@@ -1870,6 +1870,7 @@ substitute_multiple_relids_walker(Node *node,
 	Assert(!IsA(node, SpecialJoinInfo));
 	Assert(!IsA(node, AppendRelInfo));
 	Assert(!IsA(node, PlaceHolderInfo));
+	Assert(!IsA(node, MinMaxAggInfo));
 
 	return expression_tree_walker(node, substitute_multiple_relids_walker,
 								  (void *) context);

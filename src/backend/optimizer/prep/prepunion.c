@@ -1641,6 +1641,7 @@ adjust_appendrel_attrs_mutator(Node *node, AppendRelInfo *context)
 	Assert(!IsA(node, SpecialJoinInfo));
 	Assert(!IsA(node, AppendRelInfo));
 	Assert(!IsA(node, PlaceHolderInfo));
+	Assert(!IsA(node, MinMaxAggInfo));
 
 	/*
 	 * We have to process RestrictInfo nodes specially.  (Note: although

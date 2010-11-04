@@ -81,6 +81,7 @@ static Node *replace_nestloop_params(PlannerInfo *root, Node *expr);
 static Node *replace_nestloop_params_mutator(Node *node, PlannerInfo *root);
 static List *fix_indexqual_references(PlannerInfo *root, IndexPath *index_path,
 						 List *indexquals);
+static Node *fix_indexqual_operand(Node *node, IndexOptInfo *index);
 static List *get_switched_clauses(List *clauses, Relids outerrelids);
 static List *order_qual_clauses(PlannerInfo *root, List *clauses);
 static void copy_path_costsize(Plan *dest, Path *src);
@@ -2396,10 +2397,8 @@ fix_indexqual_references(PlannerInfo *root, IndexPath *index_path,
 /*
  * fix_indexqual_operand
  *	  Convert an indexqual expression to a Var referencing the index column.
- *
- * This is exported because planagg.c needs it.
  */
-Node *
+static Node *
 fix_indexqual_operand(Node *node, IndexOptInfo *index)
 {
 	/*

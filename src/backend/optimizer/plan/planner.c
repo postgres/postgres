@@ -1011,6 +1011,30 @@ grouping_planner(PlannerInfo *root, double tuple_fraction)
 										   &groupColIdx, &need_tlist_eval);
 
 		/*
+		 * Do aggregate preprocessing, if the query has any aggs.
+		 *
+		 * Note: think not that we can turn off hasAggs if we find no aggs. It
+		 * is possible for constant-expression simplification to remove all
+		 * explicit references to aggs, but we still have to follow the
+		 * aggregate semantics (eg, producing only one output row).
+		 */
+		if (parse->hasAggs)
+		{
+			/*
+			 * Will need actual number of aggregates for estimating costs.
+			 * Note: we do not attempt to detect duplicate aggregates here; a
+			 * somewhat-overestimated count is okay for our present purposes.
+			 */
+			count_agg_clauses((Node *) tlist, &agg_counts);
+			count_agg_clauses(parse->havingQual, &agg_counts);
+
+			/*
+			 * Preprocess MIN/MAX aggregates, if any.
+			 */
+			preprocess_minmax_aggregates(root, tlist);
+		}
+
+		/*
 		 * Calculate pathkeys that represent grouping/ordering requirements.
 		 * Stash them in PlannerInfo so that query_planner can canonicalize
 		 * them after EquivalenceClasses have been formed.	The sortClause is
@@ -1055,23 +1079,6 @@ grouping_planner(PlannerInfo *root, double tuple_fraction)
 										  parse->sortClause,
 										  tlist,
 										  false);
-
-		/*
-		 * Will need actual number of aggregates for estimating costs.
-		 *
-		 * Note: we do not attempt to detect duplicate aggregates here; a
-		 * somewhat-overestimated count is okay for our present purposes.
-		 *
-		 * Note: think not that we can turn off hasAggs if we find no aggs. It
-		 * is possible for constant-expression simplification to remove all
-		 * explicit references to aggs, but we still have to follow the
-		 * aggregate semantics (eg, producing only one output row).
-		 */
-		if (parse->hasAggs)
-		{
-			count_agg_clauses((Node *) tlist, &agg_counts);
-			count_agg_clauses(parse->havingQual, &agg_counts);
-		}
 
 		/*
 		 * Figure out whether we want a sorted result from query_planner.

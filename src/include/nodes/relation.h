@@ -189,6 +189,8 @@ typedef struct PlannerInfo
 	List	   *distinct_pathkeys;		/* distinctClause pathkeys, if any */
 	List	   *sort_pathkeys;	/* sortClause pathkeys, if any */
 
+	List	   *minmax_aggs;	/* List of MinMaxAggInfos */
+
 	List	   *initial_rels;	/* RelOptInfos we are now trying to join */
 
 	MemoryContext planner_cxt;	/* context holding PlannerInfo */
@@ -1356,6 +1358,23 @@ typedef struct PlaceHolderInfo
 	Relids		ph_may_need;	/* highest level it might be needed at */
 	int32		ph_width;		/* estimated attribute width */
 } PlaceHolderInfo;
+
+/*
+ * For each potentially index-optimizable MIN/MAX aggregate function,
+ * root->minmax_aggs stores a MinMaxAggInfo describing it.
+ *
+ * Note: a MIN/MAX agg doesn't really care about the nulls_first property,
+ * so the pathkey's nulls_first flag should be ignored.
+ */
+typedef struct MinMaxAggInfo
+{
+	NodeTag		type;
+
+	Oid			aggfnoid;		/* pg_proc Oid of the aggregate */
+	Oid			aggsortop;		/* Oid of its sort operator */
+	Expr	   *target;			/* expression we are aggregating on */
+	List	   *pathkeys;		/* pathkeys representing needed sort order */
+} MinMaxAggInfo;
 
 /*
  * glob->paramlist keeps track of the PARAM_EXEC slots that we have decided

@@ -173,6 +173,9 @@ extern List *make_pathkeys_for_sortclauses(PlannerInfo *root,
 							  List *sortclauses,
 							  List *tlist,
 							  bool canonicalize);
+extern List *make_pathkeys_for_aggregate(PlannerInfo *root,
+										 Expr *aggtarget,
+										 Oid aggsortop);
 extern void initialize_mergeclause_eclasses(PlannerInfo *root,
 											RestrictInfo *restrictinfo);
 extern void update_mergeclause_eclasses(PlannerInfo *root,
@@ -187,10 +190,6 @@ extern List *select_outer_pathkeys_for_merge(PlannerInfo *root,
 extern List *make_inner_pathkeys_for_merge(PlannerInfo *root,
 							  List *mergeclauses,
 							  List *outer_pathkeys);
-extern int pathkeys_useful_for_merging(PlannerInfo *root,
-							RelOptInfo *rel,
-							List *pathkeys);
-extern int	pathkeys_useful_for_ordering(PlannerInfo *root, List *pathkeys);
 extern List *truncate_useless_pathkeys(PlannerInfo *root,
 						  RelOptInfo *rel,
 						  List *pathkeys);

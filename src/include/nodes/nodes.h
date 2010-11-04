@@ -230,6 +230,7 @@ typedef enum NodeTag
 	T_SpecialJoinInfo,
 	T_AppendRelInfo,
 	T_PlaceHolderInfo,
+	T_MinMaxAggInfo,
 	T_PlannerParamItem,
 
 	/*

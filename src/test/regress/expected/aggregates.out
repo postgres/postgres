@@ -442,16 +442,55 @@ FROM bool_test;
 (1 row)
 
 --
--- Test several cases that should be optimized into indexscans instead of
--- the generic aggregate implementation.  We can't actually verify that they
--- are done as indexscans, but we can check that the results are correct.
+-- Test cases that should be optimized into indexscans instead of
+-- the generic aggregate implementation.
 --
+analyze tenk1;		-- ensure we get consistent plans here
 -- Basic cases
+explain (costs off)
+  select min(unique1) from tenk1;
+                      QUERY PLAN                       
+-------------------------------------------------------
+ Result
+   InitPlan 1 (returns $0)
+     ->  Limit
+           ->  Index Scan using tenk1_unique1 on tenk1
+                 Index Cond: (unique1 IS NOT NULL)
+(5 rows)
+
+select min(unique1) from tenk1;
+ min 
+-----
+   0
+(1 row)
+
+explain (costs off)
+  select max(unique1) from tenk1;
+                           QUERY PLAN                           
+----------------------------------------------------------------
+ Result
+   InitPlan 1 (returns $0)
+     ->  Limit
+           ->  Index Scan Backward using tenk1_unique1 on tenk1
+                 Index Cond: (unique1 IS NOT NULL)
+(5 rows)
+
 select max(unique1) from tenk1;
  max  
 ------
  9999
 (1 row)
+
+explain (costs off)
+  select max(unique1) from tenk1 where unique1 < 42;
+                               QUERY PLAN                               
+------------------------------------------------------------------------
+ Result
+   InitPlan 1 (returns $0)
+     ->  Limit
+           ->  Index Scan Backward using tenk1_unique1 on tenk1
+                 Index Cond: ((unique1 IS NOT NULL) AND (unique1 < 42))
+(5 rows)
 
 select max(unique1) from tenk1 where unique1 < 42;
  max 
@@ -459,11 +498,33 @@ select max(unique1) from tenk1 where unique1 < 42;
   41
 (1 row)
 
+explain (costs off)
+  select max(unique1) from tenk1 where unique1 > 42;
+                               QUERY PLAN                               
+------------------------------------------------------------------------
+ Result
+   InitPlan 1 (returns $0)
+     ->  Limit
+           ->  Index Scan Backward using tenk1_unique1 on tenk1
+                 Index Cond: ((unique1 IS NOT NULL) AND (unique1 > 42))
+(5 rows)
+
 select max(unique1) from tenk1 where unique1 > 42;
  max  
 ------
  9999
 (1 row)
+
+explain (costs off)
+  select max(unique1) from tenk1 where unique1 > 42000;
+                                QUERY PLAN                                 
+---------------------------------------------------------------------------
+ Result
+   InitPlan 1 (returns $0)
+     ->  Limit
+           ->  Index Scan Backward using tenk1_unique1 on tenk1
+                 Index Cond: ((unique1 IS NOT NULL) AND (unique1 > 42000))
+(5 rows)
 
 select max(unique1) from tenk1 where unique1 > 42000;
  max 
@@ -472,11 +533,33 @@ select max(unique1) from tenk1 where unique1 > 42000;
 (1 row)
 
 -- multi-column index (uses tenk1_thous_tenthous)
+explain (costs off)
+  select max(tenthous) from tenk1 where thousand = 33;
+                                QUERY PLAN                                
+--------------------------------------------------------------------------
+ Result
+   InitPlan 1 (returns $0)
+     ->  Limit
+           ->  Index Scan Backward using tenk1_thous_tenthous on tenk1
+                 Index Cond: ((thousand = 33) AND (tenthous IS NOT NULL))
+(5 rows)
+
 select max(tenthous) from tenk1 where thousand = 33;
  max  
 ------
  9033
 (1 row)
+
+explain (costs off)
+  select min(tenthous) from tenk1 where thousand = 33;
+                                QUERY PLAN                                
+--------------------------------------------------------------------------
+ Result
+   InitPlan 1 (returns $0)
+     ->  Limit
+           ->  Index Scan using tenk1_thous_tenthous on tenk1
+                 Index Cond: ((thousand = 33) AND (tenthous IS NOT NULL))
+(5 rows)
 
 select min(tenthous) from tenk1 where thousand = 33;
  min 
@@ -485,8 +568,22 @@ select min(tenthous) from tenk1 where thousand = 33;
 (1 row)
 
 -- check parameter propagation into an indexscan subquery
+explain (costs off)
+  select f1, (select min(unique1) from tenk1 where unique1 > f1) AS gt
+    from int4_tbl;
+                                       QUERY PLAN                                        
+-----------------------------------------------------------------------------------------
+ Seq Scan on int4_tbl
+   SubPlan 2
+     ->  Result
+           InitPlan 1 (returns $1)
+             ->  Limit
+                   ->  Index Scan using tenk1_unique1 on tenk1
+                         Index Cond: ((unique1 IS NOT NULL) AND (unique1 > int4_tbl.f1))
+(7 rows)
+
 select f1, (select min(unique1) from tenk1 where unique1 > f1) AS gt
-from int4_tbl;
+  from int4_tbl;
      f1      | gt 
 -------------+----
            0 |  1
@@ -497,11 +594,36 @@ from int4_tbl;
 (5 rows)
 
 -- check some cases that were handled incorrectly in 8.3.0
+explain (costs off)
+  select distinct max(unique2) from tenk1;
+                           QUERY PLAN                           
+----------------------------------------------------------------
+ HashAggregate
+   InitPlan 1 (returns $0)
+     ->  Limit
+           ->  Index Scan Backward using tenk1_unique2 on tenk1
+                 Index Cond: (unique2 IS NOT NULL)
+   ->  Result
+(6 rows)
+
 select distinct max(unique2) from tenk1;
  max  
 ------
  9999
 (1 row)
+
+explain (costs off)
+  select max(unique2) from tenk1 order by 1;
+                           QUERY PLAN                           
+----------------------------------------------------------------
+ Sort
+   Sort Key: ($0)
+   InitPlan 1 (returns $0)
+     ->  Limit
+           ->  Index Scan Backward using tenk1_unique2 on tenk1
+                 Index Cond: (unique2 IS NOT NULL)
+   ->  Result
+(7 rows)
 
 select max(unique2) from tenk1 order by 1;
  max  
@@ -509,17 +631,56 @@ select max(unique2) from tenk1 order by 1;
  9999
 (1 row)
 
+explain (costs off)
+  select max(unique2) from tenk1 order by max(unique2);
+                           QUERY PLAN                           
+----------------------------------------------------------------
+ Sort
+   Sort Key: ($0)
+   InitPlan 1 (returns $0)
+     ->  Limit
+           ->  Index Scan Backward using tenk1_unique2 on tenk1
+                 Index Cond: (unique2 IS NOT NULL)
+   ->  Result
+(7 rows)
+
 select max(unique2) from tenk1 order by max(unique2);
  max  
 ------
  9999
 (1 row)
 
+explain (costs off)
+  select max(unique2) from tenk1 order by max(unique2)+1;
+                           QUERY PLAN                           
+----------------------------------------------------------------
+ Sort
+   Sort Key: (($0 + 1))
+   InitPlan 1 (returns $0)
+     ->  Limit
+           ->  Index Scan Backward using tenk1_unique2 on tenk1
+                 Index Cond: (unique2 IS NOT NULL)
+   ->  Result
+(7 rows)
+
 select max(unique2) from tenk1 order by max(unique2)+1;
  max  
 ------
  9999
 (1 row)
+
+explain (costs off)
+  select max(unique2), generate_series(1,3) as g from tenk1 order by g desc;
+                           QUERY PLAN                           
+----------------------------------------------------------------
+ Sort
+   Sort Key: (generate_series(1, 3))
+   InitPlan 1 (returns $0)
+     ->  Limit
+           ->  Index Scan Backward using tenk1_unique2 on tenk1
+                 Index Cond: (unique2 IS NOT NULL)
+   ->  Result
+(7 rows)
 
 select max(unique2), generate_series(1,3) as g from tenk1 order by g desc;
  max  | g 
@@ -529,6 +690,69 @@ select max(unique2), generate_series(1,3) as g from tenk1 order by g desc;
  9999 | 1
 (3 rows)
 
+-- this is an interesting special case as of 9.1
+explain (costs off)
+  select min(unique2) from tenk1 where unique2 = 42;
+                  QUERY PLAN                   
+-----------------------------------------------
+ Aggregate
+   ->  Index Scan using tenk1_unique2 on tenk1
+         Index Cond: (unique2 = 42)
+(3 rows)
+
+select min(unique2) from tenk1 where unique2 = 42;
+ min 
+-----
+  42
+(1 row)
+
+-- try it on an inheritance tree
+create table minmaxtest(f1 int);
+create table minmaxtest1() inherits (minmaxtest);
+create table minmaxtest2() inherits (minmaxtest);
+create index minmaxtesti on minmaxtest(f1);
+create index minmaxtest1i on minmaxtest1(f1);
+create index minmaxtest2i on minmaxtest2(f1 desc);
+insert into minmaxtest values(11), (12);
+insert into minmaxtest1 values(13), (14);
+insert into minmaxtest2 values(15), (16);
+explain (costs off)
+  select min(f1), max(f1) from minmaxtest;
+                                      QUERY PLAN                                      
+--------------------------------------------------------------------------------------
+ Result
+   InitPlan 1 (returns $0)
+     ->  Limit
+           ->  Merge Append
+                 Sort Key: public.minmaxtest.f1
+                 ->  Index Scan using minmaxtesti on minmaxtest
+                       Index Cond: (f1 IS NOT NULL)
+                 ->  Index Scan using minmaxtest1i on minmaxtest1 minmaxtest
+                       Index Cond: (f1 IS NOT NULL)
+                 ->  Index Scan Backward using minmaxtest2i on minmaxtest2 minmaxtest
+                       Index Cond: (f1 IS NOT NULL)
+   InitPlan 2 (returns $1)
+     ->  Limit
+           ->  Merge Append
+                 Sort Key: public.minmaxtest.f1
+                 ->  Index Scan Backward using minmaxtesti on minmaxtest
+                       Index Cond: (f1 IS NOT NULL)
+                 ->  Index Scan Backward using minmaxtest1i on minmaxtest1 minmaxtest
+                       Index Cond: (f1 IS NOT NULL)
+                 ->  Index Scan using minmaxtest2i on minmaxtest2 minmaxtest
+                       Index Cond: (f1 IS NOT NULL)
+(21 rows)
+
+select min(f1), max(f1) from minmaxtest;
+ min | max 
+-----+-----
+  11 |  16
+(1 row)
+
+drop table minmaxtest cascade;
+NOTICE:  drop cascades to 2 other objects
+DETAIL:  drop cascades to table minmaxtest1
+drop cascades to table minmaxtest2
 --
 -- Test combinations of DISTINCT and/or ORDER BY
 --

@@ -913,6 +913,39 @@ make_pathkeys_for_sortclauses(PlannerInfo *root,
 }
 
 /****************************************************************************
+ *		PATHKEYS AND AGGREGATES
+ ****************************************************************************/
+
+/*
+ * make_pathkeys_for_aggregate
+ *		Generate a pathkeys list (always a 1-item list) that represents
+ *		the sort order needed by a MIN/MAX aggregate
+ *
+ * This is only called before EquivalenceClass merging, so we can assume
+ * we are not supposed to canonicalize.
+ */
+List *
+make_pathkeys_for_aggregate(PlannerInfo *root,
+							Expr *aggtarget,
+							Oid aggsortop)
+{
+	PathKey    *pathkey;
+
+	/*
+	 * We arbitrarily set nulls_first to false.  Actually, a MIN/MAX agg can
+	 * use either nulls ordering option, but that is dealt with elsewhere.
+	 */
+	pathkey = make_pathkey_from_sortinfo(root,
+										 aggtarget,
+										 aggsortop,
+										 false,	/* nulls_first */
+										 0,
+										 true,
+										 false);
+	return list_make1(pathkey);
+}
+
+/****************************************************************************
  *		PATHKEYS AND MERGECLAUSES
  ****************************************************************************/
 
@@ -1379,10 +1412,11 @@ make_inner_pathkeys_for_merge(PlannerInfo *root,
  *		PATHKEY USEFULNESS CHECKS
  *
  * We only want to remember as many of the pathkeys of a path as have some
- * potential use, either for subsequent mergejoins or for meeting the query's
- * requested output ordering.  This ensures that add_path() won't consider
- * a path to have a usefully different ordering unless it really is useful.
- * These routines check for usefulness of given pathkeys.
+ * potential use, which can include subsequent mergejoins, meeting the query's
+ * requested output ordering, or implementing MIN/MAX aggregates.  This
+ * ensures that add_path() won't consider a path to have a usefully different
+ * ordering unless it really is useful.  These routines check for usefulness
+ * of given pathkeys.
  ****************************************************************************/
 
 /*
@@ -1403,7 +1437,7 @@ make_inner_pathkeys_for_merge(PlannerInfo *root,
  * that direction should be preferred, in hopes of avoiding a final sort step.
  * right_merge_direction() implements this heuristic.
  */
-int
+static int
 pathkeys_useful_for_merging(PlannerInfo *root, RelOptInfo *rel, List *pathkeys)
 {
 	int			useful = 0;
@@ -1506,7 +1540,7 @@ right_merge_direction(PlannerInfo *root, PathKey *pathkey)
  * no good to order by just the first key(s) of the requested ordering.
  * So the result is always either 0 or list_length(root->query_pathkeys).
  */
-int
+static int
 pathkeys_useful_for_ordering(PlannerInfo *root, List *pathkeys)
 {
 	if (root->query_pathkeys == NIL)
@@ -1525,6 +1559,50 @@ pathkeys_useful_for_ordering(PlannerInfo *root, List *pathkeys)
 }
 
 /*
+ * pathkeys_useful_for_minmax
+ *		Count the number of pathkeys that are useful for implementing
+ *		some MIN/MAX aggregate.
+ *
+ * Like pathkeys_useful_for_ordering, this is a yes-or-no affair, but
+ * there could be several MIN/MAX aggregates and we can match to any one.
+ *
+ * We can't use pathkeys_contained_in() because we would like to match
+ * pathkeys regardless of the nulls_first setting.  However, we know that
+ * MIN/MAX aggregates will have at most one item in their pathkeys, so it's
+ * not too complicated to match by brute force.
+ */
+static int
+pathkeys_useful_for_minmax(PlannerInfo *root, List *pathkeys)
+{
+	PathKey    *pathkey;
+	ListCell   *lc;
+
+	if (pathkeys == NIL)
+		return 0;				/* unordered path */
+	pathkey = (PathKey *) linitial(pathkeys);
+
+	foreach(lc, root->minmax_aggs)
+	{
+		MinMaxAggInfo *mminfo = (MinMaxAggInfo *) lfirst(lc);
+		PathKey    *mmpathkey;
+
+		/* Ignore minmax agg if its pathkey turned out to be redundant */
+		if (mminfo->pathkeys == NIL)
+			continue;
+
+		Assert(list_length(mminfo->pathkeys) == 1);
+		mmpathkey = (PathKey *) linitial(mminfo->pathkeys);
+
+		if (mmpathkey->pk_eclass == pathkey->pk_eclass &&
+			mmpathkey->pk_opfamily == pathkey->pk_opfamily &&
+			mmpathkey->pk_strategy == pathkey->pk_strategy)
+			return 1;
+	}
+
+	return 0;					/* path ordering not useful */
+}
+
+/*
  * truncate_useless_pathkeys
  *		Shorten the given pathkey list to just the useful pathkeys.
  */
@@ -1535,11 +1613,15 @@ truncate_useless_pathkeys(PlannerInfo *root,
 {
 	int			nuseful;
 	int			nuseful2;
+	int			nuseful3;
 
 	nuseful = pathkeys_useful_for_merging(root, rel, pathkeys);
 	nuseful2 = pathkeys_useful_for_ordering(root, pathkeys);
 	if (nuseful2 > nuseful)
 		nuseful = nuseful2;
+	nuseful3 = pathkeys_useful_for_minmax(root, pathkeys);
+	if (nuseful3 > nuseful)
+		nuseful = nuseful3;
 
 	/*
 	 * Note: not safe to modify input list destructively, but we can avoid
@@ -1565,8 +1647,8 @@ truncate_useless_pathkeys(PlannerInfo *root,
  *
  * We could make the test more complex, for example checking to see if any of
  * the joinclauses are really mergejoinable, but that likely wouldn't win
- * often enough to repay the extra cycles.	Queries with neither a join nor
- * a sort are reasonably common, though, so this much work seems worthwhile.
+ * often enough to repay the extra cycles.	Queries with no join, sort, or
+ * aggregate at all are reasonably common, so this much work seems worthwhile.
  */
 bool
 has_useful_pathkeys(PlannerInfo *root, RelOptInfo *rel)
@@ -1575,5 +1657,7 @@ has_useful_pathkeys(PlannerInfo *root, RelOptInfo *rel)
 		return true;			/* might be able to use pathkeys for merging */
 	if (root->query_pathkeys != NIL)
 		return true;			/* might be able to use them for ordering */
+	if (root->minmax_aggs != NIL)
+		return true;			/* might be able to use them for MIN/MAX */
 	return false;				/* definitely useless */
 }

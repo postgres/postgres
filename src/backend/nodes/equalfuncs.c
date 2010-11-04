@@ -844,6 +844,17 @@ _equalPlaceHolderInfo(PlaceHolderInfo *a, PlaceHolderInfo *b)
 	return true;
 }
 
+static bool
+_equalMinMaxAggInfo(MinMaxAggInfo *a, MinMaxAggInfo *b)
+{
+	COMPARE_SCALAR_FIELD(aggfnoid);
+	COMPARE_SCALAR_FIELD(aggsortop);
+	COMPARE_NODE_FIELD(target);
+	COMPARE_NODE_FIELD(pathkeys);
+
+	return true;
+}
+
 
 /*
  * Stuff from parsenodes.h
@@ -2567,6 +2578,9 @@ equal(void *a, void *b)
 			break;
 		case T_PlaceHolderInfo:
 			retval = _equalPlaceHolderInfo(a, b);
+			break;
+		case T_MinMaxAggInfo:
+			retval = _equalMinMaxAggInfo(a, b);
 			break;
 
 		case T_List:

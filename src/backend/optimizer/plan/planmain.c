@@ -30,6 +30,10 @@
 #include "utils/selfuncs.h"
 
 
+/* Local functions */
+static void canonicalize_all_pathkeys(PlannerInfo *root);
+
+
 /*
  * query_planner
  *	  Generate a path (that is, a simplified plan) for a basic query,
@@ -68,9 +72,9 @@
  * PlannerInfo field and not a passed parameter is that the low-level routines
  * in indxpath.c need to see it.)
  *
- * Note: the PlannerInfo node also includes group_pathkeys, window_pathkeys,
- * distinct_pathkeys, and sort_pathkeys, which like query_pathkeys need to be
- * canonicalized once the info is available.
+ * Note: the PlannerInfo node includes other pathkeys fields besides
+ * query_pathkeys, all of which need to be canonicalized once the info is
+ * available.  See canonicalize_all_pathkeys.
  *
  * tuple_fraction is interpreted as follows:
  *	  0: expect all tuples to be retrieved (normal case)
@@ -118,16 +122,7 @@ query_planner(PlannerInfo *root, List *tlist,
 		 * something like "SELECT 2+2 ORDER BY 1".
 		 */
 		root->canon_pathkeys = NIL;
-		root->query_pathkeys = canonicalize_pathkeys(root,
-													 root->query_pathkeys);
-		root->group_pathkeys = canonicalize_pathkeys(root,
-													 root->group_pathkeys);
-		root->window_pathkeys = canonicalize_pathkeys(root,
-													  root->window_pathkeys);
-		root->distinct_pathkeys = canonicalize_pathkeys(root,
-													root->distinct_pathkeys);
-		root->sort_pathkeys = canonicalize_pathkeys(root,
-													root->sort_pathkeys);
+		canonicalize_all_pathkeys(root);
 		return;
 	}
 
@@ -136,7 +131,7 @@ query_planner(PlannerInfo *root, List *tlist,
 	 * for "simple" rels.
 	 *
 	 * NOTE: append_rel_list was set up by subquery_planner, so do not touch
-	 * here; eq_classes may contain data already, too.
+	 * here; eq_classes and minmax_aggs may contain data already, too.
 	 */
 	root->simple_rel_array_size = list_length(parse->rtable) + 1;
 	root->simple_rel_array = (RelOptInfo **)
@@ -212,15 +207,10 @@ query_planner(PlannerInfo *root, List *tlist,
 
 	/*
 	 * We have completed merging equivalence sets, so it's now possible to
-	 * convert the requested query_pathkeys to canonical form.	Also
-	 * canonicalize the groupClause, windowClause, distinctClause and
-	 * sortClause pathkeys for use later.
+	 * convert previously generated pathkeys (in particular, the requested
+	 * query_pathkeys) to canonical form.
 	 */
-	root->query_pathkeys = canonicalize_pathkeys(root, root->query_pathkeys);
-	root->group_pathkeys = canonicalize_pathkeys(root, root->group_pathkeys);
-	root->window_pathkeys = canonicalize_pathkeys(root, root->window_pathkeys);
-	root->distinct_pathkeys = canonicalize_pathkeys(root, root->distinct_pathkeys);
-	root->sort_pathkeys = canonicalize_pathkeys(root, root->sort_pathkeys);
+	canonicalize_all_pathkeys(root);
 
 	/*
 	 * Examine any "placeholder" expressions generated during subquery pullup.
@@ -429,4 +419,29 @@ query_planner(PlannerInfo *root, List *tlist,
 
 	*cheapest_path = cheapestpath;
 	*sorted_path = sortedpath;
+}
+
+
+/*
+ * canonicalize_all_pathkeys
+ *		Canonicalize all pathkeys that were generated before entering
+ *		query_planner and then stashed in PlannerInfo.
+ */
+static void
+canonicalize_all_pathkeys(PlannerInfo *root)
+{
+	ListCell   *lc;
+
+	root->query_pathkeys = canonicalize_pathkeys(root, root->query_pathkeys);
+	root->group_pathkeys = canonicalize_pathkeys(root, root->group_pathkeys);
+	root->window_pathkeys = canonicalize_pathkeys(root, root->window_pathkeys);
+	root->distinct_pathkeys = canonicalize_pathkeys(root, root->distinct_pathkeys);
+	root->sort_pathkeys = canonicalize_pathkeys(root, root->sort_pathkeys);
+
+	foreach(lc, root->minmax_aggs)
+	{
+		MinMaxAggInfo *mminfo = (MinMaxAggInfo *) lfirst(lc);
+
+		mminfo->pathkeys = canonicalize_pathkeys(root, mminfo->pathkeys);
+	}
 }

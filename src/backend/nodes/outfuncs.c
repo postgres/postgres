@@ -1608,6 +1608,7 @@ _outPlannerInfo(StringInfo str, PlannerInfo *node)
 	WRITE_NODE_FIELD(window_pathkeys);
 	WRITE_NODE_FIELD(distinct_pathkeys);
 	WRITE_NODE_FIELD(sort_pathkeys);
+	WRITE_NODE_FIELD(minmax_aggs);
 	WRITE_FLOAT_FIELD(total_table_pages, "%.0f");
 	WRITE_FLOAT_FIELD(tuple_fraction, "%.4f");
 	WRITE_BOOL_FIELD(hasInheritedTarget);
@@ -1806,6 +1807,17 @@ _outPlaceHolderInfo(StringInfo str, PlaceHolderInfo *node)
 	WRITE_BITMAPSET_FIELD(ph_needed);
 	WRITE_BITMAPSET_FIELD(ph_may_need);
 	WRITE_INT_FIELD(ph_width);
+}
+
+static void
+_outMinMaxAggInfo(StringInfo str, MinMaxAggInfo *node)
+{
+	WRITE_NODE_TYPE("MINMAXAGGINFO");
+
+	WRITE_OID_FIELD(aggfnoid);
+	WRITE_OID_FIELD(aggsortop);
+	WRITE_NODE_FIELD(target);
+	WRITE_NODE_FIELD(pathkeys);
 }
 
 static void
@@ -2844,6 +2856,9 @@ _outNode(StringInfo str, void *obj)
 				break;
 			case T_PlaceHolderInfo:
 				_outPlaceHolderInfo(str, obj);
+				break;
+			case T_MinMaxAggInfo:
+				_outMinMaxAggInfo(str, obj);
 				break;
 			case T_PlannerParamItem:
 				_outPlannerParamItem(str, obj);
