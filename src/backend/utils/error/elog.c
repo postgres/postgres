@@ -667,8 +667,10 @@ errcode_for_socket_access(void)
 		/* Expand %m in format string */ \
 		fmtbuf = expand_fmt_string(fmt, edata); \
 		initStringInfo(&buf); \
-		if ((appendval) && edata->targetfield) \
-			appendStringInfo(&buf, "%s\n", edata->targetfield); \
+		if ((appendval) && edata->targetfield) { \
+			appendStringInfoString(&buf, edata->targetfield); \
+			appendStringInfoChar(&buf, '\n'); \
+		} \
 		/* Generate actual output --- have to use appendStringInfoVA */ \
 		for (;;) \
 		{ \
@@ -708,8 +710,10 @@ errcode_for_socket_access(void)
 		/* Expand %m in format string */ \
 		fmtbuf = expand_fmt_string(fmt, edata); \
 		initStringInfo(&buf); \
-		if ((appendval) && edata->targetfield) \
-			appendStringInfo(&buf, "%s\n", edata->targetfield); \
+		if ((appendval) && edata->targetfield) { \
+			appendStringInfoString(&buf, edata->targetfield); \
+			appendStringInfoChar(&buf, '\n'); \
+		} \
 		/* Generate actual output --- have to use appendStringInfoVA */ \
 		for (;;) \
 		{ \
@@ -1809,7 +1813,7 @@ log_line_prefix(StringInfo buf, ErrorData *edata)
 
 					if (appname == NULL || *appname == '\0')
 						appname = _("[unknown]");
-					appendStringInfo(buf, "%s", appname);
+					appendStringInfoString(buf, appname);
 				}
 				break;
 			case 'u':
@@ -1819,7 +1823,7 @@ log_line_prefix(StringInfo buf, ErrorData *edata)
 
 					if (username == NULL || *username == '\0')
 						username = _("[unknown]");
-					appendStringInfo(buf, "%s", username);
+					appendStringInfoString(buf, username);
 				}
 				break;
 			case 'd':
@@ -1829,7 +1833,7 @@ log_line_prefix(StringInfo buf, ErrorData *edata)
 
 					if (dbname == NULL || *dbname == '\0')
 						dbname = _("[unknown]");
-					appendStringInfo(buf, "%s", dbname);
+					appendStringInfoString(buf, dbname);
 				}
 				break;
 			case 'c':
@@ -1877,7 +1881,7 @@ log_line_prefix(StringInfo buf, ErrorData *edata)
 			case 'r':
 				if (MyProcPort && MyProcPort->remote_host)
 				{
-					appendStringInfo(buf, "%s", MyProcPort->remote_host);
+					appendStringInfoString(buf, MyProcPort->remote_host);
 					if (MyProcPort->remote_port &&
 						MyProcPort->remote_port[0] != '\0')
 						appendStringInfo(buf, "(%s)",
@@ -1886,7 +1890,7 @@ log_line_prefix(StringInfo buf, ErrorData *edata)
 				break;
 			case 'h':
 				if (MyProcPort && MyProcPort->remote_host)
-					appendStringInfo(buf, "%s", MyProcPort->remote_host);
+					appendStringInfoString(buf, MyProcPort->remote_host);
 				break;
 			case 'q':
 				/* in postmaster and friends, stop if %q is seen */
@@ -2004,9 +2008,12 @@ write_csvlog(ErrorData *edata)
 	if (MyProcPort && MyProcPort->remote_host)
 	{
 		appendStringInfoChar(&buf, '"');
-		appendStringInfo(&buf, "%s", MyProcPort->remote_host);
+		appendStringInfoString(&buf, MyProcPort->remote_host);
 		if (MyProcPort->remote_port && MyProcPort->remote_port[0] != '\0')
-			appendStringInfo(&buf, ":%s", MyProcPort->remote_port);
+		{
+			appendStringInfoChar(&buf, ':');
+			appendStringInfoString(&buf, MyProcPort->remote_port);
+		}
 		appendStringInfoChar(&buf, '"');
 	}
 	appendStringInfoChar(&buf, ',');
@@ -2053,40 +2060,40 @@ write_csvlog(ErrorData *edata)
 	appendStringInfoChar(&buf, ',');
 
 	/* Error severity */
-	appendStringInfo(&buf, "%s", error_severity(edata->elevel));
+	appendStringInfoString(&buf, error_severity(edata->elevel));
 	appendStringInfoChar(&buf, ',');
 
 	/* SQL state code */
-	appendStringInfo(&buf, "%s", unpack_sql_state(edata->sqlerrcode));
+	appendStringInfoString(&buf, unpack_sql_state(edata->sqlerrcode));
 	appendStringInfoChar(&buf, ',');
 
 	/* errmessage */
 	appendCSVLiteral(&buf, edata->message);
-	appendStringInfoCharMacro(&buf, ',');
+	appendStringInfoChar(&buf, ',');
 
 	/* errdetail or errdetail_log */
 	if (edata->detail_log)
 		appendCSVLiteral(&buf, edata->detail_log);
 	else
 		appendCSVLiteral(&buf, edata->detail);
-	appendStringInfoCharMacro(&buf, ',');
+	appendStringInfoChar(&buf, ',');
 
 	/* errhint */
 	appendCSVLiteral(&buf, edata->hint);
-	appendStringInfoCharMacro(&buf, ',');
+	appendStringInfoChar(&buf, ',');
 
 	/* internal query */
 	appendCSVLiteral(&buf, edata->internalquery);
-	appendStringInfoCharMacro(&buf, ',');
+	appendStringInfoChar(&buf, ',');
 
 	/* if printed internal query, print internal pos too */
 	if (edata->internalpos > 0 && edata->internalquery != NULL)
 		appendStringInfo(&buf, "%d", edata->internalpos);
-	appendStringInfoCharMacro(&buf, ',');
+	appendStringInfoChar(&buf, ',');
 
 	/* errcontext */
 	appendCSVLiteral(&buf, edata->context);
-	appendStringInfoCharMacro(&buf, ',');
+	appendStringInfoChar(&buf, ',');
 
 	/* user query --- only reported if not disabled by the caller */
 	if (is_log_level_output(edata->elevel, log_min_error_statement) &&
@@ -2095,10 +2102,10 @@ write_csvlog(ErrorData *edata)
 		print_stmt = true;
 	if (print_stmt)
 		appendCSVLiteral(&buf, debug_query_string);
-	appendStringInfoCharMacro(&buf, ',');
+	appendStringInfoChar(&buf, ',');
 	if (print_stmt && edata->cursorpos > 0)
 		appendStringInfo(&buf, "%d", edata->cursorpos);
-	appendStringInfoCharMacro(&buf, ',');
+	appendStringInfoChar(&buf, ',');
 
 	/* file error location */
 	if (Log_error_verbosity >= PGERROR_VERBOSE)
@@ -2117,7 +2124,7 @@ write_csvlog(ErrorData *edata)
 		appendCSVLiteral(&buf, msgbuf.data);
 		pfree(msgbuf.data);
 	}
-	appendStringInfoCharMacro(&buf, ',');
+	appendStringInfoChar(&buf, ',');
 
 	/* application name */
 	if (application_name)
