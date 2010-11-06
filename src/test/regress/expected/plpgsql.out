@@ -4006,7 +4006,7 @@ $$ language plpgsql;
 -- "limit" is to prevent this from being inlined
 create function sql_recurse(float8) returns float8 as
 $$ select recurse($1) limit 1; $$ language sql;
-select recurse(5);
+select recurse(10);
  recurse 
 ---------
        0

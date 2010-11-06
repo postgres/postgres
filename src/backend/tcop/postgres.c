@@ -19,10 +19,11 @@
 
 #include "postgres.h"
 
+#include <fcntl.h>
+#include <limits.h>
+#include <signal.h>
 #include <time.h>
 #include <unistd.h>
-#include <signal.h>
-#include <fcntl.h>
 #include <sys/socket.h>
 #ifdef HAVE_SYS_SELECT_H
 #include <sys/select.h>
@@ -4107,7 +4108,7 @@ PostgresMain(int argc, char *argv[], const char *username)
 /*
  * Obtain platform stack depth limit (in bytes)
  *
- * Return -1 if unlimited or not known
+ * Return -1 if unknown
  */
 long
 get_stack_depth_rlimit(void)
@@ -4123,7 +4124,10 @@ get_stack_depth_rlimit(void)
 		if (getrlimit(RLIMIT_STACK, &rlim) < 0)
 			val = -1;
 		else if (rlim.rlim_cur == RLIM_INFINITY)
-			val = -1;
+			val = LONG_MAX;
+		/* rlim_cur is probably of an unsigned type, so check for overflow */
+		else if (rlim.rlim_cur >= LONG_MAX)
+			val = LONG_MAX;
 		else
 			val = rlim.rlim_cur;
 	}

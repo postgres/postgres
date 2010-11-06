@@ -3211,7 +3211,7 @@ $$ language plpgsql;
 create function sql_recurse(float8) returns float8 as
 $$ select recurse($1) limit 1; $$ language sql;
 
-select recurse(5);
+select recurse(10);
 
 create function error1(text) returns text language sql as
 $$ SELECT relname::text FROM pg_class c WHERE c.oid = $1::regclass $$;
