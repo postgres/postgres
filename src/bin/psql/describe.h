@@ -70,7 +70,7 @@ extern bool listConversions(const char *pattern, bool showSystem);
 extern bool listCasts(const char *pattern);
 
 /* \dn */
-extern bool listSchemas(const char *pattern, bool verbose);
+extern bool listSchemas(const char *pattern, bool verbose, bool showSystem);
 
 /* \dew */
 extern bool listForeignDataWrappers(const char *pattern, bool verbose);

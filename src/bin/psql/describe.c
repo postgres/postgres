@@ -2697,7 +2697,7 @@ listCasts(const char *pattern)
  * Describes schemas (namespaces)
  */
 bool
-listSchemas(const char *pattern, bool verbose)
+listSchemas(const char *pattern, bool verbose, bool showSystem)
 {
 	PQExpBufferData buf;
 	PGresult   *res;
@@ -2720,11 +2720,14 @@ listSchemas(const char *pattern, bool verbose)
 	}
 
 	appendPQExpBuffer(&buf,
-					  "\nFROM pg_catalog.pg_namespace n\n"
-					  "WHERE	(n.nspname !~ '^pg_temp_' OR\n"
-		   "		 n.nspname = (pg_catalog.current_schemas(true))[1])\n");		/* temp schema is first */
+					  "\nFROM pg_catalog.pg_namespace n\n");
 
-	processSQLNamePattern(pset.db, &buf, pattern, true, false,
+	if (!showSystem && !pattern)
+		appendPQExpBuffer(&buf,
+						  "WHERE n.nspname !~ '^pg_' AND n.nspname <> 'information_schema'\n");
+
+	processSQLNamePattern(pset.db, &buf, pattern,
+						  !showSystem && !pattern, false,
 						  NULL, "n.nspname", NULL,
 						  NULL);
 

@@ -1232,16 +1232,17 @@ testdb=&gt;
 
 
       <varlistentry>
-        <term><literal>\dn[+] [ <link linkend="APP-PSQL-patterns"><replaceable class="parameter">pattern</replaceable></link> ]</literal></term>
+        <term><literal>\dn[S+] [ <link linkend="APP-PSQL-patterns"><replaceable class="parameter">pattern</replaceable></link> ]</literal></term>
 
         <listitem>
         <para>
         Lists schemas (namespaces). If <replaceable
         class="parameter">pattern</replaceable>
         is specified, only schemas whose names match the pattern are listed.
-        Non-local temporary schemas are suppressed.  If <literal>+</literal>
-        is appended to the command name, each object is listed with its associated
-        permissions and description, if any.
+        By default, only user-created objects are shown; supply a
+        pattern or the <literal>S</literal> modifier to include system objects.
+        If <literal>+</literal> is appended to the command name, each object
+        is listed with its associated permissions and description, if any.
         </para>
         </listitem>
       </varlistentry>
