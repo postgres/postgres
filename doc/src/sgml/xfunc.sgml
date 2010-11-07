@@ -271,7 +271,7 @@ $$ LANGUAGE SQL;
     </para>
    </sect2>
 
-   <sect2>
+   <sect2 id="xfunc-sql-composite-functions">
     <title><acronym>SQL</acronym> Functions on Composite Types</title>
 
     <para>
@@ -491,6 +491,12 @@ SELECT emp.name, emp.double_salary FROM emp;
       An application using this wouldn't need to be directly aware that
       <literal>double_salary</> isn't a real column of the table.
       (You can also emulate computed fields with views.)
+     </para>
+
+     <para>
+      Because of this behavior, it's unwise to give a function that takes
+      a single composite-type argument the same name as any of the fields of
+      that composite type.
      </para>
     </tip>
 

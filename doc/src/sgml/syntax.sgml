@@ -1522,6 +1522,19 @@ sqrt(2)
     The arguments can optionally have names attached.
     See <xref linkend="sql-syntax-calling-funcs"> for details.
    </para>
+
+   <note>
+    <para>
+     A function that takes a single argument of composite type can
+     optionally be called using field-selection syntax, and conversely
+     field selection can be written in functional style.  That is, the
+     notations <literal>col(table)</> and <literal>table.col</> are
+     interchangeable.  This behavior is not SQL-standard but is provided
+     in <productname>PostgreSQL</> because it allows use of functions to
+     emulate <quote>computed fields</>.  For more information see
+     <xref linkend="xfunc-sql-composite-functions">.
+    </para>
+   </note>
   </sect2>
 
   <sect2 id="syntax-aggregates">

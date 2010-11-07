@@ -324,3 +324,49 @@ select * from price;
 (3 rows)
 
 rollback;
+--
+-- We allow I/O conversion casts from composite types to strings to be
+-- invoked via cast syntax, but not functional syntax.  This is because
+-- the latter is too prone to be invoked unintentionally.
+--
+select cast (fullname as text) from fullname;
+ fullname 
+----------
+(0 rows)
+
+select fullname::text from fullname;
+ fullname 
+----------
+(0 rows)
+
+select text(fullname) from fullname;  -- error
+ERROR:  function text(fullname) does not exist
+LINE 1: select text(fullname) from fullname;
+               ^
+HINT:  No function matches the given name and argument types. You might need to add explicit type casts.
+select fullname.text from fullname;  -- error
+ERROR:  column fullname.text does not exist
+LINE 1: select fullname.text from fullname;
+               ^
+-- same, but RECORD instead of named composite type:
+select cast (row('Jim', 'Beam') as text);
+    row     
+------------
+ (Jim,Beam)
+(1 row)
+
+select (row('Jim', 'Beam'))::text;
+    row     
+------------
+ (Jim,Beam)
+(1 row)
+
+select text(row('Jim', 'Beam'));  -- error
+ERROR:  function text(record) does not exist
+LINE 1: select text(row('Jim', 'Beam'));
+               ^
+HINT:  No function matches the given name and argument types. You might need to add explicit type casts.
+select (row('Jim', 'Beam')).text;  -- error
+ERROR:  could not identify column "text" in record data type
+LINE 1: select (row('Jim', 'Beam')).text;
+                ^

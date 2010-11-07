@@ -157,3 +157,18 @@ UPDATE price
 select * from price;
 
 rollback;
+
+--
+-- We allow I/O conversion casts from composite types to strings to be
+-- invoked via cast syntax, but not functional syntax.  This is because
+-- the latter is too prone to be invoked unintentionally.
+--
+select cast (fullname as text) from fullname;
+select fullname::text from fullname;
+select text(fullname) from fullname;  -- error
+select fullname.text from fullname;  -- error
+-- same, but RECORD instead of named composite type:
+select cast (row('Jim', 'Beam') as text);
+select (row('Jim', 'Beam'))::text;
+select text(row('Jim', 'Beam'));  -- error
+select (row('Jim', 'Beam')).text;  -- error

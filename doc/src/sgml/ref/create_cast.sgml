@@ -38,7 +38,7 @@ CREATE CAST (<replaceable>source_type</replaceable> AS <replaceable>target_type<
   <para>
    <command>CREATE CAST</command> defines a new cast.  A cast
    specifies how to perform a conversion between
-   two data types.  For example:
+   two data types.  For example,
 <programlisting>
 SELECT CAST(42 AS float8);
 </programlisting>
@@ -64,10 +64,13 @@ SELECT CAST(42 AS float8);
   </para>
 
   <para>
-   You can define a cast as an <firstterm>I/O conversion cast</> using
+   You can define a cast as an <firstterm>I/O conversion cast</> by using
    the <literal>WITH INOUT</literal> syntax. An I/O conversion cast is
    performed by invoking the output function of the source data type, and
-   passing the result to the input function of the target data type.
+   passing the resulting string to the input function of the target data type.
+   In many common cases, this feature avoids the need to write a separate
+   cast function for conversion. An I/O conversion cast acts the same as
+   a regular function-based cast; only the implementation is different.
   </para>
 
   <para>
@@ -218,7 +221,7 @@ SELECT CAST ( 2 AS numeric ) + 4.0;
       <para>
        Indicates that the cast is an I/O conversion cast, performed by
        invoking the output function of the source data type, and passing the
-       result to the input function of the target data type.
+       resulting string to the input function of the target data type.
       </para>
      </listitem>
     </varlistentry>
@@ -278,9 +281,9 @@ SELECT CAST ( 2 AS numeric ) + 4.0;
   <para>
    When a cast has different source and
    target types and a function that takes more than one argument, it
-   represents converting from one type to another and applying a length
+   supports converting from one type to another and applying a length
    coercion in a single step.  When no such entry is available, coercion
-   to a type that uses a type modifier involves two steps, one to
+   to a type that uses a type modifier involves two cast steps, one to
    convert between data types and a second to apply the modifier.
   </para>
 
@@ -364,6 +367,18 @@ SELECT CAST ( 2 AS numeric ) + 4.0;
     type, the call will be construed as an I/O conversion cast.  This
     exception allows I/O conversion casts to be invoked using functional
     syntax.
+   </para>
+  </note>
+
+  <note>
+   <para>
+    There's an exception to the exception, too: I/O conversion casts from
+    composite types to string types cannot be invoked using functional
+    syntax, but must be written in explicit cast syntax (either
+    <literal>CAST</> or <literal>::</> notation).  This exception was added
+    because after the introduction of automatically-provided I/O conversion
+    casts, it was found too easy to accidentally invoke such a cast when
+    a function or column reference was intended.
    </para>
   </note>
  </refsect1>

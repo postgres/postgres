@@ -985,8 +985,13 @@ func_get_detail(List *funcname,
 		 * can't write "foo[] (something)" as a function call.  In theory
 		 * someone might want to invoke it as "_foo (something)" but we have
 		 * never supported that historically, so we can insist that people
-		 * write it as a normal cast instead.  Lack of historical support is
-		 * also the reason for not considering composite-type casts here.
+		 * write it as a normal cast instead.
+		 *
+		 * We also reject the specific case of COERCEVIAIO for a composite
+		 * source type and a string-category target type.  This is a case that
+		 * find_coercion_pathway() allows by default, but experience has shown
+		 * that it's too commonly invoked by mistake.  So, again, insist that
+		 * people use cast syntax if they want to do that.
 		 *
 		 * NB: it's important that this code does not exceed what coerce_type
 		 * can do, because the caller will try to apply coerce_type if we
@@ -1017,8 +1022,23 @@ func_get_detail(List *funcname,
 					cpathtype = find_coercion_pathway(targetType, sourceType,
 													  COERCION_EXPLICIT,
 													  &cfuncid);
-					iscoercion = (cpathtype == COERCION_PATH_RELABELTYPE ||
-								  cpathtype == COERCION_PATH_COERCEVIAIO);
+					switch (cpathtype)
+					{
+						case COERCION_PATH_RELABELTYPE:
+							iscoercion = true;
+							break;
+						case COERCION_PATH_COERCEVIAIO:
+							if ((sourceType == RECORDOID ||
+								 ISCOMPLEX(sourceType)) &&
+								TypeCategory(targetType) == TYPCATEGORY_STRING)
+								iscoercion = false;
+							else
+								iscoercion = true;
+							break;
+						default:
+							iscoercion = false;
+							break;
+					}
 				}
 
 				if (iscoercion)
