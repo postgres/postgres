@@ -1754,6 +1754,9 @@ autovac_balance_cost(void)
  * get_database_list
  *		Return a list of all databases found in pg_database.
  *
+ * The list and associated data is allocated in the caller's memory context,
+ * which is in charge of ensuring that it's properly cleaned up afterwards.
+ *
  * Note: this is the only function in which the autovacuum launcher uses a
  * transaction.  Although we aren't attached to any particular database and
  * therefore can't access most catalogs, we do have enough infrastructure
@@ -1766,6 +1769,10 @@ get_database_list(void)
 	Relation	rel;
 	HeapScanDesc scan;
 	HeapTuple	tup;
+	MemoryContext	resultcxt;
+
+	/* This is the context that we will allocate our output data in */
+	resultcxt = CurrentMemoryContext;
 
 	/*
 	 * Start a transaction so we can access pg_database, and get a snapshot.
@@ -1777,9 +1784,6 @@ get_database_list(void)
 	StartTransactionCommand();
 	(void) GetTransactionSnapshot();
 
-	/* Allocate our results in AutovacMemCxt, not transaction context */
-	MemoryContextSwitchTo(AutovacMemCxt);
-
 	rel = heap_open(DatabaseRelationId, AccessShareLock);
 	scan = heap_beginscan(rel, SnapshotNow, 0, NULL);
 
@@ -1787,6 +1791,15 @@ get_database_list(void)
 	{
 		Form_pg_database pgdatabase = (Form_pg_database) GETSTRUCT(tup);
 		avw_dbase  *avdb;
+		MemoryContext	oldcxt;
+
+		/*
+		 * Allocate our results in the caller's context, not the transaction's.
+		 * We do this inside the loop, and restore the original context at the
+		 * end, so that leaky things like heap_getnext() are not called in a
+		 * potentially long-lived context.
+		 */
+		oldcxt = MemoryContextSwitchTo(resultcxt);
 
 		avdb = (avw_dbase *) palloc(sizeof(avw_dbase));
 
@@ -1797,6 +1810,7 @@ get_database_list(void)
 		avdb->adw_entry = NULL;
 
 		dblist = lappend(dblist, avdb);
+		MemoryContextSwitchTo(oldcxt);
 	}
 
 	heap_endscan(scan);
