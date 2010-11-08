@@ -341,11 +341,20 @@ subquery_planner(PlannerGlobal *glob, Query *parse,
 	inline_set_returning_functions(root);
 
 	/*
-	 * Check to see if any subqueries in the rangetable can be merged into
+	 * Check to see if any subqueries in the jointree can be merged into
 	 * this query.
 	 */
 	parse->jointree = (FromExpr *)
 		pull_up_subqueries(root, (Node *) parse->jointree, NULL, NULL);
+
+	/*
+	 * If this is a simple UNION ALL query, flatten it into an appendrel.
+	 * We do this now because it requires applying pull_up_subqueries to the
+	 * leaf queries of the UNION ALL, which weren't touched above because they
+	 * weren't referenced by the jointree (they will be after we do this).
+	 */
+	if (parse->setOperations)
+		flatten_simple_union_all(root);
 
 	/*
 	 * Detect whether any rangetable entries are RTE_JOIN kind; if not, we can

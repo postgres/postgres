@@ -7,6 +7,7 @@
  *		pull_up_sublinks
  *		inline_set_returning_functions
  *		pull_up_subqueries
+ *		flatten_simple_union_all
  *		do expression preprocessing (including flattening JOIN alias vars)
  *		reduce_outer_joins
  *
@@ -869,11 +870,6 @@ pull_up_simple_union_all(PlannerInfo *root, Node *jtnode, RangeTblEntry *rte)
 	List	   *rtable;
 
 	/*
-	 * Append the subquery rtable entries to upper query.
-	 */
-	rtoffset = list_length(root->parse->rtable);
-
-	/*
 	 * Append child RTEs to parent rtable.
 	 *
 	 * Upper-level vars in subquery are now one level closer to their parent
@@ -881,6 +877,7 @@ pull_up_simple_union_all(PlannerInfo *root, Node *jtnode, RangeTblEntry *rte)
 	 * because any such vars must refer to stuff above the level of the query
 	 * we are pulling into.
 	 */
+	rtoffset = list_length(root->parse->rtable);
 	rtable = copyObject(subquery->rtable);
 	IncrementVarSublevelsUp_rtable(rtable, -1, 1);
 	root->parse->rtable = list_concat(root->parse->rtable, rtable);
@@ -888,7 +885,7 @@ pull_up_simple_union_all(PlannerInfo *root, Node *jtnode, RangeTblEntry *rte)
 	/*
 	 * Recursively scan the subquery's setOperations tree and add
 	 * AppendRelInfo nodes for leaf subqueries to the parent's
-	 * append_rel_list.
+	 * append_rel_list.  Also apply pull_up_subqueries to the leaf subqueries.
 	 */
 	Assert(subquery->setOperations);
 	pull_up_union_leaf_queries(subquery->setOperations, root, varno, subquery,
@@ -905,14 +902,20 @@ pull_up_simple_union_all(PlannerInfo *root, Node *jtnode, RangeTblEntry *rte)
 /*
  * pull_up_union_leaf_queries -- recursive guts of pull_up_simple_union_all
  *
- * Note that setOpQuery is the Query containing the setOp node, whose rtable
- * is where to look up the RTE if setOp is a RangeTblRef.  This is *not* the
- * same as root->parse, which is the top-level Query we are pulling up into.
+ * Build an AppendRelInfo for each leaf query in the setop tree, and then
+ * apply pull_up_subqueries to the leaf query.
+ *
+ * Note that setOpQuery is the Query containing the setOp node, whose tlist
+ * contains references to all the setop output columns.  When called from
+ * pull_up_simple_union_all, this is *not* the same as root->parse, which is
+ * the parent Query we are pulling up into.
  *
  * parentRTindex is the appendrel parent's index in root->parse->rtable.
  *
- * The child RTEs have already been copied to the parent. childRToffset
- * tells us where in the parent's range table they were copied.
+ * The child RTEs have already been copied to the parent.  childRToffset
+ * tells us where in the parent's range table they were copied.  When called
+ * from flatten_simple_union_all, childRToffset is 0 since the child RTEs
+ * were already in root->parse->rtable and no RT index adjustment is needed.
  */
 static void
 pull_up_union_leaf_queries(Node *setOp, PlannerInfo *root, int parentRTindex,
@@ -1417,6 +1420,102 @@ pullup_replace_vars_callback(Var *var,
 
 	return newnode;
 }
+
+
+/*
+ * flatten_simple_union_all
+ *		Try to optimize top-level UNION ALL structure into an appendrel
+ *
+ * If a query's setOperations tree consists entirely of simple UNION ALL
+ * operations, flatten it into an append relation, which we can process more
+ * intelligently than the general setops case.  Otherwise, do nothing.
+ *
+ * In most cases, this can succeed only for a top-level query, because for a
+ * subquery in FROM, the parent query's invocation of pull_up_subqueries would
+ * already have flattened the UNION via pull_up_simple_union_all.  But there
+ * are a few cases we can support here but not in that code path, for example
+ * when the subquery also contains ORDER BY.
+ */
+void
+flatten_simple_union_all(PlannerInfo *root)
+{
+	Query	   *parse = root->parse;
+	SetOperationStmt *topop;
+	Node	   *leftmostjtnode;
+	int			leftmostRTI;
+	RangeTblEntry *leftmostRTE;
+	int			childRTI;
+	RangeTblEntry *childRTE;
+	RangeTblRef *rtr;
+
+	/* Shouldn't be called unless query has setops */
+	topop = (SetOperationStmt *) parse->setOperations;
+	Assert(topop && IsA(topop, SetOperationStmt));
+
+	/* Can't optimize away a recursive UNION */
+	if (root->hasRecursion)
+		return;
+
+	/*
+	 * Recursively check the tree of set operations.  If not all UNION ALL
+	 * with identical column types, punt.
+	 */
+	if (!is_simple_union_all_recurse((Node *) topop, parse, topop->colTypes))
+		return;
+
+	/*
+	 * Locate the leftmost leaf query in the setops tree.  The upper query's
+	 * Vars all refer to this RTE (see transformSetOperationStmt).
+	 */
+	leftmostjtnode = topop->larg;
+	while (leftmostjtnode && IsA(leftmostjtnode, SetOperationStmt))
+		leftmostjtnode = ((SetOperationStmt *) leftmostjtnode)->larg;
+	Assert(leftmostjtnode && IsA(leftmostjtnode, RangeTblRef));
+	leftmostRTI = ((RangeTblRef *) leftmostjtnode)->rtindex;
+	leftmostRTE = rt_fetch(leftmostRTI, parse->rtable);
+	Assert(leftmostRTE->rtekind == RTE_SUBQUERY);
+
+	/*
+	 * Make a copy of the leftmost RTE and add it to the rtable.  This copy
+	 * will represent the leftmost leaf query in its capacity as a member
+	 * of the appendrel.  The original will represent the appendrel as a
+	 * whole.  (We must do things this way because the upper query's Vars
+	 * have to be seen as referring to the whole appendrel.)
+	 */
+	childRTE = copyObject(leftmostRTE);
+	parse->rtable = lappend(parse->rtable, childRTE);
+	childRTI = list_length(parse->rtable);
+
+	/* Modify the setops tree to reference the child copy */
+	((RangeTblRef *) leftmostjtnode)->rtindex = childRTI;
+
+	/* Modify the formerly-leftmost RTE to mark it as an appendrel parent */
+	leftmostRTE->inh = true;
+
+	/*
+	 * Form a RangeTblRef for the appendrel, and insert it into FROM.  The top
+	 * Query of a setops tree should have had an empty FromClause initially.
+	 */
+	rtr = makeNode(RangeTblRef);
+	rtr->rtindex = leftmostRTI;
+	Assert(parse->jointree->fromlist == NIL);
+	parse->jointree->fromlist = list_make1(rtr);
+
+	/*
+	 * Now pretend the query has no setops.  We must do this before trying
+	 * to do subquery pullup, because of Assert in pull_up_simple_subquery.
+	 */
+	parse->setOperations = NULL;
+
+	/*
+	 * Build AppendRelInfo information, and apply pull_up_subqueries to the
+	 * leaf queries of the UNION ALL.  (We must do that now because they
+	 * weren't previously referenced by the jointree, and so were missed by
+	 * the main invocation of pull_up_subqueries.)
+	 */
+	pull_up_union_leaf_queries((Node *) topop, root, leftmostRTI, parse, 0);
+}
+
 
 /*
  * reduce_outer_joins
