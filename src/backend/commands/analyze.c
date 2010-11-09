@@ -625,6 +625,12 @@ compute_index_stats(Relation onerel, double totalrows,
 		{
 			HeapTuple	heapTuple = rows[rowno];
 
+			/*
+			 * Reset the per-tuple context each time, to reclaim any cruft
+			 * left behind by evaluating the predicate or index expressions.
+			 */
+			ResetExprContext(econtext);
+
 			/* Set up for predicate or expression evaluation */
 			ExecStoreTuple(heapTuple, slot, InvalidBuffer, false);
 
@@ -649,15 +655,26 @@ compute_index_stats(Relation onerel, double totalrows,
 							   isnull);
 
 				/*
-				 * Save just the columns we care about.
+				 * Save just the columns we care about.  We copy the values
+				 * into ind_context from the estate's per-tuple context.
 				 */
 				for (i = 0; i < attr_cnt; i++)
 				{
 					VacAttrStats *stats = thisdata->vacattrstats[i];
 					int			attnum = stats->attr->attnum;
 
-					exprvals[tcnt] = values[attnum - 1];
-					exprnulls[tcnt] = isnull[attnum - 1];
+					if (isnull[attnum - 1])
+					{
+						exprvals[tcnt] = (Datum) 0;
+						exprnulls[tcnt] = true;
+					}
+					else
+					{
+						exprvals[tcnt] = datumCopy(values[attnum - 1],
+												   stats->attrtype->typbyval,
+												   stats->attrtype->typlen);
+						exprnulls[tcnt] = false;
+					}
 					tcnt++;
 				}
 			}
