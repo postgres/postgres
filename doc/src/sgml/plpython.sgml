@@ -954,8 +954,8 @@ $$ LANGUAGE plpythonu;
    <function>plpy.fatal</function> actually raise a Python exception
    which, if uncaught, propagates out to the calling query, causing
    the current transaction or subtransaction to be aborted.
-   <literal>raise plpy.ERROR(<replaceable>msg</>)</literal> and
-   <literal>raise plpy.FATAL(<replaceable>msg</>)</literal> are
+   <literal>raise plpy.Error(<replaceable>msg</>)</literal> and
+   <literal>raise plpy.Fatal(<replaceable>msg</>)</literal> are
    equivalent to calling
    <function>plpy.error</function> and
    <function>plpy.fatal</function>, respectively.
