@@ -25,7 +25,7 @@ PostgreSQL documentation
    <arg choice="plain">init[db]</arg>
    <arg>-s</arg>
    <arg>-D <replaceable>datadir</replaceable></arg>
-   <arg>-o <replaceable>options</replaceable></arg>
+   <arg>-o <replaceable>initdb-options</replaceable></arg>
   </cmdsynopsis>
 
   <cmdsynopsis>
@@ -136,8 +136,7 @@ PostgreSQL documentation
   </para>
 
   <para>
-   The <option>init</option> or <option>initdb</option> mode creates a
-   new
+   The <option>init</option> or <option>initdb</option> mode creates a new
    <productname>PostgreSQL</productname> database cluster.  A database
    cluster is a collection of databases that are managed by a single
    server instance.  This mode invokes the <command>initdb</command>
@@ -146,10 +145,10 @@ PostgreSQL documentation
 
   <para>
    In <option>start</option> mode, a new server is launched.  The
-   server is started in the background, and standard input is attached
+   server is started in the background, and its standard input is attached
    to <filename>/dev/null</filename> (or <literal>nul</> on Windows).
    On Unix-like systems, by default, the server's standard output and
-   standard error are send to <application>pg_ctl</application>'s
+   standard error are sent to <application>pg_ctl</application>'s
    standard output (not standard error).  The standard output of
    <application>pg_ctl</application> should then be redirected to a
    file or piped to another process such as a log rotating program
@@ -157,24 +156,25 @@ PostgreSQL documentation
    will write its output to the controlling terminal (from the
    background) and will not leave the shell's process group.  On
    Windows, by default the server's standard output and standard error
-   are sent to the terminal.  These default  behaviors can be changed
-   by using <option>-l</option> to append server output to a log file.
+   are sent to the terminal.  These default behaviors can be changed
+   by using <option>-l</option> to append the server's output to a log file.
+   Use of either <option>-l</option> or output redirection is recommended.
   </para>
 
   <para>
    In <option>stop</option> mode, the server that is running in
    the specified data directory is shut down.  Three different
    shutdown methods can be selected with the <option>-m</option>
-   option: <quote>Smart</quote> mode waits for online backup mode
-   to finish and all the clients to disconnect.  This is the default.
-   If the server is in recovery, recovery and streaming replication
+   option.  <quote>Smart</quote> mode (the default) waits for all active
+   clients to disconnect and any online backup to finish.
+   If the server is in hot standby, recovery and streaming replication
    will be terminated once all clients have disconnected.
    <quote>Fast</quote> mode does not wait for clients to disconnect and
    will terminate an online backup in progress.  All active transactions are
    rolled back and clients are forcibly disconnected, then the
    server is shut down.  <quote>Immediate</quote> mode will abort
-   all server processes without a clean shutdown.  This will lead to 
-   a recovery run on restart.
+   all server processes immediately, without a clean shutdown.
+   This will lead to a crash-recovery run on the next restart.
   </para>
 
   <para>
@@ -203,7 +203,7 @@ PostgreSQL documentation
   <para>
    <option>kill</option> mode allows you to send a signal to a specified
     process.  This is particularly valuable for <productname>Microsoft Windows</>
-    which does not have a <application>kill</> command.  Use 
+    which does not have a <application>kill</> command.  Use
     <literal>--help</> to see a list of supported signal names.
   </para>
 
@@ -211,12 +211,13 @@ PostgreSQL documentation
    <option>register</option> mode allows you to register a system service
    on <productname>Microsoft Windows</>.  The <option>-S</option> option
    allows selection of service start type, either <quote>auto</quote> (start
-   service automatically on system startup), on <quote>demand</quote>.
+   service automatically on system startup) or <quote>demand</quote> (start
+   service on demand).
   </para>
 
   <para>
    <option>unregister</option> mode allows you to unregister a system service
-   on <productname>Microsoft Windows</>, previously registered with the
+   on <productname>Microsoft Windows</>.  This undoes the effects of the
    <option>register</option> command.
   </para>
  </refsect1>
@@ -231,9 +232,9 @@ PostgreSQL documentation
       <listitem>
        <para>
         Attempt to allow server crashes to produce core files, on platforms
-        where this available, by lifting any soft resource limit placed on 
-        them. 
-        This is useful in debugging or diagnosing problems by allowing a 
+        where this is possible, by lifting any soft resource limit placed on
+        core files.
+        This is useful in debugging or diagnosing problems by allowing a
         stack trace to be obtained from a failed server process.
        </para>
       </listitem>
@@ -256,8 +257,8 @@ PostgreSQL documentation
        <para>
         Append the server log output to
         <replaceable>filename</replaceable>.  If the file does not
-        exist, it is created.  The <systemitem>umask</> is set to 077, so access to
-        the log file from other users is disallowed by default.
+        exist, it is created.  The <systemitem>umask</> is set to 077,
+        so access to the log file is disallowed to other users by default.
        </para>
       </listitem>
      </varlistentry>
@@ -282,7 +283,21 @@ PostgreSQL documentation
         <command>postgres</command> command.
        </para>
        <para>
-        The options are usually surrounded by single or double
+        The options should usually be surrounded by single or double
+        quotes to ensure that they are passed through as a group.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term><option>-o <replaceable class="parameter">initdb-options</replaceable></option></term>
+      <listitem>
+       <para>
+        Specifies options to be passed directly to the
+        <command>initdb</command> command.
+       </para>
+       <para>
+        The options should usually be surrounded by single or double
         quotes to ensure that they are passed through as a group.
        </para>
       </listitem>
@@ -312,7 +327,7 @@ PostgreSQL documentation
       <term><option>-s</option></term>
       <listitem>
        <para>
-        Only print errors, no informational messages.
+        Print only errors, no informational messages.
        </para>
       </listitem>
      </varlistentry>
@@ -321,8 +336,8 @@ PostgreSQL documentation
       <term><option>-t</option></term>
       <listitem>
        <para>
-        The number of seconds to wait when waiting for start or shutdown
-        to complete.  The default is 60 seconds.
+        The maximum number of seconds to wait when waiting for startup or
+        shutdown to complete.  The default is 60 seconds.
        </para>
       </listitem>
      </varlistentry>
@@ -331,19 +346,22 @@ PostgreSQL documentation
       <term><option>-w</option></term>
       <listitem>
        <para>
-        Wait for the start or shutdown to complete.  The default wait time
-        is 60 seconds but can be overridden with the option <option>-t</option>.
-        To wait is the default option for shutdowns. A successful
-        shutdown is indicated by removal of the <acronym>PID</acronym> 
-        file. For starting up, a successful <command>psql -l</command> 
-        indicates success. <command>pg_ctl</command> will attempt to 
-        use the proper port for <application>psql</>. If the environment variable 
-        <envar>PGPORT</envar> exists, that is used. Otherwise, it will see if a port 
-        has been set in the <filename>postgresql.conf</filename> file. 
-        If neither of those is used, it will use the default port that 
-        <productname>PostgreSQL</productname> was compiled with 
-        (5432 by default). When waiting, <command>pg_ctl</command> will
-        return an accurate exit code based on the success of the startup 
+        Wait for the startup or shutdown to complete.
+        Waiting is the default option for shutdowns, but not startups.
+        When waiting for shutdown, <command>pg_ctl</command> waits for
+        the server to remove its <acronym>PID</acronym> file.
+        When waiting for startup, <command>pg_ctl</command> repeatedly
+        attempts to connect to the server via <application>psql</>, and
+        reports success when this is successful.
+        <command>pg_ctl</command> will attempt to use the proper port for
+        <application>psql</>. If the environment variable
+        <envar>PGPORT</envar> exists, that is used.  Otherwise,
+        <command>pg_ctl</command> will see if a port has been set in the
+        <filename>postgresql.conf</filename> file.  If not, it will use the
+        default port that <productname>PostgreSQL</productname> was compiled
+        with (5432 by default).
+        When waiting, <command>pg_ctl</command> will
+        return an exit code based on the success of the startup
         or shutdown.
        </para>
       </listitem>
@@ -353,8 +371,8 @@ PostgreSQL documentation
       <term><option>-W</option></term>
       <listitem>
        <para>
-        Do not wait for start or shutdown to complete.  This is the
-        default for starts and restarts.
+        Do not wait for startup or shutdown to complete.  This is the
+        default for start and restart modes.
        </para>
       </listitem>
      </varlistentry>
@@ -375,20 +393,20 @@ PostgreSQL documentation
     </varlistentry>
 
     <varlistentry>
-     <term><option>-P <replaceable class="parameter">password</replaceable></option></term>
-     <listitem>
-      <para>
-       Password for the user to start the service.
-      </para>
-     </listitem>
-    </varlistentry>
-
-    <varlistentry>
      <term><option>-U <replaceable class="parameter">username</replaceable></option></term>
      <listitem>
       <para>
        User name for the user to start the service. For domain users, use the
        format <literal>DOMAIN\username</literal>.
+      </para>
+     </listitem>
+    </varlistentry>
+
+    <varlistentry>
+     <term><option>-P <replaceable class="parameter">password</replaceable></option></term>
+     <listitem>
+      <para>
+       Password for the user to start the service.
       </para>
      </listitem>
     </varlistentry>
@@ -430,7 +448,7 @@ PostgreSQL documentation
     <listitem>
      <para>
       Default host name or Unix-domain socket location for <xref
-      linkend="app-psql"> (used by the <option>-w</option> option).
+      linkend="app-psql"> (used when waiting for startup).
      </para>
     </listitem>
    </varlistentry>
@@ -440,7 +458,8 @@ PostgreSQL documentation
 
     <listitem>
      <para>
-      Default port number for <xref linkend="app-psql"> (used by the <option>-w</option> option).
+      Default port number for <xref linkend="app-psql">
+      (used when waiting for startup).
      </para>
     </listitem>
    </varlistentry>
@@ -448,10 +467,11 @@ PostgreSQL documentation
   </variablelist>
 
   <para>
-   For additional server variables, see <xref linkend="app-postgres">.
-   This utility, like most other <productname>PostgreSQL</> utilities,
+   <command>pg_ctl</command>, like most other <productname>PostgreSQL</>
+   utilities,
    also uses the environment variables supported by <application>libpq</>
    (see <xref linkend="libpq-envars">).
+   For additional server variables, see <xref linkend="app-postgres">.
   </para>
  </refsect1>
 
@@ -477,10 +497,10 @@ PostgreSQL documentation
 
     <listitem>
      <para>If this file exists in the data directory,
-      <application>pg_ctl</application> (in <option>restart</option> mode) 
+      <application>pg_ctl</application> (in <option>restart</option> mode)
       will pass the contents of the file as options to
-      <application>postgres</application>, unless overridden 
-      by the <option>-o</option> option. The contents of this file 
+      <application>postgres</application>, unless overridden
+      by the <option>-o</option> option. The contents of this file
       are also displayed in <option>status</option> mode.
      </para>
     </listitem>
@@ -492,8 +512,8 @@ PostgreSQL documentation
     <listitem>
      <para>
       This file, located in the data directory, is parsed to find the
-      proper port to use with <application>psql</application> when the
-      <option>-w</option> is given in <option>start</option> mode.
+      proper port to use with <application>psql</application>
+      when waiting for startup.
      </para>
     </listitem>
    </varlistentry>
@@ -506,7 +526,7 @@ PostgreSQL documentation
   <title>Notes</title>
 
   <para>
-   Waiting for complete start is not a well-defined operation and might
+   Waiting for complete startup is not a well-defined operation and might
    fail if access control is set up so that a local client cannot
    connect without manual interaction (e.g., password authentication).  For
    additional connection variables, see <xref linkend="libpq-envars">,
@@ -571,8 +591,8 @@ PostgreSQL documentation
    </para>
 
    <para>
-    To restart server,
-    waiting for it to shut down and to come up:
+    To restart the server,
+    waiting for it to shut down and come up again:
 <screen>
 <prompt>$</prompt> <userinput>pg_ctl -w restart</userinput>
 </screen>
