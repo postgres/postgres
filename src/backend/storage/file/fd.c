@@ -974,7 +974,6 @@ void
 FileClose(File file)
 {
 	Vfd		   *vfdP;
-	struct stat filestats;
 
 	Assert(FileIsValid(file));
 
@@ -997,15 +996,36 @@ FileClose(File file)
 	}
 
 	/*
-	 * Delete the file if it was temporary
+	 * Delete the file if it was temporary, and make a log entry if wanted
 	 */
 	if (vfdP->fdstate & FD_TEMPORARY)
 	{
-		/* reset flag so that die() interrupt won't cause problems */
+		/*
+		 * If we get an error, as could happen within the ereport/elog calls,
+		 * we'll come right back here during transaction abort.  Reset the
+		 * flag to ensure that we can't get into an infinite loop.  This code
+		 * is arranged to ensure that the worst-case consequence is failing
+		 * to emit log message(s), not failing to attempt the unlink.
+		 */
 		vfdP->fdstate &= ~FD_TEMPORARY;
+
 		if (log_temp_files >= 0)
 		{
-			if (stat(vfdP->fileName, &filestats) == 0)
+			struct stat filestats;
+			int		stat_errno;
+
+			/* first try the stat() */
+			if (stat(vfdP->fileName, &filestats))
+				stat_errno = errno;
+			else
+				stat_errno = 0;
+
+			/* in any case do the unlink */
+			if (unlink(vfdP->fileName))
+				elog(LOG, "could not unlink file \"%s\": %m", vfdP->fileName);
+
+			/* and last report the stat results */
+			if (stat_errno == 0)
 			{
 				if (filestats.st_size >= log_temp_files)
 					ereport(LOG,
@@ -1014,10 +1034,17 @@ FileClose(File file)
 									(unsigned long) filestats.st_size)));
 			}
 			else
+			{
+				errno = stat_errno;
 				elog(LOG, "could not stat file \"%s\": %m", vfdP->fileName);
+			}
 		}
-		if (unlink(vfdP->fileName))
-			elog(LOG, "could not unlink file \"%s\": %m", vfdP->fileName);
+		else
+		{
+			/* easy case, just do the unlink */
+			if (unlink(vfdP->fileName))
+				elog(LOG, "could not unlink file \"%s\": %m", vfdP->fileName);
+		}
 	}
 
 	/* Unregister it from the resource owner */
