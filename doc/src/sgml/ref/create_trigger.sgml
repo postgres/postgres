@@ -21,8 +21,10 @@ PostgreSQL documentation
 
  <refsynopsisdiv>
 <synopsis>
-CREATE TRIGGER <replaceable class="PARAMETER">name</replaceable> { BEFORE | AFTER | INSTEAD OF } { <replaceable class="PARAMETER">event</replaceable> [ OR ... ] }
+CREATE [ CONSTRAINT ] TRIGGER <replaceable class="PARAMETER">name</replaceable> { BEFORE | AFTER | INSTEAD OF } { <replaceable class="PARAMETER">event</replaceable> [ OR ... ] }
     ON <replaceable class="PARAMETER">table</replaceable> [ FOR [ EACH ] { ROW | STATEMENT } ]
+    [ FROM <replaceable class="parameter">referenced_table_name</replaceable> ]
+    { NOT DEFERRABLE | [ DEFERRABLE ] { INITIALLY IMMEDIATE | INITIALLY DEFERRED } }
     [ WHEN ( <replaceable class="parameter">condition</replaceable> ) ]
     EXECUTE PROCEDURE <replaceable class="PARAMETER">function_name</replaceable> ( <replaceable class="PARAMETER">arguments</replaceable> )
 </synopsis>
@@ -150,6 +152,20 @@ CREATE TRIGGER <replaceable class="PARAMETER">name</replaceable> { BEFORE | AFTE
   </para>
 
   <para>
+   When the <literal>CONSTRAINT</> option is specified, this command creates a
+   <firstterm>constraint trigger</>.  This is the same as a regular trigger
+   except that the timing of the trigger firing can be adjusted using
+   <xref linkend="SQL-SET-CONSTRAINTS">.
+   Constraint triggers must be <literal>AFTER ROW</> triggers.  They can
+   be fired either at the end of the statement causing the triggering event,
+   or at the end of the containing transaction; in the latter case they are
+   said to be <firstterm>deferred</>.  A pending deferred-trigger firing can
+   also be forced to happen immediately by using <command>SET CONSTRAINTS</>.
+   Constraint triggers are expected to raise an exception when the constraints
+   they implement are violated.
+  </para>
+
+  <para>
    <command>SELECT</command> does not modify any rows so you cannot
    create <command>SELECT</command> triggers. Rules and views are more
    appropriate in such cases.
@@ -170,6 +186,10 @@ CREATE TRIGGER <replaceable class="PARAMETER">name</replaceable> { BEFORE | AFTE
      <para>
       The name to give the new trigger.  This must be distinct from
       the name of any other trigger for the same table.
+      The name cannot be schema-qualified &mdash; the trigger inherits the
+      schema of its table.  For a constraint trigger, this is also the name to
+      use when modifying the trigger's behavior using
+      <command>SET CONSTRAINTS</>.
      </para>
     </listitem>
    </varlistentry>
@@ -181,7 +201,8 @@ CREATE TRIGGER <replaceable class="PARAMETER">name</replaceable> { BEFORE | AFTE
     <listitem>
      <para>
       Determines whether the function is called before, after, or instead of
-      the event.
+      the event.  A constraint trigger can only be specified as
+      <literal>AFTER</>.
      </para>
     </listitem>
    </varlistentry>
@@ -223,6 +244,33 @@ UPDATE OF <replaceable>column_name1</replaceable> [, <replaceable>column_name2</
    </varlistentry>
 
    <varlistentry>
+    <term><replaceable class="PARAMETER">referenced_table_name</replaceable></term>
+    <listitem>
+     <para>
+      The (possibly schema-qualified) name of another table referenced by the
+      constraint.  This option is used for foreign-key constraints and is not
+      recommended for general use.  This can only be specified for
+      constraint triggers.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><literal>DEFERRABLE</literal></term>
+    <term><literal>NOT DEFERRABLE</literal></term>
+    <term><literal>INITIALLY IMMEDIATE</literal></term>
+    <term><literal>INITIALLY DEFERRED</literal></term>
+    <listitem>
+     <para>
+      The default timing of the trigger.
+      See the <xref linkend="SQL-CREATETABLE"> documentation for details of
+      these constraint options.  This can only be specified for constraint
+      triggers.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
     <term><literal>FOR EACH ROW</literal></term>
     <term><literal>FOR EACH STATEMENT</literal></term>
 
@@ -231,7 +279,8 @@ UPDATE OF <replaceable>column_name1</replaceable> [, <replaceable>column_name2</
       This specifies whether the trigger procedure should be fired
       once for every row affected by the trigger event, or just once
       per SQL statement. If neither is specified, <literal>FOR EACH
-      STATEMENT</literal> is the default.
+      STATEMENT</literal> is the default.  Constraint triggers can only
+      be specified <literal>FOR EACH ROW</>.
      </para>
     </listitem>
    </varlistentry>
@@ -262,6 +311,13 @@ UPDATE OF <replaceable>column_name1</replaceable> [, <replaceable>column_name2</
      <para>
       Currently, <literal>WHEN</literal> expressions cannot contain
       subqueries.
+     </para>
+
+     <para>
+      Note that for constraint triggers, evaluation of the <literal>WHEN</>
+      condition is not deferred, but occurs immediately after the row update
+      operation is performed. If the condition does not evaluate to true then
+      the trigger is not queued for deferred execution.
      </para>
     </listitem>
    </varlistentry>
@@ -481,6 +537,12 @@ CREATE TRIGGER view_insert
    ability to define statement-level triggers on views.
   </para>
 
+  <para>
+   <command>CREATE CONSTRAINT TRIGGER</command> is a
+   <productname>PostgreSQL</productname> extension of the <acronym>SQL</>
+   standard.
+  </para>
+
  </refsect1>
 
  <refsect1>
@@ -490,6 +552,7 @@ CREATE TRIGGER view_insert
    <member><xref linkend="sql-createfunction"></member>
    <member><xref linkend="sql-altertrigger"></member>
    <member><xref linkend="sql-droptrigger"></member>
+   <member><xref linkend="sql-set-constraints"></member>
   </simplelist>
  </refsect1>
 </refentry>

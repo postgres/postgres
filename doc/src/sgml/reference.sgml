@@ -74,7 +74,6 @@
    &copyTable;
    &createAggregate;
    &createCast;
-   &createConstraint;
    &createConversion;
    &createDatabase;
    &createDomain;

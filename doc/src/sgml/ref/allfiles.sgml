@@ -46,7 +46,6 @@ Complete list of usable sgml source files in this directory.
 <!entity copyTable          system "copy.sgml">
 <!entity createAggregate    system "create_aggregate.sgml">
 <!entity createCast         system "create_cast.sgml">
-<!entity createConstraint   system "create_constraint.sgml">
 <!entity createConversion   system "create_conversion.sgml">
 <!entity createDatabase     system "create_database.sgml">
 <!entity createDomain       system "create_domain.sgml">
