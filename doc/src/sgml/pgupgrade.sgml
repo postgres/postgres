@@ -21,7 +21,8 @@
   regularly added to PostgreSQL major releases, the internal data storage
   format rarely changes.  <application>pg_upgrade</> does its best to
   make sure the old and new clusters are binary-compatible, e.g.  by
-  checking for compatible compile-time settings.  It is important that
+  checking for compatible compile-time settings, including 32/64-bit
+  binaries.  It is important that
   any external modules are also binary compatible, though this cannot
   be checked by <application>pg_upgrade</>.
  </para>
