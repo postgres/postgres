@@ -5605,6 +5605,24 @@ GetLatestXTime(void)
 }
 
 /*
+ * Returns timestamp of latest processed commit/abort record.
+ *
+ * When the server has been started normally without recovery the function
+ * returns NULL. 
+ */
+Datum
+pg_last_xact_replay_timestamp(PG_FUNCTION_ARGS)
+{
+	TimestampTz	xtime;
+
+	xtime = GetLatestXTime();
+	if (xtime == 0)
+		PG_RETURN_NULL();
+
+	PG_RETURN_TIMESTAMPTZ(xtime);
+}
+
+/*
  * Returns bool with current recovery mode, a global state.
  */
 Datum

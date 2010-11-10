@@ -3383,6 +3383,8 @@ DATA(insert OID = 3820 ( pg_last_xlog_receive_location	PGNSP PGUID 12 1 0 0 f f 
 DESCR("current xlog flush location");
 DATA(insert OID = 3821 ( pg_last_xlog_replay_location	PGNSP PGUID 12 1 0 0 f f f t f v 0 0 25 "" _null_ _null_ _null_ _null_ pg_last_xlog_replay_location _null_ _null_ _null_ ));
 DESCR("last xlog replay location");
+DATA(insert OID = 3830 ( pg_last_xact_replay_timestamp	PGNSP PGUID 12 1 0 0 f f f t f v 0 0 1184 "" _null_ _null_ _null_ _null_ pg_last_xact_replay_timestamp _null_ _null_ _null_ ));
+DESCR("timestamp of last replay xact");
 
 DATA(insert OID = 2621 ( pg_reload_conf			PGNSP PGUID 12 1 0 0 f f f t f v 0 0 16 "" _null_ _null_ _null_ _null_ pg_reload_conf _null_ _null_ _null_ ));
 DESCR("reload configuration files");

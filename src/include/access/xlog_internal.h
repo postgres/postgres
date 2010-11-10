@@ -271,6 +271,7 @@ extern Datum pg_current_xlog_location(PG_FUNCTION_ARGS);
 extern Datum pg_current_xlog_insert_location(PG_FUNCTION_ARGS);
 extern Datum pg_last_xlog_receive_location(PG_FUNCTION_ARGS);
 extern Datum pg_last_xlog_replay_location(PG_FUNCTION_ARGS);
+extern Datum pg_last_xact_replay_timestamp(PG_FUNCTION_ARGS);
 extern Datum pg_xlogfile_name_offset(PG_FUNCTION_ARGS);
 extern Datum pg_xlogfile_name(PG_FUNCTION_ARGS);
 extern Datum pg_is_in_recovery(PG_FUNCTION_ARGS);

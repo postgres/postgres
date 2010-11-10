@@ -13551,6 +13551,9 @@ postgres=# SELECT * FROM pg_xlogfile_name_offset(pg_stop_backup());
    <indexterm>
     <primary>pg_last_xlog_replay_location</primary>
    </indexterm>
+   <indexterm>
+    <primary>pg_last_xact_replay_timestamp</primary>
+   </indexterm>
 
    <para>
     The functions shown in <xref
@@ -13602,6 +13605,22 @@ postgres=# SELECT * FROM pg_xlogfile_name_offset(pg_stop_backup());
         If recovery has completed then this value will remain static at
         the value of the last WAL record applied during that recovery.
         When the server has been started normally without recovery
+        the function returns NULL.
+       </entry>
+      </row>
+      <row>
+       <entry>
+        <literal><function>pg_last_xact_replay_timestamp()</function></literal>
+        </entry>
+       <entry><type>timestamp with time zone</type></entry>
+       <entry>Get timestamp of last transaction replayed during recovery.
+        This is the time at which the commit or abort WAL record for that
+        transaction was generated.
+        If no transactions have been replayed during recovery, this function
+        returns NULL.  Otherwise, if recovery is still in progress this will
+        increase monotonically.  If recovery has completed then this value will
+        remain static at the value of the last transaction applied during that
+        recovery.  When the server has been started normally without recovery
         the function returns NULL.
        </entry>
       </row>
