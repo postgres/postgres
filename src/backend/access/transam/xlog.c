@@ -4424,6 +4424,7 @@ StartupXLOG(void)
 		if (record != NULL)
 		{
 			memcpy(&checkPoint, XLogRecGetData(record), sizeof(CheckPoint));
+			wasShutdown = (record->xl_info == XLOG_CHECKPOINT_SHUTDOWN);
 			ereport(LOG,
 					(errmsg("checkpoint record is at %X/%X",
 							checkPointLoc.xlogid, checkPointLoc.xrecoff)));
@@ -4448,6 +4449,7 @@ StartupXLOG(void)
 			ereport(FATAL,
 					(errmsg("could not locate required checkpoint record"),
 					 errhint("If you are not restoring from a backup, try removing the file \"%s/backup_label\".", DataDir)));
+			wasShutdown = false; /* keep compiler quiet */
 		}
 	}
 	else
@@ -4480,10 +4482,10 @@ StartupXLOG(void)
 					 (errmsg("could not locate a valid checkpoint record")));
 		}
 		memcpy(&checkPoint, XLogRecGetData(record), sizeof(CheckPoint));
+		wasShutdown = (record->xl_info == XLOG_CHECKPOINT_SHUTDOWN);
 	}
 
 	LastRec = RecPtr = checkPointLoc;
-	wasShutdown = (record->xl_info == XLOG_CHECKPOINT_SHUTDOWN);
 
 	ereport(LOG,
 	 (errmsg("redo record is at %X/%X; undo record is at %X/%X; shutdown %s",
