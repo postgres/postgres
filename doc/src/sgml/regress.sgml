@@ -149,7 +149,7 @@ gmake installcheck
    and a running standby server that is accepting new WAL changes from the
    primary using either file-based log shipping or streaming replication.
    Those servers are not automatically created for you, nor is the setup
-   documented here. Please check the various sections of the docs already
+   documented here. Please check the various sections of the documentation already
    devoted to the required commands and related issues.
   </para>
 
