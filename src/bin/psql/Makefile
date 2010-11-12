@@ -29,9 +29,9 @@ OBJS=	command.o common.o help.o input.o stringutils.o mainloop.o copy.o \
 FLEXFLAGS = -Cfe
 
 
-all: submake-libpq submake-libpgport psql
+all: psql
 
-psql: $(OBJS) $(libpq_builddir)/libpq.a
+psql: $(OBJS) | submake-libpq submake-libpgport
 	$(CC) $(CFLAGS) $(OBJS) $(libpq_pgport) $(LDFLAGS) $(LDFLAGS_EX) $(LIBS) -o $@$(X)
 
 help.o: sql_help.h

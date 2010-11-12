@@ -23,6 +23,7 @@ override CFLAGS += $(PTHREAD_CFLAGS)
 
 SHLIB_LINK = -L../ecpglib -lecpg -L../pgtypeslib -lpgtypes $(libpq) \
 	$(filter -lintl -lm, $(LIBS)) $(PTHREAD_LIBS)
+SHLIB_PREREQS = submake-ecpglib submake-pgtypeslib
 
 SHLIB_EXPORTS = exports.txt
 
@@ -32,6 +33,14 @@ LIBS := $(filter-out -lpgport, $(LIBS))
 OBJS= informix.o $(filter snprintf.o, $(LIBOBJS))
 
 all: all-lib
+
+.PHONY: submake-ecpglib submake-pgtypeslib
+
+submake-ecpglib:
+	$(MAKE) -C $(top_builddir)/src/interfaces/ecpg/ecpglib all
+
+submake-pgtypeslib:
+	$(MAKE) -C $(top_builddir)/src/interfaces/ecpg/pgtypeslib all
 
 # Shared library stuff
 include $(top_srcdir)/src/Makefile.shlib

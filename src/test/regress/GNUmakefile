@@ -50,9 +50,9 @@ EXTRADEFS = '-DHOST_TUPLE="$(host_tuple)"' \
 
 # Build regression test driver
 
-all: submake-libpgport pg_regress$(X)
+all: pg_regress$(X)
 
-pg_regress$(X): pg_regress.o pg_regress_main.o
+pg_regress$(X): pg_regress.o pg_regress_main.o | submake-libpgport
 	$(CC) $(CFLAGS) $^ $(LDFLAGS) $(LDFLAGS_EX) $(LIBS) -o $@
 
 # dependencies ensure that path changes propagate
@@ -131,8 +131,6 @@ $(top_builddir)/contrib/dummy_seclabel/dummy_seclabel$(DLSUFFIX): $(top_builddir
 
 # Tablespace setup
 
-all: tablespace-setup
-
 .PHONY: tablespace-setup
 tablespace-setup:
 	rm -rf ./testtablespace
@@ -145,13 +143,13 @@ tablespace-setup:
 
 pg_regress_call = ./pg_regress --inputdir=$(srcdir) --dlpath=. --multibyte=$(MULTIBYTE) $(NOLOCALE)
 
-check: all
+check: all tablespace-setup
 	$(pg_regress_call) --temp-install=./tmp_check --top-builddir=$(top_builddir) --schedule=$(srcdir)/parallel_schedule $(MAXCONNOPT) $(TEMP_CONF)
 
-installcheck: all
+installcheck: all tablespace-setup
 	$(pg_regress_call) --psqldir=$(PSQLDIR) --schedule=$(srcdir)/serial_schedule
 
-installcheck-parallel: all
+installcheck-parallel: all tablespace-setup
 	$(pg_regress_call) --psqldir=$(PSQLDIR) --schedule=$(srcdir)/parallel_schedule $(MAXCONNOPT)
 
 standbycheck: all
@@ -163,10 +161,10 @@ runcheck: check
 runtest: installcheck
 runtest-parallel: installcheck-parallel
 
-bigtest: all
+bigtest: all tablespace-setup
 	$(pg_regress_call) --psqldir=$(PSQLDIR) --schedule=$(srcdir)/serial_schedule numeric_big 
 
-bigcheck: all
+bigcheck: all tablespace-setup
 	$(pg_regress_call) --temp-install=./tmp_check --top-builddir=$(top_builddir) --schedule=$(srcdir)/parallel_schedule $(MAXCONNOPT) numeric_big
 
 

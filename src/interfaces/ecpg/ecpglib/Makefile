@@ -34,6 +34,7 @@ OBJS += thread.o
 endif
 
 SHLIB_LINK = -L../pgtypeslib -lpgtypes $(libpq) $(filter -lintl -lm, $(LIBS)) $(PTHREAD_LIBS)
+SHLIB_PREREQS = submake-libpq submake-pgtypeslib
 
 SHLIB_EXPORTS = exports.txt
 
@@ -42,12 +43,10 @@ ifeq ($(PORTNAME), win32)
 SHLIB_LINK += -lshfolder
 endif
 
-all: libpq pgtypeslib all-lib
+all: all-lib
 
-libpq:
-	$(MAKE) -C $(top_builddir)/src/interfaces/libpq all
-
-pgtypeslib:
+.PHONY: submake-pgtypeslib
+submake-pgtypeslib:
 	$(MAKE) -C $(top_builddir)/src/interfaces/ecpg/pgtypeslib all
 
 # Shared library stuff

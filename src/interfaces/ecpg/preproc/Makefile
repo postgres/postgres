@@ -30,10 +30,13 @@ OBJS=	preproc.o type.o ecpg.o output.o parser.o \
 	keywords.o c_keywords.o ecpg_keywords.o kwlookup.o ../ecpglib/typename.o descriptor.o variable.o \
 	$(WIN32RES)
 
-all: submake-libpgport ecpg
+all: ecpg
 
-ecpg: $(OBJS)
+ecpg: $(OBJS) | submake-libpgport
 	$(CC) $(CFLAGS) $(LDFLAGS) $(LDFLAGS_EX) $^ $(LIBS) $(PTHREAD_LIBS) -o $@$(X)
+
+../ecpglib/typename.o: ../ecpglib/typename.c
+	$(MAKE) -C $(dir $@) $(notdir $@)
 
 # pgc is compiled as part of preproc
 preproc.o: pgc.c

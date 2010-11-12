@@ -20,9 +20,9 @@ override CPPFLAGS := -DFRONTEND -I$(libpq_srcdir) $(CPPFLAGS)
 
 OBJS=	initdb.o encnames.o pqsignal.o $(WIN32RES)
 
-all: submake-libpgport initdb
+all: initdb
 
-initdb: $(OBJS)
+initdb: $(OBJS) | submake-libpgport
 	$(CC) $(CFLAGS) $(OBJS) $(LDFLAGS) $(LDFLAGS_EX) $(LIBS) -o $@$(X)
 
 # We used to pull in all of libpq to get encnames and pqsignal, but that

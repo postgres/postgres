@@ -22,6 +22,7 @@
 # OBJS                  List of object files to include in library
 # SHLIB_LINK            If shared library relies on other libraries,
 #                       additional stuff to put in its link command
+# SHLIB_PREREQS         Order-only prerequisites for library build target
 # SHLIB_EXPORTS         (optional) Name of file containing list of symbols to
 #                       export, in the format "function_name  number"
 #
@@ -340,7 +341,7 @@ all-static-lib: $(stlib)
 all-shared-lib: $(shlib)
 
 ifndef haslibarule
-$(stlib): $(OBJS)
+$(stlib): $(OBJS) | $(SHLIB_PREREQS)
 	$(LINK.static) $@ $^
 	$(RANLIB) $@
 endif #haslibarule
@@ -351,7 +352,7 @@ ifeq (,$(filter cygwin win32,$(PORTNAME)))
 ifneq ($(PORTNAME), aix)
 
 # Normal case
-$(shlib): $(OBJS)
+$(shlib): $(OBJS) | $(SHLIB_PREREQS)
 	$(LINK.shared) -o $@ $(OBJS) $(LDFLAGS) $(LDFLAGS_SL) $(SHLIB_LINK)
 ifdef shlib_major
 # If we're using major and minor versions, then make a symlink to major-version-only.
@@ -382,7 +383,7 @@ endif
 else # PORTNAME == aix
 
 # AIX case
-$(shlib) $(stlib): $(OBJS)
+$(shlib) $(stlib): $(OBJS) | $(SHLIB_PREREQS)
 	$(LINK.static) $(stlib) $^
 	$(RANLIB) $(stlib)
 	$(MKLDEXPORT) $(stlib) >$(exports_file)
@@ -408,10 +409,10 @@ else
 DLL_DEFFILE = lib$(NAME)dll.def
 endif
 
-$(shlib): $(OBJS) $(DLL_DEFFILE)
+$(shlib): $(OBJS) $(DLL_DEFFILE) | $(SHLIB_PREREQS)
 	$(DLLWRAP) -o $@ --dllname $(shlib) $(DLLWRAP_FLAGS) --def $(DLL_DEFFILE) $(OBJS) $(LDFLAGS) $(LDFLAGS_SL) $(SHLIB_LINK)
 
-$(stlib): $(shlib) $(DLL_DEFFILE)
+$(stlib): $(shlib) $(DLL_DEFFILE) | $(SHLIB_PREREQS)
 	$(DLLTOOL) --dllname $(shlib) $(DLLTOOL_LIBFLAGS) --def $(DLL_DEFFILE) --output-lib $@
 
 endif # PORTNAME == cygwin || PORTNAME == win32

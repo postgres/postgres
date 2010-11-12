@@ -20,9 +20,9 @@ override CPPFLAGS := -DDEF_PGPORT=$(DEF_PGPORT) -I$(libpq_srcdir) $(CPPFLAGS)
 
 OBJS=	pg_ctl.o $(WIN32RES)
 
-all: submake-libpq submake-libpgport pg_ctl
+all: pg_ctl
 
-pg_ctl: $(OBJS) $(libpq_builddir)/libpq.a
+pg_ctl: $(OBJS) | submake-libpq submake-libpgport
 	$(CC) $(CFLAGS) $(OBJS) $(libpq_pgport) $(LDFLAGS) $(LDFLAGS_EX) $(LIBS) -o $@$(X)
 
 install: all installdirs

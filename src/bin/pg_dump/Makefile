@@ -27,15 +27,15 @@ KEYWRDOBJS = keywords.o kwlookup.o
 kwlookup.c: % : $(top_srcdir)/src/backend/parser/%
 	rm -f $@ && $(LN_S) $< .
 
-all: submake-libpq submake-libpgport pg_dump pg_restore pg_dumpall
+all: pg_dump pg_restore pg_dumpall
 
-pg_dump: pg_dump.o common.o pg_dump_sort.o $(OBJS) $(KEYWRDOBJS) $(libpq_builddir)/libpq.a 
+pg_dump: pg_dump.o common.o pg_dump_sort.o $(OBJS) $(KEYWRDOBJS) | submake-libpq submake-libpgport
 	$(CC) $(CFLAGS) pg_dump.o common.o pg_dump_sort.o $(KEYWRDOBJS) $(OBJS) $(libpq_pgport) $(LDFLAGS) $(LDFLAGS_EX) $(LIBS) -o $@$(X)
 
-pg_restore: pg_restore.o $(OBJS) $(KEYWRDOBJS) $(libpq_builddir)/libpq.a
+pg_restore: pg_restore.o $(OBJS) $(KEYWRDOBJS) | submake-libpq submake-libpgport
 	$(CC) $(CFLAGS) pg_restore.o $(KEYWRDOBJS) $(OBJS) $(libpq_pgport) $(LDFLAGS) $(LDFLAGS_EX) $(LIBS) -o $@$(X)
 
-pg_dumpall: pg_dumpall.o dumputils.o $(KEYWRDOBJS) $(libpq_builddir)/libpq.a
+pg_dumpall: pg_dumpall.o dumputils.o $(KEYWRDOBJS) | submake-libpq submake-libpgport
 	$(CC) $(CFLAGS) pg_dumpall.o dumputils.o $(KEYWRDOBJS) $(WIN32RES) $(libpq_pgport) $(LDFLAGS) $(LDFLAGS_EX) $(LIBS) -o $@$(X)
 
 install: all installdirs

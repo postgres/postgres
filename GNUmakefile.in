@@ -8,57 +8,39 @@ subdir =
 top_builddir = .
 include $(top_builddir)/src/Makefile.global
 
+$(call recurse,all install,src config)
+
 all:
-	$(MAKE) -C src all
-	$(MAKE) -C config all
-	@echo "All of PostgreSQL successfully made. Ready to install."
+	+@echo "All of PostgreSQL successfully made. Ready to install."
 
 docs:
 	$(MAKE) -C doc all
 
+$(call recurse,world,doc src config contrib,all)
 world:
-	$(MAKE) -C doc all
-	$(MAKE) -C src all
-	$(MAKE) -C config all
-	$(MAKE) -C contrib all
-	@echo "PostgreSQL, contrib, and documentation successfully made. Ready to install."
+	+@echo "PostgreSQL, contrib, and documentation successfully made. Ready to install."
 
 html man:
 	$(MAKE) -C doc $@
 
 install:
-	$(MAKE) -C src $@
-	$(MAKE) -C config $@
-	@echo "PostgreSQL installation complete."
+	+@echo "PostgreSQL installation complete."
 
 install-docs:
 	$(MAKE) -C doc install
 
+$(call recurse,install-world,doc src config contrib,install)
 install-world:
-	$(MAKE) -C doc install
-	$(MAKE) -C src install
-	$(MAKE) -C config install
-	$(MAKE) -C contrib install
-	@echo "PostgreSQL, contrib, and documentation installation complete."
+	+@echo "PostgreSQL, contrib, and documentation installation complete."
 
-installdirs uninstall coverage:
-	$(MAKE) -C doc $@
-	$(MAKE) -C src $@
-	$(MAKE) -C config $@
+$(call recurse,installdirs uninstall coverage,doc src config)
 
-distprep:
-	$(MAKE) -C doc $@
-	$(MAKE) -C src $@
-	$(MAKE) -C config $@
-	$(MAKE) -C contrib $@
+$(call recurse,distprep,doc src config contrib)
 
 # clean, distclean, etc should apply to contrib too, even though
 # it's not built by default
+$(call recurse,clean,doc contrib src config)
 clean:
-	$(MAKE) -C doc $@
-	$(MAKE) -C contrib $@
-	$(MAKE) -C src $@
-	$(MAKE) -C config $@
 # Garbage from autoconf:
 	@rm -rf autom4te.cache/
 
@@ -78,11 +60,7 @@ check: all
 check installcheck installcheck-parallel:
 	$(MAKE) -C src/test $@
 
-installcheck-world:
-	$(MAKE) -C src/test installcheck
-	$(MAKE) -C src/pl installcheck
-	$(MAKE) -C src/interfaces/ecpg installcheck
-	$(MAKE) -C contrib installcheck
+$(call recurse,installcheck-world,src/test src/pl src/interfaces/ecpg contrib,installcheck)
 
 GNUmakefile: GNUmakefile.in $(top_builddir)/config.status
 	./config.status $@
@@ -143,12 +121,4 @@ distcheck: dist
 	rm -rf $(distdir) $(dummy)
 	@echo "Distribution integrity checks out."
 
-.PHONY: dist distdir distcheck docs install-docs
-
-
-# Temporary measure to explore whether we can start requiring GNU make
-# 3.80.  That version also happens to be the version where the
-# .VARIABLES variable was introduced, so this is a simple check.
-ifndef .VARIABLES
-$(warning warning: GNU make 3.80 or newer might become required soon. You are using version $(MAKE_VERSION).)
-endif
+.PHONY: dist distdir distcheck docs install-docs world install-world installcheck-world

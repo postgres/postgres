@@ -17,9 +17,9 @@ include $(top_builddir)/src/Makefile.global
 
 OBJS= pg_controldata.o pg_crc.o $(WIN32RES)
 
-all: submake-libpgport pg_controldata
+all: pg_controldata
 
-pg_controldata: $(OBJS)
+pg_controldata: $(OBJS) | submake-libpgport
 	$(CC) $(CFLAGS) $^ $(LDFLAGS) $(LDFLAGS_EX) $(LIBS) -o $@$(X)
 
 pg_crc.c: $(top_srcdir)/src/backend/utils/hash/pg_crc.c

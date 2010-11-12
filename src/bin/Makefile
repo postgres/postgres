@@ -19,5 +19,4 @@ ifeq ($(PORTNAME), win32)
 SUBDIRS+=pgevent
 endif
 
-all install installdirs uninstall distprep clean distclean maintainer-clean:
-	@for dir in $(SUBDIRS); do $(MAKE) -C $$dir $@ || exit; done
+$(recurse)

@@ -12,20 +12,21 @@ subdir = src
 top_builddir = ..
 include Makefile.global
 
+SUBDIRS = \
+	port \
+	timezone \
+	backend \
+	backend/utils/mb/conversion_procs \
+	backend/snowball \
+	include \
+	interfaces \
+	backend/replication/libpqwalreceiver \
+	bin \
+	pl \
+	makefiles \
+	test/regress
 
-all install installdirs uninstall distprep:
-	$(MAKE) -C port $@
-	$(MAKE) -C timezone $@
-	$(MAKE) -C backend $@
-	$(MAKE) -C backend/utils/mb/conversion_procs $@
-	$(MAKE) -C backend/snowball $@
-	$(MAKE) -C include $@
-	$(MAKE) -C interfaces $@
-	$(MAKE) -C backend/replication/libpqwalreceiver $@
-	$(MAKE) -C bin $@
-	$(MAKE) -C pl $@
-	$(MAKE) -C makefiles $@
-	$(MAKE) -C test/regress $@
+$(recurse)
 
 install: install-local
 
@@ -46,31 +47,11 @@ uninstall-local:
 	rm -f $(addprefix '$(DESTDIR)$(pgxsdir)/$(subdir)'/, Makefile.global Makefile.port Makefile.shlib nls-global.mk)
 
 clean:
-	$(MAKE) -C port $@
-	$(MAKE) -C timezone $@
-	$(MAKE) -C backend $@
-	$(MAKE) -C backend/snowball $@
-	$(MAKE) -C include $@
-	$(MAKE) -C interfaces $@
-	$(MAKE) -C backend/replication/libpqwalreceiver $@
-	$(MAKE) -C bin $@
-	$(MAKE) -C pl $@
-	$(MAKE) -C makefiles $@
 	$(MAKE) -C test $@
 	$(MAKE) -C tutorial NO_PGXS=1 $@
 	$(MAKE) -C test/thread $@
 
 distclean maintainer-clean:
-	$(MAKE) -C port $@
-	$(MAKE) -C timezone $@
-	$(MAKE) -C backend $@
-	$(MAKE) -C backend/snowball $@
-	$(MAKE) -C include $@
-	$(MAKE) -C interfaces $@
-	$(MAKE) -C backend/replication/libpqwalreceiver $@
-	$(MAKE) -C bin $@
-	$(MAKE) -C pl $@
-	$(MAKE) -C makefiles $@
 	$(MAKE) -C test $@
 	$(MAKE) -C tutorial NO_PGXS=1 $@
 	$(MAKE) -C test/thread $@

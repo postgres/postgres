@@ -18,7 +18,9 @@
 #
 # Meta configuration
 
-.PHONY: all install install-strip installdirs uninstall clean distclean maintainer-clean distprep check installcheck maintainer-check coverage html man installcheck-parallel world install-world installcheck-world
+standard_targets = all install installdirs uninstall distprep clean distclean maintainer-clean coverage check installcheck
+
+.PHONY: $(standard_targets) install-strip maintainer-check html man installcheck-parallel
 
 # make `all' the default target
 all:
@@ -540,6 +542,48 @@ install-strip:
 
 ##########################################################################
 #
+# Recursive make support
+# ----------------------
+# Instead of recursing through subdirectories with a for loop or
+# repeated $(MAKE) -C whatever calls, this is a little smarter: it
+# allows parallel make across directories and lets make -k and -q work
+# correctly.
+
+# This function is only for internal use below.  It should be called
+# with $(eval).  It will set up a target so that it recurses into
+# subdirectories.
+# $1: target name, e.g., all
+# $2: list of subdirs
+# $3: target to run in subdir, usually same as $1
+define _create_recursive_target
+.PHONY: $(patsubst %,$(1)-%-recursive,$(2))
+$(1): $(patsubst %,$(1)-%-recursive,$(2))
+$(2:%=$(1)-%-recursive):
+	$$(MAKE) -C $$(patsubst $(1)-%-recursive,%,$$@) $(3)
+endef
+# Note that the use of $$ on the last line above is important; we want
+# those variables/functions to be evaluated when the rule is run, not
+# when the $(eval) is run to create the rule.  In the case of
+# $$(MAKE), this is necessary to get make -q working.
+
+# Call this function in a makefile.  In the normal case it doesn't
+# need any arguments.
+# $1: targets to make recursive (defaults to list of standard targets)
+# $2: list of subdirs (defaults to SUBDIRS variable)
+# $3: target to run in subdir (defaults to $1)
+recurse = $(foreach target,$(if $1,$1,$(standard_targets)),$(eval $(call _create_recursive_target,$(target),$(if $2,$2,$(SUBDIRS)),$(if $3,$3,$(target)))))
+
+# We need the $(eval) function and order-only prerequisites, which are
+# available in GNU make 3.80.  That also happens to be the version
+# where the .VARIABLES variable was introduced, so this is a simple
+# check.
+ifndef .VARIABLES
+$(error GNU make 3.80 or newer is required.  You are using version $(MAKE_VERSION))
+endif
+
+
+##########################################################################
+#
 # Automatic dependency generation
 # -------------------------------
 # When we configure with --enable-depend then we override the default
@@ -640,7 +684,6 @@ lcov.info: $(gcda_files)
 	$(GCOV) -b -f -p -o . $(GCOVFLAGS) $*.c >$*.c.gcov.out
 
 coverage: $(gcda_files:.gcda=.c.gcov) lcov.info
-	$(if $(SUBDIRS),for dir in $(SUBDIRS); do $(MAKE) -C $$dir coverage || exit; done)
 
 .PHONY: coverage-html
 coverage-html: coverage

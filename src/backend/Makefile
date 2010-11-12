@@ -122,7 +122,9 @@ submake-schemapg:
 
 .PHONY: submake-schemapg
 
-catalog/schemapg.h: submake-schemapg
+catalog/schemapg.h: | submake-schemapg
+
+$(top_builddir)/src/port/libpgport_srv.a: | submake-libpgport
 
 
 # The postgres.o target is needed by the rule in Makefile.global that
