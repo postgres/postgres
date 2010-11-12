@@ -44,6 +44,7 @@
 #include "pgstat.h"
 #include "postmaster/bgwriter.h"
 #include "storage/bufmgr.h"
+#include "storage/copydir.h"
 #include "storage/fd.h"
 #include "storage/lmgr.h"
 #include "storage/ipc.h"

@@ -22,6 +22,7 @@
 #include <unistd.h>
 #include <sys/stat.h>
 
+#include "storage/copydir.h"
 #include "storage/fd.h"
 #include "miscadmin.h"
 

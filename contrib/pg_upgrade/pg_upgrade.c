@@ -259,7 +259,6 @@ copy_clog_xlog_xid(void)
 	check_ok();
 
 	prep_status("Copying old commit clogs to new server");
-	/* libpgport's copydir() doesn't work in FRONTEND code */
 #ifndef WIN32
 	exec_prog(true, SYSTEMQUOTE "%s \"%s\" \"%s\"" SYSTEMQUOTE,
 			  "cp -Rf",

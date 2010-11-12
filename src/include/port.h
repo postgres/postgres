@@ -288,8 +288,6 @@ extern int	pgsymlink(const char *oldpath, const char *newpath);
 #define symlink(oldpath, newpath)	pgsymlink(oldpath, newpath)
 #endif
 
-extern void copydir(char *fromdir, char *todir, bool recurse);
-
 extern bool rmtree(const char *path, bool rmtopdir);
 
 /*
