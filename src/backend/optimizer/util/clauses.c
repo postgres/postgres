@@ -2758,7 +2758,9 @@ eval_const_expressions_mutator(Node *node,
 			/*
 			 * We can remove null constants from the list. For a non-null
 			 * constant, if it has not been preceded by any other
-			 * non-null-constant expressions then that is the result.
+			 * non-null-constant expressions then it is the result.  Otherwise,
+			 * it's the next argument, but we can drop following arguments
+			 * since they will never be reached.
 			 */
 			if (IsA(e, Const))
 			{
@@ -2766,6 +2768,8 @@ eval_const_expressions_mutator(Node *node,
 					continue;	/* drop null constant */
 				if (newargs == NIL)
 					return e;	/* first expr */
+				newargs = lappend(newargs, e);
+				break;
 			}
 			newargs = lappend(newargs, e);
 		}
