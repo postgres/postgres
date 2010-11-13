@@ -1878,6 +1878,15 @@ _outDefElem(StringInfo str, DefElem *node)
 }
 
 static void
+_outInhRelation(StringInfo str, InhRelation *node)
+{
+	WRITE_NODE_TYPE("INHRELATION");
+
+	WRITE_NODE_FIELD(relation);
+	WRITE_UINT_FIELD(options);
+}
+
+static void
 _outLockingClause(StringInfo str, LockingClause *node)
 {
 	WRITE_NODE_TYPE("LOCKINGCLAUSE");
@@ -2883,6 +2892,9 @@ _outNode(StringInfo str, void *obj)
 				break;
 			case T_DefElem:
 				_outDefElem(str, obj);
+				break;
+			case T_InhRelation:
+				_outInhRelation(str, obj);
 				break;
 			case T_LockingClause:
 				_outLockingClause(str, obj);
