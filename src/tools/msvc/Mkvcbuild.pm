@@ -431,7 +431,7 @@ sub mkvcbuild
             { # Also catches mbprint.c
                 $proj->AddFile('src\bin\psql\\' . $f);
             }
-            else
+            elsif ($f =~ /\.c$/)
             {
                 $proj->AddFile('src\bin\scripts\\' . $f);
             }
