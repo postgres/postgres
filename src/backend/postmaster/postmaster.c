@@ -350,7 +350,7 @@ static int	ProcessStartupPacket(Port *port, bool SSLdone);
 static void processCancelRequest(Port *port, void *pkt);
 static int	initMasks(fd_set *rmask);
 static void report_fork_failure_to_client(Port *port, int errnum);
-static enum CAC_state canAcceptConnections(void);
+static CAC_state canAcceptConnections(void);
 static long PostmasterRandom(void);
 static void RandomSalt(char *md5Salt);
 static void signal_child(pid_t pid, int signal);
@@ -1908,9 +1908,11 @@ processCancelRequest(Port *port, void *pkt)
 /*
  * canAcceptConnections --- check to see if database state allows connections.
  */
-static enum CAC_state
+static CAC_state
 canAcceptConnections(void)
 {
+	CAC_state	result = CAC_OK;
+
 	/*
 	 * Can't start backends when in startup/shutdown/inconsistent recovery
 	 * state.
@@ -1918,21 +1920,24 @@ canAcceptConnections(void)
 	 * In state PM_WAIT_BACKUP only superusers can connect (this must be
 	 * allowed so that a superuser can end online backup mode); we return
 	 * CAC_WAITBACKUP code to indicate that this must be checked later.
+	 * Note that neither CAC_OK nor CAC_WAITBACKUP can safely be returned
+	 * until we have checked for too many children.
 	 */
 	if (pmState != PM_RUN)
 	{
 		if (pmState == PM_WAIT_BACKUP)
-			return CAC_WAITBACKUP;		/* allow superusers only */
-		if (Shutdown > NoShutdown)
+			result = CAC_WAITBACKUP;	/* allow superusers only */
+		else if (Shutdown > NoShutdown)
 			return CAC_SHUTDOWN;	/* shutdown is pending */
-		if (!FatalError &&
-			(pmState == PM_STARTUP ||
-			 pmState == PM_RECOVERY))
-			return CAC_STARTUP; /* normal startup */
-		if (!FatalError &&
-			pmState == PM_HOT_STANDBY)
-			return CAC_OK;		/* connection OK during hot standby */
-		return CAC_RECOVERY;	/* else must be crash recovery */
+		else if (!FatalError &&
+				 (pmState == PM_STARTUP ||
+				  pmState == PM_RECOVERY))
+			return CAC_STARTUP;		/* normal startup */
+		else if (!FatalError &&
+				 pmState == PM_HOT_STANDBY)
+			result = CAC_OK;		/* connection OK during hot standby */
+		else
+			return CAC_RECOVERY;	/* else must be crash recovery */
 	}
 
 	/*
@@ -1948,9 +1953,9 @@ canAcceptConnections(void)
 	 * see comments for MaxLivePostmasterChildren().
 	 */
 	if (CountChildren(BACKEND_TYPE_ALL) >= MaxLivePostmasterChildren())
-		return CAC_TOOMANY;
+		result = CAC_TOOMANY;
 
-	return CAC_OK;
+	return result;
 }
 
 
