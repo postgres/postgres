@@ -1,7 +1,7 @@
 /*-------------------------------------------------------------------------
  *
  * copydir.h
- *	  Header for src/port/copydir.c compatibility functions.
+ *	  Copy a directory.
  *
  * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
