@@ -266,21 +266,13 @@ ResolveRecoveryConflictWithSnapshot(TransactionId latestRemovedXid, RelFileNode 
 
 	/*
 	 * If we get passed InvalidTransactionId then we are a little surprised,
-	 * but it is theoretically possible, so spit out a DEBUG1 message, but not
-	 * one that needs translating.
-	 *
-	 * We grab latestCompletedXid instead because this is the very latest
-	 * value it could ever be.
+	 * but it is theoretically possible in normal running. It also happens
+	 * when replaying already applied WAL records after a standby crash or
+	 * restart. If latestRemovedXid is invalid then there is no conflict. That
+	 * rule applies across all record types that suffer from this conflict.
 	 */
 	if (!TransactionIdIsValid(latestRemovedXid))
-	{
-		elog(DEBUG1, "invalid latestremovexXid reported, using latestcompletedxid instead");
-
-		LWLockAcquire(ProcArrayLock, LW_SHARED);
-		latestRemovedXid = ShmemVariableCache->latestCompletedXid;
-		LWLockRelease(ProcArrayLock);
-	}
-	Assert(TransactionIdIsValid(latestRemovedXid));
+		return;
 
 	backends = GetConflictingVirtualXIDs(latestRemovedXid,
 										 node.dbNode);
