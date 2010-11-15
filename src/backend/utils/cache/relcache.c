@@ -2751,7 +2751,7 @@ RelationCacheInitialize(void)
 								  &ctl, HASH_ELEM | HASH_FUNCTION);
 
 	/*
-	 * relation mapper needs initialized too
+	 * relation mapper needs to be initialized too
 	 */
 	RelationMapInitialize();
 }
