@@ -609,7 +609,7 @@ g_cube_picksplit(PG_FUNCTION_ARGS)
 		else
 		{
 			datum_r = union_dr;
-			size_r = size_alpha;
+			size_r = size_beta;
 			*right++ = i;
 			v->spl_nright++;
 		}
