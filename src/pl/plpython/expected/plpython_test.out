@@ -298,6 +298,15 @@ SELECT test_setof_as_iterator(2, null);
  
 (2 rows)
 
+SELECT test_setof_spi_in_iterator();
+ test_setof_spi_in_iterator 
+----------------------------
+ Hello
+ Brave
+ New
+ World
+(4 rows)
+
 -- Test tuple returning functions
 SELECT * FROM test_table_record_as('dict', null, null, false);
  first | second 
