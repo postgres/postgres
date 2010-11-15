@@ -1361,7 +1361,7 @@ scanGetItem(IndexScanDesc scan, ItemPointer advancePast,
 }
 
 #define GinIsNewKey(s)		( ((GinScanOpaque) scan->opaque)->keys == NULL )
-#define GinIsVoidRes(s)		( ((GinScanOpaque) scan->opaque)->isVoidRes == true )
+#define GinIsVoidRes(s)		( ((GinScanOpaque) scan->opaque)->isVoidRes )
 
 Datum
 gingetbitmap(PG_FUNCTION_ARGS)

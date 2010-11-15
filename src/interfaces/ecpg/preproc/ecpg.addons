@@ -353,7 +353,7 @@ ECPG: ClosePortalStmtCLOSEcursor_name block
 	}
 ECPG: opt_hold block
 	{
-		if (compat == ECPG_COMPAT_INFORMIX_SE && autocommit == true)
+		if (compat == ECPG_COMPAT_INFORMIX_SE && autocommit)
 			$$ = make_str("with hold");
 		else
 			$$ = EMPTY;

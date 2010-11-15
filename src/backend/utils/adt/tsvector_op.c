@@ -625,7 +625,7 @@ checkcondition_str(void *checkval, QueryOperand *val)
 			StopHigh = StopMiddle;
 	}
 
-	if (res == false && val->prefix == true)
+	if (!res && val->prefix)
 	{
 		/*
 		 * there was a failed exact search, so we should scan further to find

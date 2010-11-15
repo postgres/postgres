@@ -165,7 +165,7 @@ ECPGsetcommit(int lineno, const char *mode, const char *connection_name)
 
 	ecpg_log("ECPGsetcommit on line %d: action \"%s\"; connection \"%s\"\n", lineno, mode, con->name);
 
-	if (con->autocommit == true && strncmp(mode, "off", strlen("off")) == 0)
+	if (con->autocommit && strncmp(mode, "off", strlen("off")) == 0)
 	{
 		if (PQtransactionStatus(con->connection) == PQTRANS_IDLE)
 		{
@@ -176,7 +176,7 @@ ECPGsetcommit(int lineno, const char *mode, const char *connection_name)
 		}
 		con->autocommit = false;
 	}
-	else if (con->autocommit == false && strncmp(mode, "on", strlen("on")) == 0)
+	else if (!con->autocommit && strncmp(mode, "on", strlen("on")) == 0)
 	{
 		if (PQtransactionStatus(con->connection) != PQTRANS_IDLE)
 		{

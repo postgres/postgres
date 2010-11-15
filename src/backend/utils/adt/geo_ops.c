@@ -3903,7 +3903,7 @@ lseg_inside_poly(Point *a, Point *b, POLYGON *poly, int start)
 	t.p[1] = *b;
 	s.p[0] = poly->p[(start == 0) ? (poly->npts - 1) : (start - 1)];
 
-	for (i = start; i < poly->npts && res == true; i++)
+	for (i = start; i < poly->npts && res; i++)
 	{
 		Point	   *interpt;
 
@@ -3979,7 +3979,7 @@ poly_contain(PG_FUNCTION_ARGS)
 		s.p[0] = polyb->p[polyb->npts - 1];
 		result = true;
 
-		for (i = 0; i < polyb->npts && result == true; i++)
+		for (i = 0; i < polyb->npts && result; i++)
 		{
 			s.p[1] = polyb->p[i];
 			result = lseg_inside_poly(s.p, s.p + 1, polya, 0);

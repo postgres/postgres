@@ -380,12 +380,12 @@ gist_box_picksplit(PG_FUNCTION_ARGS)
 	for (i = OffsetNumberNext(FirstOffsetNumber); i <= maxoff; i = OffsetNumberNext(i))
 	{
 		cur = DatumGetBoxP(entryvec->vector[i].key);
-		if (allisequal == true && (
-								   pageunion.high.x != cur->high.x ||
-								   pageunion.high.y != cur->high.y ||
-								   pageunion.low.x != cur->low.x ||
-								   pageunion.low.y != cur->low.y
-								   ))
+		if (allisequal && (
+						   pageunion.high.x != cur->high.x ||
+						   pageunion.high.y != cur->high.y ||
+						   pageunion.low.x != cur->low.x ||
+						   pageunion.low.y != cur->low.y
+						   ))
 			allisequal = false;
 
 		adjustBox(&pageunion, cur);

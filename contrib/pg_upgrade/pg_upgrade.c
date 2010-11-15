@@ -254,7 +254,7 @@ copy_clog_xlog_xid(void)
 
 	snprintf(old_clog_path, sizeof(old_clog_path), "%s/pg_clog", old_cluster.pgdata);
 	snprintf(new_clog_path, sizeof(new_clog_path), "%s/pg_clog", new_cluster.pgdata);
-	if (rmtree(new_clog_path, true) != true)
+	if (!rmtree(new_clog_path, true))
 		pg_log(PG_FATAL, "Unable to delete directory %s\n", new_clog_path);
 	check_ok();
 

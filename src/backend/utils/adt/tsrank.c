@@ -109,7 +109,7 @@ find_wordentry(TSVector t, TSQuery q, QueryOperand *item, int32 *nitem)
 			StopHigh = StopMiddle;
 	}
 
-	if (item->prefix == true)
+	if (item->prefix)
 	{
 		if (StopLow >= StopHigh)
 			StopMiddle = StopHigh;
