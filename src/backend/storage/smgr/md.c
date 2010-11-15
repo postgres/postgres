@@ -1224,6 +1224,9 @@ register_dirty_segment(SMgrRelation reln, ForkNumber forknum, MdfdVec *seg)
 		if (ForwardFsyncRequest(reln->smgr_rnode, forknum, seg->mdfd_segno))
 			return;				/* passed it off successfully */
 
+		ereport(DEBUG1,
+			(errmsg("could not forward fsync request because request queue is full")));
+
 		if (FileSync(seg->mdfd_vfd) < 0)
 			ereport(ERROR,
 					(errcode_for_file_access(),

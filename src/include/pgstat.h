@@ -360,6 +360,7 @@ typedef struct PgStat_MsgBgWriter
 	PgStat_Counter m_buf_written_clean;
 	PgStat_Counter m_maxwritten_clean;
 	PgStat_Counter m_buf_written_backend;
+	PgStat_Counter m_buf_fsync_backend;
 	PgStat_Counter m_buf_alloc;
 } PgStat_MsgBgWriter;
 
@@ -562,6 +563,7 @@ typedef struct PgStat_GlobalStats
 	PgStat_Counter buf_written_clean;
 	PgStat_Counter maxwritten_clean;
 	PgStat_Counter buf_written_backend;
+	PgStat_Counter buf_fsync_backend;
 	PgStat_Counter buf_alloc;
 } PgStat_GlobalStats;
 

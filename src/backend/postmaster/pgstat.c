@@ -4188,6 +4188,7 @@ pgstat_recv_bgwriter(PgStat_MsgBgWriter *msg, int len)
 	globalStats.buf_written_clean += msg->m_buf_written_clean;
 	globalStats.maxwritten_clean += msg->m_maxwritten_clean;
 	globalStats.buf_written_backend += msg->m_buf_written_backend;
+	globalStats.buf_fsync_backend += msg->m_buf_fsync_backend;
 	globalStats.buf_alloc += msg->m_buf_alloc;
 }
 

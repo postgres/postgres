@@ -264,8 +264,10 @@ postgres: <replaceable>user</> <replaceable>database</> <replaceable>host</> <re
       and the number of times the background writer stopped a cleaning scan
       because it had written too many buffers.  Also includes
       statistics about the shared buffer pool, including buffers written
-      by backends (that is, not by the background writer) and total buffers
-      allocated.
+      by backends (that is, not by the background writer), how many times
+      those backends had to execute their own fsync calls (normally the
+      background writer handles those even when the backend does its own
+      write), and total buffers allocated.
      </entry>
      </row>
 

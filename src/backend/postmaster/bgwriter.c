@@ -102,13 +102,15 @@
  *
  * num_backend_writes is used to count the number of buffer writes performed
  * by non-bgwriter processes.  This counter should be wide enough that it
- * can't overflow during a single bgwriter cycle.
+ * can't overflow during a single bgwriter cycle.  num_backend_fsync
+ * counts the subset of those writes that also had to do their own fsync,
+ * because the background writer failed to absorb their request.
  *
  * The requests array holds fsync requests sent by backends and not yet
  * absorbed by the bgwriter.
  *
- * Unlike the checkpoint fields, num_backend_writes and the requests
- * fields are protected by BgWriterCommLock.
+ * Unlike the checkpoint fields, num_backend_writes, num_backend_fsync, and
+ * the requests fields are protected by BgWriterCommLock.
  *----------
  */
 typedef struct
@@ -132,6 +134,7 @@ typedef struct
 	int			ckpt_flags;		/* checkpoint flags, as defined in xlog.h */
 
 	uint32		num_backend_writes;		/* counts non-bgwriter buffer writes */
+	uint32		num_backend_fsync;		/* counts non-bgwriter fsync calls */
 
 	int			num_requests;	/* current # of requests */
 	int			max_requests;	/* allocated array size */
@@ -1084,12 +1087,14 @@ ForwardFsyncRequest(RelFileNodeBackend rnode, ForkNumber forknum,
 
 	LWLockAcquire(BgWriterCommLock, LW_EXCLUSIVE);
 
-	/* we count non-bgwriter writes even when the request queue overflows */
+	/* Count all backend writes regardless of if they fit in the queue */
 	BgWriterShmem->num_backend_writes++;
 
 	if (BgWriterShmem->bgwriter_pid == 0 ||
 		BgWriterShmem->num_requests >= BgWriterShmem->max_requests)
 	{
+		/* Also count the subset where backends have to do their own fsync */
+		BgWriterShmem->num_backend_fsync++;
 		LWLockRelease(BgWriterCommLock);
 		return false;
 	}
@@ -1137,7 +1142,10 @@ AbsorbFsyncRequests(void)
 
 	/* Transfer write count into pending pgstats message */
 	BgWriterStats.m_buf_written_backend += BgWriterShmem->num_backend_writes;
+	BgWriterStats.m_buf_fsync_backend += BgWriterShmem->num_backend_fsync;
+
 	BgWriterShmem->num_backend_writes = 0;
+	BgWriterShmem->num_backend_fsync = 0;
 
 	n = BgWriterShmem->num_requests;
 	if (n > 0)
