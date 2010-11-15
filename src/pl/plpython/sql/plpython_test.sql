@@ -96,6 +96,8 @@ SELECT test_setof_as_iterator(1, 'list');
 SELECT test_setof_as_iterator(2, 'list');
 SELECT test_setof_as_iterator(2, null);
 
+SELECT test_setof_spi_in_iterator();
+
 -- Test tuple returning functions
 SELECT * FROM test_table_record_as('dict', null, null, false);
 SELECT * FROM test_table_record_as('dict', 'one', null, false);
