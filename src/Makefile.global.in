@@ -559,9 +559,10 @@ endif
 # This function is only for internal use below.  It should be called
 # using $(eval).  It will set up a target so that it recurses into
 # a given subdirectory.  Note that to avoid a nasty bug in make 3.80,
-# it is important that the expansion of this function not exceed about
-# 200 bytes.  This is why we make it apply to just one subdirectory at a
-# time, rather than to a list of subdirectories.
+# this function has to avoid using any complicated constructs (like
+# multiple targets on a line) and also not contain any lines that expand
+# to more than about 200 bytes.  This is why we make it apply to just one
+# subdirectory at a time, rather than to a list of subdirectories.
 # $1: target name, e.g., all
 # $2: subdir name
 # $3: target to run in subdir, usually same as $1
