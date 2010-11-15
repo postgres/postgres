@@ -406,7 +406,7 @@ g_cube_picksplit(GistEntryVector *entryvec,
 		else
 		{
 			datum_r = union_dr;
-			size_r = size_alpha;
+			size_r = size_beta;
 			*right++ = i;
 			v->spl_nright++;
 		}
