@@ -1,12 +1,12 @@
 /*-------------------------------------------------------------------------
  *
- * port.h
- *	  Header for src/port/ compatibility functions.
+ * copydir.h
+ *	  Header for src/port/copydir.c compatibility functions.
  *
  * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * src/include/port.h
+ * src/include/storage/copydir.h
  *
  *-------------------------------------------------------------------------
  */
