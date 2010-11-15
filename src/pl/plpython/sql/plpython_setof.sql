@@ -35,6 +35,15 @@ class producer:
 return producer(count, content)
 $$ LANGUAGE plpythonu;
 
+CREATE FUNCTION test_setof_spi_in_iterator() RETURNS SETOF text AS
+$$
+    for s in ('Hello', 'Brave', 'New', 'World'):
+        plpy.execute('select 1')
+        yield s
+        plpy.execute('select 2')
+$$
+LANGUAGE plpythonu;
+
 
 -- Test set returning functions
 SELECT test_setof_as_list(0, 'list');
@@ -51,3 +60,5 @@ SELECT test_setof_as_iterator(0, 'list');
 SELECT test_setof_as_iterator(1, 'list');
 SELECT test_setof_as_iterator(2, 'list');
 SELECT test_setof_as_iterator(2, null);
+
+SELECT test_setof_spi_in_iterator();
