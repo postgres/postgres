@@ -779,7 +779,10 @@ PLy_function_handler(FunctionCallInfo fcinfo, PLyProcedure * proc)
 	{
 		if (!proc->is_setof || proc->setof == NULL)
 		{
-			/* Simple type returning function or first time for SETOF function */
+			/*
+			 * Simple type returning function or first time for SETOF function:
+			 * actually execute the function.
+			 */
 			plargs = PLy_function_build_args(fcinfo, proc);
 			plrv = PLy_procedure_call(proc, "args", plargs);
 			if (!proc->is_setof)
@@ -794,14 +797,10 @@ PLy_function_handler(FunctionCallInfo fcinfo, PLyProcedure * proc)
 		}
 
 		/*
-		 * Disconnect from SPI manager and then create the return values datum
-		 * (if the input function does a palloc for it this must not be
-		 * allocated in the SPI memory context because SPI_finish would free
-		 * it).
+		 * If it returns a set, call the iterator to get the next return item.
+		 * We stay in the SPI context while doing this, because PyIter_Next()
+		 * calls back into Python code which might contain SPI calls.
 		 */
-		if (SPI_finish() != SPI_OK_FINISH)
-			elog(ERROR, "SPI_finish failed");
-
 		if (proc->is_setof)
 		{
 			bool		has_error = false;
@@ -858,10 +857,23 @@ PLy_function_handler(FunctionCallInfo fcinfo, PLyProcedure * proc)
 							(errcode(ERRCODE_DATA_EXCEPTION),
 						  errmsg("error fetching next item from iterator")));
 
+				/* Disconnect from the SPI manager before returning */
+				if (SPI_finish() != SPI_OK_FINISH)
+					elog(ERROR, "SPI_finish failed");
+
 				fcinfo->isnull = true;
 				return (Datum) NULL;
 			}
 		}
+
+		/*
+		 * Disconnect from SPI manager and then create the return values datum
+		 * (if the input function does a palloc for it this must not be
+		 * allocated in the SPI memory context because SPI_finish would free
+		 * it).
+		 */
+		if (SPI_finish() != SPI_OK_FINISH)
+			elog(ERROR, "SPI_finish failed");
 
 		/*
 		 * If the function is declared to return void, the Python return value
