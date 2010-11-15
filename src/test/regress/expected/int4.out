@@ -1,7 +1,5 @@
 --
 -- INT4
--- WARNING: int4 operators never check for over/underflow!
--- Some of these answers are consequently numerically incorrect.
 --
 CREATE TABLE INT4_TBL(f1 int4);
 INSERT INTO INT4_TBL(f1) VALUES ('   0  ');

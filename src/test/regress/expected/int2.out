@@ -1,7 +1,5 @@
 --
 -- INT2
--- NOTE: int2 operators never check for over/underflow!
--- Some of these answers are consequently numerically incorrect.
 --
 CREATE TABLE INT2_TBL(f1 int2);
 INSERT INTO INT2_TBL(f1) VALUES ('0   ');
