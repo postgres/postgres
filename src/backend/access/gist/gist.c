@@ -22,8 +22,6 @@
 #include "storage/indexfsm.h"
 #include "utils/memutils.h"
 
-const XLogRecPtr XLogRecPtrForTemp = {1, 1};
-
 /* Working state for gistbuild and its callback */
 typedef struct
 {
@@ -132,7 +130,7 @@ gistbuild(PG_FUNCTION_ARGS)
 		PageSetTLI(page, ThisTimeLineID);
 	}
 	else
-		PageSetLSN(page, XLogRecPtrForTemp);
+		PageSetLSN(page, GetXLogRecPtrForTemp());
 
 	UnlockReleaseBuffer(buffer);
 
@@ -423,7 +421,7 @@ gistplacetopage(GISTInsertState *state, GISTSTATE *giststate)
 		{
 			for (ptr = dist; ptr; ptr = ptr->next)
 			{
-				PageSetLSN(ptr->page, XLogRecPtrForTemp);
+				PageSetLSN(ptr->page, GetXLogRecPtrForTemp());
 			}
 		}
 
@@ -491,7 +489,7 @@ gistplacetopage(GISTInsertState *state, GISTSTATE *giststate)
 			PageSetTLI(state->stack->page, ThisTimeLineID);
 		}
 		else
-			PageSetLSN(state->stack->page, XLogRecPtrForTemp);
+			PageSetLSN(state->stack->page, GetXLogRecPtrForTemp());
 
 		if (state->stack->blkno == GIST_ROOT_BLKNO)
 			state->needInsertComplete = false;
@@ -1027,7 +1025,7 @@ gistnewroot(Relation r, Buffer buffer, IndexTuple *itup, int len, ItemPointer ke
 		PageSetTLI(page, ThisTimeLineID);
 	}
 	else
-		PageSetLSN(page, XLogRecPtrForTemp);
+		PageSetLSN(page, GetXLogRecPtrForTemp());
 
 	END_CRIT_SECTION();
 }
