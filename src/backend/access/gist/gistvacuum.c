@@ -268,7 +268,7 @@ gistbulkdelete(PG_FUNCTION_ARGS)
 					pfree(rdata);
 				}
 				else
-					PageSetLSN(page, XLogRecPtrForTemp);
+					PageSetLSN(page, GetXLogRecPtrForTemp());
 
 				END_CRIT_SECTION();
 			}
