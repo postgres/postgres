@@ -23,8 +23,6 @@
 #include "miscadmin.h"
 #include "utils/memutils.h"
 
-const XLogRecPtr XLogRecPtrForTemp = {1, 1};
-
 /* Working state for gistbuild and its callback */
 typedef struct
 {
@@ -127,7 +125,7 @@ gistbuild(PG_FUNCTION_ARGS)
 		END_CRIT_SECTION();
 	}
 	else
-		PageSetLSN(BufferGetPage(buffer), XLogRecPtrForTemp);
+		PageSetLSN(BufferGetPage(buffer), GetXLogRecPtrForTemp());
 	LockBuffer(buffer, GIST_UNLOCK);
 	WriteBuffer(buffer);
 
@@ -356,7 +354,7 @@ gistplacetopage(GISTInsertState *state, GISTSTATE *giststate)
 			ptr = dist;
 			while (ptr)
 			{
-				PageSetLSN(BufferGetPage(ptr->buffer), XLogRecPtrForTemp);
+				PageSetLSN(BufferGetPage(ptr->buffer), GetXLogRecPtrForTemp());
 				ptr = ptr->next;
 			}
 		}
@@ -475,7 +473,7 @@ gistplacetopage(GISTInsertState *state, GISTSTATE *giststate)
 			END_CRIT_SECTION();
 		}
 		else
-			PageSetLSN(state->stack->page, XLogRecPtrForTemp);
+			PageSetLSN(state->stack->page, GetXLogRecPtrForTemp());
 
 		if (state->stack->blkno == GIST_ROOT_BLKNO)
 			state->needInsertComplete = false;
@@ -1206,7 +1204,7 @@ gistnewroot(Relation r, Buffer buffer, IndexTuple *itup, int len, ItemPointer ke
 		END_CRIT_SECTION();
 	}
 	else
-		PageSetLSN(page, XLogRecPtrForTemp);
+		PageSetLSN(page, GetXLogRecPtrForTemp());
 }
 
 void

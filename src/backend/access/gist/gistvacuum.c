@@ -201,7 +201,7 @@ gistVacuumUpdate(GistVacuum *gv, BlockNumber blkno, bool needunion)
 					ptr = dist;
 					while (ptr)
 					{
-						PageSetLSN(BufferGetPage(ptr->buffer), XLogRecPtrForTemp);
+						PageSetLSN(BufferGetPage(ptr->buffer), GetXLogRecPtrForTemp());
 						ptr = ptr->next;
 					}
 				}
@@ -306,7 +306,7 @@ gistVacuumUpdate(GistVacuum *gv, BlockNumber blkno, bool needunion)
 			pfree(rdata);
 		}
 		else
-			PageSetLSN(page, XLogRecPtrForTemp);
+			PageSetLSN(page, GetXLogRecPtrForTemp());
 		WriteBuffer(buffer);
 	}
 	else
@@ -589,7 +589,7 @@ gistbulkdelete(PG_FUNCTION_ARGS)
 					pfree(rdata);
 				}
 				else
-					PageSetLSN(page, XLogRecPtrForTemp);
+					PageSetLSN(page, GetXLogRecPtrForTemp());
 				WriteNoReleaseBuffer(buffer);
 			}
 		}

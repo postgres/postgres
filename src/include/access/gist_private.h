@@ -91,7 +91,6 @@ typedef struct GISTScanOpaqueData
 typedef GISTScanOpaqueData *GISTScanOpaque;
 
 /* XLog stuff */
-extern const XLogRecPtr XLogRecPtrForTemp;
 
 #define XLOG_GIST_ENTRY_UPDATE	0x00
 #define XLOG_GIST_ENTRY_DELETE	0x10
@@ -317,6 +316,8 @@ extern void gistdentryinit(GISTSTATE *giststate, int nkey, GISTENTRY *e,
 			   int b, bool l, bool isNull);
 void gistUserPicksplit(Relation r, GistEntryVector *entryvec, GIST_SPLITVEC *v,
 				  IndexTuple *itup, int len, GISTSTATE *giststate);
+
+extern XLogRecPtr GetXLogRecPtrForTemp(void);
 
 /* gistvacuum.c */
 extern Datum gistbulkdelete(PG_FUNCTION_ARGS);
