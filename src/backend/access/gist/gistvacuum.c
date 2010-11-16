@@ -133,7 +133,7 @@ gistDeleteSubtree(GistVacuum *gv, BlockNumber blkno)
 		PageSetTLI(page, ThisTimeLineID);
 	}
 	else
-		PageSetLSN(page, XLogRecPtrForTemp);
+		PageSetLSN(page, GetXLogRecPtrForTemp());
 
 	END_CRIT_SECTION();
 
@@ -252,7 +252,7 @@ vacuumSplitPage(GistVacuum *gv, Page tempPage, Buffer buffer, IndexTuple *addon,
 	else
 	{
 		for (ptr = dist; ptr; ptr = ptr->next)
-			PageSetLSN(BufferGetPage(ptr->buffer), XLogRecPtrForTemp);
+			PageSetLSN(BufferGetPage(ptr->buffer), GetXLogRecPtrForTemp());
 	}
 
 	for (ptr = dist; ptr; ptr = ptr->next)
@@ -466,7 +466,7 @@ gistVacuumUpdate(GistVacuum *gv, BlockNumber blkno, bool needunion)
 				pfree(rdata);
 			}
 			else
-				PageSetLSN(page, XLogRecPtrForTemp);
+				PageSetLSN(page, GetXLogRecPtrForTemp());
 		}
 
 		END_CRIT_SECTION();
@@ -789,7 +789,7 @@ gistbulkdelete(PG_FUNCTION_ARGS)
 					pfree(rdata);
 				}
 				else
-					PageSetLSN(page, XLogRecPtrForTemp);
+					PageSetLSN(page, GetXLogRecPtrForTemp());
 
 				END_CRIT_SECTION();
 			}
