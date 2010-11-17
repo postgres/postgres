@@ -68,6 +68,7 @@ typedef struct SeqTableData
 {
 	struct SeqTableData *next;	/* link to next SeqTable object */
 	Oid			relid;			/* pg_class OID of this sequence */
+	Oid			filenode;		/* last seen relfilenode of this sequence */
 	LocalTransactionId lxid;	/* xact in which we last did a seq op */
 	bool		last_valid;		/* do we have a valid "last" value? */
 	int64		last;			/* value last returned by nextval */
@@ -87,6 +88,7 @@ static SeqTable seqtab = NULL;	/* Head of list of SeqTable items */
  */
 static SeqTableData *last_used_seq = NULL;
 
+static void fill_seq_with_data(Relation rel, HeapTuple tuple);
 static int64 nextval_internal(Oid relid);
 static Relation open_share_lock(SeqTable seq);
 static void init_sequence(Oid relid, SeqTable *p_elm, Relation *p_rel);
@@ -109,9 +111,6 @@ DefineSequence(CreateSeqStmt *seq)
 	CreateStmt *stmt = makeNode(CreateStmt);
 	Oid			seqoid;
 	Relation	rel;
-	Buffer		buf;
-	Page		page;
-	sequence_magic *sm;
 	HeapTuple	tuple;
 	TupleDesc	tupDesc;
 	Datum		value[SEQ_COL_LASTCOL];
@@ -211,6 +210,100 @@ DefineSequence(CreateSeqStmt *seq)
 	rel = heap_open(seqoid, AccessExclusiveLock);
 	tupDesc = RelationGetDescr(rel);
 
+	/* now initialize the sequence's data */
+	tuple = heap_form_tuple(tupDesc, value, null);
+	fill_seq_with_data(rel, tuple);
+
+	/* process OWNED BY if given */
+	if (owned_by)
+		process_owned_by(rel, owned_by);
+
+	heap_close(rel, NoLock);
+}
+
+/*
+ * Reset a sequence to its initial value.
+ *
+ * The change is made transactionally, so that on failure of the current
+ * transaction, the sequence will be restored to its previous state.
+ * We do that by creating a whole new relfilenode for the sequence; so this
+ * works much like the rewriting forms of ALTER TABLE.
+ *
+ * Caller is assumed to have acquired AccessExclusiveLock on the sequence,
+ * which must not be released until end of transaction.  Caller is also
+ * responsible for permissions checking.
+ */
+void
+ResetSequence(Oid seq_relid)
+{
+	Relation	seq_rel;
+	SeqTable	elm;
+	Form_pg_sequence seq;
+	Buffer		buf;
+	Page		page;
+	HeapTuple	tuple;
+	HeapTupleData tupledata;
+	ItemId		lp;
+
+	/*
+	 * Read the old sequence.  This does a bit more work than really
+	 * necessary, but it's simple, and we do want to double-check that it's
+	 * indeed a sequence.
+	 */
+	init_sequence(seq_relid, &elm, &seq_rel);
+	seq = read_info(elm, seq_rel, &buf);
+
+	/*
+	 * Copy the existing sequence tuple.
+	 */
+	page = BufferGetPage(buf);
+	lp = PageGetItemId(page, FirstOffsetNumber);
+	Assert(ItemIdIsNormal(lp));
+
+	tupledata.t_data = (HeapTupleHeader) PageGetItem(page, lp);
+	tupledata.t_len = ItemIdGetLength(lp);
+	tuple = heap_copytuple(&tupledata);
+
+	/* Now we're done with the old page */
+	UnlockReleaseBuffer(buf);
+
+	/*
+	 * Modify the copied tuple to execute the restart (compare the RESTART
+	 * action in AlterSequence)
+	 */
+	seq = (Form_pg_sequence) GETSTRUCT(tuple);
+	seq->last_value = seq->start_value;
+	seq->is_called = false;
+	seq->log_cnt = 1;
+
+	/*
+	 * Create a new storage file for the sequence.  We want to keep the
+	 * sequence's relfrozenxid at 0, since it won't contain any unfrozen XIDs.
+	 */
+	RelationSetNewRelfilenode(seq_rel, InvalidTransactionId);
+
+	/*
+	 * Insert the modified tuple into the new storage file.
+	 */
+	fill_seq_with_data(seq_rel, tuple);
+
+	/* Clear local cache so that we don't think we have cached numbers */
+	/* Note that we do not change the currval() state */
+	elm->cached = elm->last;
+
+	relation_close(seq_rel, NoLock);
+}
+
+/*
+ * Initialize a sequence's relation with the specified tuple as content
+ */
+static void
+fill_seq_with_data(Relation rel, HeapTuple tuple)
+{
+	Buffer		buf;
+	Page		page;
+	sequence_magic *sm;
+
 	/* Initialize first page of relation with special magic number */
 
 	buf = ReadBuffer(rel, P_NEW);
@@ -225,8 +318,7 @@ DefineSequence(CreateSeqStmt *seq)
 	/* hack: ensure heap_insert will insert on the just-created page */
 	RelationSetTargetBlock(rel, 0);
 
-	/* Now form & insert sequence tuple */
-	tuple = heap_form_tuple(tupDesc, value, null);
+	/* Now insert sequence tuple */
 	simple_heap_insert(rel, tuple);
 
 	Assert(ItemPointerGetOffsetNumber(&(tuple->t_self)) == FirstOffsetNumber);
@@ -306,12 +398,6 @@ DefineSequence(CreateSeqStmt *seq)
 	END_CRIT_SECTION();
 
 	UnlockReleaseBuffer(buf);
-
-	/* process OWNED BY if given */
-	if (owned_by)
-		process_owned_by(rel, owned_by);
-
-	heap_close(rel, NoLock);
 }
 
 /*
@@ -323,29 +409,6 @@ void
 AlterSequence(AlterSeqStmt *stmt)
 {
 	Oid			relid;
-
-	/* find sequence */
-	relid = RangeVarGetRelid(stmt->sequence, false);
-
-	/* allow ALTER to sequence owner only */
-	/* if you change this, see also callers of AlterSequenceInternal! */
-	if (!pg_class_ownercheck(relid, GetUserId()))
-		aclcheck_error(ACLCHECK_NOT_OWNER, ACL_KIND_CLASS,
-					   stmt->sequence->relname);
-
-	/* do the work */
-	AlterSequenceInternal(relid, stmt->options);
-}
-
-/*
- * AlterSequenceInternal
- *
- * Same as AlterSequence except that the sequence is specified by OID
- * and we assume the caller already checked permissions.
- */
-void
-AlterSequenceInternal(Oid relid, List *options)
-{
 	SeqTable	elm;
 	Relation	seqrel;
 	Buffer		buf;
@@ -355,7 +418,13 @@ AlterSequenceInternal(Oid relid, List *options)
 	List	   *owned_by;
 
 	/* open and AccessShareLock sequence */
+	relid = RangeVarGetRelid(stmt->sequence, false);
 	init_sequence(relid, &elm, &seqrel);
+
+	/* allow ALTER to sequence owner only */
+	if (!pg_class_ownercheck(relid, GetUserId()))
+		aclcheck_error(ACLCHECK_NOT_OWNER, ACL_KIND_CLASS,
+					   stmt->sequence->relname);
 
 	/* lock page' buffer and read tuple into new sequence structure */
 	seq = read_info(elm, seqrel, &buf);
@@ -365,7 +434,7 @@ AlterSequenceInternal(Oid relid, List *options)
 	memcpy(&new, seq, sizeof(FormData_pg_sequence));
 
 	/* Check and set new values */
-	init_params(options, false, &new, &owned_by);
+	init_params(stmt->options, false, &new, &owned_by);
 
 	/* Clear local cache so that we don't think we have cached numbers */
 	/* Note that we do not change the currval() state */
@@ -937,6 +1006,7 @@ init_sequence(Oid relid, SeqTable *p_elm, Relation *p_rel)
 					(errcode(ERRCODE_OUT_OF_MEMORY),
 					 errmsg("out of memory")));
 		elm->relid = relid;
+		elm->filenode = InvalidOid;
 		elm->lxid = InvalidLocalTransactionId;
 		elm->last_valid = false;
 		elm->last = elm->cached = elm->increment = 0;
@@ -955,6 +1025,18 @@ init_sequence(Oid relid, SeqTable *p_elm, Relation *p_rel)
 				 errmsg("\"%s\" is not a sequence",
 						RelationGetRelationName(seqrel))));
 
+	/*
+	 * If the sequence has been transactionally replaced since we last saw it,
+	 * discard any cached-but-unissued values.  We do not touch the currval()
+	 * state, however.
+	 */
+	if (seqrel->rd_rel->relfilenode != elm->filenode)
+	{
+		elm->filenode = seqrel->rd_rel->relfilenode;
+		elm->cached = elm->last;
+	}
+
+	/* Return results */
 	*p_elm = elm;
 	*p_rel = seqrel;
 }

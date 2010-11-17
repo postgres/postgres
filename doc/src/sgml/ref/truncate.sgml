@@ -108,7 +108,9 @@ TRUNCATE [ TABLE ] [ ONLY ] <replaceable class="PARAMETER">name</replaceable> [,
   <para>
    <command>TRUNCATE</> acquires an <literal>ACCESS EXCLUSIVE</> lock on each
    table it operates on, which blocks all other concurrent operations
-   on the table.  If concurrent access to a table is required, then
+   on the table.  When <literal>RESTART IDENTITY</> is specified, any
+   sequences that are to be restarted are likewise locked exclusively.
+   If concurrent access to a table is required, then
    the <command>DELETE</> command should be used instead.
   </para>
 
@@ -130,7 +132,8 @@ TRUNCATE [ TABLE ] [ ONLY ] <replaceable class="PARAMETER">name</replaceable> [,
    the tables, then all <literal>BEFORE TRUNCATE</literal> triggers are
    fired before any truncation happens, and all <literal>AFTER
    TRUNCATE</literal> triggers are fired after the last truncation is
-   performed.  The triggers will fire in the order that the tables are
+   performed and any sequences are reset.
+   The triggers will fire in the order that the tables are
    to be processed (first those listed in the command, and then any
    that were added due to cascading).
   </para>
@@ -159,32 +162,21 @@ TRUNCATE [ TABLE ] [ ONLY ] <replaceable class="PARAMETER">name</replaceable> [,
    transaction does not commit.
   </para>
 
-  <warning>
-   <para>
-    Any <command>ALTER SEQUENCE RESTART</> operations performed as a
-    consequence of using the <literal>RESTART IDENTITY</> option are
-    nontransactional and will not be rolled back on failure.  To minimize
-    the risk, these operations are performed only after all the rest of
-    <command>TRUNCATE</>'s work is done.  However, there is still a risk
-    if <command>TRUNCATE</> is performed inside a transaction block that is
-    aborted afterwards.  For example, consider
-
-<programlisting>
-BEGIN;
-TRUNCATE TABLE foo RESTART IDENTITY;
-COPY foo FROM ...;
-COMMIT;
-</programlisting>
-
-    If the <command>COPY</> fails partway through, the table data
-    rolls back correctly, but the sequences will be left with values
-    that are probably smaller than they had before, possibly leading
-    to duplicate-key failures or other problems in later transactions.
-    If this is likely to be a problem, it's best to avoid using
-    <literal>RESTART IDENTITY</>, and accept that the new contents of
-    the table will have higher serial numbers than the old.
-   </para>
-  </warning>
+  <para>
+   When <literal>RESTART IDENTITY</> is specified, the implied
+   <command>ALTER SEQUENCE RESTART</> operations are also done
+   transactionally; that is, they will be rolled back if the surrounding
+   transaction does not commit.  This is unlike the normal behavior of
+   <command>ALTER SEQUENCE RESTART</>.  Be aware that if any additional
+   sequence operations are done on the restarted sequences before the
+   transaction rolls back, the effects of these operations on the sequences
+   will be rolled back, but not their effects on <function>currval()</>;
+   that is, after the transaction <function>currval()</> will continue to
+   reflect the last sequence value obtained inside the failed transaction,
+   even though the sequence itself may no longer be consistent with that.
+   This is similar to the usual behavior of <function>currval()</> after
+   a failed transaction.
+  </para>
  </refsect1>
 
  <refsect1>
@@ -222,13 +214,14 @@ TRUNCATE othertable CASCADE;
   <title>Compatibility</title>
 
   <para>
-   The SQL:2008 standard includes a <command>TRUNCATE</command> command with the syntax
-   <literal>TRUNCATE TABLE <replaceable>tablename</replaceable></literal>.
-   The clauses <literal>CONTINUE IDENTITY</literal>/<literal>RESTART IDENTITY</literal>
-   also appear in that standard but have slightly different but related meanings.
-   Some of the concurrency behavior of this command is left implementation-defined
-   by the standard, so the above notes should be considered and compared with
-   other implementations if necessary.
+   The SQL:2008 standard includes a <command>TRUNCATE</command> command
+   with the syntax <literal>TRUNCATE TABLE
+   <replaceable>tablename</replaceable></literal>.  The clauses
+   <literal>CONTINUE IDENTITY</literal>/<literal>RESTART IDENTITY</literal>
+   also appear in that standard, but have slightly different though related
+   meanings.  Some of the concurrency behavior of this command is left
+   implementation-defined by the standard, so the above notes should be
+   considered and compared with other implementations if necessary.
   </para>
  </refsect1>
 </refentry>

@@ -71,7 +71,7 @@ extern Datum lastval(PG_FUNCTION_ARGS);
 
 extern void DefineSequence(CreateSeqStmt *stmt);
 extern void AlterSequence(AlterSeqStmt *stmt);
-extern void AlterSequenceInternal(Oid relid, List *options);
+extern void ResetSequence(Oid seq_relid);
 
 extern void seq_redo(XLogRecPtr lsn, XLogRecord *rptr);
 extern void seq_desc(StringInfo buf, uint8 xl_info, char *rec);

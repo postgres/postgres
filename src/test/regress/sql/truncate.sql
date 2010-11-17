@@ -202,6 +202,16 @@ INSERT INTO truncate_a DEFAULT VALUES;
 INSERT INTO truncate_a DEFAULT VALUES;
 SELECT * FROM truncate_a;
 
+-- check rollback of a RESTART IDENTITY operation
+BEGIN;
+TRUNCATE truncate_a RESTART IDENTITY;
+INSERT INTO truncate_a DEFAULT VALUES;
+SELECT * FROM truncate_a;
+ROLLBACK;
+INSERT INTO truncate_a DEFAULT VALUES;
+INSERT INTO truncate_a DEFAULT VALUES;
+SELECT * FROM truncate_a;
+
 DROP TABLE truncate_a;
 
 SELECT nextval('truncate_a_id1'); -- fail, seq should have been dropped

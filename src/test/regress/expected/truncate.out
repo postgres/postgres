@@ -398,6 +398,28 @@ SELECT * FROM truncate_a;
   2 |  34
 (2 rows)
 
+-- check rollback of a RESTART IDENTITY operation
+BEGIN;
+TRUNCATE truncate_a RESTART IDENTITY;
+INSERT INTO truncate_a DEFAULT VALUES;
+SELECT * FROM truncate_a;
+ id | id1 
+----+-----
+  1 |  33
+(1 row)
+
+ROLLBACK;
+INSERT INTO truncate_a DEFAULT VALUES;
+INSERT INTO truncate_a DEFAULT VALUES;
+SELECT * FROM truncate_a;
+ id | id1 
+----+-----
+  1 |  33
+  2 |  34
+  3 |  35
+  4 |  36
+(4 rows)
+
 DROP TABLE truncate_a;
 SELECT nextval('truncate_a_id1'); -- fail, seq should have been dropped
 ERROR:  relation "truncate_a_id1" does not exist

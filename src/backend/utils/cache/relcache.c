@@ -2623,8 +2623,8 @@ RelationBuildLocalRelation(const char *relname,
  * Caller must already hold exclusive lock on the relation.
  *
  * The relation is marked with relfrozenxid = freezeXid (InvalidTransactionId
- * must be passed for indexes).  This should be a lower bound on the XIDs
- * that will be put into the new relation contents.
+ * must be passed for indexes and sequences).  This should be a lower bound on
+ * the XIDs that will be put into the new relation contents.
  */
 void
 RelationSetNewRelfilenode(Relation relation, TransactionId freezeXid)
@@ -2635,9 +2635,10 @@ RelationSetNewRelfilenode(Relation relation, TransactionId freezeXid)
 	HeapTuple	tuple;
 	Form_pg_class classform;
 
-	/* Indexes must have Invalid frozenxid; other relations must not */
-	Assert((relation->rd_rel->relkind == RELKIND_INDEX &&
-			freezeXid == InvalidTransactionId) ||
+	/* Indexes, sequences must have Invalid frozenxid; other rels must not */
+	Assert((relation->rd_rel->relkind == RELKIND_INDEX ||
+			relation->rd_rel->relkind == RELKIND_SEQUENCE) ?
+		   freezeXid == InvalidTransactionId :
 		   TransactionIdIsNormal(freezeXid));
 
 	/* Allocate a new relfilenode */
@@ -2687,8 +2688,11 @@ RelationSetNewRelfilenode(Relation relation, TransactionId freezeXid)
 		classform->relfilenode = newrelfilenode;
 
 	/* These changes are safe even for a mapped relation */
-	classform->relpages = 0;	/* it's empty until further notice */
-	classform->reltuples = 0;
+	if (relation->rd_rel->relkind != RELKIND_SEQUENCE)
+	{
+		classform->relpages = 0;	/* it's empty until further notice */
+		classform->reltuples = 0;
+	}
 	classform->relfrozenxid = freezeXid;
 
 	simple_heap_update(pg_class, &tuple->t_self, tuple);
