@@ -3871,30 +3871,30 @@ enum_val_list:	Sconst
  *****************************************************************************/
 
 AlterEnumStmt:
-         ALTER TYPE_P any_name ADD_P Sconst
+         ALTER TYPE_P any_name ADD_P VALUE_P Sconst
 			 {
 				 AlterEnumStmt *n = makeNode(AlterEnumStmt);
 				 n->typeName = $3;
-				 n->newVal = $5;
+				 n->newVal = $6;
 				 n->newValNeighbor = NULL;
 				 n->newValIsAfter = true;
 				 $$ = (Node *) n;
 			 }
-		 | ALTER TYPE_P any_name ADD_P Sconst BEFORE Sconst
+		 | ALTER TYPE_P any_name ADD_P VALUE_P Sconst BEFORE Sconst
 			 {
 				 AlterEnumStmt *n = makeNode(AlterEnumStmt);
 				 n->typeName = $3;
-				 n->newVal = $5;
-				 n->newValNeighbor = $7;
+				 n->newVal = $6;
+				 n->newValNeighbor = $8;
 				 n->newValIsAfter = false;
 				 $$ = (Node *) n;
 			 }
-		 | ALTER TYPE_P any_name ADD_P Sconst AFTER Sconst
+		 | ALTER TYPE_P any_name ADD_P VALUE_P Sconst AFTER Sconst
 			 {
 				 AlterEnumStmt *n = makeNode(AlterEnumStmt);
 				 n->typeName = $3;
-				 n->newVal = $5;
-				 n->newValNeighbor = $7;
+				 n->newVal = $6;
+				 n->newValNeighbor = $8;
 				 n->newValIsAfter = true;
 				 $$ = (Node *) n;
 			 }

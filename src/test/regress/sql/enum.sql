@@ -26,17 +26,17 @@ FROM pg_enum
 WHERE enumtypid = 'planets'::regtype
 ORDER BY 2;
 
-ALTER TYPE planets ADD 'uranus';
+ALTER TYPE planets ADD VALUE 'uranus';
 
 SELECT enumlabel, enumsortorder
 FROM pg_enum
 WHERE enumtypid = 'planets'::regtype
 ORDER BY 2;
 
-ALTER TYPE planets ADD 'mercury' BEFORE 'venus';
-ALTER TYPE planets ADD 'saturn' BEFORE 'uranus';
-ALTER TYPE planets ADD 'jupiter' AFTER 'mars';
-ALTER TYPE planets ADD 'neptune' AFTER 'uranus';
+ALTER TYPE planets ADD VALUE 'mercury' BEFORE 'venus';
+ALTER TYPE planets ADD VALUE 'saturn' BEFORE 'uranus';
+ALTER TYPE planets ADD VALUE 'jupiter' AFTER 'mars';
+ALTER TYPE planets ADD VALUE 'neptune' AFTER 'uranus';
 
 SELECT enumlabel, enumsortorder
 FROM pg_enum
@@ -49,10 +49,10 @@ WHERE enumtypid = 'planets'::regtype
 ORDER BY enumlabel::planets;
 
 -- errors for adding labels
-ALTER TYPE planets ADD
+ALTER TYPE planets ADD VALUE
   'plutoplutoplutoplutoplutoplutoplutoplutoplutoplutoplutoplutoplutopluto';
 
-ALTER TYPE planets ADD 'pluto' AFTER 'zeus';
+ALTER TYPE planets ADD VALUE 'pluto' AFTER 'zeus';
 
 --
 -- Test inserting so many values that we have to renumber
@@ -60,36 +60,36 @@ ALTER TYPE planets ADD 'pluto' AFTER 'zeus';
 
 create type insenum as enum ('L1', 'L2');
 
-alter type insenum add 'i1' before 'L2';
-alter type insenum add 'i2' before 'L2';
-alter type insenum add 'i3' before 'L2';
-alter type insenum add 'i4' before 'L2';
-alter type insenum add 'i5' before 'L2';
-alter type insenum add 'i6' before 'L2';
-alter type insenum add 'i7' before 'L2';
-alter type insenum add 'i8' before 'L2';
-alter type insenum add 'i9' before 'L2';
-alter type insenum add 'i10' before 'L2';
-alter type insenum add 'i11' before 'L2';
-alter type insenum add 'i12' before 'L2';
-alter type insenum add 'i13' before 'L2';
-alter type insenum add 'i14' before 'L2';
-alter type insenum add 'i15' before 'L2';
-alter type insenum add 'i16' before 'L2';
-alter type insenum add 'i17' before 'L2';
-alter type insenum add 'i18' before 'L2';
-alter type insenum add 'i19' before 'L2';
-alter type insenum add 'i20' before 'L2';
-alter type insenum add 'i21' before 'L2';
-alter type insenum add 'i22' before 'L2';
-alter type insenum add 'i23' before 'L2';
-alter type insenum add 'i24' before 'L2';
-alter type insenum add 'i25' before 'L2';
-alter type insenum add 'i26' before 'L2';
-alter type insenum add 'i27' before 'L2';
-alter type insenum add 'i28' before 'L2';
-alter type insenum add 'i29' before 'L2';
-alter type insenum add 'i30' before 'L2';
+alter type insenum add value 'i1' before 'L2';
+alter type insenum add value 'i2' before 'L2';
+alter type insenum add value 'i3' before 'L2';
+alter type insenum add value 'i4' before 'L2';
+alter type insenum add value 'i5' before 'L2';
+alter type insenum add value 'i6' before 'L2';
+alter type insenum add value 'i7' before 'L2';
+alter type insenum add value 'i8' before 'L2';
+alter type insenum add value 'i9' before 'L2';
+alter type insenum add value 'i10' before 'L2';
+alter type insenum add value 'i11' before 'L2';
+alter type insenum add value 'i12' before 'L2';
+alter type insenum add value 'i13' before 'L2';
+alter type insenum add value 'i14' before 'L2';
+alter type insenum add value 'i15' before 'L2';
+alter type insenum add value 'i16' before 'L2';
+alter type insenum add value 'i17' before 'L2';
+alter type insenum add value 'i18' before 'L2';
+alter type insenum add value 'i19' before 'L2';
+alter type insenum add value 'i20' before 'L2';
+alter type insenum add value 'i21' before 'L2';
+alter type insenum add value 'i22' before 'L2';
+alter type insenum add value 'i23' before 'L2';
+alter type insenum add value 'i24' before 'L2';
+alter type insenum add value 'i25' before 'L2';
+alter type insenum add value 'i26' before 'L2';
+alter type insenum add value 'i27' before 'L2';
+alter type insenum add value 'i28' before 'L2';
+alter type insenum add value 'i29' before 'L2';
+alter type insenum add value 'i30' before 'L2';
 
 -- The exact values of enumsortorder will now depend on the local properties
 -- of float4, but in any reasonable implementation we should get at least

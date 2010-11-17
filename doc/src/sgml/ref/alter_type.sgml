@@ -28,7 +28,7 @@ ALTER TYPE <replaceable class="PARAMETER">name</replaceable> OWNER TO <replaceab
 ALTER TYPE <replaceable class="PARAMETER">name</replaceable> RENAME ATTRIBUTE <replaceable class="PARAMETER">attribute_name</replaceable> TO <replaceable class="PARAMETER">new_attribute_name</replaceable>
 ALTER TYPE <replaceable class="PARAMETER">name</replaceable> RENAME TO <replaceable class="PARAMETER">new_name</replaceable>
 ALTER TYPE <replaceable class="PARAMETER">name</replaceable> SET SCHEMA <replaceable class="PARAMETER">new_schema</replaceable>
-ALTER TYPE <replaceable class="PARAMETER">name</replaceable> ADD <replaceable class="PARAMETER">new_enum_value</replaceable> [ { BEFORE | AFTER } <replaceable class="PARAMETER">existing_enum_value</replaceable> ]
+ALTER TYPE <replaceable class="PARAMETER">name</replaceable> ADD VALUE <replaceable class="PARAMETER">new_enum_value</replaceable> [ { BEFORE | AFTER } <replaceable class="PARAMETER">existing_enum_value</replaceable> ]
 
 <phrase>where <replaceable class="PARAMETER">action</replaceable> is one of:</phrase>
 
@@ -106,7 +106,7 @@ ALTER TYPE <replaceable class="PARAMETER">name</replaceable> ADD <replaceable cl
    </varlistentry>
 
    <varlistentry>
-    <term><literal>ADD [ BEFORE | AFTER ]</literal></term>
+    <term><literal>ADD VALUE [ BEFORE | AFTER ]</literal></term>
     <listitem>
      <para>
       This form adds a new value to an enum type. If the new value's place in
@@ -238,7 +238,7 @@ ALTER TYPE <replaceable class="PARAMETER">name</replaceable> ADD <replaceable cl
   <title>Notes</title>
 
   <para>
-   <command>ALTER TYPE ... ADD</> (the form that adds a new value to an
+   <command>ALTER TYPE ... ADD VALUE</> (the form that adds a new value to an
    enum type) cannot be executed inside a transaction block.
   </para>
 
@@ -292,7 +292,7 @@ ALTER TYPE compfoo ADD ATTRIBUTE f3 int;
   <para>
    To add a new value to an enum type in a particular sort position:
 <programlisting>
-ALTER TYPE colors ADD 'orange' AFTER 'red';
+ALTER TYPE colors ADD VALUE 'orange' AFTER 'red';
 </programlisting>
   </para>
  </refsect1>
