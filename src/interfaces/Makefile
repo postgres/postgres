@@ -15,3 +15,5 @@ include $(top_builddir)/src/Makefile.global
 SUBDIRS = libpq ecpg
 
 $(recurse)
+
+all-ecpg-recurse: all-libpq-recurse

@@ -6,7 +6,8 @@ SUBDIRS = include pgtypeslib ecpglib compatlib preproc
 
 $(recurse)
 
-all-compatlib-recursive: all-ecpglib-recursive
+all-compatlib-recurse: all-ecpglib-recurse
+all-ecpglib-recurse: all-pgtypeslib-recurse
 
 clean distclean maintainer-clean:
 	$(MAKE) -C test clean

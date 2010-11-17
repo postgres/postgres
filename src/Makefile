@@ -26,6 +26,10 @@ SUBDIRS = \
 	makefiles \
 	test/regress
 
+# There are too many interdependencies between the subdirectories, so
+# don't attempt parallel make here.
+.NOTPARALLEL:
+
 $(recurse)
 
 install: install-local
