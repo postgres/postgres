@@ -99,7 +99,8 @@ static void add_dummy_return(PLpgSQL_function *function);
 static Node *plpgsql_pre_column_ref(ParseState *pstate, ColumnRef *cref);
 static Node *plpgsql_post_column_ref(ParseState *pstate, ColumnRef *cref, Node *var);
 static Node *plpgsql_param_ref(ParseState *pstate, ParamRef *pref);
-static Node *resolve_column_ref(PLpgSQL_expr *expr, ColumnRef *cref);
+static Node *resolve_column_ref(ParseState *pstate, PLpgSQL_expr *expr,
+				   ColumnRef *cref, bool error_if_no_field);
 static Node *make_datum_param(PLpgSQL_expr *expr, int dno, int location);
 static PLpgSQL_row *build_row_from_class(Oid classOid);
 static PLpgSQL_row *build_row_from_vars(PLpgSQL_variable **vars, int numvars);
@@ -945,7 +946,7 @@ plpgsql_pre_column_ref(ParseState *pstate, ColumnRef *cref)
 	PLpgSQL_expr *expr = (PLpgSQL_expr *) pstate->p_ref_hook_state;
 
 	if (expr->func->resolve_option == PLPGSQL_RESOLVE_VARIABLE)
-		return resolve_column_ref(expr, cref);
+		return resolve_column_ref(pstate, expr, cref, false);
 	else
 		return NULL;
 }
@@ -965,7 +966,17 @@ plpgsql_post_column_ref(ParseState *pstate, ColumnRef *cref, Node *var)
 	if (expr->func->resolve_option == PLPGSQL_RESOLVE_COLUMN && var != NULL)
 		return NULL;			/* there's a table column, prefer that */
 
-	myvar = resolve_column_ref(expr, cref);
+	/*
+	 * If we find a record/row variable but can't match a field name, throw
+	 * error if there was no core resolution for the ColumnRef either.  In
+	 * that situation, the reference is inevitably going to fail, and
+	 * complaining about the record/row variable is likely to be more
+	 * on-point than the core parser's error message.  (It's too bad we
+	 * don't have access to transformColumnRef's internal crerr state here,
+	 * as in case of a conflict with a table name this could still be less
+	 * than the most helpful error message possible.)
+	 */
+	myvar = resolve_column_ref(pstate, expr, cref, (var == NULL));
 
 	if (myvar != NULL && var != NULL)
 	{
@@ -1010,9 +1021,13 @@ plpgsql_param_ref(ParseState *pstate, ParamRef *pref)
  * resolve_column_ref		attempt to resolve a ColumnRef as a plpgsql var
  *
  * Returns the translated node structure, or NULL if name not found
+ *
+ * error_if_no_field tells whether to throw error or quietly return NULL if
+ * we are able to match a record/row name but don't find a field name match.
  */
 static Node *
-resolve_column_ref(PLpgSQL_expr *expr, ColumnRef *cref)
+resolve_column_ref(ParseState *pstate, PLpgSQL_expr *expr,
+				   ColumnRef *cref, bool error_if_no_field)
 {
 	PLpgSQL_execstate *estate;
 	PLpgSQL_nsitem *nse;
@@ -1147,9 +1162,16 @@ resolve_column_ref(PLpgSQL_expr *expr, ColumnRef *cref)
 				/*
 				 * We should not get here, because a RECFIELD datum should
 				 * have been built at parse time for every possible qualified
-				 * reference to fields of this record.	But if we do, fall out
-				 * and return NULL.
+				 * reference to fields of this record.	But if we do, handle
+				 * it like field-not-found: throw error or return NULL.
 				 */
+				if (error_if_no_field)
+					ereport(ERROR,
+							(errcode(ERRCODE_UNDEFINED_COLUMN),
+							 errmsg("record \"%s\" has no field \"%s\"",
+									(nnames_field == 1) ? name1 : name2,
+									colname),
+							 parser_errposition(pstate, cref->location)));
 			}
 			break;
 		case PLPGSQL_NSTYPE_ROW:
@@ -1170,7 +1192,14 @@ resolve_column_ref(PLpgSQL_expr *expr, ColumnRef *cref)
 												cref->location);
 					}
 				}
-				/* Not found, so return NULL */
+				/* Not found, so throw error or return NULL */
+				if (error_if_no_field)
+					ereport(ERROR,
+							(errcode(ERRCODE_UNDEFINED_COLUMN),
+							 errmsg("record \"%s\" has no field \"%s\"",
+									(nnames_field == 1) ? name1 : name2,
+									colname),
+							 parser_errposition(pstate, cref->location)));
 			}
 			break;
 		default:
