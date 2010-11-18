@@ -1493,6 +1493,7 @@ _outMergeAppendPath(StringInfo str, MergeAppendPath *node)
 	_outPathInfo(str, (Path *) node);
 
 	WRITE_NODE_FIELD(subpaths);
+	WRITE_FLOAT_FIELD(limit_tuples, "%.0f");
 }
 
 static void
@@ -1611,6 +1612,7 @@ _outPlannerInfo(StringInfo str, PlannerInfo *node)
 	WRITE_NODE_FIELD(minmax_aggs);
 	WRITE_FLOAT_FIELD(total_table_pages, "%.0f");
 	WRITE_FLOAT_FIELD(tuple_fraction, "%.4f");
+	WRITE_FLOAT_FIELD(limit_tuples, "%.0f");
 	WRITE_BOOL_FIELD(hasInheritedTarget);
 	WRITE_BOOL_FIELD(hasJoinRTEs);
 	WRITE_BOOL_FIELD(hasHavingQual);

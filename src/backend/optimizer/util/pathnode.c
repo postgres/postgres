@@ -694,6 +694,35 @@ create_merge_append_path(PlannerInfo *root,
 	pathnode->path.pathkeys = pathkeys;
 	pathnode->subpaths = subpaths;
 
+	/*
+	 * Apply query-wide LIMIT if known and path is for sole base relation.
+	 * Finding out the latter at this low level is a bit klugy.
+	 */
+	pathnode->limit_tuples = root->limit_tuples;
+	if (pathnode->limit_tuples >= 0)
+	{
+		Index		rti;
+
+		for (rti = 1; rti < root->simple_rel_array_size; rti++)
+		{
+			RelOptInfo *brel = root->simple_rel_array[rti];
+
+			if (brel == NULL)
+				continue;
+
+			/* ignore RTEs that are "other rels" */
+			if (brel->reloptkind != RELOPT_BASEREL)
+				continue;
+
+			if (brel != rel)
+			{
+				/* Oops, it's a join query */
+				pathnode->limit_tuples = -1.0;
+				break;
+			}
+		}
+	}
+
 	/* Add up all the costs of the input paths */
 	input_startup_cost = 0;
 	input_total_cost = 0;
@@ -720,7 +749,7 @@ create_merge_append_path(PlannerInfo *root,
 					  subpath->parent->width,
 					  0.0,
 					  work_mem,
-					  -1.0);
+					  pathnode->limit_tuples);
 			input_startup_cost += sort_path.startup_cost;
 			input_total_cost += sort_path.total_cost;
 		}

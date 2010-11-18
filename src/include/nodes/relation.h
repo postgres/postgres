@@ -198,6 +198,7 @@ typedef struct PlannerInfo
 	double		total_table_pages;		/* # of pages in all tables of query */
 
 	double		tuple_fraction; /* tuple_fraction passed to query_planner */
+	double		limit_tuples;	/* limit_tuples passed to query_planner */
 
 	bool		hasInheritedTarget;		/* true if parse->resultRelation is an
 										 * inheritance child rel */
@@ -766,6 +767,7 @@ typedef struct MergeAppendPath
 {
 	Path		path;
 	List	   *subpaths;		/* list of component Paths */
+	double		limit_tuples;	/* hard limit on output tuples, or -1 */
 } MergeAppendPath;
 
 /*

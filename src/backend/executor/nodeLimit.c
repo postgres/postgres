@@ -25,6 +25,7 @@
 #include "executor/nodeLimit.h"
 
 static void recompute_limits(LimitState *node);
+static void pass_down_bound(LimitState *node, PlanState *child_node);
 
 
 /* ----------------------------------------------------------------
@@ -293,26 +294,35 @@ recompute_limits(LimitState *node)
 	/* Set state-machine state */
 	node->lstate = LIMIT_RESCAN;
 
-	/*
-	 * If we have a COUNT, and our input is a Sort node, notify it that it can
-	 * use bounded sort.
-	 *
-	 * This is a bit of a kluge, but we don't have any more-abstract way of
-	 * communicating between the two nodes; and it doesn't seem worth trying
-	 * to invent one without some more examples of special communication
-	 * needs.
-	 *
-	 * Note: it is the responsibility of nodeSort.c to react properly to
-	 * changes of these parameters.  If we ever do redesign this, it'd be a
-	 * good idea to integrate this signaling with the parameter-change
-	 * mechanism.
-	 */
-	if (IsA(outerPlanState(node), SortState))
+	/* Notify child node about limit, if useful */
+	pass_down_bound(node, outerPlanState(node));
+}
+
+/*
+ * If we have a COUNT, and our input is a Sort node, notify it that it can
+ * use bounded sort.  Also, if our input is a MergeAppend, we can apply the
+ * same bound to any Sorts that are direct children of the MergeAppend,
+ * since the MergeAppend surely need read no more than that many tuples from
+ * any one input.  We also have to be prepared to look through a Result,
+ * since the planner might stick one atop MergeAppend for projection purposes.
+ *
+ * This is a bit of a kluge, but we don't have any more-abstract way of
+ * communicating between the two nodes; and it doesn't seem worth trying
+ * to invent one without some more examples of special communication needs.
+ *
+ * Note: it is the responsibility of nodeSort.c to react properly to
+ * changes of these parameters.  If we ever do redesign this, it'd be a
+ * good idea to integrate this signaling with the parameter-change mechanism.
+ */
+static void
+pass_down_bound(LimitState *node, PlanState *child_node)
+{
+	if (IsA(child_node, SortState))
 	{
-		SortState  *sortState = (SortState *) outerPlanState(node);
+		SortState  *sortState = (SortState *) child_node;
 		int64		tuples_needed = node->count + node->offset;
 
-		/* negative test checks for overflow */
+		/* negative test checks for overflow in sum */
 		if (node->noCount || tuples_needed < 0)
 		{
 			/* make sure flag gets reset if needed upon rescan */
@@ -323,6 +333,19 @@ recompute_limits(LimitState *node)
 			sortState->bounded = true;
 			sortState->bound = tuples_needed;
 		}
+	}
+	else if (IsA(child_node, MergeAppendState))
+	{
+		MergeAppendState *maState = (MergeAppendState *) child_node;
+		int			i;
+
+		for (i = 0; i < maState->ms_nplans; i++)
+			pass_down_bound(node, maState->mergeplans[i]);
+	}
+	else if (IsA(child_node, ResultState))
+	{
+		if (outerPlanState(child_node))
+			pass_down_bound(node, outerPlanState(child_node));
 	}
 }
 

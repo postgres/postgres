@@ -714,7 +714,7 @@ create_merge_append_plan(PlannerInfo *root, MergeAppendPath *best_path)
 		if (!pathkeys_contained_in(pathkeys, subpath->pathkeys))
 			subplan = (Plan *) make_sort(root, subplan, numsortkeys,
 										 sortColIdx, sortOperators, nullsFirst,
-										 -1.0);
+										 best_path->limit_tuples);
 
 		subplans = lappend(subplans, subplan);
 	}

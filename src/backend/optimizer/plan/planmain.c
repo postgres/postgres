@@ -101,8 +101,9 @@ query_planner(PlannerInfo *root, List *tlist,
 	ListCell   *lc;
 	double		total_pages;
 
-	/* Make tuple_fraction accessible to lower-level routines */
+	/* Make tuple_fraction, limit_tuples accessible to lower-level routines */
 	root->tuple_fraction = tuple_fraction;
+	root->limit_tuples = limit_tuples;
 
 	*num_groups = 1;			/* default result */
 
@@ -315,6 +316,9 @@ query_planner(PlannerInfo *root, List *tlist,
 			!pathkeys_contained_in(root->distinct_pathkeys, root->group_pathkeys) ||
 		 !pathkeys_contained_in(root->window_pathkeys, root->group_pathkeys))
 			tuple_fraction = 0.0;
+
+		/* In any case, limit_tuples shouldn't be specified here */
+		Assert(limit_tuples < 0);
 	}
 	else if (parse->hasAggs || root->hasHavingQual)
 	{
@@ -323,6 +327,9 @@ query_planner(PlannerInfo *root, List *tlist,
 		 * it will deliver a single result row (so leave *num_groups 1).
 		 */
 		tuple_fraction = 0.0;
+
+		/* limit_tuples shouldn't be specified here */
+		Assert(limit_tuples < 0);
 	}
 	else if (parse->distinctClause)
 	{
@@ -347,6 +354,9 @@ query_planner(PlannerInfo *root, List *tlist,
 		 */
 		if (tuple_fraction >= 1.0)
 			tuple_fraction /= *num_groups;
+
+		/* limit_tuples shouldn't be specified here */
+		Assert(limit_tuples < 0);
 	}
 	else
 	{

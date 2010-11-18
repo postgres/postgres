@@ -968,6 +968,7 @@ grouping_planner(PlannerInfo *root, double tuple_fraction)
 	{
 		/* No set operations, do regular planning */
 		List	   *sub_tlist;
+		double		sub_limit_tuples;
 		AttrNumber *groupColIdx = NULL;
 		bool		need_tlist_eval = true;
 		QualCost	tlist_cost;
@@ -1120,12 +1121,27 @@ grouping_planner(PlannerInfo *root, double tuple_fraction)
 			root->query_pathkeys = NIL;
 
 		/*
+		 * Figure out whether there's a hard limit on the number of rows that
+		 * query_planner's result subplan needs to return.  Even if we know a
+		 * hard limit overall, it doesn't apply if the query has any
+		 * grouping/aggregation operations.
+		 */
+		if (parse->groupClause ||
+			parse->distinctClause ||
+			parse->hasAggs ||
+			parse->hasWindowFuncs ||
+			root->hasHavingQual)
+			sub_limit_tuples = -1.0;
+		else
+			sub_limit_tuples = limit_tuples;
+
+		/*
 		 * Generate the best unsorted and presorted paths for this Query (but
 		 * note there may not be any presorted path).  query_planner will also
 		 * estimate the number of groups in the query, and canonicalize all
 		 * the pathkeys.
 		 */
-		query_planner(root, sub_tlist, tuple_fraction, limit_tuples,
+		query_planner(root, sub_tlist, tuple_fraction, sub_limit_tuples,
 					  &cheapest_path, &sorted_path, &dNumGroups);
 
 		/*
