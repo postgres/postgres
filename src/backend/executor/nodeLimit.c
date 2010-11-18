@@ -23,6 +23,7 @@
 
 #include "executor/executor.h"
 #include "executor/nodeLimit.h"
+#include "nodes/nodeFuncs.h"
 
 static void recompute_limits(LimitState *node);
 static void pass_down_bound(LimitState *node, PlanState *child_node);
@@ -344,7 +345,19 @@ pass_down_bound(LimitState *node, PlanState *child_node)
 	}
 	else if (IsA(child_node, ResultState))
 	{
-		if (outerPlanState(child_node))
+		/*
+		 * An extra consideration here is that if the Result is projecting
+		 * a targetlist that contains any SRFs, we can't assume that every
+		 * input tuple generates an output tuple, so a Sort underneath
+		 * might need to return more than N tuples to satisfy LIMIT N.
+		 * So we cannot use bounded sort.
+		 *
+		 * If Result supported qual checking, we'd have to punt on seeing
+		 * a qual, too.  Note that having a resconstantqual is not a
+		 * showstopper: if that fails we're not getting any rows at all.
+		 */
+		if (outerPlanState(child_node) &&
+			!expression_returns_set((Node *) child_node->plan->targetlist))
 			pass_down_bound(node, outerPlanState(child_node));
 	}
 }
