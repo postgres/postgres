@@ -51,10 +51,9 @@ SECURITY LABEL
 </programlisting>
 
   <para>
-   The <filename>dummy_seclabel</> provides only four hardcoded
+   The <filename>dummy_seclabel</> module provides only four hardcoded
    labels: <literal>unclassified</>, <literal>classified</>,
-   <literal>secret</>, <literal>top secret</> and <literal>trusted</>.
-
+   <literal>secret</>, and <literal>top secret</>.
    It does not allow any other strings as security labels.
   </para>
   <para>
