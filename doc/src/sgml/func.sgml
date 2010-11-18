@@ -12848,6 +12848,11 @@ SELECT pg_type_is_visible('myschema.widget'::regtype);
        <entry>get the set of database OIDs that have objects in the tablespace</entry>
       </row>
       <row>
+       <entry><literal><function>pg_describe_object(<parameter>catalog_id</parameter>, <parameter>object_id</parameter>, <parameter>object_sub_id</parameter>)</function>)</literal></entry>
+       <entry><type>text</type></entry>
+       <entry>get description of a database object</entry>
+      </row>
+      <row>
        <entry><literal><function>pg_typeof(<parameter>any</parameter>)</function></literal></entry>
        <entry><type>regtype</type></entry>
        <entry>get the data type of any value</entry>
@@ -12938,6 +12943,13 @@ SELECT pg_type_is_visible('myschema.widget'::regtype);
    tablespace, you will need to connect to the databases identified by
    <function>pg_tablespace_databases</function> and query their
    <structname>pg_class</> catalogs.
+  </para>
+
+  <para>
+   <function>pg_describe_object</function> returns a description of a database
+   object specified by catalog OID, object OID and a (possibly zero) sub-object ID.
+   This is useful to determine the identity of an object as stored in the
+   <structname>pg_depend</structname> catalog.
   </para>
 
   <para>

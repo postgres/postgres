@@ -3333,6 +3333,8 @@ DESCR("view system lock information");
 DATA(insert OID = 1065 (  pg_prepared_xact PGNSP PGUID 12 1 1000 0 f f f t t v 0 0 2249 "" "{28,25,1184,26,26}" "{o,o,o,o,o}" "{transaction,gid,prepared,ownerid,dbid}" _null_ pg_prepared_xact _null_ _null_ _null_ ));
 DESCR("view two-phase transactions");
 
+DATA(insert OID = 3537 (  pg_describe_object		PGNSP PGUID 12 1 0 0 f f f t f s 3 0 25 "26 26 23" _null_ _null_ _null_ _null_ pg_describe_object _null_ _null_ _null_ ));
+
 DATA(insert OID = 2079 (  pg_table_is_visible		PGNSP PGUID 12 1 0 0 f f f t f s 1 0 16 "26" _null_ _null_ _null_ _null_ pg_table_is_visible _null_ _null_ _null_ ));
 DESCR("is table visible in search path?");
 DATA(insert OID = 2080 (  pg_type_is_visible		PGNSP PGUID 12 1 0 0 f f f t f s 1 0 16 "26" _null_ _null_ _null_ _null_ pg_type_is_visible _null_ _null_ _null_ ));

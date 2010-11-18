@@ -1982,6 +1982,12 @@ free_object_addresses(ObjectAddresses *addrs)
 ObjectClass
 getObjectClass(const ObjectAddress *object)
 {
+	/* only pg_class entries can have nonzero objectSubId */
+	if (object->classId != RelationRelationId &&
+		object->objectSubId != 0)
+		elog(ERROR, "invalid objectSubId 0 for object class %u",
+			 object->classId);
+
 	switch (object->classId)
 	{
 		case RelationRelationId:
@@ -1989,111 +1995,84 @@ getObjectClass(const ObjectAddress *object)
 			return OCLASS_CLASS;
 
 		case ProcedureRelationId:
-			Assert(object->objectSubId == 0);
 			return OCLASS_PROC;
 
 		case TypeRelationId:
-			Assert(object->objectSubId == 0);
 			return OCLASS_TYPE;
 
 		case CastRelationId:
-			Assert(object->objectSubId == 0);
 			return OCLASS_CAST;
 
 		case ConstraintRelationId:
-			Assert(object->objectSubId == 0);
 			return OCLASS_CONSTRAINT;
 
 		case ConversionRelationId:
-			Assert(object->objectSubId == 0);
 			return OCLASS_CONVERSION;
 
 		case AttrDefaultRelationId:
-			Assert(object->objectSubId == 0);
 			return OCLASS_DEFAULT;
 
 		case LanguageRelationId:
-			Assert(object->objectSubId == 0);
 			return OCLASS_LANGUAGE;
 
 		case LargeObjectRelationId:
-			Assert(object->objectSubId == 0);
 			return OCLASS_LARGEOBJECT;
 
 		case OperatorRelationId:
-			Assert(object->objectSubId == 0);
 			return OCLASS_OPERATOR;
 
 		case OperatorClassRelationId:
-			Assert(object->objectSubId == 0);
 			return OCLASS_OPCLASS;
 
 		case OperatorFamilyRelationId:
-			Assert(object->objectSubId == 0);
 			return OCLASS_OPFAMILY;
 
 		case AccessMethodOperatorRelationId:
-			Assert(object->objectSubId == 0);
 			return OCLASS_AMOP;
 
 		case AccessMethodProcedureRelationId:
-			Assert(object->objectSubId == 0);
 			return OCLASS_AMPROC;
 
 		case RewriteRelationId:
-			Assert(object->objectSubId == 0);
 			return OCLASS_REWRITE;
 
 		case TriggerRelationId:
-			Assert(object->objectSubId == 0);
 			return OCLASS_TRIGGER;
 
 		case NamespaceRelationId:
-			Assert(object->objectSubId == 0);
 			return OCLASS_SCHEMA;
 
 		case TSParserRelationId:
-			Assert(object->objectSubId == 0);
 			return OCLASS_TSPARSER;
 
 		case TSDictionaryRelationId:
-			Assert(object->objectSubId == 0);
 			return OCLASS_TSDICT;
 
 		case TSTemplateRelationId:
-			Assert(object->objectSubId == 0);
 			return OCLASS_TSTEMPLATE;
 
 		case TSConfigRelationId:
-			Assert(object->objectSubId == 0);
 			return OCLASS_TSCONFIG;
 
 		case AuthIdRelationId:
-			Assert(object->objectSubId == 0);
 			return OCLASS_ROLE;
 
 		case DatabaseRelationId:
-			Assert(object->objectSubId == 0);
 			return OCLASS_DATABASE;
 
 		case TableSpaceRelationId:
-			Assert(object->objectSubId == 0);
 			return OCLASS_TBLSPACE;
 
 		case ForeignDataWrapperRelationId:
-			Assert(object->objectSubId == 0);
 			return OCLASS_FDW;
 
 		case ForeignServerRelationId:
-			Assert(object->objectSubId == 0);
 			return OCLASS_FOREIGN_SERVER;
 
 		case UserMappingRelationId:
-			Assert(object->objectSubId == 0);
 			return OCLASS_USER_MAPPING;
 
 		case DefaultAclRelationId:
-			Assert(object->objectSubId == 0);
 			return OCLASS_DEFACL;
 	}
 
@@ -2806,4 +2785,28 @@ getOpFamilyDescription(StringInfo buffer, Oid opfid)
 
 	ReleaseSysCache(amTup);
 	ReleaseSysCache(opfTup);
+}
+
+/*
+ * SQL-level callable version of getObjectDescription
+ */
+Datum
+pg_describe_object(PG_FUNCTION_ARGS)
+{
+	Oid			classid = PG_GETARG_OID(0);
+	Oid			objid = PG_GETARG_OID(1);
+	int32		subobjid = PG_GETARG_INT32(2);
+	char	   *description = NULL;
+	ObjectAddress address;
+
+	/* for "pinned" items in pg_depend, return null */
+	if (!OidIsValid(classid) && !OidIsValid(objid))
+		PG_RETURN_NULL();
+
+	address.classId = classid;
+	address.objectId = objid;
+	address.objectSubId = subobjid;
+
+	description = getObjectDescription(&address);
+	PG_RETURN_TEXT_P(cstring_to_text(description));
 }
