@@ -102,6 +102,7 @@
 <!entity dblink          SYSTEM "dblink.sgml">
 <!entity dict-int        SYSTEM "dict-int.sgml">
 <!entity dict-xsyn       SYSTEM "dict-xsyn.sgml">
+<!entity dummy-seclabel  SYSTEM "dummy-seclabel.sgml">
 <!entity earthdistance   SYSTEM "earthdistance.sgml">
 <!entity fuzzystrmatch   SYSTEM "fuzzystrmatch.sgml">
 <!entity hstore          SYSTEM "hstore.sgml">
