@@ -59,8 +59,7 @@ static BufferAccessStrategy vac_strategy;
 
 
 /* non-export function prototypes */
-static List *get_rel_oids(Oid relid, const RangeVar *vacrel,
-			 const char *stmttype);
+static List *get_rel_oids(Oid relid, const RangeVar *vacrel);
 static void vac_truncate_clog(TransactionId frozenXID);
 static void vacuum_rel(Oid relid, VacuumStmt *vacstmt, bool do_toast,
 		   bool for_wraparound, bool *scanned_all);
@@ -161,7 +160,7 @@ vacuum(VacuumStmt *vacstmt, Oid relid, bool do_toast,
 	 * Build list of relations to process, unless caller gave us one. (If we
 	 * build one, we put it in vac_context for safekeeping.)
 	 */
-	relations = get_rel_oids(relid, vacstmt->relation, stmttype);
+	relations = get_rel_oids(relid, vacstmt->relation);
 
 	/*
 	 * Decide whether we need to start/commit our own transactions.
@@ -303,7 +302,7 @@ vacuum(VacuumStmt *vacstmt, Oid relid, bool do_toast,
  * per-relation transactions.
  */
 static List *
-get_rel_oids(Oid relid, const RangeVar *vacrel, const char *stmttype)
+get_rel_oids(Oid relid, const RangeVar *vacrel)
 {
 	List	   *oid_list = NIL;
 	MemoryContext oldcontext;
