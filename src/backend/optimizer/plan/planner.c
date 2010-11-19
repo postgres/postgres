@@ -3102,7 +3102,7 @@ plan_cluster_use_sort(Oid tableOid, Oid indexOid)
 	 * set_baserel_size_estimates, just do a quick hack for rows and width.
 	 */
 	rel->rows = rel->tuples;
-	rel->width = get_relation_data_width(tableOid);
+	rel->width = get_relation_data_width(tableOid, NULL);
 
 	root->total_table_pages = rel->pages;
 

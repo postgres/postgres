@@ -322,7 +322,7 @@ get_relation_info(PlannerInfo *root, Oid relationObjectId, bool inhparent,
  * estimate_rel_size - estimate # pages and # tuples in a table or index
  *
  * If attr_widths isn't NULL, it points to the zero-index entry of the
- * relation's attr_width[] cache; we fill this in if we have need to compute
+ * relation's attr_widths[] cache; we fill this in if we have need to compute
  * the attribute widths for estimation purposes.
  */
 void
@@ -435,8 +435,9 @@ estimate_rel_size(Relation rel, int32 *attr_widths,
  * get_rel_data_width
  *
  * Estimate the average width of (the data part of) the relation's tuples.
- * If attr_widths isn't NULL, also store per-column width estimates into
- * that array.
+ *
+ * If attr_widths isn't NULL, it points to the zero-index entry of the
+ * relation's attr_widths[] cache; use and update that cache as appropriate.
  *
  * Currently we ignore dropped columns.  Ideally those should be included
  * in the result, but we haven't got any way to get info about them; and
@@ -456,6 +457,14 @@ get_rel_data_width(Relation rel, int32 *attr_widths)
 
 		if (att->attisdropped)
 			continue;
+
+		/* use previously cached data, if any */
+		if (attr_widths != NULL && attr_widths[i] > 0)
+		{
+			tuple_width += attr_widths[i];
+			continue;
+		}
+
 		/* This should match set_rel_width() in costsize.c */
 		item_width = get_attavgwidth(RelationGetRelid(rel), i);
 		if (item_width <= 0)
@@ -474,10 +483,11 @@ get_rel_data_width(Relation rel, int32 *attr_widths)
 /*
  * get_relation_data_width
  *
- * External API for get_rel_data_width
+ * External API for get_rel_data_width: same behavior except we have to
+ * open the relcache entry.
  */
 int32
-get_relation_data_width(Oid relid)
+get_relation_data_width(Oid relid, int32 *attr_widths)
 {
 	int32		result;
 	Relation	relation;
@@ -485,7 +495,7 @@ get_relation_data_width(Oid relid)
 	/* As above, assume relation is already locked */
 	relation = heap_open(relid, NoLock);
 
-	result = get_rel_data_width(relation, NULL);
+	result = get_rel_data_width(relation, attr_widths);
 
 	heap_close(relation, NoLock);
 
