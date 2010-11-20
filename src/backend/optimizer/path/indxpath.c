@@ -37,11 +37,6 @@
 #include "utils/selfuncs.h"
 
 
-/*
- * DoneMatchingIndexKeys() - MACRO
- */
-#define DoneMatchingIndexKeys(families) (families[0] == InvalidOid)
-
 #define IsBooleanOpfamily(opfamily) \
 	((opfamily) == BOOL_BTREE_FAM_OID || (opfamily) == BOOL_HASH_FAM_OID)
 
@@ -83,7 +78,7 @@ static PathClauseUsage *classify_index_clause_usage(Path *path,
 static void find_indexpath_quals(Path *bitmapqual, List **quals, List **preds);
 static int	find_list_position(Node *node, List **nodelist);
 static bool match_clause_to_indexcol(IndexOptInfo *index,
-						 int indexcol, Oid opfamily,
+						 int indexcol,
 						 RestrictInfo *rinfo,
 						 Relids outer_relids,
 						 SaOpControl saop_control);
@@ -1053,7 +1048,6 @@ group_clauses_by_indexkey(IndexOptInfo *index,
 	List	   *clausegroup_list = NIL;
 	bool		found_outer_clause = false;
 	int			indexcol = 0;
-	Oid		   *families = index->opfamily;
 
 	*found_clause = false;		/* default result */
 
@@ -1062,7 +1056,6 @@ group_clauses_by_indexkey(IndexOptInfo *index,
 
 	do
 	{
-		Oid			curFamily = families[0];
 		List	   *clausegroup = NIL;
 		ListCell   *l;
 
@@ -1074,7 +1067,6 @@ group_clauses_by_indexkey(IndexOptInfo *index,
 			Assert(IsA(rinfo, RestrictInfo));
 			if (match_clause_to_indexcol(index,
 										 indexcol,
-										 curFamily,
 										 rinfo,
 										 outer_relids,
 										 saop_control))
@@ -1094,7 +1086,6 @@ group_clauses_by_indexkey(IndexOptInfo *index,
 			Assert(IsA(rinfo, RestrictInfo));
 			if (match_clause_to_indexcol(index,
 										 indexcol,
-										 curFamily,
 										 rinfo,
 										 outer_relids,
 										 saop_control))
@@ -1113,9 +1104,8 @@ group_clauses_by_indexkey(IndexOptInfo *index,
 		clausegroup_list = lappend(clausegroup_list, clausegroup);
 
 		indexcol++;
-		families++;
 
-	} while (!DoneMatchingIndexKeys(families));
+	} while (indexcol < index->ncolumns);
 
 	if (!*found_clause && !found_outer_clause)
 		return NIL;				/* no indexable clauses anywhere */
@@ -1185,7 +1175,6 @@ group_clauses_by_indexkey(IndexOptInfo *index,
 static bool
 match_clause_to_indexcol(IndexOptInfo *index,
 						 int indexcol,
-						 Oid opfamily,
 						 RestrictInfo *rinfo,
 						 Relids outer_relids,
 						 SaOpControl saop_control)
@@ -1196,6 +1185,7 @@ match_clause_to_indexcol(IndexOptInfo *index,
 	Relids		left_relids;
 	Relids		right_relids;
 	Oid			expr_op;
+	Oid			opfamily = index->opfamily[indexcol];
 	bool		plain_op;
 
 	/*
@@ -1582,23 +1572,18 @@ matches_any_index(RestrictInfo *rinfo, RelOptInfo *rel, Relids outer_relids)
 	{
 		IndexOptInfo *index = (IndexOptInfo *) lfirst(l);
 		int			indexcol = 0;
-		Oid		   *families = index->opfamily;
 
 		do
 		{
-			Oid			curFamily = families[0];
-
 			if (match_clause_to_indexcol(index,
 										 indexcol,
-										 curFamily,
 										 rinfo,
 										 outer_relids,
 										 SAOP_ALLOW))
 				return true;
 
 			indexcol++;
-			families++;
-		} while (!DoneMatchingIndexKeys(families));
+		} while (indexcol < index->ncolumns);
 	}
 
 	return false;
@@ -1621,11 +1606,10 @@ eclass_matches_any_index(EquivalenceClass *ec, EquivalenceMember *em,
 	{
 		IndexOptInfo *index = (IndexOptInfo *) lfirst(l);
 		int			indexcol = 0;
-		Oid		   *families = index->opfamily;
 
 		do
 		{
-			Oid			curFamily = families[0];
+			Oid			curFamily = index->opfamily[indexcol];
 
 			/*
 			 * If it's a btree index, we can reject it if its opfamily isn't
@@ -1643,8 +1627,7 @@ eclass_matches_any_index(EquivalenceClass *ec, EquivalenceMember *em,
 				return true;
 
 			indexcol++;
-			families++;
-		} while (!DoneMatchingIndexKeys(families));
+		} while (indexcol < index->ncolumns);
 	}
 
 	return false;
@@ -2379,7 +2362,6 @@ expand_indexqual_conditions(IndexOptInfo *index, List *clausegroups)
 	List	   *resultquals = NIL;
 	ListCell   *clausegroup_item;
 	int			indexcol = 0;
-	Oid		   *families = index->opfamily;
 
 	if (clausegroups == NIL)
 		return NIL;
@@ -2387,7 +2369,7 @@ expand_indexqual_conditions(IndexOptInfo *index, List *clausegroups)
 	clausegroup_item = list_head(clausegroups);
 	do
 	{
-		Oid			curFamily = families[0];
+		Oid			curFamily = index->opfamily[indexcol];
 		ListCell   *l;
 
 		foreach(l, (List *) lfirst(clausegroup_item))
@@ -2447,8 +2429,7 @@ expand_indexqual_conditions(IndexOptInfo *index, List *clausegroups)
 		clausegroup_item = lnext(clausegroup_item);
 
 		indexcol++;
-		families++;
-	} while (clausegroup_item != NULL && !DoneMatchingIndexKeys(families));
+	} while (clausegroup_item != NULL && indexcol < index->ncolumns);
 
 	Assert(clausegroup_item == NULL);	/* else more groups than indexkeys */
 
