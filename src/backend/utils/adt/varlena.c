@@ -15,6 +15,7 @@
 #include "postgres.h"
 
 #include <ctype.h>
+#include <limits.h>
 
 #include "access/tuptoaster.h"
 #include "catalog/pg_type.h"
@@ -74,6 +75,8 @@ static bytea *bytea_substring(Datum str,
 				bool length_not_specified);
 static bytea *bytea_overlay(bytea *t1, bytea *t2, int sp, int sl);
 static StringInfo makeStringAggState(FunctionCallInfo fcinfo);
+void text_format_string_conversion(StringInfo buf, char conversion,
+							  Oid typid, Datum value, bool isNull);
 
 static Datum text_to_array_internal(PG_FUNCTION_ARGS);
 static text *array_to_text_internal(FunctionCallInfo fcinfo, ArrayType *v,
@@ -3701,4 +3704,196 @@ text_reverse(PG_FUNCTION_ARGS)
 	}
 
 	PG_RETURN_TEXT_P(result);
+}
+
+/*
+ * Returns a formated string
+ */
+Datum
+text_format(PG_FUNCTION_ARGS)
+{
+	text	   *fmt;
+	StringInfoData	str;
+	const char *cp;
+	const char *start_ptr;
+	const char *end_ptr;
+	text	   *result;
+	int			arg = 0;
+
+	/* When format string is null, returns null */
+	if (PG_ARGISNULL(0))
+		PG_RETURN_NULL();
+
+	/* Setup for main loop. */
+	fmt = PG_GETARG_TEXT_PP(0);
+	start_ptr = VARDATA_ANY(fmt);
+	end_ptr = start_ptr + VARSIZE_ANY_EXHDR(fmt);
+	initStringInfo(&str);
+
+	/* Scan format string, looking for conversion specifiers. */
+	for (cp = start_ptr; cp < end_ptr; cp++)
+	{
+		Datum	value;
+		bool	isNull;
+		Oid		typid;
+
+		/*
+		 * If it's not the start of a conversion specifier, just copy it to
+		 * the output buffer.
+		 */
+		if (*cp != '%')
+		{
+			appendStringInfoCharMacro(&str, *cp);
+			continue;
+		}
+
+		/* Did we run off the end of the string? */
+		if (++cp >= end_ptr)
+			ereport(ERROR,
+					(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+					 errmsg("unterminated conversion specifier")));
+
+		/* Easy case: %% outputs a single % */
+		if (*cp == '%')
+		{
+			appendStringInfoCharMacro(&str, *cp);
+			continue;
+		}
+
+		/*
+		 * If the user hasn't specified an argument position, we just advance
+		 * to the next one.  If they have, we must parse it.
+		 */
+		if (*cp < '0' || *cp > '9')
+			++arg;
+		else
+		{
+			bool unterminated = false;
+
+			/* Parse digit string. */
+			arg = 0;
+			do {
+				/* Treat overflowing arg position as unterminated. */
+				if (arg > INT_MAX / 10)
+					break;
+				arg = arg * 10 + (*cp - '0');
+				++cp;
+			} while (cp < end_ptr && *cp >= '0' && *cp <= '9');
+
+			/*
+			 * If we ran off the end, or if there's not a $ next, or if the $
+			 * is the last character, the conversion specifier is improperly
+			 * terminated.
+			 */
+			if (cp == end_ptr || *cp != '$')
+				unterminated = true;
+			else
+			{
+				++cp;
+				if (cp == end_ptr)
+					unterminated = true;
+			}
+			if (unterminated)
+				ereport(ERROR,
+						(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+						 errmsg("unterminated conversion specifier")));
+
+			/* There's no argument 0. */
+			if (arg == 0)
+				ereport(ERROR,
+					(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+					 errmsg("conversion specifies argument 0, but arguments are numbered from 1")));
+		}
+
+		/* Not enough arguments?  Deduct 1 to avoid counting format string. */
+		if (arg > PG_NARGS() - 1)
+			ereport(ERROR,
+					(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+					 errmsg("too few arguments for format conversion")));
+
+		/*
+		 * At this point, we should see the main conversion specifier.
+		 * Whether or not an argument position was present, it's known
+		 * that at least one character remains in the string at this point.
+		 */
+		value = PG_GETARG_DATUM(arg);
+		isNull = PG_ARGISNULL(arg);
+		typid = get_fn_expr_argtype(fcinfo->flinfo, arg);
+
+		switch (*cp)
+		{
+			case 's':
+			case 'I':
+			case 'L':
+				text_format_string_conversion(&str, *cp, typid, value, isNull);
+				break;
+			default:
+				ereport(ERROR,
+						(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+						 errmsg("unrecognized conversion specifier: %c",
+							*cp)));
+		}
+	}
+
+	/* Generate results. */
+	result = cstring_to_text_with_len(str.data, str.len);
+	pfree(str.data);
+
+	PG_RETURN_TEXT_P(result);
+}
+
+/* Format a %s, %I, or %L conversion. */
+void
+text_format_string_conversion(StringInfo buf, char conversion,
+						 Oid typid, Datum value, bool isNull)
+{
+	Oid		typOutput;
+	bool	typIsVarlena;
+	char   *str;
+
+	/* Handle NULL arguments before trying to stringify the value. */
+	if (isNull)
+	{
+		if (conversion == 'L')
+			appendStringInfoString(buf, "NULL");
+		else if (conversion == 'I')
+			ereport(ERROR, 
+					(errcode(ERRCODE_NULL_VALUE_NOT_ALLOWED),
+					 errmsg("NULL cannot be escaped as an SQL identifier")));
+		return;
+	}
+
+	/* Stringify. */
+	getTypeOutputInfo(typid, &typOutput, &typIsVarlena);
+	str = OidOutputFunctionCall(typOutput, value);
+
+	/* Escape. */
+	if (conversion == 'I')
+	{
+		/* quote_identifier may or may not allocate a new string. */
+		appendStringInfoString(buf, quote_identifier(str));
+	}
+	else if (conversion == 'L')
+	{
+		char *qstr = quote_literal_cstr(str);
+		appendStringInfoString(buf, qstr);
+		/* quote_literal_cstr() always allocates a new string */
+		pfree(qstr);
+	}
+	else
+		appendStringInfoString(buf, str);
+
+	/* Cleanup. */
+	pfree(str);
+}
+
+/*
+ * text_format_nv - nonvariadic wrapper for text_format function.
+ * 
+ * note: this wrapper is necessary to be sanity_checks test ok
+ */
+Datum
+text_format_nv(PG_FUNCTION_ARGS)
+{
+	return text_format(fcinfo);
 }

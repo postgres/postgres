@@ -2744,6 +2744,10 @@ DATA(insert OID = 3061 ( right		PGNSP PGUID 12 1 0 0 f f f t f i 2 0 25 "25 23" 
 DESCR("return the last n characters");
 DATA(insert OID = 3062 ( reverse	PGNSP PGUID 12 1 0 0 f f f t f i 1 0 25 "25" _null_ _null_ _null_ _null_  text_reverse  _null_ _null_ _null_ ));
 DESCR("reverse text");
+DATA(insert OID = 3539 ( format		PGNSP PGUID 12 1 0 2276 f f f f f s 2 0 25 "25 2276" "{25,2276}" "{i,v}" _null_ _null_  text_format _null_ _null_ _null_ ));
+DESCR("format text message");
+DATA(insert OID = 3540 ( format		PGNSP PGUID 12 1 0 0 f f f f f s 1 0 25 "25" _null_ _null_ _null_ _null_  text_format_nv _null_ _null_ _null_ ));
+DESCR("format text message");
 
 DATA(insert OID = 1810 (  bit_length	   PGNSP PGUID 14 1 0 0 f f f t f i 1 0 23 "17" _null_ _null_ _null_ _null_ "select pg_catalog.octet_length($1) * 8" _null_ _null_ _null_ ));
 DESCR("length in bits");

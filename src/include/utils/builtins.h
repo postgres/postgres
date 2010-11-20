@@ -743,6 +743,8 @@ extern Datum text_concat_ws(PG_FUNCTION_ARGS);
 extern Datum text_left(PG_FUNCTION_ARGS);
 extern Datum text_right(PG_FUNCTION_ARGS);
 extern Datum text_reverse(PG_FUNCTION_ARGS);
+extern Datum text_format(PG_FUNCTION_ARGS);
+extern Datum text_format_nv(PG_FUNCTION_ARGS);
 
 /* version.c */
 extern Datum pgsql_version(PG_FUNCTION_ARGS);

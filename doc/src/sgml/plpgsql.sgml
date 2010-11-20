@@ -1152,6 +1152,11 @@ EXECUTE 'SELECT count(*) FROM '
      <secondary>use in PL/pgSQL</secondary>
     </indexterm>
 
+    <indexterm>
+     <primary>format</primary>
+     <secondary>use in PL/pgSQL</secondary>
+    </indexterm>
+
     <para>
      When working with dynamic commands you will often have to handle escaping
      of single quotes.  The recommended method for quoting fixed text in your
@@ -1249,6 +1254,24 @@ EXECUTE 'UPDATE tbl SET '
      So, to safely quote text that is not known in advance, you
      <emphasis>must</> use <function>quote_literal</>,
      <function>quote_nullable</>, or <function>quote_ident</>, as appropriate.
+    </para>
+
+    <para>
+     Dynamic SQL statements can also be safely constructed using the
+     <function>format</function> function (see <xref
+     linkend="functions-string">). For example:
+<programlisting>
+EXECUTE format('UPDATE tbl SET %I = %L WHERE key = %L', colname, newvalue, keyvalue);
+</programlisting>
+     The <function>format</function> function can be used in conjunction with 
+     the <literal>USING</literal> clause:
+<programlisting>
+EXECUTE format('UPDATE tbl SET %I = $1 WHERE key = $2', colname)
+   USING newvalue, keyvalue;
+</programlisting>
+     This form is more efficient, because the parameters
+     <literal>newvalue</literal> and <literal>keyvalue</literal> are not
+     converted to text.
     </para>
    </example>
 

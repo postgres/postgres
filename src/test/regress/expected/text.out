@@ -118,21 +118,105 @@ select i, left('ahoj', i), right('ahoj', i) from generate_series(-5, 5) t(i) ord
   5 | ahoj | ahoj
 (11 rows)
 
-select quote_literal('');
- quote_literal 
----------------
- ''
+select format(NULL);
+ format 
+--------
+ 
 (1 row)
 
-select quote_literal('abc''');
- quote_literal 
----------------
- 'abc'''
+select format('Hello');
+ format 
+--------
+ Hello
 (1 row)
 
-select quote_literal(e'\\');
- quote_literal 
----------------
- E'\\'
+select format('Hello %s', 'World');
+   format    
+-------------
+ Hello World
+(1 row)
+
+select format('Hello %%');
+ format  
+---------
+ Hello %
+(1 row)
+
+select format('Hello %%%%');
+  format  
+----------
+ Hello %%
+(1 row)
+
+-- should fail
+select format('Hello %s %s', 'World');
+ERROR:  too few arguments for format conversion
+select format('Hello %s');
+ERROR:  too few arguments for format conversion
+select format('Hello %x', 20);
+ERROR:  unrecognized conversion specifier: x
+-- check literal and sql identifiers
+select format('INSERT INTO %I VALUES(%L,%L)', 'mytab', 10, 'Hello');
+                 format                 
+----------------------------------------
+ INSERT INTO mytab VALUES('10','Hello')
+(1 row)
+
+select format('%s%s%s','Hello', NULL,'World');
+   format   
+------------
+ HelloWorld
+(1 row)
+
+select format('INSERT INTO %I VALUES(%L,%L)', 'mytab', 10, NULL);
+               format                
+-------------------------------------
+ INSERT INTO mytab VALUES('10',NULL)
+(1 row)
+
+select format('INSERT INTO %I VALUES(%L,%L)', 'mytab', NULL, 'Hello');
+                 format                 
+----------------------------------------
+ INSERT INTO mytab VALUES(NULL,'Hello')
+(1 row)
+
+-- should fail, sql identifier cannot be NULL
+select format('INSERT INTO %I VALUES(%L,%L)', NULL, 10, 'Hello');
+ERROR:  NULL cannot be escaped as an SQL identifier
+-- check positional placeholders
+select format('%1$s %3$s', 1, 2, 3);
+ format 
+--------
+ 1 3
+(1 row)
+
+select format('%1$s %12$s', 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12);
+ format 
+--------
+ 1 12
+(1 row)
+
+-- should fail
+select format('%1$s %4$s', 1, 2, 3);
+ERROR:  too few arguments for format conversion
+select format('%1$s %13$s', 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12);
+ERROR:  too few arguments for format conversion
+select format('%1s', 1);
+ERROR:  unterminated conversion specifier
+select format('%1$', 1);
+ERROR:  unterminated conversion specifier
+select format('%1$1', 1);
+ERROR:  unrecognized conversion specifier: 1
+--checkk mix of positional and ordered placeholders
+select format('Hello %s %1$s %s', 'World', 'Hello again');
+            format             
+-------------------------------
+ Hello World World Hello again
+(1 row)
+
+select format('Hello %s %s, %2$s %2$s', 'World', 'Hello again');
+                      format                      
+--------------------------------------------------
+ Hello World Hello again, Hello again Hello again
 (1 row)
 

@@ -1272,6 +1272,9 @@
     <primary>encode</primary>
    </indexterm>
    <indexterm>
+    <primary>format</primary>
+   </indexterm>
+   <indexterm>
     <primary>initcap</primary>
    </indexterm>
    <indexterm>
@@ -1495,6 +1498,28 @@
        <entry><literal>encode(E'123\\000\\001', 'base64')</literal></entry>
        <entry><literal>MTIzAAE=</literal></entry>
       </row>       
+
+      <row>
+       <entry>
+        <literal><function>format</function>(<parameter>formatstr</parameter> <type>text</type>
+        [, <parameter>str</parameter> <type>"any"</type> [, ...] ])</literal>
+       </entry>
+       <entry><type>text</type></entry>
+       <entry>
+         Format a string.  This function is similar to the C function
+         <function>sprintf</>; but only the following conversions
+         are recognized: <literal>%s</literal> interpolates the corresponding
+         argument as a string; <literal>%I</literal> escapes its argument as
+         an SQL identifier; <literal>%L</literal> escapes its argument as an
+         SQL literal; <literal>%%</literal> outputs a literal <literal>%</>.
+         A conversion can reference an explicit parameter position by preceding
+         the conversion specifier with <literal><replaceable>n</>$</>, where
+         <replaceable>n</replaceable> is the argument position.
+         See also <xref linkend="plpgsql-quote-literal-example">.
+       </entry>
+       <entry><literal>format('Hello %s, %1$s', 'World')</literal></entry>
+       <entry><literal>Hello World, World</literal></entry>
+      </row>
 
       <row>
        <entry><literal><function>initcap(<parameter>string</parameter>)</function></literal></entry>
