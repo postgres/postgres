@@ -3,8 +3,6 @@
  * numutils.c
  *	  utility functions for I/O of built-in numeric types.
  *
- *		integer:				pg_atoi, pg_itoa, pg_ltoa
- *
  * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
@@ -109,27 +107,118 @@ pg_atoi(char *s, int size, int c)
 }
 
 /*
- *		pg_itoa			- converts a short int to its string represention
+ * pg_itoa: converts a signed 16-bit integer to its string representation
  *
- *		Note:
- *				previously based on ~ingres/source/gutil/atoi.c
- *				now uses vendor's sprintf conversion
+ * Caller must ensure that 'a' points to enough memory to hold the result
+ * (at least 7 bytes, counting a leading sign and trailing NUL).
+ *
+ * It doesn't seem worth implementing this separately.
  */
 void
 pg_itoa(int16 i, char *a)
 {
-	sprintf(a, "%hd", (short) i);
+	pg_ltoa((int32)i, a);
 }
 
 /*
- *		pg_ltoa			- converts a long int to its string represention
+ * pg_ltoa: converts a signed 32-bit integer to its string representation
  *
- *		Note:
- *				previously based on ~ingres/source/gutil/atoi.c
- *				now uses vendor's sprintf conversion
+ * Caller must ensure that 'a' points to enough memory to hold the result
+ * (at least 12 bytes, counting a leading sign and trailing NUL).
  */
 void
-pg_ltoa(int32 l, char *a)
+pg_ltoa(int32 value, char *a)
 {
-	sprintf(a, "%d", l);
+	char *start = a;
+	bool neg = false;
+
+	/*
+	 * Avoid problems with the most negative integer not being representable
+	 * as a positive integer.
+	 */
+	if (value == INT32_MIN)
+	{
+		memcpy(a, "-2147483648", 12);
+		return;
+	}
+	else if (value < 0)
+	{
+		value = -value;
+		neg = true;
+	}
+
+	/* Compute the result backwards. */
+	do
+	{
+		int32 remainder;
+		int32 oldval = value;
+		value /= 10;
+		remainder = oldval - value * 10;
+		*a++ = '0' + remainder;
+	} while (value != 0);
+	if (neg)
+		*a++ = '-';
+
+	/* Add trailing NUL byte. */
+	*a-- = '\0';
+
+	/* reverse string */
+	while (start < a)
+	{
+		char swap = *start;
+		*start++ = *a;
+		*a-- = swap;
+	}
+}
+
+/*
+ * pg_lltoa: convert a signed 64bit integer to its string representation
+ *
+ * Caller must ensure that 'a' points to enough memory to hold the result
+ * (at least MAXINT8LEN+1 bytes, counting a leading sign and trailing NUL).
+ */
+void
+pg_lltoa(int64 value, char *a)
+{
+	char *start = a;
+	bool neg = false;
+
+	/*
+	 * Avoid problems with the most negative integer not being representable
+	 * as a positive integer.
+	 */
+	if (value == INT64_MIN)
+	{
+		memcpy(a, "-9223372036854775808", 21);
+		return;
+	}
+	else if (value < 0)
+	{
+		value = -value;
+		neg = true;
+	}
+
+	/* Build the string by computing the wanted string backwards. */
+	do
+	{
+		int64 remainder;
+		int64 oldval = value;
+		value /= 10;
+		remainder = oldval - value * 10;
+		*a++ = '0' + remainder;
+	} while (value != 0);
+
+	if (neg)
+		*a++ = '-';
+
+	/* Add trailing NUL byte. */
+	*a-- = '\0';
+
+	/* Reverse string. */
+	while (start < a)
+	{
+		char swap = *start;
+		*start++ = *a;
+		*a-- = swap;
+	}
 }

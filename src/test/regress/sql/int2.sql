@@ -83,3 +83,7 @@ SELECT '' AS five, i.f1, i.f1 - int4 '2' AS x FROM INT2_TBL i;
 SELECT '' AS five, i.f1, i.f1 / int2 '2' AS x FROM INT2_TBL i;
 
 SELECT '' AS five, i.f1, i.f1 / int4 '2' AS x FROM INT2_TBL i;
+
+-- corner cases
+SELECT (1<<15-1)::int2::text;
+SELECT (-1<<15)::int2::text;

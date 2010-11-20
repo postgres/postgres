@@ -123,3 +123,7 @@ SELECT 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 AS ten;
 SELECT 2 + 2 / 2 AS three;
 
 SELECT (2 + 2) / 2 AS two;
+
+-- corner cases
+SELECT (1<<31-1)::int4::text;
+SELECT (1<<31)::int4::text;

@@ -275,6 +275,7 @@ extern Datum current_schemas(PG_FUNCTION_ARGS);
 extern int32 pg_atoi(char *s, int size, int c);
 extern void pg_itoa(int16 i, char *a);
 extern void pg_ltoa(int32 l, char *a);
+extern void pg_lltoa(int64 ll, char *a);
 
 /*
  *		Per-opclass comparison functions for new btrees.  These are

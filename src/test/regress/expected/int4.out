@@ -329,3 +329,16 @@ SELECT (2 + 2) / 2 AS two;
    2
 (1 row)
 
+-- corner cases
+SELECT (1<<31-1)::int4::text;
+    text    
+------------
+ 1073741824
+(1 row)
+
+SELECT (1<<31)::int4::text;
+    text     
+-------------
+ -2147483648
+(1 row)
+
