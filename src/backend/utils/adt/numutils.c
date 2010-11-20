@@ -18,16 +18,6 @@
 #include <limits.h>
 #include <ctype.h>
 
-/*
- * Defining INT64_MIN as -9223372036854775808LL may not work; the compiler's
- * tokenizer may see - as a separate token and then be unable to view
- * 9223372036854775808 as a number.  This is the standard workaround for that
- * problem.
- */
-#ifndef INT64_MIN
-#define INT64_MIN (-9223372036854775807LL - 1)
-#endif
-
 #include "utils/builtins.h"
 
 /*
@@ -127,7 +117,7 @@ pg_atoi(char *s, int size, int c)
 void
 pg_itoa(int16 i, char *a)
 {
-	pg_ltoa((int32)i, a);
+	pg_ltoa((int32) i, a);
 }
 
 /*
@@ -139,14 +129,14 @@ pg_itoa(int16 i, char *a)
 void
 pg_ltoa(int32 value, char *a)
 {
-	char *start = a;
-	bool neg = false;
+	char	   *start = a;
+	bool		neg = false;
 
 	/*
 	 * Avoid problems with the most negative integer not being representable
 	 * as a positive integer.
 	 */
-	if (value == INT_MIN)
+	if (value == (-2147483647-1))
 	{
 		memcpy(a, "-2147483648", 12);
 		return;
@@ -157,32 +147,35 @@ pg_ltoa(int32 value, char *a)
 		neg = true;
 	}
 
-	/* Compute the result backwards. */
+	/* Compute the result string backwards. */
 	do
 	{
-		int32 remainder;
-		int32 oldval = value;
+		int32	remainder;
+		int32	oldval = value;
+
 		value /= 10;
 		remainder = oldval - value * 10;
 		*a++ = '0' + remainder;
 	} while (value != 0);
+
 	if (neg)
 		*a++ = '-';
 
-	/* Add trailing NUL byte. */
+	/* Add trailing NUL byte, and back up 'a' to the last character. */
 	*a-- = '\0';
 
-	/* reverse string */
+	/* Reverse string. */
 	while (start < a)
 	{
-		char swap = *start;
+		char	swap = *start;
+
 		*start++ = *a;
 		*a-- = swap;
 	}
 }
 
 /*
- * pg_lltoa: convert a signed 64bit integer to its string representation
+ * pg_lltoa: convert a signed 64-bit integer to its string representation
  *
  * Caller must ensure that 'a' points to enough memory to hold the result
  * (at least MAXINT8LEN+1 bytes, counting a leading sign and trailing NUL).
@@ -190,14 +183,14 @@ pg_ltoa(int32 value, char *a)
 void
 pg_lltoa(int64 value, char *a)
 {
-	char *start = a;
-	bool neg = false;
+	char	   *start = a;
+	bool		neg = false;
 
 	/*
 	 * Avoid problems with the most negative integer not being representable
 	 * as a positive integer.
 	 */
-	if (value == INT64_MIN)
+	if (value == (-INT64CONST(0x7FFFFFFFFFFFFFFF)-1))
 	{
 		memcpy(a, "-9223372036854775808", 21);
 		return;
@@ -208,11 +201,12 @@ pg_lltoa(int64 value, char *a)
 		neg = true;
 	}
 
-	/* Build the string by computing the wanted string backwards. */
+	/* Compute the result string backwards. */
 	do
 	{
-		int64 remainder;
-		int64 oldval = value;
+		int64	remainder;
+		int64	oldval = value;
+
 		value /= 10;
 		remainder = oldval - value * 10;
 		*a++ = '0' + remainder;
@@ -221,13 +215,14 @@ pg_lltoa(int64 value, char *a)
 	if (neg)
 		*a++ = '-';
 
-	/* Add trailing NUL byte. */
+	/* Add trailing NUL byte, and back up 'a' to the last character. */
 	*a-- = '\0';
 
 	/* Reverse string. */
 	while (start < a)
 	{
-		char swap = *start;
+		char	swap = *start;
+
 		*start++ = *a;
 		*a-- = swap;
 	}

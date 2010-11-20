@@ -249,7 +249,7 @@ SELECT (-1::int2<<15)::text;
  -32768
 (1 row)
 
-SELECT ((-1::int2<<15)+1)::text;
+SELECT ((-1::int2<<15)+1::int2)::text;
   text  
 --------
  -32767
