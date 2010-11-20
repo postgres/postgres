@@ -18,6 +18,16 @@
 #include <limits.h>
 #include <ctype.h>
 
+/*
+ * Defining INT64_MIN as -9223372036854775808LL may not work; the compiler's
+ * tokenizer may see - as a separate token and then be unable to view
+ * 9223372036854775808 as a number.  This is the standard workaround for that
+ * problem.
+ */
+#ifndef INT64_MIN
+#define INT64_MIN (-9223372036854775807LL - 1)
+#endif
+
 #include "utils/builtins.h"
 
 /*
@@ -136,7 +146,7 @@ pg_ltoa(int32 value, char *a)
 	 * Avoid problems with the most negative integer not being representable
 	 * as a positive integer.
 	 */
-	if (value == INT32_MIN)
+	if (value == INT_MIN)
 	{
 		memcpy(a, "-2147483648", 12);
 		return;

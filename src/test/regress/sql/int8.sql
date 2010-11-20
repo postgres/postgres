@@ -191,6 +191,6 @@ SELECT * FROM generate_series('+4567890123456789'::int8, '+4567890123456799'::in
 SELECT * FROM generate_series('+4567890123456789'::int8, '+4567890123456799'::int8, 0);
 SELECT * FROM generate_series('+4567890123456789'::int8, '+4567890123456799'::int8, 2);
 
--- corner cases
-SELECT (1<<63-1)::int8::text;
-SELECT (1<<63)::int8::text;
+-- corner case
+SELECT (-1::int8<<63)::text;
+SELECT ((-1::int8<<63)+1)::text;

@@ -124,6 +124,6 @@ SELECT 2 + 2 / 2 AS three;
 
 SELECT (2 + 2) / 2 AS two;
 
--- corner cases
-SELECT (1<<31-1)::int4::text;
-SELECT (1<<31)::int4::text;
+-- corner case
+SELECT (-1::int4<<31)::text;
+SELECT ((-1::int4<<31)+1)::text;
