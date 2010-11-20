@@ -118,3 +118,21 @@ select i, left('ahoj', i), right('ahoj', i) from generate_series(-5, 5) t(i) ord
   5 | ahoj | ahoj
 (11 rows)
 
+select quote_literal('');
+ quote_literal 
+---------------
+ ''
+(1 row)
+
+select quote_literal('abc''');
+ quote_literal 
+---------------
+ 'abc'''
+(1 row)
+
+select quote_literal(e'\\');
+ quote_literal 
+---------------
+ E'\\'
+(1 row)
+

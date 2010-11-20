@@ -85,7 +85,6 @@ static Tuplestorestate *build_tuplestore_recursively(char *key_fld,
 							 MemoryContext per_query_ctx,
 							 AttInMetadata *attinmeta,
 							 Tuplestorestate *tupstore);
-static char *quote_literal_cstr(char *rawstr);
 
 typedef struct
 {
@@ -1563,23 +1562,4 @@ compatCrosstabTupleDescs(TupleDesc ret_tupdesc, TupleDesc sql_tupdesc)
 
 	/* OK, the two tupdescs are compatible for our purposes */
 	return true;
-}
-
-/*
- * Return a properly quoted literal value.
- * Uses quote_literal in quote.c
- */
-static char *
-quote_literal_cstr(char *rawstr)
-{
-	text	   *rawstr_text;
-	text	   *result_text;
-	char	   *result;
-
-	rawstr_text = cstring_to_text(rawstr);
-	result_text = DatumGetTextP(DirectFunctionCall1(quote_literal,
-											  PointerGetDatum(rawstr_text)));
-	result = text_to_cstring(result_text);
-
-	return result;
 }

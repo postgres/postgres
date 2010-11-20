@@ -41,3 +41,6 @@ select concat_ws('',10,20,null,30);
 select concat_ws(NULL,10,20,null,30) is null;
 select reverse('abcde');
 select i, left('ahoj', i), right('ahoj', i) from generate_series(-5, 5) t(i) order by i;
+select quote_literal('');
+select quote_literal('abc''');
+select quote_literal(e'\\');
