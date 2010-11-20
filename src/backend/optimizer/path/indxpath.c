@@ -1047,14 +1047,14 @@ group_clauses_by_indexkey(IndexOptInfo *index,
 {
 	List	   *clausegroup_list = NIL;
 	bool		found_outer_clause = false;
-	int			indexcol = 0;
+	int			indexcol;
 
 	*found_clause = false;		/* default result */
 
 	if (clauses == NIL && outer_clauses == NIL)
 		return NIL;				/* cannot succeed */
 
-	do
+	for (indexcol = 0; indexcol < index->ncolumns; indexcol++)
 	{
 		List	   *clausegroup = NIL;
 		ListCell   *l;
@@ -1102,10 +1102,7 @@ group_clauses_by_indexkey(IndexOptInfo *index,
 			return NIL;
 
 		clausegroup_list = lappend(clausegroup_list, clausegroup);
-
-		indexcol++;
-
-	} while (indexcol < index->ncolumns);
+	}
 
 	if (!*found_clause && !found_outer_clause)
 		return NIL;				/* no indexable clauses anywhere */
@@ -1163,8 +1160,8 @@ group_clauses_by_indexkey(IndexOptInfo *index,
  *
  * 'index' is the index of interest.
  * 'indexcol' is a column number of 'index' (counting from 0).
- * 'opfamily' is the corresponding operator family.
  * 'rinfo' is the clause to be tested (as a RestrictInfo node).
+ * 'outer_relids' lists rels whose Vars can be considered pseudoconstant.
  * 'saop_control' indicates whether ScalarArrayOpExpr clauses can be used.
  *
  * Returns true if the clause can be used with this index key.
@@ -1180,12 +1177,12 @@ match_clause_to_indexcol(IndexOptInfo *index,
 						 SaOpControl saop_control)
 {
 	Expr	   *clause = rinfo->clause;
+	Oid			opfamily = index->opfamily[indexcol];
 	Node	   *leftop,
 			   *rightop;
 	Relids		left_relids;
 	Relids		right_relids;
 	Oid			expr_op;
-	Oid			opfamily = index->opfamily[indexcol];
 	bool		plain_op;
 
 	/*
@@ -1571,9 +1568,9 @@ matches_any_index(RestrictInfo *rinfo, RelOptInfo *rel, Relids outer_relids)
 	foreach(l, rel->indexlist)
 	{
 		IndexOptInfo *index = (IndexOptInfo *) lfirst(l);
-		int			indexcol = 0;
+		int			indexcol;
 
-		do
+		for (indexcol = 0; indexcol < index->ncolumns; indexcol++)
 		{
 			if (match_clause_to_indexcol(index,
 										 indexcol,
@@ -1581,9 +1578,7 @@ matches_any_index(RestrictInfo *rinfo, RelOptInfo *rel, Relids outer_relids)
 										 outer_relids,
 										 SAOP_ALLOW))
 				return true;
-
-			indexcol++;
-		} while (indexcol < index->ncolumns);
+		}
 	}
 
 	return false;
@@ -1605,9 +1600,9 @@ eclass_matches_any_index(EquivalenceClass *ec, EquivalenceMember *em,
 	foreach(l, rel->indexlist)
 	{
 		IndexOptInfo *index = (IndexOptInfo *) lfirst(l);
-		int			indexcol = 0;
+		int			indexcol;
 
-		do
+		for (indexcol = 0; indexcol < index->ncolumns; indexcol++)
 		{
 			Oid			curFamily = index->opfamily[indexcol];
 
@@ -1625,9 +1620,7 @@ eclass_matches_any_index(EquivalenceClass *ec, EquivalenceMember *em,
 				 list_member_oid(ec->ec_opfamilies, curFamily)) &&
 				match_index_to_operand((Node *) em->em_expr, indexcol, index))
 				return true;
-
-			indexcol++;
-		} while (indexcol < index->ncolumns);
+		}
 	}
 
 	return false;
@@ -2360,21 +2353,25 @@ List *
 expand_indexqual_conditions(IndexOptInfo *index, List *clausegroups)
 {
 	List	   *resultquals = NIL;
-	ListCell   *clausegroup_item;
-	int			indexcol = 0;
+	ListCell   *lc;
+	int			indexcol;
 
 	if (clausegroups == NIL)
 		return NIL;
 
-	clausegroup_item = list_head(clausegroups);
-	do
-	{
-		Oid			curFamily = index->opfamily[indexcol];
-		ListCell   *l;
+	/* clausegroups must correspond to index columns */
+	Assert(list_length(clausegroups) <= index->ncolumns);
 
-		foreach(l, (List *) lfirst(clausegroup_item))
+	indexcol = 0;
+	foreach(lc, clausegroups)
+	{
+		List	   *clausegroup = (List *) lfirst(lc);
+		Oid			curFamily = index->opfamily[indexcol];
+		ListCell   *lc2;
+
+		foreach(lc2, clausegroup)
 		{
-			RestrictInfo *rinfo = (RestrictInfo *) lfirst(l);
+			RestrictInfo *rinfo = (RestrictInfo *) lfirst(lc2);
 			Expr	   *clause = rinfo->clause;
 
 			/* First check for boolean cases */
@@ -2426,12 +2423,8 @@ expand_indexqual_conditions(IndexOptInfo *index, List *clausegroups)
 					 (int) nodeTag(clause));
 		}
 
-		clausegroup_item = lnext(clausegroup_item);
-
 		indexcol++;
-	} while (clausegroup_item != NULL && indexcol < index->ncolumns);
-
-	Assert(clausegroup_item == NULL);	/* else more groups than indexkeys */
+	}
 
 	return resultquals;
 }

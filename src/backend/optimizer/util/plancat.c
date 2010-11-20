@@ -192,13 +192,13 @@ get_relation_info(PlannerInfo *root, Oid relationObjectId, bool inhparent,
 
 			/*
 			 * Allocate per-column info arrays.  To save a few palloc cycles
-			 * we allocate all the Oid-type arrays in one request.	Note that
-			 * the opfamily array needs an extra, terminating zero at the end.
-			 * We pre-zero the ordering info in case the index is unordered.
+			 * we allocate all the Oid-type arrays in one request.  We must
+			 * pre-zero the sortop and nulls_first arrays in case the index is
+			 * unordered.
 			 */
 			info->indexkeys = (int *) palloc(sizeof(int) * ncolumns);
-			info->opfamily = (Oid *) palloc0(sizeof(Oid) * (4 * ncolumns + 1));
-			info->opcintype = info->opfamily + (ncolumns + 1);
+			info->opfamily = (Oid *) palloc0(sizeof(Oid) * (4 * ncolumns));
+			info->opcintype = info->opfamily + ncolumns;
 			info->fwdsortop = info->opcintype + ncolumns;
 			info->revsortop = info->fwdsortop + ncolumns;
 			info->nulls_first = (bool *) palloc0(sizeof(bool) * ncolumns);

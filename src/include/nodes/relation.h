@@ -427,9 +427,6 @@ typedef struct RelOptInfo
  *
  *		opfamily[], indexkeys[], opcintype[], fwdsortop[], revsortop[],
  *		and nulls_first[] each have ncolumns entries.
- *		Note: for historical reasons, the opfamily array has an extra entry
- *		that is always zero.  Some code scans until it sees a zero entry,
- *		rather than looking at ncolumns.
  *
  *		Zeroes in the indexkeys[] array indicate index columns that are
  *		expressions; there is one element in indexprs for each such column.
