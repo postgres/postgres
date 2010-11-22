@@ -50,7 +50,7 @@ static unsigned int ConfigFileLineno;
 int GUC_yylex(void);
 
 static bool ParseConfigFile(const char *config_file, const char *calling_file,
-							int depth, GucContext context, int elevel,
+							int depth, int elevel,
 							struct name_value_pair **head_p,
 							struct name_value_pair **tail_p);
 static void free_name_value_list(struct name_value_pair * list);
@@ -140,9 +140,7 @@ ProcessConfigFile(GucContext context)
 	/* Parse the file into a list of option names and values */
 	head = tail = NULL;
 
-	if (!ParseConfigFile(ConfigFileName, NULL,
-						 0, context, elevel,
-						 &head, &tail))
+	if (!ParseConfigFile(ConfigFileName, NULL, 0, elevel, &head, &tail))
 		goto cleanup_list;
 
 	/*
@@ -368,7 +366,6 @@ ProcessConfigFile(GucContext context)
  *	calling_file: absolute path of file containing the "include" directive,
  *		or NULL at outer level (config_file must be absolute at outer level)
  *	depth: recursion depth (used only to prevent infinite recursion)
- *	context: GucContext passed to ProcessConfigFile()
  *	elevel: error logging level determined by ProcessConfigFile()
  * Output parameters:
  *	head_p, tail_p: head and tail of linked list of name/value pairs
@@ -389,7 +386,7 @@ ProcessConfigFile(GucContext context)
  */
 static bool
 ParseConfigFile(const char *config_file, const char *calling_file,
-				int depth, GucContext context, int elevel,
+				int depth, int elevel,
 				struct name_value_pair **head_p,
 				struct name_value_pair **tail_p)
 {
@@ -496,7 +493,7 @@ ParseConfigFile(const char *config_file, const char *calling_file,
 			unsigned int save_ConfigFileLineno = ConfigFileLineno;
 
 			if (!ParseConfigFile(opt_value, config_file,
-								 depth + 1, context, elevel,
+								 depth + 1, elevel,
 								 head_p, tail_p))
 			{
 				pfree(opt_name);
