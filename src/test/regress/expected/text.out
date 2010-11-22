@@ -52,7 +52,7 @@ LINE 1: select 3 || 4.0;
                  ^
 HINT:  No operator matches the given name and argument type(s). You might need to add explicit type casts.
 /*
- * string functions
+ * various string functions
  */
 select concat('one');
  concat 
@@ -118,6 +118,27 @@ select i, left('ahoj', i), right('ahoj', i) from generate_series(-5, 5) t(i) ord
   5 | ahoj | ahoj
 (11 rows)
 
+select quote_literal('');
+ quote_literal 
+---------------
+ ''
+(1 row)
+
+select quote_literal('abc''');
+ quote_literal 
+---------------
+ 'abc'''
+(1 row)
+
+select quote_literal(e'\\');
+ quote_literal 
+---------------
+ E'\\'
+(1 row)
+
+/*
+ * format
+ */
 select format(NULL);
  format 
 --------
