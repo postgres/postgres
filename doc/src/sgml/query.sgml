@@ -642,12 +642,6 @@ SELECT *
    </indexterm>
 
    <para>
-    <indexterm><primary>average</primary></indexterm>
-    <indexterm><primary>count</primary></indexterm>
-    <indexterm><primary>max</primary></indexterm>
-    <indexterm><primary>min</primary></indexterm>
-    <indexterm><primary>sum</primary></indexterm>
-
     Like  most  other relational database products,
     <productname>PostgreSQL</productname> supports
     <firstterm>aggregate functions</>.
