@@ -2073,6 +2073,7 @@ typedef struct RenameStmt
 	char	   *subname;		/* name of contained object (column, rule,
 								 * trigger, etc) */
 	char	   *newname;		/* the new name */
+	DropBehavior behavior;		/* RESTRICT or CASCADE behavior */
 } RenameStmt;
 
 /* ----------------------

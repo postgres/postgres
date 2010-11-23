@@ -269,8 +269,11 @@ static void ATSimpleRecursion(List **wqueue, Relation rel,
 				  AlterTableCmd *cmd, bool recurse, LOCKMODE lockmode);
 static void ATOneLevelRecursion(List **wqueue, Relation rel,
 					AlterTableCmd *cmd, LOCKMODE lockmode);
-static void find_typed_table_dependencies(Oid typeOid, const char *typeName);
-static void ATPrepAddColumn(List **wqueue, Relation rel, bool recurse,
+static void ATTypedTableRecursion(List **wqueue, Relation rel, AlterTableCmd *cmd,
+								  LOCKMODE lockmode);
+static List *find_typed_table_dependencies(Oid typeOid, const char *typeName,
+										   DropBehavior behavior);
+static void ATPrepAddColumn(List **wqueue, Relation rel, bool recurse, bool recursing,
 				AlterTableCmd *cmd, LOCKMODE lockmode);
 static void ATExecAddColumn(AlteredTableInfo *tab, Relation rel,
 				ColumnDef *colDef, bool isOid, LOCKMODE lockmode);
@@ -290,7 +293,8 @@ static void ATExecSetOptions(Relation rel, const char *colName,
 				 Node *options, bool isReset, LOCKMODE lockmode);
 static void ATExecSetStorage(Relation rel, const char *colName,
 				 Node *newValue, LOCKMODE lockmode);
-static void ATPrepDropColumn(Relation rel, bool recurse, AlterTableCmd *cmd);
+static void ATPrepDropColumn(List **wqueue, Relation rel, bool recurse, bool recursing,
+							 AlterTableCmd *cmd, LOCKMODE lockmode);
 static void ATExecDropColumn(List **wqueue, Relation rel, const char *colName,
 				 DropBehavior behavior,
 				 bool recurse, bool recursing,
@@ -1942,14 +1946,16 @@ setRelhassubclassInRelation(Oid relationId, bool relhassubclass)
 
 
 /*
- *		renameatt		- changes the name of a attribute in a relation
+ *		renameatt_internal		- workhorse for renameatt
  */
-void
-renameatt(Oid myrelid,
-		  const char *oldattname,
-		  const char *newattname,
-		  bool recurse,
-		  int expected_parents)
+static void
+renameatt_internal(Oid myrelid,
+				   const char *oldattname,
+				   const char *newattname,
+				   bool recurse,
+				   bool recursing,
+				   int expected_parents,
+				   DropBehavior behavior)
 {
 	Relation	targetrelation;
 	Relation	attrelation;
@@ -1964,14 +1970,10 @@ renameatt(Oid myrelid,
 	 */
 	targetrelation = relation_open(myrelid, AccessExclusiveLock);
 
-	if (targetrelation->rd_rel->reloftype)
+	if (targetrelation->rd_rel->reloftype && !recursing)
 		ereport(ERROR,
 				(errcode(ERRCODE_WRONG_OBJECT_TYPE),
 				 errmsg("cannot rename column of typed table")));
-
-	if (targetrelation->rd_rel->relkind == RELKIND_COMPOSITE_TYPE)
-		find_typed_table_dependencies(targetrelation->rd_rel->reltype,
-									  RelationGetRelationName(targetrelation));
 
 	/*
 	 * Renaming the columns of sequences or toast tables doesn't actually
@@ -2038,7 +2040,7 @@ renameatt(Oid myrelid,
 			if (childrelid == myrelid)
 				continue;
 			/* note we need not recurse again */
-			renameatt(childrelid, oldattname, newattname, false, numparents);
+			renameatt_internal(childrelid, oldattname, newattname, false, true, numparents, behavior);
 		}
 	}
 	else
@@ -2055,6 +2057,20 @@ renameatt(Oid myrelid,
 					(errcode(ERRCODE_INVALID_TABLE_DEFINITION),
 					 errmsg("inherited column \"%s\" must be renamed in child tables too",
 							oldattname)));
+	}
+
+	/* rename attributes in typed tables of composite type */
+	if (targetrelation->rd_rel->relkind == RELKIND_COMPOSITE_TYPE)
+	{
+		List	   *child_oids;
+		ListCell   *lo;
+
+		child_oids = find_typed_table_dependencies(targetrelation->rd_rel->reltype,
+												   RelationGetRelationName(targetrelation),
+												   behavior);
+
+		foreach(lo, child_oids)
+			renameatt_internal(lfirst_oid(lo), oldattname, newattname, true, true, 0, behavior);
 	}
 
 	attrelation = heap_open(AttributeRelationId, RowExclusiveLock);
@@ -2113,6 +2129,22 @@ renameatt(Oid myrelid,
 	heap_close(attrelation, RowExclusiveLock);
 
 	relation_close(targetrelation, NoLock);		/* close rel but keep lock */
+}
+
+
+/*
+ *		renameatt		- changes the name of a attribute in a relation
+ */
+void
+renameatt(Oid myrelid, RenameStmt *stmt)
+{
+	renameatt_internal(myrelid,
+					   stmt->subname,		/* old att name */
+					   stmt->newname,		/* new att name */
+					   interpretInhOption(stmt->relation->inhOpt),	/* recursive? */
+					   false,  /* recursing? */
+					   0,	/* expected inhcount */
+					   stmt->behavior);
 }
 
 
@@ -2649,14 +2681,14 @@ ATPrepCmd(List **wqueue, Relation rel, AlterTableCmd *cmd,
 		case AT_AddColumn:		/* ADD COLUMN */
 			ATSimplePermissions(rel, false, true);
 			/* Performs own recursion */
-			ATPrepAddColumn(wqueue, rel, recurse, cmd, lockmode);
+			ATPrepAddColumn(wqueue, rel, recurse, recursing, cmd, lockmode);
 			pass = AT_PASS_ADD_COL;
 			break;
 		case AT_AddColumnToView:		/* add column via CREATE OR REPLACE
 										 * VIEW */
 			ATSimplePermissions(rel, true, false);
 			/* Performs own recursion */
-			ATPrepAddColumn(wqueue, rel, recurse, cmd, lockmode);
+			ATPrepAddColumn(wqueue, rel, recurse, recursing, cmd, lockmode);
 			pass = AT_PASS_ADD_COL;
 			break;
 		case AT_ColumnDefault:	/* ALTER COLUMN DEFAULT */
@@ -2704,7 +2736,7 @@ ATPrepCmd(List **wqueue, Relation rel, AlterTableCmd *cmd,
 			break;
 		case AT_DropColumn:		/* DROP COLUMN */
 			ATSimplePermissions(rel, false, true);
-			ATPrepDropColumn(rel, recurse, cmd);
+			ATPrepDropColumn(wqueue, rel, recurse, recursing, cmd, lockmode);
 			/* Recursion occurs during execution phase */
 			pass = AT_PASS_DROP;
 			break;
@@ -3671,6 +3703,37 @@ ATOneLevelRecursion(List **wqueue, Relation rel,
 	}
 }
 
+/*
+ * ATTypedTableRecursion
+ *
+ * Propagate ALTER TYPE operations to the typed tables of that type.
+ * Also check the RESTRICT/CASCADE behavior.
+ */
+static void
+ATTypedTableRecursion(List **wqueue, Relation rel, AlterTableCmd *cmd,
+					  LOCKMODE lockmode)
+{
+	ListCell   *child;
+	List	   *children;
+
+	Assert(rel->rd_rel->relkind == RELKIND_COMPOSITE_TYPE);
+
+	children = find_typed_table_dependencies(rel->rd_rel->reltype,
+											 RelationGetRelationName(rel),
+											 cmd->behavior);
+
+	foreach(child, children)
+	{
+		Oid			childrelid = lfirst_oid(child);
+		Relation	childrel;
+
+		childrel = relation_open(childrelid, lockmode);
+		CheckTableNotInUse(childrel, "ALTER TABLE");
+		ATPrepCmd(wqueue, childrel, cmd, false, true, lockmode);
+		relation_close(childrel, NoLock);
+	}
+}
+
 
 /*
  * find_composite_type_dependencies
@@ -3778,17 +3841,17 @@ find_composite_type_dependencies(Oid typeOid,
  * find_typed_table_dependencies
  *
  * Check to see if a composite type is being used as the type of a
- * typed table.  Eventually, we'd like to propagate the alter
- * operation into such tables, but for now, just error out if we find
- * any.
+ * typed table.  Abort if any are found and behavior is RESTRICT.
+ * Else return the list of tables.
  */
-static void
-find_typed_table_dependencies(Oid typeOid, const char *typeName)
+static List *
+find_typed_table_dependencies(Oid typeOid, const char *typeName, DropBehavior behavior)
 {
 	Relation	classRel;
 	ScanKeyData key[1];
 	HeapScanDesc scan;
 	HeapTuple	tuple;
+	List	   *result = NIL;
 
 	classRel = heap_open(RelationRelationId, AccessShareLock);
 
@@ -3801,14 +3864,20 @@ find_typed_table_dependencies(Oid typeOid, const char *typeName)
 
 	if (HeapTupleIsValid(tuple = heap_getnext(scan, ForwardScanDirection)))
 	{
-		ereport(ERROR,
-				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-				 errmsg("cannot alter type \"%s\" because it is the type of a typed table",
-						typeName)));
+		if (behavior == DROP_RESTRICT)
+			ereport(ERROR,
+					(errcode(ERRCODE_DEPENDENT_OBJECTS_STILL_EXIST),
+					 errmsg("cannot alter type \"%s\" because it is the type of a typed table",
+							typeName),
+					 errhint("Use ALTER ... CASCADE to alter the typed tables too.")));
+		else
+			result = lappend_oid(result, HeapTupleGetOid(tuple));
 	}
 
 	heap_endscan(scan);
 	heap_close(classRel, AccessShareLock);
+
+	return result;
 }
 
 
@@ -3821,10 +3890,10 @@ find_typed_table_dependencies(Oid typeOid, const char *typeName)
  * AlterTableCmd's.
  */
 static void
-ATPrepAddColumn(List **wqueue, Relation rel, bool recurse,
+ATPrepAddColumn(List **wqueue, Relation rel, bool recurse, bool recursing,
 				AlterTableCmd *cmd, LOCKMODE lockmode)
 {
-	if (rel->rd_rel->reloftype)
+	if (rel->rd_rel->reloftype && !recursing)
 		ereport(ERROR,
 				(errcode(ERRCODE_WRONG_OBJECT_TYPE),
 				 errmsg("cannot add column to typed table")));
@@ -3860,8 +3929,7 @@ ATPrepAddColumn(List **wqueue, Relation rel, bool recurse,
 	}
 
 	if (rel->rd_rel->relkind == RELKIND_COMPOSITE_TYPE)
-		find_typed_table_dependencies(rel->rd_rel->reltype,
-									  RelationGetRelationName(rel));
+		ATTypedTableRecursion(wqueue, rel, cmd, lockmode);
 }
 
 static void
@@ -4162,7 +4230,7 @@ ATPrepAddOids(List **wqueue, Relation rel, bool recurse, AlterTableCmd *cmd, LOC
 		cdef->storage = 0;
 		cmd->def = (Node *) cdef;
 	}
-	ATPrepAddColumn(wqueue, rel, recurse, cmd, lockmode);
+	ATPrepAddColumn(wqueue, rel, recurse, false, cmd, lockmode);
 }
 
 /*
@@ -4586,18 +4654,17 @@ ATExecSetStorage(Relation rel, const char *colName, Node *newValue, LOCKMODE loc
  * correctly.)
  */
 static void
-ATPrepDropColumn(Relation rel, bool recurse, AlterTableCmd *cmd)
+ATPrepDropColumn(List **wqueue, Relation rel, bool recurse, bool recursing,
+				 AlterTableCmd *cmd, LOCKMODE lockmode)
 {
-	if (rel->rd_rel->reloftype)
+	if (rel->rd_rel->reloftype && !recursing)
 		ereport(ERROR,
 				(errcode(ERRCODE_WRONG_OBJECT_TYPE),
 				 errmsg("cannot drop column from typed table")));
 
 	if (rel->rd_rel->relkind == RELKIND_COMPOSITE_TYPE)
-		find_typed_table_dependencies(rel->rd_rel->reltype,
-									  RelationGetRelationName(rel));
+		ATTypedTableRecursion(wqueue, rel, cmd, lockmode);
 
-	/* No command-specific prep needed except saving recurse flag */
 	if (recurse)
 		cmd->subtype = AT_DropColumnRecurse;
 }
@@ -6060,7 +6127,7 @@ ATPrepAlterColumnType(List **wqueue,
 	NewColumnValue *newval;
 	ParseState *pstate = make_parsestate(NULL);
 
-	if (rel->rd_rel->reloftype)
+	if (rel->rd_rel->reloftype && !recursing)
 		ereport(ERROR,
 				(errcode(ERRCODE_WRONG_OBJECT_TYPE),
 				 errmsg("cannot alter column type of typed table")));
@@ -6178,9 +6245,6 @@ ATPrepAlterColumnType(List **wqueue,
 		find_composite_type_dependencies(rel->rd_rel->reltype,
 										 NULL,
 										 RelationGetRelationName(rel));
-
-		find_typed_table_dependencies(rel->rd_rel->reltype,
-									  RelationGetRelationName(rel));
 	}
 
 	ReleaseSysCache(tuple);
@@ -6198,6 +6262,9 @@ ATPrepAlterColumnType(List **wqueue,
 				(errcode(ERRCODE_INVALID_TABLE_DEFINITION),
 				 errmsg("type of inherited column \"%s\" must be changed in child tables too",
 						colName)));
+
+	if (tab->relkind == RELKIND_COMPOSITE_TYPE)
+		ATTypedTableRecursion(wqueue, rel, cmd, lockmode);
 }
 
 static void

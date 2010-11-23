@@ -26,15 +26,15 @@ PostgreSQL documentation
 ALTER TYPE <replaceable class="PARAMETER">name</replaceable> <replaceable class="PARAMETER">action</replaceable> [, ... ]
 ALTER TYPE <replaceable class="PARAMETER">name</replaceable> OWNER TO <replaceable class="PARAMETER">new_owner</replaceable>
 ALTER TYPE <replaceable class="PARAMETER">name</replaceable> RENAME ATTRIBUTE <replaceable class="PARAMETER">attribute_name</replaceable> TO <replaceable class="PARAMETER">new_attribute_name</replaceable>
-ALTER TYPE <replaceable class="PARAMETER">name</replaceable> RENAME TO <replaceable class="PARAMETER">new_name</replaceable>
+ALTER TYPE <replaceable class="PARAMETER">name</replaceable> RENAME TO <replaceable class="PARAMETER">new_name</replaceable> [ CASCADE | RESTRICT ]
 ALTER TYPE <replaceable class="PARAMETER">name</replaceable> SET SCHEMA <replaceable class="PARAMETER">new_schema</replaceable>
 ALTER TYPE <replaceable class="PARAMETER">name</replaceable> ADD VALUE <replaceable class="PARAMETER">new_enum_value</replaceable> [ { BEFORE | AFTER } <replaceable class="PARAMETER">existing_enum_value</replaceable> ]
 
 <phrase>where <replaceable class="PARAMETER">action</replaceable> is one of:</phrase>
 
-    ADD ATTRIBUTE <replaceable class="PARAMETER">attribute_name</replaceable> <replaceable class="PARAMETER">data_type</replaceable>
-    DROP ATTRIBUTE [ IF EXISTS ] <replaceable class="PARAMETER">attribute_name</replaceable>
-    ALTER ATTRIBUTE <replaceable class="PARAMETER">attribute_name</replaceable> [ SET DATA ] TYPE <replaceable class="PARAMETER">data_type</replaceable>
+    ADD ATTRIBUTE <replaceable class="PARAMETER">attribute_name</replaceable> <replaceable class="PARAMETER">data_type</replaceable> [ CASCADE | RESTRICT ]
+    DROP ATTRIBUTE [ IF EXISTS ] <replaceable class="PARAMETER">attribute_name</replaceable> [ CASCADE | RESTRICT ]
+    ALTER ATTRIBUTE <replaceable class="PARAMETER">attribute_name</replaceable> [ SET DATA ] TYPE <replaceable class="PARAMETER">data_type</replaceable> [ CASCADE | RESTRICT ]
 </synopsis>
  </refsynopsisdiv>
 
@@ -113,6 +113,26 @@ ALTER TYPE <replaceable class="PARAMETER">name</replaceable> ADD VALUE <replacea
       the enum's ordering is not specified using <literal>BEFORE</literal> or
       <literal>AFTER</literal>, then the new item is placed at the end of the
       list of values.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><literal>CASCADE</literal></term>
+    <listitem>
+     <para>
+      Automatically propagate the operation to typed tables of the
+      type being altered.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><literal>RESTRICT</literal></term>
+    <listitem>
+     <para>
+      Refuse the operation if the type being altered is the type of a
+      typed table.  This is the default.
      </para>
     </listitem>
    </varlistentry>

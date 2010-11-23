@@ -42,11 +42,7 @@ extern void CheckTableNotInUse(Relation rel, const char *stmt);
 
 extern void ExecuteTruncate(TruncateStmt *stmt);
 
-extern void renameatt(Oid myrelid,
-		  const char *oldattname,
-		  const char *newattname,
-		  bool recurse,
-		  int expected_parents);
+extern void renameatt(Oid myrelid, RenameStmt *stmt);
 
 extern void RenameRelation(Oid myrelid,
 			   const char *newrelname,

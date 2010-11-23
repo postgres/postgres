@@ -1760,13 +1760,100 @@ ALTER TYPE test_type1 ALTER ATTRIBUTE b TYPE varchar; -- fails
 ERROR:  cannot alter type "test_type1" because column "test_tbl1"."y" uses it
 CREATE TYPE test_type2 AS (a int, b text);
 CREATE TABLE test_tbl2 OF test_type2;
+\d test_type2
+Composite type "public.test_type2"
+ Column |  Type   
+--------+---------
+ a      | integer
+ b      | text
+
+\d test_tbl2
+   Table "public.test_tbl2"
+ Column |  Type   | Modifiers 
+--------+---------+-----------
+ a      | integer | 
+ b      | text    | 
+Typed table of type: test_type2
+
 ALTER TYPE test_type2 ADD ATTRIBUTE c text; -- fails
 ERROR:  cannot alter type "test_type2" because it is the type of a typed table
+HINT:  Use ALTER ... CASCADE to alter the typed tables too.
+ALTER TYPE test_type2 ADD ATTRIBUTE c text CASCADE;
+\d test_type2
+Composite type "public.test_type2"
+ Column |  Type   
+--------+---------
+ a      | integer
+ b      | text
+ c      | text
+
+\d test_tbl2
+   Table "public.test_tbl2"
+ Column |  Type   | Modifiers 
+--------+---------+-----------
+ a      | integer | 
+ b      | text    | 
+ c      | text    | 
+Typed table of type: test_type2
+
 ALTER TYPE test_type2 ALTER ATTRIBUTE b TYPE varchar; -- fails
 ERROR:  cannot alter type "test_type2" because it is the type of a typed table
+HINT:  Use ALTER ... CASCADE to alter the typed tables too.
+ALTER TYPE test_type2 ALTER ATTRIBUTE b TYPE varchar CASCADE;
+\d test_type2
+Composite type "public.test_type2"
+ Column |       Type        
+--------+-------------------
+ a      | integer
+ b      | character varying
+ c      | text
+
+\d test_tbl2
+        Table "public.test_tbl2"
+ Column |       Type        | Modifiers 
+--------+-------------------+-----------
+ a      | integer           | 
+ b      | character varying | 
+ c      | text              | 
+Typed table of type: test_type2
+
 ALTER TYPE test_type2 DROP ATTRIBUTE b; -- fails
 ERROR:  cannot alter type "test_type2" because it is the type of a typed table
-ALTER TYPE test_type2 RENAME ATTRIBUTE b TO bb; -- fails
+HINT:  Use ALTER ... CASCADE to alter the typed tables too.
+ALTER TYPE test_type2 DROP ATTRIBUTE b CASCADE;
+\d test_type2
+Composite type "public.test_type2"
+ Column |  Type   
+--------+---------
+ a      | integer
+ c      | text
+
+\d test_tbl2
+   Table "public.test_tbl2"
+ Column |  Type   | Modifiers 
+--------+---------+-----------
+ a      | integer | 
+ c      | text    | 
+Typed table of type: test_type2
+
+ALTER TYPE test_type2 RENAME ATTRIBUTE a TO aa; -- fails
 ERROR:  cannot alter type "test_type2" because it is the type of a typed table
+HINT:  Use ALTER ... CASCADE to alter the typed tables too.
+ALTER TYPE test_type2 RENAME ATTRIBUTE a TO aa CASCADE;
+\d test_type2
+Composite type "public.test_type2"
+ Column |  Type   
+--------+---------
+ aa     | integer
+ c      | text
+
+\d test_tbl2
+   Table "public.test_tbl2"
+ Column |  Type   | Modifiers 
+--------+---------+-----------
+ aa     | integer | 
+ c      | text    | 
+Typed table of type: test_type2
+
 CREATE TYPE test_type_empty AS ();
 DROP TYPE test_type_empty;

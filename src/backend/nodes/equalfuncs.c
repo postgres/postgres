@@ -1306,6 +1306,7 @@ _equalRenameStmt(RenameStmt *a, RenameStmt *b)
 	COMPARE_NODE_FIELD(objarg);
 	COMPARE_STRING_FIELD(subname);
 	COMPARE_STRING_FIELD(newname);
+	COMPARE_SCALAR_FIELD(behavior);
 
 	return true;
 }

@@ -1272,10 +1272,28 @@ ALTER TYPE test_type1 ALTER ATTRIBUTE b TYPE varchar; -- fails
 
 CREATE TYPE test_type2 AS (a int, b text);
 CREATE TABLE test_tbl2 OF test_type2;
+\d test_type2
+\d test_tbl2
+
 ALTER TYPE test_type2 ADD ATTRIBUTE c text; -- fails
+ALTER TYPE test_type2 ADD ATTRIBUTE c text CASCADE;
+\d test_type2
+\d test_tbl2
+
 ALTER TYPE test_type2 ALTER ATTRIBUTE b TYPE varchar; -- fails
+ALTER TYPE test_type2 ALTER ATTRIBUTE b TYPE varchar CASCADE;
+\d test_type2
+\d test_tbl2
+
 ALTER TYPE test_type2 DROP ATTRIBUTE b; -- fails
-ALTER TYPE test_type2 RENAME ATTRIBUTE b TO bb; -- fails
+ALTER TYPE test_type2 DROP ATTRIBUTE b CASCADE;
+\d test_type2
+\d test_tbl2
+
+ALTER TYPE test_type2 RENAME ATTRIBUTE a TO aa; -- fails
+ALTER TYPE test_type2 RENAME ATTRIBUTE a TO aa CASCADE;
+\d test_type2
+\d test_tbl2
 
 CREATE TYPE test_type_empty AS ();
 DROP TYPE test_type_empty;

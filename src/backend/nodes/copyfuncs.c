@@ -2803,6 +2803,7 @@ _copyRenameStmt(RenameStmt *from)
 	COPY_NODE_FIELD(objarg);
 	COPY_STRING_FIELD(subname);
 	COPY_STRING_FIELD(newname);
+	COPY_SCALAR_FIELD(behavior);
 
 	return newnode;
 }

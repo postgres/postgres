@@ -125,11 +125,7 @@ ExecRenameStmt(RenameStmt *stmt)
 						}
 					case OBJECT_COLUMN:
 					case OBJECT_ATTRIBUTE:
-						renameatt(relid,
-								  stmt->subname,		/* old att name */
-								  stmt->newname,		/* new att name */
-								  interpretInhOption(stmt->relation->inhOpt),	/* recursive? */
-								  0);	/* expected inhcount */
+						renameatt(relid, stmt);
 						break;
 					case OBJECT_TRIGGER:
 						renametrig(relid,

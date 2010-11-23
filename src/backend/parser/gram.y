@@ -2003,41 +2003,43 @@ alter_type_cmds:
 		;
 
 alter_type_cmd:
-			/* ALTER TYPE <name> ADD ATTRIBUTE <coldef> */
-			ADD_P ATTRIBUTE TableFuncElement
+			/* ALTER TYPE <name> ADD ATTRIBUTE <coldef> [RESTRICT|CASCADE] */
+			ADD_P ATTRIBUTE TableFuncElement opt_drop_behavior
 				{
 					AlterTableCmd *n = makeNode(AlterTableCmd);
 					n->subtype = AT_AddColumn;
 					n->def = $3;
+					n->behavior = $4;
 					$$ = (Node *)n;
 				}
-			/* ALTER TYPE <name> DROP ATTRIBUTE IF EXISTS <attname> */
-			| DROP ATTRIBUTE IF_P EXISTS ColId
+			/* ALTER TYPE <name> DROP ATTRIBUTE IF EXISTS <attname> [RESTRICT|CASCADE] */
+			| DROP ATTRIBUTE IF_P EXISTS ColId opt_drop_behavior
 				{
 					AlterTableCmd *n = makeNode(AlterTableCmd);
 					n->subtype = AT_DropColumn;
 					n->name = $5;
-					n->behavior = DROP_RESTRICT; /* currently no effect */
+					n->behavior = $6;
 					n->missing_ok = TRUE;
 					$$ = (Node *)n;
 				}
-			/* ALTER TYPE <name> DROP ATTRIBUTE <attname> */
+			/* ALTER TYPE <name> DROP ATTRIBUTE <attname> [RESTRICT|CASCADE] */
 			| DROP ATTRIBUTE ColId opt_drop_behavior
 				{
 					AlterTableCmd *n = makeNode(AlterTableCmd);
 					n->subtype = AT_DropColumn;
 					n->name = $3;
-					n->behavior = DROP_RESTRICT; /* currently no effect */
+					n->behavior = $4;
 					n->missing_ok = FALSE;
 					$$ = (Node *)n;
 				}
-			/* ALTER TYPE <name> ALTER ATTRIBUTE <attname> [SET DATA] TYPE <typename> */
-			| ALTER ATTRIBUTE ColId opt_set_data TYPE_P Typename
+			/* ALTER TYPE <name> ALTER ATTRIBUTE <attname> [SET DATA] TYPE <typename> [RESTRICT|CASCADE] */
+			| ALTER ATTRIBUTE ColId opt_set_data TYPE_P Typename opt_drop_behavior
 				{
 					AlterTableCmd *n = makeNode(AlterTableCmd);
 					n->subtype = AT_AlterColumnType;
 					n->name = $3;
 					n->def = (Node *) $6;
+					n->behavior = $7;
 					$$ = (Node *)n;
 				}
 		;
@@ -6005,13 +6007,14 @@ RenameStmt: ALTER AGGREGATE func_name aggr_args RENAME TO name
 					n->newname = $6;
 					$$ = (Node *)n;
 				}
-			| ALTER TYPE_P any_name RENAME ATTRIBUTE name TO name
+			| ALTER TYPE_P any_name RENAME ATTRIBUTE name TO name opt_drop_behavior
 				{
 					RenameStmt *n = makeNode(RenameStmt);
 					n->renameType = OBJECT_ATTRIBUTE;
 					n->relation = makeRangeVarFromAnyName($3, @3, yyscanner);
 					n->subname = $6;
 					n->newname = $8;
+					n->behavior = $9;
 					$$ = (Node *)n;
 				}
 		;
