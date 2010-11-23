@@ -2685,6 +2685,21 @@ getObjectDescription(const ObjectAddress *object)
 }
 
 /*
+ * getObjectDescriptionOids: as above, except the object is specified by Oids
+ */
+char *
+getObjectDescriptionOids(Oid classid, Oid objid)
+{
+	ObjectAddress	address;
+
+	address.classId = classid;
+	address.objectId = objid;
+	address.objectSubId = 0;
+
+	return getObjectDescription(&address);
+}
+
+/*
  * subroutine for getObjectDescription: describe a relation
  */
 static void

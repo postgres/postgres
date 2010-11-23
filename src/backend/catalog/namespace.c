@@ -2340,6 +2340,40 @@ LookupCreationNamespace(const char *nspname)
 }
 
 /*
+ * Common checks on switching namespaces.
+ *
+ * We complain if (1) the old and new namespaces are the same, (2) either the
+ * old or new namespaces is a temporary schema (or temporary toast schema), or
+ * (3) either the old or new namespaces is the TOAST schema.
+ */
+void
+CheckSetNamespace(Oid oldNspOid, Oid nspOid, Oid classid, Oid objid)
+{
+	if (oldNspOid == nspOid)
+		ereport(ERROR,
+				(classid == RelationRelationId ?
+					errcode(ERRCODE_DUPLICATE_TABLE) :
+				 classid == ProcedureRelationId ?
+					errcode(ERRCODE_DUPLICATE_FUNCTION) :
+					errcode(ERRCODE_DUPLICATE_OBJECT),
+				 errmsg("%s is already in schema \"%s\"",
+						getObjectDescriptionOids(classid, objid),
+						get_namespace_name(nspOid))));
+
+	/* disallow renaming into or out of temp schemas */
+	if (isAnyTempNamespace(nspOid) || isAnyTempNamespace(oldNspOid))
+		ereport(ERROR,
+				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+				 errmsg("cannot move objects into or out of temporary schemas")));
+
+	/* same for TOAST schema */
+	if (nspOid == PG_TOAST_NAMESPACE || oldNspOid == PG_TOAST_NAMESPACE)
+		ereport(ERROR,
+				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+				 errmsg("cannot move objects into or out of TOAST schema")));
+}
+
+/*
  * QualifiedNameGetCreationNamespace
  *		Given a possibly-qualified name for an object (in List-of-Values
  *		format), determine what namespace the object should be created in.

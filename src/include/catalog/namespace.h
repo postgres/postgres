@@ -94,6 +94,8 @@ extern Oid	LookupExplicitNamespace(const char *nspname);
 extern Oid	get_namespace_oid(const char *nspname, bool missing_ok);
 
 extern Oid	LookupCreationNamespace(const char *nspname);
+extern void CheckSetNamespace(Oid oldNspOid, Oid nspOid, Oid classid,
+							  Oid objid);
 extern Oid	QualifiedNameGetCreationNamespace(List *names, char **objname_p);
 extern RangeVar *makeRangeVarFromNameList(List *names);
 extern char *NameListToString(List *names);
