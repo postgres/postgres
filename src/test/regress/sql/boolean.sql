@@ -100,7 +100,7 @@ INSERT INTO BOOLTBL1 (f1) VALUES (bool 'True');
 INSERT INTO BOOLTBL1 (f1) VALUES (bool 'true');
 
 
--- BOOLTBL1 should be full of true's at this point 
+-- BOOLTBL1 should be full of true's at this point
 SELECT '' AS t_3, BOOLTBL1.* FROM BOOLTBL1;
 
 
@@ -109,7 +109,7 @@ SELECT '' AS t_3, BOOLTBL1.*
    WHERE f1 = bool 'true';
 
 
-SELECT '' AS t_3, BOOLTBL1.* 
+SELECT '' AS t_3, BOOLTBL1.*
    FROM BOOLTBL1
    WHERE f1 <> bool 'false';
 
@@ -119,7 +119,7 @@ SELECT '' AS zero, BOOLTBL1.*
 
 INSERT INTO BOOLTBL1 (f1) VALUES (bool 'f');
 
-SELECT '' AS f_1, BOOLTBL1.* 
+SELECT '' AS f_1, BOOLTBL1.*
    FROM BOOLTBL1
    WHERE f1 = bool 'false';
 
@@ -136,10 +136,10 @@ INSERT INTO BOOLTBL2 (f1) VALUES (bool 'FALSE');
 
 -- This is now an invalid expression
 -- For pre-v6.3 this evaluated to false - thomas 1997-10-23
-INSERT INTO BOOLTBL2 (f1) 
-   VALUES (bool 'XXX');  
+INSERT INTO BOOLTBL2 (f1)
+   VALUES (bool 'XXX');
 
--- BOOLTBL2 should be full of false's at this point 
+-- BOOLTBL2 should be full of false's at this point
 SELECT '' AS f_4, BOOLTBL2.* FROM BOOLTBL2;
 
 

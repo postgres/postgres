@@ -40,7 +40,7 @@ ECPG: stmtPrepareStmt block
 	{
 		if ($1.type == NULL || strlen($1.type) == 0)
 			output_prepare_statement($1.name, $1.stmt);
-		else	
+		else
 			output_statement(cat_str(5, make_str("prepare"), $1.name, $1.type, make_str("as"), $1.stmt), 0, ECPGst_normal);
 	}
 ECPG: stmtTransactionStmt block
@@ -109,7 +109,7 @@ ECPG: stmtViewStmt rule
 
 		if (!strcmp($1, "all"))
 			fprintf(yyout, "{ ECPGdeallocate_all(__LINE__, %d, %s);", compat, con);
-		else if ($1[0] == ':') 
+		else if ($1[0] == ':')
 			fprintf(yyout, "{ ECPGdeallocate(__LINE__, %d, %s, %s);", compat, con, $1+1);
 		else
 			fprintf(yyout, "{ ECPGdeallocate(__LINE__, %d, %s, \"%s\");", compat, con, $1);

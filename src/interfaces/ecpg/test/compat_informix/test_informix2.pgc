@@ -67,8 +67,8 @@ int main(void)
 
 	EXEC SQL create table history (customerid integer, timestamp timestamp without time zone, action_taken char(5), narrative varchar(100));
 	sql_check("main", "create", 0);
-	
-	EXEC SQL insert into history 
+
+	EXEC SQL insert into history
 			(customerid, timestamp, action_taken, narrative)
 			values(1, '2003-05-07 13:28:34 CEST', 'test', 'test');
 	sql_check("main", "insert", 0);
@@ -96,7 +96,7 @@ int main(void)
 			(customerid, timestamp, action_taken, narrative)
 			values(:c, :e, 'test', 'test');
 	sql_check("main", "update", 0);
-  
+
 	EXEC SQL commit;
 
 	EXEC SQL drop table history;

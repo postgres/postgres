@@ -99,7 +99,7 @@ CREATE TEMPORARY TABLE bitwise_test(
 );
 
 -- empty case
-SELECT 
+SELECT
   BIT_AND(i2) AS "?",
   BIT_OR(i4)  AS "?"
 FROM bitwise_test;
@@ -159,7 +159,7 @@ SELECT
   boolor_statefunc(FALSE, TRUE) AS "t",
   NOT boolor_statefunc(FALSE, FALSE) AS "t";
 
-CREATE TEMPORARY TABLE bool_test(  
+CREATE TEMPORARY TABLE bool_test(
   b1 BOOL,
   b2 BOOL,
   b3 BOOL,

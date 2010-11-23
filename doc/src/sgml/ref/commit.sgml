@@ -24,7 +24,7 @@ PostgreSQL documentation
 COMMIT [ WORK | TRANSACTION ]
 </synopsis>
  </refsynopsisdiv>
-  
+
  <refsect1>
   <title>Description</title>
 
@@ -34,7 +34,7 @@ COMMIT [ WORK | TRANSACTION ]
    and are guaranteed to be durable if a crash occurs.
   </para>
  </refsect1>
-  
+
  <refsect1>
   <title>Parameters</title>
 
@@ -78,7 +78,7 @@ COMMIT;
 
  <refsect1>
   <title>Compatibility</title>
-  
+
   <para>
    The SQL standard only specifies the two forms
    <literal>COMMIT</literal> and <literal>COMMIT

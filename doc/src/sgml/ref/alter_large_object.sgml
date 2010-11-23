@@ -62,7 +62,7 @@ ALTER LARGE OBJECT <replaceable class="PARAMETER">large_object_oid</replaceable>
 
  <refsect1>
   <title>Compatibility</title>
-    
+
   <para>
    There is no <command>ALTER LARGE OBJECT</command> statement in the SQL
    standard.

@@ -3601,7 +3601,7 @@ xml_is_well_formed(PG_FUNCTION_ARGS)
 {
 #ifdef USE_LIBXML
 	text	   *data = PG_GETARG_TEXT_P(0);
-	
+
 	PG_RETURN_BOOL(wellformed_xml(data, xmloption));
 #else
 	NO_XML_SUPPORT();
@@ -3614,7 +3614,7 @@ xml_is_well_formed_document(PG_FUNCTION_ARGS)
 {
 #ifdef USE_LIBXML
 	text	   *data = PG_GETARG_TEXT_P(0);
-	
+
 	PG_RETURN_BOOL(wellformed_xml(data, XMLOPTION_DOCUMENT));
 #else
 	NO_XML_SUPPORT();
@@ -3627,7 +3627,7 @@ xml_is_well_formed_content(PG_FUNCTION_ARGS)
 {
 #ifdef USE_LIBXML
 	text	   *data = PG_GETARG_TEXT_P(0);
-	
+
 	PG_RETURN_BOOL(wellformed_xml(data, XMLOPTION_CONTENT));
 #else
 	NO_XML_SUPPORT();

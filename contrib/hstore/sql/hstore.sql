@@ -97,7 +97,7 @@ select hstore 'a=>NULL, b=>qq' ?& ARRAY['c','a'];
 select hstore 'a=>NULL, b=>qq' ?& ARRAY['c','d'];
 select hstore 'a=>NULL, b=>qq' ?& '{}'::text[];
 
--- delete 
+-- delete
 
 select delete('a=>1 , b=>2, c=>3'::hstore, 'a');
 select delete('a=>null , b=>2, c=>3'::hstore, 'a');

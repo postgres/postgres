@@ -1,8 +1,8 @@
 %{
-/* 
-** A scanner for EMP-style numeric ranges 
+/*
+ * A scanner for EMP-style numeric ranges
  * contrib/cube/cubescan.l
-*/
+ */
 
 #include "postgres.h"
 

@@ -51,7 +51,7 @@ box:
           O_BRACKET paren_list COMMA paren_list C_BRACKET {
 
 	    int dim;
-	    
+
 	    dim = delim_count($2, ',') + 1;
 	    if ( (delim_count($4, ',') + 1) != dim ) {
           ereport(ERROR,
@@ -69,16 +69,16 @@ box:
 								 CUBE_MAX_DIM)));
               YYABORT;
             }
-	    
+
 	    *((void **)result) = write_box( dim, $2, $4 );
-    
+
           }
       |
           paren_list COMMA paren_list {
 	    int dim;
 
 	    dim = delim_count($1, ',') + 1;
-	    
+
 	    if ( (delim_count($3, ',') + 1) != dim ) {
           ereport(ERROR,
                   (errcode(ERRCODE_SYNTAX_ERROR),
@@ -95,7 +95,7 @@ box:
                                  CUBE_MAX_DIM)));
               YYABORT;
             }
-	    
+
 	    *((void **)result) = write_box( dim, $1, $3 );
           }
       |
@@ -146,7 +146,7 @@ list:
              $$ = palloc(scanbuflen + 1);
 			 strcpy($$, $1);
 	  }
-      | 
+      |
 	  list COMMA CUBEFLOAT {
              $$ = $1;
 	     strcat($$, ",");
@@ -169,31 +169,31 @@ delim_count(char *s, char delim)
       return (ndelim);
 }
 
-static NDBOX * 
+static NDBOX *
 write_box(unsigned int dim, char *str1, char *str2)
 {
   NDBOX * bp;
   char * s;
-  int i; 
+  int i;
   int size = offsetof(NDBOX, x[0]) + sizeof(double) * dim * 2;
-	    
+
   bp = palloc0(size);
   SET_VARSIZE(bp, size);
   bp->dim = dim;
-	    
+
   s = str1;
   bp->x[i=0] = strtod(s, NULL);
   while ((s = strchr(s, ',')) != NULL) {
     s++; i++;
     bp->x[i] = strtod(s, NULL);
-  }	
-  
+  }
+
   s = str2;
   bp->x[i=dim] = strtod(s, NULL);
   while ((s = strchr(s, ',')) != NULL) {
     s++; i++;
     bp->x[i] = strtod(s, NULL);
-  }	
+  }
 
   return(bp);
 }
@@ -206,13 +206,13 @@ write_point_as_box(char *str, int dim)
   int i, size;
   double x;
   char * s = str;
-  
+
   size = offsetof(NDBOX, x[0]) + sizeof(double) * dim * 2;
 
   bp = palloc0(size);
   SET_VARSIZE(bp, size);
   bp->dim = dim;
-  
+
   i = 0;
   x = strtod(s, NULL);
   bp->x[0] = x;
@@ -222,7 +222,7 @@ write_point_as_box(char *str, int dim)
     x = strtod(s, NULL);
     bp->x[i] = x;
     bp->x[i+dim] = x;
-  }	
+  }
 
   return(bp);
 }

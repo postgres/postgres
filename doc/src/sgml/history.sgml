@@ -63,13 +63,13 @@
    database, and several geographic information systems.
    <productname>POSTGRES</productname> has also been used as an
    educational tool at several universities.  Finally, Illustra
-   Information Technologies (later merged into 
+   Information Technologies (later merged into
    <ulink url="http://www.informix.com/"><productname>Informix</productname></ulink>,
    which is now owned by <ulink
    url="http://www.ibm.com/">IBM</ulink>) picked up the code and
    commercialized it.  In late 1992,
    <productname>POSTGRES</productname> became the primary data manager
-   for the 
+   for the
    <ulink url="http://meteora.ucsd.edu/s2k/s2k_home.html">
    Sequoia 2000 scientific computing project</ulink>.
   </para>

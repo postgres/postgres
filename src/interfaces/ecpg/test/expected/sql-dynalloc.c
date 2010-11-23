@@ -296,28 +296,28 @@ if (sqlca.sqlcode < 0) sqlprint ( );}
    for (i=0;i<sqlca.sqlerrd[2];++i)
    {
       if (i1[i]) printf("NULL, ");
-      else printf("%d, ",d1[i]); 
+      else printf("%d, ",d1[i]);
 
       if (i2[i]) printf("NULL, ");
-      else printf("%f, ",d2[i]); 
+      else printf("%f, ",d2[i]);
 
       if (i3[i]) printf("NULL, ");
-      else printf("'%s', ",d3[i]); 
+      else printf("'%s', ",d3[i]);
 
       if (i4[i]) printf("NULL, ");
-      else printf("'%s', ",d4[i]); 
+      else printf("'%s', ",d4[i]);
 
       if (i5[i]) printf("NULL, ");
-      else printf("'%s', ",d5[i]); 
+      else printf("'%s', ",d5[i]);
 
       if (i6[i]) printf("NULL, ");
-      else printf("'%s', ",d6[i]); 
+      else printf("'%s', ",d6[i]);
 
       if (i7[i]) printf("NULL, ");
-      else printf("'%s', ",d7[i]); 
+      else printf("'%s', ",d7[i]);
 
       if (i9[i]) printf("NULL, ");
-      else printf("'%s', ",d9[i]); 
+      else printf("'%s', ",d9[i]);
 
       printf("\n");
    }

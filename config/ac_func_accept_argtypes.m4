@@ -6,7 +6,7 @@
 dnl @synopsis AC_FUNC_ACCEPT_ARGTYPES
 dnl
 dnl Checks the data types of the three arguments to accept(). Results are
-dnl placed into the symbols ACCEPT_TYPE_RETURN and ACCEPT_TYPE_ARG[123], 
+dnl placed into the symbols ACCEPT_TYPE_RETURN and ACCEPT_TYPE_ARG[123],
 dnl consistent with the following example:
 dnl
 dnl       #define ACCEPT_TYPE_RETURN int
@@ -37,7 +37,7 @@ dnl
 # which is *not* 'socklen_t *').  If we detect that, then we assume
 # 'int' as the result, because that ought to work best.
 #
-# On Win32, accept() returns 'unsigned int PASCAL' 
+# On Win32, accept() returns 'unsigned int PASCAL'
 
 AC_DEFUN([AC_FUNC_ACCEPT_ARGTYPES],
 [AC_MSG_CHECKING([types of arguments for accept()])

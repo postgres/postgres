@@ -44,11 +44,11 @@ decode('000102030405060708090a0b0c0d0e0f101112131415161718191a1b', 'hex'),
 'aes-cbc'), 'hex');
 
 -- empty data
-select encode(	encrypt('', 'foo', 'aes'), 'hex');
+select encode(encrypt('', 'foo', 'aes'), 'hex');
 -- 10 bytes key
-select encode(	encrypt('foo', '0123456789', 'aes'), 'hex');
+select encode(encrypt('foo', '0123456789', 'aes'), 'hex');
 -- 22 bytes key
-select encode(	encrypt('foo', '0123456789012345678901', 'aes'), 'hex');
+select encode(encrypt('foo', '0123456789012345678901', 'aes'), 'hex');
 
 -- decrypt
 select decrypt(encrypt('foo', '0123456', 'aes'), '0123456', 'aes');
@@ -56,7 +56,7 @@ select decrypt(encrypt('foo', '0123456', 'aes'), '0123456', 'aes');
 -- iv
 select encode(encrypt_iv('foo', '0123456', 'abcd', 'aes'), 'hex');
 select decrypt_iv(decode('2c24cb7da91d6d5699801268b0f5adad', 'hex'),
-		'0123456', 'abcd', 'aes'); 
+		'0123456', 'abcd', 'aes');
 
 -- long message
 select encode(encrypt('Lets try a longer message.', '0123456789', 'aes'), 'hex');

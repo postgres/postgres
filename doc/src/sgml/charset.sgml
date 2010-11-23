@@ -71,7 +71,7 @@ initdb --locale=sv_SE
     locale then the specifications can take the form
     <replaceable>language_territory.codeset</>.  For example,
     <literal>fr_BE.UTF-8</> represents the French language (fr) as
-    spoken in Belgium (BE), with a <acronym>UTF-8</> character set 
+    spoken in Belgium (BE), with a <acronym>UTF-8</> character set
     encoding.
    </para>
 

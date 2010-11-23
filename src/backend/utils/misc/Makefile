@@ -37,5 +37,5 @@ endif
 
 # Note: guc-file.c is not deleted by 'make clean',
 # since we want to ship it in distribution tarballs.
-clean: 
+clean:
 	@rm -f lex.yy.c

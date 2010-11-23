@@ -59,7 +59,7 @@ CREATE TEXT SEARCH TEMPLATE <replaceable class="parameter">name</replaceable> (
    Refer to <xref linkend="textsearch"> for further information.
   </para>
  </refsect1>
-  
+
  <refsect1>
   <title>Parameters</title>
 
@@ -104,7 +104,7 @@ CREATE TEXT SEARCH TEMPLATE <replaceable class="parameter">name</replaceable> (
    The arguments can appear in any order, not only the one shown above.
   </para>
  </refsect1>
- 
+
  <refsect1>
   <title>Compatibility</title>
 

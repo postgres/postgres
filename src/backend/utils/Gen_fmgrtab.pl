@@ -93,7 +93,7 @@ my $tabfile = $output_path . 'fmgrtab.c';
 open H, '>', $oidsfile . $tmpext or die "Could not open $oidsfile$tmpext: $!";
 open T, '>', $tabfile . $tmpext or die "Could not open $tabfile$tmpext: $!";
 
-print H 
+print H
 qq|/*-------------------------------------------------------------------------
  *
  * fmgroids.h

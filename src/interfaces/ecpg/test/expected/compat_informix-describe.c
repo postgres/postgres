@@ -455,7 +455,7 @@ if (sqlca.sqlcode < 0) exit (1);}
 #line 193 "describe.pgc"
 
 
-	strcpy(msg, "disconnect"); 
+	strcpy(msg, "disconnect");
 	{ ECPGdisconnect(__LINE__, "CURRENT");
 #line 196 "describe.pgc"
 

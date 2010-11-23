@@ -4,7 +4,7 @@ CREATE TABLE test_inet (
 	i inet
 );
 
-INSERT INTO test_inet VALUES 
+INSERT INTO test_inet VALUES
 	( '1.2.3.4/16' ),
 	( '1.2.4.4/16' ),
 	( '1.2.5.4/16' ),

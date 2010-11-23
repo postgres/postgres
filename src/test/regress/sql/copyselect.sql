@@ -70,7 +70,7 @@ copy (select t from test1 where id = 1) to stdout csv header force quote t;
 -- This should fail
 --
 \copy v_test1 to stdout
--- 
+--
 -- Test \copy (select ...)
 --
 \copy (select "id",'id','id""'||t,(id + 1)*id,t,"test1"."t" from test1 where id=3) to stdout

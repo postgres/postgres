@@ -193,7 +193,7 @@ PostgreSQL documentation
    </para>
 
    <para>
-    The options <option>-D</option>, <option>-l</option>, <option>-E</option>, 
+    The options <option>-D</option>, <option>-l</option>, <option>-E</option>,
     <option>-O</option>, and
     <option>-T</option> correspond to options of the underlying
     SQL command <xref linkend="SQL-CREATEDATABASE">; see there for more information
@@ -210,8 +210,8 @@ PostgreSQL documentation
       <term><option>--host <replaceable class="parameter">host</replaceable></></term>
       <listitem>
        <para>
-        Specifies the host name of the machine on which the 
-        server is running.  If the value begins with a slash, it is used 
+        Specifies the host name of the machine on which the
+        server is running.  If the value begins with a slash, it is used
         as the directory for the Unix domain socket.
        </para>
       </listitem>
@@ -222,7 +222,7 @@ PostgreSQL documentation
       <term><option>--port <replaceable class="parameter">port</replaceable></></term>
       <listitem>
        <para>
-        Specifies the TCP port or the local Unix domain socket file 
+        Specifies the TCP port or the local Unix domain socket file
         extension on which the server is listening for connections.
        </para>
       </listitem>
@@ -259,7 +259,7 @@ PostgreSQL documentation
       <listitem>
        <para>
         Force <application>createdb</application> to prompt for a
-        password before connecting to a database.  
+        password before connecting to a database.
        </para>
 
        <para>

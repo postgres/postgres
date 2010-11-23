@@ -17,7 +17,7 @@
 --	descendants.
 -----------------------------
 
--- For example, the capitals table inherits from cities table. (It inherits 
+-- For example, the capitals table inherits from cities table. (It inherits
 -- all data fields from cities.)
 
 CREATE TABLE cities (

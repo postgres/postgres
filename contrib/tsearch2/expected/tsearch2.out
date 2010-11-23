@@ -815,13 +815,13 @@ SELECT length(to_tsvector('english', '345 qwe@efd.r '' http://www.com/ http://ae
      53
 (1 row)
 
-select to_tsquery('english', 'qwe & sKies '); 
+select to_tsquery('english', 'qwe & sKies ');
   to_tsquery   
 ---------------
  'qwe' & 'sky'
 (1 row)
 
-select to_tsquery('simple', 'qwe & sKies '); 
+select to_tsquery('simple', 'qwe & sKies ');
    to_tsquery    
 -----------------
  'qwe' & 'skies'
@@ -2337,7 +2337,6 @@ Upon a woman s face. E.  J.  Pratt  (1882 1964)
  The granite features of this cliff
 (1 row)
 
- 
 select headline('Erosion It took the sea a thousand years,
 A thousand years to trace
 The granite features of this cliff
@@ -2354,7 +2353,6 @@ Upon a woman s face. E.  J.  Pratt  (1882 1964)
  The <b>granite</b> features of this cliff
 (1 row)
 
- 
 select headline('Erosion It took the sea a thousand years,
 A thousand years to trace
 The granite features of this cliff
@@ -2382,7 +2380,7 @@ ff-bg
        document.write(15);
 </script>
 </body>
-</html>', 
+</html>',
 to_tsquery('sea&foo'), 'HighlightAll=true');
                                   headline                                   
 -----------------------------------------------------------------------------

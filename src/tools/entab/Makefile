@@ -4,17 +4,17 @@
 #
 TARGET = entab
 BINDIR = /usr/local/bin
-XFLAGS = 
+XFLAGS =
 CFLAGS = -O
-LIBS = 
+LIBS =
 
 $(TARGET) : entab.o halt.o
 	$(CC) -o $(TARGET) $(XFLAGS) $(CFLAGS) entab.o halt.o $(LIBS)
 
-entab.o	: entab.c 
+entab.o	: entab.c
 	$(CC) -c $(XFLAGS) $(CFLAGS) entab.c
 
-halt.o	: halt.c 
+halt.o	: halt.c
 	$(CC) -c $(XFLAGS) $(CFLAGS) halt.c
 
 clean:

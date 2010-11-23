@@ -24,7 +24,7 @@ PostgreSQL documentation
 CREATE ROLE <replaceable class="PARAMETER">name</replaceable> [ [ WITH ] <replaceable class="PARAMETER">option</replaceable> [ ... ] ]
 
 <phrase>where <replaceable class="PARAMETER">option</replaceable> can be:</phrase>
-    
+
       SUPERUSER | NOSUPERUSER
     | CREATEDB | NOCREATEDB
     | CREATEROLE | NOCREATEROLE
@@ -33,13 +33,13 @@ CREATE ROLE <replaceable class="PARAMETER">name</replaceable> [ [ WITH ] <replac
     | LOGIN | NOLOGIN
     | CONNECTION LIMIT <replaceable class="PARAMETER">connlimit</replaceable>
     | [ ENCRYPTED | UNENCRYPTED ] PASSWORD '<replaceable class="PARAMETER">password</replaceable>'
-    | VALID UNTIL '<replaceable class="PARAMETER">timestamp</replaceable>' 
+    | VALID UNTIL '<replaceable class="PARAMETER">timestamp</replaceable>'
     | IN ROLE <replaceable class="PARAMETER">role_name</replaceable> [, ...]
     | IN GROUP <replaceable class="PARAMETER">role_name</replaceable> [, ...]
     | ROLE <replaceable class="PARAMETER">role_name</replaceable> [, ...]
     | ADMIN <replaceable class="PARAMETER">role_name</replaceable> [, ...]
     | USER <replaceable class="PARAMETER">role_name</replaceable> [, ...]
-    | SYSID <replaceable class="PARAMETER">uid</replaceable> 
+    | SYSID <replaceable class="PARAMETER">uid</replaceable>
 </synopsis>
  </refsynopsisdiv>
 
@@ -301,7 +301,7 @@ CREATE ROLE <replaceable class="PARAMETER">name</replaceable> [ [ WITH ] <replac
       </listitem>
      </varlistentry>
     </variablelist>
- </refsect1> 
+ </refsect1>
 
  <refsect1>
   <title>Notes</title>
@@ -417,14 +417,14 @@ CREATE ROLE miriam WITH LOGIN PASSWORD 'jw8s0F4' VALID UNTIL '2005-01-01';
 </programlisting>
   </para>
 
-  <para> 
+  <para>
    Create a role that can create databases and manage roles:
 <programlisting>
 CREATE ROLE admin WITH CREATEDB CREATEROLE;
 </programlisting>
   </para>
  </refsect1>
- 
+
  <refsect1>
   <title>Compatibility</title>
 
@@ -438,7 +438,7 @@ CREATE ROLE <replaceable class="PARAMETER">name</> [ WITH ADMIN <replaceable cla
    <command>CREATE ROLE</command>, are
    <productname>PostgreSQL</productname> extensions.
   </para>
-  
+
   <para>
    The SQL standard defines the concepts of users and roles, but it
    regards them as distinct concepts and leaves all commands defining

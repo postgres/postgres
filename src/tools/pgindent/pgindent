@@ -39,7 +39,7 @@ if [ "$?" -eq 0 ]
 then	echo "You appear to have GNU indent rather than BSD indent." >&2
 	echo "See the pgindent/README file for a description of its problems." >&2
 	EXTRA_OPTS="-cdb -bli0 -npcs -cli4 -sc"
-else	
+else
 	EXTRA_OPTS="-cli1"
 fi
 
@@ -193,7 +193,7 @@ do
 # isn't needed for general use.
 #	awk '
 #	{
-#			line3 = $0;  
+#			line3 = $0;
 #			if (skips > 0)
 #				skips--;
 #			if (line1 ~ /		*{$/ &&
@@ -221,7 +221,7 @@ do
 # Remove blank line between opening brace and block comment.
 	awk '
 	{
-			line3 = $0;  
+			line3 = $0;
 			if (skips > 0)
 				skips--;
 			if (line1 ~ /	*{$/ &&
@@ -326,10 +326,10 @@ do
 			print line1;
 		}' |
 
-#  Move prototype names to the same line as return type.  Useful for ctags. 
+#  Move prototype names to the same line as return type.  Useful for ctags.
 #  Indent should do this, but it does not.  It formats prototypes just
 #  like real functions.
-	awk '	BEGIN	{paren_level = 0}  
+	awk '	BEGIN	{paren_level = 0}
 	{
 		if ($0 ~ /^[a-zA-Z_][a-zA-Z_0-9]*[^\(]*$/)
 		{

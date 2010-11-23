@@ -51,7 +51,7 @@ ALTER DATABASE <replaceable class="PARAMETER">name</replaceable> RESET ALL
   <para>
    The first form changes certain per-database settings.  (See below for
    details.)  Only the database owner or a superuser can change these settings.
-  </para> 
+  </para>
 
   <para>
    The second form changes the name of the database.  Only the database
@@ -114,7 +114,7 @@ ALTER DATABASE <replaceable class="PARAMETER">name</replaceable> RESET ALL
         to this database.  -1 means no limit.
        </para>
       </listitem>
-     </varlistentry> 
+     </varlistentry>
 
    <varlistentry>
     <term><replaceable>new_name</replaceable></term>
@@ -141,7 +141,7 @@ ALTER DATABASE <replaceable class="PARAMETER">name</replaceable> RESET ALL
       The new default tablespace of the database.
      </para>
     </listitem>
-   </varlistentry> 
+   </varlistentry>
 
      <varlistentry>
       <term><replaceable>configuration_parameter</replaceable></term>
@@ -196,7 +196,7 @@ ALTER DATABASE test SET enable_indexscan TO off;
 
  <refsect1>
   <title>Compatibility</title>
-    
+
   <para>
    The <command>ALTER DATABASE</command> statement is a
    <productname>PostgreSQL</productname> extension.

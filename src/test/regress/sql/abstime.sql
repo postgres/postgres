@@ -6,7 +6,7 @@
 
 --
 -- timezones may vary based not only on location but the operating
--- system.  the main correctness issue is that the OS may not get 
+-- system.  the main correctness issue is that the OS may not get
 -- daylight savings time right for times prior to Unix epoch (jan 1 1970).
 --
 
@@ -27,11 +27,11 @@ INSERT INTO ABSTIME_TBL (f1) VALUES (abstime 'infinity');
 INSERT INTO ABSTIME_TBL (f1) VALUES (abstime '-infinity');
 INSERT INTO ABSTIME_TBL (f1) VALUES (abstime 'May 10, 1947 23:59:12');
 
--- what happens if we specify slightly misformatted abstime? 
+-- what happens if we specify slightly misformatted abstime?
 INSERT INTO ABSTIME_TBL (f1) VALUES ('Feb 35, 1946 10:00:00');
 INSERT INTO ABSTIME_TBL (f1) VALUES ('Feb 28, 1984 25:08:10');
 
--- badly formatted abstimes:  these should result in invalid abstimes 
+-- badly formatted abstimes:  these should result in invalid abstimes
 INSERT INTO ABSTIME_TBL (f1) VALUES ('bad date format');
 INSERT INTO ABSTIME_TBL (f1) VALUES ('Jun 10, 1843');
 

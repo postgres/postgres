@@ -3,7 +3,7 @@ CREATE TABLE users (
 	lname text not null,
 	username text,
 	userid serial,
-	PRIMARY KEY(lname, fname) 
+	PRIMARY KEY(lname, fname)
 	) ;
 NOTICE:  CREATE TABLE will create implicit sequence "users_userid_seq" for serial column "users.userid"
 NOTICE:  CREATE TABLE / PRIMARY KEY will create implicit index "users_pkey" for table "users"

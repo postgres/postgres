@@ -14,7 +14,7 @@ PostgreSQL documentation
   <refname>DROP TEXT SEARCH CONFIGURATION</refname>
   <refpurpose>remove a text search configuration</refpurpose>
  </refnamediv>
-  
+
  <indexterm zone="sql-droptsconfig">
   <primary>DROP TEXT SEARCH CONFIGURATION</primary>
  </indexterm>
@@ -34,7 +34,7 @@ DROP TEXT SEARCH CONFIGURATION [ IF EXISTS ] <replaceable class="PARAMETER">name
    configuration.
   </para>
  </refsect1>
-  
+
  <refsect1>
   <title>Parameters</title>
 
@@ -97,7 +97,7 @@ DROP TEXT SEARCH CONFIGURATION my_english;
    drop such indexes along with the text search configuration.
   </para>
  </refsect1>
- 
+
  <refsect1>
   <title>Compatibility</title>
 

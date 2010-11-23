@@ -1,7 +1,7 @@
 %{
-/* 
-** A scanner for EMP-style numeric ranges 
-*/
+/*
+ * A scanner for EMP-style numeric ranges
+ */
 
 #include "postgres.h"
 

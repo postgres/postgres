@@ -41,7 +41,7 @@ ALTER INDEX <replaceable class="PARAMETER">name</replaceable> RESET ( <replaceab
     <term><literal>RENAME</literal></term>
     <listitem>
      <para>
-      The <literal>RENAME</literal> form changes the name of the index. 
+      The <literal>RENAME</literal> form changes the name of the index.
       There is no effect on the stored data.
      </para>
     </listitem>
@@ -53,7 +53,7 @@ ALTER INDEX <replaceable class="PARAMETER">name</replaceable> RESET ( <replaceab
      <para>
       This form changes the index's tablespace to the specified tablespace and
       moves the data file(s) associated with the index to the new tablespace.
-      See also 
+      See also
       <xref linkend="SQL-CREATETABLESPACE">.
      </para>
     </listitem>
@@ -177,14 +177,14 @@ ALTER INDEX distributors RENAME TO suppliers;
 </programlisting>
   </para>
 
-  <para> 
+  <para>
    To move an index to a different tablespace:
 <programlisting>
 ALTER INDEX distributors SET TABLESPACE fasttablespace;
 </programlisting>
   </para>
 
-  <para> 
+  <para>
    To change an index's fill factor (assuming that the index method
    supports it):
 <programlisting>

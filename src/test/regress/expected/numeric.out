@@ -805,7 +805,7 @@ SELECT width_bucket('Infinity'::float8, 1, 10, 10),
 DROP TABLE width_bucket_test;
 -- TO_CHAR()
 --
-SELECT '' AS to_char_1, to_char(val, '9G999G999G999G999G999') 
+SELECT '' AS to_char_1, to_char(val, '9G999G999G999G999G999')
 	FROM num_data;
  to_char_1 |        to_char         
 -----------+------------------------
@@ -869,7 +869,7 @@ SELECT '' AS to_char_4, to_char(val, '9999999999999999.999999999999999S')
            |         24926804.045047420000000-
 (10 rows)
 
-SELECT '' AS to_char_5,  to_char(val, 'MI9999999999999999.999999999999999')     FROM num_data;	
+SELECT '' AS to_char_5,  to_char(val, 'MI9999999999999999.999999999999999')     FROM num_data;
  to_char_5 |              to_char              
 -----------+-----------------------------------
            |                  .000000000000000
@@ -914,7 +914,7 @@ SELECT '' AS to_char_7,  to_char(val, 'FM9999999999999999.999999999999999THPR') 
            | <24926804.04504742>
 (10 rows)
 
-SELECT '' AS to_char_8,  to_char(val, 'SG9999999999999999.999999999999999th')   FROM num_data;	
+SELECT '' AS to_char_8,  to_char(val, 'SG9999999999999999.999999999999999th')   FROM num_data;
  to_char_8 |              to_char              
 -----------+-----------------------------------
            | +                .000000000000000
@@ -929,7 +929,7 @@ SELECT '' AS to_char_8,  to_char(val, 'SG9999999999999999.999999999999999th')   
            | -        24926804.045047420000000
 (10 rows)
 
-SELECT '' AS to_char_9,  to_char(val, '0999999999999999.999999999999999')       FROM num_data;	
+SELECT '' AS to_char_9,  to_char(val, '0999999999999999.999999999999999')       FROM num_data;
  to_char_9 |              to_char              
 -----------+-----------------------------------
            |  0000000000000000.000000000000000
@@ -944,7 +944,7 @@ SELECT '' AS to_char_9,  to_char(val, '0999999999999999.999999999999999')       
            | -0000000024926804.045047420000000
 (10 rows)
 
-SELECT '' AS to_char_10, to_char(val, 'S0999999999999999.999999999999999')      FROM num_data;	
+SELECT '' AS to_char_10, to_char(val, 'S0999999999999999.999999999999999')      FROM num_data;
  to_char_10 |              to_char              
 ------------+-----------------------------------
             | +0000000000000000.000000000000000
@@ -959,7 +959,7 @@ SELECT '' AS to_char_10, to_char(val, 'S0999999999999999.999999999999999')      
             | -0000000024926804.045047420000000
 (10 rows)
 
-SELECT '' AS to_char_11, to_char(val, 'FM0999999999999999.999999999999999')     FROM num_data;	
+SELECT '' AS to_char_11, to_char(val, 'FM0999999999999999.999999999999999')     FROM num_data;
  to_char_11 |           to_char           
 ------------+-----------------------------
             | 0000000000000000.
@@ -1034,7 +1034,7 @@ SELECT '' AS to_char_15, to_char(val, 'FM9999999990999999.099999999999999') 	FRO
             | -24926804.04504742
 (10 rows)
 
-SELECT '' AS to_char_16, to_char(val, 'L9999999999999999.099999999999999')	FROM num_data;	
+SELECT '' AS to_char_16, to_char(val, 'L9999999999999999.099999999999999')	FROM num_data;
  to_char_16 |              to_char               
 ------------+------------------------------------
             |                   .000000000000000

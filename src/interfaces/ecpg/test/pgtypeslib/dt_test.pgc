@@ -23,15 +23,15 @@ main(void)
 	char *t1 = "2000-7-12 17:34:29";
 	int i;
 
-        ECPGdebug(1, stderr);
-        exec sql whenever sqlerror do sqlprint();
-        exec sql connect to REGRESSDB1;
-        exec sql create table date_test (d date, ts timestamp);
+	ECPGdebug(1, stderr);
+	exec sql whenever sqlerror do sqlprint();
+	exec sql connect to REGRESSDB1;
+	exec sql create table date_test (d date, ts timestamp);
 	exec sql set datestyle to iso;
 	exec sql set intervalstyle to postgres_verbose;
 
-	date1 = PGTYPESdate_from_asc(d1, NULL); 
-	ts1 = PGTYPEStimestamp_from_asc(t1, NULL); 
+	date1 = PGTYPESdate_from_asc(d1, NULL);
+	ts1 = PGTYPEStimestamp_from_asc(t1, NULL);
 
 	exec sql insert into date_test(d, ts) values (:date1, :ts1);
 

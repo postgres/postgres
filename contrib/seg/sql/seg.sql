@@ -213,7 +213,7 @@ SELECT '-1'::seg <@ '-1 .. 1'::seg AS bool;
 SELECT '1'::seg <@ '-1 .. 1'::seg AS bool;
 
 -- Load some example data and build the index
--- 
+--
 CREATE TABLE test_seg (s seg);
 
 \copy test_seg from 'data/test_seg.data'
@@ -221,7 +221,7 @@ CREATE TABLE test_seg (s seg);
 CREATE INDEX test_seg_ix ON test_seg USING gist (s);
 SELECT count(*) FROM test_seg WHERE s @> '11..11.3';
 
--- Test sorting 
+-- Test sorting
 SELECT * FROM test_seg WHERE s @> '11..11.3' GROUP BY s;
 
 -- Test functions

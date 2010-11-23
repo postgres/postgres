@@ -16,7 +16,7 @@ INSERT INTO BIT_TABLE VALUES (B'101011111010'); -- too long
 --INSERT INTO BIT_TABLE VALUES ('X554');
 --INSERT INTO BIT_TABLE VALUES ('X555');
 
-SELECT * FROM BIT_TABLE; 
+SELECT * FROM BIT_TABLE;
 
 CREATE TABLE VARBIT_TABLE(v BIT VARYING(11));
 
@@ -27,12 +27,12 @@ INSERT INTO VARBIT_TABLE VALUES (B'01010101010');
 INSERT INTO VARBIT_TABLE VALUES (B'101011111010'); -- too long
 --INSERT INTO VARBIT_TABLE VALUES ('X554');
 --INSERT INTO VARBIT_TABLE VALUES ('X555');
-SELECT * FROM VARBIT_TABLE; 
+SELECT * FROM VARBIT_TABLE;
 
 
 -- Concatenation
 SELECT v, b, (v || b) AS concat
-       FROM BIT_TABLE, VARBIT_TABLE 
+       FROM BIT_TABLE, VARBIT_TABLE
        ORDER BY 3;
 
 -- Length
@@ -69,7 +69,7 @@ XFA50	X05AF
 X1234	XFFF5
 \.
 
-SELECT a, b, ~a AS "~ a", a & b AS "a & b", 
+SELECT a, b, ~a AS "~ a", a & b AS "a & b",
        a | b AS "a | b", a # b AS "a # b" FROM varbit_table;
 SELECT a,b,a<b AS "a<b",a<=b AS "a<=b",a=b AS "a=b",
         a>=b AS "a>=b",a>b AS "a>b",a<>b AS "a<>b" FROM varbit_table;
@@ -93,7 +93,7 @@ XFA50	X05AF
 X1234	XFFF5
 \.
 
-SELECT a,b,~a AS "~ a",a & b AS "a & b", 
+SELECT a,b,~a AS "~ a",a & b AS "a & b",
 	a|b AS "a | b", a # b AS "a # b" FROM bit_table;
 SELECT a,b,a<b AS "a<b",a<=b AS "a<=b",a=b AS "a=b",
         a>=b AS "a>=b",a>b AS "a>b",a<>b AS "a<>b" FROM bit_table;
@@ -166,7 +166,7 @@ INSERT INTO BIT_SHIFT_TABLE SELECT b>>4 FROM BIT_SHIFT_TABLE;
 INSERT INTO BIT_SHIFT_TABLE SELECT b>>8 FROM BIT_SHIFT_TABLE;
 SELECT POSITION(B'1101' IN b),
        POSITION(B'11011' IN b),
-       b 
+       b
        FROM BIT_SHIFT_TABLE ;
 
 
@@ -178,7 +178,7 @@ INSERT INTO VARBIT_SHIFT_TABLE SELECT CAST(v || B'0000' AS BIT VARYING(12)) >>4 
 INSERT INTO VARBIT_SHIFT_TABLE SELECT CAST(v || B'00000000' AS BIT VARYING(20)) >>8 FROM VARBIT_SHIFT_TABLE;
 SELECT POSITION(B'1101' IN v),
        POSITION(B'11011' IN v),
-       v 
+       v
        FROM VARBIT_SHIFT_TABLE ;
 
 

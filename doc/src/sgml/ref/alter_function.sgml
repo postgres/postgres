@@ -13,8 +13,8 @@ PostgreSQL documentation
  <refnamediv>
   <refname>ALTER FUNCTION</refname>
   <refpurpose>change the definition of a function</refpurpose>
- </refnamediv>  
-  
+ </refnamediv>
+
  <indexterm zone="sql-alterfunction">
   <primary>ALTER FUNCTION</primary>
  </indexterm>
@@ -43,7 +43,7 @@ ALTER FUNCTION <replaceable>name</replaceable> ( [ [ <replaceable class="paramet
     RESET ALL
 </synopsis>
  </refsynopsisdiv>
-  
+
  <refsect1>
   <title>Description</title>
 
@@ -63,7 +63,7 @@ ALTER FUNCTION <replaceable>name</replaceable> ( [ [ <replaceable class="paramet
    However, a superuser can alter ownership of any function anyway.)
   </para>
  </refsect1>
-  
+
  <refsect1>
   <title>Parameters</title>
 
@@ -112,7 +112,7 @@ ALTER FUNCTION <replaceable>name</replaceable> ( [ [ <replaceable class="paramet
 
     <listitem>
      <para>
-      The data type(s) of the function's arguments (optionally 
+      The data type(s) of the function's arguments (optionally
       schema-qualified), if any.
      </para>
     </listitem>

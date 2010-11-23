@@ -46,7 +46,7 @@ int main()
     EXEC SQL end declare section;
 
     ECPGdebug(1, stderr);
-	  
+
     EXEC SQL connect to REGRESSDB1;
 
     EXEC SQL create table customers (c varchar(50), p int);

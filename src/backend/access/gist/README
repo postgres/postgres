@@ -24,21 +24,21 @@ The current implementation of GiST supports:
   * Concurrency
   * Recovery support via WAL logging
 
-The support for concurrency implemented in PostgreSQL was developed based on 
-the paper "Access Methods for Next-Generation Database Systems" by 
+The support for concurrency implemented in PostgreSQL was developed based on
+the paper "Access Methods for Next-Generation Database Systems" by
 Marcel Kornaker:
 
     http://www.sai.msu.su/~megera/postgres/gist/papers/concurrency/access-methods-for-next-generation.pdf.gz
 
 The original algorithms were modified in several ways:
 
-* They should be adapted to PostgreSQL conventions. For example, the SEARCH 
-  algorithm was considerably changed, because in PostgreSQL function search 
-  should return one tuple (next), not all tuples at once. Also, it should 
+* They should be adapted to PostgreSQL conventions. For example, the SEARCH
+  algorithm was considerably changed, because in PostgreSQL function search
+  should return one tuple (next), not all tuples at once. Also, it should
   release page locks between calls.
-* Since we added support for variable length keys, it's not possible to 
-  guarantee enough free space for all keys on pages after splitting. User 
-  defined function picksplit doesn't have information about size of tuples 
+* Since we added support for variable length keys, it's not possible to
+  guarantee enough free space for all keys on pages after splitting. User
+  defined function picksplit doesn't have information about size of tuples
   (each tuple may contain several keys as in multicolumn index while picksplit
   could work with only one key) and pages.
 * We modified original INSERT algorithm for performance reason. In particular,
@@ -67,7 +67,7 @@ gettuple(search-pred)
 	ptr = top of stack
 	while(true)
 		latch( ptr->page, S-mode )
-		if ( ptr->page->lsn != ptr->lsn ) 
+		if ( ptr->page->lsn != ptr->lsn )
 			ptr->lsn = ptr->page->lsn
 			currentposition=0
 			if ( ptr->parentlsn < ptr->page->nsn )
@@ -88,7 +88,7 @@ gettuple(search-pred)
 			else if ( ptr->page is leaf )
 				unlatch( ptr->page )
 				return tuple
-			else 
+			else
 				add to stack child page
 			end
 			currentposition++
@@ -99,20 +99,20 @@ gettuple(search-pred)
 Insert Algorithm
 ----------------
 
-INSERT guarantees that the GiST tree remains balanced. User defined key method 
-Penalty is used for choosing a subtree to insert; method PickSplit is used for 
-the node splitting algorithm; method Union is used for propagating changes 
+INSERT guarantees that the GiST tree remains balanced. User defined key method
+Penalty is used for choosing a subtree to insert; method PickSplit is used for
+the node splitting algorithm; method Union is used for propagating changes
 upward to maintain the tree properties.
 
-NOTICE: We modified original INSERT algorithm for performance reason. In 
+NOTICE: We modified original INSERT algorithm for performance reason. In
 particularly, it is now a single-pass algorithm.
 
-Function findLeaf is used to identify subtree for insertion. Page, in which 
-insertion is proceeded, is locked as well as its parent page. Functions 
-findParent and findPath are used to find parent pages, which could be changed 
-because of concurrent access. Function pageSplit is recurrent and could split 
-page by more than 2 pages, which could be necessary if keys have different 
-lengths or more than one key are inserted (in such situation, user defined 
+Function findLeaf is used to identify subtree for insertion. Page, in which
+insertion is proceeded, is locked as well as its parent page. Functions
+findParent and findPath are used to find parent pages, which could be changed
+because of concurrent access. Function pageSplit is recurrent and could split
+page by more than 2 pages, which could be necessary if keys have different
+lengths or more than one key are inserted (in such situation, user defined
 function pickSplit cannot guarantee free space on page).
 
 findLeaf(new-key)
@@ -143,7 +143,7 @@ findLeaf(new-key)
 	end
 
 findPath( stack item )
-	push stack, [root, 0, 0] // page, LSN, parent 
+	push stack, [root, 0, 0] // page, LSN, parent
 	while( stack )
 		ptr = top of stack
 		latch( ptr->page, S-mode )
@@ -152,7 +152,7 @@ findPath( stack item )
 		end
 		for( each tuple on page )
 			if ( tuple->pagepointer == item->page )
-				return stack	
+				return stack
 			else
 				add to stack at the end [tuple->pagepointer,0, ptr]
 			end
@@ -160,12 +160,12 @@ findPath( stack item )
 		unlatch( ptr->page )
 		pop stack
 	end
-	
+
 findParent( stack item )
 	parent = item->parent
 	latch( parent->page, X-mode )
 	if ( parent->page->lsn != parent->lsn )
-		while(true) 
+		while(true)
 			search parent tuple on parent->page, if found the return
 			rightlink = parent->page->rightlink
 			unlatch( parent->page )
@@ -214,7 +214,7 @@ placetopage(page, keysarray)
 			keysarray = [ union(keysarray) ]
 		end
 	end
-	
+
 insert(new-key)
 	stack = findLeaf(new-key)
 	keysarray = [new-key]
@@ -236,4 +236,4 @@ insert(new-key)
 
 Authors:
 	Teodor Sigaev	<teodor@sigaev.ru>
-	Oleg Bartunov   <oleg@sai.msu.su>
+	Oleg Bartunov	<oleg@sai.msu.su>

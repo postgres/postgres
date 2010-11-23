@@ -51,14 +51,14 @@ CREATE OR REPLACE FUNCTION trigger_data() RETURNS trigger LANGUAGE plperl AS $$
   return undef; # allow statement to proceed;
 $$;
 
-CREATE TRIGGER show_trigger_data_trig 
+CREATE TRIGGER show_trigger_data_trig
 BEFORE INSERT OR UPDATE OR DELETE ON trigger_test
 FOR EACH ROW EXECUTE PROCEDURE trigger_data(23,'skidoo');
 
 insert into trigger_test values(1,'insert');
 update trigger_test set v = 'update' where i = 1;
 delete from trigger_test;
-	  
+
 DROP TRIGGER show_trigger_data_trig on trigger_test;
 
 insert into trigger_test values(1,'insert');
@@ -74,7 +74,7 @@ delete from trigger_test_view;
 
 DROP VIEW trigger_test_view;
 delete from trigger_test;
-	  
+
 DROP FUNCTION trigger_data();
 
 CREATE OR REPLACE FUNCTION valid_id() RETURNS trigger AS $$
@@ -82,13 +82,13 @@ CREATE OR REPLACE FUNCTION valid_id() RETURNS trigger AS $$
     if (($_TD->{new}{i}>=100) || ($_TD->{new}{i}<=0))
     {
         return "SKIP";   # Skip INSERT/UPDATE command
-    } 
-    elsif ($_TD->{new}{v} ne "immortal") 
+    }
+    elsif ($_TD->{new}{v} ne "immortal")
     {
         $_TD->{new}{v} .= "(modified by trigger)";
         return "MODIFY"; # Modify tuple and proceed INSERT/UPDATE command
-    } 
-    else 
+    }
+    else
     {
         return;          # Proceed INSERT/UPDATE command
     }
@@ -116,9 +116,9 @@ CREATE OR REPLACE FUNCTION immortal() RETURNS trigger AS $$
     if ($_TD->{old}{v} eq $_TD->{args}[0])
     {
         return "SKIP"; # Skip DELETE command
-    } 
-    else 
-    { 
+    }
+    else
+    {
         return;        # Proceed DELETE command
     };
 $$ LANGUAGE plperl;

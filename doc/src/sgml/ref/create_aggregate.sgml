@@ -95,7 +95,7 @@ CREATE AGGREGATE <replaceable class="PARAMETER">name</replaceable> (
    value.  If there is no final function then the ending state value
    is returned as-is.
   </para>
-  
+
   <para>
    An aggregate function can provide an initial condition,
    that is, an initial value for the internal state value.
@@ -104,7 +104,7 @@ CREATE AGGREGATE <replaceable class="PARAMETER">name</replaceable> (
    of a constant of the state value data type.  If it is not supplied
    then the state value starts out null.
   </para>
-  
+
   <para>
    If the state transition function is declared <quote>strict</quote>,
    then it cannot be called with null inputs.  With such a transition
@@ -122,14 +122,14 @@ CREATE AGGREGATE <replaceable class="PARAMETER">name</replaceable> (
    When these types are different, you must supply a nonnull initial
    condition or use a nonstrict transition function.
   </para>
-  
+
   <para>
    If the state transition function is not strict, then it will be called
    unconditionally at each input row, and must deal with null inputs
    and null transition values for itself.  This allows the aggregate
    author to have full control over the aggregate's handling of null values.
   </para>
-  
+
   <para>
    If the final function is declared <quote>strict</quote>, then it will not
    be called when the ending state value is null; instead a null result
@@ -139,7 +139,7 @@ CREATE AGGREGATE <replaceable class="PARAMETER">name</replaceable> (
    <function>avg</function> returns null when it sees there were zero
    input rows.
   </para>
-  
+
   <para>
    Aggregates that behave like <function>MIN</> or <function>MAX</> can
    sometimes be optimized by looking into an index instead of scanning every
@@ -281,7 +281,7 @@ SELECT col FROM tab ORDER BY col USING sortop LIMIT 1;
    written in any order, not just the order illustrated above.
   </para>
  </refsect1>
-  
+
  <refsect1>
   <title>Examples</title>
 

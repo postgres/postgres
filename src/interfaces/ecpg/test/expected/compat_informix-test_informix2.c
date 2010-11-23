@@ -193,7 +193,7 @@ if (sqlca.sqlcode < 0) sqlprint();}
 #line 68 "test_informix2.pgc"
 
 	sql_check("main", "create", 0);
-	
+
 	{ ECPGdo(__LINE__, 1, 1, NULL, 0, ECPGst_normal, "insert into history ( customerid , timestamp , action_taken , narrative ) values ( 1 , '2003-05-07 13:28:34 CEST' , 'test' , 'test' )", ECPGt_EOIT, ECPGt_EORT);
 #line 73 "test_informix2.pgc"
 
@@ -244,7 +244,7 @@ if (sqlca.sqlcode < 0) sqlprint();}
 #line 97 "test_informix2.pgc"
 
 	sql_check("main", "update", 0);
-  
+
 	{ ECPGtrans(__LINE__, NULL, "commit");
 #line 100 "test_informix2.pgc"
 

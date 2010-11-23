@@ -16,7 +16,7 @@ that a backend attempting to execute CREATE DATABASE core-dumps.)  I would
 love to know why there is a discrepancy between the published source and
 the actual behavior --- tgl 7-Nov-2001.
 
-Appropriate bug reports have been filed with Apple --- see 
+Appropriate bug reports have been filed with Apple --- see
 Radar Bug#s 2767956, 2683531, 2805147.  One hopes we can retire this
 kluge in the not too distant future.
 

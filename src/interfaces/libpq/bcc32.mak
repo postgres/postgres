@@ -44,9 +44,9 @@ CFG=Release
 
 !IF "$(OS)" == "Windows_NT"
 NULL=
-!ELSE 
+!ELSE
 NULL=nul
-!ENDIF 
+!ENDIF
 
 !IF "$(CFG)" == "Debug"
 DEBUG=1
@@ -114,7 +114,7 @@ CLEAN :
 
 
 LIB32=tlib.exe
-LIB32_FLAGS= 
+LIB32_FLAGS=
 LIB32_OBJS= \
 	"$(INTDIR)\win32.obj" \
 	"$(INTDIR)\getaddrinfo.obj" \
@@ -172,7 +172,7 @@ LINK32_FLAGS = -Gn -L$(BCB)\lib;$(INTDIR); -x -Tpd -v
 
 # @<< is a Response file, http://www.opussoftware.com/tutorial/TutMakefile.htm
 
-"$(OUTDIR)\blibpq.dll": "$(OUTDIR)\blibpq.lib" "$(INTDIR)\libpq.res" blibpqdll.def 
+"$(OUTDIR)\blibpq.dll": "$(OUTDIR)\blibpq.lib" "$(INTDIR)\libpq.res" blibpqdll.def
 	$(LINK32) @<<
 	$(LINK32_FLAGS) +
 	c0d32.obj , +

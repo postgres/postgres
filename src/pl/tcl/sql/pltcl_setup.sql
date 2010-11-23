@@ -45,7 +45,7 @@ create function check_pkey1_exists(int4, bpchar) returns bool as E'
 	        where key1 = \\$1 and key2 = \\$2"		\\
     	    {int4 bpchar}]
     }
-    
+
     set n [spi_execp -count 1 $GD(plan) [list $1 $2]]
 
     if {$n > 0} {
@@ -71,8 +71,8 @@ CREATE FUNCTION trigger_data() returns trigger language pltcl as $_$
 	set dnames [info locals {[a-zA-Z]*} ]
 
 	foreach key [lsort $dnames] {
-    
-		if { [array exists $key] } { 
+
+		if { [array exists $key] } {
 			set str "{"
 			foreach akey [lsort [ array names $key ] ] {
 				if {[string length $str] > 1} { set str "$str, " }
@@ -90,11 +90,11 @@ CREATE FUNCTION trigger_data() returns trigger language pltcl as $_$
 	}
 
 
-	return OK  
+	return OK
 
 $_$;
 
-CREATE TRIGGER show_trigger_data_trig 
+CREATE TRIGGER show_trigger_data_trig
 BEFORE INSERT OR UPDATE OR DELETE ON trigger_test
 FOR EACH ROW EXECUTE PROCEDURE trigger_data(23,'skidoo');
 

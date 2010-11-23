@@ -78,7 +78,7 @@ for key in skeys:
 	val = TD[key]
 	plpy.notice("TD[" + key + "] => " + str(val))
 
-return None  
+return None
 
 $$;
 CREATE TRIGGER show_trigger_data_trig_before

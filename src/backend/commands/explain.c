@@ -1191,7 +1191,7 @@ ExplainNode(PlanState *planstate, List *ancestors,
 	{
 		ExplainOpenGroup("Plans", "Plans", false, es);
 		/* Pass current PlanState as head of ancestors list for children */
-		ancestors = lcons(planstate, ancestors); 
+		ancestors = lcons(planstate, ancestors);
 	}
 
 	/* initPlan-s */
@@ -1251,7 +1251,7 @@ ExplainNode(PlanState *planstate, List *ancestors,
 	/* end of child plans */
 	if (haschildren)
 	{
-		ancestors = list_delete_first(ancestors); 
+		ancestors = list_delete_first(ancestors);
 		ExplainCloseGroup("Plans", "Plans", false, es);
 	}
 

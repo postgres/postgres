@@ -27,5 +27,5 @@ s_lock_test: s_lock.c $(top_builddir)/src/port/libpgport.a
 check: s_lock_test
 	./s_lock_test
 
-clean distclean maintainer-clean: 
+clean distclean maintainer-clean:
 	rm -f s_lock_test

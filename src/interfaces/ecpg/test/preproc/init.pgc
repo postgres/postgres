@@ -67,7 +67,7 @@ int main(void)
 
 		int e=y->member;
 		int c=10>>2;
-		bool h=2||1; 
+		bool h=2||1;
 		long iay /* = 1L */ ;
 	exec sql end declare section;
 
@@ -94,7 +94,7 @@ int main(void)
 	exec sql select now();
 	exec sql whenever sqlerror do fe(ENUM0);
 	exec sql select now();
-	exec sql whenever sqlerror do sqlnotice(NULL, NONO); 
+	exec sql whenever sqlerror do sqlnotice(NULL, NONO);
 	exec sql select now();
 	return 0;
 }

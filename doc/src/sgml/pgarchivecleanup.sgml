@@ -61,7 +61,7 @@ archive_cleanup_command = 'pg_archivecleanup <replaceable>archivelocation</> %r'
 <synopsis>
 pg_archivecleanup <optional> <replaceable>option</> ... </optional> <replaceable>archivelocation</> <replaceable>restartwalfile</>
 </synopsis>
-   When used as a standalone program all WAL files logically preceding the 
+   When used as a standalone program all WAL files logically preceding the
    <literal>restartwalfile</> will be removed <replaceable>archivelocation</>.
    In this mode, if you specify a <filename>.backup</> file name, then only the file prefix
    will be used as the <literal>restartwalfile</>. This allows you to remove

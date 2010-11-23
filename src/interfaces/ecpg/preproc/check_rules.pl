@@ -102,7 +102,7 @@ while (<GRAM>) {
 			$block = $block . $arr[$fieldIndexer];
 		}
 	}
-} 
+}
 
 close GRAM;
 
@@ -113,7 +113,7 @@ line: while (<ECPG>) {
     @Fld = split(' ', $_, -1);
 
     if (!/^ECPG:/) {
-	next line; 
+	next line;
     }
 
     if ($found{$Fld[2]} ne 'found') {

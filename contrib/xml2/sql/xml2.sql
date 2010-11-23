@@ -10,7 +10,7 @@ RESET client_min_messages;
 
 select query_to_xml('select 1 as x',true,false,'');
 
-select xslt_process( query_to_xml('select x from generate_series(1,5) as 
+select xslt_process( query_to_xml('select x from generate_series(1,5) as
 x',true,false,'')::text,
 $$<xsl:stylesheet version="1.0"
                xmlns:xsl="http://www.w3.org/1999/XSL/Transform">

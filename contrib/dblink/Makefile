@@ -6,8 +6,8 @@ OBJS	= dblink.o
 SHLIB_LINK = $(libpq)
 SHLIB_PREREQS = submake-libpq
 
-DATA_built = dblink.sql 
-DATA = uninstall_dblink.sql 
+DATA_built = dblink.sql
+DATA = uninstall_dblink.sql
 REGRESS = dblink
 
 

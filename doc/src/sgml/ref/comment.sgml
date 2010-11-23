@@ -70,12 +70,12 @@ COMMENT ON
   </para>
 
   <para>
-    Comments can be viewed using <application>psql</application>'s 
+    Comments can be viewed using <application>psql</application>'s
     <command>\d</command> family of commands.
     Other user interfaces to retrieve comments can be built atop
     the same built-in functions that <application>psql</application> uses, namely
     <function>obj_description</>, <function>col_description</>,
-    and <function>shobj_description</> 
+    and <function>shobj_description</>
     (see <xref linkend="functions-info-comment-table">).
   </para>
  </refsect1>
@@ -113,7 +113,7 @@ COMMENT ON
      </para>
     </listitem>
    </varlistentry>
-   
+
    <varlistentry>
      <term><replaceable>source_type</replaceable></term>
      <listitem>
@@ -167,7 +167,7 @@ COMMENT ON
 
     <listitem>
      <para>
-      The data type(s) of the function's arguments (optionally 
+      The data type(s) of the function's arguments (optionally
       schema-qualified), if any.
      </para>
     </listitem>
@@ -201,7 +201,7 @@ COMMENT ON
      </para>
     </listitem>
    </varlistentry>
-    
+
   </variablelist>
  </refsect1>
 

@@ -4,7 +4,7 @@ CREATE TABLE test_time (
 	i time
 );
 
-INSERT INTO test_time VALUES 
+INSERT INTO test_time VALUES
 	( '03:55:08' ),
 	( '04:55:08' ),
 	( '05:55:08' ),

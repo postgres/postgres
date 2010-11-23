@@ -218,7 +218,7 @@
    </tgroup>
   </table>
  </sect1>
- 
+
  <sect1 id="external-extensions">
  <title>Extensions</title>
 
@@ -247,7 +247,7 @@
   <para>
    There are several administration tools available for
    <productname>PostgreSQL</>. The most popular is
-   <application><ulink url="http://www.pgadmin.org/">pgAdmin III</ulink></>, 
+   <application><ulink url="http://www.pgadmin.org/">pgAdmin III</ulink></>,
    and there are several commercially available ones as well.
   </para>
  </sect1>

@@ -17,21 +17,21 @@ To use this program manually, you must:
 	o compile and run this program
 
 If your platform requires special thread flags that are not tested by
-/config/acx_pthread.m4, add PTHREAD_CFLAGS and PTHREAD_LIBS defines to 
+/config/acx_pthread.m4, add PTHREAD_CFLAGS and PTHREAD_LIBS defines to
 your template/${port} file.
 
 Windows Systems
 ===============
 
 Windows systems do not vary in their thread-safeness in the same way that
-other systems might, nor do they generally have pthreads installed, hence 
-on Windows this test is skipped by the configure program (pthreads is 
+other systems might, nor do they generally have pthreads installed, hence
+on Windows this test is skipped by the configure program (pthreads is
 required by the test program, but not PostgreSQL itself). If you do wish
 to test your system however, you can do so as follows:
 
 1) Install pthreads in you Mingw/Msys environment. You can download pthreads
    from ftp://sources.redhat.com/pub/pthreads-win32/.
-   
+
 2) Build the test program:
 
    gcc -o thread_test.exe \

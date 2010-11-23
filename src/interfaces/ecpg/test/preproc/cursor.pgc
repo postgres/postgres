@@ -238,7 +238,7 @@ exec sql end declare section;
 	strcpy(msg, "commit");
 	exec sql commit;
 
-	strcpy(msg, "disconnect"); 
+	strcpy(msg, "disconnect");
 	exec sql disconnect;
 
 	return (0);

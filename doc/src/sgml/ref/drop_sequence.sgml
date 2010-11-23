@@ -33,7 +33,7 @@ DROP SEQUENCE [ IF EXISTS ] <replaceable class="PARAMETER">name</replaceable> [,
    generators. A sequence can only be dropped by its owner or a superuser.
   </para>
  </refsect1>
-  
+
  <refsect1>
   <title>Parameters</title>
 
@@ -42,7 +42,7 @@ DROP SEQUENCE [ IF EXISTS ] <replaceable class="PARAMETER">name</replaceable> [,
     <term><literal>IF EXISTS</literal></term>
     <listitem>
      <para>
-      Do not throw an error if the sequence does not exist. A notice is issued 
+      Do not throw an error if the sequence does not exist. A notice is issued
       in this case.
      </para>
     </listitem>
@@ -89,16 +89,16 @@ DROP SEQUENCE serial;
 </programlisting>
   </para>
  </refsect1>
- 
+
  <refsect1>
   <title>Compatibility</title>
 
   <para>
    <command>DROP SEQUENCE</command> conforms to the <acronym>SQL</acronym>
    standard, except that the standard only allows one
-   sequence to be dropped per command, and apart from the 
-   <literal>IF EXISTS</> option, which is a <productname>PostgreSQL</> 
-   extension. 
+   sequence to be dropped per command, and apart from the
+   <literal>IF EXISTS</> option, which is a <productname>PostgreSQL</>
+   extension.
   </para>
  </refsect1>
 

@@ -113,7 +113,7 @@
 %type <str> variable
 %type <str> variable_declarations
 %type <str> variable_list
-%type <str> vt_declarations 
+%type <str> vt_declarations
 
 %type <str> Op
 %type <str> IntConstVar

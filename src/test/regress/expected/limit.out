@@ -2,8 +2,8 @@
 -- LIMIT
 -- Check the LIMIT/OFFSET feature of SELECT
 --
-SELECT ''::text AS two, unique1, unique2, stringu1 
-		FROM onek WHERE unique1 > 50 
+SELECT ''::text AS two, unique1, unique2, stringu1
+		FROM onek WHERE unique1 > 50
 		ORDER BY unique1 LIMIT 2;
  two | unique1 | unique2 | stringu1 
 -----+---------+---------+----------
@@ -11,8 +11,8 @@ SELECT ''::text AS two, unique1, unique2, stringu1
      |      52 |     985 | ACAAAA
 (2 rows)
 
-SELECT ''::text AS five, unique1, unique2, stringu1 
-		FROM onek WHERE unique1 > 60 
+SELECT ''::text AS five, unique1, unique2, stringu1
+		FROM onek WHERE unique1 > 60
 		ORDER BY unique1 LIMIT 5;
  five | unique1 | unique2 | stringu1 
 ------+---------+---------+----------
@@ -23,7 +23,7 @@ SELECT ''::text AS five, unique1, unique2, stringu1
       |      65 |      64 | NCAAAA
 (5 rows)
 
-SELECT ''::text AS two, unique1, unique2, stringu1 
+SELECT ''::text AS two, unique1, unique2, stringu1
 		FROM onek WHERE unique1 > 60 AND unique1 < 63
 		ORDER BY unique1 LIMIT 5;
  two | unique1 | unique2 | stringu1 
@@ -32,8 +32,8 @@ SELECT ''::text AS two, unique1, unique2, stringu1
      |      62 |     633 | KCAAAA
 (2 rows)
 
-SELECT ''::text AS three, unique1, unique2, stringu1 
-		FROM onek WHERE unique1 > 100 
+SELECT ''::text AS three, unique1, unique2, stringu1
+		FROM onek WHERE unique1 > 100
 		ORDER BY unique1 LIMIT 3 OFFSET 20;
  three | unique1 | unique2 | stringu1 
 -------+---------+---------+----------
@@ -42,15 +42,15 @@ SELECT ''::text AS three, unique1, unique2, stringu1
        |     123 |     777 | TEAAAA
 (3 rows)
 
-SELECT ''::text AS zero, unique1, unique2, stringu1 
-		FROM onek WHERE unique1 < 50 
+SELECT ''::text AS zero, unique1, unique2, stringu1
+		FROM onek WHERE unique1 < 50
 		ORDER BY unique1 DESC LIMIT 8 OFFSET 99;
  zero | unique1 | unique2 | stringu1 
 ------+---------+---------+----------
 (0 rows)
 
-SELECT ''::text AS eleven, unique1, unique2, stringu1 
-		FROM onek WHERE unique1 < 50 
+SELECT ''::text AS eleven, unique1, unique2, stringu1
+		FROM onek WHERE unique1 < 50
 		ORDER BY unique1 DESC LIMIT 20 OFFSET 39;
  eleven | unique1 | unique2 | stringu1 
 --------+---------+---------+----------
@@ -67,7 +67,7 @@ SELECT ''::text AS eleven, unique1, unique2, stringu1
         |       0 |     998 | AAAAAA
 (11 rows)
 
-SELECT ''::text AS ten, unique1, unique2, stringu1 
+SELECT ''::text AS ten, unique1, unique2, stringu1
 		FROM onek
 		ORDER BY unique1 OFFSET 990;
  ten | unique1 | unique2 | stringu1 
@@ -84,7 +84,7 @@ SELECT ''::text AS ten, unique1, unique2, stringu1
      |     999 |     152 | LMAAAA
 (10 rows)
 
-SELECT ''::text AS five, unique1, unique2, stringu1 
+SELECT ''::text AS five, unique1, unique2, stringu1
 		FROM onek
 		ORDER BY unique1 OFFSET 990 LIMIT 5;
  five | unique1 | unique2 | stringu1 
@@ -96,7 +96,7 @@ SELECT ''::text AS five, unique1, unique2, stringu1
       |     994 |     695 | GMAAAA
 (5 rows)
 
-SELECT ''::text AS five, unique1, unique2, stringu1 
+SELECT ''::text AS five, unique1, unique2, stringu1
 		FROM onek
 		ORDER BY unique1 LIMIT 5 OFFSET 900;
  five | unique1 | unique2 | stringu1 

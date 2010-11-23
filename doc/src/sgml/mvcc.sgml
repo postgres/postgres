@@ -25,10 +25,10 @@
    </indexterm>
 
    <para>
-    <productname>PostgreSQL</productname> provides a rich set of tools 
+    <productname>PostgreSQL</productname> provides a rich set of tools
     for developers to manage concurrent access to data.  Internally,
-    data consistency is maintained by using a multiversion 
-    model (Multiversion Concurrency Control, <acronym>MVCC</acronym>). 
+    data consistency is maintained by using a multiversion
+    model (Multiversion Concurrency Control, <acronym>MVCC</acronym>).
     This means that while querying a database each transaction sees
     a snapshot of data (a <firstterm>database version</firstterm>)
     as it was some
@@ -38,7 +38,7 @@
     data rows, providing <firstterm>transaction isolation</firstterm>
     for each database session.  <acronym>MVCC</acronym>, by eschewing
     explicit locking methodologies of traditional database systems,
-    minimizes lock contention in order to allow for reasonable 
+    minimizes lock contention in order to allow for reasonable
     performance in multiuser environments.
    </para>
 

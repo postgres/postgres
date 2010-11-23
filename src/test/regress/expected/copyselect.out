@@ -113,7 +113,7 @@ ERROR:  cannot copy from view "v_test1"
 HINT:  Try the COPY (SELECT ...) TO variant.
 \copy: ERROR:  cannot copy from view "v_test1"
 HINT:  Try the COPY (SELECT ...) TO variant.
--- 
+--
 -- Test \copy (select ...)
 --
 \copy (select "id",'id','id""'||t,(id + 1)*id,t,"test1"."t" from test1 where id=3) to stdout

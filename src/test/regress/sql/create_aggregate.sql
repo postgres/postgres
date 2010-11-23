@@ -4,7 +4,7 @@
 
 -- all functions CREATEd
 CREATE AGGREGATE newavg (
-   sfunc = int4_avg_accum, basetype = int4, stype = _int8, 
+   sfunc = int4_avg_accum, basetype = int4, stype = _int8,
    finalfunc = int8_avg,
    initcond1 = '{0,0}'
 );
@@ -16,7 +16,7 @@ COMMENT ON AGGREGATE newavg (int4) IS NULL;
 
 -- without finalfunc; test obsolete spellings 'sfunc1' etc
 CREATE AGGREGATE newsum (
-   sfunc1 = int4pl, basetype = int4, stype1 = int4, 
+   sfunc1 = int4pl, basetype = int4, stype1 = int4,
    initcond1 = '0'
 );
 

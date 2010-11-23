@@ -76,7 +76,7 @@ LOCK [ TABLE ] [ ONLY ] <replaceable class="PARAMETER">name</replaceable> [, ...
    &mdash; but it won't ensure that what the transaction reads corresponds to
    the latest committed values.
   </para>
-  
+
   <para>
    If a transaction of this sort is going to change the data in the
    table, then it should use <literal>SHARE ROW EXCLUSIVE</> lock mode
@@ -189,7 +189,7 @@ LOCK [ TABLE ] [ ONLY ] <replaceable class="PARAMETER">name</replaceable> [, ...
    reference documentation.
   </para>
  </refsect1>
-  
+
  <refsect1>
   <title>Examples</title>
 
@@ -200,10 +200,10 @@ LOCK [ TABLE ] [ ONLY ] <replaceable class="PARAMETER">name</replaceable> [, ...
 <programlisting>
 BEGIN WORK;
 LOCK TABLE films IN SHARE MODE;
-SELECT id FROM films 
+SELECT id FROM films
     WHERE name = 'Star Wars: Episode I - The Phantom Menace';
 -- Do ROLLBACK if record was not returned
-INSERT INTO films_user_comments VALUES 
+INSERT INTO films_user_comments VALUES
     (_id_, 'GREAT! I was waiting for it for so long!');
 COMMIT WORK;
 </programlisting>

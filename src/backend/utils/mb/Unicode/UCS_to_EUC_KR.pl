@@ -8,7 +8,7 @@
 # map files provided by Unicode organization.
 # Unfortunately it is prohibited by the organization
 # to distribute the map files. So if you try to use this script,
-# you have to obtain OLD5601.TXT from 
+# you have to obtain OLD5601.TXT from
 # the organization's ftp site.
 #
 # OLD5601.TXT format:

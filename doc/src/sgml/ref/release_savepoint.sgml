@@ -29,7 +29,7 @@ PostgreSQL documentation
 RELEASE [ SAVEPOINT ] <replaceable>savepoint_name</replaceable>
 </synopsis>
  </refsynopsisdiv>
-  
+
  <refsect1>
   <title>Description</title>
 
@@ -107,7 +107,7 @@ COMMIT;
 
  <refsect1>
   <title>Compatibility</title>
-  
+
   <para>
    This command conforms to the <acronym>SQL</> standard.  The standard
    specifies that the key word <literal>SAVEPOINT</literal> is

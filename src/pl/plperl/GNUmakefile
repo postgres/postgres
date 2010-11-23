@@ -42,7 +42,7 @@ SHLIB_LINK = $(perl_embed_ldflags)
 
 REGRESS_OPTS = --dbname=$(PL_TESTDB) --load-language=plperl  --load-language=plperlu
 REGRESS = plperl plperl_trigger plperl_shared plperl_elog plperl_util plperl_init plperlu
-# if Perl can support two interpreters in one backend, 
+# if Perl can support two interpreters in one backend,
 # test plperl-and-plperlu cases
 ifneq ($(PERL),)
 ifeq ($(shell $(PERL) -V:usemultiplicity), usemultiplicity='define';)
@@ -59,7 +59,7 @@ plperl.o: perlchunks.h plperl_opmask.h
 plperl_opmask.h: plperl_opmask.pl
 	$(PERL) $< $@
 
-perlchunks.h: $(PERLCHUNKS) 
+perlchunks.h: $(PERLCHUNKS)
 	$(PERL) $(srcdir)/text2macro.pl --strip='^(\#.*|\s*)$$' $^ > $@
 
 all: all-lib

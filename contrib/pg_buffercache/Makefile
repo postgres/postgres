@@ -1,10 +1,10 @@
 # contrib/pg_buffercache/Makefile
 
 MODULE_big = pg_buffercache
-OBJS	= pg_buffercache_pages.o
+OBJS = pg_buffercache_pages.o
 
-DATA_built = pg_buffercache.sql 
-DATA = uninstall_pg_buffercache.sql 
+DATA_built = pg_buffercache.sql
+DATA = uninstall_pg_buffercache.sql
 
 ifdef USE_PGXS
 PG_CONFIG = pg_config

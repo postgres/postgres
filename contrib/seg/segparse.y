@@ -1,6 +1,6 @@
 %{
 #define YYPARSE_PARAM result  /* need this to pass a pointer (void *) to yyparse */
-  
+
 #include "postgres.h"
 
 #include <math.h>
@@ -23,7 +23,7 @@
   extern int seg_yylex(void);
 
   extern int significant_digits(char *str);		/* defined in seg.c */
-  
+
   void seg_yyerror(const char *message);
   int seg_yyparse(void *result);
 
@@ -126,7 +126,7 @@ boundary:
 			$$.sigd = significant_digits($1);
 			$$.val = val;
 	  }
-      | 
+      |
 	  EXTENSION SEGFLOAT {
 			/* temp variable avoids a gcc 3.3.x bug on Sparc64 */
 			float val = seg_atof($2);

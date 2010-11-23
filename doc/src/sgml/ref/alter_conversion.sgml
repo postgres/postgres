@@ -13,8 +13,8 @@ PostgreSQL documentation
  <refnamediv>
   <refname>ALTER CONVERSION</refname>
   <refpurpose>change the definition of a conversion</refpurpose>
- </refnamediv>  
-  
+ </refnamediv>
+
  <indexterm zone="sql-alterconversion">
   <primary>ALTER CONVERSION</primary>
  </indexterm>
@@ -25,7 +25,7 @@ ALTER CONVERSION <replaceable>name</replaceable> RENAME TO <replaceable>new_name
 ALTER CONVERSION <replaceable>name</replaceable> OWNER TO <replaceable>new_owner</replaceable>
 </synopsis>
  </refsynopsisdiv>
-  
+
  <refsect1>
   <title>Description</title>
 
@@ -44,7 +44,7 @@ ALTER CONVERSION <replaceable>name</replaceable> OWNER TO <replaceable>new_owner
    anyway.)
   </para>
  </refsect1>
-  
+
  <refsect1>
   <title>Parameters</title>
 

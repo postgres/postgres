@@ -4,7 +4,7 @@
 
 BEGIN;
 
-SELECT * 
+SELECT *
    INTO TABLE xacttest
    FROM aggtest;
 
@@ -27,10 +27,10 @@ SELECT * FROM aggtest;
 
 ABORT;
 
--- should not exist 
+-- should not exist
 SELECT oid FROM pg_class WHERE relname = 'disappear';
 
--- should have members again 
+-- should have members again
 SELECT * FROM aggtest;
 
 
@@ -129,7 +129,7 @@ BEGIN;
 			DELETE FROM savepoints WHERE a=2;
 ROLLBACK;
 COMMIT;		-- should not be in a transaction block
-		
+
 SELECT * FROM savepoints;
 
 -- test whole-tree commit on an aborted subtransaction

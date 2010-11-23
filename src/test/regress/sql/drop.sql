@@ -5,7 +5,7 @@
 --
 -- this will fail if the user is not the postgres superuser.
 -- if it does, don't worry about it (you can turn usersuper
--- back on as "postgres").  too many people don't follow 
+-- back on as "postgres").  too many people don't follow
 -- directions and run this as "postgres", though...
 --
 UPDATE pg_user
@@ -47,14 +47,14 @@ DROP OPERATOR ## (path, path);
 
 DROP OPERATOR <% (point, widget);
 
--- left unary 
+-- left unary
 DROP OPERATOR @#@ (none, int4);
 
--- right unary 
-DROP OPERATOR #@# (int4, none);	
+-- right unary
+DROP OPERATOR #@# (int4, none);
 
--- right unary 
-DROP OPERATOR #%# (int4, none);	
+-- right unary
+DROP OPERATOR #%# (int4, none);
 
 
 --

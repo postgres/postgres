@@ -64,4 +64,4 @@ int main(void)
 	exec sql select 1 into :i;
 	exec sql rollback;
 	exit (0);
-}	
+}

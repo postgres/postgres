@@ -168,8 +168,8 @@ SELECT length(to_tsvector('english', '345 qwe@efd.r '' http://www.com/ http://ae
 <i <b> wow  < jqw <> qwerty'));
 
 
-select to_tsquery('english', 'qwe & sKies '); 
-select to_tsquery('simple', 'qwe & sKies '); 
+select to_tsquery('english', 'qwe & sKies ');
+select to_tsquery('simple', 'qwe & sKies ');
 select to_tsquery('english', '''the wether'':dc & ''           sKies '':BC ');
 select to_tsquery('english', 'asd&(and|fghj)');
 select to_tsquery('english', '(asd&and)|fghj');
@@ -288,7 +288,7 @@ An hour of storm to place
 The sculpture of these granite seams,
 Upon a woman s face. E.  J.  Pratt  (1882 1964)
 ', to_tsquery('sea&thousand&years'));
- 
+
 select headline('Erosion It took the sea a thousand years,
 A thousand years to trace
 The granite features of this cliff
@@ -298,7 +298,7 @@ An hour of storm to place
 The sculpture of these granite seams,
 Upon a woman s face. E.  J.  Pratt  (1882 1964)
 ', to_tsquery('granite&sea'));
- 
+
 select headline('Erosion It took the sea a thousand years,
 A thousand years to trace
 The granite features of this cliff
@@ -321,7 +321,7 @@ ff-bg
        document.write(15);
 </script>
 </body>
-</html>', 
+</html>',
 to_tsquery('sea&foo'), 'HighlightAll=true');
 --check debug
 select * from public.ts_debug('Tsearch module for PostgreSQL 7.3.3');

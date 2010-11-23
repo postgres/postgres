@@ -154,7 +154,7 @@ even pages that don't contain any deletable tuples.  This guarantees that
 the btbulkdelete call cannot return while any indexscan is still holding
 a copy of a deleted index tuple.  Note that this requirement does not say
 that btbulkdelete must visit the pages in any particular order.  (See also
-on-the-fly deletion, below.) 
+on-the-fly deletion, below.)
 
 There is no such interlocking for deletion of items in internal pages,
 since backends keep no lock nor pin on a page they have descended past.

@@ -59,7 +59,7 @@ CREATE OR REPLACE FUNCTION gtrgm_consistent(internal,text,int,oid,internal)
 RETURNS bool
 AS 'MODULE_PATHNAME'
 LANGUAGE C IMMUTABLE STRICT;
- 
+
 CREATE OR REPLACE FUNCTION gtrgm_compress(internal)
 RETURNS internal
 AS 'MODULE_PATHNAME'

@@ -13,7 +13,7 @@ if (@ARGV) {
 	$path = $ARGV[0];
 	shift @ARGV;
 } else {
-	$path = "."; 
+	$path = ".";
 }
 
 $[ = 1;			# set array base to 1
@@ -86,7 +86,7 @@ line: while (<GRAM>) {
 	if ($arr[$fieldIndexer] eq '|') {
 	    next;
 	}
-	
+
 	# Put this keyword into the right list
 	push @{$keywords{$kcat}}, $arr[$fieldIndexer];
     }

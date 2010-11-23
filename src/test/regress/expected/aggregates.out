@@ -317,7 +317,7 @@ CREATE TEMPORARY TABLE bitwise_test(
   y BIT(4)
 );
 -- empty case
-SELECT 
+SELECT
   BIT_AND(i2) AS "?",
   BIT_OR(i4)  AS "?"
 FROM bitwise_test;
@@ -386,7 +386,7 @@ SELECT
  t | t | t | t | t | t | t | t | t
 (1 row)
 
-CREATE TEMPORARY TABLE bool_test(  
+CREATE TEMPORARY TABLE bool_test(
   b1 BOOL,
   b2 BOOL,
   b3 BOOL,

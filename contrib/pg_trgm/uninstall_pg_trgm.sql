@@ -16,7 +16,7 @@ DROP FUNCTION gtrgm_penalty(internal,internal,internal);
 DROP FUNCTION gtrgm_decompress(internal);
 
 DROP FUNCTION gtrgm_compress(internal);
- 
+
 DROP FUNCTION gtrgm_consistent(internal,text,int,oid,internal);
 
 DROP TYPE gtrgm CASCADE;

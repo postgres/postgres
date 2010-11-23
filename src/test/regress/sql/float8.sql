@@ -56,7 +56,7 @@ SELECT '' AS four, f.* FROM FLOAT8_TBL f WHERE '1004.3' >= f.f1;
 
 SELECT '' AS four, f.* FROM FLOAT8_TBL f WHERE  f.f1 <= '1004.3';
 
-SELECT '' AS three, f.f1, f.f1 * '-10' AS x 
+SELECT '' AS three, f.f1, f.f1 * '-10' AS x
    FROM FLOAT8_TBL f
    WHERE f.f1 > '0.0';
 
@@ -75,15 +75,15 @@ SELECT '' AS three, f.f1, f.f1 - '-10' AS x
 SELECT '' AS one, f.f1 ^ '2.0' AS square_f1
    FROM FLOAT8_TBL f where f.f1 = '1004.3';
 
--- absolute value 
-SELECT '' AS five, f.f1, @f.f1 AS abs_f1 
+-- absolute value
+SELECT '' AS five, f.f1, @f.f1 AS abs_f1
    FROM FLOAT8_TBL f;
 
--- truncate 
+-- truncate
 SELECT '' AS five, f.f1, trunc(f.f1) AS trunc_f1
    FROM FLOAT8_TBL f;
 
--- round 
+-- round
 SELECT '' AS five, f.f1, round(f.f1) AS round_f1
    FROM FLOAT8_TBL f;
 
@@ -97,7 +97,7 @@ select floor(f1) as floor_f1 from float8_tbl f;
 -- sign
 select sign(f1) as sign_f1 from float8_tbl f;
 
--- square root 
+-- square root
 SELECT sqrt(float8 '64') AS eight;
 
 SELECT |/ float8 '64' AS eight;
@@ -109,12 +109,12 @@ SELECT '' AS three, f.f1, |/f.f1 AS sqrt_f1
 -- power
 SELECT power(float8 '144', float8 '0.5');
 
--- take exp of ln(f.f1) 
+-- take exp of ln(f.f1)
 SELECT '' AS three, f.f1, exp(ln(f.f1)) AS exp_ln_f1
    FROM FLOAT8_TBL f
    WHERE f.f1 > '0.0';
 
--- cube root 
+-- cube root
 SELECT ||/ float8 '27' AS three;
 
 SELECT '' AS five, f.f1, ||/f.f1 AS cbrt_f1 FROM FLOAT8_TBL f;
@@ -142,7 +142,7 @@ SELECT '' AS bad, f.f1 / '0.0' from FLOAT8_TBL f;
 
 SELECT '' AS five, * FROM FLOAT8_TBL;
 
--- test for over- and underflow 
+-- test for over- and underflow
 INSERT INTO FLOAT8_TBL(f1) VALUES ('10e400');
 
 INSERT INTO FLOAT8_TBL(f1) VALUES ('-10e400');

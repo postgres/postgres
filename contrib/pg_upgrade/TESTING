@@ -35,10 +35,10 @@ Here are the steps needed to create a regression database dump file:
     b)  For pre-9.0, remove 'regex_flavor'
 
     f)  For pre-9.0, adjust extra_float_digits
-	Postgres 9.0 pg_dump uses extra_float_digits=-2 for pre-9.0
-	databases, and extra_float_digits=-3 for >= 9.0 databases.
-	It is necessary to modify 9.0 pg_dump to always use -3, and
-	modify the pre-9.0 old server to accept extra_float_digits=-3.
+        Postgres 9.0 pg_dump uses extra_float_digits=-2 for pre-9.0
+        databases, and extra_float_digits=-3 for >= 9.0 databases.
+        It is necessary to modify 9.0 pg_dump to always use -3, and
+        modify the pre-9.0 old server to accept extra_float_digits=-3.
 
 Once the dump is created, it can be repeatedly loaded into the old
 database, upgraded, and dumped out of the new database, and then
@@ -52,7 +52,7 @@ steps:
 
 3)  Create the regression database in the old server.
 
-4)  Load the dump file created above into the regression database; 
+4)  Load the dump file created above into the regression database;
     check for errors while loading.
 
 5)  Upgrade the old database to the new major version, as outlined in

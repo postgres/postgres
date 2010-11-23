@@ -207,7 +207,7 @@ CREATE FUNCTION complex_send(complex)
   Finally, we can provide the full definition of the data type:
 <programlisting>
 CREATE TYPE complex (
-   internallength = 16, 
+   internallength = 16,
    input = complex_in,
    output = complex_out,
    receive = complex_recv,

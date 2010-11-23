@@ -482,18 +482,18 @@ CREATE OR REPLACE FUNCTION ltree_gist_in(cstring)
 RETURNS ltree_gist
 AS 'MODULE_PATHNAME'
 LANGUAGE C STRICT;
-  
+
 CREATE OR REPLACE FUNCTION ltree_gist_out(ltree_gist)
 RETURNS cstring
 AS 'MODULE_PATHNAME'
 LANGUAGE C STRICT;
-  
+
 CREATE TYPE ltree_gist (
 	internallength = -1,
 	input = ltree_gist_in,
 	output = ltree_gist_out,
 	storage = plain
-);   
+);
 
 
 CREATE OR REPLACE FUNCTION ltree_consistent(internal,internal,int2,oid,internal)

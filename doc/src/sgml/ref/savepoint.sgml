@@ -29,7 +29,7 @@ PostgreSQL documentation
 SAVEPOINT <replaceable>savepoint_name</replaceable>
 </synopsis>
  </refsynopsisdiv>
-  
+
  <refsect1>
   <title>Description</title>
 
@@ -44,7 +44,7 @@ SAVEPOINT <replaceable>savepoint_name</replaceable>
    the transaction state to what it was at the time of the savepoint.
   </para>
  </refsect1>
-  
+
  <refsect1>
   <title>Parameters</title>
 
@@ -110,7 +110,7 @@ COMMIT;
 
  <refsect1>
   <title>Compatibility</title>
-  
+
   <para>
    SQL requires a savepoint to be destroyed automatically when another
    savepoint with the same name is established.  In

@@ -14,7 +14,7 @@ PostgreSQL documentation
   <refname>DROP TEXT SEARCH PARSER</refname>
   <refpurpose>remove a text search parser</refpurpose>
  </refnamediv>
-  
+
  <indexterm zone="sql-droptsparser">
   <primary>DROP TEXT SEARCH PARSER</primary>
  </indexterm>
@@ -33,7 +33,7 @@ DROP TEXT SEARCH PARSER [ IF EXISTS ] <replaceable class="PARAMETER">name</repla
    parser.  You must be a superuser to use this command.
   </para>
  </refsect1>
-  
+
  <refsect1>
   <title>Parameters</title>
 
@@ -94,7 +94,7 @@ DROP TEXT SEARCH PARSER my_parser;
    drop such configurations along with the parser.
   </para>
  </refsect1>
- 
+
  <refsect1>
   <title>Compatibility</title>
 

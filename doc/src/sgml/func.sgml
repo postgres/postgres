@@ -30,7 +30,7 @@
    is present in other <acronym>SQL</acronym> database management
    systems, and in many cases this functionality is compatible and
    consistent between the various implementations.  This chapter is also
-   not exhaustive;  additional functions appear in relevant sections of 
+   not exhaustive;  additional functions appear in relevant sections of
    the manual.
   </para>
 
@@ -416,7 +416,7 @@
     <literal>IS NOT NULL</literal>, respectively, except that the input
     expression must be of Boolean type.
    </para>
- 
+
 <!-- IS OF does not conform to the ISO SQL behavior, so it is undocumented here
    <para>
     <indexterm>
@@ -1077,7 +1077,7 @@
        <entry>Return Type</entry>
        <entry>Description</entry>
        <entry>Example</entry>
-       <entry>Result</entry>  
+       <entry>Result</entry>
       </row>
      </thead>
 
@@ -1432,7 +1432,7 @@
         original encoding is specified by
         <parameter>src_encoding</parameter>. The
         <parameter>string</parameter> must be valid in this encoding.
-        Conversions can be defined by <command>CREATE CONVERSION</command>.  
+        Conversions can be defined by <command>CREATE CONVERSION</command>.
         Also there are some predefined conversions. See <xref
         linkend="conversion-names"> for available conversions.
        </entry>
@@ -1476,12 +1476,12 @@
        </entry>
        <entry><type>bytea</type></entry>
        <entry>
-        Decode binary data from <parameter>string</parameter> previously 
+        Decode binary data from <parameter>string</parameter> previously
         encoded with <function>encode</>.  Parameter type is same as in <function>encode</>.
        </entry>
        <entry><literal>decode('MTIzAAE=', 'base64')</literal></entry>
        <entry><literal>123\000\001</literal></entry>
-      </row>       
+      </row>
 
       <row>
        <entry>
@@ -1497,7 +1497,7 @@
        </entry>
        <entry><literal>encode(E'123\\000\\001', 'base64')</literal></entry>
        <entry><literal>MTIzAAE=</literal></entry>
-      </row>       
+      </row>
 
       <row>
        <entry>
@@ -1897,8 +1897,8 @@
        </entry>
        <entry><literal>translate('12345', '143', 'ax')</literal></entry>
        <entry><literal>a2x5</literal></entry>
-      </row>       
-      
+      </row>
+
      </tbody>
     </tgroup>
    </table>
@@ -5050,15 +5050,15 @@ SELECT SUBSTRING('XY1234Z', 'Y*?([0-9]{1,3})');
        <row>
         <entry><literal>HH12</literal></entry>
         <entry>hour of day (01-12)</entry>
-       </row>       
+       </row>
        <row>
         <entry><literal>HH24</literal></entry>
         <entry>hour of day (00-23)</entry>
-       </row>       
+       </row>
        <row>
         <entry><literal>MI</literal></entry>
         <entry>minute (00-59)</entry>
-       </row>   
+       </row>
        <row>
         <entry><literal>SS</literal></entry>
         <entry>second (00-59)</entry>
@@ -5206,7 +5206,7 @@ SELECT SUBSTRING('XY1234Z', 'Y*?([0-9]{1,3})');
        <row>
         <entry><literal>W</literal></entry>
         <entry>week of month (1-5) (The first week starts on the first day of the month.)</entry>
-       </row> 
+       </row>
        <row>
         <entry><literal>WW</literal></entry>
         <entry>week number of year (1-53) (The first week starts on the first day of the year.)</entry>
@@ -5276,7 +5276,7 @@ SELECT SUBSTRING('XY1234Z', 'Y*?([0-9]{1,3})');
         <entry><literal>TH</literal> suffix</entry>
         <entry>upper case ordinal number suffix</entry>
         <entry><literal>DDTH</literal>, e.g., <literal>12TH</></entry>
-       </row>   
+       </row>
        <row>
         <entry><literal>th</literal> suffix</entry>
         <entry>lower case ordinal number suffix</entry>
@@ -5286,18 +5286,18 @@ SELECT SUBSTRING('XY1234Z', 'Y*?([0-9]{1,3})');
         <entry><literal>FX</literal> prefix</entry>
         <entry>fixed format global option (see usage notes)</entry>
         <entry><literal>FX&nbsp;Month&nbsp;DD&nbsp;Day</literal></entry>
-       </row>   
+       </row>
        <row>
         <entry><literal>TM</literal> prefix</entry>
         <entry>translation mode (print localized day and month names based on
          <xref linkend="guc-lc-time">)</entry>
         <entry><literal>TMMonth</literal></entry>
-       </row>       
+       </row>
        <row>
         <entry><literal>SP</literal> suffix</entry>
         <entry>spell mode (not implemented)</entry>
         <entry><literal>DDSP</literal></entry>
-       </row>       
+       </row>
       </tbody>
      </tgroup>
     </table>
@@ -5369,8 +5369,8 @@ SELECT SUBSTRING('XY1234Z', 'Y*?([0-9]{1,3})');
        use some non-digit character or template after <literal>YYYY</literal>,
        otherwise the year is always interpreted as 4 digits. For example
        (with the year 20000):
-       <literal>to_date('200001131', 'YYYYMMDD')</literal> will be 
-       interpreted as a 4-digit year; instead use a non-digit 
+       <literal>to_date('200001131', 'YYYYMMDD')</literal> will be
+       interpreted as a 4-digit year; instead use a non-digit
        separator after the year, like
        <literal>to_date('20000-1131', 'YYYY-MMDD')</literal> or
        <literal>to_date('20000Nov31', 'YYYYMonDD')</literal>.
@@ -5425,7 +5425,7 @@ SELECT SUBSTRING('XY1234Z', 'Y*?([0-9]{1,3})');
        In a conversion from string to <type>timestamp</type>, millisecond
        (<literal>MS</literal>) or microsecond (<literal>US</literal>)
        values are used as the
-       seconds digits after the decimal point. For example 
+       seconds digits after the decimal point. For example
        <literal>to_timestamp('12:3', 'SS:MS')</literal> is not 3 milliseconds,
        but 300, because the conversion counts it as 12 + 0.3 seconds.
        This means for the format <literal>SS:MS</literal>, the input values
@@ -5436,11 +5436,11 @@ SELECT SUBSTRING('XY1234Z', 'Y*?([0-9]{1,3})');
       </para>
 
       <para>
-       Here is a more 
-       complex example: 
+       Here is a more
+       complex example:
        <literal>to_timestamp('15:12:02.020.001230', 'HH:MI:SS.MS.US')</literal>
        is 15 hours, 12 minutes, and 2 seconds + 20 milliseconds +
-       1230 microseconds = 2.021230 seconds. 
+       1230 microseconds = 2.021230 seconds.
       </para>
      </listitem>
 
@@ -5491,7 +5491,7 @@ SELECT SUBSTRING('XY1234Z', 'Y*?([0-9]{1,3})');
        <row>
         <entry><literal>.</literal> (period)</entry>
         <entry>decimal point</entry>
-       </row>       
+       </row>
        <row>
         <entry><literal>,</literal> (comma)</entry>
         <entry>group (thousand) separator</entry>
@@ -5568,7 +5568,7 @@ SELECT SUBSTRING('XY1234Z', 'Y*?([0-9]{1,3})');
 
      <listitem>
       <para>
-       <literal>9</literal> results in a value with the same number of 
+       <literal>9</literal> results in a value with the same number of
        digits as there are <literal>9</literal>s. If a digit is
        not available it outputs a space.
       </para>
@@ -5585,7 +5585,7 @@ SELECT SUBSTRING('XY1234Z', 'Y*?([0-9]{1,3})');
       <para>
        <literal>PL</literal>, <literal>SG</literal>, and
        <literal>TH</literal> are <productname>PostgreSQL</productname>
-       extensions. 
+       extensions.
       </para>
      </listitem>
 
@@ -5642,7 +5642,7 @@ SELECT SUBSTRING('XY1234Z', 'Y*?([0-9]{1,3})');
         <entry><literal>TH</literal> suffix</entry>
         <entry>upper case ordinal number suffix</entry>
         <entry><literal>999TH</literal></entry>
-       </row>   
+       </row>
        <row>
         <entry><literal>th</literal> suffix</entry>
         <entry>lower case ordinal number suffix</entry>
@@ -5674,7 +5674,7 @@ SELECT SUBSTRING('XY1234Z', 'Y*?([0-9]{1,3})');
        <row>
         <entry><literal>to_char(current_timestamp, 'FMDay,&nbsp;FMDD&nbsp;&nbsp;HH12:MI:SS')</literal></entry>
         <entry><literal>'Tuesday,&nbsp;6&nbsp;&nbsp;05:39:18'</literal></entry>
-       </row>          
+       </row>
        <row>
         <entry><literal>to_char(-0.1, '99.99')</literal></entry>
         <entry><literal>'&nbsp;&nbsp;-.10'</literal></entry>
@@ -5729,7 +5729,7 @@ SELECT SUBSTRING('XY1234Z', 'Y*?([0-9]{1,3})');
        </row>
        <row>
         <entry><literal>to_char(148.5, '999D999')</literal></entry>
-        <entry><literal>'&nbsp;148,500'</literal></entry>        
+        <entry><literal>'&nbsp;148,500'</literal></entry>
        </row>
        <row>
         <entry><literal>to_char(3148.5, '9G999D999')</literal></entry>
@@ -5739,57 +5739,57 @@ SELECT SUBSTRING('XY1234Z', 'Y*?([0-9]{1,3})');
         <entry><literal>to_char(-485, '999S')</literal></entry>
         <entry><literal>'485-'</literal></entry>
        </row>
-       <row>            
+       <row>
         <entry><literal>to_char(-485, '999MI')</literal></entry>
-        <entry><literal>'485-'</literal></entry>        
+        <entry><literal>'485-'</literal></entry>
        </row>
        <row>
         <entry><literal>to_char(485, '999MI')</literal></entry>
-        <entry><literal>'485&nbsp;'</literal></entry>           
+        <entry><literal>'485&nbsp;'</literal></entry>
        </row>
        <row>
         <entry><literal>to_char(485, 'FM999MI')</literal></entry>
-        <entry><literal>'485'</literal></entry>         
+        <entry><literal>'485'</literal></entry>
        </row>
        <row>
         <entry><literal>to_char(485, 'PL999')</literal></entry>
-        <entry><literal>'+485'</literal></entry>        
+        <entry><literal>'+485'</literal></entry>
        </row>
-       <row>            
+       <row>
         <entry><literal>to_char(485, 'SG999')</literal></entry>
-        <entry><literal>'+485'</literal></entry>        
+        <entry><literal>'+485'</literal></entry>
        </row>
        <row>
         <entry><literal>to_char(-485, 'SG999')</literal></entry>
-        <entry><literal>'-485'</literal></entry>        
+        <entry><literal>'-485'</literal></entry>
        </row>
        <row>
         <entry><literal>to_char(-485, '9SG99')</literal></entry>
-        <entry><literal>'4-85'</literal></entry>        
+        <entry><literal>'4-85'</literal></entry>
        </row>
        <row>
         <entry><literal>to_char(-485, '999PR')</literal></entry>
-        <entry><literal>'&lt;485&gt;'</literal></entry>         
+        <entry><literal>'&lt;485&gt;'</literal></entry>
        </row>
        <row>
         <entry><literal>to_char(485, 'L999')</literal></entry>
-        <entry><literal>'DM&nbsp;485</literal></entry>   
+        <entry><literal>'DM&nbsp;485</literal></entry>
        </row>
        <row>
-        <entry><literal>to_char(485, 'RN')</literal></entry>            
+        <entry><literal>to_char(485, 'RN')</literal></entry>
         <entry><literal>'&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;CDLXXXV'</literal></entry>
        </row>
        <row>
-        <entry><literal>to_char(485, 'FMRN')</literal></entry>  
+        <entry><literal>to_char(485, 'FMRN')</literal></entry>
         <entry><literal>'CDLXXXV'</literal></entry>
        </row>
        <row>
         <entry><literal>to_char(5.2, 'FMRN')</literal></entry>
-        <entry><literal>'V'</literal></entry>           
+        <entry><literal>'V'</literal></entry>
        </row>
        <row>
         <entry><literal>to_char(482, '999th')</literal></entry>
-        <entry><literal>'&nbsp;482nd'</literal></entry>                         
+        <entry><literal>'&nbsp;482nd'</literal></entry>
        </row>
        <row>
         <entry><literal>to_char(485, '"Good&nbsp;number:"999')</literal></entry>
@@ -5800,14 +5800,14 @@ SELECT SUBSTRING('XY1234Z', 'Y*?([0-9]{1,3})');
         <entry><literal>'Pre:&nbsp;485&nbsp;Post:&nbsp;.800'</literal></entry>
        </row>
        <row>
-        <entry><literal>to_char(12, '99V999')</literal></entry>         
+        <entry><literal>to_char(12, '99V999')</literal></entry>
         <entry><literal>'&nbsp;12000'</literal></entry>
        </row>
        <row>
         <entry><literal>to_char(12.4, '99V999')</literal></entry>
         <entry><literal>'&nbsp;12400'</literal></entry>
        </row>
-       <row>            
+       <row>
         <entry><literal>to_char(12.45, '99V9')</literal></entry>
         <entry><literal>'&nbsp;125'</literal></entry>
        </row>
@@ -6301,20 +6301,20 @@ SELECT (DATE '2001-10-30', DATE '2001-10-30') OVERLAPS
 </screen>
 
   <para>
-   When adding an <type>interval</type> value to (or subtracting an 
-   <type>interval</type> value from) a <type>timestamp with time zone</type> 
-   value, the days component advances (or decrements) the date of the 
-   <type>timestamp with time zone</type> by the indicated number of days. 
-   Across daylight saving time changes (with the session time zone set to a 
-   time zone that recognizes DST), this means <literal>interval '1 day'</literal> 
-   does not necessarily equal <literal>interval '24 hours'</literal>. 
+   When adding an <type>interval</type> value to (or subtracting an
+   <type>interval</type> value from) a <type>timestamp with time zone</type>
+   value, the days component advances (or decrements) the date of the
+   <type>timestamp with time zone</type> by the indicated number of days.
+   Across daylight saving time changes (with the session time zone set to a
+   time zone that recognizes DST), this means <literal>interval '1 day'</literal>
+   does not necessarily equal <literal>interval '24 hours'</literal>.
    For example, with the session time zone set to <literal>CST7CDT</literal>,
    <literal>timestamp with time zone '2005-04-02 12:00-07' + interval '1 day' </literal>
-   will produce <literal>timestamp with time zone '2005-04-03 12:00-06'</literal>, 
-   while adding <literal>interval '24 hours'</literal> to the same initial 
+   will produce <literal>timestamp with time zone '2005-04-03 12:00-06'</literal>,
+   while adding <literal>interval '24 hours'</literal> to the same initial
    <type>timestamp with time zone</type> produces
    <literal>timestamp with time zone '2005-04-03 13:00-06'</literal>, as there is
-   a change in daylight saving time at <literal>2005-04-03 02:00</literal> in time zone 
+   a change in daylight saving time at <literal>2005-04-03 02:00</literal> in time zone
    <literal>CST7CDT</literal>.
   </para>
 
@@ -6704,9 +6704,9 @@ SELECT EXTRACT(SECOND FROM TIME '17:12:28.5');
         a year is in week 1 of that year.
        </para>
        <para>
-        Because of this, it is possible for early January dates to be part of the 
+        Because of this, it is possible for early January dates to be part of the
         52nd or 53rd week of the previous year.  For example, <literal>2005-01-01</>
-        is part of the 53rd week of year 2004, and <literal>2006-01-01</> is part of 
+        is part of the 53rd week of year 2004, and <literal>2006-01-01</> is part of
         the 52nd week of year 2005.
        </para>
 
@@ -6721,7 +6721,7 @@ SELECT EXTRACT(WEEK FROM TIMESTAMP '2001-02-16 20:38:40');
       <term><literal>year</literal></term>
       <listitem>
        <para>
-        The year field.  Keep in mind there is no <literal>0 AD</>, so subtracting 
+        The year field.  Keep in mind there is no <literal>0 AD</>, so subtracting
         <literal>BC</> years from <literal>AD</> years should be done with care.
        </para>
 
@@ -6900,7 +6900,7 @@ SELECT TIMESTAMP WITH TIME ZONE '2001-02-16 20:38:40-05' AT TIME ZONE 'MST';
 <lineannotation>Result: </lineannotation><computeroutput>2001-02-16 18:38:40</computeroutput>
 </screen>
     The first example takes a time stamp without time zone and interprets it as MST time
-    (UTC-7), which is then converted to PST (UTC-8) for display.  The second example takes 
+    (UTC-7), which is then converted to PST (UTC-8) for display.  The second example takes
     a time stamp specified in EST (UTC-5) and converts it to local time in MST (UTC-7).
    </para>
 
@@ -6908,7 +6908,7 @@ SELECT TIMESTAMP WITH TIME ZONE '2001-02-16 20:38:40-05' AT TIME ZONE 'MST';
     The function <literal><function>timezone</function>(<replaceable>zone</>,
     <replaceable>timestamp</>)</literal> is equivalent to the SQL-conforming construct
     <literal><replaceable>timestamp</> AT TIME ZONE
-    <replaceable>zone</></literal>. 
+    <replaceable>zone</></literal>.
    </para>
   </sect2>
 
@@ -7110,7 +7110,7 @@ SELECT pg_sleep(1.5);
 
  </sect1>
 
-  
+
  <sect1 id="functions-enum">
   <title>Enum Support Functions</title>
 
@@ -8936,7 +8936,7 @@ SELECT xpath_exists('/my:a/text()', '<my:a xmlns:my="http://example.com">test</m
 <synopsis>
 table_to_xml(tbl regclass, nulls boolean, tableforest boolean, targetns text)
 query_to_xml(query text, nulls boolean, tableforest boolean, targetns text)
-cursor_to_xml(cursor refcursor, count int, nulls boolean, 
+cursor_to_xml(cursor refcursor, count int, nulls boolean,
               tableforest boolean, targetns text)
 </synopsis>
     The return type of each function is <type>xml</type>.
@@ -9569,7 +9569,7 @@ SELECT ... WHERE CASE WHEN x &lt;&gt; 0 THEN y/x &gt; 1.5 ELSE false END;
   <para>
    The <function>COALESCE</function> function returns the first of its
    arguments that is not null.  Null is returned only if all arguments
-   are null.  It is often used to substitute a default value for 
+   are null.  It is often used to substitute a default value for
    null values when data is retrieved for display, for example:
 <programlisting>
 SELECT COALESCE(description, short_description, '(none)') ...
@@ -11803,7 +11803,7 @@ FROM (SELECT generate_subscripts(a, 1) AS s, a FROM arrays) foo;
 -- unnest a 2D array
 CREATE OR REPLACE FUNCTION unnest2(anyarray)
 RETURNS SETOF anyelement AS $$
-select $1[i][j] 
+select $1[i][j]
    from generate_subscripts($1,1) g1(i),
         generate_subscripts($1,2) g2(j);
 $$ LANGUAGE sql IMMUTABLE;
@@ -13398,7 +13398,7 @@ SELECT set_config('log_statement_stats', 'off', false);
    <para>
     <function>pg_rotate_logfile</> signals the log-file manager to switch
     to a new output file immediately.  This works only when the built-in
-    log collector is running, since otherwise there is no log-file manager 
+    log collector is running, since otherwise there is no log-file manager
     subprocess.
    </para>
 
@@ -14114,7 +14114,7 @@ SELECT (pg_stat_file('filename')).modification;
    <para>
     <function>pg_advisory_lock</> locks an application-defined resource,
     which can be identified either by a single 64-bit key value or two
-    32-bit key values (note that these two key spaces do not overlap). 
+    32-bit key values (note that these two key spaces do not overlap).
     The key type is specified in <literal>pg_locks.objid</>.  If
     another session already holds a lock on the same resource, the
     function will wait until the resource becomes available.  The lock
@@ -14193,7 +14193,7 @@ SELECT (pg_stat_file('filename')).modification;
 
    <para>
       Currently <productname>PostgreSQL</> provides one built in trigger
-      function, <function>suppress_redundant_updates_trigger</>, 
+      function, <function>suppress_redundant_updates_trigger</>,
       which will prevent any update
       that does not actually change the data in the row from taking place, in
       contrast to the normal behavior which always performs the update
@@ -14209,19 +14209,19 @@ SELECT (pg_stat_file('filename')).modification;
       and space in dead rows that will eventually have to be vacuumed.
       However, detecting such situations in client code is not
       always easy, or even possible, and writing expressions to detect
-      them can be error-prone. An alternative is to use 
+      them can be error-prone. An alternative is to use
       <function>suppress_redundant_updates_trigger</>, which will skip
       updates that don't change the data. You should use this with care,
-      however. The trigger takes a small but non-trivial time for each record, 
+      however. The trigger takes a small but non-trivial time for each record,
       so if most of the records affected by an update are actually changed,
       use of this trigger will actually make the update run slower.
     </para>
 
     <para>
-      The <function>suppress_redundant_updates_trigger</> function can be 
+      The <function>suppress_redundant_updates_trigger</> function can be
       added to a table like this:
 <programlisting>
-CREATE TRIGGER z_min_update 
+CREATE TRIGGER z_min_update
 BEFORE UPDATE ON tablename
 FOR EACH ROW EXECUTE PROCEDURE suppress_redundant_updates_trigger();
 </programlisting>

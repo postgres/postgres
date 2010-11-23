@@ -4,7 +4,7 @@ CREATE TABLE test_timestamptz (
 	i timestamptz
 );
 
-INSERT INTO test_timestamptz VALUES 
+INSERT INTO test_timestamptz VALUES
 	( '2004-10-26 03:55:08' ),
 	( '2004-10-26 04:55:08' ),
 	( '2004-10-26 05:55:08' ),

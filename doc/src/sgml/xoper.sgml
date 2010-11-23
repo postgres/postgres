@@ -52,7 +52,7 @@ CREATE OPERATOR + (
 
   <para>
    Now we could execute a query like this:
-     
+
 <screen>
 SELECT (a + b) AS c FROM test_complex;
 

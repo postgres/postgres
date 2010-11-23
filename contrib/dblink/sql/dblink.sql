@@ -327,15 +327,15 @@ SELECT dblink_disconnect('myconn');
 
 -- test asynchronous queries
 SELECT dblink_connect('dtest1', 'dbname=contrib_regression');
-SELECT * from 
+SELECT * from
  dblink_send_query('dtest1', 'select * from foo where f1 < 3') as t1;
 
 SELECT dblink_connect('dtest2', 'dbname=contrib_regression');
-SELECT * from 
+SELECT * from
  dblink_send_query('dtest2', 'select * from foo where f1 > 2 and f1 < 7') as t1;
 
 SELECT dblink_connect('dtest3', 'dbname=contrib_regression');
-SELECT * from 
+SELECT * from
  dblink_send_query('dtest3', 'select * from foo where f1 > 6') as t1;
 
 CREATE TEMPORARY TABLE result AS
@@ -364,7 +364,7 @@ SELECT dblink_disconnect('dtest3');
 SELECT * from result;
 
 SELECT dblink_connect('dtest1', 'dbname=contrib_regression');
-SELECT * from 
+SELECT * from
  dblink_send_query('dtest1', 'select * from foo where f1 < 3') as t1;
 
 SELECT dblink_cancel_query('dtest1');

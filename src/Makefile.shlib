@@ -271,7 +271,7 @@ endif
 ifeq ($(PORTNAME), sunos4)
   LINK.shared		= $(LD) -assert pure-text -Bdynamic
 endif
- 
+
 ifeq ($(PORTNAME), osf)
   LINK.shared		= $(LD) -shared -expect_unresolved '*'
 endif

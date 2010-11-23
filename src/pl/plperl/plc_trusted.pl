@@ -1,7 +1,7 @@
 #  src/pl/plperl/plc_trusted.pl
 
 package PostgreSQL::InServer::safe;
- 
+
 # Load widely useful pragmas into plperl to make them available.
 #
 # SECURITY RISKS:

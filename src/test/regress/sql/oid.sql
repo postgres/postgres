@@ -14,7 +14,7 @@ INSERT INTO OID_TBL(f1) VALUES ('   10  ');
 -- leading/trailing hard tab is also allowed
 INSERT INTO OID_TBL(f1) VALUES ('	  15 	  ');
 
--- bad inputs 
+-- bad inputs
 INSERT INTO OID_TBL(f1) VALUES ('');
 INSERT INTO OID_TBL(f1) VALUES ('    ');
 INSERT INTO OID_TBL(f1) VALUES ('asdfasd');

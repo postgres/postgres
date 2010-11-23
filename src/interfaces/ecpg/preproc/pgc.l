@@ -58,8 +58,8 @@ static bool isinformixdefine(void);
 char *token_start;
 int state_before;
 
-struct _yy_buffer 
-{ 
+struct _yy_buffer
+{
 	YY_BUFFER_STATE		buffer;
 	long				lineno;
 	char		  		*filename;
@@ -71,7 +71,7 @@ static char *old;
 #define MAX_NESTED_IF 128
 static short preproc_tos;
 static short ifcond;
-static struct _if_value 
+static struct _if_value
 {
 	short condition;
 	short else_branch;
@@ -87,7 +87,7 @@ static struct _if_value
 
 %option yylineno
 
-%x C SQL incl def def_ident undef 
+%x C SQL incl def def_ident undef
 
 /*
  * OK, here is a short description of lex/flex rules behavior.
@@ -518,7 +518,7 @@ cppline			{space}*#([^i][A-Za-z]*|{if}|{ifdef}|{ifndef}|{import})(.*\\{space})*.
 				/* throw back all but the initial "$" */
 				yyless(1);
 				/* and treat it as {other} */
-				return yytext[0];	
+				return yytext[0];
 			}
 <SQL>{dolqdelim}        {
 				token_start = yytext;
@@ -737,7 +737,7 @@ cppline			{space}*#([^i][A-Za-z]*|{if}|{ifdef}|{ifndef}|{import})(.*\\{space})*.
 					}
 <SQL>{identifier}	{
 						const ScanKeyword    *keyword;
-						
+
 						if (!isdefine())
 						{
 							/* Is it an SQL/ECPG keyword? */
@@ -764,7 +764,7 @@ cppline			{space}*#([^i][A-Za-z]*|{if}|{ifdef}|{ifndef}|{import})(.*\\{space})*.
 					}
 <SQL>{other}		{ return yytext[0]; }
 <C>{exec_sql}		{ BEGIN(SQL); return SQL_START; }
-<C>{informix_special}	{ 
+<C>{informix_special}	{
 						/* are we simulating Informix? */
 						if (INFORMIX_MODE)
 						{
@@ -939,7 +939,7 @@ cppline			{space}*#([^i][A-Za-z]*|{if}|{ifdef}|{ifndef}|{import})(.*\\{space})*.
 			                yyterminate();
 				}
 <C>{exec_sql}{include}{space}*	{ BEGIN(incl); }
-<C>{informix_special}{include}{space}* { 
+<C>{informix_special}{include}{space}* {
 					  /* are we simulating Informix? */
 					  if (INFORMIX_MODE)
 					  {
@@ -952,7 +952,7 @@ cppline			{space}*#([^i][A-Za-z]*|{if}|{ifdef}|{ifndef}|{import})(.*\\{space})*.
 					  }
 					}
 <C,xskip>{exec_sql}{ifdef}{space}*	{ ifcond = TRUE; BEGIN(xcond); }
-<C,xskip>{informix_special}{ifdef}{space}* { 
+<C,xskip>{informix_special}{ifdef}{space}* {
 					  /* are we simulating Informix? */
 					  if (INFORMIX_MODE)
 					  {
@@ -966,7 +966,7 @@ cppline			{space}*#([^i][A-Za-z]*|{if}|{ifdef}|{ifndef}|{import})(.*\\{space})*.
 					  }
 					}
 <C,xskip>{exec_sql}{ifndef}{space}* { ifcond = FALSE; BEGIN(xcond); }
-<C,xskip>{informix_special}{ifndef}{space}* { 
+<C,xskip>{informix_special}{ifndef}{space}* {
 					  /* are we simulating Informix? */
 					  if (INFORMIX_MODE)
 					  {
@@ -990,7 +990,7 @@ cppline			{space}*#([^i][A-Za-z]*|{if}|{ifdef}|{ifndef}|{import})(.*\\{space})*.
 
 						ifcond = TRUE; BEGIN(xcond);
 					}
-<C,xskip>{informix_special}{elif}{space}* { 
+<C,xskip>{informix_special}{elif}{space}* {
 					/* are we simulating Informix? */
 					if (INFORMIX_MODE)
 					{
@@ -1089,7 +1089,7 @@ cppline			{space}*#([^i][A-Za-z]*|{if}|{ifdef}|{ifndef}|{import})(.*\\{space})*.
 <xcond>{identifier}{space}*";" {
 					if (preproc_tos >= MAX_NESTED_IF-1)
 						mmerror(PARSE_ERROR, ET_FATAL, "too many nested EXEC SQL IFDEF conditions");
-					else 
+					else
 					{
 						struct _defines *defptr;
 						unsigned int i;
@@ -1132,7 +1132,7 @@ cppline			{space}*#([^i][A-Za-z]*|{if}|{ifdef}|{ifndef}|{import})(.*\\{space})*.
 <def_ident>{other}|\n	{
 				mmerror(PARSE_ERROR, ET_FATAL, "missing identifier in EXEC SQL DEFINE command");
 				yyterminate();
-			}	
+			}
 <def>{space}*";"	{
 						struct _defines *ptr, *this;
 
@@ -1170,7 +1170,7 @@ cppline			{space}*#([^i][A-Za-z]*|{if}|{ifdef}|{ifndef}|{import})(.*\\{space})*.
 <<EOF>>				{
 			  		if (yy_buffer == NULL)
 					{
-				  		if ( preproc_tos > 0 ) 
+				  		if ( preproc_tos > 0 )
 						{
 					  		preproc_tos = 0;
 							mmerror(PARSE_ERROR, ET_FATAL, "missing \"EXEC SQL ENDIF;\"");
@@ -1189,7 +1189,7 @@ cppline			{space}*#([^i][A-Za-z]*|{if}|{ifdef}|{ifndef}|{import})(.*\\{space})*.
 								ptr->used = NULL;
 								break;
 							}
-								
+
 						if (yyin != NULL)
 							fclose(yyin);
 
@@ -1209,7 +1209,7 @@ cppline			{space}*#([^i][A-Za-z]*|{if}|{ifdef}|{ifndef}|{import})(.*\\{space})*.
 
 						if (i != 0)
 							output_line_number();
-						
+
 			  		}
 				}
 <INITIAL>{other}|\n     	{ mmerror(PARSE_ERROR, ET_FATAL, "internal error: unreachable state; please report this to <pgsql-bugs@postgresql.org>"); }
@@ -1244,7 +1244,7 @@ addlit(char *ytext, int yleng)
 	/* enlarge buffer if needed */
 	if ((literallen+yleng) >= literalalloc)
 	{
-		do 
+		do
 			literalalloc *= 2;
 		while ((literallen+yleng) >= literalalloc);
 		literalbuf = (char *) realloc(literalbuf, literalalloc);
@@ -1290,7 +1290,7 @@ parse_include(void)
 
   	/*
 	 * skip the ";" if there is one and trailing whitespace. Note that
-	 * yytext contains at least one non-space character plus the ";" 
+	 * yytext contains at least one non-space character plus the ";"
 	 */
   	for (i = strlen(yytext)-2;
 		 i > 0 && ecpg_isspace(yytext[i]);
@@ -1301,7 +1301,7 @@ parse_include(void)
 		i--;
 
 	yytext[i+1] = '\0';
-	
+
 	yyin = NULL;
 
 	/* If file name is enclosed in '"' remove these and look only in '.' */
@@ -1311,7 +1311,7 @@ parse_include(void)
 	{
 		yytext[i] = '\0';
 		memmove(yytext, yytext+1, strlen(yytext));
-	
+
 		strncpy(inc_file, yytext, sizeof(inc_file));
 		yyin = fopen(inc_file, "r");
 		if (!yyin)
@@ -1322,7 +1322,7 @@ parse_include(void)
 				yyin = fopen(inc_file, "r");
 			}
 		}
-		
+
 	}
 	else
 	{
@@ -1331,7 +1331,7 @@ parse_include(void)
 			yytext[i] = '\0';
 			memmove(yytext, yytext+1, strlen(yytext));
 		}
-		
+
 	  	for (ip = include_paths; yyin == NULL && ip != NULL; ip = ip->next)
 	  	{
 			if (strlen(ip->path) + strlen(yytext) + 3 > MAXPGPATH)

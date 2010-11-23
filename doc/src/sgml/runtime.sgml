@@ -21,8 +21,8 @@
    separate user account. This user account should only own the data
    that is managed by the server, and should not be shared with other
    daemons. (For example, using the user <literal>nobody</literal> is a bad
-   idea.) It is not advisable to install executables owned by this 
-   user because compromised systems could then modify their own 
+   idea.) It is not advisable to install executables owned by this
+   user because compromised systems could then modify their own
    binaries.
   </para>
 
@@ -526,7 +526,7 @@ psql: could not connect to server: No such file or directory
     them turned on or sufficiently sized by default, especially as
     available RAM and the demands of database applications grow.
     (On <systemitem class="osname">Windows</>,
-    <productname>PostgreSQL</> provides its own replacement 
+    <productname>PostgreSQL</> provides its own replacement
     implementation of these facilities, so most of this section
     can be disregarded.)
    </para>
@@ -827,7 +827,7 @@ options "SEMMNS=240"
        </para>
 
        <para>
-        <systemitem class="osname">FreeBSD</> versions before 4.0 work like 
+        <systemitem class="osname">FreeBSD</> versions before 4.0 work like
         <systemitem class="osname">NetBSD</> and <systemitem class="osname">
         OpenBSD</> (see below).
        </para>
@@ -921,7 +921,7 @@ options        SEMMAP=256
 
        <para>
         Ancient distributions might not have the <command>sysctl</command> program,
-        but equivalent changes can be made by manipulating the 
+        but equivalent changes can be made by manipulating the
         <filename>/proc</filename> file system:
 <screen>
 <prompt>$</prompt> <userinput>echo 17179869184 &gt;/proc/sys/kernel/shmmax</userinput>
@@ -1464,7 +1464,7 @@ $ <userinput>kill -INT `head -1 /usr/local/pgsql/data/postmaster.pid`</userinput
    file installed (<xref linkend="libpq-connect">).
   </para>
  </sect1>
-  
+
  <sect1 id="encryption-options">
   <title>Encryption Options</title>
 
@@ -1479,7 +1479,7 @@ $ <userinput>kill -INT `head -1 /usr/local/pgsql/data/postmaster.pid`</userinput
    insecure networks. Encryption might also be required to secure
    sensitive data such as medical records or financial transactions.
   </para>
-   
+
   <variablelist>
 
   <varlistentry>
@@ -1509,7 +1509,7 @@ $ <userinput>kill -INT `head -1 /usr/local/pgsql/data/postmaster.pid`</userinput
      The client supplies the decryption key and the data is decrypted
      on the server and then sent to the client.
     </para>
-     
+
     <para>
      The decrypted data and the decryption key are present on the
      server for a brief time while it is being decrypted and

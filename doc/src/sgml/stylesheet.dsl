@@ -22,7 +22,7 @@
 
 <style-sheet>
  <style-specification use="docbook">
-  <style-specification-body> 
+  <style-specification-body>
 
 <!-- general customization ......................................... -->
 
@@ -45,7 +45,7 @@
 ;; Don't append period if run-in title ends with any of these
 ;; characters.  We had to add the colon here.  This is fixed in
 ;; stylesheets version 1.71, so it can be removed sometime.
-(define %content-title-end-punct% 
+(define %content-title-end-punct%
   '(#\. #\! #\? #\:))
 
 ;; No automatic punctuation after honorific name parts
@@ -114,7 +114,7 @@
    (normalize "author")
    (normalize "authorgroup")
    (normalize "title")
-   (normalize "subtitle")   
+   (normalize "subtitle")
    (normalize "volumenum")
    (normalize "edition")
    (normalize "othercredit")
@@ -214,7 +214,7 @@
       (empty-sosofo)))
 
 ;; Add character encoding and time of creation into HTML header
-(define %html-header-tags% 
+(define %html-header-tags%
   (list (list "META" '("HTTP-EQUIV" "Content-Type") '("CONTENT" "text/html; charset=ISO-8859-1"))
 	(list "META" '("NAME" "creation") (list "CONTENT" (time->string (time) #t)))))
 
@@ -332,7 +332,7 @@
 				    (make element gi: "A"
 					  attributes: (list
 						       (list "TITLE" (element-title-string nextsib))
-						       (list "HREF" 
+						       (list "HREF"
 							     (href-to
 							      nextsib)))
 					  (gentext-nav-next-sibling nextsib))))
@@ -346,7 +346,7 @@
 				    (make element gi: "A"
 					  attributes: (list
 						       (list "TITLE" (element-title-string next))
-						       (list "HREF" 
+						       (list "HREF"
 							     (href-to
 							      next))
 						       (list "ACCESSKEY"
@@ -556,7 +556,7 @@
         (my-simplelist-vert members))
        ((equal? type (normalize "horiz"))
         (simplelist-table 'row    cols members)))))
- 
+
 (element member
   (let ((type (inherited-attribute-string (normalize "type"))))
     (cond
@@ -585,7 +585,7 @@
   (let ((table (ancestor-member nd ($table-element-list$))))
     (if (node-list-empty? table)
 	nd
-	table)))	 
+	table)))
 
 ;; (The function below overrides the one in print/dbindex.dsl.)
 
@@ -652,7 +652,7 @@
 
 
 (define (part-titlepage elements #!optional (side 'recto))
-  (let ((nodelist (titlepage-nodelist 
+  (let ((nodelist (titlepage-nodelist
 		   (if (equal? side 'recto)
 		       (reference-titlepage-recto-elements)
 		       (reference-titlepage-verso-elements))
@@ -670,7 +670,7 @@
 	  page-number-restart?: (first-part?)
 	  input-whitespace-treatment: 'collapse
 	  use: default-text-style
-	  
+
 	  ;; This hack is required for the RTF backend. If an external-graphic
 	  ;; is the first thing on the page, RTF doesn't seem to do the right
 	  ;; thing (the graphic winds up on the baseline of the first line
@@ -679,7 +679,7 @@
 	  (make paragraph
 	    line-spacing: 1pt
 	    (literal ""))
-      
+
 	  (let loop ((nl nodelist) (lastnode (empty-node-list)))
 	    (if (node-list-empty? nl)
 		(empty-sosofo)
@@ -717,7 +717,7 @@
 
 
 (define (reference-titlepage elements #!optional (side 'recto))
-  (let ((nodelist (titlepage-nodelist 
+  (let ((nodelist (titlepage-nodelist
 		   (if (equal? side 'recto)
 		       (reference-titlepage-recto-elements)
 		       (reference-titlepage-verso-elements))
@@ -735,7 +735,7 @@
 	  page-number-restart?: (first-reference?)
 	  input-whitespace-treatment: 'collapse
 	  use: default-text-style
-	  
+
 	  ;; This hack is required for the RTF backend. If an external-graphic
 	  ;; is the first thing on the page, RTF doesn't seem to do the right
 	  ;; thing (the graphic winds up on the baseline of the first line
@@ -744,7 +744,7 @@
 	  (make paragraph
 	    line-spacing: 1pt
 	    (literal ""))
-      
+
 	  (let loop ((nl nodelist) (lastnode (empty-node-list)))
 	    (if (node-list-empty? nl)
 		(empty-sosofo)
@@ -812,13 +812,13 @@ Lynx, or similar).
     (literal "*")
     sosofo
     (literal "*")))
- 
+
 (define ($dquote-seq$ #!optional (sosofo (process-children)))
   (make sequence
     (literal (gentext-start-quote))
     sosofo
     (literal (gentext-end-quote))))
- 
+
 (element (para command) ($dquote-seq$))
 (element (para emphasis) ($asterix-seq$))
 (element (para filename) ($dquote-seq$))

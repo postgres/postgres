@@ -10498,7 +10498,7 @@ dumpACL(Archive *fout, CatalogId objCatId, DumpId objDumpId,
 }
 
 /*
- * dumpSecLabel 
+ * dumpSecLabel
  *
  * This routine is used to dump any security labels associated with the
  * object handed to this routine. The routine takes a constant character

@@ -14,7 +14,7 @@ PostgreSQL documentation
   <refname>DROP TEXT SEARCH DICTIONARY</refname>
   <refpurpose>remove a text search dictionary</refpurpose>
  </refnamediv>
-  
+
  <indexterm zone="sql-droptsdictionary">
   <primary>DROP TEXT SEARCH DICTIONARY</primary>
  </indexterm>
@@ -34,7 +34,7 @@ DROP TEXT SEARCH DICTIONARY [ IF EXISTS ] <replaceable class="PARAMETER">name</r
    dictionary.
   </para>
  </refsect1>
-  
+
  <refsect1>
   <title>Parameters</title>
 
@@ -96,7 +96,7 @@ DROP TEXT SEARCH DICTIONARY english;
    drop such configurations along with the dictionary.
   </para>
  </refsect1>
- 
+
  <refsect1>
   <title>Compatibility</title>
 

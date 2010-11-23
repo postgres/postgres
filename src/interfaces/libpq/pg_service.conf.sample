@@ -2,10 +2,10 @@
 #	Connection configuration file
 #
 # A service is a set of named connection parameters.  You may specify
-# multiple services in this file.  Each starts with a service name in  
+# multiple services in this file.  Each starts with a service name in
 # brackets.  Subsequent lines have connection configuration parameters of
 # the pattern "param=value" or LDAP URLs starting with "ldap://"
-# to look up such parameters.  A sample configuration for postgres is 
+# to look up such parameters.  A sample configuration for postgres is
 # included in this file.  Lines beginning with '#' are comments.
 #
 # Copy this to your sysconf directory (typically /usr/local/pgsql/etc) and

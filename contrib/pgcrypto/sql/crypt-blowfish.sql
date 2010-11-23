@@ -11,7 +11,7 @@ INSERT INTO ctest VALUES ('password', '', '');
 
 UPDATE ctest SET salt = gen_salt('bf', 8);
 UPDATE ctest SET res = crypt(data, salt);
-SELECT res = crypt(data, res) AS "worked" 
+SELECT res = crypt(data, res) AS "worked"
 FROM ctest;
 
 DROP TABLE ctest;

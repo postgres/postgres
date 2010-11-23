@@ -5608,7 +5608,7 @@ GetLatestXTime(void)
  * Returns timestamp of latest processed commit/abort record.
  *
  * When the server has been started normally without recovery the function
- * returns NULL. 
+ * returns NULL.
  */
 Datum
 pg_last_xact_replay_timestamp(PG_FUNCTION_ARGS)

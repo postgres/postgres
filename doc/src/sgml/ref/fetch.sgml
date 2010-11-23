@@ -378,7 +378,7 @@ FETCH PRIOR FROM liahona;
 CLOSE liahona;
 COMMIT WORK;
 </programlisting>
-  </para>        
+  </para>
  </refsect1>
 
  <refsect1>

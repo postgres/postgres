@@ -84,7 +84,7 @@ backends are concurrently inserting into a relation, contention can be avoided
 by having them insert into different pages.  But it is also desirable to fill
 up pages in sequential order, to get the benefit of OS prefetching and batched
 writes.  The FSM is responsible for making that happen, and the next slot
-pointer helps provide the desired behavior. 
+pointer helps provide the desired behavior.
 
 Higher-level structure
 ----------------------

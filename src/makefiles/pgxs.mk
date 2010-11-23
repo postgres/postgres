@@ -1,6 +1,6 @@
 # PGXS: PostgreSQL extensions makefile
 
-# src/makefiles/pgxs.mk 
+# src/makefiles/pgxs.mk
 
 # This file contains generic rules to build many kinds of simple
 # extension modules.  You only need to set a few variables and include

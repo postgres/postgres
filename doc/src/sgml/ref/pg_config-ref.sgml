@@ -48,7 +48,7 @@
       <para>
        Print the location of user executables. Use this, for example, to find
        the <command>psql</> program. This is normally also the location
-       where the <filename>pg_config</> program resides.       
+       where the <filename>pg_config</> program resides.
       </para>
      </listitem>
     </varlistentry>

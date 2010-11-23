@@ -18,14 +18,14 @@
 -----------------------------
 
 --
--- let's create a simple SQL function that takes no arguments and 
+-- let's create a simple SQL function that takes no arguments and
 -- returns 1
 
 CREATE FUNCTION one() RETURNS integer
    AS 'SELECT 1 as ONE' LANGUAGE SQL;
 
 --
--- functions can be used in any expressions (eg. in the target list or 
+-- functions can be used in any expressions (eg. in the target list or
 -- qualifications)
 
 SELECT one() AS answer;
@@ -61,7 +61,7 @@ INSERT INTO EMP VALUES ('Andy', -1000, 2, '(1,3)');
 INSERT INTO EMP VALUES ('Bill', 4200, 36, '(2,1)');
 INSERT INTO EMP VALUES ('Ginger', 4800, 30, '(2,4)');
 
--- the argument of a function can also be a tuple. For instance, 
+-- the argument of a function can also be a tuple. For instance,
 -- double_salary takes a tuple of the EMP table
 
 CREATE FUNCTION double_salary(EMP) RETURNS integer
@@ -71,8 +71,8 @@ SELECT name, double_salary(EMP) AS dream
 FROM EMP
 WHERE EMP.cubicle ~= '(2,1)'::point;
 
--- the return value of a function can also be a tuple. However, make sure 
--- that the expressions in the target list is in the same order as the 
+-- the return value of a function can also be a tuple. However, make sure
+-- that the expressions in the target list is in the same order as the
 -- columns of EMP.
 
 CREATE FUNCTION new_emp() RETURNS EMP
@@ -121,7 +121,7 @@ SELECT name(high_pay()) AS overpaid;
 
 -----------------------------
 -- Creating C Functions
---	in addition to SQL functions, you can also create C functions. 
+--	in addition to SQL functions, you can also create C functions.
 --	See funcs.c for the definition of the C functions.
 -----------------------------
 
@@ -144,7 +144,7 @@ SELECT makepoint('(1,2)'::point, '(3,4)'::point ) AS newpoint;
 SELECT copytext('hello world!');
 
 SELECT name, c_overpaid(EMP, 1500) AS overpaid
-FROM EMP 
+FROM EMP
 WHERE name = 'Bill' or name = 'Sam';
 
 -- remove functions that were created in this file

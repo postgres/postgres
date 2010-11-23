@@ -9,7 +9,7 @@
  </indexterm>
 
  <para>
-  It is recommended that most users download the binary distribution for 
+  It is recommended that most users download the binary distribution for
   Windows, available as a one-click installer package
   from the <productname>PostgreSQL</productname> website. Building from source
   is only intended for people developing <productname>PostgreSQL</productname>
@@ -37,7 +37,7 @@
  <para>
   Finally, the client access library
   (<application>libpq</application>) can be built using
-  <productname>Visual C++ 7.1</productname> or 
+  <productname>Visual C++ 7.1</productname> or
   <productname>Borland C++</productname> for compatibility with statically
   linked applications built using these tools.
  </para>
@@ -50,7 +50,7 @@
   These builds cannot generate 64-bit binaries.
   <productname>Cygwin</productname> is not recommended and should
   only be used for older versions of <productname>Windows</productname> where
-  the native build does not work, such as 
+  the native build does not work, such as
   <productname>Windows 98</productname>. <productname>MinGW</productname> is
   only recommended if you are building other modules using it. The official
   binaries are built using <productname>Visual Studio</productname>.
@@ -180,7 +180,7 @@ $ENV{PATH}=$ENV{PATH} . ';c:\some\where\bison\bin';
       building from a release file. Note that only Bison 1.875 or versions
       2.2 and later will work. Also, Flex version 2.5.31 or later is required.
       Bison can be downloaded from <ulink url="http://gnuwin32.sourceforge.net"></>.
-      Flex can be downloaded from 
+      Flex can be downloaded from
       <ulink url="http://www.postgresql.org/ftp/misc/winflex/"></>.
      </para></listitem>
     </varlistentry>
@@ -206,7 +206,7 @@ $ENV{PATH}=$ENV{PATH} . ';c:\some\where\bison\bin';
      <term><productname>MIT Kerberos</productname></term>
      <listitem><para>
       Required for Kerberos authentication support. MIT Kerberos can be
-      downloaded from 
+      downloaded from
       <ulink url="http://web.mit.edu/Kerberos/dist/index.html"></>.
      </para></listitem>
     </varlistentry>
@@ -234,7 +234,7 @@ $ENV{PATH}=$ENV{PATH} . ';c:\some\where\bison\bin';
     <varlistentry>
      <term><productname>ossp-uuid</productname></term>
      <listitem><para>
-      Required for UUID-OSSP support (contrib only). Source can be 
+      Required for UUID-OSSP support (contrib only). Source can be
       downloaded from
       <ulink url="http://www.ossp.org/pkg/lib/uuid/"></>.
      </para></listitem>
@@ -494,7 +494,7 @@ $ENV{DOCROOT}='c:\docbook';
      </para>
     </listitem>
    </varlistentry>
-  
+
    <varlistentry>
     <term><filename>interfaces\libpq\Release\libpqdll.lib</filename></term>
     <listitem>

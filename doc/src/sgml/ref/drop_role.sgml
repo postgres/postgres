@@ -61,7 +61,7 @@ DROP ROLE [ IF EXISTS ] <replaceable class="PARAMETER">name</replaceable> [, ...
     <term><literal>IF EXISTS</literal></term>
     <listitem>
      <para>
-      Do not throw an error if the role does not exist. A notice is issued 
+      Do not throw an error if the role does not exist. A notice is issued
       in this case.
      </para>
     </listitem>
@@ -99,10 +99,10 @@ DROP ROLE jonathan;
 </programlisting>
   </para>
  </refsect1>
- 
+
  <refsect1>
   <title>Compatibility</title>
-  
+
   <para>
    The SQL standard defines <command>DROP ROLE</command>, but it allows
    only one role to be dropped at a time, and it specifies different

@@ -116,9 +116,9 @@ DROP OPERATOR CLASS gist_interval_ops USING gist;
 DROP FUNCTION gbt_intv_same(internal, internal, internal);
 
 DROP FUNCTION gbt_intv_union(bytea, internal);
-      
+
 DROP FUNCTION gbt_intv_picksplit(internal, internal);
-   
+
 DROP FUNCTION gbt_intv_penalty(internal,internal,internal);
 
 DROP FUNCTION gbt_intv_decompress(internal);
@@ -132,9 +132,9 @@ DROP OPERATOR CLASS gist_date_ops USING gist;
 DROP FUNCTION gbt_date_same(internal, internal, internal);
 
 DROP FUNCTION gbt_date_union(bytea, internal);
-      
+
 DROP FUNCTION gbt_date_picksplit(internal, internal);
-   
+
 DROP FUNCTION gbt_date_penalty(internal,internal,internal);
 
 DROP FUNCTION gbt_date_compress(internal);
@@ -148,9 +148,9 @@ DROP OPERATOR CLASS gist_time_ops USING gist;
 DROP FUNCTION gbt_time_same(internal, internal, internal);
 
 DROP FUNCTION gbt_time_union(bytea, internal);
-      
+
 DROP FUNCTION gbt_time_picksplit(internal, internal);
-   
+
 DROP FUNCTION gbt_time_penalty(internal,internal,internal);
 
 DROP FUNCTION gbt_timetz_compress(internal);
@@ -168,15 +168,15 @@ DROP OPERATOR CLASS gist_timestamp_ops USING gist;
 DROP FUNCTION gbt_ts_same(internal, internal, internal);
 
 DROP FUNCTION gbt_ts_union(bytea, internal);
-      
+
 DROP FUNCTION gbt_ts_picksplit(internal, internal);
-   
+
 DROP FUNCTION gbt_ts_penalty(internal,internal,internal);
 
 DROP FUNCTION gbt_tstz_compress(internal);
 
 DROP FUNCTION gbt_ts_compress(internal);
-      
+
 DROP FUNCTION gbt_tstz_consistent(internal,timestamptz,int2,oid,internal);
 
 DROP FUNCTION gbt_ts_consistent(internal,timestamp,int2,oid,internal);

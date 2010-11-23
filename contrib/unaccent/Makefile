@@ -9,7 +9,7 @@ DATA_TSEARCH = unaccent.rules
 REGRESS = unaccent
 
 # Adjust REGRESS_OPTS because we need a UTF8 database
-REGRESS_OPTS = --dbname=$(CONTRIB_TESTDB) --multibyte=UTF8 --no-locale 
+REGRESS_OPTS = --dbname=$(CONTRIB_TESTDB) --multibyte=UTF8 --no-locale
 
 ifdef USE_PGXS
 PG_CONFIG = pg_config

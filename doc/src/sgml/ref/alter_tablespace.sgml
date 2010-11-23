@@ -13,8 +13,8 @@ PostgreSQL documentation
  <refnamediv>
   <refname>ALTER TABLESPACE</refname>
   <refpurpose>change the definition of a tablespace</refpurpose>
- </refnamediv>  
-  
+ </refnamediv>
+
  <indexterm zone="sql-altertablespace">
   <primary>ALTER TABLESPACE</primary>
  </indexterm>
@@ -27,7 +27,7 @@ ALTER TABLESPACE <replaceable>name</replaceable> SET ( <replaceable class="PARAM
 ALTER TABLESPACE <replaceable>name</replaceable> RESET ( <replaceable class="PARAMETER">tablespace_option</replaceable> [, ... ] )
 </synopsis>
  </refsynopsisdiv>
-  
+
  <refsect1>
   <title>Description</title>
 
@@ -43,7 +43,7 @@ ALTER TABLESPACE <replaceable>name</replaceable> RESET ( <replaceable class="PAR
    (Note that superusers have these privileges automatically.)
   </para>
  </refsect1>
-  
+
  <refsect1>
   <title>Parameters</title>
 
@@ -114,7 +114,7 @@ ALTER TABLESPACE index_space OWNER TO mary;
 </programlisting>
   </para>
  </refsect1>
- 
+
  <refsect1>
   <title>Compatibility</title>
 

@@ -277,8 +277,8 @@ xqinside		[^']+
 
 /* $foo$ style quotes ("dollar quoting")
  * The quoted string starts with $foo$ where "foo" is an optional string
- * in the form of an identifier, except that it may not contain "$", 
- * and extends to the first occurrence of an identical string.  
+ * in the form of an identifier, except that it may not contain "$",
+ * and extends to the first occurrence of an identical string.
  * There is *no* processing of the quoted text.
  *
  * {dolqfailed} is an error rule to avoid scanner backup when {dolqdelim}
@@ -364,7 +364,7 @@ self			[,()\[\].;\:\+\-\*\/\%\^\<\>\=]
 op_chars		[\~\!\@\#\^\&\|\`\?\+\-\*\/\%\<\>\=]
 operator		{op_chars}+
 
-/* we no longer allow unary minus in numbers. 
+/* we no longer allow unary minus in numbers.
  * instead we pass it separately to parser. there it gets
  * coerced via doNegate() -- Leon aug 20 1999
  *

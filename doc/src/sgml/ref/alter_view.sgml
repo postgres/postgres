@@ -13,8 +13,8 @@ PostgreSQL documentation
  <refnamediv>
   <refname>ALTER VIEW</refname>
   <refpurpose>change the definition of a view</refpurpose>
- </refnamediv>  
-  
+ </refnamediv>
+
  <indexterm zone="sql-alterview">
   <primary>ALTER VIEW</primary>
  </indexterm>
@@ -28,7 +28,7 @@ ALTER VIEW <replaceable class="parameter">name</replaceable> RENAME TO <replacea
 ALTER VIEW <replaceable class="parameter">name</replaceable> SET SCHEMA <replaceable class="parameter">new_schema</replaceable>
 </synopsis>
  </refsynopsisdiv>
-  
+
  <refsect1>
   <title>Description</title>
 
@@ -49,7 +49,7 @@ ALTER VIEW <replaceable class="parameter">name</replaceable> SET SCHEMA <replace
    However, a superuser can alter ownership of any view anyway.)
   </para>
  </refsect1>
-  
+
  <refsect1>
   <title>Parameters</title>
 

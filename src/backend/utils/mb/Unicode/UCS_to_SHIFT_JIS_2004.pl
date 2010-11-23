@@ -43,7 +43,7 @@ while($line = <FILE> ){
 	} else {
 		next;
 	}
-	
+
 	$ucs = hex($u);
 	$code = hex($c);
 	$utf = &ucs2utf($ucs);
@@ -71,7 +71,7 @@ for $index ( sort {$a <=> $b} keys( %array ) ){
 	if( $count == 0 ){
 		printf FILE "  {0x%08x, 0x%06x}	/* %s */\n", $index, $code, $comment{ $code };
 	} else {
-		printf FILE "  {0x%08x, 0x%06x},	/* %s */\n", $index, $code, $comment{ $code }; 
+		printf FILE "  {0x%08x, 0x%06x},	/* %s */\n", $index, $code, $comment{ $code };
 	}
 }
 
@@ -132,7 +132,7 @@ while($line = <FILE> ){
 	} else {
 		next;
 	}
-	
+
 	$ucs = hex($u);
 	$code = hex($c);
 	$utf = &ucs2utf($ucs);
@@ -161,7 +161,7 @@ for $index ( sort {$a <=> $b} keys( %array ) ){
 	if( $count == 0 ){
 		printf FILE "  {0x%04x, 0x%08x}	/* %s */\n", $index, $code, $comment{ $code };
 	} else {
-		printf FILE "  {0x%04x, 0x%08x},	/* %s */\n", $index, $code, $comment{ $code }; 
+		printf FILE "  {0x%04x, 0x%08x},	/* %s */\n", $index, $code, $comment{ $code };
 	}
 }
 

@@ -16,10 +16,10 @@
 CREATE TABLE POLYGON_TBL(f1 polygon);
 INSERT INTO POLYGON_TBL(f1) VALUES ('(2.0,0.0),(2.0,4.0),(0.0,0.0)');
 INSERT INTO POLYGON_TBL(f1) VALUES ('(3.0,1.0),(3.0,3.0),(1.0,0.0)');
--- degenerate polygons 
+-- degenerate polygons
 INSERT INTO POLYGON_TBL(f1) VALUES ('(0.0,0.0)');
 INSERT INTO POLYGON_TBL(f1) VALUES ('(0.0,1.0),(0.0,1.0)');
--- bad polygon input strings 
+-- bad polygon input strings
 INSERT INTO POLYGON_TBL(f1) VALUES ('0.0');
 ERROR:  invalid input syntax for type polygon: "0.0"
 LINE 1: INSERT INTO POLYGON_TBL(f1) VALUES ('0.0');
@@ -49,7 +49,7 @@ SELECT '' AS four, * FROM POLYGON_TBL;
       | ((0,1),(0,1))
 (4 rows)
 
--- overlap 
+-- overlap
 SELECT '' AS three, p.*
    FROM POLYGON_TBL p
    WHERE p.f1 && '(3.0,1.0),(3.0,3.0),(1.0,0.0)';
@@ -59,8 +59,8 @@ SELECT '' AS three, p.*
        | ((3,1),(3,3),(1,0))
 (2 rows)
 
--- left overlap 
-SELECT '' AS four, p.* 
+-- left overlap
+SELECT '' AS four, p.*
    FROM POLYGON_TBL p
    WHERE p.f1 &< '(3.0,1.0),(3.0,3.0),(1.0,0.0)';
  four |         f1          
@@ -71,8 +71,8 @@ SELECT '' AS four, p.*
       | ((0,1),(0,1))
 (4 rows)
 
--- right overlap 
-SELECT '' AS two, p.* 
+-- right overlap
+SELECT '' AS two, p.*
    FROM POLYGON_TBL p
    WHERE p.f1 &> '(3.0,1.0),(3.0,3.0),(1.0,0.0)';
  two |         f1          
@@ -80,7 +80,7 @@ SELECT '' AS two, p.*
      | ((3,1),(3,3),(1,0))
 (1 row)
 
--- left of 
+-- left of
 SELECT '' AS one, p.*
    FROM POLYGON_TBL p
    WHERE p.f1 << '(3.0,1.0),(3.0,3.0),(1.0,0.0)';
@@ -90,7 +90,7 @@ SELECT '' AS one, p.*
      | ((0,1),(0,1))
 (2 rows)
 
--- right of 
+-- right of
 SELECT '' AS zero, p.*
    FROM POLYGON_TBL p
    WHERE p.f1 >> '(3.0,1.0),(3.0,3.0),(1.0,0.0)';
@@ -98,8 +98,8 @@ SELECT '' AS zero, p.*
 ------+----
 (0 rows)
 
--- contained 
-SELECT '' AS one, p.* 
+-- contained
+SELECT '' AS one, p.*
    FROM POLYGON_TBL p
    WHERE p.f1 <@ polygon '(3.0,1.0),(3.0,3.0),(1.0,0.0)';
  one |         f1          
@@ -107,7 +107,7 @@ SELECT '' AS one, p.*
      | ((3,1),(3,3),(1,0))
 (1 row)
 
--- same 
+-- same
 SELECT '' AS one, p.*
    FROM POLYGON_TBL p
    WHERE p.f1 ~= polygon '(3.0,1.0),(3.0,3.0),(1.0,0.0)';
@@ -116,7 +116,7 @@ SELECT '' AS one, p.*
      | ((3,1),(3,3),(1,0))
 (1 row)
 
--- contains 
+-- contains
 SELECT '' AS one, p.*
    FROM POLYGON_TBL p
    WHERE p.f1 @> polygon '(3.0,1.0),(3.0,3.0),(1.0,0.0)';
@@ -138,42 +138,42 @@ SELECT '' AS one, p.*
 --
 --	0 1 2 3 4
 --
--- left of 
+-- left of
 SELECT polygon '(2.0,0.0),(2.0,4.0),(0.0,0.0)' << polygon '(3.0,1.0),(3.0,3.0),(1.0,0.0)' AS false;
  false 
 -------
  f
 (1 row)
 
--- left overlap 
+-- left overlap
 SELECT polygon '(2.0,0.0),(2.0,4.0),(0.0,0.0)' << polygon '(3.0,1.0),(3.0,3.0),(1.0,0.0)' AS true;
  true 
 ------
  f
 (1 row)
 
--- right overlap 
+-- right overlap
 SELECT polygon '(2.0,0.0),(2.0,4.0),(0.0,0.0)' &> polygon '(3.0,1.0),(3.0,3.0),(1.0,0.0)' AS false;
  false 
 -------
  f
 (1 row)
 
--- right of 
+-- right of
 SELECT polygon '(2.0,0.0),(2.0,4.0),(0.0,0.0)' >> polygon '(3.0,1.0),(3.0,3.0),(1.0,0.0)' AS false;
  false 
 -------
  f
 (1 row)
 
--- contained in 
+-- contained in
 SELECT polygon '(2.0,0.0),(2.0,4.0),(0.0,0.0)' <@ polygon '(3.0,1.0),(3.0,3.0),(1.0,0.0)' AS false;
  false 
 -------
  f
 (1 row)
 
--- contains 
+-- contains
 SELECT polygon '(2.0,0.0),(2.0,4.0),(0.0,0.0)' @> polygon '(3.0,1.0),(3.0,3.0),(1.0,0.0)' AS false;
  false 
 -------
@@ -182,7 +182,7 @@ SELECT polygon '(2.0,0.0),(2.0,4.0),(0.0,0.0)' @> polygon '(3.0,1.0),(3.0,3.0),(
 
 --     +------------------------+
 --     |    *---*               1
---     |  + |   | 
+--     |  + |   |
 --     |  2 *---*
 --     +------------------------+
 --                              3
@@ -195,10 +195,10 @@ SELECT '((0,4),(6,4),(1,2),(6,0),(0,0))'::polygon @> '((2,1),(2,3),(3,3),(3,1))'
 (1 row)
 
 --     +-----------+
---     |    *---* /      
---     |    |   |/ 
---     |    |   +  
---     |    |   |\ 
+--     |    *---* /
+--     |    |   |/
+--     |    |   +
+--     |    |   |\
 --     |    *---* \
 --     +-----------+
 SELECT '((0,4),(6,4),(3,2),(6,0),(0,0))'::polygon @> '((2,1),(2,3),(3,3),(3,1))'::polygon AS "true";
@@ -233,14 +233,14 @@ SELECT '((0,0),(0,3),(3,3),(3,0))'::polygon @> '((2,1),(2,2),(3,2),(3,1))'::poly
  t
 (1 row)
 
--- same 
+-- same
 SELECT polygon '(2.0,0.0),(2.0,4.0),(0.0,0.0)' ~= polygon '(3.0,1.0),(3.0,3.0),(1.0,0.0)' AS false;
  false 
 -------
  f
 (1 row)
 
--- overlap 
+-- overlap
 SELECT polygon '(2.0,0.0),(2.0,4.0),(0.0,0.0)' && polygon '(3.0,1.0),(3.0,3.0),(1.0,0.0)' AS true;
  true 
 ------
@@ -249,7 +249,7 @@ SELECT polygon '(2.0,0.0),(2.0,4.0),(0.0,0.0)' && polygon '(3.0,1.0),(3.0,3.0),(
 
 --     +--------------------+
 --     |    *---*       	1
---     |  + |   | 
+--     |  + |   |
 --     |  2 *---*
 --     +--------------------+
 --                      	3

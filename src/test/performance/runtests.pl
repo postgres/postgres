@@ -15,10 +15,10 @@ $DBNAME = 'perftest';
 );
 
 # Tests to run: test' script, test' description, ...
-# Test' script is in form 
+# Test' script is in form
 #
 # 	script_name[.ntm][ T]
-# 
+#
 # script_name is name of file in ./sqls
 # .ntm means that script will be used for some initialization
 #      and should not be timed: runtests.pl opens /dev/null as STDERR
@@ -26,11 +26,11 @@ $DBNAME = 'perftest';
 #      Script shouldn't notice either he is running for test or for
 #      initialization purposes.
 # T means that all queries in this test (initialization ?) are to be
-# executed in SINGLE transaction. In this case global variable $XACTBLOCK 
+# executed in SINGLE transaction. In this case global variable $XACTBLOCK
 # is not empty string. Otherwise, each query in test is to be executed
-# in own transaction ($XACTBLOCK is empty string). In accordance with 
-# $XACTBLOCK, script is to do DBMS specific preparation before execution 
-# of queries. (Look at example in sqls/inssimple for MySQL - it gives 
+# in own transaction ($XACTBLOCK is empty string). In accordance with
+# $XACTBLOCK, script is to do DBMS specific preparation before execution
+# of queries. (Look at example in sqls/inssimple for MySQL - it gives
 # an idea of what can be done for features unsupported by an DBMS.)
 #
 @perftests = (
@@ -91,9 +91,9 @@ for ($i = 0; $i <= $#perftests; $i++)
 	$runtest = $test;
 	if ( $test =~ /\.ntm/ )
 	{
-		# 
+		#
 		# No timing for this queries
-		# 
+		#
 		close (STDERR);		# close $TmpFile
 		open (STDERR, ">/dev/null") or die;
 		$runtest =~ s/\.ntm//;

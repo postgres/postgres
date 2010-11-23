@@ -48,7 +48,7 @@ SELECT '' AS three, * FROM INTERVAL_TBL
 SELECT '' AS one, * FROM INTERVAL_TBL
    WHERE INTERVAL_TBL.f1 = interval '@ 34 years';
 
-SELECT '' AS five, * FROM INTERVAL_TBL 
+SELECT '' AS five, * FROM INTERVAL_TBL
    WHERE INTERVAL_TBL.f1 >= interval '@ 1 month';
 
 SELECT '' AS nine, * FROM INTERVAL_TBL
@@ -61,11 +61,11 @@ SELECT '' AS fortyfive, r1.*, r2.*
 
 
 -- Test multiplication and division with intervals.
--- Floating point arithmetic rounding errors can lead to unexpected results, 
--- though the code attempts to do the right thing and round up to days and 
--- minutes to avoid results such as '3 days 24:00 hours' or '14:20:60'. 
--- Note that it is expected for some day components to be greater than 29 and 
--- some time components be greater than 23:59:59 due to how intervals are 
+-- Floating point arithmetic rounding errors can lead to unexpected results,
+-- though the code attempts to do the right thing and round up to days and
+-- minutes to avoid results such as '3 days 24:00 hours' or '14:20:60'.
+-- Note that it is expected for some day components to be greater than 29 and
+-- some time components be greater than 23:59:59 due to how intervals are
 -- stored internally.
 
 CREATE TABLE INTERVAL_MULDIV_TBL (span interval);
@@ -249,7 +249,7 @@ select  interval 'P0002'                  AS "year only",
 SET IntervalStyle to postgres_verbose;
 select interval '-10 mons -3 days +03:55:06.70';
 select interval '1 year 2 mons 3 days 04:05:06.699999';
-select interval '0:0:0.7', interval '@ 0.70 secs', interval '0.7 seconds'; 
+select interval '0:0:0.7', interval '@ 0.70 secs', interval '0.7 seconds';
 
 -- check that '30 days' equals '1 month' according to the hash function
 select '30 days'::interval = '1 month'::interval as t;

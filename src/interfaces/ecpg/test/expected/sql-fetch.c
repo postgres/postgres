@@ -25,7 +25,7 @@
 int main() {
   /* exec sql begin declare section */
      
-       
+      
   
 #line 9 "fetch.pgc"
  char str [ 25 ] ;

@@ -39,7 +39,7 @@ CREATE OPERATOR CLASS <replaceable class="parameter">name</replaceable> [ DEFAUL
    an index.  The operator class specifies that certain operators will fill
    particular roles or <quote>strategies</> for this data type and this
    index method.  The operator class also specifies the support procedures to
-   be used by 
+   be used by
    the index method when the operator class is selected for an
    index column.  All the operators and functions used by an operator
    class must be defined before the operator class can be created.
@@ -80,7 +80,7 @@ CREATE OPERATOR CLASS <replaceable class="parameter">name</replaceable> [ DEFAUL
    Refer to <xref linkend="xindex"> for further information.
   </para>
  </refsect1>
-  
+
  <refsect1>
   <title>Parameters</title>
 
@@ -228,7 +228,7 @@ CREATE OPERATOR CLASS <replaceable class="parameter">name</replaceable> [ DEFAUL
    clauses can appear in any order.
   </para>
  </refsect1>
-  
+
  <refsect1>
   <title>Notes</title>
 
@@ -254,7 +254,7 @@ CREATE OPERATOR CLASS <replaceable class="parameter">name</replaceable> [ DEFAUL
    cases where an operator might or might not be lossy.
   </para>
  </refsect1>
-  
+
  <refsect1>
   <title>Examples</title>
 
@@ -279,9 +279,9 @@ CREATE OPERATOR CLASS gist__int_ops
         FUNCTION        5       g_int_penalty (internal, internal, internal),
         FUNCTION        6       g_int_picksplit (internal, internal),
         FUNCTION        7       g_int_same (_int4, _int4, internal);
-</programlisting>  
+</programlisting>
  </refsect1>
- 
+
  <refsect1>
   <title>Compatibility</title>
 

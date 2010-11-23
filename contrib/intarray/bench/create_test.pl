@@ -9,7 +9,7 @@ create table message (
 	sections	int[]
 );
 create table message_section_map (
-	mid 	int not null,
+	mid	int not null,
 	sid	int not null
 );
 
@@ -66,7 +66,7 @@ unlink 'message.tmp', 'message_section_map.tmp';
 
 sub copytable {
 	my $t = shift;
-	
+
 	print "COPY $t from stdin;\n";
 	open( FFF, "$t.tmp") || die;
 	while(<FFF>) { print; }

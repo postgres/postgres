@@ -1,7 +1,7 @@
 # contrib/btree_gin/Makefile
 
 MODULE_big = btree_gin
-OBJS = btree_gin.o 
+OBJS = btree_gin.o
 
 DATA_built = btree_gin.sql
 DATA = uninstall_btree_gin.sql

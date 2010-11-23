@@ -174,7 +174,7 @@ gmake standbycheck
   </para>
 
   <para>
-   Some extreme behaviours can also be generated on the primary using the 
+   Some extreme behaviours can also be generated on the primary using the
    script: <filename>src/test/regress/sql/hs_primary_extremes.sql</filename>
    to allow the behaviour of the standby to be tested.
   </para>
@@ -185,7 +185,7 @@ gmake standbycheck
   </sect1>
 
   <sect1 id="regress-evaluation">
-   <title>Test Evaluation</title> 
+   <title>Test Evaluation</title>
 
    <para>
     Some properly installed and fully functional
@@ -224,7 +224,7 @@ gmake standbycheck
 
    <sect2>
     <title>Error message differences</title>
-      
+
     <para>
      Some of the regression tests involve intentional invalid input
      values.  Error messages can come from either the
@@ -236,7 +236,7 @@ gmake standbycheck
      inspection.
     </para>
    </sect2>
-    
+
    <sect2>
     <title>Locale differences</title>
 
@@ -283,7 +283,7 @@ gmake check NO_LOCALE=1
      applications.
     </para>
    </sect2>
-    
+
    <sect2>
     <title>Date and time differences</title>
 
@@ -297,10 +297,10 @@ gmake check NO_LOCALE=1
      ensures proper results.
     </para>
    </sect2>
-    
+
    <sect2>
     <title>Floating-point differences</title>
-      
+
     <para>
      Some of the tests involve computing 64-bit floating-point numbers (<type>double
      precision</type>) from table columns. Differences in
@@ -328,7 +328,7 @@ gmake check NO_LOCALE=1
 
    <sect2>
     <title>Row ordering differences</title>
-      
+
     <para>
 You might see differences in which the same rows are output in a
 different order than what appears in the expected file.  In most cases
@@ -364,7 +364,7 @@ exclusion of those that don't.
 
    <sect2>
     <title>Insufficient stack depth</title>
-      
+
     <para>
      If the <literal>errors</literal> test results in a server crash
      at the <literal>select infinite_recurse()</> command, it means that
@@ -373,7 +373,7 @@ exclusion of those that don't.
      <![%standalone-include;[<literal>max_stack_depth</literal>]]>
      parameter indicates.  This
      can be fixed by running the server under a higher stack
-     size limit (4MB is recommended with the default value of 
+     size limit (4MB is recommended with the default value of
      <varname>max_stack_depth</>).  If you are unable to do that, an
      alternative is to reduce the value of <varname>max_stack_depth</>.
     </para>
@@ -381,9 +381,9 @@ exclusion of those that don't.
 
    <sect2>
     <title>The <quote>random</quote> test</title>
-      
+
     <para>
-     The <literal>random</literal> test script is intended to produce 
+     The <literal>random</literal> test script is intended to produce
      random results.   In rare cases, this causes the random regression
      test to fail.  Typing:
 <programlisting>
@@ -424,7 +424,7 @@ diff results/random.out expected/random.out
 testname:output:platformpattern=comparisonfilename
 </synopsis>
     The test name is just the name of the particular regression test
-    module. The output value indicates which output file to check. For the 
+    module. The output value indicates which output file to check. For the
     standard regression tests, this is always <literal>out</literal>. The
     value corresponds to the file extension of the output file.
     The platform pattern is a pattern in the style of the Unix
@@ -488,7 +488,7 @@ float8:out:i.86-.*-openbsd=float8-small-is-zero.out
     mechanism only for variant results that you are willing to consider
     equally valid in all contexts.
    </para>
-    
+
   </sect1>
 
   <sect1 id="regress-coverage">

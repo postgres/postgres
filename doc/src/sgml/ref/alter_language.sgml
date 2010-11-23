@@ -72,7 +72,7 @@ ALTER [ PROCEDURAL ] LANGUAGE <replaceable>name</replaceable> OWNER TO <replacea
 
  <refsect1>
   <title>Compatibility</title>
-    
+
   <para>
    There is no <command>ALTER LANGUAGE</command> statement in the SQL
    standard.

@@ -438,7 +438,7 @@ select hstore 'a=>NULL, b=>qq' ?& '{}'::text[];
  f
 (1 row)
 
--- delete 
+-- delete
 select delete('a=>1 , b=>2, c=>3'::hstore, 'a');
        delete       
 --------------------

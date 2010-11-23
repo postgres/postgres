@@ -23,25 +23,25 @@ create unique index pkeys_i on pkeys (pkey1, pkey2);
 -- 	(fkey1, fkey2)	--> pkeys (pkey1, pkey2)
 -- 	(fkey3)		--> fkeys2 (pkey23)
 --
-create trigger check_fkeys_pkey_exist 
-	before insert or update on fkeys 
-	for each row 
-	execute procedure 
+create trigger check_fkeys_pkey_exist
+	before insert or update on fkeys
+	for each row
+	execute procedure
 	check_primary_key ('fkey1', 'fkey2', 'pkeys', 'pkey1', 'pkey2');
 
-create trigger check_fkeys_pkey2_exist 
-	before insert or update on fkeys 
-	for each row 
+create trigger check_fkeys_pkey2_exist
+	before insert or update on fkeys
+	for each row
 	execute procedure check_primary_key ('fkey3', 'fkeys2', 'pkey23');
 
 --
 -- For fkeys2:
 -- 	(fkey21, fkey22)	--> pkeys (pkey1, pkey2)
 --
-create trigger check_fkeys2_pkey_exist 
-	before insert or update on fkeys2 
-	for each row 
-	execute procedure 
+create trigger check_fkeys2_pkey_exist
+	before insert or update on fkeys2
+	for each row
+	execute procedure
 	check_primary_key ('fkey21', 'fkey22', 'pkeys', 'pkey1', 'pkey2');
 
 -- Test comments
@@ -55,10 +55,10 @@ COMMENT ON TRIGGER check_fkeys2_pkey_exist ON fkeys2 IS NULL;
 -- 		fkeys (fkey1, fkey2) and fkeys2 (fkey21, fkey22)
 --
 create trigger check_pkeys_fkey_cascade
-	before delete or update on pkeys 
-	for each row 
-	execute procedure 
-	check_foreign_key (2, 'cascade', 'pkey1', 'pkey2', 
+	before delete or update on pkeys
+	for each row
+	execute procedure
+	check_foreign_key (2, 'cascade', 'pkey1', 'pkey2',
 	'fkeys', 'fkey1', 'fkey2', 'fkeys2', 'fkey21', 'fkey22');
 
 --
@@ -66,9 +66,9 @@ create trigger check_pkeys_fkey_cascade
 -- 	ON DELETE/UPDATE (pkey23) RESTRICT:
 -- 		fkeys (fkey3)
 --
-create trigger check_fkeys2_fkey_restrict 
+create trigger check_fkeys2_fkey_restrict
 	before delete or update on fkeys2
-	for each row 
+	for each row
 	execute procedure check_foreign_key (1, 'restrict', 'pkey23', 'fkeys', 'fkey3');
 
 insert into fkeys2 values (10, '1', 1);
@@ -103,53 +103,53 @@ DROP TABLE fkeys2;
 -- --      Jan
 --
 -- create table dup17 (x int4);
--- 
--- create trigger dup17_before 
+--
+-- create trigger dup17_before
 -- 	before insert on dup17
--- 	for each row 
--- 	execute procedure 
+-- 	for each row
+-- 	execute procedure
 -- 	funny_dup17 ()
 -- ;
--- 
+--
 -- insert into dup17 values (17);
 -- select count(*) from dup17;
 -- insert into dup17 values (17);
 -- select count(*) from dup17;
--- 
+--
 -- drop trigger dup17_before on dup17;
--- 
+--
 -- create trigger dup17_after
 -- 	after insert on dup17
--- 	for each row 
--- 	execute procedure 
+-- 	for each row
+-- 	execute procedure
 -- 	funny_dup17 ()
 -- ;
 -- insert into dup17 values (13);
 -- select count(*) from dup17 where x = 13;
 -- insert into dup17 values (13);
 -- select count(*) from dup17 where x = 13;
--- 
+--
 -- DROP TABLE dup17;
 
 create sequence ttdummy_seq increment 10 start 0 minvalue 0;
 
 create table tttest (
-	price_id	int4, 
-	price_val	int4, 
+	price_id	int4,
+	price_val	int4,
 	price_on	int4,
 	price_off	int4 default 999999
 );
 
-create trigger ttdummy 
+create trigger ttdummy
 	before delete or update on tttest
-	for each row 
-	execute procedure 
+	for each row
+	execute procedure
 	ttdummy (price_on, price_off);
 
-create trigger ttserial 
+create trigger ttserial
 	before insert or update on tttest
-	for each row 
-	execute procedure 
+	for each row
+	execute procedure
 	autoinc (price_on, ttdummy_seq);
 
 insert into tttest values (1, 1, null);
@@ -386,7 +386,7 @@ CREATE TABLE trigger_test (
         v varchar
 );
 
-CREATE OR REPLACE FUNCTION trigger_data()  RETURNS trigger 
+CREATE OR REPLACE FUNCTION trigger_data()  RETURNS trigger
 LANGUAGE plpgsql AS $$
 
 declare
@@ -399,7 +399,7 @@ begin
 	relid := TG_relid::regclass;
 
 	-- plpgsql can't discover its trigger data in a hash like perl and python
-	-- can, or by a sort of reflection like tcl can, 
+	-- can, or by a sort of reflection like tcl can,
 	-- so we have to hard code the names.
 	raise NOTICE 'TG_NAME: %', TG_name;
 	raise NOTICE 'TG_WHEN: %', TG_when;
@@ -438,16 +438,16 @@ begin
 end;
 $$;
 
-CREATE TRIGGER show_trigger_data_trig 
+CREATE TRIGGER show_trigger_data_trig
 BEFORE INSERT OR UPDATE OR DELETE ON trigger_test
 FOR EACH ROW EXECUTE PROCEDURE trigger_data(23,'skidoo');
 
 insert into trigger_test values(1,'insert');
 update trigger_test set v = 'update' where i = 1;
 delete from trigger_test;
-      
+
 DROP TRIGGER show_trigger_data_trig on trigger_test;
-      
+
 DROP FUNCTION trigger_data();
 
 DROP TABLE trigger_test;
@@ -547,11 +547,11 @@ INSERT INTO min_updates_test VALUES ('a',1,2),('b','2',null);
 
 INSERT INTO min_updates_test_oids VALUES ('a',1,2),('b','2',null);
 
-CREATE TRIGGER z_min_update 
+CREATE TRIGGER z_min_update
 BEFORE UPDATE ON min_updates_test
 FOR EACH ROW EXECUTE PROCEDURE suppress_redundant_updates_trigger();
 
-CREATE TRIGGER z_min_update 
+CREATE TRIGGER z_min_update
 BEFORE UPDATE ON min_updates_test_oids
 FOR EACH ROW EXECUTE PROCEDURE suppress_redundant_updates_trigger();
 

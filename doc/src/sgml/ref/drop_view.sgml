@@ -33,7 +33,7 @@ DROP VIEW [ IF EXISTS ] <replaceable class="PARAMETER">name</replaceable> [, ...
    this command you must be the owner of the view.
   </para>
  </refsect1>
-  
+
  <refsect1>
   <title>Parameters</title>
 
@@ -42,7 +42,7 @@ DROP VIEW [ IF EXISTS ] <replaceable class="PARAMETER">name</replaceable> [, ...
     <term><literal>IF EXISTS</literal></term>
     <listitem>
      <para>
-      Do not throw an error if the view does not exist. A notice is issued 
+      Do not throw an error if the view does not exist. A notice is issued
       in this case.
      </para>
     </listitem>
@@ -89,15 +89,15 @@ DROP VIEW kinds;
 </programlisting>
   </para>
  </refsect1>
- 
+
  <refsect1>
   <title>Compatibility</title>
 
   <para>
    This command conforms to the SQL standard, except that the standard only
-   allows one view to be dropped per command, and apart from the 
-   <literal>IF EXISTS</> option, which is a <productname>PostgreSQL</> 
-   extension. 
+   allows one view to be dropped per command, and apart from the
+   <literal>IF EXISTS</> option, which is a <productname>PostgreSQL</>
+   extension.
   </para>
  </refsect1>
 

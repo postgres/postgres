@@ -153,7 +153,7 @@ PostgreSQL documentation
       </para>
      </listitem>
     </varlistentry>
-    
+
     <varlistentry>
      <term><option>-v</option></term>
      <listitem>

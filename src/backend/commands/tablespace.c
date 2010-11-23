@@ -608,7 +608,7 @@ create_tablespace_directories(const char *location, const Oid tablespaceoid)
 					 errmsg("could not remove symbolic link \"%s\": %m",
 							linkloc)));
 	}
-	
+
 	/*
 	 * Create the symlink under PGDATA
 	 */

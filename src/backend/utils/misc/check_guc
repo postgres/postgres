@@ -4,7 +4,7 @@
 ## in postgresql.conf.sample:
 ##   1) the valid config settings may be preceded by a '#', but NOT '# '
 ##      (we use this to skip comments)
-##   2) the valid config settings will be followed immediately by  ' =' 
+##   2) the valid config settings will be followed immediately by  ' ='
 ##      (at least one space preceding the '=')
 ## in guc.c:
 ##   3) the options have PGC_ on the same line as the option
@@ -14,7 +14,7 @@
 ## 1) Don't know what to do with TRANSACTION ISOLATION LEVEL
 
 ## if an option is valid but shows up in only one file (guc.c but not
-## postgresql.conf.sample), it should be listed here so that it 
+## postgresql.conf.sample), it should be listed here so that it
 ## can be ignored
 INTENTIONALLY_NOT_INCLUDED="autocommit debug_deadlocks \
 is_superuser lc_collate lc_ctype lc_messages lc_monetary lc_numeric lc_time \
@@ -23,35 +23,35 @@ session_authorization trace_lock_oidmin trace_lock_table trace_locks trace_lwloc
 trace_notify trace_userlocks transaction_isolation transaction_read_only \
 zero_damaged_pages"
 
-### What options are listed in postgresql.conf.sample, but don't appear 
+### What options are listed in postgresql.conf.sample, but don't appear
 ### in guc.c?
 
 # grab everything that looks like a setting and convert it to lower case
-SETTINGS=`grep ' =' postgresql.conf.sample | 
+SETTINGS=`grep ' =' postgresql.conf.sample |
 grep -v '^# ' | # strip comments
-sed -e 's/^#//' | 
+sed -e 's/^#//' |
 awk '{print $1}'`
 
 SETTINGS=`echo "$SETTINGS" | tr 'A-Z' 'a-z'`
 
-for i in $SETTINGS ; do 
+for i in $SETTINGS ; do
   hidden=0
   ## it sure would be nice to replace this with an sql "not in" statement
   ## it doesn't seem to make sense to have things in .sample and not in guc.c
 #  for hidethis in $INTENTIONALLY_NOT_INCLUDED ; do
-#    if [ "$hidethis" = "$i" ] ; then 
+#    if [ "$hidethis" = "$i" ] ; then
 #      hidden=1
 #    fi
 #  done
   if [ "$hidden" -eq 0 ] ; then
     grep -i '"'$i'"' guc.c > /dev/null
-    if [ $? -ne 0 ] ; then 
-      echo "$i seems to be missing from guc.c"; 
-    fi; 
+    if [ $? -ne 0 ] ; then
+      echo "$i seems to be missing from guc.c";
+    fi;
   fi
 done
 
-### What options are listed in guc.c, but don't appear 
+### What options are listed in guc.c, but don't appear
 ### in postgresql.conf.sample?
 
 # grab everything that looks like a setting and convert it to lower case

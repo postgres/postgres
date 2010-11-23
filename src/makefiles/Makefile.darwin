@@ -1,5 +1,5 @@
 AROPT = crs
- 
+
 DLSUFFIX = .so
 
 ifdef PGXS

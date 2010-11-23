@@ -35,7 +35,7 @@ CREATE DOMAIN earth AS cube
   CONSTRAINT on_surface check(abs(cube_distance(value, '(0)'::cube) /
   earth() - 1) < '10e-7'::float8);
 
-CREATE OR REPLACE FUNCTION sec_to_gc(float8) 
+CREATE OR REPLACE FUNCTION sec_to_gc(float8)
 RETURNS float8
 LANGUAGE SQL
 IMMUTABLE STRICT
@@ -76,7 +76,7 @@ RETURNS cube
 LANGUAGE SQL
 IMMUTABLE STRICT
 AS 'SELECT cube_enlarge($1, gc_to_sec($2), 3)';
-  
+
 --------------- geo_distance
 
 CREATE OR REPLACE FUNCTION geo_distance (point, point)

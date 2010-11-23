@@ -128,7 +128,7 @@ SELECT '' AS one, * FROM INTERVAL_TBL
      | 34 years
 (1 row)
 
-SELECT '' AS five, * FROM INTERVAL_TBL 
+SELECT '' AS five, * FROM INTERVAL_TBL
    WHERE INTERVAL_TBL.f1 >= interval '@ 1 month';
  five |       f1        
 ------+-----------------
@@ -208,11 +208,11 @@ SELECT '' AS fortyfive, r1.*, r2.*
 (45 rows)
 
 -- Test multiplication and division with intervals.
--- Floating point arithmetic rounding errors can lead to unexpected results, 
--- though the code attempts to do the right thing and round up to days and 
--- minutes to avoid results such as '3 days 24:00 hours' or '14:20:60'. 
--- Note that it is expected for some day components to be greater than 29 and 
--- some time components be greater than 23:59:59 due to how intervals are 
+-- Floating point arithmetic rounding errors can lead to unexpected results,
+-- though the code attempts to do the right thing and round up to days and
+-- minutes to avoid results such as '3 days 24:00 hours' or '14:20:60'.
+-- Note that it is expected for some day components to be greater than 29 and
+-- some time components be greater than 23:59:59 due to how intervals are
 -- stored internally.
 CREATE TABLE INTERVAL_MULDIV_TBL (span interval);
 COPY INTERVAL_MULDIV_TBL FROM STDIN;
@@ -753,7 +753,7 @@ select interval '1 year 2 mons 3 days 04:05:06.699999';
  @ 1 year 2 mons 3 days 4 hours 5 mins 6.699999 secs
 (1 row)
 
-select interval '0:0:0.7', interval '@ 0.70 secs', interval '0.7 seconds'; 
+select interval '0:0:0.7', interval '@ 0.70 secs', interval '0.7 seconds';
   interval  |  interval  |  interval  
 ------------+------------+------------
  @ 0.7 secs | @ 0.7 secs | @ 0.7 secs

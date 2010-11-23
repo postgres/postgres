@@ -46,7 +46,7 @@ do
 	else
 		EXPECTED="expected/${i}.out"
 	fi
-  
+
 	if [ `diff ${EXPECTED} results/${i}.out | wc -l` -ne 0 ]
 	then
 		( diff -C3 ${EXPECTED} results/${i}.out; \

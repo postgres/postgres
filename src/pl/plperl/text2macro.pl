@@ -88,7 +88,7 @@ sub selftest {
 	print $fh "int main() { puts(X); return 0; }\n";
 	close $fh;
 	system("cat -n $tmp.c");
-	
+
 	system("make $tmp") == 0 or die;
 	open $fh, "./$tmp |" or die;
 	my $result = <$fh>;

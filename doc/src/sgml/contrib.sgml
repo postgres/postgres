@@ -16,7 +16,7 @@
 
  <para>
   When building from the source distribution, these modules are not built
-  automatically, unless you build the "world" target 
+  automatically, unless you build the "world" target
   (see <xref linkend="build">).
   You can build and install all of them by running:
 <screen>

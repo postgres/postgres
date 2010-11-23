@@ -3,7 +3,7 @@ src/interfaces/ecpg/README.dynSQL
 descriptor statements have the following shortcomings
 
 - input descriptors (USING DESCRIPTOR <name>) are not supported
-  
+
   Reason: to fully support dynamic SQL the frontend/backend communication
   	should change to recognize input parameters.
   	Since this is not likely to happen in the near future and you

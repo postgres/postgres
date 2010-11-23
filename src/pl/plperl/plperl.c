@@ -1376,7 +1376,7 @@ plperl_validator(PG_FUNCTION_ARGS)
 								&argtypes, &argnames, &argmodes);
 	for (i = 0; i < numargs; i++)
 	{
-		if (get_typtype(argtypes[i]) == TYPTYPE_PSEUDO && 
+		if (get_typtype(argtypes[i]) == TYPTYPE_PSEUDO &&
 			argtypes[i] != RECORDOID)
 			ereport(ERROR,
 					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
@@ -2112,7 +2112,7 @@ compile_plperl_function(Oid fn_oid, bool is_trigger)
 				typeStruct = (Form_pg_type) GETSTRUCT(typeTup);
 
 				/* Disallow pseudotype argument */
-				if (typeStruct->typtype == TYPTYPE_PSEUDO && 
+				if (typeStruct->typtype == TYPTYPE_PSEUDO &&
 					procStruct->proargtypes.values[i] != RECORDOID)
 				{
 					free(prodesc->proname);
@@ -2123,7 +2123,7 @@ compile_plperl_function(Oid fn_oid, bool is_trigger)
 						format_type_be(procStruct->proargtypes.values[i]))));
 				}
 
-				if (typeStruct->typtype == TYPTYPE_COMPOSITE || 
+				if (typeStruct->typtype == TYPTYPE_COMPOSITE ||
 					procStruct->proargtypes.values[i] == RECORDOID)
 					prodesc->arg_is_rowtype[i] = true;
 				else

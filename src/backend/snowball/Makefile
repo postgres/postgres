@@ -83,7 +83,7 @@ include $(top_srcdir)/src/Makefile.shlib
 $(SQLSCRIPT): Makefile snowball_func.sql.in snowball.sql.in
 ifeq ($(enable_shared), yes)
 	echo '-- Language-specific snowball dictionaries' > $@
-	cat $(srcdir)/snowball_func.sql.in >> $@	
+	cat $(srcdir)/snowball_func.sql.in >> $@
 	@set -e; \
 	set $(LANGUAGES) ; \
 	while [ "$$#" -gt 0 ] ; \

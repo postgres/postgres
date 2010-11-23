@@ -363,7 +363,7 @@ if (sqlca.sqlcode < 0) exit (1);}
 #line 118 "outofscope.pgc"
 
 
-	strcpy(msg, "disconnect"); 
+	strcpy(msg, "disconnect");
 	{ ECPGdisconnect(__LINE__, "CURRENT");
 #line 121 "outofscope.pgc"
 

@@ -345,7 +345,7 @@ END;
     <listitem>
      <para>
       The <literal>OWNED BY</> clause is a <productname>PostgreSQL</>
-      extension. 
+      extension.
      </para>
     </listitem>
    </itemizedlist>

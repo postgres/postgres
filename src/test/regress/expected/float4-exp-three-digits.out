@@ -7,7 +7,7 @@ INSERT INTO FLOAT4_TBL(f1) VALUES ('1004.30   ');
 INSERT INTO FLOAT4_TBL(f1) VALUES ('     -34.84    ');
 INSERT INTO FLOAT4_TBL(f1) VALUES ('1.2345678901234e+20');
 INSERT INTO FLOAT4_TBL(f1) VALUES ('1.2345678901234e-20');
--- test for over and under flow 
+-- test for over and under flow
 INSERT INTO FLOAT4_TBL(f1) VALUES ('10e70');
 ERROR:  value out of range: overflow
 LINE 1: INSERT INTO FLOAT4_TBL(f1) VALUES ('10e70');
@@ -233,7 +233,7 @@ SELECT '' AS five, * FROM FLOAT4_TBL;
       | 1.23457e-020
 (5 rows)
 
--- test the unary float4abs operator 
+-- test the unary float4abs operator
 SELECT '' AS five, f.f1, @f.f1 AS abs_f1 FROM FLOAT4_TBL f;
  five |      f1      |    abs_f1    
 ------+--------------+--------------

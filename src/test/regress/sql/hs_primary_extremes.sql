@@ -8,8 +8,8 @@ drop table if exists hs_extreme;
 create table hs_extreme (col1 integer);
 
 CREATE OR REPLACE FUNCTION hs_subxids (n integer)
-RETURNS void 
-LANGUAGE plpgsql 
+RETURNS void
+LANGUAGE plpgsql
 AS $$
     BEGIN
       IF n <= 0 THEN RETURN; END IF;
@@ -29,13 +29,13 @@ COMMIT;
 set client_min_messages = 'warning';
 
 CREATE OR REPLACE FUNCTION hs_locks_create (n integer)
-RETURNS void 
-LANGUAGE plpgsql 
+RETURNS void
+LANGUAGE plpgsql
 AS $$
     BEGIN
       IF n <= 0 THEN
 		CHECKPOINT;
-		RETURN; 
+		RETURN;
 	  END IF;
       EXECUTE 'CREATE TABLE hs_locks_' || n::text || ' ()';
       PERFORM hs_locks_create(n - 1);
@@ -44,13 +44,13 @@ AS $$
 $$;
 
 CREATE OR REPLACE FUNCTION hs_locks_drop (n integer)
-RETURNS void 
-LANGUAGE plpgsql 
+RETURNS void
+LANGUAGE plpgsql
 AS $$
     BEGIN
       IF n <= 0 THEN
 		CHECKPOINT;
-		RETURN; 
+		RETURN;
 	  END IF;
 	  EXECUTE 'DROP TABLE IF EXISTS hs_locks_' || n::text;
       PERFORM hs_locks_drop(n - 1);

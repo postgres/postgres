@@ -11,7 +11,7 @@ static void dosqlprint(void) {
 
 int main(void)
 {
-	$int i = 14; 
+	$int i = 14;
 	$decimal j, m, n;
 	$string c[10];
 

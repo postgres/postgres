@@ -22,7 +22,7 @@ CREATE [ DEFAULT ] CONVERSION <replaceable>name</replaceable>
     FOR <replaceable>source_encoding</replaceable> TO <replaceable>dest_encoding</replaceable> FROM <replaceable>function_name</replaceable>
 </synopsis>
  </refsynopsisdiv>
-  
+
  <refsect1 id="sql-createconversion-description">
   <title>Description</title>
 
@@ -145,7 +145,7 @@ CREATE CONVERSION myconv FOR 'UTF8' TO 'LATIN1' FROM myfunc;
   </para>
  </refsect1>
 
- 
+
  <refsect1 id="sql-createconversion-compat">
   <title>Compatibility</title>
 

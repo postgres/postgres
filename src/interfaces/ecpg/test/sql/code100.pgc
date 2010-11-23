@@ -11,7 +11,7 @@ int main()
 
 
    ECPGdebug(1,stderr);
-   
+
    exec sql connect to REGRESSDB1;
    if (sqlca.sqlcode) printf("%ld:%s\n",sqlca.sqlcode,sqlca.sqlerrm.sqlerrmc);
 
@@ -21,7 +21,7 @@ int main()
    if (sqlca.sqlcode) printf("%ld:%s\n",sqlca.sqlcode,sqlca.sqlerrm.sqlerrmc);
    exec sql commit work;
    if (sqlca.sqlcode) printf("%ld:%s\n",sqlca.sqlcode,sqlca.sqlerrm.sqlerrmc);
-   
+
    for (index=0;index<10;++index)
    {  exec sql insert into test
                 (payload, index)
@@ -30,11 +30,11 @@ int main()
    }
    exec sql commit work;
    if (sqlca.sqlcode) printf("%ld:%s\n",sqlca.sqlcode,sqlca.sqlerrm.sqlerrmc);
-   
+
    exec sql update test
-   	set payload=payload+1 where index=-1;
+	set payload=payload+1 where index=-1;
    if (sqlca.sqlcode!=100) printf("%ld:%s\n",sqlca.sqlcode,sqlca.sqlerrm.sqlerrmc);
-   
+
    exec sql delete from test where index=-1;
    if (sqlca.sqlcode!=100) printf("%ld:%s\n",sqlca.sqlcode,sqlca.sqlerrm.sqlerrmc);
 
@@ -45,7 +45,7 @@ int main()
    if (sqlca.sqlcode) printf("%ld:%s\n",sqlca.sqlcode,sqlca.sqlerrm.sqlerrmc);
    exec sql commit work;
    if (sqlca.sqlcode) printf("%ld:%s\n",sqlca.sqlcode,sqlca.sqlerrm.sqlerrmc);
-   
+
    exec sql disconnect;
    if (sqlca.sqlcode) printf("%ld:%s\n",sqlca.sqlcode,sqlca.sqlerrm.sqlerrmc);
    return 0;

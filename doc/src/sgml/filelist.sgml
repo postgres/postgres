@@ -134,7 +134,7 @@
 <!entity unaccent      SYSTEM "unaccent.sgml">
 <!entity uuid-ossp       SYSTEM "uuid-ossp.sgml">
 <!entity vacuumlo        SYSTEM "vacuumlo.sgml">
-<!entity xml2            SYSTEM "xml2.sgml"> 
+<!entity xml2            SYSTEM "xml2.sgml">
 
 <!-- appendixes -->
 <!entity contacts   SYSTEM "contacts.sgml">

@@ -208,7 +208,7 @@ CommentObject(CommentStmt *stmt)
 	 * catalog.  Comments on all other objects are recorded in pg_description.
 	 */
 	if (stmt->objtype == OBJECT_DATABASE || stmt->objtype == OBJECT_TABLESPACE
-		|| stmt->objtype == OBJECT_ROLE)	
+		|| stmt->objtype == OBJECT_ROLE)
 		CreateSharedComments(address.objectId, address.classId, stmt->comment);
 	else
 		CreateComments(address.objectId, address.classId, address.objectSubId,

@@ -13,8 +13,8 @@ PostgreSQL documentation
  <refnamediv>
   <refname>ALTER TEXT SEARCH TEMPLATE</refname>
   <refpurpose>change the definition of a text search template</refpurpose>
- </refnamediv>  
-  
+ </refnamediv>
+
  <indexterm zone="sql-altertstemplate">
   <primary>ALTER TEXT SEARCH TEMPLATE</primary>
  </indexterm>
@@ -24,7 +24,7 @@ PostgreSQL documentation
 ALTER TEXT SEARCH TEMPLATE <replaceable>name</replaceable> RENAME TO <replaceable>new_name</replaceable>
 </synopsis>
  </refsynopsisdiv>
-  
+
  <refsect1>
   <title>Description</title>
 
@@ -38,7 +38,7 @@ ALTER TEXT SEARCH TEMPLATE <replaceable>name</replaceable> RENAME TO <replaceabl
    You must be a superuser to use <command>ALTER TEXT SEARCH TEMPLATE</>.
   </para>
  </refsect1>
-  
+
  <refsect1>
   <title>Parameters</title>
 

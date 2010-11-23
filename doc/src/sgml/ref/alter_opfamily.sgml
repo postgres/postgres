@@ -13,8 +13,8 @@ PostgreSQL documentation
  <refnamediv>
   <refname>ALTER OPERATOR FAMILY</refname>
   <refpurpose>change the definition of an operator family</refpurpose>
- </refnamediv>  
-  
+ </refnamediv>
+
  <indexterm zone="sql-alteropfamily">
   <primary>ALTER OPERATOR FAMILY</primary>
  </indexterm>
@@ -33,7 +33,7 @@ ALTER OPERATOR FAMILY <replaceable>name</replaceable> USING <replaceable class="
 ALTER OPERATOR FAMILY <replaceable>name</replaceable> USING <replaceable class="parameter">index_method</replaceable> OWNER TO <replaceable>new_owner</replaceable>
 </synopsis>
  </refsynopsisdiv>
-  
+
  <refsect1>
   <title>Description</title>
 
@@ -81,7 +81,7 @@ ALTER OPERATOR FAMILY <replaceable>name</replaceable> USING <replaceable class="
    Refer to <xref linkend="xindex"> for further information.
   </para>
  </refsect1>
-  
+
  <refsect1>
   <title>Parameters</title>
 
@@ -208,7 +208,7 @@ ALTER OPERATOR FAMILY <replaceable>name</replaceable> USING <replaceable class="
   </para>
 
  </refsect1>
-  
+
  <refsect1>
   <title>Notes</title>
 
@@ -244,7 +244,7 @@ ALTER OPERATOR FAMILY <replaceable>name</replaceable> USING <replaceable class="
    cases where an operator might or might not be lossy.
   </para>
  </refsect1>
-  
+
  <refsect1>
   <title>Examples</title>
 
@@ -272,7 +272,7 @@ ALTER OPERATOR FAMILY integer_ops USING btree ADD
   OPERATOR 4 &gt;= (int2, int4) ,
   OPERATOR 5 &gt; (int2, int4) ,
   FUNCTION 1 btint24cmp(int2, int4) ;
-</programlisting>  
+</programlisting>
 
   <para>
    To remove these entries again:
@@ -296,7 +296,7 @@ ALTER OPERATOR FAMILY integer_ops USING btree DROP
   OPERATOR 4 (int2, int4) ,
   OPERATOR 5 (int2, int4) ,
   FUNCTION 1 (int2, int4) ;
-</programlisting>  
+</programlisting>
  </refsect1>
 
  <refsect1>

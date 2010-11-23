@@ -31,17 +31,17 @@ CREATE TABLE cities (
 
 -----------------------------
 -- Populating a Table With Rows:
---	An INSERT statement is used to insert a new row into a table.  There 
+--	An INSERT statement is used to insert a new row into a table.  There
 --	are several ways you can specify what columns the data should go to.
 -----------------------------
 
 -- 1. The simplest case is when the list of value correspond to the order of
 --    the columns specified in CREATE TABLE.
 
-INSERT INTO weather 
+INSERT INTO weather
     VALUES ('San Francisco', 46, 50, 0.25, '1994-11-27');
 
-INSERT INTO cities 
+INSERT INTO cities
     VALUES ('San Francisco', '(-194.0, 53.0)');
 
 -- 2. You can also specify what column the values correspond to.  (The columns
@@ -76,7 +76,7 @@ SELECT city, (temp_hi+temp_lo)/2 AS temp_avg, date FROM weather;
 
 SELECT *
     FROM weather
-    WHERE city = 'San Francisco' 
+    WHERE city = 'San Francisco'
         AND prcp > 0.0;
 
 -- Here is a more complicated one.  Duplicates are removed when DISTINCT is
@@ -128,10 +128,10 @@ SELECT *
 -- Suppose we want to find all the records that are in the temperature range
 -- of other records.  W1 and W2 are aliases for weather.
 
-SELECT W1.city, W1.temp_lo, W1.temp_hi, 
+SELECT W1.city, W1.temp_lo, W1.temp_hi,
        W2.city, W2.temp_lo, W2.temp_hi
 FROM weather W1, weather W2
-WHERE W1.temp_lo < W2.temp_lo 
+WHERE W1.temp_lo < W2.temp_lo
    and W1.temp_hi > W2.temp_hi;
 
 
@@ -147,7 +147,7 @@ SELECT city FROM weather
 
 -- Aggregate with GROUP BY
 SELECT city, max(temp_lo)
-    FROM weather 
+    FROM weather
     GROUP BY city;
 
 -- ... and HAVING
@@ -185,7 +185,7 @@ DELETE FROM weather WHERE city = 'Hayward';
 SELECT * FROM weather;
 
 -- You can also delete all the rows in a table by doing the following.  (This
--- is different from DROP TABLE which removes the table in addition to the 
+-- is different from DROP TABLE which removes the table in addition to the
 -- removing the rows.)
 
 DELETE FROM weather;

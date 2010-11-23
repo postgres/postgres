@@ -37,9 +37,9 @@ create table rtest_person (pname text, pdesc text);
 create table rtest_admin (pname text, sysname text);
 
 create rule rtest_sys_upd as on update to rtest_system do also (
-	update rtest_interface set sysname = new.sysname 
+	update rtest_interface set sysname = new.sysname
 		where sysname = old.sysname;
-	update rtest_admin set sysname = new.sysname 
+	update rtest_admin set sysname = new.sysname
 		where sysname = old.sysname
 	);
 
@@ -75,7 +75,7 @@ create rule rtest_emp_del as on delete to rtest_emp do
 
 --
 -- Tables and rules for the multiple cascaded qualified instead
--- rule test 
+-- rule test
 --
 create table rtest_t4 (a int4, b text);
 create table rtest_t5 (a int4, b text);
@@ -420,7 +420,7 @@ create table rtest_view1 (a int4, b text, v bool);
 create table rtest_view2 (a int4);
 create table rtest_view3 (a int4, b text);
 create table rtest_view4 (a int4, b text, c int4);
-create view rtest_vview1 as select a, b from rtest_view1 X 
+create view rtest_vview1 as select a, b from rtest_view1 X
 	where 0 < (select count(*) from rtest_view2 Y where Y.a = X.a);
 create view rtest_vview2 as select a, b from rtest_view1 where v;
 create view rtest_vview3 as select a, b from rtest_vview2 X
@@ -493,7 +493,7 @@ create table rtest_unitfact (
 	factor	float
 );
 
-create view rtest_vcomp as 
+create view rtest_vcomp as
 	select X.part, (X.size * Y.factor) as size_in_cm
 			from rtest_comp X, rtest_unitfact Y
 			where X.unit = Y.unit;
@@ -746,7 +746,7 @@ create rule rrule as
   on update to vview do instead
 (
   insert into cchild (pid, descrip)
-    select old.pid, new.descrip where old.descrip isnull; 
+    select old.pid, new.descrip where old.descrip isnull;
   update cchild set descrip = new.descrip where cchild.pid = old.pid;
 );
 
@@ -770,7 +770,7 @@ drop table cchild;
 --
 SELECT viewname, definition FROM pg_views WHERE schemaname <> 'information_schema' ORDER BY viewname;
 
-SELECT tablename, rulename, definition FROM pg_rules 
+SELECT tablename, rulename, definition FROM pg_rules
 	ORDER BY tablename, rulename;
 
 --
@@ -797,14 +797,14 @@ SELECT * FROM ruletest_tbl2;
 create table rule_and_refint_t1 (
 	id1a integer,
 	id1b integer,
-	
+
 	primary key (id1a, id1b)
 );
 
 create table rule_and_refint_t2 (
 	id2a integer,
 	id2c integer,
-	
+
 	primary key (id2a, id2c)
 );
 
@@ -901,11 +901,11 @@ create temp table t1 (a integer primary key);
 create temp table t1_1 (check (a >= 0 and a < 10)) inherits (t1);
 create temp table t1_2 (check (a >= 10 and a < 20)) inherits (t1);
 
-create rule t1_ins_1 as on insert to t1 
+create rule t1_ins_1 as on insert to t1
 	where new.a >= 0 and new.a < 10
 	do instead
 	insert into t1_1 values (new.a);
-create rule t1_ins_2 as on insert to t1 
+create rule t1_ins_2 as on insert to t1
 	where new.a >= 10 and new.a < 20
 	do instead
 	insert into t1_2 values (new.a);

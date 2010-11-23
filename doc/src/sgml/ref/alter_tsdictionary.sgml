@@ -13,8 +13,8 @@ PostgreSQL documentation
  <refnamediv>
   <refname>ALTER TEXT SEARCH DICTIONARY</refname>
   <refpurpose>change the definition of a text search dictionary</refpurpose>
- </refnamediv>  
-  
+ </refnamediv>
+
  <indexterm zone="sql-altertsdictionary">
   <primary>ALTER TEXT SEARCH DICTIONARY</primary>
  </indexterm>
@@ -28,7 +28,7 @@ ALTER TEXT SEARCH DICTIONARY <replaceable>name</replaceable> RENAME TO <replacea
 ALTER TEXT SEARCH DICTIONARY <replaceable>name</replaceable> OWNER TO <replaceable>new_owner</replaceable>
 </synopsis>
  </refsynopsisdiv>
-  
+
  <refsect1>
   <title>Description</title>
 
@@ -43,7 +43,7 @@ ALTER TEXT SEARCH DICTIONARY <replaceable>name</replaceable> OWNER TO <replaceab
    <command>ALTER TEXT SEARCH DICTIONARY</>.
   </para>
  </refsect1>
-  
+
  <refsect1>
   <title>Parameters</title>
 
@@ -102,7 +102,7 @@ ALTER TEXT SEARCH DICTIONARY <replaceable>name</replaceable> OWNER TO <replaceab
    Template-specific options can appear in any order.
   </para>
  </refsect1>
-  
+
  <refsect1>
   <title>Examples</title>
 
@@ -113,7 +113,7 @@ ALTER TEXT SEARCH DICTIONARY <replaceable>name</replaceable> OWNER TO <replaceab
 
 <programlisting>
 ALTER TEXT SEARCH DICTIONARY my_dict ( StopWords = newrussian );
-</programlisting>  
+</programlisting>
 
   <para>
    The following example command changes the language option to dutch,
@@ -122,7 +122,7 @@ ALTER TEXT SEARCH DICTIONARY my_dict ( StopWords = newrussian );
 
 <programlisting>
 ALTER TEXT SEARCH DICTIONARY my_dict ( language = dutch, StopWords );
-</programlisting>  
+</programlisting>
 
   <para>
    The following example command <quote>updates</> the dictionary's

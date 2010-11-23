@@ -141,14 +141,14 @@ SELECT '' AS three, i.* FROM INT2_TBL i WHERE i.f1 >= int4 '0';
        | 32767
 (3 rows)
 
--- positive odds 
+-- positive odds
 SELECT '' AS one, i.* FROM INT2_TBL i WHERE (i.f1 % int2 '2') = int2 '1';
  one |  f1   
 -----+-------
      | 32767
 (1 row)
 
--- any evens 
+-- any evens
 SELECT '' AS three, i.* FROM INT2_TBL i WHERE (i.f1 % int4 '2') = int2 '0';
  three |  f1   
 -------+-------

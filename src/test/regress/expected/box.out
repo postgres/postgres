@@ -18,11 +18,11 @@
 CREATE TABLE BOX_TBL (f1 box);
 INSERT INTO BOX_TBL (f1) VALUES ('(2.0,2.0,0.0,0.0)');
 INSERT INTO BOX_TBL (f1) VALUES ('(1.0,1.0,3.0,3.0)');
--- degenerate cases where the box is a line or a point 
--- note that lines and points boxes all have zero area 
+-- degenerate cases where the box is a line or a point
+-- note that lines and points boxes all have zero area
 INSERT INTO BOX_TBL (f1) VALUES ('(2.5, 2.5, 2.5,3.5)');
 INSERT INTO BOX_TBL (f1) VALUES ('(3.0, 3.0,3.0,3.0)');
--- badly formatted box inputs 
+-- badly formatted box inputs
 INSERT INTO BOX_TBL (f1) VALUES ('(2.3, 4.5)');
 ERROR:  invalid input syntax for type box: "(2.3, 4.5)"
 LINE 1: INSERT INTO BOX_TBL (f1) VALUES ('(2.3, 4.5)');
@@ -50,9 +50,9 @@ SELECT '' AS four, b.*, area(b.f1) as barea
       | (3,3),(3,3)         |     0
 (4 rows)
 
--- overlap 
+-- overlap
 SELECT '' AS three, b.f1
-   FROM BOX_TBL b  
+   FROM BOX_TBL b
    WHERE b.f1 && box '(2.5,2.5,1.0,1.0)';
  three |         f1          
 -------+---------------------
@@ -61,7 +61,7 @@ SELECT '' AS three, b.f1
        | (2.5,3.5),(2.5,2.5)
 (3 rows)
 
--- left-or-overlap (x only) 
+-- left-or-overlap (x only)
 SELECT '' AS two, b1.*
    FROM BOX_TBL b1
    WHERE b1.f1 &< box '(2.0,2.0,2.5,2.5)';
@@ -71,7 +71,7 @@ SELECT '' AS two, b1.*
      | (2.5,3.5),(2.5,2.5)
 (2 rows)
 
--- right-or-overlap (x only) 
+-- right-or-overlap (x only)
 SELECT '' AS two, b1.*
    FROM BOX_TBL b1
    WHERE b1.f1 &> box '(2.0,2.0,2.5,2.5)';
@@ -81,7 +81,7 @@ SELECT '' AS two, b1.*
      | (3,3),(3,3)
 (2 rows)
 
--- left of 
+-- left of
 SELECT '' AS two, b.f1
    FROM BOX_TBL b
    WHERE b.f1 << box '(3.0,3.0,5.0,5.0)';
@@ -91,7 +91,7 @@ SELECT '' AS two, b.f1
      | (2.5,3.5),(2.5,2.5)
 (2 rows)
 
--- area <= 
+-- area <=
 SELECT '' AS four, b.f1
    FROM BOX_TBL b
    WHERE b.f1 <= box '(3.0,3.0,5.0,5.0)';
@@ -103,7 +103,7 @@ SELECT '' AS four, b.f1
       | (3,3),(3,3)
 (4 rows)
 
--- area < 
+-- area <
 SELECT '' AS two, b.f1
    FROM BOX_TBL b
    WHERE b.f1 < box '(3.0,3.0,5.0,5.0)';
@@ -113,7 +113,7 @@ SELECT '' AS two, b.f1
      | (3,3),(3,3)
 (2 rows)
 
--- area = 
+-- area =
 SELECT '' AS two, b.f1
    FROM BOX_TBL b
    WHERE b.f1 = box '(3.0,3.0,5.0,5.0)';
@@ -123,19 +123,19 @@ SELECT '' AS two, b.f1
      | (3,3),(1,1)
 (2 rows)
 
--- area > 
+-- area >
 SELECT '' AS two, b.f1
-   FROM BOX_TBL b				-- zero area 
-   WHERE b.f1 > box '(3.5,3.0,4.5,3.0)';	
+   FROM BOX_TBL b				-- zero area
+   WHERE b.f1 > box '(3.5,3.0,4.5,3.0)';
  two |     f1      
 -----+-------------
      | (2,2),(0,0)
      | (3,3),(1,1)
 (2 rows)
 
--- area >= 
+-- area >=
 SELECT '' AS four, b.f1
-   FROM BOX_TBL b				-- zero area 
+   FROM BOX_TBL b				-- zero area
    WHERE b.f1 >= box '(3.5,3.0,4.5,3.0)';
  four |         f1          
 ------+---------------------
@@ -145,7 +145,7 @@ SELECT '' AS four, b.f1
       | (3,3),(3,3)
 (4 rows)
 
--- right of 
+-- right of
 SELECT '' AS two, b.f1
    FROM BOX_TBL b
    WHERE box '(3.0,3.0,5.0,5.0)' >> b.f1;
@@ -155,7 +155,7 @@ SELECT '' AS two, b.f1
      | (2.5,3.5),(2.5,2.5)
 (2 rows)
 
--- contained in 
+-- contained in
 SELECT '' AS three, b.f1
    FROM BOX_TBL b
    WHERE b.f1 <@ box '(0,0,3,3)';
@@ -166,7 +166,7 @@ SELECT '' AS three, b.f1
        | (3,3),(3,3)
 (3 rows)
 
--- contains 
+-- contains
 SELECT '' AS three, b.f1
    FROM BOX_TBL b
    WHERE box '(0,0,3,3)' @> b.f1;
@@ -177,7 +177,7 @@ SELECT '' AS three, b.f1
        | (3,3),(3,3)
 (3 rows)
 
--- box equality 
+-- box equality
 SELECT '' AS one, b.f1
    FROM BOX_TBL b
    WHERE box '(1,1,3,3)' ~= b.f1;
@@ -186,7 +186,7 @@ SELECT '' AS one, b.f1
      | (3,3),(1,1)
 (1 row)
 
--- center of box, left unary operator 
+-- center of box, left unary operator
 SELECT '' AS four, @@(b1.f1) AS p
    FROM BOX_TBL b1;
  four |    p    
@@ -197,9 +197,9 @@ SELECT '' AS four, @@(b1.f1) AS p
       | (3,3)
 (4 rows)
 
--- wholly-contained 
+-- wholly-contained
 SELECT '' AS one, b1.*, b2.*
-   FROM BOX_TBL b1, BOX_TBL b2 
+   FROM BOX_TBL b1, BOX_TBL b2
    WHERE b1.f1 @> b2.f1 and not b1.f1 ~= b2.f1;
  one |     f1      |     f1      
 -----+-------------+-------------

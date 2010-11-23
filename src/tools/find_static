@@ -26,8 +26,8 @@ echo "
 
 	copy debug from '/tmp/"$$"';
 
-	select 	* 
-	into	table debug2 
+	select 	*
+	into	table debug2
 	from 	debug;
 
 	create index idebug on debug(scope,func);
@@ -35,8 +35,8 @@ echo "
 	vacuum debug;
 	vacuum debug2;
 
-	update 	debug2 
-	set 	scope = '_' 
+	update 	debug2
+	set 	scope = '_'
 	from 	debug
 	where 	debug2.func = debug.func and
 		debug2.scope = 'T' and debug.scope = 'U';

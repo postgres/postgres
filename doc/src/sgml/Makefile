@@ -64,7 +64,7 @@ CATALOG = -c $(DOCBOOKSTYLE)/catalog
 endif
 
 # Enable some extra warnings
-# -wfully-tagged needed to throw a warning on missing tags 
+# -wfully-tagged needed to throw a warning on missing tags
 # for older tool chains, 2007-08-31
 # Note: try "make SPFLAGS=-wxml" to catch a lot of other dubious constructs,
 # in particular < and & that haven't been made into entities.  It's far too

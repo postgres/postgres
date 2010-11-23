@@ -461,7 +461,7 @@ PGconn *PQconnectdbParams(const char **keywords, const char **values, int expand
            This parameter specifies the file name of the client SSL
            certificate, replacing the default
            <filename>~/.postgresql/postgresql.crt</>.
-           This parameter is ignored if an SSL connection is not made. 
+           This parameter is ignored if an SSL connection is not made.
           </para>
          </listitem>
         </varlistentry>

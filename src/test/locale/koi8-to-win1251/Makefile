@@ -1,7 +1,7 @@
-all: 
+all:
 
-test: 
+test:
 	./runall
 
-clean: 
+clean:
 	rm -f *.out

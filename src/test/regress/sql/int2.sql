@@ -53,10 +53,10 @@ SELECT '' AS three, i.* FROM INT2_TBL i WHERE i.f1 >= int2 '0';
 
 SELECT '' AS three, i.* FROM INT2_TBL i WHERE i.f1 >= int4 '0';
 
--- positive odds 
+-- positive odds
 SELECT '' AS one, i.* FROM INT2_TBL i WHERE (i.f1 % int2 '2') = int2 '1';
 
--- any evens 
+-- any evens
 SELECT '' AS three, i.* FROM INT2_TBL i WHERE (i.f1 % int4 '2') = int2 '0';
 
 SELECT '' AS five, i.f1, i.f1 * int2 '2' AS x FROM INT2_TBL i;

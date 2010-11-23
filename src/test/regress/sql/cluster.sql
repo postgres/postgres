@@ -174,7 +174,7 @@ UPDATE clustertest SET key = 100 WHERE key = 10;
 -- Test update where the new row version is found first in the scan
 UPDATE clustertest SET key = 35 WHERE key = 40;
 
--- Test longer update chain 
+-- Test longer update chain
 UPDATE clustertest SET key = 60 WHERE key = 50;
 UPDATE clustertest SET key = 70 WHERE key = 60;
 UPDATE clustertest SET key = 80 WHERE key = 70;

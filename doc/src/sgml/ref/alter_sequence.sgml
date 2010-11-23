@@ -15,7 +15,7 @@ PostgreSQL documentation
   <refpurpose>
    change the definition of a sequence generator
   </refpurpose>
- </refnamediv> 
+ </refnamediv>
 
  <indexterm zone="sql-altersequence">
   <primary>ALTER SEQUENCE</primary>

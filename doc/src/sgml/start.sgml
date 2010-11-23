@@ -331,7 +331,7 @@ createdb: database creation failed: ERROR:  permission denied to create database
 <screen>
 psql (&version;)
 Type "help" for help.
- 
+
 mydb=&gt;
 </screen>
     <indexterm><primary>superuser</primary></indexterm>

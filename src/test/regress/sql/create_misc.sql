@@ -42,14 +42,14 @@ SELECT *
    FROM road
    WHERE name ~ '.*Ramp';
 
-INSERT INTO ihighway 
-   SELECT * 
-   FROM road 
+INSERT INTO ihighway
+   SELECT *
+   FROM road
    WHERE name ~ 'I- .*';
 
-INSERT INTO shighway 
-   SELECT * 
-   FROM road 
+INSERT INTO shighway
+   SELECT *
+   FROM road
    WHERE name ~ 'State Hwy.*';
 
 UPDATE shighway
@@ -154,7 +154,7 @@ INSERT INTO f_star (class, a, e, f)
    VALUES ('f', 22, '-7'::int2, '(111,555),(222,666),(333,777),(444,888)'::polygon);
 
 INSERT INTO f_star (class, c, e, f)
-   VALUES ('f', 'hi keith'::name, '-8'::int2, 
+   VALUES ('f', 'hi keith'::name, '-8'::int2,
 	   '(1111,3333),(2222,4444)'::polygon);
 
 INSERT INTO f_star (class, a, c)
@@ -164,7 +164,7 @@ INSERT INTO f_star (class, a, e)
    VALUES ('f', 25, '-9'::int2);
 
 INSERT INTO f_star (class, a, f)
-   VALUES ('f', 26, '(11111,33333),(22222,44444)'::polygon); 
+   VALUES ('f', 26, '(11111,33333),(22222,44444)'::polygon);
 
 INSERT INTO f_star (class, c, e)
    VALUES ('f', 'hi allison'::name, '-10'::int2);
@@ -182,7 +182,7 @@ INSERT INTO f_star (class, c) VALUES ('f', 'hi carl'::name);
 
 INSERT INTO f_star (class, e) VALUES ('f', '-12'::int2);
 
-INSERT INTO f_star (class, f) 
+INSERT INTO f_star (class, f)
    VALUES ('f', '(11111111,33333333),(22222222,44444444)'::polygon);
 
 INSERT INTO f_star (class) VALUES ('f');
@@ -192,8 +192,8 @@ INSERT INTO f_star (class) VALUES ('f');
 -- for internal portal (cursor) tests
 --
 CREATE TABLE iportaltest (
-	i		int4, 
-	d		float4, 
+	i		int4,
+	d		float4,
 	p		polygon
 );
 

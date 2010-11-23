@@ -7,7 +7,7 @@ while (<>) {
   push @rows, $_;
 }
 
-foreach ( sort { 
+foreach ( sort {
   @ar = split("\t", $a);
   $valA = pop @ar;
   $valA =~ s/[~<> ]+//g;

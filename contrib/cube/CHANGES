@@ -6,10 +6,10 @@ Code Cleanup:
 
 Update the calling convention for all external facing functions. By external
 facing, I mean all functions that are directly referenced in cube.sql. Prior
-to my update, all functions used the older V0 calling convention. They now 
+to my update, all functions used the older V0 calling convention. They now
 use V1.
 
-New Functions: 
+New Functions:
 
 cube(float[]), which makes a zero volume cube from a float array
 

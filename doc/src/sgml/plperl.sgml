@@ -286,8 +286,8 @@ SELECT * FROM perl_set();
   </para>
 
   <para>
-   If you wish to use the <literal>strict</> pragma with your code you 
-   have a few options. For temporary global use you can <command>SET</> 
+   If you wish to use the <literal>strict</> pragma with your code you
+   have a few options. For temporary global use you can <command>SET</>
    <literal>plperl.use_strict</literal> to true.
    This will affect subsequent compilations of <application>PL/Perl</>
    functions, but not functions already compiled in the current session.
@@ -523,7 +523,7 @@ $plan = spi_prepare('SELECT * FROM test WHERE id &gt; $1 AND name = $2',
     by <literal>spi_exec_query</literal>, or in <literal>spi_query_prepared</literal> which returns a cursor
     exactly as <literal>spi_query</literal> does, which can be later passed to <literal>spi_fetchrow</literal>.
     The optional second parameter to <literal>spi_exec_prepared</literal> is a hash reference of attributes;
-    the only attribute currently supported is <literal>limit</literal>, which sets the maximum number of rows returned by a query. 
+    the only attribute currently supported is <literal>limit</literal>, which sets the maximum number of rows returned by a query.
     </para>
 
     <para>
@@ -1303,8 +1303,8 @@ DO 'elog(WARNING, join ", ", sort keys %INC)' language plperl;
       <para>
         When a session ends normally, not due to a fatal error, any
         <literal>END</> blocks that have been defined are executed.
-        Currently no other actions are performed. Specifically, 
-        file handles are not automatically flushed and objects are 
+        Currently no other actions are performed. Specifically,
+        file handles are not automatically flushed and objects are
         not automatically destroyed.
       </para>
      </listitem>

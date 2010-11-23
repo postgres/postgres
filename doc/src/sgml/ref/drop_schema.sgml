@@ -38,7 +38,7 @@ DROP SCHEMA [ IF EXISTS ] <replaceable class="PARAMETER">name</replaceable> [, .
    even if he does not own some of the objects within the schema.
   </para>
  </refsect1>
-  
+
  <refsect1>
   <title>Parameters</title>
 
@@ -47,7 +47,7 @@ DROP SCHEMA [ IF EXISTS ] <replaceable class="PARAMETER">name</replaceable> [, .
     <term><literal>IF EXISTS</literal></term>
     <listitem>
      <para>
-      Do not throw an error if the schema does not exist. A notice is issued 
+      Do not throw an error if the schema does not exist. A notice is issued
       in this case.
      </para>
     </listitem>
@@ -96,15 +96,15 @@ DROP SCHEMA mystuff CASCADE;
 </programlisting>
   </para>
  </refsect1>
- 
+
  <refsect1>
   <title>Compatibility</title>
-  
+
   <para>
    <command>DROP SCHEMA</command> is fully conforming with the SQL
    standard, except that the standard only allows one schema to be
-   dropped per command, and apart from the 
-   <literal>IF EXISTS</> option, which is a <productname>PostgreSQL</> 
+   dropped per command, and apart from the
+   <literal>IF EXISTS</> option, which is a <productname>PostgreSQL</>
    extension.
   </para>
  </refsect1>

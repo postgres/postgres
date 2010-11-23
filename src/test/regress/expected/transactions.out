@@ -2,7 +2,7 @@
 -- TRANSACTIONS
 --
 BEGIN;
-SELECT * 
+SELECT *
    INTO TABLE xacttest
    FROM aggtest;
 INSERT INTO xacttest (a, b) VALUES (777, 777.777);
@@ -24,13 +24,13 @@ SELECT * FROM aggtest;
 (0 rows)
 
 ABORT;
--- should not exist 
+-- should not exist
 SELECT oid FROM pg_class WHERE relname = 'disappear';
  oid 
 -----
 (0 rows)
 
--- should have members again 
+-- should have members again
 SELECT * FROM aggtest;
   a  |    b    
 -----+---------
@@ -179,7 +179,6 @@ BEGIN;
 ROLLBACK;
 COMMIT;		-- should not be in a transaction block
 WARNING:  there is no transaction in progress
-		
 SELECT * FROM savepoints;
  a 
 ---

@@ -4,7 +4,7 @@ CREATE TABLE test_timetz (
 	i timetz
 );
 
-INSERT INTO test_timetz VALUES 
+INSERT INTO test_timetz VALUES
 	( '03:55:08 GMT+2' ),
 	( '04:55:08 GMT+2' ),
 	( '05:55:08 GMT+2' ),

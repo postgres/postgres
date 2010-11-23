@@ -1269,7 +1269,7 @@ GRANT SELECT ON role_routine_grants TO PUBLIC;
 -- not tracked by PostgreSQL
 
 
-/* 
+/*
  * 5.47
  * ROUTINE_SEQUENCE_USAGE view
  */
@@ -1385,7 +1385,7 @@ CREATE VIEW routines AS
            CAST(null AS sql_identifier) AS result_cast_scope_schema,
            CAST(null AS sql_identifier) AS result_cast_scope_name,
            CAST(null AS cardinal_number) AS result_cast_maximum_cardinality,
-           CAST(null AS sql_identifier) AS result_cast_dtd_identifier           
+           CAST(null AS sql_identifier) AS result_cast_dtd_identifier
 
     FROM pg_namespace n, pg_proc p, pg_language l,
          pg_type t, pg_namespace nt
@@ -2323,7 +2323,7 @@ CREATE VIEW element_types AS
            CAST(null AS cardinal_number) AS datetime_precision,
            CAST(null AS character_data) AS interval_type,
            CAST(null AS character_data) AS interval_precision,
-           
+
            CAST(null AS character_data) AS domain_default, -- XXX maybe a bug in the standard
 
            CAST(current_database() AS sql_identifier) AS udt_catalog,

@@ -268,7 +268,7 @@ if (sqlca.sqlcode == ECPG_NOT_FOUND) break;
 
 if (sqlca.sqlcode < 0) exit (1);}
 #line 109 "sqlda.pgc"
- 
+
 
 		printf("FETCH RECORD %d\n", ++rec);
 		dump_sqlda(outp_sqlda);

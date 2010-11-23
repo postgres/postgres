@@ -18,13 +18,13 @@ perltidy -b -bl -nsfs -naws -l=100 -ole=unix *.pl *.pm
 Notes about Visual Studio Express
 ---------------------------------
 To build PostgreSQL using Visual Studio Express, the Platform SDK
-has to be installed. Since this is not included in the product 
+has to be installed. Since this is not included in the product
 originally, extra steps are needed to make it work.
 
-First, download and install the latest Platform SDK from 
-www.microsoft.com. 
+First, download and install the latest Platform SDK from
+www.microsoft.com.
 
-Locate the files vcprojectengine.dll.express.config and 
+Locate the files vcprojectengine.dll.express.config and
 vcprojectengine.dll.config in the vc\vcpackages directory of
 the Visual C++ Express installation. In these files, add the paths
 to the Platform SDK to the Include, Library and Path tags. Be sure

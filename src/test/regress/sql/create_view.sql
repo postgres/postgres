@@ -5,12 +5,12 @@
 --
 
 CREATE VIEW street AS
-   SELECT r.name, r.thepath, c.cname AS cname 
+   SELECT r.name, r.thepath, c.cname AS cname
    FROM ONLY road r, real_city c
    WHERE c.outline ## r.thepath;
 
 CREATE VIEW iexit AS
-   SELECT ih.name, ih.thepath, 
+   SELECT ih.name, ih.thepath,
 	interpt_pp(ih.thepath, r.thepath) AS exit
    FROM ihighway ih, ramp r
    WHERE ih.thepath ## r.thepath;
@@ -61,7 +61,7 @@ CREATE OR REPLACE VIEW viewtest AS
 CREATE OR REPLACE VIEW viewtest AS
 	SELECT a, b::numeric FROM viewtest_tbl;
 
--- should work 
+-- should work
 CREATE OR REPLACE VIEW viewtest AS
 	SELECT a, b, 0 AS c FROM viewtest_tbl;
 
@@ -135,11 +135,11 @@ CREATE VIEW v9 AS SELECT seq1.is_called FROM seq1;
 CREATE VIEW v13_temp AS SELECT seq1_temp.is_called FROM seq1_temp;
 
 SELECT relname FROM pg_class
-    WHERE relname LIKE 'v_'  
+    WHERE relname LIKE 'v_'
     AND relnamespace = (SELECT oid FROM pg_namespace WHERE nspname = 'temp_view_test')
     ORDER BY relname;
 SELECT relname FROM pg_class
-    WHERE relname LIKE 'v%' 
+    WHERE relname LIKE 'v%'
     AND relnamespace IN (SELECT oid FROM pg_namespace WHERE nspname LIKE 'pg_temp%')
     ORDER BY relname;
 
@@ -164,7 +164,7 @@ SELECT relname FROM pg_class
     AND relnamespace = (SELECT oid FROM pg_namespace WHERE nspname = 'testviewschm2')
     ORDER BY relname;
 SELECT relname FROM pg_class
-    WHERE relname LIKE 'temporal%' 
+    WHERE relname LIKE 'temporal%'
     AND relnamespace IN (SELECT oid FROM pg_namespace WHERE nspname LIKE 'pg_temp%')
     ORDER BY relname;
 

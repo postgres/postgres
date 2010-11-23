@@ -112,8 +112,8 @@ LOAD 'auto_explain';
     <listitem>
      <para>
       <varname>auto_explain.log_buffers</varname> causes <command>EXPLAIN
-      (ANALYZE, BUFFERS)</> output, rather than just <command>EXPLAIN</> 
-      output, to be printed when an execution plan is logged. This parameter is 
+      (ANALYZE, BUFFERS)</> output, rather than just <command>EXPLAIN</>
+      output, to be printed when an execution plan is logged. This parameter is
       off by default. Only superusers can change this setting. This
       parameter has no effect unless <varname>auto_explain.log_analyze</>
       parameter is set.

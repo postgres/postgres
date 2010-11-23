@@ -162,7 +162,7 @@ runtest: installcheck
 runtest-parallel: installcheck-parallel
 
 bigtest: all tablespace-setup
-	$(pg_regress_call) --psqldir=$(PSQLDIR) --schedule=$(srcdir)/serial_schedule numeric_big 
+	$(pg_regress_call) --psqldir=$(PSQLDIR) --schedule=$(srcdir)/serial_schedule numeric_big
 
 bigcheck: all tablespace-setup
 	$(pg_regress_call) --temp-install=./tmp_check --top-builddir=$(top_builddir) --schedule=$(srcdir)/parallel_schedule $(MAXCONNOPT) numeric_big

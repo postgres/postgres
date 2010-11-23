@@ -390,7 +390,7 @@
    are points in the sequence of transactions at which it is guaranteed
    that the heap and index data files have been updated with all information written before
    the checkpoint.  At checkpoint time, all dirty data pages are flushed to
-   disk and a special checkpoint record is written to the log file. 
+   disk and a special checkpoint record is written to the log file.
    (The changes were previously flushed to the <acronym>WAL</acronym> files.)
    In the event of a crash, the crash recovery procedure looks at the latest
    checkpoint record to determine the point in the log (known as the redo

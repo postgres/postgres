@@ -7,7 +7,7 @@ CREATE TABLE username_test (
 
 CREATE TRIGGER insert_usernames
 	BEFORE INSERT OR UPDATE ON username_test
-	FOR EACH ROW 
+	FOR EACH ROW
 	EXECUTE PROCEDURE insert_username (username);
 
 INSERT INTO username_test VALUES ('nothing');

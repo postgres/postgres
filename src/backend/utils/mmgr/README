@@ -377,7 +377,7 @@ constraining context-type designers very much.)
 
 Given this, the pfree routine will look something like
 
-    StandardChunkHeader * header = 
+    StandardChunkHeader * header =
         (StandardChunkHeader *) ((char *) p - sizeof(StandardChunkHeader));
 
     (*header->mycontext->methods->free_p) (p);

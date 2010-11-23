@@ -148,7 +148,7 @@ if (sqlca.sqlcode < 0) sqlprint();}
 #line 29 "array.pgc"
 
 
- 	{ ECPGtrans(__LINE__, NULL, "begin work");
+	{ ECPGtrans(__LINE__, NULL, "begin work");
 #line 31 "array.pgc"
 
 if (sqlca.sqlcode < 0) sqlprint();}
@@ -205,7 +205,7 @@ if (sqlca.sqlcode < 0) sqlprint();}
 
 if (sqlca.sqlcode < 0) sqlprint();}
 #line 43 "array.pgc"
- 
+
 
 	{ ECPGdo(__LINE__, 0, 1, NULL, 0, ECPGst_normal, "select f , text from test where i = 1", ECPGt_EOIT, 
 	ECPGt_double,&(f),(long)1,(long)1,sizeof(double), 

@@ -70,7 +70,7 @@ connection_target: opt_database_name opt_server opt_port
 			/* old style: dbname[@server][:port] */
 			if (strlen($2) > 0 && *($2) != '@')
 				mmerror(PARSE_ERROR, ET_ERROR, "expected \"@\", found \"%s\"", $2);
-			
+
 			/* C strings need to be handled differently */
 			if ($1[0] == '\"')
 				$$ = $1;
@@ -241,7 +241,7 @@ opt_options: Op connect_options
 		| /*EMPTY*/ 	{ $$ = EMPTY; }
 		;
 
-connect_options:  ColId opt_opt_value 
+connect_options:  ColId opt_opt_value
 			{ $$ = make2_str($1, $2); }
 	| ColId opt_opt_value Op connect_options
 			{
@@ -347,7 +347,7 @@ ECPGCursorStmt:  DECLARE cursor_name cursor_options CURSOR opt_hold FOR prepared
 		;
 
 ECPGExecuteImmediateStmt: EXECUTE IMMEDIATE execstring
-			{ 
+			{
 			  /* execute immediate means prepare the statement and
 			   * immediately execute it */
 			  $$ = $3;
@@ -631,7 +631,7 @@ var_type:	simple_type
 				$$.type_index = this->type->type_index;
 				if (this->type->type_sizeof && strlen(this->type->type_sizeof) != 0)
 					$$.type_sizeof = this->type->type_sizeof;
-				else 
+				else
 					$$.type_sizeof = cat_str(3, make_str("sizeof("), mm_strdup(this->name), make_str(")"));
 
 				struct_member_list[struct_level] = ECPGstruct_member_dup(this->struct_member_list);
@@ -862,7 +862,7 @@ variable: opt_pointer ECPGColLabel opt_array_bounds opt_bit_field opt_initialize
 						type = ECPGmake_simple_type(actual_type[struct_level].type_enum, length, varchar_counter);
 					else
 						type = ECPGmake_array_type(ECPGmake_simple_type(actual_type[struct_level].type_enum, length, varchar_counter), dimension);
-					
+
 					if (strcmp(dimension, "0") == 0 || abs(atoi(dimension)) == 1)
 							*dim = '\0';
 					else
@@ -1037,7 +1037,7 @@ UsingValue: UsingConst
 		}
 		| civar { $$ = EMPTY; }
 		| civarind { $$ = EMPTY; }
-		; 
+		;
 
 UsingConst: Iconst			{ $$ = $1; }
 		| '+' Iconst		{ $$ = cat_str(2, make_str("+"), $2); }
@@ -1857,7 +1857,7 @@ execute_rest: /* EMPTY */	{ $$ = EMPTY; }
 	| ecpg_into ecpg_using  { $$ = EMPTY; }
 	| ecpg_using            { $$ = EMPTY; }
 	| ecpg_into             { $$ = EMPTY; }
-	; 
+	;
 
 ecpg_into: INTO into_list	{ $$ = EMPTY; }
         | into_descriptor	{ $$ = $1; }

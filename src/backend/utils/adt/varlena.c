@@ -3054,7 +3054,7 @@ text_to_array_internal(PG_FUNCTION_ARGS)
 		int			start_posn;
 		int			end_posn;
 		int			chunk_len;
-		
+
 		text_position_setup(inputstring, fldsep, &state);
 
 		/*
@@ -3085,7 +3085,7 @@ text_to_array_internal(PG_FUNCTION_ARGS)
 														 PointerGetDatum(inputstring),
 														 is_null, 1));
 		}
-		
+
 		start_posn = 1;
 		/* start_ptr points to the start_posn'th character of inputstring */
 		start_ptr = VARDATA_ANY(inputstring);
@@ -3110,7 +3110,7 @@ text_to_array_internal(PG_FUNCTION_ARGS)
 			/* must build a temp text datum to pass to accumArrayResult */
 			result_text = cstring_to_text_with_len(start_ptr, chunk_len);
 			is_null = null_string ? text_isequal(result_text, null_string) : false;
-		
+
 			/* stash away this field */
 			astate = accumArrayResult(astate,
 									  PointerGetDatum(result_text),
@@ -3133,19 +3133,19 @@ text_to_array_internal(PG_FUNCTION_ARGS)
 	}
 	else
 	{
-		/* 
+		/*
 		 * When fldsep is NULL, each character in the inputstring becomes an
 		 * element in the result array.  The separator is effectively the space
 		 * between characters.
 		 */
 		inputstring_len = VARSIZE_ANY_EXHDR(inputstring);
-		
+
 		/* return empty array for empty input string */
 		if (inputstring_len < 1)
 			PG_RETURN_ARRAYTYPE_P(construct_empty_array(TEXTOID));
-		
+
 		start_ptr = VARDATA_ANY(inputstring);
-		
+
 		while (inputstring_len > 0)
 		{
 			int		chunk_len = pg_mblen(start_ptr);
@@ -3155,7 +3155,7 @@ text_to_array_internal(PG_FUNCTION_ARGS)
 			/* must build a temp text datum to pass to accumArrayResult */
 			result_text = cstring_to_text_with_len(start_ptr, chunk_len);
 			is_null = null_string ? text_isequal(result_text, null_string) : false;
-		
+
 			/* stash away this field */
 			astate = accumArrayResult(astate,
 									  PointerGetDatum(result_text),
@@ -3205,7 +3205,7 @@ array_to_text_null(PG_FUNCTION_ARGS)
 	/* returns NULL when first or second parameter is NULL */
 	if (PG_ARGISNULL(0) || PG_ARGISNULL(1))
 		PG_RETURN_NULL();
-	
+
 	v = PG_GETARG_ARRAYTYPE_P(0);
 	fldsep = text_to_cstring(PG_GETARG_TEXT_PP(1));
 
@@ -3332,7 +3332,7 @@ array_to_text_internal(FunctionCallInfo fcinfo, ArrayType *v,
 			}
 		}
 	}
-	
+
 	result = cstring_to_text_with_len(buf.data, buf.len);
 	pfree(buf.data);
 

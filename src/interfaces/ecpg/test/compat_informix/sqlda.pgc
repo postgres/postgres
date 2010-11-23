@@ -106,7 +106,7 @@ exec sql end declare section;
 	while (1)
 	{
 		strcpy(msg, "fetch");
-		exec sql fetch 1 from mycur1 into descriptor outp_sqlda; 
+		exec sql fetch 1 from mycur1 into descriptor outp_sqlda;
 
 		printf("FETCH RECORD %d\n", ++rec);
 		dump_sqlda(outp_sqlda);

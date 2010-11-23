@@ -14,7 +14,7 @@ PostgreSQL documentation
   <refname>DROP OPERATOR</refname>
   <refpurpose>remove an operator</refpurpose>
  </refnamediv>
-  
+
  <indexterm zone="sql-dropoperator">
   <primary>DROP OPERATOR</primary>
  </indexterm>
@@ -34,7 +34,7 @@ DROP OPERATOR [ IF EXISTS ] <replaceable class="PARAMETER">name</replaceable> ( 
    of the operator.
   </para>
  </refsect1>
-  
+
  <refsect1>
   <title>Parameters</title>
 
@@ -44,7 +44,7 @@ DROP OPERATOR [ IF EXISTS ] <replaceable class="PARAMETER">name</replaceable> ( 
     <term><literal>IF EXISTS</literal></term>
     <listitem>
      <para>
-      Do not throw an error if the operator does not exist. A notice is issued 
+      Do not throw an error if the operator does not exist. A notice is issued
       in this case.
      </para>
     </listitem>
@@ -126,7 +126,7 @@ DROP OPERATOR ! (bigint, none);
 </programlisting>
   </para>
  </refsect1>
- 
+
  <refsect1>
   <title>Compatibility</title>
 

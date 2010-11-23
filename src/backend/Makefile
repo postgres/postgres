@@ -187,7 +187,7 @@ distprep:
 	$(MAKE) -C parser	gram.c gram.h scan.c
 	$(MAKE) -C bootstrap	bootparse.c bootscanner.c
 	$(MAKE) -C catalog	schemapg.h postgres.bki postgres.description postgres.shdescription
-	$(MAKE) -C utils	fmgrtab.c fmgroids.h 
+	$(MAKE) -C utils	fmgrtab.c fmgroids.h
 	$(MAKE) -C utils/misc	guc-file.c
 
 
@@ -305,7 +305,7 @@ maintainer-clean: distclean
 #
 # Support for code development.
 #
-# Use target "quick" to build "postgres" when you know all the subsystems 
+# Use target "quick" to build "postgres" when you know all the subsystems
 # are up to date.  It saves the time of doing all the submakes.
 .PHONY: quick
 quick: $(OBJS)

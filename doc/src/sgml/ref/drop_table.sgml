@@ -24,7 +24,7 @@ PostgreSQL documentation
 DROP TABLE [ IF EXISTS ] <replaceable class="PARAMETER">name</replaceable> [, ...] [ CASCADE | RESTRICT ]
 </synopsis>
  </refsynopsisdiv>
- 
+
  <refsect1>
   <title>Description</title>
 
@@ -45,7 +45,7 @@ DROP TABLE [ IF EXISTS ] <replaceable class="PARAMETER">name</replaceable> [, ..
    constraint, not the other table entirely.)
   </para>
  </refsect1>
-  
+
  <refsect1>
   <title>Parameters</title>
 
@@ -54,7 +54,7 @@ DROP TABLE [ IF EXISTS ] <replaceable class="PARAMETER">name</replaceable> [, ..
     <term><literal>IF EXISTS</literal></term>
     <listitem>
      <para>
-      Do not throw an error if the table does not exist. A notice is issued 
+      Do not throw an error if the table does not exist. A notice is issued
       in this case.
      </para>
     </listitem>
@@ -95,7 +95,7 @@ DROP TABLE [ IF EXISTS ] <replaceable class="PARAMETER">name</replaceable> [, ..
   <title>Examples</title>
 
   <para>
-   To destroy two tables, <literal>films</literal> and 
+   To destroy two tables, <literal>films</literal> and
    <literal>distributors</literal>:
 
 <programlisting>
@@ -103,14 +103,14 @@ DROP TABLE films, distributors;
 </programlisting>
   </para>
  </refsect1>
- 
+
  <refsect1>
   <title>Compatibility</title>
 
   <para>
    This command conforms to the SQL standard, except that the standard only
-   allows one table to be dropped per command, and apart from the 
-   <literal>IF EXISTS</> option, which is a <productname>PostgreSQL</> 
+   allows one table to be dropped per command, and apart from the
+   <literal>IF EXISTS</> option, which is a <productname>PostgreSQL</>
    extension.
   </para>
  </refsect1>

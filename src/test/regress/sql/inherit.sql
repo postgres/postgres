@@ -140,7 +140,7 @@ CREATE TABLE inhx (xx text DEFAULT 'text');
  * Test double inheritance
  *
  * Ensure that defaults are NOT included unless
- * INCLUDING DEFAULTS is specified 
+ * INCLUDING DEFAULTS is specified
  */
 CREATE TABLE inhe (ee text, LIKE inhx) inherits (b);
 INSERT INTO inhe VALUES ('ee-col1', 'ee-col2', DEFAULT, 'ee-col4');

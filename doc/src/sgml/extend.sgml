@@ -9,7 +9,7 @@
 
   <para>
    In  the  sections  that follow, we will discuss how you
-   can extend the <productname>PostgreSQL</productname> 
+   can extend the <productname>PostgreSQL</productname>
    <acronym>SQL</acronym> query language by adding:
 
    <itemizedlist spacing="compact" mark="bullet">
@@ -45,8 +45,8 @@
    <title>How Extensibility Works</title>
 
    <para>
-    <productname>PostgreSQL</productname> is extensible because its operation  is  
-    catalog-driven.   If  you  are familiar with standard 
+    <productname>PostgreSQL</productname> is extensible because its operation  is
+    catalog-driven.   If  you  are familiar with standard
     relational database systems, you know that  they  store  information
     about  databases,  tables,  columns,  etc., in what are
     commonly known as system catalogs.  (Some systems  call
@@ -54,14 +54,14 @@
     user as tables like any other, but  the  <acronym>DBMS</acronym>  stores
     its  internal  bookkeeping in them.  One key difference
     between <productname>PostgreSQL</productname> and  standard  relational database systems  is
-    that <productname>PostgreSQL</productname> stores much more information in its 
+    that <productname>PostgreSQL</productname> stores much more information in its
     catalogs: not only information about tables and  columns,
     but also information about data types, functions, access
     methods, and so on.  These tables can be  modified  by
-    the  user, and since <productname>PostgreSQL</productname> bases its operation 
+    the  user, and since <productname>PostgreSQL</productname> bases its operation
     on these tables, this means that <productname>PostgreSQL</productname> can  be
     extended   by   users.    By  comparison,  conventional
-    database systems can only be extended by changing hardcoded  
+    database systems can only be extended by changing hardcoded
     procedures in the source code or by loading modules
     specially written by the <acronym>DBMS</acronym> vendor.
    </para>
@@ -209,7 +209,7 @@
      parsed.  Each position (either argument or return value) declared as
      <type>anyelement</type> is allowed to have any specific actual
      data type, but in any given call they must all be the
-     <emphasis>same</emphasis> actual type. Each 
+     <emphasis>same</emphasis> actual type. Each
      position declared as <type>anyarray</type> can have any array data type,
      but similarly they must all be the same type. If there are
      positions declared <type>anyarray</type> and others declared

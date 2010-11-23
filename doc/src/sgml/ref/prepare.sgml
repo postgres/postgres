@@ -62,7 +62,7 @@ PREPARE <replaceable class="PARAMETER">name</replaceable> [ ( <replaceable class
   <para>
    Prepared statements only last for the duration of the current
    database session. When the session ends, the prepared statement is
-   forgotten, so it must be recreated before being used again. This 
+   forgotten, so it must be recreated before being used again. This
    also means that a single  prepared statement cannot be used by
    multiple simultaneous database clients; however, each client can create
    their own prepared statement to use.  The prepared statement can be

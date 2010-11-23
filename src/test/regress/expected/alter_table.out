@@ -35,8 +35,8 @@ ALTER TABLE tmp ADD COLUMN y float4[];
 ALTER TABLE tmp ADD COLUMN z int2[];
 INSERT INTO tmp (a, b, c, d, e, f, g, h, i, j, k, l, m, n, p, q, r, s, t, u,
 	v, w, x, y, z)
-   VALUES (4, 'name', 'text', 4.1, 4.1, 2, '(4.1,4.1,3.1,3.1)', 
-        'Mon May  1 00:30:30 1995', 'c', '{Mon May  1 00:30:30 1995, Monday Aug 24 14:43:07 1992, epoch}', 
+   VALUES (4, 'name', 'text', 4.1, 4.1, 2, '(4.1,4.1,3.1,3.1)',
+        'Mon May  1 00:30:30 1995', 'c', '{Mon May  1 00:30:30 1995, Monday Aug 24 14:43:07 1992, epoch}',
 	314159, '(1,1)', '512',
 	'1 2 3 4 5 6 7 8', 'magnetic disk', '(1.1,1.1)', '(4.1,4.1,3.1,3.1)',
 	'(0,2,4.1,4.1,3.1,3.1)', '(4.1,4.1,3.1,3.1)', '["epoch" "infinity"]',
@@ -48,7 +48,7 @@ SELECT * FROM tmp;
 (1 row)
 
 DROP TABLE tmp;
--- the wolf bug - schema mods caused inconsistent row descriptors 
+-- the wolf bug - schema mods caused inconsistent row descriptors
 CREATE TABLE tmp (
 	initial 	int4
 );
@@ -80,8 +80,8 @@ ALTER TABLE tmp ADD COLUMN y float4[];
 ALTER TABLE tmp ADD COLUMN z int2[];
 INSERT INTO tmp (a, b, c, d, e, f, g, h, i, j, k, l, m, n, p, q, r, s, t, u,
 	v, w, x, y, z)
-   VALUES (4, 'name', 'text', 4.1, 4.1, 2, '(4.1,4.1,3.1,3.1)', 
-        'Mon May  1 00:30:30 1995', 'c', '{Mon May  1 00:30:30 1995, Monday Aug 24 14:43:07 1992, epoch}', 
+   VALUES (4, 'name', 'text', 4.1, 4.1, 2, '(4.1,4.1,3.1,3.1)',
+        'Mon May  1 00:30:30 1995', 'c', '{Mon May  1 00:30:30 1995, Monday Aug 24 14:43:07 1992, epoch}',
 	314159, '(1,1)', '512',
 	'1 2 3 4 5 6 7 8', 'magnetic disk', '(1.1,1.1)', '(4.1,4.1,3.1,3.1)',
 	'(0,2,4.1,4.1,3.1,3.1)', '(4.1,4.1,3.1,3.1)', '["epoch" "infinity"]',
@@ -137,7 +137,7 @@ ALTER TABLE tmp_view RENAME TO tmp_view_new;
 ANALYZE tenk1;
 set enable_seqscan to off;
 set enable_bitmapscan to off;
--- 5 values, sorted 
+-- 5 values, sorted
 SELECT unique1 FROM tenk1 WHERE unique1 < 5;
  unique1 
 ---------
@@ -1413,7 +1413,7 @@ select * from anothertab;
 (3 rows)
 
 alter table anothertab alter column atcol2 type text
-      using case when atcol2 is true then 'IT WAS TRUE' 
+      using case when atcol2 is true then 'IT WAS TRUE'
                  when atcol2 is false then 'IT WAS FALSE'
                  else 'IT WAS NULL!' end;
 select * from anothertab;

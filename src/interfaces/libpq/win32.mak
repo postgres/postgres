@@ -38,7 +38,7 @@ DEBUGDEF=/D NDEBUG
 OUTFILENAME=libpq
 !ENDIF
 
-!IF "$(SSL_INC)" == "" 
+!IF "$(SSL_INC)" == ""
 SSL_INC=C:\OpenSSL\include
 !MESSAGE Using default OpenSSL Include directory: $(SSL_INC)
 !ENDIF
@@ -48,7 +48,7 @@ SSL_LIB_PATH=C:\OpenSSL\lib\VC
 !MESSAGE Using default OpenSSL Library directory: $(SSL_LIB_PATH)
 !ENDIF
 
-!IF "$(KFW_INC)" == "" 
+!IF "$(KFW_INC)" == ""
 KFW_INC=C:\kfw-2.6.5\inc
 !MESSAGE Using default Kerberos Include directory: $(KFW_INC)
 !ENDIF
@@ -60,9 +60,9 @@ KFW_LIB_PATH=C:\kfw-2.6.5\lib\$(CPU)
 
 !IF "$(OS)" == "Windows_NT"
 NULL=
-!ELSE 
+!ELSE
 NULL=nul
-!ENDIF 
+!ENDIF
 
 CPP=cl.exe
 RSC=rc.exe
@@ -123,7 +123,7 @@ CLEAN :
 
 
 LIB32=link.exe -lib
-LIB32_FLAGS=$(LOPT) /nologo /out:"$(OUTDIR)\$(OUTFILENAME).lib" 
+LIB32_FLAGS=$(LOPT) /nologo /out:"$(OUTDIR)\$(OUTFILENAME).lib"
 LIB32_OBJS= \
 	"$(INTDIR)\win32.obj" \
 	"$(INTDIR)\getaddrinfo.obj" \

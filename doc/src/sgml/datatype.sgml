@@ -21,7 +21,7 @@
 
   <para>
    <xref linkend="datatype-table"> shows all the built-in general-purpose data
-   types. Most of the alternative names listed in the 
+   types. Most of the alternative names listed in the
    <quote>Aliases</quote> column are the names used internally by
    <productname>PostgreSQL</productname> for historical reasons.  In
    addition, some internally used or deprecated types are available,
@@ -555,7 +555,7 @@ NUMERIC
 
     <para>
      In addition to ordinary numeric values, the <type>numeric</type>
-     type allows the special value <literal>NaN</>, meaning 
+     type allows the special value <literal>NaN</>, meaning
      <quote>not-a-number</quote>.  Any operation on <literal>NaN</>
      yields another <literal>NaN</>.  When writing this value
      as a constant in an SQL command, you must put quotes around it,
@@ -703,9 +703,9 @@ NUMERIC
      <type>float(<replaceable>p</replaceable>)</type> for specifying
      inexact numeric types.  Here, <replaceable>p</replaceable> specifies
      the minimum acceptable precision in <emphasis>binary</> digits.
-     <productname>PostgreSQL</productname> accepts 
+     <productname>PostgreSQL</productname> accepts
      <type>float(1)</type> to <type>float(24)</type> as selecting the
-     <type>real</type> type, while 
+     <type>real</type> type, while
      <type>float(25)</type> to <type>float(53)</type> select
      <type>double precision</type>.  Values of <replaceable>p</replaceable>
      outside the allowed range draw an error.
@@ -1628,7 +1628,7 @@ MINUTE TO SECOND
 
     <para>
      Date and time input is accepted in almost any reasonable format, including
-     ISO 8601, <acronym>SQL</acronym>-compatible, 
+     ISO 8601, <acronym>SQL</acronym>-compatible,
      traditional <productname>POSTGRES</productname>, and others.
      For some formats, ordering of day, month, and year in date input is
      ambiguous and there is support for specifying the expected
@@ -1645,12 +1645,12 @@ MINUTE TO SECOND
      See <xref linkend="datetime-appendix">
      for the exact parsing rules of date/time input and for the
      recognized text fields including months, days of the week, and
-     time zones. 
+     time zones.
     </para>
 
     <para>
      Remember that any date or time literal input needs to be enclosed
-     in single quotes, like text strings.  Refer to 
+     in single quotes, like text strings.  Refer to
      <xref linkend="sql-syntax-constants-generic"> for more
      information.
      <acronym>SQL</acronym> requires the following syntax
@@ -1672,7 +1672,7 @@ MINUTE TO SECOND
     <indexterm>
      <primary>date</primary>
     </indexterm>
- 
+
     <para>
      <xref linkend="datatype-datetime-date-table"> shows some possible
      inputs for the <type>date</type> type.
@@ -1787,7 +1787,7 @@ MINUTE TO SECOND
      <para>
       Valid input for these types consists of a time of day followed
       by an optional time zone. (See <xref
-      linkend="datatype-datetime-time-table"> 
+      linkend="datatype-datetime-time-table">
       and <xref linkend="datatype-timezone-table">.)  If a time zone is
       specified in the input for <type>time without time zone</type>,
       it is silently ignored. You can also specify a date but it will
@@ -1954,8 +1954,8 @@ January 8 04:05:06 1999 PST
 
      <para>
       The <acronym>SQL</acronym> standard differentiates
-      <type>timestamp without time zone</type> 
-      and <type>timestamp with time zone</type> literals by the presence of a 
+      <type>timestamp without time zone</type>
+      and <type>timestamp with time zone</type> literals by the presence of a
       <quote>+</quote> or <quote>-</quote> symbol and time zone offset after
       the time.  Hence, according to the standard,
 
@@ -2097,10 +2097,10 @@ January 8 04:05:06 1999 PST
       The following <acronym>SQL</acronym>-compatible functions can also
       be used to obtain the current time value for the corresponding data
       type:
-      <literal>CURRENT_DATE</literal>, <literal>CURRENT_TIME</literal>, 
-      <literal>CURRENT_TIMESTAMP</literal>, <literal>LOCALTIME</literal>, 
-      <literal>LOCALTIMESTAMP</literal>.  The latter four accept an 
-      optional subsecond precision specification.  (See <xref 
+      <literal>CURRENT_DATE</literal>, <literal>CURRENT_TIME</literal>,
+      <literal>CURRENT_TIMESTAMP</literal>, <literal>LOCALTIME</literal>,
+      <literal>LOCALTIMESTAMP</literal>.  The latter four accept an
+      optional subsecond precision specification.  (See <xref
       linkend="functions-datetime-current">.)  Note that these are
       SQL functions and are <emphasis>not</> recognized in data input strings.
      </para>
@@ -2255,10 +2255,10 @@ January 8 04:05:06 1999 PST
      <itemizedlist>
       <listitem>
        <para>
-        Although the <type>date</type> type 
+        Although the <type>date</type> type
         cannot have an associated time zone, the
         <type>time</type> type can.
-        Time zones in the real world have little meaning unless 
+        Time zones in the real world have little meaning unless
         associated with a date as well as a time,
         since the offset can vary through the year with daylight-saving
         time boundaries.
@@ -2267,7 +2267,7 @@ January 8 04:05:06 1999 PST
 
       <listitem>
        <para>
-        The default time zone is specified as a constant numeric offset 
+        The default time zone is specified as a constant numeric offset
         from <acronym>UTC</>. It is therefore impossible to adapt to
         daylight-saving time when doing date/time arithmetic across
         <acronym>DST</acronym> boundaries.
@@ -2901,7 +2901,7 @@ SELECT * FROM person WHERE current_mood = 'happy';
       order in which the values were listed when the type was created.
       All standard comparison operators and related
       aggregate functions are supported for enums.  For example:
- 
+
 <programlisting>
 INSERT INTO person VALUES ('Larry', 'sad');
 INSERT INTO person VALUES ('Curly', 'ok');
@@ -2919,7 +2919,7 @@ SELECT * FROM person WHERE current_mood > 'sad' ORDER BY current_mood;
  Moe   | happy
 (2 rows)
 
-SELECT name 
+SELECT name
 FROM person
 WHERE current_mood = (SELECT MIN(current_mood) FROM person);
  name  
@@ -2972,7 +2972,7 @@ SELECT person.name, holidays.num_weeks FROM person, holidays
 
    <sect2>
     <title>Implementation Details</title>
-    
+
     <para>
      An enum value occupies four bytes on disk.  The length of an enum
      value's textual label is limited by the <symbol>NAMEDATALEN</symbol>
@@ -3409,8 +3409,8 @@ SELECT person.name, holidays.num_weeks FROM person, holidays
      <table id="datatype-net-cidr-table">
       <title><type>cidr</> Type Input Examples</title>
       <tgroup cols="3">
-       <thead> 
-        <row> 
+       <thead>
+        <row>
          <entry><type>cidr</type> Input</entry>
          <entry><type>cidr</type> Output</entry>
          <entry><literal><function>abbrev(<type>cidr</type>)</function></literal></entry>
@@ -3772,7 +3772,7 @@ select 'The Fat Rats'::tsvector;
      for searching:
 
 <programlisting>
-SELECT to_tsvector('english', 'The Fat Rats');         
+SELECT to_tsvector('english', 'The Fat Rats');
    to_tsvector   
 -----------------
  'fat':2 'rat':3
@@ -3913,7 +3913,7 @@ a0ee-bc99-9c0b-4ef8-bb6d-6bb9-bd38-0a11
     functions for UUIDs, but the core database does not include any
     function for generating UUIDs, because no single algorithm is well
     suited for every application.  The contrib module
-    <filename>contrib/uuid-ossp</filename> provides functions that implement 
+    <filename>contrib/uuid-ossp</filename> provides functions that implement
     several standard algorithms.
     Alternatively, UUIDs could be generated by client applications or
     other libraries invoked through a server-side function.
@@ -3933,7 +3933,7 @@ a0ee-bc99-9c0b-4ef8-bb6d-6bb9-bd38-0a11
     checks the input values for well-formedness, and there are support
     functions to perform type-safe operations on it; see <xref
     linkend="functions-xml">.  Use of this data type requires the
-    installation to have been built with <command>configure 
+    installation to have been built with <command>configure
     --with-libxml</>.
    </para>
 

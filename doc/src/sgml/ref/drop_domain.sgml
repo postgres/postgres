@@ -42,7 +42,7 @@ DROP DOMAIN [ IF EXISTS ] <replaceable class="PARAMETER">name</replaceable> [, .
     <term><literal>IF EXISTS</literal></term>
     <listitem>
      <para>
-      Do not throw an error if the domain does not exist. A notice is issued 
+      Do not throw an error if the domain does not exist. A notice is issued
       in this case.
      </para>
     </listitem>
@@ -93,10 +93,10 @@ DROP DOMAIN box;
 
  <refsect1 id="SQL-DROPDOMAIN-compatibility">
   <title>Compatibility</title>
-  
+
   <para>
    This command conforms to the SQL standard, except for the
-   <literal>IF EXISTS</> option, which is a <productname>PostgreSQL</> 
+   <literal>IF EXISTS</> option, which is a <productname>PostgreSQL</>
    extension.
   </para>
  </refsect1>

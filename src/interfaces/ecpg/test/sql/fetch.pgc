@@ -7,7 +7,7 @@ EXEC SQL INCLUDE ../regression;
 int main() {
   EXEC SQL BEGIN DECLARE SECTION;
     char str[25];
-    int i, count=1; 
+    int i, count=1;
   EXEC SQL END DECLARE SECTION;
 
   ECPGdebug(1, stderr);

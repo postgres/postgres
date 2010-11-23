@@ -2657,7 +2657,7 @@ select exc_using(5, 'foobar');
 drop function exc_using(int, text);
 
 create or replace function exc_using(int) returns void as $$
-declare 
+declare
   c refcursor;
   i int;
 begin
@@ -2668,7 +2668,7 @@ begin
     raise notice '%', i;
   end loop;
   close c;
-  return;  
+  return;
 end;
 $$ language plpgsql;
 

@@ -463,9 +463,9 @@ ParseConfigFile(const char *config_file, const char *calling_file,
 
 		/* now we must have the option value */
 		if (token != GUC_ID &&
-			token != GUC_STRING && 
-			token != GUC_INTEGER && 
-			token != GUC_REAL && 
+			token != GUC_STRING &&
+			token != GUC_INTEGER &&
+			token != GUC_REAL &&
 			token != GUC_UNQUOTED_STRING)
 			goto parse_error;
 		if (token == GUC_STRING)	/* strip quotes and escapes */
@@ -573,7 +573,7 @@ ParseConfigFile(const char *config_file, const char *calling_file,
 	else
 		ereport(elevel,
 				(errcode(ERRCODE_SYNTAX_ERROR),
-				 errmsg("syntax error in file \"%s\" line %u, near token \"%s\"", 
+				 errmsg("syntax error in file \"%s\" line %u, near token \"%s\"",
 						config_file, ConfigFileLineno, yytext)));
 	OK = false;
 

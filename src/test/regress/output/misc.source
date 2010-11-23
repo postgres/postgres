@@ -13,15 +13,15 @@ UPDATE onek
 --
 -- UPDATE onek2
 --   SET unique1 = onek2.unique1 + 1;
---UPDATE onek2 
+--UPDATE onek2
 --   SET unique1 = onek2.unique1 - 1;
 --
 -- BTREE shutting out non-functional updates
 --
--- the following two tests seem to take a long time on some 
+-- the following two tests seem to take a long time on some
 -- systems.    This non-func update stuff needs to be examined
 -- more closely.  			- jolly (2/22/96)
--- 
+--
 UPDATE tmp
    SET stringu1 = reverse_name(onek.stringu1)
    FROM onek
@@ -136,7 +136,7 @@ SELECT * FROM a_star*;
  f     |   
 (50 rows)
 
-SELECT * 
+SELECT *
    FROM b_star* x
    WHERE x.b = text 'bumble' or x.a < 3;
  class | a |   b    
@@ -144,8 +144,8 @@ SELECT *
  b     |   | bumble
 (1 row)
 
-SELECT class, a 
-   FROM c_star* x 
+SELECT class, a
+   FROM c_star* x
    WHERE x.c ~ text 'hi';
  class | a  
 -------+----
@@ -309,7 +309,7 @@ SELECT class, foo
 (25 rows)
 
 ALTER TABLE a_star RENAME COLUMN foo TO aa;
-SELECT * 
+SELECT *
    from a_star*
    WHERE aa < 1000;
  class | aa 

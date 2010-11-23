@@ -258,7 +258,7 @@ RANLIB = @RANLIB@
 WINDRES = @WINDRES@
 X = @EXEEXT@
 
-# Perl 
+# Perl
 
 ifneq (@PERL@,)
     # quoted to protect pathname with spaces
@@ -391,7 +391,7 @@ endif
 # This macro is for use by libraries linking to libpq.  (Because libpgport
 # isn't created with the same link flags as libpq, it can't be used.)
 libpq = -L$(libpq_builddir) -lpq
-  
+
 # If doing static linking, shared library dependency info isn't available,
 # so add in the libraries that libpq depends on.
 ifeq ($(enable_shared), no)
@@ -400,9 +400,9 @@ libpq += $(filter -lintl -lssl -lcrypto -lkrb5 -lcrypt, $(LIBS)) \
 endif
 
 # This macro is for use by client executables (not libraries) that use libpq.
-# We force clients to pull symbols from the non-shared library libpgport 
-# rather than pulling some libpgport symbols from libpq just because 
-# libpq uses those functions too.  This makes applications less 
+# We force clients to pull symbols from the non-shared library libpgport
+# rather than pulling some libpgport symbols from libpq just because
+# libpq uses those functions too.  This makes applications less
 # dependent on changes in libpq's usage of pgport.  To do this we link to
 # pgport before libpq.  This does cause duplicate -lpgport's to appear
 # on client link lines.
@@ -517,7 +517,7 @@ $(top_builddir)/src/include/pg_config.h: $(top_builddir)/src/include/stamp-h
 $(top_builddir)/src/include/stamp-h: $(top_srcdir)/src/include/pg_config.h.in $(top_builddir)/config.status
 	cd $(top_builddir) && ./config.status src/include/pg_config.h
 
-# Also remake ecpg_config.h from ecpg_config.h.in if the latter changed, same 
+# Also remake ecpg_config.h from ecpg_config.h.in if the latter changed, same
 # logic as above.
 $(top_builddir)/src/interfaces/ecpg/include/ecpg_config.h: $(top_builddir)/src/interfaces/ecpg/include/stamp-h
 

@@ -302,7 +302,7 @@ $$ LANGUAGE pltcl;
         If the command is a <command>SELECT</> statement and no <replaceable>loop-body</>
         script is given, then only the first row of results are stored into
         Tcl variables; remaining rows, if any, are ignored.  No storing occurs
-        if the 
+        if the
         query returns no rows.  (This case can be detected by checking the
         result of <function>spi_exec</function>.)  For example:
 <programlisting>
@@ -763,7 +763,7 @@ CREATE TRIGGER trig_mytab_modcount BEFORE INSERT OR UPDATE ON mytab
      different function definitions as long as the number of arguments or their types
      differ. Tcl, however, requires all procedure names to be distinct.
      PL/Tcl deals with this by making the internal Tcl procedure names contain
-     the object 
+     the object
      ID of the function from the system table <structname>pg_proc</> as part of their name. Thus,
      <productname>PostgreSQL</productname> functions with the same name
      and different argument types will be different Tcl procedures, too.  This

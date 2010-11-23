@@ -47,8 +47,8 @@ PostgreSQL documentation
    which the database data will live, generating the shared catalog
    tables (tables that belong to the whole cluster rather than to any
    particular database), and creating the <literal>template1</literal>
-   and <literal>postgres</literal> databases. When you later create a 
-   new database, everything in the <literal>template1</literal> database is 
+   and <literal>postgres</literal> databases. When you later create a
+   new database, everything in the <literal>template1</literal> database is
    copied.  (Therefore, anything installed in <literal>template1</literal>
    is automatically copied into each database created later.)
    The <literal>postgres</literal> database is a default database meant
@@ -89,7 +89,7 @@ PostgreSQL documentation
    <option>--lc-collate</option> and <option>--lc-ctype</option> options.
    Collation orders other than <literal>C</> or <literal>POSIX</> also have
    a performance penalty.  For these reasons it is important to choose the
-   right locale when running <command>initdb</command>. 
+   right locale when running <command>initdb</command>.
   </para>
 
   <para>
@@ -120,7 +120,7 @@ PostgreSQL documentation
        <para>
         This option specifies the authentication method for local users
         used in <filename>pg_hba.conf</>.  Do not use <literal>trust</>
-        unless you trust all local users on your system.  <literal>Trust</> 
+        unless you trust all local users on your system.  <literal>Trust</>
         is the default for ease of installation.
        </para>
       </listitem>
@@ -210,7 +210,7 @@ PostgreSQL documentation
        </para>
       </listitem>
      </varlistentry>
- 
+
      <varlistentry>
       <term><option>-W</option></term>
       <term><option>--pwprompt</option></term>

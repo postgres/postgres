@@ -134,11 +134,11 @@ SV *
 util_quote_nullable(sv)
     SV *sv
     CODE:
-    if (!sv || !SvOK(sv)) 
+    if (!sv || !SvOK(sv))
 	{
         RETVAL = newSVstring_len("NULL", 4);
     }
-    else 
+    else
 	{
         text *arg = sv2text(sv);
         text *ret = DatumGetTextP(DirectFunctionCall1(quote_nullable, PointerGetDatum(arg)));

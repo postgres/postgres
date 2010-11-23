@@ -75,7 +75,7 @@
      <para>
       If the token is a text string, match up with possible strings:
      </para>
-     
+
      <substeps>
       <step>
        <para>
@@ -83,7 +83,7 @@
         abbreviation.
        </para>
       </step>
-      
+
       <step>
        <para>
         If not found, do a similar binary-search table lookup to match
@@ -101,7 +101,7 @@
       </step>
      </substeps>
     </step>
-    
+
     <step>
      <para>
       When the token is a number or number field:
@@ -111,7 +111,7 @@
       <step>
        <para>
         If there are eight or six digits,
-        and if no other date fields have been previously read, then interpret 
+        and if no other date fields have been previously read, then interpret
         as a <quote>concatenated date</quote> (e.g.,
         <literal>19990118</literal> or <literal>990118</literal>).
         The interpretation is <literal>YYYYMMDD</> or <literal>YYMMDD</>.
@@ -124,7 +124,7 @@
         and a year has already been read, then interpret as day of year.
        </para>
       </step>
-      
+
       <step>
        <para>
         If four or six digits and a year has already been read, then
@@ -465,7 +465,7 @@
    about 1 day in 128 years.
   </para>
 
-  <para>   
+  <para>
    The accumulating calendar error prompted
    Pope Gregory XIII to reform the calendar in accordance with
    instructions from the Council of Trent.
@@ -544,7 +544,7 @@ $ <userinput>cal 9 1752</userinput>
    the beginnings of the Chinese calendar can be traced back to the 14th
    century BC. Legend has it that the Emperor Huangdi invented that
    calendar in 2637 BC.
-   
+
    The People's Republic of China uses the Gregorian calendar
    for civil purposes. The Chinese calendar is used for determining
    festivals.
@@ -552,7 +552,7 @@ $ <userinput>cal 9 1752</userinput>
 
   <para>
    The <quote>Julian Date</quote> is unrelated to the <quote>Julian
-   calendar</quote>.  
+   calendar</quote>.
    The Julian Date system was invented by the French scholar
    Joseph Justus Scaliger (1540-1609)
    and probably takes its name from Scaliger's father,

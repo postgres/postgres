@@ -46,7 +46,7 @@ DROP FUNCTION [ IF EXISTS ] <replaceable class="parameter">name</replaceable> ( 
     <term><literal>IF EXISTS</literal></term>
     <listitem>
      <para>
-      Do not throw an error if the function does not exist. A notice is issued 
+      Do not throw an error if the function does not exist. A notice is issued
       in this case.
      </para>
     </listitem>
@@ -96,7 +96,7 @@ DROP FUNCTION [ IF EXISTS ] <replaceable class="parameter">name</replaceable> ( 
 
     <listitem>
      <para>
-      The data type(s) of the function's arguments (optionally 
+      The data type(s) of the function's arguments (optionally
       schema-qualified), if any.
      </para>
     </listitem>
@@ -138,7 +138,7 @@ DROP FUNCTION sqrt(integer);
 
  <refsect1 id="SQL-DROPFUNCTION-compatibility">
   <title>Compatibility</title>
-  
+
   <para>
    A <command>DROP FUNCTION</command> statement is defined in the SQL
    standard, but it is not compatible with this command.

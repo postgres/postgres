@@ -240,7 +240,7 @@
 
    <para>
     It's possible that the ports do not update the main catalog file
-    in <filename>/usr/local/share/sgml/catalog.ports</filename> or order 
+    in <filename>/usr/local/share/sgml/catalog.ports</filename> or order
     isn't proper .  Be sure to have the following lines in beginning of file:
 <programlisting>
 CATALOG "openjade/catalog"
@@ -613,7 +613,7 @@ gmake man
 </screen>
       </para>
      </listitem>
-  
+
      <listitem>
       <para>
        To make a <acronym>PDF</acronym>:
@@ -1059,7 +1059,7 @@ save_size.pdfjadetex = 15000
     <para>
      Norm Walsh offers a
      <ulink url="http://nwalsh.com/emacs/docbookide/index.html">major mode</ulink>
-     specifically for DocBook which also has font-lock and a number of features to 
+     specifically for DocBook which also has font-lock and a number of features to
      reduce typing.
     </para>
    </sect2>
@@ -1114,7 +1114,7 @@ save_size.pdfjadetex = 15000
        </para>
       </listitem>
      </varlistentry>
-     
+
      <varlistentry>
       <term>Description</term>
       <listitem>
@@ -1123,7 +1123,7 @@ save_size.pdfjadetex = 15000
        </para>
       </listitem>
      </varlistentry>
-     
+
      <varlistentry>
       <term>Options</term>
       <listitem>
@@ -1133,7 +1133,7 @@ save_size.pdfjadetex = 15000
        </para>
       </listitem>
      </varlistentry>
-     
+
      <varlistentry>
       <term>Exit Status</term>
       <listitem>
@@ -1144,7 +1144,7 @@ save_size.pdfjadetex = 15000
        </para>
       </listitem>
      </varlistentry>
-     
+
      <varlistentry>
       <term>Usage</term>
       <listitem>
@@ -1156,7 +1156,7 @@ save_size.pdfjadetex = 15000
        </para>
       </listitem>
      </varlistentry>
-     
+
      <varlistentry>
       <term>Environment</term>
       <listitem>
@@ -1167,7 +1167,7 @@ save_size.pdfjadetex = 15000
        </para>
       </listitem>
      </varlistentry>
-     
+
      <varlistentry>
       <term>Files</term>
       <listitem>
@@ -1178,7 +1178,7 @@ save_size.pdfjadetex = 15000
        </para>
       </listitem>
      </varlistentry>
-     
+
      <varlistentry>
       <term>Diagnostics</term>
       <listitem>
@@ -1191,7 +1191,7 @@ save_size.pdfjadetex = 15000
        </para>
       </listitem>
      </varlistentry>
-     
+
      <varlistentry>
       <term>Notes</term>
       <listitem>
@@ -1202,7 +1202,7 @@ save_size.pdfjadetex = 15000
        </para>
       </listitem>
      </varlistentry>
-     
+
      <varlistentry>
       <term>Examples</term>
       <listitem>
@@ -1211,7 +1211,7 @@ save_size.pdfjadetex = 15000
        </para>
       </listitem>
      </varlistentry>
-     
+
      <varlistentry>
       <term>History</term>
       <listitem>
@@ -1222,7 +1222,7 @@ save_size.pdfjadetex = 15000
        </para>
       </listitem>
      </varlistentry>
-     
+
      <varlistentry>
       <term>See Also</term>
       <listitem>

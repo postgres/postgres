@@ -53,7 +53,7 @@ DROP TABLESPACE [ IF EXISTS ] <replaceable class="PARAMETER">tablespace_name</re
     <term><literal>IF EXISTS</literal></term>
     <listitem>
      <para>
-      Do not throw an error if the tablespace does not exist. A notice is issued 
+      Do not throw an error if the tablespace does not exist. A notice is issued
       in this case.
      </para>
     </listitem>

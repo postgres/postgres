@@ -119,8 +119,8 @@ SELECT cube('{0,1,2}'::float[], '{3,4,5}'::float[]);
 SELECT cube('{0,1,2}'::float[], '{3}'::float[]);
 SELECT cube(NULL::float[], '{3}'::float[]);
 SELECT cube('{0,1,2}'::float[]);
-SELECT cube_subset(cube('(1,3,5),(6,7,8)'), ARRAY[3,2,1,1]); 
-SELECT cube_subset(cube('(1,3,5),(6,7,8)'), ARRAY[4,0]); 
+SELECT cube_subset(cube('(1,3,5),(6,7,8)'), ARRAY[3,2,1,1]);
+SELECT cube_subset(cube('(1,3,5),(6,7,8)'), ARRAY[4,0]);
 
 --
 -- Testing limit of CUBE_MAX_DIM dimensions check in cube_in.
@@ -275,13 +275,13 @@ SELECT cube_enlarge('(2,-2),(-3,7)'::cube, -1, 2);
 SELECT cube_enlarge('(2,-2),(-3,7)'::cube, -3, 2);
 
 -- Load some example data and build the index
--- 
+--
 CREATE TABLE test_cube (c cube);
 
 \copy test_cube from 'data/test_cube.data'
 
 CREATE INDEX test_cube_ix ON test_cube USING gist (c);
-SELECT * FROM test_cube	WHERE c && '(3000,1000),(0,0)' ORDER BY c;
+SELECT * FROM test_cube WHERE c && '(3000,1000),(0,0)' ORDER BY c;
 
--- Test sorting 
-SELECT * FROM test_cube	WHERE c && '(3000,1000),(0,0)' GROUP BY c ORDER BY c;
+-- Test sorting
+SELECT * FROM test_cube WHERE c && '(3000,1000),(0,0)' GROUP BY c ORDER BY c;

@@ -32,9 +32,9 @@ ALTER DOMAIN <replaceable class="PARAMETER">name</replaceable>
 ALTER DOMAIN <replaceable class="PARAMETER">name</replaceable>
     DROP CONSTRAINT <replaceable class="PARAMETER">constraint_name</replaceable> [ RESTRICT | CASCADE ]
 ALTER DOMAIN <replaceable class="PARAMETER">name</replaceable>
-    OWNER TO <replaceable class="PARAMETER">new_owner</replaceable> 
+    OWNER TO <replaceable class="PARAMETER">new_owner</replaceable>
 ALTER DOMAIN <replaceable class="PARAMETER">name</replaceable>
-    SET SCHEMA <replaceable class="PARAMETER">new_schema</replaceable> 
+    SET SCHEMA <replaceable class="PARAMETER">new_schema</replaceable>
 </synopsis>
  </refsynopsisdiv>
 
@@ -247,7 +247,7 @@ ALTER DOMAIN zipcode SET SCHEMA customers;
 
  <refsect1 id="SQL-ALTERDOMAIN-compatibility">
   <title>Compatibility</title>
-    
+
   <para>
    <command>ALTER DOMAIN</command> conforms to the <acronym>SQL</acronym>
    standard,

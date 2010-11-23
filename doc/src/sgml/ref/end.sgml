@@ -24,7 +24,7 @@ PostgreSQL documentation
 END [ WORK | TRANSACTION ]
 </synopsis>
  </refsynopsisdiv>
-  
+
  <refsect1>
   <title>Description</title>
 
@@ -36,7 +36,7 @@ END [ WORK | TRANSACTION ]
    that is equivalent to <xref linkend="sql-commit">.
   </para>
  </refsect1>
-  
+
  <refsect1>
   <title>Parameters</title>
 
@@ -80,7 +80,7 @@ END;
 
  <refsect1>
   <title>Compatibility</title>
-  
+
   <para>
    <command>END</command> is a <productname>PostgreSQL</productname>
    extension that provides functionality equivalent to <xref

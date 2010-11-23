@@ -8,7 +8,7 @@ CREATE TABLE mdt (
 
 CREATE TRIGGER mdt_moddatetime
 	BEFORE UPDATE ON mdt
-	FOR EACH ROW 
+	FOR EACH ROW
 	EXECUTE PROCEDURE moddatetime (moddate);
 
 INSERT INTO mdt VALUES (1, 'first');

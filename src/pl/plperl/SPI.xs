@@ -1,7 +1,7 @@
 /**********************************************************************
  * PostgreSQL::InServer::SPI
  *
- * SPI interface for plperl.  
+ * SPI interface for plperl.
  *
  *    src/pl/plperl/SPI.xs
  *
@@ -94,10 +94,10 @@ spi_spi_prepare(query, ...)
 	CODE:
 		int i;
 		SV** argv;
-		if (items < 1) 
+		if (items < 1)
 			Perl_croak(aTHX_ "Usage: spi_prepare(query, ...)");
 		argv = ( SV**) palloc(( items - 1) * sizeof(SV*));
-		for ( i = 1; i < items; i++) 
+		for ( i = 1; i < items; i++)
 			argv[i - 1] = ST(i);
 		RETVAL = plperl_spi_prepare(query, items - 1, argv);
 		pfree( argv);
@@ -113,17 +113,17 @@ spi_spi_exec_prepared(query, ...)
 		HV *attr = NULL;
 		int i, offset = 1, argc;
 		SV ** argv;
-		if ( items < 1) 
-			Perl_croak(aTHX_ "Usage: spi_exec_prepared(query, [\\%%attr,] " 
+		if ( items < 1)
+			Perl_croak(aTHX_ "Usage: spi_exec_prepared(query, [\\%%attr,] "
 					   "[\\@bind_values])");
 		if ( items > 1 && SvROK( ST( 1)) && SvTYPE( SvRV( ST( 1))) == SVt_PVHV)
-		{ 
+		{
 			attr = ( HV*) SvRV(ST(1));
 			offset++;
 		}
 		argc = items - offset;
 		argv = ( SV**) palloc( argc * sizeof(SV*));
-		for ( i = 0; offset < items; offset++, i++) 
+		for ( i = 0; offset < items; offset++, i++)
 			argv[i] = ST(offset);
 		ret_hash = plperl_spi_exec_prepared(query, attr, argc, argv);
 		RETVAL = newRV_noinc((SV*)ret_hash);
@@ -137,11 +137,11 @@ spi_spi_query_prepared(query, ...)
 	CODE:
 		int i;
 		SV ** argv;
-		if ( items < 1) 
+		if ( items < 1)
 			Perl_croak(aTHX_ "Usage: spi_query_prepared(query, "
 					   "[\\@bind_values])");
 		argv = ( SV**) palloc(( items - 1) * sizeof(SV*));
-		for ( i = 1; i < items; i++) 
+		for ( i = 1; i < items; i++)
 			argv[i - 1] = ST(i);
 		RETVAL = plperl_spi_query_prepared(query, items - 1, argv);
 		pfree( argv);

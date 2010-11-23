@@ -180,7 +180,7 @@ PostgreSQL documentation
   </para>
 
   <para>
-   The <literal>-V</> and <literal>--version</> options print 
+   The <literal>-V</> and <literal>--version</> options print
    the <application>pg_resetxlog</application> version and exit.  The
    options <literal>-?</> and <literal>--help</> show supported arguments,
    and exit.
@@ -192,7 +192,7 @@ PostgreSQL documentation
   <title>Notes</title>
 
   <para>
-   This command must not be used when the server is 
+   This command must not be used when the server is
    running.  <command>pg_resetxlog</command> will refuse to start up if
    it finds a server lock file in the data directory.  If the
    server crashed then a lock file might have been left

@@ -55,7 +55,7 @@ SELECT c, count(*) FROM test_missing_target GROUP BY 3;
 
 --   group w/o existing GROUP BY and ORDER BY target under ambiguous condition
 --   failure expected
-SELECT count(*) FROM test_missing_target x, test_missing_target y 
+SELECT count(*) FROM test_missing_target x, test_missing_target y
 	WHERE x.a = y.a
 	GROUP BY b ORDER BY b;
 
@@ -75,19 +75,19 @@ SELECT a/2, a/2 FROM test_missing_target
 	GROUP BY a/2 ORDER BY a/2;
 
 --   group w/ existing GROUP BY target under ambiguous condition
-SELECT x.b, count(*) FROM test_missing_target x, test_missing_target y 
+SELECT x.b, count(*) FROM test_missing_target x, test_missing_target y
 	WHERE x.a = y.a
 	GROUP BY x.b ORDER BY x.b;
 
 --   group w/o existing GROUP BY target under ambiguous condition
-SELECT count(*) FROM test_missing_target x, test_missing_target y 
+SELECT count(*) FROM test_missing_target x, test_missing_target y
 	WHERE x.a = y.a
 	GROUP BY x.b ORDER BY x.b;
 
 --   group w/o existing GROUP BY target under ambiguous condition
 --   into a table
-SELECT count(*) INTO TABLE test_missing_target2 
-FROM test_missing_target x, test_missing_target y 
+SELECT count(*) INTO TABLE test_missing_target2
+FROM test_missing_target x, test_missing_target y
 	WHERE x.a = y.a
 	GROUP BY x.b ORDER BY x.b;
 SELECT * FROM test_missing_target2;
@@ -125,25 +125,25 @@ SELECT count(b) FROM test_missing_target
 
 --   group w/o existing GROUP BY and ORDER BY target under ambiguous condition
 --   failure expected
-SELECT count(x.a) FROM test_missing_target x, test_missing_target y 
+SELECT count(x.a) FROM test_missing_target x, test_missing_target y
 	WHERE x.a = y.a
 	GROUP BY b/2 ORDER BY b/2;
 
 --   group w/ existing GROUP BY target under ambiguous condition
-SELECT x.b/2, count(x.b) FROM test_missing_target x, test_missing_target y 
+SELECT x.b/2, count(x.b) FROM test_missing_target x, test_missing_target y
 	WHERE x.a = y.a
 	GROUP BY x.b/2 ORDER BY x.b/2;
 
 --   group w/o existing GROUP BY target under ambiguous condition
 --   failure expected due to ambiguous b in count(b)
-SELECT count(b) FROM test_missing_target x, test_missing_target y 
+SELECT count(b) FROM test_missing_target x, test_missing_target y
 	WHERE x.a = y.a
 	GROUP BY x.b/2;
 
 --   group w/o existing GROUP BY target under ambiguous condition
 --   into a table
-SELECT count(x.b) INTO TABLE test_missing_target3 
-FROM test_missing_target x, test_missing_target y 
+SELECT count(x.b) INTO TABLE test_missing_target3
+FROM test_missing_target x, test_missing_target y
 	WHERE x.a = y.a
 	GROUP BY x.b/2 ORDER BY x.b/2;
 SELECT * FROM test_missing_target3;

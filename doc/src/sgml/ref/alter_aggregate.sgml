@@ -13,8 +13,8 @@ PostgreSQL documentation
  <refnamediv>
   <refname>ALTER AGGREGATE</refname>
   <refpurpose>change the definition of an aggregate function</refpurpose>
- </refnamediv>  
-  
+ </refnamediv>
+
  <indexterm zone="sql-alteraggregate">
   <primary>ALTER AGGREGATE</primary>
  </indexterm>
@@ -26,7 +26,7 @@ ALTER AGGREGATE <replaceable>name</replaceable> ( <replaceable>type</replaceable
 ALTER AGGREGATE <replaceable>name</replaceable> ( <replaceable>type</replaceable> [ , ... ] ) SET SCHEMA <replaceable>new_schema</replaceable>
 </synopsis>
  </refsynopsisdiv>
-  
+
  <refsect1>
   <title>Description</title>
 
@@ -47,7 +47,7 @@ ALTER AGGREGATE <replaceable>name</replaceable> ( <replaceable>type</replaceable
    aggregate function anyway.)
   </para>
  </refsect1>
-  
+
  <refsect1>
   <title>Parameters</title>
 

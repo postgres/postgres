@@ -33,7 +33,7 @@ DROP TYPE [ IF EXISTS ] <replaceable class="PARAMETER">name</replaceable> [, ...
    Only the owner of a type can remove it.
   </para>
  </refsect1>
-  
+
  <refsect1>
   <title>Parameters</title>
 
@@ -42,7 +42,7 @@ DROP TYPE [ IF EXISTS ] <replaceable class="PARAMETER">name</replaceable> [, ...
     <term><literal>IF EXISTS</literal></term>
     <listitem>
      <para>
-      Do not throw an error if the type does not exist. A notice is issued 
+      Do not throw an error if the type does not exist. A notice is issued
       in this case.
      </para>
     </listitem>
@@ -78,7 +78,7 @@ DROP TYPE [ IF EXISTS ] <replaceable class="PARAMETER">name</replaceable> [, ...
    </varlistentry>
   </variablelist>
  </refsect1>
-  
+
  <refsect1 id="SQL-DROPTYPE-examples">
   <title>Examples</title>
 

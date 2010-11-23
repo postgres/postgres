@@ -35,7 +35,7 @@ PostgreSQL documentation
    <group><arg>--all</arg><arg>-a</arg></group>
   </cmdsynopsis>
  </refsynopsisdiv>
- 
+
 
  <refsect1>
   <title>Description</title>
@@ -63,7 +63,7 @@ PostgreSQL documentation
 
    <para>
     <application>clusterdb</application> accepts the following command-line arguments:
-    
+
     <variablelist>
      <varlistentry>
       <term><option>-a</></term>
@@ -156,7 +156,7 @@ PostgreSQL documentation
    </para>
 
    <para>
-    <application>clusterdb</application> also accepts 
+    <application>clusterdb</application> also accepts
     the following command-line arguments for connection parameters:
 
     <variablelist>
@@ -177,7 +177,7 @@ PostgreSQL documentation
       <term><option>--port <replaceable class="parameter">port</replaceable></></term>
       <listitem>
        <para>
-        Specifies the TCP port or local Unix domain socket file 
+        Specifies the TCP port or local Unix domain socket file
         extension on which the server
         is listening for connections.
        </para>
@@ -215,7 +215,7 @@ PostgreSQL documentation
       <listitem>
        <para>
         Force <application>clusterdb</application> to prompt for a
-        password before connecting to a database.  
+        password before connecting to a database.
        </para>
 
        <para>

@@ -34,7 +34,7 @@ DROP [ PROCEDURAL ] LANGUAGE [ IF EXISTS ] <replaceable class="PARAMETER">name</
    or the owner of the language to use <command>DROP LANGUAGE</>.
   </para>
  </refsect1>
-  
+
  <refsect1>
   <title>Parameters</title>
 
@@ -44,7 +44,7 @@ DROP [ PROCEDURAL ] LANGUAGE [ IF EXISTS ] <replaceable class="PARAMETER">name</
     <term><literal>IF EXISTS</literal></term>
     <listitem>
      <para>
-      Do not throw an error if the language does not exist. A notice is issued 
+      Do not throw an error if the language does not exist. A notice is issued
       in this case.
      </para>
     </listitem>
@@ -81,7 +81,7 @@ DROP [ PROCEDURAL ] LANGUAGE [ IF EXISTS ] <replaceable class="PARAMETER">name</
    </varlistentry>
   </variablelist>
  </refsect1>
-  
+
  <refsect1>
   <title>Examples</title>
 
@@ -94,7 +94,7 @@ DROP LANGUAGE plsample;
 </programlisting>
   </para>
  </refsect1>
- 
+
  <refsect1>
   <title>Compatibility</title>
 

@@ -141,7 +141,7 @@ INSERT INTO TIMESTAMP_TBL VALUES ('Jan 01 17:32:01 2001');
 INSERT INTO TIMESTAMP_TBL VALUES ('Feb 16 17:32:01 -0097');
 INSERT INTO TIMESTAMP_TBL VALUES ('Feb 16 17:32:01 5097 BC');
 
-SELECT '' AS "64", d1 FROM TIMESTAMP_TBL; 
+SELECT '' AS "64", d1 FROM TIMESTAMP_TBL;
 
 -- Demonstrate functions and operators
 SELECT '' AS "48", d1 FROM TIMESTAMP_TBL
@@ -190,7 +190,7 @@ SELECT '' AS "54", d1 as "timestamp",
    FROM TIMESTAMP_TBL WHERE d1 BETWEEN '1902-01-01' AND '2038-01-01';
 
 -- TO_CHAR()
-SELECT '' AS to_char_1, to_char(d1, 'DAY Day day DY Dy dy MONTH Month month RM MON Mon mon') 
+SELECT '' AS to_char_1, to_char(d1, 'DAY Day day DY Dy dy MONTH Month month RM MON Mon mon')
    FROM TIMESTAMP_TBL;
 
 SELECT '' AS to_char_2, to_char(d1, 'FMDAY FMDay FMday FMMONTH FMMonth FMmonth FMRM')
@@ -199,23 +199,23 @@ SELECT '' AS to_char_2, to_char(d1, 'FMDAY FMDay FMday FMMONTH FMMonth FMmonth F
 SELECT '' AS to_char_3, to_char(d1, 'Y,YYY YYYY YYY YY Y CC Q MM WW DDD DD D J')
    FROM TIMESTAMP_TBL;
 
-SELECT '' AS to_char_4, to_char(d1, 'FMY,YYY FMYYYY FMYYY FMYY FMY FMCC FMQ FMMM FMWW FMDDD FMDD FMD FMJ') 
+SELECT '' AS to_char_4, to_char(d1, 'FMY,YYY FMYYYY FMYYY FMYY FMY FMCC FMQ FMMM FMWW FMDDD FMDD FMD FMJ')
    FROM TIMESTAMP_TBL;
 
-SELECT '' AS to_char_5, to_char(d1, 'HH HH12 HH24 MI SS SSSS') 
+SELECT '' AS to_char_5, to_char(d1, 'HH HH12 HH24 MI SS SSSS')
    FROM TIMESTAMP_TBL;
 
-SELECT '' AS to_char_6, to_char(d1, E'"HH:MI:SS is" HH:MI:SS "\\"text between quote marks\\""') 
+SELECT '' AS to_char_6, to_char(d1, E'"HH:MI:SS is" HH:MI:SS "\\"text between quote marks\\""')
    FROM TIMESTAMP_TBL;
 
 SELECT '' AS to_char_7, to_char(d1, 'HH24--text--MI--text--SS')
    FROM TIMESTAMP_TBL;
 
-SELECT '' AS to_char_8, to_char(d1, 'YYYYTH YYYYth Jth') 
+SELECT '' AS to_char_8, to_char(d1, 'YYYYTH YYYYth Jth')
    FROM TIMESTAMP_TBL;
-  
-SELECT '' AS to_char_9, to_char(d1, 'YYYY A.D. YYYY a.d. YYYY bc HH:MI:SS P.M. HH:MI:SS p.m. HH:MI:SS pm') 
-   FROM TIMESTAMP_TBL;   
+
+SELECT '' AS to_char_9, to_char(d1, 'YYYY A.D. YYYY a.d. YYYY bc HH:MI:SS P.M. HH:MI:SS p.m. HH:MI:SS pm')
+   FROM TIMESTAMP_TBL;
 
 SELECT '' AS to_char_10, to_char(d1, 'IYYY IYY IY I IW IDDD ID')
    FROM TIMESTAMP_TBL;

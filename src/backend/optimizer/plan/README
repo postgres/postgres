@@ -37,19 +37,19 @@ This is some implementation notes and opened issues...
 
 First, implementation uses new type of parameters - PARAM_EXEC - to deal
 with correlation Vars. When query_planner() is called, it first tries to
-replace all upper queries Var referenced in current query with Param of 
-this type. Some global variables are used to keep mapping of Vars to 
-Params and Params to Vars. 
+replace all upper queries Var referenced in current query with Param of
+this type. Some global variables are used to keep mapping of Vars to
+Params and Params to Vars.
 
-After this, all current query' SubLinks are processed: for each SubLink 
-found in query' qual union_planner() (old planner() function) will be 
-called to plan corresponding subselect (union_planner() calls 
-query_planner() for "simple" query and supports UNIONs). After subselect 
-are planned, optimizer knows about is this correlated, un-correlated or 
-_undirect_ correlated (references some grand-parent Vars but no parent 
-ones: uncorrelated from the parent' point of view) query. 
+After this, all current query' SubLinks are processed: for each SubLink
+found in query' qual union_planner() (old planner() function) will be
+called to plan corresponding subselect (union_planner() calls
+query_planner() for "simple" query and supports UNIONs). After subselect
+are planned, optimizer knows about is this correlated, un-correlated or
+_undirect_ correlated (references some grand-parent Vars but no parent
+ones: uncorrelated from the parent' point of view) query.
 
-For uncorrelated and undirect correlated subqueries of EXPRession or 
+For uncorrelated and undirect correlated subqueries of EXPRession or
 EXISTS type SubLinks will be replaced with "normal" clauses from
 SubLink->Oper list (I changed this list to be list of EXPR nodes,
 not just Oper ones). Right sides of these nodes are replaced with
@@ -81,7 +81,7 @@ plan->qual) - to initialize them and let them know about changed
 Params (from the list of their "interests").
 
 After all SubLinks are processed, query_planner() calls qual'
-canonificator and does "normal" work. By using Params optimizer 
+canonificator and does "normal" work. By using Params optimizer
 is mostly unchanged.
 
 Well, Executor. To get subplans re-evaluated without ExecutorStart()
@@ -91,7 +91,7 @@ on each call) ExecReScan() now supports most of Plan types...
 
 Explanation of EXPLAIN.
 
-vac=> explain select * from tmp where x >= (select max(x2) from test2 
+vac=> explain select * from tmp where x >= (select max(x2) from test2
 where y2 = y and exists (select * from tempx where tx = x));
 NOTICE:  QUERY PLAN:
 
@@ -128,17 +128,17 @@ Opened issues.
      for each parent tuple - very slow...
 
 Results of some test. TMP is table with x,y (int4-s), x in 0-9,
-y = 100 - x, 1000 tuples (10 duplicates of each tuple). TEST2 is table 
+y = 100 - x, 1000 tuples (10 duplicates of each tuple). TEST2 is table
 with x2, y2 (int4-s), x2 in 1-99, y2 = 100 -x2, 10000 tuples (100 dups).
 
-   Trying 
+   Trying
 
 select * from tmp where x >= (select max(x2) from test2 where y2 = y);
-   
+
    and
 
 begin;
-select y as ty, max(x2) as mx into table tsub from test2, tmp 
+select y as ty, max(x2) as mx into table tsub from test2, tmp
 where y2 = y group by ty;
 vacuum tsub;
 select x, y from tmp, tsub where x >= mx and y = ty;

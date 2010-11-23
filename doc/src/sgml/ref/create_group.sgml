@@ -24,7 +24,7 @@ PostgreSQL documentation
 CREATE GROUP <replaceable class="PARAMETER">name</replaceable> [ [ WITH ] <replaceable class="PARAMETER">option</replaceable> [ ... ] ]
 
 <phrase>where <replaceable class="PARAMETER">option</replaceable> can be:</phrase>
-    
+
       SUPERUSER | NOSUPERUSER
     | CREATEDB | NOCREATEDB
     | CREATEROLE | NOCREATEROLE
@@ -32,13 +32,13 @@ CREATE GROUP <replaceable class="PARAMETER">name</replaceable> [ [ WITH ] <repla
     | INHERIT | NOINHERIT
     | LOGIN | NOLOGIN
     | [ ENCRYPTED | UNENCRYPTED ] PASSWORD '<replaceable class="PARAMETER">password</replaceable>'
-    | VALID UNTIL '<replaceable class="PARAMETER">timestamp</replaceable>' 
+    | VALID UNTIL '<replaceable class="PARAMETER">timestamp</replaceable>'
     | IN ROLE <replaceable class="PARAMETER">role_name</replaceable> [, ...]
     | IN GROUP <replaceable class="PARAMETER">role_name</replaceable> [, ...]
     | ROLE <replaceable class="PARAMETER">role_name</replaceable> [, ...]
     | ADMIN <replaceable class="PARAMETER">role_name</replaceable> [, ...]
     | USER <replaceable class="PARAMETER">role_name</replaceable> [, ...]
-    | SYSID <replaceable class="PARAMETER">uid</replaceable> 
+    | SYSID <replaceable class="PARAMETER">uid</replaceable>
 </synopsis>
  </refsynopsisdiv>
 
@@ -49,11 +49,11 @@ CREATE GROUP <replaceable class="PARAMETER">name</replaceable> [ [ WITH ] <repla
    <command>CREATE GROUP</command> is now an alias for
    <xref linkend="sql-createrole">.
   </para>
- </refsect1> 
- 
+ </refsect1>
+
  <refsect1>
   <title>Compatibility</title>
-  
+
   <para>
    There is no <command>CREATE GROUP</command> statement in the SQL
    standard.

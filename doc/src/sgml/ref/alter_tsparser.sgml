@@ -13,8 +13,8 @@ PostgreSQL documentation
  <refnamediv>
   <refname>ALTER TEXT SEARCH PARSER</refname>
   <refpurpose>change the definition of a text search parser</refpurpose>
- </refnamediv>  
-  
+ </refnamediv>
+
  <indexterm zone="sql-altertsparser">
   <primary>ALTER TEXT SEARCH PARSER</primary>
  </indexterm>
@@ -24,7 +24,7 @@ PostgreSQL documentation
 ALTER TEXT SEARCH PARSER <replaceable>name</replaceable> RENAME TO <replaceable>new_name</replaceable>
 </synopsis>
  </refsynopsisdiv>
-  
+
  <refsect1>
   <title>Description</title>
 
@@ -38,7 +38,7 @@ ALTER TEXT SEARCH PARSER <replaceable>name</replaceable> RENAME TO <replaceable>
    You must be a superuser to use <command>ALTER TEXT SEARCH PARSER</>.
   </para>
  </refsect1>
-  
+
  <refsect1>
   <title>Parameters</title>
 

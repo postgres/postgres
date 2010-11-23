@@ -2,7 +2,7 @@
 -- CREATE_FUNCTION_2
 --
 CREATE FUNCTION hobbies(person)
-   RETURNS setof hobbies_r 
+   RETURNS setof hobbies_r
    AS 'select * from hobbies_r where person = $1.name'
    LANGUAGE SQL;
 CREATE FUNCTION hobby_construct(text, text)
@@ -21,7 +21,7 @@ CREATE FUNCTION equipment(hobbies_r)
    LANGUAGE SQL;
 CREATE FUNCTION user_relns()
    RETURNS setof name
-   AS 'select relname 
+   AS 'select relname
        from pg_class c, pg_namespace n
        where relnamespace = n.oid and
              (nspname !~ ''pg_.*'' and nspname <> ''information_schema'') and

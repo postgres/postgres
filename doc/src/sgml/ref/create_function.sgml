@@ -421,7 +421,7 @@ CREATE [ OR REPLACE ] FUNCTION
        LOCAL</> command: the effects of such a command will persist after
        function exit, unless the current transaction is rolled back.
       </para>
-   
+
       <para>
        See <xref linkend="sql-set"> and
        <xref linkend="runtime-config">

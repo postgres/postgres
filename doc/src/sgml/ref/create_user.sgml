@@ -24,7 +24,7 @@ PostgreSQL documentation
 CREATE USER <replaceable class="PARAMETER">name</replaceable> [ [ WITH ] <replaceable class="PARAMETER">option</replaceable> [ ... ] ]
 
 <phrase>where <replaceable class="PARAMETER">option</replaceable> can be:</phrase>
-    
+
       SUPERUSER | NOSUPERUSER
     | CREATEDB | NOCREATEDB
     | CREATEROLE | NOCREATEROLE
@@ -33,13 +33,13 @@ CREATE USER <replaceable class="PARAMETER">name</replaceable> [ [ WITH ] <replac
     | LOGIN | NOLOGIN
     | CONNECTION LIMIT <replaceable class="PARAMETER">connlimit</replaceable>
     | [ ENCRYPTED | UNENCRYPTED ] PASSWORD '<replaceable class="PARAMETER">password</replaceable>'
-    | VALID UNTIL '<replaceable class="PARAMETER">timestamp</replaceable>' 
+    | VALID UNTIL '<replaceable class="PARAMETER">timestamp</replaceable>'
     | IN ROLE <replaceable class="PARAMETER">role_name</replaceable> [, ...]
     | IN GROUP <replaceable class="PARAMETER">role_name</replaceable> [, ...]
     | ROLE <replaceable class="PARAMETER">role_name</replaceable> [, ...]
     | ADMIN <replaceable class="PARAMETER">role_name</replaceable> [, ...]
     | USER <replaceable class="PARAMETER">role_name</replaceable> [, ...]
-    | SYSID <replaceable class="PARAMETER">uid</replaceable> 
+    | SYSID <replaceable class="PARAMETER">uid</replaceable>
 </synopsis>
  </refsynopsisdiv>
 
@@ -56,10 +56,10 @@ CREATE USER <replaceable class="PARAMETER">name</replaceable> [ [ WITH ] <replac
    <command>CREATE ROLE</command>.
   </para>
  </refsect1>
- 
+
  <refsect1>
   <title>Compatibility</title>
-  
+
   <para>
    The <command>CREATE USER</command> statement is a
    <productname>PostgreSQL</productname> extension.  The SQL standard

@@ -93,7 +93,7 @@ line: while (<>) {
     chomp;	# strip record separator
     @Fld = split(' ', $_, -1);
 
-    # Dump the action for a rule - 
+    # Dump the action for a rule -
     # mode indicates if we are processing the 'stmt:' rule (mode==0 means normal,  mode==1 means stmt:)
     # flds are the fields to use. These may start with a '$' - in which case they are the result of a previous non-terminal
     #                             if they dont start with a '$' then they are token name
@@ -235,8 +235,8 @@ line: while (<>) {
 	if ($replace_token{$arr[$fieldIndexer]}) {
 	    $arr[$fieldIndexer] = $replace_token{$arr[$fieldIndexer]};
 	}
-	
-	# Are we looking at a declaration of a non-terminal ? 
+
+	# Are we looking at a declaration of a non-terminal ?
 	if (($arr[$fieldIndexer] =~ '[A-Za-z0-9]+:') || $arr[$fieldIndexer + 1] eq ':') {
 	    $non_term_id = $arr[$fieldIndexer];
 	    $s = ':', $non_term_id =~ s/$s//g;
@@ -253,7 +253,7 @@ line: while (<>) {
 		$copymode = 'on';
 	    }
 	    $line = $line . ' ' . $arr[$fieldIndexer];
-	    # Do we have the : attached already ? 
+	    # Do we have the : attached already ?
 	    # If yes, we'll have already printed the ':'
 	    if (!($arr[$fieldIndexer] =~ '[A-Za-z0-9]+:')) {
 		# Consume the ':' which is next...
@@ -261,7 +261,7 @@ line: while (<>) {
 		$fieldIndexer++;
 	    }
 
-	    # Special mode? 
+	    # Special mode?
 	    if ($non_term_id eq 'stmt') {
 		$stmt_mode = 1;
 	    }
@@ -380,7 +380,7 @@ sub dump {
 sub dump_fields {
     local($mode, *flds, $len, $ln) = @_;
     if ($mode == 0) {
-	#Normal 
+	#Normal
 	&add_to_buffer('rules', $ln);
 	if ($feature_not_supported == 1) {
 	    # we found an unsupported feature, but we have to
@@ -393,7 +393,7 @@ sub dump_fields {
 	}
 
 	if ($len == 0) {
-	    # We have no fields ? 
+	    # We have no fields ?
 	    &add_to_buffer('rules', " \$\$=EMPTY; }");
 	}
 	else {
@@ -418,7 +418,7 @@ sub dump_fields {
 		}
 	    }
 
-	    # So - how many fields did we end up with ? 
+	    # So - how many fields did we end up with ?
 	    if ($cnt == 1) {
 		# Straight assignement
 		$str = " \$\$ = " . $flds_new{0} . ';';

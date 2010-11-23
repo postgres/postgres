@@ -13,8 +13,8 @@ PostgreSQL documentation
  <refnamediv>
   <refname>ALTER OPERATOR CLASS</refname>
   <refpurpose>change the definition of an operator class</refpurpose>
- </refnamediv>  
-  
+ </refnamediv>
+
  <indexterm zone="sql-alteropclass">
   <primary>ALTER OPERATOR CLASS</primary>
  </indexterm>
@@ -25,7 +25,7 @@ ALTER OPERATOR CLASS <replaceable>name</replaceable> USING <replaceable class="p
 ALTER OPERATOR CLASS <replaceable>name</replaceable> USING <replaceable class="parameter">index_method</replaceable> OWNER TO <replaceable>new_owner</replaceable>
 </synopsis>
  </refsynopsisdiv>
-  
+
  <refsect1>
   <title>Description</title>
 
@@ -44,7 +44,7 @@ ALTER OPERATOR CLASS <replaceable>name</replaceable> USING <replaceable class="p
    class anyway.)
   </para>
  </refsect1>
-  
+
  <refsect1>
   <title>Parameters</title>
 

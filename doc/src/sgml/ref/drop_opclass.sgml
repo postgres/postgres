@@ -14,7 +14,7 @@ PostgreSQL documentation
   <refname>DROP OPERATOR CLASS</refname>
   <refpurpose>remove an operator class</refpurpose>
  </refnamediv>
-  
+
  <indexterm zone="sql-dropopclass">
   <primary>DROP OPERATOR CLASS</primary>
  </indexterm>
@@ -40,7 +40,7 @@ DROP OPERATOR CLASS [ IF EXISTS ] <replaceable class="PARAMETER">name</replaceab
    <literal>CASCADE</> for the drop to complete.
   </para>
  </refsect1>
-  
+
  <refsect1>
   <title>Parameters</title>
 
@@ -50,7 +50,7 @@ DROP OPERATOR CLASS [ IF EXISTS ] <replaceable class="PARAMETER">name</replaceab
     <term><literal>IF EXISTS</literal></term>
     <listitem>
      <para>
-      Do not throw an error if the operator class does not exist. A notice is issued 
+      Do not throw an error if the operator class does not exist. A notice is issued
       in this case.
      </para>
     </listitem>
@@ -94,7 +94,7 @@ DROP OPERATOR CLASS [ IF EXISTS ] <replaceable class="PARAMETER">name</replaceab
    </varlistentry>
   </variablelist>
  </refsect1>
-  
+
  <refsect1>
   <title>Notes</title>
 
@@ -124,7 +124,7 @@ DROP OPERATOR CLASS widget_ops USING btree;
    such indexes along with the operator class.
   </para>
  </refsect1>
- 
+
  <refsect1>
   <title>Compatibility</title>
 

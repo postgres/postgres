@@ -1,6 +1,6 @@
--- 
+--
 -- IF EXISTS tests
--- 
+--
 
 -- table (will be really dropped at the end)
 

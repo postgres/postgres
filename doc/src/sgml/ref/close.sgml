@@ -51,7 +51,7 @@ CLOSE { <replaceable class="PARAMETER">name</replaceable> | ALL }
    disconnects.
   </para>
  </refsect1>
-  
+
  <refsect1>
   <title>Parameters</title>
 
@@ -110,10 +110,10 @@ CLOSE liahona;
 </programlisting>
   </para>
  </refsect1>
- 
+
  <refsect1>
   <title>Compatibility</title>
-  
+
   <para>
    <command>CLOSE</command> is fully conforming with the SQL
    standard. <command>CLOSE ALL</> is a <productname>PostgreSQL</>

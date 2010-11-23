@@ -5,11 +5,11 @@
 
 !IF "$(OS)" == "Windows_NT"
 NULL=
-!ELSE 
+!ELSE
 NULL=nul
-!ENDIF 
+!ENDIF
 
-ALL: 
+ALL:
    cd include
    if not exist pg_config.h copy pg_config.h.win32 pg_config.h
    if not exist pg_config_os.h copy port\win32.h pg_config_os.h

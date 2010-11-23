@@ -40,7 +40,7 @@ FILES IN src/include/nodes/
 	relation.h	- planner internal nodes
 	execnodes.h	- executor nodes
 	memnodes.h	- memory nodes
-	pg_list.h	- generic list 
+	pg_list.h	- generic list
 
 
 Steps to Add a Node
@@ -69,7 +69,7 @@ Suppose you wanna define a node Foo:
 Historical Note
 ---------------
 
-Prior to the current simple C structure definitions, the Node structures 
+Prior to the current simple C structure definitions, the Node structures
 used a pseudo-inheritance system which automatically generated creator and
 accessor functions. Since every node inherited from LispValue, the whole thing
 was a mess. Here's a little anecdote:

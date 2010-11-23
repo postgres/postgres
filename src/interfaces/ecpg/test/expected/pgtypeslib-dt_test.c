@@ -55,17 +55,17 @@ main(void)
 	char *t1 = "2000-7-12 17:34:29";
 	int i;
 
-        ECPGdebug(1, stderr);
-        /* exec sql whenever sqlerror  do sqlprint ( ) ; */
+	ECPGdebug(1, stderr);
+	/* exec sql whenever sqlerror  do sqlprint ( ) ; */
 #line 27 "dt_test.pgc"
 
-        { ECPGconnect(__LINE__, 0, "regress1" , NULL, NULL , NULL, 0); 
+	{ ECPGconnect(__LINE__, 0, "regress1" , NULL, NULL , NULL, 0); 
 #line 28 "dt_test.pgc"
 
 if (sqlca.sqlcode < 0) sqlprint ( );}
 #line 28 "dt_test.pgc"
 
-        { ECPGdo(__LINE__, 0, 1, NULL, 0, ECPGst_normal, "create table date_test ( d date , ts timestamp )", ECPGt_EOIT, ECPGt_EORT);
+	{ ECPGdo(__LINE__, 0, 1, NULL, 0, ECPGst_normal, "create table date_test ( d date , ts timestamp )", ECPGt_EOIT, ECPGt_EORT);
 #line 29 "dt_test.pgc"
 
 if (sqlca.sqlcode < 0) sqlprint ( );}
@@ -84,8 +84,8 @@ if (sqlca.sqlcode < 0) sqlprint ( );}
 #line 31 "dt_test.pgc"
 
 
-	date1 = PGTYPESdate_from_asc(d1, NULL); 
-	ts1 = PGTYPEStimestamp_from_asc(t1, NULL); 
+	date1 = PGTYPESdate_from_asc(d1, NULL);
+	ts1 = PGTYPEStimestamp_from_asc(t1, NULL);
 
 	{ ECPGdo(__LINE__, 0, 1, NULL, 0, ECPGst_normal, "insert into date_test ( d , ts ) values ( $1  , $2  )", 
 	ECPGt_date,&(date1),(long)1,(long)1,sizeof(date), 

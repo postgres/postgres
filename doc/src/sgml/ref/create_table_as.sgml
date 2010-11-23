@@ -30,7 +30,7 @@ CREATE [ [ GLOBAL | LOCAL ] { TEMPORARY | TEMP } ] TABLE <replaceable>table_name
     [ WITH [ NO ] DATA ]
 </synopsis>
  </refsynopsisdiv>
-  
+
  <refsect1>
   <title>Description</title>
 
@@ -346,5 +346,5 @@ CREATE TEMP TABLE films_recent WITH (OIDS) ON COMMIT DROP AS
    <member><xref linkend="sql-values"></member>
   </simplelist>
  </refsect1>
- 
+
 </refentry>

@@ -19,7 +19,7 @@ or, to dump in TAR format
 	pg_dump <db-name> -Ft > <backup-file>
 
 To restore, try
- 
+
    To list contents:
 
        pg_restore -l <backup-file> | less
@@ -62,12 +62,12 @@ or, simply:
 TAR
 ===
 
-The TAR archive that pg_dump creates currently has a blank username & group for the files, 
+The TAR archive that pg_dump creates currently has a blank username & group for the files,
 but should be otherwise valid. It also includes a 'restore.sql' script which is there for
 the benefit of humans. The script is never used by pg_restore.
 
 Note: the TAR format archive can only be used as input into pg_restore if it is in TAR form.
-(ie. you should not extract the files then expect pg_restore to work). 
+(ie. you should not extract the files then expect pg_restore to work).
 
 You can extract, edit, and tar the files again, and it should work, but the 'toc'
 file should go at the start, the data files be in the order they are used, and

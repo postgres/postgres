@@ -29,7 +29,7 @@ ROLLBACK PREPARED <replaceable class="PARAMETER">transaction_id</replaceable>
   <title>Description</title>
 
   <para>
-   <command>ROLLBACK PREPARED</command> rolls back a transaction that is in 
+   <command>ROLLBACK PREPARED</command> rolls back a transaction that is in
    prepared state.
   </para>
  </refsect1>
@@ -76,7 +76,7 @@ ROLLBACK PREPARED <replaceable class="PARAMETER">transaction_id</replaceable>
   <para>
    Roll back the transaction identified by the transaction
    identifier <literal>foobar</>:
-   
+
 <programlisting>
 ROLLBACK PREPARED 'foobar';
 </programlisting>

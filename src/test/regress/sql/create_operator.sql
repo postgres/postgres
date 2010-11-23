@@ -2,11 +2,11 @@
 -- CREATE_OPERATOR
 --
 
-CREATE OPERATOR ## ( 
+CREATE OPERATOR ## (
    leftarg = path,
    rightarg = path,
    procedure = path_inter,
-   commutator = ## 
+   commutator = ##
 );
 
 CREATE OPERATOR <% (
@@ -14,12 +14,12 @@ CREATE OPERATOR <% (
    rightarg = widget,
    procedure = pt_in_widget,
    commutator = >% ,
-   negator = >=% 
+   negator = >=%
 );
 
 CREATE OPERATOR @#@ (
-   rightarg = int8,		-- left unary 
-   procedure = numeric_fac 
+   rightarg = int8,		-- left unary
+   procedure = numeric_fac
 );
 
 CREATE OPERATOR #@# (
@@ -27,9 +27,9 @@ CREATE OPERATOR #@# (
    procedure = numeric_fac
 );
 
-CREATE OPERATOR #%# ( 
-   leftarg = int8,		-- right unary 
-   procedure = numeric_fac 
+CREATE OPERATOR #%# (
+   leftarg = int8,		-- right unary
+   procedure = numeric_fac
 );
 
 -- Test comments

@@ -42,8 +42,8 @@ SELECT n.nspname, c.relname
 -- column reference)
 --
 SELECT n.nspname AS schema_name,
-       bc.relname AS class_name, 
-       ic.relname AS index_name, 
+       bc.relname AS class_name,
+       ic.relname AS index_name,
        a.attname
   FROM pg_namespace n,
        pg_class bc,             -- base class
@@ -64,7 +64,7 @@ SELECT n.nspname AS schema_name,
 -- classes
 --
 SELECT n.nspname, c.relname, a.attname, format_type(t.oid, null) as typname
-  FROM pg_namespace n, pg_class c, 
+  FROM pg_namespace n, pg_class c,
        pg_attribute a, pg_type t
   WHERE n.oid = c.relnamespace
     and c.relkind = 'r'     -- no indices
@@ -94,10 +94,10 @@ SELECT n.nspname, r.rolname, format_type(t.oid, null) as typname
 --
 -- lists all left unary operators
 --
-SELECT n.nspname, o.oprname AS left_unary, 
+SELECT n.nspname, o.oprname AS left_unary,
        format_type(right_type.oid, null) AS operand,
        format_type(result.oid, null) AS return_type
-  FROM pg_namespace n, pg_operator o, 
+  FROM pg_namespace n, pg_operator o,
        pg_type right_type, pg_type result
   WHERE o.oprnamespace = n.oid
     and o.oprkind = 'l'           -- left unary
@@ -109,10 +109,10 @@ SELECT n.nspname, o.oprname AS left_unary,
 --
 -- lists all right unary operators
 --
-SELECT n.nspname, o.oprname AS right_unary, 
+SELECT n.nspname, o.oprname AS right_unary,
        format_type(left_type.oid, null) AS operand,
        format_type(result.oid, null) AS return_type
-  FROM pg_namespace n, pg_operator o, 
+  FROM pg_namespace n, pg_operator o,
        pg_type left_type, pg_type result
   WHERE o.oprnamespace = n.oid
     and o.oprkind = 'r'          -- right unary
@@ -127,7 +127,7 @@ SELECT n.nspname, o.oprname AS binary_op,
        format_type(left_type.oid, null) AS left_opr,
        format_type(right_type.oid, null) AS right_opr,
        format_type(result.oid, null) AS return_type
-  FROM pg_namespace n, pg_operator o, pg_type left_type, 
+  FROM pg_namespace n, pg_operator o, pg_type left_type,
        pg_type right_type, pg_type result
   WHERE o.oprnamespace = n.oid
     and o.oprkind = 'b'         -- binary
@@ -142,12 +142,12 @@ SELECT n.nspname, o.oprname AS binary_op,
 -- C functions
 --
 SELECT n.nspname, p.proname, p.pronargs, format_type(t.oid, null) as return_type
-  FROM pg_namespace n, pg_proc p, 
+  FROM pg_namespace n, pg_proc p,
        pg_language l, pg_type t
   WHERE p.pronamespace = n.oid
     and n.nspname not like 'pg\\_%' -- no catalogs
     and n.nspname != 'information_schema' -- no information_schema
-    and p.prolang = l.oid 
+    and p.prolang = l.oid
     and p.prorettype = t.oid
     and l.lanname = 'c'
   ORDER BY nspname, proname, pronargs, return_type;
@@ -156,7 +156,7 @@ SELECT n.nspname, p.proname, p.pronargs, format_type(t.oid, null) as return_type
 -- lists all aggregate functions and the types to which they can be applied
 --
 SELECT n.nspname, p.proname, format_type(t.oid, null) as typname
-  FROM pg_namespace n, pg_aggregate a, 
+  FROM pg_namespace n, pg_aggregate a,
        pg_proc p, pg_type t
   WHERE p.pronamespace = n.oid
     and a.aggfnoid = p.oid
@@ -170,7 +170,7 @@ SELECT n.nspname, p.proname, format_type(t.oid, null) as typname
 -- families
 --
 SELECT am.amname, n.nspname, opf.opfname, opr.oprname
-  FROM pg_namespace n, pg_am am, pg_opfamily opf, 
+  FROM pg_namespace n, pg_am am, pg_opfamily opf,
        pg_amop amop, pg_operator opr
   WHERE opf.opfnamespace = n.oid
     and opf.opfmethod = am.oid

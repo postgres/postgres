@@ -121,7 +121,7 @@ LINE 1: SELECT c, count(*) FROM test_missing_target GROUP BY 3;
                                                              ^
 --   group w/o existing GROUP BY and ORDER BY target under ambiguous condition
 --   failure expected
-SELECT count(*) FROM test_missing_target x, test_missing_target y 
+SELECT count(*) FROM test_missing_target x, test_missing_target y
 	WHERE x.a = y.a
 	GROUP BY b ORDER BY b;
 ERROR:  column reference "b" is ambiguous
@@ -177,7 +177,7 @@ SELECT a/2, a/2 FROM test_missing_target
 (5 rows)
 
 --   group w/ existing GROUP BY target under ambiguous condition
-SELECT x.b, count(*) FROM test_missing_target x, test_missing_target y 
+SELECT x.b, count(*) FROM test_missing_target x, test_missing_target y
 	WHERE x.a = y.a
 	GROUP BY x.b ORDER BY x.b;
  b | count 
@@ -189,7 +189,7 @@ SELECT x.b, count(*) FROM test_missing_target x, test_missing_target y
 (4 rows)
 
 --   group w/o existing GROUP BY target under ambiguous condition
-SELECT count(*) FROM test_missing_target x, test_missing_target y 
+SELECT count(*) FROM test_missing_target x, test_missing_target y
 	WHERE x.a = y.a
 	GROUP BY x.b ORDER BY x.b;
  count 
@@ -202,8 +202,8 @@ SELECT count(*) FROM test_missing_target x, test_missing_target y
 
 --   group w/o existing GROUP BY target under ambiguous condition
 --   into a table
-SELECT count(*) INTO TABLE test_missing_target2 
-FROM test_missing_target x, test_missing_target y 
+SELECT count(*) INTO TABLE test_missing_target2
+FROM test_missing_target x, test_missing_target y
 	WHERE x.a = y.a
 	GROUP BY x.b ORDER BY x.b;
 SELECT * FROM test_missing_target2;
@@ -291,14 +291,14 @@ SELECT count(b) FROM test_missing_target
 
 --   group w/o existing GROUP BY and ORDER BY target under ambiguous condition
 --   failure expected
-SELECT count(x.a) FROM test_missing_target x, test_missing_target y 
+SELECT count(x.a) FROM test_missing_target x, test_missing_target y
 	WHERE x.a = y.a
 	GROUP BY b/2 ORDER BY b/2;
 ERROR:  column reference "b" is ambiguous
 LINE 3:  GROUP BY b/2 ORDER BY b/2;
                                ^
 --   group w/ existing GROUP BY target under ambiguous condition
-SELECT x.b/2, count(x.b) FROM test_missing_target x, test_missing_target y 
+SELECT x.b/2, count(x.b) FROM test_missing_target x, test_missing_target y
 	WHERE x.a = y.a
 	GROUP BY x.b/2 ORDER BY x.b/2;
  ?column? | count 
@@ -310,7 +310,7 @@ SELECT x.b/2, count(x.b) FROM test_missing_target x, test_missing_target y
 
 --   group w/o existing GROUP BY target under ambiguous condition
 --   failure expected due to ambiguous b in count(b)
-SELECT count(b) FROM test_missing_target x, test_missing_target y 
+SELECT count(b) FROM test_missing_target x, test_missing_target y
 	WHERE x.a = y.a
 	GROUP BY x.b/2;
 ERROR:  column reference "b" is ambiguous
@@ -318,8 +318,8 @@ LINE 1: SELECT count(b) FROM test_missing_target x, test_missing_tar...
                      ^
 --   group w/o existing GROUP BY target under ambiguous condition
 --   into a table
-SELECT count(x.b) INTO TABLE test_missing_target3 
-FROM test_missing_target x, test_missing_target y 
+SELECT count(x.b) INTO TABLE test_missing_target3
+FROM test_missing_target x, test_missing_target y
 	WHERE x.a = y.a
 	GROUP BY x.b/2 ORDER BY x.b/2;
 SELECT * FROM test_missing_target3;

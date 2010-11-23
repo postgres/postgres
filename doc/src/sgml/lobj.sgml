@@ -42,7 +42,7 @@
     This makes the large object facility partially obsolete.  One
     remaining advantage of the large object facility is that it allows values
     up to 2 GB in size, whereas <acronym>TOAST</acronym>ed fields can be at
-    most 1 GB.  Also, large objects can be randomly modified using a read/write 
+    most 1 GB.  Also, large objects can be randomly modified using a read/write
     API that is more efficient than performing such operations using
     <acronym>TOAST</acronym>.
    </para>
@@ -64,11 +64,11 @@
     As of <productname>PostgreSQL</> 9.0, large objects have an owner
     and a set of access permissions, which can be managed using
     <xref linkend="sql-grant"> and
-    <xref linkend="sql-revoke">.  
+    <xref linkend="sql-revoke">.
     For compatibility with prior releases, see
     <xref linkend="guc-lo-compat-privileges">.
     <literal>SELECT</literal> privileges are required to read a large
-    object, and 
+    object, and
     <literal>UPDATE</literal> privileges are required to write to or
     truncate it.
     Only the large object owner (or the database superuser) can unlink, comment
@@ -108,7 +108,7 @@
 Oid lo_creat(PGconn *conn, int mode);
 </synopsis>
      <indexterm><primary>lo_creat</></>
-     creates a new large object.  
+     creates a new large object.
      The return value is the OID that was assigned to the new large object,
      or <symbol>InvalidOid</symbol> (zero) on failure.
 
@@ -167,7 +167,7 @@ inv_oid = lo_create(conn, desired_oid);
 Oid lo_import(PGconn *conn, const char *filename);
 </synopsis>
      <indexterm><primary>lo_import</></>
-     <replaceable class="parameter">filename</replaceable> 
+     <replaceable class="parameter">filename</replaceable>
      specifies the operating system name of
      the file to be imported as a large object.
      The return value is the OID that was assigned to the new large object,
@@ -238,7 +238,7 @@ int lo_open(PGconn *conn, Oid lobjId, int mode);
      descriptor for later use in <function>lo_read</function>,
      <function>lo_write</function>, <function>lo_lseek</function>,
      <function>lo_tell</function>, and <function>lo_close</function>.
-     The descriptor is only valid for 
+     The descriptor is only valid for
      the duration of the current transaction.
      On failure, -1 is returned.
     </para>
@@ -462,9 +462,9 @@ SELECT lo_export(image.raster, '/tmp/motd') FROM image
 <title>Example Program</title>
 
 <para>
-     <xref linkend="lo-example"> is a sample program which shows how the large object  
+     <xref linkend="lo-example"> is a sample program which shows how the large object
      interface
-     in <application>libpq</> can be used.  Parts of the program are 
+     in <application>libpq</> can be used.  Parts of the program are
      commented out but are left in the source for  the  reader's
      benefit.  This program can also be found in
      <filename>src/test/examples/testlo.c</filename> in the source distribution.

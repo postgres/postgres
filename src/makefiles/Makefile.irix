@@ -14,6 +14,6 @@ LDFLAGS += -Wl,-woff,15 -Wl,-woff,84
 
 # Rule for building a shared library from a single .o file
 %.so: %.o
-	$(CC) $(CFLAGS) $(LDFLAGS) $(LDFLAGS_SL) -shared -o $@ $< 
+	$(CC) $(CFLAGS) $(LDFLAGS) $(LDFLAGS_SL) -shared -o $@ $<
 
 sqlmansect = 5sql

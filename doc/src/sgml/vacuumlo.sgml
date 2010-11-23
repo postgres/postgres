@@ -75,7 +75,7 @@ vacuumlo [options] database [database2 ... databaseN]
     <listitem>
      <para>
       Force <application>vacuumlo</application> to prompt for a
-      password before connecting to a database.  
+      password before connecting to a database.
      </para>
 
      <para>

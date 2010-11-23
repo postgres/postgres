@@ -552,7 +552,7 @@ object_exists(ObjectAddress address)
 		else
 		{
 			found = ((Form_pg_attribute) GETSTRUCT(atttup))->attisdropped;
-			ReleaseSysCache(atttup);	
+			ReleaseSysCache(atttup);
 		}
 		return found;
 	}
@@ -654,5 +654,5 @@ object_exists(ObjectAddress address)
 	found = HeapTupleIsValid(systable_getnext(sd));
 	systable_endscan(sd);
 	heap_close(rel, AccessShareLock);
-	return found;	
+	return found;
 }

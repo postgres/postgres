@@ -4,7 +4,7 @@
 SET search_path = public;
 
 -- Create the user-defined type for N-dimensional boxes
--- 
+--
 
 CREATE OR REPLACE FUNCTION cube_in(cstring)
 RETURNS cube
@@ -268,12 +268,12 @@ AS 'MODULE_PATHNAME'
 LANGUAGE C IMMUTABLE STRICT;
 
 CREATE OR REPLACE FUNCTION g_cube_compress(internal)
-RETURNS internal 
+RETURNS internal
 AS 'MODULE_PATHNAME'
 LANGUAGE C IMMUTABLE STRICT;
 
 CREATE OR REPLACE FUNCTION g_cube_decompress(internal)
-RETURNS internal 
+RETURNS internal
 AS 'MODULE_PATHNAME'
 LANGUAGE C IMMUTABLE STRICT;
 
@@ -288,12 +288,12 @@ AS 'MODULE_PATHNAME'
 LANGUAGE C IMMUTABLE STRICT;
 
 CREATE OR REPLACE FUNCTION g_cube_union(internal, internal)
-RETURNS cube 
+RETURNS cube
 AS 'MODULE_PATHNAME'
 LANGUAGE C IMMUTABLE STRICT;
 
 CREATE OR REPLACE FUNCTION g_cube_same(cube, cube, internal)
-RETURNS internal 
+RETURNS internal
 AS 'MODULE_PATHNAME'
 LANGUAGE C IMMUTABLE STRICT;
 

@@ -8,7 +8,7 @@
 -- of the "old style" approach of making the functions first.
 --
 CREATE TYPE widget (
-   internallength = 24, 
+   internallength = 24,
    input = widget_in,
    output = widget_out,
    typmod_in = numerictypmodin,
@@ -16,10 +16,10 @@ CREATE TYPE widget (
    alignment = double
 );
 
-CREATE TYPE city_budget ( 
-   internallength = 16, 
-   input = int44in, 
-   output = int44out, 
+CREATE TYPE city_budget (
+   internallength = 16,
+   input = int44in,
+   output = int44out,
    element = int4,
    category = 'x',   -- just to verify the system will take it
    preferred = true  -- ditto

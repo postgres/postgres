@@ -3,7 +3,7 @@
 -- complex.sql-
 --    This file shows how to create a new user-defined type and how to
 --    use this new type.
--- 
+--
 --
 -- Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
 -- Portions Copyright (c) 1994, Regents of the University of California
@@ -28,7 +28,7 @@
 -- C code.  We also mark them IMMUTABLE, since they always return the
 -- same outputs given the same inputs.
 
--- the input function 'complex_in' takes a null-terminated string (the 
+-- the input function 'complex_in' takes a null-terminated string (the
 -- textual representation of the type) and turns it into the internal
 -- (in memory) representation. You will get a message telling you 'complex'
 -- does not exist yet but that's okay.
@@ -67,7 +67,7 @@ CREATE FUNCTION complex_send(complex)
 -- memory block required to hold the type (we need two 8-byte doubles).
 
 CREATE TYPE complex (
-   internallength = 16, 
+   internallength = 16,
    input = complex_in,
    output = complex_out,
    receive = complex_recv,
@@ -89,7 +89,7 @@ CREATE TABLE test_complex (
 );
 
 -- data for user-defined types are just strings in the proper textual
--- representation. 
+-- representation.
 
 INSERT INTO test_complex VALUES ('(1.0, 2.5)', '(4.2, 3.55 )');
 INSERT INTO test_complex VALUES ('(33.0, 51.4)', '(100.42, 93.55)');
@@ -100,7 +100,7 @@ SELECT * FROM test_complex;
 -- Creating an operator for the new type:
 --	Let's define an add operator for complex types. Since POSTGRES
 --	supports function overloading, we'll use + as the add operator.
---	(Operator names can be reused with different numbers and types of 
+--	(Operator names can be reused with different numbers and types of
 --	arguments.)
 -----------------------------
 
@@ -112,7 +112,7 @@ CREATE FUNCTION complex_add(complex, complex)
 
 -- we can now define the operator. We show a binary operator here but you
 -- can also define unary operators by omitting either of leftarg or rightarg.
-CREATE OPERATOR + ( 
+CREATE OPERATOR + (
    leftarg = complex,
    rightarg = complex,
    procedure = complex_add,

@@ -4,13 +4,13 @@
 CREATE TABLE VARCHAR_TBL(f1 varchar(1));
 INSERT INTO VARCHAR_TBL (f1) VALUES ('a');
 INSERT INTO VARCHAR_TBL (f1) VALUES ('A');
--- any of the following three input formats are acceptable 
+-- any of the following three input formats are acceptable
 INSERT INTO VARCHAR_TBL (f1) VALUES ('1');
 INSERT INTO VARCHAR_TBL (f1) VALUES (2);
 INSERT INTO VARCHAR_TBL (f1) VALUES ('3');
--- zero-length char 
+-- zero-length char
 INSERT INTO VARCHAR_TBL (f1) VALUES ('');
--- try varchar's of greater than 1 length 
+-- try varchar's of greater than 1 length
 INSERT INTO VARCHAR_TBL (f1) VALUES ('cd');
 ERROR:  value too long for type character varying(1)
 INSERT INTO VARCHAR_TBL (f1) VALUES ('c     ');

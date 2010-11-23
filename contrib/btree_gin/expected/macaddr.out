@@ -2,7 +2,7 @@ set enable_seqscan=off;
 CREATE TABLE test_macaddr (
 	i macaddr
 );
-INSERT INTO test_macaddr VALUES 
+INSERT INTO test_macaddr VALUES
 	( '22:00:5c:03:55:08' ),
 	( '22:00:5c:04:55:08' ),
 	( '22:00:5c:05:55:08' ),

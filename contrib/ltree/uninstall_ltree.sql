@@ -110,7 +110,7 @@ DROP FUNCTION ltree_compress(internal);
 DROP FUNCTION ltree_consistent(internal,internal,int2,oid,internal);
 
 DROP TYPE ltree_gist CASCADE;
-  
+
 DROP OPERATOR ^@ (ltxtquery, ltree);
 
 DROP OPERATOR ^@ (ltree, ltxtquery);

@@ -856,7 +856,7 @@ spin_delay(void)
 
 #endif
 
-  
+
 #endif	/* !defined(HAS_TEST_AND_SET) */
 
 

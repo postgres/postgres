@@ -20,10 +20,10 @@
   </abstract>
 
   <para>
-   <acronym>SQL</acronym> has become the most popular relational query 
+   <acronym>SQL</acronym> has become the most popular relational query
    language.
    The name <quote><acronym>SQL</acronym></quote> is an abbreviation for
-   <firstterm>Structured Query Language</firstterm>. 
+   <firstterm>Structured Query Language</firstterm>.
    In 1974 Donald Chamberlin and others defined the
    language SEQUEL (<firstterm>Structured English Query
     Language</firstterm>) at IBM
@@ -64,7 +64,7 @@
    Database Committee X3H2 to
    develop a proposal for a standard relational language. This proposal
    was ratified in 1986 and consisted essentially of the IBM dialect of
-   <acronym>SQL</acronym>. In 1987 this <acronym>ANSI</acronym> 
+   <acronym>SQL</acronym>. In 1987 this <acronym>ANSI</acronym>
    standard was also accepted as an international
    standard by the International Organization for Standardization
    (<acronym>ISO</acronym>).
@@ -89,7 +89,7 @@
    <acronym>SQL/92</acronym> is the version
    normally meant when people refer to <quote>the <acronym>SQL</acronym>
    standard</quote>. A detailed
-   description of <acronym>SQL/92</acronym> is given in 
+   description of <acronym>SQL/92</acronym> is given in
    <xref linkend="DATE97" endterm="DATE97">. At the time of
    writing this document a new standard informally referred to
    as <firstterm><acronym>SQL3</acronym></firstterm>
@@ -115,7 +115,7 @@
   </para>
 
   <para>
-    A <firstterm>relational database</firstterm> is a database that is 
+    A <firstterm>relational database</firstterm> is a database that is
     perceived by its
     users as a <firstterm>collection of tables</firstterm> (and
     nothing else but tables).
@@ -143,7 +143,7 @@
      <listitem>
       <para>
        SELLS stores information about which part (PNO) is sold by which
-       supplier (SNO). 
+       supplier (SNO).
        It serves in a sense to connect the other two tables together.
       </para>
      </listitem>
@@ -177,7 +177,7 @@ PART:                         4  |  3
     <firstterm>entities</firstterm> and
     SELLS can be regarded as a <firstterm>relationship</firstterm>
     between a particular
-    part and a particular supplier. 
+    part and a particular supplier.
    </para>
 
    <para>
@@ -230,12 +230,12 @@ D_{1}, v_{2} \in D_{2}, \ldots, v_{k} \in D_{k}$}.
     ...
     <parameter>v<subscript>k</subscript></parameter>,
     such that
-    <parameter>v<subscript>1</subscript></parameter> &isin; 
+    <parameter>v<subscript>1</subscript></parameter> &isin;
     <parameter>D<subscript>1</subscript></parameter>,
-    <parameter>v<subscript>2</subscript></parameter> &isin; 
+    <parameter>v<subscript>2</subscript></parameter> &isin;
     <parameter>D<subscript>2</subscript></parameter>,
     ...
-    <parameter>v<subscript>k</subscript></parameter> &isin; 
+    <parameter>v<subscript>k</subscript></parameter> &isin;
     <parameter>D<subscript>k</subscript></parameter>.
    </para>
 
@@ -293,7 +293,7 @@ domains: $R \subseteq$ \mbox{$D_{1} \times D_{2} \times \ldots \times D_{k}$}
     <xref linkend="supplier-fig" endterm="supplier-fig"> where
     every tuple is represented by a row and every column corresponds to
     one component of a tuple. Giving names (called attributes) to the
-    columns leads to the definition of a 
+    columns leads to the definition of a
     <firstterm>relation scheme</firstterm>.
    </para>
 
@@ -307,7 +307,7 @@ attributes are taken from. We often write a relation scheme as
 \mbox{$R(A_{1},A_{2},\ldots,A_{k})$}.
 \end{definition}
 -->
-    A <firstterm>relation scheme</firstterm> <literal>R</literal> is a 
+    A <firstterm>relation scheme</firstterm> <literal>R</literal> is a
     finite set of attributes
     <parameter>A<subscript>1</subscript></parameter>,
     <parameter>A<subscript>2</subscript></parameter>,
@@ -416,7 +416,7 @@ attributes are taken from. We often write a relation scheme as
        <para>
         SELECT (&sigma;): extracts <firstterm>tuples</firstterm> from
         a relation that
-        satisfy a given restriction. Let <parameter>R</parameter> be a 
+        satisfy a given restriction. Let <parameter>R</parameter> be a
         table that contains an attribute
         <parameter>A</parameter>.
 &sigma;<subscript>A=a</subscript>(R) = {t &isin; R &mid; t(A) = a}
@@ -447,7 +447,7 @@ attributes are taken from. We often write a relation scheme as
         <classname>S</classname> be a table with
         arity <literal>k</literal><subscript>2</subscript>.
         <classname>R</classname> &times; <classname>S</classname>
-        is the set of all 
+        is the set of all
         <literal>k</literal><subscript>1</subscript>
         + <literal>k</literal><subscript>2</subscript>-tuples
         whose first <literal>k</literal><subscript>1</subscript>
@@ -477,7 +477,7 @@ attributes are taken from. We often write a relation scheme as
         set of tuples
         that are in <classname>R</classname> and in
         <classname>S</classname>.
-        We again require that <classname>R</classname> and 
+        We again require that <classname>R</classname> and
         <classname>S</classname> have the
         same arity.
        </para>
@@ -497,14 +497,14 @@ attributes are taken from. We often write a relation scheme as
       <listitem>
        <para>
         JOIN (&prod;): connects two tables by their common
-        attributes. Let <classname>R</classname> be a table with the 
-        attributes <classname>A</classname>,<classname>B</classname> 
+        attributes. Let <classname>R</classname> be a table with the
+        attributes <classname>A</classname>,<classname>B</classname>
         and <classname>C</classname> and
         let <classname>S</classname> be a table with the attributes
         <classname>C</classname>,<classname>D</classname>
         and <classname>E</classname>. There is one
         attribute common to both relations,
-        the attribute <classname>C</classname>. 
+        the attribute <classname>C</classname>.
 <!--
         <classname>R</classname> &prod; <classname>S</classname> =
         &pi;<subscript><classname>R</classname>.<classname>A</classname>,<classname>R</classname>.<classname>B</classname>,<classname>R</classname>.<classname>C</classname>,<classname>S</classname>.<classname>D</classname>,<classname>S</classname>.<classname>E</classname></subscript>(&sigma;<subscript><classname>R</classname>.<classname>C</classname>=<classname>S</classname>.<classname>C</classname></subscript>(<classname>R</classname> &times; <classname>S</classname>)).
@@ -651,11 +651,11 @@ R:                    S:
      <title id="suppl-rel-alg">A Query Using Relational Algebra</title>
      <para>
       Recall that we formulated all those relational operators to be able to
-      retrieve data from the database. Let's return to our example from 
+      retrieve data from the database. Let's return to our example from
       the previous
       section (<xref linkend="operations" endterm="operations">)
       where someone wanted to know the names of all
-      suppliers that sell the part <literal>Screw</literal>. 
+      suppliers that sell the part <literal>Screw</literal>.
       This question can be answered
       using relational algebra by the following operation:
 
@@ -762,7 +762,7 @@ x(A) &mid; F(x)
     <para>
      The relational algebra and the relational calculus have the same
      <firstterm>expressive power</firstterm>; i.e., all queries that
-     can be formulated using relational algebra can also be formulated 
+     can be formulated using relational algebra can also be formulated
      using the relational calculus and vice versa.
      This was first proved by E. F. Codd in
      1972. This proof is based on an algorithm (<quote>Codd's reduction
@@ -835,7 +835,7 @@ A &lt; B + 3.
       <para>
        Aggregate Functions: Operations such as
        <firstterm>average</firstterm>, <firstterm>sum</firstterm>,
-       <firstterm>max</firstterm>, etc. can be applied to columns of a 
+       <firstterm>max</firstterm>, etc. can be applied to columns of a
        relation to
        obtain a single quantity.
       </para>
@@ -908,7 +908,7 @@ SELECT * FROM PART
         statement:
 
 <programlisting>
-SELECT PNAME, PRICE 
+SELECT PNAME, PRICE
     FROM PART
     WHERE PRICE &gt; 10;
 </programlisting>
@@ -933,7 +933,7 @@ SELECT PNAME, PRICE
         using the keywords OR, AND, and NOT:
 
 <programlisting>
-SELECT PNAME, PRICE 
+SELECT PNAME, PRICE
     FROM PART
     WHERE PNAME = 'Bolt' AND
          (PRICE = 0 OR PRICE &lt;= 15);
@@ -1020,7 +1020,7 @@ SELECT S.SNAME, P.PNAME
       because there are common named attributes (SNO and PNO) among the
       relations. Now we can distinguish between the common named attributes
       by simply prefixing the attribute name with the alias name followed by
-      a dot. The join is calculated in the same way as shown in 
+      a dot. The join is calculated in the same way as shown in
       <xref linkend="join-example" endterm="join-example">.
       First the Cartesian product
 
@@ -1029,7 +1029,7 @@ SELECT S.SNAME, P.PNAME
       is derived. Now only those tuples satisfying the
       conditions given in the WHERE clause are selected (i.e., the common
       named attributes have to be equal). Finally we project out all
-      columns but S.SNAME and P.PNAME. 
+      columns but S.SNAME and P.PNAME.
      </para>
 
      <para>
@@ -1051,7 +1051,7 @@ SELECT sname, pname from supplier
  Blake | Bolt
  Jones | Cam
  Blake | Cam
-(8 rows) 
+(8 rows)
 </screen>
      </para>
 
@@ -1148,7 +1148,7 @@ SELECT sname, pname from supplier
                 <listitem>
                 <para>
                 For each row R1 of T1, the joined table has a row for each row
-                in T2 that satisfies the join condition with R1. 
+                in T2 that satisfies the join condition with R1.
                 </para>
                 <tip>
                 <para>
@@ -1322,11 +1322,11 @@ SELECT COUNT(PNO)
       The partitioning of the tuples into groups is done by using the
       keywords <command>GROUP BY</command> followed by a list of
       attributes that define the
-      groups. If we have 
+      groups. If we have
       <command>GROUP BY A<subscript>1</subscript>, &tdot;, A<subscript>k</subscript></command>
       we partition
       the relation into groups, such that two tuples are in the same group
-      if and only if they agree on all the attributes 
+      if and only if they agree on all the attributes
       A<subscript>1</subscript>, &tdot;, A<subscript>k</subscript>.
 
       <example>
@@ -1482,8 +1482,8 @@ SELECT S.SNO, S.SNAME, COUNT(SE.PNO)
         named 'Screw' we use the query:
 
 <programlisting>
-SELECT * 
-    FROM PART 
+SELECT *
+    FROM PART
     WHERE PRICE &gt; (SELECT PRICE FROM PART
                    WHERE PNAME='Screw');
 </programlisting>
@@ -1516,11 +1516,11 @@ SELECT *
        </para>
 
        <para>
-        If we want to know all suppliers that do not sell any part 
+        If we want to know all suppliers that do not sell any part
         (e.g., to be able to remove these suppliers from the database) we use:
 
 <programlisting>
-SELECT * 
+SELECT *
     FROM SUPPLIER S
     WHERE NOT EXISTS
         (SELECT * FROM SELLS SE
@@ -1595,7 +1595,7 @@ SELECT S.SNO, S.SNAME, S.CITY
 UNION
     SELECT S.SNO, S.SNAME, S.CITY
     FROM SUPPLIER S
-    WHERE S.SNAME = 'Adams';    
+    WHERE S.SNAME = 'Adams';
 </programlisting>
 
 gives the result:
@@ -1664,7 +1664,7 @@ EXCEPT
 
     <para>
      There is a set of commands used for data definition included in the
-     <acronym>SQL</acronym> language. 
+     <acronym>SQL</acronym> language.
     </para>
 
     <sect3 id="create">
@@ -1678,7 +1678,7 @@ EXCEPT
 <synopsis>
 CREATE TABLE <replaceable class="parameter">table_name</replaceable>
     (<replaceable class="parameter">name_of_attr_1</replaceable> <replaceable class="parameter">type_of_attr_1</replaceable>
-     [, <replaceable class="parameter">name_of_attr_2</replaceable> <replaceable class="parameter">type_of_attr_2</replaceable> 
+     [, <replaceable class="parameter">name_of_attr_2</replaceable> <replaceable class="parameter">type_of_attr_2</replaceable>
      [, ...]]);
 </synopsis>
 
@@ -1718,7 +1718,7 @@ CREATE TABLE SELLS
      <title>Data Types in <acronym>SQL</acronym></title>
 
      <para>
-      The following is a list of some data types that are supported by 
+      The following is a list of some data types that are supported by
       <acronym>SQL</acronym>:
 
       <itemizedlist>
@@ -1792,7 +1792,7 @@ CREATE TABLE SELLS
       the <command>CREATE INDEX</command> command is used. The syntax is:
 
 <programlisting>
-CREATE INDEX <replaceable class="parameter">index_name</replaceable> 
+CREATE INDEX <replaceable class="parameter">index_name</replaceable>
     ON <replaceable class="parameter">table_name</replaceable> ( <replaceable class="parameter">name_of_attribute</replaceable> );
 </programlisting>
      </para>
@@ -1860,11 +1860,11 @@ CREATE VIEW <replaceable class="parameter">view_name</replaceable>
     AS <replaceable class="parameter">select_stmt</replaceable>
 </programlisting>
 
-      where <replaceable class="parameter">select_stmt</replaceable> 
+      where <replaceable class="parameter">select_stmt</replaceable>
       is a valid select statement as defined
       in <xref linkend="select-title" endterm="select-title">.
       Note that <replaceable class="parameter">select_stmt</replaceable> is
-      not executed when the view is created. It is just stored in the 
+      not executed when the view is created. It is just stored in the
       <firstterm>system catalogs</firstterm>
       and is executed whenever a query against the view is made.
      </para>
@@ -1967,7 +1967,7 @@ DROP VIEW <replaceable class="parameter">view_name</replaceable>;
       The syntax is:
 
 <programlisting>
-INSERT INTO <replaceable class="parameter">table_name</replaceable> (<replaceable class="parameter">name_of_attr_1</replaceable> 
+INSERT INTO <replaceable class="parameter">table_name</replaceable> (<replaceable class="parameter">name_of_attr_1</replaceable>
     [, <replaceable class="parameter">name_of_attr_2</replaceable> [,...]])
     VALUES (<replaceable class="parameter">val_attr_1</replaceable> [, <replaceable class="parameter">val_attr_2</replaceable> [, ...]]);
 </programlisting>
@@ -2003,7 +2003,7 @@ INSERT INTO SELLS (SNO, PNO)
 
 <programlisting>
 UPDATE <replaceable class="parameter">table_name</replaceable>
-    SET <replaceable class="parameter">name_of_attr_1</replaceable> = <replaceable class="parameter">value_1</replaceable> 
+    SET <replaceable class="parameter">name_of_attr_1</replaceable> = <replaceable class="parameter">value_1</replaceable>
         [, ... [, <replaceable class="parameter">name_of_attr_k</replaceable> = <replaceable class="parameter">value_k</replaceable>]]
     WHERE <replaceable class="parameter">condition</replaceable>;
 </programlisting>
@@ -2120,7 +2120,7 @@ DELETE FROM SUPPLIER
      by a <firstterm>precompiler</firstterm>
      (which usually inserts
      calls to library routines that perform the various <acronym>SQL</acronym>
-     commands). 
+     commands).
     </para>
 
     <para>

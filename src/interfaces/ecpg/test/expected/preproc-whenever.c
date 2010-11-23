@@ -243,4 +243,4 @@ if (sqlca.sqlcode < 0) exit (1);}
 #line 65 "whenever.pgc"
 
 	exit (0);
-}	
+}

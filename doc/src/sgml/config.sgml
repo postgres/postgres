@@ -718,7 +718,7 @@ SET ENABLE_SEQSCAN TO OFF;
       <listitem>
        <para>
         Sets the location of the Kerberos server key file. See
-        <xref linkend="kerberos-auth"> or <xref linkend="gssapi-auth"> 
+        <xref linkend="kerberos-auth"> or <xref linkend="gssapi-auth">
         for details. This parameter can only be set in the
         <filename>postgresql.conf</> file or on the server command line.
        </para>
@@ -748,7 +748,7 @@ SET ENABLE_SEQSCAN TO OFF;
        <para>
         Sets whether Kerberos and GSSAPI user names should be treated
         case-insensitively.
-        The default is <literal>off</> (case sensitive). This parameter can only be 
+        The default is <literal>off</> (case sensitive). This parameter can only be
         set in the <filename>postgresql.conf</> file or on the server command line.
        </para>
       </listitem>
@@ -1044,7 +1044,7 @@ SET ENABLE_SEQSCAN TO OFF;
        </para>
       </listitem>
      </varlistentry>
-     
+
      <varlistentry id="guc-shared-preload-libraries" xreflabel="shared_preload_libraries">
       <term><varname>shared_preload_libraries</varname> (<type>string</type>)</term>
       <indexterm>
@@ -1076,7 +1076,7 @@ SET ENABLE_SEQSCAN TO OFF;
         when the library is first used.  However, the time to start each new
         server process might increase slightly, even if that process never
         uses the library.  So this parameter is recommended only for
-        libraries that will be used in most sessions. 
+        libraries that will be used in most sessions.
        </para>
 
      <note>
@@ -1084,7 +1084,7 @@ SET ENABLE_SEQSCAN TO OFF;
         On Windows hosts, preloading a library at server start will not reduce
         the time required to start each new server process; each server process
         will re-load all preload libraries.  However, <varname>shared_preload_libraries
-        </varname> is still useful on Windows hosts because some shared libraries may 
+        </varname> is still useful on Windows hosts because some shared libraries may
         need to perform certain operations that only take place at postmaster start
         (for example, a shared library may need to reserve lightweight locks
         or shared memory and you can't do that after the postmaster has started).
@@ -1097,8 +1097,8 @@ SET ENABLE_SEQSCAN TO OFF;
 
        <para>
         Every  PostgreSQL-supported library has a <quote>magic
-        block</> that is checked to guarantee compatibility.  
-        For this reason, non-PostgreSQL libraries cannot be 
+        block</> that is checked to guarantee compatibility.
+        For this reason, non-PostgreSQL libraries cannot be
         loaded in this way.
        </para>
       </listitem>
@@ -1487,7 +1487,7 @@ SET ENABLE_SEQSCAN TO OFF;
        <para>
         <varname>fsync</varname> can only be set in the <filename>postgresql.conf</>
         file or on the server command line.
-        If you turn this parameter off, also consider turning off 
+        If you turn this parameter off, also consider turning off
         <xref linkend="guc-full-page-writes">.
        </para>
       </listitem>
@@ -1528,7 +1528,7 @@ SET ENABLE_SEQSCAN TO OFF;
        </para>
       </listitem>
      </varlistentry>
-     
+
      <varlistentry id="guc-wal-sync-method" xreflabel="wal_sync_method">
       <term><varname>wal_sync_method</varname> (<type>enum</type>)</term>
       <indexterm>
@@ -1584,7 +1584,7 @@ SET ENABLE_SEQSCAN TO OFF;
        </para>
       </listitem>
      </varlistentry>
-     
+
      <varlistentry id="guc-full-page-writes" xreflabel="full_page_writes">
       <indexterm>
        <primary><varname>full_page_writes</> configuration parameter</primary>
@@ -1848,7 +1848,7 @@ SET ENABLE_SEQSCAN TO OFF;
        </para>
       </listitem>
      </varlistentry>
-     
+
      <varlistentry id="guc-archive-timeout" xreflabel="archive_timeout">
       <term><varname>archive_timeout</varname> (<type>integer</type>)</term>
       <indexterm>
@@ -2257,7 +2257,7 @@ SET ENABLE_SEQSCAN TO OFF;
        </para>
       </listitem>
      </varlistentry>
-     
+
      </variablelist>
      </sect2>
      <sect2 id="runtime-config-query-constants">
@@ -2368,7 +2368,7 @@ SET ENABLE_SEQSCAN TO OFF;
        </para>
       </listitem>
      </varlistentry>
-    
+
      <varlistentry id="guc-cpu-operator-cost" xreflabel="cpu_operator_cost">
       <term><varname>cpu_operator_cost</varname> (<type>floating point</type>)</term>
       <indexterm>
@@ -2382,7 +2382,7 @@ SET ENABLE_SEQSCAN TO OFF;
        </para>
       </listitem>
      </varlistentry>
-     
+
      <varlistentry id="guc-effective-cache-size" xreflabel="effective_cache_size">
       <term><varname>effective_cache_size</varname> (<type>integer</type>)</term>
       <indexterm>
@@ -2745,10 +2745,10 @@ SELECT * FROM parent WHERE key = 2400;
         <productname>PostgreSQL</productname> supports several methods
          for logging server messages, including
          <systemitem>stderr</systemitem>, <systemitem>csvlog</systemitem> and
-         <systemitem>syslog</systemitem>. On Windows, 
+         <systemitem>syslog</systemitem>. On Windows,
          <systemitem>eventlog</systemitem> is also supported. Set this
          parameter to a list of desired log destinations separated by
-         commas. The default is to log to <systemitem>stderr</systemitem> 
+         commas. The default is to log to <systemitem>stderr</systemitem>
          only.
          This parameter can only be set in the <filename>postgresql.conf</>
          file or on the server command line.
@@ -2759,7 +2759,7 @@ SELECT * FROM parent WHERE key = 2400;
         value</> (<acronym>CSV</>) format, which is convenient for
         loading logs into programs.
         See <xref linkend="runtime-config-logging-csvlog"> for details.
-        <varname>logging_collector</varname> must be enabled to generate 
+        <varname>logging_collector</varname> must be enabled to generate
         CSV-format log output.
        </para>
 
@@ -2822,7 +2822,7 @@ local0.*    /var/log/postgresql
       </indexterm>
       <listitem>
        <para>
-        When <varname>logging_collector</> is enabled, 
+        When <varname>logging_collector</> is enabled,
         this parameter determines the directory in which log files will be created.
         It can be specified as an absolute path, or relative to the
         cluster data directory.
@@ -2861,7 +2861,7 @@ local0.*    /var/log/postgresql
        </para>
        <para>
         If CSV-format output is enabled in <varname>log_destination</>,
-        <literal>.csv</> will be appended to the timestamped 
+        <literal>.csv</> will be appended to the timestamped
         log file name to create the file name for CSV-format output.
         (If <varname>log_filename</> ends in <literal>.log</>, the suffix is
         replaced instead.)
@@ -2966,18 +2966,18 @@ local0.*    /var/log/postgresql
        </para>
        <para>
         Example:  To keep 7 days of logs, one log file per day named
-        <literal>server_log.Mon</literal>, <literal>server_log.Tue</literal>, 
+        <literal>server_log.Mon</literal>, <literal>server_log.Tue</literal>,
         etc, and automatically overwrite last week's log with this week's log,
-        set <varname>log_filename</varname> to <literal>server_log.%a</literal>, 
-        <varname>log_truncate_on_rotation</varname> to <literal>on</literal>, and 
+        set <varname>log_filename</varname> to <literal>server_log.%a</literal>,
+        <varname>log_truncate_on_rotation</varname> to <literal>on</literal>, and
         <varname>log_rotation_age</varname> to <literal>1440</literal>.
        </para>
        <para>
-        Example: To keep 24 hours of logs, one log file per hour, but 
-        also rotate sooner if the log file size exceeds 1GB, set 
-        <varname>log_filename</varname> to <literal>server_log.%H%M</literal>, 
-        <varname>log_truncate_on_rotation</varname> to <literal>on</literal>, 
-        <varname>log_rotation_age</varname> to <literal>60</literal>, and 
+        Example: To keep 24 hours of logs, one log file per hour, but
+        also rotate sooner if the log file size exceeds 1GB, set
+        <varname>log_filename</varname> to <literal>server_log.%H%M</literal>,
+        <varname>log_truncate_on_rotation</varname> to <literal>on</literal>,
+        <varname>log_rotation_age</varname> to <literal>60</literal>, and
         <varname>log_rotation_size</varname> to <literal>1000000</literal>.
         Including <literal>%M</> in <varname>log_filename</varname> allows
         any size-driven rotations that might occur to select a file name
@@ -3007,7 +3007,7 @@ local0.*    /var/log/postgresql
        </para>
       </listitem>
      </varlistentry>
-     
+
      <varlistentry id="guc-syslog-ident" xreflabel="syslog_ident">
       <term><varname>syslog_ident</varname> (<type>string</type>)</term>
       <indexterm>
@@ -3132,7 +3132,7 @@ local0.*    /var/log/postgresql
        </para>
       </listitem>
      </varlistentry>
-     
+
      <varlistentry id="guc-log-min-duration-statement" xreflabel="log_min_duration_statement">
       <term><varname>log_min_duration_statement</varname> (<type>integer</type>)</term>
       <indexterm>
@@ -3163,7 +3163,7 @@ local0.*    /var/log/postgresql
          the text of statements that are logged because of
          <varname>log_statement</> will not be repeated in the
          duration log message.
-         If you are not using <application>syslog</>, it is recommended 
+         If you are not using <application>syslog</>, it is recommended
          that you log the PID or session ID using
          <xref linkend="guc-log-line-prefix">
          so that you can link the statement message to the later
@@ -3365,8 +3365,8 @@ local0.*    /var/log/postgresql
 
        <note>
         <para>
-         Some client programs, like <application>psql</>, attempt 
-         to connect twice while determining if a password is required, so 
+         Some client programs, like <application>psql</>, attempt
+         to connect twice while determining if a password is required, so
          duplicate <quote>connection received</> messages do not
          necessarily indicate a problem.
         </para>
@@ -3462,7 +3462,7 @@ local0.*    /var/log/postgresql
        </para>
       </listitem>
      </varlistentry>
-     
+
      <varlistentry id="guc-log-line-prefix" xreflabel="log_line_prefix">
       <term><varname>log_line_prefix</varname> (<type>string</type>)</term>
       <indexterm>
@@ -3607,7 +3607,7 @@ FROM pg_stat_activity;
 
        <tip>
         <para>
-         <application>Syslog</> produces its own 
+         <application>Syslog</> produces its own
          time stamp and process ID information, so you probably do not want to
          include those escapes if you are logging to <application>syslog</>.
         </para>
@@ -3808,9 +3808,9 @@ COPY postgres_log FROM '/full/path/to/logfile.csv' WITH csv;
 
         <listitem>
            <para>
-            Set <varname>log_rotation_size</varname> to 0 to disable 
-            size-based log rotation, as it makes the log file name difficult 
-            to predict. 
+            Set <varname>log_rotation_size</varname> to 0 to disable
+            size-based log rotation, as it makes the log file name difficult
+            to predict.
            </para>
         </listitem>
 
@@ -5000,7 +5000,7 @@ dynamic_library_path = 'C:\tools\postgresql;H:\my_project\lib;$libdir'
 
        <para>
         Every  PostgreSQL-supported library has a <quote>magic
-        block</> that is checked to guarantee compatibility.  
+        block</> that is checked to guarantee compatibility.
         For this reason, non-PostgreSQL libraries cannot be
         loaded in this way.
        </para>

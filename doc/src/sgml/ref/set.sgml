@@ -25,7 +25,7 @@ SET [ SESSION | LOCAL ] <replaceable class="PARAMETER">configuration_parameter</
 SET [ SESSION | LOCAL ] TIME ZONE { <replaceable class="PARAMETER">timezone</replaceable> | LOCAL | DEFAULT }
 </synopsis>
  </refsynopsisdiv>
- 
+
  <refsect1>
   <title>Description</title>
 
@@ -271,7 +271,7 @@ SELECT setseed(<replaceable>value</replaceable>);
    system view to perform the equivalent of <command>SET</>.
   </para>
  </refsect1>
- 
+
  <refsect1>
   <title>Examples</title>
 

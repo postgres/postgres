@@ -2064,7 +2064,7 @@ CopyFrom(CopyState cstate)
 				done = true;
 				break;
 			}
-			
+
 			if (fld_count == -1)
 			{
 				/*

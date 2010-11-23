@@ -41,7 +41,7 @@ SELECT to_tsquery('testcfg', 'star');
  'star'
 (1 row)
 
-SELECT ts_headline('testcfg','Supernovae stars are the brightest phenomena in galaxies', 
+SELECT ts_headline('testcfg','Supernovae stars are the brightest phenomena in galaxies',
        to_tsquery('testcfg', 'stars'));
                            ts_headline                           
 -----------------------------------------------------------------

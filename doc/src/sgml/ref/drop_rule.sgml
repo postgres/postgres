@@ -42,7 +42,7 @@ DROP RULE [ IF EXISTS ] <replaceable class="PARAMETER">name</replaceable> ON <re
     <term><literal>IF EXISTS</literal></term>
     <listitem>
      <para>
-      Do not throw an error if the rule does not exist. A notice is issued 
+      Do not throw an error if the rule does not exist. A notice is issued
       in this case.
      </para>
     </listitem>
@@ -99,7 +99,7 @@ DROP RULE newrule ON mytable;
 </programlisting>
   </para>
  </refsect1>
- 
+
  <refsect1>
   <title>Compatibility</title>
 

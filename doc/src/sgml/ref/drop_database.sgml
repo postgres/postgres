@@ -24,7 +24,7 @@ PostgreSQL documentation
 DROP DATABASE [ IF EXISTS ] <replaceable class="PARAMETER">name</replaceable>
 </synopsis>
  </refsynopsisdiv>
- 
+
  <refsect1>
   <title>Description</title>
 
@@ -34,7 +34,7 @@ DROP DATABASE [ IF EXISTS ] <replaceable class="PARAMETER">name</replaceable>
    containing the data.  It can only be executed by the database owner.
    Also, it cannot be executed while you or anyone else are connected
    to the target database.  (Connect to <literal>postgres</literal> or any
-   other database to issue this command.) 
+   other database to issue this command.)
   </para>
 
   <para>
@@ -50,7 +50,7 @@ DROP DATABASE [ IF EXISTS ] <replaceable class="PARAMETER">name</replaceable>
     <term><literal>IF EXISTS</literal></term>
     <listitem>
      <para>
-      Do not throw an error if the database does not exist. A notice is issued 
+      Do not throw an error if the database does not exist. A notice is issued
       in this case.
      </para>
     </listitem>

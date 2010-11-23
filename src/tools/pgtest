@@ -18,12 +18,12 @@ TMP="/tmp/$$"
 
 [ "X$1" != "X-n" ] && PGCLEAN=clean
 
-(gmake $PGCLEAN check 2>&1; echo "$?" > $TMP/ret) | 
+(gmake $PGCLEAN check 2>&1; echo "$?" > $TMP/ret) |
 	(tee  $TMP/0; exit `cat $TMP/ret`) &&
 cat $TMP/0 |
-# The following grep's have to be adjusted for your setup because 
+# The following grep's have to be adjusted for your setup because
 # certain warnings are acceptable.
-grep -i warning | 
-grep -v setproctitle | 
-grep -v find_rule | 
+grep -i warning |
+grep -v setproctitle |
+grep -v find_rule |
 grep -v yy_flex_realloc

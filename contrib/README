@@ -90,13 +90,13 @@ isn -
 
 lo -
 	Large Object maintenance
-	by Peter Mount <peter@retep.org.uk> 
+	by Peter Mount <peter@retep.org.uk>
 
 ltree -
 	Tree-like data structures
 	by Teodor Sigaev <teodor@sigaev.ru> and Oleg Bartunov <oleg@sai.msu.su>
 
-oid2name - 
+oid2name -
 	Maps numeric files to table names
 	by B Palmer <bpalmer@crimelabs.net>
 
@@ -161,7 +161,7 @@ sslinfo -
 	Functions to get information about SSL certificates
 	by Victor Wagner <vitus@cryptocom.ru>
 
-start-scripts - 
+start-scripts -
 	Scripts for starting the server at boot time on various platforms.
 
 tablefunc -

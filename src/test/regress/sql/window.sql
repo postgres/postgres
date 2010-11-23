@@ -73,7 +73,7 @@ SELECT lead(ten * 2, 1, -1) OVER (PARTITION BY four ORDER BY ten), ten, four FRO
 SELECT first_value(ten) OVER (PARTITION BY four ORDER BY ten), ten, four FROM tenk1 WHERE unique2 < 10;
 
 -- last_value returns the last row of the frame, which is CURRENT ROW in ORDER BY window.
-SELECT last_value(four) OVER (ORDER BY ten), ten, four FROM tenk1 WHERE unique2 < 10; 
+SELECT last_value(four) OVER (ORDER BY ten), ten, four FROM tenk1 WHERE unique2 < 10;
 
 SELECT last_value(ten) OVER (PARTITION BY four), ten, four FROM
 	(SELECT * FROM tenk1 WHERE unique2 < 10 ORDER BY four, ten)s
@@ -82,19 +82,19 @@ SELECT last_value(ten) OVER (PARTITION BY four), ten, four FROM
 SELECT nth_value(ten, four + 1) OVER (PARTITION BY four), ten, four
 	FROM (SELECT * FROM tenk1 WHERE unique2 < 10 ORDER BY four, ten)s;
 
-SELECT ten, two, sum(hundred) AS gsum, sum(sum(hundred)) OVER (PARTITION BY two ORDER BY ten) AS wsum 
+SELECT ten, two, sum(hundred) AS gsum, sum(sum(hundred)) OVER (PARTITION BY two ORDER BY ten) AS wsum
 FROM tenk1 GROUP BY ten, two;
 
 SELECT count(*) OVER (PARTITION BY four), four FROM (SELECT * FROM tenk1 WHERE two = 1)s WHERE unique2 < 10;
 
-SELECT (count(*) OVER (PARTITION BY four ORDER BY ten) + 
-  sum(hundred) OVER (PARTITION BY four ORDER BY ten))::varchar AS cntsum 
+SELECT (count(*) OVER (PARTITION BY four ORDER BY ten) +
+  sum(hundred) OVER (PARTITION BY four ORDER BY ten))::varchar AS cntsum
   FROM tenk1 WHERE unique2 < 10;
 
 -- opexpr with different windows evaluation.
 SELECT * FROM(
-  SELECT count(*) OVER (PARTITION BY four ORDER BY ten) + 
-    sum(hundred) OVER (PARTITION BY two ORDER BY ten) AS total, 
+  SELECT count(*) OVER (PARTITION BY four ORDER BY ten) +
+    sum(hundred) OVER (PARTITION BY two ORDER BY ten) AS total,
     count(*) OVER (PARTITION BY four ORDER BY ten) AS fourcount,
     sum(hundred) OVER (PARTITION BY two ORDER BY ten) AS twosum
     FROM tenk1
@@ -103,7 +103,7 @@ WHERE total <> fourcount + twosum;
 
 SELECT avg(four) OVER (PARTITION BY four ORDER BY thousand / 100) FROM tenk1 WHERE unique2 < 10;
 
-SELECT ten, two, sum(hundred) AS gsum, sum(sum(hundred)) OVER win AS wsum 
+SELECT ten, two, sum(hundred) AS gsum, sum(sum(hundred)) OVER win AS wsum
 FROM tenk1 GROUP BY ten, two WINDOW win AS (PARTITION BY two ORDER BY ten);
 
 -- more than one window with GROUP BY

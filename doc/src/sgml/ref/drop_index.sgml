@@ -43,7 +43,7 @@ DROP INDEX [ IF EXISTS ] <replaceable class="PARAMETER">name</replaceable> [, ..
     <term><literal>IF EXISTS</literal></term>
     <listitem>
      <para>
-      Do not throw an error if the index does not exist. A notice is issued 
+      Do not throw an error if the index does not exist. A notice is issued
       in this case.
      </para>
     </listitem>

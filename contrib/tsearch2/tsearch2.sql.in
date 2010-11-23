@@ -11,7 +11,7 @@ CREATE DOMAIN gtsvector AS pg_catalog.gtsvector;
 CREATE DOMAIN gtsq AS pg_catalog.text;
 
 --dict interface
-CREATE FUNCTION lexize(oid, text) 
+CREATE FUNCTION lexize(oid, text)
 	RETURNS _text
 	as 'ts_lexize'
 	LANGUAGE INTERNAL
@@ -44,7 +44,7 @@ CREATE FUNCTION set_curdict(text)
 --built-in dictionaries
 CREATE FUNCTION dex_init(internal)
 	RETURNS internal
-	as 'MODULE_PATHNAME', 'tsa_dex_init' 
+	as 'MODULE_PATHNAME', 'tsa_dex_init'
 	LANGUAGE C;
 
 CREATE FUNCTION dex_lexize(internal,internal,int4)
@@ -66,7 +66,7 @@ CREATE FUNCTION snb_lexize(internal,internal,int4)
 
 CREATE FUNCTION snb_ru_init_koi8(internal)
 	RETURNS internal
-	as 'MODULE_PATHNAME', 'tsa_snb_ru_init_koi8' 
+	as 'MODULE_PATHNAME', 'tsa_snb_ru_init_koi8'
 	LANGUAGE C;
 
 CREATE FUNCTION snb_ru_init_utf8(internal)
@@ -81,7 +81,7 @@ CREATE FUNCTION snb_ru_init(internal)
 
 CREATE FUNCTION spell_init(internal)
 	RETURNS internal
-	as 'MODULE_PATHNAME', 'tsa_spell_init' 
+	as 'MODULE_PATHNAME', 'tsa_spell_init'
 	LANGUAGE C;
 
 CREATE FUNCTION spell_lexize(internal,internal,int4)
@@ -92,7 +92,7 @@ CREATE FUNCTION spell_lexize(internal,internal,int4)
 
 CREATE FUNCTION syn_init(internal)
 	RETURNS internal
-	as 'MODULE_PATHNAME', 'tsa_syn_init' 
+	as 'MODULE_PATHNAME', 'tsa_syn_init'
 	LANGUAGE C;
 
 CREATE FUNCTION syn_lexize(internal,internal,int4)
@@ -113,8 +113,8 @@ CREATE FUNCTION thesaurus_lexize(internal,internal,int4,internal)
 	RETURNS NULL ON NULL INPUT;
 
 --sql-level interface
-CREATE TYPE tokentype 
-	as (tokid int4, alias text, descr text); 
+CREATE TYPE tokentype
+	as (tokid int4, alias text, descr text);
 
 CREATE FUNCTION token_type(int4)
 	RETURNS setof tokentype
@@ -149,7 +149,7 @@ CREATE FUNCTION set_curprs(text)
 	LANGUAGE C
 	RETURNS NULL ON NULL INPUT;
 
-CREATE TYPE tokenout 
+CREATE TYPE tokenout
 	as (tokid int4, token text);
 
 CREATE FUNCTION parse(oid,text)
@@ -157,19 +157,19 @@ CREATE FUNCTION parse(oid,text)
 	as 'ts_parse_byid'
 	LANGUAGE INTERNAL
 	RETURNS NULL ON NULL INPUT;
- 
+
 CREATE FUNCTION parse(text,text)
 	RETURNS setof tokenout
 	as 'ts_parse_byname'
 	LANGUAGE INTERNAL
 	RETURNS NULL ON NULL INPUT;
- 
+
 CREATE FUNCTION parse(text)
 	RETURNS setof tokenout
 	as 'MODULE_PATHNAME', 'tsa_parse_current'
 	LANGUAGE C
 	RETURNS NULL ON NULL INPUT;
- 
+
 --default parser
 CREATE FUNCTION prsd_start(internal,int4)
 	RETURNS internal
@@ -399,7 +399,7 @@ AS
         STORAGE         gtsvector;
 
 --stat info
-CREATE TYPE statinfo 
+CREATE TYPE statinfo
 	as (word text, ndoc int4, nentry int4);
 
 CREATE FUNCTION stat(text)
@@ -560,7 +560,7 @@ AS
 CREATE OPERATOR CLASS tsvector_ops
 FOR TYPE tsvector USING btree AS
         OPERATOR        1       < ,
-        OPERATOR        2       <= , 
+        OPERATOR        2       <= ,
         OPERATOR        3       = ,
         OPERATOR        4       >= ,
         OPERATOR        5       > ,

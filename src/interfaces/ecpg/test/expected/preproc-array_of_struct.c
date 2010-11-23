@@ -120,7 +120,7 @@ int main()
 
 
     ECPGdebug(1, stderr);
-	  
+
     { ECPGconnect(__LINE__, 0, "regress1" , NULL, NULL , NULL, 0); 
 #line 50 "array_of_struct.pgc"
 

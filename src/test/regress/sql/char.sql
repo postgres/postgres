@@ -17,17 +17,17 @@ INSERT INTO CHAR_TBL (f1) VALUES ('a');
 
 INSERT INTO CHAR_TBL (f1) VALUES ('A');
 
--- any of the following three input formats are acceptable 
+-- any of the following three input formats are acceptable
 INSERT INTO CHAR_TBL (f1) VALUES ('1');
 
 INSERT INTO CHAR_TBL (f1) VALUES (2);
 
 INSERT INTO CHAR_TBL (f1) VALUES ('3');
 
--- zero-length char 
+-- zero-length char
 INSERT INTO CHAR_TBL (f1) VALUES ('');
 
--- try char's of greater than 1 length 
+-- try char's of greater than 1 length
 INSERT INTO CHAR_TBL (f1) VALUES ('cd');
 INSERT INTO CHAR_TBL (f1) VALUES ('c     ');
 

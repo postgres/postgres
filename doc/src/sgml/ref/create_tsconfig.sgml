@@ -60,7 +60,7 @@ CREATE TEXT SEARCH CONFIGURATION <replaceable class="parameter">name</replaceabl
    Refer to <xref linkend="textsearch"> for further information.
   </para>
  </refsect1>
-  
+
  <refsect1>
   <title>Parameters</title>
 
@@ -94,7 +94,7 @@ CREATE TEXT SEARCH CONFIGURATION <replaceable class="parameter">name</replaceabl
    </varlistentry>
   </variablelist>
  </refsect1>
-  
+
  <refsect1>
   <title>Notes</title>
 
@@ -105,7 +105,7 @@ CREATE TEXT SEARCH CONFIGURATION <replaceable class="parameter">name</replaceabl
   </para>
 
  </refsect1>
- 
+
  <refsect1>
   <title>Compatibility</title>
 

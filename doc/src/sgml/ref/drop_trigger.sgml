@@ -12,8 +12,8 @@ PostgreSQL documentation
 
  <refnamediv>
   <refname>DROP TRIGGER</refname>
-  <refpurpose>remove a trigger</refpurpose> 
- </refnamediv>            
+  <refpurpose>remove a trigger</refpurpose>
+ </refnamediv>
 
  <indexterm zone="sql-droptrigger">
   <primary>DROP TRIGGER</primary>
@@ -44,7 +44,7 @@ DROP TRIGGER [ IF EXISTS ] <replaceable class="PARAMETER">name</replaceable> ON 
     <term><literal>IF EXISTS</literal></term>
     <listitem>
      <para>
-      Do not throw an error if the trigger does not exist. A notice is issued 
+      Do not throw an error if the trigger does not exist. A notice is issued
       in this case.
      </para>
     </listitem>
@@ -102,10 +102,10 @@ DROP TRIGGER if_dist_exists ON films;
 </programlisting>
   </para>
  </refsect1>
- 
+
  <refsect1 id="SQL-DROPTRIGGER-compatibility">
   <title>Compatibility</title>
-  
+
   <para>
    The <command>DROP TRIGGER</command> statement in
    <productname>PostgreSQL</productname> is incompatible with the SQL

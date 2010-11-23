@@ -61,7 +61,7 @@ WHERE p1.typtype in ('b','e') AND p1.typname NOT LIKE E'\\_%' AND NOT EXISTS
            p2.typelem = p1.oid and p1.typarray = p2.oid);
 
 -- Make sure typarray points to a varlena array type of our own base
-SELECT p1.oid, p1.typname as basetype, p2.typname as arraytype, 
+SELECT p1.oid, p1.typname as basetype, p2.typname as arraytype,
        p2.typelem, p2.typlen
 FROM   pg_type p1 LEFT JOIN pg_type p2 ON (p1.typarray = p2.oid)
 WHERE  p1.typarray <> 0 AND

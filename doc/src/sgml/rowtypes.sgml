@@ -79,7 +79,7 @@ CREATE TABLE inventory_item (
 );
 </programlisting>
   then the same <literal>inventory_item</> composite type shown above would
-  come into being as a 
+  come into being as a
   byproduct, and could be used just as above.  Note however an important
   restriction of the current implementation: since no constraints are
   associated with a composite type, the constraints shown in the table
@@ -320,7 +320,7 @@ INSERT ... VALUES (E'("\\"\\\\")');
   <para>
    The <literal>ROW</> constructor syntax is usually easier to work with
    than the composite-literal syntax when writing composite values in SQL
-   commands. 
+   commands.
    In <literal>ROW</>, individual field values are written the same way
    they would be written when not members of a composite.
   </para>

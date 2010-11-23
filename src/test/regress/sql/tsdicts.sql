@@ -50,7 +50,7 @@ SELECT ts_lexize('hunspell', 'footballyklubber');
 
 -- Synonim dictionary
 CREATE TEXT SEARCH DICTIONARY synonym (
-						Template=synonym, 
+						Template=synonym,
 						Synonyms=synonym_sample
 );
 
@@ -63,7 +63,7 @@ SELECT ts_lexize('synonym', 'indices');
 -- cannot pass more than one word to thesaurus.
 CREATE TEXT SEARCH DICTIONARY thesaurus (
                         Template=thesaurus,
-						DictFile=thesaurus_sample, 
+						DictFile=thesaurus_sample,
 						Dictionary=english_stem
 );
 
@@ -99,8 +99,8 @@ CREATE TEXT SEARCH CONFIGURATION synonym_tst (
 						COPY=english
 );
 
-ALTER TEXT SEARCH CONFIGURATION synonym_tst ALTER MAPPING FOR 
-	asciiword, hword_asciipart, asciihword 
+ALTER TEXT SEARCH CONFIGURATION synonym_tst ALTER MAPPING FOR
+	asciiword, hword_asciipart, asciihword
 	WITH synonym, english_stem;
 
 SELECT to_tsvector('synonym_tst', 'Postgresql is often called as postgres or pgsql and pronounced as postgre');
@@ -114,8 +114,8 @@ CREATE TEXT SEARCH CONFIGURATION thesaurus_tst (
 						COPY=synonym_tst
 );
 
-ALTER TEXT SEARCH CONFIGURATION thesaurus_tst ALTER MAPPING FOR 
-	asciiword, hword_asciipart, asciihword 
+ALTER TEXT SEARCH CONFIGURATION thesaurus_tst ALTER MAPPING FOR
+	asciiword, hword_asciipart, asciihword
 	WITH synonym, thesaurus, english_stem;
 
 SELECT to_tsvector('thesaurus_tst', 'one postgres one two one two three one');

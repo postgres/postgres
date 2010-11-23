@@ -41,7 +41,7 @@ leaving a large gap.
 The quote-protection option allows tab replacement without
 quoted strings being changed.
 Useful when strings in source code will not have the same tab stops
-when executed in the program. 
+when executed in the program.
 .LP
 To change a text file created on a system with one size of tab
 stop to display properly on a device with different tab setting,

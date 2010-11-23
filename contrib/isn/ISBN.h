@@ -32,7 +32,7 @@
  * For ISBN with prefix 978
  * Range Table as of 2010-Jul-29
  */
- 
+
 /* where the digit set begins, and how many of them are in the table */
 const unsigned ISBN_index[10][2] = {
 	{0, 6},

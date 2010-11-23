@@ -35,12 +35,12 @@ PostgreSQL documentation
   </cmdsynopsis>
  </refsynopsisdiv>
 
- 
+
  <refsect1>
   <title>Description</title>
 
   <para>
-   <application>createlang</application> is a utility for adding a new 
+   <application>createlang</application> is a utility for adding a new
    programming language to a <productname>PostgreSQL</productname> database.
    <application>createlang</application> is just a wrapper around the
    <xref linkend="sql-createlanguage">
@@ -54,7 +54,7 @@ PostgreSQL documentation
 
    <para>
     <application>createlang</application> accepts the following command-line arguments:
-    
+
     <variablelist>
      <varlistentry>
       <term><replaceable class="parameter">langname</replaceable></term>
@@ -123,18 +123,18 @@ PostgreSQL documentation
    </para>
 
    <para>
-    <application>createlang</application> also accepts 
+    <application>createlang</application> also accepts
     the following command-line arguments for connection parameters:
-    
+
     <variablelist>
      <varlistentry>
       <term><option>-h <replaceable class="parameter">host</replaceable></></term>
       <term><option>--host <replaceable class="parameter">host</replaceable></></term>
       <listitem>
        <para>
-        Specifies the host name of the machine on which the 
+        Specifies the host name of the machine on which the
         server
-        is running.  If the value begins with a slash, it is used 
+        is running.  If the value begins with a slash, it is used
         as the directory for the Unix domain socket.
        </para>
       </listitem>
@@ -145,7 +145,7 @@ PostgreSQL documentation
       <term><option>--port <replaceable class="parameter">port</replaceable></></term>
       <listitem>
        <para>
-        Specifies the TCP port or local Unix domain socket file 
+        Specifies the TCP port or local Unix domain socket file
         extension on which the server
         is listening for connections.
        </para>
@@ -183,7 +183,7 @@ PostgreSQL documentation
       <listitem>
        <para>
         Force <application>createlang</application> to prompt for a
-        password before connecting to a database.  
+        password before connecting to a database.
        </para>
 
        <para>
@@ -251,7 +251,7 @@ PostgreSQL documentation
    Use <xref linkend="app-droplang"> to remove a language.
   </para>
  </refsect1>
- 
+
 
  <refsect1>
   <title>Examples</title>

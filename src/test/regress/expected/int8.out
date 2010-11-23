@@ -456,7 +456,7 @@ SELECT max(q1), max(q2) FROM INT8_TBL;
 
 -- TO_CHAR()
 --
-SELECT '' AS to_char_1, to_char(q1, '9G999G999G999G999G999'), to_char(q2, '9,999,999,999,999,999') 
+SELECT '' AS to_char_1, to_char(q1, '9G999G999G999G999G999'), to_char(q2, '9,999,999,999,999,999')
 	FROM INT8_TBL;
  to_char_1 |        to_char         |        to_char         
 -----------+------------------------+------------------------
@@ -467,8 +467,8 @@ SELECT '' AS to_char_1, to_char(q1, '9G999G999G999G999G999'), to_char(q2, '9,999
            |  4,567,890,123,456,789 | -4,567,890,123,456,789
 (5 rows)
 
-SELECT '' AS to_char_2, to_char(q1, '9G999G999G999G999G999D999G999'), to_char(q2, '9,999,999,999,999,999.999,999') 
-	FROM INT8_TBL;	
+SELECT '' AS to_char_2, to_char(q1, '9G999G999G999G999G999D999G999'), to_char(q2, '9,999,999,999,999,999.999,999')
+	FROM INT8_TBL;
  to_char_2 |            to_char             |            to_char             
 -----------+--------------------------------+--------------------------------
            |                    123.000,000 |                    456.000,000
@@ -478,7 +478,7 @@ SELECT '' AS to_char_2, to_char(q1, '9G999G999G999G999G999D999G999'), to_char(q2
            |  4,567,890,123,456,789.000,000 | -4,567,890,123,456,789.000,000
 (5 rows)
 
-SELECT '' AS to_char_3, to_char( (q1 * -1), '9999999999999999PR'), to_char( (q2 * -1), '9999999999999999.999PR') 
+SELECT '' AS to_char_3, to_char( (q1 * -1), '9999999999999999PR'), to_char( (q2 * -1), '9999999999999999.999PR')
 	FROM INT8_TBL;
  to_char_3 |      to_char       |        to_char         
 -----------+--------------------+------------------------
@@ -489,7 +489,7 @@ SELECT '' AS to_char_3, to_char( (q1 * -1), '9999999999999999PR'), to_char( (q2 
            | <4567890123456789> |  4567890123456789.000 
 (5 rows)
 
-SELECT '' AS to_char_4, to_char( (q1 * -1), '9999999999999999S'), to_char( (q2 * -1), 'S9999999999999999') 
+SELECT '' AS to_char_4, to_char( (q1 * -1), '9999999999999999S'), to_char( (q2 * -1), 'S9999999999999999')
 	FROM INT8_TBL;
  to_char_4 |      to_char      |      to_char      
 -----------+-------------------+-------------------
@@ -500,7 +500,7 @@ SELECT '' AS to_char_4, to_char( (q1 * -1), '9999999999999999S'), to_char( (q2 *
            | 4567890123456789- | +4567890123456789
 (5 rows)
 
-SELECT '' AS to_char_5,  to_char(q2, 'MI9999999999999999')     FROM INT8_TBL;	
+SELECT '' AS to_char_5,  to_char(q2, 'MI9999999999999999')     FROM INT8_TBL;
  to_char_5 |      to_char      
 -----------+-------------------
            |               456
@@ -530,7 +530,7 @@ SELECT '' AS to_char_7,  to_char(q2, 'FM9999999999999999THPR') FROM INT8_TBL;
            | <4567890123456789>
 (5 rows)
 
-SELECT '' AS to_char_8,  to_char(q2, 'SG9999999999999999th')   FROM INT8_TBL;	
+SELECT '' AS to_char_8,  to_char(q2, 'SG9999999999999999th')   FROM INT8_TBL;
  to_char_8 |       to_char       
 -----------+---------------------
            | +             456th
@@ -540,7 +540,7 @@ SELECT '' AS to_char_8,  to_char(q2, 'SG9999999999999999th')   FROM INT8_TBL;
            | -4567890123456789
 (5 rows)
 
-SELECT '' AS to_char_9,  to_char(q2, '0999999999999999')       FROM INT8_TBL;	
+SELECT '' AS to_char_9,  to_char(q2, '0999999999999999')       FROM INT8_TBL;
  to_char_9 |      to_char      
 -----------+-------------------
            |  0000000000000456
@@ -550,7 +550,7 @@ SELECT '' AS to_char_9,  to_char(q2, '0999999999999999')       FROM INT8_TBL;
            | -4567890123456789
 (5 rows)
 
-SELECT '' AS to_char_10, to_char(q2, 'S0999999999999999')      FROM INT8_TBL;	
+SELECT '' AS to_char_10, to_char(q2, 'S0999999999999999')      FROM INT8_TBL;
  to_char_10 |      to_char      
 ------------+-------------------
             | +0000000000000456
@@ -560,7 +560,7 @@ SELECT '' AS to_char_10, to_char(q2, 'S0999999999999999')      FROM INT8_TBL;
             | -4567890123456789
 (5 rows)
 
-SELECT '' AS to_char_11, to_char(q2, 'FM0999999999999999')     FROM INT8_TBL;	
+SELECT '' AS to_char_11, to_char(q2, 'FM0999999999999999')     FROM INT8_TBL;
  to_char_11 |      to_char      
 ------------+-------------------
             | 0000000000000456
@@ -580,7 +580,7 @@ SELECT '' AS to_char_12, to_char(q2, 'FM9999999999999999.000') FROM INT8_TBL;
             | -4567890123456789.000
 (5 rows)
 
-SELECT '' AS to_char_13, to_char(q2, 'L9999999999999999.000')  FROM INT8_TBL;	
+SELECT '' AS to_char_13, to_char(q2, 'L9999999999999999.000')  FROM INT8_TBL;
  to_char_13 |        to_char         
 ------------+------------------------
             |                456.000

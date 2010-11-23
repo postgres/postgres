@@ -13,8 +13,8 @@ PostgreSQL documentation
  <refnamediv>
   <refname>ALTER OPERATOR</refname>
   <refpurpose>change the definition of an operator</refpurpose>
- </refnamediv>  
-  
+ </refnamediv>
+
  <indexterm zone="sql-alteroperator">
   <primary>ALTER OPERATOR</primary>
  </indexterm>
@@ -24,7 +24,7 @@ PostgreSQL documentation
 ALTER OPERATOR <replaceable>name</replaceable> ( { <replaceable>left_type</replaceable> | NONE } , { <replaceable>right_type</replaceable> | NONE } ) OWNER TO <replaceable>new_owner</replaceable>
 </synopsis>
  </refsynopsisdiv>
-  
+
  <refsect1>
   <title>Description</title>
 
@@ -43,7 +43,7 @@ ALTER OPERATOR <replaceable>name</replaceable> ( { <replaceable>left_type</repla
    However, a superuser can alter ownership of any operator anyway.)
   </para>
  </refsect1>
-  
+
  <refsect1>
   <title>Parameters</title>
 
@@ -98,7 +98,7 @@ ALTER OPERATOR @@ (text, text) OWNER TO joe;
 </programlisting>
   </para>
  </refsect1>
- 
+
  <refsect1>
   <title>Compatibility</title>
 

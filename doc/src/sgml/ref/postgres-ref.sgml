@@ -99,7 +99,7 @@ PostgreSQL documentation
 
    <refsect2>
     <title>General Purpose</title>
-    
+
     <variablelist>
      <varlistentry>
       <term><option>-A 0|1</option></term>
@@ -338,7 +338,7 @@ PostgreSQL documentation
       <term><option>--describe-config</option></term>
       <listitem>
        <para>
-        This option dumps out the server's internal configuration variables, 
+        This option dumps out the server's internal configuration variables,
         descriptions, and defaults in tab-delimited <command>COPY</> format.
         It is designed primarily for use by administration tools.
        </para>
@@ -371,7 +371,7 @@ PostgreSQL documentation
         <literal>n</literal>, <literal>m</literal>, and <literal>h</literal>
         disable nested-loop, merge and hash joins respectively.
        </para>
-        
+
        <para>
         Neither sequential scans nor nested-loop joins can be disabled
         completely; the <literal>-fs</literal> and
@@ -651,7 +651,7 @@ PostgreSQL documentation
    start and shut down the <command>postgres</command> server
    safely and comfortably.
   </para>
-  
+
   <para>
    If at all possible, <emphasis>do not</emphasis> use
    <literal>SIGKILL</literal> to kill the main

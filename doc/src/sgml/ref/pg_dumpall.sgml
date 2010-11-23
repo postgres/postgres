@@ -552,7 +552,7 @@ PostgreSQL documentation
 
   <para>
    <application>pg_dumpall</application> requires all needed
-   tablespace directories to exist before the restore;  otherwise, 
+   tablespace directories to exist before the restore;  otherwise,
    database creation will fail for databases in non-default
    locations.
   </para>

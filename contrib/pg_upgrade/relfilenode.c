@@ -171,7 +171,7 @@ transfer_single_new_db(pageCnvCtx *pageConverter,
 							 namelist[fileno]->d_name);
 					snprintf(new_file, sizeof(new_file), "%s/%u%s", maps[mapnum].new_dir,
 							 maps[mapnum].new_relfilenode, strchr(namelist[fileno]->d_name, '_'));
-	
+
 					unlink(new_file);
 					transfer_relfile(pageConverter, old_file, new_file,
 							  maps[mapnum].old_nspname, maps[mapnum].old_relname,

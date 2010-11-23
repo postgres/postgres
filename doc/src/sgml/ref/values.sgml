@@ -115,7 +115,7 @@ VALUES ( <replaceable class="PARAMETER">expression</replaceable> [, ...] ) [, ..
     <listitem>
      <para>
       The number of rows to skip before starting to return rows.
-      For details see 
+      For details see
       <xref linkend="sql-limit" endterm="sql-limit-title">.
      </para>
     </listitem>

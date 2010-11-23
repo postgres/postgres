@@ -225,10 +225,10 @@ if (sqlca.sqlcode < 0) sqlprint ( );}
    for (i=0;i < sqlca.sqlerrd[2];++i)
    {
       if (ipointer1[i]) printf("NULL, ");
-      else printf("%d, ",ip1[i]); 
+      else printf("%d, ",ip1[i]);
 
       if (ipointer2[i]) printf("NULL, ");
-      else printf("'%s', ",cp2[i]); 
+      else printf("'%s', ",cp2[i]);
       printf("\n");
    }
    ECPGfree_auto_mem();

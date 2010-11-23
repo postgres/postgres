@@ -230,7 +230,7 @@ AC_SUBST(enable_coverage)
 #
 PGAC_ARG_BOOL(enable, dtrace, no,
               [build with DTrace support],
-[AC_DEFINE([ENABLE_DTRACE], 1, 
+[AC_DEFINE([ENABLE_DTRACE], 1,
            [Define to 1 to enable DTrace support. (--enable-dtrace)])
 AC_CHECK_PROGS(DTRACE, dtrace)
 if test -z "$DTRACE"; then
@@ -262,14 +262,14 @@ AC_DEFINE_UNQUOTED([BLCKSZ], ${BLCKSZ}, [
  can set it bigger if you need bigger tuples (although TOAST should
  reduce the need to have large tuples, since fields can be spread
  across multiple tuples).
- 
+
  BLCKSZ must be a power of 2.  The maximum possible value of BLCKSZ
  is currently 2^15 (32768).  This is determined by the 15-bit widths
  of the lp_off and lp_len fields in ItemIdData (see
  include/storage/itemid.h).
- 
+
  Changing BLCKSZ requires an initdb.
-]) 
+])
 
 #
 # Relation segment size
@@ -288,7 +288,7 @@ AC_DEFINE_UNQUOTED([RELSEG_SIZE], ${RELSEG_SIZE}, [
  RELSEG_SIZE is the maximum number of blocks allowed in one disk file.
  Thus, the maximum size of a single file is RELSEG_SIZE * BLCKSZ;
  relations bigger than that are divided into multiple files.
- 
+
  RELSEG_SIZE * BLCKSZ must be less than your OS' limit on file size.
  This is often 2 GB or 4GB in a 32-bit operating system, unless you
  have large file support enabled.  By default, we make the limit 1 GB
@@ -329,7 +329,7 @@ AC_DEFINE_UNQUOTED([XLOG_BLCKSZ], ${XLOG_BLCKSZ}, [
  buffers, else direct I/O may fail.
 
  Changing XLOG_BLCKSZ requires an initdb.
-]) 
+])
 
 #
 # WAL segment size
@@ -461,7 +461,7 @@ fi
 # enable profiling if --enable-profiling
 if test "$enable_profiling" = yes && test "$ac_cv_prog_cc_g" = yes; then
   if test "$GCC" = yes; then
-    AC_DEFINE([PROFILE_PID_DIR], 1, 
+    AC_DEFINE([PROFILE_PID_DIR], 1,
            [Define to 1 to allow profiling output to be saved separately for each process.])
     CFLAGS="$CFLAGS -pg $PLATFORM_PROFILE_FLAGS"
   else
@@ -1141,7 +1141,7 @@ if test "$with_krb5" = yes; then
   AC_MSG_CHECKING(for krb5_free_unparsed_name)
   AC_TRY_LINK([#include <krb5.h>],
               [krb5_free_unparsed_name(NULL,NULL);],
-              [AC_DEFINE(HAVE_KRB5_FREE_UNPARSED_NAME, 1, [Define to 1 if you have krb5_free_unparsed_name]) 
+              [AC_DEFINE(HAVE_KRB5_FREE_UNPARSED_NAME, 1, [Define to 1 if you have krb5_free_unparsed_name])
 AC_MSG_RESULT(yes)],
               [AC_MSG_RESULT(no)])
 fi
@@ -1156,8 +1156,8 @@ AC_SYS_LARGEFILE
 AC_CHECK_SIZEOF([off_t])
 
 # If we don't have largefile support, can't handle segsize >= 2GB.
-if test "$ac_cv_sizeof_off_t" -lt 8 -a "$segsize" != "1"; then 
-   AC_MSG_ERROR([Large file support is not enabled. Segment size cannot be larger than 1GB.]) 
+if test "$ac_cv_sizeof_off_t" -lt 8 -a "$segsize" != "1"; then
+   AC_MSG_ERROR([Large file support is not enabled. Segment size cannot be larger than 1GB.])
 fi
 
 
@@ -1228,8 +1228,8 @@ if test "$PORTNAME" = "win32"; then
   #
   # To properly translate all NLS languages strings, we must support the
   # *printf() %$ format, which allows *printf() arguments to be selected
-  # by position in the translated string. 
-  # 
+  # by position in the translated string.
+  #
   # libintl versions < 0.13 use the native *printf() functions, and Win32
   # *printf() doesn't understand %$, so we must use our /port versions,
   # which do understand %$. libintl versions >= 0.13 include their own
@@ -1590,7 +1590,7 @@ AC_CHECK_SIZEOF([size_t])
 AC_CHECK_SIZEOF([long])
 
 # Decide whether float4 is passed by value: user-selectable, enabled by default
-AC_MSG_CHECKING([whether to build with float4 passed by value])   
+AC_MSG_CHECKING([whether to build with float4 passed by value])
 PGAC_ARG_BOOL(enable, float4-byval, yes, [disable float4 passed by value],
               [AC_DEFINE([USE_FLOAT4_BYVAL], 1,
                          [Define to 1 if you want float4 values to be passed by value. (--enable-float4-byval)])
@@ -1858,7 +1858,7 @@ AC_CONFIG_LINKS([
 
 if test "$PORTNAME" = "win32"; then
 AC_CONFIG_COMMANDS([check_win32_symlinks],[
-# Links sometimes fail undetected on Mingw - 
+# Links sometimes fail undetected on Mingw -
 # so here we detect it and warn the user
 for FILE in $CONFIG_LINKS
  do

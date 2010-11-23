@@ -50,7 +50,7 @@ ALTER GROUP <replaceable class="PARAMETER">group_name</replaceable> RENAME TO <r
 
   <para>
    The third variant changes the name of the group.  This is exactly
-   equivalent to renaming the role with 
+   equivalent to renaming the role with
    <xref linkend="sql-alterrole">.
   </para>
  </refsect1>
@@ -110,7 +110,7 @@ ALTER GROUP workers DROP USER beth;
 
  <refsect1>
   <title>Compatibility</title>
-    
+
   <para>
    There is no <command>ALTER GROUP</command> statement in the SQL
    standard.

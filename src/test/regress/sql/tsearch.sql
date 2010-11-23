@@ -33,7 +33,7 @@ WHERE mapcfg = 0 OR mapdict = 0;
 -- Look for pg_ts_config_map entries that aren't one of parser's token types
 SELECT * FROM
   ( SELECT oid AS cfgid, (ts_token_type(cfgparser)).tokid AS tokid
-    FROM pg_ts_config ) AS tt 
+    FROM pg_ts_config ) AS tt
 RIGHT JOIN pg_ts_config_map AS m
     ON (tt.cfgid=m.mapcfg AND tt.tokid=m.maptokentype)
 WHERE
@@ -76,7 +76,7 @@ SELECT count(*) FROM test_tsvector WHERE a @@ 'eq|yt';
 SELECT count(*) FROM test_tsvector WHERE a @@ '(eq&yt)|(wr&qh)';
 SELECT count(*) FROM test_tsvector WHERE a @@ '(eq|yt)&(wr|qh)';
 SELECT count(*) FROM test_tsvector WHERE a @@ 'w:*|q:*';
-  
+
 RESET enable_seqscan;
 INSERT INTO test_tsvector VALUES ('???', 'DFG:1A,2B,6C,10 FGH');
 SELECT * FROM ts_stat('SELECT a FROM test_tsvector') ORDER BY ndoc DESC, nentry DESC, word LIMIT 10;
@@ -214,7 +214,7 @@ ff-bg
 </html>',
 to_tsquery('english', 'sea&foo'), 'HighlightAll=true');
 
---Check if headline fragments work 
+--Check if headline fragments work
 SELECT ts_headline('english', '
 Day after day, day after day,
   We stuck, nor breath nor motion,

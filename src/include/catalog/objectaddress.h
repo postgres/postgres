@@ -10,7 +10,7 @@
  *
  *-------------------------------------------------------------------------
  */
-#ifndef OBJECTADDRESS_H 
+#ifndef OBJECTADDRESS_H
 #define OBJECTADDRESS_H
 
 #include "nodes/parsenodes.h"

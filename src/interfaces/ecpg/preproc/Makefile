@@ -58,7 +58,7 @@ else
 endif
 
 preproc.y: ../../../backend/parser/gram.y parse.pl ecpg.addons ecpg.header ecpg.tokens ecpg.trailer ecpg.type
-	$(PERL) $(srcdir)/parse.pl $(srcdir) < $< > $@ 
+	$(PERL) $(srcdir)/parse.pl $(srcdir) < $< > $@
 	$(PERL) $(srcdir)/check_rules.pl $(srcdir) $<
 
 ecpg_keywords.o c_keywords.o keywords.o preproc.o parser.o: preproc.h

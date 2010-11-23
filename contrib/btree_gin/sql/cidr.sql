@@ -4,7 +4,7 @@ CREATE TABLE test_cidr (
 	i cidr
 );
 
-INSERT INTO test_cidr VALUES 
+INSERT INTO test_cidr VALUES
 	( '1.2.3.4' ),
 	( '1.2.4.4' ),
 	( '1.2.5.4' ),

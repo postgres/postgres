@@ -146,7 +146,7 @@ int main(void)
 
 		 
 		 
-		  
+		 
 		  /* = 1L */ 
 	
 #line 60 "init.pgc"
@@ -250,7 +250,7 @@ if (sqlca.sqlcode < 0) fe ( ENUM0 );}
 
 	/* exec sql whenever sqlerror  do sqlnotice ( NULL , 0 ) ; */
 #line 97 "init.pgc"
- 
+
 	{ ECPGdo(__LINE__, 0, 1, NULL, 0, ECPGst_normal, "select now ( )", ECPGt_EOIT, ECPGt_EORT);
 #line 98 "init.pgc"
 

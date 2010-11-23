@@ -4,7 +4,7 @@ CREATE TABLE test_date (
 	i date
 );
 
-INSERT INTO test_date VALUES 
+INSERT INTO test_date VALUES
 	( '2004-10-23' ),
 	( '2004-10-24' ),
 	( '2004-10-25' ),

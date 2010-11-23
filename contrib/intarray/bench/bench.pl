@@ -1,4 +1,4 @@
-#!/usr/bin/perl 
+#!/usr/bin/perl
 
 use strict;
 # make sure we are in a sane environment.
@@ -14,16 +14,16 @@ if ( !( scalar %opt && defined $opt{s} ) ) {
 	print <<EOT;
 Usage:
 $0 -d DATABASE -s SECTIONS [-b NUMBER] [-v] [-e] [-o] [-r] [-a] [-u]
--d DATABASE   	-DATABASE
--b NUMBER   	-number of repeats
--s SECTIONS 	-sections, format	sid1[,sid2[,sid3[...]]]]
--v 		-verbose (show SQL)
+-d DATABASE	-DATABASE
+-b NUMBER	-number of repeats
+-s SECTIONS	-sections, format	sid1[,sid2[,sid3[...]]]]
+-v		-verbose (show SQL)
 -e		-show explain
 -r		-use RD-tree index
 -a		-AND section
 -o		-show output
 -u		-unique
--c 		-count
+-c		-count
 
 EOT
 	exit;
@@ -87,19 +87,19 @@ if ( $opt{o} ) {
 	foreach ( @a ) {
 		print "$_->{mid}\t$_->{sections}\n";
 	}
-} 
+}
 print sprintf("total: %.02f sec; number: %d; for one: %.03f sec; found %d docs\n", $elapsed, $b, $elapsed/$b, $count+1 );
 $dbi -> disconnect;
 
 sub exec_sql {
         my ($dbi, $sql, @keys) = @_;
         my $sth=$dbi->prepare($sql) || die;
-        $sth->execute( @keys ) || die; 
-        my $r;  
+        $sth->execute( @keys ) || die;
+        my $r;
         my @row;
         while ( defined ( $r=$sth->fetchrow_hashref ) ) {
                 push @row, $r;
-        }               
-        $sth->finish;   
+        }
+        $sth->finish;
         return @row;
 }

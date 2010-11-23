@@ -4,7 +4,7 @@
 SET search_path = public;
 
 -- Create the user-defined type for 1-D floating point intervals (seg)
--- 
+--
 
 CREATE OR REPLACE FUNCTION seg_in(cstring)
 RETURNS seg
@@ -333,12 +333,12 @@ AS 'MODULE_PATHNAME'
 LANGUAGE C IMMUTABLE STRICT;
 
 CREATE OR REPLACE FUNCTION gseg_compress(internal)
-RETURNS internal 
+RETURNS internal
 AS 'MODULE_PATHNAME'
 LANGUAGE C IMMUTABLE STRICT;
 
 CREATE OR REPLACE FUNCTION gseg_decompress(internal)
-RETURNS internal 
+RETURNS internal
 AS 'MODULE_PATHNAME'
 LANGUAGE C IMMUTABLE STRICT;
 
@@ -353,12 +353,12 @@ AS 'MODULE_PATHNAME'
 LANGUAGE C IMMUTABLE STRICT;
 
 CREATE OR REPLACE FUNCTION gseg_union(internal, internal)
-RETURNS seg 
+RETURNS seg
 AS 'MODULE_PATHNAME'
 LANGUAGE C IMMUTABLE STRICT;
 
 CREATE OR REPLACE FUNCTION gseg_same(seg, seg, internal)
-RETURNS internal 
+RETURNS internal
 AS 'MODULE_PATHNAME'
 LANGUAGE C IMMUTABLE STRICT;
 
@@ -375,7 +375,7 @@ CREATE OPERATOR CLASS seg_ops
         FUNCTION        1       seg_cmp(seg, seg);
 
 CREATE OPERATOR CLASS gist_seg_ops
-DEFAULT FOR TYPE seg USING gist 
+DEFAULT FOR TYPE seg USING gist
 AS
 	OPERATOR	1	<< ,
 	OPERATOR	2	&< ,

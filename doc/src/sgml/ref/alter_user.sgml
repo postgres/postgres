@@ -24,7 +24,7 @@ PostgreSQL documentation
 ALTER USER <replaceable class="PARAMETER">name</replaceable> [ [ WITH ] <replaceable class="PARAMETER">option</replaceable> [ ... ] ]
 
 <phrase>where <replaceable class="PARAMETER">option</replaceable> can be:</phrase>
-    
+
       SUPERUSER | NOSUPERUSER
     | CREATEDB | NOCREATEDB
     | CREATEROLE | NOCREATEROLE
@@ -33,7 +33,7 @@ ALTER USER <replaceable class="PARAMETER">name</replaceable> [ [ WITH ] <replace
     | LOGIN | NOLOGIN
     | CONNECTION LIMIT <replaceable class="PARAMETER">connlimit</replaceable>
     | [ ENCRYPTED | UNENCRYPTED ] PASSWORD '<replaceable class="PARAMETER">password</replaceable>'
-    | VALID UNTIL '<replaceable class="PARAMETER">timestamp</replaceable>' 
+    | VALID UNTIL '<replaceable class="PARAMETER">timestamp</replaceable>'
 
 ALTER USER <replaceable class="PARAMETER">name</replaceable> RENAME TO <replaceable>new_name</replaceable>
 
@@ -55,7 +55,7 @@ ALTER USER <replaceable class="PARAMETER">name</replaceable> RESET ALL
 
  <refsect1>
   <title>Compatibility</title>
-    
+
   <para>
    The <command>ALTER USER</command> statement is a
    <productname>PostgreSQL</productname> extension.  The SQL standard

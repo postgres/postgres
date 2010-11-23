@@ -13,8 +13,8 @@ PostgreSQL documentation
  <refnamediv>
   <refname>ALTER TEXT SEARCH CONFIGURATION</refname>
   <refpurpose>change the definition of a text search configuration</refpurpose>
- </refnamediv>  
-  
+ </refnamediv>
+
  <indexterm zone="sql-altertsconfig">
   <primary>ALTER TEXT SEARCH CONFIGURATION</primary>
  </indexterm>
@@ -35,7 +35,7 @@ ALTER TEXT SEARCH CONFIGURATION <replaceable>name</replaceable> RENAME TO <repla
 ALTER TEXT SEARCH CONFIGURATION <replaceable>name</replaceable> OWNER TO <replaceable>new_owner</replaceable>
 </synopsis>
  </refsynopsisdiv>
-  
+
  <refsect1>
   <title>Description</title>
 
@@ -51,7 +51,7 @@ ALTER TEXT SEARCH CONFIGURATION <replaceable>name</replaceable> OWNER TO <replac
    <command>ALTER TEXT SEARCH CONFIGURATION</>.
   </para>
  </refsect1>
-  
+
  <refsect1>
   <title>Parameters</title>
 
@@ -156,7 +156,7 @@ ALTER TEXT SEARCH CONFIGURATION <replaceable>name</replaceable> OWNER TO <replac
 <programlisting>
 ALTER TEXT SEARCH CONFIGURATION my_config
   ALTER MAPPING REPLACE english WITH swedish;
-</programlisting>  
+</programlisting>
  </refsect1>
 
  <refsect1>

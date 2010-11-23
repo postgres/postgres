@@ -29,7 +29,7 @@ BEGIN [ WORK | TRANSACTION ] [ <replaceable class="parameter">transaction_mode</
     READ WRITE | READ ONLY
 </synopsis>
  </refsynopsisdiv>
- 
+
  <refsect1>
   <title>Description</title>
 
@@ -59,11 +59,11 @@ BEGIN [ WORK | TRANSACTION ] [ <replaceable class="parameter">transaction_mode</
   <para>
    If the isolation level or read/write mode is specified, the new
    transaction has those characteristics, as if
-   <xref linkend="sql-set-transaction"> 
+   <xref linkend="sql-set-transaction">
    was executed.
   </para>
  </refsect1>
-  
+
  <refsect1>
   <title>Parameters</title>
 
@@ -84,7 +84,7 @@ BEGIN [ WORK | TRANSACTION ] [ <replaceable class="parameter">transaction_mode</
    of the other parameters to this statement.
   </para>
  </refsect1>
-  
+
  <refsect1>
   <title>Notes</title>
 
@@ -92,7 +92,7 @@ BEGIN [ WORK | TRANSACTION ] [ <replaceable class="parameter">transaction_mode</
    <xref linkend="sql-start-transaction"> has the same functionality
    as <command>BEGIN</>.
   </para>
-   
+
   <para>
    Use <xref linkend="SQL-COMMIT"> or
    <xref linkend="SQL-ROLLBACK">
@@ -102,7 +102,7 @@ BEGIN [ WORK | TRANSACTION ] [ <replaceable class="parameter">transaction_mode</
   <para>
    Issuing <command>BEGIN</> when already inside a transaction block will
    provoke a warning message.  The state of the transaction is not affected.
-   To nest transactions within a transaction block, use savepoints 
+   To nest transactions within a transaction block, use savepoints
    (see <xref linkend="sql-savepoint">).
   </para>
 
@@ -124,7 +124,7 @@ BEGIN;
 </programlisting>
   </para>
  </refsect1>
- 
+
  <refsect1>
   <title>Compatibility</title>
 

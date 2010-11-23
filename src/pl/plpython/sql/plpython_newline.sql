@@ -1,6 +1,6 @@
 --
 -- Universal Newline Support
--- 
+--
 
 CREATE OR REPLACE FUNCTION newline_lf() RETURNS integer AS
 E'x = 100\ny = 23\nreturn x + y\n'

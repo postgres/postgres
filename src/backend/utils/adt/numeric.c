@@ -102,7 +102,7 @@ typedef int16 NumericDigit;
  * remaining bits are never examined.  Currently, we always initialize these
  * to zero, but it might be possible to use them for some other purpose in
  * the future.
- * 
+ *
  * In the NumericShort format, the remaining 14 bits of the header word
  * (n_short.n_header) are allocated as follows: 1 for sign (positive or
  * negative), 6 for dynamic scale, and 7 for weight.  In practice, most
@@ -3725,7 +3725,7 @@ make_result(NumericVar *var)
 		len = NUMERIC_HDRSZ_SHORT + n * sizeof(NumericDigit);
 		result = (Numeric) palloc(len);
 		SET_VARSIZE(result, len);
-		result->choice.n_short.n_header = 
+		result->choice.n_short.n_header =
 			(sign == NUMERIC_NEG ? (NUMERIC_SHORT | NUMERIC_SHORT_SIGN_MASK)
 				: NUMERIC_SHORT)
 			| (var->dscale << NUMERIC_SHORT_DSCALE_SHIFT)

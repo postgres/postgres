@@ -110,7 +110,7 @@ EXEC SQL CONNECT TO <replaceable>target</replaceable> <optional>AS <replaceable>
       <literal>unix:postgresql://<replaceable>hostname</><optional>:<replaceable>port</></optional><optional>/<replaceable>dbname</></optional><optional>?<replaceable>options</></optional></literal>
      </simpara>
     </listitem>
- 
+
     <listitem>
      <simpara>
       an SQL string literal containing one of the above forms
@@ -122,7 +122,7 @@ EXEC SQL CONNECT TO <replaceable>target</replaceable> <optional>AS <replaceable>
       a reference to a character variable containing one of the above forms (see examples)
      </simpara>
     </listitem>
- 
+
     <listitem>
      <simpara>
       <literal>DEFAULT</literal>
@@ -2743,7 +2743,6 @@ timestamp PGTYPEStimestamp_from_asc(char *str, char **endptr);
         The function returns the parsed timestamp on success. On error,
         <literal>PGTYPESInvalidTimestamp</literal> is returned and <varname>errno</> is
         set to <literal>PGTYPES_TS_BAD_TIMESTAMP</>. See <xref linkend="PGTYPESInvalidTimestamp"> for important notes on this value.
-        
        </para>
        <para>
         In general, the input string can contain any combination of an allowed
@@ -2839,7 +2838,7 @@ int PGTYPEStimestamp_fmt_asc(timestamp *ts, char *output, int str_len, char *fmt
         You can use the following format specifiers for the format mask. The
         format specifiers are the same ones that are used in the
         <function>strftime</> function in <productname>libc</productname>. Any
-        non-format specifier will be copied into the output buffer. 
+        non-format specifier will be copied into the output buffer.
         <!-- This is from the FreeBSD man page:
              http://www.freebsd.org/cgi/man.cgi?query=strftime&apropos=0&sektion=3&manpath=FreeBSD+7.0-current&format=html
         -->
@@ -2897,24 +2896,24 @@ int PGTYPEStimestamp_fmt_asc(timestamp *ts, char *output, int str_len, char *fmt
            <literal>%E*</literal> <literal>%O*</literal> -  POSIX locale
            extensions. The sequences
            <literal>%Ec</literal>
-           <literal>%EC</literal> 
-           <literal>%Ex</literal> 
-           <literal>%EX</literal> 
-           <literal>%Ey</literal> 
-           <literal>%EY</literal> 
-           <literal>%Od</literal> 
+           <literal>%EC</literal>
+           <literal>%Ex</literal>
+           <literal>%EX</literal>
+           <literal>%Ey</literal>
+           <literal>%EY</literal>
+           <literal>%Od</literal>
            <literal>%Oe</literal>
-           <literal>%OH</literal> 
-           <literal>%OI</literal> 
-           <literal>%Om</literal> 
-           <literal>%OM</literal> 
-           <literal>%OS</literal> 
-           <literal>%Ou</literal> 
-           <literal>%OU</literal> 
-           <literal>%OV</literal> 
-           <literal>%Ow</literal> 
-           <literal>%OW</literal> 
-           <literal>%Oy</literal> 
+           <literal>%OH</literal>
+           <literal>%OI</literal>
+           <literal>%Om</literal>
+           <literal>%OM</literal>
+           <literal>%OS</literal>
+           <literal>%Ou</literal>
+           <literal>%OU</literal>
+           <literal>%OV</literal>
+           <literal>%Ow</literal>
+           <literal>%OW</literal>
+           <literal>%Oy</literal>
            are supposed to provide alternative representations.
           </para>
           <para>
@@ -5763,10 +5762,10 @@ ECPG = ecpg
     <note>
     <para>
     On Windows, if the <application>ecpg</> libraries and an application are
-    compiled with different flags, this function call will crash the 
-    application because the internal representation of the 
+    compiled with different flags, this function call will crash the
+    application because the internal representation of the
     <literal>FILE</> pointers differ.  Specifically,
-    multithreaded/single-threaded, release/debug, and static/dynamic 
+    multithreaded/single-threaded, release/debug, and static/dynamic
     flags should be the same for the library and all applications using
     that library.
     </para>
@@ -5778,7 +5777,7 @@ ECPG = ecpg
        <function>ECPGget_PGconn(const char *<replaceable>connection_name</replaceable>)
        </function> returns the library database connection handle identified by the given name.
        If <replaceable>connection_name</replaceable> is set to <literal>NULL</literal>, the current
-       connection handle is returned. If no connection handle can be identified, the function returns 
+       connection handle is returned. If no connection handle can be identified, the function returns
        <literal>NULL</literal>. The returned connection handle can be used to call any other functions
        from <application>libpq</application>, if necessary.
      </para>
@@ -5803,7 +5802,7 @@ ECPG = ecpg
      <function>ECPGstatus(int <replaceable>lineno</replaceable>,
      const char* <replaceable>connection_name</replaceable>)</function>
      returns true if you are connected to a database and false if not.
-     <replaceable>connection_name</replaceable> can be <literal>NULL</> 
+     <replaceable>connection_name</replaceable> can be <literal>NULL</>
      if a single connection is being used.
     </para>
    </listitem>
@@ -8064,7 +8063,7 @@ typedef struct sqlda_compat     sqlda_t;
         Pointer to the field data. The pointer is of <literal>char *</literal> type,
         the data pointed by it is in a binary format. Example:
 <programlisting>
-int intval; 
+int intval;
 
 switch (sqldata->sqlvar[i].sqltype)
 {
@@ -8083,7 +8082,7 @@ switch (sqldata->sqlvar[i].sqltype)
       <listitem>
        <para>
         Pointer to the NULL indicator. If returned by DESCRIBE or FETCH then it's always a valid pointer.
-        If used as input for <literal>EXECUTE ... USING sqlda;</literal> then NULL-pointer value means   
+        If used as input for <literal>EXECUTE ... USING sqlda;</literal> then NULL-pointer value means
         that the value for this field is non-NULL. Otherwise a valid pointer and <literal>sqlitype</literal>
         has to be properly set. Example:
 <programlisting>
@@ -8117,7 +8116,7 @@ if (*(int2 *)sqldata->sqlvar[i].sqlind != 0)
       <listitem>
        <para>
         Type of the NULL indicator data. It's always SQLSMINT when returning data from the server.
-        When the <literal>SQLDA</literal> is used for a parametrized query, the data is treated   
+        When the <literal>SQLDA</literal> is used for a parametrized query, the data is treated
         according to the set type.
        </para>
       </listitem>
@@ -8143,13 +8142,13 @@ if (*(int2 *)sqldata->sqlvar[i].sqlind != 0)
 
      <varlistentry>
      <term><literal>sqltypename</></term>
-     <term><literal>sqltypelen</></term> 
+     <term><literal>sqltypelen</></term>
      <term><literal>sqlownerlen</></term>
      <term><literal>sqlsourcetype</></term>
-     <term><literal>sqlownername</></term> 
-     <term><literal>sqlsourceid</></term>  
-     <term><literal>sqlflags</></term>     
-     <term><literal>sqlreserved</></term>  
+     <term><literal>sqlownername</></term>
+     <term><literal>sqlsourceid</></term>
+     <term><literal>sqlflags</></term>
+     <term><literal>sqlreserved</></term>
       <listitem>
        <para>
         Unused.
@@ -8469,7 +8468,7 @@ int dectoasc(decimal *np, char *cp, int len, int right)
        <para>
         The function returns either -1 if the buffer <literal>cp</> was too
         small or <literal>ECPG_INFORMIX_OUT_OF_MEMORY</> if memory was
-        exhausted. 
+        exhausted.
        </para>
       </listitem>
      </varlistentry>
@@ -9548,7 +9547,7 @@ risnull(CINTTYPE, (char *) &i);
      </listitem>
 
      <listitem>
-      <para> 
+      <para>
        A pointer to the value or a pointer to the pointer.
       </para>
      </listitem>
