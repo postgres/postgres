@@ -30,7 +30,7 @@ include $(top_builddir)/src/Makefile.global
 override CPPFLAGS := -I$(top_builddir)/src/port -DFRONTEND $(CPPFLAGS)
 LIBS += $(PTHREAD_LIBS)
 
-OBJS = $(LIBOBJS) chklocale.o dirmod.o exec.o noblock.o path.o \
+OBJS = $(LIBOBJS) chklocale.o dirmod.o exec.o inet_net_ntop.o noblock.o path.o \
 	pgsleep.o pgstrcasecmp.o qsort.o qsort_arg.o sprompt.o thread.o
 ifneq (,$(filter $(PORTNAME),cygwin win32))
 OBJS += pipe.o

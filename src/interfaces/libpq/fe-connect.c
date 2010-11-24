@@ -960,9 +960,28 @@ connectFailureMessage(PGconn *conn, int errorno)
 	else
 #endif   /* HAVE_UNIX_SOCKETS */
 	{
+		char	host_addr[NI_MAXHOST];
+		bool 	display_host_addr;
+		struct sockaddr_in *host_addr_struct = (struct sockaddr_in *)
+												&conn->raddr.addr;
+
+		/*
+		 *	Optionally display the network address with the hostname.
+		 *	This is useful to distinguish between IPv4 and IPv6 connections.
+		 */
+		if (conn->pghostaddr != NULL)
+			strlcpy(host_addr, conn->pghostaddr, NI_MAXHOST);
+		else if (inet_net_ntop(conn->addr_cur->ai_family, &host_addr_struct->sin_addr,
+				 host_addr_struct->sin_family == AF_INET ? 32 : 128,
+				 host_addr, sizeof(host_addr)) == NULL)
+			strcpy(host_addr, "???");
+
+		display_host_addr = !conn->pghostaddr &&
+							strcmp(conn->pghost, host_addr) != 0;
+		
 		appendPQExpBuffer(&conn->errorMessage,
 						  libpq_gettext("could not connect to server: %s\n"
-					 "\tIs the server running on host \"%s\" and accepting\n"
+					 "\tIs the server running on host \"%s\" %s%s%sand accepting\n"
 										"\tTCP/IP connections on port %s?\n"),
 						  SOCK_STRERROR(errorno, sebuf, sizeof(sebuf)),
 						  conn->pghostaddr
@@ -970,6 +989,10 @@ connectFailureMessage(PGconn *conn, int errorno)
 						  : (conn->pghost
 							 ? conn->pghost
 							 : "???"),
+						  /* display the IP address only if not already output */
+						  display_host_addr ? "(" : "",
+						  display_host_addr ? host_addr : "",
+						  display_host_addr ? ") " : "",
 						  conn->pgport);
 	}
 }

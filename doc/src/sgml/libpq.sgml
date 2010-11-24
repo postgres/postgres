@@ -170,11 +170,11 @@ PGconn *PQconnectdbParams(const char **keywords, const char **values, int expand
            If <literal>host</> is specified without <literal>hostaddr</>,
            a host name lookup occurs.
            If <literal>hostaddr</> is specified without <literal>host</>,
-           the value for <literal>hostaddr</> gives the server address.
+           the value for <literal>hostaddr</> gives the server network address.
            The connection attempt will fail in any of the cases where a
            host name is required.
            If both <literal>host</> and <literal>hostaddr</> are specified,
-           the value for <literal>hostaddr</> gives the server address.
+           the value for <literal>hostaddr</> gives the server network address.
            The value for <literal>host</> is ignored unless needed for
            authentication or verification purposes, in which case it will be
            used as the host name.  Note that authentication is likely to fail

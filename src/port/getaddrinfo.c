@@ -388,16 +388,14 @@ getnameinfo(const struct sockaddr * sa, int salen,
 
 	if (node)
 	{
-		int			ret = -1;
-
 		if (sa->sa_family == AF_INET)
 		{
-			char	   *p;
-
-			p = inet_ntoa(((struct sockaddr_in *) sa)->sin_addr);
-			ret = snprintf(node, nodelen, "%s", p);
+			if (inet_net_ntop(AF_INET, ((struct sockaddr_in *) sa)->sin_addr,
+				sa->sa_family == AF_INET ? 32 : 128,
+				node, nodelen) == NULL)
+			return EAI_MEMORY;
 		}
-		if (ret == -1 || ret > nodelen)
+		else
 			return EAI_MEMORY;
 	}
 
