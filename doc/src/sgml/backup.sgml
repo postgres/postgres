@@ -383,6 +383,8 @@ tar -cf backup.tar /usr/local/pgsql/data
    on the backed-up data, it will think the previous server instance
    crashed and will replay the WAL log.  This is not a problem; just
    be aware of it (and be sure to include the WAL files in your backup).
+   You can perform a <command>CHECKPOINT</command> before taking the
+   snapshot to reduce recovery time.
   </para>
 
   <para>
