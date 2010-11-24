@@ -8815,22 +8815,28 @@ dumpOpclass(Archive *fout, OpclassInfo *opcinfo)
 	int			i_opckeytype;
 	int			i_opcdefault;
 	int			i_opcfamily;
+	int			i_opcfamilyname;
 	int			i_opcfamilynsp;
 	int			i_amname;
 	int			i_amopstrategy;
 	int			i_amopreqcheck;
 	int			i_amopopr;
+	int			i_sortfamily;
+	int			i_sortfamilynsp;
 	int			i_amprocnum;
 	int			i_amproc;
 	char	   *opcintype;
 	char	   *opckeytype;
 	char	   *opcdefault;
 	char	   *opcfamily;
+	char	   *opcfamilyname;
 	char	   *opcfamilynsp;
 	char	   *amname;
 	char	   *amopstrategy;
 	char	   *amopreqcheck;
 	char	   *amopopr;
+	char	   *sortfamily;
+	char	   *sortfamilynsp;
 	char	   *amprocnum;
 	char	   *amproc;
 	bool		needComma;
@@ -8860,8 +8866,8 @@ dumpOpclass(Archive *fout, OpclassInfo *opcinfo)
 	{
 		appendPQExpBuffer(query, "SELECT opcintype::pg_catalog.regtype, "
 						  "opckeytype::pg_catalog.regtype, "
-						  "opcdefault, "
-						  "opfname AS opcfamily, "
+						  "opcdefault, opcfamily, "
+						  "opfname AS opcfamilyname, "
 						  "nspname AS opcfamilynsp, "
 						  "(SELECT amname FROM pg_catalog.pg_am WHERE oid = opcmethod) AS amname "
 						  "FROM pg_catalog.pg_opclass c "
@@ -8874,8 +8880,8 @@ dumpOpclass(Archive *fout, OpclassInfo *opcinfo)
 	{
 		appendPQExpBuffer(query, "SELECT opcintype::pg_catalog.regtype, "
 						  "opckeytype::pg_catalog.regtype, "
-						  "opcdefault, "
-						  "NULL AS opcfamily, "
+						  "opcdefault, NULL AS opcfamily, "
+						  "NULL AS opcfamilyname, "
 						  "NULL AS opcfamilynsp, "
 		"(SELECT amname FROM pg_catalog.pg_am WHERE oid = opcamid) AS amname "
 						  "FROM pg_catalog.pg_opclass "
@@ -8901,13 +8907,16 @@ dumpOpclass(Archive *fout, OpclassInfo *opcinfo)
 	i_opckeytype = PQfnumber(res, "opckeytype");
 	i_opcdefault = PQfnumber(res, "opcdefault");
 	i_opcfamily = PQfnumber(res, "opcfamily");
+	i_opcfamilyname = PQfnumber(res, "opcfamilyname");
 	i_opcfamilynsp = PQfnumber(res, "opcfamilynsp");
 	i_amname = PQfnumber(res, "amname");
 
 	opcintype = PQgetvalue(res, 0, i_opcintype);
 	opckeytype = PQgetvalue(res, 0, i_opckeytype);
 	opcdefault = PQgetvalue(res, 0, i_opcdefault);
-	opcfamily = PQgetvalue(res, 0, i_opcfamily);
+	/* opcfamily will still be needed after we PQclear res */
+	opcfamily = strdup(PQgetvalue(res, 0, i_opcfamily));
+	opcfamilyname = PQgetvalue(res, 0, i_opcfamilyname);
 	opcfamilynsp = PQgetvalue(res, 0, i_opcfamilynsp);
 	/* amname will still be needed after we PQclear res */
 	amname = strdup(PQgetvalue(res, 0, i_amname));
@@ -8930,14 +8939,14 @@ dumpOpclass(Archive *fout, OpclassInfo *opcinfo)
 	appendPQExpBuffer(q, "FOR TYPE %s USING %s",
 					  opcintype,
 					  fmtId(amname));
-	if (strlen(opcfamily) > 0 &&
-		(strcmp(opcfamily, opcinfo->dobj.name) != 0 ||
+	if (strlen(opcfamilyname) > 0 &&
+		(strcmp(opcfamilyname, opcinfo->dobj.name) != 0 ||
 		 strcmp(opcfamilynsp, opcinfo->dobj.namespace->dobj.name) != 0))
 	{
 		appendPQExpBuffer(q, " FAMILY ");
 		if (strcmp(opcfamilynsp, opcinfo->dobj.namespace->dobj.name) != 0)
 			appendPQExpBuffer(q, "%s.", fmtId(opcfamilynsp));
-		appendPQExpBuffer(q, "%s", fmtId(opcfamily));
+		appendPQExpBuffer(q, "%s", fmtId(opcfamilyname));
 	}
 	appendPQExpBuffer(q, " AS\n    ");
 
@@ -8954,23 +8963,41 @@ dumpOpclass(Archive *fout, OpclassInfo *opcinfo)
 
 	/*
 	 * Now fetch and print the OPERATOR entries (pg_amop rows).
+	 *
+	 * Print only those opfamily members that are tied to the opclass by
+	 * pg_depend entries.
+	 *
+	 * XXX RECHECK is gone as of 8.4, but we'll still print it if dumping
+	 * an older server's opclass in which it is used.  This is to avoid
+	 * hard-to-detect breakage if a newer pg_dump is used to dump from an
+	 * older server and then reload into that old version.	This can go
+	 * away once 8.3 is so old as to not be of interest to anyone.
 	 */
 	resetPQExpBuffer(query);
 
-	if (g_fout->remoteVersion >= 80400)
+	if (g_fout->remoteVersion >= 90100)
 	{
-		/*
-		 * Print only those opfamily members that are tied to the opclass by
-		 * pg_depend entries.
-		 *
-		 * XXX RECHECK is gone as of 8.4, but we'll still print it if dumping
-		 * an older server's opclass in which it is used.  This is to avoid
-		 * hard-to-detect breakage if a newer pg_dump is used to dump from an
-		 * older server and then reload into that old version.	This can go
-		 * away once 8.3 is so old as to not be of interest to anyone.
-		 */
 		appendPQExpBuffer(query, "SELECT amopstrategy, false AS amopreqcheck, "
-						  "amopopr::pg_catalog.regoperator "
+						  "amopopr::pg_catalog.regoperator, "
+						  "opfname AS sortfamily, "
+						  "nspname AS sortfamilynsp "
+						  "FROM pg_catalog.pg_amop ao JOIN pg_catalog.pg_depend ON "
+						  "(classid = 'pg_catalog.pg_amop'::pg_catalog.regclass AND objid = ao.oid) "
+						  "LEFT JOIN pg_catalog.pg_opfamily f ON f.oid = amopsortfamily "
+						  "LEFT JOIN pg_catalog.pg_namespace n ON n.oid = opfnamespace "
+						  "WHERE refclassid = 'pg_catalog.pg_opclass'::pg_catalog.regclass "
+						  "AND refobjid = '%u'::pg_catalog.oid "
+						  "AND amopfamily = '%s'::pg_catalog.oid "
+						  "ORDER BY amopstrategy",
+						  opcinfo->dobj.catId.oid,
+						  opcfamily);
+	}
+	else if (g_fout->remoteVersion >= 80400)
+	{
+		appendPQExpBuffer(query, "SELECT amopstrategy, false AS amopreqcheck, "
+						  "amopopr::pg_catalog.regoperator, "
+						  "NULL AS sortfamily, "
+						  "NULL AS sortfamilynsp "
 						  "FROM pg_catalog.pg_amop ao, pg_catalog.pg_depend "
 		   "WHERE refclassid = 'pg_catalog.pg_opclass'::pg_catalog.regclass "
 						  "AND refobjid = '%u'::pg_catalog.oid "
@@ -8981,12 +9008,10 @@ dumpOpclass(Archive *fout, OpclassInfo *opcinfo)
 	}
 	else if (g_fout->remoteVersion >= 80300)
 	{
-		/*
-		 * Print only those opfamily members that are tied to the opclass by
-		 * pg_depend entries.
-		 */
 		appendPQExpBuffer(query, "SELECT amopstrategy, amopreqcheck, "
-						  "amopopr::pg_catalog.regoperator "
+						  "amopopr::pg_catalog.regoperator, "
+						  "NULL AS sortfamily, "
+						  "NULL AS sortfamilynsp "
 						  "FROM pg_catalog.pg_amop ao, pg_catalog.pg_depend "
 		   "WHERE refclassid = 'pg_catalog.pg_opclass'::pg_catalog.regclass "
 						  "AND refobjid = '%u'::pg_catalog.oid "
@@ -8997,8 +9022,14 @@ dumpOpclass(Archive *fout, OpclassInfo *opcinfo)
 	}
 	else
 	{
+		/*
+		 * Here, we print all entries since there are no opfamilies and
+		 * hence no loose operators to worry about.
+		 */
 		appendPQExpBuffer(query, "SELECT amopstrategy, amopreqcheck, "
-						  "amopopr::pg_catalog.regoperator "
+						  "amopopr::pg_catalog.regoperator, "
+						  "NULL AS sortfamily, "
+						  "NULL AS sortfamilynsp "
 						  "FROM pg_catalog.pg_amop "
 						  "WHERE amopclaid = '%u'::pg_catalog.oid "
 						  "ORDER BY amopstrategy",
@@ -9013,18 +9044,31 @@ dumpOpclass(Archive *fout, OpclassInfo *opcinfo)
 	i_amopstrategy = PQfnumber(res, "amopstrategy");
 	i_amopreqcheck = PQfnumber(res, "amopreqcheck");
 	i_amopopr = PQfnumber(res, "amopopr");
+	i_sortfamily = PQfnumber(res, "sortfamily");
+	i_sortfamilynsp = PQfnumber(res, "sortfamilynsp");
 
 	for (i = 0; i < ntups; i++)
 	{
 		amopstrategy = PQgetvalue(res, i, i_amopstrategy);
 		amopreqcheck = PQgetvalue(res, i, i_amopreqcheck);
 		amopopr = PQgetvalue(res, i, i_amopopr);
+		sortfamily = PQgetvalue(res, i, i_sortfamily);
+		sortfamilynsp = PQgetvalue(res, i, i_sortfamilynsp);
 
 		if (needComma)
 			appendPQExpBuffer(q, " ,\n    ");
 
 		appendPQExpBuffer(q, "OPERATOR %s %s",
 						  amopstrategy, amopopr);
+
+		if (strlen(sortfamily) > 0)
+		{
+			appendPQExpBuffer(q, " FOR ORDER BY ");
+			if (strcmp(sortfamilynsp, opcinfo->dobj.namespace->dobj.name) != 0)
+				appendPQExpBuffer(q, "%s.", fmtId(sortfamilynsp));
+			appendPQExpBuffer(q, "%s", fmtId(sortfamily));
+		}
+
 		if (strcmp(amopreqcheck, "t") == 0)
 			appendPQExpBuffer(q, " RECHECK");
 
@@ -9035,15 +9079,14 @@ dumpOpclass(Archive *fout, OpclassInfo *opcinfo)
 
 	/*
 	 * Now fetch and print the FUNCTION entries (pg_amproc rows).
+	 *
+	 * Print only those opfamily members that are tied to the opclass by
+	 * pg_depend entries.
 	 */
 	resetPQExpBuffer(query);
 
 	if (g_fout->remoteVersion >= 80300)
 	{
-		/*
-		 * Print only those opfamily members that are tied to the opclass by
-		 * pg_depend entries.
-		 */
 		appendPQExpBuffer(query, "SELECT amprocnum, "
 						  "amproc::pg_catalog.regprocedure "
 						"FROM pg_catalog.pg_amproc ap, pg_catalog.pg_depend "
@@ -9119,6 +9162,9 @@ dumpOpclass(Archive *fout, OpclassInfo *opcinfo)
 /*
  * dumpOpfamily
  *	  write out a single operator family definition
+ *
+ * Note: this also dumps any "loose" operator members that aren't bound to a
+ * specific opclass within the opfamily.
  */
 static void
 dumpOpfamily(Archive *fout, OpfamilyInfo *opfinfo)
@@ -9134,6 +9180,8 @@ dumpOpfamily(Archive *fout, OpfamilyInfo *opfinfo)
 	int			i_amopstrategy;
 	int			i_amopreqcheck;
 	int			i_amopopr;
+	int			i_sortfamily;
+	int			i_sortfamilynsp;
 	int			i_amprocnum;
 	int			i_amproc;
 	int			i_amproclefttype;
@@ -9142,6 +9190,8 @@ dumpOpfamily(Archive *fout, OpfamilyInfo *opfinfo)
 	char	   *amopstrategy;
 	char	   *amopreqcheck;
 	char	   *amopopr;
+	char	   *sortfamily;
+	char	   *sortfamilynsp;
 	char	   *amprocnum;
 	char	   *amproc;
 	char	   *amproclefttype;
@@ -9172,18 +9222,36 @@ dumpOpfamily(Archive *fout, OpfamilyInfo *opfinfo)
 	/*
 	 * Fetch only those opfamily members that are tied directly to the
 	 * opfamily by pg_depend entries.
+	 *
+	 * XXX RECHECK is gone as of 8.4, but we'll still print it if dumping
+	 * an older server's opclass in which it is used.  This is to avoid
+	 * hard-to-detect breakage if a newer pg_dump is used to dump from an
+	 * older server and then reload into that old version.	This can go
+	 * away once 8.3 is so old as to not be of interest to anyone.
 	 */
-	if (g_fout->remoteVersion >= 80400)
+	if (g_fout->remoteVersion >= 90100)
 	{
-		/*
-		 * XXX RECHECK is gone as of 8.4, but we'll still print it if dumping
-		 * an older server's opclass in which it is used.  This is to avoid
-		 * hard-to-detect breakage if a newer pg_dump is used to dump from an
-		 * older server and then reload into that old version.	This can go
-		 * away once 8.3 is so old as to not be of interest to anyone.
-		 */
 		appendPQExpBuffer(query, "SELECT amopstrategy, false AS amopreqcheck, "
-						  "amopopr::pg_catalog.regoperator "
+						  "amopopr::pg_catalog.regoperator, "
+						  "opfname AS sortfamily, "
+						  "nspname AS sortfamilynsp "
+						  "FROM pg_catalog.pg_amop ao JOIN pg_catalog.pg_depend ON "
+						  "(classid = 'pg_catalog.pg_amop'::pg_catalog.regclass AND objid = ao.oid) "
+						  "LEFT JOIN pg_catalog.pg_opfamily f ON f.oid = amopsortfamily "
+						  "LEFT JOIN pg_catalog.pg_namespace n ON n.oid = opfnamespace "
+						  "WHERE refclassid = 'pg_catalog.pg_opfamily'::pg_catalog.regclass "
+						  "AND refobjid = '%u'::pg_catalog.oid "
+						  "AND amopfamily = '%u'::pg_catalog.oid "
+						  "ORDER BY amopstrategy",
+						  opfinfo->dobj.catId.oid,
+						  opfinfo->dobj.catId.oid);
+	}
+	else if (g_fout->remoteVersion >= 80400)
+	{
+		appendPQExpBuffer(query, "SELECT amopstrategy, false AS amopreqcheck, "
+						  "amopopr::pg_catalog.regoperator, "
+						  "NULL AS sortfamily, "
+						  "NULL AS sortfamilynsp "
 						  "FROM pg_catalog.pg_amop ao, pg_catalog.pg_depend "
 		  "WHERE refclassid = 'pg_catalog.pg_opfamily'::pg_catalog.regclass "
 						  "AND refobjid = '%u'::pg_catalog.oid "
@@ -9195,7 +9263,9 @@ dumpOpfamily(Archive *fout, OpfamilyInfo *opfinfo)
 	else
 	{
 		appendPQExpBuffer(query, "SELECT amopstrategy, amopreqcheck, "
-						  "amopopr::pg_catalog.regoperator "
+						  "amopopr::pg_catalog.regoperator, "
+						  "NULL AS sortfamily, "
+						  "NULL AS sortfamilynsp "
 						  "FROM pg_catalog.pg_amop ao, pg_catalog.pg_depend "
 		  "WHERE refclassid = 'pg_catalog.pg_opfamily'::pg_catalog.regclass "
 						  "AND refobjid = '%u'::pg_catalog.oid "
@@ -9323,18 +9393,31 @@ dumpOpfamily(Archive *fout, OpfamilyInfo *opfinfo)
 		i_amopstrategy = PQfnumber(res_ops, "amopstrategy");
 		i_amopreqcheck = PQfnumber(res_ops, "amopreqcheck");
 		i_amopopr = PQfnumber(res_ops, "amopopr");
+		i_sortfamily = PQfnumber(res_ops, "sortfamily");
+		i_sortfamilynsp = PQfnumber(res_ops, "sortfamilynsp");
 
 		for (i = 0; i < ntups; i++)
 		{
 			amopstrategy = PQgetvalue(res_ops, i, i_amopstrategy);
 			amopreqcheck = PQgetvalue(res_ops, i, i_amopreqcheck);
 			amopopr = PQgetvalue(res_ops, i, i_amopopr);
+			sortfamily = PQgetvalue(res_ops, i, i_sortfamily);
+			sortfamilynsp = PQgetvalue(res_ops, i, i_sortfamilynsp);
 
 			if (needComma)
 				appendPQExpBuffer(q, " ,\n    ");
 
 			appendPQExpBuffer(q, "OPERATOR %s %s",
 							  amopstrategy, amopopr);
+
+			if (strlen(sortfamily) > 0)
+			{
+				appendPQExpBuffer(q, " FOR ORDER BY ");
+				if (strcmp(sortfamilynsp, opfinfo->dobj.namespace->dobj.name) != 0)
+					appendPQExpBuffer(q, "%s.", fmtId(sortfamilynsp));
+				appendPQExpBuffer(q, "%s", fmtId(sortfamily));
+			}
+
 			if (strcmp(amopreqcheck, "t") == 0)
 				appendPQExpBuffer(q, " RECHECK");
 

@@ -685,6 +685,11 @@ FROM pg_amop as p1
 WHERE p1.amopfamily = 0 OR p1.amoplefttype = 0 OR p1.amoprighttype = 0
     OR p1.amopopr = 0 OR p1.amopmethod = 0 OR p1.amopstrategy < 1;
 
+SELECT p1.amopfamily, p1.amopstrategy
+FROM pg_amop as p1
+WHERE NOT ((p1.amoppurpose = 's' AND p1.amopsortfamily = 0) OR
+           (p1.amoppurpose = 'o' AND p1.amopsortfamily <> 0));
+
 -- amoplefttype/amoprighttype must match the operator
 
 SELECT p1.oid, p2.oid
@@ -697,6 +702,21 @@ WHERE p1.amopopr = p2.oid AND NOT
 SELECT p1.oid, p2.oid
 FROM pg_amop AS p1, pg_opfamily AS p2
 WHERE p1.amopfamily = p2.oid AND p1.amopmethod != p2.opfmethod;
+
+-- amopsortfamily, if present, must reference a btree family
+
+SELECT p1.amopfamily, p1.amopstrategy
+FROM pg_amop AS p1
+WHERE p1.amopsortfamily <> 0 AND NOT EXISTS
+    (SELECT 1 from pg_opfamily op WHERE op.oid = p1.amopsortfamily
+     AND op.opfmethod = (SELECT oid FROM pg_am WHERE amname = 'btree'));
+
+-- check for ordering operators not supported by parent AM
+
+SELECT p1.amopfamily, p1.amopopr, p2.oid, p2.amname
+FROM pg_amop AS p1, pg_am AS p2
+WHERE p1.amopmethod = p2.oid AND
+    p1.amoppurpose = 'o' AND NOT p2.amcanorderbyop;
 
 -- Cross-check amopstrategy index against parent AM
 
@@ -716,15 +736,35 @@ WHERE p2.amopmethod = p1.oid AND
     p1.amstrategies != (SELECT count(*) FROM pg_amop AS p3
                         WHERE p3.amopfamily = p2.amopfamily AND
                               p3.amoplefttype = p2.amoplefttype AND
-                              p3.amoprighttype = p2.amoprighttype);
+                              p3.amoprighttype = p2.amoprighttype AND
+                              p3.amoppurpose = 's');
+
+-- Currently, none of the AMs with fixed strategy sets support ordering ops.
+
+SELECT p1.amname, p2.amopfamily, p2.amopstrategy
+FROM pg_am AS p1, pg_amop AS p2
+WHERE p2.amopmethod = p1.oid AND
+    p1.amstrategies <> 0 AND p2.amoppurpose <> 's';
 
 -- Check that amopopr points at a reasonable-looking operator, ie a binary
--- operator yielding boolean.
+-- operator.  If it's a search operator it had better yield boolean,
+-- otherwise an input type of its sort opfamily.
 
 SELECT p1.amopfamily, p1.amopopr, p2.oid, p2.oprname
 FROM pg_amop AS p1, pg_operator AS p2
 WHERE p1.amopopr = p2.oid AND
-    (p2.oprkind != 'b' OR p2.oprresult != 'bool'::regtype);
+    p2.oprkind != 'b';
+
+SELECT p1.amopfamily, p1.amopopr, p2.oid, p2.oprname
+FROM pg_amop AS p1, pg_operator AS p2
+WHERE p1.amopopr = p2.oid AND p1.amoppurpose = 's' AND
+    p2.oprresult != 'bool'::regtype;
+
+SELECT p1.amopfamily, p1.amopopr, p2.oid, p2.oprname
+FROM pg_amop AS p1, pg_operator AS p2
+WHERE p1.amopopr = p2.oid AND p1.amoppurpose = 'o' AND NOT EXISTS
+    (SELECT 1 FROM pg_opclass op
+     WHERE opcfamily = p1.amopsortfamily AND opcintype = p2.oprresult);
 
 -- Make a list of all the distinct operator names being used in particular
 -- strategy slots.  This is a bit hokey, since the list might need to change
@@ -735,13 +775,13 @@ SELECT DISTINCT amopmethod, amopstrategy, oprname
 FROM pg_amop p1 LEFT JOIN pg_operator p2 ON amopopr = p2.oid
 ORDER BY 1, 2, 3;
 
--- Check that all operators linked to by opclass entries have selectivity
--- estimators.  This is not absolutely required, but it seems a reasonable
--- thing to insist on for all standard datatypes.
+-- Check that all opclass search operators have selectivity estimators.
+-- This is not absolutely required, but it seems a reasonable thing
+-- to insist on for all standard datatypes.
 
 SELECT p1.amopfamily, p1.amopopr, p2.oid, p2.oprname
 FROM pg_amop AS p1, pg_operator AS p2
-WHERE p1.amopopr = p2.oid AND
+WHERE p1.amopopr = p2.oid AND p1.amoppurpose = 's' AND
     (p2.oprrest = 0 OR p2.oprjoin = 0);
 
 -- Check that each opclass in an opfamily has associated operators, that is

@@ -423,7 +423,16 @@
       <entry><structfield>amcanorder</structfield></entry>
       <entry><type>bool</type></entry>
       <entry></entry>
-      <entry>Does the access method support ordered scans?</entry>
+      <entry>Does the access method support ordered scans sorted by the
+       indexed column's value?</entry>
+     </row>
+
+     <row>
+      <entry><structfield>amcanorderbyop</structfield></entry>
+      <entry><type>bool</type></entry>
+      <entry></entry>
+      <entry>Does the access method support ordered scans sorted by the result
+       of an operator on the indexed column?</entry>
      </row>
 
      <row>
@@ -598,9 +607,13 @@
   <para>
    The catalog <structname>pg_amop</structname> stores information about
    operators associated with access method operator families.  There is one
-   row for each operator that is a member of an operator family.  An operator
+   row for each operator that is a member of an operator family.  A family
+   member can be either a <firstterm>search</> operator or an
+   <firstterm>ordering</> operator.  An operator
    can appear in more than one family, but cannot appear in more than one
-   position within a family.
+   search position nor more than one ordering position within a family.
+   (It is allowed, though unlikely, for an operator to be used for both
+   search and ordering purposes.)
   </para>
 
   <table>
@@ -646,6 +659,14 @@
      </row>
 
      <row>
+      <entry><structfield>amoppurpose</structfield></entry>
+      <entry><type>char</type></entry>
+      <entry></entry>
+      <entry>Operator purpose, either <literal>s</> for search or
+       <literal>o</> for ordering</entry>
+     </row>
+
+     <row>
       <entry><structfield>amopopr</structfield></entry>
       <entry><type>oid</type></entry>
       <entry><literal><link linkend="catalog-pg-operator"><structname>pg_operator</structname></link>.oid</literal></entry>
@@ -659,9 +680,51 @@
       <entry>Index access method operator family is for</entry>
      </row>
 
+     <row>
+      <entry><structfield>amopsortfamily</structfield></entry>
+      <entry><type>oid</type></entry>
+      <entry><literal><link linkend="catalog-pg-opfamily"><structname>pg_opfamily</structname></link>.oid</literal></entry>
+      <entry>The btree operator family this entry sorts according to, if an
+       ordering operator; zero if a search operator</entry>
+     </row>
+
     </tbody>
    </tgroup>
   </table>
+
+  <para>
+   A <quote>search</> operator entry indicates that an index of this operator
+   family can be searched to find all rows satisfying
+   <literal>WHERE</>
+   <replaceable>indexed_column</>
+   <replaceable>operator</>
+   <replaceable>constant</>.
+   Obviously, such an operator must return boolean, and its left-hand input
+   type must match the index's column data type.
+  </para>
+
+  <para>
+   An <quote>ordering</> operator entry indicates that an index of this
+   operator family can be scanned to return rows in the order represented by
+   <literal>ORDER BY</>
+   <replaceable>indexed_column</>
+   <replaceable>operator</>
+   <replaceable>constant</>.
+   Such an operator could return any sortable data type, though again
+   its left-hand input type must match the index's column data type.
+   The exact semantics of the <literal>ORDER BY</> are specified by the
+   <structfield>amopsortfamily</structfield> column, which must reference
+   a btree operator family for the operator's result type.
+  </para>
+
+  <note>
+   <para>
+    At present, it's assumed that the sort order for an ordering operator
+    is the default for the referenced opfamily, i.e., <literal>ASC NULLS
+    LAST</>.  This might someday be relaxed by adding additional columns
+    to specify sort options explicitly.
+   </para>
+  </note>
 
   <para>
    An entry's <structfield>amopmethod</> must match the

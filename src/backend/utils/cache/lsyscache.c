@@ -46,12 +46,15 @@ get_attavgwidth_hook_type get_attavgwidth_hook = NULL;
  * op_in_opfamily
  *
  *		Return t iff operator 'opno' is in operator family 'opfamily'.
+ *
+ * This function only considers search operators, not ordering operators.
  */
 bool
 op_in_opfamily(Oid opno, Oid opfamily)
 {
-	return SearchSysCacheExists2(AMOPOPID,
+	return SearchSysCacheExists3(AMOPOPID,
 								 ObjectIdGetDatum(opno),
+								 CharGetDatum(AMOP_SEARCH),
 								 ObjectIdGetDatum(opfamily));
 }
 
@@ -60,6 +63,8 @@ op_in_opfamily(Oid opno, Oid opfamily)
  *
  *		Get the operator's strategy number within the specified opfamily,
  *		or 0 if it's not a member of the opfamily.
+ *
+ * This function only considers search operators, not ordering operators.
  */
 int
 get_op_opfamily_strategy(Oid opno, Oid opfamily)
@@ -68,8 +73,9 @@ get_op_opfamily_strategy(Oid opno, Oid opfamily)
 	Form_pg_amop amop_tup;
 	int			result;
 
-	tp = SearchSysCache2(AMOPOPID,
+	tp = SearchSysCache3(AMOPOPID,
 						 ObjectIdGetDatum(opno),
+						 CharGetDatum(AMOP_SEARCH),
 						 ObjectIdGetDatum(opfamily));
 	if (!HeapTupleIsValid(tp))
 		return 0;
@@ -85,6 +91,8 @@ get_op_opfamily_strategy(Oid opno, Oid opfamily)
  *		Get the operator's strategy number and declared input data types
  *		within the specified opfamily.
  *
+ * This function only considers search operators, not ordering operators.
+ *
  * Caller should already have verified that opno is a member of opfamily,
  * therefore we raise an error if the tuple is not found.
  */
@@ -97,8 +105,9 @@ get_op_opfamily_properties(Oid opno, Oid opfamily,
 	HeapTuple	tp;
 	Form_pg_amop amop_tup;
 
-	tp = SearchSysCache2(AMOPOPID,
+	tp = SearchSysCache3(AMOPOPID,
 						 ObjectIdGetDatum(opno),
+						 CharGetDatum(AMOP_SEARCH),
 						 ObjectIdGetDatum(opfamily));
 	if (!HeapTupleIsValid(tp))
 		elog(ERROR, "operator %u is not a member of opfamily %u",

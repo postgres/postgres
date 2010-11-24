@@ -1661,8 +1661,9 @@ get_btree_test_op(Oid pred_op, Oid clause_op, bool refute_it)
 		 * From the same opfamily, find a strategy number for the clause_op,
 		 * if possible
 		 */
-		clause_tuple = SearchSysCache2(AMOPOPID,
+		clause_tuple = SearchSysCache3(AMOPOPID,
 									   ObjectIdGetDatum(clause_op),
+									   CharGetDatum(AMOP_SEARCH),
 									   ObjectIdGetDatum(opfamily_id));
 		if (HeapTupleIsValid(clause_tuple))
 		{
@@ -1677,8 +1678,9 @@ get_btree_test_op(Oid pred_op, Oid clause_op, bool refute_it)
 		}
 		else if (OidIsValid(clause_op_negator))
 		{
-			clause_tuple = SearchSysCache2(AMOPOPID,
-										 ObjectIdGetDatum(clause_op_negator),
+			clause_tuple = SearchSysCache3(AMOPOPID,
+										   ObjectIdGetDatum(clause_op_negator),
+										   CharGetDatum(AMOP_SEARCH),
 										   ObjectIdGetDatum(opfamily_id));
 			if (HeapTupleIsValid(clause_tuple))
 			{

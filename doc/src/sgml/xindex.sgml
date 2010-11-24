@@ -276,10 +276,13 @@
    </table>
 
   <para>
-   Notice that all strategy operators return Boolean values.  In
-   practice, all operators defined as index method strategies must
+   Notice that all the operators listed above return Boolean values.  In
+   practice, all operators defined as index method search operators must
    return type <type>boolean</type>, since they must appear at the top
    level of a <literal>WHERE</> clause to be used with an index.
+   (Some index access methods also support <firstterm>ordering operators</>,
+   which typically don't return Boolean values; that feature is discussed
+   in <xref linkend="xindex-ordering-ops">.)
   </para>
  </sect2>
 
@@ -464,7 +467,7 @@
    </table>
 
   <para>
-   Unlike strategy operators, support functions return whichever data
+   Unlike search operators, support functions return whichever data
    type the particular index method expects; for example in the case
    of the comparison function for B-trees, a signed integer.  The number
    and types of the arguments to each support function are likewise
@@ -918,6 +921,62 @@ ALTER OPERATOR FAMILY integer_ops USING btree ADD
    appears in a hash operator family is a candidate for hash joins,
    hash aggregation, and related optimizations.  The hash operator family
    is essential here since it identifies the hash function(s) to use.
+  </para>
+ </sect2>
+
+ <sect2 id="xindex-ordering-ops">
+  <title>Ordering Operators</title>
+
+  <para>
+   Some index access methods (currently, only GiST) support the concept of
+   <firstterm>ordering operators</>.  What we have been discussing so far
+   are <firstterm>search operators</>.  A search operator is one for which
+   the index can be searched to find all rows satisfying
+   <literal>WHERE</>
+   <replaceable>indexed_column</>
+   <replaceable>operator</>
+   <replaceable>constant</>.
+   Note that nothing is promised about the order in which the matching rows
+   will be returned.  In contrast, an ordering operator does not restrict the
+   set of rows that can be returned, but instead determines their order.
+   An ordering operator is one for which the index can be scanned to return
+   rows in the order represented by
+   <literal>ORDER BY</>
+   <replaceable>indexed_column</>
+   <replaceable>operator</>
+   <replaceable>constant</>.
+   The reason for defining ordering operators that way is that it supports
+   nearest-neighbor searches, if the operator is one that measures distance.
+   For example, a query like
+<programlisting><![CDATA[
+SELECT * FROM places ORDER BY location <-> point '(101,456)' LIMIT 10;
+]]>
+</programlisting>
+   finds the ten places closest to a given target point.  A GiST index
+   on the location column can do this efficiently because
+   <literal>&lt;-&gt;</> is an ordering operator.
+  </para>
+
+  <para>
+   While search operators have to return Boolean results, ordering operators
+   usually return some other type, such as float or numeric for distances.
+   This type is normally not the same as the data type being indexed.
+   To avoid hard-wiring assumptions about the behavior of different data
+   types, the definition of an ordering operator is required to name
+   a B-tree operator family that specifies the sort ordering of the result
+   data type.  As was stated in the previous section, B-tree operator families
+   define <productname>PostgreSQL</productname>'s notion of ordering, so
+   this is a natural representation.  Since the point <literal>&lt;-&gt;</>
+   operator returns <type>float8</>, it could be specified in an operator
+   class creation command like this:
+<programlisting><![CDATA[
+OPERATOR 15    <-> (point, point) FOR ORDER BY float_ops
+]]>
+</programlisting>
+   where <literal>float_ops</> is the built-in operator family that includes
+   operations on <type>float8</>.  This declaration states that the index
+   is able to return rows in order of increasing values of the
+   <literal>&lt;-&gt;</> operator.
   </para>
  </sect2>
 

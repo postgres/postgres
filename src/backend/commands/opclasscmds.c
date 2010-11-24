@@ -54,6 +54,7 @@ typedef struct
 	int			number;			/* strategy or support proc number */
 	Oid			lefttype;		/* lefttype */
 	Oid			righttype;		/* righttype */
+	Oid			sortfamily;		/* ordering operator's sort opfamily, or 0 */
 } OpFamilyMember;
 
 
@@ -457,6 +458,7 @@ DefineOpClass(CreateOpClassStmt *stmt)
 		CreateOpClassItem *item = lfirst(l);
 		Oid			operOid;
 		Oid			funcOid;
+		Oid			sortfamilyOid;
 		OpFamilyMember *member;
 
 		Assert(IsA(item, CreateOpClassItem));
@@ -486,6 +488,13 @@ DefineOpClass(CreateOpClassStmt *stmt)
 											 false, -1);
 				}
 
+				if (item->order_family)
+					sortfamilyOid = get_opfamily_oid(BTREE_AM_OID,
+													 item->order_family,
+													 false);
+				else
+					sortfamilyOid = InvalidOid;
+
 #ifdef NOT_USED
 				/* XXX this is unnecessary given the superuser check above */
 				/* Caller must own operator and its underlying function */
@@ -502,6 +511,7 @@ DefineOpClass(CreateOpClassStmt *stmt)
 				member = (OpFamilyMember *) palloc0(sizeof(OpFamilyMember));
 				member->object = operOid;
 				member->number = item->number;
+				member->sortfamily = sortfamilyOid;
 				assignOperTypes(member, amoid, typeoid);
 				addFamilyMember(&operators, member, false);
 				break;
@@ -825,6 +835,7 @@ AlterOpFamilyAdd(List *opfamilyname, Oid amoid, Oid opfamilyoid,
 		CreateOpClassItem *item = lfirst(l);
 		Oid			operOid;
 		Oid			funcOid;
+		Oid			sortfamilyOid;
 		OpFamilyMember *member;
 
 		Assert(IsA(item, CreateOpClassItem));
@@ -854,6 +865,13 @@ AlterOpFamilyAdd(List *opfamilyname, Oid amoid, Oid opfamilyoid,
 					operOid = InvalidOid;		/* keep compiler quiet */
 				}
 
+				if (item->order_family)
+					sortfamilyOid = get_opfamily_oid(BTREE_AM_OID,
+													 item->order_family,
+													 false);
+				else
+					sortfamilyOid = InvalidOid;
+
 #ifdef NOT_USED
 				/* XXX this is unnecessary given the superuser check above */
 				/* Caller must own operator and its underlying function */
@@ -870,6 +888,7 @@ AlterOpFamilyAdd(List *opfamilyname, Oid amoid, Oid opfamilyoid,
 				member = (OpFamilyMember *) palloc0(sizeof(OpFamilyMember));
 				member->object = operOid;
 				member->number = item->number;
+				member->sortfamily = sortfamilyOid;
 				assignOperTypes(member, amoid, InvalidOid);
 				addFamilyMember(&operators, member, false);
 				break;
@@ -1043,16 +1062,51 @@ assignOperTypes(OpFamilyMember *member, Oid amoid, Oid typeoid)
 	opform = (Form_pg_operator) GETSTRUCT(optup);
 
 	/*
-	 * Opfamily operators must be binary ops returning boolean.
+	 * Opfamily operators must be binary.
 	 */
 	if (opform->oprkind != 'b')
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
 				 errmsg("index operators must be binary")));
-	if (opform->oprresult != BOOLOID)
-		ereport(ERROR,
-				(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
-				 errmsg("index operators must return boolean")));
+
+	if (OidIsValid(member->sortfamily))
+	{
+		/*
+		 * Ordering op, check index supports that.  (We could perhaps also
+		 * check that the operator returns a type supported by the sortfamily,
+		 * but that seems more trouble than it's worth here.  If it does not,
+		 * the operator will never be matchable to any ORDER BY clause, but
+		 * no worse consequences can ensue.  Also, trying to check that would
+		 * create an ordering hazard during dump/reload: it's possible that
+		 * the family has been created but not yet populated with the required
+		 * operators.)
+		 */
+		HeapTuple	amtup;
+		Form_pg_am	pg_am;
+
+		amtup = SearchSysCache1(AMOID, ObjectIdGetDatum(amoid));
+		if (amtup == NULL)
+			elog(ERROR, "cache lookup failed for access method %u", amoid);
+		pg_am = (Form_pg_am) GETSTRUCT(amtup);
+
+		if (!pg_am->amcanorderbyop)
+			ereport(ERROR,
+					(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
+					 errmsg("access method \"%s\" does not support ordering operators",
+							NameStr(pg_am->amname))));
+
+		ReleaseSysCache(amtup);
+	}
+	else
+	{
+		/*
+		 * Search operators must return boolean.
+		 */
+		if (opform->oprresult != BOOLOID)
+			ereport(ERROR,
+					(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
+					 errmsg("index search operators must return boolean")));
+	}
 
 	/*
 	 * If lefttype/righttype isn't specified, use the operator's input types
@@ -1206,6 +1260,7 @@ storeOperators(List *opfamilyname, Oid amoid,
 	foreach(l, operators)
 	{
 		OpFamilyMember *op = (OpFamilyMember *) lfirst(l);
+		char	oppurpose;
 
 		/*
 		 * If adding to an existing family, check for conflict with an
@@ -1225,6 +1280,8 @@ storeOperators(List *opfamilyname, Oid amoid,
 							format_type_be(op->righttype),
 							NameListToString(opfamilyname))));
 
+		oppurpose = OidIsValid(op->sortfamily) ? AMOP_ORDER : AMOP_SEARCH;
+
 		/* Create the pg_amop entry */
 		memset(values, 0, sizeof(values));
 		memset(nulls, false, sizeof(nulls));
@@ -1233,8 +1290,10 @@ storeOperators(List *opfamilyname, Oid amoid,
 		values[Anum_pg_amop_amoplefttype - 1] = ObjectIdGetDatum(op->lefttype);
 		values[Anum_pg_amop_amoprighttype - 1] = ObjectIdGetDatum(op->righttype);
 		values[Anum_pg_amop_amopstrategy - 1] = Int16GetDatum(op->number);
+		values[Anum_pg_amop_amoppurpose - 1] = CharGetDatum(oppurpose);
 		values[Anum_pg_amop_amopopr - 1] = ObjectIdGetDatum(op->object);
 		values[Anum_pg_amop_amopmethod - 1] = ObjectIdGetDatum(amoid);
+		values[Anum_pg_amop_amopsortfamily - 1] = ObjectIdGetDatum(op->sortfamily);
 
 		tup = heap_form_tuple(rel->rd_att, values, nulls);
 
@@ -1274,6 +1333,15 @@ storeOperators(List *opfamilyname, Oid amoid,
 			referenced.objectId = opfamilyoid;
 			referenced.objectSubId = 0;
 			recordDependencyOn(&myself, &referenced, DEPENDENCY_AUTO);
+		}
+
+		/* A search operator also needs a dep on the referenced opfamily */
+		if (OidIsValid(op->sortfamily))
+		{
+			referenced.classId = OperatorFamilyRelationId;
+			referenced.objectId = op->sortfamily;
+			referenced.objectSubId = 0;
+			recordDependencyOn(&myself, &referenced, DEPENDENCY_NORMAL);
 		}
 	}
 
