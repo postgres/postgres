@@ -25,24 +25,33 @@ override CFLAGS += $(PTHREAD_CFLAGS)
 endif
 
 # Need to recompile any libpgport object files because we need these
-# object files to use the same compile flags as libpq.  If we used
-# the object files from libpgport, this would not be true on all
-# platforms.  We filter some object files so we only use object
-# files configure says we need.
+# object files to use the same compile flags as libpq; some
+# platforms require special flags for all libpq object files.
 LIBS := $(LIBS:-lpgport=)
+
+# external object files that are always used by libpq
+BACKEND_LIBPQ = md5 ip
+UTILS_MB = encnames wchar
+PERM_PGPORT = inet_net_ntop noblock pgstrcasecmp thread
+ifeq ($(PORTNAME), win32)
+PERM_PGPORT += pgsleep
+endif
+
+
+# pgport object files are used by libpq if identified by configure
+OPT_PGPORT = $(filter $(addsuffix .o, crypt getaddrinfo inet_aton open snprintf strerror strlcpy win32error), $(LIBOBJS))
 
 OBJS=	fe-auth.o fe-connect.o fe-exec.o fe-misc.o fe-print.o fe-lobj.o \
 	fe-protocol2.o fe-protocol3.o pqexpbuffer.o pqsignal.o fe-secure.o \
 	libpq-events.o \
-	md5.o ip.o wchar.o encnames.o inet_net_ntop.o noblock.o pgstrcasecmp.o thread.o \
-	$(filter crypt.o getaddrinfo.o inet_aton.o open.o snprintf.o strerror.o strlcpy.o win32error.o, $(LIBOBJS))
+	$(addsuffix .o, $(PERM_PGPORT) $(OPT_PGPORT) $(BACKEND_LIBPQ) $(UTILS_MB))
 
 ifeq ($(PORTNAME), cygwin)
 override shlib = cyg$(NAME)$(DLSUFFIX)
 endif
 
 ifeq ($(PORTNAME), win32)
-OBJS += win32.o pgsleep.o libpqrc.o
+OBJS += win32.o libpqrc.o
 
 libpqrc.o: libpq.rc
 	$(WINDRES) -i $< -o $@
@@ -77,17 +86,15 @@ backend_src = $(top_srcdir)/src/backend
 # We use several backend modules verbatim, but since we need to
 # compile with appropriate options to build a shared lib, we can't
 # necessarily use the same object files as the backend uses. Instead,
-# symlink the source files in here and build our own object file.
-# For port modules, this only happens if configure decides the module
-# is needed (see filter hack in OBJS, above).
+# we symlink the source files in here and build our own object files.
 
-crypt.c getaddrinfo.c inet_aton.c inet_net_ntop.c noblock.c open.c pgstrcasecmp.c snprintf.c strerror.c strlcpy.c thread.c win32error.c pgsleep.c: % : $(top_srcdir)/src/port/%
+$(addsuffix .c, $(PERM_PGPORT) $(OPT_PGPORT)): % : $(top_srcdir)/src/port/%
 	rm -f $@ && $(LN_S) $< .
 
-md5.c ip.c: % : $(backend_src)/libpq/%
+$(addsuffix .c, $(BACKEND_LIBPQ)): % : $(backend_src)/libpq/%
 	rm -f $@ && $(LN_S) $< .
 
-encnames.c wchar.c : % : $(backend_src)/utils/mb/%
+$(addsuffix .c, $(UTILS_MB)): % : $(backend_src)/utils/mb/%
 	rm -f $@ && $(LN_S) $< .
 
 
@@ -124,7 +131,7 @@ uninstall: uninstall-lib
 	rm -f '$(DESTDIR)$(datadir)/pg_service.conf.sample'
 
 clean distclean: clean-lib
-	rm -f $(OBJS) pg_config_paths.h crypt.c getaddrinfo.c inet_aton.c noblock.c open.c pgstrcasecmp.c snprintf.c strerror.c strlcpy.c thread.c md5.c ip.c encnames.c wchar.c win32error.c pgsleep.c pthread.h libpq.rc
+	rm -f $(OBJS) pg_config_paths.h pthread.h libpq.rc $(addsuffix .c, $(BACKEND_LIBPQ) $(UTILS_MB) $(PERM_PGPORT) $(OPT_PGPORT))
 # Might be left over from a Win32 client-only build
 	rm -f pg_config_paths.h
 
