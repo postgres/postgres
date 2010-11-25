@@ -2,6 +2,7 @@
 /crypt.c
 /getaddrinfo.c
 /inet_aton.c
+/inet_net_ntop.c
 /noblock.c
 /open.c
 /pgstrcasecmp.c
