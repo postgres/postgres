@@ -107,6 +107,13 @@ typedef enum
 	PQERRORS_VERBOSE			/* all the facts, ma'am */
 } PGVerbosity;
 
+typedef enum
+{
+	PQACCESS,					/* connected to server */
+	PQREJECT,					/* server rejected access */
+	PQNORESPONSE				/* server did not respond */
+} PGPing;
+
 /* PGconn encapsulates a connection to the backend.
  * The contents of this struct are not supposed to be known to applications.
  */
@@ -403,6 +410,9 @@ extern int	PQendcopy(PGconn *conn);
 extern int	PQsetnonblocking(PGconn *conn, int arg);
 extern int	PQisnonblocking(const PGconn *conn);
 extern int	PQisthreadsafe(void);
+extern PGPing PQping(const char *conninfo);
+extern PGPing PQpingParams(const char **keywords,
+				  const char **values, int expand_dbname);
 
 /* Force the write buffer to be written (or at least try) */
 extern int	PQflush(PGconn *conn);

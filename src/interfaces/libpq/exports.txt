@@ -157,3 +157,5 @@ PQescapeLiteral           154
 PQescapeIdentifier        155
 PQconnectdbParams         156
 PQconnectStartParams      157
+PQping                    158
+PQpingParams              159

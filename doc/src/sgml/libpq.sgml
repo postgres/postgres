@@ -1511,6 +1511,74 @@ int PQbackendPID(const PGconn *conn);
      </listitem>
     </varlistentry>
 
+    <varlistentry id="libpq-pqpingparams">
+     <term><function>PQpingParams</function><indexterm><primary>PQpingParams</></></term>
+     <listitem>
+      <para>
+       <function>PQpingParams</function> indicates the status of the
+       server.  The currently recognized parameter key words are the
+       same as <function>PQconnectParams</>.
+
+<synopsis>
+PGPing PQpingParams(const char **keywords, const char **values, int expand_dbname);
+</synopsis>
+
+       It returns one of the following values:
+
+       <variablelist>
+        <varlistentry id="libpq-pqpingparams-pqaccess">
+         <term><literal>PQACCESS</literal></term>
+         <listitem>
+          <para>
+           The server is running and allows access.
+          </para>
+         </listitem>
+        </varlistentry>
+
+        <varlistentry id="libpq-pqpingparams-pqreject">
+         <term><literal>PQREJECT</literal></term>
+         <listitem>
+          <para>
+           The server is running but rejected a connection request.
+          </para>
+         </listitem>
+        </varlistentry>
+
+        <varlistentry id="libpq-pqpingparams-pqnoresponse">
+         <term><literal>PQNORESPONSE</literal></term>
+         <listitem>
+          <para>
+           The server did not respond.
+          </para>
+         </listitem>
+        </varlistentry>
+       </variablelist>
+
+      </para>
+
+     </listitem>
+    </varlistentry>
+
+    <varlistentry id="libpq-pqping">
+     <term><function>PQping</function><indexterm><primary>PQping</></></term>
+     <listitem>
+      <para>
+       Returns the status of the server.
+
+<synopsis>
+PGPing PQping(const char *conninfo);
+</synopsis>
+      </para>
+
+      <para>
+       This function uses the same <literal>conninfo</literal> parameter
+       key words as <function>PQconnectdb</>.  It returns the same
+       values as <function>PQpingParams</> above.
+      </para>
+
+     </listitem>
+    </varlistentry>
+
     <varlistentry id="libpq-pqconnectionneedspassword">
      <term><function>PQconnectionNeedsPassword</function><indexterm><primary>PQconnectionNeedsPassword</></></term>
      <listitem>

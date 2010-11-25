@@ -136,7 +136,7 @@ static char **readfile(const char *path);
 static int	start_postmaster(void);
 static void read_post_opts(void);
 
-static bool test_postmaster_connection(bool);
+static PGPing test_postmaster_connection(bool);
 static bool postmaster_is_alive(pid_t pid);
 
 static char postopts_file[MAXPGPATH];
@@ -400,11 +400,10 @@ start_postmaster(void)
  * Note that the checkpoint parameter enables a Windows service control
  * manager checkpoint, it's got nothing to do with database checkpoints!!
  */
-static bool
+static PGPing
 test_postmaster_connection(bool do_checkpoint)
 {
-	PGconn	   *conn;
-	bool		success = false;
+	PGPing		ret = PQACCESS;	/* assume success for zero wait */
 	int			i;
 	char		portstr[32];
 	char	   *p;
@@ -508,18 +507,10 @@ test_postmaster_connection(bool do_checkpoint)
 
 	for (i = 0; i < wait_seconds; i++)
 	{
-		if ((conn = PQconnectdb(connstr)) != NULL &&
-			(PQstatus(conn) == CONNECTION_OK ||
-			 PQconnectionNeedsPassword(conn)))
-		{
-			PQfinish(conn);
-			success = true;
-			break;
-		}
+		if ((ret = PQping(connstr)) != PQNORESPONSE)
+			return ret;
 		else
 		{
-			PQfinish(conn);
-
 #if defined(WIN32)
 			if (do_checkpoint)
 			{
@@ -543,7 +534,8 @@ test_postmaster_connection(bool do_checkpoint)
 		}
 	}
 
-	return success;
+	/* value of last call to PQping */
+	return ret;
 }
 
 
@@ -746,9 +738,11 @@ do_start(void)
 
 	if (do_wait)
 	{
+		int status;
+		
 		print_msg(_("waiting for server to start..."));
 
-		if (test_postmaster_connection(false) == false)
+		if ((status = test_postmaster_connection(false)) == PQNORESPONSE)
 		{
 			write_stderr(_("%s: could not start server\n"
 						   "Examine the log output.\n"),
@@ -759,6 +753,9 @@ do_start(void)
 		{
 			print_msg(_(" done\n"));
 			print_msg(_("server started\n"));
+			if (status == PQREJECT)
+				write_stderr(_("warning:  could not connect, perhaps due to invalid authentication or\n"
+								"misconfiguration.\n"));
 		}
 	}
 	else

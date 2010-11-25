@@ -285,6 +285,7 @@ static bool connectOptions1(PGconn *conn, const char *conninfo);
 static bool connectOptions2(PGconn *conn);
 static int	connectDBStart(PGconn *conn);
 static int	connectDBComplete(PGconn *conn);
+static PGPing internal_ping(PGconn *conn);
 static PGconn *makeEmptyPGconn(void);
 static void fillPGconn(PGconn *conn, PQconninfoOption *connOptions);
 static void freePGconn(PGconn *conn);
@@ -375,6 +376,20 @@ PQconnectdbParams(const char **keywords,
 
 }
 
+PGPing
+PQpingParams(const char **keywords,
+				  const char **values,
+				  int expand_dbname)
+{
+	PGconn	   *conn = PQconnectStartParams(keywords, values, expand_dbname);
+	PGPing		ret;
+
+	ret = internal_ping(conn);
+	PQfinish(conn);
+
+	return ret;
+}
+
 /*
  *		PQconnectdb
  *
@@ -406,6 +421,18 @@ PQconnectdb(const char *conninfo)
 		(void) connectDBComplete(conn);
 
 	return conn;
+}
+
+PGPing
+PQping(const char *conninfo)
+{
+	PGconn	   *conn = PQconnectStart(conninfo);
+	PGPing		ret;
+
+	ret = internal_ping(conn);
+	PQfinish(conn);
+
+	return ret;
 }
 
 /*
@@ -2510,6 +2537,32 @@ error_return:
 	 */
 	conn->status = CONNECTION_BAD;
 	return PGRES_POLLING_FAILED;
+}
+
+
+/*
+ * internal_ping
+ *	Determine if a server is running and if we can connect to it.
+ */
+PGPing
+internal_ping(PGconn *conn)
+{
+	if (conn && conn->status != CONNECTION_BAD)
+	{
+		(void) connectDBComplete(conn);
+
+		/*
+		 *	If the connection needs a password, we can consider the
+		 *	server as accepting connections.
+		 */
+	    if (conn && (conn->status != CONNECTION_BAD ||
+		    PQconnectionNeedsPassword(conn)))
+			return PQACCESS;
+		else
+			return PQREJECT;
+	}
+	else
+		return PQNORESPONSE;
 }
 
 
