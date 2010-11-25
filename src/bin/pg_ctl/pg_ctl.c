@@ -754,7 +754,7 @@ do_start(void)
 			print_msg(_(" done\n"));
 			print_msg(_("server started\n"));
 			if (status == PQREJECT)
-				write_stderr(_("warning:  could not connect, perhaps due to invalid authentication or\n"
+				write_stderr(_("warning:  could not connect;  might be due to invalid authentication or\n"
 								"misconfiguration.\n"));
 		}
 	}
