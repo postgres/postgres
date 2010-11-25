@@ -20,6 +20,7 @@
 #include "catalog/catalog.h"
 #include "catalog/dependency.h"
 #include "catalog/indexing.h"
+#include "catalog/objectaccess.h"
 #include "catalog/pg_constraint.h"
 #include "catalog/pg_proc.h"
 #include "catalog/pg_trigger.h"
@@ -734,6 +735,10 @@ CreateTrigger(CreateTrigStmt *stmt, const char *queryString,
 	if (whenClause != NULL)
 		recordDependencyOnExpr(&myself, whenClause, whenRtable,
 							   DEPENDENCY_NORMAL);
+
+	/* Post creation hook for new trigger */
+	InvokeObjectAccessHook(OAT_POST_CREATE,
+						   TriggerRelationId, trigoid, 0);
 
 	/* Keep lock on target rel until end of xact */
 	heap_close(rel, NoLock);

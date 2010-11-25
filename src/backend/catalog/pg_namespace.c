@@ -17,6 +17,7 @@
 #include "access/heapam.h"
 #include "catalog/dependency.h"
 #include "catalog/indexing.h"
+#include "catalog/objectaccess.h"
 #include "catalog/pg_namespace.h"
 #include "utils/builtins.h"
 #include "utils/rel.h"
@@ -74,6 +75,9 @@ NamespaceCreate(const char *nspName, Oid ownerId)
 
 	/* Record dependency on owner */
 	recordDependencyOnOwner(NamespaceRelationId, nspoid, ownerId);
+
+	/* Post creation hook for new schema */
+	InvokeObjectAccessHook(OAT_POST_CREATE, NamespaceRelationId, nspoid, 0);
 
 	return nspoid;
 }

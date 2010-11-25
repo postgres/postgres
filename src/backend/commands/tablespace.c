@@ -59,6 +59,7 @@
 #include "catalog/catalog.h"
 #include "catalog/dependency.h"
 #include "catalog/indexing.h"
+#include "catalog/objectaccess.h"
 #include "catalog/pg_tablespace.h"
 #include "commands/comment.h"
 #include "commands/defrem.h"
@@ -332,6 +333,10 @@ CreateTableSpace(CreateTableSpaceStmt *stmt)
 
 	/* Record dependency on owner */
 	recordDependencyOnOwner(TableSpaceRelationId, tablespaceoid, ownerId);
+
+	/* Post creation hook for new tablespace */
+	InvokeObjectAccessHook(OAT_POST_CREATE,
+						   TableSpaceRelationId, tablespaceoid, 0);
 
 	create_tablespace_directories(location, tablespaceoid);
 

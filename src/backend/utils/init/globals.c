@@ -18,6 +18,7 @@
  */
 #include "postgres.h"
 
+#include "catalog/objectaccess.h"
 #include "libpq/pqcomm.h"
 #include "miscadmin.h"
 #include "storage/backendid.h"
@@ -117,3 +118,9 @@ int			VacuumCostBalance = 0;		/* working state for vacuum */
 bool		VacuumCostActive = false;
 
 int			GinFuzzySearchLimit = 0;
+
+/*
+ * Hook on object accesses.  This is intended as infrastructure for security
+ * and logging plugins.
+ */
+PGDLLIMPORT object_access_hook_type object_access_hook = NULL;

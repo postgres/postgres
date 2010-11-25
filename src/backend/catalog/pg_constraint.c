@@ -18,6 +18,7 @@
 #include "access/heapam.h"
 #include "catalog/dependency.h"
 #include "catalog/indexing.h"
+#include "catalog/objectaccess.h"
 #include "catalog/pg_constraint.h"
 #include "catalog/pg_operator.h"
 #include "catalog/pg_type.h"
@@ -359,6 +360,9 @@ CreateConstraintEntry(const char *constraintName,
 										DEPENDENCY_NORMAL,
 										DEPENDENCY_NORMAL);
 	}
+
+	/* Post creation hook for new constraint */
+	InvokeObjectAccessHook(OAT_POST_CREATE, ConstraintRelationId, conOid, 0);
 
 	return conOid;
 }

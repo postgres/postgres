@@ -37,6 +37,7 @@
 #include "access/sysattr.h"
 #include "catalog/dependency.h"
 #include "catalog/indexing.h"
+#include "catalog/objectaccess.h"
 #include "catalog/pg_aggregate.h"
 #include "catalog/pg_cast.h"
 #include "catalog/pg_language.h"
@@ -1760,6 +1761,10 @@ CreateCast(CreateCastStmt *stmt)
 		referenced.objectSubId = 0;
 		recordDependencyOn(&myself, &referenced, DEPENDENCY_NORMAL);
 	}
+
+	/* Post creation hook for new cast */
+	InvokeObjectAccessHook(OAT_POST_CREATE,
+						   CastRelationId, myself.objectId, 0);
 
 	heap_freetuple(tuple);
 

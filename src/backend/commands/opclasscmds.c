@@ -22,6 +22,7 @@
 #include "access/sysattr.h"
 #include "catalog/dependency.h"
 #include "catalog/indexing.h"
+#include "catalog/objectaccess.h"
 #include "catalog/pg_amop.h"
 #include "catalog/pg_amproc.h"
 #include "catalog/pg_namespace.h"
@@ -306,6 +307,10 @@ CreateOpFamily(char *amname, char *opfname, Oid namespaceoid, Oid amoid)
 
 	/* dependency on owner */
 	recordDependencyOnOwner(OperatorFamilyRelationId, opfamilyoid, GetUserId());
+
+	/* Post creation hook for new operator family */
+	InvokeObjectAccessHook(OAT_POST_CREATE,
+						   OperatorFamilyRelationId, opfamilyoid, 0);
 
 	heap_close(rel, RowExclusiveLock);
 
@@ -702,6 +707,10 @@ DefineOpClass(CreateOpClassStmt *stmt)
 
 	/* dependency on owner */
 	recordDependencyOnOwner(OperatorClassRelationId, opclassoid, GetUserId());
+
+	/* Post creation hook for new operator class */
+	InvokeObjectAccessHook(OAT_POST_CREATE,
+						   OperatorClassRelationId, opclassoid, 0);
 
 	heap_close(rel, RowExclusiveLock);
 }

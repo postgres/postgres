@@ -38,6 +38,7 @@
 #include "catalog/catalog.h"
 #include "catalog/dependency.h"
 #include "catalog/indexing.h"
+#include "catalog/objectaccess.h"
 #include "catalog/pg_largeobject.h"
 #include "catalog/pg_largeobject_metadata.h"
 #include "commands/comment.h"
@@ -217,6 +218,10 @@ inv_create(Oid lobjId)
 	 */
 	recordDependencyOnOwner(LargeObjectRelationId,
 							lobjId_new, GetUserId());
+
+	/* Post creation hook for new large object */
+	InvokeObjectAccessHook(OAT_POST_CREATE,
+						   LargeObjectRelationId, lobjId_new, 0);
 
 	/*
 	 * Advance command counter to make new tuple visible to later operations.

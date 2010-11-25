@@ -17,6 +17,7 @@
 #include "access/xact.h"
 #include "catalog/dependency.h"
 #include "catalog/indexing.h"
+#include "catalog/objectaccess.h"
 #include "catalog/pg_auth_members.h"
 #include "catalog/pg_authid.h"
 #include "catalog/pg_database.h"
@@ -401,6 +402,9 @@ CreateRole(CreateRoleStmt *stmt)
 	AddRoleMems(stmt->role, roleid,
 				rolemembers, roleNamesToIds(rolemembers),
 				GetUserId(), false);
+
+	/* Post creation hook for new role */
+	InvokeObjectAccessHook(OAT_POST_CREATE, AuthIdRelationId, roleid, 0);
 
 	/*
 	 * Close pg_authid, but keep lock till commit.

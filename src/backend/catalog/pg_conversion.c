@@ -18,6 +18,7 @@
 #include "access/sysattr.h"
 #include "catalog/dependency.h"
 #include "catalog/indexing.h"
+#include "catalog/objectaccess.h"
 #include "catalog/pg_conversion.h"
 #include "catalog/pg_conversion_fn.h"
 #include "catalog/pg_namespace.h"
@@ -130,6 +131,10 @@ ConversionCreate(const char *conname, Oid connamespace,
 	/* create dependency on owner */
 	recordDependencyOnOwner(ConversionRelationId, HeapTupleGetOid(tup),
 							conowner);
+
+	/* Post creation hook for new conversion */
+	InvokeObjectAccessHook(OAT_POST_CREATE,
+						   ConversionRelationId, HeapTupleGetOid(tup), 0);
 
 	heap_freetuple(tup);
 	heap_close(rel, RowExclusiveLock);

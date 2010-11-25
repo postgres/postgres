@@ -18,6 +18,7 @@
 #include "catalog/catalog.h"
 #include "catalog/dependency.h"
 #include "catalog/indexing.h"
+#include "catalog/objectaccess.h"
 #include "catalog/pg_foreign_data_wrapper.h"
 #include "catalog/pg_foreign_server.h"
 #include "catalog/pg_proc.h"
@@ -415,6 +416,10 @@ CreateForeignDataWrapper(CreateFdwStmt *stmt)
 
 	recordDependencyOnOwner(ForeignDataWrapperRelationId, fdwId, ownerId);
 
+	/* Post creation hook for new foreign data wrapper */
+	InvokeObjectAccessHook(OAT_POST_CREATE,
+						   ForeignDataWrapperRelationId, fdwId, 0);
+
 	heap_close(rel, NoLock);
 }
 
@@ -696,6 +701,9 @@ CreateForeignServer(CreateForeignServerStmt *stmt)
 
 	recordDependencyOnOwner(ForeignServerRelationId, srvId, ownerId);
 
+	/* Post creation hook for new foreign server */
+	InvokeObjectAccessHook(OAT_POST_CREATE, ForeignServerRelationId, srvId, 0);
+
 	heap_close(rel, NoLock);
 }
 
@@ -966,6 +974,9 @@ CreateUserMapping(CreateUserMappingStmt *stmt)
 	if (OidIsValid(useId))
 		/* Record the mapped user dependency */
 		recordDependencyOnOwner(UserMappingRelationId, umId, useId);
+
+	/* Post creation hook for new user mapping */
+	InvokeObjectAccessHook(OAT_POST_CREATE, UserMappingRelationId, umId, 0);
 
 	heap_close(rel, NoLock);
 }

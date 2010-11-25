@@ -32,6 +32,7 @@
 #include "catalog/catalog.h"
 #include "catalog/dependency.h"
 #include "catalog/indexing.h"
+#include "catalog/objectaccess.h"
 #include "catalog/pg_authid.h"
 #include "catalog/pg_database.h"
 #include "catalog/pg_db_role_setting.h"
@@ -571,6 +572,9 @@ createdb(const CreatedbStmt *stmt)
 
 	/* Create pg_shdepend entries for objects within database */
 	copyTemplateDependencies(src_dboid, dboid);
+
+	/* Post creation hook for new database */
+	InvokeObjectAccessHook(OAT_POST_CREATE, DatabaseRelationId, dboid, 0);
 
 	/*
 	 * Force a checkpoint before starting the copy. This will force dirty

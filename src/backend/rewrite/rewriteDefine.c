@@ -19,6 +19,7 @@
 #include "catalog/dependency.h"
 #include "catalog/indexing.h"
 #include "catalog/namespace.h"
+#include "catalog/objectaccess.h"
 #include "catalog/pg_rewrite.h"
 #include "catalog/storage.h"
 #include "miscadmin.h"
@@ -176,6 +177,10 @@ InsertRule(char *rulname,
 		recordDependencyOnExpr(&myself, event_qual, qry->rtable,
 							   DEPENDENCY_NORMAL);
 	}
+
+	/* Post creation hook for new rule */
+	InvokeObjectAccessHook(OAT_POST_CREATE,
+						   RewriteRelationId, rewriteObjectId, 0);
 
 	heap_close(pg_rewrite_desc, RowExclusiveLock);
 

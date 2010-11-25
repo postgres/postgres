@@ -26,6 +26,7 @@
 #include "catalog/index.h"
 #include "catalog/indexing.h"
 #include "catalog/namespace.h"
+#include "catalog/objectaccess.h"
 #include "catalog/pg_constraint.h"
 #include "catalog/pg_depend.h"
 #include "catalog/pg_inherits.h"
@@ -4079,6 +4080,10 @@ ATExecAddColumn(AlteredTableInfo *tab, Relation rel,
 	CatalogUpdateIndexes(pgclass, reltup);
 
 	heap_freetuple(reltup);
+
+	/* Post creation hook for new attribute */
+	InvokeObjectAccessHook(OAT_POST_CREATE,
+						   RelationRelationId, myrelid, newattnum);
 
 	heap_close(pgclass, RowExclusiveLock);
 

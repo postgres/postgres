@@ -23,6 +23,7 @@
 #include "catalog/dependency.h"
 #include "catalog/indexing.h"
 #include "catalog/namespace.h"
+#include "catalog/objectaccess.h"
 #include "catalog/pg_namespace.h"
 #include "catalog/pg_proc.h"
 #include "catalog/pg_ts_config.h"
@@ -262,6 +263,9 @@ DefineTSParser(List *names, List *parameters)
 	CatalogUpdateIndexes(prsRel, tup);
 
 	makeParserDependencies(tup);
+
+	/* Post creation hook for new text search parser */
+	InvokeObjectAccessHook(OAT_POST_CREATE, TSParserRelationId, prsOid, 0);
 
 	heap_freetuple(tup);
 
@@ -562,6 +566,10 @@ DefineTSDictionary(List *names, List *parameters)
 	CatalogUpdateIndexes(dictRel, tup);
 
 	makeDictionaryDependencies(tup);
+
+	/* Post creation hook for new text search dictionary */
+	InvokeObjectAccessHook(OAT_POST_CREATE,
+						   TSDictionaryRelationId, dictOid, 0);
 
 	heap_freetuple(tup);
 
@@ -1050,6 +1058,9 @@ DefineTSTemplate(List *names, List *parameters)
 
 	makeTSTemplateDependencies(tup);
 
+	/* Post creation hook for new text search template */
+	InvokeObjectAccessHook(OAT_POST_CREATE, TSTemplateRelationId, dictOid, 0);
+
 	heap_freetuple(tup);
 
 	heap_close(tmplRel, RowExclusiveLock);
@@ -1439,6 +1450,9 @@ DefineTSConfiguration(List *names, List *parameters)
 	}
 
 	makeConfigurationDependencies(tup, false, mapRel);
+
+	/* Post creation hook for new text search configuration */
+	InvokeObjectAccessHook(OAT_POST_CREATE, TSConfigRelationId, cfgOid, 0);
 
 	heap_freetuple(tup);
 

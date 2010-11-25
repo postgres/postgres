@@ -40,6 +40,7 @@
 #include "catalog/index.h"
 #include "catalog/indexing.h"
 #include "catalog/namespace.h"
+#include "catalog/objectaccess.h"
 #include "catalog/pg_attrdef.h"
 #include "catalog/pg_constraint.h"
 #include "catalog/pg_inherits.h"
@@ -1187,6 +1188,9 @@ heap_create_with_catalog(const char *relname,
 								  nnewmembers, newmembers);
 		}
 	}
+
+	/* Post creation hook for new relation */
+	InvokeObjectAccessHook(OAT_POST_CREATE, RelationRelationId, relid, 0);
 
 	/*
 	 * Store any supplied constraints and defaults.

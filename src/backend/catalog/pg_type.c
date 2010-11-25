@@ -18,6 +18,7 @@
 #include "access/xact.h"
 #include "catalog/dependency.h"
 #include "catalog/indexing.h"
+#include "catalog/objectaccess.h"
 #include "catalog/pg_namespace.h"
 #include "catalog/pg_proc.h"
 #include "catalog/pg_type.h"
@@ -154,6 +155,9 @@ TypeShellMake(const char *typeName, Oid typeNamespace, Oid ownerId)
 								 InvalidOid,
 								 NULL,
 								 false);
+
+	/* Post creation hook for new shell type */
+	InvokeObjectAccessHook(OAT_POST_CREATE, TypeRelationId, typoid, 0);
 
 	/*
 	 * clean up and return the type-oid
@@ -454,6 +458,9 @@ TypeCreate(Oid newTypeOid,
 								  stringToNode(defaultTypeBin) :
 								  NULL),
 								 rebuildDeps);
+
+	/* Post creation hook for new type */
+	InvokeObjectAccessHook(OAT_POST_CREATE, TypeRelationId, typeObjectId, 0);
 
 	/*
 	 * finish up

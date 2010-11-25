@@ -17,6 +17,7 @@
 #include "access/heapam.h"
 #include "catalog/dependency.h"
 #include "catalog/indexing.h"
+#include "catalog/objectaccess.h"
 #include "catalog/pg_language.h"
 #include "catalog/pg_namespace.h"
 #include "catalog/pg_pltemplate.h"
@@ -424,6 +425,10 @@ create_proc_lang(const char *languageName, bool replace,
 		referenced.objectSubId = 0;
 		recordDependencyOn(&myself, &referenced, DEPENDENCY_NORMAL);
 	}
+
+	/* Post creation hook for new procedural language */
+	InvokeObjectAccessHook(OAT_POST_CREATE,
+						   LanguageRelationId, myself.objectId, 0);
 
 	heap_close(rel, RowExclusiveLock);
 }
