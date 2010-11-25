@@ -39,7 +39,7 @@ endif
 
 
 # pgport object files are used by libpq if identified by configure
-OPT_PGPORT = $(filter $(addsuffix .o, crypt getaddrinfo inet_aton open snprintf strerror strlcpy win32error), $(LIBOBJS))
+OPT_PGPORT = $(basename $(filter $(addsuffix .o, crypt getaddrinfo inet_aton open snprintf strerror strlcpy win32error), $(LIBOBJS)))
 
 OBJS=	fe-auth.o fe-connect.o fe-exec.o fe-misc.o fe-print.o fe-lobj.o \
 	fe-protocol2.o fe-protocol3.o pqexpbuffer.o pqsignal.o fe-secure.o \
