@@ -2145,7 +2145,7 @@ getConnectionByName(const char *name)
 		remoteConnHash = createConnHash();
 
 	key = pstrdup(name);
-	truncate_identifier(key, strlen(key), true);
+	truncate_identifier(key, strlen(key), false);
 	hentry = (remoteConnHashEnt *) hash_search(remoteConnHash,
 											   key, HASH_FIND, NULL);
 
@@ -2206,7 +2206,7 @@ deleteConnection(const char *name)
 		remoteConnHash = createConnHash();
 
 	key = pstrdup(name);
-	truncate_identifier(key, strlen(key), true);
+	truncate_identifier(key, strlen(key), false);
 	hentry = (remoteConnHashEnt *) hash_search(remoteConnHash,
 											   key, HASH_REMOVE, &found);
 
