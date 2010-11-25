@@ -1659,31 +1659,26 @@ InitBufferPoolBackend(void)
 }
 
 /*
- * Ensure we have released all shared-buffer locks and pins during backend exit
+ * During backend exit, ensure that we released all shared-buffer locks and
+ * assert that we have no remaining pins.
  */
 static void
 AtProcExit_Buffers(int code, Datum arg)
 {
-	int			i;
-
 	AbortBufferIO();
 	UnlockBuffers();
 
-	for (i = 0; i < NBuffers; i++)
+#ifdef USE_ASSERT_CHECKING
+	if (assert_enabled)
 	{
-		if (PrivateRefCount[i] != 0)
-		{
-			volatile BufferDesc *buf = &(BufferDescriptors[i]);
+		int			i;
 
-			/*
-			 * We don't worry about updating ResourceOwner; if we even got
-			 * here, it suggests that ResourceOwners are messed up.
-			 */
-			PrivateRefCount[i] = 1;		/* make sure we release shared pin */
-			UnpinBuffer(buf, false);
+		for (i = 0; i < NBuffers; i++)
+		{
 			Assert(PrivateRefCount[i] == 0);
 		}
 	}
+#endif
 
 	/* localbuf.c needs a chance too */
 	AtProcExit_LocalBuffers();
