@@ -989,8 +989,6 @@ connectFailureMessage(PGconn *conn, int errorno)
 	{
 		char	host_addr[NI_MAXHOST];
 		bool 	display_host_addr;
-		struct sockaddr_in *host_addr_struct = (struct sockaddr_in *)
-												&conn->raddr.addr;
 
 		/*
 		 *	Optionally display the network address with the hostname.
@@ -998,8 +996,9 @@ connectFailureMessage(PGconn *conn, int errorno)
 		 */
 		if (conn->pghostaddr != NULL)
 			strlcpy(host_addr, conn->pghostaddr, NI_MAXHOST);
-		else if (inet_net_ntop(conn->addr_cur->ai_family, &host_addr_struct->sin_addr,
-				 host_addr_struct->sin_family == AF_INET ? 32 : 128,
+		else if (inet_net_ntop(conn->addr_cur->ai_family,
+				 &conn->addr_cur->ai_addr,
+				 conn->addr_cur->ai_family == AF_INET ? 32 : 128,
 				 host_addr, sizeof(host_addr)) == NULL)
 			strcpy(host_addr, "???");
 
