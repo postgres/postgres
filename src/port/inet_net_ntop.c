@@ -21,14 +21,28 @@
 static const char rcsid[] = "Id: inet_net_ntop.c,v 1.1.2.2 2004/03/09 09:17:27 marka Exp $";
 #endif
 
+#ifndef FRONTEND
 #include "postgres.h"
+#else
+#include "postgres_fe.h"
+#endif
 
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
 
+#ifndef FRONTEND
 #include "utils/inet.h"
+#else
+/*
+ * In a frontend build, we can't include inet.h, but we still need to have
+ * sensible definitions of these two constants.  Note that inet_net_ntop()
+ * assumes that PGSQL_AF_INET is equal to AF_INET.
+ */
+#define PGSQL_AF_INET	(AF_INET + 0)
+#define PGSQL_AF_INET6	(AF_INET + 1)
+#endif
 
 
 #define NS_IN6ADDRSZ 16
@@ -63,11 +77,21 @@ static char *inet_net_ntop_ipv6(const u_char *src, int bits,
 char *
 inet_net_ntop(int af, const void *src, int bits, char *dst, size_t size)
 {
+	/*
+	 * We need to cover both the address family constants used by the PG
+	 * inet type (PGSQL_AF_INET and PGSQL_AF_INET6) and those used by the
+	 * system libraries (AF_INET and AF_INET6).  We can safely assume
+	 * PGSQL_AF_INET == AF_INET, but the INET6 constants are very likely
+	 * to be different.  If AF_INET6 isn't defined, silently ignore it.
+	 */
 	switch (af)
 	{
 		case PGSQL_AF_INET:
 			return (inet_net_ntop_ipv4(src, bits, dst, size));
 		case PGSQL_AF_INET6:
+#if defined(AF_INET6) && AF_INET6 != PGSQL_AF_INET6
+		case AF_INET6:
+#endif
 			return (inet_net_ntop_ipv6(src, bits, dst, size));
 		default:
 			errno = EAFNOSUPPORT;
@@ -272,4 +296,3 @@ inet_net_ntop_ipv6(const u_char *src, int bits, char *dst, size_t size)
 	strcpy(dst, tmp);
 	return (dst);
 }
-
