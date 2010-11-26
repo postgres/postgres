@@ -123,4 +123,4 @@ int			GinFuzzySearchLimit = 0;
  * Hook on object accesses.  This is intended as infrastructure for security
  * and logging plugins.
  */
-PGDLLIMPORT object_access_hook_type object_access_hook = NULL;
+object_access_hook_type object_access_hook = NULL;
