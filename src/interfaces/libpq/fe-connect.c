@@ -1514,9 +1514,7 @@ keep_going:						/* We will come back to here until there is
 				/*
 				 * Try to initiate a connection to one of the addresses
 				 * returned by pg_getaddrinfo_all().  conn->addr_cur is the
-				 * next one to try. We fail when we run out of addresses
-				 * (reporting the error returned for the *last* alternative,
-				 * which may not be what users expect :-().
+				 * next one to try. We fail when we run out of addresses.
 				 */
 				while (conn->addr_cur != NULL)
 				{
