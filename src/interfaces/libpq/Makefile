@@ -24,27 +24,27 @@ ifneq ($(PORTNAME), win32)
 override CFLAGS += $(PTHREAD_CFLAGS)
 endif
 
-# Need to recompile any libpgport object files because we need these
-# object files to use the same compile flags as libpq; some
-# platforms require special flags for all libpq object files.
+# Need to recompile any external C files because we need
+# all object files to use the same compile flags as libpq; some
+# platforms require special flags.
 LIBS := $(LIBS:-lpgport=)
 
-# external object files that are always used by libpq
+# libpgport C files that are always used by libpq
+PGPORT = inet_net_ntop noblock pgstrcasecmp thread
+ifeq ($(PORTNAME), win32)
+PGPORT += pgsleep
+endif
+# libpgport C files are used by libpq if identified by configure
+PGPORT += $(basename $(filter $(addsuffix .o, crypt getaddrinfo inet_aton open snprintf strerror strlcpy win32error), $(LIBOBJS)))
+
+# other external C files
 BACKEND_LIBPQ = md5 ip
 UTILS_MB = encnames wchar
-PERM_PGPORT = inet_net_ntop noblock pgstrcasecmp thread
-ifeq ($(PORTNAME), win32)
-PERM_PGPORT += pgsleep
-endif
-
-
-# pgport object files are used by libpq if identified by configure
-OPT_PGPORT = $(basename $(filter $(addsuffix .o, crypt getaddrinfo inet_aton open snprintf strerror strlcpy win32error), $(LIBOBJS)))
 
 OBJS=	fe-auth.o fe-connect.o fe-exec.o fe-misc.o fe-print.o fe-lobj.o \
 	fe-protocol2.o fe-protocol3.o pqexpbuffer.o pqsignal.o fe-secure.o \
 	libpq-events.o \
-	$(addsuffix .o, $(PERM_PGPORT) $(OPT_PGPORT) $(BACKEND_LIBPQ) $(UTILS_MB))
+	$(addsuffix .o, $(PGPORT) $(BACKEND_LIBPQ) $(UTILS_MB))
 
 ifeq ($(PORTNAME), cygwin)
 override shlib = cyg$(NAME)$(DLSUFFIX)
@@ -88,7 +88,7 @@ backend_src = $(top_srcdir)/src/backend
 # necessarily use the same object files as the backend uses. Instead,
 # we symlink the source files in here and build our own object files.
 
-$(addsuffix .c, $(PERM_PGPORT) $(OPT_PGPORT)): % : $(top_srcdir)/src/port/%
+$(addsuffix .c, $(PGPORT)): % : $(top_srcdir)/src/port/%
 	rm -f $@ && $(LN_S) $< .
 
 $(addsuffix .c, $(BACKEND_LIBPQ)): % : $(backend_src)/libpq/%
@@ -131,7 +131,7 @@ uninstall: uninstall-lib
 	rm -f '$(DESTDIR)$(datadir)/pg_service.conf.sample'
 
 clean distclean: clean-lib
-	rm -f $(OBJS) pg_config_paths.h pthread.h libpq.rc $(addsuffix .c, $(BACKEND_LIBPQ) $(UTILS_MB) $(PERM_PGPORT) $(OPT_PGPORT))
+	rm -f $(OBJS) pg_config_paths.h pthread.h libpq.rc $(addsuffix .c, $(PGPORT) $(BACKEND_LIBPQ) $(UTILS_MB))
 # Might be left over from a Win32 client-only build
 	rm -f pg_config_paths.h
 
