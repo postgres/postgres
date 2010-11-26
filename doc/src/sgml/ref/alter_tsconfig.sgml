@@ -33,6 +33,7 @@ ALTER TEXT SEARCH CONFIGURATION <replaceable>name</replaceable>
     DROP MAPPING [ IF EXISTS ] FOR <replaceable class="parameter">token_type</replaceable> [, ... ]
 ALTER TEXT SEARCH CONFIGURATION <replaceable>name</replaceable> RENAME TO <replaceable>new_name</replaceable>
 ALTER TEXT SEARCH CONFIGURATION <replaceable>name</replaceable> OWNER TO <replaceable>new_owner</replaceable>
+ALTER TEXT SEARCH CONFIGURATION <replaceable>name</replaceable> SET SCHEMA <replaceable>new_schema</replaceable>
 </synopsis>
  </refsynopsisdiv>
 
@@ -120,6 +121,15 @@ ALTER TEXT SEARCH CONFIGURATION <replaceable>name</replaceable> OWNER TO <replac
     <listitem>
      <para>
       The new owner of the text search configuration.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><replaceable class="parameter">new_schema</replaceable></term>
+    <listitem>
+     <para>
+      The new schema for the text search configuration.
      </para>
     </listitem>
    </varlistentry>

@@ -1206,6 +1206,21 @@ create domain alter1.posint integer check (value > 0);
 
 create type alter1.ctype as (f1 int, f2 text);
 
+create function alter1.same(alter1.ctype, alter1.ctype) returns boolean language sql 
+as 'select $1.f1 is not distinct from $2.f1 and $1.f2 is not distinct from $2.f2';
+
+create operator alter1.=(procedure = alter1.same, leftarg  = alter1.ctype, rightarg = alter1.ctype);
+
+create operator class alter1.ctype_hash_ops default for type alter1.ctype using hash as
+  operator 1 alter1.=(alter1.ctype, alter1.ctype);
+
+create conversion alter1.ascii_to_utf8 for 'sql_ascii' to 'utf8' from ascii_to_utf8;
+
+create text search parser alter1.prs(start = prsd_start, gettoken = prsd_nexttoken, end = prsd_end, lextypes = prsd_lextype);
+create text search configuration alter1.cfg(parser = alter1.prs);
+create text search template alter1.tmpl(init = dsimple_init, lexize = dsimple_lexize);
+create text search dictionary alter1.dict(template = alter1.tmpl);
+
 insert into alter1.t1(f2) values(11);
 insert into alter1.t1(f2) values(12);
 
@@ -1213,7 +1228,16 @@ alter table alter1.t1 set schema alter2;
 alter table alter1.v1 set schema alter2;
 alter function alter1.plus1(int) set schema alter2;
 alter domain alter1.posint set schema alter2;
+alter operator class alter1.ctype_hash_ops using hash set schema alter2;
+alter operator family alter1.ctype_hash_ops using hash set schema alter2;
+alter operator alter1.=(alter1.ctype, alter1.ctype) set schema alter2;
+alter function alter1.same(alter1.ctype, alter1.ctype) set schema alter2;
 alter type alter1.ctype set schema alter2;
+alter conversion alter1.ascii_to_utf8 set schema alter2;
+alter text search parser alter1.prs set schema alter2;
+alter text search configuration alter1.cfg set schema alter2;
+alter text search template alter1.tmpl set schema alter2;
+alter text search dictionary alter1.dict set schema alter2;
 
 -- this should succeed because nothing is left in alter1
 drop schema alter1;

@@ -39,7 +39,9 @@
 #include "catalog/indexing.h"
 #include "catalog/namespace.h"
 #include "catalog/pg_operator.h"
+#include "catalog/pg_namespace.h"
 #include "catalog/pg_type.h"
+#include "commands/alter.h"
 #include "commands/defrem.h"
 #include "miscadmin.h"
 #include "parser/parse_func.h"
@@ -451,4 +453,36 @@ AlterOperatorOwner_internal(Relation rel, Oid operOid, Oid newOwnerId)
 	}
 
 	heap_freetuple(tup);
+}
+
+/*
+ * Execute ALTER OPERATOR SET SCHEMA
+ */
+void
+AlterOperatorNamespace(List *names, List *argtypes, const char *newschema)
+{
+	List	   *operatorName = names;
+	TypeName   *typeName1 = (TypeName *) linitial(argtypes);
+	TypeName   *typeName2 = (TypeName *) lsecond(argtypes);
+	Oid			operOid, nspOid;
+	Relation	rel;
+
+	rel = heap_open(OperatorRelationId, RowExclusiveLock);
+
+	Assert(list_length(argtypes) == 2);
+	operOid = LookupOperNameTypeNames(NULL, operatorName,
+									  typeName1, typeName2,
+									  false, -1);
+
+	/* get schema OID */
+	nspOid = LookupCreationNamespace(newschema);
+
+	AlterObjectNamespace(rel, OPEROID, OperatorRelationId, operOid, nspOid,
+						 Anum_pg_operator_oprname,
+						 Anum_pg_operator_oprnamespace,
+						 Anum_pg_operator_oprowner,
+						 ACL_KIND_OPER,
+						 false);
+
+	heap_close(rel, NoLock);
 }

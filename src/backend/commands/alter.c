@@ -14,8 +14,11 @@
  */
 #include "postgres.h"
 
+#include "catalog/dependency.h"
+#include "catalog/indexing.h"
 #include "catalog/namespace.h"
 #include "catalog/pg_largeobject.h"
+#include "catalog/pg_namespace.h"
 #include "commands/alter.h"
 #include "commands/conversioncmds.h"
 #include "commands/dbcommands.h"
@@ -33,6 +36,7 @@
 #include "utils/acl.h"
 #include "utils/builtins.h"
 #include "utils/lsyscache.h"
+#include "utils/syscache.h"
 
 
 /*
@@ -178,9 +182,25 @@ ExecAlterObjectSchemaStmt(AlterObjectSchemaStmt *stmt)
 								   stmt->newschema);
 			break;
 
+		case OBJECT_CONVERSION:
+			AlterConversionNamespace(stmt->object, stmt->newschema);
+			break;
+
 		case OBJECT_FUNCTION:
 			AlterFunctionNamespace(stmt->object, stmt->objarg, false,
 								   stmt->newschema);
+			break;
+
+		case OBJECT_OPERATOR:
+			AlterOperatorNamespace(stmt->object, stmt->objarg, stmt->newschema);
+			break;
+
+		case OBJECT_OPCLASS:
+			AlterOpClassNamespace(stmt->object, stmt->objarg, stmt->newschema);
+			break;
+
+		case OBJECT_OPFAMILY:
+			AlterOpFamilyNamespace(stmt->object, stmt->objarg, stmt->newschema);
 			break;
 
 		case OBJECT_SEQUENCE:
@@ -189,6 +209,22 @@ ExecAlterObjectSchemaStmt(AlterObjectSchemaStmt *stmt)
 			CheckRelationOwnership(stmt->relation, true);
 			AlterTableNamespace(stmt->relation, stmt->newschema,
 								stmt->objectType, AccessExclusiveLock);
+			break;
+
+		case OBJECT_TSPARSER:
+			AlterTSParserNamespace(stmt->object, stmt->newschema);
+			break;
+
+		case OBJECT_TSDICTIONARY:
+			AlterTSDictionaryNamespace(stmt->object, stmt->newschema);
+			break;
+
+		case OBJECT_TSTEMPLATE:
+			AlterTSTemplateNamespace(stmt->object, stmt->newschema);
+			break;
+
+		case OBJECT_TSCONFIGURATION:
+			AlterTSConfigurationNamespace(stmt->object, stmt->newschema);
 			break;
 
 		case OBJECT_TYPE:
@@ -201,6 +237,104 @@ ExecAlterObjectSchemaStmt(AlterObjectSchemaStmt *stmt)
 				 (int) stmt->objectType);
 	}
 }
+
+/*
+ * Generic function to change the namespace of a given object, for simple
+ * cases (won't work for tables or functions, objects which have more than 2
+ * key-attributes to use when searching for their syscache entries --- we
+ * don't want nor need to get this generic here).
+ *
+ * The AlterFooNamespace() calls just above will call a function whose job
+ * is to lookup the arguments for the generic function here.
+ *
+ * Relation must already by open, it's the responsibility of the caller to
+ * close it.
+ */
+void
+AlterObjectNamespace(Relation rel, int cacheId,
+					 Oid classId, Oid objid, Oid nspOid,
+					 int Anum_name, int Anum_namespace, int Anum_owner,
+					 AclObjectKind acl_kind,
+					 bool superuser_only)
+{
+	Oid			oldNspOid;
+	Datum       name, namespace;
+	bool        isnull;
+	HeapTuple	tup, newtup = NULL;
+	Datum	   *values;
+	bool	   *nulls;
+	bool	   *replaces;
+
+	tup = SearchSysCacheCopy1(cacheId, ObjectIdGetDatum(objid));
+	if (!HeapTupleIsValid(tup)) /* should not happen */
+		elog(ERROR, "cache lookup failed for object %u: %s",
+			 objid, getObjectDescriptionOids(classId, objid));
+
+	name = heap_getattr(tup, Anum_name, rel->rd_att, &isnull);
+	namespace = heap_getattr(tup, Anum_namespace, rel->rd_att, &isnull);
+	oldNspOid = DatumGetObjectId(namespace);
+
+	/* Check basic namespace related issues */
+	CheckSetNamespace(oldNspOid, nspOid, classId, objid);
+
+	/* check for duplicate name (more friendly than unique-index failure) */
+	if (SearchSysCacheExists2(cacheId, name, ObjectIdGetDatum(nspOid)))
+		ereport(ERROR,
+				(errcode(ERRCODE_DUPLICATE_OBJECT),
+				 errmsg("%s already exists in schema \"%s\"",
+						getObjectDescriptionOids(classId, objid),
+						get_namespace_name(nspOid))));
+
+	/* Superusers can always do it */
+	if (!superuser())
+	{
+		Datum       owner;
+		Oid			ownerId;
+		AclResult	aclresult;
+
+		if (superuser_only)
+			ereport(ERROR,
+					(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
+					 (errmsg("must be superuser to SET SCHEMA of %s",
+							 getObjectDescriptionOids(classId, objid)))));
+
+		/* Otherwise, must be owner of the existing object */
+		owner = heap_getattr(tup, Anum_owner, rel->rd_att, &isnull);
+		ownerId = DatumGetObjectId(owner);
+
+		if (!has_privs_of_role(GetUserId(), ownerId))
+			aclcheck_error(ACLCHECK_NOT_OWNER, acl_kind,
+						   NameStr(*(DatumGetName(name))));
+
+		/* owner must have CREATE privilege on namespace */
+		aclresult = pg_namespace_aclcheck(oldNspOid, GetUserId(), ACL_CREATE);
+		if (aclresult != ACLCHECK_OK)
+			aclcheck_error(aclresult, ACL_KIND_NAMESPACE,
+						   get_namespace_name(oldNspOid));
+	}
+
+	/* Prepare to update tuple */
+	values = palloc0(rel->rd_att->natts * sizeof(Datum));
+	nulls = palloc0(rel->rd_att->natts * sizeof(bool));
+	replaces = palloc0(rel->rd_att->natts * sizeof(bool));
+	values[Anum_namespace - 1] = nspOid;
+	replaces[Anum_namespace - 1] = true;
+	newtup = heap_modify_tuple(tup, rel->rd_att, values, nulls, replaces);
+
+	/* Perform actual update */
+	simple_heap_update(rel, &tup->t_self, newtup);
+	CatalogUpdateIndexes(rel, newtup);
+
+	/* Release memory */
+	pfree(values);
+	pfree(nulls);
+	pfree(replaces);
+
+	/* update dependencies to point to the new schema */
+	changeDependencyFor(classId, objid,
+						NamespaceRelationId, oldNspOid, nspOid);
+}
+
 
 /*
  * Executes an ALTER OBJECT / OWNER TO statement.  Based on the object

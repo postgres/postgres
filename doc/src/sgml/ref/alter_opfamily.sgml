@@ -31,6 +31,7 @@ ALTER OPERATOR FAMILY <replaceable>name</replaceable> USING <replaceable class="
   } [, ... ]
 ALTER OPERATOR FAMILY <replaceable>name</replaceable> USING <replaceable class="parameter">index_method</replaceable> RENAME TO <replaceable>new_name</replaceable>
 ALTER OPERATOR FAMILY <replaceable>name</replaceable> USING <replaceable class="parameter">index_method</replaceable> OWNER TO <replaceable>new_owner</replaceable>
+ALTER OPERATOR FAMILY <replaceable>name</replaceable> USING <replaceable class="parameter">index_method</replaceable> SET SCHEMA <replaceable>new_schema</replaceable>
 </synopsis>
  </refsynopsisdiv>
 
@@ -213,6 +214,15 @@ ALTER OPERATOR FAMILY <replaceable>name</replaceable> USING <replaceable class="
     <listitem>
      <para>
       The new owner of the operator family.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><replaceable class="parameter">new_schema</replaceable></term>
+    <listitem>
+     <para>
+      The new schema for the operator family.
      </para>
     </listitem>
    </varlistentry>

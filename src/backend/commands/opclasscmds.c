@@ -31,6 +31,7 @@
 #include "catalog/pg_opfamily.h"
 #include "catalog/pg_proc.h"
 #include "catalog/pg_type.h"
+#include "commands/alter.h"
 #include "commands/defrem.h"
 #include "miscadmin.h"
 #include "parser/parse_func.h"
@@ -1989,6 +1990,41 @@ AlterOpClassOwner_internal(Relation rel, HeapTuple tup, Oid newOwnerId)
 }
 
 /*
+ * ALTER OPERATOR CLASS any_name USING access_method SET SCHEMA name
+ */
+void
+AlterOpClassNamespace(List *name, List *argam, const char *newschema)
+{
+	Oid			amOid;
+	char       *access_method = linitial(argam);
+	Relation	rel;
+	Oid			oid;
+	Oid			nspOid;
+
+	Assert(list_length(argam) == 1);
+
+	amOid = get_am_oid(access_method, false);
+
+	rel = heap_open(OperatorClassRelationId, RowExclusiveLock);
+
+	/* Look up the opclass. */
+	oid = get_opclass_oid(amOid, name, false);
+
+	/* get schema OID */
+	nspOid = LookupCreationNamespace(newschema);
+
+	AlterObjectNamespace(rel, CLAOID, OperatorClassRelationId,
+						 oid, nspOid,
+						 Anum_pg_opfamily_opfname,
+						 Anum_pg_opfamily_opfnamespace,
+						 Anum_pg_opfamily_opfowner,
+						 ACL_KIND_OPCLASS,
+						 false);
+
+	heap_close(rel, NoLock);
+}
+
+/*
  * Change opfamily owner by name
  */
 void
@@ -2143,4 +2179,38 @@ get_am_oid(const char *amname, bool missing_ok)
 				(errcode(ERRCODE_UNDEFINED_OBJECT),
 				 errmsg("access method \"%s\" does not exist", amname)));
 	return oid;
+}
+
+/*
+ * ALTER OPERATOR FAMILY any_name USING access_method SET SCHEMA name
+ */
+void
+AlterOpFamilyNamespace(List *name, List *argam, const char *newschema)
+{
+	Oid			amOid;
+	char       *access_method = linitial(argam);
+	Relation	rel;
+	Oid			nspOid;
+	Oid			oid;
+
+	Assert(list_length(argam) == 1);
+	amOid = get_am_oid(access_method, false);
+
+	rel = heap_open(OperatorFamilyRelationId, RowExclusiveLock);
+
+	/* Look up the opfamily */
+	oid = get_opfamily_oid(amOid, name, false);
+
+	/* get schema OID */
+	nspOid = LookupCreationNamespace(newschema);
+
+	AlterObjectNamespace(rel, OPFAMILYOID, OperatorFamilyRelationId,
+						 oid, nspOid,
+						 Anum_pg_opfamily_opfname,
+						 Anum_pg_opfamily_opfnamespace,
+						 Anum_pg_opfamily_opfowner,
+						 ACL_KIND_OPFAMILY,
+						 false);
+
+	heap_close(rel, NoLock);
 }

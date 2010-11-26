@@ -741,13 +741,22 @@ psql_completion(char *text, int start, int end)
 		}
 	}
 
-	/* ALTER CONVERSION,SCHEMA <name> */
+	/* ALTER SCHEMA <name> */
 	else if (pg_strcasecmp(prev3_wd, "ALTER") == 0 &&
-			 (pg_strcasecmp(prev2_wd, "CONVERSION") == 0 ||
-			  pg_strcasecmp(prev2_wd, "SCHEMA") == 0))
+			  pg_strcasecmp(prev2_wd, "SCHEMA") == 0)
 	{
 		static const char *const list_ALTERGEN[] =
 		{"OWNER TO", "RENAME TO", NULL};
+
+		COMPLETE_WITH_LIST(list_ALTERGEN);
+	}
+
+	/* ALTER CONVERSION <name> */
+	else if (pg_strcasecmp(prev3_wd, "ALTER") == 0 &&
+			 pg_strcasecmp(prev2_wd, "CONVERSION") == 0)
+	{
+		static const char *const list_ALTERGEN[] =
+		{"OWNER TO", "RENAME TO", "SET SCHEMA", NULL};
 
 		COMPLETE_WITH_LIST(list_ALTERGEN);
 	}
@@ -1237,15 +1246,9 @@ psql_completion(char *text, int start, int end)
 			 pg_strcasecmp(prev3_wd, "SEARCH") == 0 &&
 			 (pg_strcasecmp(prev2_wd, "TEMPLATE") == 0 ||
 			  pg_strcasecmp(prev2_wd, "PARSER") == 0))
-		COMPLETE_WITH_CONST("RENAME TO");
-
-	else if (pg_strcasecmp(prev5_wd, "ALTER") == 0 &&
-			 pg_strcasecmp(prev4_wd, "TEXT") == 0 &&
-			 pg_strcasecmp(prev3_wd, "SEARCH") == 0 &&
-			 pg_strcasecmp(prev2_wd, "DICTIONARY") == 0)
 	{
 		static const char *const list_ALTERTEXTSEARCH2[] =
-		{"OWNER TO", "RENAME TO", NULL};
+		{"RENAME TO", "SET SCHEMA", NULL};
 
 		COMPLETE_WITH_LIST(list_ALTERTEXTSEARCH2);
 	}
@@ -1253,12 +1256,23 @@ psql_completion(char *text, int start, int end)
 	else if (pg_strcasecmp(prev5_wd, "ALTER") == 0 &&
 			 pg_strcasecmp(prev4_wd, "TEXT") == 0 &&
 			 pg_strcasecmp(prev3_wd, "SEARCH") == 0 &&
-			 pg_strcasecmp(prev2_wd, "CONFIGURATION") == 0)
+			 pg_strcasecmp(prev2_wd, "DICTIONARY") == 0)
 	{
 		static const char *const list_ALTERTEXTSEARCH3[] =
-		{"ADD MAPPING FOR", "ALTER MAPPING", "DROP MAPPING FOR", "OWNER TO", "RENAME TO", NULL};
+		{"OWNER TO", "RENAME TO", "SET SCHEMA", NULL};
 
 		COMPLETE_WITH_LIST(list_ALTERTEXTSEARCH3);
+	}
+
+	else if (pg_strcasecmp(prev5_wd, "ALTER") == 0 &&
+			 pg_strcasecmp(prev4_wd, "TEXT") == 0 &&
+			 pg_strcasecmp(prev3_wd, "SEARCH") == 0 &&
+			 pg_strcasecmp(prev2_wd, "CONFIGURATION") == 0)
+	{
+		static const char *const list_ALTERTEXTSEARCH4[] =
+		{"ADD MAPPING FOR", "ALTER MAPPING", "DROP MAPPING FOR", "OWNER TO", "RENAME TO", "SET SCHEMA", NULL};
+
+		COMPLETE_WITH_LIST(list_ALTERTEXTSEARCH4);
 	}
 
 	/* complete ALTER TYPE <foo> with actions */

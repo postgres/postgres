@@ -22,6 +22,7 @@ PostgreSQL documentation
  <refsynopsisdiv>
 <synopsis>
 ALTER TEXT SEARCH TEMPLATE <replaceable>name</replaceable> RENAME TO <replaceable>new_name</replaceable>
+ALTER TEXT SEARCH TEMPLATE <replaceable>name</replaceable> SET SCHEMA <replaceable>new_schema</replaceable>
 </synopsis>
  </refsynopsisdiv>
 
@@ -57,6 +58,15 @@ ALTER TEXT SEARCH TEMPLATE <replaceable>name</replaceable> RENAME TO <replaceabl
     <listitem>
      <para>
       The new name of the text search template.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><replaceable class="parameter">new_schema</replaceable></term>
+    <listitem>
+     <para>
+      The new schema for the text search template.
      </para>
     </listitem>
    </varlistentry>

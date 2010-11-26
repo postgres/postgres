@@ -22,5 +22,6 @@ extern void DropConversionsCommand(DropStmt *drop);
 extern void RenameConversion(List *name, const char *newname);
 extern void AlterConversionOwner(List *name, Oid newOwnerId);
 extern void AlterConversionOwner_oid(Oid conversionOid, Oid newOwnerId);
+extern void AlterConversionNamespace(List *name, const char *newschema);
 
 #endif   /* CONVERSIONCMDS_H */

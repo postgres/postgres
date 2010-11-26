@@ -32,6 +32,7 @@
 #include "catalog/pg_ts_parser.h"
 #include "catalog/pg_ts_template.h"
 #include "catalog/pg_type.h"
+#include "commands/alter.h"
 #include "commands/defrem.h"
 #include "miscadmin.h"
 #include "nodes/makefuncs.h"
@@ -397,6 +398,30 @@ RenameTSParser(List *oldname, const char *newname)
 	heap_freetuple(tup);
 }
 
+/*
+ * ALTER TEXT SEARCH PARSER any_name SET SCHEMA name
+ */
+void
+AlterTSParserNamespace(List *name, const char *newschema)
+{
+	Oid			prsId, nspOid;
+	Relation	rel;
+
+	rel = heap_open(TSParserRelationId, RowExclusiveLock);
+
+	prsId = get_ts_parser_oid(name, false);
+
+	/* get schema OID */
+	nspOid = LookupCreationNamespace(newschema);
+
+	AlterObjectNamespace(rel, TSPARSEROID, TSParserRelationId, prsId, nspOid,
+						 Anum_pg_ts_parser_prsname,
+						 Anum_pg_ts_parser_prsnamespace,
+						 -1, -1, true);
+
+	heap_close(rel, NoLock);
+}
+
 /* ---------------------- TS Dictionary commands -----------------------*/
 
 /*
@@ -625,6 +650,32 @@ RenameTSDictionary(List *oldname, const char *newname)
 
 	heap_close(rel, NoLock);
 	heap_freetuple(tup);
+}
+
+/*
+ * ALTER TEXT SEARCH DICTIONARY any_name SET SCHEMA name
+ */
+void
+AlterTSDictionaryNamespace(List *name, const char *newschema)
+{
+	Oid			dictId, nspOid;
+	Relation	rel;
+
+	rel = heap_open(TSDictionaryRelationId, RowExclusiveLock);
+
+	dictId = get_ts_dict_oid(name, false);
+
+	/* get schema OID */
+	nspOid = LookupCreationNamespace(newschema);
+
+	AlterObjectNamespace(rel, TSDICTOID, TSDictionaryRelationId, dictId, nspOid,
+						 Anum_pg_ts_dict_dictname,
+						 Anum_pg_ts_dict_dictnamespace,
+						 Anum_pg_ts_dict_dictowner,
+						 ACL_KIND_TSDICTIONARY,
+						 true);
+
+	heap_close(rel, NoLock);
 }
 
 /*
@@ -1111,6 +1162,31 @@ RenameTSTemplate(List *oldname, const char *newname)
 }
 
 /*
+ * ALTER TEXT SEARCH TEMPLATE any_name SET SCHEMA name
+ */
+void
+AlterTSTemplateNamespace(List *name, const char *newschema)
+{
+	Oid			tmplId, nspOid;
+	Relation	rel;
+
+	rel = heap_open(TSTemplateRelationId, RowExclusiveLock);
+
+	tmplId = get_ts_template_oid(name, false);
+
+	/* get schema OID */
+	nspOid = LookupCreationNamespace(newschema);
+
+	AlterObjectNamespace(rel, TSTEMPLATEOID, TSTemplateRelationId,
+						 tmplId, nspOid,
+						 Anum_pg_ts_template_tmplname,
+						 Anum_pg_ts_template_tmplnamespace,
+						 -1, -1, true);
+
+	heap_close(rel, NoLock);
+}
+
+/*
  * DROP TEXT SEARCH TEMPLATE
  */
 void
@@ -1509,6 +1585,32 @@ RenameTSConfiguration(List *oldname, const char *newname)
 
 	heap_close(rel, NoLock);
 	heap_freetuple(tup);
+}
+
+/*
+ * ALTER TEXT SEARCH CONFIGURATION any_name SET SCHEMA name
+ */
+void
+AlterTSConfigurationNamespace(List *name, const char *newschema)
+{
+	Oid			cfgId, nspOid;
+	Relation	rel;
+
+	rel = heap_open(TSConfigRelationId, RowExclusiveLock);
+
+	cfgId = get_ts_config_oid(name, false);
+
+	/* get schema OID */
+	nspOid = LookupCreationNamespace(newschema);
+
+	AlterObjectNamespace(rel, TSCONFIGOID, TSConfigRelationId, cfgId, nspOid,
+						 Anum_pg_ts_config_cfgname,
+						 Anum_pg_ts_config_cfgnamespace,
+						 Anum_pg_ts_config_cfgowner,
+						 ACL_KIND_TSCONFIGURATION,
+						 false);
+
+	heap_close(rel, NoLock);
 }
 
 /*

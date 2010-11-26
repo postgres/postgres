@@ -1694,8 +1694,20 @@ CreateCommandTag(Node *parsetree)
 				case OBJECT_AGGREGATE:
 					tag = "ALTER AGGREGATE";
 					break;
+				case OBJECT_CONVERSION:
+					tag = "ALTER CONVERSION";
+					break;
 				case OBJECT_DOMAIN:
 					tag = "ALTER DOMAIN";
+					break;
+				case OBJECT_OPERATOR:
+					tag = "ALTER OPERATOR";
+					break;
+				case OBJECT_OPCLASS:
+					tag = "ALTER OPERATOR CLASS";
+					break;
+				case OBJECT_OPFAMILY:
+					tag = "ALTER OPERATOR FAMILY";
 					break;
 				case OBJECT_FUNCTION:
 					tag = "ALTER FUNCTION";

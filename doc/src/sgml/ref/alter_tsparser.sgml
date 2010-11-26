@@ -22,6 +22,7 @@ PostgreSQL documentation
  <refsynopsisdiv>
 <synopsis>
 ALTER TEXT SEARCH PARSER <replaceable>name</replaceable> RENAME TO <replaceable>new_name</replaceable>
+ALTER TEXT SEARCH PARSER <replaceable>name</replaceable> SET SCHEMA <replaceable>new_schema</replaceable>
 </synopsis>
  </refsynopsisdiv>
 
@@ -57,6 +58,15 @@ ALTER TEXT SEARCH PARSER <replaceable>name</replaceable> RENAME TO <replaceable>
     <listitem>
      <para>
       The new name of the text search parser.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><replaceable class="parameter">new_schema</replaceable></term>
+    <listitem>
+     <para>
+      The new schema for the text search parser.
      </para>
     </listitem>
    </varlistentry>

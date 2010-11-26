@@ -23,6 +23,7 @@ PostgreSQL documentation
 <synopsis>
 ALTER CONVERSION <replaceable>name</replaceable> RENAME TO <replaceable>new_name</replaceable>
 ALTER CONVERSION <replaceable>name</replaceable> OWNER TO <replaceable>new_owner</replaceable>
+ALTER CONVERSION <replaceable>name</replaceable> SET SCHEMA <replaceable>new_schema</replaceable>
 </synopsis>
  </refsynopsisdiv>
 
@@ -72,6 +73,15 @@ ALTER CONVERSION <replaceable>name</replaceable> OWNER TO <replaceable>new_owner
     <listitem>
      <para>
       The new owner of the conversion.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><replaceable class="parameter">new_schema</replaceable></term>
+    <listitem>
+     <para>
+      The new schema for the conversion.
      </para>
     </listitem>
    </varlistentry>
