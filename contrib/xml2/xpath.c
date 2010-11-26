@@ -32,6 +32,15 @@ Datum		xpath_table(PG_FUNCTION_ARGS);
 void		elog_error(const char *explain, bool force);
 void		pgxml_parser_init(void);
 
+/* workspace for pgxml_xpath() */
+
+typedef struct
+{
+	xmlDocPtr	doctree;
+	xmlXPathContextPtr ctxt;
+	xmlXPathObjectPtr res;
+} xpath_workspace;
+
 /* local declarations */
 
 static void pgxml_errorHandler(void *ctxt, const char *msg,...);
@@ -45,7 +54,10 @@ static text *pgxml_result_to_text(xmlXPathObjectPtr res, xmlChar *toptag,
 
 static xmlChar *pgxml_texttoxmlchar(text *textstring);
 
-static xmlXPathObjectPtr pgxml_xpath(text *document, xmlChar *xpath);
+static xmlXPathObjectPtr pgxml_xpath(text *document, xmlChar *xpath,
+									 xpath_workspace *workspace);
+
+static void cleanup_workspace(xpath_workspace *workspace);
 
 /* Global variables */
 static char *pgxml_errorMsg = NULL;		/* overall error message */
@@ -289,25 +301,22 @@ PG_FUNCTION_INFO_V1(xpath_nodeset);
 Datum
 xpath_nodeset(PG_FUNCTION_ARGS)
 {
-	xmlChar    *xpath,
-			   *toptag,
-			   *septag;
-	int32		pathsize;
-	text	   *xpathsupp,
-			   *xpres;
-
-	/* PG_GETARG_TEXT_P(0) is document buffer */
-	xpathsupp = PG_GETARG_TEXT_P(1);	/* XPath expression */
-
-	toptag = pgxml_texttoxmlchar(PG_GETARG_TEXT_P(2));
-	septag = pgxml_texttoxmlchar(PG_GETARG_TEXT_P(3));
-
-	pathsize = VARSIZE(xpathsupp) - VARHDRSZ;
+	text	   *document = PG_GETARG_TEXT_P(0);
+	text	   *xpathsupp = PG_GETARG_TEXT_P(1);	/* XPath expression */
+	xmlChar    *toptag = pgxml_texttoxmlchar(PG_GETARG_TEXT_P(2));
+	xmlChar    *septag = pgxml_texttoxmlchar(PG_GETARG_TEXT_P(3));
+	xmlChar    *xpath;
+	text	   *xpres;
+	xmlXPathObjectPtr res;
+	xpath_workspace workspace;
 
 	xpath = pgxml_texttoxmlchar(xpathsupp);
 
-	xpres = pgxml_result_to_text(pgxml_xpath(PG_GETARG_TEXT_P(0), xpath),
-								 toptag, septag, NULL);
+	res = pgxml_xpath(document, xpath, &workspace);
+
+	xpres = pgxml_result_to_text(res, toptag, septag, NULL);
+
+	cleanup_workspace(&workspace);
 
 	pfree(xpath);
 
@@ -325,23 +334,21 @@ PG_FUNCTION_INFO_V1(xpath_list);
 Datum
 xpath_list(PG_FUNCTION_ARGS)
 {
-	xmlChar    *xpath,
-			   *plainsep;
-	int32		pathsize;
-	text	   *xpathsupp,
-			   *xpres;
-
-	/* PG_GETARG_TEXT_P(0) is document buffer */
-	xpathsupp = PG_GETARG_TEXT_P(1);	/* XPath expression */
-
-	plainsep = pgxml_texttoxmlchar(PG_GETARG_TEXT_P(2));
-
-	pathsize = VARSIZE(xpathsupp) - VARHDRSZ;
+	text	   *document = PG_GETARG_TEXT_P(0);
+	text	   *xpathsupp = PG_GETARG_TEXT_P(1);	/* XPath expression */
+	xmlChar    *plainsep = pgxml_texttoxmlchar(PG_GETARG_TEXT_P(2));
+	xmlChar    *xpath;
+	text	   *xpres;
+	xmlXPathObjectPtr res;
+	xpath_workspace workspace;
 
 	xpath = pgxml_texttoxmlchar(xpathsupp);
 
-	xpres = pgxml_result_to_text(pgxml_xpath(PG_GETARG_TEXT_P(0), xpath),
-								 NULL, NULL, plainsep);
+	res = pgxml_xpath(document, xpath, &workspace);
+
+	xpres = pgxml_result_to_text(res, NULL, NULL, plainsep);
+
+	cleanup_workspace(&workspace);
 
 	pfree(xpath);
 
@@ -356,13 +363,13 @@ PG_FUNCTION_INFO_V1(xpath_string);
 Datum
 xpath_string(PG_FUNCTION_ARGS)
 {
+	text	   *document = PG_GETARG_TEXT_P(0);
+	text	   *xpathsupp = PG_GETARG_TEXT_P(1);	/* XPath expression */
 	xmlChar    *xpath;
 	int32		pathsize;
-	text	   *xpathsupp,
-			   *xpres;
-
-	/* PG_GETARG_TEXT_P(0) is document buffer */
-	xpathsupp = PG_GETARG_TEXT_P(1);	/* XPath expression */
+	text	   *xpres;
+	xmlXPathObjectPtr res;
+	xpath_workspace workspace;
 
 	pathsize = VARSIZE(xpathsupp) - VARHDRSZ;
 
@@ -373,13 +380,16 @@ xpath_string(PG_FUNCTION_ARGS)
 	/* We could try casting to string using the libxml function? */
 
 	xpath = (xmlChar *) palloc(pathsize + 9);
-	memcpy((char *) (xpath + 7), VARDATA(xpathsupp), pathsize);
 	strncpy((char *) xpath, "string(", 7);
+	memcpy((char *) (xpath + 7), VARDATA(xpathsupp), pathsize);
 	xpath[pathsize + 7] = ')';
 	xpath[pathsize + 8] = '\0';
 
-	xpres = pgxml_result_to_text(pgxml_xpath(PG_GETARG_TEXT_P(0), xpath),
-								 NULL, NULL, NULL);
+	res = pgxml_xpath(document, xpath, &workspace);
+
+	xpres = pgxml_result_to_text(res, NULL, NULL, NULL);
+
+	cleanup_workspace(&workspace);
 
 	pfree(xpath);
 
@@ -394,27 +404,25 @@ PG_FUNCTION_INFO_V1(xpath_number);
 Datum
 xpath_number(PG_FUNCTION_ARGS)
 {
+	text	   *document = PG_GETARG_TEXT_P(0);
+	text	   *xpathsupp = PG_GETARG_TEXT_P(1);	/* XPath expression */
 	xmlChar    *xpath;
-	int32		pathsize;
-	text	   *xpathsupp;
 	float4		fRes;
-
 	xmlXPathObjectPtr res;
-
-	/* PG_GETARG_TEXT_P(0) is document buffer */
-	xpathsupp = PG_GETARG_TEXT_P(1);	/* XPath expression */
-
-	pathsize = VARSIZE(xpathsupp) - VARHDRSZ;
+	xpath_workspace workspace;
 
 	xpath = pgxml_texttoxmlchar(xpathsupp);
 
-	res = pgxml_xpath(PG_GETARG_TEXT_P(0), xpath);
+	res = pgxml_xpath(document, xpath, &workspace);
+
 	pfree(xpath);
 
 	if (res == NULL)
 		PG_RETURN_NULL();
 
 	fRes = xmlXPathCastToNumber(res);
+
+	cleanup_workspace(&workspace);
 
 	if (xmlXPathIsNaN(fRes))
 		PG_RETURN_NULL();
@@ -428,27 +436,25 @@ PG_FUNCTION_INFO_V1(xpath_bool);
 Datum
 xpath_bool(PG_FUNCTION_ARGS)
 {
+	text	   *document = PG_GETARG_TEXT_P(0);
+	text	   *xpathsupp = PG_GETARG_TEXT_P(1);	/* XPath expression */
 	xmlChar    *xpath;
-	int32		pathsize;
-	text	   *xpathsupp;
 	int			bRes;
-
 	xmlXPathObjectPtr res;
-
-	/* PG_GETARG_TEXT_P(0) is document buffer */
-	xpathsupp = PG_GETARG_TEXT_P(1);	/* XPath expression */
-
-	pathsize = VARSIZE(xpathsupp) - VARHDRSZ;
+	xpath_workspace workspace;
 
 	xpath = pgxml_texttoxmlchar(xpathsupp);
 
-	res = pgxml_xpath(PG_GETARG_TEXT_P(0), xpath);
+	res = pgxml_xpath(document, xpath, &workspace);
+
 	pfree(xpath);
 
 	if (res == NULL)
 		PG_RETURN_BOOL(false);
 
 	bRes = xmlXPathCastToBoolean(res);
+
+	cleanup_workspace(&workspace);
 
 	PG_RETURN_BOOL(bRes);
 }
@@ -458,46 +464,58 @@ xpath_bool(PG_FUNCTION_ARGS)
 /* Core function to evaluate XPath query */
 
 static xmlXPathObjectPtr
-pgxml_xpath(text *document, xmlChar *xpath)
+pgxml_xpath(text *document, xmlChar *xpath, xpath_workspace *workspace)
 {
-	xmlDocPtr	doctree;
-	xmlXPathContextPtr ctxt;
+	int32		docsize = VARSIZE(document) - VARHDRSZ;
 	xmlXPathObjectPtr res;
 	xmlXPathCompExprPtr comppath;
-	int32		docsize;
 
-	docsize = VARSIZE(document) - VARHDRSZ;
+	workspace->doctree = NULL;
+	workspace->ctxt = NULL;
+	workspace->res = NULL;
 
 	pgxml_parser_init();
 
-	doctree = xmlParseMemory((char *) VARDATA(document), docsize);
-	if (doctree == NULL)
+	workspace->doctree = xmlParseMemory((char *) VARDATA(document), docsize);
+	if (workspace->doctree == NULL)
 		return NULL;			/* not well-formed */
 
-	ctxt = xmlXPathNewContext(doctree);
-	ctxt->node = xmlDocGetRootElement(doctree);
+	workspace->ctxt = xmlXPathNewContext(workspace->doctree);
+	workspace->ctxt->node = xmlDocGetRootElement(workspace->doctree);
 
 	/* compile the path */
 	comppath = xmlXPathCompile(xpath);
 	if (comppath == NULL)
 	{
-		xmlFreeDoc(doctree);
+		cleanup_workspace(workspace);
 		elog_error("XPath Syntax Error", true);
 	}
 
 	/* Now evaluate the path expression. */
-	res = xmlXPathCompiledEval(comppath, ctxt);
+	res = xmlXPathCompiledEval(comppath, workspace->ctxt);
+	workspace->res = res;
+
 	xmlXPathFreeCompExpr(comppath);
 
 	if (res == NULL)
-	{
-		xmlXPathFreeContext(ctxt);
-		xmlFreeDoc(doctree);
+		cleanup_workspace(workspace);
 
-		return NULL;
-	}
-	/* xmlFreeDoc(doctree); */
 	return res;
+}
+
+/* Clean up after processing the result of pgxml_xpath() */
+static void
+cleanup_workspace(xpath_workspace *workspace)
+{
+	if (workspace->res)
+		xmlXPathFreeObject(workspace->res);
+	workspace->res = NULL;
+	if (workspace->ctxt)
+		xmlXPathFreeContext(workspace->ctxt);
+	workspace->ctxt = NULL;
+	if (workspace->doctree)
+		xmlFreeDoc(workspace->doctree);
+	workspace->doctree = NULL;
 }
 
 static text *
