@@ -989,8 +989,7 @@ connectFailureMessage(PGconn *conn, int errorno)
 	{
 		char	host_addr[NI_MAXHOST];
 		bool 	display_host_addr;
-		struct sockaddr_in *host_addr_struct = (struct sockaddr_in *)
-														&conn->raddr.addr;
+		struct sockaddr_storage *addr = &conn->raddr.addr;
 
 		/*
 		 *	Optionally display the network address with the hostname.
@@ -998,18 +997,33 @@ connectFailureMessage(PGconn *conn, int errorno)
 		 */
 		if (conn->pghostaddr != NULL)
 			strlcpy(host_addr, conn->pghostaddr, NI_MAXHOST);
-		else if (inet_net_ntop(host_addr_struct->sin_family,
-				 &host_addr_struct->sin_addr.s_addr,
-				 host_addr_struct->sin_family == AF_INET ? 32 : 128,
-				 host_addr, sizeof(host_addr)) == NULL)
+		else if (addr->ss_family == AF_INET)
+		{
+			if (inet_net_ntop(AF_INET,
+							  &((struct sockaddr_in *) addr)->sin_addr.s_addr,
+							  32,
+							  host_addr, sizeof(host_addr)) == NULL)
+				strcpy(host_addr, "???");
+		}
+#ifdef HAVE_IPV6
+		else if (addr->ss_family == AF_INET6)
+		{
+			if (inet_net_ntop(AF_INET6,
+							  &((struct sockaddr_in6 *) addr)->sin6_addr.s6_addr,
+							  128,
+							  host_addr, sizeof(host_addr)) == NULL)
+				strcpy(host_addr, "???");
+		}
+#endif
+		else
 			strcpy(host_addr, "???");
 
-		display_host_addr = !conn->pghostaddr &&
-							strcmp(conn->pghost, host_addr) != 0;
-		
+		display_host_addr = (conn->pghostaddr == NULL) &&
+			(strcmp(conn->pghost, host_addr) != 0);
+
 		appendPQExpBuffer(&conn->errorMessage,
 						  libpq_gettext("could not connect to server: %s\n"
-					 "\tIs the server running on host \"%s\" %s%s%sand accepting\n"
+					 "\tIs the server running on host \"%s\"%s%s%s and accepting\n"
 										"\tTCP/IP connections on port %s?\n"),
 						  SOCK_STRERROR(errorno, sebuf, sizeof(sebuf)),
 						  conn->pghostaddr
@@ -1018,9 +1032,9 @@ connectFailureMessage(PGconn *conn, int errorno)
 							 ? conn->pghost
 							 : "???"),
 						  /* display the IP address only if not already output */
-						  display_host_addr ? "(" : "",
+						  display_host_addr ? " (" : "",
 						  display_host_addr ? host_addr : "",
-						  display_host_addr ? ") " : "",
+						  display_host_addr ? ")" : "",
 						  conn->pgport);
 	}
 }
