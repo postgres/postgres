@@ -397,20 +397,21 @@ start_postmaster(void)
 
 /*
  * Find the pgport and try a connection
+ *
  * Note that the checkpoint parameter enables a Windows service control
  * manager checkpoint, it's got nothing to do with database checkpoints!!
  */
 static PGPing
 test_postmaster_connection(bool do_checkpoint)
 {
-	PGPing		ret = PQACCESS;	/* assume success for zero wait */
+	PGPing		ret = PQPING_OK;	/* assume success for wait == zero */
 	int			i;
 	char		portstr[32];
 	char	   *p;
 	char	   *q;
 	char		connstr[128];	/* Should be way more than enough! */
 
-	*portstr = '\0';
+	portstr[0] = '\0';
 
 	/*
 	 * Look in post_opts for a -p switch.
@@ -453,7 +454,7 @@ test_postmaster_connection(bool do_checkpoint)
 	 * This parsing code isn't amazingly bright either, but it should be okay
 	 * for valid port settings.
 	 */
-	if (!*portstr)
+	if (!portstr[0])
 	{
 		char	  **optlines;
 
@@ -491,11 +492,11 @@ test_postmaster_connection(bool do_checkpoint)
 	}
 
 	/* Check environment */
-	if (!*portstr && getenv("PGPORT") != NULL)
+	if (!portstr[0] && getenv("PGPORT") != NULL)
 		strlcpy(portstr, getenv("PGPORT"), sizeof(portstr));
 
 	/* Else use compiled-in default */
-	if (!*portstr)
+	if (!portstr[0])
 		snprintf(portstr, sizeof(portstr), "%d", DEF_PGPORT);
 
 	/*
@@ -507,34 +508,32 @@ test_postmaster_connection(bool do_checkpoint)
 
 	for (i = 0; i < wait_seconds; i++)
 	{
-		if ((ret = PQping(connstr)) != PQNORESPONSE)
-			return ret;
-		else
-		{
+		ret = PQping(connstr);
+		if (ret == PQPING_OK || ret == PQPING_NO_ATTEMPT)
+			break;
+		/* No response, or startup still in process; wait */
 #if defined(WIN32)
-			if (do_checkpoint)
-			{
-				/*
-				 * Increment the wait hint by 6 secs (connection timeout +
-				 * sleep) We must do this to indicate to the SCM that our
-				 * startup time is changing, otherwise it'll usually send a
-				 * stop signal after 20 seconds, despite incrementing the
-				 * checkpoint counter.
+		if (do_checkpoint)
+		{
+			/*
+			 * Increment the wait hint by 6 secs (connection timeout +
+			 * sleep) We must do this to indicate to the SCM that our
+			 * startup time is changing, otherwise it'll usually send a
+			 * stop signal after 20 seconds, despite incrementing the
+			 * checkpoint counter.
 				 */
-				status.dwWaitHint += 6000;
-				status.dwCheckPoint++;
-				SetServiceStatus(hStatus, (LPSERVICE_STATUS) &status);
-			}
-
-			else
-#endif
-				print_msg(".");
-
-			pg_usleep(1000000); /* 1 sec */
+			status.dwWaitHint += 6000;
+			status.dwCheckPoint++;
+			SetServiceStatus(hStatus, (LPSERVICE_STATUS) &status);
 		}
+		else
+#endif
+			print_msg(".");
+
+		pg_usleep(1000000); /* 1 sec */
 	}
 
-	/* value of last call to PQping */
+	/* return result of last call to PQping */
 	return ret;
 }
 
@@ -738,24 +737,30 @@ do_start(void)
 
 	if (do_wait)
 	{
-		int status;
-		
 		print_msg(_("waiting for server to start..."));
 
-		if ((status = test_postmaster_connection(false)) == PQNORESPONSE)
+		switch (test_postmaster_connection(false))
 		{
-			write_stderr(_("%s: could not start server\n"
-						   "Examine the log output.\n"),
-						 progname);
-			exit(1);
-		}
-		else
-		{
-			print_msg(_(" done\n"));
-			print_msg(_("server started\n"));
-			if (status == PQREJECT)
-				write_stderr(_("warning:  could not connect; might be caused by invalid authentication or\n"
-								"misconfiguration.\n"));
+			case PQPING_OK:
+				print_msg(_(" done\n"));
+				print_msg(_("server started\n"));
+				break;
+			case PQPING_REJECT:
+				print_msg(_(" stopped waiting\n"));
+				print_msg(_("server is still starting up\n"));
+				break;
+			case PQPING_NO_RESPONSE:
+				print_msg(_(" stopped waiting\n"));
+				write_stderr(_("%s: could not start server\n"
+							   "Examine the log output.\n"),
+							 progname);
+				exit(1);
+				break;
+			case PQPING_NO_ATTEMPT:
+				print_msg(_(" failed\n"));
+				write_stderr(_("%s: could not wait for server because of misconfiguration\n"),
+							 progname);
+				exit(1);
 		}
 	}
 	else
@@ -1289,7 +1294,7 @@ pgwin32_ServiceMain(DWORD argc, LPTSTR *argv)
 	if (do_wait)
 	{
 		write_eventlog(EVENTLOG_INFORMATION_TYPE, _("Waiting for server startup...\n"));
-		if (test_postmaster_connection(true) == false)
+		if (test_postmaster_connection(true) != PQPING_OK)
 		{
 			write_eventlog(EVENTLOG_INFORMATION_TYPE, _("Timed out waiting for server startup\n"));
 			pgwin32_SetServiceStatus(SERVICE_STOPPED);

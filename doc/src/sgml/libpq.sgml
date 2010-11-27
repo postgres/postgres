@@ -1060,6 +1060,90 @@ PostgresPollingStatusType PQresetPoll(PGconn *conn);
      </listitem>
     </varlistentry>
 
+    <varlistentry id="libpq-pqpingparams">
+     <term><function>PQpingParams</function><indexterm><primary>PQpingParams</></></term>
+     <listitem>
+      <para>
+       <function>PQpingParams</function> reports the status of the
+       server.  It accepts connection parameters identical to those of
+       <function>PQconnectdbParams</>, described above.  It is not, however,
+       necessary to supply correct user name, password, or database name
+       values to obtain the server status.
+
+<synopsis>
+PGPing PQpingParams(const char **keywords, const char **values, int expand_dbname);
+</synopsis>
+
+       The function returns one of the following values:
+
+       <variablelist>
+        <varlistentry id="libpq-pqpingparams-pqping-ok">
+         <term><literal>PQPING_OK</literal></term>
+         <listitem>
+          <para>
+           The server is running and appears to be accepting connections.
+          </para>
+         </listitem>
+        </varlistentry>
+
+        <varlistentry id="libpq-pqpingparams-pqping-reject">
+         <term><literal>PQPING_REJECT</literal></term>
+         <listitem>
+          <para>
+           The server is running but is in a state that disallows connections
+           (startup, shutdown, or crash recovery).
+          </para>
+         </listitem>
+        </varlistentry>
+
+        <varlistentry id="libpq-pqpingparams-pqping-no-response">
+         <term><literal>PQPING_NO_RESPONSE</literal></term>
+         <listitem>
+          <para>
+           The server could not be contacted.
+          </para>
+         </listitem>
+        </varlistentry>
+
+        <varlistentry id="libpq-pqpingparams-pqping-no-attempt">
+         <term><literal>PQPING_NO_ATTEMPT</literal></term>
+         <listitem>
+          <para>
+           No attempt was made to contact the server, because the supplied
+           parameters were incorrect or there was some client-side problem
+           (for example, out of memory).
+          </para>
+         </listitem>
+        </varlistentry>
+       </variablelist>
+
+      </para>
+
+     </listitem>
+    </varlistentry>
+
+    <varlistentry id="libpq-pqping">
+     <term><function>PQping</function><indexterm><primary>PQping</></></term>
+     <listitem>
+      <para>
+       <function>PQping</function> reports the status of the
+       server.  It accepts connection parameters identical to those of
+       <function>PQconnectdb</>, described above.  It is not, however,
+       necessary to supply correct user name, password, or database name
+       values to obtain the server status.
+
+<synopsis>
+PGPing PQping(const char *conninfo);
+</synopsis>
+      </para>
+
+      <para>
+       The return values are the same as for <function>PQpingParams</>.
+      </para>
+
+     </listitem>
+    </varlistentry>
+
    </variablelist>
   </para>
  </sect1>
@@ -1508,74 +1592,6 @@ int PQbackendPID(const PGconn *conn);
        <acronym>PID</acronym> belongs to a process executing on the
        database server host, not the local host!
       </para>
-     </listitem>
-    </varlistentry>
-
-    <varlistentry id="libpq-pqpingparams">
-     <term><function>PQpingParams</function><indexterm><primary>PQpingParams</></></term>
-     <listitem>
-      <para>
-       <function>PQpingParams</function> indicates the status of the
-       server.  The currently recognized parameter key words are the
-       same as <function>PQconnectParams</>.
-
-<synopsis>
-PGPing PQpingParams(const char **keywords, const char **values, int expand_dbname);
-</synopsis>
-
-       It returns one of the following values:
-
-       <variablelist>
-        <varlistentry id="libpq-pqpingparams-pqaccess">
-         <term><literal>PQACCESS</literal></term>
-         <listitem>
-          <para>
-           The server is running and allows access.
-          </para>
-         </listitem>
-        </varlistentry>
-
-        <varlistentry id="libpq-pqpingparams-pqreject">
-         <term><literal>PQREJECT</literal></term>
-         <listitem>
-          <para>
-           The server is running but rejected a connection request.
-          </para>
-         </listitem>
-        </varlistentry>
-
-        <varlistentry id="libpq-pqpingparams-pqnoresponse">
-         <term><literal>PQNORESPONSE</literal></term>
-         <listitem>
-          <para>
-           The server did not respond.
-          </para>
-         </listitem>
-        </varlistentry>
-       </variablelist>
-
-      </para>
-
-     </listitem>
-    </varlistentry>
-
-    <varlistentry id="libpq-pqping">
-     <term><function>PQping</function><indexterm><primary>PQping</></></term>
-     <listitem>
-      <para>
-       Returns the status of the server.
-
-<synopsis>
-PGPing PQping(const char *conninfo);
-</synopsis>
-      </para>
-
-      <para>
-       This function uses the same <literal>conninfo</literal> parameter
-       key words as <function>PQconnectdb</>.  It returns the same
-       values as <function>PQpingParams</> above.
-      </para>
-
      </listitem>
     </varlistentry>
 

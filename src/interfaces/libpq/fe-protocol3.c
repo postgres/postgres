@@ -758,15 +758,19 @@ pqGetErrorNotice3(PGconn *conn, bool isError)
 
 	/*
 	 * Now build the "overall" error message for PQresultErrorMessage.
+	 *
+	 * Also, save the SQLSTATE in conn->last_sqlstate.
 	 */
 	resetPQExpBuffer(&workBuf);
 	val = PQresultErrorField(res, PG_DIAG_SEVERITY);
 	if (val)
 		appendPQExpBuffer(&workBuf, "%s:  ", val);
-	if (conn->verbosity == PQERRORS_VERBOSE)
+	val = PQresultErrorField(res, PG_DIAG_SQLSTATE);
+	if (val)
 	{
-		val = PQresultErrorField(res, PG_DIAG_SQLSTATE);
-		if (val)
+		if (strlen(val) < sizeof(conn->last_sqlstate))
+			strcpy(conn->last_sqlstate, val);
+		if (conn->verbosity == PQERRORS_VERBOSE)
 			appendPQExpBuffer(&workBuf, "%s: ", val);
 	}
 	val = PQresultErrorField(res, PG_DIAG_MESSAGE_PRIMARY);
