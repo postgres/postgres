@@ -2321,6 +2321,8 @@ keep_going:						/* We will come back to here until there is
 				}
 
 				/* It is an authentication request. */
+				conn->auth_req_received = true;
+
 				/* Get the type of request. */
 				if (pqGetInt((int *) &areq, 4, conn))
 				{
@@ -2589,11 +2591,18 @@ internal_ping(PGconn *conn)
 		return PQPING_OK;
 
 	/*
-	 * Here is the interesting part of "ping": determine the cause of the
+	 * Here begins the interesting part of "ping": determine the cause of the
 	 * failure in sufficient detail to decide what to return.  We do not want
 	 * to report that the server is not up just because we didn't have a valid
-	 * password, for example.
-	 *
+	 * password, for example.  In fact, any sort of authentication request
+	 * implies the server is up.  (We need this check since the libpq side
+	 * of things might have pulled the plug on the connection before getting
+	 * an error as such from the postmaster.)
+	 */
+	if (conn->auth_req_received)
+		return PQPING_OK;
+
+	/*
 	 * If we failed to get any ERROR response from the postmaster, report
 	 * PQPING_NO_RESPONSE.  This result could be somewhat misleading for a
 	 * pre-7.4 server, since it won't send back a SQLSTATE, but those are long
@@ -2672,6 +2681,7 @@ makeEmptyPGconn(void)
 	conn->std_strings = false;	/* unless server says differently */
 	conn->verbosity = PQERRORS_DEFAULT;
 	conn->sock = -1;
+	conn->auth_req_received = false;
 	conn->password_needed = false;
 	conn->dot_pgpass_used = false;
 #ifdef USE_SSL
