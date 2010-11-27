@@ -4357,6 +4357,12 @@ COPY postgres_log FROM '/full/path/to/logfile.csv' WITH csv;
        </para>
 
        <para>
+        This variable is also not used when creating databases.
+        By default, a new database inherits its tablespace setting from
+        the template database it is copied from.
+       </para>
+
+       <para>
         For more information on tablespaces,
         see <xref linkend="manage-ag-tablespaces">.
        </para>
