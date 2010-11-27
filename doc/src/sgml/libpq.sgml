@@ -1100,7 +1100,11 @@ PGPing PQpingParams(const char **keywords, const char **values, int expand_dbnam
          <term><literal>PQPING_NO_RESPONSE</literal></term>
          <listitem>
           <para>
-           The server could not be contacted.
+           The server could not be contacted.  This might indicate that the
+           server is not running, or that there is something wrong with the
+           given connection parameters (for example, wrong port number), or
+           that there is a network connectivity problem (for example, a
+           firewall blocking the connection request).
           </para>
          </listitem>
         </varlistentry>
@@ -1110,8 +1114,8 @@ PGPing PQpingParams(const char **keywords, const char **values, int expand_dbnam
          <listitem>
           <para>
            No attempt was made to contact the server, because the supplied
-           parameters were incorrect or there was some client-side problem
-           (for example, out of memory).
+           parameters were obviously incorrect or there was some client-side
+           problem (for example, out of memory).
           </para>
          </listitem>
         </varlistentry>
