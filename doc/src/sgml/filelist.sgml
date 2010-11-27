@@ -93,6 +93,7 @@
 <!-- contrib information -->
 <!entity contrib         SYSTEM "contrib.sgml">
 <!entity adminpack       SYSTEM "adminpack.sgml">
+<!entity auth-delay      SYSTEM "auth-delay.sgml">
 <!entity auto-explain    SYSTEM "auto-explain.sgml">
 <!entity btree-gin       SYSTEM "btree-gin.sgml">
 <!entity btree-gist      SYSTEM "btree-gist.sgml">

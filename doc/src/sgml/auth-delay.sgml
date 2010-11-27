@@ -1,0 +1,67 @@
+<!-- doc/src/sgml/auth-delay.sgml -->
+
+<sect1 id="auth-delay">
+ <title>auth_delay</title>
+
+ <indexterm zone="auth-delay">
+  <primary>auth_delay</primary>
+ </indexterm>
+
+ <para>
+  <filename>auth_delay</filename> causes the server to pause briefly before
+  reporting authentication failure, to make brute-force attacks on database
+  passwords more difficult.  Note that it does nothing to prevent
+  denial-of-service attacks, and may even exacerbate them, since processes
+  that are waiting before reporting authentication failure will still consume
+  connection slots.
+ </para>
+
+ <para>
+  In order to function, this module must be loaded via 
+  <xref linkend="guc-shared-preload-libraries"> in <filename>postgresql.conf</>.
+ </para>
+
+ <sect2>
+  <title>Configuration parameters</title>
+
+  <variablelist>
+   <varlistentry>
+    <term>
+     <varname>auth_delay.milliseconds</varname> (<type>int</type>)
+    </term>
+    <indexterm>
+     <primary><varname>auth_delay.milliseconds</> configuration parameter</primary>
+    </indexterm>
+    <listitem>
+     <para>
+      The number of milliseconds to wait before reporting an authentication
+      failure.  The default is 0.
+     </para>
+    </listitem>
+   </varlistentry>
+  </variablelist>
+
+  <para>
+   In order to set these parameters in your <filename>postgresql.conf</> file,
+   you will need to add <literal>auth_delay</> to
+   <xref linkend="guc-custom-variable-classes">.  Typical usage might be:
+  </para>
+
+<programlisting>
+# postgresql.conf
+shared_preload_libraries = 'auth_delay'
+
+custom_variable_classes = 'auth_delay'
+auth_delay.milliseconds = '500'
+</programlisting>
+ </sect2>
+
+ <sect2>
+  <title>Author</title>
+
+  <para>
+   KaiGai Kohei <email>kaigai@ak.jp.nec.com</email>
+  </para>
+ </sect2>
+
+</sect1>

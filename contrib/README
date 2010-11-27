@@ -28,6 +28,11 @@ adminpack -
 	File and log manipulation routines, used by pgAdmin
 	by Dave Page <dpage@vale-housing.co.uk>
 
+auth_delay
+	Add a short delay after a failed authentication attempt, to make
+    make brute-force attacks on database passwords a bit harder.
+	by KaiGai Kohei <kaigai@ak.jp.nec.com>
+
 auto_explain -
 	Log EXPLAIN output for long-running queries
 	by Takahiro Itagaki <itagaki.takahiro@oss.ntt.co.jp>
