@@ -953,14 +953,6 @@ LogAccessExclusiveLock(Oid dbOid, Oid relOid)
 {
 	xl_standby_lock xlrec;
 
-	/*
-	 * Ensure that a TransactionId has been assigned to this transaction. We
-	 * don't actually need the xid yet but if we don't do this then
-	 * RecordTransactionCommit() and RecordTransactionAbort() will optimise
-	 * away the transaction completion record which recovery relies upon to
-	 * release locks. It's a hack, but for a corner case not worth adding code
-	 * for into the main commit path.
-	 */
 	xlrec.xid = GetTopTransactionId();
 
 	/*
@@ -972,4 +964,25 @@ LogAccessExclusiveLock(Oid dbOid, Oid relOid)
 	xlrec.relOid = relOid;
 
 	LogAccessExclusiveLocks(1, &xlrec);
+}
+
+/*
+ * Prepare to log an AccessExclusiveLock, for use during LockAcquire()
+ */
+void
+LogAccessExclusiveLockPrepare(void)
+{
+	/*
+	 * Ensure that a TransactionId has been assigned to this transaction,
+	 * for two reasons, both related to lock release on the standby.
+	 * First, we must assign an xid so that RecordTransactionCommit() and
+	 * RecordTransactionAbort() do not optimise away the transaction
+	 * completion record which recovery relies upon to release locks. It's
+	 * a hack, but for a corner case not worth adding code for into the
+	 * main commit path. Second, must must assign an xid before the lock
+	 * is recorded in shared memory, otherwise a concurrently executing
+	 * GetRunningTransactionLocks() might see a lock associated with an
+	 * InvalidTransactionId which we later assert cannot happen.
+	 */
+	(void) GetTopTransactionId();
 }
