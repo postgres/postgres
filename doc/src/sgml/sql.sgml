@@ -1968,7 +1968,7 @@ DROP VIEW <replaceable class="parameter">view_name</replaceable>;
 
 <programlisting>
 INSERT INTO <replaceable class="parameter">table_name</replaceable> (<replaceable class="parameter">name_of_attr_1</replaceable>
-    [, <replaceable class="parameter">name_of_attr_2</replaceable> [,...]])
+    [, <replaceable class="parameter">name_of_attr_2</replaceable> [, ...]])
     VALUES (<replaceable class="parameter">val_attr_1</replaceable> [, <replaceable class="parameter">val_attr_2</replaceable> [, ...]]);
 </programlisting>
      </para>

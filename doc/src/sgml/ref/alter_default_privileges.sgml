@@ -29,12 +29,12 @@ ALTER DEFAULT PRIVILEGES
 <phrase>where <replaceable class="parameter">abbreviated_grant_or_revoke</replaceable> is one of:</phrase>
 
 GRANT { { SELECT | INSERT | UPDATE | DELETE | TRUNCATE | REFERENCES | TRIGGER }
-    [,...] | ALL [ PRIVILEGES ] }
+    [, ...] | ALL [ PRIVILEGES ] }
     ON TABLES
     TO { [ GROUP ] <replaceable class="PARAMETER">role_name</replaceable> | PUBLIC } [, ...] [ WITH GRANT OPTION ]
 
 GRANT { { USAGE | SELECT | UPDATE }
-    [,...] | ALL [ PRIVILEGES ] }
+    [, ...] | ALL [ PRIVILEGES ] }
     ON SEQUENCES
     TO { [ GROUP ] <replaceable class="PARAMETER">role_name</replaceable> | PUBLIC } [, ...] [ WITH GRANT OPTION ]
 
@@ -44,14 +44,14 @@ GRANT { EXECUTE | ALL [ PRIVILEGES ] }
 
 REVOKE [ GRANT OPTION FOR ]
     { { SELECT | INSERT | UPDATE | DELETE | TRUNCATE | REFERENCES | TRIGGER }
-    [,...] | ALL [ PRIVILEGES ] }
+    [, ...] | ALL [ PRIVILEGES ] }
     ON TABLES
     FROM { [ GROUP ] <replaceable class="PARAMETER">role_name</replaceable> | PUBLIC } [, ...]
     [ CASCADE | RESTRICT ]
 
 REVOKE [ GRANT OPTION FOR ]
     { { USAGE | SELECT | UPDATE }
-    [,...] | ALL [ PRIVILEGES ] }
+    [, ...] | ALL [ PRIVILEGES ] }
     ON SEQUENCES
     FROM { [ GROUP ] <replaceable class="PARAMETER">role_name</replaceable> | PUBLIC } [, ...]
     [ CASCADE | RESTRICT ]
