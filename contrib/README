@@ -30,7 +30,7 @@ adminpack -
 
 auth_delay
 	Add a short delay after a failed authentication attempt, to make
-    make brute-force attacks on database passwords a bit harder.
+    brute-force attacks on database passwords a bit harder.
 	by KaiGai Kohei <kaigai@ak.jp.nec.com>
 
 auto_explain -
