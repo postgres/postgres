@@ -421,20 +421,17 @@ typedef struct RelOptInfo
  * IndexOptInfo
  *		Per-index information for planning/optimization
  *
- *		Prior to Postgres 7.0, RelOptInfo was used to describe both relations
- *		and indexes, but that created confusion without actually doing anything
- *		useful.  So now we have a separate IndexOptInfo struct for indexes.
- *
- *		opfamily[], indexkeys[], opcintype[], fwdsortop[], revsortop[],
- *		and nulls_first[] each have ncolumns entries.
+ *		opfamily[], indexkeys[], and opcintype[] each have ncolumns entries.
+ *		sortopfamily[], reverse_sort[], and nulls_first[] likewise have
+ *		ncolumns entries, if the index is ordered; but if it is unordered,
+ *		those pointers are NULL.
  *
  *		Zeroes in the indexkeys[] array indicate index columns that are
  *		expressions; there is one element in indexprs for each such column.
  *
- *		For an unordered index, the sortop arrays contains zeroes.	Note that
- *		fwdsortop[] and nulls_first[] describe the sort ordering of a forward
- *		indexscan; we can also consider a backward indexscan, which will
- *		generate sort order described by revsortop/!nulls_first.
+ *		For an ordered index, reverse_sort[] and nulls_first[] describe the
+ *		sort ordering of a forward indexscan; we can also consider a backward
+ *		indexscan, which will generate the reverse ordering.
  *
  *		The indexprs and indpred expressions have been run through
  *		prepqual.c and eval_const_expressions() for ease of matching to
@@ -457,8 +454,8 @@ typedef struct IndexOptInfo
 	Oid		   *opfamily;		/* OIDs of operator families for columns */
 	int		   *indexkeys;		/* column numbers of index's keys, or 0 */
 	Oid		   *opcintype;		/* OIDs of opclass declared input data types */
-	Oid		   *fwdsortop;		/* OIDs of sort operators for each column */
-	Oid		   *revsortop;		/* OIDs of sort operators for backward scan */
+	Oid		   *sortopfamily;	/* OIDs of btree opfamilies, if orderable */
+	bool	   *reverse_sort;	/* is sort order descending? */
 	bool	   *nulls_first;	/* do NULLs come first in the sort order? */
 	Oid			relam;			/* OID of the access method (in pg_am) */
 

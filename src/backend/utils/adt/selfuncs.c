@@ -4567,14 +4567,26 @@ get_actual_variable_range(PlannerInfo *root, VariableStatData *vardata,
 		 * The first index column must match the desired variable and sort
 		 * operator --- but we can use a descending-order index.
 		 */
-		if (sortop == index->fwdsortop[0])
-			indexscandir = ForwardScanDirection;
-		else if (sortop == index->revsortop[0])
-			indexscandir = BackwardScanDirection;
-		else
-			continue;
 		if (!match_index_to_operand(vardata->var, 0, index))
 			continue;
+		switch (get_op_opfamily_strategy(sortop, index->sortopfamily[0]))
+		{
+			case BTLessStrategyNumber:
+				if (index->reverse_sort[0])
+					indexscandir = BackwardScanDirection;
+				else
+					indexscandir = ForwardScanDirection;
+				break;
+			case BTGreaterStrategyNumber:
+				if (index->reverse_sort[0])
+					indexscandir = ForwardScanDirection;
+				else
+					indexscandir = BackwardScanDirection;
+				break;
+			default:
+				/* index doesn't match the sortop */
+				continue;
+		}
 
 		/*
 		 * Found a suitable index to extract data from.  We'll need an EState
@@ -6150,12 +6162,18 @@ btcostestimate(PG_FUNCTION_ARGS)
 
 	if (HeapTupleIsValid(vardata.statsTuple))
 	{
+		Oid			sortop;
 		float4	   *numbers;
 		int			nnumbers;
 
-		if (get_attstatsslot(vardata.statsTuple, InvalidOid, 0,
+		sortop = get_opfamily_member(index->opfamily[0],
+									 index->opcintype[0],
+									 index->opcintype[0],
+									 BTLessStrategyNumber);
+		if (OidIsValid(sortop) &&
+			get_attstatsslot(vardata.statsTuple, InvalidOid, 0,
 							 STATISTIC_KIND_CORRELATION,
-							 index->fwdsortop[0],
+							 sortop,
 							 NULL,
 							 NULL, NULL,
 							 &numbers, &nnumbers))
@@ -6165,29 +6183,13 @@ btcostestimate(PG_FUNCTION_ARGS)
 			Assert(nnumbers == 1);
 			varCorrelation = numbers[0];
 
+			if (index->reverse_sort[0])
+				varCorrelation = -varCorrelation;
+
 			if (index->ncolumns > 1)
 				*indexCorrelation = varCorrelation * 0.75;
 			else
 				*indexCorrelation = varCorrelation;
-
-			free_attstatsslot(InvalidOid, NULL, 0, numbers, nnumbers);
-		}
-		else if (get_attstatsslot(vardata.statsTuple, InvalidOid, 0,
-								  STATISTIC_KIND_CORRELATION,
-								  index->revsortop[0],
-								  NULL,
-								  NULL, NULL,
-								  &numbers, &nnumbers))
-		{
-			double		varCorrelation;
-
-			Assert(nnumbers == 1);
-			varCorrelation = numbers[0];
-
-			if (index->ncolumns > 1)
-				*indexCorrelation = -varCorrelation * 0.75;
-			else
-				*indexCorrelation = -varCorrelation;
 
 			free_attstatsslot(InvalidOid, NULL, 0, numbers, nnumbers);
 		}

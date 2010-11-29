@@ -36,12 +36,6 @@ static PathKey *make_canonical_pathkey(PlannerInfo *root,
 					   EquivalenceClass *eclass, Oid opfamily,
 					   int strategy, bool nulls_first);
 static bool pathkey_is_redundant(PathKey *new_pathkey, List *pathkeys);
-static PathKey *make_pathkey_from_sortinfo(PlannerInfo *root,
-						   Expr *expr, Oid ordering_op,
-						   bool nulls_first,
-						   Index sortref,
-						   bool create_it,
-						   bool canonicalize);
 static Var *find_indexkey_var(PlannerInfo *root, RelOptInfo *rel,
 				  AttrNumber varattno);
 static bool right_merge_direction(PlannerInfo *root, PathKey *pathkey);
@@ -224,9 +218,9 @@ canonicalize_pathkeys(PlannerInfo *root, List *pathkeys)
 
 /*
  * make_pathkey_from_sortinfo
- *	  Given an expression, a sortop, and a nulls-first flag, create
- *	  a PathKey.  If canonicalize = true, the result is a "canonical"
- *	  PathKey, otherwise not.  (But note it might be redundant anyway.)
+ *	  Given an expression and sort-order information, create a PathKey.
+ *	  If canonicalize = true, the result is a "canonical" PathKey,
+ *	  otherwise not.  (But note it might be redundant anyway.)
  *
  * If the PathKey is being generated from a SortGroupClause, sortref should be
  * the SortGroupClause's SortGroupRef; otherwise zero.
@@ -240,46 +234,39 @@ canonicalize_pathkeys(PlannerInfo *root, List *pathkeys)
  */
 static PathKey *
 make_pathkey_from_sortinfo(PlannerInfo *root,
-						   Expr *expr, Oid ordering_op,
+						   Expr *expr,
+						   Oid opfamily,
+						   Oid opcintype,
+						   bool reverse_sort,
 						   bool nulls_first,
 						   Index sortref,
 						   bool create_it,
 						   bool canonicalize)
 {
-	Oid			opfamily,
-				opcintype;
 	int16		strategy;
 	Oid			equality_op;
 	List	   *opfamilies;
 	EquivalenceClass *eclass;
 
-	/*
-	 * An ordering operator fully determines the behavior of its opfamily, so
-	 * could only meaningfully appear in one family --- or perhaps two if one
-	 * builds a reverse-sort opfamily, but there's not much point in that
-	 * anymore.  But EquivalenceClasses need to contain opfamily lists based
-	 * on the family membership of equality operators, which could easily be
-	 * bigger.	So, look up the equality operator that goes with the ordering
-	 * operator (this should be unique) and get its membership.
-	 */
+	strategy = reverse_sort ? BTGreaterStrategyNumber : BTLessStrategyNumber;
 
-	/* Find the operator in pg_amop --- failure shouldn't happen */
-	if (!get_ordering_op_properties(ordering_op,
-									&opfamily, &opcintype, &strategy))
-		elog(ERROR, "operator %u is not a valid ordering operator",
-			 ordering_op);
-	/* Get matching equality operator */
+	/*
+	 * EquivalenceClasses need to contain opfamily lists based on the family
+	 * membership of mergejoinable equality operators, which could belong to
+	 * more than one opfamily.  So we have to look up the opfamily's equality
+	 * operator and get its membership.
+	 */
 	equality_op = get_opfamily_member(opfamily,
 									  opcintype,
 									  opcintype,
 									  BTEqualStrategyNumber);
 	if (!OidIsValid(equality_op))		/* shouldn't happen */
-		elog(ERROR, "could not find equality operator for ordering operator %u",
-			 ordering_op);
+		elog(ERROR, "could not find equality operator for opfamily %u",
+			 opfamily);
 	opfamilies = get_mergejoin_opfamilies(equality_op);
 	if (!opfamilies)			/* certainly should find some */
-		elog(ERROR, "could not find opfamilies for ordering operator %u",
-			 ordering_op);
+		elog(ERROR, "could not find opfamilies for equality operator %u",
+			 equality_op);
 
 	/*
 	 * When dealing with binary-compatible opclasses, we have to ensure that
@@ -320,6 +307,42 @@ make_pathkey_from_sortinfo(PlannerInfo *root,
 									  strategy, nulls_first);
 	else
 		return makePathKey(eclass, opfamily, strategy, nulls_first);
+}
+
+/*
+ * make_pathkey_from_sortop
+ *	  Like make_pathkey_from_sortinfo, but work from a sort operator.
+ *
+ * This should eventually go away, but we need to restructure SortGroupClause
+ * first.
+ */
+static PathKey *
+make_pathkey_from_sortop(PlannerInfo *root,
+						 Expr *expr,
+						 Oid ordering_op,
+						 bool nulls_first,
+						 Index sortref,
+						 bool create_it,
+						 bool canonicalize)
+{
+	Oid			opfamily,
+				opcintype;
+	int16		strategy;
+
+	/* Find the operator in pg_amop --- failure shouldn't happen */
+	if (!get_ordering_op_properties(ordering_op,
+									&opfamily, &opcintype, &strategy))
+		elog(ERROR, "operator %u is not a valid ordering operator",
+			 ordering_op);
+	return make_pathkey_from_sortinfo(root,
+									  expr,
+									  opfamily,
+									  opcintype,
+									  (strategy == BTGreaterStrategyNumber),
+									  nulls_first,
+									  sortref,
+									  create_it,
+									  canonicalize);
 }
 
 
@@ -479,11 +502,10 @@ get_cheapest_fractional_path_for_pathkeys(List *paths,
  * build_index_pathkeys
  *	  Build a pathkeys list that describes the ordering induced by an index
  *	  scan using the given index.  (Note that an unordered index doesn't
- *	  induce any ordering; such an index will have no sortop OIDS in
- *	  its sortops arrays, and we will return NIL.)
+ *	  induce any ordering, so we return NIL.)
  *
- * If 'scandir' is BackwardScanDirection, attempt to build pathkeys
- * representing a backwards scan of the index.	Return NIL if can't do it.
+ * If 'scandir' is BackwardScanDirection, build pathkeys representing a
+ * backwards scan of the index.
  *
  * The result is canonical, meaning that redundant pathkeys are removed;
  * it may therefore have fewer entries than there are index columns.
@@ -500,12 +522,16 @@ build_index_pathkeys(PlannerInfo *root,
 					 ScanDirection scandir)
 {
 	List	   *retval = NIL;
-	ListCell   *indexprs_item = list_head(index->indexprs);
+	ListCell   *indexprs_item;
 	int			i;
 
+	if (index->sortopfamily == NULL)
+		return NIL;				/* non-orderable index */
+
+	indexprs_item = list_head(index->indexprs);
 	for (i = 0; i < index->ncolumns; i++)
 	{
-		Oid			sortop;
+		bool		reverse_sort;
 		bool		nulls_first;
 		int			ikey;
 		Expr	   *indexkey;
@@ -513,17 +539,14 @@ build_index_pathkeys(PlannerInfo *root,
 
 		if (ScanDirectionIsBackward(scandir))
 		{
-			sortop = index->revsortop[i];
+			reverse_sort = !index->reverse_sort[i];
 			nulls_first = !index->nulls_first[i];
 		}
 		else
 		{
-			sortop = index->fwdsortop[i];
+			reverse_sort = index->reverse_sort[i];
 			nulls_first = index->nulls_first[i];
 		}
-
-		if (!OidIsValid(sortop))
-			break;				/* no more orderable columns */
 
 		ikey = index->indexkeys[i];
 		if (ikey != 0)
@@ -543,7 +566,9 @@ build_index_pathkeys(PlannerInfo *root,
 		/* OK, try to make a canonical pathkey for this sort key */
 		cpathkey = make_pathkey_from_sortinfo(root,
 											  indexkey,
-											  sortop,
+											  index->sortopfamily[i],
+											  index->opcintype[i],
+											  reverse_sort,
 											  nulls_first,
 											  0,
 											  false,
@@ -892,13 +917,13 @@ make_pathkeys_for_sortclauses(PlannerInfo *root,
 
 		sortkey = (Expr *) get_sortgroupclause_expr(sortcl, tlist);
 		Assert(OidIsValid(sortcl->sortop));
-		pathkey = make_pathkey_from_sortinfo(root,
-											 sortkey,
-											 sortcl->sortop,
-											 sortcl->nulls_first,
-											 sortcl->tleSortGroupRef,
-											 true,
-											 canonicalize);
+		pathkey = make_pathkey_from_sortop(root,
+										   sortkey,
+										   sortcl->sortop,
+										   sortcl->nulls_first,
+										   sortcl->tleSortGroupRef,
+										   true,
+										   canonicalize);
 
 		/* Canonical form eliminates redundant ordering keys */
 		if (canonicalize)
@@ -935,13 +960,13 @@ make_pathkeys_for_aggregate(PlannerInfo *root,
 	 * We arbitrarily set nulls_first to false.  Actually, a MIN/MAX agg can
 	 * use either nulls ordering option, but that is dealt with elsewhere.
 	 */
-	pathkey = make_pathkey_from_sortinfo(root,
-										 aggtarget,
-										 aggsortop,
-										 false,	/* nulls_first */
-										 0,
-										 true,
-										 false);
+	pathkey = make_pathkey_from_sortop(root,
+									   aggtarget,
+									   aggsortop,
+									   false,	/* nulls_first */
+									   0,
+									   true,
+									   false);
 	return list_make1(pathkey);
 }
 

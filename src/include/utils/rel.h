@@ -178,10 +178,10 @@ typedef struct RelationData
 	/*
 	 * index access support info (used only for an index relation)
 	 *
-	 * Note: only default operators and support procs for each opclass are
-	 * cached, namely those with lefttype and righttype equal to the opclass's
-	 * opcintype.  The arrays are indexed by strategy or support number, which
-	 * is a sufficient identifier given that restriction.
+	 * Note: only default support procs for each opclass are cached, namely
+	 * those with lefttype and righttype equal to the opclass's opcintype.
+	 * The arrays are indexed by support function number, which is a
+	 * sufficient identifier given that restriction.
 	 *
 	 * Note: rd_amcache is available for index AMs to cache private data about
 	 * an index.  This must be just a cache since it may get reset at any time
@@ -194,7 +194,6 @@ typedef struct RelationData
 	RelationAmInfo *rd_aminfo;	/* lookup info for funcs found in pg_am */
 	Oid		   *rd_opfamily;	/* OIDs of op families for each index col */
 	Oid		   *rd_opcintype;	/* OIDs of opclass declared input data types */
-	Oid		   *rd_operator;	/* OIDs of index operators */
 	RegProcedure *rd_support;	/* OIDs of support procedures */
 	FmgrInfo   *rd_supportinfo; /* lookup info for support procedures */
 	int16	   *rd_indoption;	/* per-column AM-specific flags */

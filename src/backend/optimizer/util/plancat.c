@@ -189,19 +189,9 @@ get_relation_info(PlannerInfo *root, Oid relationObjectId, bool inhparent,
 				RelationGetForm(indexRelation)->reltablespace;
 			info->rel = rel;
 			info->ncolumns = ncolumns = index->indnatts;
-
-			/*
-			 * Allocate per-column info arrays.  To save a few palloc cycles
-			 * we allocate all the Oid-type arrays in one request.  We must
-			 * pre-zero the sortop and nulls_first arrays in case the index is
-			 * unordered.
-			 */
 			info->indexkeys = (int *) palloc(sizeof(int) * ncolumns);
-			info->opfamily = (Oid *) palloc0(sizeof(Oid) * (4 * ncolumns));
-			info->opcintype = info->opfamily + ncolumns;
-			info->fwdsortop = info->opcintype + ncolumns;
-			info->revsortop = info->fwdsortop + ncolumns;
-			info->nulls_first = (bool *) palloc0(sizeof(bool) * ncolumns);
+			info->opfamily = (Oid *) palloc(sizeof(Oid) * ncolumns);
+			info->opcintype = (Oid *) palloc(sizeof(Oid) * ncolumns);
 
 			for (i = 0; i < ncolumns; i++)
 			{
@@ -219,48 +209,89 @@ get_relation_info(PlannerInfo *root, Oid relationObjectId, bool inhparent,
 			info->amhasgetbitmap = OidIsValid(indexRelation->rd_am->amgetbitmap);
 
 			/*
-			 * Fetch the ordering operators associated with the index, if any.
-			 * We expect that all ordering-capable indexes use btree's
-			 * strategy numbers for the ordering operators.
+			 * Fetch the ordering information for the index, if any.
 			 */
-			if (indexRelation->rd_am->amcanorder)
+			if (info->relam == BTREE_AM_OID)
 			{
-				int			nstrat = indexRelation->rd_am->amstrategies;
+				/*
+				 * If it's a btree index, we can use its opfamily OIDs
+				 * directly as the sort ordering opfamily OIDs.
+				 */
+				Assert(indexRelation->rd_am->amcanorder);
+
+				info->sortopfamily = info->opfamily;
+				info->reverse_sort = (bool *) palloc(sizeof(bool) * ncolumns);
+				info->nulls_first = (bool *) palloc(sizeof(bool) * ncolumns);
 
 				for (i = 0; i < ncolumns; i++)
 				{
 					int16		opt = indexRelation->rd_indoption[i];
-					int			fwdstrat;
-					int			revstrat;
 
-					if (opt & INDOPTION_DESC)
+					info->reverse_sort[i] = (opt & INDOPTION_DESC) != 0;
+					info->nulls_first[i] = (opt & INDOPTION_NULLS_FIRST) != 0;
+				}
+			}
+			else if (indexRelation->rd_am->amcanorder)
+			{
+				/*
+				 * Otherwise, identify the corresponding btree opfamilies by
+				 * trying to map this index's "<" operators into btree.  Since
+				 * "<" uniquely defines the behavior of a sort order, this is
+				 * a sufficient test.
+				 *
+				 * XXX This method is rather slow and also requires the
+				 * undesirable assumption that the other index AM numbers its
+				 * strategies the same as btree.  It'd be better to have a way
+				 * to explicitly declare the corresponding btree opfamily for
+				 * each opfamily of the other index type.  But given the lack
+				 * of current or foreseeable amcanorder index types, it's not
+				 * worth expending more effort on now.
+				 */
+				info->sortopfamily = (Oid *) palloc(sizeof(Oid) * ncolumns);
+				info->reverse_sort = (bool *) palloc(sizeof(bool) * ncolumns);
+				info->nulls_first = (bool *) palloc(sizeof(bool) * ncolumns);
+
+				for (i = 0; i < ncolumns; i++)
+				{
+					int16		opt = indexRelation->rd_indoption[i];
+					Oid			ltopr;
+					Oid			btopfamily;
+					Oid			btopcintype;
+					int16		btstrategy;
+
+					info->reverse_sort[i] = (opt & INDOPTION_DESC) != 0;
+					info->nulls_first[i] = (opt & INDOPTION_NULLS_FIRST) != 0;
+
+					ltopr = get_opfamily_member(info->opfamily[i],
+												info->opcintype[i],
+												info->opcintype[i],
+												BTLessStrategyNumber);
+					if (OidIsValid(ltopr) &&
+						get_ordering_op_properties(ltopr,
+												   &btopfamily,
+												   &btopcintype,
+												   &btstrategy) &&
+						btopcintype == info->opcintype[i] &&
+						btstrategy == BTLessStrategyNumber)
 					{
-						fwdstrat = BTGreaterStrategyNumber;
-						revstrat = BTLessStrategyNumber;
+						/* Successful mapping */
+						info->sortopfamily[i] = btopfamily;
 					}
 					else
 					{
-						fwdstrat = BTLessStrategyNumber;
-						revstrat = BTGreaterStrategyNumber;
+						/* Fail ... quietly treat index as unordered */
+						info->sortopfamily = NULL;
+						info->reverse_sort = NULL;
+						info->nulls_first = NULL;
+						break;
 					}
-
-					/*
-					 * Index AM must have a fixed set of strategies for it to
-					 * make sense to specify amcanorder, so we need not allow
-					 * the case amstrategies == 0.
-					 */
-					if (fwdstrat > 0)
-					{
-						Assert(fwdstrat <= nstrat);
-						info->fwdsortop[i] = indexRelation->rd_operator[i * nstrat + fwdstrat - 1];
-					}
-					if (revstrat > 0)
-					{
-						Assert(revstrat <= nstrat);
-						info->revsortop[i] = indexRelation->rd_operator[i * nstrat + revstrat - 1];
-					}
-					info->nulls_first[i] = (opt & INDOPTION_NULLS_FIRST) != 0;
 				}
+			}
+			else
+			{
+				info->sortopfamily = NULL;
+				info->reverse_sort = NULL;
+				info->nulls_first = NULL;
 			}
 
 			/*

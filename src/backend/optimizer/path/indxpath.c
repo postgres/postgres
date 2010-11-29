@@ -380,7 +380,7 @@ find_usable_indexes(PlannerInfo *root, RelOptInfo *rel,
 		 * how many of them are actually useful for this query.  This is not
 		 * relevant unless we are at top level.
 		 */
-		index_is_ordered = OidIsValid(index->fwdsortop[0]);
+		index_is_ordered = (index->sortopfamily != NULL);
 		if (index_is_ordered && possibly_useful_pathkeys &&
 			istoplevel && outer_rel == NULL)
 		{
