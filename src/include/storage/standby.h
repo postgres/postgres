@@ -109,6 +109,7 @@ typedef struct RunningTransactionsData
 typedef RunningTransactionsData *RunningTransactions;
 
 extern void LogAccessExclusiveLock(Oid dbOid, Oid relOid);
+extern void LogAccessExclusiveLockPrepare(void);
 
 extern void LogStandbySnapshot(TransactionId *oldestActiveXid, TransactionId *nextXid);
 

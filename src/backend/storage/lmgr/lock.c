@@ -499,6 +499,7 @@ LockAcquireExtended(const LOCKTAG *locktag,
 	int			partition;
 	LWLockId	partitionLock;
 	int			status;
+	bool		log_lock = false;
 
 	if (lockmethodid <= 0 || lockmethodid >= lengthof(LockMethods))
 		elog(ERROR, "unrecognized lock method: %d", lockmethodid);
@@ -577,6 +578,24 @@ LockAcquireExtended(const LOCKTAG *locktag,
 	{
 		GrantLockLocal(locallock, owner);
 		return LOCKACQUIRE_ALREADY_HELD;
+	}
+
+	/*
+	 * Emit a WAL record if acquisition of this lock needs to be replayed in a
+	 * standby server. Only AccessExclusiveLocks can conflict with lock types
+	 * that read-only transactions can acquire in a standby server.
+	 *
+	 * Make sure this definition matches the one in GetRunningTransactionLocks().
+	 *
+	 * First we prepare to log, then after lock acquired we issue log record.
+	 */
+	if (lockmode >= AccessExclusiveLock &&
+		locktag->locktag_type == LOCKTAG_RELATION &&
+		!RecoveryInProgress() &&
+		XLogStandbyInfoActive())
+	{
+		LogAccessExclusiveLockPrepare();
+		log_lock = true;
 	}
 
 	/*
@@ -868,15 +887,9 @@ LockAcquireExtended(const LOCKTAG *locktag,
 
 	/*
 	 * Emit a WAL record if acquisition of this lock need to be replayed in a
-	 * standby server. Only AccessExclusiveLocks can conflict with lock types
-	 * that read-only transactions can acquire in a standby server.
-	 *
-	 * Make sure this definition matches the one GetRunningTransactionLocks().
+	 * standby server.
 	 */
-	if (lockmode >= AccessExclusiveLock &&
-		locktag->locktag_type == LOCKTAG_RELATION &&
-		!RecoveryInProgress() &&
-		XLogStandbyInfoActive())
+	if (log_lock)
 	{
 		/*
 		 * Decode the locktag back to the original values, to avoid sending
