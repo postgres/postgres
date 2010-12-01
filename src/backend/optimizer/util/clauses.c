@@ -2668,6 +2668,10 @@ evaluate_function(Oid funcid, Oid result_type, List *args,
  * We must also beware of changing the volatility or strictness status of
  * functions by inlining them.
  *
+ * Also, at the moment we can't inline functions returning RECORD.  This
+ * doesn't work in the general case because it discards information such
+ * as OUT-parameter declarations.
+ *
  * Returns a simplified expression if successful, or NULL if cannot
  * simplify the function.
  */
@@ -2699,6 +2703,7 @@ inline_function(Oid funcid, Oid result_type, List *args,
 	if (funcform->prolang != SQLlanguageId ||
 		funcform->prosecdef ||
 		funcform->proretset ||
+		funcform->prorettype == RECORDOID ||
 		funcform->pronargs != list_length(args))
 		return NULL;
 
