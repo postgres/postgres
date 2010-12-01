@@ -891,3 +891,23 @@ select * from foobar();
 (2 rows)
 
 drop function foobar();
+-- check handling of a SQL function with multiple OUT params (bug #5777)
+create or replace function foobar(out integer, out numeric) as
+$$ select (1, 2.1) $$ language sql;
+select * from foobar();
+ column1 | column2 
+---------+---------
+       1 |     2.1
+(1 row)
+
+create or replace function foobar(out integer, out numeric) as
+$$ select (1, 2) $$ language sql;
+select * from foobar();  -- fail
+ERROR:  function return row and query-specified return row do not match
+DETAIL:  Returned type integer at ordinal position 2, but query expects numeric.
+create or replace function foobar(out integer, out numeric) as
+$$ select (1, 2.1, 3) $$ language sql;
+select * from foobar();  -- fail
+ERROR:  function return row and query-specified return row do not match
+DETAIL:  Returned row contains 3 attributes, but query expects 2.
+drop function foobar();
