@@ -274,3 +274,22 @@ reset work_mem;
 select t.a, t, t.a from foo1(10000) t limit 1;
 
 drop function foo1(n integer);
+
+-- check handling of a SQL function with multiple OUT params (bug #5777)
+
+create or replace function foobar(out integer, out numeric) as
+$$ select (1, 2.1) $$ language sql;
+
+select * from foobar();
+
+create or replace function foobar(out integer, out numeric) as
+$$ select (1, 2) $$ language sql;
+
+select * from foobar();  -- fail
+
+create or replace function foobar(out integer, out numeric) as
+$$ select (1, 2.1, 3) $$ language sql;
+
+select * from foobar();  -- fail
+
+drop function foobar();

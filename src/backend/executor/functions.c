@@ -979,6 +979,11 @@ check_sql_fn_retval(Oid func_id, Oid rettype, List *queryTreeList,
 		 * This can happen, for example, where the body of the function is
 		 * 'SELECT func2()', where func2 has the same return type as the
 		 * function that's calling it.
+		 *
+		 * XXX Note that if rettype is RECORD, the IsBinaryCoercible check
+		 * will succeed for any composite restype.  For the moment we rely on
+		 * runtime type checking to catch any discrepancy, but it'd be nice to
+		 * do better at parse time.
 		 */
 		if (tlistlen == 1)
 		{
