@@ -22,8 +22,6 @@
 #define ZLIB_OUT_SIZE	4096
 #define ZLIB_IN_SIZE	4096
 
-struct _CompressorState;
-
 typedef enum
 {
 	COMPR_ALG_NONE,
