@@ -149,7 +149,7 @@ WriteDataToArchive(ArchiveHandle *AH, CompressorState *cs,
 #ifdef HAVE_LIBZ
 			return WriteDataToArchiveZlib(AH, cs, data, dLen);
 #else
-			die_horribly(NULL, modulename, "not built with zlib support\n");	
+			die_horribly(NULL, modulename, "not built with zlib support\n");
 #endif
 		case COMPR_ALG_NONE:
 			return WriteDataToArchiveNone(AH, cs, data, dLen);
