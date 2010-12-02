@@ -68,8 +68,11 @@ ParseCompressionOption(int compression, CompressionAlgorithm *alg, int *level)
 	else if (compression == 0)
 		*alg = COMPR_ALG_NONE;
 	else
+	{
 		die_horribly(NULL, modulename, "Invalid compression code: %d\n",
 					 compression);
+		*alg = COMPR_ALG_NONE;	/* keep compiler quiet */
+	}
 
 	/* The level is just the passed-in value. */
 	if (level)
