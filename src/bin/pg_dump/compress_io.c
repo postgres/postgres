@@ -32,6 +32,20 @@
 
 #include "compress_io.h"
 
+
+/* typedef appears in compress_io.h */
+struct CompressorState
+{
+	CompressionAlgorithm comprAlg;
+	WriteFunc			writeF;
+
+#ifdef HAVE_LIBZ
+	z_streamp			zp;
+	char			   *zlibOut;
+	size_t				zlibOutSize;
+#endif
+};
+
 static const char *modulename = gettext_noop("compress_io");
 
 static void ParseCompressionOption(int compression, CompressionAlgorithm *alg,

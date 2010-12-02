@@ -44,17 +44,8 @@ typedef size_t (*WriteFunc)(ArchiveHandle *AH, const char *buf, size_t len);
  */
 typedef size_t (*ReadFunc)(ArchiveHandle *AH, char **buf, size_t *buflen);
 
-typedef struct _CompressorState
-{
-	CompressionAlgorithm comprAlg;
-	WriteFunc			writeF;
-
-#ifdef HAVE_LIBZ
-	z_streamp			zp;
-	char			   *zlibOut;
-	size_t				zlibOutSize;
-#endif
-} CompressorState;
+/* struct definition appears in compress_io.c */
+typedef struct CompressorState CompressorState;
 
 extern CompressorState *AllocateCompressor(int compression, WriteFunc writeF);
 extern void ReadDataFromArchive(ArchiveHandle *AH, int compression,
