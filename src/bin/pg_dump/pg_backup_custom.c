@@ -597,8 +597,6 @@ _skipData(ArchiveHandle *AH)
  * Mandatory.
  *
  * Called by the archiver to do integer & byte output to the archive.
- * These routines are only used to read & write headers & TOC.
- *
  */
 static int
 _WriteByte(ArchiveHandle *AH, const int i)
@@ -620,7 +618,6 @@ _WriteByte(ArchiveHandle *AH, const int i)
  * Mandatory
  *
  * Called by the archiver to read bytes & integers from the archive.
- * These routines are only used to read & write headers & TOC.
  * EOF should be treated as a fatal error.
  */
 static int
@@ -642,8 +639,6 @@ _ReadByte(ArchiveHandle *AH)
  * Mandatory.
  *
  * Called by the archiver to write a block of bytes to the archive.
- * These routines are only used to read & write headers & TOC.
- *
  */
 static size_t
 _WriteBuf(ArchiveHandle *AH, const void *buf, size_t len)
@@ -667,8 +662,6 @@ _WriteBuf(ArchiveHandle *AH, const void *buf, size_t len)
  * Mandatory.
  *
  * Called by the archiver to read a block of bytes from the archive
- * These routines are only used to read & write headers & TOC.
- *
  */
 static size_t
 _ReadBuf(ArchiveHandle *AH, void *buf, size_t len)
@@ -768,6 +761,39 @@ _ReopenArchive(ArchiveHandle *AH)
 	if (fseeko(AH->FH, tpos, SEEK_SET) != 0)
 		die_horribly(AH, modulename, "could not set seek position in archive file: %s\n",
 					 strerror(errno));
+}
+
+/*
+ * Clone format-specific fields during parallel restoration.
+ */
+static void
+_Clone(ArchiveHandle *AH)
+{
+	lclContext *ctx = (lclContext *) AH->formatData;
+
+	AH->formatData = (lclContext *) malloc(sizeof(lclContext));
+	if (AH->formatData == NULL)
+		die_horribly(AH, modulename, "out of memory\n");
+	memcpy(AH->formatData, ctx, sizeof(lclContext));
+	ctx = (lclContext *) AH->formatData;
+
+	/* sanity check, shouldn't happen */
+	if (ctx->cs != NULL)
+		die_horribly(AH, modulename, "compressor active\n");
+
+	/*
+	 * Note: we do not make a local lo_buf because we expect at most one BLOBS
+	 * entry per archive, so no parallelism is possible.  Likewise,
+	 * TOC-entry-local state isn't an issue because any one TOC entry is
+	 * touched by just one worker child.
+	 */
+}
+
+static void
+_DeClone(ArchiveHandle *AH)
+{
+	lclContext *ctx = (lclContext *) AH->formatData;
+	free(ctx);
 }
 
 /*--------------------------------------------------
@@ -888,37 +914,4 @@ _CustomReadFunc(ArchiveHandle *AH, char **buf, size_t *buflen)
 				"could not read from input file: %s\n", strerror(errno));
 	}
 	return cnt;
-}
-
-/*
- * Clone format-specific fields during parallel restoration.
- */
-static void
-_Clone(ArchiveHandle *AH)
-{
-	lclContext *ctx = (lclContext *) AH->formatData;
-
-	AH->formatData = (lclContext *) malloc(sizeof(lclContext));
-	if (AH->formatData == NULL)
-		die_horribly(AH, modulename, "out of memory\n");
-	memcpy(AH->formatData, ctx, sizeof(lclContext));
-	ctx = (lclContext *) AH->formatData;
-
-	/* sanity check, shouldn't happen */
-	if (ctx->cs != NULL)
-		die_horribly(AH, modulename, "compressor active\n");
-
-	/*
-	 * Note: we do not make a local lo_buf because we expect at most one BLOBS
-	 * entry per archive, so no parallelism is possible.  Likewise,
-	 * TOC-entry-local state isn't an issue because any one TOC entry is
-	 * touched by just one worker child.
-	 */
-}
-
-static void
-_DeClone(ArchiveHandle *AH)
-{
-	lclContext *ctx = (lclContext *) AH->formatData;
-	free(ctx);
 }
