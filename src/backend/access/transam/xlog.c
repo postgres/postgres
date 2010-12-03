@@ -5024,115 +5024,20 @@ str_time(pg_time_t tnow)
 }
 
 /*
- * Parse one line from recovery.conf. 'cmdline' is the raw line from the
- * file. If the line is parsed successfully, returns true, false indicates
- * syntax error. On success, *key_p and *value_p are set to the parameter
- * name and value on the line, respectively. If the line is an empty line,
- * consisting entirely of whitespace and comments, function returns true
- * and *keyp_p and *value_p are set to NULL.
- *
- * The pointers returned in *key_p and *value_p point to an internal buffer
- * that is valid only until the next call of parseRecoveryCommandFile().
- */
-static bool
-parseRecoveryCommandFileLine(char *cmdline, char **key_p, char **value_p)
-{
-	char	   *ptr;
-	char	   *bufp;
-	char	   *key;
-	char	   *value;
-	static char *buf = NULL;
-
-	*key_p = *value_p = NULL;
-
-	/*
-	 * Allocate the buffer on first use. It's used to hold both the parameter
-	 * name and value.
-	 */
-	if (buf == NULL)
-		buf = malloc(MAXPGPATH + 1);
-	bufp = buf;
-
-	/* Skip any whitespace at the beginning of line */
-	for (ptr = cmdline; *ptr; ptr++)
-	{
-		if (!isspace((unsigned char) *ptr))
-			break;
-	}
-	/* Ignore empty lines */
-	if (*ptr == '\0' || *ptr == '#')
-		return true;
-
-	/* Read the parameter name */
-	key = bufp;
-	while (*ptr && !isspace((unsigned char) *ptr) &&
-		   *ptr != '=' && *ptr != '\'')
-		*(bufp++) = *(ptr++);
-	*(bufp++) = '\0';
-
-	/* Skip to the beginning quote of the parameter value */
-	ptr = strchr(ptr, '\'');
-	if (!ptr)
-		return false;
-	ptr++;
-
-	/* Read the parameter value to *bufp. Collapse any '' escapes as we go. */
-	value = bufp;
-	for (;;)
-	{
-		if (*ptr == '\'')
-		{
-			ptr++;
-			if (*ptr == '\'')
-				*(bufp++) = '\'';
-			else
-			{
-				/* end of parameter */
-				*bufp = '\0';
-				break;
-			}
-		}
-		else if (*ptr == '\0')
-			return false;		/* unterminated quoted string */
-		else
-			*(bufp++) = *ptr;
-
-		ptr++;
-	}
-	*(bufp++) = '\0';
-
-	/* Check that there's no garbage after the value */
-	while (*ptr)
-	{
-		if (*ptr == '#')
-			break;
-		if (!isspace((unsigned char) *ptr))
-			return false;
-		ptr++;
-	}
-
-	/* Success! */
-	*key_p = key;
-	*value_p = value;
-	return true;
-}
-
-/*
  * See if there is a recovery command file (recovery.conf), and if so
  * read in parameters for archive recovery and XLOG streaming.
  *
- * XXX longer term intention is to expand this to
- * cater for additional parameters and controls
- * possibly use a flex lexer similar to the GUC one
+ * The file is parsed using the main configuration parser.
  */
 static void
 readRecoveryCommandFile(void)
 {
 	FILE	   *fd;
-	char		cmdline[MAXPGPATH];
 	TimeLineID	rtli = 0;
 	bool		rtliGiven = false;
-	bool		syntaxError = false;
+	ConfigVariable *item,
+				   *head = NULL,
+				   *tail = NULL;
 
 	fd = AllocateFile(RECOVERY_COMMAND_FILE, "r");
 	if (fd == NULL)
@@ -5146,55 +5051,47 @@ readRecoveryCommandFile(void)
 	}
 
 	/*
-	 * Parse the file...
-	 */
-	while (fgets(cmdline, sizeof(cmdline), fd) != NULL)
+	 * Since we're asking ParseConfigFp() to error out at FATAL, there's no
+	 * need to check the return value.
+	 */ 
+	ParseConfigFp(fd, RECOVERY_COMMAND_FILE, 0, FATAL, &head, &tail);
+
+	for (item = head; item; item = item->next)
 	{
-		char	   *tok1;
-		char	   *tok2;
-
-		if (!parseRecoveryCommandFileLine(cmdline, &tok1, &tok2))
+		if (strcmp(item->name, "restore_command") == 0)
 		{
-			syntaxError = true;
-			break;
-		}
-		if (tok1 == NULL)
-			continue;
-
-		if (strcmp(tok1, "restore_command") == 0)
-		{
-			recoveryRestoreCommand = pstrdup(tok2);
+			recoveryRestoreCommand = pstrdup(item->value);
 			ereport(DEBUG2,
 					(errmsg("restore_command = '%s'",
 							recoveryRestoreCommand)));
 		}
-		else if (strcmp(tok1, "recovery_end_command") == 0)
+		else if (strcmp(item->name, "recovery_end_command") == 0)
 		{
-			recoveryEndCommand = pstrdup(tok2);
+			recoveryEndCommand = pstrdup(item->value);
 			ereport(DEBUG2,
 					(errmsg("recovery_end_command = '%s'",
 							recoveryEndCommand)));
 		}
-		else if (strcmp(tok1, "archive_cleanup_command") == 0)
+		else if (strcmp(item->name, "archive_cleanup_command") == 0)
 		{
-			archiveCleanupCommand = pstrdup(tok2);
+			archiveCleanupCommand = pstrdup(item->value);
 			ereport(DEBUG2,
 					(errmsg("archive_cleanup_command = '%s'",
 							archiveCleanupCommand)));
 		}
-		else if (strcmp(tok1, "recovery_target_timeline") == 0)
+		else if (strcmp(item->name, "recovery_target_timeline") == 0)
 		{
 			rtliGiven = true;
-			if (strcmp(tok2, "latest") == 0)
+			if (strcmp(item->value, "latest") == 0)
 				rtli = 0;
 			else
 			{
 				errno = 0;
-				rtli = (TimeLineID) strtoul(tok2, NULL, 0);
+				rtli = (TimeLineID) strtoul(item->value, NULL, 0);
 				if (errno == EINVAL || errno == ERANGE)
 					ereport(FATAL,
 							(errmsg("recovery_target_timeline is not a valid number: \"%s\"",
-									tok2)));
+									item->value)));
 			}
 			if (rtli)
 				ereport(DEBUG2,
@@ -5203,20 +5100,20 @@ readRecoveryCommandFile(void)
 				ereport(DEBUG2,
 						(errmsg("recovery_target_timeline = latest")));
 		}
-		else if (strcmp(tok1, "recovery_target_xid") == 0)
+		else if (strcmp(item->name, "recovery_target_xid") == 0)
 		{
 			errno = 0;
-			recoveryTargetXid = (TransactionId) strtoul(tok2, NULL, 0);
+			recoveryTargetXid = (TransactionId) strtoul(item->value, NULL, 0);
 			if (errno == EINVAL || errno == ERANGE)
 				ereport(FATAL,
 				 (errmsg("recovery_target_xid is not a valid number: \"%s\"",
-						 tok2)));
+						 item->value)));
 			ereport(DEBUG2,
 					(errmsg("recovery_target_xid = %u",
 							recoveryTargetXid)));
 			recoveryTarget = RECOVERY_TARGET_XID;
 		}
-		else if (strcmp(tok1, "recovery_target_time") == 0)
+		else if (strcmp(item->name, "recovery_target_time") == 0)
 		{
 			/*
 			 * if recovery_target_xid specified, then this overrides
@@ -5231,44 +5128,44 @@ readRecoveryCommandFile(void)
 			 */
 			recoveryTargetTime =
 				DatumGetTimestampTz(DirectFunctionCall3(timestamptz_in,
-														CStringGetDatum(tok2),
+														CStringGetDatum(item->value),
 												ObjectIdGetDatum(InvalidOid),
 														Int32GetDatum(-1)));
 			ereport(DEBUG2,
 					(errmsg("recovery_target_time = '%s'",
 							timestamptz_to_str(recoveryTargetTime))));
 		}
-		else if (strcmp(tok1, "recovery_target_inclusive") == 0)
+		else if (strcmp(item->name, "recovery_target_inclusive") == 0)
 		{
 			/*
 			 * does nothing if a recovery_target is not also set
 			 */
-			if (!parse_bool(tok2, &recoveryTargetInclusive))
+			if (!parse_bool(item->value, &recoveryTargetInclusive))
 				ereport(ERROR,
 						(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
 						 errmsg("parameter \"%s\" requires a Boolean value", "recovery_target_inclusive")));
 			ereport(DEBUG2,
-					(errmsg("recovery_target_inclusive = %s", tok2)));
+					(errmsg("recovery_target_inclusive = %s", item->value)));
 		}
-		else if (strcmp(tok1, "standby_mode") == 0)
+		else if (strcmp(item->name, "standby_mode") == 0)
 		{
-			if (!parse_bool(tok2, &StandbyMode))
+			if (!parse_bool(item->value, &StandbyMode))
 				ereport(ERROR,
 						(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
 						 errmsg("parameter \"%s\" requires a Boolean value", "standby_mode")));
 			ereport(DEBUG2,
-					(errmsg("standby_mode = '%s'", tok2)));
+					(errmsg("standby_mode = '%s'", item->value)));
 		}
-		else if (strcmp(tok1, "primary_conninfo") == 0)
+		else if (strcmp(item->name, "primary_conninfo") == 0)
 		{
-			PrimaryConnInfo = pstrdup(tok2);
+			PrimaryConnInfo = pstrdup(item->value);
 			ereport(DEBUG2,
 					(errmsg("primary_conninfo = '%s'",
 							PrimaryConnInfo)));
 		}
-		else if (strcmp(tok1, "trigger_file") == 0)
+		else if (strcmp(item->name, "trigger_file") == 0)
 		{
-			TriggerFile = pstrdup(tok2);
+			TriggerFile = pstrdup(item->value);
 			ereport(DEBUG2,
 					(errmsg("trigger_file = '%s'",
 							TriggerFile)));
@@ -5276,16 +5173,8 @@ readRecoveryCommandFile(void)
 		else
 			ereport(FATAL,
 					(errmsg("unrecognized recovery parameter \"%s\"",
-							tok1)));
+							item->name)));
 	}
-
-	FreeFile(fd);
-
-	if (syntaxError)
-		ereport(FATAL,
-				(errmsg("syntax error in recovery command file: %s",
-						cmdline),
-			  errhint("Lines should have the format parameter = 'value'.")));
 
 	/*
 	 * Check for compulsory parameters
@@ -5332,6 +5221,9 @@ readRecoveryCommandFile(void)
 			recoveryTargetTLI = findNewestTimeLine(recoveryTargetTLI);
 		}
 	}
+
+	FreeConfigVariables(head);
+	FreeFile(fd);
 }
 
 /*

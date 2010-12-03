@@ -35,25 +35,11 @@ enum {
 	GUC_ERROR = 100
 };
 
-struct name_value_pair
-{
-	char       *name;
-	char       *value;
-	char	   *filename;
-	int			sourceline;
-	struct name_value_pair *next;
-};
-
 static unsigned int ConfigFileLineno;
 
 /* flex fails to supply a prototype for yylex, so provide one */
 int GUC_yylex(void);
 
-static bool ParseConfigFile(const char *config_file, const char *calling_file,
-							int depth, int elevel,
-							struct name_value_pair **head_p,
-							struct name_value_pair **tail_p);
-static void free_name_value_list(struct name_value_pair * list);
 static char *GUC_scanstr(const char *s);
 
 %}
@@ -118,7 +104,9 @@ void
 ProcessConfigFile(GucContext context)
 {
 	int			elevel;
-	struct name_value_pair *item, *head, *tail;
+	ConfigVariable *item,
+				   *head,
+				   *tail;
 	char	   *cvc = NULL;
 	struct config_string *cvc_struct;
 	const char *envvar;
@@ -351,50 +339,24 @@ ProcessConfigFile(GucContext context)
 	PgReloadTime = GetCurrentTimestamp();
 
  cleanup_list:
-	free_name_value_list(head);
+	FreeConfigVariables(head);
 	if (cvc)
 		free(cvc);
 }
 
-
 /*
- * Read and parse a single configuration file.  This function recurses
- * to handle "include" directives.
- *
- * Input parameters:
- *	config_file: absolute or relative path of file to read
- *	calling_file: absolute path of file containing the "include" directive,
- *		or NULL at outer level (config_file must be absolute at outer level)
- *	depth: recursion depth (used only to prevent infinite recursion)
- *	elevel: error logging level determined by ProcessConfigFile()
- * Output parameters:
- *	head_p, tail_p: head and tail of linked list of name/value pairs
- *
- * *head_p and *tail_p must be initialized to NULL before calling the outer
- * recursion level.  On exit, they contain a list of name-value pairs read
- * from the input file(s).
- *
- * Returns TRUE if successful, FALSE if an error occurred.  The error has
- * already been ereport'd, it is only necessary for the caller to clean up
- * its own state and release the name/value pairs list.
- *
- * Note: if elevel >= ERROR then an error will not return control to the
- * caller, and internal state such as open files will not be cleaned up.
- * This case occurs only during postmaster or standalone-backend startup,
- * where an error will lead to immediate process exit anyway; so there is
- * no point in contorting the code so it can clean up nicely.
+ * See next function for details. This one will just work with a config_file
+ * name rather than an already opened File Descriptor
  */
-static bool
+bool
 ParseConfigFile(const char *config_file, const char *calling_file,
 				int depth, int elevel,
-				struct name_value_pair **head_p,
-				struct name_value_pair **tail_p)
+				ConfigVariable **head_p,
+				ConfigVariable **tail_p)
 {
 	bool		OK = true;
-	char		abs_path[MAXPGPATH];
 	FILE	   *fp;
-	YY_BUFFER_STATE lex_buffer;
-	int			token;
+	char		abs_path[MAXPGPATH];
 
 	/*
 	 * Reject too-deep include nesting depth.  This is just a safety check
@@ -416,12 +378,23 @@ ParseConfigFile(const char *config_file, const char *calling_file,
 	 */
 	if (!is_absolute_path(config_file))
 	{
-		Assert(calling_file != NULL);
-		strlcpy(abs_path, calling_file, sizeof(abs_path));
-		get_parent_directory(abs_path);
-		join_path_components(abs_path, abs_path, config_file);
-		canonicalize_path(abs_path);
-		config_file = abs_path;
+		if (calling_file != NULL)
+		{
+			strlcpy(abs_path, calling_file, sizeof(abs_path));
+			get_parent_directory(abs_path);
+			join_path_components(abs_path, abs_path, config_file);
+			canonicalize_path(abs_path);
+			config_file = abs_path;
+		}
+		else
+		{
+			/*
+			 * calling_file is NULL, we make an absolute path from $PGDATA
+			 */
+			join_path_components(abs_path, data_directory, config_file);
+			canonicalize_path(abs_path);
+			config_file = abs_path;
+		}
 	}
 
 	fp = AllocateFile(config_file, "r");
@@ -433,6 +406,47 @@ ParseConfigFile(const char *config_file, const char *calling_file,
 						config_file)));
 		return false;
 	}
+
+	OK = ParseConfigFp(fp, config_file, depth, elevel, head_p, tail_p);
+
+	FreeFile(fp);
+
+	return OK;
+}
+
+/*
+ * Read and parse a single configuration file.  This function recurses
+ * to handle "include" directives.
+ *
+ * Input parameters:
+ *	fp: file pointer from AllocateFile for the configuration file to parse
+ *	config_file: absolute or relative path of file to read
+ *	depth: recursion depth (used only to prevent infinite recursion)
+ *	elevel: error logging level determined by ProcessConfigFile()
+ * Output parameters:
+ *	head_p, tail_p: head and tail of linked list of name/value pairs
+ *
+ * *head_p and *tail_p must be initialized to NULL before calling the outer
+ * recursion level.  On exit, they contain a list of name-value pairs read
+ * from the input file(s).
+ *
+ * Returns TRUE if successful, FALSE if an error occurred.  The error has
+ * already been ereport'd, it is only necessary for the caller to clean up
+ * its own state and release the name/value pairs list.
+ *
+ * Note: if elevel >= ERROR then an error will not return control to the
+ * caller, and internal state such as open files will not be cleaned up.
+ * This case occurs only during postmaster or standalone-backend startup,
+ * where an error will lead to immediate process exit anyway; so there is
+ * no point in contorting the code so it can clean up nicely.
+ */
+bool
+ParseConfigFp(FILE *fp, const char *config_file, int depth, int elevel,
+			  ConfigVariable **head_p, ConfigVariable **tail_p)
+{
+	bool		OK = true;
+	YY_BUFFER_STATE lex_buffer;
+	int			token;
 
 	/*
 	 * Parse
@@ -446,7 +460,7 @@ ParseConfigFile(const char *config_file, const char *calling_file,
 	while ((token = yylex()))
 	{
 		char	   *opt_name, *opt_value;
-		struct name_value_pair *item;
+		ConfigVariable *item;
 
 		if (token == GUC_EOL)	/* empty or comment line */
 			continue;
@@ -579,23 +593,22 @@ ParseConfigFile(const char *config_file, const char *calling_file,
 
 cleanup_exit:
 	yy_delete_buffer(lex_buffer);
-	FreeFile(fp);
 	return OK;
 }
 
 
 /*
- * Free a list of name/value pairs, including the names and the values
+ * Free a list of ConfigVariables, including the names and the values
  */
-static void
-free_name_value_list(struct name_value_pair *list)
+void
+FreeConfigVariables(ConfigVariable *list)
 {
-	struct name_value_pair *item;
+	ConfigVariable *item;
 
 	item = list;
 	while (item)
 	{
-		struct name_value_pair *next = item->next;
+		ConfigVariable *next = item->next;
 
 		pfree(item->name);
 		pfree(item->value);
