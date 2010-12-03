@@ -301,6 +301,10 @@ set_plan_refs(PlannerGlobal *glob, Plan *plan, int rtoffset)
 					fix_scan_list(glob, splan->indexqual, rtoffset);
 				splan->indexqualorig =
 					fix_scan_list(glob, splan->indexqualorig, rtoffset);
+				splan->indexorderby =
+					fix_scan_list(glob, splan->indexorderby, rtoffset);
+				splan->indexorderbyorig =
+					fix_scan_list(glob, splan->indexorderbyorig, rtoffset);
 			}
 			break;
 		case T_BitmapIndexScan:

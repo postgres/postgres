@@ -1942,10 +1942,13 @@ finalize_plan(PlannerInfo *root, Plan *plan, Bitmapset *valid_params,
 		case T_IndexScan:
 			finalize_primnode((Node *) ((IndexScan *) plan)->indexqual,
 							  &context);
+			finalize_primnode((Node *) ((IndexScan *) plan)->indexorderby,
+							  &context);
 
 			/*
 			 * we need not look at indexqualorig, since it will have the same
-			 * param references as indexqual.
+			 * param references as indexqual.  Likewise, we can ignore
+			 * indexorderbyorig.
 			 */
 			context.paramids = bms_add_members(context.paramids, scan_params);
 			break;

@@ -60,6 +60,11 @@ typedef uint16 StrategyNumber;
  * supported only for index scans, not heap scans; and not all index AMs
  * support them.
  *
+ * A ScanKey can also represent an ordering operator invocation, that is
+ * an ordering requirement "ORDER BY indexedcol op constant".  This looks
+ * the same as a comparison operator, except that the operator doesn't
+ * (usually) yield boolean.  We mark such ScanKeys with SK_ORDER_BY.
+ *
  * Note: in some places, ScanKeys are used as a convenient representation
  * for the invocation of an access method support procedure.  In this case
  * sk_strategy/sk_subtype are not meaningful, and sk_func may refer to a
@@ -122,6 +127,7 @@ typedef ScanKeyData *ScanKey;
 #define SK_SEARCHNULL		0x0020		/* scankey represents "col IS NULL" */
 #define SK_SEARCHNOTNULL	0x0040		/* scankey represents "col IS NOT
 										 * NULL" */
+#define SK_ORDER_BY			0x0080		/* scankey is for ORDER BY op */
 
 
 /*

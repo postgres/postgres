@@ -32,7 +32,8 @@ extern PGDLLIMPORT get_attavgwidth_hook_type get_attavgwidth_hook;
 
 extern bool op_in_opfamily(Oid opno, Oid opfamily);
 extern int	get_op_opfamily_strategy(Oid opno, Oid opfamily);
-extern void get_op_opfamily_properties(Oid opno, Oid opfamily,
+extern Oid	get_op_opfamily_sortfamily(Oid opno, Oid opfamily);
+extern void get_op_opfamily_properties(Oid opno, Oid opfamily, bool ordering_op,
 						   int *strategy,
 						   Oid *lefttype,
 						   Oid *righttype);

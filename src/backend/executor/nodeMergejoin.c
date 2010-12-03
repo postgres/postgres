@@ -201,7 +201,7 @@ MJExamineQuals(List *mergeclauses,
 		clause->rexpr = ExecInitExpr((Expr *) lsecond(qual->args), parent);
 
 		/* Extract the operator's declared left/right datatypes */
-		get_op_opfamily_properties(qual->opno, opfamily,
+		get_op_opfamily_properties(qual->opno, opfamily, false,
 								   &op_strategy,
 								   &op_lefttype,
 								   &op_righttype);

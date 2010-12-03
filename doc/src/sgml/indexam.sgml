@@ -268,6 +268,7 @@ void
 amcostestimate (PlannerInfo *root,
                 IndexOptInfo *index,
                 List *indexQuals,
+                List *indexOrderBys,
                 RelOptInfo *outer_rel,
                 Cost *indexStartupCost,
                 Cost *indexTotalCost,
@@ -318,15 +319,38 @@ amoptions (ArrayType *reloptions,
 IndexScanDesc
 ambeginscan (Relation indexRelation,
              int nkeys,
-             ScanKey key);
+             int norderbys);
 </programlisting>
-   Begin a new scan.  The <literal>key</> array (of length <literal>nkeys</>)
-   describes the scan key(s) for the index scan.  The result must be a
-   palloc'd struct. For implementation reasons the index access method
+   Prepare for an index scan.  The <literal>nkeys</> and <literal>norderbys</>
+   parameters indicate the number of quals and ordering operators that will be
+   used in the scan; these may be useful for space allocation purposes.
+   Note that the actual values of the scan keys aren't provided yet.
+   The result must be a palloc'd struct.
+   For implementation reasons the index access method
    <emphasis>must</> create this struct by calling
    <function>RelationGetIndexScan()</>.  In most cases
-   <function>ambeginscan</> itself does little beyond making that call;
+   <function>ambeginscan</> does little beyond making that call and perhaps
+   acquiring locks;
    the interesting parts of index-scan startup are in <function>amrescan</>.
+  </para>
+
+  <para>
+<programlisting>
+void
+amrescan (IndexScanDesc scan,
+          ScanKey keys,
+          int nkeys,
+          ScanKey orderbys,
+          int norderbys);
+</programlisting>
+   Start or restart an indexscan, possibly with new scan keys.  (To restart
+   using previously-passed keys, NULL is passed for <literal>keys</> and/or
+   <literal>orderbys</>.)  Note that it is not allowed for
+   the number of keys or order-by operators to be larger than
+   what was passed to <function>ambeginscan</>.  In practice the restart
+   feature is used when a new outer tuple is selected by a nested-loop join
+   and so a new key comparison value is needed, but the scan key structure
+   remains the same.
   </para>
 
   <para>
@@ -388,22 +412,6 @@ amgetbitmap (IndexScanDesc scan,
    method supports <quote>bitmap</> index scans.  If it doesn't, the
    <structfield>amgetbitmap</> field in its <structname>pg_am</> row must
    be set to zero.
-  </para>
-
-  <para>
-<programlisting>
-void
-amrescan (IndexScanDesc scan,
-          ScanKey key);
-</programlisting>
-   Restart the given scan, possibly with new scan keys (to continue using
-   the old keys, NULL is passed for <literal>key</>).  Note that it is not
-   possible for the number of keys to be changed.  In practice the restart
-   feature is used when a new outer tuple is selected by a nested-loop join
-   and so a new key comparison value is needed, but the scan key structure
-   remains the same.  This function is also called by
-   <function>RelationGetIndexScan()</>, so it is used for initial setup
-   of an index scan as well as rescanning.
   </para>
 
   <para>
@@ -820,8 +828,9 @@ amrestrpos (IndexScanDesc scan);
   <title>Index Cost Estimation Functions</title>
 
   <para>
-   The <function>amcostestimate</> function is given a list of WHERE clauses that have
-   been determined to be usable with the index.  It must return estimates
+   The <function>amcostestimate</> function is given information describing
+   a possible index scan, including lists of WHERE and ORDER BY clauses that
+   have been determined to be usable with the index.  It must return estimates
    of the cost of accessing the index and the selectivity of the WHERE
    clauses (that is, the fraction of parent-table rows that will be
    retrieved during the index scan).  For simple cases, nearly all the
@@ -839,6 +848,7 @@ void
 amcostestimate (PlannerInfo *root,
                 IndexOptInfo *index,
                 List *indexQuals,
+                List *indexOrderBys,
                 RelOptInfo *outer_rel,
                 Cost *indexStartupCost,
                 Cost *indexTotalCost,
@@ -846,7 +856,7 @@ amcostestimate (PlannerInfo *root,
                 double *indexCorrelation);
 </programlisting>
 
-   The first four parameters are inputs:
+   The first five parameters are inputs:
 
    <variablelist>
     <varlistentry>
@@ -873,6 +883,17 @@ amcostestimate (PlannerInfo *root,
       <para>
        List of index qual clauses (implicitly ANDed);
        a <symbol>NIL</> list indicates no qualifiers are available.
+       Note that the list contains expression trees with RestrictInfo nodes
+       at the top, not ScanKeys.
+      </para>
+     </listitem>
+    </varlistentry>
+
+    <varlistentry>
+     <term><parameter>indexOrderBys</></term>
+     <listitem>
+      <para>
+       List of indexable ORDER BY operators, or <symbol>NIL</> if none.
        Note that the list contains expression trees, not ScanKeys.
       </para>
      </listitem>

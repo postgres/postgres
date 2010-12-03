@@ -366,12 +366,16 @@ Datum
 hashbeginscan(PG_FUNCTION_ARGS)
 {
 	Relation	rel = (Relation) PG_GETARG_POINTER(0);
-	int			keysz = PG_GETARG_INT32(1);
-	ScanKey		scankey = (ScanKey) PG_GETARG_POINTER(2);
+	int			nkeys = PG_GETARG_INT32(1);
+	int			norderbys = PG_GETARG_INT32(2);
 	IndexScanDesc scan;
 	HashScanOpaque so;
 
-	scan = RelationGetIndexScan(rel, keysz, scankey);
+	/* no order by operators allowed */
+	Assert(norderbys == 0);
+
+	scan = RelationGetIndexScan(rel, nkeys, norderbys);
+
 	so = (HashScanOpaque) palloc(sizeof(HashScanOpaqueData));
 	so->hashso_bucket_valid = false;
 	so->hashso_bucket_blkno = 0;
@@ -396,26 +400,23 @@ hashrescan(PG_FUNCTION_ARGS)
 {
 	IndexScanDesc scan = (IndexScanDesc) PG_GETARG_POINTER(0);
 	ScanKey		scankey = (ScanKey) PG_GETARG_POINTER(1);
+	/* remaining arguments are ignored */
 	HashScanOpaque so = (HashScanOpaque) scan->opaque;
 	Relation	rel = scan->indexRelation;
 
-	/* if we are called from beginscan, so is still NULL */
-	if (so)
-	{
-		/* release any pin we still hold */
-		if (BufferIsValid(so->hashso_curbuf))
-			_hash_dropbuf(rel, so->hashso_curbuf);
-		so->hashso_curbuf = InvalidBuffer;
+	/* release any pin we still hold */
+	if (BufferIsValid(so->hashso_curbuf))
+		_hash_dropbuf(rel, so->hashso_curbuf);
+	so->hashso_curbuf = InvalidBuffer;
 
-		/* release lock on bucket, too */
-		if (so->hashso_bucket_blkno)
-			_hash_droplock(rel, so->hashso_bucket_blkno, HASH_SHARE);
-		so->hashso_bucket_blkno = 0;
+	/* release lock on bucket, too */
+	if (so->hashso_bucket_blkno)
+		_hash_droplock(rel, so->hashso_bucket_blkno, HASH_SHARE);
+	so->hashso_bucket_blkno = 0;
 
-		/* set position invalid (this will cause _hash_first call) */
-		ItemPointerSetInvalid(&(so->hashso_curpos));
-		ItemPointerSetInvalid(&(so->hashso_heappos));
-	}
+	/* set position invalid (this will cause _hash_first call) */
+	ItemPointerSetInvalid(&(so->hashso_curpos));
+	ItemPointerSetInvalid(&(so->hashso_heappos));
 
 	/* Update scan key, if a new one is given */
 	if (scankey && scan->numberOfKeys > 0)
@@ -423,8 +424,7 @@ hashrescan(PG_FUNCTION_ARGS)
 		memmove(scan->keyData,
 				scankey,
 				scan->numberOfKeys * sizeof(ScanKeyData));
-		if (so)
-			so->hashso_bucket_valid = false;
+		so->hashso_bucket_valid = false;
 	}
 
 	PG_RETURN_VOID();

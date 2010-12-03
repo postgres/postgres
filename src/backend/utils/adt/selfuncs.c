@@ -2631,7 +2631,7 @@ mergejoinscansel(PlannerInfo *root, Node *clause,
 	examine_variable(root, right, 0, &rightvar);
 
 	/* Extract the operator's declared left/right datatypes */
-	get_op_opfamily_properties(opno, opfamily,
+	get_op_opfamily_properties(opno, opfamily, false,
 							   &op_strategy,
 							   &op_lefttype,
 							   &op_righttype);
@@ -4646,7 +4646,8 @@ get_actual_variable_range(PlannerInfo *root, VariableStatData *vardata,
 			if (min)
 			{
 				index_scan = index_beginscan(heapRel, indexRel, SnapshotNow,
-											 1, scankeys);
+											 1, 0);
+				index_rescan(index_scan, scankeys, 1, NULL, 0);
 
 				/* Fetch first tuple in sortop's direction */
 				if ((tup = index_getnext(index_scan,
@@ -4677,7 +4678,8 @@ get_actual_variable_range(PlannerInfo *root, VariableStatData *vardata,
 			if (max && have_data)
 			{
 				index_scan = index_beginscan(heapRel, indexRel, SnapshotNow,
-											 1, scankeys);
+											 1, 0);
+				index_rescan(index_scan, scankeys, 1, NULL, 0);
 
 				/* Fetch first tuple in reverse direction */
 				if ((tup = index_getnext(index_scan,
@@ -5644,7 +5646,9 @@ string_to_bytea_const(const char *str, size_t str_len)
 
 static void
 genericcostestimate(PlannerInfo *root,
-					IndexOptInfo *index, List *indexQuals,
+					IndexOptInfo *index,
+					List *indexQuals,
+					List *indexOrderBys,
 					RelOptInfo *outer_rel,
 					double numIndexTuples,
 					Cost *indexStartupCost,
@@ -5856,7 +5860,8 @@ genericcostestimate(PlannerInfo *root,
 	 * CPU costs as cpu_index_tuple_cost plus one cpu_operator_cost per
 	 * indexqual operator.	Because we have numIndexTuples as a per-scan
 	 * number, we have to multiply by num_sa_scans to get the correct result
-	 * for ScalarArrayOpExpr cases.
+	 * for ScalarArrayOpExpr cases.  Similarly add in costs for any index
+	 * ORDER BY expressions.
 	 *
 	 * Note: this neglects the possible costs of rechecking lossy operators
 	 * and OR-clause expressions.  Detecting that that might be needed seems
@@ -5864,11 +5869,15 @@ genericcostestimate(PlannerInfo *root,
 	 * inaccuracies here ...
 	 */
 	cost_qual_eval(&index_qual_cost, indexQuals, root);
-	qual_op_cost = cpu_operator_cost * list_length(indexQuals);
-	qual_arg_cost = index_qual_cost.startup +
-		index_qual_cost.per_tuple - qual_op_cost;
+	qual_arg_cost = index_qual_cost.startup + index_qual_cost.per_tuple;
+	cost_qual_eval(&index_qual_cost, indexOrderBys, root);
+	qual_arg_cost += index_qual_cost.startup + index_qual_cost.per_tuple;
+	qual_op_cost = cpu_operator_cost *
+		(list_length(indexQuals) + list_length(indexOrderBys));
+	qual_arg_cost -= qual_op_cost;
 	if (qual_arg_cost < 0)		/* just in case... */
 		qual_arg_cost = 0;
+
 	*indexStartupCost = qual_arg_cost;
 	*indexTotalCost += qual_arg_cost;
 	*indexTotalCost += numIndexTuples * num_sa_scans * (cpu_index_tuple_cost + qual_op_cost);
@@ -5901,11 +5910,12 @@ btcostestimate(PG_FUNCTION_ARGS)
 	PlannerInfo *root = (PlannerInfo *) PG_GETARG_POINTER(0);
 	IndexOptInfo *index = (IndexOptInfo *) PG_GETARG_POINTER(1);
 	List	   *indexQuals = (List *) PG_GETARG_POINTER(2);
-	RelOptInfo *outer_rel = (RelOptInfo *) PG_GETARG_POINTER(3);
-	Cost	   *indexStartupCost = (Cost *) PG_GETARG_POINTER(4);
-	Cost	   *indexTotalCost = (Cost *) PG_GETARG_POINTER(5);
-	Selectivity *indexSelectivity = (Selectivity *) PG_GETARG_POINTER(6);
-	double	   *indexCorrelation = (double *) PG_GETARG_POINTER(7);
+	List	   *indexOrderBys = (List *) PG_GETARG_POINTER(3);
+	RelOptInfo *outer_rel = (RelOptInfo *) PG_GETARG_POINTER(4);
+	Cost	   *indexStartupCost = (Cost *) PG_GETARG_POINTER(5);
+	Cost	   *indexTotalCost = (Cost *) PG_GETARG_POINTER(6);
+	Selectivity *indexSelectivity = (Selectivity *) PG_GETARG_POINTER(7);
+	double	   *indexCorrelation = (double *) PG_GETARG_POINTER(8);
 	Oid			relid;
 	AttrNumber	colnum;
 	VariableStatData vardata;
@@ -6082,7 +6092,8 @@ btcostestimate(PG_FUNCTION_ARGS)
 		numIndexTuples = rint(numIndexTuples / num_sa_scans);
 	}
 
-	genericcostestimate(root, index, indexQuals, outer_rel, numIndexTuples,
+	genericcostestimate(root, index, indexQuals, indexOrderBys,
+						outer_rel, numIndexTuples,
 						indexStartupCost, indexTotalCost,
 						indexSelectivity, indexCorrelation);
 
@@ -6206,13 +6217,14 @@ hashcostestimate(PG_FUNCTION_ARGS)
 	PlannerInfo *root = (PlannerInfo *) PG_GETARG_POINTER(0);
 	IndexOptInfo *index = (IndexOptInfo *) PG_GETARG_POINTER(1);
 	List	   *indexQuals = (List *) PG_GETARG_POINTER(2);
-	RelOptInfo *outer_rel = (RelOptInfo *) PG_GETARG_POINTER(3);
-	Cost	   *indexStartupCost = (Cost *) PG_GETARG_POINTER(4);
-	Cost	   *indexTotalCost = (Cost *) PG_GETARG_POINTER(5);
-	Selectivity *indexSelectivity = (Selectivity *) PG_GETARG_POINTER(6);
-	double	   *indexCorrelation = (double *) PG_GETARG_POINTER(7);
+	List	   *indexOrderBys = (List *) PG_GETARG_POINTER(3);
+	RelOptInfo *outer_rel = (RelOptInfo *) PG_GETARG_POINTER(4);
+	Cost	   *indexStartupCost = (Cost *) PG_GETARG_POINTER(5);
+	Cost	   *indexTotalCost = (Cost *) PG_GETARG_POINTER(6);
+	Selectivity *indexSelectivity = (Selectivity *) PG_GETARG_POINTER(7);
+	double	   *indexCorrelation = (double *) PG_GETARG_POINTER(8);
 
-	genericcostestimate(root, index, indexQuals, outer_rel, 0.0,
+	genericcostestimate(root, index, indexQuals, indexOrderBys, outer_rel, 0.0,
 						indexStartupCost, indexTotalCost,
 						indexSelectivity, indexCorrelation);
 
@@ -6225,13 +6237,14 @@ gistcostestimate(PG_FUNCTION_ARGS)
 	PlannerInfo *root = (PlannerInfo *) PG_GETARG_POINTER(0);
 	IndexOptInfo *index = (IndexOptInfo *) PG_GETARG_POINTER(1);
 	List	   *indexQuals = (List *) PG_GETARG_POINTER(2);
-	RelOptInfo *outer_rel = (RelOptInfo *) PG_GETARG_POINTER(3);
-	Cost	   *indexStartupCost = (Cost *) PG_GETARG_POINTER(4);
-	Cost	   *indexTotalCost = (Cost *) PG_GETARG_POINTER(5);
-	Selectivity *indexSelectivity = (Selectivity *) PG_GETARG_POINTER(6);
-	double	   *indexCorrelation = (double *) PG_GETARG_POINTER(7);
+	List	   *indexOrderBys = (List *) PG_GETARG_POINTER(3);
+	RelOptInfo *outer_rel = (RelOptInfo *) PG_GETARG_POINTER(4);
+	Cost	   *indexStartupCost = (Cost *) PG_GETARG_POINTER(5);
+	Cost	   *indexTotalCost = (Cost *) PG_GETARG_POINTER(6);
+	Selectivity *indexSelectivity = (Selectivity *) PG_GETARG_POINTER(7);
+	double	   *indexCorrelation = (double *) PG_GETARG_POINTER(8);
 
-	genericcostestimate(root, index, indexQuals, outer_rel, 0.0,
+	genericcostestimate(root, index, indexQuals, indexOrderBys, outer_rel, 0.0,
 						indexStartupCost, indexTotalCost,
 						indexSelectivity, indexCorrelation);
 
@@ -6262,11 +6275,12 @@ gincostestimate(PG_FUNCTION_ARGS)
 	PlannerInfo *root = (PlannerInfo *) PG_GETARG_POINTER(0);
 	IndexOptInfo *index = (IndexOptInfo *) PG_GETARG_POINTER(1);
 	List	   *indexQuals = (List *) PG_GETARG_POINTER(2);
-	RelOptInfo *outer_rel = (RelOptInfo *) PG_GETARG_POINTER(3);
-	Cost	   *indexStartupCost = (Cost *) PG_GETARG_POINTER(4);
-	Cost	   *indexTotalCost = (Cost *) PG_GETARG_POINTER(5);
-	Selectivity *indexSelectivity = (Selectivity *) PG_GETARG_POINTER(6);
-	double	   *indexCorrelation = (double *) PG_GETARG_POINTER(7);
+	List	   *indexOrderBys = (List *) PG_GETARG_POINTER(3);
+	RelOptInfo *outer_rel = (RelOptInfo *) PG_GETARG_POINTER(4);
+	Cost	   *indexStartupCost = (Cost *) PG_GETARG_POINTER(5);
+	Cost	   *indexTotalCost = (Cost *) PG_GETARG_POINTER(6);
+	Selectivity *indexSelectivity = (Selectivity *) PG_GETARG_POINTER(7);
+	double	   *indexCorrelation = (double *) PG_GETARG_POINTER(8);
 	ListCell	   *l;
 	int32		   nfullscan = 0;
 	List		   *selectivityQuals;
@@ -6432,7 +6446,7 @@ gincostestimate(PG_FUNCTION_ARGS)
 		 * Get the operator's strategy number and declared input data types
 		 * within the index opfamily.
 		 */
-		get_op_opfamily_properties(clause_op, index->opfamily[indexcol],
+		get_op_opfamily_properties(clause_op, index->opfamily[indexcol], false,
 								   &strategy_op, &lefttype, &righttype);
 
 		/*
@@ -6581,15 +6595,18 @@ gincostestimate(PG_FUNCTION_ARGS)
 	 * Add on index qual eval costs, much as in genericcostestimate
 	 */
 	cost_qual_eval(&index_qual_cost, indexQuals, root);
-	qual_op_cost = cpu_operator_cost * list_length(indexQuals);
-	qual_arg_cost = index_qual_cost.startup +
-		index_qual_cost.per_tuple - qual_op_cost;
+	qual_arg_cost = index_qual_cost.startup + index_qual_cost.per_tuple;
+	cost_qual_eval(&index_qual_cost, indexOrderBys, root);
+	qual_arg_cost += index_qual_cost.startup + index_qual_cost.per_tuple;
+	qual_op_cost = cpu_operator_cost *
+		(list_length(indexQuals) + list_length(indexOrderBys));
+	qual_arg_cost -= qual_op_cost;
 	if (qual_arg_cost < 0)      /* just in case... */
 		qual_arg_cost = 0;
 
 	*indexStartupCost += qual_arg_cost;
 	*indexTotalCost += qual_arg_cost;
-	*indexTotalCost += ( numTuples * *indexSelectivity ) * (cpu_index_tuple_cost + qual_op_cost);
+	*indexTotalCost += (numTuples * *indexSelectivity) * (cpu_index_tuple_cost + qual_op_cost);
 
 	PG_RETURN_VOID();
 }

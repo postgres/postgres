@@ -1182,10 +1182,12 @@ typedef struct
  *	 IndexScanState information
  *
  *		indexqualorig	   execution state for indexqualorig expressions
- *		ScanKeys		   Skey structures to scan index rel
- *		NumScanKeys		   number of Skey structs
+ *		ScanKeys		   Skey structures for index quals
+ *		NumScanKeys		   number of ScanKeys
+ *		OrderByKeys		   Skey structures for index ordering operators
+ *		NumOrderByKeys	   number of OrderByKeys
  *		RuntimeKeys		   info about Skeys that must be evaluated at runtime
- *		NumRuntimeKeys	   number of RuntimeKeys structs
+ *		NumRuntimeKeys	   number of RuntimeKeys
  *		RuntimeKeysReady   true if runtime Skeys have been computed
  *		RuntimeContext	   expr context for evaling runtime Skeys
  *		RelationDesc	   index relation descriptor
@@ -1198,6 +1200,8 @@ typedef struct IndexScanState
 	List	   *indexqualorig;
 	ScanKey		iss_ScanKeys;
 	int			iss_NumScanKeys;
+	ScanKey		iss_OrderByKeys;
+	int			iss_NumOrderByKeys;
 	IndexRuntimeKeyInfo *iss_RuntimeKeys;
 	int			iss_NumRuntimeKeys;
 	bool		iss_RuntimeKeysReady;
@@ -1210,12 +1214,12 @@ typedef struct IndexScanState
  *	 BitmapIndexScanState information
  *
  *		result			   bitmap to return output into, or NULL
- *		ScanKeys		   Skey structures to scan index rel
- *		NumScanKeys		   number of Skey structs
+ *		ScanKeys		   Skey structures for index quals
+ *		NumScanKeys		   number of ScanKeys
  *		RuntimeKeys		   info about Skeys that must be evaluated at runtime
- *		NumRuntimeKeys	   number of RuntimeKeys structs
+ *		NumRuntimeKeys	   number of RuntimeKeys
  *		ArrayKeys		   info about Skeys that come from ScalarArrayOpExprs
- *		NumArrayKeys	   number of ArrayKeys structs
+ *		NumArrayKeys	   number of ArrayKeys
  *		RuntimeKeysReady   true if runtime Skeys have been computed
  *		RuntimeContext	   expr context for evaling runtime Skeys
  *		RelationDesc	   index relation descriptor

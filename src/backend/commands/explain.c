@@ -1017,6 +1017,8 @@ ExplainNode(PlanState *planstate, List *ancestors,
 		case T_IndexScan:
 			show_scan_qual(((IndexScan *) plan)->indexqualorig,
 						   "Index Cond", planstate, ancestors, es);
+			show_scan_qual(((IndexScan *) plan)->indexorderbyorig,
+						   "Order By", planstate, ancestors, es);
 			show_scan_qual(plan->qual, "Filter", planstate, ancestors, es);
 			break;
 		case T_BitmapIndexScan:

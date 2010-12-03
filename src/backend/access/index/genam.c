@@ -57,22 +57,20 @@
 /* ----------------
  *	RelationGetIndexScan -- Create and fill an IndexScanDesc.
  *
- *		This routine creates an index scan structure and sets its contents
- *		up correctly. This routine calls AMrescan to set up the scan with
- *		the passed key.
+ *		This routine creates an index scan structure and sets up initial
+ *		contents for it.
  *
  *		Parameters:
  *				indexRelation -- index relation for scan.
- *				nkeys -- count of scan keys.
- *				key -- array of scan keys to restrict the index scan.
+ *				nkeys -- count of scan keys (index qual conditions).
+ *				norderbys -- count of index order-by operators.
  *
  *		Returns:
  *				An initialized IndexScanDesc.
  * ----------------
  */
 IndexScanDesc
-RelationGetIndexScan(Relation indexRelation,
-					 int nkeys, ScanKey key)
+RelationGetIndexScan(Relation indexRelation, int nkeys, int norderbys)
 {
 	IndexScanDesc scan;
 
@@ -82,15 +80,19 @@ RelationGetIndexScan(Relation indexRelation,
 	scan->indexRelation = indexRelation;
 	scan->xs_snapshot = SnapshotNow;	/* may be set later */
 	scan->numberOfKeys = nkeys;
+	scan->numberOfOrderBys = norderbys;
 
 	/*
-	 * We allocate the key space here, but the AM is responsible for actually
-	 * filling it from the passed key array.
+	 * We allocate key workspace here, but it won't get filled until amrescan.
 	 */
 	if (nkeys > 0)
 		scan->keyData = (ScanKey) palloc(sizeof(ScanKeyData) * nkeys);
 	else
 		scan->keyData = NULL;
+	if (norderbys > 0)
+		scan->orderByData = (ScanKey) palloc(sizeof(ScanKeyData) * norderbys);
+	else
+		scan->orderByData = NULL;
 
 	/*
 	 * During recovery we ignore killed tuples and don't bother to kill them
@@ -115,11 +117,6 @@ RelationGetIndexScan(Relation indexRelation,
 	scan->xs_next_hot = InvalidOffsetNumber;
 	scan->xs_prev_xmax = InvalidTransactionId;
 
-	/*
-	 * Let the AM fill in the key and any opaque data it wants.
-	 */
-	index_rescan(scan, key);
-
 	return scan;
 }
 
@@ -140,6 +137,8 @@ IndexScanEnd(IndexScanDesc scan)
 {
 	if (scan->keyData != NULL)
 		pfree(scan->keyData);
+	if (scan->orderByData != NULL)
+		pfree(scan->orderByData);
 
 	pfree(scan);
 }
@@ -286,7 +285,8 @@ systable_beginscan(Relation heapRelation,
 		}
 
 		sysscan->iscan = index_beginscan(heapRelation, irel,
-										 snapshot, nkeys, key);
+										 snapshot, nkeys, 0);
+		index_rescan(sysscan->iscan, key, nkeys, NULL, 0);
 		sysscan->scan = NULL;
 	}
 	else
@@ -450,7 +450,8 @@ systable_beginscan_ordered(Relation heapRelation,
 	}
 
 	sysscan->iscan = index_beginscan(heapRelation, indexRelation,
-									 snapshot, nkeys, key);
+									 snapshot, nkeys, 0);
+	index_rescan(sysscan->iscan, key, nkeys, NULL, 0);
 	sysscan->scan = NULL;
 
 	return sysscan;

@@ -28,10 +28,24 @@ gistbeginscan(PG_FUNCTION_ARGS)
 {
 	Relation	r = (Relation) PG_GETARG_POINTER(0);
 	int			nkeys = PG_GETARG_INT32(1);
-	ScanKey		key = (ScanKey) PG_GETARG_POINTER(2);
+	int			norderbys = PG_GETARG_INT32(2);
 	IndexScanDesc scan;
+	GISTScanOpaque so;
 
-	scan = RelationGetIndexScan(r, nkeys, key);
+	/* no order by operators allowed */
+	Assert(norderbys == 0);
+
+	scan = RelationGetIndexScan(r, nkeys, norderbys);
+
+	/* initialize opaque data */
+	so = (GISTScanOpaque) palloc(sizeof(GISTScanOpaqueData));
+	so->stack = NULL;
+	so->tempCxt = createTempGistContext();
+	so->curbuf = InvalidBuffer;
+	so->giststate = (GISTSTATE *) palloc(sizeof(GISTSTATE));
+	initGISTstate(so->giststate, scan->indexRelation);
+
+	scan->opaque = so;
 
 	PG_RETURN_POINTER(scan);
 }
@@ -41,33 +55,18 @@ gistrescan(PG_FUNCTION_ARGS)
 {
 	IndexScanDesc scan = (IndexScanDesc) PG_GETARG_POINTER(0);
 	ScanKey		key = (ScanKey) PG_GETARG_POINTER(1);
-	GISTScanOpaque so;
+	/* remaining arguments are ignored */
+	GISTScanOpaque so = (GISTScanOpaque) scan->opaque;
 	int			i;
 
-	so = (GISTScanOpaque) scan->opaque;
-	if (so != NULL)
+	/* rescan an existing indexscan --- reset state */
+	gistfreestack(so->stack);
+	so->stack = NULL;
+	/* drop pins on buffers -- no locks held */
+	if (BufferIsValid(so->curbuf))
 	{
-		/* rescan an existing indexscan --- reset state */
-		gistfreestack(so->stack);
-		so->stack = NULL;
-		/* drop pins on buffers -- no locks held */
-		if (BufferIsValid(so->curbuf))
-		{
-			ReleaseBuffer(so->curbuf);
-			so->curbuf = InvalidBuffer;
-		}
-	}
-	else
-	{
-		/* initialize opaque data */
-		so = (GISTScanOpaque) palloc(sizeof(GISTScanOpaqueData));
-		so->stack = NULL;
-		so->tempCxt = createTempGistContext();
+		ReleaseBuffer(so->curbuf);
 		so->curbuf = InvalidBuffer;
-		so->giststate = (GISTSTATE *) palloc(sizeof(GISTSTATE));
-		initGISTstate(so->giststate, scan->indexRelation);
-
-		scan->opaque = so;
 	}
 
 	/*
@@ -130,21 +129,16 @@ Datum
 gistendscan(PG_FUNCTION_ARGS)
 {
 	IndexScanDesc scan = (IndexScanDesc) PG_GETARG_POINTER(0);
-	GISTScanOpaque so;
+	GISTScanOpaque so = (GISTScanOpaque) scan->opaque;
 
-	so = (GISTScanOpaque) scan->opaque;
-
-	if (so != NULL)
-	{
-		gistfreestack(so->stack);
-		if (so->giststate != NULL)
-			freeGISTstate(so->giststate);
-		/* drop pins on buffers -- we aren't holding any locks */
-		if (BufferIsValid(so->curbuf))
-			ReleaseBuffer(so->curbuf);
-		MemoryContextDelete(so->tempCxt);
-		pfree(scan->opaque);
-	}
+	gistfreestack(so->stack);
+	if (so->giststate != NULL)
+		freeGISTstate(so->giststate);
+	/* drop pins on buffers -- we aren't holding any locks */
+	if (BufferIsValid(so->curbuf))
+		ReleaseBuffer(so->curbuf);
+	MemoryContextDelete(so->tempCxt);
+	pfree(so);
 
 	PG_RETURN_VOID();
 }

@@ -86,18 +86,41 @@ get_op_opfamily_strategy(Oid opno, Oid opfamily)
 }
 
 /*
+ * get_op_opfamily_sortfamily
+ *
+ *		If the operator is an ordering operator within the specified opfamily,
+ *		return its amopsortfamily OID; else return InvalidOid.
+ */
+Oid
+get_op_opfamily_sortfamily(Oid opno, Oid opfamily)
+{
+	HeapTuple	tp;
+	Form_pg_amop amop_tup;
+	Oid			result;
+
+	tp = SearchSysCache3(AMOPOPID,
+						 ObjectIdGetDatum(opno),
+						 CharGetDatum(AMOP_ORDER),
+						 ObjectIdGetDatum(opfamily));
+	if (!HeapTupleIsValid(tp))
+		return InvalidOid;
+	amop_tup = (Form_pg_amop) GETSTRUCT(tp);
+	result = amop_tup->amopsortfamily;
+	ReleaseSysCache(tp);
+	return result;
+}
+
+/*
  * get_op_opfamily_properties
  *
  *		Get the operator's strategy number and declared input data types
  *		within the specified opfamily.
  *
- * This function only considers search operators, not ordering operators.
- *
  * Caller should already have verified that opno is a member of opfamily,
  * therefore we raise an error if the tuple is not found.
  */
 void
-get_op_opfamily_properties(Oid opno, Oid opfamily,
+get_op_opfamily_properties(Oid opno, Oid opfamily, bool ordering_op,
 						   int *strategy,
 						   Oid *lefttype,
 						   Oid *righttype)
@@ -107,7 +130,7 @@ get_op_opfamily_properties(Oid opno, Oid opfamily,
 
 	tp = SearchSysCache3(AMOPOPID,
 						 ObjectIdGetDatum(opno),
-						 CharGetDatum(AMOP_SEARCH),
+						 CharGetDatum(ordering_op ? AMOP_ORDER : AMOP_SEARCH),
 						 ObjectIdGetDatum(opfamily));
 	if (!HeapTupleIsValid(tp))
 		elog(ERROR, "operator %u is not a member of opfamily %u",

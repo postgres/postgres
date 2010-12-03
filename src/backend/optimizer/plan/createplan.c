@@ -81,6 +81,8 @@ static Node *replace_nestloop_params(PlannerInfo *root, Node *expr);
 static Node *replace_nestloop_params_mutator(Node *node, PlannerInfo *root);
 static List *fix_indexqual_references(PlannerInfo *root, IndexPath *index_path,
 						 List *indexquals);
+static List *fix_indexorderby_references(PlannerInfo *root, IndexPath *index_path,
+							List *indexorderbys);
 static Node *fix_indexqual_operand(Node *node, IndexOptInfo *index);
 static List *get_switched_clauses(List *clauses, Relids outerrelids);
 static List *order_qual_clauses(PlannerInfo *root, List *clauses);
@@ -89,6 +91,7 @@ static void copy_plan_costsize(Plan *dest, Plan *src);
 static SeqScan *make_seqscan(List *qptlist, List *qpqual, Index scanrelid);
 static IndexScan *make_indexscan(List *qptlist, List *qpqual, Index scanrelid,
 			   Oid indexid, List *indexqual, List *indexqualorig,
+			   List *indexorderby, List *indexorderbyorig,
 			   ScanDirection indexscandir);
 static BitmapIndexScan *make_bitmap_indexscan(Index scanrelid, Oid indexid,
 					  List *indexqual,
@@ -1028,11 +1031,13 @@ create_indexscan_plan(PlannerInfo *root,
 					  List *scan_clauses)
 {
 	List	   *indexquals = best_path->indexquals;
+	List	   *indexorderbys = best_path->indexorderbys;
 	Index		baserelid = best_path->path.parent->relid;
 	Oid			indexoid = best_path->indexinfo->indexoid;
 	List	   *qpqual;
 	List	   *stripped_indexquals;
 	List	   *fixed_indexquals;
+	List	   *fixed_indexorderbys;
 	ListCell   *l;
 	IndexScan  *scan_plan;
 
@@ -1051,6 +1056,11 @@ create_indexscan_plan(PlannerInfo *root,
 	 * and with index attr numbers substituted for table ones.
 	 */
 	fixed_indexquals = fix_indexqual_references(root, best_path, indexquals);
+
+	/*
+	 * Likewise fix up index attr references in the ORDER BY expressions.
+	 */
+	fixed_indexorderbys = fix_indexorderby_references(root, best_path, indexorderbys);
 
 	/*
 	 * If this is an innerjoin scan, the indexclauses will contain join
@@ -1123,11 +1133,12 @@ create_indexscan_plan(PlannerInfo *root,
 
 	/*
 	 * We have to replace any outer-relation variables with nestloop params
-	 * in the indexqualorig and qpqual expressions.  A bit annoying to have to
-	 * do this separately from the processing in fix_indexqual_references ---
-	 * rethink this when generalizing the inner indexscan support.  But note
-	 * we can't really do this earlier because it'd break the comparisons to
-	 * predicates above ... (or would it?  Those wouldn't have outer refs)
+	 * in the indexqualorig, qpqual, and indexorderbyorig expressions.  A bit
+	 * annoying to have to do this separately from the processing in
+	 * fix_indexqual_references --- rethink this when generalizing the inner
+	 * indexscan support.  But note we can't really do this earlier because
+	 * it'd break the comparisons to predicates above ... (or would it?  Those
+	 * wouldn't have outer refs)
 	 */
 	if (best_path->isjoininner)
 	{
@@ -1135,6 +1146,8 @@ create_indexscan_plan(PlannerInfo *root,
 			replace_nestloop_params(root, (Node *) stripped_indexquals);
 		qpqual = (List *)
 			replace_nestloop_params(root, (Node *) qpqual);
+		indexorderbys = (List *)
+			replace_nestloop_params(root, (Node *) indexorderbys);
 	}
 
 	/* Finally ready to build the plan node */
@@ -1144,6 +1157,8 @@ create_indexscan_plan(PlannerInfo *root,
 							   indexoid,
 							   fixed_indexquals,
 							   stripped_indexquals,
+							   fixed_indexorderbys,
+							   indexorderbys,
 							   best_path->indexscandir);
 
 	copy_path_costsize(&scan_plan->scan.plan, &best_path->path);
@@ -2395,6 +2410,63 @@ fix_indexqual_references(PlannerInfo *root, IndexPath *index_path,
 }
 
 /*
+ * fix_indexorderby_references
+ *	  Adjust indexorderby clauses to the form the executor's index
+ *	  machinery needs.
+ *
+ * This is a simplified version of fix_indexqual_references.  The input does
+ * not have RestrictInfo nodes, and we assume that indxqual.c already
+ * commuted the clauses to put the index keys on the left.  Also, we don't
+ * bother to support any cases except simple OpExprs, since nothing else
+ * is allowed for ordering operators.
+ */
+static List *
+fix_indexorderby_references(PlannerInfo *root, IndexPath *index_path,
+							List *indexorderbys)
+{
+	IndexOptInfo *index = index_path->indexinfo;
+	List	   *fixed_indexorderbys;
+	ListCell   *l;
+
+	fixed_indexorderbys = NIL;
+
+	foreach(l, indexorderbys)
+	{
+		Node	   *clause = (Node *) lfirst(l);
+
+		/*
+		 * Replace any outer-relation variables with nestloop params.
+		 *
+		 * This also makes a copy of the clause, so it's safe to modify it
+		 * in-place below.
+		 */
+		clause = replace_nestloop_params(root, clause);
+
+		if (IsA(clause, OpExpr))
+		{
+			OpExpr	   *op = (OpExpr *) clause;
+
+			if (list_length(op->args) != 2)
+				elog(ERROR, "indexorderby clause is not binary opclause");
+
+			/*
+			 * Now, determine which index attribute this is and change the
+			 * indexkey operand as needed.
+			 */
+			linitial(op->args) = fix_indexqual_operand(linitial(op->args),
+													   index);
+		}
+		else
+			elog(ERROR, "unsupported indexorderby type: %d",
+				 (int) nodeTag(clause));
+
+		fixed_indexorderbys = lappend(fixed_indexorderbys, clause);
+	}
+
+	return fixed_indexorderbys;
+}
+
+/*
  * fix_indexqual_operand
  *	  Convert an indexqual expression to a Var referencing the index column.
  */
@@ -2685,6 +2757,8 @@ make_indexscan(List *qptlist,
 			   Oid indexid,
 			   List *indexqual,
 			   List *indexqualorig,
+			   List *indexorderby,
+			   List *indexorderbyorig,
 			   ScanDirection indexscandir)
 {
 	IndexScan  *node = makeNode(IndexScan);
@@ -2699,6 +2773,8 @@ make_indexscan(List *qptlist,
 	node->indexid = indexid;
 	node->indexqual = indexqual;
 	node->indexqualorig = indexqualorig;
+	node->indexorderby = indexorderby;
+	node->indexorderbyorig = indexorderbyorig;
 	node->indexorderdir = indexscandir;
 
 	return node;

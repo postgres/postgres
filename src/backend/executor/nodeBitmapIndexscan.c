@@ -95,7 +95,9 @@ MultiExecBitmapIndexScan(BitmapIndexScanState *node)
 		doscan = ExecIndexAdvanceArrayKeys(node->biss_ArrayKeys,
 										   node->biss_NumArrayKeys);
 		if (doscan)				/* reset index scan */
-			index_rescan(node->biss_ScanDesc, node->biss_ScanKeys);
+			index_rescan(node->biss_ScanDesc,
+						 node->biss_ScanKeys, node->biss_NumScanKeys,
+						 NULL, 0);
 	}
 
 	/* must provide our own instrumentation support */
@@ -147,7 +149,9 @@ ExecReScanBitmapIndexScan(BitmapIndexScanState *node)
 
 	/* reset index scan */
 	if (node->biss_RuntimeKeysReady)
-		index_rescan(node->biss_ScanDesc, node->biss_ScanKeys);
+		index_rescan(node->biss_ScanDesc,
+					 node->biss_ScanKeys, node->biss_NumScanKeys,
+					 NULL, 0);
 }
 
 /* ----------------------------------------------------------------
@@ -256,6 +260,8 @@ ExecInitBitmapIndexScan(BitmapIndexScan *node, EState *estate, int eflags)
 	 * Initialize index-specific scan state
 	 */
 	indexstate->biss_RuntimeKeysReady = false;
+	indexstate->biss_RuntimeKeys = NULL;
+	indexstate->biss_NumRuntimeKeys = 0;
 
 	/*
 	 * build the index scan keys from the index qualification
@@ -264,6 +270,7 @@ ExecInitBitmapIndexScan(BitmapIndexScan *node, EState *estate, int eflags)
 						   indexstate->biss_RelationDesc,
 						   node->scan.scanrelid,
 						   node->indexqual,
+						   false,
 						   &indexstate->biss_ScanKeys,
 						   &indexstate->biss_NumScanKeys,
 						   &indexstate->biss_RuntimeKeys,
@@ -297,8 +304,17 @@ ExecInitBitmapIndexScan(BitmapIndexScan *node, EState *estate, int eflags)
 	indexstate->biss_ScanDesc =
 		index_beginscan_bitmap(indexstate->biss_RelationDesc,
 							   estate->es_snapshot,
-							   indexstate->biss_NumScanKeys,
-							   indexstate->biss_ScanKeys);
+							   indexstate->biss_NumScanKeys);
+
+	/*
+	 * If no run-time keys to calculate, go ahead and pass the scankeys to
+	 * the index AM.
+	 */
+	if (indexstate->biss_NumRuntimeKeys == 0 &&
+		indexstate->biss_NumArrayKeys == 0)
+		index_rescan(indexstate->biss_ScanDesc,
+					 indexstate->biss_ScanKeys, indexstate->biss_NumScanKeys,
+					 NULL, 0);
 
 	/*
 	 * all done.

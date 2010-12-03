@@ -114,7 +114,7 @@ do { \
 } while(0)
 
 static IndexScanDesc index_beginscan_internal(Relation indexRelation,
-						 int nkeys, ScanKey key);
+						 int nkeys, int norderbys);
 
 
 /* ----------------------------------------------------------------
@@ -213,11 +213,11 @@ IndexScanDesc
 index_beginscan(Relation heapRelation,
 				Relation indexRelation,
 				Snapshot snapshot,
-				int nkeys, ScanKey key)
+				int nkeys, int norderbys)
 {
 	IndexScanDesc scan;
 
-	scan = index_beginscan_internal(indexRelation, nkeys, key);
+	scan = index_beginscan_internal(indexRelation, nkeys, norderbys);
 
 	/*
 	 * Save additional parameters into the scandesc.  Everything else was set
@@ -238,11 +238,11 @@ index_beginscan(Relation heapRelation,
 IndexScanDesc
 index_beginscan_bitmap(Relation indexRelation,
 					   Snapshot snapshot,
-					   int nkeys, ScanKey key)
+					   int nkeys)
 {
 	IndexScanDesc scan;
 
-	scan = index_beginscan_internal(indexRelation, nkeys, key);
+	scan = index_beginscan_internal(indexRelation, nkeys, 0);
 
 	/*
 	 * Save additional parameters into the scandesc.  Everything else was set
@@ -258,7 +258,7 @@ index_beginscan_bitmap(Relation indexRelation,
  */
 static IndexScanDesc
 index_beginscan_internal(Relation indexRelation,
-						 int nkeys, ScanKey key)
+						 int nkeys, int norderbys)
 {
 	IndexScanDesc scan;
 	FmgrInfo   *procedure;
@@ -278,7 +278,7 @@ index_beginscan_internal(Relation indexRelation,
 		DatumGetPointer(FunctionCall3(procedure,
 									  PointerGetDatum(indexRelation),
 									  Int32GetDatum(nkeys),
-									  PointerGetDatum(key)));
+									  Int32GetDatum(norderbys)));
 
 	return scan;
 }
@@ -286,22 +286,27 @@ index_beginscan_internal(Relation indexRelation,
 /* ----------------
  *		index_rescan  - (re)start a scan of an index
  *
- * The caller may specify a new set of scankeys (but the number of keys
- * cannot change).	To restart the scan without changing keys, pass NULL
- * for the key array.
- *
- * Note that this is also called when first starting an indexscan;
- * see RelationGetIndexScan.  Keys *must* be passed in that case,
- * unless scan->numberOfKeys is zero.
+ * During a restart, the caller may specify a new set of scankeys and/or
+ * orderbykeys; but the number of keys cannot differ from what index_beginscan
+ * was told.  (Later we might relax that to "must not exceed", but currently
+ * the index AMs tend to assume that scan->numberOfKeys is what to believe.)
+ * To restart the scan without changing keys, pass NULL for the key arrays.
+ * (Of course, keys *must* be passed on the first call, unless
+ * scan->numberOfKeys is zero.)
  * ----------------
  */
 void
-index_rescan(IndexScanDesc scan, ScanKey key)
+index_rescan(IndexScanDesc scan,
+			 ScanKey keys, int nkeys,
+			 ScanKey orderbys, int norderbys)
 {
 	FmgrInfo   *procedure;
 
 	SCAN_CHECKS;
 	GET_SCAN_PROCEDURE(amrescan);
+
+	Assert(nkeys == scan->numberOfKeys);
+	Assert(norderbys == scan->numberOfOrderBys);
 
 	/* Release any held pin on a heap page */
 	if (BufferIsValid(scan->xs_cbuf))
@@ -314,9 +319,12 @@ index_rescan(IndexScanDesc scan, ScanKey key)
 
 	scan->kill_prior_tuple = false;		/* for safety */
 
-	FunctionCall2(procedure,
+	FunctionCall5(procedure,
 				  PointerGetDatum(scan),
-				  PointerGetDatum(key));
+				  PointerGetDatum(keys),
+				  Int32GetDatum(nkeys),
+				  PointerGetDatum(orderbys),
+				  Int32GetDatum(norderbys));
 }
 
 /* ----------------

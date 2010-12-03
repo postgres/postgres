@@ -631,6 +631,13 @@ typedef struct Path
  * indexable operators appear in 'indexclauses', they are replaced by the
  * derived indexscannable conditions in 'indexquals'.
  *
+ * 'indexorderbys', if not NIL, is a list of ORDER BY expressions that have
+ * been found to be usable as ordering operators for an amcanorderbyop index.
+ * Note that these are not RestrictInfos, just bare expressions, since they
+ * generally won't yield booleans.  The list will match the path's pathkeys.
+ * Also, unlike the case for quals, it's guaranteed that each expression has
+ * the index key on the left side of the operator.
+ *
  * 'isjoininner' is TRUE if the path is a nestloop inner scan (that is,
  * some of the index conditions are join rather than restriction clauses).
  * Note that the path costs will be calculated differently from a plain
@@ -663,6 +670,7 @@ typedef struct IndexPath
 	IndexOptInfo *indexinfo;
 	List	   *indexclauses;
 	List	   *indexquals;
+	List	   *indexorderbys;
 	bool		isjoininner;
 	ScanDirection indexscandir;
 	Cost		indextotalcost;

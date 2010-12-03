@@ -414,6 +414,8 @@ create_seqscan_path(PlannerInfo *root, RelOptInfo *rel)
  * 'index' is a usable index.
  * 'clause_groups' is a list of lists of RestrictInfo nodes
  *			to be used as index qual conditions in the scan.
+ * 'indexorderbys' is a list of bare expressions (no RestrictInfos)
+ *			to be used as index ordering operators in the scan.
  * 'pathkeys' describes the ordering of the path.
  * 'indexscandir' is ForwardScanDirection or BackwardScanDirection
  *			for an ordered index, or NoMovementScanDirection for
@@ -427,6 +429,7 @@ IndexPath *
 create_index_path(PlannerInfo *root,
 				  IndexOptInfo *index,
 				  List *clause_groups,
+				  List *indexorderbys,
 				  List *pathkeys,
 				  ScanDirection indexscandir,
 				  RelOptInfo *outer_rel)
@@ -463,6 +466,7 @@ create_index_path(PlannerInfo *root,
 	pathnode->indexinfo = index;
 	pathnode->indexclauses = allclauses;
 	pathnode->indexquals = indexquals;
+	pathnode->indexorderbys = indexorderbys;
 
 	pathnode->isjoininner = (outer_rel != NULL);
 	pathnode->indexscandir = indexscandir;
@@ -504,7 +508,7 @@ create_index_path(PlannerInfo *root,
 		pathnode->rows = rel->rows;
 	}
 
-	cost_index(pathnode, root, index, indexquals, outer_rel);
+	cost_index(pathnode, root, index, indexquals, indexorderbys, outer_rel);
 
 	return pathnode;
 }

@@ -135,11 +135,13 @@ extern bool index_insert(Relation indexRelation,
 extern IndexScanDesc index_beginscan(Relation heapRelation,
 				Relation indexRelation,
 				Snapshot snapshot,
-				int nkeys, ScanKey key);
+				int nkeys, int norderbys);
 extern IndexScanDesc index_beginscan_bitmap(Relation indexRelation,
 					   Snapshot snapshot,
-					   int nkeys, ScanKey key);
-extern void index_rescan(IndexScanDesc scan, ScanKey key);
+					   int nkeys);
+extern void index_rescan(IndexScanDesc scan,
+			 ScanKey keys, int nkeys,
+			 ScanKey orderbys, int norderbys);
 extern void index_endscan(IndexScanDesc scan);
 extern void index_markpos(IndexScanDesc scan);
 extern void index_restrpos(IndexScanDesc scan);
@@ -161,7 +163,7 @@ extern FmgrInfo *index_getprocinfo(Relation irel, AttrNumber attnum,
  * index access method support routines (in genam.c)
  */
 extern IndexScanDesc RelationGetIndexScan(Relation indexRelation,
-					 int nkeys, ScanKey key);
+					 int nkeys, int norderbys);
 extern void IndexScanEnd(IndexScanDesc scan);
 extern char *BuildIndexValueDescription(Relation indexRelation,
 						   Datum *values, bool *isnull);

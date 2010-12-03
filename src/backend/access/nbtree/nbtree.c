@@ -337,12 +337,27 @@ Datum
 btbeginscan(PG_FUNCTION_ARGS)
 {
 	Relation	rel = (Relation) PG_GETARG_POINTER(0);
-	int			keysz = PG_GETARG_INT32(1);
-	ScanKey		scankey = (ScanKey) PG_GETARG_POINTER(2);
+	int			nkeys = PG_GETARG_INT32(1);
+	int			norderbys = PG_GETARG_INT32(2);
 	IndexScanDesc scan;
+	BTScanOpaque so;
+
+	/* no order by operators allowed */
+	Assert(norderbys == 0);
 
 	/* get the scan */
-	scan = RelationGetIndexScan(rel, keysz, scankey);
+	scan = RelationGetIndexScan(rel, nkeys, norderbys);
+
+	/* allocate private workspace */
+	so = (BTScanOpaque) palloc(sizeof(BTScanOpaqueData));
+	so->currPos.buf = so->markPos.buf = InvalidBuffer;
+	if (scan->numberOfKeys > 0)
+		so->keyData = (ScanKey) palloc(scan->numberOfKeys * sizeof(ScanKeyData));
+	else
+		so->keyData = NULL;
+	so->killedItems = NULL;		/* until needed */
+	so->numKilled = 0;
+	scan->opaque = so;
 
 	PG_RETURN_POINTER(scan);
 }
@@ -355,22 +370,8 @@ btrescan(PG_FUNCTION_ARGS)
 {
 	IndexScanDesc scan = (IndexScanDesc) PG_GETARG_POINTER(0);
 	ScanKey		scankey = (ScanKey) PG_GETARG_POINTER(1);
-	BTScanOpaque so;
-
-	so = (BTScanOpaque) scan->opaque;
-
-	if (so == NULL)				/* if called from btbeginscan */
-	{
-		so = (BTScanOpaque) palloc(sizeof(BTScanOpaqueData));
-		so->currPos.buf = so->markPos.buf = InvalidBuffer;
-		if (scan->numberOfKeys > 0)
-			so->keyData = (ScanKey) palloc(scan->numberOfKeys * sizeof(ScanKeyData));
-		else
-			so->keyData = NULL;
-		so->killedItems = NULL; /* until needed */
-		so->numKilled = 0;
-		scan->opaque = so;
-	}
+	/* remaining arguments are ignored */
+	BTScanOpaque so = (BTScanOpaque) scan->opaque;
 
 	/* we aren't holding any read locks, but gotta drop the pins */
 	if (BTScanPosIsValid(so->currPos))

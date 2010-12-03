@@ -181,7 +181,9 @@ ExecReScanIndexScan(IndexScanState *node)
 	node->iss_RuntimeKeysReady = true;
 
 	/* reset index scan */
-	index_rescan(node->iss_ScanDesc, node->iss_ScanKeys);
+	index_rescan(node->iss_ScanDesc,
+				 node->iss_ScanKeys, node->iss_NumScanKeys,
+				 node->iss_OrderByKeys, node->iss_NumOrderByKeys);
 
 	ExecScanReScan(&node->ss);
 }
@@ -480,10 +482,11 @@ ExecInitIndexScan(IndexScan *node, EState *estate, int eflags)
 	 * initialize child expressions
 	 *
 	 * Note: we don't initialize all of the indexqual expression, only the
-	 * sub-parts corresponding to runtime keys (see below).  The indexqualorig
-	 * expression is always initialized even though it will only be used in
-	 * some uncommon cases --- would be nice to improve that.  (Problem is
-	 * that any SubPlans present in the expression must be found now...)
+	 * sub-parts corresponding to runtime keys (see below).  Likewise for
+	 * indexorderby, if any.  But the indexqualorig expression is always
+	 * initialized even though it will only be used in some uncommon cases ---
+	 * would be nice to improve that.  (Problem is that any SubPlans present
+	 * in the expression must be found now...)
 	 */
 	indexstate->ss.ps.targetlist = (List *)
 		ExecInitExpr((Expr *) node->scan.plan.targetlist,
@@ -543,6 +546,8 @@ ExecInitIndexScan(IndexScan *node, EState *estate, int eflags)
 	 * Initialize index-specific scan state
 	 */
 	indexstate->iss_RuntimeKeysReady = false;
+	indexstate->iss_RuntimeKeys = NULL;
+	indexstate->iss_NumRuntimeKeys = 0;
 
 	/*
 	 * build the index scan keys from the index qualification
@@ -551,8 +556,24 @@ ExecInitIndexScan(IndexScan *node, EState *estate, int eflags)
 						   indexstate->iss_RelationDesc,
 						   node->scan.scanrelid,
 						   node->indexqual,
+						   false,
 						   &indexstate->iss_ScanKeys,
 						   &indexstate->iss_NumScanKeys,
+						   &indexstate->iss_RuntimeKeys,
+						   &indexstate->iss_NumRuntimeKeys,
+						   NULL,	/* no ArrayKeys */
+						   NULL);
+
+	/*
+	 * any ORDER BY exprs have to be turned into scankeys in the same way
+	 */
+	ExecIndexBuildScanKeys((PlanState *) indexstate,
+						   indexstate->iss_RelationDesc,
+						   node->scan.scanrelid,
+						   node->indexorderby,
+						   true,
+						   &indexstate->iss_OrderByKeys,
+						   &indexstate->iss_NumOrderByKeys,
 						   &indexstate->iss_RuntimeKeys,
 						   &indexstate->iss_NumRuntimeKeys,
 						   NULL,	/* no ArrayKeys */
@@ -584,7 +605,16 @@ ExecInitIndexScan(IndexScan *node, EState *estate, int eflags)
 											   indexstate->iss_RelationDesc,
 											   estate->es_snapshot,
 											   indexstate->iss_NumScanKeys,
-											   indexstate->iss_ScanKeys);
+											   indexstate->iss_NumOrderByKeys);
+
+	/*
+	 * If no run-time keys to calculate, go ahead and pass the scankeys to
+	 * the index AM.
+	 */
+	if (indexstate->iss_NumRuntimeKeys == 0)
+		index_rescan(indexstate->iss_ScanDesc,
+					 indexstate->iss_ScanKeys, indexstate->iss_NumScanKeys,
+					 indexstate->iss_OrderByKeys, indexstate->iss_NumOrderByKeys);
 
 	/*
 	 * all done.
@@ -624,12 +654,20 @@ ExecInitIndexScan(IndexScan *node, EState *estate, int eflags)
  * 5. NullTest ("indexkey IS NULL/IS NOT NULL").  We just fill in the
  * ScanKey properly.
  *
+ * This code is also used to prepare ORDER BY expressions for amcanorderbyop
+ * indexes.  The behavior is exactly the same, except that we have to look up
+ * the operator differently.  Note that only cases 1 and 2 are currently
+ * possible for ORDER BY.
+ *
  * Input params are:
  *
  * planstate: executor state node we are working for
  * index: the index we are building scan keys for
  * scanrelid: varno of the index's relation within current query
- * quals: indexquals expressions
+ * quals: indexquals (or indexorderbys) expressions
+ * isorderby: true if processing ORDER BY exprs, false if processing quals
+ * *runtimeKeys: ptr to pre-existing IndexRuntimeKeyInfos, or NULL if none
+ * *numRuntimeKeys: number of pre-existing runtime keys
  *
  * Output params are:
  *
@@ -645,7 +683,8 @@ ExecInitIndexScan(IndexScan *node, EState *estate, int eflags)
  */
 void
 ExecIndexBuildScanKeys(PlanState *planstate, Relation index, Index scanrelid,
-					   List *quals, ScanKey *scanKeys, int *numScanKeys,
+					   List *quals, bool isorderby,
+					   ScanKey *scanKeys, int *numScanKeys,
 					   IndexRuntimeKeyInfo **runtimeKeys, int *numRuntimeKeys,
 					   IndexArrayKeyInfo **arrayKeys, int *numArrayKeys)
 {
@@ -654,41 +693,29 @@ ExecIndexBuildScanKeys(PlanState *planstate, Relation index, Index scanrelid,
 	IndexRuntimeKeyInfo *runtime_keys;
 	IndexArrayKeyInfo *array_keys;
 	int			n_scan_keys;
-	int			extra_scan_keys;
 	int			n_runtime_keys;
+	int			max_runtime_keys;
 	int			n_array_keys;
 	int			j;
 
-	/*
-	 * If there are any RowCompareExpr quals, we need extra ScanKey entries
-	 * for them, and possibly extra runtime-key entries.  Count up what's
-	 * needed.	(The subsidiary ScanKey arrays for the RowCompareExprs could
-	 * be allocated as separate chunks, but we have to count anyway to make
-	 * runtime_keys large enough, so might as well just do one palloc.)
-	 */
+	/* Allocate array for ScanKey structs: one per qual */
 	n_scan_keys = list_length(quals);
-	extra_scan_keys = 0;
-	foreach(qual_cell, quals)
-	{
-		if (IsA(lfirst(qual_cell), RowCompareExpr))
-			extra_scan_keys +=
-				list_length(((RowCompareExpr *) lfirst(qual_cell))->opnos);
-	}
-	scan_keys = (ScanKey)
-		palloc((n_scan_keys + extra_scan_keys) * sizeof(ScanKeyData));
-	/* Allocate these arrays as large as they could possibly need to be */
-	runtime_keys = (IndexRuntimeKeyInfo *)
-		palloc((n_scan_keys + extra_scan_keys) * sizeof(IndexRuntimeKeyInfo));
-	array_keys = (IndexArrayKeyInfo *)
-		palloc0(n_scan_keys * sizeof(IndexArrayKeyInfo));
-	n_runtime_keys = 0;
-	n_array_keys = 0;
+	scan_keys = (ScanKey) palloc(n_scan_keys * sizeof(ScanKeyData));
 
 	/*
-	 * Below here, extra_scan_keys is index of first cell to use for next
-	 * RowCompareExpr
+	 * runtime_keys array is dynamically resized as needed.  We handle it
+	 * this way so that the same runtime keys array can be shared between
+	 * indexquals and indexorderbys, which will be processed in separate
+	 * calls of this function.  Caller must be sure to pass in NULL/0 for
+	 * first call.
 	 */
-	extra_scan_keys = n_scan_keys;
+	runtime_keys = *runtimeKeys;
+	n_runtime_keys = max_runtime_keys = *numRuntimeKeys;
+
+	/* Allocate array_keys as large as it could possibly need to be */
+	array_keys = (IndexArrayKeyInfo *)
+		palloc0(n_scan_keys * sizeof(IndexArrayKeyInfo));
+	n_array_keys = 0;
 
 	/*
 	 * for each opclause in the given qual, convert the opclause into a single
@@ -742,10 +769,13 @@ ExecIndexBuildScanKeys(PlanState *planstate, Relation index, Index scanrelid,
 			 */
 			opfamily = index->rd_opfamily[varattno - 1];
 
-			get_op_opfamily_properties(opno, opfamily,
+			get_op_opfamily_properties(opno, opfamily, isorderby,
 									   &op_strategy,
 									   &op_lefttype,
 									   &op_righttype);
+
+			if (isorderby)
+				flags |= SK_ORDER_BY;
 
 			/*
 			 * rightop is the constant or variable comparison value
@@ -767,6 +797,21 @@ ExecIndexBuildScanKeys(PlanState *planstate, Relation index, Index scanrelid,
 			else
 			{
 				/* Need to treat this one as a runtime key */
+				if (n_runtime_keys >= max_runtime_keys)
+				{
+					if (max_runtime_keys == 0)
+					{
+						max_runtime_keys = 8;
+						runtime_keys = (IndexRuntimeKeyInfo *)
+							palloc(max_runtime_keys * sizeof(IndexRuntimeKeyInfo));
+					}
+					else
+					{
+						max_runtime_keys *= 2;
+						runtime_keys = (IndexRuntimeKeyInfo *)
+							repalloc(runtime_keys, max_runtime_keys * sizeof(IndexRuntimeKeyInfo));
+					}
+				}
 				runtime_keys[n_runtime_keys].scan_key = this_scan_key;
 				runtime_keys[n_runtime_keys].key_expr =
 					ExecInitExpr(rightop, planstate);
@@ -794,12 +839,19 @@ ExecIndexBuildScanKeys(PlanState *planstate, Relation index, Index scanrelid,
 			ListCell   *largs_cell = list_head(rc->largs);
 			ListCell   *rargs_cell = list_head(rc->rargs);
 			ListCell   *opnos_cell = list_head(rc->opnos);
-			ScanKey		first_sub_key = &scan_keys[extra_scan_keys];
+			ScanKey		first_sub_key;
+			int			n_sub_key;
+
+			Assert(!isorderby);
+
+			first_sub_key = (ScanKey)
+				palloc(list_length(rc->opnos) * sizeof(ScanKeyData));
+			n_sub_key = 0;
 
 			/* Scan RowCompare columns and generate subsidiary ScanKey items */
 			while (opnos_cell != NULL)
 			{
-				ScanKey		this_sub_key = &scan_keys[extra_scan_keys];
+				ScanKey		this_sub_key = &first_sub_key[n_sub_key];
 				int			flags = SK_ROW_MEMBER;
 				Datum		scanvalue;
 
@@ -832,7 +884,7 @@ ExecIndexBuildScanKeys(PlanState *planstate, Relation index, Index scanrelid,
 					elog(ERROR, "bogus RowCompare index qualification");
 				opfamily = index->rd_opfamily[varattno - 1];
 
-				get_op_opfamily_properties(opno, opfamily,
+				get_op_opfamily_properties(opno, opfamily, isorderby,
 										   &op_strategy,
 										   &op_lefttype,
 										   &op_righttype);
@@ -866,6 +918,21 @@ ExecIndexBuildScanKeys(PlanState *planstate, Relation index, Index scanrelid,
 				else
 				{
 					/* Need to treat this one as a runtime key */
+					if (n_runtime_keys >= max_runtime_keys)
+					{
+						if (max_runtime_keys == 0)
+						{
+							max_runtime_keys = 8;
+							runtime_keys = (IndexRuntimeKeyInfo *)
+								palloc(max_runtime_keys * sizeof(IndexRuntimeKeyInfo));
+						}
+						else
+						{
+							max_runtime_keys *= 2;
+							runtime_keys = (IndexRuntimeKeyInfo *)
+								repalloc(runtime_keys, max_runtime_keys * sizeof(IndexRuntimeKeyInfo));
+						}
+					}
 					runtime_keys[n_runtime_keys].scan_key = this_sub_key;
 					runtime_keys[n_runtime_keys].key_expr =
 						ExecInitExpr(rightop, planstate);
@@ -885,11 +952,11 @@ ExecIndexBuildScanKeys(PlanState *planstate, Relation index, Index scanrelid,
 									   op_righttype,	/* strategy subtype */
 									   opfuncid,		/* reg proc to use */
 									   scanvalue);		/* constant */
-				extra_scan_keys++;
+				n_sub_key++;
 			}
 
 			/* Mark the last subsidiary scankey correctly */
-			scan_keys[extra_scan_keys - 1].sk_flags |= SK_ROW_END;
+			first_sub_key[n_sub_key - 1].sk_flags |= SK_ROW_END;
 
 			/*
 			 * We don't use ScanKeyEntryInitialize for the header because it
@@ -906,6 +973,8 @@ ExecIndexBuildScanKeys(PlanState *planstate, Relation index, Index scanrelid,
 		{
 			/* indexkey op ANY (array-expression) */
 			ScalarArrayOpExpr *saop = (ScalarArrayOpExpr *) clause;
+
+			Assert(!isorderby);
 
 			Assert(saop->useOr);
 			opno = saop->opno;
@@ -935,7 +1004,7 @@ ExecIndexBuildScanKeys(PlanState *planstate, Relation index, Index scanrelid,
 			 */
 			opfamily = index->rd_opfamily[varattno - 1];
 
-			get_op_opfamily_properties(opno, opfamily,
+			get_op_opfamily_properties(opno, opfamily, isorderby,
 									   &op_strategy,
 									   &op_lefttype,
 									   &op_righttype);
@@ -972,6 +1041,8 @@ ExecIndexBuildScanKeys(PlanState *planstate, Relation index, Index scanrelid,
 			/* indexkey IS NULL or indexkey IS NOT NULL */
 			NullTest   *ntest = (NullTest *) clause;
 			int			flags;
+
+			Assert(!isorderby);
 
 			/*
 			 * argument should be the index key Var, possibly relabeled
@@ -1020,12 +1091,9 @@ ExecIndexBuildScanKeys(PlanState *planstate, Relation index, Index scanrelid,
 				 (int) nodeTag(clause));
 	}
 
+	Assert(n_runtime_keys <= max_runtime_keys);
+
 	/* Get rid of any unused arrays */
-	if (n_runtime_keys == 0)
-	{
-		pfree(runtime_keys);
-		runtime_keys = NULL;
-	}
 	if (n_array_keys == 0)
 	{
 		pfree(array_keys);

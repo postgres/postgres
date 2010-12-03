@@ -439,6 +439,8 @@ _outIndexScan(StringInfo str, IndexScan *node)
 	WRITE_OID_FIELD(indexid);
 	WRITE_NODE_FIELD(indexqual);
 	WRITE_NODE_FIELD(indexqualorig);
+	WRITE_NODE_FIELD(indexorderby);
+	WRITE_NODE_FIELD(indexorderbyorig);
 	WRITE_ENUM_FIELD(indexorderdir, ScanDirection);
 }
 
@@ -1424,6 +1426,7 @@ _outIndexPath(StringInfo str, IndexPath *node)
 	WRITE_NODE_FIELD(indexinfo);
 	WRITE_NODE_FIELD(indexclauses);
 	WRITE_NODE_FIELD(indexquals);
+	WRITE_NODE_FIELD(indexorderbys);
 	WRITE_BOOL_FIELD(isjoininner);
 	WRITE_ENUM_FIELD(indexscandir, ScanDirection);
 	WRITE_FLOAT_FIELD(indextotalcost, "%.2f");

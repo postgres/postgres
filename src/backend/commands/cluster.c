@@ -875,8 +875,8 @@ copy_heap_data(Oid OIDNewHeap, Oid OIDOldHeap, Oid OIDOldIndex,
 	if (OldIndex != NULL && !use_sort)
 	{
 		heapScan = NULL;
-		indexScan = index_beginscan(OldHeap, OldIndex,
-									SnapshotAny, 0, (ScanKey) NULL);
+		indexScan = index_beginscan(OldHeap, OldIndex, SnapshotAny, 0, 0);
+		index_rescan(indexScan, NULL, 0, NULL, 0);
 	}
 	else
 	{

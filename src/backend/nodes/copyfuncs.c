@@ -363,6 +363,8 @@ _copyIndexScan(IndexScan *from)
 	COPY_SCALAR_FIELD(indexid);
 	COPY_NODE_FIELD(indexqual);
 	COPY_NODE_FIELD(indexqualorig);
+	COPY_NODE_FIELD(indexorderby);
+	COPY_NODE_FIELD(indexorderbyorig);
 	COPY_SCALAR_FIELD(indexorderdir);
 
 	return newnode;

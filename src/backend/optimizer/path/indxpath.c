@@ -89,6 +89,9 @@ static bool match_rowcompare_to_indexcol(IndexOptInfo *index,
 							 Oid opfamily,
 							 RowCompareExpr *clause,
 							 Relids outer_relids);
+static List *match_index_to_pathkeys(IndexOptInfo *index, List *pathkeys);
+static Expr *match_clause_to_ordering_op(IndexOptInfo *index,
+							int indexcol, Expr *clause, Oid pk_opfamily);
 static Relids indexable_outerrelids(PlannerInfo *root, RelOptInfo *rel);
 static bool matches_any_index(RestrictInfo *rinfo, RelOptInfo *rel,
 				  Relids outer_relids);
@@ -286,6 +289,7 @@ find_usable_indexes(PlannerInfo *root, RelOptInfo *rel,
 		IndexOptInfo *index = (IndexOptInfo *) lfirst(ilist);
 		IndexPath  *ipath;
 		List	   *restrictclauses;
+		List	   *orderbyclauses;
 		List	   *index_pathkeys;
 		List	   *useful_pathkeys;
 		bool		useful_predicate;
@@ -388,9 +392,24 @@ find_usable_indexes(PlannerInfo *root, RelOptInfo *rel,
 												  ForwardScanDirection);
 			useful_pathkeys = truncate_useless_pathkeys(root, rel,
 														index_pathkeys);
+			orderbyclauses = NIL;
+		}
+		else if (index->amcanorderbyop && possibly_useful_pathkeys &&
+				 istoplevel && outer_rel == NULL && scantype != ST_BITMAPSCAN)
+		{
+			/* see if we can generate ordering operators for query_pathkeys */
+			orderbyclauses = match_index_to_pathkeys(index,
+													 root->query_pathkeys);
+			if (orderbyclauses)
+				useful_pathkeys = root->query_pathkeys;
+			else
+				useful_pathkeys = NIL;
 		}
 		else
+		{
 			useful_pathkeys = NIL;
+			orderbyclauses = NIL;
+		}
 
 		/*
 		 * 3. Generate an indexscan path if there are relevant restriction
@@ -402,6 +421,7 @@ find_usable_indexes(PlannerInfo *root, RelOptInfo *rel,
 		{
 			ipath = create_index_path(root, index,
 									  restrictclauses,
+									  orderbyclauses,
 									  useful_pathkeys,
 									  index_is_ordered ?
 									  ForwardScanDirection :
@@ -425,6 +445,7 @@ find_usable_indexes(PlannerInfo *root, RelOptInfo *rel,
 			{
 				ipath = create_index_path(root, index,
 										  restrictclauses,
+										  NIL,
 										  useful_pathkeys,
 										  BackwardScanDirection,
 										  outer_rel);
@@ -1381,6 +1402,179 @@ match_rowcompare_to_indexcol(IndexOptInfo *index,
 	}
 
 	return false;
+}
+
+
+/****************************************************************************
+ *				----  ROUTINES TO CHECK ORDERING OPERATORS  ----
+ ****************************************************************************/
+
+/*
+ * match_index_to_pathkeys
+ *		Test whether an index can produce output ordered according to the
+ *		given pathkeys using "ordering operators".
+ *
+ * If it can, return a list of suitable ORDER BY expressions, each of the form
+ * "indexedcol operator pseudoconstant".  If not, return NIL.
+ */
+static List *
+match_index_to_pathkeys(IndexOptInfo *index, List *pathkeys)
+{
+	List	   *orderbyexprs = NIL;
+	ListCell   *lc1;
+
+	/* Only indexes with the amcanorderbyop property are interesting here */
+	if (!index->amcanorderbyop)
+		return NIL;
+
+	foreach(lc1, pathkeys)
+	{
+		PathKey	   *pathkey = (PathKey *) lfirst(lc1);
+		bool		found = false;
+		ListCell   *lc2;
+
+		/*
+		 * Note: for any failure to match, we just return NIL immediately.
+		 * There is no value in matching just some of the pathkeys.
+		 */
+
+		/* Pathkey must request default sort order for the target opfamily */
+		if (pathkey->pk_strategy != BTLessStrategyNumber ||
+			pathkey->pk_nulls_first)
+			return NIL;
+
+		/* If eclass is volatile, no hope of using an indexscan */
+		if (pathkey->pk_eclass->ec_has_volatile)
+			return NIL;
+
+		/* Try to match eclass member expression(s) to index */
+		foreach(lc2, pathkey->pk_eclass->ec_members)
+		{
+			EquivalenceMember *member = (EquivalenceMember *) lfirst(lc2);
+			int		indexcol;
+
+			/* No possibility of match if it references other relations */
+			if (!bms_equal(member->em_relids, index->rel->relids))
+				continue;
+
+			for (indexcol = 0; indexcol < index->ncolumns; indexcol++)
+			{
+				Expr   *expr;
+
+				expr = match_clause_to_ordering_op(index,
+												   indexcol,
+												   member->em_expr,
+												   pathkey->pk_opfamily);
+				if (expr)
+				{
+					orderbyexprs = lappend(orderbyexprs, expr);
+					found = true;
+					break;
+				}
+			}
+
+			if (found)			/* don't want to look at remaining members */
+				break;
+		}
+
+		if (!found)				/* fail if no match for this pathkey */
+			return NIL;
+	}
+
+	return orderbyexprs;		/* success! */
+}
+
+/*
+ * match_clause_to_ordering_op
+ *	  Determines whether an ordering operator expression matches an
+ *	  index column.
+ *
+ *	  This is similar to, but simpler than, match_clause_to_indexcol.
+ *	  We only care about simple OpExpr cases.  The input is a bare
+ *	  expression that is being ordered by, which must be of the form
+ *	  (indexkey op const) or (const op indexkey) where op is an ordering
+ *	  operator for the column's opfamily.
+ *
+ * 'index' is the index of interest.
+ * 'indexcol' is a column number of 'index' (counting from 0).
+ * 'clause' is the ordering expression to be tested.
+ * 'pk_opfamily' is the btree opfamily describing the required sort order.
+ *
+ * If successful, return 'clause' as-is if the indexkey is on the left,
+ * otherwise a commuted copy of 'clause'.  If no match, return NULL.
+ */
+static Expr *
+match_clause_to_ordering_op(IndexOptInfo *index,
+							int indexcol,
+							Expr *clause,
+							Oid pk_opfamily)
+{
+	Oid			opfamily = index->opfamily[indexcol];
+	Node	   *leftop,
+			   *rightop;
+	Oid			expr_op;
+	Oid			sortfamily;
+	bool		commuted;
+
+	/*
+	 * Clause must be a binary opclause.
+	 */
+	if (!is_opclause(clause))
+		return NULL;
+	leftop = get_leftop(clause);
+	rightop = get_rightop(clause);
+	if (!leftop || !rightop)
+		return NULL;
+	expr_op = ((OpExpr *) clause)->opno;
+
+	/*
+	 * Check for clauses of the form: (indexkey operator constant) or
+	 * (constant operator indexkey).
+	 */
+	if (match_index_to_operand(leftop, indexcol, index) &&
+		!contain_var_clause(rightop) &&
+		!contain_volatile_functions(rightop))
+	{
+		commuted = false;
+	}
+	else if (match_index_to_operand(rightop, indexcol, index) &&
+			 !contain_var_clause(leftop) &&
+			 !contain_volatile_functions(leftop))
+	{
+		/* Might match, but we need a commuted operator */
+		expr_op = get_commutator(expr_op);
+		if (expr_op == InvalidOid)
+			return NULL;
+		commuted = true;
+	}
+	else
+		return NULL;
+
+	/*
+	 * Is the (commuted) operator an ordering operator for the opfamily?
+	 * And if so, does it yield the right sorting semantics?
+	 */
+	sortfamily = get_op_opfamily_sortfamily(expr_op, opfamily);
+	if (sortfamily != pk_opfamily)
+		return NULL;
+
+	/* We have a match.  Return clause or a commuted version thereof. */
+	if (commuted)
+	{
+		OpExpr	   *newclause = makeNode(OpExpr);
+
+		/* flat-copy all the fields of clause */
+		memcpy(newclause, clause, sizeof(OpExpr));
+
+		/* commute it */
+		newclause->opno = expr_op;
+		newclause->opfuncid = InvalidOid;
+		newclause->args = list_make2(rightop, leftop);
+
+		clause = (Expr *) newclause;
+	}
+
+	return clause;
 }
 
 
@@ -2630,7 +2824,7 @@ expand_indexqual_rowcompare(RestrictInfo *rinfo,
 	expr_op = linitial_oid(clause->opnos);
 	if (!var_on_left)
 		expr_op = get_commutator(expr_op);
-	get_op_opfamily_properties(expr_op, index->opfamily[indexcol],
+	get_op_opfamily_properties(expr_op, index->opfamily[indexcol], false,
 							   &op_strategy,
 							   &op_lefttype,
 							   &op_righttype);
@@ -2698,7 +2892,7 @@ expand_indexqual_rowcompare(RestrictInfo *rinfo,
 			break;
 
 		/* Add opfamily and datatypes to lists */
-		get_op_opfamily_properties(expr_op, index->opfamily[i],
+		get_op_opfamily_properties(expr_op, index->opfamily[i], false,
 								   &op_strategy,
 								   &op_lefttype,
 								   &op_righttype);

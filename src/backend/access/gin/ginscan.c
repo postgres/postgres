@@ -26,11 +26,28 @@ Datum
 ginbeginscan(PG_FUNCTION_ARGS)
 {
 	Relation	rel = (Relation) PG_GETARG_POINTER(0);
-	int			keysz = PG_GETARG_INT32(1);
-	ScanKey		scankey = (ScanKey) PG_GETARG_POINTER(2);
+	int			nkeys = PG_GETARG_INT32(1);
+	int			norderbys = PG_GETARG_INT32(2);
 	IndexScanDesc scan;
+	GinScanOpaque so;
 
-	scan = RelationGetIndexScan(rel, keysz, scankey);
+	/* no order by operators allowed */
+	Assert(norderbys == 0);
+
+	scan = RelationGetIndexScan(rel, nkeys, norderbys);
+
+	/* allocate private workspace */
+	so = (GinScanOpaque) palloc(sizeof(GinScanOpaqueData));
+	so->keys = NULL;
+	so->nkeys = 0;
+	so->tempCtx = AllocSetContextCreate(CurrentMemoryContext,
+										"Gin scan temporary context",
+										ALLOCSET_DEFAULT_MINSIZE,
+										ALLOCSET_DEFAULT_INITSIZE,
+										ALLOCSET_DEFAULT_MAXSIZE);
+	initGinState(&so->ginstate, scan->indexRelation);
+
+	scan->opaque = so;
 
 	PG_RETURN_POINTER(scan);
 }
@@ -241,27 +258,10 @@ ginrescan(PG_FUNCTION_ARGS)
 {
 	IndexScanDesc scan = (IndexScanDesc) PG_GETARG_POINTER(0);
 	ScanKey		scankey = (ScanKey) PG_GETARG_POINTER(1);
-	GinScanOpaque so;
+	/* remaining arguments are ignored */
+	GinScanOpaque so = (GinScanOpaque) scan->opaque;
 
-	so = (GinScanOpaque) scan->opaque;
-
-	if (so == NULL)
-	{
-		/* if called from ginbeginscan */
-		so = (GinScanOpaque) palloc(sizeof(GinScanOpaqueData));
-		so->tempCtx = AllocSetContextCreate(CurrentMemoryContext,
-											"Gin scan temporary context",
-											ALLOCSET_DEFAULT_MINSIZE,
-											ALLOCSET_DEFAULT_INITSIZE,
-											ALLOCSET_DEFAULT_MAXSIZE);
-		initGinState(&so->ginstate, scan->indexRelation);
-		scan->opaque = so;
-	}
-	else
-	{
-		freeScanKeys(so->keys, so->nkeys);
-	}
-
+	freeScanKeys(so->keys, so->nkeys);
 	so->keys = NULL;
 
 	if (scankey && scan->numberOfKeys > 0)
@@ -280,14 +280,11 @@ ginendscan(PG_FUNCTION_ARGS)
 	IndexScanDesc scan = (IndexScanDesc) PG_GETARG_POINTER(0);
 	GinScanOpaque so = (GinScanOpaque) scan->opaque;
 
-	if (so != NULL)
-	{
-		freeScanKeys(so->keys, so->nkeys);
+	freeScanKeys(so->keys, so->nkeys);
 
-		MemoryContextDelete(so->tempCtx);
+	MemoryContextDelete(so->tempCtx);
 
-		pfree(so);
-	}
+	pfree(so);
 
 	PG_RETURN_VOID();
 }

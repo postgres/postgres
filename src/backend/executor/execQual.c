@@ -4694,7 +4694,7 @@ ExecInitExpr(Expr *node, PlanState *parent)
 					Oid			righttype;
 					Oid			proc;
 
-					get_op_opfamily_properties(opno, opfamily,
+					get_op_opfamily_properties(opno, opfamily, false,
 											   &strategy,
 											   &lefttype,
 											   &righttype);

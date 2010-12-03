@@ -31,6 +31,7 @@ extern Path *create_seqscan_path(PlannerInfo *root, RelOptInfo *rel);
 extern IndexPath *create_index_path(PlannerInfo *root,
 				  IndexOptInfo *index,
 				  List *clause_groups,
+				  List *indexorderbys,
 				  List *pathkeys,
 				  ScanDirection indexscandir,
 				  RelOptInfo *outer_rel);

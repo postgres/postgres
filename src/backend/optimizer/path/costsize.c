@@ -209,6 +209,7 @@ cost_seqscan(Path *path, PlannerInfo *root,
  *
  * 'index' is the index to be used
  * 'indexQuals' is the list of applicable qual clauses (implicit AND semantics)
+ * 'indexOrderBys' is the list of ORDER BY operators for amcanorderbyop indexes
  * 'outer_rel' is the outer relation when we are considering using the index
  *		scan as the inside of a nestloop join (hence, some of the indexQuals
  *		are join clauses, and we should expect repeated scans of the index);
@@ -218,18 +219,19 @@ cost_seqscan(Path *path, PlannerInfo *root,
  * additional fields of the IndexPath besides startup_cost and total_cost.
  * These fields are needed if the IndexPath is used in a BitmapIndexScan.
  *
+ * indexQuals is a list of RestrictInfo nodes, but indexOrderBys is a list of
+ * bare expressions.
+ *
  * NOTE: 'indexQuals' must contain only clauses usable as index restrictions.
  * Any additional quals evaluated as qpquals may reduce the number of returned
  * tuples, but they won't reduce the number of tuples we have to fetch from
  * the table, so they don't reduce the scan cost.
- *
- * NOTE: as of 8.0, indexQuals is a list of RestrictInfo nodes, where formerly
- * it was a list of bare clause expressions.
  */
 void
 cost_index(IndexPath *path, PlannerInfo *root,
 		   IndexOptInfo *index,
 		   List *indexQuals,
+		   List *indexOrderBys,
 		   RelOptInfo *outer_rel)
 {
 	RelOptInfo *baserel = index->rel;
@@ -263,10 +265,11 @@ cost_index(IndexPath *path, PlannerInfo *root,
 	 * the fraction of main-table tuples we will have to retrieve) and its
 	 * correlation to the main-table tuple order.
 	 */
-	OidFunctionCall8(index->amcostestimate,
+	OidFunctionCall9(index->amcostestimate,
 					 PointerGetDatum(root),
 					 PointerGetDatum(index),
 					 PointerGetDatum(indexQuals),
+					 PointerGetDatum(indexOrderBys),
 					 PointerGetDatum(outer_rel),
 					 PointerGetDatum(&indexStartupCost),
 					 PointerGetDatum(&indexTotalCost),

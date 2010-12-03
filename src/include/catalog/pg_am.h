@@ -52,11 +52,11 @@ CATALOG(pg_am,2601)
 	bool		amclusterable;	/* does AM support cluster command? */
 	Oid			amkeytype;		/* type of data in index, or InvalidOid */
 	regproc		aminsert;		/* "insert this tuple" function */
-	regproc		ambeginscan;	/* "start new scan" function */
+	regproc		ambeginscan;	/* "prepare for index scan" function */
 	regproc		amgettuple;		/* "next valid tuple" function, or 0 */
 	regproc		amgetbitmap;	/* "fetch all valid tuples" function, or 0 */
-	regproc		amrescan;		/* "restart this scan" function */
-	regproc		amendscan;		/* "end this scan" function */
+	regproc		amrescan;		/* "(re)start index scan" function */
+	regproc		amendscan;		/* "end index scan" function */
 	regproc		ammarkpos;		/* "mark current scan position" function */
 	regproc		amrestrpos;		/* "restore marked scan position" function */
 	regproc		ambuild;		/* "build new index" function */

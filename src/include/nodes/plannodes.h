@@ -271,7 +271,10 @@ typedef Scan SeqScan;
  * be of the form (indexkey OP comparisonval) or (comparisonval OP indexkey).
  * The indexkey is a Var or expression referencing column(s) of the index's
  * base table.	The comparisonval might be any expression, but it won't use
- * any columns of the base table.
+ * any columns of the base table.  The expressions are ordered by index
+ * column position (but items referencing the same index column can appear
+ * in any order).  indexqualorig is used at runtime only if we have to recheck
+ * a lossy indexqual.
  *
  * indexqual has the same form, but the expressions have been commuted if
  * necessary to put the indexkeys on the left, and the indexkeys are replaced
@@ -280,14 +283,26 @@ typedef Scan SeqScan;
  * table).	This is a bit hokey ... would be cleaner to use a special-purpose
  * node type that could not be mistaken for a regular Var.	But it will do
  * for now.
+ *
+ * indexorderbyorig is similarly the original form of any ORDER BY expressions
+ * that are being implemented by the index, while indexorderby is modified to
+ * have index column Vars on the left-hand side.  Here, multiple expressions
+ * must appear in exactly the ORDER BY order, and this is not necessarily the
+ * index column order.  Only the expressions are provided, not the auxiliary
+ * sort-order information from the ORDER BY SortGroupClauses; it's assumed
+ * that the sort ordering is fully determinable from the top-level operators.
+ * indexorderbyorig is unused at run time, but is needed for EXPLAIN.
+ * (Note these fields are used for amcanorderbyop cases, not amcanorder cases.)
  * ----------------
  */
 typedef struct IndexScan
 {
 	Scan		scan;
 	Oid			indexid;		/* OID of index to scan */
-	List	   *indexqual;		/* list of index quals (OpExprs) */
+	List	   *indexqual;		/* list of index quals (usually OpExprs) */
 	List	   *indexqualorig;	/* the same in original form */
+	List	   *indexorderby;		/* list of index ORDER BY exprs */
+	List	   *indexorderbyorig;	/* the same in original form */
 	ScanDirection indexorderdir;	/* forward or backward or don't care */
 } IndexScan;
 

@@ -62,8 +62,10 @@ typedef struct IndexScanDescData
 	Relation	heapRelation;	/* heap relation descriptor, or NULL */
 	Relation	indexRelation;	/* index relation descriptor */
 	Snapshot	xs_snapshot;	/* snapshot to see */
-	int			numberOfKeys;	/* number of scan keys */
-	ScanKey		keyData;		/* array of scan key descriptors */
+	int			numberOfKeys;	/* number of index qualifier conditions */
+	int			numberOfOrderBys;	/* number of ordering operators */
+	ScanKey		keyData;			/* array of index qualifier descriptors */
+	ScanKey		orderByData;		/* array of ordering op descriptors */
 
 	/* signaling to index AM about killing index tuples */
 	bool		kill_prior_tuple;		/* last-returned tuple is dead */
