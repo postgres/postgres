@@ -406,14 +406,14 @@ pg_convert_from(PG_FUNCTION_ARGS)
 Datum
 pg_convert(PG_FUNCTION_ARGS)
 {
-	bytea	   *string = PG_GETARG_BYTEA_P(0);
+	bytea	   *string = PG_GETARG_BYTEA_PP(0);
 	char	   *src_encoding_name = NameStr(*PG_GETARG_NAME(1));
 	int			src_encoding = pg_char_to_encoding(src_encoding_name);
 	char	   *dest_encoding_name = NameStr(*PG_GETARG_NAME(2));
 	int			dest_encoding = pg_char_to_encoding(dest_encoding_name);
-	unsigned char *result;
+	const char *src_str;
+	char	   *dest_str;
 	bytea	   *retval;
-	unsigned char *str;
 	int			len;
 
 	if (src_encoding < 0)
@@ -427,26 +427,25 @@ pg_convert(PG_FUNCTION_ARGS)
 				 errmsg("invalid destination encoding name \"%s\"",
 						dest_encoding_name)));
 
-	/* make sure that source string is valid and null terminated */
-	len = VARSIZE(string) - VARHDRSZ;
-	pg_verify_mbstr(src_encoding, VARDATA(string), len, false);
-	str = palloc(len + 1);
-	memcpy(str, VARDATA(string), len);
-	*(str + len) = '\0';
+	/* make sure that source string is valid */
+	len = VARSIZE_ANY_EXHDR(string);
+	src_str = VARDATA_ANY(string);
+	pg_verify_mbstr_len(src_encoding, src_str, len, false);
 
-	result = pg_do_encoding_conversion(str, len, src_encoding, dest_encoding);
+	dest_str = (char *) pg_do_encoding_conversion(
+				(unsigned char *) src_str, len, src_encoding, dest_encoding);
+	if (dest_str != src_str)
+		len = strlen(dest_str);
 
 	/*
 	 * build bytea data type structure.
 	 */
-	len = strlen((char *) result) + VARHDRSZ;
-	retval = palloc(len);
-	SET_VARSIZE(retval, len);
-	memcpy(VARDATA(retval), result, len - VARHDRSZ);
+	retval = (bytea *) palloc(len + VARHDRSZ);
+	SET_VARSIZE(retval, len + VARHDRSZ);
+	memcpy(VARDATA(retval), dest_str, len);
 
-	if (result != str)
-		pfree(result);
-	pfree(str);
+	if (dest_str != src_str)
+		pfree(dest_str);
 
 	/* free memory if allocated by the toaster */
 	PG_FREE_IF_COPY(string, 0);
