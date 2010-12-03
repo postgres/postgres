@@ -15,8 +15,6 @@
 #
 #   name = 'value'
 #
-# (The quotes around the value are NOT optional, but the "=" is.)
-#
 # Comments are introduced with '#'.
 #
 # The complete list of option names and allowed values can be found
