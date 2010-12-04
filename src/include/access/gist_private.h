@@ -118,7 +118,7 @@ typedef struct GISTScanOpaqueData
 
 	/* pre-allocated workspace arrays */
 	GISTSearchTreeItem *tmpTreeItem;	/* workspace to pass to rb_insert */
-	double	   *distances;		/* workspace for computeKeyTupleDistance */
+	double	   *distances;		/* output area for gistindex_keytest */
 
 	/* In a non-ordered search, returnable heap items are stored here: */
 	GISTSearchHeapItem pageData[BLCKSZ / sizeof(IndexTupleData)];
