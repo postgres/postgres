@@ -70,9 +70,10 @@ gistindex_keytest(IndexScanDesc scan,
 	{
 		int		i;
 
+		if (GistPageIsLeaf(page))			/* shouldn't happen */
+			elog(ERROR, "invalid GIST tuple found on leaf page");
 		for (i = 0; i < scan->numberOfOrderBys; i++)
 			so->distances[i] = -get_float8_infinity();
-		*recheck_p = true;		/* probably unnecessary */
 		return true;
 	}
 
@@ -403,6 +404,8 @@ getNextGISTSearchItem(GISTScanOpaque so)
 		{
 			/* Delink item from chain */
 			so->curTreeItem->head = item->next;
+			if (item == so->curTreeItem->lastHeap)
+				so->curTreeItem->lastHeap = NULL;
 			/* Return item; caller is responsible to pfree it */
 			return item;
 		}
