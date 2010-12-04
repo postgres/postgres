@@ -361,59 +361,74 @@
    </table>
 
   <para>
-   GiST indexes require seven support functions,
+   GiST indexes require seven support functions, with an optional eighth, as
    shown in <xref linkend="xindex-gist-support-table">.
   </para>
 
    <table tocentry="1" id="xindex-gist-support-table">
     <title>GiST Support Functions</title>
-    <tgroup cols="2">
+    <tgroup cols="3">
      <thead>
       <row>
        <entry>Function</entry>
+       <entry>Description</entry>
        <entry>Support Number</entry>
       </row>
      </thead>
      <tbody>
       <row>
-       <entry>consistent - determine whether key satisfies the
+       <entry><function>consistent</></entry>
+       <entry>determine whether key satisfies the
         query qualifier</entry>
        <entry>1</entry>
       </row>
       <row>
-       <entry>union - compute union of a set of keys</entry>
+       <entry><function>union</></entry>
+       <entry>compute union of a set of keys</entry>
        <entry>2</entry>
       </row>
       <row>
-       <entry>compress - compute a compressed representation of a key or value
+       <entry><function>compress</></entry>
+       <entry>compute a compressed representation of a key or value
         to be indexed</entry>
        <entry>3</entry>
       </row>
       <row>
-       <entry>decompress - compute a decompressed representation of a
+       <entry><function>decompress</></entry>
+       <entry>compute a decompressed representation of a
         compressed key</entry>
        <entry>4</entry>
       </row>
       <row>
-       <entry>penalty - compute penalty for inserting new key into subtree
+       <entry><function>penalty</></entry>
+       <entry>compute penalty for inserting new key into subtree
        with given subtree's key</entry>
        <entry>5</entry>
       </row>
       <row>
-       <entry>picksplit - determine which entries of a page are to be moved
+       <entry><function>picksplit</></entry>
+       <entry>determine which entries of a page are to be moved
        to the new page and compute the union keys for resulting pages</entry>
        <entry>6</entry>
       </row>
       <row>
-       <entry>equal - compare two keys and return true if they are equal</entry>
+       <entry><function>equal</></entry>
+       <entry>compare two keys and return true if they are equal</entry>
        <entry>7</entry>
+      </row>
+      <row>
+       <entry><function>distance</></entry>
+       <entry>
+        (optional method) determine distance from key to query value
+       </entry>
+       <entry>8</entry>
       </row>
      </tbody>
     </tgroup>
    </table>
 
   <para>
-   GIN indexes require four support functions,
+   GIN indexes require four support functions, with an optional fifth, as
    shown in <xref linkend="xindex-gin-support-table">.
   </para>
 

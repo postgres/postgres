@@ -167,6 +167,11 @@ CREATE INDEX test1_id_index ON test1 (id);
    upper/lower case conversion.
   </para>
 
+  <para>
+   B-tree indexes can also be used to retrieve data in sorted order.
+   This is not always faster than a simple scan and sort, but it is
+   often helpful.
+  </para>
 
   <para>
    <indexterm>
@@ -236,6 +241,18 @@ CREATE INDEX <replaceable>name</replaceable> ON <replaceable>table</replaceable>
    classes are available in the <literal>contrib</> collection or as separate
    projects.  For more information see <xref linkend="GiST">.
   </para>
+
+  <para>
+   GiST indexes are also capable of optimizing <quote>nearest-neighbor</>
+   searches, such as
+<programlisting><![CDATA[
+SELECT * FROM places ORDER BY location <-> point '(101,456)' LIMIT 10;
+]]>
+</programlisting>
+   which finds the ten places closest to a given target point.  The ability
+   to do this is again dependent on the particular operator class being used.
+  </para>
+
   <para>
    <indexterm>
     <primary>index</primary>

@@ -20,6 +20,7 @@ The current implementation of GiST supports:
 
   * Variable length keys
   * Composite keys (multi-key)
+  * Ordered search (nearest-neighbor search)
   * provides NULL-safe interface to GiST core
   * Concurrency
   * Recovery support via WAL logging
@@ -32,8 +33,8 @@ Marcel Kornaker:
 
 The original algorithms were modified in several ways:
 
-* They should be adapted to PostgreSQL conventions. For example, the SEARCH
-  algorithm was considerably changed, because in PostgreSQL function search
+* They had to be adapted to PostgreSQL conventions. For example, the SEARCH
+  algorithm was considerably changed, because in PostgreSQL the search function
   should return one tuple (next), not all tuples at once. Also, it should
   release page locks between calls.
 * Since we added support for variable length keys, it's not possible to
@@ -41,12 +42,12 @@ The original algorithms were modified in several ways:
   defined function picksplit doesn't have information about size of tuples
   (each tuple may contain several keys as in multicolumn index while picksplit
   could work with only one key) and pages.
-* We modified original INSERT algorithm for performance reason. In particular,
+* We modified original INSERT algorithm for performance reasons. In particular,
   it is now a single-pass algorithm.
 * Since the papers were theoretical, some details were omitted and we
-  have to find out ourself how to solve some specific problems.
+  had to find out ourself how to solve some specific problems.
 
-Because of the above reasons, we have to revised interaction of GiST
+Because of the above reasons, we have revised the interaction of GiST
 core and PostgreSQL WAL system. Moreover, we encountered (and solved)
 a problem of uncompleted insertions when recovering after crash, which
 was not touched in the paper.
@@ -54,46 +55,49 @@ was not touched in the paper.
 Search Algorithm
 ----------------
 
-Function gettuple finds a tuple which satisfies the search
-predicate. It store their state and returns next tuple under
-subsequent calls. Stack contains page, its LSN and LSN of parent page
-and currentposition is saved between calls.
+The search code maintains a queue of unvisited items, where an "item" is
+either a heap tuple known to satisfy the search conditions, or an index
+page that is consistent with the search conditions according to inspection
+of its parent page's downlink item.  Initially the root page is searched
+to find unvisited items in it.  Then we pull items from the queue.  A
+heap tuple pointer is just returned immediately; an index page entry
+causes that page to be searched, generating more queue entries.
 
-gettuple(search-pred)
-	if ( firsttime )
-		push(stack, [root, 0, 0]) // page, LSN, parentLSN
-		currentposition=0
-	end
-	ptr = top of stack
-	while(true)
-		latch( ptr->page, S-mode )
-		if ( ptr->page->lsn != ptr->lsn )
-			ptr->lsn = ptr->page->lsn
-			currentposition=0
-			if ( ptr->parentlsn < ptr->page->nsn )
-				add to stack rightlink
-		else
-			currentposition++
-		end
+The queue is kept ordered with heap tuple items at the front, then
+index page entries, with any newly-added index page entry inserted
+before existing index page entries.  This ensures depth-first traversal
+of the index, and in particular causes the first few heap tuples to be
+returned as soon as possible.  That is helpful in case there is a LIMIT
+that requires only a few tuples to be produced.
 
-		while(true)
-			currentposition = find_first_match( currentposition )
-			if ( currentposition is invalid )
-				unlatch( ptr->page )
-				pop stack
-				ptr = top of stack
-				if (ptr is NULL)
-					return NULL
-				break loop
-			else if ( ptr->page is leaf )
-				unlatch( ptr->page )
-				return tuple
-			else
-				add to stack child page
-			end
-			currentposition++
-		end
-	end
+To implement nearest-neighbor search, the queue entries are augmented
+with distance data: heap tuple entries are labeled with exact distance
+from the search argument, while index-page entries must be labeled with
+the minimum distance that any of their children could have.  Then,
+queue entries are retrieved in smallest-distance-first order, with
+entries having identical distances managed as stated in the previous
+paragraph.
+
+The search algorithm keeps an index page locked only long enough to scan
+its entries and queue those that satisfy the search conditions.  Since
+insertions can occur concurrently with searches, it is possible for an
+index child page to be split between the time we make a queue entry for it
+(while visiting its parent page) and the time we actually reach and scan
+the child page.  To avoid missing the entries that were moved to the right
+sibling, we detect whether a split has occurred by comparing the child
+page's NSN to the LSN that the parent had when visited.  If it did, the
+sibling page is immediately added to the front of the queue, ensuring that
+its items will be scanned in the same order as if they were still on the
+original child page.
+
+As is usual in Postgres, the search algorithm only guarantees to find index
+entries that existed before the scan started; index entries added during
+the scan might or might not be visited.  This is okay as long as all
+searches use MVCC snapshot rules to reject heap tuples newer than the time
+of scan start.  In particular, this means that we need not worry about
+cases where a parent page's downlink key is "enlarged" after we look at it.
+Any such enlargement would be to add child items that we aren't interested
+in returning anyway.
 
 
 Insert Algorithm

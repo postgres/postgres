@@ -505,11 +505,31 @@ amrestrpos (IndexScanDesc scan);
 
   <para>
    Some access methods return index entries in a well-defined order, others
-   do not.  If entries are returned in sorted order, the access method should
-   set <structname>pg_am</>.<structfield>amcanorder</> true to indicate that
-   it supports ordered scans.
-   All such access methods must use btree-compatible strategy numbers for
-   their equality and ordering operators.
+   do not.  There are actually two different ways that an access method can
+   support sorted output:
+
+    <itemizedlist>
+     <listitem>
+      <para>
+       Access methods that always return entries in the natural ordering
+       of their data (such as btree) should set
+       <structname>pg_am</>.<structfield>amcanorder</> to true.
+       Currently, such access methods must use btree-compatible strategy
+       numbers for their equality and ordering operators.
+      </para>
+     </listitem>
+     <listitem>
+      <para>
+       Access methods that support ordering operators should set
+       <structname>pg_am</>.<structfield>amcanorderbyop</> to true.
+       This indicates that the index is capable of returning entries in
+       an order satisfying <literal>ORDER BY</> <replaceable>index_key</>
+       <replaceable>operator</> <replaceable>constant</>.  Scan modifiers
+       of that form can be passed to <function>amrescan</> as described
+       previously.
+      </para>
+     </listitem>
+    </itemizedlist>
   </para>
 
   <para>
@@ -521,7 +541,7 @@ amrestrpos (IndexScanDesc scan);
    the normal front-to-back direction, so <function>amgettuple</> must return
    the last matching tuple in the index, rather than the first one as it
    normally would.  (This will only occur for access
-   methods that advertise they support ordered scans.)  After the
+   methods that set <structfield>amcanorder</> to true.)  After the
    first call, <function>amgettuple</> must be prepared to advance the scan in
    either direction from the most recently returned entry.  (But if
    <structname>pg_am</>.<structfield>amcanbackward</> is false, all subsequent
@@ -563,7 +583,8 @@ amrestrpos (IndexScanDesc scan);
    tuples at once and marking or restoring scan positions isn't
    supported. Secondly, the tuples are returned in a bitmap which doesn't
    have any specific ordering, which is why <function>amgetbitmap</> doesn't
-   take a <literal>direction</> argument.  Finally, <function>amgetbitmap</>
+   take a <literal>direction</> argument.  (Ordering operators will never be
+   supplied for such a scan, either.)  Finally, <function>amgetbitmap</>
    does not guarantee any locking of the returned tuples, with implications
    spelled out in <xref linkend="index-locking">.
   </para>
