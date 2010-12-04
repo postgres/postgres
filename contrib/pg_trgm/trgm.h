@@ -4,12 +4,10 @@
 #ifndef __TRGM_H__
 #define __TRGM_H__
 
-#include "postgres.h"
-
 #include "access/gist.h"
 #include "access/itup.h"
-#include "utils/builtins.h"
 #include "storage/bufpage.h"
+#include "utils/builtins.h"
 
 /* options */
 #define LPADDING		2
@@ -17,6 +15,10 @@
 #define KEEPONLYALNUM
 #define IGNORECASE
 #define DIVUNION
+
+/* operator strategy numbers */
+#define	SimilarityStrategyNumber	1
+#define	DistanceStrategyNumber		2
 
 
 typedef char trgm[3];
@@ -89,4 +91,4 @@ extern float4 trgm_limit;
 TRGM	   *generate_trgm(char *str, int slen);
 float4		cnt_sml(TRGM *trg1, TRGM *trg2);
 
-#endif
+#endif /* __TRGM_H__ */

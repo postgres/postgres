@@ -26,7 +26,7 @@ LANGUAGE C STRICT IMMUTABLE;
 CREATE OR REPLACE FUNCTION similarity_op(text,text)
 RETURNS bool
 AS 'MODULE_PATHNAME'
-LANGUAGE C STRICT STABLE;
+LANGUAGE C STRICT STABLE;  -- stable because depends on trgm_limit
 
 CREATE OPERATOR % (
         LEFTARG = text,
@@ -35,6 +35,18 @@ CREATE OPERATOR % (
         COMMUTATOR = '%',
         RESTRICT = contsel,
         JOIN = contjoinsel
+);
+
+CREATE OR REPLACE FUNCTION similarity_dist(text,text)
+RETURNS float4
+AS 'MODULE_PATHNAME'
+LANGUAGE C STRICT IMMUTABLE;
+
+CREATE OPERATOR <-> (
+        LEFTARG = text,
+        RIGHTARG = text,
+        PROCEDURE = similarity_dist,
+        COMMUTATOR = '<->'
 );
 
 -- gist key
@@ -57,6 +69,11 @@ CREATE TYPE gtrgm (
 -- support functions for gist
 CREATE OR REPLACE FUNCTION gtrgm_consistent(internal,text,int,oid,internal)
 RETURNS bool
+AS 'MODULE_PATHNAME'
+LANGUAGE C IMMUTABLE STRICT;
+
+CREATE OR REPLACE FUNCTION gtrgm_distance(internal,text,int,oid)
+RETURNS float8
 AS 'MODULE_PATHNAME'
 LANGUAGE C IMMUTABLE STRICT;
 
@@ -95,6 +112,7 @@ CREATE OPERATOR CLASS gist_trgm_ops
 FOR TYPE text USING gist
 AS
         OPERATOR        1       % (text, text),
+        OPERATOR        2       <-> (text, text) FOR ORDER BY pg_catalog.float_ops,
         FUNCTION        1       gtrgm_consistent (internal, text, int, oid, internal),
         FUNCTION        2       gtrgm_union (bytea, internal),
         FUNCTION        3       gtrgm_compress (internal),
@@ -102,6 +120,7 @@ AS
         FUNCTION        5       gtrgm_penalty (internal, internal, internal),
         FUNCTION        6       gtrgm_picksplit (internal, internal),
         FUNCTION        7       gtrgm_same (gtrgm, gtrgm, internal),
+        FUNCTION        8       gtrgm_distance (internal, text, int, oid),
         STORAGE         gtrgm;
 
 -- support functions for gin

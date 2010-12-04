@@ -19,6 +19,8 @@ DROP FUNCTION gtrgm_compress(internal);
 
 DROP FUNCTION gtrgm_consistent(internal,text,int,oid,internal);
 
+DROP FUNCTION gtrgm_distance(internal,text,int,oid);
+
 DROP TYPE gtrgm CASCADE;
 
 DROP OPERATOR CLASS gin_trgm_ops USING gin;
@@ -32,6 +34,10 @@ DROP FUNCTION gin_trgm_consistent(internal, int2, text, int4, internal, internal
 DROP OPERATOR % (text, text);
 
 DROP FUNCTION similarity_op(text,text);
+
+DROP OPERATOR <-> (text, text);
+
+DROP FUNCTION similarity_dist(text,text);
 
 DROP FUNCTION similarity(text,text);
 

@@ -1,11 +1,16 @@
 /*
  * contrib/pg_trgm/trgm_op.c
  */
-#include "trgm.h"
+#include "postgres.h"
+
 #include <ctype.h>
-#include "utils/array.h"
+
+#include "trgm.h"
+
 #include "catalog/pg_type.h"
 #include "tsearch/ts_locale.h"
+#include "utils/array.h"
+
 
 PG_MODULE_MAGIC;
 
@@ -359,16 +364,25 @@ similarity(PG_FUNCTION_ARGS)
 	PG_RETURN_FLOAT4(res);
 }
 
+PG_FUNCTION_INFO_V1(similarity_dist);
+Datum		similarity_dist(PG_FUNCTION_ARGS);
+Datum
+similarity_dist(PG_FUNCTION_ARGS)
+{
+	float4		res = DatumGetFloat4(DirectFunctionCall2(similarity,
+														 PG_GETARG_DATUM(0),
+														 PG_GETARG_DATUM(1)));
+	PG_RETURN_FLOAT4(1.0 - res);
+}
+
 PG_FUNCTION_INFO_V1(similarity_op);
 Datum		similarity_op(PG_FUNCTION_ARGS);
 Datum
 similarity_op(PG_FUNCTION_ARGS)
 {
-	float4		res = DatumGetFloat4(DirectFunctionCall2(
-														 similarity,
+	float4		res = DatumGetFloat4(DirectFunctionCall2(similarity,
 														 PG_GETARG_DATUM(0),
-														 PG_GETARG_DATUM(1)
-														 ));
+														 PG_GETARG_DATUM(1)));
 
 	PG_RETURN_BOOL(res >= trgm_limit);
 }

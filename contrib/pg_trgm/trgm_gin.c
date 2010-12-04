@@ -1,6 +1,8 @@
 /*
  * contrib/pg_trgm/trgm_gin.c
  */
+#include "postgres.h"
+
 #include "trgm.h"
 
 #include "access/gin.h"
@@ -9,6 +11,7 @@
 #include "storage/bufpage.h"
 #include "utils/array.h"
 #include "utils/builtins.h"
+
 
 PG_FUNCTION_INFO_V1(gin_extract_trgm);
 Datum		gin_extract_trgm(PG_FUNCTION_ARGS);

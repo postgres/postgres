@@ -117,6 +117,14 @@
        <function>set_limit</>.
       </entry>
      </row>
+     <row>
+      <entry><type>text</> <literal>&lt;-&gt;</literal> <type>text</></entry>
+      <entry><type>real</type></entry>
+      <entry>
+       Returns the <quote>distance</> between the arguments, that is
+       one minus the <function>similarity()</> value.
+      </entry>
+     </row>
     </tbody>
    </tgroup>
   </table>
@@ -129,7 +137,7 @@
    The <filename>pg_trgm</filename> module provides GiST and GIN index
    operator classes that allow you to create an index over a text column for
    the purpose of very fast similarity searches.  These index types support
-   the <literal>%</> similarity operator (and no other operators, so you may
+   the above-described similarity operators (and no other operators, so you may
    want a regular B-tree index too).
   </para>
 
@@ -159,6 +167,18 @@ SELECT t, similarity(t, '<replaceable>word</>') AS sml
    similar to <replaceable>word</>, sorted from best match to worst.  The
    index will be used to make this a fast operation even over very large data
    sets.
+  </para>
+
+  <para>
+   A variant of the above query is
+<programlisting>
+SELECT t, t &lt;-&gt; '<replaceable>word</>' AS dist
+  FROM test_trgm
+  ORDER BY dist LIMIT 10;
+</programlisting>
+   This can be implemented quite efficiently by GiST indexes, but not
+   by GIN indexes.  It will usually beat the first formulation when only
+   a small number of the closest matches is wanted.
   </para>
 
   <para>
