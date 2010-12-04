@@ -459,7 +459,11 @@ Datum
 gistgettuple(PG_FUNCTION_ARGS)
 {
 	IndexScanDesc scan = (IndexScanDesc) PG_GETARG_POINTER(0);
+	ScanDirection dir = (ScanDirection) PG_GETARG_INT32(1);
 	GISTScanOpaque so = (GISTScanOpaque) scan->opaque;
+
+	if (dir != ForwardScanDirection)
+		elog(ERROR, "GiST only supports forward scan direction");
 
 	if (!so->qual_ok)
 		PG_RETURN_BOOL(false);
