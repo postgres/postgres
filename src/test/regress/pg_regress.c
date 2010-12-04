@@ -1674,7 +1674,7 @@ run_single_test(const char *test, test_function tfunc)
 			   *tl;
 	bool		differ = false;
 
-	status(_("test %-20s ... "), test);
+	status(_("test %-24s ... "), test);
 	pid = (tfunc) (test, &resultfiles, &expectfiles, &tags);
 	wait_for_tests(&pid, &exit_status, NULL, 1);
 
