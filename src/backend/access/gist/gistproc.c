@@ -904,6 +904,76 @@ gist_point_compress(PG_FUNCTION_ARGS)
 	PG_RETURN_POINTER(entry);
 }
 
+#define	point_point_distance(p1,p2)	\
+	DatumGetFloat8(DirectFunctionCall2(point_distance, \
+									   PointPGetDatum(p1), PointPGetDatum(p2)))
+
+static double
+computeDistance(bool isLeaf, BOX *box, Point *point)
+{
+	double		result = 0.0;
+
+	if (isLeaf)
+	{
+		/* simple point to point distance */
+		result = point_point_distance(point, &box->low);
+	}
+	else if (point->x <= box->high.x && point->x >= box->low.x &&
+			 point->y <= box->high.y && point->y >= box->low.y)
+	{
+		/* point inside the box */
+		result = 0.0;
+	}
+	else if (point->x <= box->high.x && point->x >= box->low.x)
+	{
+		/* point is over or below box */
+		Assert(box->low.y <= box->high.y);
+		if (point->y > box->high.y)
+			result = point->y - box->high.y;
+		else if (point->y < box->low.y)
+			result = box->low.y - point->y;
+		else
+			elog(ERROR, "inconsistent point values");
+	}
+	else if (point->y <= box->high.y && point->y >= box->low.y)
+	{
+		/* point is to left or right of box */
+		Assert(box->low.x <= box->high.x);
+		if (point->x > box->high.x)
+			result = point->x - box->high.x;
+		else if (point->x < box->low.x)
+			result = box->low.x - point->x;
+		else
+			elog(ERROR, "inconsistent point values");
+	}
+	else
+	{
+		/* closest point will be a vertex */
+		Point	p;
+		double	subresult;
+
+		result = point_point_distance(point, &box->low);
+
+		subresult = point_point_distance(point, &box->high);
+		if (result > subresult)
+			result = subresult;
+
+		p.x = box->low.x;
+		p.y = box->high.y;
+		subresult = point_point_distance(point, &p);
+		if (result > subresult)
+			result = subresult;
+
+		p.x = box->high.x;
+		p.y = box->low.y;
+		subresult = point_point_distance(point, &p);
+		if (result > subresult)
+			result = subresult;
+	}
+
+	return result;
+}
+
 static bool
 gist_point_consistent_internal(StrategyNumber strategy,
 							   bool isLeaf, BOX *key, Point *query)
@@ -954,8 +1024,8 @@ gist_point_consistent(PG_FUNCTION_ARGS)
 {
 	GISTENTRY  *entry = (GISTENTRY *) PG_GETARG_POINTER(0);
 	StrategyNumber strategy = (StrategyNumber) PG_GETARG_UINT16(2);
-	bool		result;
 	bool	   *recheck = (bool *) PG_GETARG_POINTER(4);
+	bool		result;
 	StrategyNumber strategyGroup = strategy / GeoStrategyNumberOffset;
 
 	switch (strategyGroup)
@@ -1034,9 +1104,32 @@ gist_point_consistent(PG_FUNCTION_ARGS)
 			}
 			break;
 		default:
-			result = false;		/* silence compiler warning */
 			elog(ERROR, "unknown strategy number: %d", strategy);
+			result = false;		/* keep compiler quiet */
 	}
 
 	PG_RETURN_BOOL(result);
+}
+
+Datum
+gist_point_distance(PG_FUNCTION_ARGS)
+{
+	GISTENTRY  *entry = (GISTENTRY *) PG_GETARG_POINTER(0);
+	StrategyNumber strategy = (StrategyNumber) PG_GETARG_UINT16(2);
+	double		distance;
+	StrategyNumber strategyGroup = strategy / GeoStrategyNumberOffset;
+
+	switch (strategyGroup)
+	{
+		case PointStrategyNumberGroup:
+			distance = computeDistance(GIST_LEAF(entry),
+									   DatumGetBoxP(entry->key),
+									   PG_GETARG_POINT_P(1));
+			break;
+		default:
+			elog(ERROR, "unknown strategy number: %d", strategy);
+			distance = 0.0;		/* keep compiler quiet */
+	}
+
+	PG_RETURN_FLOAT8(distance);
 }

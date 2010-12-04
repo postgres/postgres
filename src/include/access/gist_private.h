@@ -17,34 +17,19 @@
 #include "access/gist.h"
 #include "access/itup.h"
 #include "storage/bufmgr.h"
+#include "utils/rbtree.h"
 
-#define GIST_UNLOCK BUFFER_LOCK_UNLOCK
+/* Buffer lock modes */
 #define GIST_SHARE	BUFFER_LOCK_SHARE
 #define GIST_EXCLUSIVE	BUFFER_LOCK_EXCLUSIVE
-
+#define GIST_UNLOCK BUFFER_LOCK_UNLOCK
 
 /*
- * XXX old comment!!!
- * When we descend a tree, we keep a stack of parent pointers. This
- * allows us to follow a chain of internal node points until we reach
- * a leaf node, and then back up the stack to re-examine the internal
- * nodes.
+ * GISTSTATE: information needed for any GiST index operation
  *
- * 'parent' is the previous stack entry -- i.e. the node we arrived
- * from. 'block' is the node's block number. 'offset' is the offset in
- * the node's page that we stopped at (i.e. we followed the child
- * pointer located at the specified offset).
+ * This struct retains call info for the index's opclass-specific support
+ * functions (per index column), plus the index's tuple descriptor.
  */
-typedef struct GISTSearchStack
-{
-	struct GISTSearchStack *next;
-	BlockNumber block;
-	/* to identify page changed */
-	GistNSN		lsn;
-	/* to recognize split occured */
-	GistNSN		parentlsn;
-} GISTSearchStack;
-
 typedef struct GISTSTATE
 {
 	FmgrInfo	consistentFn[INDEX_MAX_KEYS];
@@ -54,37 +39,95 @@ typedef struct GISTSTATE
 	FmgrInfo	penaltyFn[INDEX_MAX_KEYS];
 	FmgrInfo	picksplitFn[INDEX_MAX_KEYS];
 	FmgrInfo	equalFn[INDEX_MAX_KEYS];
+	FmgrInfo	distanceFn[INDEX_MAX_KEYS];
 
 	TupleDesc	tupdesc;
 } GISTSTATE;
 
-typedef struct ItemResult
-{
-	ItemPointerData heapPtr;
-	OffsetNumber pageOffset;	/* offset in index page */
-	bool		recheck;
-} ItemResult;
 
 /*
- *	When we're doing a scan, we need to keep track of the parent stack
- *	for the marked and current items.
+ * During a GiST index search, we must maintain a queue of unvisited items,
+ * which can be either individual heap tuples or whole index pages.  If it
+ * is an ordered search, the unvisited items should be visited in distance
+ * order.  Unvisited items at the same distance should be visited in
+ * depth-first order, that is heap items first, then lower index pages, then
+ * upper index pages; this rule avoids doing extra work during a search that
+ * ends early due to LIMIT.
+ *
+ * To perform an ordered search, we use an RBTree to manage the distance-order
+ * queue.  Each GISTSearchTreeItem stores all unvisited items of the same
+ * distance; they are GISTSearchItems chained together via their next fields.
+ *
+ * In a non-ordered search (no order-by operators), the RBTree degenerates
+ * to a single item, which we use as a queue of unvisited index pages only.
+ * In this case matched heap items from the current index leaf page are
+ * remembered in GISTScanOpaqueData.pageData[] and returned directly from
+ * there, instead of building a separate GISTSearchItem for each one.
+ */
+
+/* Individual heap tuple to be visited */
+typedef struct GISTSearchHeapItem
+{
+	ItemPointerData heapPtr;
+	bool		recheck;		/* T if quals must be rechecked */
+} GISTSearchHeapItem;
+
+/* Unvisited item, either index page or heap tuple */
+typedef struct GISTSearchItem
+{
+	struct GISTSearchItem *next;	/* list link */
+	BlockNumber blkno;			/* index page number, or InvalidBlockNumber */
+	union
+	{
+		GistNSN		parentlsn;		/* parent page's LSN, if index page */
+		/* we must store parentlsn to detect whether a split occurred */
+		GISTSearchHeapItem heap;	/* heap info, if heap tuple */
+	}			data;
+}	GISTSearchItem;
+
+#define GISTSearchItemIsHeap(item)  ((item).blkno == InvalidBlockNumber)
+
+/*
+ * Within a GISTSearchTreeItem's chain, heap items always appear before
+ * index-page items, since we want to visit heap items first.  lastHeap points
+ * to the last heap item in the chain, or is NULL if there are none.
+ */
+typedef struct GISTSearchTreeItem
+{
+	RBNode		rbnode;			/* this is an RBTree item */
+	GISTSearchItem *head;		/* first chain member */
+	GISTSearchItem *lastHeap;	/* last heap-tuple member, if any */
+	double		distances[1];	/* array with numberOfOrderBys entries */
+} GISTSearchTreeItem;
+
+#define GSTIHDRSZ offsetof(GISTSearchTreeItem, distances)
+
+/*
+ * GISTScanOpaqueData: private state for a scan of a GiST index
  */
 typedef struct GISTScanOpaqueData
 {
-	GISTSearchStack *stack;
-	GISTSearchStack *markstk;
+	GISTSTATE  *giststate;		/* index information, see above */
+	RBTree	   *queue;			/* queue of unvisited items */
+	MemoryContext queueCxt;		/* context holding the queue */
+	MemoryContext tempCxt;		/* workspace context for calling functions */
 	bool		qual_ok;		/* false if qual can never be satisfied */
-	GISTSTATE  *giststate;
-	MemoryContext tempCxt;
-	Buffer		curbuf;
-	ItemPointerData curpos;
+	bool		firstCall;		/* true until first gistgettuple call */
 
-	ItemResult	pageData[BLCKSZ / sizeof(IndexTupleData)];
-	OffsetNumber nPageData;
-	OffsetNumber curPageData;
+	GISTSearchTreeItem *curTreeItem;	/* current queue item, if any */
+
+	/* pre-allocated workspace arrays */
+	GISTSearchTreeItem *tmpTreeItem;	/* workspace to pass to rb_insert */
+	double	   *distances;		/* workspace for computeKeyTupleDistance */
+
+	/* In a non-ordered search, returnable heap items are stored here: */
+	GISTSearchHeapItem pageData[BLCKSZ / sizeof(IndexTupleData)];
+	OffsetNumber nPageData;		/* number of valid items in array */
+	OffsetNumber curPageData;	/* next item to return */
 } GISTScanOpaqueData;
 
 typedef GISTScanOpaqueData *GISTScanOpaque;
+
 
 /* XLog stuff */
 

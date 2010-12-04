@@ -32,7 +32,8 @@
 #define GIST_PENALTY_PROC				5
 #define GIST_PICKSPLIT_PROC				6
 #define GIST_EQUAL_PROC					7
-#define GISTNProcs						7
+#define GIST_DISTANCE_PROC				8
+#define GISTNProcs						8
 
 /*
  * strategy numbers for GiST opclasses that want to implement the old
@@ -52,6 +53,7 @@
 #define RTOverAboveStrategyNumber		12
 #define RTOldContainsStrategyNumber		13		/* for old spelling of @> */
 #define RTOldContainedByStrategyNumber	14		/* for old spelling of <@ */
+#define RTKNNSearchStrategyNumber 		15
 
 /*
  * Page opaque data in a GiST index page.
@@ -131,13 +133,13 @@ typedef struct GISTENTRY
 #define GistClearTuplesDeleted(page)	( GistPageGetOpaque(page)->flags &= ~F_TUPLES_DELETED)
 
 /*
- * Vector of GISTENTRY structs; user-defined methods union and pick
- * split takes it as one of their arguments
+ * Vector of GISTENTRY structs; user-defined methods union and picksplit
+ * take it as one of their arguments
  */
 typedef struct
 {
 	int32		n;				/* number of elements */
-	GISTENTRY	vector[1];
+	GISTENTRY	vector[1];		/* variable-length array */
 } GistEntryVector;
 
 #define GEVHDRSZ	(offsetof(GistEntryVector, vector))

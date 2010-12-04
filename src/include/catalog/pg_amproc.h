@@ -205,6 +205,7 @@ DATA(insert (	1029   600 600 4 2580 ));
 DATA(insert (	1029   600 600 5 2581 ));
 DATA(insert (	1029   600 600 6 2582 ));
 DATA(insert (	1029   600 600 7 2584 ));
+DATA(insert (	1029   600 600 8 3064 ));
 
 
 /* gin */

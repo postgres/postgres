@@ -1030,6 +1030,9 @@ gistnewroot(Relation r, Buffer buffer, IndexTuple *itup, int len, ItemPointer ke
 	END_CRIT_SECTION();
 }
 
+/*
+ * Fill a GISTSTATE with information about the index
+ */
 void
 initGISTstate(GISTSTATE *giststate, Relation index)
 {
@@ -1064,6 +1067,13 @@ initGISTstate(GISTSTATE *giststate, Relation index)
 		fmgr_info_copy(&(giststate->equalFn[i]),
 					   index_getprocinfo(index, i + 1, GIST_EQUAL_PROC),
 					   CurrentMemoryContext);
+		/* opclasses are not required to provide a Distance method */
+		if (OidIsValid(index_getprocid(index, i + 1, GIST_DISTANCE_PROC)))
+			fmgr_info_copy(&(giststate->distanceFn[i]),
+						   index_getprocinfo(index, i + 1, GIST_DISTANCE_PROC),
+						   CurrentMemoryContext);
+		else
+			giststate->distanceFn[i].fn_oid = InvalidOid;
 	}
 }
 
