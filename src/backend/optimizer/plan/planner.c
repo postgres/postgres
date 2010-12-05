@@ -41,6 +41,7 @@
 #include "parser/parse_oper.h"
 #include "parser/parsetree.h"
 #include "utils/lsyscache.h"
+#include "utils/memutils.h"
 #include "utils/syscache.h"
 
 
@@ -741,19 +742,52 @@ inheritance_planner(PlannerInfo *root)
 	List	   *rowMarks;
 	List	   *tlist;
 	PlannerInfo subroot;
+	MemoryContext childcxt;
 	ListCell   *l;
+
+	/*
+	 * Memory management here is a bit messy, because the planning process can
+	 * scribble on both the query parsetree and the rangetable.  We need to
+	 * ensure that each call of grouping_planner gets an un-scribbled-on copy
+	 * to start with, so we start by copying the given query tree each time
+	 * (as a byproduct of adjust_appendrel_attrs).  However, we also want to
+	 * make sure that the modified rangetable ultimately gets propagated back
+	 * to the master copy, to pick up any changes of the Query structures
+	 * inside subquery RTEs.  We do that by copying back the rangetable from
+	 * the first successful child planning step.  (We are effectively assuming
+	 * that sub-Queries will get planned identically each time, or at least
+	 * that the impacts on their rangetables will be the same each time.)
+	 *
+	 * Another consideration is that when there are a lot of child tables, we
+	 * can eat a lot of memory this way.  To fix that, we create a child
+	 * memory context that can be reset between steps to recover memory, at
+	 * the cost of having to copy the completed plan trees out to the parent
+	 * context.
+	 */
+	childcxt = AllocSetContextCreate(CurrentMemoryContext,
+									 "Inheritance child planning context",
+									 ALLOCSET_DEFAULT_MINSIZE,
+									 ALLOCSET_DEFAULT_INITSIZE,
+									 ALLOCSET_DEFAULT_MAXSIZE);
 
 	foreach(l, root->append_rel_list)
 	{
 		AppendRelInfo *appinfo = (AppendRelInfo *) lfirst(l);
 		Plan	   *subplan;
+		MemoryContext oldcxt;
 
 		/* append_rel_list contains all append rels; ignore others */
 		if (appinfo->parent_relid != parentRTindex)
 			continue;
 
 		/*
-		 * Generate modified query with this rel as target.
+		 * Discard any cruft generated in previous loop iterations.
+		 */
+		MemoryContextReset(childcxt);
+		oldcxt = MemoryContextSwitchTo(childcxt);
+
+		/*
+		 * Generate modified query (in childcxt) with this rel as target.
 		 */
 		memcpy(&subroot, root, sizeof(PlannerInfo));
 		subroot.parse = (Query *)
@@ -767,8 +801,10 @@ inheritance_planner(PlannerInfo *root)
 		/* and we haven't created PlaceHolderInfos, either */
 		Assert(subroot.placeholder_list == NIL);
 
-		/* Generate plan */
+		/* Generate plan (also in childcxt) */
 		subplan = grouping_planner(&subroot, 0.0 /* retrieve all tuples */ );
+
+		MemoryContextSwitchTo(oldcxt);
 
 		/*
 		 * If this child rel was excluded by constraint exclusion, exclude it
@@ -777,14 +813,20 @@ inheritance_planner(PlannerInfo *root)
 		if (is_dummy_plan(subplan))
 			continue;
 
-		/* Save rtable from first rel for use below */
+		/*
+		 * Be sure to copy what we need out of the child context.
+		 */
+		subplan = copyObject(subplan);
+
+		/* Save rtable from first child to install in parent after the loop */
 		if (subplans == NIL)
-			rtable = subroot.parse->rtable;
+			rtable = copyObject(subroot.parse->rtable);
 
 		subplans = lappend(subplans, subplan);
 
 		/* Make sure any initplans from this rel get into the outer list */
-		root->init_plans = list_concat(root->init_plans, subroot.init_plans);
+		root->init_plans = list_concat(root->init_plans,
+									   copyObject(subroot.init_plans));
 
 		/* Build target-relations list for the executor */
 		resultRelations = lappend_int(resultRelations, appinfo->child_relid);
@@ -794,13 +836,17 @@ inheritance_planner(PlannerInfo *root)
 		{
 			List	   *rlist;
 
+			rlist = copyObject(subroot.parse->returningList);
 			rlist = set_returning_clause_references(root->glob,
-												subroot.parse->returningList,
+													rlist,
 													subplan,
 													appinfo->child_relid);
 			returningLists = lappend(returningLists, rlist);
 		}
 	}
+
+	/* Done with child context */
+	MemoryContextDelete(childcxt);
 
 	root->resultRelations = resultRelations;
 
@@ -824,15 +870,7 @@ inheritance_planner(PlannerInfo *root)
 	}
 
 	/*
-	 * Planning might have modified the rangetable, due to changes of the
-	 * Query structures inside subquery RTEs.  We have to ensure that this
-	 * gets propagated back to the master copy.  But can't do this until we
-	 * are done planning, because all the calls to grouping_planner need
-	 * virgin sub-Queries to work from.  (We are effectively assuming that
-	 * sub-Queries will get planned identically each time, or at least that
-	 * the impacts on their rangetables will be the same each time.)
-	 *
-	 * XXX should clean this up someday
+	 * Install modified rangetable from first child into parent parsetree.
 	 */
 	parse->rtable = rtable;
 
