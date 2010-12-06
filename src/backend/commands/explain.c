@@ -1469,7 +1469,7 @@ show_sort_info(SortState *sortstate, ExplainState *es)
 		if (es->format == EXPLAIN_FORMAT_TEXT)
 		{
 			appendStringInfoSpaces(es->str, es->indent * 2);
-			appendStringInfo(es->str, "Sort Method:  %s  %s: %ldkB\n",
+			appendStringInfo(es->str, "Sort Method: %s  %s: %ldkB\n",
 							 sortMethod, spaceType, spaceUsed);
 		}
 		else
