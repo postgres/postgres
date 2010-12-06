@@ -141,6 +141,11 @@ typedef struct CopyStateData
 	 */
 	StringInfoData attribute_buf;
 
+	/* field raw data pointers found by COPY FROM */
+
+	int max_fields;
+	char ** raw_fields;
+
 	/*
 	 * Similarly, line_buf holds the whole input line being processed. The
 	 * input cycle is first to read the whole line into line_buf, convert it
@@ -250,10 +255,8 @@ static void CopyOneRowTo(CopyState cstate, Oid tupleOid,
 static void CopyFrom(CopyState cstate);
 static bool CopyReadLine(CopyState cstate);
 static bool CopyReadLineText(CopyState cstate);
-static int CopyReadAttributesText(CopyState cstate, int maxfields,
-					   char **fieldvals);
-static int CopyReadAttributesCSV(CopyState cstate, int maxfields,
-					  char **fieldvals);
+static int CopyReadAttributesText(CopyState cstate);
+static int CopyReadAttributesCSV(CopyState cstate);
 static Datum CopyReadBinaryAttribute(CopyState cstate,
 						int column_no, FmgrInfo *flinfo,
 						Oid typioparam, int32 typmod,
@@ -1921,7 +1924,11 @@ CopyFrom(CopyState cstate)
 
 	/* create workspace for CopyReadAttributes results */
 	nfields = file_has_oids ? (attr_count + 1) : attr_count;
-	field_strings = (char **) palloc(nfields * sizeof(char *));
+	if (! cstate->binary)
+	{
+		cstate->max_fields = nfields;
+		cstate->raw_fields = (char **) palloc(nfields * sizeof(char *));
+	}
 
 	/* Initialize state variables */
 	cstate->fe_eof = false;
@@ -1985,10 +1992,18 @@ CopyFrom(CopyState cstate)
 
 			/* Parse the line into de-escaped field values */
 			if (cstate->csv_mode)
-				fldct = CopyReadAttributesCSV(cstate, nfields, field_strings);
+				fldct = CopyReadAttributesCSV(cstate);
 			else
-				fldct = CopyReadAttributesText(cstate, nfields, field_strings);
+				fldct = CopyReadAttributesText(cstate);
+
+			/* check for overflowing fields */
+			if (nfields > 0 && fldct > nfields)
+				ereport(ERROR,
+						(errcode(ERRCODE_BAD_COPY_FILE_FORMAT),
+						 errmsg("extra data after last expected column")));
+
 			fieldno = 0;
+			field_strings = cstate->raw_fields;
 
 			/* Read the OID field if present */
 			if (file_has_oids)
@@ -2218,7 +2233,8 @@ CopyFrom(CopyState cstate)
 
 	pfree(values);
 	pfree(nulls);
-	pfree(field_strings);
+	if (! cstate->binary)
+		pfree(cstate->raw_fields);
 
 	pfree(in_functions);
 	pfree(typioparams);
@@ -2717,21 +2733,22 @@ GetDecimalFromHex(char hex)
  * performing de-escaping as needed.
  *
  * The input is in line_buf.  We use attribute_buf to hold the result
- * strings.  fieldvals[k] is set to point to the k'th attribute string,
- * or NULL when the input matches the null marker string.  (Note that the
- * caller cannot check for nulls since the returned string would be the
- * post-de-escaping equivalent, which may look the same as some valid data
- * string.)
+ * strings.  cstate->raw_fields[k] is set to point to the k'th attribute 
+ * string, or NULL when the input matches the null marker string.  
+ * This array is expanded as necessary.
+ *
+ * (Note that the caller cannot check for nulls since the returned 
+ * string would be the post-de-escaping equivalent, which may look 
+ * the same as some valid data string.)
  *
  * delim is the column delimiter string (must be just one byte for now).
  * null_print is the null marker string.  Note that this is compared to
  * the pre-de-escaped input string.
  *
- * The return value is the number of fields actually read.	(We error out
- * if this would exceed maxfields, which is the length of fieldvals[].)
+ * The return value is the number of fields actually read.
  */
 static int
-CopyReadAttributesText(CopyState cstate, int maxfields, char **fieldvals)
+CopyReadAttributesText(CopyState cstate)
 {
 	char		delimc = cstate->delim[0];
 	int			fieldno;
@@ -2743,7 +2760,7 @@ CopyReadAttributesText(CopyState cstate, int maxfields, char **fieldvals)
 	 * We need a special case for zero-column tables: check that the input
 	 * line is empty, and return.
 	 */
-	if (maxfields <= 0)
+	if (cstate->max_fields <= 0)
 	{
 		if (cstate->line_buf.len != 0)
 			ereport(ERROR,
@@ -2759,7 +2776,7 @@ CopyReadAttributesText(CopyState cstate, int maxfields, char **fieldvals)
 	 * data line, so we can just force attribute_buf to be large enough and
 	 * then transfer data without any checks for enough space.	We need to do
 	 * it this way because enlarging attribute_buf mid-stream would invalidate
-	 * pointers already stored into fieldvals[].
+	 * pointers already stored into cstate->raw_fields[].
 	 */
 	if (cstate->attribute_buf.maxlen <= cstate->line_buf.len)
 		enlargeStringInfo(&cstate->attribute_buf, cstate->line_buf.len);
@@ -2779,15 +2796,17 @@ CopyReadAttributesText(CopyState cstate, int maxfields, char **fieldvals)
 		int			input_len;
 		bool		saw_non_ascii = false;
 
-		/* Make sure space remains in fieldvals[] */
-		if (fieldno >= maxfields)
-			ereport(ERROR,
-					(errcode(ERRCODE_BAD_COPY_FILE_FORMAT),
-					 errmsg("extra data after last expected column")));
+		/* Make sure there is enough space for the next value */
+		if (fieldno >= cstate->max_fields)
+		{
+			cstate->max_fields *= 2;
+			cstate->raw_fields = 
+				repalloc(cstate->raw_fields, cstate->max_fields*sizeof(char *));
+		}
 
 		/* Remember start of field on both input and output sides */
 		start_ptr = cur_ptr;
-		fieldvals[fieldno] = output_ptr;
+		cstate->raw_fields[fieldno] = output_ptr;
 
 		/* Scan data for field */
 		for (;;)
@@ -2912,7 +2931,7 @@ CopyReadAttributesText(CopyState cstate, int maxfields, char **fieldvals)
 		 */
 		if (saw_non_ascii)
 		{
-			char	   *fld = fieldvals[fieldno];
+			char	   *fld = cstate->raw_fields[fieldno];
 
 			pg_verifymbstr(fld, output_ptr - (fld + 1), false);
 		}
@@ -2921,7 +2940,7 @@ CopyReadAttributesText(CopyState cstate, int maxfields, char **fieldvals)
 		input_len = end_ptr - start_ptr;
 		if (input_len == cstate->null_print_len &&
 			strncmp(start_ptr, cstate->null_print, input_len) == 0)
-			fieldvals[fieldno] = NULL;
+			cstate->raw_fields[fieldno] = NULL;
 
 		fieldno++;
 		/* Done if we hit EOL instead of a delim */
@@ -2944,7 +2963,7 @@ CopyReadAttributesText(CopyState cstate, int maxfields, char **fieldvals)
  * "standard" (i.e. common) CSV usage.
  */
 static int
-CopyReadAttributesCSV(CopyState cstate, int maxfields, char **fieldvals)
+CopyReadAttributesCSV(CopyState cstate)
 {
 	char		delimc = cstate->delim[0];
 	char		quotec = cstate->quote[0];
@@ -2958,7 +2977,7 @@ CopyReadAttributesCSV(CopyState cstate, int maxfields, char **fieldvals)
 	 * We need a special case for zero-column tables: check that the input
 	 * line is empty, and return.
 	 */
-	if (maxfields <= 0)
+	if (cstate->max_fields <= 0)
 	{
 		if (cstate->line_buf.len != 0)
 			ereport(ERROR,
@@ -2974,7 +2993,7 @@ CopyReadAttributesCSV(CopyState cstate, int maxfields, char **fieldvals)
 	 * data line, so we can just force attribute_buf to be large enough and
 	 * then transfer data without any checks for enough space.	We need to do
 	 * it this way because enlarging attribute_buf mid-stream would invalidate
-	 * pointers already stored into fieldvals[].
+	 * pointers already stored into cstate->raw_fields[].
 	 */
 	if (cstate->attribute_buf.maxlen <= cstate->line_buf.len)
 		enlargeStringInfo(&cstate->attribute_buf, cstate->line_buf.len);
@@ -2994,15 +3013,17 @@ CopyReadAttributesCSV(CopyState cstate, int maxfields, char **fieldvals)
 		char	   *end_ptr;
 		int			input_len;
 
-		/* Make sure space remains in fieldvals[] */
-		if (fieldno >= maxfields)
-			ereport(ERROR,
-					(errcode(ERRCODE_BAD_COPY_FILE_FORMAT),
-					 errmsg("extra data after last expected column")));
+		/* Make sure there is enough space for the next value */
+		if (fieldno >= cstate->max_fields)
+		{
+			cstate->max_fields *= 2;
+			cstate->raw_fields = 
+				repalloc(cstate->raw_fields, cstate->max_fields*sizeof(char *));
+		}
 
 		/* Remember start of field on both input and output sides */
 		start_ptr = cur_ptr;
-		fieldvals[fieldno] = output_ptr;
+		cstate->raw_fields[fieldno] = output_ptr;
 
 		/*
 		 * Scan data for field,
@@ -3090,7 +3111,7 @@ endfield:
 		input_len = end_ptr - start_ptr;
 		if (!saw_quote && input_len == cstate->null_print_len &&
 			strncmp(start_ptr, cstate->null_print, input_len) == 0)
-			fieldvals[fieldno] = NULL;
+			cstate->raw_fields[fieldno] = NULL;
 
 		fieldno++;
 		/* Done if we hit EOL instead of a delim */
