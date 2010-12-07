@@ -671,7 +671,7 @@ StandbyReleaseAllLocks(void)
 /*
  * StandbyReleaseOldLocks
  *		Release standby locks held by XIDs < removeXid, as long
- *		as their not prepared transactions.
+ *		as they're not prepared transactions.
  */
 void
 StandbyReleaseOldLocks(TransactionId removeXid)
@@ -848,14 +848,9 @@ LogStandbySnapshot(TransactionId *oldestActiveXid, TransactionId *nextXid)
 	 * record we write, because standby will open up when it sees this.
 	 */
 	running = GetRunningTransactionData();
-
-	/*
-	 * The gap between GetRunningTransactionData() and
-	 * LogCurrentRunningXacts() is what most of the fuss is about here, so
-	 * artifically extending this interval is a great way to test the little
-	 * used parts of the code.
-	 */
 	LogCurrentRunningXacts(running);
+	/* GetRunningTransactionData() acquired XidGenLock, we must release it */
+	LWLockRelease(XidGenLock);
 
 	*oldestActiveXid = running->oldestRunningXid;
 	*nextXid = running->nextXid;

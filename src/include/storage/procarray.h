@@ -28,7 +28,6 @@ extern void ProcArrayRemove(PGPROC *proc, TransactionId latestXid);
 extern void ProcArrayEndTransaction(PGPROC *proc, TransactionId latestXid);
 extern void ProcArrayClearTransaction(PGPROC *proc);
 
-extern void ProcArrayInitRecoveryInfo(TransactionId oldestActiveXid);
 extern void ProcArrayApplyRecoveryInfo(RunningTransactions running);
 extern void ProcArrayApplyXidAssignment(TransactionId topxid,
 							int nsubxids, TransactionId *subxids);

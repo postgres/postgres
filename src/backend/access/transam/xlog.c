@@ -5987,8 +5987,6 @@ StartupXLOG(void)
 			StartupSUBTRANS(oldestActiveXID);
 			StartupMultiXact();
 
-			ProcArrayInitRecoveryInfo(oldestActiveXID);
-
 			/*
 			 * If we're beginning at a shutdown checkpoint, we know that
 			 * nothing was running on the master at this point. So fake-up an
