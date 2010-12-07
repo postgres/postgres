@@ -22,6 +22,7 @@
 
 #include "postgres.h"
 
+#include "miscadmin.h"
 #include "nodes/plannodes.h"
 #include "nodes/relation.h"
 #include "utils/datum.h"
@@ -3013,6 +3014,9 @@ copyObject(void *from)
 
 	if (from == NULL)
 		return NULL;
+
+	/* Guard against stack overflow due to overly complex expressions */
+	check_stack_depth();
 
 	switch (nodeTag(from))
 	{
