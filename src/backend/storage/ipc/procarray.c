@@ -435,19 +435,6 @@ ProcArrayClearTransaction(PGPROC *proc)
 }
 
 /*
- * ProcArrayInitRecoveryInfo
- *
- * When trying to assemble our snapshot we only care about xids after this value.
- * See comments for LogStandbySnapshot().
- */
-void
-ProcArrayInitRecoveryInfo(TransactionId oldestActiveXid)
-{
-	latestObservedXid = oldestActiveXid;
-	TransactionIdRetreat(latestObservedXid);
-}
-
-/*
  * ProcArrayApplyRecoveryInfo -- apply recovery info about xids
  *
  * Takes us through 3 states: Initialized, Pending and Ready.
@@ -523,11 +510,9 @@ ProcArrayApplyRecoveryInfo(RunningTransactions running)
 	 */
 
 	/*
-	 * Remove all xids except xids later than the snapshot. We don't know
-	 * exactly which ones that is until precisely now, so that is why we allow
-	 * xids to be added only to remove most of them again here.
+	 * Release any locks belonging to old transactions that are not
+	 * running according to the running-xacts record.
 	 */
-	ExpireOldKnownAssignedTransactionIds(running->nextXid);
 	StandbyReleaseOldLocks(running->nextXid);
 
 	/*
@@ -536,9 +521,8 @@ ProcArrayApplyRecoveryInfo(RunningTransactions running)
 	LWLockAcquire(ProcArrayLock, LW_EXCLUSIVE);
 
 	/*
-	 * Combine the running xact data with already known xids, if any exist.
-	 * KnownAssignedXids is sorted so we cannot just add new xids, we have to
-	 * combine them first, sort them and then re-add to KnownAssignedXids.
+	 * KnownAssignedXids is sorted so we cannot just add the xids, we have to
+	 * sort them first.
 	 *
 	 * Some of the new xids are top-level xids and some are subtransactions.
 	 * We don't call SubtransSetParent because it doesn't matter yet. If we
@@ -547,51 +531,32 @@ ProcArrayApplyRecoveryInfo(RunningTransactions running)
 	 * xids to subtrans. If RunningXacts is overflowed then we don't have
 	 * enough information to correctly update subtrans anyway.
 	 */
+	Assert(procArray->numKnownAssignedXids == 0);
 
 	/*
-	 * Allocate a temporary array so we can combine xids. The total of both
-	 * arrays should never normally exceed TOTAL_MAX_CACHED_SUBXIDS.
+	 * Allocate a temporary array to avoid modifying the array passed as
+	 * argument.
 	 */
-	xids = palloc(sizeof(TransactionId) * TOTAL_MAX_CACHED_SUBXIDS);
+	xids = palloc(sizeof(TransactionId) * running->xcnt);
 
 	/*
-	 * Get the remaining KnownAssignedXids. In most cases there won't be any
-	 * at all since this exists only to catch a theoretical race condition.
+	 * Add to the temp array any xids which have not already completed.
 	 */
-	nxids = KnownAssignedXidsGet(xids, InvalidTransactionId);
-	if (nxids > 0)
-		KnownAssignedXidsDisplay(trace_recovery(DEBUG3));
-
-	/*
-	 * Now we have a copy of any KnownAssignedXids we can zero the array
-	 * before we re-insert combined snapshot.
-	 */
-	KnownAssignedXidsRemovePreceding(InvalidTransactionId);
-
-	/*
-	 * Add to the temp array any xids which have not already completed, taking
-	 * care not to overflow in extreme cases.
-	 */
+	nxids = 0;
 	for (i = 0; i < running->xcnt; i++)
 	{
 		TransactionId xid = running->xids[i];
 
 		/*
-		 * The running-xacts snapshot can contain xids that were running at
-		 * the time of the snapshot, yet complete before the snapshot was
-		 * written to WAL. They're running now, so ignore them.
+		 * The running-xacts snapshot can contain xids that were still visible
+		 * in the procarray when the snapshot was taken, but were already
+		 * WAL-logged as completed. They're not running anymore, so ignore
+		 * them.
 		 */
 		if (TransactionIdDidCommit(xid) || TransactionIdDidAbort(xid))
 			continue;
 
 		xids[nxids++] = xid;
-
-		/*
-		 * Test for overflow only after we have filtered out already complete
-		 * transactions.
-		 */
-		if (nxids > TOTAL_MAX_CACHED_SUBXIDS)
-			elog(ERROR, "too many xids to add into KnownAssignedXids");
 	}
 
 	if (nxids > 0)
@@ -603,19 +568,10 @@ ProcArrayApplyRecoveryInfo(RunningTransactions running)
 		qsort(xids, nxids, sizeof(TransactionId), xidComparator);
 
 		/*
-		 * Re-initialise latestObservedXid to the highest xid we've seen.
-		 */
-		latestObservedXid = xids[nxids - 1];
-
-		/*
 		 * Add the sorted snapshot into KnownAssignedXids
 		 */
 		for (i = 0; i < nxids; i++)
-		{
-			TransactionId xid = xids[i];
-
-			KnownAssignedXidsAdd(xid, xid, true);
-		}
+			KnownAssignedXidsAdd(xids[i], xids[i], true);
 
 		KnownAssignedXidsDisplay(trace_recovery(DEBUG3));
 	}
@@ -623,52 +579,41 @@ ProcArrayApplyRecoveryInfo(RunningTransactions running)
 	pfree(xids);
 
 	/*
-	 * Now we've got the running xids we need to set the global values thare
-	 * used to track snapshots as they evolve further
+	 * Now we've got the running xids we need to set the global values that
+	 * are used to track snapshots as they evolve further.
 	 *
-	 * * latestCompletedXid which will be the xmax for snapshots *
-	 * lastOverflowedXid which shows whether snapshots overflow * nextXid
+	 * - latestCompletedXid which will be the xmax for snapshots
+	 * - lastOverflowedXid which shows whether snapshots overflow
+	 * - nextXid
 	 *
 	 * If the snapshot overflowed, then we still initialise with what we know,
 	 * but the recovery snapshot isn't fully valid yet because we know there
 	 * are some subxids missing. We don't know the specific subxids that are
 	 * missing, so conservatively assume the last one is latestObservedXid.
-	 * If no missing subxids, try to clear lastOverflowedXid.
-	 *
-	 * If the snapshot didn't overflow it's still possible that an overflow
-	 * occurred in the gap between taking snapshot and logging record, so we
-	 * also need to check if lastOverflowedXid is already ahead of us.
 	 */
+	latestObservedXid = running->nextXid;
+	TransactionIdRetreat(latestObservedXid);
+
 	if (running->subxid_overflow)
 	{
 		standbyState = STANDBY_SNAPSHOT_PENDING;
 
 		standbySnapshotPendingXmin = latestObservedXid;
-		if (TransactionIdFollows(latestObservedXid,
-								 procArray->lastOverflowedXid))
-			procArray->lastOverflowedXid = latestObservedXid;
-	}
-	else if (TransactionIdFollows(procArray->lastOverflowedXid,
-								  latestObservedXid))
-	{
-		standbyState = STANDBY_SNAPSHOT_PENDING;
-
-		standbySnapshotPendingXmin = procArray->lastOverflowedXid;
+		procArray->lastOverflowedXid = latestObservedXid;
 	}
 	else
 	{
 		standbyState = STANDBY_SNAPSHOT_READY;
 
 		standbySnapshotPendingXmin = InvalidTransactionId;
-		if (TransactionIdFollows(running->oldestRunningXid,
-								 procArray->lastOverflowedXid))
-			procArray->lastOverflowedXid = InvalidTransactionId;
+		procArray->lastOverflowedXid = InvalidTransactionId;
 	}
 
 	/*
-	 * If a transaction completed in the gap between taking and logging the
-	 * snapshot then latestCompletedXid may already be higher than the value
-	 * from the snapshot, so check before we use the incoming value.
+	 * If a transaction wrote a commit record in the gap between taking and
+	 * logging the snapshot then latestCompletedXid may already be higher
+	 * than the value from the snapshot, so check before we use the incoming
+	 * value.
 	 */
 	if (TransactionIdPrecedes(ShmemVariableCache->latestCompletedXid,
 							  running->latestCompletedXid))
@@ -1407,6 +1352,10 @@ GetSnapshotData(Snapshot snapshot)
  * Similar to GetSnapshotData but returns more information. We include
  * all PGPROCs with an assigned TransactionId, even VACUUM processes.
  *
+ * We acquire XidGenLock, but the caller is responsible for releasing it.
+ * This ensures that no new XIDs enter the proc array until the caller has
+ * WAL-logged this snapshot, and releases the lock.
+ *
  * The returned data structure is statically allocated; caller should not
  * modify it, and must not assume it is valid past the next call.
  *
@@ -1526,7 +1475,7 @@ GetRunningTransactionData(void)
 	CurrentRunningXacts->oldestRunningXid = oldestRunningXid;
 	CurrentRunningXacts->latestCompletedXid = latestCompletedXid;
 
-	LWLockRelease(XidGenLock);
+	/* We don't release XidGenLock here, the caller is responsible for that */
 	LWLockRelease(ProcArrayLock);
 
 	Assert(TransactionIdIsValid(CurrentRunningXacts->nextXid));
@@ -2337,10 +2286,8 @@ DisplayXidCache(void)
  *		unobserved XIDs.
  *
  * RecordKnownAssignedTransactionIds() should be run for *every* WAL record
- * type apart from XLOG_RUNNING_XACTS (since that initialises the first
- * snapshot so that RecordKnownAssignedTransactionIds() can be called). Must
- * be called for each record after we have executed StartupCLOG() et al,
- * since we must ExtendCLOG() etc..
+ * associated with a transaction. Must be called for each record after we
+ * have executed StartupCLOG() et al, since we must ExtendCLOG() etc..
  *
  * Called during recovery in analogy with and in place of GetNewTransactionId()
  */
@@ -2348,11 +2295,18 @@ void
 RecordKnownAssignedTransactionIds(TransactionId xid)
 {
 	Assert(standbyState >= STANDBY_INITIALIZED);
-	Assert(TransactionIdIsValid(latestObservedXid));
 	Assert(TransactionIdIsValid(xid));
 
 	elog(trace_recovery(DEBUG4), "record known xact %u latestObservedXid %u",
 		 xid, latestObservedXid);
+
+	/*
+	 * If the KnownAssignedXids machinery isn't up yet, do nothing.
+	 */
+	if (standbyState <= STANDBY_INITIALIZED)
+		return;
+
+	Assert(TransactionIdIsValid(latestObservedXid));
 
 	/*
 	 * When a newly observed xid arrives, it is frequently the case that it is
