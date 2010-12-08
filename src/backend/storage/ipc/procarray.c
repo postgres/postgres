@@ -1886,19 +1886,24 @@ CancelVirtualTransaction(VirtualTransactionId vxid, ProcSignalReason sigmode)
 }
 
 /*
- * CountActiveBackends --- count backends (other than myself) that are in
- *		active transactions.  This is used as a heuristic to decide if
+ * MinimumActiveBackends --- count backends (other than myself) that are
+ *		in active transactions.  Return true if the count exceeds the
+ *		minimum threshold passed.  This is used as a heuristic to decide if
  *		a pre-XLOG-flush delay is worthwhile during commit.
  *
  * Do not count backends that are blocked waiting for locks, since they are
  * not going to get to run until someone else commits.
  */
-int
-CountActiveBackends(void)
+bool
+MinimumActiveBackends(int min)
 {
 	ProcArrayStruct *arrayP = procArray;
 	int			count = 0;
 	int			index;
+
+	/* Quick short-circuit if no minimum is specified */
+	if (min == 0)
+		return true;
 
 	/*
 	 * Note: for speed, we don't acquire ProcArrayLock.  This is a little bit
@@ -1932,9 +1937,11 @@ CountActiveBackends(void)
 		if (proc->waitLock != NULL)
 			continue;			/* do not count if blocked on a lock */
 		count++;
+		if (count >= min)
+			break;
 	}
 
-	return count;
+	return count >= min;
 }
 
 /*

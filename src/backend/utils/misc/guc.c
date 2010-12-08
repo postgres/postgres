@@ -1816,7 +1816,7 @@ static struct config_int ConfigureNamesInt[] =
 			NULL
 		},
 		&CommitSiblings,
-		5, 1, 1000, NULL, NULL
+		5, 0, 1000, NULL, NULL
 	},
 
 	{

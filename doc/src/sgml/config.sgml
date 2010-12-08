@@ -1683,17 +1683,24 @@ SET ENABLE_SEQSCAN TO OFF;
       </indexterm>
       <listitem>
        <para>
-        Time delay between writing a commit record to the WAL buffer
-        and flushing the buffer out to disk, in microseconds. A
-        nonzero delay can allow multiple transactions to be committed
-        with only one <function>fsync()</function> system call, if
+        When the commit data for a transaction is flushed to disk, any
+        additional commits ready at that time are also flushed out.
+        <varname>commit_delay</varname> adds a time delay, set in
+        microseconds, before writing some commit records to the WAL
+        buffer and flushing the buffer out to disks. A nonzero delay
+        can allow more transactions to be committed with only one call
+        to the active <varname>wal_sync_method</varname>, if
         system load is high enough that additional transactions become
         ready to commit within the given interval. But the delay is
         just wasted if no other transactions become ready to
         commit. Therefore, the delay is only performed if at least
         <varname>commit_siblings</varname> other transactions are
         active at the instant that a server process has written its
-        commit record. The default is zero (no delay).
+        commit record. The default is zero (no delay).  Since
+        all pending commit data flushes are written at every flush
+        regardless of this setting, it is rare that adding delay to
+        that by increasing this parameter will actually improve commit
+        performance.
        </para>
       </listitem>
      </varlistentry>

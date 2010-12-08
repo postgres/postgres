@@ -1052,7 +1052,7 @@ RecordTransactionCommit(void)
 		 * fewer than CommitSiblings other backends with active transactions.
 		 */
 		if (CommitDelay > 0 && enableFsync &&
-			CountActiveBackends() >= CommitSiblings)
+			MinimumActiveBackends(CommitSiblings))
 			pg_usleep(CommitDelay);
 
 		XLogFlush(XactLastRecEnd);
