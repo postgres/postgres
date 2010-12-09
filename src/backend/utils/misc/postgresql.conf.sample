@@ -153,7 +153,7 @@
 #wal_sync_method = fsync		# the default is the first option 
 					# supported by the operating system:
 					#   open_datasync
-					#   fdatasync
+					#   fdatasync (default on Linux)
 					#   fsync
 					#   fsync_writethrough
 					#   open_sync
