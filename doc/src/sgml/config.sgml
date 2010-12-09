@@ -1460,18 +1460,19 @@ SET ENABLE_SEQSCAN TO OFF;
        <para>
         While turning off <varname>fsync</varname> is often a performance
         benefit, this can result in unrecoverable data corruption in
-        the event of an unexpected system shutdown or crash.  Thus it
-        is only advisable to turn off  <varname>fsync</varname> if
+        the event of a power failure or system crash.  Thus it
+        is only advisable to turn off <varname>fsync</varname> if
         you can easily recreate your entire database from external
         data.
        </para>
 
        <para>
         Examples of safe circumstances for turning off
-        <varname>fsync</varname> include the initial loading a new
+        <varname>fsync</varname> include the initial loading of a new
         database cluster from a backup file, using a database cluster
-        for processing statistics on an hourly basis which is then
-        recreated, or for a reporting read-only database clone which
+        for processing a batch of data after which the database
+        will be thrown away and recreated,
+        or for a read-only database clone which
         gets recreated frequently and is not used for failover.  High
         quality hardware alone is not a sufficient justification for
         turning off <varname>fsync</varname>.
@@ -1554,12 +1555,12 @@ SET ENABLE_SEQSCAN TO OFF;
         </listitem>
         <listitem>
         <para>
-         <literal>fsync_writethrough</> (call <function>fsync()</> at each commit, forcing write-through of any disk write cache)
+         <literal>fsync</> (call <function>fsync()</> at each commit)
         </para>
         </listitem>
         <listitem>
         <para>
-         <literal>fsync</> (call <function>fsync()</> at each commit)
+         <literal>fsync_writethrough</> (call <function>fsync()</> at each commit, forcing write-through of any disk write cache)
         </para>
         </listitem>
         <listitem>
@@ -1569,16 +1570,15 @@ SET ENABLE_SEQSCAN TO OFF;
         </listitem>
        </itemizedlist>
        <para>
-        Not all of these choices are available on all platforms.
         The <literal>open_</>* options also use <literal>O_DIRECT</> if available.
+        Not all of these choices are available on all platforms.
         The default is the first method in the above list that is supported
-        by the platform.  The default is not necessarily ideal; it might be
+        by the platform, except that <literal>fdatasync</> is the default on
+        Linux.  The default is not necessarily ideal; it might be
         necessary to change this setting or other aspects of your system
         configuration in order to create a crash-safe configuration or
         achieve optimal performance.
         These aspects are discussed in <xref linkend="wal-reliability">.
-        The utility <filename>src/tools/fsync</> in the PostgreSQL source tree
-        can do performance testing of various fsync methods.
         This parameter can only be set in the <filename>postgresql.conf</>
         file or on the server command line.
        </para>
@@ -1686,21 +1686,20 @@ SET ENABLE_SEQSCAN TO OFF;
         When the commit data for a transaction is flushed to disk, any
         additional commits ready at that time are also flushed out.
         <varname>commit_delay</varname> adds a time delay, set in
-        microseconds, before writing some commit records to the WAL
-        buffer and flushing the buffer out to disks. A nonzero delay
-        can allow more transactions to be committed with only one call
-        to the active <varname>wal_sync_method</varname>, if
+        microseconds, before a transaction attempts to
+        flush the WAL buffer out to disk.  A nonzero delay can allow more
+        transactions to be committed with only one flush operation, if
         system load is high enough that additional transactions become
         ready to commit within the given interval. But the delay is
         just wasted if no other transactions become ready to
         commit. Therefore, the delay is only performed if at least
         <varname>commit_siblings</varname> other transactions are
         active at the instant that a server process has written its
-        commit record. The default is zero (no delay).  Since
-        all pending commit data flushes are written at every flush
-        regardless of this setting, it is rare that adding delay to
-        that by increasing this parameter will actually improve commit
-        performance.
+        commit record.
+        The default <varname>commit_delay</> is zero (no delay).
+        Since all pending commit data will be written at every flush
+        regardless of this setting, it is rare that adding delay
+        by increasing this parameter will actually improve performance.
        </para>
       </listitem>
      </varlistentry>
