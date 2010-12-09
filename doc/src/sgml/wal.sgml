@@ -27,7 +27,7 @@
   </para>
 
   <para>
-   While forcing data periodically to the disk platters might seem like
+   While forcing data to the disk platters periodically might seem like
    a simple operation, it is not. Because disk drives are dramatically
    slower than main memory and CPUs, several layers of caching exist
    between the computer's main memory and the disk platters.
@@ -48,7 +48,7 @@
    some later time. Such caches can be a reliability hazard because the
    memory in the disk controller cache is volatile, and will lose its
    contents in a power failure.  Better controller cards have
-   <firstterm>battery-backed unit</> (<acronym>BBU</>) caches, meaning
+   <firstterm>battery-backup units</> (<acronym>BBU</>s), meaning
    the card has a battery that
    maintains power to the cache in case of system power loss.  After power
    is restored the data will be written to the disk drives.
@@ -57,54 +57,85 @@
   <para>
    And finally, most disk drives have caches. Some are write-through
    while some are write-back, and the same concerns about data loss
-   exist for write-back drive caches as exist for disk controller
+   exist for write-back drive caches as for disk controller
    caches.  Consumer-grade IDE and SATA drives are particularly likely
-   to have write-back caches that will not survive a power failure,
-   though <acronym>ATAPI-6</> introduced a drive cache flush command
-   (<command>FLUSH CACHE EXT</>) that some file systems use, e.g.
-   <acronym>ZFS</>, <acronym>ext4</>.  (The SCSI command
-   <command>SYNCHRONIZE CACHE</> has long been available.) Many
-   solid-state drives (SSD) also have volatile write-back caches, and
-   many do not honor cache flush commands by default.
+   to have write-back caches that will not survive a power failure.  Many
+   solid-state drives (SSD) also have volatile write-back caches.
   </para>
 
   <para>
-   To check write caching on <productname>Linux</> use
-   <command>hdparm -I</>;  it is enabled if there is a <literal>*</> next
-   to <literal>Write cache</>; <command>hdparm -W</> to turn off
-   write caching.  On <productname>FreeBSD</> use
-   <application>atacontrol</>.  (For SCSI disks use <ulink
-   url="http://sg.danny.cz/sg/sdparm.html"><application>sdparm</></ulink>
-   to turn off <literal>WCE</>.)  On <productname>Solaris</> the disk
-   write cache is controlled by <ulink
-   url="http://www.sun.com/bigadmin/content/submitted/format_utility.jsp"><literal>format
-   -e</></ulink>. (The Solaris <acronym>ZFS</> file system is safe with
-   disk write-cache enabled because it issues its own disk cache flush
-   commands.)  On <productname>Windows</> if <varname>wal_sync_method</>
-   is <literal>open_datasync</> (the default), write caching is disabled
-   by unchecking <literal>My Computer\Open\{select disk
-   drive}\Properties\Hardware\Properties\Policies\Enable write caching on
-   the disk</>.  Also on Windows, <literal>fsync</> and
-   <literal>fsync_writethrough</> never do write caching.  The
-   <literal>fsync_writethrough</> option can also be used to disable
-   write caching on <productname>MacOS X</>.
+   These caches can typically be disabled; however, the method for doing
+   this varies by operating system and drive type:
   </para>
 
+  <itemizedlist>
+    <listitem>
+      <para>
+        On <productname>Linux</>, IDE drives can be queried using
+        <command>hdparm -I</command>; write caching is enabled if there is
+        a <literal>*</> next to <literal>Write cache</>.  <command>hdparm -W</>
+        can be used to turn off write caching.  SCSI drives can be queried
+        using <ulink url="http://sg.danny.cz/sg/sdparm.html"><application>sdparm</></ulink>.
+        Use <command>sdparm --get=WCE</command> to check
+        whether the write cache is enabled and <command>sdparm --clear=WCE</>
+        to disable it.
+      </para>
+    </listitem>
+
+    <listitem>
+      <para>
+        On <productname>FreeBSD</>, IDE drives can be queried using
+        <command>atacontrol</command>, and SCSI drives using
+        <command>sdparm</command>.
+      </para>
+    </listitem>
+
+    <listitem>
+      <para>
+        On <productname>Solaris</>, the disk write cache is controlled by
+        <ulink url="http://www.sun.com/bigadmin/content/submitted/format_utility.jsp"><literal>format -e</></ulink>.
+        (The Solaris <acronym>ZFS</> file system is safe with disk write-cache
+        enabled because it issues its own disk cache flush commands.)
+      </para>
+    </listitem>
+
+    <listitem>
+      <para>
+        On <productname>Windows</>, if <varname>wal_sync_method</> is
+        <literal>open_datasync</> (the default), write caching can be disabled
+        by unchecking <literal>My Computer\Open\<replaceable>disk drive</>\Properties\Hardware\Properties\Policies\Enable write caching on the disk</>.
+        Alternatively, set <varname>wal_sync_method</varname> to
+        <literal>fsync</> or <literal>fsync_writethrough</>, which prevent
+        write caching.
+      </para>
+    </listitem>
+
+    <listitem>
+      <para>
+        On <productname>Mac OS X</productname>, write caching can be prevented by
+        setting <varname>wal_sync_method</> to <literal>fsync_writethrough</>.
+      </para>
+    </listitem>
+  </itemizedlist>
+
   <para>
-   Many file systems that use write barriers (e.g.  <acronym>ZFS</>,
-   <acronym>ext4</>) internally use <command>FLUSH CACHE EXT</> or
-   <command>SYNCHRONIZE CACHE</> commands to flush data to the platters on
-   write-back-enabled drives.  Unfortunately, such write barrier file
-   systems behave suboptimally when combined with battery-backed unit
+   Recent SATA drives (those following <acronym>ATAPI-6</> or later)
+   offer a drive cache flush command (<command>FLUSH CACHE EXT</>),
+   while SCSI drives have long supported a similar command
+   <command>SYNCHRONIZE CACHE</>.  These commands are not directly
+   accessible to <productname>PostgreSQL</>, but some file systems
+   (e.g., <acronym>ZFS</>, <acronym>ext4</>) can use them to flush
+   data to the platters on write-back-enabled drives.  Unfortunately, such
+   file systems behave suboptimally when combined with battery-backup unit
    (<acronym>BBU</>) disk controllers.  In such setups, the synchronize
-   command forces all data from the BBU to the disks, eliminating much
-   of the benefit of the BBU.  You can run the utility
+   command forces all data from the controller cache to the disks,
+   eliminating much of the benefit of the BBU.  You can run the utility
    <filename>src/tools/fsync</> in the PostgreSQL source tree to see
    if you are affected.  If you are affected, the performance benefits
-   of the BBU cache can be regained by turning off write barriers in
+   of the BBU can be regained by turning off write barriers in
    the file system or reconfiguring the disk controller, if that is
    an option.  If write barriers are turned off, make sure the battery
-   remains active; a faulty battery can potentially lead to data loss.
+   remains functional; a faulty battery can potentially lead to data loss.
    Hopefully file system and disk controller designers will eventually
    address this suboptimal behavior.
   </para>
@@ -117,6 +148,8 @@
    ensure data integrity.  Avoid disk controllers that have non-battery-backed
    write caches.  At the drive level, disable write-back caching if the
    drive cannot guarantee the data will be written before shutdown.
+   If you use SSDs, be aware that many of these do not honor cache flush
+   commands by default.
    You can test for reliable I/O subsystem behavior using <ulink
    url="http://brad.livejournal.com/2116715.html"><filename>diskchecker.pl</filename></ulink>.
   </para>
@@ -126,16 +159,17 @@
    operations themselves. Disk platters are divided into sectors,
    commonly 512 bytes each.  Every physical read or write operation
    processes a whole sector.
-   When a write request arrives at the drive, it might be for 512 bytes,
-   1024 bytes, or 8192 bytes, and the process of writing could fail due
+   When a write request arrives at the drive, it might be for some multiple
+   of 512 bytes (<productname>PostgreSQL</> typically writes 8192 bytes, or
+   16 sectors, at a time), and the process of writing could fail due
    to power loss at any time, meaning some of the 512-byte sectors were
-   written, and others were not.  To guard against such failures,
+   written while others were not.  To guard against such failures,
    <productname>PostgreSQL</> periodically writes full page images to
    permanent WAL storage <emphasis>before</> modifying the actual page on
    disk. By doing this, during crash recovery <productname>PostgreSQL</> can
-   restore partially-written pages.  If you have a battery-backed disk
+   restore partially-written pages from WAL.  If you have a battery-backed disk
    controller or file-system software that prevents partial page writes
-   (e.g., ZFS),  you can turn off this page imaging by turning off the
+   (e.g., ZFS), you can safely turn off this page imaging by turning off the
    <xref linkend="guc-full-page-writes"> parameter.
   </para>
  </sect1>

@@ -1459,18 +1459,19 @@ SET ENABLE_SEQSCAN TO OFF;
        <para>
         While turning off <varname>fsync</varname> is often a performance
         benefit, this can result in unrecoverable data corruption in
-        the event of an unexpected system shutdown or crash.  Thus it
-        is only advisable to turn off  <varname>fsync</varname> if
+        the event of a power failure or system crash.  Thus it
+        is only advisable to turn off <varname>fsync</varname> if
         you can easily recreate your entire database from external
         data.
        </para>
 
        <para>
         Examples of safe circumstances for turning off
-        <varname>fsync</varname> include the initial loading a new
+        <varname>fsync</varname> include the initial loading of a new
         database cluster from a backup file, using a database cluster
-        for processing statistics on an hourly basis which is then
-        recreated, or for a reporting read-only database clone which
+        for processing a batch of data after which the database
+        will be thrown away and recreated,
+        or for a read-only database clone which
         gets recreated frequently and is not used for failover.  High
         quality hardware alone is not a sufficient justification for
         turning off <varname>fsync</varname>.
@@ -1553,12 +1554,12 @@ SET ENABLE_SEQSCAN TO OFF;
         </listitem>
         <listitem>
         <para>
-         <literal>fsync_writethrough</> (call <function>fsync()</> at each commit, forcing write-through of any disk write cache)
+         <literal>fsync</> (call <function>fsync()</> at each commit)
         </para>
         </listitem>
         <listitem>
         <para>
-         <literal>fsync</> (call <function>fsync()</> at each commit)
+         <literal>fsync_writethrough</> (call <function>fsync()</> at each commit, forcing write-through of any disk write cache)
         </para>
         </listitem>
         <listitem>
@@ -1568,16 +1569,15 @@ SET ENABLE_SEQSCAN TO OFF;
         </listitem>
        </itemizedlist>
        <para>
-        Not all of these choices are available on all platforms.
         The <literal>open_</>* options also use <literal>O_DIRECT</> if available.
+        Not all of these choices are available on all platforms.
         The default is the first method in the above list that is supported
-        by the platform.  The default is not necessarily ideal; it might be
+        by the platform, except that <literal>fdatasync</> is the default on
+        Linux.  The default is not necessarily ideal; it might be
         necessary to change this setting or other aspects of your system
         configuration in order to create a crash-safe configuration or
         achieve optimal performance.
         These aspects are discussed in <xref linkend="wal-reliability">.
-        The utility <filename>src/tools/fsync</> in the PostgreSQL source tree
-        can do performance testing of various fsync methods.
         This parameter can only be set in the <filename>postgresql.conf</>
         file or on the server command line.
        </para>
