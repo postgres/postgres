@@ -321,6 +321,8 @@ typedef struct _tocEntry
 	struct _tocEntry *par_next; /* these are NULL if not in either list */
 	bool		created;		/* set for DATA member if TABLE was created */
 	int			depCount;		/* number of dependencies not yet restored */
+	DumpId	   *revDeps;		/* dumpIds of objects depending on this one */
+	int			nRevDeps;		/* number of such dependencies */
 	DumpId	   *lockDeps;		/* dumpIds of objects this one needs lock on */
 	int			nLockDeps;		/* number of such dependencies */
 } TocEntry;
