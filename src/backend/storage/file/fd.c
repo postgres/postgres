@@ -247,12 +247,13 @@ static void RemovePgTempFilesInDir(const char *tmpdirname);
 int
 pg_fsync(int fd)
 {
-#ifndef HAVE_FSYNC_WRITETHROUGH_ONLY
-	if (sync_method != SYNC_METHOD_FSYNC_WRITETHROUGH)
-		return pg_fsync_no_writethrough(fd);
+	/* #if is to skip the sync_method test if there's no need for it */
+#if defined(HAVE_FSYNC_WRITETHROUGH) && !defined(FSYNC_WRITETHROUGH_IS_FSYNC)
+	if (sync_method == SYNC_METHOD_FSYNC_WRITETHROUGH)
+		return pg_fsync_writethrough(fd);
 	else
 #endif
-		return pg_fsync_writethrough(fd);
+		return pg_fsync_no_writethrough(fd);
 }
 
 

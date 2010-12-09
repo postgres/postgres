@@ -12,3 +12,13 @@
  * to have a kernel version test here.
  */
 #define HAVE_LINUX_EIDRM_BUG
+
+/*
+ * Set the default wal_sync_method to fdatasync.  With recent Linux versions,
+ * xlogdefs.h's normal rules will prefer open_datasync, which (a) doesn't
+ * perform better and (b) causes outright failures on ext4 data=journal
+ * filesystems, because those don't support O_DIRECT.
+ */
+#define PLATFORM_DEFAULT_SYNC_METHOD_STR "fdatasync"
+#define PLATFORM_DEFAULT_SYNC_METHOD	SYNC_METHOD_FDATASYNC
+#define PLATFORM_DEFAULT_SYNC_FLAGBIT	0
