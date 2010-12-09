@@ -3809,11 +3809,9 @@ HeapTupleHeaderAdvanceLatestRemovedXid(HeapTupleHeader tuple,
 		 !(tuple->t_infomask & HEAP_XMIN_INVALID) &&
 		 TransactionIdDidCommit(xmin)))
 	{
-		if (TransactionIdFollows(xmax, xmin))
-		{
-			if (TransactionIdFollows(xmax, *latestRemovedXid))
+		if (xmax != xmin &&
+			TransactionIdFollows(xmax, *latestRemovedXid))
 				*latestRemovedXid = xmax;
-		}
 	}
 
 	/* *latestRemovedXid may still be invalid at end */
