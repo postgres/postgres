@@ -1347,12 +1347,12 @@ SET ENABLE_SEQSCAN TO OFF;
         </listitem>
         <listitem>
         <para>
-         <literal>fsync_writethrough</> (call <function>fsync()</> at each commit, forcing write-through of any disk write cache)
+         <literal>fsync</> (call <function>fsync()</> at each commit)
         </para>
         </listitem>
         <listitem>
         <para>
-         <literal>fsync</> (call <function>fsync()</> at each commit)
+         <literal>fsync_writethrough</> (call <function>fsync()</> at each commit, forcing write-through of any disk write cache)
         </para>
         </listitem>
         <listitem>
@@ -1363,7 +1363,9 @@ SET ENABLE_SEQSCAN TO OFF;
        </itemizedlist>
        <para>
         Not all of these choices are available on all platforms.
-        The default is the first method in the above list that is supported.
+        The default is the first method in the above list that is supported
+        by the platform, except that <literal>fdatasync</> is the default on
+        Linux.
         This option can be set at server start or in the
         <filename>postgresql.conf</filename> file.
        </para>
