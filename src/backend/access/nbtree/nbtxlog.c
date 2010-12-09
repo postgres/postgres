@@ -580,7 +580,6 @@ btree_xlog_delete_get_latestRemovedXid(XLogRecord *record)
 	BlockNumber hblkno;
 	OffsetNumber hoffnum;
 	TransactionId latestRemovedXid = InvalidTransactionId;
-	TransactionId htupxid = InvalidTransactionId;
 	int			i;
 
 	/*
@@ -646,24 +645,16 @@ btree_xlog_delete_get_latestRemovedXid(XLogRecord *record)
 		}
 
 		/*
-		 * If the heap item has storage, then read the header. Some LP_DEAD
-		 * items may not be accessible, so we ignore them.
+		 * If the heap item has storage, then read the header and use that to
+		 * set latestRemovedXid.
+		 *
+		 * Some LP_DEAD items may not be accessible, so we ignore them.
 		 */
 		if (ItemIdHasStorage(hitemid))
 		{
 			htuphdr = (HeapTupleHeader) PageGetItem(hpage, hitemid);
 
-			/*
-			 * Get the heap tuple's xmin/xmax and ratchet up the
-			 * latestRemovedXid. No need to consider xvac values here.
-			 */
-			htupxid = HeapTupleHeaderGetXmin(htuphdr);
-			if (TransactionIdFollows(htupxid, latestRemovedXid))
-				latestRemovedXid = htupxid;
-
-			htupxid = HeapTupleHeaderGetXmax(htuphdr);
-			if (TransactionIdFollows(htupxid, latestRemovedXid))
-				latestRemovedXid = htupxid;
+			HeapTupleHeaderAdvanceLatestRemovedXid(htuphdr, &latestRemovedXid);
 		}
 		else if (ItemIdIsDead(hitemid))
 		{

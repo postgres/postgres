@@ -237,7 +237,6 @@ heap_page_prune(Relation relation, Buffer buffer, TransactionId OldestXmin,
 		{
 			XLogRecPtr	recptr;
 
-			Assert(TransactionIdIsValid(prstate.latestRemovedXid));
 			recptr = log_heap_clean(relation, buffer,
 									prstate.redirected, prstate.nredirected,
 									prstate.nowdead, prstate.ndead,

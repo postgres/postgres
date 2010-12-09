@@ -3776,8 +3776,11 @@ heap_restrpos(HeapScanDesc scan)
 }
 
 /*
- * If 'tuple' contains any XID greater than latestRemovedXid, update
- * latestRemovedXid to the greatest one found.
+ * If 'tuple' contains any visible XID greater than latestRemovedXid,
+ * ratchet forwards latestRemovedXid to the greatest one found.
+ * This is used as the basis for generating Hot Standby conflicts, so
+ * if a tuple was never visible then removing it should not conflict
+ * with queries.
  */
 void
 HeapTupleHeaderAdvanceLatestRemovedXid(HeapTupleHeader tuple,
@@ -3793,13 +3796,27 @@ HeapTupleHeaderAdvanceLatestRemovedXid(HeapTupleHeader tuple,
 			*latestRemovedXid = xvac;
 	}
 
-	if (TransactionIdPrecedes(*latestRemovedXid, xmax))
-		*latestRemovedXid = xmax;
+	/*
+	 * Ignore tuples inserted by an aborted transaction or
+	 * if the tuple was updated/deleted by the inserting transaction.
+	 *
+	 * Look for a committed hint bit, or if no xmin bit is set, check clog.
+	 * This needs to work on both master and standby, where it is used
+	 * to assess btree delete records.
+	 */
+	if ((tuple->t_infomask & HEAP_XMIN_COMMITTED) ||
+		(!(tuple->t_infomask & HEAP_XMIN_COMMITTED) &&
+		 !(tuple->t_infomask & HEAP_XMIN_INVALID) &&
+		 TransactionIdDidCommit(xmin)))
+	{
+		if (TransactionIdFollows(xmax, xmin))
+		{
+			if (TransactionIdFollows(xmax, *latestRemovedXid))
+				*latestRemovedXid = xmax;
+		}
+	}
 
-	if (TransactionIdPrecedes(*latestRemovedXid, xmin))
-		*latestRemovedXid = xmin;
-
-	Assert(TransactionIdIsValid(*latestRemovedXid));
+	/* *latestRemovedXid may still be invalid at end */
 }
 
 /*
