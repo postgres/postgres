@@ -145,8 +145,15 @@ struct Tuplestorestate
 	/*
 	 * This array holds pointers to tuples in memory if we are in state INMEM.
 	 * In states WRITEFILE and READFILE it's not used.
+	 *
+	 * When memtupdeleted > 0, the first memtupdeleted pointers are already
+	 * released due to a tuplestore_trim() operation, but we haven't expended
+	 * the effort to slide the remaining pointers down.  These unused pointers
+	 * are set to NULL to catch any invalid accesses.  Note that memtupcount
+	 * includes the deleted pointers.
 	 */
 	void	  **memtuples;		/* array of pointers to palloc'd tuples */
+	int			memtupdeleted;	/* the first N slots are currently unused */
 	int			memtupcount;	/* number of tuples currently present */
 	int			memtupsize;		/* allocated length of memtuples array */
 
@@ -252,6 +259,7 @@ tuplestore_begin_common(int eflags, bool interXact, int maxKBytes)
 	state->context = CurrentMemoryContext;
 	state->resowner = CurrentResourceOwner;
 
+	state->memtupdeleted = 0;
 	state->memtupcount = 0;
 	state->memtupsize = 1024;	/* initial guess */
 	state->memtuples = (void **) palloc(state->memtupsize * sizeof(void *));
@@ -401,7 +409,7 @@ tuplestore_clear(Tuplestorestate *state)
 	state->myfile = NULL;
 	if (state->memtuples)
 	{
-		for (i = 0; i < state->memtupcount; i++)
+		for (i = state->memtupdeleted; i < state->memtupcount; i++)
 		{
 			FREEMEM(state, GetMemoryChunkSpace(state->memtuples[i]));
 			pfree(state->memtuples[i]);
@@ -409,6 +417,7 @@ tuplestore_clear(Tuplestorestate *state)
 	}
 	state->status = TSS_INMEM;
 	state->truncated = false;
+	state->memtupdeleted = 0;
 	state->memtupcount = 0;
 	readptr = state->readptrs;
 	for (i = 0; i < state->readptrcount; readptr++, i++)
@@ -432,7 +441,7 @@ tuplestore_end(Tuplestorestate *state)
 		BufFileClose(state->myfile);
 	if (state->memtuples)
 	{
-		for (i = 0; i < state->memtupcount; i++)
+		for (i = state->memtupdeleted; i < state->memtupcount; i++)
 			pfree(state->memtuples[i]);
 		pfree(state->memtuples);
 	}
@@ -774,14 +783,14 @@ tuplestore_gettuple(Tuplestorestate *state, bool forward,
 				}
 				else
 				{
-					if (readptr->current <= 0)
+					if (readptr->current <= state->memtupdeleted)
 					{
 						Assert(!state->truncated);
 						return NULL;
 					}
 					readptr->current--; /* last returned tuple */
 				}
-				if (readptr->current <= 0)
+				if (readptr->current <= state->memtupdeleted)
 				{
 					Assert(!state->truncated);
 					return NULL;
@@ -969,7 +978,7 @@ dumptuples(Tuplestorestate *state)
 {
 	int			i;
 
-	for (i = 0;; i++)
+	for (i = state->memtupdeleted;; i++)
 	{
 		TSReadPointer *readptr = state->readptrs;
 		int			j;
@@ -984,6 +993,7 @@ dumptuples(Tuplestorestate *state)
 			break;
 		WRITETUP(state, state->memtuples[i]);
 	}
+	state->memtupdeleted = 0;
 	state->memtupcount = 0;
 }
 
@@ -1153,24 +1163,36 @@ tuplestore_trim(Tuplestorestate *state)
 	nremove = oldest - 1;
 	if (nremove <= 0)
 		return;					/* nothing to do */
+
+	Assert(nremove >= state->memtupdeleted);
 	Assert(nremove <= state->memtupcount);
 
 	/* Release no-longer-needed tuples */
-	for (i = 0; i < nremove; i++)
+	for (i = state->memtupdeleted; i < nremove; i++)
 	{
 		FREEMEM(state, GetMemoryChunkSpace(state->memtuples[i]));
 		pfree(state->memtuples[i]);
+		state->memtuples[i] = NULL;
 	}
+	state->memtupdeleted = nremove;
+
+	/* mark tuplestore as truncated (used for Assert crosschecks only) */
+	state->truncated = true;
 
 	/*
-	 * Slide the array down and readjust pointers.	This may look pretty
-	 * stupid, but we expect that there will usually not be very many
-	 * tuple-pointers to move, so this isn't that expensive; and it keeps a
-	 * lot of other logic simple.
+	 * If nremove is less than 1/8th memtupcount, just stop here, leaving the
+	 * "deleted" slots as NULL.  This prevents us from expending O(N^2) time
+	 * repeatedly memmove-ing a large pointer array.  The worst case space
+	 * wastage is pretty small, since it's just pointers and not whole tuples.
+	 */
+	if (nremove < state->memtupcount / 8)
+		return;
+
+	/*
+	 * Slide the array down and readjust pointers.
 	 *
-	 * In fact, in the current usage for merge joins, it's demonstrable that
-	 * there will always be exactly one non-removed tuple; so optimize that
-	 * case.
+	 * In mergejoin's current usage, it's demonstrable that there will always
+	 * be exactly one non-removed tuple; so optimize that case.
 	 */
 	if (nremove + 1 == state->memtupcount)
 		state->memtuples[0] = state->memtuples[nremove];
@@ -1178,15 +1200,13 @@ tuplestore_trim(Tuplestorestate *state)
 		memmove(state->memtuples, state->memtuples + nremove,
 				(state->memtupcount - nremove) * sizeof(void *));
 
+	state->memtupdeleted = 0;
 	state->memtupcount -= nremove;
 	for (i = 0; i < state->readptrcount; i++)
 	{
 		if (!state->readptrs[i].eof_reached)
 			state->readptrs[i].current -= nremove;
 	}
-
-	/* mark tuplestore as truncated (used for Assert crosschecks only) */
-	state->truncated = true;
 }
 
 /*
