@@ -552,7 +552,7 @@ create_tablespace_directories(const char *location, const Oid tablespaceoid)
 	 * Attempt to coerce target directory to safe permissions.	If this fails,
 	 * it doesn't exist or has the wrong owner.
 	 */
-	if (chmod(location, 0700) != 0)
+	if (chmod(location, S_IRWXU) != 0)
 	{
 		if (errno == ENOENT)
 			ereport(ERROR,

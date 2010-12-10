@@ -494,7 +494,7 @@ PostmasterMain(int argc, char *argv[])
 	/*
 	 * for security, no dir or file created can be group or other accessible
 	 */
-	umask((mode_t) 0077);
+	umask(S_IRWXG | S_IRWXO);
 
 	/*
 	 * Fire up essential subsystems: memory management
@@ -1274,7 +1274,7 @@ pmdaemonize(void)
 					 progname, DEVNULL, strerror(errno));
 		ExitPostmaster(1);
 	}
-	pmlog = open(pmlogname, O_CREAT | O_WRONLY | O_APPEND, 0600);
+	pmlog = open(pmlogname, O_CREAT | O_WRONLY | O_APPEND, S_IRUSR | S_IWUSR);
 	if (pmlog < 0)
 	{
 		write_stderr("%s: could not open log file \"%s/%s\": %s\n",

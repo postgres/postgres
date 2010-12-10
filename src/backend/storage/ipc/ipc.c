@@ -126,8 +126,8 @@ proc_exit(int code)
 		else
 			snprintf(gprofDirName, 32, "gprof/%d", (int) getpid());
 
-		mkdir("gprof", 0777);
-		mkdir(gprofDirName, 0777);
+		mkdir("gprof", S_IRWXU | S_IRWXG | S_IRWXO);
+		mkdir(gprofDirName, S_IRWXU | S_IRWXG | S_IRWXO);
 		chdir(gprofDirName);
 	}
 #endif

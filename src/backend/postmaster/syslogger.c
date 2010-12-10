@@ -73,7 +73,7 @@ int			Log_RotationSize = 10 * 1024;
 char	   *Log_directory = NULL;
 char	   *Log_filename = NULL;
 bool		Log_truncate_on_rotation = false;
-int			Log_file_mode = 0600;
+int			Log_file_mode = S_IRUSR | S_IWUSR;
 
 /*
  * Globally visible state (used by elog.c)
@@ -511,7 +511,7 @@ SysLogger_Start(void)
 	/*
 	 * Create log directory if not present; ignore errors
 	 */
-	mkdir(Log_directory, 0700);
+	mkdir(Log_directory, S_IRWXU);
 
 	/*
 	 * The initial logfile is created right in the postmaster, to verify that
@@ -1020,7 +1020,7 @@ logfile_open(const char *filename, const char *mode, bool allow_errors)
 	 * Note we do not let Log_file_mode disable IWUSR, since we certainly
 	 * want to be able to write the files ourselves.
 	 */
-	oumask = umask((mode_t) ((~(Log_file_mode | S_IWUSR)) & 0777));
+	oumask = umask((mode_t) ((~(Log_file_mode | S_IWUSR)) & (S_IRWXU | S_IRWXG | S_IRWXO)));
 	fh = fopen(filename, mode);
 	umask(oumask);
 

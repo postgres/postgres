@@ -870,7 +870,7 @@ mkdatadir(const char *subdir)
 	else
 		strcpy(path, pg_data);
 
-	if (mkdir_p(path, 0700) == 0)
+	if (mkdir_p(path, S_IRWXU) == 0)
 		return true;
 
 	fprintf(stderr, _("%s: could not create directory \"%s\": %s\n"),
@@ -1166,7 +1166,7 @@ setup_config(void)
 	snprintf(path, sizeof(path), "%s/postgresql.conf", pg_data);
 
 	writefile(path, conflines);
-	chmod(path, 0600);
+	chmod(path, S_IRUSR | S_IWUSR);
 
 	free(conflines);
 
@@ -1237,7 +1237,7 @@ setup_config(void)
 	snprintf(path, sizeof(path), "%s/pg_hba.conf", pg_data);
 
 	writefile(path, conflines);
-	chmod(path, 0600);
+	chmod(path, S_IRUSR | S_IWUSR);
 
 	free(conflines);
 
@@ -1248,7 +1248,7 @@ setup_config(void)
 	snprintf(path, sizeof(path), "%s/pg_ident.conf", pg_data);
 
 	writefile(path, conflines);
-	chmod(path, 0600);
+	chmod(path, S_IRUSR | S_IWUSR);
 
 	free(conflines);
 
@@ -2904,7 +2904,7 @@ main(int argc, char *argv[])
 
 	printf("\n");
 
-	umask(077);
+	umask(S_IRWXG | S_IRWXO);
 
 	/*
 	 * now we are starting to do real work, trap signals so we can clean up
@@ -2951,7 +2951,7 @@ main(int argc, char *argv[])
 				   pg_data);
 			fflush(stdout);
 
-			if (chmod(pg_data, 0700) != 0)
+			if (chmod(pg_data, S_IRWXU) != 0)
 			{
 				fprintf(stderr, _("%s: could not change permissions of directory \"%s\": %s\n"),
 						progname, pg_data, strerror(errno));
@@ -3004,7 +3004,7 @@ main(int argc, char *argv[])
 					   xlog_dir);
 				fflush(stdout);
 
-				if (mkdir_p(xlog_dir, 0700) != 0)
+				if (mkdir_p(xlog_dir, S_IRWXU) != 0)
 				{
 					fprintf(stderr, _("%s: could not create directory \"%s\": %s\n"),
 							progname, xlog_dir, strerror(errno));
@@ -3021,7 +3021,7 @@ main(int argc, char *argv[])
 					   xlog_dir);
 				fflush(stdout);
 
-				if (chmod(xlog_dir, 0700) != 0)
+				if (chmod(xlog_dir, S_IRWXU) != 0)
 				{
 					fprintf(stderr, _("%s: could not change permissions of directory \"%s\": %s\n"),
 							progname, xlog_dir, strerror(errno));

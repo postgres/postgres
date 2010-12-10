@@ -56,7 +56,7 @@ copydir(char *fromdir, char *todir, bool recurse)
 	char		fromfile[MAXPGPATH];
 	char		tofile[MAXPGPATH];
 
-	if (mkdir(todir, S_IRUSR | S_IWUSR | S_IXUSR) != 0)
+	if (mkdir(todir, S_IRWXU) != 0)
 		ereport(ERROR,
 				(errcode_for_file_access(),
 				 errmsg("could not create directory \"%s\": %m", todir)));

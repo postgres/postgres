@@ -1269,7 +1269,7 @@ DoCopyTo(CopyState cstate)
 					(errcode(ERRCODE_INVALID_NAME),
 					 errmsg("relative path not allowed for COPY to file")));
 
-		oumask = umask((mode_t) 022);
+		oumask = umask(S_IWGRP | S_IWOTH);
 		cstate->copy_file = AllocateFile(cstate->filename, PG_BINARY_W);
 		umask(oumask);
 

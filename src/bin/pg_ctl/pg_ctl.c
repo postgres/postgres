@@ -1769,7 +1769,7 @@ main(int argc, char **argv)
 	 */
 	argv0 = argv[0];
 
-	umask(077);
+	umask(S_IRWXG | S_IRWXO);
 
 	/* support --help and --version even if invoked as root */
 	if (argc > 1)
