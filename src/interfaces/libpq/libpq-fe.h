@@ -85,6 +85,7 @@ typedef enum
 								 * contains the result tuples */
 	PGRES_COPY_OUT,				/* Copy Out data transfer in progress */
 	PGRES_COPY_IN,				/* Copy In data transfer in progress */
+	PGRES_COPY_BOTH,			/* Copy In/Out data transfer in progress */
 	PGRES_BAD_RESPONSE,			/* an unexpected response was recv'd from the
 								 * backend */
 	PGRES_NONFATAL_ERROR,		/* notice or warning message */

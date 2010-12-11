@@ -218,7 +218,8 @@ typedef enum
 	PGASYNC_BUSY,				/* query in progress */
 	PGASYNC_READY,				/* result ready for PQgetResult */
 	PGASYNC_COPY_IN,			/* Copy In data transfer in progress */
-	PGASYNC_COPY_OUT			/* Copy Out data transfer in progress */
+	PGASYNC_COPY_OUT,			/* Copy Out data transfer in progress */
+	PGASYNC_COPY_BOTH			/* Copy In/Out data transfer in progress */
 } PGAsyncStatusType;
 
 /* PGQueryClass tracks which query protocol we are now executing */

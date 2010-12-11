@@ -287,8 +287,8 @@ WalSndHandshake(void)
 									(errcode(ERRCODE_CANNOT_CONNECT_NOW),
 									 errmsg("standby connections not allowed because wal_level=minimal")));
 
-						/* Send a CopyOutResponse message, and start streaming */
-						pq_beginmessage(&buf, 'H');
+						/* Send a CopyBothResponse message, and start streaming */
+						pq_beginmessage(&buf, 'W');
 						pq_sendbyte(&buf, 0);
 						pq_sendint(&buf, 0, 2);
 						pq_endmessage(&buf);

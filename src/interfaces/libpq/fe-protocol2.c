@@ -541,6 +541,10 @@ pqParseInput2(PGconn *conn)
 				case 'H':		/* Start Copy Out */
 					conn->asyncStatus = PGASYNC_COPY_OUT;
 					break;
+					/*
+					 * Don't need to process CopyBothResponse here because
+					 * it never arrives from the server during protocol 2.0.
+					 */
 				default:
 					printfPQExpBuffer(&conn->errorMessage,
 									  libpq_gettext(

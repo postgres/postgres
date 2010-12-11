@@ -1033,12 +1033,25 @@
    </para>
 
    <para>
-    The CopyInResponse and CopyOutResponse messages include fields that
-    inform the frontend of the number of columns per row and the format
-    codes being used for each column.  (As of the present implementation,
-    all columns in a given <command>COPY</> operation will use the same
-    format, but the message design does not assume this.)
+    There is another Copy-related mode called Copy-both, which allows
+    high-speed bulk data transfer to <emphasis>and</> from the server.
+    Copy-both mode is initiated when a backend in walsender mode
+    executes a <command>START_REPLICATION</command> statement.  The
+    backend sends a CopyBothResponse message to the frontend.  Both
+    the backend and the frontend may then send CopyData messages
+    until the connection is terminated.  See see <xref
+    linkend="protocol-replication">.
    </para>
+
+   <para>
+    The CopyInResponse, CopyOutResponse and CopyBothResponse messages
+    include fields that inform the frontend of the number of columns
+    per row and the format codes being used for each column.  (As of
+    the present implementation, all columns in a given <command>COPY</>
+    operation will use the same format, but the message design does not
+    assume this.)
+   </para>
+
   </sect2>
 
   <sect2 id="protocol-async">
@@ -1344,7 +1357,7 @@ The commands accepted in walsender mode are:
       WAL position <replaceable>XXX</>/<replaceable>XXX</>.
       The server can reply with an error, e.g. if the requested section of WAL
       has already been recycled. On success, server responds with a
-      CopyOutResponse message, and then starts to stream WAL to the frontend.
+      CopyBothResponse message, and then starts to stream WAL to the frontend.
       WAL will continue to be streamed until the connection is broken;
       no further commands will be accepted.
      </para>
@@ -2637,6 +2650,79 @@ CopyOutResponse (B)
 <para>
                 Identifies the message as a Start Copy Out response.
                 This message will be followed by copy-out data.
+</para>
+</listitem>
+</varlistentry>
+<varlistentry>
+<term>
+        Int32
+</term>
+<listitem>
+<para>
+                Length of message contents in bytes, including self.
+</para>
+</listitem>
+</varlistentry>
+<varlistentry>
+<term>
+        Int8
+</term>
+<listitem>
+<para>
+                0 indicates the overall <command>COPY</command> format
+                is textual (rows separated by newlines, columns
+                separated by separator characters, etc). 1 indicates
+                the overall copy format is binary (similar to DataRow
+                format). See <xref linkend="sql-copy"> for more information.
+</para>
+</listitem>
+</varlistentry>
+<varlistentry>
+<term>
+        Int16
+</term>
+<listitem>
+<para>
+                The number of columns in the data to be copied
+                (denoted <replaceable>N</> below).
+</para>
+</listitem>
+</varlistentry>
+<varlistentry>
+<term>
+        Int16[<replaceable>N</>]
+</term>
+<listitem>
+<para>
+                The format codes to be used for each column.
+                Each must presently be zero (text) or one (binary).
+                All must be zero if the overall copy format is textual.
+</para>
+</listitem>
+</varlistentry>
+</variablelist>
+
+</para>
+</listitem>
+</varlistentry>
+
+
+<varlistentry>
+<term>
+CopyBothResponse (B)
+</term>
+<listitem>
+<para>
+
+<variablelist>
+<varlistentry>
+<term>
+        Byte1('W')
+</term>
+<listitem>
+<para>
+                Identifies the message as a Start Copy Both response.
+                This message is used only for Streaming Replication.
 </para>
 </listitem>
 </varlistentry>

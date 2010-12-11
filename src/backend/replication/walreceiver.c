@@ -57,6 +57,7 @@ bool		am_walreceiver;
 /* libpqreceiver hooks to these when loaded */
 walrcv_connect_type walrcv_connect = NULL;
 walrcv_receive_type walrcv_receive = NULL;
+walrcv_send_type walrcv_send = NULL;
 walrcv_disconnect_type walrcv_disconnect = NULL;
 
 #define NAPTIME_PER_CYCLE 100	/* max sleep time between cycles (100ms) */
@@ -247,7 +248,7 @@ WalReceiverMain(void)
 	/* Load the libpq-specific functions */
 	load_file("libpqwalreceiver", false);
 	if (walrcv_connect == NULL || walrcv_receive == NULL ||
-		walrcv_disconnect == NULL)
+		walrcv_send == NULL || walrcv_disconnect == NULL)
 		elog(ERROR, "libpqwalreceiver didn't initialize correctly");
 
 	/*

@@ -358,6 +358,12 @@ pqParseInput3(PGconn *conn)
 					conn->asyncStatus = PGASYNC_COPY_OUT;
 					conn->copy_already_done = 0;
 					break;
+				case 'W':		/* Start Copy Both */
+					if (getCopyStart(conn, PGRES_COPY_BOTH))
+						return;
+					conn->asyncStatus = PGASYNC_COPY_BOTH;
+					conn->copy_already_done = 0;
+					break;
 				case 'd':		/* Copy Data */
 
 					/*
@@ -1196,7 +1202,8 @@ getNotify(PGconn *conn)
 }
 
 /*
- * getCopyStart - process CopyInResponse or CopyOutResponse message
+ * getCopyStart - process CopyInResponse, CopyOutResponse or
+ * CopyBothResponse message
  *
  * parseInput already read the message type and length.
  */
@@ -1367,6 +1374,7 @@ getCopyDataMessage(PGconn *conn)
 
 /*
  * PQgetCopyData - read a row of data from the backend during COPY OUT
+ * or COPY BOTH
  *
  * If successful, sets *buffer to point to a malloc'd row of data, and
  * returns row length (always > 0) as result.
@@ -1390,10 +1398,10 @@ pqGetCopyData3(PGconn *conn, char **buffer, int async)
 		if (msgLength < 0)
 		{
 			/*
-			 * On end-of-copy, exit COPY_OUT mode and let caller read status
-			 * with PQgetResult().	The normal case is that it's Copy Done,
-			 * but we let parseInput read that.  If error, we expect the state
-			 * was already changed.
+			 * On end-of-copy, exit COPY_OUT or COPY_BOTH mode and let caller
+			 * read status with PQgetResult().	The normal case is that it's
+			 * Copy Done, but we let parseInput read that.  If error, we expect
+			 * the state was already changed.
 			 */
 			if (msgLength == -1)
 				conn->asyncStatus = PGASYNC_BUSY;

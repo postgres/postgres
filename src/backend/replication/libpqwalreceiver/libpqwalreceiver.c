@@ -50,6 +50,7 @@ static char *recvBuf = NULL;
 static bool libpqrcv_connect(char *conninfo, XLogRecPtr startpoint);
 static bool libpqrcv_receive(int timeout, unsigned char *type,
 				 char **buffer, int *len);
+static void libpqrcv_send(const char *buffer, int nbytes);
 static void libpqrcv_disconnect(void);
 
 /* Prototypes for private functions */
@@ -64,10 +65,11 @@ _PG_init(void)
 {
 	/* Tell walreceiver how to reach us */
 	if (walrcv_connect != NULL || walrcv_receive != NULL ||
-		walrcv_disconnect != NULL)
+		walrcv_send != NULL || walrcv_disconnect != NULL)
 		elog(ERROR, "libpqwalreceiver already loaded");
 	walrcv_connect = libpqrcv_connect;
 	walrcv_receive = libpqrcv_receive;
+	walrcv_send = libpqrcv_send;
 	walrcv_disconnect = libpqrcv_disconnect;
 }
 
@@ -157,7 +159,7 @@ libpqrcv_connect(char *conninfo, XLogRecPtr startpoint)
 	snprintf(cmd, sizeof(cmd), "START_REPLICATION %X/%X",
 			 startpoint.xlogid, startpoint.xrecoff);
 	res = libpqrcv_PQexec(cmd);
-	if (PQresultStatus(res) != PGRES_COPY_OUT)
+	if (PQresultStatus(res) != PGRES_COPY_BOTH)
 	{
 		PQclear(res);
 		ereport(ERROR,
@@ -303,6 +305,7 @@ libpqrcv_PQexec(const char *query)
 
 		if (PQresultStatus(lastResult) == PGRES_COPY_IN ||
 			PQresultStatus(lastResult) == PGRES_COPY_OUT ||
+			PQresultStatus(lastResult) == PGRES_COPY_BOTH ||
 			PQstatus(streamConn) == CONNECTION_BAD)
 			break;
 	}
@@ -397,4 +400,19 @@ libpqrcv_receive(int timeout, unsigned char *type, char **buffer, int *len)
 	*len = rawlen - sizeof(*type);
 
 	return true;
+}
+
+/*
+ * Send a message to XLOG stream.
+ *
+ * ereports on error.
+ */
+static void
+libpqrcv_send(const char *buffer, int nbytes)
+{
+	if (PQputCopyData(streamConn, buffer, nbytes) <= 0 ||
+		PQflush(streamConn))
+		ereport(ERROR,
+				(errmsg("could not send data to WAL stream: %s",
+						PQerrorMessage(streamConn))));
 }

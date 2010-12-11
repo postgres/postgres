@@ -35,6 +35,7 @@ char	   *const pgresStatus[] = {
 	"PGRES_TUPLES_OK",
 	"PGRES_COPY_OUT",
 	"PGRES_COPY_IN",
+	"PGRES_COPY_BOTH",
 	"PGRES_BAD_RESPONSE",
 	"PGRES_NONFATAL_ERROR",
 	"PGRES_FATAL_ERROR"
@@ -174,6 +175,7 @@ PQmakeEmptyPGresult(PGconn *conn, ExecStatusType status)
 			case PGRES_TUPLES_OK:
 			case PGRES_COPY_OUT:
 			case PGRES_COPY_IN:
+			case PGRES_COPY_BOTH:
 				/* non-error cases */
 				break;
 			default:
@@ -1591,6 +1593,12 @@ PQgetResult(PGconn *conn)
 			else
 				res = PQmakeEmptyPGresult(conn, PGRES_COPY_OUT);
 			break;
+		case PGASYNC_COPY_BOTH:
+			if (conn->result && conn->result->resultStatus == PGRES_COPY_BOTH)
+				res = pqPrepareAsyncResult(conn);
+			else
+				res = PQmakeEmptyPGresult(conn, PGRES_COPY_BOTH);
+			break;
 		default:
 			printfPQExpBuffer(&conn->errorMessage,
 							  libpq_gettext("unexpected asyncStatus: %d\n"),
@@ -1775,6 +1783,13 @@ PQexecStart(PGconn *conn)
 				return false;
 			}
 		}
+		else if (resultStatus == PGRES_COPY_BOTH)
+		{
+			/* We don't allow PQexec during COPY BOTH */
+			printfPQExpBuffer(&conn->errorMessage,
+			 libpq_gettext("PQexec not allowed during COPY BOTH\n"));
+			return false;			
+		}
 		/* check for loss of connection, too */
 		if (conn->status == CONNECTION_BAD)
 			return false;
@@ -1798,7 +1813,7 @@ PQexecFinish(PGconn *conn)
 	 * than one --- but merge error messages if we get more than one error
 	 * result.
 	 *
-	 * We have to stop if we see copy in/out, however. We will resume parsing
+	 * We have to stop if we see copy in/out/both, however. We will resume parsing
 	 * after application performs the data transfer.
 	 *
 	 * Also stop if the connection is lost (else we'll loop infinitely).
@@ -1827,6 +1842,7 @@ PQexecFinish(PGconn *conn)
 		lastResult = result;
 		if (result->resultStatus == PGRES_COPY_IN ||
 			result->resultStatus == PGRES_COPY_OUT ||
+			result->resultStatus == PGRES_COPY_BOTH ||
 			conn->status == CONNECTION_BAD)
 			break;
 	}
@@ -2000,7 +2016,7 @@ PQnotifies(PGconn *conn)
 }
 
 /*
- * PQputCopyData - send some data to the backend during COPY IN
+ * PQputCopyData - send some data to the backend during COPY IN or COPY BOTH
  *
  * Returns 1 if successful, 0 if data could not be sent (only possible
  * in nonblock mode), or -1 if an error occurs.
@@ -2010,7 +2026,8 @@ PQputCopyData(PGconn *conn, const char *buffer, int nbytes)
 {
 	if (!conn)
 		return -1;
-	if (conn->asyncStatus != PGASYNC_COPY_IN)
+	if (conn->asyncStatus != PGASYNC_COPY_IN &&
+		conn->asyncStatus != PGASYNC_COPY_BOTH)
 	{
 		printfPQExpBuffer(&conn->errorMessage,
 						  libpq_gettext("no COPY in progress\n"));
@@ -2148,6 +2165,7 @@ PQputCopyEnd(PGconn *conn, const char *errormsg)
 
 /*
  * PQgetCopyData - read a row of data from the backend during COPY OUT
+ * or COPY BOTH
  *
  * If successful, sets *buffer to point to a malloc'd row of data, and
  * returns row length (always > 0) as result.
@@ -2161,7 +2179,8 @@ PQgetCopyData(PGconn *conn, char **buffer, int async)
 	*buffer = NULL;				/* for all failure cases */
 	if (!conn)
 		return -2;
-	if (conn->asyncStatus != PGASYNC_COPY_OUT)
+	if (conn->asyncStatus != PGASYNC_COPY_OUT &&
+		conn->asyncStatus != PGASYNC_COPY_BOTH)
 	{
 		printfPQExpBuffer(&conn->errorMessage,
 						  libpq_gettext("no COPY in progress\n"));
