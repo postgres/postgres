@@ -440,13 +440,13 @@ copy_dir(const char *src, const char *dst, bool force)
 			return -1;
 		}
 
-		if (fst.st_mode & S_IFDIR)
+		if (S_ISDIR(fst.st_mode))
 		{
 			/* recurse to handle subdirectories */
 			if (force)
 				copy_dir(src_file, dest_file, true);
 		}
-		else if (fst.st_mode & S_IFREG)
+		else if (S_ISREG(fst.st_mode))
 		{
 			if ((copy_file(src_file, dest_file, 1)) == -1)
 			{

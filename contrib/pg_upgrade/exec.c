@@ -10,7 +10,7 @@
 #include "pg_upgrade.h"
 
 #include <fcntl.h>
-#include <grp.h>
+#include <unistd.h>
 
 
 static void check_data_dir(const char *pg_data);
@@ -206,17 +206,9 @@ validate_exec(const char *path)
 {
 	struct stat buf;
 
-#ifndef WIN32
-	uid_t		euid;
-	struct group *gp;
-	struct passwd *pwp;
-	int			in_grp = 0;
-#else
-	char		path_exe[MAXPGPATH + sizeof(EXE_EXT) - 1];
-#endif
-
 #ifdef WIN32
 	/* Win32 requires a .exe suffix for stat() */
+	char		path_exe[MAXPGPATH + sizeof(EXE_EXT) - 1];
 
 	if (strlen(path) >= strlen(EXE_EXT) &&
 		pg_strcasecmp(path + strlen(path) - strlen(EXE_EXT), EXE_EXT) != 0)
@@ -233,68 +225,17 @@ validate_exec(const char *path)
 	if (stat(path, &buf) < 0)
 		return getErrorText(errno);
 
-	if ((buf.st_mode & S_IFMT) != S_IFREG)
+	if (!S_ISREG(buf.st_mode))
 		return "not an executable file";
-
-	/*
-	 * Ensure that we are using an authorized executable.
-	 */
 
 	/*
 	 * Ensure that the file is both executable and readable (required for
 	 * dynamic loading).
 	 */
 #ifndef WIN32
-	euid = geteuid();
-
-	/* If owned by us, just check owner bits */
-	if (euid == buf.st_uid)
-	{
-		if ((buf.st_mode & S_IRUSR) == 0)
-			return "can't read file (permission denied)";
-		if ((buf.st_mode & S_IXUSR) == 0)
-			return "can't execute (permission denied)";
-		return NULL;
-	}
-
-	/* OK, check group bits */
-	pwp = getpwuid(euid);		/* not thread-safe */
-
-	if (pwp)
-	{
-		if (pwp->pw_gid == buf.st_gid)	/* my primary group? */
-			++in_grp;
-		else if (pwp->pw_name &&
-				 (gp = getgrgid(buf.st_gid)) != NULL &&
-				  /* not thread-safe */ gp->gr_mem != NULL)
-		{
-			/* try list of member groups */
-			int			i;
-
-			for (i = 0; gp->gr_mem[i]; ++i)
-			{
-				if (!strcmp(gp->gr_mem[i], pwp->pw_name))
-				{
-					++in_grp;
-					break;
-				}
-			}
-		}
-
-		if (in_grp)
-		{
-			if ((buf.st_mode & S_IRGRP) == 0)
-				return "can't read file (permission denied)";
-			if ((buf.st_mode & S_IXGRP) == 0)
-				return "can't execute (permission denied)";
-			return NULL;
-		}
-	}
-
-	/* Check "other" bits */
-	if ((buf.st_mode & S_IROTH) == 0)
+	if (access(path, R_OK) != 0)
 		return "can't read file (permission denied)";
-	if ((buf.st_mode & S_IXOTH) == 0)
+	if (access(path, X_OK) != 0)
 		return "can't execute (permission denied)";
 	return NULL;
 #else
