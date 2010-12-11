@@ -615,9 +615,8 @@ PostgreSQL documentation
 <screen>
 <prompt>$</prompt> <userinput>pg_ctl status</userinput>
 <computeroutput>
-pg_ctl: server is running (pid: 13718)
-Command line was:
-/usr/local/pgsql/bin/postgres '-D' '/usr/local/pgsql/data' '-p' '5433' '-B' '128'
+pg_ctl: server is running (PID: 13718)
+/usr/local/pgsql/bin/postgres "-D" "/usr/local/pgsql/data" "-p" "5433" "-B" "128"
 </computeroutput>
 </screen>
     This is the command line that would be invoked in restart mode.
