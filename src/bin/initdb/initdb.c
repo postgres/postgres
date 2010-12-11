@@ -40,7 +40,6 @@
  *
  * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
- * Portions taken from FreeBSD.
  *
  * src/bin/initdb/initdb.c
  *
@@ -152,11 +151,9 @@ static char **filter_lines_with_token(char **lines, const char *token);
 static char **readfile(const char *path);
 static void writefile(char *path, char **lines);
 static FILE *popen_check(const char *command, const char *mode);
-static int	mkdir_p(char *path, mode_t omode);
 static void exit_nicely(void);
 static char *get_id(void);
 static char *get_encoding_id(char *encoding_name);
-static int	check_data_dir(char *dir);
 static bool mkdatadir(const char *subdir);
 static void set_input(char **dest, char *filename);
 static void check_input(char *path);
@@ -470,110 +467,6 @@ popen_check(const char *command, const char *mode)
 	return cmdfd;
 }
 
-/* source stolen from FreeBSD /src/bin/mkdir/mkdir.c and adapted */
-
-/*
- * this tries to build all the elements of a path to a directory a la mkdir -p
- * we assume the path is in canonical form, i.e. uses / as the separator
- * we also assume it isn't null.
- *
- * note that on failure, the path arg has been modified to show the particular
- * directory level we had problems with.
- */
-static int
-mkdir_p(char *path, mode_t omode)
-{
-	struct stat sb;
-	mode_t		numask,
-				oumask;
-	int			first,
-				last,
-				retval;
-	char	   *p;
-
-	p = path;
-	oumask = 0;
-	retval = 0;
-
-#ifdef WIN32
-	/* skip network and drive specifiers for win32 */
-	if (strlen(p) >= 2)
-	{
-		if (p[0] == '/' && p[1] == '/')
-		{
-			/* network drive */
-			p = strstr(p + 2, "/");
-			if (p == NULL)
-				return 1;
-		}
-		else if (p[1] == ':' &&
-				 ((p[0] >= 'a' && p[0] <= 'z') ||
-				  (p[0] >= 'A' && p[0] <= 'Z')))
-		{
-			/* local drive */
-			p += 2;
-		}
-	}
-#endif
-
-	if (p[0] == '/')			/* Skip leading '/'. */
-		++p;
-	for (first = 1, last = 0; !last; ++p)
-	{
-		if (p[0] == '\0')
-			last = 1;
-		else if (p[0] != '/')
-			continue;
-		*p = '\0';
-		if (!last && p[1] == '\0')
-			last = 1;
-		if (first)
-		{
-			/*
-			 * POSIX 1003.2: For each dir operand that does not name an
-			 * existing directory, effects equivalent to those caused by the
-			 * following command shall occcur:
-			 *
-			 * mkdir -p -m $(umask -S),u+wx $(dirname dir) && mkdir [-m mode]
-			 * dir
-			 *
-			 * We change the user's umask and then restore it, instead of
-			 * doing chmod's.
-			 */
-			oumask = umask(0);
-			numask = oumask & ~(S_IWUSR | S_IXUSR);
-			(void) umask(numask);
-			first = 0;
-		}
-		if (last)
-			(void) umask(oumask);
-
-		/* check for pre-existing directory; ok if it's a parent */
-		if (stat(path, &sb) == 0)
-		{
-			if (!S_ISDIR(sb.st_mode))
-			{
-				if (last)
-					errno = EEXIST;
-				else
-					errno = ENOTDIR;
-				retval = 1;
-				break;
-			}
-		}
-		else if (mkdir(path, last ? omode : S_IRWXU | S_IRWXG | S_IRWXO) < 0)
-		{
-			retval = 1;
-			break;
-		}
-		if (!last)
-			*p = '/';
-	}
-	if (!first && !last)
-		(void) umask(oumask);
-	return retval;
-}
-
 /*
  * clean up any files we created on failure
  * if we created the data directory remove it too
@@ -802,59 +695,6 @@ find_matching_ts_config(const char *lc_type)
 
 
 /*
- * make sure the directory either doesn't exist or is empty
- *
- * Returns 0 if nonexistent, 1 if exists and empty, 2 if not empty,
- * or -1 if trouble accessing directory
- */
-static int
-check_data_dir(char *dir)
-{
-	DIR		   *chkdir;
-	struct dirent *file;
-	int			result = 1;
-
-	errno = 0;
-
-	chkdir = opendir(dir);
-
-	if (!chkdir)
-		return (errno == ENOENT) ? 0 : -1;
-
-	while ((file = readdir(chkdir)) != NULL)
-	{
-		if (strcmp(".", file->d_name) == 0 ||
-			strcmp("..", file->d_name) == 0)
-		{
-			/* skip this and parent directory */
-			continue;
-		}
-		else
-		{
-			result = 2;			/* not empty */
-			break;
-		}
-	}
-
-#ifdef WIN32
-
-	/*
-	 * This fix is in mingw cvs (runtime/mingwex/dirent.c rev 1.4), but not in
-	 * released version
-	 */
-	if (GetLastError() == ERROR_NO_MORE_FILES)
-		errno = 0;
-#endif
-
-	closedir(chkdir);
-
-	if (errno != 0)
-		result = -1;			/* some kind of I/O error? */
-
-	return result;
-}
-
-/*
  * make the data directory (or one of its subdirectories if subdir is not NULL)
  */
 static bool
@@ -870,7 +710,7 @@ mkdatadir(const char *subdir)
 	else
 		strcpy(path, pg_data);
 
-	if (mkdir_p(path, S_IRWXU) == 0)
+	if (pg_mkdir_p(path, S_IRWXU) == 0)
 		return true;
 
 	fprintf(stderr, _("%s: could not create directory \"%s\": %s\n"),
@@ -2929,7 +2769,7 @@ main(int argc, char *argv[])
 	pqsignal(SIGPIPE, SIG_IGN);
 #endif
 
-	switch (check_data_dir(pg_data))
+	switch (pg_check_dir(pg_data))
 	{
 		case 0:
 			/* PGDATA not there, must create it */
@@ -2995,8 +2835,8 @@ main(int argc, char *argv[])
 			exit_nicely();
 		}
 
-		/* check if the specified xlog directory is empty */
-		switch (check_data_dir(xlog_dir))
+		/* check if the specified xlog directory exists/is empty */
+		switch (pg_check_dir(xlog_dir))
 		{
 			case 0:
 				/* xlog directory not there, must create it */
@@ -3004,7 +2844,7 @@ main(int argc, char *argv[])
 					   xlog_dir);
 				fflush(stdout);
 
-				if (mkdir_p(xlog_dir, S_IRWXU) != 0)
+				if (pg_mkdir_p(xlog_dir, S_IRWXU) != 0)
 				{
 					fprintf(stderr, _("%s: could not create directory \"%s\": %s\n"),
 							progname, xlog_dir, strerror(errno));
@@ -3015,6 +2855,7 @@ main(int argc, char *argv[])
 
 				made_new_xlogdir = true;
 				break;
+
 			case 1:
 				/* Present but empty, fix permissions and use it */
 				printf(_("fixing permissions on existing directory %s ... "),
@@ -3032,6 +2873,7 @@ main(int argc, char *argv[])
 
 				found_existing_xlogdir = true;
 				break;
+
 			case 2:
 				/* Present and not empty */
 				fprintf(stderr,

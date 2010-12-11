@@ -441,4 +441,10 @@ extern int	pg_get_encoding_from_locale(const char *ctype);
 extern char *inet_net_ntop(int af, const void *src, int bits,
 			  char *dst, size_t size);
 
+/* port/pgcheckdir.c */
+extern int	pg_check_dir(const char *dir);
+
+/* port/pgmkdirp.c */
+extern int	pg_mkdir_p(char *path, int omode);
+
 #endif   /* PG_PORT_H */
