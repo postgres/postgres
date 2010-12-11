@@ -326,13 +326,18 @@ typedef unsigned short mode_t;
 #endif
 
 #ifndef __BORLANDC__
-#define _S_IRWXU	(_S_IREAD | _S_IWRITE | _S_IEXEC)
-#define _S_IXUSR	_S_IEXEC
-#define _S_IWUSR	_S_IWRITE
-#define _S_IRUSR	_S_IREAD
-#define S_IRUSR		_S_IRUSR
-#define S_IWUSR		_S_IWUSR
-#define S_IXUSR		_S_IXUSR
+#define S_IRUSR _S_IREAD
+#define S_IWUSR _S_IWRITE
+#define S_IXUSR _S_IEXEC
+#define S_IRWXU (S_IRUSR | S_IWUSR | S_IXUSR)
+#define S_IRGRP 0
+#define S_IWGRP 0
+#define S_IXGRP 0
+#define S_IRWXG 0
+#define S_IROTH 0
+#define S_IWOTH 0
+#define S_IXOTH 0
+#define S_IRWXO 0
 #define S_ISDIR(m) (((m) & S_IFMT) == S_IFDIR)
 #define S_ISREG(m) (((m) & S_IFMT) == S_IFREG)
 #endif
