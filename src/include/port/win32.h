@@ -315,6 +315,7 @@ extern void pgwin32_unsetenv(const char *);
 
 /* Things that exist in MingW headers, but need to be added to MSVC & BCC */
 #ifdef WIN32_ONLY_COMPILER
+
 #ifndef _WIN64
 typedef long ssize_t;
 #else
@@ -323,24 +324,15 @@ typedef __int64 ssize_t;
 
 #ifndef __BORLANDC__
 typedef unsigned short mode_t;
-#endif
 
-#ifndef __BORLANDC__
 #define S_IRUSR _S_IREAD
 #define S_IWUSR _S_IWRITE
 #define S_IXUSR _S_IEXEC
 #define S_IRWXU (S_IRUSR | S_IWUSR | S_IXUSR)
-#define S_IRGRP 0
-#define S_IWGRP 0
-#define S_IXGRP 0
-#define S_IRWXG 0
-#define S_IROTH 0
-#define S_IWOTH 0
-#define S_IXOTH 0
-#define S_IRWXO 0
+/* see also S_IRGRP etc below */
 #define S_ISDIR(m) (((m) & S_IFMT) == S_IFDIR)
 #define S_ISREG(m) (((m) & S_IFMT) == S_IFREG)
-#endif
+#endif /* __BORLANDC__ */
 
 #define F_OK 0
 #define W_OK 2
@@ -363,10 +355,22 @@ typedef unsigned short mode_t;
 #ifndef O_RANDOM
 #define O_RANDOM		0x0010	/* File access is primarily random */
 #define O_SEQUENTIAL	0x0020	/* File access is primarily sequential */
-#define O_TEMPORARY 0x0040		/* Temporary file bit */
+#define O_TEMPORARY		0x0040	/* Temporary file bit */
 #define O_SHORT_LIVED	0x1000	/* Temporary storage file, try not to flush */
 #define _O_SHORT_LIVED	O_SHORT_LIVED
 #endif   /* ifndef O_RANDOM */
 #endif   /* __BORLANDC__ */
 
-#endif
+#endif /* WIN32_ONLY_COMPILER */
+
+/* These aren't provided by either MingW or MSVC */
+#ifndef __BORLANDC__
+#define S_IRGRP 0
+#define S_IWGRP 0
+#define S_IXGRP 0
+#define S_IRWXG 0
+#define S_IROTH 0
+#define S_IWOTH 0
+#define S_IXOTH 0
+#define S_IRWXO 0
+#endif /* __BORLANDC__ */
