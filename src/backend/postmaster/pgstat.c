@@ -4006,10 +4006,21 @@ pgstat_recv_resetcounter(PgStat_MsgResetcounter *msg, int len)
 
 	dbentry->tables = NULL;
 	dbentry->functions = NULL;
+
+	/*
+	 * Reset database-level stats too.  This should match the initialization
+	 * code in pgstat_get_db_entry().
+	 */
 	dbentry->n_xact_commit = 0;
 	dbentry->n_xact_rollback = 0;
 	dbentry->n_blocks_fetched = 0;
 	dbentry->n_blocks_hit = 0;
+	dbentry->n_tuples_returned = 0;
+	dbentry->n_tuples_fetched = 0;
+	dbentry->n_tuples_inserted = 0;
+	dbentry->n_tuples_updated = 0;
+	dbentry->n_tuples_deleted = 0;
+	dbentry->last_autovac_time = 0;
 
 	memset(&hash_ctl, 0, sizeof(hash_ctl));
 	hash_ctl.keysize = sizeof(Oid);
