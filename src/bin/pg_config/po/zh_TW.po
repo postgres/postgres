@@ -1,16 +1,15 @@
-# Korean message translation file for PostgreSQL pg_config
-# Ioseph Kim <ioseph@uri.sarang.net>, 2004.
+# 2004-12-13 Zhenbang Wei <forth@zbwei.net>
 #
 msgid ""
 msgstr ""
 "Project-Id-Version: PostgreSQL 8.4\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
-"POT-Creation-Date: 2010-09-09 16:34+0000\n"
-"PO-Revision-Date: 2010-09-24 12:26-0400\n"
+"POT-Creation-Date: 2010-09-09 16:27+0000\n"
+"PO-Revision-Date: 2010-09-24 17:05-0400\n"
 "Last-Translator: EnterpriseDB translation team <dev-escalations@enterprisedb.com>\n"
 "Language-Team: EnterpriseDB translation team <dev-escalations@enterprisedb.com>\n"
 "MIME-Version: 1.0\n"
-"Content-Type: text/plain; charset=euc-kr\n"
+"Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=1; plural=0;\n"
 
@@ -18,7 +17,7 @@ msgstr ""
 #: pg_config.c:307 pg_config.c:323 pg_config.c:339 pg_config.c:355
 #, c-format
 msgid "not recorded\n"
-msgstr "ÇØ´ç Á¤º¸ ¾øÀ½\n"
+msgstr "æœªè¨˜éŒ„\n"
 
 #: pg_config.c:411
 #, c-format
@@ -28,13 +27,13 @@ msgid ""
 "\n"
 msgstr ""
 "\n"
-"%s ÇÁ·Î±×·¥Àº ¼³Ä¡µÈ PostgreSQL ¹öÀü¿¡ ´ëÇÑ Á¤º¸¸¦ Á¦°øÇÕ´Ï´Ù.\n"
+"%s é¡¯ç¤ºå·²å®‰è£çš„PostgreSQLè³‡è¨Šã€‚\n"
 "\n"
 
 #: pg_config.c:412
 #, c-format
 msgid "Usage:\n"
-msgstr "»ç¿ë¹ı:\n"
+msgstr "ä½¿ç”¨æ–¹æ³•ï¼š\n"
 
 #: pg_config.c:413
 #, c-format
@@ -48,83 +47,78 @@ msgstr ""
 #: pg_config.c:414
 #, c-format
 msgid "Options:\n"
-msgstr "¿É¼Çµé:\n"
+msgstr "é¸é …ï¼š\n"
 
 #: pg_config.c:415
 #, c-format
 msgid "  --bindir              show location of user executables\n"
-msgstr ""
-"  --bindir              »ç¿ëÀÚ°¡ ½ÇÇàÇÒ ¼ö ÀÖ´Â ÀÀ¿ëÇÁ·Î±×·¥µéÀÌ ÀÖ´Â\n"
-"                        °æ·Î¸¦ º¸¿©ÁÜ\n"
+msgstr "  --bindir              é¡¯ç¤ºåŸ·è¡Œæª”ä½ç½®\n"
 
 #: pg_config.c:416
 #, c-format
 msgid "  --docdir              show location of documentation files\n"
-msgstr "  --docdir              ¹®¼­ ÆÄÀÏµéÀÌ ÀÖ´Â À§Ä¡¸¦ º¸¿©ÁÜ\n"
+msgstr "  --docdir              é¡¯ç¤ºæ–‡ä»¶æª”ä½ç½®\n"
 
 #: pg_config.c:417
 #, c-format
 msgid "  --htmldir             show location of HTML documentation files\n"
-msgstr "  --htmldir             HTML ¹®¼­ ÆÄÀÏÀÇ À§Ä¡¸¦ º¸¿©ÁÜ\n"
+msgstr "  --htmldir             é¡¯ç¤º HTML æ–‡ä»¶æª”ä½ç½®\n"
 
 #: pg_config.c:418
 #, c-format
 msgid ""
 "  --includedir          show location of C header files of the client\n"
 "                        interfaces\n"
-msgstr ""
-"  --includedir          Å¬¶óÀÌ¾ğÆ® ÀÎÅÍÆäÀÌ½ºÀÇ C Çì´õ ÆÄÀÏÀÌ ÀÖ´Â °æ·Î¸¦\n"
-"                        º¸¿©ÁÜ\n"
+msgstr "  --includedir          é¡¯ä½¿ç”¨æˆ¶ç«¯ä»‹é¢Cæ¨™é ­æª”ä½ç½®\n"
 
 #: pg_config.c:420
 #, c-format
 msgid "  --pkgincludedir       show location of other C header files\n"
-msgstr "  --pkgincludedir       ±âÅ¸ C Çì´õ ÆÄÀÏ À§Ä¡¸¦ º¸¿©ÁÜ\n"
+msgstr "  --pkgincludedir       é¡¯ç¤ºå…¶ä»– C æ¨™é ­æª”ä½ç½®\n"
 
 #: pg_config.c:421
 #, c-format
 msgid ""
 "  --includedir-server   show location of C header files for the server\n"
-msgstr "  --includedir-server   ¼­¹ö¿ë C Çì´õ ÆÄÀÏ °æ·Î¸¦ º¸¿©ÁÜ\n"
+msgstr "  --includedir-server   é¡¯ç¤ºä¼ºæœå™¨Cæ¨™é ­æª”ä½ç½®\n"
 
 #: pg_config.c:422
 #, c-format
 msgid "  --libdir              show location of object code libraries\n"
-msgstr "  --libdir              ¶óÀÌºê·¯¸® °æ·Î¸¦ º¸¿©ÁÜ\n"
+msgstr "  --libdir              é¡¯ç¤ºç¨‹å¼åº«ä½ç½®\n"
 
 #: pg_config.c:423
 #, c-format
 msgid "  --pkglibdir           show location of dynamically loadable modules\n"
-msgstr "  --pkglibdir           µ¿Àû È£Ãâ °¡´É ¸ğµâÀÇ °æ·Î¸¦ º¸¿©ÁÜ\n"
+msgstr "  --pkglibdir           é¡¯ç¤ºå¯å‹•æ…‹è¼‰å…¥æ¨¡çµ„ä½ç½®\n"
 
 #: pg_config.c:424
 #, c-format
 msgid "  --localedir           show location of locale support files\n"
-msgstr "  --localedir           ·ÎÄÉÀÎ Áö¿ø ÆÄÀÏµéÀÇ À§Ä¡¸¦ º¸¿©ÁÜ\n"
+msgstr "  --localedir           é¡¯ç¤ºå€åŸŸæ”¯æ´æª”ä½ç½®\n"
 
 #: pg_config.c:425
 #, c-format
 msgid "  --mandir              show location of manual pages\n"
-msgstr "  --mandir              ¸ÇÆäÀÌÁö À§Ä¡¸¦ º¸¿©ÁÜ\n"
+msgstr "  --mandir              é¡¯ç¤ºæ‰‹å†Šé é¢ä½ç½®\n"
 
 #: pg_config.c:426
 #, c-format
 msgid ""
 "  --sharedir            show location of architecture-independent support "
 "files\n"
-msgstr ""
-"  --sharedir            °¢Á¾ °ø¿ëÀ¸·Î »ç¿ëµÇ´Â share ÆÄÀÏµéÀÇ À§Ä¡¸¦ º¸¿©ÁÜ\n"
+msgstr "  --sharedir            é¡¯ç¤ºèˆ‡æ¶æ§‹ç„¡é—œçš„æ”¯æ´æª”ä½ç½®\n"
 
 #: pg_config.c:427
 #, c-format
 msgid ""
 "  --sysconfdir          show location of system-wide configuration files\n"
-msgstr "  --sysconfdir          ½Ã½ºÅÛ Àü¿ª È¯°æ ¼³Á¤ ÆÄÀÏÀÇ À§Ä¡¸¦ º¸¿©ÁÜ\n"
+msgstr "  --sysconfdir          é¡¯ç¤ºç³»çµ±å±¤ç´šè¨­å®šæª”ä½ç½®\n"
 
 #: pg_config.c:428
 #, c-format
 msgid "  --pgxs                show location of extension makefile\n"
-msgstr "  --pgxs                È®Àå makefile °æ·Î¸¦ º¸¿©ÁÜ\n"
+msgstr "  --pgxs                é¡¯ç¤ºå¤–æ›ç¨‹å¼makefileä½ç½®\n"
 
 #: pg_config.c:429
 #, c-format
@@ -132,62 +126,60 @@ msgid ""
 "  --configure           show options given to \"configure\" script when\n"
 "                        PostgreSQL was built\n"
 msgstr ""
-"  --configure           PostgreSQL ¸¸µé ¶§ »ç¿ëÇÑ \"configure\" ½ºÅ©¸³Æ®ÀÇ\n"
-"                        ¿É¼ÇµéÀ» º¸¿©ÁÜ\n"
+"  --configure           é¡¯ç¤ºç·¨è­¯PostgreSQLæ™‚'configure'å‘½ä»¤æ\n"
+"                        æ‰€ä½¿ç”¨çš„åƒæ•¸\n"
 
 #: pg_config.c:431
 #, c-format
 msgid "  --cc                  show CC value used when PostgreSQL was built\n"
-msgstr "  --cc                  PostgreSQL ¸¸µé ¶§ »ç¿ëµÈ CC °ªÀ» º¸¿©ÁÜ\n"
+msgstr "  --cc                  é¡¯ç¤ºå»ºç«‹ PostgreSQL æ™‚ä½¿ç”¨çš„ CC å€¼\n"
 
 #: pg_config.c:432
 #, c-format
 msgid ""
 "  --cppflags            show CPPFLAGS value used when PostgreSQL was built\n"
-msgstr "  --cppflags            PostgreSQL ¸¸µé ¶§ ÁöÁ¤ÇÑ CPPFLAGS °ª\n"
+msgstr "  --cppflags            é¡¯ç¤ºå»ºç«‹ PostgreSQL æ™‚ä½¿ç”¨çš„ CPPFLAGS å€¼\n"
 
 #: pg_config.c:433
 #, c-format
 msgid ""
 "  --cflags              show CFLAGS value used when PostgreSQL was built\n"
-msgstr ""
-"  --cflags              PostgreSQL ¸¸µé ¶§, »ç¿ëÇÑ CFLAGS °ªÀ» º¸¿©ÁÜ\n"
+msgstr "  --cflags              é¡¯ç¤ºå»ºç«‹ PostgreSQL æ™‚ä½¿ç”¨çš„ CFLAGS å€¼\n"
 
 #: pg_config.c:434
 #, c-format
 msgid ""
 "  --cflags_sl           show CFLAGS_SL value used when PostgreSQL was built\n"
-msgstr "  --cflags_sl           PostgreSQL ¸¸µé ¶§ ÁöÁ¤ÇÑ CFLAGS_SL °ª\n"
+msgstr "  --cflags_sl           é¡¯ç¤ºå»ºç«‹ PostgreSQL æ™‚ä½¿ç”¨çš„ CFLAGS_SL å€¼\n"
 
 #: pg_config.c:435
 #, c-format
 msgid ""
 "  --ldflags             show LDFLAGS value used when PostgreSQL was built\n"
-msgstr ""
-"  --ldflags             PostgreSQL ¸¸µé ¶§, »ç¿ëÇÑ LDFLAGS °ªÀ» º¸¿©ÁÜ\n"
+msgstr "  --ldflags             é¡¯ç¤ºå»ºç«‹ PostgreSQL æ™‚ä½¿ç”¨çš„ LDFLAGS å€¼\n"
 
 #: pg_config.c:436
 #, c-format
 msgid ""
 "  --ldflags_sl          show LDFLAGS_SL value used when PostgreSQL was "
 "built\n"
-msgstr "  --ldflags_sl          PostgreSQL ¸¸µé ¶§ ÁöÁ¤ÇÑ LDFLAGS_SL °ª\n"
+msgstr "  --ldflags_sl          é¡¯ç¤ºå»ºç«‹ PostgreSQL æ™‚ä½¿ç”¨çš„ LDFLAGS_SL å€¼\n"
 
 #: pg_config.c:437
 #, c-format
 msgid ""
 "  --libs                show LIBS value used when PostgreSQL was built\n"
-msgstr "  --libs                PostgreSQL ¸¸µé ¶§, »ç¿ëÇÑ LIBS °ªÀ» º¸¿©ÁÜ\n"
+msgstr "  --libs                é¡¯ç¤ºå»ºç«‹ PostgreSQL æ™‚ä½¿ç”¨çš„ LIBS å€¼\n"
 
 #: pg_config.c:438
 #, c-format
 msgid "  --version             show the PostgreSQL version\n"
-msgstr "  --version             PostgreSQL ¹öÀüÀ» º¸¿©ÁÜ\n"
+msgstr "  --version             é¡¯ç¤º PostgreSQL ç‰ˆæœ¬\n"
 
 #: pg_config.c:439
 #, c-format
 msgid "  --help                show this help, then exit\n"
-msgstr "  --help                ÀÌ µµ¿ò¸»À» º¸¿©ÁÖ°í ¸¶Ä§\n"
+msgstr "  --help                é¡¯ç¤ºæœ¬èªªæ˜ï¼Œç„¶å¾ŒçµæŸ\n"
 
 #: pg_config.c:440
 #, c-format
@@ -197,80 +189,103 @@ msgid ""
 "\n"
 msgstr ""
 "\n"
-"¸í·ÉÇà ÀÎ¼ö°¡ ¾øÀ¸¸é ¸ğµç Ç×¸ñ¿¡ ´ëÇÑ Á¤º¸¸¦ º¸¿© ÁÜ\n"
+"å·²é¡¯ç¤ºæ‰€æœ‰å·²çŸ¥é …ç›® (ä¸å«åƒæ•¸)ã€‚\n"
 "\n"
 
 #: pg_config.c:441
 #, c-format
 msgid "Report bugs to <pgsql-bugs@postgresql.org>.\n"
-msgstr "¿À·ùº¸°í: <pgsql-bugs@postgresql.org>.\n"
+msgstr "å›å ±éŒ¯èª¤è‡³<pgsql-bugs@postgresql.org>ã€‚\n"
 
+# postmaster/postmaster.c:512 postmaster/postmaster.c:525
 #: pg_config.c:447
 #, c-format
 msgid "Try \"%s --help\" for more information.\n"
-msgstr "º¸´Ù ÀÚ¼¼ÇÑ Á¤º¸°¡ ÇÊ¿äÇÏ¸é, \"%s --help\"\n"
+msgstr "åŸ·è¡Œ\"%s --help\"é¡¯ç¤ºæ›´å¤šè³‡è¨Šã€‚\n"
 
 #: pg_config.c:486
 #, c-format
 msgid "%s: could not find own program executable\n"
-msgstr "%s: ½ÇÇà °¡´ÉÇÑ ÇÁ·Î±×·¥À» Ã£À» ¼ö ¾ø½À´Ï´Ù\n"
+msgstr "%sï¼šæ‰¾ä¸åˆ°ç¨‹å¼åŸ·è¡Œæª”\n"
 
 #: pg_config.c:509
 #, c-format
 msgid "%s: invalid argument: %s\n"
-msgstr "%s: Àß¸øµÈ ÀÎ¼ö: %s\n"
+msgstr "%sï¼šç„¡æ•ˆçš„åƒæ•¸ï¼š%s\n"
 
 #: ../../port/exec.c:195 ../../port/exec.c:309 ../../port/exec.c:352
 #, c-format
 msgid "could not identify current directory: %s"
-msgstr "ÇöÀç µğ·ºÅÍ¸®¸¦ ¾Ë ¼ö ¾øÀ½: %s"
+msgstr "ç„¡æ³•è­˜åˆ¥ç›®å‰çš„ç›®éŒ„ï¼š%s"
 
+# command.c:122
 #: ../../port/exec.c:214
 #, c-format
 msgid "invalid binary \"%s\""
-msgstr "Àß¸øµÈ ¹ÙÀÌ³Ê¸® ÆÄÀÏ: \"%s\""
+msgstr "ç„¡æ•ˆçš„äºŒé€²åˆ¶ç¢¼ \"%s\""
 
+# command.c:1103
 #: ../../port/exec.c:263
 #, c-format
 msgid "could not read binary \"%s\""
-msgstr "\"%s\" ¹ÙÀÌ³Ê¸® ÆÄÀÏÀ» ÀĞÀ» ¼ö ¾øÀ½"
+msgstr "ç„¡æ³•è®€å–äºŒé€²åˆ¶ç¢¼ \"%s\""
 
 #: ../../port/exec.c:270
 #, c-format
 msgid "could not find a \"%s\" to execute"
-msgstr "½ÇÇàÇÒ \"%s\" ÆÄÀÏ Ã£À» ¼ö ¾øÀ½"
+msgstr "æœªèƒ½æ‰¾åˆ°ä¸€å€‹ \"%s\" ä¾†åŸ·è¡Œ"
 
 #: ../../port/exec.c:325 ../../port/exec.c:361
 #, c-format
 msgid "could not change directory to \"%s\""
-msgstr "\"%s\" µğ·ºÅÍ¸®·Î ÀÌµ¿ ÇÒ ¼ö ¾øÀ½"
+msgstr "ç„¡æ³•åˆ‡æ›ç›®éŒ„è‡³\"%s\""
 
 #: ../../port/exec.c:340
 #, c-format
 msgid "could not read symbolic link \"%s\""
-msgstr "\"%s\" ½É¹ú¸¯ ¸µÅ©¸¦ ÀĞÀ» ¼ö ¾øÀ½"
+msgstr "ç„¡æ³•è®€å–ç¬¦è™Ÿé€£çµ\"%s\""
 
 #: ../../port/exec.c:586
 #, c-format
 msgid "child process exited with exit code %d"
-msgstr "ÇÏÀ§ ÇÁ·Î¼¼½º°¡ Á¾·áµÇ¾úÀ½, Á¾·á ÄÚµå %d"
+msgstr "å­è¡Œç¨‹çµæŸï¼ŒçµæŸä»£ç¢¼ %d"
 
 #: ../../port/exec.c:590
 #, c-format
 msgid "child process was terminated by exception 0x%X"
-msgstr "0x%X ¿¹¿ÜÃ³¸®¿¡ ÀÇÇØ ÇÏÀ§ ÇÁ·Î¼¼½º°¡ Á¾·áµÇ¾úÀ½"
+msgstr "å­é€²ç¨‹è¢«ä¾‹å¤–(exception) 0x%X çµ‚æ­¢"
 
 #: ../../port/exec.c:599
 #, c-format
 msgid "child process was terminated by signal %s"
-msgstr "%s ½Ã±×³ÎÀÌ °¨ÁöµÇ¾î ÇÏÀ§ ÇÁ·Î¼¼½º°¡ Á¾·áµÇ¾úÀ½"
+msgstr "å­é€²ç¨‹è¢«ä¿¡è™Ÿ %s çµ‚æ­¢"
 
 #: ../../port/exec.c:602
 #, c-format
 msgid "child process was terminated by signal %d"
-msgstr "ÇÏÀ§ ÇÁ·Î¼¼½º°¡ Á¾·áµÇ¾úÀ½, ½Ã±×³Î %d"
+msgstr "å­è¡Œç¨‹è¢«ä¿¡è™Ÿ %d çµæŸ"
 
 #: ../../port/exec.c:606
 #, c-format
 msgid "child process exited with unrecognized status %d"
-msgstr "ÇÏÀ§ ÇÁ·Î¼¼½º°¡ Á¾·áµÇ¾úÀ½, ¾Ë¼ö ¾ø´Â »óÅÂ %d"
+msgstr "å­è¡Œç¨‹çµæŸï¼Œä¸æ˜ç‹€æ…‹ä»£ç¢¼ %d"
+
+#~ msgid ""
+#~ "  %s OPTION...\n"
+#~ "\n"
+#~ msgstr ""
+#~ "  %s é¸é …...\n"
+#~ "\n"
+
+#~ msgid ""
+#~ "\n"
+#~ "Try \"%s --help\" for more information\n"
+#~ msgstr ""
+#~ "\n"
+#~ "åŸ·è¡Œ\"%s --help\"å–å¾—æ›´å¤šè³‡è¨Š\n"
+
+#~ msgid "%s: argument required\n"
+#~ msgstr "%sï¼šä¸èƒ½çœç•¥åƒæ•¸\n"
+
+#~ msgid "%s: could not find own executable\n"
+#~ msgstr "%sï¼šæ‰¾ä¸åˆ°åŸ·è¡Œæª”\n"

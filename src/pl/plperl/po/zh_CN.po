@@ -1,0 +1,157 @@
+# LANGUAGE message translation file for plperl
+# Copyright (C) 2010 PostgreSQL Global Development Group
+# This file is distributed under the same license as the PostgreSQL package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2010.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: PostgreSQL 9.0\n"
+"Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
+"POT-Creation-Date: 2010-10-15 16:49+0000\n"
+"PO-Revision-Date: 2010-10-01 12:53+0800\n"
+"Last-Translator: Weibin <ssmei_2000@yahoo.com>\n"
+"Language-Team: Weibin <ssmei_2000@yahoo.com>\n"
+"Language: \n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+
+#: plperl.c:311
+msgid ""
+"If true, trusted and untrusted Perl code will be compiled in strict mode."
+msgstr "如果为真的话，那么信任和非信任的Perl代码将以限制模式编译."
+
+#: plperl.c:325
+msgid ""
+"Perl initialization code to execute when a Perl interpreter is initialized."
+msgstr "当初始化一个Perl解释器时候执行Perl初始化代码"
+
+#: plperl.c:347
+msgid "Perl initialization code to execute once when plperl is first used."
+msgstr "在第一次使用plperl的时候执行一次Perl初始化代码"
+
+#: plperl.c:355
+msgid "Perl initialization code to execute once when plperlu is first used."
+msgstr "在plperlu第一次使用的时候执行一次Perl初始化代码"
+
+#: plperl.c:571 plperl.c:730 plperl.c:735 plperl.c:838 plperl.c:851
+#: plperl.c:893 plperl.c:914 plperl.c:1451 plperl.c:1557 plperl.c:1613
+#, c-format
+msgid "%s"
+msgstr "%s"
+
+#: plperl.c:572
+msgid "while executing PostgreSQL::InServer::SPI::bootstrap"
+msgstr "同时在执行PostgreSQL::InServer::SPI::bootstrap"
+
+#: plperl.c:731
+msgid "while parsing Perl initialization"
+msgstr "同时在解析Perl初始化"
+
+#: plperl.c:736
+msgid "while running Perl initialization"
+msgstr "同时在运行Perl初始化"
+
+#: plperl.c:839
+msgid "while executing PLC_TRUSTED"
+msgstr "同时在执行PLC_TRUSTED"
+
+#: plperl.c:852
+msgid "while executing utf8fix"
+msgstr "同时在执行utf8fix"
+
+#: plperl.c:894
+msgid "while executing plperl.on_plperl_init"
+msgstr "同时在执行plperl.on_plperl_init"
+
+#: plperl.c:915
+msgid "while executing plperl.on_plperlu_init"
+msgstr "同时在执行plperl.on_plperlu_init"
+
+#: plperl.c:957 plperl.c:1154
+#, c-format
+msgid "Perl hash contains nonexistent column \"%s\""
+msgstr "Perl的哈希功能包含不存在的列\"%s\""
+
+#: plperl.c:1130
+msgid "$_TD->{new} does not exist"
+msgstr "$_TD->{new}不存在"
+
+#: plperl.c:1134
+msgid "$_TD->{new} is not a hash reference"
+msgstr "$_TD->{new}不是一个哈希引用"
+
+#: plperl.c:1368 plperl.c:2072
+#, c-format
+msgid "PL/Perl functions cannot return type %s"
+msgstr "PL/Perl函数无法返回类型%s"
+
+#: plperl.c:1380 plperl.c:2118
+#, c-format
+msgid "PL/Perl functions cannot accept type %s"
+msgstr "PL/Perl functions无法使用类型%s"
+
+#: plperl.c:1455
+#, c-format
+msgid "didn't get a CODE reference from compiling function \"%s\""
+msgstr "没有从正在编译的函数 \"%s\"得到CODE参考"
+
+#: plperl.c:1665
+msgid "set-valued function called in context that cannot accept a set"
+msgstr "集值函数在不能使用集合的环境中调用"
+
+#: plperl.c:1708
+msgid ""
+"set-returning PL/Perl function must return reference to array or use "
+"return_next"
+msgstr "返回集合的PL/Perl函数必须返回对数组的引用或者使用return_next"
+
+#: plperl.c:1741
+msgid "composite-returning PL/Perl function must return reference to hash"
+msgstr "返回组合类型值的PL/Perl函数必须返回对哈希的引用"
+
+#: plperl.c:1750
+msgid ""
+"function returning record called in context that cannot accept type record"
+msgstr "返回值类型是记录的函数在不接受使用记录类型的环境中调用"
+
+#: plperl.c:1870
+msgid "ignoring modified row in DELETE trigger"
+msgstr "在DELETE触发器中忽略已修改的记录"
+
+#: plperl.c:1878
+msgid ""
+"result of PL/Perl trigger function must be undef, \"SKIP\", or \"MODIFY\""
+msgstr "PL/Perl 触发器函数的结果必须是undef, \"SKIP\", 或 \"MODIFY\""
+
+#: plperl.c:2003 plperl.c:2009
+msgid "out of memory"
+msgstr "内存用尽"
+
+#: plperl.c:2063
+msgid "trigger functions can only be called as triggers"
+msgstr "触发器函数只能以触发器的形式调用"
+
+#: plperl.c:2382
+msgid "cannot use return_next in a non-SETOF function"
+msgstr "不能在非SETOF函数中使用return_next"
+
+#: plperl.c:2388
+msgid ""
+"SETOF-composite-returning PL/Perl function must call return_next with "
+"reference to hash"
+msgstr "返回SETOF-组合类型值的PL/Perl函数必须调用带有对哈希引用的return_next"
+
+#: plperl.c:3182
+#, c-format
+msgid "PL/Perl function \"%s\""
+msgstr "PL/Perl函数\"%s\""
+
+#: plperl.c:3194
+#, c-format
+msgid "compilation of PL/Perl function \"%s\""
+msgstr "编译PL/Perl函数\"%s\""
+
+#: plperl.c:3203
+msgid "PL/Perl anonymous code block"
+msgstr "PL/Perl匿名代码块"
