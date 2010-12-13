@@ -1629,12 +1629,11 @@
      </row>
 
      <row>
-      <entry><structfield>relistemp</structfield></entry>
+      <entry><structfield>relpersistence</structfield></entry>
       <entry><type>bool</type></entry>
       <entry></entry>
       <entry>
-       True if this table is a temporary relation.  If so, only the creating
-       session can safely access its contents.
+       <literal>p</> = permanent table, <literal>t</> = temporary table
       </entry>
      </row>
 
