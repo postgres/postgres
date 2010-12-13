@@ -1,7 +1,7 @@
 # German message translation file for pg_dump and friends
 # Peter Eisentraut <peter_e@gmx.net>, 2001 - 2009.
 #
-# pgtranslation Id: pg_dump.po,v 1.3.2.4 2009/01/16 08:05:42 petere Exp $
+# pgtranslation Id: pg_dump.po,v 1.3.2.5 2010/12/09 19:31:44 petere Exp $
 #
 # Use these quotes: »%s«
 #
@@ -10,7 +10,7 @@ msgstr ""
 "Project-Id-Version: PostgreSQL 8.2\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2009-01-15 19:26+0000\n"
-"PO-Revision-Date: 2009-01-16 00:53+0200\n"
+"PO-Revision-Date: 2010-12-09 21:30+0200\n"
 "Last-Translator: Peter Eisentraut <peter_e@gmx.net>\n"
 "Language-Team: German <peter_e@gmx.net>\n"
 "MIME-Version: 1.0\n"
@@ -1618,8 +1618,7 @@ msgstr ""
 #: pg_restore.c:392
 #, c-format
 msgid "  -n, --schema=NAME        restore only objects in this schema\n"
-msgstr ""
-"  -s, --schema=NAME        nur Objekte in diesem Schema wiederherstellen\n"
+msgstr "  -n, --schema=NAME        nur Objekte in diesem Schema wiederherstellen\n"
 
 #: pg_restore.c:393 pg_dumpall.c:386
 #, c-format
