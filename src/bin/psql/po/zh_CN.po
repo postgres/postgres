@@ -1,14 +1,16 @@
 msgid ""
 msgstr ""
-"Project-Id-Version: PostgreSQL 8.3\n"
+"Project-Id-Version: psql (PostgreSQL 8.4)\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
-"POT-Creation-Date: 2010-02-19 01:53+0000\n"
+"POT-Creation-Date: 2010-10-01 14:53+0000\n"
 "PO-Revision-Date: 2010-03-30 16:37+0800\n"
 "Last-Translator: Weibin <ssmei_2000@yahoo.com>\n"
-"Language-Team: The PostgreSQL Global Development Group <Kuo.ChaoYi@gmail.com>\n"
+"Language-Team: Chinese (Simplified)\n"
+"com>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
+"Language: zh_CN\n"
 "X-Poedit-Language: Chinese\n"
 "X-Poedit-Country: CHINA\n"
 "X-Poedit-SourceCharset: utf-8\n"
@@ -46,17 +48,14 @@ msgid "\\%s: could not change directory to \"%s\": %s\n"
 msgstr "\\%s: 无法切换目录至 \"%s\": %s\n"
 
 # common.c:930
-#: command.c:316
-#: common.c:935
+#: command.c:316 common.c:935
 #, c-format
 msgid "Time: %.3f ms\n"
 msgstr "时间：%.3f ms\n"
 
 # command.c:370
 # command.c:760
-#: command.c:469
-#: command.c:497
-#: command.c:1037
+#: command.c:469 command.c:497 command.c:1037
 msgid "no query buffer\n"
 msgstr "没有查询缓存区\n"
 
@@ -77,14 +76,8 @@ msgstr "%s：无效的编码名称或找不到转换程序\n"
 # command.c:612
 # command.c:740
 # command.c:771
-#: command.c:661
-#: command.c:695
-#: command.c:709
-#: command.c:726
-#: command.c:830
-#: command.c:880
-#: command.c:1017
-#: command.c:1048
+#: command.c:661 command.c:695 command.c:709 command.c:726 command.c:830
+#: command.c:880 command.c:1017 command.c:1048
 #, c-format
 msgid "\\%s: missing required argument\n"
 msgstr "\\%s：缺少所需参数\n"
@@ -118,9 +111,7 @@ msgstr "密码加密失败.\n"
 
 # command.c:696
 # command.c:745
-#: command.c:859
-#: command.c:960
-#: command.c:1022
+#: command.c:859 command.c:960 command.c:1022
 #, c-format
 msgid "\\%s: error\n"
 msgstr "\\%s：错误\n"
@@ -140,14 +131,8 @@ msgstr "书写历程到档案 \"%s/%s\".\n"
 # common.c:85
 # common.c:99
 # mainloop.c:71
-#: command.c:951
-#: common.c:52
-#: common.c:66
-#: input.c:198
-#: mainloop.c:70
-#: mainloop.c:228
-#: print.c:61
-#: print.c:75
+#: command.c:951 common.c:52 common.c:66 input.c:198 mainloop.c:70
+#: mainloop.c:228 print.c:61 print.c:75
 #, c-format
 msgid "out of memory\n"
 msgstr "记忆体用尽\n"
@@ -175,19 +160,9 @@ msgstr "停止计时功能."
 # common.c:170
 # copy.c:530
 # copy.c:575
-#: command.c:1065
-#: command.c:1085
-#: command.c:1584
-#: command.c:1591
-#: command.c:1600
-#: command.c:1610
-#: command.c:1619
-#: command.c:1633
-#: command.c:1650
-#: command.c:1683
-#: common.c:137
-#: copy.c:517
-#: copy.c:584
+#: command.c:1065 command.c:1085 command.c:1584 command.c:1591 command.c:1600
+#: command.c:1610 command.c:1619 command.c:1633 command.c:1650 command.c:1683
+#: common.c:137 copy.c:517 copy.c:584
 #, c-format
 msgid "%s: %s\n"
 msgstr "%s: %s\n"
@@ -196,8 +171,7 @@ msgstr "%s: %s\n"
 # command.c:939
 # startup.c:187
 # startup.c:205
-#: command.c:1167
-#: startup.c:159
+#: command.c:1167 startup.c:159
 msgid "Password: "
 msgstr "口令："
 
@@ -205,9 +179,7 @@ msgstr "口令："
 # command.c:939
 # startup.c:187
 # startup.c:205
-#: command.c:1174
-#: startup.c:162
-#: startup.c:164
+#: command.c:1174 startup.c:162 startup.c:164
 #, c-format
 msgid "Password for user %s: "
 msgstr "用户 %s 的口令："
@@ -217,17 +189,8 @@ msgstr "用户 %s 的口令："
 # common.c:605
 # common.c:660
 # common.c:903
-#: command.c:1270
-#: command.c:2113
-#: common.c:183
-#: common.c:460
-#: common.c:525
-#: common.c:811
-#: common.c:836
-#: common.c:920
-#: copy.c:655
-#: copy.c:700
-#: copy.c:829
+#: command.c:1270 command.c:2131 common.c:183 common.c:460 common.c:525
+#: common.c:811 common.c:836 common.c:920 copy.c:655 copy.c:700 copy.c:829
 #, c-format
 msgid "%s"
 msgstr "%s"
@@ -327,138 +290,141 @@ msgid "could not open temporary file \"%s\": %s\n"
 msgstr "无法开启暂存档 \"%s\": %s\n"
 
 # command.c:1340
-#: command.c:1767
-msgid "\\pset: allowed formats are unaligned, aligned, wrapped, html, latex, troff-ms\n"
-msgstr "\\pset：可以使用的格式有unaligned, aligned, wrapped, html, latex, troff-ms\n"
+#: command.c:1785
+msgid ""
+"\\pset: allowed formats are unaligned, aligned, wrapped, html, latex, troff-"
+"ms\n"
+msgstr ""
+"\\pset：可以使用的格式有unaligned, aligned, wrapped, html, latex, troff-ms\n"
 
 # command.c:1345
-#: command.c:1772
+#: command.c:1790
 #, c-format
 msgid "Output format is %s.\n"
 msgstr "输出格式是 %s。\n"
 
 # command.c:1355
-#: command.c:1782
+#: command.c:1800
 #, c-format
 msgid "Border style is %d.\n"
 msgstr "边界风格是 %d。\n"
 
 # command.c:1364
-#: command.c:1794
+#: command.c:1812
 #, c-format
 msgid "Expanded display is on.\n"
 msgstr "扩展显示已打开。\n"
 
 # command.c:1365
-#: command.c:1795
+#: command.c:1813
 #, c-format
 msgid "Expanded display is off.\n"
 msgstr "扩展显示已关闭。\n"
 
-#: command.c:1808
+#: command.c:1826
 msgid "Showing locale-adjusted numeric output."
 msgstr "显示语言环境调整后的数字输出。"
 
-#: command.c:1810
+#: command.c:1828
 msgid "Locale-adjusted numeric output is off."
 msgstr "语言环境调整后的数值输出关闭。"
 
 # command.c:1377
-#: command.c:1823
+#: command.c:1841
 #, c-format
 msgid "Null display is \"%s\".\n"
 msgstr " \"%s\" 是空值显示。\n"
 
 # command.c:1389
-#: command.c:1835
+#: command.c:1853
 #, c-format
 msgid "Field separator is \"%s\".\n"
 msgstr "栏位分隔符号是 \"%s\"。\n"
 
 # command.c:1403
-#: command.c:1849
+#: command.c:1867
 #, c-format
 msgid "Record separator is <newline>."
 msgstr "记录分隔符号是 <newline>。"
 
 # command.c:1405
-#: command.c:1851
+#: command.c:1869
 #, c-format
 msgid "Record separator is \"%s\".\n"
 msgstr "记录分隔符号是 \"%s\"。\n"
 
 # command.c:1416
-#: command.c:1865
+#: command.c:1883
 msgid "Showing only tuples."
 msgstr "只显示 Tuples。"
 
 # command.c:1418
-#: command.c:1867
+#: command.c:1885
 msgid "Tuples only is off."
 msgstr "关闭只显示 Tuples。"
 
 # command.c:1434
-#: command.c:1883
+#: command.c:1901
 #, c-format
 msgid "Title is \"%s\".\n"
 msgstr "标题是 \"%s\"。\n"
 
 # command.c:1436
-#: command.c:1885
+#: command.c:1903
 #, c-format
 msgid "Title is unset.\n"
 msgstr "无标题。\n"
 
 # command.c:1452
-#: command.c:1901
+#: command.c:1919
 #, c-format
 msgid "Table attribute is \"%s\".\n"
 msgstr "资料表属性是 \"%s\"。\n"
 
 # command.c:1454
-#: command.c:1903
+#: command.c:1921
 #, c-format
 msgid "Table attributes unset.\n"
 msgstr "未设置资料表属性。\n"
 
 # command.c:1470
-#: command.c:1924
+#: command.c:1942
 msgid "Pager is used for long output."
 msgstr "显示大量资料时使用分页器。"
 
 # command.c:1472
-#: command.c:1926
+#: command.c:1944
 msgid "Pager is always used."
 msgstr "总是使用分页器。"
 
 # command.c:1474
-#: command.c:1928
+#: command.c:1946
 msgid "Pager usage is off."
 msgstr "不使用分页器。"
 
 # command.c:1485
-#: command.c:1942
+#: command.c:1960
 msgid "Default footer is on."
 msgstr "打开预设步进器(Footer)。"
 
 # command.c:1487
-#: command.c:1944
+#: command.c:1962
 msgid "Default footer is off."
 msgstr "关闭预设步进器(Footer)。"
 
-#: command.c:1955
+#: command.c:1973
 #, c-format
 msgid "Target width for \"wrapped\" format is %d.\n"
 msgstr "对于\"wrapped\"格式的目标长度是%d.\n"
 
 # command.c:1493
-#: command.c:1960
+#: command.c:1978
 #, c-format
 msgid "\\pset: unknown option: %s\n"
 msgstr "\\pset: 不明选项: %s\n"
 
 # command.c:1532
-#: command.c:2014
+#: command.c:2032
 msgid "\\!: failed\n"
 msgstr "\\!：失败\n"
 
@@ -495,14 +461,11 @@ msgstr "完成。\n"
 
 # common.c:636
 # common.c:871
-#: common.c:493
-#: common.c:768
+#: common.c:493 common.c:768
 msgid "You are currently not connected to a database.\n"
 msgstr "你目前没有与资料库连线。\n"
 
-#: common.c:499
-#: common.c:506
-#: common.c:794
+#: common.c:499 common.c:506 common.c:794
 #, c-format
 msgid ""
 "********* QUERY **********\n"
@@ -518,25 +481,31 @@ msgstr ""
 # common.c:691
 #: common.c:558
 #, c-format
-msgid "Asynchronous notification \"%s\" received from server process with PID %d.\n"
+msgid ""
+"Asynchronous notification \"%s\" received from server process with PID %d.\n"
 msgstr "收到来自伺服器 \"%s\" 进程 PID %d 非同步通知。\n"
 
 # common.c:879
 #: common.c:776
 #, c-format
 msgid ""
-"***(Single step mode: verify command)*******************************************\n"
+"***(Single step mode: verify command)"
+"*******************************************\n"
 "%s\n"
-"***(press return to proceed or enter x and return to cancel)********************\n"
+"***(press return to proceed or enter x and return to cancel)"
+"********************\n"
 msgstr ""
-"***(单步(Single step)模式：验证命令)*******************************************\n"
+"***(单步(Single step)模式：验证命令)"
+"*******************************************\n"
 "%s\n"
 "***(按 Enter 键继续或键入 x 来取消)********************\n"
 
 # describe.c:117
 #: common.c:827
 #, c-format
-msgid "The server (version %d.%d) does not support savepoints for ON_ERROR_ROLLBACK.\n"
+msgid ""
+"The server (version %d.%d) does not support savepoints for "
+"ON_ERROR_ROLLBACK.\n"
 msgstr "服务器(版本 %d.%d)不支持保存点(Savepoint)ON_ERROR_ROLLBACK。\n"
 
 # copy.c:122
@@ -568,8 +537,7 @@ msgid "\\copy: %s"
 msgstr "\\copy：%s"
 
 # copy.c:566
-#: copy.c:558
-#: copy.c:572
+#: copy.c:558 copy.c:572
 #, c-format
 msgid "\\copy: unexpected response (%d)\n"
 msgstr "\\copy：意外回应 (%d)\n"
@@ -579,8 +547,7 @@ msgid "trying to exit copy mode"
 msgstr "正在尝试退出"
 
 # command.c:1103
-#: copy.c:630
-#: copy.c:640
+#: copy.c:630 copy.c:640
 #, c-format
 msgid "could not write COPY data: %s\n"
 msgstr "无法写入 COPY 资料：%s\n"
@@ -652,13 +619,16 @@ msgstr "通用选项:\n"
 # help.c:94
 #: help.c:95
 #, c-format
-msgid "  -c, --command=COMMAND    run only single command (SQL or internal) and exit\n"
+msgid ""
+"  -c, --command=COMMAND    run only single command (SQL or internal) and "
+"exit\n"
 msgstr "  -c,--command=命令        执行单一命令(SQL或内部指令)然后结束\n"
 
 # help.c:93
 #: help.c:96
 #, c-format
-msgid "  -d, --dbname=DBNAME      database name to connect to (default: \"%s\")\n"
+msgid ""
+"  -d, --dbname=DBNAME      database name to connect to (default: \"%s\")\n"
 msgstr " -d, --dbname=数据库名称   指定要连接的数据库 (缺省：\"%s\")\n"
 
 # help.c:95
@@ -733,7 +703,8 @@ msgstr "  -e, --echo-queries      显示发送给服务器的命令\n"
 # help.c:105
 #: help.c:110
 #, c-format
-msgid "  -E, --echo-hidden        display queries that internal commands generate\n"
+msgid ""
+"  -E, --echo-hidden        display queries that internal commands generate\n"
 msgstr " -E, --echo-hidden        显示内部命令产生的查询\n"
 
 # help.c:107
@@ -745,7 +716,8 @@ msgstr "  -L, --log-file=文件名  将会话日志写入文件\n"
 # help.c:108
 #: help.c:112
 #, c-format
-msgid "  -n, --no-readline        disable enhanced command line editing (readline)\n"
+msgid ""
+"  -n, --no-readline        disable enhanced command line editing (readline)\n"
 msgstr "  -n, --no-readline       禁用增强命令行编辑功能(readline)\n"
 
 # help.c:107
@@ -757,7 +729,8 @@ msgstr "  -o, --output=FILENAME 将查询结果写入文件(或 |管道)\n"
 # help.c:106
 #: help.c:114
 #, c-format
-msgid "  -q, --quiet              run quietly (no messages, only query output)\n"
+msgid ""
+"  -q, --quiet              run quietly (no messages, only query output)\n"
 msgstr "  -q, --quiet             以沉默模式运行(不显示消息，只有查询结果)\n"
 
 # help.c:109
@@ -769,7 +742,9 @@ msgstr "  -s, --single-step       单步模式 (确认每个查询)\n"
 # help.c:110
 #: help.c:116
 #, c-format
-msgid "  -S, --single-line        single-line mode (end of line terminates SQL command)\n"
+msgid ""
+"  -S, --single-line        single-line mode (end of line terminates SQL "
+"command)\n"
 msgstr "  -S, --single-line        单行模式 (一行就是一条 SQL 命令)\n"
 
 # help.c:112
@@ -807,8 +782,11 @@ msgstr "  -H, --html             HTML 表格输出模式\n"
 # help.c:118
 #: help.c:124
 #, c-format
-msgid "  -P, --pset=VAR[=ARG]     set printing option VAR to ARG (see \\pset command)\n"
-msgstr "  -P, --pset=变量[=参数]    设置将变量打印到参数的选项(查阅 \\pset 命令)\n"
+msgid ""
+"  -P, --pset=VAR[=ARG]     set printing option VAR to ARG (see \\pset "
+"command)\n"
+msgstr ""
+"  -P, --pset=变量[=参数]    设置将变量打印到参数的选项(查阅 \\pset 命令)\n"
 
 # help.c:121
 #: help.c:125
@@ -829,7 +807,9 @@ msgstr "  -t, --tuples-only      只打印记录i\n"
 # help.c:116
 #: help.c:128
 #, c-format
-msgid "  -T, --table-attr=TEXT    set HTML table tag attributes (e.g., width, border)\n"
+msgid ""
+"  -T, --table-attr=TEXT    set HTML table tag attributes (e.g., width, "
+"border)\n"
 msgstr "  -T, --table-attr=文本   设定 HTML 表格标记属性（例如,宽度,边界)\n"
 
 # help.c:117
@@ -850,8 +830,11 @@ msgstr ""
 # help.c:126
 #: help.c:134
 #, c-format
-msgid "  -h, --host=HOSTNAME      database server host or socket directory (default: \"%s\")\n"
-msgstr "  -h, --host=主机名        数据库服务器主机或socket目录(缺省：\"%s\")\n"
+msgid ""
+"  -h, --host=HOSTNAME      database server host or socket directory "
+"(default: \"%s\")\n"
+msgstr ""
+"  -h, --host=主机名        数据库服务器主机或socket目录(缺省：\"%s\")\n"
 
 # help.c:127
 #: help.c:135
@@ -877,7 +860,9 @@ msgstr "  -w, --no-password       永远不提示输入口令\n"
 
 #: help.c:146
 #, c-format
-msgid "  -W, --password           force password prompt (should happen automatically)\n"
+msgid ""
+"  -W, --password           force password prompt (should happen "
+"automatically)\n"
 msgstr "  -W, --password           强制口令提示 (自动)\n"
 
 # help.c:140
@@ -885,7 +870,8 @@ msgstr "  -W, --password           强制口令提示 (自动)\n"
 #, c-format
 msgid ""
 "\n"
-"For more information, type \"\\?\" (for internal commands) or \"\\help\" (for SQL\n"
+"For more information, type \"\\?\" (for internal commands) or \"\\help"
+"\" (for SQL\n"
 "commands) from within psql, or consult the psql section in the PostgreSQL\n"
 "documentation.\n"
 "\n"
@@ -909,19 +895,23 @@ msgstr "一般性\n"
 # help.c:179
 #: help.c:170
 #, c-format
-msgid "  \\copyright             show PostgreSQL usage and distribution terms\n"
+msgid ""
+"  \\copyright             show PostgreSQL usage and distribution terms\n"
 msgstr "  \\copyright            显示PostgreSQL的使用和发行许可条款\n"
 
 # help.c:194
 #: help.c:171
 #, c-format
-msgid "  \\g [FILE] or ;         execute query (and send results to file or |pipe)\n"
+msgid ""
+"  \\g [FILE] or ;         execute query (and send results to file or |pipe)\n"
 msgstr "  \\g [文件] or;     执行查询 (并把结果写入文件或 |管道)\n"
 
 # help.c:182
 #: help.c:172
 #, c-format
-msgid "  \\h [NAME]              help on syntax of SQL commands, * for all commands\n"
+msgid ""
+"  \\h [NAME]              help on syntax of SQL commands, * for all "
+"commands\n"
 msgstr "  \\h [名称]          SQL命令语法上的说明，用*显示全部命令的语法说明\n"
 
 # help.c:183
@@ -939,13 +929,16 @@ msgstr "查询缓存区\n"
 # help.c:193
 #: help.c:177
 #, c-format
-msgid "  \\e [FILE]              edit the query buffer (or file) with external editor\n"
+msgid ""
+"  \\e [FILE]              edit the query buffer (or file) with external "
+"editor\n"
 msgstr "  \\e [文件]         使用外部编辑器编辑查询缓存区(或文件)\n"
 
 # help.c:193
 #: help.c:178
 #, c-format
-msgid "  \\ef [FUNCNAME]         edit function definition with external editor\n"
+msgid ""
+"  \\ef [FUNCNAME]         edit function definition with external editor\n"
 msgstr "  \\ef [函数名称]        使用外部编辑器编辑函数定义\n"
 
 # help.c:195
@@ -981,7 +974,9 @@ msgstr "输入/输出\n"
 # help.c:251
 #: help.c:188
 #, c-format
-msgid "  \\copy ...              perform SQL COPY with data stream to the client host\n"
+msgid ""
+"  \\copy ...              perform SQL COPY with data stream to the client "
+"host\n"
 msgstr "  \\copy ...             执行 SQL COPY，将数据流发送到客户端主机\n"
 
 # help.c:204
@@ -1005,7 +1000,8 @@ msgstr "  \\o [文件]        将全部查询结果写入文件或 |管道\n"
 # help.c:207
 #: help.c:192
 #, c-format
-msgid "  \\qecho [STRING]        write string to query output stream (see \\o)\n"
+msgid ""
+"  \\qecho [STRING]        write string to query output stream (see \\o)\n"
 msgstr "  \\qecho [字符串]      将字符串写到查询输出串流(参考 \\o)\n"
 
 # help.c:211
@@ -1088,7 +1084,8 @@ msgstr " \\dew[+] [模式]       列出外部数据封装器\n"
 # help.c:215
 #: help.c:208
 #, c-format
-msgid "  \\df[antw][S+] [PATRN]  list [only agg/normal/trigger/window] functions\n"
+msgid ""
+"  \\df[antw][S+] [PATRN]  list [only agg/normal/trigger/window] functions\n"
 msgstr "   \\df[antw][S+] [模式]    列出[只包括 聚合/常规/触发器/窗口]函数 \n"
 
 # help.c:221
@@ -1148,7 +1145,8 @@ msgstr "  \\do[S]  [模式]   列出运算符\n"
 # help.c:226
 #: help.c:218
 #, c-format
-msgid "  \\dp     [PATTERN]      list table, view, and sequence access privileges\n"
+msgid ""
+"  \\dp     [PATTERN]      list table, view, and sequence access privileges\n"
 msgstr "  \\dp     [模式]     列出表，视图和序列的访问权限\n"
 
 # help.c:228
@@ -1201,7 +1199,8 @@ msgstr "格式化\n"
 # help.c:234
 #: help.c:229
 #, c-format
-msgid "  \\a                     toggle between unaligned and aligned output mode\n"
+msgid ""
+"  \\a                     toggle between unaligned and aligned output mode\n"
 msgstr "  \\a                  在非对齐模式和对齐模式之间切换\n"
 
 # help.c:235
@@ -1213,7 +1212,9 @@ msgstr "  \\C [字符串]        设置表的标题，或如果没有的标题�
 # help.c:236
 #: help.c:231
 #, c-format
-msgid "  \\f [STRING]            show or set field separator for unaligned query output\n"
+msgid ""
+"  \\f [STRING]            show or set field separator for unaligned query "
+"output\n"
 msgstr "  \\f [字符串]         显示或设定非对齐模式查询输出的字段分隔符\n"
 
 # help.c:237
@@ -1227,8 +1228,10 @@ msgstr "  \\H                    切换HTML输出模式 (目前是 %s)\n"
 #, c-format
 msgid ""
 "  \\pset NAME [VALUE]     set table output option\n"
-"                         (NAME := {format|border|expanded|fieldsep|footer|null|\n"
-"                         numericlocale|recordsep|tuples_only|title|tableattr|pager})\n"
+"                         (NAME := {format|border|expanded|fieldsep|footer|"
+"null|\n"
+"                         numericlocale|recordsep|tuples_only|title|tableattr|"
+"pager})\n"
 msgstr ""
 "  \\pset 名称 [值]  设定表输出选项\n"
 "                  (名称：= {format|border|expanded|fieldsep|footer|null|\n"
@@ -1243,8 +1246,10 @@ msgstr "  \\t [开|关]       只显示记录 (目前是 %s)\n"
 # help.c:245
 #: help.c:239
 #, c-format
-msgid "  \\T [STRING]            set HTML <table> tag attributes, or unset if none\n"
-msgstr "  \\T [字符串]         设置HTML <表格>标签属性, 或者如果没有的话取消设置\n"
+msgid ""
+"  \\T [STRING]            set HTML <table> tag attributes, or unset if none\n"
+msgstr ""
+"  \\T [字符串]         设置HTML <表格>标签属性, 或者如果没有的话取消设置\n"
 
 # help.c:246
 #: help.c:240
@@ -1299,7 +1304,9 @@ msgstr " \\timing [开|关]       切换命令计时开关 (目前是 %s)\n"
 # help.c:189
 #: help.c:256
 #, c-format
-msgid "  \\! [COMMAND]           execute command in shell or start interactive shell\n"
+msgid ""
+"  \\! [COMMAND]           execute command in shell or start interactive "
+"shell\n"
 msgstr "  \\! [命令]      在 shell中执行命令或启动一个交互式shell\n"
 
 #: help.c:259
@@ -1316,7 +1323,9 @@ msgstr "  \\prompt [文本] 名称 提示用户设定内部变量\n"
 # help.c:184
 #: help.c:261
 #, c-format
-msgid "  \\set [NAME [VALUE]]    set internal variable, or list all if no parameters\n"
+msgid ""
+"  \\set [NAME [VALUE]]    set internal variable, or list all if no "
+"parameters\n"
 msgstr "  \\set [名称 [值数]] 设定内部变量，若无参数则列出全部变量\n"
 
 # help.c:188
@@ -1425,25 +1434,11 @@ msgstr "ID"
 # describe.c:1488
 # describe.c:1733
 # large_obj.c:256
-#: large_obj.c:287
-#: describe.c:95
-#: describe.c:158
-#: describe.c:337
-#: describe.c:490
-#: describe.c:566
-#: describe.c:637
-#: describe.c:760
-#: describe.c:1231
-#: describe.c:2006
-#: describe.c:2137
-#: describe.c:2431
-#: describe.c:2493
-#: describe.c:2629
-#: describe.c:2668
-#: describe.c:2735
-#: describe.c:2794
-#: describe.c:2803
-#: describe.c:2862
+#: large_obj.c:287 describe.c:95 describe.c:158 describe.c:337 describe.c:490
+#: describe.c:566 describe.c:637 describe.c:760 describe.c:1231
+#: describe.c:2006 describe.c:2137 describe.c:2431 describe.c:2493
+#: describe.c:2629 describe.c:2668 describe.c:2735 describe.c:2794
+#: describe.c:2803 describe.c:2862
 msgid "Description"
 msgstr "描述"
 
@@ -1479,33 +1474,33 @@ msgstr ""
 "       \\q 退出\n"
 
 # print.c:428
-#: print.c:977
+#: print.c:955
 #, c-format
 msgid "(No rows)\n"
 msgstr "(无资料列)\n"
 
-#: print.c:1964
+#: print.c:1872
 #, c-format
 msgid "Interrupted\n"
 msgstr "已中断\n"
 
-#: print.c:2031
+#: print.c:1941
 #, c-format
 msgid "Cannot add header to table content: column count of %d exceeded.\n"
 msgstr "无法对表的内容增加标题:已经超过%d列的数量.\n"
 
-#: print.c:2068
+#: print.c:1981
 #, c-format
 msgid "Cannot add cell to table content: total cell count of %d exceeded.\n"
 msgstr "无法对表的内容添加单元: 总共有%d个单元超过.\n"
 
-#: print.c:2267
+#: print.c:2201
 #, c-format
 msgid "invalid output format (internal error): %d"
 msgstr "无效的输出格式 (内部错误): %d"
 
 # print.c:1202
-#: print.c:2356
+#: print.c:2298
 #, c-format
 msgid "(%lu row)"
 msgid_plural "(%lu rows)"
@@ -1546,8 +1541,7 @@ msgstr "%s：无法设定变数 \"%s\"\n"
 
 # startup.c:533
 # startup.c:539
-#: startup.c:511
-#: startup.c:517
+#: startup.c:511 startup.c:517
 #, c-format
 msgid "Try \"%s --help\" for more information.\n"
 msgstr "尝试 \"%s --help\" 以得到更多资讯。\n"
@@ -1572,19 +1566,9 @@ msgstr "包含命令列编辑支援"
 # describe.c:1476
 # describe.c:1585
 # describe.c:1633
-#: describe.c:68
-#: describe.c:235
-#: describe.c:462
-#: describe.c:561
-#: describe.c:682
-#: describe.c:757
-#: describe.c:2115
-#: describe.c:2236
-#: describe.c:2291
-#: describe.c:2491
-#: describe.c:2718
-#: describe.c:2790
-#: describe.c:2801
+#: describe.c:68 describe.c:235 describe.c:462 describe.c:561 describe.c:682
+#: describe.c:757 describe.c:2115 describe.c:2236 describe.c:2291
+#: describe.c:2491 describe.c:2718 describe.c:2790 describe.c:2801
 #: describe.c:2860
 msgid "Schema"
 msgstr "架构模式"
@@ -1601,42 +1585,21 @@ msgstr "架构模式"
 # describe.c:1586
 # describe.c:1634
 # describe.c:1727
-#: describe.c:69
-#: describe.c:145
-#: describe.c:236
-#: describe.c:463
-#: describe.c:562
-#: describe.c:612
-#: describe.c:683
-#: describe.c:758
-#: describe.c:2116
-#: describe.c:2237
-#: describe.c:2292
-#: describe.c:2422
-#: describe.c:2492
-#: describe.c:2719
-#: describe.c:2791
-#: describe.c:2802
-#: describe.c:2861
-#: describe.c:3051
-#: describe.c:3110
+#: describe.c:69 describe.c:145 describe.c:236 describe.c:463 describe.c:562
+#: describe.c:612 describe.c:683 describe.c:758 describe.c:2116
+#: describe.c:2237 describe.c:2292 describe.c:2422 describe.c:2492
+#: describe.c:2719 describe.c:2791 describe.c:2802 describe.c:2861
+#: describe.c:3051 describe.c:3110
 msgid "Name"
 msgstr "名称"
 
 # describe.c:177
-#: describe.c:70
-#: describe.c:248
-#: describe.c:294
-#: describe.c:311
+#: describe.c:70 describe.c:248 describe.c:294 describe.c:311
 msgid "Result data type"
 msgstr "结果资料型别"
 
 # describe.c:178
-#: describe.c:84
-#: describe.c:88
-#: describe.c:249
-#: describe.c:295
-#: describe.c:312
+#: describe.c:84 describe.c:88 describe.c:249 describe.c:295 describe.c:312
 msgid "Argument data types"
 msgstr "参数资料型别"
 
@@ -1656,13 +1619,8 @@ msgstr "服务器(版本%d.%d) 不支持使用表空间.\n"
 # describe.c:362
 # describe.c:1478
 # describe.c:1727
-#: describe.c:146
-#: describe.c:334
-#: describe.c:613
-#: describe.c:2123
-#: describe.c:2423
-#: describe.c:3052
-#: describe.c:3111
+#: describe.c:146 describe.c:334 describe.c:613 describe.c:2123
+#: describe.c:2423 describe.c:3052 describe.c:3111
 msgid "Owner"
 msgstr "拥有者"
 
@@ -1687,9 +1645,7 @@ msgid "\\df does not take a \"w\" option with server version %d.%d\n"
 msgstr "\\df 不能有带着服务器版本%d.%d 的选项\"w\" \n"
 
 #. translator: "agg" is short for "aggregate"
-#: describe.c:251
-#: describe.c:297
-#: describe.c:314
+#: describe.c:251 describe.c:297 describe.c:314
 msgid "agg"
 msgstr "agg"
 
@@ -1698,17 +1654,12 @@ msgid "window"
 msgstr "窗口"
 
 # describe.c:575
-#: describe.c:253
-#: describe.c:298
-#: describe.c:315
-#: describe.c:897
+#: describe.c:253 describe.c:298 describe.c:315 describe.c:897
 msgid "trigger"
 msgstr "触发器"
 
 # help.c:211
-#: describe.c:254
-#: describe.c:299
-#: describe.c:316
+#: describe.c:254 describe.c:299 describe.c:316
 msgid "normal"
 msgstr "常规"
 
@@ -1716,14 +1667,8 @@ msgstr "常规"
 # describe.c:745
 # describe.c:1478
 # describe.c:1587
-#: describe.c:255
-#: describe.c:300
-#: describe.c:317
-#: describe.c:685
-#: describe.c:1216
-#: describe.c:2122
-#: describe.c:2238
-#: describe.c:3123
+#: describe.c:255 describe.c:300 describe.c:317 describe.c:685 describe.c:1216
+#: describe.c:2122 describe.c:2238 describe.c:3123
 msgid "Type"
 msgstr "型别"
 
@@ -1770,9 +1715,7 @@ msgid "Internal name"
 msgstr "内部名称"
 
 # describe.c:257
-#: describe.c:474
-#: describe.c:629
-#: describe.c:2133
+#: describe.c:474 describe.c:629 describe.c:2133
 msgid "Size"
 msgstr "大小"
 
@@ -1836,27 +1779,21 @@ msgstr "资料库列表"
 # describe.c:415
 # describe.c:543
 # describe.c:1477
-#: describe.c:684
-#: describe.c:852
-#: describe.c:2117
+#: describe.c:684 describe.c:852 describe.c:2117
 msgid "table"
 msgstr "资料表"
 
 # describe.c:415
 # describe.c:543
 # describe.c:1477
-#: describe.c:684
-#: describe.c:853
-#: describe.c:2118
+#: describe.c:684 describe.c:853 describe.c:2118
 msgid "view"
 msgstr "视观表"
 
 # describe.c:415
 # describe.c:543
 # describe.c:1477
-#: describe.c:684
-#: describe.c:855
-#: describe.c:2120
+#: describe.c:684 describe.c:855 describe.c:2120
 msgid "sequence"
 msgstr "序列数"
 
@@ -1868,9 +1805,7 @@ msgstr "列访问权限"
 # describe.c:133
 # describe.c:415
 # describe.c:1733
-#: describe.c:722
-#: describe.c:3218
-#: describe.c:3222
+#: describe.c:722 describe.c:3218 describe.c:3222
 msgid "Access privileges"
 msgstr "存取权限"
 
@@ -1901,8 +1836,7 @@ msgstr "资料型别"
 
 # describe.c:543
 # describe.c:1477
-#: describe.c:854
-#: describe.c:2119
+#: describe.c:854 describe.c:2119
 msgid "index"
 msgstr "索引"
 
@@ -2041,8 +1975,7 @@ msgstr "视图定义:"
 
 # describe.c:983
 # describe.c:1204
-#: describe.c:1396
-#: describe.c:1647
+#: describe.c:1396 describe.c:1647
 msgid "Rules:"
 msgstr "规则："
 
@@ -2107,25 +2040,18 @@ msgstr "有 OIDs"
 # describe.c:1262
 # describe.c:1637
 # describe.c:1694
-#: describe.c:1815
-#: describe.c:2295
-#: describe.c:2369
+#: describe.c:1815 describe.c:2295 describe.c:2369
 msgid "yes"
 msgstr "是"
 
 # describe.c:1262
 # describe.c:1638
 # describe.c:1692
-#: describe.c:1815
-#: describe.c:2295
-#: describe.c:2369
+#: describe.c:1815 describe.c:2295 describe.c:2369
 msgid "no"
 msgstr "否"
 
-#: describe.c:1823
-#: describe.c:3061
-#: describe.c:3125
-#: describe.c:3181
+#: describe.c:1823 describe.c:3061 describe.c:3125 describe.c:3181
 msgid "Options"
 msgstr "选项"
 
@@ -2137,7 +2063,7 @@ msgstr "表空间：\"%s\""
 
 # describe.c:1342
 #: describe.c:1921
-#, fuzzy, c-format
+#, c-format
 msgid ", tablespace \"%s\""
 msgstr ", 表空间 \"%s\""
 
@@ -2264,8 +2190,7 @@ msgid "Target type"
 msgstr "目标型别"
 
 # describe.c:1691
-#: describe.c:2368
-#: describe.c:2628
+#: describe.c:2368 describe.c:2628
 msgid "Function"
 msgstr "函数"
 
@@ -2290,10 +2215,7 @@ msgid "List of schemas"
 msgstr "架构模式列表"
 
 # describe.c:117
-#: describe.c:2474
-#: describe.c:2707
-#: describe.c:2775
-#: describe.c:2843
+#: describe.c:2474 describe.c:2707 describe.c:2775 describe.c:2843
 #, c-format
 msgid "The server (version %d.%d) does not support full text search.\n"
 msgstr "服务器(版本%d.%d)不支持使用全文搜索.\n"
@@ -2491,8 +2413,7 @@ msgstr "列出用户映射"
 
 # sql_help.h:25
 # sql_help.h:373
-#: sql_help.h:25
-#: sql_help.h:505
+#: sql_help.h:25 sql_help.h:505
 msgid "abort the current transaction"
 msgstr "中止目前的交易"
 
@@ -2550,7 +2471,8 @@ msgid ""
 "\n"
 "ALTER DATABASE name SET TABLESPACE new_tablespace\n"
 "\n"
-"ALTER DATABASE name SET configuration_parameter { TO | = } { value | DEFAULT }\n"
+"ALTER DATABASE name SET configuration_parameter { TO | = } { value | "
+"DEFAULT }\n"
 "ALTER DATABASE name SET configuration_parameter FROM CURRENT\n"
 "ALTER DATABASE name RESET configuration_parameter\n"
 "ALTER DATABASE name RESET ALL"
@@ -2724,8 +2646,12 @@ msgstr "更改运算子的定义"
 
 # sql_help.h:66
 #: sql_help.h:66
-msgid "ALTER OPERATOR name ( { lefttype | NONE } , { righttype | NONE } ) OWNER TO newowner"
-msgstr "ALTER OPERATOR 名称 ( { 左侧类型 | NONE } , { 右侧类型 | NONE } ) OWNER TO 新的属主"
+msgid ""
+"ALTER OPERATOR name ( { lefttype | NONE } , { righttype | NONE } ) OWNER TO "
+"newowner"
+msgstr ""
+"ALTER OPERATOR 名称 ( { 左侧类型 | NONE } , { 右侧类型 | NONE } ) OWNER TO 新"
+"的属主"
 
 # sql_help.h:61
 #: sql_help.h:69
@@ -2750,7 +2676,8 @@ msgstr "更改一个运算子家族的识别"
 msgid ""
 "ALTER OPERATOR FAMILY name USING index_method ADD\n"
 "  {  OPERATOR strategy_number operator_name ( op_type, op_type )\n"
-"   | FUNCTION support_number [ ( op_type [ , op_type ] ) ] funcname ( argument_type [, ...] )\n"
+"   | FUNCTION support_number [ ( op_type [ , op_type ] ) ] funcname "
+"( argument_type [, ...] )\n"
 "  } [, ... ]\n"
 "ALTER OPERATOR FAMILY name USING index_method DROP\n"
 "  {  OPERATOR strategy_number ( op_type [ , op_type ] )\n"
@@ -2761,7 +2688,8 @@ msgid ""
 msgstr ""
 "ALTER OPERATOR FAMILY 名称 USING 索引方法 ADD\n"
 "  {  OPERATOR 策略数量 ( 操作数类型, 操作数类型 )\n"
-"   | FUNCTION 所支持的数量 [ (  [操作数类型 , 操作数类型 ] ) ] 函数名称 ( 参数类型 [, ...] )\n"
+"   | FUNCTION 所支持的数量 [ (  [操作数类型 , 操作数类型 ] ) ] 函数名称 ( 参"
+"数类型 [, ...] )\n"
 "  } [, ... ]\n"
 "ALTER OPERATOR FAMILY 名称 USING 索引名称 DROP\n"
 "  {  OPERATOR 策略数量 ( 操作数类型 [ , 操作数类型] )\n"
@@ -2771,8 +2699,7 @@ msgstr ""
 "ALTER OPERATOR FAMILY 名称 USING 索引方法 OWNER TO 新的属主"
 
 # sql_help.h:37
-#: sql_help.h:77
-#: sql_help.h:125
+#: sql_help.h:77 sql_help.h:125
 msgid "change a database role"
 msgstr "变更资料库角色"
 
@@ -2901,7 +2828,8 @@ msgid ""
 "    ALTER [ COLUMN ] column DROP DEFAULT\n"
 "    ALTER [ COLUMN ] column { SET | DROP } NOT NULL\n"
 "    ALTER [ COLUMN ] column SET STATISTICS integer\n"
-"    ALTER [ COLUMN ] column SET STORAGE { PLAIN | EXTERNAL | EXTENDED | MAIN }\n"
+"    ALTER [ COLUMN ] column SET STORAGE { PLAIN | EXTERNAL | EXTENDED | "
+"MAIN }\n"
 "    ADD table_constraint\n"
 "    DROP CONSTRAINT constraint_name [ RESTRICT | CASCADE ]\n"
 "    DISABLE TRIGGER [ trigger_name | ALL | USER ]\n"
@@ -2991,7 +2919,8 @@ msgid ""
 "ALTER TEXT SEARCH CONFIGURATION name\n"
 "    ALTER MAPPING REPLACE old_dictionary WITH new_dictionary\n"
 "ALTER TEXT SEARCH CONFIGURATION name\n"
-"    ALTER MAPPING FOR token_type [, ... ] REPLACE old_dictionary WITH new_dictionary\n"
+"    ALTER MAPPING FOR token_type [, ... ] REPLACE old_dictionary WITH "
+"new_dictionary\n"
 "ALTER TEXT SEARCH CONFIGURATION name\n"
 "    DROP MAPPING [ IF EXISTS ] FOR token_type [, ... ]\n"
 "ALTER TEXT SEARCH CONFIGURATION name RENAME TO newname\n"
@@ -3165,8 +3094,7 @@ msgstr "ANALYZE [ VERBOSE ] [ 资料表 [ ( 栏位 [, ...] ) ] ]"
 
 # sql_help.h:101
 # sql_help.h:413
-#: sql_help.h:141
-#: sql_help.h:553
+#: sql_help.h:141 sql_help.h:553
 msgid "start a transaction block"
 msgstr "开始一个事物交易区块"
 
@@ -3177,14 +3105,16 @@ msgid ""
 "\n"
 "where transaction_mode is one of:\n"
 "\n"
-"    ISOLATION LEVEL { SERIALIZABLE | REPEATABLE READ | READ COMMITTED | READ UNCOMMITTED }\n"
+"    ISOLATION LEVEL { SERIALIZABLE | REPEATABLE READ | READ COMMITTED | READ "
+"UNCOMMITTED }\n"
 "    READ WRITE | READ ONLY"
 msgstr ""
 "BEGIN [ WORK | TRANSACTION ] [事务模式 [, ...] ]\n"
 "\n"
 "其中事务模式可以是下列模式之一:\n"
 "\n"
-"    ISOLATION LEVEL { SERIALIZABLE | REPEATABLE READ | READ COMMITTED | READ UNCOMMITTED }\n"
+"    ISOLATION LEVEL { SERIALIZABLE | REPEATABLE READ | READ COMMITTED | READ "
+"UNCOMMITTED }\n"
 "    READ WRITE | READ ONLY"
 
 # sql_help.h:105
@@ -3292,8 +3222,7 @@ msgstr ""
 
 # sql_help.h:121
 # sql_help.h:309
-#: sql_help.h:161
-#: sql_help.h:433
+#: sql_help.h:161 sql_help.h:433
 msgid "commit the current transaction"
 msgstr "确认目前的事物交易"
 
@@ -3452,7 +3381,8 @@ msgid ""
 "    AFTER event [ OR ... ]\n"
 "    ON table_name\n"
 "    [ FROM referenced_table_name ]\n"
-"    { NOT DEFERRABLE | [ DEFERRABLE ] { INITIALLY IMMEDIATE | INITIALLY DEFERRED } }\n"
+"    { NOT DEFERRABLE | [ DEFERRABLE ] { INITIALLY IMMEDIATE | INITIALLY "
+"DEFERRED } }\n"
 "    FOR EACH ROW\n"
 "    EXECUTE PROCEDURE funcname ( arguments )"
 msgstr ""
@@ -3460,7 +3390,8 @@ msgstr ""
 "    AFTER 事件 [ OR ... ]\n"
 "    ON 表名\n"
 "    [ FROM 被引用的表 ]\n"
-"    { NOT DEFERRABLE | [ DEFERRABLE ] { INITIALLY IMMEDIATE | INITIALLY DEFERRED } }\n"
+"    { NOT DEFERRABLE | [ DEFERRABLE ] { INITIALLY IMMEDIATE | INITIALLY "
+"DEFERRED } }\n"
 "    FOR EACH ROW\n"
 "    EXECUTE PROCEDURE 函数名称 ( 参数 )"
 
@@ -3550,7 +3481,8 @@ msgstr "建立新的函数"
 #: sql_help.h:202
 msgid ""
 "CREATE [ OR REPLACE ] FUNCTION\n"
-"    name ( [ [ argmode ] [ argname ] argtype [ { DEFAULT | = } defexpr ] [, ...] ] )\n"
+"    name ( [ [ argmode ] [ argname ] argtype [ { DEFAULT | = } defexpr ] "
+"[, ...] ] )\n"
 "    [ RETURNS rettype\n"
 "      | RETURNS TABLE ( colname coltype [, ...] ) ]\n"
 "  { LANGUAGE langname\n"
@@ -3567,7 +3499,8 @@ msgid ""
 "    [ WITH ( attribute [, ...] ) ]"
 msgstr ""
 "CREATE [ OR REPLACE ] FUNCTION\n"
-"    名称 ( [ [ 参数模式 ] [ 参数名称 ] 参数类型 [ { DEFAULT | = } 缺省表达式 ] [, ...] ] )\n"
+"    名称 ( [ [ 参数模式 ] [ 参数名称 ] 参数类型 [ { DEFAULT | = } 缺省表达"
+"式 ] [, ...] ] )\n"
 "    [ RETURNS 返回类型\n"
 "      | RETURNS TABLE ( 列名 列的类型 [, ...] ) ]\n"
 "  { LANGUAGE 语言名称\n"
@@ -3584,9 +3517,7 @@ msgstr ""
 "    [ WITH ( 属性 [, ...] ) ]"
 
 # sql_help.h:189
-#: sql_help.h:205
-#: sql_help.h:229
-#: sql_help.h:285
+#: sql_help.h:205 sql_help.h:229 sql_help.h:285
 msgid "define a new database role"
 msgstr "定义一个新资料库角色"
 
@@ -3638,13 +3569,15 @@ msgstr "建立新的索引"
 #: sql_help.h:210
 msgid ""
 "CREATE [ UNIQUE ] INDEX [ CONCURRENTLY ] name ON table [ USING method ]\n"
-"    ( { column | ( expression ) } [ opclass ] [ ASC | DESC ] [ NULLS { FIRST | LAST } ] [, ...] )\n"
+"    ( { column | ( expression ) } [ opclass ] [ ASC | DESC ] [ NULLS { FIRST "
+"| LAST } ] [, ...] )\n"
 "    [ WITH ( storage_parameter = value [, ... ] ) ]\n"
 "    [ TABLESPACE tablespace ]\n"
 "    [ WHERE predicate ]"
 msgstr ""
 "CREATE [ UNIQUE ] INDEX [ CONCURRENTLY ] 名称 ON 表 [ USING 方法 ]\n"
-"    ( { 列 | ( 表达式 ) } [ 操作类型 ] [ ASC | DESC ] [ NULLS { FIRST | LAST } ] [, ...] )\n"
+"    ( { 列 | ( 表达式 ) } [ 操作类型 ] [ ASC | DESC ] [ NULLS { FIRST | "
+"LAST } ] [, ...] )\n"
 "    [ WITH ( 存储参数 = 值 [, ... ] ) ]\n"
 "    [ TABLESPACE 表空间 ]\n"
 "    [ WHERE 针对部分索引的约束表达式 ]"
@@ -3697,14 +3630,16 @@ msgid ""
 "CREATE OPERATOR CLASS name [ DEFAULT ] FOR TYPE data_type\n"
 "  USING index_method [ FAMILY family_name ] AS\n"
 "  {  OPERATOR strategy_number operator_name [ ( op_type, op_type ) ]\n"
-"   | FUNCTION support_number [ ( op_type [ , op_type ] ) ] funcname ( argument_type [, ...] )\n"
+"   | FUNCTION support_number [ ( op_type [ , op_type ] ) ] funcname "
+"( argument_type [, ...] )\n"
 "   | STORAGE storage_type\n"
 "  } [, ... ]"
 msgstr ""
 "CREATE OPERATOR CLASS 名称 [ DEFAULT ] FOR TYPE 数据类型\n"
 "  USING 索引方法 [ FAMILY 已存在的操作符集合名称 ] AS\n"
 "  {  OPERATOR 策略数 操作符名称 [ ( 操作数类型, 操作数类型 ) ]\n"
-"   | FUNCTION 所支持的函数数量 [ ( 操作符类型 [ , 操作符类型 ] ) ] 函数名称 ( 参数类型 [, ...] )\n"
+"   | FUNCTION 所支持的函数数量 [ ( 操作符类型 [ , 操作符类型 ] ) ] 函数名称 "
+"( 参数类型 [, ...] )\n"
 "   | STORAGE 存储类型\n"
 "  } [, ... ]"
 
@@ -3783,10 +3718,12 @@ msgstr "建立新的架构模式"
 
 #: sql_help.h:238
 msgid ""
-"CREATE SCHEMA schemaname [ AUTHORIZATION username ] [ schema_element [ ... ] ]\n"
+"CREATE SCHEMA schemaname [ AUTHORIZATION username ] [ schema_element "
+"[ ... ] ]\n"
 "CREATE SCHEMA AUTHORIZATION username [ schema_element [ ... ] ]"
 msgstr ""
-"CREATE SCHEMA 架构模式名称 [ AUTHORIZATION 用户名称 ] [ 架构模式_元素 [ ... ] ]\n"
+"CREATE SCHEMA 架构模式名称 [ AUTHORIZATION 用户名称 ] [ 架构模式_元素 "
+"[ ... ] ]\n"
 "CREATE SCHEMA AUTHORIZATION 用户名称 [ 架构模式_元素 [ ... ] ]"
 
 # sql_help.h:185
@@ -3829,13 +3766,16 @@ msgstr "建立新的资料表"
 #: sql_help.h:250
 msgid ""
 "CREATE [ [ GLOBAL | LOCAL ] { TEMPORARY | TEMP } ] TABLE table_name ( [\n"
-"  { column_name data_type [ DEFAULT default_expr ] [ column_constraint [ ... ] ]\n"
+"  { column_name data_type [ DEFAULT default_expr ] [ column_constraint "
+"[ ... ] ]\n"
 "    | table_constraint\n"
-"    | LIKE parent_table [ { INCLUDING | EXCLUDING } { DEFAULTS | CONSTRAINTS | INDEXES } ] ... }\n"
+"    | LIKE parent_table [ { INCLUDING | EXCLUDING } { DEFAULTS | CONSTRAINTS "
+"| INDEXES } ] ... }\n"
 "    [, ... ]\n"
 "] )\n"
 "[ INHERITS ( parent_table [, ... ] ) ]\n"
-"[ WITH ( storage_parameter [= value] [, ... ] ) | WITH OIDS | WITHOUT OIDS ]\n"
+"[ WITH ( storage_parameter [= value] [, ... ] ) | WITH OIDS | WITHOUT "
+"OIDS ]\n"
 "[ ON COMMIT { PRESERVE ROWS | DELETE ROWS | DROP } ]\n"
 "[ TABLESPACE tablespace ]\n"
 "\n"
@@ -3847,9 +3787,11 @@ msgid ""
 "  UNIQUE index_parameters |\n"
 "  PRIMARY KEY index_parameters |\n"
 "  CHECK ( expression ) |\n"
-"  REFERENCES reftable [ ( refcolumn ) ] [ MATCH FULL | MATCH PARTIAL | MATCH SIMPLE ]\n"
+"  REFERENCES reftable [ ( refcolumn ) ] [ MATCH FULL | MATCH PARTIAL | MATCH "
+"SIMPLE ]\n"
 "    [ ON DELETE action ] [ ON UPDATE action ] }\n"
-"[ DEFERRABLE | NOT DEFERRABLE ] [ INITIALLY DEFERRED | INITIALLY IMMEDIATE ]\n"
+"[ DEFERRABLE | NOT DEFERRABLE ] [ INITIALLY DEFERRED | INITIALLY "
+"IMMEDIATE ]\n"
 "\n"
 "and table_constraint is:\n"
 "\n"
@@ -3857,9 +3799,12 @@ msgid ""
 "{ UNIQUE ( column_name [, ... ] ) index_parameters |\n"
 "  PRIMARY KEY ( column_name [, ... ] ) index_parameters |\n"
 "  CHECK ( expression ) |\n"
-"  FOREIGN KEY ( column_name [, ... ] ) REFERENCES reftable [ ( refcolumn [, ... ] ) ]\n"
-"    [ MATCH FULL | MATCH PARTIAL | MATCH SIMPLE ] [ ON DELETE action ] [ ON UPDATE action ] }\n"
-"[ DEFERRABLE | NOT DEFERRABLE ] [ INITIALLY DEFERRED | INITIALLY IMMEDIATE ]\n"
+"  FOREIGN KEY ( column_name [, ... ] ) REFERENCES reftable [ ( refcolumn "
+"[, ... ] ) ]\n"
+"    [ MATCH FULL | MATCH PARTIAL | MATCH SIMPLE ] [ ON DELETE action ] [ ON "
+"UPDATE action ] }\n"
+"[ DEFERRABLE | NOT DEFERRABLE ] [ INITIALLY DEFERRED | INITIALLY "
+"IMMEDIATE ]\n"
 "\n"
 "index_parameters in UNIQUE and PRIMARY KEY constraints are:\n"
 "\n"
@@ -3869,7 +3814,8 @@ msgstr ""
 "CREATE [ [ GLOBAL | LOCAL ] { TEMPORARY | TEMP } ] TABLE 表名 ( [\n"
 "  { 列名 数据类型 [ DEFAULT 缺省表达式 ] [ 列约束 [ ... ] ]\n"
 "    | 表约束\n"
-"    | LIKE 源表 [ { INCLUDING | EXCLUDING } { DEFAULTS | CONSTRAINTS | INDEXES } ] ... }\n"
+"    | LIKE 源表 [ { INCLUDING | EXCLUDING } { DEFAULTS | CONSTRAINTS | "
+"INDEXES } ] ... }\n"
 "    [, ... ]\n"
 "] )\n"
 "[ INHERITS ( 源表 [, ... ] ) ]\n"
@@ -3885,9 +3831,11 @@ msgstr ""
 "  UNIQUE 索引参数 |\n"
 "  PRIMARY KEY 索引参数 |\n"
 "  CHECK ( 表达式 ) |\n"
-"  REFERENCES 所引用的表 [ ( 所引用的列 ) ] [ MATCH FULL | MATCH PARTIAL | MATCH SIMPLE ]\n"
+"  REFERENCES 所引用的表 [ ( 所引用的列 ) ] [ MATCH FULL | MATCH PARTIAL | "
+"MATCH SIMPLE ]\n"
 "    [ ON DELETE 操作 ] [ ON UPDATE 操作 ] }\n"
-"[ DEFERRABLE | NOT DEFERRABLE ] [ INITIALLY DEFERRED | INITIALLY IMMEDIATE ]\n"
+"[ DEFERRABLE | NOT DEFERRABLE ] [ INITIALLY DEFERRED | INITIALLY "
+"IMMEDIATE ]\n"
 "\n"
 "表级约束是:\n"
 "\n"
@@ -3895,9 +3843,12 @@ msgstr ""
 "{ UNIQUE ( 列名 [, ... ] ) 索引参数 |\n"
 "  PRIMARY KEY ( 列名 [, ... ] ) 索引参数 |\n"
 "  CHECK ( 表达式 ) |\n"
-"  FOREIGN KEY ( 列名 [, ... ] ) REFERENCES 所引用的表 [ ( 所引用的列 [, ... ] ) ]\n"
-"    [ MATCH FULL | MATCH PARTIAL | MATCH SIMPLE ] [ ON DELETE 操作 ] [ ON UPDATE 操作 ] }\n"
-"[ DEFERRABLE | NOT DEFERRABLE ] [ INITIALLY DEFERRED | INITIALLY IMMEDIATE ]\n"
+"  FOREIGN KEY ( 列名 [, ... ] ) REFERENCES 所引用的表 [ ( 所引用的列 "
+"[, ... ] ) ]\n"
+"    [ MATCH FULL | MATCH PARTIAL | MATCH SIMPLE ] [ ON DELETE 操作 ] [ ON "
+"UPDATE 操作 ] }\n"
+"[ DEFERRABLE | NOT DEFERRABLE ] [ INITIALLY DEFERRED | INITIALLY "
+"IMMEDIATE ]\n"
 "\n"
 "在UNIQUE和PRIMARY KEY约束中的索引参数是:\n"
 "\n"
@@ -3906,8 +3857,7 @@ msgstr ""
 
 # sql_help.h:193
 # sql_help.h:389
-#: sql_help.h:253
-#: sql_help.h:525
+#: sql_help.h:253 sql_help.h:525
 msgid "define a new table from the results of a query"
 msgstr "以查询结果建立新的资料表"
 
@@ -3915,7 +3865,8 @@ msgstr "以查询结果建立新的资料表"
 msgid ""
 "CREATE [ [ GLOBAL | LOCAL ] { TEMPORARY | TEMP } ] TABLE table_name\n"
 "    [ (column_name [, ...] ) ]\n"
-"    [ WITH ( storage_parameter [= value] [, ... ] ) | WITH OIDS | WITHOUT OIDS ]\n"
+"    [ WITH ( storage_parameter [= value] [, ... ] ) | WITH OIDS | WITHOUT "
+"OIDS ]\n"
 "    [ ON COMMIT { PRESERVE ROWS | DELETE ROWS | DROP } ]\n"
 "    [ TABLESPACE tablespace ]\n"
 "    AS query\n"
@@ -3936,7 +3887,8 @@ msgstr "建立新的表空间"
 
 # sql_help.h:198
 #: sql_help.h:258
-msgid "CREATE TABLESPACE tablespacename [ OWNER username ] LOCATION 'directory'"
+msgid ""
+"CREATE TABLESPACE tablespacename [ OWNER username ] LOCATION 'directory'"
 msgstr "CREATE TABLESPACE 表空间名称 [ OWNER 用户名称 ] LOCATION 'directory'"
 
 # sql_help.h:129
@@ -4155,10 +4107,12 @@ msgstr "建立新的视观表"
 
 #: sql_help.h:294
 msgid ""
-"CREATE [ OR REPLACE ] [ TEMP | TEMPORARY ] VIEW name [ ( column_name [, ...] ) ]\n"
+"CREATE [ OR REPLACE ] [ TEMP | TEMPORARY ] VIEW name [ ( column_name "
+"[, ...] ) ]\n"
 "    AS query"
 msgstr ""
-"CREATE [ OR REPLACE ] [ TEMP | TEMPORARY ] VIEW 名称 [ ( 栏位_名称 [, ...] ) ]\n"
+"CREATE [ OR REPLACE ] [ TEMP | TEMPORARY ] VIEW 名称 [ ( 栏位_名称 "
+"[, ...] ) ]\n"
 "    AS 查询"
 
 # sql_help.h:217
@@ -4215,8 +4169,10 @@ msgstr "移除一个聚集函数"
 
 # sql_help.h:230
 #: sql_help.h:314
-msgid "DROP AGGREGATE [ IF EXISTS ] name ( type [ , ... ] ) [ CASCADE | RESTRICT ]"
-msgstr "DROP AGGREGATE [ IF EXISTS ] 名称 ( 型别 [ , ... ] ) [ CASCADE | RESTRICT ]"
+msgid ""
+"DROP AGGREGATE [ IF EXISTS ] name ( type [ , ... ] ) [ CASCADE | RESTRICT ]"
+msgstr ""
+"DROP AGGREGATE [ IF EXISTS ] 名称 ( 型别 [ , ... ] ) [ CASCADE | RESTRICT ]"
 
 # sql_help.h:233
 #: sql_help.h:317
@@ -4225,7 +4181,8 @@ msgstr "移除一个型别转换"
 
 # sql_help.h:234
 #: sql_help.h:318
-msgid "DROP CAST [ IF EXISTS ] (sourcetype AS targettype) [ CASCADE | RESTRICT ]"
+msgid ""
+"DROP CAST [ IF EXISTS ] (sourcetype AS targettype) [ CASCADE | RESTRICT ]"
 msgstr "DROP CAST [ IF EXISTS ] (来源型别 AS 目标型别) [ CASCADE | RESTRICT ]"
 
 # sql_help.h:237
@@ -4276,16 +4233,16 @@ msgstr "移除函数"
 # sql_help.h:250
 #: sql_help.h:338
 msgid ""
-"DROP FUNCTION [ IF EXISTS ] name ( [ [ argmode ] [ argname ] argtype [, ...] ] )\n"
+"DROP FUNCTION [ IF EXISTS ] name ( [ [ argmode ] [ argname ] argtype "
+"[, ...] ] )\n"
 "    [ CASCADE | RESTRICT ]"
 msgstr ""
-"DROP FUNCTION [ IF EXISTS ] 名称 ( [ [ 引数模式 ] [ 引数名称 ] 引数型别 [, ...] ] )\n"
+"DROP FUNCTION [ IF EXISTS ] 名称 ( [ [ 引数模式 ] [ 引数名称 ] 引数型别 "
+"[, ...] ] )\n"
 "    [ CASCADE | RESTRICT ]"
 
 # sql_help.h:241
-#: sql_help.h:341
-#: sql_help.h:369
-#: sql_help.h:421
+#: sql_help.h:341 sql_help.h:369 sql_help.h:421
 msgid "remove a database role"
 msgstr "移除一个资料库成员"
 
@@ -4320,8 +4277,12 @@ msgstr "移除运算子"
 
 # sql_help.h:270
 #: sql_help.h:354
-msgid "DROP OPERATOR [ IF EXISTS ] name ( { lefttype | NONE } , { righttype | NONE } ) [ CASCADE | RESTRICT ]"
-msgstr "DROP OPERATOR [ IF EXISTS ] 名称 ( { 左侧资料型别 | NONE } , { 左侧资料型别 | NONE } ) [ CASCADE | RESTRICT ]"
+msgid ""
+"DROP OPERATOR [ IF EXISTS ] name ( { lefttype | NONE } , { righttype | "
+"NONE } ) [ CASCADE | RESTRICT ]"
+msgstr ""
+"DROP OPERATOR [ IF EXISTS ] 名称 ( { 左侧资料型别 | NONE } , { 左侧资料型别 "
+"| NONE } ) [ CASCADE | RESTRICT ]"
 
 # sql_help.h:265
 #: sql_help.h:357
@@ -4330,8 +4291,11 @@ msgstr "移除一个运算子类别"
 
 # sql_help.h:266
 #: sql_help.h:358
-msgid "DROP OPERATOR CLASS [ IF EXISTS ] name USING index_method [ CASCADE | RESTRICT ]"
-msgstr "DROP OPERATOR CLASS [ IF EXISTS ] 名称 USING 索引_方式 [ CASCADE | RESTRICT ]"
+msgid ""
+"DROP OPERATOR CLASS [ IF EXISTS ] name USING index_method [ CASCADE | "
+"RESTRICT ]"
+msgstr ""
+"DROP OPERATOR CLASS [ IF EXISTS ] 名称 USING 索引_方式 [ CASCADE | RESTRICT ]"
 
 # sql_help.h:269
 #: sql_help.h:361
@@ -4340,8 +4304,12 @@ msgstr "移除一个运算子家族"
 
 # sql_help.h:266
 #: sql_help.h:362
-msgid "DROP OPERATOR FAMILY [ IF EXISTS ] name USING index_method [ CASCADE | RESTRICT ]"
-msgstr "DROP OPERATOR FAMILY [ IF EXISTS ] 名称 USING 索引_方式 [ CASCADE | RESTRICT ]"
+msgid ""
+"DROP OPERATOR FAMILY [ IF EXISTS ] name USING index_method [ CASCADE | "
+"RESTRICT ]"
+msgstr ""
+"DROP OPERATOR FAMILY [ IF EXISTS ] 名称 USING 索引_方式 [ CASCADE | "
+"RESTRICT ]"
 
 #: sql_help.h:365
 msgid "remove database objects owned by a database role"
@@ -4423,8 +4391,10 @@ msgstr "移除一个文本搜寻组态"
 
 # sql_help.h:238
 #: sql_help.h:398
-msgid "DROP TEXT SEARCH CONFIGURATION [ IF EXISTS ] name [ CASCADE | RESTRICT ]"
-msgstr "DROP TEXT SEARCH CONFIGURATION [ IF EXISTS ] 名称 [ CASCADE | RESTRICT ]"
+msgid ""
+"DROP TEXT SEARCH CONFIGURATION [ IF EXISTS ] name [ CASCADE | RESTRICT ]"
+msgstr ""
+"DROP TEXT SEARCH CONFIGURATION [ IF EXISTS ] 名称 [ CASCADE | RESTRICT ]"
 
 # sql_help.h:301
 #: sql_help.h:401
@@ -4485,8 +4455,12 @@ msgid "remove a user mapping for a foreign server"
 msgstr "为外部服务器删除用户映射"
 
 #: sql_help.h:426
-msgid "DROP USER MAPPING [ IF EXISTS ] FOR { username | USER | CURRENT_USER | PUBLIC } SERVER servername"
-msgstr "DROP USER MAPPING [ IF EXISTS ] FOR { 用户名 | USER | CURRENT_USER | PUBLIC } SERVER 服务器名称"
+msgid ""
+"DROP USER MAPPING [ IF EXISTS ] FOR { username | USER | CURRENT_USER | "
+"PUBLIC } SERVER servername"
+msgstr ""
+"DROP USER MAPPING [ IF EXISTS ] FOR { 用户名 | USER | CURRENT_USER | "
+"PUBLIC } SERVER 服务器名称"
 
 # sql_help.h:305
 #: sql_help.h:429
@@ -4575,7 +4549,8 @@ msgstr "建立存取权限"
 
 #: sql_help.h:450
 msgid ""
-"GRANT { { SELECT | INSERT | UPDATE | DELETE | TRUNCATE | REFERENCES | TRIGGER }\n"
+"GRANT { { SELECT | INSERT | UPDATE | DELETE | TRUNCATE | REFERENCES | "
+"TRIGGER }\n"
 "    [,...] | ALL [ PRIVILEGES ] }\n"
 "    ON [ TABLE ] tablename [, ...]\n"
 "    TO { [ GROUP ] rolename | PUBLIC } [, ...] [ WITH GRANT OPTION ]\n"
@@ -4590,7 +4565,8 @@ msgid ""
 "    ON SEQUENCE sequencename [, ...]\n"
 "    TO { [ GROUP ] rolename | PUBLIC } [, ...] [ WITH GRANT OPTION ]\n"
 "\n"
-"GRANT { { CREATE | CONNECT | TEMPORARY | TEMP } [,...] | ALL [ PRIVILEGES ] }\n"
+"GRANT { { CREATE | CONNECT | TEMPORARY | TEMP } [,...] | ALL "
+"[ PRIVILEGES ] }\n"
 "    ON DATABASE dbname [, ...]\n"
 "    TO { [ GROUP ] rolename | PUBLIC } [, ...] [ WITH GRANT OPTION ]\n"
 "\n"
@@ -4603,7 +4579,8 @@ msgid ""
 "    TO { [ GROUP ] rolename | PUBLIC } [, ...] [ WITH GRANT OPTION ]\n"
 "\n"
 "GRANT { EXECUTE | ALL [ PRIVILEGES ] }\n"
-"    ON FUNCTION funcname ( [ [ argmode ] [ argname ] argtype [, ...] ] ) [, ...]\n"
+"    ON FUNCTION funcname ( [ [ argmode ] [ argname ] argtype [, ...] ] ) "
+"[, ...]\n"
 "    TO { [ GROUP ] rolename | PUBLIC } [, ...] [ WITH GRANT OPTION ]\n"
 "\n"
 "GRANT { USAGE | ALL [ PRIVILEGES ] }\n"
@@ -4620,7 +4597,8 @@ msgid ""
 "\n"
 "GRANT role [, ...] TO rolename [, ...] [ WITH ADMIN OPTION ]"
 msgstr ""
-"GRANT { { SELECT | INSERT | UPDATE | DELETE | TRUNCATE | REFERENCES | TRIGGER }\n"
+"GRANT { { SELECT | INSERT | UPDATE | DELETE | TRUNCATE | REFERENCES | "
+"TRIGGER }\n"
 "    [,...] | ALL [ PRIVILEGES ] }\n"
 "    ON [ TABLE ] 表名 [, ...]\n"
 "    TO { [ GROUP ] 角色名称 | PUBLIC } [, ...] [ WITH GRANT OPTION ]\n"
@@ -4635,7 +4613,8 @@ msgstr ""
 "    ON SEQUENCE 序列名称 [, ...]\n"
 "    TO { [ GROUP ] 角色名称 | PUBLIC } [, ...] [ WITH GRANT OPTION ]\n"
 "\n"
-"GRANT { { CREATE | CONNECT | TEMPORARY | TEMP } [,...] | ALL [ PRIVILEGES ] }\n"
+"GRANT { { CREATE | CONNECT | TEMPORARY | TEMP } [,...] | ALL "
+"[ PRIVILEGES ] }\n"
 "    ON DATABASE 数据库名称 [, ...]\n"
 "    TO { [ GROUP ] 角色名称 | PUBLIC } [, ...] [ WITH GRANT OPTION ]\n"
 "\n"
@@ -4648,7 +4627,8 @@ msgstr ""
 "    TO { [ GROUP ] 角色名称 | PUBLIC } [, ...] [ WITH GRANT OPTION ]\n"
 "\n"
 "GRANT { EXECUTE | ALL [ PRIVILEGES ] }\n"
-"    ON FUNCTION 函数名称 ( [ [ 参数模式 ] [ 参数名称 ] 参数类型 [, ...] ] ) [, ...]\n"
+"    ON FUNCTION 函数名称 ( [ [ 参数模式 ] [ 参数名称 ] 参数类型 [, ...] ] ) "
+"[, ...]\n"
 "    TO { [ GROUP ] 角色名称 | PUBLIC } [, ...] [ WITH GRANT OPTION ]\n"
 "\n"
 "GRANT { USAGE | ALL [ PRIVILEGES ] }\n"
@@ -4673,11 +4653,13 @@ msgstr "在资料表中建立资料"
 #: sql_help.h:454
 msgid ""
 "INSERT INTO table [ ( column [, ...] ) ]\n"
-"    { DEFAULT VALUES | VALUES ( { expression | DEFAULT } [, ...] ) [, ...] | query }\n"
+"    { DEFAULT VALUES | VALUES ( { expression | DEFAULT } [, ...] ) [, ...] | "
+"query }\n"
 "    [ RETURNING * | output_expression [ [ AS ] output_name ] [, ...] ]"
 msgstr ""
 "INSERT INTO 表 [ ( 列 [, ...] ) ]\n"
-"    { DEFAULT VALUES | VALUES ( { 表达式 | DEFAULT } [, ...] ) [, ...] | 查询 }\n"
+"    { DEFAULT VALUES | VALUES ( { 表达式 | DEFAULT } [, ...] ) [, ...] | 查"
+"询 }\n"
 "    [ RETURNING * | 输出表达式 [ AS 输出名称 ] [, ...] ]"
 
 # sql_help.h:333
@@ -4811,7 +4793,8 @@ msgstr "移除存取权限"
 #: sql_help.h:502
 msgid ""
 "REVOKE [ GRANT OPTION FOR ]\n"
-"    { { SELECT | INSERT | UPDATE | DELETE | TRUNCATE | REFERENCES | TRIGGER }\n"
+"    { { SELECT | INSERT | UPDATE | DELETE | TRUNCATE | REFERENCES | "
+"TRIGGER }\n"
 "    [,...] | ALL [ PRIVILEGES ] }\n"
 "    ON [ TABLE ] tablename [, ...]\n"
 "    FROM { [ GROUP ] rolename | PUBLIC } [, ...]\n"
@@ -4851,7 +4834,8 @@ msgid ""
 "\n"
 "REVOKE [ GRANT OPTION FOR ]\n"
 "    { EXECUTE | ALL [ PRIVILEGES ] }\n"
-"    ON FUNCTION funcname ( [ [ argmode ] [ argname ] argtype [, ...] ] ) [, ...]\n"
+"    ON FUNCTION funcname ( [ [ argmode ] [ argname ] argtype [, ...] ] ) "
+"[, ...]\n"
 "    FROM { [ GROUP ] rolename | PUBLIC } [, ...]\n"
 "    [ CASCADE | RESTRICT ]\n"
 "\n"
@@ -4878,7 +4862,8 @@ msgid ""
 "    [ CASCADE | RESTRICT ]"
 msgstr ""
 "REVOKE [ GRANT OPTION FOR ]\n"
-"    { { SELECT | INSERT | UPDATE | DELETE | TRUNCATE | REFERENCES | TRIGGER }\n"
+"    { { SELECT | INSERT | UPDATE | DELETE | TRUNCATE | REFERENCES | "
+"TRIGGER }\n"
 "    [,...] | ALL [ PRIVILEGES ] }\n"
 "    ON [ TABLE ] 表名 [, ...]\n"
 "    FROM { [ GROUP ] 角色名 | PUBLIC } [, ...]\n"
@@ -4918,7 +4903,8 @@ msgstr ""
 "\n"
 "REVOKE [ GRANT OPTION FOR ]\n"
 "    { EXECUTE | ALL [ PRIVILEGES ] }\n"
-"    ON FUNCTION 函数名称 ( [ [ 参数模式 ] [ 参数名称 ] 参数类型 [, ...] ] ) [, ...]\n"
+"    ON FUNCTION 函数名称 ( [ [ 参数模式 ] [ 参数名称 ] 参数类型 [, ...] ] ) "
+"[, ...]\n"
 "    FROM { [ GROUP ] 角色名称 | PUBLIC } [, ...]\n"
 "    [ CASCADE | RESTRICT ]\n"
 "\n"
@@ -4977,15 +4963,11 @@ msgid "SAVEPOINT savepoint_name"
 msgstr "SAVEPOINT 储存点_名称"
 
 # sql_help.h:385
-#: sql_help.h:521
-#: sql_help.h:557
-#: sql_help.h:581
+#: sql_help.h:521 sql_help.h:557 sql_help.h:581
 msgid "retrieve rows from a table or view"
 msgstr "从资料表或视观表读取资料"
 
-#: sql_help.h:522
-#: sql_help.h:558
-#: sql_help.h:582
+#: sql_help.h:522 sql_help.h:558 sql_help.h:582
 msgid ""
 "[ WITH [ RECURSIVE ] with_query [, ...] ]\n"
 "SELECT [ ALL | DISTINCT [ ON ( expression [, ...] ) ] ]\n"
@@ -4996,7 +4978,8 @@ msgid ""
 "    [ HAVING condition [, ...] ]\n"
 "    [ WINDOW window_name AS ( window_definition ) [, ...] ]\n"
 "    [ { UNION | INTERSECT | EXCEPT } [ ALL ] select ]\n"
-"    [ ORDER BY expression [ ASC | DESC | USING operator ] [ NULLS { FIRST | LAST } ] [, ...] ]\n"
+"    [ ORDER BY expression [ ASC | DESC | USING operator ] [ NULLS { FIRST | "
+"LAST } ] [, ...] ]\n"
 "    [ LIMIT { count | ALL } ]\n"
 "    [ OFFSET start [ ROW | ROWS ] ]\n"
 "    [ FETCH { FIRST | NEXT } [ count ] { ROW | ROWS } ONLY ]\n"
@@ -5007,9 +4990,11 @@ msgid ""
 "    [ ONLY ] table_name [ * ] [ [ AS ] alias [ ( column_alias [, ...] ) ] ]\n"
 "    ( select ) [ AS ] alias [ ( column_alias [, ...] ) ]\n"
 "    with_query_name [ [ AS ] alias [ ( column_alias [, ...] ) ] ]\n"
-"    function_name ( [ argument [, ...] ] ) [ AS ] alias [ ( column_alias [, ...] | column_definition [, ...] ) ]\n"
+"    function_name ( [ argument [, ...] ] ) [ AS ] alias [ ( column_alias "
+"[, ...] | column_definition [, ...] ) ]\n"
 "    function_name ( [ argument [, ...] ] ) AS ( column_definition [, ...] )\n"
-"    from_item [ NATURAL ] join_type from_item [ ON join_condition | USING ( join_column [, ...] ) ]\n"
+"    from_item [ NATURAL ] join_type from_item [ ON join_condition | USING "
+"( join_column [, ...] ) ]\n"
 "\n"
 "and with_query is:\n"
 "\n"
@@ -5026,7 +5011,8 @@ msgstr ""
 "    [ HAVING 条件 [, ...] ]\n"
 "    [ WINDOW 窗口名称 AS ( 窗口定义 ) [, ...] ]\n"
 "    [ { UNION | INTERSECT | EXCEPT } [ ALL ] 查询语句 ]\n"
-"    [ ORDER BY 表达式 [ ASC | DESC | USING operator ] [ NULLS { FIRST | LAST } ] [, ...] ]\n"
+"    [ ORDER BY 表达式 [ ASC | DESC | USING operator ] [ NULLS { FIRST | "
+"LAST } ] [, ...] ]\n"
 "    [ LIMIT { 输出记录数 | ALL } ]\n"
 "    [ OFFSET 开始值 [ ROW | ROWS ] ]\n"
 "    [ FETCH { FIRST | NEXT } [ 一次取回的记录数量 ] { ROW | ROWS } ONLY ]\n"
@@ -5037,9 +5023,11 @@ msgstr ""
 "    [ ONLY ] 表名 [ * ] [ [ AS ] 化名 [ ( 列的化名 [, ...] ) ] ]\n"
 "    ( 查询语句 ) [ AS ] 化名 [ ( 列的化名 [, ...] ) ]\n"
 "    查询名称 [ [ AS ] 化名 [ ( 列的化名 [, ...] ) ] ]\n"
-"    函数名称 ( [ 参数 [, ...] ] ) [ AS ] 化名 [ ( 列的化名 [, ...] | 列的定义 [, ...] ) ]\n"
+"    函数名称 ( [ 参数 [, ...] ] ) [ AS ] 化名 [ ( 列的化名 [, ...] | 列的定"
+"义 [, ...] ) ]\n"
 "    函数名称 ( [ 参数 [, ...] ] ) AS ( 列的定义 [, ...] )\n"
-"    查询成员 [ NATURAL ] 连接类型 查询成员 [ ON 连接条件 | USING ( 连接列 [, ...] ) ]\n"
+"    查询成员 [ NATURAL ] 连接类型 查询成员 [ ON 连接条件 | USING ( 连接列 "
+"[, ...] ) ]\n"
 "\n"
 "查询是:\n"
 "\n"
@@ -5059,7 +5047,8 @@ msgid ""
 "    [ HAVING condition [, ...] ]\n"
 "    [ WINDOW window_name AS ( window_definition ) [, ...] ]\n"
 "    [ { UNION | INTERSECT | EXCEPT } [ ALL ] select ]\n"
-"    [ ORDER BY expression [ ASC | DESC | USING operator ] [ NULLS { FIRST | LAST } ] [, ...] ]\n"
+"    [ ORDER BY expression [ ASC | DESC | USING operator ] [ NULLS { FIRST | "
+"LAST } ] [, ...] ]\n"
 "    [ LIMIT { count | ALL } ]\n"
 "    [ OFFSET start [ ROW | ROWS ] ]\n"
 "    [ FETCH { FIRST | NEXT } [ count ] { ROW | ROWS } ONLY ]\n"
@@ -5075,7 +5064,8 @@ msgstr ""
 "    [ HAVING 表达式 [, ...] ]\n"
 "    [ WINDOW 窗口名称 AS ( 窗口定义 ) [, ...] ]\n"
 "    [ { UNION | INTERSECT | EXCEPT } [ ALL ] 查询 ]\n"
-"    [ ORDER BY 表达式 [ ASC | DESC | USING operator ] [ NULLS { FIRST | LAST } ] [, ...] ]\n"
+"    [ ORDER BY 表达式 [ ASC | DESC | USING operator ] [ NULLS { FIRST | "
+"LAST } ] [, ...] ]\n"
 "    [ LIMIT { 一次取出记录的数量 | ALL } ]\n"
 "    [ OFFSET 起始值 [ ROW | ROWS ] ]\n"
 "    [ FETCH { FIRST | NEXT } [ 下一次取出记录的数量 ] { ROW | ROWS } ONLY ]\n"
@@ -5088,7 +5078,8 @@ msgstr "更改一个执行时期参数"
 
 #: sql_help.h:530
 msgid ""
-"SET [ SESSION | LOCAL ] configuration_parameter { TO | = } { value | 'value' | DEFAULT }\n"
+"SET [ SESSION | LOCAL ] configuration_parameter { TO | = } { value | 'value' "
+"| DEFAULT }\n"
 "SET [ SESSION | LOCAL ] TIME ZONE { timezone | LOCAL | DEFAULT }"
 msgstr ""
 "SET [ SESSION | LOCAL ] 组态_参数器 { TO | = } { 值 | '值' | DEFAULT }\n"
@@ -5121,7 +5112,9 @@ msgstr ""
 
 # sql_help.h:401
 #: sql_help.h:541
-msgid "set the session user identifier and the current user identifier of the current session"
+msgid ""
+"set the session user identifier and the current user identifier of the "
+"current session"
 msgstr "设置会话用户标识符和当前会话的当前用户标识符"
 
 # sql_help.h:402
@@ -5148,7 +5141,8 @@ msgid ""
 "\n"
 "where transaction_mode is one of:\n"
 "\n"
-"    ISOLATION LEVEL { SERIALIZABLE | REPEATABLE READ | READ COMMITTED | READ UNCOMMITTED }\n"
+"    ISOLATION LEVEL { SERIALIZABLE | REPEATABLE READ | READ COMMITTED | READ "
+"UNCOMMITTED }\n"
 "    READ WRITE | READ ONLY"
 msgstr ""
 "SET TRANSACTION 事务交易_模式 [, ...]\n"
@@ -5156,7 +5150,8 @@ msgstr ""
 "\n"
 "在事务交易_模式的地方可以是一个：\n"
 "\n"
-"    ISOLATION LEVEL { SERIALIZABLE | REPEATABLE READ | READ COMMITTED | READ UNCOMMITTED }\n"
+"    ISOLATION LEVEL { SERIALIZABLE | REPEATABLE READ | READ COMMITTED | READ "
+"UNCOMMITTED }\n"
 "    READ WRITE | READ ONLY"
 
 # sql_help.h:409
@@ -5180,14 +5175,16 @@ msgid ""
 "\n"
 "where transaction_mode is one of:\n"
 "\n"
-"    ISOLATION LEVEL { SERIALIZABLE | REPEATABLE READ | READ COMMITTED | READ UNCOMMITTED }\n"
+"    ISOLATION LEVEL { SERIALIZABLE | REPEATABLE READ | READ COMMITTED | READ "
+"UNCOMMITTED }\n"
 "    READ WRITE | READ ONLY"
 msgstr ""
 "START TRANSACTION [ 事务交易_模式 [, ...] ]\n"
 "\n"
 "在事务交易_模式的地方可以是一个：\n"
 "\n"
-"    ISOLATION LEVEL { SERIALIZABLE | REPEATABLE READ | READ COMMITTED | READ UNCOMMITTED }\n"
+"    ISOLATION LEVEL { SERIALIZABLE | REPEATABLE READ | READ COMMITTED | READ "
+"UNCOMMITTED }\n"
 "    READ WRITE | READ ONLY"
 
 # sql_help.h:425
@@ -5223,7 +5220,8 @@ msgstr "更新资料表中的资料列"
 msgid ""
 "UPDATE [ ONLY ] table [ [ AS ] alias ]\n"
 "    SET { column = { expression | DEFAULT } |\n"
-"          ( column [, ...] ) = ( { expression | DEFAULT } [, ...] ) } [, ...]\n"
+"          ( column [, ...] ) = ( { expression | DEFAULT } [, ...] ) } "
+"[, ...]\n"
 "    [ FROM fromlist ]\n"
 "    [ WHERE condition | WHERE CURRENT OF cursor_name ]\n"
 "    [ RETURNING * | output_expression [ [ AS ] output_name ] [, ...] ]"
@@ -5244,7 +5242,8 @@ msgstr "垃圾收集(GC)并选择性的分析资料库"
 #: sql_help.h:574
 msgid ""
 "VACUUM [ FULL ] [ FREEZE ] [ VERBOSE ] [ table ]\n"
-"VACUUM [ FULL ] [ FREEZE ] [ VERBOSE ] ANALYZE [ table [ (column [, ...] ) ] ]"
+"VACUUM [ FULL ] [ FREEZE ] [ VERBOSE ] ANALYZE [ table [ (column "
+"[, ...] ) ] ]"
 msgstr ""
 "VACUUM [ FULL ] [ FREEZE ] [ VERBOSE ] [ 资料表 ]\n"
 "VACUUM [ FULL ] [ FREEZE ] [ VERBOSE ] ANALYZE [ 资料表 [ (栏位 [, ...] ) ] ]"
@@ -5268,9 +5267,7 @@ msgstr ""
 "    [ FETCH { FIRST | NEXT } [ count ] { ROW | ROWS } ONLY ]"
 
 # command.c:240
-#: ../../port/exec.c:195
-#: ../../port/exec.c:309
-#: ../../port/exec.c:352
+#: ../../port/exec.c:195 ../../port/exec.c:309 ../../port/exec.c:352
 #, c-format
 msgid "could not identify current directory: %s"
 msgstr "无法识别目前的目录：%s"
@@ -5293,8 +5290,7 @@ msgid "could not find a \"%s\" to execute"
 msgstr "未能找到一个 \"%s\" 来执行"
 
 # command.c:256
-#: ../../port/exec.c:325
-#: ../../port/exec.c:361
+#: ../../port/exec.c:325 ../../port/exec.c:361
 #, c-format
 msgid "could not change directory to \"%s\""
 msgstr "无法切换目录至 \"%s\""
@@ -5329,4 +5325,3 @@ msgstr "子进程被信号 %d 终止"
 #, c-format
 msgid "child process exited with unrecognized status %d"
 msgstr "子进程结束，不明状态代码 %d"
-

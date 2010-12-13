@@ -5,94 +5,118 @@
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: PostgreSQL 8.4\n"
+"Project-Id-Version: plperl (PostgreSQL 8.4)\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
-"POT-Creation-Date: 2010-02-19 01:51+0000\n"
+"POT-Creation-Date: 2010-10-01 14:50+0000\n"
 "PO-Revision-Date: 2010-03-30 14:41+0800\n"
 "Last-Translator: Weibin <ssmei_2000@yahoo.com>\n"
-"Language-Team: LANGUAGE <LL@li.org>\n"
+"Language-Team: Chinese (Simplified)\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
+"Language: zh_CN\n"
 
-#: plperl.c:202
-msgid "If true, trusted and untrusted Perl code will be compiled in strict mode."
+#: plperl.c:262
+msgid ""
+"If true, trusted and untrusted Perl code will be compiled in strict mode."
 msgstr "如果为真的话，那么信任和非信任的Perl代码将以限制模式编译."
 
-#: plperl.c:626
-#: plperl.c:819
+#: plperl.c:597 plperl.c:602 plperl.c:664 plperl.c:677
+#, c-format
+msgid "%s"
+msgstr "%s"
+
+#: plperl.c:598
+msgid "while parsing Perl initialization"
+msgstr "同时在解析Perl初始化"
+
+#: plperl.c:603
+msgid "while running Perl initialization"
+msgstr "同时在运行Perl初始化"
+
+#: plperl.c:665
+msgid "while executing PLC_TRUSTED"
+msgstr "同时在执行PLC_TRUSTED"
+
+#: plperl.c:678
+msgid "while executing utf8fix"
+msgstr "同时在执行utf8fix"
+
+#: plperl.c:763 plperl.c:956
 #, c-format
 msgid "Perl hash contains nonexistent column \"%s\""
 msgstr "Perl的哈希功能包含不存在的列\"%s\""
 
-#: plperl.c:795
+#: plperl.c:932
 msgid "$_TD->{new} does not exist"
 msgstr "$_TD->{new}不存在"
 
-#: plperl.c:799
+#: plperl.c:936
 msgid "$_TD->{new} is not a hash reference"
 msgstr "$_TD->{new}不是一个哈希引用"
 
-#: plperl.c:938
-#: plperl.c:1635
+#: plperl.c:1075 plperl.c:1779
 #, c-format
 msgid "PL/Perl functions cannot return type %s"
 msgstr "PL/Perl函数无法返回类型%s"
 
-#: plperl.c:950
-#: plperl.c:1682
+#: plperl.c:1087 plperl.c:1826
 #, c-format
 msgid "PL/Perl functions cannot accept type %s"
 msgstr "PL/Perl functions无法使用类型%s"
 
-#: plperl.c:1026
+#: plperl.c:1156
 #, c-format
 msgid "creation of Perl function \"%s\" failed: %s"
 msgstr "创建Perl函数\"%s\"失败: %s"
 
-#: plperl.c:1156
-#: plperl.c:1214
+#: plperl.c:1282 plperl.c:1340
 #, c-format
 msgid "error from Perl function \"%s\": %s"
 msgstr "在Perl函数\"%s\"中产生错误: %s"
 
-#: plperl.c:1261
+#: plperl.c:1387
 msgid "set-valued function called in context that cannot accept a set"
 msgstr "集值函数在不能使用集合的环境中调用"
 
-#: plperl.c:1304
-msgid "set-returning PL/Perl function must return reference to array or use return_next"
+#: plperl.c:1430
+msgid ""
+"set-returning PL/Perl function must return reference to array or use "
+"return_next"
 msgstr "返回集合的PL/Perl函数必须返回对数组的引用或者使用return_next"
 
-#: plperl.c:1337
+#: plperl.c:1463
 msgid "composite-returning PL/Perl function must return reference to hash"
 msgstr "返回组合类型值的PL/Perl函数必须返回对哈希的引用"
 
-#: plperl.c:1346
-msgid "function returning record called in context that cannot accept type record"
+#: plperl.c:1472
+msgid ""
+"function returning record called in context that cannot accept type record"
 msgstr "返回值类型是记录的函数在不接受使用记录类型的环境中调用"
 
-#: plperl.c:1458
+#: plperl.c:1584
 msgid "ignoring modified row in DELETE trigger"
 msgstr "在DELETE触发器中忽略已修改的记录"
 
-#: plperl.c:1466
-msgid "result of PL/Perl trigger function must be undef, \"SKIP\", or \"MODIFY\""
+#: plperl.c:1592
+msgid ""
+"result of PL/Perl trigger function must be undef, \"SKIP\", or \"MODIFY\""
 msgstr "PL/Perl 触发器函数的结果必须是undef, \"SKIP\", 或 \"MODIFY\""
 
-#: plperl.c:1569
+#: plperl.c:1709 plperl.c:1715
 msgid "out of memory"
 msgstr "内存用尽"
 
-#: plperl.c:1626
+#: plperl.c:1770
 msgid "trigger functions can only be called as triggers"
 msgstr "触发器函数只能以触发器的形式调用"
 
-#: plperl.c:1919
+#: plperl.c:2067
 msgid "cannot use return_next in a non-SETOF function"
 msgstr "不能在非SETOF函数中使用return_next"
 
-#: plperl.c:1925
-msgid "SETOF-composite-returning PL/Perl function must call return_next with reference to hash"
+#: plperl.c:2073
+msgid ""
+"SETOF-composite-returning PL/Perl function must call return_next with "
+"reference to hash"
 msgstr "返回SETOF-组合类型值的PL/Perl函数必须调用带有对哈希引用的return_next"
-

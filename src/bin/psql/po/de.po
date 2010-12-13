@@ -10,7 +10,7 @@ msgstr ""
 "Project-Id-Version: PostgreSQL 8.4\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
 "POT-Creation-Date: 2009-10-03 21:47+0000\n"
-"PO-Revision-Date: 2009-10-04 23:51+0300\n"
+"PO-Revision-Date: 2010-12-11 09:39+0200\n"
 "Last-Translator: Peter Eisentraut <peter_e@gmx.net>\n"
 "Language-Team: German <peter_e@gmx.net>\n"
 "MIME-Version: 1.0\n"
@@ -1023,8 +1023,8 @@ msgstr "  \\do[S]  [MUSTER]       Operatoren auflisten\n"
 msgid ""
 "  \\dp     [PATTERN]      list table, view, and sequence access privileges\n"
 msgstr ""
-"  \\dp     [MUSTER]       Zugriffsrechte für Tabellen, Sichten und Sequenzen "
-"auflisten\n"
+"  \\dp     [MUSTER]       Zugriffsprivilegien für Tabellen, Sichten und\n"
+"                         Sequenzen auflisten\n"
 
 #: help.c:219
 #, c-format
@@ -1568,7 +1568,7 @@ msgstr "Spalten-Zugriffsprivilegien"
 
 #: describe.c:722 describe.c:3218 describe.c:3222
 msgid "Access privileges"
-msgstr "Zugriffsrechte"
+msgstr "Zugriffsprivilegien"
 
 #: describe.c:759
 msgid "Object"

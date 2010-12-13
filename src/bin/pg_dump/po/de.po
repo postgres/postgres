@@ -10,7 +10,7 @@ msgstr ""
 "Project-Id-Version: PostgreSQL 8.4\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
 "POT-Creation-Date: 2010-06-28 03:55+0000\n"
-"PO-Revision-Date: 2010-06-28 22:28-0400\n"
+"PO-Revision-Date: 2010-12-09 21:30+0200\n"
 "Last-Translator: Peter Eisentraut <peter_e@gmx.net>\n"
 "Language-Team: German <peter_e@gmx.net>\n"
 "MIME-Version: 1.0\n"
@@ -1863,8 +1863,7 @@ msgstr ""
 #: pg_restore.c:420
 #, c-format
 msgid "  -n, --schema=NAME        restore only objects in this schema\n"
-msgstr ""
-"  -s, --schema=NAME        nur Objekte in diesem Schema wiederherstellen\n"
+msgstr "  -n, --schema=NAME        nur Objekte in diesem Schema wiederherstellen\n"
 
 #: pg_restore.c:421
 #, c-format
