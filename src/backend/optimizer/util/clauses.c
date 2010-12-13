@@ -3726,6 +3726,10 @@ inline_function(Oid funcid, Oid result_type, List *args,
 	if (pg_proc_aclcheck(funcid, GetUserId(), ACL_EXECUTE) != ACLCHECK_OK)
 		return NULL;
 
+	/* Check whether a plugin wants to hook function entry/exit */
+	if (FmgrHookIsNeeded(funcid))
+		return NULL;
+
 	/*
 	 * Make a temporary memory context, so that we don't leak all the stuff
 	 * that parsing might create.
@@ -4156,6 +4160,10 @@ inline_set_returning_function(PlannerInfo *root, RangeTblEntry *rte)
 
 	/* Check permission to call function (fail later, if not) */
 	if (pg_proc_aclcheck(func_oid, GetUserId(), ACL_EXECUTE) != ACLCHECK_OK)
+		return NULL;
+
+	/* Check whether a plugin wants to hook function entry/exit */
+	if (FmgrHookIsNeeded(func_oid))
 		return NULL;
 
 	/*

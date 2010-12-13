@@ -544,6 +544,32 @@ extern void **find_rendezvous_variable(const char *varName);
 extern int AggCheckCallContext(FunctionCallInfo fcinfo,
 					MemoryContext *aggcontext);
 
+/*
+ * We allow plugin modules to hook function entry/exit.  This is intended
+ * as support for loadable security policy modules, which may want to
+ * perform additional privilege checks on function entry or exit, or to do
+ * other internal bookkeeping.  To make this possible, such modules must be
+ * able not only to support normal function entry and exit, but also to trap
+ * the case where we bail out due to an error; and they must also be able to
+ * prevent inlining.
+ */
+typedef enum FmgrHookEventType
+{
+	FHET_START,
+	FHET_END,
+	FHET_ABORT
+} FmgrHookEventType;
+
+typedef bool (*needs_fmgr_hook_type)(Oid fn_oid);
+
+typedef void (*fmgr_hook_type)(FmgrHookEventType event,
+							   FmgrInfo *flinfo, Datum *private);
+
+extern PGDLLIMPORT needs_fmgr_hook_type	needs_fmgr_hook;
+extern PGDLLIMPORT fmgr_hook_type		fmgr_hook;
+
+#define FmgrHookIsNeeded(fn_oid)							\
+	(!needs_fmgr_hook ? false : (*needs_fmgr_hook)(fn_oid))
 
 /*
  * !!! OLD INTERFACE !!!
