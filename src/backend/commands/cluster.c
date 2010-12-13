@@ -675,6 +675,7 @@ make_new_heap(Oid OIDOldHeap, Oid NewTableSpace)
 										  tupdesc,
 										  NIL,
 										  OldHeap->rd_rel->relkind,
+										  OldHeap->rd_rel->relpersistence,
 										  false,
 										  RelationIsMapped(OldHeap),
 										  true,
@@ -789,9 +790,9 @@ copy_heap_data(Oid OIDNewHeap, Oid OIDOldHeap, Oid OIDOldIndex,
 
 	/*
 	 * We need to log the copied data in WAL iff WAL archiving/streaming is
-	 * enabled AND it's not a temp rel.
+	 * enabled AND it's not a WAL-logged rel.
 	 */
-	use_wal = XLogIsNeeded() && !NewHeap->rd_istemp;
+	use_wal = XLogIsNeeded() && RelationNeedsWAL(NewHeap);
 
 	/* use_wal off requires smgr_targblock be initially invalid */
 	Assert(RelationGetTargetBlock(NewHeap) == InvalidBlockNumber);

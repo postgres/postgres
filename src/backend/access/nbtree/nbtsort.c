@@ -211,9 +211,9 @@ _bt_leafbuild(BTSpool *btspool, BTSpool *btspool2)
 
 	/*
 	 * We need to log index creation in WAL iff WAL archiving/streaming is
-	 * enabled AND it's not a temp index.
+	 * enabled UNLESS the index isn't WAL-logged anyway.
 	 */
-	wstate.btws_use_wal = XLogIsNeeded() && !wstate.index->rd_istemp;
+	wstate.btws_use_wal = XLogIsNeeded() && RelationNeedsWAL(wstate.index);
 
 	/* reserve the metapage */
 	wstate.btws_pages_alloced = BTREE_METAPAGE + 1;
@@ -797,9 +797,9 @@ _bt_load(BTWriteState *wstate, BTSpool *btspool, BTSpool *btspool2)
 	_bt_uppershutdown(wstate, state);
 
 	/*
-	 * If the index isn't temp, we must fsync it down to disk before it's safe
-	 * to commit the transaction.  (For a temp index we don't care since the
-	 * index will be uninteresting after a crash anyway.)
+	 * If the index is WAL-logged, we must fsync it down to disk before it's
+	 * safe to commit the transaction.  (For a non-WAL-logged index we don't
+	 * care since the index will be uninteresting after a crash anyway.)
 	 *
 	 * It's obvious that we must do this when not WAL-logging the build. It's
 	 * less obvious that we have to do it even if we did WAL-log the index
@@ -811,7 +811,7 @@ _bt_load(BTWriteState *wstate, BTSpool *btspool, BTSpool *btspool2)
 	 * fsync those pages here, they might still not be on disk when the crash
 	 * occurs.
 	 */
-	if (!wstate->index->rd_istemp)
+	if (RelationNeedsWAL(wstate->index))
 	{
 		RelationOpenSmgr(wstate->index);
 		smgrimmedsync(wstate->index->rd_smgr, MAIN_FORKNUM);

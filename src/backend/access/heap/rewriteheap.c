@@ -277,8 +277,8 @@ end_heap_rewrite(RewriteState state)
 	}
 
 	/*
-	 * If the rel isn't temp, must fsync before commit.  We use heap_sync to
-	 * ensure that the toast table gets fsync'd too.
+	 * If the rel is WAL-logged, must fsync before commit.  We use heap_sync
+	 * to ensure that the toast table gets fsync'd too.
 	 *
 	 * It's obvious that we must do this when not WAL-logging. It's less
 	 * obvious that we have to do it even if we did WAL-log the pages. The
@@ -287,7 +287,7 @@ end_heap_rewrite(RewriteState state)
 	 * occurring during the rewriteheap operation won't have fsync'd data we
 	 * wrote before the checkpoint.
 	 */
-	if (!state->rs_new_rel->rd_istemp)
+	if (RelationNeedsWAL(state->rs_new_rel))
 		heap_sync(state->rs_new_rel);
 
 	/* Deleting the context frees everything */

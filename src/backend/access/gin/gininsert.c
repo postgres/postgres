@@ -55,7 +55,7 @@ createPostingTree(Relation index, ItemPointerData *items, uint32 nitems)
 
 	MarkBufferDirty(buffer);
 
-	if (!index->rd_istemp)
+	if (RelationNeedsWAL(index))
 	{
 		XLogRecPtr	recptr;
 		XLogRecData rdata[2];
@@ -325,7 +325,7 @@ ginbuild(PG_FUNCTION_ARGS)
 	GinInitBuffer(RootBuffer, GIN_LEAF);
 	MarkBufferDirty(RootBuffer);
 
-	if (!index->rd_istemp)
+	if (RelationNeedsWAL(index))
 	{
 		XLogRecPtr	recptr;
 		XLogRecData rdata;

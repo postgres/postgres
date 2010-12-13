@@ -268,10 +268,10 @@ static void
 vacuum_log_cleanup_info(Relation rel, LVRelStats *vacrelstats)
 {
 	/*
-	 * No need to log changes for temp tables, they do not contain data
-	 * visible on the standby server.
+	 * Skip this for relations for which no WAL is to be written, or if we're
+	 * not trying to support archive recovery.
 	 */
-	if (rel->rd_istemp || !XLogIsNeeded())
+	if (!RelationNeedsWAL(rel) || !XLogIsNeeded())
 		return;
 
 	/*
@@ -664,8 +664,7 @@ lazy_scan_heap(Relation onerel, LVRelStats *vacrelstats,
 		if (nfrozen > 0)
 		{
 			MarkBufferDirty(buf);
-			/* no XLOG for temp tables, though */
-			if (!onerel->rd_istemp)
+			if (RelationNeedsWAL(onerel))
 			{
 				XLogRecPtr	recptr;
 
@@ -895,7 +894,7 @@ lazy_vacuum_page(Relation onerel, BlockNumber blkno, Buffer buffer,
 	MarkBufferDirty(buffer);
 
 	/* XLOG stuff */
-	if (!onerel->rd_istemp)
+	if (RelationNeedsWAL(onerel))
 	{
 		XLogRecPtr	recptr;
 

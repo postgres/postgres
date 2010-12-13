@@ -612,16 +612,26 @@ pg_relation_filepath(PG_FUNCTION_ARGS)
 		PG_RETURN_NULL();
 	}
 
-	/* If temporary, determine owning backend. */
-	if (!relform->relistemp)
-		backend = InvalidBackendId;
-	else if (isTempOrToastNamespace(relform->relnamespace))
-		backend = MyBackendId;
-	else
+	/* Determine owning backend. */
+	switch (relform->relpersistence)
 	{
-		/* Do it the hard way. */
-		backend = GetTempNamespaceBackendId(relform->relnamespace);
-		Assert(backend != InvalidBackendId);
+		case RELPERSISTENCE_PERMANENT:
+			backend = InvalidBackendId;
+			break;
+		case RELPERSISTENCE_TEMP:
+			if (isTempOrToastNamespace(relform->relnamespace))
+				backend = MyBackendId;
+			else
+			{
+				/* Do it the hard way. */
+				backend = GetTempNamespaceBackendId(relform->relnamespace);
+				Assert(backend != InvalidBackendId);
+			}
+			break;
+		default:
+			elog(ERROR, "invalid relpersistence: %c", relform->relpersistence);
+			backend = InvalidBackendId; 	/* placate compiler */
+			break;
 	}
 
 	ReleaseSysCache(tuple);

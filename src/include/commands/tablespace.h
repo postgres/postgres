@@ -47,7 +47,7 @@ extern void AlterTableSpaceOptions(AlterTableSpaceOptionsStmt *stmt);
 
 extern void TablespaceCreateDbspace(Oid spcNode, Oid dbNode, bool isRedo);
 
-extern Oid	GetDefaultTablespace(bool forTemp);
+extern Oid	GetDefaultTablespace(char relpersistence);
 
 extern void PrepareTempTablespaces(void);
 

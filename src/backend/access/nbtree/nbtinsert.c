@@ -766,7 +766,7 @@ _bt_insertonpg(Relation rel,
 		}
 
 		/* XLOG stuff */
-		if (!rel->rd_istemp)
+		if (RelationNeedsWAL(rel))
 		{
 			xl_btree_insert xlrec;
 			BlockNumber xldownlink;
@@ -1165,7 +1165,7 @@ _bt_split(Relation rel, Buffer buf, OffsetNumber firstright,
 	}
 
 	/* XLOG stuff */
-	if (!rel->rd_istemp)
+	if (RelationNeedsWAL(rel))
 	{
 		xl_btree_split xlrec;
 		uint8		xlinfo;
@@ -1914,7 +1914,7 @@ _bt_newroot(Relation rel, Buffer lbuf, Buffer rbuf)
 	MarkBufferDirty(metabuf);
 
 	/* XLOG stuff */
-	if (!rel->rd_istemp)
+	if (RelationNeedsWAL(rel))
 	{
 		xl_btree_newroot xlrec;
 		XLogRecPtr	recptr;

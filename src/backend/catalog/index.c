@@ -545,6 +545,7 @@ index_create(Oid heapRelationId,
 	bool		is_exclusion;
 	Oid			namespaceId;
 	int			i;
+	char		relpersistence;
 
 	is_exclusion = (indexInfo->ii_ExclusionOps != NULL);
 
@@ -561,11 +562,13 @@ index_create(Oid heapRelationId,
 	/*
 	 * The index will be in the same namespace as its parent table, and is
 	 * shared across databases if and only if the parent is.  Likewise, it
-	 * will use the relfilenode map if and only if the parent does.
+	 * will use the relfilenode map if and only if the parent does; and it
+	 * inherits the parent's relpersistence.
 	 */
 	namespaceId = RelationGetNamespace(heapRelation);
 	shared_relation = heapRelation->rd_rel->relisshared;
 	mapped_relation = RelationIsMapped(heapRelation);
+	relpersistence = heapRelation->rd_rel->relpersistence;
 
 	/*
 	 * check parameters
@@ -646,9 +649,7 @@ index_create(Oid heapRelationId,
 		else
 		{
 			indexRelationId =
-				GetNewRelFileNode(tableSpaceId, pg_class,
-								  heapRelation->rd_istemp ?
-									MyBackendId : InvalidBackendId);
+				GetNewRelFileNode(tableSpaceId, pg_class, relpersistence);
 		}
 	}
 
@@ -663,6 +664,7 @@ index_create(Oid heapRelationId,
 								indexRelationId,
 								indexTupDesc,
 								RELKIND_INDEX,
+								relpersistence,
 								shared_relation,
 								mapped_relation,
 								allow_system_table_mods);

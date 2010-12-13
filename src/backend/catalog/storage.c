@@ -95,19 +95,35 @@ typedef struct xl_smgr_truncate
  * transaction aborts later on, the storage will be destroyed.
  */
 void
-RelationCreateStorage(RelFileNode rnode, bool istemp)
+RelationCreateStorage(RelFileNode rnode, char relpersistence)
 {
 	PendingRelDelete *pending;
 	XLogRecPtr	lsn;
 	XLogRecData rdata;
 	xl_smgr_create xlrec;
 	SMgrRelation srel;
-	BackendId	backend = istemp ? MyBackendId : InvalidBackendId;
+	BackendId	backend;
+	bool		needs_wal;
+
+	switch (relpersistence)
+	{
+		case RELPERSISTENCE_TEMP:
+			backend = MyBackendId;
+			needs_wal = false;
+			break;
+		case RELPERSISTENCE_PERMANENT:
+			backend = InvalidBackendId;
+			needs_wal = true;
+			break;
+		default:
+			elog(ERROR, "invalid relpersistence: %c", relpersistence);
+			return;			/* placate compiler */
+	}
 
 	srel = smgropen(rnode, backend);
 	smgrcreate(srel, MAIN_FORKNUM, false);
 
-	if (!istemp)
+	if (needs_wal)
 	{
 		/*
 		 * Make an XLOG entry reporting the file creation.
@@ -253,7 +269,7 @@ RelationTruncate(Relation rel, BlockNumber nblocks)
 	 * failure to truncate, that might spell trouble at WAL replay, into a
 	 * certain PANIC.
 	 */
-	if (!rel->rd_istemp)
+	if (RelationNeedsWAL(rel))
 	{
 		/*
 		 * Make an XLOG entry reporting the file truncation.

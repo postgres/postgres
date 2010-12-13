@@ -93,7 +93,7 @@ xlogVacuumPage(Relation index, Buffer buffer)
 
 	Assert(GinPageIsLeaf(page));
 
-	if (index->rd_istemp)
+	if (!RelationNeedsWAL(index))
 		return;
 
 	data.node = index->rd_node;
@@ -308,7 +308,7 @@ ginDeletePage(GinVacuumState *gvs, BlockNumber deleteBlkno, BlockNumber leftBlkn
 		MarkBufferDirty(lBuffer);
 	MarkBufferDirty(dBuffer);
 
-	if (!gvs->index->rd_istemp)
+	if (RelationNeedsWAL(gvs->index))
 	{
 		XLogRecPtr	recptr;
 		XLogRecData rdata[4];

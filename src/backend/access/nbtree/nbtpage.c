@@ -224,7 +224,7 @@ _bt_getroot(Relation rel, int access)
 		MarkBufferDirty(metabuf);
 
 		/* XLOG stuff */
-		if (!rel->rd_istemp)
+		if (RelationNeedsWAL(rel))
 		{
 			xl_btree_newroot xlrec;
 			XLogRecPtr	recptr;
@@ -452,7 +452,7 @@ _bt_checkpage(Relation rel, Buffer buf)
 static void
 _bt_log_reuse_page(Relation rel, BlockNumber blkno, TransactionId latestRemovedXid)
 {
-	if (rel->rd_istemp)
+	if (!RelationNeedsWAL(rel))
 		return;
 
 	/* No ereport(ERROR) until changes are logged */
@@ -751,7 +751,7 @@ _bt_delitems_vacuum(Relation rel, Buffer buf,
 	MarkBufferDirty(buf);
 
 	/* XLOG stuff */
-	if (!rel->rd_istemp)
+	if (RelationNeedsWAL(rel))
 	{
 		XLogRecPtr	recptr;
 		XLogRecData rdata[2];
@@ -829,7 +829,7 @@ _bt_delitems_delete(Relation rel, Buffer buf,
 	MarkBufferDirty(buf);
 
 	/* XLOG stuff */
-	if (!rel->rd_istemp)
+	if (RelationNeedsWAL(rel))
 	{
 		XLogRecPtr	recptr;
 		XLogRecData rdata[3];
@@ -1365,7 +1365,7 @@ _bt_pagedel(Relation rel, Buffer buf, BTStack stack)
 		MarkBufferDirty(lbuf);
 
 	/* XLOG stuff */
-	if (!rel->rd_istemp)
+	if (RelationNeedsWAL(rel))
 	{
 		xl_btree_delete_page xlrec;
 		xl_btree_metadata xlmeta;

@@ -238,6 +238,7 @@ heap_create(const char *relname,
 			Oid relid,
 			TupleDesc tupDesc,
 			char relkind,
+			char relpersistence,
 			bool shared_relation,
 			bool mapped_relation,
 			bool allow_system_table_mods)
@@ -311,7 +312,8 @@ heap_create(const char *relname,
 									 relid,
 									 reltablespace,
 									 shared_relation,
-									 mapped_relation);
+									 mapped_relation,
+									 relpersistence);
 
 	/*
 	 * Have the storage manager create the relation's disk file, if needed.
@@ -322,7 +324,7 @@ heap_create(const char *relname,
 	if (create_storage)
 	{
 		RelationOpenSmgr(rel);
-		RelationCreateStorage(rel->rd_node, rel->rd_istemp);
+		RelationCreateStorage(rel->rd_node, relpersistence);
 	}
 
 	return rel;
@@ -693,7 +695,7 @@ InsertPgClassTuple(Relation pg_class_desc,
 	values[Anum_pg_class_reltoastidxid - 1] = ObjectIdGetDatum(rd_rel->reltoastidxid);
 	values[Anum_pg_class_relhasindex - 1] = BoolGetDatum(rd_rel->relhasindex);
 	values[Anum_pg_class_relisshared - 1] = BoolGetDatum(rd_rel->relisshared);
-	values[Anum_pg_class_relistemp - 1] = BoolGetDatum(rd_rel->relistemp);
+	values[Anum_pg_class_relpersistence - 1] = CharGetDatum(rd_rel->relpersistence);
 	values[Anum_pg_class_relkind - 1] = CharGetDatum(rd_rel->relkind);
 	values[Anum_pg_class_relnatts - 1] = Int16GetDatum(rd_rel->relnatts);
 	values[Anum_pg_class_relchecks - 1] = Int16GetDatum(rd_rel->relchecks);
@@ -898,6 +900,7 @@ heap_create_with_catalog(const char *relname,
 						 TupleDesc tupdesc,
 						 List *cooked_constraints,
 						 char relkind,
+						 char relpersistence,
 						 bool shared_relation,
 						 bool mapped_relation,
 						 bool oidislocal,
@@ -997,8 +1000,7 @@ heap_create_with_catalog(const char *relname,
 		}
 		else
 			relid = GetNewRelFileNode(reltablespace, pg_class_desc,
-									  isTempOrToastNamespace(relnamespace) ?
-										  MyBackendId : InvalidBackendId);
+									  relpersistence);
 	}
 
 	/*
@@ -1036,6 +1038,7 @@ heap_create_with_catalog(const char *relname,
 							   relid,
 							   tupdesc,
 							   relkind,
+							   relpersistence,
 							   shared_relation,
 							   mapped_relation,
 							   allow_system_table_mods);

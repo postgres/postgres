@@ -219,6 +219,7 @@ Boot_CreateStmt:
 												   $3,
 												   tupdesc,
 												   RELKIND_RELATION,
+												   RELPERSISTENCE_PERMANENT,
 												   shared_relation,
 												   mapped_relation,
 												   true);
@@ -238,6 +239,7 @@ Boot_CreateStmt:
 													  tupdesc,
 													  NIL,
 													  RELKIND_RELATION,
+													  RELPERSISTENCE_PERMANENT,
 													  shared_relation,
 													  mapped_relation,
 													  true,

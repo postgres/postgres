@@ -74,7 +74,7 @@ typedef struct RangeVar
 	char	   *relname;		/* the relation/sequence name */
 	InhOption	inhOpt;			/* expand rel by inheritance? recursively act
 								 * on children? */
-	bool		istemp;			/* is this a temp relation/sequence? */
+	char		relpersistence;	/* see RELPERSISTENCE_* in pg_class.h */
 	Alias	   *alias;			/* table alias & optional column aliases */
 	int			location;		/* token location, or -1 if unknown */
 } RangeVar;

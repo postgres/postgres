@@ -132,7 +132,6 @@ typedef struct RelationData
 	struct SMgrRelationData *rd_smgr;	/* cached file handle, or NULL */
 	int			rd_refcnt;		/* reference count */
 	BackendId	rd_backend;		/* owning backend id, if temporary relation */
-	bool		rd_istemp;		/* rel is a temporary relation */
 	bool		rd_isnailed;	/* rel is nailed in cache */
 	bool		rd_isvalid;		/* relcache entry is valid */
 	char		rd_indexvalid;	/* state of rd_indexlist: 0 = not valid, 1 =
@@ -390,6 +389,27 @@ typedef struct StdRdOptions
 	} while (0)
 
 /*
+ * RelationNeedsWAL
+ *		True if relation needs WAL.
+ */
+#define RelationNeedsWAL(relation) \
+	((relation)->rd_rel->relpersistence == RELPERSISTENCE_PERMANENT)
+
+/*
+ * RelationUsesLocalBuffers
+ *		True if relation's pages are stored in local buffers.
+ */
+#define RelationUsesLocalBuffers(relation) \
+	((relation)->rd_rel->relpersistence == RELPERSISTENCE_TEMP)
+
+/*
+ * RelationUsesTempNamespace
+ *		True if relation's catalog entries live in a private namespace.
+ */
+#define RelationUsesTempNamespace(relation) \
+	((relation)->rd_rel->relpersistence == RELPERSISTENCE_TEMP)
+
+/*
  * RELATION_IS_LOCAL
  *		If a rel is either temp or newly created in the current transaction,
  *		it can be assumed to be visible only to the current backend.
@@ -407,7 +427,8 @@ typedef struct StdRdOptions
  * Beware of multiple eval of argument
  */
 #define RELATION_IS_OTHER_TEMP(relation) \
-	((relation)->rd_istemp && (relation)->rd_backend != MyBackendId)
+	((relation)->rd_rel->relpersistence == RELPERSISTENCE_TEMP \
+	&& (relation)->rd_backend != MyBackendId)
 
 /* routines in utils/cache/relcache.c */
 extern void RelationIncrementReferenceCount(Relation rel);

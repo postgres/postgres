@@ -124,7 +124,7 @@ initscan(HeapScanDesc scan, ScanKey key, bool is_rescan)
 	 *
 	 * During a rescan, don't make a new strategy object if we don't have to.
 	 */
-	if (!scan->rs_rd->rd_istemp &&
+	if (!RelationUsesLocalBuffers(scan->rs_rd) &&
 		scan->rs_nblocks > NBuffers / 4)
 	{
 		allow_strat = scan->rs_allow_strat;
@@ -905,7 +905,7 @@ relation_open(Oid relationId, LOCKMODE lockmode)
 		elog(ERROR, "could not open relation with OID %u", relationId);
 
 	/* Make note that we've accessed a temporary relation */
-	if (r->rd_istemp)
+	if (RelationUsesLocalBuffers(r))
 		MyXactAccessedTempRel = true;
 
 	pgstat_initstats(r);
@@ -951,7 +951,7 @@ try_relation_open(Oid relationId, LOCKMODE lockmode)
 		elog(ERROR, "could not open relation with OID %u", relationId);
 
 	/* Make note that we've accessed a temporary relation */
-	if (r->rd_istemp)
+	if (RelationUsesLocalBuffers(r))
 		MyXactAccessedTempRel = true;
 
 	pgstat_initstats(r);
@@ -1917,7 +1917,7 @@ heap_insert(Relation relation, HeapTuple tup, CommandId cid,
 	MarkBufferDirty(buffer);
 
 	/* XLOG stuff */
-	if (!(options & HEAP_INSERT_SKIP_WAL) && !relation->rd_istemp)
+	if (!(options & HEAP_INSERT_SKIP_WAL) && RelationNeedsWAL(relation))
 	{
 		xl_heap_insert xlrec;
 		xl_heap_header xlhdr;
@@ -2227,7 +2227,7 @@ l1:
 	MarkBufferDirty(buffer);
 
 	/* XLOG stuff */
-	if (!relation->rd_istemp)
+	if (RelationNeedsWAL(relation))
 	{
 		xl_heap_delete xlrec;
 		XLogRecPtr	recptr;
@@ -2780,7 +2780,7 @@ l2:
 	MarkBufferDirty(buffer);
 
 	/* XLOG stuff */
-	if (!relation->rd_istemp)
+	if (RelationNeedsWAL(relation))
 	{
 		XLogRecPtr	recptr = log_heap_update(relation, buffer, oldtup.t_self,
 											 newbuf, heaptup,
@@ -3403,7 +3403,7 @@ l3:
 	 * (Also, in a PITR log-shipping or 2PC environment, we have to have XLOG
 	 * entries for everything anyway.)
 	 */
-	if (!relation->rd_istemp)
+	if (RelationNeedsWAL(relation))
 	{
 		xl_heap_lock xlrec;
 		XLogRecPtr	recptr;
@@ -3505,7 +3505,7 @@ heap_inplace_update(Relation relation, HeapTuple tuple)
 	MarkBufferDirty(buffer);
 
 	/* XLOG stuff */
-	if (!relation->rd_istemp)
+	if (RelationNeedsWAL(relation))
 	{
 		xl_heap_inplace xlrec;
 		XLogRecPtr	recptr;
@@ -3867,8 +3867,8 @@ log_heap_clean(Relation reln, Buffer buffer,
 	XLogRecPtr	recptr;
 	XLogRecData rdata[4];
 
-	/* Caller should not call me on a temp relation */
-	Assert(!reln->rd_istemp);
+	/* Caller should not call me on a non-WAL-logged relation */
+	Assert(RelationNeedsWAL(reln));
 
 	xlrec.node = reln->rd_node;
 	xlrec.block = BufferGetBlockNumber(buffer);
@@ -3950,8 +3950,8 @@ log_heap_freeze(Relation reln, Buffer buffer,
 	XLogRecPtr	recptr;
 	XLogRecData rdata[2];
 
-	/* Caller should not call me on a temp relation */
-	Assert(!reln->rd_istemp);
+	/* Caller should not call me on a non-WAL-logged relation */
+	Assert(RelationNeedsWAL(reln));
 	/* nor when there are no tuples to freeze */
 	Assert(offcnt > 0);
 
@@ -3996,8 +3996,8 @@ log_heap_update(Relation reln, Buffer oldbuf, ItemPointerData from,
 	XLogRecData rdata[4];
 	Page		page = BufferGetPage(newbuf);
 
-	/* Caller should not call me on a temp relation */
-	Assert(!reln->rd_istemp);
+	/* Caller should not call me on a non-WAL-logged relation */
+	Assert(RelationNeedsWAL(reln));
 
 	if (HeapTupleIsHeapOnly(newtup))
 		info = XLOG_HEAP_HOT_UPDATE;
@@ -4997,7 +4997,7 @@ heap2_desc(StringInfo buf, uint8 xl_info, char *rec)
  *	heap_sync		- sync a heap, for use when no WAL has been written
  *
  * This forces the heap contents (including TOAST heap if any) down to disk.
- * If we skipped using WAL, and it's not a temp relation, we must force the
+ * If we skipped using WAL, and WAL is otherwise needed, we must force the
  * relation down to disk before it's safe to commit the transaction.  This
  * requires writing out any dirty buffers and then doing a forced fsync.
  *
@@ -5010,8 +5010,8 @@ heap2_desc(StringInfo buf, uint8 xl_info, char *rec)
 void
 heap_sync(Relation rel)
 {
-	/* temp tables never need fsync */
-	if (rel->rd_istemp)
+	/* non-WAL-logged tables never need fsync */
+	if (!RelationNeedsWAL(rel))
 		return;
 
 	/* main heap */

@@ -1975,7 +1975,7 @@ do_autovacuum(void)
 		 * Check if it is a temp table (presumably, of some other backend's).
 		 * We cannot safely process other backends' temp tables.
 		 */
-		if (classForm->relistemp)
+		if (classForm->relpersistence == RELPERSISTENCE_TEMP)
 		{
 			int			backendID;
 
@@ -2072,7 +2072,7 @@ do_autovacuum(void)
 		/*
 		 * We cannot safely process other backends' temp tables, so skip 'em.
 		 */
-		if (classForm->relistemp)
+		if (classForm->relpersistence == RELPERSISTENCE_TEMP)
 			continue;
 
 		relid = HeapTupleGetOid(tuple);

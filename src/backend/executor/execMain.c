@@ -2131,7 +2131,8 @@ OpenIntoRel(QueryDesc *queryDesc)
 	/*
 	 * Check consistency of arguments
 	 */
-	if (into->onCommit != ONCOMMIT_NOOP && !into->rel->istemp)
+	if (into->onCommit != ONCOMMIT_NOOP
+		&& into->rel->relpersistence != RELPERSISTENCE_TEMP)
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_TABLE_DEFINITION),
 				 errmsg("ON COMMIT can only be used on temporary tables")));
@@ -2141,7 +2142,8 @@ OpenIntoRel(QueryDesc *queryDesc)
 	 * code.  This is needed because calling code might not expect untrusted
 	 * tables to appear in pg_temp at the front of its search path.
 	 */
-	if (into->rel->istemp && InSecurityRestrictedOperation())
+	if (into->rel->relpersistence == RELPERSISTENCE_TEMP
+		&& InSecurityRestrictedOperation())
 		ereport(ERROR,
 				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
 				 errmsg("cannot create temporary table within security-restricted operation")));
@@ -2168,7 +2170,7 @@ OpenIntoRel(QueryDesc *queryDesc)
 	}
 	else
 	{
-		tablespaceId = GetDefaultTablespace(into->rel->istemp);
+		tablespaceId = GetDefaultTablespace(into->rel->relpersistence);
 		/* note InvalidOid is OK in this case */
 	}
 
@@ -2208,6 +2210,7 @@ OpenIntoRel(QueryDesc *queryDesc)
 											  tupdesc,
 											  NIL,
 											  RELKIND_RELATION,
+											  into->rel->relpersistence,
 											  false,
 											  false,
 											  true,

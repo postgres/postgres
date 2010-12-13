@@ -311,7 +311,8 @@ static RangeVar *makeRangeVarFromAnyName(List *names, int position, core_yyscan_
 %type <fun_param_mode> arg_class
 %type <typnam>	func_return func_type
 
-%type <boolean>  OptTemp opt_trusted opt_restart_seqs
+%type <boolean>  opt_trusted opt_restart_seqs
+%type <ival>	 OptTemp
 %type <oncommit> OnCommitOption
 
 %type <node>	for_locking_item
@@ -2280,7 +2281,7 @@ CreateStmt:	CREATE OptTemp TABLE qualified_name '(' OptTableElementList ')'
 			OptInherit OptWith OnCommitOption OptTableSpace
 				{
 					CreateStmt *n = makeNode(CreateStmt);
-					$4->istemp = $2;
+					$4->relpersistence = $2;
 					n->relation = $4;
 					n->tableElts = $6;
 					n->inhRelations = $8;
@@ -2296,7 +2297,7 @@ CreateStmt:	CREATE OptTemp TABLE qualified_name '(' OptTableElementList ')'
 			OptTableSpace
 				{
 					CreateStmt *n = makeNode(CreateStmt);
-					$7->istemp = $2;
+					$7->relpersistence = $2;
 					n->relation = $7;
 					n->tableElts = $9;
 					n->inhRelations = $11;
@@ -2311,7 +2312,7 @@ CreateStmt:	CREATE OptTemp TABLE qualified_name '(' OptTableElementList ')'
 			OptTypedTableElementList OptWith OnCommitOption OptTableSpace
 				{
 					CreateStmt *n = makeNode(CreateStmt);
-					$4->istemp = $2;
+					$4->relpersistence = $2;
 					n->relation = $4;
 					n->tableElts = $7;
 					n->ofTypename = makeTypeNameFromNameList($6);
@@ -2327,7 +2328,7 @@ CreateStmt:	CREATE OptTemp TABLE qualified_name '(' OptTableElementList ')'
 			OptTypedTableElementList OptWith OnCommitOption OptTableSpace
 				{
 					CreateStmt *n = makeNode(CreateStmt);
-					$7->istemp = $2;
+					$7->relpersistence = $2;
 					n->relation = $7;
 					n->tableElts = $10;
 					n->ofTypename = makeTypeNameFromNameList($9);
@@ -2348,13 +2349,13 @@ CreateStmt:	CREATE OptTemp TABLE qualified_name '(' OptTableElementList ')'
  * NOTE: we accept both GLOBAL and LOCAL options; since we have no modules
  * the LOCAL keyword is really meaningless.
  */
-OptTemp:	TEMPORARY						{ $$ = TRUE; }
-			| TEMP							{ $$ = TRUE; }
-			| LOCAL TEMPORARY				{ $$ = TRUE; }
-			| LOCAL TEMP					{ $$ = TRUE; }
-			| GLOBAL TEMPORARY				{ $$ = TRUE; }
-			| GLOBAL TEMP					{ $$ = TRUE; }
-			| /*EMPTY*/						{ $$ = FALSE; }
+OptTemp:	TEMPORARY					{ $$ = RELPERSISTENCE_TEMP; }
+			| TEMP						{ $$ = RELPERSISTENCE_TEMP; }
+			| LOCAL TEMPORARY			{ $$ = RELPERSISTENCE_TEMP; }
+			| LOCAL TEMP				{ $$ = RELPERSISTENCE_TEMP; }
+			| GLOBAL TEMPORARY			{ $$ = RELPERSISTENCE_TEMP; }
+			| GLOBAL TEMP				{ $$ = RELPERSISTENCE_TEMP; }
+			| /*EMPTY*/					{ $$ = RELPERSISTENCE_PERMANENT; }
 		;
 
 OptTableElementList:
@@ -2834,7 +2835,7 @@ CreateAsStmt:
 								(errcode(ERRCODE_SYNTAX_ERROR),
 								 errmsg("CREATE TABLE AS cannot specify INTO"),
 								 parser_errposition(exprLocation((Node *) n->intoClause))));
-					$4->rel->istemp = $2;
+					$4->rel->relpersistence = $2;
 					n->intoClause = $4;
 					/* Implement WITH NO DATA by forcing top-level LIMIT 0 */
 					if (!$7)
@@ -2900,7 +2901,7 @@ CreateSeqStmt:
 			CREATE OptTemp SEQUENCE qualified_name OptSeqOptList
 				{
 					CreateSeqStmt *n = makeNode(CreateSeqStmt);
-					$4->istemp = $2;
+					$4->relpersistence = $2;
 					n->sequence = $4;
 					n->options = $5;
 					n->ownerId = InvalidOid;
@@ -6621,7 +6622,7 @@ ViewStmt: CREATE OptTemp VIEW qualified_name opt_column_list
 				{
 					ViewStmt *n = makeNode(ViewStmt);
 					n->view = $4;
-					n->view->istemp = $2;
+					n->view->relpersistence = $2;
 					n->aliases = $5;
 					n->query = $7;
 					n->replace = false;
@@ -6632,7 +6633,7 @@ ViewStmt: CREATE OptTemp VIEW qualified_name opt_column_list
 				{
 					ViewStmt *n = makeNode(ViewStmt);
 					n->view = $6;
-					n->view->istemp = $4;
+					n->view->relpersistence = $4;
 					n->aliases = $7;
 					n->query = $9;
 					n->replace = true;
@@ -7328,7 +7329,7 @@ ExecuteStmt: EXECUTE name execute_param_clause
 					ExecuteStmt *n = makeNode(ExecuteStmt);
 					n->name = $7;
 					n->params = $8;
-					$4->rel->istemp = $2;
+					$4->rel->relpersistence = $2;
 					n->into = $4;
 					if ($4->colNames)
 						ereport(ERROR,
@@ -7889,42 +7890,42 @@ OptTempTableName:
 			TEMPORARY opt_table qualified_name
 				{
 					$$ = $3;
-					$$->istemp = true;
+					$$->relpersistence = RELPERSISTENCE_TEMP;
 				}
 			| TEMP opt_table qualified_name
 				{
 					$$ = $3;
-					$$->istemp = true;
+					$$->relpersistence = RELPERSISTENCE_TEMP;
 				}
 			| LOCAL TEMPORARY opt_table qualified_name
 				{
 					$$ = $4;
-					$$->istemp = true;
+					$$->relpersistence = RELPERSISTENCE_TEMP;
 				}
 			| LOCAL TEMP opt_table qualified_name
 				{
 					$$ = $4;
-					$$->istemp = true;
+					$$->relpersistence = RELPERSISTENCE_TEMP;
 				}
 			| GLOBAL TEMPORARY opt_table qualified_name
 				{
 					$$ = $4;
-					$$->istemp = true;
+					$$->relpersistence = RELPERSISTENCE_TEMP;
 				}
 			| GLOBAL TEMP opt_table qualified_name
 				{
 					$$ = $4;
-					$$->istemp = true;
+					$$->relpersistence = RELPERSISTENCE_TEMP;
 				}
 			| TABLE qualified_name
 				{
 					$$ = $2;
-					$$->istemp = false;
+					$$->relpersistence = RELPERSISTENCE_PERMANENT;
 				}
 			| qualified_name
 				{
 					$$ = $1;
-					$$->istemp = false;
+					$$->relpersistence = RELPERSISTENCE_PERMANENT;
 				}
 		;
 
@@ -10916,16 +10917,12 @@ qualified_name_list:
 qualified_name:
 			ColId
 				{
-					$$ = makeNode(RangeVar);
-					$$->catalogname = NULL;
-					$$->schemaname = NULL;
-					$$->relname = $1;
-					$$->location = @1;
+					$$ = makeRangeVar(NULL, $1, @1);
 				}
 			| ColId indirection
 				{
 					check_qualified_name($2, yyscanner);
-					$$ = makeNode(RangeVar);
+					$$ = makeRangeVar(NULL, NULL, @1);
 					switch (list_length($2))
 					{
 						case 1:
@@ -10946,7 +10943,6 @@ qualified_name:
 									 parser_errposition(@1)));
 							break;
 					}
-					$$->location = @1;
 				}
 		;
 
@@ -12163,6 +12159,7 @@ makeRangeVarFromAnyName(List *names, int position, core_yyscan_t yyscanner)
 			break;
 	}
 
+	r->relpersistence = RELPERSISTENCE_PERMANENT;
 	r->location = position;
 
 	return r;

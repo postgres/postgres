@@ -123,7 +123,7 @@ PrefetchBuffer(Relation reln, ForkNumber forkNum, BlockNumber blockNum)
 	/* Open it at the smgr level if not already done */
 	RelationOpenSmgr(reln);
 
-	if (reln->rd_istemp)
+	if (RelationUsesLocalBuffers(reln))
 	{
 		/* see comments in ReadBufferExtended */
 		if (RELATION_IS_OTHER_TEMP(reln))
@@ -2071,7 +2071,7 @@ FlushRelationBuffers(Relation rel)
 	/* Open rel at the smgr level if not already done */
 	RelationOpenSmgr(rel);
 
-	if (rel->rd_istemp)
+	if (RelationUsesLocalBuffers(rel))
 	{
 		for (i = 0; i < NLocBuffer; i++)
 		{

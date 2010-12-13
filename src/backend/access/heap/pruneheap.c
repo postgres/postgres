@@ -233,7 +233,7 @@ heap_page_prune(Relation relation, Buffer buffer, TransactionId OldestXmin,
 		/*
 		 * Emit a WAL HEAP_CLEAN record showing what we did
 		 */
-		if (!relation->rd_istemp)
+		if (RelationNeedsWAL(relation))
 		{
 			XLogRecPtr	recptr;
 

@@ -15,6 +15,7 @@
  */
 #include "postgres.h"
 
+#include "catalog/pg_class.h"
 #include "catalog/pg_type.h"
 #include "nodes/makefuncs.h"
 #include "nodes/nodeFuncs.h"
@@ -378,7 +379,7 @@ makeRangeVar(char *schemaname, char *relname, int location)
 	r->schemaname = schemaname;
 	r->relname = relname;
 	r->inhOpt = INH_DEFAULT;
-	r->istemp = false;
+	r->relpersistence = RELPERSISTENCE_PERMANENT;
 	r->alias = NULL;
 	r->location = location;
 

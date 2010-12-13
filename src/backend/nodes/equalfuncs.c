@@ -104,7 +104,7 @@ _equalRangeVar(RangeVar *a, RangeVar *b)
 	COMPARE_STRING_FIELD(schemaname);
 	COMPARE_STRING_FIELD(relname);
 	COMPARE_SCALAR_FIELD(inhOpt);
-	COMPARE_SCALAR_FIELD(istemp);
+	COMPARE_SCALAR_FIELD(relpersistence);
 	COMPARE_NODE_FIELD(alias);
 	COMPARE_LOCATION_FIELD(location);
 

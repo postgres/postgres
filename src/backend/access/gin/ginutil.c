@@ -410,7 +410,7 @@ ginUpdateStats(Relation index, const GinStatsData *stats)
 
 	MarkBufferDirty(metabuffer);
 
-	if (!index->rd_istemp)
+	if (RelationNeedsWAL(index))
 	{
 		XLogRecPtr			recptr;
 		ginxlogUpdateMeta	data;

@@ -103,7 +103,7 @@ writeListPage(Relation index, Buffer buffer,
 
 	MarkBufferDirty(buffer);
 
-	if (!index->rd_istemp)
+	if (RelationNeedsWAL(index))
 	{
 		XLogRecData rdata[2];
 		ginxlogInsertListPage data;
@@ -384,7 +384,7 @@ ginHeapTupleFastInsert(Relation index, GinState *ginstate,
 	 */
 	MarkBufferDirty(metabuffer);
 
-	if (!index->rd_istemp)
+	if (RelationNeedsWAL(index))
 	{
 		XLogRecPtr	recptr;
 
@@ -564,7 +564,7 @@ shiftList(Relation index, Buffer metabuffer, BlockNumber newHead,
 			MarkBufferDirty(buffers[i]);
 		}
 
-		if (!index->rd_istemp)
+		if (RelationNeedsWAL(index))
 		{
 			XLogRecPtr	recptr;
 

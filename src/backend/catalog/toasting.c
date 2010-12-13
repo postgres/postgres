@@ -195,7 +195,7 @@ create_toast_table(Relation rel, Oid toastOid, Oid toastIndexOid, Datum reloptio
 	 * Toast tables for regular relations go in pg_toast; those for temp
 	 * relations go into the per-backend temp-toast-table namespace.
 	 */
-	if (rel->rd_backend == MyBackendId)
+	if (RelationUsesTempNamespace(rel))
 		namespaceid = GetTempToastNamespace();
 	else
 		namespaceid = PG_TOAST_NAMESPACE;
@@ -216,6 +216,7 @@ create_toast_table(Relation rel, Oid toastOid, Oid toastIndexOid, Datum reloptio
 										   tupdesc,
 										   NIL,
 										   RELKIND_TOASTVALUE,
+										   rel->rd_rel->relpersistence,
 										   shared_relation,
 										   mapped_relation,
 										   true,

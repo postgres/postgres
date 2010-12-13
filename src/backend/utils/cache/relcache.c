@@ -849,20 +849,30 @@ RelationBuildDesc(Oid targetRelId, bool insertIt)
 	relation->rd_isnailed = false;
 	relation->rd_createSubid = InvalidSubTransactionId;
 	relation->rd_newRelfilenodeSubid = InvalidSubTransactionId;
-	relation->rd_istemp = relation->rd_rel->relistemp;
-	if (!relation->rd_istemp)
-		relation->rd_backend = InvalidBackendId;
-	else if (isTempOrToastNamespace(relation->rd_rel->relnamespace))
-		relation->rd_backend = MyBackendId;
-	else
+	switch (relation->rd_rel->relpersistence)
 	{
-		/*
-		 * If it's a temporary table, but not one of ours, we have to use
-		 * the slow, grotty method to figure out the owning backend.
-		 */
-		relation->rd_backend =
-			GetTempNamespaceBackendId(relation->rd_rel->relnamespace);
-		Assert(relation->rd_backend != InvalidBackendId);
+		case RELPERSISTENCE_PERMANENT:
+			relation->rd_backend = InvalidBackendId;
+			break;
+		case RELPERSISTENCE_TEMP:
+			if (isTempOrToastNamespace(relation->rd_rel->relnamespace))
+				relation->rd_backend = MyBackendId;
+			else
+			{
+				/*
+				 * If it's a local temp table, but not one of ours, we have to
+				 * use the slow, grotty method to figure out the owning
+				 * backend.
+				 */
+				relation->rd_backend =
+					GetTempNamespaceBackendId(relation->rd_rel->relnamespace);
+				Assert(relation->rd_backend != InvalidBackendId);
+			}
+			break;
+		default:
+			elog(ERROR, "invalid relpersistence: %c",
+				 relation->rd_rel->relpersistence);
+			break;
 	}
 
 	/*
@@ -1358,7 +1368,6 @@ formrdesc(const char *relationName, Oid relationReltype,
 	relation->rd_isnailed = true;
 	relation->rd_createSubid = InvalidSubTransactionId;
 	relation->rd_newRelfilenodeSubid = InvalidSubTransactionId;
-	relation->rd_istemp = false;
 	relation->rd_backend = InvalidBackendId;
 
 	/*
@@ -1384,11 +1393,8 @@ formrdesc(const char *relationName, Oid relationReltype,
 	if (isshared)
 		relation->rd_rel->reltablespace = GLOBALTABLESPACE_OID;
 
-	/*
-	 * Likewise, we must know if a relation is temp ... but formrdesc is not
-	 * used for any temp relations.
-	 */
-	relation->rd_rel->relistemp = false;
+	/* formrdesc is used only for permanent relations */
+	relation->rd_rel->relpersistence = RELPERSISTENCE_PERMANENT;
 
 	relation->rd_rel->relpages = 1;
 	relation->rd_rel->reltuples = 1;
@@ -2366,7 +2372,8 @@ RelationBuildLocalRelation(const char *relname,
 						   Oid relid,
 						   Oid reltablespace,
 						   bool shared_relation,
-						   bool mapped_relation)
+						   bool mapped_relation,
+						   char relpersistence)
 {
 	Relation	rel;
 	MemoryContext oldcxt;
@@ -2440,10 +2447,6 @@ RelationBuildLocalRelation(const char *relname,
 	/* must flag that we have rels created in this transaction */
 	need_eoxact_work = true;
 
-	/* it is temporary if and only if it is in my temp-table namespace */
-	rel->rd_istemp = isTempOrToastNamespace(relnamespace);
-	rel->rd_backend = rel->rd_istemp ? MyBackendId : InvalidBackendId;
-
 	/*
 	 * create a new tuple descriptor from the one passed in.  We do this
 	 * partly to copy it into the cache context, and partly because the new
@@ -2483,6 +2486,21 @@ RelationBuildLocalRelation(const char *relname,
 	/* needed when bootstrapping: */
 	rel->rd_rel->relowner = BOOTSTRAP_SUPERUSERID;
 
+	/* set up persistence; rd_backend is a function of persistence type */
+	rel->rd_rel->relpersistence = relpersistence;
+	switch (relpersistence)
+	{
+		case RELPERSISTENCE_PERMANENT:
+			rel->rd_backend = InvalidBackendId;
+			break;
+		case RELPERSISTENCE_TEMP:
+			rel->rd_backend = MyBackendId;
+			break;
+		default:
+			elog(ERROR, "invalid relpersistence: %c", relpersistence);
+			break;
+	}
+
 	/*
 	 * Insert relation physical and logical identifiers (OIDs) into the right
 	 * places.	Note that the physical ID (relfilenode) is initially the same
@@ -2491,7 +2509,6 @@ RelationBuildLocalRelation(const char *relname,
 	 * map.
 	 */
 	rel->rd_rel->relisshared = shared_relation;
-	rel->rd_rel->relistemp = rel->rd_istemp;
 
 	RelationGetRelid(rel) = relid;
 
@@ -2569,7 +2586,7 @@ RelationSetNewRelfilenode(Relation relation, TransactionId freezeXid)
 
 	/* Allocate a new relfilenode */
 	newrelfilenode = GetNewRelFileNode(relation->rd_rel->reltablespace, NULL,
-									   relation->rd_backend);
+									   relation->rd_rel->relpersistence);
 
 	/*
 	 * Get a writable copy of the pg_class tuple for the given relation.
@@ -2592,7 +2609,7 @@ RelationSetNewRelfilenode(Relation relation, TransactionId freezeXid)
 	newrnode.node = relation->rd_node;
 	newrnode.node.relNode = newrelfilenode;
 	newrnode.backend = relation->rd_backend;
-	RelationCreateStorage(newrnode.node, relation->rd_istemp);
+	RelationCreateStorage(newrnode.node, relation->rd_rel->relpersistence);
 	smgrclosenode(newrnode);
 
 	/*

@@ -224,7 +224,7 @@ static const struct dropmsgstrings dropmsgstringarray[] = {
 
 
 static void truncate_check_rel(Relation rel);
-static List *MergeAttributes(List *schema, List *supers, bool istemp,
+static List *MergeAttributes(List *schema, List *supers, char relpersistence,
 				List **supOids, List **supconstr, int *supOidCount);
 static bool MergeCheckConstraint(List *constraints, char *name, Node *expr);
 static bool change_varattnos_walker(Node *node, const AttrNumber *newattno);
@@ -339,7 +339,7 @@ static void ATPrepAddInherit(Relation child_rel);
 static void ATExecAddInherit(Relation child_rel, RangeVar *parent, LOCKMODE lockmode);
 static void ATExecDropInherit(Relation rel, RangeVar *parent, LOCKMODE lockmode);
 static void copy_relation_data(SMgrRelation rel, SMgrRelation dst,
-				   ForkNumber forkNum, bool istemp);
+				   ForkNumber forkNum, char relpersistence);
 static const char *storage_name(char c);
 
 
@@ -391,7 +391,8 @@ DefineRelation(CreateStmt *stmt, char relkind, Oid ownerId)
 	/*
 	 * Check consistency of arguments
 	 */
-	if (stmt->oncommit != ONCOMMIT_NOOP && !stmt->relation->istemp)
+	if (stmt->oncommit != ONCOMMIT_NOOP 
+		&& stmt->relation->relpersistence != RELPERSISTENCE_TEMP)
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_TABLE_DEFINITION),
 				 errmsg("ON COMMIT can only be used on temporary tables")));
@@ -401,7 +402,8 @@ DefineRelation(CreateStmt *stmt, char relkind, Oid ownerId)
 	 * code.  This is needed because calling code might not expect untrusted
 	 * tables to appear in pg_temp at the front of its search path.
 	 */
-	if (stmt->relation->istemp && InSecurityRestrictedOperation())
+	if (stmt->relation->relpersistence == RELPERSISTENCE_TEMP
+		&& InSecurityRestrictedOperation())
 		ereport(ERROR,
 				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
 				 errmsg("cannot create temporary table within security-restricted operation")));
@@ -434,7 +436,7 @@ DefineRelation(CreateStmt *stmt, char relkind, Oid ownerId)
 	}
 	else
 	{
-		tablespaceId = GetDefaultTablespace(stmt->relation->istemp);
+		tablespaceId = GetDefaultTablespace(stmt->relation->relpersistence);
 		/* note InvalidOid is OK in this case */
 	}
 
@@ -478,7 +480,7 @@ DefineRelation(CreateStmt *stmt, char relkind, Oid ownerId)
 	 * inherited attributes.
 	 */
 	schema = MergeAttributes(schema, stmt->inhRelations,
-							 stmt->relation->istemp,
+							 stmt->relation->relpersistence,
 							 &inheritOids, &old_constraints, &parentOidCount);
 
 	/*
@@ -557,6 +559,7 @@ DefineRelation(CreateStmt *stmt, char relkind, Oid ownerId)
 										  list_concat(cookedDefaults,
 													  old_constraints),
 										  relkind,
+										  stmt->relation->relpersistence,
 										  false,
 										  false,
 										  localHasOids,
@@ -1208,7 +1211,7 @@ storage_name(char c)
  *----------
  */
 static List *
-MergeAttributes(List *schema, List *supers, bool istemp,
+MergeAttributes(List *schema, List *supers, char relpersistence,
 				List **supOids, List **supconstr, int *supOidCount)
 {
 	ListCell   *entry;
@@ -1316,7 +1319,8 @@ MergeAttributes(List *schema, List *supers, bool istemp,
 					 errmsg("inherited relation \"%s\" is not a table",
 							parent->relname)));
 		/* Permanent rels cannot inherit from temporary ones */
-		if (!istemp && relation->rd_istemp)
+		if (relpersistence != RELPERSISTENCE_TEMP
+			&& RelationUsesTempNamespace(relation))
 			ereport(ERROR,
 					(errcode(ERRCODE_WRONG_OBJECT_TYPE),
 					 errmsg("cannot inherit from temporary relation \"%s\"",
@@ -5124,26 +5128,27 @@ ATAddForeignKeyConstraint(AlteredTableInfo *tab, Relation rel,
 						RelationGetRelationName(pkrel))));
 
 	/*
-	 * Disallow reference from permanent table to temp table or vice versa.
-	 * (The ban on perm->temp is for fairly obvious reasons.  The ban on
-	 * temp->perm is because other backends might need to run the RI triggers
-	 * on the perm table, but they can't reliably see tuples the owning
-	 * backend has created in the temp table, because non-shared buffers are
-	 * used for temp tables.)
+	 * References from permanent tables to temp tables are disallowed because
+	 * the contents of the temp table disappear at the end of each session.
+	 * References from temp tables to permanent tables are also disallowed,
+	 * because other backends might need to run the RI triggers on the perm
+	 * table, but they can't reliably see tuples in the local buffers of other
+	 * backends.
 	 */
-	if (pkrel->rd_istemp)
+	switch (rel->rd_rel->relpersistence)
 	{
-		if (!rel->rd_istemp)
-			ereport(ERROR,
-					(errcode(ERRCODE_INVALID_TABLE_DEFINITION),
-					 errmsg("cannot reference temporary table from permanent table constraint")));
-	}
-	else
-	{
-		if (rel->rd_istemp)
-			ereport(ERROR,
-					(errcode(ERRCODE_INVALID_TABLE_DEFINITION),
-					 errmsg("cannot reference permanent table from temporary table constraint")));
+		case RELPERSISTENCE_PERMANENT:
+			if (pkrel->rd_rel->relpersistence != RELPERSISTENCE_PERMANENT)
+				ereport(ERROR,
+						(errcode(ERRCODE_INVALID_TABLE_DEFINITION),
+						 errmsg("constraints on permanent tables may reference only permanent tables")));
+			break;
+		case RELPERSISTENCE_TEMP:
+			if (pkrel->rd_rel->relpersistence != RELPERSISTENCE_TEMP)
+				ereport(ERROR,
+						(errcode(ERRCODE_INVALID_TABLE_DEFINITION),
+						 errmsg("constraints on temporary tables may reference only temporary tables")));
+			break;
 	}
 
 	/*
@@ -7347,7 +7352,8 @@ ATExecSetTableSpace(Oid tableOid, Oid newTableSpace, LOCKMODE lockmode)
 	 * Relfilenodes are not unique across tablespaces, so we need to allocate
 	 * a new one in the new tablespace.
 	 */
-	newrelfilenode = GetNewRelFileNode(newTableSpace, NULL, rel->rd_backend);
+	newrelfilenode = GetNewRelFileNode(newTableSpace, NULL,
+									   rel->rd_rel->relpersistence);
 
 	/* Open old and new relation */
 	newrnode = rel->rd_node;
@@ -7364,10 +7370,11 @@ ATExecSetTableSpace(Oid tableOid, Oid newTableSpace, LOCKMODE lockmode)
 	 * NOTE: any conflict in relfilenode value will be caught in
 	 * RelationCreateStorage().
 	 */
-	RelationCreateStorage(newrnode, rel->rd_istemp);
+	RelationCreateStorage(newrnode, rel->rd_rel->relpersistence);
 
 	/* copy main fork */
-	copy_relation_data(rel->rd_smgr, dstrel, MAIN_FORKNUM, rel->rd_istemp);
+	copy_relation_data(rel->rd_smgr, dstrel, MAIN_FORKNUM,
+					   rel->rd_rel->relpersistence);
 
 	/* copy those extra forks that exist */
 	for (forkNum = MAIN_FORKNUM + 1; forkNum <= MAX_FORKNUM; forkNum++)
@@ -7375,7 +7382,8 @@ ATExecSetTableSpace(Oid tableOid, Oid newTableSpace, LOCKMODE lockmode)
 		if (smgrexists(rel->rd_smgr, forkNum))
 		{
 			smgrcreate(dstrel, forkNum, false);
-			copy_relation_data(rel->rd_smgr, dstrel, forkNum, rel->rd_istemp);
+			copy_relation_data(rel->rd_smgr, dstrel, forkNum,
+							   rel->rd_rel->relpersistence);
 		}
 	}
 
@@ -7410,7 +7418,7 @@ ATExecSetTableSpace(Oid tableOid, Oid newTableSpace, LOCKMODE lockmode)
  */
 static void
 copy_relation_data(SMgrRelation src, SMgrRelation dst,
-				   ForkNumber forkNum, bool istemp)
+				   ForkNumber forkNum, char relpersistence)
 {
 	char	   *buf;
 	Page		page;
@@ -7429,9 +7437,9 @@ copy_relation_data(SMgrRelation src, SMgrRelation dst,
 
 	/*
 	 * We need to log the copied data in WAL iff WAL archiving/streaming is
-	 * enabled AND it's not a temp rel.
+	 * enabled AND it's a permanent relation.
 	 */
-	use_wal = XLogIsNeeded() && !istemp;
+	use_wal = XLogIsNeeded() && relpersistence == RELPERSISTENCE_PERMANENT;
 
 	nblocks = smgrnblocks(src, forkNum);
 
@@ -7470,7 +7478,7 @@ copy_relation_data(SMgrRelation src, SMgrRelation dst,
 	 * wouldn't replay our earlier WAL entries. If we do not fsync those pages
 	 * here, they might still not be on disk when the crash occurs.
 	 */
-	if (!istemp)
+	if (relpersistence == RELPERSISTENCE_PERMANENT)
 		smgrimmedsync(dst, forkNum);
 }
 
@@ -7538,7 +7546,8 @@ ATExecAddInherit(Relation child_rel, RangeVar *parent, LOCKMODE lockmode)
 	ATSimplePermissions(parent_rel, false, false);
 
 	/* Permanent rels cannot inherit from temporary ones */
-	if (parent_rel->rd_istemp && !child_rel->rd_istemp)
+	if (RelationUsesTempNamespace(parent_rel)
+		&& !RelationUsesTempNamespace(child_rel))
 		ereport(ERROR,
 				(errcode(ERRCODE_WRONG_OBJECT_TYPE),
 				 errmsg("cannot inherit from temporary relation \"%s\"",

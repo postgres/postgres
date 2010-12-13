@@ -235,14 +235,14 @@ RangeVarGetRelid(const RangeVar *relation, bool failOK)
 	}
 
 	/*
-	 * If istemp is set, this is a reference to a temp relation.  The parser
-	 * never generates such a RangeVar in simple DML, but it can happen in
-	 * contexts such as "CREATE TEMP TABLE foo (f1 int PRIMARY KEY)".  Such a
-	 * command will generate an added CREATE INDEX operation, which must be
+	 * Some non-default relpersistence value may have been specified.  The
+	 * parser never generates such a RangeVar in simple DML, but it can happen
+	 * in contexts such as "CREATE TEMP TABLE foo (f1 int PRIMARY KEY)".  Such
+	 * a command will generate an added CREATE INDEX operation, which must be
 	 * careful to find the temp table, even when pg_temp is not first in the
 	 * search path.
 	 */
-	if (relation->istemp)
+	if (relation->relpersistence == RELPERSISTENCE_TEMP)
 	{
 		if (relation->schemaname)
 			ereport(ERROR,
@@ -308,7 +308,7 @@ RangeVarGetCreationNamespace(const RangeVar *newRelation)
 							newRelation->relname)));
 	}
 
-	if (newRelation->istemp)
+	if (newRelation->relpersistence == RELPERSISTENCE_TEMP)
 	{
 		/* TEMP tables are created in our backend-local temp namespace */
 		if (newRelation->schemaname)

@@ -115,7 +115,7 @@ gistbuild(PG_FUNCTION_ARGS)
 
 	MarkBufferDirty(buffer);
 
-	if (!index->rd_istemp)
+	if (RelationNeedsWAL(index))
 	{
 		XLogRecPtr	recptr;
 		XLogRecData rdata;
@@ -401,7 +401,7 @@ gistplacetopage(GISTInsertState *state, GISTSTATE *giststate)
 			dist->page = BufferGetPage(dist->buffer);
 		}
 
-		if (!state->r->rd_istemp)
+		if (RelationNeedsWAL(state->r))
 		{
 			XLogRecPtr	recptr;
 			XLogRecData *rdata;
@@ -465,7 +465,7 @@ gistplacetopage(GISTInsertState *state, GISTSTATE *giststate)
 
 		MarkBufferDirty(state->stack->buffer);
 
-		if (!state->r->rd_istemp)
+		if (RelationNeedsWAL(state->r))
 		{
 			OffsetNumber noffs = 0,
 						offs[1];
@@ -550,7 +550,7 @@ gistfindleaf(GISTInsertState *state, GISTSTATE *giststate)
 		opaque = GistPageGetOpaque(state->stack->page);
 
 		state->stack->lsn = PageGetLSN(state->stack->page);
-		Assert(state->r->rd_istemp || !XLogRecPtrIsInvalid(state->stack->lsn));
+		Assert(!RelationNeedsWAL(state->r) || !XLogRecPtrIsInvalid(state->stack->lsn));
 
 		if (state->stack->blkno != GIST_ROOT_BLKNO &&
 			XLByteLT(state->stack->parent->lsn, opaque->nsn))
@@ -911,7 +911,7 @@ gistmakedeal(GISTInsertState *state, GISTSTATE *giststate)
 	}
 
 	/* say to xlog that insert is completed */
-	if (state->needInsertComplete && !state->r->rd_istemp)
+	if (state->needInsertComplete && RelationNeedsWAL(state->r))
 		gistxlogInsertCompletion(state->r->rd_node, &(state->key), 1);
 }
 
@@ -1011,7 +1011,7 @@ gistnewroot(Relation r, Buffer buffer, IndexTuple *itup, int len, ItemPointer ke
 
 	MarkBufferDirty(buffer);
 
-	if (!r->rd_istemp)
+	if (RelationNeedsWAL(r))
 	{
 		XLogRecPtr	recptr;
 		XLogRecData *rdata;

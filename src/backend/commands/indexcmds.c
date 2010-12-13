@@ -222,7 +222,7 @@ DefineIndex(RangeVar *heapRelation,
 	}
 	else
 	{
-		tablespaceId = GetDefaultTablespace(rel->rd_istemp);
+		tablespaceId = GetDefaultTablespace(rel->rd_rel->relpersistence);
 		/* note InvalidOid is OK in this case */
 	}
 
@@ -1706,7 +1706,7 @@ ReindexDatabase(const char *databaseName, bool do_system, bool do_user)
 			continue;
 
 		/* Skip temp tables of other backends; we can't reindex them at all */
-		if (classtuple->relistemp &&
+		if (classtuple->relpersistence == RELPERSISTENCE_TEMP &&
 			!isTempNamespace(classtuple->relnamespace))
 			continue;
 

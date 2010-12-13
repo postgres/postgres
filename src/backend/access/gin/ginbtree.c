@@ -304,7 +304,7 @@ ginInsertValue(GinBtree btree, GinBtreeStack *stack, GinStatsData *buildStats)
 
 			MarkBufferDirty(stack->buffer);
 
-			if (!btree->index->rd_istemp)
+			if (RelationNeedsWAL(btree->index))
 			{
 				XLogRecPtr	recptr;
 
@@ -373,7 +373,7 @@ ginInsertValue(GinBtree btree, GinBtreeStack *stack, GinStatsData *buildStats)
 				MarkBufferDirty(lbuffer);
 				MarkBufferDirty(stack->buffer);
 
-				if (!btree->index->rd_istemp)
+				if (RelationNeedsWAL(btree->index))
 				{
 					XLogRecPtr	recptr;
 
@@ -422,7 +422,7 @@ ginInsertValue(GinBtree btree, GinBtreeStack *stack, GinStatsData *buildStats)
 				MarkBufferDirty(rbuffer);
 				MarkBufferDirty(stack->buffer);
 
-				if (!btree->index->rd_istemp)
+				if (RelationNeedsWAL(btree->index))
 				{
 					XLogRecPtr	recptr;
 

@@ -1050,8 +1050,8 @@ assign_default_tablespace(const char *newval, bool doit, GucSource source)
 /*
  * GetDefaultTablespace -- get the OID of the current default tablespace
  *
- * Regular objects and temporary objects have different default tablespaces,
- * hence the forTemp parameter must be specified.
+ * Temporary objects have different default tablespaces, hence the
+ * relpersistence parameter must be specified.
  *
  * May return InvalidOid to indicate "use the database's default tablespace".
  *
@@ -1062,12 +1062,12 @@ assign_default_tablespace(const char *newval, bool doit, GucSource source)
  * default_tablespace GUC variable.
  */
 Oid
-GetDefaultTablespace(bool forTemp)
+GetDefaultTablespace(char relpersistence)
 {
 	Oid			result;
 
 	/* The temp-table case is handled elsewhere */
-	if (forTemp)
+	if (relpersistence == RELPERSISTENCE_TEMP)
 	{
 		PrepareTempTablespaces();
 		return GetNextTempTableSpace();

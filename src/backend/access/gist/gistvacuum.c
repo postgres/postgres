@@ -248,7 +248,7 @@ gistbulkdelete(PG_FUNCTION_ARGS)
 					PageIndexTupleDelete(page, todelete[i]);
 				GistMarkTuplesDeleted(page);
 
-				if (!rel->rd_istemp)
+				if (RelationNeedsWAL(rel))
 				{
 					XLogRecData *rdata;
 					XLogRecPtr	recptr;

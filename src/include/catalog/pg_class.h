@@ -49,7 +49,7 @@ CATALOG(pg_class,1259) BKI_BOOTSTRAP BKI_ROWTYPE_OID(83) BKI_SCHEMA_MACRO
 	Oid			reltoastidxid;	/* if toast table, OID of chunk_id index */
 	bool		relhasindex;	/* T if has (or has had) any indexes */
 	bool		relisshared;	/* T if shared across databases */
-	bool		relistemp;		/* T if temporary relation */
+	char		relpersistence;	/* see RELPERSISTENCE_xxx constants */
 	char		relkind;		/* see RELKIND_xxx constants below */
 	int2		relnatts;		/* number of user attributes */
 
@@ -108,7 +108,7 @@ typedef FormData_pg_class *Form_pg_class;
 #define Anum_pg_class_reltoastidxid		12
 #define Anum_pg_class_relhasindex		13
 #define Anum_pg_class_relisshared		14
-#define Anum_pg_class_relistemp			15
+#define Anum_pg_class_relpersistence	15
 #define Anum_pg_class_relkind			16
 #define Anum_pg_class_relnatts			17
 #define Anum_pg_class_relchecks			18
@@ -132,13 +132,13 @@ typedef FormData_pg_class *Form_pg_class;
  */
 
 /* Note: "3" in the relfrozenxid column stands for FirstNormalTransactionId */
-DATA(insert OID = 1247 (  pg_type		PGNSP 71 0 PGUID 0 0 0 0 0 0 0 f f f r 28 0 t f f f f f 3 _null_ _null_ ));
+DATA(insert OID = 1247 (  pg_type		PGNSP 71 0 PGUID 0 0 0 0 0 0 0 f f p r 28 0 t f f f f f 3 _null_ _null_ ));
 DESCR("");
-DATA(insert OID = 1249 (  pg_attribute	PGNSP 75 0 PGUID 0 0 0 0 0 0 0 f f f r 19 0 f f f f f f 3 _null_ _null_ ));
+DATA(insert OID = 1249 (  pg_attribute	PGNSP 75 0 PGUID 0 0 0 0 0 0 0 f f p r 19 0 f f f f f f 3 _null_ _null_ ));
 DESCR("");
-DATA(insert OID = 1255 (  pg_proc		PGNSP 81 0 PGUID 0 0 0 0 0 0 0 f f f r 25 0 t f f f f f 3 _null_ _null_ ));
+DATA(insert OID = 1255 (  pg_proc		PGNSP 81 0 PGUID 0 0 0 0 0 0 0 f f p r 25 0 t f f f f f 3 _null_ _null_ ));
 DESCR("");
-DATA(insert OID = 1259 (  pg_class		PGNSP 83 0 PGUID 0 0 0 0 0 0 0 f f f r 27 0 t f f f f f 3 _null_ _null_ ));
+DATA(insert OID = 1259 (  pg_class		PGNSP 83 0 PGUID 0 0 0 0 0 0 0 f f p r 27 0 t f f f f f 3 _null_ _null_ ));
 DESCR("");
 
 #define		  RELKIND_INDEX			  'i'		/* secondary index */
@@ -148,5 +148,8 @@ DESCR("");
 #define		  RELKIND_TOASTVALUE	  't'		/* moved off huge values */
 #define		  RELKIND_VIEW			  'v'		/* view */
 #define		  RELKIND_COMPOSITE_TYPE  'c'		/* composite type */
+
+#define		  RELPERSISTENCE_PERMANENT	'p'
+#define		  RELPERSISTENCE_TEMP		't'
 
 #endif   /* PG_CLASS_H */
