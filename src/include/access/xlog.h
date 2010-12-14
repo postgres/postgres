@@ -257,6 +257,13 @@ typedef struct CheckpointStatsData
 	int			ckpt_segs_added;	/* # of new xlog segments created */
 	int			ckpt_segs_removed;		/* # of xlog segments deleted */
 	int			ckpt_segs_recycled;		/* # of xlog segments recycled */
+
+	int			ckpt_sync_rels;		/* # of relations synced */
+	uint64		ckpt_longest_sync;	/* Longest sync for one relation */
+	uint64		ckpt_agg_sync_time;	/* The sum of all the individual sync
+									 * times, which is not necessarily the
+									 * same as the total elapsed time for
+									 * the entire sync phase. */
 } CheckpointStatsData;
 
 extern CheckpointStatsData CheckpointStats;
