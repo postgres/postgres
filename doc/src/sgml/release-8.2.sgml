@@ -1,6 +1,250 @@
 <!-- doc/src/sgml/release-8.2.sgml -->
 <!-- See header comment in release.sgml about typical markup -->
 
+ <sect1 id="release-8-2-19">
+  <title>Release 8.2.19</title>
+
+  <note>
+  <title>Release date</title>
+  <simpara>2010-12-16</simpara>
+  </note>
+
+  <para>
+   This release contains a variety of fixes from 8.2.18.
+   For information about new features in the 8.2 major release, see
+   <xref linkend="release-8-2">.
+  </para>
+
+  <sect2>
+   <title>Migration to Version 8.2.19</title>
+
+   <para>
+    A dump/restore is not required for those running 8.2.X.
+    However, if you are upgrading from a version earlier than 8.2.14,
+    see the release notes for 8.2.14.
+   </para>
+
+  </sect2>
+
+  <sect2>
+   <title>Changes</title>
+
+   <itemizedlist>
+
+    <listitem>
+     <para>
+      Force the default
+      <link linkend="guc-wal-sync-method"><varname>wal_sync_method</></link>
+      to be <literal>fdatasync</> on Linux (Tom Lane, Marti Raudsepp)
+     </para>
+
+     <para>
+      The default on Linux has actually been <literal>fdatasync</> for many
+      years, but recent kernel changes caused <productname>PostgreSQL</> to
+      choose <literal>open_datasync</> instead.  This choice did not result
+      in any performance improvement, and caused outright failures on
+      certain filesystems, notably <literal>ext4</> with the
+      <literal>data=journal</> mount option.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix assorted bugs in WAL replay logic for GIN indexes (Tom Lane)
+     </para>
+
+     <para>
+      This could result in <quote>bad buffer id: 0</> failures or
+      corruption of index contents during replication.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix recovery from base backup when the starting checkpoint WAL record
+      is not in the same WAL segment as its redo point (Jeff Davis)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Add support for detecting register-stack overrun on <literal>IA64</>
+      (Tom Lane)
+     </para>
+
+     <para>
+      The <literal>IA64</> architecture has two hardware stacks.  Full
+      prevention of stack-overrun failures requires checking both.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Add a check for stack overflow in <function>copyObject()</> (Tom Lane)
+     </para>
+
+     <para>
+      Certain code paths could crash due to stack overflow given a
+      sufficiently complex query.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix detection of page splits in temporary GiST indexes (Heikki
+      Linnakangas)
+     </para>
+
+     <para>
+      It is possible to have a <quote>concurrent</> page split in a
+      temporary index, if for example there is an open cursor scanning the
+      index when an insertion is done.  GiST failed to detect this case and
+      hence could deliver wrong results when execution of the cursor
+      continued.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Avoid memory leakage while <command>ANALYZE</>'ing complex index
+      expressions (Tom Lane)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Ensure an index that uses a whole-row Var still depends on its table
+      (Tom Lane)
+     </para>
+
+     <para>
+      An index declared like <literal>create index i on t (foo(t.*))</>
+      would not automatically get dropped when its table was dropped.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Do not <quote>inline</> a SQL function with multiple <literal>OUT</>
+      parameters (Tom Lane)
+     </para>
+
+     <para>
+      This avoids a possible crash due to loss of information about the
+      expected result rowtype.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Behave correctly if <literal>ORDER BY</>, <literal>LIMIT</>,
+      <literal>FOR UPDATE</>, or <literal>WITH</> is attached to the
+      <literal>VALUES</> part of <literal>INSERT ... VALUES</> (Tom Lane)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix constant-folding of <literal>COALESCE()</> expressions (Tom Lane)
+     </para>
+
+     <para>
+      The planner would sometimes attempt to evaluate sub-expressions that
+      in fact could never be reached, possibly leading to unexpected errors.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Add print functionality for <structname>InhRelation</> nodes (Tom Lane)
+     </para>
+
+     <para>
+      This avoids a failure when <varname>debug_print_parse</> is enabled
+      and certain types of query are executed.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix incorrect calculation of distance from a point to a horizontal
+      line segment (Tom Lane)
+     </para>
+
+     <para>
+      This bug affected several different geometric distance-measurement
+      operators.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix <application>PL/pgSQL</>'s handling of <quote>simple</>
+      expressions to not fail in recursion or error-recovery cases (Tom Lane)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix <application>PL/Python</>'s handling of set-returning functions
+      (Jan Urbanski)
+     </para>
+
+     <para>
+      Attempts to call SPI functions within the iterator generating a set
+      result would fail.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix bug in <filename>contrib/cube</>'s GiST picksplit algorithm
+      (Alexander Korotkov)
+     </para>
+
+     <para>
+      This could result in considerable inefficiency, though not actually
+      incorrect answers, in a GiST index on a <type>cube</> column.
+      If you have such an index, consider <command>REINDEX</>ing it after
+      installing this update.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Don't emit <quote>identifier will be truncated</> notices in
+      <filename>contrib/dblink</> except when creating new connections
+      (Itagaki Takahiro)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix potential coredump on missing public key in
+      <filename>contrib/pgcrypto</> (Marti Raudsepp)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix memory leak in <filename>contrib/xml2</>'s XPath query functions
+      (Tom Lane)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Update time zone data files to <application>tzdata</> release 2010o
+      for DST law changes in Fiji and Samoa;
+      also historical corrections for Hong Kong.
+     </para>
+    </listitem>
+
+   </itemizedlist>
+
+  </sect2>
+ </sect1>
+
  <sect1 id="release-8-2-18">
   <title>Release 8.2.18</title>
 
