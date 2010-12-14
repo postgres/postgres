@@ -303,6 +303,57 @@ static const SchemaQuery Query_for_list_of_tables = {
 	NULL
 };
 
+/* The bit masks for the following three functions come from
+ * src/include/catalog/pg_trigger.h.
+ */
+static const SchemaQuery Query_for_list_of_insertables = {
+	/* catname */
+	"pg_catalog.pg_class c",
+	/* selcondition */
+	"(c.relkind = 'r' OR (c.relkind = 'v' AND c.relhastriggers AND EXISTS "
+	"(SELECT 1 FROM pg_catalog.pg_trigger t WHERE t.tgrelid = c.oid AND t.tgtype & (1 << 2) <> 0)))",
+	/* viscondition */
+	"pg_catalog.pg_table_is_visible(c.oid)",
+	/* namespace */
+	"c.relnamespace",
+	/* result */
+	"pg_catalog.quote_ident(c.relname)",
+	/* qualresult */
+	NULL
+};
+
+static const SchemaQuery Query_for_list_of_deletables = {
+	/* catname */
+	"pg_catalog.pg_class c",
+	/* selcondition */
+	"(c.relkind = 'r' OR (c.relkind = 'v' AND c.relhastriggers AND EXISTS "
+	"(SELECT 1 FROM pg_catalog.pg_trigger t WHERE t.tgrelid = c.oid AND t.tgtype & (1 << 3) <> 0)))",
+	/* viscondition */
+	"pg_catalog.pg_table_is_visible(c.oid)",
+	/* namespace */
+	"c.relnamespace",
+	/* result */
+	"pg_catalog.quote_ident(c.relname)",
+	/* qualresult */
+	NULL
+};
+
+static const SchemaQuery Query_for_list_of_updatables = {
+	/* catname */
+	"pg_catalog.pg_class c",
+	/* selcondition */
+	"(c.relkind = 'r' OR (c.relkind = 'v' AND c.relhastriggers AND EXISTS "
+	"(SELECT 1 FROM pg_catalog.pg_trigger t WHERE t.tgrelid = c.oid AND t.tgtype & (1 << 4) <> 0)))",
+	/* viscondition */
+	"pg_catalog.pg_table_is_visible(c.oid)",
+	/* namespace */
+	"c.relnamespace",
+	/* result */
+	"pg_catalog.quote_ident(c.relname)",
+	/* qualresult */
+	NULL
+};
+
 static const SchemaQuery Query_for_list_of_tisv = {
 	/* catname */
 	"pg_catalog.pg_class c",
@@ -1655,7 +1706,7 @@ psql_completion(char *text, int start, int end)
 			 pg_strcasecmp(prev2_wd, "TRIGGER") == 0)
 	{
 		static const char *const list_CREATETRIGGER[] =
-		{"BEFORE", "AFTER", NULL};
+		{"BEFORE", "AFTER", "INSTEAD OF", NULL};
 
 		COMPLETE_WITH_LIST(list_CREATETRIGGER);
 	}
@@ -1778,7 +1829,7 @@ psql_completion(char *text, int start, int end)
 	/* Complete DELETE FROM with a list of tables */
 	else if (pg_strcasecmp(prev2_wd, "DELETE") == 0 &&
 			 pg_strcasecmp(prev_wd, "FROM") == 0)
-		COMPLETE_WITH_SCHEMA_QUERY(Query_for_list_of_tables, NULL);
+		COMPLETE_WITH_SCHEMA_QUERY(Query_for_list_of_deletables, NULL);
 	/* Complete DELETE FROM <table> */
 	else if (pg_strcasecmp(prev3_wd, "DELETE") == 0 &&
 			 pg_strcasecmp(prev2_wd, "FROM") == 0)
@@ -2066,7 +2117,7 @@ psql_completion(char *text, int start, int end)
 	/* Complete INSERT INTO with table names */
 	else if (pg_strcasecmp(prev2_wd, "INSERT") == 0 &&
 			 pg_strcasecmp(prev_wd, "INTO") == 0)
-		COMPLETE_WITH_SCHEMA_QUERY(Query_for_list_of_tables, NULL);
+		COMPLETE_WITH_SCHEMA_QUERY(Query_for_list_of_insertables, NULL);
 	/* Complete "INSERT INTO <table> (" with attribute names */
 	else if (pg_strcasecmp(prev4_wd, "INSERT") == 0 &&
 			 pg_strcasecmp(prev3_wd, "INTO") == 0 &&
@@ -2423,7 +2474,7 @@ psql_completion(char *text, int start, int end)
 /* UPDATE */
 	/* If prev. word is UPDATE suggest a list of tables */
 	else if (pg_strcasecmp(prev_wd, "UPDATE") == 0)
-		COMPLETE_WITH_SCHEMA_QUERY(Query_for_list_of_tables, NULL);
+		COMPLETE_WITH_SCHEMA_QUERY(Query_for_list_of_updatables, NULL);
 	/* Complete UPDATE <table> with "SET" */
 	else if (pg_strcasecmp(prev2_wd, "UPDATE") == 0)
 		COMPLETE_WITH_CONST("SET");
