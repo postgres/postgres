@@ -29,8 +29,7 @@ UserOpts	user_opts;
 /*
  * parseCommandLine()
  *
- *	Parses the command line (argc, argv[]) into the given migratorContext object
- *	and initializes the rest of the object.
+ *	Parses the command line (argc, argv[]) and loads structures
  */
 void
 parseCommandLine(int argc, char *argv[])

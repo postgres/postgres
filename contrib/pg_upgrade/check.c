@@ -184,7 +184,7 @@ issue_warnings(char *sequence_script_file_name)
 void
 output_completion_banner(char *deletion_script_file_name)
 {
-	/* Did we migrate the free space files? */
+	/* Did we copy the free space files? */
 	if (GET_MAJOR_VERSION(old_cluster.major_version) >= 804)
 		pg_log(PG_REPORT,
 			   "| Optimizer statistics is not transferred by pg_upgrade\n"
@@ -213,7 +213,7 @@ check_cluster_versions(void)
 	old_cluster.major_version = get_major_server_version(&old_cluster.major_version_str, CLUSTER_OLD);
 	new_cluster.major_version = get_major_server_version(&new_cluster.major_version_str, CLUSTER_NEW);
 
-	/* We allow migration from/to the same major version for beta upgrades */
+	/* We allow upgrades from/to the same major version for alpha/beta upgrades */
 
 	if (GET_MAJOR_VERSION(old_cluster.major_version) < 803)
 		pg_log(PG_FATAL, "This utility can only upgrade from PostgreSQL version 8.3 and later.\n");
@@ -529,9 +529,9 @@ check_for_isn_and_int8_passing_mismatch(Cluster whichCluster)
 			   "| which rely on the bigint data type.  Your old and\n"
 			   "| new clusters pass bigint values differently so this\n"
 			   "| cluster cannot currently be upgraded.  You can\n"
-			   "| manually migrate data that use \"/contrib/isn\"\n"
+			   "| manually upgrade data that use \"/contrib/isn\"\n"
 			   "| facilities and remove \"/contrib/isn\" from the\n"
-			   "| old cluster and restart the migration.  A list\n"
+			   "| old cluster and restart the upgrade.  A list\n"
 			   "| of the problem functions is in the file:\n"
 			   "| \t%s\n\n", output_path);
 	}
@@ -631,7 +631,7 @@ check_for_reg_data_type_usage(Cluster whichCluster)
 			   "| user tables.  These data types reference system oids that\n"
 			   "| are not preserved by pg_upgrade, so this cluster cannot\n"
 			   "| currently be upgraded.  You can remove the problem tables\n"
-			   "| and restart the migration.  A list of the problem columns\n"
+			   "| and restart the upgrade.  A list of the problem columns\n"
 			   "| is in the file:\n"
 			   "| \t%s\n\n", output_path);
 	}

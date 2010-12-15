@@ -73,7 +73,7 @@ new_9_0_populate_pg_largeobject_metadata(bool check_mode,
 			pg_log(PG_WARNING, "\n"
 				   "| Your installation contains large objects.\n"
 				   "| The new database has an additional large object\n"
-				   "| permission table.  After migration, you will be\n"
+				   "| permission table.  After upgrading, you will be\n"
 				   "| given a command to populate the pg_largeobject\n"
 				   "| permission table with default permissions.\n\n");
 		else

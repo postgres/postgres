@@ -26,7 +26,7 @@ static void putenv2(const char *var, const char *val);
  * and then pipe its output. With little string parsing we get the
  * pg_control data.  pg_resetxlog cannot be run while the server is running
  * so we use pg_controldata;  pg_controldata doesn't provide all the fields
- * we need to actually perform the migration, but it provides enough for
+ * we need to actually perform the upgrade, but it provides enough for
  * check mode.	We do not implement pg_resetxlog -n because it is hard to
  * return valid xid data for a running server.
  */
@@ -505,8 +505,8 @@ check_control_data(ControlData *oldctrl,
 			   "\nOld and new pg_controldata date/time storage types do not match.\n");
 
 		/*
-		 * This is a common 8.3 -> 8.4 migration problem, so we are more
-		 * verboase
+		 * This is a common 8.3 -> 8.4 upgrade problem, so we are more
+		 * verbose
 		 */
 		pg_log(PG_FATAL,
 			   "You will need to rebuild the new server with configure\n"

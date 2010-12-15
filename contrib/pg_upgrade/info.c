@@ -313,10 +313,10 @@ get_rel_infos(const DbInfo *dbinfo, RelInfoArr *relarr, Cluster whichCluster)
 
 	/*
 	 * pg_largeobject contains user data that does not appear the pg_dumpall
-	 * --schema-only output, so we have to migrate that system table heap and
+	 * --schema-only output, so we have to upgrade that system table heap and
 	 * index.  Ideally we could just get the relfilenode from template1 but
 	 * pg_largeobject_loid_pn_index's relfilenode can change if the table was
-	 * reindexed so we get the relfilenode for each database and migrate it as
+	 * reindexed so we get the relfilenode for each database and upgrade it as
 	 * a normal user table.
 	 * Order by tablespace so we can cache the directory contents efficiently.
 	 */

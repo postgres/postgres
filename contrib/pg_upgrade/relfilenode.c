@@ -231,7 +231,7 @@ transfer_relfile(pageCnvCtx *pageConverter, const char *oldfile,
 	const char *msg;
 
 	if ((user_opts.transfer_mode == TRANSFER_MODE_LINK) && (pageConverter != NULL))
-		pg_log(PG_FATAL, "this migration requires page-by-page conversion, "
+		pg_log(PG_FATAL, "this upgrade requires page-by-page conversion, "
 			   "you must use copy-mode instead of link-mode\n");
 
 	if (user_opts.transfer_mode == TRANSFER_MODE_COPY)

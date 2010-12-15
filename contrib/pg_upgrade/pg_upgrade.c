@@ -51,8 +51,8 @@ main(int argc, char **argv)
 	check_new_cluster();
 	report_clusters_compatible();
 
-	pg_log(PG_REPORT, "\nPerforming Migration\n");
-	pg_log(PG_REPORT, "--------------------\n");
+	pg_log(PG_REPORT, "\nPerforming Upgrade\n");
+	pg_log(PG_REPORT, "------------------\n");
 
 	disable_old_cluster();
 	prepare_new_cluster();

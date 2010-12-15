@@ -97,7 +97,7 @@ old_8_3_check_for_name_data_type_usage(Cluster whichCluster)
 			   "| user tables.  This data type changed its internal\n"
 			   "| alignment between your old and new clusters so this\n"
 			   "| cluster cannot currently be upgraded.  You can\n"
-			   "| remove the problem tables and restart the migration.\n"
+			   "| remove the problem tables and restart the upgrade.\n"
 			   "| A list of the problem columns is in the file:\n"
 			   "| \t%s\n\n", output_path);
 	}
@@ -110,7 +110,7 @@ old_8_3_check_for_name_data_type_usage(Cluster whichCluster)
  * old_8_3_check_for_tsquery_usage()
  *	8.3 -> 8.4
  *	A new 'prefix' field was added to the 'tsquery' data type in 8.4
- *	so migration of such fields is impossible.
+ *	so upgrading of such fields is impossible.
  */
 void
 old_8_3_check_for_tsquery_usage(Cluster whichCluster)
@@ -186,7 +186,7 @@ old_8_3_check_for_tsquery_usage(Cluster whichCluster)
 			   "| This data type added a new internal field between\n"
 			   "| your old and new clusters so this cluster cannot\n"
 			   "| currently be upgraded.  You can remove the problem\n"
-			   "| columns and restart the migration.  A list of the\n"
+			   "| columns and restart the upgrade.  A list of the\n"
 			   "| problem columns is in the file:\n"
 			   "| \t%s\n\n", output_path);
 	}
@@ -328,7 +328,7 @@ old_8_3_rebuild_tsvector_tables(bool check_mode,
 				   "| Your installation contains tsvector columns.\n"
 				   "| The tsvector internal storage format changed\n"
 				   "| between your old and new clusters so the tables\n"
-				   "| must be rebuilt.  After migration, you will be\n"
+				   "| must be rebuilt.  After upgrading, you will be\n"
 				   "| given instructions.\n\n");
 		else
 			pg_log(PG_WARNING, "\n"
@@ -441,7 +441,7 @@ old_8_3_invalidate_hash_gin_indexes(bool check_mode,
 				   "| indexes.  These indexes have different\n"
 				   "| internal formats between your old and new\n"
 				   "| clusters so they must be reindexed with the\n"
-				   "| REINDEX command. After migration, you will\n"
+				   "| REINDEX command. After upgrading, you will\n"
 				   "| be given REINDEX instructions.\n\n");
 		else
 			pg_log(PG_WARNING, "\n"
@@ -571,7 +571,7 @@ old_8_3_invalidate_bpchar_pattern_ops_indexes(bool check_mode,
 				   "| \"bpchar_pattern_ops\".  These indexes have\n"
 				   "| different internal formats between your old and\n"
 				   "| new clusters so they must be reindexed with the\n"
-				   "| REINDEX command.  After migration, you will be\n"
+				   "| REINDEX command.  After upgrading, you will be\n"
 				   "| given REINDEX instructions.\n\n");
 		else
 			pg_log(PG_WARNING, "\n"
