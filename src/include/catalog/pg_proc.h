@@ -3403,6 +3403,12 @@ DATA(insert OID = 2623 ( pg_stat_file		PGNSP PGUID 12 1 0 0 f f f t f v 1 0 2249
 DESCR("return file information");
 DATA(insert OID = 2624 ( pg_read_file		PGNSP PGUID 12 1 0 0 f f f t f v 3 0 25 "25 20 20" _null_ _null_ _null_ _null_ pg_read_file _null_ _null_ _null_ ));
 DESCR("read text from a file");
+DATA(insert OID = 3826 ( pg_read_file		PGNSP PGUID 12 1 0 0 f f f t f v 1 0 25 "25" _null_ _null_ _null_ _null_ pg_read_file_all _null_ _null_ _null_ ));
+DESCR("read text from a file");
+DATA(insert OID = 3827 ( pg_read_binary_file	PGNSP PGUID 12 1 0 0 f f f t f v 3 0 17 "25 20 20" _null_ _null_ _null_ _null_ pg_read_binary_file _null_ _null_ _null_ ));
+DESCR("read bytea from a file");
+DATA(insert OID = 3828 ( pg_read_binary_file	PGNSP PGUID 12 1 0 0 f f f t f v 1 0 17 "25" _null_ _null_ _null_ _null_ pg_read_binary_file_all _null_ _null_ _null_ ));
+DESCR("read bytea from a file");
 DATA(insert OID = 2625 ( pg_ls_dir			PGNSP PGUID 12 1 1000 0 f f f t t v 1 0 25 "25" _null_ _null_ _null_ _null_ pg_ls_dir _null_ _null_ _null_ ));
 DESCR("list all files in a directory");
 DATA(insert OID = 2626 ( pg_sleep			PGNSP PGUID 12 1 0 0 f f f t f v 1 0 2278 "701" _null_ _null_ _null_ _null_ pg_sleep _null_ _null_ _null_ ));

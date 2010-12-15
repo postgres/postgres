@@ -442,6 +442,9 @@ extern Datum pg_relation_filepath(PG_FUNCTION_ARGS);
 /* genfile.c */
 extern Datum pg_stat_file(PG_FUNCTION_ARGS);
 extern Datum pg_read_file(PG_FUNCTION_ARGS);
+extern Datum pg_read_file_all(PG_FUNCTION_ARGS);
+extern Datum pg_read_binary_file(PG_FUNCTION_ARGS);
+extern Datum pg_read_binary_file_all(PG_FUNCTION_ARGS);
 extern Datum pg_ls_dir(PG_FUNCTION_ARGS);
 
 /* misc.c */

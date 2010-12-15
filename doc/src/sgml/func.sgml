@@ -14449,10 +14449,17 @@ postgres=# SELECT * FROM pg_xlogfile_name_offset(pg_stop_backup());
       </row>
       <row>
        <entry>
-        <literal><function>pg_read_file(<parameter>filename</> <type>text</>, <parameter>offset</> <type>bigint</>, <parameter>length</> <type>bigint</>)</function></literal>
+        <literal><function>pg_read_file(<parameter>filename</> <type>text</> [, <parameter>offset</> <type>bigint</>, <parameter>length</> <type>bigint</>])</function></literal>
        </entry>
        <entry><type>text</type></entry>
        <entry>Return the contents of a text file</entry>
+      </row>
+      <row>
+       <entry>
+        <literal><function>pg_read_binary_file(<parameter>filename</> <type>text</> [, <parameter>offset</> <type>bigint</>, <parameter>length</> <type>bigint</>])</function></literal>
+       </entry>
+       <entry><type>bytea</type></entry>
+       <entry>Return the contents of a file</entry>
       </row>
       <row>
        <entry>
@@ -14482,6 +14489,22 @@ postgres=# SELECT * FROM pg_xlogfile_name_offset(pg_stop_backup());
     at the given <parameter>offset</>, returning at most <parameter>length</>
     bytes (less if the end of file is reached first).  If <parameter>offset</>
     is negative, it is relative to the end of the file.
+    When <parameter>offset</> and <parameter>length</> parameters are omitted,
+    it returns the whole of the file.
+    The part of a file must be a valid text in the server encoding.
+   </para>
+
+   <indexterm>
+    <primary>pg_read_binary_file</primary>
+   </indexterm>
+   <para>
+    <function>pg_read_binary_file</> returns part of a file as like as
+    <function>pg_read_file</>, but the result is a bytea value.
+    One of the usages is to read a file in the specified encoding combined with
+    <function>convert_from</> function:
+<programlisting>
+SELECT convert_from(pg_read_binary_file('file_in_utf8.txt'), 'UTF8');
+</programlisting>    
    </para>
 
    <indexterm>

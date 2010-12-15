@@ -80,15 +80,14 @@ convert_and_check_filename(text *arg)
 
 
 /*
- * Read a section of a file, returning it as text
+ * Read a section of a file, returning it as bytea
+ *
+ * We read the whole of the file when bytes_to_read is nagative.
  */
-Datum
-pg_read_file(PG_FUNCTION_ARGS)
+static bytea *
+read_binary_file(text *filename_t, int64 seek_offset, int64 bytes_to_read)
 {
-	text	   *filename_t = PG_GETARG_TEXT_P(0);
-	int64		seek_offset = PG_GETARG_INT64(1);
-	int64		bytes_to_read = PG_GETARG_INT64(2);
-	char	   *buf;
+	bytea	   *buf;
 	size_t		nbytes;
 	FILE	   *file;
 	char	   *filename;
@@ -99,6 +98,29 @@ pg_read_file(PG_FUNCTION_ARGS)
 				 (errmsg("must be superuser to read files"))));
 
 	filename = convert_and_check_filename(filename_t);
+
+	if (bytes_to_read < 0)
+	{
+		if (seek_offset < 0)
+			bytes_to_read = -seek_offset;
+		else
+		{
+			struct stat fst;
+
+			if (stat(filename, &fst) < 0)
+				ereport(ERROR,
+						(errcode_for_file_access(),
+						 errmsg("could not stat file \"%s\": %m", filename)));
+
+			bytes_to_read = fst.st_size - seek_offset;
+		}
+	}
+
+	/* not sure why anyone thought that int64 length was a good idea */
+	if (bytes_to_read > (MaxAllocSize - VARHDRSZ))
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+				 errmsg("requested length too large")));
 
 	if ((file = AllocateFile(filename, PG_BINARY_R)) == NULL)
 		ereport(ERROR,
@@ -112,18 +134,7 @@ pg_read_file(PG_FUNCTION_ARGS)
 				(errcode_for_file_access(),
 				 errmsg("could not seek in file \"%s\": %m", filename)));
 
-	if (bytes_to_read < 0)
-		ereport(ERROR,
-				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-				 errmsg("requested length cannot be negative")));
-
-	/* not sure why anyone thought that int64 length was a good idea */
-	if (bytes_to_read > (MaxAllocSize - VARHDRSZ))
-		ereport(ERROR,
-				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-				 errmsg("requested length too large")));
-
-	buf = palloc((Size) bytes_to_read + VARHDRSZ);
+	buf = (bytea *) palloc((Size) bytes_to_read + VARHDRSZ);
 
 	nbytes = fread(VARDATA(buf), 1, (size_t) bytes_to_read, file);
 
@@ -132,15 +143,86 @@ pg_read_file(PG_FUNCTION_ARGS)
 				(errcode_for_file_access(),
 				 errmsg("could not read file \"%s\": %m", filename)));
 
-	/* Make sure the input is valid */
-	pg_verifymbstr(VARDATA(buf), nbytes, false);
-
 	SET_VARSIZE(buf, nbytes + VARHDRSZ);
 
 	FreeFile(file);
 	pfree(filename);
 
-	PG_RETURN_TEXT_P(buf);
+	return buf;
+}
+
+/*
+ * In addition to read_binary_file, verify whether the contents are encoded
+ * in the database encoding.
+ */
+static text *
+read_text_file(text *filename, int64 seek_offset, int64 bytes_to_read)
+{
+	bytea *buf = read_binary_file(filename, seek_offset, bytes_to_read);
+
+	/* Make sure the input is valid */
+	pg_verifymbstr(VARDATA(buf), VARSIZE(buf) - VARHDRSZ, false);
+
+	/* OK, we can cast it as text safely */
+	return (text *) buf;
+}
+
+/*
+ * Read a section of a file, returning it as text
+ */
+Datum
+pg_read_file(PG_FUNCTION_ARGS)
+{
+	text	   *filename_t = PG_GETARG_TEXT_P(0);
+	int64		seek_offset = PG_GETARG_INT64(1);
+	int64		bytes_to_read = PG_GETARG_INT64(2);
+
+	if (bytes_to_read < 0)
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+				 errmsg("requested length cannot be negative")));
+
+	PG_RETURN_TEXT_P(read_text_file(filename_t, seek_offset, bytes_to_read));
+}
+
+/*
+ * Read the whole of a file, returning it as text
+ */
+Datum
+pg_read_file_all(PG_FUNCTION_ARGS)
+{
+	text	   *filename_t = PG_GETARG_TEXT_P(0);
+
+	PG_RETURN_TEXT_P(read_text_file(filename_t, 0, -1));
+}
+
+/*
+ * Read a section of a file, returning it as bytea
+ */
+Datum
+pg_read_binary_file(PG_FUNCTION_ARGS)
+{
+	text	   *filename_t = PG_GETARG_TEXT_P(0);
+	int64		seek_offset = PG_GETARG_INT64(1);
+	int64		bytes_to_read = PG_GETARG_INT64(2);
+
+	if (bytes_to_read < 0)
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+				 errmsg("requested length cannot be negative")));
+
+	PG_RETURN_BYTEA_P(read_binary_file(filename_t, seek_offset, bytes_to_read));
+}
+
+/*
+ * Read the whole of a file, returning it as bytea
+ */
+Datum
+pg_read_binary_file_all(PG_FUNCTION_ARGS)
+{
+	text	   *filename_t = PG_GETARG_TEXT_P(0);
+
+	PG_RETURN_BYTEA_P(read_binary_file(filename_t, 0, -1));
 }
 
 /*
