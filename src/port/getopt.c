@@ -41,7 +41,7 @@ static char sccsid[] = "@(#)getopt.c	8.3 (Berkeley) 4/27/95";
  * On some versions of Solaris, opterr and friends are defined in core libc
  * rather than in a separate getopt module.  Define these variables only
  * if configure found they aren't there by default.  (We assume that testing
- * opterr is sufficient for all of these except optreset.)
+ * opterr is sufficient for all of these.)
  */
 #ifndef HAVE_INT_OPTERR
 
@@ -57,12 +57,6 @@ extern int	optopt;
 extern char *optarg;
 #endif
 
-#ifndef HAVE_INT_OPTRESET
-int			optreset;			/* reset getopt */
-#else
-extern int	optreset;
-#endif
-
 #define BADCH	(int)'?'
 #define BADARG	(int)':'
 #define EMSG	""
@@ -70,6 +64,12 @@ extern int	optreset;
 /*
  * getopt
  *	Parse argc/argv argument vector.
+ *
+ * This implementation does not use optreset.  Instead, we guarantee that
+ * it can be restarted on a new argv array after a previous call returned -1,
+ * if the caller resets optind to 1 before the first call of the new series.
+ * (Internally, this means we must be sure to reset "place" to EMSG before
+ * returning -1.)
  */
 int
 getopt(nargc, nargv, ostr)
@@ -80,9 +80,8 @@ const char *ostr;
 	static char *place = EMSG;	/* option letter processing */
 	char	   *oli;			/* option letter list index */
 
-	if (optreset || !*place)
+	if (!*place)
 	{							/* update scanning pointer */
-		optreset = 0;
 		if (optind >= nargc || *(place = nargv[optind]) != '-')
 		{
 			place = EMSG;
@@ -102,7 +101,10 @@ const char *ostr;
 		 * if the user didn't specify '-' as an option, assume it means -1.
 		 */
 		if (optopt == (int) '-')
+		{
+			place = EMSG;
 			return -1;
+		}
 		if (!*place)
 			++optind;
 		if (opterr && *ostr != ':')

@@ -18,7 +18,6 @@ extern int	opterr;
 extern int	optind;
 extern int	optopt;
 extern char *optarg;
-extern int	optreset;
 
 #ifndef HAVE_STRUCT_OPTION
 
