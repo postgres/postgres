@@ -152,7 +152,7 @@ read_binary_file(text *filename_t, int64 seek_offset, int64 bytes_to_read)
 }
 
 /*
- * In addition to read_binary_file, verify whether the contents are encoded
+ * Similar to read_binary_file, but we verify that the contents are valid
  * in the database encoding.
  */
 static text *
@@ -163,7 +163,7 @@ read_text_file(text *filename, int64 seek_offset, int64 bytes_to_read)
 	/* Make sure the input is valid */
 	pg_verifymbstr(VARDATA(buf), VARSIZE(buf) - VARHDRSZ, false);
 
-	/* OK, we can cast it as text safely */
+	/* OK, we can cast it to text safely */
 	return (text *) buf;
 }
 
