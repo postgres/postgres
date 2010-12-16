@@ -312,8 +312,7 @@ extern char *optarg;
 extern int	optind,
 			opterr;
 
-/* If not HAVE_GETOPT, we are using src/port/getopt.c, which has optreset */
-#if defined(HAVE_INT_OPTRESET) || !defined(HAVE_GETOPT)
+#ifdef HAVE_INT_OPTRESET
 extern int	optreset;			/* might not be declared by system headers */
 #endif
 
@@ -751,7 +750,7 @@ PostmasterMain(int argc, char *argv[])
 	 * getopt(3) library so that it will work correctly in subprocesses.
 	 */
 	optind = 1;
-#if defined(HAVE_INT_OPTRESET) || !defined(HAVE_GETOPT)
+#ifdef HAVE_INT_OPTRESET
 	optreset = 1;				/* some systems need this too */
 #endif
 
