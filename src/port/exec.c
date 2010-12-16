@@ -357,6 +357,7 @@ pipe_read_line(char *cmd, char *line, int maxsize)
 
 	if (fgets(line, maxsize, pgver) == NULL)
 	{
+		pclose(pgver);		/* no error checking */
 		perror("fgets failure");
 		return NULL;
 	}
