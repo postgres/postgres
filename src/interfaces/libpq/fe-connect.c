@@ -1031,7 +1031,8 @@ connectFailureMessage(PGconn *conn, int errorno)
 			strcpy(host_addr, "???");
 
 		display_host_addr = (conn->pghostaddr == NULL) &&
-			(strcmp(conn->pghost, host_addr) != 0);
+							(conn->pghost != NULL) &&
+							(strcmp(conn->pghost, host_addr) != 0);
 
 		appendPQExpBuffer(&conn->errorMessage,
 						  libpq_gettext("could not connect to server: %s\n"
