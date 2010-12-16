@@ -1443,6 +1443,9 @@ SELECT E'\\xDEADBEEF';
     <primary>timestamp</primary>
    </indexterm>
    <indexterm zone="datatype-datetime">
+    <primary>timestamptz</primary>
+   </indexterm>
+   <indexterm zone="datatype-datetime">
     <primary>timestamp with time zone</primary>
    </indexterm>
    <indexterm zone="datatype-datetime">
@@ -1535,7 +1538,9 @@ SELECT E'\\xDEADBEEF';
      be equivalent to <type>timestamp without time
      zone</type>, and <productname>PostgreSQL</productname> honors that
      behavior.  (Releases prior to 7.3 treated it as <type>timestamp
-     with time zone</type>.)
+     with time zone</type>.)  <type>timestamptz</type> is taken as an
+     abbreviation for <type>timestamp with time zone</type>; this is a
+     <productname>PostgreSQL</productname> extension.
     </para>
    </note>
 
