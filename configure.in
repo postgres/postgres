@@ -1019,6 +1019,13 @@ case $host_os in bsdi*|netbsd*)
 ac_cv_func_fseeko=yes
 esac
 
+# mingw has adopted a GNU-centric interpretation of optind/optreset,
+# so always use our version on Windows.
+if test "$PORTNAME" = "win32"; then
+  AC_LIBOBJ(getopt)
+  AC_LIBOBJ(getopt_long)
+fi
+
 # Win32 support
 if test "$PORTNAME" = "win32"; then
 AC_REPLACE_FUNCS(gettimeofday)
