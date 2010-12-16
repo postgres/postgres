@@ -1328,6 +1328,13 @@ if test "$PORTNAME" = "solaris"; then
   AC_LIBOBJ(getopt)
 fi
 
+# mingw has adopted a GNU-centric interpretation of optind/optreset,
+# so always use our version on Windows.
+if test "$PORTNAME" = "win32"; then
+  AC_LIBOBJ(getopt)
+  AC_LIBOBJ(getopt_long)
+fi
+
 # Cygwin's erand48() is broken (always returns zero) in some releases,
 # so force use of ours.
 if test "$PORTNAME" = "cygwin"; then
@@ -1336,13 +1343,13 @@ fi
 
 # Win32 support
 if test "$PORTNAME" = "win32"; then
-AC_REPLACE_FUNCS(gettimeofday)
-AC_LIBOBJ(kill)
-AC_LIBOBJ(open)
-AC_LIBOBJ(win32env)
-AC_LIBOBJ(win32error)
-AC_DEFINE([HAVE_SYMLINK], 1,
-          [Define to 1 if you have the `symlink' function.])
+  AC_REPLACE_FUNCS(gettimeofday)
+  AC_LIBOBJ(kill)
+  AC_LIBOBJ(open)
+  AC_LIBOBJ(win32env)
+  AC_LIBOBJ(win32error)
+  AC_DEFINE([HAVE_SYMLINK], 1,
+            [Define to 1 if you have the `symlink' function.])
 fi
 
 if test "$with_readline" = yes; then
