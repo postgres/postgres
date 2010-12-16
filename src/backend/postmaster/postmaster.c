@@ -2974,7 +2974,7 @@ PostmasterStateMachine(void)
 					pmState = PM_WAIT_DEAD_END;
 
 					/* Kill the walsenders, archiver and stats collector too */
-					SignalSomeChildren(SIGQUIT, BACKEND_TYPE_ALL);
+					SignalChildren(SIGQUIT);
 					if (PgArchPID != 0)
 						signal_child(PgArchPID, SIGQUIT);
 					if (PgStatPID != 0)
