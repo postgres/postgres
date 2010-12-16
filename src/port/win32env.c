@@ -115,9 +115,14 @@ pgwin32_putenv(const char *envval)
 	 * Need a copy of the string so we can modify it.
 	 */
 	envcpy = strdup(envval);
+	if (!envcpy)
+		return -1;
 	cp = strchr(envcpy, '=');
 	if (cp == NULL)
+	{
+		free(envcpy);
 		return -1;
+	}
 	*cp = '\0';
 	cp++;
 	if (strlen(cp))
