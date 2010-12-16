@@ -78,7 +78,8 @@
 extern char *optarg;
 extern int	optind;
 
-#ifdef HAVE_INT_OPTRESET
+/* If not HAVE_GETOPT, we are using src/port/getopt.c, which has optreset */
+#if defined(HAVE_INT_OPTRESET) || !defined(HAVE_GETOPT)
 extern int	optreset;			/* might not be declared by system headers */
 #endif
 
@@ -3442,7 +3443,7 @@ process_postgres_switches(int argc, char *argv[], GucContext ctx)
 	 * or when this function is called a second time with another array.
 	 */
 	optind = 1;
-#ifdef HAVE_INT_OPTRESET
+#if defined(HAVE_INT_OPTRESET) || !defined(HAVE_GETOPT)
 	optreset = 1;				/* some systems need this too */
 #endif
 

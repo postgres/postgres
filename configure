@@ -20758,6 +20758,23 @@ esac
 
 fi
 
+# mingw has adopted a GNU-centric interpretation of optind/optreset,
+# so always use our version on Windows.
+if test "$PORTNAME" = "win32"; then
+  case " $LIBOBJS " in
+  *" getopt.$ac_objext "* ) ;;
+  *) LIBOBJS="$LIBOBJS getopt.$ac_objext"
+ ;;
+esac
+
+  case " $LIBOBJS " in
+  *" getopt_long.$ac_objext "* ) ;;
+  *) LIBOBJS="$LIBOBJS getopt_long.$ac_objext"
+ ;;
+esac
+
+fi
+
 # Cygwin's erand48() is broken (always returns zero) in some releases,
 # so force use of ours.
 if test "$PORTNAME" = "cygwin"; then
@@ -20880,25 +20897,25 @@ fi
 done
 
 
-case " $LIBOBJS " in
+  case " $LIBOBJS " in
   *" kill.$ac_objext "* ) ;;
   *) LIBOBJS="$LIBOBJS kill.$ac_objext"
  ;;
 esac
 
-case " $LIBOBJS " in
+  case " $LIBOBJS " in
   *" open.$ac_objext "* ) ;;
   *) LIBOBJS="$LIBOBJS open.$ac_objext"
  ;;
 esac
 
-case " $LIBOBJS " in
+  case " $LIBOBJS " in
   *" win32env.$ac_objext "* ) ;;
   *) LIBOBJS="$LIBOBJS win32env.$ac_objext"
  ;;
 esac
 
-case " $LIBOBJS " in
+  case " $LIBOBJS " in
   *" win32error.$ac_objext "* ) ;;
   *) LIBOBJS="$LIBOBJS win32error.$ac_objext"
  ;;
