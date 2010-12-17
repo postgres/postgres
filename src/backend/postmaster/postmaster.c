@@ -357,7 +357,6 @@ static void signal_child(pid_t pid, int signal);
 static bool SignalSomeChildren(int signal, int targets);
 
 #define SignalChildren(sig)			   SignalSomeChildren(sig, BACKEND_TYPE_ALL)
-#define SignalAutovacWorkers(sig)  SignalSomeChildren(sig, BACKEND_TYPE_AUTOVAC)
 
 /*
  * Possible types of a backend. These are OR-able request flag bits
@@ -2179,7 +2178,7 @@ pmdie(SIGNAL_ARGS)
 				pmState == PM_HOT_STANDBY || pmState == PM_STARTUP)
 			{
 				/* autovacuum workers are told to shut down immediately */
-				SignalAutovacWorkers(SIGTERM);
+				SignalSomeChildren(SIGTERM, BACKEND_TYPE_AUTOVAC);
 				/* and the autovac launcher too */
 				if (AutoVacPID != 0)
 					signal_child(AutoVacPID, SIGTERM);
