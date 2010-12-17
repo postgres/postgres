@@ -193,6 +193,10 @@ ResolveRecoveryConflictWithVirtualXIDs(VirtualTransactionId *waitlist,
 	TimestampTz waitStart;
 	char	   *new_status;
 
+	/* Fast exit, to avoid a kernel call if there's no work to be done. */
+	if (!VirtualTransactionIdIsValid(*waitlist))
+		return;
+
 	waitStart = GetCurrentTimestamp();
 	new_status = NULL;		/* we haven't changed the ps display */
 
