@@ -3994,8 +3994,9 @@ PostgresMain(int argc, char *argv[], const char *username)
 				/* Set statement_timestamp() */
 				SetCurrentStatementStartTimestamp();
 
-				/* Tell the collector what we're doing */
+				/* Report query to various monitoring facilities. */
 				pgstat_report_activity("<FASTPATH> function call");
+				set_ps_display("<FASTPATH>", false);
 
 				/* start an xact for this function invocation */
 				start_xact_command();
