@@ -522,19 +522,6 @@ PostgreSQL documentation
  </refsect1>
 
 
- <refsect1>
-  <title>Notes</title>
-
-  <para>
-   Waiting for complete startup is not a well-defined operation and might
-   fail if access control is set up so that a local client cannot
-   connect without manual interaction (e.g., password authentication).  For
-   additional connection variables, see <xref linkend="libpq-envars">,
-   and for passwords, also see <xref linkend="libpq-pgpass">.
-  </para>
- </refsect1>
-
-
  <refsect1 id="R1-APP-PGCTL-2">
   <title>Examples</title>
 
