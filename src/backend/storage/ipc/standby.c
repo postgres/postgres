@@ -21,7 +21,6 @@
 #include "access/xact.h"
 #include "access/xlog.h"
 #include "miscadmin.h"
-#include "pgstat.h"
 #include "storage/bufmgr.h"
 #include "storage/lmgr.h"
 #include "storage/proc.h"
@@ -191,16 +190,14 @@ static void
 ResolveRecoveryConflictWithVirtualXIDs(VirtualTransactionId *waitlist,
 									   ProcSignalReason reason)
 {
+	TimestampTz waitStart;
+	char	   *new_status;
+
+	waitStart = GetCurrentTimestamp();
+	new_status = NULL;		/* we haven't changed the ps display */
+
 	while (VirtualTransactionIdIsValid(*waitlist))
 	{
-		TimestampTz waitStart;
-		char	   *new_status;
-
-		pgstat_report_waiting(true);
-
-		waitStart = GetCurrentTimestamp();
-		new_status = NULL;		/* we haven't changed the ps display */
-
 		/* reset standbyWait_us for each xact we wait for */
 		standbyWait_us = STANDBY_INITIAL_WAIT_US;
 
@@ -246,16 +243,15 @@ ResolveRecoveryConflictWithVirtualXIDs(VirtualTransactionId *waitlist,
 			}
 		}
 
-		/* Reset ps display if we changed it */
-		if (new_status)
-		{
-			set_ps_display(new_status, false);
-			pfree(new_status);
-		}
-		pgstat_report_waiting(false);
-
 		/* The virtual transaction is gone now, wait for the next one */
 		waitlist++;
+	}
+
+	/* Reset ps display if we changed it */
+	if (new_status)
+	{
+		set_ps_display(new_status, false);
+		pfree(new_status);
 	}
 }
 
