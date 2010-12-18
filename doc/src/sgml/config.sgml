@@ -2415,7 +2415,8 @@ SELECT * FROM parent WHERE key = 2400;
         documentation of your system's
         <application>syslog</application> daemon.
         This parameter can only be set in the <filename>postgresql.conf</>
-        file or on the server command line.
+        file or on the server command line. This parameter is unavailable
+        unless the server is compiled with support for syslog.
        </para>
       </listitem>
      </varlistentry>
@@ -2433,7 +2434,8 @@ SELECT * FROM parent WHERE key = 2400;
          <application>syslog</application> logs. The default is
          <literal>postgres</literal>.
          This parameter can only be set in the <filename>postgresql.conf</>
-         file or on the server command line.
+         file or on the server command line. This parameter is unavailable
+         unless the server is compiled with support for syslog.
         </para>
        </listitem>
       </varlistentry>
