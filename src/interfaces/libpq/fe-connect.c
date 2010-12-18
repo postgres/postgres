@@ -1030,20 +1030,25 @@ connectFailureMessage(PGconn *conn, int errorno)
 		else
 			strcpy(host_addr, "???");
 
+		/*
+		 *	If the user did not supply an IP address using 'hostaddr', and
+		 *	'host' was missing or does not match our lookup, display the
+		 *	looked-up IP address.
+		 */
 		display_host_addr = (conn->pghostaddr == NULL) &&
-							(conn->pghost != NULL) &&
-							(strcmp(conn->pghost, host_addr) != 0);
+							((conn->pghost == NULL) ||
+							 (strcmp(conn->pghost, host_addr) != 0));
 
 		appendPQExpBuffer(&conn->errorMessage,
 						  libpq_gettext("could not connect to server: %s\n"
 					 "\tIs the server running on host \"%s\"%s%s%s and accepting\n"
 										"\tTCP/IP connections on port %s?\n"),
 						  SOCK_STRERROR(errorno, sebuf, sizeof(sebuf)),
-						  conn->pghostaddr
+						  (conn->pghostaddr && conn->pghostaddr[0] != '\0')
 						  ? conn->pghostaddr
-						  : (conn->pghost
+						  : (conn->pghost && conn->pghost[0] != '\0')
 							 ? conn->pghost
-							 : "???"),
+							 : DefaultHost,
 						  /* display the IP address only if not already output */
 						  display_host_addr ? " (" : "",
 						  display_host_addr ? host_addr : "",
@@ -1304,7 +1309,7 @@ connectDBStart(PGconn *conn)
 		UNIXSOCK_PATH(portstr, portnum, conn->pgunixsocket);
 #else
 		/* Without Unix sockets, default to localhost instead */
-		node = "localhost";
+		node = DefaultHost;
 		hint.ai_family = AF_UNSPEC;
 #endif   /* HAVE_UNIX_SOCKETS */
 	}
@@ -3388,7 +3393,7 @@ ldapServiceLookup(const char *purl, PQconninfoOption *options,
 	/* hostname */
 	hostname = url + strlen(LDAP_URL);
 	if (*hostname == '/')		/* no hostname? */
-		hostname = "localhost"; /* the default */
+		hostname = DefaultHost; /* the default */
 
 	/* dn, "distinguished name" */
 	p = strchr(url + strlen(LDAP_URL), '/');
