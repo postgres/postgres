@@ -95,8 +95,8 @@ ifneq ($(PORTNAME),win32)
 abs_srcdir := $(shell cd $(srcdir) && pwd)
 abs_builddir := $(shell pwd)
 else
-abs_srcdir := $(shell cd $(srcdir) && pwd -W)
-abs_builddir := $(shell pwd -W)
+abs_srcdir := $(shell cd $(srcdir) && sh -c "pwd -W")
+abs_builddir := $(shell sh -c "pwd -W")
 endif
 
 testtablespace := $(abs_builddir)/testtablespace
