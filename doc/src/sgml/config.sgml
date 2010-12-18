@@ -615,7 +615,8 @@ SET ENABLE_SEQSCAN TO OFF;
        <para>
         Specifies a list of <acronym>SSL</> ciphers that are allowed to be
         used on secure connections. See the <application>openssl</>
-        manual page for a list of supported ciphers.
+        manual page for a list of supported ciphers. This parameter is
+        unavailable unless the server is compiled with support for SSL.
        </para>
       </listitem>
      </varlistentry>
@@ -2604,7 +2605,8 @@ local0.*    /var/log/postgresql
         documentation of your system's
         <application>syslog</application> daemon.
         This parameter can only be set in the <filename>postgresql.conf</>
-        file or on the server command line.
+        file or on the server command line. This parameter is unavailable
+        unless the server is compiled with support for syslog.
        </para>
       </listitem>
      </varlistentry>
@@ -2622,7 +2624,8 @@ local0.*    /var/log/postgresql
          <application>syslog</application> logs. The default is
          <literal>postgres</literal>.
          This parameter can only be set in the <filename>postgresql.conf</>
-         file or on the server command line.
+         file or on the server command line. This parameter is unavailable
+         unless the server is compiled with support for syslog.
         </para>
        </listitem>
       </varlistentry>
