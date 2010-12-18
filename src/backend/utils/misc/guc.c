@@ -128,6 +128,7 @@ extern char *temp_tablespaces;
 extern bool synchronize_seqscans;
 extern bool fullPageWrites;
 extern int	ssl_renegotiation_limit;
+extern char *SSLCipherSuites;
 
 #ifdef TRACE_SORT
 extern bool trace_sort;
@@ -139,10 +140,6 @@ extern bool trace_syncscan;
 extern bool optimize_bounded_sort;
 #endif
 
-#ifdef USE_SSL
-extern char *SSLCipherSuites;
-#endif
-
 static void set_config_sourcefile(const char *name, char *sourcefile,
 					  int sourceline);
 
@@ -151,12 +148,14 @@ static const char *assign_log_destination(const char *value,
 
 #ifdef HAVE_SYSLOG
 static int	syslog_facility = LOG_LOCAL0;
+#else
+static int	syslog_facility = 0;
+#endif
 
 static bool assign_syslog_facility(int newval,
 					   bool doit, GucSource source);
 static const char *assign_syslog_ident(const char *ident,
 					bool doit, GucSource source);
-#endif
 
 static bool assign_session_replication_role(int newval, bool doit,
 								GucSource source);
@@ -280,8 +279,8 @@ static const struct config_enum_entry session_replication_role_options[] = {
 	{NULL, 0, false}
 };
 
-#ifdef HAVE_SYSLOG
 static const struct config_enum_entry syslog_facility_options[] = {
+#ifdef HAVE_SYSLOG
 	{"local0", LOG_LOCAL0, false},
 	{"local1", LOG_LOCAL1, false},
 	{"local2", LOG_LOCAL2, false},
@@ -290,9 +289,11 @@ static const struct config_enum_entry syslog_facility_options[] = {
 	{"local5", LOG_LOCAL5, false},
 	{"local6", LOG_LOCAL6, false},
 	{"local7", LOG_LOCAL7, false},
+#else
+	{"none", 0, false},
+#endif
 	{NULL, 0}
 };
-#endif
 
 static const struct config_enum_entry track_function_options[] = {
 	{"none", TRACK_FUNC_OFF, false},
@@ -410,9 +411,7 @@ int			tcp_keepalives_count;
  */
 static char *log_destination_string;
 
-#ifdef HAVE_SYSLOG
 static char *syslog_ident_str;
-#endif
 static bool phony_autocommit;
 static bool session_auth_is_superuser;
 static double phony_random_seed;
@@ -2531,7 +2530,6 @@ static struct config_string ConfigureNamesString[] =
 		"postgresql-%Y-%m-%d_%H%M%S.log", NULL, NULL
 	},
 
-#ifdef HAVE_SYSLOG
 	{
 		{"syslog_ident", PGC_SIGHUP, LOGGING_WHERE,
 			gettext_noop("Sets the program name used to identify PostgreSQL "
@@ -2541,7 +2539,6 @@ static struct config_string ConfigureNamesString[] =
 		&syslog_ident_str,
 		"postgres", assign_syslog_ident, NULL
 	},
-#endif
 
 	{
 		{"TimeZone", PGC_USERSET, CLIENT_CONN_LOCALE,
@@ -2680,7 +2677,6 @@ static struct config_string ConfigureNamesString[] =
 		"pg_catalog.simple", assignTSCurrentConfig, NULL
 	},
 
-#ifdef USE_SSL
 	{
 		{"ssl_ciphers", PGC_POSTMASTER, CONN_AUTH_SECURITY,
 			gettext_noop("Sets the list of allowed SSL ciphers."),
@@ -2688,9 +2684,13 @@ static struct config_string ConfigureNamesString[] =
 			GUC_SUPERUSER_ONLY
 		},
 		&SSLCipherSuites,
-		"ALL:!ADH:!LOW:!EXP:!MD5:@STRENGTH", NULL, NULL
+#ifdef USE_SSL
+		"ALL:!ADH:!LOW:!EXP:!MD5:@STRENGTH",
+#else
+		"none",
+#endif
+		NULL, NULL
 	},
-#endif   /* USE_SSL */
 
 	{
 		{"application_name", PGC_USERSET, LOGGING_WHAT,
@@ -2807,16 +2807,19 @@ static struct config_enum ConfigureNamesEnum[] =
 		LOGSTMT_NONE, log_statement_options, NULL, NULL
 	},
 
-#ifdef HAVE_SYSLOG
 	{
 		{"syslog_facility", PGC_SIGHUP, LOGGING_WHERE,
 			gettext_noop("Sets the syslog \"facility\" to be used when syslog enabled."),
 			NULL
 		},
 		&syslog_facility,
-		LOG_LOCAL0, syslog_facility_options, assign_syslog_facility, NULL
-	},
+#ifdef HAVE_SYSLOG
+		LOG_LOCAL0,
+#else
+		0,
 #endif
+		syslog_facility_options, assign_syslog_facility, NULL
+	},
 
 	{
 		{"session_replication_role", PGC_SUSET, CLIENT_CONN_STATEMENT,
@@ -7637,14 +7640,15 @@ assign_log_destination(const char *value, bool doit, GucSource source)
 	return value;
 }
 
-#ifdef HAVE_SYSLOG
-
 static bool
 assign_syslog_facility(int newval, bool doit, GucSource source)
 {
+#ifdef HAVE_SYSLOG
 	if (doit)
 		set_syslog_parameters(syslog_ident_str ? syslog_ident_str : "postgres",
 							  newval);
+#endif
+	/* Without syslog support, just ignore it */
 
 	return true;
 }
@@ -7652,12 +7656,14 @@ assign_syslog_facility(int newval, bool doit, GucSource source)
 static const char *
 assign_syslog_ident(const char *ident, bool doit, GucSource source)
 {
+#ifdef HAVE_SYSLOG
 	if (doit)
 		set_syslog_parameters(ident, syslog_facility);
+#endif
+	/* Without syslog support, it will always be set to "none", so ignore */
 
 	return ident;
 }
-#endif   /* HAVE_SYSLOG */
 
 
 static bool

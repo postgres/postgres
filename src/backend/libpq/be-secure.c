@@ -103,10 +103,10 @@ int			ssl_renegotiation_limit;
 #ifdef USE_SSL
 static SSL_CTX *SSL_context = NULL;
 static bool ssl_loaded_verify_locations = false;
+#endif
 
 /* GUC variable controlling SSL cipher list */
 char	   *SSLCipherSuites = NULL;
-#endif
 
 /* ------------------------------------------------------------ */
 /*						 Hardcoded values						*/
