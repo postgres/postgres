@@ -303,6 +303,9 @@ extern int	pgwin32_is_service(void);
 /* in backend/port/win32_shmem.c */
 extern int	pgwin32_ReserveSharedMemoryRegion(HANDLE);
 
+/* in backend/port/win32/crashdump.c */
+extern void pgwin32_install_crashdump_handler(void);
+
 /* in port/win32error.c */
 extern void _dosmaperr(unsigned long);
 

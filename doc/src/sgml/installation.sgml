@@ -2734,6 +2734,22 @@ cc-1020 cc: ERROR File = pqcomm.c, Line = 427
     under <command>CMD.EXE</command>, as the MSYS console has
     buffering issues.
    </para>
+
+   <sect3>
+    <title>Collecting crash dumps on Windows</title>
+
+    <para>
+     If PostgreSQL on Windows crashes, it has the ability to generate
+     <productname>minidumps</> that can be used to track down the cause
+     for the crash, similar to core dumps on Unix. These dumps can be
+     read using the <productname>Windows Debugger Tools</> or using
+     <productname>Visual Studio</>. To enable the generation of dumps
+     on Windows, create a subdirectory named <filename>crashdumps</filename>
+     inside the cluster data directory. The dumps will then be written
+     into this directory with a unique name based on the identifier of
+     the crashing process and the current time of the crash.
+    </para>
+   </sect3>
   </sect2>
 
   <sect2 id="installation-notes-sco">

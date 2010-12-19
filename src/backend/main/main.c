@@ -82,6 +82,14 @@ main(int argc, char *argv[])
 	argv = save_ps_display_args(argc, argv);
 
 	/*
+	 * If supported on the current platform, set up a handler to be called if
+	 * the backend/postmaster crashes with a fatal signal or exception.
+	 */
+#ifdef WIN32
+	pgwin32_install_crashdump_handler();
+#endif
+
+	/*
 	 * Set up locale information from environment.	Note that LC_CTYPE and
 	 * LC_COLLATE will be overridden later from pg_control if we are in an
 	 * already-initialized database.  We set them here so that they will be
