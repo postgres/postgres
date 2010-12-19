@@ -2570,7 +2570,18 @@ eval_const_expressions_mutator(Node *node,
 		 * placeholder nodes, so that we have the opportunity to reduce
 		 * constant test conditions.  For example this allows
 		 *		CASE 0 WHEN 0 THEN 1 ELSE 1/0 END
-		 * to reduce to 1 rather than drawing a divide-by-0 error.
+		 * to reduce to 1 rather than drawing a divide-by-0 error.  Note
+		 * that when the test expression is constant, we don't have to
+		 * include it in the resulting CASE; for example
+		 *		CASE 0 WHEN x THEN y ELSE z END
+		 * is transformed by the parser to
+		 *		CASE 0 WHEN CaseTestExpr = x THEN y ELSE z END
+		 * which we can simplify to
+		 *		CASE WHEN 0 = x THEN y ELSE z END
+		 * It is not necessary for the executor to evaluate the "arg"
+		 * expression when executing the CASE, since any contained
+		 * CaseTestExprs that might have referred to it will have been
+		 * replaced by the constant.
 		 *----------
 		 */
 		CaseExpr   *caseexpr = (CaseExpr *) node;
@@ -2589,7 +2600,10 @@ eval_const_expressions_mutator(Node *node,
 		/* Set up for contained CaseTestExpr nodes */
 		save_case_val = context->case_val;
 		if (newarg && IsA(newarg, Const))
+		{
 			context->case_val = newarg;
+			newarg = NULL;		/* not needed anymore, see comment above */
+		}
 		else
 			context->case_val = NULL;
 
