@@ -132,11 +132,6 @@ crashDumpHandler(struct _EXCEPTION_POINTERS *pExceptionInfo)
 			dumpType |= MiniDumpWithIndirectlyReferencedMemory |
 				MiniDumpWithPrivateReadWriteMemory;
 		}
-		if (GetProcAddress(hDll, "SymFromIndex") != NULL)
-		{
-			/* If this function exists, we have version 6.2 or newer */
-			dumpType |= MiniDumpWithThreadInfo;
-		}
 
 		systemTicks = GetTickCount();
 		snprintf(dumpPath, _MAX_PATH,
