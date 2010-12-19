@@ -5146,23 +5146,19 @@ get_rule_expr(Node *node, deparse_context *context,
 						 * boolexpr WHEN TRUE THEN ...", then the optimizer's
 						 * simplify_boolean_equality() may have reduced this
 						 * to just "CaseTestExpr" or "NOT CaseTestExpr", for
-						 * which we have to show "TRUE" or "FALSE".  Also,
-						 * depending on context the original CaseTestExpr
-						 * might have been reduced to a Const (but we won't
-						 * see "WHEN Const").  We have also to consider the
-						 * possibility that an implicit coercion was inserted
-						 * between the CaseTestExpr and the operator.
+						 * which we have to show "TRUE" or "FALSE".  We have
+						 * also to consider the possibility that an implicit
+						 * coercion was inserted between the CaseTestExpr and
+						 * the operator.
 						 */
 						if (IsA(w, OpExpr))
 						{
 							List	   *args = ((OpExpr *) w)->args;
-							Node	   *lhs;
 							Node	   *rhs;
 
 							Assert(list_length(args) == 2);
-							lhs = strip_implicit_coercions(linitial(args));
-							Assert(IsA(lhs, CaseTestExpr) ||
-								   IsA(lhs, Const));
+							Assert(IsA(strip_implicit_coercions(linitial(args)),
+									   CaseTestExpr));
 							rhs = (Node *) lsecond(args);
 							get_rule_expr(rhs, context, false);
 						}
