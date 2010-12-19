@@ -360,8 +360,8 @@ makepol(TSQueryParserState state,
 			case PT_OPEN:
 				makepol(state, pushval, opaque);
 
-				if (lenstack && (opstack[lenstack - 1] == OP_AND ||
-								 opstack[lenstack - 1] == OP_NOT))
+				while (lenstack && (opstack[lenstack - 1] == OP_AND ||
+									opstack[lenstack - 1] == OP_NOT))
 				{
 					lenstack--;
 					pushOperator(state, opstack[lenstack]);
