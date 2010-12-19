@@ -396,8 +396,8 @@ makepol(QPRS_STATE * state, void (*pushval) (QPRS_STATE *, int, char *, int, int
 			case OPEN:
 				if (makepol(state, pushval) == ERR)
 					return ERR;
-				if (lenstack && (stack[lenstack - 1] == (int4) '&' ||
-								 stack[lenstack - 1] == (int4) '!'))
+				while (lenstack && (stack[lenstack - 1] == (int4) '&' ||
+									stack[lenstack - 1] == (int4) '!'))
 				{
 					lenstack--;
 					pushquery(state, OPR, stack[lenstack], 0, 0, 0);
