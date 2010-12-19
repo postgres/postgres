@@ -196,8 +196,8 @@ makepol(WORKSTATE *state)
 			case OPEN:
 				if (makepol(state) == ERR)
 					return ERR;
-				if (lenstack && (stack[lenstack - 1] == (int4) '&' ||
-								 stack[lenstack - 1] == (int4) '!'))
+				while (lenstack && (stack[lenstack - 1] == (int4) '&' ||
+									stack[lenstack - 1] == (int4) '!'))
 				{
 					lenstack--;
 					pushquery(state, OPR, stack[lenstack]);
