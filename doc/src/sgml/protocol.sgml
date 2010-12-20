@@ -1039,7 +1039,7 @@
     executes a <command>START_REPLICATION</command> statement.  The
     backend sends a CopyBothResponse message to the frontend.  Both
     the backend and the frontend may then send CopyData messages
-    until the connection is terminated.  See see <xref
+    until the connection is terminated.  See <xref
     linkend="protocol-replication">.
    </para>
 
