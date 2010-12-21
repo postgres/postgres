@@ -181,7 +181,7 @@ static bool window_gettupleslot(WindowObject winobj, int64 pos,
 
 /*
  * initialize_windowaggregate
- * parallel to initialize_aggregate in nodeAgg.c
+ * parallel to initialize_aggregates in nodeAgg.c
  */
 static void
 initialize_windowaggregate(WindowAggState *winstate,
@@ -207,7 +207,7 @@ initialize_windowaggregate(WindowAggState *winstate,
 
 /*
  * advance_windowaggregate
- * parallel to advance_aggregate in nodeAgg.c
+ * parallel to advance_aggregates in nodeAgg.c
  */
 static void
 advance_windowaggregate(WindowAggState *winstate,
