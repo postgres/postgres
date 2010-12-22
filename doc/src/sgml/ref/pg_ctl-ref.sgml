@@ -587,7 +587,7 @@ PostgreSQL documentation
    </para>
 
    <para>
-    To restart using port 5433 and disabe <function>fsync</> upon restart:
+    To restart using port 5433 and disable <function>fsync</> upon restart:
 <screen>
 <prompt>$</prompt> <userinput>pg_ctl -o "-F -p 5433" restart</userinput>
 </screen>
