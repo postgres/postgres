@@ -487,7 +487,7 @@ PostgreSQL documentation
      <para>
       The existence of this file in the data directory is used to help
       <application>pg_ctl</application> determine if the server is
-      currently running or not.
+      currently running.
      </para>
     </listitem>
    </varlistentry>
@@ -536,8 +536,8 @@ PostgreSQL documentation
    </para>
 
    <para>
-    An example of starting the server, blocking until the server has
-    come up is:
+    An example of starting the server, and waiting until the server is
+    accepting connection:
 <screen>
 <prompt>$</prompt> <userinput>pg_ctl -w start</userinput>
 </screen>
@@ -555,11 +555,12 @@ PostgreSQL documentation
   <refsect2 id="R2-APP-PGCTL-4">
    <title>Stopping the Server</title>
    <para>
+    To stop the server, use:
 <screen>
 <prompt>$</prompt> <userinput>pg_ctl stop</userinput>
 </screen>
-    stops the server. Using the <option>-m</option> switch allows one
-    to control <emphasis>how</emphasis> the backend shuts down.
+    The <option>-m</option> option allows control over
+    <emphasis>how</emphasis> the server shuts down.
    </para>
   </refsect2>
 
@@ -568,7 +569,7 @@ PostgreSQL documentation
 
    <para>
     Restarting the server is almost equivalent to stopping the
-    server and starting it again
+    server and starting it again,
     except that <command>pg_ctl</command> saves and reuses the command line options that
     were passed to the previously running instance.  To restart
     the server in the simplest form, use:
@@ -579,14 +580,14 @@ PostgreSQL documentation
 
    <para>
     To restart the server,
-    waiting for it to shut down and come up again:
+    waiting for it to shut down and restart:
 <screen>
 <prompt>$</prompt> <userinput>pg_ctl -w restart</userinput>
 </screen>
    </para>
 
    <para>
-    To restart using port 5433 and disabling <function>fsync</> after restarting:
+    To restart using port 5433 and disabe <function>fsync</> upon restart:
 <screen>
 <prompt>$</prompt> <userinput>pg_ctl -o "-F -p 5433" restart</userinput>
 </screen>
@@ -597,7 +598,7 @@ PostgreSQL documentation
    <title>Showing the Server Status</title>
 
    <para>
-    Here is a sample status output from
+    Here is sample status output from
     <application>pg_ctl</application>:
 <screen>
 <prompt>$</prompt> <userinput>pg_ctl status</userinput>
