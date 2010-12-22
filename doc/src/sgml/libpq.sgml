@@ -5359,6 +5359,50 @@ void *PQresultAlloc(PGresult *res, size_t nBytes);
     </listitem>
    </varlistentry>
 
+   <varlistentry id="libpq-pqlibversion">
+    <term>
+     <function>PQlibVersion</function>
+     <indexterm>
+      <primary>PQlibVersion</primary>
+      <seealso>PQserverVersion</seealso>
+     </indexterm>
+    </term>
+
+    <listitem>
+     <para>
+      Return the version of <productname>libpq</> that is being used.
+<synopsis>
+int PQlibVersion(void);
+</synopsis>
+     </para>
+
+     <para>
+      The result of this function can be used to determine, at
+      runtime, if specific functionality is available in the currently
+      loaded version of libpq. The function can be used, for example,
+      to determine which connection options are available for
+      <function>PQconnectdb</> or if the <literal>hex</> <type>bytea</>
+      output added in PostgreSQL 9.0 is supported.
+     </para>
+
+     <para>
+      The number is formed by converting the major, minor, and revision
+      numbers into two-decimal-digit numbers and appending them together.
+      For example, version 9.1 will be returned as 90100, and version
+      9.1.2 will be returned as 90102 (leading zeroes are not shown).
+     </para>
+
+     <note>
+      <para>
+       This function appeared in <productname>PostgreSQL</> version 9.1, so
+       it cannot be used to detect required functionality in earlier
+       versions, since linking to it will create a link dependency
+       on version 9.1.
+      </para>
+     </note>
+    </listitem>
+   </varlistentry>
+
   </variablelist>
 
  </sect1>

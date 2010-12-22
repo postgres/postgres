@@ -66,6 +66,14 @@ static int pqSocketCheck(PGconn *conn, int forRead, int forWrite,
 			  time_t end_time);
 static int	pqSocketPoll(int sock, int forRead, int forWrite, time_t end_time);
 
+/*
+ * PQlibVersion: return the libpq version number
+ */
+int
+PQlibVersion(void)
+{
+	return PG_VERSION_NUM;
+}
 
 /*
  * fputnbytes: print exactly N bytes to a file
