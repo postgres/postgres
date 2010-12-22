@@ -68,7 +68,7 @@ ltree_compare(const ltree *a, const ltree *b)
 
 	while (an > 0 && bn > 0)
 	{
-		if ((res = strncmp(al->name, bl->name, Min(al->len, bl->len))) == 0)
+		if ((res = memcmp(al->name, bl->name, Min(al->len, bl->len))) == 0)
 		{
 			if (al->len != bl->len)
 				return (al->len - bl->len) * 10 * (an + 1);
@@ -165,7 +165,7 @@ inner_isparent(const ltree *c, const ltree *p)
 	{
 		if (cl->len != pl->len)
 			return false;
-		if (strncmp(cl->name, pl->name, cl->len))
+		if (memcmp(cl->name, pl->name, cl->len))
 			return false;
 
 		pn--;
@@ -373,7 +373,7 @@ ltree_index(PG_FUNCTION_ARGS)
 			bptr = LTREE_FIRST(b);
 			for (j = 0; j < b->numlevel; j++)
 			{
-				if (!(aptr->len == bptr->len && strncmp(aptr->name, bptr->name, aptr->len) == 0))
+				if (!(aptr->len == bptr->len && memcmp(aptr->name, bptr->name, aptr->len) == 0))
 					break;
 				aptr = LEVEL_NEXT(aptr);
 				bptr = LEVEL_NEXT(bptr);
@@ -451,7 +451,7 @@ lca_inner(ltree **a, int len)
 			num = 0;
 			for (i = 0; i < Min(tmp, (*ptr)->numlevel - 1); i++)
 			{
-				if (l1->len == l2->len && strncmp(l1->name, l2->name, l1->len) == 0)
+				if (l1->len == l2->len && memcmp(l1->name, l2->name, l1->len) == 0)
 					num = i + 1;
 				else
 					break;

@@ -1286,7 +1286,7 @@ varstr_cmp(char *arg1, int len1, char *arg2, int len2)
 	 */
 	if (lc_collate_is_c())
 	{
-		result = strncmp(arg1, arg2, Min(len1, len2));
+		result = memcmp(arg1, arg2, Min(len1, len2));
 		if ((result == 0) && (len1 != len2))
 			result = (len1 < len2) ? -1 : 1;
 	}
@@ -1370,7 +1370,7 @@ varstr_cmp(char *arg1, int len1, char *arg2, int len2)
 			 */
 			if (result == 0)
 			{
-				result = strncmp(arg1, arg2, Min(len1, len2));
+				result = memcmp(arg1, arg2, Min(len1, len2));
 				if ((result == 0) && (len1 != len2))
 					result = (len1 < len2) ? -1 : 1;
 			}
@@ -1462,8 +1462,8 @@ texteq(PG_FUNCTION_ARGS)
 	if (VARSIZE_ANY_EXHDR(arg1) != VARSIZE_ANY_EXHDR(arg2))
 		result = false;
 	else
-		result = (strncmp(VARDATA_ANY(arg1), VARDATA_ANY(arg2),
-						  VARSIZE_ANY_EXHDR(arg1)) == 0);
+		result = (memcmp(VARDATA_ANY(arg1), VARDATA_ANY(arg2),
+						 VARSIZE_ANY_EXHDR(arg1)) == 0);
 
 	PG_FREE_IF_COPY(arg1, 0);
 	PG_FREE_IF_COPY(arg2, 1);
@@ -1485,8 +1485,8 @@ textne(PG_FUNCTION_ARGS)
 	if (VARSIZE_ANY_EXHDR(arg1) != VARSIZE_ANY_EXHDR(arg2))
 		result = true;
 	else
-		result = (strncmp(VARDATA_ANY(arg1), VARDATA_ANY(arg2),
-						  VARSIZE_ANY_EXHDR(arg1)) != 0);
+		result = (memcmp(VARDATA_ANY(arg1), VARDATA_ANY(arg2),
+						 VARSIZE_ANY_EXHDR(arg1)) != 0);
 
 	PG_FREE_IF_COPY(arg1, 0);
 	PG_FREE_IF_COPY(arg2, 1);
@@ -1612,7 +1612,7 @@ internal_text_pattern_compare(text *arg1, text *arg2)
 	len1 = VARSIZE_ANY_EXHDR(arg1);
 	len2 = VARSIZE_ANY_EXHDR(arg2);
 
-	result = strncmp(VARDATA_ANY(arg1), VARDATA_ANY(arg2), Min(len1, len2));
+	result = memcmp(VARDATA_ANY(arg1), VARDATA_ANY(arg2), Min(len1, len2));
 	if (result != 0)
 		return result;
 	else if (len1 < len2)

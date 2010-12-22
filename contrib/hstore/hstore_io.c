@@ -280,9 +280,9 @@ comparePairs(const void *a, const void *b)
 {
 	if (((Pairs *) a)->keylen == ((Pairs *) b)->keylen)
 	{
-		int			res = strncmp(((Pairs *) a)->key,
-								  ((Pairs *) b)->key,
-								  ((Pairs *) a)->keylen);
+		int			res = memcmp(((Pairs *) a)->key,
+								 ((Pairs *) b)->key,
+								 ((Pairs *) a)->keylen);
 
 		if (res)
 			return res;
@@ -324,7 +324,7 @@ hstoreUniquePairs(Pairs *a, int4 l, int4 *buflen)
 	while (ptr - a < l)
 	{
 		if (ptr->keylen == res->keylen &&
-			strncmp(ptr->key, res->key, res->keylen) == 0)
+			memcmp(ptr->key, res->key, res->keylen) == 0)
 		{
 			if (ptr->needfree)
 			{

@@ -49,7 +49,7 @@ hstoreFindKey(HStore *hs, int *lowbound, char *key, int keylen)
 		stopMiddle = stopLow + (stopHigh - stopLow) / 2;
 
 		if (HS_KEYLEN(entries, stopMiddle) == keylen)
-			difference = strncmp(HS_KEY(entries, base, stopMiddle), key, keylen);
+			difference = memcmp(HS_KEY(entries, base, stopMiddle), key, keylen);
 		else
 			difference = (HS_KEYLEN(entries, stopMiddle) > keylen) ? 1 : -1;
 
@@ -263,7 +263,7 @@ hstore_delete(PG_FUNCTION_ARGS)
 		int			len = HS_KEYLEN(es, i);
 		char	   *ptrs = HS_KEY(es, bufs, i);
 
-		if (!(len == keylen && strncmp(ptrs, keyptr, keylen) == 0))
+		if (!(len == keylen && memcmp(ptrs, keyptr, keylen) == 0))
 		{
 			int			vallen = HS_VALLEN(es, i);
 
@@ -331,9 +331,9 @@ hstore_delete_array(PG_FUNCTION_ARGS)
 			int			skeylen = HS_KEYLEN(es, i);
 
 			if (skeylen == key_pairs[j].keylen)
-				difference = strncmp(HS_KEY(es, ps, i),
-									 key_pairs[j].key,
-									 key_pairs[j].keylen);
+				difference = memcmp(HS_KEY(es, ps, i),
+									key_pairs[j].key,
+									key_pairs[j].keylen);
 			else
 				difference = (skeylen > key_pairs[j].keylen) ? 1 : -1;
 		}
@@ -416,9 +416,9 @@ hstore_delete_hstore(PG_FUNCTION_ARGS)
 			int			s2keylen = HS_KEYLEN(es2, j);
 
 			if (skeylen == s2keylen)
-				difference = strncmp(HS_KEY(es, ps, i),
-									 HS_KEY(es2, ps2, j),
-									 skeylen);
+				difference = memcmp(HS_KEY(es, ps, i),
+									HS_KEY(es2, ps2, j),
+									skeylen);
 			else
 				difference = (skeylen > s2keylen) ? 1 : -1;
 		}
@@ -433,7 +433,7 @@ hstore_delete_hstore(PG_FUNCTION_ARGS)
 			if (snullval != HS_VALISNULL(es2, j)
 				|| (!snullval
 					&& (svallen != HS_VALLEN(es2, j)
-						|| strncmp(HS_VAL(es, ps, i), HS_VAL(es2, ps2, j), svallen) != 0)))
+						|| memcmp(HS_VAL(es, ps, i), HS_VAL(es2, ps2, j), svallen) != 0)))
 			{
 				HS_COPYITEM(ed, bufd, pd,
 							HS_KEY(es, ps, i), HS_KEYLEN(es, i),
@@ -526,9 +526,9 @@ hstore_concat(PG_FUNCTION_ARGS)
 			int			s2keylen = HS_KEYLEN(es2, s2idx);
 
 			if (s1keylen == s2keylen)
-				difference = strncmp(HS_KEY(es1, ps1, s1idx),
-									 HS_KEY(es2, ps2, s2idx),
-									 s1keylen);
+				difference = memcmp(HS_KEY(es1, ps1, s1idx),
+									HS_KEY(es2, ps2, s2idx),
+									s1keylen);
 			else
 				difference = (s1keylen > s2keylen) ? 1 : -1;
 		}
@@ -996,7 +996,7 @@ hstore_contains(PG_FUNCTION_ARGS)
 			if (nullval != HS_VALISNULL(ve, idx)
 				|| (!nullval
 					&& (vallen != HS_VALLEN(ve, idx)
-			|| strncmp(HS_VAL(te, tstr, i), HS_VAL(ve, vstr, idx), vallen))))
+			|| memcmp(HS_VAL(te, tstr, i), HS_VAL(ve, vstr, idx), vallen))))
 				res = false;
 		}
 		else

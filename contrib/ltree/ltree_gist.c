@@ -546,7 +546,7 @@ gist_tqcmp(ltree *t, lquery *q)
 	while (an > 0 && bn > 0)
 	{
 		bl = LQL_FIRST(ql);
-		if ((res = strncmp(al->name, bl->name, Min(al->len, bl->len))) == 0)
+		if ((res = memcmp(al->name, bl->name, Min(al->len, bl->len))) == 0)
 		{
 			if (al->len != bl->len)
 				return al->len - bl->len;

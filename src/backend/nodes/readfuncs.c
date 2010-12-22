@@ -1196,7 +1196,7 @@ parseNodeString(void)
 	token = pg_strtok(&length);
 
 #define MATCH(tokname, namelen) \
-	(length == namelen && strncmp(token, tokname, namelen) == 0)
+	(length == namelen && memcmp(token, tokname, namelen) == 0)
 
 	if (MATCH("QUERY", 5))
 		return_value = _readQuery();
