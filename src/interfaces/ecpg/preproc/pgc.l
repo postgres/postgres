@@ -146,6 +146,7 @@ xeinside		[^\\']+
 xeescape		[\\][^0-7]
 xeoctesc		[\\][0-7]{1,3}
 xehexesc		[\\]x[0-9A-Fa-f]{1,2}
+xeunicode		[\\](u[0-9A-Fa-f]{4}|U[0-9A-Fa-f]{8})
 
 /* C version of hex number */
 xch				0[xX][0-9A-Fa-f]*
@@ -505,6 +506,7 @@ cppline			{space}*#([^i][A-Za-z]*|{if}|{ifdef}|{ifndef}|{import})(.*\\{space})*.
 			}
 <xq,xqc,xn,xus>{xqinside}	{ addlit(yytext, yyleng); }
 <xe>{xeinside}		{ addlit(yytext, yyleng); }
+<xe>{xeunicode}		{ addlit(yytext, yyleng); }
 <xe>{xeescape}  	{ addlit(yytext, yyleng); }
 <xe>{xeoctesc}		{ addlit(yytext, yyleng); }
 <xe>{xehexesc}		{ addlit(yytext, yyleng); }
