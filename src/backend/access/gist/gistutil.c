@@ -152,7 +152,7 @@ gistfillitupvec(IndexTuple *vec, int veclen, int *memlen)
  * invalid tuple. Resulting Datums aren't compressed.
  */
 
-bool
+void
 gistMakeUnionItVec(GISTSTATE *giststate, IndexTuple *itvec, int len, int startkey,
 				   Datum *attr, bool *isnull)
 {
@@ -179,10 +179,6 @@ gistMakeUnionItVec(GISTSTATE *giststate, IndexTuple *itvec, int len, int startke
 		{
 			Datum		datum;
 			bool		IsNull;
-
-			if (GistTupleIsInvalid(itvec[j]))
-				return FALSE;	/* signals that union with invalid tuple =>
-								 * result is invalid */
 
 			datum = index_getattr(itvec[j], i + 1, giststate->tupdesc, &IsNull);
 			if (IsNull)
@@ -218,8 +214,6 @@ gistMakeUnionItVec(GISTSTATE *giststate, IndexTuple *itvec, int len, int startke
 			isnull[i] = FALSE;
 		}
 	}
-
-	return TRUE;
 }
 
 /*
@@ -231,8 +225,7 @@ gistunion(Relation r, IndexTuple *itvec, int len, GISTSTATE *giststate)
 {
 	memset(isnullS, TRUE, sizeof(bool) * giststate->tupdesc->natts);
 
-	if (!gistMakeUnionItVec(giststate, itvec, len, 0, attrS, isnullS))
-		return gist_form_invalid_tuple(InvalidBlockNumber);
+	gistMakeUnionItVec(giststate, itvec, len, 0, attrS, isnullS);
 
 	return gistFormTuple(giststate, r, attrS, isnullS, false);
 }
@@ -328,9 +321,6 @@ gistgetadjusted(Relation r, IndexTuple oldtup, IndexTuple addtup, GISTSTATE *gis
 	IndexTuple	newtup = NULL;
 	int			i;
 
-	if (GistTupleIsInvalid(oldtup) || GistTupleIsInvalid(addtup))
-		return gist_form_invalid_tuple(ItemPointerGetBlockNumber(&(oldtup->t_tid)));
-
 	gistDeCompressAtt(giststate, r, oldtup, NULL,
 					  (OffsetNumber) 0, oldentries, oldisnull);
 
@@ -400,14 +390,6 @@ gistchoose(Relation r, Page p, IndexTuple it,	/* it has compressed entry */
 	{
 		int			j;
 		IndexTuple	itup = (IndexTuple) PageGetItem(p, PageGetItemId(p, i));
-
-		if (!GistPageIsLeaf(p) && GistTupleIsInvalid(itup))
-		{
-			ereport(LOG,
-					(errmsg("index \"%s\" needs VACUUM or REINDEX to finish crash recovery",
-							RelationGetRelationName(r))));
-			continue;
-		}
 
 		sum_grow = 0;
 		for (j = 0; j < r->rd_att->natts; j++)
@@ -521,7 +503,11 @@ gistFormTuple(GISTSTATE *giststate, Relation r,
 	}
 
 	res = index_form_tuple(giststate->tupdesc, compatt, isnull);
-	GistTupleSetValid(res);
+	/*
+	 * The offset number on tuples on internal pages is unused. For historical
+	 * reasons, it is set 0xffff.
+	 */
+	ItemPointerSetOffsetNumber( &(res->t_tid), 0xffff);
 	return res;
 }
 

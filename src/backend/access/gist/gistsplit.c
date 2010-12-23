@@ -500,58 +500,6 @@ gistSplitHalf(GIST_SPLITVEC *v, int len)
 }
 
 /*
- * if it was invalid tuple then we need special processing.
- * We move all invalid tuples on right page.
- *
- * if there is no place on left page, gistSplit will be called one more
- * time for left page.
- *
- * Normally, we never exec this code, but after crash replay it's possible
- * to get 'invalid' tuples (probability is low enough)
- */
-static void
-gistSplitByInvalid(GISTSTATE *giststate, GistSplitVector *v, IndexTuple *itup, int len)
-{
-	int			i;
-	static OffsetNumber offInvTuples[MaxOffsetNumber];
-	int			nOffInvTuples = 0;
-
-	for (i = 1; i <= len; i++)
-		if (GistTupleIsInvalid(itup[i - 1]))
-			offInvTuples[nOffInvTuples++] = i;
-
-	if (nOffInvTuples == len)
-	{
-		/* corner case, all tuples are invalid */
-		v->spl_rightvalid = v->spl_leftvalid = false;
-		gistSplitHalf(&v->splitVector, len);
-	}
-	else
-	{
-		GistSplitUnion gsvp;
-
-		v->splitVector.spl_right = offInvTuples;
-		v->splitVector.spl_nright = nOffInvTuples;
-		v->spl_rightvalid = false;
-
-		v->splitVector.spl_left = (OffsetNumber *) palloc(len * sizeof(OffsetNumber));
-		v->splitVector.spl_nleft = 0;
-		for (i = 1; i <= len; i++)
-			if (!GistTupleIsInvalid(itup[i - 1]))
-				v->splitVector.spl_left[v->splitVector.spl_nleft++] = i;
-		v->spl_leftvalid = true;
-
-		gsvp.equiv = NULL;
-		gsvp.attr = v->spl_lattr;
-		gsvp.len = v->splitVector.spl_nleft;
-		gsvp.entries = v->splitVector.spl_left;
-		gsvp.isnull = v->spl_lisnull;
-
-		gistunionsubkeyvec(giststate, itup, &gsvp, 0);
-	}
-}
-
-/*
  * trys to split page by attno key, in a case of null
  * values move its to separate page.
  */
@@ -568,12 +516,6 @@ gistSplitByKey(Relation r, Page page, IndexTuple *itup, int len, GISTSTATE *gist
 		Datum		datum;
 		bool		IsNull;
 
-		if (!GistPageIsLeaf(page) && GistTupleIsInvalid(itup[i - 1]))
-		{
-			gistSplitByInvalid(giststate, v, itup, len);
-			return;
-		}
-
 		datum = index_getattr(itup[i - 1], attno + 1, giststate->tupdesc, &IsNull);
 		gistdentryinit(giststate, attno, &(entryvec->vector[i]),
 					   datum, r, page, i,
@@ -581,8 +523,6 @@ gistSplitByKey(Relation r, Page page, IndexTuple *itup, int len, GISTSTATE *gist
 		if (IsNull)
 			offNullTuples[nOffNullTuples++] = i;
 	}
-
-	v->spl_leftvalid = v->spl_rightvalid = true;
 
 	if (nOffNullTuples == len)
 	{

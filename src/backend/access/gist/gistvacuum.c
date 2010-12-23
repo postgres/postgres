@@ -26,13 +26,6 @@
 #include "utils/memutils.h"
 
 
-typedef struct GistBulkDeleteResult
-{
-	IndexBulkDeleteResult std;	/* common state */
-	bool		needReindex;
-} GistBulkDeleteResult;
-
-
 /*
  * VACUUM cleanup: update FSM
  */
@@ -40,7 +33,7 @@ Datum
 gistvacuumcleanup(PG_FUNCTION_ARGS)
 {
 	IndexVacuumInfo *info = (IndexVacuumInfo *) PG_GETARG_POINTER(0);
-	GistBulkDeleteResult *stats = (GistBulkDeleteResult *) PG_GETARG_POINTER(1);
+	IndexBulkDeleteResult *stats = (IndexBulkDeleteResult *) PG_GETARG_POINTER(1);
 	Relation	rel = info->index;
 	BlockNumber npages,
 				blkno;
@@ -56,21 +49,16 @@ gistvacuumcleanup(PG_FUNCTION_ARGS)
 	/* Set up all-zero stats if gistbulkdelete wasn't called */
 	if (stats == NULL)
 	{
-		stats = (GistBulkDeleteResult *) palloc0(sizeof(GistBulkDeleteResult));
+		stats = (IndexBulkDeleteResult *) palloc0(sizeof(IndexBulkDeleteResult));
 		/* use heap's tuple count */
-		stats->std.num_index_tuples = info->num_heap_tuples;
-		stats->std.estimated_count = info->estimated_count;
+		stats->num_index_tuples = info->num_heap_tuples;
+		stats->estimated_count = info->estimated_count;
 
 		/*
 		 * XXX the above is wrong if index is partial.	Would it be OK to just
 		 * return NULL, or is there work we must do below?
 		 */
 	}
-
-	if (stats->needReindex)
-		ereport(NOTICE,
-				(errmsg("index \"%s\" needs VACUUM FULL or REINDEX to finish crash recovery",
-						RelationGetRelationName(rel))));
 
 	/*
 	 * Need lock unless it's local to this backend.
@@ -112,10 +100,10 @@ gistvacuumcleanup(PG_FUNCTION_ARGS)
 	IndexFreeSpaceMapVacuum(info->index);
 
 	/* return statistics */
-	stats->std.pages_free = totFreePages;
+	stats->pages_free = totFreePages;
 	if (needLock)
 		LockRelationForExtension(rel, ExclusiveLock);
-	stats->std.num_pages = RelationGetNumberOfBlocks(rel);
+	stats->num_pages = RelationGetNumberOfBlocks(rel);
 	if (needLock)
 		UnlockRelationForExtension(rel, ExclusiveLock);
 
@@ -135,7 +123,7 @@ pushStackIfSplited(Page page, GistBDItem *stack)
 	GISTPageOpaque opaque = GistPageGetOpaque(page);
 
 	if (stack->blkno != GIST_ROOT_BLKNO && !XLogRecPtrIsInvalid(stack->parentlsn) &&
-		XLByteLT(stack->parentlsn, opaque->nsn) &&
+		(GistFollowRight(page) || XLByteLT(stack->parentlsn, opaque->nsn)) &&
 		opaque->rightlink != InvalidBlockNumber /* sanity check */ )
 	{
 		/* split page detected, install right link to the stack */
@@ -162,7 +150,7 @@ Datum
 gistbulkdelete(PG_FUNCTION_ARGS)
 {
 	IndexVacuumInfo *info = (IndexVacuumInfo *) PG_GETARG_POINTER(0);
-	GistBulkDeleteResult *stats = (GistBulkDeleteResult *) PG_GETARG_POINTER(1);
+	IndexBulkDeleteResult *stats = (IndexBulkDeleteResult *) PG_GETARG_POINTER(1);
 	IndexBulkDeleteCallback callback = (IndexBulkDeleteCallback) PG_GETARG_POINTER(2);
 	void	   *callback_state = (void *) PG_GETARG_POINTER(3);
 	Relation	rel = info->index;
@@ -171,10 +159,10 @@ gistbulkdelete(PG_FUNCTION_ARGS)
 
 	/* first time through? */
 	if (stats == NULL)
-		stats = (GistBulkDeleteResult *) palloc0(sizeof(GistBulkDeleteResult));
+		stats = (IndexBulkDeleteResult *) palloc0(sizeof(IndexBulkDeleteResult));
 	/* we'll re-count the tuples each time */
-	stats->std.estimated_count = false;
-	stats->std.num_index_tuples = 0;
+	stats->estimated_count = false;
+	stats->num_index_tuples = 0;
 
 	stack = (GistBDItem *) palloc0(sizeof(GistBDItem));
 	stack->blkno = GIST_ROOT_BLKNO;
@@ -232,10 +220,10 @@ gistbulkdelete(PG_FUNCTION_ARGS)
 				{
 					todelete[ntodelete] = i - ntodelete;
 					ntodelete++;
-					stats->std.tuples_removed += 1;
+					stats->tuples_removed += 1;
 				}
 				else
-					stats->std.num_index_tuples += 1;
+					stats->num_index_tuples += 1;
 			}
 
 			if (ntodelete)
@@ -250,22 +238,13 @@ gistbulkdelete(PG_FUNCTION_ARGS)
 
 				if (RelationNeedsWAL(rel))
 				{
-					XLogRecData *rdata;
 					XLogRecPtr	recptr;
-					gistxlogPageUpdate *xlinfo;
 
-					rdata = formUpdateRdata(rel->rd_node, buffer,
+					recptr = gistXLogUpdate(rel->rd_node, buffer,
 											todelete, ntodelete,
-											NULL, 0,
-											NULL);
-					xlinfo = (gistxlogPageUpdate *) rdata->next->data;
-
-					recptr = XLogInsert(RM_GIST_ID, XLOG_GIST_PAGE_UPDATE, rdata);
+											NULL, 0, InvalidBuffer);
 					PageSetLSN(page, recptr);
 					PageSetTLI(page, ThisTimeLineID);
-
-					pfree(xlinfo);
-					pfree(rdata);
 				}
 				else
 					PageSetLSN(page, GetXLogRecPtrForTemp());
@@ -293,7 +272,11 @@ gistbulkdelete(PG_FUNCTION_ARGS)
 				stack->next = ptr;
 
 				if (GistTupleIsInvalid(idxtuple))
-					stats->needReindex = true;
+					ereport(LOG,
+							(errmsg("index \"%s\" contains an inner tuple marked as invalid",
+									RelationGetRelationName(rel)),
+							 errdetail("This is caused by an incomplete page split at crash recovery before upgrading to 9.1."),
+							 errhint("Please REINDEX it.")));
 			}
 		}
 

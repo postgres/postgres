@@ -709,33 +709,4 @@ my_distance(PG_FUNCTION_ARGS)
 
 </sect1>
 
-<sect1 id="gist-recovery">
- <title>Crash Recovery</title>
-
- <para>
-  Usually, replay of the WAL log is sufficient to restore the integrity
-  of a GiST index following a database crash.  However, there are some
-  corner cases in which the index state is not fully rebuilt.  The index
-  will still be functionally correct, but there might be some performance
-  degradation.  When this occurs, the index can be repaired by
-  <command>VACUUM</>ing its table, or by rebuilding the index using
-  <command>REINDEX</>.  In some cases a plain <command>VACUUM</> is
-  not sufficient, and either <command>VACUUM FULL</> or <command>REINDEX</>
-  is needed.  The need for one of these procedures is indicated by occurrence
-  of this log message during crash recovery:
-<programlisting>
-LOG:  index NNN/NNN/NNN needs VACUUM or REINDEX to finish crash recovery
-</programlisting>
-  or this log message during routine index insertions:
-<programlisting>
-LOG:  index "FOO" needs VACUUM or REINDEX to finish crash recovery
-</programlisting>
-  If a plain <command>VACUUM</> finds itself unable to complete recovery
-  fully, it will return a notice:
-<programlisting>
-NOTICE:  index "FOO" needs VACUUM FULL or REINDEX to finish crash recovery
-</programlisting>
- </para>
-</sect1>
-
 </chapter>

@@ -40,6 +40,6 @@ const RmgrData RmgrTable[RM_MAX_ID + 1] = {
 	{"Btree", btree_redo, btree_desc, btree_xlog_startup, btree_xlog_cleanup, btree_safe_restartpoint},
 	{"Hash", hash_redo, hash_desc, NULL, NULL, NULL},
 	{"Gin", gin_redo, gin_desc, gin_xlog_startup, gin_xlog_cleanup, gin_safe_restartpoint},
-	{"Gist", gist_redo, gist_desc, gist_xlog_startup, gist_xlog_cleanup, gist_safe_restartpoint},
+	{"Gist", gist_redo, gist_desc, gist_xlog_startup, gist_xlog_cleanup, NULL},
 	{"Sequence", seq_redo, seq_desc, NULL, NULL, NULL}
 };

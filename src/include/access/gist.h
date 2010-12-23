@@ -58,9 +58,10 @@
 /*
  * Page opaque data in a GiST index page.
  */
-#define F_LEAF				(1 << 0)
-#define F_DELETED			(1 << 1)
-#define F_TUPLES_DELETED	(1 << 2)
+#define F_LEAF				(1 << 0)	/* leaf page */
+#define F_DELETED			(1 << 1)	/* the page has been deleted */
+#define F_TUPLES_DELETED	(1 << 2)	/* some tuples on the page are dead */
+#define F_FOLLOW_RIGHT		(1 << 3)	/* page to the right has no downlink */
 
 typedef XLogRecPtr GistNSN;
 
@@ -131,6 +132,10 @@ typedef struct GISTENTRY
 #define GistTuplesDeleted(page) ( GistPageGetOpaque(page)->flags & F_TUPLES_DELETED)
 #define GistMarkTuplesDeleted(page) ( GistPageGetOpaque(page)->flags |= F_TUPLES_DELETED)
 #define GistClearTuplesDeleted(page)	( GistPageGetOpaque(page)->flags &= ~F_TUPLES_DELETED)
+
+#define GistFollowRight(page) ( GistPageGetOpaque(page)->flags & F_FOLLOW_RIGHT)
+#define GistMarkFollowRight(page) ( GistPageGetOpaque(page)->flags |= F_FOLLOW_RIGHT)
+#define GistClearFollowRight(page)	( GistPageGetOpaque(page)->flags &= ~F_FOLLOW_RIGHT)
 
 /*
  * Vector of GISTENTRY structs; user-defined methods union and picksplit

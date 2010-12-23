@@ -254,9 +254,15 @@ gistScanPage(IndexScanDesc scan, GISTSearchItem *pageItem, double *myDistances,
 	page = BufferGetPage(buffer);
 	opaque = GistPageGetOpaque(page);
 
-	/* check if page split occurred since visit to parent */
+	/*
+	 * Check if we need to follow the rightlink. We need to follow it if the
+	 * page was concurrently split since we visited the parent (in which case
+	 * parentlsn < nsn), or if the the system crashed after a page split but
+	 * before the downlink was inserted into the parent.
+	 */
 	if (!XLogRecPtrIsInvalid(pageItem->data.parentlsn) &&
-		XLByteLT(pageItem->data.parentlsn, opaque->nsn) &&
+		(GistFollowRight(page) ||
+		 XLByteLT(pageItem->data.parentlsn, opaque->nsn)) &&
 		opaque->rightlink != InvalidBlockNumber /* sanity check */ )
 	{
 		/* There was a page split, follow right link to add pages */

@@ -108,43 +108,71 @@ Penalty is used for choosing a subtree to insert; method PickSplit is used for
 the node splitting algorithm; method Union is used for propagating changes
 upward to maintain the tree properties.
 
-NOTICE: We modified original INSERT algorithm for performance reason. In
-particularly, it is now a single-pass algorithm.
+To insert a tuple, we first have to find a suitable leaf page to insert to.
+The algorithm walks down the tree, starting from the root, along the path
+of smallest Penalty. At each step:
 
-Function findLeaf is used to identify subtree for insertion. Page, in which
-insertion is proceeded, is locked as well as its parent page. Functions
-findParent and findPath are used to find parent pages, which could be changed
-because of concurrent access. Function pageSplit is recurrent and could split
-page by more than 2 pages, which could be necessary if keys have different
-lengths or more than one key are inserted (in such situation, user defined
-function pickSplit cannot guarantee free space on page).
+1. Has this page been split since we looked at the parent? If so, it's
+possible that we should be inserting to the other half instead, so retreat
+back to the parent.
+2. If this is a leaf node, we've found our target node.
+3. Otherwise use Penalty to pick a new target subtree.
+4. Check the key representing the target subtree. If it doesn't already cover
+the key we're inserting, replace it with the Union of the old downlink key
+and the key being inserted. (Actually, we always call Union, and just skip
+the replacement if the Unioned key is the same as the existing key)
+5. Replacing the key in step 4 might cause the page to be split. In that case,
+propagate the change upwards and restart the algorithm from the first parent
+that didn't need to be split.
+6. Walk down to the target subtree, and goto 1.
 
-findLeaf(new-key)
-	push(stack, [root, 0]) //page, LSN
-	while(true)
-		ptr = top of stack
-		latch( ptr->page, S-mode )
-		ptr->lsn = ptr->page->lsn
-		if ( exists ptr->parent AND ptr->parent->lsn < ptr->page->nsn )
-			unlatch( ptr->page )
-			pop stack
-		else if ( ptr->page is not leaf )
-			push( stack, [get_best_child(ptr->page, new-key), 0] )
-			unlatch( ptr->page )
-		else
-			unlatch( ptr->page )
-			latch( ptr->page, X-mode )
-			if ( ptr->page is not leaf )
-				//the only root page can become a non-leaf
-				unlatch( ptr->page )
-			else if ( ptr->parent->lsn < ptr->page->nsn )
-				unlatch( ptr->page )
-				pop stack
-			else
-				return stack
-			end
-		end
-	end
+This differs from the insertion algorithm in the original paper. In the
+original paper, you first walk down the tree until you reach a leaf page, and
+then you adjust the downlink in the parent, and propagating the adjustment up,
+all the way up to the root in the worst case. But we adjust the downlinks to
+cover the new key already when we walk down, so that when we reach the leaf
+page, we don't need to update the parents anymore, except to insert the
+downlinks if we have to split the page. This makes crash recovery simpler:
+after inserting a key to the page, the tree is immediately self-consistent
+without having to update the parents. Even if we split a page and crash before
+inserting the downlink to the parent, the tree is self-consistent because the
+right half of the split is accessible via the rightlink of the left page
+(which replaced the original page).
+
+Note that the algorithm can walk up and down the tree before reaching a leaf
+page, if internal pages need to split while adjusting the downlinks for the
+new key. Eventually, you should reach the bottom, and proceed with the
+insertion of the new tuple.
+
+Once we've found the target page to insert to, we check if there's room
+for the new tuple. If there is, the tuple is inserted, and we're done.
+If it doesn't fit, however, the page needs to be split. Note that it is
+possible that a page needs to be split into more than two pages, if keys have
+different lengths or more than one key is being inserted at a time (which can
+happen when inserting downlinks for a page split that resulted in more than
+two pages at the lower level). After splitting a page, the parent page needs
+to be updated. The downlink for the new page needs to be inserted, and the
+downlink for the old page, which became the left half of the split, needs to
+be updated to only cover those tuples that stayed on the left page. Inserting
+the downlink in the parent can again lead to a page split, recursing up to the
+root page in the worst case.
+
+gistplacetopage is the workhorse function that performs one step of the
+insertion. If the tuple fits, it inserts it to the given page, otherwise
+it splits the page, and constructs the new downlink tuples for the split
+pages. The caller must then call gistplacetopage() on the parent page to
+insert the downlink tuples. The parent page that holds the downlink to
+the child might have migrated as a result of concurrent splits of the
+parent, gistfindCorrectParent() is used to find the parent page.
+
+Splitting the root page works slightly differently. At root split,
+gistplacetopage() allocates the new child pages and replaces the old root
+page with the new root containing downlinks to the new children, all in one
+operation.
+
+
+findPath is a subroutine of findParent, used when the correct parent page
+can't be found by following the rightlinks at the parent level:
 
 findPath( stack item )
 	push stack, [root, 0, 0] // page, LSN, parent
@@ -165,9 +193,13 @@ findPath( stack item )
 		pop stack
 	end
 
+
+gistFindCorrectParent is used to re-find the parent of a page during
+insertion. It might have migrated to the right since we traversed down the
+tree because of page splits.
+
 findParent( stack item )
 	parent = item->parent
-	latch( parent->page, X-mode )
 	if ( parent->page->lsn != parent->lsn )
 		while(true)
 			search parent tuple on parent->page, if found the return
@@ -181,8 +213,12 @@ findParent( stack item )
 		end
 		newstack = findPath( item->parent )
 		replace part of stack to new one
+		latch( parent->page, X-mode )
 		return findParent( item )
 	end
+
+pageSplit function decides how to distribute keys to the new pages after
+page split:
 
 pageSplit(page, allkeys)
 	(lkeys, rkeys) = pickSplit( allkeys )
@@ -204,39 +240,44 @@ pageSplit(page, allkeys)
 	return newkeys
 
 
-placetopage(page, keysarray)
-	if ( no space left on page )
-		keysarray = pageSplit(page, [ extract_keys(page), keysarray])
-		last page in chain gets old NSN,
-		original and others - new NSN equals to LSN
-		if ( page is root )
-			make new root with keysarray
-		end
-	else
-		put keysarray on page
-		if ( length of keysarray > 1 )
-			keysarray = [ union(keysarray) ]
-		end
-	end
 
-insert(new-key)
-	stack = findLeaf(new-key)
-	keysarray = [new-key]
-	ptr = top of stack
-	while(true)
-		findParent( ptr ) //findParent latches parent page
-		keysarray = placetopage(ptr->page, keysarray)
-		unlatch( ptr->page )
-		pop stack;
-		ptr = top of stack
-		if (length of keysarray == 1)
-			newboundingkey = union(oldboundingkey, keysarray)
-			if (newboundingkey == oldboundingkey)
-				unlatch ptr->page
-				break loop
-			end
-		end
-	end
+Concurrency control
+-------------------
+As a rule of thumb, if you need to hold a lock on multiple pages at the
+same time, the locks should be acquired in the following order: child page
+before parent, and left-to-right at the same level. Always acquiring the
+locks in the same order avoids deadlocks.
+
+The search algorithm only looks at and locks one page at a time. Consequently
+there's a race condition between a search and a page split. A page split
+happens in two phases: 1. The page is split 2. The downlink is inserted to the
+parent. If a search looks at the parent page between those steps, before the
+downlink is inserted, it will still find the new right half by following the
+rightlink on the left half. But it must not follow the rightlink if it saw the
+downlink in the parent, or the page will be visited twice!
+
+A split initially marks the left page with the F_FOLLOW_RIGHT flag. If a scan
+sees that flag set, it knows that the right page is missing the downlink, and
+should be visited too. When split inserts the downlink to the parent, it
+clears the F_FOLLOW_RIGHT flag in the child, and sets the NSN field in the
+child page header to match the LSN of the insertion on the parent. If the
+F_FOLLOW_RIGHT flag is not set, a scan compares the NSN on the child and the
+LSN it saw in the parent. If NSN < LSN, the scan looked at the parent page
+before the downlink was inserted, so it should follow the rightlink. Otherwise
+the scan saw the downlink in the parent page, and will/did follow that as
+usual.
+
+A scan can't normally see a page with the F_FOLLOW_RIGHT flag set, because
+a page split keeps the child pages locked until the downlink has been inserted
+to the parent and the flag cleared again. But if a crash happens in the middle
+of a page split, before the downlinks are inserted into the parent, that will
+leave a page with F_FOLLOW_RIGHT in the tree. Scans handle that just fine,
+but we'll eventually want to fix that for performance reasons. And more
+importantly, dealing with pages with missing downlink pointers in the parent
+would complicate the insertion algorithm. So when an insertion sees a page
+with F_FOLLOW_RIGHT set, it immediately tries to bring the split that
+crashed in the middle to completion by adding the downlink in the parent.
+
 
 Authors:
 	Teodor Sigaev	<teodor@sigaev.ru>

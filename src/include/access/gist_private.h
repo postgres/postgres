@@ -132,9 +132,9 @@ typedef GISTScanOpaqueData *GISTScanOpaque;
 /* XLog stuff */
 
 #define XLOG_GIST_PAGE_UPDATE		0x00
-#define XLOG_GIST_NEW_ROOT			0x20
+/* #define XLOG_GIST_NEW_ROOT			0x20 */ /* not used anymore */
 #define XLOG_GIST_PAGE_SPLIT		0x30
-#define XLOG_GIST_INSERT_COMPLETE	0x40
+/* #define XLOG_GIST_INSERT_COMPLETE	0x40 */ /* not used anymore */
 #define XLOG_GIST_CREATE_INDEX		0x50
 #define XLOG_GIST_PAGE_DELETE		0x60
 
@@ -144,9 +144,10 @@ typedef struct gistxlogPageUpdate
 	BlockNumber blkno;
 
 	/*
-	 * It used to identify completeness of insert. Sets to leaf itup
+	 * If this operation completes a page split, by inserting a downlink for
+	 * the split page, leftchild points to the left half of the split.
 	 */
-	ItemPointerData key;
+	BlockNumber	leftchild;
 
 	/* number of deleted offsets */
 	uint16		ntodelete;
@@ -160,11 +161,12 @@ typedef struct gistxlogPageSplit
 {
 	RelFileNode node;
 	BlockNumber origblkno;		/* splitted page */
+	BlockNumber	origrlink;		/* rightlink of the page before split */
+	GistNSN		orignsn;		/* NSN of the page before split */
 	bool		origleaf;		/* was splitted page a leaf page? */
-	uint16		npage;
 
-	/* see comments on gistxlogPageUpdate */
-	ItemPointerData key;
+	BlockNumber leftchild;		/* like in gistxlogPageUpdate */
+	uint16		npage;			/* # of pages in the split */
 
 	/*
 	 * follow: 1. gistxlogPage and array of IndexTupleData per page
@@ -176,12 +178,6 @@ typedef struct gistxlogPage
 	BlockNumber blkno;
 	int			num;			/* number of index tuples following */
 } gistxlogPage;
-
-typedef struct gistxlogInsertComplete
-{
-	RelFileNode node;
-	/* follows ItemPointerData key to clean */
-} gistxlogInsertComplete;
 
 typedef struct gistxlogPageDelete
 {
@@ -206,7 +202,6 @@ typedef struct SplitedPageLayout
  * GISTInsertStack used for locking buffers and transfer arguments during
  * insertion
  */
-
 typedef struct GISTInsertStack
 {
 	/* current page */
@@ -215,7 +210,7 @@ typedef struct GISTInsertStack
 	Page		page;
 
 	/*
-	 * log sequence number from page->lsn to recognize page update	and
+	 * log sequence number from page->lsn to recognize page update and
 	 * compare it with page's nsn to recognize page split
 	 */
 	GistNSN		lsn;
@@ -223,9 +218,8 @@ typedef struct GISTInsertStack
 	/* child's offset */
 	OffsetNumber childoffnum;
 
-	/* pointer to parent and child */
+	/* pointer to parent */
 	struct GISTInsertStack *parent;
-	struct GISTInsertStack *child;
 
 	/* for gistFindPath */
 	struct GISTInsertStack *next;
@@ -238,12 +232,10 @@ typedef struct GistSplitVector
 	Datum		spl_lattr[INDEX_MAX_KEYS];		/* Union of subkeys in
 												 * spl_left */
 	bool		spl_lisnull[INDEX_MAX_KEYS];
-	bool		spl_leftvalid;
 
 	Datum		spl_rattr[INDEX_MAX_KEYS];		/* Union of subkeys in
 												 * spl_right */
 	bool		spl_risnull[INDEX_MAX_KEYS];
-	bool		spl_rightvalid;
 
 	bool	   *spl_equiv;		/* equivalent tuples which can be freely
 								 * distributed between left and right pages */
@@ -252,28 +244,40 @@ typedef struct GistSplitVector
 typedef struct
 {
 	Relation	r;
-	IndexTuple *itup;			/* in/out, points to compressed entry */
-	int			ituplen;		/* length of itup */
 	Size		freespace;		/* free space to be left */
-	GISTInsertStack *stack;
-	bool		needInsertComplete;
 
-	/* pointer to heap tuple */
-	ItemPointerData key;
+	GISTInsertStack *stack;
 } GISTInsertState;
 
 /* root page of a gist index */
 #define GIST_ROOT_BLKNO				0
 
 /*
- * mark tuples on inner pages during recovery
+ * Before PostgreSQL 9.1, we used rely on so-called "invalid tuples" on inner
+ * pages to finish crash recovery of incomplete page splits. If a crash
+ * happened in the middle of a page split, so that the downlink pointers were
+ * not yet inserted, crash recovery inserted a special downlink pointer. The
+ * semantics of an invalid tuple was that it if you encounter one in a scan,
+ * it must always be followed, because we don't know if the tuples on the
+ * child page match or not.
+ *
+ * We no longer create such invalid tuples, we now mark the left-half of such
+ * an incomplete split with the F_FOLLOW_RIGHT flag instead, and finish the
+ * split properly the next time we need to insert on that page. To retain
+ * on-disk compatibility for the sake of pg_upgrade, we still store 0xffff as
+ * the offset number of all inner tuples. If we encounter any invalid tuples
+ * with 0xfffe during insertion, we throw an error, though scans still handle
+ * them. You should only encounter invalid tuples if you pg_upgrade a pre-9.1
+ * gist index which already has invalid tuples in it because of a crash. That
+ * should be rare, and you are recommended to REINDEX anyway if you have any
+ * invalid tuples in an index, so throwing an error is as far as we go with
+ * supporting that.
  */
 #define TUPLE_IS_VALID		0xffff
 #define TUPLE_IS_INVALID	0xfffe
 
 #define  GistTupleIsInvalid(itup)	( ItemPointerGetOffsetNumber( &((itup)->t_tid) ) == TUPLE_IS_INVALID )
 #define  GistTupleSetValid(itup)	ItemPointerSetOffsetNumber( &((itup)->t_tid), TUPLE_IS_VALID )
-#define  GistTupleSetInvalid(itup)	ItemPointerSetOffsetNumber( &((itup)->t_tid), TUPLE_IS_INVALID )
 
 /* gist.c */
 extern Datum gistbuild(PG_FUNCTION_ARGS);
@@ -281,8 +285,6 @@ extern Datum gistinsert(PG_FUNCTION_ARGS);
 extern MemoryContext createTempGistContext(void);
 extern void initGISTstate(GISTSTATE *giststate, Relation index);
 extern void freeGISTstate(GISTSTATE *giststate);
-extern void gistmakedeal(GISTInsertState *state, GISTSTATE *giststate);
-extern void gistnewroot(Relation r, Buffer buffer, IndexTuple *itup, int len, ItemPointer key);
 
 extern SplitedPageLayout *gistSplit(Relation r, Page page, IndexTuple *itup,
 		  int len, GISTSTATE *giststate);
@@ -294,18 +296,17 @@ extern void gist_redo(XLogRecPtr lsn, XLogRecord *record);
 extern void gist_desc(StringInfo buf, uint8 xl_info, char *rec);
 extern void gist_xlog_startup(void);
 extern void gist_xlog_cleanup(void);
-extern bool gist_safe_restartpoint(void);
-extern IndexTuple gist_form_invalid_tuple(BlockNumber blkno);
 
-extern XLogRecData *formUpdateRdata(RelFileNode node, Buffer buffer,
-				OffsetNumber *todelete, int ntodelete,
-				IndexTuple *itup, int ituplen, ItemPointer key);
+extern XLogRecPtr gistXLogUpdate(RelFileNode node, Buffer buffer,
+			   OffsetNumber *todelete, int ntodelete,
+								 IndexTuple *itup, int ntup,
+			   Buffer leftchild);
 
-extern XLogRecData *formSplitRdata(RelFileNode node,
-			   BlockNumber blkno, bool page_is_leaf,
-			   ItemPointer key, SplitedPageLayout *dist);
-
-extern XLogRecPtr gistxlogInsertCompletion(RelFileNode node, ItemPointerData *keys, int len);
+extern XLogRecPtr gistXLogSplit(RelFileNode node,
+			  BlockNumber blkno, bool page_is_leaf,
+			  SplitedPageLayout *dist,
+			  BlockNumber origrlink, GistNSN oldnsn,
+			  Buffer leftchild);
 
 /* gistget.c */
 extern Datum gistgettuple(PG_FUNCTION_ARGS);
@@ -357,7 +358,7 @@ extern void gistdentryinit(GISTSTATE *giststate, int nkey, GISTENTRY *e,
 extern float gistpenalty(GISTSTATE *giststate, int attno,
 			GISTENTRY *key1, bool isNull1,
 			GISTENTRY *key2, bool isNull2);
-extern bool gistMakeUnionItVec(GISTSTATE *giststate, IndexTuple *itvec, int len, int startkey,
+extern void gistMakeUnionItVec(GISTSTATE *giststate, IndexTuple *itvec, int len, int startkey,
 				   Datum *attr, bool *isnull);
 extern bool gistKeyIsEQ(GISTSTATE *giststate, int attno, Datum a, Datum b);
 extern void gistDeCompressAtt(GISTSTATE *giststate, Relation r, IndexTuple tuple, Page p,
