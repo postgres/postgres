@@ -167,10 +167,12 @@
    <productname>PostgreSQL</> periodically writes full page images to
    permanent WAL storage <emphasis>before</> modifying the actual page on
    disk. By doing this, during crash recovery <productname>PostgreSQL</> can
-   restore partially-written pages from WAL.  If you have a battery-backed disk
-   controller or file-system software that prevents partial page writes
-   (e.g., ZFS), you can safely turn off this page imaging by turning off the
-   <xref linkend="guc-full-page-writes"> parameter.
+   restore partially-written pages from WAL.  If you have file-system software
+   that prevents partial page writes (e.g., ZFS),  you can turn off
+   this page imaging by turning off the <xref
+   linkend="guc-full-page-writes"> parameter. Battery-Backed Unit
+   (BBU) disk controllers do not prevent partial page writes unless
+   they guarantee that data is written to the BBU as full (8kB) pages.
   </para>
  </sect1>
 
