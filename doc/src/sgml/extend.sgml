@@ -320,7 +320,7 @@
      <listitem>
       <para>
        If calling backend functions from C++ code, be sure that the
-       C++ call stack contains only plain old data structure
+       C++ call stack contains only plain old data structures
        (<acronym>POD</>).  This is necessary because backend errors
        generate a distant <function>longjump()</> that does not properly
        unroll a C++ call stack with non-POD objects.
