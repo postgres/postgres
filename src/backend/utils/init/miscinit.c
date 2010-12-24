@@ -33,6 +33,7 @@
 #include "mb/pg_wchar.h"
 #include "miscadmin.h"
 #include "postmaster/autovacuum.h"
+#include "postmaster/postmaster.h"
 #include "storage/fd.h"
 #include "storage/ipc.h"
 #include "storage/pg_shmem.h"
@@ -658,7 +659,7 @@ CreateLockFile(const char *filename, bool amPostmaster,
 			   bool isDDLock, const char *refName)
 {
 	int			fd;
-	char		buffer[MAXPGPATH + 100];
+	char		buffer[MAXPGPATH * 2 + 256];
 	int			ntries;
 	int			len;
 	int			encoded_pid;
@@ -868,9 +869,9 @@ CreateLockFile(const char *filename, bool amPostmaster,
 	/*
 	 * Successfully created the file, now fill it.
 	 */
-	snprintf(buffer, sizeof(buffer), "%d\n%s\n",
+	snprintf(buffer, sizeof(buffer), "%d\n%s\n%d\n%s\n",
 			 amPostmaster ? (int) my_pid : -((int) my_pid),
-			 DataDir);
+			 DataDir, PostPortNumber, UnixSocketDir);
 	errno = 0;
 	if (write(fd, buffer, strlen(buffer)) != strlen(buffer))
 	{
@@ -994,8 +995,9 @@ RecordSharedMemoryInLockFile(unsigned long id1, unsigned long id2)
 {
 	int			fd;
 	int			len;
+	int			lineno;
 	char	   *ptr;
-	char		buffer[BLCKSZ];
+	char		buffer[MAXPGPATH * 2 + 256];
 
 	fd = open(DIRECTORY_LOCK_FILE, O_RDWR | PG_BINARY, 0);
 	if (fd < 0)
@@ -1019,18 +1021,20 @@ RecordSharedMemoryInLockFile(unsigned long id1, unsigned long id2)
 	buffer[len] = '\0';
 
 	/*
-	 * Skip over first two lines (PID and path).
+	 * Skip over first four lines (PID, pgdata, portnum, socketdir).
 	 */
-	ptr = strchr(buffer, '\n');
-	if (ptr == NULL ||
-		(ptr = strchr(ptr + 1, '\n')) == NULL)
+	ptr = buffer;
+	for (lineno = 1; lineno <= 4; lineno++)
 	{
-		elog(LOG, "bogus data in \"%s\"", DIRECTORY_LOCK_FILE);
-		close(fd);
-		return;
+		if ((ptr = strchr(ptr, '\n')) == NULL)
+		{
+			elog(LOG, "bogus data in \"%s\"", DIRECTORY_LOCK_FILE);
+			close(fd);
+			return;
+		}
+		ptr++;
 	}
-	ptr++;
-
+	
 	/*
 	 * Append key information.	Format to try to keep it the same length
 	 * always (trailing junk won't hurt, but might confuse humans).

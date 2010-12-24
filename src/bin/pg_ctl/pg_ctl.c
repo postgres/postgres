@@ -141,7 +141,6 @@ static bool postmaster_is_alive(pid_t pid);
 
 static char postopts_file[MAXPGPATH];
 static char pid_file[MAXPGPATH];
-static char conf_file[MAXPGPATH];
 static char backup_file[MAXPGPATH];
 static char recovery_file[MAXPGPATH];
 
@@ -404,113 +403,108 @@ start_postmaster(void)
 static PGPing
 test_postmaster_connection(bool do_checkpoint)
 {
+	int			portnum = 0;
+	char		socket_dir[MAXPGPATH];
+	char		connstr[MAXPGPATH + 256];
 	PGPing		ret = PQPING_OK;	/* assume success for wait == zero */
+	char	  **optlines;
 	int			i;
-	char		portstr[32];
-	char	   *p;
-	char	   *q;
-	char		connstr[128];	/* Should be way more than enough! */
 
-	portstr[0] = '\0';
-
-	/*
-	 * Look in post_opts for a -p switch.
-	 *
-	 * This parsing code is not amazingly bright; it could for instance get
-	 * fooled if ' -p' occurs within a quoted argument value.  Given that few
-	 * people pass complicated settings in post_opts, it's probably good
-	 * enough.
-	 */
-	for (p = post_opts; *p;)
-	{
-		/* advance past whitespace */
-		while (isspace((unsigned char) *p))
-			p++;
-
-		if (strncmp(p, "-p", 2) == 0)
-		{
-			p += 2;
-			/* advance past any whitespace/quoting */
-			while (isspace((unsigned char) *p) || *p == '\'' || *p == '"')
-				p++;
-			/* find end of value (not including any ending quote!) */
-			q = p;
-			while (*q &&
-				   !(isspace((unsigned char) *q) || *q == '\'' || *q == '"'))
-				q++;
-			/* and save the argument value */
-			strlcpy(portstr, p, Min((q - p) + 1, sizeof(portstr)));
-			/* keep looking, maybe there is another -p */
-			p = q;
-		}
-		/* Advance to next whitespace */
-		while (*p && !isspace((unsigned char) *p))
-			p++;
-	}
-
-	/*
-	 * Search config file for a 'port' option.
-	 *
-	 * This parsing code isn't amazingly bright either, but it should be okay
-	 * for valid port settings.
-	 */
-	if (!portstr[0])
-	{
-		char	  **optlines;
-
-		optlines = readfile(conf_file);
-		if (optlines != NULL)
-		{
-			for (; *optlines != NULL; optlines++)
-			{
-				p = *optlines;
-
-				while (isspace((unsigned char) *p))
-					p++;
-				if (strncmp(p, "port", 4) != 0)
-					continue;
-				p += 4;
-				while (isspace((unsigned char) *p))
-					p++;
-				if (*p != '=')
-					continue;
-				p++;
-				/* advance past any whitespace/quoting */
-				while (isspace((unsigned char) *p) || *p == '\'' || *p == '"')
-					p++;
-				/* find end of value (not including any ending quote/comment!) */
-				q = p;
-				while (*q &&
-					   !(isspace((unsigned char) *q) ||
-						 *q == '\'' || *q == '"' || *q == '#'))
-					q++;
-				/* and save the argument value */
-				strlcpy(portstr, p, Min((q - p) + 1, sizeof(portstr)));
-				/* keep looking, maybe there is another */
-			}
-		}
-	}
-
-	/* Check environment */
-	if (!portstr[0] && getenv("PGPORT") != NULL)
-		strlcpy(portstr, getenv("PGPORT"), sizeof(portstr));
-
-	/* Else use compiled-in default */
-	if (!portstr[0])
-		snprintf(portstr, sizeof(portstr), "%d", DEF_PGPORT);
-
-	/*
-	 * We need to set a connect timeout otherwise on Windows the SCM will
-	 * probably timeout first
-	 */
-	snprintf(connstr, sizeof(connstr),
-			 "dbname=postgres port=%s connect_timeout=5", portstr);
-
+	socket_dir[0] = '\0';
+	connstr[0] = '\0';
+	
 	for (i = 0; i < wait_seconds; i++)
 	{
-		ret = PQping(connstr);
-		if (ret == PQPING_OK || ret == PQPING_NO_ATTEMPT)
-			break;
+		/* Do we need a connection string? */
+		if (connstr[0] == '\0')
+		{
+			/*
+			 * 	The number of lines in postmaster.pid tells us several things:
+			 *
+			 *	# of lines
+			 *		0	lock file created but status not written
+			 *		2	pre-9.1 server, shared memory not created
+			 *		3	pre-9.1 server, shared memory created
+			 *		4	9.1+ server, shared memory not created
+			 *		5	9.1+ server, shared memory created
+			 *
+			 *	For pre-9.1 Unix servers, we grab the port number from the
+			 *	shmem key (first value on line 3).  Pre-9.1 Win32 has no
+			 *	written shmem key, so we fail.  9.1+ writes both the port
+			 *	number and socket address in the file for us to use.
+			 *	(PG_VERSION could also have told us the major version.)
+			 */
+		
+			/* Try to read a completed postmaster.pid file */
+			if ((optlines = readfile(pid_file)) != NULL &&
+				optlines[0] != NULL &&
+				optlines[1] != NULL &&
+				optlines[2] != NULL)
+			{				
+				/* A 3-line file? */
+				if (optlines[3] == NULL)
+				{
+					/*
+					 *	Pre-9.1:  on Unix, we get the port number by
+					 *	deriving it from the shmem key (the first number on
+					 *	on the line);  see
+					 *	miscinit.c::RecordSharedMemoryInLockFile().
+					 */
+					portnum = atoi(optlines[2]) / 1000;
+					/* Win32 does not give us a shmem key, so we fail. */
+					if (portnum == 0)
+					{
+						write_stderr(_("%s: -w option is not supported on this platform\nwhen connecting to a pre-9.1 server\n"),
+									 progname);
+						return PQPING_NO_ATTEMPT;
+					}
+				}
+				else	/* 9.1+ server */
+				{
+					portnum = atoi(optlines[2]);
+	
+					/* Get socket directory, if specified. */
+					if (optlines[3][0] != '\n')
+					{
+						/*
+						 *	While unix_socket_directory can accept relative
+						 *	directories, libpq's host must have a leading slash
+						 *	to indicate a socket directory.
+						 */
+						if (optlines[3][0] != '/')
+						{
+							write_stderr(_("%s: -w option cannot use a relative socket directory specification\n"),
+										 progname);
+							return PQPING_NO_ATTEMPT;
+						}
+						strlcpy(socket_dir, optlines[3], MAXPGPATH);
+						/* remove newline */
+						if (strchr(socket_dir, '\n') != NULL)
+							*strchr(socket_dir, '\n') = '\0';
+					}
+				}
+
+				/*
+				 * We need to set connect_timeout otherwise on Windows the
+				 * Service Control Manager (SCM) will probably timeout first.
+				 */
+				snprintf(connstr, sizeof(connstr),
+						 "dbname=postgres port=%d connect_timeout=5", portnum);
+
+				if (socket_dir[0] != '\0')
+					snprintf(connstr + strlen(connstr), sizeof(connstr) - strlen(connstr),
+						" host='%s'", socket_dir);
+			}
+		}
+
+		/* If we have a connection string, ping the server */
+		if (connstr[0] != '\0')
+		{
+			ret = PQping(connstr);
+			if (ret == PQPING_OK || ret == PQPING_NO_ATTEMPT)
+				break;
+		}
+
 		/* No response, or startup still in process; wait */
 #if defined(WIN32)
 		if (do_checkpoint)
@@ -2009,7 +2003,6 @@ main(int argc, char **argv)
 	{
 		snprintf(postopts_file, MAXPGPATH, "%s/postmaster.opts", pg_data);
 		snprintf(pid_file, MAXPGPATH, "%s/postmaster.pid", pg_data);
-		snprintf(conf_file, MAXPGPATH, "%s/postgresql.conf", pg_data);
 		snprintf(backup_file, MAXPGPATH, "%s/backup_label", pg_data);
 		snprintf(recovery_file, MAXPGPATH, "%s/recovery.conf", pg_data);
 	}

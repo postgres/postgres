@@ -348,21 +348,12 @@ PostgreSQL documentation
        <para>
         Wait for the startup or shutdown to complete.
         Waiting is the default option for shutdowns, but not startups.
+        When waiting for startup, <command>pg_ctl</command> repeatedly
+        attempts to connect to the server.
         When waiting for shutdown, <command>pg_ctl</command> waits for
         the server to remove its <acronym>PID</acronym> file.
-        When waiting for startup, <command>pg_ctl</command> repeatedly
-        attempts to connect to the server via <application>psql</>, and
-        reports success when this is successful.
-        <command>pg_ctl</command> will attempt to use the proper port for
-        <application>psql</>. If the environment variable
-        <envar>PGPORT</envar> exists, that is used.  Otherwise,
-        <command>pg_ctl</command> will see if a port has been set in the
-        <filename>postgresql.conf</filename> file.  If not, it will use the
-        default port that <productname>PostgreSQL</productname> was compiled
-        with (5432 by default).
-        When waiting, <command>pg_ctl</command> will
-        return an exit code based on the success of the startup
-        or shutdown.
+        <command>pg_ctl</command> returns an exit code based on the
+        success of the startup or shutdown.
        </para>
       </listitem>
      </varlistentry>
@@ -442,28 +433,6 @@ PostgreSQL documentation
     </listitem>
    </varlistentry>
 
-   <varlistentry>
-    <term><envar>PGHOST</envar></term>
-
-    <listitem>
-     <para>
-      Default host name or Unix-domain socket location for <xref
-      linkend="app-psql"> (used when waiting for startup).
-     </para>
-    </listitem>
-   </varlistentry>
-
-   <varlistentry>
-    <term><envar>PGPORT</envar></term>
-
-    <listitem>
-     <para>
-      Default port number for <xref linkend="app-psql">
-      (used when waiting for startup).
-     </para>
-    </listitem>
-   </varlistentry>
-
   </variablelist>
 
   <para>
@@ -502,18 +471,6 @@ PostgreSQL documentation
       <application>postgres</application>, unless overridden
       by the <option>-o</option> option. The contents of this file
       are also displayed in <option>status</option> mode.
-     </para>
-    </listitem>
-   </varlistentry>
-
-   <varlistentry>
-    <term><filename>postgresql.conf</filename></term>
-
-    <listitem>
-     <para>
-      This file, located in the data directory, is parsed to find the
-      proper port to use with <application>psql</application>
-      when waiting for startup.
      </para>
     </listitem>
    </varlistentry>
