@@ -1,9 +1,9 @@
 <!-- doc/src/sgml/release-9.1.sgml -->
 
-<!-- This is up-to-date with commits through 2010-10-29 -->
+<!-- This is up-to-date with commits through 2010-12-23 -->
 
 <sect1 id="release-9-1-alpha">
-  <title>Release 9.1alpha2</title>
+  <title>Release 9.1alpha3</title>
   <sect2>
     <title>Overview</title>
     <para>
@@ -72,13 +72,48 @@
 
        <listitem>
         <para>
-         <emphasis>Add ALTER TYPE ... ADD/DROP/ALTER/RENAME ATTRIBUTE</emphasis>
+         <emphasis>Add ALTER ... SET SCHEMA support for conversions,
+         operators, operator classes, operator families, text search
+         configurations, text search dictionaries, text search
+         parsers, and text search templates</emphasis>
         </para>
        </listitem>
 
        <listitem>
         <para>
-         <emphasis>Support triggers on views</emphasis>
+         <emphasis>Make TRUNCATE ... RESTART IDENTITY restart
+         sequences transactionally</emphasis>
+        </para>
+
+        <para>
+         Previously, the sequence restart did not roll back on error.
+         This meant that an error between truncating and committing
+         left the sequences out of sync with the table contents, with
+         potentially bad consequences as were noted in a Warning on
+         the TRUNCATE man page.
+        </para>
+       </listitem>
+
+       <listitem>
+        <para>
+         <emphasis>Prevent invoking I/O conversion casts via
+         functional/attribute notation</emphasis>
+        </para>
+        <para>
+         This was found to be confusing in some cases.  The
+         functionality is still available via cast syntax.
+        </para>
+       </listitem>
+
+       <listitem>
+        <para>
+         Add ALTER TYPE ... ADD/DROP/ALTER/RENAME ATTRIBUTE
+        </para>
+       </listitem>
+
+       <listitem>
+        <para>
+         Support triggers on views
         </para>
 
         <para>
@@ -94,8 +129,8 @@
 
        <listitem>
         <para>
-         <emphasis>Allow WITH clauses to be attached to INSERT, UPDATE, DELETE
-         statements</emphasis>
+         Allow WITH clauses to be attached to INSERT, UPDATE, DELETE
+         statements
         </para>
 
         <para>
@@ -107,7 +142,7 @@
 
        <listitem>
         <para>
-         <emphasis>Allow new values to be added to an existing enum type</emphasis>
+         Allow new values to be added to an existing enum type
         </para>
        </listitem>
 
@@ -137,8 +172,35 @@
 
        <listitem>
         <para>
-         <emphasis>Support MergeAppend plans, to allow sorted output
-         from append relations</emphasis>
+         <emphasis>Optimize the commit_siblings configuration parameter</emphasis>
+        </para>
+       </listitem>
+
+       <listitem>
+        <para>
+         <emphasis>KNN GiST, otherwise known as order-by-operator support for GiST</emphasis>
+        </para>
+
+        <para>
+         This can be used to optimize nearest-neighbor searches.
+        </para>
+       </listitem>
+       <listitem>
+        <para>
+         <emphasis>Improve process shutdown speed</emphasis>
+        </para>
+       </listitem>
+
+       <listitem>
+        <para>
+         <emphasis>Speed up conversion of signed integers to C strings</emphasis>
+        </para>
+       </listitem>
+
+       <listitem>
+        <para>
+         Support MergeAppend plans, to allow sorted output
+         from append relations
         </para>
 
         <para>
@@ -151,26 +213,26 @@
 
        <listitem>
         <para>
-         <emphasis>Reduce the memory requirement for large ispell dictionaries</emphasis>
+         Reduce the memory requirement for large ispell dictionaries
         </para>
        </listitem>
 
        <listitem>
         <para>
-         <emphasis>Teach CLUSTER to use seqscan-and-sort when it's faster than
-         indexscan</emphasis>
+         Teach CLUSTER to use seqscan-and-sort when it's faster than
+         indexscan
         </para>
        </listitem>
 
        <listitem>
         <para>
-         <emphasis>Improve GIN indexscan cost estimation</emphasis>
+         Improve GIN indexscan cost estimation
         </para>
        </listitem>
 
        <listitem>
         <para>
-         <emphasis>Performance improvements in pg_upgrade for uses with many tables</emphasis>
+         Performance improvements in pg_upgrade for uses with many tables
         </para>
        </listitem>
 
@@ -245,16 +307,44 @@
 
        <listitem>
         <para>
-         <emphasis>Allow pg_ctl to register the service in either AUTO or DEMAND start
-         type</emphasis>
+         <emphasis>Instrument checkpoint sync calls</emphasis>
         </para>
        </listitem>
 
        <listitem>
         <para>
-         <emphasis>Support host names and host key
+         <emphasis>Use the same lexer for recovery.conf that has been used for postgresql.conf</emphasis>
+        </para>
+
+        <para>
+         Among other things, this allows values in recovery.conf to be unquoted.
+        </para>
+       </listitem>
+
+       <listitem>
+        <para>
+         <emphasis>Add column buffers_backend_fsync to pg_stat_bgwriter</emphasis>
+        </para>
+       </listitem>
+
+       <listitem>
+        <para>
+         <emphasis>Add monitoring function pg_last_xact_replay_timestamp()</emphasis>
+        </para>
+       </listitem>
+
+       <listitem>
+        <para>
+         Allow pg_ctl to register the service in either AUTO or DEMAND start
+         type
+        </para>
+       </listitem>
+
+       <listitem>
+        <para>
+         Support host names and host key
          word <literal>all</literal>
-         in <filename>pg_hba.conf</filename></emphasis>
+         in <filename>pg_hba.conf</filename>
         </para>
        </listitem>
 
@@ -294,7 +384,7 @@
 
        <listitem>
         <para>
-         <emphasis>Add SECURITY LABEL command</emphasis>
+         Add SECURITY LABEL command
         </para>
         <para>
          This is intended as infrastructure to support integration
@@ -323,10 +413,30 @@
 
        <listitem>
         <para>
-         <emphasis>Accept <literal>public</literal> as a pseudo-role
+         <emphasis>Add pg_read_binary_file() and whole-file-at-once
+         versions of pg_read_file()</emphasis>
+        </para>
+       </listitem>
+
+       <listitem>
+        <para>
+         <emphasis>Add new function format(), for sprintf-like string formatting</emphasis>
+        </para>
+       </listitem>
+
+       <listitem>
+        <para>
+         <emphasis>Add pg_describe_object() function to obtain textual
+         descriptions of objects as stored in pg_depend</emphasis>
+        </para>
+       </listitem>
+
+       <listitem>
+        <para>
+         Accept <literal>public</literal> as a pseudo-role
          name in <literal>has_table_privilege()</literal> and friends
          to see if a particular privilege has been granted to
-         <literal>PUBLIC</literal></emphasis>
+         <literal>PUBLIC</literal>
         </para>
        </listitem>
 
@@ -418,6 +528,15 @@
 
        <listitem>
         <para>
+         <emphasis>Add <quote>S</quote> option to \dn command in psql</emphasis>
+        </para>
+        <para>
+         System schemas are now hidden by default by \dn.
+        </para>
+       </listitem>
+
+       <listitem>
+        <para>
          Add \conninfo command to psql, to show current connection
          info
         </para>
@@ -448,6 +567,42 @@
         <para>
          Make psql distinguish between unique indices and unique
          constraints in \d printout
+        </para>
+       </listitem>
+
+      </itemizedlist>
+    </sect3>
+    <sect3>
+      <title>libpq</title>
+      <itemizedlist>
+
+       <listitem>
+        <para>
+         <emphasis>Add PQlibVersion() function</emphasis>
+        </para>
+       </listitem>
+
+       <listitem>
+        <para>
+         <emphasis>When reporting the server as not responding, if the
+         hostname was supplied, also print the IP address</emphasis>
+        </para>
+        <para>
+         This allows IPv4 and IPv6 failures to be distinguished.  Also
+         useful when a hostname resolves to multiple IP addresses.
+        </para>
+       </listitem>
+
+       <listitem>
+        <para>
+         <emphasis>Add functions PQping and PQpingParams to allow
+         detection of the server's status, including a status where
+         the server is running but refuses ordinary connections</emphasis>
+        </para>
+        <para>
+         pg_ctl uses the new function.  This fixes the case where
+         pg_ctl reports that the server is not running (cannot
+         connect) but in fact it is running.
         </para>
        </listitem>
 
@@ -496,7 +651,7 @@
        <itemizedlist>
         <listitem>
          <para>
-          <emphasis>Allow generic record arguments to PL/Perl functions</emphasis>
+          Allow generic record arguments to PL/Perl functions
          </para>
         </listitem>
        </itemizedlist>
@@ -508,7 +663,13 @@
 
        <listitem>
         <para>
-         <emphasis>Updates to contrib/isn ISBN tables</emphasis>
+         <emphasis>New module contrib/auth_delay</emphasis>
+        </para>
+       </listitem>
+
+       <listitem>
+        <para>
+         Updates to contrib/isn ISBN tables
         </para>
        </listitem>
 
@@ -553,6 +714,44 @@
     <sect3>
       <title>Source Code, Build Options</title>
       <itemizedlist>
+
+       <listitem>
+        <para>
+         <emphasis>Rewrite the GiST insertion logic so that the
+         post-recovery cleanup stage to finish incomplete inserts or
+         splits is not needed anymore</emphasis>
+        </para>
+       </listitem>
+
+       <listitem>
+        <para>
+         <emphasis>Add support for collecting
+         <quote>minidump</quote>-style crash dumps on
+         Windows</emphasis>
+        </para>
+       </listitem>
+
+       <listitem>
+        <para>
+         <emphasis>Replace pg_class.relistemp column with relpersistence</emphasis>
+        </para>
+
+        <para>
+         This is for upcoming work on unlogged and global temporary tables.
+        </para>
+       </listitem>
+
+       <listitem>
+        <para>
+         <emphasis>GNU make 3.80 or newer is now required</emphasis>
+        </para>
+       </listitem>
+
+       <listitem>
+        <para>
+         <emphasis>Improved support for parallel make, make -k, and make -q</emphasis>
+        </para>
+       </listitem>
 
        <listitem>
         <para>
