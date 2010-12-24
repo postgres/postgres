@@ -193,6 +193,15 @@ PostgreSQL documentation
      </varlistentry>
 
      <varlistentry>
+      <term><option>--no-security-label</option></term>
+      <listitem>
+       <para>
+        Do not dump security labels.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
       <term><option>-r</option></term>
       <term><option>--roles-only</option></term>
       <listitem>
@@ -490,14 +499,6 @@ PostgreSQL documentation
         the required rights.  Some installations have a policy against
         logging in directly as a superuser, and use of this option allows
         dumps to be made without violating the policy.
-       </para>
-      </listitem>
-     </varlistentry>
-     <varlistentry>
-      <term><option>--no-security-label</option></term>
-      <listitem>
-       <para>
-        Do not dump security labels.
        </para>
       </listitem>
      </varlistentry>
