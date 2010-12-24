@@ -780,11 +780,10 @@ PostgreSQL documentation
      </varlistentry>
 
      <varlistentry>
-      <term><option>--security-label</option></term>
+      <term><option>--no-security-label</option></term>
       <listitem>
        <para>
-        With this option, it also outputs security labels of database
-        objects to be dumped, if labeled.
+        Do not dump security labels.
        </para>
       </listitem>
      </varlistentry>
