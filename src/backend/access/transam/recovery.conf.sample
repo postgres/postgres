@@ -13,7 +13,7 @@
 #
 # This file consists of lines of the form:
 #
-#   name = 'value'
+#   name = value
 #
 # Comments are introduced with '#'.
 #
@@ -75,7 +75,7 @@
 #
 #recovery_target_xid = ''
 #
-#recovery_target_inclusive = 'true'
+#recovery_target_inclusive = true
 #
 #
 # If you want to recover into a timeline other than the "main line" shown in
@@ -93,7 +93,7 @@
 # connection settings primary_conninfo, and receives XLOG records
 # continuously.
 #
-#standby_mode = 'off'
+#standby_mode = off
 #
 #primary_conninfo = ''		# e.g. 'host=localhost port=5432'
 #
