@@ -258,6 +258,9 @@
 /* Define to 1 if you have the <memory.h> header file. */
 #define HAVE_MEMORY_H 1
 
+/* Define to 1 if the system has the type `MINIDUMP_TYPE'. */
+#define HAVE_MINIDUMP_TYPE 1
+
 /* Define to 1 if you have the <netinet/in.h> header file. */
 #define HAVE_NETINET_IN_H 1
 

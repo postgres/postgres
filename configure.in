@@ -1350,6 +1350,16 @@ if test "$PORTNAME" = "win32"; then
   AC_LIBOBJ(win32error)
   AC_DEFINE([HAVE_SYMLINK], 1,
             [Define to 1 if you have the `symlink' function.])
+  AC_CHECK_TYPES(MINIDUMP_TYPE, [pgac_minidump_type=yes], [pgac_minidump_type=no], [
+#define WIN32_LEAN_AND_MEAN
+#include <windows.h>
+#include <string.h>
+#include <dbghelp.h>])
+fi
+if test x"$pgac_minidump_type" = x"yes" ; then
+  AC_SUBST(have_win32_dbghelp,yes)
+else
+  AC_SUBST(have_win32_dbghelp,no)
 fi
 
 if test "$with_readline" = yes; then
