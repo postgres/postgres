@@ -691,7 +691,9 @@ PGconn *PQsetdb(char *pghost,
        Make a connection to the database server in a nonblocking manner.
 
 <synopsis>
-PGconn *PQconnectStartParams(const char **keywords, const char **values, int expand_dbname);
+PGconn *PQconnectStartParams(const char **keywords,
+                             const char **values,
+                             int expand_dbname);
 
 PGconn *PQconnectStart(const char *conninfo);
 
