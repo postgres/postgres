@@ -2396,9 +2396,9 @@ DESCR("less than");
 DATA(insert OID = 1672 (  varbitcmp			PGNSP PGUID 12 1 0 0 f f f t f i 2 0 23 "1562 1562" _null_ _null_ _null_ _null_ bitcmp _null_ _null_ _null_ ));
 DESCR("compare");
 
-DATA(insert OID = 1673 (  bitand			PGNSP PGUID 12 1 0 0 f f f t f i 2 0 1560 "1560 1560" _null_ _null_ _null_ _null_	bitand _null_ _null_ _null_ ));
+DATA(insert OID = 1673 (  bitand			PGNSP PGUID 12 1 0 0 f f f t f i 2 0 1560 "1560 1560" _null_ _null_ _null_ _null_	bit_and _null_ _null_ _null_ ));
 DESCR("bitwise and");
-DATA(insert OID = 1674 (  bitor				PGNSP PGUID 12 1 0 0 f f f t f i 2 0 1560 "1560 1560" _null_ _null_ _null_ _null_	bitor _null_ _null_ _null_ ));
+DATA(insert OID = 1674 (  bitor				PGNSP PGUID 12 1 0 0 f f f t f i 2 0 1560 "1560 1560" _null_ _null_ _null_ _null_	bit_or _null_ _null_ _null_ ));
 DESCR("bitwise or");
 DATA(insert OID = 1675 (  bitxor			PGNSP PGUID 12 1 0 0 f f f t f i 2 0 1560 "1560 1560" _null_ _null_ _null_ _null_	bitxor _null_ _null_ _null_ ));
 DESCR("bitwise exclusive or");
