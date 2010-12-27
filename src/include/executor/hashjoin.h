@@ -15,6 +15,7 @@
 #define HASHJOIN_H
 
 #include "fmgr.h"
+#include "nodes/execnodes.h"
 #include "storage/buffile.h"
 
 /* ----------------------------------------------------------------
