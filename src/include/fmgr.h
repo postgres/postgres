@@ -563,7 +563,7 @@ typedef enum FmgrHookEventType
 typedef bool (*needs_fmgr_hook_type)(Oid fn_oid);
 
 typedef void (*fmgr_hook_type)(FmgrHookEventType event,
-							   FmgrInfo *flinfo, Datum *private);
+							   FmgrInfo *flinfo, Datum *arg);
 
 extern PGDLLIMPORT needs_fmgr_hook_type	needs_fmgr_hook;
 extern PGDLLIMPORT fmgr_hook_type		fmgr_hook;

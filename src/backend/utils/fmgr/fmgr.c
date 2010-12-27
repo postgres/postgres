@@ -863,7 +863,7 @@ struct fmgr_security_definer_cache
 	FmgrInfo	flinfo;			/* lookup info for target function */
 	Oid			userid;			/* userid to set, or InvalidOid */
 	ArrayType  *proconfig;		/* GUC values to set, or NULL */
-	Datum		private;		/* private usage for plugin modules */
+	Datum		arg;			/* passthrough argument for plugin modules */
 };
 
 /*
@@ -949,7 +949,7 @@ fmgr_security_definer(PG_FUNCTION_ARGS)
 
 	/* function manager hook */
 	if (fmgr_hook)
-		(*fmgr_hook)(FHET_START, &fcache->flinfo, &fcache->private);
+		(*fmgr_hook)(FHET_START, &fcache->flinfo, &fcache->arg);
 
 	/*
 	 * We don't need to restore GUC or userid settings on error, because the
@@ -980,7 +980,7 @@ fmgr_security_definer(PG_FUNCTION_ARGS)
 	{
 		fcinfo->flinfo = save_flinfo;
 		if (fmgr_hook)
-			(*fmgr_hook)(FHET_ABORT, &fcache->flinfo, &fcache->private);
+			(*fmgr_hook)(FHET_ABORT, &fcache->flinfo, &fcache->arg);
 		PG_RE_THROW();
 	}
 	PG_END_TRY();
@@ -992,7 +992,7 @@ fmgr_security_definer(PG_FUNCTION_ARGS)
 	if (OidIsValid(fcache->userid))
 		SetUserIdAndSecContext(save_userid, save_sec_context);
 	if (fmgr_hook)
-		(*fmgr_hook)(FHET_END, &fcache->flinfo, &fcache->private);
+		(*fmgr_hook)(FHET_END, &fcache->flinfo, &fcache->arg);
 
 	return result;
 }
