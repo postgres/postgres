@@ -760,6 +760,114 @@
 },
 
 {
+	"fdw_error", ERRCODE_FDW_ERROR
+},
+
+{
+	"fdw_column_name_not_found", ERRCODE_FDW_COLUMN_NAME_NOT_FOUND
+},
+
+{
+	"fdw_dynamic_parameter_value_needed", ERRCODE_FDW_DYNAMIC_PARAMETER_VALUE_NEEDED
+},
+
+{
+	"fdw_function_sequence_error", ERRCODE_FDW_FUNCTION_SEQUENCE_ERROR
+},
+
+{
+	"fdw_inconsistent_descriptor_information", ERRCODE_FDW_INCONSISTENT_DESCRIPTOR_INFORMATION
+},
+
+{
+	"fdw_invalid_attribute_value", ERRCODE_FDW_INVALID_ATTRIBUTE_VALUE
+},
+
+{
+	"fdw_invalid_column_name", ERRCODE_FDW_INVALID_COLUMN_NAME
+},
+
+{
+	"fdw_invalid_column_number", ERRCODE_FDW_INVALID_COLUMN_NUMBER
+},
+
+{
+	"fdw_invalid_data_type", ERRCODE_FDW_INVALID_DATA_TYPE
+},
+
+{
+	"fdw_invalid_data_type_descriptors", ERRCODE_FDW_INVALID_DATA_TYPE_DESCRIPTORS
+},
+
+{
+	"fdw_invalid_descriptor_field_identifier", ERRCODE_FDW_INVALID_DESCRIPTOR_FIELD_IDENTIFIER
+},
+
+{
+	"fdw_invalid_handle", ERRCODE_FDW_INVALID_HANDLE
+},
+
+{
+	"fdw_invalid_option_index", ERRCODE_FDW_INVALID_OPTION_INDEX
+},
+
+{
+	"fdw_invalid_option_name", ERRCODE_FDW_INVALID_OPTION_NAME
+},
+
+{
+	"fdw_invalid_string_length_or_buffer_length", ERRCODE_FDW_INVALID_STRING_LENGTH_OR_BUFFER_LENGTH
+},
+
+{
+	"fdw_invalid_string_format", ERRCODE_FDW_INVALID_STRING_FORMAT
+},
+
+{
+	"fdw_invalid_use_of_null_pointer", ERRCODE_FDW_INVALID_USE_OF_NULL_POINTER
+},
+
+{
+	"fdw_too_many_handles", ERRCODE_FDW_TOO_MANY_HANDLES
+},
+
+{
+	"fdw_out_of_memory", ERRCODE_FDW_OUT_OF_MEMORY
+},
+
+{
+	"fdw_no_schemas", ERRCODE_FDW_NO_SCHEMAS
+},
+
+{
+	"fdw_option_name_not_found", ERRCODE_FDW_OPTION_NAME_NOT_FOUND
+},
+
+{
+	"fdw_reply_handle", ERRCODE_FDW_REPLY_HANDLE
+},
+
+{
+	"fdw_schema_not_found", ERRCODE_FDW_SCHEMA_NOT_FOUND
+},
+
+{
+	"fdw_table_not_found", ERRCODE_FDW_TABLE_NOT_FOUND
+},
+
+{
+	"fdw_unable_to_create_execution", ERRCODE_FDW_UNABLE_TO_CREATE_EXECUTION
+},
+
+{
+	"fdw_unable_to_create_reply", ERRCODE_FDW_UNABLE_TO_CREATE_REPLY
+},
+
+{
+	"fdw_unable_to_establish_connection", ERRCODE_FDW_UNABLE_TO_ESTABLISH_CONNECTION
+},
+
+{
 	"raise_exception", ERRCODE_RAISE_EXCEPTION
 },
 

@@ -1411,6 +1411,173 @@
 
 
 <row>
+<entry spanname="span13"><emphasis role="bold">Class HV &mdash; Foreign Data Wrapper Error (SQL/MED)</></entry>
+</row>
+
+<row>
+<entry><literal>HV000</literal></entry>
+<entry>FDW ERROR</entry>
+<entry>fdw_error</entry>
+</row>
+
+<row>
+<entry><literal>HV005</literal></entry>
+<entry>FDW COLUMN NAME NOT FOUND</entry>
+<entry>fdw_column_name_not_found</entry>
+</row>
+
+<row>
+<entry><literal>HV002</literal></entry>
+<entry>FDW DYNAMIC PARAMETER VALUE NEEDED</entry>
+<entry>fdw_dynamic_parameter_value_needed</entry>
+</row>
+
+<row>
+<entry><literal>HV010</literal></entry>
+<entry>FDW FUNCTION SEQUENCE ERROR</entry>
+<entry>fdw_function_sequence_error</entry>
+</row>
+
+<row>
+<entry><literal>HV021</literal></entry>
+<entry>FDW INCONSISTENT DESCRIPTOR INFORMATION</entry>
+<entry>fdw_inconsistent_descriptor_information</entry>
+</row>
+
+<row>
+<entry><literal>HV024</literal></entry>
+<entry>FDW INVALID ATTRIBUTE VALUE</entry>
+<entry>fdw_invalid_attribute_value</entry>
+</row>
+
+<row>
+<entry><literal>HV007</literal></entry>
+<entry>FDW INVALID COLUMN NAME</entry>
+<entry>fdw_invalid_column_name</entry>
+</row>
+
+<row>
+<entry><literal>HV008</literal></entry>
+<entry>FDW INVALID COLUMN NUMBER</entry>
+<entry>fdw_invalid_column_number</entry>
+</row>
+
+<row>
+<entry><literal>HV004</literal></entry>
+<entry>FDW INVALID DATA TYPE</entry>
+<entry>fdw_invalid_data_type</entry>
+</row>
+
+<row>
+<entry><literal>HV006</literal></entry>
+<entry>FDW INVALID DATA TYPE DESCRIPTORS</entry>
+<entry>fdw_invalid_data_type_descriptors</entry>
+</row>
+
+<row>
+<entry><literal>HV091</literal></entry>
+<entry>FDW INVALID DESCRIPTOR FIELD IDENTIFIER</entry>
+<entry>fdw_invalid_descriptor_field_identifier</entry>
+</row>
+
+<row>
+<entry><literal>HV00B</literal></entry>
+<entry>FDW INVALID HANDLE</entry>
+<entry>fdw_invalid_handle</entry>
+</row>
+
+<row>
+<entry><literal>HV00C</literal></entry>
+<entry>FDW INVALID OPTION INDEX</entry>
+<entry>fdw_invalid_option_index</entry>
+</row>
+
+<row>
+<entry><literal>HV00D</literal></entry>
+<entry>FDW INVALID OPTION NAME</entry>
+<entry>fdw_invalid_option_name</entry>
+</row>
+
+<row>
+<entry><literal>HV090</literal></entry>
+<entry>FDW INVALID STRING LENGTH OR BUFFER LENGTH</entry>
+<entry>fdw_invalid_string_length_or_buffer_length</entry>
+</row>
+
+<row>
+<entry><literal>HV00A</literal></entry>
+<entry>FDW INVALID STRING FORMAT</entry>
+<entry>fdw_invalid_string_format</entry>
+</row>
+
+<row>
+<entry><literal>HV009</literal></entry>
+<entry>FDW INVALID USE OF NULL POINTER</entry>
+<entry>fdw_invalid_use_of_null_pointer</entry>
+</row>
+
+<row>
+<entry><literal>HV014</literal></entry>
+<entry>FDW TOO MANY HANDLES</entry>
+<entry>fdw_too_many_handles</entry>
+</row>
+
+<row>
+<entry><literal>HV001</literal></entry>
+<entry>FDW OUT OF MEMORY</entry>
+<entry>fdw_out_of_memory</entry>
+</row>
+
+<row>
+<entry><literal>HV00P</literal></entry>
+<entry>FDW NO SCHEMAS</entry>
+<entry>fdw_no_schemas</entry>
+</row>
+
+<row>
+<entry><literal>HV00J</literal></entry>
+<entry>FDW OPTION NAME NOT FOUND</entry>
+<entry>fdw_option_name_not_found</entry>
+</row>
+
+<row>
+<entry><literal>HV00K</literal></entry>
+<entry>FDW REPLY HANDLE</entry>
+<entry>fdw_reply_handle</entry>
+</row>
+
+<row>
+<entry><literal>HV00Q</literal></entry>
+<entry>FDW SCHEMA NOT FOUND</entry>
+<entry>fdw_schema_not_found</entry>
+</row>
+
+<row>
+<entry><literal>HV00R</literal></entry>
+<entry>FDW TABLE NOT FOUND</entry>
+<entry>fdw_table_not_found</entry>
+</row>
+
+<row>
+<entry><literal>HV00L</literal></entry>
+<entry>FDW UNABLE TO CREATE EXECUTION</entry>
+<entry>fdw_unable_to_create_execution</entry>
+</row>
+
+<row>
+<entry><literal>HV00M</literal></entry>
+<entry>FDW UNABLE TO CREATE REPLY</entry>
+<entry>fdw_unable_to_create_reply</entry>
+</row>
+
+<row>
+<entry><literal>HV00N</literal></entry>
+<entry>FDW UNABLE TO ESTABLISH CONNECTION</entry>
+<entry>fdw_unable_to_establish_connection</entry>
+</row>
+
+
+<row>
 <entry spanname="span13"><emphasis role="bold">Class P0 &mdash; PL/pgSQL Error</></entry>
 </row>
 
