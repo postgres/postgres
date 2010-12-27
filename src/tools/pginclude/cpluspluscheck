@@ -15,12 +15,14 @@ tmp=`mktemp -d /tmp/$me.XXXXXX`
 echo ' extern "C" {'
 echo '#include "postgres.h"'
 
-# Omit port/, because it's platform specific, and c.h includes it anyway. Omit
-# regex/ and snowball/, because those files came from elsewhere, and they would
-# need extra work if someone cared to fix them.  kwlist.h is not meant to be
-# included directly.  rusagestub.h will be included by ./utils/pg_rusage.h if
-# necessary.
-for file in `find . \( -name port -prune -o -name regex -prune -o -name snowball -prune \) -o -name '*.h' -not -name kwlist.h -not -name rusagestub.h -print`; do
+# Omit port/, because it's platform specific, and c.h includes the relevant
+# file anyway.
+# Omit regex/ and snowball/, because those files came from elsewhere, and
+# they would need extra work if someone cared to fix them.
+# gram.h will be included by ./parser/gramparse.h.
+# kwlist.h is not meant to be included without having defined PG_KEYWORD.
+# rusagestub.h will be included by ./utils/pg_rusage.h if necessary.
+for file in `find . \( -name port -prune -o -name regex -prune -o -name snowball -prune \) -o -name '*.h' -not -name gram.h -not -name kwlist.h -not -name rusagestub.h -print`; do
 	f=`echo $file | sed 's,^\./,,'`
 	echo "#include \"$f\""
 done
