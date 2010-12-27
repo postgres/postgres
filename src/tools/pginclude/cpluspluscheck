@@ -30,7 +30,5 @@ do
 	    echo '};'
 	} >$tmp/test.cpp
 
-	# -fno-operator-names omits the definition of bitand and bitor, which
-	# collide with varbit.h.  Could be fixed, if one were so inclined.
-	${CXX:-g++} -I . -I src/include -fsyntax-only -fno-operator-names -Wall -c $tmp/test.cpp
+	${CXX:-g++} -I . -I src/include -fsyntax-only -Wall -c $tmp/test.cpp
 done
