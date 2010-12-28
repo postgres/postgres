@@ -825,7 +825,7 @@ CreateLockFile(const char *filename, bool amPostmaster,
 		 */
 		if (isDDLock)
 		{
-			char	   *ptr = NULL;
+			char	   *ptr = buffer;
 			unsigned long id1,
 						id2;
 			int lineno;
