@@ -2196,16 +2196,6 @@ ExecStatusType PQresultStatus(const PGresult *res);
           </listitem>
          </varlistentry>
 
-         <varlistentry id="libpq-pgres-copy-both">
-          <term><literal>PGRES_COPY_BOTH</literal></term>
-          <listitem>
-           <para>
-            Copy In/Out (to and from server) data transfer started.  This is
-            currently used only for streaming replication.
-           </para>
-          </listitem>
-         </varlistentry>
-
          <varlistentry id="libpq-pgres-bad-response">
           <term><literal>PGRES_BAD_RESPONSE</literal></term>
           <listitem>
@@ -2229,6 +2219,16 @@ ExecStatusType PQresultStatus(const PGresult *res);
           <listitem>
            <para>
             A fatal error occurred.
+           </para>
+          </listitem>
+         </varlistentry>
+
+         <varlistentry id="libpq-pgres-copy-both">
+          <term><literal>PGRES_COPY_BOTH</literal></term>
+          <listitem>
+           <para>
+            Copy In/Out (to and from server) data transfer started.  This is
+            currently used only for streaming replication.
            </para>
           </listitem>
          </varlistentry>
