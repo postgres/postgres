@@ -13939,7 +13939,6 @@ SELECT set_config('log_statement_stats', 'off', false);
     The functions shown in <xref
     linkend="functions-admin-backup-table"> assist in making on-line backups.
     These functions cannot be executed during recovery.
-    Use of the first three functions is restricted to superusers.
    </para>
 
    <table id="functions-admin-backup-table">
@@ -13970,21 +13969,21 @@ SELECT set_config('log_statement_stats', 'off', false);
         <literal><function>pg_start_backup(<parameter>label</> <type>text</> <optional>, <parameter>fast</> <type>boolean</> </optional>)</function></literal>
         </entry>
        <entry><type>text</type></entry>
-       <entry>Prepare for performing on-line backup</entry>
+       <entry>Prepare for performing on-line backup (restricted to superusers)</entry>
       </row>
       <row>
        <entry>
         <literal><function>pg_stop_backup()</function></literal>
         </entry>
        <entry><type>text</type></entry>
-       <entry>Finish performing on-line backup</entry>
+       <entry>Finish performing on-line backup (restricted to superusers)</entry>
       </row>
       <row>
        <entry>
         <literal><function>pg_switch_xlog()</function></literal>
         </entry>
        <entry><type>text</type></entry>
-       <entry>Force switch to a new transaction log file</entry>
+       <entry>Force switch to a new transaction log file (restricted to superusers)</entry>
       </row>
       <row>
        <entry>
