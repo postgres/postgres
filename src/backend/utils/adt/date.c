@@ -331,20 +331,13 @@ date2timestamp_no_overflow(DateADT dateVal)
 {
 	double	result;
 
-	if (DATE_IS_NOBEGIN(dateVal))
-		result = -DBL_MAX;
-	else if (DATE_IS_NOEND(dateVal))
-		result = DBL_MAX;
-	else
-	{
 #ifdef HAVE_INT64_TIMESTAMP
-		/* date is days since 2000, timestamp is microseconds since same... */
-		result = dateVal * (double) USECS_PER_DAY;
+	/* date is days since 2000, timestamp is microseconds since same... */
+	result = dateVal * (double) USECS_PER_DAY;
 #else
-		/* date is days since 2000, timestamp is seconds since same... */
-		result = dateVal * (double) SECS_PER_DAY;
+	/* date is days since 2000, timestamp is seconds since same... */
+	result = dateVal * (double) SECS_PER_DAY;
 #endif
-	}
 
 	return result;
 }
