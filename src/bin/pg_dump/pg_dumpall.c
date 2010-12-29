@@ -653,16 +653,26 @@ dumpRoles(PGconn *conn)
 				i_rolconnlimit,
 				i_rolpassword,
 				i_rolvaliduntil,
+				i_rolreplication,
 				i_rolcomment;
 	int			i;
 
 	/* note: rolconfig is dumped later */
-	if (server_version >= 80200)
+	if (server_version >= 90100)
 		printfPQExpBuffer(buf,
 						  "SELECT rolname, rolsuper, rolinherit, "
 						  "rolcreaterole, rolcreatedb, rolcatupdate, "
 						  "rolcanlogin, rolconnlimit, rolpassword, "
-						  "rolvaliduntil, "
+						  "rolvaliduntil, rolreplication, "
+			  "pg_catalog.shobj_description(oid, 'pg_authid') as rolcomment "
+						  "FROM pg_authid "
+						  "ORDER BY 1");
+	else if (server_version >= 80200)
+		printfPQExpBuffer(buf,
+						  "SELECT rolname, rolsuper, rolinherit, "
+						  "rolcreaterole, rolcreatedb, rolcatupdate, "
+						  "rolcanlogin, rolconnlimit, rolpassword, "
+						  "rolvaliduntil, false as rolreplication, "
 			  "pg_catalog.shobj_description(oid, 'pg_authid') as rolcomment "
 						  "FROM pg_authid "
 						  "ORDER BY 1");
@@ -671,7 +681,8 @@ dumpRoles(PGconn *conn)
 						  "SELECT rolname, rolsuper, rolinherit, "
 						  "rolcreaterole, rolcreatedb, rolcatupdate, "
 						  "rolcanlogin, rolconnlimit, rolpassword, "
-						  "rolvaliduntil, null as rolcomment "
+						  "rolvaliduntil, false as rolreplication, "
+						  "null as rolcomment "
 						  "FROM pg_authid "
 						  "ORDER BY 1");
 	else
@@ -686,6 +697,7 @@ dumpRoles(PGconn *conn)
 						  "-1 as rolconnlimit, "
 						  "passwd as rolpassword, "
 						  "valuntil as rolvaliduntil, "
+						  "false as rolreplication, "
 						  "null as rolcomment "
 						  "FROM pg_shadow "
 						  "UNION ALL "
@@ -699,6 +711,7 @@ dumpRoles(PGconn *conn)
 						  "-1 as rolconnlimit, "
 						  "null::text as rolpassword, "
 						  "null::abstime as rolvaliduntil, "
+						  "false as rolreplication, "
 						  "null as rolcomment "
 						  "FROM pg_group "
 						  "WHERE NOT EXISTS (SELECT 1 FROM pg_shadow "
@@ -717,6 +730,7 @@ dumpRoles(PGconn *conn)
 	i_rolconnlimit = PQfnumber(res, "rolconnlimit");
 	i_rolpassword = PQfnumber(res, "rolpassword");
 	i_rolvaliduntil = PQfnumber(res, "rolvaliduntil");
+	i_rolreplication = PQfnumber(res, "rolreplication");
 	i_rolcomment = PQfnumber(res, "rolcomment");
 
 	if (PQntuples(res) > 0)
@@ -764,6 +778,11 @@ dumpRoles(PGconn *conn)
 			appendPQExpBuffer(buf, " LOGIN");
 		else
 			appendPQExpBuffer(buf, " NOLOGIN");
+
+		if (strcmp(PQgetvalue(res, i, i_rolreplication), "t") == 0)
+			appendPQExpBuffer(buf, " REPLICATION");
+		else
+			appendPQExpBuffer(buf, " NOREPLICATION");
 
 		if (strcmp(PQgetvalue(res, i, i_rolconnlimit), "-1") != 0)
 			appendPQExpBuffer(buf, " CONNECTION LIMIT %s",

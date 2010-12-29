@@ -636,8 +636,8 @@ protocol to make nodes agree on a serializable transactional order.
    <para>
     If you want to use streaming replication, set up authentication on the
     primary server to allow replication connections from the standby
-    server(s); that is, provide a suitable entry or entries in
-    <filename>pg_hba.conf</> with the database field set to
+    server(s); that is, create a role and provide a suitable entry or
+    entries in <filename>pg_hba.conf</> with the database field set to
     <literal>replication</>.  Also ensure <varname>max_wal_senders</> is set
     to a sufficiently large value in the configuration file of the primary
     server.
@@ -796,15 +796,28 @@ archive_cleanup_command = 'pg_archivecleanup /path/to/archive %r'
      It is very important that the access privileges for replication be set up
      so that only trusted users can read the WAL stream, because it is
      easy to extract privileged information from it.  Standby servers must
-     authenticate to the primary as a superuser account.
-     So a role with the <literal>SUPERUSER</> and <literal>LOGIN</>
-     privileges needs to be created on the primary.
+     authenticate to the primary as an account that has the
+     <literal>REPLICATION</> privilege. So a role with the
+     <literal>REPLICATION</> and <literal>LOGIN</> privileges needs to be
+     created on the primary.
     </para>
+
+    <note>
+     <para>
+      It is recommended that a dedicated user account is used for replication.
+      While it is possible to add  the <literal>REPLICATION</> privilege to
+      a superuser account for the purporses of replication, this is not
+      recommended. While <literal>REPLICATION</> privilege gives very high
+      permissions, it does not allow the user to modify any data on the
+      primary system, which the <literal>SUPERUSER</> privilege does.
+     </para>
+    </note>
+
     <para>
      Client authentication for replication is controlled by a
      <filename>pg_hba.conf</> record specifying <literal>replication</> in the
      <replaceable>database</> field. For example, if the standby is running on
-     host IP <literal>192.168.1.100</> and the superuser's name for replication
+     host IP <literal>192.168.1.100</> and the account name for replication
      is <literal>foo</>, the administrator can add the following line to the
      <filename>pg_hba.conf</> file on the primary:
 
@@ -823,7 +836,7 @@ host    replication     foo             192.168.1.100/32        md5
      standby (specify <literal>replication</> in the <replaceable>database</>
      field).
      For example, if the primary is running on host IP <literal>192.168.1.50</>,
-     port <literal>5432</literal>, the superuser's name for replication is
+     port <literal>5432</literal>, the account name for replication is
      <literal>foo</>, and the password is <literal>foopass</>, the administrator
      can add the following line to the <filename>recovery.conf</> file on the
      standby:

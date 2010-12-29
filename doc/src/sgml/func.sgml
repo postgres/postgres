@@ -13969,14 +13969,14 @@ SELECT set_config('log_statement_stats', 'off', false);
         <literal><function>pg_start_backup(<parameter>label</> <type>text</> <optional>, <parameter>fast</> <type>boolean</> </optional>)</function></literal>
         </entry>
        <entry><type>text</type></entry>
-       <entry>Prepare for performing on-line backup (restricted to superusers)</entry>
+       <entry>Prepare for performing on-line backup (restricted to superusers or replication roles)</entry>
       </row>
       <row>
        <entry>
         <literal><function>pg_stop_backup()</function></literal>
         </entry>
        <entry><type>text</type></entry>
-       <entry>Finish performing on-line backup (restricted to superusers)</entry>
+       <entry>Finish performing on-line backup (restricted to superusers or replication roles)</entry>
       </row>
       <row>
        <entry>

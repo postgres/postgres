@@ -15,6 +15,7 @@ CREATE VIEW pg_roles AS
         rolcreatedb,
         rolcatupdate,
         rolcanlogin,
+        rolreplication,
         rolconnlimit,
         '********'::text as rolpassword,
         rolvaliduntil,
@@ -30,6 +31,7 @@ CREATE VIEW pg_shadow AS
         rolcreatedb AS usecreatedb,
         rolsuper AS usesuper,
         rolcatupdate AS usecatupd,
+        rolreplication AS userepl,
         rolpassword AS passwd,
         rolvaliduntil::abstime AS valuntil,
         setconfig AS useconfig
@@ -54,6 +56,7 @@ CREATE VIEW pg_user AS
         usecreatedb,
         usesuper,
         usecatupd,
+        userepl,
         '********'::text as passwd,
         valuntil,
         useconfig

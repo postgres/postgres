@@ -1236,6 +1236,17 @@
      </row>
 
      <row>
+      <entry><structfield>rolreplication</structfield></entry>
+      <entry><type>bool</type></entry>
+      <entry>
+       Role is a replication role. That is, this role can initiate streaming
+       replication (see <xref linkend="streaming-replication">) and set/unset
+       the system backup mode using <function>pg_start_backup</> and
+       <function>pg_stop_backup</>.
+      </entry>
+     </row>
+
+     <row>
       <entry><structfield>rolconnlimit</structfield></entry>
       <entry><type>int4</type></entry>
       <entry>

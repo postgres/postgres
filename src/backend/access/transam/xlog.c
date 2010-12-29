@@ -8301,10 +8301,10 @@ pg_start_backup(PG_FUNCTION_ARGS)
 	struct stat stat_buf;
 	FILE	   *fp;
 
-	if (!superuser())
+	if (!superuser() && !is_authenticated_user_replication_role())
 		ereport(ERROR,
 				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
-				 errmsg("must be superuser to run a backup")));
+				 errmsg("must be superuser or replication role to run a backup")));
 
 	if (RecoveryInProgress())
 		ereport(ERROR,
@@ -8493,10 +8493,10 @@ pg_stop_backup(PG_FUNCTION_ARGS)
 	int			waits = 0;
 	bool		reported_waiting = false;
 
-	if (!superuser())
+	if (!superuser() && !is_authenticated_user_replication_role())
 		ereport(ERROR,
 				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
-				 (errmsg("must be superuser to run a backup"))));
+				 (errmsg("must be superuser or replication role to run a backup"))));
 
 	if (RecoveryInProgress())
 		ereport(ERROR,

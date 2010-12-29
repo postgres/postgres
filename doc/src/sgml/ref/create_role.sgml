@@ -31,6 +31,7 @@ CREATE ROLE <replaceable class="PARAMETER">name</replaceable> [ [ WITH ] <replac
     | CREATEUSER | NOCREATEUSER
     | INHERIT | NOINHERIT
     | LOGIN | NOLOGIN
+    | REPLICATION | NOREPLICATION
     | CONNECTION LIMIT <replaceable class="PARAMETER">connlimit</replaceable>
     | [ ENCRYPTED | UNENCRYPTED ] PASSWORD '<replaceable class="PARAMETER">password</replaceable>'
     | VALID UNTIL '<replaceable class="PARAMETER">timestamp</replaceable>'
@@ -170,6 +171,21 @@ CREATE ROLE <replaceable class="PARAMETER">name</replaceable> [ [ WITH ] <replac
         <literal>NOLOGIN</literal> is the default, except when
         <command>CREATE ROLE</> is invoked through its alternative spelling
         <command>CREATE USER</>.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term><literal>REPLICATION</literal></term>
+      <term><literal>NOREPLICATION</literal></term>
+      <listitem>
+       <para>
+        These clauses determine whether a role is allowed to initiate
+        streaming replication or put the system in and out of backup mode.
+        A role having the <literal>REPLICATION</> attribute is a very
+        highly privileged role, and should only be used on roles actually
+	used for replication. If not specified,
+        <literal>NOREPLICATION</literal> is the default.
        </para>
       </listitem>
      </varlistentry>

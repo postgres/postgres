@@ -2195,6 +2195,10 @@ describeRoles(const char *pattern, bool verbose)
 			appendPQExpBufferStr(&buf, "\n, pg_catalog.shobj_description(r.oid, 'pg_authid') AS description");
 			ncols++;
 		}
+		if (pset.sversion >= 90100)
+		{
+			appendPQExpBufferStr(&buf,"\n, r.rolreplication");
+		}
 
 		appendPQExpBufferStr(&buf, "\nFROM pg_catalog.pg_roles r\n");
 
@@ -2253,6 +2257,10 @@ describeRoles(const char *pattern, bool verbose)
 
 		if (strcmp(PQgetvalue(res, i, 5), "t") != 0)
 			add_role_attribute(&buf, _("Cannot login"));
+
+		if (pset.sversion >= 90100)
+			if (strcmp(PQgetvalue(res, i, 8), "t") == 0)
+				add_role_attribute(&buf, _("Replication"));
 
 		conns = atoi(PQgetvalue(res, i, 6));
 		if (conns >= 0)

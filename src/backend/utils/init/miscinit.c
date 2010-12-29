@@ -231,6 +231,7 @@ static int	SecurityRestrictionContext = 0;
 static bool SetRoleIsActive = false;
 
 
+
 /*
  * GetUserId - get the current effective user ID.
  *
@@ -387,6 +388,24 @@ SetUserIdAndContext(Oid userid, bool sec_def_context)
 		SecurityRestrictionContext &= ~SECURITY_LOCAL_USERID_CHANGE;
 }
 
+
+/*
+ * Check if the authenticated user is a replication role
+ */
+bool
+is_authenticated_user_replication_role(void)
+{
+	bool            result = false;
+	HeapTuple       utup;
+
+	utup = SearchSysCache1(AUTHOID, ObjectIdGetDatum(AuthenticatedUserId));
+	if (HeapTupleIsValid(utup))
+	{
+		result = ((Form_pg_authid) GETSTRUCT(utup))->rolreplication;
+		ReleaseSysCache(utup);
+	}
+	return result;
+}
 
 /*
  * Initialize user identity during normal backend startup

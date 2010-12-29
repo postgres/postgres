@@ -31,6 +31,7 @@ ALTER ROLE <replaceable class="PARAMETER">name</replaceable> [ [ WITH ] <replace
     | CREATEUSER | NOCREATEUSER
     | INHERIT | NOINHERIT
     | LOGIN | NOLOGIN
+    | REPLICATION | NOREPLICATION
     | CONNECTION LIMIT <replaceable class="PARAMETER">connlimit</replaceable>
     | [ ENCRYPTED | UNENCRYPTED ] PASSWORD '<replaceable class="PARAMETER">password</replaceable>'
     | VALID UNTIL '<replaceable class="PARAMETER">timestamp</replaceable>'
@@ -63,7 +64,7 @@ ALTER ROLE <replaceable class="PARAMETER">name</replaceable> [ IN DATABASE <repl
    Attributes not mentioned in the command retain their previous settings.
    Database superusers can change any of these settings for any role.
    Roles having <literal>CREATEROLE</> privilege can change any of these
-   settings, but only for non-superuser roles.
+   settings, but only for non-superuser and non-replication roles.
    Ordinary roles can only change their own password.
   </para>
 
@@ -127,6 +128,8 @@ ALTER ROLE <replaceable class="PARAMETER">name</replaceable> [ IN DATABASE <repl
       <term><literal>NOINHERIT</literal></term>
       <term><literal>LOGIN</literal></term>
       <term><literal>NOLOGIN</literal></term>
+      <term><literal>REPLICATION</literal></term>
+      <term><literal>NOREPLICATION</literal></term>
       <term><literal>CONNECTION LIMIT</literal> <replaceable class="parameter">connlimit</replaceable></term>
       <term><literal>PASSWORD</> <replaceable class="parameter">password</replaceable></term>
       <term><literal>ENCRYPTED</></term>
