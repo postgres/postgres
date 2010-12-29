@@ -3796,8 +3796,7 @@ convert_timevalue_to_scalar(Datum value, Oid typid)
 			return DatumGetTimestamp(DirectFunctionCall1(abstime_timestamp,
 														 value));
 		case DATEOID:
-			return DatumGetTimestamp(DirectFunctionCall1(date_timestamp,
-														 value));
+			return date2timestamp_no_overflow(DatumGetDateADT(value));
 		case INTERVALOID:
 			{
 				Interval   *interval = DatumGetIntervalP(value);

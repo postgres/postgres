@@ -447,6 +447,39 @@ date2timestamptz(DateADT dateVal)
 	return result;
 }
 
+/*
+ * date2timestamp_no_overflow
+ *
+ * This is chartered to produce a double value that is numerically
+ * equivalent to the corresponding Timestamp value, if the date is in the
+ * valid range of Timestamps, but in any case not throw an overflow error.
+ * We can do this since the numerical range of double is greater than
+ * that of non-erroneous timestamps.  The results are currently only
+ * used for statistical estimation purposes.
+ */
+double
+date2timestamp_no_overflow(DateADT dateVal)
+{
+	double	result;
+
+	if (DATE_IS_NOBEGIN(dateVal))
+		result = -DBL_MAX;
+	else if (DATE_IS_NOEND(dateVal))
+		result = DBL_MAX;
+	else
+	{
+#ifdef HAVE_INT64_TIMESTAMP
+		/* date is days since 2000, timestamp is microseconds since same... */
+		result = dateVal * (double) USECS_PER_DAY;
+#else
+		/* date is days since 2000, timestamp is seconds since same... */
+		result = dateVal * (double) SECS_PER_DAY;
+#endif
+	}
+
+	return result;
+}
+
 
 /*
  * Crosstype comparison functions for dates
