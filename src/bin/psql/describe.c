@@ -1118,6 +1118,7 @@ describeOneTableDetails(const char *schemaname,
 		Oid			tablespace;
 		char	   *reloptions;
 		char	   *reloftype;
+		char		relpersistence;
 	}			tableinfo;
 	bool		show_modifiers = false;
 	bool		retval;
@@ -1133,6 +1134,23 @@ describeOneTableDetails(const char *schemaname,
 
 	/* Get general table info */
 	if (pset.sversion >= 90000)
+	{
+		printfPQExpBuffer(&buf,
+			  "SELECT c.relchecks, c.relkind, c.relhasindex, c.relhasrules, "
+						  "c.relhastriggers, c.relhasoids, "
+						  "%s, c.reltablespace, "
+						  "CASE WHEN c.reloftype = 0 THEN '' ELSE c.reloftype::pg_catalog.regtype::pg_catalog.text END, "
+						  "c.relpersistence\n"
+						  "FROM pg_catalog.pg_class c\n "
+		   "LEFT JOIN pg_catalog.pg_class tc ON (c.reltoastrelid = tc.oid)\n"
+						  "WHERE c.oid = '%s'\n",
+						  (verbose ?
+						   "pg_catalog.array_to_string(c.reloptions || "
+						   "array(select 'toast.' || x from pg_catalog.unnest(tc.reloptions) x), ', ')\n"
+						   : "''"),
+						  oid);
+	}
+	else if (pset.sversion >= 90000)
 	{
 		printfPQExpBuffer(&buf,
 			  "SELECT c.relchecks, c.relkind, c.relhasindex, c.relhasrules, "
@@ -1218,6 +1236,8 @@ describeOneTableDetails(const char *schemaname,
 		atooid(PQgetvalue(res, 0, 7)) : 0;
 	tableinfo.reloftype = (pset.sversion >= 90000 && strcmp(PQgetvalue(res, 0, 8), "") != 0) ?
 		strdup(PQgetvalue(res, 0, 8)) : 0;
+	tableinfo.relpersistence = (pset.sversion >= 90100 && strcmp(PQgetvalue(res, 0, 9), "") != 0) ?
+		PQgetvalue(res, 0, 9)[0] : 0;
 	PQclear(res);
 	res = NULL;
 
@@ -1269,8 +1289,12 @@ describeOneTableDetails(const char *schemaname,
 	switch (tableinfo.relkind)
 	{
 		case 'r':
-			printfPQExpBuffer(&title, _("Table \"%s.%s\""),
-							  schemaname, relationname);
+			if (tableinfo.relpersistence == 'u')
+				printfPQExpBuffer(&title, _("Unlogged Table \"%s.%s\""),
+								  schemaname, relationname);
+			else
+				printfPQExpBuffer(&title, _("Table \"%s.%s\""),
+								  schemaname, relationname);
 			break;
 		case 'v':
 			printfPQExpBuffer(&title, _("View \"%s.%s\""),
@@ -1281,8 +1305,12 @@ describeOneTableDetails(const char *schemaname,
 							  schemaname, relationname);
 			break;
 		case 'i':
-			printfPQExpBuffer(&title, _("Index \"%s.%s\""),
-							  schemaname, relationname);
+			if (tableinfo.relpersistence == 'u')
+				printfPQExpBuffer(&title, _("Unlogged Index \"%s.%s\""),
+								  schemaname, relationname);
+			else
+				printfPQExpBuffer(&title, _("Index \"%s.%s\""),
+								  schemaname, relationname);
 			break;
 		case 's':
 			/* not used as of 8.2, but keep it for backwards compatibility */

@@ -281,6 +281,7 @@ typedef struct
 
 /* gist.c */
 extern Datum gistbuild(PG_FUNCTION_ARGS);
+extern Datum gistbuildempty(PG_FUNCTION_ARGS);
 extern Datum gistinsert(PG_FUNCTION_ARGS);
 extern MemoryContext createTempGistContext(void);
 extern void initGISTstate(GISTSTATE *giststate, Relation index);

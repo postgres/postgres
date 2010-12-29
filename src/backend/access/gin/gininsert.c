@@ -19,6 +19,7 @@
 #include "catalog/index.h"
 #include "miscadmin.h"
 #include "storage/bufmgr.h"
+#include "storage/smgr.h"
 #include "storage/indexfsm.h"
 #include "utils/memutils.h"
 
@@ -409,6 +410,47 @@ ginbuild(PG_FUNCTION_ARGS)
 	result->index_tuples = buildstate.indtuples;
 
 	PG_RETURN_POINTER(result);
+}
+
+/*
+ *	ginbuildempty() -- build an empty gin index in the initialization fork
+ */
+Datum
+ginbuildempty(PG_FUNCTION_ARGS)
+{
+	Relation	index = (Relation) PG_GETARG_POINTER(0);
+	Buffer		RootBuffer,
+				MetaBuffer;
+
+	/* An empty GIN index has two pages. */
+	MetaBuffer =
+		ReadBufferExtended(index, INIT_FORKNUM, P_NEW, RBM_NORMAL, NULL);
+	LockBuffer(MetaBuffer, BUFFER_LOCK_EXCLUSIVE);
+	RootBuffer =
+		ReadBufferExtended(index, INIT_FORKNUM, P_NEW, RBM_NORMAL, NULL);
+	LockBuffer(RootBuffer, BUFFER_LOCK_EXCLUSIVE);
+
+	/* Initialize both pages, mark them dirty, unlock and release buffer. */
+	START_CRIT_SECTION();
+	GinInitMetabuffer(MetaBuffer);
+	MarkBufferDirty(MetaBuffer);
+	GinInitBuffer(RootBuffer, GIN_LEAF);
+	MarkBufferDirty(RootBuffer);
+
+	/* XLOG the new pages */
+	log_newpage(&index->rd_smgr->smgr_rnode.node, INIT_FORKNUM,
+				BufferGetBlockNumber(MetaBuffer),
+				BufferGetPage(MetaBuffer));
+	log_newpage(&index->rd_smgr->smgr_rnode.node, INIT_FORKNUM,
+				BufferGetBlockNumber(RootBuffer),
+				BufferGetPage(RootBuffer));
+	END_CRIT_SECTION();
+
+	/* Unlock and release the buffers. */
+	UnlockReleaseBuffer(MetaBuffer);
+	UnlockReleaseBuffer(RootBuffer);
+
+	PG_RETURN_VOID();
 }
 
 /*

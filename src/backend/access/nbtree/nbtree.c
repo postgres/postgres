@@ -29,6 +29,7 @@
 #include "storage/indexfsm.h"
 #include "storage/ipc.h"
 #include "storage/lmgr.h"
+#include "storage/smgr.h"
 #include "utils/memutils.h"
 
 
@@ -202,6 +203,36 @@ btbuildCallback(Relation index,
 	buildstate->indtuples += 1;
 
 	pfree(itup);
+}
+
+/*
+ *	btbuildempty() -- build an empty btree index in the initialization fork
+ */
+Datum
+btbuildempty(PG_FUNCTION_ARGS)
+{
+	Relation	index = (Relation) PG_GETARG_POINTER(0);
+	Page		metapage;
+
+	/* Construct metapage. */
+	metapage = (Page) palloc(BLCKSZ);
+	_bt_initmetapage(metapage, P_NONE, 0);
+
+	/* Write the page.  If archiving/streaming, XLOG it. */
+	smgrwrite(index->rd_smgr, INIT_FORKNUM, BTREE_METAPAGE,
+			  (char *) metapage, true);
+	if (XLogIsNeeded())
+		log_newpage(&index->rd_smgr->smgr_rnode.node, INIT_FORKNUM,
+					BTREE_METAPAGE, metapage);
+
+	/*
+	 * An immediate sync is require even if we xlog'd the page, because the
+	 * write did not go through shared_buffers and therefore a concurrent
+	 * checkpoint may have move the redo pointer past our xlog record.
+	 */
+	smgrimmedsync(index->rd_smgr, INIT_FORKNUM);
+
+	PG_RETURN_VOID();
 }
 
 /*

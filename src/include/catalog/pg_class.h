@@ -150,6 +150,7 @@ DESCR("");
 #define		  RELKIND_COMPOSITE_TYPE  'c'		/* composite type */
 
 #define		  RELPERSISTENCE_PERMANENT	'p'
+#define		  RELPERSISTENCE_UNLOGGED	'u'
 #define		  RELPERSISTENCE_TEMP		't'
 
 #endif   /* PG_CLASS_H */

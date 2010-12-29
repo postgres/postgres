@@ -114,6 +114,7 @@ typedef struct RelationAmInfo
 	FmgrInfo	ammarkpos;
 	FmgrInfo	amrestrpos;
 	FmgrInfo	ambuild;
+	FmgrInfo	ambuildempty;
 	FmgrInfo	ambulkdelete;
 	FmgrInfo	amvacuumcleanup;
 	FmgrInfo	amcostestimate;

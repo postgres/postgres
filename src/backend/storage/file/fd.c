@@ -2055,7 +2055,7 @@ looks_like_temp_rel_name(const char *name)
 	/* We might have _forkname or .segment or both. */
 	if (name[pos] == '_')
 	{
-		int		forkchar = forkname_chars(&name[pos+1]);
+		int		forkchar = forkname_chars(&name[pos+1], NULL);
 		if (forkchar <= 0)
 			return false;
 		pos += forkchar + 1;

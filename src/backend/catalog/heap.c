@@ -1211,6 +1211,25 @@ heap_create_with_catalog(const char *relname,
 		register_on_commit_action(relid, oncommit);
 
 	/*
+	 * If this is an unlogged relation, it needs an init fork so that it
+	 * can be correctly reinitialized on restart.  Since we're going to
+	 * do an immediate sync, we ony need to xlog this if archiving or
+	 * streaming is enabled.  And the immediate sync is required, because
+	 * otherwise there's no guarantee that this will hit the disk before
+	 * the next checkpoint moves the redo pointer.
+	 */
+	if (relpersistence == RELPERSISTENCE_UNLOGGED)
+	{
+		Assert(relkind == RELKIND_RELATION || relkind == RELKIND_TOASTVALUE);
+
+		smgrcreate(new_rel_desc->rd_smgr, INIT_FORKNUM, false);
+		if (XLogIsNeeded())
+			log_smgrcreate(&new_rel_desc->rd_smgr->smgr_rnode.node,
+						   INIT_FORKNUM);
+		smgrimmedsync(new_rel_desc->rd_smgr, INIT_FORKNUM);
+	}
+
+	/*
 	 * ok, the relation has been cataloged, so close our relations and return
 	 * the OID of the newly created relation.
 	 */

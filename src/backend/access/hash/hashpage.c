@@ -183,9 +183,9 @@ _hash_getinitbuf(Relation rel, BlockNumber blkno)
  *		extend the index at a time.
  */
 Buffer
-_hash_getnewbuf(Relation rel, BlockNumber blkno)
+_hash_getnewbuf(Relation rel, BlockNumber blkno, ForkNumber forkNum)
 {
-	BlockNumber nblocks = RelationGetNumberOfBlocks(rel);
+	BlockNumber nblocks = RelationGetNumberOfBlocksInFork(rel, forkNum);
 	Buffer		buf;
 
 	if (blkno == P_NEW)
@@ -197,13 +197,13 @@ _hash_getnewbuf(Relation rel, BlockNumber blkno)
 	/* smgr insists we use P_NEW to extend the relation */
 	if (blkno == nblocks)
 	{
-		buf = ReadBuffer(rel, P_NEW);
+		buf = ReadBufferExtended(rel, forkNum, P_NEW, RBM_NORMAL, NULL);
 		if (BufferGetBlockNumber(buf) != blkno)
 			elog(ERROR, "unexpected hash relation size: %u, should be %u",
 				 BufferGetBlockNumber(buf), blkno);
 	}
 	else
-		buf = ReadBufferExtended(rel, MAIN_FORKNUM, blkno, RBM_ZERO, NULL);
+		buf = ReadBufferExtended(rel, forkNum, blkno, RBM_ZERO, NULL);
 
 	LockBuffer(buf, HASH_WRITE);
 
@@ -324,7 +324,7 @@ _hash_chgbufaccess(Relation rel,
  * multiple buffer locks is ignored.
  */
 uint32
-_hash_metapinit(Relation rel, double num_tuples)
+_hash_metapinit(Relation rel, double num_tuples, ForkNumber forkNum)
 {
 	HashMetaPage metap;
 	HashPageOpaque pageopaque;
@@ -340,7 +340,7 @@ _hash_metapinit(Relation rel, double num_tuples)
 	uint32		i;
 
 	/* safety check */
-	if (RelationGetNumberOfBlocks(rel) != 0)
+	if (RelationGetNumberOfBlocksInFork(rel, forkNum) != 0)
 		elog(ERROR, "cannot initialize non-empty hash index \"%s\"",
 			 RelationGetRelationName(rel));
 
@@ -383,7 +383,7 @@ _hash_metapinit(Relation rel, double num_tuples)
 	 * calls to occur.	This ensures that the smgr level has the right idea of
 	 * the physical index length.
 	 */
-	metabuf = _hash_getnewbuf(rel, HASH_METAPAGE);
+	metabuf = _hash_getnewbuf(rel, HASH_METAPAGE, forkNum);
 	pg = BufferGetPage(metabuf);
 
 	pageopaque = (HashPageOpaque) PageGetSpecialPointer(pg);
@@ -451,7 +451,7 @@ _hash_metapinit(Relation rel, double num_tuples)
 		/* Allow interrupts, in case N is huge */
 		CHECK_FOR_INTERRUPTS();
 
-		buf = _hash_getnewbuf(rel, BUCKET_TO_BLKNO(metap, i));
+		buf = _hash_getnewbuf(rel, BUCKET_TO_BLKNO(metap, i), forkNum);
 		pg = BufferGetPage(buf);
 		pageopaque = (HashPageOpaque) PageGetSpecialPointer(pg);
 		pageopaque->hasho_prevblkno = InvalidBlockNumber;
@@ -468,7 +468,7 @@ _hash_metapinit(Relation rel, double num_tuples)
 	/*
 	 * Initialize first bitmap page
 	 */
-	_hash_initbitmap(rel, metap, num_buckets + 1);
+	_hash_initbitmap(rel, metap, num_buckets + 1, forkNum);
 
 	/* all done */
 	_hash_wrtbuf(rel, metabuf);
@@ -785,7 +785,7 @@ _hash_splitbucket(Relation rel,
 	oopaque = (HashPageOpaque) PageGetSpecialPointer(opage);
 
 	nblkno = start_nblkno;
-	nbuf = _hash_getnewbuf(rel, nblkno);
+	nbuf = _hash_getnewbuf(rel, nblkno, MAIN_FORKNUM);
 	npage = BufferGetPage(nbuf);
 
 	/* initialize the new bucket's primary page */

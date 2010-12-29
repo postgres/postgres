@@ -167,6 +167,17 @@ ambuild (Relation heapRelation,
 
   <para>
 <programlisting>
+void
+ambuildempty (Relation indexRelation);
+</programlisting>
+   Build an empty index, and write it to the initialization fork (INIT_FORKNUM)
+   of the given relation.  This method is called only for unlogged tables; the
+   empty index written to the initialization fork will be copied over the main
+   relation fork on each server restart.
+  </para>
+
+  <para>
+<programlisting>
 bool
 aminsert (Relation indexRelation,
           Datum *values,

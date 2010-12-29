@@ -615,6 +615,7 @@ pg_relation_filepath(PG_FUNCTION_ARGS)
 	/* Determine owning backend. */
 	switch (relform->relpersistence)
 	{
+		case RELPERSISTENCE_UNLOGGED:
 		case RELPERSISTENCE_PERMANENT:
 			backend = InvalidBackendId;
 			break;

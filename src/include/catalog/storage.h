@@ -35,6 +35,8 @@ extern void AtSubCommit_smgr(void);
 extern void AtSubAbort_smgr(void);
 extern void PostPrepare_smgr(void);
 
+extern void log_smgrcreate(RelFileNode *rnode, ForkNumber forkNum);
+
 extern void smgr_redo(XLogRecPtr lsn, XLogRecord *record);
 extern void smgr_desc(StringInfo buf, uint8 xl_info, char *rec);
 

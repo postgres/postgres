@@ -389,6 +389,7 @@ extern void ginUpdateStats(Relation index, const GinStatsData *stats);
 
 /* gininsert.c */
 extern Datum ginbuild(PG_FUNCTION_ARGS);
+extern Datum ginbuildempty(PG_FUNCTION_ARGS);
 extern Datum gininsert(PG_FUNCTION_ARGS);
 extern void ginEntryInsert(Relation index, GinState *ginstate,
 			   OffsetNumber attnum, Datum value,

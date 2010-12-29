@@ -219,6 +219,19 @@ gistbuildCallback(Relation index,
 }
 
 /*
+ *	gistbuildempty() -- build an empty gist index in the initialization fork
+ */
+Datum
+gistbuildempty(PG_FUNCTION_ARGS)
+{
+	ereport(ERROR,
+			(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+			 errmsg("unlogged GIST indexes are not supported")));
+
+	PG_RETURN_VOID();
+}
+
+/*
  *	gistinsert -- wrapper for GiST tuple insertion.
  *
  *	  This is the public interface routine for tuple insertion in GiSTs.

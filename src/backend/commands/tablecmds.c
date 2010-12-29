@@ -5128,12 +5128,12 @@ ATAddForeignKeyConstraint(AlteredTableInfo *tab, Relation rel,
 						RelationGetRelationName(pkrel))));
 
 	/*
-	 * References from permanent tables to temp tables are disallowed because
-	 * the contents of the temp table disappear at the end of each session.
-	 * References from temp tables to permanent tables are also disallowed,
-	 * because other backends might need to run the RI triggers on the perm
-	 * table, but they can't reliably see tuples in the local buffers of other
-	 * backends.
+	 * References from permanent or unlogged tables to temp tables, and from
+	 * permanent tables to unlogged tables, are disallowed because the
+	 * referenced data can vanish out from under us.  References from temp
+	 * tables to any other table type are also disallowed, because other
+	 * backends might need to run the RI triggers on the perm table, but they
+	 * can't reliably see tuples in the local buffers of other backends.
 	 */
 	switch (rel->rd_rel->relpersistence)
 	{
@@ -5142,6 +5142,13 @@ ATAddForeignKeyConstraint(AlteredTableInfo *tab, Relation rel,
 				ereport(ERROR,
 						(errcode(ERRCODE_INVALID_TABLE_DEFINITION),
 						 errmsg("constraints on permanent tables may reference only permanent tables")));
+			break;
+		case RELPERSISTENCE_UNLOGGED:
+			if (pkrel->rd_rel->relpersistence != RELPERSISTENCE_PERMANENT
+				&& pkrel->rd_rel->relpersistence != RELPERSISTENCE_UNLOGGED)
+				ereport(ERROR,
+						(errcode(ERRCODE_INVALID_TABLE_DEFINITION),
+						 errmsg("constraints on unlogged tables may reference only permanent or unlogged tables")));
 			break;
 		case RELPERSISTENCE_TEMP:
 			if (pkrel->rd_rel->relpersistence != RELPERSISTENCE_TEMP)

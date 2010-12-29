@@ -69,7 +69,7 @@ hashbuild(PG_FUNCTION_ARGS)
 	estimate_rel_size(heap, NULL, &relpages, &reltuples);
 
 	/* Initialize the hash index metadata page and initial buckets */
-	num_buckets = _hash_metapinit(index, reltuples);
+	num_buckets = _hash_metapinit(index, reltuples, MAIN_FORKNUM);
 
 	/*
 	 * If we just insert the tuples into the index in scan order, then
@@ -111,6 +111,19 @@ hashbuild(PG_FUNCTION_ARGS)
 	result->index_tuples = buildstate.indtuples;
 
 	PG_RETURN_POINTER(result);
+}
+
+/*
+ *	hashbuildempty() -- build an empty hash index in the initialization fork
+ */
+Datum
+hashbuildempty(PG_FUNCTION_ARGS)
+{
+	Relation	index = (Relation) PG_GETARG_POINTER(0);
+
+	_hash_metapinit(index, 0, INIT_FORKNUM);
+
+	PG_RETURN_VOID();
 }
 
 /*

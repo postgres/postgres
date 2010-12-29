@@ -82,7 +82,7 @@ static bool IsForInput;
 static volatile BufferDesc *PinCountWaitBuf = NULL;
 
 
-static Buffer ReadBuffer_common(SMgrRelation reln,
+static Buffer ReadBuffer_common(SMgrRelation reln, char relpersistence,
 				  ForkNumber forkNum, BlockNumber blockNum,
 				  ReadBufferMode mode, BufferAccessStrategy strategy,
 				  bool *hit);
@@ -97,7 +97,9 @@ static void TerminateBufferIO(volatile BufferDesc *buf, bool clear_dirty,
 				  int set_flag_bits);
 static void shared_buffer_write_error_callback(void *arg);
 static void local_buffer_write_error_callback(void *arg);
-static volatile BufferDesc *BufferAlloc(SMgrRelation smgr, ForkNumber forkNum,
+static volatile BufferDesc *BufferAlloc(SMgrRelation smgr,
+			char relpersistence,
+			ForkNumber forkNum,
 			BlockNumber blockNum,
 			BufferAccessStrategy strategy,
 			bool *foundPtr);
@@ -241,8 +243,8 @@ ReadBufferExtended(Relation reln, ForkNumber forkNum, BlockNumber blockNum,
 	 * miss.
 	 */
 	pgstat_count_buffer_read(reln);
-	buf = ReadBuffer_common(reln->rd_smgr, forkNum, blockNum,
-							mode, strategy, &hit);
+	buf = ReadBuffer_common(reln->rd_smgr, reln->rd_rel->relpersistence,
+							forkNum, blockNum, mode, strategy, &hit);
 	if (hit)
 		pgstat_count_buffer_hit(reln);
 	return buf;
@@ -253,10 +255,10 @@ ReadBufferExtended(Relation reln, ForkNumber forkNum, BlockNumber blockNum,
  * ReadBufferWithoutRelcache -- like ReadBufferExtended, but doesn't require
  *		a relcache entry for the relation.
  *
- * NB: At present, this function may not be used on temporary relations, which
+ * NB: At present, this function may only be used on permanent relations, which
  * is OK, because we only use it during XLOG replay.  If in the future we
- * want to use it on temporary relations, we could pass the backend ID as an
- * additional parameter.
+ * want to use it on temporary or unlogged relations, we could pass additional
+ * parameters.
  */
 Buffer
 ReadBufferWithoutRelcache(RelFileNode rnode, ForkNumber forkNum,
@@ -267,7 +269,8 @@ ReadBufferWithoutRelcache(RelFileNode rnode, ForkNumber forkNum,
 
 	SMgrRelation smgr = smgropen(rnode, InvalidBackendId);
 
-	return ReadBuffer_common(smgr, forkNum, blockNum, mode, strategy, &hit);
+	return ReadBuffer_common(smgr, RELPERSISTENCE_PERMANENT, forkNum, blockNum,
+							 mode, strategy, &hit);
 }
 
 
@@ -277,7 +280,7 @@ ReadBufferWithoutRelcache(RelFileNode rnode, ForkNumber forkNum,
  * *hit is set to true if the request was satisfied from shared buffer cache.
  */
 static Buffer
-ReadBuffer_common(SMgrRelation smgr, ForkNumber forkNum,
+ReadBuffer_common(SMgrRelation smgr, char relpersistence, ForkNumber forkNum,
 				  BlockNumber blockNum, ReadBufferMode mode,
 				  BufferAccessStrategy strategy, bool *hit)
 {
@@ -319,7 +322,8 @@ ReadBuffer_common(SMgrRelation smgr, ForkNumber forkNum,
 		 * lookup the buffer.  IO_IN_PROGRESS is set if the requested block is
 		 * not currently in memory.
 		 */
-		bufHdr = BufferAlloc(smgr, forkNum, blockNum, strategy, &found);
+		bufHdr = BufferAlloc(smgr, relpersistence, forkNum, blockNum,
+							 strategy, &found);
 		if (found)
 			pgBufferUsage.shared_blks_hit++;
 		else
@@ -500,7 +504,7 @@ ReadBuffer_common(SMgrRelation smgr, ForkNumber forkNum,
  * No locks are held either at entry or exit.
  */
 static volatile BufferDesc *
-BufferAlloc(SMgrRelation smgr, ForkNumber forkNum,
+BufferAlloc(SMgrRelation smgr, char relpersistence, ForkNumber forkNum,
 			BlockNumber blockNum,
 			BufferAccessStrategy strategy,
 			bool *foundPtr)
@@ -797,8 +801,11 @@ BufferAlloc(SMgrRelation smgr, ForkNumber forkNum,
 	 * 1 so that the buffer can survive one clock-sweep pass.)
 	 */
 	buf->tag = newTag;
-	buf->flags &= ~(BM_VALID | BM_DIRTY | BM_JUST_DIRTIED | BM_CHECKPOINT_NEEDED | BM_IO_ERROR);
-	buf->flags |= BM_TAG_VALID;
+	buf->flags &= ~(BM_VALID | BM_DIRTY | BM_JUST_DIRTIED | BM_CHECKPOINT_NEEDED | BM_IO_ERROR | BM_PERMANENT);
+	if (relpersistence == RELPERSISTENCE_PERMANENT)
+		buf->flags |= BM_TAG_VALID | BM_PERMANENT;
+	else
+		buf->flags |= BM_TAG_VALID;
 	buf->usage_count = 1;
 
 	UnlockBufHdr(buf);
@@ -1155,8 +1162,10 @@ UnpinBuffer(volatile BufferDesc *buf, bool fixOwner)
  * BufferSync -- Write out all dirty buffers in the pool.
  *
  * This is called at checkpoint time to write out all dirty shared buffers.
- * The checkpoint request flags should be passed in; currently the only one
- * examined is CHECKPOINT_IMMEDIATE, which disables delays between writes.
+ * The checkpoint request flags should be passed in.  If CHECKPOINT_IMMEDIATE
+ * is set, we disable delays between writes; if CHECKPOINT_IS_SHUTDOWN is
+ * set, we write even unlogged buffers, which are otherwise skipped.  The
+ * remaining flags currently have no effect here.
  */
 static void
 BufferSync(int flags)
@@ -1165,9 +1174,17 @@ BufferSync(int flags)
 	int			num_to_scan;
 	int			num_to_write;
 	int			num_written;
+	int			mask = BM_DIRTY;
 
 	/* Make sure we can handle the pin inside SyncOneBuffer */
 	ResourceOwnerEnlargeBuffers(CurrentResourceOwner);
+
+	/*
+	 * Unless this is a shutdown checkpoint, we write only permanent, dirty
+	 * buffers.  But at shutdown time, we write all dirty buffers.
+	 */
+	if (!(flags & CHECKPOINT_IS_SHUTDOWN))
+		flags |= BM_PERMANENT;
 
 	/*
 	 * Loop over all buffers, and mark the ones that need to be written with
@@ -1196,7 +1213,7 @@ BufferSync(int flags)
 		 */
 		LockBufHdr(bufHdr);
 
-		if (bufHdr->flags & BM_DIRTY)
+		if ((bufHdr->flags & mask) == mask)
 		{
 			bufHdr->flags |= BM_CHECKPOINT_NEEDED;
 			num_to_write++;
@@ -1897,12 +1914,12 @@ FlushBuffer(volatile BufferDesc *buf, SMgrRelation reln)
  *		Determines the current number of pages in the relation.
  */
 BlockNumber
-RelationGetNumberOfBlocks(Relation relation)
+RelationGetNumberOfBlocksInFork(Relation relation, ForkNumber forkNum)
 {
 	/* Open it at the smgr level if not already done */
 	RelationOpenSmgr(relation);
 
-	return smgrnblocks(relation->rd_smgr, MAIN_FORKNUM);
+	return smgrnblocks(relation->rd_smgr, forkNum);
 }
 
 /* ---------------------------------------------------------------------

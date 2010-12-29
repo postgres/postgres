@@ -1644,7 +1644,8 @@
       <entry><type>bool</type></entry>
       <entry></entry>
       <entry>
-       <literal>p</> = permanent table, <literal>t</> = temporary table
+       <literal>p</> = permanent table, <literal>u</> = unlogged table,
+       <literal>t</> = temporary table
       </entry>
      </row>
 

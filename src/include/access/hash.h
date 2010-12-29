@@ -242,6 +242,7 @@ typedef HashMetaPageData *HashMetaPage;
 /* public routines */
 
 extern Datum hashbuild(PG_FUNCTION_ARGS);
+extern Datum hashbuildempty(PG_FUNCTION_ARGS);
 extern Datum hashinsert(PG_FUNCTION_ARGS);
 extern Datum hashbeginscan(PG_FUNCTION_ARGS);
 extern Datum hashgettuple(PG_FUNCTION_ARGS);
@@ -291,7 +292,7 @@ extern Buffer _hash_addovflpage(Relation rel, Buffer metabuf, Buffer buf);
 extern BlockNumber _hash_freeovflpage(Relation rel, Buffer ovflbuf,
 				   BufferAccessStrategy bstrategy);
 extern void _hash_initbitmap(Relation rel, HashMetaPage metap,
-				 BlockNumber blkno);
+				 BlockNumber blkno, ForkNumber forkNum);
 extern void _hash_squeezebucket(Relation rel,
 					Bucket bucket, BlockNumber bucket_blkno,
 					BufferAccessStrategy bstrategy);
@@ -303,7 +304,8 @@ extern void _hash_droplock(Relation rel, BlockNumber whichlock, int access);
 extern Buffer _hash_getbuf(Relation rel, BlockNumber blkno,
 			 int access, int flags);
 extern Buffer _hash_getinitbuf(Relation rel, BlockNumber blkno);
-extern Buffer _hash_getnewbuf(Relation rel, BlockNumber blkno);
+extern Buffer _hash_getnewbuf(Relation rel, BlockNumber blkno,
+				ForkNumber forkNum);
 extern Buffer _hash_getbuf_with_strategy(Relation rel, BlockNumber blkno,
 						   int access, int flags,
 						   BufferAccessStrategy bstrategy);
@@ -312,7 +314,8 @@ extern void _hash_dropbuf(Relation rel, Buffer buf);
 extern void _hash_wrtbuf(Relation rel, Buffer buf);
 extern void _hash_chgbufaccess(Relation rel, Buffer buf, int from_access,
 				   int to_access);
-extern uint32 _hash_metapinit(Relation rel, double num_tuples);
+extern uint32 _hash_metapinit(Relation rel, double num_tuples,
+				ForkNumber forkNum);
 extern void _hash_pageinit(Page page, Size size);
 extern void _hash_expandtable(Relation rel, Buffer metabuf);
 

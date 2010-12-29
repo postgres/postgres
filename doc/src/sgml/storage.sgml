@@ -147,7 +147,9 @@ the relation.  The free space map is stored in a file named with the filenode
 number plus the suffix <literal>_fsm</>.  Tables also have a
 <firstterm>visibility map</>, stored in a fork with the suffix <literal>_vm</>,
 to track which pages are known to have no dead tuples.  The visibility map is
-described further in <xref linkend="storage-vm">.
+described further in <xref linkend="storage-vm">.  Unlogged tables and indexes
+have a third fork, known as the initialization fork, which is stored in a fork
+with the suffix <literal>_init</literal> (see <xref linkend="storage-init">).
 </para>
 
 <caution>
@@ -481,6 +483,24 @@ in future it might also be used to avoid visiting the page for visibility
 checks. The map is conservative in the sense that we
 make sure that whenever a bit is set, we know the condition is true, but if
 a bit is not set, it might or might not be true.
+</para>
+
+</sect1>
+
+<sect1 id="storage-init">
+
+<title>The Initialization Fork</title>
+
+<indexterm>
+ <primary>Initialization Fork</primary>
+</indexterm>
+
+<para>
+Each unlogged table, and each index on an unlogged table, has an initialization
+fork.  The initialization fork is an empty table or index of the appropriate
+type.  When an unlogged table must be reset to empty due to a crash, the
+initialization fork is copied over the main fork, and any other forks are
+erased (they will be recreated automatically as needed).
 </para>
 
 </sect1>

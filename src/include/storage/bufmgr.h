@@ -177,12 +177,16 @@ extern void AtEOXact_Buffers(bool isCommit);
 extern void PrintBufferLeakWarning(Buffer buffer);
 extern void CheckPointBuffers(int flags);
 extern BlockNumber BufferGetBlockNumber(Buffer buffer);
-extern BlockNumber RelationGetNumberOfBlocks(Relation relation);
+extern BlockNumber RelationGetNumberOfBlocksInFork(Relation relation,
+								ForkNumber forkNum);
 extern void FlushRelationBuffers(Relation rel);
 extern void FlushDatabaseBuffers(Oid dbid);
 extern void DropRelFileNodeBuffers(RelFileNodeBackend rnode,
 					   ForkNumber forkNum, BlockNumber firstDelBlock);
 extern void DropDatabaseBuffers(Oid dbid);
+
+#define RelationGetNumberOfBlocks(reln) \
+	RelationGetNumberOfBlocksInFork(reln, MAIN_FORKNUM)
 
 #ifdef NOT_USED
 extern void PrintPinnedBufs(void);

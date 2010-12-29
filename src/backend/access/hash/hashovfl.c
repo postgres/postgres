@@ -259,7 +259,7 @@ _hash_getovflpage(Relation rel, Buffer metabuf)
 		 * convenient to pre-mark them as "in use" too.
 		 */
 		bit = metap->hashm_spares[splitnum];
-		_hash_initbitmap(rel, metap, bitno_to_blkno(metap, bit));
+		_hash_initbitmap(rel, metap, bitno_to_blkno(metap, bit), MAIN_FORKNUM);
 		metap->hashm_spares[splitnum]++;
 	}
 	else
@@ -280,7 +280,7 @@ _hash_getovflpage(Relation rel, Buffer metabuf)
 	 * with metapage write lock held; would be better to use a lock that
 	 * doesn't block incoming searches.
 	 */
-	newbuf = _hash_getnewbuf(rel, blkno);
+	newbuf = _hash_getnewbuf(rel, blkno, MAIN_FORKNUM);
 
 	metap->hashm_spares[splitnum]++;
 
@@ -503,7 +503,8 @@ _hash_freeovflpage(Relation rel, Buffer ovflbuf,
  * All bits in the new bitmap page are set to "1", indicating "in use".
  */
 void
-_hash_initbitmap(Relation rel, HashMetaPage metap, BlockNumber blkno)
+_hash_initbitmap(Relation rel, HashMetaPage metap, BlockNumber blkno,
+				 ForkNumber forkNum)
 {
 	Buffer		buf;
 	Page		pg;
@@ -520,7 +521,7 @@ _hash_initbitmap(Relation rel, HashMetaPage metap, BlockNumber blkno)
 	 * page while holding the metapage lock, but this path is taken so seldom
 	 * that it's not worth worrying about.
 	 */
-	buf = _hash_getnewbuf(rel, blkno);
+	buf = _hash_getnewbuf(rel, blkno, forkNum);
 	pg = BufferGetPage(buf);
 
 	/* initialize the page's special space */
