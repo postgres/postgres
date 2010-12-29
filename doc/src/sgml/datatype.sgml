@@ -1538,7 +1538,7 @@ SELECT E'\\xDEADBEEF';
      be equivalent to <type>timestamp without time
      zone</type>, and <productname>PostgreSQL</productname> honors that
      behavior.  (Releases prior to 7.3 treated it as <type>timestamp
-     with time zone</type>.)  <type>timestamptz</type> is taken as an
+     with time zone</type>.)  <type>timestamptz</type> is accepted as an
      abbreviation for <type>timestamp with time zone</type>; this is a
      <productname>PostgreSQL</productname> extension.
     </para>
