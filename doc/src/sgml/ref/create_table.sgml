@@ -22,7 +22,7 @@ PostgreSQL documentation
  <refsynopsisdiv>
 <synopsis>
 CREATE [ [ GLOBAL | LOCAL ] { TEMPORARY | TEMP } ] TABLE [ IF NOT EXISTS ] <replaceable class="PARAMETER">table_name</replaceable> ( [
-  { <replaceable class="PARAMETER">column_name</replaceable> <replaceable class="PARAMETER">data_type</replaceable> [ DEFAULT <replaceable>default_expr</replaceable> ] [ <replaceable class="PARAMETER">column_constraint</replaceable> [ ... ] ]
+  { <replaceable class="PARAMETER">column_name</replaceable> <replaceable class="PARAMETER">data_type</replaceable> [ <replaceable class="PARAMETER">column_constraint</replaceable> [ ... ] ]
     | <replaceable>table_constraint</replaceable>
     | LIKE <replaceable>parent_table</replaceable> [ <replaceable>like_option</replaceable> ... ] }
     [, ... ]
@@ -34,7 +34,7 @@ CREATE [ [ GLOBAL | LOCAL ] { TEMPORARY | TEMP } ] TABLE [ IF NOT EXISTS ] <repl
 
 CREATE [ [ GLOBAL | LOCAL ] { TEMPORARY | TEMP } ] TABLE [ IF NOT EXISTS ] <replaceable class="PARAMETER">table_name</replaceable>
     OF <replaceable class="PARAMETER">type_name</replaceable> [ (
-  { <replaceable class="PARAMETER">column_name</replaceable> WITH OPTIONS [ DEFAULT <replaceable>default_expr</replaceable> ] [ <replaceable class="PARAMETER">column_constraint</replaceable> [ ... ] ]
+  { <replaceable class="PARAMETER">column_name</replaceable> WITH OPTIONS [ <replaceable class="PARAMETER">column_constraint</replaceable> [ ... ] ]
     | <replaceable>table_constraint</replaceable> }
     [, ... ]
 ) ]
@@ -48,6 +48,7 @@ CREATE [ [ GLOBAL | LOCAL ] { TEMPORARY | TEMP } ] TABLE [ IF NOT EXISTS ] <repl
 { NOT NULL |
   NULL |
   CHECK ( <replaceable class="PARAMETER">expression</replaceable> ) |
+  DEFAULT <replaceable>default_expr</replaceable> |
   UNIQUE <replaceable class="PARAMETER">index_parameters</replaceable> |
   PRIMARY KEY <replaceable class="PARAMETER">index_parameters</replaceable> |
   REFERENCES <replaceable class="PARAMETER">reftable</replaceable> [ ( <replaceable class="PARAMETER">refcolumn</replaceable> ) ] [ MATCH FULL | MATCH PARTIAL | MATCH SIMPLE ]
@@ -227,27 +228,6 @@ CREATE [ [ GLOBAL | LOCAL ] { TEMPORARY | TEMP } ] TABLE [ IF NOT EXISTS ] <repl
    </varlistentry>
 
    <varlistentry>
-    <term><literal>DEFAULT
-    <replaceable>default_expr</replaceable></literal></term>
-    <listitem>
-     <para>
-      The <literal>DEFAULT</> clause assigns a default data value for
-      the column whose column definition it appears within.  The value
-      is any variable-free expression (subqueries and cross-references
-      to other columns in the current table are not allowed).  The
-      data type of the default expression must match the data type of the
-      column.
-     </para>
-
-     <para>
-      The default expression will be used in any insert operation that
-      does not specify a value for the column.  If there is no default
-      for a column, then the default is null.
-     </para>
-    </listitem>
-   </varlistentry>
-
-   <varlistentry>
     <term><literal>INHERITS ( <replaceable>parent_table</replaceable> [, ... ] )</literal></term>
     <listitem>
      <para>
@@ -417,6 +397,27 @@ CREATE [ [ GLOBAL | LOCAL ] { TEMPORARY | TEMP } ] TABLE [ IF NOT EXISTS ] <repl
       Currently, <literal>CHECK</literal> expressions cannot contain
       subqueries nor refer to variables other than columns of the
       current row.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><literal>DEFAULT
+    <replaceable>default_expr</replaceable></literal></term>
+    <listitem>
+     <para>
+      The <literal>DEFAULT</> clause assigns a default data value for
+      the column whose column definition it appears within.  The value
+      is any variable-free expression (subqueries and cross-references
+      to other columns in the current table are not allowed).  The
+      data type of the default expression must match the data type of the
+      column.
+     </para>
+
+     <para>
+      The default expression will be used in any insert operation that
+      does not specify a value for the column.  If there is no default
+      for a column, then the default is null.
      </para>
     </listitem>
    </varlistentry>
