@@ -14,7 +14,7 @@
 
 
 static void	check_data_dir(migratorContext *ctx, const char *pg_data);
-static void check_bin_dir(migratorContext *ctx, ClusterInfo *cluster);
+static void check_bin_dir(migratorContext *ctx, ClusterInfo *cluster, Cluster whichCluster);
 static int	check_exec(migratorContext *ctx, const char *dir, const char *cmdName);
 static const char *validate_exec(const char *path);
 
@@ -99,7 +99,7 @@ verify_directories(migratorContext *ctx)
 	check_ok(ctx);
 
 	prep_status(ctx, "Checking old bin directory (%s)", ctx->old.bindir);
-	check_bin_dir(ctx, &ctx->old);
+	check_bin_dir(ctx, &ctx->old, CLUSTER_OLD);
 	check_ok(ctx);
 
 	prep_status(ctx, "Checking new data directory (%s)", ctx->new.pgdata);
@@ -107,7 +107,7 @@ verify_directories(migratorContext *ctx)
 	check_ok(ctx);
 
 	prep_status(ctx, "Checking new bin directory (%s)", ctx->new.bindir);
-	check_bin_dir(ctx, &ctx->new);
+	check_bin_dir(ctx, &ctx->new, CLUSTER_NEW);
 	check_ok(ctx);
 }
 
@@ -158,12 +158,18 @@ check_data_dir(migratorContext *ctx, const char *pg_data)
  *	exit().
  */
 static void
-check_bin_dir(migratorContext *ctx, ClusterInfo *cluster)
+check_bin_dir(migratorContext *ctx, ClusterInfo *cluster, Cluster whichCluster)
 {
 	check_exec(ctx, cluster->bindir, "postgres");
-	check_exec(ctx, cluster->bindir, "psql");
 	check_exec(ctx, cluster->bindir, "pg_ctl");
-	check_exec(ctx, cluster->bindir, "pg_dumpall");
+	check_exec(ctx, cluster->bindir, "pg_resetxlog");
+	if (whichCluster == CLUSTER_NEW)
+	{
+		/* these are only needed in the new cluster */
+		check_exec(ctx, cluster->bindir, "pg_config");
+		check_exec(ctx, cluster->bindir, "psql");
+		check_exec(ctx, cluster->bindir, "pg_dumpall");
+	}
 }
 
 

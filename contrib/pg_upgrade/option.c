@@ -308,7 +308,11 @@ validateDirectoryOption(migratorContext *ctx, char **dirpath,
 static void
 get_pkglibdirs(migratorContext *ctx)
 {
-	ctx->old.libpath = get_pkglibdir(ctx, ctx->old.bindir);
+	/*
+	 * we do not need to know the libpath in the old cluster, and might not
+	 * have a working pg_config to ask for it anyway.
+	 */
+	ctx->old.libpath = NULL;
 	ctx->new.libpath = get_pkglibdir(ctx, ctx->new.bindir);
 }
 
