@@ -14,7 +14,7 @@
 
 
 static void check_data_dir(const char *pg_data);
-static void check_bin_dir(ClusterInfo *cluster);
+static void check_bin_dir(ClusterInfo *cluster, Cluster whichCluster);
 static int	check_exec(const char *dir, const char *cmdName);
 static const char *validate_exec(const char *path);
 
@@ -99,7 +99,7 @@ verify_directories(void)
 	check_ok();
 
 	prep_status("Checking old bin directory (%s)", old_cluster.bindir);
-	check_bin_dir(&old_cluster);
+	check_bin_dir(&old_cluster, CLUSTER_OLD);
 	check_ok();
 
 	prep_status("Checking new data directory (%s)", new_cluster.pgdata);
@@ -107,7 +107,7 @@ verify_directories(void)
 	check_ok();
 
 	prep_status("Checking new bin directory (%s)", new_cluster.bindir);
-	check_bin_dir(&new_cluster);
+	check_bin_dir(&new_cluster, CLUSTER_NEW);
 	check_ok();
 }
 
@@ -158,12 +158,18 @@ check_data_dir(const char *pg_data)
  *	exit().
  */
 static void
-check_bin_dir(ClusterInfo *cluster)
+check_bin_dir(ClusterInfo *cluster, Cluster whichCluster)
 {
 	check_exec(cluster->bindir, "postgres");
-	check_exec(cluster->bindir, "psql");
 	check_exec(cluster->bindir, "pg_ctl");
-	check_exec(cluster->bindir, "pg_dumpall");
+	check_exec(cluster->bindir, "pg_resetxlog");
+	if (whichCluster == CLUSTER_NEW)
+	{
+		/* these are only needed in the new cluster */
+		check_exec(cluster->bindir, "pg_config");
+		check_exec(cluster->bindir, "psql");
+		check_exec(cluster->bindir, "pg_dumpall");
+	}
 }
 
 
