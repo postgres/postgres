@@ -184,7 +184,7 @@ CREATE ROLE <replaceable class="PARAMETER">name</replaceable> [ [ WITH ] <replac
         streaming replication or put the system in and out of backup mode.
         A role having the <literal>REPLICATION</> attribute is a very
         highly privileged role, and should only be used on roles actually
-	used for replication. If not specified,
+        used for replication. If not specified,
         <literal>NOREPLICATION</literal> is the default.
        </para>
       </listitem>
