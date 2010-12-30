@@ -133,9 +133,6 @@ typedef struct SlruCtlData
 
 typedef SlruCtlData *SlruCtl;
 
-/* Opaque struct known only in slru.c */
-typedef struct SlruFlushData *SlruFlush;
-
 
 extern Size SimpleLruShmemSize(int nslots, int nlsns);
 extern void SimpleLruInit(SlruCtl ctl, const char *name, int nslots, int nlsns,
@@ -145,7 +142,7 @@ extern int SimpleLruReadPage(SlruCtl ctl, int pageno, bool write_ok,
 				  TransactionId xid);
 extern int SimpleLruReadPage_ReadOnly(SlruCtl ctl, int pageno,
 						   TransactionId xid);
-extern void SimpleLruWritePage(SlruCtl ctl, int slotno, SlruFlush fdata);
+extern void SimpleLruWritePage(SlruCtl ctl, int slotno);
 extern void SimpleLruFlush(SlruCtl ctl, bool checkpoint);
 extern void SimpleLruTruncate(SlruCtl ctl, int cutoffPage);
 extern bool SlruScanDirectory(SlruCtl ctl, int cutoffPage, bool doDeletions);

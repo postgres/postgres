@@ -445,7 +445,7 @@ BootStrapCLOG(void)
 	slotno = ZeroCLOGPage(0, false);
 
 	/* Make sure it's written out */
-	SimpleLruWritePage(ClogCtl, slotno, NULL);
+	SimpleLruWritePage(ClogCtl, slotno);
 	Assert(!ClogCtl->shared->page_dirty[slotno]);
 
 	LWLockRelease(CLogControlLock);
@@ -698,7 +698,7 @@ clog_redo(XLogRecPtr lsn, XLogRecord *record)
 		LWLockAcquire(CLogControlLock, LW_EXCLUSIVE);
 
 		slotno = ZeroCLOGPage(pageno, false);
-		SimpleLruWritePage(ClogCtl, slotno, NULL);
+		SimpleLruWritePage(ClogCtl, slotno);
 		Assert(!ClogCtl->shared->page_dirty[slotno]);
 
 		LWLockRelease(CLogControlLock);

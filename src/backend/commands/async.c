@@ -507,7 +507,7 @@ AsyncShmemInit(void)
 		LWLockAcquire(AsyncCtlLock, LW_EXCLUSIVE);
 		slotno = SimpleLruZeroPage(AsyncCtl, QUEUE_POS_PAGE(QUEUE_HEAD));
 		/* This write is just to verify that pg_notify/ is writable */
-		SimpleLruWritePage(AsyncCtl, slotno, NULL);
+		SimpleLruWritePage(AsyncCtl, slotno);
 		LWLockRelease(AsyncCtlLock);
 	}
 }
