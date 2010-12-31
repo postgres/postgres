@@ -117,8 +117,9 @@ last started with</entry>
 <row>
  <entry><filename>postmaster.pid</></entry>
  <entry>A lock file recording the current postmaster process id (PID),
- cluster data directory, port number, Unix domain socket directory,
- and shared memory segment ID</entry>
+ postmaster start time, cluster data directory, port number, user-specified
+ Unix domain socket directory, first valid listen_address host, and
+ shared memory segment ID</entry>
 </row>
 
 </tbody>

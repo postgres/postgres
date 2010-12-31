@@ -46,7 +46,20 @@
 
 
 #define DIRECTORY_LOCK_FILE		"postmaster.pid"
-
+/*
+ *	The lock file contents are:
+ *
+ * line #
+ *		1	pid
+ *		2	postmaster start time
+ *		3	data directory
+ *		4	port #
+ *		5	user-specified socket directory
+ *			(the lines below are added later)
+ *		6	first valid listen_address
+ *		7	shared memory key
+ */
+	
 ProcessingMode Mode = InitProcessing;
 
 /* Note: we rely on this to initialize as zeroes */
@@ -678,7 +691,7 @@ CreateLockFile(const char *filename, bool amPostmaster,
 			   bool isDDLock, const char *refName)
 {
 	int			fd;
-	char		buffer[MAXPGPATH * 2 + 256];
+	char		buffer[MAXPGPATH * 3 + 256];
 	int			ntries;
 	int			len;
 	int			encoded_pid;
@@ -845,11 +858,10 @@ CreateLockFile(const char *filename, bool amPostmaster,
 		if (isDDLock)
 		{
 			char	   *ptr = buffer;
-			unsigned long id1,
-						id2;
+			unsigned long id1, id2;
 			int lineno;
 
-			for (lineno = 1; lineno <= 4; lineno++)
+			for (lineno = 1; lineno <= LOCK_FILE_LINES - 1; lineno++)
 			{
 				if ((ptr = strchr(ptr, '\n')) == NULL)
 				{
@@ -893,9 +905,10 @@ CreateLockFile(const char *filename, bool amPostmaster,
 	/*
 	 * Successfully created the file, now fill it.
 	 */
-	snprintf(buffer, sizeof(buffer), "%d\n%s\n%d\n%s\n",
+	snprintf(buffer, sizeof(buffer), "%d\n%ld\n%s\n%d\n%s\n",
 			 amPostmaster ? (int) my_pid : -((int) my_pid),
-			 DataDir, PostPortNumber, UnixSocketDir);
+			 (long) MyStartTime, DataDir, PostPortNumber,
+			 UnixSocketDir);
 	errno = 0;
 	if (write(fd, buffer, strlen(buffer)) != strlen(buffer))
 	{
@@ -1004,24 +1017,19 @@ TouchSocketLockFile(void)
 	}
 }
 
+
 /*
- * Append information about a shared memory segment to the data directory
- * lock file.
- *
- * This may be called multiple times in the life of a postmaster, if we
- * delete and recreate shmem due to backend crash.	Therefore, be prepared
- * to overwrite existing information.  (As of 7.1, a postmaster only creates
- * one shm seg at a time; but for the purposes here, if we did have more than
- * one then any one of them would do anyway.)
+ * Add lines to the data directory lock file.  This erases all following
+ * lines, but that is OK because lines are added in order.
  */
 void
-RecordSharedMemoryInLockFile(unsigned long id1, unsigned long id2)
+AddToLockFile(int target_line, const char *str)
 {
 	int			fd;
 	int			len;
 	int			lineno;
 	char	   *ptr;
-	char		buffer[MAXPGPATH * 2 + 256];
+	char		buffer[MAXPGPATH * 3 + 256];
 
 	fd = open(DIRECTORY_LOCK_FILE, O_RDWR | PG_BINARY, 0);
 	if (fd < 0)
@@ -1048,7 +1056,7 @@ RecordSharedMemoryInLockFile(unsigned long id1, unsigned long id2)
 	 * Skip over first four lines (PID, pgdata, portnum, socketdir).
 	 */
 	ptr = buffer;
-	for (lineno = 1; lineno <= 4; lineno++)
+	for (lineno = 1; lineno < target_line; lineno++)
 	{
 		if ((ptr = strchr(ptr, '\n')) == NULL)
 		{
@@ -1059,11 +1067,7 @@ RecordSharedMemoryInLockFile(unsigned long id1, unsigned long id2)
 		ptr++;
 	}
 	
-	/*
-	 * Append key information.	Format to try to keep it the same length
-	 * always (trailing junk won't hurt, but might confuse humans).
-	 */
-	sprintf(ptr, "%9lu %9lu\n", id1, id2);
+	strlcat(buffer, str, sizeof(buffer));
 
 	/*
 	 * And rewrite the data.  Since we write in a single kernel call, this

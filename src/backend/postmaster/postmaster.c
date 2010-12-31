@@ -483,7 +483,8 @@ PostmasterMain(int argc, char *argv[])
 	int			status;
 	char	   *userDoption = NULL;
 	int			i;
-
+	bool		connection_line_output = false;
+	
 	MyProcPid = PostmasterPid = getpid();
 
 	MyStartTime = time(NULL);
@@ -860,10 +861,22 @@ PostmasterMain(int argc, char *argv[])
 										  UnixSocketDir,
 										  ListenSocket, MAXLISTEN);
 			else
+			{
 				status = StreamServerPort(AF_UNSPEC, curhost,
 										  (unsigned short) PostPortNumber,
 										  UnixSocketDir,
 										  ListenSocket, MAXLISTEN);
+				/* must supply a valid listen_address for PQping() */
+				if (!connection_line_output)
+				{
+					char line[MAXPGPATH + 2];
+
+					sprintf(line, "%s\n", curhost);
+					AddToLockFile(LOCK_FILE_LINES - 1, line);
+					connection_line_output = true;
+				}
+			}
+				
 			if (status == STATUS_OK)
 				success++;
 			else
@@ -879,6 +892,10 @@ PostmasterMain(int argc, char *argv[])
 		list_free(elemlist);
 		pfree(rawstring);
 	}
+
+	/* Supply an empty listen_address line for PQping() */
+	if (!connection_line_output)
+		AddToLockFile(LOCK_FILE_LINES - 1, "\n");
 
 #ifdef USE_BONJOUR
 	/* Register for Bonjour only if we opened TCP socket(s) */

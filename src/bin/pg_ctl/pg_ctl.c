@@ -22,6 +22,7 @@
 
 #include <locale.h>
 #include <signal.h>
+#include <stdlib.h>
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <unistd.h>
@@ -138,6 +139,7 @@ static void read_post_opts(void);
 
 static PGPing test_postmaster_connection(bool);
 static bool postmaster_is_alive(pid_t pid);
+static time_t start_time;
 
 static char postopts_file[MAXPGPATH];
 static char pid_file[MAXPGPATH];
@@ -404,13 +406,13 @@ static PGPing
 test_postmaster_connection(bool do_checkpoint)
 {
 	int			portnum = 0;
-	char		socket_dir[MAXPGPATH];
+	char		host_str[MAXPGPATH];
 	char		connstr[MAXPGPATH + 256];
 	PGPing		ret = PQPING_OK;	/* assume success for wait == zero */
 	char	  **optlines;
 	int			i;
 
-	socket_dir[0] = '\0';
+	host_str[0] = '\0';
 	connstr[0] = '\0';
 	
 	for (i = 0; i < wait_seconds; i++)
@@ -425,13 +427,14 @@ test_postmaster_connection(bool do_checkpoint)
 			 *		0	lock file created but status not written
 			 *		2	pre-9.1 server, shared memory not created
 			 *		3	pre-9.1 server, shared memory created
-			 *		4	9.1+ server, shared memory not created
-			 *		5	9.1+ server, shared memory created
+			 *		5	9.1+ server, listen host not created
+			 *		6	9.1+ server, shared memory not created
+			 *		7	9.1+ server, shared memory created
 			 *
 			 *	For pre-9.1 Unix servers, we grab the port number from the
 			 *	shmem key (first value on line 3).  Pre-9.1 Win32 has no
-			 *	written shmem key, so we fail.  9.1+ writes both the port
-			 *	number and socket address in the file for us to use.
+			 *	written shmem key, so we fail.  9.1+ writes connection
+			 *	information in the file for us to use.
 			 *	(PG_VERSION could also have told us the major version.)
 			 */
 		
@@ -439,7 +442,10 @@ test_postmaster_connection(bool do_checkpoint)
 			if ((optlines = readfile(pid_file)) != NULL &&
 				optlines[0] != NULL &&
 				optlines[1] != NULL &&
-				optlines[2] != NULL)
+				optlines[2] != NULL &&
+				/* pre-9.1 server or listen_address line is present? */
+				(optlines[3] == NULL ||
+				 optlines[5] != NULL))
 			{				
 				/* A 3-line file? */
 				if (optlines[3] == NULL)
@@ -459,31 +465,53 @@ test_postmaster_connection(bool do_checkpoint)
 						return PQPING_NO_ATTEMPT;
 					}
 				}
-				else	/* 9.1+ server */
+				else
 				{
-					portnum = atoi(optlines[2]);
-	
-					/* Get socket directory, if specified. */
-					if (optlines[3][0] != '\n')
+					/*
+					 *	Easy check to see if we are looking at the right
+					 *	data directory:  Is the postmaster older than this
+					 *	execution of pg_ctl?  Subtract 2 seconds to account
+					 *	for possible clock skew between pg_ctl and the
+					 *	postmaster.
+					 */
+					if (atol(optlines[1]) < start_time - 2)
 					{
-						/*
-						 *	While unix_socket_directory can accept relative
-						 *	directories, libpq's host must have a leading slash
-						 *	to indicate a socket directory.
-						 */
-						if (optlines[3][0] != '/')
-						{
-							write_stderr(_("%s: -w option cannot use a relative socket directory specification\n"),
-										 progname);
-							return PQPING_NO_ATTEMPT;
-						}
-						strlcpy(socket_dir, optlines[3], MAXPGPATH);
-						/* remove newline */
-						if (strchr(socket_dir, '\n') != NULL)
-							*strchr(socket_dir, '\n') = '\0';
+						write_stderr(_("%s: this data directory is running an older postmaster\n"),
+									 progname);
+						return PQPING_NO_ATTEMPT;
 					}
-				}
+						
+					portnum = atoi(optlines[3]);
 
+					/*
+					 *	Determine the proper host string to use.
+					 */
+#ifdef HAVE_UNIX_SOCKETS
+					/*
+					 *	Use socket directory, if specified.  We assume if we
+					 *	have unix sockets, the server does too because we
+					 *	just started the postmaster.
+					 */
+					/*
+					 *	While unix_socket_directory can accept relative
+					 *	directories, libpq's host must have a leading slash
+					 *	to indicate a socket directory.
+					 */
+					if (optlines[4][0] != '\n' && optlines[4][0] != '/')
+					{
+						write_stderr(_("%s: -w option cannot use a relative socket directory specification\n"),
+									 progname);
+						return PQPING_NO_ATTEMPT;
+					}
+					strlcpy(host_str, optlines[4], sizeof(host_str));
+#else
+					strlcpy(host_str, optlines[5], sizeof(host_str));
+#endif
+					/* remove newline */
+					if (strchr(host_str, '\n') != NULL)
+						*strchr(host_str, '\n') = '\0';
+				}
+				
 				/*
 				 * We need to set connect_timeout otherwise on Windows the
 				 * Service Control Manager (SCM) will probably timeout first.
@@ -491,9 +519,9 @@ test_postmaster_connection(bool do_checkpoint)
 				snprintf(connstr, sizeof(connstr),
 						 "dbname=postgres port=%d connect_timeout=5", portnum);
 
-				if (socket_dir[0] != '\0')
+				if (host_str[0] != '\0')
 					snprintf(connstr + strlen(connstr), sizeof(connstr) - strlen(connstr),
-						" host='%s'", socket_dir);
+						" host='%s'", host_str);
 			}
 		}
 
@@ -1756,6 +1784,7 @@ main(int argc, char **argv)
 
 	progname = get_progname(argv[0]);
 	set_pglocale_pgservice(argv[0], PG_TEXTDOMAIN("pg_ctl"));
+	start_time = time(NULL);
 
 	/*
 	 * save argv[0] so do_start() can look for the postmaster if necessary. we

@@ -104,7 +104,7 @@ on_exit_reset(void)
 }
 
 void
-RecordSharedMemoryInLockFile(unsigned long id1, unsigned long id2)
+AddToLockFile(int target_line, const char *str)
 {
 }
 
