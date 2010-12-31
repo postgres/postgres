@@ -113,6 +113,8 @@ typedef struct HashJoinTableData
 	struct HashJoinTupleData **buckets;
 	/* buckets array is per-batch storage, as are all the tuples */
 
+	bool		keepNulls;		/* true to store unmatchable NULL tuples */
+
 	bool		skewEnabled;	/* are we using skew optimization? */
 	HashSkewBucket **skewBucket;	/* hashtable of skew buckets */
 	int			skewBucketLen;	/* size of skewBucket array (a power of 2!) */

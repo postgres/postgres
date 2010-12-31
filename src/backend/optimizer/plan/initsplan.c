@@ -1328,10 +1328,9 @@ distribute_restrictinfo_to_rels(PlannerInfo *root,
 
 			/*
 			 * Check for hashjoinable operators.  (We don't bother setting the
-			 * hashjoin info if we're not going to need it.)
+			 * hashjoin info except in true join clauses.)
 			 */
-			if (enable_hashjoin)
-				check_hashjoinable(restrictinfo);
+			check_hashjoinable(restrictinfo);
 
 			/*
 			 * Add clause to the join lists of all the relevant relations.
@@ -1458,10 +1457,9 @@ build_implied_join_equality(Oid opno,
 									 qualscope, /* required_relids */
 									 NULL);		/* nullable_relids */
 
-	/* Set mergejoinability info always, and hashjoinability if enabled */
+	/* Set mergejoinability/hashjoinability flags */
 	check_mergejoinable(restrictinfo);
-	if (enable_hashjoin)
-		check_hashjoinable(restrictinfo);
+	check_hashjoinable(restrictinfo);
 
 	return restrictinfo;
 }

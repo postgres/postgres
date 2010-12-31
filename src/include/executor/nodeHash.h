@@ -22,7 +22,8 @@ extern Node *MultiExecHash(HashState *node);
 extern void ExecEndHash(HashState *node);
 extern void ExecReScanHash(HashState *node);
 
-extern HashJoinTable ExecHashTableCreate(Hash *node, List *hashOperators);
+extern HashJoinTable ExecHashTableCreate(Hash *node, List *hashOperators,
+										 bool keepNulls);
 extern void ExecHashTableDestroy(HashJoinTable hashtable);
 extern void ExecHashTableInsert(HashJoinTable hashtable,
 					TupleTableSlot *slot,
@@ -37,9 +38,12 @@ extern void ExecHashGetBucketAndBatch(HashJoinTable hashtable,
 						  uint32 hashvalue,
 						  int *bucketno,
 						  int *batchno);
-extern HashJoinTuple ExecScanHashBucket(HashJoinState *hjstate,
-				   ExprContext *econtext);
+extern bool ExecScanHashBucket(HashJoinState *hjstate, ExprContext *econtext);
+extern void ExecPrepHashTableForUnmatched(HashJoinState *hjstate);
+extern bool ExecScanHashTableForUnmatched(HashJoinState *hjstate,
+										  ExprContext *econtext);
 extern void ExecHashTableReset(HashJoinTable hashtable);
+extern void ExecHashTableResetMatchFlags(HashJoinTable hashtable);
 extern void ExecChooseHashTableSize(double ntuples, int tupwidth, bool useskew,
 						int *numbuckets,
 						int *numbatches,

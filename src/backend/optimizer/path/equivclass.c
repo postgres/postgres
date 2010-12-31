@@ -889,8 +889,8 @@ generate_join_implied_equalities_normal(PlannerInfo *root,
 	 * combination for which an opfamily member operator exists.  If we have
 	 * choices, we prefer simple Var members (possibly with RelabelType) since
 	 * these are (a) cheapest to compute at runtime and (b) most likely to
-	 * have useful statistics.	Also, if enable_hashjoin is on, we prefer
-	 * operators that are also hashjoinable.
+	 * have useful statistics. Also, prefer operators that are also
+	 * hashjoinable.
 	 */
 	if (outer_members && inner_members)
 	{
@@ -925,8 +925,7 @@ generate_join_implied_equalities_normal(PlannerInfo *root,
 					(IsA(inner_em->em_expr, RelabelType) &&
 					 IsA(((RelabelType *) inner_em->em_expr)->arg, Var)))
 					score++;
-				if (!enable_hashjoin ||
-					op_hashjoinable(eq_op,
+				if (op_hashjoinable(eq_op,
 									exprType((Node *) outer_em->em_expr)))
 					score++;
 				if (score > best_score)
