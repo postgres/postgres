@@ -42,7 +42,7 @@ static List *select_mergejoin_clauses(PlannerInfo *root,
 						 RelOptInfo *innerrel,
 						 List *restrictlist,
 						 JoinType jointype,
-						 bool *have_nonmergeable_clause);
+						 bool *mergejoin_allowed);
 
 
 /*
@@ -78,7 +78,7 @@ add_paths_to_joinrel(PlannerInfo *root,
 					 List *restrictlist)
 {
 	List	   *mergeclause_list = NIL;
-	bool		have_nonmergeable_clause = false;
+	bool		mergejoin_allowed = true;
 
 	/*
 	 * Find potential mergejoin clauses.  We can skip this if we are not
@@ -93,13 +93,13 @@ add_paths_to_joinrel(PlannerInfo *root,
 													innerrel,
 													restrictlist,
 													jointype,
-													&have_nonmergeable_clause);
+													&mergejoin_allowed);
 
 	/*
 	 * 1. Consider mergejoin paths where both relations must be explicitly
 	 * sorted.  Skip this if we can't mergejoin.
 	 */
-	if (!have_nonmergeable_clause)
+	if (mergejoin_allowed)
 		sort_inner_and_outer(root, joinrel, outerrel, innerrel,
 							 restrictlist, mergeclause_list, jointype, sjinfo);
 
@@ -108,9 +108,9 @@ add_paths_to_joinrel(PlannerInfo *root,
 	 * sorted. This includes both nestloops and mergejoins where the outer
 	 * path is already ordered.  Again, skip this if we can't mergejoin.
 	 * (That's okay because we know that nestloop can't handle right/full
-	 * joins at all, so it wouldn't work in those cases either.)
+	 * joins at all, so it wouldn't work in the prohibited cases either.)
 	 */
-	if (!have_nonmergeable_clause)
+	if (mergejoin_allowed)
 		match_unsorted_outer(root, joinrel, outerrel, innerrel,
 							 restrictlist, mergeclause_list, jointype, sjinfo);
 
@@ -127,7 +127,7 @@ add_paths_to_joinrel(PlannerInfo *root,
 	 * those made by match_unsorted_outer when add_paths_to_joinrel() is
 	 * invoked with the two rels given in the other order.
 	 */
-	if (!have_nonmergeable_clause)
+	if (mergejoin_allowed)
 		match_unsorted_inner(root, joinrel, outerrel, innerrel,
 							 restrictlist, mergeclause_list, jointype, sjinfo);
 #endif
@@ -927,10 +927,14 @@ best_appendrel_indexscan(PlannerInfo *root, RelOptInfo *rel,
  *	  Select mergejoin clauses that are usable for a particular join.
  *	  Returns a list of RestrictInfo nodes for those clauses.
  *
- * *have_nonmergeable_clause is set TRUE if this is a right/full join and
- * there are nonmergejoinable join clauses.  The executor's mergejoin
- * machinery cannot handle such cases, so we have to avoid generating a
- * mergejoin plan.
+ * *mergejoin_allowed is normally set to TRUE, but it is set to FALSE if
+ * this is a right/full join and there are nonmergejoinable join clauses.
+ * The executor's mergejoin machinery cannot handle such cases, so we have
+ * to avoid generating a mergejoin plan.  (Note that this flag does NOT
+ * consider whether there are actually any mergejoinable clauses.  This is
+ * correct because in some cases we need to build a clauseless mergejoin.
+ * Simply returning NIL is therefore not enough to distinguish safe from
+ * unsafe cases.)
  *
  * We also mark each selected RestrictInfo to show which side is currently
  * being considered as outer.  These are transient markings that are only
@@ -947,13 +951,12 @@ select_mergejoin_clauses(PlannerInfo *root,
 						 RelOptInfo *innerrel,
 						 List *restrictlist,
 						 JoinType jointype,
-						 bool *have_nonmergeable_clause)
+						 bool *mergejoin_allowed)
 {
 	List	   *result_list = NIL;
 	bool		isouterjoin = IS_OUTER_JOIN(jointype);
+	bool		have_nonmergeable_joinclause = false;
 	ListCell   *l;
-
-	*have_nonmergeable_clause = false;
 
 	foreach(l, restrictlist)
 	{
@@ -962,7 +965,7 @@ select_mergejoin_clauses(PlannerInfo *root,
 		/*
 		 * If processing an outer join, only use its own join clauses in the
 		 * merge.  For inner joins we can use pushed-down clauses too. (Note:
-		 * we don't set have_nonmergeable_clause here because pushed-down
+		 * we don't set have_nonmergeable_joinclause here because pushed-down
 		 * clauses will become otherquals not joinquals.)
 		 */
 		if (isouterjoin && restrictinfo->is_pushed_down)
@@ -979,7 +982,7 @@ select_mergejoin_clauses(PlannerInfo *root,
 			 * FALSE.)
 			 */
 			if (!restrictinfo->clause || !IsA(restrictinfo->clause, Const))
-				*have_nonmergeable_clause = true;
+				have_nonmergeable_joinclause = true;
 			continue;			/* not mergejoinable */
 		}
 
@@ -988,7 +991,7 @@ select_mergejoin_clauses(PlannerInfo *root,
 		 */
 		if (!clause_sides_match_join(restrictinfo, outerrel, innerrel))
 		{
-			*have_nonmergeable_clause = true;
+			have_nonmergeable_joinclause = true;
 			continue;			/* no good for these input relations */
 		}
 
@@ -1017,7 +1020,7 @@ select_mergejoin_clauses(PlannerInfo *root,
 		if (EC_MUST_BE_REDUNDANT(restrictinfo->left_ec) ||
 			EC_MUST_BE_REDUNDANT(restrictinfo->right_ec))
 		{
-			*have_nonmergeable_clause = true;
+			have_nonmergeable_joinclause = true;
 			continue;			/* can't handle redundant eclasses */
 		}
 
@@ -1025,18 +1028,16 @@ select_mergejoin_clauses(PlannerInfo *root,
 	}
 
 	/*
-	 * If it is not a right/full join then we don't need to insist on all the
-	 * joinclauses being mergejoinable, so reset the flag.  This simplifies
-	 * the logic in add_paths_to_joinrel.
+	 * Report whether mergejoin is allowed (see comment at top of function).
 	 */
 	switch (jointype)
 	{
 		case JOIN_RIGHT:
 		case JOIN_FULL:
+			*mergejoin_allowed = !have_nonmergeable_joinclause;
 			break;
 		default:
-			/* otherwise, it's OK to have nonmergeable join quals */
-			*have_nonmergeable_clause = false;
+			*mergejoin_allowed = true;
 			break;
 	}
 
