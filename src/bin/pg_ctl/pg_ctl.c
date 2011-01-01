@@ -23,6 +23,7 @@
 #include <locale.h>
 #include <signal.h>
 #include <stdlib.h>
+#include <time.h>
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <unistd.h>
