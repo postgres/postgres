@@ -15,8 +15,7 @@
 static void get_db_infos(ClusterInfo *cluster);
 static void dbarr_print(ClusterInfo *cluster);
 static void relarr_print(RelInfoArr *arr);
-static void get_rel_infos(ClusterInfo *cluster, const DbInfo *dbinfo,
-			  RelInfoArr *relarr);
+static void get_rel_infos(ClusterInfo *cluster, const int dbnum);
 static void relarr_free(RelInfoArr *rel_arr);
 static void map_rel(const RelInfo *oldrel,
 		const RelInfo *newrel, const DbInfo *old_db,
@@ -272,8 +271,7 @@ get_db_and_rel_infos(ClusterInfo *cluster)
 	get_db_infos(cluster);
 
 	for (dbnum = 0; dbnum < cluster->dbarr.ndbs; dbnum++)
-		get_rel_infos(cluster, &cluster->dbarr.dbs[dbnum],
-					  &cluster->dbarr.dbs[dbnum].rel_arr);
+		get_rel_infos(cluster, dbnum);
 
 	if (log_opts.debug)
 		dbarr_print(cluster);
@@ -290,9 +288,10 @@ get_db_and_rel_infos(ClusterInfo *cluster)
  * FirstNormalObjectId belongs to the user
  */
 static void
-get_rel_infos(ClusterInfo *cluster, const DbInfo *dbinfo, RelInfoArr *relarr)
+get_rel_infos(ClusterInfo *cluster, const int dbnum)
 {
-	PGconn	   *conn = connectToServer(cluster, dbinfo->db_name);
+	PGconn	   *conn = connectToServer(cluster,
+									   cluster->dbarr.dbs[dbnum].db_name);
 	PGresult   *res;
 	RelInfo    *relinfos;
 	int			ntups;
@@ -374,16 +373,16 @@ get_rel_infos(ClusterInfo *cluster, const DbInfo *dbinfo, RelInfoArr *relarr)
 		tblspace = PQgetvalue(res, relnum, i_spclocation);
 		/* if no table tablespace, use the database tablespace */
 		if (strlen(tblspace) == 0)
-			tblspace = dbinfo->db_tblspace;
+			tblspace = cluster->dbarr.dbs[dbnum].db_tblspace;
 		strlcpy(curr->tablespace, tblspace, sizeof(curr->tablespace));
 	}
 	PQclear(res);
 
 	PQfinish(conn);
 
-	relarr->rels = relinfos;
-	relarr->nrels = num_rels;
-	relarr->last_relname_lookup = 0;
+	cluster->dbarr.dbs[dbnum].rel_arr.rels = relinfos;
+	cluster->dbarr.dbs[dbnum].rel_arr.nrels = num_rels;
+	cluster->dbarr.dbs[dbnum].rel_arr.last_relname_lookup = 0;
 }
 
 

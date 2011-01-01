@@ -384,8 +384,6 @@ cleanup(void)
 	dbarr_free(&new_cluster.dbarr);
 	pg_free(log_opts.filename);
 	pg_free(os_info.user);
-	pg_free(old_cluster.major_version_str);
-	pg_free(new_cluster.major_version_str);
 	pg_free(old_cluster.controldata.lc_collate);
 	pg_free(new_cluster.controldata.lc_collate);
 	pg_free(old_cluster.controldata.lc_ctype);

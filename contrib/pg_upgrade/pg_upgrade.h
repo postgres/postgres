@@ -179,7 +179,7 @@ typedef struct
 	char	   *bindir;			/* pathname for cluster's executable directory */
 	unsigned short port;		/* port number where postmaster is waiting */
 	uint32		major_version;	/* PG_VERSION of cluster */
-	char	   *major_version_str;		/* string PG_VERSION of cluster */
+	char	   major_version_str[64];		/* string PG_VERSION of cluster */
 	Oid			pg_database_oid;	/* OID of pg_database relation */
 	char	   *libpath;		/* pathname for cluster's pkglibdir */
 	char	   *tablespace_suffix;		/* directory specification */
@@ -357,7 +357,7 @@ PGresult *executeQueryOrDie(PGconn *conn, const char *fmt,...);
 
 void		start_postmaster(ClusterInfo *cluster, bool quiet);
 void		stop_postmaster(bool fast, bool quiet);
-uint32 get_major_server_version(ClusterInfo *cluster, char **verstr);
+uint32 get_major_server_version(ClusterInfo *cluster);
 void		check_for_libpq_envvars(void);
 
 

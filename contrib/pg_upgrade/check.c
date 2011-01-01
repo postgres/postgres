@@ -209,8 +209,8 @@ void
 check_cluster_versions(void)
 {
 	/* get old and new cluster versions */
-	old_cluster.major_version = get_major_server_version(&old_cluster, &old_cluster.major_version_str);
-	new_cluster.major_version = get_major_server_version(&new_cluster, &new_cluster.major_version_str);
+	old_cluster.major_version = get_major_server_version(&old_cluster);
+	new_cluster.major_version = get_major_server_version(&new_cluster);
 
 	/* We allow upgrades from/to the same major version for alpha/beta upgrades */
 

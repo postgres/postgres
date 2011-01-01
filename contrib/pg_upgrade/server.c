@@ -129,22 +129,21 @@ get_postmaster_pid(const char *datadir)
  * is retrieved by reading the PG_VERSION file.
  */
 uint32
-get_major_server_version(ClusterInfo *cluster, char **verstr)
+get_major_server_version(ClusterInfo *cluster)
 {
 	const char *datadir = cluster->pgdata;
 	FILE	   *version_fd;
-	char		ver_file[MAXPGPATH];
+	char		ver_filename[MAXPGPATH];
 	int			integer_version = 0;
 	int			fractional_version = 0;
 
-	*verstr = pg_malloc(64);
-
-	snprintf(ver_file, sizeof(ver_file), "%s/PG_VERSION", datadir);
-	if ((version_fd = fopen(ver_file, "r")) == NULL)
+	snprintf(ver_filename, sizeof(ver_filename), "%s/PG_VERSION", datadir);
+	if ((version_fd = fopen(ver_filename, "r")) == NULL)
 		return 0;
 
-	if (fscanf(version_fd, "%63s", *verstr) == 0 ||
-		sscanf(*verstr, "%d.%d", &integer_version, &fractional_version) != 2)
+	if (fscanf(version_fd, "%63s", cluster->major_version_str) == 0 ||
+		sscanf(cluster->major_version_str, "%d.%d", &integer_version,
+			   &fractional_version) != 2)
 	{
 		pg_log(PG_FATAL, "could not get version from %s\n", datadir);
 		fclose(version_fd);
