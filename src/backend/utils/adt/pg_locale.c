@@ -2,7 +2,7 @@
  *
  * PostgreSQL locale utilities
  *
- * Portions Copyright (c) 2002-2010, PostgreSQL Global Development Group
+ * Portions Copyright (c) 2002-2011, PostgreSQL Global Development Group
  *
  * src/backend/utils/adt/pg_locale.c
  *

@@ -3,7 +3,7 @@
  * pipe.c
  *	  pipe()
  *
- * Copyright (c) 1996-2010, PostgreSQL Global Development Group
+ * Copyright (c) 1996-2011, PostgreSQL Global Development Group
  *
  *	This is a replacement version of pipe for Win32 which allows
  *	returned handles to be used in select(). Note that read/write calls

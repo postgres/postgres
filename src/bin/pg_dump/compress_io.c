@@ -4,7 +4,7 @@
  *   Routines for archivers to write an uncompressed or compressed data
  *   stream.
  *
- * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2011, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *  The interface for writing to an archive consists of three functions:

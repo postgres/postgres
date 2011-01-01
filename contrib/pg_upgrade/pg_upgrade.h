@@ -1,7 +1,7 @@
 /*
  *	pg_upgrade.h
  *
- *	Copyright (c) 2010, PostgreSQL Global Development Group
+ *	Copyright (c) 2010-2011, PostgreSQL Global Development Group
  *	contrib/pg_upgrade/pg_upgrade.h
  */
 
