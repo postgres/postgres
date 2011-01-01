@@ -92,3 +92,18 @@ drop cascades to function get_all_persons()
 drop cascades to table persons2
 drop cascades to table persons3
 DROP TABLE stuff;
+-- implicit casting
+CREATE TYPE person_type AS (id int, name text);
+CREATE TABLE persons OF person_type;
+INSERT INTO persons VALUES (1, 'test');
+CREATE FUNCTION namelen(person_type) RETURNS int LANGUAGE SQL AS $$ SELECT length($1.name) $$;
+SELECT id, namelen(persons) FROM persons;
+ id | namelen 
+----+---------
+  1 |       4
+(1 row)
+
+DROP TYPE person_type CASCADE;
+NOTICE:  drop cascades to 2 other objects
+DETAIL:  drop cascades to table persons
+drop cascades to function namelen(person_type)

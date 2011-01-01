@@ -47,3 +47,15 @@ DROP TYPE person_type RESTRICT;
 DROP TYPE person_type CASCADE;
 
 DROP TABLE stuff;
+
+
+-- implicit casting
+
+CREATE TYPE person_type AS (id int, name text);
+CREATE TABLE persons OF person_type;
+INSERT INTO persons VALUES (1, 'test');
+
+CREATE FUNCTION namelen(person_type) RETURNS int LANGUAGE SQL AS $$ SELECT length($1.name) $$;
+SELECT id, namelen(persons) FROM persons;
+
+DROP TYPE person_type CASCADE;

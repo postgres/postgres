@@ -15,6 +15,7 @@
 #include "postgres.h"
 
 #include "catalog/pg_cast.h"
+#include "catalog/pg_class.h"
 #include "catalog/pg_inherits_fn.h"
 #include "catalog/pg_proc.h"
 #include "catalog/pg_type.h"
@@ -48,6 +49,7 @@ static Node *coerce_record_to_complex(ParseState *pstate, Node *node,
 						 CoercionForm cformat,
 						 int location);
 static bool is_complex_array(Oid typid);
+static bool typeIsOfTypedTable(Oid reltypeId, Oid reloftypeId);
 
 
 /*
@@ -371,7 +373,8 @@ coerce_type(ParseState *pstate, Node *node,
 		/* NB: we do NOT want a RelabelType here */
 		return node;
 	}
-	if (typeInheritsFrom(inputTypeId, targetTypeId))
+	if (typeInheritsFrom(inputTypeId, targetTypeId)
+		|| typeIsOfTypedTable(inputTypeId, targetTypeId))
 	{
 		/*
 		 * Input class type is a subclass of target, so generate an
@@ -482,7 +485,8 @@ can_coerce_type(int nargs, Oid *input_typeids, Oid *target_typeids,
 		/*
 		 * If input is a class type that inherits from target, accept
 		 */
-		if (typeInheritsFrom(inputTypeId, targetTypeId))
+		if (typeInheritsFrom(inputTypeId, targetTypeId)
+			|| typeIsOfTypedTable(inputTypeId, targetTypeId))
 			continue;
 
 		/*
@@ -2045,4 +2049,35 @@ is_complex_array(Oid typid)
 	Oid			elemtype = get_element_type(typid);
 
 	return (OidIsValid(elemtype) && ISCOMPLEX(elemtype));
+}
+
+
+/*
+ * Check whether reltypeId is the row type of a typed table of type
+ * reloftypeId.  (This is conceptually similar to the subtype
+ * relationship checked by typeInheritsFrom().)
+ */
+static bool
+typeIsOfTypedTable(Oid reltypeId, Oid reloftypeId)
+{
+	Oid relid = typeidTypeRelid(reltypeId);
+	bool result = false;
+
+	if (relid)
+	{
+		HeapTuple	tp;
+		Form_pg_class reltup;
+
+		tp = SearchSysCache1(RELOID, ObjectIdGetDatum(relid));
+		if (!HeapTupleIsValid(tp))
+			elog(ERROR, "cache lookup failed for relation %u", relid);
+
+		reltup = (Form_pg_class) GETSTRUCT(tp);
+		if (reltup->reloftype == reloftypeId)
+			result = true;
+
+		ReleaseSysCache(tp);
+	}
+
+	return result;
 }
