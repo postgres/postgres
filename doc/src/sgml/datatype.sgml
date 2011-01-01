@@ -435,7 +435,7 @@
      the best balance between range, storage size, and performance.
      The <type>smallint</type> type is generally only used if disk
      space is at a premium.  The <type>bigint</type> type should only
-     be used if the <type>integer</type> range is insufficient,
+     be used if the range of the <type>integer</type> type is insufficient,
      because the latter is definitely faster.
     </para>
 
