@@ -52,9 +52,8 @@
 #define EXE_EXT				".exe"
 #endif
 
-#define CLUSTER_NAME(cluster)	((cluster) == CLUSTER_OLD ? "old" : "new")
-#define ACTIVE_CLUSTER(cluster) (((cluster) == CLUSTER_OLD) ? \
-									&old_cluster : &new_cluster)
+#define CLUSTER_NAME(cluster)	((cluster) == &old_cluster ? "old" : \
+								 (cluster) == &new_cluster ? "new" : "none")
 
 #define atooid(x)  ((Oid) strtoul((x), NULL, 10))
 
@@ -163,15 +162,6 @@ typedef enum
 	PG_DEBUG
 } eLogType;
 
-/*
- * Enumeration to distinguish between old cluster and new cluster
- */
-typedef enum
-{
-	NONE = 0,					/* used for no running servers */
-	CLUSTER_OLD,
-	CLUSTER_NEW
-} Cluster;
 
 typedef long pgpid_t;
 
@@ -234,7 +224,7 @@ typedef struct
 	char	  **libraries;		/* loadable libraries */
 	int			num_libraries;
 	pgpid_t		postmasterPID;	/* PID of currently running postmaster */
-	Cluster		running_cluster;
+	ClusterInfo *running_cluster;
 } OSInfo;
 
 
@@ -243,8 +233,7 @@ typedef struct
  */
 extern LogOpts	log_opts;
 extern UserOpts user_opts;
-extern ClusterInfo old_cluster,
-			new_cluster;
+extern ClusterInfo old_cluster, new_cluster;
 extern OSInfo os_info;
 extern char scandir_file_pattern[];
 
@@ -339,8 +328,7 @@ void		check_loadable_libraries(void);
 FileNameMap *gen_db_file_maps(DbInfo *old_db,
 				 DbInfo *new_db, int *nmaps, const char *old_pgdata,
 				 const char *new_pgdata);
-void get_db_and_rel_infos(DbInfoArr *db_arr,
-					 Cluster whichCluster);
+void get_db_and_rel_infos(ClusterInfo *cluster);
 DbInfo	   *dbarr_lookup_db(DbInfoArr *db_arr, const char *db_name);
 void		dbarr_free(DbInfoArr *db_arr);
 void print_maps(FileNameMap *maps, int n,
@@ -352,7 +340,7 @@ void		parseCommandLine(int argc, char *argv[]);
 
 /* relfilenode.c */
 
-void		get_pg_database_relfilenode(Cluster whichCluster);
+void		get_pg_database_relfilenode(ClusterInfo *cluster);
 const char *transfer_all_new_dbs(DbInfoArr *olddb_arr,
 				   DbInfoArr *newdb_arr, char *old_pgdata, char *new_pgdata);
 
@@ -364,14 +352,12 @@ void		init_tablespaces(void);
 
 /* server.c */
 
-PGconn *connectToServer(const char *db_name,
-				Cluster whichCluster);
-PGresult *executeQueryOrDie(PGconn *conn,
-				  const char *fmt,...);
+PGconn *connectToServer(ClusterInfo *cluster, const char *db_name);
+PGresult *executeQueryOrDie(PGconn *conn, const char *fmt,...);
 
-void		start_postmaster(Cluster whichCluster, bool quiet);
+void		start_postmaster(ClusterInfo *cluster, bool quiet);
 void		stop_postmaster(bool fast, bool quiet);
-uint32 get_major_server_version(char **verstr, Cluster whichCluster);
+uint32 get_major_server_version(ClusterInfo *cluster, char **verstr);
 void		check_for_libpq_envvars(void);
 
 
@@ -394,17 +380,15 @@ unsigned int str2uint(const char *str);
 
 /* version.c */
 
-void new_9_0_populate_pg_largeobject_metadata(
-									  bool check_mode, Cluster whichCluster);
+void new_9_0_populate_pg_largeobject_metadata(ClusterInfo *cluster,
+											  bool check_mode);
 
 /* version_old_8_3.c */
 
-void		old_8_3_check_for_name_data_type_usage(Cluster whichCluster);
-void		old_8_3_check_for_tsquery_usage(Cluster whichCluster);
-void old_8_3_rebuild_tsvector_tables(bool check_mode,
-								Cluster whichCluster);
-void old_8_3_invalidate_hash_gin_indexes(bool check_mode,
-									Cluster whichCluster);
-void old_8_3_invalidate_bpchar_pattern_ops_indexes(bool check_mode,
-											  Cluster whichCluster);
-char	   *old_8_3_create_sequence_script(Cluster whichCluster);
+void		old_8_3_check_for_name_data_type_usage(ClusterInfo *cluster);
+void		old_8_3_check_for_tsquery_usage(ClusterInfo *cluster);
+void old_8_3_rebuild_tsvector_tables(ClusterInfo *cluster, bool check_mode);
+void old_8_3_invalidate_hash_gin_indexes(ClusterInfo *cluster, bool check_mode);
+void old_8_3_invalidate_bpchar_pattern_ops_indexes(ClusterInfo *cluster,
+												   bool check_mode);
+char	   *old_8_3_create_sequence_script(ClusterInfo *cluster);

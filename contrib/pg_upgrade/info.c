@@ -12,13 +12,11 @@
 #include "access/transam.h"
 
 
-static void get_db_infos(DbInfoArr *dbinfos,
-			 Cluster whichCluster);
-static void dbarr_print(DbInfoArr *arr,
-			Cluster whichCluster);
+static void get_db_infos(ClusterInfo *cluster);
+static void dbarr_print(ClusterInfo *cluster);
 static void relarr_print(RelInfoArr *arr);
-static void get_rel_infos(const DbInfo *dbinfo,
-			  RelInfoArr *relarr, Cluster whichCluster);
+static void get_rel_infos(ClusterInfo *cluster, const DbInfo *dbinfo,
+			  RelInfoArr *relarr);
 static void relarr_free(RelInfoArr *rel_arr);
 static void map_rel(const RelInfo *oldrel,
 		const RelInfo *newrel, const DbInfo *old_db,
@@ -30,11 +28,10 @@ static void map_rel_by_id(Oid oldid, Oid newid,
 			  const char *old_tablespace, const DbInfo *old_db,
 			  const DbInfo *new_db, const char *olddata,
 			  const char *newdata, FileNameMap *map);
-static RelInfo *relarr_lookup_reloid(RelInfoArr *rel_arr,
-				Oid oid, Cluster whichCluster);
-static RelInfo *relarr_lookup_rel(RelInfoArr *rel_arr,
-				  const char *nspname, const char *relname,
-				  Cluster whichCluster);
+static RelInfo *relarr_lookup_reloid(ClusterInfo *cluster, RelInfoArr *rel_arr,
+				Oid oid);
+static RelInfo *relarr_lookup_rel(ClusterInfo *cluster, RelInfoArr *rel_arr,
+				  const char *nspname, const char *relname);
 
 
 /*
@@ -66,8 +63,8 @@ gen_db_file_maps(DbInfo *old_db, DbInfo *new_db,
 		if (strcmp(newrel->nspname, "pg_toast") == 0)
 			continue;
 
-		oldrel = relarr_lookup_rel(&old_db->rel_arr, newrel->nspname,
-								   newrel->relname, CLUSTER_OLD);
+		oldrel = relarr_lookup_rel(&old_cluster, &old_db->rel_arr,
+								   newrel->nspname, newrel->relname);
 
 		map_rel(oldrel, newrel, old_db, new_db, old_pgdata, new_pgdata,
 				maps + num_maps);
@@ -91,10 +88,10 @@ gen_db_file_maps(DbInfo *old_db, DbInfo *new_db,
 					 newrel->reloid);
 
 			/* look them up in their respective arrays */
-			old_toast = relarr_lookup_reloid(&old_db->rel_arr,
-											 oldrel->toastrelid, CLUSTER_OLD);
-			new_toast = relarr_lookup_rel(&new_db->rel_arr,
-										  "pg_toast", new_name, CLUSTER_NEW);
+			old_toast = relarr_lookup_reloid(&old_cluster, &old_db->rel_arr,
+											 oldrel->toastrelid);
+			new_toast = relarr_lookup_rel(&new_cluster, &new_db->rel_arr,
+										  "pg_toast", new_name);
 
 			/* finally create a mapping for them */
 			map_rel(old_toast, new_toast, old_db, new_db, old_pgdata, new_pgdata,
@@ -118,10 +115,10 @@ gen_db_file_maps(DbInfo *old_db, DbInfo *new_db,
 
 			/* look them up in their respective arrays */
 			/* we lose our cache location here */
-			old_toast = relarr_lookup_rel(&old_db->rel_arr,
-										  "pg_toast", old_name, CLUSTER_OLD);
-			new_toast = relarr_lookup_rel(&new_db->rel_arr,
-										  "pg_toast", new_name, CLUSTER_NEW);
+			old_toast = relarr_lookup_rel(&old_cluster, &old_db->rel_arr,
+										  "pg_toast", old_name);
+			new_toast = relarr_lookup_rel(&new_cluster, &new_db->rel_arr,
+										  "pg_toast", new_name);
 
 			/* finally create a mapping for them */
 			map_rel(old_toast, new_toast, old_db, new_db, old_pgdata,
@@ -214,13 +211,13 @@ print_maps(FileNameMap *maps, int n, const char *dbName)
 /*
  * get_db_infos()
  *
- * Scans pg_database system catalog and returns (in dbinfs_arr) all user
+ * Scans pg_database system catalog and populates all user
  * databases.
  */
 static void
-get_db_infos(DbInfoArr *dbinfs_arr, Cluster whichCluster)
+get_db_infos(ClusterInfo *cluster)
 {
-	PGconn	   *conn = connectToServer("template1", whichCluster);
+	PGconn	   *conn = connectToServer(cluster, "template1");
 	PGresult   *res;
 	int			ntups;
 	int			tupnum;
@@ -256,8 +253,8 @@ get_db_infos(DbInfoArr *dbinfs_arr, Cluster whichCluster)
 
 	PQfinish(conn);
 
-	dbinfs_arr->dbs = dbinfos;
-	dbinfs_arr->ndbs = ntups;
+	cluster->dbarr.dbs = dbinfos;
+	cluster->dbarr.ndbs = ntups;
 }
 
 
@@ -268,18 +265,18 @@ get_db_infos(DbInfoArr *dbinfs_arr, Cluster whichCluster)
  * on the given "port". Assumes that server is already running.
  */
 void
-get_db_and_rel_infos(DbInfoArr *db_arr, Cluster whichCluster)
+get_db_and_rel_infos(ClusterInfo *cluster)
 {
 	int			dbnum;
 
-	get_db_infos(db_arr, whichCluster);
+	get_db_infos(cluster);
 
-	for (dbnum = 0; dbnum < db_arr->ndbs; dbnum++)
-		get_rel_infos(&db_arr->dbs[dbnum],
-					  &db_arr->dbs[dbnum].rel_arr, whichCluster);
+	for (dbnum = 0; dbnum < cluster->dbarr.ndbs; dbnum++)
+		get_rel_infos(cluster, &cluster->dbarr.dbs[dbnum],
+					  &cluster->dbarr.dbs[dbnum].rel_arr);
 
 	if (log_opts.debug)
-		dbarr_print(db_arr, whichCluster);
+		dbarr_print(cluster);
 }
 
 
@@ -293,9 +290,9 @@ get_db_and_rel_infos(DbInfoArr *db_arr, Cluster whichCluster)
  * FirstNormalObjectId belongs to the user
  */
 static void
-get_rel_infos(const DbInfo *dbinfo, RelInfoArr *relarr, Cluster whichCluster)
+get_rel_infos(ClusterInfo *cluster, const DbInfo *dbinfo, RelInfoArr *relarr)
 {
-	PGconn	   *conn = connectToServer(dbinfo->db_name, whichCluster);
+	PGconn	   *conn = connectToServer(cluster, dbinfo->db_name);
 	PGresult   *res;
 	RelInfo    *relinfos;
 	int			ntups;
@@ -417,8 +414,8 @@ dbarr_lookup_db(DbInfoArr *db_arr, const char *db_name)
  * RelInfo structure.
  */
 static RelInfo *
-relarr_lookup_rel(RelInfoArr *rel_arr, const char *nspname,
-					const char *relname, Cluster whichCluster)
+relarr_lookup_rel(ClusterInfo *cluster, RelInfoArr *rel_arr,
+					const char *nspname, const char *relname)
 {
 	int			relnum;
 
@@ -441,7 +438,7 @@ relarr_lookup_rel(RelInfoArr *rel_arr, const char *nspname,
 		}
 	}
 	pg_log(PG_FATAL, "Could not find %s.%s in %s cluster\n",
-		   nspname, relname, CLUSTER_NAME(whichCluster));
+		   nspname, relname, CLUSTER_NAME(cluster));
 	return NULL;
 }
 
@@ -454,8 +451,7 @@ relarr_lookup_rel(RelInfoArr *rel_arr, const char *nspname,
  *	found.
  */
 static RelInfo *
-relarr_lookup_reloid(RelInfoArr *rel_arr, Oid oid,
-					 Cluster whichCluster)
+relarr_lookup_reloid(ClusterInfo *cluster, RelInfoArr *rel_arr, Oid oid)
 {
 	int			relnum;
 
@@ -465,7 +461,7 @@ relarr_lookup_reloid(RelInfoArr *rel_arr, Oid oid,
 			return &rel_arr->rels[relnum];
 	}
 	pg_log(PG_FATAL, "Could not find %d in %s cluster\n",
-		   oid, CLUSTER_NAME(whichCluster));
+		   oid, CLUSTER_NAME(cluster));
 	return NULL;
 }
 
@@ -491,16 +487,16 @@ dbarr_free(DbInfoArr *db_arr)
 
 
 static void
-dbarr_print(DbInfoArr *arr, Cluster whichCluster)
+dbarr_print(ClusterInfo *cluster)
 {
 	int			dbnum;
 
-	pg_log(PG_DEBUG, "%s databases\n", CLUSTER_NAME(whichCluster));
+	pg_log(PG_DEBUG, "%s databases\n", CLUSTER_NAME(cluster));
 
-	for (dbnum = 0; dbnum < arr->ndbs; dbnum++)
+	for (dbnum = 0; dbnum < cluster->dbarr.ndbs; dbnum++)
 	{
-		pg_log(PG_DEBUG, "Database: %s\n", arr->dbs[dbnum].db_name);
-		relarr_print(&arr->dbs[dbnum].rel_arr);
+		pg_log(PG_DEBUG, "Database: %s\n", cluster->dbarr.dbs[dbnum].db_name);
+		relarr_print(&cluster->dbarr.dbs[dbnum].rel_arr);
 		pg_log(PG_DEBUG, "\n\n");
 	}
 }

@@ -77,10 +77,9 @@ transfer_all_new_dbs(DbInfoArr *olddb_arr,
  *	relfilenodes later in the upgrade process.
  */
 void
-get_pg_database_relfilenode(Cluster whichCluster)
+get_pg_database_relfilenode(ClusterInfo *cluster)
 {
-	PGconn	   *conn = connectToServer("template1", whichCluster);
-	ClusterInfo *active_cluster = ACTIVE_CLUSTER(whichCluster);
+	PGconn	   *conn = connectToServer(cluster, "template1");
 	PGresult   *res;
 	int			i_relfile;
 
@@ -94,7 +93,7 @@ get_pg_database_relfilenode(Cluster whichCluster)
 							"ORDER BY c.relname");
 
 	i_relfile = PQfnumber(res, "relfilenode");
-	active_cluster->pg_database_oid = atooid(PQgetvalue(res, 0, i_relfile));
+	cluster->pg_database_oid = atooid(PQgetvalue(res, 0, i_relfile));
 
 	PQclear(res);
 	PQfinish(conn);

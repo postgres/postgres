@@ -28,7 +28,7 @@ install_support_functions(void)
 	for (dbnum = 0; dbnum < new_cluster.dbarr.ndbs; dbnum++)
 	{
 		DbInfo	   *newdb = &new_cluster.dbarr.dbs[dbnum];
-		PGconn	   *conn = connectToServer(newdb->db_name, CLUSTER_NEW);
+		PGconn	   *conn = connectToServer(&new_cluster, newdb->db_name);
 
 		/* suppress NOTICE of dropped objects */
 		PQclear(executeQueryOrDie(conn,
@@ -99,7 +99,7 @@ uninstall_support_functions(void)
 	for (dbnum = 0; dbnum < new_cluster.dbarr.ndbs; dbnum++)
 	{
 		DbInfo	   *newdb = &new_cluster.dbarr.dbs[dbnum];
-		PGconn	   *conn = connectToServer(newdb->db_name, CLUSTER_NEW);
+		PGconn	   *conn = connectToServer(&new_cluster, newdb->db_name);
 
 		/* suppress NOTICE of dropped objects */
 		PQclear(executeQueryOrDie(conn,
@@ -123,20 +123,19 @@ uninstall_support_functions(void)
 void
 get_loadable_libraries(void)
 {
-	ClusterInfo *active_cluster = &old_cluster;
 	PGresult  **ress;
 	int			totaltups;
 	int			dbnum;
 
 	ress = (PGresult **)
-		pg_malloc(active_cluster->dbarr.ndbs * sizeof(PGresult *));
+		pg_malloc(old_cluster.dbarr.ndbs * sizeof(PGresult *));
 	totaltups = 0;
 
 	/* Fetch all library names, removing duplicates within each DB */
-	for (dbnum = 0; dbnum < active_cluster->dbarr.ndbs; dbnum++)
+	for (dbnum = 0; dbnum < old_cluster.dbarr.ndbs; dbnum++)
 	{
-		DbInfo	   *active_db = &active_cluster->dbarr.dbs[dbnum];
-		PGconn	   *conn = connectToServer(active_db->db_name, CLUSTER_OLD);
+		DbInfo	   *active_db = &old_cluster.dbarr.dbs[dbnum];
+		PGconn	   *conn = connectToServer(&old_cluster, active_db->db_name);
 
 		/* Fetch all libraries referenced in this DB */
 		ress[dbnum] = executeQueryOrDie(conn,
@@ -163,7 +162,7 @@ get_loadable_libraries(void)
 	 */
 	totaltups = 0;
 
-	for (dbnum = 0; dbnum < active_cluster->dbarr.ndbs; dbnum++)
+	for (dbnum = 0; dbnum < old_cluster.dbarr.ndbs; dbnum++)
 	{
 		PGresult   *res = ress[dbnum];
 		int			ntups;
@@ -207,7 +206,7 @@ get_loadable_libraries(void)
 void
 check_loadable_libraries(void)
 {
-	PGconn	   *conn = connectToServer("template1", CLUSTER_NEW);
+	PGconn	   *conn = connectToServer(&new_cluster, "template1");
 	int			libnum;
 	FILE	   *script = NULL;
 	bool		found = false;

@@ -19,9 +19,8 @@
  *	checks tables and indexes.
  */
 void
-old_8_3_check_for_name_data_type_usage(Cluster whichCluster)
+old_8_3_check_for_name_data_type_usage(ClusterInfo *cluster)
 {
-	ClusterInfo *active_cluster = ACTIVE_CLUSTER(whichCluster);
 	int			dbnum;
 	FILE	   *script = NULL;
 	bool		found = false;
@@ -32,7 +31,7 @@ old_8_3_check_for_name_data_type_usage(Cluster whichCluster)
 	snprintf(output_path, sizeof(output_path), "%s/tables_using_name.txt",
 			 os_info.cwd);
 
-	for (dbnum = 0; dbnum < active_cluster->dbarr.ndbs; dbnum++)
+	for (dbnum = 0; dbnum < cluster->dbarr.ndbs; dbnum++)
 	{
 		PGresult   *res;
 		bool		db_used = false;
@@ -41,8 +40,8 @@ old_8_3_check_for_name_data_type_usage(Cluster whichCluster)
 		int			i_nspname,
 					i_relname,
 					i_attname;
-		DbInfo	   *active_db = &active_cluster->dbarr.dbs[dbnum];
-		PGconn	   *conn = connectToServer(active_db->db_name, whichCluster);
+		DbInfo	   *active_db = &cluster->dbarr.dbs[dbnum];
+		PGconn	   *conn = connectToServer(cluster, active_db->db_name);
 
 		/*
 		 * With a smaller alignment in 8.4, 'name' cannot be used in a
@@ -113,9 +112,8 @@ old_8_3_check_for_name_data_type_usage(Cluster whichCluster)
  *	so upgrading of such fields is impossible.
  */
 void
-old_8_3_check_for_tsquery_usage(Cluster whichCluster)
+old_8_3_check_for_tsquery_usage(ClusterInfo *cluster)
 {
-	ClusterInfo *active_cluster = ACTIVE_CLUSTER(whichCluster);
 	int			dbnum;
 	FILE	   *script = NULL;
 	bool		found = false;
@@ -126,7 +124,7 @@ old_8_3_check_for_tsquery_usage(Cluster whichCluster)
 	snprintf(output_path, sizeof(output_path), "%s/tables_using_tsquery.txt",
 			 os_info.cwd);
 
-	for (dbnum = 0; dbnum < active_cluster->dbarr.ndbs; dbnum++)
+	for (dbnum = 0; dbnum < cluster->dbarr.ndbs; dbnum++)
 	{
 		PGresult   *res;
 		bool		db_used = false;
@@ -135,8 +133,8 @@ old_8_3_check_for_tsquery_usage(Cluster whichCluster)
 		int			i_nspname,
 					i_relname,
 					i_attname;
-		DbInfo	   *active_db = &active_cluster->dbarr.dbs[dbnum];
-		PGconn	   *conn = connectToServer(active_db->db_name, whichCluster);
+		DbInfo	   *active_db = &cluster->dbarr.dbs[dbnum];
+		PGconn	   *conn = connectToServer(cluster, active_db->db_name);
 
 		/* Find any user-defined tsquery columns */
 		res = executeQueryOrDie(conn,
@@ -208,10 +206,8 @@ old_8_3_check_for_tsquery_usage(Cluster whichCluster)
  *	'c' 'bb' 'aaa'		   -- 8.3
  */
 void
-old_8_3_rebuild_tsvector_tables(bool check_mode,
-								Cluster whichCluster)
+old_8_3_rebuild_tsvector_tables(ClusterInfo *cluster, bool check_mode)
 {
-	ClusterInfo *active_cluster = ACTIVE_CLUSTER(whichCluster);
 	int			dbnum;
 	FILE	   *script = NULL;
 	bool		found = false;
@@ -222,7 +218,7 @@ old_8_3_rebuild_tsvector_tables(bool check_mode,
 	snprintf(output_path, sizeof(output_path), "%s/rebuild_tsvector_tables.sql",
 			 os_info.cwd);
 
-	for (dbnum = 0; dbnum < active_cluster->dbarr.ndbs; dbnum++)
+	for (dbnum = 0; dbnum < cluster->dbarr.ndbs; dbnum++)
 	{
 		PGresult   *res;
 		bool		db_used = false;
@@ -233,8 +229,8 @@ old_8_3_rebuild_tsvector_tables(bool check_mode,
 		int			i_nspname,
 					i_relname,
 					i_attname;
-		DbInfo	   *active_db = &active_cluster->dbarr.dbs[dbnum];
-		PGconn	   *conn = connectToServer(active_db->db_name, whichCluster);
+		DbInfo	   *active_db = &cluster->dbarr.dbs[dbnum];
+		PGconn	   *conn = connectToServer(cluster, active_db->db_name);
 
 		/* Find any user-defined tsvector columns */
 		res = executeQueryOrDie(conn,
@@ -352,10 +348,8 @@ old_8_3_rebuild_tsvector_tables(bool check_mode,
  *	Hash, Gin, and GiST index binary format has changes from 8.3->8.4
  */
 void
-old_8_3_invalidate_hash_gin_indexes(bool check_mode,
-									Cluster whichCluster)
+old_8_3_invalidate_hash_gin_indexes(ClusterInfo *cluster, bool check_mode)
 {
-	ClusterInfo *active_cluster = ACTIVE_CLUSTER(whichCluster);
 	int			dbnum;
 	FILE	   *script = NULL;
 	bool		found = false;
@@ -366,7 +360,7 @@ old_8_3_invalidate_hash_gin_indexes(bool check_mode,
 	snprintf(output_path, sizeof(output_path), "%s/reindex_hash_and_gin.sql",
 			 os_info.cwd);
 
-	for (dbnum = 0; dbnum < active_cluster->dbarr.ndbs; dbnum++)
+	for (dbnum = 0; dbnum < cluster->dbarr.ndbs; dbnum++)
 	{
 		PGresult   *res;
 		bool		db_used = false;
@@ -374,8 +368,8 @@ old_8_3_invalidate_hash_gin_indexes(bool check_mode,
 		int			rowno;
 		int			i_nspname,
 					i_relname;
-		DbInfo	   *active_db = &active_cluster->dbarr.dbs[dbnum];
-		PGconn	   *conn = connectToServer(active_db->db_name, whichCluster);
+		DbInfo	   *active_db = &cluster->dbarr.dbs[dbnum];
+		PGconn	   *conn = connectToServer(cluster, active_db->db_name);
 
 		/* find hash and gin indexes */
 		res = executeQueryOrDie(conn,
@@ -467,10 +461,9 @@ old_8_3_invalidate_hash_gin_indexes(bool check_mode,
  *	8.4 bpchar_pattern_ops no longer sorts based on trailing spaces
  */
 void
-old_8_3_invalidate_bpchar_pattern_ops_indexes(bool check_mode,
-											  Cluster whichCluster)
+old_8_3_invalidate_bpchar_pattern_ops_indexes(ClusterInfo *cluster,
+											  bool check_mode)
 {
-	ClusterInfo *active_cluster = ACTIVE_CLUSTER(whichCluster);
 	int			dbnum;
 	FILE	   *script = NULL;
 	bool		found = false;
@@ -481,7 +474,7 @@ old_8_3_invalidate_bpchar_pattern_ops_indexes(bool check_mode,
 	snprintf(output_path, sizeof(output_path), "%s/reindex_bpchar_ops.sql",
 			 os_info.cwd);
 
-	for (dbnum = 0; dbnum < active_cluster->dbarr.ndbs; dbnum++)
+	for (dbnum = 0; dbnum < cluster->dbarr.ndbs; dbnum++)
 	{
 		PGresult   *res;
 		bool		db_used = false;
@@ -489,8 +482,8 @@ old_8_3_invalidate_bpchar_pattern_ops_indexes(bool check_mode,
 		int			rowno;
 		int			i_nspname,
 					i_relname;
-		DbInfo	   *active_db = &active_cluster->dbarr.dbs[dbnum];
-		PGconn	   *conn = connectToServer(active_db->db_name, whichCluster);
+		DbInfo	   *active_db = &cluster->dbarr.dbs[dbnum];
+		PGconn	   *conn = connectToServer(cluster, active_db->db_name);
 
 		/* find bpchar_pattern_ops indexes */
 
@@ -602,9 +595,8 @@ old_8_3_invalidate_bpchar_pattern_ops_indexes(bool check_mode,
  *	server, even in link mode.
  */
 char *
-old_8_3_create_sequence_script(Cluster whichCluster)
+old_8_3_create_sequence_script(ClusterInfo *cluster)
 {
-	ClusterInfo *active_cluster = ACTIVE_CLUSTER(whichCluster);
 	int			dbnum;
 	FILE	   *script = NULL;
 	bool		found = false;
@@ -614,7 +606,7 @@ old_8_3_create_sequence_script(Cluster whichCluster)
 
 	prep_status("Creating script to adjust sequences");
 
-	for (dbnum = 0; dbnum < active_cluster->dbarr.ndbs; dbnum++)
+	for (dbnum = 0; dbnum < cluster->dbarr.ndbs; dbnum++)
 	{
 		PGresult   *res;
 		bool		db_used = false;
@@ -622,8 +614,8 @@ old_8_3_create_sequence_script(Cluster whichCluster)
 		int			rowno;
 		int			i_nspname,
 					i_relname;
-		DbInfo	   *active_db = &active_cluster->dbarr.dbs[dbnum];
-		PGconn	   *conn = connectToServer(active_db->db_name, whichCluster);
+		DbInfo	   *active_db = &cluster->dbarr.dbs[dbnum];
+		PGconn	   *conn = connectToServer(cluster, active_db->db_name);
 
 		/* Find any sequences */
 		res = executeQueryOrDie(conn,

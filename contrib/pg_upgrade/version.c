@@ -18,10 +18,8 @@
  *	9.0 has a new pg_largeobject permission table
  */
 void
-new_9_0_populate_pg_largeobject_metadata(bool check_mode,
-										 Cluster whichCluster)
+new_9_0_populate_pg_largeobject_metadata(ClusterInfo *cluster, bool check_mode)
 {
-	ClusterInfo *active_cluster = ACTIVE_CLUSTER(whichCluster);
 	int			dbnum;
 	FILE	   *script = NULL;
 	bool		found = false;
@@ -32,12 +30,12 @@ new_9_0_populate_pg_largeobject_metadata(bool check_mode,
 	snprintf(output_path, sizeof(output_path), "%s/pg_largeobject.sql",
 			 os_info.cwd);
 
-	for (dbnum = 0; dbnum < active_cluster->dbarr.ndbs; dbnum++)
+	for (dbnum = 0; dbnum < cluster->dbarr.ndbs; dbnum++)
 	{
 		PGresult   *res;
 		int			i_count;
-		DbInfo	   *active_db = &active_cluster->dbarr.dbs[dbnum];
-		PGconn	   *conn = connectToServer(active_db->db_name, whichCluster);
+		DbInfo	   *active_db = &cluster->dbarr.dbs[dbnum];
+		PGconn	   *conn = connectToServer(cluster, active_db->db_name);
 
 		/* find if there are any large objects */
 		res = executeQueryOrDie(conn,

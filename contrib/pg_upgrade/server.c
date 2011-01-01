@@ -15,8 +15,7 @@
 
 
 static pgpid_t get_postmaster_pid(const char *datadir);
-static bool test_server_conn(int timeout,
-				 Cluster whichCluster);
+static bool test_server_conn(ClusterInfo *cluster, int timeout);
 
 
 /*
@@ -27,11 +26,9 @@ static bool test_server_conn(int timeout,
  *	message and calls exit_nicely() to kill the program.
  */
 PGconn *
-connectToServer(const char *db_name,
-				Cluster whichCluster)
+connectToServer(ClusterInfo *cluster, const char *db_name)
 {
-	ClusterInfo *active_cluster = ACTIVE_CLUSTER(whichCluster);
-	unsigned short port = active_cluster->port;
+	unsigned short port = cluster->port;
 	char		connectString[MAXPGPATH];
 	PGconn	   *conn;
 
@@ -132,10 +129,9 @@ get_postmaster_pid(const char *datadir)
  * is retrieved by reading the PG_VERSION file.
  */
 uint32
-get_major_server_version(char **verstr, Cluster whichCluster)
+get_major_server_version(ClusterInfo *cluster, char **verstr)
 {
-	ClusterInfo *active_cluster = ACTIVE_CLUSTER(whichCluster);
-	const char *datadir = active_cluster->pgdata;
+	const char *datadir = cluster->pgdata;
 	FILE	   *version_fd;
 	char		ver_file[MAXPGPATH];
 	int			integer_version = 0;
@@ -160,17 +156,16 @@ get_major_server_version(char **verstr, Cluster whichCluster)
 
 
 void
-start_postmaster(Cluster whichCluster, bool quiet)
+start_postmaster(ClusterInfo *cluster, bool quiet)
 {
-	ClusterInfo *active_cluster = ACTIVE_CLUSTER(whichCluster);
 	char		cmd[MAXPGPATH];
 	const char *bindir;
 	const char *datadir;
 	unsigned short port;
 
-	bindir = active_cluster->bindir;
-	datadir = active_cluster->pgdata;
-	port = active_cluster->port;
+	bindir = cluster->bindir;
+	datadir = cluster->pgdata;
+	port = cluster->port;
 
 	/*
 	 * On Win32, we can't send both pg_upgrade output and pg_ctl output to the
@@ -193,13 +188,13 @@ start_postmaster(Cluster whichCluster, bool quiet)
 
 	/* wait for the server to start properly */
 
-	if (test_server_conn(POSTMASTER_UPTIME, whichCluster) == false)
+	if (test_server_conn(cluster, POSTMASTER_UPTIME) == false)
 		pg_log(PG_FATAL, " Unable to start %s postmaster with the command: %s\nPerhaps pg_hba.conf was not set to \"trust\".",
-			   CLUSTER_NAME(whichCluster), cmd);
+			   CLUSTER_NAME(cluster), cmd);
 
 	if ((os_info.postmasterPID = get_postmaster_pid(datadir)) == 0)
 		pg_log(PG_FATAL, " Unable to get postmaster pid\n");
-	os_info.running_cluster = whichCluster;
+	os_info.running_cluster = cluster;
 }
 
 
@@ -210,12 +205,12 @@ stop_postmaster(bool fast, bool quiet)
 	const char *bindir;
 	const char *datadir;
 
-	if (os_info.running_cluster == CLUSTER_OLD)
+	if (os_info.running_cluster == &old_cluster)
 	{
 		bindir = old_cluster.bindir;
 		datadir = old_cluster.pgdata;
 	}
-	else if (os_info.running_cluster == CLUSTER_NEW)
+	else if (os_info.running_cluster == &new_cluster)
 	{
 		bindir = new_cluster.bindir;
 		datadir = new_cluster.pgdata;
@@ -236,7 +231,7 @@ stop_postmaster(bool fast, bool quiet)
 	exec_prog(fast ? false : true, "%s", cmd);
 
 	os_info.postmasterPID = 0;
-	os_info.running_cluster = NONE;
+	os_info.running_cluster = NULL;
 }
 
 
@@ -250,10 +245,9 @@ stop_postmaster(bool fast, bool quiet)
  * Returns true if the connection attempt was successfull, false otherwise.
  */
 static bool
-test_server_conn(int timeout, Cluster whichCluster)
+test_server_conn(ClusterInfo *cluster, int timeout)
 {
-	ClusterInfo *active_cluster = ACTIVE_CLUSTER(whichCluster);
-	unsigned short port = active_cluster->port;
+	unsigned short port = cluster->port;
 	PGconn	   *conn = NULL;
 	char		con_opts[MAX_STRING];
 	int			tries;
@@ -275,7 +269,7 @@ test_server_conn(int timeout, Cluster whichCluster)
 
 		if (tries == STARTUP_WARNING_TRIES)
 			prep_status("Trying to start %s server ",
-						CLUSTER_NAME(whichCluster));
+						CLUSTER_NAME(cluster));
 		else if (tries > STARTUP_WARNING_TRIES)
 			pg_log(PG_REPORT, ".");
 	}

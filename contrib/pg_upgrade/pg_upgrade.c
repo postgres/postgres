@@ -22,8 +22,7 @@ static void set_frozenxids(void);
 static void setup(char *argv0, bool live_check);
 static void cleanup(void);
 
-ClusterInfo old_cluster,
-			new_cluster;
+ClusterInfo old_cluster, new_cluster;
 OSInfo		os_info;
 
 int
@@ -46,7 +45,7 @@ main(int argc, char **argv)
 
 
 	/* -- NEW -- */
-	start_postmaster(CLUSTER_NEW, false);
+	start_postmaster(&new_cluster, false);
 
 	check_new_cluster();
 	report_clusters_compatible();
@@ -178,7 +177,7 @@ prepare_new_cluster(void)
 		   new_cluster.bindir, new_cluster.port, os_info.user, log_opts.filename);
 	check_ok();
 
-	get_pg_database_relfilenode(CLUSTER_NEW);
+	get_pg_database_relfilenode(&new_cluster);
 }
 
 
@@ -186,7 +185,7 @@ static void
 prepare_new_databases(void)
 {
 	/* -- NEW -- */
-	start_postmaster(CLUSTER_NEW, false);
+	start_postmaster(&new_cluster, false);
 
 	/*
 	 * We set autovacuum_freeze_max_age to its maximum value so autovacuum
@@ -210,7 +209,7 @@ prepare_new_databases(void)
 			  GLOBALS_DUMP_FILE, log_opts.filename);
 	check_ok();
 
-	get_db_and_rel_infos(&new_cluster.dbarr, CLUSTER_NEW);
+	get_db_and_rel_infos(&new_cluster);
 
 	stop_postmaster(false, false);
 }
@@ -220,7 +219,7 @@ static void
 create_new_objects(void)
 {
 	/* -- NEW -- */
-	start_postmaster(CLUSTER_NEW, false);
+	start_postmaster(&new_cluster, false);
 
 	install_support_functions();
 
@@ -235,7 +234,7 @@ create_new_objects(void)
 
 	/* regenerate now that we have db schemas */
 	dbarr_free(&new_cluster.dbarr);
-	get_db_and_rel_infos(&new_cluster.dbarr, CLUSTER_NEW);
+	get_db_and_rel_infos(&new_cluster);
 
 	uninstall_support_functions();
 
@@ -309,7 +308,7 @@ set_frozenxids(void)
 
 	prep_status("Setting frozenxid counters in new cluster");
 
-	conn_template1 = connectToServer("template1", CLUSTER_NEW);
+	conn_template1 = connectToServer(&new_cluster, "template1");
 
 	/* set pg_database.datfrozenxid */
 	PQclear(executeQueryOrDie(conn_template1,
@@ -344,7 +343,7 @@ set_frozenxids(void)
 									  "SET	datallowconn = true "
 									  "WHERE datname = '%s'", datname));
 
-		conn = connectToServer(datname, CLUSTER_NEW);
+		conn = connectToServer(&new_cluster, datname);
 
 		/* set pg_class.relfrozenxid */
 		PQclear(executeQueryOrDie(conn,

@@ -10,13 +10,12 @@
 #include "pg_upgrade.h"
 
 
-static void set_locale_and_encoding(Cluster whichCluster);
+static void set_locale_and_encoding(ClusterInfo *cluster);
 static void check_new_db_is_empty(void);
 static void check_locale_and_encoding(ControlData *oldctrl,
 						  ControlData *newctrl);
-static void check_for_isn_and_int8_passing_mismatch(
-										Cluster whichCluster);
-static void check_for_reg_data_type_usage(Cluster whichCluster);
+static void check_for_isn_and_int8_passing_mismatch(ClusterInfo *cluster);
+static void check_for_reg_data_type_usage(ClusterInfo *cluster);
 
 
 void
@@ -46,14 +45,14 @@ check_old_cluster(bool live_check,
 	/* -- OLD -- */
 
 	if (!live_check)
-		start_postmaster(CLUSTER_OLD, false);
+		start_postmaster(&old_cluster, false);
 
-	set_locale_and_encoding(CLUSTER_OLD);
+	set_locale_and_encoding(&old_cluster);
 
-	get_pg_database_relfilenode(CLUSTER_OLD);
+	get_pg_database_relfilenode(&old_cluster);
 
 	/* Extract a list of databases and tables from the old cluster */
-	get_db_and_rel_infos(&old_cluster.dbarr, CLUSTER_OLD);
+	get_db_and_rel_infos(&old_cluster);
 
 	init_tablespaces();
 
@@ -64,19 +63,19 @@ check_old_cluster(bool live_check,
 	 * Check for various failure cases
 	 */
 
-	check_for_reg_data_type_usage(CLUSTER_OLD);
-	check_for_isn_and_int8_passing_mismatch(CLUSTER_OLD);
+	check_for_reg_data_type_usage(&old_cluster);
+	check_for_isn_and_int8_passing_mismatch(&old_cluster);
 
 	/* old = PG 8.3 checks? */
 	if (GET_MAJOR_VERSION(old_cluster.major_version) <= 803)
 	{
-		old_8_3_check_for_name_data_type_usage(CLUSTER_OLD);
-		old_8_3_check_for_tsquery_usage(CLUSTER_OLD);
+		old_8_3_check_for_name_data_type_usage(&old_cluster);
+		old_8_3_check_for_tsquery_usage(&old_cluster);
 		if (user_opts.check)
 		{
-			old_8_3_rebuild_tsvector_tables(true, CLUSTER_OLD);
-			old_8_3_invalidate_hash_gin_indexes(true, CLUSTER_OLD);
-			old_8_3_invalidate_bpchar_pattern_ops_indexes(true, CLUSTER_OLD);
+			old_8_3_rebuild_tsvector_tables(&old_cluster, true);
+			old_8_3_invalidate_hash_gin_indexes(&old_cluster, true);
+			old_8_3_invalidate_bpchar_pattern_ops_indexes(&old_cluster, true);
 		}
 		else
 
@@ -86,12 +85,12 @@ check_old_cluster(bool live_check,
 			 * end.
 			 */
 			*sequence_script_file_name =
-				old_8_3_create_sequence_script(CLUSTER_OLD);
+				old_8_3_create_sequence_script(&old_cluster);
 	}
 
 	/* Pre-PG 9.0 had no large object permissions */
 	if (GET_MAJOR_VERSION(old_cluster.major_version) <= 804)
-		new_9_0_populate_pg_largeobject_metadata(true, CLUSTER_OLD);
+		new_9_0_populate_pg_largeobject_metadata(&old_cluster, true);
 
 	/*
 	 * While not a check option, we do this now because this is the only time
@@ -111,7 +110,7 @@ check_old_cluster(bool live_check,
 void
 check_new_cluster(void)
 {
-	set_locale_and_encoding(CLUSTER_NEW);
+	set_locale_and_encoding(&new_cluster);
 
 	check_new_db_is_empty();
 
@@ -149,7 +148,7 @@ issue_warnings(char *sequence_script_file_name)
 	/* old = PG 8.3 warnings? */
 	if (GET_MAJOR_VERSION(old_cluster.major_version) <= 803)
 	{
-		start_postmaster(CLUSTER_NEW, true);
+		start_postmaster(&new_cluster, true);
 
 		/* restore proper sequence values using file created from old server */
 		if (sequence_script_file_name)
@@ -165,17 +164,17 @@ issue_warnings(char *sequence_script_file_name)
 			check_ok();
 		}
 
-		old_8_3_rebuild_tsvector_tables(false, CLUSTER_NEW);
-		old_8_3_invalidate_hash_gin_indexes(false, CLUSTER_NEW);
-		old_8_3_invalidate_bpchar_pattern_ops_indexes(false, CLUSTER_NEW);
+		old_8_3_rebuild_tsvector_tables(&new_cluster, false);
+		old_8_3_invalidate_hash_gin_indexes(&new_cluster, false);
+		old_8_3_invalidate_bpchar_pattern_ops_indexes(&new_cluster, false);
 		stop_postmaster(false, true);
 	}
 
 	/* Create dummy large object permissions for old < PG 9.0? */
 	if (GET_MAJOR_VERSION(old_cluster.major_version) <= 804)
 	{
-		start_postmaster(CLUSTER_NEW, true);
-		new_9_0_populate_pg_largeobject_metadata(false, CLUSTER_NEW);
+		start_postmaster(&new_cluster, true);
+		new_9_0_populate_pg_largeobject_metadata(&new_cluster, false);
 		stop_postmaster(false, true);
 	}
 }
@@ -210,8 +209,8 @@ void
 check_cluster_versions(void)
 {
 	/* get old and new cluster versions */
-	old_cluster.major_version = get_major_server_version(&old_cluster.major_version_str, CLUSTER_OLD);
-	new_cluster.major_version = get_major_server_version(&new_cluster.major_version_str, CLUSTER_NEW);
+	old_cluster.major_version = get_major_server_version(&old_cluster, &old_cluster.major_version_str);
+	new_cluster.major_version = get_major_server_version(&new_cluster, &new_cluster.major_version_str);
 
 	/* We allow upgrades from/to the same major version for alpha/beta upgrades */
 
@@ -270,16 +269,15 @@ check_cluster_compatibility(bool live_check)
  * query the database to get the template0 locale
  */
 static void
-set_locale_and_encoding(Cluster whichCluster)
+set_locale_and_encoding(ClusterInfo *cluster)
 {
-	ClusterInfo *active_cluster = ACTIVE_CLUSTER(whichCluster);
-	ControlData *ctrl = &active_cluster->controldata;
+	ControlData *ctrl = &cluster->controldata;
 	PGconn	   *conn;
 	PGresult   *res;
 	int			i_encoding;
-	int			cluster_version = active_cluster->major_version;
+	int			cluster_version = cluster->major_version;
 
-	conn = connectToServer("template1", whichCluster);
+	conn = connectToServer(cluster, "template1");
 
 	/* for pg < 80400, we got the values from pg_controldata */
 	if (cluster_version >= 80400)
@@ -345,7 +343,7 @@ check_new_db_is_empty(void)
 	int			dbnum;
 	bool		found = false;
 
-	get_db_and_rel_infos(&new_cluster.dbarr, CLUSTER_NEW);
+	get_db_and_rel_infos(&new_cluster);
 
 	for (dbnum = 0; dbnum < new_cluster.dbarr.ndbs; dbnum++)
 	{
@@ -457,9 +455,8 @@ create_script_for_old_cluster_deletion(
  *	it must match for the old and new servers.
  */
 void
-check_for_isn_and_int8_passing_mismatch(Cluster whichCluster)
+check_for_isn_and_int8_passing_mismatch(ClusterInfo *cluster)
 {
-	ClusterInfo *active_cluster = ACTIVE_CLUSTER(whichCluster);
 	int			dbnum;
 	FILE	   *script = NULL;
 	bool		found = false;
@@ -478,7 +475,7 @@ check_for_isn_and_int8_passing_mismatch(Cluster whichCluster)
 	snprintf(output_path, sizeof(output_path), "%s/contrib_isn_and_int8_pass_by_value.txt",
 			 os_info.cwd);
 
-	for (dbnum = 0; dbnum < active_cluster->dbarr.ndbs; dbnum++)
+	for (dbnum = 0; dbnum < cluster->dbarr.ndbs; dbnum++)
 	{
 		PGresult   *res;
 		bool		db_used = false;
@@ -486,8 +483,8 @@ check_for_isn_and_int8_passing_mismatch(Cluster whichCluster)
 		int			rowno;
 		int			i_nspname,
 					i_proname;
-		DbInfo	   *active_db = &active_cluster->dbarr.dbs[dbnum];
-		PGconn	   *conn = connectToServer(active_db->db_name, whichCluster);
+		DbInfo	   *active_db = &cluster->dbarr.dbs[dbnum];
+		PGconn	   *conn = connectToServer(cluster, active_db->db_name);
 
 		/* Find any functions coming from contrib/isn */
 		res = executeQueryOrDie(conn,
@@ -552,9 +549,8 @@ check_for_isn_and_int8_passing_mismatch(Cluster whichCluster)
  *	tables upgraded by pg_upgrade.
  */
 void
-check_for_reg_data_type_usage(Cluster whichCluster)
+check_for_reg_data_type_usage(ClusterInfo *cluster)
 {
-	ClusterInfo *active_cluster = ACTIVE_CLUSTER(whichCluster);
 	int			dbnum;
 	FILE	   *script = NULL;
 	bool		found = false;
@@ -565,7 +561,7 @@ check_for_reg_data_type_usage(Cluster whichCluster)
 	snprintf(output_path, sizeof(output_path), "%s/tables_using_reg.txt",
 			 os_info.cwd);
 
-	for (dbnum = 0; dbnum < active_cluster->dbarr.ndbs; dbnum++)
+	for (dbnum = 0; dbnum < cluster->dbarr.ndbs; dbnum++)
 	{
 		PGresult   *res;
 		bool		db_used = false;
@@ -574,8 +570,8 @@ check_for_reg_data_type_usage(Cluster whichCluster)
 		int			i_nspname,
 					i_relname,
 					i_attname;
-		DbInfo	   *active_db = &active_cluster->dbarr.dbs[dbnum];
-		PGconn	   *conn = connectToServer(active_db->db_name, whichCluster);
+		DbInfo	   *active_db = &cluster->dbarr.dbs[dbnum];
+		PGconn	   *conn = connectToServer(cluster, active_db->db_name);
 
 		res = executeQueryOrDie(conn,
 								"SELECT n.nspname, c.relname, a.attname "

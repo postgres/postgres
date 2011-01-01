@@ -10,8 +10,7 @@
 #include "pg_upgrade.h"
 
 static void get_tablespace_paths(void);
-static void set_tablespace_directory_suffix(
-								Cluster whichCluster);
+static void set_tablespace_directory_suffix(ClusterInfo *cluster);
 
 
 void
@@ -19,8 +18,8 @@ init_tablespaces(void)
 {
 	get_tablespace_paths();
 
-	set_tablespace_directory_suffix(CLUSTER_OLD);
-	set_tablespace_directory_suffix(CLUSTER_NEW);
+	set_tablespace_directory_suffix(&old_cluster);
+	set_tablespace_directory_suffix(&new_cluster);
 
 	if (os_info.num_tablespaces > 0 &&
 	strcmp(old_cluster.tablespace_suffix, new_cluster.tablespace_suffix) == 0)
@@ -39,7 +38,7 @@ init_tablespaces(void)
 static void
 get_tablespace_paths(void)
 {
-	PGconn	   *conn = connectToServer("template1", CLUSTER_OLD);
+	PGconn	   *conn = connectToServer(&old_cluster, "template1");
 	PGresult   *res;
 	int			tblnum;
 	int			i_spclocation;
@@ -71,21 +70,19 @@ get_tablespace_paths(void)
 
 
 static void
-set_tablespace_directory_suffix(Cluster whichCluster)
+set_tablespace_directory_suffix(ClusterInfo *cluster)
 {
-	ClusterInfo *active_cluster = ACTIVE_CLUSTER(whichCluster);
-
-	if (GET_MAJOR_VERSION(active_cluster->major_version) <= 804)
-		active_cluster->tablespace_suffix = pg_strdup("");
+	if (GET_MAJOR_VERSION(cluster->major_version) <= 804)
+		cluster->tablespace_suffix = pg_strdup("");
 	else
 	{
 		/* This cluster has a version-specific subdirectory */
-		active_cluster->tablespace_suffix = pg_malloc(4 +
-								  strlen(active_cluster->major_version_str) +
+		cluster->tablespace_suffix = pg_malloc(4 +
+								  strlen(cluster->major_version_str) +
 													  10 /* OIDCHARS */ + 1);
 
 		/* The leading slash is needed to start a new directory. */
-		sprintf(active_cluster->tablespace_suffix, "/PG_%s_%d", active_cluster->major_version_str,
-				active_cluster->controldata.cat_ver);
+		sprintf(cluster->tablespace_suffix, "/PG_%s_%d", cluster->major_version_str,
+				cluster->controldata.cat_ver);
 	}
 }
