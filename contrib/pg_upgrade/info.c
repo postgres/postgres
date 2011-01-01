@@ -441,7 +441,7 @@ relarr_lookup_rel(RelInfoArr *rel_arr, const char *nspname,
 		}
 	}
 	pg_log(PG_FATAL, "Could not find %s.%s in %s cluster\n",
-		   nspname, relname, CLUSTERNAME(whichCluster));
+		   nspname, relname, CLUSTER_NAME(whichCluster));
 	return NULL;
 }
 
@@ -465,7 +465,7 @@ relarr_lookup_reloid(RelInfoArr *rel_arr, Oid oid,
 			return &rel_arr->rels[relnum];
 	}
 	pg_log(PG_FATAL, "Could not find %d in %s cluster\n",
-		   oid, CLUSTERNAME(whichCluster));
+		   oid, CLUSTER_NAME(whichCluster));
 	return NULL;
 }
 
@@ -495,7 +495,7 @@ dbarr_print(DbInfoArr *arr, Cluster whichCluster)
 {
 	int			dbnum;
 
-	pg_log(PG_DEBUG, "%s databases\n", CLUSTERNAME(whichCluster));
+	pg_log(PG_DEBUG, "%s databases\n", CLUSTER_NAME(whichCluster));
 
 	for (dbnum = 0; dbnum < arr->ndbs; dbnum++)
 	{

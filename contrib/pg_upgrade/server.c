@@ -195,7 +195,7 @@ start_postmaster(Cluster whichCluster, bool quiet)
 
 	if (test_server_conn(POSTMASTER_UPTIME, whichCluster) == false)
 		pg_log(PG_FATAL, " Unable to start %s postmaster with the command: %s\nPerhaps pg_hba.conf was not set to \"trust\".",
-			   CLUSTERNAME(whichCluster), cmd);
+			   CLUSTER_NAME(whichCluster), cmd);
 
 	if ((os_info.postmasterPID = get_postmaster_pid(datadir)) == 0)
 		pg_log(PG_FATAL, " Unable to get postmaster pid\n");
@@ -275,7 +275,7 @@ test_server_conn(int timeout, Cluster whichCluster)
 
 		if (tries == STARTUP_WARNING_TRIES)
 			prep_status("Trying to start %s server ",
-						CLUSTERNAME(whichCluster));
+						CLUSTER_NAME(whichCluster));
 		else if (tries > STARTUP_WARNING_TRIES)
 			pg_log(PG_REPORT, ".");
 	}

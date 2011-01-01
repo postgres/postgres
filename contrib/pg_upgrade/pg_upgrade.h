@@ -52,7 +52,7 @@
 #define EXE_EXT				".exe"
 #endif
 
-#define CLUSTERNAME(cluster)	((cluster) == CLUSTER_OLD ? "old" : "new")
+#define CLUSTER_NAME(cluster)	((cluster) == CLUSTER_OLD ? "old" : "new")
 #define ACTIVE_CLUSTER(cluster) (((cluster) == CLUSTER_OLD) ? \
 									&old_cluster : &new_cluster)
 
