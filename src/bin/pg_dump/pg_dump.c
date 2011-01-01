@@ -10730,7 +10730,7 @@ dumpTableSecLabel(Archive *fout, TableInfo *tbinfo, const char *reltypename)
 							tbinfo->dobj.catId.oid,
 							&labels);
 
-	/* If comments exist, build SECURITY LABEL statements */
+	/* If security labels exist, build SECURITY LABEL statements */
 	if (nlabels <= 0)
 		return;
 
@@ -10753,9 +10753,9 @@ dumpTableSecLabel(Archive *fout, TableInfo *tbinfo, const char *reltypename)
 		else
 		{
 			colname = getAttrName(objsubid, tbinfo);
-			appendPQExpBuffer(target, "COLUMN %s.%s",
-							  fmtId(tbinfo->dobj.name),
-							  fmtId(colname));
+			/* first fmtId result must be consumed before calling it again */
+			appendPQExpBuffer(target, "COLUMN %s", fmtId(tbinfo->dobj.name));
+			appendPQExpBuffer(target, ".%s", fmtId(colname));
 		}
 		appendPQExpBuffer(query, "SECURITY LABEL FOR %s ON %s IS ",
 						  fmtId(provider), target->data);
