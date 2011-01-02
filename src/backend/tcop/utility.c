@@ -220,6 +220,7 @@ check_xact_readonly(Node *parsetree)
 		case T_AlterUserMappingStmt:
 		case T_DropUserMappingStmt:
 		case T_AlterTableSpaceOptionsStmt:
+		case T_CreateForeignTableStmt:
 		case T_SecLabelStmt:
 			PreventCommandIfReadOnly(CreateCommandTag(parsetree));
 			break;
@@ -492,6 +493,7 @@ standard_ProcessUtility(Node *parsetree,
 			break;
 
 		case T_CreateStmt:
+		case T_CreateForeignTableStmt:
 			{
 				List	   *stmts;
 				ListCell   *l;
@@ -539,6 +541,22 @@ standard_ProcessUtility(Node *parsetree,
 											   true);
 
 						AlterTableCreateToastTable(relOid, toast_options);
+					}
+					else if (IsA(stmt, CreateForeignTableStmt))
+					{
+						/* Create the table itself */
+						relOid = DefineRelation((CreateStmt *) stmt,
+												RELKIND_FOREIGN_TABLE,
+												InvalidOid);
+
+						/*
+						 * Unless "IF NOT EXISTS" was specified and the
+						 * relation already exists, create the pg_foreign_table
+						 * entry.
+						 */
+						if (relOid != InvalidOid)
+							CreateForeignTable((CreateForeignTableStmt *) stmt,
+												relOid);
 					}
 					else
 					{
@@ -618,6 +636,7 @@ standard_ProcessUtility(Node *parsetree,
 					case OBJECT_SEQUENCE:
 					case OBJECT_VIEW:
 					case OBJECT_INDEX:
+					case OBJECT_FOREIGN_TABLE:
 						RemoveRelations(stmt);
 						break;
 
@@ -1557,6 +1576,10 @@ CreateCommandTag(Node *parsetree)
 			tag = "DROP USER MAPPING";
 			break;
 
+		case T_CreateForeignTableStmt:
+			tag = "CREATE FOREIGN TABLE";
+			break;
+
 		case T_DropStmt:
 			switch (((DropStmt *) parsetree)->removeType)
 			{
@@ -1595,6 +1618,9 @@ CreateCommandTag(Node *parsetree)
 					break;
 				case OBJECT_TSCONFIGURATION:
 					tag = "DROP TEXT SEARCH CONFIGURATION";
+					break;
+				case OBJECT_FOREIGN_TABLE:
+					tag = "DROP FOREIGN TABLE";
 					break;
 				default:
 					tag = "???";
@@ -1654,6 +1680,14 @@ CreateCommandTag(Node *parsetree)
 					tag = "ALTER SEQUENCE";
 					break;
 				case OBJECT_COLUMN:
+					{
+						RenameStmt *stmt = (RenameStmt *) parsetree;
+						if (stmt->relationType == OBJECT_FOREIGN_TABLE)
+							tag = "ALTER FOREIGN TABLE";
+						else
+							tag = "ALTER TABLE";
+					}
+					break;
 				case OBJECT_TABLE:
 					tag = "ALTER TABLE";
 					break;
@@ -1665,6 +1699,9 @@ CreateCommandTag(Node *parsetree)
 					break;
 				case OBJECT_VIEW:
 					tag = "ALTER VIEW";
+					break;
+				case OBJECT_FOREIGN_TABLE:
+					tag = "ALTER FOREIGN TABLE";
 					break;
 				case OBJECT_TSPARSER:
 					tag = "ALTER TEXT SEARCH PARSER";
@@ -1736,6 +1773,9 @@ CreateCommandTag(Node *parsetree)
 				case OBJECT_VIEW:
 					tag = "ALTER VIEW";
 					break;
+				case OBJECT_FOREIGN_TABLE:
+					tag = "ALTER FOREIGN TABLE";
+					break;
 				default:
 					tag = "???";
 					break;
@@ -1796,6 +1836,9 @@ CreateCommandTag(Node *parsetree)
 				case OBJECT_FOREIGN_SERVER:
 					tag = "ALTER SERVER";
 					break;
+				case OBJECT_FOREIGN_TABLE:
+					tag = "ALTER FOREIGN TABLE";
+					break;
 				default:
 					tag = "???";
 					break;
@@ -1819,6 +1862,9 @@ CreateCommandTag(Node *parsetree)
 					break;
 				case OBJECT_VIEW:
 					tag = "ALTER VIEW";
+					break;
+				case OBJECT_FOREIGN_TABLE:
+					tag = "ALTER FOREIGN TABLE";
 					break;
 				default:
 					tag = "???";
@@ -2316,6 +2362,7 @@ GetCommandLogLevel(Node *parsetree)
 			break;
 
 		case T_CreateStmt:
+		case T_CreateForeignTableStmt:
 			lev = LOGSTMT_DDL;
 			break;
 

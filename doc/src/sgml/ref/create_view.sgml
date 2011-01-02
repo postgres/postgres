@@ -50,7 +50,7 @@ CREATE [ OR REPLACE ] [ TEMP | TEMPORARY ] VIEW <replaceable class="PARAMETER">n
    schema.  Otherwise it is created in the current schema.  Temporary
    views exist in a special schema, so a schema name cannot be given
    when creating a temporary view. The name of the view must be
-   distinct from the name of any other view, table, sequence, or index
+   distinct from the name of any other view, table, sequence, index or foreign table
    in the same schema.
   </para>
  </refsect1>

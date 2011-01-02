@@ -242,6 +242,9 @@ pgstat_relation(Relation rel, FunctionCallInfo fcinfo)
 		case RELKIND_COMPOSITE_TYPE:
 			err = "composite type";
 			break;
+		case RELKIND_FOREIGN_TABLE:
+			err = "foreign table";
+			break;
 		default:
 			err = "unknown";
 			break;

@@ -149,6 +149,11 @@
      </row>
 
      <row>
+      <entry><link linkend="catalog-pg-foreign-table"><structname>pg_foreign_table</structname></link></entry>
+      <entry>additional foreign table information</entry>
+     </row>
+
+     <row>
       <entry><link linkend="catalog-pg-index"><structname>pg_index</structname></link></entry>
       <entry>additional index information</entry>
      </row>
@@ -1656,8 +1661,8 @@
       <entry>
        <literal>r</> = ordinary table, <literal>i</> = index,
        <literal>S</> = sequence, <literal>v</> = view, <literal>c</> =
-       composite type, <literal>t</> = TOAST
-       table
+       composite type, <literal>t</> = TOAST table,
+       <literal>f</> = foreign table
       </entry>
      </row>
 
@@ -2924,6 +2929,61 @@
       <entry></entry>
       <entry>
        Foreign server specific options, as <quote>keyword=value</> strings
+      </entry>
+     </row>
+    </tbody>
+   </tgroup>
+  </table>
+ </sect1>
+
+
+ <sect1 id="catalog-pg-foreign-table">
+  <title><structname>pg_foreign_table</structname></title>
+
+  <indexterm zone="catalog-pg-foreign-table">
+   <primary>pg_foreign_table</primary>
+  </indexterm>
+
+  <para>
+   The catalog <structname>pg_foreign_table</structname> contains part
+   of the information about foreign tables.
+   The rest is mostly in <structname>pg_class</structname>.
+  </para>
+
+  <table>
+   <title><structname>pg_foreign_table</> Columns</title>
+
+   <tgroup cols="4">
+    <thead>
+     <row>
+      <entry>Name</entry>
+      <entry>Type</entry>
+      <entry>References</entry>
+      <entry>Description</entry>
+     </row>
+    </thead>
+
+    <tbody>
+     <row>
+      <entry><structfield>ftrelid</structfield></entry>
+      <entry><type>oid</type></entry>
+      <entry><literal><link linkend="catalog-pg-class"><structname>pg_class</structname></link>.oid</literal></entry>
+      <entry>The OID of the <structname>pg_class</> entry for this foreign table</entry>
+     </row>
+
+     <row>
+      <entry><structfield>ftserver</structfield></entry>
+      <entry><type>oid</type></entry>
+      <entry><literal><link linkend="catalog-pg-foreign-server"><structname>pg_foreign_server</structname></link>.oid</literal></entry>
+      <entry>The OID of the foreign server for this foreign table</entry>
+     </row>
+
+     <row>
+      <entry><structfield>ftoptions</structfield></entry>
+      <entry><type>text[]</type></entry>
+      <entry></entry>
+      <entry>
+       Foreign table options, as <quote>keyword=value</> strings.
       </entry>
      </row>
     </tbody>

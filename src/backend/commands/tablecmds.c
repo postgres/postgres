@@ -29,6 +29,7 @@
 #include "catalog/objectaccess.h"
 #include "catalog/pg_constraint.h"
 #include "catalog/pg_depend.h"
+#include "catalog/pg_foreign_table.h"
 #include "catalog/pg_inherits.h"
 #include "catalog/pg_inherits_fn.h"
 #include "catalog/pg_namespace.h"
@@ -48,6 +49,7 @@
 #include "commands/trigger.h"
 #include "commands/typecmds.h"
 #include "executor/executor.h"
+#include "foreign/foreign.h"
 #include "miscadmin.h"
 #include "nodes/makefuncs.h"
 #include "nodes/nodeFuncs.h"
@@ -219,9 +221,21 @@ static const struct dropmsgstrings dropmsgstringarray[] = {
 		gettext_noop("type \"%s\" does not exist, skipping"),
 		gettext_noop("\"%s\" is not a type"),
 	gettext_noop("Use DROP TYPE to remove a type.")},
+	{RELKIND_FOREIGN_TABLE,
+		ERRCODE_UNDEFINED_OBJECT,
+		gettext_noop("foreign table \"%s\" does not exist"),
+		gettext_noop("foreign table \"%s\" does not exist, skipping"),
+		gettext_noop("\"%s\" is not a foreign table"),
+	gettext_noop("Use DROP FOREIGN TABLE to remove a foreign table.")},
 	{'\0', 0, NULL, NULL, NULL, NULL}
 };
 
+/* Alter table target-type flags for ATSimplePermissions */
+#define		ATT_TABLE				0x0001
+#define		ATT_VIEW				0x0002
+#define		ATT_INDEX				0x0004
+#define		ATT_COMPOSITE_TYPE		0x0008
+#define		ATT_FOREIGN_TABLE		0x0010
 
 static void truncate_check_rel(Relation rel);
 static List *MergeAttributes(List *schema, List *supers, char relpersistence,
@@ -264,8 +278,8 @@ static void ATExecCmd(List **wqueue, AlteredTableInfo *tab, Relation rel,
 static void ATRewriteTables(List **wqueue, LOCKMODE lockmode);
 static void ATRewriteTable(AlteredTableInfo *tab, Oid OIDNewHeap, LOCKMODE lockmode);
 static AlteredTableInfo *ATGetQueueEntry(List **wqueue, Relation rel);
-static void ATSimplePermissions(Relation rel, bool allowView, bool allowType);
-static void ATSimplePermissionsRelationOrIndex(Relation rel);
+static void ATSimplePermissions(Relation rel, int allowed_targets);
+static void ATWrongRelkindError(Relation rel, int allowed_targets);
 static void ATSimpleRecursion(List **wqueue, Relation rel,
 				  AlterTableCmd *cmd, bool recurse, LOCKMODE lockmode);
 static void ATOneLevelRecursion(List **wqueue, Relation rel,
@@ -338,6 +352,8 @@ static void ATExecEnableDisableRule(Relation rel, char *rulename,
 static void ATPrepAddInherit(Relation child_rel);
 static void ATExecAddInherit(Relation child_rel, RangeVar *parent, LOCKMODE lockmode);
 static void ATExecDropInherit(Relation rel, RangeVar *parent, LOCKMODE lockmode);
+static void ATExecGenericOptions(Relation rel, List *options);
+
 static void copy_relation_data(SMgrRelation rel, SMgrRelation dst,
 				   ForkNumber forkNum, char relpersistence);
 static const char *storage_name(char c);
@@ -396,6 +412,10 @@ DefineRelation(CreateStmt *stmt, char relkind, Oid ownerId)
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_TABLE_DEFINITION),
 				 errmsg("ON COMMIT can only be used on temporary tables")));
+	if (stmt->constraints != NIL && relkind == RELKIND_FOREIGN_TABLE)
+		ereport(ERROR,
+				(errcode(ERRCODE_WRONG_OBJECT_TYPE),
+				 errmsg("constraints on foreign tables are not supported")));
 
 	/*
 	 * Security check: disallow creating temp tables from security-restricted
@@ -518,6 +538,11 @@ DefineRelation(CreateStmt *stmt, char relkind, Oid ownerId)
 		if (colDef->raw_default != NULL)
 		{
 			RawColumnDefault *rawEnt;
+
+			if (relkind == RELKIND_FOREIGN_TABLE)
+				ereport(ERROR,
+						(errcode(ERRCODE_WRONG_OBJECT_TYPE),
+					 errmsg("default values on foreign tables are not supported")));
 
 			Assert(colDef->cooked_default == NULL);
 
@@ -675,7 +700,8 @@ DropErrorMsgWrongType(const char *relname, char wrongkind, char rightkind)
 
 /*
  * RemoveRelations
- *		Implements DROP TABLE, DROP INDEX, DROP SEQUENCE, DROP VIEW
+ *		Implements DROP TABLE, DROP INDEX, DROP SEQUENCE, DROP VIEW,
+ *      DROP FOREIGN TABLE
  */
 void
 RemoveRelations(DropStmt *drop)
@@ -707,6 +733,10 @@ RemoveRelations(DropStmt *drop)
 
 		case OBJECT_VIEW:
 			relkind = RELKIND_VIEW;
+			break;
+
+		case OBJECT_FOREIGN_TABLE:
+			relkind = RELKIND_FOREIGN_TABLE;
 			break;
 
 		default:
@@ -1991,10 +2021,11 @@ renameatt_internal(Oid myrelid,
 	if (relkind != RELKIND_RELATION &&
 		relkind != RELKIND_VIEW &&
 		relkind != RELKIND_COMPOSITE_TYPE &&
-		relkind != RELKIND_INDEX)
+		relkind != RELKIND_INDEX &&
+		relkind != RELKIND_FOREIGN_TABLE)
 		ereport(ERROR,
 				(errcode(ERRCODE_WRONG_OBJECT_TYPE),
-			   errmsg("\"%s\" is not a table, view, composite type or index",
+			   errmsg("\"%s\" is not a table, view, composite type, index or foreign table",
 					  RelationGetRelationName(targetrelation))));
 
 	/*
@@ -2154,7 +2185,7 @@ renameatt(Oid myrelid, RenameStmt *stmt)
 
 
 /*
- * Execute ALTER TABLE/INDEX/SEQUENCE/VIEW RENAME
+ * Execute ALTER TABLE/INDEX/SEQUENCE/VIEW/FOREIGN TABLE RENAME
  *
  * Caller has already done permissions checks.
  */
@@ -2176,7 +2207,9 @@ RenameRelation(Oid myrelid, const char *newrelname, ObjectType reltype)
 
 	/*
 	 * For compatibility with prior releases, we don't complain if ALTER TABLE
-	 * or ALTER INDEX is used to rename a sequence or view.
+	 * or ALTER INDEX is used to rename some other type of relation.  But
+	 * ALTER SEQUENCE/VIEW/FOREIGN TABLE are only to be used with relations of
+	 * that type.
 	 */
 	if (reltype == OBJECT_SEQUENCE && relkind != RELKIND_SEQUENCE)
 		ereport(ERROR,
@@ -2189,6 +2222,13 @@ RenameRelation(Oid myrelid, const char *newrelname, ObjectType reltype)
 				(errcode(ERRCODE_WRONG_OBJECT_TYPE),
 				 errmsg("\"%s\" is not a view",
 						RelationGetRelationName(targetrelation))));
+
+	if (reltype == OBJECT_FOREIGN_TABLE && relkind != RELKIND_FOREIGN_TABLE)
+		ereport(ERROR,
+				(errcode(ERRCODE_WRONG_OBJECT_TYPE),
+				 errmsg("\"%s\" is not a foreign table",
+						RelationGetRelationName(targetrelation)),
+				 errhint("Use ALTER FOREIGN TABLE instead.")));
 
 	/*
 	 * Don't allow ALTER TABLE on composite types. We want people to use ALTER
@@ -2402,7 +2442,8 @@ AlterTable(AlterTableStmt *stmt)
 			 * For mostly-historical reasons, we allow ALTER TABLE to apply to
 			 * almost all relation types.
 			 */
-			if (rel->rd_rel->relkind == RELKIND_COMPOSITE_TYPE)
+			if (rel->rd_rel->relkind == RELKIND_COMPOSITE_TYPE
+				|| rel->rd_rel->relkind == RELKIND_FOREIGN_TABLE)
 				ereport(ERROR,
 						(errcode(ERRCODE_WRONG_OBJECT_TYPE),
 						 errmsg("\"%s\" is not a table",
@@ -2438,6 +2479,14 @@ AlterTable(AlterTableStmt *stmt)
 				ereport(ERROR,
 						(errcode(ERRCODE_WRONG_OBJECT_TYPE),
 						 errmsg("\"%s\" is not a view",
+								RelationGetRelationName(rel))));
+			break;
+
+		case OBJECT_FOREIGN_TABLE:
+			if (rel->rd_rel->relkind != RELKIND_FOREIGN_TABLE)
+				ereport(ERROR,
+						(errcode(ERRCODE_WRONG_OBJECT_TYPE),
+						 errmsg("\"%s\" is not a foreign table",
 								RelationGetRelationName(rel))));
 			break;
 
@@ -2526,6 +2575,7 @@ AlterTableGetLockLevel(List *cmds)
 			case AT_SetTableSpace:		/* must rewrite heap */
 			case AT_DropNotNull:		/* may change some SQL plans */
 			case AT_SetNotNull:
+			case AT_GenericOptions:
 				cmd_lockmode = AccessExclusiveLock;
 				break;
 
@@ -2684,14 +2734,15 @@ ATPrepCmd(List **wqueue, Relation rel, AlterTableCmd *cmd,
 	switch (cmd->subtype)
 	{
 		case AT_AddColumn:		/* ADD COLUMN */
-			ATSimplePermissions(rel, false, true);
+			ATSimplePermissions(rel,
+				ATT_TABLE|ATT_COMPOSITE_TYPE|ATT_FOREIGN_TABLE);
 			/* Performs own recursion */
 			ATPrepAddColumn(wqueue, rel, recurse, recursing, cmd, lockmode);
 			pass = AT_PASS_ADD_COL;
 			break;
 		case AT_AddColumnToView:		/* add column via CREATE OR REPLACE
 										 * VIEW */
-			ATSimplePermissions(rel, true, false);
+			ATSimplePermissions(rel, ATT_VIEW);
 			/* Performs own recursion */
 			ATPrepAddColumn(wqueue, rel, recurse, recursing, cmd, lockmode);
 			pass = AT_PASS_ADD_COL;
@@ -2704,19 +2755,19 @@ ATPrepCmd(List **wqueue, Relation rel, AlterTableCmd *cmd,
 			 * substitutes default values into INSERTs before it expands
 			 * rules.
 			 */
-			ATSimplePermissions(rel, true, false);
+			ATSimplePermissions(rel, ATT_TABLE|ATT_VIEW);
 			ATSimpleRecursion(wqueue, rel, cmd, recurse, lockmode);
 			/* No command-specific prep needed */
 			pass = cmd->def ? AT_PASS_ADD_CONSTR : AT_PASS_DROP;
 			break;
 		case AT_DropNotNull:	/* ALTER COLUMN DROP NOT NULL */
-			ATSimplePermissions(rel, false, false);
+			ATSimplePermissions(rel, ATT_TABLE|ATT_FOREIGN_TABLE);
 			ATSimpleRecursion(wqueue, rel, cmd, recurse, lockmode);
 			/* No command-specific prep needed */
 			pass = AT_PASS_DROP;
 			break;
 		case AT_SetNotNull:		/* ALTER COLUMN SET NOT NULL */
-			ATSimplePermissions(rel, false, false);
+			ATSimplePermissions(rel, ATT_TABLE|ATT_FOREIGN_TABLE);
 			ATSimpleRecursion(wqueue, rel, cmd, recurse, lockmode);
 			/* No command-specific prep needed */
 			pass = AT_PASS_ADD_CONSTR;
@@ -2729,30 +2780,31 @@ ATPrepCmd(List **wqueue, Relation rel, AlterTableCmd *cmd,
 			break;
 		case AT_SetOptions:		/* ALTER COLUMN SET ( options ) */
 		case AT_ResetOptions:	/* ALTER COLUMN RESET ( options ) */
-			ATSimplePermissionsRelationOrIndex(rel);
+			ATSimplePermissions(rel, ATT_TABLE|ATT_INDEX);
 			/* This command never recurses */
 			pass = AT_PASS_MISC;
 			break;
 		case AT_SetStorage:		/* ALTER COLUMN SET STORAGE */
-			ATSimplePermissions(rel, false, false);
+			ATSimplePermissions(rel, ATT_TABLE);
 			ATSimpleRecursion(wqueue, rel, cmd, recurse, lockmode);
 			/* No command-specific prep needed */
 			pass = AT_PASS_MISC;
 			break;
 		case AT_DropColumn:		/* DROP COLUMN */
-			ATSimplePermissions(rel, false, true);
+			ATSimplePermissions(rel,
+				ATT_TABLE|ATT_COMPOSITE_TYPE|ATT_FOREIGN_TABLE);
 			ATPrepDropColumn(wqueue, rel, recurse, recursing, cmd, lockmode);
 			/* Recursion occurs during execution phase */
 			pass = AT_PASS_DROP;
 			break;
 		case AT_AddIndex:		/* ADD INDEX */
-			ATSimplePermissions(rel, false, false);
+			ATSimplePermissions(rel, ATT_TABLE);
 			/* This command never recurses */
 			/* No command-specific prep needed */
 			pass = AT_PASS_ADD_INDEX;
 			break;
 		case AT_AddConstraint:	/* ADD CONSTRAINT */
-			ATSimplePermissions(rel, false, false);
+			ATSimplePermissions(rel, ATT_TABLE);
 			/* Recursion occurs during execution phase */
 			/* No command-specific prep needed except saving recurse flag */
 			if (recurse)
@@ -2760,7 +2812,7 @@ ATPrepCmd(List **wqueue, Relation rel, AlterTableCmd *cmd,
 			pass = AT_PASS_ADD_CONSTR;
 			break;
 		case AT_DropConstraint:	/* DROP CONSTRAINT */
-			ATSimplePermissions(rel, false, false);
+			ATSimplePermissions(rel, ATT_TABLE);
 			/* Recursion occurs during execution phase */
 			/* No command-specific prep needed except saving recurse flag */
 			if (recurse)
@@ -2768,7 +2820,8 @@ ATPrepCmd(List **wqueue, Relation rel, AlterTableCmd *cmd,
 			pass = AT_PASS_DROP;
 			break;
 		case AT_AlterColumnType:		/* ALTER COLUMN TYPE */
-			ATSimplePermissions(rel, false, true);
+			ATSimplePermissions(rel,
+				ATT_TABLE|ATT_COMPOSITE_TYPE|ATT_FOREIGN_TABLE);
 			/* Performs own recursion */
 			ATPrepAlterColumnType(wqueue, tab, rel, recurse, recursing, cmd, lockmode);
 			pass = AT_PASS_ALTER_TYPE;
@@ -2780,20 +2833,20 @@ ATPrepCmd(List **wqueue, Relation rel, AlterTableCmd *cmd,
 			break;
 		case AT_ClusterOn:		/* CLUSTER ON */
 		case AT_DropCluster:	/* SET WITHOUT CLUSTER */
-			ATSimplePermissions(rel, false, false);
+			ATSimplePermissions(rel, ATT_TABLE);
 			/* These commands never recurse */
 			/* No command-specific prep needed */
 			pass = AT_PASS_MISC;
 			break;
 		case AT_AddOids:		/* SET WITH OIDS */
-			ATSimplePermissions(rel, false, false);
+			ATSimplePermissions(rel, ATT_TABLE);
 			/* Performs own recursion */
 			if (!rel->rd_rel->relhasoids || recursing)
 				ATPrepAddOids(wqueue, rel, recurse, cmd, lockmode);
 			pass = AT_PASS_ADD_COL;
 			break;
 		case AT_DropOids:		/* SET WITHOUT OIDS */
-			ATSimplePermissions(rel, false, false);
+			ATSimplePermissions(rel, ATT_TABLE);
 			/* Performs own recursion */
 			if (rel->rd_rel->relhasoids)
 			{
@@ -2807,20 +2860,20 @@ ATPrepCmd(List **wqueue, Relation rel, AlterTableCmd *cmd,
 			pass = AT_PASS_DROP;
 			break;
 		case AT_SetTableSpace:	/* SET TABLESPACE */
-			ATSimplePermissionsRelationOrIndex(rel);
+			ATSimplePermissions(rel, ATT_TABLE|ATT_INDEX);
 			/* This command never recurses */
 			ATPrepSetTableSpace(tab, rel, cmd->name, lockmode);
 			pass = AT_PASS_MISC;	/* doesn't actually matter */
 			break;
 		case AT_SetRelOptions:	/* SET (...) */
 		case AT_ResetRelOptions:		/* RESET (...) */
-			ATSimplePermissionsRelationOrIndex(rel);
+			ATSimplePermissions(rel, ATT_TABLE|ATT_INDEX);
 			/* This command never recurses */
 			/* No command-specific prep needed */
 			pass = AT_PASS_MISC;
 			break;
 		case AT_AddInherit:		/* INHERIT */
-			ATSimplePermissions(rel, false, false);
+			ATSimplePermissions(rel, ATT_TABLE);
 			/* This command never recurses */
 			ATPrepAddInherit(rel);
 			pass = AT_PASS_MISC;
@@ -2837,9 +2890,18 @@ ATPrepCmd(List **wqueue, Relation rel, AlterTableCmd *cmd,
 		case AT_EnableAlwaysRule:
 		case AT_EnableReplicaRule:
 		case AT_DisableRule:
-		case AT_DropInherit:	/* NO INHERIT */
-			ATSimplePermissions(rel, false, false);
+			ATSimplePermissions(rel, ATT_TABLE);
 			/* These commands never recurse */
+			/* No command-specific prep needed */
+			pass = AT_PASS_MISC;
+			break;
+		case AT_DropInherit:	/* NO INHERIT */
+			ATSimplePermissions(rel, ATT_TABLE);
+			/* No command-specific prep needed */
+			pass = AT_PASS_MISC;
+			break;
+		case AT_GenericOptions:
+			ATSimplePermissions(rel, ATT_FOREIGN_TABLE);
 			/* No command-specific prep needed */
 			pass = AT_PASS_MISC;
 			break;
@@ -3085,6 +3147,9 @@ ATExecCmd(List **wqueue, AlteredTableInfo *tab, Relation rel,
 		case AT_DropInherit:
 			ATExecDropInherit(rel, (RangeVar *) cmd->def, lockmode);
 			break;
+		case AT_GenericOptions:
+			ATExecGenericOptions(rel, (List *) cmd->def);
+			break;
 		default:				/* oops */
 			elog(ERROR, "unrecognized alter table type: %d",
 				 (int) cmd->subtype);
@@ -3110,6 +3175,10 @@ ATRewriteTables(List **wqueue, LOCKMODE lockmode)
 	foreach(ltab, *wqueue)
 	{
 		AlteredTableInfo *tab = (AlteredTableInfo *) lfirst(ltab);
+
+		/* Foreign tables have no storage. */
+		if (tab->relkind == RELKIND_FOREIGN_TABLE)
+			continue;
 
 		/*
 		 * We only need to rewrite the table if at least one column needs to
@@ -3564,32 +3633,35 @@ ATGetQueueEntry(List **wqueue, Relation rel)
  * - Ensure that it is not a system table
  */
 static void
-ATSimplePermissions(Relation rel, bool allowView, bool allowType)
+ATSimplePermissions(Relation rel, int allowed_targets)
 {
-	if (rel->rd_rel->relkind != RELKIND_RELATION)
+	int		actual_target;
+
+	switch (rel->rd_rel->relkind)
 	{
-		if (allowView)
-		{
-			if (rel->rd_rel->relkind != RELKIND_VIEW)
-				ereport(ERROR,
-						(errcode(ERRCODE_WRONG_OBJECT_TYPE),
-						 errmsg("\"%s\" is not a table or view",
-								RelationGetRelationName(rel))));
-		}
-		else if (allowType)
-		{
-			if (rel->rd_rel->relkind != RELKIND_COMPOSITE_TYPE)
-				ereport(ERROR,
-						(errcode(ERRCODE_WRONG_OBJECT_TYPE),
-						 errmsg("\"%s\" is not a table or composite type",
-								RelationGetRelationName(rel))));
-		}
-		else
-			ereport(ERROR,
-					(errcode(ERRCODE_WRONG_OBJECT_TYPE),
-					 errmsg("\"%s\" is not a table",
-							RelationGetRelationName(rel))));
+		case RELKIND_RELATION:
+			actual_target = ATT_TABLE;
+			break;
+		case RELKIND_VIEW:
+			actual_target = ATT_VIEW;
+			break;
+		case RELKIND_INDEX:
+			actual_target = ATT_INDEX;
+			break;
+		case RELKIND_COMPOSITE_TYPE:
+			actual_target = ATT_COMPOSITE_TYPE;
+			break;
+		case RELKIND_FOREIGN_TABLE:
+			actual_target = ATT_FOREIGN_TABLE;
+			break;
+		default:
+			actual_target = 0;
+			break;
 	}
+
+	/* Wrong target type? */
+	if ((actual_target & allowed_targets) == 0)
+		ATWrongRelkindError(rel, allowed_targets);
 
 	/* Permissions checks */
 	if (!pg_class_ownercheck(RelationGetRelid(rel), GetUserId()))
@@ -3604,32 +3676,48 @@ ATSimplePermissions(Relation rel, bool allowView, bool allowType)
 }
 
 /*
- * ATSimplePermissionsRelationOrIndex
+ * ATWrongRelkindError
  *
- * - Ensure that it is a relation or an index
- * - Ensure this user is the owner
- * - Ensure that it is not a system table
+ * Throw an error when a relation has been determined to be of the wrong
+ * type.
  */
 static void
-ATSimplePermissionsRelationOrIndex(Relation rel)
+ATWrongRelkindError(Relation rel, int allowed_targets)
 {
-	if (rel->rd_rel->relkind != RELKIND_RELATION &&
-		rel->rd_rel->relkind != RELKIND_INDEX)
-		ereport(ERROR,
-				(errcode(ERRCODE_WRONG_OBJECT_TYPE),
-				 errmsg("\"%s\" is not a table or index",
-						RelationGetRelationName(rel))));
+	char	   *msg;
 
-	/* Permissions checks */
-	if (!pg_class_ownercheck(RelationGetRelid(rel), GetUserId()))
-		aclcheck_error(ACLCHECK_NOT_OWNER, ACL_KIND_CLASS,
-					   RelationGetRelationName(rel));
+	switch (allowed_targets)
+	{
+		case ATT_TABLE:
+			msg = _("\"%s\" is not a table");
+			break;
+		case ATT_TABLE|ATT_INDEX:
+			msg = _("\"%s\" is not a table or index");
+			break;
+		case ATT_TABLE|ATT_VIEW:
+			msg = _("\"%s\" is not a table or view");
+			break;
+		case ATT_TABLE|ATT_FOREIGN_TABLE:
+			msg = _("\"%s\" is not a table or foreign table");
+			break;
+		case ATT_TABLE|ATT_COMPOSITE_TYPE|ATT_FOREIGN_TABLE:
+			msg = _("\"%s\" is not a table, composite type, or foreign table");
+			break;
+		case ATT_VIEW:
+			msg = _("\"%s\" is not a view");
+			break;
+		case ATT_FOREIGN_TABLE:
+			msg = _("\"%s\" is not a foreign table");
+			break;
+		default:
+			/* shouldn't get here, add all necessary cases above */
+			msg = _("\"%s\" is of the wrong type");
+			break;
+	}
 
-	if (!allowSystemTableMods && IsSystemRelation(rel))
-		ereport(ERROR,
-				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
-				 errmsg("permission denied: \"%s\" is a system catalog",
-						RelationGetRelationName(rel))));
+	ereport(ERROR,
+			(errcode(ERRCODE_WRONG_OBJECT_TYPE),
+			 errmsg(msg, RelationGetRelationName(rel))));
 }
 
 /*
@@ -4101,6 +4189,11 @@ ATExecAddColumn(AlteredTableInfo *tab, Relation rel,
 	{
 		RawColumnDefault *rawEnt;
 
+		if (relkind == RELKIND_FOREIGN_TABLE)
+			ereport(ERROR,
+					(errcode(ERRCODE_WRONG_OBJECT_TYPE),
+					 errmsg("default values on foreign tables are not supported")));
+
 		rawEnt = (RawColumnDefault *) palloc(sizeof(RawColumnDefault));
 		rawEnt->attnum = attribute.attnum;
 		rawEnt->raw_default = copyObject(colDef->raw_default);
@@ -4137,12 +4230,14 @@ ATExecAddColumn(AlteredTableInfo *tab, Relation rel,
 	 * returned by AddRelationNewConstraints, so that the right thing happens
 	 * when a datatype's default applies.
 	 *
-	 * We skip this step completely for views.	For a view, we can only get
-	 * here from CREATE OR REPLACE VIEW, which historically doesn't set up
-	 * defaults, not even for domain-typed columns.  And in any case we
-	 * mustn't invoke Phase 3 on a view, since it has no storage.
+	 * We skip this step completely for views and foreign tables.  For a view,
+	 * we can only get here from CREATE OR REPLACE VIEW, which historically
+	 * doesn't set up defaults, not even for domain-typed columns.  And in any
+	 * case we mustn't invoke Phase 3 on a view or foreign table, since they
+	 * have no storage.
 	 */
-	if (relkind != RELKIND_VIEW && relkind != RELKIND_COMPOSITE_TYPE && attribute.attnum > 0)
+	if (relkind != RELKIND_VIEW && relkind != RELKIND_COMPOSITE_TYPE
+		&& relkind != RELKIND_FOREIGN_TABLE && attribute.attnum > 0)
 	{
 		defval = (Expr *) build_column_default(rel, attribute.attnum);
 
@@ -4692,7 +4787,7 @@ ATExecDropColumn(List **wqueue, Relation rel, const char *colName,
 
 	/* At top level, permission check was done in ATPrepCmd, else do it */
 	if (recursing)
-		ATSimplePermissions(rel, false, true);
+		ATSimplePermissions(rel, ATT_TABLE);
 
 	/*
 	 * get the number of the attribute
@@ -4996,7 +5091,7 @@ ATAddCheckConstraint(List **wqueue, AlteredTableInfo *tab, Relation rel,
 
 	/* At top level, permission check was done in ATPrepCmd, else do it */
 	if (recursing)
-		ATSimplePermissions(rel, false, false);
+		ATSimplePermissions(rel, ATT_TABLE);
 
 	/*
 	 * Call AddRelationNewConstraints to do the work, making sure it works on
@@ -5947,7 +6042,7 @@ ATExecDropConstraint(Relation rel, const char *constrName,
 
 	/* At top level, permission check was done in ATPrepCmd, else do it */
 	if (recursing)
-		ATSimplePermissions(rel, false, false);
+		ATSimplePermissions(rel, ATT_TABLE);
 
 	conrel = heap_open(ConstraintRelationId, RowExclusiveLock);
 
@@ -6251,6 +6346,13 @@ ATPrepAlterColumnType(List **wqueue,
 		newval->expr = (Expr *) transform;
 
 		tab->newvals = lappend(tab->newvals, newval);
+	}
+	else if (tab->relkind == RELKIND_FOREIGN_TABLE)
+	{
+		if (cmd->transform)
+			ereport(ERROR,
+					(errcode(ERRCODE_WRONG_OBJECT_TYPE),
+					 errmsg("ALTER TYPE USING is not supported on foreign tables")));
 	}
 
 	if (tab->relkind == RELKIND_COMPOSITE_TYPE)
@@ -6834,6 +6936,7 @@ ATExecChangeOwner(Oid relationOid, Oid newOwnerId, bool recursing, LOCKMODE lock
 	{
 		case RELKIND_RELATION:
 		case RELKIND_VIEW:
+		case RELKIND_FOREIGN_TABLE:
 			/* ok to change owner */
 			break;
 		case RELKIND_INDEX:
@@ -6890,7 +6993,7 @@ ATExecChangeOwner(Oid relationOid, Oid newOwnerId, bool recursing, LOCKMODE lock
 		default:
 			ereport(ERROR,
 					(errcode(ERRCODE_WRONG_OBJECT_TYPE),
-					 errmsg("\"%s\" is not a table, view, or sequence",
+					 errmsg("\"%s\" is not a table, view, sequence, or foreign tabl, or foreign tablee",
 							NameStr(tuple_class->relname))));
 	}
 
@@ -7550,7 +7653,7 @@ ATExecAddInherit(Relation child_rel, RangeVar *parent, LOCKMODE lockmode)
 	 * Must be owner of both parent and child -- child was checked by
 	 * ATSimplePermissions call in ATPrepCmd
 	 */
-	ATSimplePermissions(parent_rel, false, false);
+	ATSimplePermissions(parent_rel, ATT_TABLE);
 
 	/* Permanent rels cannot inherit from temporary ones */
 	if (RelationUsesTempNamespace(parent_rel)
@@ -8108,6 +8211,76 @@ ATExecDropInherit(Relation rel, RangeVar *parent, LOCKMODE lockmode)
 	heap_close(parent_rel, NoLock);
 }
 
+/*
+ * ALTER FOREIGN TABLE <name> OPTIONS (...)
+ */
+static void
+ATExecGenericOptions(Relation rel, List *options)
+{
+	Relation		ftrel;
+	ForeignServer  *server;
+	ForeignDataWrapper *fdw;
+	HeapTuple		tuple;
+	bool			isnull;
+	Datum			repl_val[Natts_pg_foreign_table];
+	bool			repl_null[Natts_pg_foreign_table];
+	bool			repl_repl[Natts_pg_foreign_table];
+	Datum			datum;
+	Form_pg_foreign_table	tableform;
+
+	if (options == NIL) 
+		return;
+
+	ftrel = heap_open(ForeignTableRelationId, RowExclusiveLock);
+
+	tuple = SearchSysCacheCopy1(FOREIGNTABLEREL, rel->rd_id);
+	if (!HeapTupleIsValid(tuple))
+		ereport(ERROR,
+				(errcode(ERRCODE_UNDEFINED_OBJECT),
+				 errmsg("foreign table \"%s\" does not exist",
+										RelationGetRelationName(rel))));
+	tableform = (Form_pg_foreign_table) GETSTRUCT(tuple);
+	server = GetForeignServer(tableform->ftserver);
+	fdw = GetForeignDataWrapper(server->fdwid);
+
+	memset(repl_val, 0, sizeof(repl_val));
+	memset(repl_null, false, sizeof(repl_null));
+	memset(repl_repl, false, sizeof(repl_repl));
+
+	/* Extract the current options */
+	datum = SysCacheGetAttr(FOREIGNTABLEREL,
+							tuple,
+							Anum_pg_foreign_table_ftoptions,
+							&isnull);
+	if (isnull)
+		datum = PointerGetDatum(NULL);
+
+	/* Transform the options */
+	datum = transformGenericOptions(ForeignTableRelationId,
+									datum,
+									options,
+									fdw->fdwvalidator);
+
+	if (PointerIsValid(DatumGetPointer(datum)))
+		repl_val[Anum_pg_foreign_table_ftoptions - 1] = datum;
+	else
+		repl_null[Anum_pg_foreign_table_ftoptions - 1] = true;
+
+	repl_repl[Anum_pg_foreign_table_ftoptions - 1] = true;
+
+	/* Everything looks good - update the tuple */
+
+	tuple = heap_modify_tuple(tuple, RelationGetDescr(ftrel),
+							  repl_val, repl_null, repl_repl);
+
+	simple_heap_update(ftrel, &tuple->t_self, tuple);
+	CatalogUpdateIndexes(ftrel, tuple);
+
+	heap_close(ftrel, RowExclusiveLock);
+
+	heap_freetuple(tuple);
+}
+
 
 /*
  * Execute ALTER TABLE SET SCHEMA
@@ -8156,6 +8329,14 @@ AlterTableNamespace(RangeVar *relation, const char *newschema,
 								RelationGetRelationName(rel))));
 			break;
 
+		case OBJECT_FOREIGN_TABLE:
+			if (rel->rd_rel->relkind != RELKIND_FOREIGN_TABLE)
+				ereport(ERROR,
+						(errcode(ERRCODE_WRONG_OBJECT_TYPE),
+						 errmsg("\"%s\" is not a foreign table",
+								RelationGetRelationName(rel))));
+			break;
+
 		default:
 			elog(ERROR, "unrecognized object type: %d", (int) stmttype);
 	}
@@ -8165,6 +8346,7 @@ AlterTableNamespace(RangeVar *relation, const char *newschema,
 	{
 		case RELKIND_RELATION:
 		case RELKIND_VIEW:
+		case RELKIND_FOREIGN_TABLE:
 			/* ok to change schema */
 			break;
 		case RELKIND_SEQUENCE:
@@ -8195,7 +8377,7 @@ AlterTableNamespace(RangeVar *relation, const char *newschema,
 		default:
 			ereport(ERROR,
 					(errcode(ERRCODE_WRONG_OBJECT_TYPE),
-					 errmsg("\"%s\" is not a table, view, or sequence",
+					 errmsg("\"%s\" is not a table, view, sequence, or foreign table",
 							RelationGetRelationName(rel))));
 	}
 

@@ -154,6 +154,11 @@ extern void CreateUserMapping(CreateUserMappingStmt *stmt);
 extern void AlterUserMapping(AlterUserMappingStmt *stmt);
 extern void RemoveUserMapping(DropUserMappingStmt *stmt);
 extern void RemoveUserMappingById(Oid umId);
+extern void CreateForeignTable(CreateForeignTableStmt *stmt, Oid relid);
+extern Datum transformGenericOptions(Oid catalogId,
+									 Datum oldOptions,
+									 List *options,
+									 Oid fdwvalidator);
 
 /* support routines in commands/define.c */
 

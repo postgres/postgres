@@ -2384,6 +2384,132 @@ ORDER BY c.ordinal_position;
   </table>
  </sect1>
 
+ <sect1 id="infoschema-foreign-table-options">
+  <title><literal>foreign_table_options</literal></title>
+
+  <para>
+   The view <literal>foreign_table_options</literal> contains all the
+   options defined for foreign tables in the current database.  Only
+   those foreign tables are shown that the current user has access to
+   (by way of being the owner or having some privilege).
+  </para>
+
+  <table>
+   <title><literal>foreign_table_options</literal> Columns</title>
+
+   <tgroup cols="3">
+    <thead>
+     <row>
+      <entry>Name</entry>
+      <entry>Data Type</entry>
+      <entry>Description</entry>
+     </row>
+    </thead>
+
+    <tbody>
+     <row>
+      <entry><literal>foreign_table_catalog</literal></entry>
+      <entry><type>sql_identifier</type></entry>
+      <entry>Name of the database that contains the foreign table (always the current database)</entry>
+     </row>
+
+     <row>
+      <entry><literal>foreign_table_schema</literal></entry>
+      <entry><type>sql_identifier</type></entry>
+      <entry>Name of the schema that contains the foreign table</entry>
+     </row>
+
+     <row>
+      <entry><literal>foreign_table_name</literal></entry>
+      <entry><type>sql_identifier</type></entry>
+      <entry>Name of the foreign table</entry>
+     </row>
+
+     <row>
+      <entry><literal>foreign_server_catalog</literal></entry>
+      <entry><type>sql_identifier</type></entry>
+      <entry>Name of the database that the foreign server is defined in (always the current database)</entry>
+     </row>
+
+     <row>
+      <entry><literal>foreign_server_name</literal></entry>
+      <entry><type>sql_identifier</type></entry>
+      <entry>Name of the foreign server</entry>
+     </row>
+
+     <row>
+      <entry><literal>option_name</literal></entry>
+      <entry><type>sql_identifier</type></entry>
+      <entry>Name of an option</entry>
+     </row>
+
+     <row>
+      <entry><literal>option_value</literal></entry>
+      <entry><type>character_data</type></entry>
+      <entry>Value of the option</entry>
+     </row>
+    </tbody>
+   </tgroup>
+  </table>
+ </sect1>
+
+ <sect1 id="infoschema-foreign-tables">
+  <title><literal>foreign_tables</literal></title>
+
+  <para>
+   The view <literal>foreign_tables</literal> contains all foreign
+   tables defined in the current database.  Only those foreign
+   tables are shown that the current user has access to (by way of
+   being the owner or having some privilege).
+  </para>
+
+  <table>
+   <title><literal>foreign_tables</literal> Columns</title>
+
+   <tgroup cols="3">
+    <thead>
+     <row>
+      <entry>Name</entry>
+      <entry>Data Type</entry>
+      <entry>Description</entry>
+     </row>
+    </thead>
+
+    <tbody>
+     <row>
+      <entry><literal>foreign_table_catalog</literal></entry>
+      <entry><type>sql_identifier</type></entry>
+      <entry>Name of the database that the foreign table is defined in (always the current database)</entry>
+     </row>
+
+     <row>
+      <entry><literal>foreign_table_schema</literal></entry>
+      <entry><type>sql_identifier</type></entry>
+      <entry>Name of the schema that contains the foreign table</entry>
+     </row>
+
+     <row>
+      <entry><literal>foreign_table_name</literal></entry>
+      <entry><type>sql_identifier</type></entry>
+      <entry>Name of the foreign table</entry>
+     </row>
+
+     <row>
+      <entry><literal>foreign_server_catalog</literal></entry>
+      <entry><type>sql_identifier</type></entry>
+      <entry>Name of the database that the foreign server is defined in (always the current database)</entry>
+     </row>
+
+     <row>
+      <entry><literal>foreign_server_name</literal></entry>
+      <entry><type>sql_identifier</type></entry>
+      <entry>Name of the foreign server</entry>
+     </row>
+    </tbody>
+   </tgroup>
+  </table>
+ </sect1>
+
  <sect1 id="infoschema-key-column-usage">
   <title><literal>key_column_usage</literal></title>
 
@@ -4730,8 +4856,9 @@ ORDER BY c.ordinal_position;
       <entry>
        Type of the table: <literal>BASE TABLE</literal> for a
        persistent base table (the normal table type),
-       <literal>VIEW</literal> for a view, or <literal>LOCAL
-       TEMPORARY</literal> for a temporary table
+       <literal>VIEW</literal> for a view, <literal>FOREIGN TABLE</literal>
+       for a foreign table, or
+       <literal>LOCAL TEMPORARY</literal> for a temporary table
       </entry>
      </row>
 

@@ -65,7 +65,7 @@
 /* State shared by transformCreateStmt and its subroutines */
 typedef struct
 {
-	const char *stmtType;		/* "CREATE TABLE" or "ALTER TABLE" */
+	const char *stmtType;		/* "CREATE [FOREIGN] TABLE" or "ALTER TABLE" */
 	RangeVar   *relation;		/* relation to create */
 	Relation	rel;			/* opened/locked rel, if ALTER */
 	List	   *inhRelations;	/* relations to inherit from */
@@ -173,7 +173,10 @@ transformCreateStmt(CreateStmt *stmt, const char *queryString)
 	pstate = make_parsestate(NULL);
 	pstate->p_sourcetext = queryString;
 
-	cxt.stmtType = "CREATE TABLE";
+	if (IsA(stmt, CreateForeignTableStmt))
+		cxt.stmtType = "CREATE FOREIGN TABLE";
+	else
+		cxt.stmtType = "CREATE TABLE";
 	cxt.relation = stmt->relation;
 	cxt.rel = NULL;
 	cxt.inhRelations = stmt->inhRelations;

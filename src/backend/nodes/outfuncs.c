@@ -1857,6 +1857,17 @@ _outCreateStmt(StringInfo str, CreateStmt *node)
 }
 
 static void
+_outCreateForeignTableStmt(StringInfo str, CreateForeignTableStmt *node)
+{
+	WRITE_NODE_TYPE("CREATEFOREIGNTABLESTMT");
+
+	_outCreateStmt(str, (CreateStmt *) &node->base);
+
+	WRITE_STRING_FIELD(servername);
+	WRITE_NODE_FIELD(options);
+}
+
+static void
 _outIndexStmt(StringInfo str, IndexStmt *node)
 {
 	WRITE_NODE_TYPE("INDEXSTMT");
@@ -2880,6 +2891,9 @@ _outNode(StringInfo str, void *obj)
 
 			case T_CreateStmt:
 				_outCreateStmt(str, obj);
+				break;
+			case T_CreateForeignTableStmt:
+				_outCreateForeignTableStmt(str, obj);
 				break;
 			case T_IndexStmt:
 				_outIndexStmt(str, obj);

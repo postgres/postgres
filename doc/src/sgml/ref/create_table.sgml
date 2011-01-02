@@ -97,8 +97,8 @@ CREATE [ [ GLOBAL | LOCAL ] { TEMPORARY | TEMP } | UNLOGGED ] TABLE [ IF NOT EXI
    schema.  Otherwise it is created in the current schema.  Temporary
    tables exist in a special schema, so a schema name cannot be given
    when creating a temporary table.  The name of the table must be
-   distinct from the name of any other table, sequence, index, or view
-   in the same schema.
+   distinct from the name of any other table, sequence, index, view,
+   or foreign table in the same schema.
   </para>
 
   <para>

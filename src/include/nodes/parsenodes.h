@@ -1066,6 +1066,7 @@ typedef enum ObjectType
 	OBJECT_DOMAIN,
 	OBJECT_FDW,
 	OBJECT_FOREIGN_SERVER,
+	OBJECT_FOREIGN_TABLE,
 	OBJECT_FUNCTION,
 	OBJECT_INDEX,
 	OBJECT_LANGUAGE,
@@ -1165,7 +1166,8 @@ typedef enum AlterTableType
 	AT_EnableReplicaRule,		/* ENABLE REPLICA RULE name */
 	AT_DisableRule,				/* DISABLE RULE name */
 	AT_AddInherit,				/* INHERIT parent */
-	AT_DropInherit				/* NO INHERIT parent */
+	AT_DropInherit,				/* NO INHERIT parent */
+	AT_GenericOptions,			/* OPTIONS (...) */
 } AlterTableType;
 
 typedef struct AlterTableCmd	/* one subcommand of an ALTER TABLE */
@@ -1226,6 +1228,7 @@ typedef enum GrantObjectType
 	ACL_OBJECT_DATABASE,		/* database */
 	ACL_OBJECT_FDW,				/* foreign-data wrapper */
 	ACL_OBJECT_FOREIGN_SERVER,	/* foreign server */
+	ACL_OBJECT_FOREIGN_TABLE,	/* foreign table */
 	ACL_OBJECT_FUNCTION,		/* function */
 	ACL_OBJECT_LANGUAGE,		/* procedural language */
 	ACL_OBJECT_LARGEOBJECT,		/* largeobject */
@@ -1578,6 +1581,18 @@ typedef struct DropForeignServerStmt
 	bool		missing_ok;		/* ignore missing servers */
 	DropBehavior behavior;		/* drop behavior - cascade/restrict */
 } DropForeignServerStmt;
+
+/* ----------------------
+ *		Create FOREIGN TABLE Statements
+ * ----------------------
+ */
+
+typedef struct CreateForeignTableStmt
+{
+	CreateStmt	base;
+	char	   *servername;
+	List	   *options;
+} CreateForeignTableStmt;
 
 /* ----------------------
  *		Create/Drop USER MAPPING Statements
@@ -2068,6 +2083,7 @@ typedef struct RenameStmt
 {
 	NodeTag		type;
 	ObjectType	renameType;		/* OBJECT_TABLE, OBJECT_COLUMN, etc */
+	ObjectType	relationType;	/* if column name, associated relation type */
 	RangeVar   *relation;		/* in case it's a table */
 	List	   *object;			/* in case it's some other object */
 	List	   *objarg;			/* argument types, if applicable */

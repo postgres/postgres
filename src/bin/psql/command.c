@@ -369,7 +369,7 @@ exec_command(const char *cmd,
 					success = describeTableDetails(pattern, show_verbose, show_system);
 				else
 					/* standard listing of interesting things */
-					success = listTables("tvs", NULL, show_verbose, show_system);
+					success = listTables("tvsE", NULL, show_verbose, show_system);
 				break;
 			case 'a':
 				success = describeAggregates(pattern, show_verbose, show_system);
@@ -432,6 +432,7 @@ exec_command(const char *cmd,
 			case 'v':
 			case 'i':
 			case 's':
+			case 'E':
 				success = listTables(&cmd[1], pattern, show_verbose, show_system);
 				break;
 			case 'r':
@@ -482,6 +483,9 @@ exec_command(const char *cmd,
 						break;
 					case 'w':
 						success = listForeignDataWrappers(pattern, show_verbose);
+						break;
+					case 't':
+						success = listForeignTables(pattern, show_verbose);
 						break;
 					default:
 						status = PSQL_CMD_UNKNOWN;

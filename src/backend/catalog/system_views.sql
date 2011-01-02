@@ -167,8 +167,9 @@ CREATE VIEW pg_seclabels AS
 SELECT
 	l.objoid, l.classoid, l.objsubid,
 	CASE WHEN rel.relkind = 'r' THEN 'table'::text
-	     WHEN rel.relkind = 'v' THEN 'view'::text
-	     WHEN rel.relkind = 'S' THEN 'sequence'::text END AS objtype,
+		 WHEN rel.relkind = 'v' THEN 'view'::text
+		 WHEN rel.relkind = 'S' THEN 'sequence'::text
+		 WHEN rel.relkind = 'f' THEN 'foreign table'::text END AS objtype,
 	rel.relnamespace AS objnamespace,
 	CASE WHEN pg_table_is_visible(rel.oid)
 	     THEN quote_ident(rel.relname)

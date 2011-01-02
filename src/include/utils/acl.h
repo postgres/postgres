@@ -150,6 +150,7 @@ typedef ArrayType Acl;
 #define ACL_ALL_RIGHTS_DATABASE		(ACL_CREATE|ACL_CREATE_TEMP|ACL_CONNECT)
 #define ACL_ALL_RIGHTS_FDW			(ACL_USAGE)
 #define ACL_ALL_RIGHTS_FOREIGN_SERVER (ACL_USAGE)
+#define ACL_ALL_RIGHTS_FOREIGN_TABLE (ACL_SELECT)
 #define ACL_ALL_RIGHTS_FUNCTION		(ACL_EXECUTE)
 #define ACL_ALL_RIGHTS_LANGUAGE		(ACL_USAGE)
 #define ACL_ALL_RIGHTS_LARGEOBJECT	(ACL_SELECT|ACL_UPDATE)
@@ -193,6 +194,7 @@ typedef enum AclObjectKind
 	ACL_KIND_TSCONFIGURATION,	/* pg_ts_config */
 	ACL_KIND_FDW,				/* pg_foreign_data_wrapper */
 	ACL_KIND_FOREIGN_SERVER,	/* pg_foreign_server */
+	ACL_KIND_FOREIGN_TABLE,		/* pg_foreign_table */
 	MAX_ACL_KIND				/* MUST BE LAST */
 } AclObjectKind;
 

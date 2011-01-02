@@ -975,8 +975,9 @@ expand_table_name_patterns(SimpleStringList *patterns, SimpleOidList *oids)
 						  "SELECT c.oid"
 						  "\nFROM pg_catalog.pg_class c"
 		"\n     LEFT JOIN pg_catalog.pg_namespace n ON n.oid = c.relnamespace"
-						  "\nWHERE c.relkind in ('%c', '%c', '%c')\n",
-						  RELKIND_RELATION, RELKIND_SEQUENCE, RELKIND_VIEW);
+						  "\nWHERE c.relkind in ('%c', '%c', '%c', '%c')\n",
+						  RELKIND_RELATION, RELKIND_SEQUENCE, RELKIND_VIEW,
+						  RELKIND_FOREIGN_TABLE);
 		processSQLNamePattern(g_conn, query, cell->val, true, false,
 							  "n.nspname", "c.relname", NULL,
 							  "pg_catalog.pg_table_is_visible(c.oid)");
@@ -1475,6 +1476,9 @@ getTableData(TableInfo *tblinfo, int numTables, bool oids)
 			continue;
 		/* Skip SEQUENCEs (handled elsewhere) */
 		if (tblinfo[i].relkind == RELKIND_SEQUENCE)
+			continue;
+		/* Skip FOREIGN TABLEs (no data to dump) */
+		if (tblinfo[i].relkind == RELKIND_FOREIGN_TABLE)
 			continue;
 		/* Skip unlogged tables if so requested */
 		if (tblinfo[i].relpersistence == RELPERSISTENCE_UNLOGGED
@@ -3513,12 +3517,13 @@ getTables(int *numTables)
 						  "d.objsubid = 0 AND "
 						  "d.refclassid = c.tableoid AND d.deptype = 'a') "
 					   "LEFT JOIN pg_class tc ON (c.reltoastrelid = tc.oid) "
-						  "WHERE c.relkind in ('%c', '%c', '%c', '%c') "
+						  "WHERE c.relkind in ('%c', '%c', '%c', '%c', '%c') "
 						  "ORDER BY c.oid",
 						  username_subquery,
 						  RELKIND_SEQUENCE,
 						  RELKIND_RELATION, RELKIND_SEQUENCE,
-						  RELKIND_VIEW, RELKIND_COMPOSITE_TYPE);
+						  RELKIND_VIEW, RELKIND_COMPOSITE_TYPE,
+						  RELKIND_FOREIGN_TABLE);
 	}
 	else if (g_fout->remoteVersion >= 90000)
 	{
@@ -3871,7 +3876,7 @@ getTables(int *numTables)
 		 * assume our lock on the child is enough to prevent schema
 		 * alterations to parent tables.
 		 *
-		 * NOTE: it'd be kinda nice to lock views and sequences too, not only
+		 * NOTE: it'd be kinda nice to lock other relations too, not only
 		 * plain tables, but the backend doesn't presently allow that.
 		 */
 		if (tblinfo[i].dobj.dump && tblinfo[i].relkind == RELKIND_RELATION)
@@ -10938,7 +10943,9 @@ dumpTable(Archive *fout, TableInfo *tbinfo)
 		/* Handle the ACL here */
 		namecopy = strdup(fmtId(tbinfo->dobj.name));
 		dumpACL(fout, tbinfo->dobj.catId, tbinfo->dobj.dumpId,
-				(tbinfo->relkind == RELKIND_SEQUENCE) ? "SEQUENCE" : "TABLE",
+				(tbinfo->relkind == RELKIND_SEQUENCE) ? "SEQUENCE" :
+				(tbinfo->relkind == RELKIND_FOREIGN_TABLE) ? "FOREIGN TABLE" :
+				"TABLE",
 				namecopy, NULL, tbinfo->dobj.name,
 				tbinfo->dobj.namespace->dobj.name, tbinfo->rolname,
 				tbinfo->relacl);
@@ -11007,6 +11014,8 @@ dumpTableSchema(Archive *fout, TableInfo *tbinfo)
 	int			j,
 				k;
 	bool		toast_set = false;
+	char	   *srvname;
+	char	   *ftoptions = NULL;
 
 	/* Make sure we are in proper schema */
 	selectSourceSchema(tbinfo->dobj.namespace->dobj.name);
@@ -11080,7 +11089,35 @@ dumpTableSchema(Archive *fout, TableInfo *tbinfo)
 	}
 	else
 	{
-		reltypename = "TABLE";
+		if (tbinfo->relkind == RELKIND_FOREIGN_TABLE)
+		{
+			int		i_srvname;
+			int		i_ftoptions;
+
+			reltypename = "FOREIGN TABLE";
+
+			/* retrieve name of foreign server and generic options */ 
+			appendPQExpBuffer(query,
+				"SELECT fs.srvname, array_to_string(ARRAY("
+				"   SELECT option_name || ' ' || quote_literal(option_value)"
+				"   FROM pg_options_to_table(ftoptions)), ', ') AS ftoptions "
+				"FROM pg_foreign_table ft JOIN pg_foreign_server fs "
+				"	ON (fs.oid = ft.ftserver) "
+				"WHERE ft.ftrelid = %u", tbinfo->dobj.catId.oid);
+			res = PQexec(g_conn, query->data);
+			check_sql_result(res, g_conn, query->data, PGRES_TUPLES_OK);
+			i_srvname = PQfnumber(res, "srvname");
+			i_ftoptions = PQfnumber(res, "ftoptions");
+			srvname = strdup(PQgetvalue(res, 0, i_srvname));
+			ftoptions = strdup(PQgetvalue(res, 0, i_ftoptions));
+			PQclear(res);
+		}
+		else
+		{
+			reltypename = "TABLE";
+			srvname = NULL;
+			ftoptions = NULL;
+		}
 		numParents = tbinfo->numParents;
 		parents = tbinfo->parents;
 
@@ -11088,7 +11125,7 @@ dumpTableSchema(Archive *fout, TableInfo *tbinfo)
 		 * DROP must be fully qualified in case same name appears in
 		 * pg_catalog
 		 */
-		appendPQExpBuffer(delq, "DROP TABLE %s.",
+		appendPQExpBuffer(delq, "DROP %s %s.", reltypename,
 						  fmtId(tbinfo->dobj.namespace->dobj.name));
 		appendPQExpBuffer(delq, "%s;\n",
 						  fmtId(tbinfo->dobj.name));
@@ -11096,12 +11133,11 @@ dumpTableSchema(Archive *fout, TableInfo *tbinfo)
 		if (binary_upgrade)
 			binary_upgrade_set_relfilenodes(q, tbinfo->dobj.catId.oid, false);
 
-		if (tbinfo->relpersistence == RELPERSISTENCE_UNLOGGED)
-			appendPQExpBuffer(q, "CREATE UNLOGGED TABLE %s",
-							  fmtId(tbinfo->dobj.name));
-		else
-			appendPQExpBuffer(q, "CREATE TABLE %s",
-							  fmtId(tbinfo->dobj.name));
+		appendPQExpBuffer(q, "CREATE %s%s %s",
+						  tbinfo->relpersistence == RELPERSISTENCE_UNLOGGED ?
+								"UNLOGGED " : "",
+						  reltypename,
+						  fmtId(tbinfo->dobj.name));
 		if (tbinfo->reloftype)
 			appendPQExpBuffer(q, " OF %s", tbinfo->reloftype);
 		actual_atts = 0;
@@ -11235,6 +11271,9 @@ dumpTableSchema(Archive *fout, TableInfo *tbinfo)
 			appendPQExpBuffer(q, ")");
 		}
 
+		if (tbinfo->relkind == RELKIND_FOREIGN_TABLE)
+			appendPQExpBuffer(q, "\nSERVER %s", srvname);
+
 		if ((tbinfo->reloptions && strlen(tbinfo->reloptions) > 0) ||
 		  (tbinfo->toast_reloptions && strlen(tbinfo->toast_reloptions) > 0))
 		{
@@ -11254,6 +11293,10 @@ dumpTableSchema(Archive *fout, TableInfo *tbinfo)
 			appendPQExpBuffer(q, ")");
 		}
 
+		/* Dump generic options if any */
+		if (ftoptions && ftoptions[0])
+			appendPQExpBuffer(q, "\nOPTIONS (%s)", ftoptions);
+
 		appendPQExpBuffer(q, ";\n");
 
 		/*
@@ -11268,7 +11311,7 @@ dumpTableSchema(Archive *fout, TableInfo *tbinfo)
 		 * order.  That also means we have to take care about setting
 		 * attislocal correctly, plus fix up any inherited CHECK constraints.
 		 */
-		if (binary_upgrade)
+		if (binary_upgrade && tbinfo->relkind == RELKIND_RELATION)
 		{
 			for (j = 0; j < tbinfo->numatts; j++)
 			{

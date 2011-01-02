@@ -31,6 +31,7 @@ COMMENT ON
   CONVERSION <replaceable class="PARAMETER">object_name</replaceable> |
   DATABASE <replaceable class="PARAMETER">object_name</replaceable> |
   DOMAIN <replaceable class="PARAMETER">object_name</replaceable> |
+  FOREIGN TABLE <replaceable class="PARAMETER">object_name</replaceable> |
   FUNCTION <replaceable class="PARAMETER">function_name</replaceable> ( [ [ <replaceable class="parameter">argmode</replaceable> ] [ <replaceable class="parameter">argname</replaceable> ] <replaceable class="parameter">argtype</replaceable> [, ...] ] ) |
   INDEX <replaceable class="PARAMETER">object_name</replaceable> |
   LARGE OBJECT <replaceable class="PARAMETER">large_object_oid</replaceable> |
@@ -96,9 +97,9 @@ COMMENT ON
     <listitem>
      <para>
       The name of the object to be commented.  Names of tables,
-      aggregates, domains, functions, indexes, operators, operator classes,
-      operator families, sequences, text search objects, types, and views can
-      be schema-qualified.
+      aggregates, domains, foreign tables, functions, indexes, operators,
+      operator classes, operator families, sequences, text search objects,
+      types, and views can be schema-qualified.
      </para>
     </listitem>
    </varlistentry>
@@ -247,6 +248,7 @@ COMMENT ON COLUMN my_table.my_column IS 'Employee ID number';
 COMMENT ON CONVERSION my_conv IS 'Conversion to UTF8';
 COMMENT ON DATABASE my_database IS 'Development Database';
 COMMENT ON DOMAIN my_domain IS 'Email Address Domain';
+COMMENT ON FOREIGN TABLE my_foreign_table IS 'Employee Information in other database';
 COMMENT ON FUNCTION my_function (timestamp) IS 'Returns Roman Numeral';
 COMMENT ON INDEX my_index IS 'Enforces uniqueness on employee ID';
 COMMENT ON LANGUAGE plpython IS 'Python support for stored procedures';

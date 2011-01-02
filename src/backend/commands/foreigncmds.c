@@ -14,6 +14,7 @@
 #include "postgres.h"
 
 #include "access/heapam.h"
+#include "access/xact.h"
 #include "access/reloptions.h"
 #include "catalog/catalog.h"
 #include "catalog/dependency.h"
@@ -21,6 +22,7 @@
 #include "catalog/objectaccess.h"
 #include "catalog/pg_foreign_data_wrapper.h"
 #include "catalog/pg_foreign_server.h"
+#include "catalog/pg_foreign_table.h"
 #include "catalog/pg_proc.h"
 #include "catalog/pg_type.h"
 #include "catalog/pg_user_mapping.h"
@@ -88,7 +90,7 @@ optionListToArray(List *options)
  *
  * This is used by CREATE/ALTER of FOREIGN DATA WRAPPER/SERVER/USER MAPPING.
  */
-static Datum
+Datum
 transformGenericOptions(Oid catalogId,
 						Datum oldOptions,
 						List *options,
@@ -1157,4 +1159,93 @@ RemoveUserMappingById(Oid umId)
 	ReleaseSysCache(tp);
 
 	heap_close(rel, RowExclusiveLock);
+}
+
+/*
+ * Create a foreign table
+ * call after DefineRelation().
+ */
+void
+CreateForeignTable(CreateForeignTableStmt *stmt, Oid relid)
+{
+	Relation	ftrel;
+	Datum		ftoptions;
+	Datum		values[Natts_pg_foreign_table];
+	bool		nulls[Natts_pg_foreign_table];
+	HeapTuple	tuple;
+	Oid			ftId;
+	AclResult	aclresult;
+	ObjectAddress myself;
+	ObjectAddress referenced;
+	Oid			ownerId;
+	ForeignDataWrapper *fdw;
+	ForeignServer *server;
+
+	/*
+	 * Advance command counter to ensure the pg_attribute tuple visible; the
+	 * tuple might be updated to add constraints in previous step.
+	 */
+	CommandCounterIncrement();
+
+	/*
+	 * For now the owner cannot be specified on create. Use effective user ID.
+	 */
+	ownerId = GetUserId();
+
+	/*
+	 * Check that the foreign server exists and that we have USAGE on it. Also
+	 * get the actual FDW for option validation etc.
+	 */
+	server = GetForeignServerByName(stmt->servername, false);
+	aclresult = pg_foreign_server_aclcheck(server->serverid, ownerId, ACL_USAGE);
+	if (aclresult != ACLCHECK_OK)
+		aclcheck_error(aclresult, ACL_KIND_FOREIGN_SERVER, server->servername);
+
+	fdw = GetForeignDataWrapper(server->fdwid);
+
+	aclresult = pg_foreign_data_wrapper_aclcheck(fdw->fdwid, ownerId, ACL_USAGE);
+	if (aclresult != ACLCHECK_OK)
+		aclcheck_error(aclresult, ACL_KIND_FDW, fdw->fdwname);
+
+	/*
+	 * Insert tuple into pg_foreign_table.
+	 */
+	ftrel = heap_open(ForeignTableRelationId, RowExclusiveLock);
+
+	memset(values, 0, sizeof(values));
+	memset(nulls, false, sizeof(nulls));
+
+	values[Anum_pg_foreign_table_ftrelid - 1] = ObjectIdGetDatum(relid);
+	values[Anum_pg_foreign_table_ftserver - 1] = ObjectIdGetDatum(server->serverid);
+	/* Add table generic options */
+	ftoptions = transformGenericOptions(ForeignTableRelationId,
+										PointerGetDatum(NULL),
+										stmt->options,
+										fdw->fdwvalidator);
+
+	if (PointerIsValid(DatumGetPointer(ftoptions)))
+		values[Anum_pg_foreign_table_ftoptions - 1] = ftoptions;
+	else
+		nulls[Anum_pg_foreign_table_ftoptions - 1] = true;
+
+	tuple = heap_form_tuple(ftrel->rd_att, values, nulls);
+
+	/* pg_foreign_table don't have OID */
+	ftId = simple_heap_insert(ftrel, tuple);
+
+	CatalogUpdateIndexes(ftrel, tuple);
+
+	heap_freetuple(tuple);
+
+	/* Add pg_class dependency on the server */
+	myself.classId = RelationRelationId;
+	myself.objectId = relid;
+	myself.objectSubId = 0;
+
+	referenced.classId = ForeignServerRelationId;
+	referenced.objectId = server->serverid;
+	referenced.objectSubId = 0;
+	recordDependencyOn(&myself, &referenced, DEPENDENCY_NORMAL);
+
+	heap_close(ftrel, NoLock);
 }

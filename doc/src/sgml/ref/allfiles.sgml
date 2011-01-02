@@ -12,6 +12,7 @@ Complete list of usable sgml source files in this directory.
 <!entity alterDefaultPrivileges system "alter_default_privileges.sgml">
 <!entity alterDomain        system "alter_domain.sgml">
 <!entity alterForeignDataWrapper system "alter_foreign_data_wrapper.sgml">
+<!entity alterForeignTable  system "alter_foreign_table.sgml">
 <!entity alterFunction      system "alter_function.sgml">
 <!entity alterGroup         system "alter_group.sgml">
 <!entity alterIndex         system "alter_index.sgml">
@@ -50,6 +51,7 @@ Complete list of usable sgml source files in this directory.
 <!entity createDatabase     system "create_database.sgml">
 <!entity createDomain       system "create_domain.sgml">
 <!entity createForeignDataWrapper system "create_foreign_data_wrapper.sgml">
+<!entity createForeignTable system "create_foreign_table.sgml">
 <!entity createFunction     system "create_function.sgml">
 <!entity createGroup        system "create_group.sgml">
 <!entity createIndex        system "create_index.sgml">
@@ -85,6 +87,7 @@ Complete list of usable sgml source files in this directory.
 <!entity dropDatabase       system "drop_database.sgml">
 <!entity dropDomain         system "drop_domain.sgml">
 <!entity dropForeignDataWrapper system "drop_foreign_data_wrapper.sgml">
+<!entity dropForeignTable   system "drop_foreign_table.sgml">
 <!entity dropFunction       system "drop_function.sgml">
 <!entity dropGroup          system "drop_group.sgml">
 <!entity dropIndex          system "drop_index.sgml">

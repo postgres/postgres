@@ -91,6 +91,7 @@ CommentObject(CommentStmt *stmt)
 		case OBJECT_SEQUENCE:
 		case OBJECT_TABLE:
 		case OBJECT_VIEW:
+		case OBJECT_FOREIGN_TABLE:
 			if (!pg_class_ownercheck(RelationGetRelid(relation), GetUserId()))
 				aclcheck_error(ACLCHECK_NOT_OWNER, ACL_KIND_CLASS,
 							   RelationGetRelationName(relation));
@@ -574,18 +575,20 @@ CheckAttributeComment(Relation relation)
 					   RelationGetRelationName(relation));
 
 	/*
-	 * Allow comments only on columns of tables, views, and composite types
-	 * (which are the only relkinds for which pg_dump will dump per-column
-	 * comments).  In particular we wish to disallow comments on index
-	 * columns, because the naming of an index's columns may change across PG
-	 * versions, so dumping per-column comments could create reload failures.
+	 * Allow comments only on columns of tables, views, composite types, and
+	 * foreign tables (which are the only relkinds for which pg_dump will dump
+	 * per-column comments).  In particular we wish to disallow comments on
+	 * index columns, because the naming of an index's columns may change
+	 * across PG versions, so dumping per-column comments could create reload
+	 * failures.
 	 */
 	if (relation->rd_rel->relkind != RELKIND_RELATION &&
 		relation->rd_rel->relkind != RELKIND_VIEW &&
-		relation->rd_rel->relkind != RELKIND_COMPOSITE_TYPE)
+		relation->rd_rel->relkind != RELKIND_COMPOSITE_TYPE &&
+		relation->rd_rel->relkind != RELKIND_FOREIGN_TABLE)
 		ereport(ERROR,
 				(errcode(ERRCODE_WRONG_OBJECT_TYPE),
-				 errmsg("\"%s\" is not a table, view, or composite type",
+				 errmsg("\"%s\" is not a table, view, composite type, or foreign table",
 						RelationGetRelationName(relation))));
 }
 

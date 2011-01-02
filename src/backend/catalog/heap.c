@@ -43,6 +43,7 @@
 #include "catalog/objectaccess.h"
 #include "catalog/pg_attrdef.h"
 #include "catalog/pg_constraint.h"
+#include "catalog/pg_foreign_table.h"
 #include "catalog/pg_inherits.h"
 #include "catalog/pg_namespace.h"
 #include "catalog/pg_statistic.h"
@@ -269,6 +270,7 @@ heap_create(const char *relname,
 	{
 		case RELKIND_VIEW:
 		case RELKIND_COMPOSITE_TYPE:
+		case RELKIND_FOREIGN_TABLE:
 			create_storage = false;
 
 			/*
@@ -987,7 +989,8 @@ heap_create_with_catalog(const char *relname,
 		/* Use binary-upgrade overrides if applicable */
 		if (OidIsValid(binary_upgrade_next_heap_relfilenode) &&
 			(relkind == RELKIND_RELATION || relkind == RELKIND_SEQUENCE ||
-			 relkind == RELKIND_VIEW || relkind == RELKIND_COMPOSITE_TYPE))
+			 relkind == RELKIND_VIEW || relkind == RELKIND_COMPOSITE_TYPE ||
+			 relkind == RELKIND_FOREIGN_TABLE))
 		{
 			relid = binary_upgrade_next_heap_relfilenode;
 			binary_upgrade_next_heap_relfilenode = InvalidOid;
@@ -1012,6 +1015,7 @@ heap_create_with_catalog(const char *relname,
 		{
 			case RELKIND_RELATION:
 			case RELKIND_VIEW:
+			case RELKIND_FOREIGN_TABLE:
 				relacl = get_user_default_acl(ACL_OBJECT_RELATION, ownerid,
 											  relnamespace);
 				break;
@@ -1049,10 +1053,12 @@ heap_create_with_catalog(const char *relname,
 	 * Decide whether to create an array type over the relation's rowtype. We
 	 * do not create any array types for system catalogs (ie, those made
 	 * during initdb).	We create array types for regular relations, views,
-	 * and composite types ... but not, eg, for toast tables or sequences.
+	 * composite types and foreign tables ... but not, eg, for toast tables or
+	 * sequences.
 	 */
 	if (IsUnderPostmaster && (relkind == RELKIND_RELATION ||
 							  relkind == RELKIND_VIEW ||
+							  relkind == RELKIND_FOREIGN_TABLE ||
 							  relkind == RELKIND_COMPOSITE_TYPE))
 		new_array_oid = AssignTypeArrayOid();
 
@@ -1590,10 +1596,31 @@ heap_drop_with_catalog(Oid relid)
 						RelationGetRelationName(rel))));
 
 	/*
+	 * Delete pg_foreign_table tuple first.
+	 */
+	if (rel->rd_rel->relkind == RELKIND_FOREIGN_TABLE)
+	{
+		Relation    rel;
+		HeapTuple   tuple;
+
+		rel = heap_open(ForeignTableRelationId, RowExclusiveLock);
+
+		tuple = SearchSysCache1(FOREIGNTABLEREL, ObjectIdGetDatum(relid));
+		if (!HeapTupleIsValid(tuple))
+			elog(ERROR, "cache lookup failed for foreign table %u", relid);
+
+		simple_heap_delete(rel, &tuple->t_self);
+
+		ReleaseSysCache(tuple);
+		heap_close(rel, RowExclusiveLock);
+	}
+
+	/*
 	 * Schedule unlinking of the relation's physical files at commit.
 	 */
 	if (rel->rd_rel->relkind != RELKIND_VIEW &&
-		rel->rd_rel->relkind != RELKIND_COMPOSITE_TYPE)
+		rel->rd_rel->relkind != RELKIND_COMPOSITE_TYPE &&
+		rel->rd_rel->relkind != RELKIND_FOREIGN_TABLE)
 	{
 		RelationDropStorage(rel);
 	}

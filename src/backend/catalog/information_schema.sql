@@ -465,7 +465,7 @@ CREATE VIEW column_domain_usage AS
           AND a.attrelid = c.oid
           AND a.atttypid = t.oid
           AND t.typtype = 'd'
-          AND c.relkind IN ('r', 'v')
+          AND c.relkind IN ('r', 'v', 'f')
           AND a.attnum > 0
           AND NOT a.attisdropped
           AND pg_has_role(t.typowner, 'USAGE');
@@ -504,7 +504,7 @@ CREATE VIEW column_privileges AS
                   pr_c.relowner
            FROM (SELECT oid, relname, relnamespace, relowner, (aclexplode(relacl)).*
                  FROM pg_class
-                 WHERE relkind IN ('r', 'v')
+                 WHERE relkind IN ('r', 'v', 'f')
                 ) pr_c (oid, relname, relnamespace, relowner, grantor, grantee, prtype, grantable),
                 pg_attribute a
            WHERE a.attrelid = pr_c.oid
@@ -526,7 +526,7 @@ CREATE VIEW column_privileges AS
                 ) pr_a (attrelid, attname, grantor, grantee, prtype, grantable),
                 pg_class c
            WHERE pr_a.attrelid = c.oid
-                 AND relkind IN ('r','v')
+                 AND relkind IN ('r', 'v', 'f')
          ) x,
          pg_namespace nc,
          pg_authid u_grantor,
@@ -569,7 +569,7 @@ CREATE VIEW column_udt_usage AS
     WHERE a.attrelid = c.oid
           AND a.atttypid = t.oid
           AND nc.oid = c.relnamespace
-          AND a.attnum > 0 AND NOT a.attisdropped AND c.relkind in ('r', 'v')
+          AND a.attnum > 0 AND NOT a.attisdropped AND c.relkind in ('r', 'v', 'f')
           AND pg_has_role(coalesce(bt.typowner, t.typowner), 'USAGE');
 
 GRANT SELECT ON column_udt_usage TO PUBLIC;
@@ -692,7 +692,7 @@ CREATE VIEW columns AS
           AND nc.oid = c.relnamespace
           AND (NOT pg_is_other_temp_schema(nc.oid))
 
-          AND a.attnum > 0 AND NOT a.attisdropped AND c.relkind in ('r', 'v')
+          AND a.attnum > 0 AND NOT a.attisdropped AND c.relkind in ('r', 'v', 'f')
 
           AND (pg_has_role(c.relowner, 'USAGE')
                OR has_column_privilege(c.oid, a.attnum,
@@ -1793,6 +1793,7 @@ CREATE VIEW tables AS
              CASE WHEN nc.oid = pg_my_temp_schema() THEN 'LOCAL TEMPORARY'
                   WHEN c.relkind = 'r' THEN 'BASE TABLE'
                   WHEN c.relkind = 'v' THEN 'VIEW'
+                  WHEN c.relkind = 'f' THEN 'FOREIGN TABLE'
                   ELSE null END
              AS character_data) AS table_type,
 
@@ -1817,7 +1818,7 @@ CREATE VIEW tables AS
     FROM pg_namespace nc JOIN pg_class c ON (nc.oid = c.relnamespace)
            LEFT JOIN (pg_type t JOIN pg_namespace nt ON (t.typnamespace = nt.oid)) ON (c.reloftype = t.oid)
 
-    WHERE c.relkind IN ('r', 'v')
+    WHERE c.relkind IN ('r', 'v', 'f')
           AND (NOT pg_is_other_temp_schema(nc.oid))
           AND (pg_has_role(c.relowner, 'USAGE')
                OR has_table_privilege(c.oid, 'SELECT, INSERT, UPDATE, DELETE, TRUNCATE, REFERENCES, TRIGGER')
@@ -2129,7 +2130,7 @@ CREATE VIEW view_column_usage AS
           AND dt.refclassid = 'pg_catalog.pg_class'::regclass
           AND dt.refobjid = t.oid
           AND t.relnamespace = nt.oid
-          AND t.relkind IN ('r', 'v')
+          AND t.relkind IN ('r', 'v', 'f')
           AND t.oid = a.attrelid
           AND dt.refobjsubid = a.attnum
           AND pg_has_role(t.relowner, 'USAGE');
@@ -2199,7 +2200,7 @@ CREATE VIEW view_table_usage AS
           AND dt.refclassid = 'pg_catalog.pg_class'::regclass
           AND dt.refobjid = t.oid
           AND t.relnamespace = nt.oid
-          AND t.relkind IN ('r', 'v')
+          AND t.relkind IN ('r', 'v', 'f')
           AND pg_has_role(t.relowner, 'USAGE');
 
 GRANT SELECT ON view_table_usage TO PUBLIC;
@@ -2344,7 +2345,7 @@ CREATE VIEW element_types AS
                   'TABLE'::text, a.attnum, a.atttypid
            FROM pg_class c, pg_attribute a
            WHERE c.oid = a.attrelid
-                 AND c.relkind IN ('r', 'v')
+                 AND c.relkind IN ('r', 'v', 'f')
                  AND attnum > 0 AND NOT attisdropped
 
            UNION ALL
@@ -2479,6 +2480,60 @@ CREATE VIEW foreign_servers AS
     FROM _pg_foreign_servers;
 
 GRANT SELECT ON foreign_servers TO PUBLIC;
+
+
+/* Base view for foreign tables */
+CREATE VIEW _pg_foreign_tables AS
+    SELECT
+           CAST(current_database() AS sql_identifier) AS foreign_table_catalog,
+           n.nspname AS foreign_table_schema,
+           c.relname AS foreign_table_name,
+           t.ftoptions AS ftoptions,
+           CAST(current_database() AS sql_identifier) AS foreign_server_catalog,
+           CAST(srvname AS sql_identifier) AS foreign_server_name,
+           CAST(u.rolname AS sql_identifier) AS authorization_identifier
+    FROM pg_foreign_table t, pg_foreign_server s, pg_foreign_data_wrapper w,
+         pg_authid u, pg_namespace n, pg_class c
+    WHERE w.oid = s.srvfdw
+          AND u.oid = c.relowner
+          AND (pg_has_role(c.relowner, 'USAGE')
+               OR has_table_privilege(c.oid, 'SELECT')
+               OR has_any_column_privilege(c.oid, 'SELECT'))
+          AND n.oid = c.relnamespace
+          AND c.oid = t.ftrelid
+          AND c.relkind = 'f'
+          AND s.oid = t.ftserver;
+
+
+/*
+ * 24.8
+ * FOREIGN_TABLE_OPTIONS view
+ */
+CREATE VIEW foreign_table_options AS
+    SELECT foreign_table_catalog,
+           foreign_table_schema,
+           foreign_table_name,
+           CAST((pg_options_to_table(t.ftoptions)).option_name AS sql_identifier) AS option_name,
+           CAST((pg_options_to_table(t.ftoptions)).option_value AS character_data) AS option_value
+    FROM _pg_foreign_tables t;
+
+GRANT SELECT ON TABLE foreign_table_options TO PUBLIC;
+
+
+/*
+ * 24.9
+ * FOREIGN_TABLES view
+ */
+CREATE VIEW foreign_tables AS
+    SELECT foreign_table_catalog,
+           foreign_table_schema,
+           foreign_table_name,
+           foreign_server_catalog,
+           foreign_server_name
+    FROM _pg_foreign_tables;
+
+GRANT SELECT ON foreign_tables TO PUBLIC;
+
 
 
 /* Base view for user mappings */

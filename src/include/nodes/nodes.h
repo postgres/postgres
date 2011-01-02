@@ -353,6 +353,7 @@ typedef enum NodeTag
 	T_DropUserMappingStmt,
 	T_AlterTableSpaceOptionsStmt,
 	T_SecLabelStmt,
+	T_CreateForeignTableStmt,
 
 	/*
 	 * TAGS FOR PARSE TREE NODES (parsenodes.h)

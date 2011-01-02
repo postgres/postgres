@@ -272,6 +272,9 @@ restrict_and_check_grant(bool is_grant, AclMode avail_goptions, bool all_privs,
 		case ACL_KIND_FOREIGN_SERVER:
 			whole_mask = ACL_ALL_RIGHTS_FOREIGN_SERVER;
 			break;
+		case ACL_KIND_FOREIGN_TABLE:
+			whole_mask = ACL_ALL_RIGHTS_FOREIGN_TABLE;
+			break;
 		default:
 			elog(ERROR, "unrecognized object kind: %d", objkind);
 			/* not reached, but keep compiler quiet */
@@ -475,6 +478,10 @@ ExecuteGrantStmt(GrantStmt *stmt)
 			all_privileges = ACL_ALL_RIGHTS_FOREIGN_SERVER;
 			errormsg = gettext_noop("invalid privilege type %s for foreign server");
 			break;
+		case ACL_OBJECT_FOREIGN_TABLE:
+			all_privileges = ACL_ALL_RIGHTS_FOREIGN_TABLE;
+			errormsg = gettext_noop("invalid privilege type %s for foreign table");
+			break;
 		default:
 			elog(ERROR, "unrecognized GrantStmt.objtype: %d",
 				 (int) stmt->objtype);
@@ -545,6 +552,7 @@ ExecGrantStmt_oids(InternalGrant *istmt)
 	{
 		case ACL_OBJECT_RELATION:
 		case ACL_OBJECT_SEQUENCE:
+		case ACL_OBJECT_FOREIGN_TABLE:
 			ExecGrant_Relation(istmt);
 			break;
 		case ACL_OBJECT_DATABASE:
@@ -594,6 +602,7 @@ objectNamesToOids(GrantObjectType objtype, List *objnames)
 	{
 		case ACL_OBJECT_RELATION:
 		case ACL_OBJECT_SEQUENCE:
+		case ACL_OBJECT_FOREIGN_TABLE:
 			foreach(cell, objnames)
 			{
 				RangeVar   *relvar = (RangeVar *) lfirst(cell);
@@ -718,10 +727,12 @@ objectsInSchemaToOids(GrantObjectType objtype, List *nspnames)
 		switch (objtype)
 		{
 			case ACL_OBJECT_RELATION:
-				/* Process both regular tables and views */
+				/* Process regular tables, views and foreign tables */
 				objs = getRelationsInNamespace(namespaceId, RELKIND_RELATION);
 				objects = list_concat(objects, objs);
 				objs = getRelationsInNamespace(namespaceId, RELKIND_VIEW);
+				objects = list_concat(objects, objs);
+				objs = getRelationsInNamespace(namespaceId, RELKIND_FOREIGN_TABLE);
 				objects = list_concat(objects, objs);
 				break;
 			case ACL_OBJECT_SEQUENCE:
@@ -1689,11 +1700,21 @@ ExecGrant_Relation(InternalGrant *istmt)
 					 errmsg("\"%s\" is not a sequence",
 							NameStr(pg_class_tuple->relname))));
 
-		/* Adjust the default permissions based on whether it is a sequence */
+		/* Used GRANT FOREIGN TABLE on a non-foreign-table? */
+		if (istmt->objtype == ACL_OBJECT_FOREIGN_TABLE &&
+			pg_class_tuple->relkind != RELKIND_FOREIGN_TABLE)
+			ereport(ERROR,
+					(errcode(ERRCODE_WRONG_OBJECT_TYPE),
+					errmsg("\"%s\" is not a foreign table",
+							NameStr(pg_class_tuple->relname))));
+
+		/* Adjust the default permissions based on object type */
 		if (istmt->all_privs && istmt->privileges == ACL_NO_RIGHTS)
 		{
 			if (pg_class_tuple->relkind == RELKIND_SEQUENCE)
 				this_privileges = ACL_ALL_RIGHTS_SEQUENCE;
+			else if (pg_class_tuple->relkind == RELKIND_FOREIGN_TABLE)
+				this_privileges = ACL_ALL_RIGHTS_FOREIGN_TABLE;
 			else
 				this_privileges = ACL_ALL_RIGHTS_RELATION;
 		}
@@ -1727,6 +1748,16 @@ ExecGrant_Relation(InternalGrant *istmt)
 							 errmsg("sequence \"%s\" only supports USAGE, SELECT, and UPDATE privileges",
 									NameStr(pg_class_tuple->relname))));
 					this_privileges &= (AclMode) ACL_ALL_RIGHTS_SEQUENCE;
+				}
+			}
+			else if (pg_class_tuple->relkind == RELKIND_FOREIGN_TABLE)
+			{
+				if (this_privileges & ~((AclMode) ACL_ALL_RIGHTS_FOREIGN_TABLE))
+				{
+					ereport(ERROR,
+							(errcode(ERRCODE_INVALID_GRANT_OPERATION),
+							 errmsg("foreign table \"%s\" only supports SELECT privileges",
+									NameStr(pg_class_tuple->relname))));
 				}
 			}
 			else
@@ -1781,9 +1812,18 @@ ExecGrant_Relation(InternalGrant *istmt)
 								   &isNull);
 		if (isNull)
 		{
-			old_acl = acldefault(pg_class_tuple->relkind == RELKIND_SEQUENCE ?
-								 ACL_OBJECT_SEQUENCE : ACL_OBJECT_RELATION,
-								 ownerId);
+			switch (pg_class_tuple->relkind)
+			{
+				case RELKIND_SEQUENCE:
+					old_acl = acldefault(ACL_OBJECT_SEQUENCE, ownerId);
+					break;
+				case RELKIND_FOREIGN_TABLE:
+					old_acl = acldefault(ACL_OBJECT_FOREIGN_TABLE, ownerId);
+					break;
+				default:
+					old_acl = acldefault(ACL_OBJECT_RELATION, ownerId);
+					break;
+			}
 			/* There are no old member roles according to the catalogs */
 			noldmembers = 0;
 			oldmembers = NULL;
@@ -1812,11 +1852,25 @@ ExecGrant_Relation(InternalGrant *istmt)
 			bool		replaces[Natts_pg_class];
 			int			nnewmembers;
 			Oid		   *newmembers;
+			AclObjectKind aclkind;
 
 			/* Determine ID to do the grant as, and available grant options */
 			select_best_grantor(GetUserId(), this_privileges,
 								old_acl, ownerId,
 								&grantorId, &avail_goptions);
+
+			switch (pg_class_tuple->relkind)
+			{
+				case RELKIND_SEQUENCE:
+					aclkind = ACL_KIND_SEQUENCE;
+					break;
+				case RELKIND_FOREIGN_TABLE:
+					aclkind = ACL_KIND_FOREIGN_TABLE;
+					break;
+				default:
+					aclkind = ACL_KIND_CLASS;
+					break;
+			}
 
 			/*
 			 * Restrict the privileges to what we can actually grant, and emit
@@ -1825,9 +1879,7 @@ ExecGrant_Relation(InternalGrant *istmt)
 			this_privileges =
 				restrict_and_check_grant(istmt->is_grant, avail_goptions,
 										 istmt->all_privs, this_privileges,
-										 relOid, grantorId,
-								  pg_class_tuple->relkind == RELKIND_SEQUENCE
-										 ? ACL_KIND_SEQUENCE : ACL_KIND_CLASS,
+										 relOid, grantorId, aclkind,
 										 NameStr(pg_class_tuple->relname),
 										 0, NULL);
 
@@ -1907,6 +1959,16 @@ ExecGrant_Relation(InternalGrant *istmt)
 						 errmsg("sequence \"%s\" only supports SELECT column privileges",
 								NameStr(pg_class_tuple->relname))));
 
+				this_privileges &= (AclMode) ACL_SELECT;
+			}
+			else if (pg_class_tuple->relkind == RELKIND_FOREIGN_TABLE &&
+				this_privileges & ~((AclMode) ACL_SELECT))
+			{
+				/* Foreign tables have the same restriction as sequences. */
+				ereport(WARNING,
+					(errcode(ERRCODE_INVALID_GRANT_OPERATION),
+					 errmsg("foreign table \"%s\" only supports SELECT column privileges",
+							NameStr(pg_class_tuple->relname))));
 				this_privileges &= (AclMode) ACL_SELECT;
 			}
 
@@ -3080,7 +3142,9 @@ static const char *const no_priv_msg[MAX_ACL_KIND] =
 	/* ACL_KIND_FDW */
 	gettext_noop("permission denied for foreign-data wrapper %s"),
 	/* ACL_KIND_FOREIGN_SERVER */
-	gettext_noop("permission denied for foreign server %s")
+	gettext_noop("permission denied for foreign server %s"),
+	/* ACL_KIND_FOREIGN_TABLE */
+	gettext_noop("permission denied for foreign table %s"),
 };
 
 static const char *const not_owner_msg[MAX_ACL_KIND] =
@@ -3120,7 +3184,9 @@ static const char *const not_owner_msg[MAX_ACL_KIND] =
 	/* ACL_KIND_FDW */
 	gettext_noop("must be owner of foreign-data wrapper %s"),
 	/* ACL_KIND_FOREIGN_SERVER */
-	gettext_noop("must be owner of foreign server %s")
+	gettext_noop("must be owner of foreign server %s"),
+	/* ACL_KIND_FOREIGN_TABLE */
+	gettext_noop("must be owner of foreign table %s"),
 };
 
 
@@ -3410,9 +3476,18 @@ pg_class_aclmask(Oid table_oid, Oid roleid,
 	if (isNull)
 	{
 		/* No ACL, so build default ACL */
-		acl = acldefault(classForm->relkind == RELKIND_SEQUENCE ?
-						 ACL_OBJECT_SEQUENCE : ACL_OBJECT_RELATION,
-						 ownerId);
+		switch (classForm->relkind)
+		{
+			case RELKIND_SEQUENCE:
+				acl = acldefault(ACL_OBJECT_SEQUENCE, ownerId);
+				break;
+			case RELKIND_FOREIGN_TABLE:
+				acl = acldefault(ACL_OBJECT_FOREIGN_TABLE, ownerId);
+				break;
+			default:
+				acl = acldefault(ACL_OBJECT_RELATION, ownerId);
+				break;
+		}
 		aclDatum = (Datum) 0;
 	}
 	else

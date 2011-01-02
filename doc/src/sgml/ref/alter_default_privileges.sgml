@@ -71,8 +71,8 @@ REVOKE [ GRANT OPTION FOR ]
    <command>ALTER DEFAULT PRIVILEGES</> allows you to set the privileges
    that will be applied to objects created in the future.  (It does not
    affect privileges assigned to already-existing objects.)  Currently,
-   only the privileges for tables (including views), sequences, and
-   functions can be altered.
+   only the privileges for tables (including views and foreign tables),
+   sequences, and functions can be altered.
   </para>
 
   <para>

@@ -95,6 +95,7 @@ ExecRenameStmt(RenameStmt *stmt)
 		case OBJECT_COLUMN:
 		case OBJECT_ATTRIBUTE:
 		case OBJECT_TRIGGER:
+		case OBJECT_FOREIGN_TABLE:
 			{
 				Oid			relid;
 
@@ -108,6 +109,7 @@ ExecRenameStmt(RenameStmt *stmt)
 					case OBJECT_SEQUENCE:
 					case OBJECT_VIEW:
 					case OBJECT_INDEX:
+					case OBJECT_FOREIGN_TABLE:
 						{
 							/*
 							 * RENAME TABLE requires that we (still) hold
@@ -206,6 +208,7 @@ ExecAlterObjectSchemaStmt(AlterObjectSchemaStmt *stmt)
 		case OBJECT_SEQUENCE:
 		case OBJECT_TABLE:
 		case OBJECT_VIEW:
+		case OBJECT_FOREIGN_TABLE:
 			CheckRelationOwnership(stmt->relation, true);
 			AlterTableNamespace(stmt->relation, stmt->newschema,
 								stmt->objectType, AccessExclusiveLock);

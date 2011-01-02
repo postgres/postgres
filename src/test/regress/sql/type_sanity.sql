@@ -217,7 +217,7 @@ WHERE p1.typanalyze = p2.oid AND p1.typtype in ('b', 'p') AND NOT
 
 SELECT p1.oid, p1.relname
 FROM pg_class as p1
-WHERE p1.relkind NOT IN ('r', 'i', 's', 'S', 'c', 't', 'v');
+WHERE p1.relkind NOT IN ('r', 'i', 's', 'S', 'c', 't', 'v', 'f');
 
 -- Indexes should have an access method, others not.
 

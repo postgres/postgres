@@ -934,6 +934,12 @@ InitResultRelInfo(ResultRelInfo *resultRelInfo,
 					break;
 			}
 			break;
+		case RELKIND_FOREIGN_TABLE:
+			ereport(ERROR,
+					(errcode(ERRCODE_WRONG_OBJECT_TYPE),
+					 errmsg("cannot change foreign table \"%s\"",
+							RelationGetRelationName(resultRelationDesc))));
+			break;
 		default:
 			ereport(ERROR,
 					(errcode(ERRCODE_WRONG_OBJECT_TYPE),

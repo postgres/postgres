@@ -81,5 +81,8 @@ extern bool listForeignServers(const char *pattern, bool verbose);
 /* \deu */
 extern bool listUserMappings(const char *pattern, bool verbose);
 
+/* \det */
+extern bool listForeignTables(const char *pattern, bool verbose);
+
 
 #endif   /* DESCRIBE_H */

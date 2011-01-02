@@ -36,6 +36,7 @@
 #include "catalog/pg_depend.h"
 #include "catalog/pg_foreign_data_wrapper.h"
 #include "catalog/pg_foreign_server.h"
+#include "catalog/pg_foreign_table.h"
 #include "catalog/pg_language.h"
 #include "catalog/pg_largeobject.h"
 #include "catalog/pg_namespace.h"
@@ -152,6 +153,7 @@ static const Oid object_classes[MAX_OCLASS] = {
 	ForeignDataWrapperRelationId,		/* OCLASS_FDW */
 	ForeignServerRelationId,	/* OCLASS_FOREIGN_SERVER */
 	UserMappingRelationId,		/* OCLASS_USER_MAPPING */
+	ForeignTableRelationId,		/* OCLASS_FOREIGN_TABLE */
 	DefaultAclRelationId		/* OCLASS_DEFACL */
 };
 
@@ -2072,6 +2074,10 @@ getObjectClass(const ObjectAddress *object)
 		case UserMappingRelationId:
 			return OCLASS_USER_MAPPING;
 
+		case ForeignTableRelationId:
+			Assert(object->objectSubId == 0);
+			return OCLASS_FOREIGN_TABLE;
+
 		case DefaultAclRelationId:
 			return OCLASS_DEFACL;
 	}
@@ -2752,6 +2758,10 @@ getRelationDescription(StringInfo buffer, Oid relid)
 			break;
 		case RELKIND_COMPOSITE_TYPE:
 			appendStringInfo(buffer, _("composite type %s"),
+							 relname);
+			break;
+		case RELKIND_FOREIGN_TABLE:
+			appendStringInfo(buffer, _("foreign table %s"),
 							 relname);
 			break;
 		default:

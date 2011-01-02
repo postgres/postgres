@@ -2575,11 +2575,15 @@ _copyCopyStmt(CopyStmt *from)
 	return newnode;
 }
 
-static CreateStmt *
-_copyCreateStmt(CreateStmt *from)
+/*
+ * CopyCreateStmtFields
+ *
+ *		This function copies the fields of the CreateStmt node.  It is used by
+ *		copy functions for classes which inherit from CreateStmt.
+ */
+static void
+CopyCreateStmtFields(CreateStmt *from, CreateStmt *newnode)
 {
-	CreateStmt *newnode = makeNode(CreateStmt);
-
 	COPY_NODE_FIELD(relation);
 	COPY_NODE_FIELD(tableElts);
 	COPY_NODE_FIELD(inhRelations);
@@ -2589,6 +2593,14 @@ _copyCreateStmt(CreateStmt *from)
 	COPY_SCALAR_FIELD(oncommit);
 	COPY_STRING_FIELD(tablespacename);
 	COPY_SCALAR_FIELD(if_not_exists);
+}
+
+static CreateStmt *
+_copyCreateStmt(CreateStmt *from)
+{
+	CreateStmt *newnode = makeNode(CreateStmt);
+
+	CopyCreateStmtFields(from, newnode);
 
 	return newnode;
 }
@@ -3293,6 +3305,19 @@ _copyDropUserMappingStmt(DropUserMappingStmt *from)
 	COPY_STRING_FIELD(username);
 	COPY_STRING_FIELD(servername);
 	COPY_SCALAR_FIELD(missing_ok);
+
+	return newnode;
+}
+
+static CreateForeignTableStmt *
+_copyCreateForeignTableStmt(CreateForeignTableStmt *from)
+{
+	CreateForeignTableStmt *newnode = makeNode(CreateForeignTableStmt);
+
+	CopyCreateStmtFields((CreateStmt *) from, (CreateStmt *) newnode);
+
+	COPY_STRING_FIELD(servername);
+	COPY_NODE_FIELD(options);
 
 	return newnode;
 }
@@ -4197,6 +4222,9 @@ copyObject(void *from)
 			break;
 		case T_DropUserMappingStmt:
 			retval = _copyDropUserMappingStmt(from);
+			break;
+		case T_CreateForeignTableStmt:
+			retval = _copyCreateForeignTableStmt(from);
 			break;
 		case T_CreateTrigStmt:
 			retval = _copyCreateTrigStmt(from);

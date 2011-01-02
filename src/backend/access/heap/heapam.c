@@ -1060,7 +1060,8 @@ relation_close(Relation relation, LOCKMODE lockmode)
  *
  *		This is essentially relation_open plus check that the relation
  *		is not an index nor a composite type.  (The caller should also
- *		check that it's not a view before assuming it has storage.)
+ *		check that it's not a view or foreign table before assuming it has
+ *      storage.)
  * ----------------
  */
 Relation

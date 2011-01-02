@@ -1,0 +1,188 @@
+<!-- doc/src/sgml/ref/create_foreign_table.sgml -->
+
+<refentry id="SQL-CREATEFOREIGNTABLE">
+ <refmeta>
+  <refentrytitle>CREATE FOREIGN TABLE</refentrytitle>
+  <manvolnum>7</manvolnum>
+  <refmiscinfo>SQL - Language Statements</refmiscinfo>
+ </refmeta>
+
+ <refnamediv>
+  <refname>CREATE FOREIGN TABLE</refname>
+  <refpurpose>define a new foreign table</refpurpose>
+ </refnamediv>
+
+ <indexterm zone="sql-createforeigntable">
+  <primary>CREATE FOREIGN TABLE</primary>
+ </indexterm>
+
+ <refsynopsisdiv>
+<synopsis>
+CREATE FOREIGN TABLE [ IF NOT EXISTS ] <replaceable class="PARAMETER">table_name</replaceable> ( [
+  { <replaceable class="PARAMETER">column_name</replaceable> <replaceable class="PARAMETER">data_type</replaceable> [ NULL | NOT NULL ] }
+    [, ... ]
+] )
+  SERVER <replaceable class="parameter">server_name</replaceable>
+[ OPTIONS ( <replaceable class="PARAMETER">option</replaceable> '<replaceable class="PARAMETER">value</replaceable>' [, ... ] ) ]
+
+</synopsis>
+ </refsynopsisdiv>
+
+ <refsect1 id="SQL-CREATEFOREIGNTABLE-description">
+  <title>Description</title>
+
+  <para>
+   <command>CREATE FOREIGN TABLE</command> will create a new foreign table
+   in the current database. The table will be owned by the user issuing the
+   command.
+  </para>
+
+  <para>
+   If a schema name is given (for example, <literal>CREATE FOREIGN TABLE
+   myschema.mytable ...</>) then the table is created in the specified
+   schema.  Otherwise it is created in the current schema.
+   The name of the foreign table must be
+   distinct from the name of any other foreign table, table, sequence, index,
+   or view in the same schema.
+  </para>
+
+  <para>
+   <command>CREATE FOREIGN TABLE</command> also automatically creates a data
+   type that represents the composite type corresponding to one row of
+   the foreign table.  Therefore, foreign tables cannot have the same
+   name as any existing data type in the same schema.
+  </para>
+ </refsect1>
+
+ <refsect1>
+  <title>Parameters</title>
+
+  <variablelist>
+
+   <varlistentry>
+    <term><literal>IF NOT EXISTS</></term>
+    <listitem>
+     <para>
+      Do not throw an error if a relation with the same name already exists.
+      A notice is issued in this case.  Note that there is no guarantee that
+      the existing relation is anything like the one that would have been
+      created.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><replaceable class="PARAMETER">table_name</replaceable></term>
+    <listitem>
+     <para>
+      The name (optionally schema-qualified) of the table to be created.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><replaceable class="PARAMETER">column_name</replaceable></term>
+    <listitem>
+     <para>
+      The name of a column to be created in the new table.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><replaceable class="PARAMETER">data_type</replaceable></term>
+    <listitem>
+     <para>
+      The data type of the column. This can include array
+      specifiers. For more information on the data types supported by
+      <productname>PostgreSQL</productname>, refer to <xref
+      linkend="datatype">.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><literal>NOT NULL</></term>
+    <listitem>
+     <para>
+      The column is not allowed to contain null values.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><literal>NULL</></term>
+    <listitem>
+     <para>
+      The column is allowed to contain null values. This is the default.
+     </para>
+
+     <para>
+      This clause is only provided for compatibility with
+      non-standard SQL databases.  Its use is discouraged in new
+      applications.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><literal>OPTIONS ( <replaceable class="PARAMETER">option</replaceable> = '<replaceable class="PARAMETER">value</replaceable>' [, ...] )</literal></term>
+    <listitem>
+     <para>
+      Options to be associated with the new foreign table.
+      The allowed option names and values are specific to each foreign
+      data wrapper and are validated using the foreign-data wrapper
+      library. Option names must be unique. 
+     </para>
+    </listitem>
+   </varlistentry>
+
+  </variablelist>
+
+ </refsect1>
+
+
+ <refsect1 id="SQL-CREATEFOREIGNTABLE-examples">
+  <title>Examples</title>
+
+  <para>
+   Create foreign table <structname>films</> with <structname>film_server</>:
+
+<programlisting>
+CREATE FOREIGN TABLE films (
+    code        char(5) NOT NULL,
+    title       varchar(40) NOT NULL,
+    did         integer NOT NULL,
+    date_prod   date,
+    kind        varchar(10),
+    len         interval hour to minute
+)
+SERVER film_server;
+</programlisting>
+  </para>
+
+ </refsect1>
+
+ <refsect1 id="SQL-CREATEFOREIGNTABLE-compatibility">
+  <title id="SQL-CREATEFOREIGNTABLE-compatibility-title">Compatibility</title>
+
+  <para>
+   The <command>CREATE FOREIGN TABLE</command> command largely conforms to the
+   <acronym>SQL</acronym> standard; however, much as with
+   <link linkend="sql-createtable"><command>CREATE TABLE</></link>,
+   <literal>NULL</> constraints and zero-column foreign tables are permitted.
+  </para>
+
+ </refsect1>
+
+ <refsect1>
+  <title>See Also</title>
+
+  <simplelist type="inline">
+   <member><xref linkend="sql-alterforeigntable"></member>
+   <member><xref linkend="sql-dropforeigntable"></member>
+   <member><xref linkend="sql-createtable"></member>
+   <member><xref linkend="sql-createserver"></member>
+  </simplelist>
+ </refsect1>
+</refentry>

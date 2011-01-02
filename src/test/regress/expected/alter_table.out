@@ -599,9 +599,9 @@ ERROR:  cannot alter system column "oid"
 -- try creating a view and altering that, should fail
 create view myview as select * from atacc1;
 alter table myview alter column test drop not null;
-ERROR:  "myview" is not a table
+ERROR:  "myview" is not a table or foreign table
 alter table myview alter column test set not null;
-ERROR:  "myview" is not a table
+ERROR:  "myview" is not a table or foreign table
 drop view myview;
 drop table atacc1;
 -- test inheritance
@@ -854,7 +854,7 @@ select * from myview;
 (0 rows)
 
 alter table myview drop d;
-ERROR:  "myview" is not a table or composite type
+ERROR:  "myview" is not a table, composite type, or foreign table
 drop view myview;
 -- test some commands to make sure they fail on the dropped column
 analyze atacc1(a);

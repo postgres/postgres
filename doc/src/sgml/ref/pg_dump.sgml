@@ -408,9 +408,9 @@ PostgreSQL documentation
       <term><option>--table=<replaceable class="parameter">table</replaceable></option></term>
       <listitem>
        <para>
-        Dump only tables (or views or sequences) matching <replaceable
-        class="parameter">table</replaceable>.  Multiple tables can be
-        selected by writing multiple <option>-t</> switches.  Also, the
+        Dump only tables (or views or sequences or foreign tables) matching
+        <replaceable class="parameter">table</replaceable>.  Multiple tables
+        can be selected by writing multiple <option>-t</> switches.  Also, the
         <replaceable class="parameter">table</replaceable> parameter is
         interpreted as a pattern according to the same rules used by
         <application>psql</>'s <literal>\d</> commands (see <xref

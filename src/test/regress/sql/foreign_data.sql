@@ -254,6 +254,61 @@ RESET ROLE;
 DROP SERVER s7;
 \deu
 
+-- CREATE FOREIGN TABLE
+CREATE SCHEMA foreign_schema;
+CREATE SERVER sc FOREIGN DATA WRAPPER dummy;
+CREATE FOREIGN TABLE ft1 ();                                    -- ERROR
+CREATE FOREIGN TABLE ft1 () SERVER no_server;                   -- ERROR
+CREATE FOREIGN TABLE ft1 (c1 serial) SERVER sc;                 -- ERROR
+CREATE FOREIGN TABLE ft1 () SERVER sc WITH OIDS;                -- ERROR
+CREATE FOREIGN TABLE ft1 (
+	c1 integer NOT NULL,
+	c2 text,
+	c3 date
+) SERVER sc OPTIONS (delimiter ',', quote '"');
+COMMENT ON FOREIGN TABLE ft1 IS 'ft1';
+COMMENT ON COLUMN ft1.c1 IS 'ft1.c1';
+\d+ ft1
+\det+
+CREATE INDEX id_ft1_c2 ON ft1 (c2);                             -- ERROR
+
+-- ALTER FOREIGN TABLE
+COMMENT ON FOREIGN TABLE ft1 IS 'foreign table';
+COMMENT ON FOREIGN TABLE ft1 IS NULL;
+COMMENT ON COLUMN ft1.c1 IS 'foreign column';
+COMMENT ON COLUMN ft1.c1 IS NULL;
+
+ALTER FOREIGN TABLE ft1 ADD COLUMN c4 integer;
+ALTER FOREIGN TABLE ft1 ADD COLUMN c5 integer DEFAULT 0;        -- ERROR
+ALTER FOREIGN TABLE ft1 ADD COLUMN c6 integer;
+ALTER FOREIGN TABLE ft1 ADD COLUMN c7 integer NOT NULL;
+ALTER FOREIGN TABLE ft1 ADD COLUMN c8 integer;
+ALTER FOREIGN TABLE ft1 ADD COLUMN c9 integer;
+ALTER FOREIGN TABLE ft1 ADD COLUMN c10 integer;
+
+ALTER FOREIGN TABLE ft1 ALTER COLUMN c4 SET DEFAULT 0;          -- ERROR
+ALTER FOREIGN TABLE ft1 ALTER COLUMN c5 DROP DEFAULT;           -- ERROR
+ALTER FOREIGN TABLE ft1 ALTER COLUMN c6 SET NOT NULL;
+ALTER FOREIGN TABLE ft1 ALTER COLUMN c7 DROP NOT NULL;
+ALTER FOREIGN TABLE ft1 ALTER COLUMN c8 TYPE char(10) using '0'; -- ERROR
+ALTER FOREIGN TABLE ft1 ALTER COLUMN c8 TYPE char(10);
+ALTER FOREIGN TABLE ft1 ALTER COLUMN c8 SET DATA TYPE text;
+ALTER FOREIGN TABLE ft1 ADD CONSTRAINT ft1_c9_check CHECK (c9 < 0);
+ALTER FOREIGN TABLE ft1 DROP CONSTRAINT no_const;               -- ERROR
+ALTER FOREIGN TABLE ft1 DROP CONSTRAINT IF EXISTS no_const;
+ALTER FOREIGN TABLE ft1 DROP CONSTRAINT ft1_c1_check;
+ALTER FOREIGN TABLE ft1 SET WITH OIDS;                          -- ERROR
+ALTER FOREIGN TABLE ft1 OWNER TO regress_test_role;
+ALTER FOREIGN TABLE ft1 OPTIONS (DROP delimiter, SET quote '~', ADD escape '@');
+ALTER FOREIGN TABLE ft1 DROP COLUMN no_column;                  -- ERROR
+ALTER FOREIGN TABLE ft1 DROP COLUMN IF EXISTS no_column;
+ALTER FOREIGN TABLE ft1 DROP COLUMN c9;
+ALTER FOREIGN TABLE ft1 SET SCHEMA foreign_schema;
+ALTER FOREIGN TABLE ft1 SET TABLESPACE ts;                      -- ERROR
+ALTER FOREIGN TABLE foreign_schema.ft1 RENAME c1 TO foreign_column_1;
+ALTER FOREIGN TABLE foreign_schema.ft1 RENAME TO foreign_table_1;
+\d foreign_schema.foreign_table_1
+
 -- Information schema
 
 SELECT * FROM information_schema.foreign_data_wrappers ORDER BY 1, 2;
@@ -264,6 +319,8 @@ SELECT * FROM information_schema.user_mappings ORDER BY lower(authorization_iden
 SELECT * FROM information_schema.user_mapping_options ORDER BY lower(authorization_identifier), 2, 3, 4;
 SELECT * FROM information_schema.usage_privileges WHERE object_type LIKE 'FOREIGN%' ORDER BY 1, 2, 3, 4, 5;
 SELECT * FROM information_schema.role_usage_grants WHERE object_type LIKE 'FOREIGN%' ORDER BY 1, 2, 3, 4, 5;
+SELECT * FROM information_schema.foreign_tables ORDER BY 1, 2, 3;
+SELECT * FROM information_schema.foreign_table_options ORDER BY 1, 2, 3, 4;
 SET ROLE regress_test_role;
 SELECT * FROM information_schema.user_mapping_options ORDER BY 1, 2, 3, 4;
 SELECT * FROM information_schema.usage_privileges WHERE object_type LIKE 'FOREIGN%' ORDER BY 1, 2, 3, 4, 5;
@@ -366,7 +423,13 @@ CREATE USER MAPPING FOR current_user SERVER s9;
 DROP SERVER s9 CASCADE;                                         -- ERROR
 RESET ROLE;
 
+-- DROP FOREIGN TABLE
+DROP FOREIGN TABLE no_table;                                    -- ERROR
+DROP FOREIGN TABLE IF EXISTS no_table;
+DROP FOREIGN TABLE foreign_schema.foreign_table_1;
+
 -- Cleanup
+DROP SCHEMA foreign_schema CASCADE;
 DROP ROLE regress_test_role;                                -- ERROR
 DROP SERVER s5 CASCADE;
 DROP SERVER t1 CASCADE;

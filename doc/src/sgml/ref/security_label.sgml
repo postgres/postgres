@@ -27,6 +27,7 @@ SECURITY LABEL [ FOR <replaceable class="PARAMETER">provider</replaceable> ] ON
   COLUMN <replaceable class="PARAMETER">table_name</replaceable>.<replaceable class="PARAMETER">column_name</replaceable> |
   AGGREGATE <replaceable class="PARAMETER">agg_name</replaceable> (<replaceable class="PARAMETER">agg_type</replaceable> [, ...] ) |
   DOMAIN <replaceable class="PARAMETER">object_name</replaceable> |
+  FOREIGN TABLE <replaceable class="PARAMETER">object_name</replaceable>
   FUNCTION <replaceable class="PARAMETER">function_name</replaceable> ( [ [ <replaceable class="parameter">argmode</replaceable> ] [ <replaceable class="parameter">argname</replaceable> ] <replaceable class="parameter">argtype</replaceable> [, ...] ] ) |
   LARGE OBJECT <replaceable class="PARAMETER">large_object_oid</replaceable> |
   [ PROCEDURAL ] LANGUAGE <replaceable class="PARAMETER">object_name</replaceable> |
@@ -82,8 +83,8 @@ SECURITY LABEL [ FOR <replaceable class="PARAMETER">provider</replaceable> ] ON
     <listitem>
      <para>
       The name of the object to be commented.  Names of tables,
-      aggregates, domains, functions, sequences, types, and views can
-      be schema-qualified.
+      aggregates, domains, foreign tables, functions, sequences, types, and
+      views can be schema-qualified.
      </para>
     </listitem>
    </varlistentry>

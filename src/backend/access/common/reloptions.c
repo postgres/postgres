@@ -782,6 +782,9 @@ extractRelOptions(HeapTuple tuple, TupleDesc tupdesc, Oid amoptions)
 		case RELKIND_INDEX:
 			options = index_reloptions(amoptions, datum, false);
 			break;
+		case RELKIND_FOREIGN_TABLE:
+			options = NULL;
+			break;
 		default:
 			Assert(false);		/* can't get here */
 			options = NULL;		/* keep compiler quiet */
@@ -1174,7 +1177,7 @@ heap_reloptions(char relkind, Datum reloptions, bool validate)
 		case RELKIND_RELATION:
 			return default_reloptions(reloptions, validate, RELOPT_KIND_HEAP);
 		default:
-			/* sequences, composite types and views are not supported */
+			/* other relkinds are not supported */
 			return NULL;
 	}
 }
