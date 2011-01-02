@@ -24,6 +24,7 @@
 #include "commands/defrem.h"
 #include "commands/sequence.h"
 #include "commands/tablecmds.h"
+#include "funcapi.h"
 #include "miscadmin.h"
 #include "nodes/makefuncs.h"
 #include "storage/bufmgr.h"
@@ -1417,6 +1418,56 @@ process_owned_by(Relation seqrel, List *owned_by)
 	/* Done, but hold lock until commit */
 	if (tablerel)
 		relation_close(tablerel, NoLock);
+}
+
+
+/*
+ * Return sequence parameters, for use by information schema
+ */
+Datum
+pg_sequence_parameters(PG_FUNCTION_ARGS)
+{
+	Oid			relid = PG_GETARG_OID(0);
+	TupleDesc	tupdesc;
+	Datum		values[5];
+	bool		isnull[5];
+	SeqTable	elm;
+	Relation	seqrel;
+	Buffer		buf;
+	Form_pg_sequence seq;
+
+	/* open and AccessShareLock sequence */
+	init_sequence(relid, &elm, &seqrel);
+
+	if (pg_class_aclcheck(relid, GetUserId(), ACL_SELECT | ACL_UPDATE | ACL_USAGE) != ACLCHECK_OK)
+		ereport(ERROR,
+				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
+				 errmsg("permission denied for sequence %s",
+						RelationGetRelationName(seqrel))));
+
+	tupdesc = CreateTemplateTupleDesc(5, false);
+	TupleDescInitEntry(tupdesc, (AttrNumber) 1, "start_value", INT8OID, -1, 0);
+	TupleDescInitEntry(tupdesc, (AttrNumber) 2, "minimum_value", INT8OID, -1, 0);
+	TupleDescInitEntry(tupdesc, (AttrNumber) 3, "maximum_value", INT8OID, -1, 0);
+	TupleDescInitEntry(tupdesc, (AttrNumber) 4, "increment", INT8OID, -1, 0);
+	TupleDescInitEntry(tupdesc, (AttrNumber) 5, "cycle_option", BOOLOID, -1, 0);
+
+	BlessTupleDesc(tupdesc);
+
+	memset(isnull, 0, sizeof(isnull));
+
+	seq = read_info(elm, seqrel, &buf);
+
+	values[0] = Int64GetDatum(seq->start_value);
+	values[1] = Int64GetDatum(seq->min_value);
+	values[2] = Int64GetDatum(seq->max_value);
+	values[3] = Int64GetDatum(seq->increment_by);
+	values[4] = BoolGetDatum(seq->is_cycled);
+
+	UnlockReleaseBuffer(buf);
+	relation_close(seqrel, NoLock);
+
+	return HeapTupleGetDatum(heap_form_tuple(tupdesc, values, isnull));
 }
 
 

@@ -69,6 +69,8 @@ extern Datum setval_oid(PG_FUNCTION_ARGS);
 extern Datum setval3_oid(PG_FUNCTION_ARGS);
 extern Datum lastval(PG_FUNCTION_ARGS);
 
+extern Datum pg_sequence_parameters(PG_FUNCTION_ARGS);
+
 extern void DefineSequence(CreateSeqStmt *stmt);
 extern void AlterSequence(AlterSeqStmt *stmt);
 extern void ResetSequence(Oid seq_relid);

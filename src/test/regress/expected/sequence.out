@@ -220,6 +220,13 @@ SELECT nextval('sequence_test2');
        5
 (1 row)
 
+-- Information schema
+SELECT * FROM information_schema.sequences WHERE sequence_name IN ('sequence_test2');
+ sequence_catalog | sequence_schema | sequence_name  | data_type | numeric_precision | numeric_precision_radix | numeric_scale | start_value | minimum_value | maximum_value | increment | cycle_option 
+------------------+-----------------+----------------+-----------+-------------------+-------------------------+---------------+-------------+---------------+---------------+-----------+--------------
+ regression       | public          | sequence_test2 | bigint    |                64 |                       2 |             0 | 32          | 5             | 36            | 4         | YES
+(1 row)
+
 -- Test comments
 COMMENT ON SEQUENCE asdf IS 'won''t work';
 ERROR:  relation "asdf" does not exist

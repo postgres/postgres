@@ -85,6 +85,9 @@ SELECT nextval('sequence_test2');
 SELECT nextval('sequence_test2');
 SELECT nextval('sequence_test2');
 
+-- Information schema
+SELECT * FROM information_schema.sequences WHERE sequence_name IN ('sequence_test2');
+
 -- Test comments
 COMMENT ON SEQUENCE asdf IS 'won''t work';
 COMMENT ON SEQUENCE sequence_test2 IS 'will work';

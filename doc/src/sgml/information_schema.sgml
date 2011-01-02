@@ -4139,31 +4139,42 @@ ORDER BY c.ordinal_position;
      </row>
 
      <row>
-      <entry><literal>maximum_value</literal></entry>
-      <entry><type>cardinal_number</type></entry>
-      <entry>Not yet implemented</entry>
+      <entry><literal>start_value</literal></entry>
+      <entry><type>character_data</type></entry>
+      <entry>The start value of the sequence</entry>
      </row>
 
      <row>
       <entry><literal>minimum_value</literal></entry>
-      <entry><type>cardinal_number</type></entry>
-      <entry>Not yet implemented</entry>
+      <entry><type>character_data</type></entry>
+      <entry>The minimum value of the sequence</entry>
+     </row>
+
+     <row>
+      <entry><literal>maximum_value</literal></entry>
+      <entry><type>character_data</type></entry>
+      <entry>The maximum value of the sequence</entry>
      </row>
 
      <row>
       <entry><literal>increment</literal></entry>
-      <entry><type>cardinal_number</type></entry>
-      <entry>Not yet implemented</entry>
+      <entry><type>character_data</type></entry>
+      <entry>The increment of the sequence</entry>
      </row>
 
      <row>
       <entry><literal>cycle_option</literal></entry>
       <entry><type>yes_or_no</type></entry>
-      <entry>Not yet implemented</entry>
+      <entry><literal>YES</literal> if the sequence cycles, else <literal>NO</literal></entry>
      </row>
     </tbody>
    </tgroup>
   </table>
+
+  <para>
+   Note that in accordance with the SQL standard, the start, minimum,
+   maximum, and increment values are returned as character strings.
+  </para>
  </sect1>
 
  <sect1 id="infoschema-sql-features">
