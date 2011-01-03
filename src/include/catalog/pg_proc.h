@@ -3117,6 +3117,18 @@ DATA(insert OID = 2761 (  pg_stat_get_db_tuples_updated PGNSP PGUID 12 1 0 0 f f
 DESCR("statistics: tuples updated in database");
 DATA(insert OID = 2762 (  pg_stat_get_db_tuples_deleted PGNSP PGUID 12 1 0 0 f f f t f s 1 0 20 "26" _null_ _null_ _null_ _null_ pg_stat_get_db_tuples_deleted _null_ _null_ _null_ ));
 DESCR("statistics: tuples deleted in database");
+DATA(insert OID = 3065 (  pg_stat_get_db_conflict_tablespace PGNSP PGUID 12 1 0 0 f f f t f s 1 0 20 "26" _null_ _null_ _null_ _null_ pg_stat_get_db_conflict_tablespace _null_ _null_ _null_ ));
+DESCR("statistics: recovery conflicts in database caused by drop tablespace");
+DATA(insert OID = 3066 (  pg_stat_get_db_conflict_lock PGNSP PGUID 12 1 0 0 f f f t f s 1 0 20 "26" _null_ _null_ _null_ _null_ pg_stat_get_db_conflict_lock _null_ _null_ _null_ ));
+DESCR("statistics: recovery conflicts in database caused by relation lock");
+DATA(insert OID = 3067 (  pg_stat_get_db_conflict_snapshot PGNSP PGUID 12 1 0 0 f f f t f s 1 0 20 "26" _null_ _null_ _null_ _null_ pg_stat_get_db_conflict_snapshot _null_ _null_ _null_ ));
+DESCR("statistics: recovery conflicts in database caused by snapshot expiry");
+DATA(insert OID = 3068 (  pg_stat_get_db_conflict_bufferpin PGNSP PGUID 12 1 0 0 f f f t f s 1 0 20 "26" _null_ _null_ _null_ _null_ pg_stat_get_db_conflict_bufferpin _null_ _null_ _null_ ));
+DESCR("statistics: recovery conflicts in database caused by shared buffer pin");
+DATA(insert OID = 3069 (  pg_stat_get_db_conflict_startup_deadlock PGNSP PGUID 12 1 0 0 f f f t f s 1 0 20 "26" _null_ _null_ _null_ _null_ pg_stat_get_db_conflict_startup_deadlock _null_ _null_ _null_ ));
+DESCR("statistics: recovery conflicts in database caused by buffer deadlock");
+DATA(insert OID = 3070 (  pg_stat_get_db_conflict_all PGNSP PGUID 12 1 0 0 f f f t f s 1 0 20 "26" _null_ _null_ _null_ _null_ pg_stat_get_db_conflict_all _null_ _null_ _null_ ));
+DESCR("statistics: recovery conflicts in database");
 DATA(insert OID = 2769 ( pg_stat_get_bgwriter_timed_checkpoints PGNSP PGUID 12 1 0 0 f f f t f s 0 0 20 "" _null_ _null_ _null_ _null_ pg_stat_get_bgwriter_timed_checkpoints _null_ _null_ _null_ ));
 DESCR("statistics: number of timed checkpoints started by the bgwriter");
 DATA(insert OID = 2770 ( pg_stat_get_bgwriter_requested_checkpoints PGNSP PGUID 12 1 0 0 f f f t f s 0 0 20 "" _null_ _null_ _null_ _null_ pg_stat_get_bgwriter_requested_checkpoints _null_ _null_ _null_ ));

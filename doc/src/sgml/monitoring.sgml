@@ -278,7 +278,19 @@ postgres: <replaceable>user</> <replaceable>database</> <replaceable>host</> <re
       number of transactions committed and rolled back in that database,
       total disk blocks read, total buffer hits (i.e., block
       read requests avoided by finding the block already in buffer cache),
-      number of rows returned, fetched, inserted, updated and deleted.
+      number of rows returned, fetched, inserted, updated and deleted, and
+      total number of queries cancelled due to conflict with recovery (on
+      standby servers).
+     </entry>
+     </row>
+
+     <row>
+      <entry><structname>pg_stat_database_conflicts</><indexterm><primary>pg_stat_database_conflicts</primary></indexterm></entry>
+      <entry>One row per database, showing database OID, database name and
+      the number of queries that have been cancelled in this database due to
+      dropped tablespaces, lock timeouts, old snapshots, pinned buffers and
+      deadlocks. Will only contain information on standby servers, since
+      conflicts do not occur on master servers.
      </entry>
      </row>
 
@@ -596,6 +608,46 @@ postgres: <replaceable>user</> <replaceable>database</> <replaceable>host</> <re
       <entry><type>bigint</type></entry>
       <entry>
        Number of tuples deleted in database
+      </entry>
+     </row>
+
+     <row>
+      <entry><literal><function>pg_stat_get_db_conflict_tablespace</function>(<type>oid</type>)</literal></entry>
+      <entry><type>bigint</type></entry>
+      <entry>
+       Number of queries cancelled because of recovery conflict with dropped tablespaces in database
+      </entry>
+     </row>
+
+     <row>
+      <entry><literal><function>pg_stat_get_db_conflict_lock</function>(<type>oid</type>)</literal></entry>
+      <entry><type>bigint</type></entry>
+      <entry>
+       Number of queries cancelled because of recovery conflict with locks in database
+      </entry>
+     </row>
+
+     <row>
+      <entry><literal><function>pg_stat_get_db_conflict_snapshot</function>(<type>oid</type>)</literal></entry>
+      <entry><type>bigint</type></entry>
+      <entry>
+       Number of queries cancelled because of recovery conflict with old snapshots in database
+      </entry>
+     </row>
+
+     <row>
+      <entry><literal><function>pg_stat_get_db_conflict_bufferpin</function>(<type>oid</type>)</literal></entry>
+      <entry><type>bigint</type></entry>
+      <entry>
+       Number of queries cancelled because of recovery conflict with pinned buffers in database
+      </entry>
+     </row>
+
+     <row>
+      <entry><literal><function>pg_stat_get_db_conflict_startup_deadlock</function>(<type>oid</type>)</literal></entry>
+      <entry><type>bigint</type></entry>
+      <entry>
+       Number of queries cancelled because of recovery conflict with deadlocks in database
       </entry>
      </row>
 

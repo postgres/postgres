@@ -57,6 +57,7 @@
 #include "storage/ipc.h"
 #include "storage/pg_shmem.h"
 #include "storage/pmsignal.h"
+#include "storage/procsignal.h"
 #include "utils/guc.h"
 #include "utils/memutils.h"
 #include "utils/ps_status.h"
@@ -278,6 +279,7 @@ static void pgstat_recv_analyze(PgStat_MsgAnalyze *msg, int len);
 static void pgstat_recv_bgwriter(PgStat_MsgBgWriter *msg, int len);
 static void pgstat_recv_funcstat(PgStat_MsgFuncstat *msg, int len);
 static void pgstat_recv_funcpurge(PgStat_MsgFuncpurge *msg, int len);
+static void pgstat_recv_recoveryconflict(PgStat_MsgRecoveryConflict *msg, int len);
 
 
 /* ------------------------------------------------------------
@@ -1314,6 +1316,25 @@ pgstat_report_analyze(Relation rel, bool adopt_counts,
 	pgstat_send(&msg, sizeof(msg));
 }
 
+/* --------
+ * pgstat_report_recovery_conflict() -
+ *
+ *  Tell the collector about a Hot Standby recovery conflict.
+ * --------
+ */
+void
+pgstat_report_recovery_conflict(int reason)
+{
+	PgStat_MsgRecoveryConflict msg;
+
+	if (pgStatSock == PGINVALID_SOCKET || !pgstat_track_counts)
+		return;
+
+	pgstat_setheader(&msg.m_hdr, PGSTAT_MTYPE_RECOVERYCONFLICT);
+	msg.m_databaseid = MyDatabaseId;
+	msg.m_reason = reason;
+	pgstat_send(&msg, sizeof(msg));
+}
 
 /* ----------
  * pgstat_ping() -
@@ -3053,6 +3074,10 @@ PgstatCollectorMain(int argc, char *argv[])
 					pgstat_recv_funcpurge((PgStat_MsgFuncpurge *) &msg, len);
 					break;
 
+				case PGSTAT_MTYPE_RECOVERYCONFLICT:
+					pgstat_recv_recoveryconflict((PgStat_MsgRecoveryConflict *) &msg, len);
+					break;
+
 				default:
 					break;
 			}
@@ -3129,6 +3154,11 @@ pgstat_get_db_entry(Oid databaseid, bool create)
 		result->n_tuples_updated = 0;
 		result->n_tuples_deleted = 0;
 		result->last_autovac_time = 0;
+		result->n_conflict_tablespace = 0;
+		result->n_conflict_lock = 0;
+		result->n_conflict_snapshot = 0;
+		result->n_conflict_bufferpin = 0;
+		result->n_conflict_startup_deadlock = 0;
 
 		memset(&hash_ctl, 0, sizeof(hash_ctl));
 		hash_ctl.keysize = sizeof(Oid);
@@ -4201,6 +4231,45 @@ pgstat_recv_bgwriter(PgStat_MsgBgWriter *msg, int len)
 	globalStats.buf_written_backend += msg->m_buf_written_backend;
 	globalStats.buf_fsync_backend += msg->m_buf_fsync_backend;
 	globalStats.buf_alloc += msg->m_buf_alloc;
+}
+
+/* ----------
+ * pgstat_recv_recoveryconflict() -
+ *
+ *  Process as RECOVERYCONFLICT message.
+ * ----------
+ */
+static void
+pgstat_recv_recoveryconflict(PgStat_MsgRecoveryConflict *msg, int len)
+{
+	PgStat_StatDBEntry *dbentry;
+	dbentry = pgstat_get_db_entry(msg->m_databaseid, true);
+
+	switch (msg->m_reason)
+	{
+		case PROCSIG_RECOVERY_CONFLICT_DATABASE:
+			/*
+			 * Since we drop the information about the database as soon
+			 * as it replicates, there is no point in counting these
+			 * conflicts.
+			 */
+			break;
+		case PROCSIG_RECOVERY_CONFLICT_TABLESPACE:
+			dbentry->n_conflict_tablespace++;
+			break;
+		case PROCSIG_RECOVERY_CONFLICT_LOCK:
+			dbentry->n_conflict_lock++;
+			break;
+		case PROCSIG_RECOVERY_CONFLICT_SNAPSHOT:
+			dbentry->n_conflict_snapshot++;
+			break;
+		case PROCSIG_RECOVERY_CONFLICT_BUFFERPIN:
+			dbentry->n_conflict_bufferpin++;
+			break;
+		case PROCSIG_RECOVERY_CONFLICT_STARTUP_DEADLOCK:
+			dbentry->n_conflict_startup_deadlock++;
+			break;
+	}
 }
 
 /* ----------

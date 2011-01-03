@@ -1554,6 +1554,13 @@ if (!triggered)
     approach, since <varname>vacuum_defer_cleanup_age</> is measured in
     transactions executed on the primary server.
    </para>
+
+   <para>
+    The number of query cancels and the reason for them can be viewed using
+    the <structname>pg_stat_database_conflicts</> system view on the standby
+    server. The <structname>pg_stat_database</> system view also contains
+    summary information.
+   </para>
   </sect2>
 
   <sect2 id="hot-standby-admin">

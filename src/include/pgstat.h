@@ -45,7 +45,8 @@ typedef enum StatMsgType
 	PGSTAT_MTYPE_ANALYZE,
 	PGSTAT_MTYPE_BGWRITER,
 	PGSTAT_MTYPE_FUNCSTAT,
-	PGSTAT_MTYPE_FUNCPURGE
+	PGSTAT_MTYPE_FUNCPURGE,
+	PGSTAT_MTYPE_RECOVERYCONFLICT
 } StatMsgType;
 
 /* ----------
@@ -364,6 +365,17 @@ typedef struct PgStat_MsgBgWriter
 	PgStat_Counter m_buf_alloc;
 } PgStat_MsgBgWriter;
 
+/* ----------
+ * PgStat_MsgRecoveryConflict	Sent by the backend upon recovery conflict
+ * ----------
+ */
+typedef struct PgStat_MsgRecoveryConflict
+{
+	PgStat_MsgHdr m_hdr;
+
+	Oid			m_databaseid;
+	int			m_reason;
+} PgStat_MsgRecoveryConflict;
 
 /* ----------
  * PgStat_FunctionCounts	The actual per-function counts kept by a backend
@@ -460,6 +472,7 @@ typedef union PgStat_Msg
 	PgStat_MsgBgWriter msg_bgwriter;
 	PgStat_MsgFuncstat msg_funcstat;
 	PgStat_MsgFuncpurge msg_funcpurge;
+	PgStat_MsgRecoveryConflict msg_recoveryconflict;
 } PgStat_Msg;
 
 
@@ -490,6 +503,12 @@ typedef struct PgStat_StatDBEntry
 	PgStat_Counter n_tuples_updated;
 	PgStat_Counter n_tuples_deleted;
 	TimestampTz last_autovac_time;
+	PgStat_Counter n_conflict_tablespace;
+	PgStat_Counter n_conflict_lock;
+	PgStat_Counter n_conflict_snapshot;
+	PgStat_Counter n_conflict_bufferpin;
+	PgStat_Counter n_conflict_startup_deadlock;
+
 
 	/*
 	 * tables and functions must be last in the struct, because we don't write
@@ -688,6 +707,8 @@ extern void pgstat_report_vacuum(Oid tableoid, bool shared, bool adopt_counts,
 					 PgStat_Counter tuples);
 extern void pgstat_report_analyze(Relation rel, bool adopt_counts,
 					  PgStat_Counter livetuples, PgStat_Counter deadtuples);
+
+extern void pgstat_report_recovery_conflict(int reason);
 
 extern void pgstat_initialize(void);
 extern void pgstat_bestart(void);
