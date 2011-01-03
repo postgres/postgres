@@ -1033,14 +1033,15 @@ RecordTransactionCommit(void)
 	 * Check if we want to commit asynchronously.  We can allow the XLOG flush
 	 * to happen asynchronously if synchronous_commit=off, or if the current
 	 * transaction has not performed any WAL-logged operation.  The latter case
-	 * can arise if the current transaction wrote only to temporary tables.
-	 * In case of a crash, the loss of such a transaction will be irrelevant
-	 * since temp tables will be lost anyway.  (Given the foregoing, you might
-	 * think that it would be unnecessary to emit the XLOG record at all in
-	 * this case, but we don't currently try to do that.  It would certainly
-	 * cause problems at least in Hot Standby mode, where the KnownAssignedXids
-	 * machinery requires tracking every XID assignment.  It might be OK to
-	 * skip it only when wal_level < hot_standby, but for now we don't.)
+	 * can arise if the current transaction wrote only to temporary and/or
+	 * unlogged tables.  In case of a crash, the loss of such a transaction
+	 * will be irrelevant since temp tables will be lost anyway, and unlogged
+	 * tables will be truncated.  (Given the foregoing, you might think that it
+	 * would be unnecessary to emit the XLOG record at all in this case, but we
+	 * don't currently try to do that.  It would certainly cause problems at
+	 * least in Hot Standby mode, where the KnownAssignedXids machinery
+	 * requires tracking every XID assignment.  It might be OK to skip it only
+	 * when wal_level < hot_standby, but for now we don't.)
 	 *
 	 * However, if we're doing cleanup of any non-temp rels or committing any
 	 * command that wanted to force sync commit, then we must flush XLOG
