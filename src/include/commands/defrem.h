@@ -101,11 +101,11 @@ extern void RenameOpClass(List *name, const char *access_method, const char *new
 extern void RenameOpFamily(List *name, const char *access_method, const char *newname);
 extern void AlterOpClassOwner(List *name, const char *access_method, Oid newOwnerId);
 extern void AlterOpClassOwner_oid(Oid opclassOid, Oid newOwnerId);
-extern void AlterOpClassNamespace(List *name, List *argam, const char *newschema);
+extern void AlterOpClassNamespace(List *name, char *access_method, const char *newschema);
 extern void AlterOpFamilyOwner(List *name, const char *access_method, Oid newOwnerId);
 extern void AlterOpFamilyOwner_oid(Oid opfamilyOid, Oid newOwnerId);
 extern Oid get_am_oid(const char *amname, bool missing_ok);
-extern void AlterOpFamilyNamespace(List *name, List *argam, const char *newschema);
+extern void AlterOpFamilyNamespace(List *name, char *access_method, const char *newschema);
 
 /* commands/tsearchcmds.c */
 extern void DefineTSParser(List *names, List *parameters);

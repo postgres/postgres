@@ -1993,15 +1993,12 @@ AlterOpClassOwner_internal(Relation rel, HeapTuple tup, Oid newOwnerId)
  * ALTER OPERATOR CLASS any_name USING access_method SET SCHEMA name
  */
 void
-AlterOpClassNamespace(List *name, List *argam, const char *newschema)
+AlterOpClassNamespace(List *name, char *access_method, const char *newschema)
 {
 	Oid			amOid;
-	char       *access_method = linitial(argam);
 	Relation	rel;
 	Oid			oid;
 	Oid			nspOid;
-
-	Assert(list_length(argam) == 1);
 
 	amOid = get_am_oid(access_method, false);
 
@@ -2185,15 +2182,13 @@ get_am_oid(const char *amname, bool missing_ok)
  * ALTER OPERATOR FAMILY any_name USING access_method SET SCHEMA name
  */
 void
-AlterOpFamilyNamespace(List *name, List *argam, const char *newschema)
+AlterOpFamilyNamespace(List *name, char *access_method, const char *newschema)
 {
 	Oid			amOid;
-	char       *access_method = linitial(argam);
 	Relation	rel;
 	Oid			nspOid;
 	Oid			oid;
 
-	Assert(list_length(argam) == 1);
 	amOid = get_am_oid(access_method, false);
 
 	rel = heap_open(OperatorFamilyRelationId, RowExclusiveLock);

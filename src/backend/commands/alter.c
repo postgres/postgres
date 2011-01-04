@@ -198,11 +198,11 @@ ExecAlterObjectSchemaStmt(AlterObjectSchemaStmt *stmt)
 			break;
 
 		case OBJECT_OPCLASS:
-			AlterOpClassNamespace(stmt->object, stmt->objarg, stmt->newschema);
+			AlterOpClassNamespace(stmt->object, stmt->addname, stmt->newschema);
 			break;
 
 		case OBJECT_OPFAMILY:
-			AlterOpFamilyNamespace(stmt->object, stmt->objarg, stmt->newschema);
+			AlterOpFamilyNamespace(stmt->object, stmt->addname, stmt->newschema);
 			break;
 
 		case OBJECT_SEQUENCE:
