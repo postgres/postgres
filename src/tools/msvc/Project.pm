@@ -24,6 +24,7 @@ sub new {
         defines         => ';',
 		solution        => $solution,
         disablewarnings => '4018;4244',
+		vcver           => $solution->{vcver}
     };
 
 	bless $self;
@@ -337,7 +338,7 @@ sub WriteHeader {
 
 	print $f <<EOF;
 <?xml version="1.0" encoding="Windows-1252"?>
-<VisualStudioProject ProjectType="Visual C++" Version="8.00" Name="$self->{name}" ProjectGUID="$self->{guid}">
+<VisualStudioProject ProjectType="Visual C++" Version="$self->{vcver}" Name="$self->{name}" ProjectGUID="$self->{guid}">
  <Platforms><Platform Name="Win32"/></Platforms>
  <Configurations>
 EOF
