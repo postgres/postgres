@@ -17,8 +17,8 @@ static void transfer_single_new_db(pageCnvCtx *pageConverter,
 					   FileNameMap *maps, int size);
 static void transfer_relfile(pageCnvCtx *pageConverter,
 				 const char *fromfile, const char *tofile,
-				 const char *oldnspname, const char *oldrelname,
-				 const char *newnspname, const char *newrelname);
+				 const char *old_nspname, const char *new_nspname,
+				 const char *old_relname, const char *new_relname);
 
 /* used by scandir(), must be global */
 char		scandir_file_pattern[MAXPGPATH];
@@ -149,8 +149,8 @@ transfer_single_new_db(pageCnvCtx *pageConverter,
 		 */
 		unlink(new_file);
 		transfer_relfile(pageConverter, old_file, new_file,
-						 maps[mapnum].old_nspname, maps[mapnum].old_relname,
-						 maps[mapnum].new_nspname, maps[mapnum].new_relname);
+						 maps[mapnum].old_nspname, maps[mapnum].new_nspname,
+						 maps[mapnum].old_relname, maps[mapnum].new_relname);
 
 		/* fsm/vm files added in PG 8.4 */
 		if (GET_MAJOR_VERSION(old_cluster.major_version) >= 804)
@@ -173,8 +173,8 @@ transfer_single_new_db(pageCnvCtx *pageConverter,
 
 					unlink(new_file);
 					transfer_relfile(pageConverter, old_file, new_file,
-							  maps[mapnum].old_nspname, maps[mapnum].old_relname,
-							 maps[mapnum].new_nspname, maps[mapnum].new_relname);
+							  maps[mapnum].old_nspname, maps[mapnum].new_nspname,
+							  maps[mapnum].old_relname, maps[mapnum].new_relname);
 				}
 			}
 		}
@@ -201,8 +201,8 @@ transfer_single_new_db(pageCnvCtx *pageConverter,
 
 				unlink(new_file);
 				transfer_relfile(pageConverter, old_file, new_file,
-							  maps[mapnum].old_nspname, maps[mapnum].old_relname,
-							 maps[mapnum].new_nspname, maps[mapnum].new_relname);
+							  maps[mapnum].old_nspname, maps[mapnum].new_nspname,
+							  maps[mapnum].old_relname, maps[mapnum].new_relname);
 			}
 		}
 	}
@@ -223,9 +223,9 @@ transfer_single_new_db(pageCnvCtx *pageConverter,
  * Copy or link file from old cluster to new one.
  */
 static void
-transfer_relfile(pageCnvCtx *pageConverter, const char *oldfile,
-		 const char *newfile, const char *oldnspname, const char *oldrelname,
-				 const char *newnspname, const char *newrelname)
+transfer_relfile(pageCnvCtx *pageConverter, const char *old_file,
+		 const char *new_file, const char *old_nspname, const char *new_nspname,
+		 const char *old_relname, const char *new_relname)
 {
 	const char *msg;
 
@@ -235,21 +235,21 @@ transfer_relfile(pageCnvCtx *pageConverter, const char *oldfile,
 
 	if (user_opts.transfer_mode == TRANSFER_MODE_COPY)
 	{
-		pg_log(PG_INFO, "copying %s to %s\n", oldfile, newfile);
+		pg_log(PG_INFO, "copying %s to %s\n", old_file, new_file);
 
-		if ((msg = copyAndUpdateFile(pageConverter, oldfile, newfile, true)) != NULL)
+		if ((msg = copyAndUpdateFile(pageConverter, old_file, new_file, true)) != NULL)
 			pg_log(PG_FATAL, "error while copying %s.%s(%s) to %s.%s(%s): %s\n",
-				   oldnspname, oldrelname, oldfile, newnspname, newrelname, newfile, msg);
+				   old_nspname, old_relname, old_file, new_nspname, new_relname, new_file, msg);
 	}
 	else
 	{
-		pg_log(PG_INFO, "linking %s to %s\n", oldfile, newfile);
+		pg_log(PG_INFO, "linking %s to %s\n", old_file, new_file);
 
-		if ((msg = linkAndUpdateFile(pageConverter, oldfile, newfile)) != NULL)
+		if ((msg = linkAndUpdateFile(pageConverter, old_file, new_file)) != NULL)
 			pg_log(PG_FATAL,
 			   "error while creating link from %s.%s(%s) to %s.%s(%s): %s\n",
-				   oldnspname, oldrelname, oldfile, newnspname, newrelname,
-				   newfile, msg);
+				   old_nspname, old_relname, old_file, new_nspname, new_relname,
+				   new_file, msg);
 	}
 	return;
 }
