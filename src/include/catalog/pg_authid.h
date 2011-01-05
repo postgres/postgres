@@ -93,7 +93,7 @@ typedef FormData_pg_authid *Form_pg_authid;
  * user choices.
  * ----------------
  */
-DATA(insert OID = 10 ( "POSTGRES" t t t t t t f -1 _null_ _null_ ));
+DATA(insert OID = 10 ( "POSTGRES" t t t t t t t -1 _null_ _null_ ));
 
 #define BOOTSTRAP_SUPERUSERID 10
 

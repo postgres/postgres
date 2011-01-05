@@ -805,9 +805,9 @@ archive_cleanup_command = 'pg_archivecleanup /path/to/archive %r'
     <note>
      <para>
       It is recommended that a dedicated user account is used for replication.
-      While it is possible to add  the <literal>REPLICATION</> privilege to
-      a superuser account for the purporses of replication, this is not
-      recommended. While <literal>REPLICATION</> privilege gives very high
+      While the <literal>REPLICATION</> privilege is granted to superuser
+      accounts by default, it is not recommended to use superuser accounts
+      for replication. While <literal>REPLICATION</> privilege gives very high
       permissions, it does not allow the user to modify any data on the
       primary system, which the <literal>SUPERUSER</> privilege does.
      </para>

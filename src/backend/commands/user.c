@@ -248,7 +248,15 @@ CreateRole(CreateRoleStmt *stmt)
 	if (dpassword && dpassword->arg)
 		password = strVal(dpassword->arg);
 	if (dissuper)
+	{
 		issuper = intVal(dissuper->arg) != 0;
+		/*
+		 * Superusers get replication by default, but only if
+		 * NOREPLICATION wasn't explicitly mentioned
+		 */
+		if (!(disreplication && intVal(disreplication->arg) == 0))
+			isreplication = 1;
+	}
 	if (dinherit)
 		inherit = intVal(dinherit->arg) != 0;
 	if (dcreaterole)
