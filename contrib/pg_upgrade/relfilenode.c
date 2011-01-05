@@ -243,7 +243,7 @@ transfer_relfile(pageCnvCtx *pageConverter, const char *oldfile,
 	}
 	else
 	{
-		pg_log(PG_INFO, "linking %s to %s\n", newfile, oldfile);
+		pg_log(PG_INFO, "linking %s to %s\n", oldfile, newfile);
 
 		if ((msg = linkAndUpdateFile(pageConverter, oldfile, newfile)) != NULL)
 			pg_log(PG_FATAL,
