@@ -47,33 +47,33 @@ gen_db_file_maps(DbInfo *old_db, DbInfo *new_db,
 
 	for (relnum = 0; relnum < old_db->rel_arr.nrels; relnum++)
 	{
-		RelInfo    *oldrel = &old_db->rel_arr.rels[relnum];
-		RelInfo    *newrel;
+		RelInfo    *old_rel = &old_db->rel_arr.rels[relnum];
+		RelInfo    *new_rel;
 
 		/* toast tables are handled by their parents */
-		if (strcmp(oldrel->nspname, "pg_toast") == 0)
+		if (strcmp(old_rel->nspname, "pg_toast") == 0)
 			continue;
 
-		newrel = relarr_lookup_rel_name(&old_cluster, &old_db->rel_arr,
-								   oldrel->nspname, oldrel->relname);
+		new_rel = relarr_lookup_rel_name(&new_cluster, &new_db->rel_arr,
+								   old_rel->nspname, old_rel->relname);
 
 		create_rel_filename_map(old_pgdata, new_pgdata, old_db, new_db,
-				oldrel, newrel, maps + num_maps);
+				old_rel, new_rel, maps + num_maps);
 		num_maps++;
 
 		/*
 		 * So much for mapping this relation;  now we need a mapping
 		 * for its corresponding toast relation and toast index, if any.
 		 */
-		if (oldrel->toastrelid > 0)
+		if (old_rel->toastrelid > 0)
 		{
 			char		old_name[MAXPGPATH], new_name[MAXPGPATH];
 			RelInfo    *old_toast, *new_toast;
 
 			old_toast = relarr_lookup_rel_oid(&old_cluster, &old_db->rel_arr,
-											  oldrel->toastrelid);
+											  old_rel->toastrelid);
 			new_toast = relarr_lookup_rel_oid(&new_cluster, &new_db->rel_arr,
-											  newrel->toastrelid);
+											  new_rel->toastrelid);
 
 			create_rel_filename_map(old_pgdata, new_pgdata, old_db, new_db,
 					old_toast, new_toast, maps + num_maps);
