@@ -218,7 +218,7 @@ transfer_relfile(migratorContext *ctx, pageCnvCtx *pageConverter, const char *ol
 	}
 	else
 	{
-		pg_log(ctx, PG_INFO, "linking %s to %s\n", newfile, oldfile);
+		pg_log(ctx, PG_INFO, "linking %s to %s\n", oldfile, newfile);
 
 		if ((msg = linkAndUpdateFile(ctx, pageConverter, oldfile, newfile)) != NULL)
 			pg_log(ctx, PG_FATAL,
