@@ -54,6 +54,7 @@ gen_db_file_maps(DbInfo *old_db, DbInfo *new_db,
 		if (strcmp(old_rel->nspname, "pg_toast") == 0)
 			continue;
 
+		/* old/new non-toast relation names match */
 		new_rel = relarr_lookup_rel_name(&new_cluster, &new_db->rel_arr,
 								   old_rel->nspname, old_rel->relname);
 
@@ -70,6 +71,7 @@ gen_db_file_maps(DbInfo *old_db, DbInfo *new_db,
 			char		old_name[MAXPGPATH], new_name[MAXPGPATH];
 			RelInfo    *old_toast, *new_toast;
 
+			/* use the toast relids from the rel_arr for lookups */
 			old_toast = relarr_lookup_rel_oid(&old_cluster, &old_db->rel_arr,
 											  old_rel->toastrelid);
 			new_toast = relarr_lookup_rel_oid(&new_cluster, &new_db->rel_arr,
@@ -79,12 +81,7 @@ gen_db_file_maps(DbInfo *old_db, DbInfo *new_db,
 					old_toast, new_toast, maps + num_maps);
 			num_maps++;
 
-			/*
-			 * We also need to provide a mapping for the index of this toast
-			 * relation. The procedure is similar to what we did above for
-			 * toast relation itself, the only difference being that the
-			 * relnames need to be appended with _index.
-			 */
+			/* toast indexes are the same, except with an "_index" suffix */
 			snprintf(old_name, sizeof(old_name), "%s_index", old_toast->relname);
 			snprintf(new_name, sizeof(new_name), "%s_index", new_toast->relname);
 
