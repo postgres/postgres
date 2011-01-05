@@ -87,12 +87,18 @@ typedef struct
 {
 	char		old_dir[MAXPGPATH];
 	char		new_dir[MAXPGPATH];
-	Oid			old_relfilenode;	/* Relfilenode of the old relation */
-	Oid			new_relfilenode;	/* Relfilenode of the new relation */
-	char		old_nspname[NAMEDATALEN];		/* old name of the namespace */
-	char		old_relname[NAMEDATALEN];		/* old name of the relation */
-	char		new_nspname[NAMEDATALEN];		/* new name of the namespace */
-	char		new_relname[NAMEDATALEN];		/* new name of the relation */
+	/*
+	 * old/new relfilenodes might differ for pg_largeobject(_metadata) indexes
+	 * due to VACUUM FULL or REINDEX.  Other relfilenodes are preserved.
+	 */
+	Oid			old_relfilenode;
+	Oid			new_relfilenode;
+	/* the rest are used only for logging and error reporting */
+	char		old_nspname[NAMEDATALEN];		/* namespaces */
+	char		new_nspname[NAMEDATALEN];
+	/* old/new relnames differ for toast tables and toast indexes */
+	char		old_relname[NAMEDATALEN];
+	char		new_relname[NAMEDATALEN];
 } FileNameMap;
 
 /*

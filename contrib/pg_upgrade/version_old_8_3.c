@@ -222,8 +222,8 @@ old_8_3_rebuild_tsvector_tables(ClusterInfo *cluster, bool check_mode)
 	{
 		PGresult   *res;
 		bool		db_used = false;
-		char		old_nspname[NAMEDATALEN] = "",
-					old_relname[NAMEDATALEN] = "";
+		char		nspname[NAMEDATALEN] = "",
+					relname[NAMEDATALEN] = "";
 		int			ntups;
 		int			rowno;
 		int			i_nspname,
@@ -283,10 +283,10 @@ old_8_3_rebuild_tsvector_tables(ClusterInfo *cluster, bool check_mode)
 				}
 
 				/* Rebuild all tsvector collumns with one ALTER TABLE command */
-				if (strcmp(PQgetvalue(res, rowno, i_nspname), old_nspname) != 0 ||
-				 strcmp(PQgetvalue(res, rowno, i_relname), old_relname) != 0)
+				if (strcmp(PQgetvalue(res, rowno, i_nspname), nspname) != 0 ||
+				 strcmp(PQgetvalue(res, rowno, i_relname), relname) != 0)
 				{
-					if (strlen(old_nspname) != 0 || strlen(old_relname) != 0)
+					if (strlen(nspname) != 0 || strlen(relname) != 0)
 						fprintf(script, ";\n\n");
 					fprintf(script, "ALTER TABLE %s.%s\n",
 						 quote_identifier(PQgetvalue(res, rowno, i_nspname)),
@@ -294,8 +294,8 @@ old_8_3_rebuild_tsvector_tables(ClusterInfo *cluster, bool check_mode)
 				}
 				else
 					fprintf(script, ",\n");
-				strlcpy(old_nspname, PQgetvalue(res, rowno, i_nspname), sizeof(old_nspname));
-				strlcpy(old_relname, PQgetvalue(res, rowno, i_relname), sizeof(old_relname));
+				strlcpy(nspname, PQgetvalue(res, rowno, i_nspname), sizeof(nspname));
+				strlcpy(relname, PQgetvalue(res, rowno, i_relname), sizeof(relname));
 
 				fprintf(script, "ALTER COLUMN %s "
 				/* This could have been a custom conversion function call. */
@@ -304,7 +304,7 @@ old_8_3_rebuild_tsvector_tables(ClusterInfo *cluster, bool check_mode)
 						quote_identifier(PQgetvalue(res, rowno, i_attname)));
 			}
 		}
-		if (strlen(old_nspname) != 0 || strlen(old_relname) != 0)
+		if (strlen(nspname) != 0 || strlen(relname) != 0)
 			fprintf(script, ";\n\n");
 
 		PQclear(res);

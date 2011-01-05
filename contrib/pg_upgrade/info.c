@@ -33,8 +33,6 @@ static RelInfo *relarr_lookup_rel_oid(ClusterInfo *cluster, RelInfoArr *rel_arr,
  * generates database mappings for "old_db" and "new_db". Returns a malloc'ed
  * array of mappings. nmaps is a return parameter which refers to the number
  * mappings.
- *
- * NOTE: Its the Caller's responsibility to free the returned array.
  */
 FileNameMap *
 gen_db_file_maps(DbInfo *old_db, DbInfo *new_db,
@@ -45,19 +43,19 @@ gen_db_file_maps(DbInfo *old_db, DbInfo *new_db,
 	int			num_maps = 0;
 
 	maps = (FileNameMap *) pg_malloc(sizeof(FileNameMap) *
-									 new_db->rel_arr.nrels);
+									 old_db->rel_arr.nrels);
 
-	for (relnum = 0; relnum < new_db->rel_arr.nrels; relnum++)
+	for (relnum = 0; relnum < old_db->rel_arr.nrels; relnum++)
 	{
-		RelInfo    *newrel = &new_db->rel_arr.rels[relnum];
-		RelInfo    *oldrel;
+		RelInfo    *oldrel = &old_db->rel_arr.rels[relnum];
+		RelInfo    *newrel;
 
-		/* toast tables are handled by their parent */
-		if (strcmp(newrel->nspname, "pg_toast") == 0)
+		/* toast tables are handled by their parents */
+		if (strcmp(oldrel->nspname, "pg_toast") == 0)
 			continue;
 
-		oldrel = relarr_lookup_rel_name(&old_cluster, &old_db->rel_arr,
-								   newrel->nspname, newrel->relname);
+		newrel = relarr_lookup_rel_name(&old_cluster, &old_db->rel_arr,
+								   oldrel->nspname, oldrel->relname);
 
 		create_rel_filename_map(old_pgdata, new_pgdata, old_db, new_db,
 				oldrel, newrel, maps + num_maps);
@@ -65,52 +63,36 @@ gen_db_file_maps(DbInfo *old_db, DbInfo *new_db,
 
 		/*
 		 * So much for mapping this relation;  now we need a mapping
-		 * for its corresponding toast relation, if any.
+		 * for its corresponding toast relation and toast index, if any.
 		 */
 		if (oldrel->toastrelid > 0)
 		{
-			RelInfo    *new_toast;
-			RelInfo    *old_toast;
-			char		new_name[MAXPGPATH];
-			char		old_name[MAXPGPATH];
+			char		old_name[MAXPGPATH], new_name[MAXPGPATH];
+			RelInfo    *old_toast, *new_toast;
 
-			/* construct the new and old relnames for the toast relation */
-			snprintf(old_name, sizeof(old_name), "pg_toast_%u", oldrel->reloid);
-			snprintf(new_name, sizeof(new_name), "pg_toast_%u", newrel->reloid);
-
-			/* look them up in their respective arrays */
 			old_toast = relarr_lookup_rel_oid(&old_cluster, &old_db->rel_arr,
-											 oldrel->toastrelid);
-			new_toast = relarr_lookup_rel_name(&new_cluster, &new_db->rel_arr,
-										  "pg_toast", new_name);
+											  oldrel->toastrelid);
+			new_toast = relarr_lookup_rel_oid(&new_cluster, &new_db->rel_arr,
+											  newrel->toastrelid);
 
-			/* finally create a mapping for them */
 			create_rel_filename_map(old_pgdata, new_pgdata, old_db, new_db,
 					old_toast, new_toast, maps + num_maps);
 			num_maps++;
 
 			/*
-			 * also need to provide a mapping for the index of this toast
+			 * We also need to provide a mapping for the index of this toast
 			 * relation. The procedure is similar to what we did above for
 			 * toast relation itself, the only difference being that the
 			 * relnames need to be appended with _index.
 			 */
-
-			/*
-			 * construct the new and old relnames for the toast index
-			 * relations
-			 */
 			snprintf(old_name, sizeof(old_name), "%s_index", old_toast->relname);
-			snprintf(new_name, sizeof(new_name), "pg_toast_%u_index",
-					 newrel->reloid);
+			snprintf(new_name, sizeof(new_name), "%s_index", new_toast->relname);
 
-			/* look them up in their respective arrays */
 			old_toast = relarr_lookup_rel_name(&old_cluster, &old_db->rel_arr,
 										  "pg_toast", old_name);
 			new_toast = relarr_lookup_rel_name(&new_cluster, &new_db->rel_arr,
 										  "pg_toast", new_name);
 
-			/* finally create a mapping for them */
 			create_rel_filename_map(old_pgdata, new_pgdata, old_db,
 					new_db, old_toast, new_toast, maps + num_maps);
 			num_maps++;
@@ -133,15 +115,6 @@ create_rel_filename_map(const char *old_data, const char *new_data,
 			  const RelInfo *old_rel, const RelInfo *new_rel,
 			  FileNameMap *map)
 {
-	map->old_relfilenode = old_rel->relfilenode;
-	map->new_relfilenode = new_rel->relfilenode;
-
-	snprintf(map->old_nspname, sizeof(map->old_nspname), "%s", old_rel->nspname);
-	snprintf(map->new_nspname, sizeof(map->new_nspname), "%s", new_rel->nspname);
-
-	snprintf(map->old_relname, sizeof(map->old_relname), "%s", old_rel->relname);
-	snprintf(map->new_relname, sizeof(map->new_relname), "%s", new_rel->relname);
-
 	if (strlen(old_rel->tablespace) == 0)
 	{
 		/*
@@ -155,14 +128,21 @@ create_rel_filename_map(const char *old_data, const char *new_data,
 	}
 	else
 	{
-		/*
-		 * relation belongs to some tablespace, so use the tablespace location
-		 */
+		/* relation belongs to a tablespace, so use the tablespace location */
 		snprintf(map->old_dir, sizeof(map->old_dir), "%s%s/%u", old_rel->tablespace,
 				 old_cluster.tablespace_suffix, old_db->db_oid);
 		snprintf(map->new_dir, sizeof(map->new_dir), "%s%s/%u", new_rel->tablespace,
 				 new_cluster.tablespace_suffix, new_db->db_oid);
 	}
+
+	map->old_relfilenode = old_rel->relfilenode;
+	map->new_relfilenode = new_rel->relfilenode;
+
+	/* used only for logging and error reporing */
+	snprintf(map->old_nspname, sizeof(map->old_nspname), "%s", old_rel->nspname);
+	snprintf(map->new_nspname, sizeof(map->new_nspname), "%s", new_rel->nspname);
+	snprintf(map->old_relname, sizeof(map->old_relname), "%s", old_rel->relname);
+	snprintf(map->new_relname, sizeof(map->new_relname), "%s", new_rel->relname);
 }
 
 

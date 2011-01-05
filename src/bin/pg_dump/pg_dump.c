@@ -2354,34 +2354,37 @@ binary_upgrade_set_relfilenodes(PQExpBuffer upgrade_buffer, Oid pg_class_oid,
 					"\n-- For binary upgrade, must preserve relfilenodes\n");
 
 	if (!is_index)
+	{
 		appendPQExpBuffer(upgrade_buffer,
 						  "SELECT binary_upgrade.set_next_heap_relfilenode('%u'::pg_catalog.oid);\n",
 						  pg_class_relfilenode);
+		/* only tables have toast tables, not indexes */
+		if (OidIsValid(pg_class_reltoastrelid))
+		{
+			/*
+			 * One complexity is that the table definition might not require the
+			 * creation of a TOAST table, and the TOAST table might have been
+			 * created long after table creation, when the table was loaded with
+			 * wide data.  By setting the TOAST relfilenode we force creation of
+			 * the TOAST heap and TOAST index by the backend so we can cleanly
+			 * migrate the files during binary migration.
+			 */
+	
+			appendPQExpBuffer(upgrade_buffer,
+							  "SELECT binary_upgrade.set_next_toast_relfilenode('%u'::pg_catalog.oid);\n",
+							  pg_class_reltoastrelid);
+	
+			/* every toast table has an index */
+			appendPQExpBuffer(upgrade_buffer,
+							  "SELECT binary_upgrade.set_next_index_relfilenode('%u'::pg_catalog.oid);\n",
+							  pg_class_reltoastidxid);
+		}
+	}
 	else
 		appendPQExpBuffer(upgrade_buffer,
 						  "SELECT binary_upgrade.set_next_index_relfilenode('%u'::pg_catalog.oid);\n",
 						  pg_class_relfilenode);
 
-	if (OidIsValid(pg_class_reltoastrelid))
-	{
-		/*
-		 * One complexity is that the table definition might not require the
-		 * creation of a TOAST table, and the TOAST table might have been
-		 * created long after table creation, when the table was loaded with
-		 * wide data.  By setting the TOAST relfilenode we force creation of
-		 * the TOAST heap and TOAST index by the backend so we can cleanly
-		 * migrate the files during binary migration.
-		 */
-
-		appendPQExpBuffer(upgrade_buffer,
-						  "SELECT binary_upgrade.set_next_toast_relfilenode('%u'::pg_catalog.oid);\n",
-						  pg_class_reltoastrelid);
-
-		/* every toast table has an index */
-		appendPQExpBuffer(upgrade_buffer,
-						  "SELECT binary_upgrade.set_next_index_relfilenode('%u'::pg_catalog.oid);\n",
-						  pg_class_reltoastidxid);
-	}
 	appendPQExpBuffer(upgrade_buffer, "\n");
 
 	PQclear(upgrade_res);
