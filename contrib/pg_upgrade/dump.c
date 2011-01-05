@@ -10,7 +10,6 @@
 #include "pg_upgrade.h"
 
 
-
 void
 generate_old_dump(void)
 {

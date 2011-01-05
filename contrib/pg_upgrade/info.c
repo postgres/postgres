@@ -13,24 +13,18 @@
 
 
 static void get_db_infos(ClusterInfo *cluster);
-static void dbarr_print(ClusterInfo *cluster);
-static void relarr_print(RelInfoArr *arr);
-static void get_rel_infos(ClusterInfo *cluster, const int dbnum);
-static void relarr_free(RelInfoArr *rel_arr);
-static void map_rel(const RelInfo *oldrel,
-		const RelInfo *newrel, const DbInfo *old_db,
-		const DbInfo *new_db, const char *olddata,
-		const char *newdata, FileNameMap *map);
-static void map_rel_by_id(Oid oldid, Oid newid,
-			  const char *old_nspname, const char *old_relname,
-			  const char *new_nspname, const char *new_relname,
-			  const char *old_tablespace, const DbInfo *old_db,
-			  const DbInfo *new_db, const char *olddata,
-			  const char *newdata, FileNameMap *map);
-static RelInfo *relarr_lookup_reloid(ClusterInfo *cluster, RelInfoArr *rel_arr,
-				Oid oid);
-static RelInfo *relarr_lookup_rel(ClusterInfo *cluster, RelInfoArr *rel_arr,
+static void print_db_arr(ClusterInfo *cluster);
+static void print_rel_arr(RelInfoArr *arr);
+static void get_rel_infos(ClusterInfo *cluster, DbInfo *dbinfo);
+static void free_rel_arr(RelInfoArr *rel_arr);
+static void create_rel_filename_map(const char *old_data, const char *new_data,
+			  const DbInfo *old_db, const DbInfo *new_db,
+			  const RelInfo *old_rel, const RelInfo *new_rel,
+			  FileNameMap *map);
+static RelInfo *relarr_lookup_rel_name(ClusterInfo *cluster, RelInfoArr *rel_arr,
 				  const char *nspname, const char *relname);
+static RelInfo *relarr_lookup_rel_oid(ClusterInfo *cluster, RelInfoArr *rel_arr,
+				Oid oid);
 
 
 /*
@@ -62,11 +56,11 @@ gen_db_file_maps(DbInfo *old_db, DbInfo *new_db,
 		if (strcmp(newrel->nspname, "pg_toast") == 0)
 			continue;
 
-		oldrel = relarr_lookup_rel(&old_cluster, &old_db->rel_arr,
+		oldrel = relarr_lookup_rel_name(&old_cluster, &old_db->rel_arr,
 								   newrel->nspname, newrel->relname);
 
-		map_rel(oldrel, newrel, old_db, new_db, old_pgdata, new_pgdata,
-				maps + num_maps);
+		create_rel_filename_map(old_pgdata, new_pgdata, old_db, new_db,
+				oldrel, newrel, maps + num_maps);
 		num_maps++;
 
 		/*
@@ -81,20 +75,18 @@ gen_db_file_maps(DbInfo *old_db, DbInfo *new_db,
 			char		old_name[MAXPGPATH];
 
 			/* construct the new and old relnames for the toast relation */
-			snprintf(old_name, sizeof(old_name), "pg_toast_%u",
-					 oldrel->reloid);
-			snprintf(new_name, sizeof(new_name), "pg_toast_%u",
-					 newrel->reloid);
+			snprintf(old_name, sizeof(old_name), "pg_toast_%u", oldrel->reloid);
+			snprintf(new_name, sizeof(new_name), "pg_toast_%u", newrel->reloid);
 
 			/* look them up in their respective arrays */
-			old_toast = relarr_lookup_reloid(&old_cluster, &old_db->rel_arr,
+			old_toast = relarr_lookup_rel_oid(&old_cluster, &old_db->rel_arr,
 											 oldrel->toastrelid);
-			new_toast = relarr_lookup_rel(&new_cluster, &new_db->rel_arr,
+			new_toast = relarr_lookup_rel_name(&new_cluster, &new_db->rel_arr,
 										  "pg_toast", new_name);
 
 			/* finally create a mapping for them */
-			map_rel(old_toast, new_toast, old_db, new_db, old_pgdata, new_pgdata,
-					maps + num_maps);
+			create_rel_filename_map(old_pgdata, new_pgdata, old_db, new_db,
+					old_toast, new_toast, maps + num_maps);
 			num_maps++;
 
 			/*
@@ -113,15 +105,14 @@ gen_db_file_maps(DbInfo *old_db, DbInfo *new_db,
 					 newrel->reloid);
 
 			/* look them up in their respective arrays */
-			/* we lose our cache location here */
-			old_toast = relarr_lookup_rel(&old_cluster, &old_db->rel_arr,
+			old_toast = relarr_lookup_rel_name(&old_cluster, &old_db->rel_arr,
 										  "pg_toast", old_name);
-			new_toast = relarr_lookup_rel(&new_cluster, &new_db->rel_arr,
+			new_toast = relarr_lookup_rel_name(&new_cluster, &new_db->rel_arr,
 										  "pg_toast", new_name);
 
 			/* finally create a mapping for them */
-			map_rel(old_toast, new_toast, old_db, new_db, old_pgdata,
-					new_pgdata, maps + num_maps);
+			create_rel_filename_map(old_pgdata, new_pgdata, old_db,
+					new_db, old_toast, new_toast, maps + num_maps);
 			num_maps++;
 		}
 	}
@@ -131,56 +122,45 @@ gen_db_file_maps(DbInfo *old_db, DbInfo *new_db,
 }
 
 
-static void
-map_rel(const RelInfo *oldrel, const RelInfo *newrel,
-		const DbInfo *old_db, const DbInfo *new_db, const char *olddata,
-		const char *newdata, FileNameMap *map)
-{
-	map_rel_by_id(oldrel->relfilenode, newrel->relfilenode, oldrel->nspname,
-				  oldrel->relname, newrel->nspname, newrel->relname, oldrel->tablespace, old_db,
-				  new_db, olddata, newdata, map);
-}
-
-
 /*
- * map_rel_by_id()
+ * create_rel_filename_map()
  *
  * fills a file node map structure and returns it in "map".
  */
 static void
-map_rel_by_id(Oid oldid, Oid newid,
-			  const char *old_nspname, const char *old_relname,
-			  const char *new_nspname, const char *new_relname,
-			  const char *old_tablespace, const DbInfo *old_db,
-			  const DbInfo *new_db, const char *olddata,
-			  const char *newdata, FileNameMap *map)
+create_rel_filename_map(const char *old_data, const char *new_data,
+			  const DbInfo *old_db, const DbInfo *new_db,
+			  const RelInfo *old_rel, const RelInfo *new_rel,
+			  FileNameMap *map)
 {
-	map->old_relfilenode = oldid;
-	map->new_relfilenode = newid;
+	map->old_relfilenode = old_rel->relfilenode;
+	map->new_relfilenode = new_rel->relfilenode;
 
-	snprintf(map->old_nspname, sizeof(map->old_nspname), "%s", old_nspname);
-	snprintf(map->old_relname, sizeof(map->old_relname), "%s", old_relname);
-	snprintf(map->new_nspname, sizeof(map->new_nspname), "%s", new_nspname);
-	snprintf(map->new_relname, sizeof(map->new_relname), "%s", new_relname);
+	snprintf(map->old_nspname, sizeof(map->old_nspname), "%s", old_rel->nspname);
+	snprintf(map->new_nspname, sizeof(map->new_nspname), "%s", new_rel->nspname);
 
-	if (strlen(old_tablespace) == 0)
+	snprintf(map->old_relname, sizeof(map->old_relname), "%s", old_rel->relname);
+	snprintf(map->new_relname, sizeof(map->new_relname), "%s", new_rel->relname);
+
+	if (strlen(old_rel->tablespace) == 0)
 	{
 		/*
-		 * relation belongs to the default tablespace, hence relfiles would
+		 * relation belongs to the default tablespace, hence relfiles should
 		 * exist in the data directories.
 		 */
-		snprintf(map->old_dir, sizeof(map->old_dir), "%s/base/%u", olddata, old_db->db_oid);
-		snprintf(map->new_dir, sizeof(map->new_dir), "%s/base/%u", newdata, new_db->db_oid);
+		snprintf(map->old_dir, sizeof(map->old_dir), "%s/base/%u", old_data,
+				 old_db->db_oid);
+		snprintf(map->new_dir, sizeof(map->new_dir), "%s/base/%u", new_data,
+				 new_db->db_oid);
 	}
 	else
 	{
 		/*
-		 * relation belongs to some tablespace, hence copy its physical
-		 * location
+		 * relation belongs to some tablespace, so use the tablespace location
 		 */
-		snprintf(map->old_dir, sizeof(map->old_dir), "%s%s/%u", old_tablespace,
+		snprintf(map->old_dir, sizeof(map->old_dir), "%s%s/%u", old_rel->tablespace,
 				 old_cluster.tablespace_suffix, old_db->db_oid);
-		snprintf(map->new_dir, sizeof(map->new_dir), "%s%s/%u", old_tablespace,
+		snprintf(map->new_dir, sizeof(map->new_dir), "%s%s/%u", new_rel->tablespace,
 				 new_cluster.tablespace_suffix, new_db->db_oid);
 	}
 }
@@ -271,10 +251,10 @@ get_db_and_rel_infos(ClusterInfo *cluster)
 	get_db_infos(cluster);
 
 	for (dbnum = 0; dbnum < cluster->dbarr.ndbs; dbnum++)
-		get_rel_infos(cluster, dbnum);
+		get_rel_infos(cluster, &cluster->dbarr.dbs[dbnum]);
 
 	if (log_opts.debug)
-		dbarr_print(cluster);
+		print_db_arr(cluster);
 }
 
 
@@ -288,10 +268,10 @@ get_db_and_rel_infos(ClusterInfo *cluster)
  * FirstNormalObjectId belongs to the user
  */
 static void
-get_rel_infos(ClusterInfo *cluster, const int dbnum)
+get_rel_infos(ClusterInfo *cluster, DbInfo *dbinfo)
 {
 	PGconn	   *conn = connectToServer(cluster,
-									   cluster->dbarr.dbs[dbnum].db_name);
+									   dbinfo->db_name);
 	PGresult   *res;
 	RelInfo    *relinfos;
 	int			ntups;
@@ -373,16 +353,16 @@ get_rel_infos(ClusterInfo *cluster, const int dbnum)
 		tblspace = PQgetvalue(res, relnum, i_spclocation);
 		/* if no table tablespace, use the database tablespace */
 		if (strlen(tblspace) == 0)
-			tblspace = cluster->dbarr.dbs[dbnum].db_tblspace;
+			tblspace = dbinfo->db_tblspace;
 		strlcpy(curr->tablespace, tblspace, sizeof(curr->tablespace));
 	}
 	PQclear(res);
 
 	PQfinish(conn);
 
-	cluster->dbarr.dbs[dbnum].rel_arr.rels = relinfos;
-	cluster->dbarr.dbs[dbnum].rel_arr.nrels = num_rels;
-	cluster->dbarr.dbs[dbnum].rel_arr.last_relname_lookup = 0;
+	dbinfo->rel_arr.rels = relinfos;
+	dbinfo->rel_arr.nrels = num_rels;
+	dbinfo->rel_arr.last_relname_lookup = 0;
 }
 
 
@@ -407,13 +387,13 @@ dbarr_lookup_db(DbInfoArr *db_arr, const char *db_name)
 
 
 /*
- * relarr_lookup_rel()
+ * relarr_lookup_rel_name()
  *
  * Searches "relname" in rel_arr. Returns the *real* pointer to the
  * RelInfo structure.
  */
 static RelInfo *
-relarr_lookup_rel(ClusterInfo *cluster, RelInfoArr *rel_arr,
+relarr_lookup_rel_name(ClusterInfo *cluster, RelInfoArr *rel_arr,
 					const char *nspname, const char *relname)
 {
 	int			relnum;
@@ -443,14 +423,14 @@ relarr_lookup_rel(ClusterInfo *cluster, RelInfoArr *rel_arr,
 
 
 /*
- * relarr_lookup_reloid()
+ * relarr_lookup_rel_oid()
  *
  *	Returns a pointer to the RelInfo structure for the
  *	given oid or NULL if the desired entry cannot be
  *	found.
  */
 static RelInfo *
-relarr_lookup_reloid(ClusterInfo *cluster, RelInfoArr *rel_arr, Oid oid)
+relarr_lookup_rel_oid(ClusterInfo *cluster, RelInfoArr *rel_arr, Oid oid)
 {
 	int			relnum;
 
@@ -466,7 +446,7 @@ relarr_lookup_reloid(ClusterInfo *cluster, RelInfoArr *rel_arr, Oid oid)
 
 
 static void
-relarr_free(RelInfoArr *rel_arr)
+free_rel_arr(RelInfoArr *rel_arr)
 {
 	pg_free(rel_arr->rels);
 	rel_arr->nrels = 0;
@@ -480,13 +460,13 @@ dbarr_free(DbInfoArr *db_arr)
 	int			dbnum;
 
 	for (dbnum = 0; dbnum < db_arr->ndbs; dbnum++)
-		relarr_free(&db_arr->dbs[dbnum].rel_arr);
+		free_rel_arr(&db_arr->dbs[dbnum].rel_arr);
 	db_arr->ndbs = 0;
 }
 
 
 static void
-dbarr_print(ClusterInfo *cluster)
+print_db_arr(ClusterInfo *cluster)
 {
 	int			dbnum;
 
@@ -495,14 +475,14 @@ dbarr_print(ClusterInfo *cluster)
 	for (dbnum = 0; dbnum < cluster->dbarr.ndbs; dbnum++)
 	{
 		pg_log(PG_DEBUG, "Database: %s\n", cluster->dbarr.dbs[dbnum].db_name);
-		relarr_print(&cluster->dbarr.dbs[dbnum].rel_arr);
+		print_rel_arr(&cluster->dbarr.dbs[dbnum].rel_arr);
 		pg_log(PG_DEBUG, "\n\n");
 	}
 }
 
 
 static void
-relarr_print(RelInfoArr *arr)
+print_rel_arr(RelInfoArr *arr)
 {
 	int			relnum;
 
