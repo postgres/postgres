@@ -310,13 +310,16 @@ get_rel_infos(ClusterInfo *cluster, DbInfo *dbinfo)
 			 "	) OR ( "
 			 "	n.nspname = 'pg_catalog' "
 			 "	AND relname IN "
-			 "        ('pg_largeobject', 'pg_largeobject_loid_pn_index') )) "
+			 "        ('pg_largeobject', 'pg_largeobject_loid_pn_index'%s) )) "
 			 "	AND relkind IN ('r','t', 'i'%s)"
 			 "GROUP BY  c.oid, n.nspname, c.relname, c.relfilenode,"
 			 "			c.reltoastrelid, t.spclocation, "
 			 "			n.nspname "
 			 "ORDER BY t.spclocation, n.nspname, c.relname;",
 			 FirstNormalObjectId,
+	/* does pg_largeobject_metadata need to be migrated? */
+			 (GET_MAJOR_VERSION(old_cluster.major_version) <= 804) ?
+			 "" : ", 'pg_largeobject_metadata', 'pg_largeobject_metadata_oid_index'",
 	/* see the comment at the top of old_8_3_create_sequence_script() */
 			 (GET_MAJOR_VERSION(old_cluster.major_version) <= 803) ?
 			 "" : ", 'S'");
