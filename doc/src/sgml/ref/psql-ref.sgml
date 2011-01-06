@@ -2679,7 +2679,7 @@ bar
         <listitem>
         <para>
         The value of the last affected OID, as returned from an
-        <command>INSERT</command> or <command>lo_insert</command>
+        <command>INSERT</command> or <command>\lo_import</command>
         command. This variable is only guaranteed to be valid until
         after the result of the next <acronym>SQL</acronym> command has
         been displayed.
