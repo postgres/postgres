@@ -27,8 +27,8 @@ install_support_functions(void)
 
 	for (dbnum = 0; dbnum < new_cluster.dbarr.ndbs; dbnum++)
 	{
-		DbInfo	   *newdb = &new_cluster.dbarr.dbs[dbnum];
-		PGconn	   *conn = connectToServer(&new_cluster, newdb->db_name);
+		DbInfo	   *new_db = &new_cluster.dbarr.dbs[dbnum];
+		PGconn	   *conn = connectToServer(&new_cluster, new_db->db_name);
 
 		/* suppress NOTICE of dropped objects */
 		PQclear(executeQueryOrDie(conn,
@@ -98,8 +98,8 @@ uninstall_support_functions(void)
 
 	for (dbnum = 0; dbnum < new_cluster.dbarr.ndbs; dbnum++)
 	{
-		DbInfo	   *newdb = &new_cluster.dbarr.dbs[dbnum];
-		PGconn	   *conn = connectToServer(&new_cluster, newdb->db_name);
+		DbInfo	   *new_db = &new_cluster.dbarr.dbs[dbnum];
+		PGconn	   *conn = connectToServer(&new_cluster, new_db->db_name);
 
 		/* suppress NOTICE of dropped objects */
 		PQclear(executeQueryOrDie(conn,
