@@ -10361,7 +10361,7 @@ SELECT NULLIF(value, '(none)') ...
         </entry>
         <entry><type>int</type></entry>
         <entry>returns upper bound of the requested array dimension</entry>
-        <entry><literal>array_upper(ARRAY[1,2,3,4], 1)</literal></entry>
+        <entry><literal>array_upper(ARRAY[1,8,3,7], 1)</literal></entry>
         <entry><literal>4</literal></entry>
        </row>
        <row>
