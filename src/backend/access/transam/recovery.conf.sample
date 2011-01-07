@@ -3,8 +3,8 @@
 # -------------------------------
 #
 # Edit this file to provide the parameters that PostgreSQL needs to
-# perform an archive recovery of a database, or to act as a log-streaming
-# replication standby.
+# perform an archive recovery of a database, or to act as a replication
+# standby.
 #
 # If "recovery.conf" is present in the PostgreSQL data directory, it is
 # read on postmaster startup.  After successful recovery, it is renamed
@@ -88,21 +88,27 @@
 # STANDBY SERVER PARAMETERS
 #---------------------------------------------------------------------------
 #
-# When standby_mode is enabled, the PostgreSQL server will work as
-# a standby. It tries to connect to the primary according to the
-# connection settings primary_conninfo, and receives XLOG records
-# continuously.
+# standby_mode
+#
+# When standby_mode is enabled, the PostgreSQL server will work as a
+# standby. It will continuously wait for the additional XLOG records, using
+# restore_command and/or primary_conninfo.
 #
 #standby_mode = off
+#
+# primary_conninfo
+#
+# If set, the PostgreSQL server will try to connect to the primary using this
+# connection string and receive XLOG records continuously.
 #
 #primary_conninfo = ''		# e.g. 'host=localhost port=5432'
 #
 #
-# By default, a standby server keeps streaming XLOG records from the
-# primary indefinitely. If you want to stop streaming and finish recovery,
-# opening up the system in read/write mode, specify path to a trigger file.
-# Server will poll the trigger file path periodically and stop streaming
-# when it's found.
+# By default, a standby server keeps restoring XLOG records from the
+# primary indefinitely. If you want to stop the standby mode, finish recovery
+# and open the system in read/write mode, specify path to a trigger file.
+# The server will poll the trigger file path periodically and start as a
+# primary server when it's found.
 #
 #trigger_file = ''
 #
