@@ -54,4 +54,6 @@ extern Size WalSndShmemSize(void);
 extern void WalSndShmemInit(void);
 extern void WalSndWakeup(void);
 
+extern Datum pg_stat_get_wal_senders(PG_FUNCTION_ARGS);
+
 #endif   /* _WALSENDER_H */

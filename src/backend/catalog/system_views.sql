@@ -492,6 +492,21 @@ CREATE VIEW pg_stat_activity AS
     WHERE S.datid = D.oid AND
             S.usesysid = U.oid;
 
+CREATE VIEW pg_stat_replication AS
+    SELECT
+            S.procpid,
+            S.usesysid,
+            U.rolname AS usename,
+            S.application_name,
+            S.client_addr,
+            S.client_port,
+            S.backend_start,
+            W.sent_location
+    FROM pg_stat_get_activity(NULL) AS S, pg_authid U,
+            pg_stat_get_wal_senders() AS W
+    WHERE S.usesysid = U.oid AND
+            S.procpid = W.procpid;
+
 CREATE VIEW pg_stat_database AS
     SELECT
             D.oid AS datid,
