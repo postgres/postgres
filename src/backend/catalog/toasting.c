@@ -31,7 +31,7 @@
 #include "utils/builtins.h"
 #include "utils/syscache.h"
 
-/* Kluges for upgrade-in-place support */
+/* Potentially set by contrib/pg_upgrade_support functions */
 extern Oid	binary_upgrade_next_toast_relfilenode;
 
 Oid			binary_upgrade_next_pg_type_toast_oid = InvalidOid;
@@ -200,6 +200,7 @@ create_toast_table(Relation rel, Oid toastOid, Oid toastIndexOid, Datum reloptio
 	else
 		namespaceid = PG_TOAST_NAMESPACE;
 
+	/* Use binary-upgrade override for pg_type.oid, if supplied. */
 	if (OidIsValid(binary_upgrade_next_pg_type_toast_oid))
 	{
 		toast_typid = binary_upgrade_next_pg_type_toast_oid;

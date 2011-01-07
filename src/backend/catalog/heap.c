@@ -73,7 +73,7 @@
 #include "utils/tqual.h"
 
 
-/* Kluge for upgrade-in-place support */
+/* Potentially set by contrib/pg_upgrade_support functions */
 Oid			binary_upgrade_next_heap_relfilenode = InvalidOid;
 Oid			binary_upgrade_next_toast_relfilenode = InvalidOid;
 
@@ -986,7 +986,10 @@ heap_create_with_catalog(const char *relname,
 	 */
 	if (!OidIsValid(relid))
 	{
-		/* Use binary-upgrade overrides if applicable */
+		/*
+		 *	Use binary-upgrade override for pg_class.relfilenode/oid,
+		 *	if supplied.
+		 */
 		if (OidIsValid(binary_upgrade_next_heap_relfilenode) &&
 			(relkind == RELKIND_RELATION || relkind == RELKIND_SEQUENCE ||
 			 relkind == RELKIND_VIEW || relkind == RELKIND_COMPOSITE_TYPE ||

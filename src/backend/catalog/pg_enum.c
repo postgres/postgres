@@ -28,6 +28,7 @@
 #include "utils/tqual.h"
 
 
+/* Potentially set by contrib/pg_upgrade_support functions */
 Oid      binary_upgrade_next_pg_enum_oid = InvalidOid;
 
 static void RenumberEnumType(Relation pg_enum, HeapTuple *existing, int nelems);
@@ -313,9 +314,9 @@ restart:
 	if (OidIsValid(binary_upgrade_next_pg_enum_oid))
 	{
 		/*
-		 * In binary upgrades, just add the new label with the predetermined
-		 * Oid.  It's pg_upgrade's responsibility that the Oid meets
-		 * requirements.
+		 *	Use binary-upgrade override for pg_enum.oid, if supplied.
+		 *	During binary upgrade, all pg_enum.oid's are set this way
+		 *	so they are guaranteed to be consistent.
 		 */
 		if (neighbor != NULL)
 			ereport(ERROR,

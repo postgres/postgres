@@ -7,6 +7,28 @@
  *	contrib/pg_upgrade/pg_upgrade.c
  */
 
+/*
+ *	To simplify the upgrade process, we force certain system items to be
+ *	consistent between old and new clusters:
+ *
+ *	We control all assignments of pg_class.relfilenode so we can keep the
+ *	same relfilenodes for old and new files.  The only exception is
+ *	pg_largeobject, pg_largeobject_metadata, and its indexes, which can
+ *	change due to a cluster, reindex, or vacuum full.  (We don't create
+ *	those so have no control over their oid/relfilenode values.)
+ *
+ *	While pg_class.oid and pg_class.relfilenode are intially the same, they
+ *	can diverge due to cluster, reindex, or vacuum full.  The new cluster
+ *	will again have matching pg_class.relfilenode and pg_class.oid values,
+ *	but based on the new relfilenode value, so the old/new oids might
+ *	differ.
+ *
+ *	We control all assignments of pg_type.oid because these are stored
+ *	in composite types.
+ */
+
+
+ 
 #include "pg_upgrade.h"
 
 #ifdef HAVE_LANGINFO_H

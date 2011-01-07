@@ -68,7 +68,7 @@
 #include "utils/tqual.h"
 
 
-/* Kluge for upgrade-in-place support */
+/* Potentially set by contrib/pg_upgrade_support functions */
 Oid			binary_upgrade_next_index_relfilenode = InvalidOid;
 
 /* state info for validate_index bulkdelete callback */
@@ -640,7 +640,10 @@ index_create(Oid heapRelationId,
 	 */
 	if (!OidIsValid(indexRelationId))
 	{
-		/* Use binary-upgrade override if applicable */
+		/*
+		 *	Use binary-upgrade override for pg_class.relfilenode/oid,
+		 *	if supplied.
+		 */
 		if (OidIsValid(binary_upgrade_next_index_relfilenode))
 		{
 			indexRelationId = binary_upgrade_next_index_relfilenode;

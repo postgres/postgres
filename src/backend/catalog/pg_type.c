@@ -33,6 +33,7 @@
 #include "utils/rel.h"
 #include "utils/syscache.h"
 
+/* Potentially set by contrib/pg_upgrade_support functions */
 Oid			binary_upgrade_next_pg_type_oid = InvalidOid;
 
 /* ----------------------------------------------------------------
@@ -121,6 +122,7 @@ TypeShellMake(const char *typeName, Oid typeNamespace, Oid ownerId)
 	 */
 	tup = heap_form_tuple(tupDesc, values, nulls);
 
+	/* Use binary-upgrade override for pg_type.oid, if supplied. */
 	if (OidIsValid(binary_upgrade_next_pg_type_oid))
 	{
 		HeapTupleSetOid(tup, binary_upgrade_next_pg_type_oid);
@@ -422,6 +424,7 @@ TypeCreate(Oid newTypeOid,
 		/* Force the OID if requested by caller */
 		if (OidIsValid(newTypeOid))
 			HeapTupleSetOid(tup, newTypeOid);
+		/* Use binary-upgrade override for pg_type.oid, if supplied. */
 		else if (OidIsValid(binary_upgrade_next_pg_type_oid))
 		{
 			HeapTupleSetOid(tup, binary_upgrade_next_pg_type_oid);
