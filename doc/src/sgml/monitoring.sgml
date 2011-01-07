@@ -295,6 +295,15 @@ postgres: <replaceable>user</> <replaceable>database</> <replaceable>host</> <re
      </row>
 
      <row>
+      <entry><structname>pg_stat_replication</><indexterm><primary>pg_stat_replication</primary></indexterm></entry>
+      <entry>One row per WAL sender process, showing process <acronym>ID</>,
+      user OID, user name, application name, client's address and port number,
+      time at which the server process began execution, and transaction log
+      location.
+     </entry>
+     </row>
+
+     <row>
       <entry><structname>pg_stat_all_tables</><indexterm><primary>pg_stat_all_tables</primary></indexterm></entry>
       <entry>For each table in the current database (including TOAST tables),
       the table OID, schema and table name, number of sequential

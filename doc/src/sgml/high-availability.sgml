@@ -865,6 +865,16 @@ primary_conninfo = 'host=192.168.1.50 port=5432 user=foo password=foopass'
      process status of the WAL receiver process, displayed using the
      <command>ps</> command (see <xref linkend="monitoring-ps"> for details).
     </para>
+    <para>
+     You can retrieve a list of WAL sender processes via the
+     <link linkend="monitoring-stats-views-table">
+     <literal>pg_stat_replication</></link> view. Large differences between
+     <function>pg_current_xlog_location</> and <literal>sent_location</> field
+     might indicate that the master server is under heavy load, while
+     differences between <literal>sent_location</> and 
+     <function>pg_last_xlog_receive_location</> on the standby might indicate
+     network delay, or that the the standby is under heavy load.
+    </para>
    </sect3>
 
   </sect2>
