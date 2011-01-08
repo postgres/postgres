@@ -77,7 +77,6 @@ typedef struct
 {
 	RelInfo    *rels;
 	int			nrels;
-	int			last_relname_lookup;	/* cache of last lookup location */
 } RelInfoArr;
 
 /*
@@ -321,8 +320,8 @@ void		check_hard_link(void);
 
 /* function.c */
 
-void		install_support_functions_in_db(const char *db_name);
-void		uninstall_support_functions(void);
+void		install_support_functions_in_new_db(const char *db_name);
+void		uninstall_support_functions_from_new_cluster(void);
 void		get_loadable_libraries(void);
 void		check_loadable_libraries(void);
 
@@ -331,8 +330,7 @@ void		check_loadable_libraries(void);
 FileNameMap *gen_db_file_maps(DbInfo *old_db,
 				 DbInfo *new_db, int *nmaps, const char *old_pgdata,
 				 const char *new_pgdata);
-void get_db_and_rel_infos(ClusterInfo *cluster);
-DbInfo	   *dbarr_lookup_db(DbInfoArr *db_arr, const char *db_name);
+void 		get_db_and_rel_infos(ClusterInfo *cluster);
 void		dbarr_free(DbInfoArr *db_arr);
 void print_maps(FileNameMap *maps, int n,
 		   const char *dbName);

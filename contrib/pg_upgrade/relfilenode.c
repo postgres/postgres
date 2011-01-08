@@ -29,22 +29,29 @@ char		scandir_file_pattern[MAXPGPATH];
  * physically link the databases.
  */
 const char *
-transfer_all_new_dbs(DbInfoArr *olddb_arr,
-					 DbInfoArr *newdb_arr, char *old_pgdata, char *new_pgdata)
+transfer_all_new_dbs(DbInfoArr *old_db_arr,
+					 DbInfoArr *new_db_arr, char *old_pgdata, char *new_pgdata)
 {
 	int			dbnum;
 	const char *msg = NULL;
 
 	prep_status("Restoring user relation files\n");
 
-	for (dbnum = 0; dbnum < newdb_arr->ndbs; dbnum++)
+	if (old_db_arr->ndbs != new_db_arr->ndbs)
+		pg_log(PG_FATAL, "old and new clusters have a different number of databases\n");
+	
+	for (dbnum = 0; dbnum < old_db_arr->ndbs; dbnum++)
 	{
-		DbInfo	   *new_db = &newdb_arr->dbs[dbnum];
-		DbInfo	   *old_db = dbarr_lookup_db(olddb_arr, new_db->db_name);
+		DbInfo	   *old_db = &old_db_arr->dbs[dbnum];
+		DbInfo	   *new_db = &new_db_arr->dbs[dbnum];
 		FileNameMap *mappings;
 		int			n_maps;
 		pageCnvCtx *pageConverter = NULL;
 
+		if (strcmp(old_db->db_name, new_db->db_name) != 0)
+			pg_log(PG_FATAL, "old and new databases have a different names: old \"%s\", new \"%s\"\n",
+				old_db->db_name, new_db->db_name);
+		
 		n_maps = 0;
 		mappings = gen_db_file_maps(old_db, new_db, &n_maps, old_pgdata,
 									new_pgdata);

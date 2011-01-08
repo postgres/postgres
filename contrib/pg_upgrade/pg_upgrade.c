@@ -229,7 +229,7 @@ prepare_new_databases(void)
 	 *	Install support functions in the database accessed by
 	 *	GLOBALS_DUMP_FILE because it can preserve pg_authid.oid.
 	 */
-	install_support_functions_in_db(os_info.user);
+	install_support_functions_in_new_db(os_info.user);
 
 	/*
 	 * We have to create the databases first so we can install support
@@ -244,6 +244,7 @@ prepare_new_databases(void)
 			  GLOBALS_DUMP_FILE, log_opts.filename);
 	check_ok();
 
+	/* we load this to get a current list of databases */
 	get_db_and_rel_infos(&new_cluster);
 
 	stop_postmaster(false, false);
@@ -266,7 +267,7 @@ create_new_objects(void)
 
 		/* skip db we already installed */
 		if (strcmp(new_db->db_name, os_info.user) != 0)
-			install_support_functions_in_db(new_db->db_name);
+			install_support_functions_in_new_db(new_db->db_name);
 	}
 	check_ok();
 
@@ -279,11 +280,11 @@ create_new_objects(void)
 			  DB_DUMP_FILE, log_opts.filename);
 	check_ok();
 
-	/* regenerate now that we have db schemas */
+	/* regenerate now that we have objects in the databases */
 	dbarr_free(&new_cluster.dbarr);
 	get_db_and_rel_infos(&new_cluster);
 
-	uninstall_support_functions();
+	uninstall_support_functions_from_new_cluster();
 
 	stop_postmaster(false, false);
 }

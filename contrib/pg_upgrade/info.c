@@ -21,10 +21,6 @@ static void create_rel_filename_map(const char *old_data, const char *new_data,
 			  const DbInfo *old_db, const DbInfo *new_db,
 			  const RelInfo *old_rel, const RelInfo *new_rel,
 			  FileNameMap *map);
-static RelInfo *relarr_lookup_rel_name(ClusterInfo *cluster, RelInfoArr *rel_arr,
-				  const char *nspname, const char *relname);
-static RelInfo *relarr_lookup_rel_oid(ClusterInfo *cluster, RelInfoArr *rel_arr,
-				Oid oid);
 
 
 /*
@@ -42,18 +38,22 @@ gen_db_file_maps(DbInfo *old_db, DbInfo *new_db,
 	int			relnum;
 	int			num_maps = 0;
 
+	if (old_db->rel_arr.nrels != new_db->rel_arr.nrels)
+		pg_log(PG_FATAL, "old and new databases \"%s\" have a different number of relations\n",
+					old_db->db_name);
+
 	maps = (FileNameMap *) pg_malloc(sizeof(FileNameMap) *
 									 old_db->rel_arr.nrels);
 
 	for (relnum = 0; relnum < old_db->rel_arr.nrels; relnum++)
 	{
 		RelInfo    *old_rel = &old_db->rel_arr.rels[relnum];
-		RelInfo    *new_rel;
+		RelInfo    *new_rel = &old_db->rel_arr.rels[relnum];
 
-		/* old/new relation names always match */
-		new_rel = relarr_lookup_rel_name(&new_cluster, &new_db->rel_arr,
-								   old_rel->nspname, old_rel->relname);
-
+		if (old_rel->reloid != new_rel->reloid)
+			pg_log(PG_FATAL, "mismatch of relation id: database \"%s\", old relid %d, new relid %d\n",
+			old_db->db_name, old_rel->reloid, new_rel->reloid);
+	
 		create_rel_filename_map(old_pgdata, new_pgdata, old_db, new_db,
 				old_rel, new_rel, maps + num_maps);
 		num_maps++;
@@ -153,7 +153,9 @@ get_db_infos(ClusterInfo *cluster)
 							"FROM pg_catalog.pg_database d "
 							" LEFT OUTER JOIN pg_catalog.pg_tablespace t "
 							" ON d.dattablespace = t.oid "
-							"WHERE d.datallowconn = true");
+							"WHERE d.datallowconn = true "
+	/* we don't preserve pg_database.oid so we sort by name */
+							"ORDER BY 2");
 
 	i_datname = PQfnumber(res, "datname");
 	i_oid = PQfnumber(res, "oid");
@@ -258,7 +260,8 @@ get_rel_infos(ClusterInfo *cluster, DbInfo *dbinfo)
 			 "GROUP BY  c.oid, n.nspname, c.relname, c.relfilenode,"
 			 "			c.reltoastrelid, t.spclocation, "
 			 "			n.nspname "
-			 "ORDER BY t.spclocation, n.nspname, c.relname;",
+	/* we preserve pg_class.oid so we sort by it to match old/new */
+			 "ORDER BY 1;",
 			 FirstNormalObjectId,
 	/* does pg_largeobject_metadata need to be migrated? */
 			 (GET_MAJOR_VERSION(old_cluster.major_version) <= 804) ?
@@ -308,86 +311,6 @@ get_rel_infos(ClusterInfo *cluster, DbInfo *dbinfo)
 
 	dbinfo->rel_arr.rels = relinfos;
 	dbinfo->rel_arr.nrels = num_rels;
-	dbinfo->rel_arr.last_relname_lookup = 0;
-}
-
-
-/*
- * dbarr_lookup_db()
- *
- * Returns the pointer to the DbInfo structure
- */
-DbInfo *
-dbarr_lookup_db(DbInfoArr *db_arr, const char *db_name)
-{
-	int			dbnum;
-
-	for (dbnum = 0; dbnum < db_arr->ndbs; dbnum++)
-	{
-		if (strcmp(db_arr->dbs[dbnum].db_name, db_name) == 0)
-			return &db_arr->dbs[dbnum];
-	}
-
-	return NULL;
-}
-
-
-/*
- * relarr_lookup_rel_name()
- *
- * Searches "relname" in rel_arr. Returns the *real* pointer to the
- * RelInfo structure.
- */
-static RelInfo *
-relarr_lookup_rel_name(ClusterInfo *cluster, RelInfoArr *rel_arr,
-					const char *nspname, const char *relname)
-{
-	int			relnum;
-
-	/* Test next lookup first, for speed */
-	if (rel_arr->last_relname_lookup + 1 < rel_arr->nrels &&
-		strcmp(rel_arr->rels[rel_arr->last_relname_lookup + 1].nspname, nspname) == 0 &&
-		strcmp(rel_arr->rels[rel_arr->last_relname_lookup + 1].relname, relname) == 0)
-	{
-		rel_arr->last_relname_lookup++;
-		return &rel_arr->rels[rel_arr->last_relname_lookup];
-	}
-
-	for (relnum = 0; relnum < rel_arr->nrels; relnum++)
-	{
-		if (strcmp(rel_arr->rels[relnum].nspname, nspname) == 0 &&
-			strcmp(rel_arr->rels[relnum].relname, relname) == 0)
-		{
-			rel_arr->last_relname_lookup = relnum;
-			return &rel_arr->rels[relnum];
-		}
-	}
-	pg_log(PG_FATAL, "Could not find %s.%s in %s cluster\n",
-		   nspname, relname, CLUSTER_NAME(cluster));
-	return NULL;
-}
-
-
-/*
- * relarr_lookup_rel_oid()
- *
- *	Returns a pointer to the RelInfo structure for the
- *	given oid or NULL if the desired entry cannot be
- *	found.
- */
-static RelInfo *
-relarr_lookup_rel_oid(ClusterInfo *cluster, RelInfoArr *rel_arr, Oid oid)
-{
-	int			relnum;
-
-	for (relnum = 0; relnum < rel_arr->nrels; relnum++)
-	{
-		if (rel_arr->rels[relnum].reloid == oid)
-			return &rel_arr->rels[relnum];
-	}
-	pg_log(PG_FATAL, "Could not find %d in %s cluster\n",
-		   oid, CLUSTER_NAME(cluster));
-	return NULL;
 }
 
 
@@ -396,7 +319,6 @@ free_rel_arr(RelInfoArr *rel_arr)
 {
 	pg_free(rel_arr->rels);
 	rel_arr->nrels = 0;
-	rel_arr->last_relname_lookup = 0;
 }
 
 
