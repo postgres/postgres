@@ -224,11 +224,15 @@ prepare_new_databases(void)
 
 	set_frozenxids();
 
-	/*
-	 * We have to create the databases first so we can create the toast table
-	 * placeholder relfiles.
-	 */
 	prep_status("Creating databases in the new cluster");
+
+	/* install support functions in the database used by GLOBALS_DUMP_FILE */
+	install_db_support_functions(os_info.user);
+
+	/*
+	 * We have to create the databases first so we can install support
+	 * functions in all the other databases.
+	 */
 	exec_prog(true,
 			  SYSTEMQUOTE "\"%s/psql\" --set ON_ERROR_STOP=on "
 	/* --no-psqlrc prevents AUTOCOMMIT=off */
@@ -247,10 +251,20 @@ prepare_new_databases(void)
 static void
 create_new_objects(void)
 {
+	int			dbnum;
+
 	/* -- NEW -- */
 	start_postmaster(&new_cluster, false);
 
-	install_support_functions();
+	prep_status("Adding support functions to new cluster");
+
+	for (dbnum = 0; dbnum < new_cluster.dbarr.ndbs; dbnum++)
+	{
+		DbInfo	   *new_db = &new_cluster.dbarr.dbs[dbnum];
+
+		install_db_support_functions(new_db->db_name);
+	}
+	check_ok();
 
 	prep_status("Restoring database schema to new cluster");
 	exec_prog(true,

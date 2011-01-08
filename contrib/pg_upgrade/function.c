@@ -13,23 +13,16 @@
 
 
 /*
- * install_support_functions()
+ * install_db_support_functions()
  *
  * pg_upgrade requires some support functions that enable it to modify
  * backend behavior.
  */
 void
-install_support_functions(void)
+install_db_support_functions(const char *db_name)
 {
-	int			dbnum;
-
-	prep_status("Adding support functions to new cluster");
-
-	for (dbnum = 0; dbnum < new_cluster.dbarr.ndbs; dbnum++)
-	{
-		DbInfo	   *new_db = &new_cluster.dbarr.dbs[dbnum];
-		PGconn	   *conn = connectToServer(&new_cluster, new_db->db_name);
-
+		PGconn *conn = connectToServer(&new_cluster, db_name);
+		
 		/* suppress NOTICE of dropped objects */
 		PQclear(executeQueryOrDie(conn,
 								  "SET client_min_messages = warning;"));
@@ -83,9 +76,13 @@ install_support_functions(void)
 								  "RETURNS VOID "
 								  "AS '$libdir/pg_upgrade_support' "
 								  "LANGUAGE C STRICT;"));
+		PQclear(executeQueryOrDie(conn,
+								  "CREATE OR REPLACE FUNCTION "
+			 "		binary_upgrade.set_next_pg_authid_oid(OID) "
+								  "RETURNS VOID "
+								  "AS '$libdir/pg_upgrade_support' "
+								  "LANGUAGE C STRICT;"));
 		PQfinish(conn);
-	}
-	check_ok();
 }
 
 

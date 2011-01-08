@@ -324,7 +324,7 @@ void		check_hard_link(void);
 
 /* function.c */
 
-void		install_support_functions(void);
+void		install_db_support_functions(const char *db_name);
 void		uninstall_support_functions(void);
 void		get_loadable_libraries(void);
 void		check_loadable_libraries(void);

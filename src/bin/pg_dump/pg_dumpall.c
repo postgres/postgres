@@ -650,7 +650,8 @@ dumpRoles(PGconn *conn)
 {
 	PQExpBuffer buf = createPQExpBuffer();
 	PGresult   *res;
-	int			i_rolname,
+	int			i_oid,
+				i_rolname,
 				i_rolsuper,
 				i_rolinherit,
 				i_rolcreaterole,
@@ -667,34 +668,34 @@ dumpRoles(PGconn *conn)
 	/* note: rolconfig is dumped later */
 	if (server_version >= 90100)
 		printfPQExpBuffer(buf,
-						  "SELECT rolname, rolsuper, rolinherit, "
+						  "SELECT oid, rolname, rolsuper, rolinherit, "
 						  "rolcreaterole, rolcreatedb, rolcatupdate, "
 						  "rolcanlogin, rolconnlimit, rolpassword, "
 						  "rolvaliduntil, rolreplication, "
 			  "pg_catalog.shobj_description(oid, 'pg_authid') as rolcomment "
 						  "FROM pg_authid "
-						  "ORDER BY 1");
+						  "ORDER BY 2");
 	else if (server_version >= 80200)
 		printfPQExpBuffer(buf,
-						  "SELECT rolname, rolsuper, rolinherit, "
+						  "SELECT oid, rolname, rolsuper, rolinherit, "
 						  "rolcreaterole, rolcreatedb, rolcatupdate, "
 						  "rolcanlogin, rolconnlimit, rolpassword, "
 						  "rolvaliduntil, false as rolreplication, "
 			  "pg_catalog.shobj_description(oid, 'pg_authid') as rolcomment "
 						  "FROM pg_authid "
-						  "ORDER BY 1");
+						  "ORDER BY 2");
 	else if (server_version >= 80100)
 		printfPQExpBuffer(buf,
-						  "SELECT rolname, rolsuper, rolinherit, "
+						  "SELECT oid, rolname, rolsuper, rolinherit, "
 						  "rolcreaterole, rolcreatedb, rolcatupdate, "
 						  "rolcanlogin, rolconnlimit, rolpassword, "
 						  "rolvaliduntil, false as rolreplication, "
 						  "null as rolcomment "
 						  "FROM pg_authid "
-						  "ORDER BY 1");
+						  "ORDER BY 2");
 	else
 		printfPQExpBuffer(buf,
-						  "SELECT usename as rolname, "
+						  "SELECT 0, usename as rolname, "
 						  "usesuper as rolsuper, "
 						  "true as rolinherit, "
 						  "usesuper as rolcreaterole, "
@@ -708,7 +709,7 @@ dumpRoles(PGconn *conn)
 						  "null as rolcomment "
 						  "FROM pg_shadow "
 						  "UNION ALL "
-						  "SELECT groname as rolname, "
+						  "SELECT 0, groname as rolname, "
 						  "false as rolsuper, "
 						  "true as rolinherit, "
 						  "false as rolcreaterole, "
@@ -723,10 +724,11 @@ dumpRoles(PGconn *conn)
 						  "FROM pg_group "
 						  "WHERE NOT EXISTS (SELECT 1 FROM pg_shadow "
 						  " WHERE usename = groname) "
-						  "ORDER BY 1");
+						  "ORDER BY 2");
 
 	res = executeQuery(conn, buf->data);
 
+	i_oid = PQfnumber(res, "oid");
 	i_rolname = PQfnumber(res, "rolname");
 	i_rolsuper = PQfnumber(res, "rolsuper");
 	i_rolinherit = PQfnumber(res, "rolinherit");
@@ -750,6 +752,16 @@ dumpRoles(PGconn *conn)
 		rolename = PQgetvalue(res, i, i_rolname);
 
 		resetPQExpBuffer(buf);
+
+		if (binary_upgrade)
+		{
+			Oid			auth_oid = atooid(PQgetvalue(res, i, i_oid));
+
+			appendPQExpBuffer(buf, "\n-- For binary upgrade, must preserve pg_authid.oid\n");
+			appendPQExpBuffer(buf,
+			 "SELECT binary_upgrade.set_next_pg_authid_oid('%u'::pg_catalog.oid);\n\n",
+							  auth_oid);
+		}
 
 		/*
 		 * We dump CREATE ROLE followed by ALTER ROLE to ensure that the role

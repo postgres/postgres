@@ -35,6 +35,9 @@
 #include "utils/syscache.h"
 #include "utils/tqual.h"
 
+/* Potentially set by contrib/pg_upgrade_support functions */
+Oid			binary_upgrade_next_pg_authid_oid = InvalidOid;
+
 
 /* GUC parameter */
 extern bool Password_encryption;
@@ -392,6 +395,16 @@ CreateRole(CreateRoleStmt *stmt)
 	new_record_nulls[Anum_pg_authid_rolvaliduntil - 1] = validUntil_null;
 
 	tuple = heap_form_tuple(pg_authid_dsc, new_record, new_record_nulls);
+
+	/*
+	 * pg_largeobject_metadata contains pg_authid.oid's, so we
+	 * use the binary-upgrade override, if specified.
+	 */
+	if (OidIsValid(binary_upgrade_next_pg_authid_oid))
+	{
+		HeapTupleSetOid(tuple, binary_upgrade_next_pg_authid_oid);
+		binary_upgrade_next_pg_authid_oid = InvalidOid;
+	}
 
 	/*
 	 * Insert new record in the pg_authid table

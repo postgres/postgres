@@ -282,7 +282,7 @@ get_rel_infos(ClusterInfo *cluster, DbInfo *dbinfo)
 			 "	ON c.relnamespace = n.oid "
 			 "   LEFT OUTER JOIN pg_catalog.pg_tablespace t "
 			 "	ON c.reltablespace = t.oid "
-			 "WHERE (( n.nspname NOT IN ('pg_catalog', 'information_schema') "
+			 "WHERE (( n.nspname NOT IN ('pg_catalog', 'information_schema', 'binary_upgrade') "
 			 "	AND c.oid >= %u "
 			 "	) OR ( "
 			 "	n.nspname = 'pg_catalog' "
