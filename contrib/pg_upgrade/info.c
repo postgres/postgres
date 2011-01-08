@@ -54,7 +54,7 @@ gen_db_file_maps(DbInfo *old_db, DbInfo *new_db,
 		if (strcmp(old_rel->nspname, "pg_toast") == 0)
 			continue;
 
-		/* old/new non-toast relation names match */
+		/* old/new relation names always match */
 		new_rel = relarr_lookup_rel_name(&new_cluster, &new_db->rel_arr,
 								   old_rel->nspname, old_rel->relname);
 
@@ -135,11 +135,9 @@ create_rel_filename_map(const char *old_data, const char *new_data,
 	map->old_relfilenode = old_rel->relfilenode;
 	map->new_relfilenode = new_rel->relfilenode;
 
-	/* used only for logging and error reporing */
-	snprintf(map->old_nspname, sizeof(map->old_nspname), "%s", old_rel->nspname);
-	snprintf(map->new_nspname, sizeof(map->new_nspname), "%s", new_rel->nspname);
-	snprintf(map->old_relname, sizeof(map->old_relname), "%s", old_rel->relname);
-	snprintf(map->new_relname, sizeof(map->new_relname), "%s", new_rel->relname);
+	/* used only for logging and error reporing, old/new are identical */
+	snprintf(map->nspname, sizeof(map->nspname), "%s", old_rel->nspname);
+	snprintf(map->relname, sizeof(map->relname), "%s", old_rel->relname);
 }
 
 
@@ -153,10 +151,9 @@ print_maps(FileNameMap *maps, int n, const char *dbName)
 		pg_log(PG_DEBUG, "mappings for db %s:\n", dbName);
 
 		for (mapnum = 0; mapnum < n; mapnum++)
-			pg_log(PG_DEBUG, "%s.%s:%u ==> %s.%s:%u\n",
-				   maps[mapnum].old_nspname, maps[mapnum].old_relname,
+			pg_log(PG_DEBUG, "%s.%s: %u to %u\n",
+				   maps[mapnum].nspname, maps[mapnum].relname,
 				   maps[mapnum].old_relfilenode,
-				   maps[mapnum].new_nspname, maps[mapnum].new_relname,
 				   maps[mapnum].new_relfilenode);
 
 		pg_log(PG_DEBUG, "\n\n");
@@ -265,7 +262,7 @@ get_rel_infos(ClusterInfo *cluster, DbInfo *dbinfo)
 	char		query[QUERY_ALLOC];
 
 	/*
-	 * pg_largeobject contains user data that does not appear the pg_dumpall
+	 * pg_largeobject contains user data that does not appear in pg_dumpall
 	 * --schema-only output, so we have to copy that system table heap and
 	 * index.  Ideally we could just get the relfilenode from template1 but
 	 * pg_largeobject_loid_pn_index's relfilenode can change if the table was

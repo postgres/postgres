@@ -94,11 +94,8 @@ typedef struct
 	Oid			old_relfilenode;
 	Oid			new_relfilenode;
 	/* the rest are used only for logging and error reporting */
-	char		old_nspname[NAMEDATALEN];		/* namespaces */
-	char		new_nspname[NAMEDATALEN];
-	/* old/new relnames differ for toast tables and toast indexes */
-	char		old_relname[NAMEDATALEN];
-	char		new_relname[NAMEDATALEN];
+	char		nspname[NAMEDATALEN];		/* namespaces */
+	char		relname[NAMEDATALEN];
 } FileNameMap;
 
 /*
