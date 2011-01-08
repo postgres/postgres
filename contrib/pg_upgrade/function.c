@@ -13,13 +13,13 @@
 
 
 /*
- * install_db_support_functions()
+ * install_support_functions_in_db()
  *
  * pg_upgrade requires some support functions that enable it to modify
  * backend behavior.
  */
 void
-install_db_support_functions(const char *db_name)
+install_support_functions_in_db(const char *db_name)
 {
 	PGconn *conn = connectToServer(&new_cluster, db_name);
 	
