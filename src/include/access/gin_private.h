@@ -549,12 +549,19 @@ extern void ginPrepareDataScan(GinBtree btree, Relation index);
 /* ginscan.c */
 
 /*
- * GinScanKeyData describes a single GIN index qualification condition.
- * It contains one GinScanEntryData for each key datum extracted from
- * the qual by the extractQueryFn or added implicitly by ginFillScanKey.
- * nentries is the true number of entries, nuserentries is the number
- * that extractQueryFn returned (which is what we report to consistentFn).
- * The "user" entries must come first.
+ * GinScanKeyData describes a single GIN index qualifier expression.
+ *
+ * From each qual expression, we extract one or more specific index search
+ * conditions, which are represented by GinScanEntryData.  It's quite
+ * possible for identical search conditions to be requested by more than
+ * one qual expression, in which case we merge such conditions to have just
+ * one unique GinScanEntry --- this is particularly important for efficiency
+ * when dealing with full-index-scan entries.  So there can be multiple
+ * GinScanKeyData.scanEntry pointers to the same GinScanEntryData.
+ *
+ * In each GinScanKeyData, nentries is the true number of entries, while
+ * nuserentries is the number that extractQueryFn returned (which is what
+ * we report to consistentFn).  The "user" entries must come first.
  */
 typedef struct GinScanKeyData *GinScanKey;
 
@@ -567,10 +574,10 @@ typedef struct GinScanKeyData
 	/* Number of entries that extractQueryFn and consistentFn know about */
 	uint32		nuserentries;
 
-	/* array of GinScanEntryData, one per key datum */
-	GinScanEntry scanEntry;
+	/* array of GinScanEntry pointers, one per extracted search condition */
+	GinScanEntry *scanEntry;
 
-	/* array of ItemPointer result, reported to consistentFn */
+	/* array of check flags, reported to consistentFn */
 	bool	   *entryRes;
 
 	/* other data needed for calling consistentFn */
@@ -583,22 +590,21 @@ typedef struct GinScanKeyData
 	int32		searchMode;
 	OffsetNumber attnum;
 
-	/* scan status data */
+	/*
+	 * Match status data.  curItem is the TID most recently tested (could be
+	 * a lossy-page pointer).  curItemMatches is TRUE if it passes the
+	 * consistentFn test; if so, recheckCurItem is the recheck flag.
+	 * isFinished means that all the input entry streams are finished, so
+	 * this key cannot succeed for any later TIDs.
+	 */
 	ItemPointerData curItem;
+	bool		curItemMatches;
 	bool		recheckCurItem;
-
-	bool		firstCall;
 	bool		isFinished;
 } GinScanKeyData;
 
 typedef struct GinScanEntryData
 {
-	/* link to any preceding identical entry in current scan key */
-	GinScanEntry master;
-
-	/* ptr to value reported to consistentFn, points to parent->entryRes[i] */
-	bool	   *pval;
-
 	/* query key and other information from extractQueryFn */
 	Datum		queryKey;
 	GinNullCategory queryCategory;
@@ -634,10 +640,14 @@ typedef struct GinScanOpaqueData
 	MemoryContext tempCtx;
 	GinState	ginstate;
 
-	GinScanKey	keys;
+	GinScanKey	keys;			/* one per scan qualifier expr */
 	uint32		nkeys;
-	bool		isVoidRes;		/* true if ginstate.extractQueryFn guarantees
-								 * that nothing will be found */
+
+	GinScanEntry *entries;		/* one per index search condition */
+	uint32		totalentries;
+	uint32		allocentries;	/* allocated length of entries[] */
+
+	bool		isVoidRes;		/* true if query is unsatisfiable */
 } GinScanOpaqueData;
 
 typedef GinScanOpaqueData *GinScanOpaque;
