@@ -1047,6 +1047,11 @@ extern Datum window_first_value(PG_FUNCTION_ARGS);
 extern Datum window_last_value(PG_FUNCTION_ARGS);
 extern Datum window_nth_value(PG_FUNCTION_ARGS);
 
+/* access/gin/ginarrayproc.c */
+extern Datum ginarrayextract(PG_FUNCTION_ARGS);
+extern Datum ginqueryarrayextract(PG_FUNCTION_ARGS);
+extern Datum ginarrayconsistent(PG_FUNCTION_ARGS);
+
 /* access/transam/twophase.c */
 extern Datum pg_prepared_xact(PG_FUNCTION_ARGS);
 

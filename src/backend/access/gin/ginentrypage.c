@@ -14,7 +14,7 @@
 
 #include "postgres.h"
 
-#include "access/gin.h"
+#include "access/gin_private.h"
 #include "storage/bufmgr.h"
 #include "utils/rel.h"
 
@@ -24,107 +24,116 @@
  * If the tuple would be too big to be stored, function throws a suitable
  * error if errorTooBig is TRUE, or returns NULL if errorTooBig is FALSE.
  *
- * On leaf pages, Index tuple has non-traditional layout. Tuple may contain
- * posting list or root blocknumber of posting tree.
- * Macros: GinIsPostingTree(itup) / GinSetPostingTree(itup, blkno)
- * 1) Posting list
- *		- itup->t_info & INDEX_SIZE_MASK contains total size of tuple as usual
- *		- ItemPointerGetBlockNumber(&itup->t_tid) contains original
- *		  size of tuple (without posting list).
- *		  Macros: GinGetOrigSizePosting(itup) / GinSetOrigSizePosting(itup,n)
- *		- ItemPointerGetOffsetNumber(&itup->t_tid) contains number
- *		  of elements in posting list (number of heap itempointers)
- *		  Macros: GinGetNPosting(itup) / GinSetNPosting(itup,n)
- *		- After standard part of tuple there is a posting list, ie, array
- *		  of heap itempointers
- *		  Macros: GinGetPosting(itup)
- * 2) Posting tree
- *		- itup->t_info & INDEX_SIZE_MASK contains size of tuple as usual
- *		- ItemPointerGetBlockNumber(&itup->t_tid) contains block number of
- *		  root of posting tree
- *		- ItemPointerGetOffsetNumber(&itup->t_tid) contains magic number
- *		  GIN_TREE_POSTING, which distinguishes this from posting-list case
- *
- * Attributes of an index tuple are different for single and multicolumn index.
- * For single-column case, index tuple stores only value to be indexed.
- * For multicolumn case, it stores two attributes: column number of value
- * and value.
+ * See src/backend/access/gin/README for a description of the index tuple
+ * format that is being built here.  We build on the assumption that we
+ * are making a leaf-level key entry containing a posting list of nipd items.
+ * If the caller is actually trying to make a posting-tree entry, non-leaf
+ * entry, or pending-list entry, it should pass nipd = 0 and then overwrite
+ * the t_tid fields as necessary.  In any case, ipd can be NULL to skip
+ * copying any itempointers into the posting list; the caller is responsible
+ * for filling the posting list afterwards, if ipd = NULL and nipd > 0.
  */
 IndexTuple
-GinFormTuple(Relation index, GinState *ginstate,
-			 OffsetNumber attnum, Datum key,
-			 ItemPointerData *ipd, uint32 nipd, bool errorTooBig)
+GinFormTuple(GinState *ginstate,
+			 OffsetNumber attnum, Datum key, GinNullCategory category,
+			 ItemPointerData *ipd, uint32 nipd,
+			 bool errorTooBig)
 {
-	bool		isnull[2] = {FALSE, FALSE};
+	Datum		datums[2];
+	bool		isnull[2];
 	IndexTuple	itup;
 	uint32		newsize;
 
+	/* Build the basic tuple: optional column number, plus key datum */
 	if (ginstate->oneCol)
-		itup = index_form_tuple(ginstate->origTupdesc, &key, isnull);
+	{
+		datums[0] = key;
+		isnull[0] = (category != GIN_CAT_NORM_KEY);
+	}
 	else
 	{
-		Datum		datums[2];
-
 		datums[0] = UInt16GetDatum(attnum);
+		isnull[0] = false;
 		datums[1] = key;
-		itup = index_form_tuple(ginstate->tupdesc[attnum - 1], datums, isnull);
+		isnull[1] = (category != GIN_CAT_NORM_KEY);
 	}
 
-	GinSetOrigSizePosting(itup, IndexTupleSize(itup));
+	itup = index_form_tuple(ginstate->tupdesc[attnum - 1], datums, isnull);
 
-	if (nipd > 0)
+	/*
+	 * Determine and store offset to the posting list, making sure there is
+	 * room for the category byte if needed.
+	 *
+	 * Note: because index_form_tuple MAXALIGNs the tuple size, there may well
+	 * be some wasted pad space.  Is it worth recomputing the data length to
+	 * prevent that?  That would also allow us to Assert that the real data
+	 * doesn't overlap the GinNullCategory byte, which this code currently
+	 * takes on faith.
+	 */
+	newsize = IndexTupleSize(itup);
+
+	if (IndexTupleHasNulls(itup))
 	{
-		newsize = MAXALIGN(SHORTALIGN(IndexTupleSize(itup)) + sizeof(ItemPointerData) * nipd);
-		if (newsize > Min(INDEX_SIZE_MASK, GinMaxItemSize))
-		{
-			if (errorTooBig)
-				ereport(ERROR,
-						(errcode(ERRCODE_PROGRAM_LIMIT_EXCEEDED),
-						 errmsg("index row size %lu exceeds maximum %lu for index \"%s\"",
-								(unsigned long) newsize,
-								(unsigned long) Min(INDEX_SIZE_MASK,
-													GinMaxItemSize),
-								RelationGetRelationName(index))));
-			return NULL;
-		}
+		uint32		minsize;
 
+		Assert(category != GIN_CAT_NORM_KEY);
+		minsize = GinCategoryOffset(itup, ginstate) + sizeof(GinNullCategory);
+		newsize = Max(newsize, minsize);
+	}
+
+	newsize = SHORTALIGN(newsize);
+
+	GinSetPostingOffset(itup, newsize);
+
+	GinSetNPosting(itup, nipd);
+
+	/*
+	 * Add space needed for posting list, if any.  Then check that the tuple
+	 * won't be too big to store.
+	 */
+	newsize += sizeof(ItemPointerData) * nipd;
+	newsize = MAXALIGN(newsize);
+	if (newsize > Min(INDEX_SIZE_MASK, GinMaxItemSize))
+	{
+		if (errorTooBig)
+			ereport(ERROR,
+					(errcode(ERRCODE_PROGRAM_LIMIT_EXCEEDED),
+					 errmsg("index row size %lu exceeds maximum %lu for index \"%s\"",
+							(unsigned long) newsize,
+							(unsigned long) Min(INDEX_SIZE_MASK,
+												GinMaxItemSize),
+							RelationGetRelationName(ginstate->index))));
+		pfree(itup);
+		return NULL;
+	}
+
+	/*
+	 * Resize tuple if needed
+	 */
+	if (newsize != IndexTupleSize(itup))
+	{
 		itup = repalloc(itup, newsize);
 
-		/* set new size */
+		/* set new size in tuple header */
 		itup->t_info &= ~INDEX_SIZE_MASK;
 		itup->t_info |= newsize;
-
-		if (ipd)
-			memcpy(GinGetPosting(itup), ipd, sizeof(ItemPointerData) * nipd);
-		GinSetNPosting(itup, nipd);
 	}
-	else
+
+	/*
+	 * Insert category byte, if needed
+	 */
+	if (category != GIN_CAT_NORM_KEY)
 	{
-		/*
-		 * Gin tuple without any ItemPointers should be large enough to keep
-		 * one ItemPointer, to prevent inconsistency between
-		 * ginHeapTupleFastCollect and ginEntryInsert called by
-		 * ginHeapTupleInsert.	ginHeapTupleFastCollect forms tuple without
-		 * extra pointer to heap, but ginEntryInsert (called for pending list
-		 * cleanup during vacuum) will form the same tuple with one
-		 * ItemPointer.
-		 */
-		newsize = MAXALIGN(SHORTALIGN(IndexTupleSize(itup)) + sizeof(ItemPointerData));
-		if (newsize > Min(INDEX_SIZE_MASK, GinMaxItemSize))
-		{
-			if (errorTooBig)
-				ereport(ERROR,
-						(errcode(ERRCODE_PROGRAM_LIMIT_EXCEEDED),
-						 errmsg("index row size %lu exceeds maximum %lu for index \"%s\"",
-								(unsigned long) newsize,
-								(unsigned long) Min(INDEX_SIZE_MASK,
-													GinMaxItemSize),
-								RelationGetRelationName(index))));
-			return NULL;
-		}
-
-		GinSetNPosting(itup, 0);
+		Assert(IndexTupleHasNulls(itup));
+		GinSetNullCategory(itup, ginstate, category);
 	}
+
+	/*
+	 * Copy in the posting list, if provided
+	 */
+	if (ipd)
+		memcpy(GinGetPosting(itup), ipd, sizeof(ItemPointerData) * nipd);
+
 	return itup;
 }
 
@@ -140,7 +149,8 @@ GinShortenTuple(IndexTuple itup, uint32 nipd)
 
 	Assert(nipd <= GinGetNPosting(itup));
 
-	newsize = MAXALIGN(SHORTALIGN(GinGetOrigSizePosting(itup)) + sizeof(ItemPointerData) * nipd);
+	newsize = GinGetPostingOffset(itup) + sizeof(ItemPointerData) * nipd;
+	newsize = MAXALIGN(newsize);
 
 	Assert(newsize <= (itup->t_info & INDEX_SIZE_MASK));
 
@@ -151,8 +161,45 @@ GinShortenTuple(IndexTuple itup, uint32 nipd)
 }
 
 /*
+ * Form a non-leaf entry tuple by copying the key data from the given tuple,
+ * which can be either a leaf or non-leaf entry tuple.
+ *
+ * Any posting list in the source tuple is not copied.  The specified child
+ * block number is inserted into t_tid.
+ */
+static IndexTuple
+GinFormInteriorTuple(IndexTuple itup, Page page, BlockNumber childblk)
+{
+	IndexTuple	nitup;
+
+	if (GinPageIsLeaf(page) && !GinIsPostingTree(itup))
+	{
+		/* Tuple contains a posting list, just copy stuff before that */
+		uint32		origsize = GinGetPostingOffset(itup);
+
+		origsize = MAXALIGN(origsize);
+		nitup = (IndexTuple) palloc(origsize);
+		memcpy(nitup, itup, origsize);
+		/* ... be sure to fix the size header field ... */
+		nitup->t_info &= ~INDEX_SIZE_MASK;
+		nitup->t_info |= origsize;
+	}
+	else
+	{
+		/* Copy the tuple as-is */
+		nitup = (IndexTuple) palloc(IndexTupleSize(itup));
+		memcpy(nitup, itup, IndexTupleSize(itup));
+	}
+
+	/* Now insert the correct downlink */
+	GinSetDownlink(nitup, childblk);
+
+	return nitup;
+}
+
+/*
  * Entry tree is a "static", ie tuple never deletes from it,
- * so we don't use right bound, we use rightest key instead.
+ * so we don't use right bound, we use rightmost key instead.
  */
 static IndexTuple
 getRightMostTuple(Page page)
@@ -166,16 +213,20 @@ static bool
 entryIsMoveRight(GinBtree btree, Page page)
 {
 	IndexTuple	itup;
+	OffsetNumber attnum;
+	Datum		key;
+	GinNullCategory category;
 
 	if (GinPageRightMost(page))
 		return FALSE;
 
 	itup = getRightMostTuple(page);
+	attnum = gintuple_get_attrnum(btree->ginstate, itup);
+	key = gintuple_get_key(btree->ginstate, itup, &category);
 
 	if (ginCompareAttEntries(btree->ginstate,
-							 btree->entryAttnum, btree->entryValue,
-							 gintuple_get_attrnum(btree->ginstate, itup),
-							 gin_index_getattr(btree->ginstate, itup)) > 0)
+							 btree->entryAttnum, btree->entryKey, btree->entryCategory,
+							 attnum, key, category) > 0)
 		return TRUE;
 
 	return FALSE;
@@ -183,7 +234,7 @@ entryIsMoveRight(GinBtree btree, Page page)
 
 /*
  * Find correct tuple in non-leaf page. It supposed that
- * page correctly choosen and searching value SHOULD be on page
+ * page correctly chosen and searching value SHOULD be on page
  */
 static BlockNumber
 entryLocateEntry(GinBtree btree, GinBtreeStack *stack)
@@ -216,23 +267,31 @@ entryLocateEntry(GinBtree btree, GinBtreeStack *stack)
 		OffsetNumber mid = low + ((high - low) / 2);
 
 		if (mid == maxoff && GinPageRightMost(page))
+		{
 			/* Right infinity */
 			result = -1;
+		}
 		else
 		{
+			OffsetNumber attnum;
+			Datum		key;
+			GinNullCategory category;
+
 			itup = (IndexTuple) PageGetItem(page, PageGetItemId(page, mid));
+			attnum = gintuple_get_attrnum(btree->ginstate, itup);
+			key = gintuple_get_key(btree->ginstate, itup, &category);
 			result = ginCompareAttEntries(btree->ginstate,
 										  btree->entryAttnum,
-										  btree->entryValue,
-								 gintuple_get_attrnum(btree->ginstate, itup),
-								   gin_index_getattr(btree->ginstate, itup));
+										  btree->entryKey,
+										  btree->entryCategory,
+										  attnum, key, category);
 		}
 
 		if (result == 0)
 		{
 			stack->off = mid;
-			Assert(GinItemPointerGetBlockNumber(&(itup)->t_tid) != GIN_ROOT_BLKNO);
-			return GinItemPointerGetBlockNumber(&(itup)->t_tid);
+			Assert(GinGetDownlink(itup) != GIN_ROOT_BLKNO);
+			return GinGetDownlink(itup);
 		}
 		else if (result > 0)
 			low = mid + 1;
@@ -244,13 +303,13 @@ entryLocateEntry(GinBtree btree, GinBtreeStack *stack)
 
 	stack->off = high;
 	itup = (IndexTuple) PageGetItem(page, PageGetItemId(page, high));
-	Assert(GinItemPointerGetBlockNumber(&(itup)->t_tid) != GIN_ROOT_BLKNO);
-	return GinItemPointerGetBlockNumber(&(itup)->t_tid);
+	Assert(GinGetDownlink(itup) != GIN_ROOT_BLKNO);
+	return GinGetDownlink(itup);
 }
 
 /*
  * Searches correct position for value on leaf page.
- * Page should be corrrectly choosen.
+ * Page should be correctly chosen.
  * Returns true if value found on page.
  */
 static bool
@@ -259,7 +318,6 @@ entryLocateLeafEntry(GinBtree btree, GinBtreeStack *stack)
 	Page		page = BufferGetPage(stack->buffer);
 	OffsetNumber low,
 				high;
-	IndexTuple	itup;
 
 	Assert(GinPageIsLeaf(page));
 	Assert(!GinPageIsData(page));
@@ -284,14 +342,20 @@ entryLocateLeafEntry(GinBtree btree, GinBtreeStack *stack)
 	while (high > low)
 	{
 		OffsetNumber mid = low + ((high - low) / 2);
+		IndexTuple	itup;
+		OffsetNumber attnum;
+		Datum		key;
+		GinNullCategory category;
 		int			result;
 
 		itup = (IndexTuple) PageGetItem(page, PageGetItemId(page, mid));
+		attnum = gintuple_get_attrnum(btree->ginstate, itup);
+		key = gintuple_get_key(btree->ginstate, itup, &category);
 		result = ginCompareAttEntries(btree->ginstate,
 									  btree->entryAttnum,
-									  btree->entryValue,
-								 gintuple_get_attrnum(btree->ginstate, itup),
-								   gin_index_getattr(btree->ginstate, itup));
+									  btree->entryKey,
+									  btree->entryCategory,
+									  attnum, key, category);
 		if (result == 0)
 		{
 			stack->off = mid;
@@ -321,7 +385,7 @@ entryFindChildPtr(GinBtree btree, Page page, BlockNumber blkno, OffsetNumber sto
 	if (storedOff >= FirstOffsetNumber && storedOff <= maxoff)
 	{
 		itup = (IndexTuple) PageGetItem(page, PageGetItemId(page, storedOff));
-		if (GinItemPointerGetBlockNumber(&(itup)->t_tid) == blkno)
+		if (GinGetDownlink(itup) == blkno)
 			return storedOff;
 
 		/*
@@ -331,7 +395,7 @@ entryFindChildPtr(GinBtree btree, Page page, BlockNumber blkno, OffsetNumber sto
 		for (i = storedOff + 1; i <= maxoff; i++)
 		{
 			itup = (IndexTuple) PageGetItem(page, PageGetItemId(page, i));
-			if (GinItemPointerGetBlockNumber(&(itup)->t_tid) == blkno)
+			if (GinGetDownlink(itup) == blkno)
 				return i;
 		}
 		maxoff = storedOff - 1;
@@ -341,7 +405,7 @@ entryFindChildPtr(GinBtree btree, Page page, BlockNumber blkno, OffsetNumber sto
 	for (i = FirstOffsetNumber; i <= maxoff; i++)
 	{
 		itup = (IndexTuple) PageGetItem(page, PageGetItemId(page, i));
-		if (GinItemPointerGetBlockNumber(&(itup)->t_tid) == blkno)
+		if (GinGetDownlink(itup) == blkno)
 			return i;
 	}
 
@@ -358,7 +422,7 @@ entryGetLeftMostPage(GinBtree btree, Page page)
 	Assert(PageGetMaxOffsetNumber(page) >= FirstOffsetNumber);
 
 	itup = (IndexTuple) PageGetItem(page, PageGetItemId(page, FirstOffsetNumber));
-	return GinItemPointerGetBlockNumber(&(itup)->t_tid);
+	return GinGetDownlink(itup);
 }
 
 static bool
@@ -406,7 +470,7 @@ entryPreparePage(GinBtree btree, Page page, OffsetNumber off)
 	{
 		IndexTuple	itup = (IndexTuple) PageGetItem(page, PageGetItemId(page, off));
 
-		ItemPointerSet(&itup->t_tid, btree->rightblkno, InvalidOffsetNumber);
+		GinSetDownlink(itup, btree->rightblkno);
 		ret = btree->rightblkno;
 	}
 
@@ -422,10 +486,11 @@ static void
 entryPlaceToPage(GinBtree btree, Buffer buf, OffsetNumber off, XLogRecData **prdata)
 {
 	Page		page = BufferGetPage(buf);
-	static XLogRecData rdata[3];
 	OffsetNumber placed;
-	static ginxlogInsert data;
 	int			cnt = 0;
+	/* these must be static so they can be returned to caller */
+	static XLogRecData rdata[3];
+	static ginxlogInsert data;
 
 	*prdata = rdata;
 	data.updateBlkno = entryPreparePage(btree, page, off);
@@ -475,31 +540,6 @@ entryPlaceToPage(GinBtree btree, Buffer buf, OffsetNumber off, XLogRecData **prd
 }
 
 /*
- * Returns new tuple with copied value from source tuple.
- * New tuple will not store posting list
- */
-static IndexTuple
-copyIndexTuple(IndexTuple itup, Page page)
-{
-	IndexTuple	nitup;
-
-	if (GinPageIsLeaf(page) && !GinIsPostingTree(itup))
-	{
-		nitup = (IndexTuple) palloc(MAXALIGN(GinGetOrigSizePosting(itup)));
-		memcpy(nitup, itup, GinGetOrigSizePosting(itup));
-		nitup->t_info &= ~INDEX_SIZE_MASK;
-		nitup->t_info |= GinGetOrigSizePosting(itup);
-	}
-	else
-	{
-		nitup = (IndexTuple) palloc(MAXALIGN(IndexTupleSize(itup)));
-		memcpy(nitup, itup, IndexTupleSize(itup));
-	}
-
-	return nitup;
-}
-
-/*
  * Place tuple and split page, original buffer(lbuf) leaves untouched,
  * returns shadow page of lbuf filled new data.
  * Tuples are distributed between pages by equal size on its, not
@@ -508,26 +548,27 @@ copyIndexTuple(IndexTuple itup, Page page)
 static Page
 entrySplitPage(GinBtree btree, Buffer lbuf, Buffer rbuf, OffsetNumber off, XLogRecData **prdata)
 {
-	static XLogRecData rdata[2];
 	OffsetNumber i,
 				maxoff,
 				separator = InvalidOffsetNumber;
 	Size		totalsize = 0;
 	Size		lsize = 0,
 				size;
-	static char tupstore[2 * BLCKSZ];
 	char	   *ptr;
 	IndexTuple	itup,
 				leftrightmost = NULL;
-	static ginxlogSplit data;
 	Page		page;
 	Page		lpage = PageGetTempPageCopy(BufferGetPage(lbuf));
 	Page		rpage = BufferGetPage(rbuf);
 	Size		pageSize = PageGetPageSize(lpage);
+	/* these must be static so they can be returned to caller */
+	static XLogRecData rdata[2];
+	static ginxlogSplit data;
+	static char tupstore[2 * BLCKSZ];
 
 	*prdata = rdata;
 	data.leftChildBlkno = (GinPageIsLeaf(lpage)) ?
-		InvalidOffsetNumber : GinItemPointerGetBlockNumber(&(btree->entry->t_tid));
+		InvalidOffsetNumber : GinGetDownlink(btree->entry);
 	data.updateBlkno = entryPreparePage(btree, lpage, off);
 
 	maxoff = PageGetMaxOffsetNumber(lpage);
@@ -588,8 +629,8 @@ entrySplitPage(GinBtree btree, Buffer lbuf, Buffer rbuf, OffsetNumber off, XLogR
 		ptr += MAXALIGN(IndexTupleSize(itup));
 	}
 
-	btree->entry = copyIndexTuple(leftrightmost, lpage);
-	ItemPointerSet(&(btree->entry)->t_tid, BufferGetBlockNumber(lbuf), InvalidOffsetNumber);
+	btree->entry = GinFormInteriorTuple(leftrightmost, lpage,
+										BufferGetBlockNumber(lbuf));
 
 	btree->rightblkno = BufferGetBlockNumber(rbuf);
 
@@ -627,8 +668,7 @@ ginPageGetLinkItup(Buffer buf)
 	Page		page = BufferGetPage(buf);
 
 	itup = getRightMostTuple(page);
-	nitup = copyIndexTuple(itup, page);
-	ItemPointerSet(&nitup->t_tid, BufferGetBlockNumber(buf), InvalidOffsetNumber);
+	nitup = GinFormInteriorTuple(itup, page, BufferGetBlockNumber(buf));
 
 	return nitup;
 }
@@ -656,12 +696,20 @@ ginEntryFillRoot(GinBtree btree, Buffer root, Buffer lbuf, Buffer rbuf)
 	pfree(itup);
 }
 
+/*
+ * Set up GinBtree for entry page access
+ *
+ * Note: during WAL recovery, there may be no valid data in ginstate
+ * other than a faked-up Relation pointer; the key datum is bogus too.
+ */
 void
-ginPrepareEntryScan(GinBtree btree, Relation index, OffsetNumber attnum, Datum value, GinState *ginstate)
+ginPrepareEntryScan(GinBtree btree, OffsetNumber attnum,
+					Datum key, GinNullCategory category,
+					GinState *ginstate)
 {
 	memset(btree, 0, sizeof(GinBtreeData));
 
-	btree->index = index;
+	btree->index = ginstate->index;
 	btree->ginstate = ginstate;
 
 	btree->findChildPage = entryLocateEntry;
@@ -680,6 +728,7 @@ ginPrepareEntryScan(GinBtree btree, Relation index, OffsetNumber attnum, Datum v
 	btree->isBuild = FALSE;
 
 	btree->entryAttnum = attnum;
-	btree->entryValue = value;
+	btree->entryKey = key;
+	btree->entryCategory = category;
 	btree->isDelete = FALSE;
 }

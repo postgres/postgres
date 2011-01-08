@@ -15,23 +15,23 @@ is similar to GiST and differs from btree indices, which have predefined,
 comparison-based operations.
 
 An inverted index is an index structure storing a set of (key, posting list)
-pairs, where 'posting list' is a set of documents in which the key occurs.
+pairs, where 'posting list' is a set of heap rows in which the key occurs.
 (A text document would usually contain many keys.)  The primary goal of
 Gin indices is support for highly scalable, full-text search in PostgreSQL.
 
-Gin consists of a B-tree index constructed over entries (ET, entries tree),
-where each entry is an element of the indexed value (element of array, lexeme
-for tsvector) and where each tuple in a leaf page is either a pointer to a
-B-tree over item pointers (PT, posting tree), or a list of item pointers
-(PL, posting list) if the tuple is small enough.
+A Gin index consists of a B-tree index constructed over key values,
+where each key is an element of some indexed items (element of array, lexeme
+for tsvector) and where each tuple in a leaf page contains either a pointer to
+a B-tree over item pointers (posting tree), or a simple list of item pointers
+(posting list) if the list is small enough.
 
-Note: There is no delete operation for ET. The reason for this is that in
-our experience, the set of distinct words in a large corpus changes very
-rarely.  This greatly simplifies the code and concurrency algorithms.
+Note: There is no delete operation in the key (entry) tree. The reason for
+this is that in our experience, the set of distinct words in a large corpus
+changes very slowly.  This greatly simplifies the code and concurrency
+algorithms.
 
-Gin comes with built-in support for one-dimensional arrays (eg. integer[],
-text[]), but no support for NULL elements.  The following operations are
-available:
+Core PostgreSQL includes built-in Gin support for one-dimensional arrays
+(eg. integer[], text[]).  The following operations are available:
 
   * contains: value_array @> query_array
   * overlaps: value_array && query_array
@@ -71,7 +71,7 @@ limit).
 If a non-zero search limit is set, then the returned set is a subset of the
 whole result set, chosen at random.
 
-"Soft" means that the actual number of returned results could slightly differ
+"Soft" means that the actual number of returned results could differ
 from the specified limit, depending on the query and the quality of the
 system's random number generator.
 
@@ -80,40 +80,156 @@ From experience, a value of 'gin_fuzzy_search_limit' in the thousands
 have no effect for queries returning a result set with less tuples than this
 number.
 
+Index structure
+---------------
+
+The "items" that a GIN index indexes are composite values that contain
+zero or more "keys".  For example, an item might be an integer array, and
+then the keys would be the individual integer values.  The index actually
+stores and searches for the key values, not the items per se.  In the
+pg_opclass entry for a GIN opclass, the opcintype is the data type of the
+items, and the opckeytype is the data type of the keys.  GIN is optimized
+for cases where items contain many keys and the same key values appear
+in many different items.
+
+A GIN index contains a metapage, a btree of key entries, and possibly
+"posting tree" pages, which hold the overflow when a key entry acquires
+too many heap tuple pointers to fit in a btree page.  Additionally, if the
+fast-update feature is enabled, there can be "list pages" holding "pending"
+key entries that haven't yet been merged into the main btree.  The list
+pages have to be scanned linearly when doing a search, so the pending
+entries should be merged into the main btree before there get to be too
+many of them.  The advantage of the pending list is that bulk insertion of
+a few thousand entries can be much faster than retail insertion.  (The win
+comes mainly from not having to do multiple searches/insertions when the
+same key appears in multiple new heap tuples.)
+
+Key entries are nominally of the same IndexEntry format as used in other
+index types, but since a leaf key entry typically refers to multiple heap
+tuples, there are significant differences.  (See GinFormTuple, which works
+by building a "normal" index tuple and then modifying it.)  The points to
+know are:
+
+* In a single-column index, a key tuple just contains the key datum, but
+in a multi-column index, a key tuple contains the pair (column number,
+key datum) where the column number is stored as an int2.  This is needed
+to support different key data types in different columns.  This much of
+the tuple is built by index_form_tuple according to the usual rules.
+The column number (if present) can never be null, but the key datum can
+be, in which case a null bitmap is present as usual.  (As usual for index
+tuples, the size of the null bitmap is fixed at INDEX_MAX_KEYS.)
+
+* If the key datum is null (ie, IndexTupleHasNulls() is true), then
+just after the nominal index data (ie, at offset IndexInfoFindDataOffset
+or IndexInfoFindDataOffset + sizeof(int2)) there is a byte indicating
+the "category" of the null entry.  These are the possible categories:
+	1 = ordinary null key value extracted from an indexable item
+	2 = placeholder for zero-key indexable item
+	3 = placeholder for null indexable item
+Placeholder null entries are inserted into the index because otherwise
+there would be no index entry at all for an empty or null indexable item,
+which would mean that full index scans couldn't be done and various corner
+cases would give wrong answers.  The different categories of null entries
+are treated as distinct keys by the btree, but heap itempointers for the
+same category of null entry are merged into one index entry just as happens
+with ordinary key entries.
+
+* In a key entry at the btree leaf level, at the next SHORTALIGN boundary,
+there is an array of zero or more ItemPointers, which store the heap tuple
+TIDs for which the indexable items contain this key.  This is called the
+"posting list".  The TIDs in a posting list must appear in sorted order.
+If the list would be too big for the index tuple to fit on an index page,
+the ItemPointers are pushed out to a separate posting page or pages, and
+none appear in the key entry itself.  The separate pages are called a
+"posting tree"; they are organized as a btree of ItemPointer values.
+Note that in either case, the ItemPointers associated with a key can
+easily be read out in sorted order; this is relied on by the scan
+algorithms.
+
+* The index tuple header fields of a leaf key entry are abused as follows:
+
+1) Posting list case:
+
+* ItemPointerGetBlockNumber(&itup->t_tid) contains the offset from index
+  tuple start to the posting list.
+  Access macros: GinGetPostingOffset(itup) / GinSetPostingOffset(itup,n)
+
+* ItemPointerGetOffsetNumber(&itup->t_tid) contains the number of elements
+  in the posting list (number of heap itempointers).
+  Access macros: GinGetNPosting(itup) / GinSetNPosting(itup,n)
+
+* If IndexTupleHasNulls(itup) is true, the null category byte can be
+  accessed/set with GinGetNullCategory(itup,gs) / GinSetNullCategory(itup,gs,c)
+
+* The posting list can be accessed with GinGetPosting(itup)
+
+2) Posting tree case:
+
+* ItemPointerGetBlockNumber(&itup->t_tid) contains the index block number
+  of the root of the posting tree.
+  Access macros: GinGetPostingTree(itup) / GinSetPostingTree(itup, blkno)
+
+* ItemPointerGetOffsetNumber(&itup->t_tid) contains the magic number
+  GIN_TREE_POSTING, which distinguishes this from the posting-list case
+  (it's large enough that that many heap itempointers couldn't possibly
+  fit on an index page).  This value is inserted automatically by the
+  GinSetPostingTree macro.
+
+* If IndexTupleHasNulls(itup) is true, the null category byte can be
+  accessed/set with GinGetNullCategory(itup) / GinSetNullCategory(itup,c)
+
+* The posting list is not present and must not be accessed.
+
+Use the macro GinIsPostingTree(itup) to determine which case applies.
+
+In both cases, itup->t_info & INDEX_SIZE_MASK contains actual total size of
+tuple, and the INDEX_VAR_MASK and INDEX_NULL_MASK bits have their normal
+meanings as set by index_form_tuple.
+
+Index tuples in non-leaf levels of the btree contain the optional column
+number, key datum, and null category byte as above.  They do not contain
+a posting list.  ItemPointerGetBlockNumber(&itup->t_tid) is the downlink
+to the next lower btree level, and ItemPointerGetOffsetNumber(&itup->t_tid)
+is InvalidOffsetNumber.  Use the access macros GinGetDownlink/GinSetDownlink
+to get/set the downlink.
+
+Index entries that appear in "pending list" pages work a tad differently as
+well.  The optional column number, key datum, and null category byte are as
+for other GIN index entries.  However, there is always exactly one heap
+itempointer associated with a pending entry, and it is stored in the t_tid
+header field just as in non-GIN indexes.  There is no posting list.
+Furthermore, the code that searches the pending list assumes that all
+entries for a given heap tuple appear consecutively in the pending list and
+are sorted by the column-number-plus-key-datum.  The GIN_LIST_FULLROW page
+flag bit tells whether entries for a given heap tuple are spread across
+multiple pending-list pages.  If GIN_LIST_FULLROW is set, the page contains
+all the entries for one or more heap tuples.  If GIN_LIST_FULLROW is clear,
+the page contains entries for only one heap tuple, *and* they are not all
+the entries for that tuple.  (Thus, a heap tuple whose entries do not all
+fit on one pending-list page must have those pages to itself, even if this
+results in wasting much of the space on the preceding page and the last
+page for the tuple.)
+
 Limitations
 -----------
 
-  * No support for multicolumn indices
-  * Gin doesn't uses scan->kill_prior_tuple & scan->ignore_killed_tuples
-  * Gin searches entries only by equality matching.  This may be improved in
-    future.
-  * Gin doesn't support full scans of indices.
-  * Gin doesn't index NULL values.
-
-Open Items
-----------
-
-We appreciate any comments, help and suggestions.
-
-  * Teach optimizer/executor that GIN is intrinsically clustered. i.e., it
-    always returns ItemPointer in ascending order.
-  * Tweak gincostestimate.
+  * Gin doesn't use scan->kill_prior_tuple & scan->ignore_killed_tuples
+  * Gin searches entries only by equality matching, or simple range
+    matching using the "partial match" feature.
 
 TODO
 ----
 
 Nearest future:
 
-  * Opclasses for all types (no programming, just many catalog changes).
+  * Opclasses for more types (no programming, just many catalog changes)
 
 Distant future:
 
   * Replace B-tree of entries to something like GiST
-  * Add multicolumn support
-  * Optimize insert operations (background index insertion)
 
 Authors
 -------
 
-All work was done by Teodor Sigaev (teodor@sigaev.ru) and Oleg Bartunov
+Original work was done by Teodor Sigaev (teodor@sigaev.ru) and Oleg Bartunov
 (oleg@sai.msu.su).

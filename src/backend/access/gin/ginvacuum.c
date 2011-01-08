@@ -14,8 +14,7 @@
 
 #include "postgres.h"
 
-#include "access/genam.h"
-#include "access/gin.h"
+#include "access/gin_private.h"
 #include "catalog/storage.h"
 #include "commands/vacuum.h"
 #include "miscadmin.h"
@@ -190,7 +189,6 @@ ginVacuumPostingTreeLeaves(GinVacuumState *gvs, BlockNumber blkno, bool isRoot, 
 		/* saves changes about deleted tuple ... */
 		if (oldMaxOff != newMaxOff)
 		{
-
 			START_CRIT_SECTION();
 
 			if (newMaxOff > 0)
@@ -519,7 +517,7 @@ ginVacuumEntryPage(GinVacuumState *gvs, Buffer buffer, BlockNumber *roots, uint3
 			 * store posting tree's roots for further processing, we can't
 			 * vacuum it just now due to risk of deadlocks with scans/inserts
 			 */
-			roots[*nroot] = GinItemPointerGetBlockNumber(&itup->t_tid);
+			roots[*nroot] = GinGetDownlink(itup);
 			(*nroot)++;
 		}
 		else if (GinGetNPosting(itup) > 0)
@@ -533,8 +531,9 @@ ginVacuumEntryPage(GinVacuumState *gvs, Buffer buffer, BlockNumber *roots, uint3
 
 			if (GinGetNPosting(itup) != newN)
 			{
-				Datum		value;
 				OffsetNumber attnum;
+				Datum		key;
+				GinNullCategory category;
 
 				/*
 				 * Some ItemPointers was deleted, so we should remake our
@@ -562,9 +561,9 @@ ginVacuumEntryPage(GinVacuumState *gvs, Buffer buffer, BlockNumber *roots, uint3
 					itup = (IndexTuple) PageGetItem(tmppage, PageGetItemId(tmppage, i));
 				}
 
-				value = gin_index_getattr(&gvs->ginstate, itup);
 				attnum = gintuple_get_attrnum(&gvs->ginstate, itup);
-				itup = GinFormTuple(gvs->index, &gvs->ginstate, attnum, value,
+				key = gintuple_get_key(&gvs->ginstate, itup, &category);
+				itup = GinFormTuple(&gvs->ginstate, attnum, key, category,
 									GinGetPosting(itup), newN, true);
 				PageIndexTupleDelete(tmppage, i);
 
@@ -606,7 +605,7 @@ ginbulkdelete(PG_FUNCTION_ARGS)
 		/* Yes, so initialize stats to zeroes */
 		stats = (IndexBulkDeleteResult *) palloc0(sizeof(IndexBulkDeleteResult));
 		/* and cleanup any pending inserts */
-		ginInsertCleanup(index, &gvs.ginstate, true, stats);
+		ginInsertCleanup(&gvs.ginstate, true, stats);
 	}
 
 	/* we'll re-count the tuples each time */
@@ -642,7 +641,7 @@ ginbulkdelete(PG_FUNCTION_ARGS)
 		Assert(PageGetMaxOffsetNumber(page) >= FirstOffsetNumber);
 
 		itup = (IndexTuple) PageGetItem(page, PageGetItemId(page, FirstOffsetNumber));
-		blkno = GinItemPointerGetBlockNumber(&(itup)->t_tid);
+		blkno = GinGetDownlink(itup);
 		Assert(blkno != InvalidBlockNumber);
 
 		UnlockReleaseBuffer(buffer);
@@ -719,7 +718,7 @@ ginvacuumcleanup(PG_FUNCTION_ARGS)
 		if (IsAutoVacuumWorkerProcess())
 		{
 			initGinState(&ginstate, index);
-			ginInsertCleanup(index, &ginstate, true, stats);
+			ginInsertCleanup(&ginstate, true, stats);
 		}
 		PG_RETURN_POINTER(stats);
 	}
@@ -732,7 +731,7 @@ ginvacuumcleanup(PG_FUNCTION_ARGS)
 	{
 		stats = (IndexBulkDeleteResult *) palloc0(sizeof(IndexBulkDeleteResult));
 		initGinState(&ginstate, index);
-		ginInsertCleanup(index, &ginstate, true, stats);
+		ginInsertCleanup(&ginstate, true, stats);
 	}
 
 	memset(&idxStat, 0, sizeof(idxStat));

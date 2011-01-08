@@ -13,7 +13,7 @@
  */
 #include "postgres.h"
 
-#include "access/gin.h"
+#include "access/gin_private.h"
 #include "access/xlogutils.h"
 #include "storage/bufmgr.h"
 #include "utils/memutils.h"
@@ -152,7 +152,7 @@ ginRedoInsert(XLogRecPtr lsn, XLogRecord *record)
 
 			itup = (IndexTuple) (XLogRecGetData(record) + sizeof(ginxlogInsert));
 			forgetIncompleteSplit(data->node,
-								  GinItemPointerGetBlockNumber(&itup->t_tid),
+								  GinGetDownlink(itup),
 								  data->updateBlkno);
 		}
 	}
@@ -213,7 +213,7 @@ ginRedoInsert(XLogRecPtr lsn, XLogRecord *record)
 				Assert(!GinPageIsLeaf(page));
 				Assert(data->offset >= FirstOffsetNumber && data->offset <= PageGetMaxOffsetNumber(page));
 				itup = (IndexTuple) PageGetItem(page, PageGetItemId(page, data->offset));
-				ItemPointerSet(&itup->t_tid, data->updateBlkno, InvalidOffsetNumber);
+				GinSetDownlink(itup, data->updateBlkno);
 			}
 
 			if (data->isDelete)
@@ -270,7 +270,7 @@ ginRedoSplit(XLogRecPtr lsn, XLogRecord *record)
 	if (data->isData)
 	{
 		char	   *ptr = XLogRecGetData(record) + sizeof(ginxlogSplit);
-		Size		sizeofitem = GinSizeOfItem(lpage);
+		Size		sizeofitem = GinSizeOfDataPageItem(lpage);
 		OffsetNumber i;
 		ItemPointer bound;
 
@@ -380,8 +380,9 @@ ginRedoVacuumPage(XLogRecPtr lsn, XLogRecord *record)
 	{
 		if (GinPageIsData(page))
 		{
-			memcpy(GinDataPageGetData(page), XLogRecGetData(record) + sizeof(ginxlogVacuumPage),
-				   GinSizeOfItem(page) *data->nitem);
+			memcpy(GinDataPageGetData(page),
+				   XLogRecGetData(record) + sizeof(ginxlogVacuumPage),
+				   data->nitem * GinSizeOfDataPageItem(page));
 			GinPageGetOpaque(page)->maxoff = data->nitem;
 		}
 		else
@@ -792,6 +793,7 @@ static void
 ginContinueSplit(ginIncompleteSplit *split)
 {
 	GinBtreeData btree;
+	GinState	ginstate;
 	Relation	reln;
 	Buffer		buffer;
 	GinBtreeStack stack;
@@ -813,7 +815,12 @@ ginContinueSplit(ginIncompleteSplit *split)
 
 	if (split->rootBlkno == GIN_ROOT_BLKNO)
 	{
-		ginPrepareEntryScan(&btree, reln, InvalidOffsetNumber, (Datum) 0, NULL);
+		MemSet(&ginstate, 0, sizeof(ginstate));
+		ginstate.index = reln;
+
+		ginPrepareEntryScan(&btree,
+							InvalidOffsetNumber, (Datum) 0, GIN_CAT_NULL_KEY,
+							&ginstate);
 		btree.entry = ginPageGetLinkItup(buffer);
 	}
 	else

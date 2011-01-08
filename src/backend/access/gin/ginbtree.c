@@ -14,7 +14,7 @@
 
 #include "postgres.h"
 
-#include "access/gin.h"
+#include "access/gin_private.h"
 #include "miscadmin.h"
 #include "storage/bufmgr.h"
 #include "utils/rel.h"
@@ -104,7 +104,8 @@ ginFindLeafPage(GinBtree btree, GinBtreeStack *stack)
 		 * ok, page is correctly locked, we should check to move right ..,
 		 * root never has a right link, so small optimization
 		 */
-		while (btree->fullScan == FALSE && stack->blkno != rootBlkno && btree->isMoveRight(btree, page))
+		while (btree->fullScan == FALSE && stack->blkno != rootBlkno &&
+			   btree->isMoveRight(btree, page))
 		{
 			BlockNumber rightlink = GinPageGetOpaque(page)->rightlink;
 
@@ -225,7 +226,6 @@ ginFindParents(GinBtree btree, GinBtreeStack *stack,
 	leftmostBlkno = blkno = btree->getLeftMostPage(btree, page);
 	LockBuffer(root->buffer, GIN_UNLOCK);
 	Assert(blkno != InvalidBlockNumber);
-
 
 	for (;;)
 	{

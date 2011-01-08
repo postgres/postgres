@@ -14,8 +14,7 @@
 
 #include "postgres.h"
 
-#include "access/genam.h"
-#include "access/gin.h"
+#include "access/gin_private.h"
 #include "access/reloptions.h"
 #include "catalog/pg_type.h"
 #include "miscadmin.h"
@@ -24,26 +23,39 @@
 #include "storage/indexfsm.h"
 #include "storage/lmgr.h"
 
+
+/*
+ * initGinState: fill in an empty GinState struct to describe the index
+ *
+ * Note: assorted subsidiary data is allocated in the CurrentMemoryContext.
+ */
 void
 initGinState(GinState *state, Relation index)
 {
+	TupleDesc	origTupdesc = RelationGetDescr(index);
 	int			i;
 
-	state->origTupdesc = index->rd_att;
+	MemSet(state, 0, sizeof(GinState));
 
-	state->oneCol = (index->rd_att->natts == 1) ? true : false;
+	state->index = index;
+	state->oneCol = (origTupdesc->natts == 1) ? true : false;
+	state->origTupdesc = origTupdesc;
 
-	for (i = 0; i < index->rd_att->natts; i++)
+	for (i = 0; i < origTupdesc->natts; i++)
 	{
-		state->tupdesc[i] = CreateTemplateTupleDesc(2, false);
+		if (state->oneCol)
+			state->tupdesc[i] = state->origTupdesc;
+		else
+		{
+			state->tupdesc[i] = CreateTemplateTupleDesc(2, false);
 
-		TupleDescInitEntry(state->tupdesc[i], (AttrNumber) 1, NULL,
-						   INT2OID, -1, 0);
-		TupleDescInitEntry(state->tupdesc[i], (AttrNumber) 2, NULL,
-						   index->rd_att->attrs[i]->atttypid,
-						   index->rd_att->attrs[i]->atttypmod,
-						   index->rd_att->attrs[i]->attndims
-			);
+			TupleDescInitEntry(state->tupdesc[i], (AttrNumber) 1, NULL,
+							   INT2OID, -1, 0);
+			TupleDescInitEntry(state->tupdesc[i], (AttrNumber) 2, NULL,
+							   origTupdesc->attrs[i]->atttypid,
+							   origTupdesc->attrs[i]->atttypmod,
+							   origTupdesc->attrs[i]->attndims);
+		}
 
 		fmgr_info_copy(&(state->compareFn[i]),
 					   index_getprocinfo(index, i + 1, GIN_COMPARE_PROC),
@@ -82,9 +94,14 @@ initGinState(GinState *state, Relation index)
 OffsetNumber
 gintuple_get_attrnum(GinState *ginstate, IndexTuple tuple)
 {
-	OffsetNumber colN = FirstOffsetNumber;
+	OffsetNumber colN;
 
-	if (!ginstate->oneCol)
+	if (ginstate->oneCol)
+	{
+		/* column number is not stored explicitly */
+		colN = FirstOffsetNumber;
+	}
+	else
 	{
 		Datum		res;
 		bool		isnull;
@@ -105,13 +122,14 @@ gintuple_get_attrnum(GinState *ginstate, IndexTuple tuple)
 }
 
 /*
- * Extract stored datum from GIN tuple
+ * Extract stored datum (and possible null category) from GIN tuple
  */
 Datum
-gin_index_getattr(GinState *ginstate, IndexTuple tuple)
+gintuple_get_key(GinState *ginstate, IndexTuple tuple,
+				 GinNullCategory *category)
 {
-	bool		isnull;
 	Datum		res;
+	bool		isnull;
 
 	if (ginstate->oneCol)
 	{
@@ -134,7 +152,10 @@ gin_index_getattr(GinState *ginstate, IndexTuple tuple)
 							&isnull);
 	}
 
-	Assert(!isnull);
+	if (isnull)
+		*category = GinGetNullCategory(tuple, ginstate);
+	else
+		*category = GIN_CAT_NORM_KEY;
 
 	return res;
 }
@@ -144,7 +165,6 @@ gin_index_getattr(GinState *ginstate, IndexTuple tuple)
  * The returned buffer is already pinned and exclusive-locked
  * Caller is responsible for initializing the page by calling GinInitBuffer
  */
-
 Buffer
 GinNewBuffer(Relation index)
 {
@@ -233,96 +253,218 @@ GinInitMetabuffer(Buffer b)
 	metadata->nEntryPages = 0;
 	metadata->nDataPages = 0;
 	metadata->nEntries = 0;
+	metadata->ginVersion = GIN_CURRENT_VERSION;
 }
 
+/*
+ * Compare two keys of the same index column
+ */
 int
-ginCompareEntries(GinState *ginstate, OffsetNumber attnum, Datum a, Datum b)
+ginCompareEntries(GinState *ginstate, OffsetNumber attnum,
+				  Datum a, GinNullCategory categorya,
+				  Datum b, GinNullCategory categoryb)
 {
+	/* if not of same null category, sort by that first */
+	if (categorya != categoryb)
+		return (categorya < categoryb) ? -1 : 1;
+
+	/* all null items in same category are equal */
+	if (categorya != GIN_CAT_NORM_KEY)
+		return 0;
+
+	/* both not null, so safe to call the compareFn */
 	return DatumGetInt32(FunctionCall2(&ginstate->compareFn[attnum - 1],
 									   a, b));
 }
 
+/*
+ * Compare two keys of possibly different index columns
+ */
 int
-ginCompareAttEntries(GinState *ginstate, OffsetNumber attnum_a, Datum a,
-					 OffsetNumber attnum_b, Datum b)
+ginCompareAttEntries(GinState *ginstate,
+					 OffsetNumber attnuma, Datum a, GinNullCategory categorya,
+					 OffsetNumber attnumb, Datum b, GinNullCategory categoryb)
 {
-	if (attnum_a == attnum_b)
-		return ginCompareEntries(ginstate, attnum_a, a, b);
+	/* attribute number is the first sort key */
+	if (attnuma != attnumb)
+		return (attnuma < attnumb) ? -1 : 1;
 
-	return (attnum_a < attnum_b) ? -1 : 1;
+	return ginCompareEntries(ginstate, attnuma, a, categorya, b, categoryb);
 }
+
+
+/*
+ * Support for sorting key datums in ginExtractEntries
+ *
+ * Note: we only have to worry about null and not-null keys here;
+ * ginExtractEntries never generates more than one placeholder null,
+ * so it doesn't have to sort those.
+ */
+typedef struct
+{
+	Datum		datum;
+	bool		isnull;
+} keyEntryData;
 
 typedef struct
 {
 	FmgrInfo   *cmpDatumFunc;
-	bool	   *needUnique;
-} cmpEntriesData;
+	bool		haveDups;
+} cmpEntriesArg;
 
 static int
-cmpEntries(const Datum *a, const Datum *b, cmpEntriesData *arg)
+cmpEntries(const void *a, const void *b, void *arg)
 {
-	int			res = DatumGetInt32(FunctionCall2(arg->cmpDatumFunc,
-												  *a, *b));
+	const keyEntryData *aa = (const keyEntryData *) a;
+	const keyEntryData *bb = (const keyEntryData *) b;
+	cmpEntriesArg *data = (cmpEntriesArg *) arg;
+	int			res;
 
+	if (aa->isnull)
+	{
+		if (bb->isnull)
+			res = 0;			/* NULL "=" NULL */
+		else
+			res = 1;			/* NULL ">" not-NULL */
+	}
+	else if (bb->isnull)
+		res = -1;				/* not-NULL "<" NULL */
+	else
+		res = DatumGetInt32(FunctionCall2(data->cmpDatumFunc,
+										  aa->datum, bb->datum));
+
+	/*
+	 * Detect if we have any duplicates.  If there are equal keys, qsort
+	 * must compare them at some point, else it wouldn't know whether one
+	 * should go before or after the other.
+	 */
 	if (res == 0)
-		*(arg->needUnique) = TRUE;
+		data->haveDups = true;
 
 	return res;
 }
 
+
+/*
+ * Extract the index key values from an indexable item
+ *
+ * The resulting key values are sorted, and any duplicates are removed.
+ * This avoids generating redundant index entries.
+ */
 Datum *
-ginExtractEntriesS(GinState *ginstate, OffsetNumber attnum, Datum value, int32 *nentries,
-				bool *needUnique)
+ginExtractEntries(GinState *ginstate, OffsetNumber attnum,
+				  Datum value, bool isNull,
+				  int32 *nentries, GinNullCategory **categories)
 {
 	Datum	   *entries;
+	bool	   *nullFlags;
+	int32		i;
 
-	entries = (Datum *) DatumGetPointer(FunctionCall2(
-									   &ginstate->extractValueFn[attnum - 1],
-													  value,
-													PointerGetDatum(nentries)
-													  ));
-
-	if (entries == NULL)
-		*nentries = 0;
-
-	*needUnique = FALSE;
-	if (*nentries > 1)
+	/*
+	 * We don't call the extractValueFn on a null item.  Instead generate a
+	 * placeholder.
+	 */
+	if (isNull)
 	{
-		cmpEntriesData arg;
-
-		arg.cmpDatumFunc = &ginstate->compareFn[attnum - 1];
-		arg.needUnique = needUnique;
-		qsort_arg(entries, *nentries, sizeof(Datum),
-				  (qsort_arg_comparator) cmpEntries, (void *) &arg);
+		*nentries = 1;
+		entries = (Datum *) palloc(sizeof(Datum));
+		entries[0] = (Datum) 0;
+		*categories = (GinNullCategory *) palloc(sizeof(GinNullCategory));
+		(*categories)[0] = GIN_CAT_NULL_ITEM;
+		return entries;
 	}
 
-	return entries;
-}
+	/* OK, call the opclass's extractValueFn */
+	nullFlags = NULL;			/* in case extractValue doesn't set it */
+	entries = (Datum *)
+		DatumGetPointer(FunctionCall3(&ginstate->extractValueFn[attnum - 1],
+									  value,
+									  PointerGetDatum(nentries),
+									  PointerGetDatum(&nullFlags)));
 
-
-Datum *
-ginExtractEntriesSU(GinState *ginstate, OffsetNumber attnum, Datum value, int32 *nentries)
-{
-	bool		needUnique;
-	Datum	   *entries = ginExtractEntriesS(ginstate, attnum, value, nentries,
-											 &needUnique);
-
-	if (needUnique)
+	/*
+	 * Generate a placeholder if the item contained no keys.
+	 */
+	if (entries == NULL || *nentries <= 0)
 	{
-		Datum	   *ptr,
-				   *res;
+		*nentries = 1;
+		entries = (Datum *) palloc(sizeof(Datum));
+		entries[0] = (Datum) 0;
+		*categories = (GinNullCategory *) palloc(sizeof(GinNullCategory));
+		(*categories)[0] = GIN_CAT_EMPTY_ITEM;
+		return entries;
+	}
 
-		ptr = res = entries;
+	/*
+	 * If the extractValueFn didn't create a nullFlags array, create one,
+	 * assuming that everything's non-null.  Otherwise, run through the
+	 * array and make sure each value is exactly 0 or 1; this ensures
+	 * binary compatibility with the GinNullCategory representation.
+	 */
+	if (nullFlags == NULL)
+		nullFlags = (bool *) palloc0(*nentries * sizeof(bool));
+	else
+	{
+		for (i = 0; i < *nentries; i++)
+			nullFlags[i] = (nullFlags[i] ? true : false);
+	}
+	/* now we can use the nullFlags as category codes */
+	*categories = (GinNullCategory *) nullFlags;
 
-		while (ptr - entries < *nentries)
+	/*
+	 * If there's more than one key, sort and unique-ify.
+	 *
+	 * XXX Using qsort here is notationally painful, and the overhead is
+	 * pretty bad too.  For small numbers of keys it'd likely be better to
+	 * use a simple insertion sort.
+	 */
+	if (*nentries > 1)
+	{
+		keyEntryData *keydata;
+		cmpEntriesArg arg;
+
+		keydata = (keyEntryData *) palloc(*nentries * sizeof(keyEntryData));
+		for (i = 0; i < *nentries; i++)
 		{
-			if (ginCompareEntries(ginstate, attnum, *ptr, *res) != 0)
-				*(++res) = *ptr++;
-			else
-				ptr++;
+			keydata[i].datum = entries[i];
+			keydata[i].isnull = nullFlags[i];
 		}
 
-		*nentries = res + 1 - entries;
+		arg.cmpDatumFunc = &ginstate->compareFn[attnum - 1];
+		arg.haveDups = false;
+		qsort_arg(keydata, *nentries, sizeof(keyEntryData),
+				  cmpEntries, (void *) &arg);
+
+		if (arg.haveDups)
+		{
+			/* there are duplicates, must get rid of 'em */
+			int32		j;
+
+			entries[0] = keydata[0].datum;
+			nullFlags[0] = keydata[0].isnull;
+			j = 1;
+			for (i = 1; i < *nentries; i++)
+			{
+				if (cmpEntries(&keydata[i-1], &keydata[i], &arg) != 0)
+				{
+					entries[j] = keydata[i].datum;
+					nullFlags[j] = keydata[i].isnull;
+					j++;
+				}
+			}
+			*nentries = j;
+		}
+		else
+		{
+			/* easy, no duplicates */
+			for (i = 0; i < *nentries; i++)
+			{
+				entries[i] = keydata[i].datum;
+				nullFlags[i] = keydata[i].isnull;
+			}
+		}
+
+		pfree(keydata);
 	}
 
 	return entries;
@@ -361,7 +503,7 @@ ginoptions(PG_FUNCTION_ARGS)
  * Fetch index's statistical data into *stats
  *
  * Note: in the result, nPendingPages can be trusted to be up-to-date,
- * but the other fields are as of the last VACUUM.
+ * as can ginVersion; but the other fields are as of the last VACUUM.
  */
 void
 ginGetStats(Relation index, GinStatsData *stats)
@@ -380,6 +522,7 @@ ginGetStats(Relation index, GinStatsData *stats)
 	stats->nEntryPages = metadata->nEntryPages;
 	stats->nDataPages = metadata->nDataPages;
 	stats->nEntries = metadata->nEntries;
+	stats->ginVersion = metadata->ginVersion;
 
 	UnlockReleaseBuffer(metabuffer);
 }
@@ -387,7 +530,7 @@ ginGetStats(Relation index, GinStatsData *stats)
 /*
  * Write the given statistics to the index's metapage
  *
- * Note: nPendingPages is *not* copied over
+ * Note: nPendingPages and ginVersion are *not* copied over
  */
 void
 ginUpdateStats(Relation index, const GinStatsData *stats)

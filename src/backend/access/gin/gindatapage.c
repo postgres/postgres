@@ -14,21 +14,27 @@
 
 #include "postgres.h"
 
-#include "access/gin.h"
+#include "access/gin_private.h"
 #include "storage/bufmgr.h"
 #include "utils/rel.h"
 
 int
 ginCompareItemPointers(ItemPointer a, ItemPointer b)
 {
-	if (GinItemPointerGetBlockNumber(a) == GinItemPointerGetBlockNumber(b))
+	BlockNumber	ba = GinItemPointerGetBlockNumber(a);
+	BlockNumber	bb = GinItemPointerGetBlockNumber(b);
+
+	if (ba == bb)
 	{
-		if (GinItemPointerGetOffsetNumber(a) == GinItemPointerGetOffsetNumber(b))
+		OffsetNumber	oa = GinItemPointerGetOffsetNumber(a);
+		OffsetNumber	ob = GinItemPointerGetOffsetNumber(b);
+
+		if (oa == ob)
 			return 0;
-		return (GinItemPointerGetOffsetNumber(a) > GinItemPointerGetOffsetNumber(b)) ? 1 : -1;
+		return (oa > ob) ? 1 : -1;
 	}
 
-	return (GinItemPointerGetBlockNumber(a) > GinItemPointerGetBlockNumber(b)) ? 1 : -1;
+	return (ba > bb) ? 1 : -1;
 }
 
 /*
@@ -122,12 +128,13 @@ dataLocateItem(GinBtree btree, GinBtreeStack *stack)
 		pitem = (PostingItem *) GinDataPageGetItem(page, mid);
 
 		if (mid == maxoff)
-
+		{
 			/*
 			 * Right infinity, page already correctly chosen with a help of
 			 * dataIsMoveRight
 			 */
 			result = -1;
+		}
 		else
 		{
 			pitem = (PostingItem *) GinDataPageGetItem(page, mid);
@@ -220,7 +227,7 @@ dataFindChildPtr(GinBtree btree, Page page, BlockNumber blkno, OffsetNumber stor
 	Assert(!GinPageIsLeaf(page));
 	Assert(GinPageIsData(page));
 
-	/* if page isn't changed, we returns storedOff */
+	/* if page isn't changed, we return storedOff */
 	if (storedOff >= FirstOffsetNumber && storedOff <= maxoff)
 	{
 		pitem = (PostingItem *) GinDataPageGetItem(page, storedOff);
@@ -286,9 +293,11 @@ GinDataPageAddItem(Page page, void *data, OffsetNumber offset)
 	{
 		ptr = GinDataPageGetItem(page, offset);
 		if (maxoff + 1 - offset != 0)
-			memmove(ptr + GinSizeOfItem(page), ptr, (maxoff - offset + 1) * GinSizeOfItem(page));
+			memmove(ptr + GinSizeOfDataPageItem(page),
+					ptr,
+					(maxoff - offset + 1) * GinSizeOfDataPageItem(page));
 	}
-	memcpy(ptr, data, GinSizeOfItem(page));
+	memcpy(ptr, data, GinSizeOfDataPageItem(page));
 
 	GinPageGetOpaque(page)->maxoff++;
 }
@@ -372,10 +381,11 @@ static void
 dataPlaceToPage(GinBtree btree, Buffer buf, OffsetNumber off, XLogRecData **prdata)
 {
 	Page		page = BufferGetPage(buf);
-	static XLogRecData rdata[3];
-	int			sizeofitem = GinSizeOfItem(page);
-	static ginxlogInsert data;
+	int			sizeofitem = GinSizeOfDataPageItem(page);
 	int			cnt = 0;
+	/* these must be static so they can be returned to caller */
+	static XLogRecData rdata[3];
+	static ginxlogInsert data;
 
 	*prdata = rdata;
 	Assert(GinPageIsData(page));
@@ -453,20 +463,21 @@ dataPlaceToPage(GinBtree btree, Buffer buf, OffsetNumber off, XLogRecData **prda
 static Page
 dataSplitPage(GinBtree btree, Buffer lbuf, Buffer rbuf, OffsetNumber off, XLogRecData **prdata)
 {
-	static ginxlogSplit data;
-	static XLogRecData rdata[4];
-	static char vector[2 * BLCKSZ];
 	char	   *ptr;
 	OffsetNumber separator;
 	ItemPointer bound;
 	Page		lpage = PageGetTempPageCopy(BufferGetPage(lbuf));
 	ItemPointerData oldbound = *GinDataPageGetRightBound(lpage);
-	int			sizeofitem = GinSizeOfItem(lpage);
+	int			sizeofitem = GinSizeOfDataPageItem(lpage);
 	OffsetNumber maxoff = GinPageGetOpaque(lpage)->maxoff;
 	Page		rpage = BufferGetPage(rbuf);
 	Size		pageSize = PageGetPageSize(lpage);
 	Size		freeSpace;
 	uint32		nCopied = 1;
+	/* these must be static so they can be returned to caller */
+	static ginxlogSplit data;
+	static XLogRecData rdata[4];
+	static char vector[2 * BLCKSZ];
 
 	GinInitPage(rpage, GinPageGetOpaque(lpage)->flags, pageSize);
 	freeSpace = GinDataPageGetFreeSpace(rpage);
@@ -482,9 +493,11 @@ dataSplitPage(GinBtree btree, Buffer lbuf, Buffer rbuf, OffsetNumber off, XLogRe
 	if (GinPageIsLeaf(lpage) && GinPageRightMost(lpage) && off > GinPageGetOpaque(lpage)->maxoff)
 	{
 		nCopied = 0;
-		while (btree->curitem < btree->nitem && maxoff * sizeof(ItemPointerData) < 2 * (freeSpace - sizeof(ItemPointerData)))
+		while (btree->curitem < btree->nitem &&
+			   maxoff * sizeof(ItemPointerData) < 2 * (freeSpace - sizeof(ItemPointerData)))
 		{
-			memcpy(vector + maxoff * sizeof(ItemPointerData), btree->items + btree->curitem,
+			memcpy(vector + maxoff * sizeof(ItemPointerData),
+				   btree->items + btree->curitem,
 				   sizeof(ItemPointerData));
 			maxoff++;
 			nCopied++;
@@ -631,9 +644,9 @@ ginPrepareScanPostingTree(Relation index, BlockNumber rootBlkno, bool searchMode
  * Inserts array of item pointers, may execute several tree scan (very rare)
  */
 void
-ginInsertItemPointer(GinPostingTreeScan *gdi,
-					 ItemPointerData *items, uint32 nitem,
-					 GinStatsData *buildStats)
+ginInsertItemPointers(GinPostingTreeScan *gdi,
+					  ItemPointerData *items, uint32 nitem,
+					  GinStatsData *buildStats)
 {
 	BlockNumber rootBlkno = gdi->stack->blkno;
 
