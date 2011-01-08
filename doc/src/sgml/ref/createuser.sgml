@@ -103,7 +103,6 @@ PostgreSQL documentation
       <listitem>
        <para>
         The new user will not be allowed to create databases.
-        This is the default.
        </para>
       </listitem>
      </varlistentry>
@@ -217,7 +216,6 @@ PostgreSQL documentation
       <listitem>
        <para>
         The new user will not be allowed to create new roles.
-        This is the default.
        </para>
       </listitem>
      </varlistentry>
@@ -238,7 +236,6 @@ PostgreSQL documentation
       <listitem>
        <para>
         The new user will not be a superuser.
-        This is the default.
        </para>
       </listitem>
      </varlistentry>
