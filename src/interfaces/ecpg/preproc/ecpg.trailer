@@ -840,7 +840,7 @@ variable: opt_pointer ECPGColLabel opt_array_bounds opt_bit_field opt_initialize
 			struct ECPGtype * type;
 			char *dimension = $3.index1; /* dimension of array */
 			char *length = $3.index2;    /* length of string */
-			char dim[14L];
+			char *dim_str;
 			char *vcn;
 
 			adjust_array(actual_type[struct_level].type_enum, &dimension, &length, actual_type[struct_level].type_dimension, actual_type[struct_level].type_index, strlen($1), false);
@@ -864,9 +864,9 @@ variable: opt_pointer ECPGColLabel opt_array_bounds opt_bit_field opt_initialize
 						type = ECPGmake_array_type(ECPGmake_simple_type(actual_type[struct_level].type_enum, length, varchar_counter), dimension);
 
 					if (strcmp(dimension, "0") == 0 || abs(atoi(dimension)) == 1)
-							*dim = '\0';
+							dim_str=make_str("");
 					else
-							sprintf(dim, "[%s]", dimension);
+							dim_str=cat_str(3, make_str("["), mm_strdup(dimension), make_str("]"));
 					/* cannot check for atoi <= 0 because a defined constant will yield 0 here as well */
 					if (atoi(length) < 0 || strcmp(length, "0") == 0)
 						mmerror(PARSE_ERROR, ET_ERROR, "pointers to varchar are not implemented");
@@ -877,7 +877,7 @@ variable: opt_pointer ECPGColLabel opt_array_bounds opt_bit_field opt_initialize
 					if (strcmp(dimension, "0") == 0)
 						$$ = cat_str(7, make2_str(make_str(" struct varchar_"), vcn), make_str(" { int len; char arr["), mm_strdup(length), make_str("]; } *"), mm_strdup($2), $4, $5);
 					else
-						$$ = cat_str(8, make2_str(make_str(" struct varchar_"), vcn), make_str(" { int len; char arr["), mm_strdup(length), make_str("]; } "), mm_strdup($2), mm_strdup(dim), $4, $5);
+						$$ = cat_str(8, make2_str(make_str(" struct varchar_"), vcn), make_str(" { int len; char arr["), mm_strdup(length), make_str("]; } "), mm_strdup($2), dim_str, $4, $5);
 					varchar_counter++;
 					break;
 
