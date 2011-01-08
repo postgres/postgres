@@ -74,8 +74,8 @@
 
 
 /* Potentially set by contrib/pg_upgrade_support functions */
-Oid			binary_upgrade_next_heap_relfilenode = InvalidOid;
-Oid			binary_upgrade_next_toast_relfilenode = InvalidOid;
+Oid			binary_upgrade_next_heap_pg_class_oid = InvalidOid;
+Oid			binary_upgrade_next_toast_pg_class_oid = InvalidOid;
 
 static void AddNewRelationTuple(Relation pg_class_desc,
 					Relation new_rel_desc,
@@ -987,22 +987,22 @@ heap_create_with_catalog(const char *relname,
 	if (!OidIsValid(relid))
 	{
 		/*
-		 *	Use binary-upgrade override for pg_class.relfilenode/oid,
+		 *	Use binary-upgrade override for pg_class.oid/relfilenode,
 		 *	if supplied.
 		 */
-		if (OidIsValid(binary_upgrade_next_heap_relfilenode) &&
+		if (OidIsValid(binary_upgrade_next_heap_pg_class_oid) &&
 			(relkind == RELKIND_RELATION || relkind == RELKIND_SEQUENCE ||
 			 relkind == RELKIND_VIEW || relkind == RELKIND_COMPOSITE_TYPE ||
 			 relkind == RELKIND_FOREIGN_TABLE))
 		{
-			relid = binary_upgrade_next_heap_relfilenode;
-			binary_upgrade_next_heap_relfilenode = InvalidOid;
+			relid = binary_upgrade_next_heap_pg_class_oid;
+			binary_upgrade_next_heap_pg_class_oid = InvalidOid;
 		}
-		else if (OidIsValid(binary_upgrade_next_toast_relfilenode) &&
+		else if (OidIsValid(binary_upgrade_next_toast_pg_class_oid) &&
 				 relkind == RELKIND_TOASTVALUE)
 		{
-			relid = binary_upgrade_next_toast_relfilenode;
-			binary_upgrade_next_toast_relfilenode = InvalidOid;
+			relid = binary_upgrade_next_toast_pg_class_oid;
+			binary_upgrade_next_toast_pg_class_oid = InvalidOid;
 		}
 		else
 			relid = GetNewRelFileNode(reltablespace, pg_class_desc,

@@ -67,8 +67,8 @@ typedef struct
 {
 	char		nspname[NAMEDATALEN];	/* namespace name */
 	char		relname[NAMEDATALEN];	/* relation name */
-	Oid			reloid;			/* relation oid				 */
-	Oid			relfilenode;	/* relation relfile node	 */
+	Oid			reloid;			/* relation oid */
+	Oid			relfilenode;	/* relation relfile node */
 	Oid			toastrelid;		/* oid of the toast relation */
 	char		tablespace[MAXPGPATH];	/* relations tablespace path */
 } RelInfo;

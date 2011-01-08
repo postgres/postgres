@@ -21,28 +21,35 @@ PG_MODULE_MAGIC;
 #endif
 
 extern PGDLLIMPORT Oid binary_upgrade_next_pg_type_oid;
-extern PGDLLIMPORT Oid binary_upgrade_next_pg_type_array_oid;
-extern PGDLLIMPORT Oid binary_upgrade_next_pg_type_toast_oid;
-extern PGDLLIMPORT Oid binary_upgrade_next_heap_relfilenode;
-extern PGDLLIMPORT Oid binary_upgrade_next_toast_relfilenode;
-extern PGDLLIMPORT Oid binary_upgrade_next_index_relfilenode;
+extern PGDLLIMPORT Oid binary_upgrade_next_array_pg_type_oid;
+extern PGDLLIMPORT Oid binary_upgrade_next_toast_pg_type_oid;
+
+extern PGDLLIMPORT Oid binary_upgrade_next_heap_pg_class_oid;
+extern PGDLLIMPORT Oid binary_upgrade_next_index_pg_class_oid;
+extern PGDLLIMPORT Oid binary_upgrade_next_toast_pg_class_oid;
+
 extern PGDLLIMPORT Oid binary_upgrade_next_pg_enum_oid;
 
 Datum		set_next_pg_type_oid(PG_FUNCTION_ARGS);
-Datum		set_next_pg_type_array_oid(PG_FUNCTION_ARGS);
-Datum		set_next_pg_type_toast_oid(PG_FUNCTION_ARGS);
-Datum		set_next_heap_relfilenode(PG_FUNCTION_ARGS);
-Datum		set_next_toast_relfilenode(PG_FUNCTION_ARGS);
-Datum		set_next_index_relfilenode(PG_FUNCTION_ARGS);
+Datum		set_next_array_pg_type_oid(PG_FUNCTION_ARGS);
+Datum		set_next_toast_pg_type_oid(PG_FUNCTION_ARGS);
+
+Datum		set_next_heap_pg_class_oid(PG_FUNCTION_ARGS);
+Datum		set_next_index_pg_class_oid(PG_FUNCTION_ARGS);
+Datum		set_next_toast_pg_class_oid(PG_FUNCTION_ARGS);
+
 Datum		set_next_pg_enum_oid(PG_FUNCTION_ARGS);
 
 PG_FUNCTION_INFO_V1(set_next_pg_type_oid);
-PG_FUNCTION_INFO_V1(set_next_pg_type_array_oid);
-PG_FUNCTION_INFO_V1(set_next_pg_type_toast_oid);
-PG_FUNCTION_INFO_V1(set_next_heap_relfilenode);
-PG_FUNCTION_INFO_V1(set_next_toast_relfilenode);
-PG_FUNCTION_INFO_V1(set_next_index_relfilenode);
+PG_FUNCTION_INFO_V1(set_next_array_pg_type_oid);
+PG_FUNCTION_INFO_V1(set_next_toast_pg_type_oid);
+
+PG_FUNCTION_INFO_V1(set_next_heap_pg_class_oid);
+PG_FUNCTION_INFO_V1(set_next_index_pg_class_oid);
+PG_FUNCTION_INFO_V1(set_next_toast_pg_class_oid);
+
 PG_FUNCTION_INFO_V1(set_next_pg_enum_oid);
+
 
 Datum
 set_next_pg_type_oid(PG_FUNCTION_ARGS)
@@ -55,51 +62,51 @@ set_next_pg_type_oid(PG_FUNCTION_ARGS)
 }
 
 Datum
-set_next_pg_type_array_oid(PG_FUNCTION_ARGS)
+set_next_array_pg_type_oid(PG_FUNCTION_ARGS)
 {
 	Oid			typoid = PG_GETARG_OID(0);
 
-	binary_upgrade_next_pg_type_array_oid = typoid;
+	binary_upgrade_next_array_pg_type_oid = typoid;
 
 	PG_RETURN_VOID();
 }
 
 Datum
-set_next_pg_type_toast_oid(PG_FUNCTION_ARGS)
+set_next_toast_pg_type_oid(PG_FUNCTION_ARGS)
 {
 	Oid			typoid = PG_GETARG_OID(0);
 
-	binary_upgrade_next_pg_type_toast_oid = typoid;
+	binary_upgrade_next_toast_pg_type_oid = typoid;
 
 	PG_RETURN_VOID();
 }
 
 Datum
-set_next_heap_relfilenode(PG_FUNCTION_ARGS)
+set_next_heap_pg_class_oid(PG_FUNCTION_ARGS)
 {
-	Oid			relfilenode = PG_GETARG_OID(0);
+	Oid			reloid = PG_GETARG_OID(0);
 
-	binary_upgrade_next_heap_relfilenode = relfilenode;
+	binary_upgrade_next_heap_pg_class_oid = reloid;
 
 	PG_RETURN_VOID();
 }
 
 Datum
-set_next_toast_relfilenode(PG_FUNCTION_ARGS)
+set_next_index_pg_class_oid(PG_FUNCTION_ARGS)
 {
-	Oid			relfilenode = PG_GETARG_OID(0);
+	Oid			reloid = PG_GETARG_OID(0);
 
-	binary_upgrade_next_toast_relfilenode = relfilenode;
+	binary_upgrade_next_index_pg_class_oid = reloid;
 
 	PG_RETURN_VOID();
 }
 
 Datum
-set_next_index_relfilenode(PG_FUNCTION_ARGS)
+set_next_toast_pg_class_oid(PG_FUNCTION_ARGS)
 {
-	Oid			relfilenode = PG_GETARG_OID(0);
+	Oid			reloid = PG_GETARG_OID(0);
 
-	binary_upgrade_next_index_relfilenode = relfilenode;
+	binary_upgrade_next_toast_pg_class_oid = reloid;
 
 	PG_RETURN_VOID();
 }

@@ -266,7 +266,7 @@ get_rel_infos(ClusterInfo *cluster, DbInfo *dbinfo)
 
 	/*
 	 * pg_largeobject contains user data that does not appear the pg_dumpall
-	 * --schema-only output, so we have to upgrade that system table heap and
+	 * --schema-only output, so we have to copy that system table heap and
 	 * index.  Ideally we could just get the relfilenode from template1 but
 	 * pg_largeobject_loid_pn_index's relfilenode can change if the table was
 	 * reindexed so we get the relfilenode for each database and upgrade it as

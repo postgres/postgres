@@ -75,7 +75,7 @@ typedef struct
 } RelToCheck;
 
 /* Potentially set by contrib/pg_upgrade_support functions */
-Oid			binary_upgrade_next_pg_type_array_oid = InvalidOid;
+Oid			binary_upgrade_next_array_pg_type_oid = InvalidOid;
 
 static Oid	findTypeInputFunction(List *procname, Oid typeOid);
 static Oid	findTypeOutputFunction(List *procname, Oid typeOid);
@@ -1519,10 +1519,10 @@ AssignTypeArrayOid(void)
 	Oid			type_array_oid;
 
 	/* Use binary-upgrade override for pg_type.typarray, if supplied. */
-	if (OidIsValid(binary_upgrade_next_pg_type_array_oid))
+	if (OidIsValid(binary_upgrade_next_array_pg_type_oid))
 	{
-		type_array_oid = binary_upgrade_next_pg_type_array_oid;
-		binary_upgrade_next_pg_type_array_oid = InvalidOid;
+		type_array_oid = binary_upgrade_next_array_pg_type_oid;
+		binary_upgrade_next_array_pg_type_oid = InvalidOid;
 	}
 	else
 	{
