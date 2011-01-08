@@ -19,7 +19,9 @@
  *	in a cluster, but they can diverge due to CLUSTER, REINDEX, or VACUUM
  *	FULL.  The new cluster will have matching pg_class.oid and
  *	pg_class.relfilenode values and be based on the old oid value.  This can
- *	cause the old and new pg_class.relfilenode values to differ.
+ *	cause the old and new pg_class.relfilenode values to differ.  In summary,
+ *	old and new pg_class.oid and new pg_class.relfilenode will have the
+ *	same value, and old pg_class.relfilenode might differ.
  *
  *	We control all assignments of pg_type.oid because these oids are stored
  *	in user composite type values.

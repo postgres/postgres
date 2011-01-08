@@ -132,7 +132,13 @@ create_rel_filename_map(const char *old_data, const char *new_data,
 				 new_cluster.tablespace_suffix, new_db->db_oid);
 	}
 
+	/*
+	 *	old_relfilenode might differ from pg_class.oid (and hence
+	 *	new_relfilenode) because of CLUSTER, REINDEX, or VACUUM FULL.
+	 */
 	map->old_relfilenode = old_rel->relfilenode;
+
+	/* new_relfilenode will match old and new pg_class.oid */
 	map->new_relfilenode = new_rel->relfilenode;
 
 	/* used only for logging and error reporing, old/new are identical */
