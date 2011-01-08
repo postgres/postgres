@@ -470,13 +470,6 @@
      </row>
 
      <row>
-      <entry><structfield>amindexnulls</structfield></entry>
-      <entry><type>bool</type></entry>
-      <entry></entry>
-      <entry>Does the access method support null index entries?</entry>
-     </row>
-
-     <row>
       <entry><structfield>amsearchnulls</structfield></entry>
       <entry><type>bool</type></entry>
       <entry></entry>
@@ -565,6 +558,13 @@
       <entry><type>regproc</type></entry>
       <entry><literal><link linkend="catalog-pg-proc"><structname>pg_proc</structname></link>.oid</literal></entry>
       <entry><quote>Build new index</quote> function</entry>
+     </row>
+
+     <row>
+      <entry><structfield>ambuildempty</structfield></entry>
+      <entry><type>regproc</type></entry>
+      <entry><literal><link linkend="catalog-pg-proc"><structname>pg_proc</structname></link>.oid</literal></entry>
+      <entry><quote>Build empty index</quote> function</entry>
      </row>
 
      <row>

@@ -105,14 +105,15 @@
    where no indexable restriction clause is given for the first index column.
    When <structfield>amcanmulticol</structfield> is false,
    <structfield>amoptionalkey</structfield> essentially says whether the
-   access method allows full-index scans without any restriction clause.
+   access method supports full-index scans without any restriction clause.
    Access methods that support multiple index columns <emphasis>must</>
    support scans that omit restrictions on any or all of the columns after
    the first; however they are permitted to require some restriction to
    appear for the first index column, and this is signaled by setting
    <structfield>amoptionalkey</structfield> false.
-   <structfield>amindexnulls</structfield> asserts that index entries are
-   created for NULL key values.  Since most indexable operators are
+   One reason that an index AM might set
+   <structfield>amoptionalkey</structfield> false is if it doesn't index
+   NULLs.  Since most indexable operators are
    strict and hence cannot return TRUE for NULL inputs,
    it is at first sight attractive to not store index entries for null values:
    they could never be returned by an index scan anyway.  However, this
@@ -129,10 +130,7 @@
    used to scan for rows with <literal>a = 4</literal>, which is wrong if the
    index omits rows where <literal>b</> is null.
    It is, however, OK to omit rows where the first indexed column is null.
-   Thus, <structfield>amindexnulls</structfield> should be set true only if the
-   index access method indexes all rows, including arbitrary combinations of
-   null values.  An index access method that sets
-   <structfield>amindexnulls</structfield> may also set
+   An index access method that does index nulls may also set
    <structfield>amsearchnulls</structfield>, indicating that it supports
    <literal>IS NULL</> and <literal>IS NOT NULL</> clauses as search
    conditions.
