@@ -458,12 +458,12 @@ AS
 
 --GIN
 
-CREATE OR REPLACE FUNCTION ginint4_queryextract(internal, internal, int2, internal, internal)
+CREATE OR REPLACE FUNCTION ginint4_queryextract(internal, internal, int2, internal, internal, internal, internal)
 RETURNS internal
 AS 'MODULE_PATHNAME'
 LANGUAGE C IMMUTABLE STRICT;
 
-CREATE OR REPLACE FUNCTION ginint4_consistent(internal, int2, internal, int4, internal, internal)
+CREATE OR REPLACE FUNCTION ginint4_consistent(internal, int2, internal, int4, internal, internal, internal, internal)
 RETURNS bool
 AS 'MODULE_PATHNAME'
 LANGUAGE C IMMUTABLE STRICT;
@@ -479,7 +479,7 @@ AS
 	OPERATOR	14	~,
 	OPERATOR	20	@@ (_int4, query_int),
 	FUNCTION	1	btint4cmp (int4, int4),
-	FUNCTION	2	ginarrayextract (anyarray, internal),
-	FUNCTION	3	ginint4_queryextract (internal, internal, int2, internal, internal),
-	FUNCTION	4	ginint4_consistent (internal, int2, internal, int4, internal, internal),
+	FUNCTION	2	ginarrayextract (anyarray, internal, internal),
+	FUNCTION	3	ginint4_queryextract (internal, internal, int2, internal, internal, internal, internal),
+	FUNCTION	4	ginint4_consistent (internal, int2, internal, int4, internal, internal, internal, internal),
 	STORAGE		int4;
