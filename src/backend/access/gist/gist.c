@@ -741,22 +741,28 @@ gistdoinsert(Relation r, IndexTuple itup, Size freespace, GISTSTATE *giststate)
 				/*
 				 * Update the tuple.
 				 *
-				 * gistinserthere() might have to split the page to make the
-				 * updated tuple fit. It will adjust the stack so that after
-				 * the call, we'll be holding a lock on the page containing
-				 * the tuple, which might have moved right.
-				 *
-				 * Except if this causes a root split, gistinserthere()
-				 * returns 'true'. In that case, stack only holds the new
-				 * root, and the child page was released. Have to start
-				 * all over.
+				 * We still hold the lock after gistinserttuples(), but it
+				 * might have to split the page to make the updated tuple fit.
+				 * In that case the updated tuple might migrate to the other
+				 * half of the split, so we have to go back to the parent and
+				 * descend back to the half that's a better fit for the new
+				 * tuple.
 				 */
 				if (gistinserttuples(&state, stack, giststate, &newtup, 1,
 									 stack->childoffnum, InvalidBuffer))
 				{
-					UnlockReleaseBuffer(stack->buffer);
-					xlocked = false;
-					state.stack = stack = stack->parent;
+					/*
+					 * If this was a root split, the root page continues to
+					 * be the parent and the updated tuple went to one of the
+					 * child pages, so we just need to retry from the root
+					 * page.
+					 */
+					if (stack->blkno != GIST_ROOT_BLKNO)
+					{
+						UnlockReleaseBuffer(stack->buffer);
+						xlocked = false;
+						state.stack = stack = stack->parent;
+					}
 					continue;
 				}
 			}
