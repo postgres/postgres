@@ -2998,7 +2998,7 @@ deconstruct_array(ArrayType *array,
 	nelems = ArrayGetNItems(ARR_NDIM(array), ARR_DIMS(array));
 	*elemsp = elems = (Datum *) palloc(nelems * sizeof(Datum));
 	if (nullsp)
-		*nullsp = nulls = (bool *) palloc(nelems * sizeof(bool));
+		*nullsp = nulls = (bool *) palloc0(nelems * sizeof(bool));
 	else
 		nulls = NULL;
 	*nelemsp = nelems;
@@ -3023,8 +3023,6 @@ deconstruct_array(ArrayType *array,
 		else
 		{
 			elems[i] = fetch_att(p, elmbyval, elmlen);
-			if (nulls)
-				nulls[i] = false;
 			p = att_addlength_pointer(p, elmlen, p);
 			p = (char *) att_align_nominal(p, elmalign);
 		}
@@ -3040,6 +3038,49 @@ deconstruct_array(ArrayType *array,
 			}
 		}
 	}
+}
+
+/*
+ * array_contains_nulls --- detect whether an array has any null elements
+ *
+ * This gives an accurate answer, whereas testing ARR_HASNULL only tells
+ * if the array *might* contain a null.
+ */
+bool
+array_contains_nulls(ArrayType *array)
+{
+	int			nelems;
+	bits8	   *bitmap;
+	int			bitmask;
+
+	/* Easy answer if there's no null bitmap */
+	if (!ARR_HASNULL(array))
+		return false;
+
+	nelems = ArrayGetNItems(ARR_NDIM(array), ARR_DIMS(array));
+
+	bitmap = ARR_NULLBITMAP(array);
+
+	/* check whole bytes of the bitmap byte-at-a-time */
+	while (nelems >= 8)
+	{
+		if (*bitmap != 0xFF)
+			return true;
+		bitmap++;
+		nelems -= 8;
+	}
+
+	/* check last partial byte */
+	bitmask = 1;
+	while (nelems > 0)
+	{
+		if ((*bitmap & bitmask) == 0)
+			return true;
+		bitmask <<= 1;
+		nelems--;
+	}
+
+	return false;
 }
 
 
