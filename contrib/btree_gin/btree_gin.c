@@ -394,10 +394,11 @@ static TypeInfo TypeInfo_varbit = {true, leftmostvalue_varbit, bitcmp};
 GIN_SUPPORT(varbit)
 
 /*
- * Numeric type hasn't applicable left-most value, so NULL
- * is used for that. NULL will never be an argument for a C-level
- * numeric function except gin_numeric_cmp and it will not be stored
- * somewhere and it could not be returned in any user SQL query.
+ * Numeric type hasn't a real left-most value, so we use PointerGetDatum(NULL)
+ * (*not* a SQL NULL) to represent that.  We can get away with that because
+ * the value returned by our leftmostvalue function will never be stored in
+ * the index nor passed to anything except our compare and prefix-comparison
+ * functions.  The same trick could be used for other pass-by-reference types.
  */
 
 #define NUMERIC_IS_LEFTMOST(x)	((x) == NULL)
