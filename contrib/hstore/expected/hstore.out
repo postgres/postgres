@@ -435,7 +435,7 @@ select hstore 'a=>NULL, b=>qq' ?& ARRAY['c','d'];
 select hstore 'a=>NULL, b=>qq' ?& '{}'::text[];
  ?column? 
 ----------
- f
+ t
 (1 row)
 
 -- delete
