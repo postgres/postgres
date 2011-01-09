@@ -8308,6 +8308,21 @@ pg_start_backup(PG_FUNCTION_ARGS)
 	text	   *backupid = PG_GETARG_TEXT_P(0);
 	bool		fast = PG_GETARG_BOOL(1);
 	char	   *backupidstr;
+	XLogRecPtr  startpoint;
+	char		startxlogstr[MAXFNAMELEN];
+
+	backupidstr = text_to_cstring(backupid);
+
+	startpoint = do_pg_start_backup(backupidstr, fast);
+
+	snprintf(startxlogstr, sizeof(startxlogstr), "%X/%X",
+			 startpoint.xlogid, startpoint.xrecoff);
+	PG_RETURN_TEXT_P(cstring_to_text(startxlogstr));
+}
+
+XLogRecPtr
+do_pg_start_backup(const char *backupidstr, bool fast)
+{
 	XLogRecPtr	checkpointloc;
 	XLogRecPtr	startpoint;
 	pg_time_t	stamp_time;
@@ -8334,8 +8349,6 @@ pg_start_backup(PG_FUNCTION_ARGS)
 				(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
 			  errmsg("WAL level not sufficient for making an online backup"),
 				 errhint("wal_level must be set to \"archive\" or \"hot_standby\" at server start.")));
-
-	backupidstr = text_to_cstring(backupid);
 
 	/*
 	 * Mark backup active in shared memory.  We must do full-page WAL writes
@@ -8459,9 +8472,7 @@ pg_start_backup(PG_FUNCTION_ARGS)
 	/*
 	 * We're done.  As a convenience, return the starting WAL location.
 	 */
-	snprintf(xlogfilename, sizeof(xlogfilename), "%X/%X",
-			 startpoint.xlogid, startpoint.xrecoff);
-	PG_RETURN_TEXT_P(cstring_to_text(xlogfilename));
+	return startpoint;
 }
 
 /* Error cleanup callback for pg_start_backup */
@@ -8489,6 +8500,19 @@ pg_start_backup_callback(int code, Datum arg)
  */
 Datum
 pg_stop_backup(PG_FUNCTION_ARGS)
+{
+	XLogRecPtr	stoppoint;
+	char		stopxlogstr[MAXFNAMELEN];
+
+	stoppoint = do_pg_stop_backup();
+
+	snprintf(stopxlogstr, sizeof(stopxlogstr), "%X/%X",
+			 stoppoint.xlogid, stoppoint.xrecoff);
+	PG_RETURN_TEXT_P(cstring_to_text(stopxlogstr));
+}
+
+XLogRecPtr
+do_pg_stop_backup(void)
 {
 	XLogRecPtr	startpoint;
 	XLogRecPtr	stoppoint;
@@ -8699,9 +8723,35 @@ pg_stop_backup(PG_FUNCTION_ARGS)
 	/*
 	 * We're done.  As a convenience, return the ending WAL location.
 	 */
-	snprintf(stopxlogfilename, sizeof(stopxlogfilename), "%X/%X",
-			 stoppoint.xlogid, stoppoint.xrecoff);
-	PG_RETURN_TEXT_P(cstring_to_text(stopxlogfilename));
+	return stoppoint;
+}
+
+
+/*
+ * do_pg_abort_backup: abort a running backup
+ *
+ * This does just the most basic steps of pg_stop_backup(), by taking the
+ * system out of backup mode, thus making it a lot more safe to call from
+ * an error handler.
+ */
+void
+do_pg_abort_backup(void)
+{
+	/*
+	 * OK to clear forcePageWrites
+	 */
+	LWLockAcquire(WALInsertLock, LW_EXCLUSIVE);
+	XLogCtl->Insert.forcePageWrites = false;
+	LWLockRelease(WALInsertLock);
+
+	/*
+	 * Remove backup label file
+	 */
+	if (unlink(BACKUP_LABEL_FILE) != 0)
+		ereport(ERROR,
+				(errcode_for_file_access(),
+				 errmsg("could not remove file \"%s\": %m",
+						BACKUP_LABEL_FILE)));
 }
 
 /*
