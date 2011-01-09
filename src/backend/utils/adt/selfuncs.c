@@ -6281,7 +6281,6 @@ gincostestimate(PG_FUNCTION_ARGS)
 	Selectivity *indexSelectivity = (Selectivity *) PG_GETARG_POINTER(7);
 	double	   *indexCorrelation = (double *) PG_GETARG_POINTER(8);
 	ListCell	   *l;
-	int32		   nfullscan = 0;
 	List		   *selectivityQuals;
 	double		   numPages = index->pages,
 				   numTuples = index->tuples;
@@ -6289,6 +6288,7 @@ gincostestimate(PG_FUNCTION_ARGS)
 				   numDataPages,
 				   numPendingPages,
 				   numEntries;
+	bool		   haveFullScan = false;
 	double		   partialEntriesInQuals = 0.0;
 	double		   searchEntriesInQuals = 0.0;
 	double		   exactEntriesInQuals = 0.0;
@@ -6394,6 +6394,8 @@ gincostestimate(PG_FUNCTION_ARGS)
 		int32			nentries = 0;
 		bool			*partial_matches = NULL;
 		Pointer			*extra_data = NULL;
+		bool		   *nullFlags = NULL;
+		int32			searchMode = GIN_SEARCH_MODE_DEFAULT;
 		int				indexcol;
 
 		Assert(IsA(rinfo, RestrictInfo));
@@ -6414,7 +6416,7 @@ gincostestimate(PG_FUNCTION_ARGS)
 		}
 		else
 		{
-			elog(ERROR, "Could not match index to operand");
+			elog(ERROR, "could not match index to operand");
 			operand = NULL; /* keep compiler quiet */
 		}
 
@@ -6443,42 +6445,43 @@ gincostestimate(PG_FUNCTION_ARGS)
 
 		/*
 		 * Get the operator's strategy number and declared input data types
-		 * within the index opfamily.
+		 * within the index opfamily.  (We don't need the latter, but we
+		 * use get_op_opfamily_properties because it will throw error if
+		 * it fails to find a matching pg_amop entry.)
 		 */
 		get_op_opfamily_properties(clause_op, index->opfamily[indexcol], false,
 								   &strategy_op, &lefttype, &righttype);
 
 		/*
-		 * GIN (like GiST) always has lefttype == righttype in pg_amproc
-		 * and they are equal to type Oid on which index was created/designed
+		 * GIN always uses the "default" support functions, which are those
+		 * with lefttype == righttype == the opclass' opcintype (see
+		 * IndexSupportInitialize in relcache.c).
 		 */
 		extractProcOid = get_opfamily_proc(index->opfamily[indexcol],
-										   lefttype, lefttype,
+										   index->opcintype[indexcol],
+										   index->opcintype[indexcol],
 										   GIN_EXTRACTQUERY_PROC);
 
 		if (!OidIsValid(extractProcOid))
 		{
-			/* probably shouldn't happen, but cope sanely if so */
-			searchEntriesInQuals++;
-			continue;
+			/* should not happen; throw same error as index_getprocinfo */
+			elog(ERROR, "missing support function %d for attribute %d of index \"%s\"",
+				 GIN_EXTRACTQUERY_PROC, indexcol+1,
+				 get_rel_name(index->indexoid));
 		}
 
-		OidFunctionCall5(extractProcOid,
-						 ((Const*)operand)->constvalue,
+		OidFunctionCall7(extractProcOid,
+						 ((Const*) operand)->constvalue,
 						 PointerGetDatum(&nentries),
 						 UInt16GetDatum(strategy_op),
 						 PointerGetDatum(&partial_matches),
-						 PointerGetDatum(&extra_data));
+						 PointerGetDatum(&extra_data),
+						 PointerGetDatum(&nullFlags),
+						 PointerGetDatum(&searchMode));
 
-		if (nentries == 0)
+		if (nentries <= 0 && searchMode == GIN_SEARCH_MODE_DEFAULT)
 		{
-			nfullscan++;
-		}
-		else if (nentries < 0)
-		{
-			/*
-			 * GIN_EXTRACTQUERY_PROC guarantees that nothing will be found
-			 */
+			/* No match is possible */
 			*indexStartupCost = 0;
 			*indexTotalCost = 0;
 			*indexSelectivity = 0;
@@ -6486,7 +6489,7 @@ gincostestimate(PG_FUNCTION_ARGS)
 		}
 		else
 		{
-			int		i;
+			int32	i;
 
 			for (i=0; i<nentries; i++)
 			{
@@ -6503,10 +6506,28 @@ gincostestimate(PG_FUNCTION_ARGS)
 				searchEntriesInQuals++;
 			}
 		}
+
+		if (searchMode == GIN_SEARCH_MODE_INCLUDE_EMPTY)
+		{
+			/* Treat "include empty" like an exact-match item */
+			exactEntriesInQuals++;
+			searchEntriesInQuals++;
+		}
+		else if (searchMode != GIN_SEARCH_MODE_DEFAULT)
+		{
+			/* It's GIN_SEARCH_MODE_ALL */
+			haveFullScan = true;
+		}
 	}
 
-	if (nfullscan == list_length(indexQuals))
+	if (haveFullScan || indexQuals == NIL)
+	{
+		/*
+		 * Full index scan will be required.  We treat this as if every key in
+		 * the index had been listed in the query; is that reasonable?
+		 */
 		searchEntriesInQuals = numEntries;
+	}
 
 	/* Will we have more than one iteration of a nestloop scan? */
 	if (outer_rel != NULL && outer_rel->rows > 1)
