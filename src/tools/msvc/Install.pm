@@ -380,7 +380,7 @@ sub CopyIncludeFiles
 
     EnsureDirectories($target, 'include', 'include/libpq',
         'include/internal', 'include/internal/libpq',
-        'include/server');
+        'include/server', 'include/server/parser');
 
     CopyFiles(
         'Public headers',
