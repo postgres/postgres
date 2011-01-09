@@ -5,9 +5,9 @@ SET search_path = public;
 
 DROP OPERATOR CLASS gin__int_ops USING gin;
 
-DROP FUNCTION ginint4_queryextract(internal, internal, int2, internal, internal);
+DROP FUNCTION ginint4_queryextract(internal, internal, int2, internal, internal, internal, internal);
 
-DROP FUNCTION ginint4_consistent(internal, int2, internal, int4, internal, internal);
+DROP FUNCTION ginint4_consistent(internal, int2, internal, int4, internal, internal, internal, internal);
 
 DROP OPERATOR CLASS gist__intbig_ops USING gist;
 

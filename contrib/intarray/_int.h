@@ -9,41 +9,36 @@
 /* number ranges for compression */
 #define MAXNUMRANGE 100
 
-/* dimension of array */
-#define NDIM 1
-
 /* useful macros for accessing int4 arrays */
 #define ARRPTR(x)  ( (int4 *) ARR_DATA_PTR(x) )
 #define ARRNELEMS(x)  ArrayGetNItems(ARR_NDIM(x), ARR_DIMS(x))
 
-/* reject arrays we can't handle; but allow a NULL or empty array */
+/* reject arrays we can't handle; to wit, those containing nulls */
 #define CHECKARRVALID(x) \
 	do { \
-		if (x) { \
-			if (ARR_NDIM(x) != NDIM && ARR_NDIM(x) != 0) \
-				ereport(ERROR, \
-						(errcode(ERRCODE_ARRAY_SUBSCRIPT_ERROR), \
-						 errmsg("array must be one-dimensional"))); \
-			if (ARR_HASNULL(x)) \
-				ereport(ERROR, \
-						(errcode(ERRCODE_NULL_VALUE_NOT_ALLOWED), \
-						 errmsg("array must not contain nulls"))); \
-		} \
+		if (ARR_HASNULL(x) && array_contains_nulls(x)) \
+			ereport(ERROR, \
+					(errcode(ERRCODE_NULL_VALUE_NOT_ALLOWED), \
+					 errmsg("array must not contain nulls"))); \
 	} while(0)
 
-#define ARRISVOID(x)  ((x) == NULL || ARRNELEMS(x) == 0)
+#define ARRISEMPTY(x)  (ARRNELEMS(x) == 0)
 
+/* sort the elements of the array */
 #define SORT(x) \
 	do { \
-		 if ( ARRNELEMS( x ) > 1 ) \
-			isort( ARRPTR( x ), ARRNELEMS( x ) ); \
+		int		_nelems_ = ARRNELEMS(x); \
+		if (_nelems_ > 1) \
+			isort(ARRPTR(x), _nelems_); \
 	} while(0)
 
+/* sort the elements of the array and remove duplicates */
 #define PREPAREARR(x) \
 	do { \
-		 if ( ARRNELEMS( x ) > 1 ) \
-			if ( isort( ARRPTR( x ), ARRNELEMS( x ) ) ) \
-				x = _int_unique( x ); \
+		int		_nelems_ = ARRNELEMS(x); \
+		if (_nelems_ > 1) \
+			if (isort(ARRPTR(x), _nelems_)) \
+				(x) = _int_unique(x); \
 	} while(0)
 
 /* "wish" function */
@@ -90,14 +85,14 @@ typedef struct
 #define GETSIGN(x)		( (BITVECP)( (char*)x+GTHDRSIZE ) )
 
 /*
-** types for functions
-*/
+ * types for functions
+ */
 typedef ArrayType *(*formarray) (ArrayType *, ArrayType *);
 typedef void (*formfloat) (ArrayType *, float *);
 
 /*
-** useful function
-*/
+ * useful functions
+ */
 bool		isort(int4 *a, int len);
 ArrayType  *new_intArrayType(int num);
 ArrayType  *copy_intArrayType(ArrayType *a);
@@ -133,17 +128,18 @@ typedef struct ITEM
 	int4		val;
 } ITEM;
 
-typedef struct
+typedef struct QUERYTYPE
 {
 	int32		vl_len_;		/* varlena header (do not touch directly!) */
-	int4		size;
-	char		data[1];
+	int4		size;			/* number of ITEMs */
+	ITEM		items[1];		/* variable length array */
 } QUERYTYPE;
 
-#define HDRSIZEQT	(VARHDRSZ + sizeof(int4))
-#define COMPUTESIZE(size)	( HDRSIZEQT + size * sizeof(ITEM) )
-#define GETQUERY(x)  (ITEM*)( (char*)(x)+HDRSIZEQT )
+#define HDRSIZEQT	offsetof(QUERYTYPE, items)
+#define COMPUTESIZE(size)	( HDRSIZEQT + (size) * sizeof(ITEM) )
+#define GETQUERY(x)  ( (x)->items )
 
+/* "type" codes for ITEM */
 #define END		0
 #define ERR		1
 #define VAL		2
@@ -151,18 +147,28 @@ typedef struct
 #define OPEN	4
 #define CLOSE	5
 
+/* fmgr macros for QUERYTYPE objects */
+#define DatumGetQueryTypeP(X)		  ((QUERYTYPE *) PG_DETOAST_DATUM(X))
+#define DatumGetQueryTypePCopy(X)	  ((QUERYTYPE *) PG_DETOAST_DATUM_COPY(X))
+#define PG_GETARG_QUERYTYPE_P(n)	  DatumGetQueryTypeP(PG_GETARG_DATUM(n))
+#define PG_GETARG_QUERYTYPE_P_COPY(n) DatumGetQueryTypePCopy(PG_GETARG_DATUM(n))
+
 bool		signconsistent(QUERYTYPE *query, BITVEC sign, bool calcnot);
 bool		execconsistent(QUERYTYPE *query, ArrayType *array, bool calcnot);
-bool		ginconsistent(QUERYTYPE *query, bool *check);
-int4		shorterquery(ITEM *q, int4 len);
+
+bool		gin_bool_consistent(QUERYTYPE *query, bool *check);
+bool		query_has_required_values(QUERYTYPE *query);
 
 int			compASC(const void *a, const void *b);
-
 int			compDESC(const void *a, const void *b);
 
-#define QSORT(a, direction)										\
-if (ARRNELEMS(a) > 1)											\
-		qsort((void*)ARRPTR(a), ARRNELEMS(a),sizeof(int4),		\
-				(direction) ? compASC : compDESC )
+/* sort, either ascending or descending */
+#define QSORT(a, direction) \
+	do { \
+		int		_nelems_ = ARRNELEMS(a); \
+		if (_nelems_ > 1) \
+			qsort((void*) ARRPTR(a), _nelems_, sizeof(int4), \
+				  (direction) ? compASC : compDESC ); \
+	} while(0)
 
 #endif   /* ___INT_H__ */

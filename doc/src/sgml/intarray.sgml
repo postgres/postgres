@@ -9,8 +9,19 @@
 
  <para>
   The <filename>intarray</> module provides a number of useful functions
-  and operators for manipulating one-dimensional arrays of integers.
+  and operators for manipulating null-free arrays of integers.
   There is also support for indexed searches using some of the operators.
+ </para>
+
+ <para>
+  All of these operations will throw an error if a supplied array contains any
+  NULL elements.
+ </para>
+
+ <para>
+  Many of these operations are only sensible for one-dimensional arrays.
+  Although they will accept input arrays of more dimensions, the data is
+  treated as though it were a linear array in storage order.
  </para>
 
  <sect2>
@@ -211,14 +222,12 @@
   </para>
 
   <para>
-   The containment operators <literal>@&gt;</> and <literal>&lt;@</> are
-   approximately equivalent to <productname>PostgreSQL</>'s built-in operators
-   of the same names, except that they work only on integer arrays while the
-   built-in operators work for any array type.  An important difference is
-   that <filename>intarray</>'s operators do not consider an empty array to be
-   contained in anything else.  This is consistent with the behavior of
-   GIN-indexed queries, but not with the usual mathematical definition of
-   containment.
+   The operators <literal>&amp;&amp;</>, <literal>@&gt;</> and
+   <literal>&lt;@</> are equivalent to <productname>PostgreSQL</>'s built-in
+   operators of the same names, except that they work only on integer arrays
+   that do not contain nulls, while the built-in operators work for any array
+   type.  This restriction makes them faster than the built-in operators
+   in many cases.
   </para>
 
   <para>

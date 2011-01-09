@@ -153,13 +153,13 @@ g_intbig_compress(PG_FUNCTION_ARGS)
 	if (entry->leafkey)
 	{
 		GISTENTRY  *retval;
-		ArrayType  *in = (ArrayType *) PG_DETOAST_DATUM(entry->key);
+		ArrayType  *in = DatumGetArrayTypeP(entry->key);
 		int4	   *ptr;
 		int			num;
 		GISTTYPE   *res = (GISTTYPE *) palloc0(CALCGTSIZE(0));
 
 		CHECKARRVALID(in);
-		if (ARRISVOID(in))
+		if (ARRISEMPTY(in))
 		{
 			ptr = NULL;
 			num = 0;
@@ -182,7 +182,7 @@ g_intbig_compress(PG_FUNCTION_ARGS)
 					  entry->rel, entry->page,
 					  entry->offset, FALSE);
 
-		if (in != (ArrayType *) PG_DETOAST_DATUM(entry->key))
+		if (in != DatumGetArrayTypeP(entry->key))
 			pfree(in);
 
 		PG_RETURN_POINTER(retval);
@@ -504,7 +504,7 @@ Datum
 g_intbig_consistent(PG_FUNCTION_ARGS)
 {
 	GISTENTRY  *entry = (GISTENTRY *) PG_GETARG_POINTER(0);
-	ArrayType  *query = (ArrayType *) PG_DETOAST_DATUM(PG_GETARG_POINTER(1));
+	ArrayType  *query = PG_GETARG_ARRAYTYPE_P(1);
 	StrategyNumber strategy = (StrategyNumber) PG_GETARG_UINT16(2);
 
 	/* Oid		subtype = PG_GETARG_OID(3); */
@@ -527,11 +527,6 @@ g_intbig_consistent(PG_FUNCTION_ARGS)
 	}
 
 	CHECKARRVALID(query);
-	if (ARRISVOID(query))
-	{
-		PG_FREE_IF_COPY(query, 1);
-		PG_RETURN_BOOL(FALSE);
-	}
 
 	switch (strategy)
 	{
@@ -547,8 +542,6 @@ g_intbig_consistent(PG_FUNCTION_ARGS)
 				BITVEC		qp;
 				BITVECP		dq,
 							de;
-
-				CHECKARRVALID(query);
 
 				memset(qp, 0, sizeof(BITVEC));
 
@@ -588,8 +581,6 @@ g_intbig_consistent(PG_FUNCTION_ARGS)
 				BITVEC		qp;
 				BITVECP		dq,
 							de;
-
-				CHECKARRVALID(query);
 
 				memset(qp, 0, sizeof(BITVEC));
 

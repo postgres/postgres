@@ -3,6 +3,7 @@
  */
 #include "postgres.h"
 
+#include "miscadmin.h"
 #include "utils/builtins.h"
 
 #include "_int.h"
@@ -21,13 +22,6 @@ Datum		rboolop(PG_FUNCTION_ARGS);
 PG_FUNCTION_INFO_V1(querytree);
 Datum		querytree(PG_FUNCTION_ARGS);
 
-
-#define END		0
-#define ERR		1
-#define VAL		2
-#define OPR		3
-#define OPEN	4
-#define CLOSE	5
 
 /* parser's states */
 #define WAITOPERAND 1
@@ -167,6 +161,9 @@ makepol(WORKSTATE *state)
 	int4		stack[STACKDEPTH];
 	int4		lenstack = 0;
 
+	/* since this function recurses, it could be driven to stack overflow */
+	check_stack_depth();
+
 	while ((type = gettoken(state, &val)) != END)
 	{
 		switch (type)
@@ -236,7 +233,7 @@ typedef struct
 } CHKVAL;
 
 /*
- * is there value 'val' in array or not ?
+ * is there value 'val' in (sorted) array or not ?
  */
 static bool
 checkcondition_arr(void *checkval, ITEM *item)
@@ -267,11 +264,14 @@ checkcondition_bit(void *checkval, ITEM *item)
 }
 
 /*
- * check for boolean condition
+ * evaluate boolean expression, using chkcond() to test the primitive cases
  */
 static bool
-execute(ITEM *curitem, void *checkval, bool calcnot, bool (*chkcond) (void *checkval, ITEM *item))
+execute(ITEM *curitem, void *checkval, bool calcnot,
+		bool (*chkcond) (void *checkval, ITEM *item))
 {
+	/* since this function recurses, it could be driven to stack overflow */
+	check_stack_depth();
 
 	if (curitem->type == VAL)
 		return (*chkcond) (checkval, curitem);
@@ -304,13 +304,12 @@ execute(ITEM *curitem, void *checkval, bool calcnot, bool (*chkcond) (void *chec
 bool
 signconsistent(QUERYTYPE *query, BITVEC sign, bool calcnot)
 {
-	return execute(
-				   GETQUERY(query) + query->size - 1,
+	return execute(GETQUERY(query) + query->size - 1,
 				   (void *) sign, calcnot,
-				   checkcondition_bit
-		);
+				   checkcondition_bit);
 }
 
+/* Array must be sorted! */
 bool
 execconsistent(QUERYTYPE *query, ArrayType *array, bool calcnot)
 {
@@ -319,11 +318,9 @@ execconsistent(QUERYTYPE *query, ArrayType *array, bool calcnot)
 	CHECKARRVALID(array);
 	chkval.arrb = ARRPTR(array);
 	chkval.arre = chkval.arrb + ARRNELEMS(array);
-	return execute(
-				   GETQUERY(query) + query->size - 1,
+	return execute(GETQUERY(query) + query->size - 1,
 				   (void *) &chkval, calcnot,
-				   checkcondition_arr
-		);
+				   checkcondition_arr);
 }
 
 typedef struct
@@ -341,27 +338,75 @@ checkcondition_gin(void *checkval, ITEM *item)
 }
 
 bool
-ginconsistent(QUERYTYPE *query, bool *check)
+gin_bool_consistent(QUERYTYPE *query, bool *check)
 {
 	GinChkVal	gcv;
 	ITEM	   *items = GETQUERY(query);
 	int			i,
 				j = 0;
 
-	if (query->size < 0)
+	if (query->size <= 0)
 		return FALSE;
 
+	/*
+	 * Set up data for checkcondition_gin.  This must agree with the
+	 * query extraction code in ginint4_queryextract.
+	 */
 	gcv.first = items;
 	gcv.mapped_check = (bool *) palloc(sizeof(bool) * query->size);
 	for (i = 0; i < query->size; i++)
+	{
 		if (items[i].type == VAL)
 			gcv.mapped_check[i] = check[j++];
+	}
 
-	return execute(
-				   GETQUERY(query) + query->size - 1,
+	return execute(GETQUERY(query) + query->size - 1,
 				   (void *) &gcv, true,
-				   checkcondition_gin
-		);
+				   checkcondition_gin);
+}
+
+static bool
+contains_required_value(ITEM *curitem)
+{
+	/* since this function recurses, it could be driven to stack overflow */
+	check_stack_depth();
+
+	if (curitem->type == VAL)
+		return true;
+	else if (curitem->val == (int4) '!')
+	{
+		/*
+		 * Assume anything under a NOT is non-required.  For some cases with
+		 * nested NOTs, we could prove there's a required value, but it seems
+		 * unlikely to be worth the trouble.
+		 */
+		return false;
+	}
+	else if (curitem->val == (int4) '&')
+	{
+		/* If either side has a required value, we're good */
+		if (contains_required_value(curitem + curitem->left))
+			return true;
+		else
+			return contains_required_value(curitem - 1);
+	}
+	else
+	{							/* |-operator */
+		/* Both sides must have required values */
+		if (contains_required_value(curitem + curitem->left))
+			return contains_required_value(curitem - 1);
+		else
+			return false;
+	}
+	return false;
+}
+
+bool
+query_has_required_values(QUERYTYPE *query)
+{
+	if (query->size <= 0)
+		return false;
+	return contains_required_value(GETQUERY(query) + query->size - 1);
 }
 
 /*
@@ -370,37 +415,27 @@ ginconsistent(QUERYTYPE *query, bool *check)
 Datum
 rboolop(PG_FUNCTION_ARGS)
 {
-	return DirectFunctionCall2(
-							   boolop,
+	/* just reverse the operands */
+	return DirectFunctionCall2(boolop,
 							   PG_GETARG_DATUM(1),
-							   PG_GETARG_DATUM(0)
-		);
+							   PG_GETARG_DATUM(0));
 }
 
 Datum
 boolop(PG_FUNCTION_ARGS)
 {
-	ArrayType  *val = (ArrayType *) PG_DETOAST_DATUM_COPY(PG_GETARG_POINTER(0));
-	QUERYTYPE  *query = (QUERYTYPE *) PG_DETOAST_DATUM(PG_GETARG_POINTER(1));
+	ArrayType  *val = PG_GETARG_ARRAYTYPE_P_COPY(0);
+	QUERYTYPE  *query = PG_GETARG_QUERYTYPE_P(1);
 	CHKVAL		chkval;
 	bool		result;
 
 	CHECKARRVALID(val);
-	if (ARRISVOID(val))
-	{
-		pfree(val);
-		PG_FREE_IF_COPY(query, 1);
-		PG_RETURN_BOOL(false);
-	}
-
 	PREPAREARR(val);
 	chkval.arrb = ARRPTR(val);
 	chkval.arre = chkval.arrb + ARRNELEMS(val);
-	result = execute(
-					 GETQUERY(query) + query->size - 1,
+	result = execute(GETQUERY(query) + query->size - 1,
 					 &chkval, true,
-					 checkcondition_arr
-		);
+					 checkcondition_arr);
 	pfree(val);
 
 	PG_FREE_IF_COPY(query, 1);
@@ -599,7 +634,7 @@ infix(INFIX *in, bool first)
 Datum
 bqarr_out(PG_FUNCTION_ARGS)
 {
-	QUERYTYPE  *query = (QUERYTYPE *) PG_DETOAST_DATUM(PG_GETARG_POINTER(0));
+	QUERYTYPE  *query = PG_GETARG_QUERYTYPE_P(0);
 	INFIX		nrm;
 
 	if (query->size == 0)
@@ -617,173 +652,11 @@ bqarr_out(PG_FUNCTION_ARGS)
 	PG_RETURN_POINTER(nrm.buf);
 }
 
-static int4
-countdroptree(ITEM *q, int4 pos)
-{
-	if (q[pos].type == VAL)
-		return 1;
-	else if (q[pos].val == (int4) '!')
-		return 1 + countdroptree(q, pos - 1);
-	else
-		return 1 + countdroptree(q, pos - 1) + countdroptree(q, pos + q[pos].left);
-}
 
-/*
- * common algorithm:
- * result of all '!' will be = 'true', so
- * we can modify query tree for clearing
- */
-int4
-shorterquery(ITEM *q, int4 len)
-{
-	int4		index,
-				posnot,
-				poscor;
-	bool		notisleft = false;
-	int4		drop,
-				i;
-
-	/* out all '!' */
-	do
-	{
-		index = 0;
-		drop = 0;
-		/* find ! */
-		for (posnot = 0; posnot < len; posnot++)
-			if (q[posnot].type == OPR && q[posnot].val == (int4) '!')
-			{
-				index = 1;
-				break;
-			}
-
-		if (posnot == len)
-			return len;
-
-		/* last operator is ! */
-		if (posnot == len - 1)
-			return 0;
-
-		/* find operator for this operand */
-		for (poscor = posnot + 1; poscor < len; poscor++)
-		{
-			if (q[poscor].type == OPR)
-			{
-				if (poscor == posnot + 1)
-				{
-					notisleft = false;
-					break;
-				}
-				else if (q[poscor].left + poscor == posnot)
-				{
-					notisleft = true;
-					break;
-				}
-			}
-		}
-		if (q[poscor].val == (int4) '!')
-		{
-			drop = countdroptree(q, poscor);
-			q[poscor - 1].type = VAL;
-			for (i = poscor + 1; i < len; i++)
-				if (q[i].type == OPR && q[i].left + i <= poscor)
-					q[i].left += drop - 2;
-			memcpy((void *) &q[poscor - drop + 1],
-				   (void *) &q[poscor - 1],
-				   sizeof(ITEM) * (len - (poscor - 1)));
-			len -= drop - 2;
-		}
-		else if (q[poscor].val == (int4) '|')
-		{
-			drop = countdroptree(q, poscor);
-			q[poscor - 1].type = VAL;
-			q[poscor].val = (int4) '!';
-			q[poscor].left = -1;
-			for (i = poscor + 1; i < len; i++)
-				if (q[i].type == OPR && q[i].left + i < poscor)
-					q[i].left += drop - 2;
-			memcpy((void *) &q[poscor - drop + 1],
-				   (void *) &q[poscor - 1],
-				   sizeof(ITEM) * (len - (poscor - 1)));
-			len -= drop - 2;
-		}
-		else
-		{						/* &-operator */
-			if (
-				(notisleft && q[poscor - 1].type == OPR &&
-				 q[poscor - 1].val == (int4) '!') ||
-				(!notisleft && q[poscor + q[poscor].left].type == OPR &&
-				 q[poscor + q[poscor].left].val == (int4) '!')
-				)
-			{					/* drop subtree */
-				drop = countdroptree(q, poscor);
-				q[poscor - 1].type = VAL;
-				q[poscor].val = (int4) '!';
-				q[poscor].left = -1;
-				for (i = poscor + 1; i < len; i++)
-					if (q[i].type == OPR && q[i].left + i < poscor)
-						q[i].left += drop - 2;
-				memcpy((void *) &q[poscor - drop + 1],
-					   (void *) &q[poscor - 1],
-					   sizeof(ITEM) * (len - (poscor - 1)));
-				len -= drop - 2;
-			}
-			else
-			{					/* drop only operator */
-				int4		subtreepos = (notisleft) ?
-				poscor - 1 : poscor + q[poscor].left;
-				int4		subtreelen = countdroptree(q, subtreepos);
-
-				drop = countdroptree(q, poscor);
-				for (i = poscor + 1; i < len; i++)
-					if (q[i].type == OPR && q[i].left + i < poscor)
-						q[i].left += drop - subtreelen;
-				memcpy((void *) &q[subtreepos + 1],
-					   (void *) &q[poscor + 1],
-					   sizeof(ITEM) * (len - (poscor - 1)));
-				memcpy((void *) &q[poscor - drop + 1],
-					   (void *) &q[subtreepos - subtreelen + 1],
-					   sizeof(ITEM) * (len - (drop - subtreelen)));
-				len -= drop - subtreelen;
-			}
-		}
-	} while (index);
-	return len;
-}
-
-
+/* Useless old "debugging" function for a fundamentally wrong algorithm */
 Datum
 querytree(PG_FUNCTION_ARGS)
 {
-	QUERYTYPE  *query = (QUERYTYPE *) PG_DETOAST_DATUM(PG_GETARG_POINTER(0));
-	INFIX		nrm;
-	text	   *res;
-	ITEM	   *q;
-	int4		len;
-
-	if (query->size == 0)
-		ereport(ERROR,
-				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-				 errmsg("empty query")));
-
-	q = (ITEM *) palloc(sizeof(ITEM) * query->size);
-	memcpy((void *) q, GETQUERY(query), sizeof(ITEM) * query->size);
-	len = shorterquery(q, query->size);
-	PG_FREE_IF_COPY(query, 0);
-
-	if (len == 0)
-	{
-		res = cstring_to_text("T");
-	}
-	else
-	{
-		nrm.curpol = q + len - 1;
-		nrm.buflen = 32;
-		nrm.cur = nrm.buf = (char *) palloc(sizeof(char) * nrm.buflen);
-		*(nrm.cur) = '\0';
-		infix(&nrm, true);
-		res = cstring_to_text_with_len(nrm.buf, nrm.cur - nrm.buf);
-	}
-	pfree(q);
-
-	PG_RETURN_TEXT_P(res);
+	elog(ERROR, "querytree is no longer implemented");
+	PG_RETURN_NULL();
 }

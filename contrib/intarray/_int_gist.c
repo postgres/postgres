@@ -40,7 +40,7 @@ Datum
 g_int_consistent(PG_FUNCTION_ARGS)
 {
 	GISTENTRY  *entry = (GISTENTRY *) PG_GETARG_POINTER(0);
-	ArrayType  *query = (ArrayType *) PG_DETOAST_DATUM_COPY(PG_GETARG_POINTER(1));
+	ArrayType  *query = PG_GETARG_ARRAYTYPE_P_COPY(1);
 	StrategyNumber strategy = (StrategyNumber) PG_GETARG_UINT16(2);
 
 	/* Oid		subtype = PG_GETARG_OID(3); */
@@ -62,11 +62,6 @@ g_int_consistent(PG_FUNCTION_ARGS)
 
 	/* sort query for fast search, key is already sorted */
 	CHECKARRVALID(query);
-	if (ARRISVOID(query))
-	{
-		pfree(query);
-		PG_RETURN_BOOL(false);
-	}
 	PREPAREARR(query);
 
 	switch (strategy)
@@ -77,12 +72,10 @@ g_int_consistent(PG_FUNCTION_ARGS)
 			break;
 		case RTSameStrategyNumber:
 			if (GIST_LEAF(entry))
-				DirectFunctionCall3(
-									g_int_same,
+				DirectFunctionCall3(g_int_same,
 									entry->key,
 									PointerGetDatum(query),
-									PointerGetDatum(&retval)
-					);
+									PointerGetDatum(&retval));
 			else
 				retval = inner_int_contains((ArrayType *) DatumGetPointer(entry->key),
 											query);
@@ -162,7 +155,7 @@ g_int_compress(PG_FUNCTION_ARGS)
 
 	if (entry->leafkey)
 	{
-		r = (ArrayType *) PG_DETOAST_DATUM_COPY(entry->key);
+		r = DatumGetArrayTypePCopy(entry->key);
 		CHECKARRVALID(r);
 		PREPAREARR(r);
 
@@ -182,9 +175,9 @@ g_int_compress(PG_FUNCTION_ARGS)
 	 * ==true, so now we work only with internal keys
 	 */
 
-	r = (ArrayType *) PG_DETOAST_DATUM(entry->key);
+	r = DatumGetArrayTypeP(entry->key);
 	CHECKARRVALID(r);
-	if (ARRISVOID(r))
+	if (ARRISEMPTY(r))
 	{
 		if (r != (ArrayType *) DatumGetPointer(entry->key))
 			pfree(r);
@@ -194,7 +187,7 @@ g_int_compress(PG_FUNCTION_ARGS)
 	if ((len = ARRNELEMS(r)) >= 2 * MAXNUMRANGE)
 	{							/* compress */
 		if (r == (ArrayType *) DatumGetPointer(entry->key))
-			r = (ArrayType *) PG_DETOAST_DATUM_COPY(entry->key);
+			r = DatumGetArrayTypePCopy(entry->key);
 		r = resize_intArrayType(r, 2 * (len));
 
 		dr = ARRPTR(r);
@@ -242,10 +235,10 @@ g_int_decompress(PG_FUNCTION_ARGS)
 	int			i,
 				j;
 
-	in = (ArrayType *) PG_DETOAST_DATUM(entry->key);
+	in = DatumGetArrayTypeP(entry->key);
 
 	CHECKARRVALID(in);
-	if (ARRISVOID(in))
+	if (ARRISEMPTY(in))
 	{
 		if (in != (ArrayType *) DatumGetPointer(entry->key))
 		{
@@ -321,8 +314,8 @@ g_int_penalty(PG_FUNCTION_ARGS)
 Datum
 g_int_same(PG_FUNCTION_ARGS)
 {
-	ArrayType  *a = (ArrayType *) PointerGetDatum(PG_GETARG_POINTER(0));
-	ArrayType  *b = (ArrayType *) PointerGetDatum(PG_GETARG_POINTER(1));
+	ArrayType  *a = PG_GETARG_ARRAYTYPE_P(0);
+	ArrayType  *b = PG_GETARG_ARRAYTYPE_P(1);
 	bool	   *result = (bool *) PG_GETARG_POINTER(2);
 	int4		n = ARRNELEMS(a);
 	int4	   *da,
@@ -340,11 +333,13 @@ g_int_same(PG_FUNCTION_ARGS)
 	da = ARRPTR(a);
 	db = ARRPTR(b);
 	while (n--)
+	{
 		if (*da++ != *db++)
 		{
 			*result = FALSE;
 			break;
 		}
+	}
 
 	PG_RETURN_POINTER(result);
 }

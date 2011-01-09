@@ -8,6 +8,7 @@
 #include "_int.h"
 
 
+/* arguments are assumed sorted & unique-ified */
 bool
 inner_int_contains(ArrayType *a, ArrayType *b)
 {
@@ -19,12 +20,6 @@ inner_int_contains(ArrayType *a, ArrayType *b)
 	int		   *da,
 			   *db;
 
-	CHECKARRVALID(a);
-	CHECKARRVALID(b);
-
-	if (ARRISVOID(a) || ARRISVOID(b))
-		return FALSE;
-
 	na = ARRNELEMS(a);
 	nb = ARRNELEMS(b);
 	da = ARRPTR(a);
@@ -32,6 +27,7 @@ inner_int_contains(ArrayType *a, ArrayType *b)
 
 	i = j = n = 0;
 	while (i < na && j < nb)
+	{
 		if (da[i] < db[j])
 			i++;
 		else if (da[i] == db[j])
@@ -41,11 +37,13 @@ inner_int_contains(ArrayType *a, ArrayType *b)
 			j++;
 		}
 		else
-			break;
+			break;				/* db[j] is not in da */
+	}
 
 	return (n == nb) ? TRUE : FALSE;
 }
 
+/* arguments are assumed sorted */
 bool
 inner_int_overlap(ArrayType *a, ArrayType *b)
 {
@@ -56,12 +54,6 @@ inner_int_overlap(ArrayType *a, ArrayType *b)
 	int		   *da,
 			   *db;
 
-	CHECKARRVALID(a);
-	CHECKARRVALID(b);
-
-	if (ARRISVOID(a) || ARRISVOID(b))
-		return FALSE;
-
 	na = ARRNELEMS(a);
 	nb = ARRNELEMS(b);
 	da = ARRPTR(a);
@@ -69,12 +61,14 @@ inner_int_overlap(ArrayType *a, ArrayType *b)
 
 	i = j = 0;
 	while (i < na && j < nb)
+	{
 		if (da[i] < db[j])
 			i++;
 		else if (da[i] == db[j])
 			return TRUE;
 		else
 			j++;
+	}
 
 	return FALSE;
 }
@@ -87,11 +81,11 @@ inner_int_union(ArrayType *a, ArrayType *b)
 	CHECKARRVALID(a);
 	CHECKARRVALID(b);
 
-	if (ARRISVOID(a) && ARRISVOID(b))
+	if (ARRISEMPTY(a) && ARRISEMPTY(b))
 		return new_intArrayType(0);
-	if (ARRISVOID(a))
+	if (ARRISEMPTY(a))
 		r = copy_intArrayType(b);
-	if (ARRISVOID(b))
+	if (ARRISEMPTY(b))
 		r = copy_intArrayType(a);
 
 	if (!r)
@@ -148,10 +142,7 @@ inner_int_inter(ArrayType *a, ArrayType *b)
 	int			i,
 				j;
 
-	CHECKARRVALID(a);
-	CHECKARRVALID(b);
-
-	if (ARRISVOID(a) || ARRISVOID(b))
+	if (ARRISEMPTY(a) || ARRISEMPTY(b))
 		return new_intArrayType(0);
 
 	na = ARRNELEMS(a);
@@ -163,6 +154,7 @@ inner_int_inter(ArrayType *a, ArrayType *b)
 
 	i = j = 0;
 	while (i < na && j < nb)
+	{
 		if (da[i] < db[j])
 			i++;
 		else if (da[i] == db[j])
@@ -174,6 +166,7 @@ inner_int_inter(ArrayType *a, ArrayType *b)
 		}
 		else
 			j++;
+	}
 
 	if ((dr - ARRPTR(r)) == 0)
 	{
@@ -188,57 +181,60 @@ void
 rt__int_size(ArrayType *a, float *size)
 {
 	*size = (float) ARRNELEMS(a);
-
-	return;
 }
 
-
-/* len >= 2 */
+/* Sort the given data (len >= 2).  Return true if any duplicates found */
 bool
 isort(int4 *a, int len)
 {
-	int4		tmp,
-				index;
-	int4	   *cur,
+	int4		cur,
+				prev;
+	int4	   *pcur,
+			   *pprev,
 			   *end;
 	bool		r = FALSE;
 
+	/*
+	 * We use a simple insertion sort.  While this is O(N^2) in the worst
+	 * case, it's quite fast if the input is already sorted or nearly so.
+	 * Also, for not-too-large inputs it's faster than more complex methods
+	 * anyhow.
+	 */
 	end = a + len;
-	do
+	for (pcur = a + 1; pcur < end; pcur++)
 	{
-		index = 0;
-		cur = a + 1;
-		while (cur < end)
+		cur = *pcur;
+		for (pprev = pcur - 1; pprev >= a; pprev--)
 		{
-			if (*(cur - 1) > *cur)
+			prev = *pprev;
+			if (prev <= cur)
 			{
-				tmp = *(cur - 1);
-				*(cur - 1) = *cur;
-				*cur = tmp;
-				index = 1;
+				if (prev == cur)
+					r = TRUE;
+				break;
 			}
-			else if (!r && *(cur - 1) == *cur)
-				r = TRUE;
-			cur++;
+			pprev[1] = prev;
 		}
-	} while (index);
+		pprev[1] = cur;
+	}
 	return r;
 }
 
+/* Create a new int array with room for "num" elements */
 ArrayType *
 new_intArrayType(int num)
 {
 	ArrayType  *r;
-	int			nbytes = ARR_OVERHEAD_NONULLS(NDIM) + sizeof(int) * num;
+	int			nbytes = ARR_OVERHEAD_NONULLS(1) + sizeof(int) * num;
 
 	r = (ArrayType *) palloc0(nbytes);
 
 	SET_VARSIZE(r, nbytes);
-	ARR_NDIM(r) = NDIM;
+	ARR_NDIM(r) = 1;
 	r->dataoffset = 0;			/* marker for no null bitmap */
 	ARR_ELEMTYPE(r) = INT4OID;
-	*((int *) ARR_DIMS(r)) = num;
-	*((int *) ARR_LBOUND(r)) = 1;
+	ARR_DIMS(r)[0] = num;
+	ARR_LBOUND(r)[0] = 1;
 
 	return r;
 }
@@ -246,7 +242,8 @@ new_intArrayType(int num)
 ArrayType *
 resize_intArrayType(ArrayType *a, int num)
 {
-	int			nbytes = ARR_OVERHEAD_NONULLS(NDIM) + sizeof(int) * num;
+	int			nbytes = ARR_DATA_OFFSET(a) + sizeof(int) * num;
+	int			i;
 
 	if (num == ARRNELEMS(a))
 		return a;
@@ -254,7 +251,12 @@ resize_intArrayType(ArrayType *a, int num)
 	a = (ArrayType *) repalloc(a, nbytes);
 
 	SET_VARSIZE(a, nbytes);
-	*((int *) ARR_DIMS(a)) = num;
+	/* usually the array should be 1-D already, but just in case ... */
+	for (i = 0; i < ARR_NDIM(a); i++)
+	{
+		ARR_DIMS(a)[i] = num;
+		num = 1;
+	}
 	return a;
 }
 
@@ -262,9 +264,10 @@ ArrayType *
 copy_intArrayType(ArrayType *a)
 {
 	ArrayType  *r;
+	int			n = ARRNELEMS(a);
 
-	r = new_intArrayType(ARRNELEMS(a));
-	memmove(r, a, VARSIZE(r));
+	r = new_intArrayType(n);
+	memcpy(ARRPTR(r), ARRPTR(a), n * sizeof(int4));
 	return r;
 }
 
@@ -276,13 +279,15 @@ internal_size(int *a, int len)
 				size = 0;
 
 	for (i = 0; i < len; i += 2)
+	{
 		if (!i || a[i] != a[i - 1])		/* do not count repeated range */
 			size += a[i + 1] - a[i] + 1;
+	}
 
 	return size;
 }
 
-/* r is sorted and size of r > 1 */
+/* unique-ify elements of r in-place ... r must be sorted already */
 ArrayType *
 _int_unique(ArrayType *r)
 {
@@ -291,17 +296,17 @@ _int_unique(ArrayType *r)
 			   *data;
 	int			num = ARRNELEMS(r);
 
-	CHECKARRVALID(r);
-
 	if (num < 2)
 		return r;
 
 	data = tmp = dr = ARRPTR(r);
 	while (tmp - data < num)
+	{
 		if (*tmp != *dr)
 			*(++dr) = *tmp++;
 		else
 			tmp++;
+	}
 	return resize_intArrayType(r, dr + 1 - ARRPTR(r));
 }
 
@@ -326,8 +331,6 @@ intarray_match_first(ArrayType *a, int32 elem)
 				i;
 
 	CHECKARRVALID(a);
-	if (ARRISVOID(a))
-		return 0;
 	c = ARRNELEMS(a);
 	aa = ARRPTR(a);
 	for (i = 0; i < c; i++)
@@ -344,7 +347,7 @@ intarray_add_elem(ArrayType *a, int32 elem)
 	int32		c;
 
 	CHECKARRVALID(a);
-	c = (ARRISVOID(a)) ? 0 : ARRNELEMS(a);
+	c = ARRNELEMS(a);
 	result = new_intArrayType(c + 1);
 	r = ARRPTR(result);
 	if (c > 0)
@@ -357,8 +360,8 @@ ArrayType *
 intarray_concat_arrays(ArrayType *a, ArrayType *b)
 {
 	ArrayType  *result;
-	int32		ac = (ARRISVOID(a)) ? 0 : ARRNELEMS(a);
-	int32		bc = (ARRISVOID(b)) ? 0 : ARRNELEMS(b);
+	int32		ac = ARRNELEMS(a);
+	int32		bc = ARRNELEMS(b);
 
 	CHECKARRVALID(a);
 	CHECKARRVALID(b);

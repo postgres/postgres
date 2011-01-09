@@ -3,6 +3,7 @@
  */
 #include "postgres.h"
 
+#include "access/gin.h"
 #include "access/gist.h"
 #include "access/skey.h"
 
@@ -16,66 +17,90 @@ ginint4_queryextract(PG_FUNCTION_ARGS)
 {
 	int32	   *nentries = (int32 *) PG_GETARG_POINTER(1);
 	StrategyNumber strategy = PG_GETARG_UINT16(2);
+	int32	   *searchMode = (int32 *) PG_GETARG_POINTER(6);
 	Datum	   *res = NULL;
 
 	*nentries = 0;
 
 	if (strategy == BooleanSearchStrategy)
 	{
-		QUERYTYPE  *query = (QUERYTYPE *) PG_DETOAST_DATUM_COPY(PG_GETARG_POINTER(0));
+		QUERYTYPE  *query = PG_GETARG_QUERYTYPE_P(0);
 		ITEM	   *items = GETQUERY(query);
 		int			i;
 
-		if (query->size == 0)
+		/* empty query must fail */
+		if (query->size <= 0)
 			PG_RETURN_POINTER(NULL);
 
-		if (shorterquery(items, query->size) == 0)
-			elog(ERROR, "Query requires full scan, GIN doesn't support it");
+		/*
+		 * If the query doesn't have any required primitive values (for
+		 * instance, it's something like '! 42'), we have to do a full
+		 * index scan.
+		 */
+		if (query_has_required_values(query))
+			*searchMode = GIN_SEARCH_MODE_DEFAULT;
+		else
+			*searchMode = GIN_SEARCH_MODE_ALL;
 
-		pfree(query);
-
-		query = (QUERYTYPE *) PG_DETOAST_DATUM(PG_GETARG_POINTER(0));
-		items = GETQUERY(query);
-
+		/*
+		 * Extract all the VAL items as things we want GIN to check for.
+		 */
 		res = (Datum *) palloc(sizeof(Datum) * query->size);
 		*nentries = 0;
 
 		for (i = 0; i < query->size; i++)
+		{
 			if (items[i].type == VAL)
 			{
 				res[*nentries] = Int32GetDatum(items[i].val);
 				(*nentries)++;
 			}
+		}
 	}
 	else
 	{
 		ArrayType  *query = PG_GETARG_ARRAYTYPE_P(0);
-		int4	   *arr;
-		uint32		i;
 
 		CHECKARRVALID(query);
 		*nentries = ARRNELEMS(query);
 		if (*nentries > 0)
 		{
+			int4	   *arr;
+			int32		i;
+
 			res = (Datum *) palloc(sizeof(Datum) * (*nentries));
 
 			arr = ARRPTR(query);
 			for (i = 0; i < *nentries; i++)
 				res[i] = Int32GetDatum(arr[i]);
 		}
-	}
 
-	if (*nentries == 0)
-	{
 		switch (strategy)
 		{
-			case BooleanSearchStrategy:
 			case RTOverlapStrategyNumber:
-				*nentries = -1; /* nobody can be found */
+				*searchMode = GIN_SEARCH_MODE_DEFAULT;
 				break;
-			default:			/* require fullscan: GIN can't find void
-								 * arrays */
+			case RTContainedByStrategyNumber:
+			case RTOldContainedByStrategyNumber:
+				/* empty set is contained in everything */
+				*searchMode = GIN_SEARCH_MODE_INCLUDE_EMPTY;
 				break;
+			case RTSameStrategyNumber:
+				if (*nentries > 0)
+					*searchMode = GIN_SEARCH_MODE_DEFAULT;
+				else
+					*searchMode = GIN_SEARCH_MODE_INCLUDE_EMPTY;
+				break;
+			case RTContainsStrategyNumber:
+			case RTOldContainsStrategyNumber:
+				if (*nentries > 0)
+					*searchMode = GIN_SEARCH_MODE_DEFAULT;
+				else				/* everything contains the empty set */
+					*searchMode = GIN_SEARCH_MODE_ALL;
+				break;
+			default:
+				elog(ERROR, "ginint4_queryextract: unknown strategy number: %d",
+					 strategy);
 		}
 	}
 
@@ -90,16 +115,11 @@ ginint4_consistent(PG_FUNCTION_ARGS)
 {
 	bool	   *check = (bool *) PG_GETARG_POINTER(0);
 	StrategyNumber strategy = PG_GETARG_UINT16(1);
-
-	/* int32	nkeys = PG_GETARG_INT32(3); */
+	int32		nkeys = PG_GETARG_INT32(3);
 	/* Pointer	   *extra_data = (Pointer *) PG_GETARG_POINTER(4); */
 	bool	   *recheck = (bool *) PG_GETARG_POINTER(5);
 	bool		res = FALSE;
-
-	/*
-	 * we need not check array carefully, it's done by previous
-	 * ginarrayextract call
-	 */
+	int32		i;
 
 	switch (strategy)
 	{
@@ -117,47 +137,41 @@ ginint4_consistent(PG_FUNCTION_ARGS)
 			res = TRUE;
 			break;
 		case RTSameStrategyNumber:
+			/* we will need recheck */
+			*recheck = true;
+			/* Must have all elements in check[] true */
+			res = TRUE;
+			for (i = 0; i < nkeys; i++)
 			{
-				ArrayType  *query = PG_GETARG_ARRAYTYPE_P(2);
-				int			i,
-							nentries = ARRNELEMS(query);
-
-				/* we will need recheck */
-				*recheck = true;
-				res = TRUE;
-				for (i = 0; i < nentries; i++)
-					if (!check[i])
-					{
-						res = FALSE;
-						break;
-					}
+				if (!check[i])
+				{
+					res = FALSE;
+					break;
+				}
 			}
 			break;
 		case RTContainsStrategyNumber:
 		case RTOldContainsStrategyNumber:
+			/* result is not lossy */
+			*recheck = false;
+			/* Must have all elements in check[] true */
+			res = TRUE;
+			for (i = 0; i < nkeys; i++)
 			{
-				ArrayType  *query = PG_GETARG_ARRAYTYPE_P(2);
-				int			i,
-							nentries = ARRNELEMS(query);
-
-				/* result is not lossy */
-				*recheck = false;
-				res = TRUE;
-				for (i = 0; i < nentries; i++)
-					if (!check[i])
-					{
-						res = FALSE;
-						break;
-					}
+				if (!check[i])
+				{
+					res = FALSE;
+					break;
+				}
 			}
 			break;
 		case BooleanSearchStrategy:
 			{
-				QUERYTYPE  *query = (QUERYTYPE *) PG_DETOAST_DATUM(PG_GETARG_POINTER(2));
+				QUERYTYPE  *query = PG_GETARG_QUERYTYPE_P(2);
 
 				/* result is not lossy */
 				*recheck = false;
-				res = ginconsistent(query, check);
+				res = gin_bool_consistent(query, check);
 			}
 			break;
 		default:
