@@ -19,6 +19,9 @@ Datum		gin_extract_trgm(PG_FUNCTION_ARGS);
 PG_FUNCTION_INFO_V1(gin_trgm_consistent);
 Datum		gin_trgm_consistent(PG_FUNCTION_ARGS);
 
+/*
+ * This function is used as both extractValue and extractQuery
+ */
 Datum
 gin_extract_trgm(PG_FUNCTION_ARGS)
 {
@@ -26,7 +29,7 @@ gin_extract_trgm(PG_FUNCTION_ARGS)
 	int32	   *nentries = (int32 *) PG_GETARG_POINTER(1);
 	Datum	   *entries = NULL;
 	TRGM	   *trg;
-	int4		trglen;
+	int32		trglen;
 
 	*nentries = 0;
 
@@ -36,30 +39,18 @@ gin_extract_trgm(PG_FUNCTION_ARGS)
 	if (trglen > 0)
 	{
 		trgm	   *ptr;
-		int4		i = 0,
-					item;
+		int32		i;
 
-		*nentries = (int32) trglen;
+		*nentries = trglen;
 		entries = (Datum *) palloc(sizeof(Datum) * trglen);
 
 		ptr = GETARR(trg);
-		while (ptr - GETARR(trg) < ARRNELEM(trg))
+		for (i = 0; i < trglen; i++)
 		{
-			item = trgm2int(ptr);
-			entries[i++] = Int32GetDatum(item);
+			int32	item = trgm2int(ptr);
 
+			entries[i] = Int32GetDatum(item);
 			ptr++;
-		}
-		if (PG_NARGS() > 4)
-		{
-			/*
-			 * Function called from query extracting
-			 */
-			Pointer   **extra_data = (Pointer **) PG_GETARG_POINTER(4);
-
-			*extra_data = (Pointer *) palloc0(sizeof(Pointer) * (*nentries));
-
-			*(int32 *) (*extra_data) = trglen;
 		}
 	}
 
@@ -70,30 +61,29 @@ Datum
 gin_trgm_consistent(PG_FUNCTION_ARGS)
 {
 	bool	   *check = (bool *) PG_GETARG_POINTER(0);
-
 	/* StrategyNumber strategy = PG_GETARG_UINT16(1); */
 	/* text    *query = PG_GETARG_TEXT_P(2); */
-	/* int32	nkeys = PG_GETARG_INT32(3); */
-	Pointer    *extra_data = (Pointer *) PG_GETARG_POINTER(4);
+	int32		nkeys = PG_GETARG_INT32(3);
+	/* Pointer    *extra_data = (Pointer *) PG_GETARG_POINTER(4); */
 	bool	   *recheck = (bool *) PG_GETARG_POINTER(5);
 	bool		res = FALSE;
-	int4		i,
-				trglen,
+	int32		i,
 				ntrue = 0;
 
 	/* All cases served by this function are inexact */
 	*recheck = true;
 
-	trglen = *(int32 *) extra_data;
-
-	for (i = 0; i < trglen; i++)
+	/* Count the matches */
+	for (i = 0; i < nkeys; i++)
+	{
 		if (check[i])
 			ntrue++;
+	}
 
 #ifdef DIVUNION
-	res = (trglen == ntrue) ? true : ((((((float4) ntrue) / ((float4) (trglen - ntrue)))) >= trgm_limit) ? true : false);
+	res = (nkeys == ntrue) ? true : ((((((float4) ntrue) / ((float4) (nkeys - ntrue)))) >= trgm_limit) ? true : false);
 #else
-	res = (trglen == 0) ? false : ((((((float4) ntrue) / ((float4) trglen))) >= trgm_limit) ? true : false);
+	res = (nkeys == 0) ? false : ((((((float4) ntrue) / ((float4) nkeys))) >= trgm_limit) ? true : false);
 #endif
 
 	PG_RETURN_BOOL(res);
