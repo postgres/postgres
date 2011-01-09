@@ -4700,7 +4700,7 @@ array_fill_internal(ArrayType *dims, ArrayType *lbs,
 				 errmsg("wrong range of array subscripts"),
 				 errdetail("Lower bound of dimension array must be one.")));
 
-	if (ARR_HASNULL(dims))
+	if (array_contains_nulls(dims))
 		ereport(ERROR,
 				(errcode(ERRCODE_NULL_VALUE_NOT_ALLOWED),
 				 errmsg("dimension values cannot be null")));
@@ -4732,7 +4732,7 @@ array_fill_internal(ArrayType *dims, ArrayType *lbs,
 					 errmsg("wrong range of array subscripts"),
 				  errdetail("Lower bound of dimension array must be one.")));
 
-		if (ARR_HASNULL(lbs))
+		if (array_contains_nulls(lbs))
 			ereport(ERROR,
 					(errcode(ERRCODE_NULL_VALUE_NOT_ALLOWED),
 					 errmsg("dimension values cannot be null")));

@@ -187,7 +187,7 @@ cube_a_f8_f8(PG_FUNCTION_ARGS)
 	double	   *dur,
 			   *dll;
 
-	if (ARR_HASNULL(ur) || ARR_HASNULL(ll))
+	if (array_contains_nulls(ur) || array_contains_nulls(ll))
 		ereport(ERROR,
 				(errcode(ERRCODE_ARRAY_ELEMENT_ERROR),
 				 errmsg("cannot work with arrays containing NULLs")));
@@ -228,7 +228,7 @@ cube_a_f8(PG_FUNCTION_ARGS)
 	int			size;
 	double	   *dur;
 
-	if (ARR_HASNULL(ur))
+	if (array_contains_nulls(ur))
 		ereport(ERROR,
 				(errcode(ERRCODE_ARRAY_ELEMENT_ERROR),
 				 errmsg("cannot work with arrays containing NULLs")));
@@ -262,7 +262,7 @@ cube_subset(PG_FUNCTION_ARGS)
 				i;
 	int		   *dx;
 
-	if (ARR_HASNULL(idx))
+	if (array_contains_nulls(idx))
 		ereport(ERROR,
 				(errcode(ERRCODE_ARRAY_ELEMENT_ERROR),
 				 errmsg("cannot work with arrays containing NULLs")));

@@ -408,7 +408,7 @@ getWeights(ArrayType *win)
 				(errcode(ERRCODE_ARRAY_SUBSCRIPT_ERROR),
 				 errmsg("array of weight is too short")));
 
-	if (ARR_HASNULL(win))
+	if (array_contains_nulls(win))
 		ereport(ERROR,
 				(errcode(ERRCODE_NULL_VALUE_NOT_ALLOWED),
 				 errmsg("array of weight must not contain nulls")));

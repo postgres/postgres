@@ -52,7 +52,7 @@ array_iterator(ArrayType *la, PGCALL2 callback, void *param, ltree **found)
 		ereport(ERROR,
 				(errcode(ERRCODE_ARRAY_SUBSCRIPT_ERROR),
 				 errmsg("array must be one-dimensional")));
-	if (ARR_HASNULL(la))
+	if (array_contains_nulls(la))
 		ereport(ERROR,
 				(errcode(ERRCODE_NULL_VALUE_NOT_ALLOWED),
 				 errmsg("array must not contain nulls")));
@@ -152,7 +152,7 @@ _lt_q_regex(PG_FUNCTION_ARGS)
 		ereport(ERROR,
 				(errcode(ERRCODE_ARRAY_SUBSCRIPT_ERROR),
 				 errmsg("array must be one-dimensional")));
-	if (ARR_HASNULL(_query))
+	if (array_contains_nulls(_query))
 		ereport(ERROR,
 				(errcode(ERRCODE_NULL_VALUE_NOT_ALLOWED),
 				 errmsg("array must not contain nulls")));
@@ -310,7 +310,7 @@ _lca(PG_FUNCTION_ARGS)
 		ereport(ERROR,
 				(errcode(ERRCODE_ARRAY_SUBSCRIPT_ERROR),
 				 errmsg("array must be one-dimensional")));
-	if (ARR_HASNULL(la))
+	if (array_contains_nulls(la))
 		ereport(ERROR,
 				(errcode(ERRCODE_NULL_VALUE_NOT_ALLOWED),
 				 errmsg("array must not contain nulls")));
