@@ -13,6 +13,7 @@
  */
 #include "postgres.h"
 
+#include "access/gin.h"
 #include "access/skey.h"
 #include "tsearch/ts_type.h"
 #include "tsearch/ts_utils.h"
@@ -26,8 +27,7 @@ gin_cmp_tslexeme(PG_FUNCTION_ARGS)
 	text	   *b = PG_GETARG_TEXT_PP(1);
 	int			cmp;
 
-	cmp = tsCompareString(
-						  VARDATA_ANY(a), VARSIZE_ANY_EXHDR(a),
+	cmp = tsCompareString(VARDATA_ANY(a), VARSIZE_ANY_EXHDR(a),
 						  VARDATA_ANY(b), VARSIZE_ANY_EXHDR(b),
 						  false);
 
@@ -48,8 +48,7 @@ gin_cmp_prefix(PG_FUNCTION_ARGS)
 #endif
 	int			cmp;
 
-	cmp = tsCompareString(
-						  VARDATA_ANY(a), VARSIZE_ANY_EXHDR(a),
+	cmp = tsCompareString(VARDATA_ANY(a), VARSIZE_ANY_EXHDR(a),
 						  VARDATA_ANY(b), VARSIZE_ANY_EXHDR(b),
 						  true);
 
@@ -96,71 +95,72 @@ gin_extract_tsquery(PG_FUNCTION_ARGS)
 {
 	TSQuery		query = PG_GETARG_TSQUERY(0);
 	int32	   *nentries = (int32 *) PG_GETARG_POINTER(1);
-
 	/* StrategyNumber strategy = PG_GETARG_UINT16(2); */
 	bool	  **ptr_partialmatch = (bool **) PG_GETARG_POINTER(3);
 	Pointer   **extra_data = (Pointer **) PG_GETARG_POINTER(4);
+	/* bool	  **nullFlags = (bool **) PG_GETARG_POINTER(5); */
+	int32	   *searchMode = (int32 *) PG_GETARG_POINTER(6);
 	Datum	   *entries = NULL;
-	bool	   *partialmatch;
 
 	*nentries = 0;
 
 	if (query->size > 0)
 	{
+		QueryItem  *item = GETQUERY(query);
 		int4		i,
-					j = 0,
-					len;
-		QueryItem  *item;
-		bool		use_fullscan = false;
+					j;
+		bool	   *partialmatch;
 		int		   *map_item_operand;
 
-		item = clean_NOT(GETQUERY(query), &len);
-		if (!item)
-		{
-			use_fullscan = true;
-			*nentries = 1;
-		}
+		/*
+		 * If the query doesn't have any required positive matches (for
+		 * instance, it's something like '! foo'), we have to do a full
+		 * index scan.
+		 */
+		if (tsquery_requires_match(item))
+			*searchMode = GIN_SEARCH_MODE_DEFAULT;
+		else
+			*searchMode = GIN_SEARCH_MODE_ALL;
 
-		item = GETQUERY(query);
-
+		/* count number of VAL items */
+		j = 0;
 		for (i = 0; i < query->size; i++)
+		{
 			if (item[i].type == QI_VAL)
-				(*nentries)++;
+				j++;
+		}
+		*nentries = j;
 
-		entries = (Datum *) palloc(sizeof(Datum) * (*nentries));
-		partialmatch = *ptr_partialmatch = (bool *) palloc(sizeof(bool) * (*nentries));
+		entries = (Datum *) palloc(sizeof(Datum) * j);
+		partialmatch = *ptr_partialmatch = (bool *) palloc(sizeof(bool) * j);
 
 		/*
 		 * Make map to convert item's number to corresponding operand's (the
 		 * same, entry's) number. Entry's number is used in check array in
 		 * consistent method. We use the same map for each entry.
 		 */
-		*extra_data = (Pointer *) palloc0(sizeof(Pointer) * (*nentries));
-		map_item_operand = palloc0(sizeof(int) * (query->size + 1));
+		*extra_data = (Pointer *) palloc(sizeof(Pointer) * j);
+		map_item_operand = (int *) palloc0(sizeof(int) * query->size);
 
+		/* Now rescan the VAL items and fill in the arrays */
+		j = 0;
 		for (i = 0; i < query->size; i++)
+		{
 			if (item[i].type == QI_VAL)
 			{
-				text	   *txt;
 				QueryOperand *val = &item[i].qoperand;
+				text	   *txt;
 
 				txt = cstring_to_text_with_len(GETOPERAND(query) + val->distance,
 											   val->length);
+				entries[j] = PointerGetDatum(txt);
+				partialmatch[j] = val->prefix;
 				(*extra_data)[j] = (Pointer) map_item_operand;
 				map_item_operand[i] = j;
-				partialmatch[j] = val->prefix;
-				entries[j++] = PointerGetDatum(txt);
+				j++;
 			}
-
-		if (use_fullscan)
-		{
-			(*extra_data)[j] = (Pointer) map_item_operand;
-			map_item_operand[i] = j;
-			entries[j++] = PointerGetDatum(cstring_to_text_with_len("", 0));
 		}
 	}
-	else
-		*nentries = -1;			/* nothing can be found */
 
 	PG_FREE_IF_COPY(query, 0);
 
@@ -222,12 +222,10 @@ gin_tsquery_consistent(PG_FUNCTION_ARGS)
 		gcv.map_item_operand = (int *) (extra_data[0]);
 		gcv.need_recheck = recheck;
 
-		res = TS_execute(
-						 GETQUERY(query),
+		res = TS_execute(GETQUERY(query),
 						 &gcv,
 						 true,
-						 checkcondition_gin
-			);
+						 checkcondition_gin);
 	}
 
 	PG_RETURN_BOOL(res);
