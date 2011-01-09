@@ -410,6 +410,8 @@ sub CopyIncludeFiles
         $target . '/include/server/',
         'src/include/', 'pg_config.h', 'pg_config_os.h'
     );
+    CopyFiles('Grammar header', $target . '/include/server/parser/',
+	      'src/backend/parser/', 'gram.h');
     CopySetOfFiles('', 
 				   [ glob( "src\\include\\*.h" ) ], 
 				   $target . '/include/server/');
