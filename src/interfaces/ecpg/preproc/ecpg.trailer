@@ -34,7 +34,7 @@ CreateAsStmt: CREATE OptTemp TABLE create_as_target AS {FoundInto = 0;} SelectSt
 			if (FoundInto == 1)
 				mmerror(PARSE_ERROR, ET_ERROR, "CREATE TABLE AS cannot specify INTO");
 
-			$$ = cat_str(6, make_str("create"), $2, make_str("table"), $4, make_str("as"), $7);
+			$$ = cat_str(6, mm_strdup("create"), $2, mm_strdup("table"), $4, mm_strdup("as"), $7);
 		}
 	;
 
@@ -55,14 +55,14 @@ at: AT connection_object
  * the exec sql connect statement: connect to the given database
  */
 ECPGConnect: SQL_CONNECT TO connection_target opt_connection_name opt_user
-			{ $$ = cat_str(5, $3, make_str(","), $5, make_str(","), $4); }
+			{ $$ = cat_str(5, $3, mm_strdup(","), $5, mm_strdup(","), $4); }
 		| SQL_CONNECT TO DEFAULT
-			{ $$ = make_str("NULL, NULL, NULL, \"DEFAULT\""); }
+			{ $$ = mm_strdup("NULL, NULL, NULL, \"DEFAULT\""); }
 		  /* also allow ORACLE syntax */
 		| SQL_CONNECT ora_user
-			{ $$ = cat_str(3, make_str("NULL,"), $2, make_str(", NULL")); }
+			{ $$ = cat_str(3, mm_strdup("NULL,"), $2, mm_strdup(", NULL")); }
 		| DATABASE connection_target
-			{ $$ = cat2_str($2, make_str(", NULL, NULL, NULL")); }
+			{ $$ = cat2_str($2, mm_strdup(", NULL, NULL, NULL")); }
 		;
 
 connection_target: opt_database_name opt_server opt_port
@@ -75,7 +75,7 @@ connection_target: opt_database_name opt_server opt_port
 			if ($1[0] == '\"')
 				$$ = $1;
 			else
-				$$ = make3_str(make_str("\""), make3_str($1, $2, $3), make_str("\""));
+				$$ = make3_str(mm_strdup("\""), make3_str($1, $2, $3), mm_strdup("\""));
 		}
 		|  db_prefix ':' server opt_port '/' opt_database_name opt_options
 		{
@@ -91,7 +91,7 @@ connection_target: opt_database_name opt_server opt_port
 				strncmp($3 + strlen("//"), "127.0.0.1", strlen("127.0.0.1")) != 0)
 				mmerror(PARSE_ERROR, ET_ERROR, "Unix-domain sockets only work on \"localhost\" but not on \"%s\"", $3 + strlen("//"));
 
-			$$ = make3_str(make3_str(make_str("\""), $1, make_str(":")), $3, make3_str(make3_str($4, make_str("/"), $6),	$7, make_str("\"")));
+			$$ = make3_str(make3_str(mm_strdup("\""), $1, mm_strdup(":")), $3, make3_str(make3_str($4, mm_strdup("/"), $6),	$7, mm_strdup("\"")));
 		}
 		| char_variable
 		{
@@ -120,7 +120,7 @@ db_prefix: ecpg_ident cvariable
 			if (strcmp($1, "tcp") != 0 && strcmp($1, "unix") != 0)
 				mmerror(PARSE_ERROR, ET_ERROR, "invalid connection type: %s", $1);
 
-			$$ = make3_str($1, make_str(":"), $2);
+			$$ = make3_str($1, mm_strdup(":"), $2);
 		}
 		;
 
@@ -138,30 +138,30 @@ opt_server: server			{ $$ = $1; }
 		;
 
 server_name: ColId					{ $$ = $1; }
-		| ColId '.' server_name		{ $$ = make3_str($1, make_str("."), $3); }
+		| ColId '.' server_name		{ $$ = make3_str($1, mm_strdup("."), $3); }
 		| IP						{ $$ = make_name(); }
 		;
 
-opt_port: ':' Iconst		{ $$ = make2_str(make_str(":"), $2); }
+opt_port: ':' Iconst		{ $$ = make2_str(mm_strdup(":"), $2); }
 		| /*EMPTY*/	{ $$ = EMPTY; }
 		;
 
 opt_connection_name: AS connection_object	{ $$ = $2; }
-		| /*EMPTY*/			{ $$ = make_str("NULL"); }
+		| /*EMPTY*/			{ $$ = mm_strdup("NULL"); }
 		;
 
 opt_user: USER ora_user		{ $$ = $2; }
-		| /*EMPTY*/			{ $$ = make_str("NULL, NULL"); }
+		| /*EMPTY*/			{ $$ = mm_strdup("NULL, NULL"); }
 		;
 
 ora_user: user_name
-			{ $$ = cat2_str($1, make_str(", NULL")); }
+			{ $$ = cat2_str($1, mm_strdup(", NULL")); }
 		| user_name '/' user_name
-			{ $$ = cat_str(3, $1, make_str(","), $3); }
+			{ $$ = cat_str(3, $1, mm_strdup(","), $3); }
 		| user_name SQL_IDENTIFIED BY user_name
-			{ $$ = cat_str(3, $1, make_str(","), $4); }
+			{ $$ = cat_str(3, $1, mm_strdup(","), $4); }
 		| user_name USING user_name
-			{ $$ = cat_str(3, $1, make_str(","), $3); }
+			{ $$ = cat_str(3, $1, mm_strdup(","), $3); }
 		;
 
 user_name: RoleId
@@ -169,14 +169,14 @@ user_name: RoleId
 			if ($1[0] == '\"')
 				$$ = $1;
 			else
-				$$ = make3_str(make_str("\""), $1, make_str("\""));
+				$$ = make3_str(mm_strdup("\""), $1, mm_strdup("\""));
 		}
 		| ecpg_sconst
 		{
 			if ($1[0] == '\"')
 				$$ = $1;
 			else
-				$$ = make3_str(make_str("\""), $1, make_str("\""));
+				$$ = make3_str(mm_strdup("\""), $1, mm_strdup("\""));
 		}
 		| civar
 		{
@@ -188,7 +188,7 @@ user_name: RoleId
 
 			/* handle varchars */
 			if (type == ECPGt_varchar)
-				$$ = make2_str(mm_strdup(argsinsert->variable->name), make_str(".arr"));
+				$$ = make2_str(mm_strdup(argsinsert->variable->name), mm_strdup(".arr"));
 			else
 				$$ = mm_strdup(argsinsert->variable->name);
 		}
@@ -217,7 +217,7 @@ char_variable: cvariable
 						$$ = $1;
 						break;
 					case ECPGt_varchar:
-						$$ = make2_str($1, make_str(".arr"));
+						$$ = make2_str($1, mm_strdup(".arr"));
 						break;
 					default:
 						mmerror(PARSE_ERROR, ET_ERROR, "invalid data type");
@@ -236,7 +236,7 @@ opt_options: Op connect_options
 			if (strcmp($1, "?") != 0)
 				mmerror(PARSE_ERROR, ET_ERROR, "unrecognized token \"%s\"", $1);
 
-			$$ = make2_str(make_str("?"), $2);
+			$$ = make2_str(mm_strdup("?"), $2);
 		}
 		| /*EMPTY*/ 	{ $$ = EMPTY; }
 		;
@@ -258,11 +258,11 @@ connect_options:  ColId opt_opt_value
 opt_opt_value: /*EMPTY*/
 			{ $$ = EMPTY; }
 		| '=' Iconst
-			{ $$ = make2_str(make_str("="), $2); }
+			{ $$ = make2_str(mm_strdup("="), $2); }
 		| '=' ecpg_ident
-			{ $$ = make2_str(make_str("="), $2); }
+			{ $$ = make2_str(mm_strdup("="), $2); }
 		| '=' civar
-			{ $$ = make2_str(make_str("="), $2); }
+			{ $$ = make2_str(mm_strdup("="), $2); }
 		;
 
 prepared_name: name             {
@@ -275,7 +275,7 @@ prepared_name: name             {
                                                 for (i = 0; i< strlen($1); i++)
                                                         $1[i] = tolower((unsigned char) $1[i]);
 
-                                                $$ = make3_str(make_str("\""), $1, make_str("\""));
+                                                $$ = make3_str(mm_strdup("\""), $1, mm_strdup("\""));
                                         }
                                 }
                 | char_variable { $$ = $1; }
@@ -288,7 +288,7 @@ prepared_name: name             {
 ECPGCursorStmt:  DECLARE cursor_name cursor_options CURSOR opt_hold FOR prepared_name
 		{
 			struct cursor *ptr, *this;
-			char *cursor_marker = $2[0] == ':' ? make_str("$0") : mm_strdup($2);
+			char *cursor_marker = $2[0] == ':' ? mm_strdup("$0") : mm_strdup($2);
 			int (* strcmp_fn)(const char *, const char *) = ($2[0] == ':' ? strcmp : pg_strcasecmp);
 			struct variable *thisquery = (struct variable *)mm_alloc(sizeof(struct variable));
 			const char *con = connection ? connection : "NULL";
@@ -313,7 +313,7 @@ ECPGCursorStmt:  DECLARE cursor_name cursor_options CURSOR opt_hold FOR prepared
 			this->name = $2;
 			this->function = (current_function ? mm_strdup(current_function) : NULL);
 			this->connection = connection;
-			this->command =  cat_str(6, make_str("declare"), cursor_marker, $3, make_str("cursor"), $5, make_str("for $1"));
+			this->command =  cat_str(6, mm_strdup("declare"), cursor_marker, $3, mm_strdup("cursor"), $5, mm_strdup("for $1"));
 			this->argsresult = NULL;
 			this->argsresult_oos = NULL;
 
@@ -335,11 +335,11 @@ ECPGCursorStmt:  DECLARE cursor_name cursor_options CURSOR opt_hold FOR prepared
 
 			cur = this;
 
-			comment = cat_str(3, make_str("/*"), mm_strdup(this->command), make_str("*/"));
+			comment = cat_str(3, mm_strdup("/*"), mm_strdup(this->command), mm_strdup("*/"));
 
 			if ((braces_open > 0) && INFORMIX_MODE) /* we're in a function */
 				$$ = cat_str(3, adjust_outofscope_cursor_vars(this),
-					make_str("ECPG_informix_reset_sqlca();"),
+					mm_strdup("ECPG_informix_reset_sqlca();"),
 					comment);
 			else
 				$$ = cat2_str(adjust_outofscope_cursor_vars(this), comment);
@@ -368,10 +368,10 @@ opt_scale:	',' NumericOnly	{ $$ = $2; }
 		;
 
 ecpg_interval:	opt_interval	{ $$ = $1; }
-		| YEAR_P TO MINUTE_P	{ $$ = make_str("year to minute"); }
-		| YEAR_P TO SECOND_P	{ $$ = make_str("year to second"); }
-		| DAY_P TO DAY_P		{ $$ = make_str("day to day"); }
-		| MONTH_P TO MONTH_P	{ $$ = make_str("month to month"); }
+		| YEAR_P TO MINUTE_P	{ $$ = mm_strdup("year to minute"); }
+		| YEAR_P TO SECOND_P	{ $$ = mm_strdup("year to second"); }
+		| DAY_P TO DAY_P		{ $$ = mm_strdup("day to day"); }
+		| MONTH_P TO MONTH_P	{ $$ = mm_strdup("month to month"); }
 		;
 
 /*
@@ -417,7 +417,7 @@ type_declaration: S_TYPEDEF
 
 		fprintf(yyout, "typedef %s %s %s %s;\n", $3.type_str, *$4 ? "*" : "", $5, $6.str);
 		output_line_number();
-		$$ = make_str("");
+		$$ = mm_strdup("");
 	};
 
 var_declaration: storage_declaration
@@ -433,7 +433,7 @@ var_declaration: storage_declaration
 		}
 		variable_list ';'
 		{
-			$$ = cat_str(5, actual_startline[struct_level], $1, $2.type_str, $4, make_str(";\n"));
+			$$ = cat_str(5, actual_startline[struct_level], $1, $2.type_str, $4, mm_strdup(";\n"));
 		}
 		| var_type
 		{
@@ -447,15 +447,15 @@ var_declaration: storage_declaration
 		}
 		variable_list ';'
 		{
-			$$ = cat_str(4, actual_startline[struct_level], $1.type_str, $3, make_str(";\n"));
+			$$ = cat_str(4, actual_startline[struct_level], $1.type_str, $3, mm_strdup(";\n"));
 		}
 		| struct_union_type_with_symbol ';'
 		{
-			$$ = cat2_str($1, make_str(";"));
+			$$ = cat2_str($1, mm_strdup(";"));
 		}
 		;
 
-opt_bit_field:	':' Iconst	{ $$ =cat2_str(make_str(":"), $2); }
+opt_bit_field:	':' Iconst	{ $$ =cat2_str(mm_strdup(":"), $2); }
 		| /* EMPTY */	{ $$ = EMPTY; }
 		;
 
@@ -465,29 +465,29 @@ storage_declaration: storage_clause storage_modifier
 		| storage_modifier		{$$ = $1; }
 		;
 
-storage_clause : S_EXTERN	{ $$ = make_str("extern"); }
-		| S_STATIC			{ $$ = make_str("static"); }
-		| S_REGISTER		{ $$ = make_str("register"); }
-		| S_AUTO			{ $$ = make_str("auto"); }
+storage_clause : S_EXTERN	{ $$ = mm_strdup("extern"); }
+		| S_STATIC			{ $$ = mm_strdup("static"); }
+		| S_REGISTER		{ $$ = mm_strdup("register"); }
+		| S_AUTO			{ $$ = mm_strdup("auto"); }
 		;
 
-storage_modifier : S_CONST	{ $$ = make_str("const"); }
-		| S_VOLATILE		{ $$ = make_str("volatile"); }
+storage_modifier : S_CONST	{ $$ = mm_strdup("const"); }
+		| S_VOLATILE		{ $$ = mm_strdup("volatile"); }
 		;
 
 var_type:	simple_type
 		{
 			$$.type_enum = $1;
 			$$.type_str = mm_strdup(ecpg_type_name($1));
-			$$.type_dimension = make_str("-1");
-			$$.type_index = make_str("-1");
+			$$.type_dimension = mm_strdup("-1");
+			$$.type_index = mm_strdup("-1");
 			$$.type_sizeof = NULL;
 		}
 		| struct_union_type
 		{
 			$$.type_str = $1;
-			$$.type_dimension = make_str("-1");
-			$$.type_index = make_str("-1");
+			$$.type_dimension = mm_strdup("-1");
+			$$.type_index = mm_strdup("-1");
 
 			if (strncmp($1, "struct", sizeof("struct")-1) == 0)
 			{
@@ -504,8 +504,8 @@ var_type:	simple_type
 		{
 			$$.type_str = $1;
 			$$.type_enum = ECPGt_int;
-			$$.type_dimension = make_str("-1");
-			$$.type_index = make_str("-1");
+			$$.type_dimension = mm_strdup("-1");
+			$$.type_index = mm_strdup("-1");
 			$$.type_sizeof = NULL;
 		}
 		| ECPGColLabelCommon '(' precision opt_scale ')'
@@ -513,22 +513,22 @@ var_type:	simple_type
 			if (strcmp($1, "numeric") == 0)
 			{
 				$$.type_enum = ECPGt_numeric;
-				$$.type_str = make_str("numeric");
+				$$.type_str = mm_strdup("numeric");
 			}
 			else if (strcmp($1, "decimal") == 0)
 			{
 				$$.type_enum = ECPGt_decimal;
-				$$.type_str = make_str("decimal");
+				$$.type_str = mm_strdup("decimal");
 			}
 			else
 			{
 				mmerror(PARSE_ERROR, ET_ERROR, "only data types numeric and decimal have precision/scale argument");
 				$$.type_enum = ECPGt_numeric;
-				$$.type_str = make_str("numeric");
+				$$.type_str = mm_strdup("numeric");
 			}
 
-			$$.type_dimension = make_str("-1");
-			$$.type_index = make_str("-1");
+			$$.type_dimension = mm_strdup("-1");
+			$$.type_index = mm_strdup("-1");
 			$$.type_sizeof = NULL;
 		}
 		| ECPGColLabelCommon ecpg_interval
@@ -543,81 +543,81 @@ var_type:	simple_type
 			if (strcmp($1, "varchar") == 0)
 			{
 				$$.type_enum = ECPGt_varchar;
-				$$.type_str = EMPTY; /*make_str("varchar");*/
-				$$.type_dimension = make_str("-1");
-				$$.type_index = make_str("-1");
+				$$.type_str = EMPTY; /*mm_strdup("varchar");*/
+				$$.type_dimension = mm_strdup("-1");
+				$$.type_index = mm_strdup("-1");
 				$$.type_sizeof = NULL;
 			}
 			else if (strcmp($1, "float") == 0)
 			{
 				$$.type_enum = ECPGt_float;
-				$$.type_str = make_str("float");
-				$$.type_dimension = make_str("-1");
-				$$.type_index = make_str("-1");
+				$$.type_str = mm_strdup("float");
+				$$.type_dimension = mm_strdup("-1");
+				$$.type_index = mm_strdup("-1");
 				$$.type_sizeof = NULL;
 			}
 			else if (strcmp($1, "double") == 0)
 			{
 				$$.type_enum = ECPGt_double;
-				$$.type_str = make_str("double");
-				$$.type_dimension = make_str("-1");
-				$$.type_index = make_str("-1");
+				$$.type_str = mm_strdup("double");
+				$$.type_dimension = mm_strdup("-1");
+				$$.type_index = mm_strdup("-1");
 				$$.type_sizeof = NULL;
 			}
 			else if (strcmp($1, "numeric") == 0)
 			{
 				$$.type_enum = ECPGt_numeric;
-				$$.type_str = make_str("numeric");
-				$$.type_dimension = make_str("-1");
-				$$.type_index = make_str("-1");
+				$$.type_str = mm_strdup("numeric");
+				$$.type_dimension = mm_strdup("-1");
+				$$.type_index = mm_strdup("-1");
 				$$.type_sizeof = NULL;
 			}
 			else if (strcmp($1, "decimal") == 0)
 			{
 				$$.type_enum = ECPGt_decimal;
-				$$.type_str = make_str("decimal");
-				$$.type_dimension = make_str("-1");
-				$$.type_index = make_str("-1");
+				$$.type_str = mm_strdup("decimal");
+				$$.type_dimension = mm_strdup("-1");
+				$$.type_index = mm_strdup("-1");
 				$$.type_sizeof = NULL;
 			}
 			else if (strcmp($1, "date") == 0)
 			{
 				$$.type_enum = ECPGt_date;
-				$$.type_str = make_str("date");
-				$$.type_dimension = make_str("-1");
-				$$.type_index = make_str("-1");
+				$$.type_str = mm_strdup("date");
+				$$.type_dimension = mm_strdup("-1");
+				$$.type_index = mm_strdup("-1");
 				$$.type_sizeof = NULL;
 			}
 			else if (strcmp($1, "timestamp") == 0)
 			{
 				$$.type_enum = ECPGt_timestamp;
-				$$.type_str = make_str("timestamp");
-				$$.type_dimension = make_str("-1");
-				$$.type_index = make_str("-1");
+				$$.type_str = mm_strdup("timestamp");
+				$$.type_dimension = mm_strdup("-1");
+				$$.type_index = mm_strdup("-1");
 				$$.type_sizeof = NULL;
 			}
 			else if (strcmp($1, "interval") == 0)
 			{
 				$$.type_enum = ECPGt_interval;
-				$$.type_str = make_str("interval");
-				$$.type_dimension = make_str("-1");
-				$$.type_index = make_str("-1");
+				$$.type_str = mm_strdup("interval");
+				$$.type_dimension = mm_strdup("-1");
+				$$.type_index = mm_strdup("-1");
 				$$.type_sizeof = NULL;
 			}
 			else if (strcmp($1, "datetime") == 0)
 			{
 				$$.type_enum = ECPGt_timestamp;
-				$$.type_str = make_str("timestamp");
-				$$.type_dimension = make_str("-1");
-				$$.type_index = make_str("-1");
+				$$.type_str = mm_strdup("timestamp");
+				$$.type_dimension = mm_strdup("-1");
+				$$.type_index = mm_strdup("-1");
 				$$.type_sizeof = NULL;
 			}
 			else if ((strcmp($1, "string") == 0) && INFORMIX_MODE)
 			{
 				$$.type_enum = ECPGt_string;
-				$$.type_str = make_str("char");
-				$$.type_dimension = make_str("-1");
-				$$.type_index = make_str("-1");
+				$$.type_str = mm_strdup("char");
+				$$.type_dimension = mm_strdup("-1");
+				$$.type_index = mm_strdup("-1");
 				$$.type_sizeof = NULL;
 			}
 			else
@@ -632,7 +632,7 @@ var_type:	simple_type
 				if (this->type->type_sizeof && strlen(this->type->type_sizeof) != 0)
 					$$.type_sizeof = this->type->type_sizeof;
 				else
-					$$.type_sizeof = cat_str(3, make_str("sizeof("), mm_strdup(this->name), make_str(")"));
+					$$.type_sizeof = cat_str(3, mm_strdup("sizeof("), mm_strdup(this->name), mm_strdup(")"));
 
 				struct_member_list[struct_level] = ECPGstruct_member_dup(this->struct_member_list);
 			}
@@ -663,24 +663,24 @@ var_type:	simple_type
 			{
 				$$.type_str = name;
 				$$.type_enum = ECPGt_long;
-				$$.type_dimension = make_str("-1");
-				$$.type_index = make_str("-1");
-				$$.type_sizeof = make_str("");
+				$$.type_dimension = mm_strdup("-1");
+				$$.type_index = mm_strdup("-1");
+				$$.type_sizeof = mm_strdup("");
 				struct_member_list[struct_level] = NULL;
 			}
 		}
 		;
 
 enum_type: ENUM_P symbol enum_definition
-			{ $$ = cat_str(3, make_str("enum"), $2, $3); }
+			{ $$ = cat_str(3, mm_strdup("enum"), $2, $3); }
 		| ENUM_P enum_definition
-			{ $$ = cat2_str(make_str("enum"), $2); }
+			{ $$ = cat2_str(mm_strdup("enum"), $2); }
 		| ENUM_P symbol
-			{ $$ = cat2_str(make_str("enum"), $2); }
+			{ $$ = cat2_str(mm_strdup("enum"), $2); }
 		;
 
 enum_definition: '{' c_list '}'
-			{ $$ = cat_str(3, make_str("{"), $2, make_str("}")); };
+			{ $$ = cat_str(3, mm_strdup("{"), $2, mm_strdup("}")); };
 
 struct_union_type_with_symbol: s_struct_union_symbol
 		{
@@ -723,13 +723,13 @@ struct_union_type_with_symbol: s_struct_union_symbol
 			this->type = (struct this_type *) mm_alloc(sizeof(struct this_type));
 			this->type->type_enum = su_type.type_enum;
 			this->type->type_str = mm_strdup(su_type.type_str);
-			this->type->type_dimension = make_str("-1"); /* dimension of array */
-			this->type->type_index = make_str("-1");	/* length of string */
+			this->type->type_dimension = mm_strdup("-1"); /* dimension of array */
+			this->type->type_index = mm_strdup("-1");	/* length of string */
 			this->type->type_sizeof = ECPGstruct_sizeof;
 			this->struct_member_list = struct_member_list[struct_level];
 
 			types = this;
-			$$ = cat_str(4, su_type.type_str, make_str("{"), $4, make_str("}"));
+			$$ = cat_str(4, su_type.type_str, mm_strdup("{"), $4, mm_strdup("}"));
 		}
 		;
 
@@ -745,29 +745,29 @@ struct_union_type: struct_union_type_with_symbol	{ $$ = $1; }
 			ECPGfree_struct_member(struct_member_list[struct_level]);
 			struct_member_list[struct_level] = NULL;
 			struct_level--;
-			$$ = cat_str(4, $1, make_str("{"), $4, make_str("}"));
+			$$ = cat_str(4, $1, mm_strdup("{"), $4, mm_strdup("}"));
 		}
 		;
 
 s_struct_union_symbol: SQL_STRUCT symbol
 		{
-			$$.su = make_str("struct");
+			$$.su = mm_strdup("struct");
 			$$.symbol = $2;
-			ECPGstruct_sizeof = cat_str(3, make_str("sizeof("), cat2_str(mm_strdup($$.su), mm_strdup($$.symbol)), make_str(")"));
+			ECPGstruct_sizeof = cat_str(3, mm_strdup("sizeof("), cat2_str(mm_strdup($$.su), mm_strdup($$.symbol)), mm_strdup(")"));
 		}
 		| UNION symbol
 		{
-			$$.su = make_str("union");
+			$$.su = mm_strdup("union");
 			$$.symbol = $2;
 		}
 		;
 
 s_struct_union: SQL_STRUCT
 		{
-			ECPGstruct_sizeof = make_str(""); /* This must not be NULL to distinguish from simple types. */
-			$$ = make_str("struct");
+			ECPGstruct_sizeof = mm_strdup(""); /* This must not be NULL to distinguish from simple types. */
+			$$ = mm_strdup("struct");
 		}
-		| UNION 	{ $$ = make_str("union"); }
+		| UNION 	{ $$ = mm_strdup("union"); }
 		;
 
 simple_type: unsigned_type					{ $$=$1; }
@@ -832,7 +832,7 @@ opt_signed: SQL_SIGNED
 variable_list: variable
 			{ $$ = $1; }
 		| variable_list ',' variable
-			{ $$ = cat_str(3, $1, make_str(","), $3); }
+			{ $$ = cat_str(3, $1, mm_strdup(","), $3); }
 		;
 
 variable: opt_pointer ECPGColLabel opt_array_bounds opt_bit_field opt_initializer
@@ -864,9 +864,9 @@ variable: opt_pointer ECPGColLabel opt_array_bounds opt_bit_field opt_initialize
 						type = ECPGmake_array_type(ECPGmake_simple_type(actual_type[struct_level].type_enum, length, varchar_counter), dimension);
 
 					if (strcmp(dimension, "0") == 0 || abs(atoi(dimension)) == 1)
-							dim_str=make_str("");
+							dim_str=mm_strdup("");
 					else
-							dim_str=cat_str(3, make_str("["), mm_strdup(dimension), make_str("]"));
+							dim_str=cat_str(3, mm_strdup("["), mm_strdup(dimension), mm_strdup("]"));
 					/* cannot check for atoi <= 0 because a defined constant will yield 0 here as well */
 					if (atoi(length) < 0 || strcmp(length, "0") == 0)
 						mmerror(PARSE_ERROR, ET_ERROR, "pointers to varchar are not implemented");
@@ -875,9 +875,9 @@ variable: opt_pointer ECPGColLabel opt_array_bounds opt_bit_field opt_initialize
 					vcn = (char *) mm_alloc(strlen($2) + sizeof(int) * CHAR_BIT * 10 / 3);
 					sprintf(vcn, "%s_%d", $2, varchar_counter);
 					if (strcmp(dimension, "0") == 0)
-						$$ = cat_str(7, make2_str(make_str(" struct varchar_"), vcn), make_str(" { int len; char arr["), mm_strdup(length), make_str("]; } *"), mm_strdup($2), $4, $5);
+						$$ = cat_str(7, make2_str(mm_strdup(" struct varchar_"), vcn), mm_strdup(" { int len; char arr["), mm_strdup(length), mm_strdup("]; } *"), mm_strdup($2), $4, $5);
 					else
-						$$ = cat_str(8, make2_str(make_str(" struct varchar_"), vcn), make_str(" { int len; char arr["), mm_strdup(length), make_str("]; } "), mm_strdup($2), dim_str, $4, $5);
+						$$ = cat_str(8, make2_str(mm_strdup(" struct varchar_"), vcn), mm_strdup(" { int len; char arr["), mm_strdup(length), mm_strdup("]; } "), mm_strdup($2), dim_str, $4, $5);
 					varchar_counter++;
 					break;
 
@@ -905,9 +905,9 @@ variable: opt_pointer ECPGColLabel opt_array_bounds opt_bit_field opt_initialize
 
 				default:
 					if (atoi(dimension) < 0)
-						type = ECPGmake_simple_type(actual_type[struct_level].type_enum, make_str("1"), 0);
+						type = ECPGmake_simple_type(actual_type[struct_level].type_enum, mm_strdup("1"), 0);
 					else
-						type = ECPGmake_array_type(ECPGmake_simple_type(actual_type[struct_level].type_enum, make_str("1"), 0), dimension);
+						type = ECPGmake_array_type(ECPGmake_simple_type(actual_type[struct_level].type_enum, mm_strdup("1"), 0), dimension);
 
 					$$ = cat_str(5, $1, mm_strdup($2), $3.str, $4, $5);
 					break;
@@ -927,13 +927,13 @@ opt_initializer: /*EMPTY*/
 		| '=' c_term
 		{
 			initializer = 1;
-			$$ = cat2_str(make_str("="), $2);
+			$$ = cat2_str(mm_strdup("="), $2);
 		}
 		;
 
 opt_pointer: /*EMPTY*/				{ $$ = EMPTY; }
-		| '*'						{ $$ = make_str("*"); }
-		| '*' '*'					{ $$ = make_str("**"); }
+		| '*'						{ $$ = mm_strdup("*"); }
+		| '*' '*'					{ $$ = mm_strdup("**"); }
 		;
 
 /*
@@ -942,7 +942,7 @@ opt_pointer: /*EMPTY*/				{ $$ = EMPTY; }
 ECPGDeclare: DECLARE STATEMENT ecpg_ident
 		{
 			/* this is only supported for compatibility */
-			$$ = cat_str(3, make_str("/* declare statement"), $3, make_str("*/"));
+			$$ = cat_str(3, mm_strdup("/* declare statement"), $3, mm_strdup("*/"));
 		}
 		;
 /*
@@ -952,20 +952,20 @@ ECPGDisconnect: SQL_DISCONNECT dis_name { $$ = $2; }
 		;
 
 dis_name: connection_object			{ $$ = $1; }
-		| CURRENT_P			{ $$ = make_str("\"CURRENT\""); }
-		| ALL				{ $$ = make_str("\"ALL\""); }
-		| /* EMPTY */			{ $$ = make_str("\"CURRENT\""); }
+		| CURRENT_P			{ $$ = mm_strdup("\"CURRENT\""); }
+		| ALL				{ $$ = mm_strdup("\"ALL\""); }
+		| /* EMPTY */			{ $$ = mm_strdup("\"CURRENT\""); }
 		;
 
-connection_object: database_name		{ $$ = make3_str(make_str("\""), $1, make_str("\"")); }
-		| DEFAULT			{ $$ = make_str("\"DEFAULT\""); }
+connection_object: database_name		{ $$ = make3_str(mm_strdup("\""), $1, mm_strdup("\"")); }
+		| DEFAULT			{ $$ = mm_strdup("\"DEFAULT\""); }
 		| char_variable			{ $$ = $1; }
 		;
 
 execstring: char_variable
 			{ $$ = $1; }
 		|	CSTRING
-			{ $$ = make3_str(make_str("\""), $1, make_str("\"")); }
+			{ $$ = make3_str(mm_strdup("\""), $1, mm_strdup("\"")); }
 		;
 
 /*
@@ -973,7 +973,7 @@ execstring: char_variable
  * prepared statement
  */
 ECPGFree:	SQL_FREE cursor_name	{ $$ = $2; }
-		| SQL_FREE ALL	{ $$ = make_str("all"); }
+		| SQL_FREE ALL	{ $$ = mm_strdup("all"); }
 		;
 
 /*
@@ -1040,11 +1040,11 @@ UsingValue: UsingConst
 		;
 
 UsingConst: Iconst			{ $$ = $1; }
-		| '+' Iconst		{ $$ = cat_str(2, make_str("+"), $2); }
-                | '-' Iconst		{ $$ = cat_str(2, make_str("-"), $2); }
+		| '+' Iconst		{ $$ = cat_str(2, mm_strdup("+"), $2); }
+                | '-' Iconst		{ $$ = cat_str(2, mm_strdup("-"), $2); }
 		| ecpg_fconst		{ $$ = $1; }
-		| '+' ecpg_fconst	{ $$ = cat_str(2, make_str("+"), $2); }
-                | '-' ecpg_fconst	{ $$ = cat_str(2, make_str("-"), $2); }
+		| '+' ecpg_fconst	{ $$ = cat_str(2, mm_strdup("+"), $2); }
+                | '-' ecpg_fconst	{ $$ = cat_str(2, mm_strdup("-"), $2); }
 		| ecpg_sconst		{ $$ = $1; }
 		| ecpg_bconst		{ $$ = $1; }
 		| ecpg_xconst		{ $$ = $1; }
@@ -1093,7 +1093,7 @@ ECPGDescribe: SQL_DESCRIBE INPUT_P prepared_name using_descriptor
 	}
 	;
 
-opt_output:	SQL_OUTPUT	{ $$ = make_str("output"); }
+opt_output:	SQL_OUTPUT	{ $$ = mm_strdup("output"); }
 	| 	/* EMPTY */	{ $$ = EMPTY; }
 	;
 
@@ -1210,7 +1210,7 @@ AllConstVar:    ecpg_fconst
                 | '-' ecpg_fconst
                 {
                         char *length = mm_alloc(sizeof(int) * CHAR_BIT * 10 / 3);
-                        char *var = cat2_str(make_str("-"), $2);
+                        char *var = cat2_str(mm_strdup("-"), $2);
 
                         sprintf(length, "%d", (int) strlen(var));
                         new_variable(var, ECPGmake_simple_type(ECPGt_const, length, 0), 0);
@@ -1219,7 +1219,7 @@ AllConstVar:    ecpg_fconst
                 | '-' Iconst
                 {
                         char *length = mm_alloc(sizeof(int) * CHAR_BIT * 10 / 3);
-                        char *var = cat2_str(make_str("-"), $2);
+                        char *var = cat2_str(mm_strdup("-"), $2);
 
                         sprintf(length, "%d", (int) strlen(var));
                         new_variable(var, ECPGmake_simple_type(ECPGt_const, length, 0), 0);
@@ -1262,8 +1262,8 @@ ECPGSetAutocommit:	SET SQL_AUTOCOMMIT '=' on_off	{ $$ = $4; }
 		|  SET SQL_AUTOCOMMIT TO on_off   { $$ = $4; }
 		;
 
-on_off: ON				{ $$ = make_str("on"); }
-		| OFF			{ $$ = make_str("off"); }
+on_off: ON				{ $$ = mm_strdup("on"); }
+		| OFF			{ $$ = mm_strdup("off"); }
 		;
 
 /*
@@ -1289,13 +1289,13 @@ ECPGTypedef: TYPE_P
 			add_typedef($3, $6.index1, $6.index2, $5.type_enum, $5.type_dimension, $5.type_index, initializer, *$7 ? 1 : 0);
 
 			if (auto_create_c == false)
-				$$ = cat_str(7, make_str("/* exec sql type"), mm_strdup($3), make_str("is"), mm_strdup($5.type_str), mm_strdup($6.str), $7, make_str("*/"));
+				$$ = cat_str(7, mm_strdup("/* exec sql type"), mm_strdup($3), mm_strdup("is"), mm_strdup($5.type_str), mm_strdup($6.str), $7, mm_strdup("*/"));
 			else
-				$$ = cat_str(6, make_str("typedef "), mm_strdup($5.type_str), *$7?make_str("*"):make_str(""), mm_strdup($6.str), mm_strdup($3), make_str(";"));
+				$$ = cat_str(6, mm_strdup("typedef "), mm_strdup($5.type_str), *$7?mm_strdup("*"):mm_strdup(""), mm_strdup($6.str), mm_strdup($3), mm_strdup(";"));
 		}
 		;
 
-opt_reference: SQL_REFERENCE 		{ $$ = make_str("reference"); }
+opt_reference: SQL_REFERENCE 		{ $$ = mm_strdup("reference"); }
 		| /*EMPTY*/		 			{ $$ = EMPTY; }
 		;
 
@@ -1354,9 +1354,9 @@ ECPGVar: SQL_VAR
 							mmerror(PARSE_ERROR, ET_ERROR, "multidimensional arrays for simple data types are not supported");
 
 						if (atoi(dimension) < 0)
-							type = ECPGmake_simple_type($5.type_enum, make_str("1"), 0);
+							type = ECPGmake_simple_type($5.type_enum, mm_strdup("1"), 0);
 						else
-							type = ECPGmake_array_type(ECPGmake_simple_type($5.type_enum, make_str("1"), 0), dimension);
+							type = ECPGmake_array_type(ECPGmake_simple_type($5.type_enum, mm_strdup("1"), 0), dimension);
 						break;
 				}
 
@@ -1364,7 +1364,7 @@ ECPGVar: SQL_VAR
 				p->type = type;
 			}
 
-			$$ = cat_str(7, make_str("/* exec sql var"), mm_strdup($3), make_str("is"), mm_strdup($5.type_str), mm_strdup($6.str), $7, make_str("*/"));
+			$$ = cat_str(7, mm_strdup("/* exec sql var"), mm_strdup($3), mm_strdup("is"), mm_strdup($5.type_str), mm_strdup($6.str), $7, mm_strdup("*/"));
 		}
 		;
 
@@ -1376,19 +1376,19 @@ ECPGWhenever: SQL_WHENEVER SQL_SQLERROR action
 		{
 			when_error.code = $<action>3.code;
 			when_error.command = $<action>3.command;
-			$$ = cat_str(3, make_str("/* exec sql whenever sqlerror "), $3.str, make_str("; */"));
+			$$ = cat_str(3, mm_strdup("/* exec sql whenever sqlerror "), $3.str, mm_strdup("; */"));
 		}
 		| SQL_WHENEVER NOT SQL_FOUND action
 		{
 			when_nf.code = $<action>4.code;
 			when_nf.command = $<action>4.command;
-			$$ = cat_str(3, make_str("/* exec sql whenever not found "), $4.str, make_str("; */"));
+			$$ = cat_str(3, mm_strdup("/* exec sql whenever not found "), $4.str, mm_strdup("; */"));
 		}
 		| SQL_WHENEVER SQL_SQLWARNING action
 		{
 			when_warn.code = $<action>3.code;
 			when_warn.command = $<action>3.command;
-			$$ = cat_str(3, make_str("/* exec sql whenever sql_warning "), $3.str, make_str("; */"));
+			$$ = cat_str(3, mm_strdup("/* exec sql whenever sql_warning "), $3.str, mm_strdup("; */"));
 		}
 		;
 
@@ -1396,55 +1396,55 @@ action : CONTINUE_P
 		{
 			$<action>$.code = W_NOTHING;
 			$<action>$.command = NULL;
-			$<action>$.str = make_str("continue");
+			$<action>$.str = mm_strdup("continue");
 		}
 		| SQL_SQLPRINT
 		{
 			$<action>$.code = W_SQLPRINT;
 			$<action>$.command = NULL;
-			$<action>$.str = make_str("sqlprint");
+			$<action>$.str = mm_strdup("sqlprint");
 		}
 		| SQL_STOP
 		{
 			$<action>$.code = W_STOP;
 			$<action>$.command = NULL;
-			$<action>$.str = make_str("stop");
+			$<action>$.str = mm_strdup("stop");
 		}
 		| SQL_GOTO name
 		{
 			$<action>$.code = W_GOTO;
 			$<action>$.command = strdup($2);
-			$<action>$.str = cat2_str(make_str("goto "), $2);
+			$<action>$.str = cat2_str(mm_strdup("goto "), $2);
 		}
 		| SQL_GO TO name
 		{
 			$<action>$.code = W_GOTO;
 			$<action>$.command = strdup($3);
-			$<action>$.str = cat2_str(make_str("goto "), $3);
+			$<action>$.str = cat2_str(mm_strdup("goto "), $3);
 		}
 		| DO name '(' c_args ')'
 		{
 			$<action>$.code = W_DO;
-			$<action>$.command = cat_str(4, $2, make_str("("), $4, make_str(")"));
-			$<action>$.str = cat2_str(make_str("do"), mm_strdup($<action>$.command));
+			$<action>$.command = cat_str(4, $2, mm_strdup("("), $4, mm_strdup(")"));
+			$<action>$.str = cat2_str(mm_strdup("do"), mm_strdup($<action>$.command));
 		}
 		| DO SQL_BREAK
 		{
 			$<action>$.code = W_BREAK;
 			$<action>$.command = NULL;
-			$<action>$.str = make_str("break");
+			$<action>$.str = mm_strdup("break");
 		}
 		| SQL_CALL name '(' c_args ')'
 		{
 			$<action>$.code = W_DO;
-			$<action>$.command = cat_str(4, $2, make_str("("), $4, make_str(")"));
-			$<action>$.str = cat2_str(make_str("call"), mm_strdup($<action>$.command));
+			$<action>$.command = cat_str(4, $2, mm_strdup("("), $4, mm_strdup(")"));
+			$<action>$.str = cat2_str(mm_strdup("call"), mm_strdup($<action>$.command));
 		}
 		| SQL_CALL name
 		{
 			$<action>$.code = W_DO;
-			$<action>$.command = cat2_str($2, make_str("()"));
-			$<action>$.str = cat2_str(make_str("call"), mm_strdup($<action>$.command));
+			$<action>$.command = cat2_str($2, mm_strdup("()"));
+			$<action>$.str = cat2_str(mm_strdup("call"), mm_strdup($<action>$.command));
 		}
 		;
 
@@ -1455,48 +1455,48 @@ ECPGKeywords: ECPGKeywords_vanames	{ $$ = $1; }
 		| ECPGKeywords_rest 	{ $$ = $1; }
 		;
 
-ECPGKeywords_vanames:  SQL_BREAK		{ $$ = make_str("break"); }
-		| SQL_CALL						{ $$ = make_str("call"); }
-		| SQL_CARDINALITY				{ $$ = make_str("cardinality"); }
-		| SQL_COUNT						{ $$ = make_str("count"); }
-		| SQL_DATETIME_INTERVAL_CODE	{ $$ = make_str("datetime_interval_code"); }
-		| SQL_DATETIME_INTERVAL_PRECISION	{ $$ = make_str("datetime_interval_precision"); }
-		| SQL_FOUND						{ $$ = make_str("found"); }
-		| SQL_GO						{ $$ = make_str("go"); }
-		| SQL_GOTO						{ $$ = make_str("goto"); }
-		| SQL_IDENTIFIED				{ $$ = make_str("identified"); }
-		| SQL_INDICATOR				{ $$ = make_str("indicator"); }
-		| SQL_KEY_MEMBER			{ $$ = make_str("key_member"); }
-		| SQL_LENGTH				{ $$ = make_str("length"); }
-		| SQL_NULLABLE				{ $$ = make_str("nullable"); }
-		| SQL_OCTET_LENGTH			{ $$ = make_str("octet_length"); }
-		| SQL_RETURNED_LENGTH		{ $$ = make_str("returned_length"); }
-		| SQL_RETURNED_OCTET_LENGTH	{ $$ = make_str("returned_octet_length"); }
-		| SQL_SCALE					{ $$ = make_str("scale"); }
-		| SQL_SECTION				{ $$ = make_str("section"); }
-		| SQL_SQL				{ $$ = make_str("sql"); }
-		| SQL_SQLERROR				{ $$ = make_str("sqlerror"); }
-		| SQL_SQLPRINT				{ $$ = make_str("sqlprint"); }
-		| SQL_SQLWARNING			{ $$ = make_str("sqlwarning"); }
-		| SQL_STOP					{ $$ = make_str("stop"); }
+ECPGKeywords_vanames:  SQL_BREAK		{ $$ = mm_strdup("break"); }
+		| SQL_CALL						{ $$ = mm_strdup("call"); }
+		| SQL_CARDINALITY				{ $$ = mm_strdup("cardinality"); }
+		| SQL_COUNT						{ $$ = mm_strdup("count"); }
+		| SQL_DATETIME_INTERVAL_CODE	{ $$ = mm_strdup("datetime_interval_code"); }
+		| SQL_DATETIME_INTERVAL_PRECISION	{ $$ = mm_strdup("datetime_interval_precision"); }
+		| SQL_FOUND						{ $$ = mm_strdup("found"); }
+		| SQL_GO						{ $$ = mm_strdup("go"); }
+		| SQL_GOTO						{ $$ = mm_strdup("goto"); }
+		| SQL_IDENTIFIED				{ $$ = mm_strdup("identified"); }
+		| SQL_INDICATOR				{ $$ = mm_strdup("indicator"); }
+		| SQL_KEY_MEMBER			{ $$ = mm_strdup("key_member"); }
+		| SQL_LENGTH				{ $$ = mm_strdup("length"); }
+		| SQL_NULLABLE				{ $$ = mm_strdup("nullable"); }
+		| SQL_OCTET_LENGTH			{ $$ = mm_strdup("octet_length"); }
+		| SQL_RETURNED_LENGTH		{ $$ = mm_strdup("returned_length"); }
+		| SQL_RETURNED_OCTET_LENGTH	{ $$ = mm_strdup("returned_octet_length"); }
+		| SQL_SCALE					{ $$ = mm_strdup("scale"); }
+		| SQL_SECTION				{ $$ = mm_strdup("section"); }
+		| SQL_SQL				{ $$ = mm_strdup("sql"); }
+		| SQL_SQLERROR				{ $$ = mm_strdup("sqlerror"); }
+		| SQL_SQLPRINT				{ $$ = mm_strdup("sqlprint"); }
+		| SQL_SQLWARNING			{ $$ = mm_strdup("sqlwarning"); }
+		| SQL_STOP					{ $$ = mm_strdup("stop"); }
 		;
 
-ECPGKeywords_rest:  SQL_CONNECT		{ $$ = make_str("connect"); }
-		| SQL_DESCRIBE				{ $$ = make_str("describe"); }
-		| SQL_DISCONNECT			{ $$ = make_str("disconnect"); }
-		| SQL_OPEN					{ $$ = make_str("open"); }
-		| SQL_VAR					{ $$ = make_str("var"); }
-		| SQL_WHENEVER				{ $$ = make_str("whenever"); }
+ECPGKeywords_rest:  SQL_CONNECT		{ $$ = mm_strdup("connect"); }
+		| SQL_DESCRIBE				{ $$ = mm_strdup("describe"); }
+		| SQL_DISCONNECT			{ $$ = mm_strdup("disconnect"); }
+		| SQL_OPEN					{ $$ = mm_strdup("open"); }
+		| SQL_VAR					{ $$ = mm_strdup("var"); }
+		| SQL_WHENEVER				{ $$ = mm_strdup("whenever"); }
 		;
 
 /* additional keywords that can be SQL type names (but not ECPGColLabels) */
-ECPGTypeName:  SQL_BOOL				{ $$ = make_str("bool"); }
-		| SQL_LONG					{ $$ = make_str("long"); }
-		| SQL_OUTPUT				{ $$ = make_str("output"); }
-		| SQL_SHORT					{ $$ = make_str("short"); }
-		| SQL_STRUCT				{ $$ = make_str("struct"); }
-		| SQL_SIGNED				{ $$ = make_str("signed"); }
-		| SQL_UNSIGNED				{ $$ = make_str("unsigned"); }
+ECPGTypeName:  SQL_BOOL				{ $$ = mm_strdup("bool"); }
+		| SQL_LONG					{ $$ = mm_strdup("long"); }
+		| SQL_OUTPUT				{ $$ = mm_strdup("output"); }
+		| SQL_SHORT					{ $$ = mm_strdup("short"); }
+		| SQL_STRUCT				{ $$ = mm_strdup("struct"); }
+		| SQL_SIGNED				{ $$ = mm_strdup("signed"); }
+		| SQL_UNSIGNED				{ $$ = mm_strdup("unsigned"); }
 		;
 
 symbol: ColLabel					{ $$ = $1; }
@@ -1508,8 +1508,8 @@ ECPGColId: ecpg_ident				{ $$ = $1; }
 		| ECPGunreserved_interval	{ $$ = $1; }
 		| ECPGKeywords				{ $$ = $1; }
 		| ECPGCKeywords				{ $$ = $1; }
-		| CHAR_P					{ $$ = make_str("char"); }
-		| VALUES					{ $$ = make_str("values"); }
+		| CHAR_P					{ $$ = mm_strdup("char"); }
+		| VALUES					{ $$ = mm_strdup("values"); }
 		;
 
 /*
@@ -1527,8 +1527,8 @@ ColId:	ecpg_ident					{ $$ = $1; }
 		| col_name_keyword			{ $$ = $1; }
 		| ECPGKeywords				{ $$ = $1; }
 		| ECPGCKeywords				{ $$ = $1; }
-		| CHAR_P					{ $$ = make_str("char"); }
-		| VALUES					{ $$ = make_str("values"); }
+		| CHAR_P					{ $$ = mm_strdup("char"); }
+		| VALUES					{ $$ = mm_strdup("values"); }
 		;
 
 /* Type/function identifier --- names that can be type or function names.
@@ -1546,13 +1546,13 @@ type_function_name:	ecpg_ident		{ $$ = $1; }
  */
 ColLabel:  ECPGColLabel				{ $$ = $1; }
 		| ECPGTypeName				{ $$ = $1; }
-		| CHAR_P					{ $$ = make_str("char"); }
-		| CURRENT_P					{ $$ = make_str("current"); }
-		| INPUT_P					{ $$ = make_str("input"); }
-		| INT_P						{ $$ = make_str("int"); }
-		| TO						{ $$ = make_str("to"); }
-		| UNION						{ $$ = make_str("union"); }
-		| VALUES					{ $$ = make_str("values"); }
+		| CHAR_P					{ $$ = mm_strdup("char"); }
+		| CURRENT_P					{ $$ = mm_strdup("current"); }
+		| INPUT_P					{ $$ = mm_strdup("input"); }
+		| INT_P						{ $$ = mm_strdup("int"); }
+		| TO						{ $$ = mm_strdup("to"); }
+		| UNION						{ $$ = mm_strdup("union"); }
+		| VALUES					{ $$ = mm_strdup("values"); }
 		| ECPGCKeywords				{ $$ = $1; }
 		| ECPGunreserved_interval	{ $$ = $1; }
 		;
@@ -1561,7 +1561,7 @@ ECPGColLabel:  ECPGColLabelCommon	{ $$ = $1; }
 		| unreserved_keyword		{ $$ = $1; }
 		| reserved_keyword			{ $$ = $1; }
 		| ECPGKeywords_rest			{ $$ = $1; }
-		| CONNECTION				{ $$ = make_str("connection"); }
+		| CONNECTION				{ $$ = mm_strdup("connection"); }
 		;
 
 ECPGColLabelCommon:  ecpg_ident		{ $$ = $1; }
@@ -1570,13 +1570,13 @@ ECPGColLabelCommon:  ecpg_ident		{ $$ = $1; }
 		| ECPGKeywords_vanames		{ $$ = $1; }
 		;
 
-ECPGCKeywords: S_AUTO				{ $$ = make_str("auto"); }
-		| S_CONST					{ $$ = make_str("const"); }
-		| S_EXTERN					{ $$ = make_str("extern"); }
-		| S_REGISTER				{ $$ = make_str("register"); }
-		| S_STATIC					{ $$ = make_str("static"); }
-		| S_TYPEDEF					{ $$ = make_str("typedef"); }
-		| S_VOLATILE				{ $$ = make_str("volatile"); }
+ECPGCKeywords: S_AUTO				{ $$ = mm_strdup("auto"); }
+		| S_CONST					{ $$ = mm_strdup("const"); }
+		| S_EXTERN					{ $$ = mm_strdup("extern"); }
+		| S_REGISTER				{ $$ = mm_strdup("register"); }
+		| S_STATIC					{ $$ = mm_strdup("static"); }
+		| S_TYPEDEF					{ $$ = mm_strdup("typedef"); }
+		| S_VOLATILE				{ $$ = mm_strdup("volatile"); }
 		;
 
 /* "Unreserved" keywords --- available for use as any kind of name.
@@ -1595,15 +1595,15 @@ ECPGCKeywords: S_AUTO				{ $$ = make_str("auto"); }
  */
 all_unreserved_keyword: unreserved_keyword	{ $$ = $1; }
 		| ECPGunreserved_interval			{ $$ = $1; }
-		| CONNECTION						{ $$ = make_str("connection"); }
+		| CONNECTION						{ $$ = mm_strdup("connection"); }
 		;
 
-ECPGunreserved_interval: DAY_P				{ $$ = make_str("day"); }
-		| HOUR_P							{ $$ = make_str("hour"); }
-		| MINUTE_P							{ $$ = make_str("minute"); }
-		| MONTH_P							{ $$ = make_str("month"); }
-		| SECOND_P							{ $$ = make_str("second"); }
-		| YEAR_P							{ $$ = make_str("year"); }
+ECPGunreserved_interval: DAY_P				{ $$ = mm_strdup("day"); }
+		| HOUR_P							{ $$ = mm_strdup("hour"); }
+		| MINUTE_P							{ $$ = mm_strdup("minute"); }
+		| MONTH_P							{ $$ = mm_strdup("month"); }
+		| SECOND_P							{ $$ = mm_strdup("second"); }
+		| YEAR_P							{ $$ = mm_strdup("year"); }
 		;
 
 
@@ -1737,14 +1737,14 @@ ecpg_sconst:
 ecpg_xconst:	XCONST		{ $$ = make_name(); } ;
 
 ecpg_ident:	IDENT		{ $$ = make_name(); }
-		| CSTRING	{ $$ = make3_str(make_str("\""), $1, make_str("\"")); }
+		| CSTRING	{ $$ = make3_str(mm_strdup("\""), $1, mm_strdup("\"")); }
 		| UIDENT	{ $$ = $1; }
 		;
 
 quoted_ident_stringvar: name
-			{ $$ = make3_str(make_str("\""), $1, make_str("\"")); }
+			{ $$ = make3_str(mm_strdup("\""), $1, mm_strdup("\"")); }
 		| char_variable
-			{ $$ = make3_str(make_str("("), $1, make_str(")")); }
+			{ $$ = make3_str(mm_strdup("("), $1, mm_strdup(")")); }
 		;
 
 /*
@@ -1752,9 +1752,9 @@ quoted_ident_stringvar: name
  */
 
 c_stuff_item: c_anything			{ $$ = $1; }
-		| '(' ')'			{ $$ = make_str("()"); }
+		| '(' ')'			{ $$ = mm_strdup("()"); }
 		| '(' c_stuff ')'
-			{ $$ = cat_str(3, make_str("("), $2, make_str(")")); }
+			{ $$ = cat_str(3, mm_strdup("("), $2, mm_strdup(")")); }
 		;
 
 c_stuff: c_stuff_item			{ $$ = $1; }
@@ -1763,91 +1763,91 @@ c_stuff: c_stuff_item			{ $$ = $1; }
 		;
 
 c_list: c_term				{ $$ = $1; }
-		| c_list ',' c_term	{ $$ = cat_str(3, $1, make_str(","), $3); }
+		| c_list ',' c_term	{ $$ = cat_str(3, $1, mm_strdup(","), $3); }
 		;
 
 c_term:  c_stuff			{ $$ = $1; }
-		| '{' c_list '}'	{ $$ = cat_str(3, make_str("{"), $2, make_str("}")); }
+		| '{' c_list '}'	{ $$ = cat_str(3, mm_strdup("{"), $2, mm_strdup("}")); }
 		;
 
 c_thing:	c_anything		{ $$ = $1; }
-		|	'('		{ $$ = make_str("("); }
-		|	')'		{ $$ = make_str(")"); }
-		|	','		{ $$ = make_str(","); }
-		|	';'		{ $$ = make_str(";"); }
+		|	'('		{ $$ = mm_strdup("("); }
+		|	')'		{ $$ = mm_strdup(")"); }
+		|	','		{ $$ = mm_strdup(","); }
+		|	';'		{ $$ = mm_strdup(";"); }
 		;
 
 c_anything:  ecpg_ident				{ $$ = $1; }
 		| Iconst			{ $$ = $1; }
 		| ecpg_fconst			{ $$ = $1; }
 		| ecpg_sconst			{ $$ = $1; }
-		| '*'				{ $$ = make_str("*"); }
-		| '+'				{ $$ = make_str("+"); }
-		| '-'				{ $$ = make_str("-"); }
-		| '/'				{ $$ = make_str("/"); }
-		| '%'				{ $$ = make_str("%"); }
-		| NULL_P			{ $$ = make_str("NULL"); }
-		| S_ADD				{ $$ = make_str("+="); }
-		| S_AND				{ $$ = make_str("&&"); }
+		| '*'				{ $$ = mm_strdup("*"); }
+		| '+'				{ $$ = mm_strdup("+"); }
+		| '-'				{ $$ = mm_strdup("-"); }
+		| '/'				{ $$ = mm_strdup("/"); }
+		| '%'				{ $$ = mm_strdup("%"); }
+		| NULL_P			{ $$ = mm_strdup("NULL"); }
+		| S_ADD				{ $$ = mm_strdup("+="); }
+		| S_AND				{ $$ = mm_strdup("&&"); }
 		| S_ANYTHING			{ $$ = make_name(); }
-		| S_AUTO			{ $$ = make_str("auto"); }
-		| S_CONST			{ $$ = make_str("const"); }
-		| S_DEC				{ $$ = make_str("--"); }
-		| S_DIV				{ $$ = make_str("/="); }
-		| S_DOTPOINT			{ $$ = make_str(".*"); }
-		| S_EQUAL			{ $$ = make_str("=="); }
-		| S_EXTERN			{ $$ = make_str("extern"); }
-		| S_INC				{ $$ = make_str("++"); }
-		| S_LSHIFT			{ $$ = make_str("<<"); }
-		| S_MEMBER			{ $$ = make_str("->"); }
-		| S_MEMPOINT			{ $$ = make_str("->*"); }
-		| S_MOD				{ $$ = make_str("%="); }
-		| S_MUL				{ $$ = make_str("*="); }
-		| S_NEQUAL			{ $$ = make_str("!="); }
-		| S_OR				{ $$ = make_str("||"); }
-		| S_REGISTER			{ $$ = make_str("register"); }
-		| S_RSHIFT			{ $$ = make_str(">>"); }
-		| S_STATIC			{ $$ = make_str("static"); }
-		| S_SUB				{ $$ = make_str("-="); }
-		| S_TYPEDEF			{ $$ = make_str("typedef"); }
-		| S_VOLATILE			{ $$ = make_str("volatile"); }
-		| SQL_BOOL			{ $$ = make_str("bool"); }
-		| ENUM_P			{ $$ = make_str("enum"); }
-		| HOUR_P			{ $$ = make_str("hour"); }
-		| INT_P				{ $$ = make_str("int"); }
-		| SQL_LONG			{ $$ = make_str("long"); }
-		| MINUTE_P			{ $$ = make_str("minute"); }
-		| MONTH_P			{ $$ = make_str("month"); }
-		| SECOND_P			{ $$ = make_str("second"); }
-		| SQL_SHORT			{ $$ = make_str("short"); }
-		| SQL_SIGNED			{ $$ = make_str("signed"); }
-		| SQL_STRUCT			{ $$ = make_str("struct"); }
-		| SQL_UNSIGNED			{ $$ = make_str("unsigned"); }
-		| YEAR_P			{ $$ = make_str("year"); }
-		| CHAR_P			{ $$ = make_str("char"); }
-		| FLOAT_P			{ $$ = make_str("float"); }
-		| TO				{ $$ = make_str("to"); }
-		| UNION				{ $$ = make_str("union"); }
-		| VARCHAR			{ $$ = make_str("varchar"); }
-		| '['				{ $$ = make_str("["); }
-		| ']'				{ $$ = make_str("]"); }
-		| '='				{ $$ = make_str("="); }
-		| ':' 				{ $$ = make_str(":"); }
+		| S_AUTO			{ $$ = mm_strdup("auto"); }
+		| S_CONST			{ $$ = mm_strdup("const"); }
+		| S_DEC				{ $$ = mm_strdup("--"); }
+		| S_DIV				{ $$ = mm_strdup("/="); }
+		| S_DOTPOINT			{ $$ = mm_strdup(".*"); }
+		| S_EQUAL			{ $$ = mm_strdup("=="); }
+		| S_EXTERN			{ $$ = mm_strdup("extern"); }
+		| S_INC				{ $$ = mm_strdup("++"); }
+		| S_LSHIFT			{ $$ = mm_strdup("<<"); }
+		| S_MEMBER			{ $$ = mm_strdup("->"); }
+		| S_MEMPOINT			{ $$ = mm_strdup("->*"); }
+		| S_MOD				{ $$ = mm_strdup("%="); }
+		| S_MUL				{ $$ = mm_strdup("*="); }
+		| S_NEQUAL			{ $$ = mm_strdup("!="); }
+		| S_OR				{ $$ = mm_strdup("||"); }
+		| S_REGISTER			{ $$ = mm_strdup("register"); }
+		| S_RSHIFT			{ $$ = mm_strdup(">>"); }
+		| S_STATIC			{ $$ = mm_strdup("static"); }
+		| S_SUB				{ $$ = mm_strdup("-="); }
+		| S_TYPEDEF			{ $$ = mm_strdup("typedef"); }
+		| S_VOLATILE			{ $$ = mm_strdup("volatile"); }
+		| SQL_BOOL			{ $$ = mm_strdup("bool"); }
+		| ENUM_P			{ $$ = mm_strdup("enum"); }
+		| HOUR_P			{ $$ = mm_strdup("hour"); }
+		| INT_P				{ $$ = mm_strdup("int"); }
+		| SQL_LONG			{ $$ = mm_strdup("long"); }
+		| MINUTE_P			{ $$ = mm_strdup("minute"); }
+		| MONTH_P			{ $$ = mm_strdup("month"); }
+		| SECOND_P			{ $$ = mm_strdup("second"); }
+		| SQL_SHORT			{ $$ = mm_strdup("short"); }
+		| SQL_SIGNED			{ $$ = mm_strdup("signed"); }
+		| SQL_STRUCT			{ $$ = mm_strdup("struct"); }
+		| SQL_UNSIGNED			{ $$ = mm_strdup("unsigned"); }
+		| YEAR_P			{ $$ = mm_strdup("year"); }
+		| CHAR_P			{ $$ = mm_strdup("char"); }
+		| FLOAT_P			{ $$ = mm_strdup("float"); }
+		| TO				{ $$ = mm_strdup("to"); }
+		| UNION				{ $$ = mm_strdup("union"); }
+		| VARCHAR			{ $$ = mm_strdup("varchar"); }
+		| '['				{ $$ = mm_strdup("["); }
+		| ']'				{ $$ = mm_strdup("]"); }
+		| '='				{ $$ = mm_strdup("="); }
+		| ':' 				{ $$ = mm_strdup(":"); }
 		;
 
 DeallocateStmt: DEALLOCATE prepared_name                { $$ = $2; }
                 | DEALLOCATE PREPARE prepared_name      { $$ = $3; }
-                | DEALLOCATE ALL                        { $$ = make_str("all"); }
-                | DEALLOCATE PREPARE ALL                { $$ = make_str("all"); }
+                | DEALLOCATE ALL                        { $$ = mm_strdup("all"); }
+                | DEALLOCATE PREPARE ALL                { $$ = mm_strdup("all"); }
                 ;
 
 Iresult:        Iconst			{ $$ = $1; }
-                | '(' Iresult ')'       { $$ = cat_str(3, make_str("("), $2, make_str(")")); }
-                | Iresult '+' Iresult   { $$ = cat_str(3, $1, make_str("+"), $3); }
-                | Iresult '-' Iresult   { $$ = cat_str(3, $1, make_str("-"), $3); }
-                | Iresult '*' Iresult   { $$ = cat_str(3, $1, make_str("*"), $3); }
-                | Iresult '/' Iresult   { $$ = cat_str(3, $1, make_str("/"), $3); }
-                | Iresult '%' Iresult   { $$ = cat_str(3, $1, make_str("%"), $3); }
+                | '(' Iresult ')'       { $$ = cat_str(3, mm_strdup("("), $2, mm_strdup(")")); }
+                | Iresult '+' Iresult   { $$ = cat_str(3, $1, mm_strdup("+"), $3); }
+                | Iresult '-' Iresult   { $$ = cat_str(3, $1, mm_strdup("-"), $3); }
+                | Iresult '*' Iresult   { $$ = cat_str(3, $1, mm_strdup("*"), $3); }
+                | Iresult '/' Iresult   { $$ = cat_str(3, $1, mm_strdup("/"), $3); }
+                | Iresult '%' Iresult   { $$ = cat_str(3, $1, mm_strdup("%"), $3); }
                 | ecpg_sconst		{ $$ = $1; }
                 | ColId                 { $$ = $1; }
                 ;

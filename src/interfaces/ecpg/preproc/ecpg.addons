@@ -41,7 +41,7 @@ ECPG: stmtPrepareStmt block
 		if ($1.type == NULL || strlen($1.type) == 0)
 			output_prepare_statement($1.name, $1.stmt);
 		else
-			output_statement(cat_str(5, make_str("prepare"), $1.name, $1.type, make_str("as"), $1.stmt), 0, ECPGst_normal);
+			output_statement(cat_str(5, mm_strdup("prepare"), $1.name, $1.type, mm_strdup("as"), $1.stmt), 0, ECPGst_normal);
 	}
 ECPG: stmtTransactionStmt block
 	{
@@ -212,21 +212,21 @@ ECPG: var_valueNumericOnly addon
 		if ($1[0] == '$')
 		{
 			free($1);
-			$1 = make_str("$0");
+			$1 = mm_strdup("$0");
 		}
 ECPG: fetch_argscursor_name addon
 		add_additional_variables($1, false);
 		if ($1[0] == ':')
 		{
 			free($1);
-			$1 = make_str("$0");
+			$1 = mm_strdup("$0");
 		}
 ECPG: fetch_argsfrom_incursor_name addon
 		add_additional_variables($2, false);
 		if ($2[0] == ':')
 		{
 			free($2);
-			$2 = make_str("$0");
+			$2 = mm_strdup("$0");
 		}
 ECPG: fetch_argsNEXTopt_from_incursor_name addon
 ECPG: fetch_argsPRIORopt_from_incursor_name addon
@@ -237,19 +237,19 @@ ECPG: fetch_argsALLopt_from_incursor_name addon
 		if ($3[0] == ':')
 		{
 			free($3);
-			$3 = make_str("$0");
+			$3 = mm_strdup("$0");
 		}
 ECPG: fetch_argsSignedIconstopt_from_incursor_name addon
 		add_additional_variables($3, false);
 		if ($3[0] == ':')
 		{
 			free($3);
-			$3 = make_str("$0");
+			$3 = mm_strdup("$0");
 		}
 		if ($1[0] == '$')
 		{
 			free($1);
-			$1 = make_str("$0");
+			$1 = mm_strdup("$0");
 		}
 ECPG: fetch_argsFORWARDALLopt_from_incursor_name addon
 ECPG: fetch_argsBACKWARDALLopt_from_incursor_name addon
@@ -257,7 +257,7 @@ ECPG: fetch_argsBACKWARDALLopt_from_incursor_name addon
 		if ($4[0] == ':')
 		{
 			free($4);
-			$4 = make_str("$0");
+			$4 = mm_strdup("$0");
 		}
 ECPG: fetch_argsABSOLUTE_PSignedIconstopt_from_incursor_name addon
 ECPG: fetch_argsRELATIVE_PSignedIconstopt_from_incursor_name addon
@@ -267,12 +267,12 @@ ECPG: fetch_argsBACKWARDSignedIconstopt_from_incursor_name addon
 		if ($4[0] == ':')
 		{
 			free($4);
-			$4 = make_str("$0");
+			$4 = mm_strdup("$0");
 		}
 		if ($2[0] == '$')
 		{
 			free($2);
-			$2 = make_str("$0");
+			$2 = mm_strdup("$0");
 		}
 ECPG: cursor_namename rule
 	| char_civar
@@ -287,7 +287,7 @@ ECPG: PrepareStmtPREPAREprepared_nameprep_type_clauseASPreparableStmt block
 	{
 		$$.name = $2;
 		$$.type = $3;
-		$$.stmt = cat_str(3, make_str("\""), $5, make_str("\""));
+		$$.stmt = cat_str(3, mm_strdup("\""), $5, mm_strdup("\""));
 	}
 	| PREPARE prepared_name FROM execstring
 	{
@@ -300,7 +300,7 @@ ECPG: ExecuteStmtEXECUTEprepared_nameexecute_param_clauseexecute_rest block
 ECPG: DeclareCursorStmtDECLAREcursor_namecursor_optionsCURSORopt_holdFORSelectStmt block
 	{
 		struct cursor *ptr, *this;
-		char *cursor_marker = $2[0] == ':' ? make_str("$0") : mm_strdup($2);
+		char *cursor_marker = $2[0] == ':' ? mm_strdup("$0") : mm_strdup($2);
 		char *comment, *c1, *c2;
 		int (* strcmp_fn)(const char *, const char *) = ($2[0] == ':' ? strcmp : pg_strcasecmp);
 
@@ -322,7 +322,7 @@ ECPG: DeclareCursorStmtDECLAREcursor_namecursor_optionsCURSORopt_holdFORSelectSt
 		this->function = (current_function ? mm_strdup(current_function) : NULL);
 		this->connection = connection;
 		this->opened = false;
-		this->command =  cat_str(7, make_str("declare"), cursor_marker, $3, make_str("cursor"), $5, make_str("for"), $7);
+		this->command =  cat_str(7, mm_strdup("declare"), cursor_marker, $3, mm_strdup("cursor"), $5, mm_strdup("for"), $7);
 		this->argsinsert = argsinsert;
 		this->argsinsert_oos = NULL;
 		this->argsresult = argsresult;
@@ -337,31 +337,31 @@ ECPG: DeclareCursorStmtDECLAREcursor_namecursor_optionsCURSORopt_holdFORSelectSt
 			c2[0] = '.';
 			c2[1] = '.';
 		}
-		comment = cat_str(3, make_str("/*"), c1, make_str("*/"));
+		comment = cat_str(3, mm_strdup("/*"), c1, mm_strdup("*/"));
 
 		if ((braces_open > 0) && INFORMIX_MODE) /* we're in a function */
 			$$ = cat_str(3, adjust_outofscope_cursor_vars(this),
-				make_str("ECPG_informix_reset_sqlca();"),
+				mm_strdup("ECPG_informix_reset_sqlca();"),
 				comment);
 		else
 			$$ = cat2_str(adjust_outofscope_cursor_vars(this), comment);
 	}
 ECPG: ClosePortalStmtCLOSEcursor_name block
 	{
-		char *cursor_marker = $2[0] == ':' ? make_str("$0") : $2;
-		$$ = cat2_str(make_str("close"), cursor_marker);
+		char *cursor_marker = $2[0] == ':' ? mm_strdup("$0") : $2;
+		$$ = cat2_str(mm_strdup("close"), cursor_marker);
 	}
 ECPG: opt_hold block
 	{
 		if (compat == ECPG_COMPAT_INFORMIX_SE && autocommit)
-			$$ = make_str("with hold");
+			$$ = mm_strdup("with hold");
 		else
 			$$ = EMPTY;
 	}
 ECPG: into_clauseINTOOptTempTableName block
 					{
 						FoundInto = 1;
-						$$= cat2_str(make_str("into"), $2);
+						$$= cat2_str(mm_strdup("into"), $2);
 					}
 	| ecpg_into                     { $$ = EMPTY; }
 ECPG: table_refselect_with_parens addon
@@ -369,16 +369,16 @@ ECPG: table_refselect_with_parens addon
 ECPG: TypenameSimpleTypenameopt_array_bounds block
 	{	$$ = cat2_str($1, $2.str); }
 ECPG: TypenameSETOFSimpleTypenameopt_array_bounds block
-	{	$$ = cat_str(3, make_str("setof"), $2, $3.str); }
+	{	$$ = cat_str(3, mm_strdup("setof"), $2, $3.str); }
 ECPG: opt_array_boundsopt_array_bounds'['']' block
 	{
 		$$.index1 = $1.index1;
 		$$.index2 = $1.index2;
 		if (strcmp($$.index1, "-1") == 0)
-			$$.index1 = make_str("0");
+			$$.index1 = mm_strdup("0");
 		else if (strcmp($1.index2, "-1") == 0)
-			$$.index2 = make_str("0");
-		$$.str = cat_str(2, $1.str, make_str("[]"));
+			$$.index2 = mm_strdup("0");
+		$$.str = cat_str(2, $1.str, mm_strdup("[]"));
 	}
 	| opt_array_bounds '[' Iresult ']'
 	{
@@ -388,12 +388,12 @@ ECPG: opt_array_boundsopt_array_bounds'['']' block
 			$$.index1 = strdup($3);
 		else if (strcmp($1.index2, "-1") == 0)
 			$$.index2 = strdup($3);
-		$$.str = cat_str(4, $1.str, make_str("["), $3, make_str("]"));
+		$$.str = cat_str(4, $1.str, mm_strdup("["), $3, mm_strdup("]"));
 	}
 ECPG: opt_array_bounds
 	{
-		$$.index1 = make_str("-1");
-		$$.index2 = make_str("-1");
+		$$.index1 = mm_strdup("-1");
+		$$.index2 = mm_strdup("-1");
 		$$.str= EMPTY;
 	}
 ECPG: IconstICONST block
@@ -404,8 +404,8 @@ ECPG: AexprConstNULL_P rule
 ECPG: ColIdcol_name_keyword rule
 	| ECPGKeywords                  { $$ = $1; }
 	| ECPGCKeywords                 { $$ = $1; }
-	| CHAR_P                        { $$ = make_str("char"); }
-	| VALUES                        { $$ = make_str("values"); }
+	| CHAR_P                        { $$ = mm_strdup("char"); }
+	| VALUES                        { $$ = mm_strdup("values"); }
 ECPG: type_function_nametype_func_name_keyword rule
 	| ECPGKeywords                          { $$ = $1; }
 	| ECPGTypeName                          { $$ = $1; }
@@ -418,60 +418,60 @@ ECPG: VariableShowStmtSHOWALL block
 ECPG: FetchStmtMOVEfetch_args rule
 	| FETCH fetch_args ecpg_fetch_into
 	{
-		$$ = cat2_str(make_str("fetch"), $2);
+		$$ = cat2_str(mm_strdup("fetch"), $2);
 	}
 	| FETCH FORWARD cursor_name opt_ecpg_fetch_into
 	{
-		char *cursor_marker = $3[0] == ':' ? make_str("$0") : $3;
+		char *cursor_marker = $3[0] == ':' ? mm_strdup("$0") : $3;
 		add_additional_variables($3, false);
-		$$ = cat_str(2, make_str("fetch forward"), cursor_marker);
+		$$ = cat_str(2, mm_strdup("fetch forward"), cursor_marker);
 	}
 	| FETCH FORWARD from_in cursor_name opt_ecpg_fetch_into
 	{
-		char *cursor_marker = $4[0] == ':' ? make_str("$0") : $4;
+		char *cursor_marker = $4[0] == ':' ? mm_strdup("$0") : $4;
 		add_additional_variables($4, false);
-		$$ = cat_str(2, make_str("fetch forward from"), cursor_marker);
+		$$ = cat_str(2, mm_strdup("fetch forward from"), cursor_marker);
 	}
 	| FETCH BACKWARD cursor_name opt_ecpg_fetch_into
 	{
-		char *cursor_marker = $3[0] == ':' ? make_str("$0") : $3;
+		char *cursor_marker = $3[0] == ':' ? mm_strdup("$0") : $3;
 		add_additional_variables($3, false);
-		$$ = cat_str(2, make_str("fetch backward"), cursor_marker);
+		$$ = cat_str(2, mm_strdup("fetch backward"), cursor_marker);
 	}
 	| FETCH BACKWARD from_in cursor_name opt_ecpg_fetch_into
 	{
-		char *cursor_marker = $4[0] == ':' ? make_str("$0") : $4;
+		char *cursor_marker = $4[0] == ':' ? mm_strdup("$0") : $4;
 		add_additional_variables($4, false);
-		$$ = cat_str(2, make_str("fetch backward from"), cursor_marker);
+		$$ = cat_str(2, mm_strdup("fetch backward from"), cursor_marker);
 	}
 	| MOVE FORWARD cursor_name
 	{
-		char *cursor_marker = $3[0] == ':' ? make_str("$0") : $3;
+		char *cursor_marker = $3[0] == ':' ? mm_strdup("$0") : $3;
 		add_additional_variables($3, false);
-		$$ = cat_str(2, make_str("move forward"), cursor_marker);
+		$$ = cat_str(2, mm_strdup("move forward"), cursor_marker);
 	}
 	| MOVE FORWARD from_in cursor_name
 	{
-		char *cursor_marker = $4[0] == ':' ? make_str("$0") : $4;
+		char *cursor_marker = $4[0] == ':' ? mm_strdup("$0") : $4;
 		add_additional_variables($4, false);
-		$$ = cat_str(2, make_str("move forward from"), cursor_marker);
+		$$ = cat_str(2, mm_strdup("move forward from"), cursor_marker);
 	}
 	| MOVE BACKWARD cursor_name
 	{
-		char *cursor_marker = $3[0] == ':' ? make_str("$0") : $3;
+		char *cursor_marker = $3[0] == ':' ? mm_strdup("$0") : $3;
 		add_additional_variables($3, false);
-		$$ = cat_str(2, make_str("move backward"), cursor_marker);
+		$$ = cat_str(2, mm_strdup("move backward"), cursor_marker);
 	}
 	| MOVE BACKWARD from_in cursor_name
 	{
-		char *cursor_marker = $4[0] == ':' ? make_str("$0") : $4;
+		char *cursor_marker = $4[0] == ':' ? mm_strdup("$0") : $4;
 		add_additional_variables($4, false);
-		$$ = cat_str(2, make_str("move backward from"), cursor_marker);
+		$$ = cat_str(2, mm_strdup("move backward from"), cursor_marker);
 	}
 ECPG: limit_clauseLIMITselect_limit_value','select_offset_value block
         {
                 mmerror(PARSE_ERROR, ET_WARNING, "no longer supported LIMIT #,# syntax passed to server");
-                $$ = cat_str(4, make_str("limit"), $2, make_str(","), $4);
+                $$ = cat_str(4, mm_strdup("limit"), $2, mm_strdup(","), $4);
         }
 ECPG: SignedIconstIconst rule
 	| civar	{ $$ = $1; }

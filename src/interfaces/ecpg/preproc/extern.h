@@ -14,7 +14,7 @@
 /* defines */
 
 #define STRUCT_DEPTH 128
-#define EMPTY make_str("")
+#define EMPTY mm_strdup("")
 
 /* variables */
 
@@ -62,7 +62,6 @@ extern struct ECPGstruct_member *struct_member_list[STRUCT_DEPTH];
 
 extern const char *get_dtype(enum ECPGdtype);
 extern void lex_init(void);
-extern char *make_str(const char *);
 extern void output_line_number(void);
 extern void output_statement(char *, int, enum ECPG_statement_type);
 extern void output_prepare_statement(char *, char *);

@@ -188,7 +188,7 @@ output_get_descr(char *desc_name, char *index)
 				break;
 		}
 		fprintf(yyout, "%s,", get_dtype(results->value));
-		ECPGdump_a_type(yyout, v->name, v->type, v->brace_level, NULL, NULL, -1, NULL, NULL, make_str("0"), NULL, NULL);
+		ECPGdump_a_type(yyout, v->name, v->type, v->brace_level, NULL, NULL, -1, NULL, NULL, mm_strdup("0"), NULL, NULL);
 	}
 	drop_assignments();
 	fputs("ECPGd_EODT);\n", yyout);
@@ -293,7 +293,7 @@ output_set_descr(char *desc_name, char *index)
 			case ECPGd_length:
 			case ECPGd_type:
 				fprintf(yyout, "%s,", get_dtype(results->value));
-				ECPGdump_a_type(yyout, v->name, v->type, v->brace_level, NULL, NULL, -1, NULL, NULL, make_str("0"), NULL, NULL);
+				ECPGdump_a_type(yyout, v->name, v->type, v->brace_level, NULL, NULL, -1, NULL, NULL, mm_strdup("0"), NULL, NULL);
 				break;
 
 			default:

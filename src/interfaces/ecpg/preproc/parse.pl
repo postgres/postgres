@@ -397,7 +397,7 @@ sub dump_fields {
 	    &add_to_buffer('rules', " \$\$=EMPTY; }");
 	}
 	else {
-	    # Go through each field and try to 'aggregate' the tokens into a single 'make_str' where possible
+	    # Go through each field and try to 'aggregate' the tokens into a single 'mm_strdup' where possible
 	    $cnt = 0;
 	    for ($z = 0; $z < $len; $z++) {
 		if (substr($flds{$z}, 1, 1) eq "\$") {
@@ -410,7 +410,7 @@ sub dump_fields {
 		while (1) {
 		    if ($z >= $len - 1 || substr($flds{$z + 1}, 1, 1) eq "\$") {
 			# We're at the end...
-			$flds_new{$cnt++} = "make_str(\"" . $str . "\")";
+			$flds_new{$cnt++} = "mm_strdup(\"" . $str . "\")";
 			last;
 		    }
 		    $z++;

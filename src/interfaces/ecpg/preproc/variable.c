@@ -446,7 +446,7 @@ dump_variables(struct arguments * list, int mode)
 	/* Then the current element and its indicator */
 	ECPGdump_a_type(yyout, list->variable->name, list->variable->type, list->variable->brace_level,
 					list->indicator->name, list->indicator->type, list->indicator->brace_level,
-					NULL, NULL, make_str("0"), NULL, NULL);
+					NULL, NULL, mm_strdup("0"), NULL, NULL);
 
 	/* Then release the list element. */
 	if (mode != 0)
@@ -542,7 +542,7 @@ adjust_array(enum ECPGttype type_enum, char **dimension, char **length, char *ty
 			if (pointer_len)
 			{
 				*length = *dimension;
-				*dimension = make_str("0");
+				*dimension = mm_strdup("0");
 			}
 
 			if (atoi(*length) >= 0)
@@ -552,13 +552,13 @@ adjust_array(enum ECPGttype type_enum, char **dimension, char **length, char *ty
 		case ECPGt_varchar:
 			/* pointer has to get dimension 0 */
 			if (pointer_len)
-				*dimension = make_str("0");
+				*dimension = mm_strdup("0");
 
 			/* one index is the string length */
 			if (atoi(*length) < 0)
 			{
 				*length = *dimension;
-				*dimension = make_str("-1");
+				*dimension = mm_strdup("-1");
 			}
 
 			break;
@@ -568,13 +568,13 @@ adjust_array(enum ECPGttype type_enum, char **dimension, char **length, char *ty
 			/* char ** */
 			if (pointer_len == 2)
 			{
-				*length = *dimension = make_str("0");
+				*length = *dimension = mm_strdup("0");
 				break;
 			}
 
 			/* pointer has to get length 0 */
 			if (pointer_len == 1)
-				*length = make_str("0");
+				*length = mm_strdup("0");
 
 			/* one index is the string length */
 			if (atoi(*length) < 0)
@@ -589,13 +589,13 @@ adjust_array(enum ECPGttype type_enum, char **dimension, char **length, char *ty
 					 * do not change this for typedefs since it will be
 					 * changed later on when the variable is defined
 					 */
-					*length = make_str("1");
+					*length = mm_strdup("1");
 				else if (strcmp(*dimension, "0") == 0)
-					*length = make_str("-1");
+					*length = mm_strdup("-1");
 				else
 					*length = *dimension;
 
-				*dimension = make_str("-1");
+				*dimension = mm_strdup("-1");
 			}
 			break;
 		default:
@@ -603,7 +603,7 @@ adjust_array(enum ECPGttype type_enum, char **dimension, char **length, char *ty
 			if (pointer_len)
 			{
 				*length = *dimension;
-				*dimension = make_str("0");
+				*dimension = mm_strdup("0");
 			}
 
 			if (atoi(*length) >= 0)

@@ -120,7 +120,7 @@ ECPGmake_array_type(struct ECPGtype * type, char *size)
 struct ECPGtype *
 ECPGmake_struct_type(struct ECPGstruct_member * rm, enum ECPGttype type, char *type_name, char *struct_sizeof)
 {
-	struct ECPGtype *ne = ECPGmake_simple_type(type, make_str("1"), 0);
+	struct ECPGtype *ne = ECPGmake_simple_type(type, mm_strdup("1"), 0);
 
 	ne->type_name = mm_strdup(type_name);
 	ne->u.members = ECPGstruct_member_dup(rm);
@@ -308,7 +308,7 @@ ECPGdump_a_type(FILE *o, const char *name, struct ECPGtype * type, const int bra
 					if (ind_type != NULL)
 					{
 						if (ind_type->type == ECPGt_NO_INDICATOR)
-							ECPGdump_a_simple(o, ind_name, ind_type->type, ind_type->size, make_str("-1"), NULL, ind_prefix, 0);
+							ECPGdump_a_simple(o, ind_name, ind_type->type, ind_type->size, mm_strdup("-1"), NULL, ind_prefix, 0);
 						else
 						{
 							ECPGdump_a_simple(o, ind_name, ind_type->u.element->type,
@@ -321,7 +321,7 @@ ECPGdump_a_type(FILE *o, const char *name, struct ECPGtype * type, const int bra
 			if (indicator_set && ind_type->type != ECPGt_struct)
 				mmerror(INDICATOR_NOT_STRUCT, ET_FATAL, "indicator for struct has to be a struct");
 
-			ECPGdump_a_struct(o, name, ind_name, make_str("1"), type, ind_type, prefix, ind_prefix);
+			ECPGdump_a_struct(o, name, ind_name, mm_strdup("1"), type, ind_type, prefix, ind_prefix);
 			break;
 		case ECPGt_union:		/* cannot dump a complete union */
 			base_yyerror("type of union has to be specified");
@@ -330,25 +330,25 @@ ECPGdump_a_type(FILE *o, const char *name, struct ECPGtype * type, const int bra
 			if (indicator_set && (ind_type->type == ECPGt_struct || ind_type->type == ECPGt_array))
 				mmerror(INDICATOR_NOT_SIMPLE, ET_FATAL, "indicator for simple data type has to be simple");
 
-			ECPGdump_a_simple(o, name, type->type, make_str("1"), (arr_str_siz && strcmp(arr_str_siz, "0") != 0) ? arr_str_siz : make_str("1"), struct_sizeof, prefix, 0);
+			ECPGdump_a_simple(o, name, type->type, mm_strdup("1"), (arr_str_siz && strcmp(arr_str_siz, "0") != 0) ? arr_str_siz : mm_strdup("1"), struct_sizeof, prefix, 0);
 			if (ind_type != NULL)
-				ECPGdump_a_simple(o, ind_name, ind_type->type, ind_type->size, (arr_str_siz && strcmp(arr_str_siz, "0") != 0) ? arr_str_siz : make_str("-1"), ind_struct_sizeof, ind_prefix, 0);
+				ECPGdump_a_simple(o, ind_name, ind_type->type, ind_type->size, (arr_str_siz && strcmp(arr_str_siz, "0") != 0) ? arr_str_siz : mm_strdup("-1"), ind_struct_sizeof, ind_prefix, 0);
 			break;
 		case ECPGt_descriptor:
 			if (indicator_set && (ind_type->type == ECPGt_struct || ind_type->type == ECPGt_array))
 				mmerror(INDICATOR_NOT_SIMPLE, ET_FATAL, "indicator for simple data type has to be simple");
 
-			ECPGdump_a_simple(o, name, type->type, NULL, make_str("-1"), NULL, prefix, 0);
+			ECPGdump_a_simple(o, name, type->type, NULL, mm_strdup("-1"), NULL, prefix, 0);
 			if (ind_type != NULL)
-				ECPGdump_a_simple(o, ind_name, ind_type->type, ind_type->size, make_str("-1"), NULL, ind_prefix, 0);
+				ECPGdump_a_simple(o, ind_name, ind_type->type, ind_type->size, mm_strdup("-1"), NULL, ind_prefix, 0);
 			break;
 		default:
 			if (indicator_set && (ind_type->type == ECPGt_struct || ind_type->type == ECPGt_array))
 				mmerror(INDICATOR_NOT_SIMPLE, ET_FATAL, "indicator for simple data type has to be simple");
 
-			ECPGdump_a_simple(o, name, type->type, type->size, (arr_str_siz && strcmp(arr_str_siz, "0") != 0) ? arr_str_siz : make_str("-1"), struct_sizeof, prefix, type->counter);
+			ECPGdump_a_simple(o, name, type->type, type->size, (arr_str_siz && strcmp(arr_str_siz, "0") != 0) ? arr_str_siz : mm_strdup("-1"), struct_sizeof, prefix, type->counter);
 			if (ind_type != NULL)
-				ECPGdump_a_simple(o, ind_name, ind_type->type, ind_type->size, (arr_str_siz && strcmp(arr_str_siz, "0") != 0) ? arr_str_siz : make_str("-1"), ind_struct_sizeof, ind_prefix, 0);
+				ECPGdump_a_simple(o, ind_name, ind_type->type, ind_type->size, (arr_str_siz && strcmp(arr_str_siz, "0") != 0) ? arr_str_siz : mm_strdup("-1"), ind_struct_sizeof, ind_prefix, 0);
 			break;
 	}
 }
