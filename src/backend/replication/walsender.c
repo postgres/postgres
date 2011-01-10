@@ -44,6 +44,7 @@
 #include "libpq/pqformat.h"
 #include "libpq/pqsignal.h"
 #include "miscadmin.h"
+#include "replication/basebackup.h"
 #include "replication/walprotocol.h"
 #include "replication/walsender.h"
 #include "storage/fd.h"
@@ -54,6 +55,7 @@
 #include "utils/guc.h"
 #include "utils/memutils.h"
 #include "utils/ps_status.h"
+#include "utils/resowner.h"
 
 
 /* Array of WalSnds in shared memory */
@@ -135,6 +137,9 @@ WalSenderMain(void)
 										   ALLOCSET_DEFAULT_INITSIZE,
 										   ALLOCSET_DEFAULT_MAXSIZE);
 	MemoryContextSwitchTo(walsnd_context);
+
+	/* Set up resource owner */
+	CurrentResourceOwner = ResourceOwnerCreate(NULL, "walsender top-level resource owner");
 
 	/* Unblock signals (they were blocked when the postmaster forked us) */
 	PG_SETMASK(&UnBlockSig);
@@ -304,6 +309,15 @@ WalSndHandshake(void)
 
 						/* break out of the loop */
 						replication_started = true;
+					}
+					else if (strncmp(query_string, "BASE_BACKUP ", 12) == 0)
+					{
+						/* Command is BASE_BACKUP <options>;<label> */
+						SendBaseBackup(query_string + strlen("BASE_BACKUP "));
+						/* Send CommandComplete and ReadyForQuery messages */
+						EndCommand("SELECT", DestRemote);
+						ReadyForQuery(DestRemote);
+						/* ReadyForQuery did pq_flush for us */
 					}
 					else
 					{

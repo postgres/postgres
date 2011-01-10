@@ -1458,6 +1458,98 @@ The commands accepted in walsender mode are:
      </para>
     </listitem>
   </varlistentry>
+
+  <varlistentry>
+    <term>BASE_BACKUP <replaceable>options</><literal>;</><replaceable>label</></term>
+    <listitem>
+     <para>
+      Instructs the server to start streaming a base backup.
+      The system will automatically be put in backup mode with the label
+      specified in <replaceable>label</> before the backup is started, and
+      taken out of it when the backup is complete. The following options
+      are accepted:
+      <variablelist>
+       <varlistentry>
+        <term><literal>PROGRESS</></term>
+        <listitem>
+         <para>
+          Request information required to generate a progress report. This will
+          send back an approximate size in the header of each tablespace, which
+          can be used to calculate how far along the stream is done. This is
+          calculated by enumerating all the file sizes once before the transfer
+          is even started, and may as such have a negative impact on the
+          performance - in particular it may take longer before the first data
+          is streamed. Since the database files can change during the backup,
+          the size is only approximate and may both grow and shrink between
+          the time of approximation and the sending of the actual files.
+         </para>
+        </listitem>
+       </varlistentry>
+      </variablelist>
+     </para>
+     <para>
+      When the backup is started, the server will first send a header in
+      ordinary result set format, followed by one or more CopyResponse
+      results, one for PGDATA and one for each additional tablespace other
+      than <literal>pg_default</> and <literal>pg_global</>. The data in
+      the CopyResponse results will be a tar format (using ustar00
+      extensions) dump of the tablespace contents.
+     </para>
+     <para>
+      The header is an ordinary resultset with one row for each tablespace.
+      The fields in this row are:
+      <variablelist>
+       <varlistentry>
+        <term>spcoid</term>
+        <listitem>
+         <para>
+          The oid of the tablespace, or <literal>NULL</> if it's the base
+          directory.
+         </para>
+        </listitem>
+       </varlistentry>
+       <varlistentry>
+        <term>spclocation</term>
+        <listitem>
+         <para>
+          The full path of the tablespace directory, or <literal>NULL</>
+          if it's the base directory.
+         </para>
+        </listitem>
+       </varlistentry>
+       <varlistentry>
+        <term>size</term>
+        <listitem>
+         <para>
+          The approximate size of the tablespace, if progress report has
+          been requested; otherwise it's <literal>NULL</>.
+         </para>
+        </listitem>
+       </varlistentry>
+      </variablelist>
+     </para>
+     <para>
+      The tar archive for the data directory and each tablespace will contain
+      all files in the directories, regardless of whether they are
+      <productname>PostgreSQL</> files or other files added to the same
+      directory. The only excluded files are:
+      <itemizedlist spacing="compact" mark="bullet">
+       <listitem>
+        <para>
+         <filename>postmaster.pid</>
+        </para>
+       </listitem>
+       <listitem>
+        <para>
+         <filename>pg_xlog</> (including subdirectories)
+        </para>
+       </listitem>
+      </itemizedlist>
+      Owner, group and file mode are set if the underlying filesystem on
+      the server supports it.
+     </para>
+    </listitem>
+  </varlistentry>
 </variablelist>
 
 </para>
