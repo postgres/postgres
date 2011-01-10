@@ -276,6 +276,12 @@ sendDir(char *path, int basepathlen, bool sizeonly)
 		if (strcmp(de->d_name, ".") == 0 || strcmp(de->d_name, "..") == 0)
 			continue;
 
+		/* Skip temporary files */
+		if (strncmp(de->d_name,
+					PG_TEMP_FILE_PREFIX,
+					strlen(PG_TEMP_FILE_PREFIX)) == 0)
+			continue;
+
 		snprintf(pathbuf, MAXPGPATH, "%s/%s", path, de->d_name);
 
 		/* Skip postmaster.pid in the data directory */
