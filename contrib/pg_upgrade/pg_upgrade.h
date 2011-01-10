@@ -69,7 +69,6 @@ typedef struct
 	char		relname[NAMEDATALEN];	/* relation name */
 	Oid			reloid;			/* relation oid */
 	Oid			relfilenode;	/* relation relfile node */
-	Oid			toastrelid;		/* oid of the toast relation */
 	char		tablespace[MAXPGPATH];	/* relations tablespace path */
 } RelInfo;
 
@@ -331,9 +330,9 @@ FileNameMap *gen_db_file_maps(DbInfo *old_db,
 				 DbInfo *new_db, int *nmaps, const char *old_pgdata,
 				 const char *new_pgdata);
 void 		get_db_and_rel_infos(ClusterInfo *cluster);
-void		dbarr_free(DbInfoArr *db_arr);
-void print_maps(FileNameMap *maps, int n,
-		   const char *dbName);
+void		free_db_and_rel_infos(DbInfoArr *db_arr);
+void		print_maps(FileNameMap *maps, int n,
+				const char *db_name);
 
 /* option.c */
 

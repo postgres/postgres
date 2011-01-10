@@ -281,7 +281,7 @@ create_new_objects(void)
 	check_ok();
 
 	/* regenerate now that we have objects in the databases */
-	dbarr_free(&new_cluster.dbarr);
+	free_db_and_rel_infos(&new_cluster.dbarr);
 	get_db_and_rel_infos(&new_cluster);
 
 	uninstall_support_functions_from_new_cluster();
@@ -428,8 +428,8 @@ cleanup(void)
 		pg_free(os_info.tablespaces[tblnum]);
 	pg_free(os_info.tablespaces);
 
-	dbarr_free(&old_cluster.dbarr);
-	dbarr_free(&new_cluster.dbarr);
+	free_db_and_rel_infos(&old_cluster.dbarr);
+	free_db_and_rel_infos(&new_cluster.dbarr);
 	pg_free(log_opts.filename);
 	pg_free(os_info.user);
 	pg_free(old_cluster.controldata.lc_collate);

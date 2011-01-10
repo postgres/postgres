@@ -12,15 +12,15 @@
 #include "access/transam.h"
 
 
-static void get_db_infos(ClusterInfo *cluster);
-static void print_db_arr(ClusterInfo *cluster);
-static void print_rel_arr(RelInfoArr *arr);
-static void get_rel_infos(ClusterInfo *cluster, DbInfo *dbinfo);
-static void free_rel_arr(RelInfoArr *rel_arr);
 static void create_rel_filename_map(const char *old_data, const char *new_data,
 			  const DbInfo *old_db, const DbInfo *new_db,
 			  const RelInfo *old_rel, const RelInfo *new_rel,
 			  FileNameMap *map);
+static void get_db_infos(ClusterInfo *cluster);
+static void get_rel_infos(ClusterInfo *cluster, DbInfo *dbinfo);
+static void free_rel_infos(RelInfoArr *rel_arr);
+static void print_db_infos(DbInfoArr *dbinfo);
+static void print_rel_infos(RelInfoArr *arr);
 
 
 /*
@@ -111,21 +111,45 @@ create_rel_filename_map(const char *old_data, const char *new_data,
 
 
 void
-print_maps(FileNameMap *maps, int n, const char *dbName)
+print_maps(FileNameMap *maps, int n_maps, const char *db_name)
 {
 	if (log_opts.debug)
 	{
 		int			mapnum;
 
-		pg_log(PG_DEBUG, "mappings for db %s:\n", dbName);
+		pg_log(PG_DEBUG, "mappings for db %s:\n", db_name);
 
-		for (mapnum = 0; mapnum < n; mapnum++)
+		for (mapnum = 0; mapnum < n_maps; mapnum++)
 			pg_log(PG_DEBUG, "%s.%s: %u to %u\n",
 				   maps[mapnum].nspname, maps[mapnum].relname,
 				   maps[mapnum].old_relfilenode,
 				   maps[mapnum].new_relfilenode);
 
 		pg_log(PG_DEBUG, "\n\n");
+	}
+}
+
+
+/*
+ * get_db_and_rel_infos()
+ *
+ * higher level routine to generate dbinfos for the database running
+ * on the given "port". Assumes that server is already running.
+ */
+void
+get_db_and_rel_infos(ClusterInfo *cluster)
+{
+	int			dbnum;
+
+	get_db_infos(cluster);
+
+	for (dbnum = 0; dbnum < cluster->dbarr.ndbs; dbnum++)
+		get_rel_infos(cluster, &cluster->dbarr.dbs[dbnum]);
+
+	if (log_opts.debug)
+	{
+		pg_log(PG_DEBUG, "%s databases\n", CLUSTER_NAME(cluster));
+		print_db_infos(&cluster->dbarr);
 	}
 }
 
@@ -144,9 +168,7 @@ get_db_infos(ClusterInfo *cluster)
 	int			ntups;
 	int			tupnum;
 	DbInfo	   *dbinfos;
-	int			i_datname;
-	int			i_oid;
-	int			i_spclocation;
+	int			i_datname, i_oid, i_spclocation;
 
 	res = executeQueryOrDie(conn,
 							"SELECT d.oid, d.datname, t.spclocation "
@@ -183,27 +205,6 @@ get_db_infos(ClusterInfo *cluster)
 
 
 /*
- * get_db_and_rel_infos()
- *
- * higher level routine to generate dbinfos for the database running
- * on the given "port". Assumes that server is already running.
- */
-void
-get_db_and_rel_infos(ClusterInfo *cluster)
-{
-	int			dbnum;
-
-	get_db_infos(cluster);
-
-	for (dbnum = 0; dbnum < cluster->dbarr.ndbs; dbnum++)
-		get_rel_infos(cluster, &cluster->dbarr.dbs[dbnum]);
-
-	if (log_opts.debug)
-		print_db_arr(cluster);
-}
-
-
-/*
  * get_rel_infos()
  *
  * gets the relinfos for all the user tables of the database refered
@@ -224,27 +225,20 @@ get_rel_infos(ClusterInfo *cluster, DbInfo *dbinfo)
 	int			num_rels = 0;
 	char	   *nspname = NULL;
 	char	   *relname = NULL;
-	int			i_spclocation = -1;
-	int			i_nspname = -1;
-	int			i_relname = -1;
-	int			i_oid = -1;
-	int			i_relfilenode = -1;
-	int			i_reltoastrelid = -1;
+	int			i_spclocation, i_nspname, i_relname, i_oid, i_relfilenode;
 	char		query[QUERY_ALLOC];
 
 	/*
 	 * pg_largeobject contains user data that does not appear in pg_dumpall
 	 * --schema-only output, so we have to copy that system table heap and
-	 * index.  Ideally we could just get the relfilenode from template1 but
-	 * pg_largeobject_loid_pn_index's relfilenode can change if the table was
-	 * reindexed so we get the relfilenode for each database and upgrade it as
-	 * a normal user table.
-	 * Order by tablespace so we can cache the directory contents efficiently.
+	 * index.  We could grab the pg_largeobject oids from template1, but
+	 * it is easy to treat it as a normal table.
+	 * Order by oid so we can join old/new structures efficiently.
 	 */
 
 	snprintf(query, sizeof(query),
-			 "SELECT DISTINCT c.oid, n.nspname, c.relname, "
-			 "	c.relfilenode, c.reltoastrelid, t.spclocation "
+			 "SELECT c.oid, n.nspname, c.relname, "
+			 "	c.relfilenode, t.spclocation "
 			 "FROM pg_catalog.pg_class c JOIN "
 			 "		pg_catalog.pg_namespace n "
 			 "	ON c.relnamespace = n.oid "
@@ -256,10 +250,7 @@ get_rel_infos(ClusterInfo *cluster, DbInfo *dbinfo)
 			 "	n.nspname = 'pg_catalog' "
 			 "	AND relname IN "
 			 "        ('pg_largeobject', 'pg_largeobject_loid_pn_index'%s) )) "
-			 "	AND relkind IN ('r','t', 'i'%s)"
-			 "GROUP BY  c.oid, n.nspname, c.relname, c.relfilenode,"
-			 "			c.reltoastrelid, t.spclocation, "
-			 "			n.nspname "
+			 "	AND relkind IN ('r','t', 'i'%s) "
 	/* we preserve pg_class.oid so we sort by it to match old/new */
 			 "ORDER BY 1;",
 			 FirstNormalObjectId,
@@ -280,7 +271,6 @@ get_rel_infos(ClusterInfo *cluster, DbInfo *dbinfo)
 	i_nspname = PQfnumber(res, "nspname");
 	i_relname = PQfnumber(res, "relname");
 	i_relfilenode = PQfnumber(res, "relfilenode");
-	i_reltoastrelid = PQfnumber(res, "reltoastrelid");
 	i_spclocation = PQfnumber(res, "spclocation");
 
 	for (relnum = 0; relnum < ntups; relnum++)
@@ -297,7 +287,6 @@ get_rel_infos(ClusterInfo *cluster, DbInfo *dbinfo)
 		strlcpy(curr->relname, relname, sizeof(curr->relname));
 
 		curr->relfilenode = atooid(PQgetvalue(res, relnum, i_relfilenode));
-		curr->toastrelid = atooid(PQgetvalue(res, relnum, i_reltoastrelid));
 
 		tblspace = PQgetvalue(res, relnum, i_spclocation);
 		/* if no table tablespace, use the database tablespace */
@@ -314,43 +303,42 @@ get_rel_infos(ClusterInfo *cluster, DbInfo *dbinfo)
 }
 
 
+void
+free_db_and_rel_infos(DbInfoArr *db_arr)
+{
+	int			dbnum;
+
+	for (dbnum = 0; dbnum < db_arr->ndbs; dbnum++)
+		free_rel_infos(&db_arr->dbs[dbnum].rel_arr);
+	pg_free(db_arr->dbs);
+	db_arr->ndbs = 0;
+}
+
+
 static void
-free_rel_arr(RelInfoArr *rel_arr)
+free_rel_infos(RelInfoArr *rel_arr)
 {
 	pg_free(rel_arr->rels);
 	rel_arr->nrels = 0;
 }
 
 
-void
-dbarr_free(DbInfoArr *db_arr)
+static void
+print_db_infos(DbInfoArr *db_arr)
 {
 	int			dbnum;
 
 	for (dbnum = 0; dbnum < db_arr->ndbs; dbnum++)
-		free_rel_arr(&db_arr->dbs[dbnum].rel_arr);
-	db_arr->ndbs = 0;
-}
-
-
-static void
-print_db_arr(ClusterInfo *cluster)
-{
-	int			dbnum;
-
-	pg_log(PG_DEBUG, "%s databases\n", CLUSTER_NAME(cluster));
-
-	for (dbnum = 0; dbnum < cluster->dbarr.ndbs; dbnum++)
 	{
-		pg_log(PG_DEBUG, "Database: %s\n", cluster->dbarr.dbs[dbnum].db_name);
-		print_rel_arr(&cluster->dbarr.dbs[dbnum].rel_arr);
+		pg_log(PG_DEBUG, "Database: %s\n", db_arr->dbs[dbnum].db_name);
+		print_rel_infos(&db_arr->dbs[dbnum].rel_arr);
 		pg_log(PG_DEBUG, "\n\n");
 	}
 }
 
 
 static void
-print_rel_arr(RelInfoArr *arr)
+print_rel_infos(RelInfoArr *arr)
 {
 	int			relnum;
 
