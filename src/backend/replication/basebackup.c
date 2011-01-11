@@ -39,6 +39,7 @@ static void send_int8_string(StringInfoData *buf, int64 intval);
 static void SendBackupHeader(List *tablespaces);
 static void SendBackupDirectory(char *location, char *spcoid);
 static void base_backup_cleanup(int code, Datum arg);
+static void perform_base_backup(const char *backup_label, List *tablespaces);
 
 typedef struct
 {
