@@ -196,8 +196,8 @@ create_index_paths(PlannerInfo *root, RelOptInfo *rel)
 			add_path(rel, (Path *) ipath);
 
 		if (ipath->indexinfo->amhasgetbitmap &&
-			ipath->indexselectivity < 1.0 &&
-			!ScanDirectionIsBackward(ipath->indexscandir))
+			(ipath->path.pathkeys == NIL ||
+			 ipath->indexselectivity < 1.0))
 			bitindexpaths = lappend(bitindexpaths, ipath);
 	}
 
