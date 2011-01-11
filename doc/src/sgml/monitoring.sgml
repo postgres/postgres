@@ -298,8 +298,8 @@ postgres: <replaceable>user</> <replaceable>database</> <replaceable>host</> <re
       <entry><structname>pg_stat_replication</><indexterm><primary>pg_stat_replication</primary></indexterm></entry>
       <entry>One row per WAL sender process, showing process <acronym>ID</>,
       user OID, user name, application name, client's address and port number,
-      time at which the server process began execution, and transaction log
-      location.
+      time at which the server process began execution, current WAL sender
+      state and transaction log location.
      </entry>
      </row>
 

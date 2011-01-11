@@ -501,6 +501,7 @@ CREATE VIEW pg_stat_replication AS
             S.client_addr,
             S.client_port,
             S.backend_start,
+            W.state,
             W.sent_location
     FROM pg_stat_get_activity(NULL) AS S, pg_authid U,
             pg_stat_get_wal_senders() AS W

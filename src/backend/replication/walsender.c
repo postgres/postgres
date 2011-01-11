@@ -179,6 +179,7 @@ WalSndHandshake(void)
 	{
 		int			firstchar;
 
+		WalSndSetState(WALSNDSTATE_STARTUP);
 		set_ps_display("idle", false);
 
 		/* Wait for a command to arrive */
@@ -482,6 +483,9 @@ WalSndLoop(void)
 			if (!XLogSend(output_message, &caughtup))
 				break;
 		}
+
+		/* Update our state to indicate if we're behind or not */
+		WalSndSetState(caughtup ? WALSNDSTATE_STREAMING : WALSNDSTATE_CATCHUP);
 	}
 
 	/*
@@ -533,6 +537,7 @@ InitWalSnd(void)
 			 */
 			walsnd->pid = MyProcPid;
 			MemSet(&walsnd->sentPtr, 0, sizeof(XLogRecPtr));
+			walsnd->state = WALSNDSTATE_STARTUP;
 			SpinLockRelease(&walsnd->mutex);
 			/* don't need the lock anymore */
 			OwnLatch((Latch *) &walsnd->latch);
@@ -960,6 +965,45 @@ WalSndWakeup(void)
 		SetLatch(&WalSndCtl->walsnds[i].latch);
 }
 
+/* Set state for current walsender (only called in walsender) */
+void
+WalSndSetState(WalSndState state)
+{
+	/* use volatile pointer to prevent code rearrangement */
+	volatile WalSnd *walsnd = MyWalSnd;
+
+	Assert(am_walsender);
+
+	if (walsnd->state == state)
+		return;
+
+	SpinLockAcquire(&walsnd->mutex);
+	walsnd->state = state;
+	SpinLockRelease(&walsnd->mutex);
+}
+
+/*
+ * Return a string constant representing the state. This is used
+ * in system views, and should *not* be translated.
+ */
+static const char *
+WalSndGetStateString(WalSndState state)
+{
+	switch (state)
+	{
+		case WALSNDSTATE_STARTUP:
+			return "STARTUP";
+		case WALSNDSTATE_BACKUP:
+			return "BACKUP";
+		case WALSNDSTATE_CATCHUP:
+			return "CATCHUP";
+		case WALSNDSTATE_STREAMING:
+			return "STREAMING";
+	}
+	return "UNKNOWN";
+}
+
+
 /*
  * Returns activity of walsenders, including pids and xlog locations sent to
  * standby servers.
@@ -967,7 +1011,7 @@ WalSndWakeup(void)
 Datum
 pg_stat_get_wal_senders(PG_FUNCTION_ARGS)
 {
-#define PG_STAT_GET_WAL_SENDERS_COLS 	2
+#define PG_STAT_GET_WAL_SENDERS_COLS 	3
 	ReturnSetInfo	   *rsinfo = (ReturnSetInfo *) fcinfo->resultinfo;
 	TupleDesc			tupdesc;
 	Tuplestorestate	   *tupstore;
@@ -1021,7 +1065,8 @@ pg_stat_get_wal_senders(PG_FUNCTION_ARGS)
 
 		memset(nulls, 0, sizeof(nulls));
 		values[0] = Int32GetDatum(walsnd->pid);
-		values[1] = CStringGetTextDatum(sent_location);
+		values[1] = CStringGetTextDatum(WalSndGetStateString(walsnd->state));
+		values[2] = CStringGetTextDatum(sent_location);
 
 		tuplestore_putvalues(tupstore, tupdesc, values, nulls);
 	}
