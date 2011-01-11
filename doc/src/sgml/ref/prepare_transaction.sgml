@@ -84,7 +84,7 @@ PREPARE TRANSACTION <replaceable class="PARAMETER">transaction_id</replaceable>
 
   <para>
    <command>PREPARE TRANSACTION</> is not intended for use in applications
-   or interactive sessions. It's purpose is to allow an external
+   or interactive sessions. Its purpose is to allow an external
    transaction manager to perform atomic global transactions across multiple
    databases or other transactional resources. Unless you're writing a
    transaction manager, you probably shouldn't be using <command>PREPARE
