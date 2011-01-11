@@ -49,13 +49,44 @@ typedef struct
 
 
 /*
- * Called when ERROR or FATAL happens in SendBaseBackup() after
+ * Called when ERROR or FATAL happens in perform_base_backup() after
  * we have started the backup - make sure we end it!
  */
 static void
 base_backup_cleanup(int code, Datum arg)
 {
 	do_pg_abort_backup();
+}
+
+/*
+ * Actually do a base backup for the specified tablespaces.
+ *
+ * This is split out mainly to avoid complaints about "variable might be
+ * clobbered by longjmp" from stupider versions of gcc.
+ */
+static void
+perform_base_backup(const char *backup_label, List *tablespaces)
+{
+	do_pg_start_backup(backup_label, true);
+
+	PG_ENSURE_ERROR_CLEANUP(base_backup_cleanup, (Datum) 0);
+	{
+		ListCell   *lc;
+
+		/* Send tablespace header */
+		SendBackupHeader(tablespaces);
+
+		/* Send off our tablespaces one by one */
+		foreach(lc, tablespaces)
+		{
+			tablespaceinfo *ti = (tablespaceinfo *) lfirst(lc);
+
+			SendBackupDirectory(ti->path, ti->oid);
+		}
+	}
+	PG_END_ENSURE_ERROR_CLEANUP(base_backup_cleanup, (Datum) 0);
+
+	do_pg_stop_backup();
 }
 
 /*
@@ -145,26 +176,7 @@ SendBaseBackup(const char *options)
 	}
 	FreeDir(dir);
 
-	do_pg_start_backup(backup_label, true);
-
-	PG_ENSURE_ERROR_CLEANUP(base_backup_cleanup, (Datum) 0);
-	{
-		ListCell   *lc;
-
-		/* Send tablespace header */
-		SendBackupHeader(tablespaces);
-
-		/* Send off our tablespaces one by one */
-		foreach(lc, tablespaces)
-		{
-			ti = (tablespaceinfo *) lfirst(lc);
-
-			SendBackupDirectory(ti->path, ti->oid);
-		}
-	}
-	PG_END_ENSURE_ERROR_CLEANUP(base_backup_cleanup, (Datum) 0);
-
-	do_pg_stop_backup();
+	perform_base_backup(backup_label, tablespaces);
 
 	MemoryContextSwitchTo(old_context);
 	MemoryContextDelete(backup_context);
