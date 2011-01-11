@@ -32,6 +32,9 @@
    interprocess communication and locking are working correctly.
   </para>
 
+  <sect2>
+   <title>Running the tests against a temporary installation</title>
+
   <para>
    To run the parallel regression tests after building but before installation,
    type:
@@ -104,6 +107,10 @@ gmake MAX_CONNECTIONS=10 check
 </screen>
     runs no more than ten tests concurrently.
    </para>
+  </sect2>
+
+  <sect2>
+   <title>Running the tests against an existing installation</title>
 
   <para>
    To run the tests after installation<![%standalone-ignore;[ (see <xref linkend="installation">)]]>,
@@ -142,6 +149,10 @@ gmake installcheck
    You can also do this in a subdirectory of <filename>contrib</> to run
    the tests for just one module.
   </para>
+  </sect2>
+
+  <sect2>
+   <title>Testing Hot Standby</title>
 
   <para>
    The source distribution also contains regression tests of the static
@@ -182,6 +193,7 @@ gmake standbycheck
   <para>
    Additional automated testing may be available in later releases.
   </para>
+  </sect2>
   </sect1>
 
   <sect1 id="regress-evaluation">
