@@ -380,7 +380,7 @@ sub CopyIncludeFiles
 
     EnsureDirectories($target, 'include', 'include/libpq',
         'include/internal', 'include/internal/libpq',
-        'include/server', 'include/server/parser');
+        'include/server');
 
     CopyFiles(
         'Public headers',
@@ -410,8 +410,6 @@ sub CopyIncludeFiles
         $target . '/include/server/',
         'src/include/', 'pg_config.h', 'pg_config_os.h'
     );
-    CopyFiles('Grammar header', $target . '/include/server/parser/',
-	      'src/backend/parser/', 'gram.h');
     CopySetOfFiles('', 
 				   [ glob( "src\\include\\*.h" ) ], 
 				   $target . '/include/server/');
