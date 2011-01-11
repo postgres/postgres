@@ -179,6 +179,8 @@ WalSndHandshake(void)
 	{
 		int			firstchar;
 
+		set_ps_display("idle", false);
+
 		/* Wait for a command to arrive */
 		firstchar = pq_getbyte();
 
