@@ -1826,16 +1826,6 @@ log_line_prefix(StringInfo buf, ErrorData *edata)
 					appendStringInfoString(buf, username);
 				}
 				break;
-			case 'U':
-				if (MyProcPort)
-				{
-					const char *username = GetUserNameFromId(GetUserId());
-
-					if (username == NULL || *username == '\0')
-						username = _("[unknown]");
-					appendStringInfoString(buf, username);
-				}
-				break;
 			case 'd':
 				if (MyProcPort)
 				{
