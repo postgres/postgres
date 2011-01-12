@@ -3504,7 +3504,12 @@ local0.*    /var/log/postgresql
             </row>
             <row>
              <entry><literal>%u</literal></entry>
-             <entry>User name</entry>
+             <entry>Login user name</entry>
+             <entry>yes</entry>
+            </row>
+            <row>
+             <entry><literal>%U</literal></entry>
+             <entry>Current user name</entry>
              <entry>yes</entry>
             </row>
             <row>
