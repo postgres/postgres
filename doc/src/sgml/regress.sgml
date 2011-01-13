@@ -194,6 +194,48 @@ gmake standbycheck
    Additional automated testing may be available in later releases.
   </para>
   </sect2>
+
+  <sect2>
+   <title>Locale and encoding</title>
+
+   <para>
+    By default, the tests against a temporary installation use the
+    locale defined in the current environment and the corresponding
+    database encoding as determined by <command>initdb</command>.  It
+    can be useful to test different locales by setting the appropriate
+    environment variables, for example:
+<screen>
+gmake check LANG=C
+gmake check LC_COLLATE=en_US.utf8 LC_CTYPE=fr_CA.utf8
+</screen>
+    For implementation reasons, setting <envar>LC_ALL</envar> does not
+    work for this purpose; all the other locale-related environment
+    variables do work.
+   </para>
+
+   <para>
+    When testing against an existing installation, the locale is
+    determined by the existing database cluster and cannot be set
+    separately for the test run.
+   </para>
+
+   <para>
+    You can also choose the database encoding explicitly by setting
+    the variable <envar>MULTIBYTE</envar>, for example:
+<screen>
+gmake check LANG=C MULTIBYTE=EUC_JP
+</screen>
+    Setting the database encoding this way typically only makes sense
+    if the locale is C; otherwise the encoding is chosen automatically
+    from the locale, and specifying an encoding that does not match
+    the locale will result in an error.
+   </para>
+
+   <para>
+    The encoding can be set for tests against a temporary or an
+    existing installation.
+   </para>
+  </sect2>
   </sect1>
 
   <sect1 id="regress-evaluation">
