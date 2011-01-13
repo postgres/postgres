@@ -397,8 +397,8 @@ PGconn *PQconnectdbParams(const char **keywords, const char **values, int expand
              <row>
               <entry><literal>verify-ca</></entry>
               <entry>only try an <acronym>SSL</> connection, and verify that
-              the server certificate is issued by a trusted <acronym>CA</>
-              </entry>
+              the server certificate is issued by a trusted certificate
+              authority (<acronym>CA</>)</entry>
              </row>
 
              <row>
@@ -791,8 +791,8 @@ PostgresPollingStatusType PQconnectPoll(PGconn *conn);
 
       <para>
        At any time during connection, the status of the connection can be
-       checked by calling <function>PQstatus</>. If this gives <symbol>CONNECTION_BAD</>, then the
-       connection procedure has failed; if it gives <function>CONNECTION_OK</>, then the
+       checked by calling <function>PQstatus</>. If this call returns <symbol>CONNECTION_BAD</>, then the
+       connection procedure has failed; if the call returns <function>CONNECTION_OK</>, then the
        connection is ready.  Both of these states are equally detectable
        from the return value of <function>PQconnectPoll</>, described above. Other states might also occur
        during (and only during) an asynchronous connection procedure. These
@@ -956,7 +956,7 @@ PQconninfoOption *PQconninfoParse(const char *conninfo, char **errmsg);
       <para>
        Parses a connection string and returns the resulting options as an
        array; or returns <symbol>NULL</> if there is a problem with the connection
-       string.  This can be used to determine
+       string.  This function can be used to extract
        the <function>PQconnectdb</function> options in the provided
        connection string.  The return value points to an array of
        <structname>PQconninfoOption</structname> structures, which ends
@@ -1486,9 +1486,10 @@ const char *PQparameterStatus(const PGconn *conn, const char *paramName);
 <synopsis>
 int PQprotocolVersion(const PGconn *conn);
 </synopsis>
-       Applications might wish to use this to determine whether certain
+       Applications might wish to use this function to determine whether certain
        features are supported.  Currently, the possible values are 2 (2.0
-       protocol), 3 (3.0 protocol), or zero (connection bad).  This will
+       protocol), 3 (3.0 protocol), or zero (connection bad).  The
+       protocol version will
        not change after connection startup is complete, but it could
        theoretically change during a connection reset.  The 3.0 protocol
        will normally be used when communicating with
@@ -1513,7 +1514,7 @@ int PQprotocolVersion(const PGconn *conn);
 <synopsis>
 int PQserverVersion(const PGconn *conn);
 </synopsis>
-       Applications might use this to determine the version of the database
+       Applications might use this function to determine the version of the database
        server they are connected to. The number is formed by converting
        the major, minor, and revision numbers into two-decimal-digit
        numbers and appending them together. For example, version 8.1.5
@@ -1547,7 +1548,7 @@ char *PQerrorMessage(const PGconn *conn);
        Nearly all <application>libpq</> functions will set a message for
        <function>PQerrorMessage</function> if they fail.  Note that by
        <application>libpq</application> convention, a nonempty
-       <function>PQerrorMessage</function> result can be multiple lines,
+       <function>PQerrorMessage</function> result can consist of multiple lines,
        and will include a trailing newline. The caller should not free
        the result directly. It will be freed when the associated
        <structname>PGconn</> handle is passed to
@@ -1717,8 +1718,8 @@ PGresult *PQexec(PGconn *conn, const char *command);
      </varlistentry>
     </variablelist>
 
-    It is allowed to include multiple SQL commands (separated by semicolons)
-    in the command string.  Multiple queries sent in a single
+    The command string can include multiple SQL commands
+    (separated by semicolons).  Multiple queries sent in a single
     <function>PQexec</> call are processed in a single transaction, unless
     there are explicit <command>BEGIN</command>/<command>COMMIT</command>
     commands included in the query string to divide it into multiple
@@ -4142,7 +4143,7 @@ int PQcancel(PGcancel *cancel, char *errbuf, int errbufsize);
       <para>
        The return value is 1 if the cancel request was successfully
        dispatched and 0 if not.  If not, <parameter>errbuf</> is filled
-       with an error message explaining why not.  <parameter>errbuf</>
+       with an explanatory error message.  <parameter>errbuf</>
        must be a char array of size <parameter>errbufsize</> (the
        recommended size is 256 bytes).
       </para>
