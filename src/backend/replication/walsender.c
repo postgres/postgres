@@ -1050,6 +1050,7 @@ pg_stat_get_wal_senders(PG_FUNCTION_ARGS)
 		volatile WalSnd *walsnd = &WalSndCtl->walsnds[i];
 		char		sent_location[MAXFNAMELEN];
 		XLogRecPtr	sentPtr;
+		WalSndState	state;
 		Datum		values[PG_STAT_GET_WAL_SENDERS_COLS];
 		bool		nulls[PG_STAT_GET_WAL_SENDERS_COLS];
 
@@ -1058,6 +1059,7 @@ pg_stat_get_wal_senders(PG_FUNCTION_ARGS)
 
 		SpinLockAcquire(&walsnd->mutex);
 		sentPtr = walsnd->sentPtr;
+		state = walsnd->state;
 		SpinLockRelease(&walsnd->mutex);
 
 		snprintf(sent_location, sizeof(sent_location), "%X/%X",
@@ -1065,7 +1067,7 @@ pg_stat_get_wal_senders(PG_FUNCTION_ARGS)
 
 		memset(nulls, 0, sizeof(nulls));
 		values[0] = Int32GetDatum(walsnd->pid);
-		values[1] = CStringGetTextDatum(WalSndGetStateString(walsnd->state));
+		values[1] = CStringGetTextDatum(WalSndGetStateString(state));
 		values[2] = CStringGetTextDatum(sent_location);
 
 		tuplestore_putvalues(tupstore, tupdesc, values, nulls);
