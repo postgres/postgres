@@ -972,8 +972,8 @@ PQconninfoOption *PQconninfoParse(const char *conninfo, char **errmsg);
        If <literal>errmsg</> is not <symbol>NULL</>, then <literal>*errmsg</> is set
        to <symbol>NULL</> on success, else to a <function>malloc</>'d error string explaining
        the problem.  (It is also possible for <literal>*errmsg</> to be
-       set to <symbol>NULL</> even when <symbol>NULL</> is returned; this indicates an out-of-memory
-       situation.)
+       set to <symbol>NULL</> and the function to return <symbol>NULL</>;
+       this indicates an out-of-memory condition.)
       </para>
 
       <para>
@@ -1352,7 +1352,7 @@ ConnStatusType PQstatus(const PGconn *conn);
       <para>
        See the entry for <function>PQconnectStartParams</>, <function>PQconnectStart</>
        and <function>PQconnectPoll</> with regards to other status codes that
-       might be seen.
+       might be returned.
       </para>
      </listitem>
     </varlistentry>
@@ -3163,23 +3163,15 @@ Oid PQoidValue(const PGresult *res);
 
      <listitem>
       <para>
-       Returns a string with the OID of the inserted row, if the
-       <acronym>SQL</acronym> command was an <command>INSERT</command>
-       that inserted exactly one row, or a <command>EXECUTE</command> of
-       a prepared statement consisting of a suitable
-       <command>INSERT</command>.  (The string will be <literal>0</> if
-       the <command>INSERT</command> did not insert exactly one row, or
-       if the target table does not have OIDs.)  If the command was not
-       an <command>INSERT</command>, returns an empty string.
+       This function is deprecated in favor of
+       <function>PQoidValue</function> and is not thread-safe.
+       It returns a string with the OID of the inserted row, while
+       <function>PQoidValue</function> returns the OID value.
 <synopsis>
 char *PQoidStatus(const PGresult *res);
 </synopsis>
       </para>
 
-      <para>
-       This function is deprecated in favor of
-       <function>PQoidValue</function>.  It is not thread-safe.
-      </para>
      </listitem>
     </varlistentry>
    </variablelist>
