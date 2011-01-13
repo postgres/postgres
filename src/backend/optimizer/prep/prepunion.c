@@ -1291,10 +1291,6 @@ expand_inherited_rtentry(PlannerInfo *root, RangeTblEntry *rte, Index rti)
 			newrc->markType = oldrc->markType;
 			newrc->noWait = oldrc->noWait;
 			newrc->isParent = false;
-			/* junk attrs for children are not identified yet */
-			newrc->ctidAttNo = InvalidAttrNumber;
-			newrc->toidAttNo = InvalidAttrNumber;
-			newrc->wholeAttNo = InvalidAttrNumber;
 
 			root->rowMarks = lappend(root->rowMarks, newrc);
 		}

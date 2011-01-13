@@ -1858,10 +1858,6 @@ preprocess_rowmarks(PlannerInfo *root)
 			newrc->markType = ROW_MARK_SHARE;
 		newrc->noWait = rc->noWait;
 		newrc->isParent = false;
-		/* attnos will be assigned in preprocess_targetlist */
-		newrc->ctidAttNo = InvalidAttrNumber;
-		newrc->toidAttNo = InvalidAttrNumber;
-		newrc->wholeAttNo = InvalidAttrNumber;
 
 		prowmarks = lappend(prowmarks, newrc);
 	}
@@ -1888,10 +1884,6 @@ preprocess_rowmarks(PlannerInfo *root)
 			newrc->markType = ROW_MARK_COPY;
 		newrc->noWait = false;	/* doesn't matter */
 		newrc->isParent = false;
-		/* attnos will be assigned in preprocess_targetlist */
-		newrc->ctidAttNo = InvalidAttrNumber;
-		newrc->toidAttNo = InvalidAttrNumber;
-		newrc->wholeAttNo = InvalidAttrNumber;
 
 		prowmarks = lappend(prowmarks, newrc);
 	}

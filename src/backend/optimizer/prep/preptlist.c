@@ -111,8 +111,7 @@ preprocess_targetlist(PlannerInfo *root, List *tlist)
 	/*
 	 * Add necessary junk columns for rowmarked rels.  These values are needed
 	 * for locking of rels selected FOR UPDATE/SHARE, and to do EvalPlanQual
-	 * rechecking.	While we are at it, store these junk attnos in the
-	 * PlanRowMark list so that we don't have to redetermine them at runtime.
+	 * rechecking.  See comments for PlanRowMark in plannodes.h.
 	 */
 	foreach(lc, root->rowMarks)
 	{
@@ -121,18 +120,9 @@ preprocess_targetlist(PlannerInfo *root, List *tlist)
 		char		resname[32];
 		TargetEntry *tle;
 
-		/* child rels should just use the same junk attrs as their parents */
+		/* child rels use the same junk attrs as their parents */
 		if (rc->rti != rc->prti)
-		{
-			PlanRowMark *prc = get_plan_rowmark(root->rowMarks, rc->prti);
-
-			/* parent should have appeared earlier in list */
-			if (prc == NULL || prc->toidAttNo == InvalidAttrNumber)
-				elog(ERROR, "parent PlanRowMark not processed yet");
-			rc->ctidAttNo = prc->ctidAttNo;
-			rc->toidAttNo = prc->toidAttNo;
 			continue;
-		}
 
 		if (rc->markType != ROW_MARK_COPY)
 		{
@@ -148,7 +138,6 @@ preprocess_targetlist(PlannerInfo *root, List *tlist)
 								  pstrdup(resname),
 								  true);
 			tlist = lappend(tlist, tle);
-			rc->ctidAttNo = tle->resno;
 
 			/* if parent of inheritance tree, need the tableoid too */
 			if (rc->isParent)
@@ -164,7 +153,6 @@ preprocess_targetlist(PlannerInfo *root, List *tlist)
 									  pstrdup(resname),
 									  true);
 				tlist = lappend(tlist, tle);
-				rc->toidAttNo = tle->resno;
 			}
 		}
 		else
@@ -179,7 +167,6 @@ preprocess_targetlist(PlannerInfo *root, List *tlist)
 								  pstrdup(resname),
 								  true);
 			tlist = lappend(tlist, tle);
-			rc->wholeAttNo = tle->resno;
 		}
 	}
 

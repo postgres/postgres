@@ -58,12 +58,13 @@ lnext:
 
 	/*
 	 * Attempt to lock the source tuple(s).  (Note we only have locking
-	 * rowmarks in lr_rowMarks.)
+	 * rowmarks in lr_arowMarks.)
 	 */
 	epq_started = false;
-	foreach(lc, node->lr_rowMarks)
+	foreach(lc, node->lr_arowMarks)
 	{
-		ExecRowMark *erm = (ExecRowMark *) lfirst(lc);
+		ExecAuxRowMark *aerm = (ExecAuxRowMark *) lfirst(lc);
+		ExecRowMark *erm = aerm->rowmark;
 		Datum		datum;
 		bool		isNull;
 		HeapTupleData tuple;
@@ -84,7 +85,7 @@ lnext:
 			Oid			tableoid;
 
 			datum = ExecGetJunkAttribute(slot,
-										 erm->toidAttNo,
+										 aerm->toidAttNo,
 										 &isNull);
 			/* shouldn't ever get a null result... */
 			if (isNull)
@@ -101,7 +102,7 @@ lnext:
 
 		/* fetch the tuple's ctid */
 		datum = ExecGetJunkAttribute(slot,
-									 erm->ctidAttNo,
+									 aerm->ctidAttNo,
 									 &isNull);
 		/* shouldn't ever get a null result... */
 		if (isNull)
@@ -189,9 +190,10 @@ lnext:
 		 * so as to avoid overhead in the common case where there are no
 		 * concurrent updates.)
 		 */
-		foreach(lc, node->lr_rowMarks)
+		foreach(lc, node->lr_arowMarks)
 		{
-			ExecRowMark *erm = (ExecRowMark *) lfirst(lc);
+			ExecAuxRowMark *aerm = (ExecAuxRowMark *) lfirst(lc);
+			ExecRowMark *erm = aerm->rowmark;
 			HeapTupleData tuple;
 			Buffer		buffer;
 
@@ -251,6 +253,7 @@ ExecInitLockRows(LockRows *node, EState *estate, int eflags)
 {
 	LockRowsState *lrstate;
 	Plan	   *outerPlan = outerPlan(node);
+	List	   *epq_arowmarks;
 	ListCell   *lc;
 
 	/* check for unsupported flags */
@@ -262,7 +265,6 @@ ExecInitLockRows(LockRows *node, EState *estate, int eflags)
 	lrstate = makeNode(LockRowsState);
 	lrstate->ps.plan = (Plan *) node;
 	lrstate->ps.state = estate;
-	EvalPlanQualInit(&lrstate->lr_epqstate, estate, outerPlan, node->epqParam);
 
 	/*
 	 * Miscellaneous initialization
@@ -288,15 +290,17 @@ ExecInitLockRows(LockRows *node, EState *estate, int eflags)
 	lrstate->ps.ps_ProjInfo = NULL;
 
 	/*
-	 * Locate the ExecRowMark(s) that this node is responsible for. (InitPlan
-	 * should already have built the global list of ExecRowMarks.)
+	 * Locate the ExecRowMark(s) that this node is responsible for, and
+	 * construct ExecAuxRowMarks for them.  (InitPlan should already have
+	 * built the global list of ExecRowMarks.)
 	 */
-	lrstate->lr_rowMarks = NIL;
+	lrstate->lr_arowMarks = NIL;
+	epq_arowmarks = NIL;
 	foreach(lc, node->rowMarks)
 	{
 		PlanRowMark *rc = (PlanRowMark *) lfirst(lc);
-		ExecRowMark *erm = NULL;
-		ListCell   *lce;
+		ExecRowMark *erm;
+		ExecAuxRowMark *aerm;
 
 		Assert(IsA(rc, PlanRowMark));
 
@@ -304,16 +308,9 @@ ExecInitLockRows(LockRows *node, EState *estate, int eflags)
 		if (rc->isParent)
 			continue;
 
-		foreach(lce, estate->es_rowMarks)
-		{
-			erm = (ExecRowMark *) lfirst(lce);
-			if (erm->rti == rc->rti)
-				break;
-			erm = NULL;
-		}
-		if (erm == NULL)
-			elog(ERROR, "failed to find ExecRowMark for PlanRowMark %u",
-				 rc->rti);
+		/* find ExecRowMark and build ExecAuxRowMark */
+		erm = ExecFindRowMark(estate, rc->rti);
+		aerm = ExecBuildAuxRowMark(erm, outerPlan->targetlist);
 
 		/*
 		 * Only locking rowmarks go into our own list.	Non-locking marks are
@@ -322,10 +319,14 @@ ExecInitLockRows(LockRows *node, EState *estate, int eflags)
 		 * do an EPQ recheck.
 		 */
 		if (RowMarkRequiresRowShareLock(erm->markType))
-			lrstate->lr_rowMarks = lappend(lrstate->lr_rowMarks, erm);
+			lrstate->lr_arowMarks = lappend(lrstate->lr_arowMarks, aerm);
 		else
-			EvalPlanQualAddRowMark(&lrstate->lr_epqstate, erm);
+			epq_arowmarks = lappend(epq_arowmarks, aerm);
 	}
+
+	/* Now we have the info needed to set up EPQ state */
+	EvalPlanQualInit(&lrstate->lr_epqstate, estate,
+					 outerPlan, epq_arowmarks, node->epqParam);
 
 	return lrstate;
 }
