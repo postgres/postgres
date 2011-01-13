@@ -208,9 +208,21 @@ ExecInitJunkFilterConversion(List *targetList,
 AttrNumber
 ExecFindJunkAttribute(JunkFilter *junkfilter, const char *attrName)
 {
+	return ExecFindJunkAttributeInTlist(junkfilter->jf_targetList, attrName);
+}
+
+/*
+ * ExecFindJunkAttributeInTlist
+ *
+ * Find a junk attribute given a subplan's targetlist (not necessarily
+ * part of a JunkFilter).
+ */
+AttrNumber
+ExecFindJunkAttributeInTlist(List *targetlist, const char *attrName)
+{
 	ListCell   *t;
 
-	foreach(t, junkfilter->jf_targetList)
+	foreach(t, targetlist)
 	{
 		TargetEntry *tle = lfirst(t);
 

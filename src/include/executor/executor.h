@@ -142,6 +142,8 @@ extern JunkFilter *ExecInitJunkFilterConversion(List *targetList,
 							 TupleTableSlot *slot);
 extern AttrNumber ExecFindJunkAttribute(JunkFilter *junkfilter,
 					  const char *attrName);
+extern AttrNumber ExecFindJunkAttributeInTlist(List *targetlist,
+					  const char *attrName);
 extern Datum ExecGetJunkAttribute(TupleTableSlot *slot, AttrNumber attno,
 					 bool *isNull);
 extern TupleTableSlot *ExecFilterJunk(JunkFilter *junkfilter,
@@ -171,15 +173,17 @@ extern ResultRelInfo *ExecGetTriggerResultRel(EState *estate, Oid relid);
 extern bool ExecContextForcesOids(PlanState *planstate, bool *hasoids);
 extern void ExecConstraints(ResultRelInfo *resultRelInfo,
 				TupleTableSlot *slot, EState *estate);
+extern ExecRowMark *ExecFindRowMark(EState *estate, Index rti);
+extern ExecAuxRowMark *ExecBuildAuxRowMark(ExecRowMark *erm, List *targetlist);
 extern TupleTableSlot *EvalPlanQual(EState *estate, EPQState *epqstate,
 			 Relation relation, Index rti,
 			 ItemPointer tid, TransactionId priorXmax);
 extern HeapTuple EvalPlanQualFetch(EState *estate, Relation relation,
 				  int lockmode, ItemPointer tid, TransactionId priorXmax);
 extern void EvalPlanQualInit(EPQState *epqstate, EState *estate,
-				 Plan *subplan, int epqParam);
-extern void EvalPlanQualSetPlan(EPQState *epqstate, Plan *subplan);
-extern void EvalPlanQualAddRowMark(EPQState *epqstate, ExecRowMark *erm);
+				 Plan *subplan, List *auxrowmarks, int epqParam);
+extern void EvalPlanQualSetPlan(EPQState *epqstate,
+								Plan *subplan, List *auxrowmarks);
 extern void EvalPlanQualSetTuple(EPQState *epqstate, Index rti,
 					 HeapTuple tuple);
 extern HeapTuple EvalPlanQualGetTuple(EPQState *epqstate, Index rti);

@@ -798,9 +798,6 @@ _outPlanRowMark(StringInfo str, PlanRowMark *node)
 	WRITE_ENUM_FIELD(markType, RowMarkType);
 	WRITE_BOOL_FIELD(noWait);
 	WRITE_BOOL_FIELD(isParent);
-	WRITE_INT_FIELD(ctidAttNo);
-	WRITE_INT_FIELD(toidAttNo);
-	WRITE_INT_FIELD(wholeAttNo);
 }
 
 static void
