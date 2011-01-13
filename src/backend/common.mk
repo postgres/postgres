@@ -34,7 +34,7 @@ objfiles.txt: Makefile $(SUBDIROBJS) $(OBJS)
 expand_subsys = $(foreach file,$(1),$(if $(filter %/objfiles.txt,$(file)),$(patsubst ../../src/backend/%,%,$(addprefix $(top_builddir)/,$(shell cat $(file)))),$(file)))
 
 # Parallel make trickery
-$(SUBDIROBJS): | $(SUBDIRS:%=%-recursive) ;
+$(SUBDIROBJS): $(SUBDIRS:%=%-recursive) ;
 
 .PHONY: $(SUBDIRS:%=%-recursive)
 $(SUBDIRS:%=%-recursive):
