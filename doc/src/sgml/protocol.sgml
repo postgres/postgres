@@ -1460,15 +1460,26 @@ The commands accepted in walsender mode are:
   </varlistentry>
 
   <varlistentry>
-    <term>BASE_BACKUP <replaceable>options</><literal>;</><replaceable>label</></term>
+    <term>BASE_BACKUP [<literal>LABEL</literal> <replaceable>'label'</replaceable>] [<literal>PROGRESS</literal>]</term>
     <listitem>
      <para>
       Instructs the server to start streaming a base backup.
-      The system will automatically be put in backup mode with the label
-      specified in <replaceable>label</> before the backup is started, and
-      taken out of it when the backup is complete. The following options
-      are accepted:
+      The system will automatically be put in backup mode before the backup
+      is started, and taken out of it when the backup is complete. The
+      following options are accepted:
       <variablelist>
+       <varlistentry>
+        <term><literal>LABEL</literal> <replaceable>'label'</replaceable></term>
+        <listitem>
+         <para>
+          Sets the label of the backup. If none is specified, a backup label
+          of <literal>base backup</literal> will be used. The quoting rules
+          for the label are the same as a standard SQL string with
+          <xref linkend="guc-standard-conforming-strings"> turned on.
+         </para>
+        </listitem>
+       </varlistentry>
+
        <varlistentry>
         <term><literal>PROGRESS</></term>
         <listitem>

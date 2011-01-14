@@ -70,6 +70,7 @@ sub mkvcbuild
     $postgres->AddFiles('src\backend\parser','scan.l','gram.y');
     $postgres->AddFiles('src\backend\bootstrap','bootscanner.l','bootparse.y');
     $postgres->AddFiles('src\backend\utils\misc','guc-file.l');
+    $postgres->AddFiles('src\backend\replication', 'repl_scanner.l', 'repl_gram.y');
     $postgres->AddDefine('BUILDING_DLL');
     $postgres->AddLibrary('wsock32.lib');
     $postgres->AddLibrary('ws2_32.lib');
