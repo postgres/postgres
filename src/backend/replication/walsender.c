@@ -88,8 +88,8 @@ static XLogRecPtr sentPtr = {0, 0};
 
 /* Flags set by signal handlers for later service in main loop */
 static volatile sig_atomic_t got_SIGHUP = false;
-static volatile sig_atomic_t shutdown_requested = false;
-static volatile sig_atomic_t ready_to_stop = false;
+volatile sig_atomic_t walsender_shutdown_requested = false;
+volatile sig_atomic_t walsender_ready_to_stop = false;
 
 /* Signal handlers */
 static void WalSndSigHupHandler(SIGNAL_ARGS);
@@ -426,16 +426,16 @@ WalSndLoop(void)
 		 * When SIGUSR2 arrives, we send all outstanding logs up to the
 		 * shutdown checkpoint record (i.e., the latest record) and exit.
 		 */
-		if (ready_to_stop)
+		if (walsender_ready_to_stop)
 		{
 			if (!XLogSend(output_message, &caughtup))
 				break;
 			if (caughtup)
-				shutdown_requested = true;
+				walsender_shutdown_requested = true;
 		}
 
 		/* Normal exit from the walsender is here */
-		if (shutdown_requested)
+		if (walsender_shutdown_requested)
 		{
 			/* Inform the standby that XLOG streaming was done */
 			pq_puttextmessage('C', "COPY 0");
@@ -461,7 +461,7 @@ WalSndLoop(void)
 
 			if (!XLogSend(output_message, &caughtup))
 				break;
-			if (caughtup && !got_SIGHUP && !ready_to_stop && !shutdown_requested)
+			if (caughtup && !got_SIGHUP && !walsender_ready_to_stop && !walsender_shutdown_requested)
 			{
 				/*
 				 * XXX: We don't really need the periodic wakeups anymore,
@@ -841,7 +841,7 @@ WalSndSigHupHandler(SIGNAL_ARGS)
 static void
 WalSndShutdownHandler(SIGNAL_ARGS)
 {
-	shutdown_requested = true;
+	walsender_shutdown_requested = true;
 	if (MyWalSnd)
 		SetLatch(&MyWalSnd->latch);
 }
@@ -889,7 +889,7 @@ WalSndXLogSendHandler(SIGNAL_ARGS)
 static void
 WalSndLastCycleHandler(SIGNAL_ARGS)
 {
-	ready_to_stop = true;
+	walsender_ready_to_stop = true;
 	if (MyWalSnd)
 		SetLatch(&MyWalSnd->latch);
 }

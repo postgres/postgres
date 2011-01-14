@@ -308,6 +308,15 @@ sendDir(char *path, int basepathlen, bool sizeonly)
 					strlen(PG_TEMP_FILE_PREFIX)) == 0)
 			continue;
 
+		/*
+		 * Check if the postmaster has signaled us to exit, and abort
+		 * with an error in that case. The error handler further up
+		 * will call do_pg_abort_backup() for us.
+		 */
+		if (walsender_shutdown_requested || walsender_ready_to_stop)
+			ereport(ERROR,
+					(errmsg("shutdown requested, aborting active base backup")));
+
 		snprintf(pathbuf, MAXPGPATH, "%s/%s", path, de->d_name);
 
 		/* Skip postmaster.pid in the data directory */
@@ -462,7 +471,10 @@ sendFile(char *filename, int basepathlen, struct stat * statbuf)
 	while ((cnt = fread(buf, 1, Min(sizeof(buf), statbuf->st_size - len), fp)) > 0)
 	{
 		/* Send the chunk as a CopyData message */
-		pq_putmessage('d', buf, cnt);
+		if (pq_putmessage('d', buf, cnt))
+			ereport(ERROR,
+					(errmsg("base backup could not send data, aborting backup")));
+
 		len += cnt;
 
 		if (len >= statbuf->st_size)

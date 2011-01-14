@@ -53,6 +53,8 @@ extern WalSndCtlData *WalSndCtl;
 
 /* global state */
 extern bool am_walsender;
+extern volatile sig_atomic_t walsender_shutdown_requested;
+extern volatile sig_atomic_t walsender_ready_to_stop;
 
 /* user-settable parameters */
 extern int	WalSndDelay;
