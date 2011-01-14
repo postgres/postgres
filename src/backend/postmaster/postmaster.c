@@ -482,9 +482,9 @@ PostmasterMain(int argc, char *argv[])
 	int			opt;
 	int			status;
 	char	   *userDoption = NULL;
+	bool		listen_addr_saved = false;
 	int			i;
-	bool		connection_line_output = false;
-	
+
 	MyProcPid = PostmasterPid = getpid();
 
 	MyStartTime = time(NULL);
@@ -861,24 +861,21 @@ PostmasterMain(int argc, char *argv[])
 										  UnixSocketDir,
 										  ListenSocket, MAXLISTEN);
 			else
-			{
 				status = StreamServerPort(AF_UNSPEC, curhost,
 										  (unsigned short) PostPortNumber,
 										  UnixSocketDir,
 										  ListenSocket, MAXLISTEN);
-				/* must supply a valid listen_address for PQping() */
-				if (!connection_line_output)
-				{
-					char line[MAXPGPATH + 2];
 
-					sprintf(line, "%s\n", curhost);
-					AddToLockFile(LOCK_FILE_LINES - 1, line);
-					connection_line_output = true;
+			if (status == STATUS_OK)
+			{
+				success++;
+				/* record the first successful host addr in lockfile */
+				if (!listen_addr_saved)
+				{
+					AddToDataDirLockFile(LOCK_FILE_LINE_LISTEN_ADDR, curhost);
+					listen_addr_saved = true;
 				}
 			}
-				
-			if (status == STATUS_OK)
-				success++;
 			else
 				ereport(WARNING,
 						(errmsg("could not create listen socket for \"%s\"",
@@ -892,10 +889,6 @@ PostmasterMain(int argc, char *argv[])
 		list_free(elemlist);
 		pfree(rawstring);
 	}
-
-	/* Supply an empty listen_address line for PQping() */
-	if (!connection_line_output)
-		AddToLockFile(LOCK_FILE_LINES - 1, "\n");
 
 #ifdef USE_BONJOUR
 	/* Register for Bonjour only if we opened TCP socket(s) */
@@ -951,6 +944,14 @@ PostmasterMain(int argc, char *argv[])
 	if (ListenSocket[0] == PGINVALID_SOCKET)
 		ereport(FATAL,
 				(errmsg("no socket created for listening")));
+
+	/*
+	 * If no valid TCP ports, write an empty line for listen address,
+	 * indicating the Unix socket must be used.  Note that this line is not
+	 * added to the lock file until there is a socket backing it.
+	 */
+	if (!listen_addr_saved)
+		AddToDataDirLockFile(LOCK_FILE_LINE_LISTEN_ADDR, "");
 
 	/*
 	 * Set up shared memory and semaphores.

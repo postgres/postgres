@@ -22,7 +22,6 @@
 
 #include <locale.h>
 #include <signal.h>
-#include <stdlib.h>
 #include <time.h>
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -91,6 +90,24 @@ static char *register_username = NULL;
 static char *register_password = NULL;
 static char *argv0 = NULL;
 static bool allow_core_files = false;
+static time_t start_time;
+
+static char postopts_file[MAXPGPATH];
+static char pid_file[MAXPGPATH];
+static char backup_file[MAXPGPATH];
+static char recovery_file[MAXPGPATH];
+
+#if defined(WIN32) || defined(__CYGWIN__)
+static DWORD pgctl_start_type = SERVICE_AUTO_START;
+static SERVICE_STATUS status;
+static SERVICE_STATUS_HANDLE hStatus = (SERVICE_STATUS_HANDLE) 0;
+static HANDLE shutdownHandles[2];
+static pid_t postmasterPID = -1;
+
+#define shutdownEvent	  shutdownHandles[0]
+#define postmasterProcess shutdownHandles[1]
+#endif
+
 
 static void
 write_stderr(const char *fmt,...)
@@ -122,15 +139,6 @@ static void WINAPI pgwin32_ServiceHandler(DWORD);
 static void WINAPI pgwin32_ServiceMain(DWORD, LPTSTR *);
 static void pgwin32_doRunAsService(void);
 static int	CreateRestrictedProcess(char *cmd, PROCESS_INFORMATION *processInfo, bool as_service);
-
-static DWORD pgctl_start_type = SERVICE_AUTO_START;
-static SERVICE_STATUS status;
-static SERVICE_STATUS_HANDLE hStatus = (SERVICE_STATUS_HANDLE) 0;
-static HANDLE shutdownHandles[2];
-static pid_t postmasterPID = -1;
-
-#define shutdownEvent	  shutdownHandles[0]
-#define postmasterProcess shutdownHandles[1]
 #endif
 
 static pgpid_t get_pgpid(void);
@@ -140,12 +148,6 @@ static void read_post_opts(void);
 
 static PGPing test_postmaster_connection(bool);
 static bool postmaster_is_alive(pid_t pid);
-static time_t start_time;
-
-static char postopts_file[MAXPGPATH];
-static char pid_file[MAXPGPATH];
-static char backup_file[MAXPGPATH];
-static char recovery_file[MAXPGPATH];
 
 #if defined(HAVE_GETRLIMIT) && defined(RLIMIT_CORE)
 static void unlimit_core_size(void);
@@ -406,14 +408,10 @@ start_postmaster(void)
 static PGPing
 test_postmaster_connection(bool do_checkpoint)
 {
-	int			portnum = 0;
-	char		host_str[MAXPGPATH];
-	char		connstr[MAXPGPATH + 256];
 	PGPing		ret = PQPING_OK;	/* assume success for wait == zero */
-	char	  **optlines;
+	char		connstr[MAXPGPATH * 2 + 256];
 	int			i;
 
-	host_str[0] = '\0';
 	connstr[0] = '\0';
 	
 	for (i = 0; i < wait_seconds; i++)
@@ -421,108 +419,111 @@ test_postmaster_connection(bool do_checkpoint)
 		/* Do we need a connection string? */
 		if (connstr[0] == '\0')
 		{
-			/*
-			 * 	The number of lines in postmaster.pid tells us several things:
+			/*----------
+			 * The number of lines in postmaster.pid tells us several things:
 			 *
-			 *	# of lines
+			 * # of lines
 			 *		0	lock file created but status not written
 			 *		2	pre-9.1 server, shared memory not created
 			 *		3	pre-9.1 server, shared memory created
-			 *		5	9.1+ server, listen host not created
+			 *		5	9.1+ server, ports not opened
 			 *		6	9.1+ server, shared memory not created
 			 *		7	9.1+ server, shared memory created
 			 *
-			 *	For pre-9.1 Unix servers, we grab the port number from the
-			 *	shmem key (first value on line 3).  Pre-9.1 Win32 has no
-			 *	written shmem key, so we fail.  9.1+ writes connection
-			 *	information in the file for us to use.
-			 *	(PG_VERSION could also have told us the major version.)
+			 * This code does not support pre-9.1 servers.  On Unix machines
+			 * we could consider extracting the port number from the shmem
+			 * key, but that (a) is not robust, and (b) doesn't help with
+			 * finding out the socket directory.  And it wouldn't work anyway
+			 * on Windows.
+			 *
+			 * If we see less than 6 lines in postmaster.pid, just keep
+			 * waiting.
+			 *----------
 			 */
-		
-			/* Try to read a completed postmaster.pid file */
+			char	  **optlines;
+
+			/* Try to read the postmaster.pid file */
 			if ((optlines = readfile(pid_file)) != NULL &&
 				optlines[0] != NULL &&
 				optlines[1] != NULL &&
-				optlines[2] != NULL &&
-				/* pre-9.1 server or listen_address line is present? */
-				(optlines[3] == NULL ||
-				 optlines[5] != NULL))
-			{				
-				/* A 3-line file? */
+				optlines[2] != NULL)
+			{
 				if (optlines[3] == NULL)
 				{
-					/*
-					 *	Pre-9.1:  on Unix, we get the port number by
-					 *	deriving it from the shmem key (the first number on
-					 *	on the line);  see
-					 *	miscinit.c::RecordSharedMemoryInLockFile().
-					 */
-					portnum = atoi(optlines[2]) / 1000;
-					/* Win32 does not give us a shmem key, so we fail. */
-					if (portnum == 0)
-					{
-						write_stderr(_("%s: -w option is not supported on this platform\nwhen connecting to a pre-9.1 server\n"),
-									 progname);
-						return PQPING_NO_ATTEMPT;
-					}
+					/* File is exactly three lines, must be pre-9.1 */
+					write_stderr(_("%s: -w option is not supported when starting a pre-9.1 server\n"),
+								 progname);
+					return PQPING_NO_ATTEMPT;
 				}
-				else
+				else if (optlines[4] != NULL &&
+						 optlines[5] != NULL)
 				{
-					/*
-					 *	Easy check to see if we are looking at the right
-					 *	data directory:  Is the postmaster older than this
-					 *	execution of pg_ctl?  Subtract 2 seconds to account
-					 *	for possible clock skew between pg_ctl and the
-					 *	postmaster.
-					 */
-					if (atol(optlines[1]) < start_time - 2)
-					{
-						write_stderr(_("%s: this data directory is running an older postmaster\n"),
-									 progname);
-						return PQPING_NO_ATTEMPT;
-					}
-						
-					portnum = atoi(optlines[3]);
+					/* File is complete enough for us, parse it */
+					time_t	pmstart;
+					int		portnum;
+					char   *sockdir;
+					char   *hostaddr;
+					char	host_str[MAXPGPATH];
 
 					/*
-					 *	Determine the proper host string to use.
+					 * Easy cross-check that we are looking at the right data
+					 * directory: is the postmaster older than this execution
+					 * of pg_ctl?  Subtract 2 seconds to allow for possible
+					 * clock skew between pg_ctl and the postmaster.
 					 */
-#ifdef HAVE_UNIX_SOCKETS
+					pmstart = atol(optlines[LOCK_FILE_LINE_START_TIME - 1]);
+					if (pmstart < start_time - 2)
+					{
+						write_stderr(_("%s: this data directory is running a pre-existing postmaster\n"),
+									 progname);
+						return PQPING_NO_ATTEMPT;
+					}
+
 					/*
-					 *	Use socket directory, if specified.  We assume if we
-					 *	have unix sockets, the server does too because we
-					 *	just started the postmaster.
+					 * OK, extract port number and host string to use.
+					 * Prefer using Unix socket if available.
 					 */
+					portnum = atoi(optlines[LOCK_FILE_LINE_PORT - 1]);
+
+					sockdir = optlines[LOCK_FILE_LINE_SOCKET_DIR - 1];
+					hostaddr = optlines[LOCK_FILE_LINE_LISTEN_ADDR - 1];
+
 					/*
-					 *	While unix_socket_directory can accept relative
-					 *	directories, libpq's host must have a leading slash
-					 *	to indicate a socket directory.
+					 * While unix_socket_directory can accept relative
+					 * directories, libpq's host parameter must have a leading
+					 * slash to indicate a socket directory.  So, ignore
+					 * sockdir if it's relative, and try to use TCP instead.
 					 */
-					if (optlines[4][0] != '\n' && optlines[4][0] != '/')
+					if (sockdir[0] == '/')
+						strlcpy(host_str, sockdir, sizeof(host_str));
+					else
+						strlcpy(host_str, hostaddr, sizeof(host_str));
+
+					/* remove trailing newline */
+					if (strchr(host_str, '\n') != NULL)
+						*strchr(host_str, '\n') = '\0';
+
+					/* Fail if we couldn't get either sockdir or host addr */
+					if (host_str[0] == '\0')
 					{
 						write_stderr(_("%s: -w option cannot use a relative socket directory specification\n"),
 									 progname);
 						return PQPING_NO_ATTEMPT;
 					}
-					strlcpy(host_str, optlines[4], sizeof(host_str));
-#else
-					strlcpy(host_str, optlines[5], sizeof(host_str));
-#endif
-					/* remove newline */
-					if (strchr(host_str, '\n') != NULL)
-						*strchr(host_str, '\n') = '\0';
-				}
-				
-				/*
-				 * We need to set connect_timeout otherwise on Windows the
-				 * Service Control Manager (SCM) will probably timeout first.
-				 */
-				snprintf(connstr, sizeof(connstr),
-						 "dbname=postgres port=%d connect_timeout=5", portnum);
 
-				if (host_str[0] != '\0')
-					snprintf(connstr + strlen(connstr), sizeof(connstr) - strlen(connstr),
-						" host='%s'", host_str);
+					/* If postmaster is listening on "*", use "localhost" */
+					if (strcmp(host_str, "*") == 0)
+						strcpy(host_str, "localhost");
+
+					/*
+					 * We need to set connect_timeout otherwise on Windows the
+					 * Service Control Manager (SCM) will probably timeout
+					 * first.
+					 */
+					snprintf(connstr, sizeof(connstr),
+							 "dbname=postgres port=%d host='%s' connect_timeout=5",
+							 portnum, host_str);
+				}
 			}
 		}
 
@@ -544,7 +545,7 @@ test_postmaster_connection(bool do_checkpoint)
 			 * startup time is changing, otherwise it'll usually send a
 			 * stop signal after 20 seconds, despite incrementing the
 			 * checkpoint counter.
-				 */
+			 */
 			status.dwWaitHint += 6000;
 			status.dwCheckPoint++;
 			SetServiceStatus(hStatus, (LPSERVICE_STATUS) &status);

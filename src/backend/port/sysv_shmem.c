@@ -199,15 +199,16 @@ InternalIpcMemoryCreate(IpcMemoryKey memKey, Size size)
 	on_shmem_exit(IpcMemoryDetach, PointerGetDatum(memAddress));
 
 	/*
-	 * Append record key and ID in lockfile for data directory. Format
-	 * to try to keep it the same length.
+	 * Store shmem key and ID in data directory lockfile.  Format to try to
+	 * keep it the same length always (trailing junk in the lockfile won't
+	 * hurt, but might confuse humans).
 	 */
 	{
-		char line[32];
+		char line[64];
 
-		sprintf(line, "%9lu %9lu\n", (unsigned long) memKey,
-									 (unsigned long) shmid);
-		AddToLockFile(LOCK_FILE_LINES, line);
+		sprintf(line, "%9lu %9lu",
+				(unsigned long) memKey, (unsigned long) shmid);
+		AddToDataDirLockFile(LOCK_FILE_LINE_SHMEM_KEY, line);
 	}
 
 	return memAddress;

@@ -46,20 +46,7 @@
 
 
 #define DIRECTORY_LOCK_FILE		"postmaster.pid"
-/*
- *	The lock file contents are:
- *
- * line #
- *		1	pid
- *		2	postmaster start time
- *		3	data directory
- *		4	port #
- *		5	user-specified socket directory
- *			(the lines below are added later)
- *		6	first valid listen_address
- *		7	shared memory key
- */
-	
+
 ProcessingMode Mode = InitProcessing;
 
 /* Note: we rely on this to initialize as zeroes */
@@ -242,7 +229,6 @@ static int	SecurityRestrictionContext = 0;
 
 /* We also remember if a SET ROLE is currently active */
 static bool SetRoleIsActive = false;
-
 
 
 /*
@@ -691,7 +677,7 @@ CreateLockFile(const char *filename, bool amPostmaster,
 			   bool isDDLock, const char *refName)
 {
 	int			fd;
-	char		buffer[MAXPGPATH * 3 + 256];
+	char		buffer[MAXPGPATH * 2 + 256];
 	int			ntries;
 	int			len;
 	int			encoded_pid;
@@ -852,26 +838,26 @@ CreateLockFile(const char *filename, bool amPostmaster,
 		 * looking to see if there is an associated shmem segment that is
 		 * still in use.
 		 *
-		 * Note: because postmaster.pid is written in two steps, we might not
-		 * find the shmem ID values in it; we can't treat that as an error.
+		 * Note: because postmaster.pid is written in multiple steps, we might
+		 * not find the shmem ID values in it; we can't treat that as an
+		 * error.
 		 */
 		if (isDDLock)
 		{
 			char	   *ptr = buffer;
-			unsigned long id1, id2;
-			int lineno;
+			unsigned long id1,
+						id2;
+			int			lineno;
 
-			for (lineno = 1; lineno <= LOCK_FILE_LINES - 1; lineno++)
+			for (lineno = 1; lineno < LOCK_FILE_LINE_SHMEM_KEY; lineno++)
 			{
 				if ((ptr = strchr(ptr, '\n')) == NULL)
-				{
-					elog(LOG, "bogus data in \"%s\"", DIRECTORY_LOCK_FILE);
 					break;
-				}
 				ptr++;
 			}
 
-			if (ptr && sscanf(ptr, "%lu %lu", &id1, &id2) == 2)
+			if (ptr != NULL &&
+				sscanf(ptr, "%lu %lu", &id1, &id2) == 2)
 			{
 				if (PGSharedMemoryIsInUse(id1, id2))
 					ereport(FATAL,
@@ -903,12 +889,23 @@ CreateLockFile(const char *filename, bool amPostmaster,
 	}
 
 	/*
-	 * Successfully created the file, now fill it.
+	 * Successfully created the file, now fill it.  See comment in miscadmin.h
+	 * about the contents.  Note that we write the same info into both datadir
+	 * and socket lockfiles; although more stuff may get added to the datadir
+	 * lockfile later.
 	 */
-	snprintf(buffer, sizeof(buffer), "%d\n%ld\n%s\n%d\n%s\n",
+	snprintf(buffer, sizeof(buffer), "%d\n%s\n%ld\n%d\n%s\n",
 			 amPostmaster ? (int) my_pid : -((int) my_pid),
-			 (long) MyStartTime, DataDir, PostPortNumber,
-			 UnixSocketDir);
+			 DataDir,
+			 (long) MyStartTime,
+			 PostPortNumber,
+#ifdef HAVE_UNIX_SOCKETS
+			 (*UnixSocketDir != '\0') ? UnixSocketDir : DEFAULT_PGSOCKET_DIR
+#else
+			 ""
+#endif
+			 );
+
 	errno = 0;
 	if (write(fd, buffer, strlen(buffer)) != strlen(buffer))
 	{
@@ -1019,17 +1016,20 @@ TouchSocketLockFile(void)
 
 
 /*
- * Add lines to the data directory lock file.  This erases all following
- * lines, but that is OK because lines are added in order.
+ * Add (or replace) a line in the data directory lock file.
+ * The given string should not include a trailing newline.
+ *
+ * Caution: this erases all following lines.  In current usage that is OK
+ * because lines are added in order.  We could improve it if needed.
  */
 void
-AddToLockFile(int target_line, const char *str)
+AddToDataDirLockFile(int target_line, const char *str)
 {
 	int			fd;
 	int			len;
 	int			lineno;
 	char	   *ptr;
-	char		buffer[MAXPGPATH * 3 + 256];
+	char		buffer[BLCKSZ];
 
 	fd = open(DIRECTORY_LOCK_FILE, O_RDWR | PG_BINARY, 0);
 	if (fd < 0)
@@ -1040,7 +1040,7 @@ AddToLockFile(int target_line, const char *str)
 						DIRECTORY_LOCK_FILE)));
 		return;
 	}
-	len = read(fd, buffer, sizeof(buffer) - 100);
+	len = read(fd, buffer, sizeof(buffer) - 1);
 	if (len < 0)
 	{
 		ereport(LOG,
@@ -1053,7 +1053,7 @@ AddToLockFile(int target_line, const char *str)
 	buffer[len] = '\0';
 
 	/*
-	 * Skip over first four lines (PID, pgdata, portnum, socketdir).
+	 * Skip over lines we are not supposed to rewrite.
 	 */
 	ptr = buffer;
 	for (lineno = 1; lineno < target_line; lineno++)
@@ -1066,8 +1066,11 @@ AddToLockFile(int target_line, const char *str)
 		}
 		ptr++;
 	}
-	
-	strlcat(buffer, str, sizeof(buffer));
+
+	/*
+	 * Write or rewrite the target line.
+	 */
+	snprintf(ptr, buffer + sizeof(buffer) - ptr, "%s\n", str);
 
 	/*
 	 * And rewrite the data.  Since we write in a single kernel call, this

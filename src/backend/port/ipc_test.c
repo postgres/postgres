@@ -104,7 +104,7 @@ on_exit_reset(void)
 }
 
 void
-AddToLockFile(int target_line, const char *str)
+AddToDataDirLockFile(int target_line, const char *str)
 {
 }
 
@@ -135,7 +135,7 @@ errcode_for_file_access(void)
 
 bool
 errstart(int elevel, const char *filename, int lineno,
-		 const char *funcname)
+		 const char *funcname, const char *domain)
 {
 	return (elevel >= ERROR);
 }
