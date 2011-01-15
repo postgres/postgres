@@ -168,7 +168,8 @@ test_sync(int writes_per_op)
 		printf("\nCompare file sync methods using one write:\n");
 	else
 		printf("\nCompare file sync methods using two writes:\n");
-	printf("(in wal_sync_method preference order)\n");
+	printf("(in wal_sync_method preference order, except fdatasync\n");
+	printf("is Linux's default)\n");
 
 	/*
 	 * Test open_datasync if available
