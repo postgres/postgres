@@ -163,7 +163,8 @@ void
 test_sync(int writes_per_op)
 {
 	int			tmpfile, ops, writes;
-
+	bool		fs_warning = false;
+	
 	if (writes_per_op == 1)
 		printf("\nCompare file sync methods using one write:\n");
 	else
@@ -176,9 +177,17 @@ test_sync(int writes_per_op)
 	 */
 #ifdef OPEN_DATASYNC_FLAG
 	if (writes_per_op == 1)
-		printf(LABEL_FORMAT, "open_datasync 8k write");
+		printf(LABEL_FORMAT, "open_datasync 8k write"
+#if PG_O_DIRECT != 0
+		"**"
+#endif
+		);
 	else
-	 	printf(LABEL_FORMAT, "2 open_datasync 8k writes");
+	 	printf(LABEL_FORMAT, "2 open_datasync 8k writes"
+#if PG_O_DIRECT != 0
+		"**"
+#endif
+		);
 	fflush(stdout);
 
 	if ((tmpfile = open(filename, O_RDWR | O_DSYNC, 0)) == -1)
@@ -201,7 +210,10 @@ test_sync(int writes_per_op)
 	 */
 #if PG_O_DIRECT != 0
 	if ((tmpfile = open(filename, O_RDWR | O_DSYNC | PG_O_DIRECT, 0)) == -1)
-		printf(NA_FORMAT, "o_direct", "n/a on this filesystem\n");
+	{
+		printf(NA_FORMAT, "o_direct", "n/a*\n");
+		fs_warning = true;
+	}
 	else
 	{
 		if (writes_per_op == 1)
@@ -321,9 +333,17 @@ test_sync(int writes_per_op)
  */
 #ifdef OPEN_SYNC_FLAG
 	if (writes_per_op == 1)
-		printf(LABEL_FORMAT, "open_sync 8k write");
+		printf(LABEL_FORMAT, "open_sync 8k write"
+#if PG_O_DIRECT != 0
+		"**"
+#endif
+		);
 	else
-		printf(LABEL_FORMAT, "2 open_sync 8k writes");
+		printf(LABEL_FORMAT, "2 open_sync 8k writes"
+#if PG_O_DIRECT != 0
+		"**"
+#endif
+		);
 	fflush(stdout);
 
 	if ((tmpfile = open(filename, O_RDWR | OPEN_SYNC_FLAG, 0)) == -1)
@@ -352,7 +372,10 @@ test_sync(int writes_per_op)
 	fflush(stdout);
 
 	if ((tmpfile = open(filename, O_RDWR | OPEN_SYNC_FLAG | PG_O_DIRECT, 0)) == -1)
-		printf(NA_FORMAT, "o_direct", "n/a on this filesystem\n");
+	{
+		printf(NA_FORMAT, "o_direct", "n/a*\n");
+		fs_warning = true;
+	}
 	else
 	{
 		gettimeofday(&start_t, NULL);
@@ -375,6 +398,17 @@ test_sync(int writes_per_op)
 #else
 	printf(NA_FORMAT, "open_sync", "n/a\n");
 #endif
+
+	if (fs_warning)
+	{
+		printf("* This file system and its mount options do not support direct\n");
+		printf("I/O, e.g. ext4 in journaled mode.\n");
+	}
+
+#if defined(OPEN_DATASYNC_FLAG) || defined(OPEN_SYNC_FLAG)
+	if (PG_O_DIRECT != 0)
+		printf("** This non-direct I/O option is not used by Postgres.\n");
+#endif
 }
 
 void
@@ -388,6 +422,8 @@ test_open_syncs(void)
 	printf("\nCompare open_sync with different sizes:\n");
 	printf("(This is designed to compare the cost of one large\n");
 	printf("sync'ed write and two smaller sync'ed writes.)\n");
+
+	/* XXX no PG_O_DIRECT */
 
 /*
  * Test open_sync with different size files
