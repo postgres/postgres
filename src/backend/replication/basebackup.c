@@ -40,7 +40,7 @@ static void send_int8_string(StringInfoData *buf, int64 intval);
 static void SendBackupHeader(List *tablespaces);
 static void SendBackupDirectory(char *location, char *spcoid);
 static void base_backup_cleanup(int code, Datum arg);
-static void perform_base_backup(const char *backup_label, List *tablespaces);
+static void perform_base_backup(const char *backup_label, bool progress, DIR *tblspcdir);
 
 typedef struct
 {
@@ -67,13 +67,50 @@ base_backup_cleanup(int code, Datum arg)
  * clobbered by longjmp" from stupider versions of gcc.
  */
 static void
-perform_base_backup(const char *backup_label, List *tablespaces)
+perform_base_backup(const char *backup_label, bool progress, DIR *tblspcdir)
 {
 	do_pg_start_backup(backup_label, true);
 
 	PG_ENSURE_ERROR_CLEANUP(base_backup_cleanup, (Datum) 0);
 	{
+		List	   *tablespaces = NIL;
 		ListCell   *lc;
+		struct dirent *de;
+		tablespaceinfo *ti;
+
+
+		/* Add a node for the base directory */
+		ti = palloc0(sizeof(tablespaceinfo));
+		ti->size = progress ? sendDir(".", 1, true) : -1;
+		tablespaces = lappend(tablespaces, ti);
+
+		/* Collect information about all tablespaces */
+		while ((de = ReadDir(tblspcdir, "pg_tblspc")) != NULL)
+		{
+			char		fullpath[MAXPGPATH];
+			char		linkpath[MAXPGPATH];
+
+			/* Skip special stuff */
+			if (strcmp(de->d_name, ".") == 0 || strcmp(de->d_name, "..") == 0)
+				continue;
+
+			snprintf(fullpath, sizeof(fullpath), "pg_tblspc/%s", de->d_name);
+
+			MemSet(linkpath, 0, sizeof(linkpath));
+			if (readlink(fullpath, linkpath, sizeof(linkpath) - 1) == -1)
+			{
+				ereport(WARNING,
+						(errmsg("unable to read symbolic link %s: %m", fullpath)));
+				continue;
+			}
+
+			ti = palloc(sizeof(tablespaceinfo));
+			ti->oid = pstrdup(de->d_name);
+			ti->path = pstrdup(linkpath);
+			ti->size = progress ? sendDir(linkpath, strlen(linkpath), true) : -1;
+			tablespaces = lappend(tablespaces, ti);
+		}
+
 
 		/* Send tablespace header */
 		SendBackupHeader(tablespaces);
@@ -101,9 +138,6 @@ void
 SendBaseBackup(const char *backup_label, bool progress)
 {
 	DIR		   *dir;
-	struct dirent *de;
-	List	   *tablespaces = NIL;
-	tablespaceinfo *ti;
 	MemoryContext backup_context;
 	MemoryContext old_context;
 
@@ -134,40 +168,9 @@ SendBaseBackup(const char *backup_label, bool progress)
 		ereport(ERROR,
 				(errmsg("unable to open directory pg_tblspc: %m")));
 
-	/* Add a node for the base directory */
-	ti = palloc0(sizeof(tablespaceinfo));
-	ti->size = progress ? sendDir(".", 1, true) : -1;
-	tablespaces = lappend(tablespaces, ti);
+	perform_base_backup(backup_label, progress, dir);
 
-	/* Collect information about all tablespaces */
-	while ((de = ReadDir(dir, "pg_tblspc")) != NULL)
-	{
-		char		fullpath[MAXPGPATH];
-		char		linkpath[MAXPGPATH];
-
-		/* Skip special stuff */
-		if (strcmp(de->d_name, ".") == 0 || strcmp(de->d_name, "..") == 0)
-			continue;
-
-		snprintf(fullpath, sizeof(fullpath), "pg_tblspc/%s", de->d_name);
-
-		MemSet(linkpath, 0, sizeof(linkpath));
-		if (readlink(fullpath, linkpath, sizeof(linkpath) - 1) == -1)
-		{
-			ereport(WARNING,
-				  (errmsg("unable to read symbolic link %s: %m", fullpath)));
-			continue;
-		}
-
-		ti = palloc(sizeof(tablespaceinfo));
-		ti->oid = pstrdup(de->d_name);
-		ti->path = pstrdup(linkpath);
-		ti->size = progress ? sendDir(linkpath, strlen(linkpath), true) : -1;
-		tablespaces = lappend(tablespaces, ti);
-	}
 	FreeDir(dir);
-
-	perform_base_backup(backup_label, tablespaces);
 
 	MemoryContextSwitchTo(old_context);
 	MemoryContextDelete(backup_context);
