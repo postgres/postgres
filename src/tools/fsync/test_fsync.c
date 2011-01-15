@@ -179,13 +179,13 @@ test_sync(int writes_per_op)
 	if (writes_per_op == 1)
 		printf(LABEL_FORMAT, "open_datasync 8k write"
 #if PG_O_DIRECT != 0
-		"**"
+		"*"
 #endif
 		);
 	else
 	 	printf(LABEL_FORMAT, "2 open_datasync 8k writes"
 #if PG_O_DIRECT != 0
-		"**"
+		"*"
 #endif
 		);
 	fflush(stdout);
@@ -211,7 +211,7 @@ test_sync(int writes_per_op)
 #if PG_O_DIRECT != 0
 	if ((tmpfile = open(filename, O_RDWR | O_DSYNC | PG_O_DIRECT, 0)) == -1)
 	{
-		printf(NA_FORMAT, "o_direct", "n/a*\n");
+		printf(NA_FORMAT, "o_direct", "n/a**\n");
 		fs_warning = true;
 	}
 	else
@@ -335,13 +335,13 @@ test_sync(int writes_per_op)
 	if (writes_per_op == 1)
 		printf(LABEL_FORMAT, "open_sync 8k write"
 #if PG_O_DIRECT != 0
-		"**"
+		"*"
 #endif
 		);
 	else
 		printf(LABEL_FORMAT, "2 open_sync 8k writes"
 #if PG_O_DIRECT != 0
-		"**"
+		"*"
 #endif
 		);
 	fflush(stdout);
@@ -373,7 +373,7 @@ test_sync(int writes_per_op)
 
 	if ((tmpfile = open(filename, O_RDWR | OPEN_SYNC_FLAG | PG_O_DIRECT, 0)) == -1)
 	{
-		printf(NA_FORMAT, "o_direct", "n/a*\n");
+		printf(NA_FORMAT, "o_direct", "n/a**\n");
 		fs_warning = true;
 	}
 	else
@@ -399,16 +399,16 @@ test_sync(int writes_per_op)
 	printf(NA_FORMAT, "open_sync", "n/a\n");
 #endif
 
-	if (fs_warning)
-	{
-		printf("* This file system and its mount options do not support direct\n");
-		printf("I/O, e.g. ext4 in journaled mode.\n");
-	}
-
 #if defined(OPEN_DATASYNC_FLAG) || defined(OPEN_SYNC_FLAG)
 	if (PG_O_DIRECT != 0)
-		printf("** This non-direct I/O option is not used by Postgres.\n");
+		printf("* This non-direct I/O option is not used by Postgres.\n");
 #endif
+
+	if (fs_warning)
+	{
+		printf("** This file system and its mount options do not support direct\n");
+		printf("I/O, e.g. ext4 in journaled mode.\n");
+	}
 }
 
 void
