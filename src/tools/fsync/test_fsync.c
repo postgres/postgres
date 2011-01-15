@@ -30,7 +30,8 @@
 
 #define WRITE_SIZE	(8 * 1024)	/* 8k */
 
-#define LABEL_FORMAT	"\t%-30s"
+#define LABEL_FORMAT	"        %-32s"
+#define NA_FORMAT		LABEL_FORMAT "%18s"
 
 
 int			loops = 2000;
@@ -129,7 +130,7 @@ main(int argc, char *argv[])
 #if PG_O_DIRECT != 0
 	fflush(stdout);
 	if ((tmpfile = open(filename, O_RDWR | O_DSYNC | PG_O_DIRECT, 0)) == -1)
-		printf("\t(unavailable: o_direct on this filesystem)\n");
+		printf(NA_FORMAT, "o_direct", "n/a on this filesystem\n");
 	else
 	{
 		printf(LABEL_FORMAT, "open_datasync 8k direct I/O write");
@@ -146,11 +147,11 @@ main(int argc, char *argv[])
 		print_elapse(start_t, stop_t);
 	}
 #else
-		printf("\t(unavailable: o_direct)\n");
+		printf(NA_FORMAT, "o_direct", "n/a\n");
 #endif
 
 #else
-	printf("\t(unavailable: open_datasync)\n");
+	printf(NA_FORMAT, "open_datasync", "n/a\n");
 #endif
 
 /*
@@ -180,7 +181,7 @@ main(int argc, char *argv[])
 	printf(LABEL_FORMAT, "open_sync 8k direct I/O write");
 	fflush(stdout);
 	if ((tmpfile = open(filename, O_RDWR | OPEN_SYNC_FLAG | PG_O_DIRECT, 0)) == -1)
-		printf("\t(unavailable: o_direct on this filesystem)\n");
+		printf(NA_FORMAT, "o_direct", "n/a on this filesystem\n");
 	else
 	{
 		gettimeofday(&start_t, NULL);
@@ -196,11 +197,11 @@ main(int argc, char *argv[])
 		print_elapse(start_t, stop_t);
 	}
 #else
-	printf("\t(unavailable: o_direct)\n");
+	printf(NA_FORMAT, "o_direct", "n/a\n");
 #endif
 
 #else
-	printf("\t(unavailable: open_sync)\n");
+	printf(NA_FORMAT, "open_sync", "n/a\n");
 #endif
 
 /*
@@ -224,7 +225,7 @@ main(int argc, char *argv[])
 	close(tmpfile);
 	print_elapse(start_t, stop_t);
 #else
-	printf("\t(unavailable: fdatasync)\n");
+	printf(NA_FORMAT, "fdatasync", "n/a\n");
 #endif
 
 /*
@@ -270,7 +271,7 @@ main(int argc, char *argv[])
 	close(tmpfile);
 	print_elapse(start_t, stop_t);
 #else
-	printf("\t(unavailable: fsync_writethrough)\n");
+	printf(NA_FORMAT, "fsync_writethrough", "n/a\n");
 #endif
 
 	/*
@@ -320,11 +321,11 @@ main(int argc, char *argv[])
 	close(tmpfile);
 	print_elapse(start_t, stop_t);
 #else
-		printf("\t(unavailable: o_direct)\n");
+		printf(NA_FORMAT, "o_direct" "n/a\n");
 #endif
 
 #else
-	printf("\t(unavailable: open_datasync)\n");
+	printf(NA_FORMAT, "open_datasync", "n/a\n");
 #endif
 
 /*
@@ -368,11 +369,11 @@ main(int argc, char *argv[])
 	close(tmpfile);
 	print_elapse(start_t, stop_t);
 #else
-	printf("\t(unavailable: o_direct)\n");
+	printf(NA_FORMAT, "o_direct", "n/a\n");
 #endif
 
 #else
-	printf("\t(unavailable: open_sync)\n");
+	printf(NA_FORMAT, "open_sync", "n/a\n");
 #endif
 
 /*
@@ -398,7 +399,7 @@ main(int argc, char *argv[])
 	close(tmpfile);
 	print_elapse(start_t, stop_t);
 #else
-	printf("\t(unavailable: fdatasync)\n");
+	printf(NA_FORMAT, "fdatasync", "n/a\n");
 #endif
 
 /*
@@ -448,7 +449,7 @@ main(int argc, char *argv[])
 	close(tmpfile);
 	print_elapse(start_t, stop_t);
 #else
-	printf("\t(unavailable: fsync_writethrough)\n");
+	printf(NA_FORMAT, "fsync_writethrough", "n/a\n");
 #endif
 
 	/*
@@ -496,7 +497,7 @@ main(int argc, char *argv[])
 	close(tmpfile);
 	print_elapse(start_t, stop_t);
 #else
-	printf("\t(unavailable: open_sync)\n");
+	printf(NA_FORMAT, "open_sync", "n/a\n");
 #endif
 
 	/*
@@ -581,7 +582,7 @@ print_elapse(struct timeval start_t, struct timeval stop_t)
 	(stop_t.tv_usec - start_t.tv_usec) * 0.000001;
 	double		per_second = loops / total_time;
 
-	printf("%9.3f/second\n", per_second);
+	printf("%9.3f ops/sec\n", per_second);
 }
 
 void
