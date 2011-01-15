@@ -316,6 +316,16 @@ StartReplication(StartReplicationCmd * cmd)
 	StringInfoData buf;
 
 	/*
+	 * Let postmaster know that we're streaming. Once we've declared us as
+	 * a WAL sender process, postmaster will let us outlive the bgwriter and
+	 * kill us last in the shutdown sequence, so we get a chance to stream
+	 * all remaining WAL at shutdown, including the shutdown checkpoint.
+	 * Note that there's no going back, and we mustn't write any WAL records
+	 * after this.
+	 */
+	MarkPostmasterChildWalSender();
+
+	/*
 	 * Check that we're logging enough information in the WAL for
 	 * log-shipping.
 	 *

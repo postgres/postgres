@@ -49,6 +49,8 @@
  *
  * Actually there is a fourth state, WALSENDER.  This is just like ACTIVE,
  * but carries the extra information that the child is a WAL sender.
+ * WAL senders too start in ACTIVE state, but switch to WALSENDER once they
+ * start streaming the WAL (and they never go back to ACTIVE after that).
  */
 
 #define PM_CHILD_UNUSED		0	/* these values must fit in sig_atomic_t */
@@ -225,8 +227,25 @@ MarkPostmasterChildActive(void)
 	Assert(slot > 0 && slot <= PMSignalState->num_child_flags);
 	slot--;
 	Assert(PMSignalState->PMChildFlags[slot] == PM_CHILD_ASSIGNED);
-	PMSignalState->PMChildFlags[slot] =
-		(am_walsender ? PM_CHILD_WALSENDER : PM_CHILD_ACTIVE);
+	PMSignalState->PMChildFlags[slot] = PM_CHILD_ACTIVE;
+}
+
+/*
+ * MarkPostmasterChildWalSender - mark a postmaster child as a WAL sender
+ * process.  This is called in the child process, sometime after marking the
+ * child as active.
+ */
+void
+MarkPostmasterChildWalSender(void)
+{
+	int			slot = MyPMChildSlot;
+
+	Assert(am_walsender);
+
+	Assert(slot > 0 && slot <= PMSignalState->num_child_flags);
+	slot--;
+	Assert(PMSignalState->PMChildFlags[slot] == PM_CHILD_ACTIVE);
+	PMSignalState->PMChildFlags[slot] = PM_CHILD_WALSENDER;
 }
 
 /*
