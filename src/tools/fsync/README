@@ -1,11 +1,20 @@
-src/tools/fsync/README
-
-fsync
-=====
+test_fsync
+==========
 
 This program tests fsync.  The tests are described as part of the program output.
 
 	Usage:	test_fsync [-f filename] [loops]
+	
+test_fsync is intended to give you a reasonable idea of what the fastest
+fsync_method is on your specific system, as well as supplying diagnostic
+information in the event of an identified I/O problem.  However,
+differences shown by test_fsync might not make any difference in real
+database throughput, especially since many database servers are not
+speed-limited by their transaction logs.
 
-Loops defaults to 5000.  The default output file is /var/tmp/test_fsync.out.
-Consider that /tmp or /var/tmp might be memory-based file systems.
+The output filename defaults to test_fsync.out in the current directory.
+test_fsync should be run in the same filesystem as your transaction log
+directory (pg_xlog).
+
+Loops default to 2000.  Increase this to get more accurate measurements.
+

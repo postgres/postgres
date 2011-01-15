@@ -16,9 +16,9 @@ override CPPFLAGS := -I$(libpq_srcdir) $(CPPFLAGS)
 
 OBJS= test_fsync.o
 
-all: test_fsync
+all: submake-libpq submake-libpgport test_fsync
 
-test_fsync: test_fsync.o | submake-libpq submake-libpgport
+test_fsync: test_fsync.o $(libpq_builddir)/libpq.a
 	$(CC) $(CFLAGS) test_fsync.o $(libpq_pgport) $(LDFLAGS) $(LDFLAGS_EX) $(LIBS) -o $@$(X)
 
 clean distclean maintainer-clean:
