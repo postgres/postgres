@@ -31,8 +31,8 @@
 
 #define WRITE_SIZE	(8 * 1024)	/* 8k */
 
-#define LABEL_FORMAT	"        %-32s"
-#define NA_FORMAT		LABEL_FORMAT "%18s"
+#define LABEL_FORMAT		"        %-32s"
+#define NA_FORMAT			LABEL_FORMAT "%18s"
 
 
 int			ops_per_test = 2000;
@@ -365,12 +365,6 @@ test_sync(int writes_per_op)
 	 * If O_DIRECT is enabled, test that with open_sync
 	 */
 #if PG_O_DIRECT != 0
-	if (writes_per_op == 1)
-		printf(LABEL_FORMAT, "open_sync 8k direct I/O write");
-	else
-		printf(LABEL_FORMAT, "2 open_sync 8k direct I/O writes");
-	fflush(stdout);
-
 	if ((tmpfile = open(filename, O_RDWR | OPEN_SYNC_FLAG | PG_O_DIRECT, 0)) == -1)
 	{
 		printf(NA_FORMAT, "o_direct", "n/a**\n");
@@ -378,6 +372,12 @@ test_sync(int writes_per_op)
 	}
 	else
 	{
+		if (writes_per_op == 1)
+			printf(LABEL_FORMAT, "open_sync 8k direct I/O write");
+		else
+			printf(LABEL_FORMAT, "2 open_sync 8k direct I/O writes");
+		fflush(stdout);
+
 		gettimeofday(&start_t, NULL);
 		for (ops = 0; ops < ops_per_test; ops++)
 		{
@@ -423,47 +423,51 @@ test_open_syncs(void)
 	printf("(This is designed to compare the cost of one large\n");
 	printf("sync'ed write and two smaller sync'ed writes.)\n");
 
-	/* XXX no PG_O_DIRECT */
-
 /*
  * Test open_sync with different size files
  */
 #ifdef OPEN_SYNC_FLAG
-	printf(LABEL_FORMAT, "open_sync 16k write");
-	fflush(stdout);
-
-	if ((tmpfile = open(filename, O_RDWR | OPEN_SYNC_FLAG, 0)) == -1)
-		die("Cannot open output file.");
-	gettimeofday(&start_t, NULL);
-	for (ops = 0; ops < ops_per_test; ops++)
+	if ((tmpfile = open(filename, O_RDWR | OPEN_SYNC_FLAG | PG_O_DIRECT, 0)) == -1)
+		printf(NA_FORMAT, "o_direct", "n/a**\n");
+	else
 	{
-		if (write(tmpfile, buf, WRITE_SIZE * 2) != WRITE_SIZE * 2)
-			die("write failed");
-		if (lseek(tmpfile, 0, SEEK_SET) == -1)
-			die("seek failed");
+		printf(LABEL_FORMAT, "open_sync 16k write");
+		fflush(stdout);
+
+		gettimeofday(&start_t, NULL);
+		for (ops = 0; ops < ops_per_test; ops++)
+		{
+			if (write(tmpfile, buf, WRITE_SIZE * 2) != WRITE_SIZE * 2)
+				die("write failed");
+			if (lseek(tmpfile, 0, SEEK_SET) == -1)
+				die("seek failed");
+		}
+		gettimeofday(&stop_t, NULL);
+		close(tmpfile);
+		print_elapse(start_t, stop_t);
 	}
-	gettimeofday(&stop_t, NULL);
-	close(tmpfile);
-	print_elapse(start_t, stop_t);
-
-	printf(LABEL_FORMAT, "2 open_sync 8k writes");
-	fflush(stdout);
-
-	if ((tmpfile = open(filename, O_RDWR | OPEN_SYNC_FLAG, 0)) == -1)
-		die("Cannot open output file.");
-	gettimeofday(&start_t, NULL);
-	for (ops = 0; ops < ops_per_test; ops++)
+	
+	if ((tmpfile = open(filename, O_RDWR | OPEN_SYNC_FLAG | PG_O_DIRECT, 0)) == -1)
+		printf(NA_FORMAT, "n/a**\n");
+	else
 	{
-		if (write(tmpfile, buf, WRITE_SIZE) != WRITE_SIZE)
-			die("write failed");
-		if (write(tmpfile, buf, WRITE_SIZE) != WRITE_SIZE)
-			die("write failed");
-		if (lseek(tmpfile, 0, SEEK_SET) == -1)
-			die("seek failed");
+		printf(LABEL_FORMAT, "2 open_sync 8k writes");
+		fflush(stdout);
+
+		gettimeofday(&start_t, NULL);
+		for (ops = 0; ops < ops_per_test; ops++)
+		{
+			if (write(tmpfile, buf, WRITE_SIZE) != WRITE_SIZE)
+				die("write failed");
+			if (write(tmpfile, buf, WRITE_SIZE) != WRITE_SIZE)
+				die("write failed");
+			if (lseek(tmpfile, 0, SEEK_SET) == -1)
+				die("seek failed");
+		}
+		gettimeofday(&stop_t, NULL);
+		close(tmpfile);
+		print_elapse(start_t, stop_t);
 	}
-	gettimeofday(&stop_t, NULL);
-	close(tmpfile);
-	print_elapse(start_t, stop_t);
 #else
 	printf(NA_FORMAT, "open_sync", "n/a\n");
 #endif
