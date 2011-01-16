@@ -33,7 +33,7 @@
 
 #define LABEL_FORMAT		"        %-32s"
 #define NA_FORMAT			LABEL_FORMAT "%18s"
-
+#define OPS_FORMAT			"%9.3f ops/sec"
 
 int			ops_per_test = 2000;
 char	    full_buf[XLOG_SEG_SIZE], *buf, *filename = FSYNC_FILENAME;
@@ -555,7 +555,7 @@ print_elapse(struct timeval start_t, struct timeval stop_t)
 	(stop_t.tv_usec - start_t.tv_usec) * 0.000001;
 	double		per_second = ops_per_test / total_time;
 
-	printf("%9.3f ops/sec\n", per_second);
+	printf(OPS_FORMAT "\n", per_second);
 }
 
 void
