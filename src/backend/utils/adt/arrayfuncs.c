@@ -2459,6 +2459,7 @@ array_set_slice(ArrayType *array,
 	{
 		/*
 		 * here we must allow for possibility of slice larger than orig array
+		 * and/or not adjacent to orig array subscripts
 		 */
 		int			oldlb = ARR_LBOUND(array)[0];
 		int			oldub = oldlb + ARR_DIMS(array)[0] - 1;
@@ -2467,10 +2468,12 @@ array_set_slice(ArrayType *array,
 		char	   *oldarraydata = ARR_DATA_PTR(array);
 		bits8	   *oldarraybitmap = ARR_NULLBITMAP(array);
 
+		/* count/size of old array entries that will go before the slice */
 		itemsbefore = Min(slicelb, oldub + 1) - oldlb;
 		lenbefore = array_nelems_size(oldarraydata, 0, oldarraybitmap,
 									  itemsbefore,
 									  elmlen, elmbyval, elmalign);
+		/* count/size of old array entries that will be replaced by slice */
 		if (slicelb > sliceub)
 		{
 			nolditems = 0;
@@ -2484,7 +2487,8 @@ array_set_slice(ArrayType *array,
 											nolditems,
 											elmlen, elmbyval, elmalign);
 		}
-		itemsafter = oldub - sliceub;
+		/* count/size of old array entries that will go after the slice */
+		itemsafter = oldub + 1 - Max(sliceub + 1, oldlb);
 		lenafter = olddatasize - lenbefore - olditemsize;
 	}
 
