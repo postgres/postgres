@@ -8,6 +8,7 @@
 
 #include "postgres.h"
 
+#include "getopt_long.h"
 #include "access/xlog_internal.h"
 #include "access/xlog.h"
 #include "access/xlogdefs.h"
@@ -80,26 +81,52 @@ main(int argc, char *argv[])
 void
 handle_args(int argc, char *argv[])
 {
-	if (argc > 1 && strcmp(argv[1], "-h") == 0)
+	static struct option long_options[] = {
+		{"filename", required_argument, NULL, 'f'},
+		{"ops-per-test", required_argument, NULL, 'o'},
+		{NULL, 0, NULL, 0}
+	};
+	int			option;			/* Command line option */
+	int			optindex = 0;	/* used by getopt_long */
+
+	if (argc > 1)
 	{
-		fprintf(stderr, "test_fsync [-f filename] [ops-per-test]\n");
-		exit(1);
-	}
-	
-	/* 
-	 * arguments: ops_per_test and filename (optional) 
-	 */
-	if (argc > 2 && strcmp(argv[1], "-f") == 0)
-	{
-		filename = argv[2];
-		argv += 2;
-		argc -= 2;
+		if (strcmp(argv[1], "--help") == 0 || strcmp(argv[1], "-h") == 0 ||
+			strcmp(argv[1], "-?") == 0)
+		{
+			fprintf(stderr, "test_fsync [-f filename] [ops-per-test]\n");
+			exit(0);
+		}
+		if (strcmp(argv[1], "--version") == 0 || strcmp(argv[1], "-V") == 0)
+		{
+			fprintf(stderr,"test_fsync " PG_VERSION "\n");
+			exit(0);
+		}
 	}
 
-	if (argc > 1) 
-		ops_per_test = atoi(argv[1]);
+	while ((option = getopt_long(argc, argv, "f:o:",
+								 long_options, &optindex)) != -1)
+	{
+		switch (option)
+		{
+			case 'f':
+				filename = strdup(optarg);
+				break;
 
-	printf("Ops-per-test = %d\n\n", ops_per_test);
+			case 'o':
+				ops_per_test = atoi(optarg);
+				break;
+				
+			default:
+				fprintf(stderr,
+					   "Try \"%s --help\" for more information.\n",
+					   "test_fsync");
+				exit(1);
+				break;
+		}
+	}
+
+	printf("%d operations per test\n\n", ops_per_test);
 }
 
 void
@@ -448,7 +475,7 @@ test_open_syncs(void)
 	}
 	
 	if ((tmpfile = open(filename, O_RDWR | OPEN_SYNC_FLAG | PG_O_DIRECT, 0)) == -1)
-		printf(NA_FORMAT, "n/a**\n");
+		printf(NA_FORMAT, "o_direct", "n/a**\n");
 	else
 	{
 		printf(LABEL_FORMAT, "2 open_sync 8k writes");

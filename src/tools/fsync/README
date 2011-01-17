@@ -3,7 +3,11 @@ test_fsync
 
 This program tests fsync.  The tests are described as part of the program output.
 
-	Usage:	test_fsync [-f filename] [ops_per_test]
+	Usage: test_fsync [option...]
+
+Options:
+	-f, --filename		specify filename for test
+	-o, --ops-per-test	operations per test
 	
 test_fsync is intended to give you a reasonable idea of what the fastest
 fsync_method is on your specific system, as well as supplying diagnostic
@@ -16,6 +20,6 @@ The output filename defaults to test_fsync.out in the current directory.
 test_fsync should be run in the same filesystem as your transaction log
 directory (pg_xlog).
 
-Ops-per-test defaults to 2000.  Increase this to get more accurate
+Operations per test defaults to 2000.  Increase this to get more accurate
 measurements.
 
