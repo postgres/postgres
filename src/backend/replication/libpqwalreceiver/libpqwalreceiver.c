@@ -78,7 +78,7 @@ _PG_init(void)
 static bool
 libpqrcv_connect(char *conninfo, XLogRecPtr startpoint)
 {
-	char		conninfo_repl[MAXCONNINFO + 37];
+	char		conninfo_repl[MAXCONNINFO + 75];
 	char	   *primary_sysid;
 	char		standby_sysid[32];
 	TimeLineID	primary_tli;
@@ -92,7 +92,7 @@ libpqrcv_connect(char *conninfo, XLogRecPtr startpoint)
 	 * "replication" for .pgpass lookup.
 	 */
 	snprintf(conninfo_repl, sizeof(conninfo_repl),
-			 "%s dbname=replication replication=true",
+			 "%s dbname=replication replication=true fallback_application_name=walreceiver",
 			 conninfo);
 
 	streamConn = PQconnectdb(conninfo_repl);
