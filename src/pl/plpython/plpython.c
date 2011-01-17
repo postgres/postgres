@@ -2043,7 +2043,10 @@ PLyList_FromArray(PLyDatumToOb *arg, Datum d)
 						 elm->typlen, elm->typbyval, elm->typalign,
 						 &isnull);
 		if (isnull)
+		{
+			Py_INCREF(Py_None);
 			PyList_SET_ITEM(list, i, Py_None);
+		}
 		else
 			PyList_SET_ITEM(list, i, elm->func(elm, elem));
 	}
