@@ -323,6 +323,9 @@ WalRcvDie(int code, Datum arg)
 	/* use volatile pointer to prevent code rearrangement */
 	volatile WalRcvData *walrcv = WalRcv;
 
+	/* Ensure that all WAL records received are flushed to disk */
+	XLogWalRcvFlush();
+
 	SpinLockAcquire(&walrcv->mutex);
 	Assert(walrcv->walRcvState == WALRCV_RUNNING ||
 		   walrcv->walRcvState == WALRCV_STOPPING);
