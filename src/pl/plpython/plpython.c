@@ -2681,6 +2681,7 @@ PLy_plan_new(void)
 	ob->plan = NULL;
 	ob->nargs = 0;
 	ob->types = NULL;
+	ob->values = NULL;
 	ob->args = NULL;
 
 	return (PyObject *) ob;
@@ -2696,6 +2697,8 @@ PLy_plan_dealloc(PyObject *arg)
 		SPI_freeplan(ob->plan);
 	if (ob->types)
 		PLy_free(ob->types);
+	if (ob->values)
+		PLy_free(ob->values);
 	if (ob->args)
 	{
 		int			i;
