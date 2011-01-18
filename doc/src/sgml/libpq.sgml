@@ -6641,7 +6641,7 @@ ldap://ldap.acme.com/cn=dbserver,cn=hosts?pgconnectinfo?base?(objectclass=*)
   </para>
 
  <sect2 id="libq-ssl-certificates">
-  <title>Certificate verification</title>
+  <title>Client Verification of Server Certificates</title>
 
   <para>
    By default, <productname>PostgreSQL</> will not perform any verification of
@@ -6696,7 +6696,7 @@ ldap://ldap.acme.com/cn=dbserver,cn=hosts?pgconnectinfo?base?(objectclass=*)
  </sect2>
 
  <sect2 id="libpq-ssl-clientcert">
-  <title>Client certificates</title>
+  <title>Client Certificates</title>
 
   <para>
    If the server requests a trusted client certificate,
@@ -6738,7 +6738,7 @@ ldap://ldap.acme.com/cn=dbserver,cn=hosts?pgconnectinfo?base?(objectclass=*)
  </sect2>
 
  <sect2 id="libpq-ssl-protection">
-  <title>Protection provided in different modes</title>
+  <title>Protection Provided in Different Modes</title>
 
   <para>
    The different values for the <literal>sslmode</> parameter provide different
@@ -6746,7 +6746,7 @@ ldap://ldap.acme.com/cn=dbserver,cn=hosts?pgconnectinfo?base?(objectclass=*)
    protection against three types of attacks:
   </para>
   <table id="libpq-ssl-protect-attacks">
-   <title>SSL attacks</title>
+   <title>SSL Attacks</title>
    <tgroup cols="2">
     <thead>
      <row>
@@ -6821,7 +6821,7 @@ ldap://ldap.acme.com/cn=dbserver,cn=hosts?pgconnectinfo?base?(objectclass=*)
   </para>
 
   <table id="libpq-ssl-sslmode-statements">
-   <title>SSL mode descriptions</title>
+   <title>SSL Mode Descriptions</title>
    <tgroup cols="4">
     <thead>
      <row>
@@ -6912,7 +6912,7 @@ ldap://ldap.acme.com/cn=dbserver,cn=hosts?pgconnectinfo?base?(objectclass=*)
  </sect2>
 
  <sect2 id="libpq-ssl-fileusage">
-  <title>SSL File Usage</title>
+  <title>SSL Client File Usage</title>
   <table id="libpq-ssl-file-usage">
    <title>Libpq/Client SSL File Usage</title>
    <tgroup cols="3">
@@ -6958,7 +6958,7 @@ ldap://ldap.acme.com/cn=dbserver,cn=hosts?pgconnectinfo?base?(objectclass=*)
  </sect2>
 
  <sect2 id="libpq-ssl-initialize">
-  <title>SSL library initialization</title>
+  <title>SSL Library Initialization</title>
 
   <para>
    If your application initializes <literal>libssl</> and/or
