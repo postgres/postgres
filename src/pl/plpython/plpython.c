@@ -2304,6 +2304,9 @@ PLyMapping_ToTuple(PLyTypeInfo *info, PyObject *mapping)
 		PyObject   *volatile value;
 		PLyObToDatum *att;
 
+		if (desc->attrs[i]->attisdropped)
+			continue;
+
 		key = NameStr(desc->attrs[i]->attname);
 		value = NULL;
 		att = &info->out.r.atts[i];
@@ -2354,6 +2357,7 @@ PLySequence_ToTuple(PLyTypeInfo *info, PyObject *sequence)
 	HeapTuple	tuple;
 	Datum	   *values;
 	bool	   *nulls;
+	volatile int idx;
 	volatile int i;
 
 	Assert(PySequence_Check(sequence));
@@ -2364,7 +2368,13 @@ PLySequence_ToTuple(PLyTypeInfo *info, PyObject *sequence)
 	 * plpython developer's errors we are strict here
 	 */
 	desc = lookup_rowtype_tupdesc(info->out.d.typoid, -1);
-	if (PySequence_Length(sequence) != desc->natts)
+	idx = 0;
+	for (i = 0; i < desc->natts; i++)
+	{
+		if (!desc->attrs[i]->attisdropped)
+			idx++;
+	}
+	if (PySequence_Length(sequence) != idx)
 		ereport(ERROR,
 				(errcode(ERRCODE_DATATYPE_MISMATCH),
 				 errmsg("length of returned sequence did not match number of columns in row")));
@@ -2376,16 +2386,20 @@ PLySequence_ToTuple(PLyTypeInfo *info, PyObject *sequence)
 	/* Build tuple */
 	values = palloc(sizeof(Datum) * desc->natts);
 	nulls = palloc(sizeof(bool) * desc->natts);
+	idx = 0;
 	for (i = 0; i < desc->natts; ++i)
 	{
 		PyObject   *volatile value;
 		PLyObToDatum *att;
 
+		if (desc->attrs[i]->attisdropped)
+			continue;
+
 		value = NULL;
 		att = &info->out.r.atts[i];
 		PG_TRY();
 		{
-			value = PySequence_GetItem(sequence, i);
+			value = PySequence_GetItem(sequence, idx);
 			Assert(value);
 			if (value == Py_None)
 			{
@@ -2407,6 +2421,8 @@ PLySequence_ToTuple(PLyTypeInfo *info, PyObject *sequence)
 			PG_RE_THROW();
 		}
 		PG_END_TRY();
+
+		idx++;
 	}
 
 	tuple = heap_form_tuple(desc, values, nulls);
@@ -2440,6 +2456,9 @@ PLyObject_ToTuple(PLyTypeInfo *info, PyObject *object)
 		char	   *key;
 		PyObject   *volatile value;
 		PLyObToDatum *att;
+
+		if (desc->attrs[i]->attisdropped)
+			continue;
 
 		key = NameStr(desc->attrs[i]->attname);
 		value = NULL;
