@@ -1605,7 +1605,7 @@ PLy_procedure_compile(PLyProcedure *proc, const char *src)
 	 */
 	msrc = PLy_procedure_munge_source(proc->pyname, src);
 	crv = PyRun_String(msrc, Py_file_input, proc->globals, NULL);
-	free(msrc);
+	pfree(msrc);
 
 	if (crv != NULL)
 	{
@@ -1642,7 +1642,7 @@ PLy_procedure_munge_source(const char *name, const char *src)
 	 */
 	mlen = (strlen(src) * 2) + strlen(name) + 16;
 
-	mrc = PLy_malloc(mlen);
+	mrc = palloc(mlen);
 	plen = snprintf(mrc, mlen, "def %s():\n\t", name);
 	Assert(plen >= 0 && plen < mlen);
 
@@ -3664,13 +3664,8 @@ PLy_traceback(int *xlevel)
 static void *
 PLy_malloc(size_t bytes)
 {
-	void	   *ptr = malloc(bytes);
-
-	if (ptr == NULL)
-		ereport(FATAL,
-				(errcode(ERRCODE_OUT_OF_MEMORY),
-				 errmsg("out of memory")));
-	return ptr;
+	/* We need our allocations to be long-lived, so use TopMemoryContext */
+	return MemoryContextAlloc(TopMemoryContext, bytes);
 }
 
 static void *
@@ -3699,7 +3694,7 @@ PLy_strdup(const char *str)
 static void
 PLy_free(void *ptr)
 {
-	free(ptr);
+	pfree(ptr);
 }
 
 /*
