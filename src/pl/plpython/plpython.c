@@ -1164,6 +1164,14 @@ PLy_function_handler(FunctionCallInfo fcinfo, PLyProcedure *proc)
 		Py_XDECREF(plargs);
 		Py_XDECREF(plrv);
 
+		/*
+		 * If there was an error the iterator might have not been exhausted
+		 * yet. Set it to NULL so the next invocation of the function will
+		 * start the iteration again.
+		 */
+		Py_XDECREF(proc->setof);
+		proc->setof = NULL;
+
 		PG_RE_THROW();
 	}
 	PG_END_TRY();
