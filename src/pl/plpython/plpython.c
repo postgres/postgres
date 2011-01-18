@@ -1625,7 +1625,11 @@ PLy_procedure_compile(PLyProcedure *proc, const char *src)
 			return;
 	}
 
-	PLy_elog(ERROR, "could not compile PL/Python function \"%s\"", proc->proname);
+	if (proc->proname)
+		PLy_elog(ERROR, "could not compile PL/Python function \"%s\"",
+				 proc->proname);
+	else
+		PLy_elog(ERROR, "could not compile anonymous PL/Python code block");
 }
 
 static char *
