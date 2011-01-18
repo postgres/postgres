@@ -767,7 +767,7 @@ TransactionIdIsInProgress(TransactionId xid)
 	}
 
 	/*
-	 * If not first time through, get workspace to remember main XIDs in. We
+	 * If first time through, get workspace to remember main XIDs in. We
 	 * malloc it permanently to avoid repeated palloc/pfree overhead.
 	 */
 	if (xids == NULL)
@@ -1786,7 +1786,7 @@ GetConflictingVirtualXIDs(TransactionId limitXmin, Oid dbOid)
 	int			index;
 
 	/*
-	 * If not first time through, get workspace to remember main XIDs in. We
+	 * If first time through, get workspace to remember main XIDs in. We
 	 * malloc it permanently to avoid repeated palloc/pfree overhead. Allow
 	 * result space, remembering room for a terminator.
 	 */
