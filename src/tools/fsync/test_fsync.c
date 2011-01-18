@@ -47,6 +47,7 @@ void		test_open(void);
 void		test_non_sync(void);
 void		test_sync(int writes_per_op);
 void		test_open_syncs(void);
+void		test_open_sync(const char *msg, int writes_size);
 void		test_file_descriptor_sync(void);
 void		print_elapse(struct timeval start_t, struct timeval stop_t);
 void		die(char *str);
@@ -61,8 +62,6 @@ main(int argc, char *argv[])
 
 	test_open();
 	
-	test_non_sync();
-	
 	/* Test using 1 8k write */
 	test_sync(1);
 
@@ -72,6 +71,8 @@ main(int argc, char *argv[])
 	test_open_syncs();
 
 	test_file_descriptor_sync();
+	
+	test_non_sync();
 	
 	unlink(filename);
 
@@ -105,7 +106,7 @@ handle_args(int argc, char *argv[])
 	}
 
 	while ((option = getopt_long(argc, argv, "f:o:",
-								 long_options, &optindex)) != -1)
+			long_options, &optindex)) != -1)
 	{
 		switch (option)
 		{
@@ -126,7 +127,7 @@ handle_args(int argc, char *argv[])
 		}
 	}
 
-	printf("%d operations per test\n\n", ops_per_test);
+	printf("%d operations per test\n", ops_per_test);
 }
 
 void
@@ -162,40 +163,15 @@ test_open(void)
 }
 
 void
-test_non_sync(void)
-{
-	int			tmpfile, ops;
-
-	/*
-	 * Test a simple write without fsync
-	 */
-	printf("Simple non-sync'ed write:\n");
-	printf(LABEL_FORMAT, "8k write");
-	fflush(stdout);
-
-	gettimeofday(&start_t, NULL);
-	for (ops = 0; ops < ops_per_test; ops++)
-	{
-		if ((tmpfile = open(filename, O_RDWR, 0)) == -1)
-			die("Cannot open output file.");
-		if (write(tmpfile, buf, WRITE_SIZE) != WRITE_SIZE)
-			die("write failed");
-		close(tmpfile);
-	}
-	gettimeofday(&stop_t, NULL);
-	print_elapse(start_t, stop_t);
-}
-
-void
 test_sync(int writes_per_op)
 {
 	int			tmpfile, ops, writes;
 	bool		fs_warning = false;
 	
 	if (writes_per_op == 1)
-		printf("\nCompare file sync methods using one write:\n");
+		printf("\nCompare file sync methods using one 8k write:\n");
 	else
-		printf("\nCompare file sync methods using two writes:\n");
+		printf("\nCompare file sync methods using two 8k writes:\n");
 	printf("(in wal_sync_method preference order, except fdatasync\n");
 	printf("is Linux's default)\n");
 
@@ -203,16 +179,9 @@ test_sync(int writes_per_op)
 	 * Test open_datasync if available
 	 */
 #ifdef OPEN_DATASYNC_FLAG
-	if (writes_per_op == 1)
-		printf(LABEL_FORMAT, "open_datasync 8k write"
+	printf(LABEL_FORMAT, "open_datasync"
 #if PG_O_DIRECT != 0
-		"*"
-#endif
-		);
-	else
-	 	printf(LABEL_FORMAT, "2 open_datasync 8k writes"
-#if PG_O_DIRECT != 0
-		"*"
+		" (non-direct I/O)*"
 #endif
 		);
 	fflush(stdout);
@@ -243,10 +212,7 @@ test_sync(int writes_per_op)
 	}
 	else
 	{
-		if (writes_per_op == 1)
-			printf(LABEL_FORMAT, "open_datasync 8k direct I/O write");
-		else
-			printf(LABEL_FORMAT, "2 open_datasync 8k direct I/O writes");
+		printf(LABEL_FORMAT, "open_datasync (direct I/O)");
 		fflush(stdout);
 
 		gettimeofday(&start_t, NULL);
@@ -262,8 +228,6 @@ test_sync(int writes_per_op)
 		close(tmpfile);
 		print_elapse(start_t, stop_t);
 	}
-#else
-		printf(NA_FORMAT, "o_direct", "n/a\n");
 #endif
 
 #else
@@ -274,10 +238,7 @@ test_sync(int writes_per_op)
  * Test fdatasync if available
  */
 #ifdef HAVE_FDATASYNC
-	if (writes_per_op == 1)
-		printf(LABEL_FORMAT, "8k write, fdatasync");
-	else
-		printf(LABEL_FORMAT, "8k write, 8k write, fdatasync");
+	printf(LABEL_FORMAT, "fdatasync");
 	fflush(stdout);
 
 	if ((tmpfile = open(filename, O_RDWR, 0)) == -1)
@@ -302,10 +263,7 @@ test_sync(int writes_per_op)
 /*
  * Test fsync
  */
-	if (writes_per_op == 1)
-		printf(LABEL_FORMAT, "8k write, fsync");
-	else
-		printf(LABEL_FORMAT, "8k write, 8k write, fsync");
+	printf(LABEL_FORMAT, "fsync");
 	fflush(stdout);
 
 	if ((tmpfile = open(filename, O_RDWR, 0)) == -1)
@@ -329,10 +287,7 @@ test_sync(int writes_per_op)
  * If fsync_writethrough is available, test as well
  */	
 #ifdef HAVE_FSYNC_WRITETHROUGH
-	if (writes_per_op == 1)
-		printf(LABEL_FORMAT, "8k write, fsync_writethrough");
-	else
-		printf(LABEL_FORMAT, "8k write, 8k write, fsync_writethrough");
+	printf(LABEL_FORMAT, "fsync_writethrough");
 	fflush(stdout);
 
 	if ((tmpfile = open(filename, O_RDWR, 0)) == -1)
@@ -359,16 +314,9 @@ test_sync(int writes_per_op)
  * Test open_sync if available
  */
 #ifdef OPEN_SYNC_FLAG
-	if (writes_per_op == 1)
-		printf(LABEL_FORMAT, "open_sync 8k write"
+	printf(LABEL_FORMAT, "open_sync"
 #if PG_O_DIRECT != 0
-		"*"
-#endif
-		);
-	else
-		printf(LABEL_FORMAT, "2 open_sync 8k writes"
-#if PG_O_DIRECT != 0
-		"*"
+		" (non-direct I/O)*"
 #endif
 		);
 	fflush(stdout);
@@ -399,10 +347,7 @@ test_sync(int writes_per_op)
 	}
 	else
 	{
-		if (writes_per_op == 1)
-			printf(LABEL_FORMAT, "open_sync 8k direct I/O write");
-		else
-			printf(LABEL_FORMAT, "2 open_sync 8k direct I/O writes");
+		printf(LABEL_FORMAT, "open_sync (direct I/O)");
 		fflush(stdout);
 
 		gettimeofday(&start_t, NULL);
@@ -418,8 +363,6 @@ test_sync(int writes_per_op)
 		close(tmpfile);
 		print_elapse(start_t, stop_t);
 	}
-#else
-	printf(NA_FORMAT, "o_direct", "n/a\n");
 #endif
 
 #else
@@ -428,7 +371,7 @@ test_sync(int writes_per_op)
 
 #if defined(OPEN_DATASYNC_FLAG) || defined(OPEN_SYNC_FLAG)
 	if (PG_O_DIRECT != 0)
-		printf("* This non-direct I/O option is not used by Postgres.\n");
+		printf("* This non-direct I/O mode is not used by Postgres.\n");
 #endif
 
 	if (fs_warning)
@@ -441,14 +384,22 @@ test_sync(int writes_per_op)
 void
 test_open_syncs(void)
 {
-	int			tmpfile, ops;
+	printf("\nCompare open_sync with different write sizes:\n");
+	printf("(This is designed to compare the cost of writing 16k\n");
+	printf("in different write open_sync sizes.)\n");
 
-	/*
-	 * Compare 1 to 2 writes
-	 */
-	printf("\nCompare open_sync with different sizes:\n");
-	printf("(This is designed to compare the cost of one large\n");
-	printf("sync'ed write and two smaller sync'ed writes.)\n");
+	test_open_sync(" 1 16k open_sync write", 16);
+	test_open_sync(" 2  8k open_sync writes", 8);
+	test_open_sync(" 4  4k open_sync writes", 4);
+	test_open_sync(" 8  2k open_sync writes", 2);
+	test_open_sync("16  1k open_sync writes", 1);
+}
+
+
+void
+test_open_sync(const char *msg, int writes_size)
+{
+	int		tmpfile, ops, writes;
 
 /*
  * Test open_sync with different size files
@@ -458,14 +409,15 @@ test_open_syncs(void)
 		printf(NA_FORMAT, "o_direct", "n/a**\n");
 	else
 	{
-		printf(LABEL_FORMAT, "open_sync 16k write");
+		printf(LABEL_FORMAT, msg);
 		fflush(stdout);
 
 		gettimeofday(&start_t, NULL);
 		for (ops = 0; ops < ops_per_test; ops++)
 		{
-			if (write(tmpfile, buf, WRITE_SIZE * 2) != WRITE_SIZE * 2)
-				die("write failed");
+			for (writes = 0; writes < 16 / writes_size; writes++)
+				if (write(tmpfile, buf, writes_size) != writes_size)
+					die("write failed");
 			if (lseek(tmpfile, 0, SEEK_SET) == -1)
 				die("seek failed");
 		}
@@ -474,27 +426,6 @@ test_open_syncs(void)
 		print_elapse(start_t, stop_t);
 	}
 	
-	if ((tmpfile = open(filename, O_RDWR | OPEN_SYNC_FLAG | PG_O_DIRECT, 0)) == -1)
-		printf(NA_FORMAT, "o_direct", "n/a**\n");
-	else
-	{
-		printf(LABEL_FORMAT, "2 open_sync 8k writes");
-		fflush(stdout);
-
-		gettimeofday(&start_t, NULL);
-		for (ops = 0; ops < ops_per_test; ops++)
-		{
-			if (write(tmpfile, buf, WRITE_SIZE) != WRITE_SIZE)
-				die("write failed");
-			if (write(tmpfile, buf, WRITE_SIZE) != WRITE_SIZE)
-				die("write failed");
-			if (lseek(tmpfile, 0, SEEK_SET) == -1)
-				die("seek failed");
-		}
-		gettimeofday(&stop_t, NULL);
-		close(tmpfile);
-		print_elapse(start_t, stop_t);
-	}
 #else
 	printf(NA_FORMAT, "open_sync", "n/a\n");
 #endif
@@ -520,7 +451,7 @@ test_file_descriptor_sync(void)
 	 * first write, fsync and close, which is the 
 	 * normal behavior without multiple descriptors
 	 */
-	printf(LABEL_FORMAT, "8k write, fsync, close");
+	printf(LABEL_FORMAT, "write, fsync, close");
 	fflush(stdout);
 
 	gettimeofday(&start_t, NULL);
@@ -549,7 +480,7 @@ test_file_descriptor_sync(void)
 	 * This simulates processes fsyncing each other's
 	 * writes.
 	 */
- 	printf(LABEL_FORMAT, "8k write, close, fsync");
+ 	printf(LABEL_FORMAT, "write, close, fsync");
  	fflush(stdout);
 
 	gettimeofday(&start_t, NULL);
@@ -570,6 +501,31 @@ test_file_descriptor_sync(void)
 	gettimeofday(&stop_t, NULL);
 	print_elapse(start_t, stop_t);
 
+}
+
+void
+test_non_sync(void)
+{
+	int			tmpfile, ops;
+
+	/*
+	 * Test a simple write without fsync
+	 */
+	printf("\nNon-sync'ed 8k writes:\n");
+	printf(LABEL_FORMAT, "write");
+	fflush(stdout);
+
+	gettimeofday(&start_t, NULL);
+	for (ops = 0; ops < ops_per_test; ops++)
+	{
+		if ((tmpfile = open(filename, O_RDWR, 0)) == -1)
+			die("Cannot open output file.");
+		if (write(tmpfile, buf, WRITE_SIZE) != WRITE_SIZE)
+			die("write failed");
+		close(tmpfile);
+	}
+	gettimeofday(&stop_t, NULL);
+	print_elapse(start_t, stop_t);
 }
 
 /* 
