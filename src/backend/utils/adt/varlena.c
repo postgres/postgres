@@ -1451,22 +1451,34 @@ text_cmp(text *arg1, text *arg2)
 Datum
 texteq(PG_FUNCTION_ARGS)
 {
-	text	   *arg1 = PG_GETARG_TEXT_PP(0);
-	text	   *arg2 = PG_GETARG_TEXT_PP(1);
+	Datum		arg1 = PG_GETARG_DATUM(0);
+	Datum		arg2 = PG_GETARG_DATUM(1);
 	bool		result;
+	Size		len1,
+				len2;
 
 	/*
 	 * Since we only care about equality or not-equality, we can avoid all the
-	 * expense of strcoll() here, and just do bitwise comparison.
+	 * expense of strcoll() here, and just do bitwise comparison.  In fact,
+	 * we don't even have to do a bitwise comparison if we can show the
+	 * lengths of the strings are unequal; which might save us from having
+	 * to detoast one or both values.
 	 */
-	if (VARSIZE_ANY_EXHDR(arg1) != VARSIZE_ANY_EXHDR(arg2))
+	len1 = toast_raw_datum_size(arg1);
+	len2 = toast_raw_datum_size(arg2);
+	if (len1 != len2)
 		result = false;
 	else
-		result = (memcmp(VARDATA_ANY(arg1), VARDATA_ANY(arg2),
-						 VARSIZE_ANY_EXHDR(arg1)) == 0);
+	{
+		text	   *targ1 = DatumGetTextPP(arg1);
+		text	   *targ2 = DatumGetTextPP(arg2);
 
-	PG_FREE_IF_COPY(arg1, 0);
-	PG_FREE_IF_COPY(arg2, 1);
+		result = (memcmp(VARDATA_ANY(targ1), VARDATA_ANY(targ2),
+						 len1 - VARHDRSZ) == 0);
+
+		PG_FREE_IF_COPY(targ1, 0);
+		PG_FREE_IF_COPY(targ2, 1);
+	}
 
 	PG_RETURN_BOOL(result);
 }
@@ -1474,22 +1486,28 @@ texteq(PG_FUNCTION_ARGS)
 Datum
 textne(PG_FUNCTION_ARGS)
 {
-	text	   *arg1 = PG_GETARG_TEXT_PP(0);
-	text	   *arg2 = PG_GETARG_TEXT_PP(1);
+	Datum		arg1 = PG_GETARG_DATUM(0);
+	Datum		arg2 = PG_GETARG_DATUM(1);
 	bool		result;
+	Size		len1,
+				len2;
 
-	/*
-	 * Since we only care about equality or not-equality, we can avoid all the
-	 * expense of strcoll() here, and just do bitwise comparison.
-	 */
-	if (VARSIZE_ANY_EXHDR(arg1) != VARSIZE_ANY_EXHDR(arg2))
+	/* See comment in texteq() */
+	len1 = toast_raw_datum_size(arg1);
+	len2 = toast_raw_datum_size(arg2);
+	if (len1 != len2)
 		result = true;
 	else
-		result = (memcmp(VARDATA_ANY(arg1), VARDATA_ANY(arg2),
-						 VARSIZE_ANY_EXHDR(arg1)) != 0);
+	{
+		text	   *targ1 = DatumGetTextPP(arg1);
+		text	   *targ2 = DatumGetTextPP(arg2);
 
-	PG_FREE_IF_COPY(arg1, 0);
-	PG_FREE_IF_COPY(arg2, 1);
+		result = (memcmp(VARDATA_ANY(targ1), VARDATA_ANY(targ2),
+						 len1 - VARHDRSZ) != 0);
+
+		PG_FREE_IF_COPY(targ1, 0);
+		PG_FREE_IF_COPY(targ2, 1);
+	}
 
 	PG_RETURN_BOOL(result);
 }
@@ -2358,23 +2376,31 @@ SplitIdentifierString(char *rawstring, char separator,
 Datum
 byteaeq(PG_FUNCTION_ARGS)
 {
-	bytea	   *arg1 = PG_GETARG_BYTEA_PP(0);
-	bytea	   *arg2 = PG_GETARG_BYTEA_PP(1);
-	int			len1,
-				len2;
+	Datum		arg1 = PG_GETARG_DATUM(0);
+	Datum		arg2 = PG_GETARG_DATUM(1);
 	bool		result;
+	Size		len1,
+				len2;
 
-	len1 = VARSIZE_ANY_EXHDR(arg1);
-	len2 = VARSIZE_ANY_EXHDR(arg2);
-
-	/* fast path for different-length inputs */
+	/*
+	 * We can use a fast path for unequal lengths, which might save us from
+	 * having to detoast one or both values.
+	 */
+	len1 = toast_raw_datum_size(arg1);
+	len2 = toast_raw_datum_size(arg2);
 	if (len1 != len2)
 		result = false;
 	else
-		result = (memcmp(VARDATA_ANY(arg1), VARDATA_ANY(arg2), len1) == 0);
+	{
+		bytea	   *barg1 = DatumGetByteaPP(arg1);
+		bytea	   *barg2 = DatumGetByteaPP(arg2);
 
-	PG_FREE_IF_COPY(arg1, 0);
-	PG_FREE_IF_COPY(arg2, 1);
+		result = (memcmp(VARDATA_ANY(barg1), VARDATA_ANY(barg2),
+						 len1 - VARHDRSZ) == 0);
+
+		PG_FREE_IF_COPY(barg1, 0);
+		PG_FREE_IF_COPY(barg2, 1);
+	}
 
 	PG_RETURN_BOOL(result);
 }
@@ -2382,23 +2408,31 @@ byteaeq(PG_FUNCTION_ARGS)
 Datum
 byteane(PG_FUNCTION_ARGS)
 {
-	bytea	   *arg1 = PG_GETARG_BYTEA_PP(0);
-	bytea	   *arg2 = PG_GETARG_BYTEA_PP(1);
-	int			len1,
-				len2;
+	Datum		arg1 = PG_GETARG_DATUM(0);
+	Datum		arg2 = PG_GETARG_DATUM(1);
 	bool		result;
+	Size		len1,
+				len2;
 
-	len1 = VARSIZE_ANY_EXHDR(arg1);
-	len2 = VARSIZE_ANY_EXHDR(arg2);
-
-	/* fast path for different-length inputs */
+	/*
+	 * We can use a fast path for unequal lengths, which might save us from
+	 * having to detoast one or both values.
+	 */
+	len1 = toast_raw_datum_size(arg1);
+	len2 = toast_raw_datum_size(arg2);
 	if (len1 != len2)
 		result = true;
 	else
-		result = (memcmp(VARDATA_ANY(arg1), VARDATA_ANY(arg2), len1) != 0);
+	{
+		bytea	   *barg1 = DatumGetByteaPP(arg1);
+		bytea	   *barg2 = DatumGetByteaPP(arg2);
 
-	PG_FREE_IF_COPY(arg1, 0);
-	PG_FREE_IF_COPY(arg2, 1);
+		result = (memcmp(VARDATA_ANY(barg1), VARDATA_ANY(barg2),
+						 len1 - VARHDRSZ) != 0);
+
+		PG_FREE_IF_COPY(barg1, 0);
+		PG_FREE_IF_COPY(barg2, 1);
+	}
 
 	PG_RETURN_BOOL(result);
 }
