@@ -2671,7 +2671,7 @@ PLy_plan_new(void)
 {
 	PLyPlanObject *ob;
 
-	if ((ob = PyObject_NEW(PLyPlanObject, &PLy_PlanType)) == NULL)
+	if ((ob = PyObject_New(PLyPlanObject, &PLy_PlanType)) == NULL)
 		return NULL;
 
 	ob->plan = NULL;
@@ -2727,7 +2727,7 @@ PLy_result_new(void)
 {
 	PLyResultObject *ob;
 
-	if ((ob = PyObject_NEW(PLyResultObject, &PLy_ResultType)) == NULL)
+	if ((ob = PyObject_New(PLyResultObject, &PLy_ResultType)) == NULL)
 		return NULL;
 
 	/* ob->tuples = NULL; */
