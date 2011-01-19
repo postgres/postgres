@@ -58,7 +58,7 @@ SECURITY LABEL [ FOR <replaceable class="PARAMETER">provider</replaceable> ] ON
   </note>
 
   <para>
-   The label provider determines whether a given a label is valid and whether
+   The label provider determines whether a given label is valid and whether
    it is permissible to assign that label to a given object.  The meaning of a
    given label is likewise at the discretion of the label provider.
    <productname>PostgreSQL</> places no restrictions on whether or how a

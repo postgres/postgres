@@ -1646,7 +1646,7 @@
 
      <row>
       <entry><structfield>relpersistence</structfield></entry>
-      <entry><type>bool</type></entry>
+      <entry><type>char</type></entry>
       <entry></entry>
       <entry>
        <literal>p</> = permanent table, <literal>u</> = unlogged table,
