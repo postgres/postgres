@@ -1007,12 +1007,13 @@ PLy_function_handler(FunctionCallInfo fcinfo, PLyProcedure *proc)
 			plargs = PLy_function_build_args(fcinfo, proc);
 			plrv = PLy_procedure_call(proc, "args", plargs);
 			if (!proc->is_setof)
-
+			{
 				/*
 				 * SETOF function parameters will be deleted when last row is
 				 * returned
 				 */
 				PLy_function_delete_args(proc);
+			}
 			Assert(plrv != NULL);
 			Assert(!PLy_error_in_progress);
 		}
