@@ -99,6 +99,15 @@
    </varlistentry>
 
    <varlistentry>
+    <term><acronym>CTE</acronym></term>
+    <listitem>
+     <para>
+      <link linkend="queries-with">Common Table Expression</link>
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
     <term><acronym>CVE</acronym></term>
     <listitem>
      <para>
