@@ -84,5 +84,7 @@ extern bool listUserMappings(const char *pattern, bool verbose);
 /* \det */
 extern bool listForeignTables(const char *pattern, bool verbose);
 
+/* \dL */
+extern bool listLanguages(const char *pattern, bool verbose, bool showSystem);
 
 #endif   /* DESCRIBE_H */

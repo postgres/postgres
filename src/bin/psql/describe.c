@@ -2567,6 +2567,74 @@ listTables(const char *tabtypes, const char *pattern, bool verbose, bool showSys
 
 
 /*
+ * \dL
+ *
+ * Describes languages.
+ */
+bool
+listLanguages(const char *pattern, bool verbose, bool showSystem)
+{
+	PQExpBufferData buf;
+	PGresult *res;
+	printQueryOpt myopt = pset.popt;
+
+	initPQExpBuffer(&buf);
+
+	printfPQExpBuffer(&buf,
+					  "SELECT l.lanname AS \"%s\",\n",
+					  gettext_noop("Name"));
+	if (pset.sversion >= 80300)
+			appendPQExpBuffer(&buf,
+							  "       pg_catalog.pg_get_userbyid(l.lanowner) as \"%s\",\n",
+							  gettext_noop("Owner"));
+
+	appendPQExpBuffer(&buf,
+					  "       l.lanpltrusted AS \"%s\"",
+					  gettext_noop("Trusted"));
+
+	if (verbose)
+	{
+			appendPQExpBuffer(&buf,
+							  ",\n       NOT l.lanispl AS \"%s\",\n"
+							  "       l.lanplcallfoid::regprocedure AS \"%s\",\n"
+							  "       l.lanvalidator::regprocedure AS \"%s\",\n       ",
+							  gettext_noop("Internal Language"),
+							  gettext_noop("Call Handler"),
+							  gettext_noop("Validator"));
+			if (pset.sversion >= 90000)
+				appendPQExpBuffer(&buf, "l.laninline::regprocedure AS \"%s\",\n       ",
+								  gettext_noop("Inline Handler"));
+			printACLColumn(&buf, "l.lanacl");
+	}
+
+	appendPQExpBuffer(&buf,
+					  "\nFROM pg_catalog.pg_language l\n");
+
+	processSQLNamePattern(pset.db, &buf, pattern, false, false,
+						  NULL, "l.lanname", NULL, NULL);
+
+	if (!showSystem && !pattern)
+		appendPQExpBuffer(&buf, "WHERE lanplcallfoid != 0\n");
+
+	appendPQExpBuffer(&buf, "ORDER BY 1;");
+
+	res = PSQLexec(buf.data, false);
+	termPQExpBuffer(&buf);
+	if (!res)
+		return false;
+
+	myopt.nullPrint = NULL;
+	myopt.title = _("List of languages");
+	myopt.translate_header = true;
+
+	printQuery(res, &myopt, pset.queryFout, pset.logfile);
+
+	PQclear(res);
+	return true;
+}
+
+
+/*
  * \dD
  *
  * Describes domains.

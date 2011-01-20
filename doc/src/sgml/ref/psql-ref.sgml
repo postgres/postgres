@@ -1249,6 +1249,21 @@ testdb=&gt;
         </listitem>
       </varlistentry>
 
+      <varlistentry>
+        <term><literal>\dL[S+] [ <link linkend="APP-PSQL-patterns"><replaceable class="parameter">pattern</replaceable></link> ]</literal></term>
+        <listitem>
+        <para>
+        Lists all procedural languages. If <replaceable
+        class="parameter">pattern</replaceable>
+        is specified, only languages whose names match the pattern are listed.
+        By default, only user-created languages
+        are shown; supply the <literal>S</literal> modifier to include system
+        objects. If <literal>+</literal> is appended to the command name, each
+        language is listed with its call handler, validator, access privileges,
+        and whether it is a system object.
+        </para>
+        </listitem>
+      </varlistentry>
 
       <varlistentry>
         <term><literal>\dn[S+] [ <link linkend="APP-PSQL-patterns"><replaceable class="parameter">pattern</replaceable></link> ]</literal></term>

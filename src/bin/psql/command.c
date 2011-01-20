@@ -416,6 +416,9 @@ exec_command(const char *cmd,
 			case 'l':
 				success = do_lo_list();
 				break;
+			case 'L':
+				success = listLanguages(pattern, show_verbose, show_system);
+				break;
 			case 'n':
 				success = listSchemas(pattern, show_verbose, show_system);
 				break;
