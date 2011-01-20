@@ -265,9 +265,9 @@ PG_FUNCTION_INFO_V1(plpython_inline_handler);
 
 /* most of the remaining of the declarations, all static */
 
-/* these should only be called once at the first call
- * of plpython_call_handler.  initialize the python interpreter
- * and global data.
+/*
+ * These should only be called once from _PG_init.  Initialize the
+ * Python interpreter and global data.
  */
 static void PLy_init_interp(void);
 static void PLy_init_plpy(void);
