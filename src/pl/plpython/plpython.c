@@ -1386,6 +1386,136 @@ PLy_procedure_get(Oid fn_oid, bool is_trigger)
 }
 
 /*
+ * Set up output conversion functions for a procedure
+ */
+static void
+PLy_procedure_output_conversion(PLyProcedure *proc, Form_pg_proc procStruct)
+{
+	HeapTuple	rvTypeTup;
+	Form_pg_type rvTypeStruct;
+
+	/* Get the return type */
+	rvTypeTup = SearchSysCache1(TYPEOID,
+								ObjectIdGetDatum(procStruct->prorettype));
+	if (!HeapTupleIsValid(rvTypeTup))
+		elog(ERROR, "cache lookup failed for type %u",
+			 procStruct->prorettype);
+	rvTypeStruct = (Form_pg_type) GETSTRUCT(rvTypeTup);
+
+	/* Disallow pseudotype result, except for void */
+	if (rvTypeStruct->typtype == TYPTYPE_PSEUDO &&
+		procStruct->prorettype != VOIDOID)
+	{
+		if (procStruct->prorettype == TRIGGEROID)
+			ereport(ERROR,
+					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+					 errmsg("trigger functions can only be called as triggers")));
+		else
+			ereport(ERROR,
+					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+					 errmsg("PL/Python functions cannot return type %s",
+							format_type_be(procStruct->prorettype))));
+	}
+
+	if (rvTypeStruct->typtype == TYPTYPE_COMPOSITE)
+	{
+		/*
+		 * Tuple: set up later, during first call to
+		 * PLy_function_handler
+		 */
+		proc->result.out.d.typoid = procStruct->prorettype;
+		proc->result.is_rowtype = 2;
+	}
+	else
+	{
+		/* Do the real work */
+		PLy_output_datum_func(&proc->result, rvTypeTup);
+	}
+
+	ReleaseSysCache(rvTypeTup);
+}
+
+/*
+ * Set up output conversion functions for a procedure
+ */
+static void
+PLy_procedure_input_conversion(PLyProcedure *proc, HeapTuple procTup,
+							   Form_pg_proc procStruct)
+{
+	Oid		*types;
+	char	**names,
+			*modes;
+	int		i,
+			pos,
+			total;
+
+	/* Extract argument type info from the pg_proc tuple */
+	total = get_func_arg_info(procTup, &types, &names, &modes);
+
+	/* Count number of in+inout args into proc->nargs */
+	if (modes == NULL)
+		proc->nargs = total;
+	else
+	{
+		/* proc->nargs was initialized to 0 above */
+		for (i = 0; i < total; i++)
+		{
+			if (modes[i] != PROARGMODE_OUT &&
+				modes[i] != PROARGMODE_TABLE)
+				(proc->nargs)++;
+		}
+	}
+
+	proc->argnames = (char **) PLy_malloc0(sizeof(char *) * proc->nargs);
+	for (i = pos = 0; i < total; i++)
+	{
+		HeapTuple	argTypeTup;
+		Form_pg_type argTypeStruct;
+
+		if (modes &&
+			(modes[i] == PROARGMODE_OUT ||
+			 modes[i] == PROARGMODE_TABLE))
+			continue;	/* skip OUT arguments */
+
+		Assert(types[i] == procStruct->proargtypes.values[pos]);
+
+		argTypeTup = SearchSysCache1(TYPEOID,
+									 ObjectIdGetDatum(types[i]));
+		if (!HeapTupleIsValid(argTypeTup))
+			elog(ERROR, "cache lookup failed for type %u", types[i]);
+		argTypeStruct = (Form_pg_type) GETSTRUCT(argTypeTup);
+
+		/* Check argument type is OK, set up I/O function info */
+		switch (argTypeStruct->typtype)
+		{
+			case TYPTYPE_PSEUDO:
+				/* Disallow pseudotype argument */
+				ereport(ERROR,
+						(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+						 errmsg("PL/Python functions cannot accept type %s",
+								format_type_be(types[i]))));
+				break;
+			case TYPTYPE_COMPOSITE:
+				/* We'll set IO funcs at first call */
+				proc->args[pos].is_rowtype = 2;
+				break;
+			default:
+				PLy_input_datum_func(&(proc->args[pos]),
+									 types[i],
+									 argTypeTup);
+				break;
+		}
+
+		/* Get argument name */
+		proc->argnames[pos] = names ? PLy_strdup(names[i]) : NULL;
+
+		ReleaseSysCache(argTypeTup);
+
+		pos++;
+	}
+}
+
+/*
  * Create a new PLyProcedure structure
  */
 static PLyProcedure *
@@ -1433,46 +1563,7 @@ PLy_procedure_create(HeapTuple procTup, Oid fn_oid, bool is_trigger)
 		 * but only if this isn't a trigger.
 		 */
 		if (!is_trigger)
-		{
-			HeapTuple	rvTypeTup;
-			Form_pg_type rvTypeStruct;
-
-			rvTypeTup = SearchSysCache1(TYPEOID,
-								   ObjectIdGetDatum(procStruct->prorettype));
-			if (!HeapTupleIsValid(rvTypeTup))
-				elog(ERROR, "cache lookup failed for type %u",
-					 procStruct->prorettype);
-			rvTypeStruct = (Form_pg_type) GETSTRUCT(rvTypeTup);
-
-			/* Disallow pseudotype result, except for void */
-			if (rvTypeStruct->typtype == TYPTYPE_PSEUDO &&
-				procStruct->prorettype != VOIDOID)
-			{
-				if (procStruct->prorettype == TRIGGEROID)
-					ereport(ERROR,
-							(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-							 errmsg("trigger functions can only be called as triggers")));
-				else
-					ereport(ERROR,
-							(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-						  errmsg("PL/Python functions cannot return type %s",
-								 format_type_be(procStruct->prorettype))));
-			}
-
-			if (rvTypeStruct->typtype == TYPTYPE_COMPOSITE)
-			{
-				/*
-				 * Tuple: set up later, during first call to
-				 * PLy_function_handler
-				 */
-				proc->result.out.d.typoid = procStruct->prorettype;
-				proc->result.is_rowtype = 2;
-			}
-			else
-				PLy_output_datum_func(&proc->result, rvTypeTup);
-
-			ReleaseSysCache(rvTypeTup);
-		}
+			PLy_procedure_output_conversion(proc, procStruct);
 
 		/*
 		 * Now get information required for input conversion of the
@@ -1482,79 +1573,7 @@ PLy_procedure_create(HeapTuple procTup, Oid fn_oid, bool is_trigger)
 		 * arguments.
 		 */
 		if (procStruct->pronargs)
-		{
-			Oid		   *types;
-			char	  **names,
-					   *modes;
-			int			i,
-						pos,
-						total;
-
-			/* extract argument type info from the pg_proc tuple */
-			total = get_func_arg_info(procTup, &types, &names, &modes);
-
-			/* count number of in+inout args into proc->nargs */
-			if (modes == NULL)
-				proc->nargs = total;
-			else
-			{
-				/* proc->nargs was initialized to 0 above */
-				for (i = 0; i < total; i++)
-				{
-					if (modes[i] != PROARGMODE_OUT &&
-						modes[i] != PROARGMODE_TABLE)
-						(proc->nargs)++;
-				}
-			}
-
-			proc->argnames = (char **) PLy_malloc0(sizeof(char *) * proc->nargs);
-			for (i = pos = 0; i < total; i++)
-			{
-				HeapTuple	argTypeTup;
-				Form_pg_type argTypeStruct;
-
-				if (modes &&
-					(modes[i] == PROARGMODE_OUT ||
-					 modes[i] == PROARGMODE_TABLE))
-					continue;	/* skip OUT arguments */
-
-				Assert(types[i] == procStruct->proargtypes.values[pos]);
-
-				argTypeTup = SearchSysCache1(TYPEOID,
-											 ObjectIdGetDatum(types[i]));
-				if (!HeapTupleIsValid(argTypeTup))
-					elog(ERROR, "cache lookup failed for type %u", types[i]);
-				argTypeStruct = (Form_pg_type) GETSTRUCT(argTypeTup);
-
-				/* check argument type is OK, set up I/O function info */
-				switch (argTypeStruct->typtype)
-				{
-					case TYPTYPE_PSEUDO:
-						/* Disallow pseudotype argument */
-						ereport(ERROR,
-								(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-						  errmsg("PL/Python functions cannot accept type %s",
-								 format_type_be(types[i]))));
-						break;
-					case TYPTYPE_COMPOSITE:
-						/* we'll set IO funcs at first call */
-						proc->args[pos].is_rowtype = 2;
-						break;
-					default:
-						PLy_input_datum_func(&(proc->args[pos]),
-											 types[i],
-											 argTypeTup);
-						break;
-				}
-
-				/* get argument name */
-				proc->argnames[pos] = names ? PLy_strdup(names[i]) : NULL;
-
-				ReleaseSysCache(argTypeTup);
-
-				pos++;
-			}
-		}
+			PLy_procedure_input_conversion(proc, procTup, procStruct);
 
 		/*
 		 * get the text of the function.
