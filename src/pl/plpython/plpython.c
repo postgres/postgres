@@ -182,7 +182,7 @@ typedef union PLyTypeOutput
 } PLyTypeOutput;
 
 /* all we need to move Postgresql data to Python objects,
- * and vis versa
+ * and vice versa
  */
 typedef struct PLyTypeInfo
 {
