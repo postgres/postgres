@@ -371,7 +371,7 @@ SELECT depname, empno, salary, avg(salary) OVER (PARTITION BY depname) FROM emps
 
    <para>
     A window function call always contains an <literal>OVER</> clause
-    following the window function's name and argument(s).  This is what
+    directly following the window function's name and argument(s).  This is what
     syntactically distinguishes it from a regular function or aggregate
     function.  The <literal>OVER</> clause determines exactly how the
     rows of the query are split up for processing by the window function.
