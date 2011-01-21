@@ -419,6 +419,8 @@ insert into atacc1 (test) values (2);
 insert into atacc1 (test) values (4);
 -- try adding a unique oid constraint
 alter table atacc1 add constraint atacc_oid1 unique(oid);
+-- try to create duplicates via alter table using - should fail
+alter table atacc1 alter column test type integer using 0;
 drop table atacc1;
 
 -- let's do one where the unique constraint fails when added

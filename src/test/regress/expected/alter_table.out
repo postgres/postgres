@@ -413,6 +413,10 @@ insert into atacc1 (test) values (4);
 -- try adding a unique oid constraint
 alter table atacc1 add constraint atacc_oid1 unique(oid);
 NOTICE:  ALTER TABLE / ADD UNIQUE will create implicit index "atacc_oid1" for table "atacc1"
+-- try to create duplicates via alter table using - should fail
+alter table atacc1 alter column test type integer using 0;
+ERROR:  could not create unique index "atacc_test1"
+DETAIL:  Key (test)=(0) is duplicated.
 drop table atacc1;
 -- let's do one where the unique constraint fails when added
 create table atacc1 ( test int );

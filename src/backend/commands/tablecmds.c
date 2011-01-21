@@ -1076,7 +1076,7 @@ ExecuteTruncate(TruncateStmt *stmt)
 			/*
 			 * Reconstruct the indexes to match, and we're done.
 			 */
-			reindex_relation(heap_relid, true, false);
+			reindex_relation(heap_relid, true, 0);
 		}
 	}
 
@@ -3236,13 +3236,14 @@ ATRewriteTables(List **wqueue, LOCKMODE lockmode)
 
 			/*
 			 * Swap the physical files of the old and new heaps, then rebuild
-			 * indexes and discard the new heap.  We can use RecentXmin for
+			 * indexes and discard the old heap.  We can use RecentXmin for
 			 * the table's new relfrozenxid because we rewrote all the tuples
 			 * in ATRewriteTable, so no older Xid remains in the table.  Also,
 			 * we never try to swap toast tables by content, since we have no
 			 * interest in letting this code work on system catalogs.
 			 */
-			finish_heap_swap(tab->relid, OIDNewHeap, false, false, RecentXmin);
+			finish_heap_swap(tab->relid, OIDNewHeap,
+							 false, false, true, RecentXmin);
 		}
 		else
 		{
