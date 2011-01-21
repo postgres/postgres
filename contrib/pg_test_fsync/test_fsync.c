@@ -1,7 +1,4 @@
 /*
- * src/tools/fsync/test_fsync.c
- *
- *
  *	test_fsync.c
  *		tests all supported fsync() methods
  */
