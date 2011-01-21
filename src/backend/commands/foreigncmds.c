@@ -1203,10 +1203,6 @@ CreateForeignTable(CreateForeignTableStmt *stmt, Oid relid)
 
 	fdw = GetForeignDataWrapper(server->fdwid);
 
-	aclresult = pg_foreign_data_wrapper_aclcheck(fdw->fdwid, ownerId, ACL_USAGE);
-	if (aclresult != ACLCHECK_OK)
-		aclcheck_error(aclresult, ACL_KIND_FDW, fdw->fdwname);
-
 	/*
 	 * Insert tuple into pg_foreign_table.
 	 */
