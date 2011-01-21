@@ -130,7 +130,7 @@
    (<acronym>BBU</>) disk controllers.  In such setups, the synchronize
    command forces all data from the controller cache to the disks,
    eliminating much of the benefit of the BBU.  You can run the utility
-   <filename>src/tools/fsync</> in the PostgreSQL source tree to see
+   <filename>contrib/pg_test_fsync</> in the PostgreSQL source tree to see
    if you are affected.  If you are affected, the performance benefits
    of the BBU can be regained by turning off write barriers in
    the file system or reconfiguring the disk controller, if that is
@@ -571,7 +571,7 @@
    the exception of <literal>fsync_writethrough</>, which can sometimes
    force a flush of the disk cache even when other options do not do so.
    However, it's quite platform-specific which one will be the fastest;
-   you can test option speeds using the utility <filename>src/tools/fsync</>
+   you can test option speeds using the utility <filename>contrib/pg_test_fsync</>
    in the PostgreSQL source tree.
    Note that this parameter is irrelevant if <varname>fsync</varname>
    has been turned off.
