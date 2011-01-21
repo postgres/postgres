@@ -124,6 +124,7 @@
 <!entity pgstandby       SYSTEM "pgstandby.sgml">
 <!entity pgstatstatements SYSTEM "pgstatstatements.sgml">
 <!entity pgstattuple     SYSTEM "pgstattuple.sgml">
+<!entity pgtestfsync     SYSTEM "pgtestfsync.sgml">
 <!entity pgtrgm          SYSTEM "pgtrgm.sgml">
 <!entity pgupgrade       SYSTEM "pgupgrade.sgml">
 <!entity seg             SYSTEM "seg.sgml">

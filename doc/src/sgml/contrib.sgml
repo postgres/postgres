@@ -112,6 +112,7 @@ psql -d dbname -f <replaceable>SHAREDIR</>/contrib/<replaceable>module</>.sql
  &pgstandby;
  &pgstatstatements;
  &pgstattuple;
+ &pgtestfsync;
  &pgtrgm;
  &pgupgrade;
  &seg;
