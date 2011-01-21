@@ -9,9 +9,10 @@
 
  <para>
   <application>pg_test_fsync</> is intended to give you a reasonable
-  idea of what the fastest fsync_method is on your specific system,
+  idea of what the fastest <xref linkend="guc-wal-sync-method"> is on your
+  specific system,
   as well as supplying diagnostic information in the event of an
-  identified I/O problem.  However, differences shown by test_fsync
+  identified I/O problem.  However, differences shown by pg_test_fsync
   might not make any difference in real database throughput, especially
   since many database servers are not speed-limited by their transaction
   logs.
@@ -20,11 +21,13 @@
  <sect2>
   <title>Usage</title>
 
- <sect2>
-  <title><application>pg_test_fsync</> Options</title>
+<synopsis>
+pg_test_fsync [options]
+</synopsis>
 
    <para>
-    <application>pg_test_fsync</application> accepts the following command-line arguments:
+    <application>pg_test_fsync</application> accepts the following
+    command-line options:
 
     <variablelist>
 
@@ -33,9 +36,10 @@
       <term><option>--filename</option></term>
       <listitem>
        <para>
-        Specifies the filename for test.  The file should be in the
-        same file system as the <filename>pg_xlog</> directory.
-        <filename>/pg_xlog</> contains the <acronym>WAL</> files.)
+        Specifies the filename to write test data in.
+        This file should be in the same file system that the
+        <filename>pg_xlog</> directory is or will be placed in.
+        (<filename>pg_xlog</> contains the <acronym>WAL</> files.)
         The default is <filename>test_fsync.out</> in the current
         directory.
        </para>
@@ -48,8 +52,8 @@
       <listitem>
        <para>
         Specifies the number of operations per test.  The more operations
-        per test, the greater the test's accuracy.  The default is
-        2000.
+        per test, the greater the test's accuracy, but the longer it takes
+        to run.  The default is 2000.
        </para>
       </listitem>
      </varlistentry>
