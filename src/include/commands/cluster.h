@@ -28,6 +28,7 @@ extern Oid	make_new_heap(Oid OIDOldHeap, Oid NewTableSpace);
 extern void finish_heap_swap(Oid OIDOldHeap, Oid OIDNewHeap,
 				 bool is_system_catalog,
 				 bool swap_toast_by_content,
+				 bool check_constraints,
 				 TransactionId frozenXid);
 
 #endif   /* CLUSTER_H */

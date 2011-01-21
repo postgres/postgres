@@ -607,7 +607,7 @@ rebuild_relation(Relation OldHeap, Oid indexOid,
 	 * rebuild the target's indexes and throw away the transient table.
 	 */
 	finish_heap_swap(tableOid, OIDNewHeap, is_system_catalog,
-					 swap_toast_by_content, frozenXid);
+					 swap_toast_by_content, false, frozenXid);
 }
 
 
@@ -1326,10 +1326,12 @@ void
 finish_heap_swap(Oid OIDOldHeap, Oid OIDNewHeap,
 				 bool is_system_catalog,
 				 bool swap_toast_by_content,
+				 bool check_constraints,
 				 TransactionId frozenXid)
 {
 	ObjectAddress object;
 	Oid			mapped_tables[4];
+	int			reindex_flags;
 	int			i;
 
 	/* Zero out possible results from swapped_relation_files */
@@ -1359,7 +1361,10 @@ finish_heap_swap(Oid OIDOldHeap, Oid OIDNewHeap,
 	 * so no chance to reclaim disk space before commit.  We do not need a
 	 * final CommandCounterIncrement() because reindex_relation does it.
 	 */
-	reindex_relation(OIDOldHeap, false, true);
+	reindex_flags = REINDEX_SUPPRESS_INDEX_USE;
+	if (check_constraints)
+		reindex_flags |= REINDEX_CHECK_CONSTRAINTS;
+	reindex_relation(OIDOldHeap, false, reindex_flags);
 
 	/* Destroy new heap with old filenode */
 	object.classId = RelationRelationId;
