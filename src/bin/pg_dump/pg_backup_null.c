@@ -23,6 +23,7 @@
  */
 
 #include "pg_backup_archiver.h"
+#include "dumputils.h"
 
 #include <unistd.h>				/* for dup */
 
@@ -101,16 +102,16 @@ _WriteBlobData(ArchiveHandle *AH, const void *data, size_t dLen)
 {
 	if (dLen > 0)
 	{
-		unsigned char *str;
-		size_t		len;
+		PQExpBuffer buf = createPQExpBuffer();
 
-		str = PQescapeBytea((const unsigned char *) data, dLen, &len);
-		if (!str)
-			die_horribly(AH, NULL, "out of memory\n");
+		appendByteaLiteralAHX(buf,
+							  (const unsigned char *) data,
+							  dLen,
+							  AH);
 
-		ahprintf(AH, "SELECT lowrite(0, '%s');\n", str);
+		ahprintf(AH, "SELECT pg_catalog.lowrite(0, %s);\n", buf->data);
 
-		free(str);
+		destroyPQExpBuffer(buf);
 	}
 	return dLen;
 }

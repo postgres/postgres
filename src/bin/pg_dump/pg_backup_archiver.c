@@ -1252,20 +1252,19 @@ dump_lo_buf(ArchiveHandle *AH)
 	}
 	else
 	{
-		unsigned char *str;
-		size_t		len;
+		PQExpBuffer buf = createPQExpBuffer();
 
-		str = PQescapeBytea((const unsigned char *) AH->lo_buf,
-							AH->lo_buf_used, &len);
-		if (!str)
-			die_horribly(AH, modulename, "out of memory\n");
+		appendByteaLiteralAHX(buf,
+							  (const unsigned char *) AH->lo_buf,
+							  AH->lo_buf_used,
+							  AH);
 
 		/* Hack: turn off writingBlob so ahwrite doesn't recurse to here */
 		AH->writingBlob = 0;
-		ahprintf(AH, "SELECT lowrite(0, '%s');\n", str);
+		ahprintf(AH, "SELECT pg_catalog.lowrite(0, %s);\n", buf->data);
 		AH->writingBlob = 1;
 
-		free(str);
+		destroyPQExpBuffer(buf);
 	}
 	AH->lo_buf_used = 0;
 }
