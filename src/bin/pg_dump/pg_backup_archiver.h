@@ -329,6 +329,9 @@ extern bool checkSeek(FILE *fp);
 #define appendStringLiteralAHX(buf,str,AH) \
 	appendStringLiteral(buf, str, (AH)->public.encoding, (AH)->public.std_strings)
 
+#define appendByteaLiteralAHX(buf,str,len,AH) \
+	appendByteaLiteral(buf, str, len, (AH)->public.std_strings)
+
 /*
  * Mandatory routines for each supported format
  */
