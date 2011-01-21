@@ -35,6 +35,19 @@ select argument_test_one(users, fname, lname) from users where lname = 'doe' ord
  willem doe => {fname: willem, lname: doe, userid: 3, username: w_doe}
 (3 rows)
 
+-- check module contents
+CREATE FUNCTION module_contents() RETURNS text AS
+$$
+contents = list(filter(lambda x: not x.startswith("__"), dir(plpy)))
+contents.sort()
+return ", ".join(contents)
+$$ LANGUAGE plpythonu;
+select module_contents();
+                                      module_contents                                      
+-------------------------------------------------------------------------------------------
+ Error, Fatal, SPIError, debug, error, execute, fatal, info, log, notice, prepare, warning
+(1 row)
+
 CREATE FUNCTION elog_test() RETURNS void
 AS $$
 plpy.debug('debug')

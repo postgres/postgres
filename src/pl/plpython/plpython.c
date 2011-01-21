@@ -3268,11 +3268,37 @@ PLy_spi_execute_fetch_result(SPITupleTable *tuptable, int rows, int status)
  * language handler and interpreter initialization
  */
 
+/*
+ * Add exceptions to the plpy module
+ */
+static void
+PLy_add_exceptions(PyObject *plpy)
+{
+	PLy_exc_error = PyErr_NewException("plpy.Error", NULL, NULL);
+	PLy_exc_fatal = PyErr_NewException("plpy.Fatal", NULL, NULL);
+	PLy_exc_spi_error = PyErr_NewException("plpy.SPIError", NULL, NULL);
+
+	Py_INCREF(PLy_exc_error);
+	PyModule_AddObject(plpy, "Error", PLy_exc_error);
+	Py_INCREF(PLy_exc_fatal);
+	PyModule_AddObject(plpy, "Fatal", PLy_exc_fatal);
+	Py_INCREF(PLy_exc_spi_error);
+	PyModule_AddObject(plpy, "SPIError", PLy_exc_spi_error);
+}
+
 #if PY_MAJOR_VERSION >= 3
 static PyMODINIT_FUNC
 PyInit_plpy(void)
 {
-	return PyModule_Create(&PLy_module);
+	PyObject   *m;
+
+	m = PyModule_Create(&PLy_module);
+	if (m == NULL)
+		return NULL;
+
+	PLy_add_exceptions(m);
+
+	return m;
 }
 #endif
 
@@ -3363,8 +3389,7 @@ PLy_init_plpy(void)
 	PyObject   *main_mod,
 			   *main_dict,
 			   *plpy_mod;
-	PyObject   *plpy,
-			   *plpy_dict;
+	PyObject   *plpy;
 
 	/*
 	 * initialize plpy module
@@ -3376,19 +3401,13 @@ PLy_init_plpy(void)
 
 #if PY_MAJOR_VERSION >= 3
 	plpy = PyModule_Create(&PLy_module);
+	/* for Python 3 we initialized the exceptions in PyInit_plpy */
 #else
 	plpy = Py_InitModule("plpy", PLy_methods);
+	PLy_add_exceptions(plpy);
 #endif
-	plpy_dict = PyModule_GetDict(plpy);
 
 	/* PyDict_SetItemString(plpy, "PlanType", (PyObject *) &PLy_PlanType); */
-
-	PLy_exc_error = PyErr_NewException("plpy.Error", NULL, NULL);
-	PLy_exc_fatal = PyErr_NewException("plpy.Fatal", NULL, NULL);
-	PLy_exc_spi_error = PyErr_NewException("plpy.SPIError", NULL, NULL);
-	PyDict_SetItemString(plpy_dict, "Error", PLy_exc_error);
-	PyDict_SetItemString(plpy_dict, "Fatal", PLy_exc_fatal);
-	PyDict_SetItemString(plpy_dict, "SPIError", PLy_exc_spi_error);
 
 	/*
 	 * initialize main module, and add plpy

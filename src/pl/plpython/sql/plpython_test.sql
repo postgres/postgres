@@ -26,6 +26,17 @@ return words'
 select argument_test_one(users, fname, lname) from users where lname = 'doe' order by 1;
 
 
+-- check module contents
+CREATE FUNCTION module_contents() RETURNS text AS
+$$
+contents = list(filter(lambda x: not x.startswith("__"), dir(plpy)))
+contents.sort()
+return ", ".join(contents)
+$$ LANGUAGE plpythonu;
+
+select module_contents();
+
+
 CREATE FUNCTION elog_test() RETURNS void
 AS $$
 plpy.debug('debug')
