@@ -3167,13 +3167,25 @@ SignalSomeChildren(int signal, int target)
 
 		if (bp->dead_end)
 			continue;
-		if (!(target & BACKEND_TYPE_NORMAL) && !bp->is_autovacuum)
-			continue;
-		if (!(target & BACKEND_TYPE_AUTOVAC) && bp->is_autovacuum)
-			continue;
-		if (!(target & BACKEND_TYPE_WALSND) &&
-			IsPostmasterChildWalSender(bp->child_slot))
-			continue;
+
+		/*
+		 * Since target == BACKEND_TYPE_ALL is the most common case,
+		 * we test it first and avoid touching shared memory for
+		 * every child.
+		 */
+		if (target != BACKEND_TYPE_ALL)
+		{
+			int			child;
+
+			if (bp->is_autovacuum)
+				child = BACKEND_TYPE_AUTOVAC;
+			else if (IsPostmasterChildWalSender(bp->child_slot))
+				child = BACKEND_TYPE_WALSND;
+			else
+				child = BACKEND_TYPE_NORMAL;
+			if (!(target & child))
+				continue;
+		}
 
 		ereport(DEBUG4,
 				(errmsg_internal("sending signal %d to process %d",
@@ -4380,13 +4392,25 @@ CountChildren(int target)
 
 		if (bp->dead_end)
 			continue;
-		if (!(target & BACKEND_TYPE_NORMAL) && !bp->is_autovacuum)
-			continue;
-		if (!(target & BACKEND_TYPE_AUTOVAC) && bp->is_autovacuum)
-			continue;
-		if (!(target & BACKEND_TYPE_WALSND) &&
-			IsPostmasterChildWalSender(bp->child_slot))
-			continue;
+
+		/*
+		 * Since target == BACKEND_TYPE_ALL is the most common case,
+		 * we test it first and avoid touching shared memory for
+		 * every child.
+		 */
+		if (target != BACKEND_TYPE_ALL)
+		{
+			int			child;
+
+			if (bp->is_autovacuum)
+				child = BACKEND_TYPE_AUTOVAC;
+			else if (IsPostmasterChildWalSender(bp->child_slot))
+				child = BACKEND_TYPE_WALSND;
+			else
+				child = BACKEND_TYPE_NORMAL;
+			if (!(target & child))
+				continue;
+		}
 
 		cnt++;
 	}
