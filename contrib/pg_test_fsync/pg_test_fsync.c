@@ -391,16 +391,15 @@ test_open_syncs(void)
 	test_open_sync("16  1k open_sync writes", 1);
 }
 
-
-static void
-test_open_sync(const char *msg, int writes_size)
-{
-	int		tmpfile, ops, writes;
-
 /*
  * Test open_sync with different size files
  */
+static void
+test_open_sync(const char *msg, int writes_size)
+{
 #ifdef OPEN_SYNC_FLAG
+	int		tmpfile, ops, writes;
+
 	if ((tmpfile = open(filename, O_RDWR | OPEN_SYNC_FLAG | PG_O_DIRECT, 0)) == -1)
 		printf(NA_FORMAT, "o_direct", "n/a**\n");
 	else
