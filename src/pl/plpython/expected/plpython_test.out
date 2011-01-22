@@ -73,5 +73,5 @@ NOTICE:  notice
 CONTEXT:  PL/Python function "elog_test"
 WARNING:  warning
 CONTEXT:  PL/Python function "elog_test"
-ERROR:  error
+ERROR:  PL/Python: plpy.Error: error
 CONTEXT:  PL/Python function "elog_test"

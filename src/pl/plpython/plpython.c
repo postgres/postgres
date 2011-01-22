@@ -284,6 +284,9 @@ PLy_exception_set_plural(PyObject *, const char *, const char *,
 __attribute__((format(printf, 2, 5)))
 __attribute__((format(printf, 3, 5)));
 
+/* like PLy_exception_set, but conserve more fields from ErrorData */
+static void PLy_spi_exception_set(ErrorData *edata);
+
 /* Get the innermost python procedure called from the backend */
 static char *PLy_procedure_name(PLyProcedure *);
 
@@ -291,6 +294,7 @@ static char *PLy_procedure_name(PLyProcedure *);
 static void
 PLy_elog(int, const char *,...)
 __attribute__((format(printf, 2, 3)));
+static void PLy_get_spi_error_data(PyObject *exc, char **hint, char **query, int *position);
 static char *PLy_traceback(int *);
 
 static void *PLy_malloc(size_t);
@@ -363,19 +367,6 @@ static HeapTuple PLyObject_ToTuple(PLyTypeInfo *, PyObject *);
  * Currently active plpython function
  */
 static PLyProcedure *PLy_curr_procedure = NULL;
-
-/*
- * When a callback from Python into PG incurs an error, we temporarily store
- * the error information here, and return NULL to the Python interpreter.
- * Any further callback attempts immediately fail, and when the Python
- * interpreter returns to the calling function, we re-throw the error (even if
- * Python thinks it trapped the error and doesn't return NULL).  Eventually
- * this ought to be improved to let Python code really truly trap the error,
- * but that's more of a change from the pre-8.0 semantics than I have time for
- * now --- it will only be possible if the callback query is executed inside a
- * subtransaction.
- */
-static ErrorData *PLy_error_in_progress = NULL;
 
 static PyObject *PLy_interp_globals = NULL;
 static PyObject *PLy_interp_safe_globals = NULL;
@@ -597,7 +588,6 @@ PLy_trigger_handler(FunctionCallInfo fcinfo, PLyProcedure *proc)
 		plrv = PLy_procedure_call(proc, "TD", plargs);
 
 		Assert(plrv != NULL);
-		Assert(!PLy_error_in_progress);
 
 		/*
 		 * Disconnect from SPI manager
@@ -1015,7 +1005,6 @@ PLy_function_handler(FunctionCallInfo fcinfo, PLyProcedure *proc)
 				PLy_function_delete_args(proc);
 			}
 			Assert(plrv != NULL);
-			Assert(!PLy_error_in_progress);
 		}
 
 		/*
@@ -1194,23 +1183,9 @@ PLy_procedure_call(PLyProcedure *proc, char *kargs, PyObject *vargs)
 	rv = PyEval_EvalCode((PyCodeObject *) proc->code,
 						 proc->globals, proc->globals);
 
-	/*
-	 * If there was an error in a PG callback, propagate that no matter what
-	 * Python claims about its success.
-	 */
-	if (PLy_error_in_progress)
-	{
-		ErrorData  *edata = PLy_error_in_progress;
-
-		PLy_error_in_progress = NULL;
-		ReThrowError(edata);
-	}
-
-	if (rv == NULL || PyErr_Occurred())
-	{
-		Py_XDECREF(rv);
+	/* If the Python code returned an error, propagate it */
+	if (rv == NULL)
 		PLy_elog(ERROR, NULL);
-	}
 
 	return rv;
 }
@@ -2862,13 +2837,6 @@ PLy_spi_prepare(PyObject *self, PyObject *args)
 	void	   *tmpplan;
 	volatile MemoryContext oldcontext;
 
-	/* Can't execute more if we have an unhandled error */
-	if (PLy_error_in_progress)
-	{
-		PLy_exception_set(PLy_exc_error, "transaction aborted");
-		return NULL;
-	}
-
 	if (!PyArg_ParseTuple(args, "s|O", &query, &list))
 	{
 		PLy_exception_set(PLy_exc_spi_error,
@@ -2978,8 +2946,10 @@ PLy_spi_prepare(PyObject *self, PyObject *args)
 	}
 	PG_CATCH();
 	{
+		ErrorData	*edata;
+
 		MemoryContextSwitchTo(oldcontext);
-		PLy_error_in_progress = CopyErrorData();
+		edata = CopyErrorData();
 		FlushErrorState();
 		Py_DECREF(plan);
 		Py_XDECREF(optr);
@@ -2987,6 +2957,7 @@ PLy_spi_prepare(PyObject *self, PyObject *args)
 			PLy_exception_set(PLy_exc_spi_error,
 							  "unrecognized error in PLy_spi_prepare");
 		PLy_elog(WARNING, NULL);
+		PLy_spi_exception_set(edata);
 		return NULL;
 	}
 	PG_END_TRY();
@@ -3004,13 +2975,6 @@ PLy_spi_execute(PyObject *self, PyObject *args)
 	PyObject   *plan;
 	PyObject   *list = NULL;
 	long		limit = 0;
-
-	/* Can't execute more if we have an unhandled error */
-	if (PLy_error_in_progress)
-	{
-		PLy_exception_set(PLy_exc_error, "transaction aborted");
-		return NULL;
-	}
 
 	if (PyArg_ParseTuple(args, "s|l", &query, &limit))
 		return PLy_spi_execute_query(query, limit);
@@ -3116,9 +3080,10 @@ PLy_spi_execute_plan(PyObject *ob, PyObject *list, long limit)
 	PG_CATCH();
 	{
 		int			k;
+		ErrorData	*edata;
 
 		MemoryContextSwitchTo(oldcontext);
-		PLy_error_in_progress = CopyErrorData();
+		edata = CopyErrorData();
 		FlushErrorState();
 
 		/*
@@ -3138,6 +3103,7 @@ PLy_spi_execute_plan(PyObject *ob, PyObject *list, long limit)
 			PLy_exception_set(PLy_exc_error,
 							  "unrecognized error in PLy_spi_execute_plan");
 		PLy_elog(WARNING, NULL);
+		PLy_spi_exception_set(edata);
 		return NULL;
 	}
 	PG_END_TRY();
@@ -3150,14 +3116,6 @@ PLy_spi_execute_plan(PyObject *ob, PyObject *list, long limit)
 			pfree(DatumGetPointer(plan->values[i]));
 			plan->values[i] = PointerGetDatum(NULL);
 		}
-	}
-
-	if (rv < 0)
-	{
-		PLy_exception_set(PLy_exc_spi_error,
-						  "SPI_execute_plan failed: %s",
-						  SPI_result_code_string(rv));
-		return NULL;
 	}
 
 	return PLy_spi_execute_fetch_result(SPI_tuptable, SPI_processed, rv);
@@ -3177,13 +3135,16 @@ PLy_spi_execute_query(char *query, long limit)
 	}
 	PG_CATCH();
 	{
+		ErrorData	*edata;
+
 		MemoryContextSwitchTo(oldcontext);
-		PLy_error_in_progress = CopyErrorData();
+		edata = CopyErrorData();
 		FlushErrorState();
 		if (!PyErr_Occurred())
 			PLy_exception_set(PLy_exc_spi_error,
 							  "unrecognized error in PLy_spi_execute_query");
 		PLy_elog(WARNING, NULL);
+		PLy_spi_exception_set(edata);
 		return NULL;
 	}
 	PG_END_TRY();
@@ -3244,8 +3205,6 @@ PLy_spi_execute_fetch_result(SPITupleTable *tuptable, int rows, int status)
 		PG_CATCH();
 		{
 			MemoryContextSwitchTo(oldcontext);
-			PLy_error_in_progress = CopyErrorData();
-			FlushErrorState();
 			if (!PyErr_Occurred())
 				PLy_exception_set(PLy_exc_error,
 					   "unrecognized error in PLy_spi_execute_fetch_result");
@@ -3502,11 +3461,11 @@ PLy_output(volatile int level, PyObject *self, PyObject *args)
 	}
 	PG_CATCH();
 	{
-		MemoryContextSwitchTo(oldcontext);
-		PLy_error_in_progress = CopyErrorData();
-		FlushErrorState();
+		ErrorData  *edata;
 
-		PyErr_SetString(PLy_exc_error, sv);
+		MemoryContextSwitchTo(oldcontext);
+		edata = CopyErrorData();
+		FlushErrorState();
 
 		/*
 		 * Note: If sv came from PyString_AsString(), it points into storage
@@ -3514,11 +3473,8 @@ PLy_output(volatile int level, PyObject *self, PyObject *args)
 		 */
 		Py_XDECREF(so);
 
-		/*
-		 * returning NULL here causes the python interpreter to bail. when
-		 * control passes back to PLy_procedure_call, we check for PG
-		 * exceptions and re-throw the error.
-		 */
+		/* Make Python raise the exception */
+		PLy_exception_set(PLy_exc_error, edata->message);
 		return NULL;
 	}
 	PG_END_TRY();
@@ -3584,6 +3540,48 @@ PLy_exception_set_plural(PyObject *exc,
 	PyErr_SetString(exc, buf);
 }
 
+/*
+ * Raise a SPIError, passing in it more error details, like the
+ * internal query and error position.
+ */
+static void
+PLy_spi_exception_set(ErrorData *edata)
+{
+	PyObject	*args = NULL;
+	PyObject	*spierror = NULL;
+	PyObject	*spidata = NULL;
+
+	args = Py_BuildValue("(s)", edata->message);
+	if (!args)
+		goto failure;
+
+	/* create a new SPIError with the error message as the parameter */
+	spierror = PyObject_CallObject(PLy_exc_spi_error, args);
+	if (!spierror)
+		goto failure;
+
+	spidata = Py_BuildValue("(zzi)", edata->hint,
+							edata->internalquery, edata->internalpos);
+	if (!spidata)
+		goto failure;
+
+	if (PyObject_SetAttrString(spierror, "spidata", spidata) == -1)
+		goto failure;
+
+	PyErr_SetObject(PLy_exc_spi_error, spierror);
+
+	Py_DECREF(args);
+	Py_DECREF(spierror);
+	Py_DECREF(spidata);
+	return;
+
+failure:
+	Py_XDECREF(args);
+	Py_XDECREF(spierror);
+	Py_XDECREF(spidata);
+	elog(ERROR, "could not convert SPI error to Python exception");
+}
+
 /* Emit a PG error or notice, together with any available info about
  * the current Python error, previously set by PLy_exception_set().
  * This should be used to propagate Python errors into PG.	If fmt is
@@ -3596,6 +3594,15 @@ PLy_elog(int elevel, const char *fmt,...)
 	char	   *xmsg;
 	int			xlevel;
 	StringInfoData emsg;
+	PyObject	*exc, *val, *tb;
+	char		*hint = NULL;
+	char		*query = NULL;
+	int			position = 0;
+
+	PyErr_Fetch(&exc, &val, &tb);
+	if (exc != NULL && PyErr_GivenExceptionMatches(val, PLy_exc_spi_error))
+		PLy_get_spi_error_data(val, &hint, &query, &position);
+	PyErr_Restore(exc, val, tb);
 
 	xmsg = PLy_traceback(&xlevel);
 
@@ -3621,10 +3628,16 @@ PLy_elog(int elevel, const char *fmt,...)
 		if (fmt)
 			ereport(elevel,
 					(errmsg("PL/Python: %s", emsg.data),
-					 (xmsg) ? errdetail("%s", xmsg) : 0));
+					 (xmsg) ? errdetail("%s", xmsg) : 0,
+					 (hint) ? errhint(hint) : 0,
+					 (query) ? internalerrquery(query) : 0,
+					 (position) ? internalerrposition(position) : 0));
 		else
 			ereport(elevel,
-					(errmsg("PL/Python: %s", xmsg)));
+					(errmsg("PL/Python: %s", xmsg),
+					 (hint) ? errhint(hint) : 0,
+					 (query) ? internalerrquery(query) : 0,
+					 (position) ? internalerrposition(position) : 0));
 	}
 	PG_CATCH();
 	{
@@ -3641,6 +3654,28 @@ PLy_elog(int elevel, const char *fmt,...)
 	if (xmsg)
 		pfree(xmsg);
 }
+
+/*
+ * Extract the error data from a SPIError
+ */
+static void
+PLy_get_spi_error_data(PyObject *exc, char **hint, char **query, int *position)
+{
+	PyObject	*spidata = NULL;
+
+	spidata = PyObject_GetAttrString(exc, "spidata");
+	if (!spidata)
+		goto cleanup;
+
+	if (!PyArg_ParseTuple(spidata, "zzi", hint, query, position))
+		goto cleanup;
+
+cleanup:
+	PyErr_Clear();
+	/* no elog here, we simply won't report the errhint, errposition etc */
+	Py_XDECREF(spidata);
+}
+
 
 static char *
 PLy_traceback(int *xlevel)
