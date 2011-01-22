@@ -33,6 +33,7 @@ SUBDIRS = \
 		pg_freespacemap \
 		pg_standby	\
 		pg_stat_statements \
+		pg_test_fsync	\
 		pg_trgm		\
 		pg_upgrade	\
 		pg_upgrade_support \

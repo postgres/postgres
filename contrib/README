@@ -30,7 +30,7 @@ adminpack -
 
 auth_delay
 	Add a short delay after a failed authentication attempt, to make
-    brute-force attacks on database passwords a bit harder.
+	brute-force attacks on database passwords a bit harder.
 	by KaiGai Kohei <kaigai@ak.jp.nec.com>
 
 auto_explain -
@@ -71,7 +71,7 @@ dict_xsyn -
 
 earthdistance -
 	Functions for computing distances between two points on Earth
-        by Bruno Wolff III <bruno@wolff.to> and Hal Snyder <hal@vailsys.com>
+	by Bruno Wolff III <bruno@wolff.to> and Hal Snyder <hal@vailsys.com>
 
 fuzzystrmatch -
 	Levenshtein, metaphone, and soundex fuzzy string matching
@@ -128,6 +128,10 @@ pg_standby -
 pg_stat_statements -
 	Track statement execution times across a whole database cluster
 	by Takahiro Itagaki <itagaki.takahiro@oss.ntt.co.jp>
+
+pg_test_fsync -
+	Test different wal_sync_method settings
+	by Bruce Momjian <bruce@momjian.us>
 
 pg_trgm -
 	Functions for determining the similarity of text based on trigram

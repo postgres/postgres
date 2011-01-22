@@ -40,7 +40,7 @@ pg_test_fsync [options]
         This file should be in the same file system that the
         <filename>pg_xlog</> directory is or will be placed in.
         (<filename>pg_xlog</> contains the <acronym>WAL</> files.)
-        The default is <filename>test_fsync.out</> in the current
+        The default is <filename>pg_test_fsync.out</> in the current
         directory.
        </para>
       </listitem>

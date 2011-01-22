@@ -1,31 +1,27 @@
 /*
- *	test_fsync.c
+ *	pg_test_fsync.c
  *		tests all supported fsync() methods
  */
 
 #include "postgres.h"
+
+#include <fcntl.h>
+#include <sys/stat.h>
+#include <sys/time.h>
+#include <time.h>
+#include <unistd.h>
 
 #include "getopt_long.h"
 #include "access/xlog_internal.h"
 #include "access/xlog.h"
 #include "access/xlogdefs.h"
 
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <fcntl.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <time.h>
-#include <sys/time.h>
-#include <unistd.h>
-#include <string.h>
 
-
-/* 
+/*
  * put the temp files in the local directory
- * unless the user specifies otherwise 
+ * unless the user specifies otherwise
  */
-#define FSYNC_FILENAME	"./test_fsync.out"
+#define FSYNC_FILENAME	"./pg_test_fsync.out"
 
 #define WRITE_SIZE	(8 * 1024)	/* 8k */
 
@@ -54,23 +50,23 @@ int
 main(int argc, char *argv[])
 {
 	handle_args(argc, argv);
-	
+
 	prepare_buf();
 
 	test_open();
-	
+
 	/* Test using 1 8k write */
 	test_sync(1);
 
 	/* Test using 2 8k writes */
 	test_sync(2);
-	
+
 	test_open_syncs();
 
 	test_file_descriptor_sync();
-	
+
 	test_non_sync();
-	
+
 	unlink(filename);
 
 	return 0;
@@ -92,12 +88,12 @@ handle_args(int argc, char *argv[])
 		if (strcmp(argv[1], "--help") == 0 || strcmp(argv[1], "-h") == 0 ||
 			strcmp(argv[1], "-?") == 0)
 		{
-			fprintf(stderr, "test_fsync [-f filename] [ops-per-test]\n");
+			fprintf(stderr, "pg_test_fsync [-f filename] [ops-per-test]\n");
 			exit(0);
 		}
 		if (strcmp(argv[1], "--version") == 0 || strcmp(argv[1], "-V") == 0)
 		{
-			fprintf(stderr,"test_fsync " PG_VERSION "\n");
+			fprintf(stderr,"pg_test_fsync " PG_VERSION "\n");
 			exit(0);
 		}
 	}
@@ -114,11 +110,11 @@ handle_args(int argc, char *argv[])
 			case 'o':
 				ops_per_test = atoi(optarg);
 				break;
-				
+
 			default:
 				fprintf(stderr,
 					   "Try \"%s --help\" for more information.\n",
-					   "test_fsync");
+					   "pg_test_fsync");
 				exit(1);
 				break;
 		}
@@ -144,8 +140,8 @@ test_open(void)
 {
 	int			tmpfile;
 
-	/* 
-	 * test if we can open the target file 
+	/*
+	 * test if we can open the target file
 	 */
 	if ((tmpfile = open(filename, O_RDWR | O_CREAT, S_IRUSR | S_IWUSR)) == -1)
 		die("Cannot open output file.");
@@ -164,7 +160,7 @@ test_sync(int writes_per_op)
 {
 	int			tmpfile, ops, writes;
 	bool		fs_warning = false;
-	
+
 	if (writes_per_op == 1)
 		printf("\nCompare file sync methods using one 8k write:\n");
 	else
@@ -279,10 +275,10 @@ test_sync(int writes_per_op)
 	gettimeofday(&stop_t, NULL);
 	close(tmpfile);
 	print_elapse(start_t, stop_t);
-	
+
 /*
  * If fsync_writethrough is available, test as well
- */	
+ */
 #ifdef HAVE_FSYNC_WRITETHROUGH
 	printf(LABEL_FORMAT, "fsync_writethrough");
 	fflush(stdout);
@@ -422,7 +418,7 @@ test_open_sync(const char *msg, int writes_size)
 		close(tmpfile);
 		print_elapse(start_t, stop_t);
 	}
-	
+
 #else
 	printf(NA_FORMAT, "open_sync", "n/a\n");
 #endif
@@ -444,8 +440,8 @@ test_file_descriptor_sync(void)
 	printf("(If the times are similar, fsync() can sync data written\n");
 	printf("on a different descriptor.)\n");
 
-	/* 
-	 * first write, fsync and close, which is the 
+	/*
+	 * first write, fsync and close, which is the
 	 * normal behavior without multiple descriptors
 	 */
 	printf(LABEL_FORMAT, "write, fsync, close");
@@ -477,8 +473,8 @@ test_file_descriptor_sync(void)
 	 * This simulates processes fsyncing each other's
 	 * writes.
 	 */
- 	printf(LABEL_FORMAT, "write, close, fsync");
- 	fflush(stdout);
+	printf(LABEL_FORMAT, "write, close, fsync");
+	fflush(stdout);
 
 	gettimeofday(&start_t, NULL);
 	for (ops = 0; ops < ops_per_test; ops++)
@@ -525,7 +521,7 @@ test_non_sync(void)
 	print_elapse(start_t, stop_t);
 }
 
-/* 
+/*
  * print out the writes per second for tests
  */
 void
