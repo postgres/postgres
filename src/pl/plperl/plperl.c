@@ -774,6 +774,7 @@ pp_require_safe(pTHX)
 		RETPUSHYES;
 
 	DIE(aTHX_ "Unable to load %s into plperl", name);
+	return NULL;				/* keep compiler quiet */
 }
 
 
