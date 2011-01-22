@@ -34,16 +34,19 @@ char	    full_buf[XLOG_SEG_SIZE], *buf, *filename = FSYNC_FILENAME;
 struct timeval start_t, stop_t;
 
 
-void		handle_args(int argc, char *argv[]);
-void		prepare_buf(void);
-void		test_open(void);
-void		test_non_sync(void);
-void		test_sync(int writes_per_op);
-void		test_open_syncs(void);
-void		test_open_sync(const char *msg, int writes_size);
-void		test_file_descriptor_sync(void);
-void		print_elapse(struct timeval start_t, struct timeval stop_t);
-void		die(char *str);
+static void	handle_args(int argc, char *argv[]);
+static void	prepare_buf(void);
+static void	test_open(void);
+static void	test_non_sync(void);
+static void	test_sync(int writes_per_op);
+static void	test_open_syncs(void);
+static void	test_open_sync(const char *msg, int writes_size);
+static void	test_file_descriptor_sync(void);
+#ifdef HAVE_FSYNC_WRITETHROUGH
+static int	pg_fsync_writethrough(int fd);
+#endif
+static void	print_elapse(struct timeval start_t, struct timeval stop_t);
+static void	die(char *str);
 
 
 int
@@ -72,7 +75,7 @@ main(int argc, char *argv[])
 	return 0;
 }
 
-void
+static void
 handle_args(int argc, char *argv[])
 {
 	static struct option long_options[] = {
@@ -88,7 +91,7 @@ handle_args(int argc, char *argv[])
 		if (strcmp(argv[1], "--help") == 0 || strcmp(argv[1], "-h") == 0 ||
 			strcmp(argv[1], "-?") == 0)
 		{
-			fprintf(stderr, "pg_test_fsync [-f filename] [ops-per-test]\n");
+			fprintf(stderr, "pg_test_fsync [-f filename] [-o ops-per-test]\n");
 			exit(0);
 		}
 		if (strcmp(argv[1], "--version") == 0 || strcmp(argv[1], "-V") == 0)
@@ -123,7 +126,7 @@ handle_args(int argc, char *argv[])
 	printf("%d operations per test\n", ops_per_test);
 }
 
-void
+static void
 prepare_buf(void)
 {
 	int			ops;
@@ -135,7 +138,7 @@ prepare_buf(void)
 	buf = (char *) TYPEALIGN(ALIGNOF_XLOG_BUFFER, full_buf);
 }
 
-void
+static void
 test_open(void)
 {
 	int			tmpfile;
@@ -155,7 +158,7 @@ test_open(void)
 	close(tmpfile);
 }
 
-void
+static void
 test_sync(int writes_per_op)
 {
 	int			tmpfile, ops, writes;
@@ -291,7 +294,7 @@ test_sync(int writes_per_op)
 		for (writes = 0; writes < writes_per_op; writes++)
 			if (write(tmpfile, buf, WRITE_SIZE) != WRITE_SIZE)
 				die("write failed");
-		if (fcntl(tmpfile, F_FULLFSYNC ) != 0)
+		if (pg_fsync_writethrough(tmpfile) != 0)
 			die("fsync failed");
 		if (lseek(tmpfile, 0, SEEK_SET) == -1)
 			die("seek failed");
@@ -374,7 +377,7 @@ test_sync(int writes_per_op)
 	}
 }
 
-void
+static void
 test_open_syncs(void)
 {
 	printf("\nCompare open_sync with different write sizes:\n");
@@ -389,7 +392,7 @@ test_open_syncs(void)
 }
 
 
-void
+static void
 test_open_sync(const char *msg, int writes_size)
 {
 	int		tmpfile, ops, writes;
@@ -424,7 +427,7 @@ test_open_sync(const char *msg, int writes_size)
 #endif
 }
 
-void
+static void
 test_file_descriptor_sync(void)
 {
 	int			tmpfile, ops;
@@ -496,7 +499,7 @@ test_file_descriptor_sync(void)
 
 }
 
-void
+static void
 test_non_sync(void)
 {
 	int			tmpfile, ops;
@@ -521,10 +524,27 @@ test_non_sync(void)
 	print_elapse(start_t, stop_t);
 }
 
+#ifdef HAVE_FSYNC_WRITETHROUGH
+
+static int
+pg_fsync_writethrough(int fd)
+{
+#ifdef WIN32
+	return _commit(fd);
+#elif defined(F_FULLFSYNC)
+	return (fcntl(fd, F_FULLFSYNC, 0) == -1) ? -1 : 0;
+#else
+	errno = ENOSYS;
+	return -1;
+#endif
+}
+
+#endif
+
 /*
  * print out the writes per second for tests
  */
-void
+static void
 print_elapse(struct timeval start_t, struct timeval stop_t)
 {
 	double		total_time = (stop_t.tv_sec - start_t.tv_sec) +
@@ -534,7 +554,7 @@ print_elapse(struct timeval start_t, struct timeval stop_t)
 	printf(OPS_FORMAT "\n", per_second);
 }
 
-void
+static void
 die(char *str)
 {
 	fprintf(stderr, "%s\n", str);
