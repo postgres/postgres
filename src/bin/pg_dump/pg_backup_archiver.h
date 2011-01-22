@@ -132,12 +132,6 @@ typedef void (*DeClonePtr) (struct _archiveHandle * AH);
 
 typedef size_t (*CustomOutPtr) (struct _archiveHandle * AH, const void *buf, size_t len);
 
-typedef struct _outputContext
-{
-	void	   *OF;
-	int			gzOut;
-} OutputContext;
-
 typedef enum
 {
 	SQL_SCAN = 0,				/* normal */
