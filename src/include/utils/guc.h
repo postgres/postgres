@@ -201,6 +201,7 @@ extern char *ConfigFileName;
 extern char *HbaFileName;
 extern char *IdentFileName;
 extern char *external_pid_file;
+extern char *XactIsoLevel_string;
 
 extern char *application_name;
 

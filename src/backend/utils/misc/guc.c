@@ -425,7 +425,6 @@ static int	server_version_num;
 static char *timezone_string;
 static char *log_timezone_string;
 static char *timezone_abbreviations_string;
-static char *XactIsoLevel_string;
 static char *custom_variable_classes;
 static int	max_function_args;
 static int	max_index_keys;
@@ -440,6 +439,7 @@ static int	effective_io_concurrency;
 /* should be static, but commands/variable.c needs to get at these */
 char	   *role_string;
 char	   *session_authorization_string;
+char	   *XactIsoLevel_string;
 
 
 /*
