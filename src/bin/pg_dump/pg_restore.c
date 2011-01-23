@@ -352,6 +352,11 @@ main(int argc, char **argv)
 				opts->format = archCustom;
 				break;
 
+			case 'd':
+			case 'D':
+				opts->format = archDirectory;
+				break;
+
 			case 'f':
 			case 'F':
 				opts->format = archFiles;
@@ -363,7 +368,7 @@ main(int argc, char **argv)
 				break;
 
 			default:
-				write_msg(NULL, "unrecognized archive format \"%s\"; please specify \"c\" or \"t\"\n",
+				write_msg(NULL, "unrecognized archive format \"%s\"; please specify \"c\", \"d\" or \"t\"\n",
 						  opts->formatName);
 				exit(1);
 		}
@@ -418,7 +423,7 @@ usage(const char *progname)
 	printf(_("\nGeneral options:\n"));
 	printf(_("  -d, --dbname=NAME        connect to database name\n"));
 	printf(_("  -f, --file=FILENAME      output file name\n"));
-	printf(_("  -F, --format=c|t         backup file format (should be automatic)\n"));
+	printf(_("  -F, --format=c|d|t       backup file format (should be automatic)\n"));
 	printf(_("  -l, --list               print summarized TOC of the archive\n"));
 	printf(_("  -v, --verbose            verbose mode\n"));
 	printf(_("  --help                   show this help, then exit\n"));

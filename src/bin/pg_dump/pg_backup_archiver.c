@@ -25,6 +25,7 @@
 
 #include <ctype.h>
 #include <unistd.h>
+#include <sys/stat.h>
 #include <sys/types.h>
 #include <sys/wait.h>
 
@@ -1751,11 +1752,46 @@ _discoverArchiveFormat(ArchiveHandle *AH)
 
 	if (AH->fSpec)
 	{
+		struct stat	st;
+
 		wantClose = 1;
-		fh = fopen(AH->fSpec, PG_BINARY_R);
-		if (!fh)
-			die_horribly(AH, modulename, "could not open input file \"%s\": %s\n",
-						 AH->fSpec, strerror(errno));
+
+		/*
+		 * Check if the specified archive is a directory. If so, check if
+		 * there's a "toc.dat" (or "toc.dat.gz") file in it.
+		 */
+		if (stat(AH->fSpec, &st) == 0 && S_ISDIR(st.st_mode))
+		{
+			char		buf[MAXPGPATH];
+			if (snprintf(buf, MAXPGPATH, "%s/toc.dat", AH->fSpec) >= MAXPGPATH)
+				die_horribly(AH, modulename, "directory name too long: \"%s\"\n",
+							 AH->fSpec);
+			if (stat(buf, &st) == 0 && S_ISREG(st.st_mode))
+			{
+				AH->format = archDirectory;
+				return AH->format;
+			}
+
+#ifdef HAVE_LIBZ
+			if (snprintf(buf, MAXPGPATH, "%s/toc.dat.gz", AH->fSpec) >= MAXPGPATH)
+				die_horribly(AH, modulename, "directory name too long: \"%s\"\n",
+							 AH->fSpec);
+			if (stat(buf, &st) == 0 && S_ISREG(st.st_mode))
+			{
+				AH->format = archDirectory;
+				return AH->format;
+			}
+#endif
+			die_horribly(AH, modulename, "directory \"%s\" does not appear to be a valid archive (\"toc.dat\" does not exist)\n",
+						 AH->fSpec);
+		}
+		else
+		{
+			fh = fopen(AH->fSpec, PG_BINARY_R);
+			if (!fh)
+				die_horribly(AH, modulename, "could not open input file \"%s\": %s\n",
+							 AH->fSpec, strerror(errno));
+		}
 	}
 	else
 	{
@@ -1971,6 +2007,10 @@ _allocAH(const char *FileSpec, const ArchiveFormat fmt,
 
 		case archNull:
 			InitArchiveFmt_Null(AH);
+			break;
+
+		case archDirectory:
+			InitArchiveFmt_Directory(AH);
 			break;
 
 		case archTar:

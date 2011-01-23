@@ -138,6 +138,7 @@ static int	no_unlogged_table_data = 0;
 
 
 static void help(const char *progname);
+static ArchiveFormat parseArchiveFormat(const char *format, ArchiveMode *mode);
 static void expand_schema_name_patterns(SimpleStringList *patterns,
 							SimpleOidList *oids);
 static void expand_table_name_patterns(SimpleStringList *patterns,
@@ -267,6 +268,8 @@ main(int argc, char **argv)
 	int			my_version;
 	int			optindex;
 	RestoreOptions *ropt;
+	ArchiveFormat archiveFormat = archUnknown;
+	ArchiveMode	archiveMode;
 
 	static int	disable_triggers = 0;
 	static int	outputNoTablespaces = 0;
@@ -539,35 +542,30 @@ main(int argc, char **argv)
 		exit(1);
 	}
 
+	archiveFormat = parseArchiveFormat(format, &archiveMode);
+
+	/* archiveFormat specific setup */
+	if (archiveFormat == archNull)
+		plainText = 1;
+
+	/*
+	 * Ignore compression level for plain format. XXX: This is a bit
+	 * inconsistent, tar-format throws an error instead.
+	 */
+	if (archiveFormat == archNull)
+		compressLevel = 0;
+
+	/* Custom and directory formats are compressed by default */
+	if (compressLevel == -1)
+	{
+		if (archiveFormat == archCustom || archiveFormat == archDirectory)
+			compressLevel = Z_DEFAULT_COMPRESSION;
+		else
+			compressLevel = 0;
+	}
+
 	/* open the output file */
-	if (pg_strcasecmp(format, "a") == 0 || pg_strcasecmp(format, "append") == 0)
-	{
-		/* This is used by pg_dumpall, and is not documented */
-		plainText = 1;
-		g_fout = CreateArchive(filename, archNull, 0, archModeAppend);
-	}
-	else if (pg_strcasecmp(format, "c") == 0 || pg_strcasecmp(format, "custom") == 0)
-		g_fout = CreateArchive(filename, archCustom, compressLevel, archModeWrite);
-	else if (pg_strcasecmp(format, "f") == 0 || pg_strcasecmp(format, "file") == 0)
-	{
-		/*
-		 * Dump files into the current directory; for demonstration only, not
-		 * documented.
-		 */
-		g_fout = CreateArchive(filename, archFiles, compressLevel, archModeWrite);
-	}
-	else if (pg_strcasecmp(format, "p") == 0 || pg_strcasecmp(format, "plain") == 0)
-	{
-		plainText = 1;
-		g_fout = CreateArchive(filename, archNull, 0, archModeWrite);
-	}
-	else if (pg_strcasecmp(format, "t") == 0 || pg_strcasecmp(format, "tar") == 0)
-		g_fout = CreateArchive(filename, archTar, compressLevel, archModeWrite);
-	else
-	{
-		write_msg(NULL, "invalid output format \"%s\" specified\n", format);
-		exit(1);
-	}
+	g_fout = CreateArchive(filename, archiveFormat, compressLevel, archiveMode);
 
 	if (g_fout == NULL)
 	{
@@ -835,8 +833,8 @@ help(const char *progname)
 	printf(_("  %s [OPTION]... [DBNAME]\n"), progname);
 
 	printf(_("\nGeneral options:\n"));
-	printf(_("  -f, --file=FILENAME         output file name\n"));
-	printf(_("  -F, --format=c|t|p          output file format (custom, tar, plain text)\n"));
+	printf(_("  -f, --file=OUTPUT           output file or directory name\n"));
+	printf(_("  -F, --format=c|d|t|p        output file format (custom, directory, tar, plain text)\n"));
 	printf(_("  -v, --verbose               verbose mode\n"));
 	printf(_("  -Z, --compress=0-9          compression level for compressed formats\n"));
 	printf(_("  --lock-wait-timeout=TIMEOUT fail after waiting TIMEOUT for a table lock\n"));
@@ -892,6 +890,49 @@ exit_nicely(void)
 	if (g_verbose)
 		write_msg(NULL, "*** aborted because of error\n");
 	exit(1);
+}
+
+static ArchiveFormat
+parseArchiveFormat(const char *format, ArchiveMode *mode)
+{
+	ArchiveFormat archiveFormat;
+
+	*mode = archModeWrite;
+
+	if (pg_strcasecmp(format, "a") == 0 || pg_strcasecmp(format, "append") == 0)
+	{
+		/* This is used by pg_dumpall, and is not documented */
+		archiveFormat = archNull;
+		*mode = archModeAppend;
+	}
+	else if (pg_strcasecmp(format, "c") == 0)
+		archiveFormat = archCustom;
+	else if (pg_strcasecmp(format, "custom") == 0)
+		archiveFormat = archCustom;
+	else if (pg_strcasecmp(format, "d") == 0)
+		archiveFormat = archDirectory;
+	else if (pg_strcasecmp(format, "directory") == 0)
+		archiveFormat = archDirectory;
+	else if (pg_strcasecmp(format, "f") == 0 || pg_strcasecmp(format, "file") == 0)
+		/*
+		 * Dump files into the current directory; for demonstration only, not
+		 * documented.
+		 */
+		archiveFormat = archFiles;
+	else if (pg_strcasecmp(format, "p") == 0)
+		archiveFormat = archNull;
+	else if (pg_strcasecmp(format, "plain") == 0)
+		archiveFormat = archNull;
+	else if (pg_strcasecmp(format, "t") == 0)
+		archiveFormat = archTar;
+	else if (pg_strcasecmp(format, "tar") == 0)
+		archiveFormat = archTar;
+	else
+	{
+		write_msg(NULL, "invalid output format \"%s\" specified\n", format);
+		exit(1);
+	}
+	return archiveFormat;
 }
 
 /*

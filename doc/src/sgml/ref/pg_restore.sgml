@@ -79,7 +79,8 @@
       <term><replaceable class="parameter">filename</replaceable></term>
       <listitem>
        <para>
-       Specifies the location of the archive file to be restored.
+       Specifies the location of the archive file (or directory, for a
+       directory-format archive) to be restored.
        If not specified, the standard input is used.
        </para>
       </listitem>
@@ -166,6 +167,16 @@
         one of the following:
 
        <variablelist>
+        <varlistentry>
+         <term><literal>d</></term>
+         <term><literal>directory</></term>
+         <listitem>
+          <para>
+           The archive is a <command>directory</command> archive.
+          </para>
+         </listitem>
+        </varlistentry>
+
         <varlistentry>
          <term><literal>t</></term>
          <term><literal>tar</></term>

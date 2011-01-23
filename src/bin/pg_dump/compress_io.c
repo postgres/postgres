@@ -7,6 +7,17 @@
  * Portions Copyright (c) 1996-2011, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
+ * This file includes two APIs for dealing with compressed data. The first
+ * provides more flexibility, using callbacks to read/write data from the
+ * underlying stream. The second API is a wrapper around fopen/gzopen and
+ * friends, providing an interface similar to those, but abstracts away
+ * the possible compression. Both APIs use libz for the compression, but
+ * the second API uses gzip headers, so the resulting files can be easily
+ * manipulated with the gzip utility.
+ *
+ * Compressor API
+ * --------------
+ *
  *  The interface for writing to an archive consists of three functions:
  *  AllocateCompressor, WriteDataToArchive and EndCompressor. First you call
  *  AllocateCompressor, then write all the data by calling WriteDataToArchive
@@ -23,6 +34,17 @@
  *
  *  The interface is the same for compressed and uncompressed streams.
  *
+ * Compressed stream API
+ * ----------------------
+ *
+ *  The compressed stream API is a wrapper around the C standard fopen() and
+ *  libz's gzopen() APIs. It allows you to use the same functions for
+ *  compressed and uncompressed streams. cfopen_read() first tries to open
+ *  the file with given name, and if it fails, it tries to open the same
+ *  file with the .gz suffix. cfopen_write() opens a file for writing, an
+ *  extra argument specifies if the file should be compressed, and adds the
+ *  .gz suffix to the filename if so. This allows you to easily handle both
+ *  compressed and uncompressed files.
  *
  * IDENTIFICATION
  *     src/bin/pg_dump/compress_io.c
@@ -32,6 +54,10 @@
 
 #include "compress_io.h"
 
+/*----------------------
+ * Compressor API
+ *----------------------
+ */
 
 /* typedef appears in compress_io.h */
 struct CompressorState
@@ -418,3 +444,234 @@ WriteDataToArchiveNone(ArchiveHandle *AH, CompressorState *cs,
 }
 
 
+/*----------------------
+ * Compressed stream API
+ *----------------------
+ */
+
+/*
+ * cfp represents an open stream, wrapping the underlying FILE or gzFile
+ * pointer. This is opaque to the callers.
+ */
+struct cfp
+{
+	FILE *uncompressedfp;
+#ifdef HAVE_LIBZ
+	gzFile compressedfp;
+#endif
+};
+
+#ifdef HAVE_LIBZ
+static int	hasSuffix(const char *filename, const char *suffix);
+#endif
+
+/*
+ * Open a file for reading. 'path' is the file to open, and 'mode' should
+ * be either "r" or "rb".
+ *
+ * If the file at 'path' does not exist, we append the ".gz" suffix (if 'path'
+ * doesn't already have it) and try again. So if you pass "foo" as 'path',
+ * this will open either "foo" or "foo.gz".
+ */
+cfp *
+cfopen_read(const char *path, const char *mode)
+{
+	cfp *fp;
+
+#ifdef HAVE_LIBZ
+	if (hasSuffix(path, ".gz"))
+		fp = cfopen(path, mode, 1);
+	else
+#endif
+	{
+		fp = cfopen(path, mode, 0);
+#ifdef HAVE_LIBZ
+		if (fp == NULL)
+		{
+			int fnamelen = strlen(path) + 4;
+			char *fname = malloc(fnamelen);
+			if (fname == NULL)
+				die_horribly(NULL, modulename, "Out of memory\n");
+
+			snprintf(fname, fnamelen, "%s%s", path, ".gz");
+			fp = cfopen(fname, mode, 1);
+			free(fname);
+		}
+#endif
+	}
+	return fp;
+}
+
+/*
+ * Open a file for writing. 'path' indicates the path name, and 'mode' must
+ * be a filemode as accepted by fopen() and gzopen() that indicates writing
+ * ("w", "wb", "a", or "ab").
+ *
+ * If 'compression' is non-zero, a gzip compressed stream is opened, and
+ * and 'compression' indicates the compression level used. The ".gz" suffix
+ * is automatically added to 'path' in that case.
+ */
+cfp *
+cfopen_write(const char *path, const char *mode, int compression)
+{
+	cfp *fp;
+
+	if (compression == 0)
+		fp = cfopen(path, mode, 0);
+	else
+	{
+#ifdef HAVE_LIBZ
+		int fnamelen = strlen(path) + 4;
+		char *fname = malloc(fnamelen);
+		if (fname == NULL)
+			die_horribly(NULL, modulename, "Out of memory\n");
+
+		snprintf(fname, fnamelen, "%s%s", path, ".gz");
+		fp = cfopen(fname, mode, 1);
+		free(fname);
+#else
+		die_horribly(NULL, modulename, "not built with zlib support\n");
+#endif
+	}
+	return fp;
+}
+
+/*
+ * Opens file 'path' in 'mode'. If 'compression' is non-zero, the file
+ * is opened with libz gzopen(), otherwise with plain fopen()
+ */
+cfp *
+cfopen(const char *path, const char *mode, int compression)
+{
+	cfp *fp = malloc(sizeof(cfp));
+	if (fp == NULL)
+		die_horribly(NULL, modulename, "Out of memory\n");
+
+	if (compression != 0)
+	{
+#ifdef HAVE_LIBZ
+		fp->compressedfp = gzopen(path, mode);
+		fp->uncompressedfp = NULL;
+		if (fp->compressedfp == NULL)
+		{
+			free(fp);
+			fp = NULL;
+		}
+#else
+		die_horribly(NULL, modulename, "not built with zlib support\n");
+#endif
+	}
+	else
+	{
+#ifdef HAVE_LIBZ
+		fp->compressedfp = NULL;
+#endif
+		fp->uncompressedfp = fopen(path, mode);
+		if (fp->uncompressedfp == NULL)
+		{
+			free(fp);
+			fp = NULL;
+		}
+	}
+
+	return fp;
+}
+
+
+int
+cfread(void *ptr, int size, cfp *fp)
+{
+#ifdef HAVE_LIBZ
+	if (fp->compressedfp)
+		return gzread(fp->compressedfp, ptr, size);
+	else
+#endif
+		return fread(ptr, 1, size, fp->uncompressedfp);
+}
+
+int
+cfwrite(const void *ptr, int size, cfp *fp)
+{
+#ifdef HAVE_LIBZ
+	if (fp->compressedfp)
+		return gzwrite(fp->compressedfp, ptr, size);
+	else
+#endif
+		return fwrite(ptr, 1, size, fp->uncompressedfp);
+}
+
+int
+cfgetc(cfp *fp)
+{
+#ifdef HAVE_LIBZ
+	if (fp->compressedfp)
+		return gzgetc(fp->compressedfp);
+	else
+#endif
+		return fgetc(fp->uncompressedfp);
+}
+
+char *
+cfgets(cfp *fp, char *buf, int len)
+{
+#ifdef HAVE_LIBZ
+	if (fp->compressedfp)
+		return gzgets(fp->compressedfp, buf, len);
+	else
+#endif
+		return fgets(buf, len, fp->uncompressedfp);
+}
+
+int
+cfclose(cfp *fp)
+{
+	int result;
+
+	if (fp == NULL)
+	{
+		errno = EBADF;
+		return EOF;
+	}
+#ifdef HAVE_LIBZ
+	if (fp->compressedfp)
+	{
+		result = gzclose(fp->compressedfp);
+		fp->compressedfp = NULL;
+	}
+	else
+#endif
+	{
+		result = fclose(fp->uncompressedfp);
+		fp->uncompressedfp = NULL;
+	}
+	free(fp);
+
+	return result;
+}
+
+int
+cfeof(cfp *fp)
+{
+#ifdef HAVE_LIBZ
+	if (fp->compressedfp)
+		return gzeof(fp->compressedfp);
+	else
+#endif
+		return feof(fp->uncompressedfp);
+}
+
+#ifdef HAVE_LIBZ
+static int
+hasSuffix(const char *filename, const char *suffix)
+{
+	int filenamelen = strlen(filename);
+	int suffixlen = strlen(suffix);
+
+	if (filenamelen < suffixlen)
+		return 0;
+
+	return memcmp(&filename[filenamelen - suffixlen],
+					suffix,
+					suffixlen) == 0;
+}
+#endif
