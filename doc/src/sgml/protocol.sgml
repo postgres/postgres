@@ -1460,7 +1460,7 @@ The commands accepted in walsender mode are:
   </varlistentry>
 
   <varlistentry>
-    <term>BASE_BACKUP [<literal>LABEL</literal> <replaceable>'label'</replaceable>] [<literal>PROGRESS</literal>]</term>
+    <term>BASE_BACKUP [<literal>LABEL</literal> <replaceable>'label'</replaceable>] [<literal>PROGRESS</literal>] [<literal>FAST</literal>]</term>
     <listitem>
      <para>
       Instructs the server to start streaming a base backup.
@@ -1493,6 +1493,15 @@ The commands accepted in walsender mode are:
           is streamed. Since the database files can change during the backup,
           the size is only approximate and may both grow and shrink between
           the time of approximation and the sending of the actual files.
+         </para>
+        </listitem>
+       </varlistentry>
+
+       <varlistentry>
+        <term><literal>FAST</></term>
+        <listitem>
+         <para>
+          Request a fast checkpoint.
          </para>
         </listitem>
        </varlistentry>

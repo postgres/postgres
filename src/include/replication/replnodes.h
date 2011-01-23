@@ -47,6 +47,7 @@ typedef struct BaseBackupCmd
 	NodeTag		type;
 	char	   *label;
 	bool		progress;
+	bool		fastcheckpoint;
 }	BaseBackupCmd;
 
 

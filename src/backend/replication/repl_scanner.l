@@ -57,6 +57,7 @@ quotestop		{quote}
 %%
 
 BASE_BACKUP			{ return K_BASE_BACKUP; }
+FAST			{ return K_FAST; }
 IDENTIFY_SYSTEM		{ return K_IDENTIFY_SYSTEM; }
 LABEL			{ return K_LABEL; }
 PROGRESS			{ return K_PROGRESS; }

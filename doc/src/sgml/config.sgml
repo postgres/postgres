@@ -1921,7 +1921,8 @@ SET ENABLE_SEQSCAN TO OFF;
        <listitem>
        <para>
         Specifies the maximum number of concurrent connections from standby
-        servers (i.e., the maximum number of simultaneously running WAL sender
+        servers or streaming base backup clients (i.e., the maximum number of
+        simultaneously running WAL sender
         processes). The default is zero. This parameter can only be set at
         server start. <varname>wal_level</> must be set to <literal>archive</>
         or <literal>hot_standby</> to allow connections from standby servers.

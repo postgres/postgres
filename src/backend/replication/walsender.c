@@ -402,7 +402,7 @@ HandleReplicationCommand(const char *cmd_string)
 			{
 				BaseBackupCmd *cmd = (BaseBackupCmd *) cmd_node;
 
-				SendBaseBackup(cmd->label, cmd->progress);
+				SendBaseBackup(cmd->label, cmd->progress, cmd->fastcheckpoint);
 
 				/* Send CommandComplete and ReadyForQuery messages */
 				EndCommand("SELECT", DestRemote);

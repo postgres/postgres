@@ -66,11 +66,12 @@ Node *replication_parse_result;
 %token K_IDENTIFY_SYSTEM
 %token K_LABEL
 %token K_PROGRESS
+%token K_FAST
 %token K_START_REPLICATION
 
 %type <node>	command
 %type <node>	base_backup start_replication identify_system
-%type <boolval>	opt_progress
+%type <boolval>	opt_progress opt_fast
 %type <str>     opt_label
 
 %%
@@ -102,15 +103,16 @@ identify_system:
 			;
 
 /*
- * BASE_BACKUP [LABEL <label>] [PROGRESS]
+ * BASE_BACKUP [LABEL <label>] [PROGRESS] [FAST]
  */
 base_backup:
-			K_BASE_BACKUP opt_label opt_progress
+			K_BASE_BACKUP opt_label opt_progress opt_fast
 				{
 					BaseBackupCmd *cmd = (BaseBackupCmd *) makeNode(BaseBackupCmd);
 
 					cmd->label = $2;
 					cmd->progress = $3;
+					cmd->fastcheckpoint = $4;
 
 					$$ = (Node *) cmd;
 				}
@@ -121,6 +123,9 @@ opt_label: K_LABEL SCONST { $$ = $2; }
 			;
 
 opt_progress: K_PROGRESS		{ $$ = true; }
+			| /* EMPTY */		{ $$ = false; }
+			;
+opt_fast: K_FAST		{ $$ = true; }
 			| /* EMPTY */		{ $$ = false; }
 			;
 

@@ -275,6 +275,8 @@ sub mkvcbuild
     $initdb->AddLibrary('wsock32.lib');
     $initdb->AddLibrary('ws2_32.lib');
 
+    my $pgbasebackup = AddSimpleFrontend('pg_basebackup', 1);
+
     my $pgconfig = AddSimpleFrontend('pg_config');
 
     my $pgcontrol = AddSimpleFrontend('pg_controldata');

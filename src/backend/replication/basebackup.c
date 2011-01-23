@@ -40,7 +40,7 @@ static void send_int8_string(StringInfoData *buf, int64 intval);
 static void SendBackupHeader(List *tablespaces);
 static void SendBackupDirectory(char *location, char *spcoid);
 static void base_backup_cleanup(int code, Datum arg);
-static void perform_base_backup(const char *backup_label, bool progress, DIR *tblspcdir);
+static void perform_base_backup(const char *backup_label, bool progress, DIR *tblspcdir, bool fastcheckpoint);
 
 typedef struct
 {
@@ -67,9 +67,9 @@ base_backup_cleanup(int code, Datum arg)
  * clobbered by longjmp" from stupider versions of gcc.
  */
 static void
-perform_base_backup(const char *backup_label, bool progress, DIR *tblspcdir)
+perform_base_backup(const char *backup_label, bool progress, DIR *tblspcdir, bool fastcheckpoint)
 {
-	do_pg_start_backup(backup_label, true);
+	do_pg_start_backup(backup_label, fastcheckpoint);
 
 	PG_ENSURE_ERROR_CLEANUP(base_backup_cleanup, (Datum) 0);
 	{
@@ -135,7 +135,7 @@ perform_base_backup(const char *backup_label, bool progress, DIR *tblspcdir)
  * pg_stop_backup() for the user.
  */
 void
-SendBaseBackup(const char *backup_label, bool progress)
+SendBaseBackup(const char *backup_label, bool progress, bool fastcheckpoint)
 {
 	DIR		   *dir;
 	MemoryContext backup_context;
@@ -168,7 +168,7 @@ SendBaseBackup(const char *backup_label, bool progress)
 		ereport(ERROR,
 				(errmsg("unable to open directory pg_tblspc: %m")));
 
-	perform_base_backup(backup_label, progress, dir);
+	perform_base_backup(backup_label, progress, dir, fastcheckpoint);
 
 	FreeDir(dir);
 
@@ -333,7 +333,16 @@ sendDir(char *path, int basepathlen, bool sizeonly)
 		if (strcmp(pathbuf, "./pg_xlog") == 0)
 		{
 			if (!sizeonly)
+			{
+				/* If pg_xlog is a symlink, write it as a directory anyway */
+#ifndef WIN32
+				if (S_ISLNK(statbuf.st_mode))
+#else
+				if (pgwin32_is_junction(pathbuf))
+#endif
+					statbuf.st_mode = S_IFDIR | S_IRWXU;
 				_tarWriteHeader(pathbuf + basepathlen + 1, NULL, &statbuf);
+			}
 			size += 512;		/* Size of the header just added */
 			continue;			/* don't recurse into pg_xlog */
 		}
