@@ -15,6 +15,8 @@
 
 #include "postgres.h"
 
+#include "nodes/makefuncs.h"
+#include "nodes/parsenodes.h"
 #include "replication/replnodes.h"
 #include "replication/walsender.h"
 
@@ -55,6 +57,8 @@ Node *replication_parse_result;
 
 		XLogRecPtr				recptr;
 		Node					*node;
+		List					*list;
+		DefElem					*defelt;
 }
 
 /* Non-keyword tokens */
@@ -71,9 +75,8 @@ Node *replication_parse_result;
 
 %type <node>	command
 %type <node>	base_backup start_replication identify_system
-%type <boolval>	opt_progress opt_fast
-%type <str>     opt_label
-
+%type <list>	base_backup_opt_list
+%type <defelt>	base_backup_opt
 %%
 
 firstcmd: command opt_semicolon
@@ -106,28 +109,34 @@ identify_system:
  * BASE_BACKUP [LABEL <label>] [PROGRESS] [FAST]
  */
 base_backup:
-			K_BASE_BACKUP opt_label opt_progress opt_fast
+			K_BASE_BACKUP base_backup_opt_list
 				{
 					BaseBackupCmd *cmd = (BaseBackupCmd *) makeNode(BaseBackupCmd);
-
-					cmd->label = $2;
-					cmd->progress = $3;
-					cmd->fastcheckpoint = $4;
-
+					cmd->options = $2;
 					$$ = (Node *) cmd;
 				}
 			;
 
-opt_label: K_LABEL SCONST { $$ = $2; }
-			| /* EMPTY */		{ $$ = NULL; }
-			;
+base_backup_opt_list: base_backup_opt_list base_backup_opt { $$ = lappend($1, $2); }
+			| /* EMPTY */           { $$ = NIL; }
 
-opt_progress: K_PROGRESS		{ $$ = true; }
-			| /* EMPTY */		{ $$ = false; }
-			;
-opt_fast: K_FAST		{ $$ = true; }
-			| /* EMPTY */		{ $$ = false; }
-			;
+base_backup_opt:
+			K_LABEL SCONST
+				{
+				  $$ = makeDefElem("label",
+						   (Node *)makeString($2));
+				}
+			| K_PROGRESS
+				{
+				  $$ = makeDefElem("progress",
+						   (Node *)makeInteger(TRUE));
+				}
+			| K_FAST
+				{
+				  $$ = makeDefElem("fast",
+						   (Node *)makeInteger(TRUE));
+				}
+
 
 /*
  * START_REPLICATION %X/%X

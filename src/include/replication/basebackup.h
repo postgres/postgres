@@ -12,6 +12,8 @@
 #ifndef _BASEBACKUP_H
 #define _BASEBACKUP_H
 
-extern void SendBaseBackup(const char *backup_label, bool progress, bool fastcheckpoint);
+#include "replication/replnodes.h"
+
+extern void SendBaseBackup(BaseBackupCmd *cmd);
 
 #endif   /* _BASEBACKUP_H */

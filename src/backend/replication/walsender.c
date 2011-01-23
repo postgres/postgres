@@ -399,17 +399,13 @@ HandleReplicationCommand(const char *cmd_string)
 			break;
 
 		case T_BaseBackupCmd:
-			{
-				BaseBackupCmd *cmd = (BaseBackupCmd *) cmd_node;
+			SendBaseBackup((BaseBackupCmd *) cmd_node);
 
-				SendBaseBackup(cmd->label, cmd->progress, cmd->fastcheckpoint);
-
-				/* Send CommandComplete and ReadyForQuery messages */
-				EndCommand("SELECT", DestRemote);
-				ReadyForQuery(DestRemote);
-				/* ReadyForQuery did pq_flush for us */
-				break;
-			}
+			/* Send CommandComplete and ReadyForQuery messages */
+			EndCommand("SELECT", DestRemote);
+			ReadyForQuery(DestRemote);
+			/* ReadyForQuery did pq_flush for us */
+			break;
 
 		default:
 			ereport(FATAL,
