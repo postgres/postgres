@@ -544,13 +544,62 @@ show_log_timezone(void)
 
 
 /*
+ * SET TRANSACTION READ ONLY and SET TRANSACTION READ WRITE
+ *
+ * We allow idempotent changes (r/w -> r/w and r/o -> r/o) at any time, and
+ * we also always allow changes from read-write to read-only.  However,
+ * read-only to read-write may be changed only when source == PGC_S_OVERRIDE
+ * (i.e. we're aborting a read only transaction and restoring the previous
+ * setting) or in a top-level transaction that has not yet taken an initial
+ * snapshot.
+ */
+bool
+assign_transaction_read_only(bool newval, bool doit, GucSource source)
+{
+	if (source != PGC_S_OVERRIDE && newval == false && XactReadOnly)
+	{
+		/* Can't go to r/w mode inside a r/o transaction */
+		if (IsSubTransaction())
+		{
+			ereport(GUC_complaint_elevel(source),
+					(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+					 errmsg("cannot set transaction read-write mode inside a read-only transaction")));
+			return false;
+		}
+		/* Top level transaction can't change to r/w after first snapshot. */
+		if (FirstSnapshotSet)
+		{
+			ereport(GUC_complaint_elevel(source),
+					(errcode(ERRCODE_ACTIVE_SQL_TRANSACTION),
+					 errmsg("transaction read-write mode must be set before any query")));
+			return false;
+		}
+		/* Can't go to r/w mode while recovery is still active */
+		if (RecoveryInProgress())
+		{
+			ereport(GUC_complaint_elevel(source),
+					(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+					 errmsg("cannot set transaction read-write mode during recovery")));
+			return false;
+		}
+	}
+
+	return true;
+}
+
+/*
  * SET TRANSACTION ISOLATION LEVEL
+ *
+ * We allow idempotent changes at any time, but otherwise this can only be
+ * changed from a toplevel transaction that has not yet taken a snapshot, or
+ * when source == PGC_S_OVERRIDE (i.e. we're aborting a transaction and
+ * restoring the previously set value).
  */
 const char *
 assign_XactIsoLevel(const char *value, bool doit, GucSource source)
 {
 	/* source == PGC_S_OVERRIDE means do it anyway, eg at xact abort */
-	if (source != PGC_S_OVERRIDE)
+	if (source != PGC_S_OVERRIDE && strcmp(value, XactIsoLevel_string) != 0)
 	{
 		if (FirstSnapshotSet)
 		{
@@ -560,7 +609,7 @@ assign_XactIsoLevel(const char *value, bool doit, GucSource source)
 			return NULL;
 		}
 		/* We ignore a subtransaction setting it to the existing value. */
-		if (IsSubTransaction() && strcmp(value, XactIsoLevel_string) != 0)
+		if (IsSubTransaction())
 		{
 			ereport(GUC_complaint_elevel(source),
 					(errcode(ERRCODE_ACTIVE_SQL_TRANSACTION),

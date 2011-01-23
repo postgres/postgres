@@ -43,6 +43,81 @@ SELECT * FROM aggtest;
 -- Read-only tests
 CREATE TABLE writetest (a int);
 CREATE TEMPORARY TABLE temptest (a int);
+BEGIN;
+SET TRANSACTION READ ONLY; -- ok
+SELECT * FROM writetest; -- ok
+ a 
+---
+(0 rows)
+
+SET TRANSACTION READ WRITE; --fail
+ERROR:  transaction read-write mode must be set before any query
+COMMIT;
+BEGIN;
+SET TRANSACTION READ ONLY; -- ok
+SET TRANSACTION READ WRITE; -- ok
+SET TRANSACTION READ ONLY; -- ok
+SELECT * FROM writetest; -- ok
+ a 
+---
+(0 rows)
+
+SAVEPOINT x;
+SET TRANSACTION READ ONLY; -- ok
+SELECT * FROM writetest; -- ok
+ a 
+---
+(0 rows)
+
+SET TRANSACTION READ ONLY; -- ok
+SET TRANSACTION READ WRITE; --fail
+ERROR:  cannot set transaction read-write mode inside a read-only transaction
+COMMIT;
+BEGIN;
+SET TRANSACTION READ WRITE; -- ok
+SAVEPOINT x;
+SET TRANSACTION READ WRITE; -- ok
+SET TRANSACTION READ ONLY; -- ok
+SELECT * FROM writetest; -- ok
+ a 
+---
+(0 rows)
+
+SET TRANSACTION READ ONLY; -- ok
+SET TRANSACTION READ WRITE; --fail
+ERROR:  cannot set transaction read-write mode inside a read-only transaction
+COMMIT;
+BEGIN;
+SET TRANSACTION READ WRITE; -- ok
+SAVEPOINT x;
+SET TRANSACTION READ ONLY; -- ok
+SELECT * FROM writetest; -- ok
+ a 
+---
+(0 rows)
+
+ROLLBACK TO SAVEPOINT x;
+SHOW transaction_read_only;  -- off
+ transaction_read_only 
+-----------------------
+ off
+(1 row)
+
+SAVEPOINT y;
+SET TRANSACTION READ ONLY; -- ok
+SELECT * FROM writetest; -- ok
+ a 
+---
+(0 rows)
+
+RELEASE SAVEPOINT y;
+SHOW transaction_read_only;  -- off
+ transaction_read_only 
+-----------------------
+ off
+(1 row)
+
+COMMIT;
 SET SESSION CHARACTERISTICS AS TRANSACTION READ ONLY;
 DROP TABLE writetest; -- fail
 ERROR:  cannot execute DROP TABLE in a read-only transaction

@@ -168,7 +168,6 @@ static bool assign_bonjour(bool newval, bool doit, GucSource source);
 static bool assign_ssl(bool newval, bool doit, GucSource source);
 static bool assign_stage_log_stats(bool newval, bool doit, GucSource source);
 static bool assign_log_stats(bool newval, bool doit, GucSource source);
-static bool assign_transaction_read_only(bool newval, bool doit, GucSource source);
 static const char *assign_canonical_path(const char *newval, bool doit, GucSource source);
 static const char *assign_timezone_abbreviations(const char *newval, bool doit, GucSource source);
 static const char *show_archive_command(void);
@@ -7840,34 +7839,6 @@ assign_log_stats(bool newval, bool doit, GucSource source)
 		if (source != PGC_S_OVERRIDE)
 			return false;
 	}
-	return true;
-}
-
-static bool
-assign_transaction_read_only(bool newval, bool doit, GucSource source)
-{
-	/* Can't go to r/w mode inside a r/o transaction */
-	if (newval == false && XactReadOnly && IsSubTransaction())
-	{
-		ereport(GUC_complaint_elevel(source),
-				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-				 errmsg("cannot set transaction read-write mode inside a read-only transaction")));
-		/* source == PGC_S_OVERRIDE means do it anyway, eg at xact abort */
-		if (source != PGC_S_OVERRIDE)
-			return false;
-	}
-
-	/* Can't go to r/w mode while recovery is still active */
-	if (newval == false && XactReadOnly && RecoveryInProgress())
-	{
-		ereport(GUC_complaint_elevel(source),
-				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-		  errmsg("cannot set transaction read-write mode during recovery")));
-		/* source == PGC_S_OVERRIDE means do it anyway, eg at xact abort */
-		if (source != PGC_S_OVERRIDE)
-			return false;
-	}
-
 	return true;
 }
 
