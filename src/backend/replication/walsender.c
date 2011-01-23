@@ -1141,8 +1141,20 @@ pg_stat_get_wal_senders(PG_FUNCTION_ARGS)
 
 		memset(nulls, 0, sizeof(nulls));
 		values[0] = Int32GetDatum(walsnd->pid);
-		values[1] = CStringGetTextDatum(WalSndGetStateString(state));
-		values[2] = CStringGetTextDatum(sent_location);
+		if (!superuser())
+		{
+			/*
+			 * Only superusers can see details. Other users only get
+			 * the pid value to know it's a walsender, but no details.
+			 */
+			nulls[1] = true;
+			nulls[2] = true;
+		}
+		else
+		{
+			values[1] = CStringGetTextDatum(WalSndGetStateString(state));
+			values[2] = CStringGetTextDatum(sent_location);
+		}
 
 		tuplestore_putvalues(tupstore, tupdesc, values, nulls);
 	}

@@ -299,7 +299,9 @@ postgres: <replaceable>user</> <replaceable>database</> <replaceable>host</> <re
       <entry>One row per WAL sender process, showing process <acronym>ID</>,
       user OID, user name, application name, client's address and port number,
       time at which the server process began execution, current WAL sender
-      state and transaction log location.
+      state and transaction log location. The columns detailing what exactly
+      the connection is doing are only visible if the user examining the view
+      is a superuser.
      </entry>
      </row>
 
