@@ -914,9 +914,9 @@ main(int argc, char **argv)
 				}
 				break;
 			case 'c':
-				if (strcasecmp(optarg, "fast") == 0)
+				if (pg_strcasecmp(optarg, "fast") == 0)
 					fastcheckpoint = true;
-				else if (strcasecmp(optarg, "spread") == 0)
+				else if (pg_strcasecmp(optarg, "spread") == 0)
 					fastcheckpoint = false;
 				else
 				{
