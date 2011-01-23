@@ -427,7 +427,7 @@ ReceiveAndUnpackTarFile(PGconn *conn, PGresult *res, int rownum)
 	char		current_path[MAXPGPATH];
 	char		fn[MAXPGPATH];
 	int			current_len_left;
-	int			current_padding;
+	int			current_padding = 0;
 	char	   *copybuf = NULL;
 	FILE	   *file = NULL;
 
