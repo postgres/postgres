@@ -483,9 +483,7 @@ ReceiveAndUnpackTarFile(PGconn *conn, PGresult *res, int rownum)
 
 		if (file == NULL)
 		{
-#ifndef WIN32
 			mode_t		filemode;
-#endif
 
 			/*
 			 * No current file, so this must be the header for a new file
