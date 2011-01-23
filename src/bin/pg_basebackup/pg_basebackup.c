@@ -483,7 +483,7 @@ ReceiveAndUnpackTarFile(PGconn *conn, PGresult *res, int rownum)
 
 		if (file == NULL)
 		{
-			mode_t		filemode;
+			int		filemode;
 
 			/*
 			 * No current file, so this must be the header for a new file
@@ -540,7 +540,7 @@ ReceiveAndUnpackTarFile(PGconn *conn, PGresult *res, int rownum)
 						disconnect_and_exit(1);
 					}
 #ifndef WIN32
-					if (chmod(fn, filemode))
+					if (chmod(fn, (mode_t) filemode))
 						fprintf(stderr, _("%s: could not set permissions on directory \"%s\": %s\n"),
 								progname, fn, strerror(errno));
 #endif
@@ -580,7 +580,7 @@ ReceiveAndUnpackTarFile(PGconn *conn, PGresult *res, int rownum)
 			}
 
 #ifndef WIN32
-			if (chmod(fn, filemode))
+			if (chmod(fn, (mode_t) filemode))
 				fprintf(stderr, _("%s: could not set permissions on file \"%s\": %s\n"),
 						progname, fn, strerror(errno));
 #endif
