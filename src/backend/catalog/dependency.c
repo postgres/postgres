@@ -2339,13 +2339,17 @@ getObjectDescription(const ObjectAddress *object)
 
 				/*
 				 * translator: %d is the operator strategy (a number), the
-				 * first %s is the textual form of the operator, and the
-				 * second %s is the description of the operator family.
+				 * first two %s's are data type names, the third %s is the
+				 * description of the operator family, and the last %s is the
+				 * textual form of the operator with arguments.
 				 */
-				appendStringInfo(&buffer, _("operator %d %s of %s"),
+				appendStringInfo(&buffer, _("operator %d (%s, %s) of %s: %s"),
 								 amopForm->amopstrategy,
-								 format_operator(amopForm->amopopr),
-								 opfam.data);
+								 format_type_be(amopForm->amoplefttype),
+								 format_type_be(amopForm->amoprighttype),
+								 opfam.data,
+								 format_operator(amopForm->amopopr));
+
 				pfree(opfam.data);
 
 				systable_endscan(amscan);
@@ -2385,14 +2389,18 @@ getObjectDescription(const ObjectAddress *object)
 				getOpFamilyDescription(&opfam, amprocForm->amprocfamily);
 
 				/*
-				 * translator: %d is the function number, the first %s is the
-				 * textual form of the function with arguments, and the second
-				 * %s is the description of the operator family.
+				 * translator: %d is the function number, the first two %s's
+				 * are data type names, the third %s is the description of the
+				 * operator family, and the last %s is the textual form of the
+				 * function with arguments.
 				 */
-				appendStringInfo(&buffer, _("function %d %s of %s"),
+				appendStringInfo(&buffer, _("function %d (%s, %s) of %s: %s"),
 								 amprocForm->amprocnum,
-								 format_procedure(amprocForm->amproc),
-								 opfam.data);
+								 format_type_be(amprocForm->amproclefttype),
+								 format_type_be(amprocForm->amprocrighttype),
+								 opfam.data,
+								 format_procedure(amprocForm->amproc));
+
 				pfree(opfam.data);
 
 				systable_endscan(amscan);
