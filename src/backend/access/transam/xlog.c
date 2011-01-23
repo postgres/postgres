@@ -69,7 +69,7 @@
 /* User-settable parameters */
 int			CheckPointSegments = 3;
 int			wal_keep_segments = 0;
-int			XLOGbuffers = 8;
+int			XLOGbuffers = -1;
 int			XLogArchiveTimeout = 0;
 bool		XLogArchiveMode = false;
 char	   *XLogArchiveCommand = NULL;
@@ -4778,12 +4778,51 @@ GetSystemIdentifier(void)
 }
 
 /*
+ * Auto-tune the number of XLOG buffers.
+ *
+ * If the user-set value of wal_buffers is -1, we auto-tune to about 3% of
+ * shared_buffers, with a maximum of one XLOG segment and a minimum of 8
+ * blocks (8 was the default value prior to PostgreSQL 9.1, when auto-tuning
+ * was added).  We also clamp manually-set values to at least 4 blocks; prior
+ * to PostgreSQL 9.1, a minimum of 4 was enforced by guc.c, but since that
+ * is no longer possible, we just silently treat such values as a request for
+ * the minimum.
+ */
+static void
+XLOGTuneNumBuffers(void)
+{
+	int			xbuffers = XLOGbuffers;
+	char		buf[32];
+
+	if (xbuffers == -1)
+	{
+		xbuffers = NBuffers / 32;
+		if (xbuffers > XLOG_SEG_SIZE / XLOG_BLCKSZ)
+			xbuffers = XLOG_SEG_SIZE / XLOG_BLCKSZ;
+		if (xbuffers < 8)
+			xbuffers = 8;
+	}
+	else if (xbuffers < 4)
+		xbuffers = 4;
+
+	if (xbuffers != XLOGbuffers)
+	{
+		snprintf(buf, sizeof(buf), "%d", xbuffers);
+		SetConfigOption("wal_buffers", buf, PGC_POSTMASTER, PGC_S_OVERRIDE);
+	}
+}
+
+/*
  * Initialization of shared memory for XLOG
  */
 Size
 XLOGShmemSize(void)
 {
 	Size		size;
+
+	/* Figure out how many XLOG buffers we need. */
+	XLOGTuneNumBuffers();
+	Assert(XLOGbuffers > 0);
 
 	/* XLogCtl */
 	size = sizeof(XLogCtlData);
