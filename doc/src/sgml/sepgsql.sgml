@@ -307,14 +307,14 @@ $ restorecon -R /usr/local/pgsql/
     Currently, <productname>sepgsql</productname> allows security labels to be
     assigned to schemas, tables, columns, sequences, views, and functions.
     When <productname>sepgsql</productname> is in use, security labels are
-    automatically assigned to suppoted database objects at creation time.
+    automatically assigned to supported database objects at creation time.
     This label is called as a default security label, being decided according
     to the system security policy, which takes as input the creator's label
     and the label assigned to the new object's parent object.
    </para>
 
    <para>
-    A new database object basically inherits security label of the parent
+    A new database object basically inherits the security label of the parent
     object, except when the security policy has special rules known as
     type-transition rules, in which case a different label may be applied.
     The meaning of the term "parent object" varies by object class, as follows.
@@ -365,7 +365,7 @@ $ restorecon -R /usr/local/pgsql/
      <term>function</term>
      <listitem>
       <para>
-       Its parent object is the containing schema.
+       The parent object is the containing schema.
       </para>
      </listitem>
     </varlistentry>
@@ -383,7 +383,7 @@ $ restorecon -R /usr/local/pgsql/
    <para>
     DML statements are used to reference or modify contents within
     the specified database objects; such as tables or columns.
-    We basically checks access rights of the client on all the objects
+    The access rights of the client are checked on all the objects
     mentioned in the given statement, and the kind of privileges checked
     depend on the class of the object and the type of access.
    </para>
@@ -391,10 +391,10 @@ $ restorecon -R /usr/local/pgsql/
    <para>
     For tables, <literal>db_table:select</>, <literal>db_table:insert</>,
     <literal>db_table:update</> or <literal>db_table:delete</> is
-    checked for all the appeared target tables depending on the sort of
+    checked for all the referenced target tables depending on the sort of
     statement;
     in addition, <literal>db_table:select</> is also checked for
-    all the tables that containin the columns to be referenced in
+    all the tables that contain the columns referenced in the
     <literal>WHERE</> or <literal>RETURNING</> clause, as a data source
     of <literal>UPDATE</>, and so on.
    </para>
@@ -404,23 +404,23 @@ $ restorecon -R /usr/local/pgsql/
 UPDATE t1 SET x = 2, y = md5sum(y) WHERE z = 100;
 </synopsis>
 
-    In this case, we must have <literal>db_table:select</>, not only
+    In this case, we must have <literal>db_table:select</> in addition to
     <literal>db_table:update</>, because <literal>t1.a</> is referenced
-    within <literal>WHERE</> clause.  Column-level permissions will be
-    checked as well, for each referenced column.
+    within the <literal>WHERE</> clause.  Column-level permissions will also be
+    checked for each referenced column.
    </para>
 
    <para>
-    The client must be allowed to reference all the appeared tables and
-    columns, even if they are originated from views then expanded, because we
-    intend to apply consistent access control rules independent from the
-    manner in which the table contents are referenced.
+    The client must be allowed to access all referenced tables and
+    columns, even if they originated from views which were then expanded,
+    so that we apply consistent access control rules independent of the manner
+    in which the table contents are referenced.
    </para>
 
    <para>
     For columns, <literal>db_column:select</> is checked on
     not only the columns being read using <literal>SELECT</>, but being
-    referenced in other DML statement.
+    referenced in other DML statements.
    </para>
 
    <para>
@@ -438,16 +438,15 @@ UPDATE t1 SET x = 2, y = md5sum(y) WHERE z = 100;
     on the <literal>t1.y</> being updated and referenced,
     and <literal>db_column:select</> on the <literal>t1.z</> being only
     referenced in the <literal>WHERE</> clause.
-    Also note that <literal>db_table:{select update}</> shall be checked
-    in the table-level granularity.
+    <literal>db_table:{select update}</> will also be checked
+    at the table level.
    </para>
 
    <para>
-    For sequences, <literal>db_sequence:get_value</> when we reference
-    a sequence object using <literal>SELECT</>; however, note that we
-    cannot check permissions on execution of corresponding functions
-    such as <literal>lastval()</> right now, although they performs same
-    job, because here is no object access hook to acquire controls.
+    For sequences, <literal>db_sequence:get_value</> is checked when we
+    reference a sequence object using <literal>SELECT</>; however, note that we
+    do not currently check permissions on execution of corresponding functions
+    such as <literal>lastval()</>.
    </para>
 
    <para>
@@ -462,7 +461,7 @@ UPDATE t1 SET x = 2, y = md5sum(y) WHERE z = 100;
    </para>
 
    <para>
-    Here is a few more corner cases.
+    Here are a few more corner cases.
     The default database privilege system allows database superusers to
     modify system catalogs using DML commands, and reference or modify
     toast tables.  These operations are prohibited when
@@ -480,30 +479,24 @@ UPDATE t1 SET x = 2, y = md5sum(y) WHERE z = 100;
    </para>
 
    <para>
-    In a case when multiple label providers are installed and user tries
+    In the case where multiple label providers are installed and the user tries
     to set a security label, but is not managed by <productname>SELinux</>,
     only <literal>setattr</> should be checked here.
-    This is currently not done due to implementation restrictions.
+    This is currently not checked due to implementation restrictions.
    </para>
   </sect3>
 
   <sect3>
    <title>Trusted Procedure</title>
    <para>
-    It is a similar idea to security definer functions or set-uid commands
-    on operating systems. <productname>SELinux</> provides a feature to
-    switch privilege of the client (that is a security label of the client
-    for more correctness) during execution of certain functions; being
-    called as trusted procedures.
-   </para>
-
-   <para>
-    A trusted function is a function with a special security label being
-    set up as a trusted procedure.
-    So, we need to assign the special security label on the function that
-    we hope it to perform as a trusted procedure, by administrative users.
-    The default security policy also provides this special security label.
-    See the following example.
+    Trusted procedures are similar to security definer functions or set-uid
+    commands. <productname>SELinux</> provides a feature to allow trusted
+    code to run using a security label different from that of the client,
+    generally for the purpose of providing highly controlled access to
+    sensitive data (e.g. rows might be omitted, or the precision of stored
+    values might be reduced).  Whether or not a function acts as a trusted
+    procedure is controlled by its security label and the operating system
+    security policy.  For example:
    </para>
 
 <screen>
@@ -527,7 +520,7 @@ SECURITY LABEL
 </screen>
 
    <para>
-    Above operations shall be done by administrative users.
+    The above operations should be performed by an administrative user.
    </para>
 
 <screen>
@@ -544,14 +537,15 @@ postgres=# SELECT cid, cname, show_credit(cid) FROM customer;
    <para>
     In this case, a regular user cannot reference <literal>customer.credit</>
     directly, but a trusted procedure <literal>show_credit</> enables us
-    to print credit number of customers with a bit modification.
+    to print the credit card number of customers with some of the digits masked
+    out.
    </para>
   </sect3>
 
   <sect3>
    <title>Miscellaneous</title>
    <para>
-    In this version, we reject <xref linkend="sql-load"> command across
+    In this version, we reject the <xref linkend="sql-load"> command across
     the board, because any module loaded could easily circumvent security
     policy enforcement.
    </para>
@@ -605,10 +599,12 @@ postgres=# SELECT cid, cname, show_credit(cid) FROM customer;
     <listitem>
      <para>
       <productname>sepgsql</> never tries to hide existence of
-      a certain object, even if user is not allowed to reference.
-      For example, we can infer an existence of invisible object using
-      primary-key confliction, foreign-key violation, and so on, even if
-      we cannot reference contents of these objects.
+      a certain object, even if the user is not allowed to the reference.
+      For example, we can infer the existence of an invisible object as
+      a result of primary key conflicts, foreign key violations, and so on,
+      even if we cannot reference contents of these objects.  The existence
+      of a top secret table cannot be hidden; we only hope to conceal its
+      contents.
      </para>
     </listitem>
    </varlistentry>
@@ -623,7 +619,7 @@ postgres=# SELECT cid, cname, show_credit(cid) FROM customer;
     <listitem>
      <para>
       This wiki page provides a brief-overview, security design, architecture,
-      administration and upcoming feature for more details.
+      administration and upcoming features.
      </para>
     </listitem>
    </varlistentry>
@@ -631,9 +627,9 @@ postgres=# SELECT cid, cname, show_credit(cid) FROM customer;
     <term><ulink url="http://docs.fedoraproject.org/selinux-user-guide/">Fedora SELinux User Guide</ulink></term>
     <listitem>
      <para>
-      This document provides wide spectrum of knowledge to administer
+      This document provides a wide spectrum of knowledge to administer
       <productname>SELinux</> on your systems.
-      It primary focuses on Fedora, but is not limited to Fedora.
+      It focuses primarily on Fedora, but is not limited to Fedora.
      </para>
     </listitem>
    </varlistentry>
@@ -641,9 +637,9 @@ postgres=# SELECT cid, cname, show_credit(cid) FROM customer;
     <term><ulink url="http://docs.fedoraproject.org/selinux-faq">Fedora SELinux FAQ</ulink></term>
     <listitem>
      <para>
-      This document answers frequently asked questins about
+      This document answers frequently asked questions about
       <productname>SELinux</productname>.
-      It primary focuses on Fedora, but is not limited to Fedora.
+      It focuses primarily on Fedora, but is not limited to Fedora.
      </para>
     </listitem>
    </varlistentry>
