@@ -356,6 +356,9 @@ sub mkvcbuild
         push @contrib_excludes,'uuid-ossp';
     }
 
+    # No SELinux support for Windows.
+    push @contrib_excludes,'sepgsql';
+
     # Pgcrypto makefile too complex to parse....
     my $pgcrypto = $solution->AddProject('pgcrypto','dll','crypto');
     $pgcrypto->AddFiles(
