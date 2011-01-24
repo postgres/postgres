@@ -1784,6 +1784,7 @@ _discoverArchiveFormat(ArchiveHandle *AH)
 #endif
 			die_horribly(AH, modulename, "directory \"%s\" does not appear to be a valid archive (\"toc.dat\" does not exist)\n",
 						 AH->fSpec);
+			fh = NULL; /* keep compiler quiet */
 		}
 		else
 		{
