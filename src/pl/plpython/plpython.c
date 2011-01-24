@@ -2978,6 +2978,7 @@ PLy_spi_execute_plan(PyObject *ob, PyObject *list, long limit)
 				rv;
 	PLyPlanObject *plan;
 	volatile MemoryContext oldcontext;
+	PyObject   *ret;
 
 	if (list != NULL)
 	{
@@ -3014,8 +3015,13 @@ PLy_spi_execute_plan(PyObject *ob, PyObject *list, long limit)
 	oldcontext = CurrentMemoryContext;
 	PG_TRY();
 	{
-		char	   *nulls = palloc(nargs * sizeof(char));
+		char	   *nulls;
 		volatile int j;
+
+		if (nargs > 0)
+			nulls = palloc(nargs * sizeof(char));
+		else
+			nulls = NULL;
 
 		for (j = 0; j < nargs; j++)
 		{
@@ -3055,8 +3061,10 @@ PLy_spi_execute_plan(PyObject *ob, PyObject *list, long limit)
 
 		rv = SPI_execute_plan(plan->plan, plan->values, nulls,
 							  PLy_curr_procedure->fn_readonly, limit);
+		ret = PLy_spi_execute_fetch_result(SPI_tuptable, SPI_processed, rv);
 
-		pfree(nulls);
+		if (nargs > 0)
+			pfree(nulls);
 	}
 	PG_CATCH();
 	{
@@ -3099,7 +3107,7 @@ PLy_spi_execute_plan(PyObject *ob, PyObject *list, long limit)
 		}
 	}
 
-	return PLy_spi_execute_fetch_result(SPI_tuptable, SPI_processed, rv);
+	return ret;
 }
 
 static PyObject *
@@ -3107,12 +3115,14 @@ PLy_spi_execute_query(char *query, long limit)
 {
 	int			rv;
 	volatile MemoryContext oldcontext;
+	PyObject   *ret;
 
 	oldcontext = CurrentMemoryContext;
 	PG_TRY();
 	{
 		pg_verifymbstr(query, strlen(query), false);
 		rv = SPI_execute(query, PLy_curr_procedure->fn_readonly, limit);
+		ret = PLy_spi_execute_fetch_result(SPI_tuptable, SPI_processed, rv);
 	}
 	PG_CATCH();
 	{
@@ -3138,7 +3148,7 @@ PLy_spi_execute_query(char *query, long limit)
 		return NULL;
 	}
 
-	return PLy_spi_execute_fetch_result(SPI_tuptable, SPI_processed, rv);
+	return ret;
 }
 
 static PyObject *
