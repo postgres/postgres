@@ -36,7 +36,7 @@ my $contrib_extrasource = {
     'cube' => ['cubescan.l','cubeparse.y'],
     'seg' => ['segscan.l','segparse.y']
 };
-my @contrib_excludes = ('pgcrypto','intagg');
+my @contrib_excludes = ('pgcrypto','intagg','sepgsql');
 
 sub mkvcbuild
 {
@@ -355,9 +355,6 @@ sub mkvcbuild
     {
         push @contrib_excludes,'uuid-ossp';
     }
-
-    # No SELinux support for Windows.
-    push @contrib_excludes,'sepgsql';
 
     # Pgcrypto makefile too complex to parse....
     my $pgcrypto = $solution->AddProject('pgcrypto','dll','crypto');
