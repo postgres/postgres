@@ -61,6 +61,10 @@ ifeq ($(with_libxml),yes)
 SUBDIRS += xml2
 endif
 
+ifeq ($(with_selinux),yes)
+SUBDIRS += sepgsql
+endif
+
 # Missing:
 #		start-scripts	\ (does not have a makefile)
 

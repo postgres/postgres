@@ -1,0 +1,52 @@
+#!/bin/sh
+#
+# A wrapper script to launch psql command in regression test
+#
+# Copyright (c) 2010-2011, PostgreSQL Global Development Group
+#
+# -------------------------------------------------------------------------
+
+if [ $# -lt 1 ]; then
+    echo "usage: `basename $0` <command> [options...]"
+    exit 1
+fi
+
+RUNCON=`which runcon`
+if [ ! -e "$RUNCON" ]; then
+    echo "runcon command is not found"
+    exit 1
+fi
+
+#
+# Read SQL from stdin
+#
+TEMP=`mktemp`
+CONTEXT=""
+
+while IFS='\\n' read LINE
+do
+    if echo "$LINE" | grep -q "^-- @SECURITY-CONTEXT="; then
+        if [ -s "$TEMP" ]; then
+            if [ -n "$CONTEXT" ]; then
+                "$RUNCON" "$CONTEXT" $* < "$TEMP"
+            else
+                $* < $TEMP
+            fi
+            truncate -s0 $TEMP
+        fi
+        CONTEXT=`echo "$LINE" | sed 's/^-- @SECURITY-CONTEXT=//g'`
+        LINE="SELECT sepgsql_getcon();	-- confirm client privilege"
+    fi
+    echo "$LINE" >> $TEMP
+done
+
+if [ -s "$TEMP" ]; then
+    if [ -n "$CONTEXT" ]; then
+        "$RUNCON" "$CONTEXT" $* < "$TEMP"
+    else
+        $* < $TEMP
+    fi
+fi
+
+# cleanup temp file
+rm -f $TEMP

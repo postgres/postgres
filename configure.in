@@ -676,6 +676,13 @@ PGAC_ARG_BOOL(with, openssl, no, [build with OpenSSL support],
 AC_MSG_RESULT([$with_openssl])
 AC_SUBST(with_openssl)
 
+#
+# SELinux
+#
+AC_MSG_CHECKING([whether to build with SELinux support])
+PGAC_ARG_BOOL(with, selinux, no, [build with SELinux support])
+AC_SUBST(with_selinux)
+AC_MSG_RESULT([$with_selinux])
 
 #
 # Readline
@@ -946,6 +953,12 @@ fi
 
 if test "$with_libxslt" = yes ; then
   AC_CHECK_LIB(xslt, xsltCleanupGlobals, [], [AC_MSG_ERROR([library 'xslt' is required for XSLT support])])
+fi
+
+# for contrib/sepgsql
+if test "$with_selinux" = yes; then
+  AC_CHECK_LIB(selinux, getpeercon_raw, [],
+               [AC_MSG_ERROR([library 'libselinux' is required for SELinux support])])
 fi
 
 # for contrib/uuid-ossp

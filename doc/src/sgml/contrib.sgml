@@ -116,6 +116,7 @@ psql -d dbname -f <replaceable>SHAREDIR</>/contrib/<replaceable>module</>.sql
  &pgtrgm;
  &pgupgrade;
  &seg;
+ &sepgsql;
  &contrib-spi;
  &sslinfo;
  &tablefunc;

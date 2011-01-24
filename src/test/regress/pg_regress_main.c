@@ -33,6 +33,7 @@ psql_start_test(const char *testname,
 	char		outfile[MAXPGPATH];
 	char		expectfile[MAXPGPATH];
 	char		psql_cmd[MAXPGPATH * 3];
+	size_t		offset = 0;
 
 	/*
 	 * Look for files in the output dir first, consistent with a vpath search.
@@ -58,7 +59,11 @@ psql_start_test(const char *testname,
 	add_stringlist_item(resultfiles, outfile);
 	add_stringlist_item(expectfiles, expectfile);
 
-	snprintf(psql_cmd, sizeof(psql_cmd),
+	if (launcher)
+		offset += snprintf(psql_cmd + offset, sizeof(psql_cmd) - offset,
+						   "%s ", launcher);
+
+	snprintf(psql_cmd + offset, sizeof(psql_cmd) - offset,
 			 SYSTEMQUOTE "\"%s%spsql\" -X -a -q -d \"%s\" < \"%s\" > \"%s\" 2>&1" SYSTEMQUOTE,
 			 psqldir ? psqldir : "",
 			 psqldir ? "/" : "",

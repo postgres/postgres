@@ -715,6 +715,7 @@ with_libxslt
 with_libxml
 XML2_CONFIG
 with_ossp_uuid
+with_selinux
 with_openssl
 with_bonjour
 with_ldap
@@ -837,6 +838,7 @@ with_pam
 with_ldap
 with_bonjour
 with_openssl
+with_selinux
 with_readline
 with_libedit_preferred
 with_ossp_uuid
@@ -848,6 +850,7 @@ with_gnu_ld
 enable_largefile
 enable_float4_byval
 enable_float8_byval
+enable_float8_byval
 '
       ac_precious_vars='build_alias
 host_alias
@@ -858,6 +861,7 @@ LDFLAGS
 LIBS
 CPPFLAGS
 CPP
+CPPFLAGS
 LDFLAGS_EX
 LDFLAGS_SL
 DOCBOOKSTYLE'
@@ -1533,6 +1537,7 @@ Optional Packages:
   --with-ldap             build with LDAP support
   --with-bonjour          build with Bonjour support
   --with-openssl          build with OpenSSL support
+  --with-selinux          build with SELinux support
   --without-readline      do not use GNU Readline nor BSD Libedit for editing
   --with-libedit-preferred
                           prefer BSD Libedit over GNU Readline
@@ -5364,6 +5369,40 @@ fi
 $as_echo "$with_openssl" >&6; }
 
 
+#
+# SELinux
+#
+{ $as_echo "$as_me:$LINENO: checking whether to build with SELinux support" >&5
+$as_echo_n "checking whether to build with SELinux support... " >&6; }
+
+
+
+# Check whether --with-selinux was given.
+if test "${with_selinux+set}" = set; then
+  withval=$with_selinux;
+  case $withval in
+    yes)
+      :
+      ;;
+    no)
+      :
+      ;;
+    *)
+      { { $as_echo "$as_me:$LINENO: error: no argument expected for --with-selinux option" >&5
+$as_echo "$as_me: error: no argument expected for --with-selinux option" >&2;}
+   { (exit 1); exit 1; }; }
+      ;;
+  esac
+
+else
+  with_selinux=no
+
+fi
+
+
+
+{ $as_echo "$as_me:$LINENO: result: $with_selinux" >&5
+$as_echo "$with_selinux" >&6; }
 
 #
 # Readline
@@ -9286,6 +9325,89 @@ _ACEOF
 else
   { { $as_echo "$as_me:$LINENO: error: library 'xslt' is required for XSLT support" >&5
 $as_echo "$as_me: error: library 'xslt' is required for XSLT support" >&2;}
+   { (exit 1); exit 1; }; }
+fi
+
+fi
+
+# for contrib/sepgsql
+if test "$with_selinux" = yes; then
+
+{ $as_echo "$as_me:$LINENO: checking for getpeercon_raw in -lselinux" >&5
+$as_echo_n "checking for getpeercon_raw in -lselinux... " >&6; }
+if test "${ac_cv_lib_selinux_getpeercon_raw+set}" = set; then
+  $as_echo_n "(cached) " >&6
+else
+  ac_check_lib_save_LIBS=$LIBS
+LIBS="-lselinux  $LIBS"
+cat >conftest.$ac_ext <<_ACEOF
+/* confdefs.h.  */
+_ACEOF
+cat confdefs.h >>conftest.$ac_ext
+cat >>conftest.$ac_ext <<_ACEOF
+/* end confdefs.h.  */
+
+/* Override any GCC internal prototype to avoid an error.
+   Use char because int might match the return type of a GCC
+   builtin and then its argument prototype would still apply.  */
+#ifdef __cplusplus
+extern "C"
+#endif
+char getpeercon_raw ();
+int
+main ()
+{
+return getpeercon_raw ();
+  ;
+  return 0;
+}
+_ACEOF
+rm -f conftest.$ac_objext conftest$ac_exeext
+if { (ac_try="$ac_link"
+case "(($ac_try" in
+  *\"* | *\`* | *\\*) ac_try_echo=\$ac_try;;
+  *) ac_try_echo=$ac_try;;
+esac
+eval ac_try_echo="\"\$as_me:$LINENO: $ac_try_echo\""
+$as_echo "$ac_try_echo") >&5
+  (eval "$ac_link") 2>conftest.er1
+  ac_status=$?
+  grep -v '^ *+' conftest.er1 >conftest.err
+  rm -f conftest.er1
+  cat conftest.err >&5
+  $as_echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); } && {
+	 test -z "$ac_c_werror_flag" ||
+	 test ! -s conftest.err
+       } && test -s conftest$ac_exeext && {
+	 test "$cross_compiling" = yes ||
+	 $as_test_x conftest$ac_exeext
+       }; then
+  ac_cv_lib_selinux_getpeercon_raw=yes
+else
+  $as_echo "$as_me: failed program was:" >&5
+sed 's/^/| /' conftest.$ac_ext >&5
+
+	ac_cv_lib_selinux_getpeercon_raw=no
+fi
+
+rm -rf conftest.dSYM
+rm -f core conftest.err conftest.$ac_objext conftest_ipa8_conftest.oo \
+      conftest$ac_exeext conftest.$ac_ext
+LIBS=$ac_check_lib_save_LIBS
+fi
+{ $as_echo "$as_me:$LINENO: result: $ac_cv_lib_selinux_getpeercon_raw" >&5
+$as_echo "$ac_cv_lib_selinux_getpeercon_raw" >&6; }
+if test "x$ac_cv_lib_selinux_getpeercon_raw" = x""yes; then
+  cat >>confdefs.h <<_ACEOF
+#define HAVE_LIBSELINUX 1
+_ACEOF
+
+  LIBS="-lselinux $LIBS"
+
+else
+  { { $as_echo "$as_me:$LINENO: error: library 'libselinux' is required for SELinux support" >&5
+$as_echo "$as_me: error: library 'libselinux' is required for SELinux support" >&2;}
    { (exit 1); exit 1; }; }
 fi
 

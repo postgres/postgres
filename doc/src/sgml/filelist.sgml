@@ -129,6 +129,7 @@
 <!entity pgupgrade       SYSTEM "pgupgrade.sgml">
 <!entity seg             SYSTEM "seg.sgml">
 <!entity contrib-spi     SYSTEM "contrib-spi.sgml">
+<!entity sepgsql         SYSTEM "sepgsql.sgml">
 <!entity sslinfo         SYSTEM "sslinfo.sgml">
 <!entity tablefunc       SYSTEM "tablefunc.sgml">
 <!entity test-parser     SYSTEM "test-parser.sgml">

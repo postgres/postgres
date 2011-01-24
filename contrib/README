@@ -163,6 +163,10 @@ seg -
 	Confidence-interval datatype (GiST indexing example)
 	by Gene Selkov, Jr. <selkovjr@mcs.anl.gov>
 
+sepgsql -
+	External security provider using SELinux
+	by KaiGai Kohei <kaigai@ak.jp.nec.com>
+
 spi -
 	Various trigger functions, examples for using SPI.
 
