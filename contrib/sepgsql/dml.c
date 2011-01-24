@@ -171,12 +171,12 @@ check_relation_privileges(Oid relOid,
 						 SEPG_DB_TABLE__DELETE)) != 0)
 			ereport(ERROR,
 					(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
-					 errmsg("selinux: hardwired security policy violation")));
+					 errmsg("SELinux: hardwired security policy violation")));
 
 		if (relkind == RELKIND_TOASTVALUE)
 			ereport(ERROR,
 					(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
-					 errmsg("selinux: hardwired security policy violation")));
+					 errmsg("SELinux: hardwired security policy violation")));
 	}
 
 	/*

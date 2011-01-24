@@ -81,7 +81,7 @@ sepgsql_get_label(Oid classId, Oid objectId, int32 subId)
 		if (security_get_initial_context_raw("unlabeled", &unlabeled) < 0)
 			ereport(ERROR,
 					(errcode(ERRCODE_INTERNAL_ERROR),
-					 errmsg("selinux: unable to get initial security label")));
+					 errmsg("SELinux: failed to get initial security label")));
 		PG_TRY();
 		{
 			label = pstrdup(unlabeled);
@@ -114,7 +114,7 @@ sepgsql_object_relabel(const ObjectAddress *object, const char *seclabel)
 		security_check_context_raw((security_context_t) seclabel) < 0)
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_NAME),
-				 errmsg("invalid security label: \"%s\"", seclabel)));
+				 errmsg("SELinux: invalid security label: \"%s\"", seclabel)));
 	/*
 	 * Do actual permission checks for each object classes
 	 */
@@ -154,13 +154,11 @@ sepgsql_getcon(PG_FUNCTION_ARGS)
 	char   *client_label;
 
 	if (!sepgsql_is_enabled())
-		ereport(ERROR,
-				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-				 errmsg("SELinux: now disabled")));
+		PG_RETURN_NULL();
 
 	client_label = sepgsql_get_client_label();
 
-	PG_RETURN_POINTER(cstring_to_text(client_label));
+	PG_RETURN_TEXT_P(cstring_to_text(client_label));
 }
 
 /*
@@ -179,14 +177,14 @@ sepgsql_mcstrans_in(PG_FUNCTION_ARGS)
 
 	if (!sepgsql_is_enabled())
 		ereport(ERROR,
-				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-				 errmsg("SELinux: now disabled")));
+				(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
+				 errmsg("sepgsql is not enabled")));
 
 	if (selinux_trans_to_raw_context(text_to_cstring(label),
 									 &raw_label) < 0)
 		ereport(ERROR,
 				(errcode(ERRCODE_INTERNAL_ERROR),
-				 errmsg("SELinux: internal error on mcstrans")));
+				 errmsg("SELinux: could not translate security label")));
 
 	PG_TRY();
 	{
@@ -200,7 +198,7 @@ sepgsql_mcstrans_in(PG_FUNCTION_ARGS)
 	PG_END_TRY();
 	freecon(raw_label);
 
-	PG_RETURN_POINTER(cstring_to_text(result));
+	PG_RETURN_TEXT_P(cstring_to_text(result));
 }
 
 /*
@@ -219,14 +217,14 @@ sepgsql_mcstrans_out(PG_FUNCTION_ARGS)
 
 	if (!sepgsql_is_enabled())
 		ereport(ERROR,
-				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-				 errmsg("SELinux: now disabled")));
+				(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
+				 errmsg("sepgsql is not currently enabled")));
 
 	if (selinux_raw_to_trans_context(text_to_cstring(label),
 									 &qual_label) < 0)
 		ereport(ERROR,
 				(errcode(ERRCODE_INTERNAL_ERROR),
-				 errmsg("SELinux: internal error on mcstrans")));
+				 errmsg("SELinux: could not translate security label")));
 
 	PG_TRY();
 	{
@@ -240,7 +238,7 @@ sepgsql_mcstrans_out(PG_FUNCTION_ARGS)
 	PG_END_TRY();
 	freecon(qual_label);
 
-	PG_RETURN_POINTER(cstring_to_text(result));
+	PG_RETURN_TEXT_P(cstring_to_text(result));
 }
 
 /*
@@ -360,8 +358,7 @@ exec_object_restorecon(struct selabel_handle *sehnd, Oid catalogId)
 				break;
 
 			default:
-				elog(ERROR, "Bug? %u is not supported to set initial labels",
-					 catalogId);
+				elog(ERROR, "unexpected catalog id: %u", catalogId);
 				break;
 		}
 
@@ -387,12 +384,12 @@ exec_object_restorecon(struct selabel_handle *sehnd, Oid catalogId)
 		}
 		else if (errno == ENOENT)
 			ereport(WARNING,
-					(errmsg("no valid initial label on %s (type=%d), skipped",
+					(errmsg("SELinux: no initial label assigned for %s (type=%d), skipping",
 							objname, objtype)));
 		else
 			ereport(ERROR,
 					(errcode(ERRCODE_INTERNAL_ERROR),
-					 errmsg("libselinux: internal error")));
+					 errmsg("SELinux: could not determine initial security label for %s (type=%d)", objname, objtype)));
 	}
 	systable_endscan(sscan);
 
@@ -422,8 +419,8 @@ sepgsql_restorecon(PG_FUNCTION_ARGS)
 	 */
 	if (!sepgsql_is_enabled())
 		ereport(ERROR,
-				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-				 errmsg("SELinux: now disabled")));
+				(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
+				 errmsg("sepgsql is not currently enabled")));
 	/*
 	 * Check DAC permission. Only superuser can set up initial
 	 * security labels, like root-user in filesystems
@@ -431,7 +428,7 @@ sepgsql_restorecon(PG_FUNCTION_ARGS)
 	if (!superuser())
 		ereport(ERROR,
 				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
-				 errmsg("must be superuser to restore initial contexts")));
+				 errmsg("SELinux: must be superuser to restore initial contexts")));
 
 	/*
 	 * Open selabel_lookup(3) stuff. It provides a set of mapping
@@ -452,7 +449,7 @@ sepgsql_restorecon(PG_FUNCTION_ARGS)
 	if (!sehnd)
 		ereport(ERROR,
 				(errcode(ERRCODE_INTERNAL_ERROR),
-				 errmsg("SELinux internal error")));
+				 errmsg("SELinux: failed to initialize labeling handle")));
 	PG_TRY();
 	{
 		/*

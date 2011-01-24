@@ -1,1 +1,5 @@
 /sepgsql.sql
+/sepgsql-regtest.fc
+/sepgsql-regtest.if
+/sepgsql-regtest.pp
+/tmp

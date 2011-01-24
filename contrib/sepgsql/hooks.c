@@ -91,7 +91,7 @@ sepgsql_client_auth(Port *port, int status)
 	if (getpeercon_raw(port->sock, &context) < 0)
 		ereport(FATAL,
 				(errcode(ERRCODE_INTERNAL_ERROR),
-				 errmsg("selinux: failed to get the peer label")));
+				 errmsg("SELinux: unable to get peer label")));
 
 	sepgsql_set_client_label(context);
 
@@ -318,7 +318,7 @@ sepgsql_utility_command(Node *parsetree,
 			{
 				ereport(ERROR,
 						(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
-						 errmsg("SELinux: LOAD is not allowed anyway.")));
+						 errmsg("SELinux: LOAD is not permitted")));
 			}
 			break;
 		default:
@@ -352,8 +352,8 @@ _PG_init(void)
 	 */
 	if (IsUnderPostmaster)
 		ereport(ERROR,
-				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-				 errmsg("Not allowed to load SE-PostgreSQL now")));
+				(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
+				 errmsg("sepgsql must be loaded via shared_preload_libraries")));
 
 	/*
 	 * Check availability of SELinux on the platform.
@@ -414,7 +414,7 @@ _PG_init(void)
 	if (getcon_raw(&context) < 0)
 		ereport(ERROR,
 				(errcode(ERRCODE_INTERNAL_ERROR),
-				 errmsg("selinux: unable to get security label of server")));
+				 errmsg("SELinux: failed to get server security label")));
 	sepgsql_set_client_label(context);
 
 	/* Security label provider hook */
