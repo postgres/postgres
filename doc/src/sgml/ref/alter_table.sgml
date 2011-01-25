@@ -43,6 +43,7 @@ ALTER TABLE <replaceable class="PARAMETER">name</replaceable>
     ALTER [ COLUMN ] <replaceable class="PARAMETER">column</replaceable> RESET ( <replaceable class="PARAMETER">attribute_option</replaceable> [, ... ] )
     ALTER [ COLUMN ] <replaceable class="PARAMETER">column</replaceable> SET STORAGE { PLAIN | EXTERNAL | EXTENDED | MAIN }
     ADD <replaceable class="PARAMETER">table_constraint</replaceable>
+    ADD <replaceable class="PARAMETER">table_constraint_using_index</replaceable>
     DROP CONSTRAINT [ IF EXISTS ]  <replaceable class="PARAMETER">constraint_name</replaceable> [ RESTRICT | CASCADE ]
     DISABLE TRIGGER [ <replaceable class="PARAMETER">trigger_name</replaceable> | ALL | USER ]
     ENABLE TRIGGER [ <replaceable class="PARAMETER">trigger_name</replaceable> | ALL | USER ]
@@ -62,6 +63,12 @@ ALTER TABLE <replaceable class="PARAMETER">name</replaceable>
     NO INHERIT <replaceable class="PARAMETER">parent_table</replaceable>
     OWNER TO <replaceable class="PARAMETER">new_owner</replaceable>
     SET TABLESPACE <replaceable class="PARAMETER">new_tablespace</replaceable>
+
+<phrase>and <replaceable class="PARAMETER">table_constraint_using_index</replaceable> is:</phrase>
+
+    [ CONSTRAINT <replaceable class="PARAMETER">constraint_name</replaceable> ]
+    { UNIQUE | PRIMARY KEY } USING INDEX <replaceable class="PARAMETER">index_name</replaceable>
+    [ DEFERRABLE | NOT DEFERRABLE ] [ INITIALLY DEFERRED | INITIALLY IMMEDIATE ]
 </synopsis>
  </refsynopsisdiv>
 
@@ -226,6 +233,57 @@ ALTER TABLE <replaceable class="PARAMETER">name</replaceable>
       This form adds a new constraint to a table using the same syntax as
       <xref linkend="SQL-CREATETABLE">.
      </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><literal>ADD <replaceable class="PARAMETER">table_constraint_using_index</replaceable></literal></term>
+    <listitem>
+     <para>
+      This form adds a new <literal>PRIMARY KEY</> or <literal>UNIQUE</>
+      constraint to a table based on an existing unique index.  All the
+      columns of the index will be included in the constraint.
+     </para>
+
+     <para>
+      The index cannot have expression columns nor be a partial index.
+      Also, it must be a b-tree index with default sort ordering.  These
+      restrictions ensure that the index is equivalent to one that would be
+      built by a regular <literal>ADD PRIMARY KEY</> or <literal>ADD UNIQUE</>
+      command.
+     </para>
+
+     <para>
+      If <literal>PRIMARY KEY</> is specified, and the index's columns are not
+      already marked <literal>NOT NULL</>, then this command will attempt to
+      do <literal>ALTER COLUMN SET NOT NULL</> against each such column.
+      That requires a full table scan to verify the column(s) contain no
+      nulls.  In all other cases, this is a fast operation.
+     </para>
+
+     <para>
+      If a constraint name is provided then the index will be renamed to match
+      the constraint name.  Otherwise the constraint will be named the same as
+      the index.
+     </para>
+
+     <para>
+      After this command is executed, the index is <quote>owned</> by the
+      constraint, in the same way as if the index had been built by
+      a regular <literal>ADD PRIMARY KEY</> or <literal>ADD UNIQUE</>
+      command.  In particular, dropping the constraint will make the index
+      disappear too.
+     </para>
+
+     <note>
+      <para>
+       Adding a constraint using an existing index can be helpful in
+       situations where a new constraint needs to be added without blocking
+       table updates for a long time.  To do that, create the index using
+       <command>CREATE INDEX CONCURRENTLY</>, and then install it as an
+       official constraint using this syntax.  See the example below.
+      </para>
+     </note>
     </listitem>
    </varlistentry>
 
@@ -920,13 +978,24 @@ ALTER TABLE myschema.distributors SET SCHEMA yourschema;
 </programlisting>
   </para>
 
+  <para>
+   To recreate a primary key constraint, without blocking updates while the
+   index is rebuilt:
+<programlisting>
+CREATE UNIQUE INDEX CONCURRENTLY dist_id_temp_idx on distributors (dist_id);
+ALTER TABLE distributors DROP CONSTRAINT distributors_pkey,
+    ADD CONSTRAINT distributors_pkey PRIMARY KEY USING INDEX dist_id_temp_idx;
+</programlisting>
+  </para>
+
  </refsect1>
 
  <refsect1>
   <title>Compatibility</title>
 
   <para>
-   The forms <literal>ADD</literal>, <literal>DROP</>, <literal>SET DEFAULT</>,
+   The forms <literal>ADD</literal> (without <literal>USING INDEX</literal>),
+   <literal>DROP</>, <literal>SET DEFAULT</>,
    and <literal>SET DATA TYPE</literal> (without <literal>USING</literal>)
    conform with the SQL standard.  The other forms are
    <productname>PostgreSQL</productname> extensions of the SQL standard.
@@ -939,5 +1008,13 @@ ALTER TABLE myschema.distributors SET SCHEMA yourschema;
    column of a table, leaving a zero-column table.  This is an
    extension of SQL, which disallows zero-column tables.
   </para>
+ </refsect1>
+
+ <refsect1>
+  <title>See Also</title>
+
+  <simplelist type="inline">
+   <member><xref linkend="sql-createtable"></member>
+  </simplelist>
  </refsect1>
 </refentry>

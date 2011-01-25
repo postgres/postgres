@@ -115,6 +115,7 @@ create_toast_table(Relation rel, Oid toastOid, Oid toastIndexOid, Datum reloptio
 	TupleDesc	tupdesc;
 	bool		shared_relation;
 	bool		mapped_relation;
+	Relation	toast_rel;
 	Relation	class_rel;
 	Oid			toast_relid;
 	Oid			toast_idxid;
@@ -229,8 +230,11 @@ create_toast_table(Relation rel, Oid toastOid, Oid toastIndexOid, Datum reloptio
 										   false);
 	Assert(toast_relid != InvalidOid);
 
-	/* make the toast relation visible, else index creation will fail */
+	/* make the toast relation visible, else heap_open will fail */
 	CommandCounterIncrement();
+
+	/* ShareLock is not really needed here, but take it anyway */
+	toast_rel = heap_open(toast_relid, ShareLock);
 
 	/*
 	 * Create unique index on chunk_id, chunk_seq.
@@ -266,7 +270,7 @@ create_toast_table(Relation rel, Oid toastOid, Oid toastIndexOid, Datum reloptio
 	coloptions[0] = 0;
 	coloptions[1] = 0;
 
-	toast_idxid = index_create(toast_relid, toast_idxname, toastIndexOid,
+	toast_idxid = index_create(toast_rel, toast_idxname, toastIndexOid,
 							   indexInfo,
 							   list_make2("chunk_id", "chunk_seq"),
 							   BTREE_AM_OID,
@@ -274,6 +278,8 @@ create_toast_table(Relation rel, Oid toastOid, Oid toastIndexOid, Datum reloptio
 							   classObjectId, coloptions, (Datum) 0,
 							   true, false, false, false,
 							   true, false, false);
+
+	heap_close(toast_rel, NoLock);
 
 	/*
 	 * Store the toast table's OID in the parent relation's pg_class row

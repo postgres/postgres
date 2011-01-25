@@ -65,6 +65,7 @@
 /* State shared by transformCreateStmt and its subroutines */
 typedef struct
 {
+	ParseState *pstate;			/* overall parser state */
 	const char *stmtType;		/* "CREATE [FOREIGN] TABLE" or "ALTER TABLE" */
 	RangeVar   *relation;		/* relation to create */
 	Relation	rel;			/* opened/locked rel, if ALTER */
@@ -98,30 +99,27 @@ typedef struct
 } CreateSchemaStmtContext;
 
 
-static void transformColumnDefinition(ParseState *pstate,
-						  CreateStmtContext *cxt,
+static void transformColumnDefinition(CreateStmtContext *cxt,
 						  ColumnDef *column);
-static void transformTableConstraint(ParseState *pstate,
-						 CreateStmtContext *cxt,
+static void transformTableConstraint(CreateStmtContext *cxt,
 						 Constraint *constraint);
-static void transformInhRelation(ParseState *pstate, CreateStmtContext *cxt,
+static void transformInhRelation(CreateStmtContext *cxt,
 					 InhRelation *inhrelation);
-static void transformOfType(ParseState *pstate, CreateStmtContext *cxt,
+static void transformOfType(CreateStmtContext *cxt,
 				TypeName *ofTypename);
 static char *chooseIndexName(const RangeVar *relation, IndexStmt *index_stmt);
 static IndexStmt *generateClonedIndexStmt(CreateStmtContext *cxt,
 						Relation parent_index, AttrNumber *attmap);
 static List *get_opclass(Oid opclass, Oid actual_datatype);
-static void transformIndexConstraints(ParseState *pstate,
-						  CreateStmtContext *cxt);
+static void transformIndexConstraints(CreateStmtContext *cxt);
 static IndexStmt *transformIndexConstraint(Constraint *constraint,
 						 CreateStmtContext *cxt);
-static void transformFKConstraints(ParseState *pstate,
-					   CreateStmtContext *cxt,
+static void transformFKConstraints(CreateStmtContext *cxt,
 					   bool skipValidation,
 					   bool isAddConstraint);
-static void transformConstraintAttrs(ParseState *pstate, List *constraintList);
-static void transformColumnType(ParseState *pstate, ColumnDef *column);
+static void transformConstraintAttrs(CreateStmtContext *cxt,
+									 List *constraintList);
+static void transformColumnType(CreateStmtContext *cxt, ColumnDef *column);
 static void setSchemaName(char *context_schema, char **stmt_schema_name);
 
 
@@ -169,10 +167,11 @@ transformCreateStmt(CreateStmt *stmt, const char *queryString)
 		stmt->relation->schemaname = get_namespace_name(namespaceid);
 	}
 
-	/* Set up pstate */
+	/* Set up pstate and CreateStmtContext */
 	pstate = make_parsestate(NULL);
 	pstate->p_sourcetext = queryString;
 
+	cxt.pstate = pstate;
 	if (IsA(stmt, CreateForeignTableStmt))
 		cxt.stmtType = "CREATE FOREIGN TABLE";
 	else
@@ -194,7 +193,7 @@ transformCreateStmt(CreateStmt *stmt, const char *queryString)
 	Assert(!stmt->ofTypename || !stmt->inhRelations);	/* grammar enforces */
 
 	if (stmt->ofTypename)
-		transformOfType(pstate, &cxt, stmt->ofTypename);
+		transformOfType(&cxt, stmt->ofTypename);
 
 	/*
 	 * Run through each primary element in the table creation clause. Separate
@@ -207,18 +206,15 @@ transformCreateStmt(CreateStmt *stmt, const char *queryString)
 		switch (nodeTag(element))
 		{
 			case T_ColumnDef:
-				transformColumnDefinition(pstate, &cxt,
-										  (ColumnDef *) element);
+				transformColumnDefinition(&cxt, (ColumnDef *) element);
 				break;
 
 			case T_Constraint:
-				transformTableConstraint(pstate, &cxt,
-										 (Constraint *) element);
+				transformTableConstraint(&cxt, (Constraint *) element);
 				break;
 
 			case T_InhRelation:
-				transformInhRelation(pstate, &cxt,
-									 (InhRelation *) element);
+				transformInhRelation(&cxt, (InhRelation *) element);
 				break;
 
 			default:
@@ -240,12 +236,12 @@ transformCreateStmt(CreateStmt *stmt, const char *queryString)
 	/*
 	 * Postprocess constraints that give rise to index definitions.
 	 */
-	transformIndexConstraints(pstate, &cxt);
+	transformIndexConstraints(&cxt);
 
 	/*
 	 * Postprocess foreign-key constraints.
 	 */
-	transformFKConstraints(pstate, &cxt, true, false);
+	transformFKConstraints(&cxt, true, false);
 
 	/*
 	 * Output results.
@@ -266,8 +262,7 @@ transformCreateStmt(CreateStmt *stmt, const char *queryString)
  *		Also used in ALTER TABLE ADD COLUMN
  */
 static void
-transformColumnDefinition(ParseState *pstate, CreateStmtContext *cxt,
-						  ColumnDef *column)
+transformColumnDefinition(CreateStmtContext *cxt, ColumnDef *column)
 {
 	bool		is_serial;
 	bool		saw_nullable;
@@ -309,12 +304,13 @@ transformColumnDefinition(ParseState *pstate, CreateStmtContext *cxt,
 			ereport(ERROR,
 					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 					 errmsg("array of serial is not implemented"),
-					 parser_errposition(pstate, column->typeName->location)));
+					 parser_errposition(cxt->pstate,
+										column->typeName->location)));
 	}
 
 	/* Do necessary work on the column type declaration */
 	if (column->typeName)
-		transformColumnType(pstate, column);
+		transformColumnType(cxt, column);
 
 	/* Special actions for SERIAL pseudo-types */
 	if (is_serial)
@@ -437,7 +433,7 @@ transformColumnDefinition(ParseState *pstate, CreateStmtContext *cxt,
 	}
 
 	/* Process column constraints, if any... */
-	transformConstraintAttrs(pstate, column->constraints);
+	transformConstraintAttrs(cxt, column->constraints);
 
 	saw_nullable = false;
 	saw_default = false;
@@ -455,7 +451,7 @@ transformColumnDefinition(ParseState *pstate, CreateStmtContext *cxt,
 							(errcode(ERRCODE_SYNTAX_ERROR),
 							 errmsg("conflicting NULL/NOT NULL declarations for column \"%s\" of table \"%s\"",
 									column->colname, cxt->relation->relname),
-							 parser_errposition(pstate,
+							 parser_errposition(cxt->pstate,
 												constraint->location)));
 				column->is_not_null = FALSE;
 				saw_nullable = true;
@@ -467,7 +463,7 @@ transformColumnDefinition(ParseState *pstate, CreateStmtContext *cxt,
 							(errcode(ERRCODE_SYNTAX_ERROR),
 							 errmsg("conflicting NULL/NOT NULL declarations for column \"%s\" of table \"%s\"",
 									column->colname, cxt->relation->relname),
-							 parser_errposition(pstate,
+							 parser_errposition(cxt->pstate,
 												constraint->location)));
 				column->is_not_null = TRUE;
 				saw_nullable = true;
@@ -479,7 +475,7 @@ transformColumnDefinition(ParseState *pstate, CreateStmtContext *cxt,
 							(errcode(ERRCODE_SYNTAX_ERROR),
 							 errmsg("multiple default values specified for column \"%s\" of table \"%s\"",
 									column->colname, cxt->relation->relname),
-							 parser_errposition(pstate,
+							 parser_errposition(cxt->pstate,
 												constraint->location)));
 				column->raw_default = constraint->raw_expr;
 				Assert(constraint->cooked_expr == NULL);
@@ -532,8 +528,7 @@ transformColumnDefinition(ParseState *pstate, CreateStmtContext *cxt,
  *		transform a Constraint node within CREATE TABLE or ALTER TABLE
  */
 static void
-transformTableConstraint(ParseState *pstate, CreateStmtContext *cxt,
-						 Constraint *constraint)
+transformTableConstraint(CreateStmtContext *cxt, Constraint *constraint)
 {
 	switch (constraint->contype)
 	{
@@ -577,8 +572,7 @@ transformTableConstraint(ParseState *pstate, CreateStmtContext *cxt,
  * <subtable>.
  */
 static void
-transformInhRelation(ParseState *pstate, CreateStmtContext *cxt,
-					 InhRelation *inhRelation)
+transformInhRelation(CreateStmtContext *cxt, InhRelation *inhRelation)
 {
 	AttrNumber	parent_attno;
 	Relation	relation;
@@ -587,7 +581,8 @@ transformInhRelation(ParseState *pstate, CreateStmtContext *cxt,
 	AclResult	aclresult;
 	char	   *comment;
 
-	relation = parserOpenTable(pstate, inhRelation->relation, AccessShareLock);
+	relation = parserOpenTable(cxt->pstate, inhRelation->relation,
+							   AccessShareLock);
 
 	if (relation->rd_rel->relkind != RELKIND_RELATION)
 		ereport(ERROR,
@@ -816,7 +811,7 @@ transformInhRelation(ParseState *pstate, CreateStmtContext *cxt,
 }
 
 static void
-transformOfType(ParseState *pstate, CreateStmtContext *cxt, TypeName *ofTypename)
+transformOfType(CreateStmtContext *cxt, TypeName *ofTypename)
 {
 	HeapTuple	tuple;
 	Form_pg_type typ;
@@ -937,6 +932,7 @@ generateClonedIndexStmt(CreateStmtContext *cxt, Relation source_idx,
 		index->tableSpace = get_tablespace_name(idxrelrec->reltablespace);
 	else
 		index->tableSpace = NULL;
+	index->indexOid = InvalidOid;
 	index->unique = idxrec->indisunique;
 	index->primary = idxrec->indisprimary;
 	index->concurrent = false;
@@ -1181,7 +1177,7 @@ get_opclass(Oid opclass, Oid actual_datatype)
  *		LIKE ... INCLUDING INDEXES.
  */
 static void
-transformIndexConstraints(ParseState *pstate, CreateStmtContext *cxt)
+transformIndexConstraints(CreateStmtContext *cxt)
 {
 	IndexStmt  *index;
 	List	   *indexlist = NIL;
@@ -1304,7 +1300,8 @@ transformIndexConstraint(Constraint *constraint, CreateStmtContext *cxt)
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_TABLE_DEFINITION),
 			 errmsg("multiple primary keys for table \"%s\" are not allowed",
-					cxt->relation->relname)));
+					cxt->relation->relname),
+					 parser_errposition(cxt->pstate, constraint->location)));
 		cxt->pkey = index;
 
 		/*
@@ -1328,7 +1325,181 @@ transformIndexConstraint(Constraint *constraint, CreateStmtContext *cxt)
 	index->whereClause = constraint->where_clause;
 	index->indexParams = NIL;
 	index->excludeOpNames = NIL;
+	index->indexOid = InvalidOid;
 	index->concurrent = false;
+
+	/*
+	 * If it's ALTER TABLE ADD CONSTRAINT USING INDEX, look up the index and
+	 * verify it's usable, then extract the implied column name list.  (We
+	 * will not actually need the column name list at runtime, but we need
+	 * it now to check for duplicate column entries below.)
+	 */
+	if (constraint->indexname != NULL)
+	{
+		char	   *index_name = constraint->indexname;
+		Relation	heap_rel = cxt->rel;
+		Oid			index_oid;
+		Relation	index_rel;
+		Form_pg_index index_form;
+		oidvector  *indclass;
+		Datum		indclassDatum;
+		bool		isnull;
+		int			i;
+
+		/* Grammar should not allow this with explicit column list */
+		Assert(constraint->keys == NIL);
+
+		/* Grammar should only allow PRIMARY and UNIQUE constraints */
+		Assert(constraint->contype == CONSTR_PRIMARY ||
+			   constraint->contype == CONSTR_UNIQUE);
+
+		/* Must be ALTER, not CREATE, but grammar doesn't enforce that */
+		if (!cxt->isalter)
+			ereport(ERROR,
+					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+					 errmsg("cannot use an existing index in CREATE TABLE"),
+					 parser_errposition(cxt->pstate, constraint->location)));
+
+		/* Look for the index in the same schema as the table */
+		index_oid = get_relname_relid(index_name, RelationGetNamespace(heap_rel));
+
+		if (!OidIsValid(index_oid))
+			ereport(ERROR,
+					(errcode(ERRCODE_UNDEFINED_OBJECT),
+					 errmsg("index \"%s\" does not exist", index_name),
+					 parser_errposition(cxt->pstate, constraint->location)));
+
+		/* Open the index (this will throw an error if it is not an index) */
+		index_rel = index_open(index_oid, AccessShareLock);
+		index_form = index_rel->rd_index;
+
+		/* Check that it does not have an associated constraint already */
+		if (OidIsValid(get_index_constraint(index_oid)))
+			ereport(ERROR,
+					(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
+					 errmsg("index \"%s\" is already associated with a constraint",
+							index_name),
+					 parser_errposition(cxt->pstate, constraint->location)));
+
+		/* Perform validity checks on the index */
+		if (index_form->indrelid != RelationGetRelid(heap_rel))
+			ereport(ERROR,
+					(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
+					 errmsg("index \"%s\" does not belong to table \"%s\"",
+							index_name, RelationGetRelationName(heap_rel)),
+					 parser_errposition(cxt->pstate, constraint->location)));
+
+		if (!index_form->indisvalid)
+			ereport(ERROR,
+					(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
+					 errmsg("index \"%s\" is not valid", index_name),
+					 parser_errposition(cxt->pstate, constraint->location)));
+
+		if (!index_form->indisready)
+			ereport(ERROR,
+					(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
+					 errmsg("index \"%s\" is not ready", index_name),
+					 parser_errposition(cxt->pstate, constraint->location)));
+
+		if (!index_form->indisunique)
+			ereport(ERROR,
+					(errcode(ERRCODE_WRONG_OBJECT_TYPE),
+					 errmsg("\"%s\" is not a unique index", index_name),
+					 errdetail("Cannot create a PRIMARY KEY or UNIQUE constraint using such an index."),
+					 parser_errposition(cxt->pstate, constraint->location)));
+
+		if (RelationGetIndexExpressions(index_rel) != NIL)
+			ereport(ERROR,
+					(errcode(ERRCODE_WRONG_OBJECT_TYPE),
+					 errmsg("index \"%s\" contains expressions", index_name),
+					 errdetail("Cannot create a PRIMARY KEY or UNIQUE constraint using such an index."),
+					 parser_errposition(cxt->pstate, constraint->location)));
+
+		if (RelationGetIndexPredicate(index_rel) != NIL)
+			ereport(ERROR,
+					(errcode(ERRCODE_WRONG_OBJECT_TYPE),
+					 errmsg("\"%s\" is a partial index", index_name),
+					 errdetail("Cannot create a PRIMARY KEY or UNIQUE constraint using such an index."),
+					 parser_errposition(cxt->pstate, constraint->location)));
+
+		/*
+		 * It's probably unsafe to change a deferred index to non-deferred.
+		 * (A non-constraint index couldn't be deferred anyway, so this case
+		 * should never occur; no need to sweat, but let's check it.)
+		 */
+		if (!index_form->indimmediate && !constraint->deferrable)
+			ereport(ERROR,
+					(errcode(ERRCODE_WRONG_OBJECT_TYPE),
+					 errmsg("\"%s\" is a deferrable index", index_name),
+					 errdetail("Cannot create a non-deferrable constraint using a deferrable index."),
+					 parser_errposition(cxt->pstate, constraint->location)));
+
+		/*
+		 * Insist on it being a btree.  That's the only kind that supports
+		 * uniqueness at the moment anyway; but we must have an index that
+		 * exactly matches what you'd get from plain ADD CONSTRAINT syntax,
+		 * else dump and reload will produce a different index (breaking
+		 * pg_upgrade in particular).
+		 */
+		if (index_rel->rd_rel->relam != get_am_oid(DEFAULT_INDEX_TYPE, false))
+			ereport(ERROR,
+					(errcode(ERRCODE_WRONG_OBJECT_TYPE),
+					 errmsg("index \"%s\" is not a b-tree", index_name),
+					 parser_errposition(cxt->pstate, constraint->location)));
+
+		/* Must get indclass the hard way */
+		indclassDatum = SysCacheGetAttr(INDEXRELID, index_rel->rd_indextuple,
+										Anum_pg_index_indclass, &isnull);
+		Assert(!isnull);
+		indclass = (oidvector *) DatumGetPointer(indclassDatum);
+
+		for (i = 0; i < index_form->indnatts; i++)
+		{
+			int2	attnum = index_form->indkey.values[i];
+			Form_pg_attribute attform;
+			char   *attname;
+			Oid		defopclass;
+
+			/*
+			 * We shouldn't see attnum == 0 here, since we already rejected
+			 * expression indexes.  If we do, SystemAttributeDefinition
+			 * will throw an error.
+			 */
+			if (attnum > 0)
+			{
+				Assert(attnum <= heap_rel->rd_att->natts);
+				attform = heap_rel->rd_att->attrs[attnum - 1];
+			}
+			else
+				attform = SystemAttributeDefinition(attnum,
+													heap_rel->rd_rel->relhasoids);
+			attname = pstrdup(NameStr(attform->attname));
+
+			/*
+			 * Insist on default opclass and sort options.  While the index
+			 * would still work as a constraint with non-default settings, it
+			 * might not provide exactly the same uniqueness semantics as
+			 * you'd get from a normally-created constraint; and there's also
+			 * the dump/reload problem mentioned above.
+			 */
+			defopclass = GetDefaultOpClass(attform->atttypid,
+										   index_rel->rd_rel->relam);
+			if (indclass->values[i] != defopclass ||
+				index_rel->rd_indoption[i] != 0)
+				ereport(ERROR,
+						(errcode(ERRCODE_WRONG_OBJECT_TYPE),
+						 errmsg("index \"%s\" does not have default sorting behavior", index_name),
+						 errdetail("Cannot create a PRIMARY KEY or UNIQUE constraint using such an index."),
+						 parser_errposition(cxt->pstate, constraint->location)));
+
+			constraint->keys = lappend(constraint->keys, makeString(attname));
+		}
+
+		/* Close the index relation but keep the lock */
+		relation_close(index_rel, NoLock);
+
+		index->indexOid = index_oid;
+	}
 
 	/*
 	 * If it's an EXCLUDE constraint, the grammar returns a list of pairs of
@@ -1450,8 +1621,8 @@ transformIndexConstraint(Constraint *constraint, CreateStmtContext *cxt)
 		if (!found && !cxt->isalter)
 			ereport(ERROR,
 					(errcode(ERRCODE_UNDEFINED_COLUMN),
-					 errmsg("column \"%s\" named in key does not exist",
-							key)));
+					 errmsg("column \"%s\" named in key does not exist", key),
+					 parser_errposition(cxt->pstate, constraint->location)));
 
 		/* Check for PRIMARY KEY(foo, foo) */
 		foreach(columns, index->indexParams)
@@ -1463,12 +1634,14 @@ transformIndexConstraint(Constraint *constraint, CreateStmtContext *cxt)
 					ereport(ERROR,
 							(errcode(ERRCODE_DUPLICATE_COLUMN),
 							 errmsg("column \"%s\" appears twice in primary key constraint",
-									key)));
+									key),
+							 parser_errposition(cxt->pstate, constraint->location)));
 				else
 					ereport(ERROR,
 							(errcode(ERRCODE_DUPLICATE_COLUMN),
 					errmsg("column \"%s\" appears twice in unique constraint",
-						   key)));
+						   key),
+							 parser_errposition(cxt->pstate, constraint->location)));
 			}
 		}
 
@@ -1491,7 +1664,7 @@ transformIndexConstraint(Constraint *constraint, CreateStmtContext *cxt)
  *		handle FOREIGN KEY constraints
  */
 static void
-transformFKConstraints(ParseState *pstate, CreateStmtContext *cxt,
+transformFKConstraints(CreateStmtContext *cxt,
 					   bool skipValidation, bool isAddConstraint)
 {
 	ListCell   *fkclist;
@@ -1978,7 +2151,7 @@ transformAlterTableStmt(AlterTableStmt *stmt, const char *queryString)
 	stmt = (AlterTableStmt *) copyObject(stmt);
 
 	/*
-	 * Assign the appropriate lock level for this list of subcommands.
+	 * Determine the appropriate lock level for this list of subcommands.
 	 */
 	lockmode = AlterTableGetLockLevel(stmt->cmds);
 
@@ -1992,10 +2165,11 @@ transformAlterTableStmt(AlterTableStmt *stmt, const char *queryString)
 	 */
 	rel = relation_openrv(stmt->relation, lockmode);
 
-	/* Set up pstate */
+	/* Set up pstate and CreateStmtContext */
 	pstate = make_parsestate(NULL);
 	pstate->p_sourcetext = queryString;
 
+	cxt.pstate = pstate;
 	cxt.stmtType = "ALTER TABLE";
 	cxt.relation = stmt->relation;
 	cxt.rel = rel;
@@ -2028,7 +2202,7 @@ transformAlterTableStmt(AlterTableStmt *stmt, const char *queryString)
 					ColumnDef  *def = (ColumnDef *) cmd->def;
 
 					Assert(IsA(def, ColumnDef));
-					transformColumnDefinition(pstate, &cxt, def);
+					transformColumnDefinition(&cxt, def);
 
 					/*
 					 * If the column has a non-null default, we can't skip
@@ -2053,8 +2227,7 @@ transformAlterTableStmt(AlterTableStmt *stmt, const char *queryString)
 				 */
 				if (IsA(cmd->def, Constraint))
 				{
-					transformTableConstraint(pstate, &cxt,
-											 (Constraint *) cmd->def);
+					transformTableConstraint(&cxt, (Constraint *) cmd->def);
 					if (((Constraint *) cmd->def)->contype == CONSTR_FOREIGN)
 						skipValidation = false;
 				}
@@ -2088,25 +2261,25 @@ transformAlterTableStmt(AlterTableStmt *stmt, const char *queryString)
 	cxt.alist = NIL;
 
 	/* Postprocess index and FK constraints */
-	transformIndexConstraints(pstate, &cxt);
+	transformIndexConstraints(&cxt);
 
-	transformFKConstraints(pstate, &cxt, skipValidation, true);
+	transformFKConstraints(&cxt, skipValidation, true);
 
 	/*
 	 * Push any index-creation commands into the ALTER, so that they can be
 	 * scheduled nicely by tablecmds.c.  Note that tablecmds.c assumes that
-	 * the IndexStmt attached to an AT_AddIndex subcommand has already been
-	 * through transformIndexStmt.
+	 * the IndexStmt attached to an AT_AddIndex or AT_AddIndexConstraint
+	 * subcommand has already been through transformIndexStmt.
 	 */
 	foreach(l, cxt.alist)
 	{
-		Node	   *idxstmt = (Node *) lfirst(l);
+		IndexStmt  *idxstmt = (IndexStmt *) lfirst(l);
 
 		Assert(IsA(idxstmt, IndexStmt));
+		idxstmt = transformIndexStmt(idxstmt, queryString);
 		newcmd = makeNode(AlterTableCmd);
-		newcmd->subtype = AT_AddIndex;
-		newcmd->def = (Node *) transformIndexStmt((IndexStmt *) idxstmt,
-												  queryString);
+		newcmd->subtype = OidIsValid(idxstmt->indexOid) ? AT_AddIndexConstraint : AT_AddIndex;
+		newcmd->def = (Node *) idxstmt;
 		newcmds = lappend(newcmds, newcmd);
 	}
 	cxt.alist = NIL;
@@ -2153,7 +2326,7 @@ transformAlterTableStmt(AlterTableStmt *stmt, const char *queryString)
  * for other constraint types.
  */
 static void
-transformConstraintAttrs(ParseState *pstate, List *constraintList)
+transformConstraintAttrs(CreateStmtContext *cxt, List *constraintList)
 {
 	Constraint *lastprimarycon = NULL;
 	bool		saw_deferrability = false;
@@ -2181,12 +2354,12 @@ transformConstraintAttrs(ParseState *pstate, List *constraintList)
 					ereport(ERROR,
 							(errcode(ERRCODE_SYNTAX_ERROR),
 							 errmsg("misplaced DEFERRABLE clause"),
-							 parser_errposition(pstate, con->location)));
+							 parser_errposition(cxt->pstate, con->location)));
 				if (saw_deferrability)
 					ereport(ERROR,
 							(errcode(ERRCODE_SYNTAX_ERROR),
 							 errmsg("multiple DEFERRABLE/NOT DEFERRABLE clauses not allowed"),
-							 parser_errposition(pstate, con->location)));
+							 parser_errposition(cxt->pstate, con->location)));
 				saw_deferrability = true;
 				lastprimarycon->deferrable = true;
 				break;
@@ -2196,12 +2369,12 @@ transformConstraintAttrs(ParseState *pstate, List *constraintList)
 					ereport(ERROR,
 							(errcode(ERRCODE_SYNTAX_ERROR),
 							 errmsg("misplaced NOT DEFERRABLE clause"),
-							 parser_errposition(pstate, con->location)));
+							 parser_errposition(cxt->pstate, con->location)));
 				if (saw_deferrability)
 					ereport(ERROR,
 							(errcode(ERRCODE_SYNTAX_ERROR),
 							 errmsg("multiple DEFERRABLE/NOT DEFERRABLE clauses not allowed"),
-							 parser_errposition(pstate, con->location)));
+							 parser_errposition(cxt->pstate, con->location)));
 				saw_deferrability = true;
 				lastprimarycon->deferrable = false;
 				if (saw_initially &&
@@ -2209,7 +2382,7 @@ transformConstraintAttrs(ParseState *pstate, List *constraintList)
 					ereport(ERROR,
 							(errcode(ERRCODE_SYNTAX_ERROR),
 							 errmsg("constraint declared INITIALLY DEFERRED must be DEFERRABLE"),
-							 parser_errposition(pstate, con->location)));
+							 parser_errposition(cxt->pstate, con->location)));
 				break;
 
 			case CONSTR_ATTR_DEFERRED:
@@ -2217,12 +2390,12 @@ transformConstraintAttrs(ParseState *pstate, List *constraintList)
 					ereport(ERROR,
 							(errcode(ERRCODE_SYNTAX_ERROR),
 							 errmsg("misplaced INITIALLY DEFERRED clause"),
-							 parser_errposition(pstate, con->location)));
+							 parser_errposition(cxt->pstate, con->location)));
 				if (saw_initially)
 					ereport(ERROR,
 							(errcode(ERRCODE_SYNTAX_ERROR),
 							 errmsg("multiple INITIALLY IMMEDIATE/DEFERRED clauses not allowed"),
-							 parser_errposition(pstate, con->location)));
+							 parser_errposition(cxt->pstate, con->location)));
 				saw_initially = true;
 				lastprimarycon->initdeferred = true;
 
@@ -2235,7 +2408,7 @@ transformConstraintAttrs(ParseState *pstate, List *constraintList)
 					ereport(ERROR,
 							(errcode(ERRCODE_SYNTAX_ERROR),
 							 errmsg("constraint declared INITIALLY DEFERRED must be DEFERRABLE"),
-							 parser_errposition(pstate, con->location)));
+							 parser_errposition(cxt->pstate, con->location)));
 				break;
 
 			case CONSTR_ATTR_IMMEDIATE:
@@ -2243,12 +2416,12 @@ transformConstraintAttrs(ParseState *pstate, List *constraintList)
 					ereport(ERROR,
 							(errcode(ERRCODE_SYNTAX_ERROR),
 							 errmsg("misplaced INITIALLY IMMEDIATE clause"),
-							 parser_errposition(pstate, con->location)));
+							 parser_errposition(cxt->pstate, con->location)));
 				if (saw_initially)
 					ereport(ERROR,
 							(errcode(ERRCODE_SYNTAX_ERROR),
 							 errmsg("multiple INITIALLY IMMEDIATE/DEFERRED clauses not allowed"),
-							 parser_errposition(pstate, con->location)));
+							 parser_errposition(cxt->pstate, con->location)));
 				saw_initially = true;
 				lastprimarycon->initdeferred = false;
 				break;
@@ -2268,12 +2441,12 @@ transformConstraintAttrs(ParseState *pstate, List *constraintList)
  * Special handling of type definition for a column
  */
 static void
-transformColumnType(ParseState *pstate, ColumnDef *column)
+transformColumnType(CreateStmtContext *cxt, ColumnDef *column)
 {
 	/*
 	 * All we really need to do here is verify that the type is valid.
 	 */
-	Type		ctype = typenameType(pstate, column->typeName, NULL);
+	Type		ctype = typenameType(cxt->pstate, column->typeName, NULL);
 
 	ReleaseSysCache(ctype);
 }

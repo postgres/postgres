@@ -410,6 +410,32 @@ COMMIT;
 DROP TABLE concur_heap;
 
 --
+-- Test ADD CONSTRAINT USING INDEX
+--
+
+CREATE TABLE cwi_test( a int , b varchar(10), c char);
+
+-- add some data so that all tests have something to work with.
+
+INSERT INTO cwi_test VALUES(1, 2), (3, 4), (5, 6);
+
+CREATE UNIQUE INDEX cwi_uniq_idx ON cwi_test(a , b);
+ALTER TABLE cwi_test ADD primary key USING INDEX cwi_uniq_idx;
+
+\d cwi_test
+
+CREATE UNIQUE INDEX cwi_uniq2_idx ON cwi_test(b , a);
+ALTER TABLE cwi_test DROP CONSTRAINT cwi_uniq_idx,
+	ADD CONSTRAINT cwi_replaced_pkey PRIMARY KEY
+		USING INDEX cwi_uniq2_idx;
+
+\d cwi_test
+
+DROP INDEX cwi_replaced_pkey;	-- Should fail; a constraint depends on it
+
+DROP TABLE cwi_test;
+
+--
 -- Tests for IS NULL/IS NOT NULL with b-tree indexes
 --
 

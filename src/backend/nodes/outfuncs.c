@@ -1877,6 +1877,7 @@ _outIndexStmt(StringInfo str, IndexStmt *node)
 	WRITE_NODE_FIELD(options);
 	WRITE_NODE_FIELD(whereClause);
 	WRITE_NODE_FIELD(excludeOpNames);
+	WRITE_OID_FIELD(indexOid);
 	WRITE_BOOL_FIELD(unique);
 	WRITE_BOOL_FIELD(primary);
 	WRITE_BOOL_FIELD(isconstraint);
@@ -2474,6 +2475,7 @@ _outConstraint(StringInfo str, Constraint *node)
 			appendStringInfo(str, "PRIMARY_KEY");
 			WRITE_NODE_FIELD(keys);
 			WRITE_NODE_FIELD(options);
+			WRITE_STRING_FIELD(indexname);
 			WRITE_STRING_FIELD(indexspace);
 			/* access_method and where_clause not currently used */
 			break;
@@ -2482,6 +2484,7 @@ _outConstraint(StringInfo str, Constraint *node)
 			appendStringInfo(str, "UNIQUE");
 			WRITE_NODE_FIELD(keys);
 			WRITE_NODE_FIELD(options);
+			WRITE_STRING_FIELD(indexname);
 			WRITE_STRING_FIELD(indexspace);
 			/* access_method and where_clause not currently used */
 			break;
@@ -2490,6 +2493,7 @@ _outConstraint(StringInfo str, Constraint *node)
 			appendStringInfo(str, "EXCLUSION");
 			WRITE_NODE_FIELD(exclusions);
 			WRITE_NODE_FIELD(options);
+			WRITE_STRING_FIELD(indexname);
 			WRITE_STRING_FIELD(indexspace);
 			WRITE_STRING_FIELD(access_method);
 			WRITE_NODE_FIELD(where_clause);

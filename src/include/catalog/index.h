@@ -28,7 +28,11 @@ typedef void (*IndexBuildCallback) (Relation index,
 												void *state);
 
 
-extern Oid index_create(Oid heapRelationId,
+extern void index_check_primary_key(Relation heapRel,
+						IndexInfo *indexInfo,
+						bool is_alter_table);
+
+extern Oid index_create(Relation heapRelation,
 			 const char *indexRelationName,
 			 Oid indexRelationId,
 			 IndexInfo *indexInfo,
@@ -45,6 +49,17 @@ extern Oid index_create(Oid heapRelationId,
 			 bool allow_system_table_mods,
 			 bool skip_build,
 			 bool concurrent);
+
+extern void index_constraint_create(Relation heapRelation,
+						Oid indexRelationId,
+						IndexInfo *indexInfo,
+						const char *constraintName,
+						char constraintType,
+						bool deferrable,
+						bool initdeferred,
+						bool mark_as_primary,
+						bool update_pgindex,
+						bool allow_system_table_mods);
 
 extern void index_drop(Oid indexId);
 

@@ -82,6 +82,7 @@ typedef struct
 } v_i_state;
 
 /* non-export function prototypes */
+static bool relationHasPrimaryKey(Relation rel);
 static TupleDesc ConstructTupleDescriptor(Relation heapRelation,
 						 IndexInfo *indexInfo,
 						 List *indexColNames,
@@ -116,6 +117,141 @@ static void SetReindexPending(List *indexes);
 static void RemoveReindexPending(Oid indexOid);
 static void ResetReindexPending(void);
 
+
+/*
+ * relationHasPrimaryKey
+ *		See whether an existing relation has a primary key.
+ *
+ * Caller must have suitable lock on the relation.
+ */
+static bool
+relationHasPrimaryKey(Relation rel)
+{
+	bool		result = false;
+	List	   *indexoidlist;
+	ListCell   *indexoidscan;
+
+	/*
+	 * Get the list of index OIDs for the table from the relcache, and look up
+	 * each one in the pg_index syscache until we find one marked primary key
+	 * (hopefully there isn't more than one such).
+	 */
+	indexoidlist = RelationGetIndexList(rel);
+
+	foreach(indexoidscan, indexoidlist)
+	{
+		Oid			indexoid = lfirst_oid(indexoidscan);
+		HeapTuple	indexTuple;
+
+		indexTuple = SearchSysCache1(INDEXRELID, ObjectIdGetDatum(indexoid));
+		if (!HeapTupleIsValid(indexTuple))		/* should not happen */
+			elog(ERROR, "cache lookup failed for index %u", indexoid);
+		result = ((Form_pg_index) GETSTRUCT(indexTuple))->indisprimary;
+		ReleaseSysCache(indexTuple);
+		if (result)
+			break;
+	}
+
+	list_free(indexoidlist);
+
+	return result;
+}
+
+/*
+ * index_check_primary_key
+ *		Apply special checks needed before creating a PRIMARY KEY index
+ *
+ * This processing used to be in DefineIndex(), but has been split out
+ * so that it can be applied during ALTER TABLE ADD PRIMARY KEY USING INDEX.
+ *
+ * We check for a pre-existing primary key, and that all columns of the index
+ * are simple column references (not expressions), and that all those
+ * columns are marked NOT NULL.  If they aren't (which can only happen during
+ * ALTER TABLE ADD CONSTRAINT, since the parser forces such columns to be
+ * created NOT NULL during CREATE TABLE), do an ALTER SET NOT NULL to mark
+ * them so --- or fail if they are not in fact nonnull.
+ *
+ * Caller had better have at least ShareLock on the table, else the not-null
+ * checking isn't trustworthy.
+ */
+void
+index_check_primary_key(Relation heapRel,
+						IndexInfo *indexInfo,
+						bool is_alter_table)
+{
+	List	   *cmds;
+	int			i;
+
+	/*
+	 * If ALTER TABLE, check that there isn't already a PRIMARY KEY. In
+	 * CREATE TABLE, we have faith that the parser rejected multiple pkey
+	 * clauses; and CREATE INDEX doesn't have a way to say PRIMARY KEY, so
+	 * it's no problem either.
+	 */
+	if (is_alter_table &&
+		relationHasPrimaryKey(heapRel))
+	{
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_TABLE_DEFINITION),
+				 errmsg("multiple primary keys for table \"%s\" are not allowed",
+						RelationGetRelationName(heapRel))));
+	}
+
+	/*
+	 * Check that all of the attributes in a primary key are marked as not
+	 * null, otherwise attempt to ALTER TABLE .. SET NOT NULL
+	 */
+	cmds = NIL;
+	for (i = 0; i < indexInfo->ii_NumIndexAttrs; i++)
+	{
+		AttrNumber	attnum = indexInfo->ii_KeyAttrNumbers[i];
+		HeapTuple	atttuple;
+		Form_pg_attribute attform;
+
+		if (attnum == 0)
+			ereport(ERROR,
+					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+					 errmsg("primary keys cannot be expressions")));
+
+		/* System attributes are never null, so no need to check */
+		if (attnum < 0)
+			continue;
+
+		atttuple = SearchSysCache2(ATTNUM,
+								   ObjectIdGetDatum(RelationGetRelid(heapRel)),
+								   Int16GetDatum(attnum));
+		if (!HeapTupleIsValid(atttuple))
+			elog(ERROR, "cache lookup failed for attribute %d of relation %u",
+				 attnum, RelationGetRelid(heapRel));
+		attform = (Form_pg_attribute) GETSTRUCT(atttuple);
+
+		if (!attform->attnotnull)
+		{
+			/* Add a subcommand to make this one NOT NULL */
+			AlterTableCmd *cmd = makeNode(AlterTableCmd);
+
+			cmd->subtype = AT_SetNotNull;
+			cmd->name = pstrdup(NameStr(attform->attname));
+			cmds = lappend(cmds, cmd);
+		}
+
+		ReleaseSysCache(atttuple);
+	}
+
+	/*
+	 * XXX: Shouldn't the ALTER TABLE .. SET NOT NULL cascade to child
+	 * tables?	Currently, since the PRIMARY KEY itself doesn't cascade,
+	 * we don't cascade the notnull constraint(s) either; but this is
+	 * pretty debatable.
+	 *
+	 * XXX: possible future improvement: when being called from ALTER
+	 * TABLE, it would be more efficient to merge this with the outer
+	 * ALTER TABLE, so as to avoid two scans.  But that seems to
+	 * complicate DefineIndex's API unduly.
+	 */
+	if (cmds)
+		AlterTableInternal(RelationGetRelid(heapRel), cmds, false);
+}
 
 /*
  *		ConstructTupleDescriptor
@@ -492,7 +628,7 @@ UpdateIndexRelation(Oid indexoid,
 /*
  * index_create
  *
- * heapRelationId: OID of table to build index on
+ * heapRelation: table to build index on (suitably locked by caller)
  * indexRelationName: what it say
  * indexRelationId: normally, pass InvalidOid to let this routine
  *		generate an OID for the index.	During bootstrap this may be
@@ -505,7 +641,7 @@ UpdateIndexRelation(Oid indexoid,
  * coloptions: array of per-index-column indoption settings
  * reloptions: AM-specific options
  * isprimary: index is a PRIMARY KEY
- * isconstraint: index is owned by a PRIMARY KEY or UNIQUE constraint
+ * isconstraint: index is owned by PRIMARY KEY, UNIQUE, or EXCLUSION constraint
  * deferrable: constraint is DEFERRABLE
  * initdeferred: constraint is INITIALLY DEFERRED
  * allow_system_table_mods: allow table to be a system catalog
@@ -518,7 +654,7 @@ UpdateIndexRelation(Oid indexoid,
  * Returns the OID of the created index.
  */
 Oid
-index_create(Oid heapRelationId,
+index_create(Relation heapRelation,
 			 const char *indexRelationName,
 			 Oid indexRelationId,
 			 IndexInfo *indexInfo,
@@ -536,8 +672,8 @@ index_create(Oid heapRelationId,
 			 bool skip_build,
 			 bool concurrent)
 {
+	Oid			heapRelationId = RelationGetRelid(heapRelation);
 	Relation	pg_class;
-	Relation	heapRelation;
 	Relation	indexRelation;
 	TupleDesc	indexTupDesc;
 	bool		shared_relation;
@@ -550,14 +686,6 @@ index_create(Oid heapRelationId,
 	is_exclusion = (indexInfo->ii_ExclusionOps != NULL);
 
 	pg_class = heap_open(RelationRelationId, RowExclusiveLock);
-
-	/*
-	 * Only SELECT ... FOR UPDATE/SHARE are allowed while doing a standard
-	 * index build; but for concurrent builds we allow INSERT/UPDATE/DELETE
-	 * (but not VACUUM).
-	 */
-	heapRelation = heap_open(heapRelationId,
-						(concurrent ? ShareUpdateExclusiveLock : ShareLock));
 
 	/*
 	 * The index will be in the same namespace as its parent table, and is
@@ -734,9 +862,9 @@ index_create(Oid heapRelationId,
 	 * Register constraint and dependencies for the index.
 	 *
 	 * If the index is from a CONSTRAINT clause, construct a pg_constraint
-	 * entry. The index is then linked to the constraint, which in turn is
-	 * linked to the table.  If it's not a CONSTRAINT, make the dependency
-	 * directly on the table.
+	 * entry.  The index will be linked to the constraint, which in turn is
+	 * linked to the table.  If it's not a CONSTRAINT, we need to make a
+	 * dependency directly on the table.
 	 *
 	 * We don't need a dependency on the namespace, because there'll be an
 	 * indirect dependency via our parent table.
@@ -756,7 +884,6 @@ index_create(Oid heapRelationId,
 		if (isconstraint)
 		{
 			char		constraintType;
-			Oid			conOid;
 
 			if (isprimary)
 				constraintType = CONSTRAINT_PRIMARY;
@@ -770,77 +897,16 @@ index_create(Oid heapRelationId,
 				constraintType = 0;		/* keep compiler quiet */
 			}
 
-			/* primary/unique constraints shouldn't have any expressions */
-			if (indexInfo->ii_Expressions &&
-				constraintType != CONSTRAINT_EXCLUSION)
-				elog(ERROR, "constraints cannot have index expressions");
-
-			conOid = CreateConstraintEntry(indexRelationName,
-										   namespaceId,
-										   constraintType,
-										   deferrable,
-										   initdeferred,
-										   heapRelationId,
-										   indexInfo->ii_KeyAttrNumbers,
-										   indexInfo->ii_NumIndexAttrs,
-										   InvalidOid,	/* no domain */
-										   indexRelationId,		/* index OID */
-										   InvalidOid,	/* no foreign key */
-										   NULL,
-										   NULL,
-										   NULL,
-										   NULL,
-										   0,
-										   ' ',
-										   ' ',
-										   ' ',
-										   indexInfo->ii_ExclusionOps,
-										   NULL,		/* no check constraint */
-										   NULL,
-										   NULL,
-										   true,		/* islocal */
-										   0);	/* inhcount */
-
-			referenced.classId = ConstraintRelationId;
-			referenced.objectId = conOid;
-			referenced.objectSubId = 0;
-
-			recordDependencyOn(&myself, &referenced, DEPENDENCY_INTERNAL);
-
-			/*
-			 * If the constraint is deferrable, create the deferred uniqueness
-			 * checking trigger.  (The trigger will be given an internal
-			 * dependency on the constraint by CreateTrigger, so there's no
-			 * need to do anything more here.)
-			 */
-			if (deferrable)
-			{
-				RangeVar   *heapRel;
-				CreateTrigStmt *trigger;
-
-				heapRel = makeRangeVar(get_namespace_name(namespaceId),
-							  pstrdup(RelationGetRelationName(heapRelation)),
-									   -1);
-
-				trigger = makeNode(CreateTrigStmt);
-				trigger->trigname = (isprimary ? "PK_ConstraintTrigger" :
-									 "Unique_ConstraintTrigger");
-				trigger->relation = heapRel;
-				trigger->funcname = SystemFuncName("unique_key_recheck");
-				trigger->args = NIL;
-				trigger->row = true;
-				trigger->timing = TRIGGER_TYPE_AFTER;
-				trigger->events = TRIGGER_TYPE_INSERT | TRIGGER_TYPE_UPDATE;
-				trigger->columns = NIL;
-				trigger->whenClause = NULL;
-				trigger->isconstraint = true;
-				trigger->deferrable = true;
-				trigger->initdeferred = initdeferred;
-				trigger->constrrel = NULL;
-
-				(void) CreateTrigger(trigger, NULL, conOid, indexRelationId,
-									 true);
-			}
+			index_constraint_create(heapRelation,
+									indexRelationId,
+									indexInfo,
+									indexRelationName,
+									constraintType,
+									deferrable,
+									initdeferred,
+									false,		/* already marked primary */
+									false,		/* pg_index entry is OK */
+									allow_system_table_mods);
 		}
 		else
 		{
@@ -970,13 +1036,209 @@ index_create(Oid heapRelationId,
 	}
 
 	/*
-	 * Close the heap and index; but we keep the locks that we acquired above
-	 * until end of transaction.
+	 * Close the index; but we keep the lock that we acquired above until end
+	 * of transaction.  Closing the heap is caller's responsibility.
 	 */
 	index_close(indexRelation, NoLock);
-	heap_close(heapRelation, NoLock);
 
 	return indexRelationId;
+}
+
+/*
+ * index_constraint_create
+ *
+ * Set up a constraint associated with an index
+ *
+ * heapRelation: table owning the index (must be suitably locked by caller)
+ * indexRelationId: OID of the index
+ * indexInfo: same info executor uses to insert into the index
+ * constraintName: what it say (generally, should match name of index)
+ * constraintType: one of CONSTRAINT_PRIMARY, CONSTRAINT_UNIQUE, or
+ *		CONSTRAINT_EXCLUSION
+ * deferrable: constraint is DEFERRABLE
+ * initdeferred: constraint is INITIALLY DEFERRED
+ * mark_as_primary: if true, set flags to mark index as primary key
+ * update_pgindex: if true, update pg_index row (else caller's done that)
+ * allow_system_table_mods: allow table to be a system catalog
+ */
+void
+index_constraint_create(Relation heapRelation,
+						Oid indexRelationId,
+						IndexInfo *indexInfo,
+						const char *constraintName,
+						char constraintType,
+						bool deferrable,
+						bool initdeferred,
+						bool mark_as_primary,
+						bool update_pgindex,
+						bool allow_system_table_mods)
+{
+	Oid			namespaceId = RelationGetNamespace(heapRelation);
+	ObjectAddress myself,
+				referenced;
+	Oid			conOid;
+
+	/* constraint creation support doesn't work while bootstrapping */
+	Assert(!IsBootstrapProcessingMode());
+
+	/* enforce system-table restriction */
+	if (!allow_system_table_mods &&
+		IsSystemRelation(heapRelation) &&
+		IsNormalProcessingMode())
+		ereport(ERROR,
+				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+				 errmsg("user-defined indexes on system catalog tables are not supported")));
+
+	/* primary/unique constraints shouldn't have any expressions */
+	if (indexInfo->ii_Expressions &&
+		constraintType != CONSTRAINT_EXCLUSION)
+		elog(ERROR, "constraints cannot have index expressions");
+
+	/*
+	 * Construct a pg_constraint entry.
+	 */
+	conOid = CreateConstraintEntry(constraintName,
+								   namespaceId,
+								   constraintType,
+								   deferrable,
+								   initdeferred,
+								   RelationGetRelid(heapRelation),
+								   indexInfo->ii_KeyAttrNumbers,
+								   indexInfo->ii_NumIndexAttrs,
+								   InvalidOid,	/* no domain */
+								   indexRelationId,		/* index OID */
+								   InvalidOid,	/* no foreign key */
+								   NULL,
+								   NULL,
+								   NULL,
+								   NULL,
+								   0,
+								   ' ',
+								   ' ',
+								   ' ',
+								   indexInfo->ii_ExclusionOps,
+								   NULL,		/* no check constraint */
+								   NULL,
+								   NULL,
+								   true,		/* islocal */
+								   0);	/* inhcount */
+
+	/*
+	 * Register the index as internally dependent on the constraint.
+	 *
+	 * Note that the constraint has a dependency on the table, so when this
+	 * path is taken we do not need any direct dependency from the index to
+	 * the table.  (But if one exists, no great harm is done, either.  So in
+	 * the case where we're manufacturing a constraint for a pre-existing
+	 * index, we don't bother to try to get rid of the existing index->table
+	 * dependency.)
+	 */
+	myself.classId = RelationRelationId;
+	myself.objectId = indexRelationId;
+	myself.objectSubId = 0;
+
+	referenced.classId = ConstraintRelationId;
+	referenced.objectId = conOid;
+	referenced.objectSubId = 0;
+
+	recordDependencyOn(&myself, &referenced, DEPENDENCY_INTERNAL);
+
+	/*
+	 * If the constraint is deferrable, create the deferred uniqueness
+	 * checking trigger.  (The trigger will be given an internal
+	 * dependency on the constraint by CreateTrigger.)
+	 */
+	if (deferrable)
+	{
+		RangeVar   *heapRel;
+		CreateTrigStmt *trigger;
+
+		heapRel = makeRangeVar(get_namespace_name(namespaceId),
+							   pstrdup(RelationGetRelationName(heapRelation)),
+							   -1);
+
+		trigger = makeNode(CreateTrigStmt);
+		trigger->trigname = (constraintType == CONSTRAINT_PRIMARY) ?
+			"PK_ConstraintTrigger" :
+			"Unique_ConstraintTrigger";
+		trigger->relation = heapRel;
+		trigger->funcname = SystemFuncName("unique_key_recheck");
+		trigger->args = NIL;
+		trigger->row = true;
+		trigger->timing = TRIGGER_TYPE_AFTER;
+		trigger->events = TRIGGER_TYPE_INSERT | TRIGGER_TYPE_UPDATE;
+		trigger->columns = NIL;
+		trigger->whenClause = NULL;
+		trigger->isconstraint = true;
+		trigger->deferrable = true;
+		trigger->initdeferred = initdeferred;
+		trigger->constrrel = NULL;
+
+		(void) CreateTrigger(trigger, NULL, conOid, indexRelationId, true);
+	}
+
+	/*
+	 * If needed, mark the table as having a primary key.  We assume it can't
+	 * have been so marked already, so no need to clear the flag in the other
+	 * case.
+	 *
+	 * Note: this might better be done by callers.  We do it here to avoid
+	 * exposing index_update_stats() globally, but that wouldn't be necessary
+	 * if relhaspkey went away.
+	 */
+	if (mark_as_primary)
+		index_update_stats(heapRelation,
+						   true,
+						   true,
+						   false,
+						   InvalidOid,
+						   heapRelation->rd_rel->reltuples);
+
+	/*
+	 * If needed, mark the index as primary and/or deferred in pg_index.
+	 *
+	 * Note: since this is a transactional update, it's unsafe against
+	 * concurrent SnapshotNow scans of pg_index.  When making an existing
+	 * index into a constraint, caller must have a table lock that prevents
+	 * concurrent table updates, and there is a risk that concurrent readers
+	 * of the table will miss seeing this index at all.
+	 */
+	if (update_pgindex && (mark_as_primary || deferrable))
+	{
+		Relation		pg_index;
+		HeapTuple		indexTuple;
+		Form_pg_index	indexForm;
+		bool			dirty = false;
+
+		pg_index = heap_open(IndexRelationId, RowExclusiveLock);
+
+		indexTuple = SearchSysCacheCopy1(INDEXRELID,
+										 ObjectIdGetDatum(indexRelationId));
+		if (!HeapTupleIsValid(indexTuple))
+			elog(ERROR, "cache lookup failed for index %u", indexRelationId);
+		indexForm = (Form_pg_index) GETSTRUCT(indexTuple);
+
+		if (mark_as_primary && !indexForm->indisprimary)
+		{
+			indexForm->indisprimary = true;
+			dirty = true;
+		}
+
+		if (deferrable && indexForm->indimmediate)
+		{
+			indexForm->indimmediate = false;
+			dirty = true;
+		}
+
+		if (dirty)
+		{
+			simple_heap_update(pg_index, &indexTuple->t_self, indexTuple);
+			CatalogUpdateIndexes(pg_index, indexTuple);
+		}
+
+		heap_freetuple(indexTuple);
+		heap_close(pg_index, RowExclusiveLock);
+	}
 }
 
 /*

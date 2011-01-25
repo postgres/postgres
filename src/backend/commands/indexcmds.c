@@ -69,7 +69,6 @@ static void ComputeIndexAttrs(IndexInfo *indexInfo,
 static Oid GetIndexOpClass(List *opclass, Oid attrType,
 				char *accessMethodName, Oid accessMethodId);
 static char *ChooseIndexNameAddition(List *colnames);
-static bool relationHasPrimaryKey(Relation rel);
 
 
 /*
@@ -321,92 +320,6 @@ DefineIndex(RangeVar *heapRelation,
 		CheckPredicate(predicate);
 
 	/*
-	 * Extra checks when creating a PRIMARY KEY index.
-	 */
-	if (primary)
-	{
-		List	   *cmds;
-		ListCell   *keys;
-
-		/*
-		 * If ALTER TABLE, check that there isn't already a PRIMARY KEY. In
-		 * CREATE TABLE, we have faith that the parser rejected multiple pkey
-		 * clauses; and CREATE INDEX doesn't have a way to say PRIMARY KEY, so
-		 * it's no problem either.
-		 */
-		if (is_alter_table &&
-			relationHasPrimaryKey(rel))
-		{
-			ereport(ERROR,
-					(errcode(ERRCODE_INVALID_TABLE_DEFINITION),
-			 errmsg("multiple primary keys for table \"%s\" are not allowed",
-					RelationGetRelationName(rel))));
-		}
-
-		/*
-		 * Check that all of the attributes in a primary key are marked as not
-		 * null, otherwise attempt to ALTER TABLE .. SET NOT NULL
-		 */
-		cmds = NIL;
-		foreach(keys, attributeList)
-		{
-			IndexElem  *key = (IndexElem *) lfirst(keys);
-			HeapTuple	atttuple;
-
-			if (!key->name)
-				ereport(ERROR,
-						(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-						 errmsg("primary keys cannot be expressions")));
-
-			/* System attributes are never null, so no problem */
-			if (SystemAttributeByName(key->name, rel->rd_rel->relhasoids))
-				continue;
-
-			atttuple = SearchSysCacheAttName(relationId, key->name);
-			if (HeapTupleIsValid(atttuple))
-			{
-				if (!((Form_pg_attribute) GETSTRUCT(atttuple))->attnotnull)
-				{
-					/* Add a subcommand to make this one NOT NULL */
-					AlterTableCmd *cmd = makeNode(AlterTableCmd);
-
-					cmd->subtype = AT_SetNotNull;
-					cmd->name = key->name;
-
-					cmds = lappend(cmds, cmd);
-				}
-				ReleaseSysCache(atttuple);
-			}
-			else
-			{
-				/*
-				 * This shouldn't happen during CREATE TABLE, but can happen
-				 * during ALTER TABLE.	Keep message in sync with
-				 * transformIndexConstraints() in parser/parse_utilcmd.c.
-				 */
-				ereport(ERROR,
-						(errcode(ERRCODE_UNDEFINED_COLUMN),
-						 errmsg("column \"%s\" named in key does not exist",
-								key->name)));
-			}
-		}
-
-		/*
-		 * XXX: Shouldn't the ALTER TABLE .. SET NOT NULL cascade to child
-		 * tables?	Currently, since the PRIMARY KEY itself doesn't cascade,
-		 * we don't cascade the notnull constraint(s) either; but this is
-		 * pretty debatable.
-		 *
-		 * XXX: possible future improvement: when being called from ALTER
-		 * TABLE, it would be more efficient to merge this with the outer
-		 * ALTER TABLE, so as to avoid two scans.  But that seems to
-		 * complicate DefineIndex's API unduly.
-		 */
-		if (cmds)
-			AlterTableInternal(relationId, cmds, false);
-	}
-
-	/*
 	 * Parse AM-specific options, convert to text array form, validate.
 	 */
 	reloptions = transformRelOptions((Datum) 0, options, NULL, NULL, false, false);
@@ -440,6 +353,12 @@ DefineIndex(RangeVar *heapRelation,
 					  amcanorder, isconstraint);
 
 	/*
+	 * Extra checks when creating a PRIMARY KEY index.
+	 */
+	if (primary)
+		index_check_primary_key(rel, indexInfo, is_alter_table);
+
+	/*
 	 * Report index creation if appropriate (delay this till after most of the
 	 * error checks)
 	 */
@@ -466,17 +385,12 @@ DefineIndex(RangeVar *heapRelation,
 				  indexRelationName, RelationGetRelationName(rel))));
 	}
 
-	/* save lockrelid and locktag for below, then close rel */
-	heaprelid = rel->rd_lockInfo.lockRelId;
-	SET_LOCKTAG_RELATION(heaplocktag, heaprelid.dbId, heaprelid.relId);
-	heap_close(rel, NoLock);
-
 	/*
 	 * Make the catalog entries for the index, including constraints. Then, if
 	 * not skip_build || concurrent, actually build the index.
 	 */
 	indexRelationId =
-		index_create(relationId, indexRelationName, indexRelationId,
+		index_create(rel, indexRelationName, indexRelationId,
 					 indexInfo, indexColNames,
 					 accessMethodId, tablespaceId, classObjectId,
 					 coloptions, reloptions, primary,
@@ -486,7 +400,16 @@ DefineIndex(RangeVar *heapRelation,
 					 concurrent);
 
 	if (!concurrent)
-		return;					/* We're done, in the standard case */
+	{
+		/* Close the heap and we're done, in the non-concurrent case */
+		heap_close(rel, NoLock);
+		return;
+	}
+
+	/* save lockrelid and locktag for below, then close rel */
+	heaprelid = rel->rd_lockInfo.lockRelId;
+	SET_LOCKTAG_RELATION(heaplocktag, heaprelid.dbId, heaprelid.relId);
+	heap_close(rel, NoLock);
 
 	/*
 	 * For a concurrent build, it's important to make the catalog entries
@@ -1528,44 +1451,6 @@ ChooseIndexColumnNames(List *indexElems)
 		/* And attach to the result list */
 		result = lappend(result, pstrdup(curname));
 	}
-	return result;
-}
-
-/*
- * relationHasPrimaryKey -
- *
- *	See whether an existing relation has a primary key.
- */
-static bool
-relationHasPrimaryKey(Relation rel)
-{
-	bool		result = false;
-	List	   *indexoidlist;
-	ListCell   *indexoidscan;
-
-	/*
-	 * Get the list of index OIDs for the table from the relcache, and look up
-	 * each one in the pg_index syscache until we find one marked primary key
-	 * (hopefully there isn't more than one such).
-	 */
-	indexoidlist = RelationGetIndexList(rel);
-
-	foreach(indexoidscan, indexoidlist)
-	{
-		Oid			indexoid = lfirst_oid(indexoidscan);
-		HeapTuple	indexTuple;
-
-		indexTuple = SearchSysCache1(INDEXRELID, ObjectIdGetDatum(indexoid));
-		if (!HeapTupleIsValid(indexTuple))		/* should not happen */
-			elog(ERROR, "cache lookup failed for index %u", indexoid);
-		result = ((Form_pg_index) GETSTRUCT(indexTuple))->indisprimary;
-		ReleaseSysCache(indexTuple);
-		if (result)
-			break;
-	}
-
-	list_free(indexoidlist);
-
 	return result;
 }
 

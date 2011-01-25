@@ -1210,6 +1210,43 @@ Indexes:
 
 DROP TABLE concur_heap;
 --
+-- Test ADD CONSTRAINT USING INDEX
+--
+CREATE TABLE cwi_test( a int , b varchar(10), c char);
+-- add some data so that all tests have something to work with.
+INSERT INTO cwi_test VALUES(1, 2), (3, 4), (5, 6);
+CREATE UNIQUE INDEX cwi_uniq_idx ON cwi_test(a , b);
+ALTER TABLE cwi_test ADD primary key USING INDEX cwi_uniq_idx;
+\d cwi_test
+          Table "public.cwi_test"
+ Column |         Type          | Modifiers 
+--------+-----------------------+-----------
+ a      | integer               | not null
+ b      | character varying(10) | not null
+ c      | character(1)          | 
+Indexes:
+    "cwi_uniq_idx" PRIMARY KEY, btree (a, b)
+
+CREATE UNIQUE INDEX cwi_uniq2_idx ON cwi_test(b , a);
+ALTER TABLE cwi_test DROP CONSTRAINT cwi_uniq_idx,
+	ADD CONSTRAINT cwi_replaced_pkey PRIMARY KEY
+		USING INDEX cwi_uniq2_idx;
+NOTICE:  ALTER TABLE / ADD CONSTRAINT USING INDEX will rename index "cwi_uniq2_idx" to "cwi_replaced_pkey"
+\d cwi_test
+          Table "public.cwi_test"
+ Column |         Type          | Modifiers 
+--------+-----------------------+-----------
+ a      | integer               | not null
+ b      | character varying(10) | not null
+ c      | character(1)          | 
+Indexes:
+    "cwi_replaced_pkey" PRIMARY KEY, btree (b, a)
+
+DROP INDEX cwi_replaced_pkey;	-- Should fail; a constraint depends on it
+ERROR:  cannot drop index cwi_replaced_pkey because constraint cwi_replaced_pkey on table cwi_test requires it
+HINT:  You can drop constraint cwi_replaced_pkey on table cwi_test instead.
+DROP TABLE cwi_test;
+--
 -- Tests for IS NULL/IS NOT NULL with b-tree indexes
 --
 SELECT unique1, unique2 INTO onek_with_null FROM onek;

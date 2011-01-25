@@ -1142,6 +1142,7 @@ typedef enum AlterTableType
 	AT_AddConstraintRecurse,	/* internal to commands/tablecmds.c */
 	AT_ProcessedConstraint,		/* pre-processed add constraint (local in
 								 * parser/parse_utilcmd.c) */
+	AT_AddIndexConstraint,		/* add constraint using existing index */
 	AT_DropConstraint,			/* drop constraint */
 	AT_DropConstraintRecurse,	/* internal to commands/tablecmds.c */
 	AT_AlterColumnType,			/* alter column type */
@@ -1477,6 +1478,7 @@ typedef struct Constraint
 
 	/* Fields used for index constraints (UNIQUE, PRIMARY KEY, EXCLUSION): */
 	List	   *options;		/* options from WITH clause */
+	char	   *indexname;		/* existing index to use; otherwise NULL */
 	char	   *indexspace;		/* index tablespace; NULL for default */
 	/* These could be, but currently are not, used for UNIQUE/PKEY: */
 	char	   *access_method;	/* index access method; NULL for default */
@@ -1953,6 +1955,12 @@ typedef struct FetchStmt
 
 /* ----------------------
  *		Create Index Statement
+ *
+ * This represents creation of an index and/or an associated constraint.
+ * If indexOid isn't InvalidOid, we are not creating an index, just a
+ * UNIQUE/PKEY constraint using an existing index.  isconstraint must always
+ * be true in this case, and the fields describing the index properties are
+ * empty.
  * ----------------------
  */
 typedef struct IndexStmt
@@ -1966,6 +1974,7 @@ typedef struct IndexStmt
 	List	   *options;		/* options from WITH clause */
 	Node	   *whereClause;	/* qualification (partial-index predicate) */
 	List	   *excludeOpNames; /* exclusion operator names, or NIL if none */
+	Oid			indexOid;		/* OID of an existing index, if any */
 	bool		unique;			/* is index unique? */
 	bool		primary;		/* is index on primary key? */
 	bool		isconstraint;	/* is it from a CONSTRAINT clause? */

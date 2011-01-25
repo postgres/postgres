@@ -422,6 +422,7 @@ static RangeVar *makeRangeVarFromAnyName(List *names, int position, core_yyscan_
 %type <ival>	key_actions key_delete key_match key_update key_action
 %type <ival>	ConstraintAttributeSpec ConstraintDeferrabilitySpec
 				ConstraintTimeSpec
+%type <str>		ExistingIndex
 
 %type <list>	constraints_set_list
 %type <boolean> constraints_set_mode
@@ -2501,6 +2502,7 @@ ColConstraintElem:
 					n->location = @1;
 					n->keys = NULL;
 					n->options = $2;
+					n->indexname = NULL;
 					n->indexspace = $3;
 					$$ = (Node *)n;
 				}
@@ -2511,6 +2513,7 @@ ColConstraintElem:
 					n->location = @1;
 					n->keys = NULL;
 					n->options = $3;
+					n->indexname = NULL;
 					n->indexspace = $4;
 					$$ = (Node *)n;
 				}
@@ -2665,9 +2668,23 @@ ConstraintElem:
 					n->location = @1;
 					n->keys = $3;
 					n->options = $5;
+					n->indexname = NULL;
 					n->indexspace = $6;
 					n->deferrable = ($7 & 1) != 0;
 					n->initdeferred = ($7 & 2) != 0;
+					$$ = (Node *)n;
+				}
+			| UNIQUE ExistingIndex ConstraintAttributeSpec
+				{
+					Constraint *n = makeNode(Constraint);
+					n->contype = CONSTR_UNIQUE;
+					n->location = @1;
+					n->keys = NIL;
+					n->options = NIL;
+					n->indexname = $2;
+					n->indexspace = NULL;
+					n->deferrable = ($3 & 1) != 0;
+					n->initdeferred = ($3 & 2) != 0;
 					$$ = (Node *)n;
 				}
 			| PRIMARY KEY '(' columnList ')' opt_definition OptConsTableSpace
@@ -2678,9 +2695,23 @@ ConstraintElem:
 					n->location = @1;
 					n->keys = $4;
 					n->options = $6;
+					n->indexname = NULL;
 					n->indexspace = $7;
 					n->deferrable = ($8 & 1) != 0;
 					n->initdeferred = ($8 & 2) != 0;
+					$$ = (Node *)n;
+				}
+			| PRIMARY KEY ExistingIndex ConstraintAttributeSpec
+				{
+					Constraint *n = makeNode(Constraint);
+					n->contype = CONSTR_PRIMARY;
+					n->location = @1;
+					n->keys = NIL;
+					n->options = NIL;
+					n->indexname = $3;
+					n->indexspace = NULL;
+					n->deferrable = ($4 & 1) != 0;
+					n->initdeferred = ($4 & 2) != 0;
 					$$ = (Node *)n;
 				}
 			| EXCLUDE access_method_clause '(' ExclusionConstraintList ')'
@@ -2693,6 +2724,7 @@ ConstraintElem:
 					n->access_method	= $2;
 					n->exclusions		= $4;
 					n->options			= $6;
+					n->indexname		= NULL;
 					n->indexspace		= $7;
 					n->where_clause		= $8;
 					n->deferrable		= ($9 & 1) != 0;
@@ -2835,6 +2867,9 @@ OptTableSpace:   TABLESPACE name					{ $$ = $2; }
 
 OptConsTableSpace:   USING INDEX TABLESPACE name	{ $$ = $4; }
 			| /*EMPTY*/								{ $$ = NULL; }
+		;
+
+ExistingIndex:   USING INDEX index_name				{ $$ = $3; }
 		;
 
 
@@ -5230,6 +5265,7 @@ IndexStmt:	CREATE opt_unique INDEX opt_concurrently opt_index_name
 					n->options = $12;
 					n->tableSpace = $13;
 					n->whereClause = $14;
+					n->indexOid = InvalidOid;
 					$$ = (Node *)n;
 				}
 		;
