@@ -20,7 +20,9 @@
  */
 #define FSYNC_FILENAME	"./pg_test_fsync.out"
 
-#define WRITE_SIZE	(8 * 1024)	/* 8k */
+#if XLOG_BLCKSZ != 8 * 1024  /* 8k */
+#error Unknown block size for test.
+#endif
 
 #define LABEL_FORMAT		"        %-32s"
 #define NA_FORMAT			LABEL_FORMAT "%18s"
@@ -198,7 +200,7 @@ test_sync(int writes_per_op)
 	for (ops = 0; ops < ops_per_test; ops++)
 	{
 		for (writes = 0; writes < writes_per_op; writes++)
-			if (write(tmpfile, buf, WRITE_SIZE) != WRITE_SIZE)
+			if (write(tmpfile, buf, XLOG_BLCKSZ) != XLOG_BLCKSZ)
 				die("write failed");
 		if (lseek(tmpfile, 0, SEEK_SET) == -1)
 			die("seek failed");
@@ -225,7 +227,7 @@ test_sync(int writes_per_op)
 		for (ops = 0; ops < ops_per_test; ops++)
 		{
 			for (writes = 0; writes < writes_per_op; writes++)
-				if (write(tmpfile, buf, WRITE_SIZE) != WRITE_SIZE)
+				if (write(tmpfile, buf, XLOG_BLCKSZ) != XLOG_BLCKSZ)
 					die("write failed");
 			if (lseek(tmpfile, 0, SEEK_SET) == -1)
 				die("seek failed");
@@ -253,7 +255,7 @@ test_sync(int writes_per_op)
 	for (ops = 0; ops < ops_per_test; ops++)
 	{
 		for (writes = 0; writes < writes_per_op; writes++)
-			if (write(tmpfile, buf, WRITE_SIZE) != WRITE_SIZE)
+			if (write(tmpfile, buf, XLOG_BLCKSZ) != XLOG_BLCKSZ)
 				die("write failed");
 		fdatasync(tmpfile);
 		if (lseek(tmpfile, 0, SEEK_SET) == -1)
@@ -278,7 +280,7 @@ test_sync(int writes_per_op)
 	for (ops = 0; ops < ops_per_test; ops++)
 	{
 		for (writes = 0; writes < writes_per_op; writes++)
-			if (write(tmpfile, buf, WRITE_SIZE) != WRITE_SIZE)
+			if (write(tmpfile, buf, XLOG_BLCKSZ) != XLOG_BLCKSZ)
 				die("write failed");
 		if (fsync(tmpfile) != 0)
 			die("fsync failed");
@@ -302,7 +304,7 @@ test_sync(int writes_per_op)
 	for (ops = 0; ops < ops_per_test; ops++)
 	{
 		for (writes = 0; writes < writes_per_op; writes++)
-			if (write(tmpfile, buf, WRITE_SIZE) != WRITE_SIZE)
+			if (write(tmpfile, buf, XLOG_BLCKSZ) != XLOG_BLCKSZ)
 				die("write failed");
 		if (pg_fsync_writethrough(tmpfile) != 0)
 			die("fsync failed");
@@ -333,7 +335,7 @@ test_sync(int writes_per_op)
 	for (ops = 0; ops < ops_per_test; ops++)
 	{
 		for (writes = 0; writes < writes_per_op; writes++)
-			if (write(tmpfile, buf, WRITE_SIZE) != WRITE_SIZE)
+			if (write(tmpfile, buf, XLOG_BLCKSZ) != XLOG_BLCKSZ)
 				die("write failed");
 		if (lseek(tmpfile, 0, SEEK_SET) == -1)
 			die("seek failed");
@@ -360,7 +362,7 @@ test_sync(int writes_per_op)
 		for (ops = 0; ops < ops_per_test; ops++)
 		{
 			for (writes = 0; writes < writes_per_op; writes++)
-				if (write(tmpfile, buf, WRITE_SIZE) != WRITE_SIZE)
+				if (write(tmpfile, buf, XLOG_BLCKSZ) != XLOG_BLCKSZ)
 					die("write failed");
 			if (lseek(tmpfile, 0, SEEK_SET) == -1)
 				die("seek failed");
@@ -465,7 +467,7 @@ test_file_descriptor_sync(void)
 	{
 		if ((tmpfile = open(filename, O_RDWR, 0)) == -1)
 			die("could not open output file");
-		if (write(tmpfile, buf, WRITE_SIZE) != WRITE_SIZE)
+		if (write(tmpfile, buf, XLOG_BLCKSZ) != XLOG_BLCKSZ)
 			die("write failed");
 		if (fsync(tmpfile) != 0)
 			die("fsync failed");
@@ -494,7 +496,7 @@ test_file_descriptor_sync(void)
 	{
 		if ((tmpfile = open(filename, O_RDWR, 0)) == -1)
 			die("could not open output file");
-		if (write(tmpfile, buf, WRITE_SIZE) != WRITE_SIZE)
+		if (write(tmpfile, buf, XLOG_BLCKSZ) != XLOG_BLCKSZ)
 			die("write failed");
 		close(tmpfile);
 		/* reopen file */
@@ -526,7 +528,7 @@ test_non_sync(void)
 	{
 		if ((tmpfile = open(filename, O_RDWR, 0)) == -1)
 			die("could not open output file");
-		if (write(tmpfile, buf, WRITE_SIZE) != WRITE_SIZE)
+		if (write(tmpfile, buf, XLOG_BLCKSZ) != XLOG_BLCKSZ)
 			die("write failed");
 		close(tmpfile);
 	}
