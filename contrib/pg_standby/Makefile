@@ -1,7 +1,7 @@
 # contrib/pg_standby/Makefile
 
 PGFILEDESC = "pg_standby - supports creation of a warm standby"
-PGAPPICON=win32
+PGAPPICON = win32
 
 PROGRAM = pg_standby
 OBJS	= pg_standby.o

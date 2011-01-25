@@ -1,7 +1,7 @@
 # contrib/pgbench/Makefile
 
 PGFILEDESC = "pgbench - a simple program for running benchmark tests"
-PGAPPICON=win32
+PGAPPICON = win32
 
 PROGRAM = pgbench
 OBJS	= pgbench.o

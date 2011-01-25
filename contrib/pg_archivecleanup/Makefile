@@ -1,7 +1,7 @@
 # contrib/pg_archivecleanup/Makefile
 
 PGFILEDESC = "pg_archivecleanup - cleans archive when used with streaming replication"
-PGAPPICON=win32
+PGAPPICON = win32
 
 PROGRAM = pg_archivecleanup
 OBJS	= pg_archivecleanup.o
