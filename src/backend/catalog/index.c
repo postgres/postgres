@@ -96,10 +96,11 @@ static void UpdateIndexRelation(Oid indexoid, Oid heapoid,
 					Oid *classOids,
 					int16 *coloptions,
 					bool primary,
+					bool isexclusion,
 					bool immediate,
 					bool isvalid);
 static void index_update_stats(Relation rel,
-				   bool hasindex, bool isprimary, bool hasexclusion,
+				   bool hasindex, bool isprimary,
 				   Oid reltoastidxid, double reltuples);
 static void IndexCheckExclusion(Relation heapRelation,
 					Relation indexRelation,
@@ -523,6 +524,7 @@ UpdateIndexRelation(Oid indexoid,
 					Oid *classOids,
 					int16 *coloptions,
 					bool primary,
+					bool isexclusion,
 					bool immediate,
 					bool isvalid)
 {
@@ -591,6 +593,7 @@ UpdateIndexRelation(Oid indexoid,
 	values[Anum_pg_index_indnatts - 1] = Int16GetDatum(indexInfo->ii_NumIndexAttrs);
 	values[Anum_pg_index_indisunique - 1] = BoolGetDatum(indexInfo->ii_Unique);
 	values[Anum_pg_index_indisprimary - 1] = BoolGetDatum(primary);
+	values[Anum_pg_index_indisexclusion - 1] = BoolGetDatum(isexclusion);
 	values[Anum_pg_index_indimmediate - 1] = BoolGetDatum(immediate);
 	values[Anum_pg_index_indisclustered - 1] = BoolGetDatum(false);
 	values[Anum_pg_index_indisvalid - 1] = BoolGetDatum(isvalid);
@@ -819,7 +822,6 @@ index_create(Relation heapRelation,
 	indexRelation->rd_rel->relam = accessMethodObjectId;
 	indexRelation->rd_rel->relkind = RELKIND_INDEX;
 	indexRelation->rd_rel->relhasoids = false;
-	indexRelation->rd_rel->relhasexclusion = is_exclusion;
 
 	/*
 	 * store index's pg_class entry
@@ -854,7 +856,7 @@ index_create(Relation heapRelation,
 	 * ----------------
 	 */
 	UpdateIndexRelation(indexRelationId, heapRelationId, indexInfo,
-						classObjectId, coloptions, isprimary,
+						classObjectId, coloptions, isprimary, is_exclusion,
 						!deferrable,
 						!concurrent);
 
@@ -1024,7 +1026,6 @@ index_create(Relation heapRelation,
 		index_update_stats(heapRelation,
 						   true,
 						   isprimary,
-						   is_exclusion,
 						   InvalidOid,
 						   heapRelation->rd_rel->reltuples);
 		/* Make the above update visible */
@@ -1190,7 +1191,6 @@ index_constraint_create(Relation heapRelation,
 		index_update_stats(heapRelation,
 						   true,
 						   true,
-						   false,
 						   InvalidOid,
 						   heapRelation->rd_rel->reltuples);
 
@@ -1375,7 +1375,7 @@ BuildIndexInfo(Relation index)
 	ii->ii_PredicateState = NIL;
 
 	/* fetch exclusion constraint info if any */
-	if (index->rd_rel->relhasexclusion)
+	if (indexStruct->indisexclusion)
 	{
 		RelationGetExclusionInfo(index,
 								 &ii->ii_ExclusionOps,
@@ -1486,7 +1486,6 @@ FormIndexDatum(IndexInfo *indexInfo,
  *
  * hasindex: set relhasindex to this value
  * isprimary: if true, set relhaspkey true; else no change
- * hasexclusion: if true, set relhasexclusion true; else no change
  * reltoastidxid: if not InvalidOid, set reltoastidxid to this value;
  *		else no change
  * reltuples: set reltuples to this value
@@ -1503,7 +1502,7 @@ FormIndexDatum(IndexInfo *indexInfo,
  */
 static void
 index_update_stats(Relation rel,
-				   bool hasindex, bool isprimary, bool hasexclusion,
+				   bool hasindex, bool isprimary,
 				   Oid reltoastidxid, double reltuples)
 {
 	BlockNumber relpages = RelationGetNumberOfBlocks(rel);
@@ -1542,9 +1541,9 @@ index_update_stats(Relation rel,
 	 * It is safe to use a non-transactional update even though our
 	 * transaction could still fail before committing.	Setting relhasindex
 	 * true is safe even if there are no indexes (VACUUM will eventually fix
-	 * it), likewise for relhaspkey and relhasexclusion.  And of course the
-	 * relpages and reltuples counts are correct (or at least more so than the
-	 * old values) regardless.
+	 * it), likewise for relhaspkey.  And of course the relpages and reltuples
+	 * counts are correct (or at least more so than the old values)
+	 * regardless.
 	 */
 
 	pg_class = heap_open(RelationRelationId, RowExclusiveLock);
@@ -1594,14 +1593,6 @@ index_update_stats(Relation rel,
 		if (!rd_rel->relhaspkey)
 		{
 			rd_rel->relhaspkey = true;
-			dirty = true;
-		}
-	}
-	if (hasexclusion)
-	{
-		if (!rd_rel->relhasexclusion)
-		{
-			rd_rel->relhasexclusion = true;
 			dirty = true;
 		}
 	}
@@ -1760,13 +1751,11 @@ index_build(Relation heapRelation,
 	index_update_stats(heapRelation,
 					   true,
 					   isprimary,
-					   (indexInfo->ii_ExclusionOps != NULL),
 					   (heapRelation->rd_rel->relkind == RELKIND_TOASTVALUE) ?
 					   RelationGetRelid(indexRelation) : InvalidOid,
 					   stats->heap_tuples);
 
 	index_update_stats(indexRelation,
-					   false,
 					   false,
 					   false,
 					   InvalidOid,

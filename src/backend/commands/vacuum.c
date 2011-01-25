@@ -524,21 +524,12 @@ vac_update_relstats(Relation relation,
 
 	/*
 	 * If we have discovered that there are no indexes, then there's no
-	 * primary key either, nor any exclusion constraints.  This could be done
-	 * more thoroughly...
+	 * primary key either.  This could be done more thoroughly...
 	 */
-	if (!hasindex)
+	if (pgcform->relhaspkey && !hasindex)
 	{
-		if (pgcform->relhaspkey)
-		{
-			pgcform->relhaspkey = false;
-			dirty = true;
-		}
-		if (pgcform->relhasexclusion && pgcform->relkind != RELKIND_INDEX)
-		{
-			pgcform->relhasexclusion = false;
-			dirty = true;
-		}
+		pgcform->relhaspkey = false;
+		dirty = true;
 	}
 
 	/* We also clear relhasrules and relhastriggers if needed */

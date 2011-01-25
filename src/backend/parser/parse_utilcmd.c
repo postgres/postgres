@@ -949,7 +949,7 @@ generateClonedIndexStmt(CreateStmtContext *cxt, Relation source_idx,
 	 * certainly isn't.  If it is or might be from a constraint, we have to
 	 * fetch the pg_constraint record.
 	 */
-	if (index->primary || index->unique || idxrelrec->relhasexclusion)
+	if (index->primary || index->unique || idxrec->indisexclusion)
 	{
 		Oid			constraintId = get_index_constraint(source_relid);
 
@@ -970,7 +970,7 @@ generateClonedIndexStmt(CreateStmtContext *cxt, Relation source_idx,
 			index->initdeferred = conrec->condeferred;
 
 			/* If it's an exclusion constraint, we need the operator names */
-			if (idxrelrec->relhasexclusion)
+			if (idxrec->indisexclusion)
 			{
 				Datum	   *elems;
 				int			nElems;

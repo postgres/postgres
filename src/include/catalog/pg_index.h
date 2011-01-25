@@ -35,6 +35,7 @@ CATALOG(pg_index,2610) BKI_WITHOUT_OIDS BKI_SCHEMA_MACRO
 	int2		indnatts;		/* number of columns in index */
 	bool		indisunique;	/* is this a unique index? */
 	bool		indisprimary;	/* is this index for primary key? */
+	bool		indisexclusion;	/* is this index for exclusion constraint? */
 	bool		indimmediate;	/* is uniqueness enforced immediately? */
 	bool		indisclustered; /* is this the index last clustered by? */
 	bool		indisvalid;		/* is this index valid for use by queries? */
@@ -63,22 +64,23 @@ typedef FormData_pg_index *Form_pg_index;
  *		compiler constants for pg_index
  * ----------------
  */
-#define Natts_pg_index					15
+#define Natts_pg_index					16
 #define Anum_pg_index_indexrelid		1
 #define Anum_pg_index_indrelid			2
 #define Anum_pg_index_indnatts			3
 #define Anum_pg_index_indisunique		4
 #define Anum_pg_index_indisprimary		5
-#define Anum_pg_index_indimmediate		6
-#define Anum_pg_index_indisclustered	7
-#define Anum_pg_index_indisvalid		8
-#define Anum_pg_index_indcheckxmin		9
-#define Anum_pg_index_indisready		10
-#define Anum_pg_index_indkey			11
-#define Anum_pg_index_indclass			12
-#define Anum_pg_index_indoption			13
-#define Anum_pg_index_indexprs			14
-#define Anum_pg_index_indpred			15
+#define Anum_pg_index_indisexclusion	6
+#define Anum_pg_index_indimmediate		7
+#define Anum_pg_index_indisclustered	8
+#define Anum_pg_index_indisvalid		9
+#define Anum_pg_index_indcheckxmin		10
+#define Anum_pg_index_indisready		11
+#define Anum_pg_index_indkey			12
+#define Anum_pg_index_indclass			13
+#define Anum_pg_index_indoption			14
+#define Anum_pg_index_indexprs			15
+#define Anum_pg_index_indpred			16
 
 /*
  * Index AMs that support ordered scans must support these two indoption

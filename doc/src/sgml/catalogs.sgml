@@ -1707,17 +1707,6 @@
      </row>
 
      <row>
-      <entry><structfield>relhasexclusion</structfield></entry>
-      <entry><type>bool</type></entry>
-      <entry></entry>
-      <entry>
-       For a table, true if the table has (or once had) any exclusion
-       constraints; for an index, true if the index supports an exclusion
-       constraint
-      </entry>
-     </row>
-
-     <row>
       <entry><structfield>relhasrules</structfield></entry>
       <entry><type>bool</type></entry>
       <entry></entry>
@@ -2046,8 +2035,7 @@
    <para>
     <literal>pg_class.relchecks</literal> needs to agree with the
     number of check-constraint entries found in this table for each
-    relation.  Also, <literal>pg_class.relhasexclusion</literal> must
-    be true if there are any exclusion-constraint entries for the relation.
+    relation.
    </para>
   </note>
 
@@ -3057,11 +3045,19 @@
      </row>
 
      <row>
+      <entry><structfield>indisexclusion</structfield></entry>
+      <entry><type>bool</type></entry>
+      <entry></entry>
+      <entry>If true, this index supports an exclusion constraint</entry>
+     </row>
+
+     <row>
       <entry><structfield>indimmediate</structfield></entry>
       <entry><type>bool</type></entry>
       <entry></entry>
-      <entry>If true, the uniqueness check is enforced immediately on insertion
-      (<structfield>indisunique</> should always be true when this is true)</entry>
+      <entry>If true, the uniqueness check is enforced immediately on
+       insertion
+       (irrelevant if <structfield>indisunique</> is not true)</entry>
      </row>
 
      <row>
