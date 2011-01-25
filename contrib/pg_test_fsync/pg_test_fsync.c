@@ -421,7 +421,8 @@ test_open_sync(const char *msg, int writes_size)
 		for (ops = 0; ops < ops_per_test; ops++)
 		{
 			for (writes = 0; writes < 16 / writes_size; writes++)
-				if (write(tmpfile, buf, writes_size) != writes_size)
+				if (write(tmpfile, buf, writes_size * 1024) !=
+					writes_size * 1024)
 					die("write failed");
 			if (lseek(tmpfile, 0, SEEK_SET) == -1)
 				die("seek failed");
