@@ -264,7 +264,7 @@ ALTER FOREIGN TABLE <replaceable class="PARAMETER">name</replaceable>
     added or removed with <literal>ADD COLUMN</literal> or
     <literal>DROP COLUMN</literal>, a system <literal>oid</> column is added
     or removed, a <literal>CHECK</> or <literal>NOT NULL</> constraint is
-    added, or column type is changed with <literal>ALTER TYPE</>.  It is the
+    added, or column type is changed with <literal>SET DATA TYPE</>.  It is the
     user's responsibility to ensure that the table definition matches the
     remote side.
    </para>
