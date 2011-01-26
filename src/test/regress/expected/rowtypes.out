@@ -82,11 +82,14 @@ select * from people;
  (Joe,Blow) | 01-10-1984
 (1 row)
 
--- at the moment this will not work due to ALTER TABLE inadequacy:
+-- the default doesn't need to propagate through to the rowtypes, so this is OK
 alter table fullname add column suffix text default '';
-ERROR:  cannot alter table "fullname" because column "people"."fn" uses its rowtype
--- but this should work:
+alter table fullname drop column suffix;
+-- this one, without a default, is OK too
 alter table fullname add column suffix text default null;
+-- but this should fail, due to ALTER TABLE inadequacy
+alter table fullname alter column suffix set data type integer using null;
+ERROR:  cannot alter table "fullname" because column "people"."fn" uses its rowtype
 select * from people;
      fn      |     bd     
 -------------+------------

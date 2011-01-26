@@ -45,11 +45,15 @@ insert into people values ('(Joe,Blow)', '1984-01-10');
 
 select * from people;
 
--- at the moment this will not work due to ALTER TABLE inadequacy:
+-- the default doesn't need to propagate through to the rowtypes, so this is OK
 alter table fullname add column suffix text default '';
+alter table fullname drop column suffix;
 
--- but this should work:
+-- this one, without a default, is OK too
 alter table fullname add column suffix text default null;
+
+-- but this should fail, due to ALTER TABLE inadequacy
+alter table fullname alter column suffix set data type integer using null;
 
 select * from people;
 
