@@ -4942,7 +4942,9 @@ ATExecDropColumn(List **wqueue, Relation rel, const char *colName,
 
 	/*
 	 * If we dropped the OID column, must adjust pg_class.relhasoids and tell
-	 * Phase 3 to physically get rid of the column.
+	 * Phase 3 to physically get rid of the column.  We formerly left the
+	 * column in place physically, but this caused subtle problems.  See
+	 * http://archives.postgresql.org/pgsql-hackers/2009-02/msg00363.php
 	 */
 	if (attnum == ObjectIdAttributeNumber)
 	{
