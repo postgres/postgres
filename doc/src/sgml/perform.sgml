@@ -1159,7 +1159,7 @@ SELECT * FROM x, y, a, b, c WHERE something AND somethingelse;
       <para>
        Turn off <xref linkend="guc-synchronous-commit">;  there might be no
        need to write the <acronym>WAL</acronym> to disk on every
-       commit.  This does affect database crash transaction durability.
+       commit.  This can cause transaction loss after a server crash.
       </para>
      </listitem>
     </itemizedlist>
