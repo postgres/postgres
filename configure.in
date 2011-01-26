@@ -429,6 +429,8 @@ if test "$GCC" = yes -a "$ICC" = no; then
   # These work in some but not all gcc versions
   PGAC_PROG_CC_CFLAGS_OPT([-Wdeclaration-after-statement])
   PGAC_PROG_CC_CFLAGS_OPT([-Wendif-labels])
+  # This was included in -Wall/-Wformat in older GCC versions
+  PGAC_PROG_CC_CFLAGS_OPT([-Wformat-security])
   # Disable strict-aliasing rules; needed for gcc 3.3+
   PGAC_PROG_CC_CFLAGS_OPT([-fno-strict-aliasing])
   # Disable optimizations that assume no overflow; needed for gcc 4.3+
