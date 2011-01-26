@@ -982,7 +982,7 @@ ALTER TABLE myschema.distributors SET SCHEMA yourschema;
    To recreate a primary key constraint, without blocking updates while the
    index is rebuilt:
 <programlisting>
-CREATE UNIQUE INDEX CONCURRENTLY dist_id_temp_idx on distributors (dist_id);
+CREATE UNIQUE INDEX CONCURRENTLY dist_id_temp_idx ON distributors (dist_id);
 ALTER TABLE distributors DROP CONSTRAINT distributors_pkey,
     ADD CONSTRAINT distributors_pkey PRIMARY KEY USING INDEX dist_id_temp_idx;
 </programlisting>
