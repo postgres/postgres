@@ -294,7 +294,7 @@ static char *PLy_procedure_name(PLyProcedure *);
 static void
 PLy_elog(int, const char *,...)
 __attribute__((format(printf, 2, 3)));
-static void PLy_get_spi_error_data(PyObject *exc, char **hint, char **query, int *position);
+static void PLy_get_spi_error_data(PyObject *exc, char **detail, char **hint, char **query, int *position);
 static char *PLy_traceback(int *);
 
 static void *PLy_malloc(size_t);
@@ -3551,7 +3551,7 @@ PLy_spi_exception_set(ErrorData *edata)
 	if (!spierror)
 		goto failure;
 
-	spidata = Py_BuildValue("(zzi)", edata->hint,
+	spidata = Py_BuildValue("(zzzi)", edata->detail, edata->hint,
 							edata->internalquery, edata->internalpos);
 	if (!spidata)
 		goto failure;
@@ -3586,13 +3586,14 @@ PLy_elog(int elevel, const char *fmt,...)
 	int			xlevel;
 	StringInfoData emsg;
 	PyObject	*exc, *val, *tb;
+	char		*detail = NULL;
 	char		*hint = NULL;
 	char		*query = NULL;
 	int			position = 0;
 
 	PyErr_Fetch(&exc, &val, &tb);
 	if (exc != NULL && PyErr_GivenExceptionMatches(val, PLy_exc_spi_error))
-		PLy_get_spi_error_data(val, &hint, &query, &position);
+		PLy_get_spi_error_data(val, &detail, &hint, &query, &position);
 	PyErr_Restore(exc, val, tb);
 
 	xmsg = PLy_traceback(&xlevel);
@@ -3626,6 +3627,7 @@ PLy_elog(int elevel, const char *fmt,...)
 		else
 			ereport(elevel,
 					(errmsg("PL/Python: %s", xmsg),
+					 (detail) ? errdetail("%s", detail) : 0,
 					 (hint) ? errhint("%s", hint) : 0,
 					 (query) ? internalerrquery(query) : 0,
 					 (position) ? internalerrposition(position) : 0));
@@ -3650,7 +3652,7 @@ PLy_elog(int elevel, const char *fmt,...)
  * Extract the error data from a SPIError
  */
 static void
-PLy_get_spi_error_data(PyObject *exc, char **hint, char **query, int *position)
+PLy_get_spi_error_data(PyObject *exc, char **detail, char **hint, char **query, int *position)
 {
 	PyObject	*spidata = NULL;
 
@@ -3658,7 +3660,7 @@ PLy_get_spi_error_data(PyObject *exc, char **hint, char **query, int *position)
 	if (!spidata)
 		goto cleanup;
 
-	if (!PyArg_ParseTuple(spidata, "zzi", hint, query, position))
+	if (!PyArg_ParseTuple(spidata, "zzzi", detail, hint, query, position))
 		goto cleanup;
 
 cleanup:
