@@ -850,7 +850,6 @@ with_gnu_ld
 enable_largefile
 enable_float4_byval
 enable_float8_byval
-enable_float8_byval
 '
       ac_precious_vars='build_alias
 host_alias
@@ -861,7 +860,6 @@ LDFLAGS
 LIBS
 CPPFLAGS
 CPP
-CPPFLAGS
 LDFLAGS_EX
 LDFLAGS_SL
 DOCBOOKSTYLE'

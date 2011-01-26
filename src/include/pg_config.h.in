@@ -305,6 +305,9 @@
 /* Define if you have a function readline library */
 #undef HAVE_LIBREADLINE
 
+/* Define to 1 if you have the `selinux' library (-lselinux). */
+#undef HAVE_LIBSELINUX
+
 /* Define to 1 if you have the `ssl' library (-lssl). */
 #undef HAVE_LIBSSL
 
