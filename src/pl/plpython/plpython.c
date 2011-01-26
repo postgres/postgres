@@ -3465,7 +3465,7 @@ PLy_output(volatile int level, PyObject *self, PyObject *args)
 		Py_XDECREF(so);
 
 		/* Make Python raise the exception */
-		PLy_exception_set(PLy_exc_error, edata->message);
+		PLy_exception_set(PLy_exc_error, "%s", edata->message);
 		return NULL;
 	}
 	PG_END_TRY();
@@ -3620,13 +3620,13 @@ PLy_elog(int elevel, const char *fmt,...)
 			ereport(elevel,
 					(errmsg("PL/Python: %s", emsg.data),
 					 (xmsg) ? errdetail("%s", xmsg) : 0,
-					 (hint) ? errhint(hint) : 0,
+					 (hint) ? errhint("%s", hint) : 0,
 					 (query) ? internalerrquery(query) : 0,
 					 (position) ? internalerrposition(position) : 0));
 		else
 			ereport(elevel,
 					(errmsg("PL/Python: %s", xmsg),
-					 (hint) ? errhint(hint) : 0,
+					 (hint) ? errhint("%s", hint) : 0,
 					 (query) ? internalerrquery(query) : 0,
 					 (position) ? internalerrposition(position) : 0));
 	}
