@@ -175,9 +175,9 @@ test_sync(int writes_per_op)
 	bool		fs_warning = false;
 
 	if (writes_per_op == 1)
-		printf("\nCompare file sync methods using one %dK write:\n", XLOG_BLCKSZ_K);
+		printf("\nCompare file sync methods using one %dkB write:\n", XLOG_BLCKSZ_K);
 	else
-		printf("\nCompare file sync methods using two %dK writes:\n", XLOG_BLCKSZ_K);
+		printf("\nCompare file sync methods using two %dkB writes:\n", XLOG_BLCKSZ_K);
 	printf("(in wal_sync_method preference order, except fdatasync\n");
 	printf("is Linux's default)\n");
 
@@ -391,14 +391,14 @@ static void
 test_open_syncs(void)
 {
 	printf("\nCompare open_sync with different write sizes:\n");
-	printf("(This is designed to compare the cost of writing 16K\n");
+	printf("(This is designed to compare the cost of writing 16kB\n");
 	printf("in different write open_sync sizes.)\n");
 
-	test_open_sync("16K open_sync write", 16);
-	test_open_sync(" 8K open_sync writes", 8);
-	test_open_sync(" 4K open_sync writes", 4);
-	test_open_sync(" 2K open_sync writes", 2);
-	test_open_sync(" 1K open_sync writes", 1);
+	test_open_sync("16kB open_sync write", 16);
+	test_open_sync(" 8kB open_sync writes", 8);
+	test_open_sync(" 4kB open_sync writes", 4);
+	test_open_sync(" 2kB open_sync writes", 2);
+	test_open_sync(" 1kB open_sync writes", 1);
 }
 
 /*
@@ -517,7 +517,7 @@ test_non_sync(void)
 	/*
 	 * Test a simple write without fsync
 	 */
-	printf("\nNon-Sync'ed %dK writes:\n", XLOG_BLCKSZ_K);
+	printf("\nNon-Sync'ed %dkB writes:\n", XLOG_BLCKSZ_K);
 	printf(LABEL_FORMAT, "write");
 	fflush(stdout);
 
