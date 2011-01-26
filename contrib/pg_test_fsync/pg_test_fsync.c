@@ -20,9 +20,7 @@
  */
 #define FSYNC_FILENAME	"./pg_test_fsync.out"
 
-#if XLOG_BLCKSZ != 8 * 1024  /* 8k */
-#error Unknown block size for test.
-#endif
+#define XLOG_BLCKSZ_K	(XLOG_BLCKSZ / 1024)
 
 #define LABEL_FORMAT		"        %-32s"
 #define NA_FORMAT			LABEL_FORMAT "%18s"
@@ -61,10 +59,10 @@ main(int argc, char *argv[])
 
 	test_open();
 
-	/* Test using 1 8k write */
+	/* Test using 1 XLOG_BLCKSZ write */
 	test_sync(1);
 
-	/* Test using 2 8k writes */
+	/* Test using 2 XLOG_BLCKSZ writes */
 	test_sync(2);
 
 	test_open_syncs();
@@ -177,9 +175,9 @@ test_sync(int writes_per_op)
 	bool		fs_warning = false;
 
 	if (writes_per_op == 1)
-		printf("\nCompare file sync methods using one 8k write:\n");
+		printf("\nCompare file sync methods using one %dk write:\n", XLOG_BLCKSZ_K);
 	else
-		printf("\nCompare file sync methods using two 8k writes:\n");
+		printf("\nCompare file sync methods using two %dk writes:\n", XLOG_BLCKSZ_K);
 	printf("(in wal_sync_method preference order, except fdatasync\n");
 	printf("is Linux's default)\n");
 
@@ -396,11 +394,11 @@ test_open_syncs(void)
 	printf("(This is designed to compare the cost of writing 16k\n");
 	printf("in different write open_sync sizes.)\n");
 
-	test_open_sync(" 1 16k open_sync write", 16);
-	test_open_sync(" 2  8k open_sync writes", 8);
-	test_open_sync(" 4  4k open_sync writes", 4);
-	test_open_sync(" 8  2k open_sync writes", 2);
-	test_open_sync("16  1k open_sync writes", 1);
+	test_open_sync("16k open_sync write", 16);
+	test_open_sync(" 8k open_sync writes", 8);
+	test_open_sync(" 4k open_sync writes", 4);
+	test_open_sync(" 2k open_sync writes", 2);
+	test_open_sync(" 1k open_sync writes", 1);
 }
 
 /*
@@ -519,7 +517,7 @@ test_non_sync(void)
 	/*
 	 * Test a simple write without fsync
 	 */
-	printf("\nNon-sync'ed 8k writes:\n");
+	printf("\nNon-sync'ed %dk writes:\n", XLOG_BLCKSZ_K);
 	printf(LABEL_FORMAT, "write");
 	fflush(stdout);
 
