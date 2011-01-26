@@ -2820,15 +2820,11 @@ PLy_spi_prepare(PyObject *self, PyObject *args)
 	int			nargs;
 
 	if (!PyArg_ParseTuple(args, "s|O", &query, &list))
-	{
-		PLy_exception_set(PLy_exc_spi_error,
-						  "invalid arguments for plpy.prepare");
 		return NULL;
-	}
 
 	if (list && (!PySequence_Check(list)))
 	{
-		PLy_exception_set(PLy_exc_spi_error,
+		PLy_exception_set(PyExc_TypeError,
 					   "second argument of plpy.prepare must be a sequence");
 		return NULL;
 	}
@@ -2984,7 +2980,7 @@ PLy_spi_execute_plan(PyObject *ob, PyObject *list, long limit)
 	{
 		if (!PySequence_Check(list) || PyString_Check(list) || PyUnicode_Check(list))
 		{
-			PLy_exception_set(PLy_exc_spi_error, "plpy.execute takes a sequence as its second argument");
+			PLy_exception_set(PyExc_TypeError, "plpy.execute takes a sequence as its second argument");
 			return NULL;
 		}
 		nargs = PySequence_Length(list);
@@ -3002,7 +2998,7 @@ PLy_spi_execute_plan(PyObject *ob, PyObject *list, long limit)
 		if (!so)
 			PLy_elog(ERROR, "could not execute plan");
 		sv = PyString_AsString(so);
-		PLy_exception_set_plural(PLy_exc_spi_error,
+		PLy_exception_set_plural(PyExc_TypeError,
 							  "Expected sequence of %d argument, got %d: %s",
 							 "Expected sequence of %d arguments, got %d: %s",
 								 plan->nargs,
@@ -3089,7 +3085,7 @@ PLy_spi_execute_plan(PyObject *ob, PyObject *list, long limit)
 		}
 
 		if (!PyErr_Occurred())
-			PLy_exception_set(PLy_exc_error,
+			PLy_exception_set(PLy_exc_spi_error,
 							  "unrecognized error in PLy_spi_execute_plan");
 		PLy_elog(WARNING, NULL);
 		PLy_spi_exception_set(edata);

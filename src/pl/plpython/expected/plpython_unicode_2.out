@@ -39,7 +39,7 @@ SELECT * FROM unicode_test;
 (0 rows)
 
 SELECT unicode_plan1();
-WARNING:  PL/Python: plpy.Error: unrecognized error in PLy_spi_execute_plan
+WARNING:  PL/Python: plpy.SPIError: unrecognized error in PLy_spi_execute_plan
 CONTEXT:  PL/Python function "unicode_plan1"
 ERROR:  PL/Python: plpy.SPIError: PL/Python: could not convert Python Unicode object to PostgreSQL server encoding
 DETAIL:  UnicodeError: ASCII encoding error: ordinal not in range(128)
