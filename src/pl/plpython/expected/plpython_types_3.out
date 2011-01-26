@@ -596,7 +596,7 @@ CREATE FUNCTION test_type_conversion_array_error() RETURNS int[] AS $$
 return 5
 $$ LANGUAGE plpython3u;
 SELECT * FROM test_type_conversion_array_error();
-ERROR:  PL/Python: return value of function with array return type is not a Python sequence
+ERROR:  return value of function with array return type is not a Python sequence
 CONTEXT:  while creating return value
 PL/Python function "test_type_conversion_array_error"
 --

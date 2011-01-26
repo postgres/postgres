@@ -3615,14 +3615,14 @@ PLy_elog(int elevel, const char *fmt,...)
 	{
 		if (fmt)
 			ereport(elevel,
-					(errmsg("PL/Python: %s", emsg.data),
+					(errmsg("%s", emsg.data),
 					 (xmsg) ? errdetail("%s", xmsg) : 0,
 					 (hint) ? errhint("%s", hint) : 0,
 					 (query) ? internalerrquery(query) : 0,
 					 (position) ? internalerrposition(position) : 0));
 		else
 			ereport(elevel,
-					(errmsg("PL/Python: %s", xmsg),
+					(errmsg("%s", xmsg),
 					 (detail) ? errdetail("%s", detail) : 0,
 					 (hint) ? errhint("%s", hint) : 0,
 					 (query) ? internalerrquery(query) : 0,
