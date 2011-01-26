@@ -31,10 +31,9 @@
   <para>
    You can monitor disk space in three ways:
    using the SQL functions listed in <xref linkend="functions-admin-dbsize">,
-   using the tools in <filename>contrib/oid2name</>, or
+   using the <xref linkend="oid2name"> module, or
    using manual inspection of the system catalogs.
    The SQL functions are the easiest to use and are generally recommended.
-   <filename>contrib/oid2name</> is described in <xref linkend="oid2name">.
    The remainder of this section shows how to do it by inspection of the
    system catalogs.
   </para>

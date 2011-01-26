@@ -17,7 +17,7 @@
 
  <para>
   If you use this, you may also be interested in the <function>lo_manage</>
-  trigger in <filename>contrib/lo</> (see <xref linkend="lo">).
+  trigger in the <xref linkend="lo"> module.
   <function>lo_manage</> is useful to try
   to avoid creating orphaned LOs in the first place.
  </para>

@@ -8,9 +8,9 @@
  </indexterm>
 
  <para>
-  The <literal>tsearch2</literal> module provides backwards-compatible
+  The <application>tsearch2</> module provides backwards-compatible
   text search functionality for applications that used
-  <filename>contrib/tsearch2</> before text searching was integrated
+  <application>tsearch2</> before text searching was integrated
   into core <productname>PostgreSQL</productname> in release 8.3.
  </para>
 
@@ -19,7 +19,7 @@
 
   <para>
    Although the built-in text search features were based on
-   <filename>contrib/tsearch2</> and are largely similar to it,
+   <application>tsearch2</> and are largely similar to it,
    there are numerous small differences that will create portability
    issues for existing applications:
   </para>
@@ -38,7 +38,7 @@
     <para>
      The built-in text search data types and functions all exist within
      the system schema <literal>pg_catalog</>.  In an installation using
-     <filename>contrib/tsearch2</>, these objects would usually have been in
+     <application>tsearch2</>, these objects would usually have been in
      the <literal>public</> schema, though some users chose to place them
      in a separate schema of their own.  Explicitly schema-qualified
      references to the objects will therefore fail in either case.
@@ -86,7 +86,7 @@
     <para>
      Text search configuration information has been moved into core
      system catalogs that are noticeably different from the tables used
-     by <filename>contrib/tsearch2</>.  Any applications that examined
+     by <application>tsearch2</>.  Any applications that examined
      or modified those tables will need adjustment.
     </para>
    </listitem>
@@ -98,7 +98,7 @@
      catalogs using the new text search configuration SQL commands.
      The replacement <literal>tsearch2</literal> module offers a little
      bit of support for this by making it possible to load an old set
-     of <filename>contrib/tsearch2</> configuration tables into
+     of <application>tsearch2</> configuration tables into
      <productname>PostgreSQL</productname> 8.3.  (Without the module,
      it is not possible to load the configuration data because values in the
      <type>regprocedure</> columns cannot be resolved to functions.)
@@ -132,7 +132,7 @@
 
   <para>
    The recommended way to update a pre-8.3 installation that uses
-   <filename>contrib/tsearch2</> is:
+   <application>tsearch2</> is:
   </para>
 
   <procedure>
@@ -150,7 +150,7 @@
      the replacement <literal>tsearch2</literal> module into each
      database that will use text search.  This must be done
      <emphasis>before</> loading the dump data!  If your old installation
-     had the <filename>contrib/tsearch2</> objects in a schema other
+     had the <application>tsearch2</> objects in a schema other
      than <literal>public</>, be sure to adjust the
      <literal>tsearch2</literal> installation script so that the replacement
      objects are created in that same schema.
@@ -160,7 +160,7 @@
    <step>
     <para>
      Load the dump data.  There will be quite a few errors reported
-     due to failure to recreate the original <filename>contrib/tsearch2</>
+     due to failure to recreate the original <application>tsearch2</>
      objects.  These errors can be ignored, but this means you cannot
      restore the dump in a single transaction (eg, you cannot use
      <application>pg_restore</>'s <literal>-1</> switch).
@@ -169,7 +169,7 @@
 
    <step>
     <para>
-     Examine the contents of the restored <filename>contrib/tsearch2</>
+     Examine the contents of the restored <application>tsearch2</>
      configuration tables (<structname>pg_ts_cfg</> and so on), and
      create equivalent built-in text search configurations as needed.
      You may drop the old configuration tables once you've extracted

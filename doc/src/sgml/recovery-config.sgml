@@ -92,9 +92,8 @@ restore_command = 'copy "C:\\server\\archivedir\\%f" "%p"'  # Windows
         may be safely removed.
         This information can be used to truncate the archive to just the
         minimum required to support restart from the current restore.
-        The <application>pg_archivecleanup</> utility provided in
-        <literal>contrib</> (see <xref linkend="pgarchivecleanup">) serves as a
-        convenient target for <varname>archive_cleanup_command</> in typical
+        The <xref linkend="pgarchivecleanup"> module
+        is often used in <varname>archive_cleanup_command</> for
         single-standby configurations, for example:
 <programlisting> archive_cleanup_command = 'pg_archivecleanup /mnt/server/archivedir %r' </programlisting>
         Note however that if multiple standby servers are restoring from the

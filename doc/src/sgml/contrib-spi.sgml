@@ -9,7 +9,7 @@
  </indexterm>
 
  <para>
-  The <filename>contrib/spi</> module provides several workable examples
+  The <application>spi</> module provides several workable examples
   of using SPI and triggers.  While these functions are of some value in
   their own right, they are even more useful as examples to modify for
   your own purposes.  The functions are general enough to be used

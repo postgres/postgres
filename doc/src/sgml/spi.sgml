@@ -3939,8 +3939,8 @@ INSERT INTO a SELECT * FROM a;
    using <function>SPI_exec</function> and returns the number of rows
    that were processed by the command.  You can find more complex
    examples for SPI in the source tree in
-   <filename>src/test/regress/regress.c</filename> and in
-   <filename>contrib/spi</filename>.
+   <filename>src/test/regress/regress.c</filename> and in the
+   <xref linkend="contrib-spi"> module.
   </para>
 
 <programlisting>

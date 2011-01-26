@@ -3231,8 +3231,9 @@ CREATE OR REPLACE FUNCTION retcomposite(IN integer, IN integer,
     </para>
 
     <para>
-     The directory <filename>contrib/tablefunc</> in the source
-     distribution contains more examples of set-returning functions.
+     The directory <link linkend="tablefunc">contrib/tablefunc</>
+     module in the source distribution contains more examples of
+     set-returning functions.
     </para>
    </sect2>
 

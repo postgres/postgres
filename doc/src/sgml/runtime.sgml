@@ -1502,9 +1502,8 @@ $ <userinput>kill -INT `head -1 /usr/local/pgsql/data/postmaster.pid`</userinput
 
    <listitem>
     <para>
-     The <filename>contrib</> function library
-     <link linkend="pgcrypto"><function>pgcrypto</function></link>
-     allows certain fields to be stored encrypted.
+     The <xref linkend="pgcrypto"> module allows certain fields to be
+     stored encrypted.
      This is useful if only some of the data is sensitive.
      The client supplies the decryption key and the data is decrypted
      on the server and then sent to the client.

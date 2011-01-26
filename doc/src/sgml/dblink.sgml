@@ -303,7 +303,7 @@ SELECT dblink_disconnect('myconn');
   </refsect1>
  </refentry>
 
- <refentry id="CONTRIB-DBLINK">
+ <refentry id="CONTRIB-DBLINK-FUNCTION">
   <refmeta>
    <refentrytitle>dblink</refentrytitle>
    <manvolnum>3</manvolnum>

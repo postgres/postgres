@@ -455,8 +455,8 @@ at the root.
 <para>
 See <filename>src/backend/storage/freespace/README</> for more details on
 how the <acronym>FSM</> is structured, and how it's updated and searched.
-The <filename>contrib/pg_freespacemap</> module can be used to examine the
-information stored in free space maps (see <xref linkend="pgfreespacemap">).
+The <xref linkend="pgfreespacemap"> module
+can be used to examine the information stored in free space maps.
 </para>
 
 </sect1>

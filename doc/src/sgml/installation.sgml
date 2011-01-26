@@ -1007,8 +1007,8 @@ su - postgres
        <listitem>
         <para>
          Use the <ulink url="http://www.ossp.org/pkg/lib/uuid/">OSSP UUID
-         library</ulink> when building <filename>contrib/uuid-ossp</>.
-         The library provides functions to generate
+         library</ulink> when building the <xref linkend="uuid-ossp">
+         module.  The library provides functions to generate
          UUIDs.<indexterm><primary>UUID</primary></indexterm>
         </para>
        </listitem>
@@ -1041,9 +1041,9 @@ su - postgres
        <term><option>--with-libxslt</option></term>
        <listitem>
         <para>
-         Use libxslt when building <filename>contrib/xml2</>.
-         <filename>contrib/xml2</> relies on this library to perform
-         XSL transformations of XML.
+         Use libxslt when building the <xref linkend="xml2">
+         module.  <application>xml2</> relies on this library
+         to perform XSL transformations of XML.
         </para>
        </listitem>
       </varlistentry>

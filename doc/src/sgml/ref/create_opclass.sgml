@@ -276,8 +276,8 @@ CREATE OPERATOR CLASS <replaceable class="parameter">name</replaceable> [ DEFAUL
 
   <para>
    The following example command defines a GiST index operator class
-   for the data type <literal>_int4</> (array of <type>int4</type>).  See
-   <filename>contrib/intarray/</> for the complete example.
+   for the data type <literal>_int4</> (array of <type>int4</type>).  See the
+   <xref linkend="intarray"> module for the complete example.
   </para>
 
 <programlisting>

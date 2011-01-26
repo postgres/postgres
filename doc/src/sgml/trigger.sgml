@@ -832,7 +832,7 @@ DELETE 2
    <para>
     There are more complex examples in
     <filename>src/test/regress/regress.c</filename> and
-    in <filename>contrib/spi</filename>.
+    in <xref linkend="contrib-spi">.
    </para>
   </sect1>
  </chapter>

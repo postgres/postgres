@@ -966,8 +966,8 @@ primary_conninfo = 'host=192.168.1.50 port=5432 user=foo password=foopass'
     sections is to use a <varname>restore_command</> that polls the archive location.
     This was the only option available in versions 8.4 and below. In this
     setup, set <varname>standby_mode</> off, because you are implementing
-    the polling required for standby operation yourself. See
-    contrib/pg_standby (<xref linkend="pgstandby">) for a reference
+    the polling required for standby operation yourself. See the
+    <xref linkend="pgstandby"> module for a reference
     implementation of this.
    </para>
 
@@ -1027,7 +1027,7 @@ if (!triggered)
 
    <para>
     A working example of a waiting <varname>restore_command</> is provided
-    as a <filename>contrib</> module named <application>pg_standby</>. It
+    in the <xref linkend="pgstandby"> module. It
     should be used as a reference on how to correctly implement the logic
     described above. It can also be extended as needed to support specific
     configurations and environments.
@@ -1542,7 +1542,7 @@ if (!triggered)
     primary server and keep a query active for as long as needed to
     run queries on the standby. This prevents <command>VACUUM</> from removing
     recently-dead rows and so cleanup conflicts do not occur.
-    This could be done using <filename>contrib/dblink</> and
+    This could be done using <xref linkend="dblink"> and
     <function>pg_sleep()</>, or via other mechanisms. If you do this, you
     should note that this will delay cleanup of dead rows on the primary,
     which may result in undesirable table bloat. However, the cleanup
