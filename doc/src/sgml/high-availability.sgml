@@ -486,18 +486,19 @@ protocol to make nodes agree on a serializable transactional order.
   <para>
    Directly moving WAL records from one database server to another
    is typically described as log shipping. <productname>PostgreSQL</>
-   implements file-based log shipping, which means that WAL records are
-   transferred one file (WAL segment) at a time. WAL files (16MB) can be
+   implements file-based log shipping by transfering WAL records
+   one file (WAL segment) at a time. WAL files (16MB) can be
    shipped easily and cheaply over any distance, whether it be to an
    adjacent system, another system at the same site, or another system on
    the far side of the globe. The bandwidth required for this technique
    varies according to the transaction rate of the primary server.
-   Record-based log shipping is also possible with streaming replication
-   (see <xref linkend="streaming-replication">).
+   Record-based log shipping is more granular and streams WAL changes
+   incrementally over a network connection (see <xref
+   linkend="streaming-replication">).
   </para>
 
   <para>
-   It should be noted that the log shipping is asynchronous, i.e., the WAL
+   It should be noted that log shipping is asynchronous, i.e., the WAL
    records are shipped after transaction commit. As a result, there is a
    window for data loss should the primary server suffer a catastrophic
    failure; transactions not yet shipped will be lost.  The size of the
@@ -505,8 +506,8 @@ protocol to make nodes agree on a serializable transactional order.
    <varname>archive_timeout</varname> parameter, which can be set as low
    as a few seconds.  However such a low setting will
    substantially increase the bandwidth required for file shipping.
-   If you need a window of less than a minute or so, consider using
-   streaming replication (see <xref linkend="streaming-replication">).
+   Streaming replication (see <xref linkend="streaming-replication">)
+   allows a much smaller window of data loss.
   </para>
 
   <para>
