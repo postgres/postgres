@@ -1118,9 +1118,10 @@ SELECT * FROM x, y, a, b, c WHERE something AND somethingelse;
     so if your site does not require such a guarantee,
     <productname>PostgreSQL</productname> can be configured to run
     much faster.  The following are configuration changes you can make
-    to improve performance in such cases;  they do not invalidate
-    commit guarantees related to database crashes, only abrupt operating
-    system stoppage, except as mentioned below:
+    to improve performance in such cases.  Except as noted below, durability
+    is still guaranteed in case of a crash of the database software;
+    only abrupt operating system stoppage creates a risk of data loss
+    or corruption when these settings are used.
 
     <itemizedlist>
      <listitem>
@@ -1159,8 +1160,8 @@ SELECT * FROM x, y, a, b, c WHERE something AND somethingelse;
       <para>
        Turn off <xref linkend="guc-synchronous-commit">;  there might be no
        need to write the <acronym>WAL</acronym> to disk on every
-       commit.  This does enable possible tranaction loss in case of
-       a <emphasis>database</> crash.
+       commit.  This setting does risk transaction loss (though not data
+       corruption) in case of a crash of the <emphasis>database</> alone.
       </para>
      </listitem>
     </itemizedlist>
