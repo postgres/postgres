@@ -102,6 +102,19 @@
 
     <listitem>
      <para>
+      Fix buffer overrun in <filename>contrib/intarray</>'s input function
+      for the <type>query_int</> type (Apple)
+     </para>
+
+     <para>
+      This bug is a security risk since the function's return address could
+      be overwritten.  Thanks to Apple Inc's security team for reporting this
+      issue and supplying the fix.  (CVE-2010-4015)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
       Fix bug in <filename>contrib/seg</>'s GiST picksplit algorithm
       (Alexander Korotkov)
      </para>
