@@ -1157,9 +1157,10 @@ SELECT * FROM x, y, a, b, c WHERE something AND somethingelse;
 
      <listitem>
       <para>
-       Turn off <xref linkend="guc-synchronous-commit">;  there is no
+       Turn off <xref linkend="guc-synchronous-commit">;  there might be no
        need to write the <acronym>WAL</acronym> to disk on every
-       commit.
+       commit.  This does enable possible tranaction loss in case of
+       a <emphasis>database</> crash.
       </para>
      </listitem>
     </itemizedlist>
