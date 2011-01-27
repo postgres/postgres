@@ -6,7 +6,7 @@ msgstr ""
 "Project-Id-Version: PostgreSQL 9.0 beta 3\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
 "POT-Creation-Date: 2010-07-19 21:50+0900\n"
-"PO-Revision-Date: 2010-07-21 18:48+0900\n"
+"PO-Revision-Date: 2011-01-15 22:36+0900\n"
 "Last-Translator: HOTTA Michihide <hotta@net-newbie.com>\n"
 "Language-Team: jpug-doc <jpug-doc@ml.postgresql.jp>\n"
 "MIME-Version: 1.0\n"
@@ -4487,7 +4487,7 @@ msgstr "集約のstypeを指定しなければなりません"
 
 #: commands/aggregatecmds.c:117
 msgid "aggregate sfunc must be specified"
-msgstr "集約のsfuncを指定しなければなりません"
+msgstr "集約用の状態遷移関数を指定しなければなりません"
 
 #: commands/aggregatecmds.c:134
 msgid "aggregate input type must be specified"

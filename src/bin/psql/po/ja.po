@@ -6,7 +6,7 @@ msgstr ""
 "Project-Id-Version: PostgreSQL 9.0.0\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
 "POT-Creation-Date: 2010-07-19 21:46+0900\n"
-"PO-Revision-Date: 2010-09-24 15:20+0900\n"
+"PO-Revision-Date: 2011-01-15 22:30+0900\n"
 "Last-Translator: HOTTA Michihide <hotta@net-newbie.com>\n"
 "Language-Team: jpug-doc <jpug-doc@ml.postgresql.jp>\n"
 "MIME-Version: 1.0\n"
@@ -3177,7 +3177,7 @@ msgstr "入力データの型"
 
 #: sql_help.c:964 sql_help.c:971
 msgid "sfunc"
-msgstr "開始関数"
+msgstr "状態遷移関数"
 
 #: sql_help.c:965 sql_help.c:972
 msgid "state_data_type"
