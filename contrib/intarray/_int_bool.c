@@ -56,24 +56,25 @@ typedef struct
 static int4
 gettoken(WORKSTATE *state, int4 *val)
 {
-	char		nnn[16],
-			   *curnnn;
+	char		nnn[16];
+	int			innn;
 
 	*val = 0;					/* default result */
 
-	curnnn = nnn;
+	innn = 0;
 	while (1)
 	{
+		if (innn >= sizeof(nnn))
+			return ERR;			/* buffer overrun => syntax error */
 		switch (state->state)
 		{
 			case WAITOPERAND:
-				curnnn = nnn;
+				innn = 0;
 				if ((*(state->buf) >= '0' && *(state->buf) <= '9') ||
 					*(state->buf) == '-')
 				{
 					state->state = WAITENDOPERAND;
-					*curnnn = *(state->buf);
-					curnnn++;
+					nnn[innn++] = *(state->buf);
 				}
 				else if (*(state->buf) == '!')
 				{
@@ -93,13 +94,18 @@ gettoken(WORKSTATE *state, int4 *val)
 			case WAITENDOPERAND:
 				if (*(state->buf) >= '0' && *(state->buf) <= '9')
 				{
-					*curnnn = *(state->buf);
-					curnnn++;
+					nnn[innn++] = *(state->buf);
 				}
 				else
 				{
-					*curnnn = '\0';
-					*val = (int4) atoi(nnn);
+					long	lval;
+
+					nnn[innn] = '\0';
+					errno = 0;
+					lval = strtol(nnn, NULL, 0);
+					*val = (int4) lval;
+					if (errno != 0 || (long) *val != lval)
+						return ERR;
 					state->state = WAITOPERATOR;
 					return (state->count && *(state->buf) == '\0')
 						? ERR : VAL;
