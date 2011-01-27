@@ -762,6 +762,9 @@ inv_truncate(LargeObjectDesc *obj_desc, int len)
 
 	indstate = CatalogOpenIndexes(lo_heap_r);
 
+	/*
+	 * Set up to find all pages with desired loid and pageno >= target
+	 */
 	ScanKeyInit(&skey[0],
 				Anum_pg_largeobject_loid,
 				BTEqualStrategyNumber, F_OIDEQ,
@@ -841,10 +844,14 @@ inv_truncate(LargeObjectDesc *obj_desc, int len)
 	{
 		/*
 		 * If the first page we found was after the truncation point, we're in
-		 * a hole that we'll fill, but we need to delete the later page.
+		 * a hole that we'll fill, but we need to delete the later page because
+		 * the loop below won't visit it again.
 		 */
-		if (olddata != NULL && olddata->pageno > pageno)
+		if (olddata != NULL)
+		{
+			Assert(olddata->pageno > pageno);
 			simple_heap_delete(lo_heap_r, &oldtuple->t_self);
+		}
 
 		/*
 		 * Write a brand new page.
@@ -873,11 +880,15 @@ inv_truncate(LargeObjectDesc *obj_desc, int len)
 	}
 
 	/*
-	 * Delete any pages after the truncation point
+	 * Delete any pages after the truncation point.  If the initial search
+	 * didn't find a page, then of course there's nothing more to do.
 	 */
-	while ((oldtuple = systable_getnext_ordered(sd, ForwardScanDirection)) != NULL)
+	if (olddata != NULL)
 	{
-		simple_heap_delete(lo_heap_r, &oldtuple->t_self);
+		while ((oldtuple = systable_getnext_ordered(sd, ForwardScanDirection)) != NULL)
+		{
+			simple_heap_delete(lo_heap_r, &oldtuple->t_self);
+		}
 	}
 
 	systable_endscan_ordered(sd);
