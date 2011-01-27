@@ -1,6 +1,169 @@
 <!-- doc/src/sgml/release-9.0.sgml -->
 <!-- See header comment in release.sgml about typical markup -->
 
+ <sect1 id="release-9-0-3">
+  <title>Release 9.0.3</title>
+
+  <note>
+  <title>Release date</title>
+  <simpara>2011-01-31</simpara>
+  </note>
+
+  <para>
+   This release contains a variety of fixes from 9.0.2.
+   For information about new features in the 9.0 major release, see
+   <xref linkend="release-9-0">.
+  </para>
+
+  <sect2>
+   <title>Migration to Version 9.0.3</title>
+
+   <para>
+    A dump/restore is not required for those running 9.0.X.
+   </para>
+
+  </sect2>
+
+  <sect2>
+   <title>Changes</title>
+
+   <itemizedlist>
+
+    <listitem>
+     <para>
+      Before exiting <application>walreceiver</>, ensure all the received WAL
+      is fsync'd to disk (Heikki Linnakangas)
+     </para>
+
+     <para>
+      Otherwise the standby server could replay some un-synced WAL, conceivably
+      leading to data corruption if the system crashes just at that point.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Avoid excess fsync activity in <application>walreceiver</>
+      (Heikki Linnakangas)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Make <command>ALTER TABLE</> revalidate uniqueness and exclusion
+      constraints when needed (Noah Misch)
+     </para>
+
+     <para>
+      This was broken in 9.0 by a change that was intended to suppress
+      revalidation during <command>VACUUM FULL</> and <command>CLUSTER</>,
+      but unintentionally affected <command>ALTER TABLE</> as well.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix EvalPlanQual for <command>UPDATE</> of an inheritance tree in which
+      the tables are not all alike (Tom Lane)
+     </para>
+
+     <para>
+      Any variation in the table row types (including dropped columns present
+      in only some child tables) would confuse the EvalPlanQual code, leading
+      to misbehavior or even crashes.  Since EvalPlanQual is only executed
+      during concurrent updates to the same row, the problem was only seen
+      intermittently.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Avoid failures when <command>EXPLAIN</> tries to display a simple-form
+      <literal>CASE</> expression (Tom Lane)
+     </para>
+
+     <para>
+      If the <literal>CASE</>'s test expression was a constant, the planner
+      could simplify the <literal>CASE</> into a form that confused the
+      expression-display code, resulting in <quote>unexpected CASE WHEN
+      clause</> errors.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix assignment to an array slice that is before the existing range
+      of subscripts (Tom Lane)
+     </para>
+
+     <para>
+      If there was a gap between the newly added subscripts and the first
+      pre-existing subscript, the code miscalculated how many entries needed
+      to be copied from the old array's null bitmap, potentially leading to
+      data corruption or crash.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Avoid unexpected conversion overflow in planner for very distant date
+      values (Tom Lane)
+     </para>
+
+     <para>
+      The <type>date</> type supports a wider range of dates than can be
+      represented by the <type>timestamp</> types, but the planner assumed it
+      could always convert a date to timestamp with impunity.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix PL/Python crash when an array contains null entries (Alex Hunsaker)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Remove <application>ecpg</>'s fixed length limit for constants defining
+      an array dimension (Michael Meskes)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix erroneous parsing of <type>tsquery</> values containing
+      <literal>... &amp; !(subexpression) | ...</literal> (Tom Lane)
+     </para>
+
+     <para>
+      Queries containing this combination of operators were not executed
+      correctly.  The same error existed in <filename>contrib/intarray</>'s
+      <type>query_int</> type and <filename>contrib/ltree</>'s
+      <type>ltxtquery</> type.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix bug in <filename>contrib/seg</>'s GiST picksplit algorithm
+      (Alexander Korotkov)
+     </para>
+
+     <para>
+      This could result in considerable inefficiency, though not actually
+      incorrect answers, in a GiST index on a <type>seg</> column.
+      If you have such an index, consider <command>REINDEX</>ing it after
+      installing this update.  (This is identical to the bug that was fixed in
+      <filename>contrib/cube</> in the previous update.)
+     </para>
+    </listitem>
+
+   </itemizedlist>
+
+  </sect2>
+ </sect1>
+
  <sect1 id="release-9-0-2">
   <title>Release 9.0.2</title>
 

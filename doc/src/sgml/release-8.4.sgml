@@ -1,6 +1,125 @@
 <!-- doc/src/sgml/release-8.4.sgml -->
 <!-- See header comment in release.sgml about typical markup -->
 
+ <sect1 id="release-8-4-7">
+  <title>Release 8.4.7</title>
+
+  <note>
+  <title>Release date</title>
+  <simpara>2011-01-31</simpara>
+  </note>
+
+  <para>
+   This release contains a variety of fixes from 8.4.6.
+   For information about new features in the 8.4 major release, see
+   <xref linkend="release-8-4">.
+  </para>
+
+  <sect2>
+   <title>Migration to Version 8.4.7</title>
+
+   <para>
+    A dump/restore is not required for those running 8.4.X.
+    However, if you are upgrading from a version earlier than 8.4.2,
+    see the release notes for 8.4.2.
+   </para>
+
+  </sect2>
+
+  <sect2>
+   <title>Changes</title>
+
+   <itemizedlist>
+
+    <listitem>
+     <para>
+      Avoid failures when <command>EXPLAIN</> tries to display a simple-form
+      <literal>CASE</> expression (Tom Lane)
+     </para>
+
+     <para>
+      If the <literal>CASE</>'s test expression was a constant, the planner
+      could simplify the <literal>CASE</> into a form that confused the
+      expression-display code, resulting in <quote>unexpected CASE WHEN
+      clause</> errors.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix assignment to an array slice that is before the existing range
+      of subscripts (Tom Lane)
+     </para>
+
+     <para>
+      If there was a gap between the newly added subscripts and the first
+      pre-existing subscript, the code miscalculated how many entries needed
+      to be copied from the old array's null bitmap, potentially leading to
+      data corruption or crash.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Avoid unexpected conversion overflow in planner for very distant date
+      values (Tom Lane)
+     </para>
+
+     <para>
+      The <type>date</> type supports a wider range of dates than can be
+      represented by the <type>timestamp</> types, but the planner assumed it
+      could always convert a date to timestamp with impunity.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix <application>pg_restore</>'s text output for large objects (BLOBs)
+      when <varname>standard_conforming_strings</> is on (Tom Lane)
+     </para>
+
+     <para>
+      Although restoring directly to a database worked correctly, string
+      escaping was incorrect if <application>pg_restore</> was asked for
+      SQL text output and <varname>standard_conforming_strings</> had been
+      enabled in the source database.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix erroneous parsing of <type>tsquery</> values containing
+      <literal>... &amp; !(subexpression) | ...</literal> (Tom Lane)
+     </para>
+
+     <para>
+      Queries containing this combination of operators were not executed
+      correctly.  The same error existed in <filename>contrib/intarray</>'s
+      <type>query_int</> type and <filename>contrib/ltree</>'s
+      <type>ltxtquery</> type.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix bug in <filename>contrib/seg</>'s GiST picksplit algorithm
+      (Alexander Korotkov)
+     </para>
+
+     <para>
+      This could result in considerable inefficiency, though not actually
+      incorrect answers, in a GiST index on a <type>seg</> column.
+      If you have such an index, consider <command>REINDEX</>ing it after
+      installing this update.  (This is identical to the bug that was fixed in
+      <filename>contrib/cube</> in the previous update.)
+     </para>
+    </listitem>
+
+   </itemizedlist>
+
+  </sect2>
+ </sect1>
+
  <sect1 id="release-8-4-6">
   <title>Release 8.4.6</title>
 
