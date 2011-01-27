@@ -142,7 +142,6 @@ typedef struct AlteredTableInfo
 	List	   *newvals;		/* List of NewColumnValue */
 	bool		new_notnull;	/* T if we added new NOT NULL constraints */
 	bool		new_changeoids; /* T if we added/dropped the OID column */
-	bool		new_changetypes; /* T if we changed column types */
 	Oid			newTableSpace;	/* new tablespace; 0 means no change */
 	/* Objects to rebuild after completing ALTER TYPE operations */
 	List	   *changedConstraintOids;	/* OIDs of constraints to rebuild */
@@ -3379,14 +3378,14 @@ ATRewriteTable(AlteredTableInfo *tab, Oid OIDNewHeap, LOCKMODE lockmode)
 	}
 
 	/*
-	 * If we change column data types or add/remove OIDs, the operation has to
-	 * be propagated to tables that use this table's rowtype as a column type.
+	 * If we need to rewrite the table, the operation has to be propagated to
+	 * tables that use this table's rowtype as a column type.
 	 *
 	 * (Eventually this will probably become true for scans as well, but at
 	 * the moment a composite type does not enforce any constraints, so it's
 	 * not necessary/appropriate to enforce them just during ALTER.)
 	 */
-	if (tab->new_changetypes || tab->new_changeoids)
+	if (newrel)
 		find_composite_type_dependencies(oldrel->rd_rel->reltype,
 										 RelationGetRelationName(oldrel),
 										 NULL);
@@ -6432,7 +6431,6 @@ ATPrepAlterColumnType(List **wqueue,
 		newval->expr = (Expr *) transform;
 
 		tab->newvals = lappend(tab->newvals, newval);
-		tab->new_changetypes = true;
 	}
 	else if (tab->relkind == RELKIND_FOREIGN_TABLE)
 	{
