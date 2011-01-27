@@ -2049,9 +2049,8 @@
   </indexterm>
 
   <para>
-   The catalog <structname>pg_conversion</structname> describes the
-   available encoding conversion procedures.  See
-   <xref linkend="sql-createconversion">
+   The catalog <structname>pg_conversion</structname> describes
+   encoding conversion procedures.  See <xref linkend="sql-createconversion">
    for more information.
   </para>
 
