@@ -3003,7 +3003,9 @@ ProcessInterrupts(void)
  */
 #if defined(__ia64__) || defined(__ia64)
 
+#ifdef __INTEL_COMPILER
 #include <asm/ia64regs.h>
+#endif
 
 static __inline__ char *
 ia64_get_bsp(void)
