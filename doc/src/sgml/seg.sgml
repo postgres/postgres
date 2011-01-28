@@ -80,13 +80,13 @@ test=> select '6.25 .. 6.50'::seg as "pH";
 
   <para>
    The external representation of an interval is formed using one or two
-   floating point numbers joined by the range operator (<literal>..</literal>
+   floating-point numbers joined by the range operator (<literal>..</literal>
    or <literal>...</literal>).  Alternatively, it can be specified as a
    center point plus or minus a deviation.
    Optional certainty indicators (<literal>&lt;</literal>,
-   <literal>&gt;</literal> and <literal>~</literal>) can be stored as well.
+   <literal>&gt;</literal> or <literal>~</literal>) can be stored as well.
    (Certainty indicators are ignored by all the built-in operators, however.)
-   <xref linkend="seg-repr-table"> gives on overview over the allowed
+   <xref linkend="seg-repr-table"> gives an overview of allowed
    representations; <xref linkend="seg-input-examples"> shows some
    examples.
   </para>
