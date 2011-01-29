@@ -34,7 +34,13 @@
 /* interval for calling AbsorbFsyncRequests in mdsync */
 #define FSYNCS_PER_ABSORB		10
 
-/* special values for the segno arg to RememberFsyncRequest */
+/*
+ * Special values for the segno arg to RememberFsyncRequest.
+ *
+ * Note that CompactBgwriterRequestQueue assumes that it's OK to remove an
+ * fsync request from the queue if an identical, subsequent request is found.
+ * See comments there before making changes here.
+ */
 #define FORGET_RELATION_FSYNC	(InvalidBlockNumber)
 #define FORGET_DATABASE_FSYNC	(InvalidBlockNumber-1)
 #define UNLINK_RELATION_REQUEST (InvalidBlockNumber-2)

@@ -182,6 +182,7 @@ static void CheckArchiveTimeout(void);
 static void BgWriterNap(void);
 static bool IsCheckpointOnSchedule(double progress);
 static bool ImmediateCheckpointRequested(void);
+static bool CompactBgwriterRequestQueue(void);
 
 /* Signal handlers */
 
@@ -1064,14 +1065,15 @@ RequestCheckpoint(int flags)
  * use high values for special flags; that's all internal to md.c, which
  * see for details.)
  *
- * If we are unable to pass over the request (at present, this can happen
- * if the shared memory queue is full), we return false.  That forces
- * the backend to do its own fsync.  We hope that will be even more seldom.
- *
- * Note: we presently make no attempt to eliminate duplicate requests
- * in the requests[] queue.  The bgwriter will have to eliminate dups
- * internally anyway, so we may as well avoid holding the lock longer
- * than we have to here.
+ * To avoid holding the lock for longer than necessary, we normally write
+ * to the requests[] queue without checking for duplicates.  The bgwriter
+ * will have to eliminate dups internally anyway.  However, if we discover
+ * that the queue is full, we make a pass over the entire queue to compact
+ * it.  This is somewhat expensive, but the alternative is for the backend
+ * to perform its own fsync, which is far more expensive in practice.  It
+ * is theoretically possible a backend fsync might still be necessary, if
+ * the queue is full and contains no duplicate entries.  In that case, we
+ * let the backend know by returning false.
  */
 bool
 ForwardFsyncRequest(RelFileNodeBackend rnode, ForkNumber forknum,
@@ -1090,10 +1092,20 @@ ForwardFsyncRequest(RelFileNodeBackend rnode, ForkNumber forknum,
 	/* Count all backend writes regardless of if they fit in the queue */
 	BgWriterShmem->num_backend_writes++;
 
+	/*
+	 * If the background writer isn't running or the request queue is full,
+	 * the backend will have to perform its own fsync request.  But before
+	 * forcing that to happen, we can try to compact the background writer
+	 * request queue.
+	 */
 	if (BgWriterShmem->bgwriter_pid == 0 ||
-		BgWriterShmem->num_requests >= BgWriterShmem->max_requests)
+		(BgWriterShmem->num_requests >= BgWriterShmem->max_requests
+		&& !CompactBgwriterRequestQueue()))
 	{
-		/* Also count the subset where backends have to do their own fsync */
+		/*
+		 * Count the subset of writes where backends have to do their own
+		 * fsync
+		 */
 		BgWriterShmem->num_backend_fsync++;
 		LWLockRelease(BgWriterCommLock);
 		return false;
@@ -1103,6 +1115,108 @@ ForwardFsyncRequest(RelFileNodeBackend rnode, ForkNumber forknum,
 	request->forknum = forknum;
 	request->segno = segno;
 	LWLockRelease(BgWriterCommLock);
+	return true;
+}
+
+/*
+ * CompactBgwriterRequestQueue
+ * 		Remove duplicates from the request queue to avoid backend fsyncs.
+ *
+ * Although a full fsync request queue is not common, it can lead to severe
+ * performance problems when it does happen.  So far, this situation has
+ * only been observed to occur when the system is under heavy write load,
+ * and especially during the "sync" phase of a checkpoint.  Without this
+ * logic, each backend begins doing an fsync for every block written, which
+ * gets very expensive and can slow down the whole system.
+ *
+ * Trying to do this every time the queue is full could lose if there
+ * aren't any removable entries.  But should be vanishingly rare in
+ * practice: there's one queue entry per shared buffer.
+ */
+static bool
+CompactBgwriterRequestQueue()
+{
+	struct BgWriterSlotMapping {
+		BgWriterRequest	request;
+		int		slot;
+	};
+
+	int			n,
+				preserve_count;
+	int			num_skipped = 0;
+	HASHCTL		ctl;
+	HTAB	   *htab;
+	bool	   *skip_slot;
+
+	/* must hold BgWriterCommLock in exclusive mode */
+	Assert(LWLockHeldByMe(BgWriterCommLock));
+
+	/* Initialize temporary hash table */
+	MemSet(&ctl, 0, sizeof(ctl));
+	ctl.keysize = sizeof(BgWriterRequest);
+	ctl.entrysize = sizeof(struct BgWriterSlotMapping);
+	ctl.hash = tag_hash;
+	htab = hash_create("CompactBgwriterRequestQueue",
+					   BgWriterShmem->num_requests,
+					   &ctl,
+					   HASH_ELEM | HASH_FUNCTION);
+
+	/* Initialize skip_slot array */
+	skip_slot = palloc0(sizeof(bool) * BgWriterShmem->num_requests);
+
+	/* 
+	 * The basic idea here is that a request can be skipped if it's followed
+	 * by a later, identical request.  It might seem more sensible to work
+	 * backwards from the end of the queue and check whether a request is
+	 * *preceded* by an earlier, identical request, in the hopes of doing less
+	 * copying.  But that might change the semantics, if there's an
+	 * intervening FORGET_RELATION_FSYNC or FORGET_DATABASE_FSYNC request, so
+	 * we do it this way.  It would be possible to be even smarter if we made
+	 * the code below understand the specific semantics of such requests (it
+	 * could blow away preceding entries that would end up being cancelled
+	 * anyhow), but it's not clear that the extra complexity would buy us
+	 * anything.
+	 */
+	for (n = 0; n < BgWriterShmem->num_requests; ++n)
+	{
+		BgWriterRequest *request;
+		struct BgWriterSlotMapping *slotmap;
+		bool	found;
+
+		request = &BgWriterShmem->requests[n];
+		slotmap = hash_search(htab, request, HASH_ENTER, &found);
+		if (found)
+		{
+			skip_slot[slotmap->slot] = true;
+			++num_skipped;
+		}
+		slotmap->slot = n;
+	}
+
+	/* Done with the hash table. */
+	hash_destroy(htab);
+
+	/* If no duplicates, we're out of luck. */
+	if (!num_skipped)
+	{
+		pfree(skip_slot);
+		return false;
+	}
+
+	/* We found some duplicates; remove them. */
+	for (n = 0, preserve_count = 0; n < BgWriterShmem->num_requests; ++n)
+	{
+		if (skip_slot[n])
+			continue;
+		BgWriterShmem->requests[preserve_count++] = BgWriterShmem->requests[n];
+	}
+	ereport(DEBUG1,
+			(errmsg("compacted fsync request queue from %d entries to %d entries",
+				BgWriterShmem->num_requests, preserve_count)));
+	BgWriterShmem->num_requests = preserve_count;
+
+	/* Cleanup. */
+	pfree(skip_slot);
 	return true;
 }
 
