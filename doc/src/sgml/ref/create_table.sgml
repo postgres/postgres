@@ -1369,7 +1369,7 @@ CREATE TABLE employees OF employee_type (
   </refsect2>
 
   <refsect2>
-   <title>Zero-column tables</title>
+   <title>Zero-Column Tables</title>
 
    <para>
     <productname>PostgreSQL</productname> allows a table of no columns
@@ -1382,7 +1382,7 @@ CREATE TABLE employees OF employee_type (
   </refsect2>
 
   <refsect2>
-   <title><literal>WITH</> clause</title>
+   <title><literal>WITH</> Clause</title>
 
    <para>
     The <literal>WITH</> clause is a <productname>PostgreSQL</productname>

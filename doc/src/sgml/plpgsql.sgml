@@ -1135,7 +1135,7 @@ EXECUTE 'SELECT count(*) FROM '
    </note>
 
    <example id="plpgsql-quote-literal-example">
-   <title>Quoting values in dynamic queries</title>
+   <title>Quoting Values In Dynamic Queries</title>
 
     <indexterm>
      <primary>quote_ident</primary>
@@ -2094,7 +2094,7 @@ END LOOP;
      </sect3>
 
      <sect3 id="plpgsql-integer-for">
-      <title><literal>FOR</> (integer variant)</title>
+      <title><literal>FOR</> (Integer Variant)</title>
 
 <synopsis>
 <optional> &lt;&lt;<replaceable>label</replaceable>&gt;&gt; </optional>

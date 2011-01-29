@@ -44,7 +44,7 @@
   <title>Functions and Operators</title>
 
   <table id="pgtrgm-func-table">
-   <title><filename>pg_trgm</filename> functions</title>
+   <title><filename>pg_trgm</filename> Functions</title>
    <tgroup cols="3">
     <thead>
      <row>
@@ -97,7 +97,7 @@
   </table>
 
   <table id="pgtrgm-op-table">
-   <title><filename>pg_trgm</filename> operators</title>
+   <title><filename>pg_trgm</filename> Operators</title>
    <tgroup cols="3">
     <thead>
      <row>

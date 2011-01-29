@@ -937,7 +937,7 @@ SELECT * FROM x, y, a, b, c WHERE something AND somethingelse;
   </sect2>
 
   <sect2 id="populate-pitr">
-   <title>Disable WAL archival and streaming replication</title>
+   <title>Disable WAL Archival and Streaming Replication</title>
 
    <para>
     When loading large amounts of data into an installation that uses

@@ -54,7 +54,7 @@
  </para>
 
  <sect1 id="auth-pg-hba-conf">
-  <title>The <filename>pg_hba.conf</filename> file</title>
+  <title>The <filename>pg_hba.conf</filename> File</title>
 
   <indexterm zone="auth-pg-hba-conf">
    <primary>pg_hba.conf</primary>
@@ -577,7 +577,7 @@ hostnossl  <replaceable>database</replaceable>  <replaceable>user</replaceable> 
   </para>
 
    <example id="example-pg-hba.conf">
-    <title>Example <filename>pg_hba.conf</filename> entries</title>
+    <title>Example <filename>pg_hba.conf</filename> Entries</title>
 <programlisting>
 # Allow any user on the local system to connect to any database with
 # any database user name using Unix-domain sockets (the default for local
@@ -666,7 +666,7 @@ local   db1,db2,@demodbs  all                                   md5
  </sect1>
 
  <sect1 id="auth-username-maps">
-  <title>User name maps</title>
+  <title>User Name Maps</title>
 
   <indexterm zone="auth-username-maps">
    <primary>User name maps</primary>
@@ -771,7 +771,7 @@ mymap   /^(.*)@otherdomain\.com$   guest
   </para>
 
   <example id="example-pg-ident.conf">
-   <title>An example <filename>pg_ident.conf</> file</title>
+   <title>An Example <filename>pg_ident.conf</> File</title>
 <programlisting>
 # MAPNAME       SYSTEM-USERNAME         PG-USERNAME
 
@@ -786,13 +786,13 @@ omicron         bryanh                  guest1
  </sect1>
 
  <sect1 id="auth-methods">
-  <title>Authentication methods</title>
+  <title>Authentication Methods</title>
   <para>
    The following subsections describe the authentication methods in more detail.
   </para>
 
   <sect2 id="auth-trust">
-   <title>Trust authentication</title>
+   <title>Trust Authentication</title>
 
    <para>
     When <literal>trust</> authentication is specified,
@@ -840,7 +840,7 @@ omicron         bryanh                  guest1
   </sect2>
 
   <sect2 id="auth-password">
-   <title>Password authentication</title>
+   <title>Password Authentication</title>
 
    <indexterm>
     <primary>MD5</>
@@ -883,7 +883,7 @@ omicron         bryanh                  guest1
   </sect2>
 
   <sect2 id="gssapi-auth">
-   <title>GSSAPI authentication</title>
+   <title>GSSAPI Authentication</title>
 
    <indexterm zone="gssapi-auth">
     <primary>GSSAPI</primary>
@@ -960,7 +960,7 @@ omicron         bryanh                  guest1
   </sect2>
 
   <sect2 id="sspi-auth">
-   <title>SSPI authentication</title>
+   <title>SSPI Authentication</title>
 
    <indexterm zone="sspi-auth">
     <primary>SSPI</primary>
@@ -1026,7 +1026,7 @@ omicron         bryanh                  guest1
   </sect2>
 
   <sect2 id="kerberos-auth">
-   <title>Kerberos authentication</title>
+   <title>Kerberos Authentication</title>
 
    <indexterm zone="kerberos-auth">
     <primary>Kerberos</primary>
@@ -1198,7 +1198,7 @@ omicron         bryanh                  guest1
   </sect2>
 
   <sect2 id="auth-ident">
-   <title>Ident-based authentication</title>
+   <title>Ident-Based Authentication</title>
 
    <indexterm>
     <primary>ident</primary>
@@ -1229,7 +1229,7 @@ omicron         bryanh                  guest1
    </para>
 
    <sect3>
-    <title>Ident Authentication over TCP/IP</title>
+    <title>Ident Authentication Over TCP/IP</title>
 
    <para>
     The <quote>Identification Protocol</quote> is described in
@@ -1276,7 +1276,7 @@ omicron         bryanh                  guest1
    </sect3>
 
    <sect3>
-    <title>Ident Authentication over Local Sockets</title>
+    <title>Ident Authentication Over Local Sockets</title>
 
    <para>
     On systems supporting <symbol>SO_PEERCRED</symbol> requests for
@@ -1306,7 +1306,7 @@ omicron         bryanh                  guest1
   </sect2>
 
   <sect2 id="auth-ldap">
-   <title>LDAP authentication</title>
+   <title>LDAP Authentication</title>
 
    <indexterm zone="auth-ldap">
     <primary>LDAP</primary>
@@ -1450,7 +1450,7 @@ ldapserver=ldap.example.net ldapprefix="cn=" ldapsuffix=", dc=example, dc=net"
   </sect2>
 
   <sect2 id="auth-radius">
-   <title>RADIUS authentication</title>
+   <title>RADIUS Authentication</title>
 
    <indexterm zone="auth-radius">
     <primary>RADIUS</primary>
@@ -1539,7 +1539,7 @@ ldapserver=ldap.example.net ldapprefix="cn=" ldapsuffix=", dc=example, dc=net"
   </sect2>
 
   <sect2 id="auth-cert">
-   <title>Certificate authentication</title>
+   <title>Certificate Authentication</title>
 
    <indexterm zone="auth-cert">
     <primary>Certificate</primary>
@@ -1575,7 +1575,7 @@ ldapserver=ldap.example.net ldapprefix="cn=" ldapsuffix=", dc=example, dc=net"
   </sect2>
 
   <sect2 id="auth-pam">
-   <title>PAM authentication</title>
+   <title>PAM Authentication</title>
 
    <indexterm zone="auth-pam">
     <primary>PAM</primary>
@@ -1621,7 +1621,7 @@ ldapserver=ldap.example.net ldapprefix="cn=" ldapsuffix=", dc=example, dc=net"
  </sect1>
 
   <sect1 id="client-authentication-problems">
-   <title>Authentication problems</title>
+   <title>Authentication Problems</title>
 
    <para>
     Authentication failures and related problems generally

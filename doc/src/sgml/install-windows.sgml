@@ -262,7 +262,7 @@ $ENV{PATH}=$ENV{PATH} . ';c:\some\where\bison\bin';
  </sect2>
 
  <sect2>
-  <title>Special considerations for 64-bit Windows</title>
+  <title>Special Considerations for 64-bit Windows</title>
 
   <para>
    PostgreSQL will only build for the x64 architecture on 64-bit Windows, there
@@ -324,7 +324,7 @@ $ENV{CONFIG}="Debug";
  </sect2>
 
  <sect2>
-  <title>Cleaning and installing</title>
+  <title>Cleaning and Installing</title>
 
   <para>
    Most of the time, the automatic dependency tracking in Visual Studio will
@@ -349,7 +349,7 @@ $ENV{CONFIG}="Debug";
  </sect2>
 
  <sect2>
-  <title>Running the regression tests</title>
+  <title>Running the Regression Tests</title>
 
   <para>
    To run the regression tests, make sure you have completed the build of all
@@ -378,7 +378,7 @@ $ENV{CONFIG}="Debug";
  </sect2>
 
  <sect2>
-  <title>Building the documentation</title>
+  <title>Building the Documentation</title>
 
   <para>
    Building the PostgreSQL documentation in HTML format requires several tools
@@ -481,7 +481,7 @@ $ENV{DOCROOT}='c:\docbook';
  </para>
 
  <sect2>
- <title>Generated files</title>
+ <title>Generated Files</title>
  <para>
   The following files will be built:
 

@@ -1928,7 +1928,7 @@ SELECT * FROM phone_number WHERE tricky(person, phone);
 </sect1>
 
 <sect1 id="rules-triggers">
-<title>Rules versus Triggers</title>
+<title>Rules Versus Triggers</title>
 
 <indexterm zone="rules-triggers">
  <primary>rule</primary>

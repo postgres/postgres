@@ -342,7 +342,7 @@ recovery_end_command = 'del C:\pgsql.trigger.5442'
  </sect2>
 
  <sect2>
-  <title>Supported server versions</title>
+  <title>Supported Server Versions</title>
 
   <para>
    <application>pg_standby</application> is designed to work with

@@ -25,7 +25,7 @@
  </para>
 
  <sect2>
-  <title>The <structname>pg_buffercache</structname> view</title>
+  <title>The <structname>pg_buffercache</structname> View</title>
 
   <para>
    The definitions of the columns exposed by the view are shown in <xref linkend="pgbuffercache-columns">.
@@ -132,7 +132,7 @@
  </sect2>
 
  <sect2>
-  <title>Sample output</title>
+  <title>Sample Output</title>
 
 <screen>
 regression=# SELECT c.relname, count(*) AS buffers

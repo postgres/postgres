@@ -18,7 +18,7 @@
  </para>
 
  <sect2>
-  <title>refint.c &mdash; functions for implementing referential integrity</title>
+  <title>refint.c &mdash; Functions for Implementing Referential Integrity</title>
 
   <para>
    <function>check_primary_key()</> and
@@ -59,7 +59,7 @@
  </sect2>
 
  <sect2>
-  <title>timetravel.c &mdash; functions for implementing time travel</title>
+  <title>timetravel.c &mdash; Functions for Implementing Time Travel</title>
 
   <para>
    Long ago, <productname>PostgreSQL</> had a built-in time travel feature
@@ -152,7 +152,7 @@ CREATE TABLE mytab (
  </sect2>
 
  <sect2>
-  <title>autoinc.c &mdash; functions for autoincrementing fields</title>
+  <title>autoinc.c &mdash; Functions for Autoincrementing Fields</title>
 
   <para>
    <function>autoinc()</> is a trigger that stores the next value of
@@ -179,7 +179,7 @@ CREATE TABLE mytab (
  </sect2>
 
  <sect2>
-  <title>insert_username.c &mdash; functions for tracking who changed a table</title>
+  <title>insert_username.c &mdash; Functions for Tracking Who Changed a Table</title>
 
   <para>
    <function>insert_username()</> is a trigger that stores the current
@@ -200,7 +200,7 @@ CREATE TABLE mytab (
  </sect2>
 
  <sect2>
-  <title>moddatetime.c &mdash; functions for tracking last modification time</title>
+  <title>moddatetime.c &mdash; Functions for Tracking Last Modification Time</title>
 
   <para>
    <function>moddatetime()</> is a trigger that stores the current

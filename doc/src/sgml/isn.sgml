@@ -22,7 +22,7 @@
  </para>
 
  <sect2>
-  <title>Data types</title>
+  <title>Data Types</title>
 
   <para>
    <xref linkend="isn-datatypes"> shows the data types provided by
@@ -30,11 +30,11 @@
   </para>
 
   <table id="isn-datatypes">
-   <title><filename>isn</filename> data types</title>
+   <title><filename>isn</filename> Data Types</title>
    <tgroup cols="2">
     <thead>
      <row>
-      <entry>Data type</entry>
+      <entry>Data Type</entry>
       <entry>Description</entry>
      </row>
     </thead>
@@ -228,7 +228,7 @@
   </para>
 
   <table id="isn-functions">
-   <title><filename>isn</> functions</title>
+   <title><filename>isn</> Functions</title>
    <tgroup cols="3">
     <thead>
      <row>

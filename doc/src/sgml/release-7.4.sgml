@@ -5,7 +5,7 @@
   <title>Release 7.4.30</title>
 
   <note>
-  <title>Release date</title>
+  <title>Release Date</title>
   <simpara>2010-10-04</simpara>
   </note>
 
@@ -139,7 +139,7 @@
   <title>Release 7.4.29</title>
 
   <note>
-  <title>Release date</title>
+  <title>Release Date</title>
   <simpara>2010-05-17</simpara>
   </note>
 
@@ -283,7 +283,7 @@
   <title>Release 7.4.28</title>
 
   <note>
-  <title>Release date</title>
+  <title>Release Date</title>
   <simpara>2010-03-15</simpara>
   </note>
 
@@ -402,7 +402,7 @@
   <title>Release 7.4.27</title>
 
   <note>
-  <title>Release date</title>
+  <title>Release Date</title>
   <simpara>2009-12-14</simpara>
   </note>
 
@@ -522,7 +522,7 @@
   <title>Release 7.4.26</title>
 
   <note>
-  <title>Release date</title>
+  <title>Release Date</title>
   <simpara>2009-09-09</simpara>
   </note>
 
@@ -652,7 +652,7 @@
   <title>Release 7.4.25</title>
 
   <note>
-  <title>Release date</title>
+  <title>Release Date</title>
   <simpara>2009-03-16</simpara>
   </note>
 
@@ -732,7 +732,7 @@
   <title>Release 7.4.24</title>
 
   <note>
-  <title>Release date</title>
+  <title>Release Date</title>
   <simpara>2009-02-02</simpara>
   </note>
 
@@ -818,7 +818,7 @@
   <title>Release 7.4.23</title>
 
   <note>
-  <title>Release date</title>
+  <title>Release Date</title>
   <simpara>2008-11-03</simpara>
   </note>
 
@@ -902,7 +902,7 @@
   <title>Release 7.4.22</title>
 
   <note>
-  <title>Release date</title>
+  <title>Release Date</title>
   <simpara>2008-09-22</simpara>
   </note>
 
@@ -978,7 +978,7 @@
   <title>Release 7.4.21</title>
 
   <note>
-  <title>Release date</title>
+  <title>Release Date</title>
   <simpara>2008-06-12</simpara>
   </note>
 
@@ -1032,7 +1032,7 @@
   <title>Release 7.4.20</title>
 
   <note>
-  <title>Release date</title>
+  <title>Release Date</title>
   <simpara>never released</simpara>
   </note>
 
@@ -1177,7 +1177,7 @@
   <title>Release 7.4.19</title>
 
   <note>
-  <title>Release date</title>
+  <title>Release Date</title>
   <simpara>2008-01-07</simpara>
   </note>
 
@@ -1331,7 +1331,7 @@
   <title>Release 7.4.18</title>
 
   <note>
-  <title>Release date</title>
+  <title>Release Date</title>
   <simpara>2007-09-17</simpara>
   </note>
 
@@ -1407,7 +1407,7 @@
   <title>Release 7.4.17</title>
 
   <note>
-  <title>Release date</title>
+  <title>Release Date</title>
   <simpara>2007-04-23</simpara>
   </note>
 
@@ -1478,7 +1478,7 @@
   <title>Release 7.4.16</title>
 
   <note>
-  <title>Release date</title>
+  <title>Release Date</title>
   <simpara>2007-02-05</simpara>
   </note>
 
@@ -1549,7 +1549,7 @@
   <title>Release 7.4.15</title>
 
   <note>
-  <title>Release date</title>
+  <title>Release Date</title>
   <simpara>2007-01-08</simpara>
   </note>
 
@@ -1638,7 +1638,7 @@
   <title>Release 7.4.14</title>
 
   <note>
-  <title>Release date</title>
+  <title>Release Date</title>
   <simpara>2006-10-16</simpara>
   </note>
 
@@ -1685,7 +1685,7 @@ ANYARRAY</para></listitem>
   <title>Release 7.4.13</title>
 
   <note>
-  <title>Release date</title>
+  <title>Release Date</title>
   <simpara>2006-05-23</simpara>
   </note>
 
@@ -1792,7 +1792,7 @@ Fuhr)</para></listitem>
   <title>Release 7.4.12</title>
 
   <note>
-  <title>Release date</title>
+  <title>Release Date</title>
   <simpara>2006-02-14</simpara>
   </note>
 
@@ -1855,7 +1855,7 @@ and <function>isinf</> during configure (Tom)</para></listitem>
   <title>Release 7.4.11</title>
 
   <note>
-  <title>Release date</title>
+  <title>Release Date</title>
   <simpara>2006-01-09</simpara>
   </note>
 
@@ -1922,7 +1922,7 @@ what's actually returned by the query (Joe)</para></listitem>
   <title>Release 7.4.10</title>
 
   <note>
-  <title>Release date</title>
+  <title>Release Date</title>
   <simpara>2005-12-12</simpara>
   </note>
 
@@ -1975,7 +1975,7 @@ table has been dropped</para></listitem>
   <title>Release 7.4.9</title>
 
   <note>
-  <title>Release date</title>
+  <title>Release Date</title>
   <simpara>2005-10-04</simpara>
   </note>
 
@@ -2044,7 +2044,7 @@ code</para></listitem>
   <title>Release 7.4.8</title>
 
   <note>
-  <title>Release date</title>
+  <title>Release Date</title>
   <simpara>2005-05-09</simpara>
   </note>
 
@@ -2228,7 +2228,7 @@ holder of the lock released it within a very narrow window.
   <title>Release 7.4.7</title>
 
   <note>
-  <title>Release date</title>
+  <title>Release Date</title>
   <simpara>2005-01-31</simpara>
   </note>
 
@@ -2288,7 +2288,7 @@ GMT</para></listitem>
   <title>Release 7.4.6</title>
 
   <note>
-  <title>Release date</title>
+  <title>Release Date</title>
   <simpara>2004-10-22</simpara>
   </note>
 
@@ -2360,7 +2360,7 @@ ECPG prepare statement</para></listitem>
   <title>Release 7.4.5</title>
 
   <note>
-  <title>Release date</title>
+  <title>Release Date</title>
   <simpara>2004-08-18</simpara>
   </note>
 
@@ -2398,7 +2398,7 @@ still worth a re-release.  The bug does not exist in pre-7.4 releases.
   <title>Release 7.4.4</title>
 
   <note>
-  <title>Release date</title>
+  <title>Release Date</title>
   <simpara>2004-08-16</simpara>
   </note>
 
@@ -2450,7 +2450,7 @@ aggregate plan</para></listitem>
   <title>Release 7.4.3</title>
 
   <note>
-  <title>Release date</title>
+  <title>Release Date</title>
   <simpara>2004-06-14</simpara>
   </note>
 
@@ -2508,7 +2508,7 @@ names from outer query levels.
   <title>Release 7.4.2</title>
 
   <note>
-  <title>Release date</title>
+  <title>Release Date</title>
   <simpara>2004-03-08</simpara>
   </note>
 
@@ -2651,7 +2651,7 @@ inconveniences associated with the <literal>i/I</> problem.</para></listitem>
   <title>Release 7.4.1</title>
 
   <note>
-  <title>Release date</title>
+  <title>Release Date</title>
   <simpara>2003-12-22</simpara>
   </note>
 
@@ -2765,7 +2765,7 @@ DROP SCHEMA information_schema CASCADE;
  <title>Release 7.4</title>
 
  <note>
-  <title>Release date</title>
+  <title>Release Date</title>
   <simpara>2003-11-17</simpara>
  </note>
 

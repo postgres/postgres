@@ -26,7 +26,7 @@ pgrowlocks(text) returns setof record
   </para>
 
   <table id="pgrowlocks-columns">
-   <title><function>pgrowlocks</> output columns</title>
+   <title><function>pgrowlocks</> Output Columns</title>
 
    <tgroup cols="3">
     <thead>
@@ -112,7 +112,7 @@ SELECT * FROM accounts AS a, pgrowlocks('accounts') AS p
  </sect2>
 
  <sect2>
-  <title>Sample output</title>
+  <title>Sample Output</title>
 
 <screen>
 test=# SELECT * FROM pgrowlocks('t1');

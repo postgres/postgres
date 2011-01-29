@@ -602,7 +602,7 @@ SELECT release_hosts_query();
  </sect2>
 
  <sect2 id="plperl-utility-functions">
-  <title>Utility functions in PL/Perl</title>
+  <title>Utility Functions in PL/Perl</title>
 
    <variablelist>
     <varlistentry>

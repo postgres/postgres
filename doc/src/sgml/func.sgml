@@ -9535,7 +9535,7 @@ table2-mapping
    </para>
 
    <figure id="xslt-xml-html">
-    <title>XSLT stylesheet for converting SQL/XML output to HTML</title>
+    <title>XSLT Stylesheet for Converting SQL/XML Output to HTML</title>
 <programlisting><![CDATA[
 <?xml version="1.0"?>
 <xsl:stylesheet version="1.0"
@@ -13618,7 +13618,7 @@ SELECT typlen FROM pg_type WHERE oid = pg_typeof(33);
    </para>
 
    <table id="functions-txid-snapshot">
-    <title>Transaction IDs and snapshots</title>
+    <title>Transaction IDs and Snapshots</title>
     <tgroup cols="3">
      <thead>
       <row><entry>Name</entry> <entry>Return Type</entry> <entry>Description</entry></row>
@@ -13671,7 +13671,7 @@ SELECT typlen FROM pg_type WHERE oid = pg_typeof(33);
    </para>
 
    <table id="functions-txid-snapshot-parts">
-    <title>Snapshot components</title>
+    <title>Snapshot Components</title>
     <tgroup cols="2">
      <thead>
       <row>

@@ -82,7 +82,7 @@
  </para>
 
  <sect1 id="different-replication-solutions">
- <title>Comparison of different solutions</title>
+ <title>Comparison of Different Solutions</title>
 
  <variablelist>
 
@@ -960,7 +960,7 @@ primary_conninfo = 'host=192.168.1.50 port=5432 user=foo password=foopass'
   </sect1>
 
   <sect1 id="log-shipping-alternative">
-   <title>Alternative method for log shipping</title>
+   <title>Alternative Method for Log Shipping</title>
 
    <para>
     An alternative to the built-in standby mode described in the previous
@@ -1377,7 +1377,7 @@ if (!triggered)
   </sect2>
 
   <sect2 id="hot-standby-conflict">
-   <title>Handling query conflicts</title>
+   <title>Handling Query Conflicts</title>
 
    <para>
     The primary and standby servers are in many ways loosely connected. Actions

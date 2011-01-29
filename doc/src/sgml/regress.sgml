@@ -33,7 +33,7 @@
   </para>
 
   <sect2>
-   <title>Running the tests against a temporary installation</title>
+   <title>Running the Tests Against a Temporary Installation</title>
 
   <para>
    To run the parallel regression tests after building but before installation,
@@ -110,7 +110,7 @@ gmake MAX_CONNECTIONS=10 check
   </sect2>
 
   <sect2>
-   <title>Running the tests against an existing installation</title>
+   <title>Running the Tests Against an Existing Installation</title>
 
   <para>
    To run the tests after installation<![%standalone-ignore;[ (see <xref linkend="installation">)]]>,
@@ -196,7 +196,7 @@ gmake standbycheck
   </sect2>
 
   <sect2>
-   <title>Locale and encoding</title>
+   <title>Locale and Encoding</title>
 
    <para>
     By default, the tests against a temporary installation use the
@@ -277,7 +277,7 @@ gmake check LANG=C MULTIBYTE=EUC_JP
    </para>
 
    <sect2>
-    <title>Error message differences</title>
+    <title>Error Message Differences</title>
 
     <para>
      Some of the regression tests involve intentional invalid input
@@ -292,7 +292,7 @@ gmake check LANG=C MULTIBYTE=EUC_JP
    </sect2>
 
    <sect2>
-    <title>Locale differences</title>
+    <title>Locale Differences</title>
 
     <para>
      If you run the tests against a server that was
@@ -339,7 +339,7 @@ gmake check NO_LOCALE=1
    </sect2>
 
    <sect2>
-    <title>Date and time differences</title>
+    <title>Date and Time Differences</title>
 
     <para>
      Most of the date and time results are dependent on the time zone
@@ -353,7 +353,7 @@ gmake check NO_LOCALE=1
    </sect2>
 
    <sect2>
-    <title>Floating-point differences</title>
+    <title>Floating-Point Differences</title>
 
     <para>
      Some of the tests involve computing 64-bit floating-point numbers (<type>double
@@ -381,7 +381,7 @@ gmake check NO_LOCALE=1
    </sect2>
 
    <sect2>
-    <title>Row ordering differences</title>
+    <title>Row Ordering Differences</title>
 
     <para>
 You might see differences in which the same rows are output in a
@@ -417,7 +417,7 @@ exclusion of those that don't.
    </sect2>
 
    <sect2>
-    <title>Insufficient stack depth</title>
+    <title>Insufficient Stack Depth</title>
 
     <para>
      If the <literal>errors</literal> test results in a server crash
@@ -434,7 +434,7 @@ exclusion of those that don't.
    </sect2>
 
    <sect2>
-    <title>The <quote>random</quote> test</title>
+    <title>The <quote>random</quote> Test</title>
 
     <para>
      The <literal>random</literal> test script is intended to produce

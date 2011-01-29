@@ -15,7 +15,7 @@
  </para>
 
  <sect2>
-  <title>Functions implemented</title>
+  <title>Functions Implemented</title>
 
   <para>
    The functions implemented by <filename>adminpack</> can only be run by a

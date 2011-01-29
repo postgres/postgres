@@ -99,7 +99,7 @@ test=> select '6.25 .. 6.50'::seg as "pH";
   </para>
 
   <table id="seg-repr-table">
-   <title><type>seg</> external representations</title>
+   <title><type>seg</> External Representations</title>
    <tgroup cols="2">
     <tbody>
      <row>
@@ -133,7 +133,7 @@ test=> select '6.25 .. 6.50'::seg as "pH";
   </table>
 
   <table id="seg-input-examples">
-   <title>Examples of valid <type>seg</> input</title>
+   <title>Examples of Valid <type>seg</> Input</title>
    <tgroup cols="2">
     <tbody>
      <row>
@@ -241,7 +241,7 @@ test=> select '6.25 .. 6.50'::seg as "pH";
   </para>
 
   <table id="seg-gist-operators">
-   <title>Seg GiST operators</title>
+   <title>Seg GiST Operators</title>
    <tgroup cols="2">
     <thead>
      <row>

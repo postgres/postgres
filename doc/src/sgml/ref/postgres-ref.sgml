@@ -476,7 +476,7 @@ PostgreSQL documentation
    </refsect2>
 
    <refsect2>
-    <title>Options for single-user mode</title>
+    <title>Options for Single-User Mode</title>
 
     <para>
      The following options only apply to the single-user mode.

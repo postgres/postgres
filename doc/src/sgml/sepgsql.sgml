@@ -293,7 +293,7 @@ $ restorecon -R /usr/local/pgsql/
  <sect2 id="sepgsql-features">
   <title>Features</title>
   <sect3>
-   <title>controlled object classes</title>
+   <title>Controlled Object Classes</title>
    <para>
     The security model of <productname>SELinux</> describes all the access
     control rules as a relationship between a subject entity (typically,

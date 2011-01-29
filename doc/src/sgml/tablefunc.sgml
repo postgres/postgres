@@ -23,7 +23,7 @@
   </para>
 
   <table id="tablefunc-functions">
-   <title><filename>tablefunc</> functions</title>
+   <title><filename>tablefunc</> Functions</title>
    <tgroup cols="3">
     <thead>
      <row>
@@ -620,7 +620,7 @@ connectby(text relname, text keyid_fld, text parent_keyid_fld
    </para>
 
    <table id="tablefunc-connectby-parameters">
-    <title><function>connectby</function> parameters</title>
+    <title><function>connectby</function> Parameters</title>
     <tgroup cols="2">
      <thead>
       <row>

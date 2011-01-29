@@ -1,7 +1,7 @@
 <!-- doc/src/sgml/charset.sgml -->
 
 <chapter id="charset">
- <title>Localization</>
+ <title>Localization</title>
 
  <para>
   This chapter describes the available localization features from the
@@ -44,7 +44,7 @@
   </para>
 
   <sect2>
-   <title>Overview</>
+   <title>Overview</title>
 
    <para>
     Locale support is automatically initialized when a database
@@ -198,7 +198,7 @@ initdb --locale=sv_SE
   </sect2>
 
   <sect2>
-   <title>Behavior</>
+   <title>Behavior</title>
 
    <para>
     The locale settings influence the following SQL features:
@@ -256,7 +256,7 @@ initdb --locale=sv_SE
   </sect2>
 
   <sect2>
-   <title>Problems</>
+   <title>Problems</title>
 
    <para>
     If locale support doesn't work according to the explanation above,

@@ -1065,7 +1065,7 @@ SELECT '52093.89'::money::numeric::float8;
    </para>
 
    <example>
-    <title>Using the character types</title>
+    <title>Using the Character Types</title>
 
 <programlisting>
 CREATE TABLE test1 (a character(4));
@@ -1218,7 +1218,7 @@ SELECT b, char_length(b) FROM test2;
    </para>
 
   <sect2>
-   <title><type>bytea</> hex format</title>
+   <title><type>bytea</> Hex Format</title>
 
    <para>
     The <quote>hex</> format encodes binary data as 2 hexadecimal digits
@@ -1245,7 +1245,7 @@ SELECT E'\\xDEADBEEF';
   </sect2>
 
   <sect2>
-   <title><type>bytea</> escape format</title>
+   <title><type>bytea</> Escape Format</title>
 
    <para>
     The <quote>escape</quote> format is the traditional
@@ -2492,7 +2492,7 @@ P <replaceable>quantity</> <replaceable>unit</> <optional> <replaceable>quantity
      </para>
 
      <table id="datatype-interval-iso8601-units">
-      <title>ISO 8601 interval unit abbreviations</title>
+      <title>ISO 8601 Interval Unit Abbreviations</title>
      <tgroup cols="2">
        <thead>
         <row>
@@ -2827,7 +2827,7 @@ P <optional> <replaceable>years</>-<replaceable>months</>-<replaceable>days</> <
    </para>
 
    <example id="datatype-boolean-example">
-    <title>Using the <type>boolean</type> type</title>
+    <title>Using the <type>boolean</type> Type</title>
 
 <programlisting>
 CREATE TABLE test1 (a boolean, b text);
@@ -3526,7 +3526,7 @@ SELECT person.name, holidays.num_weeks FROM person, holidays
    </sect2>
 
    <sect2 id="datatype-macaddr">
-    <title><type>macaddr</></>
+    <title><type>macaddr</type></title>
 
     <indexterm>
      <primary>macaddr (data type)</primary>
@@ -3624,7 +3624,7 @@ SELECT person.name, holidays.num_weeks FROM person, holidays
    </para>
 
    <example>
-    <title>Using the bit string types</title>
+    <title>Using the Bit String Types</title>
 
 <programlisting>
 CREATE TABLE test (a BIT(3), b BIT VARYING(5));

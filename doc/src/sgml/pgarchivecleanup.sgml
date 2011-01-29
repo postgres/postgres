@@ -131,7 +131,7 @@ archive_cleanup_command = 'pg_archivecleanup -d /mnt/standby/archive %r 2>>clean
  </sect2>
 
  <sect2>
-  <title>Supported server versions</title>
+  <title>Supported Server Versions</title>
 
   <para>
    <application>pg_archivecleanup</application> is designed to work with

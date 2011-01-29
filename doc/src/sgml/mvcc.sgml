@@ -432,7 +432,7 @@ ERROR:  could not serialize access due to concurrent update
    </para>
 
    <sect3 id="mvcc-serializability">
-    <title>Serializable Isolation versus True Serializability</title>
+    <title>Serializable Isolation Versus True Serializability</title>
 
    <indexterm>
     <primary>serializability</primary>
@@ -578,7 +578,7 @@ SELECT SUM(value) FROM mytab WHERE class = 2;
    </para>
 
      <variablelist>
-      <title>Table-level lock modes</title>
+      <title>Table-level Lock Modes</title>
       <varlistentry>
        <term>
         <literal>ACCESS SHARE</literal>
@@ -776,7 +776,7 @@ SELECT SUM(value) FROM mytab WHERE class = 2;
 
 
     <table tocentry="1" id="table-lock-compatibility">
-     <title> Conflicting lock modes</title>
+     <title> Conflicting Lock Modes</title>
      <tgroup cols="9">
       <colspec colnum="2" colname="lockst">
       <colspec colnum="9" colname="lockend">

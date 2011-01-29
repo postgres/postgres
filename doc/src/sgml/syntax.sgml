@@ -2296,7 +2296,7 @@ LANGUAGE SQL IMMUTABLE STRICT;
    </para>
 
    <sect2 id="sql-syntax-calling-funcs-positional">
-    <title>Using positional notation</title>
+    <title>Using Positional Notation</title>
 
     <indexterm>
      <primary>function</primary>
@@ -2331,7 +2331,7 @@ SELECT concat_lower_or_upper('Hello', 'World');
    </sect2>
 
    <sect2 id="sql-syntax-calling-funcs-named">
-    <title>Using named notation</title>
+    <title>Using Named Notation</title>
 
     <indexterm>
      <primary>function</primary>
@@ -2370,7 +2370,7 @@ SELECT concat_lower_or_upper(a := 'Hello', uppercase := true, b := 'World');
    </sect2>
 
   <sect2 id="sql-syntax-calling-funcs-mixed">
-   <title>Using mixed notation</title>
+   <title>Using Mixed Notation</title>
 
    <indexterm>
     <primary>function</primary>

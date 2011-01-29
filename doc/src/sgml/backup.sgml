@@ -103,7 +103,7 @@ pg_dump <replaceable class="parameter">dbname</replaceable> &gt; <replaceable cl
   </important>
 
   <sect2 id="backup-dump-restore">
-   <title>Restoring the dump</title>
+   <title>Restoring the Dump</title>
 
    <para>
     The text files created by <application>pg_dump</> are intended to
@@ -225,7 +225,7 @@ psql -f <replaceable class="parameter">infile</replaceable> postgres
   </sect2>
 
   <sect2 id="backup-dump-large">
-   <title>Handling large databases</title>
+   <title>Handling Large Databases</title>
 
    <para>
     Some operating systems have maximum file size limits that cause
@@ -527,7 +527,7 @@ tar -cf backup.tar /usr/local/pgsql/data
   </para>
 
   <sect2 id="backup-archiving-wal">
-   <title>Setting up WAL archiving</title>
+   <title>Setting Up WAL Archiving</title>
 
    <para>
     In an abstract sense, a running <productname>PostgreSQL</> system
@@ -934,7 +934,7 @@ SELECT pg_stop_backup();
   </sect2>
 
   <sect2 id="backup-pitr-recovery">
-   <title>Recovering using a Continuous Archive Backup</title>
+   <title>Recovering Using a Continuous Archive Backup</title>
 
    <para>
     Okay, the worst has happened and you need to recover from your backup.
@@ -1193,7 +1193,7 @@ restore_command = 'cp /mnt/server/archivedir/%f %p'
    </para>
 
     <sect3 id="backup-standalone">
-     <title>Standalone hot backups</title>
+     <title>Standalone Hot Backups</title>
 
      <para>
       It is possible to use <productname>PostgreSQL</>'s backup facilities to
@@ -1256,7 +1256,7 @@ restore_command = 'gunzip &lt; /mnt/server/archivedir/%f | pg_decompresslog - %p
     </sect3>
 
     <sect3 id="backup-scripts">
-     <title><varname>archive_command</varname> scripts</title>
+     <title><varname>archive_command</varname> Scripts</title>
 
      <para>
       Many people choose to use scripts to define their
@@ -1482,7 +1482,7 @@ archive_command = 'local_backup_script.sh'
   </variablelist>
 
   <sect2 id="migration-methods-pgdump">
-   <title>Migrating data via <application>pg_dump</></title>
+   <title>Migrating Data via <application>pg_dump</></title>
 
   <para>
    To dump data from one major version of <productname>PostgreSQL</> and
@@ -1562,7 +1562,7 @@ psql -f backup postgres
   </sect2>
 
   <sect2 id="migration-methods-other">
-   <title>Other data migration methods</title>
+   <title>Other Data Migration Methods</title>
 
   <para>
    The <filename>contrib</> program

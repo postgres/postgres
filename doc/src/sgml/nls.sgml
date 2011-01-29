@@ -138,7 +138,7 @@ msgstr "another translated"
   </sect2>
 
   <sect2>
-   <title>Creating and maintaining message catalogs</title>
+   <title>Creating and Maintaining Message Catalogs</title>
 
    <para>
     OK, so how does one create a <quote>blank</quote> message
@@ -206,7 +206,7 @@ gmake update-po
   </sect2>
 
   <sect2>
-   <title>Editing the PO files</title>
+   <title>Editing the PO Files</title>
 
    <para>
     The PO files can be edited with a regular text editor.  The
@@ -313,7 +313,7 @@ msgstr "Die Datei %2$s hat %1$u Zeichen."
   </para>
 
   <procedure>
-   <title>Adding NLS support to a program</title>
+   <title>Adding NLS Support to a Program</title>
 
    <step>
     <para>
@@ -440,7 +440,7 @@ fprintf(stderr, gettext("panic level %d\n"), lvl);
   </sect2>
 
   <sect2 id="nls-guidelines">
-   <title>Message-writing guidelines</title>
+   <title>Message-Writing Guidelines</title>
 
   <para>
    Here are some guidelines for writing messages that are easily

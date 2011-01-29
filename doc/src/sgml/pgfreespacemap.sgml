@@ -72,7 +72,7 @@
  </sect2>
 
  <sect2>
-  <title>Sample output</title>
+  <title>Sample Output</title>
 
 <screen>
 postgres=# SELECT * FROM pg_freespace('foo');

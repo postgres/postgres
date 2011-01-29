@@ -3204,7 +3204,7 @@ local0.*    /var/log/postgresql
     </para>
 
     <table id="runtime-config-severity-levels">
-     <title>Message severity levels</title>
+     <title>Message Severity Levels</title>
      <tgroup cols="4">
       <thead>
        <row>
@@ -6084,11 +6084,11 @@ LOG:  CleanUpLock: deleting: lock(0xb7acd844) id(24688,24696,0,0,0,1)
    </para>
 
     <table id="runtime-config-short-table">
-     <title>Short option key</title>
+     <title>Short Option Key</title>
      <tgroup cols="2">
       <thead>
        <row>
-        <entry>Short option</entry>
+        <entry>Short Option</entry>
         <entry>Equivalent</entry>
        </row>
       </thead>

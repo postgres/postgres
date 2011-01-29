@@ -45,7 +45,7 @@ free_percent       | 1.95
     </para>
 
     <table id="pgstattuple-columns">
-     <title><function>pgstattuple</function> output columns</title>
+     <title><function>pgstattuple</function> Output Columns</title>
      <tgroup cols="3">
       <thead>
        <row>

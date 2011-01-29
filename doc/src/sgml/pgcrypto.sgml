@@ -18,7 +18,7 @@
  </para>
 
  <sect2>
-  <title>General hashing functions</title>
+  <title>General Hashing Functions</title>
 
   <sect3>
    <title><function>digest()</function></title>
@@ -77,7 +77,7 @@ hmac(data bytea, key text, type text) returns bytea
  </sect2>
 
  <sect2>
-  <title>Password hashing functions</title>
+  <title>Password Hashing Functions</title>
 
   <para>
    The functions <function>crypt()</> and <function>gen_salt()</>
@@ -126,14 +126,14 @@ hmac(data bytea, key text, type text) returns bytea
   </para>
 
   <table id="pgcrypto-crypt-algorithms">
-   <title>Supported algorithms for <function>crypt()</></title>
+   <title>Supported Algorithms for <function>crypt()</></title>
    <tgroup cols="5">
     <thead>
      <row>
       <entry>Algorithm</entry>
-      <entry>Max password length</entry>
+      <entry>Max Password Length</entry>
       <entry>Adaptive?</entry>
-      <entry>Salt bits</entry>
+      <entry>Salt Bits</entry>
       <entry>Description</entry>
      </row>
     </thead>
@@ -230,7 +230,7 @@ gen_salt(type text [, iter_count integer ]) returns text
    </para>
 
    <table id="pgcrypto-icfc-table">
-    <title>Iteration counts for <function>crypt()</></title>
+    <title>Iteration Counts for <function>crypt()</></title>
     <tgroup cols="4">
      <thead>
       <row>
@@ -283,7 +283,7 @@ gen_salt(type text [, iter_count integer ]) returns text
    </para>
 
    <table id="pgcrypto-hash-speed-table">
-    <title>Hash algorithm speeds</title>
+    <title>Hash Algorithm Speeds</title>
     <tgroup cols="4">
      <thead>
       <row>
@@ -398,7 +398,7 @@ gen_salt(type text [, iter_count integer ]) returns text
  </sect2>
 
  <sect2>
-  <title>PGP encryption functions</title>
+  <title>PGP Encryption Functions</title>
 
   <para>
    The functions here implement the encryption part of the OpenPGP (RFC 4880)
@@ -627,7 +627,7 @@ dearmor(data text) returns bytea
   </sect3>
 
   <sect3>
-   <title>Options for PGP functions</title>
+   <title>Options for PGP Functions</title>
 
    <para>
     Options are named to be similar to GnuPG.  An option's value should be
@@ -802,7 +802,7 @@ Applies to: pgp_sym_encrypt, pgp_pub_encrypt
   </sect3>
 
  <sect3>
-  <title>Generating PGP keys with GnuPG</title>
+  <title>Generating PGP Keys with GnuPG</title>
 
   <para>
    To generate a new key:
@@ -850,7 +850,7 @@ gpg -a --export-secret-keys KEYID > secret.key
  </sect3>
 
  <sect3>
-  <title>Limitations of PGP code</title>
+  <title>Limitations of PGP Code</title>
 
   <itemizedlist>
    <listitem>
@@ -878,7 +878,7 @@ gpg -a --export-secret-keys KEYID > secret.key
  </sect2>
 
  <sect2>
-  <title>Raw encryption functions</title>
+  <title>Raw Encryption Functions</title>
 
   <para>
    These functions only run a cipher over data; they don't have any advanced
@@ -980,7 +980,7 @@ encrypt(data, 'fooz', 'bf-cbc/pad:pkcs')
  </sect2>
 
  <sect2>
-  <title>Random-data functions</title>
+  <title>Random-Data Functions</title>
 
 <synopsis>
 gen_random_bytes(count integer) returns bytea
@@ -1017,7 +1017,7 @@ gen_random_bytes(count integer) returns bytea
    </para>
 
    <table id="pgcrypto-with-without-openssl">
-    <title>Summary of functionality with and without OpenSSL</title>
+    <title>Summary of Functionality with and without OpenSSL</title>
     <tgroup cols="3">
      <thead>
       <row>
@@ -1109,7 +1109,7 @@ gen_random_bytes(count integer) returns bytea
   </sect3>
 
   <sect3>
-   <title>NULL handling</title>
+   <title>NULL Handling</title>
 
    <para>
     As is standard in SQL, all functions return NULL, if any of the arguments
@@ -1118,7 +1118,7 @@ gen_random_bytes(count integer) returns bytea
   </sect3>
 
   <sect3>
-   <title>Security limitations</title>
+   <title>Security Limitations</title>
 
    <para>
     All <filename>pgcrypto</> functions run inside the database server.
@@ -1142,7 +1142,7 @@ gen_random_bytes(count integer) returns bytea
   </sect3>
 
   <sect3>
-   <title>Useful reading</title>
+   <title>Useful Reading</title>
 
    <itemizedlist>
     <listitem>
@@ -1173,7 +1173,7 @@ gen_random_bytes(count integer) returns bytea
   </sect3>
 
   <sect3>
-   <title>Technical references</title>
+   <title>Technical References</title>
 
    <itemizedlist>
     <listitem>

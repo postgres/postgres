@@ -527,7 +527,7 @@ su - postgres
   <procedure>
 
   <step id="configure">
-   <title>Configuration</>
+   <title>Configuration</title>
 
    <indexterm zone="configure">
     <primary>configure</primary>
@@ -1676,7 +1676,7 @@ PostgreSQL, contrib and HTML documentation successfully made. Ready to install.
    </para>
 
    <formalpara>
-    <title>Client-only installation:</title>
+    <title>Client-Only installation:</title>
     <para>
      If you want to install only the client applications and
      interface libraries, then you can use these commands:
@@ -2184,7 +2184,7 @@ kill `cat /usr/local/pgsql/data/postmaster.pid`
    </para>
 
    <sect3>
-    <title>GCC issues</title>
+    <title>GCC Issues</title>
 
     <para>
      On AIX 5.3, there have been some problems getting PostgreSQL to
@@ -2202,7 +2202,7 @@ kill `cat /usr/local/pgsql/data/postmaster.pid`
    </sect3>
 
    <sect3>
-    <title>Unix-domain sockets broken</title>
+    <title>Unix-Domain Sockets Broken</title>
 
     <para>
      AIX 5.3 has a problem
@@ -2228,7 +2228,7 @@ kill `cat /usr/local/pgsql/data/postmaster.pid`
    </sect3>
 
    <sect3>
-    <title>Internet address issues</title>
+    <title>Internet Address Issues</title>
 
     <para>
      PostgreSQL relies on the system's <function>getaddrinfo</> function
@@ -2300,7 +2300,7 @@ hosts=local4,bind4
    </sect3>
 
    <sect3>
-    <title>Memory management</title>
+    <title>Memory Management</title>
     <!-- http://archives.postgresql.org/message-id/603bgqmpl9.fsf@dba2.int.libertyrms.com -->
 
     <para>
@@ -2395,7 +2395,7 @@ createlang: language installation failed: ERROR:  could not load library "/opt/d
     </para>
 
     <bibliography>
-     <title>References and resources</title>
+     <title>References and Resources</title>
 
      <biblioentry>
       <biblioset relation="article">
@@ -2740,7 +2740,7 @@ cc-1020 cc: ERROR File = pqcomm.c, Line = 427
    </para>
 
    <sect3>
-    <title>Collecting crash dumps on Windows</title>
+    <title>Collecting Crash Dumps on Windows</title>
 
     <para>
      If PostgreSQL on Windows crashes, it has the ability to generate
@@ -2862,7 +2862,7 @@ cc-1020 cc: ERROR File = pqcomm.c, Line = 427
    </sect3>
 
    <sect3>
-    <title>Reading the PostgreSQL man pages</title>
+    <title>Reading the PostgreSQL Man Pages</title>
 
     <para>
      By default, the PostgreSQL man pages are installed into
@@ -2936,7 +2936,7 @@ MANPATH=/usr/lib/scohelp/%L/man:/usr/dt/man:/usr/man:/usr/share/man:scohelp:/usr
    </para>
 
    <sect3>
-    <title>Required tools</title>
+    <title>Required Tools</title>
 
     <para>
      You can build with either GCC or Sun's compiler suite.  For
@@ -2986,7 +2986,7 @@ MANPATH=/usr/lib/scohelp/%L/man:/usr/dt/man:/usr/man:/usr/share/man:scohelp:/usr
    </sect3>
 
    <sect3>
-    <title>configure complains about a failed test program</title>
+    <title>configure Complains About a Failed Test Program</title>
 
     <para>
      If <command>configure</command> complains about a failed test
@@ -3005,7 +3005,7 @@ configure ... LDFLAGS="-R /usr/sfw/lib:/opt/sfw/lib:/usr/local/lib"
    </sect3>
 
    <sect3>
-    <title>64-bit build sometimes crashes</title>
+    <title>64-bit Build Sometimes Crashes</title>
 
     <para>
      On Solaris 7 and older, the 64-bit version of libc has a buggy
@@ -3029,7 +3029,7 @@ LIBOBJS = snprintf.o
    </sect3>
 
    <sect3>
-    <title>Compiling for optimal performance</title>
+    <title>Compiling for Optimal Performance</title>
 
     <para>
      On the SPARC architecture, Sun Studio is strongly recommended for
@@ -3062,7 +3062,7 @@ LIBOBJS = snprintf.o
    </sect3>
 
    <sect3>
-    <title>Using DTrace for tracing PostgreSQL</title>
+    <title>Using DTrace for Tracing PostgreSQL</title>
 
     <para>
      Yes, using DTrace is possible.  See <![%standalone-include[the

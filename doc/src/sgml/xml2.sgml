@@ -13,7 +13,7 @@
  </para>
 
  <sect2>
-  <title>Deprecation notice</title>
+  <title>Deprecation Notice</title>
 
   <para>
    From <productname>PostgreSQL</> 8.3 on, there is XML-related
@@ -31,7 +31,7 @@
  </sect2>
 
  <sect2>
-  <title>Description of functions</title>
+  <title>Description of Functions</title>
 
   <para>
    <xref linkend="xml2-functions-table"> shows the functions provided by this module.
@@ -339,7 +339,7 @@ WHERE t.author_id = p.person_id;
   </para>
 
   <sect3>
-   <title>Multivalued results</title>
+   <title>Multivalued Results</title>
 
    <para>
     The <function>xpath_table</> function assumes that the results of each XPath query
@@ -414,7 +414,7 @@ ORDER BY doc_num, line_num;
  </sect2>
 
  <sect2>
-  <title>XSLT functions</title>
+  <title>XSLT Functions</title>
 
   <para>
    The following functions are available if libxslt is installed:

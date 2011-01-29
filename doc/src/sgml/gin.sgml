@@ -319,7 +319,7 @@
  </para>
 
  <sect2 id="gin-fast-update">
-  <title>GIN fast update technique</title>
+  <title>GIN Fast Update Technique</title>
 
   <para>
    Updating a <acronym>GIN</acronym> index tends to be slow because of the
@@ -357,7 +357,7 @@
  </sect2>
 
  <sect2 id="gin-partial-match">
-  <title>Partial match algorithm</title>
+  <title>Partial Match Algorithm</title>
 
   <para>
    GIN can support <quote>partial match</> queries, in which the query
@@ -378,11 +378,11 @@
 </sect1>
 
 <sect1 id="gin-tips">
-<title>GIN tips and tricks</title>
+<title>GIN Tips and Tricks</title>
 
  <variablelist>
   <varlistentry>
-   <term>Create vs insert</term>
+   <term>Create vs. insert</term>
    <listitem>
     <para>
      Insertion into a <acronym>GIN</acronym> index can be slow

@@ -5,7 +5,7 @@
   <title>Release 8.1.23</title>
 
   <note>
-  <title>Release date</title>
+  <title>Release Date</title>
   <simpara>2010-12-16</simpara>
   </note>
 
@@ -224,7 +224,7 @@
   <title>Release 8.1.22</title>
 
   <note>
-  <title>Release date</title>
+  <title>Release Date</title>
   <simpara>2010-10-04</simpara>
   </note>
 
@@ -442,7 +442,7 @@
   <title>Release 8.1.21</title>
 
   <note>
-  <title>Release date</title>
+  <title>Release Date</title>
   <simpara>2010-05-17</simpara>
   </note>
 
@@ -596,7 +596,7 @@
   <title>Release 8.1.20</title>
 
   <note>
-  <title>Release date</title>
+  <title>Release Date</title>
   <simpara>2010-03-15</simpara>
   </note>
 
@@ -786,7 +786,7 @@
   <title>Release 8.1.19</title>
 
   <note>
-  <title>Release date</title>
+  <title>Release Date</title>
   <simpara>2009-12-14</simpara>
   </note>
 
@@ -967,7 +967,7 @@
   <title>Release 8.1.18</title>
 
   <note>
-  <title>Release date</title>
+  <title>Release Date</title>
   <simpara>2009-09-09</simpara>
   </note>
 
@@ -1131,7 +1131,7 @@
   <title>Release 8.1.17</title>
 
   <note>
-  <title>Release date</title>
+  <title>Release Date</title>
   <simpara>2009-03-16</simpara>
   </note>
 
@@ -1254,7 +1254,7 @@
   <title>Release 8.1.16</title>
 
   <note>
-  <title>Release date</title>
+  <title>Release Date</title>
   <simpara>2009-02-02</simpara>
   </note>
 
@@ -1374,7 +1374,7 @@
   <title>Release 8.1.15</title>
 
   <note>
-  <title>Release date</title>
+  <title>Release Date</title>
   <simpara>2008-11-03</simpara>
   </note>
 
@@ -1526,7 +1526,7 @@
   <title>Release 8.1.14</title>
 
   <note>
-  <title>Release date</title>
+  <title>Release Date</title>
   <simpara>2008-09-22</simpara>
   </note>
 
@@ -1702,7 +1702,7 @@
   <title>Release 8.1.13</title>
 
   <note>
-  <title>Release date</title>
+  <title>Release Date</title>
   <simpara>2008-06-12</simpara>
   </note>
 
@@ -1769,7 +1769,7 @@
   <title>Release 8.1.12</title>
 
   <note>
-  <title>Release date</title>
+  <title>Release Date</title>
   <simpara>never released</simpara>
   </note>
 
@@ -2019,7 +2019,7 @@
   <title>Release 8.1.11</title>
 
   <note>
-  <title>Release date</title>
+  <title>Release Date</title>
   <simpara>2008-01-07</simpara>
   </note>
 
@@ -2271,7 +2271,7 @@
   <title>Release 8.1.10</title>
 
   <note>
-  <title>Release date</title>
+  <title>Release Date</title>
   <simpara>2007-09-17</simpara>
   </note>
 
@@ -2392,7 +2392,7 @@
   <title>Release 8.1.9</title>
 
   <note>
-  <title>Release date</title>
+  <title>Release Date</title>
   <simpara>2007-04-23</simpara>
   </note>
 
@@ -2483,7 +2483,7 @@
   <title>Release 8.1.8</title>
 
   <note>
-  <title>Release date</title>
+  <title>Release Date</title>
   <simpara>2007-02-07</simpara>
   </note>
 
@@ -2525,7 +2525,7 @@
   <title>Release 8.1.7</title>
 
   <note>
-  <title>Release date</title>
+  <title>Release Date</title>
   <simpara>2007-02-05</simpara>
   </note>
 
@@ -2627,7 +2627,7 @@
   <title>Release 8.1.6</title>
 
   <note>
-  <title>Release date</title>
+  <title>Release Date</title>
   <simpara>2007-01-08</simpara>
   </note>
 
@@ -2777,7 +2777,7 @@
   <title>Release 8.1.5</title>
 
   <note>
-  <title>Release date</title>
+  <title>Release Date</title>
   <simpara>2006-10-16</simpara>
   </note>
 
@@ -2854,7 +2854,7 @@ compilers (Hiroshi Saito)</para></listitem>
   <title>Release 8.1.4</title>
 
   <note>
-  <title>Release date</title>
+  <title>Release Date</title>
   <simpara>2006-05-23</simpara>
   </note>
 
@@ -3008,7 +3008,7 @@ documented (Tom)</para></listitem>
   <title>Release 8.1.3</title>
 
   <note>
-  <title>Release date</title>
+  <title>Release Date</title>
   <simpara>2006-02-14</simpara>
   </note>
 
@@ -3130,7 +3130,7 @@ creation (Tom)</para></listitem>
   <title>Release 8.1.2</title>
 
   <note>
-  <title>Release date</title>
+  <title>Release Date</title>
   <simpara>2006-01-09</simpara>
   </note>
 
@@ -3233,7 +3233,7 @@ what's actually returned by the query (Joe)</para></listitem>
   <title>Release 8.1.1</title>
 
   <note>
-  <title>Release date</title>
+  <title>Release Date</title>
   <simpara>2005-12-12</simpara>
   </note>
 
@@ -3325,7 +3325,7 @@ DISTINCT query</para></listitem>
   <title>Release 8.1</title>
 
   <note>
-   <title>Release date</title>
+   <title>Release Date</title>
    <simpara>2005-11-08</simpara>
   </note>
 

@@ -32,7 +32,7 @@ LOAD 'auto_explain';
  </para>
 
  <sect2>
-  <title>Configuration parameters</title>
+  <title>Configuration Parameters</title>
 
  <para>
   There are several configuration parameters that control the behavior of

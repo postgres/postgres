@@ -34,7 +34,7 @@
   </para>
 
  <sect1 id="monitoring-ps">
-  <title>Standard Unix Tools</Title>
+  <title>Standard Unix Tools</title>
 
   <indexterm zone="monitoring-ps">
    <primary>ps</primary>
@@ -106,7 +106,7 @@ postgres: <replaceable>user</> <replaceable>database</> <replaceable>host</> <re
  </sect1>
 
  <sect1 id="monitoring-stats">
-  <title>The Statistics Collector</Title>
+  <title>The Statistics Collector</title>
 
   <indexterm zone="monitoring-stats">
    <primary>statistics</primary>
@@ -129,7 +129,7 @@ postgres: <replaceable>user</> <replaceable>database</> <replaceable>host</> <re
   </para>
 
  <sect2 id="monitoring-stats-setup">
-  <title>Statistics Collection Configuration</Title>
+  <title>Statistics Collection Configuration</title>
 
   <para>
    Since collection of statistics adds some overhead to query execution,
@@ -177,7 +177,7 @@ postgres: <replaceable>user</> <replaceable>database</> <replaceable>host</> <re
  </sect2>
 
  <sect2 id="monitoring-stats-views">
-  <title>Viewing Collected Statistics</Title>
+  <title>Viewing Collected Statistics</title>
 
   <para>
    Several predefined views, listed in <xref

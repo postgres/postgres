@@ -711,7 +711,7 @@ CREATE TRIGGER trig_mytab_modcount BEFORE INSERT OR UPDATE ON mytab
    </sect1>
 
    <sect1 id="pltcl-unknown">
-       <title>Modules and the <function>unknown</> command</title>
+       <title>Modules and the <function>unknown</> Command</title>
        <para>
         PL/Tcl has support for autoloading Tcl code when used.
         It recognizes a special table, <literal>pltcl_modules</>, which

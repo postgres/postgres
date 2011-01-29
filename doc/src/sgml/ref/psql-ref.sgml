@@ -538,7 +538,7 @@ PostgreSQL documentation
   <title>Usage</title>
 
   <refsect2 id="R2-APP-PSQL-connecting">
-    <title>Connecting To A Database</title>
+    <title>Connecting to a Database</title>
 
     <para>
     <application>psql</application> is a regular
@@ -2394,7 +2394,7 @@ lo_import 152801
  </refsect2>
 
  <refsect2>
-  <title>Advanced features</title>
+  <title>Advanced Features</title>
 
    <refsect3 id="APP-PSQL-variables">
     <title id="APP-PSQL-variables-title">Variables</title>
@@ -3275,7 +3275,7 @@ $endif
 
 
  <refsect1>
-  <title>Notes for Windows users</title>
+  <title>Notes for Windows Users</title>
 
  <para>
   <application>psql</application> is built as a <quote>console

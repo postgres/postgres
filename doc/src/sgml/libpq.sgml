@@ -359,7 +359,7 @@ PGconn *PQconnectdbParams(const char **keywords, const char **values, int expand
           </para>
 
           <table id="libpq-connect-sslmode-options">
-           <title><literal>sslmode</literal> options</title>
+           <title><literal>sslmode</literal> Options</title>
            <tgroup cols="2">
             <thead>
              <row>
@@ -7534,7 +7534,7 @@ main(int argc, char **argv)
   </example>
 
   <example id="libpq-example-3">
-   <title><application>libpq</application> Example Program 3</>
+   <title><application>libpq</application> Example Program 3</title>
 
 <programlisting>
 <![CDATA[

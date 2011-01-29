@@ -36,7 +36,7 @@
  </para>
 
  <sect2>
-  <title>Example usage</title>
+  <title>Example Usage</title>
 
   <para>
    Simple example using btree_gist instead of btree:

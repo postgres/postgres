@@ -980,7 +980,7 @@ SELECT product_id, p.name, (sum(s.units) * (p.price - p.cost)) AS profit
   </sect2>
 
   <sect2 id="queries-window">
-   <title>Window Function Processing</>
+   <title>Window Function Processing</title>
 
    <indexterm zone="queries-window">
     <primary>window function</primary>

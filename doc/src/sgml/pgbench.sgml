@@ -409,7 +409,7 @@ pgbench <optional> <replaceable>options</> </optional> <replaceable>dbname</>
  </sect2>
 
  <sect2>
-  <title>What is the <quote>transaction</> actually performed in pgbench?</title>
+  <title>What is the <quote>Transaction</> Actually Performed in pgbench?</title>
 
   <para>
    The default transaction script issues seven commands per transaction:
@@ -622,7 +622,7 @@ END;
  </sect2>
 
  <sect2>
-  <title>Per-transaction logging</title>
+  <title>Per-Transaction Logging</title>
 
   <para>
    With the <literal>-l</> option, <application>pgbench</> writes the time
@@ -667,7 +667,7 @@ END;
  </sect2>
 
  <sect2>
-  <title>Per-statement latencies</title>
+  <title>Per-Statement Latencies</title>
 
   <para>
    With the <literal>-r</> option, <application>pgbench</> collects

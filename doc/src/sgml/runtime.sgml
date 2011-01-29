@@ -552,7 +552,7 @@ psql: could not connect to server: No such file or directory
 
 
    <table id="sysvipc-parameters">
-    <title><systemitem class="osname">System V</> <acronym>IPC</> parameters</>
+    <title><systemitem class="osname">System V</> <acronym>IPC</> Parameters</title>
 
     <tgroup cols="3">
      <thead>
@@ -738,7 +738,7 @@ psql: could not connect to server: No such file or directory
       <indexterm><primary>BSD/OS</><secondary>IPC configuration</></>
       <listitem>
        <formalpara>
-        <title>Shared Memory</>
+        <title>Shared Memory</title>
         <para>
          By default, only 4 MB of shared memory is supported. Keep in
          mind that shared memory is not pageable; it is locked in RAM.
@@ -759,7 +759,7 @@ options "SHMMAX=\(SHMALL*PAGE_SIZE\)"
        </formalpara>
 
        <formalpara>
-        <title>Semaphores</>
+        <title>Semaphores</title>
         <para>
          You will probably want to increase the number of semaphores
          as well; the default system total of 60 will only allow about
@@ -1092,7 +1092,7 @@ set semsys:seminfo_semmsl=32
 
 
    <table id="shared-memory-parameters">
-    <title><productname>PostgreSQL</productname> shared memory usage</>
+    <title><productname>PostgreSQL</productname> Shared Memory Usage</>
 
     <tgroup cols="2">
      <thead>
@@ -1701,7 +1701,7 @@ $ <userinput>kill -INT `head -1 /usr/local/pgsql/data/postmaster.pid`</userinput
   </para>
 
   <sect2 id="ssl-client-certificates">
-   <title>Using client certificates</title>
+   <title>Using Client Certificates</title>
 
    <para>
    To require the client to supply a trusted certificate, place

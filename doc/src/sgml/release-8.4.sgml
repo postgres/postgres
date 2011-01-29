@@ -5,7 +5,7 @@
   <title>Release 8.4.7</title>
 
   <note>
-  <title>Release date</title>
+  <title>Release Date</title>
   <simpara>2011-01-31</simpara>
   </note>
 
@@ -137,7 +137,7 @@
   <title>Release 8.4.6</title>
 
   <note>
-  <title>Release date</title>
+  <title>Release Date</title>
   <simpara>2010-12-16</simpara>
   </note>
 
@@ -448,7 +448,7 @@
   <title>Release 8.4.5</title>
 
   <note>
-  <title>Release date</title>
+  <title>Release Date</title>
   <simpara>2010-10-04</simpara>
   </note>
 
@@ -970,7 +970,7 @@
   <title>Release 8.4.4</title>
 
   <note>
-  <title>Release date</title>
+  <title>Release Date</title>
   <simpara>2010-05-17</simpara>
   </note>
 
@@ -1261,7 +1261,7 @@
   <title>Release 8.4.3</title>
 
   <note>
-  <title>Release date</title>
+  <title>Release Date</title>
   <simpara>2010-03-15</simpara>
   </note>
 
@@ -1728,7 +1728,7 @@
   <title>Release 8.4.2</title>
 
   <note>
-  <title>Release date</title>
+  <title>Release Date</title>
   <simpara>2009-12-14</simpara>
   </note>
 
@@ -2259,7 +2259,7 @@ WITH w AS (SELECT * FROM foo) SELECT * FROM w, bar ... FOR UPDATE
   <title>Release 8.4.1</title>
 
   <note>
-  <title>Release date</title>
+  <title>Release Date</title>
   <simpara>2009-09-09</simpara>
   </note>
 
@@ -2558,7 +2558,7 @@ WITH w AS (SELECT * FROM foo) SELECT * FROM w, bar ... FOR UPDATE
   <title>Release 8.4</title>
 
   <note>
-   <title>Release date</title>
+   <title>Release Date</title>
    <simpara>2009-07-01</simpara>
   </note>
 

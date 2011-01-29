@@ -31,7 +31,7 @@
 
   <sect1 id="archive-recovery-settings">
 
-    <title>Archive recovery settings</title>
+    <title>Archive Recovery Settings</title>
      <variablelist>
 
      <varlistentry id="restore-command" xreflabel="restore_command">
@@ -140,7 +140,7 @@ restore_command = 'copy "C:\\server\\archivedir\\%f" "%p"'  # Windows
 
   <sect1 id="recovery-target-settings">
 
-    <title>Recovery target settings</title>
+    <title>Recovery Target Settings</title>
      <variablelist>
 
      <varlistentry id="recovery-target-time" xreflabel="recovery_target_time">
@@ -232,7 +232,7 @@ restore_command = 'copy "C:\\server\\archivedir\\%f" "%p"'  # Windows
 
   <sect1 id="standby-settings">
 
-    <title>Standby server settings</title>
+    <title>Standby Server Settings</title>
      <variablelist>
 
        <varlistentry id="standby-mode" xreflabel="standby_mode">

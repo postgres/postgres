@@ -23,7 +23,7 @@
   </para>
 
   <table id="cube-repr-table">
-   <title>Cube external representations</title>
+   <title>Cube External Representations</title>
    <tgroup cols="2">
     <tbody>
      <row>
@@ -102,7 +102,7 @@
   </para>
 
   <table id="cube-gist-operators">
-   <title>Cube GiST operators</title>
+   <title>Cube GiST Operators</title>
    <tgroup cols="2">
     <thead>
      <row>
@@ -181,7 +181,7 @@
   </para>
 
   <table id="cube-functions-table">
-   <title>Cube functions</title>
+   <title>Cube Functions</title>
    <tgroup cols="2">
     <tbody>
      <row>

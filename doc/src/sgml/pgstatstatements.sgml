@@ -20,7 +20,7 @@
  </para>
 
  <sect2>
-  <title>The <structname>pg_stat_statements</structname> view</title>
+  <title>The <structname>pg_stat_statements</structname> View</title>
 
   <para>
    The statistics gathered by the module are made available via a system view
@@ -31,7 +31,7 @@
   </para>
 
   <table id="pgstatstatements-columns">
-   <title><structname>pg_stat_statements</> columns</title>
+   <title><structname>pg_stat_statements</> Columns</title>
 
    <tgroup cols="4">
     <thead>
@@ -190,7 +190,7 @@
  </sect2>
 
  <sect2>
-  <title>Configuration parameters</title>
+  <title>Configuration Parameters</title>
 
   <variablelist>
    <varlistentry>
@@ -292,7 +292,7 @@ pg_stat_statements.track = all
  </sect2>
 
  <sect2>
-  <title>Sample output</title>
+  <title>Sample Output</title>
 
 <screen>
 bench=# SELECT pg_stat_statements_reset();
