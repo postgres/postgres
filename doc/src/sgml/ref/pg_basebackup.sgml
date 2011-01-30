@@ -145,6 +145,31 @@ PostgreSQL documentation
      </varlistentry>
 
      <varlistentry>
+      <term><option>-x</option></term>
+      <term><option>--xlog</option></term>
+      <listitem>
+       <para>
+        Includes the required transaction log files (WAL files) in the
+        backup. This will include all transaction logs generated during
+        the backup. If this option is specified, it is possible to start
+        a postmaster directly in the extracted directory without the need
+        to consult the log archive, thus making this a completely standalone
+        backup.
+       </para>
+       <note>
+        <para>
+         The transaction log files are collected at the end of the backup.
+         Therefore, it is necessary for the
+         <xref linkend="guc-wal-keep-segments"> parameter to be set high
+         enough that the log is not removed before the end of the backup.
+         If the log has been rotated when it's time to transfer it, the
+         backup will fail and be unusable.
+        </para>
+       </note>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
       <term><option>-Z <replaceable class="parameter">level</replaceable></option></term>
       <term><option>--compress=<replaceable class="parameter">level</replaceable></option></term>
       <listitem>
@@ -164,7 +189,7 @@ PostgreSQL documentation
     <variablelist>
      <varlistentry>
       <term><option>-c <replaceable class="parameter">fast|spread</replaceable></option></term>
-      <term><option>--checkpoint <replaceable class="parameter">fast|spread</replaceable></option></term>
+      <term><option>--checkpoint=<replaceable class="parameter">fast|spread</replaceable></option></term>
       <listitem>
        <para>
         Sets checkpoint mode to fast or spread (default).
@@ -191,7 +216,10 @@ PostgreSQL documentation
         Enables progress reporting. Turning this on will deliver an approximate
         progress report during the backup. Since the database may change during
         the backup, this is only an approximation and may not end at exactly
-        <literal>100%</literal>.
+        <literal>100%</literal>. In particular, when WAL log is included in the
+        backup, the total amount of data cannot be estimated in advance, and
+        in this case the progress report will only count towards the total
+        amount of data without WAL.
        </para>
        <para>
         When this is enabled, the backup will start by enumerating the size of

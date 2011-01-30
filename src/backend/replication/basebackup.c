@@ -37,6 +37,7 @@ typedef struct
 	const char *label;
 	bool		progress;
 	bool		fastcheckpoint;
+	bool		includewal;
 }	basebackup_options;
 
 
@@ -46,10 +47,16 @@ static void _tarWriteHeader(char *filename, char *linktarget,
 				struct stat * statbuf);
 static void send_int8_string(StringInfoData *buf, int64 intval);
 static void SendBackupHeader(List *tablespaces);
-static void SendBackupDirectory(char *location, char *spcoid);
 static void base_backup_cleanup(int code, Datum arg);
 static void perform_base_backup(basebackup_options *opt, DIR *tblspcdir);
 static void parse_basebackup_options(List *options, basebackup_options *opt);
+
+/*
+ * Size of each block sent into the tar stream for larger files.
+ *
+ * XLogSegSize *MUST* be evenly dividable by this
+ */
+#define TAR_SEND_SIZE 32768
 
 typedef struct
 {
@@ -78,7 +85,10 @@ base_backup_cleanup(int code, Datum arg)
 static void
 perform_base_backup(basebackup_options *opt, DIR *tblspcdir)
 {
-	do_pg_start_backup(opt->label, opt->fastcheckpoint);
+	XLogRecPtr	startptr;
+	XLogRecPtr	endptr;
+
+	startptr = do_pg_start_backup(opt->label, opt->fastcheckpoint);
 
 	PG_ENSURE_ERROR_CLEANUP(base_backup_cleanup, (Datum) 0);
 	{
@@ -86,12 +96,6 @@ perform_base_backup(basebackup_options *opt, DIR *tblspcdir)
 		ListCell   *lc;
 		struct dirent *de;
 		tablespaceinfo *ti;
-
-
-		/* Add a node for the base directory */
-		ti = palloc0(sizeof(tablespaceinfo));
-		ti->size = opt->progress ? sendDir(".", 1, true) : -1;
-		tablespaces = lappend(tablespaces, ti);
 
 		/* Collect information about all tablespaces */
 		while ((de = ReadDir(tblspcdir, "pg_tblspc")) != NULL)
@@ -120,6 +124,10 @@ perform_base_backup(basebackup_options *opt, DIR *tblspcdir)
 			tablespaces = lappend(tablespaces, ti);
 		}
 
+		/* Add a node for the base directory at the end */
+		ti = palloc0(sizeof(tablespaceinfo));
+		ti->size = opt->progress ? sendDir(".", 1, true) : -1;
+		tablespaces = lappend(tablespaces, ti);
 
 		/* Send tablespace header */
 		SendBackupHeader(tablespaces);
@@ -128,13 +136,102 @@ perform_base_backup(basebackup_options *opt, DIR *tblspcdir)
 		foreach(lc, tablespaces)
 		{
 			tablespaceinfo *ti = (tablespaceinfo *) lfirst(lc);
+			StringInfoData buf;
 
-			SendBackupDirectory(ti->path, ti->oid);
+			/* Send CopyOutResponse message */
+			pq_beginmessage(&buf, 'H');
+			pq_sendbyte(&buf, 0);		/* overall format */
+			pq_sendint(&buf, 0, 2);		/* natts */
+			pq_endmessage(&buf);
+
+			sendDir(ti->path == NULL ? "." : ti->path,
+					ti->path == NULL ? 1 : strlen(ti->path),
+					false);
+
+			/*
+			 * If we're including WAL, and this is the main data directory we
+			 * don't terminate the tar stream here. Instead, we will append
+			 * the xlog files below and terminate it then. This is safe since
+			 * the main data directory is always sent *last*.
+			 */
+			if (opt->includewal && ti->path == NULL)
+			{
+				Assert(lnext(lc) == NULL);
+			}
+			else
+				pq_putemptymessage('c');		/* CopyDone */
 		}
 	}
 	PG_END_ENSURE_ERROR_CLEANUP(base_backup_cleanup, (Datum) 0);
 
-	do_pg_stop_backup();
+	endptr = do_pg_stop_backup();
+
+	if (opt->includewal)
+	{
+		/*
+		 * We've left the last tar file "open", so we can now append the
+		 * required WAL files to it.
+		 */
+		uint32		logid,
+					logseg;
+		uint32		endlogid,
+					endlogseg;
+		struct stat statbuf;
+
+		MemSet(&statbuf, 0, sizeof(statbuf));
+		statbuf.st_mode = S_IRUSR | S_IWUSR;
+#ifndef WIN32
+		statbuf.st_uid = geteuid();
+		statbuf.st_gid = getegid();
+#endif
+		statbuf.st_size = XLogSegSize;
+		statbuf.st_mtime = time(NULL);
+
+		XLByteToSeg(startptr, logid, logseg);
+		XLByteToPrevSeg(endptr, endlogid, endlogseg);
+
+		while (true)
+		{
+			/* Send another xlog segment */
+			char		fn[MAXPGPATH];
+			int			i;
+
+			XLogFilePath(fn, ThisTimeLineID, logid, logseg);
+			_tarWriteHeader(fn, NULL, &statbuf);
+
+			/* Send the actual WAL file contents, block-by-block */
+			for (i = 0; i < XLogSegSize / TAR_SEND_SIZE; i++)
+			{
+				char		buf[TAR_SEND_SIZE];
+				XLogRecPtr	ptr;
+
+				ptr.xlogid = logid;
+				ptr.xrecoff = logseg * XLogSegSize + TAR_SEND_SIZE * i;
+
+				XLogRead(buf, ptr, TAR_SEND_SIZE);
+				if (pq_putmessage('d', buf, TAR_SEND_SIZE))
+					ereport(ERROR,
+							(errmsg("base backup could not send data, aborting backup")));
+			}
+
+			/*
+			 * Files are always fixed size, and always end on a 512 byte
+			 * boundary, so padding is never necessary.
+			 */
+
+
+			/* Advance to the next WAL file */
+			NextLogSeg(logid, logseg);
+
+			/* Have we reached our stop position yet? */
+			if (logid > endlogid ||
+				(logid == endlogid && logseg > endlogseg))
+				break;
+		}
+
+		/* Send CopyDone message for the last tar file */
+		pq_putemptymessage('c');
+	}
 }
 
 /*
@@ -147,6 +244,7 @@ parse_basebackup_options(List *options, basebackup_options *opt)
 	bool		o_label = false;
 	bool		o_progress = false;
 	bool		o_fast = false;
+	bool		o_wal = false;
 
 	MemSet(opt, 0, sizeof(*opt));
 	foreach(lopt, options)
@@ -179,6 +277,15 @@ parse_basebackup_options(List *options, basebackup_options *opt)
 						 errmsg("duplicate option \"%s\"", defel->defname)));
 			opt->fastcheckpoint = true;
 			o_fast = true;
+		}
+		else if (strcmp(defel->defname, "wal") == 0)
+		{
+			if (o_wal)
+				ereport(ERROR,
+						(errcode(ERRCODE_SYNTAX_ERROR),
+						 errmsg("duplicate option \"%s\"", defel->defname)));
+			opt->includewal = true;
+			o_wal = true;
 		}
 		else
 			elog(ERROR, "option \"%s\" not recognized",
@@ -314,26 +421,6 @@ SendBackupHeader(List *tablespaces)
 
 	/* Send a CommandComplete message */
 	pq_puttextmessage('C', "SELECT");
-}
-
-static void
-SendBackupDirectory(char *location, char *spcoid)
-{
-	StringInfoData buf;
-
-	/* Send CopyOutResponse message */
-	pq_beginmessage(&buf, 'H');
-	pq_sendbyte(&buf, 0);		/* overall format */
-	pq_sendint(&buf, 0, 2);		/* natts */
-	pq_endmessage(&buf);
-
-	/* tar up the data directory if NULL, otherwise the tablespace */
-	sendDir(location == NULL ? "." : location,
-			location == NULL ? 1 : strlen(location),
-			false);
-
-	/* Send CopyDone message */
-	pq_putemptymessage('c');
 }
 
 
@@ -506,7 +593,7 @@ static void
 sendFile(char *filename, int basepathlen, struct stat * statbuf)
 {
 	FILE	   *fp;
-	char		buf[32768];
+	char		buf[TAR_SEND_SIZE];
 	size_t		cnt;
 	pgoff_t		len = 0;
 	size_t		pad;

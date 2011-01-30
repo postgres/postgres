@@ -33,6 +33,7 @@ char	   *label = "pg_basebackup base backup";
 bool		showprogress = false;
 int			verbose = 0;
 int			compresslevel = 0;
+bool		includewal = false;
 bool		fastcheckpoint = false;
 char	   *dbhost = NULL;
 char	   *dbuser = NULL;
@@ -124,6 +125,7 @@ usage(void)
 	printf(_("\nOptions controlling the output:\n"));
 	printf(_("  -D, --pgdata=directory    receive base backup into directory\n"));
 	printf(_("  -F, --format=p|t          output format (plain, tar)\n"));
+	printf(_("  -x, --xlog                include required WAL files in backup\n"));
 	printf(_("  -Z, --compress=0-9        compress tar output\n"));
 	printf(_("\nGeneral options:\n"));
 	printf(_("  -c, --checkpoint=fast|spread\n"
@@ -200,16 +202,20 @@ verify_dir_is_empty_or_create(char *dirname)
 static void
 progress_report(int tablespacenum, char *fn)
 {
+	int percent = (int) ((totaldone / 1024) * 100 / totalsize);
+	if (percent > 100)
+		percent = 100;
+
 	if (verbose)
 		fprintf(stderr,
 				INT64_FORMAT "/" INT64_FORMAT " kB (%i%%) %i/%i tablespaces (%-30s)\r",
 				totaldone / 1024, totalsize,
-				(int) ((totaldone / 1024) * 100 / totalsize),
+				percent,
 				tablespacenum, tablespacecount, fn);
 	else
 		fprintf(stderr, INT64_FORMAT "/" INT64_FORMAT " kB (%i%%) %i/%i tablespaces\r",
 				totaldone / 1024, totalsize,
-				(int) ((totaldone / 1024) * 100 / totalsize),
+				percent,
 				tablespacenum, tablespacecount);
 }
 
@@ -746,9 +752,10 @@ BaseBackup()
 	conn = GetConnection();
 
 	PQescapeStringConn(conn, escaped_label, label, sizeof(escaped_label), &i);
-	snprintf(current_path, sizeof(current_path), "BASE_BACKUP LABEL '%s' %s %s",
+	snprintf(current_path, sizeof(current_path), "BASE_BACKUP LABEL '%s' %s %s %s",
 			 escaped_label,
 			 showprogress ? "PROGRESS" : "",
+			 includewal ? "WAL" : "",
 			 fastcheckpoint ? "FAST" : "");
 
 	if (PQsendQuery(conn, current_path) == 0)
@@ -789,7 +796,7 @@ BaseBackup()
 		 * first once since it can be relocated, and it will be checked before
 		 * we do anything anyway.
 		 */
-		if (format == 'p' && i > 0)
+		if (format == 'p' && !PQgetisnull(res, i, 1))
 			verify_dir_is_empty_or_create(PQgetvalue(res, i, 1));
 	}
 
@@ -848,6 +855,7 @@ main(int argc, char **argv)
 		{"pgdata", required_argument, NULL, 'D'},
 		{"format", required_argument, NULL, 'F'},
 		{"checkpoint", required_argument, NULL, 'c'},
+		{"xlog", no_argument, NULL, 'x'},
 		{"compress", required_argument, NULL, 'Z'},
 		{"label", required_argument, NULL, 'l'},
 		{"host", required_argument, NULL, 'h'},
@@ -881,7 +889,7 @@ main(int argc, char **argv)
 		}
 	}
 
-	while ((c = getopt_long(argc, argv, "D:F:l:Z:c:h:p:U:wWvP",
+	while ((c = getopt_long(argc, argv, "D:F:l:Z:c:h:p:U:xwWvP",
 							long_options, &option_index)) != -1)
 	{
 		switch (c)
@@ -900,6 +908,9 @@ main(int argc, char **argv)
 							progname, optarg);
 					exit(1);
 				}
+				break;
+			case 'x':
+				includewal = true;
 				break;
 			case 'l':
 				label = xstrdup(optarg);
