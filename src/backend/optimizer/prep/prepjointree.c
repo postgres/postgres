@@ -1738,6 +1738,11 @@ reduce_outer_joins_pass2(Node *jtnode,
 			 * is that we pass either the local or the upper constraints,
 			 * never both, to the children of an outer join.
 			 *
+			 * Note that a SEMI join works like an inner join here: it's okay
+			 * to pass down both local and upper constraints.  (There can't
+			 * be any upper constraints affecting its inner side, but it's
+			 * not worth having a separate code path to avoid passing them.)
+			 *
 			 * At a FULL join we just punt and pass nothing down --- is it
 			 * possible to be smarter?
 			 */
@@ -1747,7 +1752,7 @@ reduce_outer_joins_pass2(Node *jtnode,
 				if (!computed_local_nonnullable_vars)
 					local_nonnullable_vars = find_nonnullable_vars(j->quals);
 				local_forced_null_vars = find_forced_null_vars(j->quals);
-				if (jointype == JOIN_INNER)
+				if (jointype == JOIN_INNER || jointype == JOIN_SEMI)
 				{
 					/* OK to merge upper and local constraints */
 					local_nonnullable_rels = bms_add_members(local_nonnullable_rels,
@@ -1767,14 +1772,14 @@ reduce_outer_joins_pass2(Node *jtnode,
 
 			if (left_state->contains_outer)
 			{
-				if (jointype == JOIN_INNER)
+				if (jointype == JOIN_INNER || jointype == JOIN_SEMI)
 				{
 					/* pass union of local and upper constraints */
 					pass_nonnullable_rels = local_nonnullable_rels;
 					pass_nonnullable_vars = local_nonnullable_vars;
 					pass_forced_null_vars = local_forced_null_vars;
 				}
-				else if (jointype != JOIN_FULL) /* ie, LEFT/SEMI/ANTI */
+				else if (jointype != JOIN_FULL)		/* ie, LEFT or ANTI */
 				{
 					/* can't pass local constraints to non-nullable side */
 					pass_nonnullable_rels = nonnullable_rels;
