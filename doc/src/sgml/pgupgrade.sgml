@@ -17,9 +17,19 @@
  </para>
 
  <para>
-  <application>pg_upgrade</> works because, though new features are
-  regularly added to PostgreSQL major releases, the internal data storage
-  format rarely changes.  <application>pg_upgrade</> does its best to
+  Major PostgreSQL releases regularly add new features that often
+  change the layout of the system tables, but the internal data storage
+  format rarely changes.  <application>pg_upgrade</> uses this fact
+  to perform rapid upgrades by creating new system tables and simply
+  reusing the old user data files.  If a future major release ever
+  changes the data storage format in a way that makes the old data
+  format unreadable, <application>pg_upgrade</> will not be usable
+  for such upgrades.  (The community will attempt to avoid such
+  situations.)
+ </para>
+
+ <para>
+  <application>pg_upgrade</> does its best to
   make sure the old and new clusters are binary-compatible, e.g.  by
   checking for compatible compile-time settings, including 32/64-bit
   binaries.  It is important that

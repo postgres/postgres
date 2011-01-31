@@ -1692,17 +1692,13 @@ pg_dumpall -p 5432 | psql -d postgres -p 5433
   </sect2>
 
   <sect2 id="upgrading-methods-other">
-   <title>Other data migration methods</title>
+   <title>Non-Dump Upgrade Methods</title>
 
    <para>
-    The <filename>contrib</> program
-    <link linkend="pgupgrade"><application>pg_upgrade</application></link>
-    allows an installation to be migrated in-place from one major
-    <productname>PostgreSQL</> version to the next.  Keep in mind that this
-    method does not provide any scope for running old and new versions
-    concurrently.  Also, <application>pg_upgrade</application> is much less
-    battle-tested than <application>pg_dump</application>, so having an
-    up-to-date backup is strongly recommended in case something goes wrong.
+    The <link linkend="pgupgrade">pg_upgrade</link> module allows an
+    installation to be migrated in-place from one major
+    <productname>PostgreSQL</> version to the next.  Upgrades can be
+    performed in minutes.
    </para>
 
    <para>
