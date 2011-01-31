@@ -645,7 +645,7 @@ ReceiveAndUnpackTarFile(PGconn *conn, PGresult *res, int rownum)
 
 	if (file != NULL)
 	{
-		fprintf(stderr, _("%s: last file was never finsihed!\n"), progname);
+		fprintf(stderr, _("%s: last file was never finished!\n"), progname);
 		disconnect_and_exit(1);
 	}
 
