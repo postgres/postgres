@@ -4,7 +4,16 @@
 #define WIN32_ONLY_COMPILER
 #endif
 
+/* 
+ * Make sure _WIN32_WINNT has the minumum required value. 
+ * Leave a higher value in place.
+*/
+#if defined(_WIN32_WINNT) && _WIN32_WINNT < 0x0501
+#undefine _WIN32_WINNT
+#endif
+#ifndef _WIN32_WINNT
 #define _WIN32_WINNT 0x0501
+#endif
 /*
  * Always build with SSPI support. Keep it as a #define in case
  * we want a switch to disable it sometime in the future.
@@ -17,10 +26,17 @@
 #undef mkdir
 
 #undef ERROR
+
+/* 
+ * The Mingw64 headers choke if this is already defined - they
+ * define it themselves.
+ */
+#if !defined(WIN64) || defined(WIN32_ONLY_COMPILER)
 #define _WINSOCKAPI_
-#include <windows.h>
+#endif
 #include <winsock2.h>
 #include <ws2tcpip.h>
+#include <windows.h>
 #undef small
 #include <process.h>
 #include <signal.h>

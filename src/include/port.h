@@ -325,8 +325,12 @@ extern FILE *pgwin32_fopen(const char *, const char *);
 #define		fopen(a,b) pgwin32_fopen(a,b)
 #endif
 
+#ifndef popen
 #define popen(a,b) _popen(a,b)
+#endif
+#ifndef pclose
 #define pclose(a) _pclose(a)
+#endif
 
 /* New versions of MingW have gettimeofday, old mingw and msvc don't */
 #ifndef HAVE_GETTIMEOFDAY

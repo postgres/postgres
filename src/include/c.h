@@ -58,7 +58,7 @@
 #endif
 #include "postgres_ext.h"
 
-#if _MSC_VER >= 1400
+#if _MSC_VER >= 1400 || defined(WIN64)
 #define errcode __msvc_errcode
 #include <crtdefs.h>
 #undef errcode
