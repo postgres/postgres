@@ -42,8 +42,10 @@ typedef struct
 
 
 static int64 sendDir(char *path, int basepathlen, bool sizeonly);
-static void sendFile(char *path, int basepathlen, struct stat * statbuf);
-static void _tarWriteHeader(char *filename, char *linktarget,
+static void sendFile(char *readfilename, char *tarfilename,
+		 struct stat * statbuf);
+static void sendFileWithContent(const char *filename, const char *content);
+static void _tarWriteHeader(const char *filename, char *linktarget,
 				struct stat * statbuf);
 static void send_int8_string(StringInfoData *buf, int64 intval);
 static void SendBackupHeader(List *tablespaces);
@@ -87,8 +89,9 @@ perform_base_backup(basebackup_options *opt, DIR *tblspcdir)
 {
 	XLogRecPtr	startptr;
 	XLogRecPtr	endptr;
+	char	   *labelfile;
 
-	startptr = do_pg_start_backup(opt->label, opt->fastcheckpoint);
+	startptr = do_pg_start_backup(opt->label, opt->fastcheckpoint, &labelfile);
 
 	PG_ENSURE_ERROR_CLEANUP(base_backup_cleanup, (Datum) 0);
 	{
@@ -144,6 +147,10 @@ perform_base_backup(basebackup_options *opt, DIR *tblspcdir)
 			pq_sendint(&buf, 0, 2);		/* natts */
 			pq_endmessage(&buf);
 
+			/* In the main tar, include the backup_label first. */
+			if (ti->path == NULL)
+				sendFileWithContent(BACKUP_LABEL_FILE, labelfile);
+
 			sendDir(ti->path == NULL ? "." : ti->path,
 					ti->path == NULL ? 1 : strlen(ti->path),
 					false);
@@ -164,7 +171,7 @@ perform_base_backup(basebackup_options *opt, DIR *tblspcdir)
 	}
 	PG_END_ENSURE_ERROR_CLEANUP(base_backup_cleanup, (Datum) 0);
 
-	endptr = do_pg_stop_backup();
+	endptr = do_pg_stop_backup(labelfile);
 
 	if (opt->includewal)
 	{
@@ -299,8 +306,9 @@ parse_basebackup_options(List *options, basebackup_options *opt)
 /*
  * SendBaseBackup() - send a complete base backup.
  *
- * The function will take care of running pg_start_backup() and
- * pg_stop_backup() for the user.
+ * The function will put the system into backup mode like pg_start_backup()
+ * does, so that the backup is consistent even though we read directly from
+ * the filesystem, bypassing the buffer cache.
  */
 void
 SendBaseBackup(BaseBackupCmd *cmd)
@@ -423,7 +431,52 @@ SendBackupHeader(List *tablespaces)
 	pq_puttextmessage('C', "SELECT");
 }
 
+/*
+ * Inject a file with given name and content in the output tar stream.
+ */
+static void
+sendFileWithContent(const char *filename, const char *content)
+{
+	struct stat statbuf;
+	int pad, len;
 
+	len = strlen(content);
+
+	/*
+	 * Construct a stat struct for the backup_label file we're injecting
+	 * in the tar.
+	 */
+	/* Windows doesn't have the concept of uid and gid */
+#ifdef WIN32
+	statbuf.st_uid = 0;
+	statbuf.st_gid = 0;
+#else
+	statbuf.st_uid = geteuid();
+	statbuf.st_gid = getegid();
+#endif
+	statbuf.st_mtime = time(NULL);
+	statbuf.st_mode = S_IRUSR | S_IWUSR;
+	statbuf.st_size = len;
+
+	_tarWriteHeader(filename, NULL, &statbuf);
+	/* Send the contents as a CopyData message */
+	pq_putmessage('d', content, len);
+
+	/* Pad to 512 byte boundary, per tar format requirements */
+	pad = ((len + 511) & ~511) - len;
+	if (pad > 0)
+	{
+		char buf[512];
+		MemSet(buf, 0, pad);
+		pq_putmessage('d', buf, pad);
+	}
+}
+
+/*
+ * Include all files from the given directory in the output tar stream. If
+ * 'sizeonly' is true, we just calculate a total length and return ig, without
+ * actually sending anything.
+ */
 static int64
 sendDir(char *path, int basepathlen, bool sizeonly)
 {
@@ -444,6 +497,14 @@ sendDir(char *path, int basepathlen, bool sizeonly)
 		if (strncmp(de->d_name,
 					PG_TEMP_FILE_PREFIX,
 					strlen(PG_TEMP_FILE_PREFIX)) == 0)
+			continue;
+
+		/*
+		 * If there's a backup_label file, it belongs to a backup started by
+		 * the user with pg_start_backup(). It is *not* correct for this
+		 * backup, our backup_label is injected into the tar separately.
+		 */
+		if (strcmp(de->d_name, BACKUP_LABEL_FILE) == 0)
 			continue;
 
 		/*
@@ -532,7 +593,7 @@ sendDir(char *path, int basepathlen, bool sizeonly)
 			/* Add size, rounded up to 512byte block */
 			size += ((statbuf.st_size + 511) & ~511);
 			if (!sizeonly)
-				sendFile(pathbuf, basepathlen, &statbuf);
+				sendFile(pathbuf, pathbuf + basepathlen + 1, &statbuf);
 			size += 512;		/* Size of the header of the file */
 		}
 		else
@@ -590,7 +651,7 @@ _tarChecksum(char *header)
 
 /* Given the member, write the TAR header & send the file */
 static void
-sendFile(char *filename, int basepathlen, struct stat * statbuf)
+sendFile(char *readfilename, char *tarfilename, struct stat *statbuf)
 {
 	FILE	   *fp;
 	char		buf[TAR_SEND_SIZE];
@@ -598,11 +659,11 @@ sendFile(char *filename, int basepathlen, struct stat * statbuf)
 	pgoff_t		len = 0;
 	size_t		pad;
 
-	fp = AllocateFile(filename, "rb");
+	fp = AllocateFile(readfilename, "rb");
 	if (fp == NULL)
 		ereport(ERROR,
 				(errcode(errcode_for_file_access()),
-				 errmsg("could not open file \"%s\": %m", filename)));
+				 errmsg("could not open file \"%s\": %m", readfilename)));
 
 	/*
 	 * Some compilers will throw a warning knowing this test can never be true
@@ -611,9 +672,9 @@ sendFile(char *filename, int basepathlen, struct stat * statbuf)
 	if (statbuf->st_size > MAX_TAR_MEMBER_FILELEN)
 		ereport(ERROR,
 				(errmsg("archive member \"%s\" too large for tar format",
-						filename)));
+						tarfilename)));
 
-	_tarWriteHeader(filename + basepathlen + 1, NULL, statbuf);
+	_tarWriteHeader(tarfilename, NULL, statbuf);
 
 	while ((cnt = fread(buf, 1, Min(sizeof(buf), statbuf->st_size - len), fp)) > 0)
 	{
@@ -660,7 +721,7 @@ sendFile(char *filename, int basepathlen, struct stat * statbuf)
 
 
 static void
-_tarWriteHeader(char *filename, char *linktarget, struct stat * statbuf)
+_tarWriteHeader(const char *filename, char *linktarget, struct stat * statbuf)
 {
 	char		h[512];
 	int			lastSum = 0;

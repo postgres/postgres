@@ -59,10 +59,9 @@ PostgreSQL documentation
   </para>
 
   <para>
-   Only one backup can be concurrently active in
-   <productname>PostgreSQL</productname>, meaning that only one instance of
-   <application>pg_basebackup</application> can run at the same time
-   against a single database cluster.
+   There can be multiple pg_basebackups running at the same time, but it is
+   better from a performance point of view to take only one backup, and copy
+   the the result.
   </para>
  </refsect1>
 

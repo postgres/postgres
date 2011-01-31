@@ -312,8 +312,15 @@ extern void HandleStartupProcInterrupts(void);
 extern void StartupProcessMain(void);
 extern void WakeupRecovery(void);
 
-extern XLogRecPtr do_pg_start_backup(const char *backupidstr, bool fast);
-extern XLogRecPtr do_pg_stop_backup(void);
+/*
+ * Starting/stopping a base backup
+ */
+extern XLogRecPtr do_pg_start_backup(const char *backupidstr, bool fast, char **labelfile);
+extern XLogRecPtr do_pg_stop_backup(char *labelfile);
 extern void do_pg_abort_backup(void);
+
+/* File path names (all relative to $PGDATA) */
+#define BACKUP_LABEL_FILE		"backup_label"
+#define BACKUP_LABEL_OLD		"backup_label.old"
 
 #endif   /* XLOG_H */

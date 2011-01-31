@@ -814,12 +814,13 @@ SELECT pg_stop_backup();
 
    <para>
     You can also use the <xref linkend="app-pgbasebackup"> tool to take
-    the backup, instead of manually copying the files. This tool will take
-    care of the <function>pg_start_backup()</>, copy and
+    the backup, instead of manually copying the files. This tool will do
+    the equivalent of <function>pg_start_backup()</>, copy and
     <function>pg_stop_backup()</> steps automatically, and transfers the
     backup over a regular <productname>PostgreSQL</productname> connection
     using the replication protocol, instead of requiring filesystem level
-    access.
+    access. pg_basebackup does not interfere with filesystem level backups
+    taken using <function>pg_start_backup()</>/<function>pg_stop_backup()</>.
    </para>
 
    <para>

@@ -60,8 +60,6 @@
 
 
 /* File path names (all relative to $PGDATA) */
-#define BACKUP_LABEL_FILE		"backup_label"
-#define BACKUP_LABEL_OLD		"backup_label.old"
 #define RECOVERY_COMMAND_FILE	"recovery.conf"
 #define RECOVERY_COMMAND_DONE	"recovery.done"
 
@@ -339,6 +337,15 @@ typedef struct XLogCtlInsert
 	char	   *currpos;		/* current insertion point in cache */
 	XLogRecPtr	RedoRecPtr;		/* current redo point for insertions */
 	bool		forcePageWrites;	/* forcing full-page writes for PITR? */
+
+	/*
+	 * exclusiveBackup is true if a backup started with pg_start_backup() is
+	 * in progress, and nonExclusiveBackups is a counter indicating the number
+	 * of streaming base backups currently in progress. forcePageWrites is
+	 * set to true when either of these is non-zero.
+	 */
+	bool		exclusiveBackup;
+	int			nonExclusiveBackups;
 } XLogCtlInsert;
 
 /*
@@ -8352,16 +8359,38 @@ pg_start_backup(PG_FUNCTION_ARGS)
 
 	backupidstr = text_to_cstring(backupid);
 
-	startpoint = do_pg_start_backup(backupidstr, fast);
+	startpoint = do_pg_start_backup(backupidstr, fast, NULL);
 
 	snprintf(startxlogstr, sizeof(startxlogstr), "%X/%X",
 			 startpoint.xlogid, startpoint.xrecoff);
 	PG_RETURN_TEXT_P(cstring_to_text(startxlogstr));
 }
 
+/*
+ * do_pg_start_backup is the workhorse of the user-visible pg_start_backup()
+ * function. It creates the necessary starting checkpoint and constructs the
+ * backup label file.
+ * 
+ * There are two kind of backups: exclusive and non-exclusive. An exclusive
+ * backup is started with pg_start_backup(), and there can be only one active
+ * at a time. The backup label file of an exclusive backup is written to
+ * $PGDATA/backup_label, and it is removed by pg_stop_backup().
+ *
+ * A non-exclusive backup is used for the streaming base backups (see
+ * src/backend/replication/basebackup.c). The difference to exclusive backups
+ * is that the backup label file is not written to disk. Instead, its would-be
+ * contents are returned in *labelfile, and the caller is responsible for
+ * including it in the backup archive as 'backup_label'. There can be many
+ * non-exclusive backups active at the same time, and they don't conflict
+ * with an exclusive backup either.
+ *
+ * Every successfully started non-exclusive backup must be stopped by calling
+ * do_pg_stop_backup() or do_pg_abort_backup().
+ */
 XLogRecPtr
-do_pg_start_backup(const char *backupidstr, bool fast)
+do_pg_start_backup(const char *backupidstr, bool fast, char **labelfile)
 {
+	bool		exclusive = (labelfile == NULL);
 	XLogRecPtr	checkpointloc;
 	XLogRecPtr	startpoint;
 	pg_time_t	stamp_time;
@@ -8371,6 +8400,7 @@ do_pg_start_backup(const char *backupidstr, bool fast)
 	uint32		_logSeg;
 	struct stat stat_buf;
 	FILE	   *fp;
+	StringInfoData labelfbuf;
 
 	if (!superuser() && !is_authenticated_user_replication_role())
 		ereport(ERROR,
@@ -8388,6 +8418,12 @@ do_pg_start_backup(const char *backupidstr, bool fast)
 				(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
 			  errmsg("WAL level not sufficient for making an online backup"),
 				 errhint("wal_level must be set to \"archive\" or \"hot_standby\" at server start.")));
+
+	if (strlen(backupidstr) > MAXPGPATH)
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+				 errmsg("backup label too long (max %d bytes)",
+						MAXPGPATH)));
 
 	/*
 	 * Mark backup active in shared memory.  We must do full-page WAL writes
@@ -8407,14 +8443,20 @@ do_pg_start_backup(const char *backupidstr, bool fast)
 	 * ensure adequate interlocking against XLogInsert().
 	 */
 	LWLockAcquire(WALInsertLock, LW_EXCLUSIVE);
-	if (XLogCtl->Insert.forcePageWrites)
+	if (exclusive)
 	{
-		LWLockRelease(WALInsertLock);
-		ereport(ERROR,
-				(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
-				 errmsg("a backup is already in progress"),
-				 errhint("Run pg_stop_backup() and try again.")));
+		if (XLogCtl->Insert.exclusiveBackup)
+		{
+			LWLockRelease(WALInsertLock);
+			ereport(ERROR,
+					(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
+					 errmsg("a backup is already in progress"),
+					 errhint("Run pg_stop_backup() and try again.")));
+		}
+		XLogCtl->Insert.exclusiveBackup = true;
 	}
+	else
+		XLogCtl->Insert.nonExclusiveBackups++;
 	XLogCtl->Insert.forcePageWrites = true;
 	LWLockRelease(WALInsertLock);
 
@@ -8432,7 +8474,7 @@ do_pg_start_backup(const char *backupidstr, bool fast)
 	RequestXLogSwitch();
 
 	/* Ensure we release forcePageWrites if fail below */
-	PG_ENSURE_ERROR_CLEANUP(pg_start_backup_callback, (Datum) 0);
+	PG_ENSURE_ERROR_CLEANUP(pg_start_backup_callback, (Datum) BoolGetDatum(exclusive));
 	{
 		/*
 		 * Force a CHECKPOINT.	Aside from being necessary to prevent torn
@@ -8459,54 +8501,67 @@ do_pg_start_backup(const char *backupidstr, bool fast)
 		XLByteToSeg(startpoint, _logId, _logSeg);
 		XLogFileName(xlogfilename, ThisTimeLineID, _logId, _logSeg);
 
+		/*
+		 * Construct backup label file 
+		 */
+		initStringInfo(&labelfbuf);
+
 		/* Use the log timezone here, not the session timezone */
 		stamp_time = (pg_time_t) time(NULL);
 		pg_strftime(strfbuf, sizeof(strfbuf),
 					"%Y-%m-%d %H:%M:%S %Z",
 					pg_localtime(&stamp_time, log_timezone));
+		appendStringInfo(&labelfbuf, "START WAL LOCATION: %X/%X (file %s)\n",
+						 startpoint.xlogid, startpoint.xrecoff, xlogfilename);
+		appendStringInfo(&labelfbuf, "CHECKPOINT LOCATION: %X/%X\n",
+						 checkpointloc.xlogid, checkpointloc.xrecoff);
+		appendStringInfo(&labelfbuf, "START TIME: %s\n", strfbuf);
+		appendStringInfo(&labelfbuf, "LABEL: %s\n", backupidstr);
 
 		/*
-		 * Check for existing backup label --- implies a backup is already
-		 * running.  (XXX given that we checked forcePageWrites above, maybe
-		 * it would be OK to just unlink any such label file?)
+		 * Okay, write the file, or return its contents to caller.
 		 */
-		if (stat(BACKUP_LABEL_FILE, &stat_buf) != 0)
+		if (exclusive)
 		{
-			if (errno != ENOENT)
+			/*
+			 * Check for existing backup label --- implies a backup is already
+			 * running.  (XXX given that we checked exclusiveBackup above, maybe
+			 * it would be OK to just unlink any such label file?)
+			 */
+			if (stat(BACKUP_LABEL_FILE, &stat_buf) != 0)
+			{
+				if (errno != ENOENT)
+					ereport(ERROR,
+							(errcode_for_file_access(),
+							 errmsg("could not stat file \"%s\": %m",
+									BACKUP_LABEL_FILE)));
+			}
+			else
+				ereport(ERROR,
+						(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
+						 errmsg("a backup is already in progress"),
+						 errhint("If you're sure there is no backup in progress, remove file \"%s\" and try again.",
+								 BACKUP_LABEL_FILE)));
+
+			fp = AllocateFile(BACKUP_LABEL_FILE, "w");
+
+			if (!fp)
 				ereport(ERROR,
 						(errcode_for_file_access(),
-						 errmsg("could not stat file \"%s\": %m",
+						 errmsg("could not create file \"%s\": %m",
 								BACKUP_LABEL_FILE)));
+			fwrite(labelfbuf.data, labelfbuf.len, 1, fp);
+			if (fflush(fp) || ferror(fp) || FreeFile(fp))
+				ereport(ERROR,
+						(errcode_for_file_access(),
+						 errmsg("could not write file \"%s\": %m",
+								BACKUP_LABEL_FILE)));
+			pfree(labelfbuf.data);
 		}
 		else
-			ereport(ERROR,
-					(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
-					 errmsg("a backup is already in progress"),
-					 errhint("If you're sure there is no backup in progress, remove file \"%s\" and try again.",
-							 BACKUP_LABEL_FILE)));
-
-		/*
-		 * Okay, write the file
-		 */
-		fp = AllocateFile(BACKUP_LABEL_FILE, "w");
-		if (!fp)
-			ereport(ERROR,
-					(errcode_for_file_access(),
-					 errmsg("could not create file \"%s\": %m",
-							BACKUP_LABEL_FILE)));
-		fprintf(fp, "START WAL LOCATION: %X/%X (file %s)\n",
-				startpoint.xlogid, startpoint.xrecoff, xlogfilename);
-		fprintf(fp, "CHECKPOINT LOCATION: %X/%X\n",
-				checkpointloc.xlogid, checkpointloc.xrecoff);
-		fprintf(fp, "START TIME: %s\n", strfbuf);
-		fprintf(fp, "LABEL: %s\n", backupidstr);
-		if (fflush(fp) || ferror(fp) || FreeFile(fp))
-			ereport(ERROR,
-					(errcode_for_file_access(),
-					 errmsg("could not write file \"%s\": %m",
-							BACKUP_LABEL_FILE)));
+			*labelfile = labelfbuf.data;
 	}
-	PG_END_ENSURE_ERROR_CLEANUP(pg_start_backup_callback, (Datum) 0);
+	PG_END_ENSURE_ERROR_CLEANUP(pg_start_backup_callback, (Datum) BoolGetDatum(exclusive));
 
 	/*
 	 * We're done.  As a convenience, return the starting WAL location.
@@ -8518,9 +8573,26 @@ do_pg_start_backup(const char *backupidstr, bool fast)
 static void
 pg_start_backup_callback(int code, Datum arg)
 {
-	/* Turn off forcePageWrites on failure */
+	bool exclusive = DatumGetBool(arg);
+
+	/* Update backup counters and forcePageWrites on failure */
 	LWLockAcquire(WALInsertLock, LW_EXCLUSIVE);
-	XLogCtl->Insert.forcePageWrites = false;
+	if (exclusive)
+	{
+		Assert(XLogCtl->Insert.exclusiveBackup);
+		XLogCtl->Insert.exclusiveBackup = false;
+	}
+	else
+	{
+		Assert(XLogCtl->Insert.nonExclusiveBackups > 0);
+		XLogCtl->Insert.nonExclusiveBackups--;
+	}
+
+	if (!XLogCtl->Insert.exclusiveBackup &&
+		XLogCtl->Insert.nonExclusiveBackups == 0)
+	{
+		XLogCtl->Insert.forcePageWrites = false;
+	}
 	LWLockRelease(WALInsertLock);
 }
 
@@ -8543,16 +8615,24 @@ pg_stop_backup(PG_FUNCTION_ARGS)
 	XLogRecPtr	stoppoint;
 	char		stopxlogstr[MAXFNAMELEN];
 
-	stoppoint = do_pg_stop_backup();
+	stoppoint = do_pg_stop_backup(NULL);
 
 	snprintf(stopxlogstr, sizeof(stopxlogstr), "%X/%X",
 			 stoppoint.xlogid, stoppoint.xrecoff);
 	PG_RETURN_TEXT_P(cstring_to_text(stopxlogstr));
 }
 
+/*
+ * do_pg_stop_backup is the workhorse of the user-visible pg_stop_backup()
+ * function.
+
+ * If labelfile is NULL, this stops an exclusive backup. Otherwise this stops
+ * the non-exclusive backup specified by 'labelfile'.
+ */
 XLogRecPtr
-do_pg_stop_backup(void)
+do_pg_stop_backup(char *labelfile)
 {
+	bool		exclusive = (labelfile == NULL);
 	XLogRecPtr	startpoint;
 	XLogRecPtr	stoppoint;
 	XLogRecData rdata;
@@ -8568,10 +8648,10 @@ do_pg_stop_backup(void)
 	FILE	   *lfp;
 	FILE	   *fp;
 	char		ch;
-	int			ich;
 	int			seconds_before_warning;
 	int			waits = 0;
 	bool		reported_waiting = false;
+	char	   *remaining;
 
 	if (!superuser() && !is_authenticated_user_replication_role())
 		ereport(ERROR,
@@ -8591,38 +8671,88 @@ do_pg_stop_backup(void)
 				 errhint("wal_level must be set to \"archive\" or \"hot_standby\" at server start.")));
 
 	/*
-	 * OK to clear forcePageWrites
+	 * OK to update backup counters and forcePageWrites
 	 */
 	LWLockAcquire(WALInsertLock, LW_EXCLUSIVE);
-	XLogCtl->Insert.forcePageWrites = false;
+	if (exclusive)
+		XLogCtl->Insert.exclusiveBackup = false;
+	else
+	{
+		/*
+		 * The user-visible pg_start/stop_backup() functions that operate on
+		 * exclusive backups can be called at any time, but for non-exclusive
+		 * backups, it is expected that each do_pg_start_backup() call is
+		 * matched by exactly one do_pg_stop_backup() call.
+		 */
+		Assert(XLogCtl->Insert.nonExclusiveBackups > 0);
+		XLogCtl->Insert.nonExclusiveBackups--;
+	}
+
+	if (!XLogCtl->Insert.exclusiveBackup &&
+		XLogCtl->Insert.nonExclusiveBackups == 0)
+	{
+		XLogCtl->Insert.forcePageWrites = false;
+	}
 	LWLockRelease(WALInsertLock);
 
-	/*
-	 * Open the existing label file
-	 */
-	lfp = AllocateFile(BACKUP_LABEL_FILE, "r");
-	if (!lfp)
+	if (exclusive)
 	{
-		if (errno != ENOENT)
+		/*
+		 * Read the existing label file into memory.
+		 */
+		struct	stat statbuf;
+		int		r;
+
+		if (stat(BACKUP_LABEL_FILE, &statbuf))
+		{
+			if (errno != ENOENT)
+				ereport(ERROR,
+						(errcode_for_file_access(),
+						 errmsg("could not stat file \"%s\": %m",
+								BACKUP_LABEL_FILE)));
+			ereport(ERROR,
+					(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
+					 errmsg("a backup is not in progress")));
+		}
+
+		lfp = AllocateFile(BACKUP_LABEL_FILE, "r");
+		if (!lfp)
+		{
 			ereport(ERROR,
 					(errcode_for_file_access(),
 					 errmsg("could not read file \"%s\": %m",
 							BACKUP_LABEL_FILE)));
-		ereport(ERROR,
-				(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
-				 errmsg("a backup is not in progress")));
+		}
+		labelfile = palloc(statbuf.st_size + 1);
+		r = fread(labelfile, statbuf.st_size, 1, lfp);
+		labelfile[statbuf.st_size] = '\0';
+
+		/*
+		 * Close and remove the backup label file
+		 */
+		if (r != 1 || ferror(lfp) || FreeFile(lfp))
+			ereport(ERROR,
+					(errcode_for_file_access(),
+					 errmsg("could not read file \"%s\": %m",
+							BACKUP_LABEL_FILE)));
+		if (unlink(BACKUP_LABEL_FILE) != 0)
+			ereport(ERROR,
+					(errcode_for_file_access(),
+					 errmsg("could not remove file \"%s\": %m",
+							BACKUP_LABEL_FILE)));
 	}
 
 	/*
 	 * Read and parse the START WAL LOCATION line (this code is pretty crude,
 	 * but we are not expecting any variability in the file format).
 	 */
-	if (fscanf(lfp, "START WAL LOCATION: %X/%X (file %24s)%c",
+	if (sscanf(labelfile, "START WAL LOCATION: %X/%X (file %24s)%c",
 			   &startpoint.xlogid, &startpoint.xrecoff, startxlogfilename,
 			   &ch) != 4 || ch != '\n')
 		ereport(ERROR,
 				(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
 				 errmsg("invalid data in file \"%s\"", BACKUP_LABEL_FILE)));
+	remaining = strchr(labelfile, '\n') + 1; /* %n is not portable enough */
 
 	/*
 	 * Write the backup-end xlog record
@@ -8665,28 +8795,13 @@ do_pg_stop_backup(void)
 	fprintf(fp, "STOP WAL LOCATION: %X/%X (file %s)\n",
 			stoppoint.xlogid, stoppoint.xrecoff, stopxlogfilename);
 	/* transfer remaining lines from label to history file */
-	while ((ich = fgetc(lfp)) != EOF)
-		fputc(ich, fp);
+	fprintf(fp, "%s", remaining);
 	fprintf(fp, "STOP TIME: %s\n", strfbuf);
 	if (fflush(fp) || ferror(fp) || FreeFile(fp))
 		ereport(ERROR,
 				(errcode_for_file_access(),
 				 errmsg("could not write file \"%s\": %m",
 						histfilepath)));
-
-	/*
-	 * Close and remove the backup label file
-	 */
-	if (ferror(lfp) || FreeFile(lfp))
-		ereport(ERROR,
-				(errcode_for_file_access(),
-				 errmsg("could not read file \"%s\": %m",
-						BACKUP_LABEL_FILE)));
-	if (unlink(BACKUP_LABEL_FILE) != 0)
-		ereport(ERROR,
-				(errcode_for_file_access(),
-				 errmsg("could not remove file \"%s\": %m",
-						BACKUP_LABEL_FILE)));
 
 	/*
 	 * Clean out any no-longer-needed history files.  As a side effect, this
@@ -8769,28 +8884,27 @@ do_pg_stop_backup(void)
 /*
  * do_pg_abort_backup: abort a running backup
  *
- * This does just the most basic steps of pg_stop_backup(), by taking the
+ * This does just the most basic steps of do_pg_stop_backup(), by taking the
  * system out of backup mode, thus making it a lot more safe to call from
  * an error handler.
+ *
+ * NB: This is only for aborting a non-exclusive backup that doesn't write
+ * backup_label. A backup started with pg_stop_backup() needs to be finished
+ * with pg_stop_backup().
  */
 void
 do_pg_abort_backup(void)
 {
-	/*
-	 * OK to clear forcePageWrites
-	 */
 	LWLockAcquire(WALInsertLock, LW_EXCLUSIVE);
-	XLogCtl->Insert.forcePageWrites = false;
-	LWLockRelease(WALInsertLock);
+	Assert(XLogCtl->Insert.nonExclusiveBackups > 0);
+	XLogCtl->Insert.nonExclusiveBackups--;
 
-	/*
-	 * Remove backup label file
-	 */
-	if (unlink(BACKUP_LABEL_FILE) != 0)
-		ereport(ERROR,
-				(errcode_for_file_access(),
-				 errmsg("could not remove file \"%s\": %m",
-						BACKUP_LABEL_FILE)));
+	if (!XLogCtl->Insert.exclusiveBackup &&
+		XLogCtl->Insert.nonExclusiveBackups == 0)
+	{
+		XLogCtl->Insert.forcePageWrites = false;
+	}
+	LWLockRelease(WALInsertLock);
 }
 
 /*
