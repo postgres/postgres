@@ -494,7 +494,7 @@ CheckRecoveryConflictDeadlock(LWLockId partitionLock)
 	 * process will continue to wait even though we have avoided deadlock.
 	 */
 	ereport(ERROR,
-			(errcode(ERRCODE_QUERY_CANCELED),
+			(errcode(ERRCODE_T_R_DEADLOCK_DETECTED),
 			 errmsg("canceling statement due to conflict with recovery"),
 	   errdetail("User transaction caused buffer deadlock with recovery.")));
 }
