@@ -61,7 +61,7 @@ PostgreSQL documentation
   <para>
    There can be multiple pg_basebackups running at the same time, but it is
    better from a performance point of view to take only one backup, and copy
-   the the result.
+   the result.
   </para>
  </refsect1>
 
