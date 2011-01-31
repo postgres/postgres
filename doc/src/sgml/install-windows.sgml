@@ -47,13 +47,24 @@
   <productname>Cygwin</productname> uses the normal build system, see
   <xref linkend="installation"> and the specific notes in
   <xref linkend="installation-notes-mingw"> and <xref linkend="installation-notes-cygwin">.
-  These builds cannot generate 64-bit binaries.
-  <productname>Cygwin</productname> is not recommended and should
-  only be used for older versions of <productname>Windows</productname> where
+  To produce native 64 bit binaries in these environments, use the tools from
+  <productname>Mingw64</productname>. These tools can also be used to
+  cross-compile for 32 bit and 64 bit <productname>Windows</productname> 
+  targets on other hosts, such as <productname>Linux</productname> and 
+  <productname>Darwin</productname>.
+  <productname>Cygwin</productname> is not recommended for running a
+  production server, and it should only be used for running on
+  older versions of <productname>Windows</productname> where
   the native build does not work, such as
-  <productname>Windows 98</productname>. <productname>MinGW</productname> is
-  only recommended if you are building other modules using it. The official
+  <productname>Windows 98</productname>. The official
   binaries are built using <productname>Visual Studio</productname>.
+ </para>
+
+ <para>
+  Native builds of <application>psql</application> don't support command 
+  line editing. The <productname>Cygwin</productname> build does support
+  command line editing, so it should be used where psql is needed for
+  interactive use on  <productname>Windows</productname>.
  </para>
 
  <sect1 id="install-windows-full">

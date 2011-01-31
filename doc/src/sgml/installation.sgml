@@ -2312,7 +2312,7 @@ createlang: language installation failed: ERROR:  could not load library "/opt/d
     PostgreSQL can be built using Cygwin, a Linux-like environment for
     Windows, but that method is inferior to the native Windows build
     <![%standalone-ignore[(see <xref linkend="install-windows">)]]> and
-    is no longer recommended.
+    running a server under Cygwin is no longer recommended.
    </para>
 
    <para>
@@ -2368,6 +2368,16 @@ createlang: language installation failed: ERROR:  could not load library "/opt/d
        default <command>cygserver</command> configuration may need to
        be changed (e.g., increase <symbol>SEMMNS</symbol>) to prevent
        PostgreSQL from failing due to a lack of system resources.
+      </para>
+     </listitem>
+
+     <listitem>
+      <para>
+        Building might fail on some systems where a locale other than
+        C is in use. To fix this, set the locale to C by doing
+        <command>export LANG=C.utf8</command> before building, and then
+        setting it back to the previous setting, after you have installed
+        PostgreSQL.
       </para>
      </listitem>
 
@@ -2578,6 +2588,14 @@ cc-1020 cc: ERROR File = pqcomm.c, Line = 427
     from <ulink url="http://www.mingw.org/"></ulink>.  Neither is
     required to run the resulting binaries; they are needed only for
     creating the binaries.
+   </para>
+
+   <para>
+     To build 64 bit binaries using MinGW, install the 64 bit tool set
+     from <ulink url="http://www.mingw64.org/"></ulink>, put its bin
+     directory in the <envar>PATH</envar>, and run 
+     <command>configure</command> with the  
+     <command>--host=x86_64-w64-mingw</command> option.
    </para>
 
    <para>
