@@ -1418,6 +1418,307 @@ $ <userinput>kill -INT `head -1 /usr/local/pgsql/data/postmaster.pid`</userinput
   </para>
  </sect1>
 
+ <sect1 id="upgrading">
+  <title>Upgrading a <productname>PostgreSQL</> Cluster</title>
+
+  <indexterm zone="upgrading">
+   <primary>upgrading</primary>
+  </indexterm>
+
+  <indexterm zone="upgrading">
+   <primary>version</primary>
+   <secondary>compatibility</secondary>
+  </indexterm>
+
+  <para>
+   This section discusses how to upgrade your database data from one
+   <productname>PostgreSQL</> release to a newer one.
+  </para>
+
+  <para>
+   <productname>PostgreSQL</> major versions are represented by the
+   first two digit groups of the version number, e.g., 8.4.
+   <productname>PostgreSQL</> minor versions are represented by the
+   third group of version digits, e.g., 8.4.2 is the second minor
+   release of 8.4.  Minor releases never change the internal storage
+   format and are always compatible with earlier and later minor
+   releases of the same major version number, e.g., 8.4.2 is compatible
+   with 8.4, 8.4.1 and 8.4.6.  To update between compatible versions,
+   you simply replace the executables while the server is down and
+   restart the server.  The data directory remains unchanged &mdash;
+   minor upgrades are that simple.
+  </para>
+
+  <para>
+   For <emphasis>major</> releases of <productname>PostgreSQL</>, the
+   internal data storage format is subject to change, thus complicating
+   upgrades.  The traditional method for moving data to a new major version
+   is to dump and reload the database.  Other methods are available,
+   as discussed below.
+  </para>
+
+  <para>
+   New major versions also typically introduce some user-visible
+   incompatibilities, so application programming changes might be required.
+   All user-visible changes are listed in the release notes (<xref
+   linkend="release">);  pay particular attention to the section
+   labeled "Migration".  If you are upgrading across several major
+   versions, be sure to read the release notes for each intervening
+   version.
+  </para>
+
+  <para>
+   Cautious users will want to test their client applications on the new
+   version before switching over fully; therefore, it's often a good idea to
+   set up concurrent installations of old and new versions.  When
+   testing a <productname>PostgreSQL</> major upgrade, consider the
+   following categories of possible changes:
+  </para>
+
+  <variablelist>
+
+   <varlistentry>
+    <term>Administration</term>
+    <listitem>
+     <para>
+      The capabilities available for administrators to monitor and control
+      the server often change and improve in each major release.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term>SQL</term>
+    <listitem>
+     <para>
+      Typically this includes new SQL command capabilities and not changes
+      in behavior, unless specifically mentioned in the release notes.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term>Library API</term>
+    <listitem>
+     <para>
+      Typically libraries like <application>libpq</> only add new
+      functionality, again unless mentioned in the release notes.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term>System Catalogs</term>
+    <listitem>
+     <para>
+      System catalog changes usually only affect database management tools.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term>Server C-language API</term>
+    <listitem>
+     <para>
+      This involves changes in the backend function API, which is written
+      in the C programming language.  Such changes affect code that
+      references backend functions deep inside the server.
+     </para>
+    </listitem>
+   </varlistentry>
+
+  </variablelist>
+
+  <sect2 id="upgrade-methods-pgdump">
+   <title>Upgrading Data via <application>pg_dump</></title>
+
+   <para>
+    To dump data from one major version of <productname>PostgreSQL</> and
+    reload it in another, you must use <application>pg_dump</>; file system
+    level backup methods will not work. (There are checks in place that prevent
+    you from using a data directory with an incompatible version of
+    <productname>PostgreSQL</productname>, so no great harm can be done by
+    trying to start the wrong server version on a data directory.)
+   </para>
+
+   <para>
+    It is recommended that you use the <application>pg_dump</> and
+    <application>pg_dumpall</> programs from the newer version of
+    <productname>PostgreSQL</>, to take advantage of enhancements
+    that might have been made in these programs.  Current releases of the
+    dump programs can read data from any server version back to 7.0.
+   </para>
+
+   <para>
+    These instructions assume that your existing installation is under the
+    <filename>/usr/local/pgsql</> directory, and that the data area is in
+    <filename>/usr/local/pgsql/data</>.  Substitute your paths
+    appropriately.
+   </para>
+
+   <procedure>
+    <step>
+     <para>
+      If making a backup, make sure that your database is not being updated.
+      This does not affect the integrity of the backup, but the changed
+      data would of course not be included. If necessary, edit the
+      permissions in the file <filename>/usr/local/pgsql/data/pg_hba.conf</>
+      (or equivalent) to disallow access from everyone except you.
+      See <xref linkend="client-authentication"> for additional information on
+      access control.
+     </para>
+
+     <para>
+      <indexterm>
+       <primary>pg_dumpall</primary>
+       <secondary>use during upgrade</secondary>
+      </indexterm>
+
+      To back up your database installation, type:
+<screen>
+<userinput>pg_dumpall &gt; <replaceable>outputfile</></userinput>
+</screen>
+      If you need to preserve OIDs (such as when using them as
+      foreign keys), then use the <option>-o</option> option when running
+      <application>pg_dumpall</>.
+     </para>
+
+     <para>
+      To make the backup, you can use the <application>pg_dumpall</application>
+      command from the version you are currently running.  For best
+      results, however, try to use the <application>pg_dumpall</application>
+      command from <productname>PostgreSQL</productname> &version;,
+      since this version contains bug fixes and improvements over older
+      versions.  While this advice might seem idiosyncratic since you
+      haven't installed the new version yet, it is advisable to follow
+      it if you plan to install the new version in parallel with the
+      old version.  In that case you can complete the installation
+      normally and transfer the data later.  This will also decrease
+      the downtime.
+     </para>
+    </step>
+
+    <step>
+     <para>
+      Shut down the old server:
+<screen>
+<userinput>pg_ctl stop</>
+</screen>
+      On systems that have <productname>PostgreSQL</> started at boot time,
+      there is probably a start-up file that will accomplish the same thing. For
+      example, on a <systemitem class="osname">Red Hat Linux</> system one
+      might find that this works:
+<screen>
+<userinput>/etc/rc.d/init.d/postgresql stop</userinput>
+</screen>
+     </para>
+      See <xref linkend="runtime"> for details about starting and
+      stoping the server.
+    </step>
+
+    <step>
+     <para>
+      If restoring from backup, rename or delete the old installation
+      directory.  It is a good idea to rename the directory, rather than
+      delete it, in case you have trouble and need to revert to it.  Keep
+      in mind the directory might consume significant disk space.  To rename
+      the directory, use a command like this:
+<screen>
+<userinput>mv /usr/local/pgsql /usr/local/pgsql.old</>
+</screen>
+     (Be sure to move the directory as a single unit so relative paths
+     remain unchanged.)
+     </para>
+    </step>
+
+    <step>
+     <para>
+      Install the new version of <productname>PostgreSQL</productname> as
+      outlined in <![%standalone-include[the next section.]]>
+      <![%standalone-ignore[<xref linkend="install-procedure">.]]>
+     </para>
+    </step>
+
+    <step>
+     <para>
+      Create a new database cluster if needed.  Remember that you must
+      execute these commands while logged in to the special database user
+      account (which you already have if you are upgrading).
+<programlisting>
+<userinput>/usr/local/pgsql/bin/initdb -D /usr/local/pgsql/data</>
+</programlisting>
+     </para>
+    </step>
+
+    <step>
+     <para>
+      Restore your previous <filename>pg_hba.conf</> and any
+      <filename>postgresql.conf</> modifications.
+     </para>
+    </step>
+
+    <step>
+     <para>
+      Start the database server, again using the special database user
+      account:
+<programlisting>
+<userinput>/usr/local/pgsql/bin/postgres -D /usr/local/pgsql/data</>
+</programlisting>
+     </para>
+    </step>
+
+    <step>
+     <para>
+      Finally, restore your data from backup with:
+<screen>
+<userinput>/usr/local/pgsql/bin/psql -d postgres -f <replaceable>outputfile</></userinput>
+</screen>
+      using the <emphasis>new</> <application>psql</>.
+     </para>
+    </step>
+   </procedure>
+
+   <para>
+    The least downtime can be achieved by installing the new server in
+    a different directory and running both the old and the new servers
+    in parallel, on different ports. Then you can use something like:
+
+<programlisting>
+pg_dumpall -p 5432 | psql -d postgres -p 5433
+</programlisting>
+    to transfer your data.
+   </para>
+
+  </sect2>
+
+  <sect2 id="upgrading-methods-other">
+   <title>Other data migration methods</title>
+
+   <para>
+    The <filename>contrib</> program
+    <link linkend="pgupgrade"><application>pg_upgrade</application></link>
+    allows an installation to be migrated in-place from one major
+    <productname>PostgreSQL</> version to the next.  Keep in mind that this
+    method does not provide any scope for running old and new versions
+    concurrently.  Also, <application>pg_upgrade</application> is much less
+    battle-tested than <application>pg_dump</application>, so having an
+    up-to-date backup is strongly recommended in case something goes wrong.
+   </para>
+
+   <para>
+    It is also possible to use certain replication methods, such as
+    <productname>Slony</>, to create a standby server with the updated version of
+    <productname>PostgreSQL</>.  The standby can be on the same computer or
+    a different computer.  Once it has synced up with the master server
+    (running the older version of <productname>PostgreSQL</>), you can
+    switch masters and make the standby the master and shut down the older
+    database instance.  Such a switch-over results in only several seconds
+    of downtime for an upgrade.
+   </para>
+
+  </sect2>
+ </sect1>
+
  <sect1 id="preventing-server-spoofing">
   <title>Preventing Server Spoofing</title>
 
