@@ -1704,6 +1704,8 @@ pg_dumpall -p 5432 | psql -d postgres -p 5433
    <para>
     It is also possible to use certain replication methods, such as
     <productname>Slony</>, to create a standby server with the updated version of
+    <productname>PostgreSQL</>.  This is possible because Slony supports
+    replication between different major versions of
     <productname>PostgreSQL</>.  The standby can be on the same computer or
     a different computer.  Once it has synced up with the master server
     (running the older version of <productname>PostgreSQL</>), you can
