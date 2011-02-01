@@ -736,6 +736,10 @@
 },
 
 {
+	"database_dropped", ERRCODE_DATABASE_DROPPED
+},
+
+{
 	"io_error", ERRCODE_IO_ERROR
 },
 

@@ -1369,6 +1369,12 @@
 <entry>cannot_connect_now</entry>
 </row>
 
+<row>
+<entry><literal>57P04</literal></entry>
+<entry>DATABASE DROPPED</entry>
+<entry>database_dropped</entry>
+</row>
+
 
 <row>
 <entry spanname="span13"><emphasis role="bold">Class 58 &mdash; System Error (errors external to <productname>PostgreSQL</> itself)</></entry>
