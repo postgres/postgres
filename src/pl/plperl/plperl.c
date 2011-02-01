@@ -1422,7 +1422,7 @@ plperl_create_sub(plperl_proc_desc *prodesc, char *s, Oid fn_oid)
 	EXTEND(SP, 4);
 	PUSHs(sv_2mortal(newSVstring(subname)));
 	PUSHs(sv_2mortal(newRV_noinc((SV *) pragma_hv)));
-	PUSHs(sv_2mortal(newSVstring("our $_TD; local $_TD=shift;")));
+	PUSHs(&PL_sv_no); /* XXX is $prolog in mkfunc needed any more? */
 	PUSHs(sv_2mortal(newSVstring(s)));
 	PUTBACK;
 
@@ -1494,9 +1494,7 @@ plperl_call_perl_func(plperl_proc_desc *desc, FunctionCallInfo fcinfo)
 	SAVETMPS;
 
 	PUSHMARK(SP);
-	EXTEND(sp, 1 + desc->nargs);
-
-	PUSHs(&PL_sv_undef);		/* no trigger data */
+	EXTEND(sp, desc->nargs);
 
 	for (i = 0; i < desc->nargs; i++)
 	{
@@ -1576,21 +1574,22 @@ plperl_call_perl_trigger_func(plperl_proc_desc *desc, FunctionCallInfo fcinfo,
 							  SV *td)
 {
 	dSP;
-	SV		   *retval;
-	Trigger    *tg_trigger;
-	int			i;
-	int			count;
+	SV		   *retval, *TDsv;
+	int			i, count;
+	Trigger    *tg_trigger = ((TriggerData *) fcinfo->context)->tg_trigger;
 
 	ENTER;
 	SAVETMPS;
 
+	TDsv = get_sv("_TD", GV_ADD);
+	SAVESPTR(TDsv);	/* local $_TD */
+	sv_setsv(TDsv, td);
+
 	PUSHMARK(sp);
+	EXTEND(sp, tg_trigger->tgnargs);
 
-	XPUSHs(td);
-
-	tg_trigger = ((TriggerData *) fcinfo->context)->tg_trigger;
 	for (i = 0; i < tg_trigger->tgnargs; i++)
-		XPUSHs(sv_2mortal(newSVstring(tg_trigger->tgargs[i])));
+		PUSHs(sv_2mortal(newSVstring(tg_trigger->tgargs[i])));
 	PUTBACK;
 
 	/* Do NOT use G_KEEPERR here */
