@@ -4794,6 +4794,8 @@ SET XML OPTION { DOCUMENT | CONTENT };
        <para>
         Sets the client-side encoding (character set).
         The default is to use the database encoding.
+        The character sets supported by the <productname>PostgreSQL</productname>
+        server are described in <xref linkend="multibyte-charset-supported">.
        </para>
       </listitem>
      </varlistentry>
