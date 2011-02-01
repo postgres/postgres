@@ -294,7 +294,7 @@ ExecEvalArrayRef(ArrayRefExprState *astate,
 			ereport(ERROR,
 					(errcode(ERRCODE_PROGRAM_LIMIT_EXCEEDED),
 					 errmsg("number of array dimensions (%d) exceeds the maximum allowed (%d)",
-							i, MAXDIM)));
+							i + 1, MAXDIM)));
 
 		upper.indx[i++] = DatumGetInt32(ExecEvalExpr(eltstate,
 													 econtext,
@@ -322,7 +322,7 @@ ExecEvalArrayRef(ArrayRefExprState *astate,
 				ereport(ERROR,
 						(errcode(ERRCODE_PROGRAM_LIMIT_EXCEEDED),
 						 errmsg("number of array dimensions (%d) exceeds the maximum allowed (%d)",
-								i, MAXDIM)));
+								j + 1, MAXDIM)));
 
 			lower.indx[j++] = DatumGetInt32(ExecEvalExpr(eltstate,
 														 econtext,
