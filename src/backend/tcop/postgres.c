@@ -2916,7 +2916,7 @@ ProcessInterrupts(void)
 			Assert(RecoveryConflictReason == PROCSIG_RECOVERY_CONFLICT_DATABASE);
 			pgstat_report_recovery_conflict(RecoveryConflictReason);
 			ereport(FATAL,
-					(errcode(ERRCODE_T_R_DATABASE_DROPPED),
+					(errcode(ERRCODE_DATABASE_DROPPED),
 			  errmsg("terminating connection due to conflict with recovery"),
 					 errdetail_recovery_conflict()));
 		}

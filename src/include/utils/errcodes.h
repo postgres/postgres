@@ -243,7 +243,6 @@
 #define ERRCODE_T_R_SERIALIZATION_FAILURE	MAKE_SQLSTATE('4','0', '0','0','1')
 #define ERRCODE_T_R_STATEMENT_COMPLETION_UNKNOWN	MAKE_SQLSTATE('4','0', '0','0','3')
 #define ERRCODE_T_R_DEADLOCK_DETECTED		MAKE_SQLSTATE('4','0', 'P','0','1')
-#define ERRCODE_T_R_DATABASE_DROPPED		MAKE_SQLSTATE('4','0', 'P','0','2')
 
 /* Class 42 - Syntax Error or Access Rule Violation */
 #define ERRCODE_SYNTAX_ERROR_OR_ACCESS_RULE_VIOLATION		MAKE_SQLSTATE('4','2', '0','0','0')
@@ -333,6 +332,7 @@
 #define ERRCODE_ADMIN_SHUTDOWN				MAKE_SQLSTATE('5','7', 'P','0','1')
 #define ERRCODE_CRASH_SHUTDOWN				MAKE_SQLSTATE('5','7', 'P','0','2')
 #define ERRCODE_CANNOT_CONNECT_NOW			MAKE_SQLSTATE('5','7', 'P','0','3')
+#define ERRCODE_DATABASE_DROPPED			MAKE_SQLSTATE('5','7', 'P','0','4')
 
 /* Class 58 - System Error (class borrowed from DB2) */
 /* (we define this as errors external to PostgreSQL itself) */
