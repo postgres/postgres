@@ -6059,15 +6059,17 @@ LOG:  CleanUpLock: deleting: lock(0xb7acd844) id(24688,24696,0,0,0,1)
        <para>
         Detection of a damaged page header normally causes
         <productname>PostgreSQL</> to report an error, aborting the current
-        command.  Setting <varname>zero_damaged_pages</> to on causes
-        the system to instead report a warning, zero out the damaged page,
-        and continue processing.  This behavior <emphasis>will destroy data</>,
-        namely all the rows on the damaged page.  But it allows you to get
+        transaction.  Setting <varname>zero_damaged_pages</> to on causes
+        the system to instead report a warning, zero out the damaged
+        page in memory, and continue processing.  This behavior <emphasis>will destroy data</>,
+        namely all the rows on the damaged page.  However, it does allow you to get
         past the error and retrieve rows from any undamaged pages that might
-        be present in the table.  So it is useful for recovering data if
+        be present in the table.  It is useful for recovering data if
         corruption has occurred due to a hardware or software error.  You should
         generally not set this on until you have given up hope of recovering
-        data from the damaged pages of a table.  The
+        data from the damaged pages of a table.  Zerod-out pages are not
+        forced to disk so it is recommended to recreate the table or
+        the index before turning this parameter off again.  The
         default setting is <literal>off</>, and it can only be changed
         by a superuser.
        </para>
