@@ -18,6 +18,23 @@ float4		trgm_limit = 0.3f;
 
 PG_FUNCTION_INFO_V1(set_limit);
 Datum		set_limit(PG_FUNCTION_ARGS);
+
+PG_FUNCTION_INFO_V1(show_limit);
+Datum		show_limit(PG_FUNCTION_ARGS);
+
+PG_FUNCTION_INFO_V1(show_trgm);
+Datum		show_trgm(PG_FUNCTION_ARGS);
+
+PG_FUNCTION_INFO_V1(similarity);
+Datum		similarity(PG_FUNCTION_ARGS);
+
+PG_FUNCTION_INFO_V1(similarity_dist);
+Datum		similarity_dist(PG_FUNCTION_ARGS);
+
+PG_FUNCTION_INFO_V1(similarity_op);
+Datum		similarity_op(PG_FUNCTION_ARGS);
+
+
 Datum
 set_limit(PG_FUNCTION_ARGS)
 {
@@ -29,8 +46,6 @@ set_limit(PG_FUNCTION_ARGS)
 	PG_RETURN_FLOAT4(trgm_limit);
 }
 
-PG_FUNCTION_INFO_V1(show_limit);
-Datum		show_limit(PG_FUNCTION_ARGS);
 Datum
 show_limit(PG_FUNCTION_ARGS)
 {
@@ -120,7 +135,7 @@ cnt_trigram(trgm *tptr, char *str, int bytelen)
 #endif
 
 /*
- * Adds trigramm from words (already padded).
+ * Adds trigrams from words (already padded).
  */
 static trgm *
 make_trigrams(trgm *tptr, char *str, int bytelen, int charlen)
@@ -236,6 +251,225 @@ generate_trgm(char *str, int slen)
 	return trg;
 }
 
+/*
+ * Extract the next non-wildcard part of a search string, ie, a word bounded
+ * by '_' or '%' meta-characters, non-word characters or string end.
+ *
+ * str: source string, of length lenstr bytes (need not be null-terminated)
+ * buf: where to return the substring (must be long enough)
+ * *bytelen: receives byte length of the found substring
+ * *charlen: receives character length of the found substring
+ *
+ * Returns pointer to end+1 of the found substring in the source string.
+ * Returns NULL if no word found (in which case buf, bytelen, charlen not set)
+ *
+ * If the found word is bounded by non-word characters or string boundaries
+ * then this function will include corresponding padding spaces into buf.
+ */
+static const char *
+get_wildcard_part(const char *str, int lenstr,
+				  char *buf, int *bytelen, int *charlen)
+{
+	const char *beginword = str;
+	const char *endword;
+	char	   *s = buf;
+	bool        in_wildcard_meta = false;
+	bool        in_escape = false;
+	int         clen;
+
+	/*
+	 * Find the first word character remembering whether last character was
+	 * wildcard meta-character.
+	 */
+	while (beginword - str < lenstr)
+	{
+		if (in_escape)
+		{
+			in_escape = false;
+			in_wildcard_meta = false;
+			if (iswordchr(beginword))
+				break;
+		}
+		else
+		{
+			if (ISESCAPECHAR(beginword))
+				in_escape = true;
+			else if (ISWILDCARDCHAR(beginword))
+				in_wildcard_meta = true;
+			else if (iswordchr(beginword))
+				break;
+			else
+				in_wildcard_meta = false;
+		}
+		beginword += pg_mblen(beginword);
+	}
+
+	/*
+	 * Handle string end.
+	 */
+	if (beginword - str >= lenstr)
+		return NULL;
+
+	/*
+	 * Add left padding spaces if last character wasn't wildcard
+	 * meta-character.
+	 */
+	*charlen = 0;
+	if (!in_wildcard_meta)
+	{
+		if (LPADDING > 0)
+		{
+			*s++ = ' ';
+			(*charlen)++;
+			if (LPADDING > 1)
+			{
+				*s++ = ' ';
+				(*charlen)++;
+			}
+		}
+	}
+
+	/*
+	 * Copy data into buf until wildcard meta-character, non-word character or
+	 * string boundary.  Strip escapes during copy.
+	 */
+	endword = beginword;
+	in_wildcard_meta = false;
+	in_escape = false;
+	while (endword - str < lenstr)
+	{
+		clen = pg_mblen(endword);
+		if (in_escape)
+		{
+			in_escape = false;
+			in_wildcard_meta = false;
+			if (iswordchr(endword))
+			{
+				memcpy(s, endword, clen);
+				(*charlen)++;
+				s += clen;
+			}
+			else
+				break;
+		}
+		else
+		{
+			if (ISESCAPECHAR(endword))
+				in_escape = true;
+			else if (ISWILDCARDCHAR(endword))
+			{
+				in_wildcard_meta = true;
+				break;
+			}
+			else if (iswordchr(endword))
+			{
+				memcpy(s, endword, clen);
+				(*charlen)++;
+				s += clen;
+			}
+			else
+			{
+				in_wildcard_meta = false;
+				break;
+			}
+		}
+		endword += clen;
+	}
+
+	/*
+	 * Add right padding spaces if last character wasn't wildcard
+	 * meta-character.
+	 */
+	if (!in_wildcard_meta)
+	{
+		if (RPADDING > 0)
+		{
+			*s++ = ' ';
+			(*charlen)++;
+			if (RPADDING > 1)
+			{
+				*s++ = ' ';
+				(*charlen)++;
+			}
+		}
+	}
+
+	*bytelen = s - buf;
+	return endword;
+}
+
+/*
+ * Generates trigrams for wildcard search string.
+ *
+ * Returns array of trigrams that must occur in any string that matches the
+ * wildcard string.  For example, given pattern "a%bcd%" the trigrams
+ * " a", "bcd" would be extracted.
+ */
+TRGM *
+generate_wildcard_trgm(const char *str, int slen)
+{
+	TRGM	   *trg;
+	char	   *buf,
+		       *buf2;
+	trgm	   *tptr;
+	int			len,
+				charlen,
+				bytelen;
+	const char *eword;
+
+	trg = (TRGM *) palloc(TRGMHDRSIZE + sizeof(trgm) * (slen / 2 + 1) * 3);
+	trg->flag = ARRKEY;
+	SET_VARSIZE(trg, TRGMHDRSIZE);
+
+	if (slen + LPADDING + RPADDING < 3 || slen == 0)
+		return trg;
+
+	tptr = GETARR(trg);
+
+	buf = palloc(sizeof(char) * (slen + 4));
+
+	/*
+	 * Extract trigrams from each substring extracted by get_wildcard_part.
+	 */
+	eword = str;
+	while ((eword = get_wildcard_part(eword, slen - (eword - str),
+									  buf, &bytelen, &charlen)) != NULL)
+	{
+#ifdef IGNORECASE
+		buf2 = lowerstr_with_len(buf, bytelen);
+		bytelen = strlen(buf2);
+#else
+		buf2 = buf;
+#endif
+
+		/*
+		 * count trigrams
+		 */
+		tptr = make_trigrams(tptr, buf2, bytelen, charlen);
+#ifdef IGNORECASE
+		pfree(buf2);
+#endif
+	}
+
+	pfree(buf);
+
+	if ((len = tptr - GETARR(trg)) == 0)
+		return trg;
+
+	/*
+	 * Make trigrams unique.
+	 */
+	if (len > 0)
+	{
+		qsort((void *) GETARR(trg), len, sizeof(trgm), comp_trgm);
+		len = unique_array(GETARR(trg), len);
+	}
+
+	SET_VARSIZE(trg, CALCGTSIZE(ARRKEY, len));
+
+	return trg;
+}
+
 uint32
 trgm2int(trgm *ptr)
 {
@@ -250,8 +484,6 @@ trgm2int(trgm *ptr)
 	return val;
 }
 
-PG_FUNCTION_INFO_V1(show_trgm);
-Datum		show_trgm(PG_FUNCTION_ARGS);
 Datum
 show_trgm(PG_FUNCTION_ARGS)
 {
@@ -340,8 +572,44 @@ cnt_sml(TRGM *trg1, TRGM *trg2)
 
 }
 
-PG_FUNCTION_INFO_V1(similarity);
-Datum		similarity(PG_FUNCTION_ARGS);
+/*
+ * Returns whether trg2 contains all trigrams in trg1.
+ * This relies on the trigram arrays being sorted.
+ */
+bool
+trgm_contained_by(TRGM *trg1, TRGM *trg2)
+{
+	trgm	   *ptr1,
+			   *ptr2;
+	int			len1,
+				len2;
+
+	ptr1 = GETARR(trg1);
+	ptr2 = GETARR(trg2);
+
+	len1 = ARRNELEM(trg1);
+	len2 = ARRNELEM(trg2);
+
+	while (ptr1 - GETARR(trg1) < len1 && ptr2 - GETARR(trg2) < len2)
+	{
+		int			res = CMPTRGM(ptr1, ptr2);
+
+		if (res < 0)
+			return false;
+		else if (res > 0)
+			ptr2++;
+		else
+		{
+			ptr1++;
+			ptr2++;
+		}
+	}
+	if (ptr1 - GETARR(trg1) < len1)
+		return false;
+	else
+		return true;
+}
+
 Datum
 similarity(PG_FUNCTION_ARGS)
 {
@@ -364,8 +632,6 @@ similarity(PG_FUNCTION_ARGS)
 	PG_RETURN_FLOAT4(res);
 }
 
-PG_FUNCTION_INFO_V1(similarity_dist);
-Datum		similarity_dist(PG_FUNCTION_ARGS);
 Datum
 similarity_dist(PG_FUNCTION_ARGS)
 {
@@ -375,8 +641,6 @@ similarity_dist(PG_FUNCTION_ARGS)
 	PG_RETURN_FLOAT4(1.0 - res);
 }
 
-PG_FUNCTION_INFO_V1(similarity_op);
-Datum		similarity_op(PG_FUNCTION_ARGS);
 Datum
 similarity_op(PG_FUNCTION_ARGS)
 {

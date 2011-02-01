@@ -3467,3 +3467,93 @@ select t,similarity(t,'gwertyu1988') as sml from test_trgm where t % 'gwertyu198
  qwertyu0988 | 0.333333
 (1 row)
 
+create table test2(t text);
+insert into test2 values ('abcdef');
+insert into test2 values ('quark');
+create index test2_idx_gin on test2 using gin (t gin_trgm_ops);
+set enable_seqscan=off;
+explain (costs off)
+  select * from test2 where t like '%BCD%';
+                QUERY PLAN                
+------------------------------------------
+ Bitmap Heap Scan on test2
+   Recheck Cond: (t ~~ '%BCD%'::text)
+   ->  Bitmap Index Scan on test2_idx_gin
+         Index Cond: (t ~~ '%BCD%'::text)
+(4 rows)
+
+explain (costs off)
+  select * from test2 where t ilike '%BCD%';
+                QUERY PLAN                 
+-------------------------------------------
+ Bitmap Heap Scan on test2
+   Recheck Cond: (t ~~* '%BCD%'::text)
+   ->  Bitmap Index Scan on test2_idx_gin
+         Index Cond: (t ~~* '%BCD%'::text)
+(4 rows)
+
+select * from test2 where t like '%BCD%';
+ t 
+---
+(0 rows)
+
+select * from test2 where t like '%bcd%';
+   t    
+--------
+ abcdef
+(1 row)
+
+select * from test2 where t ilike '%BCD%';
+   t    
+--------
+ abcdef
+(1 row)
+
+select * from test2 where t ilike 'qua%';
+   t   
+-------
+ quark
+(1 row)
+
+drop index test2_idx_gin;
+create index test2_idx_gist on test2 using gist (t gist_trgm_ops);
+set enable_seqscan=off;
+explain (costs off)
+  select * from test2 where t like '%BCD%';
+                QUERY PLAN                
+------------------------------------------
+ Index Scan using test2_idx_gist on test2
+   Index Cond: (t ~~ '%BCD%'::text)
+(2 rows)
+
+explain (costs off)
+  select * from test2 where t ilike '%BCD%';
+                QUERY PLAN                
+------------------------------------------
+ Index Scan using test2_idx_gist on test2
+   Index Cond: (t ~~* '%BCD%'::text)
+(2 rows)
+
+select * from test2 where t like '%BCD%';
+ t 
+---
+(0 rows)
+
+select * from test2 where t like '%bcd%';
+   t    
+--------
+ abcdef
+(1 row)
+
+select * from test2 where t ilike '%BCD%';
+   t    
+--------
+ abcdef
+(1 row)
+
+select * from test2 where t ilike 'qua%';
+   t   
+-------
+ quark
+(1 row)
+

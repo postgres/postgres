@@ -25,11 +25,11 @@ DROP TYPE gtrgm CASCADE;
 
 DROP OPERATOR CLASS gin_trgm_ops USING gin;
 
-DROP FUNCTION gin_extract_trgm(text, internal);
+DROP FUNCTION gin_extract_value_trgm(text, internal);
 
-DROP FUNCTION gin_extract_trgm(text, internal, int2, internal, internal);
+DROP FUNCTION gin_extract_query_trgm(text, internal, int2, internal, internal, internal, internal);
 
-DROP FUNCTION gin_trgm_consistent(internal, int2, text, int4, internal, internal);
+DROP FUNCTION gin_trgm_consistent(internal, int2, text, int4, internal, internal, internal, internal);
 
 DROP OPERATOR % (text, text);
 

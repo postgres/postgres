@@ -13,12 +13,21 @@
 #define LPADDING		2
 #define RPADDING		1
 #define KEEPONLYALNUM
+/*
+ * Caution: IGNORECASE macro means that trigrams are case-insensitive.
+ * If this macro is disabled, the ~~* operator must be removed from the
+ * operator classes, because we can't handle case-insensitive wildcard search
+ * with case-sensitive trigrams.  Failure to do this will result in "cannot
+ * handle ~~* with case-sensitive trigrams" errors.
+ */
 #define IGNORECASE
 #define DIVUNION
 
 /* operator strategy numbers */
-#define	SimilarityStrategyNumber	1
-#define	DistanceStrategyNumber		2
+#define SimilarityStrategyNumber	1
+#define DistanceStrategyNumber		2
+#define LikeStrategyNumber			3
+#define ILikeStrategyNumber			4
 
 
 typedef char trgm[3];
@@ -40,7 +49,10 @@ uint32		trgm2int(trgm *ptr);
 #else
 #define ISPRINTABLECHAR(a)	( isascii( *(unsigned char*)(a) ) && isprint( *(unsigned char*)(a) ) )
 #endif
-#define ISPRINTABLETRGM(t)	( ISPRINTABLECHAR( ((char*)t) ) && ISPRINTABLECHAR( ((char*)t)+1 ) && ISPRINTABLECHAR( ((char*)t)+2 ) )
+#define ISPRINTABLETRGM(t)	( ISPRINTABLECHAR( ((char*)(t)) ) && ISPRINTABLECHAR( ((char*)(t))+1 ) && ISPRINTABLECHAR( ((char*)(t))+2 ) )
+
+#define ISESCAPECHAR(x) (*(x) == '\\') /* Wildcard escape character */
+#define ISWILDCARDCHAR(x) (*(x) == '_' || *(x) == '%')  /* Wildcard meta-character */
 
 typedef struct
 {
@@ -65,7 +77,7 @@ typedef char *BITVECP;
 			for(i=0;i<SIGLEN;i++)
 
 #define GETBYTE(x,i) ( *( (BITVECP)(x) + (int)( (i) / BITBYTE ) ) )
-#define GETBITBYTE(x,i) ( ((char)(x)) >> i & 0x01 )
+#define GETBITBYTE(x,i) ( (((char)(x)) >> (i)) & 0x01 )
 #define CLRBIT(x,i)   GETBYTE(x,i) &= ~( 0x01 << ( (i) % BITBYTE ) )
 #define SETBIT(x,i)   GETBYTE(x,i) |=  ( 0x01 << ( (i) % BITBYTE ) )
 #define GETBIT(x,i) ( (GETBYTE(x,i) >> ( (i) % BITBYTE )) & 0x01 )
@@ -89,6 +101,8 @@ typedef char *BITVECP;
 extern float4 trgm_limit;
 
 TRGM	   *generate_trgm(char *str, int slen);
+TRGM	   *generate_wildcard_trgm(const char *str, int slen);
 float4		cnt_sml(TRGM *trg1, TRGM *trg2);
+bool		trgm_contained_by(TRGM *trg1, TRGM *trg2);
 
 #endif /* __TRGM_H__ */

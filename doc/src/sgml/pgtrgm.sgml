@@ -137,8 +137,10 @@
    The <filename>pg_trgm</filename> module provides GiST and GIN index
    operator classes that allow you to create an index over a text column for
    the purpose of very fast similarity searches.  These index types support
-   the above-described similarity operators (and no other operators, so you may
-   want a regular B-tree index too).
+   the above-described similarity operators, and additionally support
+   trigram-based index searches for <literal>LIKE</> and <literal>ILIKE</>
+   queries.  (These indexes do not support equality nor simple comparison
+   operators, so you may need a regular B-tree index too.)
   </para>
 
   <para>
@@ -179,6 +181,18 @@ SELECT t, t &lt;-&gt; '<replaceable>word</>' AS dist
    This can be implemented quite efficiently by GiST indexes, but not
    by GIN indexes.  It will usually beat the first formulation when only
    a small number of the closest matches is wanted.
+  </para>
+
+  <para>
+   Beginning in <productname>PostgreSQL</> 9.1, these index types also support
+   index searches for <literal>LIKE</> and <literal>ILIKE</>, for example
+<programlisting>
+SELECT * FROM test_trgm WHERE t LIKE '%foo%bar';
+</programlisting>
+   The index search works by extracting trigrams from the search string
+   and then looking these up in the index.  The more trigrams in the search
+   string, the more effective the index search is.  Unlike B-tree based
+   searches, the search string need not be left-anchored.
   </para>
 
   <para>

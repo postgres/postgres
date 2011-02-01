@@ -195,31 +195,61 @@ gtrgm_consistent(PG_FUNCTION_ARGS)
 	TRGM	   *key = (TRGM *) DatumGetPointer(entry->key);
 	TRGM	   *qtrg;
 	bool		res;
-	char	   *cache = (char *) fcinfo->flinfo->fn_extra;
+	char	   *cache = (char *) fcinfo->flinfo->fn_extra,
+		       *cacheContents = cache + MAXALIGN(sizeof(StrategyNumber));
 
-	/* All cases served by this function are exact */
-	*recheck = false;
-
-	if (cache == NULL || VARSIZE(cache) != VARSIZE(query) || memcmp(cache, query, VARSIZE(query)) != 0)
+	/*
+	 * Store both the strategy number and extracted trigrams in cache, because
+	 * trigram extraction is relatively CPU-expensive.  We must include
+	 * strategy number because trigram extraction depends on strategy.
+	 */
+	if (cache == NULL || strategy != *((StrategyNumber *) cache) ||
+		VARSIZE(cacheContents) != VARSIZE(query) ||
+		memcmp(cacheContents, query, VARSIZE(query)) != 0)
 	{
-		qtrg = generate_trgm(VARDATA(query), VARSIZE(query) - VARHDRSZ);
+		switch (strategy)
+		{
+			case SimilarityStrategyNumber:
+				qtrg = generate_trgm(VARDATA(query), VARSIZE(query) - VARHDRSZ);
+				break;
+			case ILikeStrategyNumber:
+#ifndef IGNORECASE
+				elog(ERROR, "cannot handle ~~* with case-sensitive trigrams");
+#endif
+				/* FALL THRU */
+			case LikeStrategyNumber:
+				qtrg = generate_wildcard_trgm(VARDATA(query), VARSIZE(query) - VARHDRSZ);
+				break;
+			default:
+				elog(ERROR, "unrecognized strategy number: %d", strategy);
+				qtrg = NULL;		/* keep compiler quiet */
+				break;
+		}
 
 		if (cache)
 			pfree(cache);
 
-		fcinfo->flinfo->fn_extra = MemoryContextAlloc(fcinfo->flinfo->fn_mcxt,
-								   MAXALIGN(VARSIZE(query)) + VARSIZE(qtrg));
+		fcinfo->flinfo->fn_extra =
+			MemoryContextAlloc(fcinfo->flinfo->fn_mcxt,
+							   MAXALIGN(sizeof(StrategyNumber)) +
+							   MAXALIGN(VARSIZE(query)) +
+							   VARSIZE(qtrg));
 		cache = (char *) fcinfo->flinfo->fn_extra;
+		cacheContents = cache + MAXALIGN(sizeof(StrategyNumber));
 
-		memcpy(cache, query, VARSIZE(query));
-		memcpy(cache + MAXALIGN(VARSIZE(query)), qtrg, VARSIZE(qtrg));
+		*((StrategyNumber *) cache) = strategy;
+		memcpy(cacheContents, query, VARSIZE(query));
+		memcpy(cacheContents + MAXALIGN(VARSIZE(query)), qtrg, VARSIZE(qtrg));
 	}
 
-	qtrg = (TRGM *) (cache + MAXALIGN(VARSIZE(query)));
+	qtrg = (TRGM *) (cacheContents + MAXALIGN(VARSIZE(query)));
 
 	switch (strategy)
 	{
 		case SimilarityStrategyNumber:
+			/* Similarity search is exact */
+			*recheck = false;
+
 			if (GIST_LEAF(entry))
 			{							/* all leafs contains orig trgm */
 				float4      tmpsml = cnt_sml(key, qtrg);
@@ -240,6 +270,47 @@ gtrgm_consistent(PG_FUNCTION_ARGS)
 					res = false;
 				else
 					res = (((((float8) count) / ((float8) len))) >= trgm_limit) ? true : false;
+			}
+			break;
+		case ILikeStrategyNumber:
+#ifndef IGNORECASE
+			elog(ERROR, "cannot handle ~~* with case-sensitive trigrams");
+#endif
+			/* FALL THRU */
+		case LikeStrategyNumber:
+			/* Wildcard search is inexact */
+			*recheck = true;
+
+			/*
+			 * Check if all the extracted trigrams can be present in child
+			 * nodes.
+			 */
+			if (GIST_LEAF(entry))
+			{							/* all leafs contains orig trgm */
+				res = trgm_contained_by(qtrg, key);
+			}
+			else if (ISALLTRUE(key))
+			{							/* non-leaf contains signature */
+				res = true;
+			}
+			else
+			{							/* non-leaf contains signature */
+				int32	k,
+						tmp = 0,
+						len = ARRNELEM(qtrg);
+				trgm *ptr = GETARR(qtrg);
+				BITVECP sign = GETSIGN(key);
+
+				res = true;
+				for (k = 0; k < len; k++)
+				{
+					CPTRGM(((char *) &tmp), ptr + k);
+					if (!GETBIT(sign, HASHVAL(tmp)))
+					{
+						res = false;
+						break;
+					}
+				}
 			}
 			break;
 		default:
