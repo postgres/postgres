@@ -236,7 +236,9 @@ prepare_new_databases(void)
 
 	/*
 	 * We have to create the databases first so we can install support
-	 * functions in all the other databases.
+	 * functions in all the other databases.  Ideally we could create
+	 * the support functions in template1 but pg_dumpall creates database
+	 * using the template0 template.
 	 */
 	exec_prog(true,
 			  SYSTEMQUOTE "\"%s/psql\" --set ON_ERROR_STOP=on "
