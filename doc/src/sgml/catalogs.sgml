@@ -1265,7 +1265,7 @@
       <entry><type>text</type></entry>
       <entry>
        Password (possibly encrypted); null if none.  If the password is
-       encrypted, this column will contain the string md5 followed by a
+       encrypted, this column will contain the string <literal>md5</> followed by a
        32-character hexadecimal MD5 hash.  The MD5 hash will be of the
        user's password concatenated to their username (for example, if
        user joe has password xyzzy, <productname>PostgreSQL</> will store
