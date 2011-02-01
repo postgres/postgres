@@ -210,7 +210,7 @@
   </para>
 
   <sect2>
-   <title>Start-Up</title>
+   <title>Start-up</title>
 
    <para>
     To begin a session, a frontend opens a connection to the server and sends

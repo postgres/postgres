@@ -2099,7 +2099,7 @@ pg_dumpall -p 5432 | psql -d postgres -p 5433
   </sect2>
 
   <sect2 id="ssl-certificate-creation">
-   <title>Creating a Self-Signed Certificate</title>
+   <title>Creating a Self-signed Certificate</title>
 
    <para>
     To create a quick self-signed certificate for the server, use the

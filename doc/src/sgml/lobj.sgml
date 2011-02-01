@@ -407,7 +407,7 @@ int lo_unlink(PGconn *conn, Oid lobjId);
 </sect1>
 
 <sect1 id="lo-funcs">
-<title>Server-Side Functions</title>
+<title>Server-side Functions</title>
 
   <para>
    There are server-side functions callable from SQL that correspond to

@@ -428,7 +428,7 @@ tar -cf backup.tar /usr/local/pgsql/data
  </sect1>
 
  <sect1 id="continuous-archiving">
-  <title>Continuous Archiving and Point-In-Time Recovery (PITR)</title>
+  <title>Continuous Archiving and Point-in-Time Recovery (PITR)</title>
 
   <indexterm zone="backup">
    <primary>continuous archiving</primary>

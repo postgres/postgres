@@ -1,7 +1,7 @@
 <!-- doc/src/sgml/xtypes.sgml -->
 
  <sect1 id="xtypes">
-  <title>User-Defined Types</title>
+  <title>User-defined Types</title>
 
   <indexterm zone="xtypes">
    <primary>data type</primary>

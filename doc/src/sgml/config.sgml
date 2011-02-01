@@ -1108,7 +1108,7 @@ SET ENABLE_SEQSCAN TO OFF;
     </sect2>
 
     <sect2 id="runtime-config-resource-vacuum-cost">
-     <title>Cost-Based Vacuum Delay</title>
+     <title>Cost-based Vacuum Delay</title>
 
      <para>
       During the execution of <xref linkend="sql-vacuum">
@@ -3864,7 +3864,7 @@ COPY postgres_log FROM '/full/path/to/logfile.csv' WITH csv;
    </sect1>
 
    <sect1 id="runtime-config-statistics">
-    <title>Run-Time Statistics</title>
+    <title>Run-time Statistics</title>
 
     <sect2 id="runtime-config-statistics-collector">
      <title>Query and Index Statistics Collector</title>

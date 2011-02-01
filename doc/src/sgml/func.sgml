@@ -4350,7 +4350,7 @@ SELECT foo FROM regexp_split_to_table('the quick brown fox', E'\\s*') AS foo;
    </note>
 
    <table id="posix-character-entry-escapes-table">
-    <title>Regular Expression Character-Entry Escapes</title>
+    <title>Regular Expression Character-entry Escapes</title>
 
     <tgroup cols="2">
      <thead>
@@ -4478,7 +4478,7 @@ SELECT foo FROM regexp_split_to_table('the quick brown fox', E'\\s*') AS foo;
    </para>
 
    <table id="posix-class-shorthand-escapes-table">
-    <title>Regular Expression Class-Shorthand Escapes</title>
+    <title>Regular Expression Class-shorthand Escapes</title>
 
     <tgroup cols="2">
      <thead>
@@ -4672,7 +4672,7 @@ SELECT foo FROM regexp_split_to_table('the quick brown fox', E'\\s*') AS foo;
    </para>
 
    <table id="posix-embedded-options-table">
-    <title>ARE Embedded-Option Letters</title>
+    <title>ARE Embedded-option Letters</title>
 
     <tgroup cols="2">
      <thead>

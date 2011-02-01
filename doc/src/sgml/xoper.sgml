@@ -1,7 +1,7 @@
 <!-- doc/src/sgml/xoper.sgml -->
 
  <sect1 id="xoper">
-  <title>User-Defined Operators</title>
+  <title>User-defined Operators</title>
 
   <indexterm zone="xoper">
    <primary>operator</primary>

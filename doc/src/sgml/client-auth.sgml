@@ -1198,7 +1198,7 @@ omicron         bryanh                  guest1
   </sect2>
 
   <sect2 id="auth-ident">
-   <title>Ident-Based Authentication</title>
+   <title>Ident-based Authentication</title>
 
    <indexterm>
     <primary>ident</primary>

@@ -1624,7 +1624,7 @@ while (1)
    </sect3>
 
    <sect3>
-    <title>User-Defined Base Types</title>
+    <title>User-defined Base Types</title>
 
     <para>
      New user-defined base types are not directly supported by ECPG.
@@ -7931,7 +7931,7 @@ EXEC SQL CLOSE DATABASE;
   </sect2>
 
   <sect2 id="ecpg-informix-sqlda">
-   <title>Informix-Compatible SQLDA Descriptor Areas</title>
+   <title>Informix-compatible SQLDA Descriptor Areas</title>
    <para>
     Informix-compatible mode supports a different structure than the one described in
     <xref linkend="ecpg-sqlda-descriptors">. See below:

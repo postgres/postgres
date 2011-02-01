@@ -596,7 +596,7 @@ $$ LANGUAGE plpythonu;
   </sect2>
 
   <sect2>
-   <title>Set-Returning Functions</title>
+   <title>Set-returning Functions</title>
   <para>
    A <application>PL/Python</application> function can also return sets of
    scalar or composite types. There are several ways to achieve this because

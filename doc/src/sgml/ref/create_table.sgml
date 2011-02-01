@@ -1369,7 +1369,7 @@ CREATE TABLE employees OF employee_type (
   </refsect2>
 
   <refsect2>
-   <title>Zero-Column Tables</title>
+   <title>Zero-column Tables</title>
 
    <para>
     <productname>PostgreSQL</productname> allows a table of no columns

@@ -1524,7 +1524,7 @@ PostgreSQL, contrib and HTML documentation successfully made. Ready to install.
    </para>
 
    <formalpara>
-    <title>Client-Only installation:</title>
+    <title>Client-only installation:</title>
     <para>
      If you want to install only the client applications and
      interface libraries, then you can use these commands:
@@ -1951,7 +1951,7 @@ kill `cat /usr/local/pgsql/data/postmaster.pid`
  </sect1>
 
  <sect1 id="installation-platform-notes">
-  <title>Platform-Specific Notes</title>
+  <title>Platform-specific Notes</title>
 
   <para>
    This section documents additional platform-specific issues

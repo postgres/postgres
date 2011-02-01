@@ -1,7 +1,7 @@
 <!-- doc/src/sgml/xfunc.sgml -->
 
  <sect1 id="xfunc">
-  <title>User-Defined Functions</title>
+  <title>User-defined Functions</title>
 
   <indexterm zone="xfunc">
    <primary>function</primary>
@@ -1754,7 +1754,7 @@ memcpy(destination->data, buffer, 40);
     </para>
 
      <table tocentry="1" id="xfunc-c-type-table">
-      <title>Equivalent C Types for Built-In SQL Types</title>
+      <title>Equivalent C Types for Built-in SQL Types</title>
       <tgroup cols="3">
        <thead>
         <row>
@@ -2660,7 +2660,7 @@ include $(PGXS)
 
 
    <sect2>
-    <title>Composite-Type Arguments</title>
+    <title>Composite-type Arguments</title>
 
     <para>
      Composite types do not have a fixed layout like C structures.
