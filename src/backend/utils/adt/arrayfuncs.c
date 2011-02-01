@@ -202,7 +202,7 @@ array_in(PG_FUNCTION_ARGS)
 			ereport(ERROR,
 					(errcode(ERRCODE_PROGRAM_LIMIT_EXCEEDED),
 					 errmsg("number of array dimensions (%d) exceeds the maximum allowed (%d)",
-							ndim, MAXDIM)));
+							ndim + 1, MAXDIM)));
 
 		for (q = p; isdigit((unsigned char) *q) || (*q == '-') || (*q == '+'); q++);
 		if (q == p)				/* no digits? */
@@ -481,7 +481,7 @@ ArrayCount(const char *str, int *dim, char typdelim)
 							ereport(ERROR,
 									(errcode(ERRCODE_PROGRAM_LIMIT_EXCEEDED),
 									 errmsg("number of array dimensions (%d) exceeds the maximum allowed (%d)",
-											nest_level, MAXDIM)));
+											nest_level + 1, MAXDIM)));
 						temp[nest_level] = 0;
 						nest_level++;
 						if (ndim < nest_level)

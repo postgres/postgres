@@ -3786,7 +3786,7 @@ exec_assign_value(PLpgSQL_execstate *estate,
 						ereport(ERROR,
 								(errcode(ERRCODE_PROGRAM_LIMIT_EXCEEDED),
 								 errmsg("number of array dimensions (%d) exceeds the maximum allowed (%d)",
-										nsubscripts, MAXDIM)));
+										nsubscripts + 1, MAXDIM)));
 					subscripts[nsubscripts++] = arrayelem->subscript;
 					target = estate->datums[arrayelem->arrayparentno];
 				} while (target->dtype == PLPGSQL_DTYPE_ARRAYELEM);
