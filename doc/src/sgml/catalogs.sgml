@@ -1264,12 +1264,14 @@
       <entry><structfield>rolpassword</structfield></entry>
       <entry><type>text</type></entry>
       <entry>
-       Password (possibly encrypted); null if none.  If the password is
-       encrypted, this column will contain the string <literal>md5</> followed by a
-       32-character hexadecimal MD5 hash.  The MD5 hash will be of the
-       user's password concatenated to their username (for example, if
-       user joe has password xyzzy, <productname>PostgreSQL</> will store
-       the md5 hash of xyzzyjoe).
+       Password (possibly encrypted); null if none.  If the password
+       is encrypted, this column will begin with the string <literal>md5</>
+       followed by a 32-character hexadecimal MD5 hash.  The MD5 hash
+       will be of the user's password concatenated to their username.
+       For example, if user <literal>joe</> has password <literal>xyzzy</>,
+       <productname>PostgreSQL</> will store the md5 hash of
+       <literal>xyzzyjoe</>.  A password that does not follow that
+       format is assumed to be unencrypted.
       </entry>
      </row>
 
