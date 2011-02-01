@@ -173,6 +173,10 @@ CREATE VIEW comedies AS
     FROM films
     WHERE kind = 'Comedy';
 </programlisting>
+   This will create a view containing the columns that are in the
+   <literal>film</> table at the time of view creation.  Though
+   <literal>*</> was used to create the view, columns added later to
+   the table will not be part of the view.
   </para>
  </refsect1>
 
