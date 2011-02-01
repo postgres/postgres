@@ -165,6 +165,15 @@ extern unsigned char pg_tolower(unsigned char ch);
 #ifdef printf
 #undef printf
 #endif
+/*
+ * Versions of libintl >= 0.18? try to replace setlocale() with a macro
+ * to their own versions.  Remove the macro, if it exists, because it
+ * ends up calling the wrong version when the backend and libintl use
+ * different versions of msvcrt.
+ */
+#if defined(setlocale) && defined(WIN32)
+#undef setlocale
+#endif
 
 extern int	pg_vsnprintf(char *str, size_t count, const char *fmt, va_list args);
 extern int
