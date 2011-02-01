@@ -214,7 +214,7 @@ gmake prefix=/usr/local/pgsql.new install
 
     <para>
      Install <application>pg_upgrade</> and
-     <application>pg_upgrade_support</> in the new PostgreSQL cluster
+     <application>pg_upgrade_support</> in the new PostgreSQL cluster.
     </para>
    </step>
 
