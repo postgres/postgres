@@ -484,6 +484,10 @@
 },
 
 {
+	"database_dropped", ERRCODE_T_R_DATABASE_DROPPED
+},
+
+{
 	"syntax_error_or_access_rule_violation", ERRCODE_SYNTAX_ERROR_OR_ACCESS_RULE_VIOLATION
 },
 
