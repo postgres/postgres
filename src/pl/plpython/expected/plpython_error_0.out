@@ -8,7 +8,7 @@ CREATE FUNCTION python_syntax_error() RETURNS text
 '.syntaxerror'
         LANGUAGE plpythonu;
 ERROR:  could not compile PL/Python function "python_syntax_error"
-DETAIL:  SyntaxError: invalid syntax (<string>, line 2)
+DETAIL:  SyntaxError: invalid syntax (line 2)
 /* With check_function_bodies = false the function should get defined
  * and the error reported when called
  */
@@ -19,11 +19,11 @@ CREATE FUNCTION python_syntax_error() RETURNS text
         LANGUAGE plpythonu;
 SELECT python_syntax_error();
 ERROR:  could not compile PL/Python function "python_syntax_error"
-DETAIL:  SyntaxError: invalid syntax (<string>, line 2)
+DETAIL:  SyntaxError: invalid syntax (line 2)
 /* Run the function twice to check if the hashtable entry gets cleaned up */
 SELECT python_syntax_error();
 ERROR:  could not compile PL/Python function "python_syntax_error"
-DETAIL:  SyntaxError: invalid syntax (<string>, line 2)
+DETAIL:  SyntaxError: invalid syntax (line 2)
 RESET check_function_bodies;
 /* Flat out syntax error
  */

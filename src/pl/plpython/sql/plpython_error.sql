@@ -2,6 +2,29 @@
 -- the trigger handler once. the errors and subsequent core dump were
 -- interesting.
 
+/* Flat out Python syntax error
+ */
+CREATE FUNCTION python_syntax_error() RETURNS text
+        AS
+'.syntaxerror'
+        LANGUAGE plpythonu;
+
+/* With check_function_bodies = false the function should get defined
+ * and the error reported when called
+ */
+SET check_function_bodies = false;
+
+CREATE FUNCTION python_syntax_error() RETURNS text
+        AS
+'.syntaxerror'
+        LANGUAGE plpythonu;
+
+SELECT python_syntax_error();
+/* Run the function twice to check if the hashtable entry gets cleaned up */
+SELECT python_syntax_error();
+
+RESET check_function_bodies;
+
 /* Flat out syntax error
  */
 CREATE FUNCTION sql_syntax_error() RETURNS text

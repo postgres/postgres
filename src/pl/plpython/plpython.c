@@ -251,15 +251,18 @@ typedef struct PLyResultObject
 
 #if PY_MAJOR_VERSION >= 3
 /* Use separate names to avoid clash in pg_pltemplate */
+#define plpython_validator plpython3_validator
 #define plpython_call_handler plpython3_call_handler
 #define plpython_inline_handler plpython3_inline_handler
 #endif
 
 /* exported functions */
+Datum		plpython_validator(PG_FUNCTION_ARGS);
 Datum		plpython_call_handler(PG_FUNCTION_ARGS);
 Datum		plpython_inline_handler(PG_FUNCTION_ARGS);
 void		_PG_init(void);
 
+PG_FUNCTION_INFO_V1(plpython_validator);
 PG_FUNCTION_INFO_V1(plpython_call_handler);
 PG_FUNCTION_INFO_V1(plpython_inline_handler);
 
@@ -435,6 +438,42 @@ plpython_return_error_callback(void *arg)
 {
 	if (PLy_curr_procedure)
 		errcontext("while creating return value");
+}
+
+static bool
+PLy_procedure_is_trigger(Form_pg_proc procStruct)
+{
+	return (procStruct->prorettype == TRIGGEROID ||
+			(procStruct->prorettype == OPAQUEOID &&
+			 procStruct->pronargs == 0));
+}
+
+Datum
+plpython_validator(PG_FUNCTION_ARGS)
+{
+	Oid			funcoid = PG_GETARG_OID(0);
+	HeapTuple	tuple;
+	Form_pg_proc procStruct;
+	bool		is_trigger;
+
+	if (!check_function_bodies)
+	{
+		PG_RETURN_VOID();
+	}
+
+	/* Get the new function's pg_proc entry */
+	tuple = SearchSysCache1(PROCOID, ObjectIdGetDatum(funcoid));
+	if (!HeapTupleIsValid(tuple))
+		elog(ERROR, "cache lookup failed for function %u", funcoid);
+	procStruct = (Form_pg_proc) GETSTRUCT(tuple);
+
+	is_trigger = PLy_procedure_is_trigger(procStruct);
+
+	ReleaseSysCache(tuple);
+
+	PLy_procedure_get(funcoid, is_trigger);
+
+	PG_RETURN_VOID();
 }
 
 Datum

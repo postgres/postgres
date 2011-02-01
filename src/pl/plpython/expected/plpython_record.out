@@ -47,6 +47,7 @@ CREATE FUNCTION test_in_out_params_multi(first in text,
                                          second out text, third out text) AS $$
 return first + '_record_in_to_out';
 $$ LANGUAGE plpythonu;
+ERROR:  PL/Python functions cannot return type record
 CREATE FUNCTION test_inout_params(first inout text) AS $$
 return first + '_inout';
 $$ LANGUAGE plpythonu;
@@ -299,7 +300,10 @@ SELECT * FROM test_in_out_params('test_in');
 
 -- this doesn't work yet :-(
 SELECT * FROM test_in_out_params_multi('test_in');
-ERROR:  PL/Python functions cannot return type record
+ERROR:  function test_in_out_params_multi(unknown) does not exist
+LINE 1: SELECT * FROM test_in_out_params_multi('test_in');
+                      ^
+HINT:  No function matches the given name and argument types. You might need to add explicit type casts.
 SELECT * FROM test_inout_params('test_in');
      first     
 ---------------
