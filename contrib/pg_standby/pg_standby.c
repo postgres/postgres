@@ -119,7 +119,7 @@ struct stat stat_buf;
  *	accessible directory. If you want to make other assumptions,
  *	such as using a vendor-specific archive and access API, these
  *	routines are the ones you'll need to change. You're
- *	enouraged to submit any changes to pgsql-hackers@postgresql.org
+ *	encouraged to submit any changes to pgsql-hackers@postgresql.org
  *	or personally to the current maintainer. Those changes may be
  *	folded in to later versions of this program.
  */
@@ -252,7 +252,7 @@ CustomizableCleanupPriorWALFiles(void)
 		/*
 		 * Assume it's OK to keep failing. The failure situation may change
 		 * over time, so we'd rather keep going on the main processing than
-		 * fail because we couldnt clean up yet.
+		 * fail because we couldn't clean up yet.
 		 */
 		if ((xldir = opendir(archiveLocation)) != NULL)
 		{

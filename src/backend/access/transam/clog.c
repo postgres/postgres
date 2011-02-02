@@ -431,8 +431,8 @@ CLOGShmemInit(void)
 /*
  * This func must be called ONCE on system install.  It creates
  * the initial CLOG segment.  (The CLOG directory is assumed to
- * have been created by the initdb shell script, and CLOGShmemInit
- * must have been called already.)
+ * have been created by initdb, and CLOGShmemInit must have been
+ * called already.)
  */
 void
 BootStrapCLOG(void)
