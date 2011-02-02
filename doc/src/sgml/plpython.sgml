@@ -858,6 +858,9 @@ $$ LANGUAGE plpythonu;
    <literal>plpy.<replaceable>foo</replaceable></literal>.
   </para>
 
+  <sect2>
+    <title>Database Access Functions</title>
+
   <para>
    The <literal>plpy</literal> module provides two
    functions called <function>execute</function> and
@@ -937,6 +940,33 @@ CREATE FUNCTION usesavedplan() RETURNS trigger AS $$
 $$ LANGUAGE plpythonu;
 </programlisting>
   </para>
+
+  </sect2>
+
+  <sect2>
+   <title>Trapping Errors</title>
+
+   <para>
+    Functions accessing the database might encounter errors, which
+    will cause them to abort and raise an exception.  Both
+    <function>plpy.execute</function> and
+    <function>plpy.prepare</function> can raise an instance of
+    <literal>plpy.SPIError</literal>, which by default will terminate
+    the function.  This error can be handled just like any other
+    Python exception, by using the <literal>try/except</literal>
+    construct.  For example:
+<programlisting>
+CREATE FUNCTION try_adding_joe() RETURNS text AS $$
+    try:
+        plpy.execute("INSERT INTO users(username) VALUES ('joe')")
+    except plpy.SPIError:
+        return "something went wrong"
+    else:
+        return "Joe added"
+$$ LANGUAGE plpythonu;
+</programlisting>
+   </para>
+  </sect2>
  </sect1>
 
  <sect1 id="plpython-util">

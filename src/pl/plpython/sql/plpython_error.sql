@@ -130,3 +130,25 @@ return None
 	LANGUAGE plpythonu;
 
 SELECT valid_type('rick');
+
+/* manually starting subtransactions - a bad idea
+ */
+CREATE FUNCTION manual_subxact() RETURNS void AS $$
+plpy.execute("savepoint save")
+plpy.execute("create table foo(x integer)")
+plpy.execute("rollback to save")
+$$ LANGUAGE plpythonu;
+
+SELECT manual_subxact();
+
+/* same for prepared plans
+ */
+CREATE FUNCTION manual_subxact_prepared() RETURNS void AS $$
+save = plpy.prepare("savepoint save")
+rollback = plpy.prepare("rollback to save")
+plpy.execute(save)
+plpy.execute("create table foo(x integer)")
+plpy.execute(rollback)
+$$ LANGUAGE plpythonu;
+
+SELECT manual_subxact_prepared();
