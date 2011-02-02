@@ -1422,7 +1422,12 @@ plperl_create_sub(plperl_proc_desc *prodesc, char *s, Oid fn_oid)
 	EXTEND(SP, 4);
 	PUSHs(sv_2mortal(newSVstring(subname)));
 	PUSHs(sv_2mortal(newRV_noinc((SV *) pragma_hv)));
-	PUSHs(&PL_sv_no); /* XXX is $prolog in mkfunc needed any more? */
+	/* 
+	 * Use 'false' for $prolog in mkfunc, which is kept for compatibility
+	 * in case a module such as PostgreSQL::PLPerl::NYTprof replaces
+	 * the function compiler.
+	 */
+	PUSHs(&PL_sv_no); 
 	PUSHs(sv_2mortal(newSVstring(s)));
 	PUTBACK;
 
