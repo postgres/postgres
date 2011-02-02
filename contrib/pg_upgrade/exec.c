@@ -15,8 +15,7 @@
 
 static void check_data_dir(const char *pg_data);
 static void check_bin_dir(ClusterInfo *cluster);
-static int	check_exec(const char *dir, const char *cmdName);
-static const char *validate_exec(const char *path);
+static void	validate_exec(const char *dir, const char *cmdName);
 
 
 /*
@@ -160,42 +159,16 @@ check_data_dir(const char *pg_data)
 static void
 check_bin_dir(ClusterInfo *cluster)
 {
-	check_exec(cluster->bindir, "postgres");
-	check_exec(cluster->bindir, "pg_ctl");
-	check_exec(cluster->bindir, "pg_resetxlog");
+	validate_exec(cluster->bindir, "postgres");
+	validate_exec(cluster->bindir, "pg_ctl");
+	validate_exec(cluster->bindir, "pg_resetxlog");
 	if (cluster == &new_cluster)
 	{
 		/* these are only needed in the new cluster */
-		check_exec(cluster->bindir, "pg_config");
-		check_exec(cluster->bindir, "psql");
-		check_exec(cluster->bindir, "pg_dumpall");
+		validate_exec(cluster->bindir, "pg_config");
+		validate_exec(cluster->bindir, "psql");
+		validate_exec(cluster->bindir, "pg_dumpall");
 	}
-}
-
-
-/*
- * check_exec()
- *
- *	Checks whether either of the two command names (cmdName and alternative)
- *	appears to be an executable (in the given directory).  If dir/cmdName is
- *	an executable, this function returns 1. If dir/alternative is an
- *	executable, this function returns 2.  If neither of the given names is
- *	a valid executable, this function returns 0 to indicated failure.
- */
-static int
-check_exec(const char *dir, const char *cmdName)
-{
-	char		path[MAXPGPATH];
-	const char *errMsg;
-
-	snprintf(path, sizeof(path), "%s/%s", dir, cmdName);
-
-	if ((errMsg = validate_exec(path)) == NULL)
-		return 1;				/* 1 -> first alternative OK */
-	else
-		pg_log(PG_FATAL, "check for %s failed - %s\n", cmdName, errMsg);
-
-	return 0;					/* 0 -> neither alternative is acceptable */
 }
 
 
@@ -203,14 +176,14 @@ check_exec(const char *dir, const char *cmdName)
  * validate_exec()
  *
  * validate "path" as an executable file
- * returns 0 if the file is found and no error is encountered.
- *		  -1 if the regular file "path" does not exist or cannot be executed.
- *		  -2 if the file is otherwise valid but cannot be read.
  */
-static const char *
-validate_exec(const char *path)
+static void
+validate_exec(const char *dir, const char *cmdName)
 {
+	char		path[MAXPGPATH];
 	struct stat buf;
+
+	snprintf(path, sizeof(path), "%s/%s", dir, cmdName);
 
 #ifdef WIN32
 	/* Win32 requires a .exe suffix for stat() */
@@ -229,10 +202,12 @@ validate_exec(const char *path)
 	 * Ensure that the file exists and is a regular file.
 	 */
 	if (stat(path, &buf) < 0)
-		return getErrorText(errno);
+		pg_log(PG_FATAL, "check for %s failed - %s\n",
+			   cmdName, getErrorText(errno));
 
 	if (!S_ISREG(buf.st_mode))
-		return "not an executable file";
+		pg_log(PG_FATAL, "check for %s failed - not an executable file\n",
+			   cmdName);
 
 	/*
 	 * Ensure that the file is both executable and readable (required for
@@ -240,15 +215,17 @@ validate_exec(const char *path)
 	 */
 #ifndef WIN32
 	if (access(path, R_OK) != 0)
-		return "can't read file (permission denied)";
-	if (access(path, X_OK) != 0)
-		return "can't execute (permission denied)";
-	return NULL;
 #else
 	if ((buf.st_mode & S_IRUSR) == 0)
-		return "can't read file (permission denied)";
-	if ((buf.st_mode & S_IXUSR) == 0)
-		return "can't execute (permission denied)";
-	return NULL;
 #endif
+		pg_log(PG_FATAL, "check for %s failed - cannot read file (permission denied)\n",
+			   cmdName);
+
+#ifndef WIN32
+	if (access(path, X_OK) != 0)
+#else
+	if ((buf.st_mode & S_IXUSR) == 0)
+#endif
+		pg_log(PG_FATAL, "check for %s failed - cannot execute (permission denied)\n",
+			   cmdName);
 }
