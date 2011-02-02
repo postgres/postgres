@@ -360,10 +360,10 @@
    </para>
 
    <para>
-    <literal>timezone_abbreviations</> can be set to any file name
+    <varname>timezone_abbreviations</> can be set to any file name
     found in <filename>.../share/timezonesets/</>, if the file's name
     is entirely alphabetic.  (The prohibition against non-alphabetic
-    characters in <literal>timezone_abbreviations</> prevents reading
+    characters in <varname>timezone_abbreviations</> prevents reading
     files outside the intended directory, as well as reading editor
     backup files and other extraneous files.)
    </para>
@@ -420,7 +420,7 @@
     according to the <literal>zoneinfo</> timezone database.  The zone name
     definitions found in these files can be copied and pasted into a custom
     configuration file as needed.  Note that these files cannot be directly
-    referenced as <literal>timezone_abbreviations</> settings, because of
+    referenced as <varname>timezone_abbreviations</> settings, because of
     the dot embedded in their names.
    </para>
 

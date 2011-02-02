@@ -670,13 +670,13 @@ analyze threshold = analyze base threshold + analyze scale factor * number of tu
     autovacuum will only touch the table if it must do so
     to prevent transaction ID wraparound.
     Another two parameters,
-    <literal>autovacuum_vacuum_cost_delay</literal> and
-    <literal>autovacuum_vacuum_cost_limit</literal>, are used to set
+    <varname>autovacuum_vacuum_cost_delay</> and
+    <varname>autovacuum_vacuum_cost_limit</>, are used to set
     table-specific values for the cost-based vacuum delay feature
     (see <xref linkend="runtime-config-resource-vacuum-cost">).
-    <literal>autovacuum_freeze_min_age</literal>,
-    <literal>autovacuum_freeze_max_age</literal> and
-    <literal>autovacuum_freeze_table_age</literal> are used to set
+    <varname>autovacuum_freeze_min_age</>,
+    <varname>autovacuum_freeze_max_age</> and
+    <varname>autovacuum_freeze_table_age</> are used to set
     values for <xref linkend="guc-vacuum-freeze-min-age">,
     <xref linkend="guc-autovacuum-freeze-max-age"> and
     <xref linkend="guc-vacuum-freeze-table-age"> respectively.
@@ -764,7 +764,7 @@ analyze threshold = analyze base threshold + analyze scale factor * number of tu
    A better approach is to send the server's
    <systemitem>stderr</> output to some type of log rotation program.
    There is a built-in log rotation facility, which you can use by
-   setting the configuration parameter <literal>logging_collector</> to
+   setting the configuration parameter <varname>logging_collector</> to
    <literal>true</> in <filename>postgresql.conf</>.  The control
    parameters for this program are described in <xref
    linkend="runtime-config-logging-where">. You can also use this approach
@@ -794,7 +794,7 @@ pg_ctl start | rotatelogs /var/log/pgsql_log 86400
    Another production-grade approach to managing log output is to
    send it to <application>syslog</> and let
    <application>syslog</> deal with file rotation. To do this, set the
-   configuration parameter <literal>log_destination</> to <literal>syslog</>
+   configuration parameter <varname>log_destination</> to <literal>syslog</>
    (to log to <application>syslog</> only) in
    <filename>postgresql.conf</>. Then you can send a <literal>SIGHUP</literal>
    signal to the <application>syslog</> daemon whenever you want to force it

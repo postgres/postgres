@@ -111,7 +111,7 @@ pg_archivecleanup:  removing file "archive/00000001000000370000000E"
 archive_cleanup_command = 'pg_archivecleanup -d /mnt/standby/archive %r 2>>cleanup.log'
 </programlisting>
    where the archive directory is physically located on the standby server,
-   so that the <literal>archive_command</> is accessing it across NFS,
+   so that the <varname>archive_command</> is accessing it across NFS,
    but the files are local to the standby.
    This will:
   </para>

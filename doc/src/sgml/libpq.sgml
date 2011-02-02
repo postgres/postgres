@@ -1418,46 +1418,46 @@ const char *PQparameterStatus(const PGconn *conn, const char *paramName);
 
       <para>
        Parameters reported as of the current release include
-       <literal>server_version</>,
-       <literal>server_encoding</>,
-       <literal>client_encoding</>,
-       <literal>application_name</>,
-       <literal>is_superuser</>,
-       <literal>session_authorization</>,
-       <literal>DateStyle</>,
-       <literal>IntervalStyle</>,
-       <literal>TimeZone</>,
-       <literal>integer_datetimes</>, and
-       <literal>standard_conforming_strings</>.
-       (<literal>server_encoding</>, <literal>TimeZone</>, and
-       <literal>integer_datetimes</> were not reported by releases before 8.0;
-       <literal>standard_conforming_strings</> was not reported by releases
+       <varname>server_version</>,
+       <varname>server_encoding</>,
+       <varname>client_encoding</>,
+       <varname>application_name</>,
+       <varname>is_superuser</>,
+       <varname>session_authorization</>,
+       <varname>DateStyle</>,
+       <varname>IntervalStyle</>,
+       <varname>TimeZone</>,
+       <varname>integer_datetimes</>, and
+       <varname>standard_conforming_strings</>.
+       (<varname>server_encoding</>, <varname>TimeZone</>, and
+       <varname>integer_datetimes</> were not reported by releases before 8.0;
+       <varname>standard_conforming_strings</> was not reported by releases
        before 8.1;
-       <literal>IntervalStyle</> was not reported by releases before 8.4;
-       <literal>application_name</> was not reported by releases before 9.0.)
+       <varname>IntervalStyle</> was not reported by releases before 8.4;
+       <varname>application_name</> was not reported by releases before 9.0.)
        Note that
-       <literal>server_version</>,
-       <literal>server_encoding</> and
-       <literal>integer_datetimes</>
+       <varname>server_version</>,
+       <varname>server_encoding</> and
+       <varname>integer_datetimes</>
        cannot change after startup.
       </para>
 
       <para>
        Pre-3.0-protocol servers do not report parameter settings, but
        <application>libpq</> includes logic to obtain values for
-       <literal>server_version</> and <literal>client_encoding</> anyway.
+       <varname>server_version</> and <varname>client_encoding</> anyway.
        Applications are encouraged to use <function>PQparameterStatus</>
        rather than <foreignphrase>ad hoc</> code to determine these values.
        (Beware however that on a pre-3.0 connection, changing
-       <literal>client_encoding</> via <command>SET</> after connection
+       <varname>client_encoding</> via <command>SET</> after connection
        startup will not be reflected by <function>PQparameterStatus</>.)
-       For <literal>server_version</>, see also
+       For <varname>server_version</>, see also
        <function>PQserverVersion</>, which returns the information in a
        numeric form that is much easier to compare against.
       </para>
 
       <para>
-       If no value for <literal>standard_conforming_strings</> is reported,
+       If no value for <varname>standard_conforming_strings</> is reported,
        applications can assume it is <literal>off</>, that is, backslashes
        are treated as escapes in string literals.  Also, the presence of
        this parameter can be taken as an indication that the escape string

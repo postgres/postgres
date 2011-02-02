@@ -15,7 +15,7 @@
 
  <para>
   <application>pg_standby</> is designed to be a waiting
-  <literal>restore_command</literal>, which is needed to turn a standard
+  <varname>restore_command</>, which is needed to turn a standard
   archive recovery into a warm standby operation.  Other
   configuration is required as well, all of which is described in the main
   server manual (see <xref linkend="warm-standby">).
@@ -61,7 +61,7 @@ restore_command = 'pg_standby <replaceable>archiveDir</> %f %p %r'
 <synopsis>
 pg_standby <optional> <replaceable>option</> ... </optional> <replaceable>archivelocation</> <replaceable>nextwalfile</> <replaceable>xlogfilepath</> <optional> <replaceable>restartwalfile</> </optional>
 </synopsis>
-   When used within <literal>restore_command</literal>, the <literal>%f</> and
+   When used within <varname>restore_command</>, the <literal>%f</> and
    <literal>%p</> macros should be specified for <replaceable>nextwalfile</>
    and <replaceable>xlogfilepath</> respectively, to provide the actual file
    and path required for the restore.
@@ -241,7 +241,7 @@ restore_command = 'pg_standby -d -s 2 -t /tmp/pgsql.trigger.5442 .../archive %f 
 recovery_end_command = 'rm -f /tmp/pgsql.trigger.5442'
 </programlisting>
    where the archive directory is physically located on the standby server,
-   so that the <literal>archive_command</> is accessing it across NFS,
+   so that the <varname>archive_command</> is accessing it across NFS,
    but the files are local to the standby (enabling use of <literal>ln</>).
    This will:
   <itemizedlist>
@@ -285,8 +285,8 @@ restore_command = 'pg_standby -d -s 5 -t C:\pgsql.trigger.5442 ...\archive %f %p
 recovery_end_command = 'del C:\pgsql.trigger.5442'
 </programlisting>
    Note that backslashes need to be doubled in the
-   <literal>archive_command</>, but <emphasis>not</emphasis> in the
-   <literal>restore_command</> or <literal>recovery_end_command</>.
+   <varname>archive_command</>, but <emphasis>not</emphasis> in the
+   <varname>restore_command</> or <varname>recovery_end_command</>.
    This will:
   <itemizedlist>
    <listitem>
@@ -357,7 +357,7 @@ recovery_end_command = 'del C:\pgsql.trigger.5442'
   </para>
   <para>
    <productname>PostgreSQL</> 8.4 provides the
-   <literal>recovery_end_command</literal> option.  Without this option
+   <varname>recovery_end_command</> option.  Without this option
    a leftover trigger file can be hazardous.
   </para>
  </sect2>
