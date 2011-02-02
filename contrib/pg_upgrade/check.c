@@ -186,7 +186,7 @@ output_completion_banner(char *deletion_script_file_name)
 	/* Did we copy the free space files? */
 	if (GET_MAJOR_VERSION(old_cluster.major_version) >= 804)
 		pg_log(PG_REPORT,
-			   "| Optimizer statistics is not transferred by pg_upgrade\n"
+			   "| Optimizer statistics are not transferred by pg_upgrade\n"
 			   "| so consider running:\n"
 			   "| \tvacuumdb --all --analyze-only\n"
 			   "| on the newly-upgraded cluster.\n\n");
