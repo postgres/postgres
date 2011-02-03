@@ -513,7 +513,7 @@
     <term><acronym>PL</acronym></term>
     <listitem>
      <para>
-      <link linkend="server-programming">Programming Languages (server-side)</link>
+      <link linkend="server-programming">Procedural Languages (server-side)</link>
      </para>
     </listitem>
    </varlistentry>
