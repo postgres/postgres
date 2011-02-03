@@ -610,7 +610,7 @@ find_in_dynamic_libpath(const char *basename)
 		char	   *mangled;
 		char	   *full;
 
-		piece = first_path_separator(p);
+		piece = first_path_var_separator(p);
 		if (piece == p)
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_NAME),

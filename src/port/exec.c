@@ -168,7 +168,7 @@ find_my_exec(const char *argv0, char *retpath)
 			else
 				startp = endp + 1;
 
-			endp = first_path_separator(startp);
+			endp = first_path_var_separator(startp);
 			if (!endp)
 				endp = startp + strlen(startp); /* point to end */
 

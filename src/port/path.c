@@ -98,13 +98,13 @@ first_dir_separator(const char *filename)
 }
 
 /*
- *	first_path_separator
+ *	first_path_var_separator
  *
  * Find the location of the first path separator (i.e. ':' on
  * Unix, ';' on Windows), return NULL if not found.
  */
 char *
-first_path_separator(const char *pathlist)
+first_path_var_separator(const char *pathlist)
 {
 	const char *p;
 

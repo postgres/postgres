@@ -36,7 +36,7 @@ extern bool pg_set_block(pgsocket sock);
 
 extern char *first_dir_separator(const char *filename);
 extern char *last_dir_separator(const char *filename);
-extern char *first_path_separator(const char *pathlist);
+extern char *first_path_var_separator(const char *pathlist);
 extern void join_path_components(char *ret_path,
 					 const char *head, const char *tail);
 extern void canonicalize_path(char *path);
