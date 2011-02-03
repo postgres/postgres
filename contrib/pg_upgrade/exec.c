@@ -186,16 +186,10 @@ validate_exec(const char *dir, const char *cmdName)
 	snprintf(path, sizeof(path), "%s/%s", dir, cmdName);
 
 #ifdef WIN32
-	/* Win32 requires a .exe suffix for stat() */
-	char		path_exe[MAXPGPATH + sizeof(EXE_EXT) - 1];
-
-	if (strlen(path) >= strlen(EXE_EXT) &&
+	/* Windows requires a .exe suffix for stat() */
+	if (strlen(path) <= strlen(EXE_EXT) ||
 		pg_strcasecmp(path + strlen(path) - strlen(EXE_EXT), EXE_EXT) != 0)
-	{
-		strcpy(path_exe, path);
-		strcat(path_exe, EXE_EXT);
-		path = path_exe;
-	}
+		strlcat(path, EXE_EXT, sizeof(path));
 #endif
 
 	/*
