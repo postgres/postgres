@@ -75,7 +75,7 @@
     <term><productname>libselinux</productname></term>
     <listitem>
      <para>
-      v2.0.80 or later
+      v2.0.93 or later
      </para>
      <para>
       This library provides a set of APIs to communicate with
