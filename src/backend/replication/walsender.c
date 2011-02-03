@@ -258,19 +258,26 @@ IdentifySystem(void)
 	StringInfoData buf;
 	char		sysid[32];
 	char		tli[11];
+	char		xpos[MAXFNAMELEN];
+	XLogRecPtr	logptr;
 
 	/*
-	 * Reply with a result set with one row, two columns. First col is system
-	 * ID, and second is timeline ID
+	 * Reply with a result set with one row, three columns. First col is system
+	 * ID, second is timeline ID, and third is current xlog location.
 	 */
 
 	snprintf(sysid, sizeof(sysid), UINT64_FORMAT,
 			 GetSystemIdentifier());
 	snprintf(tli, sizeof(tli), "%u", ThisTimeLineID);
 
+	logptr = GetInsertRecPtr();
+
+	snprintf(xpos, sizeof(xpos), "%X/%X",
+			 logptr.xlogid, logptr.xrecoff);
+
 	/* Send a RowDescription message */
 	pq_beginmessage(&buf, 'T');
-	pq_sendint(&buf, 2, 2);		/* 2 fields */
+	pq_sendint(&buf, 3, 2);		/* 3 fields */
 
 	/* first field */
 	pq_sendstring(&buf, "systemid");	/* col name */
@@ -289,15 +296,27 @@ IdentifySystem(void)
 	pq_sendint(&buf, 4, 2);		/* typlen */
 	pq_sendint(&buf, 0, 4);		/* typmod */
 	pq_sendint(&buf, 0, 2);		/* format code */
+
+	/* third field */
+	pq_sendstring(&buf, "xlogpos");
+	pq_sendint(&buf, 0, 4);
+	pq_sendint(&buf, 0, 2);
+	pq_sendint(&buf, TEXTOID, 4);
+	pq_sendint(&buf, -1, 2);
+	pq_sendint(&buf, 0, 4);
+	pq_sendint(&buf, 0, 2);
 	pq_endmessage(&buf);
 
 	/* Send a DataRow message */
 	pq_beginmessage(&buf, 'D');
-	pq_sendint(&buf, 2, 2);		/* # of columns */
+	pq_sendint(&buf, 3, 2);		/* # of columns */
 	pq_sendint(&buf, strlen(sysid), 4); /* col1 len */
 	pq_sendbytes(&buf, (char *) &sysid, strlen(sysid));
 	pq_sendint(&buf, strlen(tli), 4);	/* col2 len */
 	pq_sendbytes(&buf, (char *) tli, strlen(tli));
+	pq_sendint(&buf, strlen(xpos), 4);	/* col3 len */
+	pq_sendbytes(&buf, (char *) xpos, strlen(xpos));
+
 	pq_endmessage(&buf);
 
 	/* Send CommandComplete and ReadyForQuery messages */

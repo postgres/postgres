@@ -1315,7 +1315,7 @@ The commands accepted in walsender mode are:
     <listitem>
      <para>
       Requests the server to identify itself. Server replies with a result
-      set of a single row, containing two fields:
+      set of a single row, containing three fields:
      </para>
 
      <para>
@@ -1344,6 +1344,19 @@ The commands accepted in walsender mode are:
       </para>
       </listitem>
       </varlistentry>
+
+      <varlistentry>
+      <term>
+       xlogpos
+      </term>
+      <listitem>
+      <para>
+       Current xlog write location. Useful to get a known location in the
+       transaction log where streaming can start.
+      </para>
+      </listitem>
+      </varlistentry>
+
       </variablelist>
      </para>
     </listitem>
@@ -1520,15 +1533,16 @@ The commands accepted in walsender mode are:
       </variablelist>
      </para>
      <para>
-      When the backup is started, the server will first send a header in
-      ordinary result set format, followed by one or more CopyResponse
-      results, one for PGDATA and one for each additional tablespace other
-      than <literal>pg_default</> and <literal>pg_global</>. The data in
-      the CopyResponse results will be a tar format (using ustar00
-      extensions) dump of the tablespace contents.
+      When the backup is started, the server will first send two
+      ordinary result sets, followed by one or more CopyResponse
+      results.
      </para>
      <para>
-      The header is an ordinary resultset with one row for each tablespace.
+      The first ordinary result set contains the starting position of the
+      backup, given in XLogRecPtr format as a single column in a single row.
+     </para>
+     <para>
+      The second ordinary result set has one row for each tablespace.
       The fields in this row are:
       <variablelist>
        <varlistentry>
@@ -1561,6 +1575,15 @@ The commands accepted in walsender mode are:
       </variablelist>
      </para>
      <para>
+      After the second regular result set, one or more CopyResponse results
+      will be sent, one for PGDATA and one for each additional tablespace other
+      than <literal>pg_default</> and <literal>pg_global</>. The data in
+      the CopyResponse results will be a tar format (using ustar00
+      extensions) dump of the tablespace contents. After the tar data is
+      complete, a final ordinary result set will be sent.
+     </para>
+
+     <para>
       The tar archive for the data directory and each tablespace will contain
       all files in the directories, regardless of whether they are
       <productname>PostgreSQL</> files or other files added to the same
@@ -1582,6 +1605,11 @@ The commands accepted in walsender mode are:
       </itemizedlist>
       Owner, group and file mode are set if the underlying filesystem on
       the server supports it.
+     </para>
+     <para>
+      Once all tablespaces have been sent, a final regular result set will
+      be sent. This result set contains the end position of the
+      backup, given in XLogRecPtr format as a single column in a single row.
      </para>
     </listitem>
   </varlistentry>

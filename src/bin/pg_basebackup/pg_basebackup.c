@@ -742,15 +742,40 @@ static void
 BaseBackup()
 {
 	PGresult   *res;
+	uint32		timeline;
 	char		current_path[MAXPGPATH];
 	char		escaped_label[MAXPGPATH];
 	int			i;
+	char		xlogstart[64];
+	char		xlogend[64];
 
 	/*
 	 * Connect in replication mode to the server
 	 */
 	conn = GetConnection();
 
+	/*
+	 * Run IDENFITY_SYSTEM so we can get the timeline
+	 */
+	res = PQexec(conn, "IDENTIFY_SYSTEM");
+	if (PQresultStatus(res) != PGRES_TUPLES_OK)
+	{
+		fprintf(stderr, _("%s: could not identify system: %s\n"),
+				progname, PQerrorMessage(conn));
+		disconnect_and_exit(1);
+	}
+	if (PQntuples(res) != 1)
+	{
+		fprintf(stderr, _("%s: could not identify system, got %i rows\n"),
+				progname, PQntuples(res));
+		disconnect_and_exit(1);
+	}
+	timeline = atoi(PQgetvalue(res, 0, 1));
+	PQclear(res);
+
+	/*
+	 * Start the actual backup
+	 */
 	PQescapeStringConn(conn, escaped_label, label, sizeof(escaped_label), &i);
 	snprintf(current_path, sizeof(current_path), "BASE_BACKUP LABEL '%s' %s %s %s",
 			 escaped_label,
@@ -766,12 +791,34 @@ BaseBackup()
 	}
 
 	/*
-	 * Get the header
+	 * Get the starting xlog position
 	 */
 	res = PQgetResult(conn);
 	if (PQresultStatus(res) != PGRES_TUPLES_OK)
 	{
 		fprintf(stderr, _("%s: could not initiate base backup: %s\n"),
+				progname, PQerrorMessage(conn));
+		disconnect_and_exit(1);
+	}
+	if (PQntuples(res) != 1)
+	{
+		fprintf(stderr, _("%s: no start point returned from server.\n"),
+				progname);
+		disconnect_and_exit(1);
+	}
+	strcpy(xlogstart, PQgetvalue(res, 0, 0));
+	if (verbose && includewal)
+		fprintf(stderr, "xlog start point: %s\n", xlogstart);
+	PQclear(res);
+	MemSet(xlogend, 0, sizeof(xlogend));
+
+	/*
+	 * Get the header
+	 */
+	res = PQgetResult(conn);
+	if (PQresultStatus(res) != PGRES_TUPLES_OK)
+	{
+		fprintf(stderr, _("%s: could not get backup header: %s\n"),
 				progname, PQerrorMessage(conn));
 		disconnect_and_exit(1);
 	}
@@ -826,6 +873,27 @@ BaseBackup()
 		progress_report(PQntuples(res), "");
 		fprintf(stderr, "\n");	/* Need to move to next line */
 	}
+	PQclear(res);
+
+	/*
+	 * Get the stop position
+	 */
+	res = PQgetResult(conn);
+	if (PQresultStatus(res) != PGRES_TUPLES_OK)
+	{
+		fprintf(stderr, _("%s: could not get end xlog position from server.\n"),
+						  progname);
+		disconnect_and_exit(1);
+	}
+	if (PQntuples(res) != 1)
+	{
+		fprintf(stderr, _("%s: no end point returned from server.\n"),
+				progname);
+		disconnect_and_exit(1);
+	}
+	strcpy(xlogend, PQgetvalue(res, 0, 0));
+	if (verbose && includewal)
+		fprintf(stderr, "xlog end point: %s\n", xlogend);
 	PQclear(res);
 
 	res = PQgetResult(conn);
