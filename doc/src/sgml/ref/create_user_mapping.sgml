@@ -34,7 +34,7 @@ CREATE USER MAPPING FOR { <replaceable class="parameter">user_name</replaceable>
    <command>CREATE USER MAPPING</command> defines a mapping of a user
    to a foreign server.  A user mapping typically encapsulates
    connection information that a foreign-data wrapper uses together
-   with the information encapsulated be a foreign server to access an
+   with the information encapsulated by a foreign server to access an
    external data resource.
   </para>
 
