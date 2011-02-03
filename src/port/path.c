@@ -35,12 +35,6 @@
 
 
 #ifndef WIN32
-#define IS_DIR_SEP(ch)	((ch) == '/')
-#else
-#define IS_DIR_SEP(ch)	((ch) == '/' || (ch) == '\\')
-#endif
-
-#ifndef WIN32
 #define IS_PATH_VAR_SEP(ch) ((ch) == ':')
 #else
 #define IS_PATH_VAR_SEP(ch) ((ch) == ';')
