@@ -56,8 +56,8 @@ SELECT sepgsql_getcon();	-- confirm client privilege
 SECURITY LABEL ON TABLE t1
     IS 'system_u:object_r:sepgsql_ro_table_t:s0';	-- ok
 SECURITY LABEL ON TABLE t2
-    IS 'invalid seuciryt context';			-- be failed
-ERROR:  invalid security label: "invalid seuciryt context"
+    IS 'invalid security context';			-- be failed
+ERROR:  SELinux: invalid security label: "invalid security context"
 SECURITY LABEL ON COLUMN t2
     IS 'system_u:object_r:sepgsql_ro_table_t:s0';	-- be failed
 ERROR:  improper relation name (too many dotted names): 

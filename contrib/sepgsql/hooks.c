@@ -91,7 +91,7 @@ sepgsql_client_auth(Port *port, int status)
 	if (getpeercon_raw(port->sock, &context) < 0)
 		ereport(FATAL,
 				(errcode(ERRCODE_INTERNAL_ERROR),
-				 errmsg("SELinux: unable to get peer label")));
+				 errmsg("SELinux: unable to get peer label: %m")));
 
 	sepgsql_set_client_label(context);
 
@@ -414,7 +414,7 @@ _PG_init(void)
 	if (getcon_raw(&context) < 0)
 		ereport(ERROR,
 				(errcode(ERRCODE_INTERNAL_ERROR),
-				 errmsg("SELinux: failed to get server security label")));
+				 errmsg("SELinux: failed to get server security label: %m")));
 	sepgsql_set_client_label(context);
 
 	/* Security label provider hook */

@@ -42,15 +42,15 @@ SELECT objtype, objname, label FROM pg_seclabels
  table   | t3      | system_u:object_r:sepgsql_fixed_table_t:s0
  table   | t4      | system_u:object_r:sepgsql_secret_table_t:s0
  table   | t5      | system_u:object_r:sepgsql_table_t:s0
- column  | t5.g    | system_u:object_r:sepgsql_secret_table_t:s0
- column  | t5.f    | system_u:object_r:sepgsql_ro_table_t:s0
  column  | t5.e    | system_u:object_r:sepgsql_table_t:s0
+ column  | t5.f    | system_u:object_r:sepgsql_ro_table_t:s0
+ column  | t5.g    | system_u:object_r:sepgsql_secret_table_t:s0
 (8 rows)
 
 -- Hardwired Rules
 UPDATE pg_attribute SET attisdropped = true
     WHERE attrelid = 't5'::regclass AND attname = 'f';	-- failed
-ERROR:  selinux: hardwired security policy violation
+ERROR:  SELinux: hardwired security policy violation
 --
 -- Simple DML statements
 --

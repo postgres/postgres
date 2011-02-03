@@ -10,6 +10,7 @@
  */
 #include "postgres.h"
 
+#include "catalog/dependency.h"
 #include "catalog/pg_namespace.h"
 #include "commands/seclabel.h"
 #include "utils/lsyscache.h"
@@ -68,7 +69,7 @@ sepgsql_schema_relabel(Oid namespaceId, const char *seclabel)
 	char	   *tcontext;
 	char	   *audit_name;
 
-	audit_name = get_namespace_name(namespaceId);
+	audit_name = getObjectDescriptionOids(NamespaceRelationId, namespaceId);
 
 	/*
 	 * check db_schema:{setattr relabelfrom} permission

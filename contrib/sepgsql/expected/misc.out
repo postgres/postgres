@@ -2,4 +2,4 @@
 -- Regression Test for Misc Permission Checks
 --
 LOAD '$libdir/sepgsql';		-- failed
-ERROR:  SELinux: LOAD is not allowed anyway.
+ERROR:  SELinux: LOAD is not permitted

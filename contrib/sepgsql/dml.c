@@ -14,6 +14,7 @@
 #include "access/tupdesc.h"
 #include "catalog/catalog.h"
 #include "catalog/heap.h"
+#include "catalog/dependency.h"
 #include "catalog/pg_attribute.h"
 #include "catalog/pg_class.h"
 #include "catalog/pg_inherits_fn.h"
@@ -151,6 +152,7 @@ check_relation_privileges(Oid relOid,
 	char		relkind = get_rel_relkind(relOid);
 	char	   *scontext = sepgsql_get_client_label();
 	char	   *tcontext;
+	char	   *audit_name;
 	Bitmapset  *columns;
 	int			index;
 	bool		result = true;
@@ -183,6 +185,7 @@ check_relation_privileges(Oid relOid,
 	 * Check permissions on the relation
 	 */
 	tcontext = sepgsql_get_label(RelationRelationId, relOid, 0);
+	audit_name = getObjectDescriptionOids(RelationRelationId, relOid);
 	switch (relkind)
 	{
 		case RELKIND_RELATION:
@@ -190,10 +193,8 @@ check_relation_privileges(Oid relOid,
 										 tcontext,
 										 SEPG_CLASS_DB_TABLE,
 										 required,
-										 get_rel_name(relOid),
+										 audit_name,
 										 abort);
-			if (!result)
-				return false;
 			break;
 
 		case RELKIND_SEQUENCE:
@@ -204,23 +205,31 @@ check_relation_privileges(Oid relOid,
 											 tcontext,
 											 SEPG_CLASS_DB_SEQUENCE,
 											 SEPG_DB_SEQUENCE__GET_VALUE,
-											 get_rel_name(relOid),
+											 audit_name,
 											 abort);
-			return result;
+			break;
 
 		case RELKIND_VIEW:
 			result = sepgsql_check_perms(scontext,
 										 tcontext,
 										 SEPG_CLASS_DB_VIEW,
 										 SEPG_DB_VIEW__EXPAND,
-										 get_rel_name(relOid),
+										 audit_name,
 										 abort);
-			return result;
+			break;
 
 		default:
 			/* nothing to be checked */
-			return true;
+			break;
 	}
+	pfree(tcontext);
+	pfree(audit_name);
+
+	/*
+	 * Only columns owned by relations shall be checked
+	 */
+	if (relkind != RELKIND_RELATION)
+		return true;
 
 	/*
 	 * Check permissions on the columns
@@ -233,7 +242,7 @@ check_relation_privileges(Oid relOid,
 	{
 		AttrNumber	attnum;
 		uint32		column_perms = 0;
-		char		audit_name[NAMEDATALEN * 2 + 10];
+		ObjectAddress	object;
 
 		if (bms_is_member(index, selected))
 			column_perms |= SEPG_DB_COLUMN__SELECT;
@@ -250,8 +259,11 @@ check_relation_privileges(Oid relOid,
 		/* obtain column's permission */
 		attnum = index + FirstLowInvalidHeapAttributeNumber;
 		tcontext = sepgsql_get_label(RelationRelationId, relOid, attnum);
-		snprintf(audit_name, sizeof(audit_name), "%s.%s",
-				 get_rel_name(relOid), get_attname(relOid, attnum));
+
+		object.classId = RelationRelationId;
+		object.objectId = relOid;
+		object.objectSubId = attnum;
+		audit_name = getObjectDescription(&object);
 
 		result = sepgsql_check_perms(scontext,
 									 tcontext,
@@ -259,6 +271,9 @@ check_relation_privileges(Oid relOid,
 									 column_perms,
 									 audit_name,
 									 abort);
+		pfree(tcontext);
+		pfree(audit_name);
+
 		if (!result)
 			return result;
 	}

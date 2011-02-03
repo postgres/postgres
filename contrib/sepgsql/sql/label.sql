@@ -46,7 +46,7 @@ SELECT objtype, objname, label FROM pg_seclabels
 SECURITY LABEL ON TABLE t1
     IS 'system_u:object_r:sepgsql_ro_table_t:s0';	-- ok
 SECURITY LABEL ON TABLE t2
-    IS 'invalid seuciryt context';			-- be failed
+    IS 'invalid security context';			-- be failed
 SECURITY LABEL ON COLUMN t2
     IS 'system_u:object_r:sepgsql_ro_table_t:s0';	-- be failed
 SECURITY LABEL ON COLUMN t2.b

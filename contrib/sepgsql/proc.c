@@ -13,6 +13,7 @@
 #include "access/genam.h"
 #include "access/heapam.h"
 #include "access/sysattr.h"
+#include "catalog/dependency.h"
 #include "catalog/indexing.h"
 #include "catalog/pg_namespace.h"
 #include "catalog/pg_proc.h"
@@ -99,7 +100,7 @@ sepgsql_proc_relabel(Oid functionId, const char *seclabel)
 	char	   *tcontext;
 	char	   *audit_name;
 
-	audit_name = get_func_name(functionId);
+	audit_name = getObjectDescriptionOids(ProcedureRelationId, functionId);
 
 	/*
 	 * check db_procedure:{setattr relabelfrom} permission

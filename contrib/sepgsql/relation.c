@@ -14,6 +14,7 @@
 #include "access/heapam.h"
 #include "access/sysattr.h"
 #include "catalog/indexing.h"
+#include "catalog/dependency.h"
 #include "catalog/pg_attribute.h"
 #include "catalog/pg_class.h"
 #include "catalog/pg_namespace.h"
@@ -79,15 +80,18 @@ sepgsql_attribute_relabel(Oid relOid, AttrNumber attnum,
 {
 	char	   *scontext = sepgsql_get_client_label();
 	char	   *tcontext;
-	char		audit_name[NAMEDATALEN * 2 + 10];
+	char	   *audit_name;
+	ObjectAddress	object;
 
 	if (get_rel_relkind(relOid) != RELKIND_RELATION)
 		ereport(ERROR,
 				(errcode(ERRCODE_WRONG_OBJECT_TYPE),
 				 errmsg("cannot set security label on non-regular columns")));
 
-	snprintf(audit_name, sizeof(audit_name), "%s.%s",
-			 get_rel_name(relOid), get_attname(relOid, attnum));
+	object.classId = RelationRelationId;
+	object.objectId = relOid;
+	object.objectSubId = attnum;
+	audit_name = getObjectDescription(&object);
 
 	/*
 	 * check db_column:{setattr relabelfrom} permission
@@ -100,7 +104,6 @@ sepgsql_attribute_relabel(Oid relOid, AttrNumber attnum,
 						SEPG_DB_COLUMN__RELABELFROM,
 						audit_name,
 						true);
-	pfree(tcontext);
 
 	/*
 	 * check db_column:{relabelto} permission
@@ -111,6 +114,9 @@ sepgsql_attribute_relabel(Oid relOid, AttrNumber attnum,
 						SEPG_DB_PROCEDURE__RELABELTO,
 						audit_name,
 						true);
+
+	pfree(tcontext);
+	pfree(audit_name);
 }
 
 /*
@@ -239,7 +245,7 @@ sepgsql_relation_relabel(Oid relOid, const char *seclabel)
 				 errmsg("cannot set security labels on relations except "
 						"for tables, sequences or views")));
 
-	audit_name = get_rel_name(relOid);
+	audit_name = getObjectDescriptionOids(RelationRelationId, relOid);
 
 	/*
 	 * check db_xxx:{setattr relabelfrom} permission
@@ -253,7 +259,6 @@ sepgsql_relation_relabel(Oid relOid, const char *seclabel)
 						SEPG_DB_TABLE__RELABELFROM,
 						audit_name,
 						true);
-	pfree(tcontext);
 
 	/*
 	 * check db_xxx:{relabelto} permission
@@ -264,4 +269,7 @@ sepgsql_relation_relabel(Oid relOid, const char *seclabel)
 						SEPG_DB_TABLE__RELABELTO,
 						audit_name,
 						true);
+
+	pfree(tcontext);
+	pfree(audit_name);
 }

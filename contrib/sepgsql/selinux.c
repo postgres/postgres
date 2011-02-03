@@ -396,7 +396,7 @@ sepgsql_audit_log(bool denied,
 	appendStringInfo(&buf, " scontext=%s tcontext=%s tclass=%s",
 					 scontext, tcontext, class_name);
 	if (audit_name)
-		appendStringInfo(&buf, " name=%s", audit_name);
+		appendStringInfo(&buf, " name=\"%s\"", audit_name);
 
 	ereport(LOG, (errmsg("SELinux: %s", buf.data)));
 }
@@ -459,7 +459,7 @@ sepgsql_compute_avd(const char *scontext,
 		ereport(ERROR,
 				(errcode(ERRCODE_INTERNAL_ERROR),
 				 errmsg("SELinux could not compute av_decision: "
-						"scontext=%s tcontext=%s tclass=%s",
+						"scontext=%s tcontext=%s tclass=%s: %m",
 						scontext, tcontext, tclass_name)));
 
 	/*
@@ -545,7 +545,7 @@ sepgsql_compute_create(const char *scontext,
 		ereport(ERROR,
 				(errcode(ERRCODE_INTERNAL_ERROR),
 				 errmsg("SELinux could not compute a new context: "
-						"scontext=%s tcontext=%s tclass=%s",
+						"scontext=%s tcontext=%s tclass=%s: %m",
 						scontext, tcontext, tclass_name)));
 
 	/*
