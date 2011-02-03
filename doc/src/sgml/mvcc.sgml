@@ -656,7 +656,8 @@ SELECT SUM(value) FROM mytab WHERE class = 2;
 
         <para>
          Acquired by <command>VACUUM</command> (without <option>FULL</option>),
-         <command>ANALYZE</>, and <command>CREATE INDEX CONCURRENTLY</>.
+         <command>ANALYZE</>, <command>CREATE INDEX CONCURRENTLY</>, and
+         some forms of <command>ALTER TABLE</command>.
         </para>
        </listitem>
       </varlistentry>
@@ -699,7 +700,7 @@ SELECT SUM(value) FROM mytab WHERE class = 2;
         <para>
          Acquired by <command>CREATE TRIGGER</command>,
          <command>CREATE RULE</command> (except for <literal>ON SELECT</>
-         rules) and in some cases <command>ALTER TABLE</command>.
+         rules) and some forms of <command>ALTER TABLE</command>.
         </para>
        </listitem>
       </varlistentry>
@@ -747,7 +748,7 @@ SELECT SUM(value) FROM mytab WHERE class = 2;
          Acquired by the <command>DROP TABLE</command>,
          <command>TRUNCATE</command>, <command>REINDEX</command>,
          <command>CLUSTER</command>, and <command>VACUUM FULL</command>
-         commands, as well as most variants of <command>ALTER TABLE</>.
+         commands, and some forms of <command>ALTER TABLE</>.
          This is also the default lock mode for <command>LOCK TABLE</command>
          statements that do not specify a mode explicitly.
         </para>
