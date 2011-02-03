@@ -10,15 +10,16 @@
  <para>
   <filename>sepgsql</> is a loadable module which supports label-based
   mandatory access control (MAC) based on <productname>SELinux</> security
-  policy.  This implementation is not complete, and primarily provides
-  protection for Data Manipulation Language statements (DML).  Support for
-  fine-grained access control of Data Definition Language (DDL) and Data
-  Control Language (DCL) statements may be added in a future release.
+  policy.
  </para>
- <para>
-  This extension won't build at all unless the installation was configured
-  with <literal>--with-selinux</>.
- </para>
+
+ <warning>
+   <para>
+     This implementation has signification limitations, and does not enforce
+     mandatory access control for all actions.  See
+     <xref linkend="sepgsql-limitations">.
+   </para>
+ </warning>
 
  <sect2 id="sepgsql-overview">
   <title>Overview</title>
@@ -59,48 +60,18 @@
   <title>Installation</title>
 
   <para>
-   This module has several prerequisites.
+    This module can only be used on <productname>Linux</productname> 2.6.28
+    or higher with <productname>SELinux</productname> enabled.  It is not
+    available on any other platform, and must be explicitly enabled using
+    <literal>--with-selinux</>.  You will also need <productname>libselinux</>
+    2.0.93 or higher and <productname>selinux-policy</> 3.9.13 or higher
+    (some distributions may backport the necessary rules into older policy
+    versions).
   </para>
 
-  <variablelist>
-   <varlistentry>
-    <term><productname>Linux kernel</productname></term>
-    <listitem>
-     <para>
-      v2.6.28 or later with built with SELinux enabled
-     </para>
-    </listitem>
-   </varlistentry>
-   <varlistentry>
-    <term><productname>libselinux</productname></term>
-    <listitem>
-     <para>
-      v2.0.93 or later
-     </para>
-     <para>
-      This library provides a set of APIs to communicate with
-      <productname>SELinux</> in kernel.
-     </para>
-    </listitem>
-   </varlistentry>
-   <varlistentry>
-    <term><productname>selinux-policy</productname></term>
-    <listitem>
-     <para>
-      v3.9.13 or later
-     </para>
-     <para>
-      The default security policy provides a set of access control rules.
-      Some distributions may backport necessary rules to older policy versions.
-     </para>
-    </listitem>
-   </varlistentry>
-  </variablelist>
   <para>
-
-   <productname>sepgsql</> needs <productname>SELinux</> being
-   available on the platform. You can check the current setting using
-   <command>sestatus</>.
+   The <command>sestatus</> command allows you to check the status of
+   <productname>SELinux</productname>.
 <screen>
 $ sestatus
 SELinux status:                 enabled
@@ -115,41 +86,25 @@ Policy from config file:        targeted
   </para>
 
   <para>
-   At compile time, pass the <literal>--with-selinux</> option to
-   the <command>configure</> script to enable this module.
-
-<screen>
-$ ./configure --enable-debug --enable-cassert --with-selinux
-$ make
-$ make install
-</screen>
+   To use this module, you must add include <literal>sepgsql</>
+   in <xref linkend="guc-shared-preload-libraries">.  The module will not
+   function if loaded in any other manner.  Once the module is loaded, you
+   should execute <filename>sepgsql.sql</filename> in each database.
+   This will install functions needed for security label management, and
+   assign initial security labels.
   </para>
 
   <para>
-   Following <command>initdb</>, add <literal>'$libdir/sepgsql'</>
-   to <xref linkend="guc-shared-preload-libraries"> in
-   the <filename>postgresql.conf</>.  Note that <productname>sepgsql</>
-   must be loaded at server startup.
-  </para>
-
-  <para>
-   Next, load the <filename>sepgsql.sql</filename> script for each database.
-   It installs functions for security label management, and attempts to assign
-   initial labels to the target objects.
-  </para>
-
-  <para>
-   The following instruction assumes your installation is under the
-   <filename>/usr/local/pgsql</> directory, and the database cluster is in
-   <filename>/usr/local/pgsql/data</>. Adjust the paths shown below as
+   The following instructions that assume your installation is under the
+   <filename>/usr/local/pgsql</> directory. Adjust the paths shown below as
    appropriate for your installaton.
   </para>
 
 <screen>
-$ initdb -D $PGDATA
+$ initdb
 $ vi $PGDATA/postgresql.conf
 $ for DBNAME in template0 template1 postgres; do
-  postgres --single -F -O -c exit_on_error=true -D $PGDATA $DBNAME \
+  postgres --single -F -O -c exit_on_error=true $DBNAME \
       < /usr/local/pgsql/share/contrib/sepgsql.sql > /dev/null
   done
 </screen>
@@ -317,76 +272,14 @@ $ restorecon -R /usr/local/pgsql/
     A new database object basically inherits the security label of the parent
     object, except when the security policy has special rules known as
     type-transition rules, in which case a different label may be applied.
-    The meaning of the term "parent object" varies by object class, as follows.
+    For schemas, the parent object is the current database; for columns, it
+    is the corresponding table; for tables, sequences, views, and functions,
+    it is the containing schema.
    </para>
-
-   <variablelist>
-    <varlistentry>
-     <term>schema</term>
-     <listitem>
-      <para>
-       The parent object is the current database.
-      </para>
-     </listitem>
-    </varlistentry>
-    <varlistentry>
-     <term>table</term>
-     <listitem>
-      <para>
-       The parent object is the containing schema.
-      </para>
-     </listitem>
-    </varlistentry>
-    <varlistentry>
-     <term>column</term>
-     <listitem>
-      <para>
-       The parent object is the table.
-      </para>
-     </listitem>
-    </varlistentry>
-    <varlistentry>
-     <term>sequence</term>
-     <listitem>
-      <para>
-       The parent object is the containing schema.
-      </para>
-     </listitem>
-    </varlistentry>
-    <varlistentry>
-     <term>view</term>
-     <listitem>
-      <para>
-       The parent object is the containing schema.
-      </para>
-     </listitem>
-    </varlistentry>
-    <varlistentry>
-     <term>function</term>
-     <listitem>
-      <para>
-       The parent object is the containing schema.
-      </para>
-     </listitem>
-    </varlistentry>
-   </variablelist>
   </sect3>
+
   <sect3>
    <title>DML Permissions</title>
-
-   <para>
-    This section introduces what permissions shall be checked on DML;
-    <literal>SELECT</>, <literal>INSERT</>, <literal>UPDATE</> and
-    <literal>DELETE</>.
-   </para>
-
-   <para>
-    DML statements are used to reference or modify contents within
-    the specified database objects; such as tables or columns.
-    The access rights of the client are checked on all the objects
-    mentioned in the given statement, and the kind of privileges checked
-    depend on the class of the object and the type of access.
-   </para>
 
    <para>
     For tables, <literal>db_table:select</>, <literal>db_table:insert</>,
@@ -461,7 +354,6 @@ UPDATE t1 SET x = 2, y = md5sum(y) WHERE z = 100;
    </para>
 
    <para>
-    Here are a few more corner cases.
     The default database privilege system allows database superusers to
     modify system catalogs using DML commands, and reference or modify
     toast tables.  These operations are prohibited when
@@ -545,13 +437,13 @@ postgres=# SELECT cid, cname, show_credit(cid) FROM customer;
   <sect3>
    <title>Miscellaneous</title>
    <para>
-    In this version, we reject the <xref linkend="sql-load"> command across
-    the board, because any module loaded could easily circumvent security
-    policy enforcement.
+    We reject the <xref linkend="sql-load"> command across the board, because
+    any module loaded could easily circumvent security policy enforcement.
    </para>
 
   </sect3>
  </sect2>
+
  <sect2 id="sepgsql-limitations">
   <title>Limitations</title>
 
@@ -649,7 +541,7 @@ postgres=# SELECT cid, cname, show_credit(cid) FROM customer;
  <sect2 id="sepgsql-author">
   <title>Author</title>
   <para>
-   KaiGai Kohei (<email>kaigai@ak.jp.nec.com</email>)
+   KaiGai Kohei <email>kaigai@ak.jp.nec.com</email>
   </para>
  </sect2>
 </sect1>
