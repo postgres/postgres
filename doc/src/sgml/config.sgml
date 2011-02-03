@@ -3362,10 +3362,9 @@ local0.*    /var/log/postgresql
       </indexterm>
       <listitem>
        <para>
-        Causes checkpoints to be logged in the server log. Some
-        statistics about each checkpoint are included in the log messages,
-        including the number of buffers written and the time spent writing
-        them.
+        Causes checkpoints and restartpoints to be logged in the server log.
+        Some statistics are included in the log messages, including the number
+        of buffers written and the time spent writing them.
         This parameter can only be set in the <filename>postgresql.conf</>
         file or on the server command line. The default is off.
        </para>

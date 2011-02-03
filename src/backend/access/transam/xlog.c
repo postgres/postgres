@@ -7058,10 +7058,14 @@ LogCheckpointEnd(bool restartpoint)
 
 	if (restartpoint)
 		elog(LOG, "restartpoint complete: wrote %d buffers (%.1f%%); "
+			 "%d transaction log file(s) added, %d removed, %d recycled; "
 			 "write=%ld.%03d s, sync=%ld.%03d s, total=%ld.%03d s; "
 			 "sync files=%d, longest=%ld.%03d s, average=%ld.%03d s",
 			 CheckpointStats.ckpt_bufs_written,
 			 (double) CheckpointStats.ckpt_bufs_written * 100 / NBuffers,
+			 CheckpointStats.ckpt_segs_added,
+			 CheckpointStats.ckpt_segs_removed,
+			 CheckpointStats.ckpt_segs_recycled,
 			 write_secs, write_usecs / 1000,
 			 sync_secs, sync_usecs / 1000,
 			 total_secs, total_usecs / 1000,
@@ -7688,16 +7692,18 @@ CreateRestartPoint(int flags)
 	SpinLockRelease(&xlogctl->info_lck);
 	LWLockRelease(WALInsertLock);
 
-	if (log_checkpoints)
-	{
-		/*
-		 * Prepare to accumulate statistics.
-		 */
-		MemSet(&CheckpointStats, 0, sizeof(CheckpointStats));
-		CheckpointStats.ckpt_start_t = GetCurrentTimestamp();
+	/*
+	 * Prepare to accumulate statistics.
+	 *
+	 * Note: because it is possible for log_checkpoints to change while a
+	 * checkpoint proceeds, we always accumulate stats, even if
+	 * log_checkpoints is currently off.
+	 */
+	MemSet(&CheckpointStats, 0, sizeof(CheckpointStats));
+	CheckpointStats.ckpt_start_t = GetCurrentTimestamp();
 
+	if (log_checkpoints)
 		LogCheckpointStart(flags, true);
-	}
 
 	CheckPointGuts(lastCheckPoint.redo, flags);
 
