@@ -3,3 +3,5 @@
 /sepgsql-regtest.if
 /sepgsql-regtest.pp
 /tmp
+# Generated subdirectories
+/results/

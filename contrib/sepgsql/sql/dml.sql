@@ -40,7 +40,8 @@ SECURITY LABEL ON FUNCTION customer_credit(int)
 SELECT objtype, objname, label FROM pg_seclabels
     WHERE provider = 'selinux'
      AND  objtype in ('table', 'column')
-     AND  objname in ('t1', 't2', 't3', 't4', 't5', 't5.e', 't5.f', 't5.g');
+     AND  objname in ('t1', 't2', 't3', 't4', 't5', 't5.e', 't5.f', 't5.g')
+ORDER BY objname;
 
 -- Hardwired Rules
 UPDATE pg_attribute SET attisdropped = true
