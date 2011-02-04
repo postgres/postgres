@@ -4172,16 +4172,16 @@ int PQcancel(PGcancel *cancel, char *errbuf, int errbufsize);
 
      <listitem>
       <para>
-       Requests that the server abandon processing of the current
-       command.
+       <function>PQrequestCancel</function> is a deprecated variant of
+       <function>PQcancel</function>.  
 <synopsis>
 int PQrequestCancel(PGconn *conn);
 </synopsis>
       </para>
 
       <para>
-       <function>PQrequestCancel</function> is a deprecated variant of
-       <function>PQcancel</function>.  It operates directly on the
+       Requests that the server abandon processing of the current
+       command.  It operates directly on the
        <structname>PGconn</> object, and in case of failure stores the
        error message in the <structname>PGconn</> object (whence it can
        be retrieved by <function>PQerrorMessage</function>).  Although
