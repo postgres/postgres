@@ -3378,12 +3378,16 @@ ATRewriteTable(AlteredTableInfo *tab, Oid OIDNewHeap, LOCKMODE lockmode)
 	}
 
 	/*
-	 * If we need to rewrite the table, the operation has to be propagated to
-	 * tables that use this table's rowtype as a column type.
+	 * If we change column data types or add/remove OIDs, the operation has to
+	 * be propagated to tables that use this table's rowtype as a column type.
+	 * newrel will also be non-NULL in the case where we're adding a column
+	 * with a default.  We choose to forbid that case as well, since composite
+	 * types might eventually support defaults.
 	 *
-	 * (Eventually this will probably become true for scans as well, but at
-	 * the moment a composite type does not enforce any constraints, so it's
-	 * not necessary/appropriate to enforce them just during ALTER.)
+	 * (Eventually we'll probably need to check for composite type
+	 * dependencies even when we're just scanning the table without a rewrite,
+	 * but at the moment a composite type does not enforce any constraints,
+	 * so it's not necessary/appropriate to enforce them just during ALTER.)
 	 */
 	if (newrel)
 		find_composite_type_dependencies(oldrel->rd_rel->reltype,
