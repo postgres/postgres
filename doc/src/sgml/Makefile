@@ -52,7 +52,7 @@ override XSLTPROCFLAGS += --stringparam pg.version '$(VERSION)'
 
 
 GENERATED_SGML = bookindex.sgml version.sgml \
-	features-supported.sgml features-unsupported.sgml
+	features-supported.sgml features-unsupported.sgml errcodes-table.sgml
 
 ALLSGML := $(wildcard $(srcdir)/*.sgml $(srcdir)/ref/*.sgml) $(GENERATED_SGML)
 
@@ -136,6 +136,8 @@ features-supported.sgml: $(top_srcdir)/src/backend/catalog/sql_feature_packages.
 features-unsupported.sgml: $(top_srcdir)/src/backend/catalog/sql_feature_packages.txt $(top_srcdir)/src/backend/catalog/sql_features.txt
 	$(PERL) $(srcdir)/mk_feature_tables.pl NO $^ > $@
 
+errcodes-table.sgml: $(top_srcdir)/src/backend/utils/errcodes.txt generate-errcodes-table.pl
+	$(PERL) $(srcdir)/generate-errcodes-table.pl $< > $@
 
 ##
 ## Print

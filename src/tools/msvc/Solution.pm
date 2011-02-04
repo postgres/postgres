@@ -273,6 +273,19 @@ s{PG_VERSION_STR "[^"]+"}{__STRINGIFY(x) #x\n#define __STRINGIFY2(z) __STRINGIFY
         );
     }
 
+    if (IsNewer('src\include\utils\errcodes.h','src\backend\utils\errcodes.txt'))
+    {
+        print "Generating errcodes.h...\n";
+        system("perl src\backend\utils\generate-errcodes.pl src\backend\utils\errcodes.txt > src\backend\utils\errcodes.h");
+        copyFile('src\backend\utils\errcodes.h','src\include\utils\errcodes.h');
+    }
+
+    if (IsNewer('src\pl\plpgsql\src\plerrcodes.h','src\backend\utils\errcodes.txt'))
+    {
+        print "Generating plerrcodes.h...\n";
+        system("perl src\pl\plpgsql\src\generate-plerrcodes.pl src\backend\utils\errcodes.txt > src\pl\plpgsql\src\plerrcodes.h");
+    }
+
     if (IsNewer('src\interfaces\libpq\libpq.rc','src\interfaces\libpq\libpq.rc.in'))
     {
         print "Generating libpq.rc...\n";

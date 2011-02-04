@@ -62,7 +62,7 @@ uninstall:
 
 
 clean:
-	rm -f utils/fmgroids.h parser/gram.h utils/probes.h catalog/schemapg.h
+	rm -f utils/fmgroids.h utils/errcodes.h parser/gram.h utils/probes.h catalog/schemapg.h
 
 distclean maintainer-clean: clean
 	rm -f pg_config.h dynloader.h pg_config_os.h stamp-h

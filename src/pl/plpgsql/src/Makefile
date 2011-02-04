@@ -33,7 +33,7 @@ uninstall: uninstall-lib
 
 
 # Force these dependencies to be known even without dependency info built:
-pl_gram.o pl_handler.o pl_comp.o pl_exec.o pl_funcs.o pl_scanner.o: plpgsql.h pl_gram.h
+pl_gram.o pl_handler.o pl_comp.o pl_exec.o pl_funcs.o pl_scanner.o: plpgsql.h pl_gram.h plerrcodes.h
 
 # See notes in src/backend/parser/Makefile about the following two rules
 
@@ -46,12 +46,16 @@ else
 	@$(missing) bison $< $@
 endif
 
-distprep: pl_gram.h pl_gram.c
+# generate plerrcodes.h from src/backend/utils/errcodes.txt
+plerrcodes.h: $(top_srcdir)/src/backend/utils/errcodes.txt generate-plerrcodes.pl
+	$(PERL) generate-plerrcodes.pl $< > $@
 
-# pl_gram.c and pl_gram.h are in the distribution tarball,
+distprep: pl_gram.h pl_gram.c plerrcodes.h
+
+# pl_gram.c, pl_gram.h and plerrcodes.h are in the distribution tarball,
 # so they are not cleaned here.
 clean distclean: clean-lib
 	rm -f $(OBJS)
 
 maintainer-clean: clean
-	rm -f pl_gram.c pl_gram.h
+	rm -f pl_gram.c pl_gram.h plerrcodes.h

@@ -32,6 +32,7 @@ SET SGML_CATALOG_FILES=%DOCROOT%\%OPENJADE%\dsssl\catalog;%DOCROOT%\docbook\docb
 perl %DOCROOT%\%DSSSL%\bin\collateindex.pl -f -g -o bookindex.sgml -N
 perl mk_feature_tables.pl YES ..\..\..\src\backend\catalog\sql_feature_packages.txt ..\..\..\src\backend\catalog\sql_features.txt > features-supported.sgml
 perl mk_feature_tables.pl NO ..\..\..\src\backend\catalog\sql_feature_packages.txt ..\..\..\src\backend\catalog\sql_features.txt > features-unsupported.sgml
+perl make-errcodes-table.pl ..\..\..\src\backend\utils\errcodes.txt > errcodes-table.sgml
 
 echo Running first build...
 %DOCROOT%\%OPENJADE%\bin\openjade -V draft-mode -wall -wno-unused-param -wno-empty -D . -c %DOCROOT%\%DSSSL%\catalog -d stylesheet.dsl -i output-html -t sgml postgres.sgml 2>&1 | findstr /V "DTDDECL catalog entries are not supported"

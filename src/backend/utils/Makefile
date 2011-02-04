@@ -26,6 +26,9 @@ fmgroids.h: fmgrtab.c ;
 fmgrtab.c: Gen_fmgrtab.pl $(catalogdir)/Catalog.pm $(top_srcdir)/src/include/catalog/pg_proc.h
 	$(PERL) -I $(catalogdir) $< $(top_srcdir)/src/include/catalog/pg_proc.h
 
+errcodes.h: $(top_srcdir)/src/backend/utils/errcodes.txt generate-errcodes.pl
+	$(PERL) generate-errcodes.pl $< > $@
+
 ifneq ($(enable_dtrace), yes)
 probes.h: Gen_dummy_probes.sed
 endif
@@ -40,10 +43,10 @@ else
 endif
 
 
-# fmgroids.h and fmgrtab.c are in the distribution tarball, so they
+# fmgroids.h, fmgrtab.c and errcodes.h are in the distribution tarball, so they
 # are not cleaned here.
 clean:
 	rm -f probes.h
 
 maintainer-clean: clean
-	rm -f fmgroids.h fmgrtab.c
+	rm -f fmgroids.h fmgrtab.c errcodes.h

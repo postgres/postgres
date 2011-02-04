@@ -30,6 +30,17 @@ SUBDIRS = \
 # don't attempt parallel make here.
 .NOTPARALLEL:
 
+# generate errcodes.h before recursing in the subdirectories
+$(SUBDIRS:%=all-%-recurse): $(top_builddir)/src/include/utils/errcodes.h
+
+backend/utils/errcodes.h: backend/utils/generate-errcodes.pl $(top_srcdir)/src/backend/utils/errcodes.txt
+	$(MAKE) -C backend/utils errcodes.h
+
+$(top_builddir)/src/include/utils/errcodes.h: backend/utils/errcodes.h
+	prereqdir=`cd $(dir $<) >/dev/null && pwd` && \
+	  cd $(dir $@) && rm -f $(notdir $@) && \
+	  $(LN_S) "$$prereqdir/$(notdir $<)" .
+
 $(recurse)
 
 install: install-local

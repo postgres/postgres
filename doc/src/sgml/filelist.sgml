@@ -164,6 +164,8 @@
 <!entity features-supported   SYSTEM "features-supported.sgml">
 <!entity features-unsupported SYSTEM "features-unsupported.sgml">
 
+<!entity errcodes-table SYSTEM "errcodes-table.sgml">
+
 <!-- back matter -->
 <!entity biblio     SYSTEM "biblio.sgml">
 <!entity bookindex  SYSTEM "bookindex.sgml">

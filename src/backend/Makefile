@@ -298,6 +298,7 @@ maintainer-clean: distclean
 	      catalog/postgres.shdescription \
 	      utils/fmgroids.h \
 	      utils/fmgrtab.c \
+	      utils/errcodes.h \
 	      utils/misc/guc-file.c
 
 
