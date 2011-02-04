@@ -16,7 +16,7 @@ catalogdir  = $(top_srcdir)/src/backend/catalog
 
 include $(top_srcdir)/src/backend/common.mk
 
-all: fmgroids.h probes.h
+all: errcodes.h fmgroids.h probes.h
 
 $(SUBDIRS:%=%-recursive): fmgroids.h
 
