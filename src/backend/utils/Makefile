@@ -27,7 +27,7 @@ fmgrtab.c: Gen_fmgrtab.pl $(catalogdir)/Catalog.pm $(top_srcdir)/src/include/cat
 	$(PERL) -I $(catalogdir) $< $(top_srcdir)/src/include/catalog/pg_proc.h
 
 errcodes.h: $(top_srcdir)/src/backend/utils/errcodes.txt generate-errcodes.pl
-	$(PERL) generate-errcodes.pl $< > $@
+	$(PERL) $(srcdir)/generate-errcodes.pl $< > $@
 
 ifneq ($(enable_dtrace), yes)
 probes.h: Gen_dummy_probes.sed

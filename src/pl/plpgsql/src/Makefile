@@ -48,7 +48,7 @@ endif
 
 # generate plerrcodes.h from src/backend/utils/errcodes.txt
 plerrcodes.h: $(top_srcdir)/src/backend/utils/errcodes.txt generate-plerrcodes.pl
-	$(PERL) generate-plerrcodes.pl $< > $@
+	$(PERL) $(srcdir)/generate-plerrcodes.pl $< > $@
 
 distprep: pl_gram.h pl_gram.c plerrcodes.h
 
