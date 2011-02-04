@@ -1,4 +1,10 @@
 <!-- doc/src/sgml/installation.sgml -->
+<!--
+
+Use </link> not just </> so INSTALL.html can be created without links
+to the main documentation.  Don't use <xref>.
+
+-->
 
 <chapter id="installation">
  <title><![%standalone-include[<productname>PostgreSQL</>]]>
