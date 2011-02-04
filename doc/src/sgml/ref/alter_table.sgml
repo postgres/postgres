@@ -403,9 +403,9 @@ ALTER TABLE <replaceable class="PARAMETER">name</replaceable>
       for details on the available parameters.  Note that the table contents
       will not be modified immediately by this command; depending on the
       parameter you might need to rewrite the table to get the desired effects.
-      That can be done with <xref linkend="SQL-CLUSTER">
-      or one of the forms of <command>ALTER
-      TABLE</> that forces a table rewrite.
+      That can be done with <link linkend="SQL-VACUUM">VACUUM
+      FULL</>, <xref linkend="SQL-CLUSTER"> or one of the forms
+      of <command>ALTER TABLE</> that forces a table rewrite.
      </para>
 
      <note>
@@ -777,18 +777,11 @@ ALTER TABLE <replaceable class="PARAMETER">name</replaceable>
    </para>
 
    <para>
-    The fact that <literal>SET DATA TYPE</> requires rewriting the whole table
-    is sometimes an advantage, because the rewriting process eliminates
-    any dead space in the table.  For example, to reclaim the space occupied
-    by a dropped column immediately, the fastest way is:
-<programlisting>
-ALTER TABLE table ALTER COLUMN anycol TYPE anytype;
-</programlisting>
-    where <literal>anycol</> is any remaining table column and
-    <literal>anytype</> is the same type that column already has.
-    This results in no semantically-visible change in the table,
-    but the command forces rewriting, which gets rid of no-longer-useful
-    data.
+    To force an immediate rewrite of the table, you can use
+    <link linkend="SQL-VACUUM">VACUUM FULL</>, <xref linkend="SQL-CLUSTER">
+    or one of the forms of ALTER TABLE that forces a rewrite, such as
+    SET DATA TYPE.  This results in no semantically-visible change in the
+    table, but gets rid of no-longer-useful data.
    </para>
 
    <para>
