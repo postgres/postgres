@@ -34,10 +34,6 @@ OBJS = $(LIBOBJS) chklocale.o dirmod.o exec.o inet_net_ntop.o noblock.o \
 	path.o pgcheckdir.o pgmkdirp.o pgsleep.o pgstrcasecmp.o \
 	qsort.o qsort_arg.o sprompt.o thread.o
 
-ifneq (,$(filter $(PORTNAME),cygwin win32))
-OBJS += pipe.o
-endif
-
 # foo_srv.o and foo.o are both built from foo.c, but only foo.o has -DFRONTEND
 OBJS_SRV = $(OBJS:%.o=%_srv.o)
 

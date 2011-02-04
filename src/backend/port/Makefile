@@ -23,6 +23,10 @@ include $(top_builddir)/src/Makefile.global
 
 OBJS = dynloader.o pg_sema.o pg_shmem.o pg_latch.o $(TAS)
 
+ifneq (,$(filter $(PORTNAME),cygwin win32))
+OBJS += pipe.o
+endif
+
 ifeq ($(PORTNAME), darwin)
 SUBDIRS += darwin
 endif

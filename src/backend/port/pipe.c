@@ -10,16 +10,12 @@
  *	must be replaced with recv/send.
  *
  * IDENTIFICATION
- *	  src/port/pipe.c
+ *	  src/backend/port/pipe.c
  *
  *-------------------------------------------------------------------------
  */
 
-#ifndef FRONTEND
 #include "postgres.h"
-#else
-#include "postgres_fe.h"
-#endif
 
 #ifdef WIN32
 int
