@@ -15,7 +15,11 @@
  *-------------------------------------------------------------------------
  */
 
+#ifndef FRONTEND
 #include "postgres.h"
+#else
+#include "postgres_fe.h"
+#endif
 
 #ifdef WIN32
 int

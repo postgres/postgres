@@ -13,7 +13,12 @@
  *-------------------------------------------------------------------------
  */
 
+#ifndef FRONTEND
 #include "postgres.h"
+#else
+#include "postgres_fe.h"
+#endif
+
 #include <dirent.h>
 
 
