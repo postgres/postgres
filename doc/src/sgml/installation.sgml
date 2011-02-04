@@ -1467,8 +1467,10 @@ PostgreSQL, contrib and HTML documentation successfully made. Ready to install.
 
    <note>
     <para>
-     If you are upgrading an existing system be sure to read <xref
-     linkend="upgrading"> which has instructions about upgrading a
+     If you are upgrading an existing system be sure to read
+     <![%standalone-include[the documentation,]]>
+     <![%standalone-ignore[<xref linkend="upgrading">]]>
+     which has instructions about upgrading a
      cluster.
     </para>
    </note>
