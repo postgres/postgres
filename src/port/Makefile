@@ -75,7 +75,7 @@ $(OBJS_SRV): | submake-errcodes
 .PHONY: submake-errcodes
 
 submake-errcodes:
-	make -C ../backend submake-errcodes
+	$(MAKE) -C ../backend submake-errcodes
 
 # Dependency is to ensure that path changes propagate
 
