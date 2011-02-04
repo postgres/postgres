@@ -32,6 +32,7 @@ SUBDIRS = \
 
 # generate errcodes.h before recursing in the subdirectories
 $(SUBDIRS:%=all-%-recurse): $(top_builddir)/src/include/utils/errcodes.h
+$(SUBDIRS:%=install-%-recurse): $(top_builddir)/src/include/utils/errcodes.h
 
 backend/utils/errcodes.h: backend/utils/generate-errcodes.pl $(top_srcdir)/src/backend/utils/errcodes.txt
 	$(MAKE) -C backend/utils errcodes.h
