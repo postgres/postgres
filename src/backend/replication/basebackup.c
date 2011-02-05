@@ -217,6 +217,12 @@ perform_base_backup(basebackup_options *opt, DIR *tblspcdir)
 				ptr.xlogid = logid;
 				ptr.xrecoff = logseg * XLogSegSize + TAR_SEND_SIZE * i;
 
+				/*
+				 *	Some old compilers, e.g. 2.95.3/x86, think that passing
+				 *	a struct in the same function as a longjump might clobber
+				 *	a variable.  bjm 2011-02-04
+				 *	http://lists.apple.com/archives/xcode-users/2003/Dec//msg00051.html
+				 */
 				XLogRead(buf, ptr, TAR_SEND_SIZE);
 				if (pq_putmessage('d', buf, TAR_SEND_SIZE))
 					ereport(ERROR,
