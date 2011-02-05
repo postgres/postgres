@@ -50,7 +50,7 @@ sub mkvcbuild
     our @pgportfiles = qw(
       chklocale.c crypt.c fseeko.c getrusage.c inet_aton.c random.c srandom.c
       getaddrinfo.c gettimeofday.c inet_net_ntop.c kill.c open.c erand48.c
-      snprintf.c strlcat.c strlcpy.c dirmod.c exec.c noblock.c path.c pipe.c
+      snprintf.c strlcat.c strlcpy.c dirmod.c exec.c noblock.c path.c
       pgcheckdir.c pgmkdirp.c pgsleep.c pgstrcasecmp.c qsort.c qsort_arg.c
       sprompt.c thread.c getopt.c getopt_long.c dirent.c rint.c win32env.c
       win32error.c);
@@ -68,6 +68,7 @@ sub mkvcbuild
     $postgres->ReplaceFile('src\backend\port\pg_shmem.c','src\backend\port\win32_shmem.c');
     $postgres->ReplaceFile('src\backend\port\pg_latch.c','src\backend\port\win32_latch.c');
     $postgres->AddFiles('src\port',@pgportfiles);
+    $postgres->AddFile('src\backend\port\pipe.c');
     $postgres->AddDir('src\timezone');
     $postgres->AddFiles('src\backend\parser','scan.l','gram.y');
     $postgres->AddFiles('src\backend\bootstrap','bootscanner.l','bootparse.y');
