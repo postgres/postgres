@@ -114,7 +114,7 @@ libpqrcv_connect(char *conninfo, XLogRecPtr startpoint)
 						"the primary server: %s",
 						PQerrorMessage(streamConn))));
 	}
-	if (PQnfields(res) != 2 || PQntuples(res) != 1)
+	if (PQnfields(res) != 3 || PQntuples(res) != 1)
 	{
 		int			ntuples = PQntuples(res);
 		int			nfields = PQnfields(res);
@@ -122,7 +122,7 @@ libpqrcv_connect(char *conninfo, XLogRecPtr startpoint)
 		PQclear(res);
 		ereport(ERROR,
 				(errmsg("invalid response from primary server"),
-				 errdetail("Expected 1 tuple with 2 fields, got %d tuples with %d fields.",
+				 errdetail("Expected 1 tuple with 3 fields, got %d tuples with %d fields.",
 						   ntuples, nfields)));
 	}
 	primary_sysid = PQgetvalue(res, 0, 0);
