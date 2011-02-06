@@ -2183,7 +2183,7 @@ get_rels_with_domain(Oid domainOid, LOCKMODE lockmode)
 			 */
 			if (OidIsValid(rel->rd_rel->reltype))
 				find_composite_type_dependencies(rel->rd_rel->reltype,
-												 NULL,
+												 RELKIND_COMPOSITE_TYPE,
 												 format_type_be(domainOid));
 
 			/* Otherwise we can ignore views, composite types, etc */
