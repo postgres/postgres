@@ -164,22 +164,36 @@ PGconn *PQconnectdbParams(const char **keywords, const char **values, int expand
            Using <literal>hostaddr</> instead of <literal>host</> allows the
            application to avoid a host name look-up, which might be important
            in applications with time constraints. However, a host name is
-           required for Kerberos, GSSAPI, or SSPI authentication, as well as
-           for full SSL certificate verification. The following rules are
-           used:
-           If <literal>host</> is specified without <literal>hostaddr</>,
-           a host name lookup occurs.
-           If <literal>hostaddr</> is specified without <literal>host</>,
-           the value for <literal>hostaddr</> gives the server network address.
-           The connection attempt will fail in any of the cases where a
-           host name is required.
-           If both <literal>host</> and <literal>hostaddr</> are specified,
-           the value for <literal>hostaddr</> gives the server network address.
-           The value for <literal>host</> is ignored unless needed for
-           authentication or verification purposes, in which case it will be
-           used as the host name.  Note that authentication is likely to fail
-           if <literal>host</> is not the name of the machine at
-           <literal>hostaddr</>.
+           required for Kerberos, GSSAPI, or SSPI authentication
+           methods, as well as for <literal>verify-full</> SSL
+           certificate verification.  The following rules are used:
+           <itemizedlist>
+            <listitem>
+             <para>
+              If <literal>host</> is specified without <literal>hostaddr</>,
+              a host name lookup occurs.
+             </para>
+            </listitem>
+            <listitem>
+             <para>
+              If <literal>hostaddr</> is specified without <literal>host</>,
+              the value for <literal>hostaddr</> gives the server network address.
+              The connection attempt will fail if the authentication
+              method requires a host name.
+             </para>
+            </listitem>
+            <listitem>
+             <para>
+              If both <literal>host</> and <literal>hostaddr</> are specified,
+              the value for <literal>hostaddr</> gives the server network address.
+              The value for <literal>host</> is ignored unless the
+              authentication method requires it, in which case it will be
+              used as the host name.  
+             </para>
+            </listitem>
+           </itemizedlist>
+           Note that authentication is likely to fail if <literal>host</>
+           is not the name of the server at network address <literal>hostaddr</>.
            Also, note that <literal>host</> rather than <literal>hostaddr</>
            is used to identify the connection in <filename>~/.pgpass</> (see
            <xref linkend="libpq-pgpass">).
