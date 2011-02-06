@@ -1913,7 +1913,7 @@ LOG:  database system is ready to accept read only connections
      advised to select a larger value of <varname>max_locks_per_transaction</>,
      perhaps as much as twice the value of the parameter on
      the primary server. You need not consider this at all if
-     your setting of <varname>max_prepared_transactions</> is <literal>0</>.
+     your setting of <varname>max_prepared_transactions</> is 0.
     </para>
    </listitem>
   </itemizedlist>

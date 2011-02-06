@@ -3705,8 +3705,8 @@ substring('foobar' from 'o(.)b')   <lineannotation>o</lineannotation>
      match, the <replaceable>source</> string is returned with the
      <replaceable>replacement</> string substituted for the matching
      substring.  The <replaceable>replacement</> string can contain
-     <literal>\</><replaceable>n</>, where <replaceable>n</> is <literal>1</>
-     through <literal>9</>, to indicate that the source substring matching the
+     <literal>\</><replaceable>n</>, where <replaceable>n</> is 1
+     through 9, to indicate that the source substring matching the
      <replaceable>n</>'th parenthesized subexpression of the pattern should be
      inserted, and it can contain <literal>\&amp;</> to indicate that the
      substring matching the entire pattern should be inserted.  Write

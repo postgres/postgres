@@ -3709,7 +3709,7 @@ FROM pg_stat_activity;
         A value of zero logs all temporary file information, while positive
         values log only files whose size is greater than or equal to
         the specified number of kilobytes.  The
-        default setting is <literal>-1</>, which disables such logging.
+        default setting is -1, which disables such logging.
         Only superusers can change this setting.
        </para>
       </listitem>
@@ -4228,8 +4228,7 @@ COPY postgres_log FROM '/full/path/to/logfile.csv' WITH csv;
       <listitem>
        <para>
         Specifies the cost delay value that will be used in automatic
-        <command>VACUUM</> operations.  If <literal>-1</> is
-        specified, the regular
+        <command>VACUUM</> operations.  If -1 is specified, the regular
         <xref linkend="guc-vacuum-cost-delay"> value will be used.
         The default value is 20 milliseconds.
         This parameter can only be set in the <filename>postgresql.conf</>
@@ -4248,7 +4247,7 @@ COPY postgres_log FROM '/full/path/to/logfile.csv' WITH csv;
       <listitem>
        <para>
         Specifies the cost limit value that will be used in automatic
-        <command>VACUUM</> operations.  If <literal>-1</> is specified (which is the
+        <command>VACUUM</> operations.  If -1 is specified (which is the
         default), the regular
         <xref linkend="guc-vacuum-cost-limit"> value will be used.  Note that
         the value is distributed proportionally among the running autovacuum

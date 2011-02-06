@@ -2007,7 +2007,7 @@ pg_dumpall -p 5432 | psql -d postgres -p 5433
    certificates of the certificate authorities (<acronym>CA</acronym>s)
    you trust in the file <filename>root.crt</filename> in the data
    directory, and set the <literal>clientcert</literal> parameter
-   to <literal>1</literal> on the appropriate <literal>hostssl</> line(s) in
+   to 1 on the appropriate <literal>hostssl</> line(s) in
    <filename>pg_hba.conf</>.
    A certificate will then be requested from the client during
    SSL connection startup.  (See <xref linkend="libpq-ssl"> for a
@@ -2025,7 +2025,7 @@ pg_dumpall -p 5432 | psql -d postgres -p 5433
    The <literal>clientcert</literal> option in <filename>pg_hba.conf</> is
    available for all authentication methods, but only for rows specified as
    <literal>hostssl</>.  When <literal>clientcert</literal> is not specified
-   or is set to <literal>0</>, the server will still verify presented client
+   or is set to 0, the server will still verify presented client
    certificates against <filename>root.crt</filename> if that file exists
    &mdash; but it will not insist that a client certificate be presented.
   </para>

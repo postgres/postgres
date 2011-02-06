@@ -835,8 +835,8 @@ SELECT pg_stop_backup();
     GNU <application>tar</> return an error code indistinguishable from
     a fatal error if a file was truncated while <application>tar</> was
     copying it.  Fortunately, GNU <application>tar</> versions 1.16 and
-    later exit with <literal>1</> if a file was changed during the backup,
-    and <literal>2</> for other errors.
+    later exit with 1 if a file was changed during the backup,
+    and 2 for other errors.
    </para>
 
    <para>

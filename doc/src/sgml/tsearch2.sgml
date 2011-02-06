@@ -163,7 +163,7 @@
      due to failure to recreate the original <application>tsearch2</>
      objects.  These errors can be ignored, but this means you cannot
      restore the dump in a single transaction (eg, you cannot use
-     <application>pg_restore</>'s <literal>-1</> switch).
+     <application>pg_restore</>'s <option>-1</> switch).
     </para>
    </step>
 

@@ -1455,7 +1455,7 @@
    return the cast destination type as their result type.  A cast
    function can have up to three arguments.  The second argument,
    if present, must be type <type>integer</>; it receives the type
-   modifier associated with the destination type, or <literal>-1</>
+   modifier associated with the destination type, or -1
    if there is none.  The third argument,
    if present, must be type <type>boolean</>; it receives <literal>true</>
    if the cast is an explicit cast, <literal>false</> otherwise.
@@ -6541,8 +6541,7 @@
        OID of the object within its system catalog, or null if the
        object is not a general database object.
        For advisory locks it is used to distinguish the two key
-       spaces (<literal>1</> for an int8 key, <literal>2</> for two
-       int4 keys).
+       spaces (1 for an int8 key, 2 for two int4 keys).
       </entry>
      </row>
      <row>

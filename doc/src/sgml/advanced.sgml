@@ -533,7 +533,7 @@ WHERE pos &lt; 3;
 </programlisting>
 
     The above query only shows the rows from the inner query having
-    <literal>rank</> less than <literal>3</>.
+    <literal>rank</> less than 3.
    </para>
 
    <para>

@@ -259,7 +259,7 @@ SELECT schedule[1:2][1:1] FROM sal_emp WHERE name = 'Bill';
 
   If any dimension is written as a slice, i.e., contains a colon, then all
   dimensions are treated as slices.  Any dimension that has only a single
-  number (no colon) is treated as being from <literal>1</>
+  number (no colon) is treated as being from 1
   to the number specified.  For example, <literal>[2]</> is treated as
   <literal>[1:2]</>, as in this example:
 

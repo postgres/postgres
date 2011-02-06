@@ -1199,7 +1199,7 @@ int SPI_getargcount(SPIPlanPtr <parameter>plan</parameter>)
     The count of expected arguments for the <parameter>plan</parameter>.
     If the <parameter>plan</parameter> is <symbol>NULL</symbol> or invalid,
     <varname>SPI_result</varname> is set to <symbol>SPI_ERROR_ARGUMENT</symbol>
-    and <literal>-1</literal> is returned.
+    and -1 is returned.
   </para>
  </refsect1>
 </refentry>
