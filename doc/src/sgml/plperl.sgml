@@ -125,6 +125,14 @@ $$ LANGUAGE plperl;
 </programlisting>
   </para>
 
+  <note>
+    <para>
+      Arguments will be converted from the database's encoding to UTF-8 
+      for use inside plperl, and then converted from UTF-8 back to the 
+      database encoding upon return. 
+    </para>
+  </note>
+
   <para>
    If an SQL null value<indexterm><primary>null value</><secondary
    sortas="PL/Perl">in PL/Perl</></indexterm> is passed to a function,

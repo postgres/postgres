@@ -21,7 +21,7 @@
 
 /* perl stuff */
 #include "plperl.h"
-
+#include "plperl_helpers.h"
 
 /*
  * Implementation of plperl's elog() function
@@ -34,13 +34,16 @@
  * This is out-of-line to suppress "might be clobbered by longjmp" warnings.
  */
 static void
-do_util_elog(int level, char *message)
+do_util_elog(int level, SV *msg)
 {
     MemoryContext oldcontext = CurrentMemoryContext;
+	char *cmsg = NULL;
 
     PG_TRY();
     {
-        elog(level, "%s", message);
+		cmsg = sv2cstr(msg);
+        elog(level, "%s", cmsg);
+		pfree(cmsg);
     }
     PG_CATCH();
     {
@@ -51,35 +54,20 @@ do_util_elog(int level, char *message)
         edata = CopyErrorData();
         FlushErrorState();
 
+		if (cmsg)
+			pfree(cmsg);
+
         /* Punt the error to Perl */
         croak("%s", edata->message);
     }
     PG_END_TRY();
 }
 
-static SV  *
-newSVstring_len(const char *str, STRLEN len)
-{
-    SV         *sv;
-
-    sv = newSVpvn(str, len);
-#if PERL_BCDVERSION >= 0x5006000L
-    if (GetDatabaseEncoding() == PG_UTF8)
-        SvUTF8_on(sv);
-#endif
-    return sv;
-}
-
 static text *
 sv2text(SV *sv)
 {
-    STRLEN    sv_len;
-    char     *sv_pv;
-
-    if (!sv)
-        sv = &PL_sv_undef;
-    sv_pv = SvPV(sv, sv_len);
-    return cstring_to_text_with_len(sv_pv, sv_len);
+	char *str = sv2cstr(sv);
+	return cstring_to_text(str);
 }
 
 MODULE = PostgreSQL::InServer::Util PREFIX = util_
@@ -105,15 +93,15 @@ _aliased_constants()
 
 
 void
-util_elog(level, message)
+util_elog(level, msg)
     int level
-    char* message
+    SV *msg
     CODE:
         if (level > ERROR)      /* no PANIC allowed thanks */
             level = ERROR;
         if (level < DEBUG5)
             level = DEBUG5;
-        do_util_elog(level, message);
+        do_util_elog(level, msg);
 
 SV *
 util_quote_literal(sv)
@@ -125,7 +113,9 @@ util_quote_literal(sv)
     else {
         text *arg = sv2text(sv);
         text *ret = DatumGetTextP(DirectFunctionCall1(quote_literal, PointerGetDatum(arg)));
-        RETVAL = newSVstring_len(VARDATA(ret), (VARSIZE(ret) - VARHDRSZ));
+		char *str = text_to_cstring(ret);
+		RETVAL = cstr2sv(str);
+		pfree(str);
     }
     OUTPUT:
     RETVAL
@@ -136,13 +126,15 @@ util_quote_nullable(sv)
     CODE:
     if (!sv || !SvOK(sv))
 	{
-        RETVAL = newSVstring_len("NULL", 4);
+        RETVAL = cstr2sv("NULL");
     }
     else
 	{
         text *arg = sv2text(sv);
         text *ret = DatumGetTextP(DirectFunctionCall1(quote_nullable, PointerGetDatum(arg)));
-        RETVAL = newSVstring_len(VARDATA(ret), (VARSIZE(ret) - VARHDRSZ));
+		char *str = text_to_cstring(ret);
+		RETVAL = cstr2sv(str);
+		pfree(str);
     }
     OUTPUT:
     RETVAL
@@ -153,10 +145,13 @@ util_quote_ident(sv)
     PREINIT:
         text *arg;
         text *ret;
+		char *str;
     CODE:
         arg = sv2text(sv);
         ret = DatumGetTextP(DirectFunctionCall1(quote_ident, PointerGetDatum(arg)));
-        RETVAL = newSVstring_len(VARDATA(ret), (VARSIZE(ret) - VARHDRSZ));
+		str = text_to_cstring(ret);
+		RETVAL = cstr2sv(str);
+		pfree(str);
     OUTPUT:
     RETVAL
 
@@ -167,9 +162,9 @@ util_decode_bytea(sv)
         char *arg;
         text *ret;
     CODE:
-        arg = SvPV_nolen(sv);
+        arg = SvPVbyte_nolen(sv);
         ret = DatumGetTextP(DirectFunctionCall1(byteain, PointerGetDatum(arg)));
-        /* not newSVstring_len because this is raw bytes not utf8'able */
+        /* not cstr2sv because this is raw bytes not utf8'able */
         RETVAL = newSVpvn(VARDATA(ret), (VARSIZE(ret) - VARHDRSZ));
     OUTPUT:
     RETVAL
@@ -180,10 +175,13 @@ util_encode_bytea(sv)
     PREINIT:
         text *arg;
         char *ret;
+		STRLEN len;
     CODE:
-        arg = sv2text(sv);
+        /* not sv2text because this is raw bytes not utf8'able */
+        ret = SvPVbyte(sv, len);
+		arg = cstring_to_text_with_len(ret, len);
         ret = DatumGetCString(DirectFunctionCall1(byteaout, PointerGetDatum(arg)));
-        RETVAL = newSVstring_len(ret, strlen(ret));
+        RETVAL = cstr2sv(ret);
     OUTPUT:
     RETVAL
 

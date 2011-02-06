@@ -43,6 +43,7 @@
 
 /* perl stuff */
 #include "plperl.h"
+#include "plperl_helpers.h"
 
 /* string literal macros defining chunks of perl code */
 #include "perlchunks.h"
@@ -222,7 +223,7 @@ static void plperl_init_shared_libs(pTHX);
 static void plperl_trusted_init(void);
 static void plperl_untrusted_init(void);
 static HV  *plperl_spi_execute_fetch_result(SPITupleTable *, int, int);
-static SV  *newSVstring(const char *str);
+static char *hek2cstr(HE *he);
 static SV **hv_store_string(HV *hv, const char *key, SV *val);
 static SV **hv_fetch_string(HV *hv, const char *key);
 static void plperl_create_sub(plperl_proc_desc *desc, char *s, Oid fn_oid);
@@ -239,24 +240,39 @@ static char *setlocale_perl(int category, char *locale);
 #endif
 
 /*
- * Convert an SV to char * and verify the encoding via pg_verifymbstr()
+ * convert a HE (hash entry) key to a cstr in the current database encoding
  */
-static inline char *
-sv2text_mbverified(SV *sv)
+static char *
+hek2cstr(HE *he)
 {
-	char	   *val;
-	STRLEN		len;
-
 	/*
-	 * The value returned here might include an embedded nul byte, because
-	 * perl allows such things. That's OK, because pg_verifymbstr will choke
-	 * on it,  If we just used strlen() instead of getting perl's idea of the
-	 * length, whatever uses the "verified" value might get something quite
-	 * weird.
+	 * Unfortunately,  while HeUTF8 is true for most things > 256, for
+	 * values 128..255 it's not, but perl will treat them as
+	 * unicode code points if the utf8 flag is not set ( see
+	 * The "Unicode Bug" in perldoc perlunicode for more)
+	 *
+	 * So if we did the expected:
+	 *    if (HeUTF8(he))
+	 * 	  	  utf_u2e(key...);
+	 * 	  else // must be ascii
+	 * 	      return HePV(he);
+	 * we won't match columns with codepoints from 128..255
+	 *
+	 * For a more concrete example given a column with the
+	 * name of the unicode codepoint U+00ae (registered sign)
+	 * and a UTF8 database and the perl return_next {
+	 * "\N{U+00ae}=>'text } would always fail as heUTF8
+	 * returns 0 and HePV() would give us a char * with 1 byte
+	 * contains the decimal value 174
+	 *
+	 * Perl has the brains to know when it should utf8 encode
+	 * 174 properly, so here we force it into an SV so that
+	 * perl will figure it out and do the right thing
 	 */
-	val = SvPV(sv, len);
-	pg_verifymbstr(val, len, false);
-	return val;
+	SV *sv = HeSVKEY_force(he);
+	if (HeUTF8(he))
+		SvUTF8_on(sv);
+	return sv2cstr(sv);
 }
 
 /*
@@ -568,7 +584,7 @@ select_perl_context(bool trusted)
 	eval_pv("PostgreSQL::InServer::SPI::bootstrap()", FALSE);
 	if (SvTRUE(ERRSV))
 		ereport(ERROR,
-				(errmsg("%s", strip_trailing_ws(SvPV_nolen(ERRSV))),
+				(errmsg("%s", strip_trailing_ws(sv2cstr(ERRSV))),
 		errcontext("while executing PostgreSQL::InServer::SPI::bootstrap")));
 
 	/* Fully initialized, so mark the hashtable entry valid */
@@ -609,7 +625,6 @@ static PerlInterpreter *
 plperl_init_interp(void)
 {
 	PerlInterpreter *plperl;
-	static int	perl_sys_init_done;
 
 	static char *embedding[3 + 2] = {
 		"", "-e", PLC_PERLBOOT
@@ -678,15 +693,19 @@ plperl_init_interp(void)
 	 * true when MYMALLOC is set.
 	 */
 #if defined(PERL_SYS_INIT3) && !defined(MYMALLOC)
-	/* only call this the first time through, as per perlembed man page */
-	if (!perl_sys_init_done)
 	{
-		char	   *dummy_env[1] = {NULL};
+		static int	perl_sys_init_done;
 
-		PERL_SYS_INIT3(&nargs, (char ***) &embedding, (char ***) &dummy_env);
-		perl_sys_init_done = 1;
-		/* quiet warning if PERL_SYS_INIT3 doesn't use the third argument */
-		dummy_env[0] = NULL;
+		/* only call this the first time through, as per perlembed man page */
+		if (!perl_sys_init_done)
+		{
+			char	   *dummy_env[1] = {NULL};
+
+			PERL_SYS_INIT3(&nargs, (char ***) &embedding, (char ***) &dummy_env);
+			perl_sys_init_done = 1;
+			/* quiet warning if PERL_SYS_INIT3 doesn't use the third argument */
+			dummy_env[0] = NULL;
+		}
 	}
 #endif
 
@@ -727,12 +746,12 @@ plperl_init_interp(void)
 	if (perl_parse(plperl, plperl_init_shared_libs,
 				   nargs, embedding, NULL) != 0)
 		ereport(ERROR,
-				(errmsg("%s", strip_trailing_ws(SvPV_nolen(ERRSV))),
+				(errmsg("%s", strip_trailing_ws(sv2cstr(ERRSV))),
 				 errcontext("while parsing Perl initialization")));
 
 	if (perl_run(plperl) != 0)
 		ereport(ERROR,
-				(errmsg("%s", strip_trailing_ws(SvPV_nolen(ERRSV))),
+				(errmsg("%s", strip_trailing_ws(sv2cstr(ERRSV))),
 				 errcontext("while running Perl initialization")));
 
 #ifdef PLPERL_RESTORE_LOCALE
@@ -836,22 +855,19 @@ plperl_trusted_init(void)
 	eval_pv(PLC_TRUSTED, FALSE);
 	if (SvTRUE(ERRSV))
 		ereport(ERROR,
-				(errmsg("%s", strip_trailing_ws(SvPV_nolen(ERRSV))),
+				(errmsg("%s", strip_trailing_ws(sv2cstr(ERRSV))),
 				 errcontext("while executing PLC_TRUSTED")));
 
-	if (GetDatabaseEncoding() == PG_UTF8)
-	{
-		/*
-		 * Force loading of utf8 module now to prevent errors that can arise
-		 * from the regex code later trying to load utf8 modules. See
-		 * http://rt.perl.org/rt3/Ticket/Display.html?id=47576
-		 */
-		eval_pv("my $a=chr(0x100); return $a =~ /\\xa9/i", FALSE);
-		if (SvTRUE(ERRSV))
-			ereport(ERROR,
-					(errmsg("%s", strip_trailing_ws(SvPV_nolen(ERRSV))),
-					 errcontext("while executing utf8fix")));
-	}
+	/*
+	 * Force loading of utf8 module now to prevent errors that can arise
+	 * from the regex code later trying to load utf8 modules. See
+	 * http://rt.perl.org/rt3/Ticket/Display.html?id=47576
+	 */
+	eval_pv("my $a=chr(0x100); return $a =~ /\\xa9/i", FALSE);
+	if (SvTRUE(ERRSV))
+		ereport(ERROR,
+				(errmsg("%s", strip_trailing_ws(sv2cstr(ERRSV))),
+				 errcontext("while executing utf8fix")));
 
 	/*
 	 * Lock down the interpreter
@@ -891,7 +907,7 @@ plperl_trusted_init(void)
 		eval_pv(plperl_on_plperl_init, FALSE);
 		if (SvTRUE(ERRSV))
 			ereport(ERROR,
-					(errmsg("%s", strip_trailing_ws(SvPV_nolen(ERRSV))),
+					(errmsg("%s", strip_trailing_ws(sv2cstr(ERRSV))),
 					 errcontext("while executing plperl.on_plperl_init")));
 
 	}
@@ -912,7 +928,7 @@ plperl_untrusted_init(void)
 		eval_pv(plperl_on_plperlu_init, FALSE);
 		if (SvTRUE(ERRSV))
 			ereport(ERROR,
-					(errmsg("%s", strip_trailing_ws(SvPV_nolen(ERRSV))),
+					(errmsg("%s", strip_trailing_ws(sv2cstr(ERRSV))),
 					 errcontext("while executing plperl.on_plperlu_init")));
 	}
 }
@@ -940,17 +956,18 @@ plperl_build_tuple_result(HV *perlhash, AttInMetadata *attinmeta)
 {
 	TupleDesc	td = attinmeta->tupdesc;
 	char	  **values;
-	SV		   *val;
-	char	   *key;
-	I32			klen;
+	HE			*he;
 	HeapTuple	tup;
+	int			i;
 
 	values = (char **) palloc0(td->natts * sizeof(char *));
 
 	hv_iterinit(perlhash);
-	while ((val = hv_iternextsv(perlhash, &key, &klen)))
+	while ((he = hv_iternext(perlhash)))
 	{
-		int			attn = SPI_fnumber(td, key);
+		SV		*val = HeVAL(he);
+		char	*key = hek2cstr(he);
+		int		attn = SPI_fnumber(td, key);
 
 		if (attn <= 0 || td->attrs[attn - 1]->attisdropped)
 			ereport(ERROR,
@@ -959,13 +976,22 @@ plperl_build_tuple_result(HV *perlhash, AttInMetadata *attinmeta)
 							key)));
 		if (SvOK(val))
 		{
-			values[attn - 1] = sv2text_mbverified(val);
+			values[attn - 1] = sv2cstr(val);
 		}
+
+		pfree(key);
 	}
 	hv_iterinit(perlhash);
 
 	tup = BuildTupleFromCStrings(attinmeta, values);
+
+	for(i = 0; i < td->natts; i++)
+	{
+		if (values[i])
+			pfree(values[i]);
+	}
 	pfree(values);
+
 	return tup;
 }
 
@@ -1025,8 +1051,8 @@ plperl_trigger_build_args(FunctionCallInfo fcinfo)
 												)
 		);
 
-	hv_store_string(hv, "name", newSVstring(tdata->tg_trigger->tgname));
-	hv_store_string(hv, "relid", newSVstring(relid));
+	hv_store_string(hv, "name", cstr2sv(tdata->tg_trigger->tgname));
+	hv_store_string(hv, "relid", cstr2sv(relid));
 
 	if (TRIGGER_FIRED_BY_INSERT(tdata->tg_event))
 	{
@@ -1062,7 +1088,7 @@ plperl_trigger_build_args(FunctionCallInfo fcinfo)
 	else
 		event = "UNKNOWN";
 
-	hv_store_string(hv, "event", newSVstring(event));
+	hv_store_string(hv, "event", cstr2sv(event));
 	hv_store_string(hv, "argc", newSViv(tdata->tg_trigger->tgnargs));
 
 	if (tdata->tg_trigger->tgnargs > 0)
@@ -1071,18 +1097,18 @@ plperl_trigger_build_args(FunctionCallInfo fcinfo)
 
 		av_extend(av, tdata->tg_trigger->tgnargs);
 		for (i = 0; i < tdata->tg_trigger->tgnargs; i++)
-			av_push(av, newSVstring(tdata->tg_trigger->tgargs[i]));
+			av_push(av, cstr2sv(tdata->tg_trigger->tgargs[i]));
 		hv_store_string(hv, "args", newRV_noinc((SV *) av));
 	}
 
 	hv_store_string(hv, "relname",
-					newSVstring(SPI_getrelname(tdata->tg_relation)));
+					cstr2sv(SPI_getrelname(tdata->tg_relation)));
 
 	hv_store_string(hv, "table_name",
-					newSVstring(SPI_getrelname(tdata->tg_relation)));
+					cstr2sv(SPI_getrelname(tdata->tg_relation)));
 
 	hv_store_string(hv, "table_schema",
-					newSVstring(SPI_getnspname(tdata->tg_relation)));
+					cstr2sv(SPI_getnspname(tdata->tg_relation)));
 
 	if (TRIGGER_FIRED_BEFORE(tdata->tg_event))
 		when = "BEFORE";
@@ -1092,7 +1118,7 @@ plperl_trigger_build_args(FunctionCallInfo fcinfo)
 		when = "INSTEAD OF";
 	else
 		when = "UNKNOWN";
-	hv_store_string(hv, "when", newSVstring(when));
+	hv_store_string(hv, "when", cstr2sv(when));
 
 	if (TRIGGER_FIRED_FOR_ROW(tdata->tg_event))
 		level = "ROW";
@@ -1100,7 +1126,7 @@ plperl_trigger_build_args(FunctionCallInfo fcinfo)
 		level = "STATEMENT";
 	else
 		level = "UNKNOWN";
-	hv_store_string(hv, "level", newSVstring(level));
+	hv_store_string(hv, "level", cstr2sv(level));
 
 	return newRV_noinc((SV *) hv);
 }
@@ -1113,10 +1139,8 @@ plperl_modify_tuple(HV *hvTD, TriggerData *tdata, HeapTuple otup)
 {
 	SV		  **svp;
 	HV		   *hvNew;
+	HE		   *he;
 	HeapTuple	rtup;
-	SV		   *val;
-	char	   *key;
-	I32			klen;
 	int			slotsused;
 	int		   *modattrs;
 	Datum	   *modvalues;
@@ -1143,13 +1167,15 @@ plperl_modify_tuple(HV *hvTD, TriggerData *tdata, HeapTuple otup)
 	slotsused = 0;
 
 	hv_iterinit(hvNew);
-	while ((val = hv_iternextsv(hvNew, &key, &klen)))
+	while ((he = hv_iternext(hvNew)))
 	{
-		int			attn = SPI_fnumber(tupdesc, key);
 		Oid			typinput;
 		Oid			typioparam;
 		int32		atttypmod;
 		FmgrInfo	finfo;
+		SV			*val = HeVAL(he);
+		char		*key = hek2cstr(he);
+		int			attn = SPI_fnumber(tupdesc, key);
 
 		if (attn <= 0 || tupdesc->attrs[attn - 1]->attisdropped)
 			ereport(ERROR,
@@ -1163,11 +1189,13 @@ plperl_modify_tuple(HV *hvTD, TriggerData *tdata, HeapTuple otup)
 		atttypmod = tupdesc->attrs[attn - 1]->atttypmod;
 		if (SvOK(val))
 		{
+			char	*str = sv2cstr(val);
 			modvalues[slotsused] = InputFunctionCall(&finfo,
-													 sv2text_mbverified(val),
+													 str,
 													 typioparam,
 													 atttypmod);
 			modnulls[slotsused] = ' ';
+			pfree(str);
 		}
 		else
 		{
@@ -1179,6 +1207,8 @@ plperl_modify_tuple(HV *hvTD, TriggerData *tdata, HeapTuple otup)
 		}
 		modattrs[slotsused] = attn;
 		slotsused++;
+
+		pfree(key);
 	}
 	hv_iterinit(hvNew);
 
@@ -1420,7 +1450,7 @@ plperl_create_sub(plperl_proc_desc *prodesc, char *s, Oid fn_oid)
 	SAVETMPS;
 	PUSHMARK(SP);
 	EXTEND(SP, 4);
-	PUSHs(sv_2mortal(newSVstring(subname)));
+	PUSHs(sv_2mortal(cstr2sv(subname)));
 	PUSHs(sv_2mortal(newRV_noinc((SV *) pragma_hv)));
 	/* 
 	 * Use 'false' for $prolog in mkfunc, which is kept for compatibility
@@ -1428,7 +1458,7 @@ plperl_create_sub(plperl_proc_desc *prodesc, char *s, Oid fn_oid)
 	 * the function compiler.
 	 */
 	PUSHs(&PL_sv_no); 
-	PUSHs(sv_2mortal(newSVstring(s)));
+	PUSHs(sv_2mortal(cstr2sv(s)));
 	PUTBACK;
 
 	/*
@@ -1457,7 +1487,7 @@ plperl_create_sub(plperl_proc_desc *prodesc, char *s, Oid fn_oid)
 	if (SvTRUE(ERRSV))
 		ereport(ERROR,
 				(errcode(ERRCODE_SYNTAX_ERROR),
-				 errmsg("%s", strip_trailing_ws(SvPV_nolen(ERRSV)))));
+				 errmsg("%s", strip_trailing_ws(sv2cstr(ERRSV)))));
 
 	if (!subref)
 		ereport(ERROR,
@@ -1533,7 +1563,7 @@ plperl_call_perl_func(plperl_proc_desc *desc, FunctionCallInfo fcinfo)
 
 			tmp = OutputFunctionCall(&(desc->arg_out_func[i]),
 									 fcinfo->arg[i]);
-			sv = newSVstring(tmp);
+			sv = cstr2sv(tmp);
 			PUSHs(sv_2mortal(sv));
 			pfree(tmp);
 		}
@@ -1561,7 +1591,7 @@ plperl_call_perl_func(plperl_proc_desc *desc, FunctionCallInfo fcinfo)
 		LEAVE;
 		/* XXX need to find a way to assign an errcode here */
 		ereport(ERROR,
-				(errmsg("%s", strip_trailing_ws(SvPV_nolen(ERRSV)))));
+				(errmsg("%s", strip_trailing_ws(sv2cstr(ERRSV)))));
 	}
 
 	retval = newSVsv(POPs);
@@ -1594,7 +1624,7 @@ plperl_call_perl_trigger_func(plperl_proc_desc *desc, FunctionCallInfo fcinfo,
 	EXTEND(sp, tg_trigger->tgnargs);
 
 	for (i = 0; i < tg_trigger->tgnargs; i++)
-		PUSHs(sv_2mortal(newSVstring(tg_trigger->tgargs[i])));
+		PUSHs(sv_2mortal(cstr2sv(tg_trigger->tgargs[i])));
 	PUTBACK;
 
 	/* Do NOT use G_KEEPERR here */
@@ -1618,7 +1648,7 @@ plperl_call_perl_trigger_func(plperl_proc_desc *desc, FunctionCallInfo fcinfo,
 		LEAVE;
 		/* XXX need to find a way to assign an errcode here */
 		ereport(ERROR,
-				(errmsg("%s", strip_trailing_ws(SvPV_nolen(ERRSV)))));
+				(errmsg("%s", strip_trailing_ws(sv2cstr(ERRSV)))));
 	}
 
 	retval = newSVsv(POPs);
@@ -1766,6 +1796,7 @@ plperl_func_handler(PG_FUNCTION_ARGS)
 	else
 	{
 		/* Return a perl string converted to a Datum */
+		char	*str;
 
 		if (prodesc->fn_retisarray && SvROK(perlret) &&
 			SvTYPE(SvRV(perlret)) == SVt_PVAV)
@@ -1775,9 +1806,11 @@ plperl_func_handler(PG_FUNCTION_ARGS)
 			perlret = array_ret;
 		}
 
+		str = sv2cstr(perlret);
 		retval = InputFunctionCall(&prodesc->result_in_func,
-								   sv2text_mbverified(perlret),
+								   str,
 								   prodesc->result_typioparam, -1);
+		pfree(str);
 	}
 
 	/* Restore the previous error callback */
@@ -1857,7 +1890,7 @@ plperl_trigger_handler(PG_FUNCTION_ARGS)
 		HeapTuple	trv;
 		char	   *tmp;
 
-		tmp = SvPV_nolen(perlret);
+		tmp = sv2cstr(perlret);
 
 		if (pg_strcasecmp(tmp, "SKIP") == 0)
 			trv = NULL;
@@ -1888,6 +1921,7 @@ plperl_trigger_handler(PG_FUNCTION_ARGS)
 			trv = NULL;
 		}
 		retval = PointerGetDatum(trv);
+		pfree(tmp);
 	}
 
 	/* Restore the previous error callback */
@@ -2231,7 +2265,7 @@ plperl_hash_from_tuple(HeapTuple tuple, TupleDesc tupdesc)
 
 		outputstr = OidOutputFunctionCall(typoutput, attr);
 
-		hv_store_string(hv, attname, newSVstring(outputstr));
+		hv_store_string(hv, attname, cstr2sv(outputstr));
 
 		pfree(outputstr);
 	}
@@ -2336,7 +2370,7 @@ plperl_spi_execute_fetch_result(SPITupleTable *tuptable, int processed,
 	result = newHV();
 
 	hv_store_string(result, "status",
-					newSVstring(SPI_result_code_string(status)));
+					cstr2sv(SPI_result_code_string(status)));
 	hv_store_string(result, "processed",
 					newSViv(processed));
 
@@ -2466,16 +2500,20 @@ plperl_return_next(SV *sv)
 
 		if (SvOK(sv))
 		{
+			char	*str;
+
 			if (prodesc->fn_retisarray && SvROK(sv) &&
 				SvTYPE(SvRV(sv)) == SVt_PVAV)
 			{
 				sv = plperl_convert_to_pg_array(sv);
 			}
 
+			str = sv2cstr(sv);
 			ret = InputFunctionCall(&prodesc->result_in_func,
-									sv2text_mbverified(sv),
+									str,
 									prodesc->result_typioparam, -1);
 			isNull = false;
+			pfree(str);
 		}
 		else
 		{
@@ -2531,7 +2569,7 @@ plperl_spi_query(char *query)
 		if (portal == NULL)
 			elog(ERROR, "SPI_cursor_open() failed:%s",
 				 SPI_result_code_string(SPI_result));
-		cursor = newSVstring(portal->name);
+		cursor = cstr2sv(portal->name);
 
 		/* Commit the inner transaction, return to outer xact context */
 		ReleaseCurrentSubTransaction();
@@ -2716,8 +2754,11 @@ plperl_spi_prepare(char *query, int argc, SV **argv)
 						typInput,
 						typIOParam;
 			int32		typmod;
+			char		*typstr;
 
-			parseTypeString(SvPV_nolen(argv[i]), &typId, &typmod);
+			typstr = sv2cstr(argv[i]);
+			parseTypeString(typstr, &typId, &typmod);
+			pfree(typstr);
 
 			getTypeInputInfo(typId, &typInput, &typIOParam);
 
@@ -2804,7 +2845,7 @@ plperl_spi_prepare(char *query, int argc, SV **argv)
 							 HASH_ENTER, &found);
 	hash_entry->query_data = qdesc;
 
-	return newSVstring(qdesc->qname);
+	return cstr2sv(qdesc->qname);
 }
 
 HV *
@@ -2881,11 +2922,13 @@ plperl_spi_exec_prepared(char *query, HV *attr, int argc, SV **argv)
 		{
 			if (SvOK(argv[i]))
 			{
+				char	*str = sv2cstr(argv[i]);
 				argvalues[i] = InputFunctionCall(&qdesc->arginfuncs[i],
-												 sv2text_mbverified(argv[i]),
+												 str,
 												 qdesc->argtypioparams[i],
 												 -1);
 				nulls[i] = ' ';
+				pfree(str);
 			}
 			else
 			{
@@ -3014,11 +3057,13 @@ plperl_spi_query_prepared(char *query, int argc, SV **argv)
 		{
 			if (SvOK(argv[i]))
 			{
+				char	*str = sv2cstr(argv[i]);
 				argvalues[i] = InputFunctionCall(&qdesc->arginfuncs[i],
-												 sv2text_mbverified(argv[i]),
+												 str,
 												 qdesc->argtypioparams[i],
 												 -1);
 				nulls[i] = ' ';
+				pfree(str);
 			}
 			else
 			{
@@ -3044,7 +3089,7 @@ plperl_spi_query_prepared(char *query, int argc, SV **argv)
 			elog(ERROR, "SPI_cursor_open() failed:%s",
 				 SPI_result_code_string(SPI_result));
 
-		cursor = newSVstring(portal->name);
+		cursor = cstr2sv(portal->name);
 
 		/* Commit the inner transaction, return to outer xact context */
 		ReleaseCurrentSubTransaction();
@@ -3125,30 +3170,17 @@ plperl_spi_freeplan(char *query)
 }
 
 /*
- * Create a new SV from a string assumed to be in the current database's
- * encoding.
- */
-static SV  *
-newSVstring(const char *str)
-{
-	SV		   *sv;
-
-	sv = newSVpv(str, 0);
-#if PERL_BCDVERSION >= 0x5006000L
-	if (GetDatabaseEncoding() == PG_UTF8)
-		SvUTF8_on(sv);
-#endif
-	return sv;
-}
-
-/*
  * Store an SV into a hash table under a key that is a string assumed to be
  * in the current database's encoding.
  */
 static SV **
 hv_store_string(HV *hv, const char *key, SV *val)
 {
-	int32		klen = strlen(key);
+	int32		hlen;
+	char		*hkey;
+	SV			**ret;
+
+	hkey = (char*)pg_do_encoding_conversion((unsigned char *)key, strlen(key), GetDatabaseEncoding(), PG_UTF8);
 
 	/*
 	 * This seems nowhere documented, but under Perl 5.8.0 and up, hv_store()
@@ -3156,11 +3188,13 @@ hv_store_string(HV *hv, const char *key, SV *val)
 	 * does not appear that hashes track UTF-8-ness of keys at all in Perl
 	 * 5.6.
 	 */
-#if PERL_BCDVERSION >= 0x5008000L
-	if (GetDatabaseEncoding() == PG_UTF8)
-		klen = -klen;
-#endif
-	return hv_store(hv, key, klen, val, 0);
+	hlen = -strlen(hkey);
+	ret = hv_store(hv, hkey, hlen, val, 0);
+
+	if (hkey != key)
+		pfree(hkey);
+
+	return ret;
 }
 
 /*
@@ -3170,14 +3204,20 @@ hv_store_string(HV *hv, const char *key, SV *val)
 static SV **
 hv_fetch_string(HV *hv, const char *key)
 {
-	int32		klen = strlen(key);
+	int32		hlen;
+	char		*hkey;
+	SV			**ret;
+
+	hkey = (char*)pg_do_encoding_conversion((unsigned char *)key, strlen(key), GetDatabaseEncoding(), PG_UTF8);
 
 	/* See notes in hv_store_string */
-#if PERL_BCDVERSION >= 0x5008000L
-	if (GetDatabaseEncoding() == PG_UTF8)
-		klen = -klen;
-#endif
-	return hv_fetch(hv, key, klen, 0);
+	hlen = -strlen(hkey);
+	ret = hv_fetch(hv, hkey, hlen, 0);
+
+	if(hkey != key)
+		pfree(hkey);
+
+	return ret;
 }
 
 /*
