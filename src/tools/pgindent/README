@@ -23,8 +23,7 @@ This can format all PostgreSQL *.c and *.h files, but excludes *.y, and
 	xargs -n100 pgindent src/tools/pgindent/typedefs.list
 
 5) Remove any files that generate errors and restore their original
-   versions, e.g. ./src/backend/tsearch/wparser_def.c has problems
-   because of a DECIMAL listed as a typedef.
+   versions.
 
 6) Do a full test build:
 
