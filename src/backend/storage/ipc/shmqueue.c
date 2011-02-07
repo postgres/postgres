@@ -43,14 +43,12 @@ SHMQueueInit(SHM_QUEUE *queue)
  * SHMQueueIsDetached -- TRUE if element is not currently
  *		in a queue.
  */
-#ifdef NOT_USED
 bool
-SHMQueueIsDetached(SHM_QUEUE *queue)
+SHMQueueIsDetached(const SHM_QUEUE *queue)
 {
 	Assert(ShmemAddrIsValid(queue));
 	return (queue->prev == NULL);
 }
-#endif
 
 /*
  * SHMQueueElemInit -- clear an element's links
@@ -146,7 +144,7 @@ SHMQueueInsertAfter(SHM_QUEUE *queue, SHM_QUEUE *elem)
  *--------------------
  */
 Pointer
-SHMQueueNext(SHM_QUEUE *queue, SHM_QUEUE *curElem, Size linkOffset)
+SHMQueueNext(const SHM_QUEUE *queue, const SHM_QUEUE *curElem, Size linkOffset)
 {
 	SHM_QUEUE  *elemPtr = curElem->next;
 
@@ -162,7 +160,7 @@ SHMQueueNext(SHM_QUEUE *queue, SHM_QUEUE *curElem, Size linkOffset)
  * SHMQueueEmpty -- TRUE if queue head is only element, FALSE otherwise
  */
 bool
-SHMQueueEmpty(SHM_QUEUE *queue)
+SHMQueueEmpty(const SHM_QUEUE *queue)
 {
 	Assert(ShmemAddrIsValid(queue));
 

@@ -4456,6 +4456,7 @@ COPY postgres_log FROM '/full/path/to/logfile.csv' WITH csv;
      <varlistentry id="guc-default-transaction-isolation" xreflabel="default_transaction_isolation">
       <indexterm>
        <primary>transaction isolation level</primary>
+       <secondary>setting default</secondary>
       </indexterm>
       <indexterm>
        <primary><varname>default_transaction_isolation</> configuration parameter</primary>
@@ -4481,6 +4482,7 @@ COPY postgres_log FROM '/full/path/to/logfile.csv' WITH csv;
      <varlistentry id="guc-default-transaction-read-only" xreflabel="default_transaction_read_only">
       <indexterm>
        <primary>read-only transaction</primary>
+       <secondary>setting default</secondary>
       </indexterm>
       <indexterm>
        <primary><varname>default_transaction_read_only</> configuration parameter</primary>
@@ -4499,6 +4501,41 @@ COPY postgres_log FROM '/full/path/to/logfile.csv' WITH csv;
        </para>
       </listitem>
      </varlistentry>
+
+     <varlistentry id="guc-default-transaction-deferrable" xreflabel="default_transaction_deferrable">
+      <indexterm>
+       <primary>deferrable transaction</primary>
+       <secondary>setting default</secondary>
+      </indexterm>
+      <indexterm>
+       <primary><varname>default_transaction_deferrable</> configuration parameter</primary>
+      </indexterm>
+
+      <term><varname>default_transaction_deferrable</varname> (<type>boolean</type>)</term>
+      <listitem>
+       <para>
+        When running at the <literal>serializable</> isolation level,
+        a deferrable read-only SQL transaction may be delayed before
+        it is allowed to proceed.  However, once it begins executing
+        it does not incur any of the overhead required to ensure
+        serializability; so serialization code will have no reason to
+        force it to abort because of concurrent updates, making this
+        option suitable for long-running read-only transactions.
+        </para>
+
+        <para>
+        This parameter controls the default deferrable status of each
+        new transaction.  It currently has no effect on read-write
+        transactions or those operating at isolation levels lower
+        than <literal>serializable</>. The default is <literal>off</>.
+       </para>
+
+       <para>
+        Consult <xref linkend="sql-set-transaction"> for more information.
+       </para>
+      </listitem>
+     </varlistentry>
+
 
      <varlistentry id="guc-session-replication-role" xreflabel="session_replication_role">
       <term><varname>session_replication_role</varname> (<type>enum</type>)</term>
@@ -5121,6 +5158,39 @@ dynamic_library_path = 'C:\tools\postgresql;H:\my_project\lib;$libdir'
         When running a standby server, you must set this parameter to the
         same or higher value than on the master server. Otherwise, queries
         will not be allowed in the standby server.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry id="guc-max-predicate-locks-per-transaction" xreflabel="max_predicate_locks_per_transaction">
+      <term><varname>max_predicate_locks_per_transaction</varname> (<type>integer</type>)</term>
+      <indexterm>
+       <primary><varname>max_predicate_locks_per_transaction</> configuration parameter</primary>
+      </indexterm>
+      <listitem>
+       <para>
+        The shared predicate lock table tracks locks on
+        <varname>max_predicate_locks_per_transaction</varname> * (<xref
+        linkend="guc-max-connections"> + <xref
+        linkend="guc-max-prepared-transactions">) objects (e.g., tables);
+        hence, no more than this many distinct objects can be locked at
+        any one time.  This parameter controls the average number of object
+        locks allocated for each transaction;  individual transactions
+        can lock more objects as long as the locks of all transactions
+        fit in the lock table.  This is <emphasis>not</> the number of
+        rows that can be locked; that value is unlimited.  The default,
+        64, has generally been sufficient in testing, but you might need to
+        raise this value if you have clients that touch many different
+        tables in a single serializable transaction. This parameter can
+        only be set at server start.
+       </para>
+
+       <para>
+        Increasing this parameter might cause <productname>PostgreSQL</>
+        to request more <systemitem class="osname">System V</> shared
+        memory than your operating system's default configuration
+        allows. See <xref linkend="sysvipc"> for information on how to
+        adjust those parameters, if necessary.
        </para>
       </listitem>
      </varlistentry>

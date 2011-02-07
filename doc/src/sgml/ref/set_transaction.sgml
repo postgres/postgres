@@ -15,6 +15,21 @@
   <primary>SET TRANSACTION</primary>
  </indexterm>
 
+ <indexterm>
+  <primary>transaction isolation level</primary>
+  <secondary>setting</secondary>
+ </indexterm>
+
+ <indexterm>
+  <primary>read-only transaction</primary>
+  <secondary>setting</secondary>
+ </indexterm>
+
+ <indexterm>
+  <primary>deferrable transaction</primary>
+  <secondary>setting</secondary>
+ </indexterm>
+
  <refsynopsisdiv>
 <synopsis>
 SET TRANSACTION <replaceable class="parameter">transaction_mode</replaceable> [, ...]
@@ -24,6 +39,7 @@ SET SESSION CHARACTERISTICS AS TRANSACTION <replaceable class="parameter">transa
 
     ISOLATION LEVEL { SERIALIZABLE | REPEATABLE READ | READ COMMITTED | READ UNCOMMITTED }
     READ WRITE | READ ONLY
+    [ NOT ] DEFERRABLE
 </synopsis>
  </refsynopsisdiv>
 
@@ -42,8 +58,8 @@ SET SESSION CHARACTERISTICS AS TRANSACTION <replaceable class="parameter">transa
 
   <para>
    The available transaction characteristics are the transaction
-   isolation level and the transaction access mode (read/write or
-   read-only).
+   isolation level, the transaction access mode (read/write or
+   read-only), and the deferrable mode.
   </para>
 
   <para>
@@ -62,7 +78,7 @@ SET SESSION CHARACTERISTICS AS TRANSACTION <replaceable class="parameter">transa
     </varlistentry>
 
     <varlistentry>
-     <term><literal>SERIALIZABLE</literal></term>
+     <term><literal>REPEATABLE READ</literal></term>
      <listitem>
       <para>
        All statements of the current transaction can only see rows committed
@@ -71,14 +87,27 @@ SET SESSION CHARACTERISTICS AS TRANSACTION <replaceable class="parameter">transa
       </para>
      </listitem>
     </varlistentry>
+
+    <varlistentry>
+     <term><literal>SERIALIZABLE</literal></term>
+     <listitem>
+      <para>
+       All statements of the current transaction can only see rows committed
+       before the first query or data-modification statement was executed in
+       this transaction.  If a pattern of reads and writes among concurrent
+       serializable transactions would create a situation which could not
+       have occurred for any serial (one-at-a-time) execution of those
+       transactions, one of them will be rolled back with a
+       <literal>serialization_failure</literal> <literal>SQLSTATE</literal>.
+      </para>
+     </listitem>
+    </varlistentry>
    </variablelist>
 
-   The SQL standard defines two additional levels, <literal>READ
-   UNCOMMITTED</literal> and <literal>REPEATABLE READ</literal>.
+   The SQL standard defines one additional level, <literal>READ
+   UNCOMMITTED</literal>.
    In <productname>PostgreSQL</productname> <literal>READ
-   UNCOMMITTED</literal> is treated as
-   <literal>READ COMMITTED</literal>, while <literal>REPEATABLE
-   READ</literal> is treated as <literal>SERIALIZABLE</literal>.
+   UNCOMMITTED</literal> is treated as <literal>READ COMMITTED</literal>.
   </para>
 
   <para>
@@ -127,8 +156,9 @@ SET SESSION CHARACTERISTICS AS TRANSACTION <replaceable class="parameter">transa
 
   <para>
    The session default transaction modes can also be set by setting the
-   configuration parameters <xref linkend="guc-default-transaction-isolation">
-   and <xref linkend="guc-default-transaction-read-only">.
+   configuration parameters <xref linkend="guc-default-transaction-isolation">,
+   <xref linkend="guc-default-transaction-read-only">, and
+   <xref linkend="guc-default-transaction-deferrable">.
    (In fact <command>SET SESSION CHARACTERISTICS</command> is just a
    verbose equivalent for setting these variables with <command>SET</>.)
    This means the defaults can be set in the configuration file, via
@@ -146,9 +176,7 @@ SET SESSION CHARACTERISTICS AS TRANSACTION <replaceable class="parameter">transa
    isolation level in the standard.  In
    <productname>PostgreSQL</productname> the default is ordinarily
    <literal>READ COMMITTED</literal>, but you can change it as
-   mentioned above.  Because of lack of predicate locking, the
-   <literal>SERIALIZABLE</literal> level is not truly
-   serializable. See <xref linkend="mvcc"> for details.
+   mentioned above.
   </para>
 
   <para>
@@ -156,6 +184,12 @@ SET SESSION CHARACTERISTICS AS TRANSACTION <replaceable class="parameter">transa
    that can be set with these commands: the size of the diagnostics
    area.  This concept is specific to embedded SQL, and therefore is
    not implemented in the <productname>PostgreSQL</productname> server.
+  </para>
+
+  <para>
+   The <literal>DEFERRABLE</literal>
+   <replaceable class="parameter">transaction_mode</replaceable>
+   is a <productname>PostgreSQL</productname> language extension.
   </para>
 
   <para>

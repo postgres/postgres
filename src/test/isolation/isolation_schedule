@@ -1,0 +1,11 @@
+test: simple-write-skew
+test: receipt-report
+test: temporal-range-integrity
+test: project-manager
+test: classroom-scheduling
+test: total-cash
+test: referential-integrity
+test: ri-trigger
+test: partial-index
+test: two-ids
+test: multiple-row-versions

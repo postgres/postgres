@@ -450,6 +450,7 @@
 #check_function_bodies = on
 #default_transaction_isolation = 'read committed'
 #default_transaction_read_only = off
+#default_transaction_deferrable = off
 #session_replication_role = 'origin'
 #statement_timeout = 0			# in milliseconds, 0 is disabled
 #vacuum_freeze_min_age = 50000000
@@ -501,7 +502,8 @@
 # Note:  Each lock table slot uses ~270 bytes of shared memory, and there are
 # max_locks_per_transaction * (max_connections + max_prepared_transactions)
 # lock table slots.
-
+#max_predicate_locks_per_transaction = 64	# min 10
+					# (change requires restart)
 
 #------------------------------------------------------------------------------
 # VERSION/PLATFORM COMPATIBILITY

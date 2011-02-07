@@ -15,6 +15,7 @@
 #include "catalog/pg_type.h"
 #include "funcapi.h"
 #include "miscadmin.h"
+#include "storage/predicate_internals.h"
 #include "storage/proc.h"
 #include "utils/builtins.h"
 
@@ -32,11 +33,20 @@ static const char *const LockTagTypeNames[] = {
 	"advisory"
 };
 
+/* This must match enum PredicateLockTargetType (predicate_internals.h) */
+static const char *const PredicateLockTagTypeNames[] = {
+	"relation",
+	"page",
+	"tuple"
+};
+
 /* Working status for pg_lock_status */
 typedef struct
 {
 	LockData   *lockData;		/* state data from lmgr */
 	int			currIdx;		/* current PROCLOCK index */
+	PredicateLockData *predLockData;	/* state data for pred locks */
+	int			predLockIdx;	/* current index for pred lock */
 } PG_Lock_Status;
 
 
@@ -69,6 +79,7 @@ pg_lock_status(PG_FUNCTION_ARGS)
 	FuncCallContext *funcctx;
 	PG_Lock_Status *mystatus;
 	LockData   *lockData;
+	PredicateLockData *predLockData;
 
 	if (SRF_IS_FIRSTCALL())
 	{
@@ -126,6 +137,8 @@ pg_lock_status(PG_FUNCTION_ARGS)
 
 		mystatus->lockData = GetLockStatusData();
 		mystatus->currIdx = 0;
+		mystatus->predLockData = GetPredicateLockStatusData();
+		mystatus->predLockIdx = 0;
 
 		MemoryContextSwitchTo(oldcontext);
 	}
@@ -297,6 +310,72 @@ pg_lock_status(PG_FUNCTION_ARGS)
 			nulls[11] = true;
 		values[12] = CStringGetTextDatum(GetLockmodeName(LOCK_LOCKMETHOD(*lock), mode));
 		values[13] = BoolGetDatum(granted);
+
+		tuple = heap_form_tuple(funcctx->tuple_desc, values, nulls);
+		result = HeapTupleGetDatum(tuple);
+		SRF_RETURN_NEXT(funcctx, result);
+	}
+
+	/*
+	 * Have returned all regular locks. Now start on the SIREAD predicate
+	 * locks.
+	 */
+	predLockData = mystatus->predLockData;
+	if (mystatus->predLockIdx < predLockData->nelements)
+	{
+		PredicateLockTargetType lockType;
+
+		PREDICATELOCKTARGETTAG *predTag = &(predLockData->locktags[mystatus->predLockIdx]);
+		SERIALIZABLEXACT *xact = &(predLockData->xacts[mystatus->predLockIdx]);
+		Datum		values[14];
+		bool		nulls[14];
+		HeapTuple	tuple;
+		Datum		result;
+
+		mystatus->predLockIdx++;
+
+		/*
+		 * Form tuple with appropriate data.
+		 */
+		MemSet(values, 0, sizeof(values));
+		MemSet(nulls, false, sizeof(nulls));
+
+		/* lock type */
+		lockType = GET_PREDICATELOCKTARGETTAG_TYPE(*predTag);
+
+		values[0] = CStringGetTextDatum(PredicateLockTagTypeNames[lockType]);
+
+		/* lock target */
+		values[1] = GET_PREDICATELOCKTARGETTAG_DB(*predTag);
+		values[2] = GET_PREDICATELOCKTARGETTAG_RELATION(*predTag);
+		if (lockType == PREDLOCKTAG_TUPLE)
+			values[4] = GET_PREDICATELOCKTARGETTAG_OFFSET(*predTag);
+		else
+			nulls[4] = true;
+		if ((lockType == PREDLOCKTAG_TUPLE) ||
+			(lockType == PREDLOCKTAG_PAGE))
+			values[3] = GET_PREDICATELOCKTARGETTAG_PAGE(*predTag);
+		else
+			nulls[3] = true;
+
+		/* these fields are targets for other types of locks */
+		nulls[5] = true;		/* virtualxid */
+		nulls[6] = true;		/* transactionid */
+		nulls[7] = true;		/* classid */
+		nulls[8] = true;		/* objid */
+		nulls[9] = true;		/* objsubid */
+
+		/* lock holder */
+		values[10] = VXIDGetDatum(xact->vxid.backendId,
+								  xact->vxid.localTransactionId);
+		nulls[11] = true;		/* pid */
+
+		/*
+		 * Lock mode. Currently all predicate locks are SIReadLocks, which are
+		 * always held (never waiting)
+		 */
+		values[12] = CStringGetTextDatum("SIReadLock");
+		values[13] = BoolGetDatum(true);
 
 		tuple = heap_form_tuple(funcctx->tuple_desc, values, nulls);
 		result = HeapTupleGetDatum(tuple);

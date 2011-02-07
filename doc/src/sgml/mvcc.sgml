@@ -21,7 +21,19 @@
    <title>Introduction</title>
 
    <indexterm>
+    <primary>Multiversion Concurrency Control</primary>
+   </indexterm>
+
+   <indexterm>
     <primary>MVCC</primary>
+   </indexterm>
+
+   <indexterm>
+    <primary>Serializable Snapshot Isolation</primary>
+   </indexterm>
+
+   <indexterm>
+    <primary>SSI</primary>
    </indexterm>
 
    <para>
@@ -37,7 +49,7 @@
     could be caused by (other) concurrent transaction updates on the same
     data rows, providing <firstterm>transaction isolation</firstterm>
     for each database session.  <acronym>MVCC</acronym>, by eschewing
-    explicit locking methodologies of traditional database systems,
+    the locking methodologies of traditional database systems,
     minimizes lock contention in order to allow for reasonable
     performance in multiuser environments.
    </para>
@@ -48,12 +60,17 @@
     <acronym>MVCC</acronym> locks acquired for querying (reading) data
     do not conflict with locks acquired for writing data, and so
     reading never blocks writing and writing never blocks reading.
+    <productname>PostgreSQL</productname> maintains this guarantee
+    even when providing the strictest level of transaction
+    isolation through the use of an innovative <firstterm>Serializable
+    Snapshot Isolation</firstterm> (<acronym>SSI</acronym>) level.
    </para>
 
    <para>
     Table- and row-level locking facilities are also available in
-    <productname>PostgreSQL</productname> for applications that cannot
-    adapt easily to <acronym>MVCC</acronym> behavior.  However, proper
+    <productname>PostgreSQL</productname> for applications which don't
+    generally need full transaction isolation and prefer to explicitly
+    manage particular points of conflict.  However, proper
     use of <acronym>MVCC</acronym> will generally provide better
     performance than locks.  In addition, application-defined advisory
     locks provide a mechanism for acquiring locks that are not tied
@@ -70,9 +87,21 @@
 
    <para>
     The <acronym>SQL</acronym> standard defines four levels of
-    transaction isolation in terms of three phenomena that must be
-    prevented between concurrent transactions.  These undesirable
-    phenomena are:
+    transaction isolation.  The most strict is Serializable,
+    which is defined by the standard in a paragraph which says that any
+    concurrent execution of a set of Serializable transactions is guaranteed
+    to produce the same effect as running them one at a time in some order.
+    The other three levels are defined in terms of phenomena, resulting from
+    interaction between concurrent transactions, which must not occur at
+    each level.  The standard notes that due to the definition of
+    Serializable, none of these phenomena are possible at that level.  (This
+    is hardly surprising -- if the effect of the transactions must be
+    consistent with having been run one at a time, how could you see any
+    phenomena caused by interactions?)
+   </para>
+
+   <para>
+    The phenomena which are prohibited are various levels are:
 
     <variablelist>
      <varlistentry>
@@ -211,15 +240,16 @@
    <para>
     In <productname>PostgreSQL</productname>, you can request any of the
     four standard transaction isolation levels.  But internally, there are
-    only two distinct isolation levels, which correspond to the levels Read
-    Committed and Serializable.  When you select the level Read
-    Uncommitted you really get Read Committed, and when you select
-    Repeatable Read you really get Serializable, so the actual
+    only three distinct isolation levels, which correspond to the levels Read
+    Committed, Repeatable Read, and Serializable.  When you select the level Read
+    Uncommitted you really get Read Committed, and phantom reads are not possible
+    in the <productname>PostgreSQL</productname> implementation of Repeatable
+    Read, so the actual
     isolation level might be stricter than what you select.  This is
     permitted by the SQL standard: the four isolation levels only
     define which phenomena must not happen, they do not define which
     phenomena must happen.  The reason that <productname>PostgreSQL</>
-    only provides two isolation levels is that this is the only
+    only provides three isolation levels is that this is the only
     sensible way to map the standard isolation levels to the multiversion
     concurrency control architecture.  The behavior of the available
     isolation levels is detailed in the following subsections.
@@ -236,6 +266,10 @@
    <indexterm>
     <primary>transaction isolation level</primary>
     <secondary>read committed</secondary>
+   </indexterm>
+
+   <indexterm>
+    <primary>read committed</primary>
    </indexterm>
 
    <para>
@@ -345,39 +379,46 @@ COMMIT;
    </para>
   </sect2>
 
-  <sect2 id="xact-serializable">
-   <title>Serializable Isolation Level</title>
+  <sect2 id="xact-repeatable-read">
+   <title>Repeatable Read Isolation Level</title>
 
    <indexterm>
     <primary>transaction isolation level</primary>
-    <secondary>serializable</secondary>
+    <secondary>repeatable read</secondary>
+   </indexterm>
+
+   <indexterm>
+    <primary>repeatable read</primary>
    </indexterm>
 
    <para>
-    The <firstterm>Serializable</firstterm> isolation level provides the strictest transaction
-    isolation.  This level emulates serial transaction execution,
-    as if transactions had been executed one after another, serially,
-    rather than concurrently.  However, applications using this level must
-    be prepared to retry transactions due to serialization failures.
+    The <firstterm>Repeatable Read</firstterm> isolation level only sees
+    data committed before the transaction began; it never sees either
+    uncommitted data or changes committed during transaction execution
+    by concurrent transactions.  (However, the query does see the
+    effects of previous updates executed within its own transaction,
+    even though they are not yet committed.)  This is a stronger
+    guarantee than is required by the <acronym>SQL</acronym> standard
+    for this isolation level, and prevents all of the phenomena described
+    in <xref linkend="mvcc-isolevel-table">.  As mentioned above, this is
+    specifically allowed by the standard, which only describes the
+    <emphasis>minimum</emphasis> protections each isolation level must
+    provide.
    </para>
 
    <para>
-    When a transaction is using the serializable level,
-    a <command>SELECT</command> query only sees data committed before the
-    transaction began; it never sees either uncommitted data or changes
-    committed
-    during transaction execution by concurrent transactions.  (However,
-    the query does see the effects of previous updates
-    executed within its own transaction, even though they are not yet
-    committed.)  This is different from Read Committed in that
-    a query in a serializable transaction
-    sees a snapshot as of the start of the <emphasis>transaction</>,
-    not as of the start
+    This level is different from Read Committed in that a query in a
+    repeatable read transaction sees a snapshot as of the start of the
+    <emphasis>transaction</>, not as of the start
     of the current query within the transaction.  Thus, successive
     <command>SELECT</command> commands within a <emphasis>single</>
     transaction see the same data, i.e., they do not see changes made by
     other transactions that committed after their own transaction started.
-    (This behavior can be ideal for reporting applications.)
+   </para>
+
+   <para>
+    Applications using this level must be prepared to retry transactions
+    due to serialization failures.
    </para>
 
    <para>
@@ -386,22 +427,21 @@ COMMIT;
     behave the same as <command>SELECT</command>
     in terms of searching for target rows: they will only find target rows
     that were committed as of the transaction start time.  However, such a
-    target
-    row might have already been updated (or deleted or locked) by
+    target row might have already been updated (or deleted or locked) by
     another concurrent transaction by the time it is found.  In this case, the
-    serializable transaction will wait for the first updating transaction to commit or
+    repeatable read transaction will wait for the first updating transaction to commit or
     roll back (if it is still in progress).  If the first updater rolls back,
-    then its effects are negated and the serializable transaction can proceed
+    then its effects are negated and the repeatable read transaction can proceed
     with updating the originally found row.  But if the first updater commits
     (and actually updated or deleted the row, not just locked it)
-    then the serializable transaction will be rolled back with the message
+    then the repeatable read transaction will be rolled back with the message
 
 <screen>
 ERROR:  could not serialize access due to concurrent update
 </screen>
 
-    because a serializable transaction cannot modify or lock rows changed by
-    other transactions after the serializable transaction began.
+    because a repeatable read transaction cannot modify or lock rows changed by
+    other transactions after the repeatable read transaction began.
    </para>
 
    <para>
@@ -419,39 +459,70 @@ ERROR:  could not serialize access due to concurrent update
    </para>
 
    <para>
-    The Serializable mode provides a rigorous guarantee that each
-    transaction sees a wholly consistent view of the database.  However,
-    the application has to be prepared to retry transactions when concurrent
-    updates make it impossible to sustain the illusion of serial execution.
-    Since the cost of redoing complex transactions can be significant,
-    serializable mode is recommended only when updating transactions contain logic
-    sufficiently complex that they might give wrong answers in Read
-    Committed mode.  Most commonly, Serializable mode is necessary when
-    a transaction executes several successive commands that must see
-    identical views of the database.
+    The Repeatable Read mode provides a rigorous guarantee that each
+    transaction sees a completely stable view of the database.  However,
+    this view will not necessarily always be consistent with some serial
+    (one at a time) execution of concurrent transactions of the same level.
+    For example, even a read only transaction at this level may see a
+    control record updated to show that a batch has been completed but
+    <emphasis>not</emphasis> see one of the detail records which is logically
+    part of the batch because it read an earlier revision of the control
+    record.  Attempts to enforce business rules by transactions running at
+    this isolation level are not likely to work correctly without careful use
+    of explicit locks to block conflicting transactions.
    </para>
 
-   <sect3 id="mvcc-serializability">
-    <title>Serializable Isolation Versus True Serializability</title>
+   <note>
+    <para>
+     Prior to <productname>PostgreSQL</productname> version 9.1, a request
+     for the Serializable transaction isolation level provided exactly the
+     same behavior described here.  To retain the legacy Serializable
+     behavior, Repeatable Read should now be requested.
+    </para>
+   </note>
+  </sect2>
+
+  <sect2 id="xact-serializable">
+   <title>Serializable Isolation Level</title>
 
    <indexterm>
-    <primary>serializability</primary>
+    <primary>transaction isolation level</primary>
+    <secondary>serializable</secondary>
+   </indexterm>
+
+   <indexterm>
+    <primary>serializable</primary>
    </indexterm>
 
    <indexterm>
     <primary>predicate locking</primary>
    </indexterm>
 
+   <indexterm>
+    <primary>serialization anomaly</primary>
+   </indexterm>
+
    <para>
-    The intuitive meaning (and mathematical definition) of
-    <quote>serializable</> execution is that any two successfully committed
-    concurrent transactions will appear to have executed strictly serially,
-    one after the other &mdash; although which one appeared to occur first might
-    not be predictable in advance.  It is important to realize that forbidding
-    the undesirable behaviors listed in <xref linkend="mvcc-isolevel-table">
-    is not sufficient to guarantee true serializability, and in fact
-    <productname>PostgreSQL</productname>'s Serializable mode <emphasis>does
-    not guarantee serializable execution in this sense</>.  As an example,
+    The <firstterm>Serializable</firstterm> isolation level provides the strictest transaction
+    isolation.  This level emulates serial transaction execution,
+    as if transactions had been executed one after another, serially,
+    rather than concurrently.  However, like the Repeatable Read level,
+    applications using this level must
+    be prepared to retry transactions due to serialization failures.
+    In fact, this isolation level works exactly the same as Repeatable
+    Read except that it monitors for conditions which could make
+    execution of a concurrent set of serializable transactions behave
+    in a manner inconsistent with all possible serial (one at a time)
+    executions of those transactions.  This monitoring does not
+    introduce any blocking beyond that present in repeatable read, but
+    there is some overhead to the monitoring, and detection of the
+    conditions which could cause a
+    <firstterm>serialization anomaly</firstterm> will trigger a
+    <firstterm>serialization failure</firstterm>.
+   </para>
+
+   <para>
+    As an example,
     consider a table <structname>mytab</>, initially containing:
 <screen>
  class | value 
@@ -472,48 +543,137 @@ SELECT SUM(value) FROM mytab WHERE class = 1;
 SELECT SUM(value) FROM mytab WHERE class = 2;
 </screen>
     and obtains the result 300, which it inserts in a new row with
-    <structfield>class</><literal> = 1</>.  Then both transactions commit.  None of
-    the listed undesirable behaviors have occurred, yet we have a result
-    that could not have occurred in either order serially.  If A had
+    <structfield>class</><literal> = 1</>.  Then both transactions try to commit.
+    If either transaction were running at the Repeatable Read isolation level,
+    both would be allowed to commit; but since there is no serial order of execution
+    consistent with the result, using Serializable transactions will allow one
+    transaction to commit and and will roll the other back with this message:
+
+<screen>
+ERROR:  could not serialize access due to read/write dependencies among transactions
+</screen>
+
+    This is because if A had
     executed before B, B would have computed the sum 330, not 300, and
     similarly the other order would have resulted in a different sum
     computed by A.
    </para>
 
    <para>
-    To guarantee true mathematical serializability, it is necessary for
-    a database system to enforce <firstterm>predicate locking</>, which
-    means that a transaction cannot insert or modify a row that would
-    have matched the <literal>WHERE</> condition of a query in another concurrent
-    transaction.  For example, once transaction A has executed the query
-    <literal>SELECT ... WHERE class = 1</>, a predicate-locking system
-    would forbid transaction B from inserting any new row with class 1
-    until A has committed.
-     <footnote>
-      <para>
-       Essentially, a predicate-locking system prevents phantom reads
-       by restricting what is written, whereas MVCC prevents them by
-       restricting what is read.
-      </para>
-     </footnote>
-    Such a locking system is complex to
-    implement and extremely expensive in execution, since every session must
-    be aware of the details of every query executed by every concurrent
-    transaction.  And this large expense is mostly wasted, since in
-    practice most applications do not do the sorts of things that could
-    result in problems.  (Certainly the example above is rather contrived
-    and unlikely to represent real software.)  For these reasons,
-    <productname>PostgreSQL</productname> does not implement predicate
-    locking.
+    To guarantee true serializability <productname>PostgreSQL</productname>
+    uses <firstterm>predicate locking</>, which means that it keeps locks
+    which allow it to determine when a write would have had an impact on
+    the result of a previous read from a concurrent transaction, had it run
+    first.  In <productname>PostgreSQL</productname> these locks do not
+    cause any blocking and therefore can <emphasis>not</> play any part in
+    causing a deadlock.  They are used to identify and flag dependencies
+    among concurrent serializable transactions which in certain combinations
+    can lead to serialization anomalies.  In contrast, a Read Committed or
+    Repeatable Read transaction which wants to ensure data consistency may
+    need to take out a lock on an entire table, which could block other
+    users attempting to use that table, or it may use <literal>SELECT FOR
+    UPDATE</literal> or <literal>SELECT FOR SHARE</literal> which not only
+    can block other transactions but cause disk access.
    </para>
 
    <para>
-    In cases where the possibility of non-serializable execution
-    is a real hazard, problems can be prevented by appropriate use of
-    explicit locking.  Further discussion appears in the following
-    sections.
+    Predicate locks in <productname>PostgreSQL</productname>, like in most
+    other database systems, are based on data actually accessed by a
+    transaction.  These will show up in the
+    <link linkend="view-pg-locks"><structname>pg_locks</structname></link>
+    system view with a <literal>mode</> of <literal>SIReadLock</>.  The
+    particular locks
+    acquired during execution of a query will depend on the plan used by
+    the query, and multiple finer-grained locks (e.g., tuple locks) may be
+    combined into fewer coarser-grained locks (e.g., page locks) during the
+    course of the transaction to prevent exhaustion of the memory used to
+    track the locks.  A <literal>READ ONLY</> transaction may be able to
+    release its SIRead locks before completion, if it detects that no
+    conflicts can still occur which could lead to a serialization anomaly.
+    In fact, <literal>READ ONLY</> transactions will often be able to
+    establish that fact at startup and avoid taking any predicate locks.
+    If you explicitly request a <literal>SERIALIZABLE READ ONLY DEFERRABLE</>
+    transaction, it will block until it can establish this fact.  (This is
+    the <emphasis>only</> case where Serializable transactions block but
+    Repeatable Read transactions don't.)  On the other hand, SIRead locks
+    often need to be kept past transaction commit, until overlapping read
+    write transactions complete.
    </para>
-  </sect3>
+
+   <para>
+    Consistent use of Serializable transactions can simplify development.
+    The guarantee that any set of concurrent serializable transactions will
+    have the same effect as if they were run one at a time means that if
+    you can demonstrate that a singe transaction, as written, will do the
+    right thing when run by itself, you can have confidence that it will
+    do the right thing in any mix of serializable transactions, even without
+    any information about what those other transactions might do.  It is
+    important that an environment which uses this technique have a
+    generalized way of handling serialization failures (which always return
+    with a SQLSTATE value of '40001'), because it will be very hard to
+    predict exactly which transactions might contribute to the read/write
+    dependencies and need to be rolled back to prevent serialization
+    anomalies.  The monitoring of read/write dependences has a cost, as does
+    the restart of transactions which are terminated with a serialization
+    failure, but balanced against the cost and blocking involved in use of
+    explicit locks and <literal>SELECT FOR UPDATE</> or <literal>SELECT FOR
+    SHARE</>, Serializable transactions are the best performance choice
+    for some environments.
+   </para>
+
+   <para>
+    For optimal performance when relying on Serializable transactions for
+    concurrency control, these issues should be considered:
+
+    <itemizedlist>
+     <listitem>
+      <para>
+       Declare transactions as <literal>READ ONLY</> when possible.
+      </para>
+     </listitem>
+     <listitem>
+      <para>
+       Control the number of active connections, using a connection pool if
+       needed.  This is always an important performance consideration, but
+       it can be paricularly important in a busy system using Serializable
+       transactions.
+      </para>
+     </listitem>
+     <listitem>
+      <para>
+       Don't put more into a single transaction than needed for integrity
+       purposes.
+      </para>
+     </listitem>
+     <listitem>
+      <para>
+       Don't leave connections dangling <quote>idle in transaction</quote>
+       longer than necessary.
+      </para>
+     </listitem>
+     <listitem>
+      <para>
+       Eliminate explicit locks, <literal>SELECT FOR UPDATE</>, and
+       <literal>SELECT FOR SHARE</> where no longer needed due to the
+       protections automatically provided by Serializable transactions.
+      </para>
+     </listitem>
+    </itemizedlist>
+   </para>
+
+   <warning>
+    <para>
+     Support for the Serializable transaction isolation level has not yet
+     been added to Hot Standby replication targets (described in
+     <xref linkend="hot-standby">).  The strictest isolation level currently
+     supported in hot standby mode is Repeatable Read.  While performing all
+     permanent database writes within Serializable transactions on the
+     master will ensure that all standbys will eventually reach a consistent
+     state, a Repeatable Read transaction run on the standby can sometimes
+     see a transient state which in inconsistent with any serial execution
+     of serializable transactions on the master.
+    </para>
+   </warning>
   </sect2>
  </sect1>
 
@@ -1109,80 +1269,148 @@ SELECT pg_advisory_lock(q.id) FROM
    <title>Data Consistency Checks at the Application Level</title>
 
    <para>
-    Because readers in <productname>PostgreSQL</productname>
-    do not lock data, regardless of
-    transaction isolation level, data read by one transaction can be
-    overwritten by another concurrent transaction. In other words,
-    if a row is returned by <command>SELECT</command> it doesn't mean that
-    the row is still current at the instant it is returned (i.e., sometime
-    after the current query began).  The row might have been modified or
-    deleted by an already-committed transaction that committed after
-    the <command>SELECT</command> started.
-    Even if the row is still valid <quote>now</>, it could be changed or
-    deleted
-    before the current transaction does a commit or rollback.
+    It is very difficult to enforce business rules regarding data integrity
+    using Read Committed transactions because the view of the data is
+    shifting with each statement, and even a single statement may not
+    restrict itself to the statement's snapshot if a write conflict occurs.
    </para>
 
    <para>
-    Another way to think about it is that each
-    transaction sees a snapshot of the database contents, and concurrently
-    executing transactions might very well see different snapshots.  So the
-    whole concept of <quote>now</quote> is somewhat ill-defined anyway.
-    This is not normally
-    a big problem if the client applications are isolated from each other,
-    but if the clients can communicate via channels outside the database
-    then serious confusion might ensue.
+    While a Repeatable Read transaction has a stable view of the data
+    throughout its execution, there is a subtle issue with using
+    <acronym>MVCC</acronym> snapshots for data consistency checks, involving
+    something known as <firstterm>read/write conflicts</firstterm>.
+    If one transaction writes data and a concurrent transaction attempts
+    to read the same data (whether before or after the write), it cannot
+    see the work of the other transaction.  The reader then appears to have
+    executed first regardless of which started first or which committed
+    first.  If that is as far as it goes, there is no problem, but
+    if the reader also writes data which is read by a concurrent transaction
+    there is now a transaction which appears to have run before either of
+    the previously mentioned transactions.  If the transaction which appears
+    to have executed last actually commits first, it is very easy for a
+    cycle to appear in a graph of the order of execution of the transactions.
+    When such a cycle appears, integrity checks will not work correctly
+    without some help.
    </para>
 
    <para>
-    To ensure the current validity of a row and protect it against
-    concurrent updates one must use <command>SELECT FOR UPDATE</command>,
-    <command>SELECT FOR SHARE</command>, or an appropriate <command>LOCK
-    TABLE</command> statement.  (<command>SELECT FOR UPDATE</command>
-    and <command>SELECT FOR SHARE</command> lock just the
-    returned rows against concurrent updates, while <command>LOCK
-    TABLE</command> locks the whole table.)  This should be taken into
-    account when porting applications to
-    <productname>PostgreSQL</productname> from other environments.
+    As mentioned in <xref linkend="xact-serializable">, Serializable
+    transactions are just Repeatable Read transactions which add
+    non-blocking monitoring for dangerous patterns of read/write conflicts.
+    When a pattern is detected which could cause a cycle in the apparent
+    order of execution, one of the transactions involved is rolled back to
+    break the cycle.
    </para>
 
-   <para>
-    Global validity checks require extra thought under <acronym>MVCC</acronym>.
-    For example, a banking application might wish to check that the sum of
-    all credits in one table equals the sum of debits in another table,
-    when both tables are being actively updated.  Comparing the results of two
-    successive <literal>SELECT sum(...)</literal> commands will not work reliably in
-    Read Committed mode, since the second query will likely include the results
-    of transactions not counted by the first.  Doing the two sums in a
-    single serializable transaction will give an accurate picture of only the
-    effects of transactions that committed before the serializable transaction
-    started &mdash; but one might legitimately wonder whether the answer is still
-    relevant by the time it is delivered.  If the serializable transaction
-    itself applied some changes before trying to make the consistency check,
-    the usefulness of the check becomes even more debatable, since now it
-    includes some but not all post-transaction-start changes.  In such cases
-    a careful person might wish to lock all tables needed for the check,
-    in order to get an indisputable picture of current reality.  A
-    <literal>SHARE</> mode (or higher) lock guarantees that there are no
-    uncommitted changes in the locked table, other than those of the current
-    transaction.
-   </para>
+   <sect2 id="serializable-consistency">
+    <title>Enforcing Consistency With Serializable Transactions</title>
 
-   <para>
-    Note also that if one is relying on explicit locking to prevent concurrent
-    changes, one should either use Read Committed mode, or in Serializable
-    mode be careful to obtain
-    locks before performing queries.  A lock obtained by a
-    serializable transaction guarantees that no other transactions modifying
-    the table are still running, but if the snapshot seen by the
-    transaction predates obtaining the lock, it might predate some now-committed
-    changes in the table.  A serializable transaction's snapshot is actually
-    frozen at the start of its first query or data-modification command
-    (<literal>SELECT</>, <literal>INSERT</>,
-    <literal>UPDATE</>, or <literal>DELETE</>), so
-    it is possible to obtain locks explicitly before the snapshot is
-    frozen.
-   </para>
+    <para>
+     If the Serializable transaction isolation level is used for all writes
+     and for all reads which need a consistent view of the data, no other
+     effort is required to ensure consistency.  Software from other
+     environments which is written to use serializable transactions to
+     ensure consistency should <quote>just work</quote> in this regard in
+     <productname>PostgreSQL</productname>.
+    </para>
+
+    <para>
+     When using this technique, it will avoid creating an unnecessary burden
+     for application programmers if the application software goes through a
+     framework which automatically retries transactions which are rolled
+     back with a serialization failure.  It may be a good idea to set
+     <literal>default_transaction_isolation</> to <literal>serializable</>.
+     It would also be wise to take some action to ensure that no other
+     transaction isolation level is used, either inadvertently or to
+     subvert integrity checks, through checks of the transaction isolation
+     level in triggers.
+    </para>
+
+    <para>
+     See <xref linkend="xact-serializable"> for performance suggestions.
+    </para>
+
+    <warning>
+     <para>
+      This level of integrity protection using Serializable transactions
+      does not yet extend to hot standby mode (<xref linkend="hot-standby">).
+      Because of that, those using hot standby may want to use Repeatable
+      Read and explicit locking.on the master.
+     </para>
+    </warning>
+   </sect2>
+
+   <sect2 id="non-serializable-consistency">
+    <title>Enforcing Consistency With Explicit Blocking Locks</title>
+
+    <para>
+     When non-serializable writes are possible,
+     to ensure the current validity of a row and protect it against
+     concurrent updates one must use <command>SELECT FOR UPDATE</command>,
+     <command>SELECT FOR SHARE</command>, or an appropriate <command>LOCK
+     TABLE</command> statement.  (<command>SELECT FOR UPDATE</command>
+     and <command>SELECT FOR SHARE</command> lock just the
+     returned rows against concurrent updates, while <command>LOCK
+     TABLE</command> locks the whole table.)  This should be taken into
+     account when porting applications to
+     <productname>PostgreSQL</productname> from other environments.
+    </para>
+
+    <para>
+     Also of note to those converting from other environments is the fact
+     that <command>SELECT FOR UPDATE</command> does not ensure that a
+     concurrent transaction will not update or delete a selected row.
+     To do that in <productname>PostgreSQL</productname> you must actually
+     update the row, even if no values need to be changed.
+     <command>SELECT FOR UPDATE</command> <emphasis>temporarily blocks</emphasis>
+     other transactions from acquiring the same lock or executing an
+     <command>UPDATE</command> or <command>DELETE</command> which would
+     affect the locked row, but once the transaction holding this lock
+     commits or rolls back, a blocked transaction will proceed with the
+     conflicting operation unless an actual <command>UPDATE</command> of
+     the row was performed while the lock was held.
+    </para>
+
+    <para>
+     Global validity checks require extra thought under
+     non-serializable <acronym>MVCC</acronym>.
+     For example, a banking application might wish to check that the sum of
+     all credits in one table equals the sum of debits in another table,
+     when both tables are being actively updated.  Comparing the results of two
+     successive <literal>SELECT sum(...)</literal> commands will not work reliably in
+     Read Committed mode, since the second query will likely include the results
+     of transactions not counted by the first.  Doing the two sums in a
+     single repeatable read transaction will give an accurate picture of only the
+     effects of transactions that committed before the repeatable read transaction
+     started &mdash; but one might legitimately wonder whether the answer is still
+     relevant by the time it is delivered.  If the repeatable read transaction
+     itself applied some changes before trying to make the consistency check,
+     the usefulness of the check becomes even more debatable, since now it
+     includes some but not all post-transaction-start changes.  In such cases
+     a careful person might wish to lock all tables needed for the check,
+     in order to get an indisputable picture of current reality.  A
+     <literal>SHARE</> mode (or higher) lock guarantees that there are no
+     uncommitted changes in the locked table, other than those of the current
+     transaction.
+    </para>
+
+    <para>
+     Note also that if one is relying on explicit locking to prevent concurrent
+     changes, one should either use Read Committed mode, or in Repeatable Read
+     mode be careful to obtain
+     locks before performing queries.  A lock obtained by a
+     repeatable read transaction guarantees that no other transactions modifying
+     the table are still running, but if the snapshot seen by the
+     transaction predates obtaining the lock, it might predate some now-committed
+     changes in the table.  A repeatable read transaction's snapshot is actually
+     frozen at the start of its first query or data-modification command
+     (<literal>SELECT</>, <literal>INSERT</>,
+     <literal>UPDATE</>, or <literal>DELETE</>), so
+     it is possible to obtain locks explicitly before the snapshot is
+     frozen.
+    </para>
+   </sect2>
   </sect1>
 
   <sect1 id="locking-indexes">

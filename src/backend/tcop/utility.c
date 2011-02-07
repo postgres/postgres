@@ -374,6 +374,10 @@ standard_ProcessUtility(Node *parsetree,
 									SetPGVariable("transaction_read_only",
 												  list_make1(item->arg),
 												  true);
+								else if (strcmp(item->defname, "transaction_deferrable") == 0)
+									SetPGVariable("transaction_deferrable",
+												  list_make1(item->arg),
+												  true);
 							}
 						}
 						break;

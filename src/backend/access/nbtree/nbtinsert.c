@@ -21,6 +21,7 @@
 #include "miscadmin.h"
 #include "storage/bufmgr.h"
 #include "storage/lmgr.h"
+#include "storage/predicate.h"
 #include "utils/inval.h"
 #include "utils/tqual.h"
 
@@ -174,6 +175,14 @@ top:
 
 	if (checkUnique != UNIQUE_CHECK_EXISTING)
 	{
+		/*
+		 * The only conflict predicate locking cares about for indexes is when
+		 * an index tuple insert conflicts with an existing lock.  Since the
+		 * actual location of the insert is hard to predict because of the
+		 * random search used to prevent O(N^2) performance when there are many
+		 * duplicate entries, we can just use the "first valid" page.
+		 */
+		CheckForSerializableConflictIn(rel, NULL, buf);
 		/* do the insertion */
 		_bt_findinsertloc(rel, &buf, &offset, natts, itup_scankey, itup, heapRel);
 		_bt_insertonpg(rel, buf, stack, itup, offset, false);
@@ -696,6 +705,9 @@ _bt_insertonpg(Relation rel,
 		/* split the buffer into left and right halves */
 		rbuf = _bt_split(rel, buf, firstright,
 						 newitemoff, itemsz, itup, newitemonleft);
+		PredicateLockPageSplit(rel,
+							   BufferGetBlockNumber(buf),
+							   BufferGetBlockNumber(rbuf));
 
 		/*----------
 		 * By here,

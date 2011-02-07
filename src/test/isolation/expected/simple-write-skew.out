@@ -1,0 +1,41 @@
+Parsed test spec with 2 sessions
+
+starting permutation: rwx1 c1 rwx2 c2
+step rwx1:  UPDATE test SET t = 'apple' WHERE t = 'pear'; 
+step c1:  COMMIT; 
+step rwx2:  UPDATE test SET t = 'pear' WHERE t = 'apple'
+step c2:  COMMIT; 
+
+starting permutation: rwx1 rwx2 c1 c2
+step rwx1:  UPDATE test SET t = 'apple' WHERE t = 'pear'; 
+step rwx2:  UPDATE test SET t = 'pear' WHERE t = 'apple'
+step c1:  COMMIT; 
+step c2:  COMMIT; 
+ERROR:  could not serialize access due to read/write dependencies among transactions
+
+starting permutation: rwx1 rwx2 c2 c1
+step rwx1:  UPDATE test SET t = 'apple' WHERE t = 'pear'; 
+step rwx2:  UPDATE test SET t = 'pear' WHERE t = 'apple'
+step c2:  COMMIT; 
+step c1:  COMMIT; 
+ERROR:  could not serialize access due to read/write dependencies among transactions
+
+starting permutation: rwx2 rwx1 c1 c2
+step rwx2:  UPDATE test SET t = 'pear' WHERE t = 'apple'
+step rwx1:  UPDATE test SET t = 'apple' WHERE t = 'pear'; 
+step c1:  COMMIT; 
+step c2:  COMMIT; 
+ERROR:  could not serialize access due to read/write dependencies among transactions
+
+starting permutation: rwx2 rwx1 c2 c1
+step rwx2:  UPDATE test SET t = 'pear' WHERE t = 'apple'
+step rwx1:  UPDATE test SET t = 'apple' WHERE t = 'pear'; 
+step c2:  COMMIT; 
+step c1:  COMMIT; 
+ERROR:  could not serialize access due to read/write dependencies among transactions
+
+starting permutation: rwx2 c2 rwx1 c1
+step rwx2:  UPDATE test SET t = 'pear' WHERE t = 'apple'
+step c2:  COMMIT; 
+step rwx1:  UPDATE test SET t = 'apple' WHERE t = 'pear'; 
+step c1:  COMMIT; 

@@ -64,9 +64,11 @@
 
 #include "access/relscan.h"
 #include "access/transam.h"
+#include "access/xact.h"
 #include "pgstat.h"
 #include "storage/bufmgr.h"
 #include "storage/lmgr.h"
+#include "storage/predicate.h"
 #include "utils/relcache.h"
 #include "utils/snapmgr.h"
 #include "utils/tqual.h"
@@ -192,6 +194,11 @@ index_insert(Relation indexRelation,
 	RELATION_CHECKS;
 	GET_REL_PROCEDURE(aminsert);
 
+	if (!(indexRelation->rd_am->ampredlocks))
+		CheckForSerializableConflictIn(indexRelation,
+									   (HeapTuple) NULL,
+									   InvalidBuffer);
+
 	/*
 	 * have the am's insert proc do all the work.
 	 */
@@ -265,6 +272,9 @@ index_beginscan_internal(Relation indexRelation,
 
 	RELATION_CHECKS;
 	GET_REL_PROCEDURE(ambeginscan);
+
+	if (!(indexRelation->rd_am->ampredlocks))
+		PredicateLockRelation(indexRelation);
 
 	/*
 	 * We hold a reference count to the relcache entry throughout the scan.
@@ -523,6 +533,7 @@ index_getnext(IndexScanDesc scan, ScanDirection direction)
 		{
 			ItemId		lp;
 			ItemPointer ctid;
+			bool		valid;
 
 			/* check for bogus TID */
 			if (offnum < FirstOffsetNumber ||
@@ -577,8 +588,13 @@ index_getnext(IndexScanDesc scan, ScanDirection direction)
 				break;
 
 			/* If it's visible per the snapshot, we must return it */
-			if (HeapTupleSatisfiesVisibility(heapTuple, scan->xs_snapshot,
-											 scan->xs_cbuf))
+			valid = HeapTupleSatisfiesVisibility(heapTuple, scan->xs_snapshot,
+												 scan->xs_cbuf);
+
+			CheckForSerializableConflictOut(valid, scan->heapRelation,
+											heapTuple, scan->xs_cbuf);
+
+			if (valid)
 			{
 				/*
 				 * If the snapshot is MVCC, we know that it could accept at
@@ -586,7 +602,8 @@ index_getnext(IndexScanDesc scan, ScanDirection direction)
 				 * any more members.  Otherwise, check for continuation of the
 				 * HOT-chain, and set state for next time.
 				 */
-				if (IsMVCCSnapshot(scan->xs_snapshot))
+				if (IsMVCCSnapshot(scan->xs_snapshot)
+					&& !IsolationIsSerializable())
 					scan->xs_next_hot = InvalidOffsetNumber;
 				else if (HeapTupleIsHotUpdated(heapTuple))
 				{
@@ -597,6 +614,8 @@ index_getnext(IndexScanDesc scan, ScanDirection direction)
 				}
 				else
 					scan->xs_next_hot = InvalidOffsetNumber;
+
+				PredicateLockTuple(scan->heapRelation, heapTuple);
 
 				LockBuffer(scan->xs_cbuf, BUFFER_LOCK_UNLOCK);
 

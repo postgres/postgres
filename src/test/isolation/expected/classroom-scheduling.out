@@ -1,0 +1,299 @@
+Parsed test spec with 2 sessions
+
+starting permutation: rx1 wy1 c1 ry2 wx2 c2
+step rx1:  SELECT count(*) FROM room_reservation WHERE room_id = '101' AND start_time < TIMESTAMP WITH TIME ZONE '2010-04-01 14:00' AND end_time > TIMESTAMP WITH TIME ZONE '2010-04-01 13:00'; 
+count          
+
+0              
+step wy1:  INSERT INTO room_reservation VALUES ('101', TIMESTAMP WITH TIME ZONE '2010-04-01 13:00', TIMESTAMP WITH TIME ZONE '2010-04-01 14:00', 'Carol'); 
+step c1:  COMMIT; 
+step ry2:  SELECT count(*) FROM room_reservation WHERE room_id = '101' AND start_time < TIMESTAMP WITH TIME ZONE '2010-04-01 14:30' AND end_time > TIMESTAMP WITH TIME ZONE '2010-04-01 13:30'; 
+count          
+
+1              
+step wx2:  UPDATE room_reservation SET start_time = TIMESTAMP WITH TIME ZONE '2010-04-01 13:30', end_time = TIMESTAMP WITH TIME ZONE '2010-04-01 14:30' WHERE room_id = '101' AND start_time = TIMESTAMP WITH TIME ZONE '2010-04-01 10:00'; 
+step c2:  COMMIT; 
+
+starting permutation: rx1 wy1 ry2 c1 wx2 c2
+step rx1:  SELECT count(*) FROM room_reservation WHERE room_id = '101' AND start_time < TIMESTAMP WITH TIME ZONE '2010-04-01 14:00' AND end_time > TIMESTAMP WITH TIME ZONE '2010-04-01 13:00'; 
+count          
+
+0              
+step wy1:  INSERT INTO room_reservation VALUES ('101', TIMESTAMP WITH TIME ZONE '2010-04-01 13:00', TIMESTAMP WITH TIME ZONE '2010-04-01 14:00', 'Carol'); 
+step ry2:  SELECT count(*) FROM room_reservation WHERE room_id = '101' AND start_time < TIMESTAMP WITH TIME ZONE '2010-04-01 14:30' AND end_time > TIMESTAMP WITH TIME ZONE '2010-04-01 13:30'; 
+count          
+
+0              
+step c1:  COMMIT; 
+step wx2:  UPDATE room_reservation SET start_time = TIMESTAMP WITH TIME ZONE '2010-04-01 13:30', end_time = TIMESTAMP WITH TIME ZONE '2010-04-01 14:30' WHERE room_id = '101' AND start_time = TIMESTAMP WITH TIME ZONE '2010-04-01 10:00'; 
+ERROR:  could not serialize access due to read/write dependencies among transactions
+step c2:  COMMIT; 
+
+starting permutation: rx1 wy1 ry2 wx2 c1 c2
+step rx1:  SELECT count(*) FROM room_reservation WHERE room_id = '101' AND start_time < TIMESTAMP WITH TIME ZONE '2010-04-01 14:00' AND end_time > TIMESTAMP WITH TIME ZONE '2010-04-01 13:00'; 
+count          
+
+0              
+step wy1:  INSERT INTO room_reservation VALUES ('101', TIMESTAMP WITH TIME ZONE '2010-04-01 13:00', TIMESTAMP WITH TIME ZONE '2010-04-01 14:00', 'Carol'); 
+step ry2:  SELECT count(*) FROM room_reservation WHERE room_id = '101' AND start_time < TIMESTAMP WITH TIME ZONE '2010-04-01 14:30' AND end_time > TIMESTAMP WITH TIME ZONE '2010-04-01 13:30'; 
+count          
+
+0              
+step wx2:  UPDATE room_reservation SET start_time = TIMESTAMP WITH TIME ZONE '2010-04-01 13:30', end_time = TIMESTAMP WITH TIME ZONE '2010-04-01 14:30' WHERE room_id = '101' AND start_time = TIMESTAMP WITH TIME ZONE '2010-04-01 10:00'; 
+step c1:  COMMIT; 
+step c2:  COMMIT; 
+ERROR:  could not serialize access due to read/write dependencies among transactions
+
+starting permutation: rx1 wy1 ry2 wx2 c2 c1
+step rx1:  SELECT count(*) FROM room_reservation WHERE room_id = '101' AND start_time < TIMESTAMP WITH TIME ZONE '2010-04-01 14:00' AND end_time > TIMESTAMP WITH TIME ZONE '2010-04-01 13:00'; 
+count          
+
+0              
+step wy1:  INSERT INTO room_reservation VALUES ('101', TIMESTAMP WITH TIME ZONE '2010-04-01 13:00', TIMESTAMP WITH TIME ZONE '2010-04-01 14:00', 'Carol'); 
+step ry2:  SELECT count(*) FROM room_reservation WHERE room_id = '101' AND start_time < TIMESTAMP WITH TIME ZONE '2010-04-01 14:30' AND end_time > TIMESTAMP WITH TIME ZONE '2010-04-01 13:30'; 
+count          
+
+0              
+step wx2:  UPDATE room_reservation SET start_time = TIMESTAMP WITH TIME ZONE '2010-04-01 13:30', end_time = TIMESTAMP WITH TIME ZONE '2010-04-01 14:30' WHERE room_id = '101' AND start_time = TIMESTAMP WITH TIME ZONE '2010-04-01 10:00'; 
+step c2:  COMMIT; 
+step c1:  COMMIT; 
+ERROR:  could not serialize access due to read/write dependencies among transactions
+
+starting permutation: rx1 ry2 wy1 c1 wx2 c2
+step rx1:  SELECT count(*) FROM room_reservation WHERE room_id = '101' AND start_time < TIMESTAMP WITH TIME ZONE '2010-04-01 14:00' AND end_time > TIMESTAMP WITH TIME ZONE '2010-04-01 13:00'; 
+count          
+
+0              
+step ry2:  SELECT count(*) FROM room_reservation WHERE room_id = '101' AND start_time < TIMESTAMP WITH TIME ZONE '2010-04-01 14:30' AND end_time > TIMESTAMP WITH TIME ZONE '2010-04-01 13:30'; 
+count          
+
+0              
+step wy1:  INSERT INTO room_reservation VALUES ('101', TIMESTAMP WITH TIME ZONE '2010-04-01 13:00', TIMESTAMP WITH TIME ZONE '2010-04-01 14:00', 'Carol'); 
+step c1:  COMMIT; 
+step wx2:  UPDATE room_reservation SET start_time = TIMESTAMP WITH TIME ZONE '2010-04-01 13:30', end_time = TIMESTAMP WITH TIME ZONE '2010-04-01 14:30' WHERE room_id = '101' AND start_time = TIMESTAMP WITH TIME ZONE '2010-04-01 10:00'; 
+ERROR:  could not serialize access due to read/write dependencies among transactions
+step c2:  COMMIT; 
+
+starting permutation: rx1 ry2 wy1 wx2 c1 c2
+step rx1:  SELECT count(*) FROM room_reservation WHERE room_id = '101' AND start_time < TIMESTAMP WITH TIME ZONE '2010-04-01 14:00' AND end_time > TIMESTAMP WITH TIME ZONE '2010-04-01 13:00'; 
+count          
+
+0              
+step ry2:  SELECT count(*) FROM room_reservation WHERE room_id = '101' AND start_time < TIMESTAMP WITH TIME ZONE '2010-04-01 14:30' AND end_time > TIMESTAMP WITH TIME ZONE '2010-04-01 13:30'; 
+count          
+
+0              
+step wy1:  INSERT INTO room_reservation VALUES ('101', TIMESTAMP WITH TIME ZONE '2010-04-01 13:00', TIMESTAMP WITH TIME ZONE '2010-04-01 14:00', 'Carol'); 
+step wx2:  UPDATE room_reservation SET start_time = TIMESTAMP WITH TIME ZONE '2010-04-01 13:30', end_time = TIMESTAMP WITH TIME ZONE '2010-04-01 14:30' WHERE room_id = '101' AND start_time = TIMESTAMP WITH TIME ZONE '2010-04-01 10:00'; 
+step c1:  COMMIT; 
+step c2:  COMMIT; 
+ERROR:  could not serialize access due to read/write dependencies among transactions
+
+starting permutation: rx1 ry2 wy1 wx2 c2 c1
+step rx1:  SELECT count(*) FROM room_reservation WHERE room_id = '101' AND start_time < TIMESTAMP WITH TIME ZONE '2010-04-01 14:00' AND end_time > TIMESTAMP WITH TIME ZONE '2010-04-01 13:00'; 
+count          
+
+0              
+step ry2:  SELECT count(*) FROM room_reservation WHERE room_id = '101' AND start_time < TIMESTAMP WITH TIME ZONE '2010-04-01 14:30' AND end_time > TIMESTAMP WITH TIME ZONE '2010-04-01 13:30'; 
+count          
+
+0              
+step wy1:  INSERT INTO room_reservation VALUES ('101', TIMESTAMP WITH TIME ZONE '2010-04-01 13:00', TIMESTAMP WITH TIME ZONE '2010-04-01 14:00', 'Carol'); 
+step wx2:  UPDATE room_reservation SET start_time = TIMESTAMP WITH TIME ZONE '2010-04-01 13:30', end_time = TIMESTAMP WITH TIME ZONE '2010-04-01 14:30' WHERE room_id = '101' AND start_time = TIMESTAMP WITH TIME ZONE '2010-04-01 10:00'; 
+step c2:  COMMIT; 
+step c1:  COMMIT; 
+ERROR:  could not serialize access due to read/write dependencies among transactions
+
+starting permutation: rx1 ry2 wx2 wy1 c1 c2
+step rx1:  SELECT count(*) FROM room_reservation WHERE room_id = '101' AND start_time < TIMESTAMP WITH TIME ZONE '2010-04-01 14:00' AND end_time > TIMESTAMP WITH TIME ZONE '2010-04-01 13:00'; 
+count          
+
+0              
+step ry2:  SELECT count(*) FROM room_reservation WHERE room_id = '101' AND start_time < TIMESTAMP WITH TIME ZONE '2010-04-01 14:30' AND end_time > TIMESTAMP WITH TIME ZONE '2010-04-01 13:30'; 
+count          
+
+0              
+step wx2:  UPDATE room_reservation SET start_time = TIMESTAMP WITH TIME ZONE '2010-04-01 13:30', end_time = TIMESTAMP WITH TIME ZONE '2010-04-01 14:30' WHERE room_id = '101' AND start_time = TIMESTAMP WITH TIME ZONE '2010-04-01 10:00'; 
+step wy1:  INSERT INTO room_reservation VALUES ('101', TIMESTAMP WITH TIME ZONE '2010-04-01 13:00', TIMESTAMP WITH TIME ZONE '2010-04-01 14:00', 'Carol'); 
+step c1:  COMMIT; 
+step c2:  COMMIT; 
+ERROR:  could not serialize access due to read/write dependencies among transactions
+
+starting permutation: rx1 ry2 wx2 wy1 c2 c1
+step rx1:  SELECT count(*) FROM room_reservation WHERE room_id = '101' AND start_time < TIMESTAMP WITH TIME ZONE '2010-04-01 14:00' AND end_time > TIMESTAMP WITH TIME ZONE '2010-04-01 13:00'; 
+count          
+
+0              
+step ry2:  SELECT count(*) FROM room_reservation WHERE room_id = '101' AND start_time < TIMESTAMP WITH TIME ZONE '2010-04-01 14:30' AND end_time > TIMESTAMP WITH TIME ZONE '2010-04-01 13:30'; 
+count          
+
+0              
+step wx2:  UPDATE room_reservation SET start_time = TIMESTAMP WITH TIME ZONE '2010-04-01 13:30', end_time = TIMESTAMP WITH TIME ZONE '2010-04-01 14:30' WHERE room_id = '101' AND start_time = TIMESTAMP WITH TIME ZONE '2010-04-01 10:00'; 
+step wy1:  INSERT INTO room_reservation VALUES ('101', TIMESTAMP WITH TIME ZONE '2010-04-01 13:00', TIMESTAMP WITH TIME ZONE '2010-04-01 14:00', 'Carol'); 
+step c2:  COMMIT; 
+step c1:  COMMIT; 
+ERROR:  could not serialize access due to read/write dependencies among transactions
+
+starting permutation: rx1 ry2 wx2 c2 wy1 c1
+step rx1:  SELECT count(*) FROM room_reservation WHERE room_id = '101' AND start_time < TIMESTAMP WITH TIME ZONE '2010-04-01 14:00' AND end_time > TIMESTAMP WITH TIME ZONE '2010-04-01 13:00'; 
+count          
+
+0              
+step ry2:  SELECT count(*) FROM room_reservation WHERE room_id = '101' AND start_time < TIMESTAMP WITH TIME ZONE '2010-04-01 14:30' AND end_time > TIMESTAMP WITH TIME ZONE '2010-04-01 13:30'; 
+count          
+
+0              
+step wx2:  UPDATE room_reservation SET start_time = TIMESTAMP WITH TIME ZONE '2010-04-01 13:30', end_time = TIMESTAMP WITH TIME ZONE '2010-04-01 14:30' WHERE room_id = '101' AND start_time = TIMESTAMP WITH TIME ZONE '2010-04-01 10:00'; 
+step c2:  COMMIT; 
+step wy1:  INSERT INTO room_reservation VALUES ('101', TIMESTAMP WITH TIME ZONE '2010-04-01 13:00', TIMESTAMP WITH TIME ZONE '2010-04-01 14:00', 'Carol'); 
+ERROR:  could not serialize access due to read/write dependencies among transactions
+step c1:  COMMIT; 
+
+starting permutation: ry2 rx1 wy1 c1 wx2 c2
+step ry2:  SELECT count(*) FROM room_reservation WHERE room_id = '101' AND start_time < TIMESTAMP WITH TIME ZONE '2010-04-01 14:30' AND end_time > TIMESTAMP WITH TIME ZONE '2010-04-01 13:30'; 
+count          
+
+0              
+step rx1:  SELECT count(*) FROM room_reservation WHERE room_id = '101' AND start_time < TIMESTAMP WITH TIME ZONE '2010-04-01 14:00' AND end_time > TIMESTAMP WITH TIME ZONE '2010-04-01 13:00'; 
+count          
+
+0              
+step wy1:  INSERT INTO room_reservation VALUES ('101', TIMESTAMP WITH TIME ZONE '2010-04-01 13:00', TIMESTAMP WITH TIME ZONE '2010-04-01 14:00', 'Carol'); 
+step c1:  COMMIT; 
+step wx2:  UPDATE room_reservation SET start_time = TIMESTAMP WITH TIME ZONE '2010-04-01 13:30', end_time = TIMESTAMP WITH TIME ZONE '2010-04-01 14:30' WHERE room_id = '101' AND start_time = TIMESTAMP WITH TIME ZONE '2010-04-01 10:00'; 
+ERROR:  could not serialize access due to read/write dependencies among transactions
+step c2:  COMMIT; 
+
+starting permutation: ry2 rx1 wy1 wx2 c1 c2
+step ry2:  SELECT count(*) FROM room_reservation WHERE room_id = '101' AND start_time < TIMESTAMP WITH TIME ZONE '2010-04-01 14:30' AND end_time > TIMESTAMP WITH TIME ZONE '2010-04-01 13:30'; 
+count          
+
+0              
+step rx1:  SELECT count(*) FROM room_reservation WHERE room_id = '101' AND start_time < TIMESTAMP WITH TIME ZONE '2010-04-01 14:00' AND end_time > TIMESTAMP WITH TIME ZONE '2010-04-01 13:00'; 
+count          
+
+0              
+step wy1:  INSERT INTO room_reservation VALUES ('101', TIMESTAMP WITH TIME ZONE '2010-04-01 13:00', TIMESTAMP WITH TIME ZONE '2010-04-01 14:00', 'Carol'); 
+step wx2:  UPDATE room_reservation SET start_time = TIMESTAMP WITH TIME ZONE '2010-04-01 13:30', end_time = TIMESTAMP WITH TIME ZONE '2010-04-01 14:30' WHERE room_id = '101' AND start_time = TIMESTAMP WITH TIME ZONE '2010-04-01 10:00'; 
+step c1:  COMMIT; 
+step c2:  COMMIT; 
+ERROR:  could not serialize access due to read/write dependencies among transactions
+
+starting permutation: ry2 rx1 wy1 wx2 c2 c1
+step ry2:  SELECT count(*) FROM room_reservation WHERE room_id = '101' AND start_time < TIMESTAMP WITH TIME ZONE '2010-04-01 14:30' AND end_time > TIMESTAMP WITH TIME ZONE '2010-04-01 13:30'; 
+count          
+
+0              
+step rx1:  SELECT count(*) FROM room_reservation WHERE room_id = '101' AND start_time < TIMESTAMP WITH TIME ZONE '2010-04-01 14:00' AND end_time > TIMESTAMP WITH TIME ZONE '2010-04-01 13:00'; 
+count          
+
+0              
+step wy1:  INSERT INTO room_reservation VALUES ('101', TIMESTAMP WITH TIME ZONE '2010-04-01 13:00', TIMESTAMP WITH TIME ZONE '2010-04-01 14:00', 'Carol'); 
+step wx2:  UPDATE room_reservation SET start_time = TIMESTAMP WITH TIME ZONE '2010-04-01 13:30', end_time = TIMESTAMP WITH TIME ZONE '2010-04-01 14:30' WHERE room_id = '101' AND start_time = TIMESTAMP WITH TIME ZONE '2010-04-01 10:00'; 
+step c2:  COMMIT; 
+step c1:  COMMIT; 
+ERROR:  could not serialize access due to read/write dependencies among transactions
+
+starting permutation: ry2 rx1 wx2 wy1 c1 c2
+step ry2:  SELECT count(*) FROM room_reservation WHERE room_id = '101' AND start_time < TIMESTAMP WITH TIME ZONE '2010-04-01 14:30' AND end_time > TIMESTAMP WITH TIME ZONE '2010-04-01 13:30'; 
+count          
+
+0              
+step rx1:  SELECT count(*) FROM room_reservation WHERE room_id = '101' AND start_time < TIMESTAMP WITH TIME ZONE '2010-04-01 14:00' AND end_time > TIMESTAMP WITH TIME ZONE '2010-04-01 13:00'; 
+count          
+
+0              
+step wx2:  UPDATE room_reservation SET start_time = TIMESTAMP WITH TIME ZONE '2010-04-01 13:30', end_time = TIMESTAMP WITH TIME ZONE '2010-04-01 14:30' WHERE room_id = '101' AND start_time = TIMESTAMP WITH TIME ZONE '2010-04-01 10:00'; 
+step wy1:  INSERT INTO room_reservation VALUES ('101', TIMESTAMP WITH TIME ZONE '2010-04-01 13:00', TIMESTAMP WITH TIME ZONE '2010-04-01 14:00', 'Carol'); 
+step c1:  COMMIT; 
+step c2:  COMMIT; 
+ERROR:  could not serialize access due to read/write dependencies among transactions
+
+starting permutation: ry2 rx1 wx2 wy1 c2 c1
+step ry2:  SELECT count(*) FROM room_reservation WHERE room_id = '101' AND start_time < TIMESTAMP WITH TIME ZONE '2010-04-01 14:30' AND end_time > TIMESTAMP WITH TIME ZONE '2010-04-01 13:30'; 
+count          
+
+0              
+step rx1:  SELECT count(*) FROM room_reservation WHERE room_id = '101' AND start_time < TIMESTAMP WITH TIME ZONE '2010-04-01 14:00' AND end_time > TIMESTAMP WITH TIME ZONE '2010-04-01 13:00'; 
+count          
+
+0              
+step wx2:  UPDATE room_reservation SET start_time = TIMESTAMP WITH TIME ZONE '2010-04-01 13:30', end_time = TIMESTAMP WITH TIME ZONE '2010-04-01 14:30' WHERE room_id = '101' AND start_time = TIMESTAMP WITH TIME ZONE '2010-04-01 10:00'; 
+step wy1:  INSERT INTO room_reservation VALUES ('101', TIMESTAMP WITH TIME ZONE '2010-04-01 13:00', TIMESTAMP WITH TIME ZONE '2010-04-01 14:00', 'Carol'); 
+step c2:  COMMIT; 
+step c1:  COMMIT; 
+ERROR:  could not serialize access due to read/write dependencies among transactions
+
+starting permutation: ry2 rx1 wx2 c2 wy1 c1
+step ry2:  SELECT count(*) FROM room_reservation WHERE room_id = '101' AND start_time < TIMESTAMP WITH TIME ZONE '2010-04-01 14:30' AND end_time > TIMESTAMP WITH TIME ZONE '2010-04-01 13:30'; 
+count          
+
+0              
+step rx1:  SELECT count(*) FROM room_reservation WHERE room_id = '101' AND start_time < TIMESTAMP WITH TIME ZONE '2010-04-01 14:00' AND end_time > TIMESTAMP WITH TIME ZONE '2010-04-01 13:00'; 
+count          
+
+0              
+step wx2:  UPDATE room_reservation SET start_time = TIMESTAMP WITH TIME ZONE '2010-04-01 13:30', end_time = TIMESTAMP WITH TIME ZONE '2010-04-01 14:30' WHERE room_id = '101' AND start_time = TIMESTAMP WITH TIME ZONE '2010-04-01 10:00'; 
+step c2:  COMMIT; 
+step wy1:  INSERT INTO room_reservation VALUES ('101', TIMESTAMP WITH TIME ZONE '2010-04-01 13:00', TIMESTAMP WITH TIME ZONE '2010-04-01 14:00', 'Carol'); 
+ERROR:  could not serialize access due to read/write dependencies among transactions
+step c1:  COMMIT; 
+
+starting permutation: ry2 wx2 rx1 wy1 c1 c2
+step ry2:  SELECT count(*) FROM room_reservation WHERE room_id = '101' AND start_time < TIMESTAMP WITH TIME ZONE '2010-04-01 14:30' AND end_time > TIMESTAMP WITH TIME ZONE '2010-04-01 13:30'; 
+count          
+
+0              
+step wx2:  UPDATE room_reservation SET start_time = TIMESTAMP WITH TIME ZONE '2010-04-01 13:30', end_time = TIMESTAMP WITH TIME ZONE '2010-04-01 14:30' WHERE room_id = '101' AND start_time = TIMESTAMP WITH TIME ZONE '2010-04-01 10:00'; 
+step rx1:  SELECT count(*) FROM room_reservation WHERE room_id = '101' AND start_time < TIMESTAMP WITH TIME ZONE '2010-04-01 14:00' AND end_time > TIMESTAMP WITH TIME ZONE '2010-04-01 13:00'; 
+count          
+
+0              
+step wy1:  INSERT INTO room_reservation VALUES ('101', TIMESTAMP WITH TIME ZONE '2010-04-01 13:00', TIMESTAMP WITH TIME ZONE '2010-04-01 14:00', 'Carol'); 
+step c1:  COMMIT; 
+step c2:  COMMIT; 
+ERROR:  could not serialize access due to read/write dependencies among transactions
+
+starting permutation: ry2 wx2 rx1 wy1 c2 c1
+step ry2:  SELECT count(*) FROM room_reservation WHERE room_id = '101' AND start_time < TIMESTAMP WITH TIME ZONE '2010-04-01 14:30' AND end_time > TIMESTAMP WITH TIME ZONE '2010-04-01 13:30'; 
+count          
+
+0              
+step wx2:  UPDATE room_reservation SET start_time = TIMESTAMP WITH TIME ZONE '2010-04-01 13:30', end_time = TIMESTAMP WITH TIME ZONE '2010-04-01 14:30' WHERE room_id = '101' AND start_time = TIMESTAMP WITH TIME ZONE '2010-04-01 10:00'; 
+step rx1:  SELECT count(*) FROM room_reservation WHERE room_id = '101' AND start_time < TIMESTAMP WITH TIME ZONE '2010-04-01 14:00' AND end_time > TIMESTAMP WITH TIME ZONE '2010-04-01 13:00'; 
+count          
+
+0              
+step wy1:  INSERT INTO room_reservation VALUES ('101', TIMESTAMP WITH TIME ZONE '2010-04-01 13:00', TIMESTAMP WITH TIME ZONE '2010-04-01 14:00', 'Carol'); 
+step c2:  COMMIT; 
+step c1:  COMMIT; 
+ERROR:  could not serialize access due to read/write dependencies among transactions
+
+starting permutation: ry2 wx2 rx1 c2 wy1 c1
+step ry2:  SELECT count(*) FROM room_reservation WHERE room_id = '101' AND start_time < TIMESTAMP WITH TIME ZONE '2010-04-01 14:30' AND end_time > TIMESTAMP WITH TIME ZONE '2010-04-01 13:30'; 
+count          
+
+0              
+step wx2:  UPDATE room_reservation SET start_time = TIMESTAMP WITH TIME ZONE '2010-04-01 13:30', end_time = TIMESTAMP WITH TIME ZONE '2010-04-01 14:30' WHERE room_id = '101' AND start_time = TIMESTAMP WITH TIME ZONE '2010-04-01 10:00'; 
+step rx1:  SELECT count(*) FROM room_reservation WHERE room_id = '101' AND start_time < TIMESTAMP WITH TIME ZONE '2010-04-01 14:00' AND end_time > TIMESTAMP WITH TIME ZONE '2010-04-01 13:00'; 
+count          
+
+0              
+step c2:  COMMIT; 
+step wy1:  INSERT INTO room_reservation VALUES ('101', TIMESTAMP WITH TIME ZONE '2010-04-01 13:00', TIMESTAMP WITH TIME ZONE '2010-04-01 14:00', 'Carol'); 
+ERROR:  could not serialize access due to read/write dependencies among transactions
+step c1:  COMMIT; 
+
+starting permutation: ry2 wx2 c2 rx1 wy1 c1
+step ry2:  SELECT count(*) FROM room_reservation WHERE room_id = '101' AND start_time < TIMESTAMP WITH TIME ZONE '2010-04-01 14:30' AND end_time > TIMESTAMP WITH TIME ZONE '2010-04-01 13:30'; 
+count          
+
+0              
+step wx2:  UPDATE room_reservation SET start_time = TIMESTAMP WITH TIME ZONE '2010-04-01 13:30', end_time = TIMESTAMP WITH TIME ZONE '2010-04-01 14:30' WHERE room_id = '101' AND start_time = TIMESTAMP WITH TIME ZONE '2010-04-01 10:00'; 
+step c2:  COMMIT; 
+step rx1:  SELECT count(*) FROM room_reservation WHERE room_id = '101' AND start_time < TIMESTAMP WITH TIME ZONE '2010-04-01 14:00' AND end_time > TIMESTAMP WITH TIME ZONE '2010-04-01 13:00'; 
+count          
+
+1              
+step wy1:  INSERT INTO room_reservation VALUES ('101', TIMESTAMP WITH TIME ZONE '2010-04-01 13:00', TIMESTAMP WITH TIME ZONE '2010-04-01 14:00', 'Carol'); 
+step c1:  COMMIT; 

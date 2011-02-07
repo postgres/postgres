@@ -198,7 +198,7 @@ ShmemAlloc(Size size)
  * Returns TRUE if the pointer points within the shared memory segment.
  */
 bool
-ShmemAddrIsValid(void *addr)
+ShmemAddrIsValid(const void *addr)
 {
 	return (addr >= ShmemBase) && (addr < ShmemEnd);
 }

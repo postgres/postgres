@@ -26,6 +26,8 @@ extern bool assign_transaction_read_only(bool value,
 extern const char *assign_XactIsoLevel(const char *value,
 					bool doit, GucSource source);
 extern const char *show_XactIsoLevel(void);
+extern bool assign_transaction_deferrable(bool newval, bool doit,
+					GucSource source);
 extern bool assign_random_seed(double value,
 				   bool doit, GucSource source);
 extern const char *show_random_seed(void);

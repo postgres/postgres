@@ -27,6 +27,7 @@
 
 #include "access/transam.h"
 #include "access/xact.h"
+#include "storage/predicate.h"
 #include "storage/proc.h"
 #include "storage/procarray.h"
 #include "utils/memutils.h"
@@ -126,9 +127,6 @@ GetTransactionSnapshot(void)
 	{
 		Assert(RegisteredSnapshots == 0);
 
-		CurrentSnapshot = GetSnapshotData(&CurrentSnapshotData);
-		FirstSnapshotSet = true;
-
 		/*
 		 * In transaction-snapshot mode, the first snapshot must live until
 		 * end of xact regardless of what the caller does with it, so we must
@@ -136,11 +134,20 @@ GetTransactionSnapshot(void)
 		 */
 		if (IsolationUsesXactSnapshot())
 		{
-			CurrentSnapshot = RegisterSnapshotOnOwner(CurrentSnapshot,
+			if (IsolationIsSerializable())
+				CurrentSnapshot = RegisterSerializableTransaction(&CurrentSnapshotData);
+			else
+			{
+				CurrentSnapshot = GetSnapshotData(&CurrentSnapshotData);
+				CurrentSnapshot = RegisterSnapshotOnOwner(CurrentSnapshot,
 												TopTransactionResourceOwner);
+			}
 			registered_xact_snapshot = true;
 		}
+		else
+			CurrentSnapshot = GetSnapshotData(&CurrentSnapshotData);
 
+		FirstSnapshotSet = true;
 		return CurrentSnapshot;
 	}
 

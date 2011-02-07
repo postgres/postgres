@@ -67,10 +67,12 @@ LOCK [ TABLE ] [ ONLY ] <replaceable class="PARAMETER">name</replaceable> [, ...
   </para>
 
   <para>
-   To achieve a similar effect when running a transaction at the Serializable
+   To achieve a similar effect when running a transaction at the
+   <literal>REPEATABLE READ</> or <literal>SERIALIZABLE</>
    isolation level, you have to execute the <command>LOCK TABLE</> statement
    before executing any <command>SELECT</> or data modification statement.
-   A serializable transaction's view of data will be frozen when its first
+   A <literal>REPEATABLE READ</> or <literal>SERIALIZABLE</> transaction's
+   view of data will be frozen when its first
    <command>SELECT</> or data modification statement begins.  A <command>LOCK
    TABLE</> later in the transaction will still prevent concurrent writes
    &mdash; but it won't ensure that what the transaction reads corresponds to

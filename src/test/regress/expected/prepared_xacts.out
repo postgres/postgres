@@ -9,7 +9,7 @@
 CREATE TABLE pxtest1 (foobar VARCHAR(10));
 INSERT INTO pxtest1 VALUES ('aaa');
 -- Test PREPARE TRANSACTION
-BEGIN;
+BEGIN TRANSACTION ISOLATION LEVEL SERIALIZABLE;
 UPDATE pxtest1 SET foobar = 'bbb' WHERE foobar = 'aaa';
 SELECT * FROM pxtest1;
  foobar 
@@ -45,7 +45,7 @@ SELECT gid FROM pg_prepared_xacts;
 (0 rows)
 
 -- Test COMMIT PREPARED
-BEGIN;
+BEGIN TRANSACTION ISOLATION LEVEL SERIALIZABLE;
 INSERT INTO pxtest1 VALUES ('ddd');
 SELECT * FROM pxtest1;
  foobar 
@@ -70,7 +70,7 @@ SELECT * FROM pxtest1;
 (2 rows)
 
 -- Test duplicate gids
-BEGIN;
+BEGIN TRANSACTION ISOLATION LEVEL SERIALIZABLE;
 UPDATE pxtest1 SET foobar = 'eee' WHERE foobar = 'ddd';
 SELECT * FROM pxtest1;
  foobar 
@@ -86,7 +86,7 @@ SELECT gid FROM pg_prepared_xacts;
  foo3
 (1 row)
 
-BEGIN;
+BEGIN TRANSACTION ISOLATION LEVEL SERIALIZABLE;
 INSERT INTO pxtest1 VALUES ('fff');
 SELECT * FROM pxtest1;
  foobar 
@@ -117,7 +117,7 @@ SELECT * FROM pxtest1;
 -- Clean up
 DROP TABLE pxtest1;
 -- Test subtransactions
-BEGIN;
+BEGIN TRANSACTION ISOLATION LEVEL SERIALIZABLE;
   CREATE TABLE pxtest2 (a int);
   INSERT INTO pxtest2 VALUES (1);
   SAVEPOINT a;
@@ -128,7 +128,7 @@ BEGIN;
 PREPARE TRANSACTION 'regress-one';
 CREATE TABLE pxtest3(fff int);
 -- Test shared invalidation
-BEGIN;
+BEGIN TRANSACTION ISOLATION LEVEL SERIALIZABLE;
   DROP TABLE pxtest3;
   CREATE TABLE pxtest4 (a int);
   INSERT INTO pxtest4 VALUES (1);

@@ -1144,7 +1144,7 @@ FOR SHARE [ OF <replaceable class="parameter">table_name</replaceable> [, ...] ]
     has already locked a selected row or rows, <command>SELECT FOR
     UPDATE</command> will wait for the other transaction to complete,
     and will then lock and return the updated row (or no row, if the
-    row was deleted).  Within a <literal>SERIALIZABLE</> transaction,
+    row was deleted).  Within a <literal>REPEATABLE READ</> or <literal>SERIALIZABLE</> transaction,
     however, an error will be thrown if a row to be locked has changed
     since the transaction started.  For further discussion see <xref
     linkend="mvcc">.

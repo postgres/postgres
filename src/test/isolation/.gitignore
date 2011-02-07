@@ -1,0 +1,12 @@
+# Local binaries
+/isolationtester
+/pg_isolation_regress
+
+# Local generated source files
+/specparse.c
+/specscanner.c
+
+# Generated subdirectories
+/results/
+/log/
+/tmp_check/

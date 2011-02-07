@@ -28,6 +28,7 @@
 #include "miscadmin.h"
 #include "pg_trace.h"
 #include "storage/ipc.h"
+#include "storage/predicate.h"
 #include "storage/proc.h"
 #include "storage/spin.h"
 
@@ -177,6 +178,9 @@ NumLWLocks(void)
 
 	/* async.c needs one per Async buffer */
 	numLocks += NUM_ASYNC_BUFFERS;
+
+	/* predicate.c needs one per old serializable xid buffer */
+	numLocks += NUM_OLDSERXID_BUFFERS;
 
 	/*
 	 * Add any requested by loadable modules; for backwards-compatibility

@@ -1,0 +1,65 @@
+src/test/isolation/README
+
+Isolation tests
+===============
+
+This directory contains a set of tests for the serializable isolation level.
+Testing isolation requires running multiple overlapping transactions, so
+which requires multiple concurrent connections, and can't therefore be
+tested using the normal pg_regress program.
+
+To represent a test with overlapping transactions, we use a test specification
+file with a custom syntax, described in the next section.
+
+isolationtester is program that uses libpq to open multiple connections,
+and executes a test specified by a spec file. A libpq connection string
+to specify the server and database to connect to, the defaults derived from
+environment variables are used otherwise.
+
+pg_isolation_regress is a tool identical to pg_regress, but instead of using
+psql to execute a test, it uses isolationtester.
+
+To run the tests, you need to have a server up and running. Run
+    gmake installcheck
+
+Test specification
+==================
+
+Each isolation test is defined by a specification file, stored in the specs
+subdirectory. A test specification consists of five parts, in this order:
+
+setup { <SQL> }
+
+  The given SQL block is executed once, in one session only, before running
+  the test. Create any test tables or such objects here. This part is
+  optional.
+
+teardown { <SQL> }
+
+  The teardown SQL block is executed once after the test is finished. Use
+  this to clean up, e.g dropping any test tables. This part is optional.
+
+session "<name>"
+
+  Each session is executed in a separate connection. A session consists
+  of four parts: setup, teardown and one or more steps. The per-session
+  setup and teardown parts have the same syntax as the per-test setup and
+  teardown described above, but they are executed in every session,
+  before and after each permutation. The setup part typically contains a
+  "BEGIN" command to begin a transaction.
+
+  Each step has a syntax of
+
+  step "<name>" { <SQL> }
+
+  where <name> is a unique name identifying this step, and SQL is a SQL
+  statement (or statements, separated by semicolons) that is executed in the
+  step.
+
+permutation "<step name>" ...
+
+  A permutation line specifies a list of steps that are ran in that order.
+  If no permutation lines are given, the test program automatically generates
+  all possible overlapping orderings of the given sessions.
+
+Lines beginning with a # are considered comments.

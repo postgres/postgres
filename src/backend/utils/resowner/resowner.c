@@ -22,6 +22,7 @@
 
 #include "access/hash.h"
 #include "storage/bufmgr.h"
+#include "storage/predicate.h"
 #include "storage/proc.h"
 #include "utils/memutils.h"
 #include "utils/rel.h"
@@ -261,7 +262,10 @@ ResourceOwnerReleaseInternal(ResourceOwner owner,
 			 * the top of the recursion.
 			 */
 			if (owner == TopTransactionResourceOwner)
+			{
 				ProcReleaseLocks(isCommit);
+				ReleasePredicateLocks(isCommit);
+			}
 		}
 		else
 		{

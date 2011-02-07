@@ -29,6 +29,7 @@
 #include "storage/freespace.h"
 #include "storage/indexfsm.h"
 #include "storage/lmgr.h"
+#include "storage/predicate.h"
 #include "utils/inval.h"
 #include "utils/snapmgr.h"
 
@@ -1182,6 +1183,12 @@ _bt_pagedel(Relation rel, Buffer buf, BTStack stack)
 			 "block %u links to %u instead of expected %u in index \"%s\"",
 			 rightsib, opaque->btpo_prev, target,
 			 RelationGetRelationName(rel));
+
+	/*
+	 * Any insert which would have gone on the target block will now go to the
+	 * right sibling block.
+	 */
+	PredicateLockPageCombine(rel, target, rightsib);
 
 	/*
 	 * Next find and write-lock the current parent of the target page. This is

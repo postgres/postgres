@@ -32,14 +32,25 @@ extern int	DefaultXactIsoLevel;
 extern int	XactIsoLevel;
 
 /*
- * We only implement two isolation levels internally.  This macro should
- * be used to check which one is selected.
+ * We implement three isolation levels internally.
+ * The two stronger ones use one snapshot per database transaction;
+ * the others use one snapshot per statement.
+ * Serializable uses predicate locks in addition to snapshots.
+ * These macros should be used to check which isolation level is selected.
  */
 #define IsolationUsesXactSnapshot() (XactIsoLevel >= XACT_REPEATABLE_READ)
+#define IsolationIsSerializable() (XactIsoLevel == XACT_SERIALIZABLE)
 
 /* Xact read-only state */
 extern bool DefaultXactReadOnly;
 extern bool XactReadOnly;
+
+/*
+ * Xact is deferrable -- only meaningful (currently) for read only
+ * SERIALIZABLE transactions
+ */
+extern bool DefaultXactDeferrable;
+extern bool XactDeferrable;
 
 /* Asynchronous commits */
 extern bool XactSyncCommit;

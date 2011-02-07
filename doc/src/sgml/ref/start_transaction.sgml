@@ -27,6 +27,7 @@ START TRANSACTION [ <replaceable class="parameter">transaction_mode</replaceable
 
     ISOLATION LEVEL { SERIALIZABLE | REPEATABLE READ | READ COMMITTED | READ UNCOMMITTED }
     READ WRITE | READ ONLY
+    [ NOT ] DEFERRABLE
 </synopsis>
  </refsynopsisdiv>
 
@@ -34,8 +35,8 @@ START TRANSACTION [ <replaceable class="parameter">transaction_mode</replaceable
   <title>Description</title>
 
   <para>
-   This command begins a new transaction block. If the isolation level or
-   read/write mode is specified, the new transaction has those
+   This command begins a new transaction block. If the isolation level,
+   read/write mode, or deferrable mode is specified, the new transaction has those
    characteristics, as if <xref linkend="sql-set-transaction"> was executed. This is the same
    as the <xref linkend="sql-begin"> command.
   </para>
@@ -62,6 +63,12 @@ START TRANSACTION [ <replaceable class="parameter">transaction_mode</replaceable
    and it is therefore often called <quote>autocommit</>.
    Other relational database systems might offer an autocommit feature
    as a convenience.
+  </para>
+
+  <para>
+   The <literal>DEFERRABLE</literal>
+   <replaceable class="parameter">transaction_mode</replaceable>
+   is a <productname>PostgreSQL</productname> language extension.
   </para>
 
   <para>

@@ -340,7 +340,7 @@ SPI_execute("INSERT INTO foo SELECT * FROM bar", false, 5);
    <function>SPI_execute</function> increments the command
    counter and computes a new <firstterm>snapshot</> before executing each
    command in the string.  The snapshot does not actually change if the
-   current transaction isolation level is <literal>SERIALIZABLE</>, but in
+   current transaction isolation level is <literal>SERIALIZABLE</> or <literal>REPEATABLE READ</>, but in
    <literal>READ COMMITTED</> mode the snapshot update allows each command to
    see the results of newly committed transactions from other sessions.
    This is essential for consistent behavior when the commands are modifying

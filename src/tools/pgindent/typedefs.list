@@ -795,6 +795,7 @@ LINE
 LOCALLOCK
 LOCALLOCKOWNER
 LOCALLOCKTAG
+LOCALPREDICATELOCK
 LOCK
 LOCKMASK
 LOCKMETHODID
@@ -931,6 +932,7 @@ OffsetNumber
 OffsetVarNodes_context
 Oid
 OidOptions
+OldSerXidControlData
 OldToNewMapping
 OldToNewMappingData
 OldTriggerInfo
@@ -1081,6 +1083,10 @@ PQconninfoOption
 PQnoticeProcessor
 PQnoticeReceiver
 PQprintOpt
+PREDICATELOCK
+PREDICATELOCKTAG
+PREDICATELOCKTARGET
+PREDICATELOCKTARGETTAG
 PROC
 PROCESS_INFORMATION
 PROCLOCK
@@ -1202,6 +1208,9 @@ PreParseColumnRefHook
 PredClass
 PredIterInfo
 PredIterInfoData
+PredXactListData
+PredXactListElementData
+PredicateLockData
 PrepareStmt
 PreparedParamsData
 PreparedStatement
@@ -1268,6 +1277,8 @@ RSA
 RTEKind
 RUHashEntry
 RUHashEntryData
+RWConflictData
+RWConflictPoolHeaderData
 RangeFunction
 RangeQueryClause
 RangeSubselect
@@ -1350,6 +1361,10 @@ RunningTransactionsData
 SC_HANDLE
 SECURITY_ATTRIBUTES
 SEG
+SERIALIZABLEXACT
+SERIALIZABLEXACTTAG
+SERIALIZABLEXID
+SERIALIZABLEXIDTAG
 SERVICE_STATUS
 SERVICE_STATUS_HANDLE
 SERVICE_TABLE_ENTRY
@@ -1595,6 +1610,9 @@ TwoPhaseCallback
 TwoPhaseFileHeader
 TwoPhaseLockRecord
 TwoPhasePgStatRecord
+TwoPhasePredicateLockRecord
+TwoPhasePredicateRecord
+TwoPhasePredicateXactRecord
 TwoPhaseRecordOnDisk
 TwoPhaseRmgrId
 TwoPhaseStateData

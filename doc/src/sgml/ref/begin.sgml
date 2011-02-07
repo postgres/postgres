@@ -27,6 +27,7 @@ BEGIN [ WORK | TRANSACTION ] [ <replaceable class="parameter">transaction_mode</
 
     ISOLATION LEVEL { SERIALIZABLE | REPEATABLE READ | READ COMMITTED | READ UNCOMMITTED }
     READ WRITE | READ ONLY
+    [ NOT ] DEFERRABLE
 </synopsis>
  </refsynopsisdiv>
 
@@ -57,7 +58,7 @@ BEGIN [ WORK | TRANSACTION ] [ <replaceable class="parameter">transaction_mode</
   </para>
 
   <para>
-   If the isolation level or read/write mode is specified, the new
+   If the isolation level, read/write mode, or deferrable mode is specified, the new
    transaction has those characteristics, as if
    <xref linkend="sql-set-transaction">
    was executed.
@@ -133,6 +134,12 @@ BEGIN;
    language extension.  It is equivalent to the SQL-standard command
    <xref linkend="sql-start-transaction">, whose reference page
    contains additional compatibility information.
+  </para>
+
+  <para>
+   The <literal>DEFERRABLE</literal>
+   <replaceable class="parameter">transaction_mode</replaceable>
+   is a <productname>PostgreSQL</productname> language extension.
   </para>
 
   <para>

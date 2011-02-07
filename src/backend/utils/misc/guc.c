@@ -59,6 +59,7 @@
 #include "storage/bufmgr.h"
 #include "storage/standby.h"
 #include "storage/fd.h"
+#include "storage/predicate.h"
 #include "tcop/tcopprot.h"
 #include "tsearch/ts_cache.h"
 #include "utils/builtins.h"
@@ -1097,6 +1098,23 @@ static struct config_bool ConfigureNamesBool[] =
 		false, assign_transaction_read_only, NULL
 	},
 	{
+		{"default_transaction_deferrable", PGC_USERSET, CLIENT_CONN_STATEMENT,
+			gettext_noop("Sets the default deferrable status of new transactions."),
+			NULL
+		},
+		&DefaultXactDeferrable,
+		false, NULL, NULL
+	},
+	{
+		{"transaction_deferrable", PGC_USERSET, CLIENT_CONN_STATEMENT,
+			gettext_noop("Whether to defer a read-only serializable transaction until it can be executed with no possible serialization failures."),
+			NULL,
+			GUC_NO_RESET_ALL | GUC_NOT_IN_SAMPLE | GUC_DISALLOW_IN_FILE
+		},
+		&XactDeferrable,
+		false, assign_transaction_deferrable, NULL
+	},
+	{
 		{"check_function_bodies", PGC_USERSET, CLIENT_CONN_STATEMENT,
 			gettext_noop("Check function bodies during CREATE FUNCTION."),
 			NULL
@@ -1692,6 +1710,17 @@ static struct config_int ConfigureNamesInt[] =
 						 "objects will need to be locked at any one time.")
 		},
 		&max_locks_per_xact,
+		64, 10, INT_MAX, NULL, NULL
+	},
+
+	{
+		{"max_predicate_locks_per_transaction", PGC_POSTMASTER, LOCK_MANAGEMENT,
+			gettext_noop("Sets the maximum number of predicate locks per transaction."),
+			gettext_noop("The shared predicate lock table is sized on the assumption that "
+			  "at most max_predicate_locks_per_transaction * max_connections distinct "
+						 "objects will need to be locked at any one time.")
+		},
+		&max_predicate_locks_per_xact,
 		64, 10, INT_MAX, NULL, NULL
 	},
 
@@ -3459,6 +3488,8 @@ InitializeGUCOptions(void)
 	SetConfigOption("transaction_isolation", "default",
 					PGC_POSTMASTER, PGC_S_OVERRIDE);
 	SetConfigOption("transaction_read_only", "no",
+					PGC_POSTMASTER, PGC_S_OVERRIDE);
+	SetConfigOption("transaction_deferrable", "no",
 					PGC_POSTMASTER, PGC_S_OVERRIDE);
 
 	/*
@@ -5699,6 +5730,9 @@ ExecSetVariableStmt(VariableSetStmt *stmt)
 					else if (strcmp(item->defname, "transaction_read_only") == 0)
 						SetPGVariable("transaction_read_only",
 									  list_make1(item->arg), stmt->is_local);
+					else if (strcmp(item->defname, "transaction_deferrable") == 0)
+						SetPGVariable("transaction_deferrable",
+									  list_make1(item->arg), stmt->is_local);
 					else
 						elog(ERROR, "unexpected SET TRANSACTION element: %s",
 							 item->defname);
@@ -5717,6 +5751,9 @@ ExecSetVariableStmt(VariableSetStmt *stmt)
 									  list_make1(item->arg), stmt->is_local);
 					else if (strcmp(item->defname, "transaction_read_only") == 0)
 						SetPGVariable("default_transaction_read_only",
+									  list_make1(item->arg), stmt->is_local);
+					else if (strcmp(item->defname, "transaction_deferrable") == 0)
+						SetPGVariable("default_transaction_deferrable",
 									  list_make1(item->arg), stmt->is_local);
 					else
 						elog(ERROR, "unexpected SET SESSION element: %s",

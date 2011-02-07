@@ -27,6 +27,10 @@
 #define LOG2_NUM_LOCK_PARTITIONS  4
 #define NUM_LOCK_PARTITIONS  (1 << LOG2_NUM_LOCK_PARTITIONS)
 
+/* Number of partitions the shared predicate lock tables are divided into */
+#define LOG2_NUM_PREDICATELOCK_PARTITIONS  4
+#define NUM_PREDICATELOCK_PARTITIONS  (1 << LOG2_NUM_PREDICATELOCK_PARTITIONS)
+
 /*
  * We have a number of predefined LWLocks, plus a bunch of LWLocks that are
  * dynamically assigned (e.g., for shared buffers).  The LWLock structures
@@ -70,12 +74,18 @@ typedef enum LWLockId
 	RelationMappingLock,
 	AsyncCtlLock,
 	AsyncQueueLock,
+	SerializableXactHashLock,
+	SerializableFinishedListLock,
+	SerializablePredicateLockListLock,
+	OldSerXidLock,
+	PredicateLockNextRowLinkLock,
 	/* Individual lock IDs end here */
 	FirstBufMappingLock,
 	FirstLockMgrLock = FirstBufMappingLock + NUM_BUFFER_PARTITIONS,
+	FirstPredicateLockMgrLock = FirstLockMgrLock + NUM_LOCK_PARTITIONS,
 
 	/* must be last except for MaxDynamicLWLock: */
-	NumFixedLWLocks = FirstLockMgrLock + NUM_LOCK_PARTITIONS,
+	NumFixedLWLocks = FirstPredicateLockMgrLock + NUM_PREDICATELOCK_PARTITIONS,
 
 	MaxDynamicLWLock = 1000000000
 } LWLockId;

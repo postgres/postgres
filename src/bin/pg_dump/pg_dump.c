@@ -11,14 +11,14 @@
  *	script that reproduces the schema in terms of SQL that is understood
  *	by PostgreSQL
  *
- *	Note that pg_dump runs in a serializable transaction, so it sees a
- *	consistent snapshot of the database including system catalogs.
- *	However, it relies in part on various specialized backend functions
- *	like pg_get_indexdef(), and those things tend to run on SnapshotNow
- *	time, ie they look at the currently committed state.  So it is
- *	possible to get 'cache lookup failed' error if someone performs DDL
- *	changes while a dump is happening. The window for this sort of thing
- *	is from the beginning of the serializable transaction to
+ *	Note that pg_dump runs in a transaction-snapshot mode transaction,
+ *	so it sees a consistent snapshot of the database including system
+ *	catalogs. However, it relies in part on various specialized backend
+ *	functions like pg_get_indexdef(), and those things tend to run on
+ *	SnapshotNow time, ie they look at the currently committed state.  So
+ *	it is possible to get 'cache lookup failed' error if someone
+ *	performs DDL changes while a dump is happening. The window for this
+ *	sort of thing is from the acquisition of the transaction snapshot to
  *	getSchemaData() (when pg_dump acquires AccessShareLock on every
  *	table it intends to dump). It isn't very large, but it can happen.
  *
@@ -135,6 +135,7 @@ static int	dump_inserts = 0;
 static int	column_inserts = 0;
 static int	no_security_label = 0;
 static int	no_unlogged_table_data = 0;
+static int	serializable_deferrable = 0;
 
 
 static void help(const char *progname);
@@ -318,6 +319,7 @@ main(int argc, char **argv)
 		{"no-tablespaces", no_argument, &outputNoTablespaces, 1},
 		{"quote-all-identifiers", no_argument, &quote_all_identifiers, 1},
 		{"role", required_argument, NULL, 3},
+		{"serializable-deferrable", no_argument, &serializable_deferrable, 1},
 		{"use-set-session-authorization", no_argument, &use_setsessauth, 1},
 		{"no-security-label", no_argument, &no_security_label, 1},
 		{"no-unlogged-table-data", no_argument, &no_unlogged_table_data, 1},
@@ -669,11 +671,21 @@ main(int argc, char **argv)
 		no_security_label = 1;
 
 	/*
-	 * Start serializable transaction to dump consistent data.
+	 * Start transaction-snapshot mode transaction to dump consistent data.
 	 */
 	do_sql_command(g_conn, "BEGIN");
-
-	do_sql_command(g_conn, "SET TRANSACTION ISOLATION LEVEL SERIALIZABLE");
+	if (g_fout->remoteVersion >= 90100)
+	{
+		if (serializable_deferrable)
+			do_sql_command(g_conn,
+						   "SET TRANSACTION ISOLATION LEVEL SERIALIZABLE, "
+						   "READ ONLY, DEFERRABLE");
+		else
+			do_sql_command(g_conn,
+						   "SET TRANSACTION ISOLATION LEVEL REPEATABLE READ");
+	}
+	else
+		do_sql_command(g_conn, "SET TRANSACTION ISOLATION LEVEL SERIALIZABLE");
 
 	/* Select the appropriate subquery to convert user IDs to names */
 	if (g_fout->remoteVersion >= 80100)
@@ -864,6 +876,7 @@ help(const char *progname)
 	printf(_("  --disable-triggers          disable triggers during data-only restore\n"));
 	printf(_("  --no-tablespaces            do not dump tablespace assignments\n"));
 	printf(_("  --quote-all-identifiers     quote all identifiers, even if not keywords\n"));
+	printf(_("  --serializable-deferrable   wait until the dump can run without anomalies\n"));
 	printf(_("  --role=ROLENAME             do SET ROLE before dump\n"));
 	printf(_("  --no-security-label         do not dump security label assignments\n"));
 	printf(_("  --no-unlogged-table-data	do not dump unlogged table data\n"));

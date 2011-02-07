@@ -616,6 +616,15 @@ assign_XactIsoLevel(const char *value, bool doit, GucSource source)
 					 errmsg("SET TRANSACTION ISOLATION LEVEL must not be called in a subtransaction")));
 			return NULL;
 		}
+		/* Can't go to serializable mode while recovery is still active */
+		if (RecoveryInProgress() && strcmp(value, "serializable") == 0)
+		{
+			ereport(GUC_complaint_elevel(source),
+					(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+					 errmsg("cannot use serializable mode in a hot standby"),
+					 errhint("You can use REPEATABLE READ instead.")));
+			return false;
+		}
 	}
 
 	if (strcmp(value, "serializable") == 0)
@@ -667,6 +676,35 @@ show_XactIsoLevel(void)
 	}
 }
 
+/*
+ * SET TRANSACTION [NOT] DEFERRABLE
+ */
+
+bool
+assign_transaction_deferrable(bool newval, bool doit, GucSource source)
+{
+	/* source == PGC_S_OVERRIDE means do it anyway, eg at xact abort */
+	if (source == PGC_S_OVERRIDE)
+		return true;
+
+	if (IsSubTransaction())
+	{
+		ereport(GUC_complaint_elevel(source),
+				(errcode(ERRCODE_ACTIVE_SQL_TRANSACTION),
+				 errmsg("SET TRANSACTION [NOT] DEFERRABLE cannot be called within a subtransaction")));
+		return false;
+	}
+
+	if (FirstSnapshotSet)
+	{
+		ereport(GUC_complaint_elevel(source),
+				(errcode(ERRCODE_ACTIVE_SQL_TRANSACTION),
+				 errmsg("SET TRANSACTION [NOT] DEFERRABLE must be called before any query")));
+		return false;
+	}
+
+	return true;
+}
 
 /*
  * Random number seed

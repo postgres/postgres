@@ -491,6 +491,13 @@
      </row>
 
      <row>
+      <entry><structfield>ampredlocks</structfield></entry>
+      <entry><type>bool</type></entry>
+      <entry></entry>
+      <entry>Does an index of this type manage fine-grained predicate locks?</entry>
+     </row>
+
+     <row>
       <entry><structfield>amkeytype</structfield></entry>
       <entry><type>oid</type></entry>
       <entry><literal><link linkend="catalog-pg-type"><structname>pg_type</structname></link>.oid</literal></entry>
@@ -6577,7 +6584,7 @@
       <entry><type>text</type></entry>
       <entry></entry>
       <entry>Name of the lock mode held or desired by this process (see <xref
-      linkend="locking-tables">)</entry>
+      linkend="locking-tables"> and <xref linkend="xact-serializable">)</entry>
      </row>
      <row>
       <entry><structfield>granted</structfield></entry>

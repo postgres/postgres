@@ -256,7 +256,7 @@ int lo_open(PGconn *conn, Oid lobjId, int mode);
      from a descriptor opened with <symbol>INV_WRITE</symbol> returns
      data that reflects all writes of other committed transactions as well
      as writes of the current transaction.  This is similar to the behavior
-     of <literal>SERIALIZABLE</> versus <literal>READ COMMITTED</> transaction
+     of <literal>REPEATABLE READ</> versus <literal>READ COMMITTED</> transaction
      modes for ordinary SQL <command>SELECT</> commands.
     </para>
 
