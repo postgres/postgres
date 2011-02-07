@@ -1192,7 +1192,7 @@ storage_name(char c)
  * 'schema' is the column/attribute definition for the table. (It's a list
  *		of ColumnDef's.) It is destructively changed.
  * 'supers' is a list of names (as RangeVar nodes) of parent relations.
- * 'istemp' is TRUE if we are creating a temp relation.
+ * 'relpersistence' is a persistence type of the table.
  *
  * Output arguments:
  * 'supOids' receives a list of the OIDs of the parent relations.
