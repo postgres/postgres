@@ -1319,7 +1319,7 @@ DoCopyTo(CopyState cstate)
 		if (FreeFile(cstate->copy_file))
 			ereport(ERROR,
 					(errcode_for_file_access(),
-					 errmsg("could not write to file \"%s\": %m",
+					 errmsg("could not close file \"%s\": %m",
 							cstate->filename)));
 	}
 }
@@ -2263,7 +2263,7 @@ CopyFrom(CopyState cstate)
 		if (FreeFile(cstate->copy_file))
 			ereport(ERROR,
 					(errcode_for_file_access(),
-					 errmsg("could not read from file \"%s\": %m",
+					 errmsg("could not close file \"%s\": %m",
 							cstate->filename)));
 	}
 
