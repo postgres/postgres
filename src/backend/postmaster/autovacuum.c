@@ -2671,19 +2671,27 @@ autovacuum_do_vac_analyze(autovac_table *tab,
 						  BufferAccessStrategy bstrategy)
 {
 	VacuumStmt	vacstmt;
+	RangeVar	rangevar;
 
-	/* Set up command parameters --- use a local variable instead of palloc */
+	/* Set up command parameters --- use local variables instead of palloc */
 	MemSet(&vacstmt, 0, sizeof(vacstmt));
+	MemSet(&rangevar, 0, sizeof(rangevar));
+
+	rangevar.schemaname = tab->at_nspname;
+	rangevar.relname = tab->at_relname;
+	rangevar.location = -1;
 
 	vacstmt.type = T_VacuumStmt;
-	vacstmt.options = 0;
+	if (!tab->at_wraparound)
+		vacstmt.options = VACOPT_NOWAIT;
 	if (tab->at_dovacuum)
 		vacstmt.options |= VACOPT_VACUUM;
 	if (tab->at_doanalyze)
 		vacstmt.options |= VACOPT_ANALYZE;
 	vacstmt.freeze_min_age = tab->at_freeze_min_age;
 	vacstmt.freeze_table_age = tab->at_freeze_table_age;
-	vacstmt.relation = NULL;	/* not used since we pass a relid */
+	/* we pass the OID, but might need this anyway for an error message */
+	vacstmt.relation = &rangevar;
 	vacstmt.va_cols = NIL;
 
 	/* Let pgstat know what we're doing */

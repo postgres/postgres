@@ -2332,7 +2332,8 @@ typedef enum VacuumOption
 	VACOPT_ANALYZE = 1 << 1,	/* do ANALYZE */
 	VACOPT_VERBOSE = 1 << 2,	/* print progress info */
 	VACOPT_FREEZE = 1 << 3,		/* FREEZE option */
-	VACOPT_FULL = 1 << 4		/* FULL (non-concurrent) vacuum */
+	VACOPT_FULL = 1 << 4,		/* FULL (non-concurrent) vacuum */
+	VACOPT_NOWAIT = 1 << 5
 } VacuumOption;
 
 typedef struct VacuumStmt

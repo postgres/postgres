@@ -61,7 +61,7 @@ static BufferAccessStrategy vac_strategy;
 /* non-export function prototypes */
 static List *get_rel_oids(Oid relid, const RangeVar *vacrel);
 static void vac_truncate_clog(TransactionId frozenXID);
-static void vacuum_rel(Oid relid, VacuumStmt *vacstmt, bool do_toast,
+static bool vacuum_rel(Oid relid, VacuumStmt *vacstmt, bool do_toast,
 		   bool for_wraparound, bool *scanned_all);
 
 
@@ -226,8 +226,11 @@ vacuum(VacuumStmt *vacstmt, Oid relid, bool do_toast,
 			bool		scanned_all = false;
 
 			if (vacstmt->options & VACOPT_VACUUM)
-				vacuum_rel(relid, vacstmt, do_toast, for_wraparound,
-						   &scanned_all);
+			{
+				if (!vacuum_rel(relid, vacstmt, do_toast, for_wraparound,
+								&scanned_all))
+					continue;
+			}
 
 			if (vacstmt->options & VACOPT_ANALYZE)
 			{
@@ -764,7 +767,7 @@ vac_truncate_clog(TransactionId frozenXID)
  *
  *		At entry and exit, we are not inside a transaction.
  */
-static void
+static bool
 vacuum_rel(Oid relid, VacuumStmt *vacstmt, bool do_toast, bool for_wraparound,
 		   bool *scanned_all)
 {
@@ -835,14 +838,29 @@ vacuum_rel(Oid relid, VacuumStmt *vacstmt, bool do_toast, bool for_wraparound,
 	 *
 	 * There's a race condition here: the rel may have gone away since the
 	 * last time we saw it.  If so, we don't need to vacuum it.
+	 *
+	 * If we've been asked not to wait for the relation lock, acquire it
+	 * first in non-blocking mode, before calling try_relation_open().
 	 */
-	onerel = try_relation_open(relid, lmode);
+	if (!(vacstmt->options & VACOPT_NOWAIT))
+		onerel = try_relation_open(relid, lmode);
+	else if (ConditionalLockRelationOid(relid, lmode))
+		onerel = try_relation_open(relid, NoLock);
+	else
+	{
+		onerel = NULL;
+		if (IsAutoVacuumWorkerProcess() && Log_autovacuum_min_duration >= 0)
+			ereport(LOG,
+					(errcode(ERRCODE_LOCK_NOT_AVAILABLE),
+					 errmsg("skipping vacuum of \"%s\" --- lock not available",
+						vacstmt->relation->relname)));
+	}
 
 	if (!onerel)
 	{
 		PopActiveSnapshot();
 		CommitTransactionCommand();
-		return;
+		return false;
 	}
 
 	/*
@@ -873,7 +891,7 @@ vacuum_rel(Oid relid, VacuumStmt *vacstmt, bool do_toast, bool for_wraparound,
 		relation_close(onerel, lmode);
 		PopActiveSnapshot();
 		CommitTransactionCommand();
-		return;
+		return false;
 	}
 
 	/*
@@ -890,7 +908,7 @@ vacuum_rel(Oid relid, VacuumStmt *vacstmt, bool do_toast, bool for_wraparound,
 		relation_close(onerel, lmode);
 		PopActiveSnapshot();
 		CommitTransactionCommand();
-		return;
+		return false;
 	}
 
 	/*
@@ -905,7 +923,7 @@ vacuum_rel(Oid relid, VacuumStmt *vacstmt, bool do_toast, bool for_wraparound,
 		relation_close(onerel, lmode);
 		PopActiveSnapshot();
 		CommitTransactionCommand();
-		return;
+		return false;
 	}
 
 	/*
@@ -989,6 +1007,9 @@ vacuum_rel(Oid relid, VacuumStmt *vacstmt, bool do_toast, bool for_wraparound,
 	 * Now release the session-level lock on the master table.
 	 */
 	UnlockRelationIdForSession(&onerelid, lmode);
+
+	/* Report that we really did it. */
+	return true;
 }
 
 

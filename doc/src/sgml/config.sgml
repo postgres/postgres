@@ -4080,7 +4080,10 @@ COPY postgres_log FROM '/full/path/to/logfile.csv' WITH csv;
         all autovacuum actions. Minus-one (the default) disables logging
         autovacuum actions.  For example, if you set this to
         <literal>250ms</literal> then all automatic vacuums and analyzes that run
-        250ms or longer will be logged.  Enabling this parameter can be helpful
+        250ms or longer will be logged.  In addition, when this parameter is
+        set to any value other than <literal>-1</literal>, a message will be
+        logged if an autovacuum action is skipped due to the existence of a
+        conflicting lock.  Enabling this parameter can be helpful
         in tracking autovacuum activity.  This setting can only be set in
         the <filename>postgresql.conf</> file or on the server command line.
        </para>
