@@ -495,6 +495,12 @@ exec_command(const char *cmd,
 						break;
 				}
 				break;
+			case 'x':          /* Extensions */
+				if (show_verbose)
+					success = listExtensionContents(pattern);
+				else
+					success = listExtensions(pattern);
+				break;
 			default:
 				status = PSQL_CMD_UNKNOWN;
 		}

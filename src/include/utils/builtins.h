@@ -440,6 +440,8 @@ extern Datum pg_relation_filenode(PG_FUNCTION_ARGS);
 extern Datum pg_relation_filepath(PG_FUNCTION_ARGS);
 
 /* genfile.c */
+extern bytea *read_binary_file(const char *filename,
+							   int64 seek_offset, int64 bytes_to_read);
 extern Datum pg_stat_file(PG_FUNCTION_ARGS);
 extern Datum pg_read_file(PG_FUNCTION_ARGS);
 extern Datum pg_read_file_all(PG_FUNCTION_ARGS);
@@ -1062,6 +1064,10 @@ extern Datum pg_describe_object(PG_FUNCTION_ARGS);
 
 /* commands/constraint.c */
 extern Datum unique_key_recheck(PG_FUNCTION_ARGS);
+
+/* commands/extension.c */
+extern Datum pg_available_extensions(PG_FUNCTION_ARGS);
+extern Datum pg_extension_config_dump(PG_FUNCTION_ARGS);
 
 /* commands/prepare.c */
 extern Datum pg_prepared_statement(PG_FUNCTION_ARGS);

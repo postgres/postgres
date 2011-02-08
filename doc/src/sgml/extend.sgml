@@ -38,6 +38,11 @@
       operator classes for indexes (starting in <xref linkend="xindex">)
      </para>
     </listitem>
+    <listitem>
+     <para>
+      packages of related objects (starting in <xref linkend="extend-extensions">)
+     </para>
+    </listitem>
    </itemizedlist>
   </para>
 
@@ -273,67 +278,701 @@
   &xoper;
   &xindex;
 
-  <sect1 id="extend-Cpp">
-   <title>Using C++ for Extensibility</title>
 
-   <indexterm zone="extend-Cpp">
-    <primary>C++</primary>
+  <sect1 id="extend-extensions">
+   <title>Packaging Related Objects into an Extension</title>
+
+   <indexterm zone="extend-extensions">
+    <primary>extension</primary>
    </indexterm>
 
    <para>
-    It is possible to use a compiler in C++ mode to build
-    <productname>PostgreSQL</productname> extensions by following these
-    guidelines:
+    A useful extension to <productname>PostgreSQL</> typically includes
+    multiple SQL objects; for example, a new datatype will require new
+    functions, new operators, and probably new index operator classes.
+    It is helpful to collect all these objects into a single package
+    to simplify database management.  <productname>PostgreSQL</> calls
+    such a package an <firstterm>extension</>.  To define an extension,
+    you need at least a <firstterm>script file</> that contains the
+    <acronym>SQL</> commands to create the extension's objects, and a
+    <firstterm>control file</> that specifies a few basic properties
+    of the extension itself.  If the extension includes C code, there
+    will typically also be a shared library file into which the C code
+    has been built.  Once you have these files, a simple
+    <xref linkend="sql-createextension"> command loads the objects into
+    your database.
+   </para>
+
+   <para>
+    The advantage of using an extension, rather than just running the
+    <acronym>SQL</> script to load a bunch of <quote>loose</> objects
+    into your database, is that <productname>PostgreSQL</> will then
+    understand that the objects of the extension go together.  You can
+    drop all the objects with a single <xref linkend="sql-dropextension">
+    command (no need to maintain a separate <quote>uninstall</> script).
+    Even more useful, <application>pg_dump</> knows that it should not
+    dump the individual member objects of the extension &mdash; it will
+    just include a <command>CREATE EXTENSION</> command in dumps, instead.
+    This vastly simplifies migration to a new version of the extension
+    that might contain more or different objects than the old version.
+    Note however that you must have the extension's control, script, and
+    other files available when loading such a dump into a new database.
+   </para>
+
+   <para>
+    <productname>PostgreSQL</> will not let you drop an individual object
+    contained in an extension, except by dropping the whole extension.
+    Also, while you can change the definition of an extension member object
+    (for example, via <command>CREATE OR REPLACE FUNCTION</command> for a
+    function), bear in mind that the modified definition will not be dumped
+    by <application>pg_dump</>.  Such a change is usually only sensible if
+    you concurrently make the same change in the extension's script file.
+    (But there are special provisions for tables containing configuration
+    data; see below.)
+   </para>
+
+   <sect2>
+    <title>Extension Files</title>
+
+   <indexterm>
+    <primary>control file</primary>
+   </indexterm>
+
+    <para>
+     The <xref linkend="sql-createextension"> command relies on a control
+     file for each extension, which must be named the same as the extension
+     with a suffix of <literal>.control</>, and must be placed in the
+     installation's <literal>SHAREDIR/contrib</literal> directory.  There
+     must also be a <acronym>SQL</> script file, which typically is
+     named after the extension with a suffix of <literal>.sql</>, and is also
+     placed in the <literal>SHAREDIR/contrib</literal> directory; but these
+     defaults can be overridden by the control file.
+    </para>
+
+    <para>
+     The file format for an extension control file is the same as for the
+     <filename>postgresql.conf</> file, namely a list of
+     <replaceable>parameter-name</> <literal>=</> <replaceable>value</>
+     assignments, one per line.  Blank lines and comments introduced by
+     <literal>#</> are allowed.  Be sure to quote any value that is not
+     a single word or number.
+    </para>
+
+    <para>
+     A control file can set the following parameters:
+    </para>
+
+    <variablelist>
+     <varlistentry>
+      <term><varname>script</varname> (<type>string</type>)</term>
+      <listitem>
+       <para>
+        The filename of the extension's <acronym>SQL</> script.
+        Defaults to the same name as the control file, but with the
+        <literal>.sql</literal> extension.  Unless an absolute path is
+        given, the name is relative to the <literal>SHAREDIR/contrib</literal>
+        directory.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term><varname>version</varname> (<type>string</type>)</term>
+      <listitem>
+       <para>
+        The version of the extension.  Any string can be given.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term><varname>comment</varname> (<type>string</type>)</term>
+      <listitem>
+       <para>
+        A comment (any string) about the extension.  Alternatively,
+        the comment can be set by means of the <xref linkend="sql-comment">
+        command.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term><varname>requires</varname> (<type>string</type>)</term>
+      <listitem>
+       <para>
+        A list of names of extensions that this extension depends on,
+        for example <literal>requires = 'foo, bar'</literal>.  Those
+        extensions must be installed before this one can be installed.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term><varname>encoding</varname> (<type>string</type>)</term>
+      <listitem>
+       <para>
+        The character set encoding used by the script file.  This should
+        be specified if the script file contains any non-ASCII characters.
+        Otherwise the script will be assumed to be in the encoding of the
+        database it is loaded into.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term><varname>relocatable</varname> (<type>boolean</type>)</term>
+      <listitem>
+       <para>
+        An extension is <firstterm>relocatable</> if it is possible to move
+        its contained objects into a different schema after initial creation
+        of the extension.  The default is <literal>false</>, i.e. the
+        extension is not relocatable.
+        See below for more information.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term><varname>schema</varname> (<type>string</type>)</term>
+      <listitem>
+       <para>
+        This parameter can only be set for non-relocatable extensions.
+        It forces the extension to be loaded into exactly the named schema
+        and not any other.  See below for more information.
+       </para>
+      </listitem>
+     </varlistentry>
+    </variablelist>
+
+    <para>
+     An extension's <acronym>SQL</> script file can contain any SQL commands,
+     except for transaction control commands (<command>BEGIN</>,
+     <command>COMMIT</>, etc) and commands that cannot be executed inside a
+     transaction block (such as <command>VACUUM</>).  This is because the
+     script file is implicitly executed within a transaction block.
+    </para>
+
+    <para>
+     While the script file can contain any characters allowed by the specified
+     encoding, the control file should contain only plain ASCII, because there
+     is no way for <productname>PostgreSQL</> to know what encoding the
+     control file is in.  In practice this is only an issue if you want to
+     use non-ASCII characters in the extension's comment.  Recommended
+     practice in that case is to not use the <varname>comment</> parameter
+     in the control file, but instead use <command>COMMENT ON EXTENSION</>
+     within the script file to set the comment.
+    </para>
+
+   </sect2>
+
+   <sect2>
+    <title>Extension Relocatability</title>
+
+    <para>
+     Users often wish to load the objects contained in an extension into a
+     different schema than the extension's author had in mind.  There are
+     three supported levels of relocatability:
+    </para>
 
     <itemizedlist>
      <listitem>
       <para>
-        All functions accessed by the backend must present a C interface
-        to the backend;  these C functions can then call C++ functions.
-        For example, <literal>extern C</> linkage is required for
-        backend-accessed functions.  This is also necessary for any
-        functions that are passed as pointers between the backend and
-        C++ code.
+       A fully relocatable extension can be moved into another schema
+       at any time, even after it's been loaded into a database.
+       This is done with the <command>ALTER EXTENSION SET SCHEMA</>
+       command, which automatically renames all the member objects into
+       the new schema.  Normally, this is only possible if the extension
+       contains no internal assumptions about what schema any of its
+       objects are in.  Also, the extension's objects must all be in one
+       schema to begin with (ignoring objects that do not belong to any
+       schema, such as procedural languages).  Mark a fully relocatable
+       extension by setting <literal>relocatable = true</> in its control
+       file.
       </para>
      </listitem>
+
      <listitem>
       <para>
-       Free memory using the appropriate deallocation method.  For example,
-       most backend memory is allocated using <function>palloc()</>, so use
-       <function>pfree()</> to free it, i.e. using C++
-       <function>delete()</> in such cases will fail.
+       An extension might be relocatable during installation but not
+       afterwards.  This is typically the case if the extension's script
+       file needs to reference the target schema explicitly, for example
+       in setting <literal>search_path</> properties for SQL functions.
+       For such an extension, set <literal>relocatable = false</> in its
+       control file, and use <literal>@extschema@</> to refer to the target
+       schema in the script file.  All occurrences of this string will be
+       replaced by the actual target schema's name before the script is
+       executed.  The user can set the target schema using the
+       <literal>SCHEMA</> option of <command>CREATE EXTENSION</>.
       </para>
      </listitem>
+
      <listitem>
       <para>
-       Prevent exceptions from propagating into the C code (use a
-       catch-all block at the top level of all <literal>extern C</>
-       functions).  This is necessary even if the C++ code does not
-       throw any exceptions because events like out-of-memory still
-       throw exceptions.  Any exceptions must be caught and appropriate
-       errors passed back to the C interface.  If possible, compile C++
-       with <option>-fno-exceptions</> to eliminate exceptions entirely;
-       in such cases, you must check for failures in your C++ code, e.g.
-       check for NULL returned by <function>new()</>.
-      </para>
-     </listitem>
-     <listitem>
-      <para>
-       If calling backend functions from C++ code, be sure that the
-       C++ call stack contains only plain old data structures
-       (<acronym>POD</>).  This is necessary because backend errors
-       generate a distant <function>longjmp()</> that does not properly
-       unroll a C++ call stack with non-POD objects.
+       If the extension does not support relocation at all, set
+       <literal>relocatable = false</> in its control file, and also set
+       <literal>schema</> to the name of the intended target schema.  This
+       will prevent use of the <literal>SCHEMA</> option of <command>CREATE
+       EXTENSION</>, unless it specifies the same schema named in the control
+       file.  This choice is typically necessary if the extension contains
+       internal assumptions about schema names that can't be replaced by
+       uses of <literal>@extschema@</>.  The <literal>@extschema@</>
+       substitution mechanism is available in this case too, although it is
+       of limited use since the schema name is determined by the control file.
       </para>
      </listitem>
     </itemizedlist>
+
+    <para>
+     In all cases, the script file will be executed with
+     <xref linkend="guc-search-path"> initially set to point to the target
+     schema; that is, <command>CREATE EXTENSION</> does the equivalent of
+     this:
+<programlisting>
+SET LOCAL search_path TO @extschema@;
+</programlisting>
+     This allows the objects created by the script file to go into the target
+     schema.  The script file can change <varname>search_path</> if it wishes,
+     but that is generally undesirable.  <varname>search_path</> is restored
+     to its previous setting upon completion of <command>CREATE EXTENSION</>.
+    </para>
+
+    <para>
+     The target schema is determined by the <varname>schema</> parameter in
+     the control file if that is given, otherwise by the <literal>SCHEMA</>
+     option of <command>CREATE EXTENSION</> if that is given, otherwise the
+     current default object creation schema (the first one in the caller's
+     <varname>search_path</>).  When the control file <varname>schema</>
+     parameter is used, the target schema will be created if it doesn't
+     already exist, but in the other two cases it must already exist.
+    </para>
+
+    <para>
+     If any prerequisite extensions are listed in <varname>requires</varname>
+     in the control file, their target schemas are appended to the initial
+     setting of <varname>search_path</>.  This allows their objects to be
+     visible to the new extension's script file.
+    </para>
+
+    <para>
+     Although a non-relocatable extension can contain objects spread across
+     multiple schemas, it is usually desirable to place all the objects meant
+     for external use into a single schema, which is considered the extension's
+     target schema.  Such an arrangement works conveniently with the default
+     setting of <varname>search_path</> during creation of dependent
+     extensions.
+    </para>
+   </sect2>
+
+   <sect2>
+    <title>Extension Configuration Tables</title>
+
+    <para>
+     Some extensions include configuration tables, which contain data that
+     might be added or changed by the user after installation of the
+     extension.  Ordinarily, if a table is part of an extension, neither
+     the table's definition nor its content will be dumped by
+     <application>pg_dump</>.  But that behavior is undesirable for a
+     configuration table; any data changes made by the user need to be
+     included in dumps, or the extension will behave differently after a dump
+     and reload.
+    </para>
+
+    <para>
+     To solve this problem, an extension's script file can mark a table
+     it has created as a configuration table, which will cause
+     <application>pg_dump</> to include the table's contents (not its
+     definition) in dumps.  To do that, call the function
+     <function>pg_extension_config_dump(regclass, text)</> after creating the
+     table, for example
+<programlisting>
+CREATE TABLE my_config (key text, value text);
+
+SELECT pg_catalog.pg_extension_config_dump('my_config', '');
+</programlisting>
+     Any number of tables can be marked this way.
+    </para>
+
+    <para>
+     When the second argument of <function>pg_extension_config_dump</> is
+     an empty string, the entire contents of the table are dumped by
+     <application>pg_dump</>.  This is usually only correct if the table
+     is initially empty as created by the extension script.  If there is
+     a mixture of initial data and user-provided data in the table,
+     the second argument of <function>pg_extension_config_dump</> provides
+     a <literal>WHERE</> condition that selects the data to be dumped.
+     For example, you might do
+<programlisting>
+CREATE TABLE my_config (key text, value text, standard_entry boolean);
+
+SELECT pg_catalog.pg_extension_config_dump('my_config', 'WHERE NOT standard_entry');
+</programlisting>
+     and then make sure that <structfield>standard_entry</> is true only
+     in the rows created by the extension's script.
+    </para>
+
+    <para>
+     More complicated situations, such as initially-provided rows that might
+     be modified by users, can be handled by creating triggers on the
+     configuration table to ensure that modified rows are marked correctly.
+    </para>
+   </sect2>
+
+   <sect2>
+    <title>Extension Example</title>
+
+    <para>
+     Here is a complete example of an <acronym>SQL</>-only
+     extension, a two-element composite type that can store any type of value
+     in its slots, which are named <quote>k</> and <quote>v</>.  Non-text
+     values are automatically coerced to text for storage.
+    </para>
+
+    <para>
+     The script file <filename>pair.sql</> looks like this:
+
+<programlisting><![CDATA[
+CREATE TYPE pair AS ( k text, v text );
+
+CREATE OR REPLACE FUNCTION pair(anyelement, text)
+RETURNS pair LANGUAGE SQL AS 'SELECT ROW($1, $2)::pair';
+
+CREATE OR REPLACE FUNCTION pair(text, anyelement)
+RETURNS pair LANGUAGE SQL AS 'SELECT ROW($1, $2)::pair';
+
+CREATE OR REPLACE FUNCTION pair(anyelement, anyelement)
+RETURNS pair LANGUAGE SQL AS 'SELECT ROW($1, $2)::pair';
+
+CREATE OR REPLACE FUNCTION pair(text, text)
+RETURNS pair LANGUAGE SQL AS 'SELECT ROW($1, $2)::pair;';
+
+CREATE OPERATOR ~> (LEFTARG = text, RIGHTARG = anyelement, PROCEDURE = pair);
+CREATE OPERATOR ~> (LEFTARG = anyelement, RIGHTARG = text, PROCEDURE = pair);
+CREATE OPERATOR ~> (LEFTARG = anyelement, RIGHTARG = anyelement, PROCEDURE = pair);
+CREATE OPERATOR ~> (LEFTARG = text, RIGHTARG = text, PROCEDURE = pair);
+]]>
+</programlisting>
+    </para>
+
+    <para>
+     The control file <filename>pair.control</> looks like this:
+
+<programlisting>
+# pair extension
+comment = 'A key/value pair data type'
+version = '0.1.2'
+relocatable = true
+</programlisting>
+    </para>
+
+    <para>
+     While you hardly need a makefile to install these two files into the
+     correct directory, you could use a <filename>Makefile</> containing this:
+
+<programlisting>
+EXTENSION = pair
+DATA = pair.sql
+
+PG_CONFIG = pg_config
+PGXS := $(shell $(PG_CONFIG) --pgxs)
+include $(PGXS)
+</programlisting>
+
+     This makefile relies on <acronym>PGXS</acronym>, which is described
+     in <xref linkend="extend-pgxs">.  The command <literal>make install</>
+     will then install the control and script files into the correct
+     directory as reported by <application>pg_config</>.
+    </para>
+
+    <para>
+     Once the files are installed, use the
+     <xref linkend="sql-createextension"> command to load the objects into
+     any particular database.
+    </para>
+   </sect2>
+  </sect1>
+
+  <sect1 id="extend-pgxs">
+   <title>Extension Building Infrastructure</title>
+
+   <indexterm zone="extend-pgxs">
+    <primary>pgxs</primary>
+   </indexterm>
+
+   <para>
+    If you are thinking about distributing your
+    <productname>PostgreSQL</> extension modules, setting up a
+    portable build system for them can be fairly difficult.  Therefore
+    the <productname>PostgreSQL</> installation provides a build
+    infrastructure for extensions, called <acronym>PGXS</acronym>, so
+    that simple extension modules can be built simply against an
+    already installed server.  <acronym>PGXS</acronym> is mainly intended
+    for extensions that include C code, although it can be used for
+    pure-SQL extensions too.  Note that <acronym>PGXS</acronym> is not
+    intended to be a universal build system framework that can be used
+    to build any software interfacing to <productname>PostgreSQL</>;
+    it simply automates common build rules for simple server extension
+    modules.  For more complicated packages, you might need to write your
+    own build system.
    </para>
 
    <para>
-    In summary, it is best to place C++ code behind a wall of
-    <literal>extern C</> functions that interface to the backend,
-    and avoid exception, memory, and call stack leakage.
+    To use the <acronym>PGXS</acronym> infrastructure for your extension,
+    you must write a simple makefile.
+    In the makefile, you need to set some variables
+    and finally include the global <acronym>PGXS</acronym> makefile.
+    Here is an example that builds an extension module named
+    <literal>isbn_issn</literal>, consisting of a shared library containing
+    some C code, an extension control file, a SQL script, and a documentation
+    text file:
+<programlisting>
+MODULES = isbn_issn
+EXTENSION = isbn_issn
+DATA_built = isbn_issn.sql
+DOCS = README.isbn_issn
+
+PG_CONFIG = pg_config
+PGXS := $(shell $(PG_CONFIG) --pgxs)
+include $(PGXS)
+</programlisting>
+    The last three lines should always be the same.  Earlier in the
+    file, you assign variables or add custom
+    <application>make</application> rules.
    </para>
+
+   <para>
+    Set one of these three variables to specify what is built:
+
+    <variablelist>
+     <varlistentry>
+      <term><varname>MODULES</varname></term>
+      <listitem>
+       <para>
+        list of shared-library objects to be built from source files with same
+        stem (do not include library suffixes in this list)
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term><varname>MODULE_big</varname></term>
+      <listitem>
+       <para>
+        a shared library to build from multiple source files
+        (list object files in <varname>OBJS</varname>)
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term><varname>PROGRAM</varname></term>
+      <listitem>
+       <para>
+        an executable program to build
+        (list object files in <varname>OBJS</varname>)
+       </para>
+      </listitem>
+     </varlistentry>
+    </variablelist>
+
+    The following variables can also be set:
+
+    <variablelist>
+     <varlistentry>
+      <term><varname>MODULEDIR</varname></term>
+      <listitem>
+       <para>
+        subdirectory into which EXTENSION, DATA and DOCS files should be
+        installed (if not set, default is <literal>contrib</literal>)
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term><varname>EXTENSION</varname></term>
+      <listitem>
+       <para>
+        extension name(s); for each name you must provide an
+        <literal><replaceable>extension</replaceable>.control</literal> file,
+        which will be installed into
+        <literal><replaceable>prefix</replaceable>/share/$MODULEDIR</literal>
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term><varname>DATA</varname></term>
+      <listitem>
+       <para>
+        random files to install into <literal><replaceable>prefix</replaceable>/share/$MODULEDIR</literal>
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term><varname>DATA_built</varname></term>
+      <listitem>
+       <para>
+        random files to install into
+        <literal><replaceable>prefix</replaceable>/share/$MODULEDIR</literal>,
+        which need to be built first
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term><varname>DATA_TSEARCH</varname></term>
+      <listitem>
+       <para>
+        random files to install under
+        <literal><replaceable>prefix</replaceable>/share/tsearch_data</literal>
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term><varname>DOCS</varname></term>
+      <listitem>
+       <para>
+        random files to install under
+        <literal><replaceable>prefix</replaceable>/doc/$MODULEDIR</literal>
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term><varname>SCRIPTS</varname></term>
+      <listitem>
+       <para>
+        script files (not binaries) to install into
+        <literal><replaceable>prefix</replaceable>/bin</literal>
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term><varname>SCRIPTS_built</varname></term>
+      <listitem>
+       <para>
+        script files (not binaries) to install into
+        <literal><replaceable>prefix</replaceable>/bin</literal>,
+        which need to be built first
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term><varname>REGRESS</varname></term>
+      <listitem>
+       <para>
+        list of regression test cases (without suffix), see below
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term><varname>EXTRA_CLEAN</varname></term>
+      <listitem>
+       <para>
+        extra files to remove in <literal>make clean</literal>
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term><varname>PG_CPPFLAGS</varname></term>
+      <listitem>
+       <para>
+        will be added to <varname>CPPFLAGS</varname>
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term><varname>PG_LIBS</varname></term>
+      <listitem>
+       <para>
+        will be added to <varname>PROGRAM</varname> link line
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term><varname>SHLIB_LINK</varname></term>
+      <listitem>
+       <para>
+        will be added to <varname>MODULE_big</varname> link line
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term><varname>PG_CONFIG</varname></term>
+      <listitem>
+       <para>
+        path to <application>pg_config</> program for the
+        <productname>PostgreSQL</productname> installation to build against
+        (typically just <literal>pg_config</> to use the first one in your
+        <varname>PATH</>)
+       </para>
+      </listitem>
+     </varlistentry>
+    </variablelist>
+   </para>
+
+   <para>
+    Put this makefile as <literal>Makefile</literal> in the directory
+    which holds your extension. Then you can do
+    <literal>make</literal> to compile, and then <literal>make
+    install</literal> to install your module.  By default, the extension is
+    compiled and installed for the
+    <productname>PostgreSQL</productname> installation that
+    corresponds to the first <command>pg_config</command> program
+    found in your <varname>PATH</>.  You can use a different installation by
+    setting <varname>PG_CONFIG</varname> to point to its
+    <command>pg_config</command> program, either within the makefile
+    or on the <literal>make</literal> command line.
+   </para>
+
+   <caution>
+    <para>
+     Changing <varname>PG_CONFIG</varname> only works when building
+     against <productname>PostgreSQL</productname> 8.3 or later.
+     With older releases it does not work to set it to anything except
+     <literal>pg_config</>; you must alter your <varname>PATH</>
+     to select the installation to build against.
+    </para>
+   </caution>
+
+   <para>
+    The scripts listed in the <varname>REGRESS</> variable are used for
+    regression testing of your module, which can be invoked by <literal>make
+    installcheck</literal> after doing <literal>make install</>.  For this to
+    work you must have a running <productname>PostgreSQL</productname> server.
+    The script files listed in <varname>REGRESS</> must appear in a
+    subdirectory named <literal>sql/</literal> in your extension's directory.
+    These files must have extension <literal>.sql</literal>, which must not be
+    included in the <varname>REGRESS</varname> list in the makefile.  For each
+    test there should also be a file containing the expected output in a
+    subdirectory named <literal>expected/</literal>, with the same stem and
+    extension <literal>.out</literal>.  <literal>make installcheck</literal>
+    executes each test script with <application>psql</>, and compares the
+    resulting output to the matching expected file.  Any differences will be
+    written to the file <literal>regression.diffs</literal> in <command>diff
+    -c</command> format.  Note that trying to run a test that is missing its
+    expected file will be reported as <quote>trouble</quote>, so make sure you
+    have all expected files.
+   </para>
+
+   <tip>
+    <para>
+     The easiest way to create the expected files is to create empty files,
+     then do a test run (which will of course report differences).  Inspect
+     the actual result files found in the <literal>results/</literal>
+     directory, then copy them to <literal>expected/</literal> if they match
+     what you expect from the test.
+    </para>
+
+   </tip>
   </sect1>
 
  </chapter>

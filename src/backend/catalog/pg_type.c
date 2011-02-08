@@ -481,7 +481,7 @@ TypeCreate(Oid newTypeOid,
  *
  * If rebuild is true, we remove existing dependencies and rebuild them
  * from scratch.  This is needed for ALTER TYPE, and also when replacing
- * a shell type.
+ * a shell type.  We don't remove/rebuild extension dependencies, though.
  */
 void
 GenerateTypeDependencies(Oid typeNamespace,
@@ -507,7 +507,7 @@ GenerateTypeDependencies(Oid typeNamespace,
 
 	if (rebuild)
 	{
-		deleteDependencyRecordsFor(TypeRelationId, typeObjectId);
+		deleteDependencyRecordsFor(TypeRelationId, typeObjectId, true);
 		deleteSharedDependencyRecordsFor(TypeRelationId, typeObjectId, 0);
 	}
 
@@ -521,7 +521,7 @@ GenerateTypeDependencies(Oid typeNamespace,
 	 * For a relation rowtype (that's not a composite type), we should skip
 	 * these because we'll depend on them indirectly through the pg_class
 	 * entry.  Likewise, skip for implicit arrays since we'll depend on them
-	 * through the element type.
+	 * through the element type.  The same goes for extension membership.
 	 */
 	if ((!OidIsValid(relationOid) || relationKind == RELKIND_COMPOSITE_TYPE) &&
 		!isImplicitArray)
@@ -532,6 +532,10 @@ GenerateTypeDependencies(Oid typeNamespace,
 		recordDependencyOn(&myself, &referenced, DEPENDENCY_NORMAL);
 
 		recordDependencyOnOwner(TypeRelationId, typeObjectId, owner);
+
+		/* dependency on extension */
+		if (!rebuild)
+			recordDependencyOnCurrentExtension(&myself);
 	}
 
 	/* Normal dependencies on the I/O functions */

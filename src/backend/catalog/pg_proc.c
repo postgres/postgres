@@ -562,10 +562,11 @@ ProcedureCreate(const char *procedureName,
 	 * Create dependencies for the new function.  If we are updating an
 	 * existing function, first delete any existing pg_depend entries.
 	 * (However, since we are not changing ownership or permissions, the
-	 * shared dependencies do *not* need to change, and we leave them alone.)
+	 * shared dependencies do *not* need to change, and we leave them alone.
+	 * We also don't change any pre-existing extension-membership dependency.)
 	 */
 	if (is_update)
-		deleteDependencyRecordsFor(ProcedureRelationId, retval);
+		deleteDependencyRecordsFor(ProcedureRelationId, retval, true);
 
 	myself.classId = ProcedureRelationId;
 	myself.objectId = retval;
@@ -614,6 +615,10 @@ ProcedureCreate(const char *procedureName,
 							  0, NULL,
 							  nnewmembers, newmembers);
 	}
+
+	/* dependency on extension */
+	if (!is_update)
+		recordDependencyOnCurrentExtension(&myself);
 
 	heap_freetuple(tup);
 

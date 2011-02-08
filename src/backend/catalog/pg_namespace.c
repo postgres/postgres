@@ -38,6 +38,7 @@ NamespaceCreate(const char *nspName, Oid ownerId)
 	Datum		values[Natts_pg_namespace];
 	NameData	nname;
 	TupleDesc	tupDesc;
+	ObjectAddress myself;
 	int			i;
 
 	/* sanity checks */
@@ -73,8 +74,16 @@ NamespaceCreate(const char *nspName, Oid ownerId)
 
 	heap_close(nspdesc, RowExclusiveLock);
 
-	/* Record dependency on owner */
+	/* Record dependencies */
+	myself.classId = NamespaceRelationId;
+	myself.objectId = nspoid;
+	myself.objectSubId = 0;
+
+	/* dependency on owner */
 	recordDependencyOnOwner(NamespaceRelationId, nspoid, ownerId);
+
+	/* dependency on extension */
+	recordDependencyOnCurrentExtension(&myself);
 
 	/* Post creation hook for new schema */
 	InvokeObjectAccessHook(OAT_POST_CREATE, NamespaceRelationId, nspoid, 0);

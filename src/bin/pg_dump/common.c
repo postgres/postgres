@@ -84,6 +84,7 @@ getSchemaData(int *numTablesPtr)
 	RuleInfo   *ruleinfo;
 	ProcLangInfo *proclanginfo;
 	CastInfo   *castinfo;
+	ExtensionInfo *extinfo;
 	OpclassInfo *opcinfo;
 	OpfamilyInfo *opfinfo;
 	ConvInfo   *convinfo;
@@ -100,6 +101,7 @@ getSchemaData(int *numTablesPtr)
 	int			numRules;
 	int			numProcLangs;
 	int			numCasts;
+	int			numExtensions;
 	int			numOpclasses;
 	int			numOpfamilies;
 	int			numConversions;
@@ -196,6 +198,11 @@ getSchemaData(int *numTablesPtr)
 	if (g_verbose)
 		write_msg(NULL, "reading type casts\n");
 	castinfo = getCasts(&numCasts);
+
+	/* this must be after getTables */
+	if (g_verbose)
+		write_msg(NULL, "reading extensions\n");
+	extinfo = getExtensions(&numExtensions);
 
 	/* Link tables to parents, mark parents of target tables interesting */
 	if (g_verbose)

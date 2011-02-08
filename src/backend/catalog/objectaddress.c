@@ -28,6 +28,7 @@
 #include "catalog/pg_constraint.h"
 #include "catalog/pg_conversion.h"
 #include "catalog/pg_database.h"
+#include "catalog/pg_extension.h"
 #include "catalog/pg_language.h"
 #include "catalog/pg_largeobject.h"
 #include "catalog/pg_largeobject_metadata.h"
@@ -46,6 +47,7 @@
 #include "catalog/pg_type.h"
 #include "commands/dbcommands.h"
 #include "commands/defrem.h"
+#include "commands/extension.h"
 #include "commands/proclang.h"
 #include "commands/tablespace.h"
 #include "commands/trigger.h"
@@ -129,6 +131,7 @@ get_object_address(ObjectType objtype, List *objname, List *objargs,
 			address = get_object_address_relobject(objtype, objname, &relation);
 			break;
 		case OBJECT_DATABASE:
+		case OBJECT_EXTENSION:
 		case OBJECT_TABLESPACE:
 		case OBJECT_ROLE:
 		case OBJECT_SCHEMA:
@@ -267,6 +270,9 @@ get_object_address_unqualified(ObjectType objtype, List *qualname)
 			case OBJECT_DATABASE:
 				msg = gettext_noop("database name cannot be qualified");
 				break;
+			case OBJECT_EXTENSION:
+				msg = gettext_noop("extension name cannot be qualified");
+				break;
 			case OBJECT_TABLESPACE:
 				msg = gettext_noop("tablespace name cannot be qualified");
 				break;
@@ -297,6 +303,11 @@ get_object_address_unqualified(ObjectType objtype, List *qualname)
 		case OBJECT_DATABASE:
 			address.classId = DatabaseRelationId;
 			address.objectId = get_database_oid(name, false);
+			address.objectSubId = 0;
+			break;
+		case OBJECT_EXTENSION:
+			address.classId = ExtensionRelationId;
+			address.objectId = get_extension_oid(name, false);
 			address.objectSubId = 0;
 			break;
 		case OBJECT_TABLESPACE:
@@ -642,6 +653,9 @@ object_exists(ObjectAddress address)
 			break;
 		case TSConfigRelationId:
 			cache = TSCONFIGOID;
+			break;
+		case ExtensionRelationId:
+			indexoid = ExtensionOidIndexId;
 			break;
 		default:
 			elog(ERROR, "unrecognized classid: %u", address.classId);

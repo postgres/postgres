@@ -17,16 +17,17 @@
 #
 # Set one of these three variables to specify what is built:
 #
-#   MODULES -- list of shared objects to be built from source files with
-#     same stem (do not include suffix in this list)
-#   MODULE_big -- a shared object to build from multiple source files
+#   MODULES -- list of shared-library objects to be built from source files
+#     with same stem (do not include library suffixes in this list)
+#   MODULE_big -- a shared library to build from multiple source files
 #     (list object files in OBJS)
-#   PROGRAM -- a binary program to build (list object files in OBJS)
+#   PROGRAM -- an executable program to build (list object files in OBJS)
 #
 # The following variables can also be set:
 #
-#   MODULEDIR -- subdirectory into which DATA and DOCS files should be
-#     installed (if not set, default is "contrib")
+#   MODULEDIR -- subdirectory into which EXTENSION, DATA and DOCS files
+#     should be installed (if not set, default is "contrib")
+#   EXTENSION -- name of extension (there must be a $EXTENSION.control file)
 #   DATA -- random files to install into $PREFIX/share/$MODULEDIR
 #   DATA_built -- random files to install into $PREFIX/share/$MODULEDIR,
 #     which need to be built first
@@ -82,7 +83,7 @@ ifdef PG_CPPFLAGS
 override CPPFLAGS := $(PG_CPPFLAGS) $(CPPFLAGS)
 endif
 
-all: $(PROGRAM) $(DATA_built) $(SCRIPTS_built) $(addsuffix $(DLSUFFIX), $(MODULES))
+all: $(PROGRAM) $(DATA_built) $(SCRIPTS_built) $(addsuffix $(DLSUFFIX), $(MODULES)) $(addsuffix .control, $(EXTENSION))
 
 ifdef MODULE_big
 # shared library parameters
@@ -95,8 +96,8 @@ endif # MODULE_big
 
 
 install: all installdirs
-ifneq (,$(DATA)$(DATA_built))
-	@for file in $(addprefix $(srcdir)/, $(DATA)) $(DATA_built); do \
+ifneq (,$(DATA)$(DATA_built)$(EXTENSION))
+	@for file in $(addprefix $(srcdir)/, $(DATA)) $(DATA_built) $(addsuffix .control, $(EXTENSION)); do \
 	  echo "$(INSTALL_DATA) $$file '$(DESTDIR)$(datadir)/$(datamoduledir)'"; \
 	  $(INSTALL_DATA) $$file '$(DESTDIR)$(datadir)/$(datamoduledir)'; \
 	done
@@ -167,8 +168,8 @@ endif # MODULE_big
 
 
 uninstall:
-ifneq (,$(DATA)$(DATA_built))
-	rm -f $(addprefix '$(DESTDIR)$(datadir)/$(datamoduledir)'/, $(notdir $(DATA) $(DATA_built)))
+ifneq (,$(DATA)$(DATA_built)$(EXTENSION))
+	rm -f $(addprefix '$(DESTDIR)$(datadir)/$(datamoduledir)'/, $(notdir $(DATA) $(DATA_built) $(addsuffix .control, $(EXTENSION))))
 endif
 ifneq (,$(DATA_TSEARCH))
 	rm -f $(addprefix '$(DESTDIR)$(datadir)/tsearch_data'/, $(notdir $(DATA_TSEARCH)))

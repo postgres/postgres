@@ -3520,9 +3520,8 @@ if TG_OP = 'INSERT' and NEW.col1 = ... then
 
      <listitem>
       <para>
-       Add data and documentation installation location control to <link
-       linkend="xfunc-c-pgxs"><acronym>PGXS</></link> Makefiles
-       (Mark Cave-Ayland)
+       Add data and documentation installation location control to
+       <acronym>PGXS</> Makefiles (Mark Cave-Ayland)
       </para>
      </listitem>
 

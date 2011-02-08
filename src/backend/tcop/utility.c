@@ -32,6 +32,7 @@
 #include "commands/defrem.h"
 #include "commands/discard.h"
 #include "commands/explain.h"
+#include "commands/extension.h"
 #include "commands/lockcmds.h"
 #include "commands/portalcmds.h"
 #include "commands/prepare.h"
@@ -210,6 +211,7 @@ check_xact_readonly(Node *parsetree)
 		case T_ReassignOwnedStmt:
 		case T_AlterTSDictionaryStmt:
 		case T_AlterTSConfigurationStmt:
+		case T_CreateExtensionStmt:
 		case T_CreateFdwStmt:
 		case T_AlterFdwStmt:
 		case T_DropFdwStmt:
@@ -594,6 +596,10 @@ standard_ProcessUtility(Node *parsetree,
 			AlterTableSpaceOptions((AlterTableSpaceOptionsStmt *) parsetree);
 			break;
 
+		case T_CreateExtensionStmt:
+			CreateExtension((CreateExtensionStmt *) parsetree);
+			break;
+
 		case T_CreateFdwStmt:
 			CreateForeignDataWrapper((CreateFdwStmt *) parsetree);
 			break;
@@ -671,6 +677,10 @@ standard_ProcessUtility(Node *parsetree,
 
 					case OBJECT_TSCONFIGURATION:
 						RemoveTSConfigurations(stmt);
+						break;
+
+					case OBJECT_EXTENSION:
+						RemoveExtensions(stmt);
 						break;
 
 					default:
@@ -1544,6 +1554,10 @@ CreateCommandTag(Node *parsetree)
 			tag = "ALTER TABLESPACE";
 			break;
 
+		case T_CreateExtensionStmt:
+			tag = "CREATE EXTENSION";
+			break;
+
 		case T_CreateFdwStmt:
 			tag = "CREATE FOREIGN DATA WRAPPER";
 			break;
@@ -1625,6 +1639,9 @@ CreateCommandTag(Node *parsetree)
 					break;
 				case OBJECT_FOREIGN_TABLE:
 					tag = "DROP FOREIGN TABLE";
+					break;
+				case OBJECT_EXTENSION:
+					tag = "DROP EXTENSION";
 					break;
 				default:
 					tag = "???";
@@ -1740,6 +1757,9 @@ CreateCommandTag(Node *parsetree)
 					break;
 				case OBJECT_DOMAIN:
 					tag = "ALTER DOMAIN";
+					break;
+				case OBJECT_EXTENSION:
+					tag = "ALTER EXTENSION";
 					break;
 				case OBJECT_OPERATOR:
 					tag = "ALTER OPERATOR";
@@ -2379,6 +2399,10 @@ GetCommandLogLevel(Node *parsetree)
 			break;
 
 		case T_AlterTableSpaceOptionsStmt:
+			lev = LOGSTMT_DDL;
+			break;
+
+		case T_CreateExtensionStmt:
 			lev = LOGSTMT_DDL;
 			break;
 

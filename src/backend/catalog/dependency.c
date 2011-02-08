@@ -34,6 +34,7 @@
 #include "catalog/pg_database.h"
 #include "catalog/pg_default_acl.h"
 #include "catalog/pg_depend.h"
+#include "catalog/pg_extension.h"
 #include "catalog/pg_foreign_data_wrapper.h"
 #include "catalog/pg_foreign_server.h"
 #include "catalog/pg_foreign_table.h"
@@ -56,6 +57,7 @@
 #include "commands/comment.h"
 #include "commands/dbcommands.h"
 #include "commands/defrem.h"
+#include "commands/extension.h"
 #include "commands/proclang.h"
 #include "commands/schemacmds.h"
 #include "commands/seclabel.h"
@@ -93,6 +95,7 @@ typedef struct
 #define DEPFLAG_NORMAL		0x0002		/* reached via normal dependency */
 #define DEPFLAG_AUTO		0x0004		/* reached via auto dependency */
 #define DEPFLAG_INTERNAL	0x0008		/* reached via internal dependency */
+#define DEPFLAG_EXTENSION	0x0010		/* reached via extension dependency */
 
 
 /* expansible list of ObjectAddresses */
@@ -153,8 +156,8 @@ static const Oid object_classes[MAX_OCLASS] = {
 	ForeignDataWrapperRelationId,		/* OCLASS_FDW */
 	ForeignServerRelationId,	/* OCLASS_FOREIGN_SERVER */
 	UserMappingRelationId,		/* OCLASS_USER_MAPPING */
-	ForeignTableRelationId,		/* OCLASS_FOREIGN_TABLE */
-	DefaultAclRelationId		/* OCLASS_DEFACL */
+	DefaultAclRelationId,		/* OCLASS_DEFACL */
+	ExtensionRelationId 		/* OCLASS_EXTENSION */
 };
 
 
@@ -551,10 +554,12 @@ findDependentObjects(const ObjectAddress *object,
 				/* no problem */
 				break;
 			case DEPENDENCY_INTERNAL:
+			case DEPENDENCY_EXTENSION:
 
 				/*
 				 * This object is part of the internal implementation of
-				 * another object.	We have three cases:
+				 * another object, or is part of the extension that is the
+				 * other object.  We have three cases:
 				 *
 				 * 1. At the outermost recursion level, disallow the DROP. (We
 				 * just ereport here, rather than proceeding, since no other
@@ -726,6 +731,9 @@ findDependentObjects(const ObjectAddress *object,
 			case DEPENDENCY_INTERNAL:
 				subflags = DEPFLAG_INTERNAL;
 				break;
+			case DEPENDENCY_EXTENSION:
+				subflags = DEPFLAG_EXTENSION;
+				break;
 			case DEPENDENCY_PIN:
 
 				/*
@@ -836,10 +844,12 @@ reportDependentObjects(const ObjectAddresses *targetObjects,
 
 		/*
 		 * If, at any stage of the recursive search, we reached the object via
-		 * an AUTO or INTERNAL dependency, then it's okay to delete it even in
-		 * RESTRICT mode.
+		 * an AUTO, INTERNAL, or EXTENSION dependency, then it's okay to
+		 * delete it even in RESTRICT mode.
 		 */
-		if (extra->flags & (DEPFLAG_AUTO | DEPFLAG_INTERNAL))
+		if (extra->flags & (DEPFLAG_AUTO |
+							DEPFLAG_INTERNAL |
+							DEPFLAG_EXTENSION))
 		{
 			/*
 			 * auto-cascades are reported at DEBUG2, not msglevel.	We don't
@@ -1152,6 +1162,10 @@ doDeletion(const ObjectAddress *object)
 
 		case OCLASS_DEFACL:
 			RemoveDefaultACLById(object->objectId);
+			break;
+
+		case OCLASS_EXTENSION:
+			RemoveExtensionById(object->objectId);
 			break;
 
 		default:
@@ -2074,12 +2088,11 @@ getObjectClass(const ObjectAddress *object)
 		case UserMappingRelationId:
 			return OCLASS_USER_MAPPING;
 
-		case ForeignTableRelationId:
-			Assert(object->objectSubId == 0);
-			return OCLASS_FOREIGN_TABLE;
-
 		case DefaultAclRelationId:
 			return OCLASS_DEFACL;
+
+		case ExtensionRelationId:
+			return OCLASS_EXTENSION;
 	}
 
 	/* shouldn't get here */
@@ -2684,6 +2697,18 @@ getObjectDescription(const ObjectAddress *object)
 
 				systable_endscan(rcscan);
 				heap_close(defaclrel, AccessShareLock);
+				break;
+			}
+
+		case OCLASS_EXTENSION:
+			{
+				char	   *extname;
+
+				extname = get_extension_name(object->objectId);
+				if (!extname)
+					elog(ERROR, "cache lookup failed for extension %u",
+						 object->objectId);
+				appendStringInfo(&buffer, _("extension %s"), extname);
 				break;
 			}
 

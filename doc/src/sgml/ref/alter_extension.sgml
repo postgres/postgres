@@ -1,0 +1,98 @@
+<!--
+doc/src/sgml/ref/alter_extension.sgml
+PostgreSQL documentation
+-->
+
+<refentry id="SQL-ALTEREXTENSION">
+ <refmeta>
+  <refentrytitle>ALTER EXTENSION</refentrytitle>
+  <manvolnum>7</manvolnum>
+  <refmiscinfo>SQL - Language Statements</refmiscinfo>
+ </refmeta>
+
+ <refnamediv>
+  <refname>ALTER EXTENSION</refname>
+  <refpurpose>
+   change the definition of an extension
+  </refpurpose>
+ </refnamediv>
+
+ <indexterm zone="sql-alterextension">
+  <primary>ALTER EXTENSION</primary>
+ </indexterm>
+
+ <refsynopsisdiv>
+<synopsis>
+ALTER EXTENSION <replaceable class="PARAMETER">name</replaceable> SET SCHEMA <replaceable class="PARAMETER">new_schema</replaceable>
+</synopsis>
+ </refsynopsisdiv>
+
+ <refsect1>
+  <title>Description</title>
+
+  <para>
+   <command>ALTER EXTENSION</command> changes the definition of an existing extension.
+   Currently there is only one subform:
+
+   <variablelist>
+   <varlistentry>
+    <term><literal>SET SCHEMA</literal></term>
+    <listitem>
+     <para>
+      This form moves the extension's objects into another schema. The
+      extension has to be <firstterm>relocatable</> for this command to
+      succeed. See <xref linkend="extend-extensions"> for details.
+     </para>
+    </listitem>
+   </varlistentry>
+   </variablelist>
+  </para>
+ </refsect1>
+
+ <refsect1>
+  <title>Parameters</title>
+
+   <para>
+    <variablelist>
+     <varlistentry>
+      <term><replaceable class="PARAMETER">name</replaceable></term>
+      <listitem>
+       <para>
+        The name of an installed extension.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term><replaceable class="PARAMETER">new_schema</replaceable></term>
+      <listitem>
+       <para>
+        The new schema for the extension.
+       </para>
+      </listitem>
+     </varlistentry>
+    </variablelist>
+  </para>
+ </refsect1>
+
+ <refsect1>
+  <title>Examples</title>
+
+  <para>
+   To change the schema of the extension <literal>hstore</literal>
+   to <literal>utils</literal>:
+<programlisting>
+ALTER EXTENSION hstore SET SCHEMA utils;
+</programlisting>
+  </para>
+ </refsect1>
+
+ <refsect1 id="SQL-ALTEREXTENSION-see-also">
+  <title>See Also</title>
+
+  <simplelist type="inline">
+   <member><xref linkend="sql-createextension"></member>
+   <member><xref linkend="sql-dropextension"></member>
+  </simplelist>
+ </refsect1>
+</refentry>

@@ -23,6 +23,7 @@
 #include "commands/conversioncmds.h"
 #include "commands/dbcommands.h"
 #include "commands/defrem.h"
+#include "commands/extension.h"
 #include "commands/proclang.h"
 #include "commands/schemacmds.h"
 #include "commands/tablecmds.h"
@@ -188,6 +189,10 @@ ExecAlterObjectSchemaStmt(AlterObjectSchemaStmt *stmt)
 			AlterConversionNamespace(stmt->object, stmt->newschema);
 			break;
 
+		case OBJECT_EXTENSION:
+			AlterExtensionNamespace(stmt->object, stmt->newschema);
+			break;
+
 		case OBJECT_FUNCTION:
 			AlterFunctionNamespace(stmt->object, stmt->objarg, false,
 								   stmt->newschema);
@@ -242,87 +247,204 @@ ExecAlterObjectSchemaStmt(AlterObjectSchemaStmt *stmt)
 }
 
 /*
+ * Change an object's namespace given its classOid and object Oid.
+ *
+ * Objects that don't have a namespace should be ignored.
+ *
+ * This function is currently used only by ALTER EXTENSION SET SCHEMA,
+ * so it only needs to cover object types that can be members of an
+ * extension, and it doesn't have to deal with certain special cases
+ * such as not wanting to process array types --- those should never
+ * be direct members of an extension anyway.
+ *
+ * Returns the OID of the object's previous namespace, or InvalidOid if
+ * object doesn't have a schema.
+ */
+Oid
+AlterObjectNamespace_oid(Oid classId, Oid objid, Oid nspOid)
+{
+	Oid			oldNspOid = InvalidOid;
+	ObjectAddress dep;
+
+	dep.classId = classId;
+	dep.objectId = objid;
+	dep.objectSubId = 0;
+
+	switch (getObjectClass(&dep))
+	{
+		case OCLASS_CLASS:
+		{
+			Relation rel;
+			Relation classRel;
+
+			rel = relation_open(objid, AccessExclusiveLock);
+			oldNspOid = RelationGetNamespace(rel);
+
+			classRel = heap_open(RelationRelationId, RowExclusiveLock);
+
+			AlterRelationNamespaceInternal(classRel,
+										   objid,
+										   oldNspOid,
+										   nspOid,
+										   true);
+
+			heap_close(classRel, RowExclusiveLock);
+
+			relation_close(rel, NoLock);
+			break;
+		}
+
+		case OCLASS_PROC:
+			oldNspOid = AlterFunctionNamespace_oid(objid, nspOid);
+			break;
+
+		case OCLASS_TYPE:
+			oldNspOid = AlterTypeNamespace_oid(objid, nspOid);
+			break;
+
+		case OCLASS_CONVERSION:
+			oldNspOid = AlterConversionNamespace_oid(objid, nspOid);
+			break;
+
+		case OCLASS_OPERATOR:
+			oldNspOid = AlterOperatorNamespace_oid(objid, nspOid);
+			break;
+
+		case OCLASS_OPCLASS:
+			oldNspOid = AlterOpClassNamespace_oid(objid, nspOid);
+			break;
+
+		case OCLASS_OPFAMILY:
+			oldNspOid = AlterOpFamilyNamespace_oid(objid, nspOid);
+			break;
+
+		case OCLASS_TSPARSER:
+			oldNspOid = AlterTSParserNamespace_oid(objid, nspOid);
+			break;
+
+		case OCLASS_TSDICT:
+			oldNspOid = AlterTSDictionaryNamespace_oid(objid, nspOid);
+			break;
+
+		case OCLASS_TSTEMPLATE:
+			oldNspOid = AlterTSTemplateNamespace_oid(objid, nspOid);
+			break;
+
+		case OCLASS_TSCONFIG:
+			oldNspOid = AlterTSConfigurationNamespace_oid(objid, nspOid);
+			break;
+
+		default:
+			break;
+	}
+
+	return oldNspOid;
+}
+
+/*
  * Generic function to change the namespace of a given object, for simple
- * cases (won't work for tables or functions, objects which have more than 2
- * key-attributes to use when searching for their syscache entries --- we
- * don't want nor need to get this generic here).
+ * cases (won't work for tables, nor other cases where we need to do more
+ * than change the namespace column of a single catalog entry).
  *
  * The AlterFooNamespace() calls just above will call a function whose job
  * is to lookup the arguments for the generic function here.
  *
- * Relation must already by open, it's the responsibility of the caller to
- * close it.
+ * rel: catalog relation containing object (RowExclusiveLock'd by caller)
+ * oidCacheId: syscache that indexes this catalog by OID
+ * nameCacheId: syscache that indexes this catalog by name and namespace
+ *		(pass -1 if there is none)
+ * objid: OID of object to change the namespace of
+ * nspOid: OID of new namespace
+ * Anum_name: column number of catalog's name column
+ * Anum_namespace: column number of catalog's namespace column
+ * Anum_owner: column number of catalog's owner column, or -1 if none
+ * acl_kind: ACL type for object, or -1 if none assigned
+ *
+ * If the object does not have an owner or permissions, pass -1 for
+ * Anum_owner and acl_kind.  In this case the calling user must be superuser.
+ *
+ * Returns the OID of the object's previous namespace.
  */
-void
-AlterObjectNamespace(Relation rel, int cacheId,
-					 Oid classId, Oid objid, Oid nspOid,
+Oid
+AlterObjectNamespace(Relation rel, int oidCacheId, int nameCacheId,
+					 Oid objid, Oid nspOid,
 					 int Anum_name, int Anum_namespace, int Anum_owner,
-					 AclObjectKind acl_kind,
-					 bool superuser_only)
+					 AclObjectKind acl_kind)
 {
+	Oid			classId = RelationGetRelid(rel);
 	Oid			oldNspOid;
 	Datum       name, namespace;
 	bool        isnull;
-	HeapTuple	tup, newtup = NULL;
+	HeapTuple	tup, newtup;
 	Datum	   *values;
 	bool	   *nulls;
 	bool	   *replaces;
 
-	tup = SearchSysCacheCopy1(cacheId, ObjectIdGetDatum(objid));
+	tup = SearchSysCacheCopy1(oidCacheId, ObjectIdGetDatum(objid));
 	if (!HeapTupleIsValid(tup)) /* should not happen */
-		elog(ERROR, "cache lookup failed for object %u: %s",
-			 objid, getObjectDescriptionOids(classId, objid));
+		elog(ERROR, "cache lookup failed for object %u of catalog \"%s\"",
+			 objid, RelationGetRelationName(rel));
 
-	name = heap_getattr(tup, Anum_name, rel->rd_att, &isnull);
-	namespace = heap_getattr(tup, Anum_namespace, rel->rd_att, &isnull);
+	name = heap_getattr(tup, Anum_name, RelationGetDescr(rel), &isnull);
+	Assert(!isnull);
+	namespace = heap_getattr(tup, Anum_namespace, RelationGetDescr(rel), &isnull);
+	Assert(!isnull);
 	oldNspOid = DatumGetObjectId(namespace);
 
 	/* Check basic namespace related issues */
 	CheckSetNamespace(oldNspOid, nspOid, classId, objid);
 
-	/* check for duplicate name (more friendly than unique-index failure) */
-	if (SearchSysCacheExists2(cacheId, name, ObjectIdGetDatum(nspOid)))
-		ereport(ERROR,
-				(errcode(ERRCODE_DUPLICATE_OBJECT),
-				 errmsg("%s already exists in schema \"%s\"",
-						getObjectDescriptionOids(classId, objid),
-						get_namespace_name(nspOid))));
-
-	/* Superusers can always do it */
+	/* Permission checks ... superusers can always do it */
 	if (!superuser())
 	{
 		Datum       owner;
 		Oid			ownerId;
 		AclResult	aclresult;
 
-		if (superuser_only)
+		/* Fail if object does not have an explicit owner */
+		if (Anum_owner <= 0)
 			ereport(ERROR,
 					(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
 					 (errmsg("must be superuser to SET SCHEMA of %s",
 							 getObjectDescriptionOids(classId, objid)))));
 
 		/* Otherwise, must be owner of the existing object */
-		owner = heap_getattr(tup, Anum_owner, rel->rd_att, &isnull);
+		owner = heap_getattr(tup, Anum_owner, RelationGetDescr(rel), &isnull);
+		Assert(!isnull);
 		ownerId = DatumGetObjectId(owner);
 
 		if (!has_privs_of_role(GetUserId(), ownerId))
 			aclcheck_error(ACLCHECK_NOT_OWNER, acl_kind,
 						   NameStr(*(DatumGetName(name))));
 
-		/* owner must have CREATE privilege on namespace */
-		aclresult = pg_namespace_aclcheck(oldNspOid, GetUserId(), ACL_CREATE);
+		/* User must have CREATE privilege on new namespace */
+		aclresult = pg_namespace_aclcheck(nspOid, GetUserId(), ACL_CREATE);
 		if (aclresult != ACLCHECK_OK)
 			aclcheck_error(aclresult, ACL_KIND_NAMESPACE,
-						   get_namespace_name(oldNspOid));
+						   get_namespace_name(nspOid));
 	}
 
-	/* Prepare to update tuple */
-	values = palloc0(rel->rd_att->natts * sizeof(Datum));
-	nulls = palloc0(rel->rd_att->natts * sizeof(bool));
-	replaces = palloc0(rel->rd_att->natts * sizeof(bool));
-	values[Anum_namespace - 1] = nspOid;
+	/*
+	 * Check for duplicate name (more friendly than unique-index failure).
+	 * Since this is just a friendliness check, we can just skip it in cases
+	 * where there isn't a suitable syscache available.
+	 */
+	if (nameCacheId >= 0 &&
+		SearchSysCacheExists2(nameCacheId, name, ObjectIdGetDatum(nspOid)))
+		ereport(ERROR,
+				(errcode(ERRCODE_DUPLICATE_OBJECT),
+				 errmsg("%s already exists in schema \"%s\"",
+						getObjectDescriptionOids(classId, objid),
+						get_namespace_name(nspOid))));
+
+	/* Build modified tuple */
+	values = palloc0(RelationGetNumberOfAttributes(rel) * sizeof(Datum));
+	nulls = palloc0(RelationGetNumberOfAttributes(rel) * sizeof(bool));
+	replaces = palloc0(RelationGetNumberOfAttributes(rel) * sizeof(bool));
+	values[Anum_namespace - 1] = ObjectIdGetDatum(nspOid);
 	replaces[Anum_namespace - 1] = true;
-	newtup = heap_modify_tuple(tup, rel->rd_att, values, nulls, replaces);
+	newtup = heap_modify_tuple(tup, RelationGetDescr(rel),
+							   values, nulls, replaces);
 
 	/* Perform actual update */
 	simple_heap_update(rel, &tup->t_self, newtup);
@@ -336,6 +458,8 @@ AlterObjectNamespace(Relation rel, int cacheId,
 	/* update dependencies to point to the new schema */
 	changeDependencyFor(classId, objid,
 						NamespaceRelationId, oldNspOid, nspOid);
+
+	return oldNspOid;
 }
 
 

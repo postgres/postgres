@@ -1160,7 +1160,8 @@ heap_create_with_catalog(const char *relname,
 	 * entry, so we needn't record them here.  Likewise, TOAST tables don't
 	 * need a namespace dependency (they live in a pinned namespace) nor an
 	 * owner dependency (they depend indirectly through the parent table), nor
-	 * should they have any ACL entries.
+	 * should they have any ACL entries.  The same applies for extension
+	 * dependencies.
 	 *
 	 * Also, skip this in bootstrap mode, since we don't make dependencies
 	 * while bootstrapping.
@@ -1181,6 +1182,8 @@ heap_create_with_catalog(const char *relname,
 		recordDependencyOn(&myself, &referenced, DEPENDENCY_NORMAL);
 
 		recordDependencyOnOwner(RelationRelationId, relid, ownerid);
+
+		recordDependencyOnCurrentExtension(&myself);
 
 		if (reloftypeid)
 		{

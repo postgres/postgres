@@ -1073,6 +1073,7 @@ typedef enum ObjectType
 	OBJECT_CONVERSION,
 	OBJECT_DATABASE,
 	OBJECT_DOMAIN,
+	OBJECT_EXTENSION,
 	OBJECT_FDW,
 	OBJECT_FOREIGN_SERVER,
 	OBJECT_FOREIGN_TABLE,
@@ -1532,6 +1533,18 @@ typedef struct AlterTableSpaceOptionsStmt
 	List	   *options;
 	bool		isReset;
 } AlterTableSpaceOptionsStmt;
+
+/* ----------------------
+ *		Create Extension Statement
+ * ----------------------
+ */
+
+typedef struct CreateExtensionStmt
+{
+	NodeTag		type;
+	char	   *extname;
+	List	   *options;		/* List of DefElem nodes */
+} CreateExtensionStmt;
 
 /* ----------------------
  *		Create/Drop FOREIGN DATA WRAPPER Statements

@@ -39,6 +39,7 @@
    &alterDatabase;
    &alterDefaultPrivileges;
    &alterDomain;
+   &alterExtension;
    &alterForeignDataWrapper;
    &alterForeignTable;
    &alterFunction;
@@ -78,6 +79,7 @@
    &createConversion;
    &createDatabase;
    &createDomain;
+   &createExtension;
    &createForeignDataWrapper;
    &createForeignTable;
    &createFunction;
@@ -114,6 +116,7 @@
    &dropConversion;
    &dropDatabase;
    &dropDomain;
+   &dropExtension;
    &dropForeignDataWrapper;
    &dropForeignTable;
    &dropFunction;

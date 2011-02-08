@@ -309,6 +309,9 @@ CreateOpFamily(char *amname, char *opfname, Oid namespaceoid, Oid amoid)
 	/* dependency on owner */
 	recordDependencyOnOwner(OperatorFamilyRelationId, opfamilyoid, GetUserId());
 
+	/* dependency on extension */
+	recordDependencyOnCurrentExtension(&myself);
+
 	/* Post creation hook for new operator family */
 	InvokeObjectAccessHook(OAT_POST_CREATE,
 						   OperatorFamilyRelationId, opfamilyoid, 0);
@@ -708,6 +711,9 @@ DefineOpClass(CreateOpClassStmt *stmt)
 
 	/* dependency on owner */
 	recordDependencyOnOwner(OperatorClassRelationId, opclassoid, GetUserId());
+
+	/* dependency on extension */
+	recordDependencyOnCurrentExtension(&myself);
 
 	/* Post creation hook for new operator class */
 	InvokeObjectAccessHook(OAT_POST_CREATE,
@@ -1997,28 +2003,48 @@ AlterOpClassNamespace(List *name, char *access_method, const char *newschema)
 {
 	Oid			amOid;
 	Relation	rel;
-	Oid			oid;
+	Oid			opclassOid;
 	Oid			nspOid;
 
 	amOid = get_am_oid(access_method, false);
 
 	rel = heap_open(OperatorClassRelationId, RowExclusiveLock);
 
-	/* Look up the opclass. */
-	oid = get_opclass_oid(amOid, name, false);
+	/* Look up the opclass */
+	opclassOid = get_opclass_oid(amOid, name, false);
 
 	/* get schema OID */
 	nspOid = LookupCreationNamespace(newschema);
 
-	AlterObjectNamespace(rel, CLAOID, OperatorClassRelationId,
-						 oid, nspOid,
-						 Anum_pg_opfamily_opfname,
-						 Anum_pg_opfamily_opfnamespace,
-						 Anum_pg_opfamily_opfowner,
-						 ACL_KIND_OPCLASS,
-						 false);
+	AlterObjectNamespace(rel, CLAOID, -1,
+						 opclassOid, nspOid,
+						 Anum_pg_opclass_opcname,
+						 Anum_pg_opclass_opcnamespace,
+						 Anum_pg_opclass_opcowner,
+						 ACL_KIND_OPCLASS);
 
-	heap_close(rel, NoLock);
+	heap_close(rel, RowExclusiveLock);
+}
+
+Oid
+AlterOpClassNamespace_oid(Oid opclassOid, Oid newNspOid)
+{
+	Oid         oldNspOid;
+	Relation	rel;
+
+	rel = heap_open(OperatorClassRelationId, RowExclusiveLock);
+
+	oldNspOid =
+		AlterObjectNamespace(rel, CLAOID, -1,
+							 opclassOid, newNspOid,
+							 Anum_pg_opclass_opcname,
+							 Anum_pg_opclass_opcnamespace,
+							 Anum_pg_opclass_opcowner,
+							 ACL_KIND_OPCLASS);
+
+	heap_close(rel, RowExclusiveLock);
+
+	return oldNspOid;
 }
 
 /*
@@ -2186,26 +2212,46 @@ AlterOpFamilyNamespace(List *name, char *access_method, const char *newschema)
 {
 	Oid			amOid;
 	Relation	rel;
+	Oid			opfamilyOid;
 	Oid			nspOid;
-	Oid			oid;
 
 	amOid = get_am_oid(access_method, false);
 
 	rel = heap_open(OperatorFamilyRelationId, RowExclusiveLock);
 
 	/* Look up the opfamily */
-	oid = get_opfamily_oid(amOid, name, false);
+	opfamilyOid = get_opfamily_oid(amOid, name, false);
 
 	/* get schema OID */
 	nspOid = LookupCreationNamespace(newschema);
 
-	AlterObjectNamespace(rel, OPFAMILYOID, OperatorFamilyRelationId,
-						 oid, nspOid,
+	AlterObjectNamespace(rel, OPFAMILYOID, -1,
+						 opfamilyOid, nspOid,
 						 Anum_pg_opfamily_opfname,
 						 Anum_pg_opfamily_opfnamespace,
 						 Anum_pg_opfamily_opfowner,
-						 ACL_KIND_OPFAMILY,
-						 false);
+						 ACL_KIND_OPFAMILY);
 
-	heap_close(rel, NoLock);
+	heap_close(rel, RowExclusiveLock);
+}
+
+Oid
+AlterOpFamilyNamespace_oid(Oid opfamilyOid, Oid newNspOid)
+{
+	Oid         oldNspOid;
+	Relation	rel;
+
+	rel = heap_open(OperatorFamilyRelationId, RowExclusiveLock);
+
+	oldNspOid =
+		AlterObjectNamespace(rel, OPFAMILYOID, -1,
+							 opfamilyOid, newNspOid,
+							 Anum_pg_opfamily_opfname,
+							 Anum_pg_opfamily_opfnamespace,
+							 Anum_pg_opfamily_opfowner,
+							 ACL_KIND_OPFAMILY);
+
+	heap_close(rel, RowExclusiveLock);
+
+	return oldNspOid;
 }

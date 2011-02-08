@@ -144,6 +144,11 @@
      </row>
 
      <row>
+      <entry><link linkend="catalog-pg-extension"><structname>pg_extension</structname></link></entry>
+      <entry>installed extensions</entry>
+     </row>
+
+     <row>
       <entry><link linkend="catalog-pg-foreign-data-wrapper"><structname>pg_foreign_data_wrapper</structname></link></entry>
       <entry>foreign-data wrapper definitions</entry>
      </row>
@@ -2680,6 +2685,21 @@
     </varlistentry>
 
     <varlistentry>
+     <term><symbol>DEPENDENCY_EXTENSION</> (<literal>e</>)</term>
+     <listitem>
+      <para>
+       The dependent object is a member of the <firstterm>extension</> that is
+       the referenced object (see
+       <link linkend="catalog-pg-extension"><structname>pg_extension</structname></link>).
+       The dependent object can be dropped only via
+       <command>DROP EXTENSION</> on the referenced object.  Functionally
+       this dependency type acts the same as an internal dependency, but
+       it's kept separate for clarity and to simplify <application>pg_dump</>.
+      </para>
+     </listitem>
+    </varlistentry>
+
+    <varlistentry>
      <term><symbol>DEPENDENCY_PIN</> (<literal>p</>)</term>
      <listitem>
       <para>
@@ -2844,6 +2864,101 @@
    negative or fractional values of <structfield>enumsortorder</structfield>.
    The only requirement on these values is that they be correctly
    ordered and unique within each enum type.
+  </para>
+ </sect1>
+
+
+ <sect1 id="catalog-pg-extension">
+  <title><structname>pg_extension</structname></title>
+
+  <indexterm zone="catalog-pg-extension">
+   <primary>pg_extension</primary>
+  </indexterm>
+
+  <para>
+   The catalog <structname>pg_extension</structname> stores information
+   about the installed extensions.  See <xref linkend="extend-extensions">
+   for details about extensions.
+  </para>
+
+  <table>
+   <title><structname>pg_extension</> Columns</title>
+
+   <tgroup cols="4">
+    <thead>
+     <row>
+      <entry>Name</entry>
+      <entry>Type</entry>
+      <entry>References</entry>
+      <entry>Description</entry>
+     </row>
+    </thead>
+
+    <tbody>
+     <row>
+      <entry><structfield>extname</structfield></entry>
+      <entry><type>name</type></entry>
+      <entry></entry>
+      <entry>Name of the extension</entry>
+     </row>
+
+     <row>
+      <entry><structfield>extowner</structfield></entry>
+      <entry><type>oid</type></entry>
+      <entry><literal><link linkend="catalog-pg-authid"><structname>pg_authid</structname></link>.oid</literal></entry>
+      <entry>Owner of the extension</entry>
+     </row>
+
+     <row>
+      <entry><structfield>extnamespace</structfield></entry>
+      <entry><type>oid</type></entry>
+      <entry><literal><link linkend="catalog-pg-namespace"><structname>pg_namespace</structname></link>.oid</literal></entry>
+      <entry>Schema containing the extension's exported objects</entry>
+     </row>
+
+     <row>
+      <entry><structfield>extrelocatable</structfield></entry>
+      <entry><type>bool</type></entry>
+      <entry></entry>
+      <entry>True if extension can be relocated to another schema</entry>
+     </row>
+
+     <row>
+      <entry><structfield>extversion</structfield></entry>
+      <entry><type>text</type></entry>
+      <entry></entry>
+      <entry>Version string for the extension, or <literal>NULL</> if none</entry>
+     </row>
+
+     <row>
+      <entry><structfield>extconfig</structfield></entry>
+      <entry><type>oid[]</type></entry>
+      <entry><literal><link linkend="catalog-pg-class"><structname>pg_class</structname></link>.oid</literal></entry>
+      <entry>Array of <type>regclass</> OIDs for the extension's configuration
+       table(s), or <literal>NULL</> if none</entry>
+     </row>
+
+     <row>
+      <entry><structfield>extcondition</structfield></entry>
+      <entry><type>text[]</type></entry>
+      <entry></entry>
+      <entry>Array of <literal>WHERE</>-clause filter conditions for the
+       extension's configuration table(s), or <literal>NULL</> if none</entry>
+     </row>
+
+    </tbody>
+   </tgroup>
+  </table>
+
+  <para>
+   Note that unlike most catalogs with a <quote>namespace</> column,
+   <structfield>extnamespace</structfield> is not meant to imply
+   that the extension belongs to that schema.  Extension names are never
+   schema-qualified.  Rather, <structfield>extnamespace</structfield>
+   indicates the schema that contains most or all of the extension's
+   objects.  If <structfield>extrelocatable</structfield> is true, then
+   this schema must in fact contain all schema-qualifiable objects
+   belonging to the extension.
   </para>
  </sect1>
 
@@ -6192,6 +6307,11 @@
 
     <tbody>
      <row>
+      <entry><link linkend="view-pg-available-extensions"><structname>pg_available_extensions</structname></link></entry>
+      <entry>available extensions</entry>
+     </row>
+
+     <row>
       <entry><link linkend="view-pg-cursors"><structname>pg_cursors</structname></link></entry>
       <entry>open cursors</entry>
      </row>
@@ -6284,6 +6404,81 @@
     </tbody>
    </tgroup>
   </table>
+ </sect1>
+
+ <sect1 id="view-pg-available-extensions">
+  <title><structname>pg_available_extensions</structname></title>
+
+  <indexterm zone="view-pg-available-extensions">
+   <primary>pg_available_extensions</primary>
+  </indexterm>
+
+  <para>
+   The <structname>pg_available_extensions</structname> view lists the
+   extensions that are available for installation.  This view can only
+   be read by superusers.  See also the
+   <link linkend="catalog-pg-extension"><structname>pg_extension</structname></link>
+   catalog, which shows the extensions currently installed.
+  </para>
+
+  <table>
+   <title><structname>pg_available_extensions</> Columns</title>
+
+   <tgroup cols="3">
+    <thead>
+     <row>
+      <entry>Name</entry>
+      <entry>Type</entry>
+      <entry>Description</entry>
+     </row>
+    </thead>
+
+    <tbody>
+     <row>
+      <entry><structfield>name</structfield></entry>
+      <entry><type>name</type></entry>
+      <entry>Extension name</entry>
+     </row>
+
+     <row>
+      <entry><structfield>version</structfield></entry>
+      <entry><type>text</type></entry>
+      <entry>Version string from the extension's control file</entry>
+     </row>
+
+     <row>
+      <entry><structfield>installed</structfield></entry>
+      <entry><type>text</type></entry>
+      <entry>Currently installed version of the extension,
+       or <literal>NULL</literal> if not installed</entry>
+     </row>
+
+     <row>
+      <entry><structfield>schema</structfield></entry>
+      <entry><type>name</type></entry>
+      <entry>Name of the schema where the extension is installed,
+       or <literal>NULL</literal> if not installed</entry>
+     </row>
+
+     <row>
+      <entry><structfield>relocatable</structfield></entry>
+      <entry><type>bool</type></entry>
+      <entry>True if extension can be relocated to another schema</entry>
+     </row>
+
+     <row>
+      <entry><structfield>comment</structfield></entry>
+      <entry><type>text</type></entry>
+      <entry>Comment string from the extension's control file</entry>
+     </row>
+    </tbody>
+   </tgroup>
+  </table>
+
+  <para>
+   The <structname>pg_available_extensions</structname> view is read only.
+  </para>
+
  </sect1>
 
  <sect1 id="view-pg-cursors">

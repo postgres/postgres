@@ -66,6 +66,7 @@ extern void DropCast(DropCastStmt *stmt);
 extern void DropCastById(Oid castOid);
 extern void AlterFunctionNamespace(List *name, List *argtypes, bool isagg,
 					   const char *newschema);
+extern Oid	AlterFunctionNamespace_oid(Oid procOid, Oid nspOid);
 extern void ExecuteDoStmt(DoStmt *stmt);
 extern Oid get_cast_oid(Oid sourcetypeid, Oid targettypeid, bool missing_ok);
 
@@ -77,6 +78,7 @@ extern void AlterOperatorOwner(List *name, TypeName *typeName1,
 				   TypeName *typename2, Oid newOwnerId);
 extern void AlterOperatorOwner_oid(Oid operOid, Oid newOwnerId);
 extern void AlterOperatorNamespace(List *names, List *argtypes, const char *newschema);
+extern Oid	AlterOperatorNamespace_oid(Oid operOid, Oid newNspOid);
 
 /* commands/aggregatecmds.c */
 extern void DefineAggregate(List *name, List *args, bool oldstyle,
@@ -100,9 +102,11 @@ extern void RenameOpFamily(List *name, const char *access_method, const char *ne
 extern void AlterOpClassOwner(List *name, const char *access_method, Oid newOwnerId);
 extern void AlterOpClassOwner_oid(Oid opclassOid, Oid newOwnerId);
 extern void AlterOpClassNamespace(List *name, char *access_method, const char *newschema);
+extern Oid	AlterOpClassNamespace_oid(Oid opclassOid, Oid newNspOid);
 extern void AlterOpFamilyOwner(List *name, const char *access_method, Oid newOwnerId);
 extern void AlterOpFamilyOwner_oid(Oid opfamilyOid, Oid newOwnerId);
 extern void AlterOpFamilyNamespace(List *name, char *access_method, const char *newschema);
+extern Oid	AlterOpFamilyNamespace_oid(Oid opfamilyOid, Oid newNspOid);
 extern Oid get_am_oid(const char *amname, bool missing_ok);
 extern Oid get_opclass_oid(Oid amID, List *opclassname, bool missing_ok);
 extern Oid get_opfamily_oid(Oid amID, List *opfamilyname, bool missing_ok);
@@ -111,6 +115,7 @@ extern Oid get_opfamily_oid(Oid amID, List *opfamilyname, bool missing_ok);
 extern void DefineTSParser(List *names, List *parameters);
 extern void RenameTSParser(List *oldname, const char *newname);
 extern void AlterTSParserNamespace(List *name, const char *newschema);
+extern Oid	AlterTSParserNamespace_oid(Oid prsId, Oid newNspOid);
 extern void RemoveTSParsers(DropStmt *drop);
 extern void RemoveTSParserById(Oid prsId);
 
@@ -121,10 +126,12 @@ extern void RemoveTSDictionaryById(Oid dictId);
 extern void AlterTSDictionary(AlterTSDictionaryStmt *stmt);
 extern void AlterTSDictionaryOwner(List *name, Oid newOwnerId);
 extern void AlterTSDictionaryNamespace(List *name, const char *newschema);
+extern Oid	AlterTSDictionaryNamespace_oid(Oid dictId, Oid newNspOid);
 
 extern void DefineTSTemplate(List *names, List *parameters);
 extern void RenameTSTemplate(List *oldname, const char *newname);
 extern void AlterTSTemplateNamespace(List *name, const char *newschema);
+extern Oid	AlterTSTemplateNamespace_oid(Oid tmplId, Oid newNspOid);
 extern void RemoveTSTemplates(DropStmt *stmt);
 extern void RemoveTSTemplateById(Oid tmplId);
 
@@ -135,6 +142,7 @@ extern void RemoveTSConfigurationById(Oid cfgId);
 extern void AlterTSConfiguration(AlterTSConfigurationStmt *stmt);
 extern void AlterTSConfigurationOwner(List *name, Oid newOwnerId);
 extern void AlterTSConfigurationNamespace(List *name, const char *newschema);
+extern Oid	AlterTSConfigurationNamespace_oid(Oid cfgId, Oid newNspOid);
 
 extern text *serialize_deflist(List *deflist);
 extern List *deserialize_deflist(Datum txt);

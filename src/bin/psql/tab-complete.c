@@ -578,6 +578,16 @@ static const SchemaQuery Query_for_list_of_views = {
 "   FROM pg_catalog.pg_proc "\
 "  WHERE proname='%s'"
 
+#define Query_for_list_of_extensions \
+" SELECT pg_catalog.quote_ident(extname) "\
+"   FROM pg_catalog.pg_extension "\
+"  WHERE substring(pg_catalog.quote_ident(extname),1,%d)='%s'"
+
+#define Query_for_list_of_available_extensions \
+" SELECT pg_catalog.quote_ident(name) "\
+"   FROM pg_catalog.pg_available_extensions "\
+"  WHERE substring(pg_catalog.quote_ident(name),1,%d)='%s' AND installed IS NULL"
+
 /*
  * This is a list of all "things" in Pgsql, which can show up after CREATE or
  * DROP; and there is also a query to get a list of them.
@@ -606,6 +616,7 @@ static const pgsql_thing_t words_after_create[] = {
 	{"DATABASE", Query_for_list_of_databases},
 	{"DICTIONARY", Query_for_list_of_ts_dictionaries, NULL, true},
 	{"DOMAIN", NULL, &Query_for_list_of_domains},
+	{"EXTENSION", Query_for_list_of_extensions},
 	{"FOREIGN DATA WRAPPER", NULL, NULL},
 	{"FOREIGN TABLE", NULL, NULL},
 	{"FUNCTION", NULL, &Query_for_list_of_functions},
@@ -775,9 +786,12 @@ psql_completion(char *text, int start, int end)
 			 pg_strcasecmp(prev3_wd, "TABLE") != 0)
 	{
 		static const char *const list_ALTER[] =
-		{"AGGREGATE", "CONVERSION", "DATABASE", "DEFAULT PRIVILEGES", "DOMAIN", "FOREIGN DATA WRAPPER", "FOREIGN TABLE", "FUNCTION",
-			"GROUP", "INDEX", "LANGUAGE", "LARGE OBJECT", "OPERATOR", "ROLE", "SCHEMA", "SERVER", "SEQUENCE", "TABLE",
-		"TABLESPACE", "TEXT SEARCH", "TRIGGER", "TYPE", "USER", "USER MAPPING FOR", "VIEW", NULL};
+		{"AGGREGATE", "CONVERSION", "DATABASE", "DEFAULT PRIVILEGES", "DOMAIN",
+		 "EXTENSION", "FOREIGN DATA WRAPPER", "FOREIGN TABLE", "FUNCTION",
+		 "GROUP", "INDEX", "LANGUAGE", "LARGE OBJECT", "OPERATOR",
+		 "ROLE", "SCHEMA", "SERVER", "SEQUENCE", "TABLE",
+		 "TABLESPACE", "TEXT SEARCH", "TRIGGER", "TYPE",
+		 "USER", "USER MAPPING FOR", "VIEW", NULL};
 
 		COMPLETE_WITH_LIST(list_ALTER);
 	}
@@ -837,6 +851,11 @@ psql_completion(char *text, int start, int end)
 
 		COMPLETE_WITH_LIST(list_ALTERDATABASE);
 	}
+
+	/* ALTER EXTENSION <name> */
+	else if (pg_strcasecmp(prev3_wd, "ALTER") == 0 &&
+			 pg_strcasecmp(prev2_wd, "EXTENSION") == 0)
+		COMPLETE_WITH_CONST("SET SCHEMA");
 
 	/* ALTER FOREIGN */
 	else if (pg_strcasecmp(prev2_wd, "ALTER") == 0 &&
@@ -1579,6 +1598,16 @@ psql_completion(char *text, int start, int end)
 			 pg_strcasecmp(prev_wd, "TEMPLATE") == 0)
 		COMPLETE_WITH_QUERY(Query_for_list_of_template_databases);
 
+	/* CREATE EXTENSION */
+	/* Complete with available extensions rather than installed ones. */
+	else if (pg_strcasecmp(prev2_wd, "CREATE") == 0 &&
+			 pg_strcasecmp(prev_wd, "EXTENSION") == 0)
+		COMPLETE_WITH_QUERY(Query_for_list_of_available_extensions);
+	/* CREATE EXTENSION <name> */
+	else if (pg_strcasecmp(prev3_wd, "CREATE") == 0 &&
+			 pg_strcasecmp(prev2_wd, "EXTENSION") == 0)
+		COMPLETE_WITH_CONST("WITH SCHEMA");
+
 	/* CREATE FOREIGN */
 	else if (pg_strcasecmp(prev2_wd, "CREATE") == 0 &&
 			 pg_strcasecmp(prev_wd, "FOREIGN") == 0)
@@ -1922,6 +1951,7 @@ psql_completion(char *text, int start, int end)
 	else if ((pg_strcasecmp(prev3_wd, "DROP") == 0 &&
 			  (pg_strcasecmp(prev2_wd, "CONVERSION") == 0 ||
 			   pg_strcasecmp(prev2_wd, "DOMAIN") == 0 ||
+			   pg_strcasecmp(prev2_wd, "EXTENSION") == 0 ||
 			   pg_strcasecmp(prev2_wd, "FUNCTION") == 0 ||
 			   pg_strcasecmp(prev2_wd, "INDEX") == 0 ||
 			   pg_strcasecmp(prev2_wd, "LANGUAGE") == 0 ||

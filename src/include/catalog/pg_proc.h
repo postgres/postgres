@@ -4873,6 +4873,12 @@ DESCR("record greater than or equal");
 DATA(insert OID = 2987 (  btrecordcmp	   PGNSP PGUID 12 1 0 0 f f f t f i 2 0 23 "2249 2249" _null_ _null_ _null_ _null_ btrecordcmp _null_ _null_ _null_ ));
 DESCR("btree less-equal-greater");
 
+/* Extensions */
+DATA(insert OID = 3082 (  pg_available_extensions		PGNSP PGUID 12 10 100 0 f f f t t s 0 0 2249 "" "{19,25,16,25}" "{o,o,o,o}" "{name,version,relocatable,comment}" _null_ pg_available_extensions _null_ _null_ _null_ ));
+DESCR("list available extensions");
+DATA(insert OID = 3083 (  pg_extension_config_dump		PGNSP PGUID 12 1 0 0 f f f t f v 2 0 2278 "2205 25" _null_ _null_ _null_ _null_ pg_extension_config_dump _null_ _null_ _null_ ));
+DESCR("flag an extension's table contents to be emitted by pg_dump");
+
 /* SQL-spec window functions */
 DATA(insert OID = 3100 (  row_number	PGNSP PGUID 12 1 0 0 f t f f f i 0 0 20 "" _null_ _null_ _null_ _null_ window_row_number _null_ _null_ _null_ ));
 DESCR("row number within partition");

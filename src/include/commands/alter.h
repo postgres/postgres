@@ -20,11 +20,11 @@
 
 extern void ExecRenameStmt(RenameStmt *stmt);
 extern void ExecAlterObjectSchemaStmt(AlterObjectSchemaStmt *stmt);
-extern void AlterObjectNamespace(Relation rel, int cacheId,
-								 Oid classId, Oid objid, Oid nspId,
-								 int Anum_name, int Anum_namespace, int Anum_owner,
-								 AclObjectKind acl_kind,
-								 bool superuser_only);
+extern Oid	AlterObjectNamespace_oid(Oid classId, Oid objid, Oid nspOid);
+extern Oid	AlterObjectNamespace(Relation rel, int oidCacheId, int nameCacheId,
+					 Oid objid, Oid nspOid,
+					 int Anum_name, int Anum_namespace, int Anum_owner,
+					 AclObjectKind acl_kind);
 extern void ExecAlterOwnerStmt(AlterOwnerStmt *stmt);
 
 #endif   /* ALTER_H */

@@ -87,4 +87,10 @@ extern bool listForeignTables(const char *pattern, bool verbose);
 /* \dL */
 extern bool listLanguages(const char *pattern, bool verbose, bool showSystem);
 
+/* \dx */
+extern bool listExtensions(const char *pattern);
+
+/* \dx+ */
+extern bool listExtensionContents(const char *pattern);
+
 #endif   /* DESCRIBE_H */

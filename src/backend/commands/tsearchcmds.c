@@ -135,6 +135,9 @@ makeParserDependencies(HeapTuple tuple)
 	referenced.objectSubId = 0;
 	recordDependencyOn(&myself, &referenced, DEPENDENCY_NORMAL);
 
+	/* dependency on extension */
+	recordDependencyOnCurrentExtension(&myself);
+
 	/* dependencies on functions */
 	referenced.classId = ProcedureRelationId;
 	referenced.objectSubId = 0;
@@ -414,12 +417,33 @@ AlterTSParserNamespace(List *name, const char *newschema)
 	/* get schema OID */
 	nspOid = LookupCreationNamespace(newschema);
 
-	AlterObjectNamespace(rel, TSPARSEROID, TSParserRelationId, prsId, nspOid,
+	AlterObjectNamespace(rel, TSPARSEROID, TSPARSERNAMENSP,
+						 prsId, nspOid,
 						 Anum_pg_ts_parser_prsname,
 						 Anum_pg_ts_parser_prsnamespace,
-						 -1, -1, true);
+						 -1, -1);
 
-	heap_close(rel, NoLock);
+	heap_close(rel, RowExclusiveLock);
+}
+
+Oid
+AlterTSParserNamespace_oid(Oid prsId, Oid newNspOid)
+{
+	Oid         oldNspOid;
+	Relation	rel;
+
+	rel = heap_open(TSParserRelationId, RowExclusiveLock);
+
+	oldNspOid =
+		AlterObjectNamespace(rel, TSPARSEROID, TSPARSERNAMENSP,
+							 prsId, newNspOid,
+							 Anum_pg_ts_parser_prsname,
+							 Anum_pg_ts_parser_prsnamespace,
+							 -1, -1);
+
+	heap_close(rel, RowExclusiveLock);
+
+	return oldNspOid;
 }
 
 /* ---------------------- TS Dictionary commands -----------------------*/
@@ -446,6 +470,9 @@ makeDictionaryDependencies(HeapTuple tuple)
 
 	/* dependency on owner */
 	recordDependencyOnOwner(myself.classId, myself.objectId, dict->dictowner);
+
+	/* dependency on extension */
+	recordDependencyOnCurrentExtension(&myself);
 
 	/* dependency on template */
 	referenced.classId = TSTemplateRelationId;
@@ -668,14 +695,35 @@ AlterTSDictionaryNamespace(List *name, const char *newschema)
 	/* get schema OID */
 	nspOid = LookupCreationNamespace(newschema);
 
-	AlterObjectNamespace(rel, TSDICTOID, TSDictionaryRelationId, dictId, nspOid,
+	AlterObjectNamespace(rel, TSDICTOID, TSDICTNAMENSP,
+						 dictId, nspOid,
 						 Anum_pg_ts_dict_dictname,
 						 Anum_pg_ts_dict_dictnamespace,
 						 Anum_pg_ts_dict_dictowner,
-						 ACL_KIND_TSDICTIONARY,
-						 true);
+						 ACL_KIND_TSDICTIONARY);
 
-	heap_close(rel, NoLock);
+	heap_close(rel, RowExclusiveLock);
+}
+
+Oid
+AlterTSDictionaryNamespace_oid(Oid dictId, Oid newNspOid)
+{
+	Oid         oldNspOid;
+	Relation	rel;
+
+	rel = heap_open(TSDictionaryRelationId, RowExclusiveLock);
+
+	oldNspOid =
+		AlterObjectNamespace(rel, TSDICTOID, TSDICTNAMENSP,
+							 dictId, newNspOid,
+							 Anum_pg_ts_dict_dictname,
+							 Anum_pg_ts_dict_dictnamespace,
+							 Anum_pg_ts_dict_dictowner,
+							 ACL_KIND_TSDICTIONARY);
+
+	heap_close(rel, RowExclusiveLock);
+
+	return oldNspOid;
 }
 
 /*
@@ -1012,6 +1060,9 @@ makeTSTemplateDependencies(HeapTuple tuple)
 	referenced.objectSubId = 0;
 	recordDependencyOn(&myself, &referenced, DEPENDENCY_NORMAL);
 
+	/* dependency on extension */
+	recordDependencyOnCurrentExtension(&myself);
+
 	/* dependencies on functions */
 	referenced.classId = ProcedureRelationId;
 	referenced.objectSubId = 0;
@@ -1177,13 +1228,33 @@ AlterTSTemplateNamespace(List *name, const char *newschema)
 	/* get schema OID */
 	nspOid = LookupCreationNamespace(newschema);
 
-	AlterObjectNamespace(rel, TSTEMPLATEOID, TSTemplateRelationId,
+	AlterObjectNamespace(rel, TSTEMPLATEOID, TSTEMPLATENAMENSP,
 						 tmplId, nspOid,
 						 Anum_pg_ts_template_tmplname,
 						 Anum_pg_ts_template_tmplnamespace,
-						 -1, -1, true);
+						 -1, -1);
 
-	heap_close(rel, NoLock);
+	heap_close(rel, RowExclusiveLock);
+}
+
+Oid
+AlterTSTemplateNamespace_oid(Oid tmplId, Oid newNspOid)
+{
+	Oid         oldNspOid;
+	Relation	rel;
+
+	rel = heap_open(TSTemplateRelationId, RowExclusiveLock);
+
+	oldNspOid =
+		AlterObjectNamespace(rel, TSTEMPLATEOID, TSTEMPLATENAMENSP,
+							 tmplId, newNspOid,
+							 Anum_pg_ts_template_tmplname,
+							 Anum_pg_ts_template_tmplnamespace,
+							 -1, -1);
+
+	heap_close(rel, RowExclusiveLock);
+
+	return oldNspOid;
 }
 
 /*
@@ -1313,10 +1384,10 @@ makeConfigurationDependencies(HeapTuple tuple, bool removeOld,
 	myself.objectId = HeapTupleGetOid(tuple);
 	myself.objectSubId = 0;
 
-	/* for ALTER case, first flush old dependencies */
+	/* for ALTER case, first flush old dependencies, except extension deps */
 	if (removeOld)
 	{
-		deleteDependencyRecordsFor(myself.classId, myself.objectId);
+		deleteDependencyRecordsFor(myself.classId, myself.objectId, true);
 		deleteSharedDependencyRecordsFor(myself.classId, myself.objectId, 0);
 	}
 
@@ -1335,6 +1406,10 @@ makeConfigurationDependencies(HeapTuple tuple, bool removeOld,
 
 	/* dependency on owner */
 	recordDependencyOnOwner(myself.classId, myself.objectId, cfg->cfgowner);
+
+	/* dependency on extension */
+	if (!removeOld)
+		recordDependencyOnCurrentExtension(&myself);
 
 	/* dependency on parser */
 	referenced.classId = TSParserRelationId;
@@ -1603,14 +1678,35 @@ AlterTSConfigurationNamespace(List *name, const char *newschema)
 	/* get schema OID */
 	nspOid = LookupCreationNamespace(newschema);
 
-	AlterObjectNamespace(rel, TSCONFIGOID, TSConfigRelationId, cfgId, nspOid,
+	AlterObjectNamespace(rel, TSCONFIGOID, TSCONFIGNAMENSP,
+						 cfgId, nspOid,
 						 Anum_pg_ts_config_cfgname,
 						 Anum_pg_ts_config_cfgnamespace,
 						 Anum_pg_ts_config_cfgowner,
-						 ACL_KIND_TSCONFIGURATION,
-						 false);
+						 ACL_KIND_TSCONFIGURATION);
 
-	heap_close(rel, NoLock);
+	heap_close(rel, RowExclusiveLock);
+}
+
+Oid
+AlterTSConfigurationNamespace_oid(Oid cfgId, Oid newNspOid)
+{
+	Oid         oldNspOid;
+	Relation	rel;
+
+	rel = heap_open(TSConfigRelationId, RowExclusiveLock);
+
+	oldNspOid =
+		AlterObjectNamespace(rel, TSCONFIGOID, TSCONFIGNAMENSP,
+							 cfgId, newNspOid,
+							 Anum_pg_ts_config_cfgname,
+							 Anum_pg_ts_config_cfgnamespace,
+							 Anum_pg_ts_config_cfgowner,
+							 ACL_KIND_TSCONFIGURATION);
+
+	heap_close(rel, RowExclusiveLock);
+
+	return oldNspOid;
 }
 
 /*

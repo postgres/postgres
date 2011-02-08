@@ -477,12 +477,32 @@ AlterOperatorNamespace(List *names, List *argtypes, const char *newschema)
 	/* get schema OID */
 	nspOid = LookupCreationNamespace(newschema);
 
-	AlterObjectNamespace(rel, OPEROID, OperatorRelationId, operOid, nspOid,
+	AlterObjectNamespace(rel, OPEROID, -1,
+						 operOid, nspOid,
 						 Anum_pg_operator_oprname,
 						 Anum_pg_operator_oprnamespace,
 						 Anum_pg_operator_oprowner,
-						 ACL_KIND_OPER,
-						 false);
+						 ACL_KIND_OPER);
 
-	heap_close(rel, NoLock);
+	heap_close(rel, RowExclusiveLock);
+}
+
+Oid
+AlterOperatorNamespace_oid(Oid operOid, Oid newNspOid)
+{
+	Oid         oldNspOid;
+	Relation	rel;
+
+	rel = heap_open(OperatorRelationId, RowExclusiveLock);
+
+	oldNspOid = AlterObjectNamespace(rel, OPEROID, -1,
+									 operOid, newNspOid,
+									 Anum_pg_operator_oprname,
+									 Anum_pg_operator_oprnamespace,
+									 Anum_pg_operator_oprowner,
+									 ACL_KIND_OPER);
+
+	heap_close(rel, RowExclusiveLock);
+
+	return oldNspOid;
 }

@@ -89,6 +89,7 @@ typedef enum
 {
 	/* When modifying this enum, update priority tables in pg_dump_sort.c! */
 	DO_NAMESPACE,
+	DO_EXTENSION,
 	DO_TYPE,
 	DO_SHELL_TYPE,
 	DO_FUNC,
@@ -138,6 +139,12 @@ typedef struct _namespaceInfo
 	char	   *rolname;		/* name of owner, or empty string */
 	char	   *nspacl;
 } NamespaceInfo;
+
+typedef struct _extensionInfo
+{
+	DumpableObject dobj;
+	char       *namespace;		/* schema containing extension's objects */
+} ExtensionInfo;
 
 typedef struct _typeInfo
 {
@@ -288,6 +295,8 @@ typedef struct _tableDataInfo
 	DumpableObject dobj;
 	TableInfo  *tdtable;		/* link to table to dump */
 	bool		oids;			/* include OIDs in data? */
+	bool		ext_config;		/* is table an extension config table? */
+	char	   *filtercond;		/* WHERE condition to limit rows dumped */
 } TableDataInfo;
 
 typedef struct _indxInfo
@@ -513,6 +522,7 @@ extern void sortDumpableObjectsByTypeOid(DumpableObject **objs, int numObjs);
  * version specific routines
  */
 extern NamespaceInfo *getNamespaces(int *numNamespaces);
+extern ExtensionInfo *getExtensions(int *numExtensions);
 extern TypeInfo *getTypes(int *numTypes);
 extern FuncInfo *getFuncs(int *numFuncs);
 extern AggInfo *getAggregates(int *numAggregates);

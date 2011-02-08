@@ -1,0 +1,118 @@
+<!--
+doc/src/sgml/ref/create_extension.sgml
+PostgreSQL documentation
+-->
+
+<refentry id="SQL-CREATEEXTENSION">
+ <refmeta>
+  <refentrytitle>CREATE EXTENSION</refentrytitle>
+  <manvolnum>7</manvolnum>
+  <refmiscinfo>SQL - Language Statements</refmiscinfo>
+ </refmeta>
+
+ <refnamediv>
+  <refname>CREATE EXTENSION</refname>
+  <refpurpose>install an extension</refpurpose>
+ </refnamediv>
+
+ <indexterm zone="sql-createextension">
+  <primary>CREATE EXTENSION</primary>
+ </indexterm>
+
+ <refsynopsisdiv>
+<synopsis>
+CREATE EXTENSION <replaceable class="parameter">extension_name</replaceable>
+    [ WITH ] [ SCHEMA [=] <replaceable class="parameter">schema</replaceable> ]
+</synopsis>
+ </refsynopsisdiv>
+
+ <refsect1>
+  <title>Description</title>
+
+  <para>
+   <command>CREATE EXTENSION</command> loads a new extension into the current
+   database.  There must not be an extension of the same name already loaded.
+  </para>
+
+  <para>
+   Loading an extension essentially amounts to running the extension's script
+   file.  The script will typically create new <acronym>SQL</> objects such as
+   functions, data types, operators and index support methods.
+   <command>CREATE EXTENSION</command> additionally records the identities
+   of all the created objects, so that they can be dropped again if
+   <command>DROP EXTENSION</command> is issued.
+  </para>
+
+  <para>
+   For information about writing new extensions, see
+   <xref linkend="extend-extensions">.
+  </para>
+
+  <para>
+   Only superusers can execute <command>CREATE EXTENSION</command>.
+  </para>
+
+ </refsect1>
+
+ <refsect1>
+  <title>Parameters</title>
+
+    <variablelist>
+     <varlistentry>
+      <term><replaceable class="parameter">extension_name</replaceable></term>
+      <listitem>
+       <para>
+        The name of the extension to be
+        installed. <productname>PostgreSQL</productname> will create the
+        extension using details from the file
+        <literal>SHAREDIR/contrib/</literal><replaceable class="parameter">extension</replaceable><literal>.control</literal>.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term><replaceable class="parameter">schema</replaceable></term>
+      <listitem>
+       <para>
+        The name of the schema in which to install the extension's
+        objects, given that the extension allows its contents to be
+        relocated.  The named schema must already exist.
+        If not specified, and the extension's control file does not specify a
+        schema either, the current default object creation schema is used.
+       </para>
+      </listitem>
+     </varlistentry>
+  </variablelist>
+ </refsect1>
+
+ <refsect1>
+  <title>Examples</title>
+
+  <para>
+   Install the <link linkend="hstore">hstore</link> extension into the
+   current database:
+<programlisting>
+CREATE EXTENSION hstore;
+</programlisting>
+  </para>
+ </refsect1>
+
+ <refsect1>
+  <title>Compatibility</title>
+
+  <para>
+   <command>CREATE EXTENSION</command> is a <productname>PostgreSQL</>
+   extension.
+  </para>
+ </refsect1>
+
+ <refsect1>
+  <title>See Also</title>
+
+  <simplelist type="inline">
+   <member><xref linkend="sql-alterextension"></member>
+   <member><xref linkend="sql-dropextension"></member>
+  </simplelist>
+ </refsect1>
+
+</refentry>

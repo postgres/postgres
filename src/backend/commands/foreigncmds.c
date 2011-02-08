@@ -342,6 +342,8 @@ CreateForeignDataWrapper(CreateFdwStmt *stmt)
 	Oid			fdwvalidator;
 	Datum		fdwoptions;
 	Oid			ownerId;
+	ObjectAddress myself;
+	ObjectAddress referenced;
 
 	/* Must be super user */
 	if (!superuser())
@@ -401,15 +403,13 @@ CreateForeignDataWrapper(CreateFdwStmt *stmt)
 
 	heap_freetuple(tuple);
 
+	/* record dependencies */
+	myself.classId = ForeignDataWrapperRelationId;
+	myself.objectId = fdwId;
+	myself.objectSubId = 0;
+
 	if (fdwvalidator)
 	{
-		ObjectAddress myself;
-		ObjectAddress referenced;
-
-		myself.classId = ForeignDataWrapperRelationId;
-		myself.objectId = fdwId;
-		myself.objectSubId = 0;
-
 		referenced.classId = ProcedureRelationId;
 		referenced.objectId = fdwvalidator;
 		referenced.objectSubId = 0;
@@ -417,6 +417,9 @@ CreateForeignDataWrapper(CreateFdwStmt *stmt)
 	}
 
 	recordDependencyOnOwner(ForeignDataWrapperRelationId, fdwId, ownerId);
+
+	/* dependency on extension */
+	recordDependencyOnCurrentExtension(&myself);
 
 	/* Post creation hook for new foreign data wrapper */
 	InvokeObjectAccessHook(OAT_POST_CREATE,
@@ -691,7 +694,7 @@ CreateForeignServer(CreateForeignServerStmt *stmt)
 
 	heap_freetuple(tuple);
 
-	/* Add dependency on FDW and owner */
+	/* record dependencies */
 	myself.classId = ForeignServerRelationId;
 	myself.objectId = srvId;
 	myself.objectSubId = 0;
@@ -702,6 +705,9 @@ CreateForeignServer(CreateForeignServerStmt *stmt)
 	recordDependencyOn(&myself, &referenced, DEPENDENCY_NORMAL);
 
 	recordDependencyOnOwner(ForeignServerRelationId, srvId, ownerId);
+
+	/* dependency on extension */
+	recordDependencyOnCurrentExtension(&myself);
 
 	/* Post creation hook for new foreign server */
 	InvokeObjectAccessHook(OAT_POST_CREATE, ForeignServerRelationId, srvId, 0);
@@ -974,8 +980,13 @@ CreateUserMapping(CreateUserMappingStmt *stmt)
 	recordDependencyOn(&myself, &referenced, DEPENDENCY_NORMAL);
 
 	if (OidIsValid(useId))
+	{
 		/* Record the mapped user dependency */
 		recordDependencyOnOwner(UserMappingRelationId, umId, useId);
+	}
+
+	/* dependency on extension */
+	recordDependencyOnCurrentExtension(&myself);
 
 	/* Post creation hook for new user mapping */
 	InvokeObjectAccessHook(OAT_POST_CREATE, UserMappingRelationId, umId, 0);

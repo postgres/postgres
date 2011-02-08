@@ -1646,6 +1646,15 @@ _equalAlterTableSpaceOptionsStmt(AlterTableSpaceOptionsStmt *a,
 }
 
 static bool
+_equalCreateExtensionStmt(CreateExtensionStmt *a, CreateExtensionStmt *b)
+{
+	COMPARE_STRING_FIELD(extname);
+	COMPARE_NODE_FIELD(options);
+
+	return true;
+}
+
+static bool
 _equalCreateFdwStmt(CreateFdwStmt *a, CreateFdwStmt *b)
 {
 	COMPARE_STRING_FIELD(fdwname);
@@ -2844,6 +2853,9 @@ equal(void *a, void *b)
 			break;
 		case T_AlterTableSpaceOptionsStmt:
 			retval = _equalAlterTableSpaceOptionsStmt(a, b);
+			break;
+		case T_CreateExtensionStmt:
+			retval = _equalCreateExtensionStmt(a, b);
 			break;
 		case T_CreateFdwStmt:
 			retval = _equalCreateFdwStmt(a, b);

@@ -50,6 +50,12 @@
  * Example: a trigger that's created to enforce a foreign-key constraint
  * is made internally dependent on the constraint's pg_constraint entry.
  *
+ * DEPENDENCY_EXTENSION ('e'): the dependent object is a member of the
+ * extension that is the referenced object.  The dependent object can be
+ * dropped only via DROP EXTENSION on the referenced object.  Functionally
+ * this dependency type acts the same as an internal dependency, but it's
+ * kept separate for clarity and to simplify pg_dump.
+ *
  * DEPENDENCY_PIN ('p'): there is no dependent object; this type of entry
  * is a signal that the system itself depends on the referenced object,
  * and so that object must never be deleted.  Entries of this type are
@@ -64,6 +70,7 @@ typedef enum DependencyType
 	DEPENDENCY_NORMAL = 'n',
 	DEPENDENCY_AUTO = 'a',
 	DEPENDENCY_INTERNAL = 'i',
+	DEPENDENCY_EXTENSION = 'e',
 	DEPENDENCY_PIN = 'p'
 } DependencyType;
 
@@ -137,8 +144,8 @@ typedef enum ObjectClass
 	OCLASS_FDW,					/* pg_foreign_data_wrapper */
 	OCLASS_FOREIGN_SERVER,		/* pg_foreign_server */
 	OCLASS_USER_MAPPING,		/* pg_user_mapping */
-	OCLASS_FOREIGN_TABLE,		/* pg_foreign_table */
 	OCLASS_DEFACL,				/* pg_default_acl */
+	OCLASS_EXTENSION,           /* pg_extension */
 	MAX_OCLASS					/* MUST BE LAST */
 } ObjectClass;
 
@@ -193,11 +200,16 @@ extern void recordMultipleDependencies(const ObjectAddress *depender,
 						   int nreferenced,
 						   DependencyType behavior);
 
-extern long deleteDependencyRecordsFor(Oid classId, Oid objectId);
+extern void recordDependencyOnCurrentExtension(const ObjectAddress *object);
+
+extern long deleteDependencyRecordsFor(Oid classId, Oid objectId,
+									   bool skipExtensionDeps);
 
 extern long changeDependencyFor(Oid classId, Oid objectId,
 					Oid refClassId, Oid oldRefObjectId,
 					Oid newRefObjectId);
+
+extern Oid	getExtensionOfObject(Oid classId, Oid objectId);
 
 extern bool sequenceIsOwned(Oid seqId, Oid *tableId, int32 *colId);
 

@@ -101,6 +101,7 @@ SELECT relname, relhasindex
  pg_depend               | t
  pg_description          | t
  pg_enum                 | t
+ pg_extension            | t
  pg_foreign_data_wrapper | t
  pg_foreign_server       | t
  pg_foreign_table        | t

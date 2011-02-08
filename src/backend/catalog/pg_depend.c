@@ -20,6 +20,8 @@
 #include "catalog/indexing.h"
 #include "catalog/pg_constraint.h"
 #include "catalog/pg_depend.h"
+#include "catalog/pg_extension.h"
+#include "commands/extension.h"
 #include "miscadmin.h"
 #include "utils/fmgroids.h"
 #include "utils/lsyscache.h"
@@ -123,15 +125,42 @@ recordMultipleDependencies(const ObjectAddress *depender,
 }
 
 /*
+ * If we are executing a CREATE EXTENSION operation, mark the given object
+ * as being a member of the extension.  Otherwise, do nothing.
+ *
+ * This must be called during creation of any user-definable object type
+ * that could be a member of an extension.
+ */
+void
+recordDependencyOnCurrentExtension(const ObjectAddress *object)
+{
+	if (creating_extension)
+	{
+		ObjectAddress	extension;
+
+		extension.classId = ExtensionRelationId;
+		extension.objectId = CurrentExtensionObject;
+		extension.objectSubId = 0;
+
+		recordDependencyOn(object, &extension, DEPENDENCY_EXTENSION);
+	}
+}
+
+/*
  * deleteDependencyRecordsFor -- delete all records with given depender
  * classId/objectId.  Returns the number of records deleted.
  *
  * This is used when redefining an existing object.  Links leading to the
  * object do not change, and links leading from it will be recreated
  * (possibly with some differences from before).
+ *
+ * If skipExtensionDeps is true, we do not delete any dependencies that
+ * show that the given object is a member of an extension.  This avoids
+ * needing a lot of extra logic to fetch and recreate that dependency.
  */
 long
-deleteDependencyRecordsFor(Oid classId, Oid objectId)
+deleteDependencyRecordsFor(Oid classId, Oid objectId,
+						   bool skipExtensionDeps)
 {
 	long		count = 0;
 	Relation	depRel;
@@ -155,6 +184,10 @@ deleteDependencyRecordsFor(Oid classId, Oid objectId)
 
 	while (HeapTupleIsValid(tup = systable_getnext(scan)))
 	{
+		if (skipExtensionDeps &&
+			((Form_pg_depend) GETSTRUCT(tup))->deptype == DEPENDENCY_EXTENSION)
+			continue;
+
 		simple_heap_delete(depRel, &tup->t_self);
 		count++;
 	}
@@ -319,6 +352,59 @@ isObjectPinned(const ObjectAddress *object, Relation rel)
  * Various special-purpose lookups and manipulations of pg_depend.
  */
 
+
+/*
+ * Find the extension containing the specified object, if any
+ *
+ * Returns the OID of the extension, or InvalidOid if the object does not
+ * belong to any extension.
+ *
+ * Extension membership is marked by an EXTENSION dependency from the object
+ * to the extension.  Note that the result will be indeterminate if pg_depend
+ * contains links from this object to more than one extension ... but that
+ * should never happen.
+ */
+Oid
+getExtensionOfObject(Oid classId, Oid objectId)
+{
+	Oid			result = InvalidOid;
+	Relation	depRel;
+	ScanKeyData key[2];
+	SysScanDesc scan;
+	HeapTuple	tup;
+
+	depRel = heap_open(DependRelationId, AccessShareLock);
+
+	ScanKeyInit(&key[0],
+				Anum_pg_depend_classid,
+				BTEqualStrategyNumber, F_OIDEQ,
+				ObjectIdGetDatum(classId));
+	ScanKeyInit(&key[1],
+				Anum_pg_depend_objid,
+				BTEqualStrategyNumber, F_OIDEQ,
+				ObjectIdGetDatum(objectId));
+
+	scan = systable_beginscan(depRel, DependDependerIndexId, true,
+							  SnapshotNow, 2, key);
+
+	while (HeapTupleIsValid((tup = systable_getnext(scan))))
+	{
+		Form_pg_depend depform = (Form_pg_depend) GETSTRUCT(tup);
+
+		if (depform->refclassid == ExtensionRelationId &&
+			depform->deptype == DEPENDENCY_EXTENSION)
+		{
+			result = depform->refobjid;
+			break;				/* no need to keep scanning */
+		}
+	}
+
+	systable_endscan(scan);
+
+	heap_close(depRel, AccessShareLock);
+
+	return result;
+}
 
 /*
  * Detect whether a sequence is marked as "owned" by a column

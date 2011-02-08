@@ -2780,19 +2780,26 @@ AlterTypeNamespace(List *names, const char *newschema)
 	TypeName   *typename;
 	Oid			typeOid;
 	Oid			nspOid;
-	Oid			elemOid;
 
 	/* Make a TypeName so we can use standard type lookup machinery */
 	typename = makeTypeNameFromNameList(names);
 	typeOid = typenameTypeId(NULL, typename);
 
+	/* get schema OID and check its permissions */
+	nspOid = LookupCreationNamespace(newschema);
+
+	AlterTypeNamespace_oid(typeOid, nspOid);
+}
+
+Oid
+AlterTypeNamespace_oid(Oid typeOid, Oid nspOid)
+{
+	Oid			elemOid;
+
 	/* check permissions on type */
 	if (!pg_type_ownercheck(typeOid, GetUserId()))
 		aclcheck_error(ACLCHECK_NOT_OWNER, ACL_KIND_TYPE,
 					   format_type_be(typeOid));
-
-	/* get schema OID and check its permissions */
-	nspOid = LookupCreationNamespace(newschema);
 
 	/* don't allow direct alteration of array types */
 	elemOid = get_element_type(typeOid);
@@ -2805,7 +2812,7 @@ AlterTypeNamespace(List *names, const char *newschema)
 						 format_type_be(elemOid))));
 
 	/* and do the work */
-	AlterTypeNamespaceInternal(typeOid, nspOid, false, true);
+	return AlterTypeNamespaceInternal(typeOid, nspOid, false, true);
 }
 
 /*
@@ -2820,8 +2827,10 @@ AlterTypeNamespace(List *names, const char *newschema)
  * If errorOnTableType is TRUE, the function errors out if the type is
  * a table type.  ALTER TABLE has to be used to move a table to a new
  * namespace.
+ *
+ * Returns the type's old namespace OID.
  */
-void
+Oid
 AlterTypeNamespaceInternal(Oid typeOid, Oid nspOid,
 						   bool isImplicitArray,
 						   bool errorOnTableType)
@@ -2928,4 +2937,6 @@ AlterTypeNamespaceInternal(Oid typeOid, Oid nspOid,
 	/* Recursively alter the associated array type, if any */
 	if (OidIsValid(arrayOid))
 		AlterTypeNamespaceInternal(arrayOid, nspOid, true, true);
+
+	return oldNspOid;
 }

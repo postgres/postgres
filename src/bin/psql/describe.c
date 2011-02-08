@@ -38,6 +38,7 @@ static bool describeOneTSConfig(const char *oid, const char *nspname,
 					const char *cfgname,
 					const char *pnspname, const char *prsname);
 static void printACLColumn(PQExpBuffer buf, const char *colname);
+static bool listOneExtensionContents(const char *extname, const char *oid);
 
 
 /*----------------
@@ -3671,7 +3672,7 @@ listForeignTables(const char *pattern, bool verbose)
 
 	if (pset.sversion < 90100)
 	{
-		fprintf(stderr, _("The server (version %d.%d) does not support foreign table.\n"),
+		fprintf(stderr, _("The server (version %d.%d) does not support foreign tables.\n"),
 				pset.sversion / 10000, (pset.sversion / 100) % 100);
 		return true;
 	}
@@ -3710,6 +3711,167 @@ listForeignTables(const char *pattern, bool verbose)
 
 	myopt.nullPrint = NULL;
 	myopt.title = _("List of foreign tables");
+	myopt.translate_header = true;
+
+	printQuery(res, &myopt, pset.queryFout, pset.logfile);
+
+	PQclear(res);
+	return true;
+}
+
+/*
+ * \dx
+ *
+ * Briefly describes installed extensions.
+ */
+bool
+listExtensions(const char *pattern)
+{
+	PQExpBufferData buf;
+	PGresult   *res;
+	printQueryOpt myopt = pset.popt;
+
+	if (pset.sversion < 90100)
+	{
+		fprintf(stderr, _("The server (version %d.%d) does not support extensions.\n"),
+				pset.sversion / 10000, (pset.sversion / 100) % 100);
+		return true;
+	}
+
+	initPQExpBuffer(&buf);
+	printfPQExpBuffer(&buf,
+					  "SELECT e.extname AS \"%s\", "
+					  "e.extversion AS \"%s\", n.nspname AS \"%s\", c.description AS \"%s\"\n"
+					  "FROM pg_catalog.pg_extension e "
+					  "LEFT JOIN pg_catalog.pg_namespace n ON n.oid = e.extnamespace "
+					  "LEFT JOIN pg_catalog.pg_description c ON c.objoid = e.oid "
+					  "AND c.classoid = 'pg_catalog.pg_extension'::pg_catalog.regclass\n",
+					  gettext_noop("Name"),
+					  gettext_noop("Version"),
+					  gettext_noop("Schema"),
+					  gettext_noop("Description"));
+
+	processSQLNamePattern(pset.db, &buf, pattern,
+						  false, false,
+						  NULL, "e.extname", NULL,
+						  NULL);
+
+	appendPQExpBuffer(&buf, "ORDER BY 1;");
+
+	res = PSQLexec(buf.data, false);
+	termPQExpBuffer(&buf);
+	if (!res)
+		return false;
+
+	myopt.nullPrint = NULL;
+	myopt.title = _("List of installed extensions");
+	myopt.translate_header = true;
+
+	printQuery(res, &myopt, pset.queryFout, pset.logfile);
+
+	PQclear(res);
+	return true;
+}
+
+/*
+ * \dx+
+ *
+ * List contents of installed extensions.
+ */
+bool
+listExtensionContents(const char *pattern)
+{
+	PQExpBufferData buf;
+	PGresult   *res;
+	int			i;
+
+	if (pset.sversion < 90100)
+	{
+		fprintf(stderr, _("The server (version %d.%d) does not support extensions.\n"),
+				pset.sversion / 10000, (pset.sversion / 100) % 100);
+		return true;
+	}
+
+	initPQExpBuffer(&buf);
+	printfPQExpBuffer(&buf,
+					  "SELECT e.extname, e.oid\n"
+					  "FROM pg_catalog.pg_extension e\n");
+
+	processSQLNamePattern(pset.db, &buf, pattern,
+						  false, false,
+						  NULL, "e.extname", NULL,
+						  NULL);
+
+	appendPQExpBuffer(&buf, "ORDER BY 1;");
+
+	res = PSQLexec(buf.data, false);
+	termPQExpBuffer(&buf);
+	if (!res)
+		return false;
+
+	if (PQntuples(res) == 0)
+	{
+		if (!pset.quiet)
+		{
+			if (pattern)
+				fprintf(stderr, _("Did not find any extension named \"%s\".\n"),
+						pattern);
+			else
+				fprintf(stderr, _("Did not find any extensions.\n"));
+		}
+		PQclear(res);
+		return false;
+	}
+
+	for (i = 0; i < PQntuples(res); i++)
+	{
+		const char *extname;
+		const char *oid;
+
+		extname = PQgetvalue(res, i, 0);
+		oid = PQgetvalue(res, i, 1);
+
+		if (!listOneExtensionContents(extname, oid))
+		{
+			PQclear(res);
+			return false;
+		}
+		if (cancel_pressed)
+		{
+			PQclear(res);
+			return false;
+		}
+	}
+
+	PQclear(res);
+	return true;
+}
+
+static bool
+listOneExtensionContents(const char *extname, const char *oid)
+{
+	PQExpBufferData buf;
+	PGresult   *res;
+	char		title[1024];
+	printQueryOpt myopt = pset.popt;
+
+	initPQExpBuffer(&buf);
+	printfPQExpBuffer(&buf,
+					  "SELECT pg_catalog.pg_describe_object(classid, objid, 0) AS \"%s\"\n"
+					  "FROM pg_catalog.pg_depend\n"
+					  "WHERE refclassid = 'pg_catalog.pg_extension'::pg_catalog.regclass AND refobjid = '%s' AND deptype = 'e'\n"
+					  "ORDER BY 1;",
+					  gettext_noop("Object Description"),
+					  oid);
+
+	res = PSQLexec(buf.data, false);
+	termPQExpBuffer(&buf);
+	if (!res)
+		return false;
+
+	myopt.nullPrint = NULL;
+	snprintf(title, sizeof(title), _("Objects in extension \"%s\""), extname);
+	myopt.title = title;
 	myopt.translate_header = true;
 
 	printQuery(res, &myopt, pset.queryFout, pset.logfile);

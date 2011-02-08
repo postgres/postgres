@@ -2392,273 +2392,6 @@ concat_text(PG_FUNCTION_ARGS)
 
 &dfunc;
 
-   <sect2 id="xfunc-c-pgxs">
-    <title>Extension Building Infrastructure</title>
-
-   <indexterm zone="xfunc-c-pgxs">
-    <primary>pgxs</primary>
-   </indexterm>
-
-   <para>
-    If you are thinking about distributing your
-    <productname>PostgreSQL</> extension modules, setting up a
-    portable build system for them can be fairly difficult.  Therefore
-    the <productname>PostgreSQL</> installation provides a build
-    infrastructure for extensions, called <acronym>PGXS</acronym>, so
-    that simple extension modules can be built simply against an
-    already installed server.  Note that this infrastructure is not
-    intended to be a universal build system framework that can be used
-    to build all software interfacing to <productname>PostgreSQL</>;
-    it simply automates common build rules for simple server extension
-    modules.  For more complicated packages, you need to write your
-    own build system.
-   </para>
-
-   <para>
-    To use the infrastructure for your extension, you must write a
-    simple makefile.  In that makefile, you need to set some variables
-    and finally include the global <acronym>PGXS</acronym> makefile.
-    Here is an example that builds an extension module named
-    <literal>isbn_issn</literal> consisting of a shared library, an
-    SQL script, and a documentation text file:
-<programlisting>
-MODULES = isbn_issn
-DATA_built = isbn_issn.sql
-DOCS = README.isbn_issn
-
-PG_CONFIG = pg_config
-PGXS := $(shell $(PG_CONFIG) --pgxs)
-include $(PGXS)
-</programlisting>
-    The last three lines should always be the same.  Earlier in the
-    file, you assign variables or add custom
-    <application>make</application> rules.
-   </para>
-
-   <para>
-    Set one of these three variables to specify what is built:
-
-    <variablelist>
-     <varlistentry>
-      <term><varname>MODULES</varname></term>
-      <listitem>
-       <para>
-        list of shared objects to be built from source files with same
-        stem (do not include suffix in this list)
-       </para>
-      </listitem>
-     </varlistentry>
-
-     <varlistentry>
-      <term><varname>MODULE_big</varname></term>
-      <listitem>
-       <para>
-        a shared object to build from multiple source files
-        (list object files in <varname>OBJS</varname>)
-       </para>
-      </listitem>
-     </varlistentry>
-
-     <varlistentry>
-      <term><varname>PROGRAM</varname></term>
-      <listitem>
-       <para>
-        a binary program to build
-        (list object files in <varname>OBJS</varname>)
-       </para>
-      </listitem>
-     </varlistentry>
-    </variablelist>
-
-    The following variables can also be set:
-
-    <variablelist>
-     <varlistentry>
-      <term><varname>MODULEDIR</varname></term>
-      <listitem>
-       <para>
-        subdirectory into which DATA and DOCS files should be
-        installed (if not set, default is <literal>contrib</literal>)
-       </para>
-      </listitem>
-     </varlistentry>
-
-     <varlistentry>
-      <term><varname>DATA</varname></term>
-      <listitem>
-       <para>
-        random files to install into <literal><replaceable>prefix</replaceable>/share/$MODULEDIR</literal>
-       </para>
-      </listitem>
-     </varlistentry>
-
-     <varlistentry>
-      <term><varname>DATA_built</varname></term>
-      <listitem>
-       <para>
-        random files to install into
-        <literal><replaceable>prefix</replaceable>/share/$MODULEDIR</literal>,
-        which need to be built first
-       </para>
-      </listitem>
-     </varlistentry>
-
-     <varlistentry>
-      <term><varname>DATA_TSEARCH</varname></term>
-      <listitem>
-       <para>
-        random files to install under
-        <literal><replaceable>prefix</replaceable>/share/tsearch_data</literal>
-       </para>
-      </listitem>
-     </varlistentry>
-
-     <varlistentry>
-      <term><varname>DOCS</varname></term>
-      <listitem>
-       <para>
-        random files to install under
-        <literal><replaceable>prefix</replaceable>/doc/$MODULEDIR</literal>
-       </para>
-      </listitem>
-     </varlistentry>
-
-     <varlistentry>
-      <term><varname>SCRIPTS</varname></term>
-      <listitem>
-       <para>
-        script files (not binaries) to install into
-        <literal><replaceable>prefix</replaceable>/bin</literal>
-       </para>
-      </listitem>
-     </varlistentry>
-
-     <varlistentry>
-      <term><varname>SCRIPTS_built</varname></term>
-      <listitem>
-       <para>
-        script files (not binaries) to install into
-        <literal><replaceable>prefix</replaceable>/bin</literal>,
-        which need to be built first
-       </para>
-      </listitem>
-     </varlistentry>
-
-     <varlistentry>
-      <term><varname>REGRESS</varname></term>
-      <listitem>
-       <para>
-        list of regression test cases (without suffix), see below
-       </para>
-      </listitem>
-     </varlistentry>
-
-     <varlistentry>
-      <term><varname>EXTRA_CLEAN</varname></term>
-      <listitem>
-       <para>
-        extra files to remove in <literal>make clean</literal>
-       </para>
-      </listitem>
-     </varlistentry>
-
-     <varlistentry>
-      <term><varname>PG_CPPFLAGS</varname></term>
-      <listitem>
-       <para>
-        will be added to <varname>CPPFLAGS</varname>
-       </para>
-      </listitem>
-     </varlistentry>
-
-     <varlistentry>
-      <term><varname>PG_LIBS</varname></term>
-      <listitem>
-       <para>
-        will be added to <varname>PROGRAM</varname> link line
-       </para>
-      </listitem>
-     </varlistentry>
-
-     <varlistentry>
-      <term><varname>SHLIB_LINK</varname></term>
-      <listitem>
-       <para>
-        will be added to <varname>MODULE_big</varname> link line
-       </para>
-      </listitem>
-     </varlistentry>
-
-     <varlistentry>
-      <term><varname>PG_CONFIG</varname></term>
-      <listitem>
-       <para>
-        path to <application>pg_config</> program for the
-        <productname>PostgreSQL</productname> installation to build against
-        (typically just <literal>pg_config</> to use the first one in your
-        <varname>PATH</>)
-       </para>
-      </listitem>
-     </varlistentry>
-    </variablelist>
-   </para>
-
-   <para>
-    Put this makefile as <literal>Makefile</literal> in the directory
-    which holds your extension. Then you can do
-    <literal>make</literal> to compile, and later <literal>make
-    install</literal> to install your module.  By default, the extension is
-    compiled and installed for the
-    <productname>PostgreSQL</productname> installation that
-    corresponds to the first <command>pg_config</command> program
-    found in your path.  You can use a different installation by
-    setting <varname>PG_CONFIG</varname> to point to its
-    <command>pg_config</command> program, either within the makefile
-    or on the <literal>make</literal> command line.
-   </para>
-
-   <caution>
-    <para>
-     Changing <varname>PG_CONFIG</varname> only works when building
-     against <productname>PostgreSQL</productname> 8.3 or later.
-     With older releases it does not work to set it to anything except
-     <literal>pg_config</>; you must alter your <varname>PATH</>
-     to select the installation to build against.
-    </para>
-   </caution>
-
-   <para>
-    The scripts listed in the <varname>REGRESS</> variable are used for
-    regression testing of your module, just like <literal>make
-    installcheck</literal> is used for the main
-    <productname>PostgreSQL</productname> server.  For this to work you need
-    to have a subdirectory named <literal>sql/</literal> in your extension's
-    directory, within which you put one file for each group of tests you want
-    to run.  The files should have extension <literal>.sql</literal>, which
-    should not be included in the <varname>REGRESS</varname> list in the
-    makefile.  For each test there should be a file containing the expected
-    result in a subdirectory named <literal>expected/</literal>, with extension
-    <literal>.out</literal>.  The tests are run by executing <literal>make
-    installcheck</literal>, and the resulting output will be compared to the
-    expected files.  The differences will be written to the file
-    <literal>regression.diffs</literal> in <command>diff -c</command> format.
-    Note that trying to run a test which is missing the expected file will be
-    reported as <quote>trouble</quote>, so make sure you have all expected
-    files.
-   </para>
-
-   <tip>
-    <para>
-     The easiest way of creating the expected files is creating empty files,
-     then carefully inspecting the result files after a test run (to be found
-     in the <literal>results/</literal> directory), and copying them to
-     <literal>expected/</literal> if they match what you want from the test.
-    </para>
-
-   </tip>
-  </sect2>
-
-
    <sect2>
     <title>Composite-type Arguments</title>
 
@@ -3385,4 +3118,68 @@ if (!ptr)
 </programlisting>
     </para>
    </sect2>
+
+   <sect2 id="extend-Cpp">
+    <title>Using C++ for Extensibility</title>
+
+    <indexterm zone="extend-Cpp">
+     <primary>C++</primary>
+    </indexterm>
+
+    <para>
+     Although the <productname>PostgreSQL</productname> backend is written in
+     C, it is possible to write extensions in C++ if these guidelines are
+     followed:
+
+     <itemizedlist>
+      <listitem>
+       <para>
+         All functions accessed by the backend must present a C interface
+         to the backend;  these C functions can then call C++ functions.
+         For example, <literal>extern C</> linkage is required for
+         backend-accessed functions.  This is also necessary for any
+         functions that are passed as pointers between the backend and
+         C++ code.
+       </para>
+      </listitem>
+      <listitem>
+       <para>
+        Free memory using the appropriate deallocation method.  For example,
+        most backend memory is allocated using <function>palloc()</>, so use
+        <function>pfree()</> to free it.  Using C++
+        <function>delete</> in such cases will fail.
+       </para>
+      </listitem>
+      <listitem>
+       <para>
+        Prevent exceptions from propagating into the C code (use a catch-all
+        block at the top level of all <literal>extern C</> functions).  This
+        is necessary even if the C++ code does not explicitly throw any
+        exceptions, because events like out-of-memory can still throw
+        exceptions.  Any exceptions must be caught and appropriate errors
+        passed back to the C interface.  If possible, compile C++ with
+        <option>-fno-exceptions</> to eliminate exceptions entirely; in such
+        cases, you must check for failures in your C++ code, e.g.  check for
+        NULL returned by <function>new()</>.
+       </para>
+      </listitem>
+      <listitem>
+       <para>
+        If calling backend functions from C++ code, be sure that the
+        C++ call stack contains only plain old data structures
+        (<acronym>POD</>).  This is necessary because backend errors
+        generate a distant <function>longjmp()</> that does not properly
+        unroll a C++ call stack with non-POD objects.
+       </para>
+      </listitem>
+     </itemizedlist>
+    </para>
+
+    <para>
+     In summary, it is best to place C++ code behind a wall of
+     <literal>extern C</> functions that interface to the backend,
+     and avoid exception, memory, and call stack leakage.
+    </para>
+   </sect2>
+
   </sect1>

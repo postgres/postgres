@@ -345,12 +345,35 @@ AlterConversionNamespace(List *name, const char *newschema)
 	/* get schema OID */
 	nspOid = LookupCreationNamespace(newschema);
 
-	AlterObjectNamespace(rel, CONVOID, ConversionRelationId, convOid, nspOid,
+	AlterObjectNamespace(rel, CONVOID, CONNAMENSP,
+						 convOid, nspOid,
 						 Anum_pg_conversion_conname,
 						 Anum_pg_conversion_connamespace,
 						 Anum_pg_conversion_conowner,
-						 ACL_KIND_CONVERSION,
-						 false);
+						 ACL_KIND_CONVERSION);
 
-	heap_close(rel, NoLock);
+	heap_close(rel, RowExclusiveLock);
+}
+
+/*
+ * Change conversion schema, by oid
+ */
+Oid
+AlterConversionNamespace_oid(Oid convOid, Oid newNspOid)
+{
+	Oid         oldNspOid;
+	Relation	rel;
+
+	rel = heap_open(ConversionRelationId, RowExclusiveLock);
+
+	oldNspOid = AlterObjectNamespace(rel, CONVOID, CONNAMENSP,
+									 convOid, newNspOid,
+									 Anum_pg_conversion_conname,
+									 Anum_pg_conversion_connamespace,
+									 Anum_pg_conversion_conowner,
+									 ACL_KIND_CONVERSION);
+
+	heap_close(rel, RowExclusiveLock);
+
+	return oldNspOid;
 }

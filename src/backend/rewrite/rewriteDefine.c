@@ -143,7 +143,7 @@ InsertRule(char *rulname,
 
 	/* If replacing, get rid of old dependencies and make new ones */
 	if (is_update)
-		deleteDependencyRecordsFor(RewriteRelationId, rewriteObjectId);
+		deleteDependencyRecordsFor(RewriteRelationId, rewriteObjectId, false);
 
 	/*
 	 * Install dependency on rule's relation to ensure it will go away on
