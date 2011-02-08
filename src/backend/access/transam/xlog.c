@@ -9619,7 +9619,7 @@ retry:
 					 * five seconds like in the WAL file polling case below.
 					 */
 					if (CheckForStandbyTrigger())
-						goto triggered;
+						goto retry;
 
 					/*
 					 * Wait for more WAL to arrive, or timeout to be reached
@@ -9886,6 +9886,10 @@ static bool
 CheckForStandbyTrigger(void)
 {
 	struct stat stat_buf;
+	static bool	triggered = false;
+
+	if (triggered)
+		return true;
 
 	if (TriggerFile == NULL)
 		return false;
@@ -9896,6 +9900,7 @@ CheckForStandbyTrigger(void)
 				(errmsg("trigger file found: %s", TriggerFile)));
 		ShutdownWalRcv();
 		unlink(TriggerFile);
+		triggered = true;
 		return true;
 	}
 	return false;
