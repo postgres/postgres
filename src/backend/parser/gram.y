@@ -546,7 +546,7 @@ static RangeVar *makeRangeVarFromAnyName(List *names, int position, core_yyscan_
 	UNBOUNDED UNCOMMITTED UNENCRYPTED UNION UNIQUE UNKNOWN UNLISTEN UNLOGGED
 	UNTIL UPDATE USER USING
 
-	VACUUM VALID VALIDATOR VALUE_P VALUES VARCHAR VARIADIC VARYING
+	VACUUM VALID VALIDATE VALIDATOR VALUE_P VALUES VARCHAR VARIADIC VARYING
 	VERBOSE VERSION_P VIEW VOLATILE
 
 	WHEN WHERE WHITESPACE_P WINDOW WITH WITHOUT WORK WRAPPER WRITE
@@ -1752,6 +1752,14 @@ alter_table_cmd:
 					n->def = $2;
 					$$ = (Node *)n;
 				}
+			/* ALTER TABLE <name> VALIDATE CONSTRAINT ... */
+			| VALIDATE CONSTRAINT name
+				{
+					AlterTableCmd *n = makeNode(AlterTableCmd);
+					n->subtype = AT_ValidateConstraint;
+					n->name = $3;
+					$$ = (Node *)n;
+				}
 			/* ALTER TABLE <name> DROP CONSTRAINT IF EXISTS <name> [RESTRICT|CASCADE] */
 			| DROP CONSTRAINT IF_P EXISTS name opt_drop_behavior
 				{
@@ -2743,9 +2751,25 @@ ConstraintElem:
 					n->fk_matchtype		= $9;
 					n->fk_upd_action	= (char) ($10 >> 8);
 					n->fk_del_action	= (char) ($10 & 0xFF);
-					n->skip_validation  = FALSE;
 					n->deferrable		= ($11 & 1) != 0;
 					n->initdeferred		= ($11 & 2) != 0;
+					n->skip_validation  = false;
+					$$ = (Node *)n;
+				}
+			| FOREIGN KEY '(' columnList ')' REFERENCES qualified_name
+				opt_column_list key_match key_actions
+				NOT VALID
+				{
+					Constraint *n = makeNode(Constraint);
+					n->contype = CONSTR_FOREIGN;
+					n->location = @1;
+					n->pktable			= $7;
+					n->fk_attrs			= $4;
+					n->pk_attrs			= $8;
+					n->fk_matchtype		= $9;
+					n->fk_upd_action	= (char) ($10 >> 8);
+					n->fk_del_action	= (char) ($10 & 0xFF);
+					n->skip_validation  = true;
 					$$ = (Node *)n;
 				}
 		;

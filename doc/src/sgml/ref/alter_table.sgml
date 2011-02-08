@@ -44,6 +44,8 @@ ALTER TABLE <replaceable class="PARAMETER">name</replaceable>
     ALTER [ COLUMN ] <replaceable class="PARAMETER">column</replaceable> SET STORAGE { PLAIN | EXTERNAL | EXTENDED | MAIN }
     ADD <replaceable class="PARAMETER">table_constraint</replaceable>
     ADD <replaceable class="PARAMETER">table_constraint_using_index</replaceable>
+    ADD <replaceable class="PARAMETER">table_constraint</replaceable> [ NOT VALID ]
+    VALIDATE CONSTRAINT <replaceable class="PARAMETER">constraint_name</replaceable>
     DROP CONSTRAINT [ IF EXISTS ]  <replaceable class="PARAMETER">constraint_name</replaceable> [ RESTRICT | CASCADE ]
     DISABLE TRIGGER [ <replaceable class="PARAMETER">trigger_name</replaceable> | ALL | USER ]
     ENABLE TRIGGER [ <replaceable class="PARAMETER">trigger_name</replaceable> | ALL | USER ]
@@ -227,11 +229,27 @@ ALTER TABLE <replaceable class="PARAMETER">name</replaceable>
    </varlistentry>
 
    <varlistentry>
-    <term><literal>ADD <replaceable class="PARAMETER">table_constraint</replaceable></literal></term>
+    <term><literal>ADD <replaceable class="PARAMETER">table_constraint</replaceable>
+          [ NOT VALID ]</literal></term>
     <listitem>
      <para>
       This form adds a new constraint to a table using the same syntax as
-      <xref linkend="SQL-CREATETABLE">.
+      <xref linkend="SQL-CREATETABLE">. Newly added foreign key constraints can
+      also be defined as <literal>NOT VALID</literal> to avoid the
+      potentially lengthy initial check that must otherwise be performed.
+      Constraint checks are skipped at create table time, so
+      <xref linkend="SQL-CREATETABLE"> does not contain this option.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><literal>VALIDATE CONSTRAINT</literal></term>
+    <listitem>
+     <para>
+      This form validates a foreign key constraint that was previously created
+      as <literal>NOT VALID</literal>. Constraints already marked valid do not
+      cause an error response.
      </para>
     </listitem>
    </varlistentry>

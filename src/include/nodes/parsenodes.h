@@ -1140,6 +1140,7 @@ typedef enum AlterTableType
 	AT_ReAddIndex,				/* internal to commands/tablecmds.c */
 	AT_AddConstraint,			/* add constraint */
 	AT_AddConstraintRecurse,	/* internal to commands/tablecmds.c */
+	AT_ValidateConstraint,		/* validate constraint */
 	AT_ProcessedConstraint,		/* pre-processed add constraint (local in
 								 * parser/parse_utilcmd.c) */
 	AT_AddIndexConstraint,		/* add constraint using existing index */
@@ -1182,6 +1183,7 @@ typedef struct AlterTableCmd	/* one subcommand of an ALTER TABLE */
 	Node	   *transform;		/* transformation expr for ALTER TYPE */
 	DropBehavior behavior;		/* RESTRICT or CASCADE for DROP cases */
 	bool		missing_ok;		/* skip error if missing? */
+	bool		validated;
 } AlterTableCmd;
 
 

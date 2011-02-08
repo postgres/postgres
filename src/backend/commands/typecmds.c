@@ -2378,6 +2378,7 @@ domainAddConstraint(Oid domainOid, Oid domainNamespace, Oid baseTypeOid,
 						  CONSTRAINT_CHECK,		/* Constraint Type */
 						  false,	/* Is Deferrable */
 						  false,	/* Is Deferred */
+						  true,		/* Is Validated */
 						  InvalidOid,	/* not a relation constraint */
 						  NULL,
 						  0,

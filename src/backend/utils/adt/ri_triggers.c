@@ -2608,8 +2608,11 @@ RI_FKey_keyequal_upd_fk(Trigger *trigger, Relation fk_rel,
  *	This is not a trigger procedure, but is called during ALTER TABLE
  *	ADD FOREIGN KEY to validate the initial table contents.
  *
- *	We expect that a ShareRowExclusiveLock or higher has been taken on rel and pkrel;
- *	hence, we do not need to lock individual rows for the check.
+ * 	We expect that the caller has made provision to prevent any problems
+ *	caused by concurrent actions. This could be either by locking rel and
+ *	pkrel at ShareRowExclusiveLock or higher, or by otherwise ensuring
+ *	that triggers implementing the checks are already active.
+ *	Hence, we do not need to lock individual rows for the check.
  *
  *	If the check fails because the current user doesn't have permissions
  *	to read both tables, return false to let our caller know that they will

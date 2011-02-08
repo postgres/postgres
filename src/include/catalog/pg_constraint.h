@@ -45,6 +45,7 @@ CATALOG(pg_constraint,2606)
 	char		contype;		/* constraint type; see codes below */
 	bool		condeferrable;	/* deferrable constraint? */
 	bool		condeferred;	/* deferred by default? */
+	bool		convalidated;	/* constraint has been validated? */
 
 	/*
 	 * conrelid and conkey are only meaningful if the constraint applies to a
@@ -148,29 +149,30 @@ typedef FormData_pg_constraint *Form_pg_constraint;
  *		compiler constants for pg_constraint
  * ----------------
  */
-#define Natts_pg_constraint					22
+#define Natts_pg_constraint					23
 #define Anum_pg_constraint_conname			1
 #define Anum_pg_constraint_connamespace		2
 #define Anum_pg_constraint_contype			3
 #define Anum_pg_constraint_condeferrable	4
 #define Anum_pg_constraint_condeferred		5
-#define Anum_pg_constraint_conrelid			6
-#define Anum_pg_constraint_contypid			7
-#define Anum_pg_constraint_conindid			8
-#define Anum_pg_constraint_confrelid		9
-#define Anum_pg_constraint_confupdtype		10
-#define Anum_pg_constraint_confdeltype		11
-#define Anum_pg_constraint_confmatchtype	12
-#define Anum_pg_constraint_conislocal		13
-#define Anum_pg_constraint_coninhcount		14
-#define Anum_pg_constraint_conkey			15
-#define Anum_pg_constraint_confkey			16
-#define Anum_pg_constraint_conpfeqop		17
-#define Anum_pg_constraint_conppeqop		18
-#define Anum_pg_constraint_conffeqop		19
-#define Anum_pg_constraint_conexclop		20
-#define Anum_pg_constraint_conbin			21
-#define Anum_pg_constraint_consrc			22
+#define Anum_pg_constraint_convalidated		6
+#define Anum_pg_constraint_conrelid			7
+#define Anum_pg_constraint_contypid			8
+#define Anum_pg_constraint_conindid			9
+#define Anum_pg_constraint_confrelid		10
+#define Anum_pg_constraint_confupdtype		11
+#define Anum_pg_constraint_confdeltype		12
+#define Anum_pg_constraint_confmatchtype	13
+#define Anum_pg_constraint_conislocal		14
+#define Anum_pg_constraint_coninhcount		15
+#define Anum_pg_constraint_conkey			16
+#define Anum_pg_constraint_confkey			17
+#define Anum_pg_constraint_conpfeqop		18
+#define Anum_pg_constraint_conppeqop		19
+#define Anum_pg_constraint_conffeqop		20
+#define Anum_pg_constraint_conexclop		21
+#define Anum_pg_constraint_conbin			22
+#define Anum_pg_constraint_consrc			23
 
 
 /* Valid values for contype */
@@ -205,6 +207,7 @@ extern Oid CreateConstraintEntry(const char *constraintName,
 					  char constraintType,
 					  bool isDeferrable,
 					  bool isDeferred,
+					  bool isValidated,
 					  Oid relId,
 					  const int16 *constraintKey,
 					  int constraintNKeys,
@@ -228,6 +231,7 @@ extern Oid CreateConstraintEntry(const char *constraintName,
 
 extern void RemoveConstraintById(Oid conId);
 extern void RenameConstraintById(Oid conId, const char *newname);
+extern void SetValidatedConstraintById(Oid conId);
 
 extern bool ConstraintNameIsUsed(ConstraintCategory conCat, Oid objId,
 					 Oid objNamespace, const char *conname);

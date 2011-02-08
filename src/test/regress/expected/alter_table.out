@@ -184,6 +184,18 @@ DETAIL:  Key (a)=(5) is not present in table "tmp2".
 DELETE FROM tmp3 where a=5;
 -- Try (and succeed)
 ALTER TABLE tmp3 add constraint tmpconstr foreign key (a) references tmp2 match full;
+ALTER TABLE tmp3 drop constraint tmpconstr;
+INSERT INTO tmp3 values (5,50);
+-- Try NOT VALID and then VALIDATE CONSTRAINT, but fails. Delete failure then re-validate
+ALTER TABLE tmp3 add constraint tmpconstr foreign key (a) references tmp2 match full NOT VALID;
+ALTER TABLE tmp3 validate constraint tmpconstr;
+ERROR:  insert or update on table "tmp3" violates foreign key constraint "tmpconstr"
+DETAIL:  Key (a)=(5) is not present in table "tmp2".
+-- Delete failing row
+DELETE FROM tmp3 where a=5;
+-- Try (and succeed) and repeat to show it works on already valid constraint
+ALTER TABLE tmp3 validate constraint tmpconstr;
+ALTER TABLE tmp3 validate constraint tmpconstr;
 -- Try (and fail) to create constraint from tmp5(a) to tmp4(a) - unique constraint on
 -- tmp4 is a,b
 ALTER TABLE tmp5 add constraint tmpconstr foreign key(a) references tmp4(a) match full;

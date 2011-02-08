@@ -422,6 +422,7 @@ CreateTrigger(CreateTrigStmt *stmt, const char *queryString,
 											  CONSTRAINT_TRIGGER,
 											  stmt->deferrable,
 											  stmt->initdeferred,
+											  true,
 											  RelationGetRelid(rel),
 											  NULL,		/* no conkey */
 											  0,

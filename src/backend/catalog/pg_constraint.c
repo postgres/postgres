@@ -46,6 +46,7 @@ CreateConstraintEntry(const char *constraintName,
 					  char constraintType,
 					  bool isDeferrable,
 					  bool isDeferred,
+					  bool isValidated,
 					  Oid relId,
 					  const int16 *constraintKey,
 					  int constraintNKeys,
@@ -158,6 +159,7 @@ CreateConstraintEntry(const char *constraintName,
 	values[Anum_pg_constraint_contype - 1] = CharGetDatum(constraintType);
 	values[Anum_pg_constraint_condeferrable - 1] = BoolGetDatum(isDeferrable);
 	values[Anum_pg_constraint_condeferred - 1] = BoolGetDatum(isDeferred);
+	values[Anum_pg_constraint_convalidated - 1] = BoolGetDatum(isValidated);
 	values[Anum_pg_constraint_conrelid - 1] = ObjectIdGetDatum(relId);
 	values[Anum_pg_constraint_contypid - 1] = ObjectIdGetDatum(domainId);
 	values[Anum_pg_constraint_conindid - 1] = ObjectIdGetDatum(indexRelId);

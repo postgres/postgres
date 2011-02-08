@@ -1837,6 +1837,7 @@ StoreRelCheck(Relation rel, char *ccname, Node *expr,
 						  CONSTRAINT_CHECK,		/* Constraint Type */
 						  false,	/* Is Deferrable */
 						  false,	/* Is Deferred */
+						  true,		/* Is Validated */
 						  RelationGetRelid(rel),		/* relation */
 						  attNos,		/* attrs in the constraint */
 						  keycount,		/* # attrs in the constraint */
