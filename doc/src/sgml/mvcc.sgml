@@ -670,7 +670,7 @@ ERROR:  could not serialize access due to read/write dependencies among transact
      permanent database writes within Serializable transactions on the
      master will ensure that all standbys will eventually reach a consistent
      state, a Repeatable Read transaction run on the standby can sometimes
-     see a transient state which in inconsistent with any serial execution
+     see a transient state which is inconsistent with any serial execution
      of serializable transactions on the master.
     </para>
    </warning>
