@@ -20,12 +20,17 @@
 typedef HeapTuple Type;
 
 extern Type LookupTypeName(ParseState *pstate, const TypeName *typeName,
-			   int32 *typmod_p);
+						   int32 *typmod_p, Oid *collid_p);
 extern Type typenameType(ParseState *pstate, const TypeName *typeName,
-			 int32 *typmod_p);
+						 int32 *typmod_p, Oid *collid_p);
+
+extern Oid LookupCollation(ParseState *pstate, List *collnames, int location);
+
 extern Oid typenameTypeId(ParseState *pstate, const TypeName *typeName);
 extern void typenameTypeIdAndMod(ParseState *pstate, const TypeName *typeName,
-								 Oid *typeid_p, int32 *typmod_p);
+								  Oid *typeid_p, int32 *typmod_p);
+extern void typenameTypeIdModColl(ParseState *pstate, const TypeName *typeName,
+								  Oid *typeid_p, int32 *typmod_p, Oid *collid_p);
 
 extern char *TypeNameToString(const TypeName *typeName);
 extern char *TypeNameListToString(List *typenames);

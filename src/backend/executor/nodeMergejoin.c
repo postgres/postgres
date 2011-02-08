@@ -180,6 +180,7 @@ typedef enum
 static MergeJoinClause
 MJExamineQuals(List *mergeclauses,
 			   Oid *mergefamilies,
+			   Oid *mergecollations,
 			   int *mergestrategies,
 			   bool *mergenullsfirst,
 			   PlanState *parent)
@@ -197,6 +198,7 @@ MJExamineQuals(List *mergeclauses,
 		OpExpr	   *qual = (OpExpr *) lfirst(cl);
 		MergeJoinClause clause = &clauses[iClause];
 		Oid			opfamily = mergefamilies[iClause];
+		Oid			collation = mergecollations[iClause];
 		StrategyNumber opstrategy = mergestrategies[iClause];
 		bool		nulls_first = mergenullsfirst[iClause];
 		int			op_strategy;
@@ -240,6 +242,7 @@ MJExamineQuals(List *mergeclauses,
 
 		/* Set up the fmgr lookup information */
 		fmgr_info(cmpproc, &(clause->cmpfinfo));
+		fmgr_info_collation(collation, &(clause->cmpfinfo));
 
 		/* Fill the additional comparison-strategy flags */
 		if (opstrategy == BTLessStrategyNumber)
@@ -1636,6 +1639,7 @@ ExecInitMergeJoin(MergeJoin *node, EState *estate, int eflags)
 	mergestate->mj_NumClauses = list_length(node->mergeclauses);
 	mergestate->mj_Clauses = MJExamineQuals(node->mergeclauses,
 											node->mergeFamilies,
+											node->mergeCollations,
 											node->mergeStrategies,
 											node->mergeNullsFirst,
 											(PlanState *) mergestate);

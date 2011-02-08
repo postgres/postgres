@@ -141,13 +141,13 @@ tablespace-setup:
 pg_regress_call = ./pg_regress --inputdir=$(srcdir) --dlpath=. $(if $(MULTIBYTE),--multibyte=$(MULTIBYTE)) $(NOLOCALE)
 
 check: all tablespace-setup
-	$(pg_regress_call) --temp-install=./tmp_check --top-builddir=$(top_builddir) --schedule=$(srcdir)/parallel_schedule $(MAXCONNOPT) $(TEMP_CONF)
+	$(pg_regress_call) --temp-install=./tmp_check --top-builddir=$(top_builddir) --schedule=$(srcdir)/parallel_schedule $(MAXCONNOPT) $(TEMP_CONF) $(EXTRA_TESTS)
 
 installcheck: all tablespace-setup
-	$(pg_regress_call) --psqldir=$(PSQLDIR) --schedule=$(srcdir)/serial_schedule
+	$(pg_regress_call) --psqldir=$(PSQLDIR) --schedule=$(srcdir)/serial_schedule $(EXTRA_TESTS)
 
 installcheck-parallel: all tablespace-setup
-	$(pg_regress_call) --psqldir=$(PSQLDIR) --schedule=$(srcdir)/parallel_schedule $(MAXCONNOPT)
+	$(pg_regress_call) --psqldir=$(PSQLDIR) --schedule=$(srcdir)/parallel_schedule $(MAXCONNOPT) $(EXTRA_TESTS)
 
 standbycheck: all
 	$(pg_regress_call) --psqldir=$(PSQLDIR) --schedule=$(srcdir)/standby_schedule --use-existing

@@ -831,7 +831,7 @@ ExecInitSubPlan(SubPlan *subplan, PlanState *parent)
 
 			/* Lookup the equality function (potentially cross-type) */
 			fmgr_info(opexpr->opfuncid, &sstate->cur_eq_funcs[i - 1]);
-			sstate->cur_eq_funcs[i - 1].fn_expr = (Node *) opexpr;
+			fmgr_info_expr((Node *) opexpr, &sstate->cur_eq_funcs[i - 1]);
 
 			/* Look up the equality function for the RHS type */
 			if (!get_compatible_hash_operators(opexpr->opno,

@@ -5257,7 +5257,23 @@ getTableAttrs(TableInfo *tblinfo, int numTables)
 
 		resetPQExpBuffer(q);
 
-		if (g_fout->remoteVersion >= 90000)
+		if (g_fout->remoteVersion >= 90100)
+		{
+			/* attcollation is new in 9.1 */
+			appendPQExpBuffer(q, "SELECT a.attnum, a.attname, a.atttypmod, "
+							  "a.attstattarget, a.attstorage, t.typstorage, "
+							  "a.attnotnull, a.atthasdef, a.attisdropped, "
+							  "a.attlen, a.attalign, a.attislocal, "
+				  "pg_catalog.format_type(t.oid,a.atttypmod,a.attcollation) AS atttypname, "
+						   "array_to_string(attoptions, ', ') AS attoptions "
+			 "FROM pg_catalog.pg_attribute a LEFT JOIN pg_catalog.pg_type t "
+							  "ON a.atttypid = t.oid "
+							  "WHERE a.attrelid = '%u'::pg_catalog.oid "
+							  "AND a.attnum > 0::pg_catalog.int2 "
+							  "ORDER BY a.attrelid, a.attnum",
+							  tbinfo->dobj.catId.oid);
+		}
+		else if (g_fout->remoteVersion >= 90000)
 		{
 			/* attoptions is new in 9.0 */
 			appendPQExpBuffer(q, "SELECT a.attnum, a.attname, a.atttypmod, "
@@ -7258,13 +7274,28 @@ dumpDomain(Archive *fout, TypeInfo *tyinfo)
 	selectSourceSchema(tyinfo->dobj.namespace->dobj.name);
 
 	/* Fetch domain specific details */
-	/* We assume here that remoteVersion must be at least 70300 */
-	appendPQExpBuffer(query, "SELECT typnotnull, "
-				"pg_catalog.format_type(typbasetype, typtypmod) AS typdefn, "
-					  "pg_catalog.pg_get_expr(typdefaultbin, 'pg_catalog.pg_type'::pg_catalog.regclass) AS typdefaultbin, typdefault "
-					  "FROM pg_catalog.pg_type "
-					  "WHERE oid = '%u'::pg_catalog.oid",
-					  tyinfo->dobj.catId.oid);
+	if (g_fout->remoteVersion >= 90100)
+	{
+		/* typcollation is new in 9.1 */
+		appendPQExpBuffer(query, "SELECT typnotnull, "
+						  "pg_catalog.format_type(typbasetype, typtypmod, typcollation) AS typdefn, "
+						  "pg_catalog.pg_get_expr(typdefaultbin, 'pg_catalog.pg_type'::pg_catalog.regclass) AS typdefaultbin, "
+						  "typdefault "
+						  "FROM pg_catalog.pg_type t "
+						  "WHERE t.oid = '%u'::pg_catalog.oid",
+						  tyinfo->dobj.catId.oid);
+	}
+	else
+	{
+		/* We assume here that remoteVersion must be at least 70300 */
+		appendPQExpBuffer(query, "SELECT typnotnull, "
+						  "pg_catalog.format_type(typbasetype, typtypmod) AS typdefn, "
+						  "pg_catalog.pg_get_expr(typdefaultbin, 'pg_catalog.pg_type'::pg_catalog.regclass) AS typdefaultbin, "
+						  "typdefault "
+						  "FROM pg_catalog.pg_type "
+						  "WHERE oid = '%u'::pg_catalog.oid",
+						  tyinfo->dobj.catId.oid);
+	}
 
 	res = PQexec(g_conn, query->data);
 	check_sql_result(res, g_conn, query->data, PGRES_TUPLES_OK);

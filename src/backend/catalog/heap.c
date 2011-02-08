@@ -542,6 +542,7 @@ InsertPgAttributeTuple(Relation pg_attribute_rel,
 	values[Anum_pg_attribute_attisdropped - 1] = BoolGetDatum(new_attribute->attisdropped);
 	values[Anum_pg_attribute_attislocal - 1] = BoolGetDatum(new_attribute->attislocal);
 	values[Anum_pg_attribute_attinhcount - 1] = Int32GetDatum(new_attribute->attinhcount);
+	values[Anum_pg_attribute_attcollation - 1] = ObjectIdGetDatum(new_attribute->attcollation);
 
 	/* start out with empty permissions and empty options */
 	nulls[Anum_pg_attribute_attacl - 1] = true;
@@ -859,7 +860,8 @@ AddNewRelationType(const char *typeName,
 				   'x',			/* fully TOASTable */
 				   -1,			/* typmod */
 				   0,			/* array dimensions for typBaseType */
-				   false);		/* Type NOT NULL */
+				   false,		/* Type NOT NULL */
+				   InvalidOid);	/* typcollation */
 }
 
 /* --------------------------------
@@ -1120,7 +1122,8 @@ heap_create_with_catalog(const char *relname,
 				   'x',			/* fully TOASTable */
 				   -1,			/* typmod */
 				   0,			/* array dimensions for typBaseType */
-				   false);		/* Type NOT NULL */
+				   false,		/* Type NOT NULL */
+				   InvalidOid);	/* typcollation */
 
 		pfree(relarrayname);
 	}

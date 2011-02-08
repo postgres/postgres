@@ -66,12 +66,13 @@ typedef struct VacAttrStats
 	 * Note: do not assume that the data being analyzed has the same datatype
 	 * shown in attr, ie do not trust attr->atttypid, attlen, etc.  This is
 	 * because some index opclasses store a different type than the underlying
-	 * column/expression.  Instead use attrtypid, attrtypmod, and attrtype for
+	 * column/expression.  Instead use attrtypid, attrtypmod, attrcollation, and attrtype for
 	 * information about the datatype being fed to the typanalyze function.
 	 */
 	Form_pg_attribute attr;		/* copy of pg_attribute row for column */
 	Oid			attrtypid;		/* type of data being analyzed */
 	int32		attrtypmod;		/* typmod of data being analyzed */
+	Oid			attrcollation;	/* collation of the data being analyzed */
 	Form_pg_type attrtype;		/* copy of pg_type row for attrtypid */
 	MemoryContext anl_context;	/* where to save long-lived data */
 

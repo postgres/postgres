@@ -182,6 +182,15 @@ extern int	list_length(List *l);
 		 (cell1) != NULL && (cell2) != NULL;						\
 		 (cell1) = lnext(cell1), (cell2) = lnext(cell2))
 
+/*
+ * forthree -
+ *    the same for three lists
+ */
+#define forthree(cell1, list1, cell2, list2, cell3, list3)			\
+	for ((cell1) = list_head(list1), (cell2) = list_head(list2), (cell3) = list_head(list3); \
+		 (cell1) != NULL && (cell2) != NULL && (cell3) != NULL;		\
+		 (cell1) = lnext(cell1), (cell2) = lnext(cell2), (cell3) = lnext(cell3))
+
 extern List *lappend(List *list, void *datum);
 extern List *lappend_int(List *list, int datum);
 extern List *lappend_oid(List *list, Oid datum);

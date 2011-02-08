@@ -356,8 +356,8 @@ createdb(const CreatedbStmt *stmt)
 	 *
 	 * Note: if you change this policy, fix initdb to match.
 	 */
-	ctype_encoding = pg_get_encoding_from_locale(dbctype);
-	collate_encoding = pg_get_encoding_from_locale(dbcollate);
+	ctype_encoding = pg_get_encoding_from_locale(dbctype, true);
+	collate_encoding = pg_get_encoding_from_locale(dbcollate, true);
 
 	if (!(ctype_encoding == encoding ||
 		  ctype_encoding == PG_SQL_ASCII ||

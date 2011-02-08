@@ -82,6 +82,7 @@
 #include <wctype.h>
 #endif
 
+#include "catalog/pg_collation.h"
 #include "mb/pg_wchar.h"
 #include "utils/builtins.h"
 #include "utils/date.h"
@@ -953,7 +954,7 @@ static void parse_format(FormatNode *node, char *str, const KeyWord *kw,
 			 KeySuffix *suf, const int *index, int ver, NUMDesc *Num);
 
 static void DCH_to_char(FormatNode *node, bool is_interval,
-			TmToChar *in, char *out);
+			TmToChar *in, char *out, Oid collid);
 static void DCH_from_char(FormatNode *node, char *in, TmFromChar *out);
 
 #ifdef DEBUG_TO_FROM_CHAR
@@ -981,7 +982,7 @@ static char *get_last_relevant_decnum(char *num);
 static void NUM_numpart_from_char(NUMProc *Np, int id, int plen);
 static void NUM_numpart_to_char(NUMProc *Np, int id);
 static char *NUM_processor(FormatNode *node, NUMDesc *Num, char *inout, char *number,
-			  int plen, int sign, bool is_to_char);
+			  int plen, int sign, bool is_to_char, Oid collid);
 static DCHCacheEntry *DCH_cache_search(char *str);
 static DCHCacheEntry *DCH_cache_getnew(char *str);
 
@@ -1470,15 +1471,19 @@ str_numth(char *dest, char *num, int type)
  * to this function.  The result is a palloc'd, null-terminated string.
  */
 char *
-str_tolower(const char *buff, size_t nbytes)
+str_tolower(const char *buff, size_t nbytes, Oid collid)
 {
 	char	   *result;
+	pg_locale_t	mylocale = 0;
 
 	if (!buff)
 		return NULL;
 
+	if (collid != DEFAULT_COLLATION_OID)
+		mylocale = pg_newlocale_from_collation(collid);
+
 #ifdef USE_WIDE_UPPER_LOWER
-	if (pg_database_encoding_max_length() > 1 && !lc_ctype_is_c())
+	if (pg_database_encoding_max_length() > 1 && !lc_ctype_is_c(collid))
 	{
 		wchar_t    *workspace;
 		size_t		curr_char;
@@ -1493,16 +1498,21 @@ str_tolower(const char *buff, size_t nbytes)
 		/* Output workspace cannot have more codes than input bytes */
 		workspace = (wchar_t *) palloc((nbytes + 1) * sizeof(wchar_t));
 
-		char2wchar(workspace, nbytes + 1, buff, nbytes);
+		char2wchar(workspace, nbytes + 1, buff, nbytes, collid);
 
 		for (curr_char = 0; workspace[curr_char] != 0; curr_char++)
+#ifdef HAVE_LOCALE_T
+			if (mylocale)
+				workspace[curr_char] = towlower_l(workspace[curr_char], mylocale);
+			else
+#endif
 			workspace[curr_char] = towlower(workspace[curr_char]);
 
 		/* Make result large enough; case change might change number of bytes */
 		result_size = curr_char * pg_database_encoding_max_length() + 1;
 		result = palloc(result_size);
 
-		wchar2char(result, workspace, result_size);
+		wchar2char(result, workspace, result_size, collid);
 		pfree(workspace);
 	}
 	else
@@ -1526,15 +1536,19 @@ str_tolower(const char *buff, size_t nbytes)
  * to this function.  The result is a palloc'd, null-terminated string.
  */
 char *
-str_toupper(const char *buff, size_t nbytes)
+str_toupper(const char *buff, size_t nbytes, Oid collid)
 {
 	char	   *result;
+	pg_locale_t	mylocale = 0;
 
 	if (!buff)
 		return NULL;
 
+	if (collid != DEFAULT_COLLATION_OID)
+		mylocale = pg_newlocale_from_collation(collid);
+
 #ifdef USE_WIDE_UPPER_LOWER
-	if (pg_database_encoding_max_length() > 1 && !lc_ctype_is_c())
+	if (pg_database_encoding_max_length() > 1 && !lc_ctype_is_c(collid))
 	{
 		wchar_t    *workspace;
 		size_t		curr_char;
@@ -1549,16 +1563,21 @@ str_toupper(const char *buff, size_t nbytes)
 		/* Output workspace cannot have more codes than input bytes */
 		workspace = (wchar_t *) palloc((nbytes + 1) * sizeof(wchar_t));
 
-		char2wchar(workspace, nbytes + 1, buff, nbytes);
+		char2wchar(workspace, nbytes + 1, buff, nbytes, collid);
 
 		for (curr_char = 0; workspace[curr_char] != 0; curr_char++)
+#ifdef HAVE_LOCALE_T
+			if (mylocale)
+				workspace[curr_char] = towupper_l(workspace[curr_char], mylocale);
+			else
+#endif
 			workspace[curr_char] = towupper(workspace[curr_char]);
 
 		/* Make result large enough; case change might change number of bytes */
 		result_size = curr_char * pg_database_encoding_max_length() + 1;
 		result = palloc(result_size);
 
-		wchar2char(result, workspace, result_size);
+		wchar2char(result, workspace, result_size, collid);
 		pfree(workspace);
 	}
 	else
@@ -1582,16 +1601,20 @@ str_toupper(const char *buff, size_t nbytes)
  * to this function.  The result is a palloc'd, null-terminated string.
  */
 char *
-str_initcap(const char *buff, size_t nbytes)
+str_initcap(const char *buff, size_t nbytes, Oid collid)
 {
 	char	   *result;
 	int			wasalnum = false;
+	pg_locale_t	mylocale = 0;
 
 	if (!buff)
 		return NULL;
 
+	if (collid != DEFAULT_COLLATION_OID)
+		mylocale = pg_newlocale_from_collation(collid);
+
 #ifdef USE_WIDE_UPPER_LOWER
-	if (pg_database_encoding_max_length() > 1 && !lc_ctype_is_c())
+	if (pg_database_encoding_max_length() > 1 && !lc_ctype_is_c(collid))
 	{
 		wchar_t    *workspace;
 		size_t		curr_char;
@@ -1606,22 +1629,35 @@ str_initcap(const char *buff, size_t nbytes)
 		/* Output workspace cannot have more codes than input bytes */
 		workspace = (wchar_t *) palloc((nbytes + 1) * sizeof(wchar_t));
 
-		char2wchar(workspace, nbytes + 1, buff, nbytes);
+		char2wchar(workspace, nbytes + 1, buff, nbytes, collid);
 
 		for (curr_char = 0; workspace[curr_char] != 0; curr_char++)
 		{
-			if (wasalnum)
-				workspace[curr_char] = towlower(workspace[curr_char]);
+#ifdef HAVE_LOCALE_T
+			if (mylocale)
+			{
+				if (wasalnum)
+					workspace[curr_char] = towlower_l(workspace[curr_char], mylocale);
+				else
+					workspace[curr_char] = towupper_l(workspace[curr_char], mylocale);
+				wasalnum = iswalnum_l(workspace[curr_char], mylocale);
+			}
 			else
-				workspace[curr_char] = towupper(workspace[curr_char]);
-			wasalnum = iswalnum(workspace[curr_char]);
+#endif
+			{
+				if (wasalnum)
+					workspace[curr_char] = towlower(workspace[curr_char]);
+				else
+					workspace[curr_char] = towupper(workspace[curr_char]);
+				wasalnum = iswalnum(workspace[curr_char]);
+			}
 		}
 
 		/* Make result large enough; case change might change number of bytes */
 		result_size = curr_char * pg_database_encoding_max_length() + 1;
 		result = palloc(result_size);
 
-		wchar2char(result, workspace, result_size);
+		wchar2char(result, workspace, result_size, collid);
 		pfree(workspace);
 	}
 	else
@@ -1647,21 +1683,21 @@ str_initcap(const char *buff, size_t nbytes)
 /* convenience routines for when the input is null-terminated */
 
 static char *
-str_tolower_z(const char *buff)
+str_tolower_z(const char *buff, Oid collid)
 {
-	return str_tolower(buff, strlen(buff));
+	return str_tolower(buff, strlen(buff), collid);
 }
 
 static char *
-str_toupper_z(const char *buff)
+str_toupper_z(const char *buff, Oid collid)
 {
-	return str_toupper(buff, strlen(buff));
+	return str_toupper(buff, strlen(buff), collid);
 }
 
 static char *
-str_initcap_z(const char *buff)
+str_initcap_z(const char *buff, Oid collid)
 {
-	return str_initcap(buff, strlen(buff));
+	return str_initcap(buff, strlen(buff), collid);
 }
 
 
@@ -2039,7 +2075,7 @@ from_char_seq_search(int *dest, char **src, char **array, int type, int max,
  * ----------
  */
 static void
-DCH_to_char(FormatNode *node, bool is_interval, TmToChar *in, char *out)
+DCH_to_char(FormatNode *node, bool is_interval, TmToChar *in, char *out, Oid collid)
 {
 	FormatNode *n;
 	char	   *s;
@@ -2151,7 +2187,7 @@ DCH_to_char(FormatNode *node, bool is_interval, TmToChar *in, char *out)
 				INVALID_FOR_INTERVAL;
 				if (tmtcTzn(in))
 				{
-					char	   *p = str_tolower_z(tmtcTzn(in));
+					char	   *p = str_tolower_z(tmtcTzn(in), collid);
 
 					strcpy(s, p);
 					pfree(p);
@@ -2195,10 +2231,10 @@ DCH_to_char(FormatNode *node, bool is_interval, TmToChar *in, char *out)
 				if (!tm->tm_mon)
 					break;
 				if (S_TM(n->suffix))
-					strcpy(s, str_toupper_z(localized_full_months[tm->tm_mon - 1]));
+					strcpy(s, str_toupper_z(localized_full_months[tm->tm_mon - 1], collid));
 				else
 					sprintf(s, "%*s", S_FM(n->suffix) ? 0 : -9,
-							str_toupper_z(months_full[tm->tm_mon - 1]));
+							str_toupper_z(months_full[tm->tm_mon - 1], collid));
 				s += strlen(s);
 				break;
 			case DCH_Month:
@@ -2206,7 +2242,7 @@ DCH_to_char(FormatNode *node, bool is_interval, TmToChar *in, char *out)
 				if (!tm->tm_mon)
 					break;
 				if (S_TM(n->suffix))
-					strcpy(s, str_initcap_z(localized_full_months[tm->tm_mon - 1]));
+					strcpy(s, str_initcap_z(localized_full_months[tm->tm_mon - 1], collid));
 				else
 					sprintf(s, "%*s", S_FM(n->suffix) ? 0 : -9, months_full[tm->tm_mon - 1]);
 				s += strlen(s);
@@ -2216,7 +2252,7 @@ DCH_to_char(FormatNode *node, bool is_interval, TmToChar *in, char *out)
 				if (!tm->tm_mon)
 					break;
 				if (S_TM(n->suffix))
-					strcpy(s, str_tolower_z(localized_full_months[tm->tm_mon - 1]));
+					strcpy(s, str_tolower_z(localized_full_months[tm->tm_mon - 1], collid));
 				else
 				{
 					sprintf(s, "%*s", S_FM(n->suffix) ? 0 : -9, months_full[tm->tm_mon - 1]);
@@ -2229,9 +2265,9 @@ DCH_to_char(FormatNode *node, bool is_interval, TmToChar *in, char *out)
 				if (!tm->tm_mon)
 					break;
 				if (S_TM(n->suffix))
-					strcpy(s, str_toupper_z(localized_abbrev_months[tm->tm_mon - 1]));
+					strcpy(s, str_toupper_z(localized_abbrev_months[tm->tm_mon - 1], collid));
 				else
-					strcpy(s, str_toupper_z(months[tm->tm_mon - 1]));
+					strcpy(s, str_toupper_z(months[tm->tm_mon - 1], collid));
 				s += strlen(s);
 				break;
 			case DCH_Mon:
@@ -2239,7 +2275,7 @@ DCH_to_char(FormatNode *node, bool is_interval, TmToChar *in, char *out)
 				if (!tm->tm_mon)
 					break;
 				if (S_TM(n->suffix))
-					strcpy(s, str_initcap_z(localized_abbrev_months[tm->tm_mon - 1]));
+					strcpy(s, str_initcap_z(localized_abbrev_months[tm->tm_mon - 1], collid));
 				else
 					strcpy(s, months[tm->tm_mon - 1]);
 				s += strlen(s);
@@ -2249,7 +2285,7 @@ DCH_to_char(FormatNode *node, bool is_interval, TmToChar *in, char *out)
 				if (!tm->tm_mon)
 					break;
 				if (S_TM(n->suffix))
-					strcpy(s, str_tolower_z(localized_abbrev_months[tm->tm_mon - 1]));
+					strcpy(s, str_tolower_z(localized_abbrev_months[tm->tm_mon - 1], collid));
 				else
 				{
 					strcpy(s, months[tm->tm_mon - 1]);
@@ -2266,16 +2302,16 @@ DCH_to_char(FormatNode *node, bool is_interval, TmToChar *in, char *out)
 			case DCH_DAY:
 				INVALID_FOR_INTERVAL;
 				if (S_TM(n->suffix))
-					strcpy(s, str_toupper_z(localized_full_days[tm->tm_wday]));
+					strcpy(s, str_toupper_z(localized_full_days[tm->tm_wday], collid));
 				else
 					sprintf(s, "%*s", S_FM(n->suffix) ? 0 : -9,
-							str_toupper_z(days[tm->tm_wday]));
+							str_toupper_z(days[tm->tm_wday], collid));
 				s += strlen(s);
 				break;
 			case DCH_Day:
 				INVALID_FOR_INTERVAL;
 				if (S_TM(n->suffix))
-					strcpy(s, str_initcap_z(localized_full_days[tm->tm_wday]));
+					strcpy(s, str_initcap_z(localized_full_days[tm->tm_wday], collid));
 				else
 					sprintf(s, "%*s", S_FM(n->suffix) ? 0 : -9, days[tm->tm_wday]);
 				s += strlen(s);
@@ -2283,7 +2319,7 @@ DCH_to_char(FormatNode *node, bool is_interval, TmToChar *in, char *out)
 			case DCH_day:
 				INVALID_FOR_INTERVAL;
 				if (S_TM(n->suffix))
-					strcpy(s, str_tolower_z(localized_full_days[tm->tm_wday]));
+					strcpy(s, str_tolower_z(localized_full_days[tm->tm_wday], collid));
 				else
 				{
 					sprintf(s, "%*s", S_FM(n->suffix) ? 0 : -9, days[tm->tm_wday]);
@@ -2294,15 +2330,15 @@ DCH_to_char(FormatNode *node, bool is_interval, TmToChar *in, char *out)
 			case DCH_DY:
 				INVALID_FOR_INTERVAL;
 				if (S_TM(n->suffix))
-					strcpy(s, str_toupper_z(localized_abbrev_days[tm->tm_wday]));
+					strcpy(s, str_toupper_z(localized_abbrev_days[tm->tm_wday], collid));
 				else
-					strcpy(s, str_toupper_z(days_short[tm->tm_wday]));
+					strcpy(s, str_toupper_z(days_short[tm->tm_wday], collid));
 				s += strlen(s);
 				break;
 			case DCH_Dy:
 				INVALID_FOR_INTERVAL;
 				if (S_TM(n->suffix))
-					strcpy(s, str_initcap_z(localized_abbrev_days[tm->tm_wday]));
+					strcpy(s, str_initcap_z(localized_abbrev_days[tm->tm_wday], collid));
 				else
 					strcpy(s, days_short[tm->tm_wday]);
 				s += strlen(s);
@@ -2310,7 +2346,7 @@ DCH_to_char(FormatNode *node, bool is_interval, TmToChar *in, char *out)
 			case DCH_dy:
 				INVALID_FOR_INTERVAL;
 				if (S_TM(n->suffix))
-					strcpy(s, str_tolower_z(localized_abbrev_days[tm->tm_wday]));
+					strcpy(s, str_tolower_z(localized_abbrev_days[tm->tm_wday], collid));
 				else
 				{
 					strcpy(s, days_short[tm->tm_wday]);
@@ -2846,7 +2882,7 @@ DCH_cache_search(char *str)
  * for formatting.
  */
 static text *
-datetime_to_char_body(TmToChar *tmtc, text *fmt, bool is_interval)
+datetime_to_char_body(TmToChar *tmtc, text *fmt, bool is_interval, Oid collid)
 {
 	FormatNode *format;
 	char	   *fmt_str,
@@ -2912,7 +2948,7 @@ datetime_to_char_body(TmToChar *tmtc, text *fmt, bool is_interval)
 	}
 
 	/* The real work is here */
-	DCH_to_char(format, is_interval, tmtc, result);
+	DCH_to_char(format, is_interval, tmtc, result, collid);
 
 	if (!incache)
 		pfree(format);
@@ -2959,7 +2995,7 @@ timestamp_to_char(PG_FUNCTION_ARGS)
 	tm->tm_wday = (thisdate + 1) % 7;
 	tm->tm_yday = thisdate - date2j(tm->tm_year, 1, 1) + 1;
 
-	if (!(res = datetime_to_char_body(&tmtc, fmt, false)))
+	if (!(res = datetime_to_char_body(&tmtc, fmt, false, PG_GET_COLLATION())))
 		PG_RETURN_NULL();
 
 	PG_RETURN_TEXT_P(res);
@@ -2991,7 +3027,7 @@ timestamptz_to_char(PG_FUNCTION_ARGS)
 	tm->tm_wday = (thisdate + 1) % 7;
 	tm->tm_yday = thisdate - date2j(tm->tm_year, 1, 1) + 1;
 
-	if (!(res = datetime_to_char_body(&tmtc, fmt, false)))
+	if (!(res = datetime_to_char_body(&tmtc, fmt, false, PG_GET_COLLATION())))
 		PG_RETURN_NULL();
 
 	PG_RETURN_TEXT_P(res);
@@ -3023,7 +3059,7 @@ interval_to_char(PG_FUNCTION_ARGS)
 	/* wday is meaningless, yday approximates the total span in days */
 	tm->tm_yday = (tm->tm_year * MONTHS_PER_YEAR + tm->tm_mon) * DAYS_PER_MONTH + tm->tm_mday;
 
-	if (!(res = datetime_to_char_body(&tmtc, fmt, true)))
+	if (!(res = datetime_to_char_body(&tmtc, fmt, true, PG_GET_COLLATION())))
 		PG_RETURN_NULL();
 
 	PG_RETURN_TEXT_P(res);
@@ -4123,7 +4159,7 @@ NUM_numpart_to_char(NUMProc *Np, int id)
  */
 static char *
 NUM_processor(FormatNode *node, NUMDesc *Num, char *inout, char *number,
-			  int plen, int sign, bool is_to_char)
+			  int plen, int sign, bool is_to_char, Oid collid)
 {
 	FormatNode *n;
 	NUMProc		_Np,
@@ -4403,12 +4439,12 @@ NUM_processor(FormatNode *node, NUMDesc *Num, char *inout, char *number,
 				case NUM_rn:
 					if (IS_FILLMODE(Np->Num))
 					{
-						strcpy(Np->inout_p, str_tolower_z(Np->number_p));
+						strcpy(Np->inout_p, str_tolower_z(Np->number_p, collid));
 						Np->inout_p += strlen(Np->inout_p) - 1;
 					}
 					else
 					{
-						sprintf(Np->inout_p, "%15s", str_tolower_z(Np->number_p));
+						sprintf(Np->inout_p, "%15s", str_tolower_z(Np->number_p, collid));
 						Np->inout_p += strlen(Np->inout_p) - 1;
 					}
 					break;
@@ -4541,7 +4577,7 @@ do { \
  */
 #define NUM_TOCHAR_finish \
 do { \
-	NUM_processor(format, &Num, VARDATA(result), numstr, plen, sign, true); \
+	NUM_processor(format, &Num, VARDATA(result), numstr, plen, sign, true, PG_GET_COLLATION()); \
 									\
 	if (shouldFree)					\
 		pfree(format);				\
@@ -4583,7 +4619,7 @@ numeric_to_number(PG_FUNCTION_ARGS)
 	numstr = (char *) palloc((len * NUM_MAX_ITEM_SIZ) + 1);
 
 	NUM_processor(format, &Num, VARDATA(value), numstr,
-				  VARSIZE(value) - VARHDRSZ, 0, false);
+				  VARSIZE(value) - VARHDRSZ, 0, false, PG_GET_COLLATION());
 
 	scale = Num.post;
 	precision = Max(0, Num.pre) + scale;

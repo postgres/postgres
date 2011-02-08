@@ -23,6 +23,7 @@
 #include "catalog/pg_opfamily.h"
 #include "catalog/pg_type.h"
 #include "nodes/makefuncs.h"
+#include "nodes/nodeFuncs.h"
 #include "optimizer/clauses.h"
 #include "optimizer/cost.h"
 #include "optimizer/pathnode.h"
@@ -99,15 +100,15 @@ static List *find_clauses_for_join(PlannerInfo *root, RelOptInfo *rel,
 					  Relids outer_relids, bool isouterjoin);
 static bool match_boolean_index_clause(Node *clause, int indexcol,
 						   IndexOptInfo *index);
-static bool match_special_index_operator(Expr *clause, Oid opfamily,
+static bool match_special_index_operator(Expr *clause, Oid idxcolcollation, Oid opfamily,
 							 bool indexkey_on_left);
 static Expr *expand_boolean_index_clause(Node *clause, int indexcol,
 							IndexOptInfo *index);
-static List *expand_indexqual_opclause(RestrictInfo *rinfo, Oid opfamily);
+static List *expand_indexqual_opclause(RestrictInfo *rinfo, Oid opfamily, Oid collation);
 static RestrictInfo *expand_indexqual_rowcompare(RestrictInfo *rinfo,
 							IndexOptInfo *index,
 							int indexcol);
-static List *prefix_quals(Node *leftop, Oid opfamily,
+static List *prefix_quals(Node *leftop, Oid opfamily, Oid collation,
 			 Const *prefix, Pattern_Prefix_Status pstatus);
 static List *network_prefix_quals(Node *leftop, Oid expr_op, Oid opfamily,
 					 Datum rightop);
@@ -1142,7 +1143,9 @@ group_clauses_by_indexkey(IndexOptInfo *index,
  *		   and
  *	  (2)  must contain an operator which is in the same family as the index
  *		   operator for this column, or is a "special" operator as recognized
- *		   by match_special_index_operator().
+ *		   by match_special_index_operator();
+ *         and
+ *    (3)  must match the collation of the index.
  *
  *	  Our definition of "const" is pretty liberal: we allow Vars belonging
  *	  to the caller-specified outer_relids relations (which had better not
@@ -1198,6 +1201,7 @@ match_clause_to_indexcol(IndexOptInfo *index,
 						 SaOpControl saop_control)
 {
 	Expr	   *clause = rinfo->clause;
+	Oid			collation = index->indexcollations[indexcol];
 	Oid			opfamily = index->opfamily[indexcol];
 	Node	   *leftop,
 			   *rightop;
@@ -1280,7 +1284,8 @@ match_clause_to_indexcol(IndexOptInfo *index,
 		bms_is_subset(right_relids, outer_relids) &&
 		!contain_volatile_functions(rightop))
 	{
-		if (is_indexable_operator(expr_op, opfamily, true))
+		if (is_indexable_operator(expr_op, opfamily, true) &&
+			(!collation || collation == exprCollation((Node *) clause)))
 			return true;
 
 		/*
@@ -1288,7 +1293,7 @@ match_clause_to_indexcol(IndexOptInfo *index,
 		 * is a "special" indexable operator.
 		 */
 		if (plain_op &&
-			match_special_index_operator(clause, opfamily, true))
+			match_special_index_operator(clause, collation, opfamily, true))
 			return true;
 		return false;
 	}
@@ -1298,14 +1303,15 @@ match_clause_to_indexcol(IndexOptInfo *index,
 		bms_is_subset(left_relids, outer_relids) &&
 		!contain_volatile_functions(leftop))
 	{
-		if (is_indexable_operator(expr_op, opfamily, false))
+		if (is_indexable_operator(expr_op, opfamily, false) &&
+			(!collation || collation == exprCollation((Node *) clause)))
 			return true;
 
 		/*
 		 * If we didn't find a member of the index's opfamily, see whether it
 		 * is a "special" indexable operator.
 		 */
-		if (match_special_index_operator(clause, opfamily, false))
+		if (match_special_index_operator(clause, collation, opfamily, false))
 			return true;
 		return false;
 	}
@@ -1389,6 +1395,9 @@ match_rowcompare_to_indexcol(IndexOptInfo *index,
 			return false;
 	}
 	else
+		return false;
+
+	if (index->indexcollations[indexcol] != linitial_oid(clause->collids))
 		return false;
 
 	/* We're good if the operator is the right type of opfamily member */
@@ -2380,7 +2389,7 @@ match_boolean_index_clause(Node *clause,
  * Return 'true' if we can do something with it anyway.
  */
 static bool
-match_special_index_operator(Expr *clause, Oid opfamily,
+match_special_index_operator(Expr *clause, Oid idxcolcollation, Oid opfamily,
 							 bool indexkey_on_left)
 {
 	bool		isIndexable = false;
@@ -2495,7 +2504,7 @@ match_special_index_operator(Expr *clause, Oid opfamily,
 			isIndexable =
 				(opfamily == TEXT_PATTERN_BTREE_FAM_OID) ||
 				(opfamily == TEXT_BTREE_FAM_OID &&
-				 (pstatus == Pattern_Prefix_Exact || lc_collate_is_c()));
+				 (pstatus == Pattern_Prefix_Exact || lc_collate_is_c(idxcolcollation)));
 			break;
 
 		case OID_BPCHAR_LIKE_OP:
@@ -2505,7 +2514,7 @@ match_special_index_operator(Expr *clause, Oid opfamily,
 			isIndexable =
 				(opfamily == BPCHAR_PATTERN_BTREE_FAM_OID) ||
 				(opfamily == BPCHAR_BTREE_FAM_OID &&
-				 (pstatus == Pattern_Prefix_Exact || lc_collate_is_c()));
+				 (pstatus == Pattern_Prefix_Exact || lc_collate_is_c(idxcolcollation)));
 			break;
 
 		case OID_NAME_LIKE_OP:
@@ -2523,6 +2532,25 @@ match_special_index_operator(Expr *clause, Oid opfamily,
 		case OID_INET_SUB_OP:
 		case OID_INET_SUBEQ_OP:
 			isIndexable = (opfamily == NETWORK_BTREE_FAM_OID);
+			break;
+	}
+
+	if (!isIndexable)
+		return false;
+
+	/*
+	 * For case-insensitive matching, we also need to check that the
+	 * collations match.
+	 */
+	switch (expr_op)
+	{
+		case OID_TEXT_ICLIKE_OP:
+		case OID_TEXT_ICREGEXEQ_OP:
+		case OID_BPCHAR_ICLIKE_OP:
+		case OID_BPCHAR_ICREGEXEQ_OP:
+		case OID_NAME_ICLIKE_OP:
+		case OID_NAME_ICREGEXEQ_OP:
+			isIndexable = (idxcolcollation == exprCollation((Node *) clause));
 			break;
 	}
 
@@ -2561,6 +2589,7 @@ expand_indexqual_conditions(IndexOptInfo *index, List *clausegroups)
 	{
 		List	   *clausegroup = (List *) lfirst(lc);
 		Oid			curFamily = index->opfamily[indexcol];
+		Oid			curCollation = index->indexcollations[indexcol];
 		ListCell   *lc2;
 
 		foreach(lc2, clausegroup)
@@ -2592,7 +2621,8 @@ expand_indexqual_conditions(IndexOptInfo *index, List *clausegroups)
 			{
 				resultquals = list_concat(resultquals,
 										  expand_indexqual_opclause(rinfo,
-																 curFamily));
+																	curFamily,
+																	curCollation));
 			}
 			else if (IsA(clause, ScalarArrayOpExpr))
 			{
@@ -2693,7 +2723,7 @@ expand_boolean_index_clause(Node *clause,
  * expand special cases that were accepted by match_special_index_operator().
  */
 static List *
-expand_indexqual_opclause(RestrictInfo *rinfo, Oid opfamily)
+expand_indexqual_opclause(RestrictInfo *rinfo, Oid opfamily, Oid collation)
 {
 	Expr	   *clause = rinfo->clause;
 
@@ -2724,7 +2754,7 @@ expand_indexqual_opclause(RestrictInfo *rinfo, Oid opfamily)
 			{
 				pstatus = pattern_fixed_prefix(patt, Pattern_Type_Like,
 											   &prefix, &rest);
-				return prefix_quals(leftop, opfamily, prefix, pstatus);
+				return prefix_quals(leftop, opfamily, collation, prefix, pstatus);
 			}
 			break;
 
@@ -2736,7 +2766,7 @@ expand_indexqual_opclause(RestrictInfo *rinfo, Oid opfamily)
 				/* the right-hand const is type text for all of these */
 				pstatus = pattern_fixed_prefix(patt, Pattern_Type_Like_IC,
 											   &prefix, &rest);
-				return prefix_quals(leftop, opfamily, prefix, pstatus);
+				return prefix_quals(leftop, opfamily, collation, prefix, pstatus);
 			}
 			break;
 
@@ -2748,7 +2778,7 @@ expand_indexqual_opclause(RestrictInfo *rinfo, Oid opfamily)
 				/* the right-hand const is type text for all of these */
 				pstatus = pattern_fixed_prefix(patt, Pattern_Type_Regex,
 											   &prefix, &rest);
-				return prefix_quals(leftop, opfamily, prefix, pstatus);
+				return prefix_quals(leftop, opfamily, collation, prefix, pstatus);
 			}
 			break;
 
@@ -2760,7 +2790,7 @@ expand_indexqual_opclause(RestrictInfo *rinfo, Oid opfamily)
 				/* the right-hand const is type text for all of these */
 				pstatus = pattern_fixed_prefix(patt, Pattern_Type_Regex_IC,
 											   &prefix, &rest);
-				return prefix_quals(leftop, opfamily, prefix, pstatus);
+				return prefix_quals(leftop, opfamily, collation, prefix, pstatus);
 			}
 			break;
 
@@ -2814,6 +2844,7 @@ expand_indexqual_rowcompare(RestrictInfo *rinfo,
 	ListCell   *largs_cell;
 	ListCell   *rargs_cell;
 	ListCell   *opnos_cell;
+	ListCell   *collids_cell;
 
 	/* We have to figure out (again) how the first col matches */
 	var_on_left = match_index_to_operand((Node *) linitial(clause->largs),
@@ -2845,6 +2876,7 @@ expand_indexqual_rowcompare(RestrictInfo *rinfo,
 	largs_cell = lnext(list_head(clause->largs));
 	rargs_cell = lnext(list_head(clause->rargs));
 	opnos_cell = lnext(list_head(clause->opnos));
+	collids_cell = lnext(list_head(clause->collids));
 
 	while (largs_cell != NULL)
 	{
@@ -2889,6 +2921,10 @@ expand_indexqual_rowcompare(RestrictInfo *rinfo,
 		/* Now, do we have the right operator for this column? */
 		if (get_op_opfamily_strategy(expr_op, index->opfamily[i])
 			!= op_strategy)
+			break;
+
+		/* Does collation match? */
+		if (lfirst_oid(collids_cell) != index->indexcollations[i])
 			break;
 
 		/* Add opfamily and datatypes to lists */
@@ -2974,6 +3010,8 @@ expand_indexqual_rowcompare(RestrictInfo *rinfo,
 		rc->opnos = new_ops;
 		rc->opfamilies = list_truncate(list_copy(clause->opfamilies),
 									   matching_cols);
+		rc->collids = list_truncate(list_copy(clause->collids),
+									matching_cols);
 		rc->largs = list_truncate((List *) copyObject(clause->largs),
 								  matching_cols);
 		rc->rargs = list_truncate((List *) copyObject(clause->rargs),
@@ -2998,7 +3036,7 @@ expand_indexqual_rowcompare(RestrictInfo *rinfo,
  * operators and operand datatypes.
  */
 static List *
-prefix_quals(Node *leftop, Oid opfamily,
+prefix_quals(Node *leftop, Oid opfamily, Oid collation,
 			 Const *prefix_const, Pattern_Prefix_Status pstatus)
 {
 	List	   *result;
@@ -3100,6 +3138,7 @@ prefix_quals(Node *leftop, Oid opfamily,
 	if (oproid == InvalidOid)
 		elog(ERROR, "no < operator for opfamily %u", opfamily);
 	fmgr_info(get_opcode(oproid), &ltproc);
+	fmgr_info_collation(collation, &ltproc);
 	greaterstr = make_greater_string(prefix_const, &ltproc);
 	if (greaterstr)
 	{

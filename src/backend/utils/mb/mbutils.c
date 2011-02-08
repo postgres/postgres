@@ -629,7 +629,7 @@ perform_default_encoding_conversion(const char *src, int len, bool is_client_to_
  * zero-terminated.  The output will be zero-terminated iff there is room.
  */
 size_t
-wchar2char(char *to, const wchar_t *from, size_t tolen)
+wchar2char(char *to, const wchar_t *from, size_t tolen, Oid collation)
 {
 	size_t		result;
 
@@ -660,7 +660,7 @@ wchar2char(char *to, const wchar_t *from, size_t tolen)
 	else
 #endif   /* WIN32 */
 	{
-		Assert(!lc_ctype_is_c());
+		Assert(!lc_ctype_is_c(collation));
 		result = wcstombs(to, from, tolen);
 	}
 	return result;
@@ -676,7 +676,7 @@ wchar2char(char *to, const wchar_t *from, size_t tolen)
  * The output will be zero-terminated iff there is room.
  */
 size_t
-char2wchar(wchar_t *to, size_t tolen, const char *from, size_t fromlen)
+char2wchar(wchar_t *to, size_t tolen, const char *from, size_t fromlen, Oid collation)
 {
 	size_t		result;
 
@@ -711,7 +711,7 @@ char2wchar(wchar_t *to, size_t tolen, const char *from, size_t fromlen)
 		/* mbstowcs requires ending '\0' */
 		char	   *str = pnstrdup(from, fromlen);
 
-		Assert(!lc_ctype_is_c());
+		Assert(!lc_ctype_is_c(collation));
 		result = mbstowcs(to, str, tolen);
 		pfree(str);
 	}
@@ -983,7 +983,7 @@ GetPlatformEncoding(void)
 	if (PlatformEncoding == NULL)
 	{
 		/* try to determine encoding of server's environment locale */
-		int			encoding = pg_get_encoding_from_locale("");
+		int			encoding = pg_get_encoding_from_locale("", true);
 
 		if (encoding < 0)
 			encoding = PG_SQL_ASCII;

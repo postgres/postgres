@@ -1899,6 +1899,54 @@ CAST ( <replaceable>expression</replaceable> AS <replaceable>type</replaceable> 
    </note>
   </sect2>
 
+  <sect2 id="sql-syntax-collate-clause">
+   <title>COLLATE Clause</title>
+
+   <indexterm>
+    <primary>COLLATE</primary>
+   </indexterm>
+
+   <para>
+    The <literal>COLLATE</literal> clause overrides the collation of
+    an expression.  It is appended to the expression it applies to:
+<synopsis>
+<replaceable>expr</replaceable> COLLATE <replaceable>collation</replaceable>
+</synopsis>
+    where <replaceable>collation</replaceable> is a possibly
+    schema-qualified identifier.  The <literal>COLLATE</literal>
+    clause binds tighter than operators; parentheses can be used when
+    necessary.
+   </para>
+
+   <para>
+    If no collation is explicitly specified, the database system
+    either derives a collation from the columns involved in the
+    expression, or it defaults to the default collation of the
+    database if no column is involved in the expression.
+   </para>
+
+   <para>
+    The two typical uses of the <literal>COLLATE</literal> clause are
+    overriding the sort order in an <literal>ORDER BY</> clause, for
+    example:
+<programlisting>
+SELECT a, b, c FROM tbl WHERE ... ORDER BY a COLLATE "C";
+</programlisting>
+    and overriding the collation of a function or operator call that
+    has locale-sensitive results, for example:
+<programlisting>
+SELECT * FROM tbl WHERE a > 'foo' COLLATE "C";
+</programlisting>
+    In the latter case it doesn't matter which argument of the
+    operator of function call the <literal>COLLATE</> clause is
+    attached to, because the collation that is applied by the operator
+    or function is derived from all arguments, and
+    the <literal>COLLATE</> clause will override the collations of all
+    other arguments.  Attaching nonmatching <literal>COLLATE</>
+    clauses to more than one argument, however, is an error.
+   </para>
+  </sect2>
+
   <sect2 id="sql-syntax-scalar-subqueries">
    <title>Scalar Subqueries</title>
 

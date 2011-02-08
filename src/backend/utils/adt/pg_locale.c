@@ -54,10 +54,13 @@
 #include <locale.h>
 #include <time.h>
 
+#include "catalog/pg_collation.h"
 #include "catalog/pg_control.h"
 #include "mb/pg_wchar.h"
+#include "utils/hsearch.h"
 #include "utils/memutils.h"
 #include "utils/pg_locale.h"
+#include "utils/syscache.h"
 
 #ifdef WIN32
 #include <shlwapi.h>
@@ -98,6 +101,11 @@ static char lc_time_envbuf[LC_ENV_BUFSIZE];
 
 #if defined(WIN32) && defined(LC_MESSAGES)
 static char *IsoLocaleName(const char *);		/* MSVC specific */
+#endif
+
+static HTAB *locale_cness_cache = NULL;
+#ifdef HAVE_LOCALE_T
+static HTAB *locale_t_cache = NULL;
 #endif
 
 
@@ -305,15 +313,89 @@ locale_messages_assign(const char *value, bool doit, GucSource source)
 
 
 /*
- * We'd like to cache whether LC_COLLATE is C (or POSIX), so we can
- * optimize a few code paths in various places.
+ * We'd like to cache whether LC_COLLATE or LC_CTYPE is C (or POSIX),
+ * so we can optimize a few code paths in various places.
+ *
+ * Note that some code relies on this not reporting false negatives
+ * (that is, saying it's not C when it is).  For example, char2wchar()
+ * could fail if the locale is C, so str_tolower() shouldn't call it
+ * in that case.
  */
+
+struct locale_cness_cache_entry
+{
+	Oid			collid;
+	bool		collate_is_c;
+	bool		ctype_is_c;
+};
+
+static void
+init_locale_cness_cache(void)
+{
+	HASHCTL		ctl;
+
+	memset(&ctl, 0, sizeof(ctl));
+	ctl.keysize = sizeof(Oid);
+	ctl.entrysize = sizeof(struct locale_cness_cache_entry);
+	ctl.hash = oid_hash;
+	locale_cness_cache = hash_create("locale C-ness cache", 1000, &ctl, HASH_ELEM | HASH_FUNCTION);
+}
+
+/*
+ * Handle caching of locale "C-ness" for nondefault collation objects.
+ * Relying on the system cache directly isn't fast enough.
+ */
+static bool
+lookup_collation_cness(Oid collation, int category)
+{
+	struct locale_cness_cache_entry *cache_entry;
+	bool		found;
+	HeapTuple	tp;
+	char	   *localeptr;
+
+	Assert(OidIsValid(collation));
+	Assert(category == LC_COLLATE || category == LC_CTYPE);
+
+	if (!locale_cness_cache)
+		init_locale_cness_cache();
+
+	cache_entry = hash_search(locale_cness_cache, &collation, HASH_ENTER, &found);
+	if (found)
+	{
+		if (category == LC_COLLATE)
+			return cache_entry->collate_is_c;
+		else
+			return cache_entry->ctype_is_c;
+	}
+
+	tp = SearchSysCache1(COLLOID, ObjectIdGetDatum(collation));
+	if (!HeapTupleIsValid(tp))
+		elog(ERROR, "cache lookup failed for collation %u", collation);
+
+	localeptr = NameStr(((Form_pg_collation) GETSTRUCT(tp))->collcollate);
+	cache_entry->collate_is_c = (strcmp(localeptr, "C") == 0) || (strcmp(localeptr, "POSIX") == 0);
+
+	localeptr = NameStr(((Form_pg_collation) GETSTRUCT(tp))->collctype);
+	cache_entry->ctype_is_c = (strcmp(localeptr, "C") == 0) || (strcmp(localeptr, "POSIX") == 0);
+
+	ReleaseSysCache(tp);
+
+	return category == LC_COLLATE ? cache_entry->collate_is_c : cache_entry->ctype_is_c;
+}
+
+
 bool
-lc_collate_is_c(void)
+lc_collate_is_c(Oid collation)
 {
 	/* Cache result so we only have to compute it once */
 	static int	result = -1;
 	char	   *localeptr;
+
+	if (!OidIsValid(collation))
+		return false;
+
+	if (collation != DEFAULT_COLLATION_OID)
+		return lookup_collation_cness(collation, LC_COLLATE);
 
 	if (result >= 0)
 		return (bool) result;
@@ -331,16 +413,18 @@ lc_collate_is_c(void)
 }
 
 
-/*
- * We'd like to cache whether LC_CTYPE is C (or POSIX), so we can
- * optimize a few code paths in various places.
- */
 bool
-lc_ctype_is_c(void)
+lc_ctype_is_c(Oid collation)
 {
 	/* Cache result so we only have to compute it once */
 	static int	result = -1;
 	char	   *localeptr;
+
+	if (!OidIsValid(collation))
+		return false;
+
+	if (collation != DEFAULT_COLLATION_OID)
+		return lookup_collation_cness(collation, LC_CTYPE);
 
 	if (result >= 0)
 		return (bool) result;
@@ -483,7 +567,7 @@ PGLC_localeconv(void)
 	/* Get formatting information for numeric */
 	setlocale(LC_NUMERIC, locale_numeric);
 	extlconv = localeconv();
-	encoding = pg_get_encoding_from_locale(locale_numeric);
+	encoding = pg_get_encoding_from_locale(locale_numeric, true);
 
 	decimal_point = db_encoding_strdup(encoding, extlconv->decimal_point);
 	thousands_sep = db_encoding_strdup(encoding, extlconv->thousands_sep);
@@ -497,7 +581,7 @@ PGLC_localeconv(void)
 	/* Get formatting information for monetary */
 	setlocale(LC_MONETARY, locale_monetary);
 	extlconv = localeconv();
-	encoding = pg_get_encoding_from_locale(locale_monetary);
+	encoding = pg_get_encoding_from_locale(locale_monetary, true);
 
 	/*
 	 * Must copy all values since restoring internal settings may overwrite
@@ -758,3 +842,118 @@ IsoLocaleName(const char *winlocname)
 }
 
 #endif   /* WIN32 && LC_MESSAGES */
+
+
+#ifdef HAVE_LOCALE_T
+struct locale_t_cache_entry
+{
+	Oid			collid;
+	locale_t	locale;
+};
+
+static void
+init_locale_t_cache(void)
+{
+	HASHCTL		ctl;
+
+	memset(&ctl, 0, sizeof(ctl));
+	ctl.keysize = sizeof(Oid);
+	ctl.entrysize = sizeof(struct locale_t_cache_entry);
+	ctl.hash = oid_hash;
+	locale_t_cache = hash_create("locale_t cache", 1000, &ctl, HASH_ELEM | HASH_FUNCTION);
+}
+#endif /* HAVE_LOCALE_T */
+
+/*
+ * Create a locale_t from a collation OID.  Results are cached for the
+ * lifetime of the backend.  Thus, do not free the result with
+ * freelocale().
+ *
+ * As a special optimization, the default/database collation returns
+ * 0.  Callers should then revert to the non-locale_t-enabled code
+ * path.  In fact, they shouldn't call this function at all when they
+ * are dealing with the default locale.  That can save quite a bit in
+ * hotspots.
+ *
+ * For simplicity, we always generate COLLATE + CTYPE even though we
+ * might only need one of them.  Since this is called only once per
+ * session, it shouldn't cost much.
+ */
+pg_locale_t
+pg_newlocale_from_collation(Oid collid)
+{
+#ifdef HAVE_LOCALE_T
+	HeapTuple	tp;
+	const char *collcollate;
+	const char *collctype;
+	locale_t	result;
+	struct locale_t_cache_entry *cache_entry;
+	bool		found;
+
+	if (collid == DEFAULT_COLLATION_OID)
+		return (locale_t) 0;
+
+	if (!OidIsValid(collid))
+		elog(ERROR, "locale operation to be invoked, but no collation was derived");
+
+	if (!locale_t_cache)
+		init_locale_t_cache();
+
+	cache_entry = hash_search(locale_t_cache, &collid, HASH_ENTER, &found);
+	if (found)
+		return cache_entry->locale;
+
+	tp = SearchSysCache1(COLLOID, ObjectIdGetDatum(collid));
+	if (!HeapTupleIsValid(tp))
+		elog(ERROR, "cache lookup failed for collation %u", collid);
+
+	collcollate = NameStr(((Form_pg_collation) GETSTRUCT(tp))->collcollate);
+	collctype = NameStr(((Form_pg_collation) GETSTRUCT(tp))->collctype);
+
+	if (strcmp(collcollate, collctype) == 0)
+	{
+		result = newlocale(LC_COLLATE_MASK | LC_CTYPE_MASK, collcollate, NULL);
+		if (!result)
+			ereport(ERROR,
+					(errcode_for_file_access(),
+					 errmsg("could not create locale \"%s\": %m", collcollate)));
+	}
+	else
+	{
+		locale_t loc1;
+
+		loc1 = newlocale(LC_COLLATE_MASK, collcollate, NULL);
+		if (!loc1)
+			ereport(ERROR,
+					(errcode_for_file_access(),
+					 errmsg("could not create locale \"%s\": %m", collcollate)));
+		result = newlocale(LC_CTYPE_MASK, collctype, loc1);
+		if (!result)
+			ereport(ERROR,
+					(errcode_for_file_access(),
+					 errmsg("could not create locale \"%s\": %m", collctype)));
+	}
+
+	ReleaseSysCache(tp);
+
+	cache_entry->locale = result;
+
+	return result;
+#else /* not HAVE_LOCALE_T */
+	/*
+	 * For platforms that don't support locale_t, check that we are
+	 * dealing with the default locale.  It's unlikely that we'll get
+	 * here, but it's possible if users are creating collations even
+	 * though they are not supported, or they are mixing builds in odd
+	 * ways.
+	 */
+	if (!OidIsValid(collid))
+		elog(ERROR, "locale operation to be invoked, but no collation was derived");
+	else if (collid != DEFAULT_COLLATION_OID)
+		ereport(ERROR,
+				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+				 errmsg("nondefault collations are not supported on this platform")));
+
+	return 0;
+#endif /* not HAVE_LOCALE_T */
+}

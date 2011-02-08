@@ -330,6 +330,9 @@
    */
 #undef HAVE_LL_CONSTANTS
 
+/* Define to 1 if the system has the type `locale_t'. */
+#undef HAVE_LOCALE_T
+
 /* Define to 1 if `long int' works and is 64 bits. */
 #undef HAVE_LONG_INT_64
 
@@ -664,6 +667,9 @@
 
 /* Define to build with Kerberos 5 support. (--with-krb5) */
 #undef KRB5
+
+/* Define to 1 if `locale_t' requires <xlocale.h>. */
+#undef LOCALE_T_IN_XLOCALE
 
 /* Define as the maximum alignment requirement of any C data type. */
 #undef MAXIMUM_ALIGNOF

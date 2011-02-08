@@ -723,6 +723,8 @@ _bt_first(IndexScanDesc scan, ScanDirection dir)
 											   cur->sk_subtype,
 											   procinfo,
 											   cur->sk_argument);
+				ScanKeyEntryInitializeCollation(scankeys + i,
+												cur->sk_func.fn_collation);
 			}
 			else
 			{
@@ -743,6 +745,8 @@ _bt_first(IndexScanDesc scan, ScanDirection dir)
 									   cur->sk_subtype,
 									   cmp_proc,
 									   cur->sk_argument);
+				ScanKeyEntryInitializeCollation(scankeys + i,
+												cur->sk_func.fn_collation);
 			}
 		}
 	}

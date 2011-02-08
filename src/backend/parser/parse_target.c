@@ -374,6 +374,7 @@ transformAssignedExpr(ParseState *pstate,
 	Oid			type_id;		/* type of value provided */
 	Oid			attrtype;		/* type of target column */
 	int32		attrtypmod;
+	Oid			attrcollation;
 	Relation	rd = pstate->p_target_relation;
 
 	Assert(rd != NULL);
@@ -385,6 +386,7 @@ transformAssignedExpr(ParseState *pstate,
 				 parser_errposition(pstate, location)));
 	attrtype = attnumTypeId(rd, attrno);
 	attrtypmod = rd->rd_att->attrs[attrno - 1]->atttypmod;
+	attrcollation = rd->rd_att->attrs[attrno - 1]->attcollation;
 
 	/*
 	 * If the expression is a DEFAULT placeholder, insert the attribute's
@@ -400,6 +402,7 @@ transformAssignedExpr(ParseState *pstate,
 
 		def->typeId = attrtype;
 		def->typeMod = attrtypmod;
+		def->collid = attrcollation;
 		if (indirection)
 		{
 			if (IsA(linitial(indirection), A_Indices))
@@ -786,6 +789,7 @@ transformAssignmentSubscripts(ParseState *pstate,
 											   arrayType,
 											   elementTypeId,
 											   arrayTypMod,
+											   InvalidOid,
 											   subscripts,
 											   rhs);
 
@@ -1267,6 +1271,7 @@ ExpandRowReference(ParseState *pstate, Node *expr,
 		fselect->fieldnum = i + 1;
 		fselect->resulttype = att->atttypid;
 		fselect->resulttypmod = att->atttypmod;
+		fselect->resultcollation = att->attcollation;
 
 		if (targetlist)
 		{
@@ -1338,6 +1343,8 @@ expandRecordVariable(ParseState *pstate, Var *var, int levelsup)
 							   exprType(varnode),
 							   exprTypmod(varnode),
 							   0);
+			TupleDescInitEntryCollation(tupleDesc, i,
+										exprCollation(varnode));
 			i++;
 		}
 		Assert(lname == NULL && lvar == NULL);	/* lists same length? */
@@ -1583,6 +1590,8 @@ FigureColnameInternal(Node *node, char **name)
 				}
 			}
 			break;
+		case T_CollateClause:
+			return FigureColnameInternal((Node *) ((CollateClause *) node)->arg, name);
 		case T_CaseExpr:
 			strength = FigureColnameInternal((Node *) ((CaseExpr *) node)->defresult,
 											 name);

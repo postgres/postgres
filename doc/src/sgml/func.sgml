@@ -13060,6 +13060,12 @@ SELECT relname FROM pg_class WHERE pg_table_is_visible(oid);
 
      <tbody>
       <row>
+       <entry><literal><function>pg_collation_is_visible(<parameter>collation_oid</parameter>)</function></literal>
+       </entry>
+       <entry><type>boolean</type></entry>
+       <entry>is collation visible in search path</entry>
+      </row>
+      <row>
        <entry><literal><function>pg_conversion_is_visible(<parameter>conversion_oid</parameter>)</function></literal>
        </entry>
        <entry><type>boolean</type></entry>
@@ -13123,6 +13129,9 @@ SELECT relname FROM pg_class WHERE pg_table_is_visible(oid);
     </tgroup>
    </table>
 
+   <indexterm>
+    <primary>pg_collation_is_visible</primary>
+   </indexterm>
    <indexterm>
     <primary>pg_conversion_is_visible</primary>
    </indexterm>
@@ -13256,7 +13265,7 @@ SELECT pg_type_is_visible('myschema.widget'::regtype);
 
      <tbody>
       <row>
-       <entry><literal><function>format_type(<parameter>type_oid</parameter>, <parameter>typemod</>)</function></literal></entry>
+       <entry><literal><function>format_type(<parameter>type_oid</parameter> [, <parameter>typemod</> [, <parameter>collation_oid</> ]])</function></literal></entry>
        <entry><type>text</type></entry>
        <entry>get SQL name of a data type</entry>
       </row>
@@ -13392,7 +13401,9 @@ SELECT pg_type_is_visible('myschema.widget'::regtype);
   <para>
    <function>format_type</function> returns the SQL name of a data type that
    is identified by its type OID and possibly a type modifier.  Pass NULL
-   for the type modifier if no specific modifier is known.
+   for the type modifier or omit the argument if no specific modifier is known.
+   If a collation is given as third argument, a <literal>COLLATE</> clause
+   followed by a formatted collation name is appended.
   </para>
 
   <para>

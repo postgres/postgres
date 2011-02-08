@@ -94,6 +94,7 @@
 #include "access/gin.h"
 #include "access/sysattr.h"
 #include "catalog/index.h"
+#include "catalog/pg_collation.h"
 #include "catalog/pg_opfamily.h"
 #include "catalog/pg_statistic.h"
 #include "catalog/pg_type.h"
@@ -144,7 +145,7 @@ static double eqjoinsel_inner(Oid operator,
 static double eqjoinsel_semi(Oid operator,
 			   VariableStatData *vardata1, VariableStatData *vardata2);
 static bool convert_to_scalar(Datum value, Oid valuetypid, double *scaledvalue,
-				  Datum lobound, Datum hibound, Oid boundstypid,
+				  Datum lobound, Datum hibound, Oid boundstypid, Oid boundscollid,
 				  double *scaledlobound, double *scaledhibound);
 static double convert_numeric_to_scalar(Datum value, Oid typid);
 static void convert_string_to_scalar(char *value,
@@ -163,10 +164,10 @@ static double convert_one_string_to_scalar(char *value,
 							 int rangelo, int rangehi);
 static double convert_one_bytea_to_scalar(unsigned char *value, int valuelen,
 							int rangelo, int rangehi);
-static char *convert_string_datum(Datum value, Oid typid);
+static char *convert_string_datum(Datum value, Oid typid, Oid collid);
 static double convert_timevalue_to_scalar(Datum value, Oid typid);
 static bool get_variable_range(PlannerInfo *root, VariableStatData *vardata,
-				   Oid sortop, Datum *min, Datum *max);
+				   Oid sortop, Oid collation, Datum *min, Datum *max);
 static bool get_actual_variable_range(PlannerInfo *root,
 						  VariableStatData *vardata,
 						  Oid sortop,
@@ -513,6 +514,7 @@ scalarineqsel(PlannerInfo *root, Oid operator, bool isgt,
 	stats = (Form_pg_statistic) GETSTRUCT(vardata->statsTuple);
 
 	fmgr_info(get_opcode(operator), &opproc);
+	fmgr_info_collation(vardata->attcollation, &opproc);
 
 	/*
 	 * If we have most-common-values info, add up the fractions of the MCV
@@ -837,7 +839,7 @@ ineq_histogram_selectivity(PlannerInfo *root,
 				 */
 				if (convert_to_scalar(constval, consttype, &val,
 									  values[i - 1], values[i],
-									  vardata->vartype,
+									  vardata->vartype, vardata->attcollation,
 									  &low, &high))
 				{
 					if (high <= low)
@@ -1249,6 +1251,7 @@ patternsel(PG_FUNCTION_ARGS, Pattern_Type ptype, bool negate)
 
 		/* Try to use the histogram entries to get selectivity */
 		fmgr_info(get_opcode(operator), &opproc);
+		fmgr_info_collation(DEFAULT_COLLATION_OID, &opproc);
 
 		selec = histogram_selectivity(&vardata, &opproc, constval, true,
 									  10, 1, &hist_size);
@@ -2585,7 +2588,7 @@ icnlikejoinsel(PG_FUNCTION_ARGS)
  */
 void
 mergejoinscansel(PlannerInfo *root, Node *clause,
-				 Oid opfamily, int strategy, bool nulls_first,
+				 Oid opfamily, Oid collation, int strategy, bool nulls_first,
 				 Selectivity *leftstart, Selectivity *leftend,
 				 Selectivity *rightstart, Selectivity *rightend)
 {
@@ -2754,20 +2757,20 @@ mergejoinscansel(PlannerInfo *root, Node *clause,
 	/* Try to get ranges of both inputs */
 	if (!isgt)
 	{
-		if (!get_variable_range(root, &leftvar, lstatop,
+		if (!get_variable_range(root, &leftvar, lstatop, collation,
 								&leftmin, &leftmax))
 			goto fail;			/* no range available from stats */
-		if (!get_variable_range(root, &rightvar, rstatop,
+		if (!get_variable_range(root, &rightvar, rstatop, collation,
 								&rightmin, &rightmax))
 			goto fail;			/* no range available from stats */
 	}
 	else
 	{
 		/* need to swap the max and min */
-		if (!get_variable_range(root, &leftvar, lstatop,
+		if (!get_variable_range(root, &leftvar, lstatop, collation,
 								&leftmax, &leftmin))
 			goto fail;			/* no range available from stats */
-		if (!get_variable_range(root, &rightvar, rstatop,
+		if (!get_variable_range(root, &rightvar, rstatop, collation,
 								&rightmax, &rightmin))
 			goto fail;			/* no range available from stats */
 	}
@@ -3368,7 +3371,7 @@ estimate_hash_bucketsize(PlannerInfo *root, Node *hashkey, double nbuckets)
  */
 static bool
 convert_to_scalar(Datum value, Oid valuetypid, double *scaledvalue,
-				  Datum lobound, Datum hibound, Oid boundstypid,
+				  Datum lobound, Datum hibound, Oid boundstypid, Oid boundscollid,
 				  double *scaledlobound, double *scaledhibound)
 {
 	/*
@@ -3421,9 +3424,9 @@ convert_to_scalar(Datum value, Oid valuetypid, double *scaledvalue,
 		case TEXTOID:
 		case NAMEOID:
 			{
-				char	   *valstr = convert_string_datum(value, valuetypid);
-				char	   *lostr = convert_string_datum(lobound, boundstypid);
-				char	   *histr = convert_string_datum(hibound, boundstypid);
+				char	   *valstr = convert_string_datum(value, valuetypid, boundscollid);
+				char	   *lostr = convert_string_datum(lobound, boundstypid, boundscollid);
+				char	   *histr = convert_string_datum(hibound, boundstypid, boundscollid);
 
 				convert_string_to_scalar(valstr, scaledvalue,
 										 lostr, scaledlobound,
@@ -3667,7 +3670,7 @@ convert_one_string_to_scalar(char *value, int rangelo, int rangehi)
  * before continuing, so as to generate correct locale-specific results.
  */
 static char *
-convert_string_datum(Datum value, Oid typid)
+convert_string_datum(Datum value, Oid typid, Oid collid)
 {
 	char	   *val;
 
@@ -3700,7 +3703,7 @@ convert_string_datum(Datum value, Oid typid)
 			return NULL;
 	}
 
-	if (!lc_collate_is_c())
+	if (!lc_collate_is_c(collid))
 	{
 		char	   *xfrmstr;
 		size_t		xfrmlen;
@@ -4099,6 +4102,7 @@ examine_variable(PlannerInfo *root, Node *node, int varRelid,
 		vardata->rel = find_base_rel(root, var->varno);
 		vardata->atttype = var->vartype;
 		vardata->atttypmod = var->vartypmod;
+		vardata->attcollation = var->varcollid;
 		vardata->isunique = has_unique_index(vardata->rel, var->varattno);
 
 		rte = root->simple_rte_array[var->varno];
@@ -4184,6 +4188,7 @@ examine_variable(PlannerInfo *root, Node *node, int varRelid,
 	vardata->var = node;
 	vardata->atttype = exprType(node);
 	vardata->atttypmod = exprTypmod(node);
+	vardata->attcollation = exprCollation(node);
 
 	if (onerel)
 	{
@@ -4392,7 +4397,7 @@ get_variable_numdistinct(VariableStatData *vardata)
  * be "<" not ">", as only the former is likely to be found in pg_statistic.
  */
 static bool
-get_variable_range(PlannerInfo *root, VariableStatData *vardata, Oid sortop,
+get_variable_range(PlannerInfo *root, VariableStatData *vardata, Oid sortop, Oid collation,
 				   Datum *min, Datum *max)
 {
 	Datum		tmin = 0;
@@ -4477,6 +4482,7 @@ get_variable_range(PlannerInfo *root, VariableStatData *vardata, Oid sortop,
 		FmgrInfo	opproc;
 
 		fmgr_info(get_opcode(sortop), &opproc);
+		fmgr_info_collation(collation, &opproc);
 
 		for (i = 0; i < nvalues; i++)
 		{
@@ -5482,7 +5488,7 @@ make_greater_string(const Const *str_const, FmgrInfo *ltproc)
 	{
 		workstr = TextDatumGetCString(str_const->constvalue);
 		len = strlen(workstr);
-		if (lc_collate_is_c() || len == 0)
+		if (lc_collate_is_c(ltproc->fn_collation) || len == 0)
 			cmpstr = str_const->constvalue;
 		else
 		{
@@ -5494,11 +5500,11 @@ make_greater_string(const Const *str_const, FmgrInfo *ltproc)
 				char	   *best;
 
 				best = "Z";
-				if (varstr_cmp(best, 1, "z", 1) < 0)
+				if (varstr_cmp(best, 1, "z", 1, DEFAULT_COLLATION_OID) < 0)
 					best = "z";
-				if (varstr_cmp(best, 1, "y", 1) < 0)
+				if (varstr_cmp(best, 1, "y", 1, DEFAULT_COLLATION_OID) < 0)
 					best = "y";
-				if (varstr_cmp(best, 1, "9", 1) < 0)
+				if (varstr_cmp(best, 1, "9", 1, DEFAULT_COLLATION_OID) < 0)
 					best = "9";
 				suffixchar = *best;
 			}

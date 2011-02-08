@@ -461,7 +461,7 @@ extern void qsort_arg(void *base, size_t nel, size_t elsize,
 		  qsort_arg_comparator cmp, void *arg);
 
 /* port/chklocale.c */
-extern int	pg_get_encoding_from_locale(const char *ctype);
+extern int	pg_get_encoding_from_locale(const char *ctype, bool write_message);
 
 /* port/inet_net_ntop.c */
 extern char *inet_net_ntop(int af, const void *src, int bits,

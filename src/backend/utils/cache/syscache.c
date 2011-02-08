@@ -28,6 +28,7 @@
 #include "catalog/pg_auth_members.h"
 #include "catalog/pg_authid.h"
 #include "catalog/pg_cast.h"
+#include "catalog/pg_collation.h"
 #include "catalog/pg_constraint.h"
 #include "catalog/pg_conversion.h"
 #include "catalog/pg_database.h"
@@ -266,6 +267,28 @@ static const struct cachedesc cacheinfo[] = {
 			0
 		},
 		64
+	},
+	{CollationRelationId,		/* COLLNAMEENCNSP */
+		CollationNameEncNspIndexId,
+		3,
+		{
+			Anum_pg_collation_collname,
+			Anum_pg_collation_collencoding,
+			Anum_pg_collation_collnamespace,
+			0
+		},
+		256
+	},
+	{CollationRelationId,		/* COLLOID */
+		CollationOidIndexId,
+		1,
+		{
+			ObjectIdAttributeNumber,
+			0,
+			0,
+			0
+		},
+		256
 	},
 	{ConversionRelationId,		/* CONDEFAULT */
 		ConversionDefaultIndexId,

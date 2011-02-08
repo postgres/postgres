@@ -45,6 +45,7 @@ CREATE TYPE <replaceable class="parameter">name</replaceable> (
     [ , DEFAULT = <replaceable class="parameter">default</replaceable> ]
     [ , ELEMENT = <replaceable class="parameter">element</replaceable> ]
     [ , DELIMITER = <replaceable class="parameter">delimiter</replaceable> ]
+    [ , COLLATABLE = <replaceable class="parameter">collatable</replaceable> ]
 )
 
 CREATE TYPE <replaceable class="parameter">name</replaceable>
@@ -352,6 +353,16 @@ CREATE TYPE <replaceable class="parameter">name</replaceable>
    with the array element type, not the array type itself.
   </para>
 
+  <para>
+   If the optional
+   parameter <replaceable class="parameter">collatable</replaceable>
+   is true, column definitions and expressions of the type may carry
+   collation information and allow the use of
+   the <literal>COLLATE</literal> clause.  It is up to the
+   implementations of the functions operating on the type to actually
+   make use of the collation information; this does not happen
+   automatically merely by marking the type collatable.
+  </para>
   </refsect2>
 
   <refsect2>

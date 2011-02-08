@@ -18,6 +18,7 @@
 #include "postgres.h"
 
 #include "access/skey.h"
+#include "catalog/pg_collation.h"
 #include "catalog/pg_type.h"
 #include "nodes/makefuncs.h"
 #include "nodes/nodeFuncs.h"
@@ -30,10 +31,10 @@
 #include "utils/lsyscache.h"
 
 
-static PathKey *makePathKey(EquivalenceClass *eclass, Oid opfamily,
+static PathKey *makePathKey(EquivalenceClass *eclass, Oid opfamily, Oid collation,
 			int strategy, bool nulls_first);
 static PathKey *make_canonical_pathkey(PlannerInfo *root,
-					   EquivalenceClass *eclass, Oid opfamily,
+					   EquivalenceClass *eclass, Oid opfamily, Oid collation,
 					   int strategy, bool nulls_first);
 static bool pathkey_is_redundant(PathKey *new_pathkey, List *pathkeys);
 static Var *find_indexkey_var(PlannerInfo *root, RelOptInfo *rel,
@@ -53,13 +54,14 @@ static bool right_merge_direction(PlannerInfo *root, PathKey *pathkey);
  * convenience routine to build the specified node.
  */
 static PathKey *
-makePathKey(EquivalenceClass *eclass, Oid opfamily,
+makePathKey(EquivalenceClass *eclass, Oid opfamily, Oid collation,
 			int strategy, bool nulls_first)
 {
 	PathKey    *pk = makeNode(PathKey);
 
 	pk->pk_eclass = eclass;
 	pk->pk_opfamily = opfamily;
+	pk->pk_collation = collation;
 	pk->pk_strategy = strategy;
 	pk->pk_nulls_first = nulls_first;
 
@@ -77,7 +79,7 @@ makePathKey(EquivalenceClass *eclass, Oid opfamily,
  */
 static PathKey *
 make_canonical_pathkey(PlannerInfo *root,
-					   EquivalenceClass *eclass, Oid opfamily,
+					   EquivalenceClass *eclass, Oid opfamily, Oid collation,
 					   int strategy, bool nulls_first)
 {
 	PathKey    *pk;
@@ -93,6 +95,7 @@ make_canonical_pathkey(PlannerInfo *root,
 		pk = (PathKey *) lfirst(lc);
 		if (eclass == pk->pk_eclass &&
 			opfamily == pk->pk_opfamily &&
+			collation == pk->pk_collation &&
 			strategy == pk->pk_strategy &&
 			nulls_first == pk->pk_nulls_first)
 			return pk;
@@ -104,7 +107,7 @@ make_canonical_pathkey(PlannerInfo *root,
 	 */
 	oldcontext = MemoryContextSwitchTo(root->planner_cxt);
 
-	pk = makePathKey(eclass, opfamily, strategy, nulls_first);
+	pk = makePathKey(eclass, opfamily, collation, strategy, nulls_first);
 	root->canon_pathkeys = lappend(root->canon_pathkeys, pk);
 
 	MemoryContextSwitchTo(oldcontext);
@@ -206,6 +209,7 @@ canonicalize_pathkeys(PlannerInfo *root, List *pathkeys)
 		cpathkey = make_canonical_pathkey(root,
 										  eclass,
 										  pathkey->pk_opfamily,
+										  pathkey->pk_collation,
 										  pathkey->pk_strategy,
 										  pathkey->pk_nulls_first);
 
@@ -247,6 +251,7 @@ make_pathkey_from_sortinfo(PlannerInfo *root,
 	Oid			equality_op;
 	List	   *opfamilies;
 	EquivalenceClass *eclass;
+	Oid			collation;
 
 	strategy = reverse_sort ? BTGreaterStrategyNumber : BTLessStrategyNumber;
 
@@ -301,12 +306,14 @@ make_pathkey_from_sortinfo(PlannerInfo *root,
 	if (!eclass)
 		return NULL;
 
+	collation = exprCollation((Node *) expr);
+
 	/* And finally we can find or create a PathKey node */
 	if (canonicalize)
-		return make_canonical_pathkey(root, eclass, opfamily,
+		return make_canonical_pathkey(root, eclass, opfamily, collation,
 									  strategy, nulls_first);
 	else
-		return makePathKey(eclass, opfamily, strategy, nulls_first);
+		return makePathKey(eclass, opfamily, collation, strategy, nulls_first);
 }
 
 /*
@@ -605,7 +612,8 @@ find_indexkey_var(PlannerInfo *root, RelOptInfo *rel, AttrNumber varattno)
 	ListCell   *temp;
 	Index		relid;
 	Oid			reloid,
-				vartypeid;
+				vartypeid,
+				varcollid;
 	int32		type_mod;
 
 	foreach(temp, rel->reltargetlist)
@@ -620,8 +628,9 @@ find_indexkey_var(PlannerInfo *root, RelOptInfo *rel, AttrNumber varattno)
 	relid = rel->relid;
 	reloid = getrelid(relid, root->parse->rtable);
 	get_atttypetypmod(reloid, varattno, &vartypeid, &type_mod);
+	varcollid = get_attcollation(reloid, varattno);
 
-	return makeVar(relid, varattno, vartypeid, type_mod, 0);
+	return makeVar(relid, varattno, vartypeid, type_mod, varcollid, 0);
 }
 
 /*
@@ -703,6 +712,7 @@ convert_subquery_pathkeys(PlannerInfo *root, RelOptInfo *rel,
 						make_canonical_pathkey(root,
 											   outer_ec,
 											   sub_pathkey->pk_opfamily,
+											   sub_pathkey->pk_collation,
 											   sub_pathkey->pk_strategy,
 											   sub_pathkey->pk_nulls_first);
 			}
@@ -805,6 +815,7 @@ convert_subquery_pathkeys(PlannerInfo *root, RelOptInfo *rel,
 					outer_pk = make_canonical_pathkey(root,
 													  outer_ec,
 													sub_pathkey->pk_opfamily,
+													sub_pathkey->pk_collation,
 													sub_pathkey->pk_strategy,
 												sub_pathkey->pk_nulls_first);
 					/* score = # of equivalence peers */
@@ -1326,6 +1337,7 @@ select_outer_pathkeys_for_merge(PlannerInfo *root,
 		pathkey = make_canonical_pathkey(root,
 										 ec,
 										 linitial_oid(ec->ec_opfamilies),
+										 DEFAULT_COLLATION_OID,
 										 BTLessStrategyNumber,
 										 false);
 		/* can't be redundant because no duplicate ECs */
@@ -1419,6 +1431,7 @@ make_inner_pathkeys_for_merge(PlannerInfo *root,
 			pathkey = make_canonical_pathkey(root,
 											 ieclass,
 											 opathkey->pk_opfamily,
+											 opathkey->pk_collation,
 											 opathkey->pk_strategy,
 											 opathkey->pk_nulls_first);
 
@@ -1539,6 +1552,7 @@ right_merge_direction(PlannerInfo *root, PathKey *pathkey)
 		PathKey    *query_pathkey = (PathKey *) lfirst(l);
 
 		if (pathkey->pk_eclass == query_pathkey->pk_eclass &&
+			pathkey->pk_collation == query_pathkey->pk_collation &&
 			pathkey->pk_opfamily == query_pathkey->pk_opfamily)
 		{
 			/*

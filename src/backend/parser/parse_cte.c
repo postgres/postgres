@@ -14,11 +14,13 @@
  */
 #include "postgres.h"
 
+#include "catalog/pg_collation.h"
 #include "catalog/pg_type.h"
 #include "nodes/nodeFuncs.h"
 #include "parser/analyze.h"
 #include "parser/parse_cte.h"
 #include "utils/builtins.h"
+#include "utils/lsyscache.h"
 
 
 /* Enumeration of contexts in which a self-reference is disallowed */
@@ -263,11 +265,13 @@ analyzeCTE(ParseState *pstate, CommonTableExpr *cte)
 		 */
 		ListCell   *lctlist,
 				   *lctyp,
-				   *lctypmod;
+				   *lctypmod,
+				   *lccoll;
 		int			varattno;
 
 		lctyp = list_head(cte->ctecoltypes);
 		lctypmod = list_head(cte->ctecoltypmods);
+		lccoll = list_head(cte->ctecolcollations);
 		varattno = 0;
 		foreach(lctlist, query->targetList)
 		{
@@ -278,7 +282,7 @@ analyzeCTE(ParseState *pstate, CommonTableExpr *cte)
 				continue;
 			varattno++;
 			Assert(varattno == te->resno);
-			if (lctyp == NULL || lctypmod == NULL)		/* shouldn't happen */
+			if (lctyp == NULL || lctypmod == NULL || lccoll == NULL)		/* shouldn't happen */
 				elog(ERROR, "wrong number of output columns in WITH");
 			texpr = (Node *) te->expr;
 			if (exprType(texpr) != lfirst_oid(lctyp) ||
@@ -293,10 +297,20 @@ analyzeCTE(ParseState *pstate, CommonTableExpr *cte)
 														 exprTypmod(texpr))),
 						 errhint("Cast the output of the non-recursive term to the correct type."),
 						 parser_errposition(pstate, exprLocation(texpr))));
+			if (exprCollation(texpr) != lfirst_oid(lccoll))
+				ereport(ERROR,
+						(errcode(ERRCODE_COLLATION_MISMATCH),
+						 errmsg("recursive query \"%s\" column %d has collation \"%s\" in non-recursive term but collation \"%s\" overall",
+								cte->ctename, varattno,
+								get_collation_name(lfirst_oid(lccoll)),
+								get_collation_name(exprCollation(texpr))),
+						 errhint("Use the COLLATE clause to set the collation of the non-recursive term."),
+						 parser_errposition(pstate, exprLocation(texpr))));
 			lctyp = lnext(lctyp);
 			lctypmod = lnext(lctypmod);
+			lccoll = lnext(lccoll);
 		}
-		if (lctyp != NULL || lctypmod != NULL)	/* shouldn't happen */
+		if (lctyp != NULL || lctypmod != NULL || lccoll != NULL)	/* shouldn't happen */
 			elog(ERROR, "wrong number of output columns in WITH");
 	}
 }
@@ -331,7 +345,7 @@ analyzeCTETargetList(ParseState *pstate, CommonTableExpr *cte, List *tlist)
 	 * handling.)
 	 */
 	cte->ctecolnames = copyObject(cte->aliascolnames);
-	cte->ctecoltypes = cte->ctecoltypmods = NIL;
+	cte->ctecoltypes = cte->ctecoltypmods = cte->ctecolcollations = NIL;
 	numaliases = list_length(cte->aliascolnames);
 	varattno = 0;
 	foreach(tlistitem, tlist)
@@ -339,6 +353,7 @@ analyzeCTETargetList(ParseState *pstate, CommonTableExpr *cte, List *tlist)
 		TargetEntry *te = (TargetEntry *) lfirst(tlistitem);
 		Oid			coltype;
 		int32		coltypmod;
+		Oid			colcoll;
 
 		if (te->resjunk)
 			continue;
@@ -353,6 +368,7 @@ analyzeCTETargetList(ParseState *pstate, CommonTableExpr *cte, List *tlist)
 		}
 		coltype = exprType((Node *) te->expr);
 		coltypmod = exprTypmod((Node *) te->expr);
+		colcoll = exprCollation((Node *) te->expr);
 
 		/*
 		 * If the CTE is recursive, force the exposed column type of any
@@ -366,9 +382,11 @@ analyzeCTETargetList(ParseState *pstate, CommonTableExpr *cte, List *tlist)
 		{
 			coltype = TEXTOID;
 			coltypmod = -1;		/* should be -1 already, but be sure */
+			colcoll = DEFAULT_COLLATION_OID;
 		}
 		cte->ctecoltypes = lappend_oid(cte->ctecoltypes, coltype);
 		cte->ctecoltypmods = lappend_int(cte->ctecoltypmods, coltypmod);
+		cte->ctecolcollations = lappend_oid(cte->ctecolcollations, colcoll);
 	}
 	if (varattno < numaliases)
 		ereport(ERROR,

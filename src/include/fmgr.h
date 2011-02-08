@@ -50,6 +50,7 @@ typedef struct FmgrInfo
 	bool		fn_strict;		/* function is "strict" (NULL in => NULL out) */
 	bool		fn_retset;		/* function returns a set */
 	unsigned char fn_stats;		/* collect stats if track_functions > this */
+	Oid			fn_collation;	/* collation to use */
 	void	   *fn_extra;		/* extra space for use by handler */
 	MemoryContext fn_mcxt;		/* memory context to store fn_extra in */
 	fmNodePtr	fn_expr;		/* expression parse tree for call, or NULL */
@@ -82,6 +83,16 @@ extern void fmgr_info(Oid functionId, FmgrInfo *finfo);
  */
 extern void fmgr_info_cxt(Oid functionId, FmgrInfo *finfo,
 			  MemoryContext mcxt);
+
+/*
+ * Initialize the fn_collation field
+ */
+extern void fmgr_info_collation(Oid collationId, FmgrInfo *finfo);
+
+/*
+ * Initialize the fn_expr field and set the collation based on it
+ */
+extern void fmgr_info_expr(fmNodePtr expr, FmgrInfo *finfo);
 
 /*
  * Copy an FmgrInfo struct
@@ -296,6 +307,7 @@ extern struct varlena *pg_detoast_datum_packed(struct varlena * datum);
 #define PG_RETURN_VARCHAR_P(x) PG_RETURN_POINTER(x)
 #define PG_RETURN_HEAPTUPLEHEADER(x)  PG_RETURN_POINTER(x)
 
+#define PG_GET_COLLATION()		(fcinfo->flinfo ? fcinfo->flinfo->fn_collation : InvalidOid)
 
 /*-------------------------------------------------------------------------
  *		Support for detecting call convention of dynamically-loaded functions
@@ -437,6 +449,12 @@ extern Datum DirectFunctionCall9(PGFunction func, Datum arg1, Datum arg2,
 					Datum arg3, Datum arg4, Datum arg5,
 					Datum arg6, Datum arg7, Datum arg8,
 					Datum arg9);
+
+/* the same but passing a collation */
+extern Datum DirectFunctionCall1WithCollation(PGFunction func, Oid collation,
+											  Datum arg1);
+extern Datum DirectFunctionCall2WithCollation(PGFunction func, Oid collation,
+											  Datum arg1, Datum arg2);
 
 /* These are for invocation of a previously-looked-up function with a
  * directly-computed parameter list.  Note that neither arguments nor result

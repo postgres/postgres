@@ -20,6 +20,7 @@
 #include "bootstrap/bootstrap.h"
 #include "catalog/pg_amop.h"
 #include "catalog/pg_amproc.h"
+#include "catalog/pg_collation.h"
 #include "catalog/pg_constraint.h"
 #include "catalog/pg_namespace.h"
 #include "catalog/pg_opclass.h"
@@ -903,6 +904,33 @@ get_atttypmod(Oid relid, AttrNumber attnum)
 }
 
 /*
+ * get_attcollation
+ *
+ *		Given the relation id and the attribute number,
+ *		return the "attcollation" field from the attribute relation.
+ */
+Oid
+get_attcollation(Oid relid, AttrNumber attnum)
+{
+	HeapTuple	tp;
+
+	tp = SearchSysCache2(ATTNUM,
+						 ObjectIdGetDatum(relid),
+						 Int16GetDatum(attnum));
+	if (HeapTupleIsValid(tp))
+	{
+		Form_pg_attribute att_tup = (Form_pg_attribute) GETSTRUCT(tp);
+		Oid		result;
+
+		result = att_tup->attcollation;
+		ReleaseSysCache(tp);
+		return result;
+	}
+	else
+		return InvalidOid;
+}
+
+/*
  * get_atttypetypmod
  *
  *		A two-fer: given the relation id and the attribute number,
@@ -929,6 +957,36 @@ get_atttypetypmod(Oid relid, AttrNumber attnum,
 	*typid = att_tup->atttypid;
 	*typmod = att_tup->atttypmod;
 	ReleaseSysCache(tp);
+}
+
+/*				---------- COLLATION CACHE ----------					 */
+
+/*
+ * get_collation_name
+ *		Returns the name of a given pg_collation entry.
+ *
+ * Returns a palloc'd copy of the string, or NULL if no such constraint.
+ *
+ * NOTE: since collation name is not unique, be wary of code that uses this
+ * for anything except preparing error messages.
+ */
+char *
+get_collation_name(Oid colloid)
+{
+	HeapTuple	tp;
+
+	tp = SearchSysCache1(COLLOID, ObjectIdGetDatum(colloid));
+	if (HeapTupleIsValid(tp))
+	{
+		Form_pg_collation colltup = (Form_pg_collation) GETSTRUCT(tp);
+		char	   *result;
+
+		result = pstrdup(NameStr(colltup->collname));
+		ReleaseSysCache(tp);
+		return result;
+	}
+	else
+		return NULL;
 }
 
 /*				---------- CONSTRAINT CACHE ----------					 */
@@ -2522,6 +2580,42 @@ get_typmodout(Oid typid)
 		return InvalidOid;
 }
 #endif   /* NOT_USED */
+
+/*
+ * get_typcollation
+ *
+ *		Given the type OID, return the type's typcollation attribute.
+ */
+Oid
+get_typcollation(Oid typid)
+{
+	HeapTuple	tp;
+
+	tp = SearchSysCache1(TYPEOID, ObjectIdGetDatum(typid));
+	if (HeapTupleIsValid(tp))
+	{
+		Form_pg_type typtup = (Form_pg_type) GETSTRUCT(tp);
+		Oid			result;
+
+		result = typtup->typcollation;
+		ReleaseSysCache(tp);
+		return result;
+	}
+	else
+		return InvalidOid;
+}
+
+
+/*
+ * type_is_collatable
+ *
+ *		Return whether the type cares about collations
+ */
+bool
+type_is_collatable(Oid typid)
+{
+	return OidIsValid(get_typcollation(typid));
+}
 
 
 /*				---------- STATISTICS CACHE ----------					 */

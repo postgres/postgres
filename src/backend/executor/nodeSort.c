@@ -86,6 +86,7 @@ ExecSort(SortState *node)
 											  plannode->numCols,
 											  plannode->sortColIdx,
 											  plannode->sortOperators,
+											  plannode->collations,
 											  plannode->nullsFirst,
 											  work_mem,
 											  node->randomAccess);

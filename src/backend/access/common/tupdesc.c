@@ -488,8 +488,30 @@ TupleDescInitEntry(TupleDesc desc,
 	att->attbyval = typeForm->typbyval;
 	att->attalign = typeForm->typalign;
 	att->attstorage = typeForm->typstorage;
+	att->attcollation = typeForm->typcollation;
 
 	ReleaseSysCache(tuple);
+}
+
+/*
+ * TupleDescInitEntryCollation
+ *
+ * Fill in the collation for an attribute in a previously initialized
+ * tuple descriptor.
+ */
+void
+TupleDescInitEntryCollation(TupleDesc desc,
+							AttrNumber attributeNumber,
+							Oid collationid)
+{
+	/*
+	 * sanity checks
+	 */
+	AssertArg(PointerIsValid(desc));
+	AssertArg(attributeNumber >= 1);
+	AssertArg(attributeNumber <= desc->natts);
+
+	desc->attrs[attributeNumber - 1]->attcollation = collationid;
 }
 
 
@@ -513,6 +535,7 @@ BuildDescForRelation(List *schema)
 	char	   *attname;
 	Oid			atttypid;
 	int32		atttypmod;
+	Oid			attcollation;
 	int			attdim;
 
 	/*
@@ -536,7 +559,7 @@ BuildDescForRelation(List *schema)
 		attnum++;
 
 		attname = entry->colname;
-		typenameTypeIdAndMod(NULL, entry->typeName, &atttypid, &atttypmod);
+		typenameTypeIdModColl(NULL, entry->typeName, &atttypid, &atttypmod, &attcollation);
 		attdim = list_length(entry->typeName->arrayBounds);
 
 		if (entry->typeName->setof)
@@ -547,6 +570,7 @@ BuildDescForRelation(List *schema)
 
 		TupleDescInitEntry(desc, attnum, attname,
 						   atttypid, atttypmod, attdim);
+		TupleDescInitEntryCollation(desc, attnum, attcollation);
 
 		/* Override TupleDescInitEntry's settings as requested */
 		if (entry->storage)
@@ -588,18 +612,20 @@ BuildDescForRelation(List *schema)
  * with functions returning RECORD.
  */
 TupleDesc
-BuildDescFromLists(List *names, List *types, List *typmods)
+BuildDescFromLists(List *names, List *types, List *typmods, List *collations)
 {
 	int			natts;
 	AttrNumber	attnum;
 	ListCell   *l1;
 	ListCell   *l2;
 	ListCell   *l3;
+	ListCell   *l4;
 	TupleDesc	desc;
 
 	natts = list_length(names);
 	Assert(natts == list_length(types));
 	Assert(natts == list_length(typmods));
+	Assert(natts == list_length(collations));
 
 	/*
 	 * allocate a new tuple descriptor
@@ -610,20 +636,25 @@ BuildDescFromLists(List *names, List *types, List *typmods)
 
 	l2 = list_head(types);
 	l3 = list_head(typmods);
+	l4 = list_head(collations);
 	foreach(l1, names)
 	{
 		char	   *attname = strVal(lfirst(l1));
 		Oid			atttypid;
 		int32		atttypmod;
+		Oid			attcollation;
 
 		atttypid = lfirst_oid(l2);
 		l2 = lnext(l2);
 		atttypmod = lfirst_int(l3);
 		l3 = lnext(l3);
+		attcollation = lfirst_oid(l4);
+		l4 = lnext(l4);
 
 		attnum++;
 
 		TupleDescInitEntry(desc, attnum, attname, atttypid, atttypmod, 0);
+		TupleDescInitEntryCollation(desc, attnum, attcollation);
 	}
 
 	return desc;

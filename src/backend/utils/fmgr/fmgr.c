@@ -192,6 +192,7 @@ fmgr_info_cxt_security(Oid functionId, FmgrInfo *finfo, MemoryContext mcxt,
 	 * elogs.
 	 */
 	finfo->fn_oid = InvalidOid;
+	finfo->fn_collation = InvalidOid;
 	finfo->fn_extra = NULL;
 	finfo->fn_mcxt = mcxt;
 	finfo->fn_expr = NULL;		/* caller may set this later */
@@ -417,6 +418,25 @@ fmgr_info_other_lang(Oid functionId, FmgrInfo *finfo, HeapTuple procedureTuple)
 		elog(ERROR, "language %u has old-style handler", language);
 
 	ReleaseSysCache(languageTuple);
+}
+
+/*
+ * Initialize the fn_collation field
+ */
+void
+fmgr_info_collation(Oid collationId, FmgrInfo *finfo)
+{
+	finfo->fn_collation = collationId;
+}
+
+/*
+ * Initialize the fn_expr field and set the collation based on it
+ */
+void
+fmgr_info_expr(Node *expr, FmgrInfo *finfo)
+{
+	finfo->fn_expr = expr;
+	finfo->fn_collation = exprCollation(expr);
 }
 
 /*
@@ -1263,6 +1283,52 @@ DirectFunctionCall9(PGFunction func, Datum arg1, Datum arg2,
 	fcinfo.argnull[6] = false;
 	fcinfo.argnull[7] = false;
 	fcinfo.argnull[8] = false;
+
+	result = (*func) (&fcinfo);
+
+	/* Check for null result, since caller is clearly not expecting one */
+	if (fcinfo.isnull)
+		elog(ERROR, "function %p returned NULL", (void *) func);
+
+	return result;
+}
+
+Datum
+DirectFunctionCall1WithCollation(PGFunction func, Oid collation, Datum arg1)
+{
+	FunctionCallInfoData fcinfo;
+	FmgrInfo	flinfo;
+	Datum		result;
+
+	InitFunctionCallInfoData(fcinfo, &flinfo, 1, NULL, NULL);
+	fcinfo.flinfo->fn_collation = collation;
+
+	fcinfo.arg[0] = arg1;
+	fcinfo.argnull[0] = false;
+
+	result = (*func) (&fcinfo);
+
+	/* Check for null result, since caller is clearly not expecting one */
+	if (fcinfo.isnull)
+		elog(ERROR, "function %p returned NULL", (void *) func);
+
+	return result;
+}
+
+Datum
+DirectFunctionCall2WithCollation(PGFunction func, Oid collation, Datum arg1, Datum arg2)
+{
+	FunctionCallInfoData fcinfo;
+	FmgrInfo	flinfo;
+	Datum		result;
+
+	InitFunctionCallInfoData(fcinfo, &flinfo, 2, NULL, NULL);
+	fcinfo.flinfo->fn_collation = collation;
+
+	fcinfo.arg[0] = arg1;
+	fcinfo.arg[1] = arg2;
+	fcinfo.argnull[0] = false;
+	fcinfo.argnull[1] = false;
 
 	result = (*func) (&fcinfo);
 

@@ -1203,6 +1203,7 @@ transformSetOperationStmt(ParseState *pstate, SelectStmt *stmt)
 	ListCell   *left_tlist,
 			   *lct,
 			   *lcm,
+			   *lcc,
 			   *l;
 	List	   *targetvars,
 			   *targetnames,
@@ -1296,10 +1297,11 @@ transformSetOperationStmt(ParseState *pstate, SelectStmt *stmt)
 	targetnames = NIL;
 	left_tlist = list_head(leftmostQuery->targetList);
 
-	forboth(lct, sostmt->colTypes, lcm, sostmt->colTypmods)
+	forthree(lct, sostmt->colTypes, lcm, sostmt->colTypmods, lcc, sostmt->colCollations)
 	{
 		Oid			colType = lfirst_oid(lct);
 		int32		colTypmod = lfirst_int(lcm);
+		Oid			colCollation = lfirst_oid(lcc);
 		TargetEntry *lefttle = (TargetEntry *) lfirst(left_tlist);
 		char	   *colName;
 		TargetEntry *tle;
@@ -1311,6 +1313,7 @@ transformSetOperationStmt(ParseState *pstate, SelectStmt *stmt)
 					  lefttle->resno,
 					  colType,
 					  colTypmod,
+					  colCollation,
 					  0);
 		var->location = exprLocation((Node *) lefttle->expr);
 		tle = makeTargetEntry((Expr *) var,
@@ -1418,7 +1421,7 @@ transformSetOperationStmt(ParseState *pstate, SelectStmt *stmt)
  *		Recursively transform leaves and internal nodes of a set-op tree
  *
  * In addition to returning the transformed node, we return a list of
- * expression nodes showing the type, typmod, and location (for error messages)
+ * expression nodes showing the type, typmod, collation, and location (for error messages)
  * of each output column of the set-op node.  This is used only during the
  * internal recursion of this function.  At the upper levels we use
  * SetToDefault nodes for this purpose, since they carry exactly the fields
@@ -1591,6 +1594,7 @@ transformSetOperationTree(ParseState *pstate, SelectStmt *stmt,
 		*colInfo = NIL;
 		op->colTypes = NIL;
 		op->colTypmods = NIL;
+		op->colCollations = NIL;
 		op->groupClauses = NIL;
 		forboth(lci, lcolinfo, rci, rcolinfo)
 		{
@@ -1604,6 +1608,7 @@ transformSetOperationTree(ParseState *pstate, SelectStmt *stmt,
 			SetToDefault *rescolnode;
 			Oid			rescoltype;
 			int32		rescoltypmod;
+			Oid			rescolcoll;
 
 			/* select common type, same as CASE et al */
 			rescoltype = select_common_type(pstate,
@@ -1615,6 +1620,12 @@ transformSetOperationTree(ParseState *pstate, SelectStmt *stmt,
 				rescoltypmod = lcoltypmod;
 			else
 				rescoltypmod = -1;
+			/* Select common collation.  A common collation is
+			 * required for all set operators except UNION ALL; see
+			 * SQL:2008-2 7.13 SR 15c. */
+			rescolcoll = select_common_collation(pstate,
+												 list_make2(lcolnode, rcolnode),
+												 (op->op == SETOP_UNION && op->all));
 
 			/*
 			 * Verify the coercions are actually possible.	If not, we'd fail
@@ -1643,11 +1654,13 @@ transformSetOperationTree(ParseState *pstate, SelectStmt *stmt,
 			rescolnode = makeNode(SetToDefault);
 			rescolnode->typeId = rescoltype;
 			rescolnode->typeMod = rescoltypmod;
+			rescolnode->collid = rescolcoll;
 			rescolnode->location = exprLocation(bestexpr);
 			*colInfo = lappend(*colInfo, rescolnode);
 
 			op->colTypes = lappend_oid(op->colTypes, rescoltype);
 			op->colTypmods = lappend_int(op->colTypmods, rescoltypmod);
+			op->colCollations = lappend_oid(op->colCollations, rescolcoll);
 
 			/*
 			 * For all cases except UNION ALL, identify the grouping operators

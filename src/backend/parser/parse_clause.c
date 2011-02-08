@@ -613,7 +613,8 @@ transformRangeFunction(ParseState *pstate, RangeFunction *r)
 
 		tupdesc = BuildDescFromLists(rte->eref->colnames,
 									 rte->funccoltypes,
-									 rte->funccoltypmods);
+									 rte->funccoltypmods,
+									 rte->funccolcollations);
 		CheckAttributeNamesTypes(tupdesc, RELKIND_COMPOSITE_TYPE, false);
 	}
 
@@ -1935,6 +1936,7 @@ addTargetToSortList(ParseState *pstate, TargetEntry *tle,
 					bool resolveUnknown)
 {
 	Oid			restype = exprType((Node *) tle->expr);
+	Oid			rescollation = exprCollation((Node *) tle->expr);
 	Oid			sortop;
 	Oid			eqop;
 	bool		hashable;
@@ -2017,6 +2019,12 @@ addTargetToSortList(ParseState *pstate, TargetEntry *tle,
 			reverse = false;
 			break;
 	}
+
+	if (type_is_collatable(restype) && !OidIsValid(rescollation))
+		ereport(ERROR,
+				(errcode(ERRCODE_INDETERMINATE_COLLATION),
+				 errmsg("no collation was derived for the sort expression"),
+				 errhint("Use the COLLATE clause to set the collation explicitly.")));
 
 	cancel_parser_errposition_callback(&pcbstate);
 

@@ -1274,6 +1274,10 @@ describeOneTableDetails(const char *schemaname,
 					  "\n   FROM pg_catalog.pg_attrdef d"
 					  "\n   WHERE d.adrelid = a.attrelid AND d.adnum = a.attnum AND a.atthasdef),"
 					  "\n  a.attnotnull, a.attnum");
+	if (pset.sversion >= 90100)
+		appendPQExpBuffer(&buf, ",\n  (SELECT collname FROM pg_collation WHERE oid = a.attcollation AND collname <> 'default') AS attcollation");
+	else
+		appendPQExpBuffer(&buf, ",\n  NULL AS attcollation");
 	if (tableinfo.relkind == 'i')
 		appendPQExpBuffer(&buf, ",\n  pg_catalog.pg_get_indexdef(a.attrelid, a.attnum, TRUE) AS indexdef");
 	if (verbose)
@@ -1396,12 +1400,25 @@ describeOneTableDetails(const char *schemaname,
 		/* Type */
 		printTableAddCell(&cont, PQgetvalue(res, i, 1), false, false);
 
-		/* Modifiers: not null and default */
+		/* Modifiers: collate, not null, default */
 		if (show_modifiers)
 		{
 			resetPQExpBuffer(&tmpbuf);
+
+			if (!PQgetisnull(res, i, 5))
+			{
+				if (tmpbuf.len > 0)
+					appendPQExpBufferStr(&tmpbuf, " ");
+				appendPQExpBuffer(&tmpbuf, _("collate %s"),
+								  PQgetvalue(res, i, 5));
+			}
+
 			if (strcmp(PQgetvalue(res, i, 3), "t") == 0)
+			{
+				if (tmpbuf.len > 0)
+					appendPQExpBufferStr(&tmpbuf, " ");
 				appendPQExpBufferStr(&tmpbuf, _("not null"));
+			}
 
 			/* handle "default" here */
 			/* (note: above we cut off the 'default' string at 128) */
@@ -1424,12 +1441,12 @@ describeOneTableDetails(const char *schemaname,
 
 		/* Expression for index column */
 		if (tableinfo.relkind == 'i')
-			printTableAddCell(&cont, PQgetvalue(res, i, 5), false, false);
+			printTableAddCell(&cont, PQgetvalue(res, i, 6), false, false);
 
 		/* Storage and Description */
 		if (verbose)
 		{
-			int			firstvcol = (tableinfo.relkind == 'i' ? 6 : 5);
+			int			firstvcol = (tableinfo.relkind == 'i' ? 7 : 6);
 			char	   *storage = PQgetvalue(res, i, firstvcol);
 
 			/* these strings are literal in our syntax, so not translated. */

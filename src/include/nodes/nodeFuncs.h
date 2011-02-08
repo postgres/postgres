@@ -27,6 +27,8 @@
 
 extern Oid	exprType(Node *expr);
 extern int32 exprTypmod(Node *expr);
+extern Oid	exprCollation(Node *expr);
+extern Oid coercion_expression_result_collation(Oid resulttype, Node *arg);
 extern bool exprIsLengthCoercion(Node *expr, int32 *coercedTypmod);
 extern bool expression_returns_set(Node *clause);
 

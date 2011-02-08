@@ -453,6 +453,7 @@ typedef struct IndexOptInfo
 	int			ncolumns;		/* number of columns in index */
 	Oid		   *opfamily;		/* OIDs of operator families for columns */
 	int		   *indexkeys;		/* column numbers of index's keys, or 0 */
+	Oid		   *indexcollations;/* OIDs of the collations of the index columns */
 	Oid		   *opcintype;		/* OIDs of opclass declared input data types */
 	Oid		   *sortopfamily;	/* OIDs of btree opfamilies, if orderable */
 	bool	   *reverse_sort;	/* is sort order descending? */
@@ -585,6 +586,7 @@ typedef struct PathKey
 
 	EquivalenceClass *pk_eclass;	/* the value that is ordered */
 	Oid			pk_opfamily;	/* btree opfamily defining the ordering */
+	Oid			pk_collation;	/* collation */
 	int			pk_strategy;	/* sort direction (ASC or DESC) */
 	bool		pk_nulls_first; /* do NULLs come before normal values? */
 } PathKey;
@@ -1102,6 +1104,7 @@ typedef struct MergeScanSelCache
 {
 	/* Ordering details (cache lookup key) */
 	Oid			opfamily;		/* btree opfamily defining the ordering */
+	Oid			collation;
 	int			strategy;		/* sort direction (ASC or DESC) */
 	bool		nulls_first;	/* do NULLs come before normal values? */
 	/* Results */

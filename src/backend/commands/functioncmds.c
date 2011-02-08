@@ -87,7 +87,7 @@ compute_return_type(TypeName *returnType, Oid languageOid,
 	Oid			rettype;
 	Type		typtup;
 
-	typtup = LookupTypeName(NULL, returnType, NULL);
+	typtup = LookupTypeName(NULL, returnType, NULL, NULL);
 
 	if (typtup)
 	{
@@ -207,7 +207,7 @@ examine_parameter_list(List *parameters, Oid languageOid,
 		Oid			toid;
 		Type		typtup;
 
-		typtup = LookupTypeName(NULL, t, NULL);
+		typtup = LookupTypeName(NULL, t, NULL, NULL);
 		if (typtup)
 		{
 			if (!((Form_pg_type) GETSTRUCT(typtup))->typisdefined)

@@ -921,6 +921,7 @@ CREATE INDEX <replaceable>name</replaceable> ON <replaceable>table</replaceable>
    defining two operator classes for the data type and then selecting
    the proper class when making an index.  The operator class determines
    the basic sort ordering (which can then be modified by adding sort options
+   <literal>COLLATE</literal>,
    <literal>ASC</>/<literal>DESC</> and/or
    <literal>NULLS FIRST</>/<literal>NULLS LAST</>).
   </para>
@@ -997,6 +998,47 @@ SELECT am.amname AS index_method,
     WHERE opf.opfmethod = am.oid AND
           amop.amopfamily = opf.oid
     ORDER BY index_method, opfamily_name, opfamily_operator;
+</programlisting>
+  </para>
+ </sect1>
+
+
+ <sect1 id="indexes-collations">
+  <title>Collations and Indexes</title>
+
+  <para>
+   An index can only support one collation for one column or
+   expression.  If multiple collations are of interest, multiple
+   indexes may be created.
+  </para>
+
+  <para>
+   Consider these statements:
+<programlisting>
+CREATE TABLE test1c (
+    id integer,
+    content varchar COLLATE "x"
+);
+
+CREATE INDEX test1c_content_index ON test1c (content);
+</programlisting>
+   The created index automatically follows the collation of the
+   underlying column, and so a query of the form
+<programlisting>
+SELECT * FROM test1c WHERE content = <replaceable>constant</replaceable>;
+</programlisting>
+   could use the index.
+  </para>
+
+  <para>
+   If in addition, a query of the form, say,
+<programlisting>
+SELECT * FROM test1c WHERE content &gt; <replaceable>constant</replaceable> COLLATE "y";
+</programlisting>
+   is of interest, an additional index could be created that supports
+   the <literal>"y"</literal> collation, like so:
+<programlisting>
+CREATE INDEX test1c_content_index ON test1c (content COLLATE "y");
 </programlisting>
   </para>
  </sect1>

@@ -71,6 +71,9 @@ extern bool OpclassIsVisible(Oid opcid);
 extern Oid	OpfamilynameGetOpfid(Oid amid, const char *opfname);
 extern bool OpfamilyIsVisible(Oid opfid);
 
+extern Oid	CollationGetCollid(const char *collname);
+extern bool CollationIsVisible(Oid collid);
+
 extern Oid	ConversionGetConid(const char *conname);
 extern bool ConversionIsVisible(Oid conid);
 
@@ -114,6 +117,7 @@ extern OverrideSearchPath *GetOverrideSearchPath(MemoryContext context);
 extern void PushOverrideSearchPath(OverrideSearchPath *newpath);
 extern void PopOverrideSearchPath(void);
 
+extern Oid	get_collation_oid(List *collname, bool missing_ok);
 extern Oid	get_conversion_oid(List *conname, bool missing_ok);
 extern Oid	FindDefaultConversionProc(int4 for_encoding, int4 to_encoding);
 

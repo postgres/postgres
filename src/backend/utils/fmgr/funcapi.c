@@ -468,7 +468,6 @@ resolve_polymorphic_tupdesc(TupleDesc tupdesc, oidvector *declared_args,
 	/* If nothing found, parser messed up */
 	if (!OidIsValid(anyelement_type) && !OidIsValid(anyarray_type))
 		return false;
-
 	/* If needed, deduce one polymorphic type from the other */
 	if (have_anyelement_result && !OidIsValid(anyelement_type))
 		anyelement_type = resolve_generic_type(ANYELEMENTOID,
@@ -511,6 +510,9 @@ resolve_polymorphic_tupdesc(TupleDesc tupdesc, oidvector *declared_args,
 			default:
 				break;
 		}
+		/* Set collation based on actual argument types */
+		TupleDescInitEntryCollation(tupdesc, i + 1,
+									exprCollation(call_expr));
 	}
 
 	return true;

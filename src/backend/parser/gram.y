@@ -261,6 +261,7 @@ static RangeVar *makeRangeVarFromAnyName(List *names, int position, core_yyscan_
 
 %type <list>	func_name handler_name qual_Op qual_all_Op subquery_Op
 				opt_class opt_inline_handler opt_validator validator_clause
+				opt_collate
 
 %type <range>	qualified_name OptConstrFromTable
 
@@ -394,7 +395,8 @@ static RangeVar *makeRangeVarFromAnyName(List *names, int position, core_yyscan_
 %type <list>	copy_generic_opt_list copy_generic_opt_arg_list
 %type <list>	copy_options
 
-%type <typnam>	Typename SimpleTypename ConstTypename
+%type <typnam>	Typename SimpleTypename SimpleTypenameWithoutCollation
+				ConstTypename
 				GenericType Numeric opt_float
 				Character ConstCharacter
 				CharacterWithLength CharacterWithoutLength
@@ -5323,36 +5325,43 @@ index_params:	index_elem							{ $$ = list_make1($1); }
  * expressions in parens.  For backwards-compatibility reasons, we allow
  * an expression that's just a function call to be written without parens.
  */
-index_elem:	ColId opt_class opt_asc_desc opt_nulls_order
+index_elem:	ColId opt_collate opt_class opt_asc_desc opt_nulls_order
 				{
 					$$ = makeNode(IndexElem);
 					$$->name = $1;
 					$$->expr = NULL;
 					$$->indexcolname = NULL;
-					$$->opclass = $2;
-					$$->ordering = $3;
-					$$->nulls_ordering = $4;
+					$$->collation = $2;
+					$$->opclass = $3;
+					$$->ordering = $4;
+					$$->nulls_ordering = $5;
 				}
-			| func_expr opt_class opt_asc_desc opt_nulls_order
+			| func_expr opt_collate opt_class opt_asc_desc opt_nulls_order
 				{
 					$$ = makeNode(IndexElem);
 					$$->name = NULL;
 					$$->expr = $1;
 					$$->indexcolname = NULL;
-					$$->opclass = $2;
-					$$->ordering = $3;
-					$$->nulls_ordering = $4;
+					$$->collation = $2;
+					$$->opclass = $3;
+					$$->ordering = $4;
+					$$->nulls_ordering = $5;
 				}
-			| '(' a_expr ')' opt_class opt_asc_desc opt_nulls_order
+			| '(' a_expr ')' opt_collate opt_class opt_asc_desc opt_nulls_order
 				{
 					$$ = makeNode(IndexElem);
 					$$->name = NULL;
 					$$->expr = $2;
 					$$->indexcolname = NULL;
-					$$->opclass = $4;
-					$$->ordering = $5;
-					$$->nulls_ordering = $6;
+					$$->collation = $4;
+					$$->opclass = $5;
+					$$->ordering = $6;
+					$$->nulls_ordering = $7;
 				}
+		;
+
+opt_collate: COLLATE any_name						{ $$ = $2; }
+			| /*EMPTY*/								{ $$ = NIL; }
 		;
 
 opt_class:	any_name								{ $$ = $1; }
@@ -8776,6 +8785,13 @@ opt_array_bounds:
 		;
 
 SimpleTypename:
+			SimpleTypenameWithoutCollation opt_collate
+			{
+				$$ = $1;
+				$$->collnames = $2;
+			}
+
+SimpleTypenameWithoutCollation:
 			GenericType								{ $$ = $1; }
 			| Numeric								{ $$ = $1; }
 			| Bit									{ $$ = $1; }
@@ -9810,6 +9826,14 @@ c_expr:		columnref								{ $$ = $1; }
 					r->row_typeid = InvalidOid;	/* not analyzed yet */
 					r->location = @1;
 					$$ = (Node *)r;
+				}
+			| c_expr COLLATE any_name
+				{
+					CollateClause *n = makeNode(CollateClause);
+					n->arg = (Expr *) $1;
+					n->collnames = $3;
+					n->location = @2;
+					$$ = (Node *)n;
 				}
 		;
 

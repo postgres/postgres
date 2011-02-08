@@ -26,6 +26,7 @@
 #include "access/xact.h"
 #include "bootstrap/bootstrap.h"
 #include "catalog/index.h"
+#include "catalog/pg_collation.h"
 #include "catalog/pg_type.h"
 #include "libpq/pqsignal.h"
 #include "miscadmin.h"
@@ -88,56 +89,57 @@ struct typinfo
 	bool		byval;
 	char		align;
 	char		storage;
+	Oid			collation;
 	Oid			inproc;
 	Oid			outproc;
 };
 
 static const struct typinfo TypInfo[] = {
-	{"bool", BOOLOID, 0, 1, true, 'c', 'p',
+	{"bool", BOOLOID, 0, 1, true, 'c', 'p', InvalidOid,
 	F_BOOLIN, F_BOOLOUT},
-	{"bytea", BYTEAOID, 0, -1, false, 'i', 'x',
+	{"bytea", BYTEAOID, 0, -1, false, 'i', 'x', InvalidOid,
 	F_BYTEAIN, F_BYTEAOUT},
-	{"char", CHAROID, 0, 1, true, 'c', 'p',
+	{"char", CHAROID, 0, 1, true, 'c', 'p', InvalidOid,
 	F_CHARIN, F_CHAROUT},
-	{"int2", INT2OID, 0, 2, true, 's', 'p',
+	{"int2", INT2OID, 0, 2, true, 's', 'p', InvalidOid,
 	F_INT2IN, F_INT2OUT},
-	{"int4", INT4OID, 0, 4, true, 'i', 'p',
+	{"int4", INT4OID, 0, 4, true, 'i', 'p', InvalidOid,
 	F_INT4IN, F_INT4OUT},
-	{"float4", FLOAT4OID, 0, 4, FLOAT4PASSBYVAL, 'i', 'p',
+	{"float4", FLOAT4OID, 0, 4, FLOAT4PASSBYVAL, 'i', 'p', InvalidOid,
 	F_FLOAT4IN, F_FLOAT4OUT},
-	{"name", NAMEOID, CHAROID, NAMEDATALEN, false, 'c', 'p',
+	{"name", NAMEOID, CHAROID, NAMEDATALEN, false, 'c', 'p', InvalidOid,
 	F_NAMEIN, F_NAMEOUT},
-	{"regclass", REGCLASSOID, 0, 4, true, 'i', 'p',
+	{"regclass", REGCLASSOID, 0, 4, true, 'i', 'p', InvalidOid,
 	F_REGCLASSIN, F_REGCLASSOUT},
-	{"regproc", REGPROCOID, 0, 4, true, 'i', 'p',
+	{"regproc", REGPROCOID, 0, 4, true, 'i', 'p', InvalidOid,
 	F_REGPROCIN, F_REGPROCOUT},
-	{"regtype", REGTYPEOID, 0, 4, true, 'i', 'p',
+	{"regtype", REGTYPEOID, 0, 4, true, 'i', 'p', InvalidOid,
 	F_REGTYPEIN, F_REGTYPEOUT},
-	{"text", TEXTOID, 0, -1, false, 'i', 'x',
+	{"text", TEXTOID, 0, -1, false, 'i', 'x', DEFAULT_COLLATION_OID,
 	F_TEXTIN, F_TEXTOUT},
-	{"oid", OIDOID, 0, 4, true, 'i', 'p',
+	{"oid", OIDOID, 0, 4, true, 'i', 'p', InvalidOid,
 	F_OIDIN, F_OIDOUT},
-	{"tid", TIDOID, 0, 6, false, 's', 'p',
+	{"tid", TIDOID, 0, 6, false, 's', 'p', InvalidOid,
 	F_TIDIN, F_TIDOUT},
-	{"xid", XIDOID, 0, 4, true, 'i', 'p',
+	{"xid", XIDOID, 0, 4, true, 'i', 'p', InvalidOid,
 	F_XIDIN, F_XIDOUT},
-	{"cid", CIDOID, 0, 4, true, 'i', 'p',
+	{"cid", CIDOID, 0, 4, true, 'i', 'p', InvalidOid,
 	F_CIDIN, F_CIDOUT},
-	{"pg_node_tree", PGNODETREEOID, 0, -1, false, 'i', 'x',
+	{"pg_node_tree", PGNODETREEOID, 0, -1, false, 'i', 'x', DEFAULT_COLLATION_OID,
 	F_PG_NODE_TREE_IN, F_PG_NODE_TREE_OUT},
-	{"int2vector", INT2VECTOROID, INT2OID, -1, false, 'i', 'p',
+	{"int2vector", INT2VECTOROID, INT2OID, -1, false, 'i', 'p', InvalidOid,
 	F_INT2VECTORIN, F_INT2VECTOROUT},
-	{"oidvector", OIDVECTOROID, OIDOID, -1, false, 'i', 'p',
+	{"oidvector", OIDVECTOROID, OIDOID, -1, false, 'i', 'p', InvalidOid,
 	F_OIDVECTORIN, F_OIDVECTOROUT},
-	{"_int4", INT4ARRAYOID, INT4OID, -1, false, 'i', 'x',
+	{"_int4", INT4ARRAYOID, INT4OID, -1, false, 'i', 'x', InvalidOid,
 	F_ARRAY_IN, F_ARRAY_OUT},
-	{"_text", 1009, TEXTOID, -1, false, 'i', 'x',
+	{"_text", 1009, TEXTOID, -1, false, 'i', 'x', DEFAULT_COLLATION_OID,
 	F_ARRAY_IN, F_ARRAY_OUT},
-	{"_oid", 1028, OIDOID, -1, false, 'i', 'x',
+	{"_oid", 1028, OIDOID, -1, false, 'i', 'x', InvalidOid,
 	F_ARRAY_IN, F_ARRAY_OUT},
-	{"_char", 1002, CHAROID, -1, false, 'i', 'x',
+	{"_char", 1002, CHAROID, -1, false, 'i', 'x', InvalidOid,
 	F_ARRAY_IN, F_ARRAY_OUT},
-	{"_aclitem", 1034, ACLITEMOID, -1, false, 'i', 'x',
+	{"_aclitem", 1034, ACLITEMOID, -1, false, 'i', 'x', InvalidOid,
 	F_ARRAY_IN, F_ARRAY_OUT}
 };
 
@@ -710,6 +712,7 @@ DefineAttr(char *name, char *type, int attnum)
 		attrtypes[attnum]->attbyval = Ap->am_typ.typbyval;
 		attrtypes[attnum]->attstorage = Ap->am_typ.typstorage;
 		attrtypes[attnum]->attalign = Ap->am_typ.typalign;
+		attrtypes[attnum]->attcollation = Ap->am_typ.typcollation;
 		/* if an array type, assume 1-dimensional attribute */
 		if (Ap->am_typ.typelem != InvalidOid && Ap->am_typ.typlen < 0)
 			attrtypes[attnum]->attndims = 1;
@@ -723,6 +726,7 @@ DefineAttr(char *name, char *type, int attnum)
 		attrtypes[attnum]->attbyval = TypInfo[typeoid].byval;
 		attrtypes[attnum]->attstorage = TypInfo[typeoid].storage;
 		attrtypes[attnum]->attalign = TypInfo[typeoid].align;
+		attrtypes[attnum]->attcollation = TypInfo[typeoid].collation;
 		/* if an array type, assume 1-dimensional attribute */
 		if (TypInfo[typeoid].elem != InvalidOid &&
 			attrtypes[attnum]->attlen < 0)

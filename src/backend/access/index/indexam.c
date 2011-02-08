@@ -872,6 +872,8 @@ index_getprocinfo(Relation irel,
 				 procnum, attnum, RelationGetRelationName(irel));
 
 		fmgr_info_cxt(procId, locinfo, irel->rd_indexcxt);
+		fmgr_info_collation(irel->rd_index->indcollation.values[attnum-1],
+							locinfo);
 	}
 
 	return locinfo;

@@ -39,7 +39,7 @@ static int	UTF8_MatchText(char *t, int tlen, char *p, int plen);
 static int	SB_IMatchText(char *t, int tlen, char *p, int plen);
 
 static int	GenericMatchText(char *s, int slen, char *p, int plen);
-static int	Generic_Text_IC_like(text *str, text *pat);
+static int	Generic_Text_IC_like(text *str, text *pat, Oid collation);
 
 /*--------------------
  * Support routine for MatchText. Compares given multibyte streams
@@ -133,7 +133,7 @@ GenericMatchText(char *s, int slen, char *p, int plen)
 }
 
 static inline int
-Generic_Text_IC_like(text *str, text *pat)
+Generic_Text_IC_like(text *str, text *pat, Oid collation)
 {
 	char	   *s,
 			   *p;
@@ -149,10 +149,10 @@ Generic_Text_IC_like(text *str, text *pat)
 	if (pg_database_encoding_max_length() > 1)
 	{
 		/* lower's result is never packed, so OK to use old macros here */
-		pat = DatumGetTextP(DirectFunctionCall1(lower, PointerGetDatum(pat)));
+		pat = DatumGetTextP(DirectFunctionCall1WithCollation(lower, collation, PointerGetDatum(pat)));
 		p = VARDATA(pat);
 		plen = (VARSIZE(pat) - VARHDRSZ);
-		str = DatumGetTextP(DirectFunctionCall1(lower, PointerGetDatum(str)));
+		str = DatumGetTextP(DirectFunctionCall1WithCollation(lower, collation, PointerGetDatum(str)));
 		s = VARDATA(str);
 		slen = (VARSIZE(str) - VARHDRSZ);
 		if (GetDatabaseEncoding() == PG_UTF8)
@@ -314,7 +314,7 @@ nameiclike(PG_FUNCTION_ARGS)
 
 	strtext = DatumGetTextP(DirectFunctionCall1(name_text,
 												NameGetDatum(str)));
-	result = (Generic_Text_IC_like(strtext, pat) == LIKE_TRUE);
+	result = (Generic_Text_IC_like(strtext, pat, PG_GET_COLLATION()) == LIKE_TRUE);
 
 	PG_RETURN_BOOL(result);
 }
@@ -329,7 +329,7 @@ nameicnlike(PG_FUNCTION_ARGS)
 
 	strtext = DatumGetTextP(DirectFunctionCall1(name_text,
 												NameGetDatum(str)));
-	result = (Generic_Text_IC_like(strtext, pat) != LIKE_TRUE);
+	result = (Generic_Text_IC_like(strtext, pat, PG_GET_COLLATION()) != LIKE_TRUE);
 
 	PG_RETURN_BOOL(result);
 }
@@ -341,7 +341,7 @@ texticlike(PG_FUNCTION_ARGS)
 	text	   *pat = PG_GETARG_TEXT_PP(1);
 	bool		result;
 
-	result = (Generic_Text_IC_like(str, pat) == LIKE_TRUE);
+	result = (Generic_Text_IC_like(str, pat, PG_GET_COLLATION()) == LIKE_TRUE);
 
 	PG_RETURN_BOOL(result);
 }
@@ -353,7 +353,7 @@ texticnlike(PG_FUNCTION_ARGS)
 	text	   *pat = PG_GETARG_TEXT_PP(1);
 	bool		result;
 
-	result = (Generic_Text_IC_like(str, pat) != LIKE_TRUE);
+	result = (Generic_Text_IC_like(str, pat, PG_GET_COLLATION()) != LIKE_TRUE);
 
 	PG_RETURN_BOOL(result);
 }

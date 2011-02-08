@@ -189,10 +189,11 @@ make_var(ParseState *pstate, RangeTblEntry *rte, int attrno, int location)
 				sublevels_up;
 	Oid			vartypeid;
 	int32		type_mod;
+	Oid			varcollid;
 
 	vnum = RTERangeTablePosn(pstate, rte, &sublevels_up);
-	get_rte_attribute_type(rte, attrno, &vartypeid, &type_mod);
-	result = makeVar(vnum, attrno, vartypeid, type_mod, sublevels_up);
+	get_rte_attribute_type(rte, attrno, &vartypeid, &type_mod, &varcollid);
+	result = makeVar(vnum, attrno, vartypeid, type_mod, varcollid, sublevels_up);
 	result->location = location;
 	return result;
 }
@@ -269,6 +270,7 @@ transformArrayType(Oid *arrayType, int32 *arrayTypmod)
  * elementType	OID of array's element type (fetch with transformArrayType,
  *				or pass InvalidOid to do it here)
  * arrayTypMod	typmod for the array (which is also typmod for the elements)
+ * arrayColl	OID of collation of array and array's elements
  * indirection	Untransformed list of subscripts (must not be NIL)
  * assignFrom	NULL for array fetch, else transformed expression for source.
  */
@@ -278,6 +280,7 @@ transformArraySubscripts(ParseState *pstate,
 						 Oid arrayType,
 						 Oid elementType,
 						 int32 arrayTypMod,
+						 Oid arrayColl,
 						 List *indirection,
 						 Node *assignFrom)
 {
@@ -404,6 +407,7 @@ transformArraySubscripts(ParseState *pstate,
 	aref->refarraytype = arrayType;
 	aref->refelemtype = elementType;
 	aref->reftypmod = arrayTypMod;
+	aref->refcollid = arrayColl;
 	aref->refupperindexpr = upperIndexpr;
 	aref->reflowerindexpr = lowerIndexpr;
 	aref->refexpr = (Expr *) arrayBase;

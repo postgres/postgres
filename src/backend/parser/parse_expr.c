@@ -65,6 +65,7 @@ static Node *transformWholeRowRef(ParseState *pstate, RangeTblEntry *rte,
 static Node *transformIndirection(ParseState *pstate, Node *basenode,
 					 List *indirection);
 static Node *transformTypeCast(ParseState *pstate, TypeCast *tc);
+static Node *transformCollateClause(ParseState *pstate, CollateClause *c);
 static Node *make_row_comparison_op(ParseState *pstate, List *opname,
 					   List *largs, List *rargs, int location);
 static Node *make_row_distinct_op(ParseState *pstate, List *opname,
@@ -146,6 +147,12 @@ transformExpr(ParseState *pstate, Node *expr)
 			{
 				TypeCast   *tc = (TypeCast *) expr;
 
+				if (tc->typeName->collnames)
+					ereport(ERROR,
+							(errcode(ERRCODE_SYNTAX_ERROR),
+							 errmsg("COLLATE clause not allowed in cast target"),
+							 parser_errposition(pstate, tc->typeName->location)));
+
 				/*
 				 * If the subject of the typecast is an ARRAY[] construct and
 				 * the target type is an array type, we invoke
@@ -184,6 +191,10 @@ transformExpr(ParseState *pstate, Node *expr)
 				result = transformTypeCast(pstate, tc);
 				break;
 			}
+
+		case T_CollateClause:
+			result = transformCollateClause(pstate, (CollateClause *) expr);
+			break;
 
 		case T_A_Expr:
 			{
@@ -423,6 +434,7 @@ transformIndirection(ParseState *pstate, Node *basenode, List *indirection)
 														   exprType(result),
 														   InvalidOid,
 														   exprTypmod(result),
+														   exprCollation(result),
 														   subscripts,
 														   NULL);
 			subscripts = NIL;
@@ -444,6 +456,7 @@ transformIndirection(ParseState *pstate, Node *basenode, List *indirection)
 												   exprType(result),
 												   InvalidOid,
 												   exprTypmod(result),
+												   exprCollation(result),
 												   subscripts,
 												   NULL);
 
@@ -1267,6 +1280,7 @@ transformCaseExpr(ParseState *pstate, CaseExpr *c)
 		placeholder = makeNode(CaseTestExpr);
 		placeholder->typeId = exprType(arg);
 		placeholder->typeMod = exprTypmod(arg);
+		placeholder->collation = exprCollation(arg);
 	}
 	else
 		placeholder = NULL;
@@ -1350,6 +1364,8 @@ transformCaseExpr(ParseState *pstate, CaseExpr *c)
 								  ptype,
 								  "CASE/WHEN");
 	}
+
+	newc->casecollation = select_common_collation(pstate, resultexprs, true);
 
 	newc->location = c->location;
 
@@ -1461,6 +1477,7 @@ transformSubLink(ParseState *pstate, SubLink *sublink)
 			param->paramid = tent->resno;
 			param->paramtype = exprType((Node *) tent->expr);
 			param->paramtypmod = exprTypmod((Node *) tent->expr);
+			param->paramcollation = exprCollation((Node *) tent->expr);
 			param->location = -1;
 
 			right_list = lappend(right_list, param);
@@ -1704,6 +1721,7 @@ transformCoalesceExpr(ParseState *pstate, CoalesceExpr *c)
 	}
 
 	newc->args = newcoercedargs;
+	newc->coalescecollation = select_common_collation(pstate, newcoercedargs, true);
 	newc->location = c->location;
 	return (Node *) newc;
 }
@@ -1728,6 +1746,7 @@ transformMinMaxExpr(ParseState *pstate, MinMaxExpr *m)
 	}
 
 	newm->minmaxtype = select_common_type(pstate, newargs, funcname, NULL);
+	newm->collid = select_common_collation(pstate, newargs, false);
 
 	/* Convert arguments if necessary */
 	foreach(args, newargs)
@@ -2083,6 +2102,36 @@ transformTypeCast(ParseState *pstate, TypeCast *tc)
 }
 
 /*
+ * Handle an explicit COLLATE clause.
+ *
+ * Transform the argument, and look up the collation name.
+ */
+static Node *
+transformCollateClause(ParseState *pstate, CollateClause *c)
+{
+	CollateClause *newc;
+	Oid		argtype;
+
+	newc = makeNode(CollateClause);
+	newc->arg = (Expr *) transformExpr(pstate, (Node *) c->arg);
+
+	argtype = exprType((Node *) newc->arg);
+	/* The unknown type is not collatable, but coerce_type() takes
+	 * care of it separately, so we'll let it go here. */
+	if (!type_is_collatable(argtype) && argtype != UNKNOWNOID)
+		ereport(ERROR,
+				(errcode(ERRCODE_SYNTAX_ERROR),
+				 errmsg("collations are not supported by type %s",
+						format_type_be(argtype))));
+
+	newc->collOid = LookupCollation(pstate, c->collnames, c->location);
+	newc->collnames = c->collnames;
+	newc->location = c->location;
+
+	return (Node *) newc;
+}
+
+/*
  * Transform a "row compare-op row" construct
  *
  * The inputs are lists of already-transformed expressions.
@@ -2103,6 +2152,7 @@ make_row_comparison_op(ParseState *pstate, List *opname,
 	List	   *opexprs;
 	List	   *opnos;
 	List	   *opfamilies;
+	List	   *collids;
 	ListCell   *l,
 			   *r;
 	List	  **opfamily_lists;
@@ -2273,6 +2323,7 @@ make_row_comparison_op(ParseState *pstate, List *opname,
 	 * possibility that make_op inserted coercion operations.
 	 */
 	opnos = NIL;
+	collids = NIL;
 	largs = NIL;
 	rargs = NIL;
 	foreach(l, opexprs)
@@ -2280,6 +2331,7 @@ make_row_comparison_op(ParseState *pstate, List *opname,
 		OpExpr	   *cmp = (OpExpr *) lfirst(l);
 
 		opnos = lappend_oid(opnos, cmp->opno);
+		collids = lappend_oid(collids, cmp->collid);
 		largs = lappend(largs, linitial(cmp->args));
 		rargs = lappend(rargs, lsecond(cmp->args));
 	}
@@ -2288,6 +2340,7 @@ make_row_comparison_op(ParseState *pstate, List *opname,
 	rcexpr->rctype = rctype;
 	rcexpr->opnos = opnos;
 	rcexpr->opfamilies = opfamilies;
+	rcexpr->collids = collids;
 	rcexpr->largs = largs;
 	rcexpr->rargs = rargs;
 

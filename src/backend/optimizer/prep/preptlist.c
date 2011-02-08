@@ -100,6 +100,7 @@ preprocess_targetlist(PlannerInfo *root, List *tlist)
 						  SelfItemPointerAttributeNumber,
 						  TIDOID,
 						  -1,
+						  InvalidOid,
 						  0);
 			snprintf(resname, sizeof(resname), "ctid%u", rc->rti);
 			tle = makeTargetEntry((Expr *) var,
@@ -115,6 +116,7 @@ preprocess_targetlist(PlannerInfo *root, List *tlist)
 							  TableOidAttributeNumber,
 							  OIDOID,
 							  -1,
+							  InvalidOid,
 							  0);
 				snprintf(resname, sizeof(resname), "tableoid%u", rc->rti);
 				tle = makeTargetEntry((Expr *) var,
@@ -257,6 +259,7 @@ expand_targetlist(List *tlist, int command_type,
 			 */
 			Oid			atttype = att_tup->atttypid;
 			int32		atttypmod = att_tup->atttypmod;
+			Oid			attcollation = att_tup->attcollation;
 			Node	   *new_expr;
 
 			switch (command_type)
@@ -296,6 +299,7 @@ expand_targetlist(List *tlist, int command_type,
 													attrno,
 													atttype,
 													atttypmod,
+													attcollation,
 													0);
 					}
 					else

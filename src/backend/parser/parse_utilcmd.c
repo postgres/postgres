@@ -627,7 +627,8 @@ transformInhRelation(CreateStmtContext *cxt, InhRelation *inhRelation)
 		def = makeNode(ColumnDef);
 		def->colname = pstrdup(attributeName);
 		def->typeName = makeTypeNameFromOid(attribute->atttypid,
-											attribute->atttypmod);
+											attribute->atttypmod,
+											attribute->attcollation);
 		def->inhcount = 0;
 		def->is_local = true;
 		def->is_not_null = attribute->attnotnull;
@@ -821,7 +822,7 @@ transformOfType(CreateStmtContext *cxt, TypeName *ofTypename)
 
 	AssertArg(ofTypename);
 
-	tuple = typenameType(NULL, ofTypename, NULL);
+	tuple = typenameType(NULL, ofTypename, NULL, NULL);
 	typ = (Form_pg_type) GETSTRUCT(tuple);
 	ofTypeId = HeapTupleGetOid(tuple);
 	ofTypename->typeOid = ofTypeId;		/* cached for later */
@@ -842,7 +843,7 @@ transformOfType(CreateStmtContext *cxt, TypeName *ofTypename)
 			continue;
 
 		n->colname = pstrdup(NameStr(attr->attname));
-		n->typeName = makeTypeNameFromOid(attr->atttypid, attr->atttypmod);
+		n->typeName = makeTypeNameFromOid(attr->atttypid, attr->atttypmod, attr->attcollation);
 		n->constraints = NULL;
 		n->is_local = true;
 		n->is_from_type = true;
@@ -2446,7 +2447,7 @@ transformColumnType(CreateStmtContext *cxt, ColumnDef *column)
 	/*
 	 * All we really need to do here is verify that the type is valid.
 	 */
-	Type		ctype = typenameType(cxt->pstate, column->typeName, NULL);
+	Type		ctype = typenameType(cxt->pstate, column->typeName, NULL, NULL);
 
 	ReleaseSysCache(ctype);
 }

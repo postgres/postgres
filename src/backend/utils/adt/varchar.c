@@ -737,7 +737,8 @@ bpcharlt(PG_FUNCTION_ARGS)
 	len1 = bcTruelen(arg1);
 	len2 = bcTruelen(arg2);
 
-	cmp = varstr_cmp(VARDATA_ANY(arg1), len1, VARDATA_ANY(arg2), len2);
+	cmp = varstr_cmp(VARDATA_ANY(arg1), len1, VARDATA_ANY(arg2), len2,
+					 PG_GET_COLLATION());
 
 	PG_FREE_IF_COPY(arg1, 0);
 	PG_FREE_IF_COPY(arg2, 1);
@@ -757,7 +758,8 @@ bpcharle(PG_FUNCTION_ARGS)
 	len1 = bcTruelen(arg1);
 	len2 = bcTruelen(arg2);
 
-	cmp = varstr_cmp(VARDATA_ANY(arg1), len1, VARDATA_ANY(arg2), len2);
+	cmp = varstr_cmp(VARDATA_ANY(arg1), len1, VARDATA_ANY(arg2), len2,
+					 PG_GET_COLLATION());
 
 	PG_FREE_IF_COPY(arg1, 0);
 	PG_FREE_IF_COPY(arg2, 1);
@@ -777,7 +779,8 @@ bpchargt(PG_FUNCTION_ARGS)
 	len1 = bcTruelen(arg1);
 	len2 = bcTruelen(arg2);
 
-	cmp = varstr_cmp(VARDATA_ANY(arg1), len1, VARDATA_ANY(arg2), len2);
+	cmp = varstr_cmp(VARDATA_ANY(arg1), len1, VARDATA_ANY(arg2), len2,
+					 PG_GET_COLLATION());
 
 	PG_FREE_IF_COPY(arg1, 0);
 	PG_FREE_IF_COPY(arg2, 1);
@@ -797,7 +800,8 @@ bpcharge(PG_FUNCTION_ARGS)
 	len1 = bcTruelen(arg1);
 	len2 = bcTruelen(arg2);
 
-	cmp = varstr_cmp(VARDATA_ANY(arg1), len1, VARDATA_ANY(arg2), len2);
+	cmp = varstr_cmp(VARDATA_ANY(arg1), len1, VARDATA_ANY(arg2), len2,
+					 PG_GET_COLLATION());
 
 	PG_FREE_IF_COPY(arg1, 0);
 	PG_FREE_IF_COPY(arg2, 1);
@@ -817,7 +821,8 @@ bpcharcmp(PG_FUNCTION_ARGS)
 	len1 = bcTruelen(arg1);
 	len2 = bcTruelen(arg2);
 
-	cmp = varstr_cmp(VARDATA_ANY(arg1), len1, VARDATA_ANY(arg2), len2);
+	cmp = varstr_cmp(VARDATA_ANY(arg1), len1, VARDATA_ANY(arg2), len2,
+					 PG_GET_COLLATION());
 
 	PG_FREE_IF_COPY(arg1, 0);
 	PG_FREE_IF_COPY(arg2, 1);
@@ -837,7 +842,8 @@ bpchar_larger(PG_FUNCTION_ARGS)
 	len1 = bcTruelen(arg1);
 	len2 = bcTruelen(arg2);
 
-	cmp = varstr_cmp(VARDATA_ANY(arg1), len1, VARDATA_ANY(arg2), len2);
+	cmp = varstr_cmp(VARDATA_ANY(arg1), len1, VARDATA_ANY(arg2), len2,
+					 PG_GET_COLLATION());
 
 	PG_RETURN_BPCHAR_P((cmp >= 0) ? arg1 : arg2);
 }
@@ -854,7 +860,8 @@ bpchar_smaller(PG_FUNCTION_ARGS)
 	len1 = bcTruelen(arg1);
 	len2 = bcTruelen(arg2);
 
-	cmp = varstr_cmp(VARDATA_ANY(arg1), len1, VARDATA_ANY(arg2), len2);
+	cmp = varstr_cmp(VARDATA_ANY(arg1), len1, VARDATA_ANY(arg2), len2,
+					 PG_GET_COLLATION());
 
 	PG_RETURN_BPCHAR_P((cmp <= 0) ? arg1 : arg2);
 }

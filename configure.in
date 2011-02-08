@@ -1118,6 +1118,8 @@ AC_TYPE_INTPTR_T
 AC_TYPE_UINTPTR_T
 AC_TYPE_LONG_LONG_INT
 
+PGAC_TYPE_LOCALE_T
+
 AC_CHECK_TYPES([struct cmsgcred, struct fcred, struct sockcred], [], [],
 [#include <sys/param.h>
 #include <sys/types.h>

@@ -142,6 +142,9 @@ CATALOG(pg_attribute,1249) BKI_BOOTSTRAP BKI_WITHOUT_OIDS BKI_ROWTYPE_OID(75) BK
 	/* Number of times inherited from direct parent relation(s) */
 	int4		attinhcount;
 
+	/* attribute's collation */
+	Oid			attcollation;
+
 	/*
 	 * VARIABLE LENGTH FIELDS start here.  These fields may be NULL, too.
 	 *
@@ -159,10 +162,10 @@ CATALOG(pg_attribute,1249) BKI_BOOTSTRAP BKI_WITHOUT_OIDS BKI_ROWTYPE_OID(75) BK
  * ATTRIBUTE_FIXED_PART_SIZE is the size of the fixed-layout,
  * guaranteed-not-null part of a pg_attribute row.	This is in fact as much
  * of the row as gets copied into tuple descriptors, so don't expect you
- * can access fields beyond attinhcount except in a real tuple!
+ * can access fields beyond attcollation except in a real tuple!
  */
 #define ATTRIBUTE_FIXED_PART_SIZE \
-	(offsetof(FormData_pg_attribute,attinhcount) + sizeof(int4))
+	(offsetof(FormData_pg_attribute,attcollation) + sizeof(Oid))
 
 /* ----------------
  *		Form_pg_attribute corresponds to a pointer to a tuple with
@@ -176,7 +179,7 @@ typedef FormData_pg_attribute *Form_pg_attribute;
  * ----------------
  */
 
-#define Natts_pg_attribute				19
+#define Natts_pg_attribute				20
 #define Anum_pg_attribute_attrelid		1
 #define Anum_pg_attribute_attname		2
 #define Anum_pg_attribute_atttypid		3
@@ -194,8 +197,9 @@ typedef FormData_pg_attribute *Form_pg_attribute;
 #define Anum_pg_attribute_attisdropped	15
 #define Anum_pg_attribute_attislocal	16
 #define Anum_pg_attribute_attinhcount	17
-#define Anum_pg_attribute_attacl		18
-#define Anum_pg_attribute_attoptions	19
+#define Anum_pg_attribute_attcollation	18
+#define Anum_pg_attribute_attacl		19
+#define Anum_pg_attribute_attoptions	20
 
 
 /* ----------------

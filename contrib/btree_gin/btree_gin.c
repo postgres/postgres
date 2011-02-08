@@ -7,6 +7,7 @@
 
 #include "fmgr.h"
 #include "access/skey.h"
+#include "catalog/pg_collation.h"
 #include "utils/builtins.h"
 #include "utils/bytea.h"
 #include "utils/cash.h"
@@ -120,8 +121,9 @@ gin_compare_prefix_##type(PG_FUNCTION_ARGS)									\
 	int32		res,														\
 				cmp;														\
 																			\
-	cmp = DatumGetInt32(DirectFunctionCall2(								\
+	cmp = DatumGetInt32(DirectFunctionCall2WithCollation(					\
 				TypeInfo_##type.typecmp,									\
+				DEFAULT_COLLATION_OID,										\
 				(data->strategy == BTLessStrategyNumber ||					\
 				 data->strategy == BTLessEqualStrategyNumber)				\
 				 ? data->datum : a,											\

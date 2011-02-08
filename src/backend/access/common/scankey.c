@@ -103,3 +103,16 @@ ScanKeyEntryInitializeWithInfo(ScanKey entry,
 	entry->sk_argument = argument;
 	fmgr_info_copy(&entry->sk_func, finfo, CurrentMemoryContext);
 }
+
+/*
+ * ScanKeyEntryInitializeCollation
+ *
+ * Initialize the collation of a scan key.  This is just a notational
+ * convenience and small abstraction.
+ */
+void
+ScanKeyEntryInitializeCollation(ScanKey entry,
+								Oid collation)
+{
+	entry->sk_func.fn_collation = collation;
+}

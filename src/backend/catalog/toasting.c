@@ -124,6 +124,7 @@ create_toast_table(Relation rel, Oid toastOid, Oid toastIndexOid, Datum reloptio
 	char		toast_relname[NAMEDATALEN];
 	char		toast_idxname[NAMEDATALEN];
 	IndexInfo  *indexInfo;
+	Oid			collationObjectId[2];
 	Oid			classObjectId[2];
 	int16		coloptions[2];
 	ObjectAddress baseobject,
@@ -264,6 +265,9 @@ create_toast_table(Relation rel, Oid toastOid, Oid toastIndexOid, Datum reloptio
 	indexInfo->ii_Concurrent = false;
 	indexInfo->ii_BrokenHotChain = false;
 
+	collationObjectId[0] = InvalidOid;
+	collationObjectId[1] = InvalidOid;
+
 	classObjectId[0] = OID_BTREE_OPS_OID;
 	classObjectId[1] = INT4_BTREE_OPS_OID;
 
@@ -275,7 +279,7 @@ create_toast_table(Relation rel, Oid toastOid, Oid toastIndexOid, Datum reloptio
 							   list_make2("chunk_id", "chunk_seq"),
 							   BTREE_AM_OID,
 							   rel->rd_rel->reltablespace,
-							   classObjectId, coloptions, (Datum) 0,
+							   collationObjectId, classObjectId, coloptions, (Datum) 0,
 							   true, false, false, false,
 							   true, false, false);
 

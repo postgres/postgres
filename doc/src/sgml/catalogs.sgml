@@ -104,6 +104,11 @@
      </row>
 
      <row>
+      <entry><link linkend="catalog-pg-collation"><structname>pg_collation</structname></link></entry>
+      <entry>collations (locale information)</entry>
+     </row>
+
+     <row>
       <entry><link linkend="catalog-pg-conversion"><structname>pg_conversion</structname></link></entry>
       <entry>encoding conversion information</entry>
      </row>
@@ -1114,6 +1119,16 @@
      </row>
 
      <row>
+      <entry><structfield>attcollation</structfield></entry>
+      <entry><type>oid</type></entry>
+      <entry><literal><link linkend="catalog-pg-collation"><structname>pg_collation</structname></link>.oid</literal></entry>
+      <entry>
+       The defined collation of the column, zero if the column does
+       not have a collatable type.
+      </entry>
+     </row>
+
+     <row>
       <entry><structfield>attacl</structfield></entry>
       <entry><type>aclitem[]</type></entry>
       <entry></entry>
@@ -2047,6 +2062,76 @@
     relation.
    </para>
   </note>
+
+ </sect1>
+
+ <sect1 id="catalog-pg-collation">
+  <title><structname>pg_collation</structname></title>
+
+  <indexterm zone="catalog-pg-collation">
+   <primary>pg_collation</primary>
+  </indexterm>
+
+  <para>
+   The catalog <structname>pg_collation</structname> describes the
+   available collations, which are essentially mappings from an SQL
+   name to operating system locale categories.
+   See <xref linkend="locale"> for more information.
+  </para>
+
+  <table>
+   <title><structname>pg_collation</> Columns</title>
+
+   <tgroup cols="4">
+    <thead>
+     <row>
+      <entry>Name</entry>
+      <entry>Type</entry>
+      <entry>References</entry>
+      <entry>Description</entry>
+     </row>
+    </thead>
+
+    <tbody>
+     <row>
+      <entry><structfield>collname</structfield></entry>
+      <entry><type>name</type></entry>
+      <entry></entry>
+      <entry>Collation name (unique per namespace and encoding)</entry>
+     </row>
+
+     <row>
+      <entry><structfield>collnamespace</structfield></entry>
+      <entry><type>oid</type></entry>
+      <entry><literal><link linkend="catalog-pg-namespace"><structname>pg_namespace</structname></link>.oid</literal></entry>
+      <entry>
+       The OID of the namespace that contains this collation
+      </entry>
+     </row>
+
+     <row>
+      <entry><structfield>collencoding</structfield></entry>
+      <entry><type>int4</type></entry>
+      <entry></entry>
+      <entry>Encoding to which the collation is applicable</entry>
+     </row>
+
+     <row>
+      <entry><structfield>collcollate</structfield></entry>
+      <entry><type>name</type></entry>
+      <entry></entry>
+      <entry>LC_COLLATE for this collation object</entry>
+     </row>
+
+     <row>
+      <entry><structfield>collctype</structfield></entry>
+      <entry><type>name</type></entry>
+      <entry></entry>
+      <entry>LC_CTYPE for this collation object</entry>
+     </row>
+    </tbody>
+   </tgroup>
+  </table>
 
  </sect1>
 
@@ -3122,6 +3207,16 @@
        columns make up the index key.  A zero in this array indicates that the
        corresponding index attribute is an expression over the table columns,
        rather than a simple column reference.
+      </entry>
+     </row>
+
+     <row>
+      <entry><structfield>indcollation</structfield></entry>
+      <entry><type>oidvector</type></entry>
+      <entry><literal><link linkend="catalog-pg-collation"><structname>pg_collation</structname></link>.oid</literal></entry>
+      <entry>
+       For each column in the index key, this contains the OID of the
+       collation to use for the index.
       </entry>
      </row>
 
@@ -5864,6 +5959,21 @@
        an array type).
        Zero for types other than domains over array types.
        </para></entry>
+     </row>
+
+     <row>
+      <entry><structfield>typcollation</structfield></entry>
+      <entry><type>oid</type></entry>
+      <entry><literal><link linkend="catalog-pg-collation"><structname>pg_collation</structname></link>.oid</literal></entry>
+      <entry><para>
+       <structfield>typcollation</structfield> specifies the collation
+       of the type.  If a type does not support collations, this will
+       be zero, collation analysis at parse time is skipped, and
+       the use of <literal>COLLATE</literal> clauses with the type is
+       invalid.  A base type that supports collations will have
+       <symbol>DEFAULT_COLLATION_OID</symbol> here.  A domain can have
+       another collation OID, if one was defined for the domain.
+      </para></entry>
      </row>
 
      <row>

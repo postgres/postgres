@@ -198,10 +198,12 @@ get_relation_info(PlannerInfo *root, Oid relationObjectId, bool inhparent,
 			info->indexkeys = (int *) palloc(sizeof(int) * ncolumns);
 			info->opfamily = (Oid *) palloc(sizeof(Oid) * ncolumns);
 			info->opcintype = (Oid *) palloc(sizeof(Oid) * ncolumns);
+			info->indexcollations = (Oid *) palloc(sizeof(Oid) * ncolumns);
 
 			for (i = 0; i < ncolumns; i++)
 			{
 				info->indexkeys[i] = index->indkey.values[i];
+				info->indexcollations[i] = indexRelation->rd_indcollation[i];
 				info->opfamily[i] = indexRelation->rd_opfamily[i];
 				info->opcintype[i] = indexRelation->rd_opcintype[i];
 			}
@@ -634,6 +636,7 @@ get_relation_constraints(PlannerInfo *root,
 												  i,
 												  att->atttypid,
 												  att->atttypmod,
+												  att->attcollation,
 												  0);
 					ntest->nulltesttype = IS_NOT_NULL;
 					ntest->argisrow = type_is_rowtype(att->atttypid);
@@ -797,6 +800,7 @@ build_physical_tlist(PlannerInfo *root, RelOptInfo *rel)
 							  attrno,
 							  att_tup->atttypid,
 							  att_tup->atttypmod,
+							  att_tup->attcollation,
 							  0);
 
 				tlist = lappend(tlist,

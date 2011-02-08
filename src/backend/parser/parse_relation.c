@@ -1098,6 +1098,7 @@ addRangeTableEntryForFunction(ParseState *pstate,
 	rte->funcexpr = funcexpr;
 	rte->funccoltypes = NIL;
 	rte->funccoltypmods = NIL;
+	rte->funccolcollations = NIL;
 	rte->alias = alias;
 
 	eref = makeAlias(alias ? alias->aliasname : funcname, NIL);
@@ -1157,6 +1158,7 @@ addRangeTableEntryForFunction(ParseState *pstate,
 			char	   *attrname;
 			Oid			attrtype;
 			int32		attrtypmod;
+			Oid			attrcollation;
 
 			attrname = pstrdup(n->colname);
 			if (n->typeName->setof)
@@ -1165,10 +1167,11 @@ addRangeTableEntryForFunction(ParseState *pstate,
 						 errmsg("column \"%s\" cannot be declared SETOF",
 								attrname),
 						 parser_errposition(pstate, n->typeName->location)));
-			typenameTypeIdAndMod(pstate, n->typeName, &attrtype, &attrtypmod);
+			typenameTypeIdModColl(pstate, n->typeName, &attrtype, &attrtypmod, &attrcollation);
 			eref->colnames = lappend(eref->colnames, makeString(attrname));
 			rte->funccoltypes = lappend_oid(rte->funccoltypes, attrtype);
 			rte->funccoltypmods = lappend_int(rte->funccoltypmods, attrtypmod);
+			rte->funccolcollations = lappend_oid(rte->funccolcollations, attrcollation);
 		}
 	}
 	else
@@ -1381,6 +1384,7 @@ addRangeTableEntryForCTE(ParseState *pstate,
 
 	rte->ctecoltypes = cte->ctecoltypes;
 	rte->ctecoltypmods = cte->ctecoltypmods;
+	rte->ctecolcollations = cte->ctecolcollations;
 
 	rte->alias = alias;
 	if (alias)
@@ -1573,6 +1577,7 @@ expandRTE(RangeTblEntry *rte, int rtindex, int sublevels_up,
 						varnode = makeVar(rtindex, varattno,
 										  exprType((Node *) te->expr),
 										  exprTypmod((Node *) te->expr),
+										  exprCollation((Node *) te->expr),
 										  sublevels_up);
 						varnode->location = location;
 
@@ -1612,6 +1617,7 @@ expandRTE(RangeTblEntry *rte, int rtindex, int sublevels_up,
 
 						varnode = makeVar(rtindex, 1,
 										  funcrettype, -1,
+										  exprCollation(rte->funcexpr),
 										  sublevels_up);
 						varnode->location = location;
 
@@ -1626,12 +1632,14 @@ expandRTE(RangeTblEntry *rte, int rtindex, int sublevels_up,
 					{
 						ListCell   *l1;
 						ListCell   *l2;
+						ListCell   *l3;
 						int			attnum = 0;
 
-						forboth(l1, rte->funccoltypes, l2, rte->funccoltypmods)
+						forthree(l1, rte->funccoltypes, l2, rte->funccoltypmods, l3, rte->funccolcollations)
 						{
 							Oid			attrtype = lfirst_oid(l1);
 							int32		attrtypmod = lfirst_int(l2);
+							Oid			attrcollation = lfirst_oid(l3);
 							Var		   *varnode;
 
 							attnum++;
@@ -1639,6 +1647,7 @@ expandRTE(RangeTblEntry *rte, int rtindex, int sublevels_up,
 											  attnum,
 											  attrtype,
 											  attrtypmod,
+											  attrcollation,
 											  sublevels_up);
 							varnode->location = location;
 							*colvars = lappend(*colvars, varnode);
@@ -1681,6 +1690,7 @@ expandRTE(RangeTblEntry *rte, int rtindex, int sublevels_up,
 						varnode = makeVar(rtindex, varattno,
 										  exprType(col),
 										  exprTypmod(col),
+										  exprCollation(col),
 										  sublevels_up);
 						varnode->location = location;
 						*colvars = lappend(*colvars, varnode);
@@ -1740,6 +1750,7 @@ expandRTE(RangeTblEntry *rte, int rtindex, int sublevels_up,
 						varnode = makeVar(rtindex, varattno,
 										  exprType(avar),
 										  exprTypmod(avar),
+										  exprCollation(avar),
 										  sublevels_up);
 						varnode->location = location;
 
@@ -1753,12 +1764,14 @@ expandRTE(RangeTblEntry *rte, int rtindex, int sublevels_up,
 				ListCell   *aliasp_item = list_head(rte->eref->colnames);
 				ListCell   *lct;
 				ListCell   *lcm;
+				ListCell   *lcc;
 
 				varattno = 0;
-				forboth(lct, rte->ctecoltypes, lcm, rte->ctecoltypmods)
+				forthree(lct, rte->ctecoltypes, lcm, rte->ctecoltypmods, lcc, rte->ctecolcollations)
 				{
 					Oid			coltype = lfirst_oid(lct);
 					int32		coltypmod = lfirst_int(lcm);
+					Oid			colcoll = lfirst_oid(lcc);
 
 					varattno++;
 
@@ -1776,7 +1789,7 @@ expandRTE(RangeTblEntry *rte, int rtindex, int sublevels_up,
 						Var		   *varnode;
 
 						varnode = makeVar(rtindex, varattno,
-										  coltype, coltypmod,
+										  coltype, coltypmod, colcoll,
 										  sublevels_up);
 						*colvars = lappend(*colvars, varnode);
 					}
@@ -1857,7 +1870,7 @@ expandTupleDesc(TupleDesc tupdesc, Alias *eref,
 			Var		   *varnode;
 
 			varnode = makeVar(rtindex, attr->attnum,
-							  attr->atttypid, attr->atttypmod,
+							  attr->atttypid, attr->atttypmod, attr->attcollation,
 							  sublevels_up);
 			varnode->location = location;
 
@@ -1968,7 +1981,7 @@ get_rte_attribute_name(RangeTblEntry *rte, AttrNumber attnum)
  */
 void
 get_rte_attribute_type(RangeTblEntry *rte, AttrNumber attnum,
-					   Oid *vartype, int32 *vartypmod)
+					   Oid *vartype, int32 *vartypmod, Oid *varcollid)
 {
 	switch (rte->rtekind)
 	{
@@ -1998,6 +2011,7 @@ get_rte_attribute_type(RangeTblEntry *rte, AttrNumber attnum,
 						   get_rel_name(rte->relid))));
 				*vartype = att_tup->atttypid;
 				*vartypmod = att_tup->atttypmod;
+				*varcollid = att_tup->attcollation;
 				ReleaseSysCache(tp);
 			}
 			break;
@@ -2012,6 +2026,7 @@ get_rte_attribute_type(RangeTblEntry *rte, AttrNumber attnum,
 						 rte->eref->aliasname, attnum);
 				*vartype = exprType((Node *) te->expr);
 				*vartypmod = exprTypmod((Node *) te->expr);
+				*varcollid = exprCollation((Node *) te->expr);
 			}
 			break;
 		case RTE_FUNCTION:
@@ -2053,17 +2068,20 @@ get_rte_attribute_type(RangeTblEntry *rte, AttrNumber attnum,
 										rte->eref->aliasname)));
 					*vartype = att_tup->atttypid;
 					*vartypmod = att_tup->atttypmod;
+					*varcollid = att_tup->attcollation;
 				}
 				else if (functypclass == TYPEFUNC_SCALAR)
 				{
 					/* Base data type, i.e. scalar */
 					*vartype = funcrettype;
 					*vartypmod = -1;
+					*varcollid = exprCollation(rte->funcexpr);
 				}
 				else if (functypclass == TYPEFUNC_RECORD)
 				{
 					*vartype = list_nth_oid(rte->funccoltypes, attnum - 1);
 					*vartypmod = list_nth_int(rte->funccoltypmods, attnum - 1);
+					*varcollid = list_nth_oid(rte->funccolcollations, attnum - 1);
 				}
 				else
 				{
@@ -2084,6 +2102,7 @@ get_rte_attribute_type(RangeTblEntry *rte, AttrNumber attnum,
 				col = (Node *) list_nth(collist, attnum - 1);
 				*vartype = exprType(col);
 				*vartypmod = exprTypmod(col);
+				*varcollid = exprCollation(col);
 			}
 			break;
 		case RTE_JOIN:
@@ -2097,6 +2116,7 @@ get_rte_attribute_type(RangeTblEntry *rte, AttrNumber attnum,
 				aliasvar = (Node *) list_nth(rte->joinaliasvars, attnum - 1);
 				*vartype = exprType(aliasvar);
 				*vartypmod = exprTypmod(aliasvar);
+				*varcollid = exprCollation(aliasvar);
 			}
 			break;
 		case RTE_CTE:
@@ -2105,6 +2125,7 @@ get_rte_attribute_type(RangeTblEntry *rte, AttrNumber attnum,
 				Assert(attnum > 0 && attnum <= list_length(rte->ctecoltypes));
 				*vartype = list_nth_oid(rte->ctecoltypes, attnum - 1);
 				*vartypmod = list_nth_int(rte->ctecoltypmods, attnum - 1);
+				*varcollid = list_nth_oid(rte->ctecolcollations, attnum - 1);
 			}
 			break;
 		default:

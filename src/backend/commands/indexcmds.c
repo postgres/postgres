@@ -58,6 +58,7 @@
 /* non-export function prototypes */
 static void CheckPredicate(Expr *predicate);
 static void ComputeIndexAttrs(IndexInfo *indexInfo,
+				  Oid *collationOidP,
 				  Oid *classOidP,
 				  int16 *colOptionP,
 				  List *attList,
@@ -124,6 +125,7 @@ DefineIndex(RangeVar *heapRelation,
 			bool quiet,
 			bool concurrent)
 {
+	Oid		   *collationObjectId;
 	Oid		   *classObjectId;
 	Oid			accessMethodId;
 	Oid			relationId;
@@ -345,9 +347,10 @@ DefineIndex(RangeVar *heapRelation,
 	indexInfo->ii_Concurrent = concurrent;
 	indexInfo->ii_BrokenHotChain = false;
 
+	collationObjectId = (Oid *) palloc(numberOfAttributes * sizeof(Oid));
 	classObjectId = (Oid *) palloc(numberOfAttributes * sizeof(Oid));
 	coloptions = (int16 *) palloc(numberOfAttributes * sizeof(int16));
-	ComputeIndexAttrs(indexInfo, classObjectId, coloptions, attributeList,
+	ComputeIndexAttrs(indexInfo, collationObjectId, classObjectId, coloptions, attributeList,
 					  exclusionOpNames, relationId,
 					  accessMethodName, accessMethodId,
 					  amcanorder, isconstraint);
@@ -392,7 +395,7 @@ DefineIndex(RangeVar *heapRelation,
 	indexRelationId =
 		index_create(rel, indexRelationName, indexRelationId,
 					 indexInfo, indexColNames,
-					 accessMethodId, tablespaceId, classObjectId,
+					 accessMethodId, tablespaceId, collationObjectId, classObjectId,
 					 coloptions, reloptions, primary,
 					 isconstraint, deferrable, initdeferred,
 					 allowSystemTableMods,
@@ -764,6 +767,7 @@ CheckPredicate(Expr *predicate)
  */
 static void
 ComputeIndexAttrs(IndexInfo *indexInfo,
+				  Oid *collationOidP,
 				  Oid *classOidP,
 				  int16 *colOptionP,
 				  List *attList,	/* list of IndexElem's */
@@ -800,6 +804,7 @@ ComputeIndexAttrs(IndexInfo *indexInfo,
 	{
 		IndexElem  *attribute = (IndexElem *) lfirst(lc);
 		Oid			atttype;
+		Oid			attcollation;
 
 		/*
 		 * Process the column-or-expression to be indexed.
@@ -829,6 +834,7 @@ ComputeIndexAttrs(IndexInfo *indexInfo,
 			attform = (Form_pg_attribute) GETSTRUCT(atttuple);
 			indexInfo->ii_KeyAttrNumbers[attn] = attform->attnum;
 			atttype = attform->atttypid;
+			attcollation = attform->attcollation;
 			ReleaseSysCache(atttuple);
 		}
 		else if (attribute->expr && IsA(attribute->expr, Var) &&
@@ -839,6 +845,7 @@ ComputeIndexAttrs(IndexInfo *indexInfo,
 
 			indexInfo->ii_KeyAttrNumbers[attn] = var->varattno;
 			atttype = get_atttype(relId, var->varattno);
+			attcollation = var->varcollid;
 		}
 		else
 		{
@@ -848,6 +855,7 @@ ComputeIndexAttrs(IndexInfo *indexInfo,
 			indexInfo->ii_Expressions = lappend(indexInfo->ii_Expressions,
 												attribute->expr);
 			atttype = exprType(attribute->expr);
+			attcollation = exprCollation(attribute->expr);
 
 			/*
 			 * We don't currently support generation of an actual query plan
@@ -873,6 +881,20 @@ ComputeIndexAttrs(IndexInfo *indexInfo,
 						(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
 						 errmsg("functions in index expression must be marked IMMUTABLE")));
 		}
+
+		/*
+		 * Collation override
+		 */
+		if (attribute->collation)
+		{
+			if (!type_is_collatable(atttype))
+				ereport(ERROR,
+						(errcode(ERRCODE_SYNTAX_ERROR),
+						 errmsg("collations are not supported by type %s",
+								format_type_be(atttype))));
+			attcollation = get_collation_oid(attribute->collation, false);
+		}
+		collationOidP[attn] = attcollation;
 
 		/*
 		 * Identify the opclass to use.

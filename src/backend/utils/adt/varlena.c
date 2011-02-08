@@ -18,6 +18,7 @@
 #include <limits.h>
 
 #include "access/tuptoaster.h"
+#include "catalog/pg_collation.h"
 #include "catalog/pg_type.h"
 #include "libpq/md5.h"
 #include "libpq/pqformat.h"
@@ -55,7 +56,7 @@ typedef struct
 #define PG_GETARG_UNKNOWN_P_COPY(n) DatumGetUnknownPCopy(PG_GETARG_DATUM(n))
 #define PG_RETURN_UNKNOWN_P(x)		PG_RETURN_POINTER(x)
 
-static int	text_cmp(text *arg1, text *arg2);
+static int	text_cmp(text *arg1, text *arg2, Oid collid);
 static int32 text_length(Datum str);
 static int	text_position(text *t1, text *t2);
 static void text_position_setup(text *t1, text *t2, TextPositionState *state);
@@ -1274,7 +1275,7 @@ text_position_cleanup(TextPositionState *state)
  * whether arg1 is less than, equal to, or greater than arg2.
  */
 int
-varstr_cmp(char *arg1, int len1, char *arg2, int len2)
+varstr_cmp(char *arg1, int len1, char *arg2, int len2, Oid collid)
 {
 	int			result;
 
@@ -1284,7 +1285,7 @@ varstr_cmp(char *arg1, int len1, char *arg2, int len2)
 	 * slower, so we optimize the case where LC_COLLATE is C.  We also try to
 	 * optimize relatively-short strings by avoiding palloc/pfree overhead.
 	 */
-	if (lc_collate_is_c())
+	if (lc_collate_is_c(collid))
 	{
 		result = memcmp(arg1, arg2, Min(len1, len2));
 		if ((result == 0) && (len1 != len2))
@@ -1298,6 +1299,10 @@ varstr_cmp(char *arg1, int len1, char *arg2, int len2)
 		char		a2buf[STACKBUFLEN];
 		char	   *a1p,
 				   *a2p;
+		pg_locale_t	mylocale = 0;
+
+		if (collid != DEFAULT_COLLATION_OID)
+			mylocale = pg_newlocale_from_collation(collid);
 
 #ifdef WIN32
 		/* Win32 does not have UTF-8, so we need to map to UTF-16 */
@@ -1398,6 +1403,11 @@ varstr_cmp(char *arg1, int len1, char *arg2, int len2)
 		memcpy(a2p, arg2, len2);
 		a2p[len2] = '\0';
 
+#ifdef HAVE_LOCALE_T
+		if (mylocale)
+			result = strcoll_l(a1p, a2p, mylocale);
+		else
+#endif
 		result = strcoll(a1p, a2p);
 
 		/*
@@ -1424,7 +1434,7 @@ varstr_cmp(char *arg1, int len1, char *arg2, int len2)
  * Returns -1, 0 or 1
  */
 static int
-text_cmp(text *arg1, text *arg2)
+text_cmp(text *arg1, text *arg2, Oid collid)
 {
 	char	   *a1p,
 			   *a2p;
@@ -1437,7 +1447,7 @@ text_cmp(text *arg1, text *arg2)
 	len1 = VARSIZE_ANY_EXHDR(arg1);
 	len2 = VARSIZE_ANY_EXHDR(arg2);
 
-	return varstr_cmp(a1p, len1, a2p, len2);
+	return varstr_cmp(a1p, len1, a2p, len2, collid);
 }
 
 /*
@@ -1519,7 +1529,7 @@ text_lt(PG_FUNCTION_ARGS)
 	text	   *arg2 = PG_GETARG_TEXT_PP(1);
 	bool		result;
 
-	result = (text_cmp(arg1, arg2) < 0);
+	result = (text_cmp(arg1, arg2, PG_GET_COLLATION()) < 0);
 
 	PG_FREE_IF_COPY(arg1, 0);
 	PG_FREE_IF_COPY(arg2, 1);
@@ -1534,7 +1544,7 @@ text_le(PG_FUNCTION_ARGS)
 	text	   *arg2 = PG_GETARG_TEXT_PP(1);
 	bool		result;
 
-	result = (text_cmp(arg1, arg2) <= 0);
+	result = (text_cmp(arg1, arg2, PG_GET_COLLATION()) <= 0);
 
 	PG_FREE_IF_COPY(arg1, 0);
 	PG_FREE_IF_COPY(arg2, 1);
@@ -1549,7 +1559,7 @@ text_gt(PG_FUNCTION_ARGS)
 	text	   *arg2 = PG_GETARG_TEXT_PP(1);
 	bool		result;
 
-	result = (text_cmp(arg1, arg2) > 0);
+	result = (text_cmp(arg1, arg2, PG_GET_COLLATION()) > 0);
 
 	PG_FREE_IF_COPY(arg1, 0);
 	PG_FREE_IF_COPY(arg2, 1);
@@ -1564,7 +1574,7 @@ text_ge(PG_FUNCTION_ARGS)
 	text	   *arg2 = PG_GETARG_TEXT_PP(1);
 	bool		result;
 
-	result = (text_cmp(arg1, arg2) >= 0);
+	result = (text_cmp(arg1, arg2, PG_GET_COLLATION()) >= 0);
 
 	PG_FREE_IF_COPY(arg1, 0);
 	PG_FREE_IF_COPY(arg2, 1);
@@ -1579,7 +1589,7 @@ bttextcmp(PG_FUNCTION_ARGS)
 	text	   *arg2 = PG_GETARG_TEXT_PP(1);
 	int32		result;
 
-	result = text_cmp(arg1, arg2);
+	result = text_cmp(arg1, arg2, PG_GET_COLLATION());
 
 	PG_FREE_IF_COPY(arg1, 0);
 	PG_FREE_IF_COPY(arg2, 1);
@@ -1595,7 +1605,7 @@ text_larger(PG_FUNCTION_ARGS)
 	text	   *arg2 = PG_GETARG_TEXT_PP(1);
 	text	   *result;
 
-	result = ((text_cmp(arg1, arg2) > 0) ? arg1 : arg2);
+	result = ((text_cmp(arg1, arg2, PG_GET_COLLATION()) > 0) ? arg1 : arg2);
 
 	PG_RETURN_TEXT_P(result);
 }
@@ -1607,7 +1617,7 @@ text_smaller(PG_FUNCTION_ARGS)
 	text	   *arg2 = PG_GETARG_TEXT_PP(1);
 	text	   *result;
 
-	result = ((text_cmp(arg1, arg2) < 0) ? arg1 : arg2);
+	result = ((text_cmp(arg1, arg2, PG_GET_COLLATION()) < 0) ? arg1 : arg2);
 
 	PG_RETURN_TEXT_P(result);
 }

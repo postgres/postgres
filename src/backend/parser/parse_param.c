@@ -30,6 +30,7 @@
 #include "nodes/nodeFuncs.h"
 #include "parser/parse_param.h"
 #include "utils/builtins.h"
+#include "utils/lsyscache.h"
 
 
 typedef struct FixedParamState
@@ -113,6 +114,7 @@ fixed_paramref_hook(ParseState *pstate, ParamRef *pref)
 	param->paramid = paramno;
 	param->paramtype = parstate->paramTypes[paramno - 1];
 	param->paramtypmod = -1;
+	param->paramcollation = get_typcollation(param->paramtype);
 	param->location = pref->location;
 
 	return (Node *) param;
@@ -165,6 +167,7 @@ variable_paramref_hook(ParseState *pstate, ParamRef *pref)
 	param->paramid = paramno;
 	param->paramtype = *pptype;
 	param->paramtypmod = -1;
+	param->paramcollation = get_typcollation(param->paramtype);
 	param->location = pref->location;
 
 	return (Node *) param;

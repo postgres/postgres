@@ -3307,6 +3307,7 @@ array_cmp(FunctionCallInfo fcinfo)
 {
 	ArrayType  *array1 = PG_GETARG_ARRAYTYPE_P(0);
 	ArrayType  *array2 = PG_GETARG_ARRAYTYPE_P(1);
+	Oid			collation = PG_GET_COLLATION();
 	int			ndims1 = ARR_NDIM(array1);
 	int			ndims2 = ARR_NDIM(array2);
 	int		   *dims1 = ARR_DIMS(array1);
@@ -3341,7 +3342,8 @@ array_cmp(FunctionCallInfo fcinfo)
 	 */
 	typentry = (TypeCacheEntry *) fcinfo->flinfo->fn_extra;
 	if (typentry == NULL ||
-		typentry->type_id != element_type)
+		typentry->type_id != element_type ||
+		typentry->cmp_proc_finfo.fn_collation != collation)
 	{
 		typentry = lookup_type_cache(element_type,
 									 TYPECACHE_CMP_PROC_FINFO);
@@ -3351,6 +3353,7 @@ array_cmp(FunctionCallInfo fcinfo)
 			   errmsg("could not identify a comparison function for type %s",
 					  format_type_be(element_type))));
 		fcinfo->flinfo->fn_extra = (void *) typentry;
+		typentry->cmp_proc_finfo.fn_collation = collation;
 	}
 	typlen = typentry->typlen;
 	typbyval = typentry->typbyval;

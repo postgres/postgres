@@ -8,6 +8,7 @@
 #include <float.h>
 
 #include "btree_utils_var.h"
+#include "catalog/pg_collation.h"
 #include "utils/pg_locale.h"
 #include "utils/builtins.h"
 #include "utils/rel.h"
@@ -156,7 +157,7 @@ gbt_bytea_pf_match(const bytea *pf, const bytea *query, const gbtree_vinfo *tinf
 
 		if (tinfo->eml > 1)
 		{
-			out = (varstr_cmp(q, nlen, n, nlen) == 0);
+			out = (varstr_cmp(q, nlen, n, nlen, DEFAULT_COLLATION_OID) == 0);
 		}
 		else
 		{

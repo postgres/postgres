@@ -937,11 +937,15 @@ ExecTypeFromTLInternal(List *targetList, bool hasoid, bool skipjunk)
 		if (skipjunk && tle->resjunk)
 			continue;
 		TupleDescInitEntry(typeInfo,
-						   cur_resno++,
+						   cur_resno,
 						   tle->resname,
 						   exprType((Node *) tle->expr),
 						   exprTypmod((Node *) tle->expr),
 						   0);
+		TupleDescInitEntryCollation(typeInfo,
+									cur_resno,
+									exprCollation((Node *) tle->expr));
+		cur_resno++;
 	}
 
 	return typeInfo;
@@ -969,11 +973,15 @@ ExecTypeFromExprList(List *exprList)
 		sprintf(fldname, "f%d", cur_resno);
 
 		TupleDescInitEntry(typeInfo,
-						   cur_resno++,
+						   cur_resno,
 						   fldname,
 						   exprType(e),
 						   exprTypmod(e),
 						   0);
+		TupleDescInitEntryCollation(typeInfo,
+									cur_resno,
+									exprCollation(e));
+		cur_resno++;
 	}
 
 	return typeInfo;

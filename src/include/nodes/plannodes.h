@@ -198,6 +198,7 @@ typedef struct MergeAppend
 	int			numCols;		/* number of sort-key columns */
 	AttrNumber *sortColIdx;		/* their indexes in the target list */
 	Oid		   *sortOperators;	/* OIDs of operators to sort them by */
+	Oid		   *collations;		/* OIDs of collations */
 	bool	   *nullsFirst;		/* NULLS FIRST/LAST directions */
 } MergeAppend;
 
@@ -401,6 +402,7 @@ typedef struct FunctionScan
 	List	   *funccolnames;	/* output column names (string Value nodes) */
 	List	   *funccoltypes;	/* OID list of column type OIDs */
 	List	   *funccoltypmods; /* integer list of column typmods */
+	List	   *funccolcollations;	/* OID list of column collation OIDs */
 } FunctionScan;
 
 /* ----------------
@@ -503,6 +505,7 @@ typedef struct MergeJoin
 	List	   *mergeclauses;	/* mergeclauses as expression trees */
 	/* these are arrays, but have the same length as the mergeclauses list: */
 	Oid		   *mergeFamilies;	/* per-clause OIDs of btree opfamilies */
+	Oid		   *mergeCollations;	/* per-clause OIDs of collations */
 	int		   *mergeStrategies;	/* per-clause ordering (ASC or DESC) */
 	bool	   *mergeNullsFirst;	/* per-clause nulls ordering */
 } MergeJoin;
@@ -536,6 +539,7 @@ typedef struct Sort
 	int			numCols;		/* number of sort-key columns */
 	AttrNumber *sortColIdx;		/* their indexes in the target list */
 	Oid		   *sortOperators;	/* OIDs of operators to sort them by */
+	Oid		   *collations;		/* OIDs of collations */
 	bool	   *nullsFirst;		/* NULLS FIRST/LAST directions */
 } Sort;
 

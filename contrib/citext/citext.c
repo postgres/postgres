@@ -18,7 +18,7 @@ PG_MODULE_MAGIC;
  *		====================
  */
 
-static int32 citextcmp(text *left, text *right);
+static int32 citextcmp(text *left, text *right, Oid collid);
 extern Datum citext_cmp(PG_FUNCTION_ARGS);
 extern Datum citext_hash(PG_FUNCTION_ARGS);
 extern Datum citext_eq(PG_FUNCTION_ARGS);
@@ -42,17 +42,18 @@ extern Datum citext_larger(PG_FUNCTION_ARGS);
  * Returns int32 negative, zero, or positive.
  */
 static int32
-citextcmp(text *left, text *right)
+citextcmp(text *left, text *right, Oid collid)
 {
 	char	   *lcstr,
 			   *rcstr;
 	int32		result;
 
-	lcstr = str_tolower(VARDATA_ANY(left), VARSIZE_ANY_EXHDR(left));
-	rcstr = str_tolower(VARDATA_ANY(right), VARSIZE_ANY_EXHDR(right));
+	lcstr = str_tolower(VARDATA_ANY(left), VARSIZE_ANY_EXHDR(left), collid);
+	rcstr = str_tolower(VARDATA_ANY(right), VARSIZE_ANY_EXHDR(right), collid);
 
 	result = varstr_cmp(lcstr, strlen(lcstr),
-						rcstr, strlen(rcstr));
+						rcstr, strlen(rcstr),
+						collid);
 
 	pfree(lcstr);
 	pfree(rcstr);
@@ -75,7 +76,7 @@ citext_cmp(PG_FUNCTION_ARGS)
 	text	   *right = PG_GETARG_TEXT_PP(1);
 	int32		result;
 
-	result = citextcmp(left, right);
+	result = citextcmp(left, right, PG_GET_COLLATION());
 
 	PG_FREE_IF_COPY(left, 0);
 	PG_FREE_IF_COPY(right, 1);
@@ -92,7 +93,7 @@ citext_hash(PG_FUNCTION_ARGS)
 	char	   *str;
 	Datum		result;
 
-	str = str_tolower(VARDATA_ANY(txt), VARSIZE_ANY_EXHDR(txt));
+	str = str_tolower(VARDATA_ANY(txt), VARSIZE_ANY_EXHDR(txt), PG_GET_COLLATION());
 	result = hash_any((unsigned char *) str, strlen(str));
 	pfree(str);
 
@@ -121,8 +122,8 @@ citext_eq(PG_FUNCTION_ARGS)
 
 	/* We can't compare lengths in advance of downcasing ... */
 
-	lcstr = str_tolower(VARDATA_ANY(left), VARSIZE_ANY_EXHDR(left));
-	rcstr = str_tolower(VARDATA_ANY(right), VARSIZE_ANY_EXHDR(right));
+	lcstr = str_tolower(VARDATA_ANY(left), VARSIZE_ANY_EXHDR(left), PG_GET_COLLATION());
+	rcstr = str_tolower(VARDATA_ANY(right), VARSIZE_ANY_EXHDR(right), PG_GET_COLLATION());
 
 	/*
 	 * Since we only care about equality or not-equality, we can avoid all the
@@ -151,8 +152,8 @@ citext_ne(PG_FUNCTION_ARGS)
 
 	/* We can't compare lengths in advance of downcasing ... */
 
-	lcstr = str_tolower(VARDATA_ANY(left), VARSIZE_ANY_EXHDR(left));
-	rcstr = str_tolower(VARDATA_ANY(right), VARSIZE_ANY_EXHDR(right));
+	lcstr = str_tolower(VARDATA_ANY(left), VARSIZE_ANY_EXHDR(left), PG_GET_COLLATION());
+	rcstr = str_tolower(VARDATA_ANY(right), VARSIZE_ANY_EXHDR(right), PG_GET_COLLATION());
 
 	/*
 	 * Since we only care about equality or not-equality, we can avoid all the
@@ -177,7 +178,7 @@ citext_lt(PG_FUNCTION_ARGS)
 	text	   *right = PG_GETARG_TEXT_PP(1);
 	bool		result;
 
-	result = citextcmp(left, right) < 0;
+	result = citextcmp(left, right, PG_GET_COLLATION()) < 0;
 
 	PG_FREE_IF_COPY(left, 0);
 	PG_FREE_IF_COPY(right, 1);
@@ -194,7 +195,7 @@ citext_le(PG_FUNCTION_ARGS)
 	text	   *right = PG_GETARG_TEXT_PP(1);
 	bool		result;
 
-	result = citextcmp(left, right) <= 0;
+	result = citextcmp(left, right, PG_GET_COLLATION()) <= 0;
 
 	PG_FREE_IF_COPY(left, 0);
 	PG_FREE_IF_COPY(right, 1);
@@ -211,7 +212,7 @@ citext_gt(PG_FUNCTION_ARGS)
 	text	   *right = PG_GETARG_TEXT_PP(1);
 	bool		result;
 
-	result = citextcmp(left, right) > 0;
+	result = citextcmp(left, right, PG_GET_COLLATION()) > 0;
 
 	PG_FREE_IF_COPY(left, 0);
 	PG_FREE_IF_COPY(right, 1);
@@ -228,7 +229,7 @@ citext_ge(PG_FUNCTION_ARGS)
 	text	   *right = PG_GETARG_TEXT_PP(1);
 	bool		result;
 
-	result = citextcmp(left, right) >= 0;
+	result = citextcmp(left, right, PG_GET_COLLATION()) >= 0;
 
 	PG_FREE_IF_COPY(left, 0);
 	PG_FREE_IF_COPY(right, 1);
@@ -251,7 +252,7 @@ citext_smaller(PG_FUNCTION_ARGS)
 	text	   *right = PG_GETARG_TEXT_PP(1);
 	text	   *result;
 
-	result = citextcmp(left, right) < 0 ? left : right;
+	result = citextcmp(left, right, PG_GET_COLLATION()) < 0 ? left : right;
 	PG_RETURN_TEXT_P(result);
 }
 
@@ -264,6 +265,6 @@ citext_larger(PG_FUNCTION_ARGS)
 	text	   *right = PG_GETARG_TEXT_PP(1);
 	text	   *result;
 
-	result = citextcmp(left, right) > 0 ? left : right;
+	result = citextcmp(left, right, PG_GET_COLLATION()) > 0 ? left : right;
 	PG_RETURN_TEXT_P(result);
 }

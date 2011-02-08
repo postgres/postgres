@@ -304,6 +304,170 @@ initdb --locale=sv_SE
  </sect1>
 
 
+ <sect1 id="collation">
+  <title>Collation Support</title>
+
+  <para>
+   The collation support allows specifying the sort order and certain
+   other locale aspects of data per column or per operation at run
+   time.  This alleviates the problem that the
+   <symbol>LC_COLLATE</symbol> and <symbol>LC_CTYPE</symbol> settings
+   of a database cannot be changed after its creation.
+  </para>
+
+  <note>
+   <para>
+    The collation support feature is currently only known to work on
+    Linux/glibc and Mac OS X platforms.
+   </para>
+  </note>
+
+  <sect2>
+   <title>Concepts</title>
+
+   <para>
+    Conceptually, every datum of a collatable data type has a
+    collation.  (Collatable data types in the base system are
+    <type>text</type>, <type>varchar</type>, and <type>char</type>.
+    User-defined base types can also be marked collatable.)  If the
+    datum is a column reference, the collation of the datum is the
+    defined collation of the column.  If the datum is a constant, the
+    collation is the default collation of the data type of the
+    constant.  The collation of more complex expressions is derived
+    from the input collations as described below.
+   </para>
+
+   <para>
+    The collation of a datum can also be the <quote>default</quote>
+    collation, which reverts to the locale settings defined for the
+    database.  In some cases, a datum can also have no known
+    collation.  In such cases, ordering operations and other
+    operations that need to know the collation will fail.
+   </para>
+
+   <para>
+    When the database system has to perform an ordering or a
+    comparison, it considers the collation of the input data.  This
+    happens in two situations: an <literal>ORDER BY</literal> clause
+    and a function or operator call such as <literal>&lt;</literal>.
+    The collation to apply for the performance of the <literal>ORDER
+    BY</literal> clause is simply the collation of the sort key.  The
+    collation to apply for a function or operator call is derived from
+    the arguments, as described below.  Additionally, collations are
+    taken into account by functions that convert between lower and
+    upper case letters, that is, <function>lower</function>,
+    <function>upper</function>, and <function>initcap</function>.
+   </para>
+
+   <para>
+    For a function call, the collation that is derived from combining
+    the argument collations is both used for performing any
+    comparisons or ordering and for the collation of the function
+    result, if the result type is collatable.
+   </para>
+
+   <para>
+    The <firstterm>collation derivation</firstterm> of a datum can be
+    implicit or explicit.  This distinction affects how collations are
+    combined when multiple different collations appear in an
+    expression.  An explicit collation derivation arises when a
+    <literal>COLLATE</literal> clause is used; all other collation
+    derivations are implicit.  When multiple collations need to be
+    combined, for example in a function call, the following rules are
+    used:
+
+    <orderedlist>
+     <listitem>
+      <para>
+       If any input item has an explicit collation derivation, then
+       all explicitly derived collations among the input items must be
+       the same, otherwise an error is raised.  If an explicitly
+       derived collation is present, that is the result of the
+       collation combination.
+      </para>
+     </listitem>
+
+     <listitem>
+      <para>
+       Otherwise, all input items must have the same implicit
+       collation derivation or the default collation.  If an
+       implicitly derived collation is present, that is the result of
+       the collation combination.  Otherwise, the result is the
+       default collation.
+      </para>
+     </listitem>
+    </orderedlist>
+
+    For example, take this table definition:
+<programlisting>
+CREATE TABLE test1 (
+    a text COLLATE "x",
+    ...
+);
+</programlisting>
+
+    Then in
+<programlisting>
+SELECT a || 'foo' FROM test1;
+</programlisting>
+    the result collation of the <literal>||</literal> operator is
+    <literal>"x"</literal> because it combines an implicitly derived
+    collation with the default collation.  But in
+<programlisting>
+SELECT a || ('foo' COLLATE "y") FROM test1;
+</programlisting>
+    the result collation is <literal>"y"</literal> because the explicit
+    collation derivation overrides the implicit one.
+   </para>
+  </sect2>
+
+  <sect2>
+   <title>Managing Collations</title>
+
+   <para>
+    A collation is an SQL schema object that maps an SQL name to
+    operating system locales.  In particular, it maps to a combination
+    of <symbol>LC_COLLATE</symbol> and <symbol>LC_CTYPE</symbol>.  (As
+    the name would indicate, the main purpose of a collation is to set
+    <symbol>LC_COLLATE</symbol>, which controls the sort order.  But
+    it is rarely necessary in practice to have an
+    <symbol>LC_CTYPE</symbol> setting that is different from
+    <symbol>LC_COLLATE</symbol>, so it is more convenient to collect
+    these under one concept than to create another infrastructure for
+    setting <symbol>LC_CTYPE</symbol> per datum.)  Also, a collation
+    is tied to a character encoding.  The same collation name may
+    exist for different encodings.
+   </para>
+
+   <para>
+    When a database system is initialized, <command>initdb</command>
+    populates the system catalog <literal>pg_collation</literal> with
+    collations based on all the locales it finds on the operating
+    system at the time.  For example, the operating system might
+    provide a locale named <literal>de_DE.utf8</literal>.
+    <command>initdb</command> would then create a collation named
+    <literal>de_DE.utf8</literal> for encoding <literal>UTF8</literal>
+    that has both <symbol>LC_COLLATE</symbol> and
+    <symbol>LC_CTYPE</symbol> set to <literal>de_DE.utf8</literal>.
+    It will also create a collation with the <literal>.utf8</literal>
+    tag stripped off the name.  So you could also use the collation
+    under the name <literal>de_DE</literal>, which is less cumbersome
+    to write and makes the name less encoding-dependent.  Note that,
+    nevertheless, the initial set of collation names is
+    platform-dependent.
+   </para>
+
+   <para>
+    In case a collation is needed that has different values for
+    <symbol>LC_COLLATE</symbol> and <symbol>LC_CTYPE</symbol>, or a
+    different name is needed for a collation (for example, for
+    compatibility with existing applications), a new collation may be
+    created.  But there is currently no SQL-level support for creating
+    or changing collations.
+   </para>
+  </sect2>
+ </sect1>
+
  <sect1 id="multibyte">
   <title>Character Set Support</title>
 

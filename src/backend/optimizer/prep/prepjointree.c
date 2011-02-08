@@ -445,6 +445,7 @@ inline_set_returning_functions(PlannerInfo *root)
 				rte->funcexpr = NULL;
 				rte->funccoltypes = NIL;
 				rte->funccoltypmods = NIL;
+				rte->funccolcollations = NIL;
 			}
 		}
 	}

@@ -912,6 +912,7 @@ arrayconst_startup_fn(Node *clause, PredIterInfo info)
 	state->constexpr.xpr.type = T_Const;
 	state->constexpr.consttype = ARR_ELEMTYPE(arrayval);
 	state->constexpr.consttypmod = -1;
+	state->constexpr.constcollid = arrayconst->constcollid;
 	state->constexpr.constlen = elmlen;
 	state->constexpr.constbyval = elmbyval;
 	lsecond(state->opexpr.args) = &state->constexpr;

@@ -13,6 +13,9 @@
 #define _PG_LOCALE_
 
 #include <locale.h>
+#ifdef LOCALE_T_IN_XLOCALE
+#include <xlocale.h>
+#endif
 
 #include "utils/guc.h"
 
@@ -42,8 +45,8 @@ extern const char *locale_time_assign(const char *value,
 extern bool check_locale(int category, const char *locale);
 extern char *pg_perm_setlocale(int category, const char *locale);
 
-extern bool lc_collate_is_c(void);
-extern bool lc_ctype_is_c(void);
+extern bool lc_collate_is_c(Oid collation);
+extern bool lc_ctype_is_c(Oid collation);
 
 /*
  * Return the POSIX lconv struct (contains number/money formatting
@@ -52,5 +55,21 @@ extern bool lc_ctype_is_c(void);
 extern struct lconv *PGLC_localeconv(void);
 
 extern void cache_locale_time(void);
+
+
+/*
+ * We define our own wrapper around locale_t so we can keep the same
+ * function signatures for all builds, while not having to create a
+ * fake version of the standard type locale_t in the global namespace.
+ * The fake version of pg_locale_t can be checked for truth; that's
+ * about all it will be needed for.
+ */
+#ifdef HAVE_LOCALE_T
+typedef locale_t pg_locale_t;
+#else
+typedef int pg_locale_t;
+#endif
+
+extern pg_locale_t pg_newlocale_from_collation(Oid collid);
 
 #endif   /* _PG_LOCALE_ */

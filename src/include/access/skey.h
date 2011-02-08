@@ -152,5 +152,7 @@ extern void ScanKeyEntryInitializeWithInfo(ScanKey entry,
 							   Oid subtype,
 							   FmgrInfo *finfo,
 							   Datum argument);
+extern void ScanKeyEntryInitializeCollation(ScanKey entry,
+											Oid collation);
 
 #endif   /* SKEY_H */

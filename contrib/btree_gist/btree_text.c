@@ -3,6 +3,7 @@
  */
 #include "btree_gist.h"
 #include "btree_utils_var.h"
+#include "catalog/pg_collation.h"
 #include "utils/builtins.h"
 
 /*
@@ -32,37 +33,37 @@ Datum		gbt_text_same(PG_FUNCTION_ARGS);
 static bool
 gbt_textgt(const void *a, const void *b)
 {
-	return (DatumGetBool(DirectFunctionCall2(text_gt, PointerGetDatum(a), PointerGetDatum(b))));
+	return (DatumGetBool(DirectFunctionCall2WithCollation(text_gt, DEFAULT_COLLATION_OID, PointerGetDatum(a), PointerGetDatum(b))));
 }
 
 static bool
 gbt_textge(const void *a, const void *b)
 {
-	return (DatumGetBool(DirectFunctionCall2(text_ge, PointerGetDatum(a), PointerGetDatum(b))));
+	return (DatumGetBool(DirectFunctionCall2WithCollation(text_ge, DEFAULT_COLLATION_OID, PointerGetDatum(a), PointerGetDatum(b))));
 }
 
 static bool
 gbt_texteq(const void *a, const void *b)
 {
-	return (DatumGetBool(DirectFunctionCall2(texteq, PointerGetDatum(a), PointerGetDatum(b))));
+	return (DatumGetBool(DirectFunctionCall2WithCollation(texteq, DEFAULT_COLLATION_OID, PointerGetDatum(a), PointerGetDatum(b))));
 }
 
 static bool
 gbt_textle(const void *a, const void *b)
 {
-	return (DatumGetBool(DirectFunctionCall2(text_le, PointerGetDatum(a), PointerGetDatum(b))));
+	return (DatumGetBool(DirectFunctionCall2WithCollation(text_le, DEFAULT_COLLATION_OID, PointerGetDatum(a), PointerGetDatum(b))));
 }
 
 static bool
 gbt_textlt(const void *a, const void *b)
 {
-	return (DatumGetBool(DirectFunctionCall2(text_lt, PointerGetDatum(a), PointerGetDatum(b))));
+	return (DatumGetBool(DirectFunctionCall2WithCollation(text_lt, DEFAULT_COLLATION_OID, PointerGetDatum(a), PointerGetDatum(b))));
 }
 
 static int32
 gbt_textcmp(const bytea *a, const bytea *b)
 {
-	return DatumGetInt32(DirectFunctionCall2(bttextcmp, PointerGetDatum(a), PointerGetDatum(b)));
+	return DatumGetInt32(DirectFunctionCall2WithCollation(bttextcmp, DEFAULT_COLLATION_OID, PointerGetDatum(a), PointerGetDatum(b)));
 }
 
 static gbtree_vinfo tinfo =

@@ -582,7 +582,7 @@ tuplesort_begin_common(int workMem, bool randomAccess)
 Tuplesortstate *
 tuplesort_begin_heap(TupleDesc tupDesc,
 					 int nkeys, AttrNumber *attNums,
-					 Oid *sortOperators, bool *nullsFirstFlags,
+					 Oid *sortOperators, Oid *collations, bool *nullsFirstFlags,
 					 int workMem, bool randomAccess)
 {
 	Tuplesortstate *state = tuplesort_begin_common(workMem, randomAccess);
@@ -639,6 +639,10 @@ tuplesort_begin_heap(TupleDesc tupDesc,
 					InvalidStrategy,
 					sortFunction,
 					(Datum) 0);
+
+		if (collations)
+			ScanKeyEntryInitializeCollation(&state->scanKeys[i],
+											collations[i]);
 
 		/* However, we use btree's conventions for encoding directionality */
 		if (reverse)
@@ -791,7 +795,7 @@ tuplesort_begin_index_hash(Relation indexRel,
 
 Tuplesortstate *
 tuplesort_begin_datum(Oid datumType,
-					  Oid sortOperator, bool nullsFirstFlag,
+					  Oid sortOperator, Oid sortCollation, bool nullsFirstFlag,
 					  int workMem, bool randomAccess)
 {
 	Tuplesortstate *state = tuplesort_begin_common(workMem, randomAccess);
@@ -832,6 +836,7 @@ tuplesort_begin_datum(Oid datumType,
 		elog(ERROR, "operator %u is not a valid ordering operator",
 			 sortOperator);
 	fmgr_info(sortFunction, &state->sortOpFn);
+	fmgr_info_collation(sortCollation, &state->sortOpFn);
 
 	/* set ordering flags */
 	state->sortFnFlags = reverse ? SK_BT_DESC : 0;

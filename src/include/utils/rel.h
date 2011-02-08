@@ -203,6 +203,7 @@ typedef struct RelationData
 	Oid		   *rd_exclprocs;	/* OIDs of exclusion ops' procs, if any */
 	uint16	   *rd_exclstrats;	/* exclusion ops' strategy numbers, if any */
 	void	   *rd_amcache;		/* available for use by index AM */
+	Oid		   *rd_indcollation; /* OIDs of index collations */
 
 	/*
 	 * Hack for CLUSTER, rewriting ALTER TABLE, etc: when writing a new

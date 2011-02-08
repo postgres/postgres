@@ -236,6 +236,27 @@ gmake check LANG=C MULTIBYTE=EUC_JP
     existing installation.
    </para>
   </sect2>
+
+  <sect2>
+   <title>Extra tests</title>
+
+   <para>
+    The regression test suite contains a few test files that are not
+    run by default, because they might be platform-dependent or take a
+    very long time to run.  You can run these or other extra test
+    files by setting the variable <envar>EXTRA_TESTS</envar>.  For
+    example, to run the <literal>numeric_big</literal> test:
+<screen>
+gmake check EXTRA_TESTS=numeric_big
+</screen>
+    To run the collation tests:
+<screen>
+gmake check EXTRA_TESTS=collate.linux.utf8 LANG=en_US.utf8
+</screen>
+    This test works only on Linux/glibc platforms and when run in a
+    UTF-8 locale.
+   </para>
+  </sect2>
   </sect1>
 
   <sect1 id="regress-evaluation">

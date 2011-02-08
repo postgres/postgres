@@ -393,8 +393,8 @@ extern int	pg_encoding_max_length(int encoding);
 extern int	pg_database_encoding_max_length(void);
 
 #ifdef USE_WIDE_UPPER_LOWER
-extern size_t wchar2char(char *to, const wchar_t *from, size_t tolen);
-extern size_t char2wchar(wchar_t *to, size_t tolen, const char *from, size_t fromlen);
+extern size_t wchar2char(char *to, const wchar_t *from, size_t tolen, Oid collation);
+extern size_t char2wchar(wchar_t *to, size_t tolen, const char *from, size_t fromlen, Oid collation);
 #endif
 
 extern int	SetClientEncoding(int encoding, bool doit);

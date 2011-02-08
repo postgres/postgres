@@ -167,7 +167,8 @@ typedef struct Query
  * specify the type by OID than by name.  If "names" is NIL then the
  * actual type OID is given by typeOid, otherwise typeOid is unused.
  * Similarly, if "typmods" is NIL then the actual typmod is expected to
- * be prespecified in typemod, otherwise typemod is unused.
+ * be prespecified in typemod, otherwise typemod is unused.  Similarly
+ * for collnames/collOid.
  *
  * If pct_type is TRUE, then names is actually a field name and we look up
  * the type of that field.	Otherwise (the normal case), names is a type
@@ -183,6 +184,8 @@ typedef struct TypeName
 	List	   *typmods;		/* type modifier expression(s) */
 	int32		typemod;		/* prespecified type modifier */
 	List	   *arrayBounds;	/* array bounds */
+	List	   *collnames;		/* collation name */
+	Oid			collOid;		/* collation by OID */
 	int			location;		/* token location, or -1 if unknown */
 } TypeName;
 
@@ -517,6 +520,7 @@ typedef struct IndexElem
 	char	   *name;			/* name of attribute to index, or NULL */
 	Node	   *expr;			/* expression to index, or NULL */
 	char	   *indexcolname;	/* name for index column; NULL = default */
+	List	   *collation;		/* name of collation; NIL = default */
 	List	   *opclass;		/* name of desired opclass; NIL = default */
 	SortByDir	ordering;		/* ASC/DESC/default */
 	SortByNulls nulls_ordering; /* FIRST/LAST/default */
@@ -702,12 +706,14 @@ typedef struct RangeTblEntry
 	 * Fields valid for a function RTE (else NULL):
 	 *
 	 * If the function returns RECORD, funccoltypes lists the column types
-	 * declared in the RTE's column type specification, and funccoltypmods
-	 * lists their declared typmods.  Otherwise, both fields are NIL.
+	 * declared in the RTE's column type specification, funccoltypmods
+	 * lists their declared typmods, funccolcollations their collations.
+	 * Otherwise, those fields are NIL.
 	 */
 	Node	   *funcexpr;		/* expression tree for func call */
 	List	   *funccoltypes;	/* OID list of column type OIDs */
 	List	   *funccoltypmods; /* integer list of column typmods */
+	List	   *funccolcollations; /* OID list of column collation OIDs */
 
 	/*
 	 * Fields valid for a values RTE (else NIL):
@@ -722,6 +728,7 @@ typedef struct RangeTblEntry
 	bool		self_reference; /* is this a recursive self-reference? */
 	List	   *ctecoltypes;	/* OID list of column type OIDs */
 	List	   *ctecoltypmods;	/* integer list of column typmods */
+	List	   *ctecolcollations; /* OID list of column collation OIDs */
 
 	/*
 	 * Fields valid in all RTEs:
@@ -883,6 +890,7 @@ typedef struct CommonTableExpr
 	List	   *ctecolnames;	/* list of output column names */
 	List	   *ctecoltypes;	/* OID list of output column type OIDs */
 	List	   *ctecoltypmods;	/* integer list of output column typmods */
+	List	   *ctecolcollations; /* OID list of column collation OIDs */
 } CommonTableExpr;
 
 /*****************************************************************************
@@ -1032,6 +1040,7 @@ typedef struct SetOperationStmt
 	/* Fields derived during parse analysis: */
 	List	   *colTypes;		/* OID list of output column type OIDs */
 	List	   *colTypmods;		/* integer list of output column typmods */
+	List	   *colCollations;	/* OID list of output column collation OIDs */
 	List	   *groupClauses;	/* a list of SortGroupClause's */
 	/* groupClauses is NIL if UNION ALL, but must be set otherwise */
 } SetOperationStmt;

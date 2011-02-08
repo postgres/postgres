@@ -67,6 +67,7 @@ makeVar(Index varno,
 		AttrNumber varattno,
 		Oid vartype,
 		int32 vartypmod,
+		Oid varcollid,
 		Index varlevelsup)
 {
 	Var		   *var = makeNode(Var);
@@ -75,6 +76,7 @@ makeVar(Index varno,
 	var->varattno = varattno;
 	var->vartype = vartype;
 	var->vartypmod = vartypmod;
+	var->varcollid = varcollid;
 	var->varlevelsup = varlevelsup;
 
 	/*
@@ -105,6 +107,7 @@ makeVarFromTargetEntry(Index varno,
 				   tle->resno,
 				   exprType((Node *) tle->expr),
 				   exprTypmod((Node *) tle->expr),
+				   exprCollation((Node *) tle->expr),
 				   0);
 }
 
@@ -139,6 +142,7 @@ makeWholeRowVar(RangeTblEntry *rte,
 							 InvalidAttrNumber,
 							 toid,
 							 -1,
+							 InvalidOid,
 							 varlevelsup);
 			break;
 		case RTE_FUNCTION:
@@ -150,6 +154,7 @@ makeWholeRowVar(RangeTblEntry *rte,
 								 InvalidAttrNumber,
 								 toid,
 								 -1,
+								 InvalidOid,
 								 varlevelsup);
 			}
 			else
@@ -164,6 +169,7 @@ makeWholeRowVar(RangeTblEntry *rte,
 								 1,
 								 toid,
 								 -1,
+								 InvalidOid,
 								 varlevelsup);
 			}
 			break;
@@ -174,6 +180,7 @@ makeWholeRowVar(RangeTblEntry *rte,
 							 InvalidAttrNumber,
 							 toid,
 							 -1,
+							 InvalidOid,
 							 varlevelsup);
 			break;
 		default:
@@ -188,6 +195,7 @@ makeWholeRowVar(RangeTblEntry *rte,
 							 InvalidAttrNumber,
 							 RECORDOID,
 							 -1,
+							 InvalidOid,
 							 varlevelsup);
 			break;
 	}
@@ -272,6 +280,7 @@ makeConst(Oid consttype,
 
 	cnst->consttype = consttype;
 	cnst->consttypmod = consttypmod;
+	cnst->constcollid = get_typcollation(consttype);
 	cnst->constlen = constlen;
 	cnst->constvalue = constvalue;
 	cnst->constisnull = constisnull;
@@ -418,15 +427,16 @@ makeTypeNameFromNameList(List *names)
 
 /*
  * makeTypeNameFromOid -
- *	build a TypeName node to represent a type already known by OID/typmod.
+ *	build a TypeName node to represent a type already known by OID/typmod/collation.
  */
 TypeName *
-makeTypeNameFromOid(Oid typeOid, int32 typmod)
+makeTypeNameFromOid(Oid typeOid, int32 typmod, Oid collOid)
 {
 	TypeName   *n = makeNode(TypeName);
 
 	n->typeOid = typeOid;
 	n->typemod = typmod;
+	n->collOid = collOid;
 	n->location = -1;
 	return n;
 }
@@ -438,7 +448,7 @@ makeTypeNameFromOid(Oid typeOid, int32 typmod)
  * The argument expressions must have been transformed already.
  */
 FuncExpr *
-makeFuncExpr(Oid funcid, Oid rettype, List *args, CoercionForm fformat)
+makeFuncExpr(Oid funcid, Oid rettype, List *args, Oid collid, CoercionForm fformat)
 {
 	FuncExpr   *funcexpr;
 
@@ -448,6 +458,7 @@ makeFuncExpr(Oid funcid, Oid rettype, List *args, CoercionForm fformat)
 	funcexpr->funcretset = false;		/* only allowed case here */
 	funcexpr->funcformat = fformat;
 	funcexpr->args = args;
+	funcexpr->collid = collid;
 	funcexpr->location = -1;
 
 	return funcexpr;

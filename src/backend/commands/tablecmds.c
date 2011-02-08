@@ -1422,6 +1422,7 @@ MergeAttributes(List *schema, List *supers, char relpersistence,
 			{
 				Oid			defTypeId;
 				int32		deftypmod;
+				Oid			defCollId;
 
 				/*
 				 * Yes, try to merge the two column definitions. They must
@@ -1431,7 +1432,7 @@ MergeAttributes(List *schema, List *supers, char relpersistence,
 						(errmsg("merging multiple inherited definitions of column \"%s\"",
 								attributeName)));
 				def = (ColumnDef *) list_nth(inhSchema, exist_attno - 1);
-				typenameTypeIdAndMod(NULL, def->typeName, &defTypeId, &deftypmod);
+				typenameTypeIdModColl(NULL, def->typeName, &defTypeId, &deftypmod, &defCollId);
 				if (defTypeId != attribute->atttypid ||
 					deftypmod != attribute->atttypmod)
 					ereport(ERROR,
@@ -1441,6 +1442,14 @@ MergeAttributes(List *schema, List *supers, char relpersistence,
 							 errdetail("%s versus %s",
 									   TypeNameToString(def->typeName),
 									   format_type_be(attribute->atttypid))));
+				if (defCollId != attribute->attcollation)
+					ereport(ERROR,
+							(errcode(ERRCODE_COLLATION_MISMATCH),
+							 errmsg("inherited column \"%s\" has a collation conflict",
+									attributeName),
+							 errdetail("\"%s\" versus \"%s\"",
+									   get_collation_name(defCollId),
+									   get_collation_name(attribute->attcollation))));
 
 				/* Copy storage parameter */
 				if (def->storage == 0)
@@ -1468,7 +1477,8 @@ MergeAttributes(List *schema, List *supers, char relpersistence,
 				def = makeNode(ColumnDef);
 				def->colname = pstrdup(attributeName);
 				def->typeName = makeTypeNameFromOid(attribute->atttypid,
-													attribute->atttypmod);
+													attribute->atttypmod,
+													attribute->attcollation);
 				def->inhcount = 1;
 				def->is_local = false;
 				def->is_not_null = attribute->attnotnull;
@@ -1594,6 +1604,8 @@ MergeAttributes(List *schema, List *supers, char relpersistence,
 							newTypeId;
 				int32		deftypmod,
 							newtypmod;
+				Oid			defcollid,
+							newcollid;
 
 				/*
 				 * Yes, try to merge the two column definitions. They must
@@ -1603,8 +1615,8 @@ MergeAttributes(List *schema, List *supers, char relpersistence,
 				   (errmsg("merging column \"%s\" with inherited definition",
 						   attributeName)));
 				def = (ColumnDef *) list_nth(inhSchema, exist_attno - 1);
-				typenameTypeIdAndMod(NULL, def->typeName, &defTypeId, &deftypmod);
-				typenameTypeIdAndMod(NULL, newdef->typeName, &newTypeId, &newtypmod);
+				typenameTypeIdModColl(NULL, def->typeName, &defTypeId, &deftypmod, &defcollid);
+				typenameTypeIdModColl(NULL, newdef->typeName, &newTypeId, &newtypmod, &newcollid);
 				if (defTypeId != newTypeId || deftypmod != newtypmod)
 					ereport(ERROR,
 							(errcode(ERRCODE_DATATYPE_MISMATCH),
@@ -1613,6 +1625,14 @@ MergeAttributes(List *schema, List *supers, char relpersistence,
 							 errdetail("%s versus %s",
 									   TypeNameToString(def->typeName),
 									   TypeNameToString(newdef->typeName))));
+				if (defcollid != newcollid)
+					ereport(ERROR,
+							(errcode(ERRCODE_COLLATION_MISMATCH),
+							 errmsg("column \"%s\" has a collation conflict",
+									attributeName),
+							 errdetail("\"%s\" versus \"%s\"",
+									   get_collation_name(defcollid),
+									   get_collation_name(newcollid))));
 
 				/* Copy storage parameter */
 				if (def->storage == 0)
@@ -4065,6 +4085,7 @@ ATExecAddColumn(AlteredTableInfo *tab, Relation rel,
 	HeapTuple	typeTuple;
 	Oid			typeOid;
 	int32		typmod;
+	Oid			collOid;
 	Form_pg_type tform;
 	Expr	   *defval;
 
@@ -4085,15 +4106,24 @@ ATExecAddColumn(AlteredTableInfo *tab, Relation rel,
 			Form_pg_attribute childatt = (Form_pg_attribute) GETSTRUCT(tuple);
 			Oid			ctypeId;
 			int32		ctypmod;
+			Oid			ccollid;
 
 			/* Child column must match by type */
-			typenameTypeIdAndMod(NULL, colDef->typeName, &ctypeId, &ctypmod);
+			typenameTypeIdModColl(NULL, colDef->typeName, &ctypeId, &ctypmod, &ccollid);
 			if (ctypeId != childatt->atttypid ||
 				ctypmod != childatt->atttypmod)
 				ereport(ERROR,
 						(errcode(ERRCODE_DATATYPE_MISMATCH),
 						 errmsg("child table \"%s\" has different type for column \"%s\"",
 							RelationGetRelationName(rel), colDef->colname)));
+			if (ccollid != childatt->attcollation)
+				ereport(ERROR,
+						(errcode(ERRCODE_COLLATION_MISMATCH),
+						 errmsg("child table \"%s\" has different collation for column \"%s\"",
+								RelationGetRelationName(rel), colDef->colname),
+						 errdetail("\"%s\" versus \"%s\"",
+								   get_collation_name(ccollid),
+								   get_collation_name(childatt->attcollation))));
 
 			/* If it's OID, child column must actually be OID */
 			if (isOid && childatt->attnum != ObjectIdAttributeNumber)
@@ -4151,7 +4181,7 @@ ATExecAddColumn(AlteredTableInfo *tab, Relation rel,
 							MaxHeapAttributeNumber)));
 	}
 
-	typeTuple = typenameType(NULL, colDef->typeName, &typmod);
+	typeTuple = typenameType(NULL, colDef->typeName, &typmod, &collOid);
 	tform = (Form_pg_type) GETSTRUCT(typeTuple);
 	typeOid = HeapTupleGetOid(typeTuple);
 
@@ -4176,6 +4206,7 @@ ATExecAddColumn(AlteredTableInfo *tab, Relation rel,
 	attribute.attisdropped = false;
 	attribute.attislocal = colDef->is_local;
 	attribute.attinhcount = colDef->inhcount;
+	attribute.attcollation = collOid;
 	/* attribute.attacl is handled by InsertPgAttributeTuple */
 
 	ReleaseSysCache(typeTuple);
@@ -4353,7 +4384,7 @@ ATPrepAddOids(List **wqueue, Relation rel, bool recurse, AlterTableCmd *cmd, LOC
 		ColumnDef  *cdef = makeNode(ColumnDef);
 
 		cdef->colname = pstrdup("oid");
-		cdef->typeName = makeTypeNameFromOid(OIDOID, -1);
+		cdef->typeName = makeTypeNameFromOid(OIDOID, -1, InvalidOid);
 		cdef->inhcount = 0;
 		cdef->is_local = true;
 		cdef->is_not_null = true;
@@ -6415,6 +6446,7 @@ ATPrepAlterColumnType(List **wqueue,
 	AttrNumber	attnum;
 	Oid			targettype;
 	int32		targettypmod;
+	Oid			targetcollid;
 	Node	   *transform;
 	NewColumnValue *newval;
 	ParseState *pstate = make_parsestate(NULL);
@@ -6449,7 +6481,7 @@ ATPrepAlterColumnType(List **wqueue,
 						colName)));
 
 	/* Look up the target type */
-	typenameTypeIdAndMod(NULL, typeName, &targettype, &targettypmod);
+	typenameTypeIdModColl(NULL, typeName, &targettype, &targettypmod, &targetcollid);
 
 	/* make sure datatype is legal for a column */
 	CheckAttributeType(colName, targettype, false);
@@ -6501,7 +6533,7 @@ ATPrepAlterColumnType(List **wqueue,
 		else
 		{
 			transform = (Node *) makeVar(1, attnum,
-										 attTup->atttypid, attTup->atttypmod,
+										 attTup->atttypid, attTup->atttypmod, attTup->attcollation,
 										 0);
 		}
 
@@ -6578,6 +6610,7 @@ ATExecAlterColumnType(AlteredTableInfo *tab, Relation rel,
 	Form_pg_type tform;
 	Oid			targettype;
 	int32		targettypmod;
+	Oid			targetcollid;
 	Node	   *defaultexpr;
 	Relation	attrelation;
 	Relation	depRel;
@@ -6606,7 +6639,7 @@ ATExecAlterColumnType(AlteredTableInfo *tab, Relation rel,
 						colName)));
 
 	/* Look up the target type (should not fail, since prep found it) */
-	typeTuple = typenameType(NULL, typeName, &targettypmod);
+	typeTuple = typenameType(NULL, typeName, &targettypmod, &targetcollid);
 	tform = (Form_pg_type) GETSTRUCT(typeTuple);
 	targettype = HeapTupleGetOid(typeTuple);
 
@@ -6880,6 +6913,7 @@ ATExecAlterColumnType(AlteredTableInfo *tab, Relation rel,
 	 */
 	attTup->atttypid = targettype;
 	attTup->atttypmod = targettypmod;
+	attTup->attcollation = targetcollid;
 	attTup->attndims = list_length(typeName->arrayBounds);
 	attTup->attlen = tform->typlen;
 	attTup->attbyval = tform->typbyval;

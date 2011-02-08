@@ -297,3 +297,32 @@ int main()
 ])dnl AC_CACHE_VAL
 AC_MSG_RESULT([$pgac_cv_printf_arg_control])
 ])# PGAC_FUNC_PRINTF_ARG_CONTROL
+
+
+# PGAC_TYPE_LOCALE_T
+# ------------------
+# Check for the locale_t type and find the right header file.  Mac OS
+# X needs xlocale.h; standard is locale.h, but glibc also has an
+# xlocale.h file that we should not use.
+#
+AC_DEFUN([PGAC_TYPE_LOCALE_T],
+[AC_CACHE_CHECK([for locale_t], pgac_cv_type_locale_t,
+[AC_COMPILE_IFELSE([AC_LANG_PROGRAM(
+[#include <locale.h>
+locale_t x;],
+[])],
+[pgac_cv_type_locale_t=yes],
+[AC_COMPILE_IFELSE([AC_LANG_PROGRAM(
+[#include <xlocale.h>
+locale_t x;],
+[])],
+[pgac_cv_type_locale_t='yes (in xlocale.h)'],
+[pgac_cv_type_locale_t=no])])])
+if test "$pgac_cv_type_locale_t" != no; then
+  AC_DEFINE(HAVE_LOCALE_T, 1,
+            [Define to 1 if the system has the type `locale_t'.])
+fi
+if test "$pgac_cv_type_locale_t" = 'yes (in xlocale.h)'; then
+  AC_DEFINE(LOCALE_T_IN_XLOCALE, 1,
+            [Define to 1 if `locale_t' requires <xlocale.h>.])
+fi])])# PGAC_HEADER_XLOCALE

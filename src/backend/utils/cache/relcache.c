@@ -976,9 +976,11 @@ RelationInitIndexAccessInfo(Relation relation)
 {
 	HeapTuple	tuple;
 	Form_pg_am	aform;
+	Datum		indcollDatum;
 	Datum		indclassDatum;
 	Datum		indoptionDatum;
 	bool		isnull;
+	oidvector  *indcoll;
 	oidvector  *indclass;
 	int2vector *indoption;
 	MemoryContext indexcxt;
@@ -1061,8 +1063,24 @@ RelationInitIndexAccessInfo(Relation relation)
 		relation->rd_supportinfo = NULL;
 	}
 
+	relation->rd_indcollation = (Oid *)
+		MemoryContextAllocZero(indexcxt, natts * sizeof(Oid));
+
 	relation->rd_indoption = (int16 *)
 		MemoryContextAllocZero(indexcxt, natts * sizeof(int16));
+
+	/*
+	 * indcollation cannot be referenced directly through the C struct, because it
+	 * comes after the variable-width indkey field.  Must extract the datum
+	 * the hard way...
+	 */
+	indcollDatum = fastgetattr(relation->rd_indextuple,
+							   Anum_pg_index_indcollation,
+							   GetPgIndexDescriptor(),
+							   &isnull);
+	Assert(!isnull);
+	indcoll = (oidvector *) DatumGetPointer(indcollDatum);
+	memcpy(relation->rd_indcollation, indcoll->values, natts * sizeof(Oid));
 
 	/*
 	 * indclass cannot be referenced directly through the C struct, because it
@@ -3988,6 +4006,7 @@ load_relcache_init_file(bool shared)
 			RegProcedure *support;
 			int			nsupport;
 			int16	   *indoption;
+			Oid		   *indcollation;
 
 			/* Count nailed indexes to ensure we have 'em all */
 			if (rel->rd_isnailed)
@@ -4054,6 +4073,16 @@ load_relcache_init_file(bool shared)
 
 			rel->rd_support = support;
 
+			/* next, read the vector of collation OIDs */
+			if (fread(&len, 1, sizeof(len), fp) != sizeof(len))
+				goto read_failed;
+
+			indcollation = (Oid *) MemoryContextAlloc(indexcxt, len);
+			if (fread(indcollation, 1, len, fp) != len)
+				goto read_failed;
+
+			rel->rd_indcollation = indcollation;
+
 			/* finally, read the vector of indoption values */
 			if (fread(&len, 1, sizeof(len), fp) != sizeof(len))
 				goto read_failed;
@@ -4087,6 +4116,7 @@ load_relcache_init_file(bool shared)
 			Assert(rel->rd_support == NULL);
 			Assert(rel->rd_supportinfo == NULL);
 			Assert(rel->rd_indoption == NULL);
+			Assert(rel->rd_indcollation == NULL);
 		}
 
 		/*
@@ -4303,6 +4333,11 @@ write_relcache_init_file(bool shared)
 			/* next, write the vector of support procedure OIDs */
 			write_item(rel->rd_support,
 				  relform->relnatts * (am->amsupport * sizeof(RegProcedure)),
+					   fp);
+
+			/* next, write the vector of collation OIDs */
+			write_item(rel->rd_indcollation,
+					   relform->relnatts * sizeof(Oid),
 					   fp);
 
 			/* finally, write the vector of indoption values */

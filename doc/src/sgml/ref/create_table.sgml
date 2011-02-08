@@ -22,7 +22,7 @@ PostgreSQL documentation
  <refsynopsisdiv>
 <synopsis>
 CREATE [ [ GLOBAL | LOCAL ] { TEMPORARY | TEMP } | UNLOGGED ] TABLE [ IF NOT EXISTS ] <replaceable class="PARAMETER">table_name</replaceable> ( [
-  { <replaceable class="PARAMETER">column_name</replaceable> <replaceable class="PARAMETER">data_type</replaceable> [ <replaceable class="PARAMETER">column_constraint</replaceable> [ ... ] ]
+  { <replaceable class="PARAMETER">column_name</replaceable> <replaceable class="PARAMETER">data_type</replaceable> [ COLLATE <replaceable>collation</replaceable> ] [ <replaceable class="PARAMETER">column_constraint</replaceable> [ ... ] ]
     | <replaceable>table_constraint</replaceable>
     | LIKE <replaceable>parent_table</replaceable> [ <replaceable>like_option</replaceable> ... ] }
     [, ... ]
@@ -240,6 +240,17 @@ CREATE [ [ GLOBAL | LOCAL ] { TEMPORARY | TEMP } | UNLOGGED ] TABLE [ IF NOT EXI
       specifiers. For more information on the data types supported by
       <productname>PostgreSQL</productname>, refer to <xref
       linkend="datatype">.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><literal>COLLATE <replaceable>collation</replaceable></literal></term>
+    <listitem>
+     <para>
+      The <literal>COLLATE</> clause assigns a nondefault collation to
+      the column.  By default, the locale settings of the database are
+      used.
      </para>
     </listitem>
    </varlistentry>

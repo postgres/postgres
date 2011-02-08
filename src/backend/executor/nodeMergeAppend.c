@@ -150,6 +150,9 @@ ExecInitMergeAppend(MergeAppend *node, EState *estate, int eflags)
 					sortFunction,
 					(Datum) 0);
 
+		ScanKeyEntryInitializeCollation(&mergestate->ms_scankeys[i],
+										node->collations[i]);
+
 		/* However, we use btree's conventions for encoding directionality */
 		if (reverse)
 			mergestate->ms_scankeys[i].sk_flags |= SK_BT_DESC;

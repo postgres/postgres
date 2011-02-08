@@ -1,0 +1,734 @@
+/*
+ * This test is for Linux/glibc systems and assumes that a full set of
+ * locales is installed.  It must be run in a UTF-8 locale.
+ */
+SET client_encoding TO UTF8;
+CREATE TABLE collate_test1 (
+    a int,
+    b text COLLATE "en_US.utf8" NOT NULL
+);
+\d collate_test1
+          Table "public.collate_test1"
+ Column |  Type   |          Modifiers          
+--------+---------+-----------------------------
+ a      | integer | 
+ b      | text    | collate en_US.utf8 not null
+
+CREATE TABLE collate_test_fail (
+    a int,
+    b text COLLATE "ja_JP.eucjp"
+);
+ERROR:  collation "ja_JP.eucjp" for current database encoding "UTF8" does not exist
+LINE 3:     b text COLLATE "ja_JP.eucjp"
+              ^
+CREATE TABLE collate_test_fail (
+    a int,
+    b text COLLATE "foo"
+);
+ERROR:  collation "foo" for current database encoding "UTF8" does not exist
+LINE 3:     b text COLLATE "foo"
+              ^
+CREATE TABLE collate_test_fail (
+    a int COLLATE "en_US.utf8",
+    b text
+);
+ERROR:  collations are not supported by type integer
+LINE 2:     a int COLLATE "en_US.utf8",
+              ^
+CREATE TABLE collate_test_like (
+    LIKE collate_test1
+);
+\d collate_test_like
+        Table "public.collate_test_like"
+ Column |  Type   |          Modifiers          
+--------+---------+-----------------------------
+ a      | integer | 
+ b      | text    | collate en_US.utf8 not null
+
+CREATE TABLE collate_test2 (
+    a int,
+    b text COLLATE "sv_SE.utf8"
+);
+CREATE TABLE collate_test3 (
+    a int,
+    b text COLLATE "C"
+);
+INSERT INTO collate_test1 VALUES (1, 'abc'), (2, 'äbc'), (3, 'bbc'), (4, 'ABC');
+INSERT INTO collate_test2 SELECT * FROM collate_test1;
+INSERT INTO collate_test3 SELECT * FROM collate_test1;
+SELECT * FROM collate_test1 WHERE b >= 'bbc';
+ a |  b  
+---+-----
+ 3 | bbc
+(1 row)
+
+SELECT * FROM collate_test2 WHERE b >= 'bbc';
+ a |  b  
+---+-----
+ 2 | äbc
+ 3 | bbc
+(2 rows)
+
+SELECT * FROM collate_test3 WHERE b >= 'bbc';
+ a |  b  
+---+-----
+ 2 | äbc
+ 3 | bbc
+(2 rows)
+
+SELECT * FROM collate_test3 WHERE b >= 'BBC';
+ a |  b  
+---+-----
+ 1 | abc
+ 2 | äbc
+ 3 | bbc
+(3 rows)
+
+SELECT * FROM collate_test1 WHERE b COLLATE "C" >= 'bbc';
+ a |  b  
+---+-----
+ 2 | äbc
+ 3 | bbc
+(2 rows)
+
+SELECT * FROM collate_test1 WHERE b >= 'bbc' COLLATE "C";
+ a |  b  
+---+-----
+ 2 | äbc
+ 3 | bbc
+(2 rows)
+
+SELECT * FROM collate_test1 WHERE b COLLATE "C" >= 'bbc' COLLATE "C";
+ a |  b  
+---+-----
+ 2 | äbc
+ 3 | bbc
+(2 rows)
+
+SELECT * FROM collate_test1 WHERE b COLLATE "C" >= 'bbc' COLLATE "en_US.utf8";
+ERROR:  collation mismatch between explicit collations "C" and "en_US.utf8"
+LINE 1: ...* FROM collate_test1 WHERE b COLLATE "C" >= 'bbc' COLLATE "e...
+                                                             ^
+SELECT * FROM collate_test1 WHERE b COLLATE "C" >= 'bbc' COLLATE "en_US";
+ERROR:  collation mismatch between explicit collations "C" and "en_US"
+LINE 1: ...* FROM collate_test1 WHERE b COLLATE "C" >= 'bbc' COLLATE "e...
+                                                             ^
+CREATE DOMAIN testdomain_sv AS text COLLATE "sv_SE.utf8";
+CREATE DOMAIN testdomain_i AS int COLLATE "sv_SE.utf8"; -- fails
+ERROR:  collations are not supported by type integer
+CREATE TABLE collate_test4 (
+    a int,
+    b testdomain_sv
+);
+INSERT INTO collate_test4 SELECT * FROM collate_test1;
+SELECT a, b FROM collate_test4 ORDER BY b;
+ a |  b  
+---+-----
+ 1 | abc
+ 4 | ABC
+ 3 | bbc
+ 2 | äbc
+(4 rows)
+
+CREATE TABLE collate_test5 (
+    a int,
+    b testdomain_sv COLLATE "en_US.utf8"
+);
+INSERT INTO collate_test5 SELECT * FROM collate_test1;
+SELECT a, b FROM collate_test5 ORDER BY b;
+ a |  b  
+---+-----
+ 1 | abc
+ 4 | ABC
+ 2 | äbc
+ 3 | bbc
+(4 rows)
+
+SELECT a, b FROM collate_test1 ORDER BY b;
+ a |  b  
+---+-----
+ 1 | abc
+ 4 | ABC
+ 2 | äbc
+ 3 | bbc
+(4 rows)
+
+SELECT a, b FROM collate_test2 ORDER BY b;
+ a |  b  
+---+-----
+ 1 | abc
+ 4 | ABC
+ 3 | bbc
+ 2 | äbc
+(4 rows)
+
+SELECT a, b FROM collate_test3 ORDER BY b;
+ a |  b  
+---+-----
+ 4 | ABC
+ 1 | abc
+ 3 | bbc
+ 2 | äbc
+(4 rows)
+
+SELECT a, b FROM collate_test1 ORDER BY b COLLATE "C";
+ a |  b  
+---+-----
+ 4 | ABC
+ 1 | abc
+ 3 | bbc
+ 2 | äbc
+(4 rows)
+
+-- star expansion
+SELECT * FROM collate_test1 ORDER BY b;
+ a |  b  
+---+-----
+ 1 | abc
+ 4 | ABC
+ 2 | äbc
+ 3 | bbc
+(4 rows)
+
+SELECT * FROM collate_test2 ORDER BY b;
+ a |  b  
+---+-----
+ 1 | abc
+ 4 | ABC
+ 3 | bbc
+ 2 | äbc
+(4 rows)
+
+SELECT * FROM collate_test3 ORDER BY b;
+ a |  b  
+---+-----
+ 4 | ABC
+ 1 | abc
+ 3 | bbc
+ 2 | äbc
+(4 rows)
+
+-- constant expression folding
+SELECT 'bbc' COLLATE "en_US.utf8" > 'äbc' COLLATE "en_US.utf8" AS "true";
+ true 
+------
+ t
+(1 row)
+
+SELECT 'bbc' COLLATE "sv_SE.utf8" > 'äbc' COLLATE "sv_SE.utf8" AS "false";
+ false 
+-------
+ f
+(1 row)
+
+-- upper/lower
+CREATE TABLE collate_test10 (
+    a int,
+    x text COLLATE "en_US.utf8",
+    y text COLLATE "tr_TR.utf8"
+);
+INSERT INTO collate_test10 VALUES (1, 'hij', 'hij'), (2, 'HIJ', 'HIJ');
+SELECT a, lower(x), lower(y), upper(x), upper(y), initcap(x), initcap(y) FROM collate_test10;
+ a | lower | lower | upper | upper | initcap | initcap 
+---+-------+-------+-------+-------+---------+---------
+ 1 | hij   | hij   | HIJ   | HİJ   | Hij     | Hij
+ 2 | hij   | hıj   | HIJ   | HIJ   | Hij     | Hıj
+(2 rows)
+
+SELECT a, lower(x COLLATE "C"), lower(y COLLATE "C") FROM collate_test10;
+ a | lower | lower 
+---+-------+-------
+ 1 | hij   | hij
+ 2 | hij   | hij
+(2 rows)
+
+SELECT a, x, y FROM collate_test10 ORDER BY lower(y), a;
+ a |  x  |  y  
+---+-----+-----
+ 2 | HIJ | HIJ
+ 1 | hij | hij
+(2 rows)
+
+-- LIKE/ILIKE
+SELECT * FROM collate_test1 WHERE b LIKE 'abc';
+ a |  b  
+---+-----
+ 1 | abc
+(1 row)
+
+SELECT * FROM collate_test1 WHERE b LIKE 'abc%';
+ a |  b  
+---+-----
+ 1 | abc
+(1 row)
+
+SELECT * FROM collate_test1 WHERE b LIKE '%bc%';
+ a |  b  
+---+-----
+ 1 | abc
+ 2 | äbc
+ 3 | bbc
+(3 rows)
+
+SELECT * FROM collate_test1 WHERE b ILIKE 'abc';
+ a |  b  
+---+-----
+ 1 | abc
+ 4 | ABC
+(2 rows)
+
+SELECT * FROM collate_test1 WHERE b ILIKE 'abc%';
+ a |  b  
+---+-----
+ 1 | abc
+ 4 | ABC
+(2 rows)
+
+SELECT * FROM collate_test1 WHERE b ILIKE '%bc%';
+ a |  b  
+---+-----
+ 1 | abc
+ 2 | äbc
+ 3 | bbc
+ 4 | ABC
+(4 rows)
+
+SELECT 'Türkiye' COLLATE "en_US.utf8" ILIKE '%KI%' AS "true";
+ true 
+------
+ t
+(1 row)
+
+SELECT 'Türkiye' COLLATE "tr_TR.utf8" ILIKE '%KI%' AS "false";
+ false 
+-------
+ f
+(1 row)
+
+-- The following actually exercises the selectivity estimation for ILIKE.
+SELECT relname FROM pg_class WHERE relname ILIKE 'abc%';
+ relname 
+---------
+(0 rows)
+
+-- to_char
+SET lc_time TO 'tr_TR.utf8';
+SELECT to_char(date '2010-04-01', 'DD TMMON YYYY');
+   to_char   
+-------------
+ 01 NIS 2010
+(1 row)
+
+SELECT to_char(date '2010-04-01', 'DD TMMON YYYY' COLLATE "tr_TR.utf8");
+   to_char   
+-------------
+ 01 NİS 2010
+(1 row)
+
+-- backwards parsing
+CREATE VIEW collview1 AS SELECT * FROM collate_test1 WHERE b COLLATE "C" >= 'bbc';
+CREATE VIEW collview2 AS SELECT a, b FROM collate_test1 ORDER BY b COLLATE "C";
+CREATE VIEW collview3 AS SELECT a, lower((x || x) COLLATE "C") FROM collate_test10;
+SELECT table_name, view_definition FROM information_schema.views
+  WHERE table_name LIKE 'collview%' ORDER BY 1;
+ table_name |                                                  view_definition                                                   
+------------+--------------------------------------------------------------------------------------------------------------------
+ collview1  | SELECT collate_test1.a, collate_test1.b FROM collate_test1 WHERE ((collate_test1.b COLLATE "C") >= 'bbc'::text);
+ collview2  | SELECT collate_test1.a, collate_test1.b FROM collate_test1 ORDER BY (collate_test1.b COLLATE "C");
+ collview3  | SELECT collate_test10.a, lower(((collate_test10.x || collate_test10.x) COLLATE "C")) AS lower FROM collate_test10;
+(3 rows)
+
+-- collation propagation in various expression type
+SELECT a, coalesce(b, 'foo') FROM collate_test1 ORDER BY 2;
+ a | coalesce 
+---+----------
+ 1 | abc
+ 4 | ABC
+ 2 | äbc
+ 3 | bbc
+(4 rows)
+
+SELECT a, coalesce(b, 'foo') FROM collate_test2 ORDER BY 2;
+ a | coalesce 
+---+----------
+ 1 | abc
+ 4 | ABC
+ 3 | bbc
+ 2 | äbc
+(4 rows)
+
+SELECT a, coalesce(b, 'foo') FROM collate_test3 ORDER BY 2;
+ a | coalesce 
+---+----------
+ 4 | ABC
+ 1 | abc
+ 3 | bbc
+ 2 | äbc
+(4 rows)
+
+SELECT a, lower(coalesce(x, 'foo')), lower(coalesce(y, 'foo')) FROM collate_test10;
+ a | lower | lower 
+---+-------+-------
+ 1 | hij   | hij
+ 2 | hij   | hıj
+(2 rows)
+
+SELECT a, b, greatest(b, 'CCC') FROM collate_test1 ORDER BY 3;
+ a |  b  | greatest 
+---+-----+----------
+ 1 | abc | CCC
+ 2 | äbc | CCC
+ 3 | bbc | CCC
+ 4 | ABC | CCC
+(4 rows)
+
+SELECT a, b, greatest(b, 'CCC') FROM collate_test2 ORDER BY 3;
+ a |  b  | greatest 
+---+-----+----------
+ 1 | abc | CCC
+ 3 | bbc | CCC
+ 4 | ABC | CCC
+ 2 | äbc | äbc
+(4 rows)
+
+SELECT a, b, greatest(b, 'CCC') FROM collate_test3 ORDER BY 3;
+ a |  b  | greatest 
+---+-----+----------
+ 4 | ABC | CCC
+ 1 | abc | abc
+ 3 | bbc | bbc
+ 2 | äbc | äbc
+(4 rows)
+
+SELECT a, x, y, lower(greatest(x, 'foo')), lower(greatest(y, 'foo')) FROM collate_test10;
+ a |  x  |  y  | lower | lower 
+---+-----+-----+-------+-------
+ 1 | hij | hij | hij   | hij
+ 2 | HIJ | HIJ | hij   | hıj
+(2 rows)
+
+SELECT a, nullif(b, 'abc') FROM collate_test1 ORDER BY 2;
+ a | nullif 
+---+--------
+ 4 | ABC
+ 2 | äbc
+ 3 | bbc
+ 1 | 
+(4 rows)
+
+SELECT a, nullif(b, 'abc') FROM collate_test2 ORDER BY 2;
+ a | nullif 
+---+--------
+ 4 | ABC
+ 3 | bbc
+ 2 | äbc
+ 1 | 
+(4 rows)
+
+SELECT a, nullif(b, 'abc') FROM collate_test3 ORDER BY 2;
+ a | nullif 
+---+--------
+ 4 | ABC
+ 3 | bbc
+ 2 | äbc
+ 1 | 
+(4 rows)
+
+SELECT a, lower(nullif(x, 'foo')), lower(nullif(y, 'foo')) FROM collate_test10;
+ a | lower | lower 
+---+-------+-------
+ 1 | hij   | hij
+ 2 | hij   | hıj
+(2 rows)
+
+SELECT a, CASE b WHEN 'abc' THEN 'abcd' ELSE b END FROM collate_test1 ORDER BY 2;
+ a |  b   
+---+------
+ 4 | ABC
+ 2 | äbc
+ 1 | abcd
+ 3 | bbc
+(4 rows)
+
+SELECT a, CASE b WHEN 'abc' THEN 'abcd' ELSE b END FROM collate_test2 ORDER BY 2;
+ a |  b   
+---+------
+ 4 | ABC
+ 1 | abcd
+ 3 | bbc
+ 2 | äbc
+(4 rows)
+
+SELECT a, CASE b WHEN 'abc' THEN 'abcd' ELSE b END FROM collate_test3 ORDER BY 2;
+ a |  b   
+---+------
+ 4 | ABC
+ 1 | abcd
+ 3 | bbc
+ 2 | äbc
+(4 rows)
+
+CREATE DOMAIN testdomain AS text;
+SELECT a, b::testdomain FROM collate_test1 ORDER BY 2;
+ a |  b  
+---+-----
+ 1 | abc
+ 4 | ABC
+ 2 | äbc
+ 3 | bbc
+(4 rows)
+
+SELECT a, b::testdomain FROM collate_test2 ORDER BY 2;
+ a |  b  
+---+-----
+ 1 | abc
+ 4 | ABC
+ 3 | bbc
+ 2 | äbc
+(4 rows)
+
+SELECT a, b::testdomain FROM collate_test3 ORDER BY 2;
+ a |  b  
+---+-----
+ 4 | ABC
+ 1 | abc
+ 3 | bbc
+ 2 | äbc
+(4 rows)
+
+SELECT a, b::testdomain_sv FROM collate_test3 ORDER BY 2;
+ a |  b  
+---+-----
+ 1 | abc
+ 4 | ABC
+ 3 | bbc
+ 2 | äbc
+(4 rows)
+
+SELECT a, lower(x::testdomain), lower(y::testdomain) FROM collate_test10;
+ a | lower | lower 
+---+-------+-------
+ 1 | hij   | hij
+ 2 | hij   | hıj
+(2 rows)
+
+SELECT min(b), max(b) FROM collate_test1;
+ min | max 
+-----+-----
+ abc | bbc
+(1 row)
+
+SELECT min(b), max(b) FROM collate_test2;
+ min | max 
+-----+-----
+ abc | äbc
+(1 row)
+
+SELECT min(b), max(b) FROM collate_test3;
+ min | max 
+-----+-----
+ ABC | äbc
+(1 row)
+
+SELECT array_agg(b ORDER BY b) FROM collate_test1;
+     array_agg     
+-------------------
+ {abc,ABC,äbc,bbc}
+(1 row)
+
+SELECT array_agg(b ORDER BY b) FROM collate_test2;
+     array_agg     
+-------------------
+ {abc,ABC,bbc,äbc}
+(1 row)
+
+SELECT array_agg(b ORDER BY b) FROM collate_test3;
+     array_agg     
+-------------------
+ {ABC,abc,bbc,äbc}
+(1 row)
+
+SELECT a, b FROM collate_test1 UNION ALL SELECT a, b FROM collate_test1 ORDER BY 2;
+ a |  b  
+---+-----
+ 1 | abc
+ 1 | abc
+ 4 | ABC
+ 4 | ABC
+ 2 | äbc
+ 2 | äbc
+ 3 | bbc
+ 3 | bbc
+(8 rows)
+
+SELECT a, b FROM collate_test2 UNION SELECT a, b FROM collate_test2 ORDER BY 2;
+ a |  b  
+---+-----
+ 1 | abc
+ 4 | ABC
+ 3 | bbc
+ 2 | äbc
+(4 rows)
+
+SELECT a, b FROM collate_test3 WHERE a < 4 INTERSECT SELECT a, b FROM collate_test3 WHERE a > 1 ORDER BY 2;
+ a |  b  
+---+-----
+ 3 | bbc
+ 2 | äbc
+(2 rows)
+
+SELECT a, b FROM collate_test3 EXCEPT SELECT a, b FROM collate_test3 WHERE a < 2 ORDER BY 2;
+ a |  b  
+---+-----
+ 4 | ABC
+ 3 | bbc
+ 2 | äbc
+(3 rows)
+
+SELECT a, b FROM collate_test1 UNION ALL SELECT a, b FROM collate_test3 ORDER BY 2; -- fail
+ERROR:  no collation was derived for the sort expression
+LINE 1: ...e_test1 UNION ALL SELECT a, b FROM collate_test3 ORDER BY 2;
+                                                                     ^
+HINT:  Use the COLLATE clause to set the collation explicitly.
+SELECT a, b FROM collate_test1 UNION ALL SELECT a, b FROM collate_test3; -- ok
+ a |  b  
+---+-----
+ 1 | abc
+ 2 | äbc
+ 3 | bbc
+ 4 | ABC
+ 1 | abc
+ 2 | äbc
+ 3 | bbc
+ 4 | ABC
+(8 rows)
+
+SELECT a, b FROM collate_test1 UNION SELECT a, b FROM collate_test3 ORDER BY 2; -- fail
+ERROR:  collation mismatch between implicit collations "en_US.utf8" and "C"
+LINE 1: SELECT a, b FROM collate_test1 UNION SELECT a, b FROM collat...
+                                                       ^
+HINT:  You can override the collation by applying the COLLATE clause to one or both expressions.
+SELECT a, b COLLATE "C" FROM collate_test1 UNION SELECT a, b FROM collate_test3 ORDER BY 2; -- ok
+ a |  b  
+---+-----
+ 4 | ABC
+ 1 | abc
+ 3 | bbc
+ 2 | äbc
+(4 rows)
+
+SELECT a, b FROM collate_test1 INTERSECT SELECT a, b FROM collate_test3 ORDER BY 2; -- fail
+ERROR:  collation mismatch between implicit collations "en_US.utf8" and "C"
+LINE 1: ...ELECT a, b FROM collate_test1 INTERSECT SELECT a, b FROM col...
+                                                             ^
+HINT:  You can override the collation by applying the COLLATE clause to one or both expressions.
+SELECT a, b FROM collate_test1 EXCEPT SELECT a, b FROM collate_test3 ORDER BY 2; -- fail
+ERROR:  collation mismatch between implicit collations "en_US.utf8" and "C"
+LINE 1: SELECT a, b FROM collate_test1 EXCEPT SELECT a, b FROM colla...
+                                                        ^
+HINT:  You can override the collation by applying the COLLATE clause to one or both expressions.
+-- casting
+SELECT CAST('42' AS text COLLATE "C");
+ERROR:  COLLATE clause not allowed in cast target
+LINE 1: SELECT CAST('42' AS text COLLATE "C");
+                            ^
+SELECT a, CAST(b AS varchar) FROM collate_test1 ORDER BY 2;
+ a |  b  
+---+-----
+ 1 | abc
+ 4 | ABC
+ 2 | äbc
+ 3 | bbc
+(4 rows)
+
+SELECT a, CAST(b AS varchar) FROM collate_test2 ORDER BY 2;
+ a |  b  
+---+-----
+ 1 | abc
+ 4 | ABC
+ 3 | bbc
+ 2 | äbc
+(4 rows)
+
+SELECT a, CAST(b AS varchar) FROM collate_test3 ORDER BY 2;
+ a |  b  
+---+-----
+ 4 | ABC
+ 1 | abc
+ 3 | bbc
+ 2 | äbc
+(4 rows)
+
+-- polymorphism
+SELECT * FROM unnest((SELECT array_agg(b ORDER BY b) FROM collate_test1)) ORDER BY 1;
+ unnest 
+--------
+ abc
+ ABC
+ äbc
+ bbc
+(4 rows)
+
+SELECT * FROM unnest((SELECT array_agg(b ORDER BY b) FROM collate_test2)) ORDER BY 1;
+ unnest 
+--------
+ abc
+ ABC
+ bbc
+ äbc
+(4 rows)
+
+SELECT * FROM unnest((SELECT array_agg(b ORDER BY b) FROM collate_test3)) ORDER BY 1;
+ unnest 
+--------
+ ABC
+ abc
+ bbc
+ äbc
+(4 rows)
+
+CREATE FUNCTION dup (f1 anyelement, f2 out anyelement, f3 out anyarray)
+    AS 'select $1, array[$1,$1]' LANGUAGE sql;
+SELECT a, (dup(b)).* FROM collate_test1 ORDER BY 2;
+ a | f2  |    f3     
+---+-----+-----------
+ 1 | abc | {abc,abc}
+ 4 | ABC | {ABC,ABC}
+ 2 | äbc | {äbc,äbc}
+ 3 | bbc | {bbc,bbc}
+(4 rows)
+
+SELECT a, (dup(b)).* FROM collate_test2 ORDER BY 2;
+ a | f2  |    f3     
+---+-----+-----------
+ 1 | abc | {abc,abc}
+ 4 | ABC | {ABC,ABC}
+ 3 | bbc | {bbc,bbc}
+ 2 | äbc | {äbc,äbc}
+(4 rows)
+
+SELECT a, (dup(b)).* FROM collate_test3 ORDER BY 2;
+ a | f2  |    f3     
+---+-----+-----------
+ 4 | ABC | {ABC,ABC}
+ 1 | abc | {abc,abc}
+ 3 | bbc | {bbc,bbc}
+ 2 | äbc | {äbc,äbc}
+(4 rows)
+
+-- indexes
+CREATE INDEX collate_test1_idx1 ON collate_test1 (b);
+CREATE INDEX collate_test1_idx2 ON collate_test1 (b COLLATE "C");
+CREATE INDEX collate_test1_idx3 ON collate_test1 ((b COLLATE "C")); -- this is different grammatically
+CREATE INDEX collate_test1_idx4 ON collate_test1 (a COLLATE "C"); -- fail
+ERROR:  collations are not supported by type integer
+CREATE INDEX collate_test1_idx5 ON collate_test1 ((a COLLATE "C")); -- fail
+ERROR:  collations are not supported by type integer
+SELECT relname, pg_get_indexdef(oid) FROM pg_class WHERE relname LIKE 'collate_test%_idx%';
+      relname       |                                       pg_get_indexdef                                        
+--------------------+----------------------------------------------------------------------------------------------
+ collate_test1_idx1 | CREATE INDEX collate_test1_idx1 ON collate_test1 USING btree (b)
+ collate_test1_idx2 | CREATE INDEX collate_test1_idx2 ON collate_test1 USING btree (b COLLATE "C")
+ collate_test1_idx3 | CREATE INDEX collate_test1_idx3 ON collate_test1 USING btree (((b COLLATE "C")) COLLATE "C")
+(3 rows)
+

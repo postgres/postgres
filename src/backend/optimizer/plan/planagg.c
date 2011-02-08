@@ -561,7 +561,8 @@ make_agg_subplan(PlannerInfo *root, RelOptInfo *rel, PrivateMMAggInfo *info)
 	 */
 	info->param = SS_make_initplan_from_plan(&subroot, plan,
 											 exprType((Node *) tle->expr),
-											 -1);
+											 -1,
+											 exprCollation((Node *) tle->expr));
 
 	/*
 	 * Put the updated list of InitPlans back into the outer PlannerInfo.

@@ -167,6 +167,7 @@ static void get_set_pwd(void);
 static void setup_depend(void);
 static void setup_sysviews(void);
 static void setup_description(void);
+static void setup_collation(void);
 static void setup_conversion(void);
 static void setup_dictionary(void);
 static void setup_privileges(void);
@@ -223,6 +224,12 @@ do { \
 #define PG_CMD_PRINTF2(fmt, arg1, arg2) \
 do { \
 	if (fprintf(cmdfd, fmt, arg1, arg2) < 0 || fflush(cmdfd) < 0) \
+		output_failed = true, output_errno = errno; \
+} while (0)
+
+#define PG_CMD_PRINTF3(fmt, arg1, arg2, arg3)		\
+do { \
+	if (fprintf(cmdfd, fmt, arg1, arg2, arg3) < 0 || fflush(cmdfd) < 0)	\
 		output_failed = true, output_errno = errno; \
 } while (0)
 
@@ -1492,6 +1499,182 @@ setup_description(void)
 	check_ok();
 }
 
+#ifdef HAVE_LOCALE_T
+/*
+ * "Normalize" a locale name, stripping off encoding tags such as
+ * ".utf8" (e.g., "en_US.utf8" -> "en_US", but "br_FR.iso885915@euro"
+ * -> "br_FR@euro").  Return true if a new, different name was
+ * generated.
+ */
+static bool
+normalize_locale_name(char *new, const char *old)
+{
+	char   *n = new;
+	const char *o = old;
+	bool	changed = false;
+
+	while (*o)
+	{
+		if (*o == '.')
+		{
+			/* skip over encoding tag such as ".utf8" or ".UTF-8" */
+			o++;
+			while ((*o >= 'A' && *o <= 'Z')
+				   || (*o >= 'a' && *o <= 'z')
+				   || (*o >= '0' && *o <= '9')
+				   || (*o == '-'))
+				o++;
+			changed = true;
+		}
+		else
+			*n++ = *o++;
+	}
+	*n = '\0';
+
+	return changed;
+}
+#endif /* HAVE_LOCALE_T */
+
+/*
+ * populate pg_collation
+ */
+static void
+setup_collation(void)
+{
+#ifdef HAVE_LOCALE_T
+	int i;
+	FILE   *locale_a_handle;
+	char	localebuf[NAMEDATALEN];
+	int		skipped = 0;
+	PG_CMD_DECL;
+#endif
+
+	fputs(_("creating collations ... "), stdout);
+	fflush(stdout);
+
+#ifdef HAVE_LOCALE_T
+	snprintf(cmd, sizeof(cmd),
+			 "\"%s\" %s template1 >%s",
+			 backend_exec, backend_options,
+			 DEVNULL);
+
+	locale_a_handle = popen_check("locale -a", "r");
+	if (!locale_a_handle)
+		return;
+
+	PG_CMD_OPEN;
+
+	PG_CMD_PUTS("CREATE TEMP TABLE tmp_pg_collation ( "
+				"	collname name, "
+				"	locale name, "
+				"	encoding int) WITHOUT OIDS;\n");
+
+	while (fgets(localebuf, sizeof(localebuf), locale_a_handle))
+	{
+		size_t	len;
+		int		enc;
+		bool	skip;
+		char	alias[NAMEDATALEN];
+
+		len = strlen(localebuf);
+
+		if (localebuf[len - 1] != '\n')
+		{
+			if (debug)
+				fprintf(stderr, _("%s: locale name too long, skipped: %s\n"),
+						progname, localebuf);
+			skipped++;
+			continue;
+		}
+		localebuf[len - 1] = '\0';
+
+		/*
+		 * Some systems have locale names that don't consist entirely
+		 * of ASCII letters (such as "bokm&aring;l" or
+		 * "fran&ccedil;ais").  This is pretty silly, since we need
+		 * the locale itself to interpret the non-ASCII characters.
+		 * We can't do much with those, so we filter them out.
+		 */
+		skip = false;
+		for (i = 0; i < len; i++)
+			if (IS_HIGHBIT_SET(localebuf[i]))
+			{
+				if (debug)
+					fprintf(stderr, _("%s: locale name has non-ASCII characters, skipped: %s\n"),
+							progname, localebuf);
+				skipped++;
+				skip = true;
+				break;
+			}
+		if (skip)
+			continue;
+
+		enc = pg_get_encoding_from_locale(localebuf, debug);
+		if (enc < 0)
+		{
+			skipped++;
+			continue;			/* error message printed by pg_get_encoding_from_locale() */
+		}
+		if (enc == PG_SQL_ASCII)
+			continue;			/* SQL_ASCII is handled separately */
+
+		PG_CMD_PRINTF2("INSERT INTO tmp_pg_collation (locale, encoding) VALUES ('%s', %d);",
+					   escape_quotes(localebuf), enc);
+
+		/*
+		 * Generate aliases such as "en_US" in addition to
+		 * "en_US.utf8" for ease of use.  Note that collation names
+		 * are unique per encoding only, so this doesn't clash with
+		 * "en_US" for LATIN1, say.
+		 */
+		if (normalize_locale_name(alias, localebuf))
+			PG_CMD_PRINTF3("INSERT INTO tmp_pg_collation (collname, locale, encoding) VALUES ('%s', '%s', %d);",
+						   escape_quotes(alias), escape_quotes(localebuf), enc);
+	}
+
+	for (i = PG_SQL_ASCII; i <= PG_ENCODING_BE_LAST; i++)
+		PG_CMD_PRINTF2("INSERT INTO tmp_pg_collation (locale, encoding) VALUES ('C', %d), ('POSIX', %d);",
+					   i, i);
+
+	/* Add an SQL-standard name */
+	PG_CMD_PRINTF1("INSERT INTO tmp_pg_collation (collname, locale, encoding) VALUES ('ucs_basic', 'C', %d);", PG_UTF8);
+
+	/*
+	 * When copying collations to the final location, eliminate
+	 * aliases that conflict with an existing locale name for the same
+	 * encoding.  For example, "br_FR.iso88591" is normalized to
+	 * "br_FR", both for encoding LATIN1.  But the unnormalized locale
+	 * "br_FR" already exists for LATIN1.  Prefer the collation that
+	 * matches the OS locale name, else the first name by sort order
+	 * (arbitrary choice to be deterministic).
+	 */
+	PG_CMD_PUTS("INSERT INTO pg_collation (collname, collnamespace, collencoding, collcollate, collctype) "
+				" SELECT DISTINCT ON (final_collname, collnamespace, encoding)"
+				"   COALESCE(collname, locale) AS final_collname, "
+				"   (SELECT oid FROM pg_namespace WHERE nspname = 'pg_catalog') AS collnamespace, "
+				"   encoding, "
+				"   locale, locale "
+				"  FROM tmp_pg_collation"
+				"  ORDER BY final_collname, collnamespace, encoding, (collname = locale) DESC, locale;\n");
+
+	pclose(locale_a_handle);
+	PG_CMD_CLOSE;
+
+	check_ok();
+	if (skipped && !debug)
+	{
+		printf(ngettext("%d system locale has been omitted because it cannot supported by PostgreSQL.\n",
+						"%d system locales have been omitted because they cannot be supported by PostgreSQL.\n",
+						skipped),
+			   skipped);
+		printf(_("Use the option \"--debug\" to see details.\n"));
+	}
+#else /* not HAVE_LOCALE_T */
+	printf(_("not supported on this platform\n"));
+	fflush(stdout);
+#endif /* not HAVE_LOCALE_T */
+}
+
 /*
  * load conversion functions
  */
@@ -2021,7 +2204,7 @@ check_locale_encoding(const char *locale, int user_enc)
 {
 	int			locale_enc;
 
-	locale_enc = pg_get_encoding_from_locale(locale);
+	locale_enc = pg_get_encoding_from_locale(locale, true);
 
 	/* See notes in createdb() to understand these tests */
 	if (!(locale_enc == user_enc ||
@@ -2675,7 +2858,7 @@ main(int argc, char *argv[])
 	{
 		int			ctype_enc;
 
-		ctype_enc = pg_get_encoding_from_locale(lc_ctype);
+		ctype_enc = pg_get_encoding_from_locale(lc_ctype, true);
 
 		if (ctype_enc == -1)
 		{
@@ -2951,6 +3134,8 @@ main(int argc, char *argv[])
 	setup_sysviews();
 
 	setup_description();
+
+	setup_collation();
 
 	setup_conversion();
 

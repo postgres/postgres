@@ -166,6 +166,9 @@ static Datum ExecEvalFieldStore(FieldStoreState *fstate,
 static Datum ExecEvalRelabelType(GenericExprState *exprstate,
 					ExprContext *econtext,
 					bool *isNull, ExprDoneCond *isDone);
+static Datum ExecEvalCollateClause(GenericExprState *exprstate,
+					ExprContext *econtext,
+					bool *isNull, ExprDoneCond *isDone);
 static Datum ExecEvalCoerceViaIO(CoerceViaIOState *iostate,
 					ExprContext *econtext,
 					bool *isNull, ExprDoneCond *isDone);
@@ -1202,7 +1205,7 @@ init_fcache(Oid foid, FuncExprState *fcache,
 
 	/* Set up the primary fmgr lookup information */
 	fmgr_info_cxt(foid, &(fcache->func), fcacheCxt);
-	fcache->func.fn_expr = (Node *) fcache->xprstate.expr;
+	fmgr_info_expr((Node *) fcache->xprstate.expr, &(fcache->func));
 
 	/* Initialize the function call parameter struct as well */
 	InitFunctionCallInfoData(fcache->fcinfo_data, &(fcache->func),
@@ -4026,6 +4029,20 @@ ExecEvalRelabelType(GenericExprState *exprstate,
 }
 
 /* ----------------------------------------------------------------
+ *		ExecEvalCollateClause
+ *
+ *		Evaluate a CollateClause node.
+ * ----------------------------------------------------------------
+ */
+static Datum
+ExecEvalCollateClause(GenericExprState *exprstate,
+					ExprContext *econtext,
+					bool *isNull, ExprDoneCond *isDone)
+{
+	return ExecEvalExpr(exprstate->arg, econtext, isNull, isDone);
+}
+
+/* ----------------------------------------------------------------
  *		ExecEvalCoerceViaIO
  *
  *		Evaluate a CoerceViaIO node.
@@ -4114,7 +4131,7 @@ ExecEvalArrayCoerceExpr(ArrayCoerceExprState *astate,
 					  econtext->ecxt_per_query_memory);
 
 		/* Initialize additional info */
-		astate->elemfunc.fn_expr = (Node *) acoerce;
+		fmgr_info_expr((Node *) acoerce, &(astate->elemfunc));
 	}
 
 	/*
@@ -4484,6 +4501,16 @@ ExecInitExpr(Expr *node, PlanState *parent)
 				state = (ExprState *) gstate;
 			}
 			break;
+		case T_CollateClause:
+			{
+				CollateClause *collate = (CollateClause *) node;
+				GenericExprState *gstate = makeNode(GenericExprState);
+
+				gstate->xprstate.evalfunc = (ExprStateEvalFunc) ExecEvalCollateClause;
+				gstate->arg = ExecInitExpr(collate->arg, parent);
+				state = (ExprState *) gstate;
+			}
+			break;
 		case T_CoerceViaIO:
 			{
 				CoerceViaIO *iocoerce = (CoerceViaIO *) node;
@@ -4657,6 +4684,7 @@ ExecInitExpr(Expr *node, PlanState *parent)
 				List	   *outlist;
 				ListCell   *l;
 				ListCell   *l2;
+				ListCell   *l3;
 				int			i;
 
 				rstate->xprstate.evalfunc = (ExprStateEvalFunc) ExecEvalRowCompare;
@@ -4685,10 +4713,11 @@ ExecInitExpr(Expr *node, PlanState *parent)
 				Assert(list_length(rcexpr->opfamilies) == nopers);
 				rstate->funcs = (FmgrInfo *) palloc(nopers * sizeof(FmgrInfo));
 				i = 0;
-				forboth(l, rcexpr->opnos, l2, rcexpr->opfamilies)
+				forthree(l, rcexpr->opnos, l2, rcexpr->opfamilies, l3, rcexpr->collids)
 				{
 					Oid			opno = lfirst_oid(l);
 					Oid			opfamily = lfirst_oid(l2);
+					Oid			collid = lfirst_oid(l3);
 					int			strategy;
 					Oid			lefttype;
 					Oid			righttype;
@@ -4710,6 +4739,7 @@ ExecInitExpr(Expr *node, PlanState *parent)
 					 * does this code.
 					 */
 					fmgr_info(proc, &(rstate->funcs[i]));
+					fmgr_info_collation(collid, &(rstate->funcs[i]));
 					i++;
 				}
 				state = (ExprState *) rstate;
@@ -4769,6 +4799,7 @@ ExecInitExpr(Expr *node, PlanState *parent)
 				 * code.
 				 */
 				fmgr_info(typentry->cmp_proc, &(mstate->cfunc));
+				fmgr_info_collation(minmaxexpr->collid, &(mstate->cfunc));
 				state = (ExprState *) mstate;
 			}
 			break;

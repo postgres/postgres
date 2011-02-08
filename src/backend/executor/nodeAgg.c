@@ -140,6 +140,7 @@ typedef struct AggStatePerAggData
 	/* deconstructed sorting information (arrays of length numSortCols) */
 	AttrNumber *sortColIdx;
 	Oid		   *sortOperators;
+	Oid		   *sortCollations;
 	bool	   *sortNullsFirst;
 
 	/*
@@ -315,12 +316,14 @@ initialize_aggregates(AggState *aggstate,
 				(peraggstate->numInputs == 1) ?
 				tuplesort_begin_datum(peraggstate->evaldesc->attrs[0]->atttypid,
 									  peraggstate->sortOperators[0],
+									  peraggstate->sortCollations[0],
 									  peraggstate->sortNullsFirst[0],
 									  work_mem, false) :
 				tuplesort_begin_heap(peraggstate->evaldesc,
 									 peraggstate->numSortCols,
 									 peraggstate->sortColIdx,
 									 peraggstate->sortOperators,
+									 peraggstate->sortCollations,
 									 peraggstate->sortNullsFirst,
 									 work_mem, false);
 		}
@@ -1668,16 +1671,17 @@ ExecInitAgg(Agg *node, EState *estate, int eflags)
 								aggref->aggtype,
 								transfn_oid,
 								finalfn_oid,
+								aggref->collid,
 								&transfnexpr,
 								&finalfnexpr);
 
 		fmgr_info(transfn_oid, &peraggstate->transfn);
-		peraggstate->transfn.fn_expr = (Node *) transfnexpr;
+		fmgr_info_expr((Node *) transfnexpr, &peraggstate->transfn);
 
 		if (OidIsValid(finalfn_oid))
 		{
 			fmgr_info(finalfn_oid, &peraggstate->finalfn);
-			peraggstate->finalfn.fn_expr = (Node *) finalfnexpr;
+			fmgr_info_expr((Node *) finalfnexpr, &peraggstate->finalfn);
 		}
 
 		get_typlenbyval(aggref->aggtype,
@@ -1786,6 +1790,8 @@ ExecInitAgg(Agg *node, EState *estate, int eflags)
 				(AttrNumber *) palloc(numSortCols * sizeof(AttrNumber));
 			peraggstate->sortOperators =
 				(Oid *) palloc(numSortCols * sizeof(Oid));
+			peraggstate->sortCollations =
+				(Oid *) palloc(numSortCols * sizeof(Oid));
 			peraggstate->sortNullsFirst =
 				(bool *) palloc(numSortCols * sizeof(bool));
 
@@ -1801,6 +1807,7 @@ ExecInitAgg(Agg *node, EState *estate, int eflags)
 
 				peraggstate->sortColIdx[i] = tle->resno;
 				peraggstate->sortOperators[i] = sortcl->sortop;
+				peraggstate->sortCollations[i] = exprCollation((Node *) tle->expr);
 				peraggstate->sortNullsFirst[i] = sortcl->nulls_first;
 				i++;
 			}

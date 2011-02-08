@@ -213,9 +213,11 @@ set_plan_references(PlannerGlobal *glob, Plan *plan,
 		newrte->funcexpr = NULL;
 		newrte->funccoltypes = NIL;
 		newrte->funccoltypmods = NIL;
+		newrte->funccolcollations = NIL;
 		newrte->values_lists = NIL;
 		newrte->ctecoltypes = NIL;
 		newrte->ctecoltypmods = NIL;
+		newrte->ctecolcollations = NIL;
 
 		glob->finalrtable = lappend(glob->finalrtable, newrte);
 
@@ -1119,6 +1121,7 @@ set_dummy_tlist_references(Plan *plan, int rtoffset)
 						 tle->resno,
 						 exprType((Node *) oldvar),
 						 exprTypmod((Node *) oldvar),
+						 exprCollation((Node *) oldvar),
 						 0);
 		if (IsA(oldvar, Var))
 		{

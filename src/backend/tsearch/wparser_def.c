@@ -14,6 +14,7 @@
 
 #include "postgres.h"
 
+#include "catalog/pg_collation.h"
 #include "commands/defrem.h"
 #include "tsearch/ts_locale.h"
 #include "tsearch/ts_public.h"
@@ -286,6 +287,7 @@ static TParser *
 TParserInit(char *str, int len)
 {
 	TParser    *prs = (TParser *) palloc0(sizeof(TParser));
+	Oid			collation = DEFAULT_COLLATION_OID; /*TODO*/
 
 	prs->charmaxlen = pg_database_encoding_max_length();
 	prs->str = str;
@@ -299,7 +301,7 @@ TParserInit(char *str, int len)
 	if (prs->charmaxlen > 1)
 	{
 		prs->usewide = true;
-		if ( lc_ctype_is_c() )
+		if ( lc_ctype_is_c(collation) )
 		{
 			/*
 			 * char2wchar doesn't work for C-locale and
@@ -311,7 +313,7 @@ TParserInit(char *str, int len)
 		else
 		{
 			prs->wstr = (wchar_t *) palloc(sizeof(wchar_t) * (prs->lenstr + 1));
-			char2wchar(prs->wstr, prs->lenstr + 1, prs->str, prs->lenstr);
+			char2wchar(prs->wstr, prs->lenstr + 1, prs->str, prs->lenstr, collation);
 		}
 	}
 	else

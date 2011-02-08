@@ -732,6 +732,7 @@ ExecIndexBuildScanKeys(PlanState *planstate, Relation index, Index scanrelid,
 		int			op_strategy;	/* operator's strategy number */
 		Oid			op_lefttype;	/* operator's declared input types */
 		Oid			op_righttype;
+		Oid			collation;
 		Expr	   *leftop;		/* expr on lhs of operator */
 		Expr	   *rightop;	/* expr on rhs ... */
 		AttrNumber	varattno;	/* att number used in scan */
@@ -831,6 +832,8 @@ ExecIndexBuildScanKeys(PlanState *planstate, Relation index, Index scanrelid,
 								   op_righttype,		/* strategy subtype */
 								   opfuncid,	/* reg proc to use */
 								   scanvalue);	/* constant */
+			ScanKeyEntryInitializeCollation(this_scan_key,
+											((OpExpr *) clause)->collid);
 		}
 		else if (IsA(clause, RowCompareExpr))
 		{
@@ -839,6 +842,7 @@ ExecIndexBuildScanKeys(PlanState *planstate, Relation index, Index scanrelid,
 			ListCell   *largs_cell = list_head(rc->largs);
 			ListCell   *rargs_cell = list_head(rc->rargs);
 			ListCell   *opnos_cell = list_head(rc->opnos);
+			ListCell   *collids_cell = list_head(rc->collids);
 			ScanKey		first_sub_key;
 			int			n_sub_key;
 
@@ -897,6 +901,9 @@ ExecIndexBuildScanKeys(PlanState *planstate, Relation index, Index scanrelid,
 											 op_righttype,
 											 BTORDER_PROC);
 
+				collation = lfirst_oid(collids_cell);
+				collids_cell = lnext(collids_cell);
+
 				/*
 				 * rightop is the constant or variable comparison value
 				 */
@@ -952,6 +959,8 @@ ExecIndexBuildScanKeys(PlanState *planstate, Relation index, Index scanrelid,
 									   op_righttype,	/* strategy subtype */
 									   opfuncid,		/* reg proc to use */
 									   scanvalue);		/* constant */
+				ScanKeyEntryInitializeCollation(this_sub_key,
+												collation);
 				n_sub_key++;
 			}
 
@@ -1035,6 +1044,8 @@ ExecIndexBuildScanKeys(PlanState *planstate, Relation index, Index scanrelid,
 								   op_righttype,		/* strategy subtype */
 								   opfuncid,	/* reg proc to use */
 								   (Datum) 0);	/* constant */
+			ScanKeyEntryInitializeCollation(this_scan_key,
+											saop->collid);
 		}
 		else if (IsA(clause, NullTest))
 		{

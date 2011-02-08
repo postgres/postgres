@@ -87,12 +87,14 @@ static TupleDesc ConstructTupleDescriptor(Relation heapRelation,
 						 IndexInfo *indexInfo,
 						 List *indexColNames,
 						 Oid accessMethodObjectId,
+						 Oid *collationObjectId,
 						 Oid *classObjectId);
 static void InitializeAttributeOids(Relation indexRelation,
 						int numatts, Oid indexoid);
 static void AppendAttributeTuples(Relation indexRelation, int numatts);
 static void UpdateIndexRelation(Oid indexoid, Oid heapoid,
 					IndexInfo *indexInfo,
+					Oid *collationOids,
 					Oid *classOids,
 					int16 *coloptions,
 					bool primary,
@@ -264,6 +266,7 @@ ConstructTupleDescriptor(Relation heapRelation,
 						 IndexInfo *indexInfo,
 						 List *indexColNames,
 						 Oid accessMethodObjectId,
+						 Oid *collationObjectId,
 						 Oid *classObjectId)
 {
 	int			numatts = indexInfo->ii_NumIndexAttrs;
@@ -398,6 +401,8 @@ ConstructTupleDescriptor(Relation heapRelation,
 			CheckAttributeType(NameStr(to->attname), to->atttypid, false);
 		}
 
+		to->attcollation = collationObjectId[i];
+
 		/*
 		 * We do not yet have the correct relation OID for the index, so just
 		 * set it invalid for now.	InitializeAttributeOids() will fix it
@@ -521,6 +526,7 @@ static void
 UpdateIndexRelation(Oid indexoid,
 					Oid heapoid,
 					IndexInfo *indexInfo,
+					Oid *collationOids,
 					Oid *classOids,
 					int16 *coloptions,
 					bool primary,
@@ -529,6 +535,7 @@ UpdateIndexRelation(Oid indexoid,
 					bool isvalid)
 {
 	int2vector *indkey;
+	oidvector  *indcollation;
 	oidvector  *indclass;
 	int2vector *indoption;
 	Datum		exprsDatum;
@@ -546,6 +553,7 @@ UpdateIndexRelation(Oid indexoid,
 	indkey = buildint2vector(NULL, indexInfo->ii_NumIndexAttrs);
 	for (i = 0; i < indexInfo->ii_NumIndexAttrs; i++)
 		indkey->values[i] = indexInfo->ii_KeyAttrNumbers[i];
+	indcollation = buildoidvector(collationOids, indexInfo->ii_NumIndexAttrs);
 	indclass = buildoidvector(classOids, indexInfo->ii_NumIndexAttrs);
 	indoption = buildint2vector(coloptions, indexInfo->ii_NumIndexAttrs);
 
@@ -601,6 +609,7 @@ UpdateIndexRelation(Oid indexoid,
 	/* we set isvalid and isready the same way */
 	values[Anum_pg_index_indisready - 1] = BoolGetDatum(isvalid);
 	values[Anum_pg_index_indkey - 1] = PointerGetDatum(indkey);
+	values[Anum_pg_index_indcollation - 1] = PointerGetDatum(indcollation);
 	values[Anum_pg_index_indclass - 1] = PointerGetDatum(indclass);
 	values[Anum_pg_index_indoption - 1] = PointerGetDatum(indoption);
 	values[Anum_pg_index_indexprs - 1] = exprsDatum;
@@ -664,6 +673,7 @@ index_create(Relation heapRelation,
 			 List *indexColNames,
 			 Oid accessMethodObjectId,
 			 Oid tableSpaceId,
+			 Oid *collationObjectId,
 			 Oid *classObjectId,
 			 int16 *coloptions,
 			 Datum reloptions,
@@ -761,6 +771,7 @@ index_create(Relation heapRelation,
 											indexInfo,
 											indexColNames,
 											accessMethodObjectId,
+											collationObjectId,
 											classObjectId);
 
 	/*
@@ -856,7 +867,7 @@ index_create(Relation heapRelation,
 	 * ----------------
 	 */
 	UpdateIndexRelation(indexRelationId, heapRelationId, indexInfo,
-						classObjectId, coloptions, isprimary, is_exclusion,
+						collationObjectId, classObjectId, coloptions, isprimary, is_exclusion,
 						!deferrable,
 						!concurrent);
 
@@ -2370,7 +2381,7 @@ validate_index(Oid heapId, Oid indexId, Snapshot snapshot)
 	ivinfo.strategy = NULL;
 
 	state.tuplesort = tuplesort_begin_datum(TIDOID,
-											TIDLessOperator, false,
+											TIDLessOperator, InvalidOid, false,
 											maintenance_work_mem,
 											false);
 	state.htups = state.itups = state.tups_inserted = 0;

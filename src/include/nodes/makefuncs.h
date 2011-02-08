@@ -27,6 +27,7 @@ extern Var *makeVar(Index varno,
 		AttrNumber varattno,
 		Oid vartype,
 		int32 vartypmod,
+		Oid varcollid,
 		Index varlevelsup);
 
 extern Var *makeVarFromTargetEntry(Index varno,
@@ -67,10 +68,10 @@ extern RangeVar *makeRangeVar(char *schemaname, char *relname, int location);
 
 extern TypeName *makeTypeName(char *typnam);
 extern TypeName *makeTypeNameFromNameList(List *names);
-extern TypeName *makeTypeNameFromOid(Oid typeOid, int32 typmod);
+extern TypeName *makeTypeNameFromOid(Oid typeOid, int32 typmod, Oid collOid);
 
 extern FuncExpr *makeFuncExpr(Oid funcid, Oid rettype,
-			 List *args, CoercionForm fformat);
+			 List *args, Oid collid, CoercionForm fformat);
 
 extern DefElem *makeDefElem(char *name, Node *arg);
 extern DefElem *makeDefElemExtended(char *nameSpace, char *name, Node *arg,

@@ -747,6 +747,7 @@ rewriteTargetListIU(Query *parsetree, Relation target_relation,
 										attrno,
 										att_tup->atttypid,
 										att_tup->atttypmod,
+										att_tup->attcollation,
 										0);
 
 			new_tle = makeTargetEntry((Expr *) new_expr,
@@ -1127,6 +1128,7 @@ rewriteTargetListUD(Query *parsetree, RangeTblEntry *target_rte,
 					  SelfItemPointerAttributeNumber,
 					  TIDOID,
 					  -1,
+					  InvalidOid,
 					  0);
 
 		attrname = "ctid";
