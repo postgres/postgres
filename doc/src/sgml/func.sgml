@@ -14174,6 +14174,64 @@ postgres=# SELECT * FROM pg_xlogfile_name_offset(pg_stop_backup());
    </table>
 
    <para>
+    The functions shown in <xref
+    linkend="functions-recovery-control-table"> control the progress of recovery.
+    These functions may be executed only during recovery.
+   </para>
+
+   <table id="functions-recovery-control-table">
+    <title>Recovery Control Functions</title>
+    <tgroup cols="3">
+     <thead>
+      <row><entry>Name</entry> <entry>Return Type</entry> <entry>Description</entry>
+      </row>
+     </thead>
+
+     <tbody>
+      <row>
+       <entry>
+        <literal><function>pg_is_xlog_replay_paused()</function></literal>
+        </entry>
+       <entry><type>bool</type></entry>
+       <entry>True if recovery is paused.
+       </entry>
+      </row>
+      <row>
+       <entry>
+        <literal><function>pg_xlog_replay_pause()</function></literal>
+        </entry>
+       <entry><type>void</type></entry>
+       <entry>Pauses recovery immediately.
+       </entry>
+      </row>
+      <row>
+       <entry>
+        <literal><function>pg_xlog_replay_resume()</function></literal>
+        </entry>
+       <entry><type>void</type></entry>
+       <entry>Restarts recovery if it was paused.
+       </entry>
+      </row>
+     </tbody>
+    </tgroup>
+   </table>
+
+   <para>
+    While recovery is paused no further database changes are applied.
+    If in hot standby, all new queries will see the same consistent snapshot
+    of the database, and no further query conflicts will be generated until
+    recovery is resumed.
+   </para>
+
+   <para>
+    If streaming replication is disabled, the paused state may continue
+    indefinitely without problem. While streaming replication is in
+    progress WAL records will continue to be received, which will
+    eventually fill available disk space, depending upon the duration of
+    the pause, the rate of WAL generation and available disk space.
+   </para>
+
+   <para>
     The functions shown in <xref linkend="functions-admin-dbsize"> calculate
     the disk space usage of database objects.
    </para>

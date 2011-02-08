@@ -275,5 +275,8 @@ extern Datum pg_last_xact_replay_timestamp(PG_FUNCTION_ARGS);
 extern Datum pg_xlogfile_name_offset(PG_FUNCTION_ARGS);
 extern Datum pg_xlogfile_name(PG_FUNCTION_ARGS);
 extern Datum pg_is_in_recovery(PG_FUNCTION_ARGS);
+extern Datum pg_xlog_replay_pause(PG_FUNCTION_ARGS);
+extern Datum pg_xlog_replay_resume(PG_FUNCTION_ARGS);
+extern Datum pg_is_xlog_replay_paused(PG_FUNCTION_ARGS);
 
 #endif   /* XLOG_INTERNAL_H */

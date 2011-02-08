@@ -182,6 +182,7 @@ static char *recoveryEndCommand = NULL;
 static char *archiveCleanupCommand = NULL;
 static RecoveryTargetType recoveryTarget = RECOVERY_TARGET_UNSET;
 static bool recoveryTargetInclusive = true;
+static bool recoveryPauseAtTarget = true;
 static TransactionId recoveryTargetXid;
 static TimestampTz recoveryTargetTime;
 
@@ -423,6 +424,8 @@ typedef struct XLogCtlData
 	XLogRecPtr	recoveryLastRecPtr;
 	/* timestamp of last COMMIT/ABORT record replayed (or being replayed) */
 	TimestampTz recoveryLastXTime;
+	/* Are we requested to pause recovery? */
+	bool		recoveryPause;
 
 	slock_t		info_lck;		/* locks shared variables shown above */
 } XLogCtlData;
@@ -570,6 +573,9 @@ static void readRecoveryCommandFile(void);
 static void exitArchiveRecovery(TimeLineID endTLI,
 					uint32 endLogId, uint32 endLogSeg);
 static bool recoveryStopsHere(XLogRecord *record, bool *includeThis);
+static void recoveryPausesHere(void);
+static bool RecoveryIsPaused(void);
+static void SetRecoveryPause(bool recoveryPause);
 static void SetLatestXTime(TimestampTz xtime);
 static TimestampTz GetLatestXTime(void);
 static void CheckRequiredParameterValues(void);
@@ -5126,6 +5132,15 @@ readRecoveryCommandFile(void)
 					(errmsg("archive_cleanup_command = '%s'",
 							archiveCleanupCommand)));
 		}
+		else if (strcmp(item->name, "pause_at_recovery_target") == 0)
+		{
+			if (!parse_bool(item->value, &recoveryPauseAtTarget))
+				ereport(ERROR,
+						(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+						 errmsg("parameter \"%s\" requires a Boolean value", "pause_at_recovery_target")));
+			ereport(DEBUG2,
+					(errmsg("pause_at_recovery_target = '%s'", item->value)));
+		}
 		else if (strcmp(item->name, "recovery_target_timeline") == 0)
 		{
 			rtliGiven = true;
@@ -5506,6 +5521,110 @@ recoveryStopsHere(XLogRecord *record, bool *includeThis)
 		SetLatestXTime(recordXtime);
 
 	return stopsHere;
+}
+
+/*
+ * Recheck shared recoveryPause by polling.
+ *
+ * XXX Can also be done with shared latch.
+ */
+static void
+recoveryPausesHere(void)
+{
+	while (RecoveryIsPaused());
+	{
+		pg_usleep(1000000L);		/* 1000 ms */
+		HandleStartupProcInterrupts();
+	};
+}
+
+static bool
+RecoveryIsPaused(void)
+{
+	/* use volatile pointer to prevent code rearrangement */
+	volatile XLogCtlData *xlogctl = XLogCtl;
+	bool recoveryPause;
+
+	SpinLockAcquire(&xlogctl->info_lck);
+	recoveryPause = xlogctl->recoveryPause;
+	SpinLockRelease(&xlogctl->info_lck);
+
+	return recoveryPause;
+}
+
+static void
+SetRecoveryPause(bool recoveryPause)
+{
+	/* use volatile pointer to prevent code rearrangement */
+	volatile XLogCtlData *xlogctl = XLogCtl;
+
+	SpinLockAcquire(&xlogctl->info_lck);
+	xlogctl->recoveryPause = recoveryPause;
+	SpinLockRelease(&xlogctl->info_lck);
+}
+
+/*
+ * pg_xlog_replay_pause - pause recovery now
+ */
+Datum
+pg_xlog_replay_pause(PG_FUNCTION_ARGS)
+{
+	if (!superuser())
+		ereport(ERROR,
+				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
+			 (errmsg("must be superuser to control recovery"))));
+
+	if (!RecoveryInProgress())
+		ereport(ERROR,
+				(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
+				 errmsg("recovery is not in progress"),
+				 errhint("Recovery control functions can only be executed during recovery.")));
+
+	SetRecoveryPause(true);
+
+	PG_RETURN_VOID();
+}
+
+/*
+ * pg_xlog_replay_resume - resume recovery now
+ */
+Datum
+pg_xlog_replay_resume(PG_FUNCTION_ARGS)
+{
+	if (!superuser())
+		ereport(ERROR,
+				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
+			 (errmsg("must be superuser to control recovery"))));
+
+	if (!RecoveryInProgress())
+		ereport(ERROR,
+				(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
+				 errmsg("recovery is not in progress"),
+				 errhint("Recovery control functions can only be executed during recovery.")));
+
+	SetRecoveryPause(false);
+
+	PG_RETURN_VOID();
+}
+
+/*
+ * pg_is_xlog_replay_paused
+ */
+Datum
+pg_is_xlog_replay_paused(PG_FUNCTION_ARGS)
+{
+	if (!superuser())
+		ereport(ERROR,
+				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
+			 (errmsg("must be superuser to control recovery"))));
+
+	if (!RecoveryInProgress())
+		ereport(ERROR,
+				(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
+				 errmsg("recovery is not in progress"),
+				 errhint("Recovery control functions can only be executed during recovery.")));
+
+	PG_RETURN_BOOL(RecoveryIsPaused());
 }
 
 /*
@@ -6074,6 +6193,13 @@ StartupXLOG(void)
 				StandbyRecoverPreparedTransactions(false);
 			}
 		}
+		else
+		{
+			/*
+			 * Must not pause unless we are going to enter Hot Standby.
+			 */
+			recoveryPauseAtTarget = false;
+		}
 
 		/* Initialize resource managers */
 		for (rmid = 0; rmid <= RM_MAX_ID; rmid++)
@@ -6098,6 +6224,7 @@ StartupXLOG(void)
 		xlogctl->replayEndRecPtr = ReadRecPtr;
 		xlogctl->recoveryLastRecPtr = ReadRecPtr;
 		xlogctl->recoveryLastXTime = 0;
+		xlogctl->recoveryPause = false;
 		SpinLockRelease(&xlogctl->info_lck);
 
 		/* Also ensure XLogReceiptTime has a sane value */
@@ -6146,6 +6273,7 @@ StartupXLOG(void)
 		{
 			bool		recoveryContinue = true;
 			bool		recoveryApply = true;
+			bool		recoveryPause = false;
 			ErrorContextCallback errcontext;
 			TimestampTz xtime;
 
@@ -6192,6 +6320,11 @@ StartupXLOG(void)
 				 */
 				if (recoveryStopsHere(record, &recoveryApply))
 				{
+					if (recoveryPauseAtTarget)
+					{
+						SetRecoveryPause(true);
+						recoveryPausesHere();
+					}
 					reachedStopPoint = true;	/* see below */
 					recoveryContinue = false;
 					if (!recoveryApply)
@@ -6218,7 +6351,11 @@ StartupXLOG(void)
 				 */
 				SpinLockAcquire(&xlogctl->info_lck);
 				xlogctl->replayEndRecPtr = EndRecPtr;
+				recoveryPause = xlogctl->recoveryPause;
 				SpinLockRelease(&xlogctl->info_lck);
+
+				if (recoveryPause)
+					recoveryPausesHere();
 
 				/*
 				 * If we are attempting to enter Hot Standby mode, process

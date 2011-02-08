@@ -3416,6 +3416,13 @@ DESCR("last xlog replay location");
 DATA(insert OID = 3830 ( pg_last_xact_replay_timestamp	PGNSP PGUID 12 1 0 0 f f f t f v 0 0 1184 "" _null_ _null_ _null_ _null_ pg_last_xact_replay_timestamp _null_ _null_ _null_ ));
 DESCR("timestamp of last replay xact");
 
+DATA(insert OID = 3071 ( pg_xlog_replay_pause		PGNSP PGUID 12 1 0 0 f f f t f v 0 0 2278 "" _null_ _null_ _null_ _null_ pg_xlog_replay_pause _null_ _null_ _null_ ));
+DESCR("pauses xlog replay");
+DATA(insert OID = 3072 ( pg_xlog_replay_resume		PGNSP PGUID 12 1 0 0 f f f t f v 0 0 2278 "" _null_ _null_ _null_ _null_ pg_xlog_replay_resume _null_ _null_ _null_ ));
+DESCR("resumes xlog replay, if it was paused");
+DATA(insert OID = 3073 ( pg_is_xlog_replay_paused	PGNSP PGUID 12 1 0 0 f f f t f v 0 0 16 "" _null_ _null_ _null_ _null_ pg_is_xlog_replay_paused _null_ _null_ _null_ ));
+DESCR("true if xlog replay is paused");
+
 DATA(insert OID = 2621 ( pg_reload_conf			PGNSP PGUID 12 1 0 0 f f f t f v 0 0 16 "" _null_ _null_ _null_ _null_ pg_reload_conf _null_ _null_ _null_ ));
 DESCR("reload configuration files");
 DATA(insert OID = 2622 ( pg_rotate_logfile		PGNSP PGUID 12 1 0 0 f f f t f v 0 0 16 "" _null_ _null_ _null_ _null_ pg_rotate_logfile _null_ _null_ _null_ ));

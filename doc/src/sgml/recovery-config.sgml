@@ -227,6 +227,31 @@ restore_command = 'copy "C:\\server\\archivedir\\%f" "%p"'  # Windows
       </listitem>
      </varlistentry>
 
+     <varlistentry id="pause-at-recovery-target"
+                   xreflabel="pause_at_recovery_target">
+      <term><varname>pause_at_recovery_target</varname>
+        (<type>boolean</type>)
+      </term>
+      <indexterm>
+        <primary><varname>pause_at_recovery_target</> recovery parameter</primary>
+      </indexterm>
+      <listitem>
+       <para>
+        Specifies whether recovery should pause when the recovery target
+        is reached. The default is true, if a recovery target is set.
+        This is intended to allow queries to be executed against the
+        database to check if this recovery target is the most desirable
+        point for recovery. The paused state can be resumed by using
+        <function>pg_xlog_replay_resume()</> (See
+        <xref linkend="functions-recovery-control-table">), which then
+        causes recovery to end. If this recovery target is not the
+        desired stopping point, then shutdown the server, change the
+        recovery target settings to a later target and restart to
+        continue recovery.
+       </para>
+      </listitem>
+     </varlistentry>
+
      </variablelist>
    </sect1>
 
