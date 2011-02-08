@@ -3671,7 +3671,7 @@ CheckForSerializableConflictOut(const bool visible, const Relation relation,
 static void
 CheckTargetForConflictsIn(PREDICATELOCKTARGETTAG *targettag)
 {
-	PREDICATELOCKTARGETTAG nexttargettag;
+	PREDICATELOCKTARGETTAG nexttargettag = { 0 };
 	PREDICATELOCKTARGETTAG thistargettag;
 
 	for (;;)
