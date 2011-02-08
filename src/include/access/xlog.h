@@ -184,7 +184,8 @@ typedef enum
 {
 	RECOVERY_TARGET_UNSET,
 	RECOVERY_TARGET_XID,
-	RECOVERY_TARGET_TIME
+	RECOVERY_TARGET_TIME,
+	RECOVERY_TARGET_NAME
 } RecoveryTargetType;
 
 extern XLogRecPtr XactLastRecEnd;
@@ -302,6 +303,7 @@ extern void InitXLOGAccess(void);
 extern void CreateCheckPoint(int flags);
 extern bool CreateRestartPoint(int flags);
 extern void XLogPutNextOid(Oid nextOid);
+extern XLogRecPtr XLogRestorePoint(const char *rpName);
 extern XLogRecPtr GetRedoRecPtr(void);
 extern XLogRecPtr GetInsertRecPtr(void);
 extern XLogRecPtr GetFlushRecPtr(void);

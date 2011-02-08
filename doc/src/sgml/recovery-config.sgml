@@ -143,6 +143,25 @@ restore_command = 'copy "C:\\server\\archivedir\\%f" "%p"'  # Windows
     <title>Recovery Target Settings</title>
      <variablelist>
 
+     <varlistentry id="recovery-target-name" xreflabel="recovery_target_name">
+      <term><varname>recovery_target_name</varname>
+           (<type>string</type>)
+      </term>
+      <indexterm>
+        <primary><varname>recovery_target_name</> recovery parameter</primary>
+      </indexterm>
+      <listitem>
+       <para>
+		This parameter specifies the named restore point, created with
+		<function>pg_create_restore_point()</> to which recovery will proceed.
+		At most one of <varname>recovery_target_name</>,
+		<xref linkend="recovery-target-time"> or
+		<xref linkend="recovery-target-xid"> can be specified.  The default is to
+		recover to the end of the WAL log.
+       </para>
+      </listitem>
+     </varlistentry>
+
      <varlistentry id="recovery-target-time" xreflabel="recovery_target_time">
       <term><varname>recovery_target_time</varname>
            (<type>timestamp</type>)
@@ -154,7 +173,8 @@ restore_command = 'copy "C:\\server\\archivedir\\%f" "%p"'  # Windows
        <para>
         This parameter specifies the time stamp up to which recovery
         will proceed.
-        At most one of <varname>recovery_target_time</> and
+        At most one of <varname>recovery_target_time</>,
+		<xref linkend="recovery-target-name"> or
         <xref linkend="recovery-target-xid"> can be specified.
         The default is to recover to the end of the WAL log.
         The precise stopping point is also influenced by
@@ -176,7 +196,8 @@ restore_command = 'copy "C:\\server\\archivedir\\%f" "%p"'  # Windows
         start, transactions can complete in a different numeric order.
         The transactions that will be recovered are those that committed
         before (and optionally including) the specified one.
-        At most one of <varname>recovery_target_xid</> and
+        At most one of <varname>recovery_target_xid</>,
+		<xref linkend="recovery-target-name"> or
         <xref linkend="recovery-target-time"> can be specified.
         The default is to recover to the end of the WAL log.
         The precise stopping point is also influenced by

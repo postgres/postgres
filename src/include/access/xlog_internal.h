@@ -267,6 +267,7 @@ extern XLogRecPtr RequestXLogSwitch(void);
 extern Datum pg_start_backup(PG_FUNCTION_ARGS);
 extern Datum pg_stop_backup(PG_FUNCTION_ARGS);
 extern Datum pg_switch_xlog(PG_FUNCTION_ARGS);
+extern Datum pg_create_restore_point(PG_FUNCTION_ARGS);
 extern Datum pg_current_xlog_location(PG_FUNCTION_ARGS);
 extern Datum pg_current_xlog_insert_location(PG_FUNCTION_ARGS);
 extern Datum pg_last_xlog_receive_location(PG_FUNCTION_ARGS);

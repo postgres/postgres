@@ -13915,6 +13915,9 @@ SELECT set_config('log_statement_stats', 'off', false);
     <primary>backup</primary>
    </indexterm>
    <indexterm>
+    <primary>pg_create_restore_point</primary>
+   </indexterm>
+   <indexterm>
     <primary>pg_current_xlog_insert_location</primary>
    </indexterm>
    <indexterm>
@@ -13951,6 +13954,13 @@ SELECT set_config('log_statement_stats', 'off', false);
      </thead>
 
      <tbody>
+      <row>
+       <entry>
+        <literal><function>pg_create_restore_point(<parameter>name</> <type>text</>)</function></literal>
+        </entry>
+       <entry><type>text</type></entry>
+       <entry>Create a named point for performing restore (restricted to superusers)</entry>
+      </row>
       <row>
        <entry>
         <literal><function>pg_current_xlog_insert_location()</function></literal>
