@@ -5612,17 +5612,16 @@ static void
 ATExecValidateConstraint(Relation rel, const char *constrName)
 {
 	Relation	conrel;
-	Form_pg_constraint con;
 	SysScanDesc scan;
 	ScanKeyData key;
 	HeapTuple	tuple;
+	Form_pg_constraint con = NULL;
 	bool		found = false;
-	Oid			conid;
 
 	conrel = heap_open(ConstraintRelationId, RowExclusiveLock);
 
 	/*
-	 * Find and the target constraint
+	 * Find and check the target constraint
 	 */
 	ScanKeyInit(&key,
 				Anum_pg_constraint_conrelid,
@@ -5634,17 +5633,23 @@ ATExecValidateConstraint(Relation rel, const char *constrName)
 	while (HeapTupleIsValid(tuple = systable_getnext(scan)))
 	{
 		con = (Form_pg_constraint) GETSTRUCT(tuple);
-
-		if (strcmp(NameStr(con->conname), constrName) != 0)
-			continue;
-
-		conid = HeapTupleGetOid(tuple);
-		found = true;
-		break;
+		if (con->contype == CONSTRAINT_FOREIGN &&
+			strcmp(NameStr(con->conname), constrName) == 0)
+		{
+			found = true;
+			break;
+		}
 	}
 
-	if (found && con->contype == CONSTRAINT_FOREIGN && !con->convalidated)
+	if (!found)
+		ereport(ERROR,
+				(errcode(ERRCODE_UNDEFINED_OBJECT),
+			errmsg("foreign key constraint \"%s\" of relation \"%s\" does not exist",
+				   constrName, RelationGetRelationName(rel))));
+
+	if (!con->convalidated)
 	{
+		Oid			conid = HeapTupleGetOid(tuple);
 		HeapTuple	copyTuple = heap_copytuple(tuple);
 		Form_pg_constraint copy_con = (Form_pg_constraint) GETSTRUCT(copyTuple);
 		Relation	refrel;
@@ -5671,19 +5676,13 @@ ATExecValidateConstraint(Relation rel, const char *constrName)
 		simple_heap_update(conrel, &copyTuple->t_self, copyTuple);
 		CatalogUpdateIndexes(conrel, copyTuple);
 		heap_freetuple(copyTuple);
+
 		heap_close(refrel, NoLock);
 	}
 
 	systable_endscan(scan);
-	heap_close(conrel, RowExclusiveLock);
 
-	if (!found)
-	{
-		ereport(ERROR,
-				(errcode(ERRCODE_UNDEFINED_OBJECT),
-			errmsg("foreign key constraint \"%s\" of relation \"%s\" does not exist",
-				   constrName, RelationGetRelationName(rel))));
-	}
+	heap_close(conrel, RowExclusiveLock);
 }
 
 /*

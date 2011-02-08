@@ -521,8 +521,8 @@ execute_extension_script(Oid extensionOid, ExtensionControlFile *control,
 						 const char *schemaName, Oid schemaOid)
 {
 	char       *filename = get_extension_absolute_path(control->script);
-	char	   *save_client_min_messages = NULL,
-			   *save_log_min_messages = NULL,
+	char	   *save_client_min_messages,
+			   *save_log_min_messages,
 			   *save_search_path;
 	StringInfoData pathbuf;
 	ListCell   *lc;
@@ -535,23 +535,19 @@ execute_extension_script(Oid extensionOid, ExtensionControlFile *control,
 	 * We use the equivalent of SET LOCAL to ensure the setting is undone
 	 * upon error.
 	 */
+	save_client_min_messages =
+		pstrdup(GetConfigOption("client_min_messages", false));
 	if (client_min_messages < WARNING)
-	{
-		save_client_min_messages =
-			pstrdup(GetConfigOption("client_min_messages", false));
 		(void) set_config_option("client_min_messages", "warning",
 								 PGC_USERSET, PGC_S_SESSION,
 								 GUC_ACTION_LOCAL, true);
-	}
 
+	save_log_min_messages =
+		pstrdup(GetConfigOption("log_min_messages", false));
 	if (log_min_messages < WARNING)
-	{
-		save_log_min_messages =
-			pstrdup(GetConfigOption("log_min_messages", false));
 		(void) set_config_option("log_min_messages", "warning",
 								 PGC_SUSET, PGC_S_SESSION,
 								 GUC_ACTION_LOCAL, true);
-	}
 
 	/*
 	 * Set up the search path to contain the target schema, then the schemas
@@ -631,15 +627,12 @@ execute_extension_script(Oid extensionOid, ExtensionControlFile *control,
 	(void) set_config_option("search_path", save_search_path,
 							 PGC_USERSET, PGC_S_SESSION,
 							 GUC_ACTION_LOCAL, true);
-
-	if (save_client_min_messages != NULL)
-		(void) set_config_option("client_min_messages", save_client_min_messages,
-								 PGC_USERSET, PGC_S_SESSION,
-								 GUC_ACTION_LOCAL, true);
-	if (save_log_min_messages != NULL)
-		(void) set_config_option("log_min_messages", save_log_min_messages,
-								 PGC_SUSET, PGC_S_SESSION,
-								 GUC_ACTION_LOCAL, true);
+	(void) set_config_option("client_min_messages", save_client_min_messages,
+							 PGC_USERSET, PGC_S_SESSION,
+							 GUC_ACTION_LOCAL, true);
+	(void) set_config_option("log_min_messages", save_log_min_messages,
+							 PGC_SUSET, PGC_S_SESSION,
+							 GUC_ACTION_LOCAL, true);
 }
 
 /*
