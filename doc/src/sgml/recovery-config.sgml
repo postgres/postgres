@@ -174,7 +174,7 @@ restore_command = 'copy "C:\\server\\archivedir\\%f" "%p"'  # Windows
         This parameter specifies the time stamp up to which recovery
         will proceed.
         At most one of <varname>recovery_target_time</>,
-		<xref linkend="recovery-target-name"> or
+        <xref linkend="recovery-target-name"> or
         <xref linkend="recovery-target-xid"> can be specified.
         The default is to recover to the end of the WAL log.
         The precise stopping point is also influenced by
@@ -197,7 +197,7 @@ restore_command = 'copy "C:\\server\\archivedir\\%f" "%p"'  # Windows
         The transactions that will be recovered are those that committed
         before (and optionally including) the specified one.
         At most one of <varname>recovery_target_xid</>,
-		<xref linkend="recovery-target-name"> or
+        <xref linkend="recovery-target-name"> or
         <xref linkend="recovery-target-time"> can be specified.
         The default is to recover to the end of the WAL log.
         The precise stopping point is also influenced by
