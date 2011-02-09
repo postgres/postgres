@@ -1473,7 +1473,7 @@ The commands accepted in walsender mode are:
   </varlistentry>
 
   <varlistentry>
-    <term>BASE_BACKUP [<literal>LABEL</literal> <replaceable>'label'</replaceable>] [<literal>PROGRESS</literal>] [<literal>FAST</literal>] [<literal>WAL</literal>]</term>
+    <term>BASE_BACKUP [<literal>LABEL</literal> <replaceable>'label'</replaceable>] [<literal>PROGRESS</literal>] [<literal>FAST</literal>] [<literal>WAL</literal>] [<literal>NOWAIT</literal>]</term>
     <listitem>
      <para>
       Instructs the server to start streaming a base backup.
@@ -1529,6 +1529,19 @@ The commands accepted in walsender mode are:
           file.
          </para>
         </listitem>
+       </varlistentry>
+
+       <varlistentry>
+        <term><literal>NOWAIT</literal></term>
+        <listitem>
+         <para>
+          By default, the backup will wait until the last required xlog
+          segment has been archived, or emit a warning if log archiving is
+          not enabled. Specifying <literal>NOWAIT</literal> disables both
+          the waiting and the warning, leaving the client responsible for
+          ensuring the required log is available.
+         </para>
+         </listitem>
        </varlistentry>
       </variablelist>
      </para>

@@ -8865,7 +8865,7 @@ pg_stop_backup(PG_FUNCTION_ARGS)
 	XLogRecPtr	stoppoint;
 	char		stopxlogstr[MAXFNAMELEN];
 
-	stoppoint = do_pg_stop_backup(NULL);
+	stoppoint = do_pg_stop_backup(NULL, true);
 
 	snprintf(stopxlogstr, sizeof(stopxlogstr), "%X/%X",
 			 stoppoint.xlogid, stoppoint.xrecoff);
@@ -8880,7 +8880,7 @@ pg_stop_backup(PG_FUNCTION_ARGS)
  * the non-exclusive backup specified by 'labelfile'.
  */
 XLogRecPtr
-do_pg_stop_backup(char *labelfile)
+do_pg_stop_backup(char *labelfile, bool waitforarchive)
 {
 	bool		exclusive = (labelfile == NULL);
 	XLogRecPtr	startpoint;
@@ -9079,7 +9079,7 @@ do_pg_stop_backup(char *labelfile)
 	 * wish to wait, you can set statement_timeout.  Also, some notices are
 	 * issued to clue in anyone who might be doing this interactively.
 	 */
-	if (XLogArchivingActive())
+	if (waitforarchive && XLogArchivingActive())
 	{
 		XLByteToPrevSeg(stoppoint, _logId, _logSeg);
 		XLogFileName(lastxlogfilename, ThisTimeLineID, _logId, _logSeg);
@@ -9120,7 +9120,7 @@ do_pg_stop_backup(char *labelfile)
 		ereport(NOTICE,
 				(errmsg("pg_stop_backup complete, all required WAL segments have been archived")));
 	}
-	else
+	else if (waitforarchive)
 		ereport(NOTICE,
 				(errmsg("WAL archiving is not enabled; you must ensure that all required WAL segments are copied through other means to complete the backup")));
 

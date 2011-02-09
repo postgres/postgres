@@ -71,6 +71,7 @@ Node *replication_parse_result;
 %token K_LABEL
 %token K_PROGRESS
 %token K_FAST
+%token K_NOWAIT
 %token K_WAL
 %token K_START_REPLICATION
 
@@ -107,7 +108,7 @@ identify_system:
 			;
 
 /*
- * BASE_BACKUP [LABEL '<label>'] [PROGRESS] [FAST] [WAL]
+ * BASE_BACKUP [LABEL '<label>'] [PROGRESS] [FAST] [WAL] [NOWAIT]
  */
 base_backup:
 			K_BASE_BACKUP base_backup_opt_list
@@ -140,6 +141,11 @@ base_backup_opt:
 			| K_WAL
 				{
 				  $$ = makeDefElem("wal",
+						   (Node *)makeInteger(TRUE));
+				}
+			| K_NOWAIT
+				{
+				  $$ = makeDefElem("nowait",
 						   (Node *)makeInteger(TRUE));
 				}
 			;

@@ -37,6 +37,7 @@ typedef struct
 	const char *label;
 	bool		progress;
 	bool		fastcheckpoint;
+	bool		nowait;
 	bool		includewal;
 }	basebackup_options;
 
@@ -173,7 +174,7 @@ perform_base_backup(basebackup_options *opt, DIR *tblspcdir)
 	}
 	PG_END_ENSURE_ERROR_CLEANUP(base_backup_cleanup, (Datum) 0);
 
-	endptr = do_pg_stop_backup(labelfile);
+	endptr = do_pg_stop_backup(labelfile, !opt->nowait);
 
 	if (opt->includewal)
 	{
@@ -260,6 +261,7 @@ parse_basebackup_options(List *options, basebackup_options *opt)
 	bool		o_label = false;
 	bool		o_progress = false;
 	bool		o_fast = false;
+	bool		o_nowait = false;
 	bool		o_wal = false;
 
 	MemSet(opt, 0, sizeof(*opt));
@@ -293,6 +295,15 @@ parse_basebackup_options(List *options, basebackup_options *opt)
 						 errmsg("duplicate option \"%s\"", defel->defname)));
 			opt->fastcheckpoint = true;
 			o_fast = true;
+		}
+		else if (strcmp(defel->defname, "nowait") == 0)
+		{
+			if (o_nowait)
+				ereport(ERROR,
+						(errcode(ERRCODE_SYNTAX_ERROR),
+						 errmsg("duplicate option \"%s\"", defel->defname)));
+			opt->nowait = true;
+			o_nowait = true;
 		}
 		else if (strcmp(defel->defname, "wal") == 0)
 		{
