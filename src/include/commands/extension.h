@@ -32,6 +32,8 @@ extern void CreateExtension(CreateExtensionStmt *stmt);
 extern void RemoveExtensions(DropStmt *stmt);
 extern void RemoveExtensionById(Oid extId);
 
+extern void ExecAlterExtensionAddStmt(AlterExtensionAddStmt *stmt);
+
 extern Oid	get_extension_oid(const char *extname, bool missing_ok);
 extern char *get_extension_name(Oid ext_oid);
 

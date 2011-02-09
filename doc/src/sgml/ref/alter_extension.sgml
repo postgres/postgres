@@ -23,7 +23,32 @@ PostgreSQL documentation
 
  <refsynopsisdiv>
 <synopsis>
-ALTER EXTENSION <replaceable class="PARAMETER">name</replaceable> SET SCHEMA <replaceable class="PARAMETER">new_schema</replaceable>
+ALTER EXTENSION <replaceable class="PARAMETER">extension_name</replaceable> SET SCHEMA <replaceable class="PARAMETER">new_schema</replaceable>
+ALTER EXTENSION <replaceable class="PARAMETER">extension_name</replaceable> ADD <replaceable class="PARAMETER">member_object</replaceable>
+
+<phrase>where <replaceable class="PARAMETER">member_object</replaceable> is:</phrase>
+
+  AGGREGATE <replaceable class="PARAMETER">agg_name</replaceable> (<replaceable class="PARAMETER">agg_type</replaceable> [, ...] ) |
+  CAST (<replaceable>source_type</replaceable> AS <replaceable>target_type</replaceable>) |
+  CONVERSION <replaceable class="PARAMETER">object_name</replaceable> |
+  DOMAIN <replaceable class="PARAMETER">object_name</replaceable> |
+  FOREIGN DATA WRAPPER <replaceable class="PARAMETER">object_name</replaceable> |
+  FOREIGN TABLE <replaceable class="PARAMETER">object_name</replaceable> |
+  FUNCTION <replaceable class="PARAMETER">function_name</replaceable> ( [ [ <replaceable class="parameter">argmode</replaceable> ] [ <replaceable class="parameter">argname</replaceable> ] <replaceable class="parameter">argtype</replaceable> [, ...] ] ) |
+  OPERATOR <replaceable class="PARAMETER">operator_name</replaceable> (<replaceable class="PARAMETER">left_type</replaceable>, <replaceable class="PARAMETER">right_type</replaceable>) |
+  OPERATOR CLASS <replaceable class="PARAMETER">object_name</replaceable> USING <replaceable class="parameter">index_method</replaceable> |
+  OPERATOR FAMILY <replaceable class="PARAMETER">object_name</replaceable> USING <replaceable class="parameter">index_method</replaceable> |
+  [ PROCEDURAL ] LANGUAGE <replaceable class="PARAMETER">object_name</replaceable> |
+  SCHEMA <replaceable class="PARAMETER">object_name</replaceable> |
+  SEQUENCE <replaceable class="PARAMETER">object_name</replaceable> |
+  SERVER <replaceable class="PARAMETER">object_name</replaceable> |
+  TABLE <replaceable class="PARAMETER">object_name</replaceable> |
+  TEXT SEARCH CONFIGURATION <replaceable class="PARAMETER">object_name</replaceable> |
+  TEXT SEARCH DICTIONARY <replaceable class="PARAMETER">object_name</replaceable> |
+  TEXT SEARCH PARSER <replaceable class="PARAMETER">object_name</replaceable> |
+  TEXT SEARCH TEMPLATE <replaceable class="PARAMETER">object_name</replaceable> |
+  TYPE <replaceable class="PARAMETER">object_name</replaceable> |
+  VIEW <replaceable class="PARAMETER">object_name</replaceable>
 </synopsis>
  </refsynopsisdiv>
 
@@ -31,8 +56,8 @@ ALTER EXTENSION <replaceable class="PARAMETER">name</replaceable> SET SCHEMA <re
   <title>Description</title>
 
   <para>
-   <command>ALTER EXTENSION</command> changes the definition of an existing extension.
-   Currently there is only one subform:
+   <command>ALTER EXTENSION</command> changes the definition of an installed
+   extension.  There are several subforms:
 
    <variablelist>
    <varlistentry>
@@ -41,37 +66,151 @@ ALTER EXTENSION <replaceable class="PARAMETER">name</replaceable> SET SCHEMA <re
      <para>
       This form moves the extension's objects into another schema. The
       extension has to be <firstterm>relocatable</> for this command to
-      succeed. See <xref linkend="extend-extensions"> for details.
+      succeed.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><literal>ADD <replaceable class="PARAMETER">member_object</replaceable></literal></term>
+    <listitem>
+     <para>
+      This form adds an existing object to the extension.  This is mainly
+      useful in extension upgrade scripts.  The object will subsequently
+      be treated as a member of the extension; notably, it can only be
+      dropped by dropping the extension.
      </para>
     </listitem>
    </varlistentry>
    </variablelist>
+
+   See <xref linkend="extend-extensions"> for more information about these
+   operations.
+  </para>
+
+  <para>
+   Only superusers can execute <command>ALTER EXTENSION</command>.
   </para>
  </refsect1>
 
  <refsect1>
   <title>Parameters</title>
 
-   <para>
-    <variablelist>
-     <varlistentry>
-      <term><replaceable class="PARAMETER">name</replaceable></term>
-      <listitem>
-       <para>
-        The name of an installed extension.
-       </para>
-      </listitem>
-     </varlistentry>
+  <para>
+   <variablelist>
+    <varlistentry>
+     <term><replaceable class="PARAMETER">extension_name</replaceable></term>
+     <listitem>
+      <para>
+       The name of an installed extension.
+      </para>
+     </listitem>
+    </varlistentry>
 
-     <varlistentry>
-      <term><replaceable class="PARAMETER">new_schema</replaceable></term>
-      <listitem>
-       <para>
-        The new schema for the extension.
-       </para>
-      </listitem>
-     </varlistentry>
-    </variablelist>
+    <varlistentry>
+     <term><replaceable class="PARAMETER">new_schema</replaceable></term>
+     <listitem>
+      <para>
+       The new schema for the extension.
+      </para>
+     </listitem>
+    </varlistentry>
+
+    <varlistentry>
+     <term><replaceable class="parameter">object_name</replaceable></term>
+     <term><replaceable class="parameter">agg_name</replaceable></term>
+     <term><replaceable class="parameter">function_name</replaceable></term>
+     <term><replaceable class="parameter">operator_name</replaceable></term>
+     <listitem>
+      <para>
+       The name of an object to be added to the extension.  Names of tables,
+       aggregates, domains, foreign tables, functions, operators,
+       operator classes, operator families, sequences, text search objects,
+       types, and views can be schema-qualified.
+      </para>
+     </listitem>
+    </varlistentry>
+
+    <varlistentry>
+     <term><replaceable class="parameter">agg_type</replaceable></term>
+     <listitem>
+      <para>
+       An input data type on which the aggregate function operates.
+       To reference a zero-argument aggregate function, write <literal>*</>
+       in place of the list of input data types.
+      </para>
+     </listitem>
+    </varlistentry>
+
+    <varlistentry>
+     <term><replaceable>source_type</replaceable></term>
+     <listitem>
+      <para>
+       The name of the source data type of the cast.
+      </para>
+     </listitem>
+    </varlistentry>
+
+    <varlistentry>
+     <term><replaceable>target_type</replaceable></term>
+     <listitem>
+      <para>
+       The name of the target data type of the cast.
+      </para>
+     </listitem>
+    </varlistentry>
+
+    <varlistentry>
+     <term><replaceable class="parameter">argmode</replaceable></term>
+
+     <listitem>
+      <para>
+       The mode of a function argument: <literal>IN</>, <literal>OUT</>,
+       <literal>INOUT</>, or <literal>VARIADIC</>.
+       If omitted, the default is <literal>IN</>.
+       Note that <command>ALTER EXTENSION</command> does not actually pay
+       any attention to <literal>OUT</> arguments, since only the input
+       arguments are needed to determine the function's identity.
+       So it is sufficient to list the <literal>IN</>, <literal>INOUT</>,
+       and <literal>VARIADIC</> arguments.
+      </para>
+     </listitem>
+    </varlistentry>
+
+    <varlistentry>
+     <term><replaceable class="parameter">argname</replaceable></term>
+
+     <listitem>
+      <para>
+       The name of a function argument.
+       Note that <command>ALTER EXTENSION</command> does not actually pay
+       any attention to argument names, since only the argument data
+       types are needed to determine the function's identity.
+      </para>
+     </listitem>
+    </varlistentry>
+
+    <varlistentry>
+     <term><replaceable class="parameter">argtype</replaceable></term>
+
+     <listitem>
+      <para>
+       The data type(s) of the function's arguments (optionally
+       schema-qualified), if any.
+      </para>
+     </listitem>
+    </varlistentry>
+
+    <varlistentry>
+     <term><literal>PROCEDURAL</literal></term>
+
+     <listitem>
+      <para>
+       This is a noise word.
+      </para>
+     </listitem>
+    </varlistentry>
+   </variablelist>
   </para>
  </refsect1>
 
@@ -83,6 +222,13 @@ ALTER EXTENSION <replaceable class="PARAMETER">name</replaceable> SET SCHEMA <re
    to <literal>utils</literal>:
 <programlisting>
 ALTER EXTENSION hstore SET SCHEMA utils;
+</programlisting>
+  </para>
+
+  <para>
+   To add an existing function to the <literal>hstore</literal> extension:
+<programlisting>
+ALTER EXTENSION hstore ADD FUNCTION populate_record(anyelement, hstore);
 </programlisting>
   </para>
  </refsect1>

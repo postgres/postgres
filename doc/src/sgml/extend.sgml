@@ -331,6 +331,18 @@
     data; see below.)
    </para>
 
+   <para>
+    The kinds of SQL objects that can be members of an extension are shown in
+    the description of <xref linkend="sql-alterextension">.  Notably, objects
+    that are database-cluster-wide, such as databases, roles, and tablespaces,
+    cannot be extension members since an extension is only known within one
+    database.  (Although an extension script is not prohibited from creating
+    such objects, if it does so they will not be tracked as part of the
+    extension.)  Also notice that while a table can be a member of an
+    extension, its subsidiary objects such as indexes are not directly
+    considered members of the extension.
+   </para>
+
    <sect2>
     <title>Extension Files</title>
 

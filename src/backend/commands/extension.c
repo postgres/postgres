@@ -1134,7 +1134,7 @@ pg_extension_config_dump(PG_FUNCTION_ARGS)
 	if (getExtensionOfObject(RelationRelationId, tableoid) !=
 		CurrentExtensionObject)
 		ereport(ERROR,
-				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+				(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
 				 errmsg("table \"%s\" is not a member of the extension being created",
 						tablename)));
 
@@ -1391,4 +1391,61 @@ AlterExtensionNamespace(List *names, const char *newschema)
 	/* update dependencies to point to the new schema */
 	changeDependencyFor(ExtensionRelationId, extensionOid,
 						NamespaceRelationId, oldNspOid, nspOid);
+}
+
+/*
+ * Execute ALTER EXTENSION ADD
+ */
+void
+ExecAlterExtensionAddStmt(AlterExtensionAddStmt *stmt)
+{
+	ObjectAddress	extension;
+	ObjectAddress	object;
+	Relation		relation;
+
+	/*
+	 * For now, insist on superuser privilege.  Later we might want to
+	 * relax this to ownership of the target object and the extension.
+	 */
+	if (!superuser())
+		ereport(ERROR,
+				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
+				 (errmsg("must be superuser to use ALTER EXTENSION"))));
+
+	/* Do this next to fail on nonexistent extension */
+	extension.classId = ExtensionRelationId;
+	extension.objectId = get_extension_oid(stmt->extname, false);
+	extension.objectSubId = 0;
+
+	/*
+	 * Translate the parser representation that identifies the object into
+	 * an ObjectAddress.  get_object_address() will throw an error if the
+	 * object does not exist, and will also acquire a lock on the object
+	 * to guard against concurrent DROP and ALTER EXTENSION ADD operations.
+	 */
+	object = get_object_address(stmt->objtype, stmt->objname, stmt->objargs,
+								&relation, ShareUpdateExclusiveLock);
+
+	/*
+	 * Complain if object is already attached to some extension.
+	 */
+	if (getExtensionOfObject(object.classId, object.objectId) != InvalidOid)
+		ereport(ERROR,
+				(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
+				 errmsg("%s is already a member of an extension",
+						getObjectDescription(&object))));
+
+	/*
+	 * OK, add the dependency.
+	 */
+	recordDependencyOn(&object, &extension, DEPENDENCY_EXTENSION);
+
+	/*
+	 * If get_object_address() opened the relation for us, we close it to keep
+	 * the reference count correct - but we retain any locks acquired by
+	 * get_object_address() until commit time, to guard against concurrent
+	 * activity.
+	 */
+	if (relation != NULL)
+		relation_close(relation, NoLock);
 }

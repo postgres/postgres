@@ -1060,13 +1060,13 @@ typedef struct SetOperationStmt
 /*
  * When a command can act on several kinds of objects with only one
  * parse structure required, use these constants to designate the
- * object type.
+ * object type.  Note that commands typically don't support all the types.
  */
 
 typedef enum ObjectType
 {
 	OBJECT_AGGREGATE,
-	OBJECT_ATTRIBUTE,			/* type's attribute, when distinct from column */
+	OBJECT_ATTRIBUTE,		/* type's attribute, when distinct from column */
 	OBJECT_CAST,
 	OBJECT_COLUMN,
 	OBJECT_CONSTRAINT,
@@ -1535,7 +1535,7 @@ typedef struct AlterTableSpaceOptionsStmt
 } AlterTableSpaceOptionsStmt;
 
 /* ----------------------
- *		Create Extension Statement
+ *		Create/Alter Extension Statements
  * ----------------------
  */
 
@@ -1545,6 +1545,15 @@ typedef struct CreateExtensionStmt
 	char	   *extname;
 	List	   *options;		/* List of DefElem nodes */
 } CreateExtensionStmt;
+
+typedef struct AlterExtensionAddStmt
+{
+	NodeTag		type;
+	char	   *extname;		/* Extension's name */
+	ObjectType	objtype;		/* Object's type */
+	List	   *objname;		/* Qualified name of the object */
+	List	   *objargs;		/* Arguments if needed (eg, for functions) */
+} AlterExtensionAddStmt;
 
 /* ----------------------
  *		Create/Drop FOREIGN DATA WRAPPER Statements

@@ -185,7 +185,7 @@ static RangeVar *makeRangeVarFromAnyName(List *names, int position, core_yyscan_
 		AlterDatabaseStmt AlterDatabaseSetStmt AlterDomainStmt AlterEnumStmt
 		AlterFdwStmt AlterForeignServerStmt AlterGroupStmt
 		AlterObjectSchemaStmt AlterOwnerStmt AlterSeqStmt AlterTableStmt
-		AlterForeignTableStmt
+		AlterExtensionAddStmt AlterForeignTableStmt
 		AlterCompositeTypeStmt AlterUserStmt AlterUserMappingStmt AlterUserSetStmt
 		AlterRoleStmt AlterRoleSetStmt
 		AlterDefaultPrivilegesStmt DefACLAction
@@ -664,6 +664,7 @@ stmt :
 			| AlterDefaultPrivilegesStmt
 			| AlterDomainStmt
 			| AlterEnumStmt
+			| AlterExtensionAddStmt
 			| AlterFdwStmt
 			| AlterForeignServerStmt
 			| AlterForeignTableStmt
@@ -3245,6 +3246,189 @@ create_extension_opt_item:
 			SCHEMA opt_equal name
 				{
 					$$ = makeDefElem("schema", (Node *)makeString($3));
+				}
+		;
+
+/*****************************************************************************
+ *
+ * ALTER EXTENSION name ADD object-identifier
+ *
+ *****************************************************************************/
+
+AlterExtensionAddStmt:
+			ALTER EXTENSION name ADD_P AGGREGATE func_name aggr_args
+				{
+					AlterExtensionAddStmt *n = makeNode(AlterExtensionAddStmt);
+					n->extname = $3;
+					n->objtype = OBJECT_AGGREGATE;
+					n->objname = $6;
+					n->objargs = $7;
+					$$ = (Node *)n;
+				}
+			| ALTER EXTENSION name ADD_P CAST '(' Typename AS Typename ')'
+				{
+					AlterExtensionAddStmt *n = makeNode(AlterExtensionAddStmt);
+					n->extname = $3;
+					n->objtype = OBJECT_CAST;
+					n->objname = list_make1($7);
+					n->objargs = list_make1($9);
+					$$ = (Node *) n;
+				}
+			| ALTER EXTENSION name ADD_P CONVERSION_P any_name
+				{
+					AlterExtensionAddStmt *n = makeNode(AlterExtensionAddStmt);
+					n->extname = $3;
+					n->objtype = OBJECT_CONVERSION;
+					n->objname = $6;
+					$$ = (Node *)n;
+				}
+			| ALTER EXTENSION name ADD_P DOMAIN_P any_name
+				{
+					AlterExtensionAddStmt *n = makeNode(AlterExtensionAddStmt);
+					n->extname = $3;
+					n->objtype = OBJECT_DOMAIN;
+					n->objname = $6;
+					$$ = (Node *)n;
+				}
+			| ALTER EXTENSION name ADD_P FUNCTION function_with_argtypes
+				{
+					AlterExtensionAddStmt *n = makeNode(AlterExtensionAddStmt);
+					n->extname = $3;
+					n->objtype = OBJECT_FUNCTION;
+					n->objname = $6->funcname;
+					n->objargs = $6->funcargs;
+					$$ = (Node *)n;
+				}
+			| ALTER EXTENSION name ADD_P opt_procedural LANGUAGE name
+				{
+					AlterExtensionAddStmt *n = makeNode(AlterExtensionAddStmt);
+					n->extname = $3;
+					n->objtype = OBJECT_LANGUAGE;
+					n->objname = list_make1(makeString($7));
+					$$ = (Node *)n;
+				}
+			| ALTER EXTENSION name ADD_P OPERATOR any_operator oper_argtypes
+				{
+					AlterExtensionAddStmt *n = makeNode(AlterExtensionAddStmt);
+					n->extname = $3;
+					n->objtype = OBJECT_OPERATOR;
+					n->objname = $6;
+					n->objargs = $7;
+					$$ = (Node *)n;
+				}
+			| ALTER EXTENSION name ADD_P OPERATOR CLASS any_name USING access_method
+				{
+					AlterExtensionAddStmt *n = makeNode(AlterExtensionAddStmt);
+					n->extname = $3;
+					n->objtype = OBJECT_OPCLASS;
+					n->objname = $7;
+					n->objargs = list_make1(makeString($9));
+					$$ = (Node *)n;
+				}
+			| ALTER EXTENSION name ADD_P OPERATOR FAMILY any_name USING access_method
+				{
+					AlterExtensionAddStmt *n = makeNode(AlterExtensionAddStmt);
+					n->extname = $3;
+					n->objtype = OBJECT_OPFAMILY;
+					n->objname = $7;
+					n->objargs = list_make1(makeString($9));
+					$$ = (Node *)n;
+				}
+			| ALTER EXTENSION name ADD_P SCHEMA name
+				{
+					AlterExtensionAddStmt *n = makeNode(AlterExtensionAddStmt);
+					n->extname = $3;
+					n->objtype = OBJECT_SCHEMA;
+					n->objname = list_make1(makeString($6));
+					$$ = (Node *)n;
+				}
+			| ALTER EXTENSION name ADD_P TABLE any_name
+				{
+					AlterExtensionAddStmt *n = makeNode(AlterExtensionAddStmt);
+					n->extname = $3;
+					n->objtype = OBJECT_TABLE;
+					n->objname = $6;
+					$$ = (Node *)n;
+				}
+			| ALTER EXTENSION name ADD_P TEXT_P SEARCH PARSER any_name
+				{
+					AlterExtensionAddStmt *n = makeNode(AlterExtensionAddStmt);
+					n->extname = $3;
+					n->objtype = OBJECT_TSPARSER;
+					n->objname = $8;
+					$$ = (Node *)n;
+				}
+			| ALTER EXTENSION name ADD_P TEXT_P SEARCH DICTIONARY any_name
+				{
+					AlterExtensionAddStmt *n = makeNode(AlterExtensionAddStmt);
+					n->extname = $3;
+					n->objtype = OBJECT_TSDICTIONARY;
+					n->objname = $8;
+					$$ = (Node *)n;
+				}
+			| ALTER EXTENSION name ADD_P TEXT_P SEARCH TEMPLATE any_name
+				{
+					AlterExtensionAddStmt *n = makeNode(AlterExtensionAddStmt);
+					n->extname = $3;
+					n->objtype = OBJECT_TSTEMPLATE;
+					n->objname = $8;
+					$$ = (Node *)n;
+				}
+			| ALTER EXTENSION name ADD_P TEXT_P SEARCH CONFIGURATION any_name
+				{
+					AlterExtensionAddStmt *n = makeNode(AlterExtensionAddStmt);
+					n->extname = $3;
+					n->objtype = OBJECT_TSCONFIGURATION;
+					n->objname = $8;
+					$$ = (Node *)n;
+				}
+			| ALTER EXTENSION name ADD_P SEQUENCE any_name
+				{
+					AlterExtensionAddStmt *n = makeNode(AlterExtensionAddStmt);
+					n->extname = $3;
+					n->objtype = OBJECT_SEQUENCE;
+					n->objname = $6;
+					$$ = (Node *)n;
+				}
+			| ALTER EXTENSION name ADD_P VIEW any_name
+				{
+					AlterExtensionAddStmt *n = makeNode(AlterExtensionAddStmt);
+					n->extname = $3;
+					n->objtype = OBJECT_VIEW;
+					n->objname = $6;
+					$$ = (Node *)n;
+				}
+			| ALTER EXTENSION name ADD_P FOREIGN TABLE any_name
+				{
+					AlterExtensionAddStmt *n = makeNode(AlterExtensionAddStmt);
+					n->extname = $3;
+					n->objtype = OBJECT_FOREIGN_TABLE;
+					n->objname = $7;
+					$$ = (Node *)n;
+				}
+			| ALTER EXTENSION name ADD_P FOREIGN DATA_P WRAPPER name
+				{
+					AlterExtensionAddStmt *n = makeNode(AlterExtensionAddStmt);
+					n->extname = $3;
+					n->objtype = OBJECT_FDW;
+					n->objname = list_make1(makeString($8));
+					$$ = (Node *)n;
+				}
+			| ALTER EXTENSION name ADD_P SERVER name
+				{
+					AlterExtensionAddStmt *n = makeNode(AlterExtensionAddStmt);
+					n->extname = $3;
+					n->objtype = OBJECT_FOREIGN_SERVER;
+					n->objname = list_make1(makeString($6));
+					$$ = (Node *)n;
+				}
+			| ALTER EXTENSION name ADD_P TYPE_P any_name
+				{
+					AlterExtensionAddStmt *n = makeNode(AlterExtensionAddStmt);
+					n->extname = $3;
+					n->objtype = OBJECT_TYPE;
+					n->objname = $6;
+					$$ = (Node *)n;
 				}
 		;
 
