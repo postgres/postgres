@@ -144,6 +144,8 @@ typedef struct _extensionInfo
 {
 	DumpableObject dobj;
 	char       *namespace;		/* schema containing extension's objects */
+	char       *extconfig;		/* info about configuration tables */
+	char       *extcondition;
 } ExtensionInfo;
 
 typedef struct _typeInfo
@@ -295,7 +297,6 @@ typedef struct _tableDataInfo
 	DumpableObject dobj;
 	TableInfo  *tdtable;		/* link to table to dump */
 	bool		oids;			/* include OIDs in data? */
-	bool		ext_config;		/* is table an extension config table? */
 	char	   *filtercond;		/* WHERE condition to limit rows dumped */
 } TableDataInfo;
 
@@ -546,5 +547,6 @@ extern TSConfigInfo *getTSConfigurations(int *numTSConfigs);
 extern FdwInfo *getForeignDataWrappers(int *numForeignDataWrappers);
 extern ForeignServerInfo *getForeignServers(int *numForeignServers);
 extern DefaultACLInfo *getDefaultACLs(int *numDefaultACLs);
+extern void getExtensionMembership(ExtensionInfo extinfo[], int numExtensions);
 
 #endif   /* PG_DUMP_H */

@@ -766,9 +766,6 @@ main(int argc, char **argv)
 
 	/*
 	 * Collect dependency data to assist in ordering the objects.
-	 *
-	 * (In 9.1 and later, this also marks extension member objects as
-	 * not to be dumped.)
 	 */
 	getDependencies();
 
@@ -1504,14 +1501,9 @@ static void
 dumpTableData(Archive *fout, TableDataInfo *tdinfo)
 {
 	TableInfo  *tbinfo = tdinfo->tdtable;
-	PQExpBuffer copyBuf;
+	PQExpBuffer copyBuf = createPQExpBuffer();
 	DataDumperPtr dumpFn;
 	char	   *copyStmt;
-
-	if (!tdinfo->dobj.dump)
-		return;
-
-	copyBuf = createPQExpBuffer();
 
 	if (!dump_inserts)
 	{
@@ -1597,7 +1589,6 @@ makeTableDataInfo(TableInfo *tbinfo, bool oids)
 	tdinfo->dobj.dump = true;
 	tdinfo->tdtable = tbinfo;
 	tdinfo->oids = oids;
-	tdinfo->ext_config = false;				/* might get set later */
 	tdinfo->filtercond = NULL;				/* might get set later */
 	addObjectDependency(&tdinfo->dobj, tbinfo->dobj.dumpId);
 
@@ -2636,7 +2627,6 @@ getExtensions(int *numExtensions)
 	PGresult   *res;
 	int			ntups;
 	int			i;
-	int			j;
 	PQExpBuffer query;
 	ExtensionInfo *extinfo;
 	int			i_tableoid;
@@ -2681,55 +2671,17 @@ getExtensions(int *numExtensions)
 
 	for (i = 0; i < ntups; i++)
 	{
-		char   *extconfig;
-		char   *extcondition;
-		char  **extconfigarray = NULL;
-		char  **extconditionarray = NULL;
-		int		nconfigitems;
-		int		nconditionitems;
-
 		extinfo[i].dobj.objType = DO_EXTENSION;
 		extinfo[i].dobj.catId.tableoid = atooid(PQgetvalue(res, i, i_tableoid));
 		extinfo[i].dobj.catId.oid = atooid(PQgetvalue(res, i, i_oid));
 		AssignDumpId(&extinfo[i].dobj);
 		extinfo[i].dobj.name = strdup(PQgetvalue(res, i, i_extname));
 		extinfo[i].namespace = strdup(PQgetvalue(res, i, i_nspname));
+		extinfo[i].extconfig = strdup(PQgetvalue(res, i, i_extconfig));
+		extinfo[i].extcondition = strdup(PQgetvalue(res, i, i_extcondition));
 
 		/* For the moment, all extensions are considered dumpable */
 		extinfo->dobj.dump = true;
-
-		/*
-		 * Find and mark any configuration tables for this extension.
-		 *
-		 * Note that we create TableDataInfo objects even in schemaOnly mode,
-		 * ie, user data in a configuration table is treated like schema data.
-		 * This seems appropriate since system data in a config table would
-		 * get reloaded by CREATE EXTENSION.
-		 */
-		extconfig = PQgetvalue(res, i, i_extconfig);
-		extcondition = PQgetvalue(res, i, i_extcondition);
-		if (parsePGArray(extconfig, &extconfigarray, &nconfigitems) &&
-			parsePGArray(extcondition, &extconditionarray, &nconditionitems) &&
-			nconfigitems == nconditionitems)
-		{
-			for (j = 0; j < nconfigitems; j++)
-			{
-				TableInfo *configtbl;
-
-				configtbl = findTableByOid(atooid(extconfigarray[j]));
-				if (configtbl && configtbl->dataObj == NULL)
-				{
-					makeTableDataInfo(configtbl, false);
-					configtbl->dataObj->ext_config = true;
-					if (strlen(extconditionarray[j]) > 0)
-						configtbl->dataObj->filtercond = strdup(extconditionarray[j]);
-				}
-			}
-		}
-		if (extconfigarray)
-			free(extconfigarray);
-		if (extconditionarray)
-			free(extconditionarray);
 	}
 
 	PQclear(res);
@@ -5200,7 +5152,7 @@ getProcLangs(int *numProcLangs)
 		else
 			planginfo[i].lanowner = strdup("");
 
-		/* Assume it should be dumped (getDependencies may override this) */
+		/* Assume it should be dumped (getExtensionMembership may override) */
 		planginfo[i].dobj.dump = true;
 
 		if (g_fout->remoteVersion < 70300)
@@ -5310,7 +5262,7 @@ getCasts(int *numCasts)
 		castinfo[i].castcontext = *(PQgetvalue(res, i, i_castcontext));
 		castinfo[i].castmethod = *(PQgetvalue(res, i, i_castmethod));
 
-		/* Assume it should be dumped (getDependencies may override this) */
+		/* Assume it should be dumped (getExtensionMembership may override) */
 		castinfo[i].dobj.dump = true;
 
 		/*
@@ -12856,6 +12808,160 @@ dumpRule(Archive *fout, RuleInfo *rinfo)
 }
 
 /*
+ * getExtensionMembership --- obtain extension membership data
+ */
+void
+getExtensionMembership(ExtensionInfo extinfo[], int numExtensions)
+{
+	PQExpBuffer query;
+	PGresult   *res;
+	int			ntups,
+				i;
+	int			i_classid,
+				i_objid,
+				i_refclassid,
+				i_refobjid;
+	DumpableObject *dobj,
+			   *refdobj;
+
+	/* Nothing to do if no extensions */
+	if (numExtensions == 0)
+		return;
+
+	/* Make sure we are in proper schema */
+	selectSourceSchema("pg_catalog");
+
+	query = createPQExpBuffer();
+
+	/* refclassid constraint is redundant but may speed the search */
+	appendPQExpBuffer(query, "SELECT "
+					  "classid, objid, refclassid, refobjid "
+					  "FROM pg_depend "
+					  "WHERE refclassid = 'pg_extension'::regclass "
+					  "AND deptype = 'e' "
+					  "ORDER BY 3,4");
+
+	res = PQexec(g_conn, query->data);
+	check_sql_result(res, g_conn, query->data, PGRES_TUPLES_OK);
+
+	ntups = PQntuples(res);
+
+	i_classid = PQfnumber(res, "classid");
+	i_objid = PQfnumber(res, "objid");
+	i_refclassid = PQfnumber(res, "refclassid");
+	i_refobjid = PQfnumber(res, "refobjid");
+
+	/*
+	 * Since we ordered the SELECT by referenced ID, we can expect that
+	 * multiple entries for the same extension will appear together; this
+	 * saves on searches.
+	 */
+	refdobj = NULL;
+
+	for (i = 0; i < ntups; i++)
+	{
+		CatalogId	objId;
+		CatalogId	refobjId;
+
+		objId.tableoid = atooid(PQgetvalue(res, i, i_classid));
+		objId.oid = atooid(PQgetvalue(res, i, i_objid));
+		refobjId.tableoid = atooid(PQgetvalue(res, i, i_refclassid));
+		refobjId.oid = atooid(PQgetvalue(res, i, i_refobjid));
+
+		if (refdobj == NULL ||
+			refdobj->catId.tableoid != refobjId.tableoid ||
+			refdobj->catId.oid != refobjId.oid)
+			refdobj = findObjectByCatalogId(refobjId);
+
+		/*
+		 * Failure to find objects mentioned in pg_depend is not unexpected,
+		 * since for example we don't collect info about TOAST tables.
+		 */
+		if (refdobj == NULL)
+		{
+#ifdef NOT_USED
+			fprintf(stderr, "no referenced object %u %u\n",
+					refobjId.tableoid, refobjId.oid);
+#endif
+			continue;
+		}
+
+		dobj = findObjectByCatalogId(objId);
+
+		if (dobj == NULL)
+		{
+#ifdef NOT_USED
+			fprintf(stderr, "no referencing object %u %u\n",
+					objId.tableoid, objId.oid);
+#endif
+			continue;
+		}
+
+		/* Record dependency so that getDependencies needn't repeat this */
+		addObjectDependency(dobj, refdobj->dumpId);
+
+		/*
+		 * Mark the member object as not to be dumped.  We still need the
+		 * dependency link, to ensure that sorting is done correctly.
+		 */
+		dobj->dump = false;
+	}
+
+	PQclear(res);
+
+	/*
+	 * Now identify extension configuration tables and create TableDataInfo
+	 * objects for them, ensuring their data will be dumped even though the
+	 * tables themselves won't be.
+	 *
+	 * Note that we create TableDataInfo objects even in schemaOnly mode,
+	 * ie, user data in a configuration table is treated like schema data.
+	 * This seems appropriate since system data in a config table would
+	 * get reloaded by CREATE EXTENSION.
+	 */
+	for (i = 0; i < numExtensions; i++)
+	{
+		char   *extconfig = extinfo[i].extconfig;
+		char   *extcondition = extinfo[i].extcondition;
+		char  **extconfigarray = NULL;
+		char  **extconditionarray = NULL;
+		int		nconfigitems;
+		int		nconditionitems;
+
+		if (parsePGArray(extconfig, &extconfigarray, &nconfigitems) &&
+			parsePGArray(extcondition, &extconditionarray, &nconditionitems) &&
+			nconfigitems == nconditionitems)
+		{
+			int		j;
+
+			for (j = 0; j < nconfigitems; j++)
+			{
+				TableInfo *configtbl;
+
+				configtbl = findTableByOid(atooid(extconfigarray[j]));
+				if (configtbl && configtbl->dataObj == NULL)
+				{
+					/*
+					 * Note: config tables are dumped without OIDs regardless
+					 * of the --oids setting.  This is because row filtering
+					 * conditions aren't compatible with dumping OIDs.
+					 */
+					makeTableDataInfo(configtbl, false);
+					if (strlen(extconditionarray[j]) > 0)
+						configtbl->dataObj->filtercond = strdup(extconditionarray[j]);
+				}
+			}
+		}
+		if (extconfigarray)
+			free(extconfigarray);
+		if (extconditionarray)
+			free(extconditionarray);
+	}
+
+	destroyPQExpBuffer(query);
+}
+
+/*
  * getDependencies --- obtain available dependency data
  */
 static void
@@ -12885,10 +12991,14 @@ getDependencies(void)
 
 	query = createPQExpBuffer();
 
+	/*
+	 * PIN dependencies aren't interesting, and EXTENSION dependencies were
+	 * already processed by getExtensionMembership.
+	 */
 	appendPQExpBuffer(query, "SELECT "
 					  "classid, objid, refclassid, refobjid, deptype "
 					  "FROM pg_depend "
-					  "WHERE deptype != 'p' "
+					  "WHERE deptype != 'p' AND deptype != 'e' "
 					  "ORDER BY 1,2");
 
 	res = PQexec(g_conn, query->data);
@@ -12964,24 +13074,6 @@ getDependencies(void)
 		else
 			/* normal case */
 			addObjectDependency(dobj, refdobj->dumpId);
-
-		/*
-		 * If it's an extension-membership dependency, mark the member
-		 * object as not to be dumped.  We still need the dependency links,
-		 * though, to ensure that sorting is done correctly.
-		 */
-		if (deptype == 'e')
-		{
-			dobj->dump = false;
-			if (dobj->objType == DO_TABLE)
-			{
-				/* Mark the data as not to be dumped either, unless config */
-				TableDataInfo *tdinfo = ((TableInfo *) dobj)->dataObj;
-
-				if (tdinfo && !tdinfo->ext_config)
-					tdinfo->dobj.dump = false;
-			}
-		}
 	}
 
 	PQclear(res);

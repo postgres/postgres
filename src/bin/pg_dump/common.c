@@ -79,12 +79,12 @@ TableInfo *
 getSchemaData(int *numTablesPtr)
 {
 	NamespaceInfo *nsinfo;
+	ExtensionInfo *extinfo;
 	AggInfo    *agginfo;
 	InhInfo    *inhinfo;
 	RuleInfo   *ruleinfo;
 	ProcLangInfo *proclanginfo;
 	CastInfo   *castinfo;
-	ExtensionInfo *extinfo;
 	OpclassInfo *opcinfo;
 	OpfamilyInfo *opfinfo;
 	ConvInfo   *convinfo;
@@ -96,12 +96,12 @@ getSchemaData(int *numTablesPtr)
 	ForeignServerInfo *srvinfo;
 	DefaultACLInfo *daclinfo;
 	int			numNamespaces;
+	int			numExtensions;
 	int			numAggregates;
 	int			numInherits;
 	int			numRules;
 	int			numProcLangs;
 	int			numCasts;
-	int			numExtensions;
 	int			numOpclasses;
 	int			numOpfamilies;
 	int			numConversions;
@@ -116,6 +116,10 @@ getSchemaData(int *numTablesPtr)
 	if (g_verbose)
 		write_msg(NULL, "reading schemas\n");
 	nsinfo = getNamespaces(&numNamespaces);
+
+	if (g_verbose)
+		write_msg(NULL, "reading extensions\n");
+	extinfo = getExtensions(&numExtensions);
 
 	if (g_verbose)
 		write_msg(NULL, "reading user-defined functions\n");
@@ -147,6 +151,10 @@ getSchemaData(int *numTablesPtr)
 	opcinfo = getOpclasses(&numOpclasses);
 
 	if (g_verbose)
+		write_msg(NULL, "reading user-defined operator families\n");
+	opfinfo = getOpfamilies(&numOpfamilies);
+
+	if (g_verbose)
 		write_msg(NULL, "reading user-defined text search parsers\n");
 	prsinfo = getTSParsers(&numTSParsers);
 
@@ -175,12 +183,12 @@ getSchemaData(int *numTablesPtr)
 	daclinfo = getDefaultACLs(&numDefaultACLs);
 
 	if (g_verbose)
-		write_msg(NULL, "reading user-defined operator families\n");
-	opfinfo = getOpfamilies(&numOpfamilies);
-
-	if (g_verbose)
 		write_msg(NULL, "reading user-defined conversions\n");
 	convinfo = getConversions(&numConversions);
+
+	if (g_verbose)
+		write_msg(NULL, "reading type casts\n");
+	castinfo = getCasts(&numCasts);
 
 	if (g_verbose)
 		write_msg(NULL, "reading user-defined tables\n");
@@ -195,14 +203,14 @@ getSchemaData(int *numTablesPtr)
 		write_msg(NULL, "reading rewrite rules\n");
 	ruleinfo = getRules(&numRules);
 
+	/*
+	 * Identify extension member objects and mark them as not to be dumped.
+	 * This must happen after reading all objects that can be direct members
+	 * of extensions, but before we begin to process table subsidiary objects.
+	 */
 	if (g_verbose)
-		write_msg(NULL, "reading type casts\n");
-	castinfo = getCasts(&numCasts);
-
-	/* this must be after getTables */
-	if (g_verbose)
-		write_msg(NULL, "reading extensions\n");
-	extinfo = getExtensions(&numExtensions);
+		write_msg(NULL, "finding extension members\n");
+	getExtensionMembership(extinfo, numExtensions);
 
 	/* Link tables to parents, mark parents of target tables interesting */
 	if (g_verbose)
@@ -525,9 +533,9 @@ findObjectByDumpId(DumpId dumpId)
  * Returns NULL for unknown ID
  *
  * We use binary search in a sorted list that is built on first call.
- * If AssignDumpId() and findObjectByCatalogId() calls were intermixed,
+ * If AssignDumpId() and findObjectByCatalogId() calls were freely intermixed,
  * the code would work, but possibly be very slow.	In the current usage
- * pattern that does not happen, indeed we only need to build the list once.
+ * pattern that does not happen, indeed we build the list at most twice.
  */
 DumpableObject *
 findObjectByCatalogId(CatalogId catalogId)
