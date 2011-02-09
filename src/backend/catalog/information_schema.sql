@@ -354,7 +354,23 @@ GRANT SELECT ON attributes TO PUBLIC;
  * CHARACTER_SETS view
  */
 
--- feature not supported
+CREATE VIEW character_sets AS
+    SELECT CAST(null AS sql_identifier) AS character_set_catalog,
+           CAST(null AS sql_identifier) AS character_set_schema,
+           CAST(getdatabaseencoding() AS sql_identifier) AS character_set_name,
+           CAST(CASE WHEN getdatabaseencoding() = 'UTF8' THEN 'UCS' ELSE getdatabaseencoding() END AS sql_identifier) AS character_repertoire,
+           CAST(getdatabaseencoding() AS sql_identifier) AS form_of_use,
+           CAST(current_database() AS sql_identifier) AS default_collate_catalog,
+           CAST(nc.nspname AS sql_identifier) AS default_collate_schema,
+           CAST(c.collname AS sql_identifier) AS default_collate_name
+    FROM pg_database d
+         LEFT JOIN (pg_collation c JOIN pg_namespace nc ON (c.collnamespace = nc.oid))
+             ON (datcollate = collcollate AND datctype = collctype)
+    WHERE d.datname = current_database()
+    ORDER BY char_length(c.collname) DESC, c.collname ASC -- prefer full/canonical name
+    LIMIT 1;
+
+GRANT SELECT ON character_sets TO PUBLIC;
 
 
 /*
@@ -425,14 +441,35 @@ GRANT SELECT ON check_constraints TO PUBLIC;
  * COLLATIONS view
  */
 
--- feature not supported
+CREATE VIEW collations AS
+    SELECT CAST(current_database() AS sql_identifier) AS collation_catalog,
+           CAST(nc.nspname AS sql_identifier) AS collation_schema,
+           CAST(c.collname AS sql_identifier) AS collation_name,
+           CAST('NO PAD' AS character_data) AS pad_attribute
+    FROM pg_collation c, pg_namespace nc
+    WHERE c.collnamespace = nc.oid
+          AND collencoding = (SELECT encoding FROM pg_catalog.pg_database WHERE datname = pg_catalog.current_database());
+
+GRANT SELECT ON collations TO PUBLIC;
+
 
 /*
  * 5.16
  * COLLATION_CHARACTER_SET_APPLICABILITY view
  */
 
--- feature not supported
+CREATE VIEW collation_character_set_applicability AS
+    SELECT CAST(current_database() AS sql_identifier) AS collation_catalog,
+           CAST(nc.nspname AS sql_identifier) AS collation_schema,
+           CAST(c.collname AS sql_identifier) AS collation_name,
+           CAST(null AS sql_identifier) AS character_set_catalog,
+           CAST(null AS sql_identifier) AS character_set_schema,
+           CAST(getdatabaseencoding() AS sql_identifier) AS character_set_name
+    FROM pg_collation c, pg_namespace nc
+    WHERE c.collnamespace = nc.oid
+          AND collencoding = (SELECT encoding FROM pg_catalog.pg_database WHERE datname = pg_catalog.current_database());
+
+GRANT SELECT ON collation_character_set_applicability TO PUBLIC;
 
 
 /*

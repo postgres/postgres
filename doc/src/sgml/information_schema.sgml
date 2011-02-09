@@ -498,6 +498,140 @@
   </para>
  </sect1>
 
+ <sect1 id="infoschema-character-sets">
+  <title><literal>character_sets</literal></title>
+
+  <para>
+   The view <literal>character_sets</literal> identifies the character
+   sets available in the current database.  Since PostgreSQL does not
+   support multiple character sets within one database, this view only
+   shows one, which is the database encoding.
+  </para>
+
+  <para>
+   Take note of how the following terms are used in the SQL standard:
+   <variablelist>
+    <varlistentry>
+     <term>character repertoire</term>
+     <listitem>
+      <para>
+       An abstract collection of characters, for
+       example <literal>UNICODE</literal>, <literal>UCS</literal>, or
+       <literal>LATIN1</literal>.  Not exposed as an SQL object, but
+       visible in this view.
+      </para>
+     </listitem>
+    </varlistentry>
+
+    <varlistentry>
+     <term>character encoding form</term>
+     <listitem>
+      <para>
+       An encoding of some character repertoire.  Most older character
+       repertoires only use one encoding form, and so there are no
+       separate names for them (e.g., <literal>LATIN1</literal> is an
+       encoding form applicable to the <literal>LATIN1</literal>
+       repertoire).  But for example Unicode has the encoding forms
+       <literal>UTF8</literal>, <literal>UTF16</literal>, etc. (not
+       all supported by PostgreSQL).  Encoding forms are not exposed
+       as an SQL object, but are visible in this view.
+      </para>
+     </listitem>
+    </varlistentry>
+
+    <varlistentry>
+     <term>character set</term>
+     <listitem>
+      <para>
+       A named SQL object that identifies a character repertoire, a
+       character encoding, and a default collation.  A predefined
+       character set would typically have the same name as an encoding
+       form, but users could define other names.  For example, the
+       character set <literal>UTF8</literal> would typically identify
+       the character repertoire <literal>UCS</literal>, encoding
+       form <literal>UTF8</literal>, and some default collation.
+      </para>
+     </listitem>
+    </varlistentry>
+   </variablelist>
+
+   You can think of an <quote>encoding</quote> in PostgreSQL either as
+   a character set or a character encoding form.  They will have the
+   same name, and there can only be one in one database.
+  </para>
+
+  <table>
+   <title><literal>character_sets</literal> Columns</title>
+
+   <tgroup cols="3">
+    <thead>
+     <row>
+      <entry>Name</entry>
+      <entry>Data Type</entry>
+      <entry>Description</entry>
+     </row>
+    </thead>
+
+    <tbody>
+     <row>
+      <entry><literal>character_set_catalog</literal></entry>
+      <entry><literal>sql_identifier</literal></entry>
+      <entry>Character sets are currently not implemented as schema objects, so this column is null.</entry>
+     </row>
+
+     <row>
+      <entry><literal>character_set_schema</literal></entry>
+      <entry><literal>sql_identifier</literal></entry>
+      <entry>Character sets are currently not implemented as schema objects, so this column is null.</entry>
+     </row>
+
+     <row>
+      <entry><literal>character_set_name</literal></entry>
+      <entry><literal>sql_identifier</literal></entry>
+      <entry>Name of the character set, currently implemented as showing the name of the database encoding</entry>
+     </row>
+
+     <row>
+      <entry><literal>character_repertoire</literal></entry>
+      <entry><literal>sql_identifier</literal></entry>
+      <entry>Character repertoire, showing <literal>UCS</literal> if the encoding is <literal>UTF8</literal>, else just the encoding name</entry>
+     </row>
+
+     <row>
+      <entry><literal>form_of_use</literal></entry>
+      <entry><literal>sql_identifier</literal></entry>
+      <entry>Character encoding form, same as the database encoding</entry>
+     </row>
+
+     <row>
+      <entry><literal>default_collate_catalog</literal></entry>
+      <entry><literal>sql_identifier</literal></entry>
+      <entry>Name of the database containing the default collation (always the current database, if any collation is identified)</entry>
+     </row>
+
+     <row>
+      <entry><literal>default_collate_schema</literal></entry>
+      <entry><literal>sql_identifier</literal></entry>
+      <entry>Name of the schema containing the default collation</entry>
+     </row>
+
+     <row>
+      <entry><literal>default_collate_name</literal></entry>
+      <entry><literal>sql_identifier</literal></entry>
+      <entry>
+       Name of the default collation.  The default collation is
+       identified as the collation that matches
+       the <literal>COLLATE</literal> and <literal>CTYPE</literal>
+       settings of the current database.  If there is no such
+       collation, then this column and the associated schema and
+       catalog columns are null.
+      </entry>
+     </row>
+    </tbody>
+   </tgroup>
+  </table>
+ </sect1>
+
  <sect1 id="infoschema-check-constraint-routine-usage">
   <title><literal>check_constraint_routine_usage</literal></title>
 
@@ -609,6 +743,123 @@
       <entry><literal>check_clause</literal></entry>
       <entry><literal>character_data</literal></entry>
       <entry>The check expression of the check constraint</entry>
+     </row>
+    </tbody>
+   </tgroup>
+  </table>
+ </sect1>
+
+ <sect1 id="infoschema-collations">
+  <title><literal>collations</literal></title>
+
+  <para>
+   The view <literal>collations</literal> contains the collations
+   available in the current database.
+  </para>
+
+  <table>
+   <title><literal>collations</literal> Columns</title>
+
+   <tgroup cols="3">
+    <thead>
+     <row>
+      <entry>Name</entry>
+      <entry>Data Type</entry>
+      <entry>Description</entry>
+     </row>
+    </thead>
+
+    <tbody>
+     <row>
+      <entry><literal>collation_catalog</literal></entry>
+      <entry><literal>sql_identifier</literal></entry>
+      <entry>Name of the database containing the collation (always the current database)</entry>
+     </row>
+
+     <row>
+      <entry><literal>collation_schema</literal></entry>
+      <entry><literal>sql_identifier</literal></entry>
+      <entry>Name of the schema containing the collation</entry>
+     </row>
+
+     <row>
+      <entry><literal>collation_name</literal></entry>
+      <entry><literal>sql_identifier</literal></entry>
+      <entry>Name of the default collation</entry>
+     </row>
+
+     <row>
+      <entry><literal>pad_attribute</literal></entry>
+      <entry><literal>character_data</literal></entry>
+      <entry>
+       Always <literal>NO PAD</literal> (The alternative <literal>PAD
+       SPACE</literal> is not supported by PostgreSQL.)
+      </entry>
+     </row>
+    </tbody>
+   </tgroup>
+  </table>
+ </sect1>
+
+ <sect1 id="infoschema-collation-character-set-applicability">
+  <title><literal>collation_character_set_applicability</literal></title>
+
+  <para>
+   The view <literal>collation_character_set_applicability</literal>
+   identifies which character set the available collations are
+   applicable to.  In PostgreSQL, there is only one character set per
+   database (see explanation
+   in <xref linkend="infoschema-character-sets">), so this view does
+   not provide much useful information.
+  </para>
+
+  <table>
+   <title><literal>collation_character_set_applicability</literal> Columns</title>
+
+   <tgroup cols="3">
+    <thead>
+     <row>
+      <entry>Name</entry>
+      <entry>Data Type</entry>
+      <entry>Description</entry>
+     </row>
+    </thead>
+
+    <tbody>
+     <row>
+      <entry><literal>collation_catalog</literal></entry>
+      <entry><literal>sql_identifier</literal></entry>
+      <entry>Name of the database containing the collation (always the current database)</entry>
+     </row>
+
+     <row>
+      <entry><literal>collation_schema</literal></entry>
+      <entry><literal>sql_identifier</literal></entry>
+      <entry>Name of the schema containing the collation</entry>
+     </row>
+
+     <row>
+      <entry><literal>collation_name</literal></entry>
+      <entry><literal>sql_identifier</literal></entry>
+      <entry>Name of the default collation</entry>
+     </row>
+
+     <row>
+      <entry><literal>character_set_catalog</literal></entry>
+      <entry><literal>sql_identifier</literal></entry>
+      <entry>Character sets are currently not implemented as schema objects, so this column is null</entry>
+     </row>
+
+     <row>
+      <entry><literal>character_set_schema</literal></entry>
+      <entry><literal>sql_identifier</literal></entry>
+      <entry>Character sets are currently not implemented as schema objects, so this column is null</entry>
+     </row>
+
+     <row>
+      <entry><literal>character_set_name</literal></entry>
+      <entry><literal>sql_identifier</literal></entry>
+      <entry>Name of the character set</entry>
      </row>
     </tbody>
    </tgroup>
