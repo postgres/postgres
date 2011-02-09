@@ -1119,7 +1119,7 @@ InitPredicateLocks(void)
 
 		SHMQueueInit(&RWConflictPool->availableList);
 		requestSize = mul_size((Size) max_table_size,
-							   PredXactListElementDataSize);
+							   RWConflictDataSize);
 		RWConflictPool->element = ShmemAlloc(requestSize);
 		if (RWConflictPool->element == NULL)
 			ereport(ERROR,
@@ -1190,11 +1190,17 @@ PredicateLockShmemSize(void)
 	size = add_size(size, hash_estimate_size(max_table_size,
 											 sizeof(SERIALIZABLEXID)));
 
+	/* rw-conflict pool */
+	max_table_size *= 5;
+	size = add_size(size, RWConflictPoolHeaderDataSize);
+	size = add_size(size, mul_size((Size) max_table_size,
+								   RWConflictDataSize));
+
 	/* Head for list of finished serializable transactions. */
 	size = add_size(size, sizeof(SHM_QUEUE));
 
 	/* Shared memory structures for SLRU tracking of old committed xids. */
-	size = add_size(size, sizeof(OldSerXidControl));
+	size = add_size(size, sizeof(OldSerXidControlData));
 	size = add_size(size, SimpleLruShmemSize(NUM_OLDSERXID_BUFFERS, 0));
 
 	return size;
