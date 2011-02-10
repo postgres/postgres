@@ -26,7 +26,7 @@ Test specification
 ==================
 
 Each isolation test is defined by a specification file, stored in the specs
-subdirectory. A test specification consists of five parts, in this order:
+subdirectory. A test specification consists of four parts, in this order:
 
 setup { <SQL> }
 
