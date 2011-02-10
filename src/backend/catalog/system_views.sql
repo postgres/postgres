@@ -530,7 +530,8 @@ CREATE VIEW pg_stat_database AS
             pg_stat_get_db_tuples_inserted(D.oid) AS tup_inserted,
             pg_stat_get_db_tuples_updated(D.oid) AS tup_updated,
             pg_stat_get_db_tuples_deleted(D.oid) AS tup_deleted,
-            pg_stat_get_db_conflict_all(D.oid) AS conflicts
+            pg_stat_get_db_conflict_all(D.oid) AS conflicts,
+            pg_stat_get_db_stat_reset_time(D.oid) AS stats_reset
     FROM pg_database D;
 
 CREATE VIEW pg_stat_database_conflicts AS
@@ -577,7 +578,8 @@ CREATE VIEW pg_stat_bgwriter AS
         pg_stat_get_bgwriter_maxwritten_clean() AS maxwritten_clean,
         pg_stat_get_buf_written_backend() AS buffers_backend,
         pg_stat_get_buf_fsync_backend() AS buffers_backend_fsync,
-        pg_stat_get_buf_alloc() AS buffers_alloc;
+        pg_stat_get_buf_alloc() AS buffers_alloc,
+        pg_stat_get_bgwriter_stat_reset_time() AS stats_reset;
 
 CREATE VIEW pg_user_mappings AS
     SELECT

@@ -267,7 +267,7 @@ postgres: <replaceable>user</> <replaceable>database</> <replaceable>host</> <re
       by backends (that is, not by the background writer), how many times
       those backends had to execute their own fsync calls (normally the
       background writer handles those even when the backend does its own
-      write), and total buffers allocated.
+      write), total buffers allocated, and time of last statistics reset.
      </entry>
      </row>
 
@@ -278,9 +278,9 @@ postgres: <replaceable>user</> <replaceable>database</> <replaceable>host</> <re
       number of transactions committed and rolled back in that database,
       total disk blocks read, total buffer hits (i.e., block
       read requests avoided by finding the block already in buffer cache),
-      number of rows returned, fetched, inserted, updated and deleted, and
+      number of rows returned, fetched, inserted, updated and deleted, the
       total number of queries cancelled due to conflict with recovery (on
-      standby servers).
+      standby servers), and time of last statistics reset.
      </entry>
      </row>
 
@@ -659,6 +659,19 @@ postgres: <replaceable>user</> <replaceable>database</> <replaceable>host</> <re
       <entry><type>bigint</type></entry>
       <entry>
        Number of queries cancelled because of recovery conflict with deadlocks in database
+      </entry>
+     </row>
+
+     <row>
+      <entry><literal><function>pg_stat_get_db_stat_reset_time</function>(<type>oid</type>)</literal></entry>
+      <entry><type>timestamptz</type></entry>
+      <entry>
+       Time of the last statistics reset for the database.  Initialized to the
+       system time during the first connection to each database.  The reset time
+       is updated when you call <function>pg_stat_reset</function> on the
+       database, as well as upon execution of
+       <function>pg_stat_reset_single_table_counters</function> against any
+       table or index in it.
       </entry>
      </row>
 
@@ -1123,6 +1136,16 @@ postgres: <replaceable>user</> <replaceable>database</> <replaceable>host</> <re
        Number of times the background writer has stopped its cleaning scan because
        it has written more buffers than specified in the
        <varname>bgwriter_lru_maxpages</varname> parameter
+      </entry>
+     </row>
+
+     <row>
+      <entry><literal><function>pg_stat_get_bgwriter_stat_reset_time()</function></literal></entry>
+      <entry><type>timestamptz</type></entry>
+      <entry>
+        Time of the last statistics reset for the background writer, updated
+        when executing <function>pg_stat_reset_shared('bgwriter')</function>
+        on the database cluster.
       </entry>
      </row>
 

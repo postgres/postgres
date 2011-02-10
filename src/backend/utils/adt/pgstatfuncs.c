@@ -77,12 +77,14 @@ extern Datum pg_stat_get_db_conflict_snapshot(PG_FUNCTION_ARGS);
 extern Datum pg_stat_get_db_conflict_bufferpin(PG_FUNCTION_ARGS);
 extern Datum pg_stat_get_db_conflict_startup_deadlock(PG_FUNCTION_ARGS);
 extern Datum pg_stat_get_db_conflict_all(PG_FUNCTION_ARGS);
+extern Datum pg_stat_get_db_stat_reset_time(PG_FUNCTION_ARGS);
 
 extern Datum pg_stat_get_bgwriter_timed_checkpoints(PG_FUNCTION_ARGS);
 extern Datum pg_stat_get_bgwriter_requested_checkpoints(PG_FUNCTION_ARGS);
 extern Datum pg_stat_get_bgwriter_buf_written_checkpoints(PG_FUNCTION_ARGS);
 extern Datum pg_stat_get_bgwriter_buf_written_clean(PG_FUNCTION_ARGS);
 extern Datum pg_stat_get_bgwriter_maxwritten_clean(PG_FUNCTION_ARGS);
+extern Datum pg_stat_get_bgwriter_stat_reset_time(PG_FUNCTION_ARGS);
 extern Datum pg_stat_get_buf_written_backend(PG_FUNCTION_ARGS);
 extern Datum pg_stat_get_buf_fsync_backend(PG_FUNCTION_ARGS);
 extern Datum pg_stat_get_buf_alloc(PG_FUNCTION_ARGS);
@@ -1136,6 +1138,24 @@ pg_stat_get_db_tuples_deleted(PG_FUNCTION_ARGS)
 }
 
 Datum
+pg_stat_get_db_stat_reset_time(PG_FUNCTION_ARGS)
+{
+	Oid			dbid = PG_GETARG_OID(0);
+	TimestampTz result;
+	PgStat_StatDBEntry *dbentry;
+
+	if ((dbentry = pgstat_fetch_stat_dbentry(dbid)) == NULL)
+		result = 0;
+	else
+		result = dbentry->stat_reset_timestamp;
+
+	if (result == 0)
+		PG_RETURN_NULL();
+	else
+		PG_RETURN_TIMESTAMPTZ(result);
+}
+
+Datum
 pg_stat_get_db_conflict_tablespace(PG_FUNCTION_ARGS)
 {
 	Oid			dbid = PG_GETARG_OID(0);
@@ -1258,6 +1278,12 @@ Datum
 pg_stat_get_bgwriter_maxwritten_clean(PG_FUNCTION_ARGS)
 {
 	PG_RETURN_INT64(pgstat_fetch_global()->maxwritten_clean);
+}
+
+Datum
+pg_stat_get_bgwriter_stat_reset_time(PG_FUNCTION_ARGS)
+{
+	PG_RETURN_TIMESTAMPTZ(pgstat_fetch_global()->stat_reset_timestamp);
 }
 
 Datum

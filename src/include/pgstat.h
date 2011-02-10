@@ -484,7 +484,7 @@ typedef union PgStat_Msg
  * ------------------------------------------------------------
  */
 
-#define PGSTAT_FILE_FORMAT_ID	0x01A5BC98
+#define PGSTAT_FILE_FORMAT_ID	0x01A5BC99
 
 /* ----------
  * PgStat_StatDBEntry			The collector's data per database
@@ -508,6 +508,7 @@ typedef struct PgStat_StatDBEntry
 	PgStat_Counter n_conflict_snapshot;
 	PgStat_Counter n_conflict_bufferpin;
 	PgStat_Counter n_conflict_startup_deadlock;
+	TimestampTz stat_reset_timestamp;
 
 
 	/*
@@ -584,6 +585,7 @@ typedef struct PgStat_GlobalStats
 	PgStat_Counter buf_written_backend;
 	PgStat_Counter buf_fsync_backend;
 	PgStat_Counter buf_alloc;
+	TimestampTz stat_reset_timestamp;
 } PgStat_GlobalStats;
 
 
