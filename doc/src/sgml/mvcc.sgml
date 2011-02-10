@@ -604,7 +604,7 @@ ERROR:  could not serialize access due to read/write dependencies among transact
     Consistent use of Serializable transactions can simplify development.
     The guarantee that any set of concurrent serializable transactions will
     have the same effect as if they were run one at a time means that if
-    you can demonstrate that a singe transaction, as written, will do the
+    you can demonstrate that a single transaction, as written, will do the
     right thing when run by itself, you can have confidence that it will
     do the right thing in any mix of serializable transactions, even without
     any information about what those other transactions might do.  It is
