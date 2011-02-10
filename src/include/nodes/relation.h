@@ -82,6 +82,8 @@ typedef struct PlannerGlobal
 
 	Index		lastPHId;		/* highest PlaceHolderVar ID assigned */
 
+	Index		lastRowMarkId;	/* highest PlanRowMark ID assigned */
+
 	bool		transientPlan;	/* redo plan when TransactionXmin changes? */
 } PlannerGlobal;
 

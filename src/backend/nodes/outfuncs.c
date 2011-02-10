@@ -808,6 +808,7 @@ _outPlanRowMark(StringInfo str, PlanRowMark *node)
 
 	WRITE_UINT_FIELD(rti);
 	WRITE_UINT_FIELD(prti);
+	WRITE_UINT_FIELD(rowmarkId);
 	WRITE_ENUM_FIELD(markType, RowMarkType);
 	WRITE_BOOL_FIELD(noWait);
 	WRITE_BOOL_FIELD(isParent);
@@ -1609,6 +1610,7 @@ _outPlannerGlobal(StringInfo str, PlannerGlobal *node)
 	WRITE_NODE_FIELD(relationOids);
 	WRITE_NODE_FIELD(invalItems);
 	WRITE_UINT_FIELD(lastPHId);
+	WRITE_UINT_FIELD(lastRowMarkId);
 	WRITE_BOOL_FIELD(transientPlan);
 }
 

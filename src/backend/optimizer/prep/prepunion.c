@@ -1294,6 +1294,7 @@ expand_inherited_rtentry(PlannerInfo *root, RangeTblEntry *rte, Index rti)
 
 			newrc->rti = childRTindex;
 			newrc->prti = rti;
+			newrc->rowmarkId = oldrc->rowmarkId;
 			newrc->markType = oldrc->markType;
 			newrc->noWait = oldrc->noWait;
 			newrc->isParent = false;

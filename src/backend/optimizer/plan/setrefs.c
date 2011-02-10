@@ -252,7 +252,7 @@ set_plan_references(PlannerGlobal *glob, Plan *plan,
 		newrc = (PlanRowMark *) palloc(sizeof(PlanRowMark));
 		memcpy(newrc, rc, sizeof(PlanRowMark));
 
-		/* adjust indexes */
+		/* adjust indexes ... but *not* the rowmarkId */
 		newrc->rti += rtoffset;
 		newrc->prti += rtoffset;
 

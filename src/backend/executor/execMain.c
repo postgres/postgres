@@ -742,6 +742,7 @@ InitPlan(QueryDesc *queryDesc, int eflags)
 		erm->relation = relation;
 		erm->rti = rc->rti;
 		erm->prti = rc->prti;
+		erm->rowmarkId = rc->rowmarkId;
 		erm->markType = rc->markType;
 		erm->noWait = rc->noWait;
 		ItemPointerSetInvalid(&(erm->curCtid));
@@ -1425,23 +1426,29 @@ ExecBuildAuxRowMark(ExecRowMark *erm, List *targetlist)
 		/* if child rel, need tableoid */
 		if (erm->rti != erm->prti)
 		{
-			snprintf(resname, sizeof(resname), "tableoid%u", erm->prti);
+			snprintf(resname, sizeof(resname), "tableoid%u", erm->rowmarkId);
 			aerm->toidAttNo = ExecFindJunkAttributeInTlist(targetlist,
 														   resname);
+			if (!AttributeNumberIsValid(aerm->toidAttNo))
+				elog(ERROR, "could not find junk %s column", resname);
 		}
 
 		/* always need ctid for real relations */
-		snprintf(resname, sizeof(resname), "ctid%u", erm->prti);
+		snprintf(resname, sizeof(resname), "ctid%u", erm->rowmarkId);
 		aerm->ctidAttNo = ExecFindJunkAttributeInTlist(targetlist,
 													   resname);
+		if (!AttributeNumberIsValid(aerm->ctidAttNo))
+			elog(ERROR, "could not find junk %s column", resname);
 	}
 	else
 	{
 		Assert(erm->markType == ROW_MARK_COPY);
 
-		snprintf(resname, sizeof(resname), "wholerow%u", erm->prti);
+		snprintf(resname, sizeof(resname), "wholerow%u", erm->rowmarkId);
 		aerm->wholeAttNo = ExecFindJunkAttributeInTlist(targetlist,
 														resname);
+		if (!AttributeNumberIsValid(aerm->wholeAttNo))
+			elog(ERROR, "could not find junk %s column", resname);
 	}
 
 	return aerm;
