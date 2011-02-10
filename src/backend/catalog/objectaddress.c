@@ -139,6 +139,7 @@ get_object_address(ObjectType objtype, List *objname, List *objargs,
 			address = get_object_address_unqualified(objtype, objname);
 			break;
 		case OBJECT_TYPE:
+		case OBJECT_DOMAIN:
 			address.classId = TypeRelationId;
 			address.objectId =
 				typenameTypeId(NULL, makeTypeNameFromNameList(objname));

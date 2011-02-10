@@ -32,6 +32,11 @@ extern void CreateExtension(CreateExtensionStmt *stmt);
 extern void RemoveExtensions(DropStmt *stmt);
 extern void RemoveExtensionById(Oid extId);
 
+extern Oid	InsertExtensionTuple(const char *extName, Oid extOwner,
+					 Oid schemaOid, bool relocatable, const char *extVersion,
+					 Datum extConfig, Datum extCondition,
+					 List *requiredExtensions);
+
 extern void ExecAlterExtensionAddStmt(AlterExtensionAddStmt *stmt);
 
 extern Oid	get_extension_oid(const char *extname, bool missing_ok);

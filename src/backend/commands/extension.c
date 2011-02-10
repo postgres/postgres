@@ -648,13 +648,7 @@ CreateExtension(CreateExtensionStmt *stmt)
 	ExtensionControlFile *control;
 	List	   *requiredExtensions;
 	List	   *requiredSchemas;
-	Relation	rel;
-	Datum		values[Natts_pg_extension];
-	bool		nulls[Natts_pg_extension];
-	HeapTuple	tuple;
 	Oid			extensionOid;
-	ObjectAddress myself;
-	ObjectAddress nsp;
 	ListCell   *lc;
 
 	/* Must be super user */
@@ -801,7 +795,58 @@ CreateExtension(CreateExtensionStmt *stmt)
 	}
 
 	/*
-	 * Insert new tuple into pg_extension.
+	 * Insert new tuple into pg_extension, and create dependency entries.
+	 */
+	extensionOid = InsertExtensionTuple(control->name, extowner,
+										schemaOid, control->relocatable,
+										control->version,
+										PointerGetDatum(NULL),
+										PointerGetDatum(NULL),
+										requiredExtensions);
+
+	/*
+	 * Apply any comment on extension
+	 */
+	if (control->comment != NULL)
+		CreateComments(extensionOid, ExtensionRelationId, 0, control->comment);
+
+	/*
+	 * Finally, execute the extension script to create the member objects
+	 */
+	execute_extension_script(extensionOid, control, requiredSchemas,
+							 schemaName, schemaOid);
+}
+
+/*
+ * InsertExtensionTuple
+ *
+ * Insert the new pg_extension row, and create extension's dependency entries.
+ * Return the OID assigned to the new row.
+ *
+ * This is exported for the benefit of pg_upgrade, which has to create a
+ * pg_extension entry (and the extension-level dependencies) without
+ * actually running the extension's script.
+ *
+ * extConfig and extCondition should be arrays or PointerGetDatum(NULL).
+ * We declare them as plain Datum to avoid needing array.h in extension.h.
+ */
+Oid
+InsertExtensionTuple(const char *extName, Oid extOwner,
+					 Oid schemaOid, bool relocatable, const char *extVersion,
+					 Datum extConfig, Datum extCondition,
+					 List *requiredExtensions)
+{
+	Oid			extensionOid;
+	Relation	rel;
+	Datum		values[Natts_pg_extension];
+	bool		nulls[Natts_pg_extension];
+	HeapTuple	tuple;
+	ObjectAddress myself;
+	ObjectAddress nsp;
+	ListCell   *lc;
+
+	/*
+	 * Build and insert the pg_extension tuple
 	 */
 	rel = heap_open(ExtensionRelationId, RowExclusiveLock);
 
@@ -809,19 +854,26 @@ CreateExtension(CreateExtensionStmt *stmt)
 	memset(nulls, 0, sizeof(nulls));
 
 	values[Anum_pg_extension_extname - 1] =
-		DirectFunctionCall1(namein, CStringGetDatum(control->name));
-	values[Anum_pg_extension_extowner - 1] = ObjectIdGetDatum(extowner);
+		DirectFunctionCall1(namein, CStringGetDatum(extName));
+	values[Anum_pg_extension_extowner - 1] = ObjectIdGetDatum(extOwner);
 	values[Anum_pg_extension_extnamespace - 1] = ObjectIdGetDatum(schemaOid);
-	values[Anum_pg_extension_extrelocatable - 1] = BoolGetDatum(control->relocatable);
+	values[Anum_pg_extension_extrelocatable - 1] = BoolGetDatum(relocatable);
 
-	if (control->version == NULL)
+	if (extVersion == NULL)
 		nulls[Anum_pg_extension_extversion - 1] = true;
 	else
 		values[Anum_pg_extension_extversion - 1] =
-			CStringGetTextDatum(control->version);
+			CStringGetTextDatum(extVersion);
 
-	nulls[Anum_pg_extension_extconfig - 1] = true;
-	nulls[Anum_pg_extension_extcondition - 1] = true;
+	if (extConfig == PointerGetDatum(NULL))
+		nulls[Anum_pg_extension_extconfig - 1] = true;
+	else
+		values[Anum_pg_extension_extconfig - 1] = extConfig;
+
+	if (extCondition == PointerGetDatum(NULL))
+		nulls[Anum_pg_extension_extcondition - 1] = true;
+	else
+		values[Anum_pg_extension_extcondition - 1] = extCondition;
 
 	tuple = heap_form_tuple(rel->rd_att, values, nulls);
 
@@ -832,15 +884,9 @@ CreateExtension(CreateExtensionStmt *stmt)
 	heap_close(rel, RowExclusiveLock);
 
 	/*
-	 * Apply any comment on extension
-	 */
-	if (control->comment != NULL)
-		CreateComments(extensionOid, ExtensionRelationId, 0, control->comment);
-
-	/*
 	 * Record dependencies on owner, schema, and prerequisite extensions
 	 */
-	recordDependencyOnOwner(ExtensionRelationId, extensionOid, extowner);
+	recordDependencyOnOwner(ExtensionRelationId, extensionOid, extOwner);
 
 	myself.classId = ExtensionRelationId;
 	myself.objectId = extensionOid;
@@ -864,11 +910,7 @@ CreateExtension(CreateExtensionStmt *stmt)
 		recordDependencyOn(&myself, &otherext, DEPENDENCY_NORMAL);
 	}
 
-	/*
-	 * Finally, execute the extension script to create the member objects
-	 */
-	execute_extension_script(extensionOid, control, requiredSchemas,
-							 schemaName, schemaOid);
+	return extensionOid;
 }
 
 

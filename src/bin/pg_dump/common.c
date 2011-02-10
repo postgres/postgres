@@ -463,6 +463,7 @@ AssignDumpId(DumpableObject *dobj)
 	dobj->name = NULL;			/* must be set later */
 	dobj->namespace = NULL;		/* may be set later */
 	dobj->dump = true;			/* default assumption */
+	dobj->ext_member = false;	/* default assumption */
 	dobj->dependencies = NULL;
 	dobj->nDeps = 0;
 	dobj->allocDeps = 0;

@@ -105,6 +105,7 @@ CommentObject(CommentStmt *stmt)
 							   strVal(linitial(stmt->objname)));
 			break;
 		case OBJECT_TYPE:
+		case OBJECT_DOMAIN:
 			if (!pg_type_ownercheck(address.objectId, GetUserId()))
 				aclcheck_error(ACLCHECK_NOT_OWNER, ACL_KIND_TYPE,
 							   format_type_be(address.objectId));

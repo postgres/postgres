@@ -4790,7 +4790,7 @@ comment_type:
 			| INDEX								{ $$ = OBJECT_INDEX; }
 			| SEQUENCE							{ $$ = OBJECT_SEQUENCE; }
 			| TABLE								{ $$ = OBJECT_TABLE; }
-			| DOMAIN_P							{ $$ = OBJECT_TYPE; }
+			| DOMAIN_P							{ $$ = OBJECT_DOMAIN; }
 			| TYPE_P							{ $$ = OBJECT_TYPE; }
 			| VIEW								{ $$ = OBJECT_VIEW; }
 			| CONVERSION_P						{ $$ = OBJECT_CONVERSION; }

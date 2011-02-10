@@ -128,6 +128,7 @@ typedef struct _dumpableObject
 	char	   *name;			/* object name (should never be NULL) */
 	struct _namespaceInfo *namespace;	/* containing namespace, or NULL */
 	bool		dump;			/* true if we want to dump this object */
+	bool		ext_member;		/* true if object is member of extension */
 	DumpId	   *dependencies;	/* dumpIds of objects this one depends on */
 	int			nDeps;			/* number of valid dependencies */
 	int			allocDeps;		/* allocated size of dependencies[] */
@@ -144,6 +145,8 @@ typedef struct _extensionInfo
 {
 	DumpableObject dobj;
 	char       *namespace;		/* schema containing extension's objects */
+	bool		relocatable;
+	char	   *extversion;
 	char       *extconfig;		/* info about configuration tables */
 	char       *extcondition;
 } ExtensionInfo;
