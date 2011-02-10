@@ -202,6 +202,7 @@
 #max_standby_streaming_delay = 30s	# max delay before canceling queries
 					# when reading streaming WAL;
 					# -1 allows indefinite delay
+#wal_receiver_status_interval = 10s	# replies at least this often, 0 disables
 
 
 #------------------------------------------------------------------------------

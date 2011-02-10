@@ -291,6 +291,7 @@ extern void issue_xlog_fsync(int fd, uint32 log, uint32 seg);
 extern bool RecoveryInProgress(void);
 extern bool XLogInsertAllowed(void);
 extern void GetXLogReceiptTime(TimestampTz *rtime, bool *fromStream);
+extern XLogRecPtr GetXLogReplayRecPtr(void);
 
 extern void UpdateControlFile(void);
 extern uint64 GetSystemIdentifier(void);

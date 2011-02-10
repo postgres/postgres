@@ -1469,6 +1469,82 @@ The commands accepted in walsender mode are:
        shutdown), it will send a CommandComplete message before exiting.
        This might not happen during an abnormal shutdown, of course.
      </para>
+
+     <para>
+       The receiving process can send a status update back to the sender at
+       any time, using the following message format (also in the payload of
+       a CopyData message):
+     </para>
+
+     <para>
+      <variablelist>
+      <varlistentry>
+      <term>
+          Standby status update (F)
+      </term>
+      <listitem>
+      <para>
+      <variablelist>
+      <varlistentry>
+      <term>
+          Byte1('r')
+      </term>
+      <listitem>
+      <para>
+          Identifies the message as a receiver status update.
+      </para>
+      </listitem>
+      </varlistentry>
+      <varlistentry>
+      <term>
+          Byte8
+      </term>
+      <listitem>
+      <para>
+          The location of the last WAL byte + 1 received and written to disk
+          in the standby, in XLogRecPtr format.
+      </para>
+      </listitem>
+      </varlistentry>
+      <varlistentry>
+      <term>
+          Byte8
+      </term>
+      <listitem>
+      <para>
+          The location of the last WAL byte + 1 flushed to disk in
+          the standby, in XLogRecPtr format.
+      </para>
+      </listitem>
+      </varlistentry>
+      <varlistentry>
+      <term>
+          Byte8
+      </term>
+      <listitem>
+      <para>
+          The location of the last WAL byte + 1 applied in the standby, in
+          XLogRecPtr format.
+      </para>
+      </listitem>
+      </varlistentry>
+      <varlistentry>
+      <term>
+          Byte8
+      </term>
+      <listitem>
+      <para>
+          The server's system clock at the time of transmission,
+          given in TimestampTz format.
+      </para>
+      </listitem>
+      </varlistentry>
+      </variablelist>
+      </para>
+      </listitem>
+      </varlistentry>
+      </variablelist>
+     </para>
     </listitem>
   </varlistentry>
 

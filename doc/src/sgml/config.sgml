@@ -1984,6 +1984,29 @@ SET ENABLE_SEQSCAN TO OFF;
        </listitem>
       </varlistentry>
 
+      <varlistentry id="guc-wal-receiver-status-interval" xreflabel="wal_receiver_status_interval">
+       <term><varname>wal_receiver_status_interval</varname> (<type>integer</type>)</term>
+       <indexterm>
+        <primary><varname>wal_receiver_status_interval</> configuration parameter</primary>
+       </indexterm>
+       <listitem>
+       <para>
+        Specifies the minimum frequency, in seconds, for the WAL receiver
+        process on the standby to send information about replication progress
+        to the primary, where they can be seen using the
+        <literal>pg_stat_replication</literal> view.  The standby will report
+        the last transaction log position it has written, the last position it
+        has flushed to disk, and the last position it has applied.  Updates are
+        sent each time the write or flush positions changed, or at least as
+        often as specified by this parameter.  Thus, the apply position may
+        lag slightly behind the true position.  Setting this parameter to zero
+        disables status updates completely.  This parameter can only be set in
+        the <filename>postgresql.conf</> file or on the server command line.
+        The default value is 10 seconds.
+       </para>
+       </listitem>
+      </varlistentry>
+
      <varlistentry id="guc-vacuum-defer-cleanup-age" xreflabel="vacuum_defer_cleanup_age">
       <term><varname>vacuum_defer_cleanup_age</varname> (<type>integer</type>)</term>
       <indexterm>

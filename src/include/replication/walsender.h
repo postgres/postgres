@@ -35,7 +35,17 @@ typedef struct WalSnd
 	WalSndState state;			/* this walsender's state */
 	XLogRecPtr	sentPtr;		/* WAL has been sent up to this point */
 
-	slock_t		mutex;			/* locks shared variables shown above */
+	/*
+	 * The xlog locations that have been written, flushed, and applied
+	 * by standby-side. These may be invalid if the standby-side has not
+	 * offered values yet.
+	 */
+	XLogRecPtr	write;
+	XLogRecPtr	flush;
+	XLogRecPtr	apply;
+
+	/* Protects shared variables shown above. */
+	slock_t		mutex;
 
 	/*
 	 * Latch used by backends to wake up this walsender when it has work

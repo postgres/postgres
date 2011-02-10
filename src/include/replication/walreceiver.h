@@ -17,6 +17,7 @@
 #include "pgtime.h"
 
 extern bool am_walreceiver;
+extern int wal_receiver_status_interval;
 
 /*
  * MAXCONNINFO: maximum size of a connection string.

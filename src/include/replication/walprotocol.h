@@ -40,6 +40,27 @@ typedef struct
 } WalDataMessageHeader;
 
 /*
+ * Reply message from standby (message type 'r').  This is wrapped within
+ * a CopyData message at the FE/BE protocol level.
+ *
+ * Note that the data length is not specified here.
+ */
+typedef struct
+{
+	/*
+	 * The xlog locations that have been written, flushed, and applied
+	 * by standby-side. These may be invalid if the standby-side is unable
+	 * to or chooses not to report these.
+	 */
+	XLogRecPtr	write;
+	XLogRecPtr	flush;
+	XLogRecPtr	apply;
+
+	/* Sender's system clock at the time of transmission */
+	TimestampTz sendTime;
+} StandbyReplyMessage;
+
+/*
  * Maximum data payload in a WAL data message.	Must be >= XLOG_BLCKSZ.
  *
  * We don't have a good idea of what a good value would be; there's some

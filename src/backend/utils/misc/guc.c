@@ -55,6 +55,7 @@
 #include "postmaster/postmaster.h"
 #include "postmaster/syslogger.h"
 #include "postmaster/walwriter.h"
+#include "replication/walreceiver.h"
 #include "replication/walsender.h"
 #include "storage/bufmgr.h"
 #include "storage/standby.h"
@@ -1438,6 +1439,16 @@ static struct config_int ConfigureNamesInt[] =
 		},
 		&max_standby_streaming_delay,
 		30 * 1000, -1, INT_MAX / 1000, NULL, NULL
+	},
+
+	{
+		{"wal_receiver_status_interval", PGC_SIGHUP, WAL_STANDBY_SERVERS,
+			gettext_noop("Sets the maximum interval between WAL receiver status reports to the master."),
+			NULL,
+			GUC_UNIT_S
+		},
+		&wal_receiver_status_interval,
+		10, 0, INT_MAX/1000, NULL, NULL
 	},
 
 	{
