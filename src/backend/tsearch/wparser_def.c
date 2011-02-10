@@ -287,7 +287,6 @@ static TParser *
 TParserInit(char *str, int len)
 {
 	TParser    *prs = (TParser *) palloc0(sizeof(TParser));
-	Oid			collation = DEFAULT_COLLATION_OID; /*TODO*/
 
 	prs->charmaxlen = pg_database_encoding_max_length();
 	prs->str = str;
@@ -300,6 +299,8 @@ TParserInit(char *str, int len)
 	 */
 	if (prs->charmaxlen > 1)
 	{
+		Oid			collation = DEFAULT_COLLATION_OID; /*TODO*/
+		
 		prs->usewide = true;
 		if ( lc_ctype_is_c(collation) )
 		{

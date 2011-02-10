@@ -243,7 +243,9 @@ char *
 lowerstr_with_len(const char *str, int len)
 {
 	char	   *out;
+#ifdef USE_WIDE_UPPER_LOWER
 	Oid			collation = DEFAULT_COLLATION_OID; /*TODO*/
+#endif
 
 	if (len == 0)
 		return pstrdup("");
