@@ -11603,9 +11603,9 @@ ColLabel:	IDENT									{ $$ = $1; }
  * shift or reduce conflicts.  The earlier lists define "less reserved"
  * categories of keywords.
  *
- * Make sure that each keyword's category in keywords.c matches where
+ * Make sure that each keyword's category in kwlist.h matches where
  * it is listed here.  (Someday we may be able to generate these lists and
- * keywords.c's table from a common master list.)
+ * kwlist.h's table from a common master list.)
  */
 
 /* "Unreserved" keywords --- available for use as any kind of name.
