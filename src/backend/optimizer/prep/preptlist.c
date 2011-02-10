@@ -132,7 +132,7 @@ preprocess_targetlist(PlannerInfo *root, List *tlist)
 						  TIDOID,
 						  -1,
 						  0);
-			snprintf(resname, sizeof(resname), "ctid%u", rc->rti);
+			snprintf(resname, sizeof(resname), "ctid%u", rc->rowmarkId);
 			tle = makeTargetEntry((Expr *) var,
 								  list_length(tlist) + 1,
 								  pstrdup(resname),
@@ -147,7 +147,7 @@ preprocess_targetlist(PlannerInfo *root, List *tlist)
 							  OIDOID,
 							  -1,
 							  0);
-				snprintf(resname, sizeof(resname), "tableoid%u", rc->rti);
+				snprintf(resname, sizeof(resname), "tableoid%u", rc->rowmarkId);
 				tle = makeTargetEntry((Expr *) var,
 									  list_length(tlist) + 1,
 									  pstrdup(resname),
@@ -161,7 +161,7 @@ preprocess_targetlist(PlannerInfo *root, List *tlist)
 			var = makeWholeRowVar(rt_fetch(rc->rti, range_table),
 								  rc->rti,
 								  0);
-			snprintf(resname, sizeof(resname), "wholerow%u", rc->rti);
+			snprintf(resname, sizeof(resname), "wholerow%u", rc->rowmarkId);
 			tle = makeTargetEntry((Expr *) var,
 								  list_length(tlist) + 1,
 								  pstrdup(resname),

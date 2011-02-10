@@ -165,6 +165,7 @@ standard_planner(Query *parse, int cursorOptions, ParamListInfo boundParams)
 	glob->relationOids = NIL;
 	glob->invalItems = NIL;
 	glob->lastPHId = 0;
+	glob->lastRowMarkId = 0;
 	glob->transientPlan = false;
 
 	/* Determine what fraction of the plan is likely to be scanned */
@@ -1852,6 +1853,7 @@ preprocess_rowmarks(PlannerInfo *root)
 
 		newrc = makeNode(PlanRowMark);
 		newrc->rti = newrc->prti = rc->rti;
+		newrc->rowmarkId = ++(root->glob->lastRowMarkId);
 		if (rc->forUpdate)
 			newrc->markType = ROW_MARK_EXCLUSIVE;
 		else
@@ -1877,6 +1879,7 @@ preprocess_rowmarks(PlannerInfo *root)
 
 		newrc = makeNode(PlanRowMark);
 		newrc->rti = newrc->prti = i;
+		newrc->rowmarkId = ++(root->glob->lastRowMarkId);
 		/* real tables support REFERENCE, anything else needs COPY */
 		if (rte->rtekind == RTE_RELATION)
 			newrc->markType = ROW_MARK_REFERENCE;

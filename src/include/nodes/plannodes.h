@@ -701,7 +701,11 @@ typedef enum RowMarkType
  * The tableoid column is only present for an inheritance hierarchy.
  * When markType == ROW_MARK_COPY, there is instead a single column named
  *		wholerow%u			whole-row value of relation
- * In all three cases, %u represents the parent rangetable index (prti).
+ * In all three cases, %u represents the rowmark ID number (rowmarkId).
+ * This number is unique within a plan tree, except that child relation
+ * entries copy their parent's rowmarkId.  (Assigning unique numbers
+ * means we needn't renumber rowmarkIds when flattening subqueries, which
+ * would require finding and renaming the resjunk columns as well.)
  * Note this means that all tables in an inheritance hierarchy share the
  * same resjunk column names.  However, in an inherited UPDATE/DELETE the
  * columns could have different physical column numbers in each subplan.
@@ -711,6 +715,7 @@ typedef struct PlanRowMark
 	NodeTag		type;
 	Index		rti;			/* range table index of markable relation */
 	Index		prti;			/* range table index of parent relation */
+	Index		rowmarkId;		/* unique identifier for resjunk columns */
 	RowMarkType markType;		/* see enum above */
 	bool		noWait;			/* NOWAIT option */
 	bool		isParent;		/* true if this is a "dummy" parent entry */

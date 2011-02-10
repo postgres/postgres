@@ -417,6 +417,7 @@ typedef struct ExecRowMark
 	Relation	relation;		/* opened and suitably locked relation */
 	Index		rti;			/* its range table index */
 	Index		prti;			/* parent range table index, if child */
+	Index		rowmarkId;		/* unique identifier for resjunk columns */
 	RowMarkType markType;		/* see enum in nodes/plannodes.h */
 	bool		noWait;			/* NOWAIT option */
 	ItemPointerData curCtid;	/* ctid of currently locked tuple, if any */
