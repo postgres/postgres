@@ -1018,7 +1018,6 @@ InitPredicateLocks(void)
 	 * PredicateLockShmemSize!
 	 */
 	max_table_size = (MaxBackends + max_prepared_xacts);
-	init_table_size = max_table_size / 2;
 
 	/*
 	 * Allocate a list to hold information on transactions participating in
@@ -1029,7 +1028,6 @@ InitPredicateLocks(void)
 	 * be summarized for storage in SLRU and the "dummy" transaction.
 	 */
 	max_table_size *= 10;
-	init_table_size *= 10;
 
 	PredXact = ShmemInitStruct("PredXactList",
 							   PredXactListDataSize,
@@ -1092,7 +1090,7 @@ InitPredicateLocks(void)
 	hash_flags = (HASH_ELEM | HASH_FUNCTION);
 
 	SerializableXidHash = ShmemInitHash("SERIALIZABLEXID hash",
-										init_table_size,
+										max_table_size,
 										max_table_size,
 										&info,
 										hash_flags);
@@ -1595,10 +1593,10 @@ RegisterPredicateLockingXid(const TransactionId xid)
 										   &sxidtag,
 										   HASH_ENTER, &found);
 	if (!sxid)
+		/* This should not be possible, based on allocation. */
 		ereport(ERROR,
 				(errcode(ERRCODE_OUT_OF_MEMORY),
-				 errmsg("out of shared memory"),
-				 errhint("You might need to increase max_predicate_locks_per_transaction.")));
+				 errmsg("out of shared memory")));
 
 	Assert(!found);
 
