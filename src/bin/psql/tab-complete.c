@@ -855,7 +855,12 @@ psql_completion(char *text, int start, int end)
 	/* ALTER EXTENSION <name> */
 	else if (pg_strcasecmp(prev3_wd, "ALTER") == 0 &&
 			 pg_strcasecmp(prev2_wd, "EXTENSION") == 0)
-		COMPLETE_WITH_CONST("SET SCHEMA");
+	{
+		static const char *const list_ALTEREXTENSION[] =
+		{"ADD", "DROP", "SET SCHEMA", NULL};
+
+		COMPLETE_WITH_LIST(list_ALTEREXTENSION);
+	}
 
 	/* ALTER FOREIGN */
 	else if (pg_strcasecmp(prev2_wd, "ALTER") == 0 &&

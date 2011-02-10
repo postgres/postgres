@@ -212,7 +212,7 @@ check_xact_readonly(Node *parsetree)
 		case T_AlterTSDictionaryStmt:
 		case T_AlterTSConfigurationStmt:
 		case T_CreateExtensionStmt:
-		case T_AlterExtensionAddStmt:
+		case T_AlterExtensionContentsStmt:
 		case T_CreateFdwStmt:
 		case T_AlterFdwStmt:
 		case T_DropFdwStmt:
@@ -601,8 +601,8 @@ standard_ProcessUtility(Node *parsetree,
 			CreateExtension((CreateExtensionStmt *) parsetree);
 			break;
 
-		case T_AlterExtensionAddStmt:
-			ExecAlterExtensionAddStmt((AlterExtensionAddStmt *) parsetree);
+		case T_AlterExtensionContentsStmt:
+			ExecAlterExtensionContentsStmt((AlterExtensionContentsStmt *) parsetree);
 			break;
 
 		case T_CreateFdwStmt:
@@ -1680,7 +1680,7 @@ CreateCommandTag(Node *parsetree)
 			tag = "CREATE EXTENSION";
 			break;
 
-		case T_AlterExtensionAddStmt:
+		case T_AlterExtensionContentsStmt:
 			tag = "ALTER EXTENSION";
 			break;
 
@@ -2307,7 +2307,7 @@ GetCommandLogLevel(Node *parsetree)
 			break;
 
 		case T_CreateExtensionStmt:
-		case T_AlterExtensionAddStmt:
+		case T_AlterExtensionContentsStmt:
 			lev = LOGSTMT_DDL;
 			break;
 

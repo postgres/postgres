@@ -1546,14 +1546,15 @@ typedef struct CreateExtensionStmt
 	List	   *options;		/* List of DefElem nodes */
 } CreateExtensionStmt;
 
-typedef struct AlterExtensionAddStmt
+typedef struct AlterExtensionContentsStmt
 {
 	NodeTag		type;
 	char	   *extname;		/* Extension's name */
+	int			action;			/* +1 = add object, -1 = drop object */
 	ObjectType	objtype;		/* Object's type */
 	List	   *objname;		/* Qualified name of the object */
 	List	   *objargs;		/* Arguments if needed (eg, for functions) */
-} AlterExtensionAddStmt;
+} AlterExtensionContentsStmt;
 
 /* ----------------------
  *		Create/Drop FOREIGN DATA WRAPPER Statements

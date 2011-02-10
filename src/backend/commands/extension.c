@@ -1436,14 +1436,15 @@ AlterExtensionNamespace(List *names, const char *newschema)
 }
 
 /*
- * Execute ALTER EXTENSION ADD
+ * Execute ALTER EXTENSION ADD/DROP
  */
 void
-ExecAlterExtensionAddStmt(AlterExtensionAddStmt *stmt)
+ExecAlterExtensionContentsStmt(AlterExtensionContentsStmt *stmt)
 {
 	ObjectAddress	extension;
 	ObjectAddress	object;
 	Relation		relation;
+	Oid				oldExtension;
 
 	/*
 	 * For now, insist on superuser privilege.  Later we might want to
@@ -1462,25 +1463,54 @@ ExecAlterExtensionAddStmt(AlterExtensionAddStmt *stmt)
 	/*
 	 * Translate the parser representation that identifies the object into
 	 * an ObjectAddress.  get_object_address() will throw an error if the
-	 * object does not exist, and will also acquire a lock on the object
-	 * to guard against concurrent DROP and ALTER EXTENSION ADD operations.
+	 * object does not exist, and will also acquire a lock on the object to
+	 * guard against concurrent DROP and ALTER EXTENSION ADD/DROP operations.
 	 */
 	object = get_object_address(stmt->objtype, stmt->objname, stmt->objargs,
 								&relation, ShareUpdateExclusiveLock);
 
 	/*
-	 * Complain if object is already attached to some extension.
+	 * Check existing extension membership.
 	 */
-	if (getExtensionOfObject(object.classId, object.objectId) != InvalidOid)
-		ereport(ERROR,
-				(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
-				 errmsg("%s is already a member of an extension",
-						getObjectDescription(&object))));
+	oldExtension = getExtensionOfObject(object.classId, object.objectId);
 
-	/*
-	 * OK, add the dependency.
-	 */
-	recordDependencyOn(&object, &extension, DEPENDENCY_EXTENSION);
+	if (stmt->action > 0)
+	{
+		/*
+		 * ADD, so complain if object is already attached to some extension.
+		 */
+		if (OidIsValid(oldExtension))
+			ereport(ERROR,
+					(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
+					 errmsg("%s is already a member of extension \"%s\"",
+							getObjectDescription(&object),
+							get_extension_name(oldExtension))));
+
+		/*
+		 * OK, add the dependency.
+		 */
+		recordDependencyOn(&object, &extension, DEPENDENCY_EXTENSION);
+	}
+	else
+	{
+		/*
+		 * DROP, so complain if it's not a member.
+		 */
+		if (oldExtension != extension.objectId)
+			ereport(ERROR,
+					(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
+					 errmsg("%s is not a member of extension \"%s\"",
+							getObjectDescription(&object),
+							stmt->extname)));
+
+		/*
+		 * OK, drop the dependency.
+		 */
+		if (deleteDependencyRecordsForClass(object.classId, object.objectId,
+											ExtensionRelationId,
+											DEPENDENCY_EXTENSION) != 1)
+			elog(ERROR, "unexpected number of extension dependency records");
+	}
 
 	/*
 	 * If get_object_address() opened the relation for us, we close it to keep

@@ -25,6 +25,7 @@ PostgreSQL documentation
 <synopsis>
 ALTER EXTENSION <replaceable class="PARAMETER">extension_name</replaceable> SET SCHEMA <replaceable class="PARAMETER">new_schema</replaceable>
 ALTER EXTENSION <replaceable class="PARAMETER">extension_name</replaceable> ADD <replaceable class="PARAMETER">member_object</replaceable>
+ALTER EXTENSION <replaceable class="PARAMETER">extension_name</replaceable> DROP <replaceable class="PARAMETER">member_object</replaceable>
 
 <phrase>where <replaceable class="PARAMETER">member_object</replaceable> is:</phrase>
 
@@ -82,6 +83,17 @@ ALTER EXTENSION <replaceable class="PARAMETER">extension_name</replaceable> ADD 
      </para>
     </listitem>
    </varlistentry>
+
+   <varlistentry>
+    <term><literal>DROP <replaceable class="PARAMETER">member_object</replaceable></literal></term>
+    <listitem>
+     <para>
+      This form removes a member object from the extension.  This is mainly
+      useful in extension upgrade scripts.  The object is not dropped, only
+      disassociated from the extension.
+     </para>
+    </listitem>
+   </varlistentry>
    </variablelist>
 
    See <xref linkend="extend-extensions"> for more information about these
@@ -123,7 +135,8 @@ ALTER EXTENSION <replaceable class="PARAMETER">extension_name</replaceable> ADD 
      <term><replaceable class="parameter">operator_name</replaceable></term>
      <listitem>
       <para>
-       The name of an object to be added to the extension.  Names of tables,
+       The name of an object to be added to or removed from the extension.
+       Names of tables,
        aggregates, domains, foreign tables, functions, operators,
        operator classes, operator families, sequences, text search objects,
        types, and views can be schema-qualified.

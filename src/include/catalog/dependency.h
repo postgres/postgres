@@ -205,6 +205,9 @@ extern void recordDependencyOnCurrentExtension(const ObjectAddress *object);
 extern long deleteDependencyRecordsFor(Oid classId, Oid objectId,
 									   bool skipExtensionDeps);
 
+extern long deleteDependencyRecordsForClass(Oid classId, Oid objectId,
+								Oid refclassId, char deptype);
+
 extern long changeDependencyFor(Oid classId, Oid objectId,
 					Oid refClassId, Oid oldRefObjectId,
 					Oid newRefObjectId);
