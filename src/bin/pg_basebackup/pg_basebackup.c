@@ -777,11 +777,12 @@ BaseBackup()
 	 * Start the actual backup
 	 */
 	PQescapeStringConn(conn, escaped_label, label, sizeof(escaped_label), &i);
-	snprintf(current_path, sizeof(current_path), "BASE_BACKUP LABEL '%s' %s %s %s",
+	snprintf(current_path, sizeof(current_path), "BASE_BACKUP LABEL '%s' %s %s %s %s",
 			 escaped_label,
 			 showprogress ? "PROGRESS" : "",
 			 includewal ? "WAL" : "",
-			 fastcheckpoint ? "FAST" : "");
+			 fastcheckpoint ? "FAST" : "",
+	         includewal ? "NOWAIT" : "");
 
 	if (PQsendQuery(conn, current_path) == 0)
 	{
