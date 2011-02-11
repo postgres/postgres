@@ -53,7 +53,8 @@ extern void RenameRelationInternal(Oid myrelid,
 					   Oid namespaceId);
 
 extern void find_composite_type_dependencies(Oid typeOid,
-								 char origRelkind, const char *origRelname);
+								 Relation origRelation,
+								 const char *origTypeName);
 
 extern AttrNumber *varattnos_map(TupleDesc olddesc, TupleDesc newdesc);
 extern AttrNumber *varattnos_map_schema(TupleDesc old, List *schema);
