@@ -189,7 +189,8 @@ LookupTypeName(ParseState *pstate, const TypeName *typeName,
 }
 
 /*
- * typenameType - given a TypeName, return a Type structure and typmod
+ * typenameType - given a TypeName, return a Type structure, typmod, and
+ * collation
  *
  * This is equivalent to LookupTypeName, except that this will report
  * a suitable error message if the type cannot be found or is not defined.
