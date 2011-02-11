@@ -761,6 +761,17 @@ psql_completion(char *text, int start, int end)
 	if (text[0] == '\\')
 		COMPLETE_WITH_LIST(backslash_commands);
 
+	/* Variable interpolation */
+	else if (text[0] == ':' && text[1] != ':')
+	{
+		if (text[1] == '\'')
+			matches = complete_from_variables(text, ":'", "'");
+		else if (text[1] == '"')
+			matches = complete_from_variables(text, ":\"", "\"");
+		else
+			matches = complete_from_variables(text, ":", "");
+	}
+
 	/* If no previous word, suggest one of the basic sql commands */
 	else if (!prev_wd)
 		COMPLETE_WITH_LIST(sql_commands);
@@ -2771,17 +2782,6 @@ psql_completion(char *text, int start, int end)
 			 strcmp(prev_wd, "\\w") == 0 || strcmp(prev_wd, "\\write") == 0
 		)
 		matches = completion_matches(text, filename_completion_function);
-
-/* Variable interpolation */
-	else if (text[0] == ':' && text[1] != ':')
-	{
-		if (text[1] == '\'')
-			matches = complete_from_variables(text, ":'", "'");
-		else if (text[1] == '"')
-			matches = complete_from_variables(text, ":\"", "\"");
-		else
-			matches = complete_from_variables(text, ":", "");
-	}
 
 	/*
 	 * Finally, we look through the list of "things", such as TABLE, INDEX and
