@@ -278,7 +278,7 @@ get_extension_control_directory(void)
 
 	get_share_path(my_exec_path, sharepath);
 	result = (char *) palloc(MAXPGPATH);
-	snprintf(result, MAXPGPATH, "%s/contrib", sharepath);
+	snprintf(result, MAXPGPATH, "%s/extension", sharepath);
 
 	return result;
 }
@@ -291,7 +291,7 @@ get_extension_control_filename(const char *extname)
 
 	get_share_path(my_exec_path, sharepath);
 	result = (char *) palloc(MAXPGPATH);
-	snprintf(result, MAXPGPATH, "%s/contrib/%s.control",
+	snprintf(result, MAXPGPATH, "%s/extension/%s.control",
 			 sharepath, extname);
 
 	return result;
@@ -305,7 +305,7 @@ get_extension_script_directory(ExtensionControlFile *control)
 
 	/*
 	 * The directory parameter can be omitted, absolute, or relative to the
-	 * control-file directory.
+	 * installation's share directory.
 	 */
 	if (!control->directory)
 		return get_extension_control_directory();
@@ -315,8 +315,7 @@ get_extension_script_directory(ExtensionControlFile *control)
 
 	get_share_path(my_exec_path, sharepath);
 	result = (char *) palloc(MAXPGPATH);
-    snprintf(result, MAXPGPATH, "%s/contrib/%s",
-			 sharepath, control->directory);
+    snprintf(result, MAXPGPATH, "%s/%s", sharepath, control->directory);
 
 	return result;
 }

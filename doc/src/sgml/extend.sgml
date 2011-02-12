@@ -365,13 +365,13 @@
      The <xref linkend="sql-createextension"> command relies on a control
      file for each extension, which must be named the same as the extension
      with a suffix of <literal>.control</>, and must be placed in the
-     installation's <literal>SHAREDIR/contrib</literal> directory.  There
+     installation's <literal>SHAREDIR/extension</literal> directory.  There
      must also be at least one <acronym>SQL</> script file, which follows the
      naming pattern
      <literal><replaceable>extension</>-<replaceable>version</>.sql</literal>
      (for example, <literal>foo-1.0.sql</> for version <literal>1.0</> of
      extension <literal>foo</>).  By default, the script file(s) are also
-     placed in the <literal>SHAREDIR/contrib</literal> directory; but the
+     placed in the <literal>SHAREDIR/extension</literal> directory; but the
      control file can specify a different directory for the script file(s).
     </para>
 
@@ -395,7 +395,9 @@
        <para>
         The directory containing the extension's <acronym>SQL</> script
         file(s).  Unless an absolute path is given, the name is relative to
-        the <literal>SHAREDIR/contrib</literal> directory.
+        the installation's <literal>SHAREDIR</literal> directory.  The
+        default behavior is equivalent to specifying
+        <literal>directory = 'extension'</>.
        </para>
       </listitem>
      </varlistentry>
@@ -905,23 +907,26 @@ include $(PGXS)
 
     <variablelist>
      <varlistentry>
-      <term><varname>MODULEDIR</varname></term>
-      <listitem>
-       <para>
-        subdirectory into which EXTENSION, DATA and DOCS files should be
-        installed (if not set, default is <literal>contrib</literal>)
-       </para>
-      </listitem>
-     </varlistentry>
-
-     <varlistentry>
       <term><varname>EXTENSION</varname></term>
       <listitem>
        <para>
         extension name(s); for each name you must provide an
         <literal><replaceable>extension</replaceable>.control</literal> file,
         which will be installed into
-        <literal><replaceable>prefix</replaceable>/share/$MODULEDIR</literal>
+        <literal><replaceable>prefix</replaceable>/share/extension</literal>
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term><varname>MODULEDIR</varname></term>
+      <listitem>
+       <para>
+        subdirectory of <literal><replaceable>prefix</>/share</literal>
+        into which DATA and DOCS files should be installed
+        (if not set, default is <literal>extension</literal> if
+        <varname>EXTENSION</varname> is set,
+        or <literal>contrib</literal> if not)
        </para>
       </listitem>
      </varlistentry>

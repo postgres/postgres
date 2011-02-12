@@ -67,7 +67,7 @@ CREATE EXTENSION <replaceable class="parameter">extension_name</replaceable>
         The name of the extension to be
         installed. <productname>PostgreSQL</productname> will create the
         extension using details from the file
-        <literal>SHAREDIR/contrib/</literal><replaceable class="parameter">extension</replaceable><literal>.control</literal>.
+        <literal>SHAREDIR/extension/</literal><replaceable class="parameter">extension_name</replaceable><literal>.control</literal>.
        </para>
       </listitem>
      </varlistentry>
