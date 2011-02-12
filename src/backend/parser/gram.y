@@ -185,7 +185,7 @@ static RangeVar *makeRangeVarFromAnyName(List *names, int position, core_yyscan_
 		AlterDatabaseStmt AlterDatabaseSetStmt AlterDomainStmt AlterEnumStmt
 		AlterFdwStmt AlterForeignServerStmt AlterGroupStmt
 		AlterObjectSchemaStmt AlterOwnerStmt AlterSeqStmt AlterTableStmt
-		AlterExtensionContentsStmt AlterForeignTableStmt
+		AlterExtensionStmt AlterExtensionContentsStmt AlterForeignTableStmt
 		AlterCompositeTypeStmt AlterUserStmt AlterUserMappingStmt AlterUserSetStmt
 		AlterRoleStmt AlterRoleSetStmt
 		AlterDefaultPrivilegesStmt DefACLAction
@@ -227,9 +227,11 @@ static RangeVar *makeRangeVarFromAnyName(List *names, int position, core_yyscan_
 %type <dbehavior>	opt_drop_behavior
 
 %type <list>	createdb_opt_list alterdb_opt_list copy_opt_list
-				transaction_mode_list create_extension_opt_list
+				transaction_mode_list
+				create_extension_opt_list alter_extension_opt_list
 %type <defelt>	createdb_opt_item alterdb_opt_item copy_opt_item
-				transaction_mode_item create_extension_opt_item
+				transaction_mode_item
+				create_extension_opt_item alter_extension_opt_item
 
 %type <ival>	opt_lock lock_type cast_context
 %type <ival>	vacuum_option_list vacuum_option_elem
@@ -664,6 +666,7 @@ stmt :
 			| AlterDefaultPrivilegesStmt
 			| AlterDomainStmt
 			| AlterEnumStmt
+			| AlterExtensionStmt
 			| AlterExtensionContentsStmt
 			| AlterFdwStmt
 			| AlterForeignServerStmt
@@ -3222,7 +3225,7 @@ DropTableSpaceStmt: DROP TABLESPACE name
  *
  * 		QUERY:
  *             CREATE EXTENSION extension
- *             [ WITH ] [ SCHEMA [=] schema ]
+ *             [ WITH ] [ SCHEMA schema ] [ VERSION version ] [ FROM oldversion ]
  *
  *****************************************************************************/
 
@@ -3243,9 +3246,46 @@ create_extension_opt_list:
 		;
 
 create_extension_opt_item:
-			SCHEMA opt_equal name
+			SCHEMA name
 				{
-					$$ = makeDefElem("schema", (Node *)makeString($3));
+					$$ = makeDefElem("schema", (Node *)makeString($2));
+				}
+			| VERSION_P ColId_or_Sconst
+				{
+					$$ = makeDefElem("new_version", (Node *)makeString($2));
+				}
+			| FROM ColId_or_Sconst
+				{
+					$$ = makeDefElem("old_version", (Node *)makeString($2));
+				}
+		;
+
+/*****************************************************************************
+ *
+ * ALTER EXTENSION name UPDATE [ TO version ]
+ *
+ *****************************************************************************/
+
+AlterExtensionStmt: ALTER EXTENSION name UPDATE alter_extension_opt_list
+				{
+					AlterExtensionStmt *n = makeNode(AlterExtensionStmt);
+					n->extname = $3;
+					n->options = $5;
+					$$ = (Node *) n;
+				}
+		;
+
+alter_extension_opt_list:
+			alter_extension_opt_list alter_extension_opt_item
+				{ $$ = lappend($1, $2); }
+			| /* EMPTY */
+				{ $$ = NIL; }
+		;
+
+alter_extension_opt_item:
+			TO ColId_or_Sconst
+				{
+					$$ = makeDefElem("new_version", (Node *)makeString($2));
 				}
 		;
 

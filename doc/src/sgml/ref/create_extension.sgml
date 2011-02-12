@@ -22,7 +22,9 @@ PostgreSQL documentation
  <refsynopsisdiv>
 <synopsis>
 CREATE EXTENSION <replaceable class="parameter">extension_name</replaceable>
-    [ WITH ] [ SCHEMA [=] <replaceable class="parameter">schema</replaceable> ]
+    [ WITH ] [ SCHEMA <replaceable class="parameter">schema</replaceable> ]
+             [ VERSION <replaceable class="parameter">version</replaceable> ]
+             [ FROM <replaceable class="parameter">old_version</replaceable> ]
 </synopsis>
  </refsynopsisdiv>
 
@@ -82,6 +84,44 @@ CREATE EXTENSION <replaceable class="parameter">extension_name</replaceable>
        </para>
       </listitem>
      </varlistentry>
+
+     <varlistentry>
+      <term><replaceable class="parameter">version</replaceable></term>
+      <listitem>
+       <para>
+        The version of the extension to install.  This can be written as
+        either an identifier or a string literal.  The default version is
+        whatever is specified in the extension's control file.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term><replaceable class="parameter">old_version</replaceable></term>
+      <listitem>
+       <para>
+        <literal>FROM</> <replaceable class="parameter">old_version</>
+        must be specified when, and only when, you are attempting to install
+        an extension that replaces an <quote>old style</> module that is just
+        a collection of objects not packaged into an extension.  This option
+        causes <command>CREATE EXTENSION</> to run an alternative installation
+        script that absorbs the existing objects into the extension, instead
+        of creating new objects.  Be careful that <literal>SCHEMA</> specifies
+        the schema containing these pre-existing objects.
+       </para>
+
+       <para>
+        The value to use for <replaceable
+        class="parameter">old_version</replaceable> is determined by the
+        extension's author, and might vary if there is more than one version
+        of the old-style module that can be upgraded into an extension.
+        For the standard additional modules supplied with pre-9.1
+        <productname>PostgreSQL</productname>, use <literal>unpackaged</>
+        for <replaceable class="parameter">old_version</replaceable> when
+        updating a module to extension style.
+       </para>
+      </listitem>
+     </varlistentry>
   </variablelist>
  </refsect1>
 
@@ -94,6 +134,16 @@ CREATE EXTENSION <replaceable class="parameter">extension_name</replaceable>
 <programlisting>
 CREATE EXTENSION hstore;
 </programlisting>
+  </para>
+
+  <para>
+   Update a pre-9.1 installation of <literal>hstore</> into
+   extension style:
+<programlisting>
+CREATE EXTENSION hstore SCHEMA public FROM unpackaged;
+</programlisting>
+   Be careful to specify the schema in which you installed the existing
+   <literal>hstore</> objects.
   </para>
  </refsect1>
 

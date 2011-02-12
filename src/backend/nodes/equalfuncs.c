@@ -1655,6 +1655,15 @@ _equalCreateExtensionStmt(CreateExtensionStmt *a, CreateExtensionStmt *b)
 }
 
 static bool
+_equalAlterExtensionStmt(AlterExtensionStmt *a, AlterExtensionStmt *b)
+{
+	COMPARE_STRING_FIELD(extname);
+	COMPARE_NODE_FIELD(options);
+
+	return true;
+}
+
+static bool
 _equalAlterExtensionContentsStmt(AlterExtensionContentsStmt *a, AlterExtensionContentsStmt *b)
 {
 	COMPARE_STRING_FIELD(extname);
@@ -2868,6 +2877,9 @@ equal(void *a, void *b)
 			break;
 		case T_CreateExtensionStmt:
 			retval = _equalCreateExtensionStmt(a, b);
+			break;
+		case T_AlterExtensionStmt:
+			retval = _equalAlterExtensionStmt(a, b);
 			break;
 		case T_AlterExtensionContentsStmt:
 			retval = _equalAlterExtensionContentsStmt(a, b);

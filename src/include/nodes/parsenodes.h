@@ -1546,6 +1546,14 @@ typedef struct CreateExtensionStmt
 	List	   *options;		/* List of DefElem nodes */
 } CreateExtensionStmt;
 
+/* Only used for ALTER EXTENSION UPDATE; later might need an action field */
+typedef struct AlterExtensionStmt
+{
+	NodeTag		type;
+	char	   *extname;
+	List	   *options;		/* List of DefElem nodes */
+} AlterExtensionStmt;
+
 typedef struct AlterExtensionContentsStmt
 {
 	NodeTag		type;

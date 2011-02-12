@@ -53,8 +53,12 @@
 #include "utils/tqual.h"
 
 
+/* Globally visible state variables */
 bool			creating_extension = false;
 Oid				CurrentExtensionObject = InvalidOid;
+
+/* Character that separates extension & version names in a script filename */
+#define EXT_VERSION_SEP  '-'
 
 /*
  * Internal data structure to hold the results of parsing a control file
@@ -62,14 +66,27 @@ Oid				CurrentExtensionObject = InvalidOid;
 typedef struct ExtensionControlFile
 {
 	char	   *name;			/* name of the extension */
-	char	   *script;			/* filename of the installation script */
-	char	   *version;	    /* version ID, if any */
+	char	   *directory;		/* directory for script files */
+	char	   *default_version; /* default install target version, if any */
 	char	   *comment;		/* comment, if any */
 	char	   *schema;			/* target schema (allowed if !relocatable) */
 	bool		relocatable;	/* is ALTER EXTENSION SET SCHEMA supported? */
 	int			encoding;		/* encoding of the script file, or -1 */
 	List	   *requires;		/* names of prerequisite extensions */
 } ExtensionControlFile;
+
+/*
+ * Internal data structure for update path information
+ */
+typedef struct ExtensionVersionInfo
+{
+	char	   *name;			/* name of the starting version */
+	List	   *reachable;		/* List of ExtensionVersionInfo's */
+	/* working state for Dijkstra's algorithm: */
+	bool		distance_known;	/* is distance from start known yet? */
+	int			distance;		/* current worst-case distance estimate */
+	struct ExtensionVersionInfo *previous; /* current best predecessor */
+} ExtensionVersionInfo;
 
 
 /*
@@ -197,6 +214,44 @@ get_extension_schema(Oid ext_oid)
 }
 
 /*
+ * Utility functions to check validity of extension and version names
+ */
+static void
+check_valid_extension_name(const char *extensionname)
+{
+	/*
+	 * No directory separators (this is sufficient to prevent ".." style
+	 * attacks).
+	 */
+	if (first_dir_separator(extensionname) != NULL)
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+				 errmsg("invalid extension name: \"%s\"", extensionname),
+				 errdetail("Extension names must not contain directory separator characters.")));
+}
+
+static void
+check_valid_version_name(const char *versionname)
+{
+	/* No separators --- would risk confusion of install vs update scripts */
+	if (strchr(versionname, EXT_VERSION_SEP))
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+				 errmsg("invalid extension version name: \"%s\"", versionname),
+				 errdetail("Version names must not contain the character \"%c\".",
+						   EXT_VERSION_SEP)));
+	/*
+	 * No directory separators (this is sufficient to prevent ".." style
+	 * attacks).
+	 */
+	if (first_dir_separator(versionname) != NULL)
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+				 errmsg("invalid extension version name: \"%s\"", versionname),
+				 errdetail("Version names must not contain directory separator characters.")));
+}
+
+/*
  * Utility functions to handle extension-related path names
  */
 static bool
@@ -205,6 +260,14 @@ is_extension_control_filename(const char *filename)
 	const char *extension = strrchr(filename, '.');
 
 	return (extension != NULL) && (strcmp(extension, ".control") == 0);
+}
+
+static bool
+is_extension_script_filename(const char *filename)
+{
+	const char *extension = strrchr(filename, '.');
+
+	return (extension != NULL) && (strcmp(extension, ".sql") == 0);
 }
 
 static char *
@@ -228,83 +291,150 @@ get_extension_control_filename(const char *extname)
 
 	get_share_path(my_exec_path, sharepath);
 	result = (char *) palloc(MAXPGPATH);
-	snprintf(result, MAXPGPATH, "%s/contrib/%s.control", sharepath, extname);
+	snprintf(result, MAXPGPATH, "%s/contrib/%s.control",
+			 sharepath, extname);
 
 	return result;
 }
 
-/*
- * Given a relative pathname such as "name.sql", return the full path to
- * the script file.  If given an absolute name, just return it.
- */
 static char *
-get_extension_absolute_path(const char *filename)
+get_extension_script_directory(ExtensionControlFile *control)
 {
 	char		sharepath[MAXPGPATH];
 	char	   *result;
 
-	if (is_absolute_path(filename))
-		return pstrdup(filename);
+	/*
+	 * The directory parameter can be omitted, absolute, or relative to the
+	 * control-file directory.
+	 */
+	if (!control->directory)
+		return get_extension_control_directory();
+
+	if (is_absolute_path(control->directory))
+		return pstrdup(control->directory);
 
 	get_share_path(my_exec_path, sharepath);
 	result = (char *) palloc(MAXPGPATH);
-    snprintf(result, MAXPGPATH, "%s/contrib/%s", sharepath, filename);
+    snprintf(result, MAXPGPATH, "%s/contrib/%s",
+			 sharepath, control->directory);
+
+	return result;
+}
+
+static char *
+get_extension_aux_control_filename(ExtensionControlFile *control,
+								   const char *version)
+{
+	char	   *result;
+	char	   *scriptdir;
+
+	scriptdir = get_extension_script_directory(control);
+
+	result = (char *) palloc(MAXPGPATH);
+	snprintf(result, MAXPGPATH, "%s/%s%c%s.control",
+			 scriptdir, control->name, EXT_VERSION_SEP, version);
+
+	pfree(scriptdir);
+
+	return result;
+}
+
+static char *
+get_extension_script_filename(ExtensionControlFile *control,
+							  const char *from_version, const char *version)
+{
+	char	   *result;
+	char	   *scriptdir;
+
+	scriptdir = get_extension_script_directory(control);
+
+	result = (char *) palloc(MAXPGPATH);
+	if (from_version)
+		snprintf(result, MAXPGPATH, "%s/%s%c%s%c%s.sql",
+				 scriptdir, control->name, EXT_VERSION_SEP, from_version,
+				 EXT_VERSION_SEP, version);
+	else
+		snprintf(result, MAXPGPATH, "%s/%s%c%s.sql",
+				 scriptdir, control->name, EXT_VERSION_SEP, version);
+
+	pfree(scriptdir);
 
 	return result;
 }
 
 
 /*
- * Read the control file for the specified extension.
+ * Parse contents of primary or auxiliary control file, and fill in
+ * fields of *control.  We parse primary file if version == NULL,
+ * else the optional auxiliary file for that version.
  *
- * The control file is supposed to be very short, half a dozen lines, and
- * reading it is only allowed to superuser, so we don't worry about
- * memory allocation risks here.  Also note that we don't worry about
- * what encoding it's in; all values are expected to be ASCII.
+ * Control files are supposed to be very short, half a dozen lines,
+ * so we don't worry about memory allocation risks here.  Also we don't
+ * worry about what encoding it's in; all values are expected to be ASCII.
  */
-static ExtensionControlFile *
-read_extension_control_file(const char *extname)
+static void
+parse_extension_control_file(ExtensionControlFile *control,
+							 const char *version)
 {
-	char	   *filename = get_extension_control_filename(extname);
+	char	   *filename;
 	FILE	   *file;
-	ExtensionControlFile *control;
 	ConfigVariable *item,
 				   *head = NULL,
 				   *tail = NULL;
 
 	/*
-	 * Parse the file content, using GUC's file parsing code
+	 * Locate the file to read.  Auxiliary files are optional.
 	 */
+	if (version)
+		filename = get_extension_aux_control_filename(control, version);
+	else
+		filename = get_extension_control_filename(control->name);
+
 	if ((file = AllocateFile(filename, "r")) == NULL)
+	{
+		if (version && errno == ENOENT)
+		{
+			/* no auxiliary file for this version */
+			pfree(filename);
+			return;
+		}
 		ereport(ERROR,
 				(errcode_for_file_access(),
 				 errmsg("could not open extension control file \"%s\": %m",
 						filename)));
+	}
 
+	/*
+	 * Parse the file content, using GUC's file parsing code
+	 */
 	ParseConfigFp(file, filename, 0, ERROR, &head, &tail);
 
 	FreeFile(file);
-
-	/*
-	 * Set up default values.  Pointer fields are initially null.
-	 */
-	control = (ExtensionControlFile *) palloc0(sizeof(ExtensionControlFile));
-	control->name = pstrdup(extname);
-	control->relocatable = false;
-	control->encoding = -1;
 
 	/*
 	 * Convert the ConfigVariable list into ExtensionControlFile entries.
 	 */
 	for (item = head; item != NULL; item = item->next)
 	{
-		if (strcmp(item->name, "script") == 0)
+		if (strcmp(item->name, "directory") == 0)
 		{
-			control->script = pstrdup(item->value);
+			if (version)
+				ereport(ERROR,
+						(errcode(ERRCODE_SYNTAX_ERROR),
+						 errmsg("parameter \"%s\" cannot be set in a per-version extension control file",
+								item->name)));
+
+			control->directory = pstrdup(item->value);
 		}
-		else if (strcmp(item->name, "version") == 0)
+		else if (strcmp(item->name, "default_version") == 0)
 		{
-			control->version = pstrdup(item->value);
+			if (version)
+				ereport(ERROR,
+						(errcode(ERRCODE_SYNTAX_ERROR),
+						 errmsg("parameter \"%s\" cannot be set in a per-version extension control file",
+								item->name)));
+
+			control->default_version = pstrdup(item->value);
 		}
 		else if (strcmp(item->name, "comment") == 0)
 		{
@@ -324,6 +454,12 @@ read_extension_control_file(const char *extname)
 		}
 		else if (strcmp(item->name, "encoding") == 0)
 		{
+			if (version)
+				ereport(ERROR,
+						(errcode(ERRCODE_SYNTAX_ERROR),
+						 errmsg("parameter \"%s\" cannot be set in a per-version extension control file",
+								item->name)));
+
 			control->encoding = pg_valid_server_encoding(item->value);
 			if (control->encoding < 0)
 				ereport(ERROR,
@@ -360,22 +496,35 @@ read_extension_control_file(const char *extname)
 				(errcode(ERRCODE_SYNTAX_ERROR),
 				 errmsg("parameter \"schema\" cannot be specified when \"relocatable\" is true")));
 
-	/*
-	 * script defaults to ${extension-name}.sql
-	 */
-	if (control->script == NULL)
-	{
-		char	script[MAXPGPATH];
+	pfree(filename);
+}
 
-		snprintf(script, MAXPGPATH, "%s.sql", control->name);
-		control->script = pstrdup(script);
-	}
+/*
+ * Read the primary control file for the specified extension.
+ */
+static ExtensionControlFile *
+read_extension_control_file(const char *extname)
+{
+	ExtensionControlFile *control;
+
+	/*
+	 * Set up default values.  Pointer fields are initially null.
+	 */
+	control = (ExtensionControlFile *) palloc0(sizeof(ExtensionControlFile));
+	control->name = pstrdup(extname);
+	control->relocatable = false;
+	control->encoding = -1;
+
+	/*
+	 * Parse the primary control file.
+	 */
+	parse_extension_control_file(control, NULL);
 
 	return control;
 }
 
 /*
- * Read the SQL script into a string, and convert to database encoding
+ * Read a SQL script file into a string, and convert to database encoding
  */
 static char *
 read_extension_script_file(const ExtensionControlFile *control,
@@ -513,19 +662,25 @@ execute_sql_string(const char *sql, const char *filename)
 }
 
 /*
- * Execute the extension's script file
+ * Execute the appropriate script file for installing or updating the extension
+ *
+ * If from_version isn't NULL, it's an update
  */
 static void
 execute_extension_script(Oid extensionOid, ExtensionControlFile *control,
+						 const char *from_version,
+						 const char *version,
 						 List *requiredSchemas,
 						 const char *schemaName, Oid schemaOid)
 {
-	char       *filename = get_extension_absolute_path(control->script);
+	char       *filename;
 	char	   *save_client_min_messages,
 			   *save_log_min_messages,
 			   *save_search_path;
 	StringInfoData pathbuf;
 	ListCell   *lc;
+
+	filename = get_extension_script_filename(control, from_version, version);
 
 	/*
 	 * Force client_min_messages and log_min_messages to be at least WARNING,
@@ -636,14 +791,198 @@ execute_extension_script(Oid extensionOid, ExtensionControlFile *control,
 }
 
 /*
+ * Find or create an ExtensionVersionInfo for the specified version name
+ *
+ * Currently, we just use a List of the ExtensionVersionInfo's.  Searching
+ * for them therefore uses about O(N^2) time when there are N versions of
+ * the extension.  We could change the data structure to a hash table if
+ * this ever becomes a bottleneck.
+ */
+static ExtensionVersionInfo *
+get_ext_ver_info(const char *versionname, List **evi_list)
+{
+	ExtensionVersionInfo *evi;
+	ListCell   *lc;
+
+	foreach(lc, *evi_list)
+	{
+		evi = (ExtensionVersionInfo *) lfirst(lc);
+		if (strcmp(evi->name, versionname) == 0)
+			return evi;
+	}
+
+	evi = (ExtensionVersionInfo *) palloc(sizeof(ExtensionVersionInfo));
+	evi->name = pstrdup(versionname);
+	evi->reachable = NIL;
+	/* initialize for later application of Dijkstra's algorithm */
+	evi->distance_known = false;
+	evi->distance = INT_MAX;
+	evi->previous = NULL;
+
+	*evi_list = lappend(*evi_list, evi);
+
+	return evi;
+}
+
+/*
+ * Locate the nearest unprocessed ExtensionVersionInfo
+ *
+ * This part of the algorithm is also about O(N^2).  A priority queue would
+ * make it much faster, but for now there's no need.
+ */
+static ExtensionVersionInfo *
+get_nearest_unprocessed_vertex(List *evi_list)
+{
+	ExtensionVersionInfo *evi = NULL;
+	ListCell   *lc;
+
+	foreach(lc, evi_list)
+	{
+		ExtensionVersionInfo *evi2 = (ExtensionVersionInfo *) lfirst(lc);
+
+		/* only vertices whose distance is still uncertain are candidates */
+		if (evi2->distance_known)
+			continue;
+		/* remember the closest such vertex */
+		if (evi == NULL ||
+			evi->distance > evi2->distance)
+			evi = evi2;
+	}
+
+	return evi;
+}
+
+/*
+ * Obtain information about the set of update scripts available for the
+ * specified extension.  The result is a List of ExtensionVersionInfo
+ * structs, each with a subsidiary list of the ExtensionVersionInfos for
+ * the versions that can be reached in one step from that version.
+ */
+static List *
+get_ext_ver_list(ExtensionControlFile *control)
+{
+	List	   *evi_list = NIL;
+	int			extnamelen = strlen(control->name);
+	char	   *location;
+	DIR		   *dir;
+	struct dirent *de;
+
+	location = get_extension_script_directory(control);
+	dir  = AllocateDir(location);
+	while ((de = ReadDir(dir, location)) != NULL)
+	{
+		char	   *vername;
+		char	   *vername2;
+		ExtensionVersionInfo *evi;
+		ExtensionVersionInfo *evi2;
+
+		/* must be a .sql file ... */
+		if (!is_extension_script_filename(de->d_name))
+			continue;
+
+		/* ... matching extension name followed by separator */
+		if (strncmp(de->d_name, control->name, extnamelen) != 0 ||
+			de->d_name[extnamelen] != EXT_VERSION_SEP)
+			continue;
+
+		/* extract version names from 'extname-something.sql' filename */
+		vername = pstrdup(de->d_name + extnamelen + 1);
+		*strrchr(vername, '.') = '\0';
+		vername2 = strchr(vername, EXT_VERSION_SEP);
+		if (!vername2)
+			continue;			/* it's not an update script */
+		*vername2++ = '\0';
+
+		/* Create ExtensionVersionInfos and link them together */
+		evi = get_ext_ver_info(vername, &evi_list);
+		evi2 = get_ext_ver_info(vername2, &evi_list);
+		evi->reachable = lappend(evi->reachable, evi2);
+	}
+	FreeDir(dir);
+
+	return evi_list;
+}
+
+/*
+ * Given an initial and final version name, identify the sequence of update
+ * scripts that have to be applied to perform that update.
+ *
+ * Result is a List of names of versions to transition through.
+ */
+static List *
+identify_update_path(ExtensionControlFile *control,
+					 const char *oldVersion, const char *newVersion)
+{
+	List	   *result;
+	List	   *evi_list;
+	ExtensionVersionInfo *evi_start;
+	ExtensionVersionInfo *evi_target;
+	ExtensionVersionInfo *evi;
+
+	if (strcmp(oldVersion, newVersion) == 0)
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+				 errmsg("version to install or update to must be different from old version")));
+
+	/* Extract the version update graph from the script directory */
+	evi_list = get_ext_ver_list(control);
+
+	/* Initialize start and end vertices */
+	evi_start = get_ext_ver_info(oldVersion, &evi_list);
+	evi_target = get_ext_ver_info(newVersion, &evi_list);
+
+	evi_start->distance = 0;
+
+	while ((evi = get_nearest_unprocessed_vertex(evi_list)) != NULL)
+	{
+		ListCell   *lc;
+
+		if (evi->distance == INT_MAX)
+			break;				/* all remaining vertices are unreachable */
+		evi->distance_known = true;
+		if (evi == evi_target)
+			break;				/* found shortest path to target */
+		foreach(lc, evi->reachable)
+		{
+			ExtensionVersionInfo *evi2 = (ExtensionVersionInfo *) lfirst(lc);
+			int		newdist;
+
+			newdist = evi->distance + 1;
+			if (newdist < evi2->distance)
+			{
+				evi2->distance = newdist;
+				evi2->previous = evi;
+			}
+		}
+	}
+
+	if (!evi_target->distance_known)
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+				 errmsg("extension \"%s\" has no update path from version \"%s\" to version \"%s\"",
+						control->name, oldVersion, newVersion)));
+
+	/* Build and return list of version names representing the update path */
+	result = NIL;
+	for (evi = evi_target; evi != evi_start; evi = evi->previous)
+		result = lcons(evi->name, result);
+
+	return result;
+}
+
+/*
  * CREATE EXTENSION
  */
 void
 CreateExtension(CreateExtensionStmt *stmt)
 {
 	DefElem    *d_schema = NULL;
+	DefElem    *d_new_version = NULL;
+	DefElem    *d_old_version = NULL;
 	char       *schemaName;
 	Oid			schemaOid;
+	char       *versionName;
+	char       *oldVersionName;
 	Oid			extowner = GetUserId();
 	ExtensionControlFile *control;
 	List	   *requiredExtensions;
@@ -668,6 +1007,9 @@ CreateExtension(CreateExtensionStmt *stmt)
 				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 				 errmsg("nested CREATE EXTENSION is not supported")));
 
+	/* Check extension name validity before any filesystem access */
+	check_valid_extension_name(stmt->extname);
+
 	/*
 	 * Check for duplicate extension name.  The unique index on
 	 * pg_extension.extname would catch this anyway, and serves as a backstop
@@ -679,9 +1021,9 @@ CreateExtension(CreateExtensionStmt *stmt)
 				 errmsg("extension \"%s\" already exists", stmt->extname)));
 
 	/*
-	 * Read the control file.  Note we assume that it does not contain
-	 * any non-ASCII data, so there is no need to worry about encoding
-	 * at this point.
+	 * Read the primary control file.  Note we assume that it does not contain
+	 * any non-ASCII data, so there is no need to worry about encoding at this
+	 * point.
 	 */
 	control = read_extension_control_file(stmt->extname);
 
@@ -700,9 +1042,57 @@ CreateExtension(CreateExtensionStmt *stmt)
 						 errmsg("conflicting or redundant options")));
 			d_schema = defel;
 		}
+		else if (strcmp(defel->defname, "new_version") == 0)
+		{
+			if (d_new_version)
+				ereport(ERROR,
+						(errcode(ERRCODE_SYNTAX_ERROR),
+						 errmsg("conflicting or redundant options")));
+			d_new_version = defel;
+		}
+		else if (strcmp(defel->defname, "old_version") == 0)
+		{
+			if (d_old_version)
+				ereport(ERROR,
+						(errcode(ERRCODE_SYNTAX_ERROR),
+						 errmsg("conflicting or redundant options")));
+			d_old_version = defel;
+		}
 		else
 			elog(ERROR, "unrecognized option: %s", defel->defname);
 	}
+
+	/*
+	 * Determine the version to install
+	 */
+	if (d_new_version && d_new_version->arg)
+		versionName = strVal(d_new_version->arg);
+	else if (control->default_version)
+		versionName = control->default_version;
+	else
+	{
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+				 errmsg("version to install must be specified")));
+		versionName = NULL;		/* keep compiler quiet */
+	}
+	check_valid_version_name(versionName);
+
+	/*
+	 * Modify control parameters for specific new version
+	 */
+	parse_extension_control_file(control, versionName);
+
+	/*
+	 * Determine the (unpackaged) version to update from, if any
+	 */
+	if (d_old_version && d_old_version->arg)
+	{
+		oldVersionName = strVal(d_old_version->arg);
+		check_valid_version_name(oldVersionName);
+	}
+	else
+		oldVersionName = NULL;
 
 	/*
 	 * Determine the target schema to install the extension into
@@ -799,7 +1189,7 @@ CreateExtension(CreateExtensionStmt *stmt)
 	 */
 	extensionOid = InsertExtensionTuple(control->name, extowner,
 										schemaOid, control->relocatable,
-										control->version,
+										versionName,
 										PointerGetDatum(NULL),
 										PointerGetDatum(NULL),
 										requiredExtensions);
@@ -811,10 +1201,36 @@ CreateExtension(CreateExtensionStmt *stmt)
 		CreateComments(extensionOid, ExtensionRelationId, 0, control->comment);
 
 	/*
-	 * Finally, execute the extension script to create the member objects
+	 * Finally, execute the extension's script file(s)
 	 */
-	execute_extension_script(extensionOid, control, requiredSchemas,
-							 schemaName, schemaOid);
+	if (oldVersionName == NULL)
+	{
+		/* Simple install */
+		execute_extension_script(extensionOid, control,
+								 oldVersionName, versionName,
+								 requiredSchemas,
+								 schemaName, schemaOid);
+	}
+	else
+	{
+		/* Update from unpackaged objects --- find update-file path */
+		List	   *updateVersions;
+
+		updateVersions = identify_update_path(control,
+											  oldVersionName,
+											  versionName);
+
+		foreach(lc, updateVersions)
+		{
+			char   *vname = (char *) lfirst(lc);
+
+			execute_extension_script(extensionOid, control,
+									 oldVersionName, vname,
+									 requiredSchemas,
+									 schemaName, schemaOid);
+			oldVersionName = vname;
+		}
+	}
 }
 
 /*
@@ -858,12 +1274,7 @@ InsertExtensionTuple(const char *extName, Oid extOwner,
 	values[Anum_pg_extension_extowner - 1] = ObjectIdGetDatum(extOwner);
 	values[Anum_pg_extension_extnamespace - 1] = ObjectIdGetDatum(schemaOid);
 	values[Anum_pg_extension_extrelocatable - 1] = BoolGetDatum(relocatable);
-
-	if (extVersion == NULL)
-		nulls[Anum_pg_extension_extversion - 1] = true;
-	else
-		values[Anum_pg_extension_extversion - 1] =
-			CStringGetTextDatum(extVersion);
+	values[Anum_pg_extension_extversion - 1] = CStringGetTextDatum(extVersion);
 
 	if (extConfig == PointerGetDatum(NULL))
 		nulls[Anum_pg_extension_extconfig - 1] = true;
@@ -1102,11 +1513,11 @@ pg_available_extensions(PG_FUNCTION_ARGS)
 			/* name */
 			values[0] = DirectFunctionCall1(namein,
 											CStringGetDatum(control->name));
-			/* version */
-			if (control->version == NULL)
+			/* default_version */
+			if (control->default_version == NULL)
 				nulls[1] = true;
 			else
-				values[1] = CStringGetTextDatum(control->version);
+				values[1] = CStringGetTextDatum(control->default_version);
 			/* relocatable */
 			values[2] = BoolGetDatum(control->relocatable);
 			/* comment */
@@ -1433,6 +1844,230 @@ AlterExtensionNamespace(List *names, const char *newschema)
 	/* update dependencies to point to the new schema */
 	changeDependencyFor(ExtensionRelationId, extensionOid,
 						NamespaceRelationId, oldNspOid, nspOid);
+}
+
+/*
+ * Execute ALTER EXTENSION UPDATE
+ */
+void
+ExecAlterExtensionStmt(AlterExtensionStmt *stmt)
+{
+	DefElem    *d_new_version = NULL;
+	char       *schemaName;
+	Oid			schemaOid;
+	char       *versionName;
+	char       *oldVersionName;
+	ExtensionControlFile *control;
+	List	   *requiredExtensions;
+	List	   *requiredSchemas;
+	Oid			extensionOid;
+	Relation	extRel;
+	ScanKeyData	key[1];
+	SysScanDesc	extScan;
+	HeapTuple	extTup;
+	Form_pg_extension extForm;
+	Datum		values[Natts_pg_extension];
+	bool		nulls[Natts_pg_extension];
+	bool		repl[Natts_pg_extension];
+	List	   *updateVersions;
+	ObjectAddress myself;
+	Datum		datum;
+	bool		isnull;
+	ListCell   *lc;
+
+	/*
+	 * For now, insist on superuser privilege.  Later we might want to
+	 * relax this to ownership of the extension.
+	 */
+	if (!superuser())
+		ereport(ERROR,
+				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
+				 (errmsg("must be superuser to use ALTER EXTENSION"))));
+
+	/*
+	 * We use global variables to track the extension being created, so we
+	 * can create/alter only one extension at the same time.
+	 */
+	if (creating_extension)
+		ereport(ERROR,
+				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+				 errmsg("nested ALTER EXTENSION is not supported")));
+
+	/* Look up the extension --- it must already exist in pg_extension */
+	extRel = heap_open(ExtensionRelationId, RowExclusiveLock);
+
+	ScanKeyInit(&key[0],
+				Anum_pg_extension_extname,
+				BTEqualStrategyNumber, F_NAMEEQ,
+				CStringGetDatum(stmt->extname));
+
+	extScan = systable_beginscan(extRel, ExtensionNameIndexId, true,
+								 SnapshotNow, 1, key);
+
+	extTup = systable_getnext(extScan);
+
+	if (!HeapTupleIsValid(extTup))
+        ereport(ERROR,
+                (errcode(ERRCODE_UNDEFINED_OBJECT),
+                 errmsg("extension \"%s\" does not exist",
+                        stmt->extname)));
+
+	/* Copy tuple so we can modify it below */
+	extTup = heap_copytuple(extTup);
+	extForm = (Form_pg_extension) GETSTRUCT(extTup);
+	extensionOid = HeapTupleGetOid(extTup);
+
+	systable_endscan(extScan);
+
+	/*
+	 * Read the primary control file.  Note we assume that it does not contain
+	 * any non-ASCII data, so there is no need to worry about encoding at this
+	 * point.
+	 */
+	control = read_extension_control_file(stmt->extname);
+
+	/*
+	 * Read the statement option list
+	 */
+	foreach(lc, stmt->options)
+	{
+		DefElem    *defel = (DefElem *) lfirst(lc);
+
+		if (strcmp(defel->defname, "new_version") == 0)
+		{
+			if (d_new_version)
+				ereport(ERROR,
+						(errcode(ERRCODE_SYNTAX_ERROR),
+						 errmsg("conflicting or redundant options")));
+			d_new_version = defel;
+		}
+		else
+			elog(ERROR, "unrecognized option: %s", defel->defname);
+	}
+
+	/*
+	 * Determine the version to install
+	 */
+	if (d_new_version && d_new_version->arg)
+		versionName = strVal(d_new_version->arg);
+	else if (control->default_version)
+		versionName = control->default_version;
+	else
+	{
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+				 errmsg("version to install must be specified")));
+		versionName = NULL;		/* keep compiler quiet */
+	}
+	check_valid_version_name(versionName);
+
+	/*
+	 * Modify control parameters for specific new version
+	 */
+	parse_extension_control_file(control, versionName);
+
+	/*
+	 * Determine the existing version we are upgrading from
+	 */
+	datum = heap_getattr(extTup, Anum_pg_extension_extversion,
+						 RelationGetDescr(extRel), &isnull);
+	if (isnull)
+		elog(ERROR, "extversion is null");
+	oldVersionName = text_to_cstring(DatumGetTextPP(datum));
+
+	/*
+	 * Determine the target schema (already set by original install)
+	 */
+	schemaOid = extForm->extnamespace;
+	schemaName = get_namespace_name(schemaOid);
+
+	/*
+	 * Look up the prerequisite extensions, and build lists of their OIDs
+	 * and the OIDs of their target schemas.  We assume that the requires
+	 * list is version-specific, so the dependencies can change across
+	 * versions.  But note that only the final version's requires list
+	 * is being consulted here!
+	 */
+	requiredExtensions = NIL;
+	requiredSchemas = NIL;
+	foreach(lc, control->requires)
+	{
+		char	   *curreq = (char *) lfirst(lc);
+		Oid			reqext;
+		Oid			reqschema;
+
+		/*
+		 * We intentionally don't use get_extension_oid's default error
+		 * message here, because it would be confusing in this context.
+		 */
+		reqext = get_extension_oid(curreq, true);
+		if (!OidIsValid(reqext))
+			ereport(ERROR,
+					(errcode(ERRCODE_UNDEFINED_OBJECT),
+					 errmsg("required extension \"%s\" is not installed",
+							curreq)));
+		reqschema = get_extension_schema(reqext);
+		requiredExtensions = lappend_oid(requiredExtensions, reqext);
+		requiredSchemas = lappend_oid(requiredSchemas, reqschema);
+	}
+
+	/*
+	 * Modify extversion in the pg_extension tuple
+	 */
+	memset(values, 0, sizeof(values));
+	memset(nulls, 0, sizeof(nulls));
+	memset(repl, 0, sizeof(repl));
+
+	values[Anum_pg_extension_extversion - 1] = CStringGetTextDatum(versionName);
+	repl[Anum_pg_extension_extversion - 1] = true;
+
+	extTup = heap_modify_tuple(extTup, RelationGetDescr(extRel),
+							   values, nulls, repl);
+
+	simple_heap_update(extRel, &extTup->t_self, extTup);
+	CatalogUpdateIndexes(extRel, extTup);
+
+	heap_close(extRel, RowExclusiveLock);
+
+	/*
+	 * Remove and recreate dependencies on prerequisite extensions
+	 */
+	deleteDependencyRecordsForClass(ExtensionRelationId, extensionOid,
+									ExtensionRelationId, DEPENDENCY_NORMAL);
+
+	myself.classId = ExtensionRelationId;
+	myself.objectId = extensionOid;
+	myself.objectSubId = 0;
+
+	foreach(lc, requiredExtensions)
+	{
+		Oid			reqext = lfirst_oid(lc);
+		ObjectAddress otherext;
+
+		otherext.classId = ExtensionRelationId;
+		otherext.objectId = reqext;
+		otherext.objectSubId = 0;
+
+		recordDependencyOn(&myself, &otherext, DEPENDENCY_NORMAL);
+	}
+
+	/*
+	 * Finally, execute the extension's script file(s)
+	 */
+	updateVersions = identify_update_path(control,
+										  oldVersionName,
+										  versionName);
+
+	foreach(lc, updateVersions)
+	{
+		char   *vname = (char *) lfirst(lc);
+
+		execute_extension_script(extensionOid, control,
+								 oldVersionName, vname,
+								 requiredSchemas,
+								 schemaName, schemaOid);
+		oldVersionName = vname;
+	}
 }
 
 /*

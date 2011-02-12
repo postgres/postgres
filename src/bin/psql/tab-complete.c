@@ -868,7 +868,7 @@ psql_completion(char *text, int start, int end)
 			 pg_strcasecmp(prev2_wd, "EXTENSION") == 0)
 	{
 		static const char *const list_ALTEREXTENSION[] =
-		{"ADD", "DROP", "SET SCHEMA", NULL};
+		{"ADD", "DROP", "UPDATE", "SET SCHEMA", NULL};
 
 		COMPLETE_WITH_LIST(list_ALTEREXTENSION);
 	}

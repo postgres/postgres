@@ -36,9 +36,11 @@ CATALOG(pg_extension,3079)
 	bool        extrelocatable; /* if true, allow ALTER EXTENSION SET SCHEMA */
 
 	/*
-	 * VARIABLE LENGTH FIELDS start here.  These fields may be NULL, too.
+	 * VARIABLE LENGTH FIELDS start here.
+	 *
+	 * extversion should never be null, but the others can be.
 	 */
-	text		extversion;			/* extension version ID, if any */
+	text		extversion;			/* extension version name */
 	Oid			extconfig[1];		/* dumpable configuration tables */
 	text		extcondition[1];	/* WHERE clauses for config tables */
 } FormData_pg_extension;

@@ -150,15 +150,10 @@ create_empty_extension(PG_FUNCTION_ARGS)
 	text	   *extName = PG_GETARG_TEXT_PP(0);
 	text	   *schemaName = PG_GETARG_TEXT_PP(1);
 	bool		relocatable = PG_GETARG_BOOL(2);
-	char	   *extVersion;
+	text	   *extVersion = PG_GETARG_TEXT_PP(3);
 	Datum		extConfig;
 	Datum		extCondition;
 	List	   *requiredExtensions;
-
-	if (PG_ARGISNULL(3))
-		extVersion = NULL;
-	else
-		extVersion = text_to_cstring(PG_GETARG_TEXT_PP(3));
 
 	if (PG_ARGISNULL(4))
 		extConfig = PointerGetDatum(NULL);
@@ -195,7 +190,7 @@ create_empty_extension(PG_FUNCTION_ARGS)
 						 GetUserId(),
 						 get_namespace_oid(text_to_cstring(schemaName), false),
 						 relocatable,
-						 extVersion,
+						 text_to_cstring(extVersion),
 						 extConfig,
 						 extCondition,
 						 requiredExtensions);

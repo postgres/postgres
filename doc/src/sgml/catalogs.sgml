@@ -2927,7 +2927,7 @@
       <entry><structfield>extversion</structfield></entry>
       <entry><type>text</type></entry>
       <entry></entry>
-      <entry>Version string for the extension, or <literal>NULL</> if none</entry>
+      <entry>Version name for the extension</entry>
      </row>
 
      <row>

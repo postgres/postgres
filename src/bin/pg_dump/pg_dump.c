@@ -2725,10 +2725,7 @@ getExtensions(int *numExtensions)
 		extinfo[i].dobj.name = strdup(PQgetvalue(res, i, i_extname));
 		extinfo[i].namespace = strdup(PQgetvalue(res, i, i_nspname));
 		extinfo[i].relocatable = *(PQgetvalue(res, i, i_extrelocatable)) == 't';
-		if (PQgetisnull(res, i, i_extversion))
-			extinfo[i].extversion = NULL;
-		else
-			extinfo[i].extversion = strdup(PQgetvalue(res, i, i_extversion));
+		extinfo[i].extversion = strdup(PQgetvalue(res, i, i_extversion));
 		extinfo[i].extconfig = strdup(PQgetvalue(res, i, i_extconfig));
 		extinfo[i].extcondition = strdup(PQgetvalue(res, i, i_extcondition));
 	}
@@ -6942,10 +6939,7 @@ dumpExtension(Archive *fout, ExtensionInfo *extinfo)
 		appendStringLiteralAH(q, extinfo->namespace, fout);
 		appendPQExpBuffer(q, ", ");
 		appendPQExpBuffer(q, "%s, ", extinfo->relocatable ? "true" : "false");
-		if (extinfo->extversion)
-			appendStringLiteralAH(q, extinfo->extversion, fout);
-		else
-			appendPQExpBuffer(q, "NULL");
+		appendStringLiteralAH(q, extinfo->extversion, fout);
 		appendPQExpBuffer(q, ", ");
 		/*
 		 * Note that we're pushing extconfig (an OID array) back into

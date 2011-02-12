@@ -304,7 +304,7 @@
    </para>
 
    <para>
-    The advantage of using an extension, rather than just running the
+    The main advantage of using an extension, rather than just running the
     <acronym>SQL</> script to load a bunch of <quote>loose</> objects
     into your database, is that <productname>PostgreSQL</> will then
     understand that the objects of the extension go together.  You can
@@ -332,6 +332,17 @@
    </para>
 
    <para>
+    The extension mechanism also has provisions for packaging modification
+    scripts that adjust the definitions of the SQL objects contained in an
+    extension.  For example, if version 1.1 of an extension adds one function
+    and changes the body of another function compared to 1.0, the extension
+    author can provide an <firstterm>update script</> that makes just those
+    two changes.  The <command>ALTER EXTENSION UPDATE</> command can then
+    be used to apply these changes and track which version of the extension
+    is actually installed in a given database.
+   </para>
+
+   <para>
     The kinds of SQL objects that can be members of an extension are shown in
     the description of <xref linkend="sql-alterextension">.  Notably, objects
     that are database-cluster-wide, such as databases, roles, and tablespaces,
@@ -355,10 +366,13 @@
      file for each extension, which must be named the same as the extension
      with a suffix of <literal>.control</>, and must be placed in the
      installation's <literal>SHAREDIR/contrib</literal> directory.  There
-     must also be a <acronym>SQL</> script file, which typically is
-     named after the extension with a suffix of <literal>.sql</>, and is also
-     placed in the <literal>SHAREDIR/contrib</literal> directory; but these
-     defaults can be overridden by the control file.
+     must also be at least one <acronym>SQL</> script file, which follows the
+     naming pattern
+     <literal><replaceable>extension</>-<replaceable>version</>.sql</literal>
+     (for example, <literal>foo-1.0.sql</> for version <literal>1.0</> of
+     extension <literal>foo</>).  By default, the script file(s) are also
+     placed in the <literal>SHAREDIR/contrib</literal> directory; but the
+     control file can specify a different directory for the script file(s).
     </para>
 
     <para>
@@ -376,23 +390,25 @@
 
     <variablelist>
      <varlistentry>
-      <term><varname>script</varname> (<type>string</type>)</term>
+      <term><varname>directory</varname> (<type>string</type>)</term>
       <listitem>
        <para>
-        The filename of the extension's <acronym>SQL</> script.
-        Defaults to the same name as the control file, but with the
-        <literal>.sql</literal> extension.  Unless an absolute path is
-        given, the name is relative to the <literal>SHAREDIR/contrib</literal>
-        directory.
+        The directory containing the extension's <acronym>SQL</> script
+        file(s).  Unless an absolute path is given, the name is relative to
+        the <literal>SHAREDIR/contrib</literal> directory.
        </para>
       </listitem>
      </varlistentry>
 
      <varlistentry>
-      <term><varname>version</varname> (<type>string</type>)</term>
+      <term><varname>default_version</varname> (<type>string</type>)</term>
       <listitem>
        <para>
-        The version of the extension.  Any string can be given.
+        The default version of the extension (the one that will be installed
+        if no version is specified in <command>CREATE EXTENSION</>).  Although
+        this can be omitted, that will result in <command>CREATE EXTENSION</>
+        failing if no <literal>VERSION</> option appears, so you generally
+        don't want to do that.
        </para>
       </listitem>
      </varlistentry>
@@ -403,7 +419,7 @@
        <para>
         A comment (any string) about the extension.  Alternatively,
         the comment can be set by means of the <xref linkend="sql-comment">
-        command.
+        command in the script file.
        </para>
       </listitem>
      </varlistentry>
@@ -423,10 +439,9 @@
       <term><varname>encoding</varname> (<type>string</type>)</term>
       <listitem>
        <para>
-        The character set encoding used by the script file.  This should
-        be specified if the script file contains any non-ASCII characters.
-        Otherwise the script will be assumed to be in the encoding of the
-        database it is loaded into.
+        The character set encoding used by the script file(s).  This should
+        be specified if the script files contain any non-ASCII characters.
+        Otherwise the files will be assumed to be in the database encoding.
        </para>
       </listitem>
      </varlistentry>
@@ -457,22 +472,37 @@
     </variablelist>
 
     <para>
-     An extension's <acronym>SQL</> script file can contain any SQL commands,
-     except for transaction control commands (<command>BEGIN</>,
-     <command>COMMIT</>, etc) and commands that cannot be executed inside a
-     transaction block (such as <command>VACUUM</>).  This is because the
-     script file is implicitly executed within a transaction block.
+     In addition to the primary control file
+     <literal><replaceable>extension</>.control</literal>,
+     an extension can have secondary control files named in the style
+     <literal><replaceable>extension</>-<replaceable>version</>.control</literal>.
+     If supplied, these must be located in the script file directory.
+     Secondary control files follow the same format as the primary control
+     file.  Any parameters set in a secondary control file override the
+     primary control file when installing or updating to that version of
+     the extension.  However, the parameters <varname>directory</>,
+     <varname>default_version</>, and <varname>encoding</> cannot be set in
+     a secondary control file; in particular, the same encoding must be used
+     in all script files associated with the extension.
     </para>
 
     <para>
-     While the script file can contain any characters allowed by the specified
-     encoding, the control file should contain only plain ASCII, because there
-     is no way for <productname>PostgreSQL</> to know what encoding the
+     An extension's <acronym>SQL</> script files can contain any SQL commands,
+     except for transaction control commands (<command>BEGIN</>,
+     <command>COMMIT</>, etc) and commands that cannot be executed inside a
+     transaction block (such as <command>VACUUM</>).  This is because the
+     script files are implicitly executed within a transaction block.
+    </para>
+
+    <para>
+     While the script files can contain any characters allowed by the specified
+     encoding, control files should contain only plain ASCII, because there
+     is no way for <productname>PostgreSQL</> to know what encoding a
      control file is in.  In practice this is only an issue if you want to
      use non-ASCII characters in the extension's comment.  Recommended
-     practice in that case is to not use the <varname>comment</> parameter
-     in the control file, but instead use <command>COMMENT ON EXTENSION</>
-     within the script file to set the comment.
+     practice in that case is to not use the control file <varname>comment</>
+     parameter, but instead use <command>COMMENT ON EXTENSION</>
+     within a script file to set the comment.
     </para>
 
    </sect2>
@@ -630,6 +660,91 @@ SELECT pg_catalog.pg_extension_config_dump('my_config', 'WHERE NOT standard_entr
    </sect2>
 
    <sect2>
+    <title>Extension Updates</title>
+
+    <para>
+     One advantage of the extension mechanism is that it provides convenient
+     ways to manage updates to the SQL commands that define an extension's
+     objects.  This is done by associating a version name or number with
+     each released version of the extension's installation script.
+     In addition, if you want users to be able to update their databases
+     dynamically from one version to the next, you should provide
+     <firstterm>update scripts</> that make the necessary changes to go from
+     one version to the next.  Update scripts have names following the pattern
+     <literal><replaceable>extension</>-<replaceable>oldversion</>-<replaceable>newversion</>.sql</literal>
+     (for example, <literal>foo-1.0-1.1.sql</> contains the commands to modify
+     version <literal>1.0</> of extension <literal>foo</> into version
+     <literal>1.1</>).
+    </para>
+
+    <para>
+     Given that a suitable update script is available, the command
+     <command>ALTER EXTENSION ... UPDATE</> will update an installed extension
+     to the specified new version.  The update script is run in the same
+     environment that <command>CREATE EXTENSION</> provides for installation
+     scripts: in particular, <varname>search_path</> is set up in the same
+     way, and any new objects created by the script are automatically added
+     to the extension.
+    </para>
+
+    <para>
+     The update mechanism can be used to solve an important special case:
+     converting a <quote>loose</> collection of objects into an extension.
+     Before the extension mechanism was added to
+     <productname>PostgreSQL</productname> (in 9.1), many people wrote
+     extension modules that simply created assorted unpackaged objects.
+     Given an existing database containing such objects, how can we convert
+     the objects into a properly packaged extension?  Dropping them and then
+     doing a plain <command>CREATE EXTENSION</> is one way, but it's not
+     desirable if the objects have dependencies (for example, if there are
+     table columns of a data type created by the extension).  The way to fix
+     this situation is to create an empty extension, then use <command>ALTER
+     EXTENSION ADD</> to attach each pre-existing object to the extension,
+     then finally create any new objects that are in the current extension
+     version but were not in the unpackaged release.  <command>CREATE
+     EXTENSION</> supports this case with its <literal>FROM</> <replaceable
+     class="parameter">old_version</> option, which causes it to not run the
+     normal installation script for the target version, but instead the update
+     script named
+     <literal><replaceable>extension</>-<replaceable>old_version</>-<replaceable>target_version</>.sql</literal>.
+     The choice of the dummy version name to use as <replaceable
+     class="parameter">old_version</> is up to the extension author, though
+     <literal>unpackaged</> is a common convention.  If you have multiple
+     prior versions you need to be able to update into extension style, use
+     multiple dummy version names to identify them.
+    </para>
+
+    <para>
+     <command>ALTER EXTENSION</> is able to execute sequences of update
+     script files to achieve a requested update.  For example, if only
+     <literal>foo-1.0-1.1.sql</> and <literal>foo-1.1-2.0.sql</> are
+     available, <command>ALTER EXTENSION</> will apply them in sequence if an
+     update to version <literal>2.0</> is requested when <literal>1.0</> is
+     currently installed.
+    </para>
+
+    <para>
+     <productname>PostgreSQL</> doesn't assume anything about the properties
+     of version names: for example, it does not know whether <literal>1.1</>
+     follows <literal>1.0</>.  It just matches up the available version names
+     and follows the path that requires applying the fewest update scripts.
+    </para>
+
+    <para>
+     Sometimes it is useful to provide <quote>downgrade</> scripts, for
+     example <literal>foo-1.1-1.0.sql</> to allow reverting the changes
+     associated with version <literal>1.1</>.  If you do that, be careful
+     of the possibility that a downgrade script might unexpectedly
+     get applied because it yields a shorter path.  The risky case is where
+     there is a <quote>fast path</> update script that jumps ahead several
+     versions as well as a downgrade script to the fast path's start point.
+     It might take fewer steps to apply the downgrade and then the fast
+     path than to move ahead one version at a time.  If the downgrade script
+     drops any irreplaceable objects, this will yield undesirable results.
+    </para>
+   </sect2>
+
+   <sect2>
     <title>Extension Example</title>
 
     <para>
@@ -640,7 +755,7 @@ SELECT pg_catalog.pg_extension_config_dump('my_config', 'WHERE NOT standard_entr
     </para>
 
     <para>
-     The script file <filename>pair.sql</> looks like this:
+     The script file <filename>pair-1.0.sql</> looks like this:
 
 <programlisting><![CDATA[
 CREATE TYPE pair AS ( k text, v text );
@@ -671,7 +786,7 @@ CREATE OPERATOR ~> (LEFTARG = text, RIGHTARG = text, PROCEDURE = pair);
 <programlisting>
 # pair extension
 comment = 'A key/value pair data type'
-version = '0.1.2'
+default_version = '1.0'
 relocatable = true
 </programlisting>
     </para>
@@ -682,7 +797,7 @@ relocatable = true
 
 <programlisting>
 EXTENSION = pair
-DATA = pair.sql
+DATA = pair-1.0.sql
 
 PG_CONFIG = pg_config
 PGXS := $(shell $(PG_CONFIG) --pgxs)
@@ -739,7 +854,7 @@ include $(PGXS)
 <programlisting>
 MODULES = isbn_issn
 EXTENSION = isbn_issn
-DATA_built = isbn_issn.sql
+DATA_built = isbn_issn-1.0.sql
 DOCS = README.isbn_issn
 
 PG_CONFIG = pg_config

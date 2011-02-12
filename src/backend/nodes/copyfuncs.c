@@ -3251,6 +3251,17 @@ _copyCreateExtensionStmt(CreateExtensionStmt *from)
 	return newnode;
 }
 
+static AlterExtensionStmt *
+_copyAlterExtensionStmt(AlterExtensionStmt *from)
+{
+	AlterExtensionStmt *newnode = makeNode(AlterExtensionStmt);
+
+	COPY_STRING_FIELD(extname);
+	COPY_NODE_FIELD(options);
+
+	return newnode;
+}
+
 static AlterExtensionContentsStmt *
 _copyAlterExtensionContentsStmt(AlterExtensionContentsStmt *from)
 {
@@ -4266,6 +4277,9 @@ copyObject(void *from)
 			break;
 		case T_CreateExtensionStmt:
 			retval = _copyCreateExtensionStmt(from);
+			break;
+		case T_AlterExtensionStmt:
+			retval = _copyAlterExtensionStmt(from);
 			break;
 		case T_AlterExtensionContentsStmt:
 			retval = _copyAlterExtensionContentsStmt(from);

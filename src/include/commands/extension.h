@@ -37,6 +37,8 @@ extern Oid	InsertExtensionTuple(const char *extName, Oid extOwner,
 					 Datum extConfig, Datum extCondition,
 					 List *requiredExtensions);
 
+extern void ExecAlterExtensionStmt(AlterExtensionStmt *stmt);
+
 extern void ExecAlterExtensionContentsStmt(AlterExtensionContentsStmt *stmt);
 
 extern Oid	get_extension_oid(const char *extname, bool missing_ok);
