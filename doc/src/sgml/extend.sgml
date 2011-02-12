@@ -482,10 +482,8 @@
      Secondary control files follow the same format as the primary control
      file.  Any parameters set in a secondary control file override the
      primary control file when installing or updating to that version of
-     the extension.  However, the parameters <varname>directory</>,
-     <varname>default_version</>, and <varname>encoding</> cannot be set in
-     a secondary control file; in particular, the same encoding must be used
-     in all script files associated with the extension.
+     the extension.  However, the parameters <varname>directory</> and
+     <varname>default_version</> cannot be set in a secondary control file.
     </para>
 
     <para>
@@ -690,6 +688,12 @@ SELECT pg_catalog.pg_extension_config_dump('my_config', 'WHERE NOT standard_entr
     </para>
 
     <para>
+     If an extension has secondary control files, the control parameters
+     that are used for an update script are those associated with the script's
+     target (new) version.
+    </para>
+
+    <para>
      The update mechanism can be used to solve an important special case:
      converting a <quote>loose</> collection of objects into an extension.
      Before the extension mechanism was added to
@@ -808,7 +812,7 @@ include $(PGXS)
 
      This makefile relies on <acronym>PGXS</acronym>, which is described
      in <xref linkend="extend-pgxs">.  The command <literal>make install</>
-     will then install the control and script files into the correct
+     will install the control and script files into the correct
      directory as reported by <application>pg_config</>.
     </para>
 

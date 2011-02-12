@@ -88,6 +88,12 @@ typedef struct ExtensionVersionInfo
 	struct ExtensionVersionInfo *previous; /* current best predecessor */
 } ExtensionVersionInfo;
 
+/* Local functions */
+static void ApplyExtensionUpdates(Oid extensionOid,
+					  ExtensionControlFile *pcontrol,
+					  const char *initialVersion,
+					  List *updateVersions);
+
 
 /*
  * get_extension_oid - given an extension name, look up the OID
@@ -453,12 +459,6 @@ parse_extension_control_file(ExtensionControlFile *control,
 		}
 		else if (strcmp(item->name, "encoding") == 0)
 		{
-			if (version)
-				ereport(ERROR,
-						(errcode(ERRCODE_SYNTAX_ERROR),
-						 errmsg("parameter \"%s\" cannot be set in a per-version extension control file",
-								item->name)));
-
 			control->encoding = pg_valid_server_encoding(item->value);
 			if (control->encoding < 0)
 				ereport(ERROR,
@@ -520,6 +520,32 @@ read_extension_control_file(const char *extname)
 	parse_extension_control_file(control, NULL);
 
 	return control;
+}
+
+/*
+ * Read the auxiliary control file for the specified extension and version.
+ *
+ * Returns a new modified ExtensionControlFile struct; the original struct
+ * (reflecting just the primary control file) is not modified.
+ */
+static ExtensionControlFile *
+read_extension_aux_control_file(const ExtensionControlFile *pcontrol,
+								const char *version)
+{
+	ExtensionControlFile *acontrol;
+
+	/*
+	 * Flat-copy the struct.  Pointer fields share values with original.
+	 */
+	acontrol = (ExtensionControlFile *) palloc(sizeof(ExtensionControlFile));
+	memcpy(acontrol, pcontrol, sizeof(ExtensionControlFile));
+
+	/*
+	 * Parse the auxiliary control file, overwriting struct fields
+	 */
+	parse_extension_control_file(acontrol, version);
+
+	return acontrol;
 }
 
 /*
@@ -906,7 +932,8 @@ get_ext_ver_list(ExtensionControlFile *control)
  * Given an initial and final version name, identify the sequence of update
  * scripts that have to be applied to perform that update.
  *
- * Result is a List of names of versions to transition through.
+ * Result is a List of names of versions to transition through (the initial
+ * version is *not* included).
  */
 static List *
 identify_update_path(ExtensionControlFile *control,
@@ -983,7 +1010,9 @@ CreateExtension(CreateExtensionStmt *stmt)
 	char       *versionName;
 	char       *oldVersionName;
 	Oid			extowner = GetUserId();
+	ExtensionControlFile *pcontrol;
 	ExtensionControlFile *control;
+	List	   *updateVersions;
 	List	   *requiredExtensions;
 	List	   *requiredSchemas;
 	Oid			extensionOid;
@@ -1024,7 +1053,7 @@ CreateExtension(CreateExtensionStmt *stmt)
 	 * any non-ASCII data, so there is no need to worry about encoding at this
 	 * point.
 	 */
-	control = read_extension_control_file(stmt->extname);
+	pcontrol = read_extension_control_file(stmt->extname);
 
 	/*
 	 * Read the statement option list
@@ -1066,8 +1095,8 @@ CreateExtension(CreateExtensionStmt *stmt)
 	 */
 	if (d_new_version && d_new_version->arg)
 		versionName = strVal(d_new_version->arg);
-	else if (control->default_version)
-		versionName = control->default_version;
+	else if (pcontrol->default_version)
+		versionName = pcontrol->default_version;
 	else
 	{
 		ereport(ERROR,
@@ -1078,20 +1107,48 @@ CreateExtension(CreateExtensionStmt *stmt)
 	check_valid_version_name(versionName);
 
 	/*
-	 * Modify control parameters for specific new version
-	 */
-	parse_extension_control_file(control, versionName);
-
-	/*
-	 * Determine the (unpackaged) version to update from, if any
+	 * Determine the (unpackaged) version to update from, if any, and then
+	 * figure out what sequence of update scripts we need to apply.
 	 */
 	if (d_old_version && d_old_version->arg)
 	{
 		oldVersionName = strVal(d_old_version->arg);
 		check_valid_version_name(oldVersionName);
+
+		updateVersions = identify_update_path(pcontrol,
+											  oldVersionName,
+											  versionName);
+
+		if (list_length(updateVersions) == 1)
+		{
+			/*
+			 * Simple case where there's just one update script to run.
+			 * We will not need any follow-on update steps.
+			 */
+			Assert(strcmp((char *) linitial(updateVersions), versionName) == 0);
+			updateVersions = NIL;
+		}
+		else
+		{
+			/*
+			 * Multi-step sequence.  We treat this as installing the version
+			 * that is the target of the first script, followed by successive
+			 * updates to the later versions.
+			 */
+			versionName = (char *) linitial(updateVersions);
+			updateVersions = list_delete_first(updateVersions);
+		}
 	}
 	else
+	{
 		oldVersionName = NULL;
+		updateVersions = NIL;
+	}
+
+	/*
+	 * Fetch control parameters for installation target version
+	 */
+	control = read_extension_aux_control_file(pcontrol, versionName);
 
 	/*
 	 * Determine the target schema to install the extension into
@@ -1200,36 +1257,19 @@ CreateExtension(CreateExtensionStmt *stmt)
 		CreateComments(extensionOid, ExtensionRelationId, 0, control->comment);
 
 	/*
-	 * Finally, execute the extension's script file(s)
+	 * Execute the installation script file
 	 */
-	if (oldVersionName == NULL)
-	{
-		/* Simple install */
-		execute_extension_script(extensionOid, control,
-								 oldVersionName, versionName,
-								 requiredSchemas,
-								 schemaName, schemaOid);
-	}
-	else
-	{
-		/* Update from unpackaged objects --- find update-file path */
-		List	   *updateVersions;
+	execute_extension_script(extensionOid, control,
+							 oldVersionName, versionName,
+							 requiredSchemas,
+							 schemaName, schemaOid);
 
-		updateVersions = identify_update_path(control,
-											  oldVersionName,
-											  versionName);
-
-		foreach(lc, updateVersions)
-		{
-			char   *vname = (char *) lfirst(lc);
-
-			execute_extension_script(extensionOid, control,
-									 oldVersionName, vname,
-									 requiredSchemas,
-									 schemaName, schemaOid);
-			oldVersionName = vname;
-		}
-	}
+	/*
+	 * If additional update scripts have to be executed, apply the updates
+	 * as though a series of ALTER EXTENSION UPDATE commands were given
+	 */
+	ApplyExtensionUpdates(extensionOid, pcontrol,
+						  versionName, updateVersions);
 }
 
 /*
@@ -1852,24 +1892,15 @@ void
 ExecAlterExtensionStmt(AlterExtensionStmt *stmt)
 {
 	DefElem    *d_new_version = NULL;
-	char       *schemaName;
-	Oid			schemaOid;
 	char       *versionName;
 	char       *oldVersionName;
 	ExtensionControlFile *control;
-	List	   *requiredExtensions;
-	List	   *requiredSchemas;
 	Oid			extensionOid;
 	Relation	extRel;
 	ScanKeyData	key[1];
 	SysScanDesc	extScan;
 	HeapTuple	extTup;
-	Form_pg_extension extForm;
-	Datum		values[Natts_pg_extension];
-	bool		nulls[Natts_pg_extension];
-	bool		repl[Natts_pg_extension];
 	List	   *updateVersions;
-	ObjectAddress myself;
 	Datum		datum;
 	bool		isnull;
 	ListCell   *lc;
@@ -1885,15 +1916,17 @@ ExecAlterExtensionStmt(AlterExtensionStmt *stmt)
 
 	/*
 	 * We use global variables to track the extension being created, so we
-	 * can create/alter only one extension at the same time.
+	 * can create/update only one extension at the same time.
 	 */
 	if (creating_extension)
 		ereport(ERROR,
 				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 				 errmsg("nested ALTER EXTENSION is not supported")));
 
-	/* Look up the extension --- it must already exist in pg_extension */
-	extRel = heap_open(ExtensionRelationId, RowExclusiveLock);
+	/*
+	 * Look up the extension --- it must already exist in pg_extension
+	 */
+	extRel = heap_open(ExtensionRelationId, AccessShareLock);
 
 	ScanKeyInit(&key[0],
 				Anum_pg_extension_extname,
@@ -1911,12 +1944,20 @@ ExecAlterExtensionStmt(AlterExtensionStmt *stmt)
                  errmsg("extension \"%s\" does not exist",
                         stmt->extname)));
 
-	/* Copy tuple so we can modify it below */
-	extTup = heap_copytuple(extTup);
-	extForm = (Form_pg_extension) GETSTRUCT(extTup);
 	extensionOid = HeapTupleGetOid(extTup);
 
+	/*
+	 * Determine the existing version we are updating from
+	 */
+	datum = heap_getattr(extTup, Anum_pg_extension_extversion,
+						 RelationGetDescr(extRel), &isnull);
+	if (isnull)
+		elog(ERROR, "extversion is null");
+	oldVersionName = text_to_cstring(DatumGetTextPP(datum));
+
 	systable_endscan(extScan);
+
+	heap_close(extRel, AccessShareLock);
 
 	/*
 	 * Read the primary control file.  Note we assume that it does not contain
@@ -1945,7 +1986,7 @@ ExecAlterExtensionStmt(AlterExtensionStmt *stmt)
 	}
 
 	/*
-	 * Determine the version to install
+	 * Determine the version to update to
 	 */
 	if (d_new_version && d_new_version->arg)
 		versionName = strVal(d_new_version->arg);
@@ -1961,111 +2002,174 @@ ExecAlterExtensionStmt(AlterExtensionStmt *stmt)
 	check_valid_version_name(versionName);
 
 	/*
-	 * Modify control parameters for specific new version
-	 */
-	parse_extension_control_file(control, versionName);
-
-	/*
-	 * Determine the existing version we are upgrading from
-	 */
-	datum = heap_getattr(extTup, Anum_pg_extension_extversion,
-						 RelationGetDescr(extRel), &isnull);
-	if (isnull)
-		elog(ERROR, "extversion is null");
-	oldVersionName = text_to_cstring(DatumGetTextPP(datum));
-
-	/*
-	 * Determine the target schema (already set by original install)
-	 */
-	schemaOid = extForm->extnamespace;
-	schemaName = get_namespace_name(schemaOid);
-
-	/*
-	 * Look up the prerequisite extensions, and build lists of their OIDs
-	 * and the OIDs of their target schemas.  We assume that the requires
-	 * list is version-specific, so the dependencies can change across
-	 * versions.  But note that only the final version's requires list
-	 * is being consulted here!
-	 */
-	requiredExtensions = NIL;
-	requiredSchemas = NIL;
-	foreach(lc, control->requires)
-	{
-		char	   *curreq = (char *) lfirst(lc);
-		Oid			reqext;
-		Oid			reqschema;
-
-		/*
-		 * We intentionally don't use get_extension_oid's default error
-		 * message here, because it would be confusing in this context.
-		 */
-		reqext = get_extension_oid(curreq, true);
-		if (!OidIsValid(reqext))
-			ereport(ERROR,
-					(errcode(ERRCODE_UNDEFINED_OBJECT),
-					 errmsg("required extension \"%s\" is not installed",
-							curreq)));
-		reqschema = get_extension_schema(reqext);
-		requiredExtensions = lappend_oid(requiredExtensions, reqext);
-		requiredSchemas = lappend_oid(requiredSchemas, reqschema);
-	}
-
-	/*
-	 * Modify extversion in the pg_extension tuple
-	 */
-	memset(values, 0, sizeof(values));
-	memset(nulls, 0, sizeof(nulls));
-	memset(repl, 0, sizeof(repl));
-
-	values[Anum_pg_extension_extversion - 1] = CStringGetTextDatum(versionName);
-	repl[Anum_pg_extension_extversion - 1] = true;
-
-	extTup = heap_modify_tuple(extTup, RelationGetDescr(extRel),
-							   values, nulls, repl);
-
-	simple_heap_update(extRel, &extTup->t_self, extTup);
-	CatalogUpdateIndexes(extRel, extTup);
-
-	heap_close(extRel, RowExclusiveLock);
-
-	/*
-	 * Remove and recreate dependencies on prerequisite extensions
-	 */
-	deleteDependencyRecordsForClass(ExtensionRelationId, extensionOid,
-									ExtensionRelationId, DEPENDENCY_NORMAL);
-
-	myself.classId = ExtensionRelationId;
-	myself.objectId = extensionOid;
-	myself.objectSubId = 0;
-
-	foreach(lc, requiredExtensions)
-	{
-		Oid			reqext = lfirst_oid(lc);
-		ObjectAddress otherext;
-
-		otherext.classId = ExtensionRelationId;
-		otherext.objectId = reqext;
-		otherext.objectSubId = 0;
-
-		recordDependencyOn(&myself, &otherext, DEPENDENCY_NORMAL);
-	}
-
-	/*
-	 * Finally, execute the extension's script file(s)
+	 * Identify the series of update script files we need to execute
 	 */
 	updateVersions = identify_update_path(control,
 										  oldVersionName,
 										  versionName);
 
-	foreach(lc, updateVersions)
-	{
-		char   *vname = (char *) lfirst(lc);
+	/*
+	 * Update the pg_extension row and execute the update scripts, one at a
+	 * time
+	 */
+	ApplyExtensionUpdates(extensionOid, control,
+						  oldVersionName, updateVersions);
+}
 
+/*
+ * Apply a series of update scripts as though individual ALTER EXTENSION
+ * UPDATE commands had been given, including altering the pg_extension row
+ * and dependencies each time.
+ *
+ * This might be more work than necessary, but it ensures that old update
+ * scripts don't break if newer versions have different control parameters.
+ */
+static void
+ApplyExtensionUpdates(Oid extensionOid,
+					  ExtensionControlFile *pcontrol,
+					  const char *initialVersion,
+					  List *updateVersions)
+{
+	const char *oldVersionName = initialVersion;
+	ListCell   *lcv;
+
+	foreach(lcv, updateVersions)
+	{
+		char	   *versionName = (char *) lfirst(lcv);
+		ExtensionControlFile *control;
+		char	   *schemaName;
+		Oid			schemaOid;
+		List	   *requiredExtensions;
+		List	   *requiredSchemas;
+		Relation	extRel;
+		ScanKeyData	key[1];
+		SysScanDesc	extScan;
+		HeapTuple	extTup;
+		Form_pg_extension extForm;
+		Datum		values[Natts_pg_extension];
+		bool		nulls[Natts_pg_extension];
+		bool		repl[Natts_pg_extension];
+		ObjectAddress myself;
+		ListCell   *lc;
+
+		/*
+		 * Fetch parameters for specific version (pcontrol is not changed)
+		 */
+		control = read_extension_aux_control_file(pcontrol, versionName);
+
+		/* Find the pg_extension tuple */
+		extRel = heap_open(ExtensionRelationId, RowExclusiveLock);
+
+		ScanKeyInit(&key[0],
+					ObjectIdAttributeNumber,
+					BTEqualStrategyNumber, F_OIDEQ,
+					ObjectIdGetDatum(extensionOid));
+
+		extScan = systable_beginscan(extRel, ExtensionOidIndexId, true,
+									 SnapshotNow, 1, key);
+
+		extTup = systable_getnext(extScan);
+
+		if (!HeapTupleIsValid(extTup)) /* should not happen */
+			elog(ERROR, "extension with oid %u does not exist",
+				 extensionOid);
+
+		extForm = (Form_pg_extension) GETSTRUCT(extTup);
+
+		/*
+		 * Determine the target schema (set by original install)
+		 */
+		schemaOid = extForm->extnamespace;
+		schemaName = get_namespace_name(schemaOid);
+
+		/*
+		 * Modify extrelocatable and extversion in the pg_extension tuple
+		 */
+		memset(values, 0, sizeof(values));
+		memset(nulls, 0, sizeof(nulls));
+		memset(repl, 0, sizeof(repl));
+
+		values[Anum_pg_extension_extrelocatable - 1] =
+			BoolGetDatum(control->relocatable);
+		repl[Anum_pg_extension_extrelocatable - 1] = true;
+		values[Anum_pg_extension_extversion - 1] =
+			CStringGetTextDatum(versionName);
+		repl[Anum_pg_extension_extversion - 1] = true;
+
+		extTup = heap_modify_tuple(extTup, RelationGetDescr(extRel),
+								   values, nulls, repl);
+
+		simple_heap_update(extRel, &extTup->t_self, extTup);
+		CatalogUpdateIndexes(extRel, extTup);
+
+		systable_endscan(extScan);
+
+		heap_close(extRel, RowExclusiveLock);
+
+		/*
+		 * Look up the prerequisite extensions for this version, and build
+		 * lists of their OIDs and the OIDs of their target schemas.
+		 */
+		requiredExtensions = NIL;
+		requiredSchemas = NIL;
+		foreach(lc, control->requires)
+		{
+			char	   *curreq = (char *) lfirst(lc);
+			Oid			reqext;
+			Oid			reqschema;
+
+			/*
+			 * We intentionally don't use get_extension_oid's default error
+			 * message here, because it would be confusing in this context.
+			 */
+			reqext = get_extension_oid(curreq, true);
+			if (!OidIsValid(reqext))
+				ereport(ERROR,
+						(errcode(ERRCODE_UNDEFINED_OBJECT),
+						 errmsg("required extension \"%s\" is not installed",
+								curreq)));
+			reqschema = get_extension_schema(reqext);
+			requiredExtensions = lappend_oid(requiredExtensions, reqext);
+			requiredSchemas = lappend_oid(requiredSchemas, reqschema);
+		}
+
+		/*
+		 * Remove and recreate dependencies on prerequisite extensions
+		 */
+		deleteDependencyRecordsForClass(ExtensionRelationId, extensionOid,
+										ExtensionRelationId,
+										DEPENDENCY_NORMAL);
+
+		myself.classId = ExtensionRelationId;
+		myself.objectId = extensionOid;
+		myself.objectSubId = 0;
+
+		foreach(lc, requiredExtensions)
+		{
+			Oid			reqext = lfirst_oid(lc);
+			ObjectAddress otherext;
+
+			otherext.classId = ExtensionRelationId;
+			otherext.objectId = reqext;
+			otherext.objectSubId = 0;
+
+			recordDependencyOn(&myself, &otherext, DEPENDENCY_NORMAL);
+		}
+
+		/*
+		 * Finally, execute the update script file
+		 */
 		execute_extension_script(extensionOid, control,
-								 oldVersionName, vname,
+								 oldVersionName, versionName,
 								 requiredSchemas,
 								 schemaName, schemaOid);
-		oldVersionName = vname;
+
+		/*
+		 * Update prior-version name and loop around.  Since execute_sql_string
+		 * did a final CommandCounterIncrement, we can update the pg_extension
+		 * row again.
+		 */
+		oldVersionName = versionName;
 	}
 }
 
