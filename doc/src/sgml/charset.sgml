@@ -459,11 +459,12 @@ SELECT a || ('foo' COLLATE "y") FROM test1;
 
    <para>
     In case a collation is needed that has different values for
-    <symbol>LC_COLLATE</symbol> and <symbol>LC_CTYPE</symbol>, or a
-    different name is needed for a collation (for example, for
-    compatibility with existing applications), a new collation may be
-    created.  But there is currently no SQL-level support for creating
-    or changing collations.
+    <symbol>LC_COLLATE</symbol> and <symbol>LC_CTYPE</symbol>, a new
+    collation may be created using
+    the <xref linkend="sql-createcollation"> command.  That command
+    can also be used to create a new collation from an existing
+    collation, which can be useful to be able to use operating-system
+    independent collation names in applications.
    </para>
   </sect2>
  </sect1>

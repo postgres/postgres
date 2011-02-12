@@ -22,9 +22,9 @@ static const char *modulename = gettext_noop("sorter");
  * Sort priority for object types when dumping a pre-7.3 database.
  * Objects are sorted by priority levels, and within an equal priority level
  * by OID.	(This is a relatively crude hack to provide semi-reasonable
- * behavior for old databases without full dependency info.)  Note: extensions,
- * text search, foreign-data, and default ACL objects can't really happen here,
- * so the rather bogus priorities for them don't matter.
+ * behavior for old databases without full dependency info.)  Note: collations,
+ * extensions, text search, foreign-data, and default ACL objects can't really
+ * happen here, so the rather bogus priorities for them don't matter.
  */
 static const int oldObjectTypePriority[] =
 {
@@ -57,7 +57,8 @@ static const int oldObjectTypePriority[] =
 	4,							/* DO_FOREIGN_SERVER */
 	17,							/* DO_DEFAULT_ACL */
 	9,							/* DO_BLOB */
-	11							/* DO_BLOB_DATA */
+	11,							/* DO_BLOB_DATA */
+	2							/* DO_COLLATION */
 };
 
 /*
@@ -95,7 +96,8 @@ static const int newObjectTypePriority[] =
 	16,							/* DO_FOREIGN_SERVER */
 	28,							/* DO_DEFAULT_ACL */
 	20,							/* DO_BLOB */
-	22							/* DO_BLOB_DATA */
+	22,							/* DO_BLOB_DATA */
+	3							/* DO_COLLATION */
 };
 
 
@@ -1063,6 +1065,11 @@ describeDumpableObject(DumpableObject *obj, char *buf, int bufsize)
 		case DO_OPFAMILY:
 			snprintf(buf, bufsize,
 					 "OPERATOR FAMILY %s  (ID %d OID %u)",
+					 obj->name, obj->dumpId, obj->catId.oid);
+			return;
+		case DO_COLLATION:
+			snprintf(buf, bufsize,
+					 "COLLATION %s  (ID %d OID %u)",
 					 obj->name, obj->dumpId, obj->catId.oid);
 			return;
 		case DO_CONVERSION:

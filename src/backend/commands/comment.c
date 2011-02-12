@@ -133,6 +133,11 @@ CommentObject(CommentStmt *stmt)
 				aclcheck_error(ACLCHECK_NOT_OWNER, ACL_KIND_NAMESPACE,
 							   strVal(linitial(stmt->objname)));
 			break;
+		case OBJECT_COLLATION:
+			if (!pg_collation_ownercheck(address.objectId, GetUserId()))
+				aclcheck_error(ACLCHECK_NOT_OWNER, ACL_KIND_COLLATION,
+							   NameListToString(stmt->objname));
+			break;
 		case OBJECT_CONVERSION:
 			if (!pg_conversion_ownercheck(address.objectId, GetUserId()))
 				aclcheck_error(ACLCHECK_NOT_OWNER, ACL_KIND_CONVERSION,

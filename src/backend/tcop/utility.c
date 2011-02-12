@@ -26,6 +26,7 @@
 #include "commands/async.h"
 #include "commands/cluster.h"
 #include "commands/comment.h"
+#include "commands/collationcmds.h"
 #include "commands/conversioncmds.h"
 #include "commands/copy.h"
 #include "commands/dbcommands.h"
@@ -665,6 +666,10 @@ standard_ProcessUtility(Node *parsetree,
 						RemoveTypes(stmt);
 						break;
 
+					case OBJECT_COLLATION:
+						DropCollationsCommand(stmt);
+						break;
+
 					case OBJECT_CONVERSION:
 						DropConversionsCommand(stmt);
 						break;
@@ -883,6 +888,10 @@ standard_ProcessUtility(Node *parsetree,
 					case OBJECT_TSCONFIGURATION:
 						Assert(stmt->args == NIL);
 						DefineTSConfiguration(stmt->defnames, stmt->definition);
+						break;
+					case OBJECT_COLLATION:
+						Assert(stmt->args == NIL);
+						DefineCollation(stmt->defnames, stmt->definition);
 						break;
 					default:
 						elog(ERROR, "unrecognized define stmt type: %d",
@@ -1453,6 +1462,9 @@ AlterObjectTypeCommandTag(ObjectType objtype)
 		case OBJECT_CAST:
 			tag = "ALTER CAST";
 			break;
+		case OBJECT_COLLATION:
+			tag = "ALTER COLLATION";
+			break;
 		case OBJECT_COLUMN:
 			tag = "ALTER TABLE";
 			break;
@@ -1754,6 +1766,9 @@ CreateCommandTag(Node *parsetree)
 				case OBJECT_DOMAIN:
 					tag = "DROP DOMAIN";
 					break;
+				case OBJECT_COLLATION:
+					tag = "DROP COLLATION";
+					break;
 				case OBJECT_CONVERSION:
 					tag = "DROP CONVERSION";
 					break;
@@ -1866,6 +1881,9 @@ CreateCommandTag(Node *parsetree)
 					break;
 				case OBJECT_TSCONFIGURATION:
 					tag = "CREATE TEXT SEARCH CONFIGURATION";
+					break;
+				case OBJECT_COLLATION:
+					tag = "CREATE COLLATION";
 					break;
 				default:
 					tag = "???";

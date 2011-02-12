@@ -25,6 +25,7 @@
 #include "catalog/pg_authid.h"
 #include "catalog/pg_cast.h"
 #include "catalog/pg_class.h"
+#include "catalog/pg_collation.h"
 #include "catalog/pg_constraint.h"
 #include "catalog/pg_conversion.h"
 #include "catalog/pg_database.h"
@@ -163,6 +164,11 @@ get_object_address(ObjectType objtype, List *objname, List *objargs,
 										(TypeName *) linitial(objargs),
 										(TypeName *) lsecond(objargs),
 										false, -1);
+			address.objectSubId = 0;
+			break;
+		case OBJECT_COLLATION:
+			address.classId = CollationRelationId;
+			address.objectId = get_collation_oid(objname, false);
 			address.objectSubId = 0;
 			break;
 		case OBJECT_CONVERSION:
@@ -620,6 +626,9 @@ object_exists(ObjectAddress address)
 			break;
 		case OperatorRelationId:
 			cache = OPEROID;
+			break;
+		case CollationRelationId:
+			cache = COLLOID;
 			break;
 		case ConversionRelationId:
 			cache = CONVOID;

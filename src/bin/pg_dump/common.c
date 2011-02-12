@@ -87,6 +87,7 @@ getSchemaData(int *numTablesPtr)
 	CastInfo   *castinfo;
 	OpclassInfo *opcinfo;
 	OpfamilyInfo *opfinfo;
+	CollInfo   *collinfo;
 	ConvInfo   *convinfo;
 	TSParserInfo *prsinfo;
 	TSTemplateInfo *tmplinfo;
@@ -104,6 +105,7 @@ getSchemaData(int *numTablesPtr)
 	int			numCasts;
 	int			numOpclasses;
 	int			numOpfamilies;
+	int			numCollations;
 	int			numConversions;
 	int			numTSParsers;
 	int			numTSTemplates;
@@ -181,6 +183,10 @@ getSchemaData(int *numTablesPtr)
 	if (g_verbose)
 		write_msg(NULL, "reading default privileges\n");
 	daclinfo = getDefaultACLs(&numDefaultACLs);
+
+	if (g_verbose)
+		write_msg(NULL, "reading user-defined collations\n");
+	collinfo = getCollations(&numCollations);
 
 	if (g_verbose)
 		write_msg(NULL, "reading user-defined conversions\n");

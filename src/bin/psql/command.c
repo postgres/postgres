@@ -425,6 +425,9 @@ exec_command(const char *cmd,
 			case 'o':
 				success = describeOperators(pattern, show_system);
 				break;
+			case 'O':
+				success = listCollations(pattern, show_verbose, show_system);
+				break;
 			case 'p':
 				success = permissionsList(pattern);
 				break;

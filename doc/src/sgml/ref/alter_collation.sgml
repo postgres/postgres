@@ -1,0 +1,128 @@
+<!--
+doc/src/sgml/ref/alter_collation.sgml
+PostgreSQL documentation
+-->
+
+<refentry id="SQL-ALTERCOLLATION">
+ <refmeta>
+  <refentrytitle>ALTER COLLATION</refentrytitle>
+  <manvolnum>7</manvolnum>
+  <refmiscinfo>SQL - Language Statements</refmiscinfo>
+ </refmeta>
+
+ <refnamediv>
+  <refname>ALTER COLLATION</refname>
+  <refpurpose>change the definition of a collation</refpurpose>
+ </refnamediv>
+
+ <indexterm zone="sql-altercollation">
+  <primary>ALTER COLLATION</primary>
+ </indexterm>
+
+ <refsynopsisdiv>
+<synopsis>
+ALTER COLLATION <replaceable>name</replaceable> RENAME TO <replaceable>new_name</replaceable>
+ALTER COLLATION <replaceable>name</replaceable> OWNER TO <replaceable>new_owner</replaceable>
+ALTER COLLATION <replaceable>name</replaceable> SET SCHEMA <replaceable>new_schema</replaceable>
+</synopsis>
+ </refsynopsisdiv>
+
+ <refsect1>
+  <title>Description</title>
+
+  <para>
+   <command>ALTER COLLATION</command> changes the definition of a
+   collation.
+  </para>
+
+  <para>
+   You must own the collation to use <command>ALTER COLLATION</>.
+   To alter the owner, you must also be a direct or indirect member of the new
+   owning role, and that role must have <literal>CREATE</literal> privilege on
+   the collation's schema.  (These restrictions enforce that altering the
+   owner doesn't do anything you couldn't do by dropping and recreating the
+   collation. However, a superuser can alter ownership of any collation
+   anyway.)
+  </para>
+ </refsect1>
+
+ <refsect1>
+  <title>Parameters</title>
+
+  <variablelist>
+   <varlistentry>
+    <term><replaceable class="parameter">name</replaceable></term>
+    <listitem>
+     <para>
+      The name (optionally schema-qualified) of an existing collation.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><replaceable class="parameter">new_name</replaceable></term>
+    <listitem>
+     <para>
+      The new name of the collation.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><replaceable class="parameter">new_owner</replaceable></term>
+    <listitem>
+     <para>
+      The new owner of the collation.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><replaceable class="parameter">new_schema</replaceable></term>
+    <listitem>
+     <para>
+      The new schema for the collation.
+     </para>
+    </listitem>
+   </varlistentry>
+  </variablelist>
+ </refsect1>
+
+ <refsect1>
+  <title>Examples</title>
+
+  <para>
+   To rename the collation <literal>de_DE</literal> to
+   <literal>german</literal>:
+<programlisting>
+ALTER COLLATION "de_DE" RENAME TO german;
+</programlisting>
+  </para>
+
+  <para>
+   To change the owner of the collation <literal>en_US</literal> to
+   <literal>joe</literal>:
+<programlisting>
+ALTER COLLATION "en_US" OWNER TO joe;
+</programlisting>
+  </para>
+ </refsect1>
+
+ <refsect1>
+  <title>Compatibility</title>
+
+  <para>
+   There is no <command>ALTER COLLATION</command> statement in the SQL
+   standard.
+  </para>
+ </refsect1>
+
+ <refsect1>
+  <title>See Also</title>
+
+  <simplelist type="inline">
+   <member><xref linkend="sql-createcollation"></member>
+   <member><xref linkend="sql-dropcollation"></member>
+  </simplelist>
+ </refsect1>
+</refentry>

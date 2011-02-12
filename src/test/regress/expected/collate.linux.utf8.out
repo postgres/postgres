@@ -732,3 +732,96 @@ SELECT relname, pg_get_indexdef(oid) FROM pg_class WHERE relname LIKE 'collate_t
  collate_test1_idx3 | CREATE INDEX collate_test1_idx3 ON collate_test1 USING btree (((b COLLATE "C")) COLLATE "C")
 (3 rows)
 
+-- schema manipulation commands
+CREATE ROLE regress_test_role;
+CREATE SCHEMA test_schema;
+CREATE COLLATION test0 (locale = 'en_US.utf8');
+CREATE COLLATION test0 (locale = 'en_US.utf8'); -- fail
+ERROR:  collation "test0" for encoding "UTF8" already exists
+CREATE COLLATION test1 (lc_collate = 'en_US.utf8', lc_ctype = 'de_DE.utf8');
+CREATE COLLATION test2 (locale = 'en_US'); -- fail
+ERROR:  encoding UTF8 does not match locale en_US
+DETAIL:  The chosen LC_CTYPE setting requires encoding LATIN1.
+CREATE COLLATION test3 (lc_collate = 'en_US.utf8'); -- fail
+ERROR:  parameter "lc_ctype" must be specified
+CREATE COLLATION test4 FROM nonsense;
+ERROR:  collation "nonsense" for current database encoding "UTF8" does not exist
+CREATE COLLATION test5 FROM test0;
+SELECT collname, collencoding, collcollate, collctype FROM pg_collation WHERE collname LIKE 'test%' ORDER BY 1;
+ collname | collencoding | collcollate | collctype  
+----------+--------------+-------------+------------
+ test0    |            6 | en_US.utf8  | en_US.utf8
+ test1    |            6 | en_US.utf8  | de_DE.utf8
+ test5    |            6 | en_US.utf8  | en_US.utf8
+(3 rows)
+
+ALTER COLLATION test1 RENAME TO test11;
+ALTER COLLATION test0 RENAME TO test11; -- fail
+ERROR:  collation "test11" for current database encoding "UTF8" already exists in schema "public"
+ALTER COLLATION test1 RENAME TO test22; -- fail
+ERROR:  collation "test1" for current database encoding "UTF8" does not exist
+ALTER COLLATION test11 OWNER TO regress_test_role;
+ALTER COLLATION test11 OWNER TO nonsense;
+ERROR:  role "nonsense" does not exist
+ALTER COLLATION test11 SET SCHEMA test_schema;
+COMMENT ON COLLATION test0 IS 'US English';
+SELECT collname, nspname, obj_description(pg_collation.oid, 'pg_collation')
+    FROM pg_collation JOIN pg_namespace ON (collnamespace = pg_namespace.oid)
+    WHERE collname LIKE 'test%'
+    ORDER BY 1;
+ collname |   nspname   | obj_description 
+----------+-------------+-----------------
+ test0    | public      | US English
+ test11   | test_schema | 
+ test5    | public      | 
+(3 rows)
+
+DROP COLLATION test0, test_schema.test11, test5;
+DROP COLLATION test0; -- fail
+ERROR:  collation "test0" for current database encoding "UTF8" does not exist
+DROP COLLATION IF EXISTS test0;
+NOTICE:  collation "test0" does not exist, skipping
+SELECT collname FROM pg_collation WHERE collname LIKE 'test%';
+ collname 
+----------
+(0 rows)
+
+DROP SCHEMA test_schema;
+DROP ROLE regress_test_role;
+-- dependencies
+CREATE COLLATION test0 (locale = 'en_US.utf8');
+CREATE TABLE collate_dep_test1 (a int, b text COLLATE test0);
+CREATE DOMAIN collate_dep_dom1 AS text COLLATE test0;
+CREATE TYPE collate_dep_test2 AS (x int, y text COLLATE test0);
+CREATE VIEW collate_dep_test3 AS SELECT text 'foo' COLLATE test0 AS foo;
+CREATE TABLE collate_dep_test4t (a int, b text);
+CREATE INDEX collate_dep_test4i ON collate_dep_test4t (b COLLATE test0);
+DROP COLLATION test0 RESTRICT; -- fail
+ERROR:  cannot drop collation test0 because other objects depend on it
+DETAIL:  table collate_dep_test1 column b depends on collation test0
+type collate_dep_dom1 depends on collation test0
+composite type collate_dep_test2 column y depends on collation test0
+view collate_dep_test3 depends on collation test0
+index collate_dep_test4i depends on collation test0
+HINT:  Use DROP ... CASCADE to drop the dependent objects too.
+DROP COLLATION test0 CASCADE;
+NOTICE:  drop cascades to 5 other objects
+DETAIL:  drop cascades to table collate_dep_test1 column b
+drop cascades to type collate_dep_dom1
+drop cascades to composite type collate_dep_test2 column y
+drop cascades to view collate_dep_test3
+drop cascades to index collate_dep_test4i
+\d collate_dep_test1
+Table "public.collate_dep_test1"
+ Column |  Type   | Modifiers 
+--------+---------+-----------
+ a      | integer | 
+
+\d collate_dep_test2
+Composite type "public.collate_dep_test2"
+ Column |  Type   
+--------+---------
+ x      | integer
+
+DROP TABLE collate_dep_test1, collate_dep_test4t;
+DROP TYPE collate_dep_test2;

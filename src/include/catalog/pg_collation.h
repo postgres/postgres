@@ -32,6 +32,7 @@ CATALOG(pg_collation,3456)
 {
 	NameData	collname;		/* collation name */
 	Oid			collnamespace;	/* OID of namespace containing this collation */
+	Oid			collowner;
 	int4		collencoding;	/* encoding that this collation applies to */
 	NameData	collcollate;	/* LC_COLLATE setting */
 	NameData	collctype;		/* LC_CTYPE setting */
@@ -48,14 +49,15 @@ typedef FormData_pg_collation *Form_pg_collation;
  *		compiler constants for pg_collation
  * ----------------
  */
-#define Natts_pg_collation				5
+#define Natts_pg_collation				6
 #define Anum_pg_collation_collname		1
 #define Anum_pg_collation_collnamespace	2
-#define Anum_pg_collation_collencoding	3
-#define Anum_pg_collation_collcollate	4
-#define Anum_pg_collation_collctype		5
+#define Anum_pg_collation_collowner		3
+#define Anum_pg_collation_collencoding	4
+#define Anum_pg_collation_collcollate	5
+#define Anum_pg_collation_collctype		6
 
-DATA(insert OID = 100 ( default PGNSP 0 "" "" ));
+DATA(insert OID = 100 ( default PGNSP PGUID 0 "" "" ));
 DESCR("placeholder for default collation");
 #define DEFAULT_COLLATION_OID			100
 

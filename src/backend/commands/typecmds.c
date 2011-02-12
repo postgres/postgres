@@ -1736,6 +1736,7 @@ AlterDomainDefault(List *names, Node *defaultRaw)
 							 InvalidOid,
 							 false,		/* a domain isn't an implicit array */
 							 typTup->typbasetype,
+							 typTup->typcollation,
 							 defaultExpr,
 							 true);		/* Rebuild is true */
 

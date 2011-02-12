@@ -25,6 +25,7 @@
 #include "catalog/dependency.h"
 #include "catalog/indexing.h"
 #include "catalog/pg_authid.h"
+#include "catalog/pg_collation.h"
 #include "catalog/pg_conversion.h"
 #include "catalog/pg_database.h"
 #include "catalog/pg_default_acl.h"
@@ -3131,6 +3132,8 @@ static const char *const no_priv_msg[MAX_ACL_KIND] =
 	gettext_noop("permission denied for operator class %s"),
 	/* ACL_KIND_OPFAMILY */
 	gettext_noop("permission denied for operator family %s"),
+	/* ACL_KIND_COLLATION */
+	gettext_noop("permission denied for collation %s"),
 	/* ACL_KIND_CONVERSION */
 	gettext_noop("permission denied for conversion %s"),
 	/* ACL_KIND_TABLESPACE */
@@ -3173,6 +3176,8 @@ static const char *const not_owner_msg[MAX_ACL_KIND] =
 	gettext_noop("must be owner of operator class %s"),
 	/* ACL_KIND_OPFAMILY */
 	gettext_noop("must be owner of operator family %s"),
+	/* ACL_KIND_COLLATION */
+	gettext_noop("must be owner of collation %s"),
 	/* ACL_KIND_CONVERSION */
 	gettext_noop("must be owner of conversion %s"),
 	/* ACL_KIND_TABLESPACE */
@@ -4629,6 +4634,32 @@ pg_database_ownercheck(Oid db_oid, Oid roleid)
 	ReleaseSysCache(tuple);
 
 	return has_privs_of_role(roleid, dba);
+}
+
+/*
+ * Ownership check for a collation (specified by OID).
+ */
+bool
+pg_collation_ownercheck(Oid coll_oid, Oid roleid)
+{
+	HeapTuple	tuple;
+	Oid			ownerId;
+
+	/* Superusers bypass all permission checking. */
+	if (superuser_arg(roleid))
+		return true;
+
+	tuple = SearchSysCache1(COLLOID, ObjectIdGetDatum(coll_oid));
+	if (!HeapTupleIsValid(tuple))
+		ereport(ERROR,
+				(errcode(ERRCODE_UNDEFINED_OBJECT),
+				 errmsg("collation with OID %u does not exist", coll_oid)));
+
+	ownerId = ((Form_pg_collation) GETSTRUCT(tuple))->collowner;
+
+	ReleaseSysCache(tuple);
+
+	return has_privs_of_role(roleid, ownerId);
 }
 
 /*

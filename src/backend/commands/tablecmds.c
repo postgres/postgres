@@ -27,6 +27,7 @@
 #include "catalog/indexing.h"
 #include "catalog/namespace.h"
 #include "catalog/objectaccess.h"
+#include "catalog/pg_collation.h"
 #include "catalog/pg_constraint.h"
 #include "catalog/pg_depend.h"
 #include "catalog/pg_foreign_table.h"
@@ -293,7 +294,7 @@ static void ATPrepAddColumn(List **wqueue, Relation rel, bool recurse, bool recu
 				AlterTableCmd *cmd, LOCKMODE lockmode);
 static void ATExecAddColumn(AlteredTableInfo *tab, Relation rel,
 				ColumnDef *colDef, bool isOid, LOCKMODE lockmode);
-static void add_column_datatype_dependency(Oid relid, int32 attnum, Oid typid);
+static void add_column_datatype_dependency(Oid relid, int32 attnum, Oid typid, Oid collid);
 static void ATPrepAddOids(List **wqueue, Relation rel, bool recurse,
 			  AlterTableCmd *cmd, LOCKMODE lockmode);
 static void ATExecDropNotNull(Relation rel, const char *colName, LOCKMODE lockmode);
@@ -4369,14 +4370,14 @@ ATExecAddColumn(AlteredTableInfo *tab, Relation rel,
 	/*
 	 * Add needed dependency entries for the new column.
 	 */
-	add_column_datatype_dependency(myrelid, newattnum, attribute.atttypid);
+	add_column_datatype_dependency(myrelid, newattnum, attribute.atttypid, attribute.attcollation);
 }
 
 /*
  * Install a column's dependency on its datatype.
  */
 static void
-add_column_datatype_dependency(Oid relid, int32 attnum, Oid typid)
+add_column_datatype_dependency(Oid relid, int32 attnum, Oid typid, Oid collid)
 {
 	ObjectAddress myself,
 				referenced;
@@ -4388,6 +4389,14 @@ add_column_datatype_dependency(Oid relid, int32 attnum, Oid typid)
 	referenced.objectId = typid;
 	referenced.objectSubId = 0;
 	recordDependencyOn(&myself, &referenced, DEPENDENCY_NORMAL);
+
+	if (collid)
+	{
+		referenced.classId = CollationRelationId;
+		referenced.objectId = collid;
+		referenced.objectSubId = 0;
+		recordDependencyOn(&myself, &referenced, DEPENDENCY_NORMAL);
+	}
 }
 
 /*
@@ -6877,6 +6886,7 @@ ATExecAlterColumnType(AlteredTableInfo *tab, Relation rel,
 			case OCLASS_PROC:
 			case OCLASS_TYPE:
 			case OCLASS_CAST:
+			case OCLASS_COLLATION:
 			case OCLASS_CONVERSION:
 			case OCLASS_LANGUAGE:
 			case OCLASS_LARGEOBJECT:
@@ -6918,7 +6928,7 @@ ATExecAlterColumnType(AlteredTableInfo *tab, Relation rel,
 	/*
 	 * Now scan for dependencies of this column on other things.  The only
 	 * thing we should find is the dependency on the column datatype, which we
-	 * want to remove.
+	 * want to remove, and possibly an associated collation.
 	 */
 	ScanKeyInit(&key[0],
 				Anum_pg_depend_classid,
@@ -6943,8 +6953,10 @@ ATExecAlterColumnType(AlteredTableInfo *tab, Relation rel,
 		if (foundDep->deptype != DEPENDENCY_NORMAL)
 			elog(ERROR, "found unexpected dependency type '%c'",
 				 foundDep->deptype);
-		if (foundDep->refclassid != TypeRelationId ||
-			foundDep->refobjid != attTup->atttypid)
+		if (!(foundDep->refclassid == TypeRelationId &&
+			  foundDep->refobjid == attTup->atttypid) &&
+			!(foundDep->refclassid == CollationRelationId &&
+			  foundDep->refobjid == attTup->attcollation))
 			elog(ERROR, "found unexpected dependency for column");
 
 		simple_heap_delete(depRel, &depTup->t_self);
@@ -6977,7 +6989,7 @@ ATExecAlterColumnType(AlteredTableInfo *tab, Relation rel,
 	heap_close(attrelation, RowExclusiveLock);
 
 	/* Install dependency on new datatype */
-	add_column_datatype_dependency(RelationGetRelid(rel), attnum, targettype);
+	add_column_datatype_dependency(RelationGetRelid(rel), attnum, targettype, targetcollid);
 
 	/*
 	 * Drop any pg_statistic entry for the column, since it's now wrong type

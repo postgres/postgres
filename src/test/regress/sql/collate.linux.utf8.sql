@@ -222,3 +222,65 @@ CREATE INDEX collate_test1_idx4 ON collate_test1 (a COLLATE "C"); -- fail
 CREATE INDEX collate_test1_idx5 ON collate_test1 ((a COLLATE "C")); -- fail
 
 SELECT relname, pg_get_indexdef(oid) FROM pg_class WHERE relname LIKE 'collate_test%_idx%';
+
+
+-- schema manipulation commands
+
+CREATE ROLE regress_test_role;
+CREATE SCHEMA test_schema;
+
+CREATE COLLATION test0 (locale = 'en_US.utf8');
+CREATE COLLATION test0 (locale = 'en_US.utf8'); -- fail
+CREATE COLLATION test1 (lc_collate = 'en_US.utf8', lc_ctype = 'de_DE.utf8');
+CREATE COLLATION test2 (locale = 'en_US'); -- fail
+CREATE COLLATION test3 (lc_collate = 'en_US.utf8'); -- fail
+
+CREATE COLLATION test4 FROM nonsense;
+CREATE COLLATION test5 FROM test0;
+
+SELECT collname, collencoding, collcollate, collctype FROM pg_collation WHERE collname LIKE 'test%' ORDER BY 1;
+
+ALTER COLLATION test1 RENAME TO test11;
+ALTER COLLATION test0 RENAME TO test11; -- fail
+ALTER COLLATION test1 RENAME TO test22; -- fail
+
+ALTER COLLATION test11 OWNER TO regress_test_role;
+ALTER COLLATION test11 OWNER TO nonsense;
+ALTER COLLATION test11 SET SCHEMA test_schema;
+
+COMMENT ON COLLATION test0 IS 'US English';
+
+SELECT collname, nspname, obj_description(pg_collation.oid, 'pg_collation')
+    FROM pg_collation JOIN pg_namespace ON (collnamespace = pg_namespace.oid)
+    WHERE collname LIKE 'test%'
+    ORDER BY 1;
+
+DROP COLLATION test0, test_schema.test11, test5;
+DROP COLLATION test0; -- fail
+DROP COLLATION IF EXISTS test0;
+
+SELECT collname FROM pg_collation WHERE collname LIKE 'test%';
+
+DROP SCHEMA test_schema;
+DROP ROLE regress_test_role;
+
+
+-- dependencies
+
+CREATE COLLATION test0 (locale = 'en_US.utf8');
+
+CREATE TABLE collate_dep_test1 (a int, b text COLLATE test0);
+CREATE DOMAIN collate_dep_dom1 AS text COLLATE test0;
+CREATE TYPE collate_dep_test2 AS (x int, y text COLLATE test0);
+CREATE VIEW collate_dep_test3 AS SELECT text 'foo' COLLATE test0 AS foo;
+CREATE TABLE collate_dep_test4t (a int, b text);
+CREATE INDEX collate_dep_test4i ON collate_dep_test4t (b COLLATE test0);
+
+DROP COLLATION test0 RESTRICT; -- fail
+DROP COLLATION test0 CASCADE;
+
+\d collate_dep_test1
+\d collate_dep_test2
+
+DROP TABLE collate_dep_test1, collate_dep_test4t;
+DROP TYPE collate_dep_test2;

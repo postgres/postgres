@@ -28,6 +28,8 @@
 #include "catalog/pg_attrdef.h"
 #include "catalog/pg_authid.h"
 #include "catalog/pg_cast.h"
+#include "catalog/pg_collation.h"
+#include "catalog/pg_collation_fn.h"
 #include "catalog/pg_constraint.h"
 #include "catalog/pg_conversion.h"
 #include "catalog/pg_conversion_fn.h"
@@ -133,6 +135,7 @@ static const Oid object_classes[MAX_OCLASS] = {
 	ProcedureRelationId,		/* OCLASS_PROC */
 	TypeRelationId,				/* OCLASS_TYPE */
 	CastRelationId,				/* OCLASS_CAST */
+	CollationRelationId,		/* OCLASS_COLLATION */
 	ConstraintRelationId,		/* OCLASS_CONSTRAINT */
 	ConversionRelationId,		/* OCLASS_CONVERSION */
 	AttrDefaultRelationId,		/* OCLASS_DEFAULT */
@@ -1075,6 +1078,10 @@ doDeletion(const ObjectAddress *object)
 			DropCastById(object->objectId);
 			break;
 
+		case OCLASS_COLLATION:
+			RemoveCollationById(object->objectId);
+			break;
+
 		case OCLASS_CONSTRAINT:
 			RemoveConstraintById(object->objectId);
 			break;
@@ -1417,6 +1424,9 @@ find_expr_references_walker(Node *node,
 		/* A constant must depend on the constant's datatype */
 		add_object_address(OCLASS_TYPE, con->consttype, 0,
 						   context->addrs);
+		if (OidIsValid(con->constcollid))
+			add_object_address(OCLASS_COLLATION, con->constcollid, 0,
+							   context->addrs);
 
 		/*
 		 * If it's a regclass or similar literal referring to an existing
@@ -1483,6 +1493,9 @@ find_expr_references_walker(Node *node,
 		/* A parameter must depend on the parameter's datatype */
 		add_object_address(OCLASS_TYPE, param->paramtype, 0,
 						   context->addrs);
+		if (OidIsValid(param->paramcollation))
+			add_object_address(OCLASS_COLLATION, param->paramcollation, 0,
+							   context->addrs);
 	}
 	else if (IsA(node, FuncExpr))
 	{
@@ -1551,6 +1564,13 @@ find_expr_references_walker(Node *node,
 
 		/* since there is no function dependency, need to depend on type */
 		add_object_address(OCLASS_TYPE, relab->resulttype, 0,
+						   context->addrs);
+	}
+	else if (IsA(node, CollateClause))
+	{
+		CollateClause *coll = (CollateClause *) node;
+
+		add_object_address(OCLASS_COLLATION, coll->collOid, 0,
 						   context->addrs);
 	}
 	else if (IsA(node, CoerceViaIO))
@@ -1652,6 +1672,14 @@ find_expr_references_walker(Node *node,
 					{
 						add_object_address(OCLASS_TYPE, lfirst_oid(ct), 0,
 										   context->addrs);
+					}
+					foreach(ct, rte->funccolcollations)
+					{
+						Oid collid = lfirst_oid(ct);
+
+						if (OidIsValid(collid))
+							add_object_address(OCLASS_COLLATION, collid, 0,
+											   context->addrs);
 					}
 					break;
 				default:
@@ -2019,6 +2047,9 @@ getObjectClass(const ObjectAddress *object)
 		case CastRelationId:
 			return OCLASS_CAST;
 
+		case CollationRelationId:
+			return OCLASS_COLLATION;
+
 		case ConstraintRelationId:
 			return OCLASS_CONSTRAINT;
 
@@ -2164,6 +2195,21 @@ getObjectDescription(const ObjectAddress *object)
 
 				systable_endscan(rcscan);
 				heap_close(castDesc, AccessShareLock);
+				break;
+			}
+
+		case OCLASS_COLLATION:
+			{
+				HeapTuple	collTup;
+
+				collTup = SearchSysCache1(COLLOID,
+										 ObjectIdGetDatum(object->objectId));
+				if (!HeapTupleIsValid(collTup))
+					elog(ERROR, "cache lookup failed for collation %u",
+						 object->objectId);
+				appendStringInfo(&buffer, _("collation %s"),
+				 NameStr(((Form_pg_collation) GETSTRUCT(collTup))->collname));
+				ReleaseSysCache(collTup);
 				break;
 			}
 

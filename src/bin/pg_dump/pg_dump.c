@@ -175,6 +175,7 @@ static void dumpCast(Archive *fout, CastInfo *cast);
 static void dumpOpr(Archive *fout, OprInfo *oprinfo);
 static void dumpOpclass(Archive *fout, OpclassInfo *opcinfo);
 static void dumpOpfamily(Archive *fout, OpfamilyInfo *opfinfo);
+static void dumpCollation(Archive *fout, CollInfo *convinfo);
 static void dumpConversion(Archive *fout, ConvInfo *convinfo);
 static void dumpRule(Archive *fout, RuleInfo *rinfo);
 static void dumpAgg(Archive *fout, AggInfo *agginfo);
@@ -3092,6 +3093,84 @@ getOperators(int *numOprs)
 	destroyPQExpBuffer(query);
 
 	return oprinfo;
+}
+
+/*
+ * getCollations:
+ *	  read all collations in the system catalogs and return them in the
+ * CollInfo* structure
+ *
+ *	numCollations is set to the number of collations read in
+ */
+CollInfo *
+getCollations(int *numCollations)
+{
+	PGresult   *res;
+	int			ntups;
+	int			i;
+	PQExpBuffer query = createPQExpBuffer();
+	CollInfo   *collinfo;
+	int			i_tableoid;
+	int			i_oid;
+	int			i_collname;
+	int			i_collnamespace;
+	int			i_rolname;
+
+	/* Collations didn't exist pre-9.1 */
+	if (g_fout->remoteVersion < 90100)
+	{
+		*numCollations = 0;
+		return NULL;
+	}
+
+	/*
+	 * find all collations, including builtin collations; we filter out
+	 * system-defined collations at dump-out time.
+	 */
+
+	/* Make sure we are in proper schema */
+	selectSourceSchema("pg_catalog");
+
+	appendPQExpBuffer(query, "SELECT tableoid, oid, collname, "
+					  "collnamespace, "
+					  "(%s collowner) AS rolname "
+					  "FROM pg_collation",
+					  username_subquery);
+
+	res = PQexec(g_conn, query->data);
+	check_sql_result(res, g_conn, query->data, PGRES_TUPLES_OK);
+
+	ntups = PQntuples(res);
+	*numCollations = ntups;
+
+	collinfo = (CollInfo *) malloc(ntups * sizeof(CollInfo));
+
+	i_tableoid = PQfnumber(res, "tableoid");
+	i_oid = PQfnumber(res, "oid");
+	i_collname = PQfnumber(res, "collname");
+	i_collnamespace = PQfnumber(res, "collnamespace");
+	i_rolname = PQfnumber(res, "rolname");
+
+	for (i = 0; i < ntups; i++)
+	{
+		collinfo[i].dobj.objType = DO_COLLATION;
+		collinfo[i].dobj.catId.tableoid = atooid(PQgetvalue(res, i, i_tableoid));
+		collinfo[i].dobj.catId.oid = atooid(PQgetvalue(res, i, i_oid));
+		AssignDumpId(&collinfo[i].dobj);
+		collinfo[i].dobj.name = strdup(PQgetvalue(res, i, i_collname));
+		collinfo[i].dobj.namespace = findNamespace(atooid(PQgetvalue(res, i, i_collnamespace)),
+												 collinfo[i].dobj.catId.oid);
+		collinfo[i].rolname = strdup(PQgetvalue(res, i, i_rolname));
+
+		/* Decide whether we want to dump it */
+		selectDumpableObject(&(collinfo[i].dobj));
+	}
+
+	PQclear(res);
+
+	destroyPQExpBuffer(query);
+
+	return collinfo;
 }
 
 /*
@@ -6763,6 +6842,9 @@ dumpDumpableObject(Archive *fout, DumpableObject *dobj)
 		case DO_OPFAMILY:
 			dumpOpfamily(fout, (OpfamilyInfo *) dobj);
 			break;
+		case DO_COLLATION:
+			dumpCollation(fout, (CollInfo *) dobj);
+			break;
 		case DO_CONVERSION:
 			dumpConversion(fout, (ConvInfo *) dobj);
 			break;
@@ -9920,6 +10002,111 @@ dumpOpfamily(Archive *fout, OpfamilyInfo *opfinfo)
 	free(amname);
 	PQclear(res_ops);
 	PQclear(res_procs);
+	destroyPQExpBuffer(query);
+	destroyPQExpBuffer(q);
+	destroyPQExpBuffer(delq);
+	destroyPQExpBuffer(labelq);
+}
+
+/*
+ * dumpCollation
+ *	  write out a single collation definition
+ */
+static void
+dumpCollation(Archive *fout, CollInfo *collinfo)
+{
+	PQExpBuffer query;
+	PQExpBuffer q;
+	PQExpBuffer delq;
+	PQExpBuffer labelq;
+	PGresult   *res;
+	int			ntups;
+	int			i_collname;
+	int			i_collcollate;
+	int			i_collctype;
+	const char *collname;
+	const char *collcollate;
+	const char *collctype;
+
+	/* Skip if not to be dumped */
+	if (!collinfo->dobj.dump || dataOnly)
+		return;
+
+	query = createPQExpBuffer();
+	q = createPQExpBuffer();
+	delq = createPQExpBuffer();
+	labelq = createPQExpBuffer();
+
+	/* Make sure we are in proper schema */
+	selectSourceSchema(collinfo->dobj.namespace->dobj.name);
+
+	/* Get conversion-specific details */
+	appendPQExpBuffer(query, "SELECT collname, "
+					  "collcollate, "
+					  "collctype "
+					  "FROM pg_catalog.pg_collation c "
+					  "WHERE c.oid = '%u'::pg_catalog.oid",
+					  collinfo->dobj.catId.oid);
+
+	res = PQexec(g_conn, query->data);
+	check_sql_result(res, g_conn, query->data, PGRES_TUPLES_OK);
+
+	/* Expecting a single result only */
+	ntups = PQntuples(res);
+	if (ntups != 1)
+	{
+		write_msg(NULL, ngettext("query returned %d row instead of one: %s\n",
+							   "query returned %d rows instead of one: %s\n",
+								 ntups),
+				  ntups, query->data);
+		exit_nicely();
+	}
+
+	i_collname = PQfnumber(res, "collname");
+	i_collcollate = PQfnumber(res, "collcollate");
+	i_collctype = PQfnumber(res, "collctype");
+
+	collname = PQgetvalue(res, 0, i_collname);
+	collcollate = PQgetvalue(res, 0, i_collcollate);
+	collctype = PQgetvalue(res, 0, i_collctype);
+
+	/*
+	 * DROP must be fully qualified in case same name appears in pg_catalog
+	 */
+	appendPQExpBuffer(delq, "DROP COLLATION %s",
+					  fmtId(collinfo->dobj.namespace->dobj.name));
+	appendPQExpBuffer(delq, ".%s;\n",
+					  fmtId(collinfo->dobj.name));
+
+	appendPQExpBuffer(q, "CREATE COLLATION %s (lc_collate = ",
+					  fmtId(collinfo->dobj.name));
+	appendStringLiteralAH(q, collcollate, fout);
+	appendPQExpBuffer(q, ", lc_ctype = ");
+	appendStringLiteralAH(q, collctype, fout);
+	appendPQExpBuffer(q, ");\n");
+
+	appendPQExpBuffer(labelq, "COLLATION %s", fmtId(collinfo->dobj.name));
+
+	if (binary_upgrade)
+		binary_upgrade_extension_member(q, &collinfo->dobj, labelq->data);
+
+	ArchiveEntry(fout, collinfo->dobj.catId, collinfo->dobj.dumpId,
+				 collinfo->dobj.name,
+				 collinfo->dobj.namespace->dobj.name,
+				 NULL,
+				 collinfo->rolname,
+				 false, "COLLATION", SECTION_PRE_DATA,
+				 q->data, delq->data, NULL,
+				 collinfo->dobj.dependencies, collinfo->dobj.nDeps,
+				 NULL, NULL);
+
+	/* Dump Collation Comments */
+	dumpComment(fout, labelq->data,
+				collinfo->dobj.namespace->dobj.name, collinfo->rolname,
+				collinfo->dobj.catId, 0, collinfo->dobj.dumpId);
+
+	PQclear(res);
+
 	destroyPQExpBuffer(query);
 	destroyPQExpBuffer(q);
 	destroyPQExpBuffer(delq);

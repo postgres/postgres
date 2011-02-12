@@ -69,6 +69,9 @@ extern bool listConversions(const char *pattern, bool showSystem);
 /* \dC */
 extern bool listCasts(const char *pattern);
 
+/* \dO */
+extern bool listCollations(const char *pattern, bool verbose, bool showSystem);
+
 /* \dn */
 extern bool listSchemas(const char *pattern, bool verbose, bool showSystem);
 

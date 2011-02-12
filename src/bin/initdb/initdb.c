@@ -1648,10 +1648,11 @@ setup_collation(void)
 	 * matches the OS locale name, else the first name by sort order
 	 * (arbitrary choice to be deterministic).
 	 */
-	PG_CMD_PUTS("INSERT INTO pg_collation (collname, collnamespace, collencoding, collcollate, collctype) "
+	PG_CMD_PUTS("INSERT INTO pg_collation (collname, collnamespace, collowner, collencoding, collcollate, collctype) "
 				" SELECT DISTINCT ON (final_collname, collnamespace, encoding)"
 				"   COALESCE(collname, locale) AS final_collname, "
 				"   (SELECT oid FROM pg_namespace WHERE nspname = 'pg_catalog') AS collnamespace, "
+				"   (SELECT relowner FROM pg_class WHERE relname = 'pg_collation') AS collowner, "
 				"   encoding, "
 				"   locale, locale "
 				"  FROM tmp_pg_collation"

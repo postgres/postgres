@@ -19,6 +19,7 @@
 #include "catalog/dependency.h"
 #include "catalog/indexing.h"
 #include "catalog/objectaccess.h"
+#include "catalog/pg_collation.h"
 #include "catalog/pg_namespace.h"
 #include "catalog/pg_proc.h"
 #include "catalog/pg_type.h"
@@ -155,6 +156,7 @@ TypeShellMake(const char *typeName, Oid typeNamespace, Oid ownerId)
 								 InvalidOid,
 								 InvalidOid,
 								 false,
+								 InvalidOid,
 								 InvalidOid,
 								 NULL,
 								 false);
@@ -460,6 +462,7 @@ TypeCreate(Oid newTypeOid,
 								 elementType,
 								 isImplicitArray,
 								 baseType,
+								 typeCollation,
 								 (defaultTypeBin ?
 								  stringToNode(defaultTypeBin) :
 								  NULL),
@@ -499,6 +502,7 @@ GenerateTypeDependencies(Oid typeNamespace,
 						 Oid elementType,
 						 bool isImplicitArray,
 						 Oid baseType,
+						 Oid typeCollation,
 						 Node *defaultExpr,
 						 bool rebuild)
 {
@@ -635,6 +639,15 @@ GenerateTypeDependencies(Oid typeNamespace,
 	{
 		referenced.classId = TypeRelationId;
 		referenced.objectId = baseType;
+		referenced.objectSubId = 0;
+		recordDependencyOn(&myself, &referenced, DEPENDENCY_NORMAL);
+	}
+
+	/* Normal dependency from a domain to its base type's collation. */
+	if (OidIsValid(typeCollation))
+	{
+		referenced.classId = CollationRelationId;
+		referenced.objectId = typeCollation;
 		referenced.objectSubId = 0;
 		recordDependencyOn(&myself, &referenced, DEPENDENCY_NORMAL);
 	}

@@ -2115,10 +2115,29 @@
      </row>
 
      <row>
+      <entry><structfield>collowner</structfield></entry>
+      <entry><type>oid</type></entry>
+      <entry><literal><link linkend="catalog-pg-authid"><structname>pg_authid</structname></link>.oid</literal></entry>
+      <entry>Owner of the collation</entry>
+     </row>
+
+     <row>
       <entry><structfield>collencoding</structfield></entry>
       <entry><type>int4</type></entry>
       <entry></entry>
-      <entry>Encoding to which the collation is applicable</entry>
+      <entry>
+       Encoding to which the collation is applicable.  SQL-level
+       commands such as <command>ALTER COLLATION</command> only
+       operate on the collation belonging to the current database
+       encoding.  But this field is necessary because when this
+       catalog is initialized, the encoding of future databases is not
+       yet known.  For practical purposes, collations that do not
+       match the current database encoding should be considered
+       invalid or invisible.  It could be useful, however, to create
+       collations whose encoding does not match the database encoding
+       in template databases.  This would currently have to be done
+       manually.
+      </entry>
      </row>
 
      <row>

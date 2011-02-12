@@ -117,7 +117,8 @@ typedef enum
 	DO_FOREIGN_SERVER,
 	DO_DEFAULT_ACL,
 	DO_BLOB,
-	DO_BLOB_DATA
+	DO_BLOB_DATA,
+	DO_COLLATION
 } DumpableObjectType;
 
 typedef struct _dumpableObject
@@ -216,6 +217,12 @@ typedef struct _opfamilyInfo
 	DumpableObject dobj;
 	char	   *rolname;
 } OpfamilyInfo;
+
+typedef struct _collInfo
+{
+	DumpableObject dobj;
+	char	   *rolname;
+} CollInfo;
 
 typedef struct _convInfo
 {
@@ -533,6 +540,7 @@ extern AggInfo *getAggregates(int *numAggregates);
 extern OprInfo *getOperators(int *numOperators);
 extern OpclassInfo *getOpclasses(int *numOpclasses);
 extern OpfamilyInfo *getOpfamilies(int *numOpfamilies);
+extern CollInfo *getCollations(int *numCollations);
 extern ConvInfo *getConversions(int *numConversions);
 extern TableInfo *getTables(int *numTables);
 extern InhInfo *getInherits(int *numInherits);

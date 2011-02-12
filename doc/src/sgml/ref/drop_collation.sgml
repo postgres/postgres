@@ -1,0 +1,110 @@
+<!-- doc/src/sgml/ref/drop_collation.sgml -->
+
+<refentry id="SQL-DROPCOLLATION">
+ <refmeta>
+  <refentrytitle>DROP COLLATION</refentrytitle>
+  <manvolnum>7</manvolnum>
+  <refmiscinfo>SQL - Language Statements</refmiscinfo>
+ </refmeta>
+
+ <refnamediv>
+  <refname>DROP COLLATION</refname>
+  <refpurpose>remove a collation</refpurpose>
+ </refnamediv>
+
+ <indexterm zone="sql-dropcollation">
+  <primary>DROP COLLATION</primary>
+ </indexterm>
+
+ <refsynopsisdiv>
+<synopsis>
+DROP COLLATION [ IF EXISTS ] <replaceable>name</replaceable> [ CASCADE | RESTRICT ]
+</synopsis>
+ </refsynopsisdiv>
+
+ <refsect1 id="sql-dropcollation-description">
+  <title>Description</title>
+
+  <para>
+   <command>DROP COLLATION</command> removes a previously defined collation.
+   To be able to drop a collation, you must own the collation.
+  </para>
+ </refsect1>
+
+ <refsect1>
+  <title>Parameters</title>
+
+   <variablelist>
+    <varlistentry>
+     <term><literal>IF EXISTS</literal></term>
+     <listitem>
+      <para>
+       Do not throw an error if the collation does not exist.
+       A notice is issued in this case.
+      </para>
+     </listitem>
+    </varlistentry>
+
+    <varlistentry>
+     <term><replaceable>name</replaceable></term>
+
+     <listitem>
+      <para>
+       The name of the collation. The collation name can be
+       schema-qualified.
+      </para>
+     </listitem>
+    </varlistentry>
+
+    <varlistentry>
+     <term><literal>CASCADE</literal></term>
+     <listitem>
+      <para>
+       Automatically drop objects that depend on the collation.
+      </para>
+     </listitem>
+    </varlistentry>
+
+    <varlistentry>
+     <term><literal>RESTRICT</literal></term>
+     <listitem>
+      <para>
+       Refuse to drop the collation if any objects depend on it.  This
+       is the default.
+      </para>
+     </listitem>
+    </varlistentry>
+   </variablelist>
+ </refsect1>
+
+ <refsect1 id="sql-dropcollation-examples">
+  <title>Examples</title>
+
+  <para>
+   To drop the collation named <literal>german</>:
+<programlisting>
+DROP COLLATION german;
+</programlisting>
+  </para>
+ </refsect1>
+
+ <refsect1 id="sql-dropcollation-compat">
+  <title>Compatibility</title>
+
+  <para>
+   The <command>DROP COLLATION</command> command conforms to the
+   <acronym>SQL</acronym> standard, apart from the <literal>IF
+   EXISTS</> option, which is a <productname>PostgreSQL</> extension..
+  </para>
+ </refsect1>
+
+ <refsect1>
+  <title>See Also</title>
+
+  <simplelist type="inline">
+   <member><xref linkend="sql-altercollation"></member>
+   <member><xref linkend="sql-createcollation"></member>
+  </simplelist>
+ </refsect1>
+
+</refentry>

@@ -129,8 +129,6 @@ createdb(const CreatedbStmt *stmt)
 	char	   *dbctype = NULL;
 	int			encoding = -1;
 	int			dbconnlimit = -1;
-	int			ctype_encoding;
-	int			collate_encoding;
 	int			notherbackends;
 	int			npreparedxacts;
 	createdb_failure_params fparms;
@@ -334,60 +332,7 @@ createdb(const CreatedbStmt *stmt)
 				(errcode(ERRCODE_WRONG_OBJECT_TYPE),
 				 errmsg("invalid locale name %s", dbctype)));
 
-	/*
-	 * Check whether chosen encoding matches chosen locale settings.  This
-	 * restriction is necessary because libc's locale-specific code usually
-	 * fails when presented with data in an encoding it's not expecting. We
-	 * allow mismatch in four cases:
-	 *
-	 * 1. locale encoding = SQL_ASCII, which means that the locale is C/POSIX
-	 * which works with any encoding.
-	 *
-	 * 2. locale encoding = -1, which means that we couldn't determine the
-	 * locale's encoding and have to trust the user to get it right.
-	 *
-	 * 3. selected encoding is UTF8 and platform is win32. This is because
-	 * UTF8 is a pseudo codepage that is supported in all locales since it's
-	 * converted to UTF16 before being used.
-	 *
-	 * 4. selected encoding is SQL_ASCII, but only if you're a superuser. This
-	 * is risky but we have historically allowed it --- notably, the
-	 * regression tests require it.
-	 *
-	 * Note: if you change this policy, fix initdb to match.
-	 */
-	ctype_encoding = pg_get_encoding_from_locale(dbctype, true);
-	collate_encoding = pg_get_encoding_from_locale(dbcollate, true);
-
-	if (!(ctype_encoding == encoding ||
-		  ctype_encoding == PG_SQL_ASCII ||
-		  ctype_encoding == -1 ||
-#ifdef WIN32
-		  encoding == PG_UTF8 ||
-#endif
-		  (encoding == PG_SQL_ASCII && superuser())))
-		ereport(ERROR,
-				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-				 errmsg("encoding %s does not match locale %s",
-						pg_encoding_to_char(encoding),
-						dbctype),
-			   errdetail("The chosen LC_CTYPE setting requires encoding %s.",
-						 pg_encoding_to_char(ctype_encoding))));
-
-	if (!(collate_encoding == encoding ||
-		  collate_encoding == PG_SQL_ASCII ||
-		  collate_encoding == -1 ||
-#ifdef WIN32
-		  encoding == PG_UTF8 ||
-#endif
-		  (encoding == PG_SQL_ASCII && superuser())))
-		ereport(ERROR,
-				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-				 errmsg("encoding %s does not match locale %s",
-						pg_encoding_to_char(encoding),
-						dbcollate),
-			 errdetail("The chosen LC_COLLATE setting requires encoding %s.",
-					   pg_encoding_to_char(collate_encoding))));
+	check_encoding_locale_matches(encoding, dbcollate, dbctype);
 
 	/*
 	 * Check that the new encoding and locale settings match the source
@@ -708,6 +653,65 @@ createdb(const CreatedbStmt *stmt)
 	}
 	PG_END_ENSURE_ERROR_CLEANUP(createdb_failure_callback,
 								PointerGetDatum(&fparms));
+}
+
+/*
+ * Check whether chosen encoding matches chosen locale settings.  This
+ * restriction is necessary because libc's locale-specific code usually
+ * fails when presented with data in an encoding it's not expecting. We
+ * allow mismatch in four cases:
+ *
+ * 1. locale encoding = SQL_ASCII, which means that the locale is C/POSIX
+ * which works with any encoding.
+ *
+ * 2. locale encoding = -1, which means that we couldn't determine the
+ * locale's encoding and have to trust the user to get it right.
+ *
+ * 3. selected encoding is UTF8 and platform is win32. This is because
+ * UTF8 is a pseudo codepage that is supported in all locales since it's
+ * converted to UTF16 before being used.
+ *
+ * 4. selected encoding is SQL_ASCII, but only if you're a superuser. This
+ * is risky but we have historically allowed it --- notably, the
+ * regression tests require it.
+ *
+ * Note: if you change this policy, fix initdb to match.
+ */
+void
+check_encoding_locale_matches(int encoding, const char *collate, const char *ctype)
+{
+	int ctype_encoding = pg_get_encoding_from_locale(ctype, true);
+	int collate_encoding = pg_get_encoding_from_locale(collate, true);
+
+	if (!(ctype_encoding == encoding ||
+		  ctype_encoding == PG_SQL_ASCII ||
+		  ctype_encoding == -1 ||
+#ifdef WIN32
+		  encoding == PG_UTF8 ||
+#endif
+		  (encoding == PG_SQL_ASCII && superuser())))
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+				 errmsg("encoding %s does not match locale %s",
+						pg_encoding_to_char(encoding),
+						ctype),
+			   errdetail("The chosen LC_CTYPE setting requires encoding %s.",
+						 pg_encoding_to_char(ctype_encoding))));
+
+	if (!(collate_encoding == encoding ||
+		  collate_encoding == PG_SQL_ASCII ||
+		  collate_encoding == -1 ||
+#ifdef WIN32
+		  encoding == PG_UTF8 ||
+#endif
+		  (encoding == PG_SQL_ASCII && superuser())))
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+				 errmsg("encoding %s does not match locale %s",
+						pg_encoding_to_char(encoding),
+						collate),
+			 errdetail("The chosen LC_COLLATE setting requires encoding %s.",
+					   pg_encoding_to_char(collate_encoding))));
 }
 
 /* Error cleanup callback for createdb */

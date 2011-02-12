@@ -20,6 +20,7 @@
 #include "catalog/pg_largeobject.h"
 #include "catalog/pg_namespace.h"
 #include "commands/alter.h"
+#include "commands/collationcmds.h"
 #include "commands/conversioncmds.h"
 #include "commands/dbcommands.h"
 #include "commands/defrem.h"
@@ -51,6 +52,10 @@ ExecRenameStmt(RenameStmt *stmt)
 	{
 		case OBJECT_AGGREGATE:
 			RenameAggregate(stmt->object, stmt->objarg, stmt->newname);
+			break;
+
+		case OBJECT_COLLATION:
+			RenameCollation(stmt->object, stmt->newname);
 			break;
 
 		case OBJECT_CONVERSION:
@@ -185,6 +190,10 @@ ExecAlterObjectSchemaStmt(AlterObjectSchemaStmt *stmt)
 								   stmt->newschema);
 			break;
 
+		case OBJECT_COLLATION:
+			AlterCollationNamespace(stmt->object, stmt->newschema);
+			break;
+
 		case OBJECT_CONVERSION:
 			AlterConversionNamespace(stmt->object, stmt->newschema);
 			break;
@@ -300,6 +309,10 @@ AlterObjectNamespace_oid(Oid classId, Oid objid, Oid nspOid)
 
 		case OCLASS_TYPE:
 			oldNspOid = AlterTypeNamespace_oid(objid, nspOid);
+			break;
+
+		case OCLASS_COLLATION:
+			oldNspOid = AlterCollationNamespace_oid(objid, nspOid);
 			break;
 
 		case OCLASS_CONVERSION:
@@ -476,6 +489,10 @@ ExecAlterOwnerStmt(AlterOwnerStmt *stmt)
 	{
 		case OBJECT_AGGREGATE:
 			AlterAggregateOwner(stmt->object, stmt->objarg, newowner);
+			break;
+
+		case OBJECT_COLLATION:
+			AlterCollationOwner(stmt->object, newowner);
 			break;
 
 		case OBJECT_CONVERSION:

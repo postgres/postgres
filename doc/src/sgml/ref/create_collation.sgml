@@ -1,0 +1,175 @@
+<!-- doc/src/sgml/ref/create_collation.sgml -->
+
+<refentry id="SQL-CREATECOLLATION">
+ <refmeta>
+  <refentrytitle>CREATE COLLATION</refentrytitle>
+  <manvolnum>7</manvolnum>
+  <refmiscinfo>SQL - Language Statements</refmiscinfo>
+ </refmeta>
+
+ <refnamediv>
+  <refname>CREATE COLLATION</refname>
+  <refpurpose>define a new collation</refpurpose>
+ </refnamediv>
+
+ <indexterm zone="sql-createcollation">
+  <primary>CREATE COLLATION</primary>
+ </indexterm>
+
+ <refsynopsisdiv>
+<synopsis>
+CREATE COLLATION <replaceable>name</replaceable> (
+    [ LOCALE = <replaceable>locale</replaceable>, ]
+    [ LC_COLLATE = <replaceable>lc_collate</replaceable>, ]
+    [ LC_CTYPE = <replaceable>lc_ctype</replaceable>, ]
+)
+CREATE COLLATION <replaceable>name</replaceable> FROM <replaceable>existing_collation</replaceable>
+</synopsis>
+ </refsynopsisdiv>
+
+ <refsect1 id="sql-createcollation-description">
+  <title>Description</title>
+
+  <para>
+   <command>CREATE COLLATION</command> defines a new collation using
+   the specified operating system locales or from an existing collation.
+ </para>
+
+  <para>
+   To be able to create a collation, you must
+   have <literal>CREATE</literal> privilege on the destination schema.
+  </para>
+ </refsect1>
+
+
+ <refsect1>
+  <title>Parameters</title>
+
+   <variablelist>
+    <varlistentry>
+     <term><replaceable>name</replaceable></term>
+
+     <listitem>
+      <para>
+       The name of the collation. The collation name can be
+       schema-qualified. If it is not, the collation is defined in the
+       current schema. The collation name must be unique within a
+       schema.  (The system catalogs can contain collations with the
+       same name for other encodings, but these are not usable if the
+       database encoding does not match.)
+      </para>
+     </listitem>
+    </varlistentry>
+
+    <varlistentry>
+     <term><replaceable>existing_collation</replaceable></term>
+
+     <listitem>
+      <para>
+       The name of an existing collation to copy.  The new collation
+       will have the same properties as the existing one, but they
+       will become independent objects.
+      </para>
+     </listitem>
+    </varlistentry>
+
+    <varlistentry>
+     <term><replaceable>locale</replaceable></term>
+
+     <listitem>
+      <para>
+       This is a shortcut for setting <symbol>LC_COLLATE</symbol>
+       and <symbol>LC_CTYPE</symbol> at once.  If you specify this,
+       you cannot specify either of the other parameters.
+      </para>
+     </listitem>
+    </varlistentry>
+
+    <varlistentry>
+     <term><replaceable>lc_collate</replaceable></term>
+
+     <listitem>
+      <para>
+       Use the specified operating system locale for
+       the <symbol>LC_COLLATE</symbol> locale category.  The locale
+       must be applicable to the current database encoding.
+       (See <xref linkend="sql-createdatabase"> for the precise
+       rules.)
+      </para>
+     </listitem>
+    </varlistentry>
+
+    <varlistentry>
+     <term><replaceable>lc_ctype</replaceable></term>
+
+     <listitem>
+      <para>
+       Use the specified operating system locale for
+       the <symbol>LC_CTYPE</symbol> locale category.  The locale
+       must be applicable to the current database encoding.
+       (See <xref linkend="sql-createdatabase"> for the precise
+       rules.)
+      </para>
+     </listitem>
+    </varlistentry>
+   </variablelist>
+ </refsect1>
+
+
+ <refsect1 id="sql-createcollation-notes">
+  <title>Notes</title>
+
+  <para>
+   Use <command>DROP COLLATION</command> to remove user-defined collations.
+  </para>
+
+  <para>
+   See <xref linkend="collation"> for more information about collation
+   support in PostgreSQL.
+  </para>
+ </refsect1>
+
+ <refsect1 id="sql-createcollation-examples">
+  <title>Examples</title>
+
+  <para>
+   To create a collation from the locale <literal>fr_FR.utf8</literal>
+   (assuming the current database encoding is <literal>UTF8</literal>):
+<programlisting>
+CREATE COLLATION french (LOCALE = 'fr_FR.utf8');
+</programlisting>
+  </para>
+
+  <para>
+   To create a collation from an existing collation:
+<programlisting>
+CREATE COLLATION german FROM "de_DE";
+</programlisting>
+   This can be convenient to be able to use operating-system
+   independent collation names in applications.
+  </para>
+ </refsect1>
+
+
+ <refsect1 id="sql-createcollation-compat">
+  <title>Compatibility</title>
+
+  <para>
+   There is a <command>CREATE COLLATION</command> statement in the SQL
+   standard, but it is limited to copying an existing collation.  The
+   syntax to create a new collation is
+   a <productname>PostgreSQL</productname> extension.
+  </para>
+ </refsect1>
+
+
+ <refsect1 id="sql-createcollation-seealso">
+  <title>See Also</title>
+
+  <simplelist type="inline">
+   <member><xref linkend="sql-altercollation"></member>
+   <member><xref linkend="sql-dropcollation"></member>
+  </simplelist>
+ </refsect1>
+
+</refentry>

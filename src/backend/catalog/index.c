@@ -36,6 +36,7 @@
 #include "catalog/index.h"
 #include "catalog/indexing.h"
 #include "catalog/namespace.h"
+#include "catalog/pg_collation.h"
 #include "catalog/pg_constraint.h"
 #include "catalog/pg_operator.h"
 #include "catalog/pg_opclass.h"
@@ -958,6 +959,19 @@ index_create(Relation heapRelation,
 			/* Non-constraint indexes can't be deferrable */
 			Assert(!deferrable);
 			Assert(!initdeferred);
+		}
+
+		/* Store dependency on collations */
+		for (i = 0; i < indexInfo->ii_NumIndexAttrs; i++)
+		{
+			if (OidIsValid(collationObjectId[i]))
+			{
+				referenced.classId = CollationRelationId;
+				referenced.objectId = collationObjectId[i];
+				referenced.objectSubId = 0;
+
+				recordDependencyOn(&myself, &referenced, DEPENDENCY_NORMAL);
+			}
 		}
 
 		/* Store dependency on operator classes */
