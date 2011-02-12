@@ -766,9 +766,13 @@ ALTER TABLE <replaceable class="PARAMETER">name</replaceable>
    <para>
     Adding a column with a non-null default or changing the type of an
     existing column will require the entire table and indexes to be rewritten.
-    This might take a significant amount of time for a large table; and it will
-    temporarily require double the disk space.  Adding or removing a system
-    <literal>oid</> column likewise requires rewriting the entire table.
+    As an exception, if the old type type is binary coercible to the new
+    type and the <literal>USING</> clause does not change the column contents,
+    a table rewrite is not needed, but any indexes on the affected columns 
+    must still be rebuilt.  Adding or removing a system <literal>oid</> column
+    also requires rewriting the entire table.  Table and/or index rebuilds may
+    take a significant amount of time for a large table; and will temporarily
+    require as much as double the disk space.
    </para>
 
    <para>
@@ -797,9 +801,9 @@ ALTER TABLE <replaceable class="PARAMETER">name</replaceable>
    <para>
     To force an immediate rewrite of the table, you can use
     <link linkend="SQL-VACUUM">VACUUM FULL</>, <xref linkend="SQL-CLUSTER">
-    or one of the forms of ALTER TABLE that forces a rewrite, such as
-    SET DATA TYPE.  This results in no semantically-visible change in the
-    table, but gets rid of no-longer-useful data.
+    or one of the forms of ALTER TABLE that forces a rewrite.  This results in
+    no semantically-visible change in the table, but gets rid of
+    no-longer-useful data.
    </para>
 
    <para>

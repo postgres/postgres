@@ -1685,6 +1685,11 @@ index_build(Relation heapRelation,
 	procedure = indexRelation->rd_am->ambuild;
 	Assert(RegProcedureIsValid(procedure));
 
+	ereport(DEBUG1,
+			(errmsg("building index \"%s\" on table \"%s\"",
+					RelationGetRelationName(indexRelation),
+					RelationGetRelationName(heapRelation))));
+
 	/*
 	 * Switch to the table owner's userid, so that any index functions are run
 	 * as that user.  Also lock down security-restricted operations and
