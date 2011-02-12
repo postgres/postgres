@@ -42,6 +42,7 @@ extern void join_path_components(char *ret_path,
 extern void canonicalize_path(char *path);
 extern void make_native_path(char *path);
 extern bool path_contains_parent_reference(const char *path);
+extern bool path_is_relative_and_below_cwd(const char *path);
 extern bool path_is_prefix_of_path(const char *path1, const char *path2);
 extern const char *get_progname(const char *argv0);
 extern void get_share_path(const char *my_exec_path, char *ret_path);
@@ -77,13 +78,7 @@ extern void pgfnames_cleanup(char **filenames);
 #else
 #define IS_DIR_SEP(ch)	((ch) == '/' || (ch) == '\\')
 
-/*
- * On Win32, a drive letter _not_ followed by a slash, e.g. 'E:abc', is
- * relative to the cwd on that drive, or the drive's root directory
- * if that drive has no cwd.  Because the path itself cannot tell us
- * which is the case, we have to assume the worst, i.e. that it is not
- * absolute;  this check is done by IS_DIR_SEP(filename[2]).
- */
+/* See path_is_relative_and_below_cwd() for how we handle 'E:abc'. */
 #define is_absolute_path(filename) \
 ( \
 	IS_DIR_SEP((filename)[0]) || \
