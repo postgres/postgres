@@ -368,7 +368,7 @@ path_contains_parent_reference(const char *path)
 bool
 path_is_relative_and_below_cwd(const char *path)
 {
-	if (!is_absolute_path(path))
+	if (is_absolute_path(path))
 		return false;
 	/* don't allow anything above the cwd */
 	else if (path_contains_parent_reference(path))
