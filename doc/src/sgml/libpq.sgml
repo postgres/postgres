@@ -3385,17 +3385,15 @@ size_t PQescapeStringConn(PGconn *conn,
 
      <listitem>
      <para>
-       <function>PQescapeString</> is an older, deprecated version of
-       <function>PQescapeStringConn</>.
 <synopsis>
 size_t PQescapeString (char *to, const char *from, size_t length);
 </synopsis>
      </para>
 
      <para>
-      The only difference from <function>PQescapeStringConn</> is that
-      <function>PQescapeString</> does not take <structname>PGconn</>
-      or <parameter>error</> parameters.
+      <function>PQescapeString</> is an older, deprecated version of
+      <function>PQescapeStringConn</>; the difference is that it does
+      not take <parameter>conn</> or <parameter>error</> parameters.
       Because of this, it cannot adjust its behavior depending on the
       connection properties (such as character encoding) and therefore
       <emphasis>it might give the wrong results</>.  Also, it has no way
@@ -3403,7 +3401,7 @@ size_t PQescapeString (char *to, const char *from, size_t length);
      </para>
 
      <para>
-      <function>PQescapeString</> can be used safely in
+      <function>PQescapeString</> can be used safely in single-threaded
       client programs that work with only one <productname>PostgreSQL</>
       connection at a time (in this case it can find out what it needs to
       know <quote>behind the scenes</>).  In other contexts it is a security
@@ -3435,11 +3433,16 @@ unsigned char *PQescapeByteaConn(PGconn *conn,
       </para>
 
       <para>
-       Certain byte values must be escaped when used as part of a
-       <type>bytea</type> literal in an <acronym>SQL</acronym> statement.
-       <function>PQescapeByteaConn</function> escapes bytes using
-       either hex encoding or backslash escaping.  See <xref
-       linkend="datatype-binary"> for more information.
+       Certain byte values <emphasis>must</emphasis> be escaped (but all
+       byte values <emphasis>can</emphasis> be escaped) when used as part
+       of a <type>bytea</type> literal in an <acronym>SQL</acronym>
+       statement. In general, to escape a byte, it is converted into the
+       three digit octal number equal to the octet value, and preceded by
+       usually two backslashes. The single quote (<literal>'</>) and backslash
+       (<literal>\</>) characters have special alternative escape
+       sequences. See <xref linkend="datatype-binary"> for more
+       information. <function>PQescapeByteaConn</function> performs this
+       operation, escaping only the minimally required bytes.
       </para>
 
       <para>
@@ -3496,13 +3499,20 @@ unsigned char *PQescapeBytea(const unsigned char *from,
       <para>
        The only difference from <function>PQescapeByteaConn</> is that
        <function>PQescapeBytea</> does not take a <structname>PGconn</>
-       parameter.  Because of this, <function>PQescapeBytea</> can
-       only be used safely in client programs that use a single
-       <productname>PostgreSQL</> connection at a time (in this case
-       it can find out what it needs to know <quote>behind the
-       scenes</>).  It <emphasis>might give the wrong results</> if
-       used in programs that use multiple database connections (use
-       <function>PQescapeByteaConn</> in such cases).
+       parameter.  Because of this, it cannot adjust its behavior
+       depending on the connection properties (in particular, whether
+       standard-conforming strings are enabled) and therefore
+       <emphasis>it might give the wrong results</>.  Also, it has no
+       way to return an error message on failure.
+      </para>
+
+      <para>
+       <function>PQescapeBytea</> can be used safely in single-threaded
+       client programs that work with only one <productname>PostgreSQL</>
+       connection at a time (in this case it can find out what it needs
+       to know <quote>behind the scenes</>).  In other contexts it is
+       a security hazard and should be avoided in favor of
+       <function>PQescapeByteaConn</>.
       </para>
      </listitem>
     </varlistentry>
