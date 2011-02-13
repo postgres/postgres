@@ -57,9 +57,6 @@
 bool			creating_extension = false;
 Oid				CurrentExtensionObject = InvalidOid;
 
-/* Character that separates extension & version names in a script filename */
-#define EXT_VERSION_SEP  '-'
-
 /*
  * Internal data structure to hold the results of parsing a control file
  */
@@ -225,9 +222,42 @@ get_extension_schema(Oid ext_oid)
 static void
 check_valid_extension_name(const char *extensionname)
 {
+	int			namelen = strlen(extensionname);
+
 	/*
-	 * No directory separators (this is sufficient to prevent ".." style
-	 * attacks).
+	 * Disallow empty names (the parser rejects empty identifiers anyway,
+	 * but let's check).
+	 */
+	if (namelen == 0)
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+				 errmsg("invalid extension name: \"%s\"", extensionname),
+				 errdetail("Extension names must not be empty.")));
+
+	/*
+	 * No double dashes, since that would make script filenames ambiguous.
+	 */
+	if (strstr(extensionname, "--"))
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+				 errmsg("invalid extension name: \"%s\"", extensionname),
+				 errdetail("Extension names must not contain \"--\".")));
+
+	/*
+	 * No leading or trailing dash either.  (We could probably allow this,
+	 * but it would require much care in filename parsing and would make
+	 * filenames visually if not formally ambiguous.  Since there's no
+	 * real-world use case, let's just forbid it.)
+	 */
+	if (extensionname[0] == '-' || extensionname[namelen - 1] == '-')
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+				 errmsg("invalid extension name: \"%s\"", extensionname),
+				 errdetail("Extension names must not begin or end with \"-\".")));
+
+	/*
+	 * No directory separators either (this is sufficient to prevent ".."
+	 * style attacks).
 	 */
 	if (first_dir_separator(extensionname) != NULL)
 		ereport(ERROR,
@@ -239,16 +269,39 @@ check_valid_extension_name(const char *extensionname)
 static void
 check_valid_version_name(const char *versionname)
 {
-	/* No separators --- would risk confusion of install vs update scripts */
-	if (strchr(versionname, EXT_VERSION_SEP))
+	int			namelen = strlen(versionname);
+
+	/*
+	 * Disallow empty names (we could possibly allow this, but there seems
+	 * little point).
+	 */
+	if (namelen == 0)
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
 				 errmsg("invalid extension version name: \"%s\"", versionname),
-				 errdetail("Version names must not contain the character \"%c\".",
-						   EXT_VERSION_SEP)));
+				 errdetail("Version names must not be empty.")));
+
 	/*
-	 * No directory separators (this is sufficient to prevent ".." style
-	 * attacks).
+	 * No double dashes, since that would make script filenames ambiguous.
+	 */
+	if (strstr(versionname, "--"))
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+				 errmsg("invalid extension version name: \"%s\"", versionname),
+				 errdetail("Version names must not contain \"--\".")));
+
+	/*
+	 * No leading or trailing dash either.
+	 */
+	if (versionname[0] == '-' || versionname[namelen - 1] == '-')
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+				 errmsg("invalid extension version name: \"%s\"", versionname),
+				 errdetail("Version names must not begin or end with \"-\".")));
+
+	/*
+	 * No directory separators either (this is sufficient to prevent ".."
+	 * style attacks).
 	 */
 	if (first_dir_separator(versionname) != NULL)
 		ereport(ERROR,
@@ -336,8 +389,8 @@ get_extension_aux_control_filename(ExtensionControlFile *control,
 	scriptdir = get_extension_script_directory(control);
 
 	result = (char *) palloc(MAXPGPATH);
-	snprintf(result, MAXPGPATH, "%s/%s%c%s.control",
-			 scriptdir, control->name, EXT_VERSION_SEP, version);
+	snprintf(result, MAXPGPATH, "%s/%s--%s.control",
+			 scriptdir, control->name, version);
 
 	pfree(scriptdir);
 
@@ -355,12 +408,11 @@ get_extension_script_filename(ExtensionControlFile *control,
 
 	result = (char *) palloc(MAXPGPATH);
 	if (from_version)
-		snprintf(result, MAXPGPATH, "%s/%s%c%s%c%s.sql",
-				 scriptdir, control->name, EXT_VERSION_SEP, from_version,
-				 EXT_VERSION_SEP, version);
+		snprintf(result, MAXPGPATH, "%s/%s--%s--%s.sql",
+				 scriptdir, control->name, from_version, version);
 	else
-		snprintf(result, MAXPGPATH, "%s/%s%c%s.sql",
-				 scriptdir, control->name, EXT_VERSION_SEP, version);
+		snprintf(result, MAXPGPATH, "%s/%s--%s.sql",
+				 scriptdir, control->name, version);
 
 	pfree(scriptdir);
 
@@ -426,7 +478,7 @@ parse_extension_control_file(ExtensionControlFile *control,
 			if (version)
 				ereport(ERROR,
 						(errcode(ERRCODE_SYNTAX_ERROR),
-						 errmsg("parameter \"%s\" cannot be set in a per-version extension control file",
+						 errmsg("parameter \"%s\" cannot be set in a secondary extension control file",
 								item->name)));
 
 			control->directory = pstrdup(item->value);
@@ -436,7 +488,7 @@ parse_extension_control_file(ExtensionControlFile *control,
 			if (version)
 				ereport(ERROR,
 						(errcode(ERRCODE_SYNTAX_ERROR),
-						 errmsg("parameter \"%s\" cannot be set in a per-version extension control file",
+						 errmsg("parameter \"%s\" cannot be set in a secondary extension control file",
 								item->name)));
 
 			control->default_version = pstrdup(item->value);
@@ -907,16 +959,18 @@ get_ext_ver_list(ExtensionControlFile *control)
 
 		/* ... matching extension name followed by separator */
 		if (strncmp(de->d_name, control->name, extnamelen) != 0 ||
-			de->d_name[extnamelen] != EXT_VERSION_SEP)
+			de->d_name[extnamelen] != '-' ||
+			de->d_name[extnamelen + 1] != '-')
 			continue;
 
-		/* extract version names from 'extname-something.sql' filename */
-		vername = pstrdup(de->d_name + extnamelen + 1);
+		/* extract version names from 'extname--something.sql' filename */
+		vername = pstrdup(de->d_name + extnamelen + 2);
 		*strrchr(vername, '.') = '\0';
-		vername2 = strchr(vername, EXT_VERSION_SEP);
+		vername2 = strstr(vername, "--");
 		if (!vername2)
 			continue;			/* it's not an update script */
-		*vername2++ = '\0';
+		*vername2 = '\0';		/* terminate first version */
+		vername2 += 2;			/* and point to second */
 
 		/* Create ExtensionVersionInfos and link them together */
 		evi = get_ext_ver_info(vername, &evi_list);
@@ -977,6 +1031,20 @@ identify_update_path(ExtensionControlFile *control,
 			if (newdist < evi2->distance)
 			{
 				evi2->distance = newdist;
+				evi2->previous = evi;
+			}
+			else if (newdist == evi2->distance &&
+					 evi2->previous != NULL &&
+					 strcmp(evi->name, evi2->previous->name) < 0)
+			{
+				/*
+				 * Break ties in favor of the version name that comes first
+				 * according to strcmp().  This behavior is undocumented and
+				 * users shouldn't rely on it.  We do it just to ensure that
+				 * if there is a tie, the update path that is chosen does not
+				 * depend on random factors like the order in which directory
+				 * entries get visited.
+				 */
 				evi2->previous = evi;
 			}
 		}
@@ -1251,7 +1319,7 @@ CreateExtension(CreateExtensionStmt *stmt)
 										requiredExtensions);
 
 	/*
-	 * Apply any comment on extension
+	 * Apply any control-file comment on extension
 	 */
 	if (control->comment != NULL)
 		CreateComments(extensionOid, ExtensionRelationId, 0, control->comment);
@@ -1543,6 +1611,10 @@ pg_available_extensions(PG_FUNCTION_ARGS)
 			/* extract extension name from 'name.control' filename */
 			extname = pstrdup(de->d_name);
 			*strrchr(extname, '.') = '\0';
+
+			/* ignore it if it's an auxiliary control file */
+			if (strstr(extname, "--"))
+				continue;
 
 			control = read_extension_control_file(extname);
 

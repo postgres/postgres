@@ -368,8 +368,8 @@
      installation's <literal>SHAREDIR/extension</literal> directory.  There
      must also be at least one <acronym>SQL</> script file, which follows the
      naming pattern
-     <literal><replaceable>extension</>-<replaceable>version</>.sql</literal>
-     (for example, <literal>foo-1.0.sql</> for version <literal>1.0</> of
+     <literal><replaceable>extension</>--<replaceable>version</>.sql</literal>
+     (for example, <literal>foo--1.0.sql</> for version <literal>1.0</> of
      extension <literal>foo</>).  By default, the script file(s) are also
      placed in the <literal>SHAREDIR/extension</literal> directory; but the
      control file can specify a different directory for the script file(s).
@@ -378,7 +378,7 @@
     <para>
      The file format for an extension control file is the same as for the
      <filename>postgresql.conf</> file, namely a list of
-     <replaceable>parameter-name</> <literal>=</> <replaceable>value</>
+     <replaceable>parameter_name</> <literal>=</> <replaceable>value</>
      assignments, one per line.  Blank lines and comments introduced by
      <literal>#</> are allowed.  Be sure to quote any value that is not
      a single word or number.
@@ -477,7 +477,7 @@
      In addition to the primary control file
      <literal><replaceable>extension</>.control</literal>,
      an extension can have secondary control files named in the style
-     <literal><replaceable>extension</>-<replaceable>version</>.control</literal>.
+     <literal><replaceable>extension</>--<replaceable>version</>.control</literal>.
      If supplied, these must be located in the script file directory.
      Secondary control files follow the same format as the primary control
      file.  Any parameters set in a secondary control file override the
@@ -671,15 +671,15 @@ SELECT pg_catalog.pg_extension_config_dump('my_config', 'WHERE NOT standard_entr
      dynamically from one version to the next, you should provide
      <firstterm>update scripts</> that make the necessary changes to go from
      one version to the next.  Update scripts have names following the pattern
-     <literal><replaceable>extension</>-<replaceable>oldversion</>-<replaceable>newversion</>.sql</literal>
-     (for example, <literal>foo-1.0-1.1.sql</> contains the commands to modify
+     <literal><replaceable>extension</>--<replaceable>oldversion</>--<replaceable>newversion</>.sql</literal>
+     (for example, <literal>foo--1.0--1.1.sql</> contains the commands to modify
      version <literal>1.0</> of extension <literal>foo</> into version
      <literal>1.1</>).
     </para>
 
     <para>
      Given that a suitable update script is available, the command
-     <command>ALTER EXTENSION ... UPDATE</> will update an installed extension
+     <command>ALTER EXTENSION UPDATE</> will update an installed extension
      to the specified new version.  The update script is run in the same
      environment that <command>CREATE EXTENSION</> provides for installation
      scripts: in particular, <varname>search_path</> is set up in the same
@@ -712,7 +712,7 @@ SELECT pg_catalog.pg_extension_config_dump('my_config', 'WHERE NOT standard_entr
      class="parameter">old_version</> option, which causes it to not run the
      normal installation script for the target version, but instead the update
      script named
-     <literal><replaceable>extension</>-<replaceable>old_version</>-<replaceable>target_version</>.sql</literal>.
+     <literal><replaceable>extension</>--<replaceable>old_version</>--<replaceable>target_version</>.sql</literal>.
      The choice of the dummy version name to use as <replaceable
      class="parameter">old_version</> is up to the extension author, though
      <literal>unpackaged</> is a common convention.  If you have multiple
@@ -723,7 +723,7 @@ SELECT pg_catalog.pg_extension_config_dump('my_config', 'WHERE NOT standard_entr
     <para>
      <command>ALTER EXTENSION</> is able to execute sequences of update
      script files to achieve a requested update.  For example, if only
-     <literal>foo-1.0-1.1.sql</> and <literal>foo-1.1-2.0.sql</> are
+     <literal>foo--1.0--1.1.sql</> and <literal>foo--1.1--2.0.sql</> are
      available, <command>ALTER EXTENSION</> will apply them in sequence if an
      update to version <literal>2.0</> is requested when <literal>1.0</> is
      currently installed.
@@ -734,11 +734,13 @@ SELECT pg_catalog.pg_extension_config_dump('my_config', 'WHERE NOT standard_entr
      of version names: for example, it does not know whether <literal>1.1</>
      follows <literal>1.0</>.  It just matches up the available version names
      and follows the path that requires applying the fewest update scripts.
+     (A version name can actually be any string that doesn't contain
+     <literal>--</> or leading or trailing <literal>-</>.)
     </para>
 
     <para>
      Sometimes it is useful to provide <quote>downgrade</> scripts, for
-     example <literal>foo-1.1-1.0.sql</> to allow reverting the changes
+     example <literal>foo--1.1--1.0.sql</> to allow reverting the changes
      associated with version <literal>1.1</>.  If you do that, be careful
      of the possibility that a downgrade script might unexpectedly
      get applied because it yields a shorter path.  The risky case is where
@@ -761,7 +763,7 @@ SELECT pg_catalog.pg_extension_config_dump('my_config', 'WHERE NOT standard_entr
     </para>
 
     <para>
-     The script file <filename>pair-1.0.sql</> looks like this:
+     The script file <filename>pair--1.0.sql</> looks like this:
 
 <programlisting><![CDATA[
 CREATE TYPE pair AS ( k text, v text );
@@ -803,7 +805,7 @@ relocatable = true
 
 <programlisting>
 EXTENSION = pair
-DATA = pair-1.0.sql
+DATA = pair--1.0.sql
 
 PG_CONFIG = pg_config
 PGXS := $(shell $(PG_CONFIG) --pgxs)
@@ -860,7 +862,7 @@ include $(PGXS)
 <programlisting>
 MODULES = isbn_issn
 EXTENSION = isbn_issn
-DATA_built = isbn_issn-1.0.sql
+DATA = isbn_issn--1.0.sql
 DOCS = README.isbn_issn
 
 PG_CONFIG = pg_config
