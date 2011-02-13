@@ -2342,7 +2342,8 @@
       whether hex or traditional format is used for <type>bytea</>
       output.  Libpq's <function>PQescapeByteaConn()</> function automatically
       uses the hex format when connected to <productname>PostgreSQL</> 9.0
-      or newer servers.
+      or newer servers.  However, pre-9.0 libpq versions will not
+      correctly process hex format from newer servers.
      </para>
 
      <para>
