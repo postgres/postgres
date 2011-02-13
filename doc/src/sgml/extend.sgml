@@ -427,23 +427,38 @@
      </varlistentry>
 
      <varlistentry>
-      <term><varname>requires</varname> (<type>string</type>)</term>
-      <listitem>
-       <para>
-        A list of names of extensions that this extension depends on,
-        for example <literal>requires = 'foo, bar'</literal>.  Those
-        extensions must be installed before this one can be installed.
-       </para>
-      </listitem>
-     </varlistentry>
-
-     <varlistentry>
       <term><varname>encoding</varname> (<type>string</type>)</term>
       <listitem>
        <para>
         The character set encoding used by the script file(s).  This should
         be specified if the script files contain any non-ASCII characters.
         Otherwise the files will be assumed to be in the database encoding.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term><varname>module_pathname</varname> (<type>string</type>)</term>
+      <listitem>
+       <para>
+        The value of this parameter will be substituted for each occurrence
+        of <literal>MODULE_PATHNAME</> in the script file(s).  If it is not
+        set, no substitution is made.  Typically, this is set to
+        <literal>$libdir/<replaceable>shared_library_name</></literal> and
+        then <literal>MODULE_PATHNAME</> is used in <command>CREATE
+        FUNCTION</> commands for C-language functions, so that the script
+        files do not need to hard-wire the name of the shared library.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term><varname>requires</varname> (<type>string</type>)</term>
+      <listitem>
+       <para>
+        A list of names of extensions that this extension depends on,
+        for example <literal>requires = 'foo, bar'</literal>.  Those
+        extensions must be installed before this one can be installed.
        </para>
       </listitem>
      </varlistentry>

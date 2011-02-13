@@ -65,6 +65,7 @@ typedef struct ExtensionControlFile
 	char	   *name;			/* name of the extension */
 	char	   *directory;		/* directory for script files */
 	char	   *default_version; /* default install target version, if any */
+	char	   *module_pathname; /* string to substitute for MODULE_PATHNAME */
 	char	   *comment;		/* comment, if any */
 	char	   *schema;			/* target schema (allowed if !relocatable) */
 	bool		relocatable;	/* is ALTER EXTENSION SET SCHEMA supported? */
@@ -493,6 +494,10 @@ parse_extension_control_file(ExtensionControlFile *control,
 
 			control->default_version = pstrdup(item->value);
 		}
+		else if (strcmp(item->name, "module_pathname") == 0)
+		{
+			control->module_pathname = pstrdup(item->value);
+		}
 		else if (strcmp(item->name, "comment") == 0)
 		{
 			control->comment = pstrdup(item->value);
@@ -836,7 +841,20 @@ execute_extension_script(Oid extensionOid, ExtensionControlFile *control,
 										CStringGetTextDatum(sql),
 										CStringGetTextDatum("@extschema@"),
 										CStringGetTextDatum(qSchemaName))));
+		}
 
+		/*
+		 * If module_pathname was set in the control file, substitute its
+		 * value for occurrences of MODULE_PATHNAME.
+		 */
+		if (control->module_pathname)
+		{
+			sql = text_to_cstring(
+				DatumGetTextPP(
+					DirectFunctionCall3(replace_text,
+										CStringGetTextDatum(sql),
+										CStringGetTextDatum("MODULE_PATHNAME"),
+										CStringGetTextDatum(control->module_pathname))));
 		}
 
 		execute_sql_string(sql, filename);
