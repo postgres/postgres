@@ -1,13 +1,13 @@
 /* contrib/pg_freespacemap/pg_freespacemap--1.0.sql */
 
 -- Register the C function.
-CREATE OR REPLACE FUNCTION pg_freespace(regclass, bigint)
+CREATE FUNCTION pg_freespace(regclass, bigint)
 RETURNS int2
 AS 'MODULE_PATHNAME', 'pg_freespace'
 LANGUAGE C STRICT;
 
 -- pg_freespace shows the recorded space avail at each block in a relation
-CREATE OR REPLACE FUNCTION
+CREATE FUNCTION
   pg_freespace(rel regclass, blkno OUT bigint, avail OUT int2)
 RETURNS SETOF RECORD
 AS $$

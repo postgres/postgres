@@ -1,11 +1,11 @@
 /* contrib/dict_xsyn/dict_xsyn--1.0.sql */
 
-CREATE OR REPLACE FUNCTION dxsyn_init(internal)
+CREATE FUNCTION dxsyn_init(internal)
         RETURNS internal
         AS 'MODULE_PATHNAME'
         LANGUAGE C STRICT;
 
-CREATE OR REPLACE FUNCTION dxsyn_lexize(internal, internal, internal, internal)
+CREATE FUNCTION dxsyn_lexize(internal, internal, internal, internal)
         RETURNS internal
         AS 'MODULE_PATHNAME'
         LANGUAGE C STRICT;

@@ -1,21 +1,21 @@
 /* contrib/unaccent/unaccent--1.0.sql */
 
-CREATE OR REPLACE FUNCTION unaccent(regdictionary, text)
+CREATE FUNCTION unaccent(regdictionary, text)
 	RETURNS text
 	AS 'MODULE_PATHNAME', 'unaccent_dict'
 	LANGUAGE C STABLE STRICT;
 
-CREATE OR REPLACE FUNCTION unaccent(text)
+CREATE FUNCTION unaccent(text)
 	RETURNS text
 	AS 'MODULE_PATHNAME', 'unaccent_dict'
 	LANGUAGE C STABLE STRICT;
 
-CREATE OR REPLACE FUNCTION unaccent_init(internal)
+CREATE FUNCTION unaccent_init(internal)
 	RETURNS internal
 	AS 'MODULE_PATHNAME', 'unaccent_init'
 	LANGUAGE C;
 
-CREATE OR REPLACE FUNCTION unaccent_lexize(internal,internal,internal,internal)
+CREATE FUNCTION unaccent_lexize(internal,internal,internal,internal)
 	RETURNS internal
 	AS 'MODULE_PATHNAME', 'unaccent_lexize'
 	LANGUAGE C;

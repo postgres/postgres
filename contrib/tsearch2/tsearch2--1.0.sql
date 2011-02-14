@@ -435,7 +435,7 @@ create type tsdebug as (
         "tsvector" tsvector
 );
 
-CREATE or replace FUNCTION _get_parser_from_curcfg()
+CREATE FUNCTION _get_parser_from_curcfg()
 RETURNS text as
 $$select prsname::text from pg_catalog.pg_ts_parser p join pg_ts_config c on cfgparser = p.oid where c.oid = show_curcfg();$$
 LANGUAGE SQL RETURNS NULL ON NULL INPUT IMMUTABLE;
@@ -461,25 +461,25 @@ where
         t.tokid = p.tokid
 $$ LANGUAGE SQL RETURNS NULL ON NULL INPUT;
 
-CREATE OR REPLACE FUNCTION numnode(tsquery)
+CREATE FUNCTION numnode(tsquery)
         RETURNS int4
         as 'tsquery_numnode'
         LANGUAGE INTERNAL
         RETURNS NULL ON NULL INPUT IMMUTABLE;
 
-CREATE OR REPLACE FUNCTION tsquery_and(tsquery,tsquery)
+CREATE FUNCTION tsquery_and(tsquery,tsquery)
         RETURNS tsquery
         as 'tsquery_and'
         LANGUAGE INTERNAL
         RETURNS NULL ON NULL INPUT IMMUTABLE;
 
-CREATE OR REPLACE FUNCTION tsquery_or(tsquery,tsquery)
+CREATE FUNCTION tsquery_or(tsquery,tsquery)
         RETURNS tsquery
         as 'tsquery_or'
         LANGUAGE INTERNAL
         RETURNS NULL ON NULL INPUT IMMUTABLE;
 
-CREATE OR REPLACE FUNCTION tsquery_not(tsquery)
+CREATE FUNCTION tsquery_not(tsquery)
         RETURNS tsquery
         as 'tsquery_not'
         LANGUAGE INTERNAL
@@ -487,24 +487,24 @@ CREATE OR REPLACE FUNCTION tsquery_not(tsquery)
 
 --------------rewrite subsystem
 
-CREATE OR REPLACE FUNCTION rewrite(tsquery, text)
+CREATE FUNCTION rewrite(tsquery, text)
         RETURNS tsquery
         as 'tsquery_rewrite_query'
         LANGUAGE INTERNAL
         RETURNS NULL ON NULL INPUT IMMUTABLE;
 
-CREATE OR REPLACE FUNCTION rewrite(tsquery, tsquery, tsquery)
+CREATE FUNCTION rewrite(tsquery, tsquery, tsquery)
         RETURNS tsquery
         as 'tsquery_rewrite'
         LANGUAGE INTERNAL
         RETURNS NULL ON NULL INPUT IMMUTABLE;
 
-CREATE OR REPLACE FUNCTION rewrite_accum(tsquery,tsquery[])
+CREATE FUNCTION rewrite_accum(tsquery,tsquery[])
         RETURNS tsquery
         AS 'MODULE_PATHNAME', 'tsa_rewrite_accum'
         LANGUAGE C;
 
-CREATE OR REPLACE FUNCTION rewrite_finish(tsquery)
+CREATE FUNCTION rewrite_finish(tsquery)
       RETURNS tsquery
       as 'MODULE_PATHNAME', 'tsa_rewrite_finish'
       LANGUAGE C;
@@ -516,13 +516,13 @@ CREATE AGGREGATE rewrite (
       FINALFUNC = rewrite_finish
 );
 
-CREATE OR REPLACE FUNCTION tsq_mcontains(tsquery, tsquery)
+CREATE FUNCTION tsq_mcontains(tsquery, tsquery)
         RETURNS bool
         as 'tsq_mcontains'
         LANGUAGE INTERNAL
         RETURNS NULL ON NULL INPUT IMMUTABLE;
 
-CREATE OR REPLACE FUNCTION tsq_mcontained(tsquery, tsquery)
+CREATE FUNCTION tsq_mcontained(tsquery, tsquery)
         RETURNS bool
         as 'tsq_mcontained'
         LANGUAGE INTERNAL

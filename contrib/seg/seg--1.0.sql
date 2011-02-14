@@ -2,12 +2,12 @@
 
 -- Create the user-defined type for 1-D floating point intervals (seg)
 
-CREATE OR REPLACE FUNCTION seg_in(cstring)
+CREATE FUNCTION seg_in(cstring)
 RETURNS seg
 AS 'MODULE_PATHNAME'
 LANGUAGE C STRICT IMMUTABLE;
 
-CREATE OR REPLACE FUNCTION seg_out(seg)
+CREATE FUNCTION seg_out(seg)
 RETURNS cstring
 AS 'MODULE_PATHNAME'
 LANGUAGE C STRICT IMMUTABLE;
@@ -27,7 +27,7 @@ COMMENT ON TYPE seg IS
 
 -- Left/Right methods
 
-CREATE OR REPLACE FUNCTION seg_over_left(seg, seg)
+CREATE FUNCTION seg_over_left(seg, seg)
 RETURNS bool
 AS 'MODULE_PATHNAME'
 LANGUAGE C STRICT IMMUTABLE;
@@ -35,7 +35,7 @@ LANGUAGE C STRICT IMMUTABLE;
 COMMENT ON FUNCTION seg_over_left(seg, seg) IS
 'overlaps or is left of';
 
-CREATE OR REPLACE FUNCTION seg_over_right(seg, seg)
+CREATE FUNCTION seg_over_right(seg, seg)
 RETURNS bool
 AS 'MODULE_PATHNAME'
 LANGUAGE C STRICT IMMUTABLE;
@@ -43,7 +43,7 @@ LANGUAGE C STRICT IMMUTABLE;
 COMMENT ON FUNCTION seg_over_right(seg, seg) IS
 'overlaps or is right of';
 
-CREATE OR REPLACE FUNCTION seg_left(seg, seg)
+CREATE FUNCTION seg_left(seg, seg)
 RETURNS bool
 AS 'MODULE_PATHNAME'
 LANGUAGE C STRICT IMMUTABLE;
@@ -51,7 +51,7 @@ LANGUAGE C STRICT IMMUTABLE;
 COMMENT ON FUNCTION seg_left(seg, seg) IS
 'is left of';
 
-CREATE OR REPLACE FUNCTION seg_right(seg, seg)
+CREATE FUNCTION seg_right(seg, seg)
 RETURNS bool
 AS 'MODULE_PATHNAME'
 LANGUAGE C STRICT IMMUTABLE;
@@ -62,7 +62,7 @@ COMMENT ON FUNCTION seg_right(seg, seg) IS
 
 -- Scalar comparison methods
 
-CREATE OR REPLACE FUNCTION seg_lt(seg, seg)
+CREATE FUNCTION seg_lt(seg, seg)
 RETURNS bool
 AS 'MODULE_PATHNAME'
 LANGUAGE C STRICT IMMUTABLE;
@@ -70,7 +70,7 @@ LANGUAGE C STRICT IMMUTABLE;
 COMMENT ON FUNCTION seg_lt(seg, seg) IS
 'less than';
 
-CREATE OR REPLACE FUNCTION seg_le(seg, seg)
+CREATE FUNCTION seg_le(seg, seg)
 RETURNS bool
 AS 'MODULE_PATHNAME'
 LANGUAGE C STRICT IMMUTABLE;
@@ -78,7 +78,7 @@ LANGUAGE C STRICT IMMUTABLE;
 COMMENT ON FUNCTION seg_le(seg, seg) IS
 'less than or equal';
 
-CREATE OR REPLACE FUNCTION seg_gt(seg, seg)
+CREATE FUNCTION seg_gt(seg, seg)
 RETURNS bool
 AS 'MODULE_PATHNAME'
 LANGUAGE C STRICT IMMUTABLE;
@@ -86,7 +86,7 @@ LANGUAGE C STRICT IMMUTABLE;
 COMMENT ON FUNCTION seg_gt(seg, seg) IS
 'greater than';
 
-CREATE OR REPLACE FUNCTION seg_ge(seg, seg)
+CREATE FUNCTION seg_ge(seg, seg)
 RETURNS bool
 AS 'MODULE_PATHNAME'
 LANGUAGE C STRICT IMMUTABLE;
@@ -94,7 +94,7 @@ LANGUAGE C STRICT IMMUTABLE;
 COMMENT ON FUNCTION seg_ge(seg, seg) IS
 'greater than or equal';
 
-CREATE OR REPLACE FUNCTION seg_contains(seg, seg)
+CREATE FUNCTION seg_contains(seg, seg)
 RETURNS bool
 AS 'MODULE_PATHNAME'
 LANGUAGE C STRICT IMMUTABLE;
@@ -102,7 +102,7 @@ LANGUAGE C STRICT IMMUTABLE;
 COMMENT ON FUNCTION seg_contains(seg, seg) IS
 'contains';
 
-CREATE OR REPLACE FUNCTION seg_contained(seg, seg)
+CREATE FUNCTION seg_contained(seg, seg)
 RETURNS bool
 AS 'MODULE_PATHNAME'
 LANGUAGE C STRICT IMMUTABLE;
@@ -110,7 +110,7 @@ LANGUAGE C STRICT IMMUTABLE;
 COMMENT ON FUNCTION seg_contained(seg, seg) IS
 'contained in';
 
-CREATE OR REPLACE FUNCTION seg_overlap(seg, seg)
+CREATE FUNCTION seg_overlap(seg, seg)
 RETURNS bool
 AS 'MODULE_PATHNAME'
 LANGUAGE C STRICT IMMUTABLE;
@@ -118,7 +118,7 @@ LANGUAGE C STRICT IMMUTABLE;
 COMMENT ON FUNCTION seg_overlap(seg, seg) IS
 'overlaps';
 
-CREATE OR REPLACE FUNCTION seg_same(seg, seg)
+CREATE FUNCTION seg_same(seg, seg)
 RETURNS bool
 AS 'MODULE_PATHNAME'
 LANGUAGE C STRICT IMMUTABLE;
@@ -126,7 +126,7 @@ LANGUAGE C STRICT IMMUTABLE;
 COMMENT ON FUNCTION seg_same(seg, seg) IS
 'same as';
 
-CREATE OR REPLACE FUNCTION seg_different(seg, seg)
+CREATE FUNCTION seg_different(seg, seg)
 RETURNS bool
 AS 'MODULE_PATHNAME'
 LANGUAGE C STRICT IMMUTABLE;
@@ -136,41 +136,41 @@ COMMENT ON FUNCTION seg_different(seg, seg) IS
 
 -- support routines for indexing
 
-CREATE OR REPLACE FUNCTION seg_cmp(seg, seg)
+CREATE FUNCTION seg_cmp(seg, seg)
 RETURNS int4
 AS 'MODULE_PATHNAME'
 LANGUAGE C STRICT IMMUTABLE;
 
 COMMENT ON FUNCTION seg_cmp(seg, seg) IS 'btree comparison function';
 
-CREATE OR REPLACE FUNCTION seg_union(seg, seg)
+CREATE FUNCTION seg_union(seg, seg)
 RETURNS seg
 AS 'MODULE_PATHNAME'
 LANGUAGE C STRICT IMMUTABLE;
 
-CREATE OR REPLACE FUNCTION seg_inter(seg, seg)
+CREATE FUNCTION seg_inter(seg, seg)
 RETURNS seg
 AS 'MODULE_PATHNAME'
 LANGUAGE C STRICT IMMUTABLE;
 
-CREATE OR REPLACE FUNCTION seg_size(seg)
+CREATE FUNCTION seg_size(seg)
 RETURNS float4
 AS 'MODULE_PATHNAME'
 LANGUAGE C STRICT IMMUTABLE;
 
 -- miscellaneous
 
-CREATE OR REPLACE FUNCTION seg_center(seg)
+CREATE FUNCTION seg_center(seg)
 RETURNS float4
 AS 'MODULE_PATHNAME'
 LANGUAGE C STRICT IMMUTABLE;
 
-CREATE OR REPLACE FUNCTION seg_upper(seg)
+CREATE FUNCTION seg_upper(seg)
 RETURNS float4
 AS 'MODULE_PATHNAME'
 LANGUAGE C STRICT IMMUTABLE;
 
-CREATE OR REPLACE FUNCTION seg_lower(seg)
+CREATE FUNCTION seg_lower(seg)
 RETURNS float4
 AS 'MODULE_PATHNAME'
 LANGUAGE C STRICT IMMUTABLE;
@@ -323,37 +323,37 @@ CREATE OPERATOR ~ (
 
 
 -- define the GiST support methods
-CREATE OR REPLACE FUNCTION gseg_consistent(internal,seg,int,oid,internal)
+CREATE FUNCTION gseg_consistent(internal,seg,int,oid,internal)
 RETURNS bool
 AS 'MODULE_PATHNAME'
 LANGUAGE C IMMUTABLE STRICT;
 
-CREATE OR REPLACE FUNCTION gseg_compress(internal)
+CREATE FUNCTION gseg_compress(internal)
 RETURNS internal
 AS 'MODULE_PATHNAME'
 LANGUAGE C IMMUTABLE STRICT;
 
-CREATE OR REPLACE FUNCTION gseg_decompress(internal)
+CREATE FUNCTION gseg_decompress(internal)
 RETURNS internal
 AS 'MODULE_PATHNAME'
 LANGUAGE C IMMUTABLE STRICT;
 
-CREATE OR REPLACE FUNCTION gseg_penalty(internal,internal,internal)
+CREATE FUNCTION gseg_penalty(internal,internal,internal)
 RETURNS internal
 AS 'MODULE_PATHNAME'
 LANGUAGE C IMMUTABLE STRICT;
 
-CREATE OR REPLACE FUNCTION gseg_picksplit(internal, internal)
+CREATE FUNCTION gseg_picksplit(internal, internal)
 RETURNS internal
 AS 'MODULE_PATHNAME'
 LANGUAGE C IMMUTABLE STRICT;
 
-CREATE OR REPLACE FUNCTION gseg_union(internal, internal)
+CREATE FUNCTION gseg_union(internal, internal)
 RETURNS seg
 AS 'MODULE_PATHNAME'
 LANGUAGE C IMMUTABLE STRICT;
 
-CREATE OR REPLACE FUNCTION gseg_same(seg, seg, internal)
+CREATE FUNCTION gseg_same(seg, seg, internal)
 RETURNS internal
 AS 'MODULE_PATHNAME'
 LANGUAGE C IMMUTABLE STRICT;

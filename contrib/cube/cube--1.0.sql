@@ -2,20 +2,20 @@
 
 -- Create the user-defined type for N-dimensional boxes
 
-CREATE OR REPLACE FUNCTION cube_in(cstring)
+CREATE FUNCTION cube_in(cstring)
 RETURNS cube
 AS 'MODULE_PATHNAME'
 LANGUAGE C IMMUTABLE STRICT;
 
-CREATE OR REPLACE FUNCTION cube(float8[], float8[]) RETURNS cube
+CREATE FUNCTION cube(float8[], float8[]) RETURNS cube
 AS 'MODULE_PATHNAME', 'cube_a_f8_f8'
 LANGUAGE C IMMUTABLE STRICT;
 
-CREATE OR REPLACE FUNCTION cube(float8[]) RETURNS cube
+CREATE FUNCTION cube(float8[]) RETURNS cube
 AS 'MODULE_PATHNAME', 'cube_a_f8'
 LANGUAGE C IMMUTABLE STRICT;
 
-CREATE OR REPLACE FUNCTION cube_out(cube)
+CREATE FUNCTION cube_out(cube)
 RETURNS cstring
 AS 'MODULE_PATHNAME'
 LANGUAGE C IMMUTABLE STRICT;
@@ -35,70 +35,70 @@ COMMENT ON TYPE cube IS 'multi-dimensional cube ''(FLOAT-1, FLOAT-2, ..., FLOAT-
 
 -- Comparison methods
 
-CREATE OR REPLACE FUNCTION cube_eq(cube, cube)
+CREATE FUNCTION cube_eq(cube, cube)
 RETURNS bool
 AS 'MODULE_PATHNAME'
 LANGUAGE C IMMUTABLE STRICT;
 
 COMMENT ON FUNCTION cube_eq(cube, cube) IS 'same as';
 
-CREATE OR REPLACE FUNCTION cube_ne(cube, cube)
+CREATE FUNCTION cube_ne(cube, cube)
 RETURNS bool
 AS 'MODULE_PATHNAME'
 LANGUAGE C IMMUTABLE STRICT;
 
 COMMENT ON FUNCTION cube_ne(cube, cube) IS 'different';
 
-CREATE OR REPLACE FUNCTION cube_lt(cube, cube)
+CREATE FUNCTION cube_lt(cube, cube)
 RETURNS bool
 AS 'MODULE_PATHNAME'
 LANGUAGE C IMMUTABLE STRICT;
 
 COMMENT ON FUNCTION cube_lt(cube, cube) IS 'lower than';
 
-CREATE OR REPLACE FUNCTION cube_gt(cube, cube)
+CREATE FUNCTION cube_gt(cube, cube)
 RETURNS bool
 AS 'MODULE_PATHNAME'
 LANGUAGE C IMMUTABLE STRICT;
 
 COMMENT ON FUNCTION cube_gt(cube, cube) IS 'greater than';
 
-CREATE OR REPLACE FUNCTION cube_le(cube, cube)
+CREATE FUNCTION cube_le(cube, cube)
 RETURNS bool
 AS 'MODULE_PATHNAME'
 LANGUAGE C IMMUTABLE STRICT;
 
 COMMENT ON FUNCTION cube_le(cube, cube) IS 'lower than or equal to';
 
-CREATE OR REPLACE FUNCTION cube_ge(cube, cube)
+CREATE FUNCTION cube_ge(cube, cube)
 RETURNS bool
 AS 'MODULE_PATHNAME'
 LANGUAGE C IMMUTABLE STRICT;
 
 COMMENT ON FUNCTION cube_ge(cube, cube) IS 'greater than or equal to';
 
-CREATE OR REPLACE FUNCTION cube_cmp(cube, cube)
+CREATE FUNCTION cube_cmp(cube, cube)
 RETURNS int4
 AS 'MODULE_PATHNAME'
 LANGUAGE C IMMUTABLE STRICT;
 
 COMMENT ON FUNCTION cube_cmp(cube, cube) IS 'btree comparison function';
 
-CREATE OR REPLACE FUNCTION cube_contains(cube, cube)
+CREATE FUNCTION cube_contains(cube, cube)
 RETURNS bool
 AS 'MODULE_PATHNAME'
 LANGUAGE C IMMUTABLE STRICT;
 
 COMMENT ON FUNCTION cube_contains(cube, cube) IS 'contains';
 
-CREATE OR REPLACE FUNCTION cube_contained(cube, cube)
+CREATE FUNCTION cube_contained(cube, cube)
 RETURNS bool
 AS 'MODULE_PATHNAME'
 LANGUAGE C IMMUTABLE STRICT;
 
 COMMENT ON FUNCTION cube_contained(cube, cube) IS 'contained in';
 
-CREATE OR REPLACE FUNCTION cube_overlap(cube, cube)
+CREATE FUNCTION cube_overlap(cube, cube)
 RETURNS bool
 AS 'MODULE_PATHNAME'
 LANGUAGE C IMMUTABLE STRICT;
@@ -107,17 +107,17 @@ COMMENT ON FUNCTION cube_overlap(cube, cube) IS 'overlaps';
 
 -- support routines for indexing
 
-CREATE OR REPLACE FUNCTION cube_union(cube, cube)
+CREATE FUNCTION cube_union(cube, cube)
 RETURNS cube
 AS 'MODULE_PATHNAME'
 LANGUAGE C IMMUTABLE STRICT;
 
-CREATE OR REPLACE FUNCTION cube_inter(cube, cube)
+CREATE FUNCTION cube_inter(cube, cube)
 RETURNS cube
 AS 'MODULE_PATHNAME'
 LANGUAGE C IMMUTABLE STRICT;
 
-CREATE OR REPLACE FUNCTION cube_size(cube)
+CREATE FUNCTION cube_size(cube)
 RETURNS float8
 AS 'MODULE_PATHNAME'
 LANGUAGE C IMMUTABLE STRICT;
@@ -125,61 +125,61 @@ LANGUAGE C IMMUTABLE STRICT;
 
 -- Misc N-dimensional functions
 
-CREATE OR REPLACE FUNCTION cube_subset(cube, int4[])
+CREATE FUNCTION cube_subset(cube, int4[])
 RETURNS cube
 AS 'MODULE_PATHNAME'
 LANGUAGE C IMMUTABLE STRICT;
 
 -- proximity routines
 
-CREATE OR REPLACE FUNCTION cube_distance(cube, cube)
+CREATE FUNCTION cube_distance(cube, cube)
 RETURNS float8
 AS 'MODULE_PATHNAME'
 LANGUAGE C IMMUTABLE STRICT;
 
 -- Extracting elements functions
 
-CREATE OR REPLACE FUNCTION cube_dim(cube)
+CREATE FUNCTION cube_dim(cube)
 RETURNS int4
 AS 'MODULE_PATHNAME'
 LANGUAGE C IMMUTABLE STRICT;
 
-CREATE OR REPLACE FUNCTION cube_ll_coord(cube, int4)
+CREATE FUNCTION cube_ll_coord(cube, int4)
 RETURNS float8
 AS 'MODULE_PATHNAME'
 LANGUAGE C IMMUTABLE STRICT;
 
-CREATE OR REPLACE FUNCTION cube_ur_coord(cube, int4)
+CREATE FUNCTION cube_ur_coord(cube, int4)
 RETURNS float8
 AS 'MODULE_PATHNAME'
 LANGUAGE C IMMUTABLE STRICT;
 
-CREATE OR REPLACE FUNCTION cube(float8) RETURNS cube
+CREATE FUNCTION cube(float8) RETURNS cube
 AS 'MODULE_PATHNAME', 'cube_f8'
 LANGUAGE C IMMUTABLE STRICT;
 
-CREATE OR REPLACE FUNCTION cube(float8, float8) RETURNS cube
+CREATE FUNCTION cube(float8, float8) RETURNS cube
 AS 'MODULE_PATHNAME', 'cube_f8_f8'
 LANGUAGE C IMMUTABLE STRICT;
 
-CREATE OR REPLACE FUNCTION cube(cube, float8) RETURNS cube
+CREATE FUNCTION cube(cube, float8) RETURNS cube
 AS 'MODULE_PATHNAME', 'cube_c_f8'
 LANGUAGE C IMMUTABLE STRICT;
 
-CREATE OR REPLACE FUNCTION cube(cube, float8, float8) RETURNS cube
+CREATE FUNCTION cube(cube, float8, float8) RETURNS cube
 AS 'MODULE_PATHNAME', 'cube_c_f8_f8'
 LANGUAGE C IMMUTABLE STRICT;
 
 -- Test if cube is also a point
 
-CREATE OR REPLACE FUNCTION cube_is_point(cube)
+CREATE FUNCTION cube_is_point(cube)
 RETURNS bool
 AS 'MODULE_PATHNAME'
 LANGUAGE C IMMUTABLE STRICT;
 
 -- Increasing the size of a cube by a radius in at least n dimensions
 
-CREATE OR REPLACE FUNCTION cube_enlarge(cube, float8, int4)
+CREATE FUNCTION cube_enlarge(cube, float8, int4)
 RETURNS cube
 AS 'MODULE_PATHNAME'
 LANGUAGE C IMMUTABLE STRICT;
@@ -258,37 +258,37 @@ CREATE OPERATOR ~ (
 
 
 -- define the GiST support methods
-CREATE OR REPLACE FUNCTION g_cube_consistent(internal,cube,int,oid,internal)
+CREATE FUNCTION g_cube_consistent(internal,cube,int,oid,internal)
 RETURNS bool
 AS 'MODULE_PATHNAME'
 LANGUAGE C IMMUTABLE STRICT;
 
-CREATE OR REPLACE FUNCTION g_cube_compress(internal)
+CREATE FUNCTION g_cube_compress(internal)
 RETURNS internal
 AS 'MODULE_PATHNAME'
 LANGUAGE C IMMUTABLE STRICT;
 
-CREATE OR REPLACE FUNCTION g_cube_decompress(internal)
+CREATE FUNCTION g_cube_decompress(internal)
 RETURNS internal
 AS 'MODULE_PATHNAME'
 LANGUAGE C IMMUTABLE STRICT;
 
-CREATE OR REPLACE FUNCTION g_cube_penalty(internal,internal,internal)
+CREATE FUNCTION g_cube_penalty(internal,internal,internal)
 RETURNS internal
 AS 'MODULE_PATHNAME'
 LANGUAGE C IMMUTABLE STRICT;
 
-CREATE OR REPLACE FUNCTION g_cube_picksplit(internal, internal)
+CREATE FUNCTION g_cube_picksplit(internal, internal)
 RETURNS internal
 AS 'MODULE_PATHNAME'
 LANGUAGE C IMMUTABLE STRICT;
 
-CREATE OR REPLACE FUNCTION g_cube_union(internal, internal)
+CREATE FUNCTION g_cube_union(internal, internal)
 RETURNS cube
 AS 'MODULE_PATHNAME'
 LANGUAGE C IMMUTABLE STRICT;
 
-CREATE OR REPLACE FUNCTION g_cube_same(cube, cube, internal)
+CREATE FUNCTION g_cube_same(cube, cube, internal)
 RETURNS internal
 AS 'MODULE_PATHNAME'
 LANGUAGE C IMMUTABLE STRICT;

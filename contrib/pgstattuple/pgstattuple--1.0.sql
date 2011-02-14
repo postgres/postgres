@@ -1,6 +1,6 @@
 /* contrib/pgstattuple/pgstattuple--1.0.sql */
 
-CREATE OR REPLACE FUNCTION pgstattuple(IN relname text,
+CREATE FUNCTION pgstattuple(IN relname text,
     OUT table_len BIGINT,		-- physical table length in bytes
     OUT tuple_count BIGINT,		-- number of live tuples
     OUT tuple_len BIGINT,		-- total tuples length in bytes
@@ -13,7 +13,7 @@ CREATE OR REPLACE FUNCTION pgstattuple(IN relname text,
 AS 'MODULE_PATHNAME', 'pgstattuple'
 LANGUAGE C STRICT;
 
-CREATE OR REPLACE FUNCTION pgstattuple(IN reloid oid,
+CREATE FUNCTION pgstattuple(IN reloid oid,
     OUT table_len BIGINT,		-- physical table length in bytes
     OUT tuple_count BIGINT,		-- number of live tuples
     OUT tuple_len BIGINT,		-- total tuples length in bytes
@@ -26,7 +26,7 @@ CREATE OR REPLACE FUNCTION pgstattuple(IN reloid oid,
 AS 'MODULE_PATHNAME', 'pgstattuplebyid'
 LANGUAGE C STRICT;
 
-CREATE OR REPLACE FUNCTION pgstatindex(IN relname text,
+CREATE FUNCTION pgstatindex(IN relname text,
     OUT version INT,
     OUT tree_level INT,
     OUT index_size BIGINT,
@@ -40,7 +40,7 @@ CREATE OR REPLACE FUNCTION pgstatindex(IN relname text,
 AS 'MODULE_PATHNAME', 'pgstatindex'
 LANGUAGE C STRICT;
 
-CREATE OR REPLACE FUNCTION pg_relpages(IN relname text)
+CREATE FUNCTION pg_relpages(IN relname text)
 RETURNS BIGINT
 AS 'MODULE_PATHNAME', 'pg_relpages'
 LANGUAGE C STRICT;

@@ -1,11 +1,11 @@
 /* contrib/btree_gist/btree_gist--1.0.sql */
 
-CREATE OR REPLACE FUNCTION gbtreekey4_in(cstring)
+CREATE FUNCTION gbtreekey4_in(cstring)
 RETURNS gbtreekey4
 AS 'MODULE_PATHNAME', 'gbtreekey_in'
 LANGUAGE C IMMUTABLE STRICT;
 
-CREATE OR REPLACE FUNCTION gbtreekey4_out(gbtreekey4)
+CREATE FUNCTION gbtreekey4_out(gbtreekey4)
 RETURNS cstring
 AS 'MODULE_PATHNAME', 'gbtreekey_out'
 LANGUAGE C IMMUTABLE STRICT;
@@ -16,12 +16,12 @@ CREATE TYPE gbtreekey4 (
 	OUTPUT = gbtreekey4_out
 );
 
-CREATE OR REPLACE FUNCTION gbtreekey8_in(cstring)
+CREATE FUNCTION gbtreekey8_in(cstring)
 RETURNS gbtreekey8
 AS 'MODULE_PATHNAME', 'gbtreekey_in'
 LANGUAGE C IMMUTABLE STRICT;
 
-CREATE OR REPLACE FUNCTION gbtreekey8_out(gbtreekey8)
+CREATE FUNCTION gbtreekey8_out(gbtreekey8)
 RETURNS cstring
 AS 'MODULE_PATHNAME', 'gbtreekey_out'
 LANGUAGE C IMMUTABLE STRICT;
@@ -32,12 +32,12 @@ CREATE TYPE gbtreekey8 (
 	OUTPUT = gbtreekey8_out
 );
 
-CREATE OR REPLACE FUNCTION gbtreekey16_in(cstring)
+CREATE FUNCTION gbtreekey16_in(cstring)
 RETURNS gbtreekey16
 AS 'MODULE_PATHNAME', 'gbtreekey_in'
 LANGUAGE C IMMUTABLE STRICT;
 
-CREATE OR REPLACE FUNCTION gbtreekey16_out(gbtreekey16)
+CREATE FUNCTION gbtreekey16_out(gbtreekey16)
 RETURNS cstring
 AS 'MODULE_PATHNAME', 'gbtreekey_out'
 LANGUAGE C IMMUTABLE STRICT;
@@ -48,12 +48,12 @@ CREATE TYPE gbtreekey16 (
 	OUTPUT = gbtreekey16_out
 );
 
-CREATE OR REPLACE FUNCTION gbtreekey32_in(cstring)
+CREATE FUNCTION gbtreekey32_in(cstring)
 RETURNS gbtreekey32
 AS 'MODULE_PATHNAME', 'gbtreekey_in'
 LANGUAGE C IMMUTABLE STRICT;
 
-CREATE OR REPLACE FUNCTION gbtreekey32_out(gbtreekey32)
+CREATE FUNCTION gbtreekey32_out(gbtreekey32)
 RETURNS cstring
 AS 'MODULE_PATHNAME', 'gbtreekey_out'
 LANGUAGE C IMMUTABLE STRICT;
@@ -64,12 +64,12 @@ CREATE TYPE gbtreekey32 (
 	OUTPUT = gbtreekey32_out
 );
 
-CREATE OR REPLACE FUNCTION gbtreekey_var_in(cstring)
+CREATE FUNCTION gbtreekey_var_in(cstring)
 RETURNS gbtreekey_var
 AS 'MODULE_PATHNAME', 'gbtreekey_in'
 LANGUAGE C IMMUTABLE STRICT;
 
-CREATE OR REPLACE FUNCTION gbtreekey_var_out(gbtreekey_var)
+CREATE FUNCTION gbtreekey_var_out(gbtreekey_var)
 RETURNS cstring
 AS 'MODULE_PATHNAME', 'gbtreekey_out'
 LANGUAGE C IMMUTABLE STRICT;
@@ -91,42 +91,42 @@ CREATE TYPE gbtreekey_var (
 --
 --
 -- define the GiST support methods
-CREATE OR REPLACE FUNCTION gbt_oid_consistent(internal,oid,int2,oid,internal)
+CREATE FUNCTION gbt_oid_consistent(internal,oid,int2,oid,internal)
 RETURNS bool
 AS 'MODULE_PATHNAME'
 LANGUAGE C IMMUTABLE STRICT;
 
-CREATE OR REPLACE FUNCTION gbt_oid_compress(internal)
+CREATE FUNCTION gbt_oid_compress(internal)
 RETURNS internal
 AS 'MODULE_PATHNAME'
 LANGUAGE C IMMUTABLE STRICT;
 
-CREATE OR REPLACE FUNCTION gbt_decompress(internal)
+CREATE FUNCTION gbt_decompress(internal)
 RETURNS internal
 AS 'MODULE_PATHNAME'
 LANGUAGE C IMMUTABLE STRICT;
 
-CREATE OR REPLACE FUNCTION gbt_var_decompress(internal)
+CREATE FUNCTION gbt_var_decompress(internal)
 RETURNS internal
 AS 'MODULE_PATHNAME'
 LANGUAGE C IMMUTABLE STRICT;
 
-CREATE OR REPLACE FUNCTION gbt_oid_penalty(internal,internal,internal)
+CREATE FUNCTION gbt_oid_penalty(internal,internal,internal)
 RETURNS internal
 AS 'MODULE_PATHNAME'
 LANGUAGE C IMMUTABLE STRICT;
 
-CREATE OR REPLACE FUNCTION gbt_oid_picksplit(internal, internal)
+CREATE FUNCTION gbt_oid_picksplit(internal, internal)
 RETURNS internal
 AS 'MODULE_PATHNAME'
 LANGUAGE C IMMUTABLE STRICT;
 
-CREATE OR REPLACE FUNCTION gbt_oid_union(bytea, internal)
+CREATE FUNCTION gbt_oid_union(bytea, internal)
 RETURNS gbtreekey8
 AS 'MODULE_PATHNAME'
 LANGUAGE C IMMUTABLE STRICT;
 
-CREATE OR REPLACE FUNCTION gbt_oid_same(internal, internal, internal)
+CREATE FUNCTION gbt_oid_same(internal, internal, internal)
 RETURNS internal
 AS 'MODULE_PATHNAME'
 LANGUAGE C IMMUTABLE STRICT;
@@ -159,32 +159,32 @@ AS
 --
 --
 -- define the GiST support methods
-CREATE OR REPLACE FUNCTION gbt_int2_consistent(internal,int2,int2,oid,internal)
+CREATE FUNCTION gbt_int2_consistent(internal,int2,int2,oid,internal)
 RETURNS bool
 AS 'MODULE_PATHNAME'
 LANGUAGE C IMMUTABLE STRICT;
 
-CREATE OR REPLACE FUNCTION gbt_int2_compress(internal)
+CREATE FUNCTION gbt_int2_compress(internal)
 RETURNS internal
 AS 'MODULE_PATHNAME'
 LANGUAGE C IMMUTABLE STRICT;
 
-CREATE OR REPLACE FUNCTION gbt_int2_penalty(internal,internal,internal)
+CREATE FUNCTION gbt_int2_penalty(internal,internal,internal)
 RETURNS internal
 AS 'MODULE_PATHNAME'
 LANGUAGE C IMMUTABLE STRICT;
 
-CREATE OR REPLACE FUNCTION gbt_int2_picksplit(internal, internal)
+CREATE FUNCTION gbt_int2_picksplit(internal, internal)
 RETURNS internal
 AS 'MODULE_PATHNAME'
 LANGUAGE C IMMUTABLE STRICT;
 
-CREATE OR REPLACE FUNCTION gbt_int2_union(bytea, internal)
+CREATE FUNCTION gbt_int2_union(bytea, internal)
 RETURNS gbtreekey4
 AS 'MODULE_PATHNAME'
 LANGUAGE C IMMUTABLE STRICT;
 
-CREATE OR REPLACE FUNCTION gbt_int2_same(internal, internal, internal)
+CREATE FUNCTION gbt_int2_same(internal, internal, internal)
 RETURNS internal
 AS 'MODULE_PATHNAME'
 LANGUAGE C IMMUTABLE STRICT;
@@ -216,32 +216,32 @@ AS
 --
 --
 -- define the GiST support methods
-CREATE OR REPLACE FUNCTION gbt_int4_consistent(internal,int4,int2,oid,internal)
+CREATE FUNCTION gbt_int4_consistent(internal,int4,int2,oid,internal)
 RETURNS bool
 AS 'MODULE_PATHNAME'
 LANGUAGE C IMMUTABLE STRICT;
 
-CREATE OR REPLACE FUNCTION gbt_int4_compress(internal)
+CREATE FUNCTION gbt_int4_compress(internal)
 RETURNS internal
 AS 'MODULE_PATHNAME'
 LANGUAGE C IMMUTABLE STRICT;
 
-CREATE OR REPLACE FUNCTION gbt_int4_penalty(internal,internal,internal)
+CREATE FUNCTION gbt_int4_penalty(internal,internal,internal)
 RETURNS internal
 AS 'MODULE_PATHNAME'
 LANGUAGE C IMMUTABLE STRICT;
 
-CREATE OR REPLACE FUNCTION gbt_int4_picksplit(internal, internal)
+CREATE FUNCTION gbt_int4_picksplit(internal, internal)
 RETURNS internal
 AS 'MODULE_PATHNAME'
 LANGUAGE C IMMUTABLE STRICT;
 
-CREATE OR REPLACE FUNCTION gbt_int4_union(bytea, internal)
+CREATE FUNCTION gbt_int4_union(bytea, internal)
 RETURNS gbtreekey8
 AS 'MODULE_PATHNAME'
 LANGUAGE C IMMUTABLE STRICT;
 
-CREATE OR REPLACE FUNCTION gbt_int4_same(internal, internal, internal)
+CREATE FUNCTION gbt_int4_same(internal, internal, internal)
 RETURNS internal
 AS 'MODULE_PATHNAME'
 LANGUAGE C IMMUTABLE STRICT;
@@ -273,32 +273,32 @@ AS
 --
 --
 -- define the GiST support methods
-CREATE OR REPLACE FUNCTION gbt_int8_consistent(internal,int8,int2,oid,internal)
+CREATE FUNCTION gbt_int8_consistent(internal,int8,int2,oid,internal)
 RETURNS bool
 AS 'MODULE_PATHNAME'
 LANGUAGE C IMMUTABLE STRICT;
 
-CREATE OR REPLACE FUNCTION gbt_int8_compress(internal)
+CREATE FUNCTION gbt_int8_compress(internal)
 RETURNS internal
 AS 'MODULE_PATHNAME'
 LANGUAGE C IMMUTABLE STRICT;
 
-CREATE OR REPLACE FUNCTION gbt_int8_penalty(internal,internal,internal)
+CREATE FUNCTION gbt_int8_penalty(internal,internal,internal)
 RETURNS internal
 AS 'MODULE_PATHNAME'
 LANGUAGE C IMMUTABLE STRICT;
 
-CREATE OR REPLACE FUNCTION gbt_int8_picksplit(internal, internal)
+CREATE FUNCTION gbt_int8_picksplit(internal, internal)
 RETURNS internal
 AS 'MODULE_PATHNAME'
 LANGUAGE C IMMUTABLE STRICT;
 
-CREATE OR REPLACE FUNCTION gbt_int8_union(bytea, internal)
+CREATE FUNCTION gbt_int8_union(bytea, internal)
 RETURNS gbtreekey16
 AS 'MODULE_PATHNAME'
 LANGUAGE C IMMUTABLE STRICT;
 
-CREATE OR REPLACE FUNCTION gbt_int8_same(internal, internal, internal)
+CREATE FUNCTION gbt_int8_same(internal, internal, internal)
 RETURNS internal
 AS 'MODULE_PATHNAME'
 LANGUAGE C IMMUTABLE STRICT;
@@ -331,32 +331,32 @@ AS
 --
 --
 -- define the GiST support methods
-CREATE OR REPLACE FUNCTION gbt_float4_consistent(internal,float4,int2,oid,internal)
+CREATE FUNCTION gbt_float4_consistent(internal,float4,int2,oid,internal)
 RETURNS bool
 AS 'MODULE_PATHNAME'
 LANGUAGE C IMMUTABLE STRICT;
 
-CREATE OR REPLACE FUNCTION gbt_float4_compress(internal)
+CREATE FUNCTION gbt_float4_compress(internal)
 RETURNS internal
 AS 'MODULE_PATHNAME'
 LANGUAGE C IMMUTABLE STRICT;
 
-CREATE OR REPLACE FUNCTION gbt_float4_penalty(internal,internal,internal)
+CREATE FUNCTION gbt_float4_penalty(internal,internal,internal)
 RETURNS internal
 AS 'MODULE_PATHNAME'
 LANGUAGE C IMMUTABLE STRICT;
 
-CREATE OR REPLACE FUNCTION gbt_float4_picksplit(internal, internal)
+CREATE FUNCTION gbt_float4_picksplit(internal, internal)
 RETURNS internal
 AS 'MODULE_PATHNAME'
 LANGUAGE C IMMUTABLE STRICT;
 
-CREATE OR REPLACE FUNCTION gbt_float4_union(bytea, internal)
+CREATE FUNCTION gbt_float4_union(bytea, internal)
 RETURNS gbtreekey8
 AS 'MODULE_PATHNAME'
 LANGUAGE C IMMUTABLE STRICT;
 
-CREATE OR REPLACE FUNCTION gbt_float4_same(internal, internal, internal)
+CREATE FUNCTION gbt_float4_same(internal, internal, internal)
 RETURNS internal
 AS 'MODULE_PATHNAME'
 LANGUAGE C IMMUTABLE STRICT;
@@ -391,32 +391,32 @@ AS
 --
 --
 -- define the GiST support methods
-CREATE OR REPLACE FUNCTION gbt_float8_consistent(internal,float8,int2,oid,internal)
+CREATE FUNCTION gbt_float8_consistent(internal,float8,int2,oid,internal)
 RETURNS bool
 AS 'MODULE_PATHNAME'
 LANGUAGE C IMMUTABLE STRICT;
 
-CREATE OR REPLACE FUNCTION gbt_float8_compress(internal)
+CREATE FUNCTION gbt_float8_compress(internal)
 RETURNS internal
 AS 'MODULE_PATHNAME'
 LANGUAGE C IMMUTABLE STRICT;
 
-CREATE OR REPLACE FUNCTION gbt_float8_penalty(internal,internal,internal)
+CREATE FUNCTION gbt_float8_penalty(internal,internal,internal)
 RETURNS internal
 AS 'MODULE_PATHNAME'
 LANGUAGE C IMMUTABLE STRICT;
 
-CREATE OR REPLACE FUNCTION gbt_float8_picksplit(internal, internal)
+CREATE FUNCTION gbt_float8_picksplit(internal, internal)
 RETURNS internal
 AS 'MODULE_PATHNAME'
 LANGUAGE C IMMUTABLE STRICT;
 
-CREATE OR REPLACE FUNCTION gbt_float8_union(bytea, internal)
+CREATE FUNCTION gbt_float8_union(bytea, internal)
 RETURNS gbtreekey16
 AS 'MODULE_PATHNAME'
 LANGUAGE C IMMUTABLE STRICT;
 
-CREATE OR REPLACE FUNCTION gbt_float8_same(internal, internal, internal)
+CREATE FUNCTION gbt_float8_same(internal, internal, internal)
 RETURNS internal
 AS 'MODULE_PATHNAME'
 LANGUAGE C IMMUTABLE STRICT;
@@ -449,42 +449,42 @@ AS
 --
 --
 
-CREATE OR REPLACE FUNCTION gbt_ts_consistent(internal,timestamp,int2,oid,internal)
+CREATE FUNCTION gbt_ts_consistent(internal,timestamp,int2,oid,internal)
 RETURNS bool
 AS 'MODULE_PATHNAME'
 LANGUAGE C IMMUTABLE STRICT;
 
-CREATE OR REPLACE FUNCTION gbt_tstz_consistent(internal,timestamptz,int2,oid,internal)
+CREATE FUNCTION gbt_tstz_consistent(internal,timestamptz,int2,oid,internal)
 RETURNS bool
 AS 'MODULE_PATHNAME'
 LANGUAGE C IMMUTABLE STRICT;
 
-CREATE OR REPLACE FUNCTION gbt_ts_compress(internal)
+CREATE FUNCTION gbt_ts_compress(internal)
 RETURNS internal
 AS 'MODULE_PATHNAME'
 LANGUAGE C IMMUTABLE STRICT;
 
-CREATE OR REPLACE FUNCTION gbt_tstz_compress(internal)
+CREATE FUNCTION gbt_tstz_compress(internal)
 RETURNS internal
 AS 'MODULE_PATHNAME'
 LANGUAGE C IMMUTABLE STRICT;
 
-CREATE OR REPLACE FUNCTION gbt_ts_penalty(internal,internal,internal)
+CREATE FUNCTION gbt_ts_penalty(internal,internal,internal)
 RETURNS internal
 AS 'MODULE_PATHNAME'
 LANGUAGE C IMMUTABLE STRICT;
 
-CREATE OR REPLACE FUNCTION gbt_ts_picksplit(internal, internal)
+CREATE FUNCTION gbt_ts_picksplit(internal, internal)
 RETURNS internal
 AS 'MODULE_PATHNAME'
 LANGUAGE C IMMUTABLE STRICT;
 
-CREATE OR REPLACE FUNCTION gbt_ts_union(bytea, internal)
+CREATE FUNCTION gbt_ts_union(bytea, internal)
 RETURNS gbtreekey16
 AS 'MODULE_PATHNAME'
 LANGUAGE C IMMUTABLE STRICT;
 
-CREATE OR REPLACE FUNCTION gbt_ts_same(internal, internal, internal)
+CREATE FUNCTION gbt_ts_same(internal, internal, internal)
 RETURNS internal
 AS 'MODULE_PATHNAME'
 LANGUAGE C IMMUTABLE STRICT;
@@ -537,42 +537,42 @@ AS
 --
 --
 
-CREATE OR REPLACE FUNCTION gbt_time_consistent(internal,time,int2,oid,internal)
+CREATE FUNCTION gbt_time_consistent(internal,time,int2,oid,internal)
 RETURNS bool
 AS 'MODULE_PATHNAME'
 LANGUAGE C IMMUTABLE STRICT;
 
-CREATE OR REPLACE FUNCTION gbt_timetz_consistent(internal,timetz,int2,oid,internal)
+CREATE FUNCTION gbt_timetz_consistent(internal,timetz,int2,oid,internal)
 RETURNS bool
 AS 'MODULE_PATHNAME'
 LANGUAGE C IMMUTABLE STRICT;
 
-CREATE OR REPLACE FUNCTION gbt_time_compress(internal)
+CREATE FUNCTION gbt_time_compress(internal)
 RETURNS internal
 AS 'MODULE_PATHNAME'
 LANGUAGE C IMMUTABLE STRICT;
 
-CREATE OR REPLACE FUNCTION gbt_timetz_compress(internal)
+CREATE FUNCTION gbt_timetz_compress(internal)
 RETURNS internal
 AS 'MODULE_PATHNAME'
 LANGUAGE C IMMUTABLE STRICT;
 
-CREATE OR REPLACE FUNCTION gbt_time_penalty(internal,internal,internal)
+CREATE FUNCTION gbt_time_penalty(internal,internal,internal)
 RETURNS internal
 AS 'MODULE_PATHNAME'
 LANGUAGE C IMMUTABLE STRICT;
 
-CREATE OR REPLACE FUNCTION gbt_time_picksplit(internal, internal)
+CREATE FUNCTION gbt_time_picksplit(internal, internal)
 RETURNS internal
 AS 'MODULE_PATHNAME'
 LANGUAGE C IMMUTABLE STRICT;
 
-CREATE OR REPLACE FUNCTION gbt_time_union(bytea, internal)
+CREATE FUNCTION gbt_time_union(bytea, internal)
 RETURNS gbtreekey16
 AS 'MODULE_PATHNAME'
 LANGUAGE C IMMUTABLE STRICT;
 
-CREATE OR REPLACE FUNCTION gbt_time_same(internal, internal, internal)
+CREATE FUNCTION gbt_time_same(internal, internal, internal)
 RETURNS internal
 AS 'MODULE_PATHNAME'
 LANGUAGE C IMMUTABLE STRICT;
@@ -623,32 +623,32 @@ AS
 --
 --
 
-CREATE OR REPLACE FUNCTION gbt_date_consistent(internal,date,int2,oid,internal)
+CREATE FUNCTION gbt_date_consistent(internal,date,int2,oid,internal)
 RETURNS bool
 AS 'MODULE_PATHNAME'
 LANGUAGE C IMMUTABLE STRICT;
 
-CREATE OR REPLACE FUNCTION gbt_date_compress(internal)
+CREATE FUNCTION gbt_date_compress(internal)
 RETURNS internal
 AS 'MODULE_PATHNAME'
 LANGUAGE C IMMUTABLE STRICT;
 
-CREATE OR REPLACE FUNCTION gbt_date_penalty(internal,internal,internal)
+CREATE FUNCTION gbt_date_penalty(internal,internal,internal)
 RETURNS internal
 AS 'MODULE_PATHNAME'
 LANGUAGE C IMMUTABLE STRICT;
 
-CREATE OR REPLACE FUNCTION gbt_date_picksplit(internal, internal)
+CREATE FUNCTION gbt_date_picksplit(internal, internal)
 RETURNS internal
 AS 'MODULE_PATHNAME'
 LANGUAGE C IMMUTABLE STRICT;
 
-CREATE OR REPLACE FUNCTION gbt_date_union(bytea, internal)
+CREATE FUNCTION gbt_date_union(bytea, internal)
 RETURNS gbtreekey8
 AS 'MODULE_PATHNAME'
 LANGUAGE C IMMUTABLE STRICT;
 
-CREATE OR REPLACE FUNCTION gbt_date_same(internal, internal, internal)
+CREATE FUNCTION gbt_date_same(internal, internal, internal)
 RETURNS internal
 AS 'MODULE_PATHNAME'
 LANGUAGE C IMMUTABLE STRICT;
@@ -681,37 +681,37 @@ AS
 --
 --
 
-CREATE OR REPLACE FUNCTION gbt_intv_consistent(internal,interval,int2,oid,internal)
+CREATE FUNCTION gbt_intv_consistent(internal,interval,int2,oid,internal)
 RETURNS bool
 AS 'MODULE_PATHNAME'
 LANGUAGE C IMMUTABLE STRICT;
 
-CREATE OR REPLACE FUNCTION gbt_intv_compress(internal)
+CREATE FUNCTION gbt_intv_compress(internal)
 RETURNS internal
 AS 'MODULE_PATHNAME'
 LANGUAGE C IMMUTABLE STRICT;
 
-CREATE OR REPLACE FUNCTION gbt_intv_decompress(internal)
+CREATE FUNCTION gbt_intv_decompress(internal)
 RETURNS internal
 AS 'MODULE_PATHNAME'
 LANGUAGE C IMMUTABLE STRICT;
 
-CREATE OR REPLACE FUNCTION gbt_intv_penalty(internal,internal,internal)
+CREATE FUNCTION gbt_intv_penalty(internal,internal,internal)
 RETURNS internal
 AS 'MODULE_PATHNAME'
 LANGUAGE C IMMUTABLE STRICT;
 
-CREATE OR REPLACE FUNCTION gbt_intv_picksplit(internal, internal)
+CREATE FUNCTION gbt_intv_picksplit(internal, internal)
 RETURNS internal
 AS 'MODULE_PATHNAME'
 LANGUAGE C IMMUTABLE STRICT;
 
-CREATE OR REPLACE FUNCTION gbt_intv_union(bytea, internal)
+CREATE FUNCTION gbt_intv_union(bytea, internal)
 RETURNS gbtreekey32
 AS 'MODULE_PATHNAME'
 LANGUAGE C IMMUTABLE STRICT;
 
-CREATE OR REPLACE FUNCTION gbt_intv_same(internal, internal, internal)
+CREATE FUNCTION gbt_intv_same(internal, internal, internal)
 RETURNS internal
 AS 'MODULE_PATHNAME'
 LANGUAGE C IMMUTABLE STRICT;
@@ -743,32 +743,32 @@ AS
 --
 --
 -- define the GiST support methods
-CREATE OR REPLACE FUNCTION gbt_cash_consistent(internal,money,int2,oid,internal)
+CREATE FUNCTION gbt_cash_consistent(internal,money,int2,oid,internal)
 RETURNS bool
 AS 'MODULE_PATHNAME'
 LANGUAGE C IMMUTABLE STRICT;
 
-CREATE OR REPLACE FUNCTION gbt_cash_compress(internal)
+CREATE FUNCTION gbt_cash_compress(internal)
 RETURNS internal
 AS 'MODULE_PATHNAME'
 LANGUAGE C IMMUTABLE STRICT;
 
-CREATE OR REPLACE FUNCTION gbt_cash_penalty(internal,internal,internal)
+CREATE FUNCTION gbt_cash_penalty(internal,internal,internal)
 RETURNS internal
 AS 'MODULE_PATHNAME'
 LANGUAGE C IMMUTABLE STRICT;
 
-CREATE OR REPLACE FUNCTION gbt_cash_picksplit(internal, internal)
+CREATE FUNCTION gbt_cash_picksplit(internal, internal)
 RETURNS internal
 AS 'MODULE_PATHNAME'
 LANGUAGE C IMMUTABLE STRICT;
 
-CREATE OR REPLACE FUNCTION gbt_cash_union(bytea, internal)
+CREATE FUNCTION gbt_cash_union(bytea, internal)
 RETURNS gbtreekey8
 AS 'MODULE_PATHNAME'
 LANGUAGE C IMMUTABLE STRICT;
 
-CREATE OR REPLACE FUNCTION gbt_cash_same(internal, internal, internal)
+CREATE FUNCTION gbt_cash_same(internal, internal, internal)
 RETURNS internal
 AS 'MODULE_PATHNAME'
 LANGUAGE C IMMUTABLE STRICT;
@@ -800,32 +800,32 @@ AS
 --
 --
 -- define the GiST support methods
-CREATE OR REPLACE FUNCTION gbt_macad_consistent(internal,macaddr,int2,oid,internal)
+CREATE FUNCTION gbt_macad_consistent(internal,macaddr,int2,oid,internal)
 RETURNS bool
 AS 'MODULE_PATHNAME'
 LANGUAGE C IMMUTABLE STRICT;
 
-CREATE OR REPLACE FUNCTION gbt_macad_compress(internal)
+CREATE FUNCTION gbt_macad_compress(internal)
 RETURNS internal
 AS 'MODULE_PATHNAME'
 LANGUAGE C IMMUTABLE STRICT;
 
-CREATE OR REPLACE FUNCTION gbt_macad_penalty(internal,internal,internal)
+CREATE FUNCTION gbt_macad_penalty(internal,internal,internal)
 RETURNS internal
 AS 'MODULE_PATHNAME'
 LANGUAGE C IMMUTABLE STRICT;
 
-CREATE OR REPLACE FUNCTION gbt_macad_picksplit(internal, internal)
+CREATE FUNCTION gbt_macad_picksplit(internal, internal)
 RETURNS internal
 AS 'MODULE_PATHNAME'
 LANGUAGE C IMMUTABLE STRICT;
 
-CREATE OR REPLACE FUNCTION gbt_macad_union(bytea, internal)
+CREATE FUNCTION gbt_macad_union(bytea, internal)
 RETURNS gbtreekey16
 AS 'MODULE_PATHNAME'
 LANGUAGE C IMMUTABLE STRICT;
 
-CREATE OR REPLACE FUNCTION gbt_macad_same(internal, internal, internal)
+CREATE FUNCTION gbt_macad_same(internal, internal, internal)
 RETURNS internal
 AS 'MODULE_PATHNAME'
 LANGUAGE C IMMUTABLE STRICT;
@@ -859,42 +859,42 @@ AS
 --
 --
 -- define the GiST support methods
-CREATE OR REPLACE FUNCTION gbt_text_consistent(internal,text,int2,oid,internal)
+CREATE FUNCTION gbt_text_consistent(internal,text,int2,oid,internal)
 RETURNS bool
 AS 'MODULE_PATHNAME'
 LANGUAGE C IMMUTABLE STRICT;
 
-CREATE OR REPLACE FUNCTION gbt_bpchar_consistent(internal,bpchar,int2,oid,internal)
+CREATE FUNCTION gbt_bpchar_consistent(internal,bpchar,int2,oid,internal)
 RETURNS bool
 AS 'MODULE_PATHNAME'
 LANGUAGE C IMMUTABLE STRICT;
 
-CREATE OR REPLACE FUNCTION gbt_text_compress(internal)
+CREATE FUNCTION gbt_text_compress(internal)
 RETURNS internal
 AS 'MODULE_PATHNAME'
 LANGUAGE C IMMUTABLE STRICT;
 
-CREATE OR REPLACE FUNCTION gbt_bpchar_compress(internal)
+CREATE FUNCTION gbt_bpchar_compress(internal)
 RETURNS internal
 AS 'MODULE_PATHNAME'
 LANGUAGE C IMMUTABLE STRICT;
 
-CREATE OR REPLACE FUNCTION gbt_text_penalty(internal,internal,internal)
+CREATE FUNCTION gbt_text_penalty(internal,internal,internal)
 RETURNS internal
 AS 'MODULE_PATHNAME'
 LANGUAGE C IMMUTABLE STRICT;
 
-CREATE OR REPLACE FUNCTION gbt_text_picksplit(internal, internal)
+CREATE FUNCTION gbt_text_picksplit(internal, internal)
 RETURNS internal
 AS 'MODULE_PATHNAME'
 LANGUAGE C IMMUTABLE STRICT;
 
-CREATE OR REPLACE FUNCTION gbt_text_union(bytea, internal)
+CREATE FUNCTION gbt_text_union(bytea, internal)
 RETURNS gbtreekey_var
 AS 'MODULE_PATHNAME'
 LANGUAGE C IMMUTABLE STRICT;
 
-CREATE OR REPLACE FUNCTION gbt_text_same(internal, internal, internal)
+CREATE FUNCTION gbt_text_same(internal, internal, internal)
 RETURNS internal
 AS 'MODULE_PATHNAME'
 LANGUAGE C IMMUTABLE STRICT;
@@ -947,32 +947,32 @@ AS
 --
 --
 -- define the GiST support methods
-CREATE OR REPLACE FUNCTION gbt_bytea_consistent(internal,bytea,int2,oid,internal)
+CREATE FUNCTION gbt_bytea_consistent(internal,bytea,int2,oid,internal)
 RETURNS bool
 AS 'MODULE_PATHNAME'
 LANGUAGE C IMMUTABLE STRICT;
 
-CREATE OR REPLACE FUNCTION gbt_bytea_compress(internal)
+CREATE FUNCTION gbt_bytea_compress(internal)
 RETURNS internal
 AS 'MODULE_PATHNAME'
 LANGUAGE C IMMUTABLE STRICT;
 
-CREATE OR REPLACE FUNCTION gbt_bytea_penalty(internal,internal,internal)
+CREATE FUNCTION gbt_bytea_penalty(internal,internal,internal)
 RETURNS internal
 AS 'MODULE_PATHNAME'
 LANGUAGE C IMMUTABLE STRICT;
 
-CREATE OR REPLACE FUNCTION gbt_bytea_picksplit(internal, internal)
+CREATE FUNCTION gbt_bytea_picksplit(internal, internal)
 RETURNS internal
 AS 'MODULE_PATHNAME'
 LANGUAGE C IMMUTABLE STRICT;
 
-CREATE OR REPLACE FUNCTION gbt_bytea_union(bytea, internal)
+CREATE FUNCTION gbt_bytea_union(bytea, internal)
 RETURNS gbtreekey_var
 AS 'MODULE_PATHNAME'
 LANGUAGE C IMMUTABLE STRICT;
 
-CREATE OR REPLACE FUNCTION gbt_bytea_same(internal, internal, internal)
+CREATE FUNCTION gbt_bytea_same(internal, internal, internal)
 RETURNS internal
 AS 'MODULE_PATHNAME'
 LANGUAGE C IMMUTABLE STRICT;
@@ -1005,32 +1005,32 @@ AS
 --
 --
 -- define the GiST support methods
-CREATE OR REPLACE FUNCTION gbt_numeric_consistent(internal,numeric,int2,oid,internal)
+CREATE FUNCTION gbt_numeric_consistent(internal,numeric,int2,oid,internal)
 RETURNS bool
 AS 'MODULE_PATHNAME'
 LANGUAGE C IMMUTABLE STRICT;
 
-CREATE OR REPLACE FUNCTION gbt_numeric_compress(internal)
+CREATE FUNCTION gbt_numeric_compress(internal)
 RETURNS internal
 AS 'MODULE_PATHNAME'
 LANGUAGE C IMMUTABLE STRICT;
 
-CREATE OR REPLACE FUNCTION gbt_numeric_penalty(internal,internal,internal)
+CREATE FUNCTION gbt_numeric_penalty(internal,internal,internal)
 RETURNS internal
 AS 'MODULE_PATHNAME'
 LANGUAGE C IMMUTABLE STRICT;
 
-CREATE OR REPLACE FUNCTION gbt_numeric_picksplit(internal, internal)
+CREATE FUNCTION gbt_numeric_picksplit(internal, internal)
 RETURNS internal
 AS 'MODULE_PATHNAME'
 LANGUAGE C IMMUTABLE STRICT;
 
-CREATE OR REPLACE FUNCTION gbt_numeric_union(bytea, internal)
+CREATE FUNCTION gbt_numeric_union(bytea, internal)
 RETURNS gbtreekey_var
 AS 'MODULE_PATHNAME'
 LANGUAGE C IMMUTABLE STRICT;
 
-CREATE OR REPLACE FUNCTION gbt_numeric_same(internal, internal, internal)
+CREATE FUNCTION gbt_numeric_same(internal, internal, internal)
 RETURNS internal
 AS 'MODULE_PATHNAME'
 LANGUAGE C IMMUTABLE STRICT;
@@ -1061,32 +1061,32 @@ AS
 --
 --
 -- define the GiST support methods
-CREATE OR REPLACE FUNCTION gbt_bit_consistent(internal,bit,int2,oid,internal)
+CREATE FUNCTION gbt_bit_consistent(internal,bit,int2,oid,internal)
 RETURNS bool
 AS 'MODULE_PATHNAME'
 LANGUAGE C IMMUTABLE STRICT;
 
-CREATE OR REPLACE FUNCTION gbt_bit_compress(internal)
+CREATE FUNCTION gbt_bit_compress(internal)
 RETURNS internal
 AS 'MODULE_PATHNAME'
 LANGUAGE C IMMUTABLE STRICT;
 
-CREATE OR REPLACE FUNCTION gbt_bit_penalty(internal,internal,internal)
+CREATE FUNCTION gbt_bit_penalty(internal,internal,internal)
 RETURNS internal
 AS 'MODULE_PATHNAME'
 LANGUAGE C IMMUTABLE STRICT;
 
-CREATE OR REPLACE FUNCTION gbt_bit_picksplit(internal, internal)
+CREATE FUNCTION gbt_bit_picksplit(internal, internal)
 RETURNS internal
 AS 'MODULE_PATHNAME'
 LANGUAGE C IMMUTABLE STRICT;
 
-CREATE OR REPLACE FUNCTION gbt_bit_union(bytea, internal)
+CREATE FUNCTION gbt_bit_union(bytea, internal)
 RETURNS gbtreekey_var
 AS 'MODULE_PATHNAME'
 LANGUAGE C IMMUTABLE STRICT;
 
-CREATE OR REPLACE FUNCTION gbt_bit_same(internal, internal, internal)
+CREATE FUNCTION gbt_bit_same(internal, internal, internal)
 RETURNS internal
 AS 'MODULE_PATHNAME'
 LANGUAGE C IMMUTABLE STRICT;
@@ -1140,32 +1140,32 @@ AS
 --
 --
 -- define the GiST support methods
-CREATE OR REPLACE FUNCTION gbt_inet_consistent(internal,inet,int2,oid,internal)
+CREATE FUNCTION gbt_inet_consistent(internal,inet,int2,oid,internal)
 RETURNS bool
 AS 'MODULE_PATHNAME'
 LANGUAGE C IMMUTABLE STRICT;
 
-CREATE OR REPLACE FUNCTION gbt_inet_compress(internal)
+CREATE FUNCTION gbt_inet_compress(internal)
 RETURNS internal
 AS 'MODULE_PATHNAME'
 LANGUAGE C IMMUTABLE STRICT;
 
-CREATE OR REPLACE FUNCTION gbt_inet_penalty(internal,internal,internal)
+CREATE FUNCTION gbt_inet_penalty(internal,internal,internal)
 RETURNS internal
 AS 'MODULE_PATHNAME'
 LANGUAGE C IMMUTABLE STRICT;
 
-CREATE OR REPLACE FUNCTION gbt_inet_picksplit(internal, internal)
+CREATE FUNCTION gbt_inet_picksplit(internal, internal)
 RETURNS internal
 AS 'MODULE_PATHNAME'
 LANGUAGE C IMMUTABLE STRICT;
 
-CREATE OR REPLACE FUNCTION gbt_inet_union(bytea, internal)
+CREATE FUNCTION gbt_inet_union(bytea, internal)
 RETURNS gbtreekey16
 AS 'MODULE_PATHNAME'
 LANGUAGE C IMMUTABLE STRICT;
 
-CREATE OR REPLACE FUNCTION gbt_inet_same(internal, internal, internal)
+CREATE FUNCTION gbt_inet_same(internal, internal, internal)
 RETURNS internal
 AS 'MODULE_PATHNAME'
 LANGUAGE C IMMUTABLE STRICT;

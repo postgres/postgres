@@ -12,12 +12,12 @@
 --	Input and output functions and data types:
 --
 ---------------------------------------------------
-CREATE OR REPLACE FUNCTION ean13_in(cstring)
+CREATE FUNCTION ean13_in(cstring)
 	RETURNS ean13
 	AS 'MODULE_PATHNAME'
 	LANGUAGE 'C'
 	IMMUTABLE STRICT;
-CREATE OR REPLACE FUNCTION ean13_out(ean13)
+CREATE FUNCTION ean13_out(ean13)
 	RETURNS cstring
 	AS 'MODULE_PATHNAME'
 	LANGUAGE 'C'
@@ -30,12 +30,12 @@ CREATE TYPE ean13 (
 COMMENT ON TYPE ean13
 	IS 'International European Article Number (EAN13)';
 
-CREATE OR REPLACE FUNCTION isbn13_in(cstring)
+CREATE FUNCTION isbn13_in(cstring)
 	RETURNS isbn13
 	AS 'MODULE_PATHNAME', 'isbn_in'
 	LANGUAGE 'C'
 	IMMUTABLE STRICT;
-CREATE OR REPLACE FUNCTION ean13_out(isbn13)
+CREATE FUNCTION ean13_out(isbn13)
 	RETURNS cstring
 	AS 'MODULE_PATHNAME'
 	LANGUAGE 'C'
@@ -48,12 +48,12 @@ CREATE TYPE isbn13 (
 COMMENT ON TYPE isbn13
 	IS 'International Standard Book Number 13 (ISBN13)';
 
-CREATE OR REPLACE FUNCTION ismn13_in(cstring)
+CREATE FUNCTION ismn13_in(cstring)
 	RETURNS ismn13
 	AS 'MODULE_PATHNAME', 'ismn_in'
 	LANGUAGE 'C'
 	IMMUTABLE STRICT;
-CREATE OR REPLACE FUNCTION ean13_out(ismn13)
+CREATE FUNCTION ean13_out(ismn13)
 	RETURNS cstring
 	AS 'MODULE_PATHNAME'
 	LANGUAGE 'C'
@@ -66,12 +66,12 @@ CREATE TYPE ismn13 (
 COMMENT ON TYPE ismn13
 	IS 'International Standard Music Number 13 (ISMN13)';
 
-CREATE OR REPLACE FUNCTION issn13_in(cstring)
+CREATE FUNCTION issn13_in(cstring)
 	RETURNS issn13
 	AS 'MODULE_PATHNAME', 'issn_in'
 	LANGUAGE 'C'
 	IMMUTABLE STRICT;
-CREATE OR REPLACE FUNCTION ean13_out(issn13)
+CREATE FUNCTION ean13_out(issn13)
 	RETURNS cstring
 	AS 'MODULE_PATHNAME'
 	LANGUAGE 'C'
@@ -86,12 +86,12 @@ COMMENT ON TYPE issn13
 
 -- Short format:
 
-CREATE OR REPLACE FUNCTION isbn_in(cstring)
+CREATE FUNCTION isbn_in(cstring)
 	RETURNS isbn
 	AS 'MODULE_PATHNAME'
 	LANGUAGE 'C'
 	IMMUTABLE STRICT;
-CREATE OR REPLACE FUNCTION isn_out(isbn)
+CREATE FUNCTION isn_out(isbn)
 	RETURNS cstring
 	AS 'MODULE_PATHNAME'
 	LANGUAGE 'C'
@@ -104,12 +104,12 @@ CREATE TYPE isbn (
 COMMENT ON TYPE isbn
 	IS 'International Standard Book Number (ISBN)';
 
-CREATE OR REPLACE FUNCTION ismn_in(cstring)
+CREATE FUNCTION ismn_in(cstring)
 	RETURNS ismn
 	AS 'MODULE_PATHNAME'
 	LANGUAGE 'C'
 	IMMUTABLE STRICT;
-CREATE OR REPLACE FUNCTION isn_out(ismn)
+CREATE FUNCTION isn_out(ismn)
 	RETURNS cstring
 	AS 'MODULE_PATHNAME'
 	LANGUAGE 'C'
@@ -122,12 +122,12 @@ CREATE TYPE ismn (
 COMMENT ON TYPE ismn
 	IS 'International Standard Music Number (ISMN)';
 
-CREATE OR REPLACE FUNCTION issn_in(cstring)
+CREATE FUNCTION issn_in(cstring)
 	RETURNS issn
 	AS 'MODULE_PATHNAME'
 	LANGUAGE 'C'
 	IMMUTABLE STRICT;
-CREATE OR REPLACE FUNCTION isn_out(issn)
+CREATE FUNCTION isn_out(issn)
 	RETURNS cstring
 	AS 'MODULE_PATHNAME'
 	LANGUAGE 'C'
@@ -140,12 +140,12 @@ CREATE TYPE issn (
 COMMENT ON TYPE issn
 	IS 'International Standard Serial Number (ISSN)';
 
-CREATE OR REPLACE FUNCTION upc_in(cstring)
+CREATE FUNCTION upc_in(cstring)
 	RETURNS upc
 	AS 'MODULE_PATHNAME'
 	LANGUAGE 'C'
 	IMMUTABLE STRICT;
-CREATE OR REPLACE FUNCTION isn_out(upc)
+CREATE FUNCTION isn_out(upc)
 	RETURNS cstring
 	AS 'MODULE_PATHNAME'
 	LANGUAGE 'C'
@@ -163,249 +163,249 @@ COMMENT ON TYPE upc
 --
 ---------------------------------------------------
 -- EAN13:
-CREATE OR REPLACE FUNCTION isnlt(ean13, ean13)
+CREATE FUNCTION isnlt(ean13, ean13)
 	RETURNS boolean
 	AS 'int8lt'
 	LANGUAGE 'internal'
 	IMMUTABLE STRICT;
-CREATE OR REPLACE FUNCTION isnle(ean13, ean13)
+CREATE FUNCTION isnle(ean13, ean13)
 	RETURNS boolean
 	AS 'int8le'
 	LANGUAGE 'internal'
 	IMMUTABLE STRICT;
-CREATE OR REPLACE FUNCTION isneq(ean13, ean13)
+CREATE FUNCTION isneq(ean13, ean13)
 	RETURNS boolean
 	AS 'int8eq'
 	LANGUAGE 'internal'
 	IMMUTABLE STRICT;
-CREATE OR REPLACE FUNCTION isnge(ean13, ean13)
+CREATE FUNCTION isnge(ean13, ean13)
 	RETURNS boolean
 	AS 'int8ge'
 	LANGUAGE 'internal'
 	IMMUTABLE STRICT;
-CREATE OR REPLACE FUNCTION isngt(ean13, ean13)
+CREATE FUNCTION isngt(ean13, ean13)
 	RETURNS boolean
 	AS 'int8gt'
 	LANGUAGE 'internal'
 	IMMUTABLE STRICT;
-CREATE OR REPLACE FUNCTION isnne(ean13, ean13)
+CREATE FUNCTION isnne(ean13, ean13)
 	RETURNS boolean
 	AS 'int8ne'
 	LANGUAGE 'internal'
 	IMMUTABLE STRICT;
 
-CREATE OR REPLACE FUNCTION isnlt(ean13, isbn13)
+CREATE FUNCTION isnlt(ean13, isbn13)
 	RETURNS boolean
 	AS 'int8lt'
 	LANGUAGE 'internal'
 	IMMUTABLE STRICT;
-CREATE OR REPLACE FUNCTION isnle(ean13, isbn13)
+CREATE FUNCTION isnle(ean13, isbn13)
 	RETURNS boolean
 	AS 'int8le'
 	LANGUAGE 'internal'
 	IMMUTABLE STRICT;
-CREATE OR REPLACE FUNCTION isneq(ean13, isbn13)
+CREATE FUNCTION isneq(ean13, isbn13)
 	RETURNS boolean
 	AS 'int8eq'
 	LANGUAGE 'internal'
 	IMMUTABLE STRICT;
-CREATE OR REPLACE FUNCTION isnge(ean13, isbn13)
+CREATE FUNCTION isnge(ean13, isbn13)
 	RETURNS boolean
 	AS 'int8ge'
 	LANGUAGE 'internal'
 	IMMUTABLE STRICT;
-CREATE OR REPLACE FUNCTION isngt(ean13, isbn13)
+CREATE FUNCTION isngt(ean13, isbn13)
 	RETURNS boolean
 	AS 'int8gt'
 	LANGUAGE 'internal'
 	IMMUTABLE STRICT;
-CREATE OR REPLACE FUNCTION isnne(ean13, isbn13)
+CREATE FUNCTION isnne(ean13, isbn13)
 	RETURNS boolean
 	AS 'int8ne'
 	LANGUAGE 'internal'
 	IMMUTABLE STRICT;
 
-CREATE OR REPLACE FUNCTION isnlt(ean13, ismn13)
+CREATE FUNCTION isnlt(ean13, ismn13)
 	RETURNS boolean
 	AS 'int8lt'
 	LANGUAGE 'internal'
 	IMMUTABLE STRICT;
-CREATE OR REPLACE FUNCTION isnle(ean13, ismn13)
+CREATE FUNCTION isnle(ean13, ismn13)
 	RETURNS boolean
 	AS 'int8le'
 	LANGUAGE 'internal'
 	IMMUTABLE STRICT;
-CREATE OR REPLACE FUNCTION isneq(ean13, ismn13)
+CREATE FUNCTION isneq(ean13, ismn13)
 	RETURNS boolean
 	AS 'int8eq'
 	LANGUAGE 'internal'
 	IMMUTABLE STRICT;
-CREATE OR REPLACE FUNCTION isnge(ean13, ismn13)
+CREATE FUNCTION isnge(ean13, ismn13)
 	RETURNS boolean
 	AS 'int8ge'
 	LANGUAGE 'internal'
 	IMMUTABLE STRICT;
-CREATE OR REPLACE FUNCTION isngt(ean13, ismn13)
+CREATE FUNCTION isngt(ean13, ismn13)
 	RETURNS boolean
 	AS 'int8gt'
 	LANGUAGE 'internal'
 	IMMUTABLE STRICT;
-CREATE OR REPLACE FUNCTION isnne(ean13, ismn13)
+CREATE FUNCTION isnne(ean13, ismn13)
 	RETURNS boolean
 	AS 'int8ne'
 	LANGUAGE 'internal'
 	IMMUTABLE STRICT;
 
-CREATE OR REPLACE FUNCTION isnlt(ean13, issn13)
+CREATE FUNCTION isnlt(ean13, issn13)
 	RETURNS boolean
 	AS 'int8lt'
 	LANGUAGE 'internal'
 	IMMUTABLE STRICT;
-CREATE OR REPLACE FUNCTION isnle(ean13, issn13)
+CREATE FUNCTION isnle(ean13, issn13)
 	RETURNS boolean
 	AS 'int8le'
 	LANGUAGE 'internal'
 	IMMUTABLE STRICT;
-CREATE OR REPLACE FUNCTION isneq(ean13, issn13)
+CREATE FUNCTION isneq(ean13, issn13)
 	RETURNS boolean
 	AS 'int8eq'
 	LANGUAGE 'internal'
 	IMMUTABLE STRICT;
-CREATE OR REPLACE FUNCTION isnge(ean13, issn13)
+CREATE FUNCTION isnge(ean13, issn13)
 	RETURNS boolean
 	AS 'int8ge'
 	LANGUAGE 'internal'
 	IMMUTABLE STRICT;
-CREATE OR REPLACE FUNCTION isngt(ean13, issn13)
+CREATE FUNCTION isngt(ean13, issn13)
 	RETURNS boolean
 	AS 'int8gt'
 	LANGUAGE 'internal'
 	IMMUTABLE STRICT;
-CREATE OR REPLACE FUNCTION isnne(ean13, issn13)
+CREATE FUNCTION isnne(ean13, issn13)
 	RETURNS boolean
 	AS 'int8ne'
 	LANGUAGE 'internal'
 	IMMUTABLE STRICT;
 
-CREATE OR REPLACE FUNCTION isnlt(ean13, isbn)
+CREATE FUNCTION isnlt(ean13, isbn)
 	RETURNS boolean
 	AS 'int8lt'
 	LANGUAGE 'internal'
 	IMMUTABLE STRICT;
-CREATE OR REPLACE FUNCTION isnle(ean13, isbn)
+CREATE FUNCTION isnle(ean13, isbn)
 	RETURNS boolean
 	AS 'int8le'
 	LANGUAGE 'internal'
 	IMMUTABLE STRICT;
-CREATE OR REPLACE FUNCTION isneq(ean13, isbn)
+CREATE FUNCTION isneq(ean13, isbn)
 	RETURNS boolean
 	AS 'int8eq'
 	LANGUAGE 'internal'
 	IMMUTABLE STRICT;
-CREATE OR REPLACE FUNCTION isnge(ean13, isbn)
+CREATE FUNCTION isnge(ean13, isbn)
 	RETURNS boolean
 	AS 'int8ge'
 	LANGUAGE 'internal'
 	IMMUTABLE STRICT;
-CREATE OR REPLACE FUNCTION isngt(ean13, isbn)
+CREATE FUNCTION isngt(ean13, isbn)
 	RETURNS boolean
 	AS 'int8gt'
 	LANGUAGE 'internal'
 	IMMUTABLE STRICT;
-CREATE OR REPLACE FUNCTION isnne(ean13, isbn)
+CREATE FUNCTION isnne(ean13, isbn)
 	RETURNS boolean
 	AS 'int8ne'
 	LANGUAGE 'internal'
 	IMMUTABLE STRICT;
 
-CREATE OR REPLACE FUNCTION isnlt(ean13, ismn)
+CREATE FUNCTION isnlt(ean13, ismn)
 	RETURNS boolean
 	AS 'int8lt'
 	LANGUAGE 'internal'
 	IMMUTABLE STRICT;
-CREATE OR REPLACE FUNCTION isnle(ean13, ismn)
+CREATE FUNCTION isnle(ean13, ismn)
 	RETURNS boolean
 	AS 'int8le'
 	LANGUAGE 'internal'
 	IMMUTABLE STRICT;
-CREATE OR REPLACE FUNCTION isneq(ean13, ismn)
+CREATE FUNCTION isneq(ean13, ismn)
 	RETURNS boolean
 	AS 'int8eq'
 	LANGUAGE 'internal'
 	IMMUTABLE STRICT;
-CREATE OR REPLACE FUNCTION isnge(ean13, ismn)
+CREATE FUNCTION isnge(ean13, ismn)
 	RETURNS boolean
 	AS 'int8ge'
 	LANGUAGE 'internal'
 	IMMUTABLE STRICT;
-CREATE OR REPLACE FUNCTION isngt(ean13, ismn)
+CREATE FUNCTION isngt(ean13, ismn)
 	RETURNS boolean
 	AS 'int8gt'
 	LANGUAGE 'internal'
 	IMMUTABLE STRICT;
-CREATE OR REPLACE FUNCTION isnne(ean13, ismn)
+CREATE FUNCTION isnne(ean13, ismn)
 	RETURNS boolean
 	AS 'int8ne'
 	LANGUAGE 'internal'
 	IMMUTABLE STRICT;
 
-CREATE OR REPLACE FUNCTION isnlt(ean13, issn)
+CREATE FUNCTION isnlt(ean13, issn)
 	RETURNS boolean
 	AS 'int8lt'
 	LANGUAGE 'internal'
 	IMMUTABLE STRICT;
-CREATE OR REPLACE FUNCTION isnle(ean13, issn)
+CREATE FUNCTION isnle(ean13, issn)
 	RETURNS boolean
 	AS 'int8le'
 	LANGUAGE 'internal'
 	IMMUTABLE STRICT;
-CREATE OR REPLACE FUNCTION isneq(ean13, issn)
+CREATE FUNCTION isneq(ean13, issn)
 	RETURNS boolean
 	AS 'int8eq'
 	LANGUAGE 'internal'
 	IMMUTABLE STRICT;
-CREATE OR REPLACE FUNCTION isnge(ean13, issn)
+CREATE FUNCTION isnge(ean13, issn)
 	RETURNS boolean
 	AS 'int8ge'
 	LANGUAGE 'internal'
 	IMMUTABLE STRICT;
-CREATE OR REPLACE FUNCTION isngt(ean13, issn)
+CREATE FUNCTION isngt(ean13, issn)
 	RETURNS boolean
 	AS 'int8gt'
 	LANGUAGE 'internal'
 	IMMUTABLE STRICT;
-CREATE OR REPLACE FUNCTION isnne(ean13, issn)
+CREATE FUNCTION isnne(ean13, issn)
 	RETURNS boolean
 	AS 'int8ne'
 	LANGUAGE 'internal'
 	IMMUTABLE STRICT;
 
-CREATE OR REPLACE FUNCTION isnlt(ean13, upc)
+CREATE FUNCTION isnlt(ean13, upc)
 	RETURNS boolean
 	AS 'int8lt'
 	LANGUAGE 'internal'
 	IMMUTABLE STRICT;
-CREATE OR REPLACE FUNCTION isnle(ean13, upc)
+CREATE FUNCTION isnle(ean13, upc)
 	RETURNS boolean
 	AS 'int8le'
 	LANGUAGE 'internal'
 	IMMUTABLE STRICT;
-CREATE OR REPLACE FUNCTION isneq(ean13, upc)
+CREATE FUNCTION isneq(ean13, upc)
 	RETURNS boolean
 	AS 'int8eq'
 	LANGUAGE 'internal'
 	IMMUTABLE STRICT;
-CREATE OR REPLACE FUNCTION isnge(ean13, upc)
+CREATE FUNCTION isnge(ean13, upc)
 	RETURNS boolean
 	AS 'int8ge'
 	LANGUAGE 'internal'
 	IMMUTABLE STRICT;
-CREATE OR REPLACE FUNCTION isngt(ean13, upc)
+CREATE FUNCTION isngt(ean13, upc)
 	RETURNS boolean
 	AS 'int8gt'
 	LANGUAGE 'internal'
 	IMMUTABLE STRICT;
-CREATE OR REPLACE FUNCTION isnne(ean13, upc)
+CREATE FUNCTION isnne(ean13, upc)
 	RETURNS boolean
 	AS 'int8ne'
 	LANGUAGE 'internal'
@@ -413,94 +413,94 @@ CREATE OR REPLACE FUNCTION isnne(ean13, upc)
 
 ---------------------------------------------------
 -- ISBN13:
-CREATE OR REPLACE FUNCTION isnlt(isbn13, isbn13)
+CREATE FUNCTION isnlt(isbn13, isbn13)
 	RETURNS boolean
 	AS 'int8lt'
 	LANGUAGE 'internal'
 	IMMUTABLE STRICT;
-CREATE OR REPLACE FUNCTION isnle(isbn13, isbn13)
+CREATE FUNCTION isnle(isbn13, isbn13)
 	RETURNS boolean
 	AS 'int8le'
 	LANGUAGE 'internal'
 	IMMUTABLE STRICT;
-CREATE OR REPLACE FUNCTION isneq(isbn13, isbn13)
+CREATE FUNCTION isneq(isbn13, isbn13)
 	RETURNS boolean
 	AS 'int8eq'
 	LANGUAGE 'internal'
 	IMMUTABLE STRICT;
-CREATE OR REPLACE FUNCTION isnge(isbn13, isbn13)
+CREATE FUNCTION isnge(isbn13, isbn13)
 	RETURNS boolean
 	AS 'int8ge'
 	LANGUAGE 'internal'
 	IMMUTABLE STRICT;
-CREATE OR REPLACE FUNCTION isngt(isbn13, isbn13)
+CREATE FUNCTION isngt(isbn13, isbn13)
 	RETURNS boolean
 	AS 'int8gt'
 	LANGUAGE 'internal'
 	IMMUTABLE STRICT;
-CREATE OR REPLACE FUNCTION isnne(isbn13, isbn13)
+CREATE FUNCTION isnne(isbn13, isbn13)
 	RETURNS boolean
 	AS 'int8ne'
 	LANGUAGE 'internal'
 	IMMUTABLE STRICT;
 
-CREATE OR REPLACE FUNCTION isnlt(isbn13, isbn)
+CREATE FUNCTION isnlt(isbn13, isbn)
 	RETURNS boolean
 	AS 'int8lt'
 	LANGUAGE 'internal'
 	IMMUTABLE STRICT;
-CREATE OR REPLACE FUNCTION isnle(isbn13, isbn)
+CREATE FUNCTION isnle(isbn13, isbn)
 	RETURNS boolean
 	AS 'int8le'
 	LANGUAGE 'internal'
 	IMMUTABLE STRICT;
-CREATE OR REPLACE FUNCTION isneq(isbn13, isbn)
+CREATE FUNCTION isneq(isbn13, isbn)
 	RETURNS boolean
 	AS 'int8eq'
 	LANGUAGE 'internal'
 	IMMUTABLE STRICT;
-CREATE OR REPLACE FUNCTION isnge(isbn13, isbn)
+CREATE FUNCTION isnge(isbn13, isbn)
 	RETURNS boolean
 	AS 'int8ge'
 	LANGUAGE 'internal'
 	IMMUTABLE STRICT;
-CREATE OR REPLACE FUNCTION isngt(isbn13, isbn)
+CREATE FUNCTION isngt(isbn13, isbn)
 	RETURNS boolean
 	AS 'int8gt'
 	LANGUAGE 'internal'
 	IMMUTABLE STRICT;
-CREATE OR REPLACE FUNCTION isnne(isbn13, isbn)
+CREATE FUNCTION isnne(isbn13, isbn)
 	RETURNS boolean
 	AS 'int8ne'
 	LANGUAGE 'internal'
 	IMMUTABLE STRICT;
 
-CREATE OR REPLACE FUNCTION isnlt(isbn13, ean13)
+CREATE FUNCTION isnlt(isbn13, ean13)
 	RETURNS boolean
 	AS 'int8lt'
 	LANGUAGE 'internal'
 	IMMUTABLE STRICT;
-CREATE OR REPLACE FUNCTION isnle(isbn13, ean13)
+CREATE FUNCTION isnle(isbn13, ean13)
 	RETURNS boolean
 	AS 'int8le'
 	LANGUAGE 'internal'
 	IMMUTABLE STRICT;
-CREATE OR REPLACE FUNCTION isneq(isbn13, ean13)
+CREATE FUNCTION isneq(isbn13, ean13)
 	RETURNS boolean
 	AS 'int8eq'
 	LANGUAGE 'internal'
 	IMMUTABLE STRICT;
-CREATE OR REPLACE FUNCTION isnge(isbn13, ean13)
+CREATE FUNCTION isnge(isbn13, ean13)
 	RETURNS boolean
 	AS 'int8ge'
 	LANGUAGE 'internal'
 	IMMUTABLE STRICT;
-CREATE OR REPLACE FUNCTION isngt(isbn13, ean13)
+CREATE FUNCTION isngt(isbn13, ean13)
 	RETURNS boolean
 	AS 'int8gt'
 	LANGUAGE 'internal'
 	IMMUTABLE STRICT;
-CREATE OR REPLACE FUNCTION isnne(isbn13, ean13)
+CREATE FUNCTION isnne(isbn13, ean13)
 	RETURNS boolean
 	AS 'int8ne'
 	LANGUAGE 'internal'
@@ -508,94 +508,94 @@ CREATE OR REPLACE FUNCTION isnne(isbn13, ean13)
 
 ---------------------------------------------------
 -- ISBN:
-CREATE OR REPLACE FUNCTION isnlt(isbn, isbn)
+CREATE FUNCTION isnlt(isbn, isbn)
 	RETURNS boolean
 	AS 'int8lt'
 	LANGUAGE 'internal'
 	IMMUTABLE STRICT;
-CREATE OR REPLACE FUNCTION isnle(isbn, isbn)
+CREATE FUNCTION isnle(isbn, isbn)
 	RETURNS boolean
 	AS 'int8le'
 	LANGUAGE 'internal'
 	IMMUTABLE STRICT;
-CREATE OR REPLACE FUNCTION isneq(isbn, isbn)
+CREATE FUNCTION isneq(isbn, isbn)
 	RETURNS boolean
 	AS 'int8eq'
 	LANGUAGE 'internal'
 	IMMUTABLE STRICT;
-CREATE OR REPLACE FUNCTION isnge(isbn, isbn)
+CREATE FUNCTION isnge(isbn, isbn)
 	RETURNS boolean
 	AS 'int8ge'
 	LANGUAGE 'internal'
 	IMMUTABLE STRICT;
-CREATE OR REPLACE FUNCTION isngt(isbn, isbn)
+CREATE FUNCTION isngt(isbn, isbn)
 	RETURNS boolean
 	AS 'int8gt'
 	LANGUAGE 'internal'
 	IMMUTABLE STRICT;
-CREATE OR REPLACE FUNCTION isnne(isbn, isbn)
+CREATE FUNCTION isnne(isbn, isbn)
 	RETURNS boolean
 	AS 'int8ne'
 	LANGUAGE 'internal'
 	IMMUTABLE STRICT;
 
-CREATE OR REPLACE FUNCTION isnlt(isbn, isbn13)
+CREATE FUNCTION isnlt(isbn, isbn13)
 	RETURNS boolean
 	AS 'int8lt'
 	LANGUAGE 'internal'
 	IMMUTABLE STRICT;
-CREATE OR REPLACE FUNCTION isnle(isbn, isbn13)
+CREATE FUNCTION isnle(isbn, isbn13)
 	RETURNS boolean
 	AS 'int8le'
 	LANGUAGE 'internal'
 	IMMUTABLE STRICT;
-CREATE OR REPLACE FUNCTION isneq(isbn, isbn13)
+CREATE FUNCTION isneq(isbn, isbn13)
 	RETURNS boolean
 	AS 'int8eq'
 	LANGUAGE 'internal'
 	IMMUTABLE STRICT;
-CREATE OR REPLACE FUNCTION isnge(isbn, isbn13)
+CREATE FUNCTION isnge(isbn, isbn13)
 	RETURNS boolean
 	AS 'int8ge'
 	LANGUAGE 'internal'
 	IMMUTABLE STRICT;
-CREATE OR REPLACE FUNCTION isngt(isbn, isbn13)
+CREATE FUNCTION isngt(isbn, isbn13)
 	RETURNS boolean
 	AS 'int8gt'
 	LANGUAGE 'internal'
 	IMMUTABLE STRICT;
-CREATE OR REPLACE FUNCTION isnne(isbn, isbn13)
+CREATE FUNCTION isnne(isbn, isbn13)
 	RETURNS boolean
 	AS 'int8ne'
 	LANGUAGE 'internal'
 	IMMUTABLE STRICT;
 
-CREATE OR REPLACE FUNCTION isnlt(isbn, ean13)
+CREATE FUNCTION isnlt(isbn, ean13)
 	RETURNS boolean
 	AS 'int8lt'
 	LANGUAGE 'internal'
 	IMMUTABLE STRICT;
-CREATE OR REPLACE FUNCTION isnle(isbn, ean13)
+CREATE FUNCTION isnle(isbn, ean13)
 	RETURNS boolean
 	AS 'int8le'
 	LANGUAGE 'internal'
 	IMMUTABLE STRICT;
-CREATE OR REPLACE FUNCTION isneq(isbn, ean13)
+CREATE FUNCTION isneq(isbn, ean13)
 	RETURNS boolean
 	AS 'int8eq'
 	LANGUAGE 'internal'
 	IMMUTABLE STRICT;
-CREATE OR REPLACE FUNCTION isnge(isbn, ean13)
+CREATE FUNCTION isnge(isbn, ean13)
 	RETURNS boolean
 	AS 'int8ge'
 	LANGUAGE 'internal'
 	IMMUTABLE STRICT;
-CREATE OR REPLACE FUNCTION isngt(isbn, ean13)
+CREATE FUNCTION isngt(isbn, ean13)
 	RETURNS boolean
 	AS 'int8gt'
 	LANGUAGE 'internal'
 	IMMUTABLE STRICT;
-CREATE OR REPLACE FUNCTION isnne(isbn, ean13)
+CREATE FUNCTION isnne(isbn, ean13)
 	RETURNS boolean
 	AS 'int8ne'
 	LANGUAGE 'internal'
@@ -603,94 +603,94 @@ CREATE OR REPLACE FUNCTION isnne(isbn, ean13)
 
 ---------------------------------------------------
 -- ISMN13:
-CREATE OR REPLACE FUNCTION isnlt(ismn13, ismn13)
+CREATE FUNCTION isnlt(ismn13, ismn13)
 	RETURNS boolean
 	AS 'int8lt'
 	LANGUAGE 'internal'
 	IMMUTABLE STRICT;
-CREATE OR REPLACE FUNCTION isnle(ismn13, ismn13)
+CREATE FUNCTION isnle(ismn13, ismn13)
 	RETURNS boolean
 	AS 'int8le'
 	LANGUAGE 'internal'
 	IMMUTABLE STRICT;
-CREATE OR REPLACE FUNCTION isneq(ismn13, ismn13)
+CREATE FUNCTION isneq(ismn13, ismn13)
 	RETURNS boolean
 	AS 'int8eq'
 	LANGUAGE 'internal'
 	IMMUTABLE STRICT;
-CREATE OR REPLACE FUNCTION isnge(ismn13, ismn13)
+CREATE FUNCTION isnge(ismn13, ismn13)
 	RETURNS boolean
 	AS 'int8ge'
 	LANGUAGE 'internal'
 	IMMUTABLE STRICT;
-CREATE OR REPLACE FUNCTION isngt(ismn13, ismn13)
+CREATE FUNCTION isngt(ismn13, ismn13)
 	RETURNS boolean
 	AS 'int8gt'
 	LANGUAGE 'internal'
 	IMMUTABLE STRICT;
-CREATE OR REPLACE FUNCTION isnne(ismn13, ismn13)
+CREATE FUNCTION isnne(ismn13, ismn13)
 	RETURNS boolean
 	AS 'int8ne'
 	LANGUAGE 'internal'
 	IMMUTABLE STRICT;
 
-CREATE OR REPLACE FUNCTION isnlt(ismn13, ismn)
+CREATE FUNCTION isnlt(ismn13, ismn)
 	RETURNS boolean
 	AS 'int8lt'
 	LANGUAGE 'internal'
 	IMMUTABLE STRICT;
-CREATE OR REPLACE FUNCTION isnle(ismn13, ismn)
+CREATE FUNCTION isnle(ismn13, ismn)
 	RETURNS boolean
 	AS 'int8le'
 	LANGUAGE 'internal'
 	IMMUTABLE STRICT;
-CREATE OR REPLACE FUNCTION isneq(ismn13, ismn)
+CREATE FUNCTION isneq(ismn13, ismn)
 	RETURNS boolean
 	AS 'int8eq'
 	LANGUAGE 'internal'
 	IMMUTABLE STRICT;
-CREATE OR REPLACE FUNCTION isnge(ismn13, ismn)
+CREATE FUNCTION isnge(ismn13, ismn)
 	RETURNS boolean
 	AS 'int8ge'
 	LANGUAGE 'internal'
 	IMMUTABLE STRICT;
-CREATE OR REPLACE FUNCTION isngt(ismn13, ismn)
+CREATE FUNCTION isngt(ismn13, ismn)
 	RETURNS boolean
 	AS 'int8gt'
 	LANGUAGE 'internal'
 	IMMUTABLE STRICT;
-CREATE OR REPLACE FUNCTION isnne(ismn13, ismn)
+CREATE FUNCTION isnne(ismn13, ismn)
 	RETURNS boolean
 	AS 'int8ne'
 	LANGUAGE 'internal'
 	IMMUTABLE STRICT;
 
-CREATE OR REPLACE FUNCTION isnlt(ismn13, ean13)
+CREATE FUNCTION isnlt(ismn13, ean13)
 	RETURNS boolean
 	AS 'int8lt'
 	LANGUAGE 'internal'
 	IMMUTABLE STRICT;
-CREATE OR REPLACE FUNCTION isnle(ismn13, ean13)
+CREATE FUNCTION isnle(ismn13, ean13)
 	RETURNS boolean
 	AS 'int8le'
 	LANGUAGE 'internal'
 	IMMUTABLE STRICT;
-CREATE OR REPLACE FUNCTION isneq(ismn13, ean13)
+CREATE FUNCTION isneq(ismn13, ean13)
 	RETURNS boolean
 	AS 'int8eq'
 	LANGUAGE 'internal'
 	IMMUTABLE STRICT;
-CREATE OR REPLACE FUNCTION isnge(ismn13, ean13)
+CREATE FUNCTION isnge(ismn13, ean13)
 	RETURNS boolean
 	AS 'int8ge'
 	LANGUAGE 'internal'
 	IMMUTABLE STRICT;
-CREATE OR REPLACE FUNCTION isngt(ismn13, ean13)
+CREATE FUNCTION isngt(ismn13, ean13)
 	RETURNS boolean
 	AS 'int8gt'
 	LANGUAGE 'internal'
 	IMMUTABLE STRICT;
-CREATE OR REPLACE FUNCTION isnne(ismn13, ean13)
+CREATE FUNCTION isnne(ismn13, ean13)
 	RETURNS boolean
 	AS 'int8ne'
 	LANGUAGE 'internal'
@@ -698,94 +698,94 @@ CREATE OR REPLACE FUNCTION isnne(ismn13, ean13)
 
 ---------------------------------------------------
 -- ISMN:
-CREATE OR REPLACE FUNCTION isnlt(ismn, ismn)
+CREATE FUNCTION isnlt(ismn, ismn)
 	RETURNS boolean
 	AS 'int8lt'
 	LANGUAGE 'internal'
 	IMMUTABLE STRICT;
-CREATE OR REPLACE FUNCTION isnle(ismn, ismn)
+CREATE FUNCTION isnle(ismn, ismn)
 	RETURNS boolean
 	AS 'int8le'
 	LANGUAGE 'internal'
 	IMMUTABLE STRICT;
-CREATE OR REPLACE FUNCTION isneq(ismn, ismn)
+CREATE FUNCTION isneq(ismn, ismn)
 	RETURNS boolean
 	AS 'int8eq'
 	LANGUAGE 'internal'
 	IMMUTABLE STRICT;
-CREATE OR REPLACE FUNCTION isnge(ismn, ismn)
+CREATE FUNCTION isnge(ismn, ismn)
 	RETURNS boolean
 	AS 'int8ge'
 	LANGUAGE 'internal'
 	IMMUTABLE STRICT;
-CREATE OR REPLACE FUNCTION isngt(ismn, ismn)
+CREATE FUNCTION isngt(ismn, ismn)
 	RETURNS boolean
 	AS 'int8gt'
 	LANGUAGE 'internal'
 	IMMUTABLE STRICT;
-CREATE OR REPLACE FUNCTION isnne(ismn, ismn)
+CREATE FUNCTION isnne(ismn, ismn)
 	RETURNS boolean
 	AS 'int8ne'
 	LANGUAGE 'internal'
 	IMMUTABLE STRICT;
 
-CREATE OR REPLACE FUNCTION isnlt(ismn, ismn13)
+CREATE FUNCTION isnlt(ismn, ismn13)
 	RETURNS boolean
 	AS 'int8lt'
 	LANGUAGE 'internal'
 	IMMUTABLE STRICT;
-CREATE OR REPLACE FUNCTION isnle(ismn, ismn13)
+CREATE FUNCTION isnle(ismn, ismn13)
 	RETURNS boolean
 	AS 'int8le'
 	LANGUAGE 'internal'
 	IMMUTABLE STRICT;
-CREATE OR REPLACE FUNCTION isneq(ismn, ismn13)
+CREATE FUNCTION isneq(ismn, ismn13)
 	RETURNS boolean
 	AS 'int8eq'
 	LANGUAGE 'internal'
 	IMMUTABLE STRICT;
-CREATE OR REPLACE FUNCTION isnge(ismn, ismn13)
+CREATE FUNCTION isnge(ismn, ismn13)
 	RETURNS boolean
 	AS 'int8ge'
 	LANGUAGE 'internal'
 	IMMUTABLE STRICT;
-CREATE OR REPLACE FUNCTION isngt(ismn, ismn13)
+CREATE FUNCTION isngt(ismn, ismn13)
 	RETURNS boolean
 	AS 'int8gt'
 	LANGUAGE 'internal'
 	IMMUTABLE STRICT;
-CREATE OR REPLACE FUNCTION isnne(ismn, ismn13)
+CREATE FUNCTION isnne(ismn, ismn13)
 	RETURNS boolean
 	AS 'int8ne'
 	LANGUAGE 'internal'
 	IMMUTABLE STRICT;
 
-CREATE OR REPLACE FUNCTION isnlt(ismn, ean13)
+CREATE FUNCTION isnlt(ismn, ean13)
 	RETURNS boolean
 	AS 'int8lt'
 	LANGUAGE 'internal'
 	IMMUTABLE STRICT;
-CREATE OR REPLACE FUNCTION isnle(ismn, ean13)
+CREATE FUNCTION isnle(ismn, ean13)
 	RETURNS boolean
 	AS 'int8le'
 	LANGUAGE 'internal'
 	IMMUTABLE STRICT;
-CREATE OR REPLACE FUNCTION isneq(ismn, ean13)
+CREATE FUNCTION isneq(ismn, ean13)
 	RETURNS boolean
 	AS 'int8eq'
 	LANGUAGE 'internal'
 	IMMUTABLE STRICT;
-CREATE OR REPLACE FUNCTION isnge(ismn, ean13)
+CREATE FUNCTION isnge(ismn, ean13)
 	RETURNS boolean
 	AS 'int8ge'
 	LANGUAGE 'internal'
 	IMMUTABLE STRICT;
-CREATE OR REPLACE FUNCTION isngt(ismn, ean13)
+CREATE FUNCTION isngt(ismn, ean13)
 	RETURNS boolean
 	AS 'int8gt'
 	LANGUAGE 'internal'
 	IMMUTABLE STRICT;
-CREATE OR REPLACE FUNCTION isnne(ismn, ean13)
+CREATE FUNCTION isnne(ismn, ean13)
 	RETURNS boolean
 	AS 'int8ne'
 	LANGUAGE 'internal'
@@ -793,94 +793,94 @@ CREATE OR REPLACE FUNCTION isnne(ismn, ean13)
 
 ---------------------------------------------------
 -- ISSN13:
-CREATE OR REPLACE FUNCTION isnlt(issn13, issn13)
+CREATE FUNCTION isnlt(issn13, issn13)
 	RETURNS boolean
 	AS 'int8lt'
 	LANGUAGE 'internal'
 	IMMUTABLE STRICT;
-CREATE OR REPLACE FUNCTION isnle(issn13, issn13)
+CREATE FUNCTION isnle(issn13, issn13)
 	RETURNS boolean
 	AS 'int8le'
 	LANGUAGE 'internal'
 	IMMUTABLE STRICT;
-CREATE OR REPLACE FUNCTION isneq(issn13, issn13)
+CREATE FUNCTION isneq(issn13, issn13)
 	RETURNS boolean
 	AS 'int8eq'
 	LANGUAGE 'internal'
 	IMMUTABLE STRICT;
-CREATE OR REPLACE FUNCTION isnge(issn13, issn13)
+CREATE FUNCTION isnge(issn13, issn13)
 	RETURNS boolean
 	AS 'int8ge'
 	LANGUAGE 'internal'
 	IMMUTABLE STRICT;
-CREATE OR REPLACE FUNCTION isngt(issn13, issn13)
+CREATE FUNCTION isngt(issn13, issn13)
 	RETURNS boolean
 	AS 'int8gt'
 	LANGUAGE 'internal'
 	IMMUTABLE STRICT;
-CREATE OR REPLACE FUNCTION isnne(issn13, issn13)
+CREATE FUNCTION isnne(issn13, issn13)
 	RETURNS boolean
 	AS 'int8ne'
 	LANGUAGE 'internal'
 	IMMUTABLE STRICT;
 
-CREATE OR REPLACE FUNCTION isnlt(issn13, issn)
+CREATE FUNCTION isnlt(issn13, issn)
 	RETURNS boolean
 	AS 'int8lt'
 	LANGUAGE 'internal'
 	IMMUTABLE STRICT;
-CREATE OR REPLACE FUNCTION isnle(issn13, issn)
+CREATE FUNCTION isnle(issn13, issn)
 	RETURNS boolean
 	AS 'int8le'
 	LANGUAGE 'internal'
 	IMMUTABLE STRICT;
-CREATE OR REPLACE FUNCTION isneq(issn13, issn)
+CREATE FUNCTION isneq(issn13, issn)
 	RETURNS boolean
 	AS 'int8eq'
 	LANGUAGE 'internal'
 	IMMUTABLE STRICT;
-CREATE OR REPLACE FUNCTION isnge(issn13, issn)
+CREATE FUNCTION isnge(issn13, issn)
 	RETURNS boolean
 	AS 'int8ge'
 	LANGUAGE 'internal'
 	IMMUTABLE STRICT;
-CREATE OR REPLACE FUNCTION isngt(issn13, issn)
+CREATE FUNCTION isngt(issn13, issn)
 	RETURNS boolean
 	AS 'int8gt'
 	LANGUAGE 'internal'
 	IMMUTABLE STRICT;
-CREATE OR REPLACE FUNCTION isnne(issn13, issn)
+CREATE FUNCTION isnne(issn13, issn)
 	RETURNS boolean
 	AS 'int8ne'
 	LANGUAGE 'internal'
 	IMMUTABLE STRICT;
 
-CREATE OR REPLACE FUNCTION isnlt(issn13, ean13)
+CREATE FUNCTION isnlt(issn13, ean13)
 	RETURNS boolean
 	AS 'int8lt'
 	LANGUAGE 'internal'
 	IMMUTABLE STRICT;
-CREATE OR REPLACE FUNCTION isnle(issn13, ean13)
+CREATE FUNCTION isnle(issn13, ean13)
 	RETURNS boolean
 	AS 'int8le'
 	LANGUAGE 'internal'
 	IMMUTABLE STRICT;
-CREATE OR REPLACE FUNCTION isneq(issn13, ean13)
+CREATE FUNCTION isneq(issn13, ean13)
 	RETURNS boolean
 	AS 'int8eq'
 	LANGUAGE 'internal'
 	IMMUTABLE STRICT;
-CREATE OR REPLACE FUNCTION isnge(issn13, ean13)
+CREATE FUNCTION isnge(issn13, ean13)
 	RETURNS boolean
 	AS 'int8ge'
 	LANGUAGE 'internal'
 	IMMUTABLE STRICT;
-CREATE OR REPLACE FUNCTION isngt(issn13, ean13)
+CREATE FUNCTION isngt(issn13, ean13)
 	RETURNS boolean
 	AS 'int8gt'
 	LANGUAGE 'internal'
 	IMMUTABLE STRICT;
-CREATE OR REPLACE FUNCTION isnne(issn13, ean13)
+CREATE FUNCTION isnne(issn13, ean13)
 	RETURNS boolean
 	AS 'int8ne'
 	LANGUAGE 'internal'
@@ -888,94 +888,94 @@ CREATE OR REPLACE FUNCTION isnne(issn13, ean13)
 
 ---------------------------------------------------
 -- ISSN:
-CREATE OR REPLACE FUNCTION isnlt(issn, issn)
+CREATE FUNCTION isnlt(issn, issn)
 	RETURNS boolean
 	AS 'int8lt'
 	LANGUAGE 'internal'
 	IMMUTABLE STRICT;
-CREATE OR REPLACE FUNCTION isnle(issn, issn)
+CREATE FUNCTION isnle(issn, issn)
 	RETURNS boolean
 	AS 'int8le'
 	LANGUAGE 'internal'
 	IMMUTABLE STRICT;
-CREATE OR REPLACE FUNCTION isneq(issn, issn)
+CREATE FUNCTION isneq(issn, issn)
 	RETURNS boolean
 	AS 'int8eq'
 	LANGUAGE 'internal'
 	IMMUTABLE STRICT;
-CREATE OR REPLACE FUNCTION isnge(issn, issn)
+CREATE FUNCTION isnge(issn, issn)
 	RETURNS boolean
 	AS 'int8ge'
 	LANGUAGE 'internal'
 	IMMUTABLE STRICT;
-CREATE OR REPLACE FUNCTION isngt(issn, issn)
+CREATE FUNCTION isngt(issn, issn)
 	RETURNS boolean
 	AS 'int8gt'
 	LANGUAGE 'internal'
 	IMMUTABLE STRICT;
-CREATE OR REPLACE FUNCTION isnne(issn, issn)
+CREATE FUNCTION isnne(issn, issn)
 	RETURNS boolean
 	AS 'int8ne'
 	LANGUAGE 'internal'
 	IMMUTABLE STRICT;
 
-CREATE OR REPLACE FUNCTION isnlt(issn, issn13)
+CREATE FUNCTION isnlt(issn, issn13)
 	RETURNS boolean
 	AS 'int8lt'
 	LANGUAGE 'internal'
 	IMMUTABLE STRICT;
-CREATE OR REPLACE FUNCTION isnle(issn, issn13)
+CREATE FUNCTION isnle(issn, issn13)
 	RETURNS boolean
 	AS 'int8le'
 	LANGUAGE 'internal'
 	IMMUTABLE STRICT;
-CREATE OR REPLACE FUNCTION isneq(issn, issn13)
+CREATE FUNCTION isneq(issn, issn13)
 	RETURNS boolean
 	AS 'int8eq'
 	LANGUAGE 'internal'
 	IMMUTABLE STRICT;
-CREATE OR REPLACE FUNCTION isnge(issn, issn13)
+CREATE FUNCTION isnge(issn, issn13)
 	RETURNS boolean
 	AS 'int8ge'
 	LANGUAGE 'internal'
 	IMMUTABLE STRICT;
-CREATE OR REPLACE FUNCTION isngt(issn, issn13)
+CREATE FUNCTION isngt(issn, issn13)
 	RETURNS boolean
 	AS 'int8gt'
 	LANGUAGE 'internal'
 	IMMUTABLE STRICT;
-CREATE OR REPLACE FUNCTION isnne(issn, issn13)
+CREATE FUNCTION isnne(issn, issn13)
 	RETURNS boolean
 	AS 'int8ne'
 	LANGUAGE 'internal'
 	IMMUTABLE STRICT;
 
-CREATE OR REPLACE FUNCTION isnlt(issn, ean13)
+CREATE FUNCTION isnlt(issn, ean13)
 	RETURNS boolean
 	AS 'int8lt'
 	LANGUAGE 'internal'
 	IMMUTABLE STRICT;
-CREATE OR REPLACE FUNCTION isnle(issn, ean13)
+CREATE FUNCTION isnle(issn, ean13)
 	RETURNS boolean
 	AS 'int8le'
 	LANGUAGE 'internal'
 	IMMUTABLE STRICT;
-CREATE OR REPLACE FUNCTION isneq(issn, ean13)
+CREATE FUNCTION isneq(issn, ean13)
 	RETURNS boolean
 	AS 'int8eq'
 	LANGUAGE 'internal'
 	IMMUTABLE STRICT;
-CREATE OR REPLACE FUNCTION isnge(issn, ean13)
+CREATE FUNCTION isnge(issn, ean13)
 	RETURNS boolean
 	AS 'int8ge'
 	LANGUAGE 'internal'
 	IMMUTABLE STRICT;
-CREATE OR REPLACE FUNCTION isngt(issn, ean13)
+CREATE FUNCTION isngt(issn, ean13)
 	RETURNS boolean
 	AS 'int8gt'
 	LANGUAGE 'internal'
 	IMMUTABLE STRICT;
-CREATE OR REPLACE FUNCTION isnne(issn, ean13)
+CREATE FUNCTION isnne(issn, ean13)
 	RETURNS boolean
 	AS 'int8ne'
 	LANGUAGE 'internal'
@@ -983,63 +983,63 @@ CREATE OR REPLACE FUNCTION isnne(issn, ean13)
 
 ---------------------------------------------------
 -- UPC:
-CREATE OR REPLACE FUNCTION isnlt(upc, upc)
+CREATE FUNCTION isnlt(upc, upc)
 	RETURNS boolean
 	AS 'int8lt'
 	LANGUAGE 'internal'
 	IMMUTABLE STRICT;
-CREATE OR REPLACE FUNCTION isnle(upc, upc)
+CREATE FUNCTION isnle(upc, upc)
 	RETURNS boolean
 	AS 'int8le'
 	LANGUAGE 'internal'
 	IMMUTABLE STRICT;
-CREATE OR REPLACE FUNCTION isneq(upc, upc)
+CREATE FUNCTION isneq(upc, upc)
 	RETURNS boolean
 	AS 'int8eq'
 	LANGUAGE 'internal'
 	IMMUTABLE STRICT;
-CREATE OR REPLACE FUNCTION isnge(upc, upc)
+CREATE FUNCTION isnge(upc, upc)
 	RETURNS boolean
 	AS 'int8ge'
 	LANGUAGE 'internal'
 	IMMUTABLE STRICT;
-CREATE OR REPLACE FUNCTION isngt(upc, upc)
+CREATE FUNCTION isngt(upc, upc)
 	RETURNS boolean
 	AS 'int8gt'
 	LANGUAGE 'internal'
 	IMMUTABLE STRICT;
-CREATE OR REPLACE FUNCTION isnne(upc, upc)
+CREATE FUNCTION isnne(upc, upc)
 	RETURNS boolean
 	AS 'int8ne'
 	LANGUAGE 'internal'
 	IMMUTABLE STRICT;
 
-CREATE OR REPLACE FUNCTION isnlt(upc, ean13)
+CREATE FUNCTION isnlt(upc, ean13)
 	RETURNS boolean
 	AS 'int8lt'
 	LANGUAGE 'internal'
 	IMMUTABLE STRICT;
-CREATE OR REPLACE FUNCTION isnle(upc, ean13)
+CREATE FUNCTION isnle(upc, ean13)
 	RETURNS boolean
 	AS 'int8le'
 	LANGUAGE 'internal'
 	IMMUTABLE STRICT;
-CREATE OR REPLACE FUNCTION isneq(upc, ean13)
+CREATE FUNCTION isneq(upc, ean13)
 	RETURNS boolean
 	AS 'int8eq'
 	LANGUAGE 'internal'
 	IMMUTABLE STRICT;
-CREATE OR REPLACE FUNCTION isnge(upc, ean13)
+CREATE FUNCTION isnge(upc, ean13)
 	RETURNS boolean
 	AS 'int8ge'
 	LANGUAGE 'internal'
 	IMMUTABLE STRICT;
-CREATE OR REPLACE FUNCTION isngt(upc, ean13)
+CREATE FUNCTION isngt(upc, ean13)
 	RETURNS boolean
 	AS 'int8gt'
 	LANGUAGE 'internal'
 	IMMUTABLE STRICT;
-CREATE OR REPLACE FUNCTION isnne(upc, ean13)
+CREATE FUNCTION isnne(upc, ean13)
 	RETURNS boolean
 	AS 'int8ne'
 	LANGUAGE 'internal'
@@ -2522,7 +2522,7 @@ CREATE OPERATOR FAMILY isn_ops USING hash;
 --
 ---------------------------------------------------
 -- EAN13:
-CREATE OR REPLACE FUNCTION btean13cmp(ean13, ean13)
+CREATE FUNCTION btean13cmp(ean13, ean13)
 	RETURNS int4
 	AS 'btint8cmp'
 	LANGUAGE 'internal'
@@ -2537,7 +2537,7 @@ CREATE OPERATOR CLASS ean13_ops DEFAULT
 	OPERATOR 5  >,
 	FUNCTION 1  btean13cmp(ean13, ean13);
 
-CREATE OR REPLACE FUNCTION hashean13(ean13)
+CREATE FUNCTION hashean13(ean13)
 	RETURNS int4
 	AS 'hashint8'
 	LANGUAGE 'internal' IMMUTABLE STRICT;
@@ -2548,37 +2548,37 @@ CREATE OPERATOR CLASS ean13_ops DEFAULT
 	FUNCTION 1  hashean13(ean13);
 
 -- EAN13 vs other types:
-CREATE OR REPLACE FUNCTION btean13cmp(ean13, isbn13)
+CREATE FUNCTION btean13cmp(ean13, isbn13)
 	RETURNS int4
 	AS 'btint8cmp'
 	LANGUAGE 'internal'
 	IMMUTABLE STRICT;
-CREATE OR REPLACE FUNCTION btean13cmp(ean13, ismn13)
+CREATE FUNCTION btean13cmp(ean13, ismn13)
 	RETURNS int4
 	AS 'btint8cmp'
 	LANGUAGE 'internal'
 	IMMUTABLE STRICT;
-CREATE OR REPLACE FUNCTION btean13cmp(ean13, issn13)
+CREATE FUNCTION btean13cmp(ean13, issn13)
 	RETURNS int4
 	AS 'btint8cmp'
 	LANGUAGE 'internal'
 	IMMUTABLE STRICT;
-CREATE OR REPLACE FUNCTION btean13cmp(ean13, isbn)
+CREATE FUNCTION btean13cmp(ean13, isbn)
 	RETURNS int4
 	AS 'btint8cmp'
 	LANGUAGE 'internal'
 	IMMUTABLE STRICT;
-CREATE OR REPLACE FUNCTION btean13cmp(ean13, ismn)
+CREATE FUNCTION btean13cmp(ean13, ismn)
 	RETURNS int4
 	AS 'btint8cmp'
 	LANGUAGE 'internal'
 	IMMUTABLE STRICT;
-CREATE OR REPLACE FUNCTION btean13cmp(ean13, issn)
+CREATE FUNCTION btean13cmp(ean13, issn)
 	RETURNS int4
 	AS 'btint8cmp'
 	LANGUAGE 'internal'
 	IMMUTABLE STRICT;
-CREATE OR REPLACE FUNCTION btean13cmp(ean13, upc)
+CREATE FUNCTION btean13cmp(ean13, upc)
 	RETURNS int4
 	AS 'btint8cmp'
 	LANGUAGE 'internal'
@@ -2639,7 +2639,7 @@ ALTER OPERATOR FAMILY isn_ops USING hash ADD
 
 ---------------------------------------------------
 -- ISBN13:
-CREATE OR REPLACE FUNCTION btisbn13cmp(isbn13, isbn13)
+CREATE FUNCTION btisbn13cmp(isbn13, isbn13)
 	RETURNS int4
 	AS 'btint8cmp'
 	LANGUAGE 'internal'
@@ -2654,7 +2654,7 @@ CREATE OPERATOR CLASS isbn13_ops DEFAULT
 	OPERATOR 5  >,
 	FUNCTION 1  btisbn13cmp(isbn13, isbn13);
 
-CREATE OR REPLACE FUNCTION hashisbn13(isbn13)
+CREATE FUNCTION hashisbn13(isbn13)
 	RETURNS int4
 	AS 'hashint8'
 	LANGUAGE 'internal'
@@ -2666,12 +2666,12 @@ CREATE OPERATOR CLASS isbn13_ops DEFAULT
 	FUNCTION 1  hashisbn13(isbn13);
 
 -- ISBN13 vs other types:
-CREATE OR REPLACE FUNCTION btisbn13cmp(isbn13, ean13)
+CREATE FUNCTION btisbn13cmp(isbn13, ean13)
 	RETURNS int4
 	AS 'btint8cmp'
 	LANGUAGE 'internal'
 	IMMUTABLE STRICT;
-CREATE OR REPLACE FUNCTION btisbn13cmp(isbn13, isbn)
+CREATE FUNCTION btisbn13cmp(isbn13, isbn)
 	RETURNS int4
 	AS 'btint8cmp'
 	LANGUAGE 'internal'
@@ -2697,7 +2697,7 @@ ALTER OPERATOR FAMILY isn_ops USING hash ADD
 
 ---------------------------------------------------
 -- ISBN:
-CREATE OR REPLACE FUNCTION btisbncmp(isbn, isbn)
+CREATE FUNCTION btisbncmp(isbn, isbn)
 	RETURNS int4
 	AS 'btint8cmp'
 	LANGUAGE 'internal'
@@ -2712,7 +2712,7 @@ CREATE OPERATOR CLASS isbn_ops DEFAULT
 	OPERATOR 5  >,
 	FUNCTION 1  btisbncmp(isbn, isbn);
 
-CREATE OR REPLACE FUNCTION hashisbn(isbn)
+CREATE FUNCTION hashisbn(isbn)
 	RETURNS int4
 	AS 'hashint8'
 	LANGUAGE 'internal'
@@ -2724,12 +2724,12 @@ CREATE OPERATOR CLASS isbn_ops DEFAULT
 	FUNCTION 1  hashisbn(isbn);
 
 -- ISBN vs other types:
-CREATE OR REPLACE FUNCTION btisbncmp(isbn, ean13)
+CREATE FUNCTION btisbncmp(isbn, ean13)
 	RETURNS int4
 	AS 'btint8cmp'
 	LANGUAGE 'internal'
 	IMMUTABLE STRICT;
-CREATE OR REPLACE FUNCTION btisbncmp(isbn, isbn13)
+CREATE FUNCTION btisbncmp(isbn, isbn13)
 	RETURNS int4
 	AS 'btint8cmp'
 	LANGUAGE 'internal'
@@ -2755,7 +2755,7 @@ ALTER OPERATOR FAMILY isn_ops USING hash ADD
 
 ---------------------------------------------------
 -- ISMN13:
-CREATE OR REPLACE FUNCTION btismn13cmp(ismn13, ismn13)
+CREATE FUNCTION btismn13cmp(ismn13, ismn13)
 	RETURNS int4
 	AS 'btint8cmp'
 	LANGUAGE 'internal'
@@ -2770,7 +2770,7 @@ CREATE OPERATOR CLASS ismn13_ops DEFAULT
 	OPERATOR 5  >,
 	FUNCTION 1  btismn13cmp(ismn13, ismn13);
 
-CREATE OR REPLACE FUNCTION hashismn13(ismn13)
+CREATE FUNCTION hashismn13(ismn13)
 	RETURNS int4
 	AS 'hashint8'
 	LANGUAGE 'internal'
@@ -2782,12 +2782,12 @@ CREATE OPERATOR CLASS ismn13_ops DEFAULT
 	FUNCTION 1  hashismn13(ismn13);
 
 -- ISMN13 vs other types:
-CREATE OR REPLACE FUNCTION btismn13cmp(ismn13, ean13)
+CREATE FUNCTION btismn13cmp(ismn13, ean13)
 	RETURNS int4
 	AS 'btint8cmp'
 	LANGUAGE 'internal'
 	IMMUTABLE STRICT;
-CREATE OR REPLACE FUNCTION btismn13cmp(ismn13, ismn)
+CREATE FUNCTION btismn13cmp(ismn13, ismn)
 	RETURNS int4
 	AS 'btint8cmp'
 	LANGUAGE 'internal'
@@ -2813,7 +2813,7 @@ ALTER OPERATOR FAMILY isn_ops USING hash ADD
 
 ---------------------------------------------------
 -- ISMN:
-CREATE OR REPLACE FUNCTION btismncmp(ismn, ismn)
+CREATE FUNCTION btismncmp(ismn, ismn)
 	RETURNS int4
 	AS 'btint8cmp'
 	LANGUAGE 'internal'
@@ -2828,7 +2828,7 @@ CREATE OPERATOR CLASS ismn_ops DEFAULT
 	OPERATOR 5  >,
 	FUNCTION 1  btismncmp(ismn, ismn);
 
-CREATE OR REPLACE FUNCTION hashismn(ismn)
+CREATE FUNCTION hashismn(ismn)
 	RETURNS int4
 	AS 'hashint8'
 	LANGUAGE 'internal'
@@ -2840,12 +2840,12 @@ CREATE OPERATOR CLASS ismn_ops DEFAULT
 	FUNCTION 1  hashismn(ismn);
 
 -- ISMN vs other types:
-CREATE OR REPLACE FUNCTION btismncmp(ismn, ean13)
+CREATE FUNCTION btismncmp(ismn, ean13)
 	RETURNS int4
 	AS 'btint8cmp'
 	LANGUAGE 'internal'
 	IMMUTABLE STRICT;
-CREATE OR REPLACE FUNCTION btismncmp(ismn, ismn13)
+CREATE FUNCTION btismncmp(ismn, ismn13)
 	RETURNS int4
 	AS 'btint8cmp'
 	LANGUAGE 'internal'
@@ -2871,7 +2871,7 @@ ALTER OPERATOR FAMILY isn_ops USING hash ADD
 
 ---------------------------------------------------
 -- ISSN13:
-CREATE OR REPLACE FUNCTION btissn13cmp(issn13, issn13)
+CREATE FUNCTION btissn13cmp(issn13, issn13)
 	RETURNS int4
 	AS 'btint8cmp'
 	LANGUAGE 'internal'
@@ -2886,7 +2886,7 @@ CREATE OPERATOR CLASS issn13_ops DEFAULT
 	OPERATOR 5  >,
 	FUNCTION 1  btissn13cmp(issn13, issn13);
 
-CREATE OR REPLACE FUNCTION hashissn13(issn13)
+CREATE FUNCTION hashissn13(issn13)
 	RETURNS int4
 	AS 'hashint8'
 	LANGUAGE 'internal'
@@ -2898,12 +2898,12 @@ CREATE OPERATOR CLASS issn13_ops DEFAULT
 	FUNCTION 1  hashissn13(issn13);
 
 -- ISSN13 vs other types:
-CREATE OR REPLACE FUNCTION btissn13cmp(issn13, ean13)
+CREATE FUNCTION btissn13cmp(issn13, ean13)
 	RETURNS int4
 	AS 'btint8cmp'
 	LANGUAGE 'internal'
 	IMMUTABLE STRICT;
-CREATE OR REPLACE FUNCTION btissn13cmp(issn13, issn)
+CREATE FUNCTION btissn13cmp(issn13, issn)
 	RETURNS int4
 	AS 'btint8cmp'
 	LANGUAGE 'internal'
@@ -2929,7 +2929,7 @@ ALTER OPERATOR FAMILY isn_ops USING hash ADD
 
 ---------------------------------------------------
 -- ISSN:
-CREATE OR REPLACE FUNCTION btissncmp(issn, issn)
+CREATE FUNCTION btissncmp(issn, issn)
 	RETURNS int4
 	AS 'btint8cmp'
 	LANGUAGE 'internal'
@@ -2944,7 +2944,7 @@ CREATE OPERATOR CLASS issn_ops DEFAULT
 	OPERATOR 5  >,
 	FUNCTION 1  btissncmp(issn, issn);
 
-CREATE OR REPLACE FUNCTION hashissn(issn)
+CREATE FUNCTION hashissn(issn)
 	RETURNS int4
 	AS 'hashint8'
 	LANGUAGE 'internal'
@@ -2956,12 +2956,12 @@ CREATE OPERATOR CLASS issn_ops DEFAULT
 	FUNCTION 1  hashissn(issn);
 
 -- ISSN vs other types:
-CREATE OR REPLACE FUNCTION btissncmp(issn, ean13)
+CREATE FUNCTION btissncmp(issn, ean13)
 	RETURNS int4
 	AS 'btint8cmp'
 	LANGUAGE 'internal'
 	IMMUTABLE STRICT;
-CREATE OR REPLACE FUNCTION btissncmp(issn, issn13)
+CREATE FUNCTION btissncmp(issn, issn13)
 	RETURNS int4
 	AS 'btint8cmp'
 	LANGUAGE 'internal'
@@ -2987,7 +2987,7 @@ ALTER OPERATOR FAMILY isn_ops USING hash ADD
 
 ---------------------------------------------------
 -- UPC:
-CREATE OR REPLACE FUNCTION btupccmp(upc, upc)
+CREATE FUNCTION btupccmp(upc, upc)
 	RETURNS int4
 	AS 'btint8cmp'
 	LANGUAGE 'internal'
@@ -3002,7 +3002,7 @@ CREATE OPERATOR CLASS upc_ops DEFAULT
 	OPERATOR 5  >,
 	FUNCTION 1  btupccmp(upc, upc);
 
-CREATE OR REPLACE FUNCTION hashupc(upc)
+CREATE FUNCTION hashupc(upc)
 	RETURNS int4
 	AS 'hashint8'
 	LANGUAGE 'internal'
@@ -3014,7 +3014,7 @@ CREATE OPERATOR CLASS upc_ops DEFAULT
 	FUNCTION 1  hashupc(upc);
 
 -- UPC vs other types:
-CREATE OR REPLACE FUNCTION btupccmp(upc, ean13)
+CREATE FUNCTION btupccmp(upc, ean13)
 	RETURNS int4
 	AS 'btint8cmp'
 	LANGUAGE 'internal'
@@ -3035,31 +3035,31 @@ ALTER OPERATOR FAMILY isn_ops USING hash ADD
 -- Type casts:
 --
 ---------------------------------------------------
-CREATE OR REPLACE FUNCTION isbn13(ean13)
+CREATE FUNCTION isbn13(ean13)
 RETURNS isbn13
 AS 'MODULE_PATHNAME', 'isbn_cast_from_ean13'
 LANGUAGE 'C' IMMUTABLE STRICT;
-CREATE OR REPLACE FUNCTION ismn13(ean13)
+CREATE FUNCTION ismn13(ean13)
 RETURNS ismn13
 AS 'MODULE_PATHNAME', 'ismn_cast_from_ean13'
 LANGUAGE 'C' IMMUTABLE STRICT;
-CREATE OR REPLACE FUNCTION issn13(ean13)
+CREATE FUNCTION issn13(ean13)
 RETURNS issn13
 AS 'MODULE_PATHNAME', 'issn_cast_from_ean13'
 LANGUAGE 'C' IMMUTABLE STRICT;
-CREATE OR REPLACE FUNCTION isbn(ean13)
+CREATE FUNCTION isbn(ean13)
 RETURNS isbn
 AS 'MODULE_PATHNAME', 'isbn_cast_from_ean13'
 LANGUAGE 'C' IMMUTABLE STRICT;
-CREATE OR REPLACE FUNCTION ismn(ean13)
+CREATE FUNCTION ismn(ean13)
 RETURNS ismn
 AS 'MODULE_PATHNAME', 'ismn_cast_from_ean13'
 LANGUAGE 'C' IMMUTABLE STRICT;
-CREATE OR REPLACE FUNCTION issn(ean13)
+CREATE FUNCTION issn(ean13)
 RETURNS issn
 AS 'MODULE_PATHNAME', 'issn_cast_from_ean13'
 LANGUAGE 'C' IMMUTABLE STRICT;
-CREATE OR REPLACE FUNCTION upc(ean13)
+CREATE FUNCTION upc(ean13)
 RETURNS upc
 AS 'MODULE_PATHNAME', 'upc_cast_from_ean13'
 LANGUAGE 'C' IMMUTABLE STRICT;
@@ -3091,83 +3091,83 @@ CREATE CAST (issn13 AS issn) WITHOUT FUNCTION AS ASSIGNMENT;
 --
 -- Validation stuff for lose types:
 --
-CREATE OR REPLACE FUNCTION make_valid(ean13)
+CREATE FUNCTION make_valid(ean13)
 	RETURNS ean13
 	AS 'MODULE_PATHNAME'
 	LANGUAGE 'C'
 	IMMUTABLE STRICT;
-CREATE OR REPLACE FUNCTION make_valid(isbn13)
+CREATE FUNCTION make_valid(isbn13)
 	RETURNS isbn13
 	AS 'MODULE_PATHNAME'
 	LANGUAGE 'C'
 	IMMUTABLE STRICT;
-CREATE OR REPLACE FUNCTION make_valid(ismn13)
+CREATE FUNCTION make_valid(ismn13)
 	RETURNS ismn13
 	AS 'MODULE_PATHNAME'
 	LANGUAGE 'C'
 	IMMUTABLE STRICT;
-CREATE OR REPLACE FUNCTION make_valid(issn13)
+CREATE FUNCTION make_valid(issn13)
 	RETURNS issn13
 	AS 'MODULE_PATHNAME'
 	LANGUAGE 'C'
 	IMMUTABLE STRICT;
-CREATE OR REPLACE FUNCTION make_valid(isbn)
+CREATE FUNCTION make_valid(isbn)
 	RETURNS isbn
 	AS 'MODULE_PATHNAME'
 	LANGUAGE 'C'
 	IMMUTABLE STRICT;
-CREATE OR REPLACE FUNCTION make_valid(ismn)
+CREATE FUNCTION make_valid(ismn)
 	RETURNS ismn
 	AS 'MODULE_PATHNAME'
 	LANGUAGE 'C'
 	IMMUTABLE STRICT;
-CREATE OR REPLACE FUNCTION make_valid(issn)
+CREATE FUNCTION make_valid(issn)
 	RETURNS issn
 	AS 'MODULE_PATHNAME'
 	LANGUAGE 'C'
 	IMMUTABLE STRICT;
-CREATE OR REPLACE FUNCTION make_valid(upc)
+CREATE FUNCTION make_valid(upc)
 	RETURNS upc
 	AS 'MODULE_PATHNAME'
 	LANGUAGE 'C'
 	IMMUTABLE STRICT;
 
-CREATE OR REPLACE FUNCTION is_valid(ean13)
+CREATE FUNCTION is_valid(ean13)
 	RETURNS boolean
 	AS 'MODULE_PATHNAME'
 	LANGUAGE 'C'
 	IMMUTABLE STRICT;
-CREATE OR REPLACE FUNCTION is_valid(isbn13)
+CREATE FUNCTION is_valid(isbn13)
 	RETURNS boolean
 	AS 'MODULE_PATHNAME'
 	LANGUAGE 'C'
 	IMMUTABLE STRICT;
-CREATE OR REPLACE FUNCTION is_valid(ismn13)
+CREATE FUNCTION is_valid(ismn13)
 	RETURNS boolean
 	AS 'MODULE_PATHNAME'
 	LANGUAGE 'C'
 	IMMUTABLE STRICT;
-CREATE OR REPLACE FUNCTION is_valid(issn13)
+CREATE FUNCTION is_valid(issn13)
 	RETURNS boolean
 	AS 'MODULE_PATHNAME'
 	LANGUAGE 'C'
 	IMMUTABLE STRICT;
-CREATE OR REPLACE FUNCTION is_valid(isbn)
+CREATE FUNCTION is_valid(isbn)
 	RETURNS boolean
 	AS 'MODULE_PATHNAME'
 	LANGUAGE 'C'
 	IMMUTABLE STRICT;
-CREATE OR REPLACE FUNCTION is_valid(ismn)
+CREATE FUNCTION is_valid(ismn)
 	RETURNS boolean
 	AS 'MODULE_PATHNAME'
 	LANGUAGE 'C'
 	IMMUTABLE STRICT;
-CREATE OR REPLACE FUNCTION is_valid(issn)
+CREATE FUNCTION is_valid(issn)
 	RETURNS boolean
 	AS 'MODULE_PATHNAME'
 	LANGUAGE 'C'
 	IMMUTABLE STRICT;
-CREATE OR REPLACE FUNCTION is_valid(upc)
+CREATE FUNCTION is_valid(upc)
 	RETURNS boolean
 	AS 'MODULE_PATHNAME'
 	LANGUAGE 'C'
@@ -3177,7 +3177,7 @@ CREATE OR REPLACE FUNCTION is_valid(upc)
 -- isn_weak(boolean) - Sets the weak input mode.
 -- This function is intended for testing use only!
 --
-CREATE OR REPLACE FUNCTION isn_weak(boolean)
+CREATE FUNCTION isn_weak(boolean)
 	RETURNS boolean
 	AS 'MODULE_PATHNAME', 'accept_weak_input'
 	LANGUAGE 'C'
@@ -3186,7 +3186,7 @@ CREATE OR REPLACE FUNCTION isn_weak(boolean)
 --
 -- isn_weak() - Gets the weak input mode status
 --
-CREATE OR REPLACE FUNCTION isn_weak()
+CREATE FUNCTION isn_weak()
 	RETURNS boolean
 	AS 'MODULE_PATHNAME', 'weak_input_status'
 	LANGUAGE 'C'

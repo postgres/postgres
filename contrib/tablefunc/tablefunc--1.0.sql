@@ -1,12 +1,12 @@
 /* contrib/tablefunc/tablefunc--1.0.sql */
 
-CREATE OR REPLACE FUNCTION normal_rand(int4, float8, float8)
+CREATE FUNCTION normal_rand(int4, float8, float8)
 RETURNS setof float8
 AS 'MODULE_PATHNAME','normal_rand'
 LANGUAGE C VOLATILE STRICT;
 
 -- the generic crosstab function:
-CREATE OR REPLACE FUNCTION crosstab(text)
+CREATE FUNCTION crosstab(text)
 RETURNS setof record
 AS 'MODULE_PATHNAME','crosstab'
 LANGUAGE C STABLE STRICT;
@@ -36,50 +36,50 @@ CREATE TYPE tablefunc_crosstab_4 AS
 	category_4 TEXT
 );
 
-CREATE OR REPLACE FUNCTION crosstab2(text)
+CREATE FUNCTION crosstab2(text)
 RETURNS setof tablefunc_crosstab_2
 AS 'MODULE_PATHNAME','crosstab'
 LANGUAGE C STABLE STRICT;
 
-CREATE OR REPLACE FUNCTION crosstab3(text)
+CREATE FUNCTION crosstab3(text)
 RETURNS setof tablefunc_crosstab_3
 AS 'MODULE_PATHNAME','crosstab'
 LANGUAGE C STABLE STRICT;
 
-CREATE OR REPLACE FUNCTION crosstab4(text)
+CREATE FUNCTION crosstab4(text)
 RETURNS setof tablefunc_crosstab_4
 AS 'MODULE_PATHNAME','crosstab'
 LANGUAGE C STABLE STRICT;
 
 -- obsolete:
-CREATE OR REPLACE FUNCTION crosstab(text,int)
+CREATE FUNCTION crosstab(text,int)
 RETURNS setof record
 AS 'MODULE_PATHNAME','crosstab'
 LANGUAGE C STABLE STRICT;
 
-CREATE OR REPLACE FUNCTION crosstab(text,text)
+CREATE FUNCTION crosstab(text,text)
 RETURNS setof record
 AS 'MODULE_PATHNAME','crosstab_hash'
 LANGUAGE C STABLE STRICT;
 
-CREATE OR REPLACE FUNCTION connectby(text,text,text,text,int,text)
+CREATE FUNCTION connectby(text,text,text,text,int,text)
 RETURNS setof record
 AS 'MODULE_PATHNAME','connectby_text'
 LANGUAGE C STABLE STRICT;
 
-CREATE OR REPLACE FUNCTION connectby(text,text,text,text,int)
+CREATE FUNCTION connectby(text,text,text,text,int)
 RETURNS setof record
 AS 'MODULE_PATHNAME','connectby_text'
 LANGUAGE C STABLE STRICT;
 
 -- These 2 take the name of a field to ORDER BY as 4th arg (for sorting siblings)
 
-CREATE OR REPLACE FUNCTION connectby(text,text,text,text,text,int,text)
+CREATE FUNCTION connectby(text,text,text,text,text,int,text)
 RETURNS setof record
 AS 'MODULE_PATHNAME','connectby_text_serial'
 LANGUAGE C STABLE STRICT;
 
-CREATE OR REPLACE FUNCTION connectby(text,text,text,text,text,int)
+CREATE FUNCTION connectby(text,text,text,text,text,int)
 RETURNS setof record
 AS 'MODULE_PATHNAME','connectby_text_serial'
 LANGUAGE C STABLE STRICT;

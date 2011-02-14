@@ -1,11 +1,11 @@
 /* contrib/dict_int/dict_int--1.0.sql */
 
-CREATE OR REPLACE FUNCTION dintdict_init(internal)
+CREATE FUNCTION dintdict_init(internal)
         RETURNS internal
         AS 'MODULE_PATHNAME'
         LANGUAGE C STRICT;
 
-CREATE OR REPLACE FUNCTION dintdict_lexize(internal, internal, internal, internal)
+CREATE FUNCTION dintdict_lexize(internal, internal, internal, internal)
         RETURNS internal
         AS 'MODULE_PATHNAME'
         LANGUAGE C STRICT;

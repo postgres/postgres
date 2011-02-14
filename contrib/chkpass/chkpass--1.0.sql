@@ -4,12 +4,12 @@
 --	Input and output functions and the type itself:
 --
 
-CREATE OR REPLACE FUNCTION chkpass_in(cstring)
+CREATE FUNCTION chkpass_in(cstring)
 	RETURNS chkpass
 	AS 'MODULE_PATHNAME'
 	LANGUAGE C STRICT;
 
-CREATE OR REPLACE FUNCTION chkpass_out(chkpass)
+CREATE FUNCTION chkpass_out(chkpass)
 	RETURNS cstring
 	AS 'MODULE_PATHNAME'
 	LANGUAGE C STRICT;
@@ -20,7 +20,7 @@ CREATE TYPE chkpass (
 	output = chkpass_out
 );
 
-CREATE OR REPLACE FUNCTION raw(chkpass)
+CREATE FUNCTION raw(chkpass)
 	RETURNS text
 	AS 'MODULE_PATHNAME', 'chkpass_rout'
 	LANGUAGE C STRICT;
@@ -29,12 +29,12 @@ CREATE OR REPLACE FUNCTION raw(chkpass)
 --	The various boolean tests:
 --
 
-CREATE OR REPLACE FUNCTION eq(chkpass, text)
+CREATE FUNCTION eq(chkpass, text)
 	RETURNS bool
 	AS 'MODULE_PATHNAME', 'chkpass_eq'
 	LANGUAGE C STRICT;
 
-CREATE OR REPLACE FUNCTION ne(chkpass, text)
+CREATE FUNCTION ne(chkpass, text)
 	RETURNS bool
 	AS 'MODULE_PATHNAME', 'chkpass_ne'
 	LANGUAGE C STRICT;

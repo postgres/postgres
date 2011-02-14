@@ -1,7 +1,7 @@
 /* contrib/pg_buffercache/pg_buffercache--1.0.sql */
 
 -- Register the function.
-CREATE OR REPLACE FUNCTION pg_buffercache_pages()
+CREATE FUNCTION pg_buffercache_pages()
 RETURNS SETOF RECORD
 AS 'MODULE_PATHNAME', 'pg_buffercache_pages'
 LANGUAGE C;

@@ -16,22 +16,22 @@ CREATE TYPE citext;
 --
 --  Input and output functions.
 --
-CREATE OR REPLACE FUNCTION citextin(cstring)
+CREATE FUNCTION citextin(cstring)
 RETURNS citext
 AS 'textin'
 LANGUAGE internal IMMUTABLE STRICT;
 
-CREATE OR REPLACE FUNCTION citextout(citext)
+CREATE FUNCTION citextout(citext)
 RETURNS cstring
 AS 'textout'
 LANGUAGE internal IMMUTABLE STRICT;
 
-CREATE OR REPLACE FUNCTION citextrecv(internal)
+CREATE FUNCTION citextrecv(internal)
 RETURNS citext
 AS 'textrecv'
 LANGUAGE internal STABLE STRICT;
 
-CREATE OR REPLACE FUNCTION citextsend(citext)
+CREATE FUNCTION citextsend(citext)
 RETURNS bytea
 AS 'textsend'
 LANGUAGE internal STABLE STRICT;
@@ -58,17 +58,17 @@ CREATE TYPE citext (
 -- automatically kick in.
 --
 
-CREATE OR REPLACE FUNCTION citext(bpchar)
+CREATE FUNCTION citext(bpchar)
 RETURNS citext
 AS 'rtrim1'
 LANGUAGE internal IMMUTABLE STRICT;
 
-CREATE OR REPLACE FUNCTION citext(boolean)
+CREATE FUNCTION citext(boolean)
 RETURNS citext
 AS 'booltext'
 LANGUAGE internal IMMUTABLE STRICT;
 
-CREATE OR REPLACE FUNCTION citext(inet)
+CREATE FUNCTION citext(inet)
 RETURNS citext
 AS 'network_show'
 LANGUAGE internal IMMUTABLE STRICT;
@@ -90,32 +90,32 @@ CREATE CAST (inet AS citext)    WITH FUNCTION citext(inet)    AS ASSIGNMENT;
 -- Operator Functions.
 --
 
-CREATE OR REPLACE FUNCTION citext_eq( citext, citext )
+CREATE FUNCTION citext_eq( citext, citext )
 RETURNS bool
 AS 'MODULE_PATHNAME'
 LANGUAGE C IMMUTABLE STRICT;
 
-CREATE OR REPLACE FUNCTION citext_ne( citext, citext )
+CREATE FUNCTION citext_ne( citext, citext )
 RETURNS bool
 AS 'MODULE_PATHNAME'
 LANGUAGE C IMMUTABLE STRICT;
 
-CREATE OR REPLACE FUNCTION citext_lt( citext, citext )
+CREATE FUNCTION citext_lt( citext, citext )
 RETURNS bool
 AS 'MODULE_PATHNAME'
 LANGUAGE C IMMUTABLE STRICT;
 
-CREATE OR REPLACE FUNCTION citext_le( citext, citext )
+CREATE FUNCTION citext_le( citext, citext )
 RETURNS bool
 AS 'MODULE_PATHNAME'
 LANGUAGE C IMMUTABLE STRICT;
 
-CREATE OR REPLACE FUNCTION citext_gt( citext, citext )
+CREATE FUNCTION citext_gt( citext, citext )
 RETURNS bool
 AS 'MODULE_PATHNAME'
 LANGUAGE C IMMUTABLE STRICT;
 
-CREATE OR REPLACE FUNCTION citext_ge( citext, citext )
+CREATE FUNCTION citext_ge( citext, citext )
 RETURNS bool
 AS 'MODULE_PATHNAME'
 LANGUAGE C IMMUTABLE STRICT;
@@ -190,12 +190,12 @@ CREATE OPERATOR > (
 -- Support functions for indexing.
 --
 
-CREATE OR REPLACE FUNCTION citext_cmp(citext, citext)
+CREATE FUNCTION citext_cmp(citext, citext)
 RETURNS int4
 AS 'MODULE_PATHNAME'
 LANGUAGE C STRICT IMMUTABLE;
 
-CREATE OR REPLACE FUNCTION citext_hash(citext)
+CREATE FUNCTION citext_hash(citext)
 RETURNS int4
 AS 'MODULE_PATHNAME'
 LANGUAGE C STRICT IMMUTABLE;
@@ -226,12 +226,12 @@ DEFAULT FOR TYPE citext USING hash AS
 -- Aggregates.
 --
 
-CREATE OR REPLACE FUNCTION citext_smaller(citext, citext)
+CREATE FUNCTION citext_smaller(citext, citext)
 RETURNS citext
 AS 'MODULE_PATHNAME'
 LANGUAGE 'C' IMMUTABLE STRICT;
 
-CREATE OR REPLACE FUNCTION citext_larger(citext, citext)
+CREATE FUNCTION citext_larger(citext, citext)
 RETURNS citext
 AS 'MODULE_PATHNAME'
 LANGUAGE 'C' IMMUTABLE STRICT;
@@ -252,19 +252,19 @@ CREATE AGGREGATE max(citext)  (
 -- CITEXT pattern matching.
 --
 
-CREATE OR REPLACE FUNCTION texticlike(citext, citext)
+CREATE FUNCTION texticlike(citext, citext)
 RETURNS bool AS 'texticlike'
 LANGUAGE internal IMMUTABLE STRICT;
 
-CREATE OR REPLACE FUNCTION texticnlike(citext, citext)
+CREATE FUNCTION texticnlike(citext, citext)
 RETURNS bool AS 'texticnlike'
 LANGUAGE internal IMMUTABLE STRICT;
 
-CREATE OR REPLACE FUNCTION texticregexeq(citext, citext)
+CREATE FUNCTION texticregexeq(citext, citext)
 RETURNS bool AS 'texticregexeq'
 LANGUAGE internal IMMUTABLE STRICT;
 
-CREATE OR REPLACE FUNCTION texticregexne(citext, citext)
+CREATE FUNCTION texticregexne(citext, citext)
 RETURNS bool AS 'texticregexne'
 LANGUAGE internal IMMUTABLE STRICT;
 
@@ -344,19 +344,19 @@ CREATE OPERATOR !~~* (
 -- Matching citext to text.
 --
 
-CREATE OR REPLACE FUNCTION texticlike(citext, text)
+CREATE FUNCTION texticlike(citext, text)
 RETURNS bool AS 'texticlike'
 LANGUAGE internal IMMUTABLE STRICT;
 
-CREATE OR REPLACE FUNCTION texticnlike(citext, text)
+CREATE FUNCTION texticnlike(citext, text)
 RETURNS bool AS 'texticnlike'
 LANGUAGE internal IMMUTABLE STRICT;
 
-CREATE OR REPLACE FUNCTION texticregexeq(citext, text)
+CREATE FUNCTION texticregexeq(citext, text)
 RETURNS bool AS 'texticregexeq'
 LANGUAGE internal IMMUTABLE STRICT;
 
-CREATE OR REPLACE FUNCTION texticregexne(citext, text)
+CREATE FUNCTION texticregexne(citext, text)
 RETURNS bool AS 'texticregexne'
 LANGUAGE internal IMMUTABLE STRICT;
 
@@ -437,50 +437,50 @@ CREATE OPERATOR !~~* (
 -- XXX TODO Ideally these would be implemented in C.
 --
 
-CREATE OR REPLACE FUNCTION regexp_matches( citext, citext ) RETURNS TEXT[] AS $$
+CREATE FUNCTION regexp_matches( citext, citext ) RETURNS TEXT[] AS $$
     SELECT pg_catalog.regexp_matches( $1::pg_catalog.text, $2::pg_catalog.text, 'i' );
 $$ LANGUAGE SQL IMMUTABLE STRICT;
 
-CREATE OR REPLACE FUNCTION regexp_matches( citext, citext, text ) RETURNS TEXT[] AS $$
+CREATE FUNCTION regexp_matches( citext, citext, text ) RETURNS TEXT[] AS $$
     SELECT pg_catalog.regexp_matches( $1::pg_catalog.text, $2::pg_catalog.text, CASE WHEN pg_catalog.strpos($3, 'c') = 0 THEN  $3 || 'i' ELSE $3 END );
 $$ LANGUAGE SQL IMMUTABLE STRICT;
 
-CREATE OR REPLACE FUNCTION regexp_replace( citext, citext, text ) returns TEXT AS $$
+CREATE FUNCTION regexp_replace( citext, citext, text ) returns TEXT AS $$
     SELECT pg_catalog.regexp_replace( $1::pg_catalog.text, $2::pg_catalog.text, $3, 'i');
 $$ LANGUAGE SQL IMMUTABLE STRICT;
 
-CREATE OR REPLACE FUNCTION regexp_replace( citext, citext, text, text ) returns TEXT AS $$
+CREATE FUNCTION regexp_replace( citext, citext, text, text ) returns TEXT AS $$
     SELECT pg_catalog.regexp_replace( $1::pg_catalog.text, $2::pg_catalog.text, $3, CASE WHEN pg_catalog.strpos($4, 'c') = 0 THEN  $4 || 'i' ELSE $4 END);
 $$ LANGUAGE SQL IMMUTABLE STRICT;
 
-CREATE OR REPLACE FUNCTION regexp_split_to_array( citext, citext ) RETURNS TEXT[] AS $$
+CREATE FUNCTION regexp_split_to_array( citext, citext ) RETURNS TEXT[] AS $$
     SELECT pg_catalog.regexp_split_to_array( $1::pg_catalog.text, $2::pg_catalog.text, 'i' );
 $$ LANGUAGE SQL IMMUTABLE STRICT;
 
-CREATE OR REPLACE FUNCTION regexp_split_to_array( citext, citext, text ) RETURNS TEXT[] AS $$
+CREATE FUNCTION regexp_split_to_array( citext, citext, text ) RETURNS TEXT[] AS $$
     SELECT pg_catalog.regexp_split_to_array( $1::pg_catalog.text, $2::pg_catalog.text, CASE WHEN pg_catalog.strpos($3, 'c') = 0 THEN  $3 || 'i' ELSE $3 END );
 $$ LANGUAGE SQL IMMUTABLE STRICT;
 
-CREATE OR REPLACE FUNCTION regexp_split_to_table( citext, citext ) RETURNS SETOF TEXT AS $$
+CREATE FUNCTION regexp_split_to_table( citext, citext ) RETURNS SETOF TEXT AS $$
     SELECT pg_catalog.regexp_split_to_table( $1::pg_catalog.text, $2::pg_catalog.text, 'i' );
 $$ LANGUAGE SQL IMMUTABLE STRICT;
 
-CREATE OR REPLACE FUNCTION regexp_split_to_table( citext, citext, text ) RETURNS SETOF TEXT AS $$
+CREATE FUNCTION regexp_split_to_table( citext, citext, text ) RETURNS SETOF TEXT AS $$
     SELECT pg_catalog.regexp_split_to_table( $1::pg_catalog.text, $2::pg_catalog.text, CASE WHEN pg_catalog.strpos($3, 'c') = 0 THEN  $3 || 'i' ELSE $3 END );
 $$ LANGUAGE SQL IMMUTABLE STRICT;
 
-CREATE OR REPLACE FUNCTION strpos( citext, citext ) RETURNS INT AS $$
+CREATE FUNCTION strpos( citext, citext ) RETURNS INT AS $$
     SELECT pg_catalog.strpos( pg_catalog.lower( $1::pg_catalog.text ), pg_catalog.lower( $2::pg_catalog.text ) );
 $$ LANGUAGE SQL IMMUTABLE STRICT;
 
-CREATE OR REPLACE FUNCTION replace( citext, citext, citext ) RETURNS TEXT AS $$
+CREATE FUNCTION replace( citext, citext, citext ) RETURNS TEXT AS $$
     SELECT pg_catalog.regexp_replace( $1::pg_catalog.text, pg_catalog.regexp_replace($2::pg_catalog.text, '([^a-zA-Z_0-9])', E'\\\\\\1', 'g'), $3::pg_catalog.text, 'gi' );
 $$ LANGUAGE SQL IMMUTABLE STRICT;
 
-CREATE OR REPLACE FUNCTION split_part( citext, citext, int ) RETURNS TEXT AS $$
+CREATE FUNCTION split_part( citext, citext, int ) RETURNS TEXT AS $$
     SELECT (pg_catalog.regexp_split_to_array( $1::pg_catalog.text, pg_catalog.regexp_replace($2::pg_catalog.text, '([^a-zA-Z_0-9])', E'\\\\\\1', 'g'), 'i'))[$3];
 $$ LANGUAGE SQL IMMUTABLE STRICT;
 
-CREATE OR REPLACE FUNCTION translate( citext, citext, text ) RETURNS TEXT AS $$
+CREATE FUNCTION translate( citext, citext, text ) RETURNS TEXT AS $$
     SELECT pg_catalog.translate( pg_catalog.translate( $1::pg_catalog.text, pg_catalog.lower($2::pg_catalog.text), $3), pg_catalog.upper($2::pg_catalog.text), $3);
 $$ LANGUAGE SQL IMMUTABLE STRICT;

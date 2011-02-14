@@ -1,21 +1,21 @@
 /* contrib/btree_gin/btree_gin--1.0.sql */
 
-CREATE OR REPLACE FUNCTION gin_btree_consistent(internal, int2, anyelement, int4, internal, internal)
+CREATE FUNCTION gin_btree_consistent(internal, int2, anyelement, int4, internal, internal)
 RETURNS bool
 AS 'MODULE_PATHNAME'
 LANGUAGE C STRICT IMMUTABLE;
 
-CREATE OR REPLACE FUNCTION gin_extract_value_int2(int2, internal)
+CREATE FUNCTION gin_extract_value_int2(int2, internal)
 RETURNS internal
 AS 'MODULE_PATHNAME'
 LANGUAGE C STRICT IMMUTABLE;
 
-CREATE OR REPLACE FUNCTION gin_compare_prefix_int2(int2, int2, int2, internal)
+CREATE FUNCTION gin_compare_prefix_int2(int2, int2, int2, internal)
 RETURNS int4
 AS 'MODULE_PATHNAME'
 LANGUAGE C STRICT IMMUTABLE;
 
-CREATE OR REPLACE FUNCTION gin_extract_query_int2(int2, internal, int2, internal, internal)
+CREATE FUNCTION gin_extract_query_int2(int2, internal, int2, internal, internal)
 RETURNS internal
 AS 'MODULE_PATHNAME'
 LANGUAGE C STRICT IMMUTABLE;
@@ -35,17 +35,17 @@ AS
     FUNCTION        5       gin_compare_prefix_int2(int2,int2,int2, internal),
 STORAGE         int2;
 
-CREATE OR REPLACE FUNCTION gin_extract_value_int4(int4, internal)
+CREATE FUNCTION gin_extract_value_int4(int4, internal)
 RETURNS internal
 AS 'MODULE_PATHNAME'
 LANGUAGE C STRICT IMMUTABLE;
 
-CREATE OR REPLACE FUNCTION gin_compare_prefix_int4(int4, int4, int2, internal)
+CREATE FUNCTION gin_compare_prefix_int4(int4, int4, int2, internal)
 RETURNS int4
 AS 'MODULE_PATHNAME'
 LANGUAGE C STRICT IMMUTABLE;
 
-CREATE OR REPLACE FUNCTION gin_extract_query_int4(int4, internal, int2, internal, internal)
+CREATE FUNCTION gin_extract_query_int4(int4, internal, int2, internal, internal)
 RETURNS internal
 AS 'MODULE_PATHNAME'
 LANGUAGE C STRICT IMMUTABLE;
@@ -65,17 +65,17 @@ AS
     FUNCTION        5       gin_compare_prefix_int4(int4,int4,int2, internal),
 STORAGE         int4;
 
-CREATE OR REPLACE FUNCTION gin_extract_value_int8(int8, internal)
+CREATE FUNCTION gin_extract_value_int8(int8, internal)
 RETURNS internal
 AS 'MODULE_PATHNAME'
 LANGUAGE C STRICT IMMUTABLE;
 
-CREATE OR REPLACE FUNCTION gin_compare_prefix_int8(int8, int8, int2, internal)
+CREATE FUNCTION gin_compare_prefix_int8(int8, int8, int2, internal)
 RETURNS int4
 AS 'MODULE_PATHNAME'
 LANGUAGE C STRICT IMMUTABLE;
 
-CREATE OR REPLACE FUNCTION gin_extract_query_int8(int8, internal, int2, internal, internal)
+CREATE FUNCTION gin_extract_query_int8(int8, internal, int2, internal, internal)
 RETURNS internal
 AS 'MODULE_PATHNAME'
 LANGUAGE C STRICT IMMUTABLE;
@@ -95,17 +95,17 @@ AS
     FUNCTION        5       gin_compare_prefix_int8(int8,int8,int2, internal),
 STORAGE         int8;
 
-CREATE OR REPLACE FUNCTION gin_extract_value_float4(float4, internal)
+CREATE FUNCTION gin_extract_value_float4(float4, internal)
 RETURNS internal
 AS 'MODULE_PATHNAME'
 LANGUAGE C STRICT IMMUTABLE;
 
-CREATE OR REPLACE FUNCTION gin_compare_prefix_float4(float4, float4, int2, internal)
+CREATE FUNCTION gin_compare_prefix_float4(float4, float4, int2, internal)
 RETURNS int4
 AS 'MODULE_PATHNAME'
 LANGUAGE C STRICT IMMUTABLE;
 
-CREATE OR REPLACE FUNCTION gin_extract_query_float4(float4, internal, int2, internal, internal)
+CREATE FUNCTION gin_extract_query_float4(float4, internal, int2, internal, internal)
 RETURNS internal
 AS 'MODULE_PATHNAME'
 LANGUAGE C STRICT IMMUTABLE;
@@ -125,17 +125,17 @@ AS
     FUNCTION        5       gin_compare_prefix_float4(float4,float4,int2, internal),
 STORAGE         float4;
 
-CREATE OR REPLACE FUNCTION gin_extract_value_float8(float8, internal)
+CREATE FUNCTION gin_extract_value_float8(float8, internal)
 RETURNS internal
 AS 'MODULE_PATHNAME'
 LANGUAGE C STRICT IMMUTABLE;
 
-CREATE OR REPLACE FUNCTION gin_compare_prefix_float8(float8, float8, int2, internal)
+CREATE FUNCTION gin_compare_prefix_float8(float8, float8, int2, internal)
 RETURNS int4
 AS 'MODULE_PATHNAME'
 LANGUAGE C STRICT IMMUTABLE;
 
-CREATE OR REPLACE FUNCTION gin_extract_query_float8(float8, internal, int2, internal, internal)
+CREATE FUNCTION gin_extract_query_float8(float8, internal, int2, internal, internal)
 RETURNS internal
 AS 'MODULE_PATHNAME'
 LANGUAGE C STRICT IMMUTABLE;
@@ -155,17 +155,17 @@ AS
     FUNCTION        5       gin_compare_prefix_float8(float8,float8,int2, internal),
 STORAGE         float8;
 
-CREATE OR REPLACE FUNCTION gin_extract_value_money(money, internal)
+CREATE FUNCTION gin_extract_value_money(money, internal)
 RETURNS internal
 AS 'MODULE_PATHNAME'
 LANGUAGE C STRICT IMMUTABLE;
 
-CREATE OR REPLACE FUNCTION gin_compare_prefix_money(money, money, int2, internal)
+CREATE FUNCTION gin_compare_prefix_money(money, money, int2, internal)
 RETURNS int4
 AS 'MODULE_PATHNAME'
 LANGUAGE C STRICT IMMUTABLE;
 
-CREATE OR REPLACE FUNCTION gin_extract_query_money(money, internal, int2, internal, internal)
+CREATE FUNCTION gin_extract_query_money(money, internal, int2, internal, internal)
 RETURNS internal
 AS 'MODULE_PATHNAME'
 LANGUAGE C STRICT IMMUTABLE;
@@ -185,17 +185,17 @@ AS
     FUNCTION        5       gin_compare_prefix_money(money,money,int2, internal),
 STORAGE         money;
 
-CREATE OR REPLACE FUNCTION gin_extract_value_oid(oid, internal)
+CREATE FUNCTION gin_extract_value_oid(oid, internal)
 RETURNS internal
 AS 'MODULE_PATHNAME'
 LANGUAGE C STRICT IMMUTABLE;
 
-CREATE OR REPLACE FUNCTION gin_compare_prefix_oid(oid, oid, int2, internal)
+CREATE FUNCTION gin_compare_prefix_oid(oid, oid, int2, internal)
 RETURNS int4
 AS 'MODULE_PATHNAME'
 LANGUAGE C STRICT IMMUTABLE;
 
-CREATE OR REPLACE FUNCTION gin_extract_query_oid(oid, internal, int2, internal, internal)
+CREATE FUNCTION gin_extract_query_oid(oid, internal, int2, internal, internal)
 RETURNS internal
 AS 'MODULE_PATHNAME'
 LANGUAGE C STRICT IMMUTABLE;
@@ -215,17 +215,17 @@ AS
     FUNCTION        5       gin_compare_prefix_oid(oid,oid,int2, internal),
 STORAGE         oid;
 
-CREATE OR REPLACE FUNCTION gin_extract_value_timestamp(timestamp, internal)
+CREATE FUNCTION gin_extract_value_timestamp(timestamp, internal)
 RETURNS internal
 AS 'MODULE_PATHNAME'
 LANGUAGE C STRICT IMMUTABLE;
 
-CREATE OR REPLACE FUNCTION gin_compare_prefix_timestamp(timestamp, timestamp, int2, internal)
+CREATE FUNCTION gin_compare_prefix_timestamp(timestamp, timestamp, int2, internal)
 RETURNS int4
 AS 'MODULE_PATHNAME'
 LANGUAGE C STRICT IMMUTABLE;
 
-CREATE OR REPLACE FUNCTION gin_extract_query_timestamp(timestamp, internal, int2, internal, internal)
+CREATE FUNCTION gin_extract_query_timestamp(timestamp, internal, int2, internal, internal)
 RETURNS internal
 AS 'MODULE_PATHNAME'
 LANGUAGE C STRICT IMMUTABLE;
@@ -245,17 +245,17 @@ AS
     FUNCTION        5       gin_compare_prefix_timestamp(timestamp,timestamp,int2, internal),
 STORAGE         timestamp;
 
-CREATE OR REPLACE FUNCTION gin_extract_value_timestamptz(timestamptz, internal)
+CREATE FUNCTION gin_extract_value_timestamptz(timestamptz, internal)
 RETURNS internal
 AS 'MODULE_PATHNAME'
 LANGUAGE C STRICT IMMUTABLE;
 
-CREATE OR REPLACE FUNCTION gin_compare_prefix_timestamptz(timestamptz, timestamptz, int2, internal)
+CREATE FUNCTION gin_compare_prefix_timestamptz(timestamptz, timestamptz, int2, internal)
 RETURNS int4
 AS 'MODULE_PATHNAME'
 LANGUAGE C STRICT IMMUTABLE;
 
-CREATE OR REPLACE FUNCTION gin_extract_query_timestamptz(timestamptz, internal, int2, internal, internal)
+CREATE FUNCTION gin_extract_query_timestamptz(timestamptz, internal, int2, internal, internal)
 RETURNS internal
 AS 'MODULE_PATHNAME'
 LANGUAGE C STRICT IMMUTABLE;
@@ -275,17 +275,17 @@ AS
     FUNCTION        5       gin_compare_prefix_timestamptz(timestamptz,timestamptz,int2, internal),
 STORAGE         timestamptz;
 
-CREATE OR REPLACE FUNCTION gin_extract_value_time(time, internal)
+CREATE FUNCTION gin_extract_value_time(time, internal)
 RETURNS internal
 AS 'MODULE_PATHNAME'
 LANGUAGE C STRICT IMMUTABLE;
 
-CREATE OR REPLACE FUNCTION gin_compare_prefix_time(time, time, int2, internal)
+CREATE FUNCTION gin_compare_prefix_time(time, time, int2, internal)
 RETURNS int4
 AS 'MODULE_PATHNAME'
 LANGUAGE C STRICT IMMUTABLE;
 
-CREATE OR REPLACE FUNCTION gin_extract_query_time(time, internal, int2, internal, internal)
+CREATE FUNCTION gin_extract_query_time(time, internal, int2, internal, internal)
 RETURNS internal
 AS 'MODULE_PATHNAME'
 LANGUAGE C STRICT IMMUTABLE;
@@ -305,17 +305,17 @@ AS
     FUNCTION        5       gin_compare_prefix_time(time,time,int2, internal),
 STORAGE         time;
 
-CREATE OR REPLACE FUNCTION gin_extract_value_timetz(timetz, internal)
+CREATE FUNCTION gin_extract_value_timetz(timetz, internal)
 RETURNS internal
 AS 'MODULE_PATHNAME'
 LANGUAGE C STRICT IMMUTABLE;
 
-CREATE OR REPLACE FUNCTION gin_compare_prefix_timetz(timetz, timetz, int2, internal)
+CREATE FUNCTION gin_compare_prefix_timetz(timetz, timetz, int2, internal)
 RETURNS int4
 AS 'MODULE_PATHNAME'
 LANGUAGE C STRICT IMMUTABLE;
 
-CREATE OR REPLACE FUNCTION gin_extract_query_timetz(timetz, internal, int2, internal, internal)
+CREATE FUNCTION gin_extract_query_timetz(timetz, internal, int2, internal, internal)
 RETURNS internal
 AS 'MODULE_PATHNAME'
 LANGUAGE C STRICT IMMUTABLE;
@@ -335,17 +335,17 @@ AS
     FUNCTION        5       gin_compare_prefix_timetz(timetz,timetz,int2, internal),
 STORAGE         timetz;
 
-CREATE OR REPLACE FUNCTION gin_extract_value_date(date, internal)
+CREATE FUNCTION gin_extract_value_date(date, internal)
 RETURNS internal
 AS 'MODULE_PATHNAME'
 LANGUAGE C STRICT IMMUTABLE;
 
-CREATE OR REPLACE FUNCTION gin_compare_prefix_date(date, date, int2, internal)
+CREATE FUNCTION gin_compare_prefix_date(date, date, int2, internal)
 RETURNS int4
 AS 'MODULE_PATHNAME'
 LANGUAGE C STRICT IMMUTABLE;
 
-CREATE OR REPLACE FUNCTION gin_extract_query_date(date, internal, int2, internal, internal)
+CREATE FUNCTION gin_extract_query_date(date, internal, int2, internal, internal)
 RETURNS internal
 AS 'MODULE_PATHNAME'
 LANGUAGE C STRICT IMMUTABLE;
@@ -365,17 +365,17 @@ AS
     FUNCTION        5       gin_compare_prefix_date(date,date,int2, internal),
 STORAGE         date;
 
-CREATE OR REPLACE FUNCTION gin_extract_value_interval(interval, internal)
+CREATE FUNCTION gin_extract_value_interval(interval, internal)
 RETURNS internal
 AS 'MODULE_PATHNAME'
 LANGUAGE C STRICT IMMUTABLE;
 
-CREATE OR REPLACE FUNCTION gin_compare_prefix_interval(interval, interval, int2, internal)
+CREATE FUNCTION gin_compare_prefix_interval(interval, interval, int2, internal)
 RETURNS int4
 AS 'MODULE_PATHNAME'
 LANGUAGE C STRICT IMMUTABLE;
 
-CREATE OR REPLACE FUNCTION gin_extract_query_interval(interval, internal, int2, internal, internal)
+CREATE FUNCTION gin_extract_query_interval(interval, internal, int2, internal, internal)
 RETURNS internal
 AS 'MODULE_PATHNAME'
 LANGUAGE C STRICT IMMUTABLE;
@@ -395,17 +395,17 @@ AS
     FUNCTION        5       gin_compare_prefix_interval(interval,interval,int2, internal),
 STORAGE         interval;
 
-CREATE OR REPLACE FUNCTION gin_extract_value_macaddr(macaddr, internal)
+CREATE FUNCTION gin_extract_value_macaddr(macaddr, internal)
 RETURNS internal
 AS 'MODULE_PATHNAME'
 LANGUAGE C STRICT IMMUTABLE;
 
-CREATE OR REPLACE FUNCTION gin_compare_prefix_macaddr(macaddr, macaddr, int2, internal)
+CREATE FUNCTION gin_compare_prefix_macaddr(macaddr, macaddr, int2, internal)
 RETURNS int4
 AS 'MODULE_PATHNAME'
 LANGUAGE C STRICT IMMUTABLE;
 
-CREATE OR REPLACE FUNCTION gin_extract_query_macaddr(macaddr, internal, int2, internal, internal)
+CREATE FUNCTION gin_extract_query_macaddr(macaddr, internal, int2, internal, internal)
 RETURNS internal
 AS 'MODULE_PATHNAME'
 LANGUAGE C STRICT IMMUTABLE;
@@ -425,17 +425,17 @@ AS
     FUNCTION        5       gin_compare_prefix_macaddr(macaddr,macaddr,int2, internal),
 STORAGE         macaddr;
 
-CREATE OR REPLACE FUNCTION gin_extract_value_inet(inet, internal)
+CREATE FUNCTION gin_extract_value_inet(inet, internal)
 RETURNS internal
 AS 'MODULE_PATHNAME'
 LANGUAGE C STRICT IMMUTABLE;
 
-CREATE OR REPLACE FUNCTION gin_compare_prefix_inet(inet, inet, int2, internal)
+CREATE FUNCTION gin_compare_prefix_inet(inet, inet, int2, internal)
 RETURNS int4
 AS 'MODULE_PATHNAME'
 LANGUAGE C STRICT IMMUTABLE;
 
-CREATE OR REPLACE FUNCTION gin_extract_query_inet(inet, internal, int2, internal, internal)
+CREATE FUNCTION gin_extract_query_inet(inet, internal, int2, internal, internal)
 RETURNS internal
 AS 'MODULE_PATHNAME'
 LANGUAGE C STRICT IMMUTABLE;
@@ -455,17 +455,17 @@ AS
     FUNCTION        5       gin_compare_prefix_inet(inet,inet,int2, internal),
 STORAGE         inet;
 
-CREATE OR REPLACE FUNCTION gin_extract_value_cidr(cidr, internal)
+CREATE FUNCTION gin_extract_value_cidr(cidr, internal)
 RETURNS internal
 AS 'MODULE_PATHNAME'
 LANGUAGE C STRICT IMMUTABLE;
 
-CREATE OR REPLACE FUNCTION gin_compare_prefix_cidr(cidr, cidr, int2, internal)
+CREATE FUNCTION gin_compare_prefix_cidr(cidr, cidr, int2, internal)
 RETURNS int4
 AS 'MODULE_PATHNAME'
 LANGUAGE C STRICT IMMUTABLE;
 
-CREATE OR REPLACE FUNCTION gin_extract_query_cidr(cidr, internal, int2, internal, internal)
+CREATE FUNCTION gin_extract_query_cidr(cidr, internal, int2, internal, internal)
 RETURNS internal
 AS 'MODULE_PATHNAME'
 LANGUAGE C STRICT IMMUTABLE;
@@ -485,17 +485,17 @@ AS
     FUNCTION        5       gin_compare_prefix_cidr(cidr,cidr,int2, internal),
 STORAGE         cidr;
 
-CREATE OR REPLACE FUNCTION gin_extract_value_text(text, internal)
+CREATE FUNCTION gin_extract_value_text(text, internal)
 RETURNS internal
 AS 'MODULE_PATHNAME'
 LANGUAGE C STRICT IMMUTABLE;
 
-CREATE OR REPLACE FUNCTION gin_compare_prefix_text(text, text, int2, internal)
+CREATE FUNCTION gin_compare_prefix_text(text, text, int2, internal)
 RETURNS int4
 AS 'MODULE_PATHNAME'
 LANGUAGE C STRICT IMMUTABLE;
 
-CREATE OR REPLACE FUNCTION gin_extract_query_text(text, internal, int2, internal, internal)
+CREATE FUNCTION gin_extract_query_text(text, internal, int2, internal, internal)
 RETURNS internal
 AS 'MODULE_PATHNAME'
 LANGUAGE C STRICT IMMUTABLE;
@@ -530,17 +530,17 @@ AS
     FUNCTION        5       gin_compare_prefix_text(text,text,int2, internal),
 STORAGE         varchar;
 
-CREATE OR REPLACE FUNCTION gin_extract_value_char("char", internal)
+CREATE FUNCTION gin_extract_value_char("char", internal)
 RETURNS internal
 AS 'MODULE_PATHNAME'
 LANGUAGE C STRICT IMMUTABLE;
 
-CREATE OR REPLACE FUNCTION gin_compare_prefix_char("char", "char", int2, internal)
+CREATE FUNCTION gin_compare_prefix_char("char", "char", int2, internal)
 RETURNS int4
 AS 'MODULE_PATHNAME'
 LANGUAGE C STRICT IMMUTABLE;
 
-CREATE OR REPLACE FUNCTION gin_extract_query_char("char", internal, int2, internal, internal)
+CREATE FUNCTION gin_extract_query_char("char", internal, int2, internal, internal)
 RETURNS internal
 AS 'MODULE_PATHNAME'
 LANGUAGE C STRICT IMMUTABLE;
@@ -560,17 +560,17 @@ AS
     FUNCTION        5       gin_compare_prefix_char("char","char",int2, internal),
 STORAGE         "char";
 
-CREATE OR REPLACE FUNCTION gin_extract_value_bytea(bytea, internal)
+CREATE FUNCTION gin_extract_value_bytea(bytea, internal)
 RETURNS internal
 AS 'MODULE_PATHNAME'
 LANGUAGE C STRICT IMMUTABLE;
 
-CREATE OR REPLACE FUNCTION gin_compare_prefix_bytea(bytea, bytea, int2, internal)
+CREATE FUNCTION gin_compare_prefix_bytea(bytea, bytea, int2, internal)
 RETURNS int4
 AS 'MODULE_PATHNAME'
 LANGUAGE C STRICT IMMUTABLE;
 
-CREATE OR REPLACE FUNCTION gin_extract_query_bytea(bytea, internal, int2, internal, internal)
+CREATE FUNCTION gin_extract_query_bytea(bytea, internal, int2, internal, internal)
 RETURNS internal
 AS 'MODULE_PATHNAME'
 LANGUAGE C STRICT IMMUTABLE;
@@ -590,17 +590,17 @@ AS
     FUNCTION        5       gin_compare_prefix_bytea(bytea,bytea,int2, internal),
 STORAGE         bytea;
 
-CREATE OR REPLACE FUNCTION gin_extract_value_bit(bit, internal)
+CREATE FUNCTION gin_extract_value_bit(bit, internal)
 RETURNS internal
 AS 'MODULE_PATHNAME'
 LANGUAGE C STRICT IMMUTABLE;
 
-CREATE OR REPLACE FUNCTION gin_compare_prefix_bit(bit, bit, int2, internal)
+CREATE FUNCTION gin_compare_prefix_bit(bit, bit, int2, internal)
 RETURNS int4
 AS 'MODULE_PATHNAME'
 LANGUAGE C STRICT IMMUTABLE;
 
-CREATE OR REPLACE FUNCTION gin_extract_query_bit(bit, internal, int2, internal, internal)
+CREATE FUNCTION gin_extract_query_bit(bit, internal, int2, internal, internal)
 RETURNS internal
 AS 'MODULE_PATHNAME'
 LANGUAGE C STRICT IMMUTABLE;
@@ -620,17 +620,17 @@ AS
     FUNCTION        5       gin_compare_prefix_bit(bit,bit,int2, internal),
 STORAGE         bit;
 
-CREATE OR REPLACE FUNCTION gin_extract_value_varbit(varbit, internal)
+CREATE FUNCTION gin_extract_value_varbit(varbit, internal)
 RETURNS internal
 AS 'MODULE_PATHNAME'
 LANGUAGE C STRICT IMMUTABLE;
 
-CREATE OR REPLACE FUNCTION gin_compare_prefix_varbit(varbit, varbit, int2, internal)
+CREATE FUNCTION gin_compare_prefix_varbit(varbit, varbit, int2, internal)
 RETURNS int4
 AS 'MODULE_PATHNAME'
 LANGUAGE C STRICT IMMUTABLE;
 
-CREATE OR REPLACE FUNCTION gin_extract_query_varbit(varbit, internal, int2, internal, internal)
+CREATE FUNCTION gin_extract_query_varbit(varbit, internal, int2, internal, internal)
 RETURNS internal
 AS 'MODULE_PATHNAME'
 LANGUAGE C STRICT IMMUTABLE;
@@ -650,22 +650,22 @@ AS
     FUNCTION        5       gin_compare_prefix_varbit(varbit,varbit,int2, internal),
 STORAGE         varbit;
 
-CREATE OR REPLACE FUNCTION gin_extract_value_numeric(numeric, internal)
+CREATE FUNCTION gin_extract_value_numeric(numeric, internal)
 RETURNS internal
 AS 'MODULE_PATHNAME'
 LANGUAGE C STRICT IMMUTABLE;
 
-CREATE OR REPLACE FUNCTION gin_compare_prefix_numeric(numeric, numeric, int2, internal)
+CREATE FUNCTION gin_compare_prefix_numeric(numeric, numeric, int2, internal)
 RETURNS int4
 AS 'MODULE_PATHNAME'
 LANGUAGE C STRICT IMMUTABLE;
 
-CREATE OR REPLACE FUNCTION gin_extract_query_numeric(numeric, internal, int2, internal, internal)
+CREATE FUNCTION gin_extract_query_numeric(numeric, internal, int2, internal, internal)
 RETURNS internal
 AS 'MODULE_PATHNAME'
 LANGUAGE C STRICT IMMUTABLE;
 
-CREATE OR REPLACE FUNCTION gin_numeric_cmp(numeric, numeric)
+CREATE FUNCTION gin_numeric_cmp(numeric, numeric)
 RETURNS int4
 AS 'MODULE_PATHNAME'
 LANGUAGE C STRICT IMMUTABLE;

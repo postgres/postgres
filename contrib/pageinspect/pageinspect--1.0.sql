@@ -3,12 +3,12 @@
 --
 -- get_raw_page()
 --
-CREATE OR REPLACE FUNCTION get_raw_page(text, int4)
+CREATE FUNCTION get_raw_page(text, int4)
 RETURNS bytea
 AS 'MODULE_PATHNAME', 'get_raw_page'
 LANGUAGE C STRICT;
 
-CREATE OR REPLACE FUNCTION get_raw_page(text, text, int4)
+CREATE FUNCTION get_raw_page(text, text, int4)
 RETURNS bytea
 AS 'MODULE_PATHNAME', 'get_raw_page_fork'
 LANGUAGE C STRICT;
@@ -16,7 +16,7 @@ LANGUAGE C STRICT;
 --
 -- page_header()
 --
-CREATE OR REPLACE FUNCTION page_header(IN page bytea,
+CREATE FUNCTION page_header(IN page bytea,
     OUT lsn text,
     OUT tli smallint,
     OUT flags smallint,
@@ -32,7 +32,7 @@ LANGUAGE C STRICT;
 --
 -- heap_page_items()
 --
-CREATE OR REPLACE FUNCTION heap_page_items(IN page bytea,
+CREATE FUNCTION heap_page_items(IN page bytea,
     OUT lp smallint,
     OUT lp_off smallint,
     OUT lp_flags smallint,
@@ -53,7 +53,7 @@ LANGUAGE C STRICT;
 --
 -- bt_metap()
 --
-CREATE OR REPLACE FUNCTION bt_metap(IN relname text,
+CREATE FUNCTION bt_metap(IN relname text,
     OUT magic int4,
     OUT version int4,
     OUT root int4,
@@ -66,7 +66,7 @@ LANGUAGE C STRICT;
 --
 -- bt_page_stats()
 --
-CREATE OR REPLACE FUNCTION bt_page_stats(IN relname text, IN blkno int4,
+CREATE FUNCTION bt_page_stats(IN relname text, IN blkno int4,
     OUT blkno int4,
     OUT type "char",
     OUT live_items int4,
@@ -84,7 +84,7 @@ LANGUAGE C STRICT;
 --
 -- bt_page_items()
 --
-CREATE OR REPLACE FUNCTION bt_page_items(IN relname text, IN blkno int4,
+CREATE FUNCTION bt_page_items(IN relname text, IN blkno int4,
     OUT itemoffset smallint,
     OUT ctid tid,
     OUT itemlen smallint,
@@ -98,7 +98,7 @@ LANGUAGE C STRICT;
 --
 -- fsm_page_contents()
 --
-CREATE OR REPLACE FUNCTION fsm_page_contents(IN page bytea)
+CREATE FUNCTION fsm_page_contents(IN page bytea)
 RETURNS text
 AS 'MODULE_PATHNAME', 'fsm_page_contents'
 LANGUAGE C STRICT;

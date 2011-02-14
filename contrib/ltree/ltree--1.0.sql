@@ -1,11 +1,11 @@
 /* contrib/ltree/ltree--1.0.sql */
 
-CREATE OR REPLACE FUNCTION ltree_in(cstring)
+CREATE FUNCTION ltree_in(cstring)
 RETURNS ltree
 AS 'MODULE_PATHNAME'
 LANGUAGE C STRICT;
 
-CREATE OR REPLACE FUNCTION ltree_out(ltree)
+CREATE FUNCTION ltree_out(ltree)
 RETURNS cstring
 AS 'MODULE_PATHNAME'
 LANGUAGE C STRICT;
@@ -19,37 +19,37 @@ CREATE TYPE ltree (
 
 
 --Compare function for ltree
-CREATE OR REPLACE FUNCTION ltree_cmp(ltree,ltree)
+CREATE FUNCTION ltree_cmp(ltree,ltree)
 RETURNS int4
 AS 'MODULE_PATHNAME'
 LANGUAGE C STRICT IMMUTABLE;
 
-CREATE OR REPLACE FUNCTION ltree_lt(ltree,ltree)
+CREATE FUNCTION ltree_lt(ltree,ltree)
 RETURNS bool
 AS 'MODULE_PATHNAME'
 LANGUAGE C STRICT IMMUTABLE;
 
-CREATE OR REPLACE FUNCTION ltree_le(ltree,ltree)
+CREATE FUNCTION ltree_le(ltree,ltree)
 RETURNS bool
 AS 'MODULE_PATHNAME'
 LANGUAGE C STRICT IMMUTABLE;
 
-CREATE OR REPLACE FUNCTION ltree_eq(ltree,ltree)
+CREATE FUNCTION ltree_eq(ltree,ltree)
 RETURNS bool
 AS 'MODULE_PATHNAME'
 LANGUAGE C STRICT IMMUTABLE;
 
-CREATE OR REPLACE FUNCTION ltree_ge(ltree,ltree)
+CREATE FUNCTION ltree_ge(ltree,ltree)
 RETURNS bool
 AS 'MODULE_PATHNAME'
 LANGUAGE C STRICT IMMUTABLE;
 
-CREATE OR REPLACE FUNCTION ltree_gt(ltree,ltree)
+CREATE FUNCTION ltree_gt(ltree,ltree)
 RETURNS bool
 AS 'MODULE_PATHNAME'
 LANGUAGE C STRICT IMMUTABLE;
 
-CREATE OR REPLACE FUNCTION ltree_ne(ltree,ltree)
+CREATE FUNCTION ltree_ne(ltree,ltree)
 RETURNS bool
 AS 'MODULE_PATHNAME'
 LANGUAGE C STRICT IMMUTABLE;
@@ -119,112 +119,112 @@ CREATE OPERATOR <> (
 
 --util functions
 
-CREATE OR REPLACE FUNCTION subltree(ltree,int4,int4)
+CREATE FUNCTION subltree(ltree,int4,int4)
 RETURNS ltree
 AS 'MODULE_PATHNAME'
 LANGUAGE C STRICT IMMUTABLE;
 
-CREATE OR REPLACE FUNCTION subpath(ltree,int4,int4)
+CREATE FUNCTION subpath(ltree,int4,int4)
 RETURNS ltree
 AS 'MODULE_PATHNAME'
 LANGUAGE C STRICT IMMUTABLE;
 
-CREATE OR REPLACE FUNCTION subpath(ltree,int4)
+CREATE FUNCTION subpath(ltree,int4)
 RETURNS ltree
 AS 'MODULE_PATHNAME'
 LANGUAGE C STRICT IMMUTABLE;
 
-CREATE OR REPLACE FUNCTION index(ltree,ltree)
+CREATE FUNCTION index(ltree,ltree)
 RETURNS int4
 AS 'MODULE_PATHNAME', 'ltree_index'
 LANGUAGE C STRICT IMMUTABLE;
 
-CREATE OR REPLACE FUNCTION index(ltree,ltree,int4)
+CREATE FUNCTION index(ltree,ltree,int4)
 RETURNS int4
 AS 'MODULE_PATHNAME', 'ltree_index'
 LANGUAGE C STRICT IMMUTABLE;
 
-CREATE OR REPLACE FUNCTION nlevel(ltree)
+CREATE FUNCTION nlevel(ltree)
 RETURNS int4
 AS 'MODULE_PATHNAME'
 LANGUAGE C STRICT IMMUTABLE;
 
-CREATE OR REPLACE FUNCTION ltree2text(ltree)
+CREATE FUNCTION ltree2text(ltree)
 RETURNS text
 AS 'MODULE_PATHNAME'
 LANGUAGE C STRICT IMMUTABLE;
 
-CREATE OR REPLACE FUNCTION text2ltree(text)
+CREATE FUNCTION text2ltree(text)
 RETURNS ltree
 AS 'MODULE_PATHNAME'
 LANGUAGE C STRICT IMMUTABLE;
 
-CREATE OR REPLACE FUNCTION lca(_ltree)
+CREATE FUNCTION lca(_ltree)
 RETURNS ltree
 AS 'MODULE_PATHNAME','_lca'
 LANGUAGE C STRICT IMMUTABLE;
 
-CREATE OR REPLACE FUNCTION lca(ltree,ltree)
+CREATE FUNCTION lca(ltree,ltree)
 RETURNS ltree
 AS 'MODULE_PATHNAME'
 LANGUAGE C STRICT IMMUTABLE;
 
-CREATE OR REPLACE FUNCTION lca(ltree,ltree,ltree)
+CREATE FUNCTION lca(ltree,ltree,ltree)
 RETURNS ltree
 AS 'MODULE_PATHNAME'
 LANGUAGE C STRICT IMMUTABLE;
 
-CREATE OR REPLACE FUNCTION lca(ltree,ltree,ltree,ltree)
+CREATE FUNCTION lca(ltree,ltree,ltree,ltree)
 RETURNS ltree
 AS 'MODULE_PATHNAME'
 LANGUAGE C STRICT IMMUTABLE;
 
-CREATE OR REPLACE FUNCTION lca(ltree,ltree,ltree,ltree,ltree)
+CREATE FUNCTION lca(ltree,ltree,ltree,ltree,ltree)
 RETURNS ltree
 AS 'MODULE_PATHNAME'
 LANGUAGE C STRICT IMMUTABLE;
 
-CREATE OR REPLACE FUNCTION lca(ltree,ltree,ltree,ltree,ltree,ltree)
+CREATE FUNCTION lca(ltree,ltree,ltree,ltree,ltree,ltree)
 RETURNS ltree
 AS 'MODULE_PATHNAME'
 LANGUAGE C STRICT IMMUTABLE;
 
-CREATE OR REPLACE FUNCTION lca(ltree,ltree,ltree,ltree,ltree,ltree,ltree)
+CREATE FUNCTION lca(ltree,ltree,ltree,ltree,ltree,ltree,ltree)
 RETURNS ltree
 AS 'MODULE_PATHNAME'
 LANGUAGE C STRICT IMMUTABLE;
 
-CREATE OR REPLACE FUNCTION lca(ltree,ltree,ltree,ltree,ltree,ltree,ltree,ltree)
+CREATE FUNCTION lca(ltree,ltree,ltree,ltree,ltree,ltree,ltree,ltree)
 RETURNS ltree
 AS 'MODULE_PATHNAME'
 LANGUAGE C STRICT IMMUTABLE;
 
-CREATE OR REPLACE FUNCTION ltree_isparent(ltree,ltree)
+CREATE FUNCTION ltree_isparent(ltree,ltree)
 RETURNS bool
 AS 'MODULE_PATHNAME'
 LANGUAGE C STRICT IMMUTABLE;
 
-CREATE OR REPLACE FUNCTION ltree_risparent(ltree,ltree)
+CREATE FUNCTION ltree_risparent(ltree,ltree)
 RETURNS bool
 AS 'MODULE_PATHNAME'
 LANGUAGE C STRICT IMMUTABLE;
 
-CREATE OR REPLACE FUNCTION ltree_addltree(ltree,ltree)
+CREATE FUNCTION ltree_addltree(ltree,ltree)
 RETURNS ltree
 AS 'MODULE_PATHNAME'
 LANGUAGE C STRICT IMMUTABLE;
 
-CREATE OR REPLACE FUNCTION ltree_addtext(ltree,text)
+CREATE FUNCTION ltree_addtext(ltree,text)
 RETURNS ltree
 AS 'MODULE_PATHNAME'
 LANGUAGE C STRICT IMMUTABLE;
 
-CREATE OR REPLACE FUNCTION ltree_textadd(text,ltree)
+CREATE FUNCTION ltree_textadd(text,ltree)
 RETURNS ltree
 AS 'MODULE_PATHNAME'
 LANGUAGE C STRICT IMMUTABLE;
 
-CREATE OR REPLACE FUNCTION ltreeparentsel(internal, oid, internal, integer)
+CREATE FUNCTION ltreeparentsel(internal, oid, internal, integer)
 RETURNS float8
 AS 'MODULE_PATHNAME'
 LANGUAGE C STRICT IMMUTABLE;
@@ -297,12 +297,12 @@ CREATE OPERATOR CLASS ltree_ops
 
 
 --lquery type
-CREATE OR REPLACE FUNCTION lquery_in(cstring)
+CREATE FUNCTION lquery_in(cstring)
 RETURNS lquery
 AS 'MODULE_PATHNAME'
 LANGUAGE C STRICT;
 
-CREATE OR REPLACE FUNCTION lquery_out(lquery)
+CREATE FUNCTION lquery_out(lquery)
 RETURNS cstring
 AS 'MODULE_PATHNAME'
 LANGUAGE C STRICT;
@@ -314,12 +314,12 @@ CREATE TYPE lquery (
 	STORAGE = extended
 );
 
-CREATE OR REPLACE FUNCTION ltq_regex(ltree,lquery)
+CREATE FUNCTION ltq_regex(ltree,lquery)
 RETURNS bool
 AS 'MODULE_PATHNAME'
 LANGUAGE C STRICT IMMUTABLE;
 
-CREATE OR REPLACE FUNCTION ltq_rregex(lquery,ltree)
+CREATE FUNCTION ltq_rregex(lquery,ltree)
 RETURNS bool
 AS 'MODULE_PATHNAME'
 LANGUAGE C STRICT IMMUTABLE;
@@ -361,12 +361,12 @@ CREATE OPERATOR ^~ (
 	JOIN = contjoinsel
 );
 
-CREATE OR REPLACE FUNCTION lt_q_regex(ltree,_lquery)
+CREATE FUNCTION lt_q_regex(ltree,_lquery)
 RETURNS bool
 AS 'MODULE_PATHNAME'
 LANGUAGE C STRICT IMMUTABLE;
 
-CREATE OR REPLACE FUNCTION lt_q_rregex(_lquery,ltree)
+CREATE FUNCTION lt_q_rregex(_lquery,ltree)
 RETURNS bool
 AS 'MODULE_PATHNAME'
 LANGUAGE C STRICT IMMUTABLE;
@@ -408,12 +408,12 @@ CREATE OPERATOR ^? (
 	JOIN = contjoinsel
 );
 
-CREATE OR REPLACE FUNCTION ltxtq_in(cstring)
+CREATE FUNCTION ltxtq_in(cstring)
 RETURNS ltxtquery
 AS 'MODULE_PATHNAME'
 LANGUAGE C STRICT;
 
-CREATE OR REPLACE FUNCTION ltxtq_out(ltxtquery)
+CREATE FUNCTION ltxtq_out(ltxtquery)
 RETURNS cstring
 AS 'MODULE_PATHNAME'
 LANGUAGE C STRICT;
@@ -427,12 +427,12 @@ CREATE TYPE ltxtquery (
 
 -- operations WITH ltxtquery
 
-CREATE OR REPLACE FUNCTION ltxtq_exec(ltree, ltxtquery)
+CREATE FUNCTION ltxtq_exec(ltree, ltxtquery)
 RETURNS bool
 AS 'MODULE_PATHNAME'
 LANGUAGE C STRICT IMMUTABLE;
 
-CREATE OR REPLACE FUNCTION ltxtq_rexec(ltxtquery, ltree)
+CREATE FUNCTION ltxtq_rexec(ltxtquery, ltree)
 RETURNS bool
 AS 'MODULE_PATHNAME'
 LANGUAGE C STRICT IMMUTABLE;
@@ -475,12 +475,12 @@ CREATE OPERATOR ^@ (
 );
 
 --GiST support for ltree
-CREATE OR REPLACE FUNCTION ltree_gist_in(cstring)
+CREATE FUNCTION ltree_gist_in(cstring)
 RETURNS ltree_gist
 AS 'MODULE_PATHNAME'
 LANGUAGE C STRICT;
 
-CREATE OR REPLACE FUNCTION ltree_gist_out(ltree_gist)
+CREATE FUNCTION ltree_gist_out(ltree_gist)
 RETURNS cstring
 AS 'MODULE_PATHNAME'
 LANGUAGE C STRICT;
@@ -493,25 +493,25 @@ CREATE TYPE ltree_gist (
 );
 
 
-CREATE OR REPLACE FUNCTION ltree_consistent(internal,internal,int2,oid,internal)
+CREATE FUNCTION ltree_consistent(internal,internal,int2,oid,internal)
 RETURNS bool as 'MODULE_PATHNAME' LANGUAGE C IMMUTABLE STRICT;
 
-CREATE OR REPLACE FUNCTION ltree_compress(internal)
+CREATE FUNCTION ltree_compress(internal)
 RETURNS internal as 'MODULE_PATHNAME' LANGUAGE C IMMUTABLE STRICT;
 
-CREATE OR REPLACE FUNCTION ltree_decompress(internal)
+CREATE FUNCTION ltree_decompress(internal)
 RETURNS internal as 'MODULE_PATHNAME' LANGUAGE C IMMUTABLE STRICT;
 
-CREATE OR REPLACE FUNCTION ltree_penalty(internal,internal,internal)
+CREATE FUNCTION ltree_penalty(internal,internal,internal)
 RETURNS internal as 'MODULE_PATHNAME' LANGUAGE C IMMUTABLE STRICT;
 
-CREATE OR REPLACE FUNCTION ltree_picksplit(internal, internal)
+CREATE FUNCTION ltree_picksplit(internal, internal)
 RETURNS internal as 'MODULE_PATHNAME' LANGUAGE C IMMUTABLE STRICT;
 
-CREATE OR REPLACE FUNCTION ltree_union(internal, internal)
+CREATE FUNCTION ltree_union(internal, internal)
 RETURNS int4 as 'MODULE_PATHNAME' LANGUAGE C IMMUTABLE STRICT;
 
-CREATE OR REPLACE FUNCTION ltree_same(internal, internal, internal)
+CREATE FUNCTION ltree_same(internal, internal, internal)
 RETURNS internal as 'MODULE_PATHNAME' LANGUAGE C IMMUTABLE STRICT;
 
 CREATE OPERATOR CLASS gist_ltree_ops
@@ -541,52 +541,52 @@ CREATE OPERATOR CLASS gist_ltree_ops
 
 -- arrays of ltree
 
-CREATE OR REPLACE FUNCTION _ltree_isparent(_ltree,ltree)
+CREATE FUNCTION _ltree_isparent(_ltree,ltree)
 RETURNS bool
 AS 'MODULE_PATHNAME'
 LANGUAGE C STRICT IMMUTABLE;
 
-CREATE OR REPLACE FUNCTION _ltree_r_isparent(ltree,_ltree)
+CREATE FUNCTION _ltree_r_isparent(ltree,_ltree)
 RETURNS bool
 AS 'MODULE_PATHNAME'
 LANGUAGE C STRICT IMMUTABLE;
 
-CREATE OR REPLACE FUNCTION _ltree_risparent(_ltree,ltree)
+CREATE FUNCTION _ltree_risparent(_ltree,ltree)
 RETURNS bool
 AS 'MODULE_PATHNAME'
 LANGUAGE C STRICT IMMUTABLE;
 
-CREATE OR REPLACE FUNCTION _ltree_r_risparent(ltree,_ltree)
+CREATE FUNCTION _ltree_r_risparent(ltree,_ltree)
 RETURNS bool
 AS 'MODULE_PATHNAME'
 LANGUAGE C STRICT IMMUTABLE;
 
-CREATE OR REPLACE FUNCTION _ltq_regex(_ltree,lquery)
+CREATE FUNCTION _ltq_regex(_ltree,lquery)
 RETURNS bool
 AS 'MODULE_PATHNAME'
 LANGUAGE C STRICT IMMUTABLE;
 
-CREATE OR REPLACE FUNCTION _ltq_rregex(lquery,_ltree)
+CREATE FUNCTION _ltq_rregex(lquery,_ltree)
 RETURNS bool
 AS 'MODULE_PATHNAME'
 LANGUAGE C STRICT IMMUTABLE;
 
-CREATE OR REPLACE FUNCTION _lt_q_regex(_ltree,_lquery)
+CREATE FUNCTION _lt_q_regex(_ltree,_lquery)
 RETURNS bool
 AS 'MODULE_PATHNAME'
 LANGUAGE C STRICT IMMUTABLE;
 
-CREATE OR REPLACE FUNCTION _lt_q_rregex(_lquery,_ltree)
+CREATE FUNCTION _lt_q_rregex(_lquery,_ltree)
 RETURNS bool
 AS 'MODULE_PATHNAME'
 LANGUAGE C STRICT IMMUTABLE;
 
-CREATE OR REPLACE FUNCTION _ltxtq_exec(_ltree, ltxtquery)
+CREATE FUNCTION _ltxtq_exec(_ltree, ltxtquery)
 RETURNS bool
 AS 'MODULE_PATHNAME'
 LANGUAGE C STRICT IMMUTABLE;
 
-CREATE OR REPLACE FUNCTION _ltxtq_rexec(ltxtquery, _ltree)
+CREATE FUNCTION _ltxtq_rexec(ltxtquery, _ltree)
 RETURNS bool
 AS 'MODULE_PATHNAME'
 LANGUAGE C STRICT IMMUTABLE;
@@ -774,7 +774,7 @@ CREATE OPERATOR ^@ (
 );
 
 --extractors
-CREATE OR REPLACE FUNCTION _ltree_extract_isparent(_ltree,ltree)
+CREATE FUNCTION _ltree_extract_isparent(_ltree,ltree)
 RETURNS ltree
 AS 'MODULE_PATHNAME'
 LANGUAGE C STRICT IMMUTABLE;
@@ -785,7 +785,7 @@ CREATE OPERATOR ?@> (
 	PROCEDURE = _ltree_extract_isparent
 );
 
-CREATE OR REPLACE FUNCTION _ltree_extract_risparent(_ltree,ltree)
+CREATE FUNCTION _ltree_extract_risparent(_ltree,ltree)
 RETURNS ltree
 AS 'MODULE_PATHNAME'
 LANGUAGE C STRICT IMMUTABLE;
@@ -796,7 +796,7 @@ CREATE OPERATOR ?<@ (
 	PROCEDURE = _ltree_extract_risparent
 );
 
-CREATE OR REPLACE FUNCTION _ltq_extract_regex(_ltree,lquery)
+CREATE FUNCTION _ltq_extract_regex(_ltree,lquery)
 RETURNS ltree
 AS 'MODULE_PATHNAME'
 LANGUAGE C STRICT IMMUTABLE;
@@ -807,7 +807,7 @@ CREATE OPERATOR ?~ (
 	PROCEDURE = _ltq_extract_regex
 );
 
-CREATE OR REPLACE FUNCTION _ltxtq_extract_exec(_ltree,ltxtquery)
+CREATE FUNCTION _ltxtq_extract_exec(_ltree,ltxtquery)
 RETURNS ltree
 AS 'MODULE_PATHNAME'
 LANGUAGE C STRICT IMMUTABLE;
@@ -819,32 +819,32 @@ CREATE OPERATOR ?@ (
 );
 
 --GiST support for ltree[]
-CREATE OR REPLACE FUNCTION _ltree_consistent(internal,internal,int2,oid,internal)
+CREATE FUNCTION _ltree_consistent(internal,internal,int2,oid,internal)
 RETURNS bool
 AS 'MODULE_PATHNAME'
 LANGUAGE C IMMUTABLE STRICT;
 
-CREATE OR REPLACE FUNCTION _ltree_compress(internal)
+CREATE FUNCTION _ltree_compress(internal)
 RETURNS internal
 AS 'MODULE_PATHNAME'
 LANGUAGE C IMMUTABLE STRICT;
 
-CREATE OR REPLACE FUNCTION _ltree_penalty(internal,internal,internal)
+CREATE FUNCTION _ltree_penalty(internal,internal,internal)
 RETURNS internal
 AS 'MODULE_PATHNAME'
 LANGUAGE C IMMUTABLE STRICT;
 
-CREATE OR REPLACE FUNCTION _ltree_picksplit(internal, internal)
+CREATE FUNCTION _ltree_picksplit(internal, internal)
 RETURNS internal
 AS 'MODULE_PATHNAME'
 LANGUAGE C IMMUTABLE STRICT;
 
-CREATE OR REPLACE FUNCTION _ltree_union(internal, internal)
+CREATE FUNCTION _ltree_union(internal, internal)
 RETURNS int4
 AS 'MODULE_PATHNAME'
 LANGUAGE C IMMUTABLE STRICT;
 
-CREATE OR REPLACE FUNCTION _ltree_same(internal, internal, internal)
+CREATE FUNCTION _ltree_same(internal, internal, internal)
 RETURNS internal
 AS 'MODULE_PATHNAME'
 LANGUAGE C IMMUTABLE STRICT;

@@ -1,6 +1,6 @@
 /* contrib/pgrowlocks/pgrowlocks--1.0.sql */
 
-CREATE OR REPLACE FUNCTION pgrowlocks(IN relname text,
+CREATE FUNCTION pgrowlocks(IN relname text,
     OUT locked_row TID,		-- row TID
     OUT lock_type TEXT,		-- lock type
     OUT locker XID,		-- locking XID
