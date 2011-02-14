@@ -325,9 +325,6 @@ sub CopyContribFiles
         {
             $flist = ParseAndCleanRule($flist, $mf);
 
-            # Special case for contrib/spi
-            $flist = "autoinc.sql insert_username.sql moddatetime.sql refint.sql timetravel.sql"
-              if ($d eq 'spi');
             foreach my $f (split /\s+/,$flist)
             {
                 lcopy('contrib/' . $d . '/' . $f,$target . '/share/contrib/' . basename($f))

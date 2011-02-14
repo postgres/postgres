@@ -579,10 +579,6 @@ sub GenerateContribSqlFiles
             $l = substr($l, 0, index($l, '$(addsuffix ')) . substr($l, $i+1);
         }
 
-        # Special case for contrib/spi
-        $l = "autoinc.sql insert_username.sql moddatetime.sql refint.sql timetravel.sql"
-          if ($n eq 'spi');
-
         foreach my $d (split /\s+/, $l)
         {
             my $in = "$d.in";
@@ -594,7 +590,6 @@ sub GenerateContribSqlFiles
                 my $cont = Project::read_file("contrib/$n/$in");
                 my $dn = $out;
                 $dn =~ s/\.sql$//;
-                if ($mf =~ /^MODULE_big\s*=\s*(.*)$/m) { $dn = $1 }
                 $cont =~ s/MODULE_PATHNAME/\$libdir\/$dn/g;
                 my $o;
                 open($o,">contrib/$n/$out") || croak "Could not write to contrib/$n/$d";
