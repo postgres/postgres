@@ -10,7 +10,7 @@
  <para>
   The <filename>earthdistance</> module provides two different approaches to
   calculating great circle distances on the surface of the Earth. The one
-  described first depends on the <filename>cube</> package (which
+  described first depends on the <filename>cube</> module (which
   <emphasis>must</> be installed before <filename>earthdistance</> can be
   installed). The second one is based on the built-in <type>point</> data type,
   using longitude and latitude for the coordinates.

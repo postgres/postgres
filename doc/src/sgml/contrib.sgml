@@ -46,38 +46,45 @@
  <para>
   Many modules supply new user-defined functions, operators, or types.
   To make use of one of these modules, after you have installed the code
-  you need to register the new objects in the database
-  system by running the SQL commands in the <literal>.sql</> file
-  supplied by the module.  For example,
+  you need to register the new SQL objects in the database system.
+  In <productname>PostgreSQL</> 9.1 and later, this is done by executing
+  a <xref linkend="sql-createextension"> command.  In a fresh database,
+  you can simply do
 
 <programlisting>
-psql -d dbname -f <replaceable>SHAREDIR</>/contrib/<replaceable>module</>.sql
+CREATE EXTENSION <replaceable>module_name</>;
 </programlisting>
 
-  Here, <replaceable>SHAREDIR</> means the installation's <quote>share</>
-  directory (<literal>pg_config --sharedir</> will tell you what this is).
-  In most cases the script must be run by a database superuser.
- </para>
-
- <para>
-  You need to run the <literal>.sql</> file in each database that you want
+  This command must be run by a database superuser.  This registers the
+  new SQL objects in the current database only, so you need to run this
+  command in each database that you want
   the module's facilities to be available in.  Alternatively, run it in
-  database <literal>template1</> so that the module will be copied into
+  database <literal>template1</> so that the extension will be copied into
   subsequently-created databases by default.
  </para>
 
  <para>
-  You can modify the first command in the <literal>.sql</> file to determine
-  which schema within the database the module's objects will be created in.
-  By default, they will be placed in <literal>public</>.
+  Many modules allow you to install their objects in a schema of your
+  choice.  To do that, add <literal>SCHEMA
+  <replaceable>schema_name</></literal> to the <command>CREATE EXTENSION</>
+  command.  By default, the objects will be placed in your current creation
+  target schema, typically <literal>public</>.
  </para>
 
  <para>
-  After a major-version upgrade of <productname>PostgreSQL</>, run the
-  installation script again, even though the module's objects might have
-  been brought forward from the old installation by dump and restore.
-  This ensures that any new functions will be available and any needed
-  corrections will be applied.
+  If your database was brought forward by dump and reload from a pre-9.1
+  version of <productname>PostgreSQL</>, and you had been using the pre-9.1
+  version of the module in it, you should instead do
+
+<programlisting>
+CREATE EXTENSION <replaceable>module_name</> FROM unpackaged;
+</programlisting>
+
+  This will update the pre-9.1 objects of the module into a proper
+  <firstterm>extension</> object.  Future updates to the module will be
+  managed by <xref linkend="sql-alterextension">.
+  For more information about extension updates, see
+  <xref linkend="extend-extensions">.
  </para>
 
  &adminpack;

@@ -152,7 +152,7 @@
      <emphasis>before</> loading the dump data!  If your old installation
      had the <application>tsearch2</> objects in a schema other
      than <literal>public</>, be sure to adjust the
-     <literal>tsearch2</literal> installation script so that the replacement
+     <command>CREATE EXTENSION</> command so that the replacement
      objects are created in that same schema.
     </para>
    </step>

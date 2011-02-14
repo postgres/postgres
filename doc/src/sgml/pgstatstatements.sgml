@@ -148,7 +148,7 @@
   <para>
    This view, and the function <function>pg_stat_statements_reset</>,
    are available only in databases they have been specifically installed into
-   by running the <filename>pg_stat_statements.sql</> install script.
+   by installing the <literal>pg_stat_statements</> extension.
    However, statistics are tracked across all databases of the server
    whenever the <filename>pg_stat_statements</filename> module is loaded
    into the server, regardless of presence of the view.

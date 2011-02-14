@@ -554,12 +554,6 @@ SELECT key, count(*) FROM
   <title>Compatibility</title>
 
   <para>
-   <emphasis>When upgrading from older versions, always load the new
-   version of this module into the database before restoring a dump.
-   Otherwise, many new features will be unavailable.</emphasis>
-  </para>
-
-  <para>
    As of PostgreSQL 9.0, <type>hstore</> uses a different internal
    representation than previous versions. This presents no obstacle for
    dump/restore upgrades since the text representation (used in the dump) is

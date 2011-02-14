@@ -47,8 +47,8 @@
   <title>Usage</title>
 
   <para>
-   Running the installation script creates a text search template
-   <literal>intdict_template</> and a dictionary <literal>intdict</>
+   Installing the <literal>dict_int</> extension creates a text search
+   template <literal>intdict_template</> and a dictionary <literal>intdict</>
    based on it, with the default parameters.  You can alter the
    parameters, for example
 

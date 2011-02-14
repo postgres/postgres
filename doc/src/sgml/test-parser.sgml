@@ -35,8 +35,8 @@ mydb=# SELECT * FROM ts_token_type('testparser');
   <title>Usage</title>
 
   <para>
-   Running the installation script creates a text search parser
-   <literal>testparser</>.  It has no user-configurable parameters.
+   Installing the <literal>test_parser</> extension creates a text search
+   parser <literal>testparser</>.  It has no user-configurable parameters.
   </para>
 
   <para>

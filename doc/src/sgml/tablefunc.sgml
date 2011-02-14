@@ -345,7 +345,9 @@ FROM crosstab3(
      <listitem>
       <para>
        Create a composite type describing the desired output columns,
-       similar to the examples in the installation script. Then define a
+       similar to the examples in
+       <filename>contrib/tablefunc/tablefunc--1.0.sql</>.
+       Then define a
        unique function name accepting one <type>text</> parameter and returning
        <type>setof your_type_name</>, but linking to the same underlying
        <function>crosstab</> C function.  For example, if your source data

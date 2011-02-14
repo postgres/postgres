@@ -87,8 +87,8 @@ word syn1 syn2 syn3
   <title>Usage</title>
 
   <para>
-   Running the installation script creates a text search template
-   <literal>xsyn_template</> and a dictionary <literal>xsyn</>
+   Installing the <literal>dict_xsyn</> extension creates a text search
+   template <literal>xsyn_template</> and a dictionary <literal>xsyn</>
    based on it, with default parameters.  You can alter the
    parameters, for example
 

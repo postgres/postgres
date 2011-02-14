@@ -73,7 +73,7 @@
   <title>Usage</title>
 
   <para>
-   Running the installation script <filename>unaccent.sql</> creates a text
+   Installing the <literal>unaccent</> extension creates a text
    search template <literal>unaccent</> and a dictionary <literal>unaccent</>
    based on it.  The <literal>unaccent</> dictionary has the default
    parameter setting <literal>RULES='unaccent'</>, which makes it immediately
