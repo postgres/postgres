@@ -6,8 +6,6 @@ ALTER EXTENSION pg_trgm ADD function show_trgm(text);
 ALTER EXTENSION pg_trgm ADD function similarity(text,text);
 ALTER EXTENSION pg_trgm ADD function similarity_op(text,text);
 ALTER EXTENSION pg_trgm ADD operator %(text,text);
-ALTER EXTENSION pg_trgm ADD function similarity_dist(text,text);
-ALTER EXTENSION pg_trgm ADD operator <->(text,text);
 ALTER EXTENSION pg_trgm ADD type gtrgm;
 ALTER EXTENSION pg_trgm ADD function gtrgm_in(cstring);
 ALTER EXTENSION pg_trgm ADD function gtrgm_out(gtrgm);
@@ -26,3 +24,17 @@ ALTER EXTENSION pg_trgm ADD function gin_extract_query_trgm(text,internal,smalli
 ALTER EXTENSION pg_trgm ADD function gin_trgm_consistent(internal,smallint,text,integer,internal,internal,internal,internal);
 ALTER EXTENSION pg_trgm ADD operator family gin_trgm_ops using gin;
 ALTER EXTENSION pg_trgm ADD operator class gin_trgm_ops using gin;
+
+-- these were not in 9.0:
+
+CREATE FUNCTION similarity_dist(text,text)
+RETURNS float4
+AS 'MODULE_PATHNAME'
+LANGUAGE C STRICT IMMUTABLE;
+
+CREATE OPERATOR <-> (
+        LEFTARG = text,
+        RIGHTARG = text,
+        PROCEDURE = similarity_dist,
+        COMMUTATOR = '<->'
+);
