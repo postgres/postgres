@@ -19,8 +19,8 @@
    similar to <ulink url="http://sourceforge.net">SourceForge.net</> in its
    feature set, providing mailing lists, forums, bug tracking, SCM, and web
    hosting. If you have a <productname>PostgreSQL</>-related open source
-   project that you would like to have hosted at PgFoundy, please feel free
-   to create a new project.
+   project that you would like to have hosted at PgFoundry, please feel free
+   to create a new project there.
   </para>
 
  <sect1 id="external-interfaces">
@@ -134,6 +134,22 @@
   </table>
  </sect1>
 
+ <sect1 id="external-admin-tools">
+ <title>Administration Tools</title>
+
+  <indexterm>
+   <primary>administration tools</primary>
+   <secondary>externally maintained</secondary>
+  </indexterm>
+
+  <para>
+   There are several administration tools available for
+   <productname>PostgreSQL</>. The most popular is
+   <application><ulink url="http://www.pgadmin.org/">pgAdmin III</ulink></>,
+   and there are several commercially available ones as well.
+  </para>
+ </sect1>
+
  <sect1 id="external-pl">
   <title>Procedural Languages</title>
 
@@ -223,32 +239,24 @@
  <title>Extensions</title>
 
   <indexterm>
-   <primary>extensions</primary>
+   <primary>extension</primary>
+   <secondary>externally maintained</secondary>
   </indexterm>
 
   <para>
    <productname>PostgreSQL</> is designed to be easily extensible. For
-   this reason, extensions loaded into the database can function just
-   like features that are packaged with the database. The
+   this reason, extensions loaded into the database can function
+   just like features that are built in. The
    <filename>contrib/</> directory shipped with the source code
-   contains a large number of extensions. The <filename>README</> file
-   in that directory contains a summary. They include conversion
-   tools, full-text indexing, <acronym>XML</> tools, and additional
-   data types and indexing methods. Other extensions are developed
+   contains several extensions, which are described in
+   <xref linkend="contrib">.  Other extensions are developed
    independently, like <application><ulink
    url="http://www.postgis.org/">PostGIS</ulink></>.  Even
-   <productname>PostgreSQL</> replication solutions are developed
+   <productname>PostgreSQL</> replication solutions can be developed
    externally. For example, <application> <ulink
    url="http://www.slony.info">Slony-I</ulink></> is a popular
    master/standby replication solution that is developed independently
    from the core project.
-  </para>
-
-  <para>
-   There are several administration tools available for
-   <productname>PostgreSQL</>. The most popular is
-   <application><ulink url="http://www.pgadmin.org/">pgAdmin III</ulink></>,
-   and there are several commercially available ones as well.
   </para>
  </sect1>
 </appendix>
