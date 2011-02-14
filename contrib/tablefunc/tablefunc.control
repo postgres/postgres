@@ -1,0 +1,5 @@
+# tablefunc extension
+comment = 'functions that manipulate whole tables, including crosstab'
+default_version = '1.0'
+module_pathname = '$libdir/tablefunc'
+relocatable = true

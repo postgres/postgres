@@ -1,0 +1,5 @@
+# chkpass extension
+comment = 'data type for auto-encrypted passwords'
+default_version = '1.0'
+module_pathname = '$libdir/chkpass'
+relocatable = true

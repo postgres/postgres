@@ -1,12 +1,4 @@
---
--- first, define the functions.  Turn off echoing so that expected file
--- does not depend on contents of pgxml.sql.
---
-SET client_min_messages = warning;
-\set ECHO none
-\i pgxml.sql
-\set ECHO all
-RESET client_min_messages;
+CREATE EXTENSION xml2;
 
 select query_to_xml('select 1 as x',true,false,'');
 

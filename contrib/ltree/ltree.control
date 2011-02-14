@@ -1,0 +1,5 @@
+# ltree extension
+comment = 'data type for hierarchical tree-like structures'
+default_version = '1.0'
+module_pathname = '$libdir/ltree'
+relocatable = true

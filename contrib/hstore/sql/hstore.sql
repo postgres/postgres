@@ -1,12 +1,4 @@
---
--- first, define the datatype.  Turn off echoing so that expected file
--- does not depend on contents of hstore.sql.
---
-SET client_min_messages = warning;
-\set ECHO none
-\i hstore.sql
-\set ECHO all
-RESET client_min_messages;
+CREATE EXTENSION hstore;
 
 set escape_string_warning=off;
 

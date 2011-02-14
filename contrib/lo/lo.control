@@ -1,0 +1,5 @@
+# lo extension
+comment = 'Large Object maintenance'
+default_version = '1.0'
+module_pathname = '$libdir/lo'
+relocatable = true

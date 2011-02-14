@@ -1,13 +1,7 @@
 --
 -- init pgcrypto
 --
---
--- first, define the functions.  Turn off echoing so that expected file
--- does not depend on contents of pgcrypto.sql.
---
-SET client_min_messages = warning;
-\set ECHO none
-RESET client_min_messages;
+CREATE EXTENSION pgcrypto;
 -- ensure consistent test output regardless of the default bytea format
 SET bytea_output TO escape;
 -- check for encoding fn's

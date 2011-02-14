@@ -1,15 +1,10 @@
-#-------------------------------------------------------------------------
-#
-# pageinspect Makefile
-#
 # contrib/pageinspect/Makefile
-#
-#-------------------------------------------------------------------------
 
 MODULE_big	= pageinspect
 OBJS		= rawpage.o heapfuncs.o btreefuncs.o fsmfuncs.o
-DATA_built	= pageinspect.sql
-DATA      	= uninstall_pageinspect.sql
+
+EXTENSION = pageinspect
+DATA = pageinspect--1.0.sql pageinspect--unpackaged--1.0.sql
 
 ifdef USE_PGXS
 PG_CONFIG = pg_config

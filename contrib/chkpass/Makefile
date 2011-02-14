@@ -2,9 +2,11 @@
 
 MODULE_big = chkpass
 OBJS = chkpass.o
+
+EXTENSION = chkpass
+DATA = chkpass--1.0.sql chkpass--unpackaged--1.0.sql
+
 SHLIB_LINK = $(filter -lcrypt, $(LIBS))
-DATA_built = chkpass.sql
-DATA = uninstall_chkpass.sql
 
 ifdef USE_PGXS
 PG_CONFIG = pg_config

@@ -1,0 +1,5 @@
+# dblink extension
+comment = 'connect to other PostgreSQL databases from within a database'
+default_version = '1.0'
+module_pathname = '$libdir/dblink'
+relocatable = true

@@ -1,0 +1,5 @@
+# unaccent extension
+comment = 'text search dictionary that removes accents'
+default_version = '1.0'
+module_pathname = '$libdir/unaccent'
+relocatable = true

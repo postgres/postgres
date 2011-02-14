@@ -2,9 +2,11 @@
 
 MODULE_big = dict_xsyn
 OBJS = dict_xsyn.o
-DATA_built = dict_xsyn.sql
-DATA = uninstall_dict_xsyn.sql
+
+EXTENSION = dict_xsyn
+DATA = dict_xsyn--1.0.sql dict_xsyn--unpackaged--1.0.sql
 DATA_TSEARCH = xsyn_sample.rules
+
 REGRESS = dict_xsyn
 
 ifdef USE_PGXS

@@ -2,8 +2,9 @@
 
 MODULE_big = fuzzystrmatch
 OBJS = fuzzystrmatch.o dmetaphone.o
-DATA_built = fuzzystrmatch.sql
-DATA = uninstall_fuzzystrmatch.sql
+
+EXTENSION = fuzzystrmatch
+DATA = fuzzystrmatch--1.0.sql fuzzystrmatch--unpackaged--1.0.sql
 
 ifdef USE_PGXS
 PG_CONFIG = pg_config

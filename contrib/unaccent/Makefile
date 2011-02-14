@@ -3,9 +3,10 @@
 MODULE_big = unaccent
 OBJS = unaccent.o
 
-DATA_built = unaccent.sql
-DATA = uninstall_unaccent.sql
+EXTENSION = unaccent
+DATA = unaccent--1.0.sql unaccent--unpackaged--1.0.sql
 DATA_TSEARCH = unaccent.rules
+
 REGRESS = unaccent
 
 # Adjust REGRESS_OPTS because we need a UTF8 database

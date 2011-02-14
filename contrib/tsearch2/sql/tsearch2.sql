@@ -1,12 +1,4 @@
---
--- first, define the datatype.  Turn off echoing so that expected file
--- does not depend on contents of tsearch2.sql.
---
-SET client_min_messages = warning;
-\set ECHO none
-\i tsearch2.sql
-\set ECHO all
-RESET client_min_messages;
+CREATE EXTENSION tsearch2;
 
 --tsvector
 SELECT '1'::tsvector;

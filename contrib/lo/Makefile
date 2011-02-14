@@ -1,8 +1,9 @@
 # contrib/lo/Makefile
 
 MODULES = lo
-DATA_built = lo.sql
-DATA = uninstall_lo.sql
+
+EXTENSION = lo
+DATA = lo--1.0.sql lo--unpackaged--1.0.sql
 
 ifdef USE_PGXS
 PG_CONFIG = pg_config

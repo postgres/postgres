@@ -1,8 +1,10 @@
 # contrib/tablefunc/Makefile
 
 MODULES = tablefunc
-DATA_built = tablefunc.sql
-DATA = uninstall_tablefunc.sql
+
+EXTENSION = tablefunc
+DATA = tablefunc--1.0.sql tablefunc--unpackaged--1.0.sql
+
 REGRESS = tablefunc
 
 LDFLAGS_SL += $(filter -lm, $(LIBS))

@@ -2,8 +2,10 @@
 
 MODULE_big = test_parser
 OBJS = test_parser.o
-DATA_built = test_parser.sql
-DATA = uninstall_test_parser.sql
+
+EXTENSION = test_parser
+DATA = test_parser--1.0.sql test_parser--unpackaged--1.0.sql
+
 REGRESS = test_parser
 
 ifdef USE_PGXS

@@ -1,0 +1,5 @@
+# autoinc extension
+comment = 'functions for autoincrementing fields'
+default_version = '1.0'
+module_pathname = '$libdir/autoinc'
+relocatable = true

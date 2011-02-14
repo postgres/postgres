@@ -3,8 +3,9 @@
 MODULE_big = pg_trgm
 OBJS = trgm_op.o trgm_gist.o trgm_gin.o
 
-DATA_built = pg_trgm.sql
-DATA = uninstall_pg_trgm.sql
+EXTENSION = pg_trgm
+DATA = pg_trgm--1.0.sql pg_trgm--unpackaged--1.0.sql
+
 REGRESS = pg_trgm
 
 ifdef USE_PGXS

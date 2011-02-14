@@ -1,6 +1,3 @@
-#
-# Makefile for pg_upgrade
-#
 # contrib/pg_upgrade/Makefile
 
 PGFILEDESC = "pg_upgrade - an in-place binary upgrade utility"

@@ -1,0 +1,6 @@
+# earthdistance extension
+comment = 'calculate great-circle distances on the surface of the Earth'
+default_version = '1.0'
+module_pathname = '$libdir/earthdistance'
+relocatable = true
+requires = 'cube'

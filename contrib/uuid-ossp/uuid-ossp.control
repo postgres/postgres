@@ -1,0 +1,5 @@
+# uuid-ossp extension
+comment = 'generate universally unique identifiers (UUIDs)'
+default_version = '1.0'
+module_pathname = '$libdir/uuid-ossp'
+relocatable = true

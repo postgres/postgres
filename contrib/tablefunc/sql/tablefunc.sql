@@ -1,12 +1,4 @@
---
--- first, define the functions.  Turn off echoing so that expected file
--- does not depend on contents of tablefunc.sql.
---
-SET client_min_messages = warning;
-\set ECHO none
-\i tablefunc.sql
-\set ECHO all
-RESET client_min_messages;
+CREATE EXTENSION tablefunc;
 
 --
 -- normal_rand()

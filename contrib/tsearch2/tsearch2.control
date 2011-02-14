@@ -1,0 +1,5 @@
+# tsearch2 extension
+comment = 'compatibility package for pre-8.3 text search functions'
+default_version = '1.0'
+module_pathname = '$libdir/tsearch2'
+relocatable = true

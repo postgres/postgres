@@ -1,0 +1,5 @@
+# pgrowlocks extension
+comment = 'show row-level locking information'
+default_version = '1.0'
+module_pathname = '$libdir/pgrowlocks'
+relocatable = true

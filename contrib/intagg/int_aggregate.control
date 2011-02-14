@@ -1,0 +1,4 @@
+# int_aggregate extension
+comment = 'integer aggregator and enumerator (obsolete)'
+default_version = '1.0'
+relocatable = true

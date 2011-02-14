@@ -2,15 +2,7 @@
 --  Test seg datatype
 --
 
---
--- first, define the datatype.  Turn off echoing so that expected file
--- does not depend on contents of seg.sql.
---
-SET client_min_messages = warning;
-\set ECHO none
-\i seg.sql
-\set ECHO all
-RESET client_min_messages;
+CREATE EXTENSION seg;
 
 --
 -- testing the input and output functions

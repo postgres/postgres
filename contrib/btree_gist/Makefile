@@ -7,8 +7,8 @@ OBJS        = btree_gist.o btree_utils_num.o btree_utils_var.o btree_int2.o btre
               btree_date.o btree_interval.o btree_macaddr.o btree_inet.o btree_text.o \
               btree_bytea.o btree_bit.o btree_numeric.o
 
-DATA_built  = btree_gist.sql
-DATA        = uninstall_btree_gist.sql
+EXTENSION = btree_gist
+DATA = btree_gist--1.0.sql btree_gist--unpackaged--1.0.sql
 
 REGRESS     = init int2 int4 int8 float4 float8 cash oid timestamp timestamptz time timetz \
               date interval macaddr inet cidr text varchar char bytea bit varbit numeric not_equal

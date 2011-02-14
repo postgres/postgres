@@ -1,8 +1,10 @@
 # contrib/tsearch2/Makefile
 
 MODULES = tsearch2
-DATA_built = tsearch2.sql
-DATA = uninstall_tsearch2.sql
+
+EXTENSION = tsearch2
+DATA = tsearch2--1.0.sql tsearch2--unpackaged--1.0.sql
+
 REGRESS = tsearch2
 
 ifdef USE_PGXS

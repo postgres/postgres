@@ -1,0 +1,5 @@
+# pgstattuple extension
+comment = 'show tuple-level statistics'
+default_version = '1.0'
+module_pathname = '$libdir/pgstattuple'
+relocatable = true

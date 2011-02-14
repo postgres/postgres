@@ -1,8 +1,4 @@
-SET client_min_messages = warning;
-\set ECHO none
-\i unaccent.sql
-\set ECHO all
-RESET client_min_messages;
+CREATE EXTENSION unaccent;
 
 -- must have a UTF8 database
 SELECT getdatabaseencoding();

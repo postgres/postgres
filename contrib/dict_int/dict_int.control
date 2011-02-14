@@ -1,0 +1,5 @@
+# dict_int extension
+comment = 'text search dictionary template for integers'
+default_version = '1.0'
+module_pathname = '$libdir/dict_int'
+relocatable = true

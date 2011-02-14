@@ -2,8 +2,9 @@
 
 MODULE_big = sslinfo
 OBJS = sslinfo.o
-DATA_built = sslinfo.sql
-DATA = uninstall_sslinfo.sql
+
+EXTENSION = sslinfo
+DATA = sslinfo--1.0.sql sslinfo--unpackaged--1.0.sql
 
 ifdef USE_PGXS
 PG_CONFIG = pg_config

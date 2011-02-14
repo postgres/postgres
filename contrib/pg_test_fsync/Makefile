@@ -1,6 +1,3 @@
-#
-# Makefile for pg_test_fsync
-#
 # contrib/pg_test_fsync/Makefile
 
 PGFILEDESC = "pg_test_fsync - test various disk sync methods"

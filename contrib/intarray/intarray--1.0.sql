@@ -1,0 +1,482 @@
+/* contrib/intarray/intarray--1.0.sql */
+
+--
+-- Create the user-defined type for the 1-D integer arrays (_int4)
+--
+
+-- Query type
+CREATE OR REPLACE FUNCTION bqarr_in(cstring)
+RETURNS query_int
+AS 'MODULE_PATHNAME'
+LANGUAGE C STRICT IMMUTABLE;
+
+CREATE OR REPLACE FUNCTION bqarr_out(query_int)
+RETURNS cstring
+AS 'MODULE_PATHNAME'
+LANGUAGE C STRICT IMMUTABLE;
+
+CREATE TYPE query_int (
+	INTERNALLENGTH = -1,
+	INPUT = bqarr_in,
+	OUTPUT = bqarr_out
+);
+
+--only for debug
+CREATE OR REPLACE FUNCTION querytree(query_int)
+RETURNS text
+AS 'MODULE_PATHNAME'
+LANGUAGE C STRICT IMMUTABLE;
+
+
+CREATE OR REPLACE FUNCTION boolop(_int4, query_int)
+RETURNS bool
+AS 'MODULE_PATHNAME'
+LANGUAGE C STRICT IMMUTABLE;
+
+COMMENT ON FUNCTION boolop(_int4, query_int) IS 'boolean operation with array';
+
+CREATE OR REPLACE FUNCTION rboolop(query_int, _int4)
+RETURNS bool
+AS 'MODULE_PATHNAME'
+LANGUAGE C STRICT IMMUTABLE;
+
+COMMENT ON FUNCTION rboolop(query_int, _int4) IS 'boolean operation with array';
+
+CREATE OPERATOR @@ (
+	LEFTARG = _int4,
+	RIGHTARG = query_int,
+	PROCEDURE = boolop,
+	COMMUTATOR = '~~',
+	RESTRICT = contsel,
+	JOIN = contjoinsel
+);
+
+CREATE OPERATOR ~~ (
+	LEFTARG = query_int,
+	RIGHTARG = _int4,
+	PROCEDURE = rboolop,
+	COMMUTATOR = '@@',
+	RESTRICT = contsel,
+	JOIN = contjoinsel
+);
+
+
+--
+-- External C-functions for R-tree methods
+--
+
+-- Comparison methods
+
+CREATE OR REPLACE FUNCTION _int_contains(_int4, _int4)
+RETURNS bool
+AS 'MODULE_PATHNAME'
+LANGUAGE C STRICT IMMUTABLE;
+
+COMMENT ON FUNCTION _int_contains(_int4, _int4) IS 'contains';
+
+CREATE OR REPLACE FUNCTION _int_contained(_int4, _int4)
+RETURNS bool
+AS 'MODULE_PATHNAME'
+LANGUAGE C STRICT IMMUTABLE;
+
+COMMENT ON FUNCTION _int_contained(_int4, _int4) IS 'contained in';
+
+CREATE OR REPLACE FUNCTION _int_overlap(_int4, _int4)
+RETURNS bool
+AS 'MODULE_PATHNAME'
+LANGUAGE C STRICT IMMUTABLE;
+
+COMMENT ON FUNCTION _int_overlap(_int4, _int4) IS 'overlaps';
+
+CREATE OR REPLACE FUNCTION _int_same(_int4, _int4)
+RETURNS bool
+AS 'MODULE_PATHNAME'
+LANGUAGE C STRICT IMMUTABLE;
+
+COMMENT ON FUNCTION _int_same(_int4, _int4) IS 'same as';
+
+CREATE OR REPLACE FUNCTION _int_different(_int4, _int4)
+RETURNS bool
+AS 'MODULE_PATHNAME'
+LANGUAGE C STRICT IMMUTABLE;
+
+COMMENT ON FUNCTION _int_different(_int4, _int4) IS 'different';
+
+-- support routines for indexing
+
+CREATE OR REPLACE FUNCTION _int_union(_int4, _int4)
+RETURNS _int4
+AS 'MODULE_PATHNAME'
+LANGUAGE C STRICT IMMUTABLE;
+
+CREATE OR REPLACE FUNCTION _int_inter(_int4, _int4)
+RETURNS _int4
+AS 'MODULE_PATHNAME'
+LANGUAGE C STRICT IMMUTABLE;
+
+--
+-- OPERATORS
+--
+
+CREATE OPERATOR && (
+	LEFTARG = _int4,
+	RIGHTARG = _int4,
+	PROCEDURE = _int_overlap,
+	COMMUTATOR = '&&',
+	RESTRICT = contsel,
+	JOIN = contjoinsel
+);
+
+--CREATE OPERATOR = (
+--	LEFTARG = _int4,
+--	RIGHTARG = _int4,
+--	PROCEDURE = _int_same,
+--	COMMUTATOR = '=',
+--	NEGATOR = '<>',
+--	RESTRICT = eqsel,
+--	JOIN = eqjoinsel,
+--	SORT1 = '<',
+--	SORT2 = '<'
+--);
+
+--CREATE OPERATOR <> (
+--	LEFTARG = _int4,
+--	RIGHTARG = _int4,
+--	PROCEDURE = _int_different,
+--	COMMUTATOR = '<>',
+--	NEGATOR = '=',
+--	RESTRICT = neqsel,
+--	JOIN = neqjoinsel
+--);
+
+CREATE OPERATOR @> (
+	LEFTARG = _int4,
+	RIGHTARG = _int4,
+	PROCEDURE = _int_contains,
+	COMMUTATOR = '<@',
+	RESTRICT = contsel,
+	JOIN = contjoinsel
+);
+
+CREATE OPERATOR <@ (
+	LEFTARG = _int4,
+	RIGHTARG = _int4,
+	PROCEDURE = _int_contained,
+	COMMUTATOR = '@>',
+	RESTRICT = contsel,
+	JOIN = contjoinsel
+);
+
+-- obsolete:
+CREATE OPERATOR @ (
+	LEFTARG = _int4,
+	RIGHTARG = _int4,
+	PROCEDURE = _int_contains,
+	COMMUTATOR = '~',
+	RESTRICT = contsel,
+	JOIN = contjoinsel
+);
+
+CREATE OPERATOR ~ (
+	LEFTARG = _int4,
+	RIGHTARG = _int4,
+	PROCEDURE = _int_contained,
+	COMMUTATOR = '@',
+	RESTRICT = contsel,
+	JOIN = contjoinsel
+);
+
+--------------
+CREATE OR REPLACE FUNCTION intset(int4)
+RETURNS _int4
+AS 'MODULE_PATHNAME'
+LANGUAGE C STRICT IMMUTABLE;
+
+CREATE OR REPLACE FUNCTION icount(_int4)
+RETURNS int4
+AS 'MODULE_PATHNAME'
+LANGUAGE C STRICT IMMUTABLE;
+
+CREATE OPERATOR # (
+	RIGHTARG = _int4,
+	PROCEDURE = icount
+);
+
+CREATE OR REPLACE FUNCTION sort(_int4, text)
+RETURNS _int4
+AS 'MODULE_PATHNAME'
+LANGUAGE C STRICT IMMUTABLE;
+
+CREATE OR REPLACE FUNCTION sort(_int4)
+RETURNS _int4
+AS 'MODULE_PATHNAME'
+LANGUAGE C STRICT IMMUTABLE;
+
+CREATE OR REPLACE FUNCTION sort_asc(_int4)
+RETURNS _int4
+AS 'MODULE_PATHNAME'
+LANGUAGE C STRICT IMMUTABLE;
+
+CREATE OR REPLACE FUNCTION sort_desc(_int4)
+RETURNS _int4
+AS 'MODULE_PATHNAME'
+LANGUAGE C STRICT IMMUTABLE;
+
+CREATE OR REPLACE FUNCTION uniq(_int4)
+RETURNS _int4
+AS 'MODULE_PATHNAME'
+LANGUAGE C STRICT IMMUTABLE;
+
+CREATE OR REPLACE FUNCTION idx(_int4, int4)
+RETURNS int4
+AS 'MODULE_PATHNAME'
+LANGUAGE C STRICT IMMUTABLE;
+
+CREATE OPERATOR # (
+	LEFTARG = _int4,
+	RIGHTARG = int4,
+	PROCEDURE = idx
+);
+
+CREATE OR REPLACE FUNCTION subarray(_int4, int4, int4)
+RETURNS _int4
+AS 'MODULE_PATHNAME'
+LANGUAGE C STRICT IMMUTABLE;
+
+CREATE OR REPLACE FUNCTION subarray(_int4, int4)
+RETURNS _int4
+AS 'MODULE_PATHNAME'
+LANGUAGE C STRICT IMMUTABLE;
+
+CREATE OR REPLACE FUNCTION intarray_push_elem(_int4, int4)
+RETURNS _int4
+AS 'MODULE_PATHNAME'
+LANGUAGE C STRICT IMMUTABLE;
+
+CREATE OPERATOR + (
+	LEFTARG = _int4,
+	RIGHTARG = int4,
+	PROCEDURE = intarray_push_elem
+);
+
+CREATE OR REPLACE FUNCTION intarray_push_array(_int4, _int4)
+RETURNS _int4
+AS 'MODULE_PATHNAME'
+LANGUAGE C STRICT IMMUTABLE;
+
+CREATE OPERATOR + (
+	LEFTARG = _int4,
+	RIGHTARG = _int4,
+	COMMUTATOR = +,
+	PROCEDURE = intarray_push_array
+);
+
+CREATE OR REPLACE FUNCTION intarray_del_elem(_int4, int4)
+RETURNS _int4
+AS 'MODULE_PATHNAME'
+LANGUAGE C STRICT IMMUTABLE;
+
+CREATE OPERATOR - (
+	LEFTARG = _int4,
+	RIGHTARG = int4,
+	PROCEDURE = intarray_del_elem
+);
+
+CREATE OR REPLACE FUNCTION intset_union_elem(_int4, int4)
+RETURNS _int4
+AS 'MODULE_PATHNAME'
+LANGUAGE C STRICT IMMUTABLE;
+
+CREATE OPERATOR | (
+	LEFTARG = _int4,
+	RIGHTARG = int4,
+	PROCEDURE = intset_union_elem
+);
+
+CREATE OPERATOR | (
+	LEFTARG = _int4,
+	RIGHTARG = _int4,
+	COMMUTATOR = |,
+	PROCEDURE = _int_union
+);
+
+CREATE OR REPLACE FUNCTION intset_subtract(_int4, _int4)
+RETURNS _int4
+AS 'MODULE_PATHNAME'
+LANGUAGE C STRICT IMMUTABLE;
+
+CREATE OPERATOR - (
+	LEFTARG = _int4,
+	RIGHTARG = _int4,
+	PROCEDURE = intset_subtract
+);
+
+CREATE OPERATOR & (
+	LEFTARG = _int4,
+	RIGHTARG = _int4,
+	COMMUTATOR = &,
+	PROCEDURE = _int_inter
+);
+--------------
+
+-- define the GiST support methods
+CREATE OR REPLACE FUNCTION g_int_consistent(internal,_int4,int,oid,internal)
+RETURNS bool
+AS 'MODULE_PATHNAME'
+LANGUAGE C IMMUTABLE STRICT;
+
+CREATE OR REPLACE FUNCTION g_int_compress(internal)
+RETURNS internal
+AS 'MODULE_PATHNAME'
+LANGUAGE C IMMUTABLE STRICT;
+
+CREATE OR REPLACE FUNCTION g_int_decompress(internal)
+RETURNS internal
+AS 'MODULE_PATHNAME'
+LANGUAGE C IMMUTABLE STRICT;
+
+CREATE OR REPLACE FUNCTION g_int_penalty(internal,internal,internal)
+RETURNS internal
+AS 'MODULE_PATHNAME'
+LANGUAGE C IMMUTABLE STRICT;
+
+CREATE OR REPLACE FUNCTION g_int_picksplit(internal, internal)
+RETURNS internal
+AS 'MODULE_PATHNAME'
+LANGUAGE C IMMUTABLE STRICT;
+
+CREATE OR REPLACE FUNCTION g_int_union(internal, internal)
+RETURNS _int4
+AS 'MODULE_PATHNAME'
+LANGUAGE C IMMUTABLE STRICT;
+
+CREATE OR REPLACE FUNCTION g_int_same(_int4, _int4, internal)
+RETURNS internal
+AS 'MODULE_PATHNAME'
+LANGUAGE C IMMUTABLE STRICT;
+
+
+-- Create the operator class for indexing
+
+CREATE OPERATOR CLASS gist__int_ops
+DEFAULT FOR TYPE _int4 USING gist AS
+	OPERATOR	3	&&,
+	OPERATOR	6	= (anyarray, anyarray),
+	OPERATOR	7	@>,
+	OPERATOR	8	<@,
+	OPERATOR	13	@,
+	OPERATOR	14	~,
+	OPERATOR	20	@@ (_int4, query_int),
+	FUNCTION	1	g_int_consistent (internal, _int4, int, oid, internal),
+	FUNCTION	2	g_int_union (internal, internal),
+	FUNCTION	3	g_int_compress (internal),
+	FUNCTION	4	g_int_decompress (internal),
+	FUNCTION	5	g_int_penalty (internal, internal, internal),
+	FUNCTION	6	g_int_picksplit (internal, internal),
+	FUNCTION	7	g_int_same (_int4, _int4, internal);
+
+
+---------------------------------------------
+-- intbig
+---------------------------------------------
+-- define the GiST support methods
+
+CREATE OR REPLACE FUNCTION _intbig_in(cstring)
+RETURNS intbig_gkey
+AS 'MODULE_PATHNAME'
+LANGUAGE C STRICT IMMUTABLE;
+
+CREATE OR REPLACE FUNCTION _intbig_out(intbig_gkey)
+RETURNS cstring
+AS 'MODULE_PATHNAME'
+LANGUAGE C STRICT IMMUTABLE;
+
+CREATE TYPE intbig_gkey (
+        INTERNALLENGTH = -1,
+        INPUT = _intbig_in,
+        OUTPUT = _intbig_out
+);
+
+CREATE OR REPLACE FUNCTION g_intbig_consistent(internal,internal,int,oid,internal)
+RETURNS bool
+AS 'MODULE_PATHNAME'
+LANGUAGE C IMMUTABLE STRICT;
+
+CREATE OR REPLACE FUNCTION g_intbig_compress(internal)
+RETURNS internal
+AS 'MODULE_PATHNAME'
+LANGUAGE C IMMUTABLE STRICT;
+
+CREATE OR REPLACE FUNCTION g_intbig_decompress(internal)
+RETURNS internal
+AS 'MODULE_PATHNAME'
+LANGUAGE C IMMUTABLE STRICT;
+
+CREATE OR REPLACE FUNCTION g_intbig_penalty(internal,internal,internal)
+RETURNS internal
+AS 'MODULE_PATHNAME'
+LANGUAGE C IMMUTABLE STRICT;
+
+CREATE OR REPLACE FUNCTION g_intbig_picksplit(internal, internal)
+RETURNS internal
+AS 'MODULE_PATHNAME'
+LANGUAGE C IMMUTABLE STRICT;
+
+CREATE OR REPLACE FUNCTION g_intbig_union(internal, internal)
+RETURNS _int4
+AS 'MODULE_PATHNAME'
+LANGUAGE C IMMUTABLE STRICT;
+
+CREATE OR REPLACE FUNCTION g_intbig_same(internal, internal, internal)
+RETURNS internal
+AS 'MODULE_PATHNAME'
+LANGUAGE C IMMUTABLE STRICT;
+
+-- register the opclass for indexing (not as default)
+
+CREATE OPERATOR CLASS gist__intbig_ops
+FOR TYPE _int4 USING gist
+AS
+	OPERATOR	3	&&,
+	OPERATOR	6	= (anyarray, anyarray),
+	OPERATOR	7	@>,
+	OPERATOR	8	<@,
+	OPERATOR	13	@,
+	OPERATOR	14	~,
+	OPERATOR	20	@@ (_int4, query_int),
+	FUNCTION	1	g_intbig_consistent (internal, internal, int, oid, internal),
+	FUNCTION	2	g_intbig_union (internal, internal),
+	FUNCTION	3	g_intbig_compress (internal),
+	FUNCTION	4	g_intbig_decompress (internal),
+	FUNCTION	5	g_intbig_penalty (internal, internal, internal),
+	FUNCTION	6	g_intbig_picksplit (internal, internal),
+	FUNCTION	7	g_intbig_same (internal, internal, internal),
+	STORAGE		intbig_gkey;
+
+--GIN
+
+CREATE OR REPLACE FUNCTION ginint4_queryextract(internal, internal, int2, internal, internal, internal, internal)
+RETURNS internal
+AS 'MODULE_PATHNAME'
+LANGUAGE C IMMUTABLE STRICT;
+
+CREATE OR REPLACE FUNCTION ginint4_consistent(internal, int2, internal, int4, internal, internal, internal, internal)
+RETURNS bool
+AS 'MODULE_PATHNAME'
+LANGUAGE C IMMUTABLE STRICT;
+
+CREATE OPERATOR CLASS gin__int_ops
+FOR TYPE _int4 USING gin
+AS
+	OPERATOR	3	&&,
+	OPERATOR	6	= (anyarray, anyarray),
+	OPERATOR	7	@>,
+	OPERATOR	8	<@,
+	OPERATOR	13	@,
+	OPERATOR	14	~,
+	OPERATOR	20	@@ (_int4, query_int),
+	FUNCTION	1	btint4cmp (int4, int4),
+	FUNCTION	2	ginarrayextract (anyarray, internal, internal),
+	FUNCTION	3	ginint4_queryextract (internal, internal, int2, internal, internal, internal, internal),
+	FUNCTION	4	ginint4_consistent (internal, int2, internal, int4, internal, internal, internal, internal),
+	STORAGE		int4;

@@ -1,9 +1,0 @@
-/* contrib/spi/insert_username.sql.in */
-
--- Adjust this setting to control where the objects get created.
-SET search_path = public;
-
-CREATE OR REPLACE FUNCTION insert_username()
-RETURNS trigger
-AS 'MODULE_PATHNAME'
-LANGUAGE C;

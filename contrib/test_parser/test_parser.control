@@ -1,0 +1,5 @@
+# test_parser extension
+comment = 'example of a custom parser for full-text search'
+default_version = '1.0'
+module_pathname = '$libdir/test_parser'
+relocatable = true

@@ -1,8 +1,10 @@
 # contrib/citext/Makefile
 
 MODULES = citext
-DATA_built = citext.sql
-DATA = uninstall_citext.sql
+
+EXTENSION = citext
+DATA = citext--1.0.sql citext--unpackaged--1.0.sql
+
 REGRESS = citext
 
 ifdef USE_PGXS

@@ -1,0 +1,5 @@
+# fuzzystrmatch extension
+comment = 'determine similarities and distance between strings'
+default_version = '1.0'
+module_pathname = '$libdir/fuzzystrmatch'
+relocatable = true

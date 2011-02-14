@@ -2,8 +2,10 @@
 
 MODULE_big = dict_int
 OBJS = dict_int.o
-DATA_built = dict_int.sql
-DATA = uninstall_dict_int.sql
+
+EXTENSION = dict_int
+DATA = dict_int--1.0.sql dict_int--unpackaged--1.0.sql
+
 REGRESS = dict_int
 
 ifdef USE_PGXS

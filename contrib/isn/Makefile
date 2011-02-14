@@ -1,8 +1,9 @@
 # contrib/isn/Makefile
 
 MODULES = isn
-DATA_built = isn.sql
-DATA = uninstall_isn.sql
+
+EXTENSION = isn
+DATA = isn--1.0.sql isn--unpackaged--1.0.sql
 
 ifdef USE_PGXS
 PG_CONFIG = pg_config

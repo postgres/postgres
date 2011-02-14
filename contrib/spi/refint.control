@@ -1,0 +1,5 @@
+# refint extension
+comment = 'functions for implementing referential integrity (obsolete)'
+default_version = '1.0'
+module_pathname = '$libdir/refint'
+relocatable = true

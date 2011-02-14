@@ -1,6 +1,3 @@
-#
-# Makefile for pg_upgrade_support
-#
 # contrib/pg_upgrade_support/Makefile
 
 PGFILEDESC = "pg_upgrade_support - server-side functions for pg_upgrade"

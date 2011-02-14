@@ -1,15 +1,15 @@
 # contrib/dblink/Makefile
 
 MODULE_big = dblink
-PG_CPPFLAGS = -I$(libpq_srcdir)
 OBJS	= dblink.o
+PG_CPPFLAGS = -I$(libpq_srcdir)
 SHLIB_LINK = $(libpq)
 SHLIB_PREREQS = submake-libpq
 
-DATA_built = dblink.sql
-DATA = uninstall_dblink.sql
-REGRESS = dblink
+EXTENSION = dblink
+DATA = dblink--1.0.sql dblink--unpackaged--1.0.sql
 
+REGRESS = dblink
 
 ifdef USE_PGXS
 PG_CONFIG = pg_config

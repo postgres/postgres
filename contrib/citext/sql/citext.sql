@@ -2,15 +2,7 @@
 --  Test citext datatype
 --
 
---
--- first, define the datatype.  Turn off echoing so that expected file
--- does not depend on contents of citext.sql.
---
-SET client_min_messages = warning;
-\set ECHO none
-\i citext.sql
-RESET client_min_messages;
-\set ECHO all
+CREATE EXTENSION citext;
 
 -- Test the operators and indexing functions
 
