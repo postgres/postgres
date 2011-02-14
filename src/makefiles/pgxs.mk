@@ -231,8 +231,7 @@ ifdef EXTRA_CLEAN
 endif
 ifdef REGRESS
 # things created by various check targets
-	rm -rf results tmp_check log
-	rm -f regression.diffs regression.out regress.out run_check.out
+	rm -rf $(pg_regress_clean_files)
 ifeq ($(PORTNAME), win)
 	rm -f regress.def
 endif
@@ -280,12 +279,11 @@ endif
 
 # against installed postmaster
 installcheck: submake
-	$(top_builddir)/src/test/regress/pg_regress --inputdir=$(srcdir) --psqldir=$(PSQLDIR) $(REGRESS_OPTS) $(REGRESS)
+	$(pg_regress_installcheck) $(REGRESS_OPTS) $(REGRESS)
 
 # in-tree test doesn't work yet (no way to install my shared library)
 #check: all submake
-#	$(top_builddir)/src/test/regress/pg_regress --temp-install \
-#	  --top-builddir=$(top_builddir) $(REGRESS_OPTS) $(REGRESS)
+#	$(pg_regress_check) $(REGRESS_OPTS) $(REGRESS)
 check:
 	@echo "'make check' is not supported."
 	@echo "Do 'make install', then 'make installcheck' instead."

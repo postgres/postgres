@@ -4,4 +4,6 @@
 /plperl_opmask.h
 
 # Generated subdirectories
+/log/
 /results/
+/tmp_check/

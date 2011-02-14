@@ -60,6 +60,9 @@ check: all
 check installcheck installcheck-parallel:
 	$(MAKE) -C src/test $@
 
+# TODO: add contrib
+$(call recurse,check-world,src/test src/pl src/interfaces/ecpg,check)
+
 $(call recurse,installcheck-world,src/test src/pl src/interfaces/ecpg contrib,installcheck)
 
 GNUmakefile: GNUmakefile.in $(top_builddir)/config.status
@@ -121,4 +124,4 @@ distcheck: dist
 	rm -rf $(distdir) $(dummy)
 	@echo "Distribution integrity checks out."
 
-.PHONY: dist distdir distcheck docs install-docs world install-world installcheck-world
+.PHONY: dist distdir distcheck docs install-docs world check-world install-world installcheck-world

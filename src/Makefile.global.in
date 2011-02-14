@@ -285,9 +285,6 @@ XGETTEXT = @XGETTEXT@
 GZIP	= gzip
 BZIP2	= bzip2
 
-PL_TESTDB = pl_regression
-CONTRIB_TESTDB = contrib_regression
-
 # Installation.
 
 INSTALL	= $(SHELL) $(top_srcdir)/config/install-sh -c
@@ -424,6 +421,19 @@ submake-libpgport:
 	$(MAKE) -C $(top_builddir)/src/port all
 
 .PHONY: submake-libpq submake-libpgport
+
+
+##########################################################################
+#
+# Testing support
+
+PL_TESTDB = pl_regression
+CONTRIB_TESTDB = contrib_regression
+
+pg_regress_check = $(top_builddir)/src/test/regress/pg_regress --inputdir=$(srcdir) --temp-install=./tmp_check --top-builddir=$(top_builddir)
+pg_regress_installcheck = $(top_builddir)/src/test/regress/pg_regress --inputdir=$(srcdir) --psqldir=$(PSQLDIR)
+
+pg_regress_clean_files = results/ regression.diffs regression.out tmp_check/ log/
 
 
 ##########################################################################

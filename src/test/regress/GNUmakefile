@@ -138,19 +138,19 @@ tablespace-setup:
 ## Run tests
 ##
 
-pg_regress_call = ./pg_regress --inputdir=$(srcdir) --dlpath=. $(if $(MULTIBYTE),--multibyte=$(MULTIBYTE)) $(NOLOCALE)
+REGRESS_OPTS = --dlpath=. $(if $(MULTIBYTE),--multibyte=$(MULTIBYTE)) $(NOLOCALE)
 
 check: all tablespace-setup
-	$(pg_regress_call) --temp-install=./tmp_check --top-builddir=$(top_builddir) --schedule=$(srcdir)/parallel_schedule $(MAXCONNOPT) $(TEMP_CONF) $(EXTRA_TESTS)
+	$(pg_regress_check) $(REGRESS_OPTS) --schedule=$(srcdir)/parallel_schedule $(MAXCONNOPT) $(TEMP_CONF) $(EXTRA_TESTS)
 
 installcheck: all tablespace-setup
-	$(pg_regress_call) --psqldir=$(PSQLDIR) --schedule=$(srcdir)/serial_schedule $(EXTRA_TESTS)
+	$(pg_regress_installcheck) $(REGRESS_OPTS) --schedule=$(srcdir)/serial_schedule $(EXTRA_TESTS)
 
 installcheck-parallel: all tablespace-setup
-	$(pg_regress_call) --psqldir=$(PSQLDIR) --schedule=$(srcdir)/parallel_schedule $(MAXCONNOPT) $(EXTRA_TESTS)
+	$(pg_regress_installcheck) $(REGRESS_OPTS) --schedule=$(srcdir)/parallel_schedule $(MAXCONNOPT) $(EXTRA_TESTS)
 
 standbycheck: all
-	$(pg_regress_call) --psqldir=$(PSQLDIR) --schedule=$(srcdir)/standby_schedule --use-existing
+	$(pg_regress_installcheck) $(REGRESS_OPTS) --schedule=$(srcdir)/standby_schedule --use-existing
 
 # old interfaces follow...
 
@@ -159,10 +159,10 @@ runtest: installcheck
 runtest-parallel: installcheck-parallel
 
 bigtest: all tablespace-setup
-	$(pg_regress_call) --psqldir=$(PSQLDIR) --schedule=$(srcdir)/serial_schedule numeric_big
+	$(pg_regress_installcheck) $(REGRESS_OPTS) --schedule=$(srcdir)/serial_schedule numeric_big
 
 bigcheck: all tablespace-setup
-	$(pg_regress_call) --temp-install=./tmp_check --top-builddir=$(top_builddir) --schedule=$(srcdir)/parallel_schedule $(MAXCONNOPT) numeric_big
+	$(pg_regress_check) $(REGRESS_OPTS) --schedule=$(srcdir)/parallel_schedule $(MAXCONNOPT) numeric_big
 
 
 ##
@@ -176,5 +176,4 @@ clean distclean maintainer-clean: clean-lib
 # things created by various check targets
 	rm -f $(output_files) $(input_files)
 	rm -rf testtablespace
-	rm -rf results tmp_check log
-	rm -f regression.diffs regression.out regress.out run_check.out
+	rm -rf $(pg_regress_clean_files)

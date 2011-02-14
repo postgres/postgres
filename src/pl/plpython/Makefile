@@ -120,13 +120,19 @@ prep3:
 clean3:
 	rm -rf python3/
 
+check: submake prep3
+	$(pg_regress_check) --inputdir=./python3 --outputdir=./python3 $(REGRESS_OPTS) $(REGRESS)
+
 installcheck: submake prep3
-	$(top_builddir)/src/test/regress/pg_regress --inputdir=./python3 --outputdir=./python3 --psqldir=$(PSQLDIR) $(REGRESS_OPTS) $(REGRESS)
+	$(pg_regress_installcheck) --inputdir=./python3 --outputdir=./python3 $(REGRESS_OPTS) $(REGRESS)
 
 clean: clean3
 else
+check: submake
+	$(pg_regress_check) $(REGRESS_OPTS) $(REGRESS)
+
 installcheck: submake
-	$(top_builddir)/src/test/regress/pg_regress --inputdir=$(srcdir) --psqldir=$(PSQLDIR) $(REGRESS_OPTS) $(REGRESS)
+	$(pg_regress_installcheck) $(REGRESS_OPTS) $(REGRESS)
 endif
 
 .PHONY: submake
@@ -135,8 +141,7 @@ submake:
 
 clean distclean maintainer-clean: clean-lib
 	rm -f $(OBJS)
-	rm -rf results
-	rm -f regression.diffs regression.out
+	rm -rf $(pg_regress_clean_files)
 ifeq ($(PORTNAME), win32)
 	rm -f python${pytverstr}.def
 endif

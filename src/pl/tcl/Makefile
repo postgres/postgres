@@ -58,8 +58,11 @@ installdirs: installdirs-lib
 uninstall: uninstall-lib
 	$(MAKE) -C modules $@
 
+check: submake
+	$(pg_regress_check) $(REGRESS_OPTS) $(REGRESS)
+
 installcheck: submake
-	$(top_builddir)/src/test/regress/pg_regress --inputdir=$(srcdir) --psqldir=$(PSQLDIR) $(REGRESS_OPTS) $(REGRESS)
+	$(pg_regress_installcheck) $(REGRESS_OPTS) $(REGRESS)
 
 .PHONY: submake
 submake:
@@ -77,6 +80,5 @@ endif # TCL_SHARED_BUILD = 0
 
 clean distclean maintainer-clean: clean-lib
 	rm -f $(OBJS)
-	rm -rf results
-	rm -f regression.diffs regression.out
+	rm -rf $(pg_regress_clean_files)
 	$(MAKE) -C modules $@

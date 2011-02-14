@@ -2094,7 +2094,7 @@ regression_main(int argc, char *argv[], init_function ifunc, test_function tfunc
 		/* "make install" */
 #ifndef WIN32_ONLY_COMPILER
 		snprintf(buf, sizeof(buf),
-				 SYSTEMQUOTE "\"%s\" -C \"%s\" DESTDIR=\"%s/install\" install with_perl=no with_python=no > \"%s/log/install.log\" 2>&1" SYSTEMQUOTE,
+				 SYSTEMQUOTE "\"%s\" -C \"%s\" DESTDIR=\"%s/install\" install > \"%s/log/install.log\" 2>&1" SYSTEMQUOTE,
 				 makeprog, top_builddir, temp_install, outputdir);
 #else
 		snprintf(buf, sizeof(buf),
