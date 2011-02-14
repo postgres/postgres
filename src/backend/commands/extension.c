@@ -24,6 +24,7 @@
 #include "postgres.h"
 
 #include <dirent.h>
+#include <limits.h>
 #include <unistd.h>
 
 #include "access/sysattr.h"
@@ -80,6 +81,7 @@ typedef struct ExtensionVersionInfo
 {
 	char	   *name;			/* name of the starting version */
 	List	   *reachable;		/* List of ExtensionVersionInfo's */
+	bool		installable;	/* does this version have an install script? */
 	/* working state for Dijkstra's algorithm: */
 	bool		distance_known;	/* is distance from start known yet? */
 	int			distance;		/* current worst-case distance estimate */
@@ -87,6 +89,13 @@ typedef struct ExtensionVersionInfo
 } ExtensionVersionInfo;
 
 /* Local functions */
+static List *find_update_path(List *evi_list,
+				 ExtensionVersionInfo *evi_start,
+				 ExtensionVersionInfo *evi_target,
+				 bool reinitialize);
+static void get_available_versions_for_extension(ExtensionControlFile *pcontrol,
+									 Tuplestorestate *tupstore,
+									 TupleDesc tupdesc);
 static void ApplyExtensionUpdates(Oid extensionOid,
 					  ExtensionControlFile *pcontrol,
 					  const char *initialVersion,
@@ -909,6 +918,7 @@ get_ext_ver_info(const char *versionname, List **evi_list)
 	evi = (ExtensionVersionInfo *) palloc(sizeof(ExtensionVersionInfo));
 	evi->name = pstrdup(versionname);
 	evi->reachable = NIL;
+	evi->installable = false;
 	/* initialize for later application of Dijkstra's algorithm */
 	evi->distance_known = false;
 	evi->distance = INT_MAX;
@@ -981,14 +991,23 @@ get_ext_ver_list(ExtensionControlFile *control)
 			de->d_name[extnamelen + 1] != '-')
 			continue;
 
-		/* extract version names from 'extname--something.sql' filename */
+		/* extract version name(s) from 'extname--something.sql' filename */
 		vername = pstrdup(de->d_name + extnamelen + 2);
 		*strrchr(vername, '.') = '\0';
 		vername2 = strstr(vername, "--");
 		if (!vername2)
-			continue;			/* it's not an update script */
+		{
+			/* It's an install, not update, script; record its version name */
+			evi = get_ext_ver_info(vername, &evi_list);
+			evi->installable = true;
+			continue;
+		}
 		*vername2 = '\0';		/* terminate first version */
 		vername2 += 2;			/* and point to second */
+
+		/* if there's a third --, it's bogus, ignore it */
+		if (strstr(vername2, "--"))
+			continue;
 
 		/* Create ExtensionVersionInfos and link them together */
 		evi = get_ext_ver_info(vername, &evi_list);
@@ -1015,7 +1034,6 @@ identify_update_path(ExtensionControlFile *control,
 	List	   *evi_list;
 	ExtensionVersionInfo *evi_start;
 	ExtensionVersionInfo *evi_target;
-	ExtensionVersionInfo *evi;
 
 	if (strcmp(oldVersion, newVersion) == 0)
 		ereport(ERROR,
@@ -1029,12 +1047,57 @@ identify_update_path(ExtensionControlFile *control,
 	evi_start = get_ext_ver_info(oldVersion, &evi_list);
 	evi_target = get_ext_ver_info(newVersion, &evi_list);
 
+	/* Find shortest path */
+	result = find_update_path(evi_list, evi_start, evi_target, false);
+
+	if (result == NIL)
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+				 errmsg("extension \"%s\" has no update path from version \"%s\" to version \"%s\"",
+						control->name, oldVersion, newVersion)));
+
+	return result;
+}
+
+/*
+ * Apply Dijkstra's algorithm to find the shortest path from evi_start to
+ * evi_target.
+ *
+ * If reinitialize is false, assume the ExtensionVersionInfo list has not
+ * been used for this before, and the initialization done by get_ext_ver_info
+ * is still good.
+ *
+ * Result is a List of names of versions to transition through (the initial
+ * version is *not* included).  Returns NIL if no such path.
+ */
+static List *
+find_update_path(List *evi_list,
+				 ExtensionVersionInfo *evi_start,
+				 ExtensionVersionInfo *evi_target,
+				 bool reinitialize)
+{
+	List	   *result;
+	ExtensionVersionInfo *evi;
+	ListCell   *lc;
+
+	/* Caller error if start == target */
+	Assert(evi_start != evi_target);
+
+	if (reinitialize)
+	{
+		foreach(lc, evi_list)
+		{
+			evi = (ExtensionVersionInfo *) lfirst(lc);
+			evi->distance_known = false;
+			evi->distance = INT_MAX;
+			evi->previous = NULL;
+		}
+	}
+
 	evi_start->distance = 0;
 
 	while ((evi = get_nearest_unprocessed_vertex(evi_list)) != NULL)
 	{
-		ListCell   *lc;
-
 		if (evi->distance == INT_MAX)
 			break;				/* all remaining vertices are unreachable */
 		evi->distance_known = true;
@@ -1068,11 +1131,9 @@ identify_update_path(ExtensionControlFile *control,
 		}
 	}
 
+	/* Return NIL if target is not reachable from start */
 	if (!evi_target->distance_known)
-		ereport(ERROR,
-				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-				 errmsg("extension \"%s\" has no update path from version \"%s\" to version \"%s\"",
-						control->name, oldVersion, newVersion)));
+		return NIL;
 
 	/* Build and return list of version names representing the update path */
 	result = NIL;
@@ -1553,9 +1614,9 @@ RemoveExtensionById(Oid extId)
 }
 
 /*
- * This function lists the extensions available in the control directory
- * (each of which might or might not actually be installed).  We parse each
- * available control file and report the interesting fields.
+ * This function lists the available extensions (one row per primary control
+ * file in the control directory).  We parse each control file and report the
+ * interesting fields.
  *
  * The system view pg_available_extensions provides a user interface to this
  * SRF, adding information about whether the extensions are installed in the
@@ -1593,6 +1654,7 @@ pg_available_extensions(PG_FUNCTION_ARGS)
 	if (get_call_result_type(fcinfo, NULL, &tupdesc) != TYPEFUNC_COMPOSITE)
 		elog(ERROR, "return type must be a row type");
 
+	/* Build tuplestore to hold the result rows */
 	per_query_ctx = rsinfo->econtext->ecxt_per_query_memory;
 	oldcontext = MemoryContextSwitchTo(per_query_ctx);
 
@@ -1620,8 +1682,8 @@ pg_available_extensions(PG_FUNCTION_ARGS)
 		{
 			ExtensionControlFile *control;
 			char	   *extname;
-			Datum		values[4];
-			bool		nulls[4];
+			Datum		values[3];
+			bool		nulls[3];
 
 			if (!is_extension_control_filename(de->d_name))
 				continue;
@@ -1647,18 +1709,329 @@ pg_available_extensions(PG_FUNCTION_ARGS)
 				nulls[1] = true;
 			else
 				values[1] = CStringGetTextDatum(control->default_version);
-			/* relocatable */
-			values[2] = BoolGetDatum(control->relocatable);
 			/* comment */
 			if (control->comment == NULL)
-				nulls[3] = true;
+				nulls[2] = true;
 			else
-				values[3] = CStringGetTextDatum(control->comment);
+				values[2] = CStringGetTextDatum(control->comment);
 
 			tuplestore_putvalues(tupstore, tupdesc, values, nulls);
 		}
 
 		FreeDir(dir);
+	}
+
+	/* clean up and return the tuplestore */
+	tuplestore_donestoring(tupstore);
+
+	return (Datum) 0;
+}
+
+/*
+ * This function lists the available extension versions (one row per
+ * extension installation script).  For each version, we parse the related
+ * control file(s) and report the interesting fields.
+ *
+ * The system view pg_available_extension_versions provides a user interface
+ * to this SRF, adding information about which versions are installed in the
+ * current DB.
+ */
+Datum
+pg_available_extension_versions(PG_FUNCTION_ARGS)
+{
+	ReturnSetInfo	   *rsinfo = (ReturnSetInfo *) fcinfo->resultinfo;
+	TupleDesc			tupdesc;
+	Tuplestorestate	   *tupstore;
+	MemoryContext		per_query_ctx;
+	MemoryContext		oldcontext;
+	char			   *location;
+	DIR				   *dir;
+	struct dirent	   *de;
+
+	if (!superuser())
+		ereport(ERROR,
+				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
+				 (errmsg("must be superuser to list available extensions"))));
+
+	/* check to see if caller supports us returning a tuplestore */
+	if (rsinfo == NULL || !IsA(rsinfo, ReturnSetInfo))
+		ereport(ERROR,
+				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+				 errmsg("set-valued function called in context that cannot accept a set")));
+	if (!(rsinfo->allowedModes & SFRM_Materialize))
+		ereport(ERROR,
+				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+				 errmsg("materialize mode required, but it is not " \
+						"allowed in this context")));
+
+	/* Build a tuple descriptor for our result type */
+	if (get_call_result_type(fcinfo, NULL, &tupdesc) != TYPEFUNC_COMPOSITE)
+		elog(ERROR, "return type must be a row type");
+
+	/* Build tuplestore to hold the result rows */
+	per_query_ctx = rsinfo->econtext->ecxt_per_query_memory;
+	oldcontext = MemoryContextSwitchTo(per_query_ctx);
+
+	tupstore = tuplestore_begin_heap(true, false, work_mem);
+	rsinfo->returnMode = SFRM_Materialize;
+	rsinfo->setResult = tupstore;
+	rsinfo->setDesc = tupdesc;
+
+	MemoryContextSwitchTo(oldcontext);
+
+	location = get_extension_control_directory();
+	dir  = AllocateDir(location);
+
+	/*
+	 * If the control directory doesn't exist, we want to silently return
+	 * an empty set.  Any other error will be reported by ReadDir.
+	 */
+	if (dir == NULL && errno == ENOENT)
+	{
+		/* do nothing */
+	}
+	else
+	{
+		while ((de = ReadDir(dir, location)) != NULL)
+		{
+			ExtensionControlFile *control;
+			char	   *extname;
+
+			if (!is_extension_control_filename(de->d_name))
+				continue;
+
+			/* extract extension name from 'name.control' filename */
+			extname = pstrdup(de->d_name);
+			*strrchr(extname, '.') = '\0';
+
+			/* ignore it if it's an auxiliary control file */
+			if (strstr(extname, "--"))
+				continue;
+
+			/* read the control file */
+			control = read_extension_control_file(extname);
+
+			/* scan extension's script directory for install scripts */
+			get_available_versions_for_extension(control, tupstore, tupdesc);
+		}
+
+		FreeDir(dir);
+	}
+
+	/* clean up and return the tuplestore */
+	tuplestore_donestoring(tupstore);
+
+	return (Datum) 0;
+}
+
+/*
+ * Inner loop for pg_available_extension_versions:
+ *		read versions of one extension, add rows to tupstore
+ */
+static void
+get_available_versions_for_extension(ExtensionControlFile *pcontrol,
+									 Tuplestorestate *tupstore,
+									 TupleDesc tupdesc)
+{
+	int			extnamelen = strlen(pcontrol->name);
+	char	   *location;
+	DIR		   *dir;
+	struct dirent *de;
+
+	location = get_extension_script_directory(pcontrol);
+	dir  = AllocateDir(location);
+	/* Note this will fail if script directory doesn't exist */
+	while ((de = ReadDir(dir, location)) != NULL)
+	{
+		ExtensionControlFile *control;
+		char	   *vername;
+		Datum		values[6];
+		bool		nulls[6];
+
+		/* must be a .sql file ... */
+		if (!is_extension_script_filename(de->d_name))
+			continue;
+
+		/* ... matching extension name followed by separator */
+		if (strncmp(de->d_name, pcontrol->name, extnamelen) != 0 ||
+			de->d_name[extnamelen] != '-' ||
+			de->d_name[extnamelen + 1] != '-')
+			continue;
+
+		/* extract version name from 'extname--something.sql' filename */
+		vername = pstrdup(de->d_name + extnamelen + 2);
+		*strrchr(vername, '.') = '\0';
+
+		/* ignore it if it's an update script */
+		if (strstr(vername, "--"))
+			continue;
+
+		/*
+		 * Fetch parameters for specific version (pcontrol is not changed)
+		 */
+		control = read_extension_aux_control_file(pcontrol, vername);
+
+		memset(values, 0, sizeof(values));
+		memset(nulls, 0, sizeof(nulls));
+
+		/* name */
+		values[0] = DirectFunctionCall1(namein,
+										CStringGetDatum(control->name));
+		/* version */
+		values[1] = CStringGetTextDatum(vername);
+		/* relocatable */
+		values[2] = BoolGetDatum(control->relocatable);
+		/* schema */
+		if (control->schema == NULL)
+			nulls[3] = true;
+		else
+			values[3] = DirectFunctionCall1(namein,
+											CStringGetDatum(control->schema));
+		/* requires */
+		if (control->requires == NIL)
+			nulls[4] = true;
+		else
+		{
+			Datum	   *datums;
+			int			ndatums;
+			ArrayType  *a;
+			ListCell   *lc;
+
+			ndatums = list_length(control->requires);
+			datums = (Datum *) palloc(ndatums * sizeof(Datum));
+			ndatums = 0;
+			foreach(lc, control->requires)
+			{
+				char	   *curreq = (char *) lfirst(lc);
+
+				datums[ndatums++] =
+					DirectFunctionCall1(namein, CStringGetDatum(curreq));
+			}
+			a = construct_array(datums, ndatums,
+								NAMEOID,
+								NAMEDATALEN, false, 'c');
+			values[4] = PointerGetDatum(a);
+		}
+		/* comment */
+		if (control->comment == NULL)
+			nulls[5] = true;
+		else
+			values[5] = CStringGetTextDatum(control->comment);
+
+		tuplestore_putvalues(tupstore, tupdesc, values, nulls);
+	}
+
+	FreeDir(dir);
+}
+
+/*
+ * This function reports the version update paths that exist for the
+ * specified extension.
+ */
+Datum
+pg_extension_update_paths(PG_FUNCTION_ARGS)
+{
+	Name		extname = PG_GETARG_NAME(0);
+	ReturnSetInfo	   *rsinfo = (ReturnSetInfo *) fcinfo->resultinfo;
+	TupleDesc			tupdesc;
+	Tuplestorestate	   *tupstore;
+	MemoryContext		per_query_ctx;
+	MemoryContext		oldcontext;
+	List	   *evi_list;
+	ExtensionControlFile *control;
+	ListCell   *lc1;
+
+	if (!superuser())
+		ereport(ERROR,
+				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
+				 (errmsg("must be superuser to list extension update paths"))));
+
+	/* Check extension name validity before any filesystem access */
+	check_valid_extension_name(NameStr(*extname));
+
+	/* check to see if caller supports us returning a tuplestore */
+	if (rsinfo == NULL || !IsA(rsinfo, ReturnSetInfo))
+		ereport(ERROR,
+				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+				 errmsg("set-valued function called in context that cannot accept a set")));
+	if (!(rsinfo->allowedModes & SFRM_Materialize))
+		ereport(ERROR,
+				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+				 errmsg("materialize mode required, but it is not " \
+						"allowed in this context")));
+
+	/* Build a tuple descriptor for our result type */
+	if (get_call_result_type(fcinfo, NULL, &tupdesc) != TYPEFUNC_COMPOSITE)
+		elog(ERROR, "return type must be a row type");
+
+	/* Build tuplestore to hold the result rows */
+	per_query_ctx = rsinfo->econtext->ecxt_per_query_memory;
+	oldcontext = MemoryContextSwitchTo(per_query_ctx);
+
+	tupstore = tuplestore_begin_heap(true, false, work_mem);
+	rsinfo->returnMode = SFRM_Materialize;
+	rsinfo->setResult = tupstore;
+	rsinfo->setDesc = tupdesc;
+
+	MemoryContextSwitchTo(oldcontext);
+
+	/* Read the extension's control file */
+	control = read_extension_control_file(NameStr(*extname));
+
+	/* Extract the version update graph from the script directory */
+	evi_list = get_ext_ver_list(control);
+
+	/* Iterate over all pairs of versions */
+	foreach(lc1, evi_list)
+	{
+		ExtensionVersionInfo *evi1 = (ExtensionVersionInfo *) lfirst(lc1);
+		ListCell   *lc2;
+
+		foreach(lc2, evi_list)
+		{
+			ExtensionVersionInfo *evi2 = (ExtensionVersionInfo *) lfirst(lc2);
+			List	   *path;
+			Datum		values[3];
+			bool		nulls[3];
+
+			if (evi1 == evi2)
+				continue;
+
+			/* Find shortest path from evi1 to evi2 */
+			path = find_update_path(evi_list, evi1, evi2, true);
+
+			/* Emit result row */
+			memset(values, 0, sizeof(values));
+			memset(nulls, 0, sizeof(nulls));
+
+			/* source */
+			values[0] = CStringGetTextDatum(evi1->name);
+			/* target */
+			values[1] = CStringGetTextDatum(evi2->name);
+			/* path */
+			if (path == NIL)
+				nulls[2] = true;
+			else
+			{
+				StringInfoData pathbuf;
+				ListCell   *lcv;
+
+				initStringInfo(&pathbuf);
+				/* The path doesn't include start vertex, but show it */
+				appendStringInfoString(&pathbuf, evi1->name);
+				foreach(lcv, path)
+				{
+					char	   *versionName = (char *) lfirst(lcv);
+
+					appendStringInfoString(&pathbuf, "--");
+					appendStringInfoString(&pathbuf, versionName);
+				}
+				values[2] = CStringGetTextDatum(pathbuf.data);
+				pfree(pathbuf.data);
+			}
+
+			tuplestore_putvalues(tupstore, tupdesc, values, nulls);
+		}
 	}
 
 	/* clean up and return the tuplestore */

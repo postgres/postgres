@@ -765,6 +765,20 @@ SELECT pg_catalog.pg_extension_config_dump('my_config', 'WHERE NOT standard_entr
      path than to move ahead one version at a time.  If the downgrade script
      drops any irreplaceable objects, this will yield undesirable results.
     </para>
+
+    <para>
+     To check for unexpected update paths, use this command:
+<programlisting>
+SELECT * FROM pg_extension_update_paths('<replaceable>extension_name</>');
+</programlisting>
+     This shows each pair of distinct known version names for the specified
+     extension, together with the update path sequence that would be taken to
+     get from the source version to the target version, or <literal>NULL</> if
+     there is no available update path.  The path is shown in textual form
+     with <literal>--</> separators.  You can use
+     <literal>regexp_split_to_array(path,'--')</> if you prefer an array
+     format.
+    </para>
    </sect2>
 
    <sect2>

@@ -154,11 +154,17 @@ CREATE VIEW pg_cursors AS
     SELECT * FROM pg_cursor() AS C;
 
 CREATE VIEW pg_available_extensions AS
-    SELECT E.name, E.version, X.extversion AS installed,
-           N.nspname AS schema, E.relocatable, E.comment
+    SELECT E.name, E.default_version, X.extversion AS installed_version,
+           E.comment
       FROM pg_available_extensions() AS E
-           LEFT JOIN pg_extension AS X ON E.name = X.extname
-           LEFT JOIN pg_namespace AS N on N.oid = X.extnamespace;
+           LEFT JOIN pg_extension AS X ON E.name = X.extname;
+
+CREATE VIEW pg_available_extension_versions AS
+    SELECT E.name, E.version, (X.extname IS NOT NULL) AS installed,
+           E.relocatable, E.schema, E.requires, E.comment
+      FROM pg_available_extension_versions() AS E
+           LEFT JOIN pg_extension AS X
+             ON E.name = X.extname AND E.version = X.extversion;
 
 CREATE VIEW pg_prepared_xacts AS
     SELECT P.transaction, P.gid, P.prepared,

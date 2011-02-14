@@ -1067,6 +1067,8 @@ extern Datum unique_key_recheck(PG_FUNCTION_ARGS);
 
 /* commands/extension.c */
 extern Datum pg_available_extensions(PG_FUNCTION_ARGS);
+extern Datum pg_available_extension_versions(PG_FUNCTION_ARGS);
+extern Datum pg_extension_update_paths(PG_FUNCTION_ARGS);
 extern Datum pg_extension_config_dump(PG_FUNCTION_ARGS);
 
 /* commands/prepare.c */

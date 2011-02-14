@@ -6331,6 +6331,11 @@
      </row>
 
      <row>
+      <entry><link linkend="view-pg-available-extension-versions"><structname>pg_available_extension_versions</structname></link></entry>
+      <entry>available versions of extensions</entry>
+     </row>
+
+     <row>
       <entry><link linkend="view-pg-cursors"><structname>pg_cursors</structname></link></entry>
       <entry>open cursors</entry>
      </row>
@@ -6460,29 +6465,17 @@
      </row>
 
      <row>
-      <entry><structfield>version</structfield></entry>
+      <entry><structfield>default_version</structfield></entry>
       <entry><type>text</type></entry>
-      <entry>Version string from the extension's control file</entry>
+      <entry>Name of default version, or <literal>NULL</literal> if none is
+       specified</entry>
      </row>
 
      <row>
-      <entry><structfield>installed</structfield></entry>
+      <entry><structfield>installed_version</structfield></entry>
       <entry><type>text</type></entry>
       <entry>Currently installed version of the extension,
        or <literal>NULL</literal> if not installed</entry>
-     </row>
-
-     <row>
-      <entry><structfield>schema</structfield></entry>
-      <entry><type>name</type></entry>
-      <entry>Name of the schema where the extension is installed,
-       or <literal>NULL</literal> if not installed</entry>
-     </row>
-
-     <row>
-      <entry><structfield>relocatable</structfield></entry>
-      <entry><type>bool</type></entry>
-      <entry>True if extension can be relocated to another schema</entry>
      </row>
 
      <row>
@@ -6497,7 +6490,88 @@
   <para>
    The <structname>pg_available_extensions</structname> view is read only.
   </para>
+ </sect1>
 
+ <sect1 id="view-pg-available-extension-versions">
+  <title><structname>pg_available_extension_versions</structname></title>
+
+  <indexterm zone="view-pg-available-extension-versions">
+   <primary>pg_available_extension_versions</primary>
+  </indexterm>
+
+  <para>
+   The <structname>pg_available_extension_versions</structname> view lists the
+   specific extension versions that are available for installation.  This view
+   can only be read by superusers.  See also the <link
+   linkend="catalog-pg-extension"><structname>pg_extension</structname></link>
+   catalog, which shows the extensions currently installed.
+  </para>
+
+  <table>
+   <title><structname>pg_available_extension_versions</> Columns</title>
+
+   <tgroup cols="3">
+    <thead>
+     <row>
+      <entry>Name</entry>
+      <entry>Type</entry>
+      <entry>Description</entry>
+     </row>
+    </thead>
+
+    <tbody>
+     <row>
+      <entry><structfield>name</structfield></entry>
+      <entry><type>name</type></entry>
+      <entry>Extension name</entry>
+     </row>
+
+     <row>
+      <entry><structfield>version</structfield></entry>
+      <entry><type>text</type></entry>
+      <entry>Version name</entry>
+     </row>
+
+     <row>
+      <entry><structfield>installed</structfield></entry>
+      <entry><type>bool</type></entry>
+      <entry>True if this version of this extension is currently
+       installed</entry>
+     </row>
+
+     <row>
+      <entry><structfield>relocatable</structfield></entry>
+      <entry><type>bool</type></entry>
+      <entry>True if extension can be relocated to another schema</entry>
+     </row>
+
+     <row>
+      <entry><structfield>schema</structfield></entry>
+      <entry><type>name</type></entry>
+      <entry>Name of the schema that the extension must be installed into,
+       or <literal>NULL</literal> if partially or fully relocatable</entry>
+     </row>
+
+     <row>
+      <entry><structfield>requires</structfield></entry>
+      <entry><type>name[]</type></entry>
+      <entry>Names of prerequisite extensions,
+       or <literal>NULL</literal> if none</entry>
+     </row>
+
+     <row>
+      <entry><structfield>comment</structfield></entry>
+      <entry><type>text</type></entry>
+      <entry>Comment string from the extension's control file</entry>
+     </row>
+    </tbody>
+   </tgroup>
+  </table>
+
+  <para>
+   The <structname>pg_available_extension_versions</structname> view is read
+   only.
+  </para>
  </sect1>
 
  <sect1 id="view-pg-cursors">

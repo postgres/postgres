@@ -586,7 +586,7 @@ static const SchemaQuery Query_for_list_of_views = {
 #define Query_for_list_of_available_extensions \
 " SELECT pg_catalog.quote_ident(name) "\
 "   FROM pg_catalog.pg_available_extensions "\
-"  WHERE substring(pg_catalog.quote_ident(name),1,%d)='%s' AND installed IS NULL"
+"  WHERE substring(pg_catalog.quote_ident(name),1,%d)='%s' AND installed_version IS NULL"
 
 /*
  * This is a list of all "things" in Pgsql, which can show up after CREATE or
