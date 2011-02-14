@@ -13,4 +13,3 @@ ALTER EXTENSION xml2 ADD function xpath_nodeset(text,text,text,text);
 ALTER EXTENSION xml2 ADD function xpath_string(text,text);
 ALTER EXTENSION xml2 ADD function xml_encode_special_chars(text);
 ALTER EXTENSION xml2 ADD function xml_valid(text);
-ALTER EXTENSION xml2 ADD function xml_is_well_formed(text);
