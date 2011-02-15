@@ -3462,7 +3462,10 @@ getAggregates(int *numAggs)
 	/* Make sure we are in proper schema */
 	selectSourceSchema("pg_catalog");
 
-	/* find all user-defined aggregates */
+	/*
+	 * Find all user-defined aggregates.  See comment in getFuncs() for the
+	 * rationale behind the filtering logic.
+	 */
 
 	if (g_fout->remoteVersion >= 80200)
 	{
@@ -3471,11 +3474,20 @@ getAggregates(int *numAggs)
 						  "pronargs, proargtypes, "
 						  "(%s proowner) AS rolname, "
 						  "proacl AS aggacl "
-						  "FROM pg_proc "
-						  "WHERE proisagg "
-						  "AND pronamespace != "
-			   "(SELECT oid FROM pg_namespace WHERE nspname = 'pg_catalog')",
+						  "FROM pg_proc p "
+						  "WHERE proisagg AND ("
+						  "pronamespace != "
+						  "(SELECT oid FROM pg_namespace "
+						  "WHERE nspname = 'pg_catalog')",
 						  username_subquery);
+		if (binary_upgrade && g_fout->remoteVersion >= 90100)
+			appendPQExpBuffer(query,
+							  " OR EXISTS(SELECT 1 FROM pg_depend WHERE "
+							  "classid = 'pg_proc'::regclass AND "
+							  "objid = p.oid AND "
+							  "refclassid = 'pg_extension'::regclass AND "
+							  "deptype = 'e')");
+		appendPQExpBuffer(query, ")");
 	}
 	else if (g_fout->remoteVersion >= 70300)
 	{
@@ -3608,7 +3620,14 @@ getFuncs(int *numFuncs)
 	/* Make sure we are in proper schema */
 	selectSourceSchema("pg_catalog");
 
-	/* find all user-defined funcs */
+	/*
+	 * Find all user-defined functions.  Normally we can exclude functions
+	 * in pg_catalog, which is worth doing since there are several thousand
+	 * of 'em.  However, there are some extensions that create functions in
+	 * pg_catalog.  In normal dumps we can still ignore those --- but in
+	 * binary-upgrade mode, we must dump the member objects of the extension,
+	 * so be sure to fetch any such functions.
+	 */
 
 	if (g_fout->remoteVersion >= 70300)
 	{
@@ -3617,12 +3636,20 @@ getFuncs(int *numFuncs)
 						  "pronargs, proargtypes, prorettype, proacl, "
 						  "pronamespace, "
 						  "(%s proowner) AS rolname "
-						  "FROM pg_proc "
-						  "WHERE NOT proisagg "
-						  "AND pronamespace != "
+						  "FROM pg_proc p "
+						  "WHERE NOT proisagg AND ("
+						  "pronamespace != "
 						  "(SELECT oid FROM pg_namespace "
 						  "WHERE nspname = 'pg_catalog')",
 						  username_subquery);
+		if (binary_upgrade && g_fout->remoteVersion >= 90100)
+			appendPQExpBuffer(query,
+							  " OR EXISTS(SELECT 1 FROM pg_depend WHERE "
+							  "classid = 'pg_proc'::regclass AND "
+							  "objid = p.oid AND "
+							  "refclassid = 'pg_extension'::regclass AND "
+							  "deptype = 'e')");
+		appendPQExpBuffer(query, ")");
 	}
 	else if (g_fout->remoteVersion >= 70100)
 	{
@@ -13319,6 +13346,8 @@ getExtensionMembership(ExtensionInfo extinfo[], int numExtensions)
 		 */
 		if (!binary_upgrade)
 			dobj->dump = false;
+		else
+			dobj->dump = refdobj->dump;
 	}
 
 	PQclear(res);
