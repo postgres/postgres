@@ -89,6 +89,11 @@ static uint32 sendOff = 0;
  */
 static XLogRecPtr sentPtr = {0, 0};
 
+/*
+ * Buffer for processing reply messages.
+ */
+static StringInfoData reply_message;
+
 /* Flags set by signal handlers for later service in main loop */
 static volatile sig_atomic_t got_SIGHUP = false;
 volatile sig_atomic_t walsender_shutdown_requested = false;
@@ -469,7 +474,7 @@ ProcessRepliesIfAny(void)
 	switch (firstchar)
 	{
 			/*
-			 * 'd' means a standby reply wrapped in a COPY BOTH packet.
+			 * 'd' means a standby reply wrapped in a CopyData packet.
 			 */
 		case 'd':
 			ProcessStandbyReplyMessage();
@@ -495,16 +500,15 @@ ProcessRepliesIfAny(void)
 static void
 ProcessStandbyReplyMessage(void)
 {
-	static StringInfoData input_message;
 	StandbyReplyMessage	reply;
 	char msgtype;
 
-	initStringInfo(&input_message);
+	resetStringInfo(&reply_message);
 
 	/*
 	 * Read the message contents.
 	 */
-	if (pq_getmessage(&input_message, 0))
+	if (pq_getmessage(&reply_message, 0))
 	{
 		ereport(COMMERROR,
 				(errcode(ERRCODE_PROTOCOL_VIOLATION),
@@ -516,13 +520,16 @@ ProcessStandbyReplyMessage(void)
 	 * Check message type from the first byte. At the moment, there is only
 	 * one type.
 	 */
-	msgtype = pq_getmsgbyte(&input_message);
+	msgtype = pq_getmsgbyte(&reply_message);
 	if (msgtype != 'r')
+	{
 		ereport(COMMERROR,
 				(errcode(ERRCODE_PROTOCOL_VIOLATION),
 				 errmsg("unexpected message type %c", msgtype)));
+		proc_exit(0);
+	}
 
-	pq_copymsgbytes(&input_message, (char *) &reply, sizeof(StandbyReplyMessage));
+	pq_copymsgbytes(&reply_message, (char *) &reply, sizeof(StandbyReplyMessage));
 
 	elog(DEBUG2, "write %X/%X flush %X/%X apply %X/%X ",
 		 reply.write.xlogid, reply.write.xrecoff,
@@ -558,6 +565,12 @@ WalSndLoop(void)
 	 * enough for maximum-sized messages.
 	 */
 	output_message = palloc(1 + sizeof(WalDataMessageHeader) + MAX_SEND_SIZE);
+
+	/*
+	 * Allocate buffer that will be used for processing reply messages.  As
+	 * above, do this just once to reduce palloc overhead.
+	 */
+	initStringInfo(&reply_message);
 
 	/* Loop forever, unless we get an error */
 	for (;;)
