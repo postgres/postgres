@@ -147,8 +147,7 @@ get_db_and_rel_infos(ClusterInfo *cluster)
 {
 	int			dbnum;
 
-	if (cluster->dbarr)
-		free_db_and_rel_infos(cluster->dbarr);
+	free_db_and_rel_infos(&cluster->dbarr);
 
 	get_db_infos(cluster);
 

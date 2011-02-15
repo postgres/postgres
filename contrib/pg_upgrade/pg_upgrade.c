@@ -64,6 +64,8 @@ main(int argc, char **argv)
 	bool		live_check = false;
 
 	parseCommandLine(argc, argv);
+	old_cluster.dbarr.ndbs = 0;
+	new_cluster.dbarr.ndbs = 0;
 
 	output_check_banner(&live_check);
 
