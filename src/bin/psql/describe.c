@@ -1754,7 +1754,7 @@ describeOneTableDetails(const char *schemaname,
 									  PQgetvalue(result, i, 0),
 									  PQgetvalue(result, i, 1));
 
-					if (strcmp(PQgetvalue(result, i, 2), "f") == 0)
+					if (pset.sversion >= 90100 && strcmp(PQgetvalue(result, i, 2), "f") == 0)
 						appendPQExpBuffer(&buf, " NOT VALID");
 
 					printTableAddFooter(&cont, buf.data);
