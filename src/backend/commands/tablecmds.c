@@ -142,7 +142,7 @@ typedef struct AlteredTableInfo
 	List	   *constraints;	/* List of NewConstraint */
 	List	   *newvals;		/* List of NewColumnValue */
 	bool		new_notnull;	/* T if we added new NOT NULL constraints */
-	bool		rewrite;		/* T if we a rewrite is forced */
+	bool		rewrite;		/* T if a rewrite is forced */
 	Oid			newTableSpace;	/* new tablespace; 0 means no change */
 	/* Objects to rebuild after completing ALTER TYPE operations */
 	List	   *changedConstraintOids;	/* OIDs of constraints to rebuild */
