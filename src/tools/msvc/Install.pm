@@ -56,8 +56,10 @@ sub Install
     my $majorver = DetermineMajorVersion();
     print "Installing version $majorver for $conf in $target\n";
 
-    EnsureDirectories($target, 'bin','lib','share','share/timezonesets','share/contrib','doc',
-        'doc/contrib', 'symbols', 'share/tsearch_data');
+    EnsureDirectories($target, 'bin', 'lib', 'share', 'share/timezonesets',
+                      'share/extension', 'share/contrib',
+                      'doc', 'doc/extension', 'doc/contrib',
+                      'symbols', 'share/tsearch_data');
 
     CopySolutionOutput($conf, $target);
     lcopy($target . '/lib/libpq.dll', $target . '/bin/libpq.dll');
@@ -316,7 +318,27 @@ sub CopyContribFiles
 
         my $mf = read_file("contrib/$d/Makefile");
         $mf =~ s{\\s*[\r\n]+}{}mg;
+
+        # Note: we currently don't support setting MODULEDIR in the makefile
+        my $moduledir = 'contrib';
+
         my $flist = '';
+        if ($mf =~ /^EXTENSION\s*=\s*(.*)$/m) {$flist .= $1}
+        if ($flist ne '')
+        {
+            $moduledir = 'extension';
+            $flist = ParseAndCleanRule($flist, $mf);
+
+            foreach my $f (split /\s+/,$flist)
+            {
+                lcopy('contrib/' . $d . '/' . $f . '.control',
+                      $target . '/share/extension/' . $f . '.control')
+                  || croak("Could not copy file $f.control in contrib $d");
+                print '.';
+            }
+        }
+
+        $flist = '';
         if ($mf =~ /^DATA_built\s*=\s*(.*)$/m) {$flist .= $1}
         if ($mf =~ /^DATA\s*=\s*(.*)$/m) {$flist .= " $1"}
         $flist =~ s/^\s*//; # Remove leading spaces if we had only DATA_built
@@ -327,7 +349,8 @@ sub CopyContribFiles
 
             foreach my $f (split /\s+/,$flist)
             {
-                lcopy('contrib/' . $d . '/' . $f,$target . '/share/contrib/' . basename($f))
+                lcopy('contrib/' . $d . '/' . $f,
+                      $target . '/share/' . $moduledir . '/' . basename($f))
                   || croak("Could not copy file $f in contrib $d");
                 print '.';
             }
@@ -341,7 +364,8 @@ sub CopyContribFiles
 
             foreach my $f (split /\s+/,$flist)
             {
-                lcopy('contrib/' . $d . '/' . $f,$target . '/share/tsearch_data/' . basename($f))
+                lcopy('contrib/' . $d . '/' . $f,
+                      $target . '/share/tsearch_data/' . basename($f))
                   || croak("Could not copy file $f in contrib $d");
                 print '.';
             }
@@ -359,7 +383,8 @@ sub CopyContribFiles
               if ($d eq 'spi');
             foreach my $f (split /\s+/,$flist)
             {
-                lcopy('contrib/' . $d . '/' . $f, $target . '/doc/contrib/' . $f)
+                lcopy('contrib/' . $d . '/' . $f,
+                      $target . '/doc/' . $moduledir . '/' . $f)
                   || croak("Could not copy file $f in contrib $d");
                 print '.';
             }
@@ -430,7 +455,7 @@ sub CopyIncludeFiles
         'src/include/', 'pg_config.h', 'pg_config_os.h'
     );
     CopyFiles('Grammar header', $target . '/include/server/parser/',
-	      'src/backend/parser/', 'gram.h');
+              'src/backend/parser/', 'gram.h');
     CopySetOfFiles('',[ glob("src\\include\\*.h") ],$target . '/include/server/');
     my $D;
     opendir($D, 'src/include') || croak "Could not opendir on src/include!\n";
