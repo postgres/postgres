@@ -1,4 +1,4 @@
-/* contrib/intagg/int_aggregate--1.0.sql */
+/* contrib/intagg/intagg--1.0.sql */
 
 -- Internal function for the aggregate
 -- Is called for each item in an aggregation
