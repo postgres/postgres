@@ -1895,6 +1895,13 @@
      </row>
 
      <row>
+      <entry><structfield>convalidated</structfield></entry>
+      <entry><type>bool</type></entry>
+      <entry></entry>
+      <entry>Has the constraint been validated? Can only be false for foreign keys</entry>
+     </row>
+
+     <row>
       <entry><structfield>conrelid</structfield></entry>
       <entry><type>oid</type></entry>
       <entry><literal><link linkend="catalog-pg-class"><structname>pg_class</structname></link>.oid</literal></entry>
