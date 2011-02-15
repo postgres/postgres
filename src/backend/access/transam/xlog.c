@@ -5228,7 +5228,7 @@ readRecoveryCommandFile(void)
 			if (strlen(recoveryTargetName) >= MAXFNAMELEN)
 				ereport(FATAL,
 						(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-						 errmsg("recovery_target_name is too long")));
+						 errmsg("recovery_target_name is too long (maximum %d characters)", MAXFNAMELEN - 1)));
 
 			ereport(DEBUG2,
 					(errmsg("recovery_target_name = '%s'",
@@ -5448,7 +5448,7 @@ exitArchiveRecovery(TimeLineID endTLI, uint32 endLogId, uint32 endLogSeg)
  * Returns TRUE if we are stopping, FALSE otherwise.  On TRUE return,
  * *includeThis is set TRUE if we should apply this record before stopping.
  *
- * We also track the timestamp of the latest applied COMMIT/ABORT/RESTORE POINT
+ * We also track the timestamp of the latest applied COMMIT/ABORT
  * record in XLogCtl->recoveryLastXTime, for logging purposes.
  * Also, some information is saved in recoveryStopXid et al for use in
  * annotating the new timeline's history file.
@@ -5493,14 +5493,19 @@ recoveryStopsHere(XLogRecord *record, bool *includeThis)
 	/* Do we have a PITR target at all? */
 	if (recoveryTarget == RECOVERY_TARGET_UNSET)
 	{
-		SetLatestXTime(recordXtime);
+		/*
+		 * Save timestamp of latest transaction commit/abort if this is
+		 * a transaction record
+		 */
+		if (record->xl_rmid == RM_XACT_ID)
+			SetLatestXTime(recordXtime);
 		return false;
 	}
 
 	if (recoveryTarget == RECOVERY_TARGET_XID)
 	{
 		/*
-		 * there can be only one transaction end record with this exact
+		 * There can be only one transaction end record with this exact
 		 * transactionid
 		 *
 		 * when testing for an xid, we MUST test for equality only, since
@@ -5515,13 +5520,13 @@ recoveryStopsHere(XLogRecord *record, bool *includeThis)
 	else if (recoveryTarget == RECOVERY_TARGET_NAME)
 	{
 		/*
-		 * there can be many restore points that share the same name, so we stop
+		 * There can be many restore points that share the same name, so we stop
 		 * at the first one
 		 */
 		stopsHere = (strcmp(recordRPName, recoveryTargetName) == 0);
 
 		/*
-		 * ignore recoveryTargetInclusive because this is not a transaction
+		 * Ignore recoveryTargetInclusive because this is not a transaction
 		 * record
 		 */
 		*includeThis = false;
@@ -5529,7 +5534,7 @@ recoveryStopsHere(XLogRecord *record, bool *includeThis)
 	else
 	{
 		/*
-		 * there can be many transactions that share the same commit time, so
+		 * There can be many transactions that share the same commit time, so
 		 * we stop after the last one, if we are inclusive, or stop at the
 		 * first one if we are exclusive
 		 */
@@ -5583,10 +5588,15 @@ recoveryStopsHere(XLogRecord *record, bool *includeThis)
 								timestamptz_to_str(recoveryStopTime))));
 		}
 
-		if (recoveryStopAfter)
+		/*
+		 * Note that if we use a RECOVERY_TARGET_TIME then we can stop
+		 * at a restore point since they are timestamped, though the latest
+		 * transaction time is not updated.
+		 */
+		if (record->xl_rmid == RM_XACT_ID && recoveryStopAfter)
 			SetLatestXTime(recordXtime);
 	}
-	else
+	else if (record->xl_rmid == RM_XACT_ID)
 		SetLatestXTime(recordXtime);
 
 	return stopsHere;
@@ -9220,7 +9230,7 @@ pg_create_restore_point(PG_FUNCTION_ARGS)
 	if (strlen(restore_name_str) >= MAXFNAMELEN)
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-				 errmsg("value too long for restore point")));
+				 errmsg("value too long for restore point (maximum %d characters)", MAXFNAMELEN - 1)));
 
 	restorepoint = XLogRestorePoint(restore_name_str);
 
