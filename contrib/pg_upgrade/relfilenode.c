@@ -49,7 +49,7 @@ transfer_all_new_dbs(DbInfoArr *old_db_arr,
 		pageCnvCtx *pageConverter = NULL;
 
 		if (strcmp(old_db->db_name, new_db->db_name) != 0)
-			pg_log(PG_FATAL, "old and new databases have a different names: old \"%s\", new \"%s\"\n",
+			pg_log(PG_FATAL, "old and new databases have different names: old \"%s\", new \"%s\"\n",
 				old_db->db_name, new_db->db_name);
 		
 		n_maps = 0;

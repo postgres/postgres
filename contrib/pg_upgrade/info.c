@@ -104,6 +104,12 @@ create_rel_filename_map(const char *old_data, const char *new_data,
 	/* new_relfilenode will match old and new pg_class.oid */
 	map->new_relfilenode = new_rel->relfilenode;
 
+	if (strcmp(old_rel->nspname, new_rel->nspname) != 0 ||
+	    strcmp(old_rel->relname, new_rel->relname) != 0)
+		pg_log(PG_FATAL, "mismatch of relation id: database \"%s\", old rel %s.%s, new rel %s.%s\n",
+			old_db, old_rel->nspname, old_rel->relname,
+			new_rel->nspname, new_rel->relname);
+
 	/* used only for logging and error reporing, old/new are identical */
 	snprintf(map->nspname, sizeof(map->nspname), "%s", old_rel->nspname);
 	snprintf(map->relname, sizeof(map->relname), "%s", old_rel->relname);
@@ -140,6 +146,9 @@ void
 get_db_and_rel_infos(ClusterInfo *cluster)
 {
 	int			dbnum;
+
+	if (cluster->dbarr)
+		free_db_and_rel_infos(cluster->dbarr);
 
 	get_db_infos(cluster);
 

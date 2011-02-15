@@ -286,7 +286,6 @@ create_new_objects(void)
 	check_ok();
 
 	/* regenerate now that we have objects in the databases */
-	free_db_and_rel_infos(&new_cluster.dbarr);
 	get_db_and_rel_infos(&new_cluster);
 
 	uninstall_support_functions_from_new_cluster();

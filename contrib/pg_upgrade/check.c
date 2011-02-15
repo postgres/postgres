@@ -362,8 +362,6 @@ check_new_db_is_empty(void)
 		}
 	}
 
-	free_db_and_rel_infos(&new_cluster.dbarr);
-
 	if (found)
 		pg_log(PG_FATAL, "New cluster is not empty; exiting\n");
 }
