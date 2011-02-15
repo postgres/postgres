@@ -1725,10 +1725,10 @@ static struct config_int ConfigureNamesInt[] =
 	},
 
 	{
-		{"max_predicate_locks_per_transaction", PGC_POSTMASTER, LOCK_MANAGEMENT,
+		{"max_pred_locks_per_transaction", PGC_POSTMASTER, LOCK_MANAGEMENT,
 			gettext_noop("Sets the maximum number of predicate locks per transaction."),
 			gettext_noop("The shared predicate lock table is sized on the assumption that "
-			  "at most max_predicate_locks_per_transaction * max_connections distinct "
+			  "at most max_pred_locks_per_transaction * max_connections distinct "
 						 "objects will need to be locked at any one time.")
 		},
 		&max_predicate_locks_per_xact,

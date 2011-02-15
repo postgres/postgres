@@ -1874,7 +1874,7 @@ DeleteChildTargetLocks(const PREDICATELOCKTARGETTAG *newtargettag)
  * thresholds are, either making it proportional to the number of
  * tuples in a page & pages in a relation, or at least making it a
  * GUC. Currently the threshold is 3 for a page lock, and
- * max_predicate_locks_per_transaction/2 for a relation lock, chosen
+ * max_pred_locks_per_transaction/2 for a relation lock, chosen
  * entirely arbitrarily (and without benchmarking).
  */
 static int
@@ -2063,7 +2063,7 @@ CreatePredicateLock(const PREDICATELOCKTARGETTAG *targettag,
 		ereport(ERROR,
 				(errcode(ERRCODE_OUT_OF_MEMORY),
 				 errmsg("out of shared memory"),
-				 errhint("You might need to increase max_predicate_locks_per_transaction.")));
+				 errhint("You might need to increase max_pred_locks_per_transaction.")));
 	if (!found)
 	{
 		SHMQueueInit(&(target->predicateLocks));
@@ -2082,7 +2082,7 @@ CreatePredicateLock(const PREDICATELOCKTARGETTAG *targettag,
 		ereport(ERROR,
 				(errcode(ERRCODE_OUT_OF_MEMORY),
 				 errmsg("out of shared memory"),
-				 errhint("You might need to increase max_predicate_locks_per_transaction.")));
+				 errhint("You might need to increase max_pred_locks_per_transaction.")));
 
 	if (!found)
 	{
@@ -2341,7 +2341,7 @@ PredicateLockTupleRowVersionLink(const Relation relation,
 			ereport(ERROR,
 					(errcode(ERRCODE_OUT_OF_MEMORY),
 					 errmsg("out of shared memory"),
-					 errhint("You might need to increase max_predicate_locks_per_transaction.")));
+					 errhint("You might need to increase max_pred_locks_per_transaction.")));
 		if (!found)
 		{
 			SHMQueueInit(&(newtarget->predicateLocks));
@@ -3337,7 +3337,7 @@ ReleaseOneSerializableXact(SERIALIZABLEXACT *sxact, bool partial,
 				ereport(ERROR,
 						(errcode(ERRCODE_OUT_OF_MEMORY),
 						 errmsg("out of shared memory"),
-						 errhint("You might need to increase max_predicate_locks_per_transaction.")));
+						 errhint("You might need to increase max_pred_locks_per_transaction.")));
 			if (found)
 			{
 				if (predlock->commitSeqNo < sxact->commitSeqNo)

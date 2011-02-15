@@ -5188,15 +5188,15 @@ dynamic_library_path = 'C:\tools\postgresql;H:\my_project\lib;$libdir'
       </listitem>
      </varlistentry>
 
-     <varlistentry id="guc-max-predicate-locks-per-transaction" xreflabel="max_predicate_locks_per_transaction">
-      <term><varname>max_predicate_locks_per_transaction</varname> (<type>integer</type>)</term>
+     <varlistentry id="guc-max-pred-locks-per-transaction" xreflabel="max_pred_locks_per_transaction">
+      <term><varname>max_pred_locks_per_transaction</varname> (<type>integer</type>)</term>
       <indexterm>
-       <primary><varname>max_predicate_locks_per_transaction</> configuration parameter</primary>
+       <primary><varname>max_pred_locks_per_transaction</> configuration parameter</primary>
       </indexterm>
       <listitem>
        <para>
         The shared predicate lock table tracks locks on
-        <varname>max_predicate_locks_per_transaction</varname> * (<xref
+        <varname>max_pred_locks_per_transaction</varname> * (<xref
         linkend="guc-max-connections"> + <xref
         linkend="guc-max-prepared-transactions">) objects (e.g., tables);
         hence, no more than this many distinct objects can be locked at
