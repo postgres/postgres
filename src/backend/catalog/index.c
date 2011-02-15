@@ -1299,6 +1299,12 @@ index_drop(Oid indexId)
 	userIndexRelation = index_open(indexId, AccessExclusiveLock);
 
 	/*
+	 * There can no longer be anyone *else* touching the index, but we
+	 * might still have open queries using it in our own session.
+	 */
+	CheckTableNotInUse(userIndexRelation, "DROP INDEX");
+
+	/*
 	 * Schedule physical removal of the files
 	 */
 	RelationDropStorage(userIndexRelation);

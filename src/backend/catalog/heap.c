@@ -1603,14 +1603,10 @@ heap_drop_with_catalog(Oid relid)
 
 	/*
 	 * There can no longer be anyone *else* touching the relation, but we
-	 * might still have open queries or cursors in our own session.
+	 * might still have open queries or cursors, or pending trigger events,
+	 * in our own session.
 	 */
-	if (rel->rd_refcnt != 1)
-		ereport(ERROR,
-				(errcode(ERRCODE_OBJECT_IN_USE),
-				 errmsg("cannot drop \"%s\" because "
-						"it is being used by active queries in this session",
-						RelationGetRelationName(rel))));
+	CheckTableNotInUse(rel, "DROP TABLE");
 
 	/*
 	 * Delete pg_foreign_table tuple first.
