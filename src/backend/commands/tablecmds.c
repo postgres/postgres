@@ -6632,10 +6632,14 @@ ATPrepAlterColumnType(List **wqueue,
 }
 
 /*
- * When the data type of a column is changed, a rewrite might not be require
- * if the data type is being changed to its current type, or more interestingly
- * to a type to which it is binary coercible.  But we must check carefully that
- * the USING clause isn't trying to insert some other value.
+ * When the data type of a column is changed, a rewrite might not be required
+ * if the new type is sufficiently identical to the old one, and the USING
+ * clause isn't trying to insert some other value.  It's safe to skip the
+ * rewrite if the old type is binary coercible to the new type, or if the
+ * new type is an unconstrained domain over the old type.  In the case of a
+ * constrained domain, we could get by with scanning the table and checking
+ * the constraint rather than actually rewriting it, but we don't currently
+ * try to do that.
  */
 static bool
 ATColumnChangeRequiresRewrite(Node *expr, AttrNumber varattno)
@@ -6649,6 +6653,14 @@ ATColumnChangeRequiresRewrite(Node *expr, AttrNumber varattno)
 			return false;
 		else if (IsA(expr, RelabelType))
 			expr = (Node *) ((RelabelType *) expr)->arg;
+		else if (IsA(expr, CoerceToDomain))
+		{
+			CoerceToDomain *d = (CoerceToDomain *) expr;
+
+			if (GetDomainConstraints(d->resulttype) != NIL)
+				return true;
+			expr = (Node *) d->arg;
+		}
 		else
 			return true;
 	}
