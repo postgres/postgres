@@ -53,6 +53,7 @@
 #include "storage/ipc.h"
 #include "storage/pmsignal.h"
 #include "storage/proc.h"
+#include "storage/procarray.h"
 #include "tcop/tcopprot.h"
 #include "utils/builtins.h"
 #include "utils/guc.h"
@@ -502,6 +503,7 @@ ProcessStandbyReplyMessage(void)
 {
 	StandbyReplyMessage	reply;
 	char msgtype;
+	TransactionId newxmin = InvalidTransactionId;
 
 	resetStringInfo(&reply_message);
 
@@ -531,10 +533,12 @@ ProcessStandbyReplyMessage(void)
 
 	pq_copymsgbytes(&reply_message, (char *) &reply, sizeof(StandbyReplyMessage));
 
-	elog(DEBUG2, "write %X/%X flush %X/%X apply %X/%X ",
+	elog(DEBUG2, "write %X/%X flush %X/%X apply %X/%X xmin %u epoch %u",
 		 reply.write.xlogid, reply.write.xrecoff,
 		 reply.flush.xlogid, reply.flush.xrecoff,
-		 reply.apply.xlogid, reply.apply.xrecoff);
+		 reply.apply.xlogid, reply.apply.xrecoff,
+		 reply.xmin,
+		 reply.epoch);
 
 	/*
 	 * Update shared state for this WalSender process
@@ -549,6 +553,69 @@ ProcessStandbyReplyMessage(void)
 		walsnd->flush = reply.flush;
 		walsnd->apply = reply.apply;
 		SpinLockRelease(&walsnd->mutex);
+	}
+
+	/*
+	 * Update the WalSender's proc xmin to allow it to be visible
+	 * to snapshots. This will hold back the removal of dead rows
+	 * and thereby prevent the generation of cleanup conflicts
+	 * on the standby server.
+	 */
+	if (TransactionIdIsValid(reply.xmin))
+	{
+		TransactionId	nextXid;
+		uint32			nextEpoch;
+		bool			epochOK;
+
+		GetNextXidAndEpoch(&nextXid, &nextEpoch);
+
+		/*
+		 * Epoch of oldestXmin should be same as standby or
+		 * if the counter has wrapped, then one less than reply.
+		 */
+		if (reply.xmin <= nextXid)
+		{
+			if (reply.epoch == nextEpoch)
+				epochOK = true;
+		}
+		else
+		{
+			if (nextEpoch > 0 && reply.epoch == nextEpoch - 1)
+				epochOK = true;
+		}
+
+		/*
+		 * Feedback from standby must not go backwards, nor should it go
+		 * forwards further than our most recent xid.
+		 */
+		if (epochOK && TransactionIdPrecedesOrEquals(reply.xmin, nextXid))
+		{
+			if (!TransactionIdIsValid(MyProc->xmin))
+			{
+				TransactionId oldestXmin = GetOldestXmin(true, true);
+				if (TransactionIdPrecedes(oldestXmin, reply.xmin))
+					newxmin = reply.xmin;
+				else
+					newxmin = oldestXmin;
+			}
+			else
+			{
+				if (TransactionIdPrecedes(MyProc->xmin, reply.xmin))
+					newxmin = reply.xmin;
+				else
+					newxmin = MyProc->xmin; /* stay the same */
+			}
+		}
+	}
+
+	/*
+	 * Grab the ProcArrayLock to set xmin, or invalidate for bad reply
+	 */
+	if (MyProc->xmin != newxmin)
+	{
+		LWLockAcquire(ProcArrayLock, LW_SHARED);
+		MyProc->xmin = newxmin;
+		LWLockRelease(ProcArrayLock);
 	}
 }
 

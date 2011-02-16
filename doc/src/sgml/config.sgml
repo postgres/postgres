@@ -2006,6 +2006,10 @@ SET ENABLE_SEQSCAN TO OFF;
         This parameter can only be set in the <filename>postgresql.conf</>
         file or on the server command line.
        </para>
+       <para>
+        You should also consider setting <varname>hot_standby_feedback</>
+        as an alternative to using this parameter.
+       </para>
       </listitem>
      </varlistentry>
      </variablelist>
@@ -2118,6 +2122,22 @@ SET ENABLE_SEQSCAN TO OFF;
        the <filename>postgresql.conf</> file or on the server command line.
        The default value is 10 seconds.
       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry id="guc-hot-standby-feedback" xreflabel="hot_standby">
+      <term><varname>hot_standby_feedback</varname> (<type>boolean</type>)</term>
+      <indexterm>
+       <primary><varname>hot_standby_feedback</> configuration parameter</primary>
+      </indexterm>
+      <listitem>
+       <para>
+        Specifies whether or not a hot standby will send feedback to the primary
+        about queries currently executing on the standby. This parameter can
+        be used to eliminate query cancels caused by cleanup records, though
+        it can cause database bloat on the primary for some workloads.
+        The default value is <literal>off</literal>.
+       </para>
       </listitem>
      </varlistentry>
 

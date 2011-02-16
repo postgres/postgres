@@ -1034,7 +1034,9 @@ GetOldestXmin(bool allDbs, bool ignoreVacuum)
 		if (ignoreVacuum && (proc->vacuumFlags & PROC_IN_VACUUM))
 			continue;
 
-		if (allDbs || proc->databaseId == MyDatabaseId)
+		if (allDbs ||
+			proc->databaseId == MyDatabaseId ||
+			proc->databaseId == 0)	/* include WalSender */
 		{
 			/* Fetch xid just once - see GetNewTransactionId */
 			TransactionId xid = proc->xid;
@@ -1066,28 +1068,35 @@ GetOldestXmin(bool allDbs, bool ignoreVacuum)
 		 */
 		TransactionId kaxmin = KnownAssignedXidsGetOldestXmin();
 
+		LWLockRelease(ProcArrayLock);
+
 		if (TransactionIdIsNormal(kaxmin) &&
 			TransactionIdPrecedes(kaxmin, result))
 				result = kaxmin;
 	}
+	else
+	{
+		/*
+		 * No other information needed, so release the lock immediately.
+		 */
+		LWLockRelease(ProcArrayLock);
 
-	LWLockRelease(ProcArrayLock);
-
-	/*
-	 * Compute the cutoff XID, being careful not to generate a "permanent"
-	 * XID.
-	 *
-	 * vacuum_defer_cleanup_age provides some additional "slop" for the
-	 * benefit of hot standby queries on slave servers.  This is quick and
-	 * dirty, and perhaps not all that useful unless the master has a
-	 * predictable transaction rate, but it's what we've got.  Note that we
-	 * are assuming vacuum_defer_cleanup_age isn't large enough to cause
-	 * wraparound --- so guc.c should limit it to no more than the
-	 * xidStopLimit threshold in varsup.c.
-	 */
-	result -= vacuum_defer_cleanup_age;
-	if (!TransactionIdIsNormal(result))
-		result = FirstNormalTransactionId;
+		/*
+		 * Compute the cutoff XID, being careful not to generate a "permanent"
+		 * XID. We need do this only on the primary, never on standby.
+		 *
+		 * vacuum_defer_cleanup_age provides some additional "slop" for the
+		 * benefit of hot standby queries on slave servers.  This is quick and
+		 * dirty, and perhaps not all that useful unless the master has a
+		 * predictable transaction rate, but it's what we've got.  Note that we
+		 * are assuming vacuum_defer_cleanup_age isn't large enough to cause
+		 * wraparound --- so guc.c should limit it to no more than the
+		 * xidStopLimit threshold in varsup.c.
+		 */
+		result -= vacuum_defer_cleanup_age;
+		if (!TransactionIdIsNormal(result))
+			result = FirstNormalTransactionId;
+	}
 
 	return result;
 }

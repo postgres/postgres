@@ -1484,23 +1484,6 @@ if (!triggered)
    </para>
 
    <para>
-    The most common reason for conflict between standby queries and WAL replay
-    is <quote>early cleanup</>.  Normally, <productname>PostgreSQL</> allows
-    cleanup of old row versions when there are no transactions that need to
-    see them to ensure correct visibility of data according to MVCC rules.
-    However, this rule can only be applied for transactions executing on the
-    master.  So it is possible that cleanup on the master will remove row
-    versions that are still visible to a transaction on the standby.
-   </para>
-
-   <para>
-    Experienced users should note that both row version cleanup and row version
-    freezing will potentially conflict with standby queries. Running a manual
-    <command>VACUUM FREEZE</> is likely to cause conflicts even on tables with
-    no updated or deleted rows.
-   </para>
-
-   <para>
     Once the delay specified by <varname>max_standby_archive_delay</> or
     <varname>max_standby_streaming_delay</> has been exceeded, conflicting
     queries will be cancelled.  This usually results just in a cancellation
@@ -1527,6 +1510,23 @@ if (!triggered)
    </para>
 
    <para>
+    The most common reason for conflict between standby queries and WAL replay
+    is <quote>early cleanup</>.  Normally, <productname>PostgreSQL</> allows
+    cleanup of old row versions when there are no transactions that need to
+    see them to ensure correct visibility of data according to MVCC rules.
+    However, this rule can only be applied for transactions executing on the
+    master.  So it is possible that cleanup on the master will remove row
+    versions that are still visible to a transaction on the standby.
+   </para>
+
+   <para>
+    Experienced users should note that both row version cleanup and row version
+    freezing will potentially conflict with standby queries. Running a manual
+    <command>VACUUM FREEZE</> is likely to cause conflicts even on tables with
+    no updated or deleted rows.
+   </para>
+
+   <para>
     Users should be clear that tables that are regularly and heavily updated
     on the primary server will quickly cause cancellation of longer running
     queries on the standby. In such cases the setting of a finite value for
@@ -1537,12 +1537,10 @@ if (!triggered)
 
    <para>
     Remedial possibilities exist if the number of standby-query cancellations
-    is found to be unacceptable.  The first option is to connect to the
-    primary server and keep a query active for as long as needed to
-    run queries on the standby. This prevents <command>VACUUM</> from removing
-    recently-dead rows and so cleanup conflicts do not occur.
-    This could be done using <xref linkend="dblink"> and
-    <function>pg_sleep()</>, or via other mechanisms. If you do this, you
+    is found to be unacceptable.  The first option is to set the parameter
+    <varname>hot_standby_feedback</>, which prevents <command>VACUUM</> from
+    removing recently-dead rows and so cleanup conflicts do not occur.
+    If you do this, you
     should note that this will delay cleanup of dead rows on the primary,
     which may result in undesirable table bloat. However, the cleanup
     situation will be no worse than if the standby queries were running

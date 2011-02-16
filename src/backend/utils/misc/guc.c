@@ -1279,6 +1279,15 @@ static struct config_bool ConfigureNamesBool[] =
 	},
 
 	{
+		{"hot_standby_feedback", PGC_SIGHUP, WAL_STANDBY_SERVERS,
+			gettext_noop("Allows feedback from a hot standby primary that will avoid query conflicts."),
+			NULL
+		},
+		&hot_standby_feedback,
+		false, NULL, NULL
+	},
+
+	{
 		{"allow_system_table_mods", PGC_POSTMASTER, DEVELOPER_OPTIONS,
 			gettext_noop("Allows modifications of the structure of system tables."),
 			NULL,

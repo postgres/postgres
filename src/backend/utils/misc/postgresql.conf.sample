@@ -196,6 +196,7 @@
 
 #hot_standby = off			# "on" allows queries during recovery
 					# (change requires restart)
+#hot_standby_feedback = off	# info from standby to prevent query conflicts
 #max_standby_archive_delay = 30s	# max delay before canceling queries
 					# when reading WAL from archive;
 					# -1 allows indefinite delay
