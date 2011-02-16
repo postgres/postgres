@@ -22,6 +22,12 @@ static void free_rel_infos(RelInfoArr *rel_arr);
 static void print_db_infos(DbInfoArr *dbinfo);
 static void print_rel_infos(RelInfoArr *arr);
 
+void
+initialize_cluster_info(ClusterInfo *cluster)
+{
+	cluster->dbarr.ndbs = 0;
+	cluster->dbarr.dbs = NULL;
+}
 
 /*
  * gen_db_file_maps()

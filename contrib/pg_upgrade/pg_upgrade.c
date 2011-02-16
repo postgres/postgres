@@ -63,9 +63,10 @@ main(int argc, char **argv)
 	char	   *deletion_script_file_name = NULL;
 	bool		live_check = false;
 
+	initialize_cluster_info(&old_cluster);
+	initialize_cluster_info(&new_cluster);
+
 	parseCommandLine(argc, argv);
-	old_cluster.dbarr.ndbs = 0;
-	new_cluster.dbarr.ndbs = 0;
 
 	output_check_banner(&live_check);
 
