@@ -615,8 +615,9 @@ protocol to make nodes agree on a serializable transactional order.
    </para>
 
    <para>
-    Standby mode is exited and the server switches to normal operation,
-    when a trigger file is found (<varname>trigger_file</>). Before failover,
+    Standby mode is exited and the server switches to normal operation
+    when <command>pg_ctl promote</> is run or a trigger file is found
+    (<varname>trigger_file</>). Before failover,
     any WAL immediately available in the archive or in <filename>pg_xlog</> will be
     restored, but no attempt is made to connect to the master.
    </para>
@@ -685,11 +686,7 @@ protocol to make nodes agree on a serializable transactional order.
     If you're setting up the standby server for high availability purposes,
     set up WAL archiving, connections and authentication like the primary
     server, because the standby server will work as a primary server after
-    failover. You will also need to set <varname>trigger_file</> to make
-    it possible to fail over.
-    If you're setting up the standby server for reporting
-    purposes, with no plans to fail over to it, <varname>trigger_file</>
-    is not required.
+    failover.
    </para>
 
    <para>
@@ -710,7 +707,6 @@ protocol to make nodes agree on a serializable transactional order.
 standby_mode = 'on'
 primary_conninfo = 'host=192.168.1.50 port=5432 user=foo password=foopass'
 restore_command = 'cp /path/to/archive/%f %p'
-trigger_file = '/path/to/trigger_file'
 archive_cleanup_command = 'pg_archivecleanup /path/to/archive %r'
 </programlisting>
    </para>
@@ -949,13 +945,15 @@ primary_conninfo = 'host=192.168.1.50 port=5432 user=foo password=foopass'
    </para>
 
    <para>
-    To trigger failover of a log-shipping standby server, create a trigger
+    To trigger failover of a log-shipping standby server,
+    run <command>pg_ctl promote</> or create a trigger
     file with the filename and path specified by the <varname>trigger_file</>
-    setting in <filename>recovery.conf</>. If <varname>trigger_file</> is
-    not given, there is no way to exit recovery in the standby and promote
-    it to a master. That can be useful for e.g reporting servers that are
+    setting in <filename>recovery.conf</>. If you're planning to use
+    <command>pg_ctl promote</> to fail over, <varname>trigger_file</> is
+    not required. If you're setting up the reporting servers that are
     only used to offload read-only queries from the primary, not for high
-    availability purposes.
+    availability purposes, you don't need to exit recovery in the standby
+    and promote it to a master.
    </para>
   </sect1>
 

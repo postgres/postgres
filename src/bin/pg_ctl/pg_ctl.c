@@ -62,6 +62,7 @@ typedef enum
 	START_COMMAND,
 	STOP_COMMAND,
 	RESTART_COMMAND,
+	PROMOTE_COMMAND,
 	RELOAD_COMMAND,
 	STATUS_COMMAND,
 	KILL_COMMAND,
@@ -96,6 +97,7 @@ static char postopts_file[MAXPGPATH];
 static char pid_file[MAXPGPATH];
 static char backup_file[MAXPGPATH];
 static char recovery_file[MAXPGPATH];
+static char promote_file[MAXPGPATH];
 
 #if defined(WIN32) || defined(__CYGWIN__)
 static DWORD pgctl_start_type = SERVICE_AUTO_START;
@@ -124,6 +126,7 @@ static void do_init(void);
 static void do_start(void);
 static void do_stop(void);
 static void do_restart(void);
+static void do_promote(void);
 static void do_reload(void);
 static void do_status(void);
 static void do_kill(pgpid_t pid);
@@ -872,7 +875,7 @@ do_stop(void)
 
 
 /*
- *	restart/reload routines
+ *	restart/promote/reload routines
  */
 
 static void
@@ -963,6 +966,66 @@ do_restart(void)
 	}
 
 	do_start();
+}
+
+static void
+do_promote(void)
+{
+	FILE	   *prmfile;
+	pgpid_t		pid;
+	struct stat statbuf;
+
+	pid = get_pgpid();
+
+	if (pid == 0)				/* no pid file */
+	{
+		write_stderr(_("%s: PID file \"%s\" does not exist\n"), progname, pid_file);
+		write_stderr(_("Is server running?\n"));
+		exit(1);
+	}
+	else if (pid < 0)			/* standalone backend, not postmaster */
+	{
+		pid = -pid;
+		write_stderr(_("%s: cannot promote server; "
+					   "single-user server is running (PID: %ld)\n"),
+					 progname, pid);
+		exit(1);
+	}
+
+	/* If recovery.conf doesn't exist, the server is not in standby mode */
+	if (stat(recovery_file, &statbuf) != 0)
+	{
+		write_stderr(_("%s: cannot promote server; "
+					   "server is not in standby mode\n"),
+					 progname);
+		exit(1);
+	}
+
+	if ((prmfile = fopen(promote_file, "w")) == NULL)
+	{
+		write_stderr(_("%s: could not create promote signal file \"%s\": %s\n"),
+					 progname, promote_file, strerror(errno));
+		exit(1);
+	}
+	if (fclose(prmfile))
+	{
+		write_stderr(_("%s: could not write promote signal file \"%s\": %s\n"),
+					 progname, promote_file, strerror(errno));
+		exit(1);
+	}
+
+	sig = SIGUSR1;
+	if (kill((pid_t) pid, sig) != 0)
+	{
+		write_stderr(_("%s: could not send promote signal (PID: %ld): %s\n"),
+					 progname, pid, strerror(errno));
+		if (unlink(promote_file) != 0)
+			write_stderr(_("%s: could not remove promote signal file \"%s\": %s\n"),
+						 progname, promote_file, strerror(errno));
+		exit(1);
+	}
+
+	print_msg(_("server promoting\n"));
 }
 
 
@@ -1617,7 +1680,7 @@ do_advice(void)
 static void
 do_help(void)
 {
-	printf(_("%s is a utility to start, stop, restart, reload configuration files,\n"
+	printf(_("%s is a utility to start, stop, restart, promote, reload configuration files,\n"
 			 "report the status of a PostgreSQL server, or signal a PostgreSQL process.\n\n"), progname);
 	printf(_("Usage:\n"));
 	printf(_("  %s init[db]               [-D DATADIR] [-s] [-o \"OPTIONS\"]\n"), progname);
@@ -1625,6 +1688,7 @@ do_help(void)
 	printf(_("  %s stop    [-W] [-t SECS] [-D DATADIR] [-s] [-m SHUTDOWN-MODE]\n"), progname);
 	printf(_("  %s restart [-w] [-t SECS] [-D DATADIR] [-s] [-m SHUTDOWN-MODE]\n"
 			 "                 [-o \"OPTIONS\"]\n"), progname);
+	printf(_("  %s promote [-D DATADIR] [-s]\n"), progname);
 	printf(_("  %s reload  [-D DATADIR] [-s]\n"), progname);
 	printf(_("  %s status  [-D DATADIR]\n"), progname);
 	printf(_("  %s kill    SIGNALNAME PID\n"), progname);
@@ -1950,6 +2014,8 @@ main(int argc, char **argv)
 				ctl_command = STOP_COMMAND;
 			else if (strcmp(argv[optind], "restart") == 0)
 				ctl_command = RESTART_COMMAND;
+			else if (strcmp(argv[optind], "promote") == 0)
+				ctl_command = PROMOTE_COMMAND;
 			else if (strcmp(argv[optind], "reload") == 0)
 				ctl_command = RELOAD_COMMAND;
 			else if (strcmp(argv[optind], "status") == 0)
@@ -2036,6 +2102,7 @@ main(int argc, char **argv)
 		snprintf(pid_file, MAXPGPATH, "%s/postmaster.pid", pg_data);
 		snprintf(backup_file, MAXPGPATH, "%s/backup_label", pg_data);
 		snprintf(recovery_file, MAXPGPATH, "%s/recovery.conf", pg_data);
+		snprintf(promote_file, MAXPGPATH, "%s/promote", pg_data);
 	}
 
 	switch (ctl_command)
@@ -2054,6 +2121,9 @@ main(int argc, char **argv)
 			break;
 		case RESTART_COMMAND:
 			do_restart();
+			break;
+		case PROMOTE_COMMAND:
+			do_promote();
 			break;
 		case RELOAD_COMMAND:
 			do_reload();

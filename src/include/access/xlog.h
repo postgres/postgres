@@ -313,6 +313,7 @@ extern TimeLineID GetRecoveryTargetTLI(void);
 
 extern void HandleStartupProcInterrupts(void);
 extern void StartupProcessMain(void);
+extern bool CheckPromoteSignal(void);
 extern void WakeupRecovery(void);
 
 /*

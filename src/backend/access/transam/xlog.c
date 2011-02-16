@@ -62,6 +62,7 @@
 /* File path names (all relative to $PGDATA) */
 #define RECOVERY_COMMAND_FILE	"recovery.conf"
 #define RECOVERY_COMMAND_DONE	"recovery.done"
+#define PROMOTE_SIGNAL_FILE	"promote"
 
 
 /* User-settable parameters */
@@ -565,6 +566,7 @@ typedef struct xl_restore_point
  */
 static volatile sig_atomic_t got_SIGHUP = false;
 static volatile sig_atomic_t shutdown_requested = false;
+static volatile sig_atomic_t promote_triggered = false;
 
 /*
  * Flag set when executing a restore command, to tell SIGTERM signal handler
@@ -9669,6 +9671,14 @@ StartupProcSigUsr1Handler(SIGNAL_ARGS)
 	latch_sigusr1_handler();
 }
 
+/* SIGUSR2: set flag to finish recovery */
+static void
+StartupProcTriggerHandler(SIGNAL_ARGS)
+{
+	promote_triggered = true;
+	WakeupRecovery();
+}
+
 /* SIGHUP: set flag to re-read config file at next convenient time */
 static void
 StartupProcSigHupHandler(SIGNAL_ARGS)
@@ -9746,7 +9756,7 @@ StartupProcessMain(void)
 		pqsignal(SIGALRM, SIG_IGN);
 	pqsignal(SIGPIPE, SIG_IGN);
 	pqsignal(SIGUSR1, StartupProcSigUsr1Handler);
-	pqsignal(SIGUSR2, SIG_IGN);
+	pqsignal(SIGUSR2, StartupProcTriggerHandler);
 
 	/*
 	 * Reset some signals that are accepted by postmaster but not here
@@ -10192,9 +10202,9 @@ emode_for_corrupt_record(int emode, XLogRecPtr RecPtr)
 }
 
 /*
- * Check to see if the trigger file exists. If it does, request postmaster
- * to shut down walreceiver, wait for it to exit, remove the trigger
- * file, and return true.
+ * Check to see whether the user-specified trigger file exists and whether a
+ * promote request has arrived.  If either condition holds, request postmaster
+ * to shut down walreceiver, wait for it to exit, and return true.
  */
 static bool
 CheckForStandbyTrigger(void)
@@ -10204,6 +10214,16 @@ CheckForStandbyTrigger(void)
 
 	if (triggered)
 		return true;
+
+	if (promote_triggered)
+	{
+		ereport(LOG,
+				(errmsg("received promote request")));
+		ShutdownWalRcv();
+		promote_triggered = false;
+		triggered = true;
+		return true;
+	}
 
 	if (TriggerFile == NULL)
 		return false;
@@ -10215,6 +10235,27 @@ CheckForStandbyTrigger(void)
 		ShutdownWalRcv();
 		unlink(TriggerFile);
 		triggered = true;
+		return true;
+	}
+	return false;
+}
+
+/*
+ * Check to see if a promote request has arrived. Should be
+ * called by postmaster after receiving SIGUSR1.
+ */
+bool
+CheckPromoteSignal(void)
+{
+	struct stat stat_buf;
+
+	if (stat(PROMOTE_SIGNAL_FILE, &stat_buf) == 0)
+	{
+		/*
+		 * Since we are in a signal handler, it's not safe
+		 * to elog. We silently ignore any error from unlink.
+		 */
+		unlink(PROMOTE_SIGNAL_FILE);
 		return true;
 	}
 	return false;

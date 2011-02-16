@@ -343,8 +343,8 @@ restore_command = 'copy "C:\\server\\archivedir\\%f" "%p"'  # Windows
         <listitem>
          <para>
           Specifies a trigger file whose presence ends recovery in the
-          standby. If no trigger file is specified, the standby never exits
-          recovery.
+          standby.  Even if this value is not set, you can still promote
+          the standby using <command>pg_ctl promote</>.
           This setting has no effect if <varname>standby_mode</> is <literal>off</>.
          </para>
         </listitem>

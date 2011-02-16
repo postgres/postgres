@@ -77,6 +77,13 @@ PostgreSQL documentation
 
   <cmdsynopsis>
    <command>pg_ctl</command>
+   <arg choice="plain">promote</arg>
+   <arg>-s</arg>
+   <arg>-D <replaceable>datadir</replaceable></arg>
+  </cmdsynopsis>
+
+  <cmdsynopsis>
+   <command>pg_ctl</command>
    <arg choice="plain">reload</arg>
    <arg>-s</arg>
    <arg>-D <replaceable>datadir</replaceable></arg>
@@ -181,6 +188,12 @@ PostgreSQL documentation
    <option>restart</option> mode effectively executes a stop followed
    by a start.  This allows changing the <command>postgres</command>
    command-line options.
+  </para>
+
+  <para>
+   In <option>promote</option> mode, the standby server that is
+   running in the specified data directory is commanded to exit
+   recovery and begin read-write operations.
   </para>
 
   <para>
