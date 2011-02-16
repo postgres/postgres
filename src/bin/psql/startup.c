@@ -224,8 +224,12 @@ main(int argc, char *argv[])
 
 	if (options.action == ACT_LIST_DB)
 	{
-		int			success = listAllDbs(false);
+		int			success;
 
+		if (!options.no_psqlrc)
+			process_psqlrc(argv[0]);
+
+		success = listAllDbs(false);
 		PQfinish(pset.db);
 		exit(success ? EXIT_SUCCESS : EXIT_FAILURE);
 	}
