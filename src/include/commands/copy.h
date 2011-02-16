@@ -14,11 +14,23 @@
 #ifndef COPY_H
 #define COPY_H
 
+#include "nodes/execnodes.h"
 #include "nodes/parsenodes.h"
 #include "tcop/dest.h"
 
 
+typedef struct CopyStateData  *CopyState;
+
 extern uint64 DoCopy(const CopyStmt *stmt, const char *queryString);
+
+extern CopyState BeginCopyFrom(Relation rel, const char *filename,
+							   List *attnamelist, List *options);
+extern void EndCopyFrom(CopyState cstate);
+extern bool NextCopyFrom(CopyState cstate, ExprContext *econtext,
+						 Datum *values, bool *nulls, Oid *tupleOid);
+extern bool NextCopyFromRawFields(CopyState cstate,
+								  char ***fields, int *nfields);
+extern void CopyFromErrorCallback(void *arg);
 
 extern DestReceiver *CreateCopyDestReceiver(void);
 
