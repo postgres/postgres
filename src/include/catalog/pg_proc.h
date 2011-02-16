@@ -4407,6 +4407,8 @@ DATA(insert OID = 2774 (  ginqueryarrayextract	PGNSP PGUID 12 1 0 0 f f f t f i 
 DESCR("GIN array support");
 DATA(insert OID = 2744 (  ginarrayconsistent	PGNSP PGUID 12 1 0 0 f f f t f i 8 0 16 "2281 21 2277 23 2281 2281 2281 2281" _null_ _null_ _null_ _null_ ginarrayconsistent _null_ _null_ _null_ ));
 DESCR("GIN array support");
+DATA(insert OID = 3076 (  ginarrayextract	 PGNSP PGUID 12 1 0 0 f f f t f i 2 0 2281 "2277 2281" _null_ _null_ _null_ _null_	ginarrayextract_2args _null_ _null_ _null_ ));
+DESCR("GIN array support (obsolete)");
 
 /* overlap/contains/contained */
 DATA(insert OID = 2747 (  arrayoverlap		   PGNSP PGUID 12 1 0 0 f f f t f i 2 0 16 "2277 2277" _null_ _null_ _null_ _null_ arrayoverlap _null_ _null_ _null_ ));
@@ -4666,6 +4668,12 @@ DATA(insert OID = 3724 (  gin_cmp_tslexeme		PGNSP PGUID 12 1 0 0 f f f t f i 2 0
 DESCR("GIN tsvector support");
 DATA(insert OID = 2700 (  gin_cmp_prefix		PGNSP PGUID 12 1 0 0 f f f t f i 4 0 23 "25 25 21 2281" _null_ _null_ _null_ _null_ gin_cmp_prefix _null_ _null_ _null_ ));
 DESCR("GIN tsvector support");
+DATA(insert OID = 3077 (  gin_extract_tsvector	PGNSP PGUID 12 1 0 0 f f f t f i 2 0 2281 "3614 2281" _null_ _null_ _null_ _null_	gin_extract_tsvector_2args _null_ _null_ _null_ ));
+DESCR("GIN tsvector support (obsolete)");
+DATA(insert OID = 3087 (  gin_extract_tsquery	PGNSP PGUID 12 1 0 0 f f f t f i 5 0 2281 "3615 2281 21 2281 2281" _null_ _null_ _null_ _null_ gin_extract_tsquery_5args _null_ _null_ _null_ ));
+DESCR("GIN tsvector support (obsolete)");
+DATA(insert OID = 3088 (  gin_tsquery_consistent PGNSP PGUID 12 1 0 0 f f f t f i 6 0 16 "2281 21 3615 23 2281 2281" _null_ _null_ _null_ _null_	gin_tsquery_consistent_6args _null_ _null_ _null_ ));
+DESCR("GIN tsvector support (obsolete)");
 
 DATA(insert OID = 3662 (  tsquery_lt			PGNSP PGUID 12 1 0 0 f f f t f i 2 0 16 "3615 3615" _null_ _null_ _null_ _null_ tsquery_lt _null_ _null_ _null_ ));
 DESCR("less-than");

@@ -59,6 +59,20 @@ ginarrayextract(PG_FUNCTION_ARGS)
 }
 
 /*
+ * Formerly, ginarrayextract had only two arguments.  Now it has three,
+ * but we still need a pg_proc entry with two args to support reloading
+ * pre-9.1 contrib/intarray opclass declarations.  This compatibility
+ * function should go away eventually.
+ */
+Datum
+ginarrayextract_2args(PG_FUNCTION_ARGS)
+{
+	if (PG_NARGS() < 3)			/* should not happen */
+		elog(ERROR, "ginarrayextract requires three arguments");
+	return ginarrayextract(fcinfo);
+}
+
+/*
  * extractQuery support function
  */
 Datum

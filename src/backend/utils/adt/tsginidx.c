@@ -230,3 +230,43 @@ gin_tsquery_consistent(PG_FUNCTION_ARGS)
 
 	PG_RETURN_BOOL(res);
 }
+
+/*
+ * Formerly, gin_extract_tsvector had only two arguments.  Now it has three,
+ * but we still need a pg_proc entry with two args to support reloading
+ * pre-9.1 contrib/tsearch2 opclass declarations.  This compatibility
+ * function should go away eventually.  (Note: you might say "hey, but the
+ * code above is only *using* two args, so let's just declare it that way".
+ * If you try that you'll find the opr_sanity regression test complains.)
+ */
+Datum
+gin_extract_tsvector_2args(PG_FUNCTION_ARGS)
+{
+	if (PG_NARGS() < 3)			/* should not happen */
+		elog(ERROR, "gin_extract_tsvector requires three arguments");
+	return gin_extract_tsvector(fcinfo);
+}
+
+/*
+ * Likewise, we need a stub version of gin_extract_tsquery declared with
+ * only five arguments.
+ */
+Datum
+gin_extract_tsquery_5args(PG_FUNCTION_ARGS)
+{
+	if (PG_NARGS() < 7)			/* should not happen */
+		elog(ERROR, "gin_extract_tsquery requires seven arguments");
+	return gin_extract_tsquery(fcinfo);
+}
+
+/*
+ * Likewise, we need a stub version of gin_tsquery_consistent declared with
+ * only six arguments.
+ */
+Datum
+gin_tsquery_consistent_6args(PG_FUNCTION_ARGS)
+{
+	if (PG_NARGS() < 8)			/* should not happen */
+		elog(ERROR, "gin_tsquery_consistent requires eight arguments");
+	return gin_tsquery_consistent(fcinfo);
+}

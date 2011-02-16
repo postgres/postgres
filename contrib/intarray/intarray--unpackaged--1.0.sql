@@ -65,7 +65,10 @@ ALTER EXTENSION intarray ADD function g_intbig_union(internal,internal);
 ALTER EXTENSION intarray ADD function g_intbig_same(internal,internal,internal);
 ALTER EXTENSION intarray ADD operator family gist__intbig_ops using gist;
 ALTER EXTENSION intarray ADD operator class gist__intbig_ops using gist;
-ALTER EXTENSION intarray ADD function ginint4_queryextract(internal,internal,smallint,internal,internal,internal,internal);
-ALTER EXTENSION intarray ADD function ginint4_consistent(internal,smallint,internal,integer,internal,internal,internal,internal);
 ALTER EXTENSION intarray ADD operator family gin__int_ops using gin;
 ALTER EXTENSION intarray ADD operator class gin__int_ops using gin;
+
+-- these two functions have different signatures in 9.1, but we don't
+-- bother trying to fix them because GIN doesn't care much
+ALTER EXTENSION intarray ADD function ginint4_queryextract(internal,internal,smallint,internal,internal);
+ALTER EXTENSION intarray ADD function ginint4_consistent(internal,smallint,internal,integer,internal,internal);
