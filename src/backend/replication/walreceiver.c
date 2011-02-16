@@ -118,7 +118,7 @@ static void DisableWalRcvImmediateExit(void);
 static void WalRcvDie(int code, Datum arg);
 static void XLogWalRcvProcessMsg(unsigned char type, char *buf, Size len);
 static void XLogWalRcvWrite(char *buf, Size nbytes, XLogRecPtr recptr);
-static void XLogWalRcvFlush(void);
+static void XLogWalRcvFlush(bool dying);
 static void XLogWalRcvSendReply(void);
 
 /* Signal handlers */
@@ -319,7 +319,7 @@ WalReceiverMain(void)
 			 * If we've written some records, flush them to disk and let the
 			 * startup process know about them.
 			 */
-			XLogWalRcvFlush();
+			XLogWalRcvFlush(false);
 		}
 		else
 		{
@@ -342,7 +342,7 @@ WalRcvDie(int code, Datum arg)
 	volatile WalRcvData *walrcv = WalRcv;
 
 	/* Ensure that all WAL records received are flushed to disk */
-	XLogWalRcvFlush();
+	XLogWalRcvFlush(true);
 
 	SpinLockAcquire(&walrcv->mutex);
 	Assert(walrcv->walRcvState == WALRCV_RUNNING ||
@@ -461,7 +461,7 @@ XLogWalRcvWrite(char *buf, Size nbytes, XLogRecPtr recptr)
 			 */
 			if (recvFile >= 0)
 			{
-				XLogWalRcvFlush();
+				XLogWalRcvFlush(false);
 
 				/*
 				 * XLOG segment files will be re-read by recovery in startup
@@ -531,9 +531,14 @@ XLogWalRcvWrite(char *buf, Size nbytes, XLogRecPtr recptr)
 	}
 }
 
-/* Flush the log to disk */
+/*
+ * Flush the log to disk.
+ *
+ * If we're in the midst of dying, it's unwise to do anything that might throw
+ * an error, so we skip sending a reply in that case.
+ */
 static void
-XLogWalRcvFlush(void)
+XLogWalRcvFlush(bool dying)
 {
 	if (XLByteLT(LogstreamResult.Flush, LogstreamResult.Write))
 	{
@@ -565,7 +570,8 @@ XLogWalRcvFlush(void)
 		}
 
 		/* Also let the master know that we made some progress */
-		XLogWalRcvSendReply();
+		if (!dying)
+			XLogWalRcvSendReply();
 	}
 }
 
