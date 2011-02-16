@@ -1035,11 +1035,6 @@ identify_update_path(ExtensionControlFile *control,
 	ExtensionVersionInfo *evi_start;
 	ExtensionVersionInfo *evi_target;
 
-	if (strcmp(oldVersion, newVersion) == 0)
-		ereport(ERROR,
-				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-				 errmsg("version to install or update to must be different from old version")));
-
 	/* Extract the version update graph from the script directory */
 	evi_list = get_ext_ver_list(control);
 
@@ -1261,6 +1256,12 @@ CreateExtension(CreateExtensionStmt *stmt)
 	{
 		oldVersionName = strVal(d_old_version->arg);
 		check_valid_version_name(oldVersionName);
+
+		if (strcmp(oldVersionName, versionName) == 0)
+			ereport(ERROR,
+					(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+					 errmsg("FROM version must be different from installation target version \"%s\"",
+							versionName)));
 
 		updateVersions = identify_update_path(pcontrol,
 											  oldVersionName,
@@ -2463,6 +2464,17 @@ ExecAlterExtensionStmt(AlterExtensionStmt *stmt)
 		versionName = NULL;		/* keep compiler quiet */
 	}
 	check_valid_version_name(versionName);
+
+	/*
+	 * If we're already at that version, just say so
+	 */
+	if (strcmp(oldVersionName, versionName) == 0)
+	{
+		ereport(NOTICE,
+				(errmsg("version \"%s\" of extension \"%s\" is already installed",
+						versionName, stmt->extname)));
+		return;
+	}
 
 	/*
 	 * Identify the series of update script files we need to execute
