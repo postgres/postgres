@@ -230,6 +230,8 @@ plpgsql_stmt_typename(PLpgSQL_stmt *stmt)
 			return _("FOR over SELECT rows");
 		case PLPGSQL_STMT_FORC:
 			return _("FOR over cursor");
+		case PLPGSQL_STMT_FOREACH_A:
+			return _("FOREACH over array");
 		case PLPGSQL_STMT_EXIT:
 			return "EXIT";
 		case PLPGSQL_STMT_RETURN:
@@ -278,6 +280,7 @@ static void dump_while(PLpgSQL_stmt_while *stmt);
 static void dump_fori(PLpgSQL_stmt_fori *stmt);
 static void dump_fors(PLpgSQL_stmt_fors *stmt);
 static void dump_forc(PLpgSQL_stmt_forc *stmt);
+static void dump_foreach_a(PLpgSQL_stmt_foreach_a *stmt);
 static void dump_exit(PLpgSQL_stmt_exit *stmt);
 static void dump_return(PLpgSQL_stmt_return *stmt);
 static void dump_return_next(PLpgSQL_stmt_return_next *stmt);
@@ -336,6 +339,9 @@ dump_stmt(PLpgSQL_stmt *stmt)
 			break;
 		case PLPGSQL_STMT_FORC:
 			dump_forc((PLpgSQL_stmt_forc *) stmt);
+			break;
+		case PLPGSQL_STMT_FOREACH_A:
+			dump_foreach_a((PLpgSQL_stmt_foreach_a *) stmt);
 			break;
 		case PLPGSQL_STMT_EXIT:
 			dump_exit((PLpgSQL_stmt_exit *) stmt);
@@ -593,6 +599,23 @@ dump_forc(PLpgSQL_stmt_forc *stmt)
 
 	dump_ind();
 	printf("    ENDFORC\n");
+}
+
+static void
+dump_foreach_a(PLpgSQL_stmt_foreach_a *stmt)
+{
+	dump_ind();
+	printf("FOREACHA var %d ", stmt->varno);
+	if (stmt->slice != 0)
+		printf("SLICE %d ", stmt->slice);
+	printf("IN ");
+	dump_expr(stmt->expr);
+	printf("\n");
+
+	dump_stmts(stmt->body);
+
+	dump_ind();
+	printf("    ENDFOREACHA");
 }
 
 static void

@@ -175,7 +175,7 @@ static	List			*read_raise_options(void);
 %type <expr>	expr_until_then expr_until_loop opt_expr_until_when
 %type <expr>	opt_exitcond
 
-%type <ival>	assign_var
+%type <ival>	assign_var foreach_slice
 %type <var>		cursor_variable
 %type <datum>	decl_cursor_arg
 %type <forvariable>	for_variable
@@ -190,7 +190,7 @@ static	List			*read_raise_options(void);
 %type <stmt>	stmt_return stmt_raise stmt_execsql
 %type <stmt>	stmt_dynexecute stmt_for stmt_perform stmt_getdiag
 %type <stmt>	stmt_open stmt_fetch stmt_move stmt_close stmt_null
-%type <stmt>	stmt_case
+%type <stmt>	stmt_case stmt_foreach_a
 
 %type <list>	proc_exceptions
 %type <exception_block> exception_sect
@@ -239,6 +239,7 @@ static	List			*read_raise_options(void);
 %token <keyword>	K_ABSOLUTE
 %token <keyword>	K_ALIAS
 %token <keyword>	K_ALL
+%token <keyword>	K_ARRAY
 %token <keyword>	K_BACKWARD
 %token <keyword>	K_BEGIN
 %token <keyword>	K_BY
@@ -264,6 +265,7 @@ static	List			*read_raise_options(void);
 %token <keyword>	K_FETCH
 %token <keyword>	K_FIRST
 %token <keyword>	K_FOR
+%token <keyword>	K_FOREACH
 %token <keyword>	K_FORWARD
 %token <keyword>	K_FROM
 %token <keyword>	K_GET
@@ -298,6 +300,7 @@ static	List			*read_raise_options(void);
 %token <keyword>	K_ROWTYPE
 %token <keyword>	K_ROW_COUNT
 %token <keyword>	K_SCROLL
+%token <keyword>	K_SLICE
 %token <keyword>	K_SQLSTATE
 %token <keyword>	K_STRICT
 %token <keyword>	K_THEN
@@ -738,6 +741,8 @@ proc_stmt		: pl_block ';'
 				| stmt_while
 						{ $$ = $1; }
 				| stmt_for
+						{ $$ = $1; }
+				| stmt_foreach_a
 						{ $$ = $1; }
 				| stmt_exit
 						{ $$ = $1; }
@@ -1383,6 +1388,58 @@ for_variable	: T_DATUM
 					{
 						/* just to give a better message than "syntax error" */
 						cword_is_not_variable(&($1), @1);
+					}
+				;
+
+stmt_foreach_a	: opt_block_label K_FOREACH for_variable foreach_slice K_IN K_ARRAY expr_until_loop loop_body
+					{
+						PLpgSQL_stmt_foreach_a *new;
+
+						new = palloc0(sizeof(PLpgSQL_stmt_foreach_a));
+						new->cmd_type = PLPGSQL_STMT_FOREACH_A;
+						new->lineno = plpgsql_location_to_lineno(@2);
+						new->label = $1;
+						new->slice = $4;
+						new->expr = $7;
+						new->body = $8.stmts;
+
+						if ($3.rec)
+						{
+							new->varno = $3.rec->dno;
+							check_assignable((PLpgSQL_datum *) $3.rec, @3);
+						}
+						else if ($3.row)
+						{
+							new->varno = $3.row->dno;
+							check_assignable((PLpgSQL_datum *) $3.row, @3);
+						}
+						else if ($3.scalar)
+						{
+							new->varno = $3.scalar->dno;
+							check_assignable($3.scalar, @3);
+						}
+						else
+						{
+							ereport(ERROR,
+									(errcode(ERRCODE_SYNTAX_ERROR),
+									 errmsg("loop variable of FOREACH must be a known variable or list of variables"),
+											 parser_errposition(@3)));
+						}
+
+						check_labels($1, $8.end_label, $8.end_label_location);
+						plpgsql_ns_pop();
+
+						$$ = (PLpgSQL_stmt *) new;
+					}
+				;
+
+foreach_slice	:
+					{
+						$$ = 0;
+					}
+				| K_SLICE ICONST
+					{
+						$$ = $2;
 					}
 				;
 
@@ -2035,6 +2092,7 @@ any_identifier	: T_WORD
 unreserved_keyword	:
 				K_ABSOLUTE
 				| K_ALIAS
+				| K_ARRAY
 				| K_BACKWARD
 				| K_CONSTANT
 				| K_CURSOR
@@ -2063,6 +2121,7 @@ unreserved_keyword	:
 				| K_ROW_COUNT
 				| K_ROWTYPE
 				| K_SCROLL
+				| K_SLICE
 				| K_SQLSTATE
 				| K_TYPE
 				| K_USE_COLUMN

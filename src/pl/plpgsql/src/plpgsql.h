@@ -90,6 +90,7 @@ enum PLpgSQL_stmt_types
 	PLPGSQL_STMT_FORI,
 	PLPGSQL_STMT_FORS,
 	PLPGSQL_STMT_FORC,
+	PLPGSQL_STMT_FOREACH_A,
 	PLPGSQL_STMT_EXIT,
 	PLPGSQL_STMT_RETURN,
 	PLPGSQL_STMT_RETURN_NEXT,
@@ -492,6 +493,18 @@ typedef struct
 	PLpgSQL_expr *query;
 	List	   *params;			/* USING expressions */
 } PLpgSQL_stmt_dynfors;
+
+
+typedef struct
+{								/* FOREACH item in array loop */
+	int			cmd_type;
+	int			lineno;
+	char	   *label;
+	int			varno;			/* loop target variable */
+	int			slice;			/* slice dimension, or 0 */
+	PLpgSQL_expr *expr;			/* array expression */
+	List	   *body;			/* List of statements */
+} PLpgSQL_stmt_foreach_a;
 
 
 typedef struct

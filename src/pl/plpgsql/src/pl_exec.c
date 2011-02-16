@@ -107,6 +107,8 @@ static int exec_stmt_fors(PLpgSQL_execstate *estate,
 			   PLpgSQL_stmt_fors *stmt);
 static int exec_stmt_forc(PLpgSQL_execstate *estate,
 			   PLpgSQL_stmt_forc *stmt);
+static int exec_stmt_foreach_a(PLpgSQL_execstate *estate,
+				    PLpgSQL_stmt_foreach_a *stmt);
 static int exec_stmt_open(PLpgSQL_execstate *estate,
 			   PLpgSQL_stmt_open *stmt);
 static int exec_stmt_fetch(PLpgSQL_execstate *estate,
@@ -1312,6 +1314,10 @@ exec_stmt(PLpgSQL_execstate *estate, PLpgSQL_stmt *stmt)
 			rc = exec_stmt_forc(estate, (PLpgSQL_stmt_forc *) stmt);
 			break;
 
+		case PLPGSQL_STMT_FOREACH_A:
+			rc = exec_stmt_foreach_a(estate, (PLpgSQL_stmt_foreach_a *) stmt);
+			break;
+
 		case PLPGSQL_STMT_EXIT:
 			rc = exec_stmt_exit(estate, (PLpgSQL_stmt_exit *) stmt);
 			break;
@@ -2022,6 +2028,185 @@ exec_stmt_forc(PLpgSQL_execstate *estate, PLpgSQL_stmt_forc *stmt)
 
 	if (curname)
 		pfree(curname);
+
+	return rc;
+}
+
+
+/* ----------
+ * exec_stmt_foreach_a			Loop over elements or slices of an array
+ *
+ * When looping over elements, the loop variable is the same type that the
+ * array stores (eg: integer), when looping through slices, the loop variable
+ * is an array of size and dimensions to match the size of the slice.
+ * ----------
+ */
+static int
+exec_stmt_foreach_a(PLpgSQL_execstate *estate, PLpgSQL_stmt_foreach_a *stmt)
+{
+	ArrayType		   *arr;
+	Oid					arrtype;
+	PLpgSQL_datum	   *loop_var;
+	Oid					loop_var_elem_type;
+	bool				found = false;
+	int					rc = PLPGSQL_RC_OK;
+	ArrayIterator		array_iterator;
+	Oid					iterator_result_type;
+	Datum				value;
+	bool				isnull;
+
+	/* get the value of the array expression */
+	value = exec_eval_expr(estate, stmt->expr, &isnull, &arrtype);
+	if (isnull)
+		ereport(ERROR,
+				(errcode(ERRCODE_NULL_VALUE_NOT_ALLOWED),
+				 errmsg("FOREACH expression must not be NULL")));
+
+	/* check the type of the expression - must be an array */
+	if (!OidIsValid(get_element_type(arrtype)))
+		ereport(ERROR,
+				(errcode(ERRCODE_DATATYPE_MISMATCH),
+				 errmsg("FOREACH expression must yield an array, not type %s",
+						format_type_be(arrtype))));
+
+	/*
+	 * We must copy the array, else it will disappear in exec_eval_cleanup.
+	 * This is annoying, but cleanup will certainly happen while running the
+	 * loop body, so we have little choice.
+	 */
+	arr = DatumGetArrayTypePCopy(value);
+
+	/* Clean up any leftover temporary memory */
+	exec_eval_cleanup(estate);
+
+	/* Slice dimension must be less than or equal to array dimension */
+	if (stmt->slice < 0 || stmt->slice > ARR_NDIM(arr))
+		ereport(ERROR,
+				(errcode(ERRCODE_ARRAY_SUBSCRIPT_ERROR),
+				 errmsg("slice dimension (%d) is out of the valid range 0..%d",
+						stmt->slice, ARR_NDIM(arr))));
+
+	/* Set up the loop variable and see if it is of an array type */
+	loop_var = estate->datums[stmt->varno];
+	if (loop_var->dtype == PLPGSQL_DTYPE_REC ||
+		loop_var->dtype == PLPGSQL_DTYPE_ROW)
+	{
+		/*
+		 * Record/row variable is certainly not of array type, and might not
+		 * be initialized at all yet, so don't try to get its type
+		 */
+		loop_var_elem_type = InvalidOid;
+	}
+	else
+		loop_var_elem_type = get_element_type(exec_get_datum_type(estate,
+																  loop_var));
+
+	/*
+	 * Sanity-check the loop variable type.  We don't try very hard here,
+	 * and should not be too picky since it's possible that exec_assign_value
+	 * can coerce values of different types.  But it seems worthwhile to
+	 * complain if the array-ness of the loop variable is not right.
+	 */
+	if (stmt->slice > 0 && loop_var_elem_type == InvalidOid)
+		ereport(ERROR,
+				(errcode(ERRCODE_DATATYPE_MISMATCH),
+				 errmsg("FOREACH ... SLICE loop variable must be of an array type")));
+	if (stmt->slice == 0 && loop_var_elem_type != InvalidOid)
+		ereport(ERROR,
+				(errcode(ERRCODE_DATATYPE_MISMATCH),
+				 errmsg("FOREACH loop variable must not be of an array type")));
+
+	/* Create an iterator to step through the array */
+	array_iterator = array_create_iterator(arr, stmt->slice);
+
+	/* Identify iterator result type */
+	if (stmt->slice > 0)
+	{
+		/* When slicing, nominal type of result is same as array type */
+		iterator_result_type = arrtype;
+	}
+	else
+	{
+		/* Without slicing, results are individual array elements */
+		iterator_result_type = ARR_ELEMTYPE(arr);
+	}
+
+	/* Iterate over the array elements or slices */
+	while (array_iterate(array_iterator, &value, &isnull))
+	{
+		found = true;			/* looped at least once */
+
+		/* Assign current element/slice to the loop variable */
+		exec_assign_value(estate, loop_var, value, iterator_result_type,
+						  &isnull);
+
+		/* In slice case, value is temporary; must free it to avoid leakage */
+		if (stmt->slice > 0)
+			pfree(DatumGetPointer(value));
+
+		/*
+		 * Execute the statements
+		 */
+		rc = exec_stmts(estate, stmt->body);
+
+		/* Handle the return code */
+		if (rc == PLPGSQL_RC_RETURN)
+			break;				/* break out of the loop */
+		else if (rc == PLPGSQL_RC_EXIT)
+		{
+			if (estate->exitlabel == NULL)
+				/* unlabelled exit, finish the current loop */
+				rc = PLPGSQL_RC_OK;
+			else if (stmt->label != NULL &&
+					 strcmp(stmt->label, estate->exitlabel) == 0)
+			{
+				/* labelled exit, matches the current stmt's label */
+				estate->exitlabel = NULL;
+				rc = PLPGSQL_RC_OK;
+			}
+
+			/*
+			 * otherwise, this is a labelled exit that does not match the
+			 * current statement's label, if any: return RC_EXIT so that the
+			 * EXIT continues to propagate up the stack.
+			 */
+			break;
+		}
+		else if (rc == PLPGSQL_RC_CONTINUE)
+		{
+			if (estate->exitlabel == NULL)
+				/* unlabelled continue, so re-run the current loop */
+				rc = PLPGSQL_RC_OK;
+			else if (stmt->label != NULL &&
+					 strcmp(stmt->label, estate->exitlabel) == 0)
+			{
+				/* label matches named continue, so re-run loop */
+				estate->exitlabel = NULL;
+				rc = PLPGSQL_RC_OK;
+			}
+			else
+			{
+				/*
+				 * otherwise, this is a named continue that does not match the
+				 * current statement's label, if any: return RC_CONTINUE so
+				 * that the CONTINUE will propagate up the stack.
+				 */
+				break;
+			}
+		}
+	}
+
+	/* Release temporary memory, including the array value */
+	array_free_iterator(array_iterator);
+	pfree(arr);
+
+	/*
+	 * Set the FOUND variable to indicate the result of executing the loop
+	 * (namely, whether we looped one or more times). This must be set here so
+	 * that it does not interfere with the value of the FOUND variable inside
+	 * the loop processing itself.
+	 */
+	exec_set_found(estate, found);
 
 	return rc;
 }

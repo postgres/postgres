@@ -4240,3 +4240,197 @@ select unreserved_test();
 (1 row)
 
 drop function unreserved_test();
+--
+-- Test FOREACH over arrays
+--
+create function foreach_test(anyarray)
+returns void as $$
+declare x int;
+begin
+  foreach x in array $1
+  loop
+    raise notice '%', x;
+  end loop;
+  end;
+$$ language plpgsql;
+select foreach_test(ARRAY[1,2,3,4]);
+NOTICE:  1
+NOTICE:  2
+NOTICE:  3
+NOTICE:  4
+ foreach_test 
+--------------
+ 
+(1 row)
+
+select foreach_test(ARRAY[[1,2],[3,4]]);
+NOTICE:  1
+NOTICE:  2
+NOTICE:  3
+NOTICE:  4
+ foreach_test 
+--------------
+ 
+(1 row)
+
+create or replace function foreach_test(anyarray)
+returns void as $$
+declare x int;
+begin
+  foreach x slice 1 in array $1
+  loop
+    raise notice '%', x;
+  end loop;
+  end;
+$$ language plpgsql;
+-- should fail
+select foreach_test(ARRAY[1,2,3,4]);
+ERROR:  FOREACH ... SLICE loop variable must be of an array type
+CONTEXT:  PL/pgSQL function "foreach_test" line 4 at FOREACH over array
+select foreach_test(ARRAY[[1,2],[3,4]]);
+ERROR:  FOREACH ... SLICE loop variable must be of an array type
+CONTEXT:  PL/pgSQL function "foreach_test" line 4 at FOREACH over array
+create or replace function foreach_test(anyarray)
+returns void as $$
+declare x int[];
+begin
+  foreach x slice 1 in array $1
+  loop
+    raise notice '%', x;
+  end loop;
+  end;
+$$ language plpgsql;
+select foreach_test(ARRAY[1,2,3,4]);
+NOTICE:  {1,2,3,4}
+ foreach_test 
+--------------
+ 
+(1 row)
+
+select foreach_test(ARRAY[[1,2],[3,4]]);
+NOTICE:  {1,2}
+NOTICE:  {3,4}
+ foreach_test 
+--------------
+ 
+(1 row)
+
+-- higher level of slicing
+create or replace function foreach_test(anyarray)
+returns void as $$
+declare x int[];
+begin
+  foreach x slice 2 in array $1
+  loop
+    raise notice '%', x;
+  end loop;
+  end;
+$$ language plpgsql;
+-- should fail
+select foreach_test(ARRAY[1,2,3,4]);
+ERROR:  slice dimension (2) is out of the valid range 0..1
+CONTEXT:  PL/pgSQL function "foreach_test" line 4 at FOREACH over array
+-- ok
+select foreach_test(ARRAY[[1,2],[3,4]]);
+NOTICE:  {{1,2},{3,4}}
+ foreach_test 
+--------------
+ 
+(1 row)
+
+select foreach_test(ARRAY[[[1,2]],[[3,4]]]);
+NOTICE:  {{1,2}}
+NOTICE:  {{3,4}}
+ foreach_test 
+--------------
+ 
+(1 row)
+
+create type xy_tuple AS (x int, y int);
+-- iteration over array of records
+create or replace function foreach_test(anyarray)
+returns void as $$
+declare r record;
+begin
+  foreach r in array $1
+  loop
+    raise notice '%', r;
+  end loop;
+  end;
+$$ language plpgsql;
+select foreach_test(ARRAY[(10,20),(40,69),(35,78)]::xy_tuple[]);
+NOTICE:  (10,20)
+NOTICE:  (40,69)
+NOTICE:  (35,78)
+ foreach_test 
+--------------
+ 
+(1 row)
+
+select foreach_test(ARRAY[[(10,20),(40,69)],[(35,78),(88,76)]]::xy_tuple[]);
+NOTICE:  (10,20)
+NOTICE:  (40,69)
+NOTICE:  (35,78)
+NOTICE:  (88,76)
+ foreach_test 
+--------------
+ 
+(1 row)
+
+create or replace function foreach_test(anyarray)
+returns void as $$
+declare x int; y int;
+begin
+  foreach x, y in array $1
+  loop
+    raise notice 'x = %, y = %', x, y;
+  end loop;
+  end;
+$$ language plpgsql;
+select foreach_test(ARRAY[(10,20),(40,69),(35,78)]::xy_tuple[]);
+NOTICE:  x = 10, y = 20
+NOTICE:  x = 40, y = 69
+NOTICE:  x = 35, y = 78
+ foreach_test 
+--------------
+ 
+(1 row)
+
+select foreach_test(ARRAY[[(10,20),(40,69)],[(35,78),(88,76)]]::xy_tuple[]);
+NOTICE:  x = 10, y = 20
+NOTICE:  x = 40, y = 69
+NOTICE:  x = 35, y = 78
+NOTICE:  x = 88, y = 76
+ foreach_test 
+--------------
+ 
+(1 row)
+
+-- slicing over array of composite types
+create or replace function foreach_test(anyarray)
+returns void as $$
+declare x xy_tuple[];
+begin
+  foreach x slice 1 in array $1
+  loop
+    raise notice '%', x;
+  end loop;
+  end;
+$$ language plpgsql;
+select foreach_test(ARRAY[(10,20),(40,69),(35,78)]::xy_tuple[]);
+NOTICE:  {"(10,20)","(40,69)","(35,78)"}
+ foreach_test 
+--------------
+ 
+(1 row)
+
+select foreach_test(ARRAY[[(10,20),(40,69)],[(35,78),(88,76)]]::xy_tuple[]);
+NOTICE:  {"(10,20)","(40,69)"}
+NOTICE:  {"(35,78)","(88,76)"}
+ foreach_test 
+--------------
+ 
+(1 row)
+
+drop function foreach_test(anyarray);
+drop type xy_tuple;

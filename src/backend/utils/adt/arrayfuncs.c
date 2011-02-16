@@ -50,6 +50,30 @@ typedef enum
 	ARRAY_LEVEL_DELIMITED
 } ArrayParseState;
 
+/* Working state for array_iterate() */
+typedef struct ArrayIteratorData
+{
+	/* basic info about the array, set up during array_create_iterator() */
+	ArrayType  *arr;			/* array we're iterating through */
+	bits8	   *nullbitmap;		/* its null bitmap, if any */
+	int			nitems;			/* total number of elements in array */
+	int16		typlen;			/* element type's length */
+	bool		typbyval;		/* element type's byval property */
+	char		typalign;		/* element type's align property */
+
+	/* information about the requested slice size */
+	int			slice_ndim;		/* slice dimension, or 0 if not slicing */
+	int			slice_len;		/* number of elements per slice */
+	int		   *slice_dims;		/* slice dims array */
+	int		   *slice_lbound;	/* slice lbound array */
+	Datum	   *slice_values;	/* workspace of length slice_len */
+	bool	   *slice_nulls;	/* workspace of length slice_len */
+
+	/* current position information, updated on each iteration */
+	char	   *data_ptr;		/* our current position in the array */
+	int			current_item;	/* the item # we're at in the array */
+} ArrayIteratorData;
+
 static bool array_isspace(char ch);
 static int	ArrayCount(const char *str, int *dim, char typdelim);
 static void ReadArrayStr(char *arrayStr, const char *origStr,
@@ -3830,6 +3854,188 @@ arraycontained(PG_FUNCTION_ARGS)
 	PG_FREE_IF_COPY(array2, 1);
 
 	PG_RETURN_BOOL(result);
+}
+
+
+/*-----------------------------------------------------------------------------
+ * Array iteration functions
+ *		These functions are used to iterate efficiently through arrays
+ *-----------------------------------------------------------------------------
+ */
+
+/*
+ * array_create_iterator --- set up to iterate through an array
+ *
+ * If slice_ndim is zero, we will iterate element-by-element; the returned
+ * datums are of the array's element type.
+ *
+ * If slice_ndim is 1..ARR_NDIM(arr), we will iterate by slices: the
+ * returned datums are of the same array type as 'arr', but of size
+ * equal to the rightmost N dimensions of 'arr'.
+ *
+ * The passed-in array must remain valid for the lifetime of the iterator.
+ */
+ArrayIterator
+array_create_iterator(ArrayType *arr, int slice_ndim)
+{
+	ArrayIterator iterator = palloc0(sizeof(ArrayIteratorData));
+
+	/*
+	 * Sanity-check inputs --- caller should have got this right already
+	 */
+	Assert(PointerIsValid(arr));
+	if (slice_ndim < 0 || slice_ndim > ARR_NDIM(arr))
+		elog(ERROR, "invalid arguments to array_create_iterator");
+
+	/*
+	 * Remember basic info about the array and its element type
+	 */
+	iterator->arr = arr;
+	iterator->nullbitmap = ARR_NULLBITMAP(arr);
+	iterator->nitems = ArrayGetNItems(ARR_NDIM(arr), ARR_DIMS(arr));
+	get_typlenbyvalalign(ARR_ELEMTYPE(arr),
+						 &iterator->typlen,
+						 &iterator->typbyval,
+						 &iterator->typalign);
+
+	/*
+	 * Remember the slicing parameters.
+	 */
+	iterator->slice_ndim = slice_ndim;
+
+	if (slice_ndim > 0)
+	{
+		/*
+		 * Get pointers into the array's dims and lbound arrays to represent
+		 * the dims/lbound arrays of a slice.  These are the same as the
+		 * rightmost N dimensions of the array.
+		 */
+		iterator->slice_dims = ARR_DIMS(arr) + ARR_NDIM(arr) - slice_ndim;
+		iterator->slice_lbound = ARR_LBOUND(arr) + ARR_NDIM(arr) - slice_ndim;
+
+		/*
+		 * Compute number of elements in a slice.
+		 */
+		iterator->slice_len = ArrayGetNItems(slice_ndim,
+											 iterator->slice_dims);
+
+		/*
+		 * Create workspace for building sub-arrays.
+		 */
+		iterator->slice_values = (Datum *)
+			palloc(iterator->slice_len * sizeof(Datum));
+		iterator->slice_nulls = (bool *)
+			palloc(iterator->slice_len * sizeof(bool));
+	}
+
+	/*
+	 * Initialize our data pointer and linear element number.  These will
+	 * advance through the array during array_iterate().
+	 */
+	iterator->data_ptr = ARR_DATA_PTR(arr);
+	iterator->current_item = 0;
+
+	return iterator;
+}
+
+/*
+ * Iterate through the array referenced by 'iterator'.
+ *
+ * As long as there is another element (or slice), return it into
+ * *value / *isnull, and return true.  Return false when no more data.
+ */
+bool
+array_iterate(ArrayIterator iterator, Datum *value, bool *isnull)
+{
+	/* Done if we have reached the end of the array */
+	if (iterator->current_item >= iterator->nitems)
+		return false;
+
+	if (iterator->slice_ndim == 0)
+	{
+		/*
+		 * Scalar case: return one element.
+		 */
+		if (array_get_isnull(iterator->nullbitmap, iterator->current_item++))
+		{
+			*isnull = true;
+			*value = (Datum) 0;
+		}
+		else
+		{
+			/* non-NULL, so fetch the individual Datum to return */
+			char	   *p = iterator->data_ptr;
+
+			*isnull = false;
+			*value = fetch_att(p, iterator->typbyval, iterator->typlen);
+
+			/* Move our data pointer forward to the next element */
+			p = att_addlength_pointer(p, iterator->typlen, p);
+			p = (char *) att_align_nominal(p, iterator->typalign);
+			iterator->data_ptr = p;
+		}
+	}
+	else
+	{
+		/*
+		 * Slice case: build and return an array of the requested size.
+		 */
+		ArrayType  *result;
+		Datum	   *values = iterator->slice_values;
+		bool	   *nulls = iterator->slice_nulls;
+		char	   *p = iterator->data_ptr;
+		int			i;
+
+		for (i = 0; i < iterator->slice_len; i++)
+		{
+			if (array_get_isnull(iterator->nullbitmap,
+								 iterator->current_item++))
+			{
+				nulls[i] = true;
+				values[i] = (Datum) 0;
+			}
+			else
+			{
+				nulls[i] = false;
+				values[i] = fetch_att(p, iterator->typbyval, iterator->typlen);
+
+				/* Move our data pointer forward to the next element */
+				p = att_addlength_pointer(p, iterator->typlen, p);
+				p = (char *) att_align_nominal(p, iterator->typalign);
+			}
+		}
+
+		iterator->data_ptr = p;
+
+		result = construct_md_array(values,
+									nulls,
+									iterator->slice_ndim,
+									iterator->slice_dims,
+									iterator->slice_lbound,
+									ARR_ELEMTYPE(iterator->arr),
+									iterator->typlen,
+									iterator->typbyval,
+									iterator->typalign);
+
+		*isnull = false;
+		*value = PointerGetDatum(result);
+	}
+
+	return true;
+}
+
+/*
+ * Release an ArrayIterator data structure
+ */
+void
+array_free_iterator(ArrayIterator iterator)
+{
+	if (iterator->slice_ndim > 0)
+	{
+		pfree(iterator->slice_values);
+		pfree(iterator->slice_nulls);
+	}
+	pfree(iterator);
 }
 
 

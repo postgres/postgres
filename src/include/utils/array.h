@@ -114,6 +114,9 @@ typedef struct ArrayMapState
 	ArrayMetaState ret_extra;
 } ArrayMapState;
 
+/* ArrayIteratorData is private in arrayfuncs.c */
+typedef struct ArrayIteratorData *ArrayIterator;
+
 /*
  * fmgr macros for array objects
  */
@@ -253,6 +256,10 @@ extern Datum makeArrayResult(ArrayBuildState *astate,
 				MemoryContext rcontext);
 extern Datum makeMdArrayResult(ArrayBuildState *astate, int ndims,
 				  int *dims, int *lbs, MemoryContext rcontext, bool release);
+
+extern ArrayIterator array_create_iterator(ArrayType *arr, int slice_ndim);
+extern bool array_iterate(ArrayIterator iterator, Datum *value, bool *isnull);
+extern void array_free_iterator(ArrayIterator iterator);
 
 /*
  * prototypes for functions defined in arrayutils.c

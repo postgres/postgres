@@ -1263,7 +1263,7 @@ EXECUTE 'UPDATE tbl SET '
 <programlisting>
 EXECUTE format('UPDATE tbl SET %I = %L WHERE key = %L', colname, newvalue, keyvalue);
 </programlisting>
-     The <function>format</function> function can be used in conjunction with 
+     The <function>format</function> function can be used in conjunction with
      the <literal>USING</literal> clause:
 <programlisting>
 EXECUTE format('UPDATE tbl SET %I = $1 WHERE key = $2', colname)
@@ -1356,19 +1356,15 @@ GET DIAGNOSTICS integer_var = ROW_COUNT;
             true if it successfully repositions the cursor, false otherwise.
            </para>
           </listitem>
-
           <listitem>
            <para>
-            A <command>FOR</> statement sets <literal>FOUND</literal> true
-            if it iterates one or more times, else false.  This applies to
-            all four variants of the <command>FOR</> statement (integer
-            <command>FOR</> loops, record-set <command>FOR</> loops,
-            dynamic record-set <command>FOR</> loops, and cursor
-            <command>FOR</> loops).
+            A <command>FOR</> or <command>FOREACH</> statement sets
+            <literal>FOUND</literal> true
+            if it iterates one or more times, else false.
             <literal>FOUND</literal> is set this way when the
-            <command>FOR</> loop exits; inside the execution of the loop,
+            loop exits; inside the execution of the loop,
             <literal>FOUND</literal> is not modified by the
-            <command>FOR</> statement, although it might be changed by the
+            loop statement, although it might be changed by the
             execution of other statements within the loop body.
            </para>
           </listitem>
@@ -1910,9 +1906,9 @@ END CASE;
 
     <para>
      With the <literal>LOOP</>, <literal>EXIT</>,
-     <literal>CONTINUE</>, <literal>WHILE</>, and <literal>FOR</>
-     statements, you can arrange for your <application>PL/pgSQL</>
-     function to repeat a series of commands.
+     <literal>CONTINUE</>, <literal>WHILE</>, <literal>FOR</>,
+     and <literal>FOREACH</> statements, you can arrange for your
+     <application>PL/pgSQL</> function to repeat a series of commands.
     </para>
 
     <sect3>
@@ -2235,6 +2231,90 @@ END LOOP <optional> <replaceable>label</replaceable> </optional>;
      Another way to specify the query whose results should be iterated
      through is to declare it as a cursor.  This is described in
      <xref linkend="plpgsql-cursor-for-loop">.
+    </para>
+   </sect2>
+
+   <sect2 id="plpgsql-foreach-array">
+    <title>Looping Through Arrays</title>
+
+    <para>
+     The <literal>FOREACH</> loop is much like a <literal>FOR</> loop,
+     but instead of iterating through the rows returned by a SQL query,
+     it iterates through the elements of an array value.
+     (In general, <literal>FOREACH</> is meant for looping through
+     components of a composite-valued expression; variants for looping
+     through composites besides arrays may be added in future.)
+     The <literal>FOREACH</> statement to loop over an array is:
+
+<synopsis>
+<optional> &lt;&lt;<replaceable>label</replaceable>&gt;&gt; </optional>
+FOREACH <replaceable>target</replaceable> <optional> SLICE <replaceable>number</replaceable> </optional> IN ARRAY <replaceable>expression</replaceable> LOOP
+    <replaceable>statements</replaceable>
+END LOOP <optional> <replaceable>label</replaceable> </optional>;
+</synopsis>
+    </para>
+
+    <para>
+     Without <literal>SLICE</>, or if <literal>SLICE 0</> is specified,
+     the loop iterates through individual elements of the array produced
+     by evaluating the <replaceable>expression</replaceable>.
+     The <replaceable>target</replaceable> variable is assigned each
+     element value in sequence, and the loop body is executed for each element.
+     Here is an example of looping through the elements of an integer
+     array:
+
+<programlisting>
+CREATE FUNCTION sum(int[]) RETURNS int8 AS $$
+DECLARE
+  s int8 := 0;
+  x int;
+BEGIN
+  FOREACH x IN ARRAY $1
+  LOOP
+    s := s + x;
+  END LOOP;
+  RETURN s;
+END;
+$$ LANGUAGE plpgsql;
+</programlisting>
+
+     The elements are visited in storage order, regardless of the number of
+     array dimensions.  Although the <replaceable>target</replaceable> is
+     usually just a single variable, it can be a list of variables when
+     looping through an array of composite values (records).  In that case,
+     for each array element, the variables are assigned from successive
+     columns of the composite value.
+    </para>
+
+    <para>
+     With a positive <literal>SLICE</> value, <literal>FOREACH</>
+     iterates through slices of the array rather than single elements.
+     The <literal>SLICE</> value must be an integer constant not larger
+     than the number of dimensions of the array.  The
+     <replaceable>target</replaceable> variable must be an array,
+     and it receives successive slices of the array value, where each slice
+     is of the number of dimensions specified by <literal>SLICE</>.
+     Here is an example of iterating through one-dimensional slices:
+
+<programlisting>
+CREATE FUNCTION scan_rows(int[]) RETURNS void AS $$
+DECLARE
+  x int[];
+BEGIN
+  FOREACH x SLICE 1 IN ARRAY $1
+  LOOP
+    RAISE NOTICE 'row = %', x;
+  END LOOP;
+END;
+$$ LANGUAGE plpgsql;
+
+SELECT scan_rows(ARRAY[[1,2,3],[4,5,6],[7,8,9],[10,11,12]]);
+
+NOTICE:  row = {1,2,3}
+NOTICE:  row = {4,5,6}
+NOTICE:  row = {7,8,9}
+NOTICE:  row = {10,11,12}
+</programlisting>
     </para>
    </sect2>
 
