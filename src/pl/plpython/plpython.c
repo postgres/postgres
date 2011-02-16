@@ -1220,8 +1220,13 @@ PLy_procedure_call(PLyProcedure *proc, char *kargs, PyObject *vargs)
 	PyObject   *rv;
 
 	PyDict_SetItemString(proc->globals, kargs, vargs);
+#if PY_VERSION_HEX >= 0x03020000
+	rv = PyEval_EvalCode(proc->code,
+						 proc->globals, proc->globals);
+#else
 	rv = PyEval_EvalCode((PyCodeObject *) proc->code,
 						 proc->globals, proc->globals);
+#endif
 
 	/* If the Python code returned an error, propagate it */
 	if (rv == NULL)
