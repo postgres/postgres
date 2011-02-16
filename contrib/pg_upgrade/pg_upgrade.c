@@ -63,9 +63,6 @@ main(int argc, char **argv)
 	char	   *deletion_script_file_name = NULL;
 	bool		live_check = false;
 
-	initialize_cluster_info(&old_cluster);
-	initialize_cluster_info(&new_cluster);
-
 	parseCommandLine(argc, argv);
 
 	output_check_banner(&live_check);
@@ -428,31 +425,10 @@ set_frozenxids(void)
 static void
 cleanup(void)
 {
-	int			tblnum;
 	char		filename[MAXPGPATH];
 
-	for (tblnum = 0; tblnum < os_info.num_tablespaces; tblnum++)
-		pg_free(os_info.tablespaces[tblnum]);
-	pg_free(os_info.tablespaces);
-
-	free_db_and_rel_infos(&old_cluster.dbarr);
-	free_db_and_rel_infos(&new_cluster.dbarr);
-	pg_free(log_opts.filename);
-	pg_free(os_info.user);
-	pg_free(old_cluster.controldata.lc_collate);
-	pg_free(new_cluster.controldata.lc_collate);
-	pg_free(old_cluster.controldata.lc_ctype);
-	pg_free(new_cluster.controldata.lc_ctype);
-	pg_free(old_cluster.controldata.encoding);
-	pg_free(new_cluster.controldata.encoding);
-	pg_free(old_cluster.tablespace_suffix);
-	pg_free(new_cluster.tablespace_suffix);
-
-	if (log_opts.fd != NULL)
-	{
+	if (log_opts.fd)
 		fclose(log_opts.fd);
-		log_opts.fd = NULL;
-	}
 
 	if (log_opts.debug_fd)
 		fclose(log_opts.debug_fd);

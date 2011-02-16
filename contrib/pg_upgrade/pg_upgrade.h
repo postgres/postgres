@@ -326,7 +326,6 @@ void		check_loadable_libraries(void);
 
 /* info.c */
 
-void		initialize_cluster_info(ClusterInfo *cluster);
 FileNameMap *gen_db_file_maps(DbInfo *old_db,
 				 DbInfo *new_db, int *nmaps, const char *old_pgdata,
 				 const char *new_pgdata);
