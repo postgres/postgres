@@ -455,7 +455,7 @@ typedef struct IndexOptInfo
 	int			ncolumns;		/* number of columns in index */
 	Oid		   *opfamily;		/* OIDs of operator families for columns */
 	int		   *indexkeys;		/* column numbers of index's keys, or 0 */
-	Oid		   *indexcollations;/* OIDs of the collations of the index columns */
+	Oid		   *indexcollations;	/* OIDs of collations of index columns */
 	Oid		   *opcintype;		/* OIDs of opclass declared input data types */
 	Oid		   *sortopfamily;	/* OIDs of btree opfamilies, if orderable */
 	bool	   *reverse_sort;	/* is sort order descending? */
@@ -469,6 +469,7 @@ typedef struct IndexOptInfo
 
 	bool		predOK;			/* true if predicate matches query */
 	bool		unique;			/* true if a unique index */
+	bool		hypothetical;	/* true if index doesn't really exist */
 	bool		amcanorderbyop;	/* does AM support order by operator result? */
 	bool		amoptionalkey;	/* can query omit key for the first column? */
 	bool		amsearchnulls;	/* can AM search for NULL/NOT NULL entries? */
