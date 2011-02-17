@@ -109,9 +109,6 @@ CREATE OPERATOR CLASS gist_trgm_ops
 FOR TYPE text USING gist
 AS
         OPERATOR        1       % (text, text),
-        OPERATOR        2       <-> (text, text) FOR ORDER BY pg_catalog.float_ops,
-        OPERATOR        3       pg_catalog.~~ (text, text),
-        OPERATOR        4       pg_catalog.~~* (text, text),
         FUNCTION        1       gtrgm_consistent (internal, text, int, oid, internal),
         FUNCTION        2       gtrgm_union (bytea, internal),
         FUNCTION        3       gtrgm_compress (internal),
@@ -119,8 +116,18 @@ AS
         FUNCTION        5       gtrgm_penalty (internal, internal, internal),
         FUNCTION        6       gtrgm_picksplit (internal, internal),
         FUNCTION        7       gtrgm_same (gtrgm, gtrgm, internal),
-        FUNCTION        8       gtrgm_distance (internal, text, int, oid),
         STORAGE         gtrgm;
+
+-- Add operators and support functions that are new in 9.1.  We do it like
+-- this, leaving them "loose" in the operator family rather than bound into
+-- the gist_trgm_ops opclass, because that's the only state that can be
+-- reproduced during an upgrade from 9.0 (see pg_trgm--unpackaged--1.0.sql).
+
+ALTER OPERATOR FAMILY gist_trgm_ops USING gist ADD
+        OPERATOR        2       <-> (text, text) FOR ORDER BY pg_catalog.float_ops,
+        OPERATOR        3       pg_catalog.~~ (text, text),
+        OPERATOR        4       pg_catalog.~~* (text, text),
+        FUNCTION        8 (text, text)  gtrgm_distance (internal, text, int, oid);
 
 -- support functions for gin
 CREATE FUNCTION gin_extract_value_trgm(text, internal)
@@ -143,10 +150,14 @@ CREATE OPERATOR CLASS gin_trgm_ops
 FOR TYPE text USING gin
 AS
         OPERATOR        1       % (text, text),
-        OPERATOR        3       pg_catalog.~~ (text, text),
-        OPERATOR        4       pg_catalog.~~* (text, text),
         FUNCTION        1       btint4cmp (int4, int4),
         FUNCTION        2       gin_extract_value_trgm (text, internal),
         FUNCTION        3       gin_extract_query_trgm (text, internal, int2, internal, internal, internal, internal),
         FUNCTION        4       gin_trgm_consistent (internal, int2, text, int4, internal, internal, internal, internal),
         STORAGE         int4;
+
+-- Add operators that are new in 9.1.
+
+ALTER OPERATOR FAMILY gin_trgm_ops USING gin ADD
+        OPERATOR        3       pg_catalog.~~ (text, text),
+        OPERATOR        4       pg_catalog.~~* (text, text);

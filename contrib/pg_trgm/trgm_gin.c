@@ -29,14 +29,16 @@ Datum		gin_trgm_consistent(PG_FUNCTION_ARGS);
 /*
  * This function can only be called if a pre-9.1 version of the GIN operator
  * class definition is present in the catalogs (probably as a consequence
- * of upgrade-in-place).  Complain.
+ * of upgrade-in-place).  Cope.
  */
 Datum
 gin_extract_trgm(PG_FUNCTION_ARGS)
 {
-	ereport(ERROR,
-			(errmsg("GIN operator class for pg_trgm is out of date"),
-			 errhint("Please drop and re-create the pg_trgm catalog entries.")));
+	if (PG_NARGS() == 3)
+		return gin_extract_value_trgm(fcinfo);
+	if (PG_NARGS() == 7)
+		return gin_extract_query_trgm(fcinfo);
+	elog(ERROR, "unexpected number of arguments to gin_extract_trgm");
 	PG_RETURN_NULL();
 }
 
