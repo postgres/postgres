@@ -3,6 +3,12 @@
  * elog.c
  *	  error logging and reporting
  *
+ * Because of the extremely high rate at which log messages can be generated,
+ * we need to be mindful of the performance cost of obtaining any information
+ * that may be logged.  Also, it's important to keep in mind that this code may
+ * get called from within an aborted transaction, in which case operations
+ * such as syscache lookups are unsafe.
+ *
  * Some notes about recursion and errors during error processing:
  *
  * We need to be robust about recursive-error scenarios --- for example,
