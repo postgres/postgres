@@ -2464,7 +2464,7 @@ BEGIN
             INSERT INTO db(a,b) VALUES (key, data);
             RETURN;
         EXCEPTION WHEN unique_violation THEN
-            -- do nothing, and loop to try the UPDATE again
+            -- Do nothing, and loop to try the UPDATE again.
         END;
     END LOOP;
 END;
@@ -2474,7 +2474,10 @@ LANGUAGE plpgsql;
 SELECT merge_db(1, 'david');
 SELECT merge_db(1, 'dennis');
 </programlisting>
-
+     This example assumes the <literal>unique_violation</> error is caused by
+     the <command>INSERT</>, and not by an <command>INSERT</> trigger function
+     on the table.  Also, this example only works in the default Read
+     Committed transaction mode.
     </para>
     </example>
   </sect2>
