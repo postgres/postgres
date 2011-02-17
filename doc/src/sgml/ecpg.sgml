@@ -555,7 +555,7 @@ EXEC SQL EXECUTE stmt1 INTO :dboid, :dbname USING 1;
    </para>
 
    <para>
-    If a statement return multiple rows, the application can use a
+    If a statement returns multiple rows, the application can use a
     cursor declared based on the prepared statement.  To bind input
     parameters, the cursor must be opened with
     a <literal>USING</literal> clause:
