@@ -4555,10 +4555,10 @@ get_actual_variable_range(PlannerInfo *root, VariableStatData *vardata,
 			continue;
 
 		/*
-		 * The index list might include fictitious indexes inserted by a
+		 * The index list might include hypothetical indexes inserted by a
 		 * get_relation_info hook --- don't try to access them.
 		 */
-		if (!OidIsValid(index->indexoid))
+		if (index->hypothetical)
 			continue;
 
 		/*

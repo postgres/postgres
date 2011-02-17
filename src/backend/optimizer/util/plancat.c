@@ -275,6 +275,7 @@ get_relation_info(PlannerInfo *root, Oid relationObjectId, bool inhparent,
 				ChangeVarNodes((Node *) info->indpred, 1, varno, 0);
 			info->predOK = false;		/* set later in indxpath.c */
 			info->unique = index->indisunique;
+			info->hypothetical = false;
 
 			/*
 			 * Estimate the index size.  If it's not a partial index, we lock
