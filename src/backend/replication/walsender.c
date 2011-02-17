@@ -565,7 +565,7 @@ ProcessStandbyReplyMessage(void)
 	{
 		TransactionId	nextXid;
 		uint32			nextEpoch;
-		bool			epochOK;
+		bool			epochOK = false;
 
 		GetNextXidAndEpoch(&nextXid, &nextEpoch);
 
