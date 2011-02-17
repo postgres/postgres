@@ -3,7 +3,7 @@
 MODULE_big = sepgsql
 OBJS = hooks.o selinux.o label.o dml.o \
 	schema.o relation.o proc.o
-DATA_built = sepgsql.sql sepgsql-regtest.pp
+DATA_built = sepgsql.sql
 REGRESS = label dml misc
 EXTRA_CLEAN = -r tmp *.pp sepgsql-regtest.if sepgsql-regtest.fc
 
@@ -20,6 +20,3 @@ endif
 
 SHLIB_LINK += $(filter -lselinux, $(LIBS))
 REGRESS_OPTS += --launcher $(top_builddir)/contrib/sepgsql/launcher
-
-sepgsql-regtest.pp: sepgsql-regtest.te
-	$(MAKE) -f $(DESTDIR)/usr/share/selinux/devel/Makefile $@

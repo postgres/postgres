@@ -124,19 +124,24 @@ $ for DBNAME in template0 template1 postgres; do
   </para>
 
   <para>
-   First, install the policy package for the regression test.
+   First, build and install the policy package for the regression test.
    The <filename>sepgsql-regtest.pp</> is a special purpose policy package
    which provides a set of rules to be allowed during the regression tests.
-   You need to install this policy package using the <command>semodule</>
-   command, which links supplied policy packages and loads them
-   into the kernel space.  If this packages is correctly installed,
+   It should be built from the policy source fire 
+   (<filename>sepgsql-regtest.te</>), which is normally done using
+   <command>make</command>.  You will need to locate the appropriate
+   Makefile on your system; the path shown below is only an example.
+   Once built, you can install this policy package using the
+   <command>semodule</> command, which links supplied policy packages and
+   loads them into the kernel space.  If this packages is correctly installed,
    <literal><command>semodule</> -l</> should list sepgsql-regtest as an
    available policy package.
   </para>
 
 <screen>
+$ make -C ./contrib/sepgsql -f /usr/share/selinux/devel/Makefile
 $ su
-# semodule -u /usr/local/pgsql/share/contrib/sepgsql-regtest.pp
+# semodule -u ./contrib/sepgsql/sepgsql-regtest.pp
 # semodule -l
     :
 sepgsql-regtest 1.03
