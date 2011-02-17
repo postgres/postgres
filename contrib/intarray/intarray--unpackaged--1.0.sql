@@ -68,7 +68,23 @@ ALTER EXTENSION intarray ADD operator class gist__intbig_ops using gist;
 ALTER EXTENSION intarray ADD operator family gin__int_ops using gin;
 ALTER EXTENSION intarray ADD operator class gin__int_ops using gin;
 
--- these two functions have different signatures in 9.1, but we don't
--- bother trying to fix them because GIN doesn't care much
+-- These functions had different signatures in 9.0.  We can't just
+-- drop and recreate them because they are linked into the GIN opclass,
+-- so we need some ugly hacks.
+
+-- First, absorb them into the extension under their old identities.
+
 ALTER EXTENSION intarray ADD function ginint4_queryextract(internal,internal,smallint,internal,internal);
 ALTER EXTENSION intarray ADD function ginint4_consistent(internal,smallint,internal,integer,internal,internal);
+
+-- Next, fix the parameter lists by means of direct UPDATE on the pg_proc
+-- entries.  This is ugly as can be, but there's no other way to do it
+-- while preserving the identities (OIDs) of the functions.
+
+UPDATE pg_catalog.pg_proc
+SET pronargs = 7, proargtypes = '2281 2281 21 2281 2281 2281 2281'
+WHERE oid = 'ginint4_queryextract(internal,internal,smallint,internal,internal)'::pg_catalog.regprocedure;
+
+UPDATE pg_catalog.pg_proc
+SET pronargs = 8, proargtypes = '2281 21 2281 23 2281 2281 2281 2281'
+WHERE oid = 'ginint4_consistent(internal,smallint,internal,integer,internal,internal)'::pg_catalog.regprocedure;
