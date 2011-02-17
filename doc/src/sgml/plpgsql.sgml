@@ -2476,8 +2476,7 @@ SELECT merge_db(1, 'dennis');
 </programlisting>
      This example assumes the <literal>unique_violation</> error is caused by
      the <command>INSERT</>, and not by an <command>INSERT</> trigger function
-     on the table.  Also, this example only works in the default Read
-     Committed transaction mode.
+     on the table.
     </para>
     </example>
   </sect2>
