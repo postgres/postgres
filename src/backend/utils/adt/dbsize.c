@@ -603,6 +603,9 @@ pg_relation_filepath(PG_FUNCTION_ARGS)
 		default:
 			/* no storage, return NULL */
 			rnode.relNode = InvalidOid;
+			/* some compilers generate warnings without these next two lines */
+			rnode.dbNode = InvalidOid;
+			rnode.spcNode = InvalidOid;
 			break;
 	}
 
