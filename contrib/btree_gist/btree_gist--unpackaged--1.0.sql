@@ -170,3 +170,71 @@ ALTER EXTENSION btree_gist ADD operator family gist_inet_ops using gist;
 ALTER EXTENSION btree_gist ADD operator class gist_inet_ops using gist;
 ALTER EXTENSION btree_gist ADD operator family gist_cidr_ops using gist;
 ALTER EXTENSION btree_gist ADD operator class gist_cidr_ops using gist;
+
+-- Add new-in-9.1 stuff to the operator classes.
+
+ALTER OPERATOR FAMILY gist_oid_ops USING gist ADD
+	OPERATOR	6	<> (oid, oid) ;
+
+ALTER OPERATOR FAMILY gist_int2_ops USING gist ADD
+	OPERATOR	6	<> (int2, int2) ;
+
+ALTER OPERATOR FAMILY gist_int4_ops USING gist ADD
+	OPERATOR	6	<> (int4, int4) ;
+
+ALTER OPERATOR FAMILY gist_int8_ops USING gist ADD
+	OPERATOR	6	<> (int8, int8) ;
+
+ALTER OPERATOR FAMILY gist_float4_ops USING gist ADD
+	OPERATOR	6	<> (float4, float4) ;
+
+ALTER OPERATOR FAMILY gist_float8_ops USING gist ADD
+	OPERATOR	6	<> (float8, float8) ;
+
+ALTER OPERATOR FAMILY gist_timestamp_ops USING gist ADD
+	OPERATOR	6	<> (timestamp, timestamp) ;
+
+ALTER OPERATOR FAMILY gist_timestamptz_ops USING gist ADD
+	OPERATOR	6	<> (timestamptz, timestamptz) ;
+
+ALTER OPERATOR FAMILY gist_time_ops USING gist ADD
+	OPERATOR	6	<> (time, time) ;
+
+ALTER OPERATOR FAMILY gist_timetz_ops USING gist ADD
+	OPERATOR	6	<> (timetz, timetz) ;
+
+ALTER OPERATOR FAMILY gist_date_ops USING gist ADD
+	OPERATOR	6	<> (date, date) ;
+
+ALTER OPERATOR FAMILY gist_interval_ops USING gist ADD
+	OPERATOR	6	<> (interval, interval) ;
+
+ALTER OPERATOR FAMILY gist_cash_ops USING gist ADD
+	OPERATOR	6	<> (money, money) ;
+
+ALTER OPERATOR FAMILY gist_macaddr_ops USING gist ADD
+	OPERATOR	6	<> (macaddr, macaddr) ;
+
+ALTER OPERATOR FAMILY gist_text_ops USING gist ADD
+	OPERATOR	6	<> (text, text) ;
+
+ALTER OPERATOR FAMILY gist_bpchar_ops USING gist ADD
+	OPERATOR	6	<> (bpchar, bpchar) ;
+
+ALTER OPERATOR FAMILY gist_bytea_ops USING gist ADD
+	OPERATOR	6	<> (bytea, bytea) ;
+
+ALTER OPERATOR FAMILY gist_numeric_ops USING gist ADD
+	OPERATOR	6	<> (numeric, numeric) ;
+
+ALTER OPERATOR FAMILY gist_bit_ops USING gist ADD
+	OPERATOR	6	<> (bit, bit) ;
+
+ALTER OPERATOR FAMILY gist_vbit_ops USING gist ADD
+	OPERATOR	6	<> (varbit, varbit) ;
+
+ALTER OPERATOR FAMILY gist_inet_ops USING gist ADD
+	OPERATOR	6	<>  (inet, inet) ;
+
+ALTER OPERATOR FAMILY gist_cidr_ops USING gist ADD
+	OPERATOR	6	<> (inet, inet) ;

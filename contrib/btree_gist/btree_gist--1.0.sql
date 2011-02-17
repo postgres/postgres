@@ -140,7 +140,6 @@ AS
 	OPERATOR	3	=  ,
 	OPERATOR	4	>= ,
 	OPERATOR	5	>  ,
-	OPERATOR	6	<> ,
 	FUNCTION	1	gbt_oid_consistent (internal, oid, int2, oid, internal),
 	FUNCTION	2	gbt_oid_union (bytea, internal),
 	FUNCTION	3	gbt_oid_compress (internal),
@@ -149,6 +148,13 @@ AS
 	FUNCTION	6	gbt_oid_picksplit (internal, internal),
 	FUNCTION	7	gbt_oid_same (internal, internal, internal),
 	STORAGE		gbtreekey8;
+
+-- Add operators that are new in 9.1.  We do it like this, leaving them
+-- "loose" in the operator family rather than bound into the opclass, because
+-- that's the only state that can be reproduced during an upgrade from 9.0.
+
+ALTER OPERATOR FAMILY gist_oid_ops USING gist ADD
+	OPERATOR	6	<> (oid, oid) ;
 
 
 --
@@ -198,7 +204,6 @@ AS
 	OPERATOR	3	=  ,
 	OPERATOR	4	>= ,
 	OPERATOR	5	>  ,
-	OPERATOR	6	<> ,
 	FUNCTION	1	gbt_int2_consistent (internal, int2, int2, oid, internal),
 	FUNCTION	2	gbt_int2_union (bytea, internal),
 	FUNCTION	3	gbt_int2_compress (internal),
@@ -207,6 +212,10 @@ AS
 	FUNCTION	6	gbt_int2_picksplit (internal, internal),
 	FUNCTION	7	gbt_int2_same (internal, internal, internal),
 	STORAGE		gbtreekey4;
+
+ALTER OPERATOR FAMILY gist_int2_ops USING gist ADD
+	OPERATOR	6	<> (int2, int2) ;
+
 
 --
 --
@@ -255,7 +264,6 @@ AS
 	OPERATOR	3	=  ,
 	OPERATOR	4	>= ,
 	OPERATOR	5	>  ,
-	OPERATOR	6	<> ,
 	FUNCTION	1	gbt_int4_consistent (internal, int4, int2, oid, internal),
 	FUNCTION	2	gbt_int4_union (bytea, internal),
 	FUNCTION	3	gbt_int4_compress (internal),
@@ -264,6 +272,10 @@ AS
 	FUNCTION	6	gbt_int4_picksplit (internal, internal),
 	FUNCTION	7	gbt_int4_same (internal, internal, internal),
 	STORAGE		gbtreekey8;
+
+ALTER OPERATOR FAMILY gist_int4_ops USING gist ADD
+	OPERATOR	6	<> (int4, int4) ;
+
 
 --
 --
@@ -312,7 +324,6 @@ AS
 	OPERATOR	3	=  ,
 	OPERATOR	4	>= ,
 	OPERATOR	5	>  ,
-	OPERATOR	6	<> ,
 	FUNCTION	1	gbt_int8_consistent (internal, int8, int2, oid, internal),
 	FUNCTION	2	gbt_int8_union (bytea, internal),
 	FUNCTION	3	gbt_int8_compress (internal),
@@ -321,6 +332,9 @@ AS
 	FUNCTION	6	gbt_int8_picksplit (internal, internal),
 	FUNCTION	7	gbt_int8_same (internal, internal, internal),
 	STORAGE		gbtreekey16;
+
+ALTER OPERATOR FAMILY gist_int8_ops USING gist ADD
+	OPERATOR	6	<> (int8, int8) ;
 
 
 --
@@ -370,7 +384,6 @@ AS
 	OPERATOR	3	=  ,
 	OPERATOR	4	>= ,
 	OPERATOR	5	>  ,
-	OPERATOR	6	<> ,
 	FUNCTION	1	gbt_float4_consistent (internal, float4, int2, oid, internal),
 	FUNCTION	2	gbt_float4_union (bytea, internal),
 	FUNCTION	3	gbt_float4_compress (internal),
@@ -380,7 +393,8 @@ AS
 	FUNCTION	7	gbt_float4_same (internal, internal, internal),
 	STORAGE		gbtreekey8;
 
-
+ALTER OPERATOR FAMILY gist_float4_ops USING gist ADD
+	OPERATOR	6	<> (float4, float4) ;
 
 
 --
@@ -430,7 +444,6 @@ AS
 	OPERATOR	3	=  ,
 	OPERATOR	4	>= ,
 	OPERATOR	5	>  ,
-	OPERATOR	6	<> ,
 	FUNCTION	1	gbt_float8_consistent (internal, float8, int2, oid, internal),
 	FUNCTION	2	gbt_float8_union (bytea, internal),
 	FUNCTION	3	gbt_float8_compress (internal),
@@ -439,6 +452,9 @@ AS
 	FUNCTION	6	gbt_float8_picksplit (internal, internal),
 	FUNCTION	7	gbt_float8_same (internal, internal, internal),
 	STORAGE		gbtreekey16;
+
+ALTER OPERATOR FAMILY gist_float8_ops USING gist ADD
+	OPERATOR	6	<> (float8, float8) ;
 
 
 --
@@ -498,7 +514,6 @@ AS
 	OPERATOR	3	=  ,
 	OPERATOR	4	>= ,
 	OPERATOR	5	>  ,
-	OPERATOR	6	<> ,
 	FUNCTION	1	gbt_ts_consistent (internal, timestamp, int2, oid, internal),
 	FUNCTION	2	gbt_ts_union (bytea, internal),
 	FUNCTION	3	gbt_ts_compress (internal),
@@ -507,6 +522,9 @@ AS
 	FUNCTION	6	gbt_ts_picksplit (internal, internal),
 	FUNCTION	7	gbt_ts_same (internal, internal, internal),
 	STORAGE		gbtreekey16;
+
+ALTER OPERATOR FAMILY gist_timestamp_ops USING gist ADD
+	OPERATOR	6	<> (timestamp, timestamp) ;
 
 
 -- Create the operator class
@@ -518,7 +536,6 @@ AS
 	OPERATOR	3	=  ,
 	OPERATOR	4	>= ,
 	OPERATOR	5	>  ,
-	OPERATOR	6	<> ,
 	FUNCTION	1	gbt_tstz_consistent (internal, timestamptz, int2, oid, internal),
 	FUNCTION	2	gbt_ts_union (bytea, internal),
 	FUNCTION	3	gbt_tstz_compress (internal),
@@ -527,6 +544,9 @@ AS
 	FUNCTION	6	gbt_ts_picksplit (internal, internal),
 	FUNCTION	7	gbt_ts_same (internal, internal, internal),
 	STORAGE		gbtreekey16;
+
+ALTER OPERATOR FAMILY gist_timestamptz_ops USING gist ADD
+	OPERATOR	6	<> (timestamptz, timestamptz) ;
 
 
 --
@@ -586,7 +606,6 @@ AS
 	OPERATOR	3	=  ,
 	OPERATOR	4	>= ,
 	OPERATOR	5	>  ,
-	OPERATOR	6	<> ,
 	FUNCTION	1	gbt_time_consistent (internal, time, int2, oid, internal),
 	FUNCTION	2	gbt_time_union (bytea, internal),
 	FUNCTION	3	gbt_time_compress (internal),
@@ -596,6 +615,10 @@ AS
 	FUNCTION	7	gbt_time_same (internal, internal, internal),
 	STORAGE		gbtreekey16;
 
+ALTER OPERATOR FAMILY gist_time_ops USING gist ADD
+	OPERATOR	6	<> (time, time) ;
+
+
 CREATE OPERATOR CLASS gist_timetz_ops
 DEFAULT FOR TYPE timetz USING gist
 AS
@@ -604,7 +627,6 @@ AS
 	OPERATOR	3	=   ,
 	OPERATOR	4	>=  ,
 	OPERATOR	5	>   ,
-	OPERATOR	6	<> ,
 	FUNCTION	1	gbt_timetz_consistent (internal, timetz, int2, oid, internal),
 	FUNCTION	2	gbt_time_union (bytea, internal),
 	FUNCTION	3	gbt_timetz_compress (internal),
@@ -613,6 +635,9 @@ AS
 	FUNCTION	6	gbt_time_picksplit (internal, internal),
 	FUNCTION	7	gbt_time_same (internal, internal, internal),
 	STORAGE		gbtreekey16;
+
+ALTER OPERATOR FAMILY gist_timetz_ops USING gist ADD
+	OPERATOR	6	<> (timetz, timetz) ;
 
 
 --
@@ -662,7 +687,6 @@ AS
 	OPERATOR	3	=  ,
 	OPERATOR	4	>= ,
 	OPERATOR	5	>  ,
-	OPERATOR	6	<> ,
 	FUNCTION	1	gbt_date_consistent (internal, date, int2, oid, internal),
 	FUNCTION	2	gbt_date_union (bytea, internal),
 	FUNCTION	3	gbt_date_compress (internal),
@@ -671,6 +695,9 @@ AS
 	FUNCTION	6	gbt_date_picksplit (internal, internal),
 	FUNCTION	7	gbt_date_same (internal, internal, internal),
 	STORAGE		gbtreekey8;
+
+ALTER OPERATOR FAMILY gist_date_ops USING gist ADD
+	OPERATOR	6	<> (date, date) ;
 
 
 --
@@ -725,7 +752,6 @@ AS
 	OPERATOR	3	= ,
 	OPERATOR	4	>= ,
 	OPERATOR	5	> ,
-	OPERATOR	6	<> ,
 	FUNCTION	1	gbt_intv_consistent (internal, interval, int2, oid, internal),
 	FUNCTION	2	gbt_intv_union (bytea, internal),
 	FUNCTION	3	gbt_intv_compress (internal),
@@ -734,6 +760,10 @@ AS
 	FUNCTION	6	gbt_intv_picksplit (internal, internal),
 	FUNCTION	7	gbt_intv_same (internal, internal, internal),
 	STORAGE		gbtreekey32;
+
+ALTER OPERATOR FAMILY gist_interval_ops USING gist ADD
+	OPERATOR	6	<> (interval, interval) ;
+
 
 --
 --
@@ -782,7 +812,6 @@ AS
 	OPERATOR	3	= ,
 	OPERATOR	4	>= ,
 	OPERATOR	5	> ,
-	OPERATOR	6	<> ,
 	FUNCTION	1	gbt_cash_consistent (internal, money, int2, oid, internal),
 	FUNCTION	2	gbt_cash_union (bytea, internal),
 	FUNCTION	3	gbt_cash_compress (internal),
@@ -791,6 +820,10 @@ AS
 	FUNCTION	6	gbt_cash_picksplit (internal, internal),
 	FUNCTION	7	gbt_cash_same (internal, internal, internal),
 	STORAGE		gbtreekey16;
+
+ALTER OPERATOR FAMILY gist_cash_ops USING gist ADD
+	OPERATOR	6	<> (money, money) ;
+
 
 --
 --
@@ -839,7 +872,6 @@ AS
 	OPERATOR	3	= ,
 	OPERATOR	4	>= ,
 	OPERATOR	5	> ,
-	OPERATOR	6	<> ,
 	FUNCTION	1	gbt_macad_consistent (internal, macaddr, int2, oid, internal),
 	FUNCTION	2	gbt_macad_union (bytea, internal),
 	FUNCTION	3	gbt_macad_compress (internal),
@@ -849,6 +881,8 @@ AS
 	FUNCTION	7	gbt_macad_same (internal, internal, internal),
 	STORAGE		gbtreekey16;
 
+ALTER OPERATOR FAMILY gist_macaddr_ops USING gist ADD
+	OPERATOR	6	<> (macaddr, macaddr) ;
 
 
 --
@@ -908,7 +942,6 @@ AS
 	OPERATOR	3	=  ,
 	OPERATOR	4	>= ,
 	OPERATOR	5	>  ,
-	OPERATOR	6	<> ,
 	FUNCTION	1	gbt_text_consistent (internal, text, int2, oid, internal),
 	FUNCTION	2	gbt_text_union (bytea, internal),
 	FUNCTION	3	gbt_text_compress (internal),
@@ -917,6 +950,9 @@ AS
 	FUNCTION	6	gbt_text_picksplit (internal, internal),
 	FUNCTION	7	gbt_text_same (internal, internal, internal),
 	STORAGE			gbtreekey_var;
+
+ALTER OPERATOR FAMILY gist_text_ops USING gist ADD
+	OPERATOR	6	<> (text, text) ;
 
 
 ---- Create the operator class
@@ -928,7 +964,6 @@ AS
 	OPERATOR	3	=  ,
 	OPERATOR	4	>= ,
 	OPERATOR	5	>  ,
-	OPERATOR	6	<> ,
 	FUNCTION	1	gbt_bpchar_consistent (internal, bpchar , int2, oid, internal),
 	FUNCTION	2	gbt_text_union (bytea, internal),
 	FUNCTION	3	gbt_bpchar_compress (internal),
@@ -938,6 +973,8 @@ AS
 	FUNCTION	7	gbt_text_same (internal, internal, internal),
 	STORAGE			gbtreekey_var;
 
+ALTER OPERATOR FAMILY gist_bpchar_ops USING gist ADD
+	OPERATOR	6	<> (bpchar, bpchar) ;
 
 
 --
@@ -986,7 +1023,6 @@ AS
 	OPERATOR	3	=  ,
 	OPERATOR	4	>= ,
 	OPERATOR	5	>  ,
-	OPERATOR	6	<> ,
 	FUNCTION	1	gbt_bytea_consistent (internal, bytea, int2, oid, internal),
 	FUNCTION	2	gbt_bytea_union (bytea, internal),
 	FUNCTION	3	gbt_bytea_compress (internal),
@@ -995,6 +1031,9 @@ AS
 	FUNCTION	6	gbt_bytea_picksplit (internal, internal),
 	FUNCTION	7	gbt_bytea_same (internal, internal, internal),
 	STORAGE			gbtreekey_var;
+
+ALTER OPERATOR FAMILY gist_bytea_ops USING gist ADD
+	OPERATOR	6	<> (bytea, bytea) ;
 
 
 --
@@ -1044,7 +1083,6 @@ AS
 	OPERATOR	3	=  ,
 	OPERATOR	4	>= ,
 	OPERATOR	5	>  ,
-	OPERATOR	6	<> ,
 	FUNCTION	1	gbt_numeric_consistent (internal, numeric, int2, oid, internal),
 	FUNCTION	2	gbt_numeric_union (bytea, internal),
 	FUNCTION	3	gbt_numeric_compress (internal),
@@ -1053,6 +1091,10 @@ AS
 	FUNCTION	6	gbt_numeric_picksplit (internal, internal),
 	FUNCTION	7	gbt_numeric_same (internal, internal, internal),
 	STORAGE			gbtreekey_var;
+
+ALTER OPERATOR FAMILY gist_numeric_ops USING gist ADD
+	OPERATOR	6	<> (numeric, numeric) ;
+
 
 --
 --
@@ -1100,7 +1142,6 @@ AS
 	OPERATOR	3	=  ,
 	OPERATOR	4	>= ,
 	OPERATOR	5	>  ,
-	OPERATOR	6	<> ,
 	FUNCTION	1	gbt_bit_consistent (internal, bit, int2, oid, internal),
 	FUNCTION	2	gbt_bit_union (bytea, internal),
 	FUNCTION	3	gbt_bit_compress (internal),
@@ -1109,6 +1150,9 @@ AS
 	FUNCTION	6	gbt_bit_picksplit (internal, internal),
 	FUNCTION	7	gbt_bit_same (internal, internal, internal),
 	STORAGE			gbtreekey_var;
+
+ALTER OPERATOR FAMILY gist_bit_ops USING gist ADD
+	OPERATOR	6	<> (bit, bit) ;
 
 
 -- Create the operator class
@@ -1120,7 +1164,6 @@ AS
 	OPERATOR	3	=  ,
 	OPERATOR	4	>= ,
 	OPERATOR	5	>  ,
-	OPERATOR	6	<> ,
 	FUNCTION	1	gbt_bit_consistent (internal, bit, int2, oid, internal),
 	FUNCTION	2	gbt_bit_union (bytea, internal),
 	FUNCTION	3	gbt_bit_compress (internal),
@@ -1130,6 +1173,8 @@ AS
 	FUNCTION	7	gbt_bit_same (internal, internal, internal),
 	STORAGE			gbtreekey_var;
 
+ALTER OPERATOR FAMILY gist_vbit_ops USING gist ADD
+	OPERATOR	6	<> (varbit, varbit) ;
 
 
 --
@@ -1179,7 +1224,6 @@ AS
 	OPERATOR	3	=   ,
 	OPERATOR	4	>=  ,
 	OPERATOR	5	>   ,
-	OPERATOR	6	<>  ,
 	FUNCTION	1	gbt_inet_consistent (internal, inet, int2, oid, internal),
 	FUNCTION	2	gbt_inet_union (bytea, internal),
 	FUNCTION	3	gbt_inet_compress (internal),
@@ -1188,6 +1232,10 @@ AS
 	FUNCTION	6	gbt_inet_picksplit (internal, internal),
 	FUNCTION	7	gbt_inet_same (internal, internal, internal),
 	STORAGE		gbtreekey16;
+
+ALTER OPERATOR FAMILY gist_inet_ops USING gist ADD
+	OPERATOR	6	<>  (inet, inet) ;
+
 
 -- Create the operator class
 CREATE OPERATOR CLASS gist_cidr_ops
@@ -1198,7 +1246,6 @@ AS
 	OPERATOR	3	=  (inet, inet)  ,
 	OPERATOR	4	>= (inet, inet)  ,
 	OPERATOR	5	>  (inet, inet)  ,
-	OPERATOR	6	<> (inet, inet)  ,
 	FUNCTION	1	gbt_inet_consistent (internal, inet, int2, oid, internal),
 	FUNCTION	2	gbt_inet_union (bytea, internal),
 	FUNCTION	3	gbt_inet_compress (internal),
@@ -1207,3 +1254,6 @@ AS
 	FUNCTION	6	gbt_inet_picksplit (internal, internal),
 	FUNCTION	7	gbt_inet_same (internal, internal, internal),
 	STORAGE		gbtreekey16;
+
+ALTER OPERATOR FAMILY gist_cidr_ops USING gist ADD
+	OPERATOR	6	<> (inet, inet) ;
