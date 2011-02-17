@@ -628,6 +628,7 @@ typedef struct PgBackendStatus
 	Oid			st_databaseid;
 	Oid			st_userid;
 	SockAddr	st_clientaddr;
+	char	   *st_clienthostname; /* MUST be null-terminated */
 
 	/* Is backend currently waiting on an lmgr lock? */
 	bool		st_waiting;

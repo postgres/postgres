@@ -2223,6 +2223,7 @@ pgstat_fetch_global(void)
 
 static PgBackendStatus *BackendStatusArray = NULL;
 static PgBackendStatus *MyBEEntry = NULL;
+static char *BackendClientHostnameBuffer = NULL;
 static char *BackendAppnameBuffer = NULL;
 static char *BackendActivityBuffer = NULL;
 
@@ -2240,11 +2241,13 @@ BackendStatusShmemSize(void)
 					mul_size(NAMEDATALEN, MaxBackends));
 	size = add_size(size,
 					mul_size(pgstat_track_activity_query_size, MaxBackends));
+	size = add_size(size,
+					mul_size(NAMEDATALEN, MaxBackends));
 	return size;
 }
 
 /*
- * Initialize the shared status array and activity/appname string buffers
+ * Initialize the shared status array and several string buffers
  * during postmaster startup.
  */
 void
@@ -2282,6 +2285,24 @@ CreateSharedBackendStatus(void)
 		for (i = 0; i < MaxBackends; i++)
 		{
 			BackendStatusArray[i].st_appname = buffer;
+			buffer += NAMEDATALEN;
+		}
+	}
+
+	/* Create or attach to the shared client hostname buffer */
+	size = mul_size(NAMEDATALEN, MaxBackends);
+	BackendClientHostnameBuffer = (char *)
+		ShmemInitStruct("Backend Client Host Name Buffer", size, &found);
+
+	if (!found)
+	{
+		MemSet(BackendClientHostnameBuffer, 0, size);
+
+		/* Initialize st_clienthostname pointers. */
+		buffer = BackendClientHostnameBuffer;
+		for (i = 0; i < MaxBackends; i++)
+		{
+			BackendStatusArray[i].st_clienthostname = buffer;
 			buffer += NAMEDATALEN;
 		}
 	}
@@ -2386,15 +2407,20 @@ pgstat_bestart(void)
 	beentry->st_databaseid = MyDatabaseId;
 	beentry->st_userid = userid;
 	beentry->st_clientaddr = clientaddr;
+	beentry->st_clienthostname[0] = '\0';
 	beentry->st_waiting = false;
 	beentry->st_appname[0] = '\0';
 	beentry->st_activity[0] = '\0';
 	/* Also make sure the last byte in each string area is always 0 */
+	beentry->st_clienthostname[NAMEDATALEN - 1] = '\0';
 	beentry->st_appname[NAMEDATALEN - 1] = '\0';
 	beentry->st_activity[pgstat_track_activity_query_size - 1] = '\0';
 
 	beentry->st_changecount++;
 	Assert((beentry->st_changecount & 1) == 0);
+
+	if (MyProcPort && MyProcPort->remote_hostname)
+		strlcpy(beentry->st_clienthostname, MyProcPort->remote_hostname, NAMEDATALEN);
 
 	/* Update app name to current GUC setting */
 	if (application_name)
