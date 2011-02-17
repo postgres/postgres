@@ -1088,13 +1088,13 @@ SELECT anyleast('abc'::text, 'def');
  abc
 (1 row)
 
-CREATE FUNCTION concat(text, VARIADIC anyarray) RETURNS text AS $$
+CREATE FUNCTION concat_values(text, VARIADIC anyarray) RETURNS text AS $$
     SELECT array_to_string($2, $1);
 $$ LANGUAGE SQL;
 
-SELECT concat('|', 1, 4, 2);
- concat 
---------
+SELECT concat_values('|', 1, 4, 2);
+ concat_values 
+---------------
  1|4|2
 (1 row)
 </screen>
