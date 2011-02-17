@@ -58,8 +58,8 @@ PG_MODULE_MAGIC;
 
 
 /**********************************************************************
- * Information associated with a Perl interpreter.  We have one interpreter
- * that is used for all plperlu (untrusted) functions.  For plperl (trusted)
+ * Information associated with a Perl interpreter.	We have one interpreter
+ * that is used for all plperlu (untrusted) functions.	For plperl (trusted)
  * functions, there is a separate interpreter for each effective SQL userid.
  * (This is needed to ensure that an unprivileged user can't inject Perl code
  * that'll be executed with the privileges of some other SQL user.)
@@ -83,9 +83,9 @@ PG_MODULE_MAGIC;
  **********************************************************************/
 typedef struct plperl_interp_desc
 {
-	Oid			user_id;				/* Hash key (must be first!) */
-	PerlInterpreter *interp;			/* The interpreter */
-	HTAB	   *query_hash;				/* plperl_query_entry structs */
+	Oid			user_id;		/* Hash key (must be first!) */
+	PerlInterpreter *interp;	/* The interpreter */
+	HTAB	   *query_hash;		/* plperl_query_entry structs */
 } plperl_interp_desc;
 
 
@@ -97,7 +97,7 @@ typedef struct plperl_proc_desc
 	char	   *proname;		/* user name of procedure */
 	TransactionId fn_xmin;
 	ItemPointerData fn_tid;
-	plperl_interp_desc *interp;	/* interpreter it's created in */
+	plperl_interp_desc *interp; /* interpreter it's created in */
 	bool		fn_readonly;
 	bool		lanpltrusted;
 	bool		fn_retistuple;	/* true, if function returns tuple */
@@ -127,18 +127,19 @@ typedef struct plperl_proc_desc
  **********************************************************************/
 typedef struct plperl_proc_key
 {
-	Oid			proc_id;				/* Function OID */
+	Oid			proc_id;		/* Function OID */
+
 	/*
 	 * is_trigger is really a bool, but declare as Oid to ensure this struct
 	 * contains no padding
 	 */
-	Oid			is_trigger;				/* is it a trigger function? */
-	Oid			user_id;				/* User calling the function, or 0 */
+	Oid			is_trigger;		/* is it a trigger function? */
+	Oid			user_id;		/* User calling the function, or 0 */
 } plperl_proc_key;
 
 typedef struct plperl_proc_ptr
 {
-	plperl_proc_key proc_key;			/* Hash key (must be first!) */
+	plperl_proc_key proc_key;	/* Hash key (must be first!) */
 	plperl_proc_desc *proc_ptr;
 } plperl_proc_ptr;
 
@@ -184,6 +185,7 @@ typedef struct plperl_query_entry
 static HTAB *plperl_interp_hash = NULL;
 static HTAB *plperl_proc_hash = NULL;
 static plperl_interp_desc *plperl_active_interp = NULL;
+
 /* If we have an unassigned "held" interpreter, it's stored here */
 static PerlInterpreter *plperl_held_interp = NULL;
 
@@ -227,7 +229,8 @@ static char *hek2cstr(HE *he);
 static SV **hv_store_string(HV *hv, const char *key, SV *val);
 static SV **hv_fetch_string(HV *hv, const char *key);
 static void plperl_create_sub(plperl_proc_desc *desc, char *s, Oid fn_oid);
-static SV  *plperl_call_perl_func(plperl_proc_desc *desc, FunctionCallInfo fcinfo);
+static SV  *plperl_call_perl_func(plperl_proc_desc *desc,
+					  FunctionCallInfo fcinfo);
 static void plperl_compile_callback(void *arg);
 static void plperl_exec_callback(void *arg);
 static void plperl_inline_callback(void *arg);
@@ -245,31 +248,32 @@ static char *setlocale_perl(int category, char *locale);
 static char *
 hek2cstr(HE *he)
 {
-	/*
-	 * Unfortunately,  while HeUTF8 is true for most things > 256, for
-	 * values 128..255 it's not, but perl will treat them as
-	 * unicode code points if the utf8 flag is not set ( see
-	 * The "Unicode Bug" in perldoc perlunicode for more)
+	/*-------------------------
+	 * Unfortunately,  while HeUTF8 is true for most things > 256, for values
+	 * 128..255 it's not, but perl will treat them as unicode code points if
+	 * the utf8 flag is not set ( see The "Unicode Bug" in perldoc perlunicode
+	 * for more)
 	 *
 	 * So if we did the expected:
-	 *    if (HeUTF8(he))
-	 * 	  	  utf_u2e(key...);
-	 * 	  else // must be ascii
-	 * 	      return HePV(he);
+	 *	  if (HeUTF8(he))
+	 *		  utf_u2e(key...);
+	 *	  else // must be ascii
+	 *		  return HePV(he);
 	 * we won't match columns with codepoints from 128..255
 	 *
-	 * For a more concrete example given a column with the
-	 * name of the unicode codepoint U+00ae (registered sign)
-	 * and a UTF8 database and the perl return_next {
-	 * "\N{U+00ae}=>'text } would always fail as heUTF8
-	 * returns 0 and HePV() would give us a char * with 1 byte
-	 * contains the decimal value 174
+	 * For a more concrete example given a column with the name of the unicode
+	 * codepoint U+00ae (registered sign) and a UTF8 database and the perl
+	 * return_next { "\N{U+00ae}=>'text } would always fail as heUTF8 returns
+	 * 0 and HePV() would give us a char * with 1 byte contains the decimal
+	 * value 174
 	 *
-	 * Perl has the brains to know when it should utf8 encode
-	 * 174 properly, so here we force it into an SV so that
-	 * perl will figure it out and do the right thing
+	 * Perl has the brains to know when it should utf8 encode 174 properly, so
+	 * here we force it into an SV so that perl will figure it out and do the
+	 * right thing
+	 *-------------------------
 	 */
-	SV *sv = HeSVKEY_force(he);
+	SV		   *sv = HeSVKEY_force(he);
+
 	if (HeUTF8(he))
 		SvUTF8_on(sv);
 	return sv2cstr(sv);
@@ -547,6 +551,7 @@ select_perl_context(bool trusted)
 	else
 	{
 #ifdef MULTIPLICITY
+
 		/*
 		 * plperl_init_interp will change Perl's idea of the active
 		 * interpreter.  Reset plperl_active_interp temporarily, so that if we
@@ -675,7 +680,7 @@ plperl_init_interp(void)
 	STMT_START { \
 		if (saved != NULL) { setlocale_perl(name, saved); pfree(saved); } \
 	} STMT_END
-#endif /* WIN32 */
+#endif   /* WIN32 */
 
 	if (plperl_on_init && *plperl_on_init)
 	{
@@ -685,12 +690,12 @@ plperl_init_interp(void)
 
 	/*
 	 * The perl API docs state that PERL_SYS_INIT3 should be called before
-	 * allocating interpreters. Unfortunately, on some platforms this fails
-	 * in the Perl_do_taint() routine, which is called when the platform is
-	 * using the system's malloc() instead of perl's own. Other platforms,
-	 * notably Windows, fail if PERL_SYS_INIT3 is not called. So we call it
-	 * if it's available, unless perl is using the system malloc(), which is
-	 * true when MYMALLOC is set.
+	 * allocating interpreters. Unfortunately, on some platforms this fails in
+	 * the Perl_do_taint() routine, which is called when the platform is using
+	 * the system's malloc() instead of perl's own. Other platforms, notably
+	 * Windows, fail if PERL_SYS_INIT3 is not called. So we call it if it's
+	 * available, unless perl is using the system malloc(), which is true when
+	 * MYMALLOC is set.
 	 */
 #if defined(PERL_SYS_INIT3) && !defined(MYMALLOC)
 	{
@@ -859,8 +864,8 @@ plperl_trusted_init(void)
 				 errcontext("while executing PLC_TRUSTED")));
 
 	/*
-	 * Force loading of utf8 module now to prevent errors that can arise
-	 * from the regex code later trying to load utf8 modules. See
+	 * Force loading of utf8 module now to prevent errors that can arise from
+	 * the regex code later trying to load utf8 modules. See
 	 * http://rt.perl.org/rt3/Ticket/Display.html?id=47576
 	 */
 	eval_pv("my $a=chr(0x100); return $a =~ /\\xa9/i", FALSE);
@@ -956,7 +961,7 @@ plperl_build_tuple_result(HV *perlhash, AttInMetadata *attinmeta)
 {
 	TupleDesc	td = attinmeta->tupdesc;
 	char	  **values;
-	HE			*he;
+	HE		   *he;
 	HeapTuple	tup;
 	int			i;
 
@@ -965,9 +970,9 @@ plperl_build_tuple_result(HV *perlhash, AttInMetadata *attinmeta)
 	hv_iterinit(perlhash);
 	while ((he = hv_iternext(perlhash)))
 	{
-		SV		*val = HeVAL(he);
-		char	*key = hek2cstr(he);
-		int		attn = SPI_fnumber(td, key);
+		SV		   *val = HeVAL(he);
+		char	   *key = hek2cstr(he);
+		int			attn = SPI_fnumber(td, key);
 
 		if (attn <= 0 || td->attrs[attn - 1]->attisdropped)
 			ereport(ERROR,
@@ -985,7 +990,7 @@ plperl_build_tuple_result(HV *perlhash, AttInMetadata *attinmeta)
 
 	tup = BuildTupleFromCStrings(attinmeta, values);
 
-	for(i = 0; i < td->natts; i++)
+	for (i = 0; i < td->natts; i++)
 	{
 		if (values[i])
 			pfree(values[i]);
@@ -1173,8 +1178,8 @@ plperl_modify_tuple(HV *hvTD, TriggerData *tdata, HeapTuple otup)
 		Oid			typioparam;
 		int32		atttypmod;
 		FmgrInfo	finfo;
-		SV			*val = HeVAL(he);
-		char		*key = hek2cstr(he);
+		SV		   *val = HeVAL(he);
+		char	   *key = hek2cstr(he);
 		int			attn = SPI_fnumber(tupdesc, key);
 
 		if (attn <= 0 || tupdesc->attrs[attn - 1]->attisdropped)
@@ -1189,7 +1194,8 @@ plperl_modify_tuple(HV *hvTD, TriggerData *tdata, HeapTuple otup)
 		atttypmod = tupdesc->attrs[attn - 1]->atttypmod;
 		if (SvOK(val))
 		{
-			char	*str = sv2cstr(val);
+			char	   *str = sv2cstr(val);
+
 			modvalues[slotsused] = InputFunctionCall(&finfo,
 													 str,
 													 typioparam,
@@ -1452,12 +1458,13 @@ plperl_create_sub(plperl_proc_desc *prodesc, char *s, Oid fn_oid)
 	EXTEND(SP, 4);
 	PUSHs(sv_2mortal(cstr2sv(subname)));
 	PUSHs(sv_2mortal(newRV_noinc((SV *) pragma_hv)));
-	/* 
-	 * Use 'false' for $prolog in mkfunc, which is kept for compatibility
-	 * in case a module such as PostgreSQL::PLPerl::NYTprof replaces
-	 * the function compiler.
+
+	/*
+	 * Use 'false' for $prolog in mkfunc, which is kept for compatibility in
+	 * case a module such as PostgreSQL::PLPerl::NYTprof replaces the function
+	 * compiler.
 	 */
-	PUSHs(&PL_sv_no); 
+	PUSHs(&PL_sv_no);
 	PUSHs(sv_2mortal(cstr2sv(s)));
 	PUTBACK;
 
@@ -1609,15 +1616,17 @@ plperl_call_perl_trigger_func(plperl_proc_desc *desc, FunctionCallInfo fcinfo,
 							  SV *td)
 {
 	dSP;
-	SV		   *retval, *TDsv;
-	int			i, count;
+	SV		   *retval,
+			   *TDsv;
+	int			i,
+				count;
 	Trigger    *tg_trigger = ((TriggerData *) fcinfo->context)->tg_trigger;
 
 	ENTER;
 	SAVETMPS;
 
 	TDsv = get_sv("_TD", GV_ADD);
-	SAVESPTR(TDsv);	/* local $_TD */
+	SAVESPTR(TDsv);				/* local $_TD */
 	sv_setsv(TDsv, td);
 
 	PUSHMARK(sp);
@@ -1796,7 +1805,7 @@ plperl_func_handler(PG_FUNCTION_ARGS)
 	else
 	{
 		/* Return a perl string converted to a Datum */
-		char	*str;
+		char	   *str;
 
 		if (prodesc->fn_retisarray && SvROK(perlret) &&
 			SvTYPE(SvRV(perlret)) == SVt_PVAV)
@@ -2500,7 +2509,7 @@ plperl_return_next(SV *sv)
 
 		if (SvOK(sv))
 		{
-			char	*str;
+			char	   *str;
 
 			if (prodesc->fn_retisarray && SvROK(sv) &&
 				SvTYPE(SvRV(sv)) == SVt_PVAV)
@@ -2754,7 +2763,7 @@ plperl_spi_prepare(char *query, int argc, SV **argv)
 						typInput,
 						typIOParam;
 			int32		typmod;
-			char		*typstr;
+			char	   *typstr;
 
 			typstr = sv2cstr(argv[i]);
 			parseTypeString(typstr, &typId, &typmod);
@@ -2922,7 +2931,8 @@ plperl_spi_exec_prepared(char *query, HV *attr, int argc, SV **argv)
 		{
 			if (SvOK(argv[i]))
 			{
-				char	*str = sv2cstr(argv[i]);
+				char	   *str = sv2cstr(argv[i]);
+
 				argvalues[i] = InputFunctionCall(&qdesc->arginfuncs[i],
 												 str,
 												 qdesc->argtypioparams[i],
@@ -3057,7 +3067,8 @@ plperl_spi_query_prepared(char *query, int argc, SV **argv)
 		{
 			if (SvOK(argv[i]))
 			{
-				char	*str = sv2cstr(argv[i]);
+				char	   *str = sv2cstr(argv[i]);
+
 				argvalues[i] = InputFunctionCall(&qdesc->arginfuncs[i],
 												 str,
 												 qdesc->argtypioparams[i],
@@ -3177,10 +3188,12 @@ static SV **
 hv_store_string(HV *hv, const char *key, SV *val)
 {
 	int32		hlen;
-	char		*hkey;
-	SV			**ret;
+	char	   *hkey;
+	SV		  **ret;
 
-	hkey = (char*)pg_do_encoding_conversion((unsigned char *)key, strlen(key), GetDatabaseEncoding(), PG_UTF8);
+	hkey = (char *)
+		pg_do_encoding_conversion((unsigned char *) key, strlen(key),
+								  GetDatabaseEncoding(), PG_UTF8);
 
 	/*
 	 * This seems nowhere documented, but under Perl 5.8.0 and up, hv_store()
@@ -3205,16 +3218,18 @@ static SV **
 hv_fetch_string(HV *hv, const char *key)
 {
 	int32		hlen;
-	char		*hkey;
-	SV			**ret;
+	char	   *hkey;
+	SV		  **ret;
 
-	hkey = (char*)pg_do_encoding_conversion((unsigned char *)key, strlen(key), GetDatabaseEncoding(), PG_UTF8);
+	hkey = (char *)
+		pg_do_encoding_conversion((unsigned char *) key, strlen(key),
+								  GetDatabaseEncoding(), PG_UTF8);
 
 	/* See notes in hv_store_string */
 	hlen = -strlen(hkey);
 	ret = hv_fetch(hv, hkey, hlen, 0);
 
-	if(hkey != key)
+	if (hkey != key)
 		pfree(hkey);
 
 	return ret;
