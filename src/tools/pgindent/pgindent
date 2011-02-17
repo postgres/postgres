@@ -21,6 +21,8 @@ fi
 TYPEDEFS="$1"
 shift
 
+INDENT=`which indent`
+
 trap "rm -f /tmp/$$ /tmp/$$a" 0 1 2 3 15
 entab </dev/null >/dev/null
 if [ "$?" -ne 0 ]
@@ -29,12 +31,12 @@ then	echo "Go to the src/tools/entab directory and do a 'make' and 'make install
 	echo "Then run $0 again."
 	exit 1
 fi
-indent -? </dev/null >/dev/null 2>&1
+$INDENT -? </dev/null >/dev/null 2>&1
 if [ "$?" -ne 1 ]
 then	echo "You do not appear to have 'indent' installed on your system." >&2
 	exit 1
 fi
-indent -gnu </dev/null >/dev/null 2>&1
+$INDENT -gnu </dev/null >/dev/null 2>&1
 if [ "$?" -eq 0 ]
 then	echo "You appear to have GNU indent rather than BSD indent." >&2
 	echo "See the pgindent/README file for a description of its problems." >&2
@@ -136,7 +138,7 @@ do
 	sed 's;^CATALOG(.*$;/*&*/;' >/tmp/$$a
 
 # We get the list of typedef's from /src/tools/find_typedef
-	indent -bad -bap -bc -bl -d0 -cdb -nce -nfc1 -di12 -i4 -l79 \
+	$INDENT -bad -bap -bc -bl -d0 -cdb -nce -nfc1 -di12 -i4 -l79 \
 		-lp -nip -npro -bbb $EXTRA_OPTS \
 		`egrep -v '^(FD_SET|date|interval|timestamp|ANY)$' "$TYPEDEFS" | sed -e '/^$/d' -e 's/.*/-T& /'` \
 		/tmp/$$a >/tmp/$$ 2>&1

@@ -10,7 +10,7 @@ This can format all PostgreSQL *.c and *.h files, but excludes *.y, and
 
 2) Download the typedef file from the buildfarm:
 
-	wget -O src/tools/pgindent/typedefs.list http://www.pgbuildfarm.org/cgi-bin/typedefs.pl
+	wget -O src/tools/pgindent/typedefs.list http://buildfarm.postgresql.org/cgi-bin/typedefs.pl
 
 3) Remove all derived files (pgindent has trouble with one of the flex macros):
 
