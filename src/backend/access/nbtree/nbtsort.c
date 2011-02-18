@@ -70,6 +70,7 @@
 #include "access/nbtree.h"
 #include "miscadmin.h"
 #include "storage/smgr.h"
+#include "tcop/tcopprot.h"
 #include "utils/rel.h"
 #include "utils/tuplesort.h"
 
