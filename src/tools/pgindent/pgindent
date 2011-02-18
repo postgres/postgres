@@ -21,7 +21,10 @@ fi
 TYPEDEFS="$1"
 shift
 
-INDENT=`which indent`
+if [ -z "$INDENT" ]
+then
+	INDENT=indent
+fi
 
 trap "rm -f /tmp/$$ /tmp/$$a" 0 1 2 3 15
 entab </dev/null >/dev/null
