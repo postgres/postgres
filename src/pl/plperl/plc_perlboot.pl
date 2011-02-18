@@ -5,8 +5,45 @@ use vars qw(%_SHARED);
 
 PostgreSQL::InServer::Util::bootstrap();
 
-package PostgreSQL::InServer;
+# globals
 
+sub ::is_array_ref {
+	return ref($_[0]) =~ m/^(?:PostgreSQL::InServer::)?ARRAY$/;
+}
+
+sub ::encode_array_literal {
+	my ($arg, $delim) = @_;
+	return $arg unless(::is_array_ref($arg));
+	$delim = ', ' unless defined $delim;
+	my $res = '';
+	foreach my $elem (@$arg) {
+		$res .= $delim if length $res;
+		if (ref $elem) {
+			$res .= ::encode_array_literal($elem, $delim);
+		}
+		elsif (defined $elem) {
+			(my $str = $elem) =~ s/(["\\])/\\$1/g;
+			$res .= qq("$str");
+		}
+		else {
+			$res .= 'NULL';
+		}
+	}
+	return qq({$res});
+}
+
+sub ::encode_array_constructor {
+	my $arg = shift;
+	return ::quote_nullable($arg) unless ::is_array_ref($arg);
+	my $res = join ", ", map {
+		(ref $_) ? ::encode_array_constructor($_)
+		         : ::quote_nullable($_)
+	} @$arg;
+	return "ARRAY[$res]";
+}
+
+{
+package PostgreSQL::InServer;
 use strict;
 use warnings;
 
@@ -43,35 +80,26 @@ sub mkfunc {
 	return $ret;
 }
 
-sub ::encode_array_literal {
-	my ($arg, $delim) = @_;
-	return $arg
-		if ref $arg ne 'ARRAY';
-	$delim = ', ' unless defined $delim;
-	my $res = '';
-	foreach my $elem (@$arg) {
-		$res .= $delim if length $res;
-		if (ref $elem) {
-			$res .= ::encode_array_literal($elem, $delim);
-		}
-		elsif (defined $elem) {
-			(my $str = $elem) =~ s/(["\\])/\\$1/g;
-			$res .= qq("$str");
-		}
-		else {
-			$res .= 'NULL';
-		}
-	}
-	return qq({$res});
+1;
 }
 
-sub ::encode_array_constructor {
-	my $arg = shift;
-	return ::quote_nullable($arg)
-		if ref $arg ne 'ARRAY';
-	my $res = join ", ", map {
-		(ref $_) ? ::encode_array_constructor($_)
-		         : ::quote_nullable($_)
-	} @$arg;
-	return "ARRAY[$res]";
+{
+package PostgreSQL::InServer::ARRAY;
+use strict;
+use warnings;
+
+use overload
+	'""'=>\&to_str,
+	'@{}'=>\&to_arr;
+
+sub to_str {
+	my $self = shift;
+	return ::encode_typed_literal($self->{'array'}, $self->{'typeoid'});
+}
+
+sub to_arr {
+	return shift->{'array'};
+}
+
+1;
 }

@@ -198,6 +198,20 @@ looks_like_number(sv)
     OUTPUT:
     RETVAL
 
+SV *
+encode_typed_literal(sv, typname)
+	SV 	   *sv
+	char   *typname;
+	PREINIT:
+		char 	*outstr;
+	CODE:
+		outstr = plperl_sv_to_literal(sv, typname);
+		if (outstr == NULL)
+			RETVAL = &PL_sv_undef;
+		else
+			RETVAL = cstr2sv(outstr);
+	OUTPUT:
+	RETVAL
 
 BOOT:
     items = 0;  /* avoid 'unused variable' warning */
