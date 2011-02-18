@@ -505,7 +505,7 @@ User Locks
 ----------
 
 User locks are handled totally on the application side as long term
-cooperative locks which extend beyond the normal transaction boundaries.
+cooperative locks which may extend beyond the normal transaction boundaries.
 Their purpose is to indicate to an application that someone is `working'
 on an item.  So it is possible to put an user lock on a tuple's oid,
 retrieve the tuple, work on it for an hour and then update it and remove
@@ -516,9 +516,12 @@ level by someone.
 User locks and normal locks are completely orthogonal and they don't
 interfere with each other.
 
-User locks are always held as session locks, so that they are not released at
-transaction end.  They must be released explicitly by the application --- but
-they are released automatically when a backend terminates.
+There are two types of user locks: session level and transaction level.
+Session level user locks are not released at transaction end.  They must
+be released explicitly by the application --- but they are released
+automatically when a backend terminates. On the other hand, transaction
+level user locks are released automatically at the end of the transaction
+as like as other normal locks.
 
 Locking during Hot Standby
 --------------------------

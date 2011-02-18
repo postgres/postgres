@@ -1199,19 +1199,28 @@ UPDATE accounts SET balance = balance - 100.00 WHERE acctnum = 22222;
      called <firstterm>advisory locks</>, because the system does not
      enforce their use &mdash; it is up to the application to use them
      correctly.  Advisory locks can be useful for locking strategies
-     that are an awkward fit for the MVCC model.  Once acquired, an
-     advisory lock is held until explicitly released or the session ends.
-     Unlike standard locks, advisory locks do not
-     honor transaction semantics: a lock acquired during a
-     transaction that is later rolled back will still be held following the
+     that are an awkward fit for the MVCC model.</para>
+
+    <para>
+     There are two different types of advisory locks in
+     <productname>PostgreSQL</productname>: session level and transaction level.
+     Once acquired, a session level advisory lock is held until explicitly
+     released or the session ends.  Unlike standard locks, session level
+     advisory locks do not honor transaction semantics: a lock acquired during
+     a transaction that is later rolled back will still be held following the
      rollback, and likewise an unlock is effective even if the calling
-     transaction fails later.  The same lock can be acquired multiple times by
-     its owning process: for each lock request there must be a corresponding
-     unlock request before the lock is actually released.  (If a session
-     already holds a given lock, additional requests will always succeed, even
-     if other sessions are awaiting the lock.)  Like all locks in
-     <productname>PostgreSQL</productname>, a complete list of advisory
-     locks currently held by any session can be found in the
+     transaction fails later.  The same session level lock can be acquired
+     multiple times by its owning process: for each lock request there must be
+     a corresponding unlock request before the lock is actually released.  (If a
+     session already holds a given lock, additional requests will always succeed,
+     even if other sessions are awaiting the lock.)  Transaction level locks on
+     the other hand behave more like regular locks; they are automatically
+     released at the end of the transaction, and can not be explicitly unlocked.
+     Session and transaction level locks share the same lock space, which means
+     that a transaction level lock will prevent another session from obtaining
+     a session level lock on that same resource and vice versa.
+     Like all locks in <productname>PostgreSQL</productname>, a complete list of
+     advisory locks currently held by any session can be found in the
      <link linkend="view-pg-locks"><structname>pg_locks</structname></link>
      system view.
     </para>
@@ -1233,7 +1242,7 @@ UPDATE accounts SET balance = balance - 100.00 WHERE acctnum = 22222;
      strategies typical of so called <quote>flat file</> data management
      systems.
      While a flag stored in a table could be used for the same purpose,
-     advisory locks are faster, avoid MVCC bloat, and are automatically
+     advisory locks are faster, avoid MVCC bloat, and can be automatically
      cleaned up by the server at the end of the session.
      In certain cases using this advisory locking method, especially in queries
      involving explicit ordering and <literal>LIMIT</> clauses, care must be

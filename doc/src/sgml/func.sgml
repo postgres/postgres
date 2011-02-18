@@ -14623,91 +14623,147 @@ SELECT (pg_stat_file('filename')).modification;
         <literal><function>pg_advisory_lock(<parameter>key</> <type>bigint</>)</function></literal>
        </entry>
        <entry><type>void</type></entry>
-       <entry>Obtain exclusive advisory lock</entry>
+       <entry>Obtain exclusive session level advisory lock</entry>
       </row>
       <row>
        <entry>
         <literal><function>pg_advisory_lock(<parameter>key1</> <type>int</>, <parameter>key2</> <type>int</>)</function></literal>
        </entry>
        <entry><type>void</type></entry>
-       <entry>Obtain exclusive advisory lock</entry>
+       <entry>Obtain exclusive session level advisory lock</entry>
       </row>
       <row>
        <entry>
         <literal><function>pg_advisory_lock_shared(<parameter>key</> <type>bigint</>)</function></literal>
        </entry>
        <entry><type>void</type></entry>
-       <entry>Obtain shared advisory lock</entry>
+       <entry>Obtain shared session level advisory lock</entry>
       </row>
       <row>
        <entry>
         <literal><function>pg_advisory_lock_shared(<parameter>key1</> <type>int</>, <parameter>key2</> <type>int</>)</function></literal>
        </entry>
        <entry><type>void</type></entry>
-       <entry>Obtain shared advisory lock</entry>
+       <entry>Obtain shared session level advisory lock</entry>
       </row>
       <row>
        <entry>
         <literal><function>pg_advisory_unlock(<parameter>key</> <type>bigint</>)</function></literal>
        </entry>
        <entry><type>boolean</type></entry>
-       <entry>Release an exclusive advisory lock</entry>
+       <entry>Release an exclusive session level advisory lock</entry>
       </row>
       <row>
        <entry>
         <literal><function>pg_advisory_unlock(<parameter>key1</> <type>int</>, <parameter>key2</> <type>int</>)</function></literal>
        </entry>
        <entry><type>boolean</type></entry>
-       <entry>Release an exclusive advisory lock</entry>
+       <entry>Release an exclusive session level advisory lock</entry>
       </row>
       <row>
        <entry>
         <literal><function>pg_advisory_unlock_all()</function></literal>
        </entry>
        <entry><type>void</type></entry>
-       <entry>Release all advisory locks held by the current session</entry>
+       <entry>Release all session level advisory locks held by the current session</entry>
       </row>
       <row>
        <entry>
         <literal><function>pg_advisory_unlock_shared(<parameter>key</> <type>bigint</>)</function></literal>
        </entry>
        <entry><type>boolean</type></entry>
-       <entry>Release a shared advisory lock</entry>
+       <entry>Release a shared session level advisory lock</entry>
       </row>
       <row>
        <entry>
         <literal><function>pg_advisory_unlock_shared(<parameter>key1</> <type>int</>, <parameter>key2</> <type>int</>)</function></literal>
        </entry>
        <entry><type>boolean</type></entry>
-       <entry>Release a shared advisory lock</entry>
+       <entry>Release a shared session level advisory lock</entry>
+      </row>
+      <row>
+       <entry>
+        <literal><function>pg_advisory_xact_lock(<parameter>key</> <type>bigint</>)</function></literal>
+       </entry>
+       <entry><type>void</type></entry>
+       <entry>Obtain exclusive transaction level advisory lock</entry>
+      </row>
+      <row>
+       <entry>
+        <literal><function>pg_advisory_xact_lock(<parameter>key1</> <type>int</>, <parameter>key2</> <type>int</>)</function></literal>
+       </entry>
+       <entry><type>void</type></entry>
+       <entry>Obtain exclusive transaction level advisory lock</entry>
+      </row>
+      <row>
+       <entry>
+        <literal><function>pg_advisory_xact_lock_shared(<parameter>key</> <type>bigint</>)</function></literal>
+       </entry>
+       <entry><type>void</type></entry>
+       <entry>Obtain shared transaction level advisory lock</entry>
+      </row>
+      <row>
+       <entry>
+        <literal><function>pg_advisory_xact_lock_shared(<parameter>key1</> <type>int</>, <parameter>key2</> <type>int</>)</function></literal>
+       </entry>
+       <entry><type>void</type></entry>
+       <entry>Obtain shared advisory lock for the current transaction</entry>
       </row>
       <row>
        <entry>
         <literal><function>pg_try_advisory_lock(<parameter>key</> <type>bigint</>)</function></literal>
        </entry>
        <entry><type>boolean</type></entry>
-       <entry>Obtain exclusive advisory lock if available</entry>
+       <entry>Obtain exclusive session level advisory lock if available</entry>
       </row>
       <row>
        <entry>
         <literal><function>pg_try_advisory_lock(<parameter>key1</> <type>int</>, <parameter>key2</> <type>int</>)</function></literal>
        </entry>
        <entry><type>boolean</type></entry>
-       <entry>Obtain exclusive advisory lock if available</entry>
+       <entry>Obtain exclusive session level advisory lock if available</entry>
       </row>
       <row>
        <entry>
         <literal><function>pg_try_advisory_lock_shared(<parameter>key</> <type>bigint</>)</function></literal>
        </entry>
        <entry><type>boolean</type></entry>
-       <entry>Obtain shared advisory lock if available</entry>
+       <entry>Obtain shared session level advisory lock if available</entry>
       </row>
       <row>
        <entry>
         <literal><function>pg_try_advisory_lock_shared(<parameter>key1</> <type>int</>, <parameter>key2</> <type>int</>)</function></literal>
        </entry>
        <entry><type>boolean</type></entry>
-       <entry>Obtain shared advisory lock if available</entry>
+       <entry>Obtain shared session level advisory lock if available</entry>
+      </row>
+      <row>
+       <entry>
+        <literal><function>pg_try_advisory_xact_lock(<parameter>key</> <type>bigint</>)</function></literal>
+       </entry>
+       <entry><type>boolean</type></entry>
+       <entry>Obtain exclusive transaction level advisory lock if available</entry>
+      </row>
+      <row>
+       <entry>
+        <literal><function>pg_try_advisory_xact_lock(<parameter>key1</> <type>int</>, <parameter>key2</> <type>int</>)</function></literal>
+       </entry>
+       <entry><type>boolean</type></entry>
+       <entry>Obtain exclusive transaction level advisory lock if available</entry>
+      </row>
+      <row>
+       <entry>
+        <literal><function>pg_try_advisory_xact_lock_shared(<parameter>key</> <type>bigint</>)</function></literal>
+       </entry>
+       <entry><type>boolean</type></entry>
+       <entry>Obtain shared transaction level advisory lock if available</entry>
+      </row>
+      <row>
+       <entry>
+        <literal><function>pg_try_advisory_xact_lock_shared(<parameter>key1</> <type>int</>, <parameter>key2</> <type>int</>)</function></literal>
+       </entry>
+       <entry><type>boolean</type></entry>
+       <entry>Obtain shared transaction level advisory lock if available</entry>
       </row>
      </tbody>
     </tgroup>
@@ -14759,11 +14815,49 @@ SELECT (pg_stat_file('filename')).modification;
    </para>
 
    <indexterm>
+    <primary>pg_advisory_xact_lock</primary>
+   </indexterm>
+   <para>
+    <function>pg_advisory_xact_lock</> works the same as
+    <function>pg_advisory_lock</>, expect the lock is automatically released
+    at the end of the current transaction and can not be released explicitly.
+   </para>
+
+   <indexterm>
+    <primary>pg_advisory_xact_lock_shared</primary>
+   </indexterm>
+   <para>
+    <function>pg_advisory_xact_lock_shared</> works the same as
+    <function>pg_advisory_lock_shared</>, expect the lock is automatically released
+    at the end of the current transaction and can not be released explicitly.
+   </para>
+
+   <indexterm>
+    <primary>pg_try_advisory_xact_lock</primary>
+   </indexterm>
+   <para>
+    <function>pg_try_advisory_xact_lock</> works the same as
+    <function>pg_try_advisory_lock</>, expect the lock, if acquired,
+    is automatically released at the end of the current transaction and
+    can not be released explicitly.
+   </para>
+
+   <indexterm>
+    <primary>pg_try_advisory_xact_lock_shared</primary>
+   </indexterm>
+   <para>
+    <function>pg_try_advisory_xact_lock_shared</> works the same as
+    <function>pg_try_advisory_lock_shared</>, expect the lock, if acquired,
+    is automatically released at the end of the current transaction and
+    can not be released explicitly.
+   </para>
+
+   <indexterm>
     <primary>pg_advisory_unlock</primary>
    </indexterm>
    <para>
     <function>pg_advisory_unlock</> will release a previously-acquired
-    exclusive advisory lock.  It
+    exclusive session level advisory lock.  It
     returns <literal>true</> if the lock is successfully released.
     If the lock was not held, it will return <literal>false</>,
     and in addition, an SQL warning will be raised by the server.
@@ -14775,15 +14869,15 @@ SELECT (pg_stat_file('filename')).modification;
    <para>
     <function>pg_advisory_unlock_shared</> works the same as
     <function>pg_advisory_unlock</>,
-    except it releases a shared advisory lock.
+    except it releases a shared session level advisory lock.
    </para>
 
    <indexterm>
     <primary>pg_advisory_unlock_all</primary>
    </indexterm>
    <para>
-    <function>pg_advisory_unlock_all</> will release all advisory locks
-    held by the current session.  (This function is implicitly invoked
+    <function>pg_advisory_unlock_all</> will release all session level advisory
+    locks held by the current session.  (This function is implicitly invoked
     at session end, even if the client disconnects ungracefully.)
    </para>
 

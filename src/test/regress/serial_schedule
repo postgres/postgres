@@ -105,6 +105,7 @@ test: foreign_data
 test: window
 test: xmlmap
 test: functional_deps
+test: advisory_lock
 test: plancache
 test: limit
 test: plpgsql

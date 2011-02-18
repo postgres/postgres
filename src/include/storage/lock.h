@@ -484,6 +484,7 @@ extern LockAcquireResult LockAcquireExtended(const LOCKTAG *locktag,
 					bool report_memory_error);
 extern bool LockRelease(const LOCKTAG *locktag,
 			LOCKMODE lockmode, bool sessionLock);
+extern void LockReleaseSession(LOCKMETHODID lockmethodid);
 extern void LockReleaseAll(LOCKMETHODID lockmethodid, bool allLocks);
 extern void LockReleaseCurrentOwner(void);
 extern void LockReassignCurrentOwner(void);

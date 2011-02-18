@@ -422,6 +422,23 @@ pg_advisory_lock_int8(PG_FUNCTION_ARGS)
 }
 
 /*
+ * pg_advisory_xact_lock(int8) - acquire xact scoped
+ * exclusive lock on an int8 key
+ */
+Datum
+pg_advisory_xact_lock_int8(PG_FUNCTION_ARGS)
+{
+	int64		key = PG_GETARG_INT64(0);
+	LOCKTAG		tag;
+
+	SET_LOCKTAG_INT64(tag, key);
+
+	(void) LockAcquire(&tag, ExclusiveLock, false, false);
+
+	PG_RETURN_VOID();
+}
+
+/*
  * pg_advisory_lock_shared(int8) - acquire share lock on an int8 key
  */
 Datum
@@ -433,6 +450,23 @@ pg_advisory_lock_shared_int8(PG_FUNCTION_ARGS)
 	SET_LOCKTAG_INT64(tag, key);
 
 	(void) LockAcquire(&tag, ShareLock, true, false);
+
+	PG_RETURN_VOID();
+}
+
+/*
+ * pg_advisory_xact_lock_shared(int8) - acquire xact scoped
+ * share lock on an int8 key
+ */
+Datum
+pg_advisory_xact_lock_shared_int8(PG_FUNCTION_ARGS)
+{
+	int64		key = PG_GETARG_INT64(0);
+	LOCKTAG		tag;
+
+	SET_LOCKTAG_INT64(tag, key);
+
+	(void) LockAcquire(&tag, ShareLock, false, false);
 
 	PG_RETURN_VOID();
 }
@@ -457,6 +491,26 @@ pg_try_advisory_lock_int8(PG_FUNCTION_ARGS)
 }
 
 /*
+ * pg_try_advisory_xact_lock(int8) - acquire xact scoped
+ * exclusive lock on an int8 key, no wait
+ *
+ * Returns true if successful, false if lock not available
+ */
+Datum
+pg_try_advisory_xact_lock_int8(PG_FUNCTION_ARGS)
+{
+	int64		key = PG_GETARG_INT64(0);
+	LOCKTAG		tag;
+	LockAcquireResult res;
+
+	SET_LOCKTAG_INT64(tag, key);
+
+	res = LockAcquire(&tag, ExclusiveLock, false, true);
+
+	PG_RETURN_BOOL(res != LOCKACQUIRE_NOT_AVAIL);
+}
+
+/*
  * pg_try_advisory_lock_shared(int8) - acquire share lock on an int8 key, no wait
  *
  * Returns true if successful, false if lock not available
@@ -471,6 +525,26 @@ pg_try_advisory_lock_shared_int8(PG_FUNCTION_ARGS)
 	SET_LOCKTAG_INT64(tag, key);
 
 	res = LockAcquire(&tag, ShareLock, true, true);
+
+	PG_RETURN_BOOL(res != LOCKACQUIRE_NOT_AVAIL);
+}
+
+/*
+ * pg_try_advisory_xact_lock_shared(int8) - acquire xact scoped
+ * share lock on an int8 key, no wait
+ *
+ * Returns true if successful, false if lock not available
+ */
+Datum
+pg_try_advisory_xact_lock_shared_int8(PG_FUNCTION_ARGS)
+{
+	int64		key = PG_GETARG_INT64(0);
+	LOCKTAG		tag;
+	LockAcquireResult res;
+
+	SET_LOCKTAG_INT64(tag, key);
+
+	res = LockAcquire(&tag, ShareLock, false, true);
 
 	PG_RETURN_BOOL(res != LOCKACQUIRE_NOT_AVAIL);
 }
@@ -531,6 +605,24 @@ pg_advisory_lock_int4(PG_FUNCTION_ARGS)
 }
 
 /*
+ * pg_advisory_xact_lock(int4, int4) - acquire xact scoped
+ * exclusive lock on 2 int4 keys
+ */
+Datum
+pg_advisory_xact_lock_int4(PG_FUNCTION_ARGS)
+{
+	int32		key1 = PG_GETARG_INT32(0);
+	int32		key2 = PG_GETARG_INT32(1);
+	LOCKTAG		tag;
+
+	SET_LOCKTAG_INT32(tag, key1, key2);
+
+	(void) LockAcquire(&tag, ExclusiveLock, false, false);
+
+	PG_RETURN_VOID();
+}
+
+/*
  * pg_advisory_lock_shared(int4, int4) - acquire share lock on 2 int4 keys
  */
 Datum
@@ -543,6 +635,24 @@ pg_advisory_lock_shared_int4(PG_FUNCTION_ARGS)
 	SET_LOCKTAG_INT32(tag, key1, key2);
 
 	(void) LockAcquire(&tag, ShareLock, true, false);
+
+	PG_RETURN_VOID();
+}
+
+/*
+ * pg_advisory_xact_lock_shared(int4, int4) - acquire xact scoped
+ * share lock on 2 int4 keys
+ */
+Datum
+pg_advisory_xact_lock_shared_int4(PG_FUNCTION_ARGS)
+{
+	int32		key1 = PG_GETARG_INT32(0);
+	int32		key2 = PG_GETARG_INT32(1);
+	LOCKTAG		tag;
+
+	SET_LOCKTAG_INT32(tag, key1, key2);
+
+	(void) LockAcquire(&tag, ShareLock, false, false);
 
 	PG_RETURN_VOID();
 }
@@ -568,6 +678,27 @@ pg_try_advisory_lock_int4(PG_FUNCTION_ARGS)
 }
 
 /*
+ * pg_try_advisory_xact_lock(int4, int4) - acquire xact scoped
+ * exclusive lock on 2 int4 keys, no wait
+ *
+ * Returns true if successful, false if lock not available
+ */
+Datum
+pg_try_advisory_xact_lock_int4(PG_FUNCTION_ARGS)
+{
+	int32		key1 = PG_GETARG_INT32(0);
+	int32		key2 = PG_GETARG_INT32(1);
+	LOCKTAG		tag;
+	LockAcquireResult res;
+
+	SET_LOCKTAG_INT32(tag, key1, key2);
+
+	res = LockAcquire(&tag, ExclusiveLock, false, true);
+
+	PG_RETURN_BOOL(res != LOCKACQUIRE_NOT_AVAIL);
+}
+
+/*
  * pg_try_advisory_lock_shared(int4, int4) - acquire share lock on 2 int4 keys, no wait
  *
  * Returns true if successful, false if lock not available
@@ -583,6 +714,27 @@ pg_try_advisory_lock_shared_int4(PG_FUNCTION_ARGS)
 	SET_LOCKTAG_INT32(tag, key1, key2);
 
 	res = LockAcquire(&tag, ShareLock, true, true);
+
+	PG_RETURN_BOOL(res != LOCKACQUIRE_NOT_AVAIL);
+}
+
+/*
+ * pg_try_advisory_xact_lock_shared(int4, int4) - acquire xact scoped
+ * share lock on 2 int4 keys, no wait
+ *
+ * Returns true if successful, false if lock not available
+ */
+Datum
+pg_try_advisory_xact_lock_shared_int4(PG_FUNCTION_ARGS)
+{
+	int32		key1 = PG_GETARG_INT32(0);
+	int32		key2 = PG_GETARG_INT32(1);
+	LOCKTAG		tag;
+	LockAcquireResult res;
+
+	SET_LOCKTAG_INT32(tag, key1, key2);
+
+	res = LockAcquire(&tag, ShareLock, false, true);
 
 	PG_RETURN_BOOL(res != LOCKACQUIRE_NOT_AVAIL);
 }
@@ -633,7 +785,7 @@ pg_advisory_unlock_shared_int4(PG_FUNCTION_ARGS)
 Datum
 pg_advisory_unlock_all(PG_FUNCTION_ARGS)
 {
-	LockReleaseAll(USER_LOCKMETHOD, true);
+	LockReleaseSession(USER_LOCKMETHOD);
 
 	PG_RETURN_VOID();
 }

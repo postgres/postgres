@@ -629,8 +629,6 @@ LockWaitCancel(void)
  * At subtransaction abort, we release all locks held by the subtransaction;
  * this is implemented by retail releasing of the locks under control of
  * the ResourceOwner mechanism.
- *
- * Note that user locks are not released in any case.
  */
 void
 ProcReleaseLocks(bool isCommit)
@@ -641,6 +639,9 @@ ProcReleaseLocks(bool isCommit)
 	LockWaitCancel();
 	/* Release locks */
 	LockReleaseAll(DEFAULT_LOCKMETHOD, !isCommit);
+
+	/* Release transaction level advisory locks */
+	LockReleaseAll(USER_LOCKMETHOD, false);
 }
 
 
