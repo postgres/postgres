@@ -2535,8 +2535,11 @@ TransferPredicateLocksToNewTarget(const PREDICATELOCKTARGETTAG oldtargettag,
 		if (!found)
 		{
 			SHMQueueInit(&(newtarget->predicateLocks));
-			newpredlocktag.myTarget = newtarget;
+			newtarget->priorVersionOfRow = NULL;
+			newtarget->nextVersionOfRow = NULL;
 		}
+
+		newpredlocktag.myTarget = newtarget;
 
 		oldpredlock = (PREDICATELOCK *)
 			SHMQueueNext(&(oldtarget->predicateLocks),
@@ -2586,10 +2589,14 @@ TransferPredicateLocksToNewTarget(const PREDICATELOCKTARGETTAG oldtargettag,
 				outOfShmem = true;
 				goto exit;
 			}
-			SHMQueueInsertBefore(&(newtarget->predicateLocks),
-								 &(newpredlock->targetLink));
-			SHMQueueInsertBefore(&(newpredlocktag.myXact->predicateLocks),
-								 &(newpredlock->xactLink));
+			if (!found)
+			{
+				SHMQueueInsertBefore(&(newtarget->predicateLocks),
+									 &(newpredlock->targetLink));
+				SHMQueueInsertBefore(&(newpredlocktag.myXact->predicateLocks),
+									 &(newpredlock->xactLink));
+				newpredlock->commitSeqNo = InvalidSerCommitSeqNo;
+			}
 
 			oldpredlock = nextpredlock;
 		}
