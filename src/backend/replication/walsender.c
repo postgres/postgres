@@ -369,6 +369,16 @@ StartReplication(StartReplicationCmd * cmd)
 				(errcode(ERRCODE_CANNOT_CONNECT_NOW),
 		errmsg("standby connections not allowed because wal_level=minimal")));
 
+	/*
+	 * When we first start replication the standby will be behind the primary.
+	 * For some applications, for example, synchronous replication, it is
+	 * important to have a clear state for this initial catchup mode, so we
+	 * can trigger actions when we change streaming state later. We may stay
+	 * in this state for a long time, which is exactly why we want to be
+	 * able to monitor whether or not we are still here.
+	 */
+	WalSndSetState(WALSNDSTATE_CATCHUP);
+
 	/* Send a CopyBothResponse message, and start streaming */
 	pq_beginmessage(&buf, 'W');
 	pq_sendbyte(&buf, 0);
@@ -752,8 +762,17 @@ WalSndLoop(void)
 				break;
 		}
 
-		/* Update our state to indicate if we're behind or not */
-		WalSndSetState(caughtup ? WALSNDSTATE_STREAMING : WALSNDSTATE_CATCHUP);
+		/*
+		 * If we're in catchup state, see if its time to move to streaming.
+		 * This is an important state change for users, since before this
+		 * point data loss might occur if the primary dies and we need to
+		 * failover to the standby. The state change is also important for
+		 * synchronous replication, since commits that started to wait at
+		 * that point might wait for some time.
+		 */
+		if (MyWalSnd->state == WALSNDSTATE_CATCHUP && caughtup)
+			WalSndSetState(WALSNDSTATE_STREAMING);
+
 		ProcessRepliesIfAny();
 	}
 
