@@ -3798,6 +3798,7 @@ CreateCopyDestReceiver(void)
 	self->pub.mydest = DestCopyOut;
 
 	self->cstate = NULL;		/* will be set later */
+	self->processed = 0;
 
 	return (DestReceiver *) self;
 }
