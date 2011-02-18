@@ -3218,12 +3218,12 @@ dumpTimestamp(ArchiveHandle *AH, const char *msg, time_t tim)
  * Main engine for parallel restore.
  *
  * Work is done in three phases.
- * First we process tocEntries until we come to one that is marked
- * SECTION_DATA or SECTION_POST_DATA, in a single connection, just as for a
- * standard restore.  Second we process the remaining non-ACL steps in
- * parallel worker children (threads on Windows, processes on Unix), each of
- * which connects separately to the database.  Finally we process all the ACL
- * entries in a single connection (that happens back in RestoreArchive).
+ * First we process all SECTION_PRE_DATA tocEntries, in a single connection,
+ * just as for a standard restore.  Second we process the remaining non-ACL
+ * steps in parallel worker children (threads on Windows, processes on Unix),
+ * each of which connects separately to the database.  Finally we process all
+ * the ACL entries in a single connection (that happens back in
+ * RestoreArchive).
  */
 static void
 restore_toc_entries_parallel(ArchiveHandle *AH)
@@ -3233,6 +3233,7 @@ restore_toc_entries_parallel(ArchiveHandle *AH)
 	ParallelSlot *slots;
 	int			work_status;
 	int			next_slot;
+	bool		skipped_some;
 	TocEntry	pending_list;
 	TocEntry	ready_list;
 	TocEntry   *next_work_item;
@@ -3262,12 +3263,31 @@ restore_toc_entries_parallel(ArchiveHandle *AH)
 	 * showing all the dependencies of SECTION_PRE_DATA items, so we do not
 	 * risk trying to process them out-of-order.
 	 */
+	skipped_some = false;
 	for (next_work_item = AH->toc->next; next_work_item != AH->toc; next_work_item = next_work_item->next)
 	{
-		/* Non-PRE_DATA items are just ignored for now */
-		if (next_work_item->section == SECTION_DATA ||
-			next_work_item->section == SECTION_POST_DATA)
-			continue;
+		/* NB: process-or-continue logic must be the inverse of loop below */
+		if (next_work_item->section != SECTION_PRE_DATA)
+		{
+			/* DATA and POST_DATA items are just ignored for now */
+			if (next_work_item->section == SECTION_DATA ||
+				next_work_item->section == SECTION_POST_DATA)
+			{
+				skipped_some = true;
+				continue;
+			}
+			else
+			{
+				/*
+				 * SECTION_NONE items, such as comments, can be processed now
+				 * if we are still in the PRE_DATA part of the archive.  Once
+				 * we've skipped any items, we have to consider whether the
+				 * comment's dependencies are satisfied, so skip it for now.
+				 */
+				if (skipped_some)
+					continue;
+			}
+		}
 
 		ahlog(AH, 1, "processing item %d %s %s\n",
 			  next_work_item->dumpId,
@@ -3310,17 +3330,32 @@ restore_toc_entries_parallel(ArchiveHandle *AH)
 	 */
 	par_list_header_init(&pending_list);
 	par_list_header_init(&ready_list);
+	skipped_some = false;
 	for (next_work_item = AH->toc->next; next_work_item != AH->toc; next_work_item = next_work_item->next)
 	{
-		/* All PRE_DATA items were dealt with above */
+		/* NB: process-or-continue logic must be the inverse of loop above */
+		if (next_work_item->section == SECTION_PRE_DATA)
+		{
+			/* All PRE_DATA items were dealt with above */
+			continue;
+		}
 		if (next_work_item->section == SECTION_DATA ||
 			next_work_item->section == SECTION_POST_DATA)
 		{
-			if (next_work_item->depCount > 0)
-				par_list_append(&pending_list, next_work_item);
-			else
-				par_list_append(&ready_list, next_work_item);
+			/* set this flag at same point that previous loop did */
+			skipped_some = true;
 		}
+		else
+		{
+			/* SECTION_NONE items must be processed if previous loop didn't */
+			if (!skipped_some)
+				continue;
+		}
+
+		if (next_work_item->depCount > 0)
+			par_list_append(&pending_list, next_work_item);
+		else
+			par_list_append(&ready_list, next_work_item);
 	}
 
 	/*
