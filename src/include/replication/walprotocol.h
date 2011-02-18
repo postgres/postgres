@@ -56,6 +56,18 @@ typedef struct
 	XLogRecPtr	flush;
 	XLogRecPtr	apply;
 
+	/* Sender's system clock at the time of transmission */
+	TimestampTz sendTime;
+} StandbyReplyMessage;
+
+/*
+ * Hot Standby feedback from standby (message type 'h').  This is wrapped within
+ * a CopyData message at the FE/BE protocol level.
+ *
+ * Note that the data length is not specified here.
+ */
+typedef struct
+{
 	/*
 	 * The current xmin and epoch from the standby, for Hot Standby feedback.
 	 * This may be invalid if the standby-side does not support feedback,
@@ -64,10 +76,9 @@ typedef struct
 	TransactionId	xmin;
 	uint32			epoch;
 
-
 	/* Sender's system clock at the time of transmission */
 	TimestampTz sendTime;
-} StandbyReplyMessage;
+} StandbyHSFeedbackMessage;
 
 /*
  * Maximum data payload in a WAL data message.	Must be >= XLOG_BLCKSZ.

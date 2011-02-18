@@ -95,6 +95,7 @@ static struct
 }	LogstreamResult;
 
 static StandbyReplyMessage	reply_message;
+static StandbyHSFeedbackMessage	feedback_message;
 
 /*
  * About SIGTERM handling:
@@ -123,6 +124,7 @@ static void XLogWalRcvProcessMsg(unsigned char type, char *buf, Size len);
 static void XLogWalRcvWrite(char *buf, Size nbytes, XLogRecPtr recptr);
 static void XLogWalRcvFlush(bool dying);
 static void XLogWalRcvSendReply(void);
+static void XLogWalRcvSendHSFeedback(void);
 
 /* Signal handlers */
 static void WalRcvSigHupHandler(SIGNAL_ARGS);
@@ -317,6 +319,7 @@ WalReceiverMain(void)
 
 			/* Let the master know that we received some data. */
 			XLogWalRcvSendReply();
+			XLogWalRcvSendHSFeedback();
 
 			/*
 			 * If we've written some records, flush them to disk and let the
@@ -331,6 +334,7 @@ WalReceiverMain(void)
 			 * the master anyway, to report any progress in applying WAL.
 			 */
 			XLogWalRcvSendReply();
+			XLogWalRcvSendHSFeedback();
 		}
 	}
 }
@@ -619,40 +623,82 @@ XLogWalRcvSendReply(void)
 	reply_message.apply = GetXLogReplayRecPtr();
 	reply_message.sendTime = now;
 
-	/*
-	 * Get the OldestXmin and its associated epoch
-	 */
-	if (hot_standby_feedback && HotStandbyActive())
-	{
-		TransactionId	nextXid;
-		uint32			nextEpoch;
-
-		reply_message.xmin = GetOldestXmin(true, false);
-
-		/*
-		 * Get epoch and adjust if nextXid and oldestXmin are different
-		 * sides of the epoch boundary.
-		 */
-		GetNextXidAndEpoch(&nextXid, &nextEpoch);
-		if (nextXid < reply_message.xmin)
-			nextEpoch--;
-		reply_message.epoch = nextEpoch;
-	}
-	else
-	{
-		reply_message.xmin = InvalidTransactionId;
-		reply_message.epoch = 0;
-	}
-
-	elog(DEBUG2, "sending write %X/%X flush %X/%X apply %X/%X xmin %u epoch %u",
+	elog(DEBUG2, "sending write %X/%X flush %X/%X apply %X/%X",
 				 reply_message.write.xlogid, reply_message.write.xrecoff,
 				 reply_message.flush.xlogid, reply_message.flush.xrecoff,
-				 reply_message.apply.xlogid, reply_message.apply.xrecoff,
-				 reply_message.xmin,
-				 reply_message.epoch);
+				 reply_message.apply.xlogid, reply_message.apply.xrecoff);
 
 	/* Prepend with the message type and send it. */
 	buf[0] = 'r';
 	memcpy(&buf[1], &reply_message, sizeof(StandbyReplyMessage));
 	walrcv_send(buf, sizeof(StandbyReplyMessage) + 1);
+}
+
+/*
+ * Send hot standby feedback message to primary, plus the current time,
+ * in case they don't have a watch.
+ */
+static void
+XLogWalRcvSendHSFeedback(void)
+{
+	char			buf[sizeof(StandbyHSFeedbackMessage) + 1];
+	TimestampTz		now;
+	TransactionId	nextXid;
+	uint32			nextEpoch;
+	TransactionId	xmin;
+
+	/*
+	 * If the user doesn't want status to be reported to the master, be sure
+	 * to exit before doing anything at all.
+	 */
+	if (!hot_standby_feedback)
+		return;
+
+	/* Get current timestamp. */
+	now = GetCurrentTimestamp();
+
+	/*
+	 * Send feedback at most once per wal_receiver_status_interval.
+	 */
+	if (!TimestampDifferenceExceeds(feedback_message.sendTime, now,
+			wal_receiver_status_interval * 1000))
+		return;
+
+	/*
+	 * If Hot Standby is not yet active there is nothing to send.
+	 * Check this after the interval has expired to reduce number of
+	 * calls.
+	 */
+	if (!HotStandbyActive())
+		return;
+
+	/*
+	 * Make the expensive call to get the oldest xmin once we are
+	 * certain everything else has been checked.
+	 */
+	xmin = GetOldestXmin(true, false);
+
+	/*
+	 * Get epoch and adjust if nextXid and oldestXmin are different
+	 * sides of the epoch boundary.
+	 */
+	GetNextXidAndEpoch(&nextXid, &nextEpoch);
+	if (nextXid < xmin)
+		nextEpoch--;
+
+	/*
+	 * Always send feedback message.
+	 */
+	feedback_message.sendTime = now;
+	feedback_message.xmin = xmin;
+	feedback_message.epoch = nextEpoch;
+
+	elog(DEBUG2, "sending hot standby feedback xmin %u epoch %u",
+				 feedback_message.xmin,
+				 feedback_message.epoch);
+
+	/* Prepend with the message type and send it. */
+	buf[0] = 'h';
+	memcpy(&buf[1], &feedback_message, sizeof(StandbyHSFeedbackMessage));
+	walrcv_send(buf, sizeof(StandbyHSFeedbackMessage) + 1);
 }
