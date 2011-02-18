@@ -246,6 +246,8 @@ typedef FormData_pg_statistic *Form_pg_statistic;
  * type with identifiable elements (for instance, tsvector).  staop contains
  * the equality operator appropriate to the element type.  stavalues contains
  * the most common element values, and stanumbers their frequencies.  Unlike
+ * MCV slots, frequencies are measured as the fraction of non-null rows the
+ * element value appears in, not the frequency of all rows.  Also unlike
  * MCV slots, the values are sorted into order (to support binary search
  * for a particular value).  Since this puts the minimum and maximum
  * frequencies at unpredictable spots in stanumbers, there are two extra
