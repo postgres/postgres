@@ -189,11 +189,17 @@ tsquerysel(VariableStatData *vardata, Datum constval)
 			/* No most-common-elements info, so do without */
 			selec = tsquery_opr_selec_no_stats(query);
 		}
+
+		/*
+		 * MCE stats count only non-null rows, so adjust for null rows.
+		 */
+		selec *= (1.0 - stats->stanullfrac);
 	}
 	else
 	{
 		/* No stats at all, so do without */
 		selec = tsquery_opr_selec_no_stats(query);
+		/* we assume no nulls here, so no stanullfrac correction */
 	}
 
 	return selec;
