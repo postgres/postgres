@@ -259,6 +259,21 @@ PGconn *PQconnectdbParams(const char **keywords, const char **values, int expand
          </listitem>
         </varlistentry>
 
+        <varlistentry id="libpq-connect-client-encoding" xreflabel="client_encoding">
+         <term><literal>client_encoding</literal></term>
+         <listitem>
+         <para>
+          This sets the <varname>client_encoding</varname>
+          configuration parameter for this connection.  In addition to
+          the values accepted by the corresponding server option, you
+          can use <literal>auto</literal> to determine the right
+          encoding from the current locale in the client
+          (<envar>LC_CTYPE</envar> environment variable on Unix
+          systems).
+         </para>
+         </listitem>
+        </varlistentry>
+
         <varlistentry id="libpq-connect-options" xreflabel="options">
          <term><literal>options</literal></term>
          <listitem>
@@ -6345,6 +6360,16 @@ myEventProc(PGEventId evtId, void *evtInfo, void *passThrough)
       linkend="libpq-connect-connect-timeout"> connection parameter.
      </para>
     </listitem>
+
+    <listitem>
+     <para>
+      <indexterm>
+       <primary><envar>PGCLIENTENCODING</envar></primary>
+      </indexterm>
+      <envar>PGCLIENTENCODING</envar> behaves the same as the <xref
+      linkend="libpq-connect-client-encoding"> connection parameter.
+     </para>
+    </listitem>
    </itemizedlist>
   </para>
 
@@ -6375,17 +6400,6 @@ myEventProc(PGEventId evtId, void *evtInfo, void *passThrough)
       </indexterm>
       <envar>PGTZ</envar> sets the default time zone.  (Equivalent to
       <literal>SET timezone TO ...</literal>.)
-     </para>
-    </listitem>
-
-    <listitem>
-     <para>
-      <indexterm>
-       <primary><envar>PGCLIENTENCODING</envar></primary>
-      </indexterm>
-      <envar>PGCLIENTENCODING</envar> sets the default client character
-      set encoding.  (Equivalent to <literal>SET client_encoding TO
-      ...</literal>.)
      </para>
     </listitem>
 

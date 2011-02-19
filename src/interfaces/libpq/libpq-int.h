@@ -235,6 +235,8 @@ typedef enum
 /* (this is used only for 2.0-protocol connections) */
 typedef enum
 {
+	SETENV_STATE_CLIENT_ENCODING_SEND,	/* About to send an Environment Option */
+	SETENV_STATE_CLIENT_ENCODING_WAIT,	/* Waiting for above send to complete */
 	SETENV_STATE_OPTION_SEND,	/* About to send an Environment Option */
 	SETENV_STATE_OPTION_WAIT,	/* Waiting for above send to complete */
 	SETENV_STATE_QUERY1_SEND,	/* About to send a status query */
@@ -293,6 +295,7 @@ struct pg_conn
 	char	   *pgtty;			/* tty on which the backend messages is
 								 * displayed (OBSOLETE, NOT USED) */
 	char	   *connect_timeout;	/* connection timeout (numeric string) */
+	char	   *client_encoding_initial; /* encoding to use */
 	char	   *pgoptions;		/* options to start the backend with */
 	char	   *appname;		/* application name */
 	char	   *fbappname;		/* fallback application name */

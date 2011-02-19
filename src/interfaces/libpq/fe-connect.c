@@ -175,6 +175,9 @@ static const PQconninfoOption PQconninfoOptions[] = {
 	{"port", "PGPORT", DEF_PGPORT_STR, NULL,
 	"Database-Port", "", 6},
 
+	{"client_encoding", "PGCLIENTENCODING", NULL, NULL,
+	"Client-Encoding", "", 10},
+
 	/*
 	 * "tty" is no longer used either, but keep it present for backwards
 	 * compatibility.
@@ -269,9 +272,6 @@ static const PQEnvironmentOption EnvironmentOptions[] =
 	},
 	{
 		"PGTZ", "timezone"
-	},
-	{
-		"PGCLIENTENCODING", "client_encoding"
 	},
 	/* internal performance-related settings */
 	{
@@ -612,6 +612,8 @@ fillPGconn(PGconn *conn, PQconninfoOption *connOptions)
 	conn->pgpass = tmp ? strdup(tmp) : NULL;
 	tmp = conninfo_getval(connOptions, "connect_timeout");
 	conn->connect_timeout = tmp ? strdup(tmp) : NULL;
+	tmp = conninfo_getval(connOptions, "client_encoding");
+	conn->client_encoding_initial = tmp ? strdup(tmp) : NULL;
 	tmp = conninfo_getval(connOptions, "keepalives");
 	conn->keepalives = tmp ? strdup(tmp) : NULL;
 	tmp = conninfo_getval(connOptions, "keepalives_idle");
@@ -785,6 +787,16 @@ connectOptions2(PGconn *conn)
 	}
 	else
 		conn->sslmode = strdup(DefaultSSLMode);
+
+	/*
+	 * Resolve special "auto" client_encoding from the locale
+	 */
+	if (conn->client_encoding_initial &&
+		strcmp(conn->client_encoding_initial, "auto") == 0)
+	{
+		free(conn->client_encoding_initial);
+		conn->client_encoding_initial = strdup(pg_encoding_to_char(pg_get_encoding_from_locale(NULL, true)));
+	}
 
 	/*
 	 * Only if we get this far is it appropriate to try to connect. (We need a
@@ -2508,7 +2520,7 @@ keep_going:						/* We will come back to here until there is
 				if (PG_PROTOCOL_MAJOR(conn->pversion) < 3)
 				{
 					conn->status = CONNECTION_SETENV;
-					conn->setenv_state = SETENV_STATE_OPTION_SEND;
+					conn->setenv_state = SETENV_STATE_CLIENT_ENCODING_SEND;
 					conn->next_eo = EnvironmentOptions;
 					return PGRES_POLLING_WRITING;
 				}
@@ -4660,6 +4672,10 @@ PQsetClientEncoding(PGconn *conn, const char *encoding)
 
 	if (!encoding)
 		return -1;
+
+	/* Resolve special "auto" value from the locale */
+	if (strcmp(encoding, "auto") == 0)
+		encoding = pg_encoding_to_char(pg_get_encoding_from_locale(NULL, true));
 
 	/* check query buffer overflow */
 	if (sizeof(qbuf) < (sizeof(query) + strlen(encoding)))

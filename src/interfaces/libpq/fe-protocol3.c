@@ -1933,6 +1933,9 @@ build_startup_packet(const PGconn *conn, char *packet,
 			ADD_STARTUP_OPTION("application_name", val);
 	}
 
+	if (conn->client_encoding_initial && conn->client_encoding_initial[0])
+		ADD_STARTUP_OPTION("client_encoding", conn->client_encoding_initial);
+
 	/* Add any environment-driven GUC settings needed */
 	for (next_eo = options; next_eo->envName; next_eo++)
 	{

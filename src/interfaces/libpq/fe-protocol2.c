@@ -58,6 +58,7 @@ pqSetenvPoll(PGconn *conn)
 	switch (conn->setenv_state)
 	{
 			/* These are reading states */
+		case SETENV_STATE_CLIENT_ENCODING_WAIT:
 		case SETENV_STATE_OPTION_WAIT:
 		case SETENV_STATE_QUERY1_WAIT:
 		case SETENV_STATE_QUERY2_WAIT:
@@ -74,6 +75,7 @@ pqSetenvPoll(PGconn *conn)
 			}
 
 			/* These are writing states, so we just proceed. */
+		case SETENV_STATE_CLIENT_ENCODING_SEND:
 		case SETENV_STATE_OPTION_SEND:
 		case SETENV_STATE_QUERY1_SEND:
 		case SETENV_STATE_QUERY2_SEND:
@@ -98,6 +100,39 @@ pqSetenvPoll(PGconn *conn)
 	{
 		switch (conn->setenv_state)
 		{
+			/*
+			 * The _CLIENT_ENCODING_SEND code is slightly different
+			 * from _OPTION_SEND below (e.g., no getenv() call), which
+			 * is why a different state is used.
+			 */
+			case SETENV_STATE_CLIENT_ENCODING_SEND:
+				{
+					char		setQuery[100];	/* note length limit in
+												 * sprintf below */
+					const char *val = conn->client_encoding_initial;
+
+					if (val)
+					{
+						if (pg_strcasecmp(val, "default") == 0)
+							sprintf(setQuery, "SET client_encoding = DEFAULT");
+						else
+							sprintf(setQuery, "SET client_encoding = '%.60s'",
+									val);
+#ifdef CONNECTDEBUG
+						fprintf(stderr,
+								"Sending client_encoding with %s\n",
+								setQuery);
+#endif
+						if (!PQsendQuery(conn, setQuery))
+							goto error_return;
+
+						conn->setenv_state = SETENV_STATE_CLIENT_ENCODING_WAIT;
+					}
+					else
+						conn->setenv_state = SETENV_STATE_OPTION_SEND;
+					break;
+				}
+
 			case SETENV_STATE_OPTION_SEND:
 				{
 					/*
@@ -138,6 +173,31 @@ pqSetenvPoll(PGconn *conn)
 					{
 						/* No more options to send, so move on to querying */
 						conn->setenv_state = SETENV_STATE_QUERY1_SEND;
+					}
+					break;
+				}
+
+			case SETENV_STATE_CLIENT_ENCODING_WAIT:
+				{
+					if (PQisBusy(conn))
+						return PGRES_POLLING_READING;
+
+					res = PQgetResult(conn);
+
+					if (res)
+					{
+						if (PQresultStatus(res) != PGRES_COMMAND_OK)
+						{
+							PQclear(res);
+							goto error_return;
+						}
+						PQclear(res);
+						/* Keep reading until PQgetResult returns NULL */
+					}
+					else
+					{
+						/* Query finished, so send the next option */
+						conn->setenv_state = SETENV_STATE_OPTION_SEND;
 					}
 					break;
 				}

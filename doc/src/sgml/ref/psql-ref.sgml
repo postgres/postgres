@@ -593,6 +593,17 @@ $ <userinput>psql "service=myservice sslmode=require"</userinput>
     privileges, server is not running on the targeted host, etc.),
     <application>psql</application> will return an error and terminate.
     </para>
+
+    <para>
+     If at least one of standard input or standard output are a
+     terminal, then <application>psql</application> sets the client
+     encoding to <quote>auto</quote>, which will detect the
+     appropriate client encoding from the locale settings
+     (<envar>LC_CTYPE</envar> environment variable on Unix systems).
+     If this doesn't work out as expected, the client encoding can be
+     overridden using the environment
+     variable <envar>PGCLIENTENCODING</envar>.
+    </para>
   </refsect2>
 
   <refsect2 id="R2-APP-PSQL-4">
