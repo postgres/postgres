@@ -3913,6 +3913,10 @@ DATA(insert OID = 2777 (  anynonarray_in	PGNSP PGUID 12 1 0 0 f f f t f i 1 0 27
 DESCR("I/O");
 DATA(insert OID = 2778 (  anynonarray_out	PGNSP PGUID 12 1 0 0 f f f t f i 1 0 2275 "2776" _null_ _null_ _null_ _null_ anynonarray_out _null_ _null_ _null_ ));
 DESCR("I/O");
+DATA(insert OID = 3116 (  fdw_handler_in	PGNSP PGUID 12 1 0 0 f f f f f i 1 0 3115 "2275" _null_ _null_ _null_ _null_ fdw_handler_in _null_ _null_ _null_ ));
+DESCR("I/O");
+DATA(insert OID = 3117 (  fdw_handler_out	PGNSP PGUID 12 1 0 0 f f f t f i 1 0 2275 "3115" _null_ _null_ _null_ _null_ fdw_handler_out _null_ _null_ _null_ ));
+DESCR("I/O");
 
 /* cryptographic */
 DATA(insert OID =  2311 (  md5	   PGNSP PGUID 12 1 0 0 f f f t f i 1 0 25 "25" _null_ _null_ _null_ _null_ md5_text _null_ _null_ _null_ ));

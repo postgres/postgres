@@ -22,7 +22,8 @@ PostgreSQL documentation
  <refsynopsisdiv>
 <synopsis>
 CREATE FOREIGN DATA WRAPPER <replaceable class="parameter">name</replaceable>
-    [ VALIDATOR <replaceable class="parameter">valfunction</replaceable> | NO VALIDATOR ]
+    [ HANDLER <replaceable class="parameter">handler_function</replaceable> | NO HANDLER ]
+    [ VALIDATOR <replaceable class="parameter">validator_function</replaceable> | NO VALIDATOR ]
     [ OPTIONS ( <replaceable class="PARAMETER">option</replaceable> '<replaceable class="PARAMETER">value</replaceable>' [, ... ] ) ]
 </synopsis>
  </refsynopsisdiv>
@@ -59,13 +60,32 @@ CREATE FOREIGN DATA WRAPPER <replaceable class="parameter">name</replaceable>
    </varlistentry>
 
    <varlistentry>
-    <term><literal>VALIDATOR <replaceable class="parameter">valfunction</replaceable></literal></term>
+    <term><literal>HANDLER <replaceable class="parameter">handler_function</replaceable></literal></term>
     <listitem>
      <para>
-      <replaceable class="parameter">valfunction</replaceable> is the
+      <replaceable class="parameter">handler_function</replaceable> is the
+      name of a previously registered function that will be called to
+      retrieve the execution functions for foreign tables.
+      The handler function must take no arguments, and
+      its return type must be <type>fdw_handler</type>.
+     </para>
+
+     <para>
+      It is possible to create a foreign-data wrapper with no handler
+      function, but foreign tables using such a wrapper can only be declared,
+      not accessed.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><literal>VALIDATOR <replaceable class="parameter">validator_function</replaceable></literal></term>
+    <listitem>
+     <para>
+      <replaceable class="parameter">validator_function</replaceable> is the
       name of a previously registered function that will be called to
       check the generic options given to the foreign-data wrapper, as
-      well as to foreign servers and user mappings using the
+      well as options for foreign servers and user mappings using the
       foreign-data wrapper.  If no validator function or <literal>NO
       VALIDATOR</literal> is specified, then options will not be
       checked at creation time.  (Foreign-data wrappers will possibly
@@ -75,8 +95,8 @@ CREATE FOREIGN DATA WRAPPER <replaceable class="parameter">name</replaceable>
       contain the array of options as stored in the system catalogs,
       and one of type <type>oid</type>, which will be the OID of the
       system catalog containing the options. The return type is ignored;
-      the function should indicate invalid options using the
-      <function>ereport()</function> function.
+      the function should report invalid options using the
+      <function>ereport(ERROR)</function> function.
      </para>
     </listitem>
    </varlistentry>
@@ -87,8 +107,8 @@ CREATE FOREIGN DATA WRAPPER <replaceable class="parameter">name</replaceable>
      <para>
       This clause specifies options for the new foreign-data wrapper.
       The allowed option names and values are specific to each foreign
-      data wrapper and are validated using the foreign-data wrapper
-      library.  Option names must be unique.
+      data wrapper and are validated using the foreign-data wrapper's
+      validator function.  Option names must be unique.
      </para>
     </listitem>
    </varlistentry>
@@ -122,17 +142,17 @@ CREATE FOREIGN DATA WRAPPER <replaceable class="parameter">name</replaceable>
   <title>Examples</title>
 
   <para>
-   Create a foreign-data wrapper <literal>dummy</>:
+   Create a useless foreign-data wrapper <literal>dummy</>:
 <programlisting>
 CREATE FOREIGN DATA WRAPPER dummy;
 </programlisting>
   </para>
 
   <para>
-   Create a foreign-data wrapper <literal>postgresql</> with
-   validator function <literal>postgresql_fdw_validator</>:
+   Create a foreign-data wrapper <literal>file</> with
+   handler function <literal>file_fdw_handler</>:
 <programlisting>
-CREATE FOREIGN DATA WRAPPER postgresql VALIDATOR postgresql_fdw_validator;
+CREATE FOREIGN DATA WRAPPER file HANDLER file_fdw_handler;
 </programlisting>
   </para>
 
@@ -151,10 +171,10 @@ CREATE FOREIGN DATA WRAPPER mywrapper
 
   <para>
    <command>CREATE FOREIGN DATA WRAPPER</command> conforms to ISO/IEC
-   9075-9 (SQL/MED), with the exception that
-   the <literal>VALIDATOR</literal> clause is an extension and the
+   9075-9 (SQL/MED), with the exception that the <literal>HANDLER</literal>
+   and <literal>VALIDATOR</literal> clauses are extensions and the standard
    clauses <literal>LIBRARY</literal> and <literal>LANGUAGE</literal>
-   are not yet implemented in PostgreSQL.
+   are not implemented in PostgreSQL.
   </para>
 
   <para>

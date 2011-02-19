@@ -3562,10 +3562,15 @@ listForeignDataWrappers(const char *pattern, bool verbose)
 	initPQExpBuffer(&buf);
 	printfPQExpBuffer(&buf,
 					  "SELECT fdwname AS \"%s\",\n"
-					  "  pg_catalog.pg_get_userbyid(fdwowner) AS \"%s\",\n"
-					  "  fdwvalidator::pg_catalog.regproc AS \"%s\"",
+					  "  pg_catalog.pg_get_userbyid(fdwowner) AS \"%s\",\n",
 					  gettext_noop("Name"),
-					  gettext_noop("Owner"),
+					  gettext_noop("Owner"));
+	if (pset.sversion >= 90100)
+		appendPQExpBuffer(&buf,
+						  "  fdwhandler::pg_catalog.regproc AS \"%s\",\n",
+						  gettext_noop("Handler"));
+	appendPQExpBuffer(&buf,
+					  "  fdwvalidator::pg_catalog.regproc AS \"%s\"",
 					  gettext_noop("Validator"));
 
 	if (verbose)

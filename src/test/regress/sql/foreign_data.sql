@@ -24,7 +24,7 @@ CREATE FOREIGN DATA WRAPPER dummy;
 CREATE FOREIGN DATA WRAPPER postgresql VALIDATOR postgresql_fdw_validator;
 
 -- At this point we should have 2 built-in wrappers and no servers.
-SELECT fdwname, fdwvalidator::regproc, fdwoptions FROM pg_foreign_data_wrapper ORDER BY 1, 2, 3;
+SELECT fdwname, fdwhandler::regproc, fdwvalidator::regproc, fdwoptions FROM pg_foreign_data_wrapper ORDER BY 1, 2, 3;
 SELECT srvname, srvoptions FROM pg_foreign_server;
 SELECT * FROM pg_user_mapping;
 
@@ -271,6 +271,8 @@ COMMENT ON COLUMN ft1.c1 IS 'ft1.c1';
 \d+ ft1
 \det+
 CREATE INDEX id_ft1_c2 ON ft1 (c2);                             -- ERROR
+SELECT * FROM ft1;                                              -- ERROR
+EXPLAIN SELECT * FROM ft1;                                      -- ERROR
 
 -- ALTER FOREIGN TABLE
 COMMENT ON FOREIGN TABLE ft1 IS 'foreign table';
@@ -453,6 +455,6 @@ DROP FOREIGN DATA WRAPPER dummy CASCADE;
 DROP ROLE foreign_data_user;
 
 -- At this point we should have no wrappers, no servers, and no mappings.
-SELECT fdwname, fdwvalidator, fdwoptions FROM pg_foreign_data_wrapper;
+SELECT fdwname, fdwhandler, fdwvalidator, fdwoptions FROM pg_foreign_data_wrapper;
 SELECT srvname, srvoptions FROM pg_foreign_server;
 SELECT * FROM pg_user_mapping;

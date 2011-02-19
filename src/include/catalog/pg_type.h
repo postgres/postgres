@@ -631,6 +631,8 @@ DATA(insert OID = 2776 ( anynonarray	PGNSP PGUID  4 t p P f t \054 0 0 0 anynona
 #define ANYNONARRAYOID	2776
 DATA(insert OID = 3500 ( anyenum		PGNSP PGUID  4 t p P f t \054 0 0 0 anyenum_in anyenum_out - - - - - i p f 0 -1 0 0 _null_ _null_ ));
 #define ANYENUMOID		3500
+DATA(insert OID = 3115 ( fdw_handler	PGNSP PGUID  4 t p P f t \054 0 0 0 fdw_handler_in fdw_handler_out - - - - - i p f 0 -1 0 0 _null_ _null_ ));
+#define FDW_HANDLEROID		3115
 
 
 /*

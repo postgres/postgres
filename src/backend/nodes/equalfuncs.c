@@ -1679,7 +1679,7 @@ static bool
 _equalCreateFdwStmt(CreateFdwStmt *a, CreateFdwStmt *b)
 {
 	COMPARE_STRING_FIELD(fdwname);
-	COMPARE_NODE_FIELD(validator);
+	COMPARE_NODE_FIELD(func_options);
 	COMPARE_NODE_FIELD(options);
 
 	return true;
@@ -1689,8 +1689,7 @@ static bool
 _equalAlterFdwStmt(AlterFdwStmt *a, AlterFdwStmt *b)
 {
 	COMPARE_STRING_FIELD(fdwname);
-	COMPARE_NODE_FIELD(validator);
-	COMPARE_SCALAR_FIELD(change_validator);
+	COMPARE_NODE_FIELD(func_options);
 	COMPARE_NODE_FIELD(options);
 
 	return true;

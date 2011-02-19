@@ -58,6 +58,7 @@ GetForeignDataWrapper(Oid fdwid)
 	fdw->fdwid = fdwid;
 	fdw->owner = fdwform->fdwowner;
 	fdw->fdwname = pstrdup(NameStr(fdwform->fdwname));
+	fdw->fdwhandler = fdwform->fdwhandler;
 	fdw->fdwvalidator = fdwform->fdwvalidator;
 
 	/* Extract the options */

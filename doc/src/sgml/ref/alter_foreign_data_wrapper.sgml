@@ -22,7 +22,8 @@ PostgreSQL documentation
  <refsynopsisdiv>
 <synopsis>
 ALTER FOREIGN DATA WRAPPER <replaceable class="parameter">name</replaceable>
-    [ VALIDATOR <replaceable class="parameter">valfunction</replaceable> | NO VALIDATOR ]
+    [ HANDLER <replaceable class="parameter">handler_function</replaceable> | NO HANDLER ]
+    [ VALIDATOR <replaceable class="parameter">validator_function</replaceable> | NO VALIDATOR ]
     [ OPTIONS ( [ ADD | SET | DROP ] <replaceable class="PARAMETER">option</replaceable> ['<replaceable class="PARAMETER">value</replaceable>'] [, ... ]) ]
 ALTER FOREIGN DATA WRAPPER <replaceable class="parameter">name</replaceable> OWNER TO <replaceable>new_owner</replaceable>
 </synopsis>
@@ -34,7 +35,7 @@ ALTER FOREIGN DATA WRAPPER <replaceable class="parameter">name</replaceable> OWN
   <para>
    <command>ALTER FOREIGN DATA WRAPPER</command> changes the
    definition of a foreign-data wrapper.  The first form of the
-   command changes the library or the generic options of the
+   command changes the support functions or the generic options of the
    foreign-data wrapper (at least one clause is required).  The second
    form changes the owner of the foreign-data wrapper.
   </para>
@@ -59,10 +60,33 @@ ALTER FOREIGN DATA WRAPPER <replaceable class="parameter">name</replaceable> OWN
    </varlistentry>
 
    <varlistentry>
-    <term><literal>VALIDATOR <replaceable class="parameter">valfunction</replaceable></literal></term>
+    <term><literal>HANDLER <replaceable class="parameter">handler_function</replaceable></literal></term>
     <listitem>
      <para>
-      Specifies a new foreign-data wrapper validator function.
+      Specifies a new handler function for the foreign-data wrapper.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><literal>NO HANDLER</literal></term>
+    <listitem>
+     <para>
+      This is used to specify that the foreign-data wrapper should no
+      longer have a handler function.
+     </para>
+     <para>
+      Note that foreign tables that use a foreign-data wrapper with no
+      handler cannot be accessed.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><literal>VALIDATOR <replaceable class="parameter">validator_function</replaceable></literal></term>
+    <listitem>
+     <para>
+      Specifies a new validator function for the foreign-data wrapper.
      </para>
 
      <para>
@@ -94,7 +118,7 @@ ALTER FOREIGN DATA WRAPPER <replaceable class="parameter">name</replaceable> OWN
       specify the action to be performed.  <literal>ADD</> is assumed
       if no operation is explicitly specified.  Option names must be
       unique; names and values are also validated using the foreign
-      data wrapper library.
+      data wrapper's validator function, if any.
      </para>
     </listitem>
    </varlistentry>
@@ -126,9 +150,8 @@ ALTER FOREIGN DATA WRAPPER dbi VALIDATOR bob.myvalidator;
 
   <para>
    <command>ALTER FOREIGN DATA WRAPPER</command> conforms to ISO/IEC
-   9075-9 (SQL/MED).  The standard does not specify the <literal>
-   VALIDATOR</literal> and <literal>OWNER TO</> variants of the
-   command.
+   9075-9 (SQL/MED), except that the <literal>HANDLER</literal>,
+   <literal>VALIDATOR</> and <literal>OWNER TO</> clauses are extensions.
   </para>
  </refsect1>
 

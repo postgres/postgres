@@ -3032,15 +3032,26 @@
      </row>
 
      <row>
+      <entry><structfield>fdwhandler</structfield></entry>
+      <entry><type>oid</type></entry>
+      <entry><literal><link linkend="catalog-pg-proc"><structname>pg_proc</structname></link>.oid</literal></entry>
+      <entry>
+       References a handler function that is responsible for
+       supplying execution routines for the foreign-data wrapper.
+       Zero if no handler is provided
+      </entry>
+     </row>
+
+     <row>
       <entry><structfield>fdwvalidator</structfield></entry>
       <entry><type>oid</type></entry>
       <entry><literal><link linkend="catalog-pg-proc"><structname>pg_proc</structname></link>.oid</literal></entry>
       <entry>
        References a validator function that is responsible for
-       checking the validity of the generic options given to the
-       foreign-data wrapper, as well as to foreign servers and user
+       checking the validity of the options given to the
+       foreign-data wrapper, as well as options for foreign servers and user
        mappings using the foreign-data wrapper.  Zero if no validator
-       is provided.
+       is provided
       </entry>
      </row>
 
@@ -3079,8 +3090,8 @@
 
   <para>
    The catalog <structname>pg_foreign_server</structname> stores
-   foreign server definitions.  A foreign server describes the
-   connection to a remote server, managing external data.  Foreign
+   foreign server definitions.  A foreign server describes a source
+   of external data, such as a remote server.  Foreign
    servers are accessed via foreign-data wrappers.
   </para>
 
@@ -3116,7 +3127,7 @@
       <entry><structfield>srvfdw</structfield></entry>
       <entry><type>oid</type></entry>
       <entry><literal><link linkend="catalog-pg-foreign-data-wrapper"><structname>pg_foreign_data_wrapper</structname></link>.oid</literal></entry>
-      <entry>The OID of the foreign-data wrapper of this foreign server</entry>
+      <entry>OID of the foreign-data wrapper of this foreign server</entry>
      </row>
 
      <row>
@@ -3167,9 +3178,12 @@
   </indexterm>
 
   <para>
-   The catalog <structname>pg_foreign_table</structname> contains part
-   of the information about foreign tables.
-   The rest is mostly in <structname>pg_class</structname>.
+   The catalog <structname>pg_foreign_table</structname> contains
+   auxiliary information about foreign tables.  A foreign table is
+   primarily represented by a <structname>pg_class</structname> entry,
+   just like a regular table.  Its <structname>pg_foreign_table</structname>
+   entry contains the information that is pertinent only to foreign tables
+   and not any other kind of relation.
   </para>
 
   <table>
@@ -3190,14 +3204,14 @@
       <entry><structfield>ftrelid</structfield></entry>
       <entry><type>oid</type></entry>
       <entry><literal><link linkend="catalog-pg-class"><structname>pg_class</structname></link>.oid</literal></entry>
-      <entry>The OID of the <structname>pg_class</> entry for this foreign table</entry>
+      <entry>OID of the <structname>pg_class</> entry for this foreign table</entry>
      </row>
 
      <row>
       <entry><structfield>ftserver</structfield></entry>
       <entry><type>oid</type></entry>
       <entry><literal><link linkend="catalog-pg-foreign-server"><structname>pg_foreign_server</structname></link>.oid</literal></entry>
-      <entry>The OID of the foreign server for this foreign table</entry>
+      <entry>OID of the foreign server for this foreign table</entry>
      </row>
 
      <row>
@@ -3205,7 +3219,7 @@
       <entry><type>text[]</type></entry>
       <entry></entry>
       <entry>
-       Foreign table options, as <quote>keyword=value</> strings.
+       Foreign table options, as <quote>keyword=value</> strings
       </entry>
      </row>
     </tbody>

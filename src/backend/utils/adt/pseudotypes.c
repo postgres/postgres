@@ -268,6 +268,33 @@ language_handler_out(PG_FUNCTION_ARGS)
 
 
 /*
+ * fdw_handler_in		- input routine for pseudo-type FDW_HANDLER.
+ */
+Datum
+fdw_handler_in(PG_FUNCTION_ARGS)
+{
+	ereport(ERROR,
+			(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+			 errmsg("cannot accept a value of type fdw_handler")));
+
+	PG_RETURN_VOID();			/* keep compiler quiet */
+}
+
+/*
+ * fdw_handler_out		- output routine for pseudo-type FDW_HANDLER.
+ */
+Datum
+fdw_handler_out(PG_FUNCTION_ARGS)
+{
+	ereport(ERROR,
+			(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+			 errmsg("cannot display a value of type fdw_handler")));
+
+	PG_RETURN_VOID();			/* keep compiler quiet */
+}
+
+
+/*
  * internal_in		- input routine for pseudo-type INTERNAL.
  */
 Datum

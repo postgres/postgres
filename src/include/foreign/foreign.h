@@ -37,7 +37,8 @@ typedef struct ForeignDataWrapper
 	Oid			fdwid;			/* FDW Oid */
 	Oid			owner;			/* FDW owner user Oid */
 	char	   *fdwname;		/* Name of the FDW */
-	Oid			fdwvalidator;
+	Oid			fdwhandler;		/* Oid of handler function, or 0 */
+	Oid			fdwvalidator;	/* Oid of validator function, or 0 */
 	List	   *options;		/* fdwoptions as DefElem list */
 } ForeignDataWrapper;
 
