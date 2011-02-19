@@ -3847,7 +3847,28 @@ SELECT 'super:*'::tsquery;
  'super':*
 </programlisting>
      This query will match any word in a <type>tsvector</> that begins
-     with <quote>super</>.
+     with <quote>super</>.  
+    </para>
+
+    <para>
+     Note that text search configuration processing happens before
+     comparisons, which means this comparison returns <literal>true</>:
+<programlisting>
+SELECT to_tsvector( 'postgraduate' ) @@ to_tsquery( 'postgres:*' );
+ ?column? 
+----------
+ t
+(1 row)
+</programlisting>
+     because <literal>postgres</> gets stemmed to <literal>postgr</>: 
+<programlisting>
+SELECT to_tsquery('postgres:*');
+ to_tsquery 
+------------
+ 'postgr':*
+(1 row)
+</programlisting>
+     which then matches <literal>postgraduate</>.
     </para>
 
     <para>
