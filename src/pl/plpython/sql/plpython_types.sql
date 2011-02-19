@@ -279,6 +279,49 @@ $$ LANGUAGE plpythonu;
 SELECT * FROM test_type_conversion_array_error();
 
 
+---
+--- Composite types
+---
+
+CREATE TABLE employee (
+    name text,
+    basesalary integer,
+    bonus integer
+);
+
+INSERT INTO employee VALUES ('John', 100, 10), ('Mary', 200, 10);
+
+CREATE OR REPLACE FUNCTION test_composite_table_input(e employee) RETURNS integer AS $$
+return e['basesalary'] + e['bonus']
+$$ LANGUAGE plpythonu;
+
+SELECT name, test_composite_table_input(employee.*) FROM employee;
+
+ALTER TABLE employee DROP bonus;
+
+SELECT name, test_composite_table_input(employee.*) FROM employee;
+
+ALTER TABLE employee ADD bonus integer;
+UPDATE employee SET bonus = 10;
+
+SELECT name, test_composite_table_input(employee.*) FROM employee;
+
+CREATE TYPE named_pair AS (
+    i integer,
+    j integer
+);
+
+CREATE OR REPLACE FUNCTION test_composite_type_input(p named_pair) RETURNS integer AS $$
+return sum(p.values())
+$$ LANGUAGE plpythonu;
+
+SELECT test_composite_type_input(row(1, 2));
+
+ALTER TYPE named_pair RENAME TO named_pair_2;
+
+SELECT test_composite_type_input(row(1, 2));
+
+
 --
 -- Prepared statements
 --

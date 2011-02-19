@@ -101,6 +101,7 @@ typedef int Py_ssize_t;
 #include "nodes/makefuncs.h"
 #include "parser/parse_type.h"
 #include "tcop/tcopprot.h"
+#include "access/transam.h"
 #include "access/xact.h"
 #include "utils/builtins.h"
 #include "utils/hsearch.h"
@@ -195,6 +196,10 @@ typedef struct PLyTypeInfo
 	 * datatype; 1 = rowtype; 2 = rowtype, but I/O functions not set up yet
 	 */
 	int			is_rowtype;
+	/* used to check if the type has been modified */
+	Oid			typ_relid;
+	TransactionId typrel_xmin;
+	ItemPointerData typrel_tid;
 } PLyTypeInfo;
 
 
@@ -1335,11 +1340,50 @@ PLy_function_delete_args(PLyProcedure *proc)
 static bool
 PLy_procedure_valid(PLyProcedure *proc, HeapTuple procTup)
 {
+	int			i;
+	bool		valid;
+
 	Assert(proc != NULL);
 
 	/* If the pg_proc tuple has changed, it's not valid */
-	return (proc->fn_xmin == HeapTupleHeaderGetXmin(procTup->t_data) &&
-			ItemPointerEquals(&proc->fn_tid, &procTup->t_self));
+	if (!(proc->fn_xmin == HeapTupleHeaderGetXmin(procTup->t_data) &&
+		  ItemPointerEquals(&proc->fn_tid, &procTup->t_self)))
+		return false;
+
+	valid = true;
+	/* If there are composite input arguments, they might have changed */
+	for (i = 0; i < proc->nargs; i++)
+	{
+		Oid				relid;
+		HeapTuple		relTup;
+
+		/* Short-circuit on first changed argument */
+		if (!valid)
+			break;
+
+		/* Only check input arguments that are composite */
+		if (proc->args[i].is_rowtype != 1)
+			continue;
+
+		Assert(OidIsValid(proc->args[i].typ_relid));
+		Assert(TransactionIdIsValid(proc->args[i].typrel_xmin));
+		Assert(ItemPointerIsValid(&proc->args[i].typrel_tid));
+
+		/* Get the pg_class tuple for the argument type */
+		relid = proc->args[i].typ_relid;
+		relTup = SearchSysCache1(RELOID, ObjectIdGetDatum(relid));
+		if (!HeapTupleIsValid(relTup))
+			elog(ERROR, "cache lookup failed for relation %u", relid);
+
+		/* If it has changed, the function is not valid */
+		if (!(proc->args[i].typrel_xmin == HeapTupleHeaderGetXmin(relTup->t_data) &&
+			  ItemPointerEquals(&proc->args[i].typrel_tid, &relTup->t_self)))
+			valid = false;
+
+		ReleaseSysCache(relTup);
+	}
+
+	return valid;
 }
 
 
@@ -1747,6 +1791,33 @@ PLy_input_tuple_funcs(PLyTypeInfo *arg, TupleDesc desc)
 		arg->in.r.atts = PLy_malloc0(desc->natts * sizeof(PLyDatumToOb));
 	}
 
+	/* Can this be an unnamed tuple? If not, then an Assert would be enough */
+	if (desc->tdtypmod != -1)
+		elog(ERROR, "received unnamed record type as input");
+
+	Assert(OidIsValid(desc->tdtypeid));
+
+	/*
+	 * RECORDOID means we got called to create input functions for a tuple
+	 * fetched by plpy.execute or for an anonymous record type
+	 */
+	if (desc->tdtypeid != RECORDOID && !TransactionIdIsValid(arg->typrel_xmin))
+	{
+		HeapTuple	relTup;
+
+		/* Get the pg_class tuple corresponding to the type of the input */
+		arg->typ_relid = typeidTypeRelid(desc->tdtypeid);
+		relTup = SearchSysCache1(RELOID, ObjectIdGetDatum(arg->typ_relid));
+		if (!HeapTupleIsValid(relTup))
+			elog(ERROR, "cache lookup failed for relation %u", arg->typ_relid);
+
+		/* Extract the XMIN value to later use it in PLy_procedure_valid */
+		arg->typrel_xmin = HeapTupleHeaderGetXmin(relTup->t_data);
+		arg->typrel_tid = relTup->t_self;
+
+		ReleaseSysCache(relTup);
+	}
+
 	for (i = 0; i < desc->natts; i++)
 	{
 		HeapTuple	typeTup;
@@ -1951,6 +2022,9 @@ PLy_typeinfo_init(PLyTypeInfo *arg)
 	arg->in.r.natts = arg->out.r.natts = 0;
 	arg->in.r.atts = NULL;
 	arg->out.r.atts = NULL;
+	arg->typ_relid = InvalidOid;
+	arg->typrel_xmin = InvalidTransactionId;
+	ItemPointerSetInvalid(&arg->typrel_tid);
 }
 
 static void
