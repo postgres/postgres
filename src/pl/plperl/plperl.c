@@ -1990,7 +1990,7 @@ plperl_func_handler(PG_FUNCTION_ARGS)
 {
 	plperl_proc_desc *prodesc;
 	SV		   *perlret;
-	Datum		retval;
+	Datum		retval = 0;
 	ReturnSetInfo *rsi;
 	ErrorContextCallback pl_error_context;
 	bool		has_retval = false;
