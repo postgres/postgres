@@ -383,10 +383,10 @@ SELECT depname, empno, salary, avg(salary) OVER (PARTITION BY depname) FROM emps
    </para>
 
    <para>
-    Although <function>avg</> will produce the same result no matter
-    what order it processes the partition's rows in, this is not true of all
-    window functions.  When needed, you can control that order using
-    <literal>ORDER BY</> within <literal>OVER</>.  Here is an example:
+    You can also control the order in which rows are processed by
+    window functions using <literal>ORDER BY</> within <literal>OVER</>.
+    (The window <literal>ORDER BY</> does not even have to match the
+    order in which the rows are output.)  Here is an example:
 
 <programlisting>
 SELECT depname, empno, salary, rank() OVER (PARTITION BY depname ORDER BY salary DESC) FROM empsalary;
