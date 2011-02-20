@@ -106,6 +106,7 @@
 <!entity dict-xsyn       SYSTEM "dict-xsyn.sgml">
 <!entity dummy-seclabel  SYSTEM "dummy-seclabel.sgml">
 <!entity earthdistance   SYSTEM "earthdistance.sgml">
+<!entity file-fdw        SYSTEM "file-fdw.sgml">
 <!entity fuzzystrmatch   SYSTEM "fuzzystrmatch.sgml">
 <!entity hstore          SYSTEM "hstore.sgml">
 <!entity intagg          SYSTEM "intagg.sgml">

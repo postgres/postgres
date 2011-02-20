@@ -1,0 +1,225 @@
+--
+-- Test foreign-data wrapper file_fdw.
+--
+-- Clean up in case a prior regression run failed
+SET client_min_messages TO 'error';
+DROP ROLE IF EXISTS file_fdw_superuser, file_fdw_user, no_priv_user;
+RESET client_min_messages;
+CREATE ROLE file_fdw_superuser LOGIN SUPERUSER; -- is a superuser
+CREATE ROLE file_fdw_user LOGIN;                -- has priv and user mapping
+CREATE ROLE no_priv_user LOGIN;                 -- has priv but no user mapping
+-- Install file_fdw
+CREATE EXTENSION file_fdw;
+-- file_fdw_superuser owns fdw-related objects
+SET ROLE file_fdw_superuser;
+CREATE SERVER file_server FOREIGN DATA WRAPPER file_fdw;
+-- privilege tests
+SET ROLE file_fdw_user;
+CREATE FOREIGN DATA WRAPPER file_fdw2 HANDLER file_fdw_handler VALIDATOR file_fdw_validator;   -- ERROR
+ERROR:  permission denied to create foreign-data wrapper "file_fdw2"
+HINT:  Must be superuser to create a foreign-data wrapper.
+CREATE SERVER file_server2 FOREIGN DATA WRAPPER file_fdw;   -- ERROR
+ERROR:  permission denied for foreign-data wrapper file_fdw
+CREATE USER MAPPING FOR file_fdw_user SERVER file_server;   -- ERROR
+ERROR:  permission denied for foreign server file_server
+SET ROLE file_fdw_superuser;
+GRANT USAGE ON FOREIGN SERVER file_server TO file_fdw_user;
+SET ROLE file_fdw_user;
+CREATE USER MAPPING FOR file_fdw_user SERVER file_server;
+-- create user mappings and grant privilege to test users
+SET ROLE file_fdw_superuser;
+CREATE USER MAPPING FOR file_fdw_superuser SERVER file_server;
+CREATE USER MAPPING FOR no_priv_user SERVER file_server;
+-- validator tests
+CREATE FOREIGN TABLE tbl () SERVER file_server OPTIONS (format 'xml');  -- ERROR
+ERROR:  COPY format "xml" not recognized
+CREATE FOREIGN TABLE tbl () SERVER file_server OPTIONS (format 'text', header 'true');      -- ERROR
+ERROR:  COPY HEADER available only in CSV mode
+CREATE FOREIGN TABLE tbl () SERVER file_server OPTIONS (format 'text', quote ':');          -- ERROR
+ERROR:  COPY quote available only in CSV mode
+CREATE FOREIGN TABLE tbl () SERVER file_server OPTIONS (format 'text', escape ':');         -- ERROR
+ERROR:  COPY escape available only in CSV mode
+CREATE FOREIGN TABLE tbl () SERVER file_server OPTIONS (format 'binary', header 'true');    -- ERROR
+ERROR:  COPY HEADER available only in CSV mode
+CREATE FOREIGN TABLE tbl () SERVER file_server OPTIONS (format 'binary', quote ':');        -- ERROR
+ERROR:  COPY quote available only in CSV mode
+CREATE FOREIGN TABLE tbl () SERVER file_server OPTIONS (format 'binary', escape ':');       -- ERROR
+ERROR:  COPY escape available only in CSV mode
+CREATE FOREIGN TABLE tbl () SERVER file_server OPTIONS (format 'text', delimiter 'a');      -- ERROR
+ERROR:  COPY delimiter cannot be "a"
+CREATE FOREIGN TABLE tbl () SERVER file_server OPTIONS (format 'text', escape '-');         -- ERROR
+ERROR:  COPY escape available only in CSV mode
+CREATE FOREIGN TABLE tbl () SERVER file_server OPTIONS (format 'csv', quote '-', null '=-=');   -- ERROR
+ERROR:  CSV quote character must not appear in the NULL specification
+CREATE FOREIGN TABLE tbl () SERVER file_server OPTIONS (format 'csv', delimiter '-', null '=-=');    -- ERROR
+ERROR:  COPY delimiter must not appear in the NULL specification
+CREATE FOREIGN TABLE tbl () SERVER file_server OPTIONS (format 'csv', delimiter '-', quote '-');    -- ERROR
+ERROR:  COPY delimiter and quote must be different
+CREATE FOREIGN TABLE tbl () SERVER file_server OPTIONS (format 'csv', delimiter '---');     -- ERROR
+ERROR:  COPY delimiter must be a single one-byte character
+CREATE FOREIGN TABLE tbl () SERVER file_server OPTIONS (format 'csv', quote '---');         -- ERROR
+ERROR:  COPY quote must be a single one-byte character
+CREATE FOREIGN TABLE tbl () SERVER file_server OPTIONS (format 'csv', escape '---');        -- ERROR
+ERROR:  COPY escape must be a single one-byte character
+CREATE FOREIGN TABLE tbl () SERVER file_server OPTIONS (format 'text', delimiter '\');       -- ERROR
+ERROR:  COPY delimiter cannot be "\"
+CREATE FOREIGN TABLE tbl () SERVER file_server OPTIONS (format 'text', delimiter '.');       -- ERROR
+ERROR:  COPY delimiter cannot be "."
+CREATE FOREIGN TABLE tbl () SERVER file_server OPTIONS (format 'text', delimiter '1');       -- ERROR
+ERROR:  COPY delimiter cannot be "1"
+CREATE FOREIGN TABLE tbl () SERVER file_server OPTIONS (format 'text', delimiter 'a');       -- ERROR
+ERROR:  COPY delimiter cannot be "a"
+CREATE FOREIGN TABLE tbl () SERVER file_server OPTIONS (format 'csv', delimiter '
+');       -- ERROR
+ERROR:  COPY delimiter cannot be newline or carriage return
+CREATE FOREIGN TABLE tbl () SERVER file_server OPTIONS (format 'csv', null '
+');       -- ERROR
+ERROR:  COPY null representation cannot use newline or carriage return
+CREATE FOREIGN TABLE agg_text (
+	a	int2,
+	b	float4
+) SERVER file_server
+OPTIONS (format 'text', filename '@abs_srcdir@/data/agg.data', delimiter '	', null '\N');
+GRANT SELECT ON agg_text TO file_fdw_user;
+CREATE FOREIGN TABLE agg_csv (
+	a	int2,
+	b	float4
+) SERVER file_server
+OPTIONS (format 'csv', filename '@abs_srcdir@/data/agg.csv', header 'true', delimiter ';', quote '@', escape '"', null '');
+CREATE FOREIGN TABLE agg_bad (
+	a	int2,
+	b	float4
+) SERVER file_server
+OPTIONS (format 'csv', filename '@abs_srcdir@/data/agg.bad', header 'true', delimiter ';', quote '@', escape '"', null '');
+-- basic query tests
+SELECT * FROM agg_text WHERE b > 10.0 ORDER BY a;
+  a  |   b    
+-----+--------
+  42 | 324.78
+ 100 | 99.097
+(2 rows)
+
+SELECT * FROM agg_csv ORDER BY a;
+  a  |    b    
+-----+---------
+   0 | 0.09561
+  42 |  324.78
+ 100 |  99.097
+(3 rows)
+
+SELECT * FROM agg_csv c JOIN agg_text t ON (t.a = c.a) ORDER BY c.a;
+  a  |    b    |  a  |    b    
+-----+---------+-----+---------
+   0 | 0.09561 |   0 | 0.09561
+  42 |  324.78 |  42 |  324.78
+ 100 |  99.097 | 100 |  99.097
+(3 rows)
+
+-- error context report tests
+SELECT * FROM agg_bad;               -- ERROR
+ERROR:  invalid input syntax for type real: "aaa"
+CONTEXT:  COPY agg_bad, line 3, column b: "aaa"
+-- misc query tests
+\t on
+EXPLAIN (VERBOSE, COSTS FALSE) SELECT * FROM agg_csv;
+ Foreign Scan on public.agg_csv
+   Output: a, b
+   Foreign File: @abs_srcdir@/data/agg.csv
+
+\t off
+PREPARE st(int) AS SELECT * FROM agg_csv WHERE a = $1;
+EXECUTE st(100);
+  a  |   b    
+-----+--------
+ 100 | 99.097
+(1 row)
+
+EXECUTE st(100);
+  a  |   b    
+-----+--------
+ 100 | 99.097
+(1 row)
+
+DEALLOCATE st;
+-- tableoid
+SELECT tableoid::regclass, b FROM agg_csv;
+ tableoid |    b    
+----------+---------
+ agg_csv  |  99.097
+ agg_csv  | 0.09561
+ agg_csv  |  324.78
+(3 rows)
+
+-- updates aren't supported
+INSERT INTO agg_csv VALUES(1,2.0);
+ERROR:  cannot change foreign table "agg_csv"
+UPDATE agg_csv SET a = 1;
+ERROR:  cannot change foreign table "agg_csv"
+DELETE FROM agg_csv WHERE a = 100;
+ERROR:  cannot change foreign table "agg_csv"
+SELECT * FROM agg_csv FOR UPDATE OF agg_csv;
+ERROR:  SELECT FOR UPDATE/SHARE cannot be used with foreign table "agg_csv"
+LINE 1: SELECT * FROM agg_csv FOR UPDATE OF agg_csv;
+                                            ^
+-- but this should be ignored
+SELECT * FROM agg_csv FOR UPDATE;
+  a  |    b    
+-----+---------
+ 100 |  99.097
+   0 | 0.09561
+  42 |  324.78
+(3 rows)
+
+-- privilege tests
+SET ROLE file_fdw_superuser;
+SELECT * FROM agg_text ORDER BY a;
+  a  |    b    
+-----+---------
+   0 | 0.09561
+  42 |  324.78
+  56 |     7.8
+ 100 |  99.097
+(4 rows)
+
+SET ROLE file_fdw_user;
+SELECT * FROM agg_text ORDER BY a;
+  a  |    b    
+-----+---------
+   0 | 0.09561
+  42 |  324.78
+  56 |     7.8
+ 100 |  99.097
+(4 rows)
+
+SET ROLE no_priv_user;
+SELECT * FROM agg_text ORDER BY a;   -- ERROR
+ERROR:  permission denied for relation agg_text
+SET ROLE file_fdw_user;
+\t on
+EXPLAIN (VERBOSE, COSTS FALSE) SELECT * FROM agg_text WHERE a > 0;
+ Foreign Scan on public.agg_text
+   Output: a, b
+   Filter: (agg_text.a > 0)
+   Foreign File: @abs_srcdir@/data/agg.data
+
+\t off
+-- privilege tests for object
+SET ROLE file_fdw_superuser;
+ALTER FOREIGN TABLE agg_text OWNER TO file_fdw_user;
+ALTER FOREIGN TABLE agg_text OPTIONS (SET format 'text');
+SET ROLE file_fdw_user;
+ALTER FOREIGN TABLE agg_text OPTIONS (SET format 'text');
+ERROR:  only superuser can change options of a file_fdw foreign table
+SET ROLE file_fdw_superuser;
+-- cleanup
+RESET ROLE;
+DROP EXTENSION file_fdw CASCADE;
+NOTICE:  drop cascades to 7 other objects
+DETAIL:  drop cascades to server file_server
+drop cascades to user mapping for file_fdw_user
+drop cascades to user mapping for file_fdw_superuser
+drop cascades to user mapping for no_priv_user
+drop cascades to foreign table agg_text
+drop cascades to foreign table agg_csv
+drop cascades to foreign table agg_bad
+DROP ROLE file_fdw_superuser, file_fdw_user, no_priv_user;

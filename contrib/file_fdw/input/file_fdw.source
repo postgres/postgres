@@ -1,0 +1,131 @@
+--
+-- Test foreign-data wrapper file_fdw.
+--
+
+-- Clean up in case a prior regression run failed
+SET client_min_messages TO 'error';
+DROP ROLE IF EXISTS file_fdw_superuser, file_fdw_user, no_priv_user;
+RESET client_min_messages;
+
+CREATE ROLE file_fdw_superuser LOGIN SUPERUSER; -- is a superuser
+CREATE ROLE file_fdw_user LOGIN;                -- has priv and user mapping
+CREATE ROLE no_priv_user LOGIN;                 -- has priv but no user mapping
+
+-- Install file_fdw
+CREATE EXTENSION file_fdw;
+
+-- file_fdw_superuser owns fdw-related objects
+SET ROLE file_fdw_superuser;
+CREATE SERVER file_server FOREIGN DATA WRAPPER file_fdw;
+
+-- privilege tests
+SET ROLE file_fdw_user;
+CREATE FOREIGN DATA WRAPPER file_fdw2 HANDLER file_fdw_handler VALIDATOR file_fdw_validator;   -- ERROR
+CREATE SERVER file_server2 FOREIGN DATA WRAPPER file_fdw;   -- ERROR
+CREATE USER MAPPING FOR file_fdw_user SERVER file_server;   -- ERROR
+
+SET ROLE file_fdw_superuser;
+GRANT USAGE ON FOREIGN SERVER file_server TO file_fdw_user;
+
+SET ROLE file_fdw_user;
+CREATE USER MAPPING FOR file_fdw_user SERVER file_server;
+
+-- create user mappings and grant privilege to test users
+SET ROLE file_fdw_superuser;
+CREATE USER MAPPING FOR file_fdw_superuser SERVER file_server;
+CREATE USER MAPPING FOR no_priv_user SERVER file_server;
+
+-- validator tests
+CREATE FOREIGN TABLE tbl () SERVER file_server OPTIONS (format 'xml');  -- ERROR
+CREATE FOREIGN TABLE tbl () SERVER file_server OPTIONS (format 'text', header 'true');      -- ERROR
+CREATE FOREIGN TABLE tbl () SERVER file_server OPTIONS (format 'text', quote ':');          -- ERROR
+CREATE FOREIGN TABLE tbl () SERVER file_server OPTIONS (format 'text', escape ':');         -- ERROR
+CREATE FOREIGN TABLE tbl () SERVER file_server OPTIONS (format 'binary', header 'true');    -- ERROR
+CREATE FOREIGN TABLE tbl () SERVER file_server OPTIONS (format 'binary', quote ':');        -- ERROR
+CREATE FOREIGN TABLE tbl () SERVER file_server OPTIONS (format 'binary', escape ':');       -- ERROR
+CREATE FOREIGN TABLE tbl () SERVER file_server OPTIONS (format 'text', delimiter 'a');      -- ERROR
+CREATE FOREIGN TABLE tbl () SERVER file_server OPTIONS (format 'text', escape '-');         -- ERROR
+CREATE FOREIGN TABLE tbl () SERVER file_server OPTIONS (format 'csv', quote '-', null '=-=');   -- ERROR
+CREATE FOREIGN TABLE tbl () SERVER file_server OPTIONS (format 'csv', delimiter '-', null '=-=');    -- ERROR
+CREATE FOREIGN TABLE tbl () SERVER file_server OPTIONS (format 'csv', delimiter '-', quote '-');    -- ERROR
+CREATE FOREIGN TABLE tbl () SERVER file_server OPTIONS (format 'csv', delimiter '---');     -- ERROR
+CREATE FOREIGN TABLE tbl () SERVER file_server OPTIONS (format 'csv', quote '---');         -- ERROR
+CREATE FOREIGN TABLE tbl () SERVER file_server OPTIONS (format 'csv', escape '---');        -- ERROR
+CREATE FOREIGN TABLE tbl () SERVER file_server OPTIONS (format 'text', delimiter '\');       -- ERROR
+CREATE FOREIGN TABLE tbl () SERVER file_server OPTIONS (format 'text', delimiter '.');       -- ERROR
+CREATE FOREIGN TABLE tbl () SERVER file_server OPTIONS (format 'text', delimiter '1');       -- ERROR
+CREATE FOREIGN TABLE tbl () SERVER file_server OPTIONS (format 'text', delimiter 'a');       -- ERROR
+CREATE FOREIGN TABLE tbl () SERVER file_server OPTIONS (format 'csv', delimiter '
+');       -- ERROR
+CREATE FOREIGN TABLE tbl () SERVER file_server OPTIONS (format 'csv', null '
+');       -- ERROR
+
+CREATE FOREIGN TABLE agg_text (
+	a	int2,
+	b	float4
+) SERVER file_server
+OPTIONS (format 'text', filename '@abs_srcdir@/data/agg.data', delimiter '	', null '\N');
+GRANT SELECT ON agg_text TO file_fdw_user;
+CREATE FOREIGN TABLE agg_csv (
+	a	int2,
+	b	float4
+) SERVER file_server
+OPTIONS (format 'csv', filename '@abs_srcdir@/data/agg.csv', header 'true', delimiter ';', quote '@', escape '"', null '');
+CREATE FOREIGN TABLE agg_bad (
+	a	int2,
+	b	float4
+) SERVER file_server
+OPTIONS (format 'csv', filename '@abs_srcdir@/data/agg.bad', header 'true', delimiter ';', quote '@', escape '"', null '');
+
+-- basic query tests
+SELECT * FROM agg_text WHERE b > 10.0 ORDER BY a;
+SELECT * FROM agg_csv ORDER BY a;
+SELECT * FROM agg_csv c JOIN agg_text t ON (t.a = c.a) ORDER BY c.a;
+
+-- error context report tests
+SELECT * FROM agg_bad;               -- ERROR
+
+-- misc query tests
+\t on
+EXPLAIN (VERBOSE, COSTS FALSE) SELECT * FROM agg_csv;
+\t off
+PREPARE st(int) AS SELECT * FROM agg_csv WHERE a = $1;
+EXECUTE st(100);
+EXECUTE st(100);
+DEALLOCATE st;
+
+-- tableoid
+SELECT tableoid::regclass, b FROM agg_csv;
+
+-- updates aren't supported
+INSERT INTO agg_csv VALUES(1,2.0);
+UPDATE agg_csv SET a = 1;
+DELETE FROM agg_csv WHERE a = 100;
+SELECT * FROM agg_csv FOR UPDATE OF agg_csv;
+-- but this should be ignored
+SELECT * FROM agg_csv FOR UPDATE;
+
+-- privilege tests
+SET ROLE file_fdw_superuser;
+SELECT * FROM agg_text ORDER BY a;
+SET ROLE file_fdw_user;
+SELECT * FROM agg_text ORDER BY a;
+SET ROLE no_priv_user;
+SELECT * FROM agg_text ORDER BY a;   -- ERROR
+SET ROLE file_fdw_user;
+\t on
+EXPLAIN (VERBOSE, COSTS FALSE) SELECT * FROM agg_text WHERE a > 0;
+\t off
+
+-- privilege tests for object
+SET ROLE file_fdw_superuser;
+ALTER FOREIGN TABLE agg_text OWNER TO file_fdw_user;
+ALTER FOREIGN TABLE agg_text OPTIONS (SET format 'text');
+SET ROLE file_fdw_user;
+ALTER FOREIGN TABLE agg_text OPTIONS (SET format 'text');
+SET ROLE file_fdw_superuser;
+
+-- cleanup
+RESET ROLE;
+DROP EXTENSION file_fdw CASCADE;
+DROP ROLE file_fdw_superuser, file_fdw_user, no_priv_user;

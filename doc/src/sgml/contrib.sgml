@@ -100,6 +100,7 @@ CREATE EXTENSION <replaceable>module_name</> FROM unpackaged;
  &dict-xsyn;
  &dummy-seclabel;
  &earthdistance;
+ &file-fdw;
  &fuzzystrmatch;
  &hstore;
  &intagg;

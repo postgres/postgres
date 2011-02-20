@@ -1,0 +1,127 @@
+<!-- doc/src/sgml/file-fdw.sgml -->
+
+<sect1 id="file-fdw">
+ <title>file_fdw</title>
+
+ <indexterm zone="file-fdw">
+  <primary>file_fdw</primary>
+ </indexterm>
+
+ <para>
+  The <filename>file_fdw</> module provides the foreign-data wrapper
+  <function>file_fdw</function>, which can be used to access data
+  files in the server's filesystem.  Data files must be in a format
+  that can be read by <command>COPY FROM</command>;
+  see <xref linkend="sql-copy"> for details.
+ </para>
+
+ <para>
+  A foreign table created using this wrapper can have the following options:
+ </para>
+
+ <variablelist>
+
+  <varlistentry>
+   <term><literal>filename</literal></term>
+
+   <listitem>
+    <para>
+     Specifies the file to be read.  Required.  Must be an absolute path name.
+    </para>
+   </listitem>
+  </varlistentry>
+
+  <varlistentry>
+   <term><literal>format</literal></term>
+
+   <listitem>
+    <para>
+     Specifies the file's format,
+     the same as <command>COPY</>'s <literal>FORMAT</literal> option.
+    </para>
+   </listitem>
+  </varlistentry>
+
+  <varlistentry>
+   <term><literal>header</literal></term>
+
+   <listitem>
+    <para>
+     Specifies whether the file has a header line,
+     the same as <command>COPY</>'s <literal>HEADER</literal> option.
+    </para>
+   </listitem>
+  </varlistentry>
+
+  <varlistentry>
+   <term><literal>delimiter</literal></term>
+
+   <listitem>
+    <para>
+     Specifies the file's delimiter character,
+     the same as <command>COPY</>'s <literal>DELIMITER</literal> option.
+    </para>
+   </listitem>
+  </varlistentry>
+
+  <varlistentry>
+   <term><literal>quote</literal></term>
+
+   <listitem>
+    <para>
+     Specifies the file's quote character,
+     the same as <command>COPY</>'s <literal>QUOTE</literal> option.
+    </para>
+   </listitem>
+  </varlistentry>
+
+  <varlistentry>
+   <term><literal>escape</literal></term>
+
+   <listitem>
+    <para>
+     Specifies the file's escape character,
+     the same as <command>COPY</>'s <literal>ESCAPE</literal> option.
+    </para>
+   </listitem>
+  </varlistentry>
+
+  <varlistentry>
+   <term><literal>null</literal></term>
+
+   <listitem>
+    <para>
+     Specifies the file's null string,
+     the same as <command>COPY</>'s <literal>NULL</literal> option.
+    </para>
+   </listitem>
+  </varlistentry>
+
+ </variablelist>
+
+ <para>
+  <command>COPY</>'s <literal>OIDS</literal>, <literal>FORCE_QUOTE</literal>,
+  and <literal>FORCE_NOT_NULL</literal> options are currently not supported by
+  <literal>file_fdw</>.
+ </para>
+
+ <para>
+  These options can only be specified for a foreign table, not in the
+  options of the <literal>file_fdw</> foreign-data wrapper, nor in the
+  options of a server or user mapping using the wrapper.
+ </para>
+
+ <para>
+  Changing table-level options requires superuser privileges, for security
+  reasons: only a superuser should be able to determine which file is read.
+  In principle non-superusers could be allowed to change the other options,
+  but that's not supported at present.
+ </para>
+
+ <para>
+  For a foreign table using <literal>file_fdw</>, <command>EXPLAIN</> shows
+  the name of the file to be read.  Unless <literal>COSTS OFF</> is
+  specified, the file size (in bytes) is shown as well.
+ </para>
+
+</sect1>
