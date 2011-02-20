@@ -241,10 +241,9 @@ U&amp;"d!0061t!+000061" UESCAPE '!'
     specified.  Both the 4-digit and the 6-digit form can be used to
     specify UTF-16 surrogate pairs to compose characters with code
     points larger than U+FFFF, although the availability of the
-    6-digit form technically makes this unnecessary.  (When surrogate
-    pairs are used when the server encoding is <literal>UTF8</>, they
-    are first combined into a single code point that is then encoded
-    in UTF-8.)
+    6-digit form technically makes this unnecessary.  (Surrogate
+    pairs are not stored directly, but combined into a single
+    code point that is then encoded in UTF-8.)
    </para>
 
    <para>
