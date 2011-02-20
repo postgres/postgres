@@ -17,6 +17,7 @@
 
 #include <math.h>
 
+#include "catalog/pg_class.h"
 #include "nodes/nodeFuncs.h"
 #ifdef OPTIMIZER_DEBUG
 #include "nodes/print.h"
@@ -34,6 +35,7 @@
 #include "parser/parse_clause.h"
 #include "parser/parsetree.h"
 #include "rewrite/rewriteManip.h"
+#include "utils/lsyscache.h"
 
 
 /* These parameters are set by GUC */
@@ -62,6 +64,8 @@ static void set_values_pathlist(PlannerInfo *root, RelOptInfo *rel,
 static void set_cte_pathlist(PlannerInfo *root, RelOptInfo *rel,
 				 RangeTblEntry *rte);
 static void set_worktable_pathlist(PlannerInfo *root, RelOptInfo *rel,
+					   RangeTblEntry *rte);
+static void set_foreign_pathlist(PlannerInfo *root, RelOptInfo *rel,
 					   RangeTblEntry *rte);
 static RelOptInfo *make_rel_from_joinlist(PlannerInfo *root, List *joinlist);
 static bool subquery_is_pushdown_safe(Query *subquery, Query *topquery,
@@ -197,9 +201,17 @@ set_rel_pathlist(PlannerInfo *root, RelOptInfo *rel,
 	}
 	else
 	{
-		/* Plain relation */
 		Assert(rel->rtekind == RTE_RELATION);
-		set_plain_rel_pathlist(root, rel, rte);
+		if (get_rel_relkind(rte->relid) == RELKIND_FOREIGN_TABLE)
+		{
+			/* Foreign table */
+			set_foreign_pathlist(root, rel, rte);
+		}
+		else
+		{
+			/* Plain relation */
+			set_plain_rel_pathlist(root, rel, rte);
+		}
 	}
 
 #ifdef OPTIMIZER_DEBUG
@@ -905,6 +917,23 @@ set_worktable_pathlist(PlannerInfo *root, RelOptInfo *rel, RangeTblEntry *rte)
 }
 
 /*
+ * set_foreign_pathlist
+ *		Build the (single) access path for a foreign table RTE
+ */
+static void
+set_foreign_pathlist(PlannerInfo *root, RelOptInfo *rel, RangeTblEntry *rte)
+{
+	/* Mark rel with estimated output rows, width, etc */
+	set_foreign_size_estimates(root, rel);
+
+	/* Generate appropriate path */
+	add_path(rel, (Path *) create_foreignscan_path(root, rel));
+
+	/* Select cheapest path (pretty easy in this case...) */
+	set_cheapest(rel);
+}
+
+/*
  * make_rel_from_joinlist
  *	  Build access paths using a "joinlist" to guide the join path search.
  *
@@ -1502,6 +1531,9 @@ print_path(PlannerInfo *root, Path *path, int indent)
 			break;
 		case T_TidPath:
 			ptype = "TidScan";
+			break;
+		case T_ForeignPath:
+			ptype = "ForeignScan";
 			break;
 		case T_AppendPath:
 			ptype = "Append";

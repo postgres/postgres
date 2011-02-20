@@ -22,6 +22,7 @@
 #include "commands/trigger.h"
 #include "executor/hashjoin.h"
 #include "executor/instrument.h"
+#include "foreign/fdwapi.h"
 #include "optimizer/clauses.h"
 #include "optimizer/planner.h"
 #include "optimizer/var.h"
@@ -80,25 +81,15 @@ static void show_sort_keys_common(PlanState *planstate,
 								  List *ancestors, ExplainState *es);
 static void show_sort_info(SortState *sortstate, ExplainState *es);
 static void show_hash_info(HashState *hashstate, ExplainState *es);
+static void show_foreignscan_info(ForeignScanState *fsstate, ExplainState *es);
 static const char *explain_get_index_name(Oid indexId);
 static void ExplainScanTarget(Scan *plan, ExplainState *es);
 static void ExplainMemberNodes(List *plans, PlanState **planstates,
 				   List *ancestors, ExplainState *es);
 static void ExplainSubPlans(List *plans, List *ancestors,
 							const char *relationship, ExplainState *es);
-static void ExplainPropertyList(const char *qlabel, List *data,
-					ExplainState *es);
 static void ExplainProperty(const char *qlabel, const char *value,
 				bool numeric, ExplainState *es);
-
-#define ExplainPropertyText(qlabel, value, es)	\
-	ExplainProperty(qlabel, value, false, es)
-static void ExplainPropertyInteger(const char *qlabel, int value,
-					   ExplainState *es);
-static void ExplainPropertyLong(const char *qlabel, long value,
-					ExplainState *es);
-static void ExplainPropertyFloat(const char *qlabel, double value, int ndigits,
-					 ExplainState *es);
 static void ExplainOpenGroup(const char *objtype, const char *labelname,
 				 bool labeled, ExplainState *es);
 static void ExplainCloseGroup(const char *objtype, const char *labelname,
@@ -705,6 +696,9 @@ ExplainNode(PlanState *planstate, List *ancestors,
 		case T_WorkTableScan:
 			pname = sname = "WorkTable Scan";
 			break;
+		case T_ForeignScan:
+			pname = sname = "Foreign Scan";
+			break;
 		case T_Material:
 			pname = sname = "Materialize";
 			break;
@@ -854,6 +848,7 @@ ExplainNode(PlanState *planstate, List *ancestors,
 		case T_ValuesScan:
 		case T_CteScan:
 		case T_WorkTableScan:
+		case T_ForeignScan:
 			ExplainScanTarget((Scan *) plan, es);
 			break;
 		case T_BitmapIndexScan:
@@ -1056,6 +1051,10 @@ ExplainNode(PlanState *planstate, List *ancestors,
 				show_scan_qual(tidquals, "TID Cond", planstate, ancestors, es);
 				show_scan_qual(plan->qual, "Filter", planstate, ancestors, es);
 			}
+			break;
+		case T_ForeignScan:
+			show_scan_qual(plan->qual, "Filter", planstate, ancestors, es);
+			show_foreignscan_info((ForeignScanState *) planstate, es);
 			break;
 		case T_NestLoop:
 			show_upper_qual(((NestLoop *) plan)->join.joinqual,
@@ -1524,6 +1523,18 @@ show_hash_info(HashState *hashstate, ExplainState *es)
 }
 
 /*
+ * Show extra information for a ForeignScan node.
+ */
+static void
+show_foreignscan_info(ForeignScanState *fsstate, ExplainState *es)
+{
+	FdwRoutine *fdwroutine = fsstate->fdwroutine;
+
+	/* Let the FDW emit whatever fields it wants */
+	fdwroutine->ExplainForeignScan(fsstate, es);
+}
+
+/*
  * Fetch the name of an index in an EXPLAIN
  *
  * We allow plugins to get control here so that plans involving hypothetical
@@ -1570,6 +1581,7 @@ ExplainScanTarget(Scan *plan, ExplainState *es)
 		case T_IndexScan:
 		case T_BitmapHeapScan:
 		case T_TidScan:
+		case T_ForeignScan:
 			/* Assert it's on a real relation */
 			Assert(rte->rtekind == RTE_RELATION);
 			objectname = get_rel_name(rte->relid);
@@ -1695,7 +1707,7 @@ ExplainSubPlans(List *plans, List *ancestors,
  * Explain a property, such as sort keys or targets, that takes the form of
  * a list of unlabeled items.  "data" is a list of C strings.
  */
-static void
+void
 ExplainPropertyList(const char *qlabel, List *data, ExplainState *es)
 {
 	ListCell   *lc;
@@ -1818,9 +1830,18 @@ ExplainProperty(const char *qlabel, const char *value, bool numeric,
 }
 
 /*
+ * Explain a string-valued property.
+ */
+void
+ExplainPropertyText(const char *qlabel, const char *value, ExplainState *es)
+{
+	ExplainProperty(qlabel, value, false, es);
+}
+
+/*
  * Explain an integer-valued property.
  */
-static void
+void
 ExplainPropertyInteger(const char *qlabel, int value, ExplainState *es)
 {
 	char		buf[32];
@@ -1832,7 +1853,7 @@ ExplainPropertyInteger(const char *qlabel, int value, ExplainState *es)
 /*
  * Explain a long-integer-valued property.
  */
-static void
+void
 ExplainPropertyLong(const char *qlabel, long value, ExplainState *es)
 {
 	char		buf[32];
@@ -1845,7 +1866,7 @@ ExplainPropertyLong(const char *qlabel, long value, ExplainState *es)
  * Explain a float-valued property, using the specified number of
  * fractional digits.
  */
-static void
+void
 ExplainPropertyFloat(const char *qlabel, double value, int ndigits,
 					 ExplainState *es)
 {

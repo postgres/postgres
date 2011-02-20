@@ -86,6 +86,7 @@
 <!entity indexam    SYSTEM "indexam.sgml">
 <!entity nls        SYSTEM "nls.sgml">
 <!entity plhandler  SYSTEM "plhandler.sgml">
+<!entity fdwhandler SYSTEM "fdwhandler.sgml">
 <!entity protocol   SYSTEM "protocol.sgml">
 <!entity sources    SYSTEM "sources.sgml">
 <!entity storage    SYSTEM "storage.sgml">

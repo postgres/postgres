@@ -131,8 +131,8 @@ CREATE FOREIGN TABLE [ IF NOT EXISTS ] <replaceable class="PARAMETER">table_name
      <para>
       Options to be associated with the new foreign table.
       The allowed option names and values are specific to each foreign
-      data wrapper and are validated using the foreign-data wrapper
-      library. Option names must be unique. 
+      data wrapper and are validated using the foreign-data wrapper's
+      validator function. Option names must be unique.
      </para>
     </listitem>
    </varlistentry>

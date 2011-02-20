@@ -60,6 +60,8 @@ typedef enum NodeTag
 	T_ValuesScan,
 	T_CteScan,
 	T_WorkTableScan,
+	T_ForeignScan,
+	T_FdwPlan,
 	T_Join,
 	T_NestLoop,
 	T_MergeJoin,
@@ -103,6 +105,7 @@ typedef enum NodeTag
 	T_ValuesScanState,
 	T_CteScanState,
 	T_WorkTableScanState,
+	T_ForeignScanState,
 	T_JoinState,
 	T_NestLoopState,
 	T_MergeJoinState,
@@ -217,6 +220,7 @@ typedef enum NodeTag
 	T_MergePath,
 	T_HashPath,
 	T_TidPath,
+	T_ForeignPath,
 	T_AppendPath,
 	T_MergeAppendPath,
 	T_ResultPath,
@@ -409,7 +413,8 @@ typedef enum NodeTag
 	T_ReturnSetInfo,			/* in nodes/execnodes.h */
 	T_WindowObjectData,			/* private in nodeWindowAgg.c */
 	T_TIDBitmap,				/* in nodes/tidbitmap.h */
-	T_InlineCodeBlock			/* in nodes/parsenodes.h */
+	T_InlineCodeBlock,			/* in nodes/parsenodes.h */
+	T_FdwRoutine				/* in foreign/fdwapi.h */
 } NodeTag;
 
 /*

@@ -17,6 +17,7 @@
 #include <math.h>
 
 #include "catalog/pg_operator.h"
+#include "foreign/fdwapi.h"
 #include "miscadmin.h"
 #include "nodes/nodeFuncs.h"
 #include "optimizer/clauses.h"
@@ -1415,6 +1416,41 @@ create_worktablescan_path(PlannerInfo *root, RelOptInfo *rel)
 
 	/* Cost is the same as for a regular CTE scan */
 	cost_ctescan(pathnode, root, rel);
+
+	return pathnode;
+}
+
+/*
+ * create_foreignscan_path
+ *	  Creates a path corresponding to a scan of a foreign table,
+ *	  returning the pathnode.
+ */
+ForeignPath *
+create_foreignscan_path(PlannerInfo *root, RelOptInfo *rel)
+{
+	ForeignPath *pathnode = makeNode(ForeignPath);
+	RangeTblEntry *rte;
+	FdwRoutine *fdwroutine;
+	FdwPlan	   *fdwplan;
+
+	pathnode->path.pathtype = T_ForeignScan;
+	pathnode->path.parent = rel;
+	pathnode->path.pathkeys = NIL;	/* result is always unordered */
+
+	/* Get FDW's callback info */
+	rte = planner_rt_fetch(rel->relid, root);
+	fdwroutine = GetFdwRoutineByRelId(rte->relid);
+
+	/* Let the FDW do its planning */
+	fdwplan = fdwroutine->PlanForeignScan(rte->relid, root, rel);
+	if (fdwplan == NULL || !IsA(fdwplan, FdwPlan))
+		elog(ERROR, "foreign-data wrapper PlanForeignScan function for relation %u did not return an FdwPlan struct",
+			 rte->relid);
+	pathnode->fdwplan = fdwplan;
+
+	/* use costs estimated by FDW */
+	pathnode->path.startup_cost = fdwplan->startup_cost;
+	pathnode->path.total_cost = fdwplan->total_cost;
 
 	return pathnode;
 }

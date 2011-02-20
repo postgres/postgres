@@ -347,6 +347,7 @@ RelOptInfo      - a relation or joined relations
   IndexPath     - index scan
   BitmapHeapPath - top of a bitmapped index scan
   TidPath       - scan by CTID
+  ForeignPath   - scan a foreign table
   AppendPath    - append multiple subpaths together
   MergeAppendPath - merge multiple subpaths, preserving their common sort order
   ResultPath    - a Result plan node (used for FROM-less SELECT)

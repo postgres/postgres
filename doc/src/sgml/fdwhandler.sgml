@@ -1,0 +1,212 @@
+<!-- doc/src/sgml/fdwhandler.sgml -->
+
+ <chapter id="fdwhandler">
+   <title>Writing A Foreign Data Wrapper</title>
+
+   <indexterm zone="fdwhandler">
+    <primary>foreign data wrapper</primary>
+    <secondary>handler for</secondary>
+   </indexterm>
+
+   <para>
+    All operations on a foreign table are handled through its foreign data
+    wrapper, which consists of a set of functions that the planner and
+    executor call. The foreign data wrapper is responsible for fetching
+    data from the remote data source and returning it to the
+    <productname>PostgreSQL</productname> executor. This chapter outlines how
+    to write a new foreign data wrapper.
+   </para>
+
+   <para>
+    The FDW author needs to implement a handler function, and optionally
+    a validator function. Both functions must be written in a compiled
+    language such as C, using the version-1 interface.
+    For details on C language calling conventions and dynamic loading,
+    see <xref linkend="xfunc-c">.
+   </para>
+
+   <para>
+    The handler function simply returns a struct of function pointers to
+    callback functions that will be called by the planner and executor.
+    Most of the effort in writing an FDW is in implementing these callback
+    functions.
+    The handler function must be registered with
+    <productname>PostgreSQL</productname> as taking no arguments and returning
+    the special pseudo-type <type>fdw_handler</type>.
+    The callback functions are plain C functions and are not visible or
+    callable at the SQL level.
+   </para>
+
+   <para>
+    The validator function is responsible for validating options given in the
+    <command>CREATE FOREIGN DATA WRAPPER</command>, <command>CREATE
+    SERVER</command> and <command>CREATE FOREIGN TABLE</command> commands.
+    The validator function must be registered as taking two arguments, a text
+    array containing the options to be validated, and an OID representing the
+    type of object the options are associated with (in the form of the OID
+    of the system catalog the object would be stored in).  If no validator
+    function is supplied, the options are not checked at object creation time.
+   </para>
+
+   <para>
+    The foreign data wrappers included in the standard distribution are good
+    references when trying to write your own.  Look into the
+    <filename>contrib/file_fdw</> subdirectory of the source tree.
+    The <xref linkend="sql-createforeigndatawrapper"> reference page also has
+    some useful details.
+   </para>
+
+   <note>
+    <para>
+     The SQL standard specifies an interface for writing foreign data wrappers.
+     However, PostgreSQL does not implement that API, because the effort to
+     accommodate it into PostgreSQL would be large, and the standard API hasn't
+     gained wide adoption anyway.
+    </para>
+   </note>
+
+   <sect1 id="fdw-routines">
+    <title>Foreign Data Wrapper Callback Routines</title>
+
+    <para>
+     The FDW handler function returns a palloc'd <structname>FdwRoutine</>
+     struct containing pointers to the following callback functions:
+    </para>
+
+    <para>
+<programlisting>
+FdwPlan *
+PlanForeignScan (Oid foreigntableid,
+                 PlannerInfo *root,
+                 RelOptInfo *baserel);
+</programlisting>
+
+     Plan a scan on a foreign table. This is called when a query is planned.
+     <literal>foreigntableid</> is the <structname>pg_class</> OID of the
+     foreign table.  <literal>root</> is the planner's global information
+     about the query, and <literal>baserel</> is the planner's information
+     about this table.
+     The function must return a palloc'd struct that contains cost estimates
+     plus any FDW-private information that is needed to execute the foreign
+     scan at a later time.  (Note that the private information must be
+     represented in a form that <function>copyObject</> knows how to copy.)
+    </para>
+
+    <para>
+     The information in <literal>root</> and <literal>baserel</> can be used
+     to reduce the amount of information that has to be fetched from the
+     foreign table (and therefore reduce the cost estimate).
+     <literal>baserel-&gt;baserestrictinfo</> is particularly interesting, as
+     it contains restriction quals (<literal>WHERE</> clauses) that can be
+     used to filter the rows to be fetched.  (The FDW is not required to
+     enforce these quals, as the finished plan will recheck them anyway.)
+     <literal>baserel-&gt;reltargetlist</> can be used to determine which
+     columns need to be fetched.
+    </para>
+
+    <para>
+     In addition to returning cost estimates, the function should update
+     <literal>baserel-&gt;rows</> to be the expected number of rows returned
+     by the scan, after accounting for the filtering done by the restriction
+     quals.  The initial value of <literal>baserel-&gt;rows</> is just a
+     constant default estimate, which should be replaced if at all possible.
+     The function may also choose to update <literal>baserel-&gt;width</> if
+     it can compute a better estimate of the average result row width.
+    </para>
+
+    <para>
+<programlisting>
+void
+ExplainForeignScan (ForeignScanState *node,
+                    ExplainState *es);
+</programlisting>
+
+     Print additional <command>EXPLAIN</> output for a foreign table scan.
+     This can just return if there is no need to print anything.
+     Otherwise, it should call <function>ExplainPropertyText</> and
+     related functions to add fields to the <command>EXPLAIN</> output.
+     The flag fields in <literal>es</> can be used to determine what to
+     print, and the state of the <structname>ForeignScanState</> node
+     can be inspected to provide runtime statistics in the <command>EXPLAIN
+     ANALYZE</> case.
+    </para>
+
+    <para>
+<programlisting>
+void
+BeginForeignScan (ForeignScanState *node,
+                  int eflags);
+</programlisting>
+
+     Begin executing a foreign scan. This is called during executor startup.
+     It should perform any initialization needed before the scan can start.
+     The <structname>ForeignScanState</> node has already been created, but
+     its <structfield>fdw_state</> field is still NULL.  Information about
+     the table to scan is accessible through the
+     <structname>ForeignScanState</> node (in particular, from the underlying
+     <structname>ForeignScan</> plan node, which contains a pointer to the
+     <structname>FdwPlan</> structure returned by
+     <function>PlanForeignScan</>).
+    </para>
+
+    <para>
+     Note that when <literal>(eflags &amp; EXEC_FLAG_EXPLAIN_ONLY)</> is
+     true, this function should not perform any externally-visible actions;
+     it should only do the minimum required to make the node state valid
+     for <function>ExplainForeignScan</> and <function>EndForeignScan</>.
+    </para>
+
+    <para>
+<programlisting>
+TupleTableSlot *
+IterateForeignScan (ForeignScanState *node);
+</programlisting>
+
+     Fetch one row from the foreign source, returning it in a tuple table slot
+     (the node's <structfield>ScanTupleSlot</> should be used for this
+     purpose).  Return NULL if no more rows are available.  The tuple table
+     slot infrastructure allows either a physical or virtual tuple to be
+     returned; in most cases the latter choice is preferable from a
+     performance standpoint.  Note that this is called in a short-lived memory
+     context that will be reset between invocations.  Create a memory context
+     in <function>BeginForeignScan</> if you need longer-lived storage, or use
+     the <structfield>es_query_cxt</> of the node's <structname>EState</>.
+    </para>
+
+    <para>
+     The rows returned must match the column signature of the foreign table
+     being scanned.  If you choose to optimize away fetching columns that
+     are not needed, you should insert nulls in those column positions.
+    </para>
+
+    <para>
+<programlisting>
+void
+ReScanForeignScan (ForeignScanState *node);
+</programlisting>
+
+     Restart the scan from the beginning.  Note that any parameters the
+     scan depends on may have changed value, so the new scan does not
+     necessarily return exactly the same rows.
+    </para>
+
+    <para>
+<programlisting>
+void
+EndForeignScan (ForeignScanState *node);
+</programlisting>
+
+     End the scan and release resources.  It is normally not important
+     to release palloc'd memory, but for example open files and connections
+     to remote servers should be cleaned up.
+    </para>
+
+    <para>
+     The <structname>FdwRoutine</> and <structname>FdwPlan</> struct types
+     are declared in <filename>src/include/foreign/fdwapi.h</>, which see
+     for additional details.
+    </para>
+
+   </sect1>
+
+ </chapter>

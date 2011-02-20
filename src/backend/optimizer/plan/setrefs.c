@@ -402,6 +402,18 @@ set_plan_refs(PlannerGlobal *glob, Plan *plan, int rtoffset)
 					fix_scan_list(glob, splan->scan.plan.qual, rtoffset);
 			}
 			break;
+		case T_ForeignScan:
+			{
+				ForeignScan *splan = (ForeignScan *) plan;
+
+				splan->scan.scanrelid += rtoffset;
+				splan->scan.plan.targetlist =
+					fix_scan_list(glob, splan->scan.plan.targetlist, rtoffset);
+				splan->scan.plan.qual =
+					fix_scan_list(glob, splan->scan.plan.qual, rtoffset);
+			}
+			break;
+
 		case T_NestLoop:
 		case T_MergeJoin:
 		case T_HashJoin:

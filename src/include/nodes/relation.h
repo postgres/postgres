@@ -750,6 +750,16 @@ typedef struct TidPath
 } TidPath;
 
 /*
+ * ForeignPath represents a scan of a foreign table
+ */
+typedef struct ForeignPath
+{
+	Path		path;
+	/* use struct pointer to avoid including fdwapi.h here */
+	struct FdwPlan *fdwplan;
+} ForeignPath;
+
+/*
  * AppendPath represents an Append plan, ie, successive execution of
  * several member plans.
  *

@@ -488,6 +488,7 @@ extern Datum FunctionCall9(FmgrInfo *flinfo, Datum arg1, Datum arg2,
  * by FunctionCallN().	If the same function is to be invoked repeatedly,
  * do the FunctionLookup() once and then use FunctionCallN().
  */
+extern Datum OidFunctionCall0(Oid functionId);
 extern Datum OidFunctionCall1(Oid functionId, Datum arg1);
 extern Datum OidFunctionCall2(Oid functionId, Datum arg1, Datum arg2);
 extern Datum OidFunctionCall3(Oid functionId, Datum arg1, Datum arg2,

@@ -3324,6 +3324,34 @@ set_cte_size_estimates(PlannerInfo *root, RelOptInfo *rel, Plan *cteplan)
 	set_baserel_size_estimates(root, rel);
 }
 
+/*
+ * set_foreign_size_estimates
+ *		Set the size estimates for a base relation that is a foreign table.
+ *
+ * There is not a whole lot that we can do here; the foreign-data wrapper
+ * is responsible for producing useful estimates.  We can do a decent job
+ * of estimating baserestrictcost, so we set that, and we also set up width
+ * using what will be purely datatype-driven estimates from the targetlist.
+ * There is no way to do anything sane with the rows value, so we just put
+ * a default estimate and hope that the wrapper can improve on it.  The
+ * wrapper's PlanForeignScan function will be called momentarily.
+ *
+ * The rel's targetlist and restrictinfo list must have been constructed
+ * already.
+ */
+void
+set_foreign_size_estimates(PlannerInfo *root, RelOptInfo *rel)
+{
+	/* Should only be applied to base relations */
+	Assert(rel->relid > 0);
+
+	rel->rows = 1000;			/* entirely bogus default estimate */
+
+	cost_qual_eval(&rel->baserestrictcost, rel->baserestrictinfo, root);
+
+	set_rel_width(root, rel);
+}
+
 
 /*
  * set_rel_width

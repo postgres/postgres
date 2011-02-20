@@ -90,12 +90,6 @@ get_relation_info(PlannerInfo *root, Oid relationObjectId, bool inhparent,
 	 */
 	relation = heap_open(relationObjectId, NoLock);
 
-	/* Foreign table scans are not implemented yet. */
-	if (relation->rd_rel->relkind == RELKIND_FOREIGN_TABLE)
-		ereport(ERROR,
-				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-				 errmsg("foreign table scans are not yet supported")));
-
 	rel->min_attr = FirstLowInvalidHeapAttributeNumber + 1;
 	rel->max_attr = RelationGetNumberOfAttributes(relation);
 	rel->reltablespace = RelationGetForm(relation)->reltablespace;
@@ -462,6 +456,11 @@ estimate_rel_size(Relation rel, int32 *attr_widths,
 			/* Sequences always have a known size */
 			*pages = 1;
 			*tuples = 1;
+			break;
+		case RELKIND_FOREIGN_TABLE:
+			/* Just use whatever's in pg_class */
+			*pages = rel->rd_rel->relpages;
+			*tuples = rel->rd_rel->reltuples;
 			break;
 		default:
 			/* else it has no disk storage; probably shouldn't get here? */

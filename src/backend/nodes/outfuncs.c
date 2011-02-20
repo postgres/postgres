@@ -24,6 +24,7 @@
 #include <ctype.h>
 
 #include "lib/stringinfo.h"
+#include "foreign/fdwapi.h"
 #include "nodes/plannodes.h"
 #include "nodes/relation.h"
 #include "utils/datum.h"
@@ -535,6 +536,27 @@ _outWorkTableScan(StringInfo str, WorkTableScan *node)
 	_outScanInfo(str, (Scan *) node);
 
 	WRITE_INT_FIELD(wtParam);
+}
+
+static void
+_outForeignScan(StringInfo str, ForeignScan *node)
+{
+	WRITE_NODE_TYPE("FOREIGNSCAN");
+
+	_outScanInfo(str, (Scan *) node);
+
+	WRITE_BOOL_FIELD(fsSystemCol);
+	WRITE_NODE_FIELD(fdwplan);
+}
+
+static void
+_outFdwPlan(StringInfo str, FdwPlan *node)
+{
+	WRITE_NODE_TYPE("FDWPLAN");
+
+	WRITE_FLOAT_FIELD(startup_cost, "%.2f");
+	WRITE_FLOAT_FIELD(total_cost, "%.2f");
+	WRITE_NODE_FIELD(fdw_private);
 }
 
 static void
@@ -1505,6 +1527,16 @@ _outTidPath(StringInfo str, TidPath *node)
 	_outPathInfo(str, (Path *) node);
 
 	WRITE_NODE_FIELD(tidquals);
+}
+
+static void
+_outForeignPath(StringInfo str, ForeignPath *node)
+{
+	WRITE_NODE_TYPE("FOREIGNPATH");
+
+	_outPathInfo(str, (Path *) node);
+
+	WRITE_NODE_FIELD(fdwplan);
 }
 
 static void
@@ -2672,6 +2704,12 @@ _outNode(StringInfo str, void *obj)
 			case T_WorkTableScan:
 				_outWorkTableScan(str, obj);
 				break;
+			case T_ForeignScan:
+				_outForeignScan(str, obj);
+				break;
+			case T_FdwPlan:
+				_outFdwPlan(str, obj);
+				break;
 			case T_Join:
 				_outJoin(str, obj);
 				break;
@@ -2876,6 +2914,9 @@ _outNode(StringInfo str, void *obj)
 				break;
 			case T_TidPath:
 				_outTidPath(str, obj);
+				break;
+			case T_ForeignPath:
+				_outForeignPath(str, obj);
 				break;
 			case T_AppendPath:
 				_outAppendPath(str, obj);

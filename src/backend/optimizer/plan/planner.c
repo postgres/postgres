@@ -1914,7 +1914,8 @@ preprocess_rowmarks(PlannerInfo *root)
 		newrc->rti = newrc->prti = i;
 		newrc->rowmarkId = ++(root->glob->lastRowMarkId);
 		/* real tables support REFERENCE, anything else needs COPY */
-		if (rte->rtekind == RTE_RELATION)
+		if (rte->rtekind == RTE_RELATION &&
+			get_rel_relkind(rte->relid) != RELKIND_FOREIGN_TABLE)
 			newrc->markType = ROW_MARK_REFERENCE;
 		else
 			newrc->markType = ROW_MARK_COPY;

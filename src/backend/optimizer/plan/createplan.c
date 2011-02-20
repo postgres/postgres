@@ -20,6 +20,7 @@
 #include <math.h>
 
 #include "access/skey.h"
+#include "foreign/fdwapi.h"
 #include "miscadmin.h"
 #include "nodes/makefuncs.h"
 #include "nodes/nodeFuncs.h"
@@ -71,6 +72,8 @@ static CteScan *create_ctescan_plan(PlannerInfo *root, Path *best_path,
 					List *tlist, List *scan_clauses);
 static WorkTableScan *create_worktablescan_plan(PlannerInfo *root, Path *best_path,
 						  List *tlist, List *scan_clauses);
+static ForeignScan *create_foreignscan_plan(PlannerInfo *root, ForeignPath *best_path,
+						List *tlist, List *scan_clauses);
 static NestLoop *create_nestloop_plan(PlannerInfo *root, NestPath *best_path,
 					 Plan *outer_plan, Plan *inner_plan);
 static MergeJoin *create_mergejoin_plan(PlannerInfo *root, MergePath *best_path,
@@ -112,6 +115,8 @@ static CteScan *make_ctescan(List *qptlist, List *qpqual,
 			 Index scanrelid, int ctePlanId, int cteParam);
 static WorkTableScan *make_worktablescan(List *qptlist, List *qpqual,
 				   Index scanrelid, int wtParam);
+static ForeignScan *make_foreignscan(List *qptlist, List *qpqual,
+				 Index scanrelid, bool fsSystemCol, FdwPlan *fdwplan);
 static BitmapAnd *make_bitmap_and(List *bitmapplans);
 static BitmapOr *make_bitmap_or(List *bitmapplans);
 static NestLoop *make_nestloop(List *tlist,
@@ -206,6 +211,7 @@ create_plan_recurse(PlannerInfo *root, Path *best_path)
 		case T_ValuesScan:
 		case T_CteScan:
 		case T_WorkTableScan:
+		case T_ForeignScan:
 			plan = create_scan_plan(root, best_path);
 			break;
 		case T_HashJoin:
@@ -346,6 +352,13 @@ create_scan_plan(PlannerInfo *root, Path *best_path)
 													  scan_clauses);
 			break;
 
+		case T_ForeignScan:
+			plan = (Plan *) create_foreignscan_plan(root,
+													(ForeignPath *) best_path,
+													tlist,
+													scan_clauses);
+			break;
+
 		default:
 			elog(ERROR, "unrecognized node type: %d",
 				 (int) best_path->pathtype);
@@ -468,6 +481,7 @@ disuse_physical_tlist(Plan *plan, Path *path)
 		case T_ValuesScan:
 		case T_CteScan:
 		case T_WorkTableScan:
+		case T_ForeignScan:
 			plan->targetlist = build_relation_tlist(path->parent);
 			break;
 		default:
@@ -1755,6 +1769,56 @@ create_worktablescan_plan(PlannerInfo *root, Path *best_path,
 	return scan_plan;
 }
 
+/*
+ * create_foreignscan_plan
+ *	 Returns a foreignscan plan for the base relation scanned by 'best_path'
+ *	 with restriction clauses 'scan_clauses' and targetlist 'tlist'.
+ */
+static ForeignScan *
+create_foreignscan_plan(PlannerInfo *root, ForeignPath *best_path,
+						List *tlist, List *scan_clauses)
+{
+	ForeignScan *scan_plan;
+	RelOptInfo *rel = best_path->path.parent;
+	Index		scan_relid = rel->relid;
+	RangeTblEntry *rte;
+	bool		fsSystemCol;
+	int			i;
+
+	/* it should be a base rel... */
+	Assert(scan_relid > 0);
+	Assert(rel->rtekind == RTE_RELATION);
+	rte = planner_rt_fetch(scan_relid, root);
+	Assert(rte->rtekind == RTE_RELATION);
+
+	/* Sort clauses into best execution order */
+	scan_clauses = order_qual_clauses(root, scan_clauses);
+
+	/* Reduce RestrictInfo list to bare expressions; ignore pseudoconstants */
+	scan_clauses = extract_actual_clauses(scan_clauses, false);
+
+	/* Detect whether any system columns are requested from rel */
+	fsSystemCol = false;
+	for (i = rel->min_attr; i < 0; i++)
+	{
+		if (!bms_is_empty(rel->attr_needed[i - rel->min_attr]))
+		{
+			fsSystemCol = true;
+			break;
+		}
+	}
+
+	scan_plan = make_foreignscan(tlist,
+								 scan_clauses,
+								 scan_relid,
+								 fsSystemCol,
+								 best_path->fdwplan);
+
+	copy_path_costsize(&scan_plan->scan.plan, &best_path->path);
+
+	return scan_plan;
+}
+
 
 /*****************************************************************************
  *
@@ -2974,6 +3038,28 @@ make_worktablescan(List *qptlist,
 	plan->righttree = NULL;
 	node->scan.scanrelid = scanrelid;
 	node->wtParam = wtParam;
+
+	return node;
+}
+
+static ForeignScan *
+make_foreignscan(List *qptlist,
+				 List *qpqual,
+				 Index scanrelid,
+				 bool fsSystemCol,
+				 FdwPlan *fdwplan)
+{
+	ForeignScan *node = makeNode(ForeignScan);
+	Plan	   *plan = &node->scan.plan;
+
+	/* cost should be inserted by caller */
+	plan->targetlist = qptlist;
+	plan->qual = qpqual;
+	plan->lefttree = NULL;
+	plan->righttree = NULL;
+	node->scan.scanrelid = scanrelid;
+	node->fsSystemCol = fsSystemCol;
+	node->fdwplan = fdwplan;
 
 	return node;
 }

@@ -2986,6 +2986,53 @@ ANALYZE measurement;
   </sect2>
  </sect1>
 
+ <sect1 id="ddl-foreign-data">
+  <title>Foreign Data</title>
+
+   <indexterm>
+    <primary>foreign data</primary>
+   </indexterm>
+   <indexterm>
+    <primary>foreign table</primary>
+   </indexterm>
+
+   <para>
+    <productname>PostgreSQL</productname> implements portions of the SQL/MED
+    specification, allowing you to access data that resides outside
+    PostgreSQL using regular SQL queries.  Such data is referred to as
+    <firstterm>foreign data</>.  (Note that this usage is not to be confused
+    with foreign keys, which are a type of constraint within the database.)
+   </para>
+
+   <para>
+    Foreign data is accessed with help from a
+    <firstterm>foreign data wrapper</firstterm>. A foreign data wrapper is a
+    library that can communicate with an external data source, hiding the
+    details of connecting to the data source and fetching data from it. There
+    are several foreign data wrappers available, which can for example read
+    plain data files residing on the server, or connect to another PostgreSQL
+    instance. If none of the existing foreign data wrappers suit your needs,
+    you can write your own; see <xref linkend="fdwhandler">.
+   </para>
+
+   <para>
+    To access foreign data, you need to create a <firstterm>foreign server</>
+    object, which defines how to connect to a particular external data source,
+    according to the set of options used by a particular foreign data
+    wrapper. Then you need to create one or more <firstterm>foreign
+    tables</firstterm>, which define the structure of the remote data. A
+    foreign table can be used in queries just like a normal table, but a
+    foreign table has no storage in the PostgreSQL server.  Whenever it is
+    used, PostgreSQL asks the foreign data wrapper to fetch the data from the
+    external source.
+   </para>
+
+   <para>
+    Currently, foreign tables are read-only.  This limitation may be fixed
+    in a future release.
+   </para>
+ </sect1>
+
  <sect1 id="ddl-others">
   <title>Other Database Objects</title>
 

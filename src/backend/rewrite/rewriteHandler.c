@@ -1392,8 +1392,12 @@ markQueryForLocking(Query *qry, Node *jtnode,
 
 		if (rte->rtekind == RTE_RELATION)
 		{
-			applyLockingClause(qry, rti, forUpdate, noWait, pushedDown);
-			rte->requiredPerms |= ACL_SELECT_FOR_UPDATE;
+			/* ignore foreign tables */
+			if (get_rel_relkind(rte->relid) != RELKIND_FOREIGN_TABLE)
+			{
+				applyLockingClause(qry, rti, forUpdate, noWait, pushedDown);
+				rte->requiredPerms |= ACL_SELECT_FOR_UPDATE;
+			}
 		}
 		else if (rte->rtekind == RTE_SUBQUERY)
 		{

@@ -738,6 +738,13 @@ InitPlan(QueryDesc *queryDesc, int eflags)
 				break;
 		}
 
+		/* if foreign table, tuples can't be locked */
+		if (relation && relation->rd_rel->relkind == RELKIND_FOREIGN_TABLE)
+			ereport(ERROR,
+					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+					 errmsg("SELECT FOR UPDATE/SHARE cannot be used with foreign table \"%s\"",
+							RelationGetRelationName(relation))));
+
 		erm = (ExecRowMark *) palloc(sizeof(ExecRowMark));
 		erm->relation = relation;
 		erm->rti = rc->rti;

@@ -436,6 +436,18 @@ typedef struct WorkTableScan
 	int			wtParam;		/* ID of Param representing work table */
 } WorkTableScan;
 
+/* ----------------
+ *		ForeignScan node
+ * ----------------
+ */
+typedef struct ForeignScan
+{
+	Scan		scan;
+	bool		fsSystemCol;	/* true if any "system column" is needed */
+	/* use struct pointer to avoid including fdwapi.h here */
+	struct FdwPlan *fdwplan;
+} ForeignScan;
+
 
 /*
  * ==========

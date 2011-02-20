@@ -670,9 +670,9 @@ Has OIDs: no
 CREATE INDEX id_ft1_c2 ON ft1 (c2);                             -- ERROR
 ERROR:  "ft1" is not a table
 SELECT * FROM ft1;                                              -- ERROR
-ERROR:  foreign table scans are not yet supported
+ERROR:  foreign-data wrapper "dummy" has no handler
 EXPLAIN SELECT * FROM ft1;                                      -- ERROR
-ERROR:  foreign table scans are not yet supported
+ERROR:  foreign-data wrapper "dummy" has no handler
 -- ALTER FOREIGN TABLE
 COMMENT ON FOREIGN TABLE ft1 IS 'foreign table';
 COMMENT ON FOREIGN TABLE ft1 IS NULL;

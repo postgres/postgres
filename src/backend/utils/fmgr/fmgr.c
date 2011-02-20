@@ -1622,6 +1622,26 @@ FunctionCall9(FmgrInfo *flinfo, Datum arg1, Datum arg2,
  * do the fmgr_info() once and then use FunctionCallN().
  */
 Datum
+OidFunctionCall0(Oid functionId)
+{
+	FmgrInfo	flinfo;
+	FunctionCallInfoData fcinfo;
+	Datum		result;
+
+	fmgr_info(functionId, &flinfo);
+
+	InitFunctionCallInfoData(fcinfo, &flinfo, 0, NULL, NULL);
+
+	result = FunctionCallInvoke(&fcinfo);
+
+	/* Check for null result, since caller is clearly not expecting one */
+	if (fcinfo.isnull)
+		elog(ERROR, "function %u returned NULL", flinfo.fn_oid);
+
+	return result;
+}
+
+Datum
 OidFunctionCall1(Oid functionId, Datum arg1)
 {
 	FmgrInfo	flinfo;

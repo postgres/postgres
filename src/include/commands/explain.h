@@ -72,4 +72,15 @@ extern void ExplainBeginOutput(ExplainState *es);
 extern void ExplainEndOutput(ExplainState *es);
 extern void ExplainSeparatePlans(ExplainState *es);
 
+extern void ExplainPropertyList(const char *qlabel, List *data,
+								ExplainState *es);
+extern void ExplainPropertyText(const char *qlabel, const char *value,
+								ExplainState *es);
+extern void ExplainPropertyInteger(const char *qlabel, int value,
+								   ExplainState *es);
+extern void ExplainPropertyLong(const char *qlabel, long value,
+								ExplainState *es);
+extern void ExplainPropertyFloat(const char *qlabel, double value, int ndigits,
+								 ExplainState *es);
+
 #endif   /* EXPLAIN_H */

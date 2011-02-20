@@ -16,8 +16,10 @@
 #include "catalog/namespace.h"
 #include "catalog/pg_foreign_data_wrapper.h"
 #include "catalog/pg_foreign_server.h"
+#include "catalog/pg_foreign_table.h"
 #include "catalog/pg_type.h"
 #include "catalog/pg_user_mapping.h"
+#include "foreign/fdwapi.h"
 #include "foreign/foreign.h"
 #include "funcapi.h"
 #include "miscadmin.h"
@@ -54,19 +56,22 @@ GetForeignDataWrapper(Oid fdwid)
 
 	fdwform = (Form_pg_foreign_data_wrapper) GETSTRUCT(tp);
 
-	fdw = palloc(sizeof(ForeignDataWrapper));
+	fdw = (ForeignDataWrapper *) palloc(sizeof(ForeignDataWrapper));
 	fdw->fdwid = fdwid;
 	fdw->owner = fdwform->fdwowner;
 	fdw->fdwname = pstrdup(NameStr(fdwform->fdwname));
 	fdw->fdwhandler = fdwform->fdwhandler;
 	fdw->fdwvalidator = fdwform->fdwvalidator;
 
-	/* Extract the options */
+	/* Extract the fdwoptions */
 	datum = SysCacheGetAttr(FOREIGNDATAWRAPPEROID,
 							tp,
 							Anum_pg_foreign_data_wrapper_fdwoptions,
 							&isnull);
-	fdw->options = untransformRelOptions(datum);
+	if (isnull)
+		fdw->options = NIL;
+	else
+		fdw->options = untransformRelOptions(datum);
 
 	ReleaseSysCache(tp);
 
@@ -88,7 +93,8 @@ GetForeignDataWrapperOidByName(const char *fdwname, bool missing_ok)
 	if (!OidIsValid(fdwId) && !missing_ok)
 		ereport(ERROR,
 				(errcode(ERRCODE_UNDEFINED_OBJECT),
-			 errmsg("foreign-data wrapper \"%s\" does not exist", fdwname)));
+				 errmsg("foreign-data wrapper \"%s\" does not exist",
+						fdwname)));
 
 	return fdwId;
 }
@@ -103,7 +109,7 @@ GetForeignDataWrapperByName(const char *fdwname, bool missing_ok)
 {
 	Oid			fdwId = GetForeignDataWrapperOidByName(fdwname, missing_ok);
 
-	if (!OidIsValid(fdwId) && missing_ok)
+	if (!OidIsValid(fdwId))
 		return NULL;
 
 	return GetForeignDataWrapper(fdwId);
@@ -129,7 +135,7 @@ GetForeignServer(Oid serverid)
 
 	serverform = (Form_pg_foreign_server) GETSTRUCT(tp);
 
-	server = palloc(sizeof(ForeignServer));
+	server = (ForeignServer *) palloc(sizeof(ForeignServer));
 	server->serverid = serverid;
 	server->servername = pstrdup(NameStr(serverform->srvname));
 	server->owner = serverform->srvowner;
@@ -154,9 +160,10 @@ GetForeignServer(Oid serverid)
 							tp,
 							Anum_pg_foreign_server_srvoptions,
 							&isnull);
-
-	/* untransformRelOptions does exactly what we want - avoid duplication */
-	server->options = untransformRelOptions(datum);
+	if (isnull)
+		server->options = NIL;
+	else
+		server->options = untransformRelOptions(datum);
 
 	ReleaseSysCache(tp);
 
@@ -191,7 +198,7 @@ GetForeignServerByName(const char *srvname, bool missing_ok)
 {
 	Oid			serverid = GetForeignServerOidByName(srvname, missing_ok);
 
-	if (!OidIsValid(serverid) && missing_ok)
+	if (!OidIsValid(serverid))
 		return NULL;
 
 	return GetForeignServer(serverid);
@@ -233,20 +240,133 @@ GetUserMapping(Oid userid, Oid serverid)
 
 	umform = (Form_pg_user_mapping) GETSTRUCT(tp);
 
+	um = (UserMapping *) palloc(sizeof(UserMapping));
+	um->userid = userid;
+	um->serverid = serverid;
+
 	/* Extract the umoptions */
 	datum = SysCacheGetAttr(USERMAPPINGUSERSERVER,
 							tp,
 							Anum_pg_user_mapping_umoptions,
 							&isnull);
-
-	um = palloc(sizeof(UserMapping));
-	um->userid = userid;
-	um->serverid = serverid;
-	um->options = untransformRelOptions(datum);
+	if (isnull)
+		um->options = NIL;
+	else
+		um->options = untransformRelOptions(datum);
 
 	ReleaseSysCache(tp);
 
 	return um;
+}
+
+
+/*
+ * GetForeignTable - look up the foreign table definition by relation oid.
+ */
+ForeignTable *
+GetForeignTable(Oid relid)
+{
+	Form_pg_foreign_table tableform;
+	ForeignTable *ft;
+	HeapTuple	tp;
+	Datum		datum;
+	bool		isnull;
+
+	tp = SearchSysCache1(FOREIGNTABLEREL, ObjectIdGetDatum(relid));
+	if (!HeapTupleIsValid(tp))
+		elog(ERROR, "cache lookup failed for foreign table %u", relid);
+	tableform = (Form_pg_foreign_table) GETSTRUCT(tp);
+
+	ft = (ForeignTable *) palloc(sizeof(ForeignTable));
+	ft->relid = relid;
+	ft->serverid = tableform->ftserver;
+
+	/* Extract the ftoptions */
+	datum = SysCacheGetAttr(FOREIGNTABLEREL,
+							tp,
+							Anum_pg_foreign_table_ftoptions,
+							&isnull);
+	if (isnull)
+		ft->options = NIL;
+	else
+		ft->options = untransformRelOptions(datum);
+
+	ReleaseSysCache(tp);
+
+	return ft;
+}
+
+
+/*
+ * GetFdwRoutine - call the specified foreign-data wrapper handler routine
+ * to get its FdwRoutine struct.
+ */
+FdwRoutine *
+GetFdwRoutine(Oid fdwhandler)
+{
+	Datum		datum;
+	FdwRoutine *routine;
+
+	datum = OidFunctionCall0(fdwhandler);
+	routine = (FdwRoutine *) DatumGetPointer(datum);
+
+	if (routine == NULL || !IsA(routine, FdwRoutine))
+		elog(ERROR, "foreign-data wrapper handler function %u did not return an FdwRoutine struct",
+			 fdwhandler);
+
+	return routine;
+}
+
+
+/*
+ * GetFdwRoutineByRelId - look up the handler of the foreign-data wrapper
+ * for the given foreign table, and retrieve its FdwRoutine struct.
+ */
+FdwRoutine *
+GetFdwRoutineByRelId(Oid relid)
+{
+	HeapTuple	tp;
+	Form_pg_foreign_data_wrapper fdwform;
+	Form_pg_foreign_server serverform;
+	Form_pg_foreign_table tableform;
+	Oid			serverid;
+	Oid			fdwid;
+	Oid			fdwhandler;
+
+	/* Get server OID for the foreign table. */
+	tp = SearchSysCache1(FOREIGNTABLEREL, ObjectIdGetDatum(relid));
+	if (!HeapTupleIsValid(tp))
+		elog(ERROR, "cache lookup failed for foreign table %u", relid);
+	tableform = (Form_pg_foreign_table) GETSTRUCT(tp);
+	serverid = tableform->ftserver;
+	ReleaseSysCache(tp);
+
+	/* Get foreign-data wrapper OID for the server. */
+	tp = SearchSysCache1(FOREIGNSERVEROID, ObjectIdGetDatum(serverid));
+	if (!HeapTupleIsValid(tp))
+		elog(ERROR, "cache lookup failed for foreign server %u", serverid);
+	serverform = (Form_pg_foreign_server) GETSTRUCT(tp);
+	fdwid = serverform->srvfdw;
+	ReleaseSysCache(tp);
+
+	/* Get handler function OID for the FDW. */
+	tp = SearchSysCache1(FOREIGNDATAWRAPPEROID, ObjectIdGetDatum(fdwid));
+	if (!HeapTupleIsValid(tp))
+		elog(ERROR, "cache lookup failed for foreign-data wrapper %u", fdwid);
+	fdwform = (Form_pg_foreign_data_wrapper) GETSTRUCT(tp);
+	fdwhandler = fdwform->fdwhandler;
+
+	/* Complain if FDW has been set to NO HANDLER. */
+	if (!OidIsValid(fdwhandler))
+		ereport(ERROR,
+				(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
+				 errmsg("foreign-data wrapper \"%s\" has no handler",
+						NameStr(fdwform->fdwname))));
+
+	ReleaseSysCache(tp);
+
+	/* And finally, call the handler function. */
+	return GetFdwRoutine(fdwhandler);
 }
 
 
@@ -261,7 +381,7 @@ deflist_to_tuplestore(ReturnSetInfo *rsinfo, List *options)
 	TupleDesc	tupdesc;
 	Tuplestorestate *tupstore;
 	Datum		values[2];
-	bool		nulls[2] = {0};
+	bool		nulls[2];
 	MemoryContext per_query_ctx;
 	MemoryContext oldcontext;
 
@@ -294,6 +414,7 @@ deflist_to_tuplestore(ReturnSetInfo *rsinfo, List *options)
 
 		values[0] = CStringGetTextDatum(def->defname);
 		values[1] = CStringGetTextDatum(((Value *) def->arg)->val.str);
+		nulls[0] = nulls[1] = false;
 		tuplestore_putvalues(tupstore, tupdesc, values, nulls);
 	}
 
@@ -313,7 +434,8 @@ pg_options_to_table(PG_FUNCTION_ARGS)
 {
 	Datum		array = PG_GETARG_DATUM(0);
 
-	deflist_to_tuplestore((ReturnSetInfo *) fcinfo->resultinfo, untransformRelOptions(array));
+	deflist_to_tuplestore((ReturnSetInfo *) fcinfo->resultinfo,
+						  untransformRelOptions(array));
 
 	return (Datum) 0;
 }
@@ -407,7 +529,8 @@ postgresql_fdw_validator(PG_FUNCTION_ARGS)
 			ereport(ERROR,
 					(errcode(ERRCODE_SYNTAX_ERROR),
 					 errmsg("invalid option \"%s\"", def->defname),
-				errhint("Valid options in this context are: %s", buf.data)));
+					 errhint("Valid options in this context are: %s",
+							 buf.data)));
 
 			PG_RETURN_BOOL(false);
 		}
