@@ -46,10 +46,10 @@ CONTEXT:  COPY x, line 1: "2001	231	\N	\N"
 COPY x from stdin;
 ERROR:  extra data after last expected column
 CONTEXT:  COPY x, line 1: "2002	232	40	50	60	70	80"
--- various COPY options: delimiters, oids, NULL string
+-- various COPY options: delimiters, oids, NULL string, encoding
 COPY x (b, c, d, e) from stdin with oids delimiter ',' null 'x';
 COPY x from stdin WITH DELIMITER AS ';' NULL AS '';
-COPY x from stdin WITH DELIMITER AS ':' NULL AS E'\\X';
+COPY x from stdin WITH DELIMITER AS ':' NULL AS E'\\X' ENCODING 'sql_ascii';
 -- check results of copy in
 SELECT * FROM x;
    a   | b  |     c      |   d    |          e           
@@ -187,7 +187,7 @@ COPY y TO stdout WITH CSV QUOTE '''' DELIMITER '|';
 Jackson, Sam|\h
 It is "perfect".|	
 ''|
-COPY y TO stdout WITH CSV FORCE QUOTE col2 ESCAPE E'\\';
+COPY y TO stdout WITH CSV FORCE QUOTE col2 ESCAPE E'\\' ENCODING 'sql_ascii';
 "Jackson, Sam","\\h"
 "It is \"perfect\".","	"
 "",

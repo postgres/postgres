@@ -72,7 +72,7 @@ COPY x from stdin;
 2002	232	40	50	60	70	80
 \.
 
--- various COPY options: delimiters, oids, NULL string
+-- various COPY options: delimiters, oids, NULL string, encoding
 COPY x (b, c, d, e) from stdin with oids delimiter ',' null 'x';
 500000,x,45,80,90
 500001,x,\x,\\x,\\\x
@@ -83,7 +83,7 @@ COPY x from stdin WITH DELIMITER AS ';' NULL AS '';
 3000;;c;;
 \.
 
-COPY x from stdin WITH DELIMITER AS ':' NULL AS E'\\X';
+COPY x from stdin WITH DELIMITER AS ':' NULL AS E'\\X' ENCODING 'sql_ascii';
 4000:\X:C:\X:\X
 4001:1:empty::
 4002:2:null:\X:\X
@@ -127,7 +127,7 @@ INSERT INTO y VALUES ('', NULL);
 
 COPY y TO stdout WITH CSV;
 COPY y TO stdout WITH CSV QUOTE '''' DELIMITER '|';
-COPY y TO stdout WITH CSV FORCE QUOTE col2 ESCAPE E'\\';
+COPY y TO stdout WITH CSV FORCE QUOTE col2 ESCAPE E'\\' ENCODING 'sql_ascii';
 COPY y TO stdout WITH CSV FORCE QUOTE *;
 
 -- Repeat above tests with new 9.0 option syntax

@@ -95,8 +95,8 @@ typedef struct CopyStateData
 								 * dest == COPY_NEW_FE in COPY FROM */
 	bool		fe_eof;			/* true if detected end of copy data */
 	EolType		eol_type;		/* EOL type of input */
-	int			client_encoding;	/* remote side's character encoding */
-	bool		need_transcoding;		/* client encoding diff from server? */
+	int			file_encoding;	/* file or remote side's character encoding */
+	bool		need_transcoding;		/* file encoding diff from server? */
 	bool		encoding_embeds_ascii;	/* ASCII can be non-first byte? */
 
 	/* parameters from the COPY command */
@@ -110,7 +110,7 @@ typedef struct CopyStateData
 	bool		header_line;	/* CSV header line? */
 	char	   *null_print;		/* NULL marker string (server encoding!) */
 	int			null_print_len; /* length of same */
-	char	   *null_print_client;		/* same converted to client encoding */
+	char	   *null_print_client;		/* same converted to file encoding */
 	char	   *delim;			/* column delimiter (must be 1 byte) */
 	char	   *quote;			/* CSV quote char (must be 1 byte) */
 	char	   *escape;			/* CSV escape char (must be 1 byte) */
@@ -845,6 +845,8 @@ ProcessCopyOptions(CopyState cstate,
 	if (cstate == NULL)
 		cstate = (CopyStateData *) palloc0(sizeof(CopyStateData));
 
+	cstate->file_encoding = -1;
+
 	/* Extract options from the statement node tree */
 	foreach(option, options)
 	{
@@ -946,6 +948,19 @@ ProcessCopyOptions(CopyState cstate,
 				ereport(ERROR,
 						(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
 						 errmsg("argument to option \"%s\" must be a list of column names",
+								defel->defname)));
+		}
+		else if (strcmp(defel->defname, "encoding") == 0)
+		{
+			if (cstate->file_encoding >= 0)
+				ereport(ERROR,
+						(errcode(ERRCODE_SYNTAX_ERROR),
+						 errmsg("conflicting or redundant options")));
+			cstate->file_encoding = pg_char_to_encoding(defGetString(defel));
+			if (cstate->file_encoding < 0)
+				ereport(ERROR,
+						(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+						 errmsg("argument to option \"%s\" must be a valid encoding name",
 								defel->defname)));
 		}
 		else
@@ -1278,17 +1293,20 @@ BeginCopy(bool is_from,
 		}
 	}
 
+	/* Use client encoding when ENCODING option is not specified. */
+	if (cstate->file_encoding < 0)
+		cstate->file_encoding = pg_get_client_encoding();
+
 	/*
-	 * Set up encoding conversion info.  Even if the client and server
-	 * encodings are the same, we must apply pg_client_to_server() to validate
+	 * Set up encoding conversion info.  Even if the file and server
+	 * encodings are the same, we must apply pg_any_to_server() to validate
 	 * data in multibyte encodings.
 	 */
-	cstate->client_encoding = pg_get_client_encoding();
 	cstate->need_transcoding =
-		(cstate->client_encoding != GetDatabaseEncoding() ||
+		(cstate->file_encoding != GetDatabaseEncoding() ||
 		 pg_database_encoding_max_length() > 1);
 	/* See Multibyte encoding comment above */
-	cstate->encoding_embeds_ascii = PG_ENCODING_IS_CLIENT_ONLY(cstate->client_encoding);
+	cstate->encoding_embeds_ascii = PG_ENCODING_IS_CLIENT_ONLY(cstate->file_encoding);
 
 	cstate->copy_dest = COPY_FILE;		/* default */
 
@@ -1526,12 +1544,13 @@ CopyTo(CopyState cstate)
 	else
 	{
 		/*
-		 * For non-binary copy, we need to convert null_print to client
+		 * For non-binary copy, we need to convert null_print to file
 		 * encoding, because it will be sent directly with CopySendString.
 		 */
 		if (cstate->need_transcoding)
-			cstate->null_print_client = pg_server_to_client(cstate->null_print,
-													 cstate->null_print_len);
+			cstate->null_print_client = pg_server_to_any(cstate->null_print,
+														 cstate->null_print_len,
+														 cstate->file_encoding);
 
 		/* if a header has been requested send the line */
 		if (cstate->header_line)
@@ -2608,8 +2627,9 @@ CopyReadLine(CopyState cstate)
 	{
 		char	   *cvt;
 
-		cvt = pg_client_to_server(cstate->line_buf.data,
-								  cstate->line_buf.len);
+		cvt = pg_any_to_server(cstate->line_buf.data,
+							   cstate->line_buf.len,
+							   cstate->file_encoding);
 		if (cvt != cstate->line_buf.data)
 		{
 			/* transfer converted data back to line_buf */
@@ -2854,7 +2874,7 @@ CopyReadLineText(CopyState cstate)
 			/* -----
 			 * get next character
 			 * Note: we do not change c so if it isn't \., we can fall
-			 * through and continue processing for client encoding.
+			 * through and continue processing for file encoding.
 			 * -----
 			 */
 			c2 = copy_raw_buf[raw_buf_ptr];
@@ -2968,7 +2988,7 @@ not_end_of_copy:
 
 			mblen_str[0] = c;
 			/* All our encodings only read the first byte to get the length */
-			mblen = pg_encoding_mblen(cstate->client_encoding, mblen_str);
+			mblen = pg_encoding_mblen(cstate->file_encoding, mblen_str);
 			IF_NEED_REFILL_AND_NOT_EOF_CONTINUE(mblen - 1);
 			IF_NEED_REFILL_AND_EOF_BREAK(mblen - 1);
 			raw_buf_ptr += mblen - 1;
@@ -3467,7 +3487,7 @@ CopyAttributeOutText(CopyState cstate, char *string)
 	char		delimc = cstate->delim[0];
 
 	if (cstate->need_transcoding)
-		ptr = pg_server_to_client(string, strlen(string));
+		ptr = pg_server_to_any(string, strlen(string), cstate->file_encoding);
 	else
 		ptr = string;
 
@@ -3540,7 +3560,7 @@ CopyAttributeOutText(CopyState cstate, char *string)
 				start = ptr++;	/* we include char in next run */
 			}
 			else if (IS_HIGHBIT_SET(c))
-				ptr += pg_encoding_mblen(cstate->client_encoding, ptr);
+				ptr += pg_encoding_mblen(cstate->file_encoding, ptr);
 			else
 				ptr++;
 		}
@@ -3627,7 +3647,7 @@ CopyAttributeOutCSV(CopyState cstate, char *string,
 		use_quote = true;
 
 	if (cstate->need_transcoding)
-		ptr = pg_server_to_client(string, strlen(string));
+		ptr = pg_server_to_any(string, strlen(string), cstate->file_encoding);
 	else
 		ptr = string;
 
@@ -3654,7 +3674,7 @@ CopyAttributeOutCSV(CopyState cstate, char *string,
 					break;
 				}
 				if (IS_HIGHBIT_SET(c) && cstate->encoding_embeds_ascii)
-					tptr += pg_encoding_mblen(cstate->client_encoding, tptr);
+					tptr += pg_encoding_mblen(cstate->file_encoding, tptr);
 				else
 					tptr++;
 			}
@@ -3678,7 +3698,7 @@ CopyAttributeOutCSV(CopyState cstate, char *string,
 				start = ptr;	/* we include char in next run */
 			}
 			if (IS_HIGHBIT_SET(c) && cstate->encoding_embeds_ascii)
-				ptr += pg_encoding_mblen(cstate->client_encoding, ptr);
+				ptr += pg_encoding_mblen(cstate->file_encoding, ptr);
 			else
 				ptr++;
 		}

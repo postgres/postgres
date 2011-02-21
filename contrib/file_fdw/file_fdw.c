@@ -55,6 +55,7 @@ static struct FileFdwOption valid_options[] = {
 	{ "quote",			ForeignTableRelationId },
 	{ "escape",			ForeignTableRelationId },
 	{ "null",			ForeignTableRelationId },
+	{ "encoding",		ForeignTableRelationId },
 
 	/*
 	 * force_quote is not supported by file_fdw because it's for COPY TO.

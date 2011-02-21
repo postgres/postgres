@@ -2236,6 +2236,10 @@ copy_opt_item:
 				{
 					$$ = makeDefElem("force_not_null", (Node *)$4);
 				}
+			| ENCODING Sconst
+				{
+					$$ = makeDefElem("encoding", (Node *)makeString($2));
+				}
 		;
 
 /* The following exist for backward compatibility with very old versions */

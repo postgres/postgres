@@ -97,6 +97,17 @@
    </listitem>
   </varlistentry>
 
+  <varlistentry>
+   <term><literal>encoding</literal></term>
+
+   <listitem>
+    <para>
+     Specifies the file's encoding.
+     the same as <command>COPY</>'s <literal>ENCODING</literal> option.
+    </para>
+   </listitem>
+  </varlistentry>
+
  </variablelist>
 
  <para>
