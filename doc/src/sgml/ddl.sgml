@@ -1400,13 +1400,33 @@ ALTER TABLE products RENAME TO items;
    <see>privilege</see>
   </indexterm>
 
+  <indexterm zone="ddl-priv">
+   <primary>owner</primary>
+  </indexterm>
+
+  <indexterm zone="ddl-priv">
+   <primary>GRANT</primary>
+  </indexterm>
+
+  <indexterm zone="ddl-priv">
+   <primary>REVOKE</primary>
+  </indexterm>
+
   <para>
-   When you create a database object, you become its owner.  By
-   default, only the owner of an object can do anything with the
-   object. In order to allow other users to use it,
-   <firstterm>privileges</firstterm> must be granted.  (However,
-   users that have the superuser attribute can always
-   access any object.)
+   When an object is created, it is assigned an owner. The
+   owner is normally the role that executed the creation statement.
+   For most kinds of objects, the initial state is that only the owner
+   (or a superuser) can do anything with the object. To allow
+   other roles to use it, <firstterm>privileges</firstterm> must be
+   granted.
+   There are several different kinds of privilege: <literal>SELECT</>,
+   <literal>INSERT</>, <literal>UPDATE</>, <literal>DELETE</>,
+   <literal>TRUNCATE</>, <literal>REFERENCES</>, <literal>TRIGGER</>,
+   <literal>CREATE</>, <literal>CONNECT</>, <literal>TEMPORARY</>,
+   <literal>EXECUTE</>, and <literal>USAGE</>.
+   For more information on the different types of privileges supported by
+   <productname>PostgreSQL</productname>, see the
+   <xref linkend="sql-grant"> reference page.
   </para>
 
   <para>
@@ -1429,14 +1449,14 @@ ALTER TABLE products RENAME TO items;
    the owner only.
   </para>
 
-  <note>
-   <para>
-    To change the owner of a table, index, sequence, or view, use the
-    <xref linkend="sql-altertable">
-    command.  There are corresponding <literal>ALTER</> commands for
-    other object types.
-   </para>
-  </note>
+  <para>
+   An object can be assigned to a new owner with an <command>ALTER</command>
+   command of the appropriate kind for the object, e.g. <xref
+   linkend="sql-altertable">.  Superusers can always do
+   this; ordinary roles can only do it if they are both the current owner
+   of the object (or a member of the owning role) and a member of the new
+   owning role.
+  </para>
 
   <para>
    To assign privileges, the <command>GRANT</command> command is

@@ -1,7 +1,7 @@
 <!-- doc/src/sgml/user-manag.sgml -->
 
 <chapter id="user-manag">
- <title>Database Roles and Privileges</title>
+ <title>Database Roles</title>
 
  <para>
   <productname>PostgreSQL</productname> manages database access permissions
@@ -22,10 +22,9 @@
  </para>
 
  <para>
-  This chapter describes how to create and manage roles and introduces
-  the privilege system.  More information about the various types of
-  database objects and the effects of privileges can be found in
-  <xref linkend="ddl">.
+  This chapter describes how to create and manage roles.
+  More information about the effects of privileges on various database
+  objects can be found in <xref linkend="ddl-priv">.
  </para>
 
  <sect1 id="database-roles">
@@ -279,81 +278,6 @@ ALTER ROLE myname SET enable_indexscan TO off;
    Note that role-specific defaults attached to roles without
    <literal>LOGIN</> privilege are fairly useless, since they will never
    be invoked.
-  </para>
- </sect1>
-
- <sect1 id="privileges">
-  <title>Privileges</title>
-
-  <indexterm zone="privileges">
-   <primary>privilege</primary>
-  </indexterm>
-
-  <indexterm zone="privileges">
-   <primary>owner</primary>
-  </indexterm>
-
-  <indexterm zone="privileges">
-   <primary>GRANT</primary>
-  </indexterm>
-
-  <indexterm zone="privileges">
-   <primary>REVOKE</primary>
-  </indexterm>
-
-  <para>
-   When an object is created, it is assigned an owner. The
-   owner is normally the role that executed the creation statement.
-   For most kinds of objects, the initial state is that only the owner
-   (or a superuser) can do anything with the object. To allow
-   other roles to use it, <firstterm>privileges</firstterm> must be
-   granted.
-   There are several different kinds of privilege: <literal>SELECT</>,
-   <literal>INSERT</>, <literal>UPDATE</>, <literal>DELETE</>,
-   <literal>TRUNCATE</>, <literal>REFERENCES</>, <literal>TRIGGER</>,
-   <literal>CREATE</>, <literal>CONNECT</>, <literal>TEMPORARY</>,
-   <literal>EXECUTE</>, and <literal>USAGE</>.
-   For more information on the different types of privileges supported by
-   <productname>PostgreSQL</productname>, see the
-   <xref linkend="sql-grant"> reference page.
-  </para>
-
-  <para>
-   To assign privileges, the <command>GRANT</command> command is
-   used. So, if <literal>joe</literal> is an existing role, and
-   <literal>accounts</literal> is an existing table, the privilege to
-   update the table can be granted with:
-<programlisting>
-GRANT UPDATE ON accounts TO joe;
-</programlisting>
-   The special name <literal>PUBLIC</literal> can
-   be used to grant a privilege to every role on the system. Writing
-   <literal>ALL</literal> in place of a specific privilege specifies that all
-   privileges that apply to the object will be granted.
-  </para>
-
-  <para>
-   To revoke a privilege, use the fittingly named
-   <xref linkend="sql-revoke"> command:
-<programlisting>
-REVOKE ALL ON accounts FROM PUBLIC;
-</programlisting>
-  </para>
-
-  <para>
-   The special privileges of an object's owner (i.e., the right to modify
-   or destroy the object) are always implicit in being the owner,
-   and cannot be granted or revoked.  But the owner can choose
-   to revoke his own ordinary privileges, for example to make a
-   table read-only for himself as well as others.
-  </para>
-
-  <para>
-   An object can be assigned to a new owner with an <command>ALTER</command>
-   command of the appropriate kind for the object.  Superusers can always do
-   this; ordinary roles can only do it if they are both the current owner
-   of the object (or a member of the owning role) and a member of the new
-   owning role.
   </para>
  </sect1>
 
