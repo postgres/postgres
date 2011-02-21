@@ -569,7 +569,7 @@ pg_server_to_client(const char *s, int len)
 {
 	Assert(ClientEncoding);
 
-	return pg_any_to_server(s, len, ClientEncoding->encoding);
+	return pg_server_to_any(s, len, ClientEncoding->encoding);
 }
 
 /*
