@@ -23,8 +23,8 @@
 
  <para>
   This chapter describes how to create and manage roles.
-  More information about the effects of privileges on various database
-  objects can be found in <xref linkend="ddl-priv">.
+  More information about the effects of role privileges on various
+  database objects can be found in <xref linkend="ddl-priv">.
  </para>
 
  <sect1 id="database-roles">
