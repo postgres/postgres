@@ -119,6 +119,12 @@ DefineSequence(CreateSeqStmt *seq)
 	int			i;
 	NameData	name;
 
+	/* Unlogged sequences are not implemented -- not clear if useful. */
+	if (seq->sequence->relpersistence == RELPERSISTENCE_UNLOGGED)
+		ereport(ERROR,
+				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+				 errmsg("unlogged sequences are not supported")));
+
 	/* Check and set all option values */
 	init_params(seq->options, true, &new, &owned_by);
 

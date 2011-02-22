@@ -24,7 +24,7 @@ PostgreSQL documentation
 [ WITH [ RECURSIVE ] <replaceable class="parameter">with_query</replaceable> [, ...] ]
 SELECT [ ALL | DISTINCT [ ON ( <replaceable class="parameter">expression</replaceable> [, ...] ) ] ]
     * | <replaceable class="parameter">expression</replaceable> [ [ AS ] <replaceable class="parameter">output_name</replaceable> ] [, ...]
-    INTO [ TEMPORARY | TEMP ] [ TABLE ] <replaceable class="parameter">new_table</replaceable>
+    INTO [ TEMPORARY | TEMP | UNLOGGED ] [ TABLE ] <replaceable class="parameter">new_table</replaceable>
     [ FROM <replaceable class="parameter">from_item</replaceable> [, ...] ]
     [ WHERE <replaceable class="parameter">condition</replaceable> ]
     [ GROUP BY <replaceable class="parameter">expression</replaceable> [, ...] ]
@@ -60,6 +60,16 @@ SELECT [ ALL | DISTINCT [ ON ( <replaceable class="parameter">expression</replac
    <listitem>
     <para>
      If specified, the table is created as a temporary table.  Refer
+     to <xref linkend="sql-createtable"> for details.
+    </para>
+   </listitem>
+  </varlistentry>
+
+  <varlistentry>
+   <term><literal>UNLOGGED</literal></term>
+   <listitem>
+    <para>
+     If specified, the table is created as an unlogged table.  Refer
      to <xref linkend="sql-createtable"> for details.
     </para>
    </listitem>

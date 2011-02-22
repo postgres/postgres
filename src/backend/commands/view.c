@@ -465,6 +465,12 @@ DefineView(ViewStmt *stmt, const char *queryString)
 						view->relname)));
 	}
 
+	/* Unlogged views are not sensible. */
+	if (view->relpersistence == RELPERSISTENCE_UNLOGGED)
+		ereport(ERROR,
+				(errcode(ERRCODE_SYNTAX_ERROR),
+				 errmsg("views cannot be unlogged because they do not have storage")));
+
 	/*
 	 * Create the view relation
 	 *
