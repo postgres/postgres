@@ -23,13 +23,14 @@
 
  <note>
   <para>
-   The SQL standard requires constraint names to be unique within a
-   schema;  <productname>PostgreSQL</productname>, however, does not
-   enforce this restriction.  If duplicate-named constraints are
-   stored in the same <productname>PostgreSQL</productname> schema,
-   a standard-compliant query that expects to return one matching
-   constraint row might return several, one row for each matching
-   constraint stored in the specified schema. 
+   When querying the database for constraint information, it is possible
+   for a standard-compliant query that expects to return one row to
+   return several.  This is because the SQL standard requires constraint
+   names to be unique within a schema, but
+   <productname>PostgreSQL</productname> does not enforce this
+   restriction.  <productname>PostgreSQL</productname>
+   automatically-generated constraint names avoid duplicates in the
+   same schema, but users can specify such duplicate names.
   </para>
  </note>
 
