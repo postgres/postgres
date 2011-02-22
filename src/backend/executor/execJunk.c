@@ -40,9 +40,9 @@
  *
  * Finally, when at the top level we get back a tuple, we can call
  * ExecFindJunkAttribute/ExecGetJunkAttribute to retrieve the values of the
- * junk attributes we are interested in, and ExecFilterJunk or ExecRemoveJunk
- * to remove all the junk attributes from a tuple. This new "clean" tuple is
- * then printed, inserted, or updated.
+ * junk attributes we are interested in, and ExecFilterJunk to remove all the
+ * junk attributes from a tuple.  This new "clean" tuple is then printed,
+ * inserted, or updated.
  *
  *-------------------------------------------------------------------------
  */
@@ -316,16 +316,4 @@ ExecFilterJunk(JunkFilter *junkfilter, TupleTableSlot *slot)
 	 * And return the virtual tuple.
 	 */
 	return ExecStoreVirtualTuple(resultSlot);
-}
-
-/*
- * ExecRemoveJunk
- *
- * Convenience routine to generate a physical clean tuple,
- * rather than just a virtual slot.
- */
-HeapTuple
-ExecRemoveJunk(JunkFilter *junkfilter, TupleTableSlot *slot)
-{
-	return ExecCopySlotTuple(ExecFilterJunk(junkfilter, slot));
 }
