@@ -1836,7 +1836,7 @@ CopyFrom(CopyState cstate)
 	ResultRelInfo *resultRelInfo;
 	EState	   *estate = CreateExecutorState(); /* for ExecConstraints() */
 	ExprContext *econtext;
-	TupleTableSlot *slot;
+	TupleTableSlot *myslot;
 	MemoryContext oldcontext = CurrentMemoryContext;
 	ErrorContextCallback errcontext;
 	CommandId	mycid = GetCurrentCommandId(true);
@@ -1932,8 +1932,10 @@ CopyFrom(CopyState cstate)
 	estate->es_result_relation_info = resultRelInfo;
 
 	/* Set up a tuple slot too */
-	slot = ExecInitExtraTupleSlot(estate);
-	ExecSetSlotDescriptor(slot, tupDesc);
+	myslot = ExecInitExtraTupleSlot(estate);
+	ExecSetSlotDescriptor(myslot, tupDesc);
+	/* Triggers might need a slot as well */
+	estate->es_trig_tuple_slot = ExecInitExtraTupleSlot(estate);
 
 	/* Prepare to catch AFTER triggers. */
 	AfterTriggerBeginQuery();
@@ -1960,6 +1962,7 @@ CopyFrom(CopyState cstate)
 
 	for (;;)
 	{
+		TupleTableSlot *slot;
 		bool		skip_tuple;
 		Oid			loaded_oid = InvalidOid;
 
@@ -1983,31 +1986,27 @@ CopyFrom(CopyState cstate)
 		/* Triggers and stuff need to be invoked in query context. */
 		MemoryContextSwitchTo(oldcontext);
 
+		/* Place tuple in tuple slot --- but slot shouldn't free it */
+		slot = myslot;
+		ExecStoreTuple(tuple, slot, InvalidBuffer, false);
+
 		skip_tuple = false;
 
 		/* BEFORE ROW INSERT Triggers */
 		if (resultRelInfo->ri_TrigDesc &&
 			resultRelInfo->ri_TrigDesc->trig_insert_before_row)
 		{
-			HeapTuple	newtuple;
+			slot = ExecBRInsertTriggers(estate, resultRelInfo, slot);
 
-			newtuple = ExecBRInsertTriggers(estate, resultRelInfo, tuple);
-
-			if (newtuple == NULL)		/* "do nothing" */
+			if (slot == NULL)		/* "do nothing" */
 				skip_tuple = true;
-			else if (newtuple != tuple) /* modified by Trigger(s) */
-			{
-				heap_freetuple(tuple);
-				tuple = newtuple;
-			}
+			else					/* trigger might have changed tuple */
+				tuple = ExecMaterializeSlot(slot);
 		}
 
 		if (!skip_tuple)
 		{
 			List	   *recheckIndexes = NIL;
-
-			/* Place tuple in tuple slot */
-			ExecStoreTuple(tuple, slot, InvalidBuffer, false);
 
 			/* Check the constraints of the tuple */
 			if (cstate->rel->rd_att->constr)

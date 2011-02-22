@@ -132,16 +132,16 @@ extern void ExecBSInsertTriggers(EState *estate,
 					 ResultRelInfo *relinfo);
 extern void ExecASInsertTriggers(EState *estate,
 					 ResultRelInfo *relinfo);
-extern HeapTuple ExecBRInsertTriggers(EState *estate,
+extern TupleTableSlot *ExecBRInsertTriggers(EState *estate,
 					 ResultRelInfo *relinfo,
-					 HeapTuple trigtuple);
+					 TupleTableSlot *slot);
 extern void ExecARInsertTriggers(EState *estate,
 					 ResultRelInfo *relinfo,
 					 HeapTuple trigtuple,
 					 List *recheckIndexes);
-extern HeapTuple ExecIRInsertTriggers(EState *estate,
+extern TupleTableSlot *ExecIRInsertTriggers(EState *estate,
 					 ResultRelInfo *relinfo,
-					 HeapTuple trigtuple);
+					 TupleTableSlot *slot);
 extern void ExecBSDeleteTriggers(EState *estate,
 					 ResultRelInfo *relinfo);
 extern void ExecASDeleteTriggers(EState *estate,
@@ -160,20 +160,20 @@ extern void ExecBSUpdateTriggers(EState *estate,
 					 ResultRelInfo *relinfo);
 extern void ExecASUpdateTriggers(EState *estate,
 					 ResultRelInfo *relinfo);
-extern HeapTuple ExecBRUpdateTriggers(EState *estate,
+extern TupleTableSlot *ExecBRUpdateTriggers(EState *estate,
 					 EPQState *epqstate,
 					 ResultRelInfo *relinfo,
 					 ItemPointer tupleid,
-					 HeapTuple newtuple);
+					 TupleTableSlot *slot);
 extern void ExecARUpdateTriggers(EState *estate,
 					 ResultRelInfo *relinfo,
 					 ItemPointer tupleid,
 					 HeapTuple newtuple,
 					 List *recheckIndexes);
-extern HeapTuple ExecIRUpdateTriggers(EState *estate,
+extern TupleTableSlot *ExecIRUpdateTriggers(EState *estate,
 					 ResultRelInfo *relinfo,
-					 HeapTuple oldtuple,
-					 HeapTuple newtuple);
+					 HeapTuple trigtuple,
+					 TupleTableSlot *slot);
 extern void ExecBSTruncateTriggers(EState *estate,
 					   ResultRelInfo *relinfo);
 extern void ExecASTruncateTriggers(EState *estate,

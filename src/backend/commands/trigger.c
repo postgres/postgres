@@ -1909,12 +1909,13 @@ ExecASInsertTriggers(EState *estate, ResultRelInfo *relinfo)
 							  false, NULL, NULL, NIL, NULL);
 }
 
-HeapTuple
+TupleTableSlot *
 ExecBRInsertTriggers(EState *estate, ResultRelInfo *relinfo,
-					 HeapTuple trigtuple)
+					 TupleTableSlot *slot)
 {
 	TriggerDesc *trigdesc = relinfo->ri_TrigDesc;
-	HeapTuple	newtuple = trigtuple;
+	HeapTuple	slottuple = ExecMaterializeSlot(slot);
+	HeapTuple	newtuple = slottuple;
 	HeapTuple	oldtuple;
 	TriggerData LocTriggerData;
 	int			i;
@@ -1947,12 +1948,29 @@ ExecBRInsertTriggers(EState *estate, ResultRelInfo *relinfo,
 									   relinfo->ri_TrigFunctions,
 									   relinfo->ri_TrigInstrument,
 									   GetPerTupleMemoryContext(estate));
-		if (oldtuple != newtuple && oldtuple != trigtuple)
+		if (oldtuple != newtuple && oldtuple != slottuple)
 			heap_freetuple(oldtuple);
 		if (newtuple == NULL)
-			break;
+			return NULL;		/* "do nothing" */
 	}
-	return newtuple;
+
+	if (newtuple != slottuple)
+	{
+		/*
+		 * Return the modified tuple using the es_trig_tuple_slot.  We assume
+		 * the tuple was allocated in per-tuple memory context, and therefore
+		 * will go away by itself. The tuple table slot should not try to
+		 * clear it.
+		 */
+		TupleTableSlot *newslot = estate->es_trig_tuple_slot;
+		TupleDesc	tupdesc = RelationGetDescr(relinfo->ri_RelationDesc);
+
+		if (newslot->tts_tupleDescriptor != tupdesc)
+			ExecSetSlotDescriptor(newslot, tupdesc);
+		ExecStoreTuple(newtuple, newslot, InvalidBuffer, false);
+		slot = newslot;
+	}
+	return slot;
 }
 
 void
@@ -1966,12 +1984,13 @@ ExecARInsertTriggers(EState *estate, ResultRelInfo *relinfo,
 							  true, NULL, trigtuple, recheckIndexes, NULL);
 }
 
-HeapTuple
+TupleTableSlot *
 ExecIRInsertTriggers(EState *estate, ResultRelInfo *relinfo,
-					 HeapTuple trigtuple)
+					 TupleTableSlot *slot)
 {
 	TriggerDesc *trigdesc = relinfo->ri_TrigDesc;
-	HeapTuple	newtuple = trigtuple;
+	HeapTuple	slottuple = ExecMaterializeSlot(slot);
+	HeapTuple	newtuple = slottuple;
 	HeapTuple	oldtuple;
 	TriggerData LocTriggerData;
 	int			i;
@@ -2004,12 +2023,29 @@ ExecIRInsertTriggers(EState *estate, ResultRelInfo *relinfo,
 									   relinfo->ri_TrigFunctions,
 									   relinfo->ri_TrigInstrument,
 									   GetPerTupleMemoryContext(estate));
-		if (oldtuple != newtuple && oldtuple != trigtuple)
+		if (oldtuple != newtuple && oldtuple != slottuple)
 			heap_freetuple(oldtuple);
 		if (newtuple == NULL)
-			break;
+			return NULL;		/* "do nothing" */
 	}
-	return newtuple;
+
+	if (newtuple != slottuple)
+	{
+		/*
+		 * Return the modified tuple using the es_trig_tuple_slot.  We assume
+		 * the tuple was allocated in per-tuple memory context, and therefore
+		 * will go away by itself. The tuple table slot should not try to
+		 * clear it.
+		 */
+		TupleTableSlot *newslot = estate->es_trig_tuple_slot;
+		TupleDesc	tupdesc = RelationGetDescr(relinfo->ri_RelationDesc);
+
+		if (newslot->tts_tupleDescriptor != tupdesc)
+			ExecSetSlotDescriptor(newslot, tupdesc);
+		ExecStoreTuple(newtuple, newslot, InvalidBuffer, false);
+		slot = newslot;
+	}
+	return slot;
 }
 
 void
@@ -2257,32 +2293,44 @@ ExecASUpdateTriggers(EState *estate, ResultRelInfo *relinfo)
 							  GetModifiedColumns(relinfo, estate));
 }
 
-HeapTuple
+TupleTableSlot *
 ExecBRUpdateTriggers(EState *estate, EPQState *epqstate,
 					 ResultRelInfo *relinfo,
-					 ItemPointer tupleid, HeapTuple newtuple)
+					 ItemPointer tupleid, TupleTableSlot *slot)
 {
 	TriggerDesc *trigdesc = relinfo->ri_TrigDesc;
+	HeapTuple	slottuple = ExecMaterializeSlot(slot);
+	HeapTuple	newtuple = slottuple;
 	TriggerData LocTriggerData;
 	HeapTuple	trigtuple;
 	HeapTuple	oldtuple;
-	HeapTuple	intuple = newtuple;
 	TupleTableSlot *newSlot;
 	int			i;
 	Bitmapset  *modifiedCols;
 
+	/* get a copy of the on-disk tuple we are planning to update */
 	trigtuple = GetTupleForTrigger(estate, epqstate, relinfo, tupleid,
 								   &newSlot);
 	if (trigtuple == NULL)
-		return NULL;
+		return NULL;			/* cancel the update action */
 
 	/*
-	 * In READ COMMITTED isolation level it's possible that newtuple was
+	 * In READ COMMITTED isolation level it's possible that target tuple was
 	 * changed due to concurrent update.  In that case we have a raw subplan
-	 * output tuple and need to run it through the junk filter.
+	 * output tuple in newSlot, and need to run it through the junk filter to
+	 * produce an insertable tuple.
+	 *
+	 * Caution: more than likely, the passed-in slot is the same as the
+	 * junkfilter's output slot, so we are clobbering the original value of
+	 * slottuple by doing the filtering.  This is OK since neither we nor our
+	 * caller have any more interest in the prior contents of that slot.
 	 */
 	if (newSlot != NULL)
-		intuple = newtuple = ExecRemoveJunk(relinfo->ri_junkFilter, newSlot);
+	{
+		slot = ExecFilterJunk(relinfo->ri_junkFilter, newSlot);
+		slottuple = ExecMaterializeSlot(slot);
+		newtuple = slottuple;
+	}
 
 	modifiedCols = GetModifiedColumns(relinfo, estate);
 
@@ -2314,13 +2362,33 @@ ExecBRUpdateTriggers(EState *estate, EPQState *epqstate,
 									   relinfo->ri_TrigFunctions,
 									   relinfo->ri_TrigInstrument,
 									   GetPerTupleMemoryContext(estate));
-		if (oldtuple != newtuple && oldtuple != intuple)
+		if (oldtuple != newtuple && oldtuple != slottuple)
 			heap_freetuple(oldtuple);
 		if (newtuple == NULL)
-			break;
+		{
+			heap_freetuple(trigtuple);
+			return NULL;		/* "do nothing" */
+		}
 	}
 	heap_freetuple(trigtuple);
-	return newtuple;
+
+	if (newtuple != slottuple)
+	{
+		/*
+		 * Return the modified tuple using the es_trig_tuple_slot.  We assume
+		 * the tuple was allocated in per-tuple memory context, and therefore
+		 * will go away by itself. The tuple table slot should not try to
+		 * clear it.
+		 */
+		TupleTableSlot *newslot = estate->es_trig_tuple_slot;
+		TupleDesc	tupdesc = RelationGetDescr(relinfo->ri_RelationDesc);
+
+		if (newslot->tts_tupleDescriptor != tupdesc)
+			ExecSetSlotDescriptor(newslot, tupdesc);
+		ExecStoreTuple(newtuple, newslot, InvalidBuffer, false);
+		slot = newslot;
+	}
+	return slot;
 }
 
 void
@@ -2342,14 +2410,15 @@ ExecARUpdateTriggers(EState *estate, ResultRelInfo *relinfo,
 	}
 }
 
-HeapTuple
+TupleTableSlot *
 ExecIRUpdateTriggers(EState *estate, ResultRelInfo *relinfo,
-					 HeapTuple oldtuple, HeapTuple newtuple)
+					 HeapTuple trigtuple, TupleTableSlot *slot)
 {
 	TriggerDesc *trigdesc = relinfo->ri_TrigDesc;
+	HeapTuple	slottuple = ExecMaterializeSlot(slot);
+	HeapTuple	newtuple = slottuple;
 	TriggerData LocTriggerData;
-	HeapTuple	intuple = newtuple;
-	HeapTuple	rettuple;
+	HeapTuple	oldtuple;
 	int			i;
 
 	LocTriggerData.type = T_TriggerData;
@@ -2367,26 +2436,42 @@ ExecIRUpdateTriggers(EState *estate, ResultRelInfo *relinfo,
 								  TRIGGER_TYPE_UPDATE))
 			continue;
 		if (!TriggerEnabled(estate, relinfo, trigger, LocTriggerData.tg_event,
-							NULL, oldtuple, newtuple))
+							NULL, trigtuple, newtuple))
 			continue;
 
-		LocTriggerData.tg_trigtuple = oldtuple;
-		LocTriggerData.tg_newtuple = newtuple;
+		LocTriggerData.tg_trigtuple = trigtuple;
+		LocTriggerData.tg_newtuple = oldtuple = newtuple;
 		LocTriggerData.tg_trigtuplebuf = InvalidBuffer;
 		LocTriggerData.tg_newtuplebuf = InvalidBuffer;
 		LocTriggerData.tg_trigger = trigger;
-		rettuple = ExecCallTriggerFunc(&LocTriggerData,
+		newtuple = ExecCallTriggerFunc(&LocTriggerData,
 									   i,
 									   relinfo->ri_TrigFunctions,
 									   relinfo->ri_TrigInstrument,
 									   GetPerTupleMemoryContext(estate));
-		if (newtuple != rettuple && newtuple != intuple)
-			heap_freetuple(newtuple);
-		newtuple = rettuple;
+		if (oldtuple != newtuple && oldtuple != slottuple)
+			heap_freetuple(oldtuple);
 		if (newtuple == NULL)
-			break;
+			return NULL;		/* "do nothing" */
 	}
-	return newtuple;
+
+	if (newtuple != slottuple)
+	{
+		/*
+		 * Return the modified tuple using the es_trig_tuple_slot.  We assume
+		 * the tuple was allocated in per-tuple memory context, and therefore
+		 * will go away by itself. The tuple table slot should not try to
+		 * clear it.
+		 */
+		TupleTableSlot *newslot = estate->es_trig_tuple_slot;
+		TupleDesc	tupdesc = RelationGetDescr(relinfo->ri_RelationDesc);
+
+		if (newslot->tts_tupleDescriptor != tupdesc)
+			ExecSetSlotDescriptor(newslot, tupdesc);
+		ExecStoreTuple(newtuple, newslot, InvalidBuffer, false);
+		slot = newslot;
+	}
+	return slot;
 }
 
 void
