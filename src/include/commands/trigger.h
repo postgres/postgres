@@ -132,10 +132,10 @@ extern void ExecBSUpdateTriggers(EState *estate,
 					 ResultRelInfo *relinfo);
 extern void ExecASUpdateTriggers(EState *estate,
 					 ResultRelInfo *relinfo);
-extern HeapTuple ExecBRUpdateTriggers(EState *estate,
+extern TupleTableSlot *ExecBRUpdateTriggers(EState *estate,
 					 ResultRelInfo *relinfo,
 					 ItemPointer tupleid,
-					 HeapTuple newtuple);
+					 TupleTableSlot *slot);
 extern void ExecARUpdateTriggers(EState *estate,
 					 ResultRelInfo *relinfo,
 					 ItemPointer tupleid,
