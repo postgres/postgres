@@ -21,6 +21,19 @@
   <productname>PostgreSQL</productname>-specific views.
  </para>
 
+ <note>
+  <para>
+   The SQL standard requires constraint names to be unique within a
+   schema;  <productname>PostgreSQL</productname>, however, does not
+   enforce this restriction.  If duplicate-named constraints are
+   stored in the same <productname>PostgreSQL</productname> schema,
+   a standard-compliant query that expects to return one matching
+   constraint row might return several, one row for each matching
+   constraint stored in the specified schema. 
+  </para>
+ </note>
+
+
  <sect1 id="infoschema-schema">
   <title>The Schema</title>
 
@@ -3211,18 +3224,6 @@ ORDER BY c.ordinal_position;
     </tbody>
    </tgroup>
   </table>
-
-  <note>
-   <para>
-    The SQL standard requires constraint names to be unique within a
-    schema;  <productname>PostgreSQL</productname>, however, does not
-    enforce this restriction.  If duplicate-named constraints are
-    stored in the same <productname>PostgreSQL</productname> schema, a
-    standard-compliant query that expects to return one row might
-    return several, one for each matching constraint stored in the
-    specified schema.
-   </para>
-  </note>
 
  </sect1>
 
