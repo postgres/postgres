@@ -504,6 +504,8 @@ extern Datum anyenum_in(PG_FUNCTION_ARGS);
 extern Datum anyenum_out(PG_FUNCTION_ARGS);
 extern Datum void_in(PG_FUNCTION_ARGS);
 extern Datum void_out(PG_FUNCTION_ARGS);
+extern Datum void_recv(PG_FUNCTION_ARGS);
+extern Datum void_send(PG_FUNCTION_ARGS);
 extern Datum trigger_in(PG_FUNCTION_ARGS);
 extern Datum trigger_out(PG_FUNCTION_ARGS);
 extern Datum language_handler_in(PG_FUNCTION_ARGS);

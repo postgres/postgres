@@ -4226,6 +4226,10 @@ DATA(insert OID = 2502 (  anyarray_recv		   PGNSP PGUID 12 1 0 0 f f f t f s 1 0
 DESCR("I/O");
 DATA(insert OID = 2503 (  anyarray_send		   PGNSP PGUID 12 1 0 0 f f f t f s 1 0 17 "2277" _null_ _null_ _null_ _null_	anyarray_send _null_ _null_ _null_ ));
 DESCR("I/O");
+DATA(insert OID = 3120 (  void_recv			   PGNSP PGUID 12 1 0 0 f f f t f i 1 0 2278 "2281" _null_ _null_ _null_ _null_ void_recv _null_ _null_ _null_ ));
+DESCR("I/O");
+DATA(insert OID = 3121 (  void_send			   PGNSP PGUID 12 1 0 0 f f f t f i 1 0 17 "2278" _null_ _null_ _null_ _null_	void_send _null_ _null_ _null_ ));
+DESCR("I/O");
 
 /* System-view support functions with pretty-print option */
 DATA(insert OID = 2504 (  pg_get_ruledef	   PGNSP PGUID 12 1 0 0 f f f t f s 2 0 25 "26 16" _null_ _null_ _null_ _null_	pg_get_ruledef_ext _null_ _null_ _null_ ));

@@ -615,7 +615,7 @@ DATA(insert OID = 2276 ( any			PGNSP PGUID  4 t p P f t \054 0 0 0 any_in any_ou
 #define ANYOID			2276
 DATA(insert OID = 2277 ( anyarray		PGNSP PGUID -1 f p P f t \054 0 0 0 anyarray_in anyarray_out anyarray_recv anyarray_send - - - d x f 0 -1 0 0 _null_ _null_ ));
 #define ANYARRAYOID		2277
-DATA(insert OID = 2278 ( void			PGNSP PGUID  4 t p P f t \054 0 0 0 void_in void_out - - - - - i p f 0 -1 0 0 _null_ _null_ ));
+DATA(insert OID = 2278 ( void			PGNSP PGUID  4 t p P f t \054 0 0 0 void_in void_out void_recv void_send - - - i p f 0 -1 0 0 _null_ _null_ ));
 #define VOIDOID			2278
 DATA(insert OID = 2279 ( trigger		PGNSP PGUID  4 t p P f t \054 0 0 0 trigger_in trigger_out - - - - - i p f 0 -1 0 0 _null_ _null_ ));
 #define TRIGGEROID		2279
