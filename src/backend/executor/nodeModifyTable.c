@@ -453,31 +453,14 @@ ExecUpdate(ItemPointer tupleid,
 	if (resultRelInfo->ri_TrigDesc &&
 		resultRelInfo->ri_TrigDesc->n_before_row[TRIGGER_EVENT_UPDATE] > 0)
 	{
-		HeapTuple	newtuple;
+		slot = ExecBRUpdateTriggers(estate, epqstate, resultRelInfo,
+									tupleid, slot);
 
-		newtuple = ExecBRUpdateTriggers(estate, epqstate, resultRelInfo,
-										tupleid, tuple);
-
-		if (newtuple == NULL)	/* "do nothing" */
+		if (slot == NULL)		/* "do nothing" */
 			return NULL;
 
-		if (newtuple != tuple)	/* modified by Trigger(s) */
-		{
-			/*
-			 * Put the modified tuple into a slot for convenience of routines
-			 * below.  We assume the tuple was allocated in per-tuple memory
-			 * context, and therefore will go away by itself. The tuple table
-			 * slot should not try to clear it.
-			 */
-			TupleTableSlot *newslot = estate->es_trig_tuple_slot;
-			TupleDesc	tupdesc = RelationGetDescr(resultRelationDesc);
-
-			if (newslot->tts_tupleDescriptor != tupdesc)
-				ExecSetSlotDescriptor(newslot, tupdesc);
-			ExecStoreTuple(newtuple, newslot, InvalidBuffer, false);
-			slot = newslot;
-			tuple = newtuple;
-		}
+		/* trigger might have changed tuple */
+		tuple = ExecMaterializeSlot(slot);
 	}
 
 	/*
