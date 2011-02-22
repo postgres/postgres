@@ -2637,6 +2637,10 @@ static PyObject *PLy_spi_execute_query(char *query, long limit);
 static PyObject *PLy_spi_execute_plan(PyObject *, PyObject *, long);
 static PyObject *PLy_spi_execute_fetch_result(SPITupleTable *, int, int);
 
+static PyObject *PLy_quote_literal(PyObject *self, PyObject *args);
+static PyObject *PLy_quote_nullable(PyObject *self, PyObject *args);
+static PyObject *PLy_quote_ident(PyObject *self, PyObject *args);
+
 
 static PyMethodDef PLy_plan_methods[] = {
 	{"status", PLy_plan_status, METH_VARARGS, NULL},
@@ -2750,6 +2754,13 @@ static PyMethodDef PLy_methods[] = {
 	 * execute a plan or query
 	 */
 	{"execute", PLy_spi_execute, METH_VARARGS, NULL},
+
+	/*
+	 * escaping strings
+	 */
+	{"quote_literal", PLy_quote_literal, METH_VARARGS, NULL},
+	{"quote_nullable", PLy_quote_nullable, METH_VARARGS, NULL},
+	{"quote_ident", PLy_quote_ident, METH_VARARGS, NULL},
 
 	{NULL, NULL, 0, NULL}
 };
@@ -3685,6 +3696,60 @@ PLy_output(volatile int level, PyObject *self, PyObject *args)
 	 */
 	Py_INCREF(Py_None);
 	return Py_None;
+}
+
+
+static PyObject *
+PLy_quote_literal(PyObject *self, PyObject *args)
+{
+	const char *str;
+	char	   *quoted;
+	PyObject   *ret;
+
+	if (!PyArg_ParseTuple(args, "s", &str))
+		return NULL;
+
+	quoted = quote_literal_cstr(str);
+	ret = PyString_FromString(quoted);
+	pfree(quoted);
+
+	return ret;
+}
+
+static PyObject *
+PLy_quote_nullable(PyObject *self, PyObject *args)
+{
+	const char *str;
+	char	   *quoted;
+	PyObject   *ret;
+
+	if (!PyArg_ParseTuple(args, "z", &str))
+		return NULL;
+
+	if (str == NULL)
+		return PyString_FromString("NULL");
+
+	quoted = quote_literal_cstr(str);
+	ret = PyString_FromString(quoted);
+	pfree(quoted);
+
+	return ret;
+}
+
+static PyObject *
+PLy_quote_ident(PyObject *self, PyObject *args)
+{
+	const char *str;
+	const char *quoted;
+	PyObject   *ret;
+
+	if (!PyArg_ParseTuple(args, "s", &str))
+		return NULL;
+
+	quoted = quote_identifier(str);
+	ret = PyString_FromString(quoted);
+
+	return ret;
 }
 
 

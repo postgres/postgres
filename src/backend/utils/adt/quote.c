@@ -43,9 +43,9 @@ quote_ident(PG_FUNCTION_ARGS)
  * uses this for before thinking you know better.
  */
 static size_t
-quote_literal_internal(char *dst, char *src, size_t len)
+quote_literal_internal(char *dst, const char *src, size_t len)
 {
-	char	   *s;
+	const char *s;
 	char	   *savedst = dst;
 
 	for (s = src; s < src + len; s++)
@@ -99,7 +99,7 @@ quote_literal(PG_FUNCTION_ARGS)
  *	  returns a properly quoted literal
  */
 char *
-quote_literal_cstr(char *rawstr)
+quote_literal_cstr(const char *rawstr)
 {
 	char	   *result;
 	int			len;

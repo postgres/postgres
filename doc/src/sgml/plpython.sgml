@@ -997,6 +997,23 @@ $$ LANGUAGE plpythonu;
    <xref linkend="guc-client-min-messages"> configuration
    variables. See <xref linkend="runtime-config"> for more information.
   </para>
+
+  <para>
+   Another set of utility functions are
+   <literal>plpy.quote_literal(<replaceable>string</>)</literal>,
+   <literal>plpy.quote_nullable(<replaceable>string</>)</literal>, and
+   <literal>plpy.quote_ident(<replaceable>string</>)</literal>.  They
+   are equivalent to the built-in quoting functions described in <xref
+   linkend="functions-string">.  They are useful when constructing
+   ad-hoc queries.  A PL/Python equivalent of dynamic SQL from <xref
+   linkend="plpgsql-quote-literal-example"> would be:
+<programlisting>
+plpy.execute("UPDATE tbl SET %s = %s where key = %s" % (
+    plpy.quote_ident(colname),
+    plpy.quote_nullable(newvalue),
+    plpy.quote_literal(keyvalue)))
+</programlisting>
+  </para>
  </sect1>
 
  <sect1 id="plpython-envar">
