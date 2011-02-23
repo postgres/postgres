@@ -305,7 +305,6 @@ markTargetListOrigin(ParseState *pstate, TargetEntry *tle,
 				markTargetListOrigin(pstate, tle, aliasvar, netlevelsup);
 			}
 			break;
-		case RTE_SPECIAL:
 		case RTE_FUNCTION:
 		case RTE_VALUES:
 			/* not a simple relation, leave it unmarked */
@@ -1357,7 +1356,6 @@ expandRecordVariable(ParseState *pstate, Var *var, int levelsup)
 	switch (rte->rtekind)
 	{
 		case RTE_RELATION:
-		case RTE_SPECIAL:
 		case RTE_VALUES:
 
 			/*

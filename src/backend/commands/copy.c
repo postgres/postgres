@@ -763,6 +763,7 @@ DoCopy(const CopyStmt *stmt, const char *queryString)
 		rte = makeNode(RangeTblEntry);
 		rte->rtekind = RTE_RELATION;
 		rte->relid = RelationGetRelid(rel);
+		rte->relkind = rel->rd_rel->relkind;
 		rte->requiredPerms = required_access;
 
 		tupDesc = RelationGetDescr(rel);

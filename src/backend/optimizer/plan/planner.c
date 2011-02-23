@@ -1915,7 +1915,7 @@ preprocess_rowmarks(PlannerInfo *root)
 		newrc->rowmarkId = ++(root->glob->lastRowMarkId);
 		/* real tables support REFERENCE, anything else needs COPY */
 		if (rte->rtekind == RTE_RELATION &&
-			get_rel_relkind(rte->relid) != RELKIND_FOREIGN_TABLE)
+			rte->relkind != RELKIND_FOREIGN_TABLE)
 			newrc->markType = ROW_MARK_REFERENCE;
 		else
 			newrc->markType = ROW_MARK_COPY;
@@ -3078,6 +3078,7 @@ plan_cluster_use_sort(Oid tableOid, Oid indexOid)
 	rte = makeNode(RangeTblEntry);
 	rte->rtekind = RTE_RELATION;
 	rte->relid = tableOid;
+	rte->relkind = RELKIND_RELATION;
 	rte->inh = false;
 	rte->inFromCl = true;
 	query->rtable = list_make1(rte);

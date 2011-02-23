@@ -144,6 +144,13 @@ AcquireRewriteLocks(Query *parsetree, bool forUpdatePushedDown)
 					lockmode = AccessShareLock;
 
 				rel = heap_open(rte->relid, lockmode);
+
+				/*
+				 * While we have the relation open, update the RTE's relkind,
+				 * just in case it changed since this rule was made.
+				 */
+				rte->relkind = rel->rd_rel->relkind;
+
 				heap_close(rel, NoLock);
 				break;
 
@@ -1393,7 +1400,7 @@ markQueryForLocking(Query *qry, Node *jtnode,
 		if (rte->rtekind == RTE_RELATION)
 		{
 			/* ignore foreign tables */
-			if (get_rel_relkind(rte->relid) != RELKIND_FOREIGN_TABLE)
+			if (rte->relkind != RELKIND_FOREIGN_TABLE)
 			{
 				applyLockingClause(qry, rti, forUpdate, noWait, pushedDown);
 				rte->requiredPerms |= ACL_SELECT_FOR_UPDATE;

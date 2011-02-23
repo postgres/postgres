@@ -49,7 +49,7 @@ CATALOG(pg_class,1259) BKI_BOOTSTRAP BKI_ROWTYPE_OID(83) BKI_SCHEMA_MACRO
 	Oid			reltoastidxid;	/* if toast table, OID of chunk_id index */
 	bool		relhasindex;	/* T if has (or has had) any indexes */
 	bool		relisshared;	/* T if shared across databases */
-	char		relpersistence;	/* see RELPERSISTENCE_xxx constants */
+	char		relpersistence;	/* see RELPERSISTENCE_xxx constants below */
 	char		relkind;		/* see RELKIND_xxx constants below */
 	int2		relnatts;		/* number of user attributes */
 
@@ -139,17 +139,18 @@ DESCR("");
 DATA(insert OID = 1259 (  pg_class		PGNSP 83 0 PGUID 0 0 0 0 0 0 0 f f p r 26 0 t f f f f 3 _null_ _null_ ));
 DESCR("");
 
+
+#define		  RELKIND_RELATION		  'r'		/* ordinary table */
 #define		  RELKIND_INDEX			  'i'		/* secondary index */
-#define		  RELKIND_RELATION		  'r'		/* ordinary cataloged heap */
-#define		  RELKIND_SEQUENCE		  'S'		/* SEQUENCE relation */
-#define		  RELKIND_UNCATALOGED	  'u'		/* temporary heap */
-#define		  RELKIND_TOASTVALUE	  't'		/* moved off huge values */
+#define		  RELKIND_SEQUENCE		  'S'		/* sequence object */
+#define		  RELKIND_TOASTVALUE	  't'		/* for out-of-line values */
 #define		  RELKIND_VIEW			  'v'		/* view */
 #define		  RELKIND_COMPOSITE_TYPE  'c'		/* composite type */
 #define		  RELKIND_FOREIGN_TABLE	  'f'		/* foreign table */
+#define		  RELKIND_UNCATALOGED	  'u'		/* not yet cataloged */
 
-#define		  RELPERSISTENCE_PERMANENT	'p'
-#define		  RELPERSISTENCE_UNLOGGED	'u'
-#define		  RELPERSISTENCE_TEMP		't'
+#define		  RELPERSISTENCE_PERMANENT	'p'		/* regular table */
+#define		  RELPERSISTENCE_UNLOGGED	'u'		/* unlogged permanent table */
+#define		  RELPERSISTENCE_TEMP		't'		/* temporary table */
 
 #endif   /* PG_CLASS_H */

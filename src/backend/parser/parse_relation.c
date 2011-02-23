@@ -894,6 +894,7 @@ addRangeTableEntry(ParseState *pstate,
 	lockmode = isLockedRefname(pstate, refname) ? RowShareLock : AccessShareLock;
 	rel = parserOpenTable(pstate, relation, lockmode);
 	rte->relid = RelationGetRelid(rel);
+	rte->relkind = rel->rd_rel->relkind;
 
 	/*
 	 * Build the list of effective column names using user-supplied aliases
@@ -956,6 +957,7 @@ addRangeTableEntryForRelation(ParseState *pstate,
 	rte->rtekind = RTE_RELATION;
 	rte->alias = alias;
 	rte->relid = RelationGetRelid(rel);
+	rte->relkind = rel->rd_rel->relkind;
 
 	/*
 	 * Build the list of effective column names using user-supplied aliases

@@ -176,41 +176,44 @@ set_rel_pathlist(PlannerInfo *root, RelOptInfo *rel,
 		/* It's an "append relation", process accordingly */
 		set_append_rel_pathlist(root, rel, rti, rte);
 	}
-	else if (rel->rtekind == RTE_SUBQUERY)
-	{
-		/* Subquery --- generate a separate plan for it */
-		set_subquery_pathlist(root, rel, rti, rte);
-	}
-	else if (rel->rtekind == RTE_FUNCTION)
-	{
-		/* RangeFunction --- generate a suitable path for it */
-		set_function_pathlist(root, rel, rte);
-	}
-	else if (rel->rtekind == RTE_VALUES)
-	{
-		/* Values list --- generate a suitable path for it */
-		set_values_pathlist(root, rel, rte);
-	}
-	else if (rel->rtekind == RTE_CTE)
-	{
-		/* CTE reference --- generate a suitable path for it */
-		if (rte->self_reference)
-			set_worktable_pathlist(root, rel, rte);
-		else
-			set_cte_pathlist(root, rel, rte);
-	}
 	else
 	{
-		Assert(rel->rtekind == RTE_RELATION);
-		if (get_rel_relkind(rte->relid) == RELKIND_FOREIGN_TABLE)
+		switch (rel->rtekind)
 		{
-			/* Foreign table */
-			set_foreign_pathlist(root, rel, rte);
-		}
-		else
-		{
-			/* Plain relation */
-			set_plain_rel_pathlist(root, rel, rte);
+			case RTE_RELATION:
+				if (rte->relkind == RELKIND_FOREIGN_TABLE)
+				{
+					/* Foreign table */
+					set_foreign_pathlist(root, rel, rte);
+				}
+				else
+				{
+					/* Plain relation */
+					set_plain_rel_pathlist(root, rel, rte);
+				}
+				break;
+			case RTE_SUBQUERY:
+				/* Subquery --- generate a separate plan for it */
+				set_subquery_pathlist(root, rel, rti, rte);
+				break;
+			case RTE_FUNCTION:
+				/* RangeFunction --- generate a suitable path for it */
+				set_function_pathlist(root, rel, rte);
+				break;
+			case RTE_VALUES:
+				/* Values list --- generate a suitable path for it */
+				set_values_pathlist(root, rel, rte);
+				break;
+			case RTE_CTE:
+				/* CTE reference --- generate a suitable path for it */
+				if (rte->self_reference)
+					set_worktable_pathlist(root, rel, rte);
+				else
+					set_cte_pathlist(root, rel, rte);
+				break;
+			default:
+				elog(ERROR, "unexpected rtekind: %d", (int) rel->rtekind);
+				break;
 		}
 	}
 

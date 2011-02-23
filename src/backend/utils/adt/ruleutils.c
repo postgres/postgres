@@ -628,6 +628,7 @@ pg_get_triggerdef_worker(Oid trigid, bool pretty)
 	if (!isnull)
 	{
 		Node	   *qual;
+		char		relkind;
 		deparse_context context;
 		deparse_namespace dpns;
 		RangeTblEntry *oldrte;
@@ -637,10 +638,13 @@ pg_get_triggerdef_worker(Oid trigid, bool pretty)
 
 		qual = stringToNode(TextDatumGetCString(value));
 
+		relkind = get_rel_relkind(trigrec->tgrelid);
+
 		/* Build minimal OLD and NEW RTEs for the rel */
 		oldrte = makeNode(RangeTblEntry);
 		oldrte->rtekind = RTE_RELATION;
 		oldrte->relid = trigrec->tgrelid;
+		oldrte->relkind = relkind;
 		oldrte->eref = makeAlias("old", NIL);
 		oldrte->inh = false;
 		oldrte->inFromCl = true;
@@ -648,6 +652,7 @@ pg_get_triggerdef_worker(Oid trigid, bool pretty)
 		newrte = makeNode(RangeTblEntry);
 		newrte->rtekind = RTE_RELATION;
 		newrte->relid = trigrec->tgrelid;
+		newrte->relkind = relkind;
 		newrte->eref = makeAlias("new", NIL);
 		newrte->inh = false;
 		newrte->inFromCl = true;
@@ -2125,6 +2130,7 @@ deparse_context_for(const char *aliasname, Oid relid)
 	rte = makeNode(RangeTblEntry);
 	rte->rtekind = RTE_RELATION;
 	rte->relid = relid;
+	rte->relkind = RELKIND_RELATION;	/* no need for exactness here */
 	rte->eref = makeAlias(aliasname, NIL);
 	rte->inh = false;
 	rte->inFromCl = true;
@@ -4004,7 +4010,6 @@ get_name_for_var_field(Var *var, int fieldno,
 	switch (rte->rtekind)
 	{
 		case RTE_RELATION:
-		case RTE_SPECIAL:
 		case RTE_VALUES:
 
 			/*

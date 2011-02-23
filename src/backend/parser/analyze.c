@@ -40,7 +40,6 @@
 #include "parser/parse_target.h"
 #include "parser/parsetree.h"
 #include "rewrite/rewriteManip.h"
-#include "utils/lsyscache.h"
 #include "utils/rel.h"
 
 
@@ -2178,13 +2177,11 @@ transformLockingClause(ParseState *pstate, Query *qry, LockingClause *lc,
 			{
 				case RTE_RELATION:
 					/* ignore foreign tables */
-					if (get_rel_relkind(rte->relid) != RELKIND_FOREIGN_TABLE)
-					{
-						applyLockingClause(qry, i,
-										   lc->forUpdate, lc->noWait,
-										   pushedDown);
-						rte->requiredPerms |= ACL_SELECT_FOR_UPDATE;
-					}
+					if (rte->relkind == RELKIND_FOREIGN_TABLE)
+						break;
+					applyLockingClause(qry, i,
+									   lc->forUpdate, lc->noWait, pushedDown);
+					rte->requiredPerms |= ACL_SELECT_FOR_UPDATE;
 					break;
 				case RTE_SUBQUERY:
 					applyLockingClause(qry, i,
@@ -2231,11 +2228,11 @@ transformLockingClause(ParseState *pstate, Query *qry, LockingClause *lc,
 					switch (rte->rtekind)
 					{
 						case RTE_RELATION:
-							if (get_rel_relkind(rte->relid) == RELKIND_FOREIGN_TABLE)
+							if (rte->relkind == RELKIND_FOREIGN_TABLE)
 								ereport(ERROR,
 										(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 										 errmsg("SELECT FOR UPDATE/SHARE cannot be used with foreign table \"%s\"",
-												get_rel_name(rte->relid)),
+												rte->eref->aliasname),
 										 parser_errposition(pstate, thisrel->location)));
 							applyLockingClause(qry, i,
 											   lc->forUpdate, lc->noWait,
@@ -2254,12 +2251,6 @@ transformLockingClause(ParseState *pstate, Query *qry, LockingClause *lc,
 							ereport(ERROR,
 									(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 									 errmsg("SELECT FOR UPDATE/SHARE cannot be applied to a join"),
-							 parser_errposition(pstate, thisrel->location)));
-							break;
-						case RTE_SPECIAL:
-							ereport(ERROR,
-									(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-									 errmsg("SELECT FOR UPDATE/SHARE cannot be applied to NEW or OLD"),
 							 parser_errposition(pstate, thisrel->location)));
 							break;
 						case RTE_FUNCTION:
