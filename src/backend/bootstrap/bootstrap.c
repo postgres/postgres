@@ -43,6 +43,7 @@
 #include "utils/fmgroids.h"
 #include "utils/memutils.h"
 #include "utils/ps_status.h"
+#include "utils/rel.h"
 #include "utils/relmapper.h"
 #include "utils/tqual.h"
 

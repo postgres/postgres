@@ -21,7 +21,7 @@
 #include "nodes/plannodes.h"
 #include "nodes/tidbitmap.h"
 #include "utils/hsearch.h"
-#include "utils/rel.h"
+#include "utils/reltrigger.h"
 #include "utils/snapshot.h"
 #include "utils/tuplestore.h"
 

@@ -18,6 +18,7 @@
 #include "utils/builtins.h"
 #include "utils/lsyscache.h"
 #include "utils/portal.h"
+#include "utils/rel.h"
 
 
 static char *fetch_cursor_param_value(ExprContext *econtext, int paramId);

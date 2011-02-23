@@ -48,6 +48,7 @@
 #include "executor/nodeWindowAgg.h"
 #include "executor/nodeWorktablescan.h"
 #include "nodes/nodeFuncs.h"
+#include "utils/rel.h"
 #include "utils/syscache.h"
 
 

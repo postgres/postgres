@@ -13,6 +13,7 @@
 #include "executor/spi.h"
 #include "miscadmin.h"
 #include "utils/builtins.h"
+#include "utils/rel.h"
 
 PG_MODULE_MAGIC;
 

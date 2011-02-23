@@ -41,6 +41,7 @@
 #include "parser/parse_oper.h"
 #include "parser/parsetree.h"
 #include "utils/lsyscache.h"
+#include "utils/rel.h"
 #include "utils/syscache.h"
 
 

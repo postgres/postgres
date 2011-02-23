@@ -24,6 +24,7 @@
 #include "miscadmin.h"
 #include "storage/bufmgr.h"
 #include "utils/memutils.h"
+#include "utils/rel.h"
 
 
 #define GIN_PAGE_FREESIZE \

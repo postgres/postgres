@@ -34,6 +34,7 @@
 #include "miscadmin.h"
 #include "storage/bufmgr.h"
 #include "utils/builtins.h"
+#include "utils/rel.h"
 
 
 extern Datum pgstatindex(PG_FUNCTION_ARGS);

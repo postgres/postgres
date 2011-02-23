@@ -7,15 +7,12 @@
 
 #include "postgres.h"
 
-/* Required for SPI */
+#include "commands/trigger.h"
 #include "executor/spi.h"
-
-/* Required for largeobjects */
 #include "libpq/be-fsstubs.h"
 #include "libpq/libpq-fs.h"
+#include "utils/rel.h"
 
-/* Required for triggers */
-#include "commands/trigger.h"
 
 PG_MODULE_MAGIC;
 

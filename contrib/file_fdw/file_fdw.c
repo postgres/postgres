@@ -24,6 +24,7 @@
 #include "foreign/foreign.h"
 #include "miscadmin.h"
 #include "optimizer/cost.h"
+#include "utils/rel.h"
 
 PG_MODULE_MAGIC;
 

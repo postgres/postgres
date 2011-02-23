@@ -33,6 +33,7 @@
 #include "utils/array.h"
 #include "utils/lsyscache.h"
 #include "utils/memutils.h"
+#include "utils/rel.h"
 
 
 static TupleTableSlot *IndexNext(IndexScanState *node);

@@ -16,6 +16,7 @@
 #include "executor/spi.h"
 #include "utils/builtins.h"
 #include "utils/geo_decls.h"
+#include "utils/rel.h"
 
 
 #define P_MAXDIG 12

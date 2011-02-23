@@ -16,6 +16,7 @@
 #include "access/htup.h"
 #include "commands/trigger.h"
 #include "utils/builtins.h"
+#include "utils/rel.h"
 
 
 /*

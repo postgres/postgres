@@ -15,6 +15,7 @@
  */
 #include "postgres.h"
 
+#include "catalog/pg_am.h"
 #include "catalog/pg_amop.h"
 #include "catalog/pg_proc.h"
 #include "catalog/pg_type.h"

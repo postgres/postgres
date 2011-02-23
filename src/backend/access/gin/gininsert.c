@@ -21,6 +21,7 @@
 #include "storage/smgr.h"
 #include "storage/indexfsm.h"
 #include "utils/memutils.h"
+#include "utils/rel.h"
 
 
 typedef struct

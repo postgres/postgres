@@ -22,6 +22,7 @@
 #include "storage/bufmgr.h"
 #include "storage/indexfsm.h"
 #include "utils/memutils.h"
+#include "utils/rel.h"
 
 /* Working state for gistbuild and its callback */
 typedef struct

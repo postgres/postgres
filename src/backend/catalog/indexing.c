@@ -19,6 +19,7 @@
 #include "catalog/index.h"
 #include "catalog/indexing.h"
 #include "executor/executor.h"
+#include "utils/rel.h"
 
 
 /*

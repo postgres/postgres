@@ -25,6 +25,7 @@
 #include "executor/executor.h"
 #include "executor/nodeLockRows.h"
 #include "storage/bufmgr.h"
+#include "utils/rel.h"
 #include "utils/tqual.h"
 
 

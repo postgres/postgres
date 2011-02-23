@@ -17,6 +17,7 @@
 #include "commands/trigger.h"
 #include "executor/executor.h"
 #include "utils/builtins.h"
+#include "utils/rel.h"
 #include "utils/tqual.h"
 
 

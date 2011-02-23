@@ -25,6 +25,7 @@
 #include "optimizer/cost.h"
 #include "optimizer/plancat.h"
 #include "storage/bufmgr.h"
+#include "utils/rel.h"
 
 
 /* Working state for hashbuild and its callback */
