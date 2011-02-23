@@ -1297,7 +1297,7 @@ describeOneTableDetails(const char *schemaname,
 	{
 		case 'r':
 			if (tableinfo.relpersistence == 'u')
-				printfPQExpBuffer(&title, _("Unlogged Table \"%s.%s\""),
+				printfPQExpBuffer(&title, _("Unlogged table \"%s.%s\""),
 								  schemaname, relationname);
 			else
 				printfPQExpBuffer(&title, _("Table \"%s.%s\""),
@@ -1313,7 +1313,7 @@ describeOneTableDetails(const char *schemaname,
 			break;
 		case 'i':
 			if (tableinfo.relpersistence == 'u')
-				printfPQExpBuffer(&title, _("Unlogged Index \"%s.%s\""),
+				printfPQExpBuffer(&title, _("Unlogged index \"%s.%s\""),
 								  schemaname, relationname);
 			else
 				printfPQExpBuffer(&title, _("Index \"%s.%s\""),
