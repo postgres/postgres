@@ -841,7 +841,7 @@ psql_completion(char *text, int start, int end)
 
 	/* ALTER SCHEMA <name> */
 	else if (pg_strcasecmp(prev3_wd, "ALTER") == 0 &&
-			  pg_strcasecmp(prev2_wd, "SCHEMA") == 0)
+			 pg_strcasecmp(prev2_wd, "SCHEMA") == 0)
 	{
 		static const char *const list_ALTERGEN[] =
 		{"OWNER TO", "RENAME TO", NULL};
@@ -906,7 +906,7 @@ psql_completion(char *text, int start, int end)
 			 pg_strcasecmp(prev2_wd, "WRAPPER") == 0)
 	{
 		static const char *const list_ALTER_FDW[] =
-		{"VALIDATOR", "OPTIONS", "OWNER TO", NULL};
+		{"HANDLER", "VALIDATOR", "OPTIONS", "OWNER TO", NULL};
 
 		COMPLETE_WITH_LIST(list_ALTER_FDW);
 	}
@@ -1128,15 +1128,15 @@ psql_completion(char *text, int start, int end)
 		COMPLETE_WITH_CONST("RENAME TO");
 
 	/*
-	 * If we detect ALTER TABLE <name>, suggest either ADD, DROP, ALTER,
-	 * RENAME, CLUSTER ON or OWNER
+	 * If we detect ALTER TABLE <name>, suggest sub commands
 	 */
 	else if (pg_strcasecmp(prev3_wd, "ALTER") == 0 &&
 			 pg_strcasecmp(prev2_wd, "TABLE") == 0)
 	{
 		static const char *const list_ALTER2[] =
 		{"ADD", "ALTER", "CLUSTER ON", "DISABLE", "DROP", "ENABLE", "INHERIT",
-		"NO INHERIT", "RENAME", "RESET", "OWNER TO", "SET", NULL};
+		"NO INHERIT", "RENAME", "RESET", "OWNER TO", "SET",
+		"VALIDATE CONSTRAINT", NULL};
 
 		COMPLETE_WITH_LIST(list_ALTER2);
 	}
@@ -1420,8 +1420,18 @@ psql_completion(char *text, int start, int end)
 			 pg_strcasecmp(prev2_wd, "TYPE") == 0)
 	{
 		static const char *const list_ALTERTYPE[] =
-		{"ADD ATTRIBUTE", "ALTER ATTRIBUTE", "DROP ATTRIBUTE",
+		{"ADD ATTRIBUTE", "ADD VALUE", "ALTER ATTRIBUTE", "DROP ATTRIBUTE",
 		 "OWNER TO", "RENAME", "SET SCHEMA", NULL};
+
+		COMPLETE_WITH_LIST(list_ALTERTYPE);
+	}
+	/* complete ALTER TYPE <foo> ADD with actions */
+	else if (pg_strcasecmp(prev4_wd, "ALTER") == 0 &&
+			 pg_strcasecmp(prev3_wd, "TYPE") == 0 &&
+			 pg_strcasecmp(prev_wd, "ADD") == 0)
+	{
+		static const char *const list_ALTERTYPE[] =
+		{"ATTRIBUTE", "VALUE", NULL};
 
 		COMPLETE_WITH_LIST(list_ALTERTYPE);
 	}
@@ -1598,7 +1608,7 @@ psql_completion(char *text, int start, int end)
 			  pg_strcasecmp(prev2_wd, "TO") == 0))
 	{
 		static const char *const list_COPY[] =
-		{"BINARY", "OIDS", "DELIMITER", "NULL", "CSV", NULL};
+		{"BINARY", "OIDS", "DELIMITER", "NULL", "CSV", "ENCODING", NULL};
 
 		COMPLETE_WITH_LIST(list_COPY);
 	}
@@ -1609,7 +1619,7 @@ psql_completion(char *text, int start, int end)
 			  pg_strcasecmp(prev3_wd, "TO") == 0))
 	{
 		static const char *const list_CSV[] =
-		{"HEADER", "QUOTE", "ESCAPE", "FORCE QUOTE", NULL};
+		{"HEADER", "QUOTE", "ESCAPE", "FORCE QUOTE", "FORCE NOT NULL", NULL};
 
 		COMPLETE_WITH_LIST(list_CSV);
 	}
@@ -1655,7 +1665,12 @@ psql_completion(char *text, int start, int end)
 			 pg_strcasecmp(prev4_wd, "FOREIGN") == 0 &&
 			 pg_strcasecmp(prev3_wd, "DATA") == 0 &&
 			 pg_strcasecmp(prev2_wd, "WRAPPER") == 0)
-		COMPLETE_WITH_CONST("VALIDATOR");
+	{
+		static const char *const list_CREATE_FOREIGN_DATA_WRAPPER[] =
+		{"HANDLER", "VALIDATOR", NULL};
+
+		COMPLETE_WITH_LIST(list_CREATE_FOREIGN_DATA_WRAPPER);
+	}
 
 	/* CREATE INDEX */
 	/* First off we complete CREATE UNIQUE with "INDEX" */
@@ -1836,11 +1851,25 @@ psql_completion(char *text, int start, int end)
 
 		COMPLETE_WITH_LIST(list_CREATETRIGGER_EVENTS);
 	}
-	/* complete CREATE TRIGGER <name> BEFORE,AFTER sth with OR,ON */
+	/* complete CREATE TRIGGER <name> INSTEAD OF with an event */
 	else if (pg_strcasecmp(prev5_wd, "CREATE") == 0 &&
 			 pg_strcasecmp(prev4_wd, "TRIGGER") == 0 &&
-			 (pg_strcasecmp(prev2_wd, "BEFORE") == 0 ||
-			  pg_strcasecmp(prev2_wd, "AFTER") == 0))
+			 pg_strcasecmp(prev2_wd, "INSTEAD") == 0 &&
+			 pg_strcasecmp(prev_wd, "OF") == 0)
+	{
+		static const char *const list_CREATETRIGGER_EVENTS[] =
+		{"INSERT", "DELETE", "UPDATE", NULL};
+
+		COMPLETE_WITH_LIST(list_CREATETRIGGER_EVENTS);
+	}
+	/* complete CREATE TRIGGER <name> BEFORE,AFTER sth with OR,ON */
+	else if ((pg_strcasecmp(prev5_wd, "CREATE") == 0 &&
+			  pg_strcasecmp(prev4_wd, "TRIGGER") == 0 &&
+			  (pg_strcasecmp(prev2_wd, "BEFORE") == 0 ||
+			   pg_strcasecmp(prev2_wd, "AFTER") == 0)) ||
+			 (pg_strcasecmp(prev5_wd, "TRIGGER") == 0 &&
+			  pg_strcasecmp(prev3_wd, "INSTEAD") == 0 &&
+			  pg_strcasecmp(prev2_wd, "OF") == 0))
 	{
 		static const char *const list_CREATETRIGGER2[] =
 		{"ON", "OR", NULL};
@@ -1857,6 +1886,11 @@ psql_completion(char *text, int start, int end)
 			  pg_strcasecmp(prev3_wd, "AFTER") == 0) &&
 			 pg_strcasecmp(prev_wd, "ON") == 0)
 		COMPLETE_WITH_SCHEMA_QUERY(Query_for_list_of_tables, NULL);
+	/* complete CREATE TRIGGER ... INSTEAD OF event ON with a list of views */
+	else if (pg_strcasecmp(prev4_wd, "INSTEAD") == 0 &&
+			 pg_strcasecmp(prev3_wd, "OF") == 0 &&
+			 pg_strcasecmp(prev_wd, "ON") == 0)
+		COMPLETE_WITH_SCHEMA_QUERY(Query_for_list_of_views, NULL);
 	/* complete CREATE TRIGGER ... EXECUTE with PROCEDURE */
 	else if (pg_strcasecmp(prev_wd, "EXECUTE") == 0)
 		COMPLETE_WITH_CONST("PROCEDURE");
