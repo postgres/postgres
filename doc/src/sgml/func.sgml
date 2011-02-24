@@ -14070,6 +14070,16 @@ postgres=# select pg_start_backup('label_goes_here');
    </para>
 
    <para>
+    <function>pg_create_restore_point</> creates a named transaction log
+    record that can be used as recovery target, and returns the corresponding
+    transaction log location.  The given name can then be used with
+    <xref linkend="recovery-target-name"> to specify the point up to which
+    recovery will proceed.  Avoid creating multiple restore points with the
+    same name, since recovery will stop at the first one whose name matches
+    the recovery target.
+   </para>
+
+   <para>
     <function>pg_current_xlog_location</> displays the current transaction log write
     location in the same format used by the above functions.  Similarly,
     <function>pg_current_xlog_insert_location</> displays the current transaction log

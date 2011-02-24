@@ -8144,6 +8144,10 @@ XLogRestorePoint(const char *rpName)
 
 	RecPtr = XLogInsert(RM_XLOG_ID, XLOG_RESTORE_POINT, &rdata);
 
+	ereport(LOG,
+			(errmsg("restore point \"%s\" created at %X/%X",
+					rpName,	RecPtr.xlogid, RecPtr.xrecoff)));
+
 	return RecPtr;
 }
 
