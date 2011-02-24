@@ -598,9 +598,12 @@ typedef struct
 	const char *name;
 	const char *query;			/* simple query, or NULL */
 	const SchemaQuery *squery;	/* schema query, or NULL */
-	const bool	noshow;			/* NULL or true if this word should not show
-								 * up after CREATE or DROP */
+	const bits32 flags;			/* visibility flags, see below */
 } pgsql_thing_t;
+
+#define THING_NO_CREATE		(1 << 0)	/* should not show up after CREATE */
+#define THING_NO_DROP		(1 << 1)	/* should not show up after DROP */
+#define THING_NO_SHOW		(THING_NO_CREATE | THING_NO_DROP)
 
 static const pgsql_thing_t words_after_create[] = {
 	{"AGGREGATE", NULL, &Query_for_list_of_aggregates},
@@ -612,10 +615,10 @@ static const pgsql_thing_t words_after_create[] = {
 	 * CREATE CONSTRAINT TRIGGER is not supported here because it is designed
 	 * to be used only by pg_dump.
 	 */
-	{"CONFIGURATION", Query_for_list_of_ts_configurations, NULL, true},
+	{"CONFIGURATION", Query_for_list_of_ts_configurations, NULL, THING_NO_SHOW},
 	{"CONVERSION", "SELECT pg_catalog.quote_ident(conname) FROM pg_catalog.pg_conversion WHERE substring(pg_catalog.quote_ident(conname),1,%d)='%s'"},
 	{"DATABASE", Query_for_list_of_databases},
-	{"DICTIONARY", Query_for_list_of_ts_dictionaries, NULL, true},
+	{"DICTIONARY", Query_for_list_of_ts_dictionaries, NULL, THING_NO_SHOW},
 	{"DOMAIN", NULL, &Query_for_list_of_domains},
 	{"EXTENSION", Query_for_list_of_extensions},
 	{"FOREIGN DATA WRAPPER", NULL, NULL},
@@ -626,7 +629,8 @@ static const pgsql_thing_t words_after_create[] = {
 	{"INDEX", NULL, &Query_for_list_of_indexes},
 	{"OPERATOR", NULL, NULL},	/* Querying for this is probably not such a
 								 * good idea. */
-	{"PARSER", Query_for_list_of_ts_parsers, NULL, true},
+	{"OWNED", NULL, NULL, THING_NO_CREATE},	/* for DROP OWNED BY ... */
+	{"PARSER", Query_for_list_of_ts_parsers, NULL, THING_NO_SHOW},
 	{"ROLE", Query_for_list_of_roles},
 	{"RULE", "SELECT pg_catalog.quote_ident(rulename) FROM pg_catalog.pg_rules WHERE substring(pg_catalog.quote_ident(rulename),1,%d)='%s'"},
 	{"SCHEMA", Query_for_list_of_schemas},
@@ -634,16 +638,17 @@ static const pgsql_thing_t words_after_create[] = {
 	{"SERVER", Query_for_list_of_servers},
 	{"TABLE", NULL, &Query_for_list_of_tables},
 	{"TABLESPACE", Query_for_list_of_tablespaces},
-	{"TEMP", NULL, NULL},		/* for CREATE TEMP TABLE ... */
-	{"TEMPLATE", Query_for_list_of_ts_templates, NULL, true},
+	{"TEMP", NULL, NULL, THING_NO_DROP},	/* for CREATE TEMP TABLE ... */
+	{"TEMPLATE", Query_for_list_of_ts_templates, NULL, THING_NO_SHOW},
 	{"TEXT SEARCH", NULL, NULL},
 	{"TRIGGER", "SELECT pg_catalog.quote_ident(tgname) FROM pg_catalog.pg_trigger WHERE substring(pg_catalog.quote_ident(tgname),1,%d)='%s'"},
 	{"TYPE", NULL, &Query_for_list_of_datatypes},
-	{"UNIQUE", NULL, NULL},		/* for CREATE UNIQUE INDEX ... */
+	{"UNIQUE", NULL, NULL, THING_NO_DROP},	/* for CREATE UNIQUE INDEX ... */
+	{"UNLOGGED", NULL, NULL, THING_NO_DROP},/* for CREATE UNLOGGED TABLE ... */
 	{"USER", Query_for_list_of_roles},
 	{"USER MAPPING FOR", NULL, NULL},
 	{"VIEW", NULL, &Query_for_list_of_views},
-	{NULL, NULL, NULL, false}	/* end of list */
+	{NULL}	/* end of list */
 };
 
 
@@ -1771,6 +1776,12 @@ psql_completion(char *text, int start, int end)
 
 		COMPLETE_WITH_LIST(list_TEMP);
 	}
+	/* Complete "CREATE UNLOGGED" with TABLE */
+	else if (pg_strcasecmp(prev2_wd, "CREATE") == 0 &&
+			 pg_strcasecmp(prev_wd, "UNLOGGED") == 0)
+	{
+		COMPLETE_WITH_CONST("TABLE");
+	}
 
 /* CREATE TABLESPACE */
 	else if (pg_strcasecmp(prev3_wd, "CREATE") == 0 &&
@@ -2858,11 +2869,11 @@ psql_completion(char *text, int start, int end)
  */
 
 /*
- * This one gives you one from a list of things you can put after CREATE
- * as defined above.
+ * Common routine for create_command_generator and drop_command_generator.
+ * Entries that have 'excluded' flags are not returned.
  */
 static char *
-create_command_generator(const char *text, int state)
+create_or_drop_command_generator(const char *text, int state, bits32 excluded)
 {
 	static int	list_index,
 				string_length;
@@ -2879,7 +2890,7 @@ create_command_generator(const char *text, int state)
 	while ((name = words_after_create[list_index++].name))
 	{
 		if ((pg_strncasecmp(name, text, string_length) == 0) &&
-			!words_after_create[list_index - 1].noshow)
+			!(words_after_create[list_index - 1].flags & excluded))
 			return pg_strdup(name);
 	}
 	/* if nothing matches, return NULL */
@@ -2887,49 +2898,22 @@ create_command_generator(const char *text, int state)
 }
 
 /*
+ * This one gives you one from a list of things you can put after CREATE
+ * as defined above.
+ */
+static char *
+create_command_generator(const char *text, int state)
+{
+	return create_or_drop_command_generator(text, state, THING_NO_CREATE);
+}
+
+/*
  * This function gives you a list of things you can put after a DROP command.
- * Very similar to create_command_generator, but has an additional entry for
- * OWNED BY.  (We do it this way in order not to duplicate the
- * words_after_create list.)
  */
 static char *
 drop_command_generator(const char *text, int state)
 {
-	static int	list_index,
-				string_length;
-	const char *name;
-
-	if (state == 0)
-	{
-		/* If this is the first time for this completion, init some values */
-		list_index = 0;
-		string_length = strlen(text);
-
-		/*
-		 * DROP can be followed by "OWNED BY", which is not found in the list
-		 * for CREATE matches, so make it the first state. (We do not make it
-		 * the last state because it would be more difficult to detect when we
-		 * have to return NULL instead.)
-		 *
-		 * Make sure we advance to the next state.
-		 */
-		list_index++;
-		if (pg_strncasecmp("OWNED", text, string_length) == 0)
-			return pg_strdup("OWNED");
-	}
-
-	/*
-	 * In subsequent attempts, try to complete with the same items we use for
-	 * CREATE
-	 */
-	while ((name = words_after_create[list_index++ - 1].name))
-	{
-		if ((pg_strncasecmp(name, text, string_length) == 0) && (!words_after_create[list_index - 2].noshow))
-			return pg_strdup(name);
-	}
-
-	/* if nothing matches, return NULL */
-	return NULL;
+	return create_or_drop_command_generator(text, state, THING_NO_DROP);
 }
 
 /* The following two functions are wrappers for _complete_from_query */
