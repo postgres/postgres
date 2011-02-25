@@ -123,6 +123,8 @@ CommandIsReadOnly(Node *parsetree)
 					return false;		/* SELECT INTO */
 				else if (stmt->rowMarks != NIL)
 					return false;		/* SELECT FOR UPDATE/SHARE */
+				else if (stmt->hasModifyingCTE)
+					return false;		/* data-modifying CTE */
 				else
 					return true;
 			case CMD_UPDATE:

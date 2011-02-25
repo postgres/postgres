@@ -40,6 +40,8 @@ typedef struct PlannedStmt
 
 	bool		hasReturning;	/* is it insert|update|delete RETURNING? */
 
+	bool		hasModifyingCTE;	/* has insert|update|delete in WITH? */
+
 	bool		canSetTag;		/* do I set the command result tag? */
 
 	bool		transientPlan;	/* redo plan when TransactionXmin changes? */
@@ -167,7 +169,9 @@ typedef struct ModifyTable
 {
 	Plan		plan;
 	CmdType		operation;		/* INSERT, UPDATE, or DELETE */
+	bool		canSetTag;		/* do we set the command tag/es_processed? */
 	List	   *resultRelations;	/* integer list of RT indexes */
+	int			resultRelIndex;	/* index of first resultRel in plan's list */
 	List	   *plans;			/* plan(s) producing source data */
 	List	   *returningLists; /* per-target-table RETURNING tlists */
 	List	   *rowMarks;		/* PlanRowMarks (non-locking only) */

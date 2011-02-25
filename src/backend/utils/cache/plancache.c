@@ -922,6 +922,7 @@ PlanCacheComputeResultDesc(List *stmt_list)
 	switch (ChoosePortalStrategy(stmt_list))
 	{
 		case PORTAL_ONE_SELECT:
+		case PORTAL_ONE_MOD_WITH:
 			node = (Node *) linitial(stmt_list);
 			if (IsA(node, Query))
 			{

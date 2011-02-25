@@ -143,8 +143,8 @@ FreeQueryDesc(QueryDesc *qdesc)
 
 /*
  * ProcessQuery
- *		Execute a single plannable query within a PORTAL_MULTI_QUERY
- *		or PORTAL_ONE_RETURNING portal
+ *		Execute a single plannable query within a PORTAL_MULTI_QUERY,
+ *		PORTAL_ONE_RETURNING, or PORTAL_ONE_MOD_WITH portal
  *
  *	plan: the plan tree for the query
  *	sourceText: the source text of the query
@@ -263,6 +263,7 @@ ChoosePortalStrategy(List *stmts)
 	 * PORTAL_ONE_SELECT and PORTAL_UTIL_SELECT need only consider the
 	 * single-statement case, since there are no rewrite rules that can add
 	 * auxiliary queries to a SELECT or a utility command.
+	 * PORTAL_ONE_MOD_WITH likewise allows only one top-level statement.
 	 */
 	if (list_length(stmts) == 1)
 	{
@@ -277,7 +278,12 @@ ChoosePortalStrategy(List *stmts)
 				if (query->commandType == CMD_SELECT &&
 					query->utilityStmt == NULL &&
 					query->intoClause == NULL)
-					return PORTAL_ONE_SELECT;
+				{
+					if (query->hasModifyingCTE)
+						return PORTAL_ONE_MOD_WITH;
+					else
+						return PORTAL_ONE_SELECT;
+				}
 				if (query->commandType == CMD_UTILITY &&
 					query->utilityStmt != NULL)
 				{
@@ -297,7 +303,12 @@ ChoosePortalStrategy(List *stmts)
 				if (pstmt->commandType == CMD_SELECT &&
 					pstmt->utilityStmt == NULL &&
 					pstmt->intoClause == NULL)
-					return PORTAL_ONE_SELECT;
+				{
+					if (pstmt->hasModifyingCTE)
+						return PORTAL_ONE_MOD_WITH;
+					else
+						return PORTAL_ONE_SELECT;
+				}
 			}
 		}
 		else
@@ -562,6 +573,7 @@ PortalStart(Portal portal, ParamListInfo params, Snapshot snapshot)
 				break;
 
 			case PORTAL_ONE_RETURNING:
+			case PORTAL_ONE_MOD_WITH:
 
 				/*
 				 * We don't start the executor until we are told to run the
@@ -572,7 +584,6 @@ PortalStart(Portal portal, ParamListInfo params, Snapshot snapshot)
 
 					pstmt = (PlannedStmt *) PortalGetPrimaryStmt(portal);
 					Assert(IsA(pstmt, PlannedStmt));
-					Assert(pstmt->hasReturning);
 					portal->tupDesc =
 						ExecCleanTypeFromTL(pstmt->planTree->targetlist,
 											false);
@@ -780,12 +791,13 @@ PortalRun(Portal portal, long count, bool isTopLevel,
 		{
 			case PORTAL_ONE_SELECT:
 			case PORTAL_ONE_RETURNING:
+			case PORTAL_ONE_MOD_WITH:
 			case PORTAL_UTIL_SELECT:
 
 				/*
 				 * If we have not yet run the command, do so, storing its
-				 * results in the portal's tuplestore. Do this only for the
-				 * PORTAL_ONE_RETURNING and PORTAL_UTIL_SELECT cases.
+				 * results in the portal's tuplestore.  But we don't do that
+				 * for the PORTAL_ONE_SELECT case.
 				 */
 				if (portal->strategy != PORTAL_ONE_SELECT && !portal->holdStore)
 					FillPortalStore(portal, isTopLevel);
@@ -879,8 +891,8 @@ PortalRun(Portal portal, long count, bool isTopLevel,
 /*
  * PortalRunSelect
  *		Execute a portal's query in PORTAL_ONE_SELECT mode, and also
- *		when fetching from a completed holdStore in PORTAL_ONE_RETURNING
- *		and PORTAL_UTIL_SELECT cases.
+ *		when fetching from a completed holdStore in PORTAL_ONE_RETURNING,
+ *		PORTAL_ONE_MOD_WITH, and PORTAL_UTIL_SELECT cases.
  *
  * This handles simple N-rows-forward-or-backward cases.  For more complex
  * nonsequential access to a portal, see PortalRunFetch.
@@ -1031,7 +1043,8 @@ PortalRunSelect(Portal portal,
  * FillPortalStore
  *		Run the query and load result tuples into the portal's tuple store.
  *
- * This is used for PORTAL_ONE_RETURNING and PORTAL_UTIL_SELECT cases only.
+ * This is used for PORTAL_ONE_RETURNING, PORTAL_ONE_MOD_WITH, and
+ * PORTAL_UTIL_SELECT cases only.
  */
 static void
 FillPortalStore(Portal portal, bool isTopLevel)
@@ -1051,6 +1064,7 @@ FillPortalStore(Portal portal, bool isTopLevel)
 	switch (portal->strategy)
 	{
 		case PORTAL_ONE_RETURNING:
+		case PORTAL_ONE_MOD_WITH:
 
 			/*
 			 * Run the portal to completion just as for the default
@@ -1392,6 +1406,7 @@ PortalRunFetch(Portal portal,
 				break;
 
 			case PORTAL_ONE_RETURNING:
+			case PORTAL_ONE_MOD_WITH:
 			case PORTAL_UTIL_SELECT:
 
 				/*
@@ -1455,6 +1470,7 @@ DoPortalRunFetch(Portal portal,
 
 	Assert(portal->strategy == PORTAL_ONE_SELECT ||
 		   portal->strategy == PORTAL_ONE_RETURNING ||
+		   portal->strategy == PORTAL_ONE_MOD_WITH ||
 		   portal->strategy == PORTAL_UTIL_SELECT);
 
 	switch (fdirection)

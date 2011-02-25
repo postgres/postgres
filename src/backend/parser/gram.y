@@ -8426,12 +8426,12 @@ cte_list:
 		| cte_list ',' common_table_expr		{ $$ = lappend($1, $3); }
 		;
 
-common_table_expr:  name opt_name_list AS select_with_parens
+common_table_expr:  name opt_name_list AS '(' PreparableStmt ')'
 			{
 				CommonTableExpr *n = makeNode(CommonTableExpr);
 				n->ctename = $1;
 				n->aliascolnames = $2;
-				n->ctequery = $4;
+				n->ctequery = $5;
 				n->location = @1;
 				$$ = (Node *) n;
 			}

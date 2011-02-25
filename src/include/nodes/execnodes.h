@@ -346,7 +346,7 @@ typedef struct EState
 	/* If query can insert/delete tuples, the command ID to mark them with */
 	CommandId	es_output_cid;
 
-	/* Info about target table for insert/update/delete queries: */
+	/* Info about target table(s) for insert/update/delete queries: */
 	ResultRelInfo *es_result_relations; /* array of ResultRelInfos */
 	int			es_num_result_relations;		/* length of array */
 	ResultRelInfo *es_result_relation_info;		/* currently active array elt */
@@ -377,6 +377,8 @@ typedef struct EState
 	List	   *es_exprcontexts;	/* List of ExprContexts within EState */
 
 	List	   *es_subplanstates;		/* List of PlanState for SubPlans */
+
+	List	   *es_auxmodifytables;	/* List of secondary ModifyTableStates */
 
 	/*
 	 * this ExprContext is for per-output-tuple operations, such as constraint
@@ -1041,10 +1043,13 @@ typedef struct ResultState
 typedef struct ModifyTableState
 {
 	PlanState	ps;				/* its first field is NodeTag */
-	CmdType		operation;
+	CmdType		operation;		/* INSERT, UPDATE, or DELETE */
+	bool		canSetTag;		/* do we set the command tag/es_processed? */
+	bool		mt_done;		/* are we done? */
 	PlanState **mt_plans;		/* subplans (one per target rel) */
 	int			mt_nplans;		/* number of plans in the array */
 	int			mt_whichplan;	/* which one is being executed (0..n-1) */
+	ResultRelInfo *resultRelInfo;	/* per-subplan target relations */
 	List	  **mt_arowmarks;	/* per-subplan ExecAuxRowMark lists */
 	EPQState	mt_epqstate;	/* for evaluating EvalPlanQual rechecks */
 	bool		fireBSTriggers; /* do we need to fire stmt triggers? */

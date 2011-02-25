@@ -930,6 +930,7 @@ SS_process_ctes(PlannerInfo *root)
 	foreach(lc, root->parse->cteList)
 	{
 		CommonTableExpr *cte = (CommonTableExpr *) lfirst(lc);
+		CmdType		cmdType = ((Query *) cte->ctequery)->commandType;
 		Query	   *subquery;
 		Plan	   *plan;
 		PlannerInfo *subroot;
@@ -939,9 +940,9 @@ SS_process_ctes(PlannerInfo *root)
 		Param	   *prm;
 
 		/*
-		 * Ignore CTEs that are not actually referenced anywhere.
+		 * Ignore SELECT CTEs that are not actually referenced anywhere.
 		 */
-		if (cte->cterefcount == 0)
+		if (cte->cterefcount == 0 && cmdType == CMD_SELECT)
 		{
 			/* Make a dummy entry in cte_plan_ids */
 			root->cte_plan_ids = lappend_int(root->cte_plan_ids, -1);
@@ -1332,14 +1333,16 @@ simplify_EXISTS_query(Query *query)
 {
 	/*
 	 * We don't try to simplify at all if the query uses set operations,
-	 * aggregates, HAVING, LIMIT/OFFSET, or FOR UPDATE/SHARE; none of these
-	 * seem likely in normal usage and their possible effects are complex.
+	 * aggregates, modifying CTEs, HAVING, LIMIT/OFFSET, or FOR UPDATE/SHARE;
+	 * none of these seem likely in normal usage and their possible effects
+	 * are complex.
 	 */
 	if (query->commandType != CMD_SELECT ||
 		query->intoClause ||
 		query->setOperations ||
 		query->hasAggs ||
 		query->hasWindowFuncs ||
+		query->hasModifyingCTE ||
 		query->havingQual ||
 		query->limitOffset ||
 		query->limitCount ||

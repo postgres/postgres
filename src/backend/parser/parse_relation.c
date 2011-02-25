@@ -1363,10 +1363,11 @@ RangeTblEntry *
 addRangeTableEntryForCTE(ParseState *pstate,
 						 CommonTableExpr *cte,
 						 Index levelsup,
-						 Alias *alias,
+						 RangeVar *rv,
 						 bool inFromCl)
 {
 	RangeTblEntry *rte = makeNode(RangeTblEntry);
+	Alias	   *alias = rv->alias;
 	char	   *refname = alias ? alias->aliasname : cte->ctename;
 	Alias	   *eref;
 	int			numaliases;
@@ -1383,6 +1384,24 @@ addRangeTableEntryForCTE(ParseState *pstate,
 	/* Bump the CTE's refcount if this isn't a self-reference */
 	if (!rte->self_reference)
 		cte->cterefcount++;
+
+	/*
+	 * We throw error if the CTE is INSERT/UPDATE/DELETE without RETURNING.
+	 * This won't get checked in case of a self-reference, but that's OK
+	 * because data-modifying CTEs aren't allowed to be recursive anyhow.
+	 */
+	if (IsA(cte->ctequery, Query))
+	{
+		Query  *ctequery = (Query *) cte->ctequery;
+
+		if (ctequery->commandType != CMD_SELECT &&
+			ctequery->returningList == NIL)
+			ereport(ERROR,
+					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+					 errmsg("WITH query \"%s\" does not have a RETURNING clause",
+							cte->ctename),
+					 parser_errposition(pstate, rv->location)));
+	}
 
 	rte->ctecoltypes = cte->ctecoltypes;
 	rte->ctecoltypmods = cte->ctecoltypmods;

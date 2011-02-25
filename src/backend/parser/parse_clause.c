@@ -458,7 +458,7 @@ transformCTEReference(ParseState *pstate, RangeVar *r,
 {
 	RangeTblEntry *rte;
 
-	rte = addRangeTableEntryForCTE(pstate, cte, levelsup, r->alias, true);
+	rte = addRangeTableEntryForCTE(pstate, cte, levelsup, r, true);
 
 	return rte;
 }

@@ -118,6 +118,7 @@ typedef struct Query
 	bool		hasSubLinks;	/* has subquery SubLink */
 	bool		hasDistinctOn;	/* distinctClause is from DISTINCT ON */
 	bool		hasRecursive;	/* WITH RECURSIVE was specified */
+	bool		hasModifyingCTE;	/* has INSERT/UPDATE/DELETE in WITH */
 	bool		hasForUpdate;	/* FOR UPDATE or FOR SHARE was specified */
 
 	List	   *cteList;		/* WITH list (of CommonTableExpr's) */
@@ -884,7 +885,8 @@ typedef struct CommonTableExpr
 	NodeTag		type;
 	char	   *ctename;		/* query name (never qualified) */
 	List	   *aliascolnames;	/* optional list of column names */
-	Node	   *ctequery;		/* subquery (SelectStmt or Query) */
+	/* SelectStmt/InsertStmt/etc before parse analysis, Query afterwards: */
+	Node	   *ctequery;		/* the CTE's subquery */
 	int			location;		/* token location, or -1 if unknown */
 	/* These fields are set during parse analysis: */
 	bool		cterecursive;	/* is this CTE actually recursive? */
@@ -895,6 +897,14 @@ typedef struct CommonTableExpr
 	List	   *ctecoltypmods;	/* integer list of output column typmods */
 	List	   *ctecolcollations; /* OID list of column collation OIDs */
 } CommonTableExpr;
+
+/* Convenience macro to get the output tlist of a CTE's query */
+#define GetCTETargetList(cte) \
+	(AssertMacro(IsA((cte)->ctequery, Query)), \
+	 ((Query *) (cte)->ctequery)->commandType == CMD_SELECT ? \
+	 ((Query *) (cte)->ctequery)->targetList : \
+	 ((Query *) (cte)->ctequery)->returningList)
+
 
 /*****************************************************************************
  *		Optimizable Statements

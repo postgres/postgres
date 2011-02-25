@@ -76,6 +76,8 @@ typedef struct PlannerGlobal
 
 	List	   *finalrowmarks;	/* "flat" list of PlanRowMarks */
 
+	List	   *resultRelations;	/* "flat" list of integer RT indexes */
+
 	List	   *relationOids;	/* OIDs of relations the plan depends on */
 
 	List	   *invalItems;		/* other dependencies, as PlanInvalItems */
@@ -153,8 +155,6 @@ typedef struct PlannerInfo
 	 */
 	List	  **join_rel_level; /* lists of join-relation RelOptInfos */
 	int			join_cur_level; /* index of list being extended */
-
-	List	   *resultRelations;	/* integer list of RT indexes, or NIL */
 
 	List	   *init_plans;		/* init SubPlans for query */
 

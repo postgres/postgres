@@ -738,7 +738,7 @@ WITH RECURSIVE
 (54 rows)
 
 --
--- Test WITH attached to a DML statement
+-- Test WITH attached to a data-modifying statement
 --
 CREATE TEMPORARY TABLE y (a INTEGER);
 INSERT INTO y SELECT generate_series(1, 10);
@@ -1159,3 +1159,564 @@ SELECT * FROM t;
  10
 (55 rows)
 
+--
+-- Data-modifying statements in WITH
+--
+-- INSERT ... RETURNING
+WITH t AS (
+    INSERT INTO y
+    VALUES
+        (11),
+        (12),
+        (13),
+        (14),
+        (15),
+        (16),
+        (17),
+        (18),
+        (19),
+        (20)
+    RETURNING *
+)
+SELECT * FROM t;
+ a  
+----
+ 11
+ 12
+ 13
+ 14
+ 15
+ 16
+ 17
+ 18
+ 19
+ 20
+(10 rows)
+
+SELECT * FROM y;
+ a  
+----
+  1
+  2
+  3
+  4
+  5
+  6
+  7
+  8
+  9
+ 10
+ 11
+ 12
+ 13
+ 14
+ 15
+ 16
+ 17
+ 18
+ 19
+ 20
+(20 rows)
+
+-- UPDATE ... RETURNING
+WITH t AS (
+    UPDATE y
+    SET a=a+1
+    RETURNING *
+)
+SELECT * FROM t;
+ a  
+----
+  2
+  3
+  4
+  5
+  6
+  7
+  8
+  9
+ 10
+ 11
+ 12
+ 13
+ 14
+ 15
+ 16
+ 17
+ 18
+ 19
+ 20
+ 21
+(20 rows)
+
+SELECT * FROM y;
+ a  
+----
+  2
+  3
+  4
+  5
+  6
+  7
+  8
+  9
+ 10
+ 11
+ 12
+ 13
+ 14
+ 15
+ 16
+ 17
+ 18
+ 19
+ 20
+ 21
+(20 rows)
+
+-- DELETE ... RETURNING
+WITH t AS (
+    DELETE FROM y
+    WHERE a <= 10
+    RETURNING *
+)
+SELECT * FROM t;
+ a  
+----
+  2
+  3
+  4
+  5
+  6
+  7
+  8
+  9
+ 10
+(9 rows)
+
+SELECT * FROM y;
+ a  
+----
+ 11
+ 12
+ 13
+ 14
+ 15
+ 16
+ 17
+ 18
+ 19
+ 20
+ 21
+(11 rows)
+
+-- forward reference
+WITH RECURSIVE t AS (
+	INSERT INTO y
+		SELECT a+5 FROM t2 WHERE a > 5
+	RETURNING *
+), t2 AS (
+	UPDATE y SET a=a-11 RETURNING *
+)
+SELECT * FROM t
+UNION ALL
+SELECT * FROM t2;
+ a  
+----
+ 11
+ 12
+ 13
+ 14
+ 15
+  0
+  1
+  2
+  3
+  4
+  5
+  6
+  7
+  8
+  9
+ 10
+(16 rows)
+
+SELECT * FROM y;
+ a  
+----
+  0
+  1
+  2
+  3
+  4
+  5
+  6
+ 11
+  7
+ 12
+  8
+ 13
+  9
+ 14
+ 10
+ 15
+(16 rows)
+
+-- unconditional DO INSTEAD rule
+CREATE RULE y_rule AS ON DELETE TO y DO INSTEAD
+  INSERT INTO y VALUES(42) RETURNING *;
+WITH t AS (
+	DELETE FROM y RETURNING *
+)
+SELECT * FROM t;
+ a  
+----
+ 42
+(1 row)
+
+SELECT * FROM y;
+ a  
+----
+  0
+  1
+  2
+  3
+  4
+  5
+  6
+ 11
+  7
+ 12
+  8
+ 13
+  9
+ 14
+ 10
+ 15
+ 42
+(17 rows)
+
+DROP RULE y_rule ON y;
+-- a truly recursive CTE in the same list
+WITH RECURSIVE t(a) AS (
+	SELECT 0
+		UNION ALL
+	SELECT a+1 FROM t WHERE a+1 < 5
+), t2 as (
+	INSERT INTO y
+		SELECT * FROM t RETURNING *
+)
+SELECT * FROM t2 JOIN y USING (a) ORDER BY a;
+ a 
+---
+ 0
+ 1
+ 2
+ 3
+ 4
+(5 rows)
+
+SELECT * FROM y;
+ a  
+----
+  0
+  1
+  2
+  3
+  4
+  5
+  6
+ 11
+  7
+ 12
+  8
+ 13
+  9
+ 14
+ 10
+ 15
+ 42
+  0
+  1
+  2
+  3
+  4
+(22 rows)
+
+-- data-modifying WITH in a modifying statement
+WITH t AS (
+    DELETE FROM y
+    WHERE a <= 10
+    RETURNING *
+)
+INSERT INTO y SELECT -a FROM t RETURNING *;
+  a  
+-----
+   0
+  -1
+  -2
+  -3
+  -4
+  -5
+  -6
+  -7
+  -8
+  -9
+ -10
+   0
+  -1
+  -2
+  -3
+  -4
+(16 rows)
+
+SELECT * FROM y;
+  a  
+-----
+  11
+  12
+  13
+  14
+  15
+  42
+   0
+  -1
+  -2
+  -3
+  -4
+  -5
+  -6
+  -7
+  -8
+  -9
+ -10
+   0
+  -1
+  -2
+  -3
+  -4
+(22 rows)
+
+-- check that WITH query is run to completion even if outer query isn't
+WITH t AS (
+    UPDATE y SET a = a * 100 RETURNING *
+)
+SELECT * FROM t LIMIT 10;
+  a   
+------
+ 1100
+ 1200
+ 1300
+ 1400
+ 1500
+ 4200
+    0
+ -100
+ -200
+ -300
+(10 rows)
+
+SELECT * FROM y;
+   a   
+-------
+  1100
+  1200
+  1300
+  1400
+  1500
+  4200
+     0
+  -100
+  -200
+  -300
+  -400
+  -500
+  -600
+  -700
+  -800
+  -900
+ -1000
+     0
+  -100
+  -200
+  -300
+  -400
+(22 rows)
+
+-- triggers
+TRUNCATE TABLE y;
+INSERT INTO y SELECT generate_series(1, 10);
+CREATE FUNCTION y_trigger() RETURNS trigger AS $$
+begin
+  raise notice 'y_trigger: a = %', new.a;
+  return new;
+end;
+$$ LANGUAGE plpgsql;
+CREATE TRIGGER y_trig BEFORE INSERT ON y FOR EACH ROW
+    EXECUTE PROCEDURE y_trigger();
+WITH t AS (
+    INSERT INTO y
+    VALUES
+        (21),
+        (22),
+        (23)
+    RETURNING *
+)
+SELECT * FROM t;
+NOTICE:  y_trigger: a = 21
+NOTICE:  y_trigger: a = 22
+NOTICE:  y_trigger: a = 23
+ a  
+----
+ 21
+ 22
+ 23
+(3 rows)
+
+SELECT * FROM y;
+ a  
+----
+  1
+  2
+  3
+  4
+  5
+  6
+  7
+  8
+  9
+ 10
+ 21
+ 22
+ 23
+(13 rows)
+
+DROP TRIGGER y_trig ON y;
+CREATE TRIGGER y_trig AFTER INSERT ON y FOR EACH ROW
+    EXECUTE PROCEDURE y_trigger();
+WITH t AS (
+    INSERT INTO y
+    VALUES
+        (31),
+        (32),
+        (33)
+    RETURNING *
+)
+SELECT * FROM t;
+NOTICE:  y_trigger: a = 31
+NOTICE:  y_trigger: a = 32
+NOTICE:  y_trigger: a = 33
+ a  
+----
+ 31
+ 32
+ 33
+(3 rows)
+
+SELECT * FROM y;
+ a  
+----
+  1
+  2
+  3
+  4
+  5
+  6
+  7
+  8
+  9
+ 10
+ 21
+ 22
+ 23
+ 31
+ 32
+ 33
+(16 rows)
+
+DROP TRIGGER y_trig ON y;
+CREATE OR REPLACE FUNCTION y_trigger() RETURNS trigger AS $$
+begin
+  raise notice 'y_trigger';
+  return null;
+end;
+$$ LANGUAGE plpgsql;
+CREATE TRIGGER y_trig AFTER INSERT ON y FOR EACH STATEMENT
+    EXECUTE PROCEDURE y_trigger();
+WITH t AS (
+    INSERT INTO y
+    VALUES
+        (41),
+        (42),
+        (43)
+    RETURNING *
+)
+SELECT * FROM t;
+NOTICE:  y_trigger
+ a  
+----
+ 41
+ 42
+ 43
+(3 rows)
+
+SELECT * FROM y;
+ a  
+----
+  1
+  2
+  3
+  4
+  5
+  6
+  7
+  8
+  9
+ 10
+ 21
+ 22
+ 23
+ 31
+ 32
+ 33
+ 41
+ 42
+ 43
+(19 rows)
+
+DROP TRIGGER y_trig ON y;
+DROP FUNCTION y_trigger();
+-- error cases
+-- data-modifying WITH tries to use its own output
+WITH RECURSIVE t AS (
+	INSERT INTO y
+		SELECT * FROM t
+)
+VALUES(FALSE);
+ERROR:  recursive query "t" must not contain data-modifying statements
+LINE 1: WITH RECURSIVE t AS (
+                       ^
+-- no RETURNING in a referenced data-modifying WITH
+WITH t AS (
+	INSERT INTO y VALUES(0)
+)
+SELECT * FROM t;
+ERROR:  WITH query "t" does not have a RETURNING clause
+LINE 4: SELECT * FROM t;
+                      ^
+-- data-modifying WITH allowed only at the top level
+SELECT * FROM (
+	WITH t AS (UPDATE y SET a=a+1 RETURNING *)
+	SELECT * FROM t
+) ss;
+ERROR:  WITH clause containing a data-modifying statement must be at the top level
+LINE 2:  WITH t AS (UPDATE y SET a=a+1 RETURNING *)
+              ^
+-- most variants of rules aren't allowed
+CREATE RULE y_rule AS ON INSERT TO y WHERE a=0 DO INSTEAD DELETE FROM y;
+WITH t AS (
+	INSERT INTO y VALUES(0)
+)
+VALUES(FALSE);
+ERROR:  conditional DO INSTEAD rules are not supported for data-modifying statements in WITH
+DROP RULE y_rule ON y;

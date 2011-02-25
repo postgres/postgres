@@ -1801,6 +1801,7 @@ RewriteQuery(Query *parsetree, List *rewrite_events)
 	bool		returning = false;
 	Query	   *qual_product = NULL;
 	List	   *rewritten = NIL;
+	ListCell   *lc1;
 
 	/*
 	 * If the statement is an insert, update, or delete, adjust its targetlist
@@ -1981,6 +1982,67 @@ RewriteQuery(Query *parsetree, List *rewrite_events)
 	}
 
 	/*
+	 * Recursively process any insert/update/delete statements in WITH clauses
+	 */
+	foreach(lc1, parsetree->cteList)
+	{
+		CommonTableExpr	*cte = (CommonTableExpr *) lfirst(lc1);
+		Query		*ctequery = (Query *) cte->ctequery;
+		List		*newstuff;
+
+		Assert(IsA(ctequery, Query));
+
+		if (ctequery->commandType == CMD_SELECT)
+			continue;
+
+		newstuff = RewriteQuery(ctequery, rewrite_events);
+
+		/*
+		 * Currently we can only handle unconditional, single-statement DO
+		 * INSTEAD rules correctly; we have to get exactly one Query out of
+		 * the rewrite operation to stuff back into the CTE node.
+		 */
+		if (list_length(newstuff) == 1)
+		{
+			/* Push the single Query back into the CTE node */
+			ctequery = (Query *) linitial(newstuff);
+			Assert(IsA(ctequery, Query));
+			/* WITH queries should never be canSetTag */
+			Assert(!ctequery->canSetTag);
+			cte->ctequery = (Node *) ctequery;
+		}
+		else if (newstuff == NIL)
+		{
+			ereport(ERROR,
+					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+					 errmsg("DO INSTEAD NOTHING rules are not supported for data-modifying statements in WITH")));
+		}
+		else
+		{
+			ListCell *lc2;
+
+			/* examine queries to determine which error message to issue */
+			foreach(lc2, newstuff)
+			{
+				Query	*q = (Query *) lfirst(lc2);
+
+				if (q->querySource == QSRC_QUAL_INSTEAD_RULE)
+					ereport(ERROR,
+							(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+							 errmsg("conditional DO INSTEAD rules are not supported for data-modifying statements in WITH")));
+				if (q->querySource == QSRC_NON_INSTEAD_RULE)
+					ereport(ERROR,
+							(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+							 errmsg("DO ALSO rules are not supported for data-modifying statements in WITH")));
+			}
+
+			ereport(ERROR,
+					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+					 errmsg("multi-statement DO INSTEAD rules are not supported for data-modifying statements in WITH")));
+		}
+	}
+
+	/*
 	 * For INSERTs, the original query is done first; for UPDATE/DELETE, it is
 	 * done last.  This is needed because update and delete rule actions might
 	 * not do anything if they are invoked after the update or delete is
@@ -2032,6 +2094,12 @@ QueryRewrite(Query *parsetree)
 	CmdType		origCmdType;
 	bool		foundOriginalQuery;
 	Query	   *lastInstead;
+
+	/*
+	 * This function is only applied to top-level original queries
+	 */
+	Assert(parsetree->querySource == QSRC_ORIGINAL);
+	Assert(parsetree->canSetTag);
 
 	/*
 	 * Step 1

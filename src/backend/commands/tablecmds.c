@@ -995,7 +995,7 @@ ExecuteTruncate(TruncateStmt *stmt)
 
 	/*
 	 * To fire triggers, we'll need an EState as well as a ResultRelInfo for
-	 * each relation.
+	 * each relation.  We don't need to call ExecOpenIndices, though.
 	 */
 	estate = CreateExecutorState();
 	resultRelInfos = (ResultRelInfo *)
@@ -1008,7 +1008,6 @@ ExecuteTruncate(TruncateStmt *stmt)
 		InitResultRelInfo(resultRelInfo,
 						  rel,
 						  0,	/* dummy rangetable index */
-						  CMD_DELETE,	/* don't need any index info */
 						  0);
 		resultRelInfo++;
 	}

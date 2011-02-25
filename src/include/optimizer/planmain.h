@@ -78,8 +78,8 @@ extern SetOp *make_setop(SetOpCmd cmd, SetOpStrategy strategy, Plan *lefttree,
 		   long numGroups, double outputRows);
 extern Result *make_result(PlannerInfo *root, List *tlist,
 			Node *resconstantqual, Plan *subplan);
-extern ModifyTable *make_modifytable(CmdType operation, List *resultRelations,
-				 List *subplans, List *returningLists,
+extern ModifyTable *make_modifytable(CmdType operation, bool canSetTag,
+				 List *resultRelations, List *subplans, List *returningLists,
 				 List *rowMarks, int epqParam);
 extern bool is_projection_capable_plan(Plan *plan);
 

@@ -330,6 +330,14 @@ DefineQueryRewrite(char *rulename,
 				 errmsg("rules on SELECT must have action INSTEAD SELECT")));
 
 		/*
+		 * ... it cannot contain data-modifying WITH ...
+		 */
+		if (query->hasModifyingCTE)
+			ereport(ERROR,
+					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+					 errmsg("rules on SELECT must not contain data-modifying statements in WITH")));
+
+		/*
 		 * ... there can be no rule qual, ...
 		 */
 		if (event_qual != NULL)

@@ -74,7 +74,7 @@ extern RangeTblEntry *addRangeTableEntryForJoin(ParseState *pstate,
 extern RangeTblEntry *addRangeTableEntryForCTE(ParseState *pstate,
 						 CommonTableExpr *cte,
 						 Index levelsup,
-						 Alias *alias,
+						 RangeVar *rv,
 						 bool inFromCl);
 extern bool isLockedRefname(ParseState *pstate, const char *refname);
 extern void addRTEtoQuery(ParseState *pstate, RangeTblEntry *rte,

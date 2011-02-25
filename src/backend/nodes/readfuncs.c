@@ -203,6 +203,7 @@ _readQuery(void)
 	READ_BOOL_FIELD(hasSubLinks);
 	READ_BOOL_FIELD(hasDistinctOn);
 	READ_BOOL_FIELD(hasRecursive);
+	READ_BOOL_FIELD(hasModifyingCTE);
 	READ_BOOL_FIELD(hasForUpdate);
 	READ_NODE_FIELD(cteList);
 	READ_NODE_FIELD(rtable);

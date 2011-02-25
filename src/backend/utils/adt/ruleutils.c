@@ -4138,7 +4138,7 @@ get_name_for_var_field(Var *var, int fieldno,
 				if (lc != NULL)
 				{
 					Query	   *ctequery = (Query *) cte->ctequery;
-					TargetEntry *ste = get_tle_by_resno(ctequery->targetList,
+					TargetEntry	*ste = get_tle_by_resno(GetCTETargetList(cte),
 														attnum);
 
 					if (ste == NULL || ste->resjunk)

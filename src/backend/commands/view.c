@@ -419,6 +419,20 @@ DefineView(ViewStmt *stmt, const char *queryString)
 		elog(ERROR, "unexpected parse analysis result");
 
 	/*
+	 * Check for unsupported cases.  These tests are redundant with ones in
+	 * DefineQueryRewrite(), but that function will complain about a bogus
+	 * ON SELECT rule, and we'd rather the message complain about a view.
+	 */
+	if (viewParse->intoClause != NULL)
+		ereport(ERROR,
+				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+				 errmsg("views must not contain SELECT INTO")));
+	if (viewParse->hasModifyingCTE)
+		ereport(ERROR,
+				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+				 errmsg("views must not contain data-modifying statements in WITH")));
+
+	/*
 	 * If a list of column names was given, run through and insert these into
 	 * the actual query tree. - thomas 2000-03-08
 	 */

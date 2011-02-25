@@ -80,6 +80,7 @@ _copyPlannedStmt(PlannedStmt *from)
 
 	COPY_SCALAR_FIELD(commandType);
 	COPY_SCALAR_FIELD(hasReturning);
+	COPY_SCALAR_FIELD(hasModifyingCTE);
 	COPY_SCALAR_FIELD(canSetTag);
 	COPY_SCALAR_FIELD(transientPlan);
 	COPY_NODE_FIELD(planTree);
@@ -174,7 +175,9 @@ _copyModifyTable(ModifyTable *from)
 	 * copy remainder of node
 	 */
 	COPY_SCALAR_FIELD(operation);
+	COPY_SCALAR_FIELD(canSetTag);
 	COPY_NODE_FIELD(resultRelations);
+	COPY_SCALAR_FIELD(resultRelIndex);
 	COPY_NODE_FIELD(plans);
 	COPY_NODE_FIELD(returningLists);
 	COPY_NODE_FIELD(rowMarks);
@@ -2384,6 +2387,7 @@ _copyQuery(Query *from)
 	COPY_SCALAR_FIELD(hasSubLinks);
 	COPY_SCALAR_FIELD(hasDistinctOn);
 	COPY_SCALAR_FIELD(hasRecursive);
+	COPY_SCALAR_FIELD(hasModifyingCTE);
 	COPY_SCALAR_FIELD(hasForUpdate);
 	COPY_NODE_FIELD(cteList);
 	COPY_NODE_FIELD(rtable);
