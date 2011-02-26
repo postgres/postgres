@@ -13386,7 +13386,7 @@ SELECT pg_type_is_visible('myschema.widget'::regtype);
       <row>
        <entry><literal><function>pg_options_to_table(<parameter>reloptions</parameter>)</function></literal></entry>
        <entry><type>setof record</type></entry>
-       <entry>get the set of option name/value pairs from <structname>pg_class</>.<structfield>reloptions</></entry>
+       <entry>get the set of storage option name/value pairs</></entry>
       </row>
       <row>
        <entry><literal><function>pg_tablespace_databases(<parameter>tablespace_oid</parameter>)</function></literal></entry>
@@ -13484,9 +13484,10 @@ SELECT pg_type_is_visible('myschema.widget'::regtype);
   </para>
 
   <para>
-   <function>pg_options_to_table</function> returns the set of option
+   <function>pg_options_to_table</function> returns the set of storage option
    name/value pairs when passed
-   <structname>pg_class</>.<structfield>reloptions</>.
+   <structname>pg_class</>.<structfield>reloptions</> or
+   <structname>pg_attribute</>.<structfield>attoptions</>.
   </para>
 
   <para>
