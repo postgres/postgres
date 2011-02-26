@@ -1147,11 +1147,14 @@ ExecInitModifyTable(ModifyTable *node, EState *estate, int eflags)
 	 * Lastly, if this is not the primary (canSetTag) ModifyTable node, add it
 	 * to estate->es_auxmodifytables so that it will be run to completion by
 	 * ExecPostprocessPlan.  (It'd actually work fine to add the primary
-	 * ModifyTable node too, but there's no need.)
+	 * ModifyTable node too, but there's no need.)  Note the use of lcons
+	 * not lappend: we need later-initialized ModifyTable nodes to be shut
+	 * down before earlier ones.  This ensures that we don't throw away
+	 * RETURNING rows that need to be seen by a later CTE subplan.
 	 */
 	if (!mtstate->canSetTag)
-		estate->es_auxmodifytables = lappend(estate->es_auxmodifytables,
-											 mtstate);
+		estate->es_auxmodifytables = lcons(mtstate,
+										   estate->es_auxmodifytables);
 
 	return mtstate;
 }

@@ -641,6 +641,32 @@ SELECT * FROM t LIMIT 10;
 
 SELECT * FROM y;
 
+-- check that run to completion happens in proper ordering
+
+TRUNCATE TABLE y;
+INSERT INTO y SELECT generate_series(1, 3);
+CREATE TEMPORARY TABLE yy (a INTEGER);
+
+WITH RECURSIVE t1 AS (
+  INSERT INTO y SELECT * FROM y RETURNING *
+), t2 AS (
+  INSERT INTO yy SELECT * FROM t1 RETURNING *
+)
+SELECT 1;
+
+SELECT * FROM y;
+SELECT * FROM yy;
+
+WITH RECURSIVE t1 AS (
+  INSERT INTO yy SELECT * FROM t2 RETURNING *
+), t2 AS (
+  INSERT INTO y SELECT * FROM y RETURNING *
+)
+SELECT 1;
+
+SELECT * FROM y;
+SELECT * FROM yy;
+
 -- triggers
 
 TRUNCATE TABLE y;
