@@ -13244,6 +13244,10 @@ SELECT pg_type_is_visible('myschema.widget'::regtype);
    </indexterm>
 
    <indexterm>
+    <primary>pg_options_to_table</primary>
+   </indexterm>
+
+   <indexterm>
     <primary>pg_tablespace_databases</primary>
    </indexterm>
 
@@ -13380,6 +13384,11 @@ SELECT pg_type_is_visible('myschema.widget'::regtype);
        <entry>get underlying <command>SELECT</command> command for view</entry>
       </row>
       <row>
+       <entry><literal><function>pg_options_to_table(<parameter>reloptions</parameter>)</function></literal></entry>
+       <entry><type>name, option</type></entry>
+       <entry>get the set of option name/value pairs from <structname>pg_class</>.<structfield>reloptions</></entry>
+      </row>
+      <row>
        <entry><literal><function>pg_tablespace_databases(<parameter>tablespace_oid</parameter>)</function></literal></entry>
        <entry><type>setof oid</type></entry>
        <entry>get the set of database OIDs that have objects in the tablespace</entry>
@@ -13472,6 +13481,12 @@ SELECT pg_type_is_visible('myschema.widget'::regtype);
   <para>
    <function>pg_get_userbyid</function> extracts a role's name given
    its OID.
+  </para>
+
+  <para>
+   <function>pg_options_to_table</function> returns the set of option
+   name/value pairs when passed
+   <structname>pg_class</>.<structfield>reloptions</>.
   </para>
 
   <para>
