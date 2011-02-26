@@ -1939,8 +1939,11 @@ SET ENABLE_SEQSCAN TO OFF;
         Specifies the delay between activity rounds for WAL sender processes.
         In each round the WAL sender sends any WAL accumulated since the last
         round to the standby server. It then sleeps for
-        <varname>wal_sender_delay</> milliseconds, and repeats. The default
-        value is 200 milliseconds (<literal>200ms</>).
+        <varname>wal_sender_delay</> milliseconds, and repeats. The sleep
+        is interrupted by transaction commit, so the effects of a committed
+        transaction are sent to standby servers as soon as the commit
+        happens, regardless of this setting. The default value is one second
+        (<literal>1s</>).
         Note that on many systems, the effective resolution of sleep delays is
         10 milliseconds; setting <varname>wal_sender_delay</> to a value that
         is not a multiple of 10 might have the same results as setting it to

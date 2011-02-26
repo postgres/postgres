@@ -1843,7 +1843,7 @@ static struct config_int ConfigureNamesInt[] =
 			GUC_UNIT_MS
 		},
 		&WalSndDelay,
-		200, 1, 10000, NULL, NULL
+		1000, 1, 10000, NULL, NULL
 	},
 
 	{

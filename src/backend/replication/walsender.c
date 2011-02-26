@@ -73,7 +73,7 @@ bool		am_walsender = false;		/* Am I a walsender process ? */
 
 /* User-settable parameters for walsender */
 int			max_wal_senders = 0;	/* the maximum number of concurrent walsenders */
-int			WalSndDelay = 200;	/* max sleep time between some actions */
+int			WalSndDelay = 1000;	/* max sleep time between some actions */
 
 /*
  * These variables are used similarly to openLogFile/Id/Seg/Off,
