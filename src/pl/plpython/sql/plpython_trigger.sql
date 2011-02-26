@@ -326,3 +326,23 @@ INSERT INTO pb VALUES ('a', '2010-10-09 21:57:33.930486');
 SELECT * FROM pb;
 UPDATE pb SET a = 'b';
 SELECT * FROM pb;
+
+
+-- triggers for tables with composite types
+
+CREATE TABLE comp1 (i integer, j boolean);
+CREATE TYPE comp2 AS (k integer, l boolean);
+
+CREATE TABLE composite_trigger_test (f1 comp1, f2 comp2);
+
+CREATE FUNCTION composite_trigger_f() RETURNS trigger AS $$
+    TD['new']['f1'] = (3, False)
+    TD['new']['f2'] = {'k': 7, 'l': 'yes', 'ignored': 10}
+    return 'MODIFY'
+$$ LANGUAGE plpythonu;
+
+CREATE TRIGGER composite_trigger BEFORE INSERT ON composite_trigger_test
+  FOR EACH ROW EXECUTE PROCEDURE composite_trigger_f();
+
+INSERT INTO composite_trigger_test VALUES (NULL, NULL);
+SELECT * FROM composite_trigger_test;

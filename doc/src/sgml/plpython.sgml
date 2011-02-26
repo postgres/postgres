@@ -390,18 +390,6 @@ $$ LANGUAGE plpythonu;
     return type and the Python data type of the actual return object
     are not flagged; the value will be converted in any case.
    </para>
-
-   <tip>
-    <para>
-     <application>PL/Python</application> functions cannot return
-     either type <type>RECORD</type> or <type>SETOF RECORD</type>.  A
-     workaround is to write a <application>PL/pgSQL</application>
-     function that creates a temporary table, have it call the
-     <application>PL/Python</application> function to fill the table,
-     and then have the <application>PL/pgSQL</application> function
-     return the generic <type>RECORD</type> from the temporary table.
-    </para>
-   </tip>
   </sect2>
 
   <sect2>
@@ -593,6 +581,17 @@ $$ LANGUAGE plpythonu;
     </varlistentry>
    </variablelist>
   </para>
+
+   <para>
+    Functions with <literal>OUT</literal> parameters are also supported.  For example:
+<programlisting>
+CREATE FUNCTION multiout_simple(OUT i integer, OUT j integer) AS $$
+return (1, 2)
+$$ LANGUAGE plpythonu;
+
+SELECT * FROM multiout_simple();
+</programlisting>
+   </para>
   </sect2>
 
   <sect2>
@@ -692,6 +691,19 @@ $$ LANGUAGE plpythonu;
     </varlistentry>
    </variablelist>
   </para>
+
+   <para>
+    Set-returning functions with <literal>OUT</literal> parameters
+    (using <literal>RETURNS SETOF record</literal>) are also
+    supported.  For example:
+<programlisting>
+CREATE FUNCTION multiout_simple_setof(n integer, OUT integer, OUT integer) RETURNS SETOF record AS $$
+return [(1, 2)] * n
+$$ LANGUAGE plpythonu;
+
+SELECT * FROM multiout_simple_setof(3);
+</programlisting>
+   </para>
   </sect2>
  </sect1>
 
