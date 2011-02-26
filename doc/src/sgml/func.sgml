@@ -13385,7 +13385,7 @@ SELECT pg_type_is_visible('myschema.widget'::regtype);
       </row>
       <row>
        <entry><literal><function>pg_options_to_table(<parameter>reloptions</parameter>)</function></literal></entry>
-       <entry><type>name, option</type></entry>
+       <entry><type>setof record</type></entry>
        <entry>get the set of option name/value pairs from <structname>pg_class</>.<structfield>reloptions</></entry>
       </row>
       <row>
