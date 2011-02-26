@@ -1767,6 +1767,14 @@ if test "$with_tcl" = yes; then
     CPPFLAGS=$ac_save_CPPFLAGS
 fi
 
+# check for <Python.h>
+if test "$with_python" = yes; then
+  ac_save_CPPFLAGS=$CPPFLAGS
+  CPPFLAGS="$python_includespec $CPPFLAGS"
+  AC_CHECK_HEADER(Python.h, [], [AC_MSG_ERROR([header file <Python.h> is required for Python])])
+  CPPFLAGS=$ac_save_CPPFLAGS
+fi
+
 #
 # Check for DocBook and tools
 #
