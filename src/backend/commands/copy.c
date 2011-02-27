@@ -1463,6 +1463,7 @@ EndCopyTo(CopyState cstate)
 	if (cstate->queryDesc != NULL)
 	{
 		/* Close down the query and free resources. */
+		ExecutorFinish(cstate->queryDesc);
 		ExecutorEnd(cstate->queryDesc);
 		FreeQueryDesc(cstate->queryDesc);
 		PopActiveSnapshot();

@@ -6,20 +6,25 @@
  * INTERFACE ROUTINES
  *	ExecutorStart()
  *	ExecutorRun()
+ *	ExecutorFinish()
  *	ExecutorEnd()
  *
- *	The old ExecutorMain() has been replaced by ExecutorStart(),
- *	ExecutorRun() and ExecutorEnd()
- *
- *	These three procedures are the external interfaces to the executor.
+ *	These four procedures are the external interface to the executor.
  *	In each case, the query descriptor is required as an argument.
  *
- *	ExecutorStart() must be called at the beginning of execution of any
- *	query plan and ExecutorEnd() should always be called at the end of
- *	execution of a plan.
+ *	ExecutorStart must be called at the beginning of execution of any
+ *	query plan and ExecutorEnd must always be called at the end of
+ *	execution of a plan (unless it is aborted due to error).
  *
  *	ExecutorRun accepts direction and count arguments that specify whether
  *	the plan is to be executed forwards, backwards, and for how many tuples.
+ *	In some cases ExecutorRun may be called multiple times to process all
+ *	the tuples for a plan.  It is also acceptable to stop short of executing
+ *	the whole plan (but only if it is a SELECT).
+ *
+ *	ExecutorFinish must be called after the final ExecutorRun call and
+ *	before ExecutorEnd.  This can be omitted only in case of EXPLAIN,
+ *	which should also omit ExecutorRun.
  *
  * Portions Copyright (c) 1996-2011, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
@@ -58,9 +63,10 @@
 #include "utils/tqual.h"
 
 
-/* Hooks for plugins to get control in ExecutorStart/Run/End() */
+/* Hooks for plugins to get control in ExecutorStart/Run/Finish/End */
 ExecutorStart_hook_type ExecutorStart_hook = NULL;
 ExecutorRun_hook_type ExecutorRun_hook = NULL;
+ExecutorFinish_hook_type ExecutorFinish_hook = NULL;
 ExecutorEnd_hook_type ExecutorEnd_hook = NULL;
 
 /* Hook for plugin to get control in ExecCheckRTPerms() */
@@ -96,8 +102,8 @@ static void intorel_destroy(DestReceiver *self);
  *		This routine must be called at the beginning of any execution of any
  *		query plan
  *
- * Takes a QueryDesc previously created by CreateQueryDesc (it's not real
- * clear why we bother to separate the two functions, but...).	The tupDesc
+ * Takes a QueryDesc previously created by CreateQueryDesc (which is separate
+ * only because some places use QueryDescs for utility commands).  The tupDesc
  * field of the QueryDesc is filled in to describe the tuples that will be
  * returned, and the internal fields (estate and planstate) are set up.
  *
@@ -170,6 +176,15 @@ standard_ExecutorStart(QueryDesc *queryDesc, int eflags)
 				queryDesc->plannedstmt->rowMarks != NIL ||
 				queryDesc->plannedstmt->hasModifyingCTE)
 				estate->es_output_cid = GetCurrentCommandId(true);
+
+			/*
+			 * A SELECT without modifying CTEs can't possibly queue triggers,
+			 * so force skip-triggers mode. This is just a marginal efficiency
+			 * hack, since AfterTriggerBeginQuery/AfterTriggerEndQuery aren't
+			 * all that expensive, but we might as well do it.
+			 */
+			if (!queryDesc->plannedstmt->hasModifyingCTE)
+				eflags |= EXEC_FLAG_SKIP_TRIGGERS;
 			break;
 
 		case CMD_INSERT:
@@ -189,12 +204,20 @@ standard_ExecutorStart(QueryDesc *queryDesc, int eflags)
 	 */
 	estate->es_snapshot = RegisterSnapshot(queryDesc->snapshot);
 	estate->es_crosscheck_snapshot = RegisterSnapshot(queryDesc->crosscheck_snapshot);
+	estate->es_top_eflags = eflags;
 	estate->es_instrument = queryDesc->instrument_options;
 
 	/*
 	 * Initialize the plan state tree
 	 */
 	InitPlan(queryDesc, eflags);
+
+	/*
+	 * Set up an AFTER-trigger statement context, unless told not to, or
+	 * unless it's EXPLAIN-only mode (when ExecutorFinish won't be called).
+	 */
+	if (!(eflags & (EXEC_FLAG_SKIP_TRIGGERS | EXEC_FLAG_EXPLAIN_ONLY)))
+		AfterTriggerBeginQuery();
 
 	MemoryContextSwitchTo(oldcontext);
 }
@@ -252,13 +275,14 @@ standard_ExecutorRun(QueryDesc *queryDesc,
 	estate = queryDesc->estate;
 
 	Assert(estate != NULL);
+	Assert(!(estate->es_top_eflags & EXEC_FLAG_EXPLAIN_ONLY));
 
 	/*
 	 * Switch into per-query memory context
 	 */
 	oldcontext = MemoryContextSwitchTo(estate->es_query_cxt);
 
-	/* Allow instrumentation of ExecutorRun overall runtime */
+	/* Allow instrumentation of Executor overall runtime */
 	if (queryDesc->totaltime)
 		InstrStartNode(queryDesc->totaltime);
 
@@ -305,6 +329,68 @@ standard_ExecutorRun(QueryDesc *queryDesc,
 }
 
 /* ----------------------------------------------------------------
+ *		ExecutorFinish
+ *
+ *		This routine must be called after the last ExecutorRun call.
+ *		It performs cleanup such as firing AFTER triggers.  It is
+ *		separate from ExecutorEnd because EXPLAIN ANALYZE needs to
+ *		include these actions in the total runtime.
+ *
+ *		We provide a function hook variable that lets loadable plugins
+ *		get control when ExecutorFinish is called.  Such a plugin would
+ *		normally call standard_ExecutorFinish().
+ *
+ * ----------------------------------------------------------------
+ */
+void
+ExecutorFinish(QueryDesc *queryDesc)
+{
+	if (ExecutorFinish_hook)
+		(*ExecutorFinish_hook) (queryDesc);
+	else
+		standard_ExecutorFinish(queryDesc);
+}
+
+void
+standard_ExecutorFinish(QueryDesc *queryDesc)
+{
+	EState	   *estate;
+	MemoryContext oldcontext;
+
+	/* sanity checks */
+	Assert(queryDesc != NULL);
+
+	estate = queryDesc->estate;
+
+	Assert(estate != NULL);
+	Assert(!(estate->es_top_eflags & EXEC_FLAG_EXPLAIN_ONLY));
+
+	/* This should be run once and only once per Executor instance */
+	Assert(!estate->es_finished);
+
+	/* Switch into per-query memory context */
+	oldcontext = MemoryContextSwitchTo(estate->es_query_cxt);
+
+	/* Allow instrumentation of Executor overall runtime */
+	if (queryDesc->totaltime)
+		InstrStartNode(queryDesc->totaltime);
+
+	/* Run ModifyTable nodes to completion */
+	ExecPostprocessPlan(estate);
+
+	/* Execute queued AFTER triggers, unless told not to */
+	if (!(estate->es_top_eflags & EXEC_FLAG_SKIP_TRIGGERS))
+		AfterTriggerEndQuery(estate);
+
+	if (queryDesc->totaltime)
+		InstrStopNode(queryDesc->totaltime, 0);
+
+	MemoryContextSwitchTo(oldcontext);
+
+	estate->es_finished = true;
+}
+
+/* ----------------------------------------------------------------
  *		ExecutorEnd
  *
  *		This routine must be called at the end of execution of any
@@ -312,19 +398,13 @@ standard_ExecutorRun(QueryDesc *queryDesc,
  *
  *		We provide a function hook variable that lets loadable plugins
  *		get control when ExecutorEnd is called.  Such a plugin would
- *		normally call standard_ExecutorEnd().  Because such hooks expect
- *		to execute after all plan execution is done, we run
- *		ExecPostprocessPlan before invoking the hook.
+ *		normally call standard_ExecutorEnd().
  *
  * ----------------------------------------------------------------
  */
 void
 ExecutorEnd(QueryDesc *queryDesc)
 {
-	/* Let plan nodes do any final processing required */
-	ExecPostprocessPlan(queryDesc->estate);
-
-	/* Now close down */
 	if (ExecutorEnd_hook)
 		(*ExecutorEnd_hook) (queryDesc);
 	else
@@ -343,6 +423,14 @@ standard_ExecutorEnd(QueryDesc *queryDesc)
 	estate = queryDesc->estate;
 
 	Assert(estate != NULL);
+
+	/*
+	 * Check that ExecutorFinish was called, unless in EXPLAIN-only mode.
+	 * This Assert is needed because ExecutorFinish is new as of 9.1, and
+	 * callers might forget to call it.
+	 */
+	Assert(estate->es_finished ||
+		   (estate->es_top_eflags & EXEC_FLAG_EXPLAIN_ONLY));
 
 	/*
 	 * Switch into per-query memory context to run ExecEndPlan
@@ -1141,13 +1229,7 @@ ExecContextForcesOids(PlanState *planstate, bool *hasoids)
 static void
 ExecPostprocessPlan(EState *estate)
 {
-	MemoryContext oldcontext;
 	ListCell   *lc;
-
-	/*
-	 * Switch into per-query memory context
-	 */
-	oldcontext = MemoryContextSwitchTo(estate->es_query_cxt);
 
 	/*
 	 * Make sure nodes run forward.
@@ -1176,8 +1258,6 @@ ExecPostprocessPlan(EState *estate)
 				break;
 		}
 	}
-
-	MemoryContextSwitchTo(oldcontext);
 }
 
 /* ----------------------------------------------------------------
@@ -2081,10 +2161,11 @@ EvalPlanQualStart(EPQState *epqstate, EState *parentestate, Plan *planTree)
 	estate->es_result_relation_info = parentestate->es_result_relation_info;
 	/* es_trig_target_relations must NOT be copied */
 	estate->es_rowMarks = parentestate->es_rowMarks;
+	estate->es_top_eflags = parentestate->es_top_eflags;
 	estate->es_instrument = parentestate->es_instrument;
 	estate->es_select_into = parentestate->es_select_into;
 	estate->es_into_oids = parentestate->es_into_oids;
-	estate->es_auxmodifytables = NIL;
+	/* es_auxmodifytables must NOT be copied */
 
 	/*
 	 * The external param list is simply shared from parent.  The internal

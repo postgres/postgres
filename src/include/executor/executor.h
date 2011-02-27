@@ -44,11 +44,17 @@
  *
  * MARK indicates that the plan node must support Mark/Restore calls.
  * When this is not passed, no Mark/Restore will occur.
+ *
+ * SKIP_TRIGGERS tells ExecutorStart/ExecutorFinish to skip calling
+ * AfterTriggerBeginQuery/AfterTriggerEndQuery.  This does not necessarily
+ * mean that the plan can't queue any AFTER triggers; just that the caller
+ * is responsible for there being a trigger context for them to be queued in.
  */
 #define EXEC_FLAG_EXPLAIN_ONLY	0x0001	/* EXPLAIN, no ANALYZE */
 #define EXEC_FLAG_REWIND		0x0002	/* need efficient rescan */
 #define EXEC_FLAG_BACKWARD		0x0004	/* need backward scan */
 #define EXEC_FLAG_MARK			0x0008	/* need mark/restore */
+#define EXEC_FLAG_SKIP_TRIGGERS	0x0010	/* skip AfterTrigger calls */
 
 
 /*
@@ -69,6 +75,10 @@ typedef void (*ExecutorRun_hook_type) (QueryDesc *queryDesc,
 												   ScanDirection direction,
 												   long count);
 extern PGDLLIMPORT ExecutorRun_hook_type ExecutorRun_hook;
+
+/* Hook for plugins to get control in ExecutorFinish() */
+typedef void (*ExecutorFinish_hook_type) (QueryDesc *queryDesc);
+extern PGDLLIMPORT ExecutorFinish_hook_type ExecutorFinish_hook;
 
 /* Hook for plugins to get control in ExecutorEnd() */
 typedef void (*ExecutorEnd_hook_type) (QueryDesc *queryDesc);
@@ -159,6 +169,8 @@ extern void ExecutorRun(QueryDesc *queryDesc,
 			ScanDirection direction, long count);
 extern void standard_ExecutorRun(QueryDesc *queryDesc,
 					 ScanDirection direction, long count);
+extern void ExecutorFinish(QueryDesc *queryDesc);
+extern void standard_ExecutorFinish(QueryDesc *queryDesc);
 extern void ExecutorEnd(QueryDesc *queryDesc);
 extern void standard_ExecutorEnd(QueryDesc *queryDesc);
 extern void ExecutorRewind(QueryDesc *queryDesc);

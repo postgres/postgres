@@ -192,9 +192,7 @@ typedef struct PortalData
 
 /* Prototypes for functions in utils/mmgr/portalmem.c */
 extern void EnablePortalManager(void);
-extern bool CommitHoldablePortals(void);
-extern bool PrepareHoldablePortals(void);
-extern void AtCommit_Portals(void);
+extern bool PreCommit_Portals(bool isPrepare);
 extern void AtAbort_Portals(void);
 extern void AtCleanup_Portals(void);
 extern void AtSubCommit_Portals(SubTransactionId mySubid,

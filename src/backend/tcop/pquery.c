@@ -182,11 +182,6 @@ ProcessQuery(PlannedStmt *plan,
 								dest, params, 0);
 
 	/*
-	 * Set up to collect AFTER triggers
-	 */
-	AfterTriggerBeginQuery();
-
-	/*
 	 * Call ExecutorStart to prepare the plan for execution
 	 */
 	ExecutorStart(queryDesc, 0);
@@ -231,17 +226,15 @@ ProcessQuery(PlannedStmt *plan,
 		}
 	}
 
-	/* Now take care of any queued AFTER triggers */
-	AfterTriggerEndQuery(queryDesc->estate);
-
-	PopActiveSnapshot();
-
 	/*
 	 * Now, we close down all the scans and free allocated resources.
 	 */
+	ExecutorFinish(queryDesc);
 	ExecutorEnd(queryDesc);
 
 	FreeQueryDesc(queryDesc);
+
+	PopActiveSnapshot();
 }
 
 /*
@@ -529,13 +522,6 @@ PortalStart(Portal portal, ParamListInfo params, Snapshot snapshot)
 											None_Receiver,
 											params,
 											0);
-
-				/*
-				 * We do *not* call AfterTriggerBeginQuery() here.	We assume
-				 * that a SELECT cannot queue any triggers.  It would be messy
-				 * to support triggers since the execution of the portal may
-				 * be interleaved with other queries.
-				 */
 
 				/*
 				 * If it's a scrollable cursor, executor needs to support

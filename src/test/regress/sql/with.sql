@@ -707,7 +707,7 @@ WITH t AS (
         (33)
     RETURNING *
 )
-SELECT * FROM t;
+SELECT * FROM t LIMIT 1;
 
 SELECT * FROM y;
 

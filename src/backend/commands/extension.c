@@ -726,10 +726,9 @@ execute_sql_string(const char *sql, const char *filename)
 										GetActiveSnapshot(), NULL,
 										dest, NULL, 0);
 
-				AfterTriggerBeginQuery();
 				ExecutorStart(qdesc, 0);
 				ExecutorRun(qdesc, ForwardScanDirection, 0);
-				AfterTriggerEndQuery(qdesc->estate);
+				ExecutorFinish(qdesc);
 				ExecutorEnd(qdesc);
 
 				FreeQueryDesc(qdesc);

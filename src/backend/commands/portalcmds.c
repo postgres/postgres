@@ -254,7 +254,14 @@ PortalCleanup(Portal portal)
 	queryDesc = PortalGetQueryDesc(portal);
 	if (queryDesc)
 	{
+		/*
+		 * Reset the queryDesc before anything else.  This prevents us
+		 * from trying to shut down the executor twice, in case of an
+		 * error below.  The transaction abort mechanisms will take care
+		 * of resource cleanup in such a case.
+		 */
 		portal->queryDesc = NULL;
+
 		if (portal->status != PORTAL_FAILED)
 		{
 			ResourceOwner saveResourceOwner;
@@ -264,7 +271,7 @@ PortalCleanup(Portal portal)
 			PG_TRY();
 			{
 				CurrentResourceOwner = portal->resowner;
-				/* we do not need AfterTriggerEndQuery() here */
+				ExecutorFinish(queryDesc);
 				ExecutorEnd(queryDesc);
 				FreeQueryDesc(queryDesc);
 			}
@@ -371,7 +378,7 @@ PersistHoldablePortal(Portal portal)
 		 * Now shut down the inner executor.
 		 */
 		portal->queryDesc = NULL;		/* prevent double shutdown */
-		/* we do not need AfterTriggerEndQuery() here */
+		ExecutorFinish(queryDesc);
 		ExecutorEnd(queryDesc);
 		FreeQueryDesc(queryDesc);
 

@@ -1678,16 +1678,14 @@ WITH t AS (
         (33)
     RETURNING *
 )
-SELECT * FROM t;
+SELECT * FROM t LIMIT 1;
 NOTICE:  y_trigger: a = 31
 NOTICE:  y_trigger: a = 32
 NOTICE:  y_trigger: a = 33
  a  
 ----
  31
- 32
- 33
-(3 rows)
+(1 row)
 
 SELECT * FROM y;
  a  

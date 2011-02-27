@@ -137,9 +137,11 @@ CreateExecutorState(void)
 	estate->es_processed = 0;
 	estate->es_lastoid = InvalidOid;
 
-	estate->es_instrument = false;
+	estate->es_top_eflags = 0;
+	estate->es_instrument = 0;
 	estate->es_select_into = false;
 	estate->es_into_oids = false;
+	estate->es_finished = false;
 
 	estate->es_exprcontexts = NIL;
 

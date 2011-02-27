@@ -95,11 +95,16 @@ This is a sketch of control flow for full query processing:
 			CreateExprContext
 				creates per-tuple context
 			ExecInitExpr
+		AfterTriggerBeginQuery
 
 	ExecutorRun
 		ExecProcNode --- recursively called in per-query context
 			ExecEvalExpr --- called in per-tuple context
 			ResetExprContext --- to free memory
+
+	ExecutorFinish
+		ExecPostprocessPlan --- run any unfinished ModifyTable nodes
+		AfterTriggerEndQuery
 
 	ExecutorEnd
 		ExecEndNode --- recursively releases resources

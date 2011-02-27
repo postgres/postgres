@@ -3676,9 +3676,9 @@ AfterTriggerBeginQuery(void)
  *	we invoke all AFTER IMMEDIATE trigger events queued by the query, and
  *	transfer deferred trigger events to the global deferred-trigger list.
  *
- *	Note that this should be called just BEFORE closing down the executor
+ *	Note that this must be called BEFORE closing down the executor
  *	with ExecutorEnd, because we make use of the EState's info about
- *	target relations.
+ *	target relations.  Normally it is called from ExecutorFinish.
  * ----------
  */
 void

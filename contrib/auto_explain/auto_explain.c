@@ -40,6 +40,7 @@ static int	nesting_level = 0;
 /* Saved hook values in case of unload */
 static ExecutorStart_hook_type prev_ExecutorStart = NULL;
 static ExecutorRun_hook_type prev_ExecutorRun = NULL;
+static ExecutorFinish_hook_type prev_ExecutorFinish = NULL;
 static ExecutorEnd_hook_type prev_ExecutorEnd = NULL;
 
 #define auto_explain_enabled() \
@@ -53,6 +54,7 @@ static void explain_ExecutorStart(QueryDesc *queryDesc, int eflags);
 static void explain_ExecutorRun(QueryDesc *queryDesc,
 					ScanDirection direction,
 					long count);
+static void explain_ExecutorFinish(QueryDesc *queryDesc);
 static void explain_ExecutorEnd(QueryDesc *queryDesc);
 
 
@@ -132,6 +134,8 @@ _PG_init(void)
 	ExecutorStart_hook = explain_ExecutorStart;
 	prev_ExecutorRun = ExecutorRun_hook;
 	ExecutorRun_hook = explain_ExecutorRun;
+	prev_ExecutorFinish = ExecutorFinish_hook;
+	ExecutorFinish_hook = explain_ExecutorFinish;
 	prev_ExecutorEnd = ExecutorEnd_hook;
 	ExecutorEnd_hook = explain_ExecutorEnd;
 }
@@ -145,6 +149,7 @@ _PG_fini(void)
 	/* Uninstall hooks. */
 	ExecutorStart_hook = prev_ExecutorStart;
 	ExecutorRun_hook = prev_ExecutorRun;
+	ExecutorFinish_hook = prev_ExecutorFinish;
 	ExecutorEnd_hook = prev_ExecutorEnd;
 }
 
@@ -201,6 +206,29 @@ explain_ExecutorRun(QueryDesc *queryDesc, ScanDirection direction, long count)
 			prev_ExecutorRun(queryDesc, direction, count);
 		else
 			standard_ExecutorRun(queryDesc, direction, count);
+		nesting_level--;
+	}
+	PG_CATCH();
+	{
+		nesting_level--;
+		PG_RE_THROW();
+	}
+	PG_END_TRY();
+}
+
+/*
+ * ExecutorFinish hook: all we need do is track nesting depth
+ */
+static void
+explain_ExecutorFinish(QueryDesc *queryDesc)
+{
+	nesting_level++;
+	PG_TRY();
+	{
+		if (prev_ExecutorFinish)
+			prev_ExecutorFinish(queryDesc);
+		else
+			standard_ExecutorFinish(queryDesc);
 		nesting_level--;
 	}
 	PG_CATCH();

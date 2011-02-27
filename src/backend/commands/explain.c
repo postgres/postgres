@@ -360,6 +360,8 @@ ExplainOnePlan(PlannedStmt *plannedstmt, ExplainState *es,
 	if (es->buffers)
 		instrument_option |= INSTRUMENT_BUFFERS;
 
+	INSTR_TIME_SET_CURRENT(starttime);
+
 	/*
 	 * Use a snapshot with an updated command ID to ensure this query sees
 	 * results of any previously executed queries.
@@ -370,12 +372,6 @@ ExplainOnePlan(PlannedStmt *plannedstmt, ExplainState *es,
 	queryDesc = CreateQueryDesc(plannedstmt, queryString,
 								GetActiveSnapshot(), InvalidSnapshot,
 								None_Receiver, params, instrument_option);
-
-	INSTR_TIME_SET_CURRENT(starttime);
-
-	/* If analyzing, we need to cope with queued triggers */
-	if (es->analyze)
-		AfterTriggerBeginQuery();
 
 	/* Select execution options */
 	if (es->analyze)
@@ -392,7 +388,10 @@ ExplainOnePlan(PlannedStmt *plannedstmt, ExplainState *es,
 		/* run the plan */
 		ExecutorRun(queryDesc, ForwardScanDirection, 0L);
 
-		/* We can't clean up 'till we're done printing the stats... */
+		/* run cleanup too */
+		ExecutorFinish(queryDesc);
+
+		/* We can't run ExecutorEnd 'till we're done printing the stats... */
 		totaltime += elapsed_time(&starttime);
 	}
 
@@ -400,18 +399,6 @@ ExplainOnePlan(PlannedStmt *plannedstmt, ExplainState *es,
 
 	/* Create textual dump of plan tree */
 	ExplainPrintPlan(es, queryDesc);
-
-	/*
-	 * If we ran the command, run any AFTER triggers it queued.  (Note this
-	 * will not include DEFERRED triggers; since those don't run until end of
-	 * transaction, we can't measure them.)  Include into total runtime.
-	 */
-	if (es->analyze)
-	{
-		INSTR_TIME_SET_CURRENT(starttime);
-		AfterTriggerEndQuery(queryDesc->estate);
-		totaltime += elapsed_time(&starttime);
-	}
 
 	/* Print info about runtime of triggers */
 	if (es->analyze)

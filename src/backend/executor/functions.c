@@ -205,7 +205,8 @@ init_execution_state(List *queryTree_list,
 
 			if (ps->commandType == CMD_SELECT &&
 				ps->utilityStmt == NULL &&
-				ps->intoClause == NULL)
+				ps->intoClause == NULL &&
+				!ps->hasModifyingCTE)
 				fcache->lazyEval = lasttages->lazyEval = true;
 		}
 	}
@@ -431,14 +432,19 @@ postquel_start(execution_state *es, SQLFunctionCachePtr fcache)
 	if (es->qd->utilitystmt == NULL)
 	{
 		/*
-		 * Only set up to collect queued triggers if it's not a SELECT. This
-		 * isn't just an optimization, but is necessary in case a SELECT
-		 * returns multiple rows to caller --- we mustn't exit from the
-		 * function execution with a stacked AfterTrigger level still active.
+		 * In lazyEval mode, do not let the executor set up an AfterTrigger
+		 * context.  This is necessary not just an optimization, because we
+		 * mustn't exit from the function execution with a stacked
+		 * AfterTrigger level still active.  We are careful not to select
+		 * lazyEval mode for any statement that could possibly queue triggers.
 		 */
-		if (es->qd->operation != CMD_SELECT)
-			AfterTriggerBeginQuery();
-		ExecutorStart(es->qd, 0);
+		int			eflags;
+
+		if (es->lazyEval)
+			eflags = EXEC_FLAG_SKIP_TRIGGERS;
+		else
+			eflags = 0;			/* default run-to-completion flags */
+		ExecutorStart(es->qd, eflags);
 	}
 
 	es->status = F_EXEC_RUN;
@@ -499,8 +505,7 @@ postquel_end(execution_state *es)
 		/* Make our snapshot the active one for any called functions */
 		PushActiveSnapshot(es->qd->snapshot);
 
-		if (es->qd->operation != CMD_SELECT)
-			AfterTriggerEndQuery(es->qd->estate);
+		ExecutorFinish(es->qd);
 		ExecutorEnd(es->qd);
 
 		PopActiveSnapshot();

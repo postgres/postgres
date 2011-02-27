@@ -61,10 +61,11 @@ DiscardAll(bool isTopLevel)
 	 */
 	PreventTransactionChain(isTopLevel, "DISCARD ALL");
 
+	/* Closing portals might run user-defined code, so do that first. */
+	PortalHashTableDeleteAll();
 	SetPGVariable("session_authorization", NIL, false);
 	ResetAllOptions();
 	DropAllPreparedStatements();
-	PortalHashTableDeleteAll();
 	Async_UnlistenAll();
 	LockReleaseAll(USER_LOCKMETHOD, true);
 	ResetPlanCache();

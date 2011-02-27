@@ -2041,6 +2041,7 @@ static int
 _SPI_pquery(QueryDesc *queryDesc, bool fire_triggers, long tcount)
 {
 	int			operation = queryDesc->operation;
+	int			eflags;
 	int			res;
 
 	switch (operation)
@@ -2084,10 +2085,13 @@ _SPI_pquery(QueryDesc *queryDesc, bool fire_triggers, long tcount)
 		ResetUsage();
 #endif
 
+	/* Select execution options */
 	if (fire_triggers)
-		AfterTriggerBeginQuery();
+		eflags = 0;				/* default run-to-completion flags */
+	else
+		eflags = EXEC_FLAG_SKIP_TRIGGERS;
 
-	ExecutorStart(queryDesc, 0);
+	ExecutorStart(queryDesc, eflags);
 
 	ExecutorRun(queryDesc, ForwardScanDirection, tcount);
 
@@ -2101,10 +2105,7 @@ _SPI_pquery(QueryDesc *queryDesc, bool fire_triggers, long tcount)
 			elog(ERROR, "consistency check on SPI tuple count failed");
 	}
 
-	/* Take care of any queued AFTER triggers */
-	if (fire_triggers)
-		AfterTriggerEndQuery(queryDesc->estate);
-
+	ExecutorFinish(queryDesc);
 	ExecutorEnd(queryDesc);
 	/* FreeQueryDesc is done by the caller */
 

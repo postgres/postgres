@@ -1753,12 +1753,10 @@ CommitTransaction(void)
 	Assert(s->parent == NULL);
 
 	/*
-	 * Do pre-commit processing (most of this stuff requires database access,
-	 * and in fact could still cause an error...)
-	 *
-	 * It is possible for CommitHoldablePortals to invoke functions that queue
-	 * deferred triggers, and it's also possible that triggers create holdable
-	 * cursors.  So we have to loop until there's nothing left to do.
+	 * Do pre-commit processing that involves calling user-defined code, such
+	 * as triggers.  Since closing cursors could queue trigger actions,
+	 * triggers could open cursors, etc, we have to keep looping until there's
+	 * nothing left to do.
 	 */
 	for (;;)
 	{
@@ -1768,19 +1766,23 @@ CommitTransaction(void)
 		AfterTriggerFireDeferred();
 
 		/*
-		 * Convert any open holdable cursors into static portals.  If there
-		 * weren't any, we are done ... otherwise loop back to check if they
-		 * queued deferred triggers.  Lather, rinse, repeat.
+		 * Close open portals (converting holdable ones into static portals).
+		 * If there weren't any, we are done ... otherwise loop back to check
+		 * if they queued deferred triggers.  Lather, rinse, repeat.
 		 */
-		if (!CommitHoldablePortals())
+		if (!PreCommit_Portals(false))
 			break;
 	}
 
-	/* Now we can shut down the deferred-trigger manager */
-	AfterTriggerEndXact(true);
+	/*
+	 * The remaining actions cannot call any user-defined code, so it's
+	 * safe to start shutting down within-transaction services.  But note
+	 * that most of this stuff could still throw an error, which would
+	 * switch us into the transaction-abort path.
+	 */
 
-	/* Close any open regular cursors */
-	AtCommit_Portals();
+	/* Shut down the deferred-trigger manager */
+	AfterTriggerEndXact(true);
 
 	/*
 	 * Let ON COMMIT management do its thing (must happen after closing
@@ -1954,12 +1956,10 @@ PrepareTransaction(void)
 	Assert(s->parent == NULL);
 
 	/*
-	 * Do pre-commit processing (most of this stuff requires database access,
-	 * and in fact could still cause an error...)
-	 *
-	 * It is possible for PrepareHoldablePortals to invoke functions that
-	 * queue deferred triggers, and it's also possible that triggers create
-	 * holdable cursors.  So we have to loop until there's nothing left to do.
+	 * Do pre-commit processing that involves calling user-defined code, such
+	 * as triggers.  Since closing cursors could queue trigger actions,
+	 * triggers could open cursors, etc, we have to keep looping until there's
+	 * nothing left to do.
 	 */
 	for (;;)
 	{
@@ -1969,19 +1969,23 @@ PrepareTransaction(void)
 		AfterTriggerFireDeferred();
 
 		/*
-		 * Convert any open holdable cursors into static portals.  If there
-		 * weren't any, we are done ... otherwise loop back to check if they
-		 * queued deferred triggers.  Lather, rinse, repeat.
+		 * Close open portals (converting holdable ones into static portals).
+		 * If there weren't any, we are done ... otherwise loop back to check
+		 * if they queued deferred triggers.  Lather, rinse, repeat.
 		 */
-		if (!PrepareHoldablePortals())
+		if (!PreCommit_Portals(true))
 			break;
 	}
 
-	/* Now we can shut down the deferred-trigger manager */
-	AfterTriggerEndXact(true);
+	/*
+	 * The remaining actions cannot call any user-defined code, so it's
+	 * safe to start shutting down within-transaction services.  But note
+	 * that most of this stuff could still throw an error, which would
+	 * switch us into the transaction-abort path.
+	 */
 
-	/* Close any open regular cursors */
-	AtCommit_Portals();
+	/* Shut down the deferred-trigger manager */
+	AfterTriggerEndXact(true);
 
 	/*
 	 * Let ON COMMIT management do its thing (must happen after closing
