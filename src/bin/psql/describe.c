@@ -2342,7 +2342,7 @@ describeRoles(const char *pattern, bool verbose)
 			add_role_attribute(&buf, _("Cannot login"));
 
 		if (pset.sversion >= 90100)
-			if (strcmp(PQgetvalue(res, i, 8), "t") == 0)
+			if (strcmp(PQgetvalue(res, i, (verbose ? 9 : 8)), "t") == 0)
 				add_role_attribute(&buf, _("Replication"));
 
 		conns = atoi(PQgetvalue(res, i, 6));
