@@ -6,6 +6,8 @@ plpython_unicode.out		server encoding != SQL_ASCII and client encoding == UTF8; 
 plpython_unicode_0.out		server encoding != SQL_ASCII and client encoding != UTF8; else ...
 plpython_unicode_3.out		server encoding == SQL_ASCII
 
+plpython_subtransaction_0.out	Python 2.5 and older (without with statement)
+
 plpython_types_3.out		Python 3.x
 
 Note: Building with Python 2.2 is supported, but there are no expected

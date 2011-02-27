@@ -955,7 +955,7 @@ $$ LANGUAGE plpythonu;
 
   </sect2>
 
-  <sect2>
+  <sect2 id="plpython-trapping">
    <title>Trapping Errors</title>
 
    <para>
@@ -978,6 +978,136 @@ CREATE FUNCTION try_adding_joe() RETURNS text AS $$
 $$ LANGUAGE plpythonu;
 </programlisting>
    </para>
+  </sect2>
+ </sect1>
+
+ <sect1 id="plpython-subtransaction">
+  <title>Explicit Subtransactions</title>
+
+  <para>
+   Recovering from errors caused by database access as described in
+   <xref linkend="plpython-trapping"> can lead to an undesirable
+   situation where some operations succeed before one of them fails,
+   and after recovering from that error the data is left in an
+   inconsistent state.  PL/Python offers a solution to this problem in
+   the form of explicit subtransactions.
+  </para>
+
+  <sect2>
+   <title>Subtransaction Context Managers</title>
+
+   <para>
+    Consider a function that implements a transfer between two
+    accounts:
+<programlisting>
+CREATE FUNCTION transfer_funds() RETURNS void AS $$
+try:
+    plpy.execute("UPDATE accounts SET balance = balance - 100 WHERE account_name = 'joe'")
+    plpy.execute("UPDATE accounts SET balance = balance + 100 WHERE account_name = 'mary'")
+except plpy.SPIError, e:
+    result = "error transferring funds: %s" % e.args
+else:
+    result = "funds transferred correctly"
+plan = plpy.prepare("INSERT INTO operations (result) VALUES ($1)", ["text"])
+plpy.execute(plan, [result])
+$$ LANGUAGE plpythonu;
+</programlisting>
+    If the second <literal>UPDATE</literal> statement results in an
+    exception being raised, this function will report the error, but
+    the result of the first <literal>UPDATE</literal> will
+    nevertheless be committed.  In other words, the funds will be
+    withdrawn from Joe's account, but will not be transferred to
+    Mary's account.
+   </para>
+
+   <para>
+    To avoid such issues, you can wrap your
+    <literal>plpy.execute</literal> calls in an explicit
+    subtransaction.  The <literal>plpy</literal> module provides a
+    helper object to manage explicit subtransactions that gets created
+    with the <literal>plpy.subtransaction()</literal> function.
+    Objects created by this function implement the
+    <ulink url="http://docs.python.org/library/stdtypes.html#context-manager-types">
+    context manager interface</ulink>.  Using explicit subtransactions
+    we can rewrite our function as:
+<programlisting>
+CREATE FUNCTION transfer_funds2() RETURNS void AS $$
+try:
+    with plpy.subtransaction():
+        plpy.execute("UPDATE accounts SET balance = balance - 100 WHERE account_name = 'joe'")
+        plpy.execute("UPDATE accounts SET balance = balance + 100 WHERE account_name = 'mary'")
+except plpy.SPIError, e:
+    result = "error transferring funds: %s" % e.args
+else:
+    result = "funds transferred correctly"
+plan = plpy.prepare("INSERT INTO operations (result) VALUES ($1)", ["text"])
+plpy.execute(plan, [result])
+$$ LANGUAGE plpythonu;
+</programlisting>
+    Note that the use of <literal>try/catch</literal> is still
+    required.  Otherwise the exception would propagate to the top of
+    the Python stack and would cause the whole function to abort with
+    a <productname>PostgreSQL</productname> error, so that the
+    <literal>operations</literal> table would not have any row
+    inserted into it.  The subtransaction context manager does not
+    trap errors, it only assures that all database operations executed
+    inside its scope will be atomically committed or rolled back.  A
+    rollback of the subtransaction block occurrs on any kind of
+    exception exit, not only ones caused by errors originating from
+    database access.  A regular Python exception raised inside an
+    explicit subtransaction block would also cause the subtransaction
+    to be rolled back.
+   </para>
+  </sect2>
+
+  <sect2>
+   <title>Older Python Versions</title>
+
+   <para>
+    Context managers syntax using the <literal>with</literal> keyword
+    is available by default in Python 2.6.  If using PL/Python with an
+    older Python version, it is still possible to use explicit
+    subtransactions, although not as transparently.  You can call the
+    subtransaction manager's <literal>__enter__</literal> and
+    <literal>__exit__</literal> functions using the
+    <literal>enter</literal> and <literal>exit</literal> convenience
+    aliases.  The example function that transfers funds could be
+    written as:
+<programlisting>
+CREATE FUNCTION transfer_funds_old() RETURNS void AS $$
+try:
+    subxact = plpy.subtransaction()
+    subxact.enter()
+    try:
+        plpy.execute("UPDATE accounts SET balance = balance - 100 WHERE account_name = 'joe'")
+        plpy.execute("UPDATE accounts SET balance = balance + 100 WHERE account_name = 'mary'")
+    except:
+        import sys
+        subxact.exit(*sys.exc_info())
+        raise
+    else:
+        subxact.exit(None, None, None)
+except plpy.SPIError, e:
+    result = "error transferring funds: %s" % e.args
+else:
+    result = "funds transferred correctly"
+
+plan = plpy.prepare("INSERT INTO operations (result) VALUES ($1)", ["text"])
+plpy.execute(plan, [result])
+$$ LANGUAGE plpythonu;
+</programlisting>
+   </para>
+
+   <note>
+    <para>
+     Although context managers were implemented in Python 2.5, to use
+     the <literal>with</literal> syntax in that version you need to
+     use a <ulink
+     url="http://docs.python.org/release/2.5/ref/future.html">future
+     statement</ulink>.  Because of implementation details, however,
+     you cannot use future statements in PL/Python functions.
+    </para>
+   </note>
   </sect2>
  </sect1>
 
