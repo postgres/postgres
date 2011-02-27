@@ -325,11 +325,11 @@ postgres: <replaceable>user</> <replaceable>database</> <replaceable>host</> <re
       scans, numbers of row insertions, updates, and deletions,
       number of row updates that were HOT (i.e., no separate index update),
       numbers of live and dead rows,
-      the last time the table was vacuumed manually,
+      the last time the table was non-<option>FULL</> vacuumed manually,
       the last time it was vacuumed by the autovacuum daemon,
       the last time it was analyzed manually,
       the last time it was analyzed by the autovacuum daemon,
-      number of times it has been vacuumed manually,
+      number of times it has been non-<option>FULL</> vacuumed manually,
       number of times it has been vacuumed by the autovacuum daemon,
       number of times it has been analyzed manually,
       and the number of times it has been analyzed by the autovacuum daemon.
@@ -781,7 +781,7 @@ postgres: <replaceable>user</> <replaceable>database</> <replaceable>host</> <re
       <entry><literal><function>pg_stat_get_last_vacuum_time</function>(<type>oid</type>)</literal></entry>
       <entry><type>timestamptz</type></entry>
       <entry>
-       Time of the last vacuum initiated by the user on this table
+       Time of the last non-<option>FULL</option> vacuum initiated by the user on this table
       </entry>
      </row>
 
@@ -814,7 +814,7 @@ postgres: <replaceable>user</> <replaceable>database</> <replaceable>host</> <re
       <entry><literal><function>pg_stat_get_vacuum_count</function>(<type>oid</type>)</literal></entry>
       <entry><type>bigint</type></entry>
       <entry>
-       The number of times this table has been vacuumed manually
+       The number of times this table has been non-<option>FULL</> vacuumed manually
       </entry>
      </row>
 
