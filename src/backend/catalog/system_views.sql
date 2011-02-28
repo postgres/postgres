@@ -520,7 +520,7 @@ CREATE VIEW pg_stat_replication AS
             W.sent_location,
             W.write_location,
             W.flush_location,
-            W.apply_location
+            W.replay_location
     FROM pg_stat_get_activity(NULL) AS S, pg_authid U,
             pg_stat_get_wal_senders() AS W
     WHERE S.usesysid = U.oid AND
