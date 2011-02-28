@@ -43,7 +43,7 @@ SELECT * FROM subtransaction_tbl;
 
 TRUNCATE subtransaction_tbl;
 SELECT subtransaction_test('SPI');
-ERROR:  plpy.SPIError: invalid input syntax for integer: "oops"
+ERROR:  spiexceptions.InvalidTextRepresentation: invalid input syntax for integer: "oops"
 LINE 1: INSERT INTO subtransaction_tbl VALUES ('oops')
                                                ^
 QUERY:  INSERT INTO subtransaction_tbl VALUES ('oops')
@@ -89,7 +89,7 @@ SELECT * FROM subtransaction_tbl;
 
 TRUNCATE subtransaction_tbl;
 SELECT subtransaction_ctx_test('SPI');
-ERROR:  plpy.SPIError: invalid input syntax for integer: "oops"
+ERROR:  spiexceptions.InvalidTextRepresentation: invalid input syntax for integer: "oops"
 LINE 1: INSERT INTO subtransaction_tbl VALUES ('oops')
                                                ^
 QUERY:  INSERT INTO subtransaction_tbl VALUES ('oops')
@@ -126,7 +126,7 @@ with plpy.subtransaction():
 return "ok"
 $$ LANGUAGE plpythonu;
 SELECT subtransaction_nested_test();
-ERROR:  plpy.SPIError: syntax error at or near "error"
+ERROR:  spiexceptions.SyntaxError: syntax error at or near "error"
 LINE 1: error
         ^
 QUERY:  error
@@ -138,7 +138,7 @@ SELECT * FROM subtransaction_tbl;
 
 TRUNCATE subtransaction_tbl;
 SELECT subtransaction_nested_test('t');
-NOTICE:  Swallowed SPIError('syntax error at or near "error"',)
+NOTICE:  Swallowed SyntaxError('syntax error at or near "error"',)
 CONTEXT:  PL/Python function "subtransaction_nested_test"
  subtransaction_nested_test 
 ----------------------------
@@ -164,7 +164,7 @@ with plpy.subtransaction():
 return "ok"
 $$ LANGUAGE plpythonu;
 SELECT subtransaction_deeply_nested_test();
-NOTICE:  Swallowed SPIError('syntax error at or near "error"',)
+NOTICE:  Swallowed SyntaxError('syntax error at or near "error"',)
 CONTEXT:  PL/Python function "subtransaction_nested_test"
 SQL statement "SELECT subtransaction_nested_test('t')"
 PL/Python function "subtransaction_nested_test"

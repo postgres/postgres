@@ -273,6 +273,12 @@ s{PG_VERSION_STR "[^"]+"}{__STRINGIFY(x) #x\n#define __STRINGIFY2(z) __STRINGIFY
         );
     }
 
+    if ($self->{options}->{python} && IsNewer('src\pl\plpython\spiexceptions.h','src\include\backend\errcodes.txt'))
+    {
+        print "Generating spiexceptions.h...\n";
+        system('perl src\pl\plpython\generate-spiexceptions.pl src\backend\utils\errcodes.txt > src\pl\plpython\spiexceptions.h');
+    }
+
     if (IsNewer('src\include\utils\errcodes.h','src\backend\utils\errcodes.txt'))
     {
         print "Generating errcodes.h...\n";

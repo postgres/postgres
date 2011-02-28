@@ -962,7 +962,7 @@ $$ LANGUAGE plpythonu;
     Functions accessing the database might encounter errors, which
     will cause them to abort and raise an exception.  Both
     <function>plpy.execute</function> and
-    <function>plpy.prepare</function> can raise an instance of
+    <function>plpy.prepare</function> can raise an instance of a subclass of
     <literal>plpy.SPIError</literal>, which by default will terminate
     the function.  This error can be handled just like any other
     Python exception, by using the <literal>try/except</literal>
@@ -977,6 +977,53 @@ CREATE FUNCTION try_adding_joe() RETURNS text AS $$
         return "Joe added"
 $$ LANGUAGE plpythonu;
 </programlisting>
+   </para>
+
+   <para>
+    The actual class of the exception being raised corresponds to the
+    specific condition that caused the error.  Refer
+    to <xref linkend="errcodes-table"> for a list of possible
+    conditions.  The module
+    <literal>plpy.spiexceptions</literal> defines an exception class
+    for each <productname>PostgreSQL</productname> condition, deriving
+    their names from the condition name.  For
+    instance, <literal>division_by_zero</literal>
+    becomes <literal>DivisionByZero</literal>, <literal>unique_violation</literal>
+    becomes <literal>UniqueViolation</literal>, <literal>fdw_error</literal>
+    becomes <literal>FdwError</literal>, and so on.  Each of these
+    exception classes inherits from <literal>SPIError</literal>.  This
+    separation makes it easier to handle specific errors, for
+    instance:
+<programlisting>
+CREATE FUNCTION insert_fraction(numerator int, denominator int) RETURNS text AS $$
+from plpy import spiexceptions
+try:
+    plan = plpy.prepare("INSERT INTO fractions (frac) VALUES ($1 / $2)", ["int", "int"])
+    plpy.execute(plan, [numerator, denominator])
+except spiexceptions.DivisionByZero:
+    return "denominator cannot equal zero"
+except spiexceptions.UniqueViolation:
+    return "already have that fraction"
+except plpy.SPIError, e:
+    return "other error, SQLSTATE %s" % e.sqlstate
+else:
+    return "fraction inserted"
+$$ LANGUAGE plpythonu;
+</programlisting>
+    Note that because all exceptions from
+    the <literal>plpy.spiexceptions</literal> module inherit
+    from <literal>SPIError</literal>, an <literal>except</literal>
+    clause handling it will catch any database access error.
+   </para>
+
+   <para>
+    As an alternative way of handling different error conditions, you
+    can catch the <literal>SPIError</literal> exception and determine
+    the specific error condition inside the <literal>except</literal>
+    block by looking at the <literal>sqlstate</literal> attribute of
+    the exception object.  This attribute is a string value containing
+    the <quote>SQLSTATE</quote> error code.  This approach provides
+    approximately the same functionality
    </para>
   </sect2>
  </sect1>

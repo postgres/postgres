@@ -131,6 +131,27 @@ return None
 
 SELECT valid_type('rick');
 
+/* check catching specific types of exceptions
+ */
+CREATE TABLE specific (
+    i integer PRIMARY KEY
+);
+
+CREATE FUNCTION specific_exception(i integer) RETURNS void AS
+$$
+from plpy import spiexceptions
+try:
+    plpy.execute("insert into specific values (%s)" % (i or "NULL"));
+except spiexceptions.NotNullViolation, e:
+    plpy.notice("Violated the NOT NULL constraint, sqlstate %s" % e.sqlstate)
+except spiexceptions.UniqueViolation, e:
+    plpy.notice("Violated the UNIQUE constraint, sqlstate %s" % e.sqlstate)
+$$ LANGUAGE plpythonu;
+
+SELECT specific_exception(2);
+SELECT specific_exception(NULL);
+SELECT specific_exception(2);
+
 /* manually starting subtransactions - a bad idea
  */
 CREATE FUNCTION manual_subxact() RETURNS void AS $$
