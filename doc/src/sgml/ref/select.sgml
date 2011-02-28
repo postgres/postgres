@@ -58,9 +58,9 @@ SELECT [ ALL | DISTINCT [ ON ( <replaceable class="parameter">expression</replac
 
 <phrase>and <replaceable class="parameter">with_query</replaceable> is:</phrase>
 
-    <replaceable class="parameter">with_query_name</replaceable> [ ( <replaceable class="parameter">column_name</replaceable> [, ...] ) ] AS ( <replaceable class="parameter">select</replaceable> )
+    <replaceable class="parameter">with_query_name</replaceable> [ ( <replaceable class="parameter">column_name</replaceable> [, ...] ) ] AS ( <replaceable class="parameter">select</replaceable> | <replaceable class="parameter">insert</replaceable> | <replaceable class="parameter">update</replaceable> | <replaceable class="parameter">delete</replaceable> )
 
-TABLE { [ ONLY ] <replaceable class="parameter">table_name</replaceable> [ * ] | <replaceable class="parameter">with_query_name</replaceable> }
+TABLE [ ONLY ] <replaceable class="parameter">table_name</replaceable> [ * ]
 </synopsis>
 
  </refsynopsisdiv>
@@ -209,6 +209,17 @@ TABLE { [ ONLY ] <replaceable class="parameter">table_name</replaceable> [ * ] |
     subqueries that can be referenced by name in the primary query.
     The subqueries effectively act as temporary tables or views
     for the duration of the primary query.
+    Each subquery can be a <command>SELECT</command>,
+    <command>INSERT</command>, <command>UPDATE</command> or
+    <command>DELETE</command> statement.
+    When writing a data-modifying statement (<command>INSERT</command>,
+    <command>UPDATE</command> or <command>DELETE</command>) in
+    <literal>WITH</>, it is usual to include a <literal>RETURNING</> clause.
+    It is the output of <literal>RETURNING</>, <emphasis>not</> the underlying
+    table that the statement modifies, that forms the temporary table that is
+    read by the primary query.  If <literal>RETURNING</> is omitted, the
+    statement is still executed, but it produces no output so it cannot be
+    referenced as a table by the primary query.
    </para>
 
    <para>
@@ -220,14 +231,18 @@ TABLE { [ ONLY ] <replaceable class="parameter">table_name</replaceable> [ * ] |
 
    <para>
     If <literal>RECURSIVE</literal> is specified, it allows a
-    subquery to reference itself by name.  Such a subquery must have
-    the form
+    <command>SELECT</command> subquery to reference itself by name.  Such a
+    subquery must have the form
 <synopsis>
 <replaceable class="parameter">non_recursive_term</replaceable> UNION [ ALL | DISTINCT ] <replaceable class="parameter">recursive_term</replaceable>
 </synopsis>
     where the recursive self-reference must appear on the right-hand
     side of the <literal>UNION</>.  Only one recursive self-reference
-    is permitted per query.
+    is permitted per query.  Recursive data-modifying statements are not
+    supported, but you can use the results of a recursive
+    <command>SELECT</command> query in
+    a data-modifying statement.  See <xref linkend="queries-with"> for
+    an example.
    </para>
 
    <para>
@@ -241,9 +256,21 @@ TABLE { [ ONLY ] <replaceable class="parameter">table_name</replaceable> [ * ] |
    </para>
 
    <para>
-    A useful property of <literal>WITH</literal> queries is that they
+    A key property of <literal>WITH</literal> queries is that they
     are evaluated only once per execution of the primary query,
     even if the primary query refers to them more than once.
+    In particular, data-modifying statements are guaranteed to be
+    executed once and only once, regardless of whether the primary query
+    reads all or any of their output.
+   </para>
+
+   <para>
+    The primary query and the <literal>WITH</literal> queries are all
+    (notionally) executed at the same time.  This implies that the effects of
+    a data-modifying statement in <literal>WITH</literal> cannot be seen from
+    other parts of the query, other than by reading its <literal>RETURNING</>
+    output.  If two such data-modifying statements attempt to modify the same
+    row, the results are unspecified.
    </para>
 
    <para>
@@ -1654,6 +1681,16 @@ SELECT distributors.* WHERE distributors.name = 'Westward';
     query as well as in sub-<command>SELECT</>s, but this is an extension.
     The <literal>FOR SHARE</> variant, and the <literal>NOWAIT</> option,
     do not appear in the standard.
+   </para>
+  </refsect2>
+
+  <refsect2>
+   <title>Data-Modifying Statements in <literal>WITH</></title>
+
+   <para>
+    <productname>PostgreSQL</productname> allows <command>INSERT</>,
+    <command>UPDATE</>, and <command>DELETE</> to be used as <literal>WITH</>
+    queries.  This is not found in the SQL standard.
    </para>
   </refsect2>
 

@@ -1539,11 +1539,23 @@ SELECT <replaceable>select_list</replaceable> FROM <replaceable>table_expression
   </indexterm>
 
   <para>
-   <literal>WITH</> provides a way to write subqueries for use in a larger
-   query.  The subqueries, which are often referred to as Common Table
-   Expressions or <acronym>CTE</acronym>s, can be thought of as defining
-   temporary tables that exist just for this query.  One use of this feature
-   is to break down complicated queries into simpler parts.  An example is:
+   <literal>WITH</> provides a way to write auxiliary statements for use in a
+   larger query.  These statements, which are often referred to as Common
+   Table Expressions or <acronym>CTE</acronym>s, can be thought of as defining
+   temporary tables that exist just for one query.  Each auxiliary statement
+   in a <literal>WITH</> clause can be a <command>SELECT</>,
+   <command>INSERT</>, <command>UPDATE</>, or <command>DELETE</>; and the
+   <literal>WITH</> clause itself is attached to a primary statement that can
+   also be a <command>SELECT</>, <command>INSERT</>, <command>UPDATE</>, or
+   <command>DELETE</>.
+  </para>
+
+ <sect2 id="queries-with-select">
+   <title><command>SELECT</> in <literal>WITH</></title>
+
+  <para>
+   The basic value of <command>SELECT</> in <literal>WITH</> is to
+   break down complicated queries into simpler parts.  An example is:
 
 <programlisting>
 WITH regional_sales AS (
@@ -1565,6 +1577,11 @@ GROUP BY region, product;
 </programlisting>
 
    which displays per-product sales totals in only the top sales regions.
+   The <literal>WITH</> clause defines two auxiliary statements named
+   <structname>regional_sales</> and <structname>top_regions</>,
+   where the output of <structname>regional_sales</> is used in
+   <structname>top_regions</> and the output of <structname>top_regions</>
+   is used in the primary <command>SELECT</> query.
    This example could have been written without <literal>WITH</>,
    but we'd have needed two levels of nested sub-SELECTs.  It's a bit
    easier to follow this way.
@@ -1779,7 +1796,9 @@ SELECT n FROM t LIMIT 100;
    fetched by the parent query.  Using this trick in production is not
    recommended, because other systems might work differently.  Also, it
    usually won't work if you make the outer query sort the recursive query's
-   results or join them to some other table.
+   results or join them to some other table, because in such cases the
+   outer query will usually try to fetch all of the <literal>WITH</> query's
+   output anyway.
   </para>
 
   <para>
@@ -1806,6 +1825,152 @@ SELECT n FROM t LIMIT 100;
    In each case it effectively provides temporary table(s) that can
    be referred to in the main command.
   </para>
+ </sect2>
+
+ <sect2 id="queries-with-modifying">
+   <title>Data-Modifying Statements in <literal>WITH</></title>
+
+   <para>
+    You can use data-modifying statements (<command>INSERT</>,
+    <command>UPDATE</>, or <command>DELETE</>) in <literal>WITH</>.  This
+    allows you to perform several different operations in the same query.
+    An example is:
+
+<programlisting>
+WITH moved_rows AS (
+    DELETE FROM products
+    WHERE
+        "date" &gt;= '2010-10-01' AND
+        "date" &lt; '2010-11-01'
+    RETURNING *
+)
+INSERT INTO products_log
+SELECT * FROM moved_rows;
+</programlisting>
+
+    This query effectively moves rows from <structname>products</> to
+    <structname>products_log</>.  The <command>DELETE</> in <literal>WITH</>
+    deletes the specified rows from <structname>products</>, returning their
+    contents by means of its <literal>RETURNING</> clause; and then the
+    primary query reads that output and inserts it into
+    <structname>products_log</>.
+   </para>
+
+   <para>
+    A fine point of the above example is that the <literal>WITH</> clause is
+    attached to the <command>INSERT</>, not the sub-<command>SELECT</> within
+    the <command>INSERT</>.  This is necessary because data-modifying
+    statements are only allowed in <literal>WITH</> clauses that are attached
+    to the top-level statement.  However, normal <literal>WITH</> visibility
+    rules apply, so it is possible to refer to the <literal>WITH</>
+    statement's output from the sub-<command>SELECT</>.
+   </para>
+
+   <para>
+    Data-modifying statements in <literal>WITH</> usually have
+    <literal>RETURNING</> clauses, as seen in the example above.
+    It is the output of the <literal>RETURNING</> clause, <emphasis>not</> the
+    target table of the data-modifying statement, that forms the temporary
+    table that can be referred to by the rest of the query.  If a
+    data-modifying statement in <literal>WITH</> lacks a <literal>RETURNING</>
+    clause, then it forms no temporary table and cannot be referred to in
+    the rest of the query.  Such a statement will be executed nonetheless.
+    A not-particularly-useful example is:
+
+<programlisting>
+WITH t AS (
+    DELETE FROM foo
+)
+DELETE FROM bar;
+</programlisting>
+
+    This example would remove all rows from tables <structname>foo</> and
+    <structname>bar</>.  The number of affected rows reported to the client
+    would only include rows removed from <structname>bar</>.
+   </para>
+
+   <para>
+    Recursive self-references in data-modifying statements are not
+    allowed.  In some cases it is possible to work around this limitation by
+    referring to the output of a recursive <literal>WITH</>, for example:
+
+<programlisting>
+WITH RECURSIVE included_parts(sub_part, part) AS (
+    SELECT sub_part, part FROM parts WHERE part = 'our_product'
+  UNION ALL
+    SELECT p.sub_part, p.part
+    FROM included_parts pr, parts p
+    WHERE p.part = pr.sub_part
+  )
+DELETE FROM parts
+  WHERE part IN (SELECT part FROM included_parts);
+</programlisting>
+
+    This query would remove all direct and indirect subparts of a product.
+   </para>
+
+   <para>
+    Data-modifying statements in <literal>WITH</> are executed exactly once,
+    and always to completion, independently of whether the primary query
+    reads all (or indeed any) of their output.  Notice that this is different
+    from the rule for <command>SELECT</> in <literal>WITH</>: as stated in the
+    previous section, execution of a <command>SELECT</> is carried only as far
+    as the primary query demands its output.
+   </para>
+
+   <para>
+    The sub-statements in <literal>WITH</> are executed concurrently with
+    each other and with the main query.  Therefore, when using data-modifying
+    statements in <literal>WITH</>, the order in which the specified updates
+    actually happen is unpredictable.  All the statements are executed with
+    the same <firstterm>snapshot</> (see <xref linkend="mvcc">), so they
+    cannot <quote>see</> each others' effects on the target tables.  This
+    alleviates the effects of the unpredictability of the actual order of row
+    updates, and means that <literal>RETURNING</> data is the only way to
+    communicate changes between different <literal>WITH</> sub-statements and
+    the main query.  An example of this is that in
+
+<programlisting>
+WITH t AS (
+    UPDATE products SET price = price * 1.05
+    RETURNING *
+)
+SELECT * FROM products;
+</programlisting>
+
+    the outer <command>SELECT</> would return the original prices before the
+    action of the <command>UPDATE</>, while in
+
+<programlisting>
+WITH t AS (
+    UPDATE products SET price = price * 1.05
+    RETURNING *
+)
+SELECT * FROM t;
+</programlisting>
+
+    the outer <command>SELECT</> would return the updated data.
+   </para>
+
+   <para>
+    Trying to update the same row twice in a single statement is not
+    supported.  Only one of the modifications takes place, but it is not easy
+    (and sometimes not possible) to reliably predict which one.  This also
+    applies to deleting a row that was already updated in the same statement:
+    only the update is performed.  Therefore you should generally avoid trying
+    to modify a single row twice in a single statement.  In particular avoid
+    writing <literal>WITH</> sub-statements that could affect the same rows
+    changed by the main statement or a sibling sub-statement.  The effects
+    of such a statement will not be predictable.
+   </para>
+
+   <para>
+    At present, any table used as the target of a data-modifying statement in
+    <literal>WITH</> must not have a conditional rule, nor an <literal>ALSO</>
+    rule, nor an <literal>INSTEAD</> rule that expands to multiple statements.
+   </para>
+
+  </sect2>
 
  </sect1>
 
