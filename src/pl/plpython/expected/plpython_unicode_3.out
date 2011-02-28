@@ -39,7 +39,7 @@ SELECT * FROM unicode_test;
 (0 rows)
 
 SELECT unicode_plan1();
-ERROR:  plpy.SPIError: could not convert Python Unicode object to PostgreSQL server encoding
+ERROR:  spiexceptions.InternalError: could not convert Python Unicode object to PostgreSQL server encoding
 DETAIL:  UnicodeEncodeError: 'ascii' codec can't encode character u'\x80' in position 0: ordinal not in range(128)
 CONTEXT:  PL/Python function "unicode_plan1"
 SELECT unicode_plan2();
