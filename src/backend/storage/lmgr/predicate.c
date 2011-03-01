@@ -124,10 +124,6 @@
  *	SerializableXactHashLock
  *		- Protects both PredXact and SerializableXidHash.
  *
- *	PredicateLockNextRowLinkLock
- *		- Protects the priorVersionOfRow and nextVersionOfRow fields of
- *			PREDICATELOCKTARGET when linkage is being created or destroyed.
- *
  *
  * Portions Copyright (c) 1996-2011, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
@@ -444,8 +440,6 @@ static void ReleaseOneSerializableXact(SERIALIZABLEXACT *sxact, bool partial,
 						   bool summarize);
 static bool XidIsConcurrent(TransactionId xid);
 static void CheckTargetForConflictsIn(PREDICATELOCKTARGETTAG *targettag);
-static bool CheckSingleTargetForConflictsIn(PREDICATELOCKTARGETTAG *targettag,
-						  PREDICATELOCKTARGETTAG *nexttargettag);
 static void FlagRWConflict(SERIALIZABLEXACT *reader, SERIALIZABLEXACT *writer);
 static void OnConflict_CheckForSerializationFailure(const SERIALIZABLEXACT *reader,
 										SERIALIZABLEXACT *writer);
@@ -1044,7 +1038,6 @@ InitPredicateLocks(void)
 		PredXact->LastSxactCommitSeqNo = FirstNormalSerCommitSeqNo - 1;
 		PredXact->CanPartialClearThrough = 0;
 		PredXact->HavePartialClearedThrough = 0;
-		PredXact->NeedTargetLinkCleanup = false;
 		requestSize = mul_size((Size) max_table_size,
 							   PredXactListElementDataSize);
 		PredXact->element = ShmemAlloc(requestSize);
@@ -1651,9 +1644,10 @@ PageIsPredicateLocked(const Relation relation, const BlockNumber blkno)
  * Important note: this function may return false even if the lock is
  * being held, because it uses the local lock table which is not
  * updated if another transaction modifies our lock list (e.g. to
- * split an index page). However, it will never return true if the
- * lock is not held. We only use this function in circumstances where
- * such false negatives are acceptable.
+ * split an index page). It can also return true when a coarser
+ * granularity lock that covers this target is being held. Be careful
+ * to only use this function in circumstances where such errors are
+ * acceptable!
  */
 static bool
 PredicateLockExists(const PREDICATELOCKTARGETTAG *targettag)
@@ -1717,6 +1711,9 @@ GetParentPredicateLockTag(const PREDICATELOCKTARGETTAG *tag,
 /*
  * Check whether the lock we are considering is already covered by a
  * coarser lock for our transaction.
+ *
+ * Like PredicateLockExists, this function might return a false
+ * negative, but it will never return a false positive.
  */
 static bool
 CoarserLockCovers(const PREDICATELOCKTARGETTAG *newtargettag)
@@ -1747,40 +1744,12 @@ static void
 RemoveTargetIfNoLongerUsed(PREDICATELOCKTARGET *target, uint32 targettaghash)
 {
 	PREDICATELOCKTARGET *rmtarget;
-	PREDICATELOCKTARGET *next;
 
 	Assert(LWLockHeldByMe(SerializablePredicateLockListLock));
 
 	/* Can't remove it until no locks at this target. */
 	if (!SHMQueueEmpty(&target->predicateLocks))
 		return;
-
-	/* Can't remove it if there are locks for a prior row version. */
-	LWLockAcquire(PredicateLockNextRowLinkLock, LW_EXCLUSIVE);
-	if (target->priorVersionOfRow != NULL)
-	{
-		LWLockRelease(PredicateLockNextRowLinkLock);
-		return;
-	}
-
-	/*
-	 * We are going to release this target,  This requires that we let the
-	 * next version of the row (if any) know that it's previous version is
-	 * done.
-	 *
-	 * It might be that the link was all that was keeping the other target
-	 * from cleanup, but we can't clean that up here -- LW locking is all
-	 * wrong for that.	We'll pass the HTAB in the general cleanup function to
-	 * get rid of such "dead" targets.
-	 */
-	next = target->nextVersionOfRow;
-	if (next != NULL)
-	{
-		next->priorVersionOfRow = NULL;
-		if (SHMQueueEmpty(&next->predicateLocks))
-			PredXact->NeedTargetLinkCleanup = true;
-	}
-	LWLockRelease(PredicateLockNextRowLinkLock);
 
 	/* Actually remove the target. */
 	rmtarget = hash_search_with_hash_value(PredicateLockTargetHash,
@@ -2065,11 +2034,7 @@ CreatePredicateLock(const PREDICATELOCKTARGETTAG *targettag,
 				 errmsg("out of shared memory"),
 				 errhint("You might need to increase max_pred_locks_per_transaction.")));
 	if (!found)
-	{
 		SHMQueueInit(&(target->predicateLocks));
-		target->priorVersionOfRow = NULL;
-		target->nextVersionOfRow = NULL;
-	}
 
 	/* We've got the sxact and target, make sure they're joined. */
 	locktag.myTarget = target;
@@ -2125,8 +2090,6 @@ PredicateLockAcquire(const PREDICATELOCKTARGETTAG *targettag)
 		hash_search_with_hash_value(LocalPredicateLockHash,
 									targettag, targettaghash,
 									HASH_ENTER, &found);
-	/* We should not hold the lock (but its entry might still exist) */
-	Assert(!found || !locallock->held);
 	locallock->held = true;
 	if (!found)
 		locallock->childLocks = 0;
@@ -2215,6 +2178,7 @@ PredicateLockTuple(const Relation relation, const HeapTuple tuple)
 {
 	PREDICATELOCKTARGETTAG tag;
 	ItemPointer tid;
+	TransactionId targetxmin;
 
 	if (SkipSerialization(relation))
 		return;
@@ -2224,15 +2188,16 @@ PredicateLockTuple(const Relation relation, const HeapTuple tuple)
 	 */
 	if (relation->rd_index == NULL)
 	{
-		TransactionId myxid = GetTopTransactionIdIfAny();
+		TransactionId	myxid;
 
+		targetxmin = HeapTupleHeaderGetXmin(tuple->t_data);
+
+		myxid = GetTopTransactionIdIfAny();
 		if (TransactionIdIsValid(myxid))
 		{
-			TransactionId xid = HeapTupleHeaderGetXmin(tuple->t_data);
-
-			if (TransactionIdFollowsOrEquals(xid, TransactionXmin))
+			if (TransactionIdFollowsOrEquals(targetxmin, TransactionXmin))
 			{
-				xid = SubTransGetTopmostTransaction(xid);
+				TransactionId xid = SubTransGetTopmostTransaction(targetxmin);
 				if (TransactionIdEquals(xid, myxid))
 				{
 					/* We wrote it; we already have a write lock. */
@@ -2241,6 +2206,8 @@ PredicateLockTuple(const Relation relation, const HeapTuple tuple)
 			}
 		}
 	}
+	else
+		targetxmin = InvalidTransactionId;
 
 	/*
 	 * Do quick-but-not-definitive test for a relation lock first.	This will
@@ -2259,116 +2226,78 @@ PredicateLockTuple(const Relation relation, const HeapTuple tuple)
 									 relation->rd_node.dbNode,
 									 relation->rd_id,
 									 ItemPointerGetBlockNumber(tid),
-									 ItemPointerGetOffsetNumber(tid));
+									 ItemPointerGetOffsetNumber(tid),
+									 targetxmin);
 	PredicateLockAcquire(&tag);
 }
 
 /*
- * If the old tuple has any predicate locks, create a lock target for the
- * new tuple and point them at each other.	Conflict detection needs to
- * look for locks against prior versions of the row.
+ * If the old tuple has any predicate locks, copy them to the new target.
+ *
+ * This is called at an UPDATE, where any predicate locks held on the old
+ * tuple need to be copied to the new tuple, because logically they both
+ * represent the same row. A lock taken before the update must conflict
+ * with anyone locking the same row after the update.
  */
 void
 PredicateLockTupleRowVersionLink(const Relation relation,
 								 const HeapTuple oldTuple,
 								 const HeapTuple newTuple)
 {
-	PREDICATELOCKTARGETTAG oldtargettag;
-	PREDICATELOCKTARGETTAG newtargettag;
-	PREDICATELOCKTARGET *oldtarget;
-	PREDICATELOCKTARGET *newtarget;
-	PREDICATELOCKTARGET *next;
-	uint32		oldtargettaghash;
-	LWLockId	oldpartitionLock;
-	uint32		newtargettaghash;
-	LWLockId	newpartitionLock;
-	bool		found;
+	PREDICATELOCKTARGETTAG oldtupletag;
+	PREDICATELOCKTARGETTAG oldpagetag;
+	PREDICATELOCKTARGETTAG newtupletag;
+	BlockNumber	oldblk,
+				newblk;
+	OffsetNumber oldoff,
+				newoff;
+	TransactionId oldxmin,
+				newxmin;
 
-	SET_PREDICATELOCKTARGETTAG_TUPLE(oldtargettag,
+	oldblk = ItemPointerGetBlockNumber(&(oldTuple->t_self));
+	oldoff = ItemPointerGetOffsetNumber(&(oldTuple->t_self));
+	oldxmin = HeapTupleHeaderGetXmin(oldTuple->t_data);
+
+	newblk = ItemPointerGetBlockNumber(&(newTuple->t_self));
+	newoff = ItemPointerGetOffsetNumber(&(newTuple->t_self));
+	newxmin = HeapTupleHeaderGetXmin(newTuple->t_data);
+
+	SET_PREDICATELOCKTARGETTAG_TUPLE(oldtupletag,
 									 relation->rd_node.dbNode,
 									 relation->rd_id,
-							  ItemPointerGetBlockNumber(&(oldTuple->t_self)),
-							ItemPointerGetOffsetNumber(&(oldTuple->t_self)));
-	oldtargettaghash = PredicateLockTargetTagHashCode(&oldtargettag);
-	oldpartitionLock = PredicateLockHashPartitionLock(oldtargettaghash);
+									 oldblk,
+									 oldoff,
+									 oldxmin);
 
-	SET_PREDICATELOCKTARGETTAG_TUPLE(newtargettag,
+	SET_PREDICATELOCKTARGETTAG_PAGE(oldpagetag,
+									relation->rd_node.dbNode,
+									relation->rd_id,
+									oldblk);
+
+	SET_PREDICATELOCKTARGETTAG_TUPLE(newtupletag,
 									 relation->rd_node.dbNode,
 									 relation->rd_id,
-							  ItemPointerGetBlockNumber(&(newTuple->t_self)),
-							ItemPointerGetOffsetNumber(&(newTuple->t_self)));
-	newtargettaghash = PredicateLockTargetTagHashCode(&newtargettag);
-	newpartitionLock = PredicateLockHashPartitionLock(newtargettaghash);
+									 newblk,
+									 newoff,
+									 newxmin);
 
-	/* Lock lower numbered partition first. */
-	if (oldpartitionLock < newpartitionLock)
-	{
-		LWLockAcquire(oldpartitionLock, LW_SHARED);
-		LWLockAcquire(newpartitionLock, LW_EXCLUSIVE);
-	}
-	else if (newpartitionLock < oldpartitionLock)
-	{
-		LWLockAcquire(newpartitionLock, LW_EXCLUSIVE);
-		LWLockAcquire(oldpartitionLock, LW_SHARED);
-	}
-	else
-		LWLockAcquire(newpartitionLock, LW_EXCLUSIVE);
+	/*
+	 * A page-level lock on the page containing the old tuple counts too.
+	 * Anyone holding a lock on the page is logically holding a lock on
+	 * the old tuple, so we need to acquire a lock on his behalf on the
+	 * new tuple too. However, if the new tuple is on the same page as the
+	 * old one, the old page-level lock already covers the new tuple.
+	 *
+	 * A relation-level lock always covers both tuple versions, so we don't
+	 * need to worry about those here.
+	 */
+	LWLockAcquire(SerializablePredicateLockListLock, LW_EXCLUSIVE);
 
-	oldtarget = (PREDICATELOCKTARGET *)
-		hash_search_with_hash_value(PredicateLockTargetHash,
-									&oldtargettag, oldtargettaghash,
-									HASH_FIND, NULL);
+	TransferPredicateLocksToNewTarget(oldtupletag, newtupletag, false);
+	if (newblk != oldblk)
+		TransferPredicateLocksToNewTarget(oldpagetag, newtupletag, false);
 
-	/* Only need to link if there is an old target already. */
-	if (oldtarget)
-	{
-		LWLockAcquire(PredicateLockNextRowLinkLock, LW_EXCLUSIVE);
-
-		/* Guard against stale pointers from rollback. */
-		next = oldtarget->nextVersionOfRow;
-		if (next != NULL)
-		{
-			next->priorVersionOfRow = NULL;
-			oldtarget->nextVersionOfRow = NULL;
-		}
-
-		/* Find or create the new target, and link old and new. */
-		newtarget = (PREDICATELOCKTARGET *)
-			hash_search_with_hash_value(PredicateLockTargetHash,
-										&newtargettag, newtargettaghash,
-										HASH_ENTER, &found);
-		if (!newtarget)
-			ereport(ERROR,
-					(errcode(ERRCODE_OUT_OF_MEMORY),
-					 errmsg("out of shared memory"),
-					 errhint("You might need to increase max_pred_locks_per_transaction.")));
-		if (!found)
-		{
-			SHMQueueInit(&(newtarget->predicateLocks));
-			newtarget->nextVersionOfRow = NULL;
-		}
-		else
-			Assert(newtarget->priorVersionOfRow == NULL);
-
-		newtarget->priorVersionOfRow = oldtarget;
-		oldtarget->nextVersionOfRow = newtarget;
-
-		LWLockRelease(PredicateLockNextRowLinkLock);
-	}
-
-	/* Release lower number partition last. */
-	if (oldpartitionLock < newpartitionLock)
-	{
-		LWLockRelease(newpartitionLock);
-		LWLockRelease(oldpartitionLock);
-	}
-	else if (newpartitionLock < oldpartitionLock)
-	{
-		LWLockRelease(oldpartitionLock);
-		LWLockRelease(newpartitionLock);
-	}
-	else
-		LWLockRelease(newpartitionLock);
+	LWLockRelease(SerializablePredicateLockListLock);
 }
 
 
@@ -2436,6 +2365,17 @@ DeleteLockTarget(PREDICATELOCKTARGET *target, uint32 targettaghash)
  * allocate the new target or locks. Guaranteed to always succeed if
  * removeOld is set (by using the reserved entry in
  * PredicateLockTargetHash for scratch space).
+ *
+ * Warning: the "removeOld" option should be used only with care,
+ * because this function does not (indeed, can not) update other
+ * backends' LocalPredicateLockHash. If we are only adding new
+ * entries, this is not a problem: the local lock table is used only
+ * as a hint, so missing entries for locks that are held are
+ * OK. Having entries for locks that are no longer held, as can happen
+ * when using "removeOld", is not in general OK. We can only use it
+ * safely when replacing a lock with a coarser-granularity lock that
+ * covers it, or if we are absolutely certain that no one will need to
+ * refer to that lock in the future.
  *
  * Caller must hold SerializablePredicateLockListLock.
  */
@@ -2533,11 +2473,7 @@ TransferPredicateLocksToNewTarget(const PREDICATELOCKTARGETTAG oldtargettag,
 
 		/* If we created a new entry, initialize it */
 		if (!found)
-		{
 			SHMQueueInit(&(newtarget->predicateLocks));
-			newtarget->priorVersionOfRow = NULL;
-			newtarget->nextVersionOfRow = NULL;
-		}
 
 		newpredlocktag.myTarget = newtarget;
 
@@ -2704,7 +2640,14 @@ PredicateLockPageSplit(const Relation relation, const BlockNumber oldblkno,
 											&newtargettag);
 		Assert(success);
 
-		/* Move the locks to the parent. This shouldn't fail.  */
+		/*
+		 * Move the locks to the parent. This shouldn't fail.
+		 *
+		 * Note that here we are removing locks held by other
+		 * backends, leading to a possible inconsistency in their
+		 * local lock hash table. This is OK because we're replacing
+		 * it with a lock that covers the old one.
+		 */
 		success = TransferPredicateLocksToNewTarget(oldtargettag,
 													newtargettag,
 													true);
@@ -2727,36 +2670,19 @@ void
 PredicateLockPageCombine(const Relation relation, const BlockNumber oldblkno,
 						 const BlockNumber newblkno)
 {
-	PREDICATELOCKTARGETTAG oldtargettag;
-	PREDICATELOCKTARGETTAG newtargettag;
-	bool		success;
-
-
-	if (SkipSplitTracking(relation))
-		return;
-
-	Assert(oldblkno != newblkno);
-	Assert(BlockNumberIsValid(oldblkno));
-	Assert(BlockNumberIsValid(newblkno));
-
-	SET_PREDICATELOCKTARGETTAG_PAGE(oldtargettag,
-									relation->rd_node.dbNode,
-									relation->rd_id,
-									oldblkno);
-	SET_PREDICATELOCKTARGETTAG_PAGE(newtargettag,
-									relation->rd_node.dbNode,
-									relation->rd_id,
-									newblkno);
-
-	LWLockAcquire(SerializablePredicateLockListLock, LW_EXCLUSIVE);
-
-	/* Move the locks. This shouldn't fail. */
-	success = TransferPredicateLocksToNewTarget(oldtargettag,
-												newtargettag,
-												true);
-	Assert(success);
-
-	LWLockRelease(SerializablePredicateLockListLock);
+	/*
+	 * Page combines differ from page splits in that we ought to be
+	 * able to remove the locks on the old page after transferring
+	 * them to the new page, instead of duplicating them. However,
+	 * because we can't edit other backends' local lock tables,
+	 * removing the old lock would leave them with an entry in their
+	 * LocalPredicateLockHash for a lock they're not holding, which
+	 * isn't acceptable. So we wind up having to do the same work as a
+	 * page split, acquiring a lock on the new page and keeping the old
+	 * page locked too. That can lead to some false positives, but
+	 * should be rare in practice.
+	 */
+	PredicateLockPageSplit(relation, oldblkno, newblkno);
 }
 
 /*
@@ -3132,9 +3058,6 @@ ClearOldPredicateLocks(void)
 {
 	SERIALIZABLEXACT *finishedSxact;
 	PREDICATELOCK *predlock;
-	int			i;
-	HASH_SEQ_STATUS seqstat;
-	PREDICATELOCKTARGET *locktarget;
 
 	LWLockAcquire(SerializableFinishedListLock, LW_EXCLUSIVE);
 	finishedSxact = (SERIALIZABLEXACT *)
@@ -3232,35 +3155,6 @@ ClearOldPredicateLocks(void)
 
 	LWLockRelease(SerializablePredicateLockListLock);
 	LWLockRelease(SerializableFinishedListLock);
-
-	if (!PredXact->NeedTargetLinkCleanup)
-		return;
-
-	/*
-	 * Clean up any targets which were disconnected from a prior version with
-	 * no predicate locks attached.
-	 */
-	for (i = 0; i < NUM_PREDICATELOCK_PARTITIONS; i++)
-		LWLockAcquire(FirstPredicateLockMgrLock + i, LW_EXCLUSIVE);
-	LWLockAcquire(PredicateLockNextRowLinkLock, LW_SHARED);
-
-	hash_seq_init(&seqstat, PredicateLockTargetHash);
-	while ((locktarget = (PREDICATELOCKTARGET *) hash_seq_search(&seqstat)))
-	{
-		if (SHMQueueEmpty(&locktarget->predicateLocks)
-			&& locktarget->priorVersionOfRow == NULL
-			&& locktarget->nextVersionOfRow == NULL)
-		{
-			hash_search(PredicateLockTargetHash, &locktarget->tag,
-						HASH_REMOVE, NULL);
-		}
-	}
-
-	PredXact->NeedTargetLinkCleanup = false;
-
-	LWLockRelease(PredicateLockNextRowLinkLock);
-	for (i = NUM_PREDICATELOCK_PARTITIONS - 1; i >= 0; i--)
-		LWLockRelease(FirstPredicateLockMgrLock + i);
 }
 
 /*
@@ -3676,38 +3570,15 @@ CheckForSerializableConflictOut(const bool visible, const Relation relation,
 }
 
 /*
- * Check a particular target for rw-dependency conflict in. This will
- * also check prior versions of a tuple, if any.
+ * Check a particular target for rw-dependency conflict in.
  */
 static void
 CheckTargetForConflictsIn(PREDICATELOCKTARGETTAG *targettag)
-{
-	PREDICATELOCKTARGETTAG nexttargettag = { 0 };
-	PREDICATELOCKTARGETTAG thistargettag;
-
-	for (;;)
-	{
-		if (!CheckSingleTargetForConflictsIn(targettag, &nexttargettag))
-			break;
-		thistargettag = nexttargettag;
-		targettag = &thistargettag;
-	}
-}
-
-/*
- * Check a particular target for rw-dependency conflict in. If the tuple
- * has prior versions, returns true and *nexttargettag is set to the tag
- * of the prior tuple version.
- */
-static bool
-CheckSingleTargetForConflictsIn(PREDICATELOCKTARGETTAG *targettag,
-								PREDICATELOCKTARGETTAG *nexttargettag)
 {
 	uint32		targettaghash;
 	LWLockId	partitionLock;
 	PREDICATELOCKTARGET *target;
 	PREDICATELOCK *predlock;
-	bool		hasnexttarget = false;
 
 	Assert(MySerializableXact != InvalidSerializableXact);
 
@@ -3717,7 +3588,6 @@ CheckSingleTargetForConflictsIn(PREDICATELOCKTARGETTAG *targettag,
 	targettaghash = PredicateLockTargetTagHashCode(targettag);
 	partitionLock = PredicateLockHashPartitionLock(targettaghash);
 	LWLockAcquire(partitionLock, LW_SHARED);
-	LWLockAcquire(PredicateLockNextRowLinkLock, LW_SHARED);
 	target = (PREDICATELOCKTARGET *)
 		hash_search_with_hash_value(PredicateLockTargetHash,
 									targettag, targettaghash,
@@ -3725,21 +3595,9 @@ CheckSingleTargetForConflictsIn(PREDICATELOCKTARGETTAG *targettag,
 	if (!target)
 	{
 		/* Nothing has this target locked; we're done here. */
-		LWLockRelease(PredicateLockNextRowLinkLock);
 		LWLockRelease(partitionLock);
-		return false;
+		return;
 	}
-
-	/*
-	 * If the target is linked to a prior version of the row, save the tag so
-	 * that it can be used for iterative calls to this function.
-	 */
-	if (target->priorVersionOfRow != NULL)
-	{
-		*nexttargettag = target->priorVersionOfRow->tag;
-		hasnexttarget = true;
-	}
-	LWLockRelease(PredicateLockNextRowLinkLock);
 
 	/*
 	 * Each lock for an overlapping transaction represents a conflict: a
@@ -3828,17 +3686,25 @@ CheckSingleTargetForConflictsIn(PREDICATELOCKTARGETTAG *targettag,
 						hash_search_with_hash_value(LocalPredicateLockHash,
 													targettag, targettaghash,
 													HASH_FIND, NULL);
-					Assert(locallock != NULL);
-					Assert(locallock->held);
-					locallock->held = false;
 
-					if (locallock->childLocks == 0)
+					/*
+					 * Remove entry in local lock table if it exists and has
+					 * no children. It's OK if it doesn't exist; that means
+					 * the lock was transferred to a new target by a
+					 * different backend.
+					 */
+					if (locallock != NULL)
 					{
-						rmlocallock = (LOCALPREDICATELOCK *)
-							hash_search_with_hash_value(LocalPredicateLockHash,
-													targettag, targettaghash,
-														HASH_REMOVE, NULL);
-						Assert(rmlocallock == locallock);
+						locallock->held = false;
+
+						if (locallock->childLocks == 0)
+						{
+							rmlocallock = (LOCALPREDICATELOCK *)
+								hash_search_with_hash_value(LocalPredicateLockHash,
+															targettag, targettaghash,
+															HASH_REMOVE, NULL);
+							Assert(rmlocallock == locallock);
+						}
 					}
 
 					DecrementParentLocks(targettag);
@@ -3848,7 +3714,7 @@ CheckSingleTargetForConflictsIn(PREDICATELOCKTARGETTAG *targettag,
 					 * the target, bail out before re-acquiring the locks.
 					 */
 					if (rmtarget)
-						return hasnexttarget;
+						return;
 
 					/*
 					 * The list has been altered.  Start over at the front.
@@ -3895,8 +3761,6 @@ CheckSingleTargetForConflictsIn(PREDICATELOCKTARGETTAG *targettag,
 	}
 	LWLockRelease(SerializableXactHashLock);
 	LWLockRelease(partitionLock);
-
-	return hasnexttarget;
 }
 
 /*
@@ -3943,7 +3807,8 @@ CheckForSerializableConflictIn(const Relation relation, const HeapTuple tuple,
 										 relation->rd_node.dbNode,
 										 relation->rd_id,
 						 ItemPointerGetBlockNumber(&(tuple->t_data->t_ctid)),
-					   ItemPointerGetOffsetNumber(&(tuple->t_data->t_ctid)));
+					   ItemPointerGetOffsetNumber(&(tuple->t_data->t_ctid)),
+					   HeapTupleHeaderGetXmin(tuple->t_data));
 		CheckTargetForConflictsIn(&targettag);
 	}
 

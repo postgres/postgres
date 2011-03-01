@@ -824,7 +824,6 @@ restart:
 	if (_bt_page_recyclable(page))
 	{
 		/* Okay to recycle this page */
-		Assert(!PageIsPredicateLocked(rel, blkno));
 		RecordFreeIndexPage(rel, blkno);
 		vstate->totFreePages++;
 		stats->pages_deleted++;

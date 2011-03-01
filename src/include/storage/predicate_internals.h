@@ -150,8 +150,6 @@ typedef struct PredXactListData
 	SerCommitSeqNo HavePartialClearedThrough;	/* have cleared through this
 												 * seq no */
 	SERIALIZABLEXACT *OldCommittedSxact;		/* shared copy of dummy sxact */
-	bool		NeedTargetLinkCleanup;	/* to save cleanup effort for rare
-										 * case */
 
 	PredXactListElement element;
 } PredXactListData;
@@ -231,9 +229,13 @@ typedef struct SERIALIZABLEXID
 
 /*
  * The PREDICATELOCKTARGETTAG struct identifies a database object which can
- * be the target of predicate locks.  It is designed to fit into 16 bytes
- * with no padding.  Note that this would need adjustment if we widen Oid or
- * BlockNumber to more than 32 bits.
+ * be the target of predicate locks.
+ *
+ * Note that the hash function being used doesn't properly respect tag
+ * length -- it will go to a four byte boundary past the end of the tag.
+ * If you change this struct, make sure any slack space is initialized,
+ * so that any random bytes in the middle or at the end are not included
+ * in the hash.
  *
  * TODO SSI: If we always use the same fields for the same type of value, we
  * should rename these.  Holding off until it's clear there are no exceptions.
@@ -247,8 +249,8 @@ typedef struct PREDICATELOCKTARGETTAG
 	uint32		locktag_field1; /* a 32-bit ID field */
 	uint32		locktag_field2; /* a 32-bit ID field */
 	uint32		locktag_field3; /* a 32-bit ID field */
-	uint16		locktag_field4; /* a 16-bit ID field */
-	uint16		locktag_field5; /* a 16-bit ID field */
+	uint32		locktag_field4; /* a 32-bit ID field */
+	uint32		locktag_field5; /* a 32-bit ID field */
 } PREDICATELOCKTARGETTAG;
 
 /*
@@ -260,12 +262,11 @@ typedef struct PREDICATELOCKTARGETTAG
  * already have one.  An entry is removed when the last lock is removed from
  * its list.
  *
- * Because a check for predicate locks on a tuple target should also find
- * locks on previous versions of the same row, if there are any created by
- * overlapping transactions, we keep a pointer to the target for the prior
- * version of the row.	We also keep a pointer to the next version of the
- * row, so that when we no longer have any predicate locks and the back
- * pointer is clear, we can clean up the prior pointer for the next version.
+ * Because a particular target might become obsolete, due to update to a new
+ * version, before the reading transaction is obsolete, we need some way to
+ * prevent errors from reuse of a tuple ID.  Rather than attempting to clean
+ * up the targets as the related tuples are pruned or vacuumed, we check the
+ * xmin on access.  This should be far less costly.
  */
 typedef struct PREDICATELOCKTARGET PREDICATELOCKTARGET;
 
@@ -277,15 +278,6 @@ struct PREDICATELOCKTARGET
 	/* data */
 	SHM_QUEUE	predicateLocks; /* list of PREDICATELOCK objects assoc. with
 								 * predicate lock target */
-
-	/*
-	 * The following two pointers are only used for tuple locks, and are only
-	 * consulted for conflict detection and cleanup; not for granularity
-	 * promotion.
-	 */
-	PREDICATELOCKTARGET *priorVersionOfRow;		/* what other locks to check */
-	PREDICATELOCKTARGET *nextVersionOfRow;		/* who has pointer here for
-												 * more targets */
 };
 
 
@@ -387,30 +379,32 @@ typedef struct PredicateLockData
 	 (locktag).locktag_field2 = (reloid), \
 	 (locktag).locktag_field3 = InvalidBlockNumber, \
 	 (locktag).locktag_field4 = InvalidOffsetNumber, \
-	 (locktag).locktag_field5 = 0)
+	 (locktag).locktag_field5 = InvalidTransactionId)
 
 #define SET_PREDICATELOCKTARGETTAG_PAGE(locktag,dboid,reloid,blocknum) \
 	((locktag).locktag_field1 = (dboid), \
 	 (locktag).locktag_field2 = (reloid), \
 	 (locktag).locktag_field3 = (blocknum), \
 	 (locktag).locktag_field4 = InvalidOffsetNumber, \
-	 (locktag).locktag_field5 = 0)
+	 (locktag).locktag_field5 = InvalidTransactionId)
 
-#define SET_PREDICATELOCKTARGETTAG_TUPLE(locktag,dboid,reloid,blocknum,offnum) \
+#define SET_PREDICATELOCKTARGETTAG_TUPLE(locktag,dboid,reloid,blocknum,offnum,xmin) \
 	((locktag).locktag_field1 = (dboid), \
 	 (locktag).locktag_field2 = (reloid), \
 	 (locktag).locktag_field3 = (blocknum), \
 	 (locktag).locktag_field4 = (offnum), \
-	 (locktag).locktag_field5 = 0)
+	 (locktag).locktag_field5 = (xmin))
 
 #define GET_PREDICATELOCKTARGETTAG_DB(locktag) \
-	((locktag).locktag_field1)
+	((Oid) (locktag).locktag_field1)
 #define GET_PREDICATELOCKTARGETTAG_RELATION(locktag) \
-	((locktag).locktag_field2)
+	((Oid) (locktag).locktag_field2)
 #define GET_PREDICATELOCKTARGETTAG_PAGE(locktag) \
-	((locktag).locktag_field3)
+	((BlockNumber) (locktag).locktag_field3)
 #define GET_PREDICATELOCKTARGETTAG_OFFSET(locktag) \
-	((locktag).locktag_field4)
+	((OffsetNumber) (locktag).locktag_field4)
+#define GET_PREDICATELOCKTARGETTAG_XMIN(locktag) \
+	((TransactionId) (locktag).locktag_field5)
 #define GET_PREDICATELOCKTARGETTAG_TYPE(locktag)							 \
 	(((locktag).locktag_field4 != InvalidOffsetNumber) ? PREDLOCKTAG_TUPLE : \
 	 (((locktag).locktag_field3 != InvalidBlockNumber) ? PREDLOCKTAG_PAGE :   \
