@@ -14179,10 +14179,8 @@ postgres=# SELECT * FROM pg_xlogfile_name_offset(pg_stop_backup());
        <entry><type>text</type></entry>
        <entry>Get last transaction log location received and synced to disk by
         streaming replication. While streaming replication is in progress
-        this will increase monotonically. But when streaming replication is
-        restarted this will back off to the replication starting position,
-        typically the beginning of the WAL file containing the current
-        replay location.  If recovery has completed this will remain static at
+        this will increase monotonically. If recovery has completed this will
+        remain static at
         the value of the last WAL record received and synced to disk during
         recovery. If streaming replication is disabled, or if it has not yet
         started, the function returns NULL.

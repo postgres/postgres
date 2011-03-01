@@ -199,8 +199,17 @@ RequestXLogStreaming(XLogRecPtr recptr, const char *conninfo)
 	walrcv->walRcvState = WALRCV_STARTING;
 	walrcv->startTime = now;
 
-	walrcv->receivedUpto = recptr;
-	walrcv->latestChunkStart = recptr;
+	/*
+	 * If this is the first startup of walreceiver, we initialize
+	 * receivedUpto and latestChunkStart to receiveStart.
+	 */
+	if (walrcv->receiveStart.xlogid == 0 &&
+		walrcv->receiveStart.xrecoff == 0)
+	{
+		walrcv->receivedUpto = recptr;
+		walrcv->latestChunkStart = recptr;
+	}
+	walrcv->receiveStart = recptr;
 
 	SpinLockRelease(&walrcv->mutex);
 
