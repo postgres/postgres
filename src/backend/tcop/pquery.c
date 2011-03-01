@@ -170,11 +170,6 @@ ProcessQuery(PlannedStmt *plan,
 	elog(DEBUG3, "ProcessQuery");
 
 	/*
-	 * Must always set a snapshot for plannable queries.
-	 */
-	PushActiveSnapshot(GetTransactionSnapshot());
-
-	/*
 	 * Create the QueryDesc object
 	 */
 	queryDesc = CreateQueryDesc(plan, sourceText,
@@ -233,8 +228,6 @@ ProcessQuery(PlannedStmt *plan,
 	ExecutorEnd(queryDesc);
 
 	FreeQueryDesc(queryDesc);
-
-	PopActiveSnapshot();
 }
 
 /*
@@ -1164,8 +1157,8 @@ PortalRunUtility(Portal portal, Node *utilityStmt, bool isTopLevel,
 	 * seems to be to enumerate those that do not need one; this is a short
 	 * list.  Transaction control, LOCK, and SET must *not* set a snapshot
 	 * since they need to be executable at the start of a transaction-snapshot
-	 * mode transaction without freezing a snapshot.  By extension we allow SHOW
-	 * not to set a snapshot.  The other stmts listed are just efficiency
+	 * mode transaction without freezing a snapshot.  By extension we allow
+	 * SHOW not to set a snapshot.  The other stmts listed are just efficiency
 	 * hacks.  Beware of listing anything that can modify the database --- if,
 	 * say, it has to update an index with expressions that invoke
 	 * user-defined functions, then it had better have a snapshot.
@@ -1219,6 +1212,7 @@ PortalRunMulti(Portal portal, bool isTopLevel,
 			   DestReceiver *dest, DestReceiver *altdest,
 			   char *completionTag)
 {
+	bool		active_snapshot_set = false;
 	ListCell   *stmtlist_item;
 
 	/*
@@ -1262,6 +1256,20 @@ PortalRunMulti(Portal portal, bool isTopLevel,
 			if (log_executor_stats)
 				ResetUsage();
 
+			/*
+			 * Must always have a snapshot for plannable queries.  First time
+			 * through, take a new snapshot; for subsequent queries in the
+			 * same portal, just update the snapshot's copy of the command
+			 * counter.
+			 */
+			if (!active_snapshot_set)
+			{
+				PushActiveSnapshot(GetTransactionSnapshot());
+				active_snapshot_set = true;
+			}
+			else
+				UpdateActiveSnapshotCommandId();
+
 			if (pstmt->canSetTag)
 			{
 				/* statement can set tag string */
@@ -1291,11 +1299,29 @@ PortalRunMulti(Portal portal, bool isTopLevel,
 			 *
 			 * These are assumed canSetTag if they're the only stmt in the
 			 * portal.
+			 *
+			 * We must not set a snapshot here for utility commands (if one is
+			 * needed, PortalRunUtility will do it).  If a utility command is
+			 * alone in a portal then everything's fine.  The only case where
+			 * a utility command can be part of a longer list is that rules
+			 * are allowed to include NotifyStmt.  NotifyStmt doesn't care
+			 * whether it has a snapshot or not, so we just leave the current
+			 * snapshot alone if we have one.
 			 */
 			if (list_length(portal->stmts) == 1)
-				PortalRunUtility(portal, stmt, isTopLevel, dest, completionTag);
+			{
+				Assert(!active_snapshot_set);
+				/* statement can set tag string */
+				PortalRunUtility(portal, stmt, isTopLevel,
+								 dest, completionTag);
+			}
 			else
-				PortalRunUtility(portal, stmt, isTopLevel, altdest, NULL);
+			{
+				Assert(IsA(stmt, NotifyStmt));
+				/* stmt added by rewrite cannot set tag */
+				PortalRunUtility(portal, stmt, isTopLevel,
+								 altdest, NULL);
+			}
 		}
 
 		/*
@@ -1312,6 +1338,10 @@ PortalRunMulti(Portal portal, bool isTopLevel,
 
 		MemoryContextDeleteChildren(PortalGetHeapMemory(portal));
 	}
+
+	/* Pop the snapshot if we pushed one. */
+	if (active_snapshot_set)
+		PopActiveSnapshot();
 
 	/*
 	 * If a command completion tag was supplied, use it.  Otherwise use the

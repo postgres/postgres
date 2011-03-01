@@ -764,7 +764,9 @@ fmgr_sql_validator(PG_FUNCTION_ARGS)
 	Oid			funcoid = PG_GETARG_OID(0);
 	HeapTuple	tuple;
 	Form_pg_proc proc;
+	List	   *raw_parsetree_list;
 	List	   *querytree_list;
+	ListCell   *lc;
 	bool		isnull;
 	Datum		tmp;
 	char	   *prosrc;
@@ -835,17 +837,32 @@ fmgr_sql_validator(PG_FUNCTION_ARGS)
 		 * We can run the text through the raw parser though; this will at
 		 * least catch silly syntactic errors.
 		 */
+		raw_parsetree_list = pg_parse_query(prosrc);
+
 		if (!haspolyarg)
 		{
-			querytree_list = pg_parse_and_rewrite(prosrc,
-												  proc->proargtypes.values,
-												  proc->pronargs);
+			/*
+			 * OK to do full precheck: analyze and rewrite the queries,
+			 * then verify the result type.
+			 */
+			querytree_list = NIL;
+			foreach(lc, raw_parsetree_list)
+			{
+				Node	   *parsetree = (Node *) lfirst(lc);
+				List	   *querytree_sublist;
+
+				querytree_sublist = pg_analyze_and_rewrite(parsetree,
+														   prosrc,
+														   proc->proargtypes.values,
+														   proc->pronargs);
+				querytree_list = list_concat(querytree_list,
+											 querytree_sublist);
+			}
+
 			(void) check_sql_fn_retval(funcoid, proc->prorettype,
 									   querytree_list,
 									   NULL, NULL);
 		}
-		else
-			querytree_list = pg_parse_query(prosrc);
 
 		error_context_stack = sqlerrcontext.previous;
 	}

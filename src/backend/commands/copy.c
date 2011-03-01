@@ -1216,7 +1216,8 @@ BeginCopy(bool is_from,
 		 * Use a snapshot with an updated command ID to ensure this query sees
 		 * results of any previously executed queries.
 		 */
-		PushUpdatedSnapshot(GetActiveSnapshot());
+		PushCopiedSnapshot(GetActiveSnapshot());
+		UpdateActiveSnapshotCommandId();
 
 		/* Create dest receiver for COPY OUT */
 		dest = CreateDestReceiver(DestCopyOut);

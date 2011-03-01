@@ -299,22 +299,33 @@ PushActiveSnapshot(Snapshot snap)
 }
 
 /*
- * PushUpdatedSnapshot
- *		As above, except we set the snapshot's CID to the current CID.
+ * PushCopiedSnapshot
+ *		As above, except forcibly copy the presented snapshot.
+ *
+ * This should be used when the ActiveSnapshot has to be modifiable, for
+ * example if the caller intends to call UpdateActiveSnapshotCommandId.
+ * The new snapshot will be released when popped from the stack.
  */
 void
-PushUpdatedSnapshot(Snapshot snapshot)
+PushCopiedSnapshot(Snapshot snapshot)
 {
-	Snapshot	newsnap;
+	PushActiveSnapshot(CopySnapshot(snapshot));
+}
 
-	/*
-	 * We cannot risk modifying a snapshot that's possibly already used
-	 * elsewhere, so make a new copy to scribble on.
-	 */
-	newsnap = CopySnapshot(snapshot);
-	newsnap->curcid = GetCurrentCommandId(false);
+/*
+ * UpdateActiveSnapshotCommandId
+ *
+ * Update the current CID of the active snapshot.  This can only be applied
+ * to a snapshot that is not referenced elsewhere.
+ */
+void
+UpdateActiveSnapshotCommandId(void)
+{
+	Assert(ActiveSnapshot != NULL);
+	Assert(ActiveSnapshot->as_snap->active_count == 1);
+	Assert(ActiveSnapshot->as_snap->regd_count == 0);
 
-	PushActiveSnapshot(newsnap);
+	ActiveSnapshot->as_snap->curcid = GetCurrentCommandId(false);
 }
 
 /*

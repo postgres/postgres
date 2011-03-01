@@ -28,7 +28,8 @@ extern Snapshot GetLatestSnapshot(void);
 extern void SnapshotSetCommandId(CommandId curcid);
 
 extern void PushActiveSnapshot(Snapshot snapshot);
-extern void PushUpdatedSnapshot(Snapshot snapshot);
+extern void PushCopiedSnapshot(Snapshot snapshot);
+extern void UpdateActiveSnapshotCommandId(void);
 extern void PopActiveSnapshot(void);
 extern Snapshot GetActiveSnapshot(void);
 extern bool ActiveSnapshotSet(void);
