@@ -84,6 +84,8 @@ static void show_hash_info(HashState *hashstate, ExplainState *es);
 static void show_foreignscan_info(ForeignScanState *fsstate, ExplainState *es);
 static const char *explain_get_index_name(Oid indexId);
 static void ExplainScanTarget(Scan *plan, ExplainState *es);
+static void ExplainModifyTarget(ModifyTable *plan, ExplainState *es);
+static void ExplainTargetRel(Plan *plan, Index rti, ExplainState *es);
 static void ExplainMemberNodes(List *plans, PlanState **planstates,
 				   List *ancestors, ExplainState *es);
 static void ExplainSubPlans(List *plans, List *ancestors,
@@ -851,6 +853,9 @@ ExplainNode(PlanState *planstate, List *ancestors,
 					ExplainPropertyText("Index Name", indexname, es);
 			}
 			break;
+		case T_ModifyTable:
+			ExplainModifyTarget((ModifyTable *) plan, es);
+			break;
 		case T_NestLoop:
 		case T_MergeJoin:
 		case T_HashJoin:
@@ -1554,14 +1559,39 @@ explain_get_index_name(Oid indexId)
 static void
 ExplainScanTarget(Scan *plan, ExplainState *es)
 {
+	ExplainTargetRel((Plan *) plan, plan->scanrelid, es);
+}
+
+/*
+ * Show the target of a ModifyTable node
+ */
+static void
+ExplainModifyTarget(ModifyTable *plan, ExplainState *es)
+{
+	Index		rti;
+
+	/*
+	 * We show the name of the first target relation.  In multi-target-table
+	 * cases this should always be the parent of the inheritance tree.
+	 */
+	Assert(plan->resultRelations != NIL);
+	rti = linitial_int(plan->resultRelations);
+
+	ExplainTargetRel((Plan *) plan, rti, es);
+}
+
+/*
+ * Show the target relation of a scan or modify node
+ */
+static void
+ExplainTargetRel(Plan *plan, Index rti, ExplainState *es)
+{
 	char	   *objectname = NULL;
 	char	   *namespace = NULL;
 	const char *objecttag = NULL;
 	RangeTblEntry *rte;
 
-	if (plan->scanrelid <= 0)	/* Is this still possible? */
-		return;
-	rte = rt_fetch(plan->scanrelid, es->rtable);
+	rte = rt_fetch(rti, es->rtable);
 
 	switch (nodeTag(plan))
 	{
@@ -1570,6 +1600,7 @@ ExplainScanTarget(Scan *plan, ExplainState *es)
 		case T_BitmapHeapScan:
 		case T_TidScan:
 		case T_ForeignScan:
+		case T_ModifyTable:
 			/* Assert it's on a real relation */
 			Assert(rte->rtekind == RTE_RELATION);
 			objectname = get_rel_name(rte->relid);
