@@ -430,18 +430,27 @@ WHERE t1.unique1 &lt; 100 AND t1.unique2 = t2.unique2;
 
    <para>
     The <literal>Total runtime</literal> shown by <command>EXPLAIN
-    ANALYZE</command> includes executor start-up and shut-down time, as well
-    as time spent processing the result rows.  It does not include parsing,
-    rewriting, or planning time.  For a <command>SELECT</> query, the total
-    run time will normally be just a little larger than the total time
-    reported for the top-level plan node.  For <command>INSERT</>,
-    <command>UPDATE</>, and <command>DELETE</> commands, the total run time
-    might be considerably larger, because it includes the time spent processing
-    the result rows.  For these commands, the time for the top plan node is
-    essentially the time spent locating the old rows and/or computing
-    the new ones, but it doesn't include the time spent applying the changes.
-    Time spent firing triggers, if any, is also outside the top plan node,
-    and is shown separately for each trigger.
+    ANALYZE</command> includes executor start-up and shut-down time, but not
+    parsing, rewriting, or planning time.  For <command>INSERT</>,
+    <command>UPDATE</>, and <command>DELETE</> commands, the time spent
+    applying the table changes is charged to a top-level Insert, Update,
+    or Delete plan node.  (The plan nodes underneath this node represent
+    the work of locating the old rows and/or computing the new ones.)
+    Time spent firing triggers, if any, is charged to the Insert,
+    Update, or Delete node, and is also shown separately for each trigger.
+    Note, however, that deferred triggers will not be fired until end of
+    transaction and are thus not accounted for in the output of
+    <command>EXPLAIN ANALYZE</command>.
+   </para>
+
+   <para>
+    There are two significant ways in which runtimes measured by
+    <command>EXPLAIN ANALYZE</command> can deviate from normal execution of
+    the same query.  First, since no output rows are delivered to the client,
+    network transmission costs and I/O formatting costs are not included.
+    Second, the overhead added by <command>EXPLAIN ANALYZE</command> can be
+    significant, especially on machines with slow <function>gettimeofday()</>
+    kernel calls.
    </para>
 
    <para>
