@@ -3936,6 +3936,7 @@ PLy_add_exceptions(PyObject *plpy)
 #endif
 	if (PyModule_AddObject(plpy, "spiexceptions", excmod) < 0)
 		PLy_elog(ERROR, "failed to add the spiexceptions module");
+	Py_INCREF(excmod);
 
 	PLy_exc_error = PyErr_NewException("plpy.Error", NULL, NULL);
 	PLy_exc_fatal = PyErr_NewException("plpy.Fatal", NULL, NULL);
