@@ -621,6 +621,16 @@ CREATE TYPE <replaceable class="parameter">name</replaceable>
      </para>
     </listitem>
    </varlistentry>
+
+   <varlistentry>
+    <term><replaceable class="parameter">collatable</replaceable></term>
+    <listitem>
+     <para>
+      True if this type's operations can use collation information.
+      The default is false.
+     </para>
+    </listitem>
+   </varlistentry>
   </variablelist>
  </refsect1>
 
