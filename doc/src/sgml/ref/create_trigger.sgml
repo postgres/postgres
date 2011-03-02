@@ -22,9 +22,10 @@ PostgreSQL documentation
  <refsynopsisdiv>
 <synopsis>
 CREATE [ CONSTRAINT ] TRIGGER <replaceable class="PARAMETER">name</replaceable> { BEFORE | AFTER | INSTEAD OF } { <replaceable class="PARAMETER">event</replaceable> [ OR ... ] }
-    ON <replaceable class="PARAMETER">table</replaceable> [ FOR [ EACH ] { ROW | STATEMENT } ]
+    ON <replaceable class="PARAMETER">table</replaceable>
     [ FROM <replaceable class="parameter">referenced_table_name</replaceable> ]
     { NOT DEFERRABLE | [ DEFERRABLE ] { INITIALLY IMMEDIATE | INITIALLY DEFERRED } }
+    [ FOR [ EACH ] { ROW | STATEMENT } ]
     [ WHEN ( <replaceable class="parameter">condition</replaceable> ) ]
     EXECUTE PROCEDURE <replaceable class="PARAMETER">function_name</replaceable> ( <replaceable class="PARAMETER">arguments</replaceable> )
 </synopsis>
@@ -518,8 +519,8 @@ CREATE TRIGGER view_insert
    deletes fire <emphasis>after</> the cascaded <literal>DELETE</> completes.
    The <productname>PostgreSQL</productname> behavior is for <literal>BEFORE
    DELETE</literal> to always fire before the delete action, even a cascading
-   one.  This is considered more consistent.  There is also unpredictable
-   behavior when <literal>BEFORE</literal> triggers modify rows or prevent
+   one.  This is considered more consistent.  There is also nonstandard
+   behavior if <literal>BEFORE</literal> triggers modify rows or prevent
    updates during an update that is caused by a referential action.  This can
    lead to constraint violations or stored data that does not honor the
    referential constraint.
