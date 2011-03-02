@@ -92,6 +92,14 @@ SELECT count(*) FROM timestamptztmp WHERE a >  '2018-12-18 10:59:54 GMT+4';
    157
 (1 row)
 
+SELECT a, a <-> '2018-12-18 10:59:54 GMT+2' FROM timestamptztmp ORDER BY a <-> '2018-12-18 10:59:54 GMT+2' LIMIT 3;
+              a               |             ?column?              
+------------------------------+-----------------------------------
+ Tue Dec 18 05:59:54 2018 PST | @ 1 hour
+ Thu Jan 10 03:01:34 2019 PST | @ 22 days 22 hours 1 min 40 secs
+ Thu Jan 24 12:28:12 2019 PST | @ 37 days 7 hours 28 mins 18 secs
+(3 rows)
+
 CREATE INDEX timestamptzidx ON timestamptztmp USING gist ( a );
 SET enable_seqscan=off;
 SELECT count(*) FROM timestamptztmp WHERE a <  '2018-12-18 10:59:54 GMT+3'::timestamptz;
@@ -183,4 +191,21 @@ SELECT count(*) FROM timestamptztmp WHERE a >  '2018-12-18 10:59:54 GMT+4'::time
 -------
    157
 (1 row)
+
+EXPLAIN (COSTS OFF)
+SELECT a, a <-> '2018-12-18 10:59:54 GMT+2' FROM timestamptztmp ORDER BY a <-> '2018-12-18 10:59:54 GMT+2' LIMIT 3;
+                                     QUERY PLAN                                     
+------------------------------------------------------------------------------------
+ Limit
+   ->  Index Scan using timestamptzidx on timestamptztmp
+         Order By: (a <-> 'Tue Dec 18 04:59:54 2018 PST'::timestamp with time zone)
+(3 rows)
+
+SELECT a, a <-> '2018-12-18 10:59:54 GMT+2' FROM timestamptztmp ORDER BY a <-> '2018-12-18 10:59:54 GMT+2' LIMIT 3;
+              a               |             ?column?              
+------------------------------+-----------------------------------
+ Tue Dec 18 05:59:54 2018 PST | @ 1 hour
+ Thu Jan 10 03:01:34 2019 PST | @ 22 days 22 hours 1 min 40 secs
+ Thu Jan 24 12:28:12 2019 PST | @ 37 days 7 hours 28 mins 18 secs
+(3 rows)
 

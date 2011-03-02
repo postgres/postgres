@@ -32,6 +32,14 @@ SELECT count(*) FROM float8tmp WHERE a >  -1890.0;
    306
 (1 row)
 
+SELECT a, a <-> '-1890.0' FROM float8tmp ORDER BY a <-> '-1890.0' LIMIT 3;
+      a       |  ?column?  
+--------------+------------
+        -1890 |          0
+ -2003.634512 | 113.634512
+  -1769.73634 |  120.26366
+(3 rows)
+
 CREATE INDEX float8idx ON float8tmp USING gist ( a );
 SET enable_seqscan=off;
 SELECT count(*) FROM float8tmp WHERE a <  -1890.0::float8;
@@ -63,4 +71,21 @@ SELECT count(*) FROM float8tmp WHERE a >  -1890.0::float8;
 -------
    306
 (1 row)
+
+EXPLAIN (COSTS OFF)
+SELECT a, a <-> '-1890.0' FROM float8tmp ORDER BY a <-> '-1890.0' LIMIT 3;
+                     QUERY PLAN                      
+-----------------------------------------------------
+ Limit
+   ->  Index Scan using float8idx on float8tmp
+         Order By: (a <-> (-1890)::double precision)
+(3 rows)
+
+SELECT a, a <-> '-1890.0' FROM float8tmp ORDER BY a <-> '-1890.0' LIMIT 3;
+      a       |  ?column?  
+--------------+------------
+        -1890 |          0
+ -2003.634512 | 113.634512
+  -1769.73634 |  120.26366
+(3 rows)
 

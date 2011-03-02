@@ -188,16 +188,13 @@ gbt_num_bin_union(Datum *u, GBT_NUMKEY *e, const gbtree_ninfo *tinfo)
 */
 
 bool
-gbt_num_consistent(
-				   const GBT_NUMKEY_R *key,
+gbt_num_consistent(const GBT_NUMKEY_R *key,
 				   const void *query,
 				   const StrategyNumber *strategy,
 				   bool is_leaf,
-				   const gbtree_ninfo *tinfo
-)
+				   const gbtree_ninfo *tinfo)
 {
-
-	bool		retval = FALSE;
+	bool		retval;
 
 	switch (*strategy)
 	{
@@ -214,7 +211,7 @@ gbt_num_consistent(
 			if (is_leaf)
 				retval = (*tinfo->f_eq) (query, key->lower);
 			else
-				retval = (*tinfo->f_le) (key->lower, query) && (*tinfo->f_le) (query, key->upper);
+				retval = ((*tinfo->f_le) (key->lower, query) && (*tinfo->f_le) (query, key->upper)) ? true : false;
 			break;
 		case BTGreaterStrategyNumber:
 			if (is_leaf)
@@ -226,14 +223,40 @@ gbt_num_consistent(
 			retval = (*tinfo->f_le) (query, key->upper);
 			break;
 		case BtreeGistNotEqualStrategyNumber:
-			retval = ! ((*tinfo->f_eq) (query, key->lower) &&
-				(*tinfo->f_eq) (query, key->upper));
+			retval = (! ((*tinfo->f_eq) (query, key->lower) &&
+				(*tinfo->f_eq) (query, key->upper)))  ? true : false;
 			break;
 		default:
-			retval = FALSE;
+			retval = false;
 	}
 
 	return (retval);
+}
+
+
+/*
+** The GiST distance method (for KNN-Gist)
+*/
+
+float8
+gbt_num_distance(const GBT_NUMKEY_R *key,
+				 const void *query,
+				 bool is_leaf,
+				 const gbtree_ninfo *tinfo)
+{
+	float8		retval;
+
+	if (tinfo->f_dist == NULL)
+		elog(ERROR, "KNN search is not supported for btree_gist type %d",
+			 (int) tinfo->t);
+	if ( tinfo->f_le(query, key->lower) )
+		retval = tinfo->f_dist(query, key->lower);
+	else if ( tinfo->f_ge(query, key->upper) )
+		retval = tinfo->f_dist(query, key->upper);
+	else
+		retval = 0.0;
+
+	return retval;
 }
 
 

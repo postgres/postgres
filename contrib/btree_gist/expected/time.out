@@ -32,6 +32,14 @@ SELECT count(*) FROM timetmp WHERE a >  '10:57:11';
    292
 (1 row)
 
+SELECT a, a <-> '10:57:11' FROM timetmp ORDER BY a <-> '10:57:11' LIMIT 3;
+    a     |    ?column?     
+----------+-----------------
+ 10:57:11 | @ 0
+ 10:57:10 | @ 1 sec
+ 10:55:32 | @ 1 min 39 secs
+(3 rows)
+
 CREATE INDEX timeidx ON timetmp USING gist ( a );
 SET enable_seqscan=off;
 SELECT count(*) FROM timetmp WHERE a <  '10:57:11'::time;
@@ -63,4 +71,21 @@ SELECT count(*) FROM timetmp WHERE a >  '10:57:11'::time;
 -------
    292
 (1 row)
+
+EXPLAIN (COSTS OFF)
+SELECT a, a <-> '10:57:11' FROM timetmp ORDER BY a <-> '10:57:11' LIMIT 3;
+                          QUERY PLAN                          
+--------------------------------------------------------------
+ Limit
+   ->  Index Scan using timeidx on timetmp
+         Order By: (a <-> '10:57:11'::time without time zone)
+(3 rows)
+
+SELECT a, a <-> '10:57:11' FROM timetmp ORDER BY a <-> '10:57:11' LIMIT 3;
+    a     |    ?column?     
+----------+-----------------
+ 10:57:11 | @ 0
+ 10:57:10 | @ 1 sec
+ 10:55:32 | @ 1 min 39 secs
+(3 rows)
 

@@ -32,6 +32,14 @@ SELECT count(*) FROM int2tmp WHERE a >  237;
    248
 (1 row)
 
+SELECT a, a <-> '237' FROM int2tmp ORDER BY a <-> '237' LIMIT 3;
+  a  | ?column? 
+-----+----------
+ 237 |        0
+ 232 |        5
+ 228 |        9
+(3 rows)
+
 CREATE INDEX int2idx ON int2tmp USING gist ( a );
 SET enable_seqscan=off;
 SELECT count(*) FROM int2tmp WHERE a <  237::int2;
@@ -63,4 +71,21 @@ SELECT count(*) FROM int2tmp WHERE a >  237::int2;
 -------
    248
 (1 row)
+
+EXPLAIN (COSTS OFF)
+SELECT a, a <-> '237' FROM int2tmp ORDER BY a <-> '237' LIMIT 3;
+                QUERY PLAN                 
+-------------------------------------------
+ Limit
+   ->  Index Scan using int2idx on int2tmp
+         Order By: (a <-> 237::smallint)
+(3 rows)
+
+SELECT a, a <-> '237' FROM int2tmp ORDER BY a <-> '237' LIMIT 3;
+  a  | ?column? 
+-----+----------
+ 237 |        0
+ 232 |        5
+ 228 |        9
+(3 rows)
 

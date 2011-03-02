@@ -32,6 +32,14 @@ SELECT count(*) FROM int8tmp WHERE a >  464571291354841;
    270
 (1 row)
 
+SELECT a, a <-> '464571291354841' FROM int8tmp ORDER BY a <-> '464571291354841' LIMIT 3;
+        a        |    ?column?    
+-----------------+----------------
+ 464571291354841 |              0
+ 457257666629329 |  7313624725512
+ 478227196042750 | 13655904687909
+(3 rows)
+
 CREATE INDEX int8idx ON int8tmp USING gist ( a );
 SET enable_seqscan=off;
 SELECT count(*) FROM int8tmp WHERE a <  464571291354841::int8;
@@ -63,4 +71,21 @@ SELECT count(*) FROM int8tmp WHERE a >  464571291354841::int8;
 -------
    270
 (1 row)
+
+EXPLAIN (COSTS OFF)
+SELECT a, a <-> '464571291354841' FROM int8tmp ORDER BY a <-> '464571291354841' LIMIT 3;
+                    QUERY PLAN                     
+---------------------------------------------------
+ Limit
+   ->  Index Scan using int8idx on int8tmp
+         Order By: (a <-> 464571291354841::bigint)
+(3 rows)
+
+SELECT a, a <-> '464571291354841' FROM int8tmp ORDER BY a <-> '464571291354841' LIMIT 3;
+        a        |    ?column?    
+-----------------+----------------
+ 464571291354841 |              0
+ 457257666629329 |  7313624725512
+ 478227196042750 | 13655904687909
+(3 rows)
 

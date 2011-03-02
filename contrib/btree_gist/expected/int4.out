@@ -32,6 +32,14 @@ SELECT count(*) FROM int4tmp WHERE a >  237;
    248
 (1 row)
 
+SELECT a, a <-> '237' FROM int4tmp ORDER BY a <-> '237' LIMIT 3;
+  a  | ?column? 
+-----+----------
+ 237 |        0
+ 232 |        5
+ 228 |        9
+(3 rows)
+
 CREATE INDEX int4idx ON int4tmp USING gist ( a );
 SET enable_seqscan=off;
 SELECT count(*) FROM int4tmp WHERE a <  237::int4;
@@ -63,4 +71,21 @@ SELECT count(*) FROM int4tmp WHERE a >  237::int4;
 -------
    248
 (1 row)
+
+EXPLAIN (COSTS OFF)
+SELECT a, a <-> '237' FROM int4tmp ORDER BY a <-> '237' LIMIT 3;
+                QUERY PLAN                 
+-------------------------------------------
+ Limit
+   ->  Index Scan using int4idx on int4tmp
+         Order By: (a <-> 237)
+(3 rows)
+
+SELECT a, a <-> '237' FROM int4tmp ORDER BY a <-> '237' LIMIT 3;
+  a  | ?column? 
+-----+----------
+ 237 |        0
+ 232 |        5
+ 228 |        9
+(3 rows)
 

@@ -8,7 +8,7 @@
  </indexterm>
 
  <para>
-  <filename>btree_gist</> provides sample GiST operator classes that
+  <filename>btree_gist</> provides GiST index operator classes that
   implement B-tree equivalent behavior for the data types
   <type>int2</>, <type>int4</>, <type>int8</>, <type>float4</>,
   <type>float8</>, <type>numeric</>, <type>timestamp with time zone</>,
@@ -23,16 +23,32 @@
   In general, these operator classes will not outperform the equivalent
   standard B-tree index methods, and they lack one major feature of the
   standard B-tree code: the ability to enforce uniqueness.  However,
-  they are useful for GiST testing and as a base for developing other
-  GiST operator classes.
+  they provide some other features that are not available with a B-tree
+  index, as described below.  Also, these operator classes are useful
+  when a multi-column GiST index is needed, wherein some of the columns
+  are of data types that are only indexable with GiST but other columns
+  are just simple data types.  Lastly, these operator classes are useful for
+  GiST testing and as a base for developing other GiST operator classes.
  </para>
 
  <para>
-  In addition to the typical btree search operators, btree_gist also
-  provides search operators for <literal>&lt;&gt;</literal> (<quote>not
+  In addition to the typical B-tree search operators, <filename>btree_gist</>
+  also provides index support for <literal>&lt;&gt;</literal> (<quote>not
   equals</quote>). This may be useful in combination with an
   <link linkend="SQL-CREATETABLE-EXCLUDE">exclusion constraint</link>,
   as described below.
+ </para>
+
+ <para>
+  Also, for data types for which there is a natural distance metric,
+  <filename>btree_gist</> defines a distance operator <literal>&lt;-&gt;</>,
+  and provides GiST index support for nearest-neighbor searches using
+  this operator.  Distance operators are provided for
+  <type>int2</>, <type>int4</>, <type>int8</>, <type>float4</>,
+  <type>float8</>, <type>timestamp with time zone</>,
+  <type>timestamp without time zone</>,
+  <type>time without time zone</>, <type>date</>, <type>interval</>,
+  <type>oid</>, and <type>money</>.
  </para>
 
  <sect2>
@@ -48,6 +64,8 @@ CREATE TABLE test (a int4);
 CREATE INDEX testidx ON test USING gist (a);
 -- query
 SELECT * FROM test WHERE a &lt; 10;
+-- nearest-neighbor search: find the ten entries closest to "42"
+SELECT *, a &lt;-&gt; 42 AS dist FROM test ORDER BY a &lt;-&gt; 42 LIMIT 10;
 </programlisting>
 
   <para>

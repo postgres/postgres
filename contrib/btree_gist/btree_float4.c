@@ -17,6 +17,7 @@ PG_FUNCTION_INFO_V1(gbt_float4_compress);
 PG_FUNCTION_INFO_V1(gbt_float4_union);
 PG_FUNCTION_INFO_V1(gbt_float4_picksplit);
 PG_FUNCTION_INFO_V1(gbt_float4_consistent);
+PG_FUNCTION_INFO_V1(gbt_float4_distance);
 PG_FUNCTION_INFO_V1(gbt_float4_penalty);
 PG_FUNCTION_INFO_V1(gbt_float4_same);
 
@@ -24,6 +25,7 @@ Datum		gbt_float4_compress(PG_FUNCTION_ARGS);
 Datum		gbt_float4_union(PG_FUNCTION_ARGS);
 Datum		gbt_float4_picksplit(PG_FUNCTION_ARGS);
 Datum		gbt_float4_consistent(PG_FUNCTION_ARGS);
+Datum		gbt_float4_distance(PG_FUNCTION_ARGS);
 Datum		gbt_float4_penalty(PG_FUNCTION_ARGS);
 Datum		gbt_float4_same(PG_FUNCTION_ARGS);
 
@@ -70,6 +72,12 @@ gbt_float4key_cmp(const void *a, const void *b)
 	return (ia->lower > ib->lower) ? 1 : -1;
 }
 
+static float8
+gbt_float4_dist(const void *a, const void *b)
+{
+	return GET_FLOAT_DISTANCE(float4, a, b);
+}
+
 
 static const gbtree_ninfo tinfo =
 {
@@ -80,8 +88,25 @@ static const gbtree_ninfo tinfo =
 	gbt_float4eq,
 	gbt_float4le,
 	gbt_float4lt,
-	gbt_float4key_cmp
+	gbt_float4key_cmp,
+	gbt_float4_dist
 };
+
+
+PG_FUNCTION_INFO_V1(float4_dist);
+Datum       float4_dist(PG_FUNCTION_ARGS);
+Datum
+float4_dist(PG_FUNCTION_ARGS)
+{
+    float4		a = PG_GETARG_FLOAT4(0);
+	float4		b = PG_GETARG_FLOAT4(1);
+	float4		r;
+
+	r = a - b;
+	CHECKFLOATVAL(r, isinf(a) || isinf(b), true);
+
+	PG_RETURN_FLOAT4( Abs(r) );
+}
 
 
 /**************************************************
@@ -119,6 +144,25 @@ gbt_float4_consistent(PG_FUNCTION_ARGS)
 
 	PG_RETURN_BOOL(
 				   gbt_num_consistent(&key, (void *) &query, &strategy, GIST_LEAF(entry), &tinfo)
+		);
+}
+
+
+Datum
+gbt_float4_distance(PG_FUNCTION_ARGS)
+{
+	GISTENTRY  *entry = (GISTENTRY *) PG_GETARG_POINTER(0);
+	float4		query = PG_GETARG_FLOAT4(1);
+
+	/* Oid		subtype = PG_GETARG_OID(3); */
+	float4KEY  *kkk = (float4KEY *) DatumGetPointer(entry->key);
+	GBT_NUMKEY_R key;
+
+	key.lower = (GBT_NUMKEY *) &kkk->lower;
+	key.upper = (GBT_NUMKEY *) &kkk->upper;
+
+	PG_RETURN_FLOAT8(
+				   gbt_num_distance(&key, (void *) &query, GIST_LEAF(entry), &tinfo)
 		);
 }
 

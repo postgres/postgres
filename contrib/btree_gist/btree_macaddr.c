@@ -84,7 +84,8 @@ static const gbtree_ninfo tinfo =
 	gbt_macadeq,
 	gbt_macadle,
 	gbt_macadlt,
-	gbt_macadkey_cmp
+	gbt_macadkey_cmp,
+	NULL
 };
 
 

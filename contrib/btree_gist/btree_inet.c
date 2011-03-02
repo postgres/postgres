@@ -84,7 +84,8 @@ static const gbtree_ninfo tinfo =
 	gbt_ineteq,
 	gbt_inetle,
 	gbt_inetlt,
-	gbt_inetkey_cmp
+	gbt_inetkey_cmp,
+	NULL
 };
 
 
