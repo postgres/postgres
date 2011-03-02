@@ -2019,6 +2019,27 @@ GRANT SELECT ON triggers TO PUBLIC;
 
 CREATE VIEW usage_privileges AS
 
+    /* collations */
+    -- Collations have no real privileges, so we represent all collations with implicit usage privilege here.
+    SELECT CAST(u.rolname AS sql_identifier) AS grantor,
+           CAST('PUBLIC' AS sql_identifier) AS grantee,
+           CAST(current_database() AS sql_identifier) AS object_catalog,
+           CAST(n.nspname AS sql_identifier) AS object_schema,
+           CAST(c.collname AS sql_identifier) AS object_name,
+           CAST('COLLATION' AS character_data) AS object_type,
+           CAST('USAGE' AS character_data) AS privilege_type,
+           CAST('NO' AS yes_or_no) AS is_grantable
+
+    FROM pg_authid u,
+         pg_namespace n,
+         pg_collation c
+
+    WHERE u.oid = c.collowner
+          AND c.collnamespace = n.oid
+          AND c.collencoding = (SELECT encoding FROM pg_catalog.pg_database WHERE datname = pg_catalog.current_database())
+
+    UNION ALL
+
     /* domains */
     -- Domains have no real privileges, so we represent all domains with implicit usage privilege here.
     SELECT CAST(u.rolname AS sql_identifier) AS grantor,

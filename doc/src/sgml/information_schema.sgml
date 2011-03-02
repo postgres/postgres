@@ -3560,7 +3560,7 @@ ORDER BY c.ordinal_position;
      <row>
       <entry><literal>object_type</literal></entry>
       <entry><type>character_data</type></entry>
-      <entry><literal>DOMAIN</literal> or <literal>FOREIGN DATA WRAPPER</literal> or <literal>FOREIGN SERVER</literal></entry>
+      <entry><literal>COLLATION</literal> or <literal>DOMAIN</literal> or <literal>FOREIGN DATA WRAPPER</literal> or <literal>FOREIGN SERVER</literal></entry>
      </row>
 
      <row>
@@ -5497,15 +5497,15 @@ ORDER BY c.ordinal_position;
    <literal>USAGE</literal> privileges granted on various kinds of
    objects to a currently enabled role or by a currently enabled role.
    In <productname>PostgreSQL</productname>, this currently applies to
-   domains, foreign-data wrappers, and foreign servers.  There is one
+   collations, domains, foreign-data wrappers, and foreign servers.  There is one
    row for each combination of object, grantor, and grantee.
   </para>
 
   <para>
-   Since domains do not have real privileges
+   Since collations and domains do not have real privileges
    in <productname>PostgreSQL</productname>, this view shows implicit
    non-grantable <literal>USAGE</literal> privileges granted by the
-   owner to <literal>PUBLIC</literal> for all domains.  The other
+   owner to <literal>PUBLIC</literal> for all collations and domains.  The other
    object types, however, show real privileges.
   </para>
 
@@ -5556,7 +5556,7 @@ ORDER BY c.ordinal_position;
      <row>
       <entry><literal>object_type</literal></entry>
       <entry><type>character_data</type></entry>
-      <entry><literal>DOMAIN</literal> or <literal>FOREIGN DATA WRAPPER</literal> or <literal>FOREIGN SERVER</literal></entry>
+      <entry><literal>COLLATION</literal> or <literal>DOMAIN</literal> or <literal>FOREIGN DATA WRAPPER</literal> or <literal>FOREIGN SERVER</literal></entry>
      </row>
 
      <row>
