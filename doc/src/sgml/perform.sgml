@@ -436,10 +436,13 @@ WHERE t1.unique1 &lt; 100 AND t1.unique2 = t2.unique2;
     applying the table changes is charged to a top-level Insert, Update,
     or Delete plan node.  (The plan nodes underneath this node represent
     the work of locating the old rows and/or computing the new ones.)
-    Time spent firing triggers, if any, is charged to the Insert,
-    Update, or Delete node, and is also shown separately for each trigger.
-    Note, however, that deferred triggers will not be fired until end of
-    transaction and are thus not accounted for in the output of
+    Time spent executing <literal>BEFORE</> triggers, if any, is charged to
+    the related Insert, Update, or Delete node, although time spent executing
+    <literal>AFTER</> triggers is not.  The time spent in each trigger
+    (either <literal>BEFORE</> or <literal>AFTER</>) is also shown separately
+    and is included in total runtime.
+    Note, however, that deferred constraint triggers will not be executed
+    until end of transaction and are thus not shown by
     <command>EXPLAIN ANALYZE</command>.
    </para>
 
