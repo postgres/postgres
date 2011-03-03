@@ -74,3 +74,15 @@ ALTER EXTENSION citext ADD function strpos(citext,citext);
 ALTER EXTENSION citext ADD function replace(citext,citext,citext);
 ALTER EXTENSION citext ADD function split_part(citext,citext,integer);
 ALTER EXTENSION citext ADD function translate(citext,citext,text);
+
+--
+-- As of 9.1, type citext should be marked collatable.  There is no ALTER TYPE
+-- command for this, so we have to do it by poking the pg_type entry directly.
+-- Notes: 100 is the OID of the "pg_catalog.default" collation --- it seems
+-- easier and more reliable to hard-wire that here than to pull it out of
+-- pg_collation.  Also, we don't need a pg_depend entry since the default
+-- collation is pinned.
+--
+
+UPDATE pg_catalog.pg_type SET typcollation = 100
+WHERE oid = 'citext'::pg_catalog.regtype;
