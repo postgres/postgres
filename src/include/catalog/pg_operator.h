@@ -83,6 +83,13 @@ typedef FormData_pg_operator *Form_pg_operator;
  * ----------------
  */
 
+/*
+ * Note: every entry in pg_operator.h is expected to have a DESCR() comment.
+ * If the operator is a deprecated equivalent of some other entry, be sure
+ * to comment it as such so that initdb doesn't think it's a preferred name
+ * for the underlying function.
+ */
+
 DATA(insert OID =  15 ( "="		   PGNSP PGUID b t t	23	20	16 416	36 int48eq eqsel eqjoinsel ));
 DESCR("equal");
 DATA(insert OID =  36 ( "<>"	   PGNSP PGUID b f f	23	20	16 417	15 int48ne neqsel neqjoinsel ));
@@ -141,7 +148,7 @@ DESCR("equal");
 DATA(insert OID = 388 (  "!"	   PGNSP PGUID r f f	20	 0	1700  0  0 numeric_fac - - ));
 DESCR("factorial");
 DATA(insert OID = 389 (  "!!"	   PGNSP PGUID l f f	 0	20	1700  0  0 numeric_fac - - ));
-DESCR("factorial");
+DESCR("deprecated, use ! instead");
 DATA(insert OID = 385 (  "="	   PGNSP PGUID b f t	29	29	16 385	 0 cideq eqsel eqjoinsel ));
 DESCR("equal");
 DATA(insert OID = 386 (  "="	   PGNSP PGUID b f t	22	22	16 386	 0 int2vectoreq eqsel eqjoinsel ));
@@ -641,7 +648,7 @@ DESCR("is above (allows touching)");
 DATA(insert OID =  801 (  "<^"	   PGNSP PGUID b f f	603  603	 16    0  0 box_below_eq positionsel positionjoinsel ));
 DESCR("is below (allows touching)");
 DATA(insert OID =  802 (  "?#"	   PGNSP PGUID b f f	603  603	 16    0  0 box_overlap areasel areajoinsel ));
-DESCR("overlaps");
+DESCR("deprecated, use && instead");
 DATA(insert OID =  803 (  "#"	   PGNSP PGUID b f f	603  603	603    0  0 box_intersect - - ));
 DESCR("box intersection");
 DATA(insert OID =  804 (  "+"	   PGNSP PGUID b f f	603  600	603    0  0 box_add - - ));
@@ -1521,41 +1528,41 @@ DESCR("concatenate");
 
 /* obsolete names for contains/contained-by operators; remove these someday */
 DATA(insert OID = 2860 (  "@"	   PGNSP PGUID b f f 604 604	16 2861  0 poly_contained contsel contjoinsel ));
-DESCR("is contained by");
+DESCR("deprecated, use <@ instead");
 DATA(insert OID = 2861 (  "~"	   PGNSP PGUID b f f 604 604	16 2860  0 poly_contain contsel contjoinsel ));
-DESCR("contains");
+DESCR("deprecated, use @> instead");
 DATA(insert OID = 2862 (  "@"	   PGNSP PGUID b f f 603 603	16 2863  0 box_contained contsel contjoinsel ));
-DESCR("is contained by");
+DESCR("deprecated, use <@ instead");
 DATA(insert OID = 2863 (  "~"	   PGNSP PGUID b f f 603 603	16 2862  0 box_contain contsel contjoinsel ));
-DESCR("contains");
+DESCR("deprecated, use @> instead");
 DATA(insert OID = 2864 (  "@"	   PGNSP PGUID b f f 718 718	16 2865  0 circle_contained contsel contjoinsel ));
-DESCR("is contained by");
+DESCR("deprecated, use <@ instead");
 DATA(insert OID = 2865 (  "~"	   PGNSP PGUID b f f 718 718	16 2864  0 circle_contain contsel contjoinsel ));
-DESCR("contains");
+DESCR("deprecated, use @> instead");
 DATA(insert OID = 2866 (  "@"	   PGNSP PGUID b f f 600 603	16	 0	 0 on_pb - - ));
-DESCR("point inside box");
+DESCR("deprecated, use <@ instead");
 DATA(insert OID = 2867 (  "@"	   PGNSP PGUID b f f 600 602	16 2868  0 on_ppath - - ));
-DESCR("point within closed path, or point on open path");
+DESCR("deprecated, use <@ instead");
 DATA(insert OID = 2868 (  "~"	   PGNSP PGUID b f f 602 600	 16  2867  0 path_contain_pt - - ));
-DESCR("contains");
+DESCR("deprecated, use @> instead");
 DATA(insert OID = 2869 (  "@"	   PGNSP PGUID b f f 600 604	 16  2870  0 pt_contained_poly - - ));
-DESCR("is contained by");
+DESCR("deprecated, use <@ instead");
 DATA(insert OID = 2870 (  "~"	   PGNSP PGUID b f f 604 600	 16  2869  0 poly_contain_pt - - ));
-DESCR("contains");
+DESCR("deprecated, use @> instead");
 DATA(insert OID = 2871 (  "@"	   PGNSP PGUID b f f 600 718	 16  2872  0 pt_contained_circle - - ));
-DESCR("is contained by");
+DESCR("deprecated, use <@ instead");
 DATA(insert OID = 2872 (  "~"	   PGNSP PGUID b f f 718 600	 16  2871  0 circle_contain_pt - - ));
-DESCR("contains");
+DESCR("deprecated, use @> instead");
 DATA(insert OID = 2873 (  "@"	   PGNSP PGUID b f f 600 628 16   0  0 on_pl - - ));
-DESCR("point on line");
+DESCR("deprecated, use <@ instead");
 DATA(insert OID = 2874 (  "@"	   PGNSP PGUID b f f 600 601 16   0  0 on_ps - - ));
-DESCR("is contained by");
+DESCR("deprecated, use <@ instead");
 DATA(insert OID = 2875 (  "@"	   PGNSP PGUID b f f 601 628 16   0  0 on_sl - - ));
-DESCR("lseg on line");
+DESCR("deprecated, use <@ instead");
 DATA(insert OID = 2876 (  "@"	   PGNSP PGUID b f f 601 603 16   0  0 on_sb - - ));
-DESCR("is contained by");
+DESCR("deprecated, use <@ instead");
 DATA(insert OID = 2877 (  "~"	   PGNSP PGUID b f f 1034 1033	 16 0 0 aclcontains - - ));
-DESCR("contains");
+DESCR("deprecated, use @> instead");
 
 /* uuid operators */
 DATA(insert OID = 2972 (  "="	   PGNSP PGUID b t t 2950 2950 16 2972 2973 uuid_eq eqsel eqjoinsel ));
@@ -1607,9 +1614,9 @@ DESCR("text search match");
 DATA(insert OID = 3637 (  "@@"	   PGNSP PGUID b f f 3615	 3614	 16 3636	0	 ts_match_qv   tsmatchsel tsmatchjoinsel ));
 DESCR("text search match");
 DATA(insert OID = 3660 (  "@@@"    PGNSP PGUID b f f 3614	 3615	 16 3661	0	 ts_match_vq   tsmatchsel tsmatchjoinsel ));
-DESCR("text search match");
+DESCR("deprecated, use @@ instead");
 DATA(insert OID = 3661 (  "@@@"    PGNSP PGUID b f f 3615	 3614	 16 3660	0	 ts_match_qv   tsmatchsel tsmatchjoinsel ));
-DESCR("text search match");
+DESCR("deprecated, use @@ instead");
 DATA(insert OID = 3674 (  "<"	   PGNSP PGUID b f f 3615	 3615	 16 3679 3678	 tsquery_lt scalarltsel scalarltjoinsel ));
 DESCR("less than");
 DATA(insert OID = 3675 (  "<="	   PGNSP PGUID b f f 3615	 3615	 16 3678 3679	 tsquery_le scalarltsel scalarltjoinsel ));

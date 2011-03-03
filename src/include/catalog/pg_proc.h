@@ -108,6 +108,25 @@ typedef FormData_pg_proc *Form_pg_proc;
  * ----------------
  */
 
+/*
+ * Note: every entry in pg_proc.h is expected to have a DESCR() comment,
+ * except for functions that implement pg_operator.h operators and don't
+ * have a good reason to be called directly rather than via the operator.
+ * (If you do expect such a function to be used directly, you should
+ * duplicate the operator's comment.)  initdb will supply suitable default
+ * comments for functions referenced by pg_operator.
+ *
+ * Try to follow the style of existing functions' comments.
+ * Some recommended conventions:
+ *		"I/O" for typinput, typoutput, typreceive, typsend functions
+ *		"I/O typmod" for typmodin, typmodout functions
+ *		"aggregate transition function" for aggtransfn functions, unless
+ *					they are reasonably useful in their own right
+ *		"aggregate final function" for aggfinalfn functions (likewise)
+ *		"convert srctypename to desttypename" for cast functions
+ *		"less-equal-greater" for B-tree comparison functions
+ */
+
 /* keep the following ordered by OID so that later changes can be made easier */
 
 /* OIDS 1 - 99 */
@@ -165,59 +184,36 @@ DESCR("I/O");
 DATA(insert OID =  55 (  oidvectorout	   PGNSP PGUID 12 1 0 0 f f f t f i 1 0 2275 "30" _null_ _null_ _null_ _null_ oidvectorout _null_ _null_ _null_ ));
 DESCR("I/O");
 DATA(insert OID =  56 (  boollt			   PGNSP PGUID 12 1 0 0 f f f t f i 2 0 16 "16 16" _null_ _null_ _null_ _null_ boollt _null_ _null_ _null_ ));
-DESCR("implementation of < operator");
 DATA(insert OID =  57 (  boolgt			   PGNSP PGUID 12 1 0 0 f f f t f i 2 0 16 "16 16" _null_ _null_ _null_ _null_ boolgt _null_ _null_ _null_ ));
-DESCR("implementation of > operator");
 DATA(insert OID =  60 (  booleq			   PGNSP PGUID 12 1 0 0 f f f t f i 2 0 16 "16 16" _null_ _null_ _null_ _null_ booleq _null_ _null_ _null_ ));
-DESCR("implementation of = operator");
 DATA(insert OID =  61 (  chareq			   PGNSP PGUID 12 1 0 0 f f f t f i 2 0 16 "18 18" _null_ _null_ _null_ _null_ chareq _null_ _null_ _null_ ));
-DESCR("implementation of = operator");
 DATA(insert OID =  62 (  nameeq			   PGNSP PGUID 12 1 0 0 f f f t f i 2 0 16 "19 19" _null_ _null_ _null_ _null_ nameeq _null_ _null_ _null_ ));
-DESCR("implementation of = operator");
 DATA(insert OID =  63 (  int2eq			   PGNSP PGUID 12 1 0 0 f f f t f i 2 0 16 "21 21" _null_ _null_ _null_ _null_ int2eq _null_ _null_ _null_ ));
-DESCR("implementation of = operator");
 DATA(insert OID =  64 (  int2lt			   PGNSP PGUID 12 1 0 0 f f f t f i 2 0 16 "21 21" _null_ _null_ _null_ _null_ int2lt _null_ _null_ _null_ ));
-DESCR("implementation of < operator");
 DATA(insert OID =  65 (  int4eq			   PGNSP PGUID 12 1 0 0 f f f t f i 2 0 16 "23 23" _null_ _null_ _null_ _null_ int4eq _null_ _null_ _null_ ));
-DESCR("implementation of = operator");
 DATA(insert OID =  66 (  int4lt			   PGNSP PGUID 12 1 0 0 f f f t f i 2 0 16 "23 23" _null_ _null_ _null_ _null_ int4lt _null_ _null_ _null_ ));
-DESCR("implementation of < operator");
 DATA(insert OID =  67 (  texteq			   PGNSP PGUID 12 1 0 0 f f f t f i 2 0 16 "25 25" _null_ _null_ _null_ _null_ texteq _null_ _null_ _null_ ));
-DESCR("implementation of = operator");
 DATA(insert OID =  68 (  xideq			   PGNSP PGUID 12 1 0 0 f f f t f i 2 0 16 "28 28" _null_ _null_ _null_ _null_ xideq _null_ _null_ _null_ ));
-DESCR("implementation of = operator");
 DATA(insert OID =  69 (  cideq			   PGNSP PGUID 12 1 0 0 f f f t f i 2 0 16 "29 29" _null_ _null_ _null_ _null_ cideq _null_ _null_ _null_ ));
-DESCR("implementation of = operator");
 DATA(insert OID =  70 (  charne			   PGNSP PGUID 12 1 0 0 f f f t f i 2 0 16 "18 18" _null_ _null_ _null_ _null_ charne _null_ _null_ _null_ ));
-DESCR("implementation of <> operator");
 DATA(insert OID = 1246 (  charlt		   PGNSP PGUID 12 1 0 0 f f f t f i 2 0 16 "18 18" _null_ _null_ _null_ _null_ charlt _null_ _null_ _null_ ));
-DESCR("implementation of < operator");
 DATA(insert OID =  72 (  charle			   PGNSP PGUID 12 1 0 0 f f f t f i 2 0 16 "18 18" _null_ _null_ _null_ _null_ charle _null_ _null_ _null_ ));
-DESCR("implementation of <= operator");
 DATA(insert OID =  73 (  chargt			   PGNSP PGUID 12 1 0 0 f f f t f i 2 0 16 "18 18" _null_ _null_ _null_ _null_ chargt _null_ _null_ _null_ ));
-DESCR("implementation of > operator");
 DATA(insert OID =  74 (  charge			   PGNSP PGUID 12 1 0 0 f f f t f i 2 0 16 "18 18" _null_ _null_ _null_ _null_ charge _null_ _null_ _null_ ));
-DESCR("implementation of >= operator");
 DATA(insert OID =  77 (  int4			   PGNSP PGUID 12 1 0 0 f f f t f i 1 0 23	"18" _null_ _null_ _null_ _null_	chartoi4 _null_ _null_ _null_ ));
 DESCR("convert char to int4");
 DATA(insert OID =  78 (  char			   PGNSP PGUID 12 1 0 0 f f f t f i 1 0 18	"23" _null_ _null_ _null_ _null_	i4tochar _null_ _null_ _null_ ));
 DESCR("convert int4 to char");
 
 DATA(insert OID =  79 (  nameregexeq	   PGNSP PGUID 12 1 0 0 f f f t f i 2 0 16 "19 25" _null_ _null_ _null_ _null_ nameregexeq _null_ _null_ _null_ ));
-DESCR("implementation of ~ operator");
 DATA(insert OID = 1252 (  nameregexne	   PGNSP PGUID 12 1 0 0 f f f t f i 2 0 16 "19 25" _null_ _null_ _null_ _null_ nameregexne _null_ _null_ _null_ ));
-DESCR("implementation of !~ operator");
 DATA(insert OID = 1254 (  textregexeq	   PGNSP PGUID 12 1 0 0 f f f t f i 2 0 16 "25 25" _null_ _null_ _null_ _null_ textregexeq _null_ _null_ _null_ ));
-DESCR("implementation of ~ operator");
 DATA(insert OID = 1256 (  textregexne	   PGNSP PGUID 12 1 0 0 f f f t f i 2 0 16 "25 25" _null_ _null_ _null_ _null_ textregexne _null_ _null_ _null_ ));
-DESCR("implementation of !~ operator");
 DATA(insert OID = 1257 (  textlen		   PGNSP PGUID 12 1 0 0 f f f t f i 1 0 23 "25" _null_ _null_ _null_ _null_ textlen _null_ _null_ _null_ ));
 DESCR("length");
 DATA(insert OID = 1258 (  textcat		   PGNSP PGUID 12 1 0 0 f f f t f i 2 0 25 "25 25" _null_ _null_ _null_ _null_ textcat _null_ _null_ _null_ ));
-DESCR("implementation of || operator");
 
 DATA(insert OID =  84 (  boolne			   PGNSP PGUID 12 1 0 0 f f f t f i 2 0 16 "16 16" _null_ _null_ _null_ _null_ boolne _null_ _null_ _null_ ));
-DESCR("implementation of <> operator");
 DATA(insert OID =  89 (  version		   PGNSP PGUID 12 1 0 0 f f f t f s 0 0 25 "" _null_ _null_ _null_ _null_ pgsql_version _null_ _null_ _null_ ));
 DESCR("PostgreSQL version string");
 
@@ -245,12 +241,9 @@ DESCR("I/O");
 DATA(insert OID =  110 (  unknownout	   PGNSP PGUID 12 1 0 0 f f f t f i 1 0 2275 "705" _null_ _null_ _null_ _null_	unknownout _null_ _null_ _null_ ));
 DESCR("I/O");
 DATA(insert OID = 111 (  numeric_fac	   PGNSP PGUID 12 1 0 0 f f f t f i 1 0 1700 "20" _null_ _null_ _null_ _null_	numeric_fac _null_ _null_ _null_ ));
-DESCR("implementation of ! operator");
 
 DATA(insert OID = 115 (  box_above_eq	   PGNSP PGUID 12 1 0 0 f f f t f i 2 0 16 "603 603" _null_ _null_ _null_ _null_	box_above_eq _null_ _null_ _null_ ));
-DESCR("implementation of >^ operator");
 DATA(insert OID = 116 (  box_below_eq	   PGNSP PGUID 12 1 0 0 f f f t f i 2 0 16 "603 603" _null_ _null_ _null_ _null_	box_below_eq _null_ _null_ _null_ ));
-DESCR("implementation of <^ operator");
 
 DATA(insert OID = 117 (  point_in		   PGNSP PGUID 12 1 0 0 f f f t f i 1 0 600 "2275" _null_ _null_ _null_ _null_	point_in _null_ _null_ _null_ ));
 DESCR("I/O");
@@ -269,135 +262,72 @@ DESCR("I/O");
 DATA(insert OID = 124 (  box_out		   PGNSP PGUID 12 1 0 0 f f f t f i 1 0 2275 "603" _null_ _null_ _null_ _null_	box_out _null_ _null_ _null_ ));
 DESCR("I/O");
 DATA(insert OID = 125 (  box_overlap	   PGNSP PGUID 12 1 0 0 f f f t f i 2 0 16 "603 603" _null_ _null_ _null_ _null_ box_overlap _null_ _null_ _null_ ));
-DESCR("implementation of && operator");
 DATA(insert OID = 126 (  box_ge			   PGNSP PGUID 12 1 0 0 f f f t f i 2 0 16 "603 603" _null_ _null_ _null_ _null_ box_ge _null_ _null_ _null_ ));
-DESCR("implementation of >= operator");
 DATA(insert OID = 127 (  box_gt			   PGNSP PGUID 12 1 0 0 f f f t f i 2 0 16 "603 603" _null_ _null_ _null_ _null_ box_gt _null_ _null_ _null_ ));
-DESCR("implementation of > operator");
 DATA(insert OID = 128 (  box_eq			   PGNSP PGUID 12 1 0 0 f f f t f i 2 0 16 "603 603" _null_ _null_ _null_ _null_ box_eq _null_ _null_ _null_ ));
-DESCR("implementation of = operator");
 DATA(insert OID = 129 (  box_lt			   PGNSP PGUID 12 1 0 0 f f f t f i 2 0 16 "603 603" _null_ _null_ _null_ _null_ box_lt _null_ _null_ _null_ ));
-DESCR("implementation of < operator");
 DATA(insert OID = 130 (  box_le			   PGNSP PGUID 12 1 0 0 f f f t f i 2 0 16 "603 603" _null_ _null_ _null_ _null_ box_le _null_ _null_ _null_ ));
-DESCR("implementation of <= operator");
 DATA(insert OID = 131 (  point_above	   PGNSP PGUID 12 1 0 0 f f f t f i 2 0 16 "600 600" _null_ _null_ _null_ _null_ point_above _null_ _null_ _null_ ));
-DESCR("implementation of >^ operator");
 DATA(insert OID = 132 (  point_left		   PGNSP PGUID 12 1 0 0 f f f t f i 2 0 16 "600 600" _null_ _null_ _null_ _null_ point_left _null_ _null_ _null_ ));
-DESCR("implementation of << operator");
 DATA(insert OID = 133 (  point_right	   PGNSP PGUID 12 1 0 0 f f f t f i 2 0 16 "600 600" _null_ _null_ _null_ _null_ point_right _null_ _null_ _null_ ));
-DESCR("implementation of >> operator");
 DATA(insert OID = 134 (  point_below	   PGNSP PGUID 12 1 0 0 f f f t f i 2 0 16 "600 600" _null_ _null_ _null_ _null_ point_below _null_ _null_ _null_ ));
-DESCR("implementation of <^ operator");
 DATA(insert OID = 135 (  point_eq		   PGNSP PGUID 12 1 0 0 f f f t f i 2 0 16 "600 600" _null_ _null_ _null_ _null_ point_eq _null_ _null_ _null_ ));
-DESCR("implementation of ~= operator");
 DATA(insert OID = 136 (  on_pb			   PGNSP PGUID 12 1 0 0 f f f t f i 2 0 16 "600 603" _null_ _null_ _null_ _null_ on_pb _null_ _null_ _null_ ));
-DESCR("implementation of <@ operator");
 DATA(insert OID = 137 (  on_ppath		   PGNSP PGUID 12 1 0 0 f f f t f i 2 0 16 "600 602" _null_ _null_ _null_ _null_ on_ppath _null_ _null_ _null_ ));
-DESCR("implementation of <@ operator");
 DATA(insert OID = 138 (  box_center		   PGNSP PGUID 12 1 0 0 f f f t f i 1 0 600 "603" _null_ _null_ _null_ _null_	box_center _null_ _null_ _null_ ));
-DESCR("implementation of @@ operator");
 DATA(insert OID = 139 (  areasel		   PGNSP PGUID 12 1 0 0 f f f t f s 4 0 701 "2281 26 2281 23" _null_ _null_ _null_ _null_	areasel _null_ _null_ _null_ ));
 DESCR("restriction selectivity for area-comparison operators");
 DATA(insert OID = 140 (  areajoinsel	   PGNSP PGUID 12 1 0 0 f f f t f s 5 0 701 "2281 26 2281 21 2281" _null_ _null_ _null_ _null_	areajoinsel _null_ _null_ _null_ ));
 DESCR("join selectivity for area-comparison operators");
 DATA(insert OID = 141 (  int4mul		   PGNSP PGUID 12 1 0 0 f f f t f i 2 0 23 "23 23" _null_ _null_ _null_ _null_ int4mul _null_ _null_ _null_ ));
-DESCR("implementation of * operator");
 DATA(insert OID = 144 (  int4ne			   PGNSP PGUID 12 1 0 0 f f f t f i 2 0 16 "23 23" _null_ _null_ _null_ _null_ int4ne _null_ _null_ _null_ ));
-DESCR("implementation of <> operator");
 DATA(insert OID = 145 (  int2ne			   PGNSP PGUID 12 1 0 0 f f f t f i 2 0 16 "21 21" _null_ _null_ _null_ _null_ int2ne _null_ _null_ _null_ ));
-DESCR("implementation of <> operator");
 DATA(insert OID = 146 (  int2gt			   PGNSP PGUID 12 1 0 0 f f f t f i 2 0 16 "21 21" _null_ _null_ _null_ _null_ int2gt _null_ _null_ _null_ ));
-DESCR("implementation of > operator");
 DATA(insert OID = 147 (  int4gt			   PGNSP PGUID 12 1 0 0 f f f t f i 2 0 16 "23 23" _null_ _null_ _null_ _null_ int4gt _null_ _null_ _null_ ));
-DESCR("implementation of > operator");
 DATA(insert OID = 148 (  int2le			   PGNSP PGUID 12 1 0 0 f f f t f i 2 0 16 "21 21" _null_ _null_ _null_ _null_ int2le _null_ _null_ _null_ ));
-DESCR("implementation of <= operator");
 DATA(insert OID = 149 (  int4le			   PGNSP PGUID 12 1 0 0 f f f t f i 2 0 16 "23 23" _null_ _null_ _null_ _null_ int4le _null_ _null_ _null_ ));
-DESCR("implementation of <= operator");
 DATA(insert OID = 150 (  int4ge			   PGNSP PGUID 12 1 0 0 f f f t f i 2 0 16 "23 23" _null_ _null_ _null_ _null_ int4ge _null_ _null_ _null_ ));
-DESCR("implementation of >= operator");
 DATA(insert OID = 151 (  int2ge			   PGNSP PGUID 12 1 0 0 f f f t f i 2 0 16 "21 21" _null_ _null_ _null_ _null_ int2ge _null_ _null_ _null_ ));
-DESCR("implementation of >= operator");
 DATA(insert OID = 152 (  int2mul		   PGNSP PGUID 12 1 0 0 f f f t f i 2 0 21 "21 21" _null_ _null_ _null_ _null_ int2mul _null_ _null_ _null_ ));
-DESCR("implementation of * operator");
 DATA(insert OID = 153 (  int2div		   PGNSP PGUID 12 1 0 0 f f f t f i 2 0 21 "21 21" _null_ _null_ _null_ _null_ int2div _null_ _null_ _null_ ));
-DESCR("implementation of / operator");
 DATA(insert OID = 154 (  int4div		   PGNSP PGUID 12 1 0 0 f f f t f i 2 0 23 "23 23" _null_ _null_ _null_ _null_ int4div _null_ _null_ _null_ ));
-DESCR("implementation of / operator");
 DATA(insert OID = 155 (  int2mod		   PGNSP PGUID 12 1 0 0 f f f t f i 2 0 21 "21 21" _null_ _null_ _null_ _null_ int2mod _null_ _null_ _null_ ));
-DESCR("implementation of % operator");
 DATA(insert OID = 156 (  int4mod		   PGNSP PGUID 12 1 0 0 f f f t f i 2 0 23 "23 23" _null_ _null_ _null_ _null_ int4mod _null_ _null_ _null_ ));
-DESCR("implementation of % operator");
 DATA(insert OID = 157 (  textne			   PGNSP PGUID 12 1 0 0 f f f t f i 2 0 16 "25 25" _null_ _null_ _null_ _null_ textne _null_ _null_ _null_ ));
-DESCR("implementation of <> operator");
 DATA(insert OID = 158 (  int24eq		   PGNSP PGUID 12 1 0 0 f f f t f i 2 0 16 "21 23" _null_ _null_ _null_ _null_ int24eq _null_ _null_ _null_ ));
-DESCR("implementation of = operator");
 DATA(insert OID = 159 (  int42eq		   PGNSP PGUID 12 1 0 0 f f f t f i 2 0 16 "23 21" _null_ _null_ _null_ _null_ int42eq _null_ _null_ _null_ ));
-DESCR("implementation of = operator");
 DATA(insert OID = 160 (  int24lt		   PGNSP PGUID 12 1 0 0 f f f t f i 2 0 16 "21 23" _null_ _null_ _null_ _null_ int24lt _null_ _null_ _null_ ));
-DESCR("implementation of < operator");
 DATA(insert OID = 161 (  int42lt		   PGNSP PGUID 12 1 0 0 f f f t f i 2 0 16 "23 21" _null_ _null_ _null_ _null_ int42lt _null_ _null_ _null_ ));
-DESCR("implementation of < operator");
 DATA(insert OID = 162 (  int24gt		   PGNSP PGUID 12 1 0 0 f f f t f i 2 0 16 "21 23" _null_ _null_ _null_ _null_ int24gt _null_ _null_ _null_ ));
-DESCR("implementation of > operator");
 DATA(insert OID = 163 (  int42gt		   PGNSP PGUID 12 1 0 0 f f f t f i 2 0 16 "23 21" _null_ _null_ _null_ _null_ int42gt _null_ _null_ _null_ ));
-DESCR("implementation of > operator");
 DATA(insert OID = 164 (  int24ne		   PGNSP PGUID 12 1 0 0 f f f t f i 2 0 16 "21 23" _null_ _null_ _null_ _null_ int24ne _null_ _null_ _null_ ));
-DESCR("implementation of <> operator");
 DATA(insert OID = 165 (  int42ne		   PGNSP PGUID 12 1 0 0 f f f t f i 2 0 16 "23 21" _null_ _null_ _null_ _null_ int42ne _null_ _null_ _null_ ));
-DESCR("implementation of <> operator");
 DATA(insert OID = 166 (  int24le		   PGNSP PGUID 12 1 0 0 f f f t f i 2 0 16 "21 23" _null_ _null_ _null_ _null_ int24le _null_ _null_ _null_ ));
-DESCR("implementation of <= operator");
 DATA(insert OID = 167 (  int42le		   PGNSP PGUID 12 1 0 0 f f f t f i 2 0 16 "23 21" _null_ _null_ _null_ _null_ int42le _null_ _null_ _null_ ));
-DESCR("implementation of <= operator");
 DATA(insert OID = 168 (  int24ge		   PGNSP PGUID 12 1 0 0 f f f t f i 2 0 16 "21 23" _null_ _null_ _null_ _null_ int24ge _null_ _null_ _null_ ));
-DESCR("implementation of >= operator");
 DATA(insert OID = 169 (  int42ge		   PGNSP PGUID 12 1 0 0 f f f t f i 2 0 16 "23 21" _null_ _null_ _null_ _null_ int42ge _null_ _null_ _null_ ));
-DESCR("implementation of >= operator");
 DATA(insert OID = 170 (  int24mul		   PGNSP PGUID 12 1 0 0 f f f t f i 2 0 23 "21 23" _null_ _null_ _null_ _null_ int24mul _null_ _null_ _null_ ));
-DESCR("implementation of * operator");
 DATA(insert OID = 171 (  int42mul		   PGNSP PGUID 12 1 0 0 f f f t f i 2 0 23 "23 21" _null_ _null_ _null_ _null_ int42mul _null_ _null_ _null_ ));
-DESCR("implementation of * operator");
 DATA(insert OID = 172 (  int24div		   PGNSP PGUID 12 1 0 0 f f f t f i 2 0 23 "21 23" _null_ _null_ _null_ _null_ int24div _null_ _null_ _null_ ));
-DESCR("implementation of / operator");
 DATA(insert OID = 173 (  int42div		   PGNSP PGUID 12 1 0 0 f f f t f i 2 0 23 "23 21" _null_ _null_ _null_ _null_ int42div _null_ _null_ _null_ ));
-DESCR("implementation of / operator");
 DATA(insert OID = 176 (  int2pl			   PGNSP PGUID 12 1 0 0 f f f t f i 2 0 21 "21 21" _null_ _null_ _null_ _null_ int2pl _null_ _null_ _null_ ));
-DESCR("implementation of + operator");
 DATA(insert OID = 177 (  int4pl			   PGNSP PGUID 12 1 0 0 f f f t f i 2 0 23 "23 23" _null_ _null_ _null_ _null_ int4pl _null_ _null_ _null_ ));
-DESCR("implementation of + operator");
 DATA(insert OID = 178 (  int24pl		   PGNSP PGUID 12 1 0 0 f f f t f i 2 0 23 "21 23" _null_ _null_ _null_ _null_ int24pl _null_ _null_ _null_ ));
-DESCR("implementation of + operator");
 DATA(insert OID = 179 (  int42pl		   PGNSP PGUID 12 1 0 0 f f f t f i 2 0 23 "23 21" _null_ _null_ _null_ _null_ int42pl _null_ _null_ _null_ ));
-DESCR("implementation of + operator");
 DATA(insert OID = 180 (  int2mi			   PGNSP PGUID 12 1 0 0 f f f t f i 2 0 21 "21 21" _null_ _null_ _null_ _null_ int2mi _null_ _null_ _null_ ));
-DESCR("implementation of - operator");
 DATA(insert OID = 181 (  int4mi			   PGNSP PGUID 12 1 0 0 f f f t f i 2 0 23 "23 23" _null_ _null_ _null_ _null_ int4mi _null_ _null_ _null_ ));
-DESCR("implementation of - operator");
 DATA(insert OID = 182 (  int24mi		   PGNSP PGUID 12 1 0 0 f f f t f i 2 0 23 "21 23" _null_ _null_ _null_ _null_ int24mi _null_ _null_ _null_ ));
-DESCR("implementation of - operator");
 DATA(insert OID = 183 (  int42mi		   PGNSP PGUID 12 1 0 0 f f f t f i 2 0 23 "23 21" _null_ _null_ _null_ _null_ int42mi _null_ _null_ _null_ ));
-DESCR("implementation of - operator");
 DATA(insert OID = 184 (  oideq			   PGNSP PGUID 12 1 0 0 f f f t f i 2 0 16 "26 26" _null_ _null_ _null_ _null_ oideq _null_ _null_ _null_ ));
-DESCR("implementation of = operator");
 DATA(insert OID = 185 (  oidne			   PGNSP PGUID 12 1 0 0 f f f t f i 2 0 16 "26 26" _null_ _null_ _null_ _null_ oidne _null_ _null_ _null_ ));
-DESCR("implementation of <> operator");
 DATA(insert OID = 186 (  box_same		   PGNSP PGUID 12 1 0 0 f f f t f i 2 0 16 "603 603" _null_ _null_ _null_ _null_ box_same _null_ _null_ _null_ ));
-DESCR("implementation of ~= operator");
 DATA(insert OID = 187 (  box_contain	   PGNSP PGUID 12 1 0 0 f f f t f i 2 0 16 "603 603" _null_ _null_ _null_ _null_ box_contain _null_ _null_ _null_ ));
-DESCR("implementation of @> operator");
 DATA(insert OID = 188 (  box_left		   PGNSP PGUID 12 1 0 0 f f f t f i 2 0 16 "603 603" _null_ _null_ _null_ _null_ box_left _null_ _null_ _null_ ));
-DESCR("implementation of << operator");
 DATA(insert OID = 189 (  box_overleft	   PGNSP PGUID 12 1 0 0 f f f t f i 2 0 16 "603 603" _null_ _null_ _null_ _null_ box_overleft _null_ _null_ _null_ ));
-DESCR("implementation of &< operator");
 DATA(insert OID = 190 (  box_overright	   PGNSP PGUID 12 1 0 0 f f f t f i 2 0 16 "603 603" _null_ _null_ _null_ _null_ box_overright _null_ _null_ _null_ ));
-DESCR("implementation of &> operator");
 DATA(insert OID = 191 (  box_right		   PGNSP PGUID 12 1 0 0 f f f t f i 2 0 16 "603 603" _null_ _null_ _null_ _null_ box_right _null_ _null_ _null_ ));
-DESCR("implementation of >> operator");
 DATA(insert OID = 192 (  box_contained	   PGNSP PGUID 12 1 0 0 f f f t f i 2 0 16 "603 603" _null_ _null_ _null_ _null_ box_contained _null_ _null_ _null_ ));
-DESCR("implementation of <@ operator");
 DATA(insert OID = 193 (  box_contain_pt    PGNSP PGUID 12 1 0 0 f f f t f i 2 0 16 "603 600" _null_ _null_ _null_ _null_ box_contain_pt _null_ _null_ _null_ ));
-DESCR("implementation of @> operator");
 
 DATA(insert OID = 195 (  pg_node_tree_in	PGNSP PGUID 12 1 0 0 f f f t f i 1 0 194 "2275" _null_ _null_ _null_ _null_ pg_node_tree_in _null_ _null_ _null_ ));
 DESCR("I/O");
@@ -415,17 +345,11 @@ DESCR("I/O");
 DATA(insert OID = 201 (  float4out		   PGNSP PGUID 12 1 0 0 f f f t f i 1 0 2275 "700" _null_ _null_ _null_ _null_	float4out _null_ _null_ _null_ ));
 DESCR("I/O");
 DATA(insert OID = 202 (  float4mul		   PGNSP PGUID 12 1 0 0 f f f t f i 2 0 700 "700 700" _null_ _null_ _null_ _null_	float4mul _null_ _null_ _null_ ));
-DESCR("implementation of * operator");
 DATA(insert OID = 203 (  float4div		   PGNSP PGUID 12 1 0 0 f f f t f i 2 0 700 "700 700" _null_ _null_ _null_ _null_	float4div _null_ _null_ _null_ ));
-DESCR("implementation of / operator");
 DATA(insert OID = 204 (  float4pl		   PGNSP PGUID 12 1 0 0 f f f t f i 2 0 700 "700 700" _null_ _null_ _null_ _null_	float4pl _null_ _null_ _null_ ));
-DESCR("implementation of + operator");
 DATA(insert OID = 205 (  float4mi		   PGNSP PGUID 12 1 0 0 f f f t f i 2 0 700 "700 700" _null_ _null_ _null_ _null_	float4mi _null_ _null_ _null_ ));
-DESCR("implementation of - operator");
 DATA(insert OID = 206 (  float4um		   PGNSP PGUID 12 1 0 0 f f f t f i 1 0 700 "700" _null_ _null_ _null_ _null_	float4um _null_ _null_ _null_ ));
-DESCR("implementation of - operator");
 DATA(insert OID = 207 (  float4abs		   PGNSP PGUID 12 1 0 0 f f f t f i 1 0 700 "700" _null_ _null_ _null_ _null_	float4abs _null_ _null_ _null_ ));
-DESCR("implementation of @ operator");
 DATA(insert OID = 208 (  float4_accum	   PGNSP PGUID 12 1 0 0 f f f t f i 2 0 1022 "1022 700" _null_ _null_ _null_ _null_ float4_accum _null_ _null_ _null_ ));
 DESCR("aggregate transition function");
 DATA(insert OID = 209 (  float4larger	   PGNSP PGUID 12 1 0 0 f f f t f i 2 0 700 "700 700" _null_ _null_ _null_ _null_	float4larger _null_ _null_ _null_ ));
@@ -434,26 +358,18 @@ DATA(insert OID = 211 (  float4smaller	   PGNSP PGUID 12 1 0 0 f f f t f i 2 0 7
 DESCR("smaller of two");
 
 DATA(insert OID = 212 (  int4um			   PGNSP PGUID 12 1 0 0 f f f t f i 1 0 23 "23" _null_ _null_ _null_ _null_ int4um _null_ _null_ _null_ ));
-DESCR("implementation of - operator");
 DATA(insert OID = 213 (  int2um			   PGNSP PGUID 12 1 0 0 f f f t f i 1 0 21 "21" _null_ _null_ _null_ _null_ int2um _null_ _null_ _null_ ));
-DESCR("implementation of - operator");
 
 DATA(insert OID = 214 (  float8in		   PGNSP PGUID 12 1 0 0 f f f t f i 1 0 701 "2275" _null_ _null_ _null_ _null_	float8in _null_ _null_ _null_ ));
 DESCR("I/O");
 DATA(insert OID = 215 (  float8out		   PGNSP PGUID 12 1 0 0 f f f t f i 1 0 2275 "701" _null_ _null_ _null_ _null_	float8out _null_ _null_ _null_ ));
 DESCR("I/O");
 DATA(insert OID = 216 (  float8mul		   PGNSP PGUID 12 1 0 0 f f f t f i 2 0 701 "701 701" _null_ _null_ _null_ _null_	float8mul _null_ _null_ _null_ ));
-DESCR("implementation of * operator");
 DATA(insert OID = 217 (  float8div		   PGNSP PGUID 12 1 0 0 f f f t f i 2 0 701 "701 701" _null_ _null_ _null_ _null_	float8div _null_ _null_ _null_ ));
-DESCR("implementation of / operator");
 DATA(insert OID = 218 (  float8pl		   PGNSP PGUID 12 1 0 0 f f f t f i 2 0 701 "701 701" _null_ _null_ _null_ _null_	float8pl _null_ _null_ _null_ ));
-DESCR("implementation of + operator");
 DATA(insert OID = 219 (  float8mi		   PGNSP PGUID 12 1 0 0 f f f t f i 2 0 701 "701 701" _null_ _null_ _null_ _null_	float8mi _null_ _null_ _null_ ));
-DESCR("implementation of - operator");
 DATA(insert OID = 220 (  float8um		   PGNSP PGUID 12 1 0 0 f f f t f i 1 0 701 "701" _null_ _null_ _null_ _null_	float8um _null_ _null_ _null_ ));
-DESCR("implementation of - operator");
 DATA(insert OID = 221 (  float8abs		   PGNSP PGUID 12 1 0 0 f f f t f i 1 0 701 "701" _null_ _null_ _null_ _null_	float8abs _null_ _null_ _null_ ));
-DESCR("implementation of @ operator");
 DATA(insert OID = 222 (  float8_accum	   PGNSP PGUID 12 1 0 0 f f f t f i 2 0 1022 "1022 701" _null_ _null_ _null_ _null_ float8_accum _null_ _null_ _null_ ));
 DESCR("aggregate transition function");
 DATA(insert OID = 223 (  float8larger	   PGNSP PGUID 12 1 0 0 f f f t f i 2 0 701 "701 701" _null_ _null_ _null_ _null_	float8larger _null_ _null_ _null_ ));
@@ -462,11 +378,8 @@ DATA(insert OID = 224 (  float8smaller	   PGNSP PGUID 12 1 0 0 f f f t f i 2 0 7
 DESCR("smaller of two");
 
 DATA(insert OID = 225 (  lseg_center	   PGNSP PGUID 12 1 0 0 f f f t f i 1 0 600 "601" _null_ _null_ _null_ _null_	lseg_center _null_ _null_ _null_ ));
-DESCR("implementation of @@ operator");
 DATA(insert OID = 226 (  path_center	   PGNSP PGUID 12 1 0 0 f f f t f i 1 0 600 "602" _null_ _null_ _null_ _null_	path_center _null_ _null_ _null_ ));
-DESCR("implementation of @@ operator");
 DATA(insert OID = 227 (  poly_center	   PGNSP PGUID 12 1 0 0 f f f t f i 1 0 600 "604" _null_ _null_ _null_ _null_	poly_center _null_ _null_ _null_ ));
-DESCR("implementation of @@ operator");
 
 DATA(insert OID = 228 (  dround			   PGNSP PGUID 12 1 0 0 f f f t f i 1 0 701 "701" _null_ _null_ _null_ _null_	dround _null_ _null_ _null_ ));
 DESCR("round to nearest integer");
@@ -481,11 +394,8 @@ DESCR("largest integer <= value");
 DATA(insert OID = 2310 ( sign			   PGNSP PGUID 12 1 0 0 f f f t f i 1 0 701 "701" _null_ _null_ _null_ _null_	dsign _null_ _null_ _null_ ));
 DESCR("sign of value");
 DATA(insert OID = 230 (  dsqrt			   PGNSP PGUID 12 1 0 0 f f f t f i 1 0 701 "701" _null_ _null_ _null_ _null_	dsqrt _null_ _null_ _null_ ));
-DESCR("implementation of |/ operator");
 DATA(insert OID = 231 (  dcbrt			   PGNSP PGUID 12 1 0 0 f f f t f i 1 0 701 "701" _null_ _null_ _null_ _null_	dcbrt _null_ _null_ _null_ ));
-DESCR("implementation of ||/ operator");
 DATA(insert OID = 232 (  dpow			   PGNSP PGUID 12 1 0 0 f f f t f i 2 0 701 "701 701" _null_ _null_ _null_ _null_	dpow _null_ _null_ _null_ ));
-DESCR("implementation of ^ operator");
 DATA(insert OID = 233 (  dexp			   PGNSP PGUID 12 1 0 0 f f f t f i 1 0 701 "701" _null_ _null_ _null_ _null_	dexp _null_ _null_ _null_ ));
 DESCR("natural exponential (e^x)");
 DATA(insert OID = 234 (  dlog1			   PGNSP PGUID 12 1 0 0 f f f t f i 1 0 701 "701" _null_ _null_ _null_ _null_	dlog1 _null_ _null_ _null_ ));
@@ -499,7 +409,6 @@ DESCR("convert float8 to int2");
 DATA(insert OID = 238 (  int2			   PGNSP PGUID 12 1 0 0 f f f t f i 1 0 21 "700" _null_ _null_ _null_ _null_	ftoi2 _null_ _null_ _null_ ));
 DESCR("convert float4 to int2");
 DATA(insert OID = 239 (  line_distance	   PGNSP PGUID 12 1 0 0 f f f t f i 2 0 701 "628 628" _null_ _null_ _null_ _null_	line_distance _null_ _null_ _null_ ));
-DESCR("implementation of <-> operator");
 
 DATA(insert OID = 240 (  abstimein		   PGNSP PGUID 12 1 0 0 f f f t f s 1 0 702 "2275" _null_ _null_ _null_ _null_	abstimein _null_ _null_ _null_ ));
 DESCR("I/O");
@@ -510,63 +419,38 @@ DESCR("I/O");
 DATA(insert OID = 243 (  reltimeout		   PGNSP PGUID 12 1 0 0 f f f t f s 1 0 2275 "703" _null_ _null_ _null_ _null_	reltimeout _null_ _null_ _null_ ));
 DESCR("I/O");
 DATA(insert OID = 244 (  timepl			   PGNSP PGUID 12 1 0 0 f f f t f i 2 0 702 "702 703" _null_ _null_ _null_ _null_	timepl _null_ _null_ _null_ ));
-DESCR("implementation of + operator");
 DATA(insert OID = 245 (  timemi			   PGNSP PGUID 12 1 0 0 f f f t f i 2 0 702 "702 703" _null_ _null_ _null_ _null_	timemi _null_ _null_ _null_ ));
-DESCR("implementation of - operator");
 DATA(insert OID = 246 (  tintervalin	   PGNSP PGUID 12 1 0 0 f f f t f s 1 0 704 "2275" _null_ _null_ _null_ _null_	tintervalin _null_ _null_ _null_ ));
 DESCR("I/O");
 DATA(insert OID = 247 (  tintervalout	   PGNSP PGUID 12 1 0 0 f f f t f s 1 0 2275 "704" _null_ _null_ _null_ _null_	tintervalout _null_ _null_ _null_ ));
 DESCR("I/O");
 DATA(insert OID = 248 (  intinterval	   PGNSP PGUID 12 1 0 0 f f f t f i 2 0 16 "702 704" _null_ _null_ _null_ _null_ intinterval _null_ _null_ _null_ ));
-DESCR("implementation of <?> operator");
 DATA(insert OID = 249 (  tintervalrel	   PGNSP PGUID 12 1 0 0 f f f t f i 1 0 703 "704" _null_ _null_ _null_ _null_	tintervalrel _null_ _null_ _null_ ));
 DESCR("tinterval to reltime");
 DATA(insert OID = 250 (  timenow		   PGNSP PGUID 12 1 0 0 f f f t f s 0 0 702 "" _null_ _null_ _null_ _null_	timenow _null_ _null_ _null_ ));
 DESCR("current date and time (abstime)");
 DATA(insert OID = 251 (  abstimeeq		   PGNSP PGUID 12 1 0 0 f f f t f i 2 0 16 "702 702" _null_ _null_ _null_ _null_ abstimeeq _null_ _null_ _null_ ));
-DESCR("implementation of = operator");
 DATA(insert OID = 252 (  abstimene		   PGNSP PGUID 12 1 0 0 f f f t f i 2 0 16 "702 702" _null_ _null_ _null_ _null_ abstimene _null_ _null_ _null_ ));
-DESCR("implementation of <> operator");
 DATA(insert OID = 253 (  abstimelt		   PGNSP PGUID 12 1 0 0 f f f t f i 2 0 16 "702 702" _null_ _null_ _null_ _null_ abstimelt _null_ _null_ _null_ ));
-DESCR("implementation of < operator");
 DATA(insert OID = 254 (  abstimegt		   PGNSP PGUID 12 1 0 0 f f f t f i 2 0 16 "702 702" _null_ _null_ _null_ _null_ abstimegt _null_ _null_ _null_ ));
-DESCR("implementation of > operator");
 DATA(insert OID = 255 (  abstimele		   PGNSP PGUID 12 1 0 0 f f f t f i 2 0 16 "702 702" _null_ _null_ _null_ _null_ abstimele _null_ _null_ _null_ ));
-DESCR("implementation of <= operator");
 DATA(insert OID = 256 (  abstimege		   PGNSP PGUID 12 1 0 0 f f f t f i 2 0 16 "702 702" _null_ _null_ _null_ _null_ abstimege _null_ _null_ _null_ ));
-DESCR("implementation of >= operator");
 DATA(insert OID = 257 (  reltimeeq		   PGNSP PGUID 12 1 0 0 f f f t f i 2 0 16 "703 703" _null_ _null_ _null_ _null_ reltimeeq _null_ _null_ _null_ ));
-DESCR("implementation of = operator");
 DATA(insert OID = 258 (  reltimene		   PGNSP PGUID 12 1 0 0 f f f t f i 2 0 16 "703 703" _null_ _null_ _null_ _null_ reltimene _null_ _null_ _null_ ));
-DESCR("implementation of <> operator");
 DATA(insert OID = 259 (  reltimelt		   PGNSP PGUID 12 1 0 0 f f f t f i 2 0 16 "703 703" _null_ _null_ _null_ _null_ reltimelt _null_ _null_ _null_ ));
-DESCR("implementation of < operator");
 DATA(insert OID = 260 (  reltimegt		   PGNSP PGUID 12 1 0 0 f f f t f i 2 0 16 "703 703" _null_ _null_ _null_ _null_ reltimegt _null_ _null_ _null_ ));
-DESCR("implementation of > operator");
 DATA(insert OID = 261 (  reltimele		   PGNSP PGUID 12 1 0 0 f f f t f i 2 0 16 "703 703" _null_ _null_ _null_ _null_ reltimele _null_ _null_ _null_ ));
-DESCR("implementation of <= operator");
 DATA(insert OID = 262 (  reltimege		   PGNSP PGUID 12 1 0 0 f f f t f i 2 0 16 "703 703" _null_ _null_ _null_ _null_ reltimege _null_ _null_ _null_ ));
-DESCR("implementation of >= operator");
 DATA(insert OID = 263 (  tintervalsame	   PGNSP PGUID 12 1 0 0 f f f t f i 2 0 16 "704 704" _null_ _null_ _null_ _null_ tintervalsame _null_ _null_ _null_ ));
-DESCR("implementation of ~= operator");
 DATA(insert OID = 264 (  tintervalct	   PGNSP PGUID 12 1 0 0 f f f t f i 2 0 16 "704 704" _null_ _null_ _null_ _null_ tintervalct _null_ _null_ _null_ ));
-DESCR("implementation of << operator");
 DATA(insert OID = 265 (  tintervalov	   PGNSP PGUID 12 1 0 0 f f f t f i 2 0 16 "704 704" _null_ _null_ _null_ _null_ tintervalov _null_ _null_ _null_ ));
-DESCR("implementation of && operator");
 DATA(insert OID = 266 (  tintervalleneq    PGNSP PGUID 12 1 0 0 f f f t f i 2 0 16 "704 703" _null_ _null_ _null_ _null_ tintervalleneq _null_ _null_ _null_ ));
-DESCR("implementation of #= operator");
 DATA(insert OID = 267 (  tintervallenne    PGNSP PGUID 12 1 0 0 f f f t f i 2 0 16 "704 703" _null_ _null_ _null_ _null_ tintervallenne _null_ _null_ _null_ ));
-DESCR("implementation of #<> operator");
 DATA(insert OID = 268 (  tintervallenlt    PGNSP PGUID 12 1 0 0 f f f t f i 2 0 16 "704 703" _null_ _null_ _null_ _null_ tintervallenlt _null_ _null_ _null_ ));
-DESCR("implementation of #< operator");
 DATA(insert OID = 269 (  tintervallengt    PGNSP PGUID 12 1 0 0 f f f t f i 2 0 16 "704 703" _null_ _null_ _null_ _null_ tintervallengt _null_ _null_ _null_ ));
-DESCR("implementation of #> operator");
 DATA(insert OID = 270 (  tintervallenle    PGNSP PGUID 12 1 0 0 f f f t f i 2 0 16 "704 703" _null_ _null_ _null_ _null_ tintervallenle _null_ _null_ _null_ ));
-DESCR("implementation of #<= operator");
 DATA(insert OID = 271 (  tintervallenge    PGNSP PGUID 12 1 0 0 f f f t f i 2 0 16 "704 703" _null_ _null_ _null_ _null_ tintervallenge _null_ _null_ _null_ ));
-DESCR("implementation of #>= operator");
 DATA(insert OID = 272 (  tintervalstart    PGNSP PGUID 12 1 0 0 f f f t f i 1 0 702 "704" _null_ _null_ _null_ _null_	tintervalstart _null_ _null_ _null_ ));
-DESCR("implementation of | operator");
 DATA(insert OID = 273 (  tintervalend	   PGNSP PGUID 12 1 0 0 f f f t f i 1 0 702 "704" _null_ _null_ _null_ _null_	tintervalend _null_ _null_ _null_ ));
 DESCR("end of interval");
 DATA(insert OID = 274 (  timeofday		   PGNSP PGUID 12 1 0 0 f f f t f v 0 0 25 "" _null_ _null_ _null_ _null_ timeofday _null_ _null_ _null_ ));
@@ -575,80 +459,46 @@ DATA(insert OID = 275 (  isfinite		   PGNSP PGUID 12 1 0 0 f f f t f i 1 0 16 "7
 DESCR("finite abstime?");
 
 DATA(insert OID = 277 (  inter_sl		   PGNSP PGUID 12 1 0 0 f f f t f i 2 0 16 "601 628" _null_ _null_ _null_ _null_ inter_sl _null_ _null_ _null_ ));
-DESCR("implementation of ?# operator");
 DATA(insert OID = 278 (  inter_lb		   PGNSP PGUID 12 1 0 0 f f f t f i 2 0 16 "628 603" _null_ _null_ _null_ _null_ inter_lb _null_ _null_ _null_ ));
-DESCR("implementation of ?# operator");
 
 DATA(insert OID = 279 (  float48mul		   PGNSP PGUID 12 1 0 0 f f f t f i 2 0 701 "700 701" _null_ _null_ _null_ _null_	float48mul _null_ _null_ _null_ ));
-DESCR("implementation of * operator");
 DATA(insert OID = 280 (  float48div		   PGNSP PGUID 12 1 0 0 f f f t f i 2 0 701 "700 701" _null_ _null_ _null_ _null_	float48div _null_ _null_ _null_ ));
-DESCR("implementation of / operator");
 DATA(insert OID = 281 (  float48pl		   PGNSP PGUID 12 1 0 0 f f f t f i 2 0 701 "700 701" _null_ _null_ _null_ _null_	float48pl _null_ _null_ _null_ ));
-DESCR("implementation of + operator");
 DATA(insert OID = 282 (  float48mi		   PGNSP PGUID 12 1 0 0 f f f t f i 2 0 701 "700 701" _null_ _null_ _null_ _null_	float48mi _null_ _null_ _null_ ));
-DESCR("implementation of - operator");
 DATA(insert OID = 283 (  float84mul		   PGNSP PGUID 12 1 0 0 f f f t f i 2 0 701 "701 700" _null_ _null_ _null_ _null_	float84mul _null_ _null_ _null_ ));
-DESCR("implementation of * operator");
 DATA(insert OID = 284 (  float84div		   PGNSP PGUID 12 1 0 0 f f f t f i 2 0 701 "701 700" _null_ _null_ _null_ _null_	float84div _null_ _null_ _null_ ));
-DESCR("implementation of / operator");
 DATA(insert OID = 285 (  float84pl		   PGNSP PGUID 12 1 0 0 f f f t f i 2 0 701 "701 700" _null_ _null_ _null_ _null_	float84pl _null_ _null_ _null_ ));
-DESCR("implementation of + operator");
 DATA(insert OID = 286 (  float84mi		   PGNSP PGUID 12 1 0 0 f f f t f i 2 0 701 "701 700" _null_ _null_ _null_ _null_	float84mi _null_ _null_ _null_ ));
-DESCR("implementation of - operator");
 
 DATA(insert OID = 287 (  float4eq		   PGNSP PGUID 12 1 0 0 f f f t f i 2 0 16 "700 700" _null_ _null_ _null_ _null_ float4eq _null_ _null_ _null_ ));
-DESCR("implementation of = operator");
 DATA(insert OID = 288 (  float4ne		   PGNSP PGUID 12 1 0 0 f f f t f i 2 0 16 "700 700" _null_ _null_ _null_ _null_ float4ne _null_ _null_ _null_ ));
-DESCR("implementation of <> operator");
 DATA(insert OID = 289 (  float4lt		   PGNSP PGUID 12 1 0 0 f f f t f i 2 0 16 "700 700" _null_ _null_ _null_ _null_ float4lt _null_ _null_ _null_ ));
-DESCR("implementation of < operator");
 DATA(insert OID = 290 (  float4le		   PGNSP PGUID 12 1 0 0 f f f t f i 2 0 16 "700 700" _null_ _null_ _null_ _null_ float4le _null_ _null_ _null_ ));
-DESCR("implementation of <= operator");
 DATA(insert OID = 291 (  float4gt		   PGNSP PGUID 12 1 0 0 f f f t f i 2 0 16 "700 700" _null_ _null_ _null_ _null_ float4gt _null_ _null_ _null_ ));
-DESCR("implementation of > operator");
 DATA(insert OID = 292 (  float4ge		   PGNSP PGUID 12 1 0 0 f f f t f i 2 0 16 "700 700" _null_ _null_ _null_ _null_ float4ge _null_ _null_ _null_ ));
-DESCR("implementation of >= operator");
 
 DATA(insert OID = 293 (  float8eq		   PGNSP PGUID 12 1 0 0 f f f t f i 2 0 16 "701 701" _null_ _null_ _null_ _null_ float8eq _null_ _null_ _null_ ));
-DESCR("implementation of = operator");
 DATA(insert OID = 294 (  float8ne		   PGNSP PGUID 12 1 0 0 f f f t f i 2 0 16 "701 701" _null_ _null_ _null_ _null_ float8ne _null_ _null_ _null_ ));
-DESCR("implementation of <> operator");
 DATA(insert OID = 295 (  float8lt		   PGNSP PGUID 12 1 0 0 f f f t f i 2 0 16 "701 701" _null_ _null_ _null_ _null_ float8lt _null_ _null_ _null_ ));
-DESCR("implementation of < operator");
 DATA(insert OID = 296 (  float8le		   PGNSP PGUID 12 1 0 0 f f f t f i 2 0 16 "701 701" _null_ _null_ _null_ _null_ float8le _null_ _null_ _null_ ));
-DESCR("implementation of <= operator");
 DATA(insert OID = 297 (  float8gt		   PGNSP PGUID 12 1 0 0 f f f t f i 2 0 16 "701 701" _null_ _null_ _null_ _null_ float8gt _null_ _null_ _null_ ));
-DESCR("implementation of > operator");
 DATA(insert OID = 298 (  float8ge		   PGNSP PGUID 12 1 0 0 f f f t f i 2 0 16 "701 701" _null_ _null_ _null_ _null_ float8ge _null_ _null_ _null_ ));
-DESCR("implementation of >= operator");
 
 DATA(insert OID = 299 (  float48eq		   PGNSP PGUID 12 1 0 0 f f f t f i 2 0 16 "700 701" _null_ _null_ _null_ _null_ float48eq _null_ _null_ _null_ ));
-DESCR("implementation of = operator");
 
 /* OIDS 300 - 399 */
 
 DATA(insert OID = 300 (  float48ne		   PGNSP PGUID 12 1 0 0 f f f t f i 2 0 16 "700 701" _null_ _null_ _null_ _null_ float48ne _null_ _null_ _null_ ));
-DESCR("implementation of <> operator");
 DATA(insert OID = 301 (  float48lt		   PGNSP PGUID 12 1 0 0 f f f t f i 2 0 16 "700 701" _null_ _null_ _null_ _null_ float48lt _null_ _null_ _null_ ));
-DESCR("implementation of < operator");
 DATA(insert OID = 302 (  float48le		   PGNSP PGUID 12 1 0 0 f f f t f i 2 0 16 "700 701" _null_ _null_ _null_ _null_ float48le _null_ _null_ _null_ ));
-DESCR("implementation of <= operator");
 DATA(insert OID = 303 (  float48gt		   PGNSP PGUID 12 1 0 0 f f f t f i 2 0 16 "700 701" _null_ _null_ _null_ _null_ float48gt _null_ _null_ _null_ ));
-DESCR("implementation of > operator");
 DATA(insert OID = 304 (  float48ge		   PGNSP PGUID 12 1 0 0 f f f t f i 2 0 16 "700 701" _null_ _null_ _null_ _null_ float48ge _null_ _null_ _null_ ));
-DESCR("implementation of >= operator");
 DATA(insert OID = 305 (  float84eq		   PGNSP PGUID 12 1 0 0 f f f t f i 2 0 16 "701 700" _null_ _null_ _null_ _null_ float84eq _null_ _null_ _null_ ));
-DESCR("implementation of = operator");
 DATA(insert OID = 306 (  float84ne		   PGNSP PGUID 12 1 0 0 f f f t f i 2 0 16 "701 700" _null_ _null_ _null_ _null_ float84ne _null_ _null_ _null_ ));
-DESCR("implementation of <> operator");
 DATA(insert OID = 307 (  float84lt		   PGNSP PGUID 12 1 0 0 f f f t f i 2 0 16 "701 700" _null_ _null_ _null_ _null_ float84lt _null_ _null_ _null_ ));
-DESCR("implementation of < operator");
 DATA(insert OID = 308 (  float84le		   PGNSP PGUID 12 1 0 0 f f f t f i 2 0 16 "701 700" _null_ _null_ _null_ _null_ float84le _null_ _null_ _null_ ));
-DESCR("implementation of <= operator");
 DATA(insert OID = 309 (  float84gt		   PGNSP PGUID 12 1 0 0 f f f t f i 2 0 16 "701 700" _null_ _null_ _null_ _null_ float84gt _null_ _null_ _null_ ));
-DESCR("implementation of > operator");
 DATA(insert OID = 310 (  float84ge		   PGNSP PGUID 12 1 0 0 f f f t f i 2 0 16 "701 700" _null_ _null_ _null_ _null_ float84ge _null_ _null_ _null_ ));
-DESCR("implementation of >= operator");
 DATA(insert OID = 320 ( width_bucket	   PGNSP PGUID 12 1 0 0 f f f t f i 4 0 23 "701 701 701 23" _null_ _null_ _null_ _null_ width_bucket_float8 _null_ _null_ _null_ ));
 DESCR("bucket number of operand in equidepth histogram");
 
@@ -661,7 +511,6 @@ DESCR("convert int2 to int4");
 DATA(insert OID = 314 (  int2			   PGNSP PGUID 12 1 0 0 f f f t f i 1 0 21	"23" _null_ _null_ _null_ _null_	i4toi2 _null_ _null_ _null_ ));
 DESCR("convert int4 to int2");
 DATA(insert OID = 315 (  int2vectoreq	   PGNSP PGUID 12 1 0 0 f f f t f i 2 0 16 "22 22" _null_ _null_ _null_ _null_ int2vectoreq _null_ _null_ _null_ ));
-DESCR("implementation of = operator");
 DATA(insert OID = 316 (  float8			   PGNSP PGUID 12 1 0 0 f f f t f i 1 0 701  "23" _null_ _null_ _null_ _null_	i4tod _null_ _null_ _null_ ));
 DESCR("convert int4 to float8");
 DATA(insert OID = 317 (  int4			   PGNSP PGUID 12 1 0 0 f f f t f i 1 0 23 "701" _null_ _null_ _null_ _null_	dtoi4 _null_ _null_ _null_ ));
@@ -701,21 +550,13 @@ DATA(insert OID = 2785 (  btoptions		   PGNSP PGUID 12 1 0 0 f f f t f s 2 0 17 
 DESCR("btree(internal)");
 
 DATA(insert OID = 339 (  poly_same		   PGNSP PGUID 12 1 0 0 f f f t f i 2 0 16 "604 604" _null_ _null_ _null_ _null_ poly_same _null_ _null_ _null_ ));
-DESCR("implementation of ~= operator");
 DATA(insert OID = 340 (  poly_contain	   PGNSP PGUID 12 1 0 0 f f f t f i 2 0 16 "604 604" _null_ _null_ _null_ _null_ poly_contain _null_ _null_ _null_ ));
-DESCR("implementation of @> operator");
 DATA(insert OID = 341 (  poly_left		   PGNSP PGUID 12 1 0 0 f f f t f i 2 0 16 "604 604" _null_ _null_ _null_ _null_ poly_left _null_ _null_ _null_ ));
-DESCR("implementation of << operator");
 DATA(insert OID = 342 (  poly_overleft	   PGNSP PGUID 12 1 0 0 f f f t f i 2 0 16 "604 604" _null_ _null_ _null_ _null_ poly_overleft _null_ _null_ _null_ ));
-DESCR("implementation of &< operator");
 DATA(insert OID = 343 (  poly_overright    PGNSP PGUID 12 1 0 0 f f f t f i 2 0 16 "604 604" _null_ _null_ _null_ _null_ poly_overright _null_ _null_ _null_ ));
-DESCR("implementation of &> operator");
 DATA(insert OID = 344 (  poly_right		   PGNSP PGUID 12 1 0 0 f f f t f i 2 0 16 "604 604" _null_ _null_ _null_ _null_ poly_right _null_ _null_ _null_ ));
-DESCR("implementation of >> operator");
 DATA(insert OID = 345 (  poly_contained    PGNSP PGUID 12 1 0 0 f f f t f i 2 0 16 "604 604" _null_ _null_ _null_ _null_ poly_contained _null_ _null_ _null_ ));
-DESCR("implementation of <@ operator");
 DATA(insert OID = 346 (  poly_overlap	   PGNSP PGUID 12 1 0 0 f f f t f i 2 0 16 "604 604" _null_ _null_ _null_ _null_ poly_overlap _null_ _null_ _null_ ));
-DESCR("implementation of && operator");
 DATA(insert OID = 347 (  poly_in		   PGNSP PGUID 12 1 0 0 f f f t f i 1 0 604 "2275" _null_ _null_ _null_ _null_	poly_in _null_ _null_ _null_ ));
 DESCR("I/O");
 DATA(insert OID = 348 (  poly_out		   PGNSP PGUID 12 1 0 0 f f f t f i 1 0 2275 "604" _null_ _null_ _null_ _null_	poly_out _null_ _null_ _null_ ));
@@ -753,31 +594,18 @@ DATA(insert OID = 382 (  btarraycmp		   PGNSP PGUID 12 1 0 0 f f f t f i 2 0 23 
 DESCR("less-equal-greater");
 
 DATA(insert OID = 361 (  lseg_distance	   PGNSP PGUID 12 1 0 0 f f f t f i 2 0 701 "601 601" _null_ _null_ _null_ _null_	lseg_distance _null_ _null_ _null_ ));
-DESCR("implementation of <-> operator");
 DATA(insert OID = 362 (  lseg_interpt	   PGNSP PGUID 12 1 0 0 f f f t f i 2 0 600 "601 601" _null_ _null_ _null_ _null_	lseg_interpt _null_ _null_ _null_ ));
-DESCR("implementation of # operator");
 DATA(insert OID = 363 (  dist_ps		   PGNSP PGUID 12 1 0 0 f f f t f i 2 0 701 "600 601" _null_ _null_ _null_ _null_	dist_ps _null_ _null_ _null_ ));
-DESCR("implementation of <-> operator");
 DATA(insert OID = 364 (  dist_pb		   PGNSP PGUID 12 1 0 0 f f f t f i 2 0 701 "600 603" _null_ _null_ _null_ _null_	dist_pb _null_ _null_ _null_ ));
-DESCR("implementation of <-> operator");
 DATA(insert OID = 365 (  dist_sb		   PGNSP PGUID 12 1 0 0 f f f t f i 2 0 701 "601 603" _null_ _null_ _null_ _null_	dist_sb _null_ _null_ _null_ ));
-DESCR("implementation of <-> operator");
 DATA(insert OID = 366 (  close_ps		   PGNSP PGUID 12 1 0 0 f f f t f i 2 0 600 "600 601" _null_ _null_ _null_ _null_	close_ps _null_ _null_ _null_ ));
-DESCR("implementation of ## operator");
 DATA(insert OID = 367 (  close_pb		   PGNSP PGUID 12 1 0 0 f f f t f i 2 0 600 "600 603" _null_ _null_ _null_ _null_	close_pb _null_ _null_ _null_ ));
-DESCR("implementation of ## operator");
 DATA(insert OID = 368 (  close_sb		   PGNSP PGUID 12 1 0 0 f f f t f i 2 0 600 "601 603" _null_ _null_ _null_ _null_	close_sb _null_ _null_ _null_ ));
-DESCR("implementation of ## operator");
 DATA(insert OID = 369 (  on_ps			   PGNSP PGUID 12 1 0 0 f f f t f i 2 0 16 "600 601" _null_ _null_ _null_ _null_ on_ps _null_ _null_ _null_ ));
-DESCR("implementation of <@ operator");
 DATA(insert OID = 370 (  path_distance	   PGNSP PGUID 12 1 0 0 f f f t f i 2 0 701 "602 602" _null_ _null_ _null_ _null_	path_distance _null_ _null_ _null_ ));
-DESCR("implementation of <-> operator");
 DATA(insert OID = 371 (  dist_ppath		   PGNSP PGUID 12 1 0 0 f f f t f i 2 0 701 "600 602" _null_ _null_ _null_ _null_	dist_ppath _null_ _null_ _null_ ));
-DESCR("implementation of <-> operator");
 DATA(insert OID = 372 (  on_sb			   PGNSP PGUID 12 1 0 0 f f f t f i 2 0 16 "601 603" _null_ _null_ _null_ _null_ on_sb _null_ _null_ _null_ ));
-DESCR("implementation of <@ operator");
 DATA(insert OID = 373 (  inter_sb		   PGNSP PGUID 12 1 0 0 f f f t f i 2 0 16 "601 603" _null_ _null_ _null_ _null_ inter_sb _null_ _null_ _null_ ));
-DESCR("implementation of ?# operator");
 
 /* OIDS 400 - 499 */
 
@@ -863,40 +691,23 @@ DESCR("I/O");
 DATA(insert OID = 461 (  int8out		   PGNSP PGUID 12 1 0 0 f f f t f i 1 0 2275 "20" _null_ _null_ _null_ _null_ int8out _null_ _null_ _null_ ));
 DESCR("I/O");
 DATA(insert OID = 462 (  int8um			   PGNSP PGUID 12 1 0 0 f f f t f i 1 0 20 "20" _null_ _null_ _null_ _null_ int8um _null_ _null_ _null_ ));
-DESCR("implementation of - operator");
 DATA(insert OID = 463 (  int8pl			   PGNSP PGUID 12 1 0 0 f f f t f i 2 0 20 "20 20" _null_ _null_ _null_ _null_ int8pl _null_ _null_ _null_ ));
-DESCR("implementation of + operator");
 DATA(insert OID = 464 (  int8mi			   PGNSP PGUID 12 1 0 0 f f f t f i 2 0 20 "20 20" _null_ _null_ _null_ _null_ int8mi _null_ _null_ _null_ ));
-DESCR("implementation of - operator");
 DATA(insert OID = 465 (  int8mul		   PGNSP PGUID 12 1 0 0 f f f t f i 2 0 20 "20 20" _null_ _null_ _null_ _null_ int8mul _null_ _null_ _null_ ));
-DESCR("implementation of * operator");
 DATA(insert OID = 466 (  int8div		   PGNSP PGUID 12 1 0 0 f f f t f i 2 0 20 "20 20" _null_ _null_ _null_ _null_ int8div _null_ _null_ _null_ ));
-DESCR("implementation of / operator");
 DATA(insert OID = 467 (  int8eq			   PGNSP PGUID 12 1 0 0 f f f t f i 2 0 16 "20 20" _null_ _null_ _null_ _null_ int8eq _null_ _null_ _null_ ));
-DESCR("implementation of = operator");
 DATA(insert OID = 468 (  int8ne			   PGNSP PGUID 12 1 0 0 f f f t f i 2 0 16 "20 20" _null_ _null_ _null_ _null_ int8ne _null_ _null_ _null_ ));
-DESCR("implementation of <> operator");
 DATA(insert OID = 469 (  int8lt			   PGNSP PGUID 12 1 0 0 f f f t f i 2 0 16 "20 20" _null_ _null_ _null_ _null_ int8lt _null_ _null_ _null_ ));
-DESCR("implementation of < operator");
 DATA(insert OID = 470 (  int8gt			   PGNSP PGUID 12 1 0 0 f f f t f i 2 0 16 "20 20" _null_ _null_ _null_ _null_ int8gt _null_ _null_ _null_ ));
-DESCR("implementation of > operator");
 DATA(insert OID = 471 (  int8le			   PGNSP PGUID 12 1 0 0 f f f t f i 2 0 16 "20 20" _null_ _null_ _null_ _null_ int8le _null_ _null_ _null_ ));
-DESCR("implementation of <= operator");
 DATA(insert OID = 472 (  int8ge			   PGNSP PGUID 12 1 0 0 f f f t f i 2 0 16 "20 20" _null_ _null_ _null_ _null_ int8ge _null_ _null_ _null_ ));
-DESCR("implementation of >= operator");
 
 DATA(insert OID = 474 (  int84eq		   PGNSP PGUID 12 1 0 0 f f f t f i 2 0 16 "20 23" _null_ _null_ _null_ _null_ int84eq _null_ _null_ _null_ ));
-DESCR("implementation of = operator");
 DATA(insert OID = 475 (  int84ne		   PGNSP PGUID 12 1 0 0 f f f t f i 2 0 16 "20 23" _null_ _null_ _null_ _null_ int84ne _null_ _null_ _null_ ));
-DESCR("implementation of <> operator");
 DATA(insert OID = 476 (  int84lt		   PGNSP PGUID 12 1 0 0 f f f t f i 2 0 16 "20 23" _null_ _null_ _null_ _null_ int84lt _null_ _null_ _null_ ));
-DESCR("implementation of < operator");
 DATA(insert OID = 477 (  int84gt		   PGNSP PGUID 12 1 0 0 f f f t f i 2 0 16 "20 23" _null_ _null_ _null_ _null_ int84gt _null_ _null_ _null_ ));
-DESCR("implementation of > operator");
 DATA(insert OID = 478 (  int84le		   PGNSP PGUID 12 1 0 0 f f f t f i 2 0 16 "20 23" _null_ _null_ _null_ _null_ int84le _null_ _null_ _null_ ));
-DESCR("implementation of <= operator");
 DATA(insert OID = 479 (  int84ge		   PGNSP PGUID 12 1 0 0 f f f t f i 2 0 16 "20 23" _null_ _null_ _null_ _null_ int84ge _null_ _null_ _null_ ));
-DESCR("implementation of >= operator");
 
 DATA(insert OID = 480 (  int4			   PGNSP PGUID 12 1 0 0 f f f t f i 1 0 23 "20" _null_ _null_ _null_ _null_ int84 _null_ _null_ _null_ ));
 DESCR("convert int8 to int4");
@@ -925,15 +736,10 @@ DATA(insert OID = 754 (  int8			   PGNSP PGUID 12 1 0 0 f f f t f i 1 0 20 "21" 
 DESCR("convert int2 to int8");
 
 DATA(insert OID = 655 (  namelt			   PGNSP PGUID 12 1 0 0 f f f t f i 2 0 16 "19 19" _null_ _null_ _null_ _null_ namelt _null_ _null_ _null_ ));
-DESCR("implementation of < operator");
 DATA(insert OID = 656 (  namele			   PGNSP PGUID 12 1 0 0 f f f t f i 2 0 16 "19 19" _null_ _null_ _null_ _null_ namele _null_ _null_ _null_ ));
-DESCR("implementation of <= operator");
 DATA(insert OID = 657 (  namegt			   PGNSP PGUID 12 1 0 0 f f f t f i 2 0 16 "19 19" _null_ _null_ _null_ _null_ namegt _null_ _null_ _null_ ));
-DESCR("implementation of > operator");
 DATA(insert OID = 658 (  namege			   PGNSP PGUID 12 1 0 0 f f f t f i 2 0 16 "19 19" _null_ _null_ _null_ _null_ namege _null_ _null_ _null_ ));
-DESCR("implementation of >= operator");
 DATA(insert OID = 659 (  namene			   PGNSP PGUID 12 1 0 0 f f f t f i 2 0 16 "19 19" _null_ _null_ _null_ _null_ namene _null_ _null_ _null_ ));
-DESCR("implementation of <> operator");
 
 DATA(insert OID = 668 (  bpchar			   PGNSP PGUID 12 1 0 0 f f f t f i 3 0 1042 "1042 23 16" _null_ _null_ _null_ _null_ bpchar _null_ _null_ _null_ ));
 DESCR("adjust char() to typmod length");
@@ -941,28 +747,19 @@ DATA(insert OID = 669 (  varchar		   PGNSP PGUID 12 1 0 0 f f f t f i 3 0 1043 "
 DESCR("adjust varchar() to typmod length");
 
 DATA(insert OID = 676 (  mktinterval	   PGNSP PGUID 12 1 0 0 f f f t f i 2 0 704 "702 702" _null_ _null_ _null_ _null_ mktinterval _null_ _null_ _null_ ));
-DESCR("implementation of <#> operator");
 
 DATA(insert OID = 619 (  oidvectorne	   PGNSP PGUID 12 1 0 0 f f f t f i 2 0 16 "30 30" _null_ _null_ _null_ _null_ oidvectorne _null_ _null_ _null_ ));
-DESCR("implementation of <> operator");
 DATA(insert OID = 677 (  oidvectorlt	   PGNSP PGUID 12 1 0 0 f f f t f i 2 0 16 "30 30" _null_ _null_ _null_ _null_ oidvectorlt _null_ _null_ _null_ ));
-DESCR("implementation of < operator");
 DATA(insert OID = 678 (  oidvectorle	   PGNSP PGUID 12 1 0 0 f f f t f i 2 0 16 "30 30" _null_ _null_ _null_ _null_ oidvectorle _null_ _null_ _null_ ));
-DESCR("implementation of <= operator");
 DATA(insert OID = 679 (  oidvectoreq	   PGNSP PGUID 12 1 0 0 f f f t f i 2 0 16 "30 30" _null_ _null_ _null_ _null_ oidvectoreq _null_ _null_ _null_ ));
-DESCR("implementation of = operator");
 DATA(insert OID = 680 (  oidvectorge	   PGNSP PGUID 12 1 0 0 f f f t f i 2 0 16 "30 30" _null_ _null_ _null_ _null_ oidvectorge _null_ _null_ _null_ ));
-DESCR("implementation of >= operator");
 DATA(insert OID = 681 (  oidvectorgt	   PGNSP PGUID 12 1 0 0 f f f t f i 2 0 16 "30 30" _null_ _null_ _null_ _null_ oidvectorgt _null_ _null_ _null_ ));
-DESCR("implementation of > operator");
 
 /* OIDS 700 - 799 */
 DATA(insert OID = 710 (  getpgusername	   PGNSP PGUID 12 1 0 0 f f f t f s 0 0 19 "" _null_ _null_ _null_ _null_ current_user _null_ _null_ _null_ ));
-DESCR("deprecated -- use current_user");
+DESCR("deprecated, use current_user instead");
 DATA(insert OID = 716 (  oidlt			   PGNSP PGUID 12 1 0 0 f f f t f i 2 0 16 "26 26" _null_ _null_ _null_ _null_ oidlt _null_ _null_ _null_ ));
-DESCR("implementation of < operator");
 DATA(insert OID = 717 (  oidle			   PGNSP PGUID 12 1 0 0 f f f t f i 2 0 16 "26 26" _null_ _null_ _null_ _null_ oidle _null_ _null_ _null_ ));
-DESCR("implementation of <= operator");
 
 DATA(insert OID = 720 (  octet_length	   PGNSP PGUID 12 1 0 0 f f f t f i 1 0 23 "17" _null_ _null_ _null_ _null_ byteaoctetlen _null_ _null_ _null_ ));
 DESCR("octet length");
@@ -980,24 +777,15 @@ DATA(insert OID = 752 (  overlay		   PGNSP PGUID 12 1 0 0 f f f t f i 3 0 17 "17
 DESCR("substitute portion of string");
 
 DATA(insert OID = 725 (  dist_pl		   PGNSP PGUID 12 1 0 0 f f f t f i 2 0 701 "600 628" _null_ _null_ _null_ _null_	dist_pl _null_ _null_ _null_ ));
-DESCR("implementation of <-> operator");
 DATA(insert OID = 726 (  dist_lb		   PGNSP PGUID 12 1 0 0 f f f t f i 2 0 701 "628 603" _null_ _null_ _null_ _null_	dist_lb _null_ _null_ _null_ ));
-DESCR("implementation of <-> operator");
 DATA(insert OID = 727 (  dist_sl		   PGNSP PGUID 12 1 0 0 f f f t f i 2 0 701 "601 628" _null_ _null_ _null_ _null_	dist_sl _null_ _null_ _null_ ));
-DESCR("implementation of <-> operator");
 DATA(insert OID = 728 (  dist_cpoly		   PGNSP PGUID 12 1 0 0 f f f t f i 2 0 701 "718 604" _null_ _null_ _null_ _null_	dist_cpoly _null_ _null_ _null_ ));
-DESCR("implementation of <-> operator");
 DATA(insert OID = 729 (  poly_distance	   PGNSP PGUID 12 1 0 0 f f f t f i 2 0 701 "604 604" _null_ _null_ _null_ _null_	poly_distance _null_ _null_ _null_ ));
-DESCR("implementation of <-> operator");
 
 DATA(insert OID = 740 (  text_lt		   PGNSP PGUID 12 1 0 0 f f f t f i 2 0 16 "25 25" _null_ _null_ _null_ _null_ text_lt _null_ _null_ _null_ ));
-DESCR("implementation of < operator");
 DATA(insert OID = 741 (  text_le		   PGNSP PGUID 12 1 0 0 f f f t f i 2 0 16 "25 25" _null_ _null_ _null_ _null_ text_le _null_ _null_ _null_ ));
-DESCR("implementation of <= operator");
 DATA(insert OID = 742 (  text_gt		   PGNSP PGUID 12 1 0 0 f f f t f i 2 0 16 "25 25" _null_ _null_ _null_ _null_ text_gt _null_ _null_ _null_ ));
-DESCR("implementation of > operator");
 DATA(insert OID = 743 (  text_ge		   PGNSP PGUID 12 1 0 0 f f f t f i 2 0 16 "25 25" _null_ _null_ _null_ _null_ text_ge _null_ _null_ _null_ ));
-DESCR("implementation of >= operator");
 
 DATA(insert OID = 745 (  current_user	   PGNSP PGUID 12 1 0 0 f f f t f s 0 0 19 "" _null_ _null_ _null_ _null_ current_user _null_ _null_ _null_ ));
 DESCR("current user name");
@@ -1005,17 +793,11 @@ DATA(insert OID = 746 (  session_user	   PGNSP PGUID 12 1 0 0 f f f t f s 0 0 19
 DESCR("session user name");
 
 DATA(insert OID = 744 (  array_eq		   PGNSP PGUID 12 1 0 0 f f f t f i 2 0 16 "2277 2277" _null_ _null_ _null_ _null_ array_eq _null_ _null_ _null_ ));
-DESCR("implementation of = operator");
 DATA(insert OID = 390 (  array_ne		   PGNSP PGUID 12 1 0 0 f f f t f i 2 0 16 "2277 2277" _null_ _null_ _null_ _null_ array_ne _null_ _null_ _null_ ));
-DESCR("implementation of <> operator");
 DATA(insert OID = 391 (  array_lt		   PGNSP PGUID 12 1 0 0 f f f t f i 2 0 16 "2277 2277" _null_ _null_ _null_ _null_ array_lt _null_ _null_ _null_ ));
-DESCR("implementation of < operator");
 DATA(insert OID = 392 (  array_gt		   PGNSP PGUID 12 1 0 0 f f f t f i 2 0 16 "2277 2277" _null_ _null_ _null_ _null_ array_gt _null_ _null_ _null_ ));
-DESCR("implementation of > operator");
 DATA(insert OID = 393 (  array_le		   PGNSP PGUID 12 1 0 0 f f f t f i 2 0 16 "2277 2277" _null_ _null_ _null_ _null_ array_le _null_ _null_ _null_ ));
-DESCR("implementation of <= operator");
 DATA(insert OID = 396 (  array_ge		   PGNSP PGUID 12 1 0 0 f f f t f i 2 0 16 "2277 2277" _null_ _null_ _null_ _null_ array_ge _null_ _null_ _null_ ));
-DESCR("implementation of >= operator");
 DATA(insert OID = 747 (  array_dims		   PGNSP PGUID 12 1 0 0 f f f t f i 1 0 25 "2277" _null_ _null_ _null_ _null_ array_dims _null_ _null_ _null_ ));
 DESCR("array dimensions");
 DATA(insert OID = 748 (  array_ndims	   PGNSP PGUID 12 1 0 0 f f f t f i 1 0 23 "2277" _null_ _null_ _null_ _null_ array_ndims _null_ _null_ _null_ ));
@@ -1035,7 +817,6 @@ DESCR("append element onto end of array");
 DATA(insert OID = 379 (  array_prepend	   PGNSP PGUID 12 1 0 0 f f f f f i 2 0 2277 "2283 2277" _null_ _null_ _null_ _null_ array_push _null_ _null_ _null_ ));
 DESCR("prepend element onto front of array");
 DATA(insert OID = 383 (  array_cat		   PGNSP PGUID 12 1 0 0 f f f f f i 2 0 2277 "2277 2277" _null_ _null_ _null_ _null_ array_cat _null_ _null_ _null_ ));
-DESCR("implementation of || operator");
 DATA(insert OID = 394 (  string_to_array   PGNSP PGUID 12 1 0 0 f f f f f i 2 0 1009 "25 25" _null_ _null_ _null_ _null_ text_to_array _null_ _null_ _null_ ));
 DESCR("split delimited text into text[]");
 DATA(insert OID = 395 (  array_to_string   PGNSP PGUID 12 1 0 0 f f f t f s 2 0 25 "2277 25" _null_ _null_ _null_ _null_ array_to_text _null_ _null_ _null_ ));
@@ -1122,51 +903,32 @@ DATA(insert OID = 2787 (  gistoptions	   PGNSP PGUID 12 1 0 0 f f f t f s 2 0 17
 DESCR("gist(internal)");
 
 DATA(insert OID = 784 (  tintervaleq	   PGNSP PGUID 12 1 0 0 f f f t f i 2 0 16 "704 704" _null_ _null_ _null_ _null_ tintervaleq _null_ _null_ _null_ ));
-DESCR("implementation of = operator");
 DATA(insert OID = 785 (  tintervalne	   PGNSP PGUID 12 1 0 0 f f f t f i 2 0 16 "704 704" _null_ _null_ _null_ _null_ tintervalne _null_ _null_ _null_ ));
-DESCR("implementation of <> operator");
 DATA(insert OID = 786 (  tintervallt	   PGNSP PGUID 12 1 0 0 f f f t f i 2 0 16 "704 704" _null_ _null_ _null_ _null_ tintervallt _null_ _null_ _null_ ));
-DESCR("implementation of < operator");
 DATA(insert OID = 787 (  tintervalgt	   PGNSP PGUID 12 1 0 0 f f f t f i 2 0 16 "704 704" _null_ _null_ _null_ _null_ tintervalgt _null_ _null_ _null_ ));
-DESCR("implementation of > operator");
 DATA(insert OID = 788 (  tintervalle	   PGNSP PGUID 12 1 0 0 f f f t f i 2 0 16 "704 704" _null_ _null_ _null_ _null_ tintervalle _null_ _null_ _null_ ));
-DESCR("implementation of <= operator");
 DATA(insert OID = 789 (  tintervalge	   PGNSP PGUID 12 1 0 0 f f f t f i 2 0 16 "704 704" _null_ _null_ _null_ _null_ tintervalge _null_ _null_ _null_ ));
-DESCR("implementation of >= operator");
 
 /* OIDS 800 - 899 */
 
 DATA(insert OID =  846 (  cash_mul_flt4    PGNSP PGUID 12 1 0 0 f f f t f i 2 0 790 "790 700" _null_ _null_ _null_ _null_	cash_mul_flt4 _null_ _null_ _null_ ));
-DESCR("implementation of * operator");
 DATA(insert OID =  847 (  cash_div_flt4    PGNSP PGUID 12 1 0 0 f f f t f i 2 0 790 "790 700" _null_ _null_ _null_ _null_	cash_div_flt4 _null_ _null_ _null_ ));
-DESCR("implementation of / operator");
 DATA(insert OID =  848 (  flt4_mul_cash    PGNSP PGUID 12 1 0 0 f f f t f i 2 0 790 "700 790" _null_ _null_ _null_ _null_	flt4_mul_cash _null_ _null_ _null_ ));
-DESCR("implementation of * operator");
 
 DATA(insert OID =  849 (  position		   PGNSP PGUID 12 1 0 0 f f f t f i 2 0 23 "25 25" _null_ _null_ _null_ _null_ textpos _null_ _null_ _null_ ));
 DESCR("position of substring");
 DATA(insert OID =  850 (  textlike		   PGNSP PGUID 12 1 0 0 f f f t f i 2 0 16 "25 25" _null_ _null_ _null_ _null_ textlike _null_ _null_ _null_ ));
-DESCR("implementation of ~~ operator");
 DATA(insert OID =  851 (  textnlike		   PGNSP PGUID 12 1 0 0 f f f t f i 2 0 16 "25 25" _null_ _null_ _null_ _null_ textnlike _null_ _null_ _null_ ));
-DESCR("implementation of !~~ operator");
 
 DATA(insert OID =  852 (  int48eq		   PGNSP PGUID 12 1 0 0 f f f t f i 2 0 16 "23 20" _null_ _null_ _null_ _null_ int48eq _null_ _null_ _null_ ));
-DESCR("implementation of = operator");
 DATA(insert OID =  853 (  int48ne		   PGNSP PGUID 12 1 0 0 f f f t f i 2 0 16 "23 20" _null_ _null_ _null_ _null_ int48ne _null_ _null_ _null_ ));
-DESCR("implementation of <> operator");
 DATA(insert OID =  854 (  int48lt		   PGNSP PGUID 12 1 0 0 f f f t f i 2 0 16 "23 20" _null_ _null_ _null_ _null_ int48lt _null_ _null_ _null_ ));
-DESCR("implementation of < operator");
 DATA(insert OID =  855 (  int48gt		   PGNSP PGUID 12 1 0 0 f f f t f i 2 0 16 "23 20" _null_ _null_ _null_ _null_ int48gt _null_ _null_ _null_ ));
-DESCR("implementation of > operator");
 DATA(insert OID =  856 (  int48le		   PGNSP PGUID 12 1 0 0 f f f t f i 2 0 16 "23 20" _null_ _null_ _null_ _null_ int48le _null_ _null_ _null_ ));
-DESCR("implementation of <= operator");
 DATA(insert OID =  857 (  int48ge		   PGNSP PGUID 12 1 0 0 f f f t f i 2 0 16 "23 20" _null_ _null_ _null_ _null_ int48ge _null_ _null_ _null_ ));
-DESCR("implementation of >= operator");
 
 DATA(insert OID =  858 (  namelike		   PGNSP PGUID 12 1 0 0 f f f t f i 2 0 16 "19 25" _null_ _null_ _null_ _null_ namelike _null_ _null_ _null_ ));
-DESCR("implementation of ~~ operator");
 DATA(insert OID =  859 (  namenlike		   PGNSP PGUID 12 1 0 0 f f f t f i 2 0 16 "19 25" _null_ _null_ _null_ _null_ namenlike _null_ _null_ _null_ ));
-DESCR("implementation of !~~ operator");
 
 DATA(insert OID =  860 (  bpchar		   PGNSP PGUID 12 1 0 0 f f f t f i 1 0 1042 "18" _null_ _null_ _null_ _null_	char_bpchar _null_ _null_ _null_ ));
 DESCR("convert char to char(n)");
@@ -1177,52 +939,34 @@ DATA(insert OID = 817 (  current_query		  PGNSP PGUID 12 1 0 0 f f f f f v 0 0 2
 DESCR("get the currently executing query");
 
 DATA(insert OID =  862 (  int4_mul_cash		   PGNSP PGUID 12 1 0 0 f f f t f i 2 0 790 "23 790" _null_ _null_ _null_ _null_ int4_mul_cash _null_ _null_ _null_ ));
-DESCR("implementation of * operator");
 DATA(insert OID =  863 (  int2_mul_cash		   PGNSP PGUID 12 1 0 0 f f f t f i 2 0 790 "21 790" _null_ _null_ _null_ _null_ int2_mul_cash _null_ _null_ _null_ ));
-DESCR("implementation of * operator");
 DATA(insert OID =  864 (  cash_mul_int4		   PGNSP PGUID 12 1 0 0 f f f t f i 2 0 790 "790 23" _null_ _null_ _null_ _null_ cash_mul_int4 _null_ _null_ _null_ ));
-DESCR("implementation of * operator");
 DATA(insert OID =  865 (  cash_div_int4		   PGNSP PGUID 12 1 0 0 f f f t f i 2 0 790 "790 23" _null_ _null_ _null_ _null_ cash_div_int4 _null_ _null_ _null_ ));
-DESCR("implementation of / operator");
 DATA(insert OID =  866 (  cash_mul_int2		   PGNSP PGUID 12 1 0 0 f f f t f i 2 0 790 "790 21" _null_ _null_ _null_ _null_ cash_mul_int2 _null_ _null_ _null_ ));
-DESCR("implementation of * operator");
 DATA(insert OID =  867 (  cash_div_int2		   PGNSP PGUID 12 1 0 0 f f f t f i 2 0 790 "790 21" _null_ _null_ _null_ _null_ cash_div_int2 _null_ _null_ _null_ ));
-DESCR("implementation of / operator");
 
 DATA(insert OID =  886 (  cash_in		   PGNSP PGUID 12 1 0 0 f f f t f s 1 0 790 "2275" _null_ _null_ _null_ _null_	cash_in _null_ _null_ _null_ ));
 DESCR("I/O");
 DATA(insert OID =  887 (  cash_out		   PGNSP PGUID 12 1 0 0 f f f t f s 1 0 2275 "790" _null_ _null_ _null_ _null_	cash_out _null_ _null_ _null_ ));
 DESCR("I/O");
 DATA(insert OID =  888 (  cash_eq		   PGNSP PGUID 12 1 0 0 f f f t f i 2 0 16 "790 790" _null_ _null_ _null_ _null_	cash_eq _null_ _null_ _null_ ));
-DESCR("implementation of = operator");
 DATA(insert OID =  889 (  cash_ne		   PGNSP PGUID 12 1 0 0 f f f t f i 2 0 16 "790 790" _null_ _null_ _null_ _null_	cash_ne _null_ _null_ _null_ ));
-DESCR("implementation of <> operator");
 DATA(insert OID =  890 (  cash_lt		   PGNSP PGUID 12 1 0 0 f f f t f i 2 0 16 "790 790" _null_ _null_ _null_ _null_	cash_lt _null_ _null_ _null_ ));
-DESCR("implementation of < operator");
 DATA(insert OID =  891 (  cash_le		   PGNSP PGUID 12 1 0 0 f f f t f i 2 0 16 "790 790" _null_ _null_ _null_ _null_	cash_le _null_ _null_ _null_ ));
-DESCR("implementation of <= operator");
 DATA(insert OID =  892 (  cash_gt		   PGNSP PGUID 12 1 0 0 f f f t f i 2 0 16 "790 790" _null_ _null_ _null_ _null_	cash_gt _null_ _null_ _null_ ));
-DESCR("implementation of > operator");
 DATA(insert OID =  893 (  cash_ge		   PGNSP PGUID 12 1 0 0 f f f t f i 2 0 16 "790 790" _null_ _null_ _null_ _null_	cash_ge _null_ _null_ _null_ ));
-DESCR("implementation of >= operator");
 DATA(insert OID =  894 (  cash_pl		   PGNSP PGUID 12 1 0 0 f f f t f i 2 0 790 "790 790" _null_ _null_ _null_ _null_	cash_pl _null_ _null_ _null_ ));
-DESCR("implementation of + operator");
 DATA(insert OID =  895 (  cash_mi		   PGNSP PGUID 12 1 0 0 f f f t f i 2 0 790 "790 790" _null_ _null_ _null_ _null_	cash_mi _null_ _null_ _null_ ));
-DESCR("implementation of - operator");
 DATA(insert OID =  896 (  cash_mul_flt8    PGNSP PGUID 12 1 0 0 f f f t f i 2 0 790 "790 701" _null_ _null_ _null_ _null_	cash_mul_flt8 _null_ _null_ _null_ ));
-DESCR("implementation of * operator");
 DATA(insert OID =  897 (  cash_div_flt8    PGNSP PGUID 12 1 0 0 f f f t f i 2 0 790 "790 701" _null_ _null_ _null_ _null_	cash_div_flt8 _null_ _null_ _null_ ));
-DESCR("implementation of / operator");
 DATA(insert OID =  898 (  cashlarger	   PGNSP PGUID 12 1 0 0 f f f t f i 2 0 790 "790 790" _null_ _null_ _null_ _null_	cashlarger _null_ _null_ _null_ ));
 DESCR("larger of two");
 DATA(insert OID =  899 (  cashsmaller	   PGNSP PGUID 12 1 0 0 f f f t f i 2 0 790 "790 790" _null_ _null_ _null_ _null_	cashsmaller _null_ _null_ _null_ ));
 DESCR("smaller of two");
 DATA(insert OID =  919 (  flt8_mul_cash    PGNSP PGUID 12 1 0 0 f f f t f i 2 0 790 "701 790" _null_ _null_ _null_ _null_	flt8_mul_cash _null_ _null_ _null_ ));
-DESCR("implementation of * operator");
 DATA(insert OID =  935 (  cash_words	   PGNSP PGUID 12 1 0 0 f f f t f i 1 0 25 "790" _null_ _null_ _null_ _null_	cash_words _null_ _null_ _null_ ));
 DESCR("output money amount as words");
 DATA(insert OID = 3822 (  cash_div_cash    PGNSP PGUID 12 1 0 0 f f f t f i 2 0 701 "790 790" _null_ _null_ _null_ _null_	cash_div_cash _null_ _null_ _null_ ));
-DESCR("implementation of / operator");
 DATA(insert OID = 3823 (  numeric		   PGNSP PGUID 12 1 0 0 f f f t f s 1 0 1700 "790" _null_ _null_ _null_ _null_	cash_numeric _null_ _null_ _null_ ));
 DESCR("convert money to numeric");
 DATA(insert OID = 3824 (  money			   PGNSP PGUID 12 1 0 0 f f f t f s 1 0 790 "1700" _null_ _null_ _null_ _null_	numeric_cash _null_ _null_ _null_ ));
@@ -1236,7 +980,6 @@ DATA(insert OID = 941 (  mod			   PGNSP PGUID 12 1 0 0 f f f t f i 2 0 23 "23 23
 DESCR("modulus");
 
 DATA(insert OID = 945 (  int8mod		   PGNSP PGUID 12 1 0 0 f f f t f i 2 0 20 "20 20" _null_ _null_ _null_ _null_ int8mod _null_ _null_ _null_ ));
-DESCR("implementation of % operator");
 DATA(insert OID = 947 (  mod			   PGNSP PGUID 12 1 0 0 f f f t f i 2 0 20 "20 20" _null_ _null_ _null_ _null_ int8mod _null_ _null_ _null_ ));
 DESCR("modulus");
 
@@ -1265,21 +1008,15 @@ DATA(insert OID = 1004 (  lo_truncate	   PGNSP PGUID 12 1 0 0 f f f t f v 2 0 23
 DESCR("truncate large object");
 
 DATA(insert OID = 959 (  on_pl			   PGNSP PGUID 12 1 0 0 f f f t f i 2 0 16 "600 628" _null_ _null_ _null_ _null_	on_pl _null_ _null_ _null_ ));
-DESCR("implementation of <@ operator");
 DATA(insert OID = 960 (  on_sl			   PGNSP PGUID 12 1 0 0 f f f t f i 2 0 16 "601 628" _null_ _null_ _null_ _null_	on_sl _null_ _null_ _null_ ));
-DESCR("implementation of <@ operator");
 DATA(insert OID = 961 (  close_pl		   PGNSP PGUID 12 1 0 0 f f f t f i 2 0 600 "600 628" _null_ _null_ _null_ _null_	close_pl _null_ _null_ _null_ ));
-DESCR("implementation of ## operator");
 DATA(insert OID = 962 (  close_sl		   PGNSP PGUID 12 1 0 0 f f f t f i 2 0 600 "601 628" _null_ _null_ _null_ _null_	close_sl _null_ _null_ _null_ ));
-DESCR("implementation of ## operator");
 DATA(insert OID = 963 (  close_lb		   PGNSP PGUID 12 1 0 0 f f f t f i 2 0 600 "628 603" _null_ _null_ _null_ _null_	close_lb _null_ _null_ _null_ ));
-DESCR("implementation of ## operator");
 
 DATA(insert OID = 964 (  lo_unlink		   PGNSP PGUID 12 1 0 0 f f f t f v 1 0 23 "26" _null_ _null_ _null_ _null_ lo_unlink _null_ _null_ _null_ ));
 DESCR("large object unlink (delete)");
 
 DATA(insert OID = 973 (  path_inter		   PGNSP PGUID 12 1 0 0 f f f t f i 2 0 16 "602 602" _null_ _null_ _null_ _null_	path_inter _null_ _null_ _null_ ));
-DESCR("implementation of ?# operator");
 DATA(insert OID = 975 (  area			   PGNSP PGUID 12 1 0 0 f f f t f i 1 0 701 "603" _null_ _null_ _null_ _null_	box_area _null_ _null_ _null_ ));
 DESCR("box area");
 DATA(insert OID = 976 (  width			   PGNSP PGUID 12 1 0 0 f f f t f i 1 0 701 "603" _null_ _null_ _null_ _null_	box_width _null_ _null_ _null_ ));
@@ -1287,49 +1024,31 @@ DESCR("box width");
 DATA(insert OID = 977 (  height			   PGNSP PGUID 12 1 0 0 f f f t f i 1 0 701 "603" _null_ _null_ _null_ _null_	box_height _null_ _null_ _null_ ));
 DESCR("box height");
 DATA(insert OID = 978 (  box_distance	   PGNSP PGUID 12 1 0 0 f f f t f i 2 0 701 "603 603" _null_ _null_ _null_ _null_	box_distance _null_ _null_ _null_ ));
-DESCR("implementation of <-> operator");
 DATA(insert OID = 979 (  area			   PGNSP PGUID 12 1 0 0 f f f t f i 1 0 701 "602" _null_ _null_ _null_ _null_	path_area _null_ _null_ _null_ ));
 DESCR("area of a closed path");
 DATA(insert OID = 980 (  box_intersect	   PGNSP PGUID 12 1 0 0 f f f t f i 2 0 603 "603 603" _null_ _null_ _null_ _null_	box_intersect _null_ _null_ _null_ ));
-DESCR("implementation of # operator");
 DATA(insert OID = 981 (  diagonal		   PGNSP PGUID 12 1 0 0 f f f t f i 1 0 601 "603" _null_ _null_ _null_ _null_	box_diagonal _null_ _null_ _null_ ));
 DESCR("box diagonal");
 DATA(insert OID = 982 (  path_n_lt		   PGNSP PGUID 12 1 0 0 f f f t f i 2 0 16 "602 602" _null_ _null_ _null_ _null_ path_n_lt _null_ _null_ _null_ ));
-DESCR("implementation of < operator");
 DATA(insert OID = 983 (  path_n_gt		   PGNSP PGUID 12 1 0 0 f f f t f i 2 0 16 "602 602" _null_ _null_ _null_ _null_ path_n_gt _null_ _null_ _null_ ));
-DESCR("implementation of > operator");
 DATA(insert OID = 984 (  path_n_eq		   PGNSP PGUID 12 1 0 0 f f f t f i 2 0 16 "602 602" _null_ _null_ _null_ _null_ path_n_eq _null_ _null_ _null_ ));
-DESCR("implementation of = operator");
 DATA(insert OID = 985 (  path_n_le		   PGNSP PGUID 12 1 0 0 f f f t f i 2 0 16 "602 602" _null_ _null_ _null_ _null_ path_n_le _null_ _null_ _null_ ));
-DESCR("implementation of <= operator");
 DATA(insert OID = 986 (  path_n_ge		   PGNSP PGUID 12 1 0 0 f f f t f i 2 0 16 "602 602" _null_ _null_ _null_ _null_ path_n_ge _null_ _null_ _null_ ));
-DESCR("implementation of >= operator");
 DATA(insert OID = 987 (  path_length	   PGNSP PGUID 12 1 0 0 f f f t f i 1 0 701 "602" _null_ _null_ _null_ _null_	path_length _null_ _null_ _null_ ));
-DESCR("implementation of @-@ operator");
 DATA(insert OID = 988 (  point_ne		   PGNSP PGUID 12 1 0 0 f f f t f i 2 0 16 "600 600" _null_ _null_ _null_ _null_ point_ne _null_ _null_ _null_ ));
-DESCR("implementation of <> operator");
 DATA(insert OID = 989 (  point_vert		   PGNSP PGUID 12 1 0 0 f f f t f i 2 0 16 "600 600" _null_ _null_ _null_ _null_ point_vert _null_ _null_ _null_ ));
-DESCR("implementation of ?| operator");
 DATA(insert OID = 990 (  point_horiz	   PGNSP PGUID 12 1 0 0 f f f t f i 2 0 16 "600 600" _null_ _null_ _null_ _null_ point_horiz _null_ _null_ _null_ ));
-DESCR("implementation of ?- operator");
 DATA(insert OID = 991 (  point_distance    PGNSP PGUID 12 1 0 0 f f f t f i 2 0 701 "600 600" _null_ _null_ _null_ _null_	point_distance _null_ _null_ _null_ ));
-DESCR("implementation of <-> operator");
 DATA(insert OID = 992 (  slope			   PGNSP PGUID 12 1 0 0 f f f t f i 2 0 701 "600 600" _null_ _null_ _null_ _null_	point_slope _null_ _null_ _null_ ));
 DESCR("slope between points");
 DATA(insert OID = 993 (  lseg			   PGNSP PGUID 12 1 0 0 f f f t f i 2 0 601 "600 600" _null_ _null_ _null_ _null_	lseg_construct _null_ _null_ _null_ ));
 DESCR("convert points to line segment");
 DATA(insert OID = 994 (  lseg_intersect    PGNSP PGUID 12 1 0 0 f f f t f i 2 0 16 "601 601" _null_ _null_ _null_ _null_ lseg_intersect _null_ _null_ _null_ ));
-DESCR("implementation of ?# operator");
 DATA(insert OID = 995 (  lseg_parallel	   PGNSP PGUID 12 1 0 0 f f f t f i 2 0 16 "601 601" _null_ _null_ _null_ _null_ lseg_parallel _null_ _null_ _null_ ));
-DESCR("implementation of ?|| operator");
 DATA(insert OID = 996 (  lseg_perp		   PGNSP PGUID 12 1 0 0 f f f t f i 2 0 16 "601 601" _null_ _null_ _null_ _null_ lseg_perp _null_ _null_ _null_ ));
-DESCR("implementation of ?-| operator");
 DATA(insert OID = 997 (  lseg_vertical	   PGNSP PGUID 12 1 0 0 f f f t f i 1 0 16 "601" _null_ _null_ _null_ _null_ lseg_vertical _null_ _null_ _null_ ));
-DESCR("implementation of ?| operator");
 DATA(insert OID = 998 (  lseg_horizontal   PGNSP PGUID 12 1 0 0 f f f t f i 1 0 16 "601" _null_ _null_ _null_ _null_ lseg_horizontal _null_ _null_ _null_ ));
-DESCR("implementation of ?- operator");
 DATA(insert OID = 999 (  lseg_eq		   PGNSP PGUID 12 1 0 0 f f f t f i 2 0 16 "601 601" _null_ _null_ _null_ _null_ lseg_eq _null_ _null_ _null_ ));
-DESCR("implementation of = operator");
 
 /* OIDS 1000 - 1999 */
 
@@ -1347,7 +1066,6 @@ DESCR("remove ACL item");
 DATA(insert OID = 1037 (  aclcontains	   PGNSP PGUID 12 1 0 0 f f f t f i 2 0 16 "1034 1033" _null_ _null_ _null_ _null_ aclcontains _null_ _null_ _null_ ));
 DESCR("contains");
 DATA(insert OID = 1062 (  aclitemeq		   PGNSP PGUID 12 1 0 0 f f f t f i 2 0 16 "1033 1033" _null_ _null_ _null_ _null_ aclitem_eq _null_ _null_ _null_ ));
-DESCR("implementation of = operator");
 DATA(insert OID = 1365 (  makeaclitem	   PGNSP PGUID 12 1 0 0 f f f t f i 4 0 1033 "26 26 25 16" _null_ _null_ _null_ _null_ makeaclitem _null_ _null_ _null_ ));
 DESCR("make ACL item");
 DATA(insert OID = 1689 (  aclexplode	PGNSP PGUID 12 1 10 0 f f f t t s 1 0 2249 "1034" "{1034,26,26,25,16}" "{i,o,o,o,o}" "{acl,grantor,grantee,privilege_type,is_grantable}" _null_ aclexplode _null_ _null_ _null_ ));
@@ -1369,17 +1087,11 @@ DESCR("I/O typmod");
 DATA(insert OID = 2916 (  varchartypmodout PGNSP PGUID 12 1 0 0 f f f t f i 1 0 2275 "23" _null_ _null_ _null_ _null_	varchartypmodout _null_ _null_ _null_ ));
 DESCR("I/O typmod");
 DATA(insert OID = 1048 (  bpchareq		   PGNSP PGUID 12 1 0 0 f f f t f i 2 0 16 "1042 1042" _null_ _null_ _null_ _null_ bpchareq _null_ _null_ _null_ ));
-DESCR("implementation of = operator");
 DATA(insert OID = 1049 (  bpcharlt		   PGNSP PGUID 12 1 0 0 f f f t f i 2 0 16 "1042 1042" _null_ _null_ _null_ _null_ bpcharlt _null_ _null_ _null_ ));
-DESCR("implementation of < operator");
 DATA(insert OID = 1050 (  bpcharle		   PGNSP PGUID 12 1 0 0 f f f t f i 2 0 16 "1042 1042" _null_ _null_ _null_ _null_ bpcharle _null_ _null_ _null_ ));
-DESCR("implementation of <= operator");
 DATA(insert OID = 1051 (  bpchargt		   PGNSP PGUID 12 1 0 0 f f f t f i 2 0 16 "1042 1042" _null_ _null_ _null_ _null_ bpchargt _null_ _null_ _null_ ));
-DESCR("implementation of > operator");
 DATA(insert OID = 1052 (  bpcharge		   PGNSP PGUID 12 1 0 0 f f f t f i 2 0 16 "1042 1042" _null_ _null_ _null_ _null_ bpcharge _null_ _null_ _null_ ));
-DESCR("implementation of >= operator");
 DATA(insert OID = 1053 (  bpcharne		   PGNSP PGUID 12 1 0 0 f f f t f i 2 0 16 "1042 1042" _null_ _null_ _null_ _null_ bpcharne _null_ _null_ _null_ ));
-DESCR("implementation of <> operator");
 DATA(insert OID = 1063 (  bpchar_larger    PGNSP PGUID 12 1 0 0 f f f t f i 2 0 1042 "1042 1042" _null_ _null_ _null_ _null_ bpchar_larger _null_ _null_ _null_ ));
 DESCR("larger of two");
 DATA(insert OID = 1064 (  bpchar_smaller   PGNSP PGUID 12 1 0 0 f f f t f i 2 0 1042 "1042 1042" _null_ _null_ _null_ _null_ bpchar_smaller _null_ _null_ _null_ ));
@@ -1395,32 +1107,21 @@ DESCR("I/O");
 DATA(insert OID = 1085 (  date_out		   PGNSP PGUID 12 1 0 0 f f f t f s 1 0 2275 "1082" _null_ _null_ _null_ _null_ date_out _null_ _null_ _null_ ));
 DESCR("I/O");
 DATA(insert OID = 1086 (  date_eq		   PGNSP PGUID 12 1 0 0 f f f t f i 2 0 16 "1082 1082" _null_ _null_ _null_ _null_ date_eq _null_ _null_ _null_ ));
-DESCR("implementation of = operator");
 DATA(insert OID = 1087 (  date_lt		   PGNSP PGUID 12 1 0 0 f f f t f i 2 0 16 "1082 1082" _null_ _null_ _null_ _null_ date_lt _null_ _null_ _null_ ));
-DESCR("implementation of < operator");
 DATA(insert OID = 1088 (  date_le		   PGNSP PGUID 12 1 0 0 f f f t f i 2 0 16 "1082 1082" _null_ _null_ _null_ _null_ date_le _null_ _null_ _null_ ));
-DESCR("implementation of <= operator");
 DATA(insert OID = 1089 (  date_gt		   PGNSP PGUID 12 1 0 0 f f f t f i 2 0 16 "1082 1082" _null_ _null_ _null_ _null_ date_gt _null_ _null_ _null_ ));
-DESCR("implementation of > operator");
 DATA(insert OID = 1090 (  date_ge		   PGNSP PGUID 12 1 0 0 f f f t f i 2 0 16 "1082 1082" _null_ _null_ _null_ _null_ date_ge _null_ _null_ _null_ ));
-DESCR("implementation of >= operator");
 DATA(insert OID = 1091 (  date_ne		   PGNSP PGUID 12 1 0 0 f f f t f i 2 0 16 "1082 1082" _null_ _null_ _null_ _null_ date_ne _null_ _null_ _null_ ));
-DESCR("implementation of <> operator");
 DATA(insert OID = 1092 (  date_cmp		   PGNSP PGUID 12 1 0 0 f f f t f i 2 0 23 "1082 1082" _null_ _null_ _null_ _null_ date_cmp _null_ _null_ _null_ ));
 DESCR("less-equal-greater");
 
 /* OIDS 1100 - 1199 */
 
 DATA(insert OID = 1102 (  time_lt		   PGNSP PGUID 12 1 0 0 f f f t f i 2 0 16 "1083 1083" _null_ _null_ _null_ _null_ time_lt _null_ _null_ _null_ ));
-DESCR("implementation of < operator");
 DATA(insert OID = 1103 (  time_le		   PGNSP PGUID 12 1 0 0 f f f t f i 2 0 16 "1083 1083" _null_ _null_ _null_ _null_ time_le _null_ _null_ _null_ ));
-DESCR("implementation of <= operator");
 DATA(insert OID = 1104 (  time_gt		   PGNSP PGUID 12 1 0 0 f f f t f i 2 0 16 "1083 1083" _null_ _null_ _null_ _null_ time_gt _null_ _null_ _null_ ));
-DESCR("implementation of > operator");
 DATA(insert OID = 1105 (  time_ge		   PGNSP PGUID 12 1 0 0 f f f t f i 2 0 16 "1083 1083" _null_ _null_ _null_ _null_ time_ge _null_ _null_ _null_ ));
-DESCR("implementation of >= operator");
 DATA(insert OID = 1106 (  time_ne		   PGNSP PGUID 12 1 0 0 f f f t f i 2 0 16 "1083 1083" _null_ _null_ _null_ _null_ time_ne _null_ _null_ _null_ ));
-DESCR("implementation of <> operator");
 DATA(insert OID = 1107 (  time_cmp		   PGNSP PGUID 12 1 0 0 f f f t f i 2 0 23 "1083 1083" _null_ _null_ _null_ _null_ time_cmp _null_ _null_ _null_ ));
 DESCR("less-equal-greater");
 DATA(insert OID = 1138 (  date_larger	   PGNSP PGUID 12 1 0 0 f f f t f i 2 0 1082 "1082 1082" _null_ _null_ _null_ _null_ date_larger _null_ _null_ _null_ ));
@@ -1428,11 +1129,8 @@ DESCR("larger of two");
 DATA(insert OID = 1139 (  date_smaller	   PGNSP PGUID 12 1 0 0 f f f t f i 2 0 1082 "1082 1082" _null_ _null_ _null_ _null_ date_smaller _null_ _null_ _null_ ));
 DESCR("smaller of two");
 DATA(insert OID = 1140 (  date_mi		   PGNSP PGUID 12 1 0 0 f f f t f i 2 0 23 "1082 1082" _null_ _null_ _null_ _null_ date_mi _null_ _null_ _null_ ));
-DESCR("implementation of - operator");
 DATA(insert OID = 1141 (  date_pli		   PGNSP PGUID 12 1 0 0 f f f t f i 2 0 1082 "1082 23" _null_ _null_ _null_ _null_ date_pli _null_ _null_ _null_ ));
-DESCR("implementation of + operator");
 DATA(insert OID = 1142 (  date_mii		   PGNSP PGUID 12 1 0 0 f f f t f i 2 0 1082 "1082 23" _null_ _null_ _null_ _null_ date_mii _null_ _null_ _null_ ));
-DESCR("implementation of - operator");
 DATA(insert OID = 1143 (  time_in		   PGNSP PGUID 12 1 0 0 f f f t f s 3 0 1083 "2275 26 23" _null_ _null_ _null_ _null_ time_in _null_ _null_ _null_ ));
 DESCR("I/O");
 DATA(insert OID = 1144 (  time_out		   PGNSP PGUID 12 1 0 0 f f f t f i 1 0 2275 "1083" _null_ _null_ _null_ _null_ time_out _null_ _null_ _null_ ));
@@ -1442,16 +1140,11 @@ DESCR("I/O typmod");
 DATA(insert OID = 2910 (  timetypmodout		PGNSP PGUID 12 1 0 0 f f f t f i 1 0 2275 "23" _null_ _null_ _null_ _null_	timetypmodout _null_ _null_ _null_ ));
 DESCR("I/O typmod");
 DATA(insert OID = 1145 (  time_eq		   PGNSP PGUID 12 1 0 0 f f f t f i 2 0 16 "1083 1083" _null_ _null_ _null_ _null_ time_eq _null_ _null_ _null_ ));
-DESCR("implementation of = operator");
 
 DATA(insert OID = 1146 (  circle_add_pt    PGNSP PGUID 12 1 0 0 f f f t f i 2 0 718 "718 600" _null_ _null_ _null_ _null_	circle_add_pt _null_ _null_ _null_ ));
-DESCR("implementation of + operator");
 DATA(insert OID = 1147 (  circle_sub_pt    PGNSP PGUID 12 1 0 0 f f f t f i 2 0 718 "718 600" _null_ _null_ _null_ _null_	circle_sub_pt _null_ _null_ _null_ ));
-DESCR("implementation of - operator");
 DATA(insert OID = 1148 (  circle_mul_pt    PGNSP PGUID 12 1 0 0 f f f t f i 2 0 718 "718 600" _null_ _null_ _null_ _null_	circle_mul_pt _null_ _null_ _null_ ));
-DESCR("implementation of * operator");
 DATA(insert OID = 1149 (  circle_div_pt    PGNSP PGUID 12 1 0 0 f f f t f i 2 0 718 "718 600" _null_ _null_ _null_ _null_	circle_div_pt _null_ _null_ _null_ ));
-DESCR("implementation of / operator");
 
 DATA(insert OID = 1150 (  timestamptz_in   PGNSP PGUID 12 1 0 0 f f f t f s 3 0 1184 "2275 26 23" _null_ _null_ _null_ _null_ timestamptz_in _null_ _null_ _null_ ));
 DESCR("I/O");
@@ -1462,17 +1155,11 @@ DESCR("I/O typmod");
 DATA(insert OID = 2908 (  timestamptztypmodout		PGNSP PGUID 12 1 0 0 f f f t f i 1 0 2275 "23" _null_ _null_ _null_ _null_	timestamptztypmodout _null_ _null_ _null_ ));
 DESCR("I/O typmod");
 DATA(insert OID = 1152 (  timestamptz_eq   PGNSP PGUID 12 1 0 0 f f f t f i 2 0 16 "1184 1184" _null_ _null_ _null_ _null_ timestamp_eq _null_ _null_ _null_ ));
-DESCR("implementation of = operator");
 DATA(insert OID = 1153 (  timestamptz_ne   PGNSP PGUID 12 1 0 0 f f f t f i 2 0 16 "1184 1184" _null_ _null_ _null_ _null_ timestamp_ne _null_ _null_ _null_ ));
-DESCR("implementation of <> operator");
 DATA(insert OID = 1154 (  timestamptz_lt   PGNSP PGUID 12 1 0 0 f f f t f i 2 0 16 "1184 1184" _null_ _null_ _null_ _null_ timestamp_lt _null_ _null_ _null_ ));
-DESCR("implementation of < operator");
 DATA(insert OID = 1155 (  timestamptz_le   PGNSP PGUID 12 1 0 0 f f f t f i 2 0 16 "1184 1184" _null_ _null_ _null_ _null_ timestamp_le _null_ _null_ _null_ ));
-DESCR("implementation of <= operator");
 DATA(insert OID = 1156 (  timestamptz_ge   PGNSP PGUID 12 1 0 0 f f f t f i 2 0 16 "1184 1184" _null_ _null_ _null_ _null_ timestamp_ge _null_ _null_ _null_ ));
-DESCR("implementation of >= operator");
 DATA(insert OID = 1157 (  timestamptz_gt   PGNSP PGUID 12 1 0 0 f f f t f i 2 0 16 "1184 1184" _null_ _null_ _null_ _null_ timestamp_gt _null_ _null_ _null_ ));
-DESCR("implementation of > operator");
 DATA(insert OID = 1158 (  to_timestamp	   PGNSP PGUID 14 1 0 0 f f f t f i 1 0 1184 "701" _null_ _null_ _null_ _null_ "select (''epoch''::pg_catalog.timestamptz + $1 * ''1 second''::pg_catalog.interval)" _null_ _null_ _null_ ));
 DESCR("convert UNIX epoch to timestamptz");
 DATA(insert OID = 1159 (  timezone		   PGNSP PGUID 12 1 0 0 f f f t f i 2 0 1114 "25 1184" _null_ _null_ _null_ _null_	timestamptz_zone _null_ _null_ _null_ ));
@@ -1487,23 +1174,14 @@ DESCR("I/O typmod");
 DATA(insert OID = 2904 (  intervaltypmodout		PGNSP PGUID 12 1 0 0 f f f t f i 1 0 2275 "23" _null_ _null_ _null_ _null_	intervaltypmodout _null_ _null_ _null_ ));
 DESCR("I/O typmod");
 DATA(insert OID = 1162 (  interval_eq	   PGNSP PGUID 12 1 0 0 f f f t f i 2 0 16 "1186 1186" _null_ _null_ _null_ _null_ interval_eq _null_ _null_ _null_ ));
-DESCR("implementation of = operator");
 DATA(insert OID = 1163 (  interval_ne	   PGNSP PGUID 12 1 0 0 f f f t f i 2 0 16 "1186 1186" _null_ _null_ _null_ _null_ interval_ne _null_ _null_ _null_ ));
-DESCR("implementation of <> operator");
 DATA(insert OID = 1164 (  interval_lt	   PGNSP PGUID 12 1 0 0 f f f t f i 2 0 16 "1186 1186" _null_ _null_ _null_ _null_ interval_lt _null_ _null_ _null_ ));
-DESCR("implementation of < operator");
 DATA(insert OID = 1165 (  interval_le	   PGNSP PGUID 12 1 0 0 f f f t f i 2 0 16 "1186 1186" _null_ _null_ _null_ _null_ interval_le _null_ _null_ _null_ ));
-DESCR("implementation of <= operator");
 DATA(insert OID = 1166 (  interval_ge	   PGNSP PGUID 12 1 0 0 f f f t f i 2 0 16 "1186 1186" _null_ _null_ _null_ _null_ interval_ge _null_ _null_ _null_ ));
-DESCR("implementation of >= operator");
 DATA(insert OID = 1167 (  interval_gt	   PGNSP PGUID 12 1 0 0 f f f t f i 2 0 16 "1186 1186" _null_ _null_ _null_ _null_ interval_gt _null_ _null_ _null_ ));
-DESCR("implementation of > operator");
 DATA(insert OID = 1168 (  interval_um	   PGNSP PGUID 12 1 0 0 f f f t f i 1 0 1186 "1186" _null_ _null_ _null_ _null_ interval_um _null_ _null_ _null_ ));
-DESCR("implementation of - operator");
 DATA(insert OID = 1169 (  interval_pl	   PGNSP PGUID 12 1 0 0 f f f t f i 2 0 1186 "1186 1186" _null_ _null_ _null_ _null_ interval_pl _null_ _null_ _null_ ));
-DESCR("implementation of + operator");
 DATA(insert OID = 1170 (  interval_mi	   PGNSP PGUID 12 1 0 0 f f f t f i 2 0 1186 "1186 1186" _null_ _null_ _null_ _null_ interval_mi _null_ _null_ _null_ ));
-DESCR("implementation of - operator");
 DATA(insert OID = 1171 (  date_part		   PGNSP PGUID 12 1 0 0 f f f t f s 2 0 701 "25 1184" _null_ _null_ _null_ _null_ timestamptz_part _null_ _null_ _null_ ));
 DESCR("extract field from timestamp with time zone");
 DATA(insert OID = 1172 (  date_part		   PGNSP PGUID 12 1 0 0 f f f t f i 2 0 701 "25 1186" _null_ _null_ _null_ _null_ interval_part _null_ _null_ _null_ ));
@@ -1532,11 +1210,8 @@ DATA(insert OID = 1181 (  age			   PGNSP PGUID 12 1 0 0 f f f t f s 1 0 23 "28" 
 DESCR("age of a transaction ID, in transactions before current transaction");
 
 DATA(insert OID = 1188 (  timestamptz_mi   PGNSP PGUID 12 1 0 0 f f f t f i 2 0 1186 "1184 1184" _null_ _null_ _null_ _null_ timestamp_mi _null_ _null_ _null_ ));
-DESCR("implementation of - operator");
 DATA(insert OID = 1189 (  timestamptz_pl_interval PGNSP PGUID 12 1 0 0 f f f t f s 2 0 1184 "1184 1186" _null_ _null_ _null_ _null_ timestamptz_pl_interval _null_ _null_ _null_ ));
-DESCR("implementation of + operator");
 DATA(insert OID = 1190 (  timestamptz_mi_interval PGNSP PGUID 12 1 0 0 f f f t f s 2 0 1184 "1184 1186" _null_ _null_ _null_ _null_ timestamptz_mi_interval _null_ _null_ _null_ ));
-DESCR("implementation of - operator");
 DATA(insert OID = 1194 (  reltime			PGNSP PGUID 12 1 0 0 f f f t f i 1 0 703 "1186" _null_ _null_ _null_ _null_ interval_reltime _null_ _null_ _null_ ));
 DESCR("convert interval to reltime");
 DATA(insert OID = 1195 (  timestamptz_smaller PGNSP PGUID 12 1 0 0 f f f t f i 2 0 1184 "1184 1184" _null_ _null_ _null_ _null_ timestamp_smaller _null_ _null_ _null_ ));
@@ -1572,7 +1247,6 @@ DESCR("increment");
 DATA(insert OID = 2804 (  int8inc_any	   PGNSP PGUID 12 1 0 0 f f f t f i 2 0 20 "20 2276" _null_ _null_ _null_ _null_ int8inc_any _null_ _null_ _null_ ));
 DESCR("increment, ignores second argument");
 DATA(insert OID = 1230 (  int8abs		   PGNSP PGUID 12 1 0 0 f f f t f i 1 0 20 "20" _null_ _null_ _null_ _null_ int8abs _null_ _null_ _null_ ));
-DESCR("implementation of @ operator");
 
 DATA(insert OID = 1236 (  int8larger	   PGNSP PGUID 12 1 0 0 f f f t f i 2 0 20 "20 20" _null_ _null_ _null_ _null_ int8larger _null_ _null_ _null_ ));
 DESCR("larger of two");
@@ -1580,58 +1254,35 @@ DATA(insert OID = 1237 (  int8smaller	   PGNSP PGUID 12 1 0 0 f f f t f i 2 0 20
 DESCR("smaller of two");
 
 DATA(insert OID = 1238 (  texticregexeq    PGNSP PGUID 12 1 0 0 f f f t f i 2 0 16 "25 25" _null_ _null_ _null_ _null_ texticregexeq _null_ _null_ _null_ ));
-DESCR("implementation of ~* operator");
 DATA(insert OID = 1239 (  texticregexne    PGNSP PGUID 12 1 0 0 f f f t f i 2 0 16 "25 25" _null_ _null_ _null_ _null_ texticregexne _null_ _null_ _null_ ));
-DESCR("implementation of !~* operator");
 DATA(insert OID = 1240 (  nameicregexeq    PGNSP PGUID 12 1 0 0 f f f t f i 2 0 16 "19 25" _null_ _null_ _null_ _null_ nameicregexeq _null_ _null_ _null_ ));
-DESCR("implementation of ~* operator");
 DATA(insert OID = 1241 (  nameicregexne    PGNSP PGUID 12 1 0 0 f f f t f i 2 0 16 "19 25" _null_ _null_ _null_ _null_ nameicregexne _null_ _null_ _null_ ));
-DESCR("implementation of !~* operator");
 
 DATA(insert OID = 1251 (  int4abs		   PGNSP PGUID 12 1 0 0 f f f t f i 1 0 23 "23" _null_ _null_ _null_ _null_ int4abs _null_ _null_ _null_ ));
-DESCR("implementation of @ operator");
 DATA(insert OID = 1253 (  int2abs		   PGNSP PGUID 12 1 0 0 f f f t f i 1 0 21 "21" _null_ _null_ _null_ _null_ int2abs _null_ _null_ _null_ ));
-DESCR("implementation of @ operator");
 
 DATA(insert OID = 1271 (  overlaps		   PGNSP PGUID 12 1 0 0 f f f f f i 4 0 16 "1266 1266 1266 1266" _null_ _null_ _null_ _null_ overlaps_timetz _null_ _null_ _null_ ));
 DESCR("intervals overlap?");
 DATA(insert OID = 1272 (  datetime_pl	   PGNSP PGUID 12 1 0 0 f f f t f i 2 0 1114 "1082 1083" _null_ _null_ _null_ _null_ datetime_timestamp _null_ _null_ _null_ ));
-DESCR("implementation of + operator");
 DATA(insert OID = 1273 (  date_part		   PGNSP PGUID 12 1 0 0 f f f t f i 2 0 701 "25 1266" _null_ _null_ _null_ _null_ timetz_part _null_ _null_ _null_ ));
 DESCR("extract field from time with time zone");
 DATA(insert OID = 1274 (  int84pl		   PGNSP PGUID 12 1 0 0 f f f t f i 2 0 20 "20 23" _null_ _null_ _null_ _null_ int84pl _null_ _null_ _null_ ));
-DESCR("implementation of + operator");
 DATA(insert OID = 1275 (  int84mi		   PGNSP PGUID 12 1 0 0 f f f t f i 2 0 20 "20 23" _null_ _null_ _null_ _null_ int84mi _null_ _null_ _null_ ));
-DESCR("implementation of - operator");
 DATA(insert OID = 1276 (  int84mul		   PGNSP PGUID 12 1 0 0 f f f t f i 2 0 20 "20 23" _null_ _null_ _null_ _null_ int84mul _null_ _null_ _null_ ));
-DESCR("implementation of * operator");
 DATA(insert OID = 1277 (  int84div		   PGNSP PGUID 12 1 0 0 f f f t f i 2 0 20 "20 23" _null_ _null_ _null_ _null_ int84div _null_ _null_ _null_ ));
-DESCR("implementation of / operator");
 DATA(insert OID = 1278 (  int48pl		   PGNSP PGUID 12 1 0 0 f f f t f i 2 0 20 "23 20" _null_ _null_ _null_ _null_ int48pl _null_ _null_ _null_ ));
-DESCR("implementation of + operator");
 DATA(insert OID = 1279 (  int48mi		   PGNSP PGUID 12 1 0 0 f f f t f i 2 0 20 "23 20" _null_ _null_ _null_ _null_ int48mi _null_ _null_ _null_ ));
-DESCR("implementation of - operator");
 DATA(insert OID = 1280 (  int48mul		   PGNSP PGUID 12 1 0 0 f f f t f i 2 0 20 "23 20" _null_ _null_ _null_ _null_ int48mul _null_ _null_ _null_ ));
-DESCR("implementation of * operator");
 DATA(insert OID = 1281 (  int48div		   PGNSP PGUID 12 1 0 0 f f f t f i 2 0 20 "23 20" _null_ _null_ _null_ _null_ int48div _null_ _null_ _null_ ));
-DESCR("implementation of / operator");
 
 DATA(insert OID =  837 (  int82pl		   PGNSP PGUID 12 1 0 0 f f f t f i 2 0 20 "20 21" _null_ _null_ _null_ _null_ int82pl _null_ _null_ _null_ ));
-DESCR("implementation of + operator");
 DATA(insert OID =  838 (  int82mi		   PGNSP PGUID 12 1 0 0 f f f t f i 2 0 20 "20 21" _null_ _null_ _null_ _null_ int82mi _null_ _null_ _null_ ));
-DESCR("implementation of - operator");
 DATA(insert OID =  839 (  int82mul		   PGNSP PGUID 12 1 0 0 f f f t f i 2 0 20 "20 21" _null_ _null_ _null_ _null_ int82mul _null_ _null_ _null_ ));
-DESCR("implementation of * operator");
 DATA(insert OID =  840 (  int82div		   PGNSP PGUID 12 1 0 0 f f f t f i 2 0 20 "20 21" _null_ _null_ _null_ _null_ int82div _null_ _null_ _null_ ));
-DESCR("implementation of / operator");
 DATA(insert OID =  841 (  int28pl		   PGNSP PGUID 12 1 0 0 f f f t f i 2 0 20 "21 20" _null_ _null_ _null_ _null_ int28pl _null_ _null_ _null_ ));
-DESCR("implementation of + operator");
 DATA(insert OID =  942 (  int28mi		   PGNSP PGUID 12 1 0 0 f f f t f i 2 0 20 "21 20" _null_ _null_ _null_ _null_ int28mi _null_ _null_ _null_ ));
-DESCR("implementation of - operator");
 DATA(insert OID =  943 (  int28mul		   PGNSP PGUID 12 1 0 0 f f f t f i 2 0 20 "21 20" _null_ _null_ _null_ _null_ int28mul _null_ _null_ _null_ ));
-DESCR("implementation of * operator");
 DATA(insert OID =  948 (  int28div		   PGNSP PGUID 12 1 0 0 f f f t f i 2 0 20 "21 20" _null_ _null_ _null_ _null_ int28div _null_ _null_ _null_ ));
-DESCR("implementation of / operator");
 
 DATA(insert OID = 1287 (  oid			   PGNSP PGUID 12 1 0 0 f f f t f i 1 0 26 "20" _null_ _null_ _null_ _null_ i8tooid _null_ _null_ _null_ ));
 DESCR("convert int8 to oid");
@@ -1642,21 +1293,15 @@ DATA(insert OID = 1291 (  suppress_redundant_updates_trigger	PGNSP PGUID 12 1 0 
 DESCR("trigger to suppress updates when new and old records match");
 
 DATA(insert OID = 1292 ( tideq			   PGNSP PGUID 12 1 0 0 f f f t f i 2 0 16 "27 27" _null_ _null_ _null_ _null_ tideq _null_ _null_ _null_ ));
-DESCR("implementation of = operator");
 DATA(insert OID = 1293 ( currtid		   PGNSP PGUID 12 1 0 0 f f f t f v 2 0 27 "26 27" _null_ _null_ _null_ _null_ currtid_byreloid _null_ _null_ _null_ ));
 DESCR("latest tid of a tuple");
 DATA(insert OID = 1294 ( currtid2		   PGNSP PGUID 12 1 0 0 f f f t f v 2 0 27 "25 27" _null_ _null_ _null_ _null_ currtid_byrelname _null_ _null_ _null_ ));
 DESCR("latest tid of a tuple");
 DATA(insert OID = 1265 ( tidne			   PGNSP PGUID 12 1 0 0 f f f t f i 2 0 16 "27 27" _null_ _null_ _null_ _null_ tidne _null_ _null_ _null_ ));
-DESCR("implementation of <> operator");
 DATA(insert OID = 2790 ( tidgt			   PGNSP PGUID 12 1 0 0 f f f t f i 2 0 16 "27 27" _null_ _null_ _null_ _null_ tidgt _null_ _null_ _null_ ));
-DESCR("implementation of > operator");
 DATA(insert OID = 2791 ( tidlt			   PGNSP PGUID 12 1 0 0 f f f t f i 2 0 16 "27 27" _null_ _null_ _null_ _null_ tidlt _null_ _null_ _null_ ));
-DESCR("implementation of < operator");
 DATA(insert OID = 2792 ( tidge			   PGNSP PGUID 12 1 0 0 f f f t f i 2 0 16 "27 27" _null_ _null_ _null_ _null_ tidge _null_ _null_ _null_ ));
-DESCR("implementation of >= operator");
 DATA(insert OID = 2793 ( tidle			   PGNSP PGUID 12 1 0 0 f f f t f i 2 0 16 "27 27" _null_ _null_ _null_ _null_ tidle _null_ _null_ _null_ ));
-DESCR("implementation of <= operator");
 DATA(insert OID = 2794 ( bttidcmp		   PGNSP PGUID 12 1 0 0 f f f t f i 2 0 23 "27 27" _null_ _null_ _null_ _null_ bttidcmp _null_ _null_ _null_ ));
 DESCR("less-equal-greater");
 DATA(insert OID = 2795 ( tidlarger		   PGNSP PGUID 12 1 0 0 f f f t f i 2 0 27 "27 27" _null_ _null_ _null_ _null_ tidlarger _null_ _null_ _null_ ));
@@ -1665,11 +1310,8 @@ DATA(insert OID = 2796 ( tidsmaller		   PGNSP PGUID 12 1 0 0 f f f t f i 2 0 27 
 DESCR("smaller of two");
 
 DATA(insert OID = 1296 (  timedate_pl	   PGNSP PGUID 14 1 0 0 f f f t f i 2 0 1114 "1083 1082" _null_ _null_ _null_ _null_ "select ($2 + $1)" _null_ _null_ _null_ ));
-DESCR("implementation of + operator");
 DATA(insert OID = 1297 (  datetimetz_pl    PGNSP PGUID 12 1 0 0 f f f t f i 2 0 1184 "1082 1266" _null_ _null_ _null_ _null_ datetimetz_timestamptz _null_ _null_ _null_ ));
-DESCR("implementation of + operator");
 DATA(insert OID = 1298 (  timetzdate_pl    PGNSP PGUID 14 1 0 0 f f f t f i 2 0 1184 "1266 1082" _null_ _null_ _null_ _null_ "select ($2 + $1)" _null_ _null_ _null_ ));
-DESCR("implementation of + operator");
 DATA(insert OID = 1299 (  now			   PGNSP PGUID 12 1 0 0 f f f t f s 0 0 1184 "" _null_ _null_ _null_ _null_ now _null_ _null_ _null_ ));
 DESCR("current transaction time");
 DATA(insert OID = 2647 (  transaction_timestamp PGNSP PGUID 12 1 0 0 f f f t f s 0 0 1184 "" _null_ _null_ _null_ _null_ now _null_ _null_ _null_ ));
@@ -1729,10 +1371,8 @@ DATA(insert OID = 1318 (  length			 PGNSP PGUID 12 1 0 0 f f f t f i 1 0 23 "104
 DESCR("character length");
 
 DATA(insert OID = 1319 (  xideqint4			 PGNSP PGUID 12 1 0 0 f f f t f i 2 0 16 "28 23" _null_ _null_ _null_ _null_ xideq _null_ _null_ _null_ ));
-DESCR("implementation of = operator");
 
 DATA(insert OID = 1326 (  interval_div		 PGNSP PGUID 12 1 0 0 f f f t f i 2 0 1186 "1186 701" _null_ _null_ _null_ _null_	interval_div _null_ _null_ _null_ ));
-DESCR("implementation of / operator");
 
 DATA(insert OID = 1339 (  dlog10			 PGNSP PGUID 12 1 0 0 f f f t f i 1 0 701 "701" _null_ _null_ _null_ _null_ dlog10 _null_ _null_ _null_ ));
 DESCR("base 10 logarithm");
@@ -1757,10 +1397,10 @@ DESCR("natural exponential (e^x)");
 
 /*
  * This form of obj_description is now deprecated, since it will fail if
- * OIDs are not unique across system catalogs.	Use the other forms instead.
+ * OIDs are not unique across system catalogs.	Use the other form instead.
  */
 DATA(insert OID = 1348 (  obj_description	 PGNSP PGUID 14 100 0 0 f f f t f s 1 0 25 "26" _null_ _null_ _null_ _null_ "select description from pg_catalog.pg_description where objoid = $1 and objsubid = 0" _null_ _null_ _null_ ));
-DESCR("get description for object id (deprecated)");
+DESCR("deprecated, use two-argument form instead");
 DATA(insert OID = 1349 (  oidvectortypes	 PGNSP PGUID 12 1 0 0 f f f t f s 1 0 25 "30" _null_ _null_ _null_ _null_	oidvectortypes _null_ _null_ _null_ ));
 DESCR("print type names of oidvector field");
 
@@ -1774,17 +1414,11 @@ DESCR("I/O typmod");
 DATA(insert OID = 2912 (  timetztypmodout	PGNSP PGUID 12 1 0 0 f f f t f i 1 0 2275 "23" _null_ _null_ _null_ _null_	timetztypmodout _null_ _null_ _null_ ));
 DESCR("I/O typmod");
 DATA(insert OID = 1352 (  timetz_eq		   PGNSP PGUID 12 1 0 0 f f f t f i 2 0 16 "1266 1266" _null_ _null_ _null_ _null_ timetz_eq _null_ _null_ _null_ ));
-DESCR("implementation of = operator");
 DATA(insert OID = 1353 (  timetz_ne		   PGNSP PGUID 12 1 0 0 f f f t f i 2 0 16 "1266 1266" _null_ _null_ _null_ _null_ timetz_ne _null_ _null_ _null_ ));
-DESCR("implementation of <> operator");
 DATA(insert OID = 1354 (  timetz_lt		   PGNSP PGUID 12 1 0 0 f f f t f i 2 0 16 "1266 1266" _null_ _null_ _null_ _null_ timetz_lt _null_ _null_ _null_ ));
-DESCR("implementation of < operator");
 DATA(insert OID = 1355 (  timetz_le		   PGNSP PGUID 12 1 0 0 f f f t f i 2 0 16 "1266 1266" _null_ _null_ _null_ _null_ timetz_le _null_ _null_ _null_ ));
-DESCR("implementation of <= operator");
 DATA(insert OID = 1356 (  timetz_ge		   PGNSP PGUID 12 1 0 0 f f f t f i 2 0 16 "1266 1266" _null_ _null_ _null_ _null_ timetz_ge _null_ _null_ _null_ ));
-DESCR("implementation of >= operator");
 DATA(insert OID = 1357 (  timetz_gt		   PGNSP PGUID 12 1 0 0 f f f t f i 2 0 16 "1266 1266" _null_ _null_ _null_ _null_ timetz_gt _null_ _null_ _null_ ));
-DESCR("implementation of > operator");
 DATA(insert OID = 1358 (  timetz_cmp	   PGNSP PGUID 12 1 0 0 f f f t f i 2 0 23 "1266 1266" _null_ _null_ _null_ _null_ timetz_cmp _null_ _null_ _null_ ));
 DESCR("less-equal-greater");
 DATA(insert OID = 1359 (  timestamptz	   PGNSP PGUID 12 1 0 0 f f f t f i 2 0 1184 "1082 1266" _null_ _null_ _null_ _null_ datetimetz_timestamptz _null_ _null_ _null_ ));
@@ -1900,26 +1534,18 @@ DESCR("convert interval to time");
 DATA(insert OID = 1421 (  box				PGNSP PGUID 12 1 0 0 f f f t f i 2 0 603 "600 600" _null_ _null_ _null_ _null_ points_box _null_ _null_ _null_ ));
 DESCR("convert points to box");
 DATA(insert OID = 1422 (  box_add			PGNSP PGUID 12 1 0 0 f f f t f i 2 0 603 "603 600" _null_ _null_ _null_ _null_ box_add _null_ _null_ _null_ ));
-DESCR("implementation of + operator");
 DATA(insert OID = 1423 (  box_sub			PGNSP PGUID 12 1 0 0 f f f t f i 2 0 603 "603 600" _null_ _null_ _null_ _null_ box_sub _null_ _null_ _null_ ));
-DESCR("implementation of - operator");
 DATA(insert OID = 1424 (  box_mul			PGNSP PGUID 12 1 0 0 f f f t f i 2 0 603 "603 600" _null_ _null_ _null_ _null_ box_mul _null_ _null_ _null_ ));
-DESCR("implementation of * operator");
 DATA(insert OID = 1425 (  box_div			PGNSP PGUID 12 1 0 0 f f f t f i 2 0 603 "603 600" _null_ _null_ _null_ _null_ box_div _null_ _null_ _null_ ));
-DESCR("implementation of / operator");
 DATA(insert OID = 1426 (  path_contain_pt	PGNSP PGUID 14 1 0 0 f f f t f i 2 0 16 "602 600" _null_ _null_ _null_ _null_  "select pg_catalog.on_ppath($2, $1)" _null_ _null_ _null_ ));
-DESCR("implementation of @> operator");
 DATA(insert OID = 1428 (  poly_contain_pt	PGNSP PGUID 12 1 0 0 f f f t f i 2 0 16 "604 600" _null_ _null_ _null_ _null_  poly_contain_pt _null_ _null_ _null_ ));
-DESCR("implementation of @> operator");
 DATA(insert OID = 1429 (  pt_contained_poly PGNSP PGUID 12 1 0 0 f f f t f i 2 0 16 "600 604" _null_ _null_ _null_ _null_  pt_contained_poly _null_ _null_ _null_ ));
-DESCR("implementation of <@ operator");
 
 DATA(insert OID = 1430 (  isclosed			PGNSP PGUID 12 1 0 0 f f f t f i 1 0 16 "602" _null_ _null_ _null_ _null_  path_isclosed _null_ _null_ _null_ ));
 DESCR("path closed?");
 DATA(insert OID = 1431 (  isopen			PGNSP PGUID 12 1 0 0 f f f t f i 1 0 16 "602" _null_ _null_ _null_ _null_  path_isopen _null_ _null_ _null_ ));
 DESCR("path open?");
 DATA(insert OID = 1432 (  path_npoints		PGNSP PGUID 12 1 0 0 f f f t f i 1 0 23 "602" _null_ _null_ _null_ _null_  path_npoints _null_ _null_ _null_ ));
-DESCR("implementation of # operator");
 
 /* pclose and popen might better be named close and open, but that crashes initdb.
  * - thomas 97/04/20
@@ -1930,29 +1556,19 @@ DESCR("close path");
 DATA(insert OID = 1434 (  popen				PGNSP PGUID 12 1 0 0 f f f t f i 1 0 602 "602" _null_ _null_ _null_ _null_ path_open _null_ _null_ _null_ ));
 DESCR("open path");
 DATA(insert OID = 1435 (  path_add			PGNSP PGUID 12 1 0 0 f f f t f i 2 0 602 "602 602" _null_ _null_ _null_ _null_ path_add _null_ _null_ _null_ ));
-DESCR("implementation of + operator");
 DATA(insert OID = 1436 (  path_add_pt		PGNSP PGUID 12 1 0 0 f f f t f i 2 0 602 "602 600" _null_ _null_ _null_ _null_ path_add_pt _null_ _null_ _null_ ));
-DESCR("implementation of + operator");
 DATA(insert OID = 1437 (  path_sub_pt		PGNSP PGUID 12 1 0 0 f f f t f i 2 0 602 "602 600" _null_ _null_ _null_ _null_ path_sub_pt _null_ _null_ _null_ ));
-DESCR("implementation of - operator");
 DATA(insert OID = 1438 (  path_mul_pt		PGNSP PGUID 12 1 0 0 f f f t f i 2 0 602 "602 600" _null_ _null_ _null_ _null_ path_mul_pt _null_ _null_ _null_ ));
-DESCR("implementation of * operator");
 DATA(insert OID = 1439 (  path_div_pt		PGNSP PGUID 12 1 0 0 f f f t f i 2 0 602 "602 600" _null_ _null_ _null_ _null_ path_div_pt _null_ _null_ _null_ ));
-DESCR("implementation of / operator");
 
 DATA(insert OID = 1440 (  point				PGNSP PGUID 12 1 0 0 f f f t f i 2 0 600 "701 701" _null_ _null_ _null_ _null_ construct_point _null_ _null_ _null_ ));
 DESCR("convert x, y to point");
 DATA(insert OID = 1441 (  point_add			PGNSP PGUID 12 1 0 0 f f f t f i 2 0 600 "600 600" _null_ _null_ _null_ _null_ point_add _null_ _null_ _null_ ));
-DESCR("implementation of + operator");
 DATA(insert OID = 1442 (  point_sub			PGNSP PGUID 12 1 0 0 f f f t f i 2 0 600 "600 600" _null_ _null_ _null_ _null_ point_sub _null_ _null_ _null_ ));
-DESCR("implementation of - operator");
 DATA(insert OID = 1443 (  point_mul			PGNSP PGUID 12 1 0 0 f f f t f i 2 0 600 "600 600" _null_ _null_ _null_ _null_ point_mul _null_ _null_ _null_ ));
-DESCR("implementation of * operator");
 DATA(insert OID = 1444 (  point_div			PGNSP PGUID 12 1 0 0 f f f t f i 2 0 600 "600 600" _null_ _null_ _null_ _null_ point_div _null_ _null_ _null_ ));
-DESCR("implementation of / operator");
 
 DATA(insert OID = 1445 (  poly_npoints		PGNSP PGUID 12 1 0 0 f f f t f i 1 0 23 "604" _null_ _null_ _null_ _null_  poly_npoints _null_ _null_ _null_ ));
-DESCR("implementation of # operator");
 DATA(insert OID = 1446 (  box				PGNSP PGUID 12 1 0 0 f f f t f i 1 0 603 "604" _null_ _null_ _null_ _null_ poly_box _null_ _null_ _null_ ));
 DESCR("convert polygon to bounding box");
 DATA(insert OID = 1447 (  path				PGNSP PGUID 12 1 0 0 f f f t f i 1 0 602 "604" _null_ _null_ _null_ _null_ poly_path _null_ _null_ _null_ ));
@@ -1967,37 +1583,21 @@ DESCR("I/O");
 DATA(insert OID = 1451 (  circle_out		PGNSP PGUID 12 1 0 0 f f f t f i 1 0 2275 "718" _null_ _null_ _null_ _null_ circle_out _null_ _null_ _null_ ));
 DESCR("I/O");
 DATA(insert OID = 1452 (  circle_same		PGNSP PGUID 12 1 0 0 f f f t f i 2 0 16 "718 718" _null_ _null_ _null_ _null_  circle_same _null_ _null_ _null_ ));
-DESCR("implementation of ~= operator");
 DATA(insert OID = 1453 (  circle_contain	PGNSP PGUID 12 1 0 0 f f f t f i 2 0 16 "718 718" _null_ _null_ _null_ _null_  circle_contain _null_ _null_ _null_ ));
-DESCR("implementation of @> operator");
 DATA(insert OID = 1454 (  circle_left		PGNSP PGUID 12 1 0 0 f f f t f i 2 0 16 "718 718" _null_ _null_ _null_ _null_  circle_left _null_ _null_ _null_ ));
-DESCR("implementation of << operator");
 DATA(insert OID = 1455 (  circle_overleft	PGNSP PGUID 12 1 0 0 f f f t f i 2 0 16 "718 718" _null_ _null_ _null_ _null_  circle_overleft _null_ _null_ _null_ ));
-DESCR("implementation of &< operator");
 DATA(insert OID = 1456 (  circle_overright	PGNSP PGUID 12 1 0 0 f f f t f i 2 0 16 "718 718" _null_ _null_ _null_ _null_  circle_overright _null_ _null_ _null_ ));
-DESCR("implementation of &> operator");
 DATA(insert OID = 1457 (  circle_right		PGNSP PGUID 12 1 0 0 f f f t f i 2 0 16 "718 718" _null_ _null_ _null_ _null_  circle_right _null_ _null_ _null_ ));
-DESCR("implementation of >> operator");
 DATA(insert OID = 1458 (  circle_contained	PGNSP PGUID 12 1 0 0 f f f t f i 2 0 16 "718 718" _null_ _null_ _null_ _null_  circle_contained _null_ _null_ _null_ ));
-DESCR("implementation of <@ operator");
 DATA(insert OID = 1459 (  circle_overlap	PGNSP PGUID 12 1 0 0 f f f t f i 2 0 16 "718 718" _null_ _null_ _null_ _null_  circle_overlap _null_ _null_ _null_ ));
-DESCR("implementation of && operator");
 DATA(insert OID = 1460 (  circle_below		PGNSP PGUID 12 1 0 0 f f f t f i 2 0 16 "718 718" _null_ _null_ _null_ _null_  circle_below _null_ _null_ _null_ ));
-DESCR("implementation of <<| operator");
 DATA(insert OID = 1461 (  circle_above		PGNSP PGUID 12 1 0 0 f f f t f i 2 0 16 "718 718" _null_ _null_ _null_ _null_  circle_above _null_ _null_ _null_ ));
-DESCR("implementation of |>> operator");
 DATA(insert OID = 1462 (  circle_eq			PGNSP PGUID 12 1 0 0 f f f t f i 2 0 16 "718 718" _null_ _null_ _null_ _null_  circle_eq _null_ _null_ _null_ ));
-DESCR("implementation of = operator");
 DATA(insert OID = 1463 (  circle_ne			PGNSP PGUID 12 1 0 0 f f f t f i 2 0 16 "718 718" _null_ _null_ _null_ _null_  circle_ne _null_ _null_ _null_ ));
-DESCR("implementation of <> operator");
 DATA(insert OID = 1464 (  circle_lt			PGNSP PGUID 12 1 0 0 f f f t f i 2 0 16 "718 718" _null_ _null_ _null_ _null_  circle_lt _null_ _null_ _null_ ));
-DESCR("implementation of < operator");
 DATA(insert OID = 1465 (  circle_gt			PGNSP PGUID 12 1 0 0 f f f t f i 2 0 16 "718 718" _null_ _null_ _null_ _null_  circle_gt _null_ _null_ _null_ ));
-DESCR("implementation of > operator");
 DATA(insert OID = 1466 (  circle_le			PGNSP PGUID 12 1 0 0 f f f t f i 2 0 16 "718 718" _null_ _null_ _null_ _null_  circle_le _null_ _null_ _null_ ));
-DESCR("implementation of <= operator");
 DATA(insert OID = 1467 (  circle_ge			PGNSP PGUID 12 1 0 0 f f f t f i 2 0 16 "718 718" _null_ _null_ _null_ _null_  circle_ge _null_ _null_ _null_ ));
-DESCR("implementation of >= operator");
 DATA(insert OID = 1468 (  area				PGNSP PGUID 12 1 0 0 f f f t f i 1 0 701 "718" _null_ _null_ _null_ _null_ circle_area _null_ _null_ _null_ ));
 DESCR("area of circle");
 DATA(insert OID = 1469 (  diameter			PGNSP PGUID 12 1 0 0 f f f t f i 1 0 701 "718" _null_ _null_ _null_ _null_ circle_diameter _null_ _null_ _null_ ));
@@ -2005,9 +1605,7 @@ DESCR("diameter of circle");
 DATA(insert OID = 1470 (  radius			PGNSP PGUID 12 1 0 0 f f f t f i 1 0 701 "718" _null_ _null_ _null_ _null_ circle_radius _null_ _null_ _null_ ));
 DESCR("radius of circle");
 DATA(insert OID = 1471 (  circle_distance	PGNSP PGUID 12 1 0 0 f f f t f i 2 0 701 "718 718" _null_ _null_ _null_ _null_ circle_distance _null_ _null_ _null_ ));
-DESCR("implementation of <-> operator");
 DATA(insert OID = 1472 (  circle_center		PGNSP PGUID 12 1 0 0 f f f t f i 1 0 600 "718" _null_ _null_ _null_ _null_ circle_center _null_ _null_ _null_ ));
-DESCR("implementation of @@ operator");
 DATA(insert OID = 1473 (  circle			PGNSP PGUID 12 1 0 0 f f f t f i 2 0 718 "600 701" _null_ _null_ _null_ _null_ cr_circle _null_ _null_ _null_ ));
 DESCR("convert point and radius to circle");
 DATA(insert OID = 1474 (  circle			PGNSP PGUID 12 1 0 0 f f f t f i 1 0 718 "604" _null_ _null_ _null_ _null_ poly_circle _null_ _null_ _null_ ));
@@ -2015,11 +1613,8 @@ DESCR("convert polygon to circle");
 DATA(insert OID = 1475 (  polygon			PGNSP PGUID 12 1 0 0 f f f t f i 2 0 604 "23 718" _null_ _null_ _null_ _null_	circle_poly _null_ _null_ _null_ ));
 DESCR("convert vertex count and circle to polygon");
 DATA(insert OID = 1476 (  dist_pc			PGNSP PGUID 12 1 0 0 f f f t f i 2 0 701 "600 718" _null_ _null_ _null_ _null_ dist_pc _null_ _null_ _null_ ));
-DESCR("implementation of <-> operator");
 DATA(insert OID = 1477 (  circle_contain_pt PGNSP PGUID 12 1 0 0 f f f t f i 2 0 16 "718 600" _null_ _null_ _null_ _null_  circle_contain_pt _null_ _null_ _null_ ));
-DESCR("implementation of @> operator");
 DATA(insert OID = 1478 (  pt_contained_circle	PGNSP PGUID 12 1 0 0 f f f t f i 2 0 16 "600 718" _null_ _null_ _null_ _null_  pt_contained_circle _null_ _null_ _null_ ));
-DESCR("implementation of <@ operator");
 DATA(insert OID = 1479 (  circle			PGNSP PGUID 12 1 0 0 f f f t f i 1 0 718 "603" _null_ _null_ _null_ _null_ box_circle _null_ _null_ _null_ ));
 DESCR("convert box to circle");
 DATA(insert OID = 1480 (  box				PGNSP PGUID 12 1 0 0 f f f t f i 1 0 603 "718" _null_ _null_ _null_ _null_ circle_box _null_ _null_ _null_ ));
@@ -2028,42 +1623,27 @@ DATA(insert OID = 1481 (  tinterval			 PGNSP PGUID 12 1 0 0 f f f t f i 2 0 704 
 DESCR("convert to tinterval");
 
 DATA(insert OID = 1482 (  lseg_ne			PGNSP PGUID 12 1 0 0 f f f t f i 2 0 16 "601 601" _null_ _null_ _null_ _null_  lseg_ne _null_ _null_ _null_ ));
-DESCR("implementation of <> operator");
 DATA(insert OID = 1483 (  lseg_lt			PGNSP PGUID 12 1 0 0 f f f t f i 2 0 16 "601 601" _null_ _null_ _null_ _null_  lseg_lt _null_ _null_ _null_ ));
-DESCR("implementation of < operator");
 DATA(insert OID = 1484 (  lseg_le			PGNSP PGUID 12 1 0 0 f f f t f i 2 0 16 "601 601" _null_ _null_ _null_ _null_  lseg_le _null_ _null_ _null_ ));
-DESCR("implementation of <= operator");
 DATA(insert OID = 1485 (  lseg_gt			PGNSP PGUID 12 1 0 0 f f f t f i 2 0 16 "601 601" _null_ _null_ _null_ _null_  lseg_gt _null_ _null_ _null_ ));
-DESCR("implementation of > operator");
 DATA(insert OID = 1486 (  lseg_ge			PGNSP PGUID 12 1 0 0 f f f t f i 2 0 16 "601 601" _null_ _null_ _null_ _null_  lseg_ge _null_ _null_ _null_ ));
-DESCR("implementation of >= operator");
 DATA(insert OID = 1487 (  lseg_length		PGNSP PGUID 12 1 0 0 f f f t f i 1 0 701 "601" _null_ _null_ _null_ _null_ lseg_length _null_ _null_ _null_ ));
-DESCR("implementation of @-@ operator");
 DATA(insert OID = 1488 (  close_ls			PGNSP PGUID 12 1 0 0 f f f t f i 2 0 600 "628 601" _null_ _null_ _null_ _null_ close_ls _null_ _null_ _null_ ));
-DESCR("implementation of ## operator");
 DATA(insert OID = 1489 (  close_lseg		PGNSP PGUID 12 1 0 0 f f f t f i 2 0 600 "601 601" _null_ _null_ _null_ _null_ close_lseg _null_ _null_ _null_ ));
-DESCR("implementation of ## operator");
 
 DATA(insert OID = 1490 (  line_in			PGNSP PGUID 12 1 0 0 f f f t f i 1 0 628 "2275" _null_ _null_ _null_ _null_ line_in _null_ _null_ _null_ ));
 DESCR("I/O");
 DATA(insert OID = 1491 (  line_out			PGNSP PGUID 12 1 0 0 f f f t f i 1 0 2275 "628" _null_ _null_ _null_ _null_ line_out _null_ _null_ _null_ ));
 DESCR("I/O");
 DATA(insert OID = 1492 (  line_eq			PGNSP PGUID 12 1 0 0 f f f t f i 2 0 16 "628 628" _null_ _null_ _null_ _null_ line_eq _null_ _null_ _null_ ));
-DESCR("implementation of = operator");
 DATA(insert OID = 1493 (  line				PGNSP PGUID 12 1 0 0 f f f t f i 2 0 628 "600 600" _null_ _null_ _null_ _null_ line_construct_pp _null_ _null_ _null_ ));
 DESCR("construct line from points");
 DATA(insert OID = 1494 (  line_interpt		PGNSP PGUID 12 1 0 0 f f f t f i 2 0 600 "628 628" _null_ _null_ _null_ _null_ line_interpt _null_ _null_ _null_ ));
-DESCR("implementation of # operator");
 DATA(insert OID = 1495 (  line_intersect	PGNSP PGUID 12 1 0 0 f f f t f i 2 0 16 "628 628" _null_ _null_ _null_ _null_  line_intersect _null_ _null_ _null_ ));
-DESCR("implementation of ?# operator");
 DATA(insert OID = 1496 (  line_parallel		PGNSP PGUID 12 1 0 0 f f f t f i 2 0 16 "628 628" _null_ _null_ _null_ _null_  line_parallel _null_ _null_ _null_ ));
-DESCR("implementation of ?|| operator");
 DATA(insert OID = 1497 (  line_perp			PGNSP PGUID 12 1 0 0 f f f t f i 2 0 16 "628 628" _null_ _null_ _null_ _null_  line_perp _null_ _null_ _null_ ));
-DESCR("implementation of ?-| operator");
 DATA(insert OID = 1498 (  line_vertical		PGNSP PGUID 12 1 0 0 f f f t f i 1 0 16 "628" _null_ _null_ _null_ _null_  line_vertical _null_ _null_ _null_ ));
-DESCR("implementation of ?| operator");
 DATA(insert OID = 1499 (  line_horizontal	PGNSP PGUID 12 1 0 0 f f f t f i 1 0 16 "628" _null_ _null_ _null_ _null_  line_horizontal _null_ _null_ _null_ ));
-DESCR("implementation of ?- operator");
 
 /* OIDS 1500 - 1599 */
 
@@ -2135,17 +1715,11 @@ DATA(insert OID = 2921 (  varbittypmodout	PGNSP PGUID 12 1 0 0 f f f t f i 1 0 2
 DESCR("I/O typmod");
 
 DATA(insert OID = 1581 (  biteq				PGNSP PGUID 12 1 0 0 f f f t f i 2 0 16 "1560 1560" _null_ _null_ _null_ _null_ biteq _null_ _null_ _null_ ));
-DESCR("implementation of = operator");
 DATA(insert OID = 1582 (  bitne				PGNSP PGUID 12 1 0 0 f f f t f i 2 0 16 "1560 1560" _null_ _null_ _null_ _null_ bitne _null_ _null_ _null_ ));
-DESCR("implementation of <> operator");
 DATA(insert OID = 1592 (  bitge				PGNSP PGUID 12 1 0 0 f f f t f i 2 0 16 "1560 1560" _null_ _null_ _null_ _null_ bitge _null_ _null_ _null_ ));
-DESCR("implementation of >= operator");
 DATA(insert OID = 1593 (  bitgt				PGNSP PGUID 12 1 0 0 f f f t f i 2 0 16 "1560 1560" _null_ _null_ _null_ _null_ bitgt _null_ _null_ _null_ ));
-DESCR("implementation of > operator");
 DATA(insert OID = 1594 (  bitle				PGNSP PGUID 12 1 0 0 f f f t f i 2 0 16 "1560 1560" _null_ _null_ _null_ _null_ bitle _null_ _null_ _null_ ));
-DESCR("implementation of <= operator");
 DATA(insert OID = 1595 (  bitlt				PGNSP PGUID 12 1 0 0 f f f t f i 2 0 16 "1560 1560" _null_ _null_ _null_ _null_ bitlt _null_ _null_ _null_ ));
-DESCR("implementation of < operator");
 DATA(insert OID = 1596 (  bitcmp			PGNSP PGUID 12 1 0 0 f f f t f i 2 0 23 "1560 1560" _null_ _null_ _null_ _null_ bitcmp _null_ _null_ _null_ ));
 DESCR("less-equal-greater");
 
@@ -2180,7 +1754,6 @@ DATA(insert OID = 1610 (  pi				PGNSP PGUID 12 1 0 0 f f f t f i 0 0 701 "" _nul
 DESCR("PI");
 
 DATA(insert OID = 1618 (  interval_mul		PGNSP PGUID 12 1 0 0 f f f t f i 2 0 1186 "1186 701" _null_ _null_ _null_ _null_ interval_mul _null_ _null_ _null_ ));
-DESCR("implementation of * operator");
 
 DATA(insert OID = 1620 (  ascii				PGNSP PGUID 12 1 0 0 f f f t f i 1 0 23 "25" _null_ _null_ _null_ _null_ ascii _null_ _null_ _null_ ));
 DESCR("convert first char to int4");
@@ -2193,36 +1766,23 @@ DATA(insert OID = 1623 (  similar_escape	PGNSP PGUID 12 1 0 0 f f f f f i 2 0 25
 DESCR("convert SQL99 regexp pattern to POSIX style");
 
 DATA(insert OID = 1624 (  mul_d_interval	PGNSP PGUID 12 1 0 0 f f f t f i 2 0 1186 "701 1186" _null_ _null_ _null_ _null_ mul_d_interval _null_ _null_ _null_ ));
-DESCR("implementation of * operator");
 
 DATA(insert OID = 1631 (  bpcharlike	   PGNSP PGUID 12 1 0 0 f f f t f i 2 0 16 "1042 25" _null_ _null_ _null_ _null_ textlike _null_ _null_ _null_ ));
-DESCR("implementation of ~~ operator");
 DATA(insert OID = 1632 (  bpcharnlike	   PGNSP PGUID 12 1 0 0 f f f t f i 2 0 16 "1042 25" _null_ _null_ _null_ _null_ textnlike _null_ _null_ _null_ ));
-DESCR("implementation of !~~ operator");
 
 DATA(insert OID = 1633 (  texticlike		PGNSP PGUID 12 1 0 0 f f f t f i 2 0 16 "25 25" _null_ _null_ _null_ _null_ texticlike _null_ _null_ _null_ ));
-DESCR("implementation of ~~* operator");
 DATA(insert OID = 1634 (  texticnlike		PGNSP PGUID 12 1 0 0 f f f t f i 2 0 16 "25 25" _null_ _null_ _null_ _null_ texticnlike _null_ _null_ _null_ ));
-DESCR("implementation of !~~* operator");
 DATA(insert OID = 1635 (  nameiclike		PGNSP PGUID 12 1 0 0 f f f t f i 2 0 16 "19 25" _null_ _null_ _null_ _null_ nameiclike _null_ _null_ _null_ ));
-DESCR("implementation of ~~* operator");
 DATA(insert OID = 1636 (  nameicnlike		PGNSP PGUID 12 1 0 0 f f f t f i 2 0 16 "19 25" _null_ _null_ _null_ _null_ nameicnlike _null_ _null_ _null_ ));
-DESCR("implementation of !~~* operator");
 DATA(insert OID = 1637 (  like_escape		PGNSP PGUID 12 1 0 0 f f f t f i 2 0 25 "25 25" _null_ _null_ _null_ _null_ like_escape _null_ _null_ _null_ ));
 DESCR("convert LIKE pattern to use backslash escapes");
 
 DATA(insert OID = 1656 (  bpcharicregexeq	 PGNSP PGUID 12 1 0 0 f f f t f i 2 0 16 "1042 25" _null_ _null_ _null_ _null_ texticregexeq _null_ _null_ _null_ ));
-DESCR("implementation of ~* operator");
 DATA(insert OID = 1657 (  bpcharicregexne	 PGNSP PGUID 12 1 0 0 f f f t f i 2 0 16 "1042 25" _null_ _null_ _null_ _null_ texticregexne _null_ _null_ _null_ ));
-DESCR("implementation of !~* operator");
 DATA(insert OID = 1658 (  bpcharregexeq    PGNSP PGUID 12 1 0 0 f f f t f i 2 0 16 "1042 25" _null_ _null_ _null_ _null_ textregexeq _null_ _null_ _null_ ));
-DESCR("implementation of ~ operator");
 DATA(insert OID = 1659 (  bpcharregexne    PGNSP PGUID 12 1 0 0 f f f t f i 2 0 16 "1042 25" _null_ _null_ _null_ _null_ textregexne _null_ _null_ _null_ ));
-DESCR("implementation of !~ operator");
 DATA(insert OID = 1660 (  bpchariclike		PGNSP PGUID 12 1 0 0 f f f t f i 2 0 16 "1042 25" _null_ _null_ _null_ _null_ texticlike _null_ _null_ _null_ ));
-DESCR("implementation of ~~* operator");
 DATA(insert OID = 1661 (  bpcharicnlike		PGNSP PGUID 12 1 0 0 f f f t f i 2 0 16 "1042 25" _null_ _null_ _null_ _null_ texticnlike _null_ _null_ _null_ ));
-DESCR("implementation of !~~* operator");
 
 /* Oracle Compatibility Related Functions - By Edmund Mergl <E.Mergl@bawue.de> */
 DATA(insert OID =  868 (  strpos	   PGNSP PGUID 12 1 0 0 f f f t f i 2 0 23 "25 25" _null_ _null_ _null_ _null_ textpos _null_ _null_ _null_ ));
@@ -2321,9 +1881,7 @@ DATA(insert OID = 2319 (  pg_encoding_max_length   PGNSP PGUID 12 1 0 0 f f f t 
 DESCR("maximum octet length of a character in given encoding");
 
 DATA(insert OID = 1638 (  oidgt				   PGNSP PGUID 12 1 0 0 f f f t f i 2 0 16 "26 26" _null_ _null_ _null_ _null_ oidgt _null_ _null_ _null_ ));
-DESCR("implementation of > operator");
 DATA(insert OID = 1639 (  oidge				   PGNSP PGUID 12 1 0 0 f f f t f i 2 0 16 "26 26" _null_ _null_ _null_ _null_ oidge _null_ _null_ _null_ ));
-DESCR("implementation of >= operator");
 
 /* System-view support functions */
 DATA(insert OID = 1573 (  pg_get_ruledef	   PGNSP PGUID 12 1 0 0 f f f t f s 1 0 25 "26" _null_ _null_ _null_ _null_ pg_get_ruledef _null_ _null_ _null_ ));
@@ -2393,34 +1951,21 @@ DATA(insert OID = 1655 (  RI_FKey_noaction_upd PGNSP PGUID 12 1 0 0 f f f t f v 
 DESCR("referential integrity ON UPDATE NO ACTION");
 
 DATA(insert OID = 1666 (  varbiteq			PGNSP PGUID 12 1 0 0 f f f t f i 2 0 16 "1562 1562" _null_ _null_ _null_ _null_ biteq _null_ _null_ _null_ ));
-DESCR("implementation of = operator");
 DATA(insert OID = 1667 (  varbitne			PGNSP PGUID 12 1 0 0 f f f t f i 2 0 16 "1562 1562" _null_ _null_ _null_ _null_ bitne _null_ _null_ _null_ ));
-DESCR("implementation of <> operator");
 DATA(insert OID = 1668 (  varbitge			PGNSP PGUID 12 1 0 0 f f f t f i 2 0 16 "1562 1562" _null_ _null_ _null_ _null_ bitge _null_ _null_ _null_ ));
-DESCR("implementation of >= operator");
 DATA(insert OID = 1669 (  varbitgt			PGNSP PGUID 12 1 0 0 f f f t f i 2 0 16 "1562 1562" _null_ _null_ _null_ _null_ bitgt _null_ _null_ _null_ ));
-DESCR("implementation of > operator");
 DATA(insert OID = 1670 (  varbitle			PGNSP PGUID 12 1 0 0 f f f t f i 2 0 16 "1562 1562" _null_ _null_ _null_ _null_ bitle _null_ _null_ _null_ ));
-DESCR("implementation of <= operator");
 DATA(insert OID = 1671 (  varbitlt			PGNSP PGUID 12 1 0 0 f f f t f i 2 0 16 "1562 1562" _null_ _null_ _null_ _null_ bitlt _null_ _null_ _null_ ));
-DESCR("implementation of < operator");
 DATA(insert OID = 1672 (  varbitcmp			PGNSP PGUID 12 1 0 0 f f f t f i 2 0 23 "1562 1562" _null_ _null_ _null_ _null_ bitcmp _null_ _null_ _null_ ));
 DESCR("less-equal-greater");
 
 DATA(insert OID = 1673 (  bitand			PGNSP PGUID 12 1 0 0 f f f t f i 2 0 1560 "1560 1560" _null_ _null_ _null_ _null_	bit_and _null_ _null_ _null_ ));
-DESCR("implementation of & operator");
 DATA(insert OID = 1674 (  bitor				PGNSP PGUID 12 1 0 0 f f f t f i 2 0 1560 "1560 1560" _null_ _null_ _null_ _null_	bit_or _null_ _null_ _null_ ));
-DESCR("implementation of | operator");
 DATA(insert OID = 1675 (  bitxor			PGNSP PGUID 12 1 0 0 f f f t f i 2 0 1560 "1560 1560" _null_ _null_ _null_ _null_	bitxor _null_ _null_ _null_ ));
-DESCR("implementation of # operator");
 DATA(insert OID = 1676 (  bitnot			PGNSP PGUID 12 1 0 0 f f f t f i 1 0 1560 "1560" _null_ _null_ _null_ _null_ bitnot _null_ _null_ _null_ ));
-DESCR("implementation of ~ operator");
 DATA(insert OID = 1677 (  bitshiftleft		PGNSP PGUID 12 1 0 0 f f f t f i 2 0 1560 "1560 23" _null_ _null_ _null_ _null_ bitshiftleft _null_ _null_ _null_ ));
-DESCR("implementation of << operator");
 DATA(insert OID = 1678 (  bitshiftright		PGNSP PGUID 12 1 0 0 f f f t f i 2 0 1560 "1560 23" _null_ _null_ _null_ _null_ bitshiftright _null_ _null_ _null_ ));
-DESCR("implementation of >> operator");
 DATA(insert OID = 1679 (  bitcat			PGNSP PGUID 12 1 0 0 f f f t f i 2 0 1562 "1562 1562" _null_ _null_ _null_ _null_	bitcat _null_ _null_ _null_ ));
-DESCR("implementation of || operator");
 DATA(insert OID = 1680 (  substring			PGNSP PGUID 12 1 0 0 f f f t f i 3 0 1560 "1560 23 23" _null_ _null_ _null_ _null_ bitsubstr _null_ _null_ _null_ ));
 DESCR("extract portion of bitstring");
 DATA(insert OID = 1681 (  length			PGNSP PGUID 12 1 0 0 f f f t f i 1 0 23 "1560" _null_ _null_ _null_ _null_ bitlength _null_ _null_ _null_ ));
@@ -2461,17 +2006,11 @@ DATA(insert OID = 753 (  trunc				PGNSP PGUID 12 1 0 0 f f f t f i 1 0 829 "829"
 DESCR("MAC manufacturer fields");
 
 DATA(insert OID = 830 (  macaddr_eq			PGNSP PGUID 12 1 0 0 f f f t f i 2 0 16 "829 829" _null_ _null_ _null_ _null_	macaddr_eq _null_ _null_ _null_ ));
-DESCR("implementation of = operator");
 DATA(insert OID = 831 (  macaddr_lt			PGNSP PGUID 12 1 0 0 f f f t f i 2 0 16 "829 829" _null_ _null_ _null_ _null_	macaddr_lt _null_ _null_ _null_ ));
-DESCR("implementation of < operator");
 DATA(insert OID = 832 (  macaddr_le			PGNSP PGUID 12 1 0 0 f f f t f i 2 0 16 "829 829" _null_ _null_ _null_ _null_	macaddr_le _null_ _null_ _null_ ));
-DESCR("implementation of <= operator");
 DATA(insert OID = 833 (  macaddr_gt			PGNSP PGUID 12 1 0 0 f f f t f i 2 0 16 "829 829" _null_ _null_ _null_ _null_	macaddr_gt _null_ _null_ _null_ ));
-DESCR("implementation of > operator");
 DATA(insert OID = 834 (  macaddr_ge			PGNSP PGUID 12 1 0 0 f f f t f i 2 0 16 "829 829" _null_ _null_ _null_ _null_	macaddr_ge _null_ _null_ _null_ ));
-DESCR("implementation of >= operator");
 DATA(insert OID = 835 (  macaddr_ne			PGNSP PGUID 12 1 0 0 f f f t f i 2 0 16 "829 829" _null_ _null_ _null_ _null_	macaddr_ne _null_ _null_ _null_ ));
-DESCR("implementation of <> operator");
 DATA(insert OID = 836 (  macaddr_cmp		PGNSP PGUID 12 1 0 0 f f f t f i 2 0 23 "829 829" _null_ _null_ _null_ _null_	macaddr_cmp _null_ _null_ _null_ ));
 DESCR("less-equal-greater");
 
@@ -2489,27 +2028,17 @@ DESCR("I/O");
 
 /* these are used for both inet and cidr */
 DATA(insert OID = 920 (  network_eq			PGNSP PGUID 12 1 0 0 f f f t f i 2 0 16 "869 869" _null_ _null_ _null_ _null_	network_eq _null_ _null_ _null_ ));
-DESCR("implementation of = operator");
 DATA(insert OID = 921 (  network_lt			PGNSP PGUID 12 1 0 0 f f f t f i 2 0 16 "869 869" _null_ _null_ _null_ _null_	network_lt _null_ _null_ _null_ ));
-DESCR("implementation of < operator");
 DATA(insert OID = 922 (  network_le			PGNSP PGUID 12 1 0 0 f f f t f i 2 0 16 "869 869" _null_ _null_ _null_ _null_	network_le _null_ _null_ _null_ ));
-DESCR("implementation of <= operator");
 DATA(insert OID = 923 (  network_gt			PGNSP PGUID 12 1 0 0 f f f t f i 2 0 16 "869 869" _null_ _null_ _null_ _null_	network_gt _null_ _null_ _null_ ));
-DESCR("implementation of > operator");
 DATA(insert OID = 924 (  network_ge			PGNSP PGUID 12 1 0 0 f f f t f i 2 0 16 "869 869" _null_ _null_ _null_ _null_	network_ge _null_ _null_ _null_ ));
-DESCR("implementation of >= operator");
 DATA(insert OID = 925 (  network_ne			PGNSP PGUID 12 1 0 0 f f f t f i 2 0 16 "869 869" _null_ _null_ _null_ _null_	network_ne _null_ _null_ _null_ ));
-DESCR("implementation of <> operator");
 DATA(insert OID = 926 (  network_cmp		PGNSP PGUID 12 1 0 0 f f f t f i 2 0 23 "869 869" _null_ _null_ _null_ _null_	network_cmp _null_ _null_ _null_ ));
 DESCR("less-equal-greater");
 DATA(insert OID = 927 (  network_sub		PGNSP PGUID 12 1 0 0 f f f t f i 2 0 16 "869 869" _null_ _null_ _null_ _null_	network_sub _null_ _null_ _null_ ));
-DESCR("implementation of << operator");
 DATA(insert OID = 928 (  network_subeq		PGNSP PGUID 12 1 0 0 f f f t f i 2 0 16 "869 869" _null_ _null_ _null_ _null_	network_subeq _null_ _null_ _null_ ));
-DESCR("implementation of <<= operator");
 DATA(insert OID = 929 (  network_sup		PGNSP PGUID 12 1 0 0 f f f t f i 2 0 16 "869 869" _null_ _null_ _null_ _null_	network_sup _null_ _null_ _null_ ));
-DESCR("implementation of >> operator");
 DATA(insert OID = 930 (  network_supeq		PGNSP PGUID 12 1 0 0 f f f t f i 2 0 16 "869 869" _null_ _null_ _null_ _null_	network_supeq _null_ _null_ _null_ ));
-DESCR("implementation of >>= operator");
 
 /* inet/cidr functions */
 DATA(insert OID = 598 (  abbrev				PGNSP PGUID 12 1 0 0 f f f t f i 1 0 25 "869" _null_ _null_ _null_ _null_	inet_abbrev _null_ _null_ _null_ ));
@@ -2549,27 +2078,17 @@ DATA(insert OID = 2199 (  inet_server_port		PGNSP PGUID 12 1 0 0 f f f f f s 0 0
 DESCR("server's port number for this connection");
 
 DATA(insert OID = 2627 (  inetnot			PGNSP PGUID 12 1 0 0 f f f t f i 1 0 869 "869" _null_ _null_ _null_ _null_	inetnot _null_ _null_ _null_ ));
-DESCR("implementation of ~ operator");
 DATA(insert OID = 2628 (  inetand			PGNSP PGUID 12 1 0 0 f f f t f i 2 0 869 "869 869" _null_ _null_ _null_ _null_	inetand _null_ _null_ _null_ ));
-DESCR("implementation of & operator");
 DATA(insert OID = 2629 (  inetor			PGNSP PGUID 12 1 0 0 f f f t f i 2 0 869 "869 869" _null_ _null_ _null_ _null_	inetor _null_ _null_ _null_ ));
-DESCR("implementation of | operator");
 DATA(insert OID = 2630 (  inetpl			PGNSP PGUID 12 1 0 0 f f f t f i 2 0 869 "869 20" _null_ _null_ _null_ _null_	inetpl _null_ _null_ _null_ ));
-DESCR("implementation of + operator");
 DATA(insert OID = 2631 (  int8pl_inet		PGNSP PGUID 14 1 0 0 f f f t f i 2 0 869 "20 869" _null_ _null_ _null_ _null_	"select $2 + $1" _null_ _null_ _null_ ));
-DESCR("implementation of + operator");
 DATA(insert OID = 2632 (  inetmi_int8		PGNSP PGUID 12 1 0 0 f f f t f i 2 0 869 "869 20" _null_ _null_ _null_ _null_	inetmi_int8 _null_ _null_ _null_ ));
-DESCR("implementation of - operator");
 DATA(insert OID = 2633 (  inetmi			PGNSP PGUID 12 1 0 0 f f f t f i 2 0 20 "869 869" _null_ _null_ _null_ _null_	inetmi _null_ _null_ _null_ ));
-DESCR("implementation of - operator");
 
 DATA(insert OID = 1690 ( time_mi_time		PGNSP PGUID 12 1 0 0 f f f t f i 2 0 1186 "1083 1083" _null_ _null_ _null_ _null_	time_mi_time _null_ _null_ _null_ ));
-DESCR("implementation of - operator");
 
 DATA(insert OID = 1691 (  boolle			PGNSP PGUID 12 1 0 0 f f f t f i 2 0 16 "16 16" _null_ _null_ _null_ _null_ boolle _null_ _null_ _null_ ));
-DESCR("implementation of <= operator");
 DATA(insert OID = 1692 (  boolge			PGNSP PGUID 12 1 0 0 f f f t f i 2 0 16 "16 16" _null_ _null_ _null_ _null_ boolge _null_ _null_ _null_ ));
-DESCR("implementation of >= operator");
 DATA(insert OID = 1693 (  btboolcmp			PGNSP PGUID 12 1 0 0 f f f t f i 2 0 23 "16 16" _null_ _null_ _null_ _null_ btboolcmp _null_ _null_ _null_ ));
 DESCR("less-equal-greater");
 
@@ -2593,7 +2112,6 @@ DESCR("I/O typmod");
 DATA(insert OID = 1703 ( numeric				PGNSP PGUID 12 1 0 0 f f f t f i 2 0 1700 "1700 23" _null_ _null_ _null_ _null_ numeric _null_ _null_ _null_ ));
 DESCR("adjust numeric to typmod precision/scale");
 DATA(insert OID = 1704 ( numeric_abs			PGNSP PGUID 12 1 0 0 f f f t f i 1 0 1700 "1700" _null_ _null_ _null_ _null_ numeric_abs _null_ _null_ _null_ ));
-DESCR("implementation of @ operator");
 DATA(insert OID = 1705 ( abs					PGNSP PGUID 12 1 0 0 f f f t f i 1 0 1700 "1700" _null_ _null_ _null_ _null_ numeric_abs _null_ _null_ _null_ ));
 DESCR("absolute value");
 DATA(insert OID = 1706 ( sign					PGNSP PGUID 12 1 0 0 f f f t f i 1 0 1700 "1700" _null_ _null_ _null_ _null_ numeric_sign _null_ _null_ _null_ ));
@@ -2613,29 +2131,18 @@ DESCR("smallest integer >= value");
 DATA(insert OID = 1712 ( floor					PGNSP PGUID 12 1 0 0 f f f t f i 1 0 1700 "1700" _null_ _null_ _null_ _null_ numeric_floor _null_ _null_ _null_ ));
 DESCR("largest integer <= value");
 DATA(insert OID = 1718 ( numeric_eq				PGNSP PGUID 12 1 0 0 f f f t f i 2 0 16 "1700 1700" _null_ _null_ _null_ _null_ numeric_eq _null_ _null_ _null_ ));
-DESCR("implementation of = operator");
 DATA(insert OID = 1719 ( numeric_ne				PGNSP PGUID 12 1 0 0 f f f t f i 2 0 16 "1700 1700" _null_ _null_ _null_ _null_ numeric_ne _null_ _null_ _null_ ));
-DESCR("implementation of <> operator");
 DATA(insert OID = 1720 ( numeric_gt				PGNSP PGUID 12 1 0 0 f f f t f i 2 0 16 "1700 1700" _null_ _null_ _null_ _null_ numeric_gt _null_ _null_ _null_ ));
-DESCR("implementation of > operator");
 DATA(insert OID = 1721 ( numeric_ge				PGNSP PGUID 12 1 0 0 f f f t f i 2 0 16 "1700 1700" _null_ _null_ _null_ _null_ numeric_ge _null_ _null_ _null_ ));
-DESCR("implementation of >= operator");
 DATA(insert OID = 1722 ( numeric_lt				PGNSP PGUID 12 1 0 0 f f f t f i 2 0 16 "1700 1700" _null_ _null_ _null_ _null_ numeric_lt _null_ _null_ _null_ ));
-DESCR("implementation of < operator");
 DATA(insert OID = 1723 ( numeric_le				PGNSP PGUID 12 1 0 0 f f f t f i 2 0 16 "1700 1700" _null_ _null_ _null_ _null_ numeric_le _null_ _null_ _null_ ));
-DESCR("implementation of <= operator");
 DATA(insert OID = 1724 ( numeric_add			PGNSP PGUID 12 1 0 0 f f f t f i 2 0 1700 "1700 1700" _null_ _null_ _null_ _null_	numeric_add _null_ _null_ _null_ ));
-DESCR("implementation of + operator");
 DATA(insert OID = 1725 ( numeric_sub			PGNSP PGUID 12 1 0 0 f f f t f i 2 0 1700 "1700 1700" _null_ _null_ _null_ _null_	numeric_sub _null_ _null_ _null_ ));
-DESCR("implementation of - operator");
 DATA(insert OID = 1726 ( numeric_mul			PGNSP PGUID 12 1 0 0 f f f t f i 2 0 1700 "1700 1700" _null_ _null_ _null_ _null_	numeric_mul _null_ _null_ _null_ ));
-DESCR("implementation of * operator");
 DATA(insert OID = 1727 ( numeric_div			PGNSP PGUID 12 1 0 0 f f f t f i 2 0 1700 "1700 1700" _null_ _null_ _null_ _null_	numeric_div _null_ _null_ _null_ ));
-DESCR("implementation of / operator");
 DATA(insert OID = 1728 ( mod					PGNSP PGUID 12 1 0 0 f f f t f i 2 0 1700 "1700 1700" _null_ _null_ _null_ _null_	numeric_mod _null_ _null_ _null_ ));
 DESCR("modulus");
 DATA(insert OID = 1729 ( numeric_mod			PGNSP PGUID 12 1 0 0 f f f t f i 2 0 1700 "1700 1700" _null_ _null_ _null_ _null_	numeric_mod _null_ _null_ _null_ ));
-DESCR("implementation of % operator");
 DATA(insert OID = 1730 ( sqrt					PGNSP PGUID 12 1 0 0 f f f t f i 1 0 1700 "1700" _null_ _null_ _null_ _null_ numeric_sqrt _null_ _null_ _null_ ));
 DESCR("square root");
 DATA(insert OID = 1731 ( numeric_sqrt			PGNSP PGUID 12 1 0 0 f f f t f i 1 0 1700 "1700" _null_ _null_ _null_ _null_ numeric_sqrt _null_ _null_ _null_ ));
@@ -2657,7 +2164,6 @@ DESCR("exponentiation");
 DATA(insert OID = 2169 ( power					PGNSP PGUID 12 1 0 0 f f f t f i 2 0 1700 "1700 1700" _null_ _null_ _null_ _null_	numeric_power _null_ _null_ _null_ ));
 DESCR("exponentiation");
 DATA(insert OID = 1739 ( numeric_power			PGNSP PGUID 12 1 0 0 f f f t f i 2 0 1700 "1700 1700" _null_ _null_ _null_ _null_	numeric_power _null_ _null_ _null_ ));
-DESCR("implementation of ^ operator");
 DATA(insert OID = 1740 ( numeric				PGNSP PGUID 12 1 0 0 f f f t f i 1 0 1700 "23" _null_ _null_ _null_ _null_ int4_numeric _null_ _null_ _null_ ));
 DESCR("convert int4 to numeric");
 DATA(insert OID = 1741 ( log					PGNSP PGUID 14 1 0 0 f f f t f i 1 0 1700 "1700" _null_ _null_ _null_ _null_ "select pg_catalog.log(10, $1)" _null_ _null_ _null_ ));
@@ -2680,13 +2186,9 @@ DATA(insert OID = 2170 ( width_bucket			PGNSP PGUID 12 1 0 0 f f f t f i 4 0 23 
 DESCR("bucket number of operand in equidepth histogram");
 
 DATA(insert OID = 1747 ( time_pl_interval		PGNSP PGUID 12 1 0 0 f f f t f i 2 0 1083 "1083 1186" _null_ _null_ _null_ _null_	time_pl_interval _null_ _null_ _null_ ));
-DESCR("implementation of + operator");
 DATA(insert OID = 1748 ( time_mi_interval		PGNSP PGUID 12 1 0 0 f f f t f i 2 0 1083 "1083 1186" _null_ _null_ _null_ _null_	time_mi_interval _null_ _null_ _null_ ));
-DESCR("implementation of - operator");
 DATA(insert OID = 1749 ( timetz_pl_interval		PGNSP PGUID 12 1 0 0 f f f t f i 2 0 1266 "1266 1186" _null_ _null_ _null_ _null_	timetz_pl_interval _null_ _null_ _null_ ));
-DESCR("implementation of + operator");
 DATA(insert OID = 1750 ( timetz_mi_interval		PGNSP PGUID 12 1 0 0 f f f t f i 2 0 1266 "1266 1186" _null_ _null_ _null_ _null_	timetz_mi_interval _null_ _null_ _null_ ));
-DESCR("implementation of - operator");
 
 DATA(insert OID = 1764 ( numeric_inc			PGNSP PGUID 12 1 0 0 f f f t f i 1 0 1700 "1700" _null_ _null_ _null_ _null_ numeric_inc _null_ _null_ _null_ ));
 DESCR("increment by one");
@@ -2697,7 +2199,6 @@ DESCR("larger of two");
 DATA(insert OID = 1769 ( numeric_cmp			PGNSP PGUID 12 1 0 0 f f f t f i 2 0 23 "1700 1700" _null_ _null_ _null_ _null_ numeric_cmp _null_ _null_ _null_ ));
 DESCR("less-equal-greater");
 DATA(insert OID = 1771 ( numeric_uminus			PGNSP PGUID 12 1 0 0 f f f t f i 1 0 1700 "1700" _null_ _null_ _null_ _null_ numeric_uminus _null_ _null_ _null_ ));
-DESCR("implementation of - operator");
 DATA(insert OID = 1779 ( int8					PGNSP PGUID 12 1 0 0 f f f t f i 1 0 20 "1700" _null_ _null_ _null_ _null_ numeric_int8 _null_ _null_ _null_ ));
 DESCR("convert numeric to int8");
 DATA(insert OID = 1781 ( numeric				PGNSP PGUID 12 1 0 0 f f f t f i 1 0 1700 "20" _null_ _null_ _null_ _null_ int8_numeric _null_ _null_ _null_ ));
@@ -2892,85 +2393,48 @@ DATA(insert OID = 1847 ( to_ascii	PGNSP PGUID 12 1 0 0 f f f t f i 2 0 25 "25 19
 DESCR("encode text from encoding to ASCII text");
 
 DATA(insert OID = 1848 ( interval_pl_time	PGNSP PGUID 14 1 0 0 f f f t f i 2 0 1083 "1186 1083" _null_ _null_ _null_ _null_	"select $2 + $1" _null_ _null_ _null_ ));
-DESCR("implementation of + operator");
 
 DATA(insert OID = 1850 (  int28eq		   PGNSP PGUID 12 1 0 0 f f f t f i 2 0 16 "21 20" _null_ _null_ _null_ _null_ int28eq _null_ _null_ _null_ ));
-DESCR("implementation of = operator");
 DATA(insert OID = 1851 (  int28ne		   PGNSP PGUID 12 1 0 0 f f f t f i 2 0 16 "21 20" _null_ _null_ _null_ _null_ int28ne _null_ _null_ _null_ ));
-DESCR("implementation of <> operator");
 DATA(insert OID = 1852 (  int28lt		   PGNSP PGUID 12 1 0 0 f f f t f i 2 0 16 "21 20" _null_ _null_ _null_ _null_ int28lt _null_ _null_ _null_ ));
-DESCR("implementation of < operator");
 DATA(insert OID = 1853 (  int28gt		   PGNSP PGUID 12 1 0 0 f f f t f i 2 0 16 "21 20" _null_ _null_ _null_ _null_ int28gt _null_ _null_ _null_ ));
-DESCR("implementation of > operator");
 DATA(insert OID = 1854 (  int28le		   PGNSP PGUID 12 1 0 0 f f f t f i 2 0 16 "21 20" _null_ _null_ _null_ _null_ int28le _null_ _null_ _null_ ));
-DESCR("implementation of <= operator");
 DATA(insert OID = 1855 (  int28ge		   PGNSP PGUID 12 1 0 0 f f f t f i 2 0 16 "21 20" _null_ _null_ _null_ _null_ int28ge _null_ _null_ _null_ ));
-DESCR("implementation of >= operator");
 
 DATA(insert OID = 1856 (  int82eq		   PGNSP PGUID 12 1 0 0 f f f t f i 2 0 16 "20 21" _null_ _null_ _null_ _null_ int82eq _null_ _null_ _null_ ));
-DESCR("implementation of = operator");
 DATA(insert OID = 1857 (  int82ne		   PGNSP PGUID 12 1 0 0 f f f t f i 2 0 16 "20 21" _null_ _null_ _null_ _null_ int82ne _null_ _null_ _null_ ));
-DESCR("implementation of <> operator");
 DATA(insert OID = 1858 (  int82lt		   PGNSP PGUID 12 1 0 0 f f f t f i 2 0 16 "20 21" _null_ _null_ _null_ _null_ int82lt _null_ _null_ _null_ ));
-DESCR("implementation of < operator");
 DATA(insert OID = 1859 (  int82gt		   PGNSP PGUID 12 1 0 0 f f f t f i 2 0 16 "20 21" _null_ _null_ _null_ _null_ int82gt _null_ _null_ _null_ ));
-DESCR("implementation of > operator");
 DATA(insert OID = 1860 (  int82le		   PGNSP PGUID 12 1 0 0 f f f t f i 2 0 16 "20 21" _null_ _null_ _null_ _null_ int82le _null_ _null_ _null_ ));
-DESCR("implementation of <= operator");
 DATA(insert OID = 1861 (  int82ge		   PGNSP PGUID 12 1 0 0 f f f t f i 2 0 16 "20 21" _null_ _null_ _null_ _null_ int82ge _null_ _null_ _null_ ));
-DESCR("implementation of >= operator");
 
 DATA(insert OID = 1892 (  int2and		   PGNSP PGUID 12 1 0 0 f f f t f i 2 0 21 "21 21" _null_ _null_ _null_ _null_ int2and _null_ _null_ _null_ ));
-DESCR("implementation of & operator");
 DATA(insert OID = 1893 (  int2or		   PGNSP PGUID 12 1 0 0 f f f t f i 2 0 21 "21 21" _null_ _null_ _null_ _null_ int2or _null_ _null_ _null_ ));
-DESCR("implementation of | operator");
 DATA(insert OID = 1894 (  int2xor		   PGNSP PGUID 12 1 0 0 f f f t f i 2 0 21 "21 21" _null_ _null_ _null_ _null_ int2xor _null_ _null_ _null_ ));
-DESCR("implementation of # operator");
 DATA(insert OID = 1895 (  int2not		   PGNSP PGUID 12 1 0 0 f f f t f i 1 0 21 "21" _null_ _null_ _null_ _null_ int2not _null_ _null_ _null_ ));
-DESCR("implementation of ~ operator");
 DATA(insert OID = 1896 (  int2shl		   PGNSP PGUID 12 1 0 0 f f f t f i 2 0 21 "21 23" _null_ _null_ _null_ _null_ int2shl _null_ _null_ _null_ ));
-DESCR("implementation of << operator");
 DATA(insert OID = 1897 (  int2shr		   PGNSP PGUID 12 1 0 0 f f f t f i 2 0 21 "21 23" _null_ _null_ _null_ _null_ int2shr _null_ _null_ _null_ ));
-DESCR("implementation of >> operator");
 
 DATA(insert OID = 1898 (  int4and		   PGNSP PGUID 12 1 0 0 f f f t f i 2 0 23 "23 23" _null_ _null_ _null_ _null_ int4and _null_ _null_ _null_ ));
-DESCR("implementation of & operator");
 DATA(insert OID = 1899 (  int4or		   PGNSP PGUID 12 1 0 0 f f f t f i 2 0 23 "23 23" _null_ _null_ _null_ _null_ int4or _null_ _null_ _null_ ));
-DESCR("implementation of | operator");
 DATA(insert OID = 1900 (  int4xor		   PGNSP PGUID 12 1 0 0 f f f t f i 2 0 23 "23 23" _null_ _null_ _null_ _null_ int4xor _null_ _null_ _null_ ));
-DESCR("implementation of # operator");
 DATA(insert OID = 1901 (  int4not		   PGNSP PGUID 12 1 0 0 f f f t f i 1 0 23 "23" _null_ _null_ _null_ _null_ int4not _null_ _null_ _null_ ));
-DESCR("implementation of ~ operator");
 DATA(insert OID = 1902 (  int4shl		   PGNSP PGUID 12 1 0 0 f f f t f i 2 0 23 "23 23" _null_ _null_ _null_ _null_ int4shl _null_ _null_ _null_ ));
-DESCR("implementation of << operator");
 DATA(insert OID = 1903 (  int4shr		   PGNSP PGUID 12 1 0 0 f f f t f i 2 0 23 "23 23" _null_ _null_ _null_ _null_ int4shr _null_ _null_ _null_ ));
-DESCR("implementation of >> operator");
 
 DATA(insert OID = 1904 (  int8and		   PGNSP PGUID 12 1 0 0 f f f t f i 2 0 20 "20 20" _null_ _null_ _null_ _null_ int8and _null_ _null_ _null_ ));
-DESCR("implementation of & operator");
 DATA(insert OID = 1905 (  int8or		   PGNSP PGUID 12 1 0 0 f f f t f i 2 0 20 "20 20" _null_ _null_ _null_ _null_ int8or _null_ _null_ _null_ ));
-DESCR("implementation of | operator");
 DATA(insert OID = 1906 (  int8xor		   PGNSP PGUID 12 1 0 0 f f f t f i 2 0 20 "20 20" _null_ _null_ _null_ _null_ int8xor _null_ _null_ _null_ ));
-DESCR("implementation of # operator");
 DATA(insert OID = 1907 (  int8not		   PGNSP PGUID 12 1 0 0 f f f t f i 1 0 20 "20" _null_ _null_ _null_ _null_ int8not _null_ _null_ _null_ ));
-DESCR("implementation of ~ operator");
 DATA(insert OID = 1908 (  int8shl		   PGNSP PGUID 12 1 0 0 f f f t f i 2 0 20 "20 23" _null_ _null_ _null_ _null_ int8shl _null_ _null_ _null_ ));
-DESCR("implementation of << operator");
 DATA(insert OID = 1909 (  int8shr		   PGNSP PGUID 12 1 0 0 f f f t f i 2 0 20 "20 23" _null_ _null_ _null_ _null_ int8shr _null_ _null_ _null_ ));
-DESCR("implementation of >> operator");
 
 DATA(insert OID = 1910 (  int8up		   PGNSP PGUID 12 1 0 0 f f f t f i 1 0 20 "20" _null_ _null_ _null_ _null_ int8up _null_ _null_ _null_ ));
-DESCR("implementation of + operator");
 DATA(insert OID = 1911 (  int2up		   PGNSP PGUID 12 1 0 0 f f f t f i 1 0 21 "21" _null_ _null_ _null_ _null_ int2up _null_ _null_ _null_ ));
-DESCR("implementation of + operator");
 DATA(insert OID = 1912 (  int4up		   PGNSP PGUID 12 1 0 0 f f f t f i 1 0 23 "23" _null_ _null_ _null_ _null_ int4up _null_ _null_ _null_ ));
-DESCR("implementation of + operator");
 DATA(insert OID = 1913 (  float4up		   PGNSP PGUID 12 1 0 0 f f f t f i 1 0 700 "700" _null_ _null_ _null_ _null_ float4up _null_ _null_ _null_ ));
-DESCR("implementation of + operator");
 DATA(insert OID = 1914 (  float8up		   PGNSP PGUID 12 1 0 0 f f f t f i 1 0 701 "701" _null_ _null_ _null_ _null_ float8up _null_ _null_ _null_ ));
-DESCR("implementation of + operator");
 DATA(insert OID = 1915 (  numeric_uplus    PGNSP PGUID 12 1 0 0 f f f t f i 1 0 1700 "1700" _null_ _null_ _null_ _null_ numeric_uplus _null_ _null_ _null_ ));
-DESCR("implementation of + operator");
 
 DATA(insert OID = 1922 (  has_table_privilege		   PGNSP PGUID 12 1 0 0 f f f t f s 3 0 16 "19 25 25" _null_ _null_ _null_ _null_	has_table_privilege_name_name _null_ _null_ _null_ ));
 DESCR("user privilege on relation by username, rel name");
@@ -3204,17 +2668,11 @@ DATA(insert OID = 1947 (  decode						PGNSP PGUID 12 1 0 0 f f f t f i 2 0 17 "2
 DESCR("convert ascii-encoded text string into bytea value");
 
 DATA(insert OID = 1948 (  byteaeq		   PGNSP PGUID 12 1 0 0 f f f t f i 2 0 16 "17 17" _null_ _null_ _null_ _null_ byteaeq _null_ _null_ _null_ ));
-DESCR("implementation of = operator");
 DATA(insert OID = 1949 (  bytealt		   PGNSP PGUID 12 1 0 0 f f f t f i 2 0 16 "17 17" _null_ _null_ _null_ _null_ bytealt _null_ _null_ _null_ ));
-DESCR("implementation of < operator");
 DATA(insert OID = 1950 (  byteale		   PGNSP PGUID 12 1 0 0 f f f t f i 2 0 16 "17 17" _null_ _null_ _null_ _null_ byteale _null_ _null_ _null_ ));
-DESCR("implementation of <= operator");
 DATA(insert OID = 1951 (  byteagt		   PGNSP PGUID 12 1 0 0 f f f t f i 2 0 16 "17 17" _null_ _null_ _null_ _null_ byteagt _null_ _null_ _null_ ));
-DESCR("implementation of > operator");
 DATA(insert OID = 1952 (  byteage		   PGNSP PGUID 12 1 0 0 f f f t f i 2 0 16 "17 17" _null_ _null_ _null_ _null_ byteage _null_ _null_ _null_ ));
-DESCR("implementation of >= operator");
 DATA(insert OID = 1953 (  byteane		   PGNSP PGUID 12 1 0 0 f f f t f i 2 0 16 "17 17" _null_ _null_ _null_ _null_ byteane _null_ _null_ _null_ ));
-DESCR("implementation of <> operator");
 DATA(insert OID = 1954 (  byteacmp		   PGNSP PGUID 12 1 0 0 f f f t f i 2 0 23 "17 17" _null_ _null_ _null_ _null_ byteacmp _null_ _null_ _null_ ));
 DESCR("less-equal-greater");
 
@@ -3234,14 +2692,10 @@ DATA(insert OID = 1969 (  timetz		   PGNSP PGUID 12 1 0 0 f f f t f i 2 0 1266 "
 DESCR("adjust time with time zone precision");
 
 DATA(insert OID = 2003 (  textanycat	   PGNSP PGUID 14 1 0 0 f f f t f v 2 0 25 "25 2776" _null_ _null_ _null_ _null_ "select $1 || $2::pg_catalog.text" _null_ _null_ _null_ ));
-DESCR("implementation of || operator");
 DATA(insert OID = 2004 (  anytextcat	   PGNSP PGUID 14 1 0 0 f f f t f v 2 0 25 "2776 25" _null_ _null_ _null_ _null_ "select $1::pg_catalog.text || $2" _null_ _null_ _null_ ));
-DESCR("implementation of || operator");
 
 DATA(insert OID = 2005 (  bytealike		   PGNSP PGUID 12 1 0 0 f f f t f i 2 0 16 "17 17" _null_ _null_ _null_ _null_ bytealike _null_ _null_ _null_ ));
-DESCR("implementation of ~~ operator");
 DATA(insert OID = 2006 (  byteanlike	   PGNSP PGUID 12 1 0 0 f f f t f i 2 0 16 "17 17" _null_ _null_ _null_ _null_ byteanlike _null_ _null_ _null_ ));
-DESCR("implementation of !~~ operator");
 DATA(insert OID = 2007 (  like			   PGNSP PGUID 12 1 0 0 f f f t f i 2 0 16 "17 17" _null_ _null_ _null_ _null_ bytealike _null_ _null_ _null_ ));
 DESCR("matches LIKE expression");
 DATA(insert OID = 2008 (  notlike		   PGNSP PGUID 12 1 0 0 f f f t f i 2 0 16 "17 17" _null_ _null_ _null_ _null_ byteanlike _null_ _null_ _null_ ));
@@ -3251,7 +2705,6 @@ DESCR("convert LIKE pattern to use backslash escapes");
 DATA(insert OID = 2010 (  length		   PGNSP PGUID 12 1 0 0 f f f t f i 1 0 23 "17" _null_ _null_ _null_ _null_ byteaoctetlen _null_ _null_ _null_ ));
 DESCR("octet length");
 DATA(insert OID = 2011 (  byteacat		   PGNSP PGUID 12 1 0 0 f f f t f i 2 0 17 "17 17" _null_ _null_ _null_ _null_ byteacat _null_ _null_ _null_ ));
-DESCR("implementation of || operator");
 DATA(insert OID = 2012 (  substring		   PGNSP PGUID 12 1 0 0 f f f t f i 3 0 17 "17 23 23" _null_ _null_ _null_ _null_	bytea_substr _null_ _null_ _null_ ));
 DESCR("extract portion of string");
 DATA(insert OID = 2013 (  substring		   PGNSP PGUID 12 1 0 0 f f f t f i 2 0 17 "17 23" _null_ _null_ _null_ _null_ bytea_substr_no_len _null_ _null_ _null_ ));
@@ -3286,11 +2739,8 @@ DESCR("convert timestamp to date");
 DATA(insert OID = 2030 (  abstime			PGNSP PGUID 12 1 0 0 f f f t f s 1 0 702 "1114" _null_ _null_ _null_ _null_ timestamp_abstime _null_ _null_ _null_ ));
 DESCR("convert timestamp to abstime");
 DATA(insert OID = 2031 (  timestamp_mi		PGNSP PGUID 12 1 0 0 f f f t f i 2 0 1186 "1114 1114" _null_ _null_ _null_ _null_	timestamp_mi _null_ _null_ _null_ ));
-DESCR("implementation of - operator");
 DATA(insert OID = 2032 (  timestamp_pl_interval PGNSP PGUID 12 1 0 0 f f f t f i 2 0 1114 "1114 1186" _null_ _null_ _null_ _null_	timestamp_pl_interval _null_ _null_ _null_ ));
-DESCR("implementation of + operator");
 DATA(insert OID = 2033 (  timestamp_mi_interval PGNSP PGUID 12 1 0 0 f f f t f i 2 0 1114 "1114 1186" _null_ _null_ _null_ _null_	timestamp_mi_interval _null_ _null_ _null_ ));
-DESCR("implementation of - operator");
 DATA(insert OID = 2035 (  timestamp_smaller PGNSP PGUID 12 1 0 0 f f f t f i 2 0 1114 "1114 1114" _null_ _null_ _null_ _null_	timestamp_smaller _null_ _null_ _null_ ));
 DESCR("smaller of two");
 DATA(insert OID = 2036 (  timestamp_larger	PGNSP PGUID 12 1 0 0 f f f t f i 2 0 1114 "1114 1114" _null_ _null_ _null_ _null_	timestamp_larger _null_ _null_ _null_ ));
@@ -3320,17 +2770,11 @@ DESCR("finite timestamp?");
 DATA(insert OID = 2049 ( to_char			PGNSP PGUID 12 1 0 0 f f f t f s 2 0 25 "1114 25" _null_ _null_ _null_ _null_  timestamp_to_char _null_ _null_ _null_ ));
 DESCR("format timestamp to text");
 DATA(insert OID = 2052 (  timestamp_eq		PGNSP PGUID 12 1 0 0 f f f t f i 2 0 16 "1114 1114" _null_ _null_ _null_ _null_ timestamp_eq _null_ _null_ _null_ ));
-DESCR("implementation of = operator");
 DATA(insert OID = 2053 (  timestamp_ne		PGNSP PGUID 12 1 0 0 f f f t f i 2 0 16 "1114 1114" _null_ _null_ _null_ _null_ timestamp_ne _null_ _null_ _null_ ));
-DESCR("implementation of <> operator");
 DATA(insert OID = 2054 (  timestamp_lt		PGNSP PGUID 12 1 0 0 f f f t f i 2 0 16 "1114 1114" _null_ _null_ _null_ _null_ timestamp_lt _null_ _null_ _null_ ));
-DESCR("implementation of < operator");
 DATA(insert OID = 2055 (  timestamp_le		PGNSP PGUID 12 1 0 0 f f f t f i 2 0 16 "1114 1114" _null_ _null_ _null_ _null_ timestamp_le _null_ _null_ _null_ ));
-DESCR("implementation of <= operator");
 DATA(insert OID = 2056 (  timestamp_ge		PGNSP PGUID 12 1 0 0 f f f t f i 2 0 16 "1114 1114" _null_ _null_ _null_ _null_ timestamp_ge _null_ _null_ _null_ ));
-DESCR("implementation of >= operator");
 DATA(insert OID = 2057 (  timestamp_gt		PGNSP PGUID 12 1 0 0 f f f t f i 2 0 16 "1114 1114" _null_ _null_ _null_ _null_ timestamp_gt _null_ _null_ _null_ ));
-DESCR("implementation of > operator");
 DATA(insert OID = 2058 (  age				PGNSP PGUID 12 1 0 0 f f f t f i 2 0 1186 "1114 1114" _null_ _null_ _null_ _null_	timestamp_age _null_ _null_ _null_ ));
 DESCR("date difference preserving months and years");
 DATA(insert OID = 2059 (  age				PGNSP PGUID 14 1 0 0 f f f t f s 1 0 1186 "1114" _null_ _null_ _null_ _null_ "select pg_catalog.age(cast(current_date as timestamp without time zone), $1)" _null_ _null_ _null_ ));
@@ -3341,9 +2785,7 @@ DESCR("adjust timestamp to new time zone");
 DATA(insert OID = 2070 (  timezone			PGNSP PGUID 12 1 0 0 f f f t f i 2 0 1184 "1186 1114" _null_ _null_ _null_ _null_	timestamp_izone _null_ _null_ _null_ ));
 DESCR("adjust timestamp to new time zone");
 DATA(insert OID = 2071 (  date_pl_interval	PGNSP PGUID 12 1 0 0 f f f t f i 2 0 1114 "1082 1186" _null_ _null_ _null_ _null_	date_pl_interval _null_ _null_ _null_ ));
-DESCR("implementation of + operator");
 DATA(insert OID = 2072 (  date_mi_interval	PGNSP PGUID 12 1 0 0 f f f t f i 2 0 1114 "1082 1186" _null_ _null_ _null_ _null_	date_mi_interval _null_ _null_ _null_ ));
-DESCR("implementation of - operator");
 
 DATA(insert OID = 2073 (  substring			PGNSP PGUID 12 1 0 0 f f f t f i 2 0 25 "25 25" _null_ _null_ _null_ _null_ textregexsubstr _null_ _null_ _null_ ));
 DESCR("extract text matching regular expression");
@@ -3682,24 +3124,16 @@ DATA(insert OID = 2829 (  corr				PGNSP PGUID 12 1 0 0 t f f f f i 2 0 701 "701 
 DESCR("correlation coefficient");
 
 DATA(insert OID = 2160 ( text_pattern_lt	 PGNSP PGUID 12 1 0 0 f f f t f i 2 0 16 "25 25" _null_ _null_ _null_ _null_ text_pattern_lt _null_ _null_ _null_ ));
-DESCR("implementation of ~<~ operator");
 DATA(insert OID = 2161 ( text_pattern_le	 PGNSP PGUID 12 1 0 0 f f f t f i 2 0 16 "25 25" _null_ _null_ _null_ _null_ text_pattern_le _null_ _null_ _null_ ));
-DESCR("implementation of ~<=~ operator");
 DATA(insert OID = 2163 ( text_pattern_ge	 PGNSP PGUID 12 1 0 0 f f f t f i 2 0 16 "25 25" _null_ _null_ _null_ _null_ text_pattern_ge _null_ _null_ _null_ ));
-DESCR("implementation of ~>=~ operator");
 DATA(insert OID = 2164 ( text_pattern_gt	 PGNSP PGUID 12 1 0 0 f f f t f i 2 0 16 "25 25" _null_ _null_ _null_ _null_ text_pattern_gt _null_ _null_ _null_ ));
-DESCR("implementation of ~>~ operator");
 DATA(insert OID = 2166 ( bttext_pattern_cmp  PGNSP PGUID 12 1 0 0 f f f t f i 2 0 23 "25 25" _null_ _null_ _null_ _null_ bttext_pattern_cmp _null_ _null_ _null_ ));
 DESCR("less-equal-greater");
 
 DATA(insert OID = 2174 ( bpchar_pattern_lt	  PGNSP PGUID 12 1 0 0 f f f t f i 2 0 16 "1042 1042" _null_ _null_ _null_ _null_ bpchar_pattern_lt _null_ _null_ _null_ ));
-DESCR("implementation of ~<~ operator");
 DATA(insert OID = 2175 ( bpchar_pattern_le	  PGNSP PGUID 12 1 0 0 f f f t f i 2 0 16 "1042 1042" _null_ _null_ _null_ _null_ bpchar_pattern_le _null_ _null_ _null_ ));
-DESCR("implementation of ~<=~ operator");
 DATA(insert OID = 2177 ( bpchar_pattern_ge	  PGNSP PGUID 12 1 0 0 f f f t f i 2 0 16 "1042 1042" _null_ _null_ _null_ _null_ bpchar_pattern_ge _null_ _null_ _null_ ));
-DESCR("implementation of ~>=~ operator");
 DATA(insert OID = 2178 ( bpchar_pattern_gt	  PGNSP PGUID 12 1 0 0 f f f t f i 2 0 16 "1042 1042" _null_ _null_ _null_ _null_ bpchar_pattern_gt _null_ _null_ _null_ ));
-DESCR("implementation of ~>~ operator");
 DATA(insert OID = 2180 ( btbpchar_pattern_cmp PGNSP PGUID 12 1 0 0 f f f t f i 2 0 23 "1042 1042" _null_ _null_ _null_ _null_ btbpchar_pattern_cmp _null_ _null_ _null_ ));
 DESCR("less-equal-greater");
 
@@ -3949,93 +3383,57 @@ DESCR("MD5 hash");
 
 /* crosstype operations for date vs. timestamp and timestamptz */
 DATA(insert OID = 2338 (  date_lt_timestamp		   PGNSP PGUID 12 1 0 0 f f f t f i 2 0 16 "1082 1114" _null_ _null_ _null_ _null_ date_lt_timestamp _null_ _null_ _null_ ));
-DESCR("implementation of < operator");
 DATA(insert OID = 2339 (  date_le_timestamp		   PGNSP PGUID 12 1 0 0 f f f t f i 2 0 16 "1082 1114" _null_ _null_ _null_ _null_ date_le_timestamp _null_ _null_ _null_ ));
-DESCR("implementation of <= operator");
 DATA(insert OID = 2340 (  date_eq_timestamp		   PGNSP PGUID 12 1 0 0 f f f t f i 2 0 16 "1082 1114" _null_ _null_ _null_ _null_ date_eq_timestamp _null_ _null_ _null_ ));
-DESCR("implementation of = operator");
 DATA(insert OID = 2341 (  date_gt_timestamp		   PGNSP PGUID 12 1 0 0 f f f t f i 2 0 16 "1082 1114" _null_ _null_ _null_ _null_ date_gt_timestamp _null_ _null_ _null_ ));
-DESCR("implementation of > operator");
 DATA(insert OID = 2342 (  date_ge_timestamp		   PGNSP PGUID 12 1 0 0 f f f t f i 2 0 16 "1082 1114" _null_ _null_ _null_ _null_ date_ge_timestamp _null_ _null_ _null_ ));
-DESCR("implementation of >= operator");
 DATA(insert OID = 2343 (  date_ne_timestamp		   PGNSP PGUID 12 1 0 0 f f f t f i 2 0 16 "1082 1114" _null_ _null_ _null_ _null_ date_ne_timestamp _null_ _null_ _null_ ));
-DESCR("implementation of <> operator");
 DATA(insert OID = 2344 (  date_cmp_timestamp	   PGNSP PGUID 12 1 0 0 f f f t f i 2 0 23 "1082 1114" _null_ _null_ _null_ _null_ date_cmp_timestamp _null_ _null_ _null_ ));
 DESCR("less-equal-greater");
 
 DATA(insert OID = 2351 (  date_lt_timestamptz	   PGNSP PGUID 12 1 0 0 f f f t f s 2 0 16 "1082 1184" _null_ _null_ _null_ _null_ date_lt_timestamptz _null_ _null_ _null_ ));
-DESCR("implementation of < operator");
 DATA(insert OID = 2352 (  date_le_timestamptz	   PGNSP PGUID 12 1 0 0 f f f t f s 2 0 16 "1082 1184" _null_ _null_ _null_ _null_ date_le_timestamptz _null_ _null_ _null_ ));
-DESCR("implementation of <= operator");
 DATA(insert OID = 2353 (  date_eq_timestamptz	   PGNSP PGUID 12 1 0 0 f f f t f s 2 0 16 "1082 1184" _null_ _null_ _null_ _null_ date_eq_timestamptz _null_ _null_ _null_ ));
-DESCR("implementation of = operator");
 DATA(insert OID = 2354 (  date_gt_timestamptz	   PGNSP PGUID 12 1 0 0 f f f t f s 2 0 16 "1082 1184" _null_ _null_ _null_ _null_ date_gt_timestamptz _null_ _null_ _null_ ));
-DESCR("implementation of > operator");
 DATA(insert OID = 2355 (  date_ge_timestamptz	   PGNSP PGUID 12 1 0 0 f f f t f s 2 0 16 "1082 1184" _null_ _null_ _null_ _null_ date_ge_timestamptz _null_ _null_ _null_ ));
-DESCR("implementation of >= operator");
 DATA(insert OID = 2356 (  date_ne_timestamptz	   PGNSP PGUID 12 1 0 0 f f f t f s 2 0 16 "1082 1184" _null_ _null_ _null_ _null_ date_ne_timestamptz _null_ _null_ _null_ ));
-DESCR("implementation of <> operator");
 DATA(insert OID = 2357 (  date_cmp_timestamptz	   PGNSP PGUID 12 1 0 0 f f f t f s 2 0 23 "1082 1184" _null_ _null_ _null_ _null_ date_cmp_timestamptz _null_ _null_ _null_ ));
 DESCR("less-equal-greater");
 
 DATA(insert OID = 2364 (  timestamp_lt_date		   PGNSP PGUID 12 1 0 0 f f f t f i 2 0 16 "1114 1082" _null_ _null_ _null_ _null_ timestamp_lt_date _null_ _null_ _null_ ));
-DESCR("implementation of < operator");
 DATA(insert OID = 2365 (  timestamp_le_date		   PGNSP PGUID 12 1 0 0 f f f t f i 2 0 16 "1114 1082" _null_ _null_ _null_ _null_ timestamp_le_date _null_ _null_ _null_ ));
-DESCR("implementation of <= operator");
 DATA(insert OID = 2366 (  timestamp_eq_date		   PGNSP PGUID 12 1 0 0 f f f t f i 2 0 16 "1114 1082" _null_ _null_ _null_ _null_ timestamp_eq_date _null_ _null_ _null_ ));
-DESCR("implementation of = operator");
 DATA(insert OID = 2367 (  timestamp_gt_date		   PGNSP PGUID 12 1 0 0 f f f t f i 2 0 16 "1114 1082" _null_ _null_ _null_ _null_ timestamp_gt_date _null_ _null_ _null_ ));
-DESCR("implementation of > operator");
 DATA(insert OID = 2368 (  timestamp_ge_date		   PGNSP PGUID 12 1 0 0 f f f t f i 2 0 16 "1114 1082" _null_ _null_ _null_ _null_ timestamp_ge_date _null_ _null_ _null_ ));
-DESCR("implementation of >= operator");
 DATA(insert OID = 2369 (  timestamp_ne_date		   PGNSP PGUID 12 1 0 0 f f f t f i 2 0 16 "1114 1082" _null_ _null_ _null_ _null_ timestamp_ne_date _null_ _null_ _null_ ));
-DESCR("implementation of <> operator");
 DATA(insert OID = 2370 (  timestamp_cmp_date	   PGNSP PGUID 12 1 0 0 f f f t f i 2 0 23 "1114 1082" _null_ _null_ _null_ _null_ timestamp_cmp_date _null_ _null_ _null_ ));
 DESCR("less-equal-greater");
 
 DATA(insert OID = 2377 (  timestamptz_lt_date	   PGNSP PGUID 12 1 0 0 f f f t f s 2 0 16 "1184 1082" _null_ _null_ _null_ _null_ timestamptz_lt_date _null_ _null_ _null_ ));
-DESCR("implementation of < operator");
 DATA(insert OID = 2378 (  timestamptz_le_date	   PGNSP PGUID 12 1 0 0 f f f t f s 2 0 16 "1184 1082" _null_ _null_ _null_ _null_ timestamptz_le_date _null_ _null_ _null_ ));
-DESCR("implementation of <= operator");
 DATA(insert OID = 2379 (  timestamptz_eq_date	   PGNSP PGUID 12 1 0 0 f f f t f s 2 0 16 "1184 1082" _null_ _null_ _null_ _null_ timestamptz_eq_date _null_ _null_ _null_ ));
-DESCR("implementation of = operator");
 DATA(insert OID = 2380 (  timestamptz_gt_date	   PGNSP PGUID 12 1 0 0 f f f t f s 2 0 16 "1184 1082" _null_ _null_ _null_ _null_ timestamptz_gt_date _null_ _null_ _null_ ));
-DESCR("implementation of > operator");
 DATA(insert OID = 2381 (  timestamptz_ge_date	   PGNSP PGUID 12 1 0 0 f f f t f s 2 0 16 "1184 1082" _null_ _null_ _null_ _null_ timestamptz_ge_date _null_ _null_ _null_ ));
-DESCR("implementation of >= operator");
 DATA(insert OID = 2382 (  timestamptz_ne_date	   PGNSP PGUID 12 1 0 0 f f f t f s 2 0 16 "1184 1082" _null_ _null_ _null_ _null_ timestamptz_ne_date _null_ _null_ _null_ ));
-DESCR("implementation of <> operator");
 DATA(insert OID = 2383 (  timestamptz_cmp_date	   PGNSP PGUID 12 1 0 0 f f f t f s 2 0 23 "1184 1082" _null_ _null_ _null_ _null_ timestamptz_cmp_date _null_ _null_ _null_ ));
 DESCR("less-equal-greater");
 
 /* crosstype operations for timestamp vs. timestamptz */
 DATA(insert OID = 2520 (  timestamp_lt_timestamptz	PGNSP PGUID 12 1 0 0 f f f t f s 2 0 16 "1114 1184" _null_ _null_ _null_ _null_ timestamp_lt_timestamptz _null_ _null_ _null_ ));
-DESCR("implementation of < operator");
 DATA(insert OID = 2521 (  timestamp_le_timestamptz	PGNSP PGUID 12 1 0 0 f f f t f s 2 0 16 "1114 1184" _null_ _null_ _null_ _null_ timestamp_le_timestamptz _null_ _null_ _null_ ));
-DESCR("implementation of <= operator");
 DATA(insert OID = 2522 (  timestamp_eq_timestamptz	PGNSP PGUID 12 1 0 0 f f f t f s 2 0 16 "1114 1184" _null_ _null_ _null_ _null_ timestamp_eq_timestamptz _null_ _null_ _null_ ));
-DESCR("implementation of = operator");
 DATA(insert OID = 2523 (  timestamp_gt_timestamptz	PGNSP PGUID 12 1 0 0 f f f t f s 2 0 16 "1114 1184" _null_ _null_ _null_ _null_ timestamp_gt_timestamptz _null_ _null_ _null_ ));
-DESCR("implementation of > operator");
 DATA(insert OID = 2524 (  timestamp_ge_timestamptz	PGNSP PGUID 12 1 0 0 f f f t f s 2 0 16 "1114 1184" _null_ _null_ _null_ _null_ timestamp_ge_timestamptz _null_ _null_ _null_ ));
-DESCR("implementation of >= operator");
 DATA(insert OID = 2525 (  timestamp_ne_timestamptz	PGNSP PGUID 12 1 0 0 f f f t f s 2 0 16 "1114 1184" _null_ _null_ _null_ _null_ timestamp_ne_timestamptz _null_ _null_ _null_ ));
-DESCR("implementation of <> operator");
 DATA(insert OID = 2526 (  timestamp_cmp_timestamptz PGNSP PGUID 12 1 0 0 f f f t f s 2 0 23 "1114 1184" _null_ _null_ _null_ _null_ timestamp_cmp_timestamptz _null_ _null_ _null_ ));
 DESCR("less-equal-greater");
 
 DATA(insert OID = 2527 (  timestamptz_lt_timestamp	PGNSP PGUID 12 1 0 0 f f f t f s 2 0 16 "1184 1114" _null_ _null_ _null_ _null_ timestamptz_lt_timestamp _null_ _null_ _null_ ));
-DESCR("implementation of < operator");
 DATA(insert OID = 2528 (  timestamptz_le_timestamp	PGNSP PGUID 12 1 0 0 f f f t f s 2 0 16 "1184 1114" _null_ _null_ _null_ _null_ timestamptz_le_timestamp _null_ _null_ _null_ ));
-DESCR("implementation of <= operator");
 DATA(insert OID = 2529 (  timestamptz_eq_timestamp	PGNSP PGUID 12 1 0 0 f f f t f s 2 0 16 "1184 1114" _null_ _null_ _null_ _null_ timestamptz_eq_timestamp _null_ _null_ _null_ ));
-DESCR("implementation of = operator");
 DATA(insert OID = 2530 (  timestamptz_gt_timestamp	PGNSP PGUID 12 1 0 0 f f f t f s 2 0 16 "1184 1114" _null_ _null_ _null_ _null_ timestamptz_gt_timestamp _null_ _null_ _null_ ));
-DESCR("implementation of > operator");
 DATA(insert OID = 2531 (  timestamptz_ge_timestamp	PGNSP PGUID 12 1 0 0 f f f t f s 2 0 16 "1184 1114" _null_ _null_ _null_ _null_ timestamptz_ge_timestamp _null_ _null_ _null_ ));
-DESCR("implementation of >= operator");
 DATA(insert OID = 2532 (  timestamptz_ne_timestamp	PGNSP PGUID 12 1 0 0 f f f t f s 2 0 16 "1184 1114" _null_ _null_ _null_ _null_ timestamptz_ne_timestamp _null_ _null_ _null_ ));
-DESCR("implementation of <> operator");
 DATA(insert OID = 2533 (  timestamptz_cmp_timestamp PGNSP PGUID 12 1 0 0 f f f t f s 2 0 23 "1184 1114" _null_ _null_ _null_ _null_ timestamptz_cmp_timestamp _null_ _null_ _null_ ));
 DESCR("less-equal-greater");
 
@@ -4329,15 +3727,10 @@ DESCR("bitwise-or bit aggregate");
 
 /* formerly-missing interval + datetime operators */
 DATA(insert OID = 2546 ( interval_pl_date			PGNSP PGUID 14 1 0 0 f f f t f i 2 0 1114 "1186 1082" _null_ _null_ _null_ _null_	"select $2 + $1" _null_ _null_ _null_ ));
-DESCR("implementation of + operator");
 DATA(insert OID = 2547 ( interval_pl_timetz			PGNSP PGUID 14 1 0 0 f f f t f i 2 0 1266 "1186 1266" _null_ _null_ _null_ _null_	"select $2 + $1" _null_ _null_ _null_ ));
-DESCR("implementation of + operator");
 DATA(insert OID = 2548 ( interval_pl_timestamp		PGNSP PGUID 14 1 0 0 f f f t f i 2 0 1114 "1186 1114" _null_ _null_ _null_ _null_	"select $2 + $1" _null_ _null_ _null_ ));
-DESCR("implementation of + operator");
 DATA(insert OID = 2549 ( interval_pl_timestamptz	PGNSP PGUID 14 1 0 0 f f f t f s 2 0 1184 "1186 1184" _null_ _null_ _null_ _null_	"select $2 + $1" _null_ _null_ _null_ ));
-DESCR("implementation of + operator");
 DATA(insert OID = 2550 ( integer_pl_date			PGNSP PGUID 14 1 0 0 f f f t f i 2 0 1082 "23 1082" _null_ _null_ _null_ _null_ "select $2 + $1" _null_ _null_ _null_ ));
-DESCR("implementation of + operator");
 
 DATA(insert OID = 2556 ( pg_tablespace_databases	PGNSP PGUID 12 1 1000 0 f f f t t s 1 0 26 "26" _null_ _null_ _null_ _null_ pg_tablespace_databases _null_ _null_ _null_ ));
 DESCR("get OIDs of databases in a tablespace");
@@ -4358,25 +3751,15 @@ DESCR("configuration load time");
 
 /* new functions for Y-direction rtree opclasses */
 DATA(insert OID = 2562 (  box_below		   PGNSP PGUID 12 1 0 0 f f f t f i 2 0 16 "603 603" _null_ _null_ _null_ _null_ box_below _null_ _null_ _null_ ));
-DESCR("implementation of <<| operator");
 DATA(insert OID = 2563 (  box_overbelow    PGNSP PGUID 12 1 0 0 f f f t f i 2 0 16 "603 603" _null_ _null_ _null_ _null_ box_overbelow _null_ _null_ _null_ ));
-DESCR("implementation of &<| operator");
 DATA(insert OID = 2564 (  box_overabove    PGNSP PGUID 12 1 0 0 f f f t f i 2 0 16 "603 603" _null_ _null_ _null_ _null_ box_overabove _null_ _null_ _null_ ));
-DESCR("implementation of |&> operator");
 DATA(insert OID = 2565 (  box_above		   PGNSP PGUID 12 1 0 0 f f f t f i 2 0 16 "603 603" _null_ _null_ _null_ _null_ box_above _null_ _null_ _null_ ));
-DESCR("implementation of |>> operator");
 DATA(insert OID = 2566 (  poly_below	   PGNSP PGUID 12 1 0 0 f f f t f i 2 0 16 "604 604" _null_ _null_ _null_ _null_ poly_below _null_ _null_ _null_ ));
-DESCR("implementation of <<| operator");
 DATA(insert OID = 2567 (  poly_overbelow   PGNSP PGUID 12 1 0 0 f f f t f i 2 0 16 "604 604" _null_ _null_ _null_ _null_ poly_overbelow _null_ _null_ _null_ ));
-DESCR("implementation of &<| operator");
 DATA(insert OID = 2568 (  poly_overabove   PGNSP PGUID 12 1 0 0 f f f t f i 2 0 16 "604 604" _null_ _null_ _null_ _null_ poly_overabove _null_ _null_ _null_ ));
-DESCR("implementation of |&> operator");
 DATA(insert OID = 2569 (  poly_above	   PGNSP PGUID 12 1 0 0 f f f t f i 2 0 16 "604 604" _null_ _null_ _null_ _null_ poly_above _null_ _null_ _null_ ));
-DESCR("implementation of |>> operator");
 DATA(insert OID = 2587 (  circle_overbelow		PGNSP PGUID 12 1 0 0 f f f t f i 2 0 16 "718 718" _null_ _null_ _null_ _null_  circle_overbelow _null_ _null_ _null_ ));
-DESCR("implementation of &<| operator");
 DATA(insert OID = 2588 (  circle_overabove		PGNSP PGUID 12 1 0 0 f f f t f i 2 0 16 "718 718" _null_ _null_ _null_ _null_  circle_overabove _null_ _null_ _null_ ));
-DESCR("implementation of |&> operator");
 
 /* support functions for GiST r-tree emulation */
 DATA(insert OID = 2578 (  gist_box_consistent	PGNSP PGUID 12 1 0 0 f f f t f i 5 0 16 "2281 603 23 26 2281" _null_ _null_ _null_ _null_	gist_box_consistent _null_ _null_ _null_ ));
@@ -4448,11 +3831,8 @@ DESCR("GIN array support (obsolete)");
 
 /* overlap/contains/contained */
 DATA(insert OID = 2747 (  arrayoverlap		   PGNSP PGUID 12 1 0 0 f f f t f i 2 0 16 "2277 2277" _null_ _null_ _null_ _null_ arrayoverlap _null_ _null_ _null_ ));
-DESCR("implementation of && operator");
 DATA(insert OID = 2748 (  arraycontains		   PGNSP PGUID 12 1 0 0 f f f t f i 2 0 16 "2277 2277" _null_ _null_ _null_ _null_ arraycontains _null_ _null_ _null_ ));
-DESCR("implementation of @> operator");
 DATA(insert OID = 2749 (  arraycontained	   PGNSP PGUID 12 1 0 0 f f f t f i 2 0 16 "2277 2277" _null_ _null_ _null_ _null_ arraycontained _null_ _null_ _null_ ));
-DESCR("implementation of <@ operator");
 
 /* userlock replacements */
 DATA(insert OID = 2880 (  pg_advisory_lock				PGNSP PGUID 12 1 0 0 f f f t f v 1 0 2278 "20" _null_ _null_ _null_ _null_ pg_advisory_lock_int8 _null_ _null_ _null_ ));
@@ -4576,17 +3956,11 @@ DESCR("I/O");
 DATA(insert OID = 2953 (  uuid_out		   PGNSP PGUID 12 1 0 0 f f f t f i 1 0 2275 "2950" _null_ _null_ _null_ _null_ uuid_out _null_ _null_ _null_ ));
 DESCR("I/O");
 DATA(insert OID = 2954 (  uuid_lt		   PGNSP PGUID 12 1 0 0 f f f t f i 2 0 16 "2950 2950" _null_ _null_ _null_ _null_ uuid_lt _null_ _null_ _null_ ));
-DESCR("implementation of < operator");
 DATA(insert OID = 2955 (  uuid_le		   PGNSP PGUID 12 1 0 0 f f f t f i 2 0 16 "2950 2950" _null_ _null_ _null_ _null_ uuid_le _null_ _null_ _null_ ));
-DESCR("implementation of <= operator");
 DATA(insert OID = 2956 (  uuid_eq		   PGNSP PGUID 12 1 0 0 f f f t f i 2 0 16 "2950 2950" _null_ _null_ _null_ _null_ uuid_eq _null_ _null_ _null_ ));
-DESCR("implementation of = operator");
 DATA(insert OID = 2957 (  uuid_ge		   PGNSP PGUID 12 1 0 0 f f f t f i 2 0 16 "2950 2950" _null_ _null_ _null_ _null_ uuid_ge _null_ _null_ _null_ ));
-DESCR("implementation of >= operator");
 DATA(insert OID = 2958 (  uuid_gt		   PGNSP PGUID 12 1 0 0 f f f t f i 2 0 16 "2950 2950" _null_ _null_ _null_ _null_ uuid_gt _null_ _null_ _null_ ));
-DESCR("implementation of > operator");
 DATA(insert OID = 2959 (  uuid_ne		   PGNSP PGUID 12 1 0 0 f f f t f i 2 0 16 "2950 2950" _null_ _null_ _null_ _null_ uuid_ne _null_ _null_ _null_ ));
-DESCR("implementation of <> operator");
 DATA(insert OID = 2960 (  uuid_cmp		   PGNSP PGUID 12 1 0 0 f f f t f i 2 0 23 "2950 2950" _null_ _null_ _null_ _null_ uuid_cmp _null_ _null_ _null_ ));
 DESCR("less-equal-greater");
 DATA(insert OID = 2961 (  uuid_recv		   PGNSP PGUID 12 1 0 0 f f f t f i 1 0 2950 "2281" _null_ _null_ _null_ _null_ uuid_recv _null_ _null_ _null_ ));
@@ -4606,17 +3980,11 @@ DESCR("I/O");
 DATA(insert OID = 3507 (  enum_out		PGNSP PGUID 12 1 0 0 f f f t f s 1 0 2275 "3500" _null_ _null_ _null_ _null_ enum_out _null_ _null_ _null_ ));
 DESCR("I/O");
 DATA(insert OID = 3508 (  enum_eq		PGNSP PGUID 12 1 0 0 f f f t f i 2 0 16 "3500 3500" _null_ _null_ _null_ _null_ enum_eq _null_ _null_ _null_ ));
-DESCR("implementation of = operator");
 DATA(insert OID = 3509 (  enum_ne		PGNSP PGUID 12 1 0 0 f f f t f i 2 0 16 "3500 3500" _null_ _null_ _null_ _null_ enum_ne _null_ _null_ _null_ ));
-DESCR("implementation of <> operator");
 DATA(insert OID = 3510 (  enum_lt		PGNSP PGUID 12 1 0 0 f f f t f i 2 0 16 "3500 3500" _null_ _null_ _null_ _null_ enum_lt _null_ _null_ _null_ ));
-DESCR("implementation of < operator");
 DATA(insert OID = 3511 (  enum_gt		PGNSP PGUID 12 1 0 0 f f f t f i 2 0 16 "3500 3500" _null_ _null_ _null_ _null_ enum_gt _null_ _null_ _null_ ));
-DESCR("implementation of > operator");
 DATA(insert OID = 3512 (  enum_le		PGNSP PGUID 12 1 0 0 f f f t f i 2 0 16 "3500 3500" _null_ _null_ _null_ _null_ enum_le _null_ _null_ _null_ ));
-DESCR("implementation of <= operator");
 DATA(insert OID = 3513 (  enum_ge		PGNSP PGUID 12 1 0 0 f f f t f i 2 0 16 "3500 3500" _null_ _null_ _null_ _null_ enum_ge _null_ _null_ _null_ ));
-DESCR("implementation of >= operator");
 DATA(insert OID = 3514 (  enum_cmp		PGNSP PGUID 12 1 0 0 f f f t f i 2 0 23 "3500 3500" _null_ _null_ _null_ _null_ enum_cmp _null_ _null_ _null_ ));
 DESCR("less-equal-greater");
 DATA(insert OID = 3515 (  hashenum		PGNSP PGUID 12 1 0 0 f f f t f i 1 0 23 "3500" _null_ _null_ _null_ _null_ hashenum _null_ _null_ _null_ ));
@@ -4665,17 +4033,11 @@ DATA(insert OID =  3647 (  gtsvectorout			PGNSP PGUID 12 1 0 0 f f f t f i 1 0 2
 DESCR("I/O");
 
 DATA(insert OID = 3616 (  tsvector_lt			PGNSP PGUID 12 1 0 0 f f f t f i 2 0 16 "3614 3614" _null_ _null_ _null_ _null_ tsvector_lt _null_ _null_ _null_ ));
-DESCR("implementation of < operator");
 DATA(insert OID = 3617 (  tsvector_le			PGNSP PGUID 12 1 0 0 f f f t f i 2 0 16 "3614 3614" _null_ _null_ _null_ _null_ tsvector_le _null_ _null_ _null_ ));
-DESCR("implementation of <= operator");
 DATA(insert OID = 3618 (  tsvector_eq			PGNSP PGUID 12 1 0 0 f f f t f i 2 0 16 "3614 3614" _null_ _null_ _null_ _null_ tsvector_eq _null_ _null_ _null_ ));
-DESCR("implementation of = operator");
 DATA(insert OID = 3619 (  tsvector_ne			PGNSP PGUID 12 1 0 0 f f f t f i 2 0 16 "3614 3614" _null_ _null_ _null_ _null_ tsvector_ne _null_ _null_ _null_ ));
-DESCR("implementation of <> operator");
 DATA(insert OID = 3620 (  tsvector_ge			PGNSP PGUID 12 1 0 0 f f f t f i 2 0 16 "3614 3614" _null_ _null_ _null_ _null_ tsvector_ge _null_ _null_ _null_ ));
-DESCR("implementation of >= operator");
 DATA(insert OID = 3621 (  tsvector_gt			PGNSP PGUID 12 1 0 0 f f f t f i 2 0 16 "3614 3614" _null_ _null_ _null_ _null_ tsvector_gt _null_ _null_ _null_ ));
-DESCR("implementation of > operator");
 DATA(insert OID = 3622 (  tsvector_cmp			PGNSP PGUID 12 1 0 0 f f f t f i 2 0 23 "3614 3614" _null_ _null_ _null_ _null_ tsvector_cmp _null_ _null_ _null_ ));
 DESCR("less-equal-greater");
 
@@ -4686,16 +4048,11 @@ DESCR("strip position information");
 DATA(insert OID = 3624 (  setweight				PGNSP PGUID 12 1 0 0 f f f t f i 2 0 3614 "3614 18" _null_ _null_ _null_ _null_ tsvector_setweight _null_ _null_ _null_ ));
 DESCR("set weight of lexeme's entries");
 DATA(insert OID = 3625 (  tsvector_concat		PGNSP PGUID 12 1 0 0 f f f t f i 2 0 3614 "3614 3614" _null_ _null_ _null_ _null_ tsvector_concat _null_ _null_ _null_ ));
-DESCR("implementation of || operator");
 
 DATA(insert OID = 3634 (  ts_match_vq			PGNSP PGUID 12 1 0 0 f f f t f i 2 0 16 "3614 3615" _null_ _null_ _null_ _null_ ts_match_vq _null_ _null_ _null_ ));
-DESCR("implementation of @@ operator");
 DATA(insert OID = 3635 (  ts_match_qv			PGNSP PGUID 12 1 0 0 f f f t f i 2 0 16 "3615 3614" _null_ _null_ _null_ _null_ ts_match_qv _null_ _null_ _null_ ));
-DESCR("implementation of @@ operator");
 DATA(insert OID = 3760 (  ts_match_tt			PGNSP PGUID 12 3 0 0 f f f t f s 2 0 16 "25 25" _null_ _null_ _null_ _null_ ts_match_tt _null_ _null_ _null_ ));
-DESCR("implementation of @@ operator");
 DATA(insert OID = 3761 (  ts_match_tq			PGNSP PGUID 12 2 0 0 f f f t f s 2 0 16 "25 3615" _null_ _null_ _null_ _null_ ts_match_tq _null_ _null_ _null_ ));
-DESCR("implementation of @@ operator");
 
 DATA(insert OID = 3648 (  gtsvector_compress	PGNSP PGUID 12 1 0 0 f f f t f i 1 0 2281 "2281" _null_ _null_ _null_ _null_ gtsvector_compress _null_ _null_ _null_ ));
 DESCR("GiST tsvector support");
@@ -4730,31 +4087,20 @@ DATA(insert OID = 3088 (  gin_tsquery_consistent PGNSP PGUID 12 1 0 0 f f f t f 
 DESCR("GIN tsvector support (obsolete)");
 
 DATA(insert OID = 3662 (  tsquery_lt			PGNSP PGUID 12 1 0 0 f f f t f i 2 0 16 "3615 3615" _null_ _null_ _null_ _null_ tsquery_lt _null_ _null_ _null_ ));
-DESCR("implementation of < operator");
 DATA(insert OID = 3663 (  tsquery_le			PGNSP PGUID 12 1 0 0 f f f t f i 2 0 16 "3615 3615" _null_ _null_ _null_ _null_ tsquery_le _null_ _null_ _null_ ));
-DESCR("implementation of <= operator");
 DATA(insert OID = 3664 (  tsquery_eq			PGNSP PGUID 12 1 0 0 f f f t f i 2 0 16 "3615 3615" _null_ _null_ _null_ _null_ tsquery_eq _null_ _null_ _null_ ));
-DESCR("implementation of = operator");
 DATA(insert OID = 3665 (  tsquery_ne			PGNSP PGUID 12 1 0 0 f f f t f i 2 0 16 "3615 3615" _null_ _null_ _null_ _null_ tsquery_ne _null_ _null_ _null_ ));
-DESCR("implementation of <> operator");
 DATA(insert OID = 3666 (  tsquery_ge			PGNSP PGUID 12 1 0 0 f f f t f i 2 0 16 "3615 3615" _null_ _null_ _null_ _null_ tsquery_ge _null_ _null_ _null_ ));
-DESCR("implementation of >= operator");
 DATA(insert OID = 3667 (  tsquery_gt			PGNSP PGUID 12 1 0 0 f f f t f i 2 0 16 "3615 3615" _null_ _null_ _null_ _null_ tsquery_gt _null_ _null_ _null_ ));
-DESCR("implementation of > operator");
 DATA(insert OID = 3668 (  tsquery_cmp			PGNSP PGUID 12 1 0 0 f f f t f i 2 0 23 "3615 3615" _null_ _null_ _null_ _null_ tsquery_cmp _null_ _null_ _null_ ));
 DESCR("less-equal-greater");
 
 DATA(insert OID = 3669 (  tsquery_and		PGNSP PGUID 12 1 0 0 f f f t f i 2 0 3615 "3615 3615" _null_ _null_ _null_ _null_ tsquery_and _null_ _null_ _null_ ));
-DESCR("implementation of && operator");
 DATA(insert OID = 3670 (  tsquery_or		PGNSP PGUID 12 1 0 0 f f f t f i 2 0 3615 "3615 3615" _null_ _null_ _null_ _null_ tsquery_or _null_ _null_ _null_ ));
-DESCR("implementation of || operator");
 DATA(insert OID = 3671 (  tsquery_not		PGNSP PGUID 12 1 0 0 f f f t f i 1 0 3615 "3615" _null_ _null_ _null_ _null_ tsquery_not _null_ _null_ _null_ ));
-DESCR("implementation of !! operator");
 
 DATA(insert OID = 3691 (  tsq_mcontains		PGNSP PGUID 12 1 0 0 f f f t f i 2 0 16 "3615 3615" _null_ _null_ _null_ _null_ tsq_mcontains _null_ _null_ _null_ ));
-DESCR("implementation of @> operator");
 DATA(insert OID = 3692 (  tsq_mcontained	PGNSP PGUID 12 1 0 0 f f f t f i 2 0 16 "3615 3615" _null_ _null_ _null_ _null_ tsq_mcontained _null_ _null_ _null_ ));
-DESCR("implementation of <@ operator");
 
 DATA(insert OID = 3672 (  numnode			PGNSP PGUID 12 1 0 0 f f f t f i 1 0 23 "3615" _null_ _null_ _null_ _null_ tsquery_numnode _null_ _null_ _null_ ));
 DESCR("number of nodes");
@@ -4925,17 +4271,11 @@ DESCR("is txid visible in snapshot?");
 
 /* record comparison */
 DATA(insert OID = 2981 (  record_eq		   PGNSP PGUID 12 1 0 0 f f f t f i 2 0 16 "2249 2249" _null_ _null_ _null_ _null_ record_eq _null_ _null_ _null_ ));
-DESCR("implementation of = operator");
 DATA(insert OID = 2982 (  record_ne		   PGNSP PGUID 12 1 0 0 f f f t f i 2 0 16 "2249 2249" _null_ _null_ _null_ _null_ record_ne _null_ _null_ _null_ ));
-DESCR("implementation of <> operator");
 DATA(insert OID = 2983 (  record_lt		   PGNSP PGUID 12 1 0 0 f f f t f i 2 0 16 "2249 2249" _null_ _null_ _null_ _null_ record_lt _null_ _null_ _null_ ));
-DESCR("implementation of < operator");
 DATA(insert OID = 2984 (  record_gt		   PGNSP PGUID 12 1 0 0 f f f t f i 2 0 16 "2249 2249" _null_ _null_ _null_ _null_ record_gt _null_ _null_ _null_ ));
-DESCR("implementation of > operator");
 DATA(insert OID = 2985 (  record_le		   PGNSP PGUID 12 1 0 0 f f f t f i 2 0 16 "2249 2249" _null_ _null_ _null_ _null_ record_le _null_ _null_ _null_ ));
-DESCR("implementation of <= operator");
 DATA(insert OID = 2986 (  record_ge		   PGNSP PGUID 12 1 0 0 f f f t f i 2 0 16 "2249 2249" _null_ _null_ _null_ _null_ record_ge _null_ _null_ _null_ ));
-DESCR("implementation of >= operator");
 DATA(insert OID = 2987 (  btrecordcmp	   PGNSP PGUID 12 1 0 0 f f f t f i 2 0 23 "2249 2249" _null_ _null_ _null_ _null_ btrecordcmp _null_ _null_ _null_ ));
 DESCR("less-equal-greater");
 

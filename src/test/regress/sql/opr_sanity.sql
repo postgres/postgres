@@ -529,28 +529,23 @@ FROM pg_operator as p1 LEFT JOIN pg_description as d
 WHERE d.classoid IS NULL AND p1.oid <= 9999;
 
 -- Check that operators' underlying functions have suitable comments,
--- namely 'implementation of XXX operator'.  In some cases (mostly legacy
--- duplicate names for operators) there are multiple operators referencing
--- the same pg_proc entry, and of course the function comment can only match
--- one of them; so don't print functions for which there's any matching
--- entry.  This still leaves a small number of functions for which the
--- comment is intentionally different because we expect the function to be
--- used on its own as well as via the operator; generally, in these special
--- cases, the function and operator comments should match.
+-- namely 'implementation of XXX operator'.  In some cases involving legacy
+-- names for operators, there are multiple operators referencing the same
+-- pg_proc entry, so ignore operators whose comments say they are deprecated.
+-- We also have a few functions that are both operator support and meant to
+-- be called directly; those should have comments matching their operator.
 WITH funcdescs AS (
-  SELECT p.oid as p_oid, proname, o.oid::regoperator as operator,
+  SELECT p.oid as p_oid, proname, o.oid as o_oid,
     obj_description(p.oid, 'pg_proc') as prodesc,
     'implementation of ' || oprname || ' operator' as expecteddesc,
     obj_description(o.oid, 'pg_operator') as oprdesc
   FROM pg_proc p JOIN pg_operator o ON oprcode = p.oid
   WHERE o.oid <= 9999
 )
-SELECT p_oid, proname, operator, prodesc, oprdesc FROM funcdescs
+SELECT * FROM funcdescs
   WHERE prodesc IS DISTINCT FROM expecteddesc
-    AND NOT EXISTS (SELECT 1 FROM funcdescs f2
-                    WHERE f2.p_oid = funcdescs.p_oid
-                      AND f2.prodesc = f2.expecteddesc)
-ORDER BY 1,3;
+    AND oprdesc NOT LIKE 'deprecated%'
+    AND prodesc IS DISTINCT FROM oprdesc;
 
 
 -- **************** pg_aggregate ****************

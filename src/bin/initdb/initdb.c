@@ -1494,6 +1494,19 @@ setup_description(void)
 				"  FROM tmp_pg_shdescription t, pg_class c "
 				"   WHERE c.relname = t.classname;\n");
 
+	/* Create default descriptions for operator implementation functions */
+	PG_CMD_PUTS("WITH funcdescs AS ( "
+				"SELECT p.oid as p_oid, oprname, "
+				"coalesce(obj_description(o.oid, 'pg_operator'),'') as opdesc "
+				"FROM pg_proc p JOIN pg_operator o ON oprcode = p.oid ) "
+				"INSERT INTO pg_description "
+				"  SELECT p_oid, 'pg_proc'::regclass, 0, "
+				"    'implementation of ' || oprname || ' operator' "
+				"  FROM funcdescs "
+				"  WHERE opdesc NOT LIKE 'deprecated%' AND "
+				"  NOT EXISTS (SELECT 1 FROM pg_description "
+                "    WHERE objoid = p_oid AND classoid = 'pg_proc'::regclass);\n");
+
 	PG_CMD_CLOSE;
 
 	check_ok();
