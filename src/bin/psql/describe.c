@@ -559,6 +559,19 @@ describeOperators(const char *pattern, bool showSystem)
 
 	initPQExpBuffer(&buf);
 
+	/*
+	 * Note: before Postgres 9.1, we did not assign comments to any built-in
+	 * operators, preferring to let the comment on the underlying function
+	 * suffice.  The coalesce() on the obj_description() calls below supports
+	 * this convention by providing a fallback lookup of a comment on the
+	 * operator's function.  As of 9.1 there is a policy that every built-in
+	 * operator should have a comment; so the coalesce() is no longer
+	 * necessary so far as built-in operators are concerned.  We keep it
+	 * anyway, for now, because (1) third-party modules may still be following
+	 * the old convention, and (2) we'd need to do it anyway when talking to a
+	 * pre-9.1 server.
+	 */
+
 	printfPQExpBuffer(&buf,
 					  "SELECT n.nspname as \"%s\",\n"
 					  "  o.oprname AS \"%s\",\n"
@@ -877,7 +890,7 @@ objectDescription(const char *pattern, bool showSystem)
 						  "n.nspname", "p.proname", NULL,
 						  "pg_catalog.pg_function_is_visible(p.oid)");
 
-	/* Operator descriptions (only if operator has its own comment) */
+	/* Operator descriptions */
 	appendPQExpBuffer(&buf,
 					  "UNION ALL\n"
 					  "  SELECT o.oid as oid, o.tableoid as tableoid,\n"
@@ -896,7 +909,7 @@ objectDescription(const char *pattern, bool showSystem)
 						  "n.nspname", "o.oprname", NULL,
 						  "pg_catalog.pg_operator_is_visible(o.oid)");
 
-	/* Type description */
+	/* Type descriptions */
 	appendPQExpBuffer(&buf,
 					  "UNION ALL\n"
 					  "  SELECT t.oid as oid, t.tableoid as tableoid,\n"
@@ -942,7 +955,7 @@ objectDescription(const char *pattern, bool showSystem)
 						  "n.nspname", "c.relname", NULL,
 						  "pg_catalog.pg_table_is_visible(c.oid)");
 
-	/* Rule description (ignore rules for views) */
+	/* Rule descriptions (ignore rules for views) */
 	appendPQExpBuffer(&buf,
 					  "UNION ALL\n"
 					  "  SELECT r.oid as oid, r.tableoid as tableoid,\n"
@@ -964,7 +977,7 @@ objectDescription(const char *pattern, bool showSystem)
 						  "n.nspname", "r.rulename", NULL,
 						  "pg_catalog.pg_table_is_visible(c.oid)");
 
-	/* Trigger description */
+	/* Trigger descriptions */
 	appendPQExpBuffer(&buf,
 					  "UNION ALL\n"
 					  "  SELECT t.oid as oid, t.tableoid as tableoid,\n"

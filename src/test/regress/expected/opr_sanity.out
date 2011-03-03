@@ -324,6 +324,15 @@ WHERE proargmodes IS NOT NULL AND proargnames IS NOT NULL AND
 -----+---------
 (0 rows)
 
+-- Insist that all built-in pg_proc entries have descriptions
+SELECT p1.oid, p1.proname
+FROM pg_proc as p1 LEFT JOIN pg_description as d
+     ON p1.tableoid = d.classoid and p1.oid = d.objoid and d.objsubid = 0
+WHERE d.classoid IS NULL AND p1.oid <= 9999;
+ oid | proname 
+-----+---------
+(0 rows)
+
 -- **************** pg_cast ****************
 -- Catch bogus values in pg_cast columns (other than cases detected by
 -- oidjoins test).
@@ -641,6 +650,48 @@ WHERE p1.oprjoin = p2.oid AND
  oid | oprname | oid | proname 
 -----+---------+-----+---------
 (0 rows)
+
+-- Insist that all built-in pg_operator entries have descriptions
+SELECT p1.oid, p1.oprname
+FROM pg_operator as p1 LEFT JOIN pg_description as d
+     ON p1.tableoid = d.classoid and p1.oid = d.objoid and d.objsubid = 0
+WHERE d.classoid IS NULL AND p1.oid <= 9999;
+ oid | oprname 
+-----+---------
+(0 rows)
+
+-- Check that operators' underlying functions have suitable comments,
+-- namely 'implementation of XXX operator'.  In some cases (mostly legacy
+-- duplicate names for operators) there are multiple operators referencing
+-- the same pg_proc entry, and of course the function comment can only match
+-- one of them; so don't print functions for which there's any matching
+-- entry.  This still leaves a small number of functions for which the
+-- comment is intentionally different because we expect the function to be
+-- used on its own as well as via the operator; generally, in these special
+-- cases, the function and operator comments should match.
+WITH funcdescs AS (
+  SELECT p.oid as p_oid, proname, o.oid::regoperator as operator,
+    obj_description(p.oid, 'pg_proc') as prodesc,
+    'implementation of ' || oprname || ' operator' as expecteddesc,
+    obj_description(o.oid, 'pg_operator') as oprdesc
+  FROM pg_proc p JOIN pg_operator o ON oprcode = p.oid
+  WHERE o.oid <= 9999
+)
+SELECT p_oid, proname, operator, prodesc, oprdesc FROM funcdescs
+  WHERE prodesc IS DISTINCT FROM expecteddesc
+    AND NOT EXISTS (SELECT 1 FROM funcdescs f2
+                    WHERE f2.p_oid = funcdescs.p_oid
+                      AND f2.prodesc = f2.expecteddesc)
+ORDER BY 1,3;
+ p_oid |    proname    |        operator         |               prodesc               |               oprdesc               
+-------+---------------+-------------------------+-------------------------------------+-------------------------------------
+   378 | array_append  | ||(anyarray,anyelement) | append element onto end of array    | append element onto end of array
+   379 | array_prepend | ||(anyelement,anyarray) | prepend element onto front of array | prepend element onto front of array
+  1035 | aclinsert     | +(aclitem[],aclitem)    | add/update ACL item                 | add/update ACL item
+  1036 | aclremove     | -(aclitem[],aclitem)    | remove ACL item                     | remove ACL item
+  1037 | aclcontains   | @>(aclitem[],aclitem)   | contains                            | contains
+  1037 | aclcontains   | ~(aclitem[],aclitem)    | contains                            | contains
+(6 rows)
 
 -- **************** pg_aggregate ****************
 -- Look for illegal values in pg_aggregate fields.
