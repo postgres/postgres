@@ -814,7 +814,7 @@ PortalRun(Portal portal, long count, bool isTopLevel,
 							   dest, altdest, completionTag);
 
 				/* Prevent portal's commands from being re-executed */
-				portal->status = PORTAL_DONE;
+				MarkPortalDone(portal);
 
 				/* Always complete at end of RunMulti */
 				result = true;

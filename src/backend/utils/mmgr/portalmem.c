@@ -402,6 +402,32 @@ UnpinPortal(Portal portal)
 }
 
 /*
+ * MarkPortalDone
+ *		Transition a portal from ACTIVE to DONE state.
+ */
+void
+MarkPortalDone(Portal portal)
+{
+	/* Perform the state transition */
+	Assert(portal->status == PORTAL_ACTIVE);
+	portal->status = PORTAL_DONE;
+
+	/*
+	 * Allow portalcmds.c to clean up the state it knows about.  We might
+	 * as well do that now, since the portal can't be executed any more.
+	 *
+	 * In some cases involving execution of a ROLLBACK command in an already
+	 * aborted transaction, this prevents an assertion failure from reaching
+	 * AtCleanup_Portals with the cleanup hook still unexecuted.
+	 */
+	if (PointerIsValid(portal->cleanup))
+	{
+		(*portal->cleanup) (portal);
+		portal->cleanup = NULL;
+	}
+}
+
+/*
  * PortalDrop
  *		Destroy the portal.
  */

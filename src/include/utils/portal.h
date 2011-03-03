@@ -206,6 +206,7 @@ extern Portal CreatePortal(const char *name, bool allowDup, bool dupSilent);
 extern Portal CreateNewPortal(void);
 extern void PinPortal(Portal portal);
 extern void UnpinPortal(Portal portal);
+extern void MarkPortalDone(Portal portal);
 extern void PortalDrop(Portal portal, bool isTopCommit);
 extern Portal GetPortalByName(const char *name);
 extern void PortalDefineQuery(Portal portal,
