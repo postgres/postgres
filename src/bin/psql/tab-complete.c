@@ -2751,6 +2751,10 @@ psql_completion(char *text, int start, int end)
 			 pg_strcasecmp(prev3_wd, "\\copy") != 0)
 		COMPLETE_WITH_SCHEMA_QUERY(Query_for_list_of_tsvf, NULL);
 
+/* ... JOIN ... */
+	else if (pg_strcasecmp(prev_wd, "JOIN") == 0)
+		COMPLETE_WITH_SCHEMA_QUERY(Query_for_list_of_tsvf, NULL);
+
 /* Backslash commands */
 /* TODO:  \dc \dd \dl */
 	else if (strcmp(prev_wd, "\\connect") == 0 || strcmp(prev_wd, "\\c") == 0)
