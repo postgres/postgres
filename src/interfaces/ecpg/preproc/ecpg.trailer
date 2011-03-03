@@ -1591,7 +1591,7 @@ ECPGCKeywords: S_AUTO				{ $$ = mm_strdup("auto"); }
  * CONNECTION can be added back in all_unreserved_keyword, but CURRENT and
  * INPUT are reserved for ecpg purposes.
  *
- * The mentioned exclusions are done by $replace_line settings in parse.pl.
+ * The mentioned exclusions are done by $replace_line settings in parse2.pl.
  */
 all_unreserved_keyword: unreserved_keyword	{ $$ = $1; }
 		| ECPGunreserved_interval			{ $$ = $1; }
