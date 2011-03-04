@@ -26,13 +26,6 @@
 #include "utils/memutils.h"
 #include "utils/tqual.h"
 
-/*
- * For most object types, the permissions-checking logic is simple enough
- * that it makes sense to just include it in CommentObject().  However,
- * attributes require a bit more checking.
- */
-static void CheckAttributeSecLabel(Relation relation);
-
 typedef struct
 {
 	const char *provider_name;
@@ -98,52 +91,30 @@ ExecSecLabelStmt(SecLabelStmt *stmt)
 	address = get_object_address(stmt->objtype, stmt->objname, stmt->objargs,
 								 &relation, ShareUpdateExclusiveLock);
 
-	/* Privilege and integrity checks. */
+	/* Require ownership of the target object. */
+	check_object_ownership(GetUserId(), stmt->objtype, address,
+						   stmt->objname, stmt->objargs, relation);
+
+	/* Perform other integrity checks as needed. */
 	switch (stmt->objtype)
 	{
-		case OBJECT_SEQUENCE:
-		case OBJECT_TABLE:
-		case OBJECT_VIEW:
-		case OBJECT_FOREIGN_TABLE:
-			if (!pg_class_ownercheck(RelationGetRelid(relation), GetUserId()))
-				aclcheck_error(ACLCHECK_NOT_OWNER, ACL_KIND_CLASS,
-							   RelationGetRelationName(relation));
-			break;
 		case OBJECT_COLUMN:
-			CheckAttributeSecLabel(relation);
-			break;
-		case OBJECT_TYPE:
-			if (!pg_type_ownercheck(address.objectId, GetUserId()))
-				aclcheck_error(ACLCHECK_NOT_OWNER, ACL_KIND_TYPE,
-							   format_type_be(address.objectId));
-			break;
-		case OBJECT_AGGREGATE:
-		case OBJECT_FUNCTION:
-			if (!pg_proc_ownercheck(address.objectId, GetUserId()))
-				aclcheck_error(ACLCHECK_NOT_OWNER, ACL_KIND_PROC,
-							   NameListToString(stmt->objname));
-			break;
-		case OBJECT_SCHEMA:
-			if (!pg_namespace_ownercheck(address.objectId, GetUserId()))
-				aclcheck_error(ACLCHECK_NOT_OWNER, ACL_KIND_NAMESPACE,
-							   strVal(linitial(stmt->objname)));
-			break;
-		case OBJECT_LANGUAGE:
-			if (!superuser())
+			/*
+			 * Allow security labels only on columns of tables, views,
+			 * composite types, and foreign tables (which are the only
+			 * relkinds for which pg_dump will dump labels).
+			 */
+			if (relation->rd_rel->relkind != RELKIND_RELATION &&
+				relation->rd_rel->relkind != RELKIND_VIEW &&
+				relation->rd_rel->relkind != RELKIND_COMPOSITE_TYPE &&
+				relation->rd_rel->relkind != RELKIND_FOREIGN_TABLE)
 				ereport(ERROR,
-						(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
-					 errmsg("must be superuser to comment on procedural language")));
-			break;
-		case OBJECT_LARGEOBJECT:
-			if (!pg_largeobject_ownercheck(address.objectId, GetUserId()))
-				ereport(ERROR,
-						(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
-						 errmsg("must be owner of large object %u",
-							address.objectId)));
+						(errcode(ERRCODE_WRONG_OBJECT_TYPE),
+						 errmsg("\"%s\" is not a table, view, composite type, or foreign table",
+								RelationGetRelationName(relation))));
 			break;
 		default:
-			elog(ERROR, "unrecognized object type: %d",
-				 (int) stmt->objtype);
+			break;
 	}
 
 	/* Provider gets control here, may throw ERROR to veto new label. */
@@ -350,31 +321,6 @@ DeleteSecurityLabel(const ObjectAddress *object)
 	systable_endscan(scan);
 
 	heap_close(pg_seclabel, RowExclusiveLock);
-}
-
-/*
- * Check whether the user is allowed to comment on an attribute of the
- * specified relation.
- */
-static void
-CheckAttributeSecLabel(Relation relation)
-{
-	if (!pg_class_ownercheck(RelationGetRelid(relation), GetUserId()))
-		aclcheck_error(ACLCHECK_NOT_OWNER, ACL_KIND_CLASS,
-					   RelationGetRelationName(relation));
-
-	/*
-	 * Allow security labels only on columns of tables, views, and composite
-	 * types (which are the only relkinds for which pg_dump will dump labels).
-	 */
-	if (relation->rd_rel->relkind != RELKIND_RELATION &&
-		relation->rd_rel->relkind != RELKIND_VIEW &&
-		relation->rd_rel->relkind != RELKIND_COMPOSITE_TYPE &&
-		relation->rd_rel->relkind != RELKIND_FOREIGN_TABLE)
-		ereport(ERROR,
-				(errcode(ERRCODE_WRONG_OBJECT_TYPE),
-				 errmsg("\"%s\" is not a table, view, composite type, or foreign table",
-						RelationGetRelationName(relation))));
 }
 
 void
