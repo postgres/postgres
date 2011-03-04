@@ -21,7 +21,7 @@ PostgreSQL documentation
 
  <refsynopsisdiv>
 <synopsis>
-CREATE EXTENSION <replaceable class="parameter">extension_name</replaceable>
+CREATE EXTENSION [ IF NOT EXISTS ] <replaceable class="parameter">extension_name</replaceable>
     [ WITH ] [ SCHEMA <replaceable class="parameter">schema</replaceable> ]
              [ VERSION <replaceable class="parameter">version</replaceable> ]
              [ FROM <replaceable class="parameter">old_version</replaceable> ]
@@ -51,7 +51,12 @@ CREATE EXTENSION <replaceable class="parameter">extension_name</replaceable>
   </para>
 
   <para>
-   Only superusers can execute <command>CREATE EXTENSION</command>.
+   Loading an extension requires the same privileges that would be
+   required to create its component objects.  For most extensions this
+   means superuser or database owner privileges are needed.
+   The user who runs <command>CREATE EXTENSION</command> becomes the
+   owner of the extension for purposes of later privilege checks, as well
+   as the owner of any objects created by the extension's script.
   </para>
 
  </refsect1>
@@ -60,6 +65,18 @@ CREATE EXTENSION <replaceable class="parameter">extension_name</replaceable>
   <title>Parameters</title>
 
     <variablelist>
+     <varlistentry>
+      <term><literal>IF NOT EXISTS</></term>
+      <listitem>
+       <para>
+        Do not throw an error if an extension with the same name already
+        exists.  A notice is issued in this case.  Note that there is no
+        guarantee that the existing extension is anything like the one that
+        would have been created.
+       </para>
+      </listitem>
+     </varlistentry>
+
      <varlistentry>
       <term><replaceable class="parameter">extension_name</replaceable></term>
       <listitem>

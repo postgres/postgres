@@ -45,6 +45,7 @@
 
 #include "access/attnum.h"
 #include "access/sysattr.h"
+#include "access/transam.h"
 #include "catalog/pg_cast.h"
 #include "catalog/pg_class.h"
 #include "catalog/pg_default_acl.h"
@@ -7041,6 +7042,19 @@ dumpExtension(Archive *fout, ExtensionInfo *extinfo)
 	if (!extinfo->dobj.dump || dataOnly)
 		return;
 
+	/*
+	 * In a regular dump, we use IF NOT EXISTS so that there isn't a problem
+	 * if the extension already exists in the target database; this is
+	 * essential for installed-by-default extensions such as plpgsql.
+	 *
+	 * In binary-upgrade mode, that doesn't work well, so instead we skip
+	 * extensions with OIDs less than FirstNormalObjectId; those were
+	 * presumably installed by initdb, and we assume they'll exist in the
+	 * target installation too.
+	 */
+	if (binary_upgrade && extinfo->dobj.catId.oid < (Oid) FirstNormalObjectId)
+		return;
+
 	q = createPQExpBuffer();
 	delq = createPQExpBuffer();
 	labelq = createPQExpBuffer();
@@ -7051,7 +7065,7 @@ dumpExtension(Archive *fout, ExtensionInfo *extinfo)
 
 	if (!binary_upgrade)
 	{
-		appendPQExpBuffer(q, "CREATE EXTENSION %s WITH SCHEMA %s;\n",
+		appendPQExpBuffer(q, "CREATE EXTENSION IF NOT EXISTS %s WITH SCHEMA %s;\n",
 						  qextname, fmtId(extinfo->namespace));
 	}
 	else

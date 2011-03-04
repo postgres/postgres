@@ -70,6 +70,7 @@ typedef struct ExtensionControlFile
 	char	   *comment;		/* comment, if any */
 	char	   *schema;			/* target schema (allowed if !relocatable) */
 	bool		relocatable;	/* is ALTER EXTENSION SET SCHEMA supported? */
+	bool		superuser;		/* must be superuser to install? */
 	int			encoding;		/* encoding of the script file, or -1 */
 	List	   *requires;		/* names of prerequisite extensions */
 } ExtensionControlFile;
@@ -523,6 +524,14 @@ parse_extension_control_file(ExtensionControlFile *control,
 						 errmsg("parameter \"%s\" requires a Boolean value",
 								item->name)));
 		}
+		else if (strcmp(item->name, "superuser") == 0)
+		{
+			if (!parse_bool(item->value, &control->superuser))
+				ereport(ERROR,
+						(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+						 errmsg("parameter \"%s\" requires a Boolean value",
+								item->name)));
+		}
 		else if (strcmp(item->name, "encoding") == 0)
 		{
 			control->encoding = pg_valid_server_encoding(item->value);
@@ -578,6 +587,7 @@ read_extension_control_file(const char *extname)
 	control = (ExtensionControlFile *) palloc0(sizeof(ExtensionControlFile));
 	control->name = pstrdup(extname);
 	control->relocatable = false;
+	control->superuser = true;
 	control->encoding = -1;
 
 	/*
@@ -769,6 +779,27 @@ execute_extension_script(Oid extensionOid, ExtensionControlFile *control,
 			   *save_search_path;
 	StringInfoData pathbuf;
 	ListCell   *lc;
+
+	/*
+	 * Enforce superuser-ness if appropriate.  We postpone this check until
+	 * here so that the flag is correctly associated with the right script(s)
+	 * if it's set in secondary control files.
+	 */
+	if (control->superuser && !superuser())
+	{
+		if (from_version == NULL)
+			ereport(ERROR,
+					(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
+					 errmsg("permission denied to create extension \"%s\"",
+							control->name),
+					 errhint("Must be superuser to create this extension.")));
+		else
+			ereport(ERROR,
+					(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
+					 errmsg("permission denied to update extension \"%s\"",
+							control->name),
+					 errhint("Must be superuser to update this extension.")));
+	}
 
 	filename = get_extension_script_filename(control, from_version, version);
 
@@ -1157,15 +1188,34 @@ CreateExtension(CreateExtensionStmt *stmt)
 	List	   *requiredExtensions;
 	List	   *requiredSchemas;
 	Oid			extensionOid;
+	AclResult	aclresult;
 	ListCell   *lc;
 
-	/* Must be super user */
-	if (!superuser())
-		ereport(ERROR,
-				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
-				 errmsg("permission denied to create extension \"%s\"",
-						stmt->extname),
-				 errhint("Must be superuser to create an extension.")));
+	/* Check extension name validity before any filesystem access */
+	check_valid_extension_name(stmt->extname);
+
+	/*
+	 * Check for duplicate extension name.  The unique index on
+	 * pg_extension.extname would catch this anyway, and serves as a backstop
+	 * in case of race conditions; but this is a friendlier error message,
+	 * and besides we need a check to support IF NOT EXISTS.
+	 */
+	if (get_extension_oid(stmt->extname, true) != InvalidOid)
+	{
+		if (stmt->if_not_exists)
+		{
+			ereport(NOTICE,
+					(errcode(ERRCODE_DUPLICATE_OBJECT),
+					 errmsg("extension \"%s\" already exists, skipping",
+							stmt->extname)));
+			return;
+		}
+		else
+			ereport(ERROR,
+					(errcode(ERRCODE_DUPLICATE_OBJECT),
+					 errmsg("extension \"%s\" already exists",
+							stmt->extname)));
+	}
 
 	/*
 	 * We use global variables to track the extension being created, so we
@@ -1175,19 +1225,6 @@ CreateExtension(CreateExtensionStmt *stmt)
 		ereport(ERROR,
 				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 				 errmsg("nested CREATE EXTENSION is not supported")));
-
-	/* Check extension name validity before any filesystem access */
-	check_valid_extension_name(stmt->extname);
-
-	/*
-	 * Check for duplicate extension name.  The unique index on
-	 * pg_extension.extname would catch this anyway, and serves as a backstop
-	 * in case of race conditions; but this is a friendlier error message.
-	 */
-	if (get_extension_oid(stmt->extname, true) != InvalidOid)
-		ereport(ERROR,
-				(errcode(ERRCODE_DUPLICATE_OBJECT),
-				 errmsg("extension \"%s\" already exists", stmt->extname)));
 
 	/*
 	 * Read the primary control file.  Note we assume that it does not contain
@@ -1356,9 +1393,13 @@ CreateExtension(CreateExtensionStmt *stmt)
 	}
 
 	/*
-	 * If we didn't already know user is superuser, we would probably want
-	 * to do pg_namespace_aclcheck(schemaOid, extowner, ACL_CREATE) here.
+	 * Check we have creation rights in target namespace.  Although strictly
+	 * speaking the extension itself isn't in the schema, it will almost
+	 * certainly want to create objects therein, so let's just check now.
 	 */
+	aclresult = pg_namespace_aclcheck(schemaOid, extowner, ACL_CREATE);
+	if (aclresult != ACLCHECK_OK)
+		aclcheck_error(aclresult, ACL_KIND_NAMESPACE, schemaName);
 
 	/*
 	 * Look up the prerequisite extensions, and build lists of their OIDs
@@ -1551,16 +1592,10 @@ RemoveExtensions(DropStmt *drop)
 			continue;
 		}
 
-		/*
-		 * Permission check.  For now, insist on superuser-ness; later we
-		 * might want to relax that to being owner of the extension.
-		 */
-		if (!superuser())
-			ereport(ERROR,
-					(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
-					 errmsg("permission denied to drop extension \"%s\"",
-							extensionName),
-					 errhint("Must be superuser to drop an extension.")));
+		/* Permission check: must own extension */
+		if (!pg_extension_ownercheck(extensionId, GetUserId()))
+			aclcheck_error(ACLCHECK_NOT_OWNER, ACL_KIND_EXTENSION,
+						   extensionName);
 
 		object.classId = ExtensionRelationId;
 		object.objectId = extensionId;
@@ -1633,11 +1668,6 @@ pg_available_extensions(PG_FUNCTION_ARGS)
 	char			   *location;
 	DIR				   *dir;
 	struct dirent	   *de;
-
-	if (!superuser())
-		ereport(ERROR,
-				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
-				 (errmsg("must be superuser to list available extensions"))));
 
 	/* check to see if caller supports us returning a tuplestore */
 	if (rsinfo == NULL || !IsA(rsinfo, ReturnSetInfo))
@@ -1748,11 +1778,6 @@ pg_available_extension_versions(PG_FUNCTION_ARGS)
 	DIR				   *dir;
 	struct dirent	   *de;
 
-	if (!superuser())
-		ereport(ERROR,
-				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
-				 (errmsg("must be superuser to list available extensions"))));
-
 	/* check to see if caller supports us returning a tuplestore */
 	if (rsinfo == NULL || !IsA(rsinfo, ReturnSetInfo))
 		ereport(ERROR,
@@ -1845,8 +1870,8 @@ get_available_versions_for_extension(ExtensionControlFile *pcontrol,
 	{
 		ExtensionControlFile *control;
 		char	   *vername;
-		Datum		values[6];
-		bool		nulls[6];
+		Datum		values[7];
+		bool		nulls[7];
 
 		/* must be a .sql file ... */
 		if (!is_extension_script_filename(de->d_name))
@@ -1879,17 +1904,19 @@ get_available_versions_for_extension(ExtensionControlFile *pcontrol,
 										CStringGetDatum(control->name));
 		/* version */
 		values[1] = CStringGetTextDatum(vername);
+		/* superuser */
+		values[2] = BoolGetDatum(control->superuser);
 		/* relocatable */
-		values[2] = BoolGetDatum(control->relocatable);
+		values[3] = BoolGetDatum(control->relocatable);
 		/* schema */
 		if (control->schema == NULL)
-			nulls[3] = true;
+			nulls[4] = true;
 		else
-			values[3] = DirectFunctionCall1(namein,
+			values[4] = DirectFunctionCall1(namein,
 											CStringGetDatum(control->schema));
 		/* requires */
 		if (control->requires == NIL)
-			nulls[4] = true;
+			nulls[5] = true;
 		else
 		{
 			Datum	   *datums;
@@ -1910,13 +1937,13 @@ get_available_versions_for_extension(ExtensionControlFile *pcontrol,
 			a = construct_array(datums, ndatums,
 								NAMEOID,
 								NAMEDATALEN, false, 'c');
-			values[4] = PointerGetDatum(a);
+			values[5] = PointerGetDatum(a);
 		}
 		/* comment */
 		if (control->comment == NULL)
-			nulls[5] = true;
+			nulls[6] = true;
 		else
-			values[5] = CStringGetTextDatum(control->comment);
+			values[6] = CStringGetTextDatum(control->comment);
 
 		tuplestore_putvalues(tupstore, tupdesc, values, nulls);
 	}
@@ -1940,11 +1967,6 @@ pg_extension_update_paths(PG_FUNCTION_ARGS)
 	List	   *evi_list;
 	ExtensionControlFile *control;
 	ListCell   *lc1;
-
-	if (!superuser())
-		ereport(ERROR,
-				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
-				 (errmsg("must be superuser to list extension update paths"))));
 
 	/* Check extension name validity before any filesystem access */
 	check_valid_extension_name(NameStr(*extname));
@@ -2204,6 +2226,7 @@ AlterExtensionNamespace(List *names, const char *newschema)
 	Oid			extensionOid;
 	Oid			nspOid;
 	Oid			oldNspOid = InvalidOid;
+	AclResult	aclresult;
 	Relation	extRel;
 	ScanKeyData	key[2];
 	SysScanDesc	extScan;
@@ -2223,11 +2246,18 @@ AlterExtensionNamespace(List *names, const char *newschema)
 
 	nspOid = LookupCreationNamespace(newschema);
 
-	/* this might later become an ownership test */
-	if (!superuser())
-		ereport(ERROR,
-				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
-				 (errmsg("must be superuser to use ALTER EXTENSION"))));
+	/*
+	 * Permission check: must own extension.  Note that we don't bother to
+	 * check ownership of the individual member objects ...
+	 */
+	if (!pg_extension_ownercheck(extensionOid, GetUserId()))
+		aclcheck_error(ACLCHECK_NOT_OWNER, ACL_KIND_EXTENSION,
+					   extensionName);
+
+	/* Permission check: must have creation rights in target namespace */
+	aclresult = pg_namespace_aclcheck(nspOid, GetUserId(), ACL_CREATE);
+	if (aclresult != ACLCHECK_OK)
+		aclcheck_error(aclresult, ACL_KIND_NAMESPACE, newschema);
 
 	/* Locate the pg_extension tuple */
 	extRel = heap_open(ExtensionRelationId, RowExclusiveLock);
@@ -2369,15 +2399,6 @@ ExecAlterExtensionStmt(AlterExtensionStmt *stmt)
 	ListCell   *lc;
 
 	/*
-	 * For now, insist on superuser privilege.  Later we might want to
-	 * relax this to ownership of the extension.
-	 */
-	if (!superuser())
-		ereport(ERROR,
-				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
-				 (errmsg("must be superuser to use ALTER EXTENSION"))));
-
-	/*
 	 * We use global variables to track the extension being created, so we
 	 * can create/update only one extension at the same time.
 	 */
@@ -2421,6 +2442,11 @@ ExecAlterExtensionStmt(AlterExtensionStmt *stmt)
 	systable_endscan(extScan);
 
 	heap_close(extRel, AccessShareLock);
+
+	/* Permission check: must own extension */
+	if (!pg_extension_ownercheck(extensionOid, GetUserId()))
+		aclcheck_error(ACLCHECK_NOT_OWNER, ACL_KIND_EXTENSION,
+					   stmt->extname);
 
 	/*
 	 * Read the primary control file.  Note we assume that it does not contain
@@ -2658,19 +2684,14 @@ ExecAlterExtensionContentsStmt(AlterExtensionContentsStmt *stmt)
 	Relation		relation;
 	Oid				oldExtension;
 
-	/*
-	 * For now, insist on superuser privilege.  Later we might want to
-	 * relax this to ownership of the target object and the extension.
-	 */
-	if (!superuser())
-		ereport(ERROR,
-				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
-				 (errmsg("must be superuser to use ALTER EXTENSION"))));
-
-	/* Do this next to fail on nonexistent extension */
 	extension.classId = ExtensionRelationId;
 	extension.objectId = get_extension_oid(stmt->extname, false);
 	extension.objectSubId = 0;
+
+	/* Permission check: must own extension */
+	if (!pg_extension_ownercheck(extension.objectId, GetUserId()))
+		aclcheck_error(ACLCHECK_NOT_OWNER, ACL_KIND_EXTENSION,
+					   stmt->extname);
 
 	/*
 	 * Translate the parser representation that identifies the object into
@@ -2680,6 +2701,10 @@ ExecAlterExtensionContentsStmt(AlterExtensionContentsStmt *stmt)
 	 */
 	object = get_object_address(stmt->objtype, stmt->objname, stmt->objargs,
 								&relation, ShareUpdateExclusiveLock);
+
+	/* Permission check: must own target object, too */
+	check_object_ownership(GetUserId(), stmt->objtype, object,
+						   stmt->objname, stmt->objargs, relation);
 
 	/*
 	 * Check existing extension membership.

@@ -29,6 +29,7 @@
 #include "catalog/pg_conversion.h"
 #include "catalog/pg_database.h"
 #include "catalog/pg_default_acl.h"
+#include "catalog/pg_extension.h"
 #include "catalog/pg_foreign_data_wrapper.h"
 #include "catalog/pg_foreign_server.h"
 #include "catalog/pg_language.h"
@@ -3148,6 +3149,8 @@ static const char *const no_priv_msg[MAX_ACL_KIND] =
 	gettext_noop("permission denied for foreign server %s"),
 	/* ACL_KIND_FOREIGN_TABLE */
 	gettext_noop("permission denied for foreign table %s"),
+	/* ACL_KIND_EXTENSION */
+	gettext_noop("permission denied for extension %s"),
 };
 
 static const char *const not_owner_msg[MAX_ACL_KIND] =
@@ -3192,6 +3195,8 @@ static const char *const not_owner_msg[MAX_ACL_KIND] =
 	gettext_noop("must be owner of foreign server %s"),
 	/* ACL_KIND_FOREIGN_TABLE */
 	gettext_noop("must be owner of foreign table %s"),
+	/* ACL_KIND_EXTENSION */
+	gettext_noop("must be owner of extension %s"),
 };
 
 
@@ -4684,6 +4689,48 @@ pg_conversion_ownercheck(Oid conv_oid, Oid roleid)
 	ownerId = ((Form_pg_conversion) GETSTRUCT(tuple))->conowner;
 
 	ReleaseSysCache(tuple);
+
+	return has_privs_of_role(roleid, ownerId);
+}
+
+/*
+ * Ownership check for an extension (specified by OID).
+ */
+bool
+pg_extension_ownercheck(Oid ext_oid, Oid roleid)
+{
+	Relation	pg_extension;
+	ScanKeyData entry[1];
+	SysScanDesc scan;
+	HeapTuple	tuple;
+	Oid			ownerId;
+
+	/* Superusers bypass all permission checking. */
+	if (superuser_arg(roleid))
+		return true;
+
+	/* There's no syscache for pg_extension, so do it the hard way */
+	pg_extension = heap_open(ExtensionRelationId, AccessShareLock);
+
+	ScanKeyInit(&entry[0],
+				ObjectIdAttributeNumber,
+				BTEqualStrategyNumber, F_OIDEQ,
+				ObjectIdGetDatum(ext_oid));
+
+	scan = systable_beginscan(pg_extension,
+							  ExtensionOidIndexId, true,
+							  SnapshotNow, 1, entry);
+
+	tuple = systable_getnext(scan);
+	if (!HeapTupleIsValid(tuple))
+		ereport(ERROR,
+				(errcode(ERRCODE_UNDEFINED_OBJECT),
+				 errmsg("extension with OID %u does not exist", ext_oid)));
+
+	ownerId = ((Form_pg_extension) GETSTRUCT(tuple))->extowner;
+
+	systable_endscan(scan);
+	heap_close(pg_extension, AccessShareLock);
 
 	return has_privs_of_role(roleid, ownerId);
 }

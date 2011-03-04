@@ -6460,8 +6460,8 @@
 
   <para>
    The <structname>pg_available_extensions</structname> view lists the
-   extensions that are available for installation.  This view can only
-   be read by superusers.  See also the
+   extensions that are available for installation.
+   See also the
    <link linkend="catalog-pg-extension"><structname>pg_extension</structname></link>
    catalog, which shows the extensions currently installed.
   </para>
@@ -6522,8 +6522,8 @@
 
   <para>
    The <structname>pg_available_extension_versions</structname> view lists the
-   specific extension versions that are available for installation.  This view
-   can only be read by superusers.  See also the <link
+   specific extension versions that are available for installation.
+   See also the <link
    linkend="catalog-pg-extension"><structname>pg_extension</structname></link>
    catalog, which shows the extensions currently installed.
   </para>
@@ -6558,6 +6558,12 @@
       <entry><type>bool</type></entry>
       <entry>True if this version of this extension is currently
        installed</entry>
+     </row>
+
+     <row>
+      <entry><structfield>superuser</structfield></entry>
+      <entry><type>bool</type></entry>
+      <entry>True if only superusers are allowed to install this extension</entry>
      </row>
 
      <row>

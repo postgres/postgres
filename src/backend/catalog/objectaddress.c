@@ -52,6 +52,8 @@
 #include "commands/proclang.h"
 #include "commands/tablespace.h"
 #include "commands/trigger.h"
+#include "libpq/be-fsstubs.h"
+#include "miscadmin.h"
 #include "nodes/makefuncs.h"
 #include "parser/parse_func.h"
 #include "parser/parse_oper.h"
@@ -77,6 +79,7 @@ static ObjectAddress get_object_address_attribute(ObjectType objtype,
 static ObjectAddress get_object_address_opcf(ObjectType objtype, List *objname,
 						List *objargs);
 static bool object_exists(ObjectAddress address);
+
 
 /*
  * Translate an object name and arguments (as passed by the parser) to an
@@ -687,4 +690,152 @@ object_exists(ObjectAddress address)
 	systable_endscan(sd);
 	heap_close(rel, AccessShareLock);
 	return found;
+}
+
+
+/*
+ * Check ownership of an object previously identified by get_object_address.
+ */
+void
+check_object_ownership(Oid roleid, ObjectType objtype, ObjectAddress address,
+					   List *objname, List *objargs, Relation relation)
+{
+	switch (objtype)
+	{
+		case OBJECT_INDEX:
+		case OBJECT_SEQUENCE:
+		case OBJECT_TABLE:
+		case OBJECT_VIEW:
+		case OBJECT_FOREIGN_TABLE:
+		case OBJECT_COLUMN:
+		case OBJECT_RULE:
+		case OBJECT_TRIGGER:
+		case OBJECT_CONSTRAINT:
+			if (!pg_class_ownercheck(RelationGetRelid(relation), roleid))
+				aclcheck_error(ACLCHECK_NOT_OWNER, ACL_KIND_CLASS,
+							   RelationGetRelationName(relation));
+			break;
+		case OBJECT_DATABASE:
+			if (!pg_database_ownercheck(address.objectId, roleid))
+				aclcheck_error(ACLCHECK_NOT_OWNER, ACL_KIND_DATABASE,
+							   NameListToString(objname));
+			break;
+		case OBJECT_TYPE:
+		case OBJECT_DOMAIN:
+		case OBJECT_ATTRIBUTE:
+			if (!pg_type_ownercheck(address.objectId, roleid))
+				aclcheck_error(ACLCHECK_NOT_OWNER, ACL_KIND_TYPE,
+							   format_type_be(address.objectId));
+			break;
+		case OBJECT_AGGREGATE:
+		case OBJECT_FUNCTION:
+			if (!pg_proc_ownercheck(address.objectId, roleid))
+				aclcheck_error(ACLCHECK_NOT_OWNER, ACL_KIND_PROC,
+							   NameListToString(objname));
+			break;
+		case OBJECT_OPERATOR:
+			if (!pg_oper_ownercheck(address.objectId, roleid))
+				aclcheck_error(ACLCHECK_NOT_OWNER, ACL_KIND_OPER,
+							   NameListToString(objname));
+			break;
+		case OBJECT_SCHEMA:
+			if (!pg_namespace_ownercheck(address.objectId, roleid))
+				aclcheck_error(ACLCHECK_NOT_OWNER, ACL_KIND_NAMESPACE,
+							   NameListToString(objname));
+			break;
+		case OBJECT_COLLATION:
+			if (!pg_collation_ownercheck(address.objectId, roleid))
+				aclcheck_error(ACLCHECK_NOT_OWNER, ACL_KIND_COLLATION,
+							   NameListToString(objname));
+			break;
+		case OBJECT_CONVERSION:
+			if (!pg_conversion_ownercheck(address.objectId, roleid))
+				aclcheck_error(ACLCHECK_NOT_OWNER, ACL_KIND_CONVERSION,
+							   NameListToString(objname));
+			break;
+		case OBJECT_EXTENSION:
+			if (!pg_extension_ownercheck(address.objectId, roleid))
+				aclcheck_error(ACLCHECK_NOT_OWNER, ACL_KIND_EXTENSION,
+							   NameListToString(objname));
+			break;
+		case OBJECT_FOREIGN_SERVER:
+			if (!pg_foreign_server_ownercheck(address.objectId, roleid))
+				aclcheck_error(ACLCHECK_NOT_OWNER, ACL_KIND_FOREIGN_SERVER,
+							   NameListToString(objname));
+			break;
+		case OBJECT_LANGUAGE:
+			if (!pg_language_ownercheck(address.objectId, roleid))
+				aclcheck_error(ACLCHECK_NOT_OWNER, ACL_KIND_LANGUAGE,
+							   NameListToString(objname));
+			break;
+		case OBJECT_OPCLASS:
+			if (!pg_opclass_ownercheck(address.objectId, roleid))
+				aclcheck_error(ACLCHECK_NOT_OWNER, ACL_KIND_OPCLASS,
+							   NameListToString(objname));
+			break;
+		case OBJECT_OPFAMILY:
+			if (!pg_opfamily_ownercheck(address.objectId, roleid))
+				aclcheck_error(ACLCHECK_NOT_OWNER, ACL_KIND_OPFAMILY,
+							   NameListToString(objname));
+			break;
+		case OBJECT_LARGEOBJECT:
+			if (!lo_compat_privileges &&
+				!pg_largeobject_ownercheck(address.objectId, roleid))
+				ereport(ERROR,
+						(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
+						 errmsg("must be owner of large object %u",
+							address.objectId)));
+			break;
+		case OBJECT_CAST:
+			{
+				/* We can only check permissions on the source/target types */
+				TypeName *sourcetype = (TypeName *) linitial(objname);
+				TypeName *targettype = (TypeName *) linitial(objargs);
+				Oid sourcetypeid = typenameTypeId(NULL, sourcetype);
+				Oid targettypeid = typenameTypeId(NULL, targettype);
+
+				if (!pg_type_ownercheck(sourcetypeid, roleid)
+					&& !pg_type_ownercheck(targettypeid, roleid))
+					ereport(ERROR,
+							(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
+							 errmsg("must be owner of type %s or type %s",
+									format_type_be(sourcetypeid),
+									format_type_be(targettypeid))));
+			}
+			break;
+		case OBJECT_TABLESPACE:
+			if (!pg_tablespace_ownercheck(address.objectId, roleid))
+				aclcheck_error(ACLCHECK_NOT_OWNER, ACL_KIND_TABLESPACE,
+							   NameListToString(objname));
+			break;
+		case OBJECT_ROLE:
+			if (!has_privs_of_role(roleid, address.objectId))
+				ereport(ERROR,
+						(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
+						 errmsg("must be member of role \"%s\"",
+								NameListToString(objname))));
+			break;
+		case OBJECT_TSDICTIONARY:
+			if (!pg_ts_dict_ownercheck(address.objectId, roleid))
+				aclcheck_error(ACLCHECK_NOT_OWNER, ACL_KIND_TSDICTIONARY,
+							   NameListToString(objname));
+			break;
+		case OBJECT_TSCONFIGURATION:
+			if (!pg_ts_config_ownercheck(address.objectId, roleid))
+				aclcheck_error(ACLCHECK_NOT_OWNER, ACL_KIND_TSCONFIGURATION,
+							   NameListToString(objname));
+			break;
+		case OBJECT_FDW:
+		case OBJECT_TSPARSER:
+		case OBJECT_TSTEMPLATE:
+			/* We treat these object types as being owned by superusers */
+			if (!superuser_arg(roleid))
+				ereport(ERROR,
+						(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
+						 errmsg("must be superuser")));
+			break;
+		default:
+			elog(ERROR, "unrecognized object type: %d",
+				 (int) objtype);
+	}
 }

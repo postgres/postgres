@@ -3289,6 +3289,7 @@ _copyCreateExtensionStmt(CreateExtensionStmt *from)
 	CreateExtensionStmt *newnode = makeNode(CreateExtensionStmt);
 
 	COPY_STRING_FIELD(extname);
+	COPY_SCALAR_FIELD(if_not_exists);
 	COPY_NODE_FIELD(options);
 
 	return newnode;

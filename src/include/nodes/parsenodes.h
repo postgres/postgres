@@ -1557,6 +1557,7 @@ typedef struct CreateExtensionStmt
 {
 	NodeTag		type;
 	char	   *extname;
+	bool		if_not_exists;	/* just do nothing if it already exists? */
 	List	   *options;		/* List of DefElem nodes */
 } CreateExtensionStmt;
 

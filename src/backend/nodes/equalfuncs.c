@@ -1650,6 +1650,7 @@ static bool
 _equalCreateExtensionStmt(CreateExtensionStmt *a, CreateExtensionStmt *b)
 {
 	COMPARE_STRING_FIELD(extname);
+	COMPARE_SCALAR_FIELD(if_not_exists);
 	COMPARE_NODE_FIELD(options);
 
 	return true;

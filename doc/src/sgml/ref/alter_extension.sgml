@@ -114,7 +114,9 @@ ALTER EXTENSION <replaceable class="PARAMETER">extension_name</replaceable> DROP
   </para>
 
   <para>
-   Only superusers can execute <command>ALTER EXTENSION</command>.
+   You must own the extension to use <command>ALTER EXTENSION</command>.
+   The <literal>ADD</>/<literal>DROP</> forms require ownership of the
+   added/dropped object as well.
   </para>
  </refsect1>
 

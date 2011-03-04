@@ -464,6 +464,19 @@
      </varlistentry>
 
      <varlistentry>
+      <term><varname>superuser</varname> (<type>boolean</type>)</term>
+      <listitem>
+       <para>
+        If this parameter is <literal>true</> (which is the default),
+        only superusers can create the extension or update it to a new
+        version.  If it is set to <literal>false</>, just the privileges
+        required to execute the commands in the installation or update script
+        are required.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
       <term><varname>relocatable</varname> (<type>boolean</type>)</term>
       <listitem>
        <para>

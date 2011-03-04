@@ -34,7 +34,7 @@ DROP EXTENSION [ IF EXISTS ] <replaceable class="PARAMETER">extension_name</repl
   </para>
 
   <para>
-   An extension can only be dropped by a superuser.
+   You must own the extension to use <command>DROP EXTENSION</command>.
   </para>
  </refsect1>
 

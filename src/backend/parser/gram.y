@@ -3240,7 +3240,16 @@ CreateExtensionStmt: CREATE EXTENSION name opt_with create_extension_opt_list
 				{
 					CreateExtensionStmt *n = makeNode(CreateExtensionStmt);
 					n->extname = $3;
+					n->if_not_exists = false;
 					n->options = $5;
+					$$ = (Node *) n;
+				}
+				| CREATE EXTENSION IF_P NOT EXISTS name opt_with create_extension_opt_list
+				{
+					CreateExtensionStmt *n = makeNode(CreateExtensionStmt);
+					n->extname = $6;
+					n->if_not_exists = true;
+					n->options = $8;
 					$$ = (Node *) n;
 				}
 		;

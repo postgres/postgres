@@ -27,7 +27,11 @@ typedef struct ObjectAddress
 	int32		objectSubId;	/* Subitem within object (eg column), or 0 */
 } ObjectAddress;
 
-ObjectAddress get_object_address(ObjectType objtype, List *objname,
+extern ObjectAddress get_object_address(ObjectType objtype, List *objname,
 				   List *objargs, Relation *relp, LOCKMODE lockmode);
+
+extern void check_object_ownership(Oid roleid,
+					   ObjectType objtype, ObjectAddress address,
+					   List *objname, List *objargs, Relation relation);
 
 #endif   /* PARSE_OBJECT_H */

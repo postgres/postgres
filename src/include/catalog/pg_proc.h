@@ -4282,7 +4282,7 @@ DESCR("less-equal-greater");
 /* Extensions */
 DATA(insert OID = 3082 (  pg_available_extensions		PGNSP PGUID 12 10 100 0 f f f t t s 0 0 2249 "" "{19,25,25}" "{o,o,o}" "{name,default_version,comment}" _null_ pg_available_extensions _null_ _null_ _null_ ));
 DESCR("list available extensions");
-DATA(insert OID = 3083 (  pg_available_extension_versions	PGNSP PGUID 12 10 100 0 f f f t t s 0 0 2249 "" "{19,25,16,19,1003,25}" "{o,o,o,o,o,o}" "{name,version,relocatable,schema,requires,comment}" _null_ pg_available_extension_versions _null_ _null_ _null_ ));
+DATA(insert OID = 3083 (  pg_available_extension_versions	PGNSP PGUID 12 10 100 0 f f f t t s 0 0 2249 "" "{19,25,16,16,19,1003,25}" "{o,o,o,o,o,o,o}" "{name,version,superuser,relocatable,schema,requires,comment}" _null_ pg_available_extension_versions _null_ _null_ _null_ ));
 DESCR("list available extension versions");
 DATA(insert OID = 3084 (  pg_extension_update_paths		PGNSP PGUID 12 10 100 0 f f f t t s 1 0 2249 "19" "{19,25,25,25}" "{i,o,o,o}" "{name,source,target,path}" _null_ pg_extension_update_paths _null_ _null_ _null_ ));
 DESCR("list an extension's version update paths");
