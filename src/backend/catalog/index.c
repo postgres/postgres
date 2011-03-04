@@ -352,6 +352,8 @@ ConstructTupleDescriptor(Relation heapRelation,
 			to->atthasdef = false;
 			to->attislocal = true;
 			to->attinhcount = 0;
+
+			to->attcollation = collationObjectId[i];
 		}
 		else
 		{
@@ -388,6 +390,8 @@ ConstructTupleDescriptor(Relation heapRelation,
 			to->atttypmod = -1;
 			to->attislocal = true;
 
+			to->attcollation = collationObjectId[i];
+
 			ReleaseSysCache(tuple);
 
 			/*
@@ -399,10 +403,8 @@ ConstructTupleDescriptor(Relation heapRelation,
 			 * whether a table column is of a safe type (which is why we
 			 * needn't check for the non-expression case).
 			 */
-			CheckAttributeType(NameStr(to->attname), to->atttypid, false);
+			CheckAttributeType(NameStr(to->attname), to->atttypid, to->attcollation, false);
 		}
-
-		to->attcollation = collationObjectId[i];
 
 		/*
 		 * We do not yet have the correct relation OID for the index, so just

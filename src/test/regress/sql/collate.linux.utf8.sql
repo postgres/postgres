@@ -188,6 +188,8 @@ SELECT a, b COLLATE "C" FROM collate_test1 UNION SELECT a, b FROM collate_test3 
 SELECT a, b FROM collate_test1 INTERSECT SELECT a, b FROM collate_test3 ORDER BY 2; -- fail
 SELECT a, b FROM collate_test1 EXCEPT SELECT a, b FROM collate_test3 ORDER BY 2; -- fail
 
+CREATE TABLE test_u AS SELECT a, b FROM collate_test1 UNION ALL SELECT a, b FROM collate_test3; -- fail
+
 
 -- casting
 

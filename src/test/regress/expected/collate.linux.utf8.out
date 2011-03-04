@@ -627,6 +627,9 @@ ERROR:  collation mismatch between implicit collations "en_US.utf8" and "C"
 LINE 1: SELECT a, b FROM collate_test1 EXCEPT SELECT a, b FROM colla...
                                                         ^
 HINT:  You can override the collation by applying the COLLATE clause to one or both expressions.
+CREATE TABLE test_u AS SELECT a, b FROM collate_test1 UNION ALL SELECT a, b FROM collate_test3; -- fail
+ERROR:  no collation was derived for column "b" with collatable type text
+HINT:  Use the COLLATE clause to set the collation explicitly.
 -- casting
 SELECT CAST('42' AS text COLLATE "C");
 ERROR:  COLLATE clause not allowed in cast target

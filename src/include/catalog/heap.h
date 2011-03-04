@@ -117,7 +117,7 @@ extern Form_pg_attribute SystemAttributeByName(const char *attname,
 extern void CheckAttributeNamesTypes(TupleDesc tupdesc, char relkind,
 						 bool allow_system_table_mods);
 
-extern void CheckAttributeType(const char *attname, Oid atttypid,
+extern void CheckAttributeType(const char *attname, Oid atttypid, Oid attcollation,
 				   bool allow_system_table_mods);
 
 #endif   /* HEAP_H */

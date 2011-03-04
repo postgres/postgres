@@ -4206,7 +4206,7 @@ ATExecAddColumn(AlteredTableInfo *tab, Relation rel,
 	typeOid = HeapTupleGetOid(typeTuple);
 
 	/* make sure datatype is legal for a column */
-	CheckAttributeType(colDef->colname, typeOid, false);
+	CheckAttributeType(colDef->colname, typeOid, collOid, false);
 
 	/* construct new attribute's pg_attribute entry */
 	attribute.attrelid = myrelid;
@@ -6515,7 +6515,7 @@ ATPrepAlterColumnType(List **wqueue,
 	typenameTypeIdModColl(NULL, typeName, &targettype, &targettypmod, &targetcollid);
 
 	/* make sure datatype is legal for a column */
-	CheckAttributeType(colName, targettype, false);
+	CheckAttributeType(colName, targettype, targetcollid, false);
 
 	if (tab->relkind == RELKIND_RELATION)
 	{

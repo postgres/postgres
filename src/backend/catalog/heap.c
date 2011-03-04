@@ -429,6 +429,7 @@ CheckAttributeNamesTypes(TupleDesc tupdesc, char relkind,
 	{
 		CheckAttributeType(NameStr(tupdesc->attrs[i]->attname),
 						   tupdesc->attrs[i]->atttypid,
+						   tupdesc->attrs[i]->attcollation,
 						   allow_system_table_mods);
 	}
 }
@@ -442,7 +443,7 @@ CheckAttributeNamesTypes(TupleDesc tupdesc, char relkind,
  * --------------------------------
  */
 void
-CheckAttributeType(const char *attname, Oid atttypid,
+CheckAttributeType(const char *attname, Oid atttypid, Oid attcollation,
 				   bool allow_system_table_mods)
 {
 	char		att_typtype = get_typtype(atttypid);
@@ -493,12 +494,24 @@ CheckAttributeType(const char *attname, Oid atttypid,
 
 			if (attr->attisdropped)
 				continue;
-			CheckAttributeType(NameStr(attr->attname), attr->atttypid,
+			CheckAttributeType(NameStr(attr->attname), attr->atttypid, attr->attcollation,
 							   allow_system_table_mods);
 		}
 
 		relation_close(relation, AccessShareLock);
 	}
+
+	/*
+	 * This might not be strictly invalid per SQL standard, but it is
+	 * pretty useless, and it cannot be dumped, so we must disallow
+	 * it.
+	 */
+	if (type_is_collatable(atttypid) && !OidIsValid(attcollation))
+			ereport(ERROR,
+					(errcode(ERRCODE_INVALID_TABLE_DEFINITION),
+					 errmsg("no collation was derived for column \"%s\" with collatable type %s",
+							attname, format_type_be(atttypid)),
+					 errhint("Use the COLLATE clause to set the collation explicitly.")));
 }
 
 /*
