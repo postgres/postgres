@@ -3936,6 +3936,16 @@ PLy_add_exceptions(PyObject *plpy)
 #endif
 	if (PyModule_AddObject(plpy, "spiexceptions", excmod) < 0)
 		PLy_elog(ERROR, "failed to add the spiexceptions module");
+
+/* 
+ * XXX it appears that in some circumstances the reference count of the
+ * spiexceptions module drops to zero causing a Python assert failure when
+ * the garbage collector visits the module. This has been observed on the
+ * buildfarm. To fix this, add an additional ref for the module here. 
+ *
+ * This shouldn't cause a memory leak - we don't want this garbage collected,
+ * and this function shouldn't be called more than once per backend.
+ */
 	Py_INCREF(excmod);
 
 	PLy_exc_error = PyErr_NewException("plpy.Error", NULL, NULL);
