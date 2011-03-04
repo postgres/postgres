@@ -15,6 +15,7 @@
 #include "postgres.h"
 
 #include "access/heapam.h"
+#include "access/xact.h"
 #include "catalog/dependency.h"
 #include "catalog/indexing.h"
 #include "catalog/namespace.h"
@@ -30,6 +31,7 @@
 #include "utils/acl.h"
 #include "utils/builtins.h"
 #include "utils/lsyscache.h"
+#include "utils/pg_locale.h"
 #include "utils/syscache.h"
 
 static void AlterCollationOwner_internal(Relation rel, Oid collationOid,
@@ -51,6 +53,7 @@ DefineCollation(List *names, List *parameters)
 	DefElem	   *lcctypeEl = NULL;
 	char	   *collcollate = NULL;
 	char	   *collctype = NULL;
+	Oid			newoid;
 
 	collNamespace = QualifiedNameGetCreationNamespace(names, &collName);
 
@@ -130,12 +133,16 @@ DefineCollation(List *names, List *parameters)
 
 	check_encoding_locale_matches(GetDatabaseEncoding(), collcollate, collctype);
 
-	CollationCreate(collName,
+	newoid = CollationCreate(collName,
 					collNamespace,
 					GetUserId(),
 					GetDatabaseEncoding(),
 					collcollate,
 					collctype);
+
+	/* check that the locales can be loaded */
+	CommandCounterIncrement();
+	pg_newlocale_from_collation(newoid);
 }
 
 /*

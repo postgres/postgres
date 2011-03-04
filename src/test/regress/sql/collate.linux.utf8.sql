@@ -234,6 +234,7 @@ CREATE COLLATION test0 (locale = 'en_US.utf8'); -- fail
 CREATE COLLATION test1 (lc_collate = 'en_US.utf8', lc_ctype = 'de_DE.utf8');
 CREATE COLLATION test2 (locale = 'en_US'); -- fail
 CREATE COLLATION test3 (lc_collate = 'en_US.utf8'); -- fail
+CREATE COLLATION testx (locale = 'nonsense'); -- fail
 
 CREATE COLLATION test4 FROM nonsense;
 CREATE COLLATION test5 FROM test0;
