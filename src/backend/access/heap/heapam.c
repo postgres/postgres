@@ -1472,9 +1472,9 @@ heap_fetch(Relation relation,
 	if (valid)
 		PredicateLockTuple(relation, tuple);
 
-	LockBuffer(buffer, BUFFER_LOCK_UNLOCK);
-
 	CheckForSerializableConflictOut(valid, relation, tuple, buffer);
+
+	LockBuffer(buffer, BUFFER_LOCK_UNLOCK);
 
 	if (valid)
 	{

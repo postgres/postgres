@@ -3366,9 +3366,10 @@ XidIsConcurrent(TransactionId xid)
  * If the transactions overlap (i.e., they cannot see each other's writes),
  * then we have a conflict out.
  *
- * This function should be called just about anywhere in heapam.c that a
- * tuple has been read.  There is currently no known reason to call this
- * function from an index AM.
+ * This function should be called just about anywhere in heapam.c where a
+ * tuple has been read. The caller must hold at least a shared lock on the
+ * buffer, because this function might set hint bits on the tuple. There is
+ * currently no known reason to call this function from an index AM.
  */
 void
 CheckForSerializableConflictOut(const bool visible, const Relation relation,
