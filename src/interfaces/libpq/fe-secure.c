@@ -825,37 +825,37 @@ initialize_SSL(PGconn *conn)
 	char		homedir[MAXPGPATH];
 	char		fnbuf[MAXPGPATH];
 	char		sebuf[256];
+	bool		have_homedir;
 	bool		have_cert;
 	EVP_PKEY   *pkey = NULL;
 
 	/*
 	 * We'll need the home directory if any of the relevant parameters are
-	 * defaulted.
+	 * defaulted.  If pqGetHomeDirectory fails, act as though none of the
+	 * files could be found.
 	 */
 	if (!(conn->sslcert && strlen(conn->sslcert) > 0) ||
 		!(conn->sslkey && strlen(conn->sslkey) > 0) ||
 		!(conn->sslrootcert && strlen(conn->sslrootcert) > 0) ||
 		!(conn->sslcrl && strlen(conn->sslcrl) > 0))
-	{
-		if (!pqGetHomeDirectory(homedir, sizeof(homedir)))
-		{
-			printfPQExpBuffer(&conn->errorMessage,
-							  libpq_gettext("could not get home directory to locate client certificate files\n"));
-			return -1;
-		}
-	}
-	else
-	{
-		homedir[0] = '\0';
-	}
+		have_homedir = pqGetHomeDirectory(homedir, sizeof(homedir));
+	else						/* won't need it */
+		have_homedir = false;
 
 	/* Read the client certificate file */
 	if (conn->sslcert && strlen(conn->sslcert) > 0)
 		strncpy(fnbuf, conn->sslcert, sizeof(fnbuf));
-	else
+	else if (have_homedir)
 		snprintf(fnbuf, sizeof(fnbuf), "%s/%s", homedir, USER_CERT_FILE);
+	else
+		fnbuf[0] = '\0';
 
-	if (stat(fnbuf, &buf) != 0)
+	if (fnbuf[0] == '\0')
+	{
+		/* no home directory, proceed without a client cert */
+		have_cert = false;
+	}
+	else if (stat(fnbuf, &buf) != 0)
 	{
 		/*
 		 * If file is not present, just go on without a client cert; server
@@ -1001,11 +1001,13 @@ initialize_SSL(PGconn *conn)
 			strncpy(fnbuf, conn->sslkey, sizeof(fnbuf));
 		}
 	}
-	else
+	else if (have_homedir)
 	{
 		/* No PGSSLKEY specified, load default file */
 		snprintf(fnbuf, sizeof(fnbuf), "%s/%s", homedir, USER_KEY_FILE);
 	}
+	else
+		fnbuf[0] = '\0';
 
 	if (have_cert && fnbuf[0] != '\0')
 	{
@@ -1060,10 +1062,13 @@ initialize_SSL(PGconn *conn)
 	 */
 	if (conn->sslrootcert && strlen(conn->sslrootcert) > 0)
 		strncpy(fnbuf, conn->sslrootcert, sizeof(fnbuf));
-	else
+	else if (have_homedir)
 		snprintf(fnbuf, sizeof(fnbuf), "%s/%s", homedir, ROOT_CERT_FILE);
+	else
+		fnbuf[0] = '\0';
 
-	if (stat(fnbuf, &buf) == 0)
+	if (fnbuf[0] != '\0' &&
+		stat(fnbuf, &buf) == 0)
 	{
 		X509_STORE *cvstore;
 
@@ -1082,11 +1087,14 @@ initialize_SSL(PGconn *conn)
 		{
 			if (conn->sslcrl && strlen(conn->sslcrl) > 0)
 				strncpy(fnbuf, conn->sslcrl, sizeof(fnbuf));
-			else
+			else if (have_homedir)
 				snprintf(fnbuf, sizeof(fnbuf), "%s/%s", homedir, ROOT_CRL_FILE);
+			else
+				fnbuf[0] = '\0';
 
 			/* Set the flags to check against the complete CRL chain */
-			if (X509_STORE_load_locations(cvstore, fnbuf, NULL) == 1)
+			if (fnbuf[0] != '\0' &&
+				X509_STORE_load_locations(cvstore, fnbuf, NULL) == 1)
 			{
 				/* OpenSSL 0.96 does not support X509_V_FLAG_CRL_CHECK */
 #ifdef X509_V_FLAG_CRL_CHECK
@@ -1116,9 +1124,19 @@ initialize_SSL(PGconn *conn)
 		 */
 		if (conn->sslmode[0] == 'v')	/* "verify-ca" or "verify-full" */
 		{
-			printfPQExpBuffer(&conn->errorMessage,
-				libpq_gettext("root certificate file \"%s\" does not exist\n"
-							  "Either provide the file or change sslmode to disable server certificate verification.\n"), fnbuf);
+			/*
+			 * The only way to reach here with an empty filename is if
+			 * pqGetHomeDirectory failed.  That's a sufficiently unusual case
+			 * that it seems worth having a specialized error message for it.
+			 */
+			if (fnbuf[0] == '\0')
+				printfPQExpBuffer(&conn->errorMessage,
+								  libpq_gettext("could not get home directory to locate root certificate file\n"
+												"Either provide the file or change sslmode to disable server certificate verification.\n"));
+			else
+				printfPQExpBuffer(&conn->errorMessage,
+								  libpq_gettext("root certificate file \"%s\" does not exist\n"
+												"Either provide the file or change sslmode to disable server certificate verification.\n"), fnbuf);
 			return -1;
 		}
 	}
