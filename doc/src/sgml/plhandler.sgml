@@ -217,6 +217,15 @@ CREATE LANGUAGE plsample
    </para>
 
    <para>
+    It's recommended that you wrap all these function declarations,
+    as well as the <command>CREATE LANGUAGE</> command itself, into
+    an <firstterm>extension</> so that a simple <command>CREATE EXTENSION</>
+    command is sufficient to install the language.  See
+    <xref linkend="extend-extensions"> for information about writing
+    extensions.
+   </para>
+
+   <para>
     The procedural languages included in the standard distribution
     are good references when trying to write your own language handler.
     Look into the <filename>src/pl</> subdirectory of the source tree.

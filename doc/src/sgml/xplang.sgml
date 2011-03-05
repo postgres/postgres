@@ -54,7 +54,7 @@
 
    <para>
     For the languages supplied with the standard distribution, it is
-    only necessary to execute <command>CREATE LANGUAGE</>
+    only necessary to execute <command>CREATE EXTENSION</>
     <replaceable>language_name</> to install the language into the
     current database.  Alternatively, the program <xref
     linkend="app-createlang"> can be used to do this from the shell
@@ -65,8 +65,7 @@
 createlang plperl template1
 </programlisting>
     The manual procedure described below is only recommended for
-    installing custom languages that <command>CREATE LANGUAGE</command>
-    does not know about.
+    installing languages that have not been packaged as extensions.
    </para>
 
    <procedure>
@@ -76,10 +75,10 @@ createlang plperl template1
 
     <para>
      A procedural language is installed in a database in five steps,
-     which must be carried out by a database superuser.  (For languages
-     known to <command>CREATE LANGUAGE</>, the second through fourth steps
-     can be omitted, because they will be carried out automatically
-     if needed.)
+     which must be carried out by a database superuser.  In most cases
+     the required SQL commands should be packaged as the installation script
+     of an <quote>extension</>, so that <command>CREATE EXTENSION</> can be
+     used to execute them.
     </para>
 
     <step performance="required" id="xplang-install-cr1">
@@ -136,14 +135,14 @@ CREATE FUNCTION <replaceable>inline_function_name</replaceable>(internal)
 CREATE FUNCTION <replaceable>validator_function_name</replaceable>(oid)
     RETURNS void
     AS '<replaceable>path-to-shared-object</replaceable>'
-    LANGUAGE C;
+    LANGUAGE C STRICT;
 </synopsis>
      </para>
     </step>
 
     <step performance="required" id="xplang-install-cr5">
      <para>
-      The PL must be declared with the command
+      Finally, the PL must be declared with the command
 <synopsis>
 CREATE <optional>TRUSTED</optional> <optional>PROCEDURAL</optional> LANGUAGE <replaceable>language-name</replaceable>
     HANDLER <replaceable>handler_function_name</replaceable>
@@ -154,7 +153,7 @@ CREATE <optional>TRUSTED</optional> <optional>PROCEDURAL</optional> LANGUAGE <re
       the language does not grant access to data that the user would
       not otherwise have.  Trusted languages are designed for ordinary
       database users (those without superuser privilege) and allows them
-      to safely create of functions and trigger
+      to safely create functions and trigger
       procedures. Since PL functions are executed inside the database
       server, the <literal>TRUSTED</literal> flag should only be given
       for languages that do not allow access to database server
@@ -201,7 +200,7 @@ CREATE FUNCTION plperl_inline_handler(internal) RETURNS void AS
     '$libdir/plperl' LANGUAGE C;
 
 CREATE FUNCTION plperl_validator(oid) RETURNS void AS
-    '$libdir/plperl' LANGUAGE C;
+    '$libdir/plperl' LANGUAGE C STRICT;
 </programlisting>
      </para>
 
