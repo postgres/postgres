@@ -42,19 +42,22 @@ PostgreSQL documentation
 
   <para>
    <application>droplang</application> is a utility for removing an
-   existing programming language from a
+   existing procedural language from a
    <productname>PostgreSQL</productname> database.
-   <application>droplang</application> can drop any procedural language,
-   even those not supplied by the <productname>PostgreSQL</> distribution.
   </para>
+
   <para>
-   Although backend programming languages can be removed directly using
-   several <acronym>SQL</acronym> commands, it is recommended to use
-   <application>droplang</application> because it performs a number
-   of checks and is much easier to use. See
-   <xref linkend="sql-droplanguage">
-   for more.
+   <application>droplang</application> is just a wrapper around the
+   <xref linkend="sql-dropextension"> SQL command.
   </para>
+
+  <caution>
+   <para>
+    <application>droplang</application> is deprecated and may be removed
+    in a future <productname>PostgreSQL</productname> release.  Direct use
+    of the <command>DROP EXTENSION</> command is recommended instead.
+   </para>
+  </caution>
  </refsect1>
 
 
@@ -69,7 +72,7 @@ PostgreSQL documentation
       <term><replaceable class="parameter">langname</replaceable></term>
       <listitem>
        <para>
-        Specifies the name of the backend programming language to be removed.
+        Specifies the name of the procedural language to be removed.
        </para>
       </listitem>
      </varlistentry>
@@ -277,6 +280,7 @@ PostgreSQL documentation
 
   <simplelist type="inline">
    <member><xref linkend="app-createlang"></member>
+   <member><xref linkend="sql-dropextension"></member>
    <member><xref linkend="sql-droplanguage"></member>
   </simplelist>
  </refsect1>

@@ -188,7 +188,15 @@ main(int argc, char *argv[])
 	}
 	PQclear(result);
 
-	printfPQExpBuffer(&sql, "CREATE LANGUAGE \"%s\";\n", langname);
+	/*
+	 * In 9.1 and up, assume that languages should be installed using CREATE
+	 * EXTENSION.  However, it's possible this tool could be used against an
+	 * older server, and it's easy enough to continue supporting the old way.
+	 */
+	if (PQserverVersion(conn) >= 90100)
+		printfPQExpBuffer(&sql, "CREATE EXTENSION \"%s\";\n", langname);
+	else
+		printfPQExpBuffer(&sql, "CREATE LANGUAGE \"%s\";\n", langname);
 
 	if (echo)
 		printf("%s", sql.data);
