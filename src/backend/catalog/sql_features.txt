@@ -210,7 +210,7 @@ F261	CASE expression	01	Simple CASE	YES
 F261	CASE expression	02	Searched CASE	YES	
 F261	CASE expression	03	NULLIF	YES	
 F261	CASE expression	04	COALESCE	YES	
-F262	Extended CASE expression			NO	
+F262	Extended CASE expression			YES	
 F263	Comma-separated predicates in simple CASE expression			NO	
 F271	Compound character literals			YES	
 F281	LIKE enhancements			YES	
@@ -229,7 +229,7 @@ F311	Schema definition statement	05	GRANT statement	YES
 F312	MERGE statement			NO	
 F313	Enhanced MERGE statement			NO	
 F321	User authorization			YES	
-F341	Usage tables			NO	
+F341	Usage tables			NO	no ROUTINE_*_USAGE tables
 F361	Subprogram support			YES	
 F381	Extended schema manipulation			YES	
 F381	Extended schema manipulation	01	ALTER TABLE statement: ALTER COLUMN clause	YES	
@@ -277,12 +277,12 @@ F561	Full value expressions			YES
 F571	Truth value tests			YES	
 F591	Derived tables			YES	
 F611	Indicator data types			YES	
-F641	Row and table constructors			NO	
+F641	Row and table constructors			YES	
 F651	Catalog name qualifiers			YES	
 F661	Simple tables			YES	
 F671	Subqueries in CHECK			NO	intentionally omitted
 F672	Retrospective check constraints			YES	
-F690	Collation support			NO	
+F690	Collation support			YES	but no character set support
 F692	Enhanced collation support			NO	
 F693	SQL-session and client module collations			NO	
 F695	Translation support			NO	
@@ -337,7 +337,7 @@ S027	Create method by specific method name			NO
 S028	Permutable UDT options list			NO	
 S041	Basic reference types			NO	
 S043	Enhanced reference types			NO	
-S051	Create table of type			NO	
+S051	Create table of type			NO	partially supported
 S071	SQL paths in function and type name resolution			YES	
 S081	Subtables			NO	
 S091	Basic array support			NO	partially supported
@@ -435,7 +435,7 @@ T271	Savepoints			YES
 T272	Enhanced savepoint management			NO	
 T281	SELECT privilege with column granularity			YES	
 T285	Enhanced derived column names			NO	
-T301	Functional dependencies			NO	
+T301	Functional dependencies			NO	partially supported
 T312	OVERLAY function			YES	
 T321	Basic SQL-invoked routines			NO	
 T321	Basic SQL-invoked routines	01	User-defined functions with no overloading	YES	
@@ -450,8 +450,8 @@ T323	Explicit security for external routines			YES
 T324	Explicit security for SQL routines			NO	
 T325	Qualified SQL parameter references			NO	
 T326	Table functions			NO	
-T331	Basic roles			NO	
-T332	Extended roles			NO	
+T331	Basic roles			YES	
+T332	Extended roles			NO	mostly supported
 T351	Bracketed SQL comments (/*...*/ comments)			YES	
 T431	Extended grouping capabilities			NO	
 T432	Nested and concatenated GROUPING SETS			NO	
@@ -490,7 +490,7 @@ T655	Cyclically dependent routines			YES
 M001	Datalinks			NO	
 M002	Datalinks via SQL/CLI			NO	
 M003	Datalinks via Embedded SQL			NO	
-M004	Foreign data support			NO	
+M004	Foreign data support			NO	partially supported
 M005	Foreign schema support			NO	
 M006	GetSQLString routine			NO	
 M007	TransmitRequest			NO	
@@ -647,4 +647,4 @@ X302	XMLTable: ordinality column option			NO
 X303	XMLTable: column default option			NO	
 X304	XMLTable: passing a context item			NO	
 X305	XMLTable: initializing an XQuery variable			NO	
-X400	Name and identifier mapping			NO	
+X400	Name and identifier mapping			YES	
