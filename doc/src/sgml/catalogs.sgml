@@ -4211,7 +4211,7 @@
      <row>
       <entry><structfield>tmplacl</structfield></entry>
       <entry><type>aclitem[]</type></entry>
-      <entry>Access privileges for template (not yet used)</entry>
+      <entry>Access privileges for template (not actually used)</entry>
      </row>
 
     </tbody>
@@ -4222,16 +4222,17 @@
    There are not currently any commands that manipulate procedural language
    templates; to change the built-in information, a superuser must modify
    the table using ordinary <command>INSERT</command>, <command>DELETE</command>,
-   or <command>UPDATE</command> commands.  It is likely that a future
-   release of <productname>PostgreSQL</productname> will offer
-   commands to change the entries in a cleaner fashion.
+   or <command>UPDATE</command> commands.
   </para>
 
-  <para>
-   When implemented, the <structfield>tmplacl</structfield> field will provide
-   access control for the template itself (i.e., the right to create a
-   language using it), not for the languages created from the template.
-  </para>
+  <note>
+   <para>
+    It is likely that <structname>pg_pltemplate</> will be removed in some
+    future release of <productname>PostgreSQL</productname>, in favor of
+    keeping this knowledge about procedural languages in their respective
+    extension installation scripts.
+   </para>
+  </note>
 
  </sect1>
 
