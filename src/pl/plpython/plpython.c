@@ -4652,3 +4652,36 @@ PLyUnicode_FromString(const char *s)
 }
 
 #endif   /* PY_MAJOR_VERSION >= 3 */
+
+#if PY_MAJOR_VERSION < 3
+
+/* Define aliases plpython2_call_handler etc */
+Datum		plpython2_call_handler(PG_FUNCTION_ARGS);
+Datum		plpython2_inline_handler(PG_FUNCTION_ARGS);
+Datum		plpython2_validator(PG_FUNCTION_ARGS);
+
+PG_FUNCTION_INFO_V1(plpython2_call_handler);
+
+Datum
+plpython2_call_handler(PG_FUNCTION_ARGS)
+{
+	return plpython_call_handler(fcinfo);
+}
+
+PG_FUNCTION_INFO_V1(plpython2_inline_handler);
+
+Datum
+plpython2_inline_handler(PG_FUNCTION_ARGS)
+{
+	return plpython_inline_handler(fcinfo);
+}
+
+PG_FUNCTION_INFO_V1(plpython2_validator);
+
+Datum
+plpython2_validator(PG_FUNCTION_ARGS)
+{
+	return plpython_validator(fcinfo);
+}
+
+#endif   /* PY_MAJOR_VERSION < 3 */

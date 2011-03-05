@@ -36,11 +36,14 @@ NAME = plperl
 
 OBJS = plperl.o SPI.o Util.o
 
+DATA = plperl.control plperl--1.0.sql plperl--unpackaged--1.0.sql \
+       plperlu.control plperlu--1.0.sql plperlu--unpackaged--1.0.sql
+
 PERLCHUNKS = plc_perlboot.pl plc_trusted.pl
 
 SHLIB_LINK = $(perl_embed_ldflags)
 
-REGRESS_OPTS = --dbname=$(PL_TESTDB) --load-language=plperl  --load-language=plperlu
+REGRESS_OPTS = --dbname=$(PL_TESTDB) --load-extension=plperl  --load-extension=plperlu
 REGRESS = plperl plperl_trigger plperl_shared plperl_elog plperl_util plperl_init plperlu plperl_array
 # if Perl can support two interpreters in one backend,
 # test plperl-and-plperlu cases
@@ -70,11 +73,25 @@ SPI.c: SPI.xs
 Util.c: Util.xs
 	$(PERL) $(perl_privlibexp)/ExtUtils/xsubpp -typemap $(perl_privlibexp)/ExtUtils/typemap $< >$@
 
-install: all installdirs install-lib
+
+install: all installdirs install-lib install-data
 
 installdirs: installdirs-lib
+	$(MKDIR_P) '$(DESTDIR)$(datadir)/extension'
 
-uninstall: uninstall-lib
+uninstall: uninstall-lib uninstall-data
+
+install-data:
+	@for file in $(addprefix $(srcdir)/, $(DATA)); do \
+	  echo "$(INSTALL_DATA) $$file '$(DESTDIR)$(datadir)/extension'"; \
+	  $(INSTALL_DATA) $$file '$(DESTDIR)$(datadir)/extension'; \
+	done
+
+uninstall-data:
+	rm -f $(addprefix '$(DESTDIR)$(datadir)/extension'/, $(notdir $(DATA)))
+
+.PHONY: install-data uninstall-data
+
 
 check: submake
 	$(pg_regress_check) $(REGRESS_OPTS) $(REGRESS)

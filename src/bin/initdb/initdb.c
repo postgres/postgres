@@ -1912,7 +1912,7 @@ load_plpgsql(void)
 
 	PG_CMD_OPEN;
 
-	PG_CMD_PUTS("CREATE LANGUAGE plpgsql;\n");
+	PG_CMD_PUTS("CREATE EXTENSION plpgsql;\n");
 
 	PG_CMD_CLOSE;
 

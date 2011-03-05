@@ -1,5 +1,5 @@
 -- first some tests of basic functionality
-CREATE LANGUAGE plpython2u;
+CREATE EXTENSION plpython2u;
 
 -- really stupid function just to get the module loaded
 CREATE FUNCTION stupid() RETURNS text AS 'return "zarkon"' LANGUAGE plpythonu;

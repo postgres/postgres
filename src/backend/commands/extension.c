@@ -1188,7 +1188,6 @@ CreateExtension(CreateExtensionStmt *stmt)
 	List	   *requiredExtensions;
 	List	   *requiredSchemas;
 	Oid			extensionOid;
-	AclResult	aclresult;
 	ListCell   *lc;
 
 	/* Check extension name validity before any filesystem access */
@@ -1393,13 +1392,13 @@ CreateExtension(CreateExtensionStmt *stmt)
 	}
 
 	/*
-	 * Check we have creation rights in target namespace.  Although strictly
-	 * speaking the extension itself isn't in the schema, it will almost
-	 * certainly want to create objects therein, so let's just check now.
+	 * We don't check creation rights on the target namespace here.  If the
+	 * extension script actually creates any objects there, it will fail if
+	 * the user doesn't have such permissions.  But there are cases such as
+	 * procedural languages where it's convenient to set schema = pg_catalog
+	 * yet we don't want to restrict the command to users with ACL_CREATE
+	 * for pg_catalog.
 	 */
-	aclresult = pg_namespace_aclcheck(schemaOid, extowner, ACL_CREATE);
-	if (aclresult != ACLCHECK_OK)
-		aclcheck_error(aclresult, ACL_KIND_NAMESPACE, schemaName);
 
 	/*
 	 * Look up the prerequisite extensions, and build lists of their OIDs

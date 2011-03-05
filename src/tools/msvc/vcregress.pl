@@ -146,14 +146,14 @@ sub plcheck
         my $lang = $pl eq 'tcl' ? 'pltcl' : $pl;
         next unless -d "../../$Config/$lang";
         $lang = 'plpythonu' if $lang eq 'plpython';
-        my @lang_args = ("--load-language=$lang");
+        my @lang_args = ("--load-extension=$lang");
         chdir $pl;
         my @tests = fetchTests();
         if ($lang eq 'plperl')
         {
 
             # run both trusted and untrusted perl tests
-            push(@lang_args, "--load-language=plperlu");
+            push(@lang_args, "--load-extension=plperlu");
 
             # assume we're using this perl to built postgres
             # test if we can run two interpreters in one backend, and if so

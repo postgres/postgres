@@ -1,6 +1,6 @@
 #-------------------------------------------------------------------------
 #
-# Makefile for the pltcl shared object
+# Makefile for the pl/tcl procedural language
 #
 # src/pl/tcl/Makefile
 #
@@ -35,9 +35,13 @@ SHLIB_LINK += $(TCL_LIBS) -lc
 endif
 
 NAME = pltcl
+
 OBJS = pltcl.o
 
-REGRESS_OPTS = --dbname=$(PL_TESTDB) --load-language=pltcl
+DATA = pltcl.control pltcl--1.0.sql pltcl--unpackaged--1.0.sql \
+       pltclu.control pltclu--1.0.sql pltclu--unpackaged--1.0.sql
+
+REGRESS_OPTS = --dbname=$(PL_TESTDB) --load-extension=pltcl
 REGRESS = pltcl_setup pltcl_queries
 # where to find psql for running the tests
 PSQLDIR = $(bindir)
@@ -49,14 +53,28 @@ ifeq ($(TCL_SHARED_BUILD), 1)
 all: all-lib
 	$(MAKE) -C modules $@
 
-install: all installdirs install-lib
+
+install: all installdirs install-lib install-data
 	$(MAKE) -C modules $@
 
 installdirs: installdirs-lib
+	$(MKDIR_P) '$(DESTDIR)$(datadir)/extension'
 	$(MAKE) -C modules $@
 
-uninstall: uninstall-lib
+uninstall: uninstall-lib uninstall-data
 	$(MAKE) -C modules $@
+
+install-data:
+	@for file in $(addprefix $(srcdir)/, $(DATA)); do \
+	  echo "$(INSTALL_DATA) $$file '$(DESTDIR)$(datadir)/extension'"; \
+	  $(INSTALL_DATA) $$file '$(DESTDIR)$(datadir)/extension'; \
+	done
+
+uninstall-data:
+	rm -f $(addprefix '$(DESTDIR)$(datadir)/extension'/, $(notdir $(DATA)))
+
+.PHONY: install-data uninstall-data
+
 
 check: submake
 	$(pg_regress_check) $(REGRESS_OPTS) $(REGRESS)

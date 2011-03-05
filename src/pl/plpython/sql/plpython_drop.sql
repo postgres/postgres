@@ -3,4 +3,6 @@
 --
 SET client_min_messages = WARNING;
 
-DROP PROCEDURAL LANGUAGE plpythonu CASCADE;
+DROP EXTENSION plpythonu CASCADE;
+
+DROP EXTENSION IF EXISTS plpython2u CASCADE;

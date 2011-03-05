@@ -1,0 +1,7 @@
+# plperlu extension
+comment = 'PL/PerlU untrusted procedural language'
+default_version = '1.0'
+module_pathname = '$libdir/plperl'
+relocatable = false
+schema = pg_catalog
+superuser = true

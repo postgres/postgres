@@ -222,6 +222,9 @@ static plperl_call_data *current_call_data = NULL;
 Datum		plperl_call_handler(PG_FUNCTION_ARGS);
 Datum		plperl_inline_handler(PG_FUNCTION_ARGS);
 Datum		plperl_validator(PG_FUNCTION_ARGS);
+Datum		plperlu_call_handler(PG_FUNCTION_ARGS);
+Datum		plperlu_inline_handler(PG_FUNCTION_ARGS);
+Datum		plperlu_validator(PG_FUNCTION_ARGS);
 void		_PG_init(void);
 
 static PerlInterpreter *plperl_init_interp(void);
@@ -1755,6 +1758,39 @@ plperl_validator(PG_FUNCTION_ARGS)
 
 	/* the result of a validator is ignored */
 	PG_RETURN_VOID();
+}
+
+
+/*
+ * plperlu likewise requires three externally visible functions:
+ * plperlu_call_handler, plperlu_inline_handler, and plperlu_validator.
+ * These are currently just aliases that send control to the plperl
+ * handler functions, and we decide whether a particular function is
+ * trusted or not by inspecting the actual pg_language tuple.
+ */
+
+PG_FUNCTION_INFO_V1(plperlu_call_handler);
+
+Datum
+plperlu_call_handler(PG_FUNCTION_ARGS)
+{
+	return plperl_call_handler(fcinfo);
+}
+
+PG_FUNCTION_INFO_V1(plperlu_inline_handler);
+
+Datum
+plperlu_inline_handler(PG_FUNCTION_ARGS)
+{
+	return plperl_inline_handler(fcinfo);
+}
+
+PG_FUNCTION_INFO_V1(plperlu_validator);
+
+Datum
+plperlu_validator(PG_FUNCTION_ARGS)
+{
+	return plperl_validator(fcinfo);
 }
 
 

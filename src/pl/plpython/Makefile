@@ -37,7 +37,12 @@ override CPPFLAGS := -I. -I$(srcdir) $(python_includespec) $(CPPFLAGS)
 rpathdir = $(python_libdir)
 
 NAME = plpython$(python_majorversion)
+
 OBJS = plpython.o
+
+DATA = plpythonu.control plpythonu--1.0.sql plpythonu--unpackaged--1.0.sql \
+       plpython2u.control plpython2u--1.0.sql plpython2u--unpackaged--1.0.sql \
+       plpython3u.control plpython3u--1.0.sql plpython3u--unpackaged--1.0.sql
 
 
 # Python on win32 ships with import libraries only for Microsoft Visual C++,
@@ -60,7 +65,7 @@ REGRESS_OPTS = --dbname=$(PL_TESTDB)
 # Only load plpythonu with Python 2.  The test files themselves load
 # the versioned language plpython(2|3)u.
 ifeq ($(python_majorversion),2)
-REGRESS_OPTS += --load-language=plpythonu
+REGRESS_OPTS += --load-extension=plpythonu
 endif
 REGRESS = \
 	plpython_schema \
@@ -98,17 +103,31 @@ all: all-lib
 
 distprep: spiexceptions.h
 
-install: all installdirs install-lib
+
+install: all installdirs install-lib install-data
 ifeq ($(python_majorversion),2)
 	cd '$(DESTDIR)$(pkglibdir)' && rm -f plpython$(DLSUFFIX) && $(LN_S) $(shlib) plpython$(DLSUFFIX)
 endif
 
 installdirs: installdirs-lib
+	$(MKDIR_P) '$(DESTDIR)$(datadir)/extension'
 
-uninstall: uninstall-lib
+uninstall: uninstall-lib uninstall-data
 ifeq ($(python_majorversion),2)
 	rm -f '$(DESTDIR)$(pkglibdir)/plpython$(DLSUFFIX)'
 endif
+
+install-data:
+	@for file in $(addprefix $(srcdir)/, $(DATA)); do \
+	  echo "$(INSTALL_DATA) $$file '$(DESTDIR)$(datadir)/extension'"; \
+	  $(INSTALL_DATA) $$file '$(DESTDIR)$(datadir)/extension'; \
+	done
+
+uninstall-data:
+	rm -f $(addprefix '$(DESTDIR)$(datadir)/extension'/, $(notdir $(DATA)))
+
+.PHONY: install-data uninstall-data
+
 
 ifeq ($(python_majorversion),3)
 # Adjust regression tests for Python 3 compatibility
@@ -124,6 +143,8 @@ prep3:
 	      -e "s/def next/def __next__/g" \
 	      -e "s/LANGUAGE plpythonu/LANGUAGE plpython3u/g" \
 	      -e "s/LANGUAGE plpython2u/LANGUAGE plpython3u/g" \
+	      -e "s/EXTENSION plpythonu/EXTENSION plpython3u/g" \
+	      -e "s/EXTENSION plpython2u/EXTENSION plpython3u/g" \
 	    $$file >`echo $$file | sed 's,$(srcdir),python3,'`; \
 	done
 

@@ -1172,6 +1172,24 @@ selectDumpableDefaultACL(DefaultACLInfo *dinfo)
 }
 
 /*
+ * selectDumpableExtension: policy-setting subroutine
+ *		Mark an extension as to be dumped or not
+ *
+ * Normally, we just dump all extensions.  However, in binary-upgrade mode
+ * it's necessary to skip built-in extensions, since we assume those will
+ * already be installed in the target database.  We identify such extensions
+ * by their having OIDs in the range reserved for initdb.
+ */
+static void
+selectDumpableExtension(ExtensionInfo *extinfo)
+{
+	if (binary_upgrade && extinfo->dobj.catId.oid < (Oid) FirstNormalObjectId)
+		extinfo->dobj.dump = false;
+	else
+		extinfo->dobj.dump = true;
+}
+
+/*
  * selectDumpableObject: policy-setting subroutine
  *		Mark a generic dumpable object as to be dumped or not
  *
@@ -2730,6 +2748,9 @@ getExtensions(int *numExtensions)
 		extinfo[i].extversion = strdup(PQgetvalue(res, i, i_extversion));
 		extinfo[i].extconfig = strdup(PQgetvalue(res, i, i_extconfig));
 		extinfo[i].extcondition = strdup(PQgetvalue(res, i, i_extcondition));
+
+		/* Decide whether we want to dump it */
+		selectDumpableExtension(&(extinfo[i]));
 	}
 
 	PQclear(res);
@@ -7042,19 +7063,6 @@ dumpExtension(Archive *fout, ExtensionInfo *extinfo)
 	if (!extinfo->dobj.dump || dataOnly)
 		return;
 
-	/*
-	 * In a regular dump, we use IF NOT EXISTS so that there isn't a problem
-	 * if the extension already exists in the target database; this is
-	 * essential for installed-by-default extensions such as plpgsql.
-	 *
-	 * In binary-upgrade mode, that doesn't work well, so instead we skip
-	 * extensions with OIDs less than FirstNormalObjectId; those were
-	 * presumably installed by initdb, and we assume they'll exist in the
-	 * target installation too.
-	 */
-	if (binary_upgrade && extinfo->dobj.catId.oid < (Oid) FirstNormalObjectId)
-		return;
-
 	q = createPQExpBuffer();
 	delq = createPQExpBuffer();
 	labelq = createPQExpBuffer();
@@ -7065,6 +7073,16 @@ dumpExtension(Archive *fout, ExtensionInfo *extinfo)
 
 	if (!binary_upgrade)
 	{
+		/*
+		 * In a regular dump, we use IF NOT EXISTS so that there isn't a
+		 * problem if the extension already exists in the target database;
+		 * this is essential for installed-by-default extensions such as
+		 * plpgsql.
+		 *
+		 * In binary-upgrade mode, that doesn't work well, so instead we skip
+		 * built-in extensions based on their OIDs; see
+		 * selectDumpableExtension.
+		 */
 		appendPQExpBuffer(q, "CREATE EXTENSION IF NOT EXISTS %s WITH SCHEMA %s;\n",
 						  qextname, fmtId(extinfo->namespace));
 	}

@@ -1,0 +1,7 @@
+# plpython2u extension
+comment = 'PL/Python2U untrusted procedural language'
+default_version = '1.0'
+module_pathname = '$libdir/plpython2'
+relocatable = false
+schema = pg_catalog
+superuser = true
