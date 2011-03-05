@@ -614,18 +614,6 @@
 
        <listitem>
         <para>
-         <emphasis>When an autovacuum worker (other than one performing an
-         anti-wraparound vacuum) is unable to obtain a lock on the target
-         relation without blocking, skip the relation.</emphasis>
-        </para>
-        <para>
-         This avoids pinning down an autovacuum worker.  The next autovacuum
-         cycle will try again. 
-        </para>
-       </listitem>
-
-       <listitem>
-        <para>
          <emphasis>Track time of last statistics reset on databases and
          bgwriter</emphasis>
         </para>
