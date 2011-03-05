@@ -172,8 +172,8 @@ sub mkvcbuild
 
     if ($solution->{options}->{python})
     {
-
-        # Attempt to get python version and location. Assume python.exe in specified dir.
+        # Attempt to get python version and location.
+        # Assume python.exe in specified dir.
         open(P,
             $solution->{options}->{python}
               . "\\python -c \"import sys;print(sys.prefix);print(str(sys.version_info[0])+str(sys.version_info[1]))\" |"
@@ -184,11 +184,14 @@ sub mkvcbuild
         chomp($pyver);
         close(P);
 
-  # Sometimes (always?) if python is not present, the execution actually works, but gives no data...
+        # Sometimes (always?) if python is not present, the execution
+        # appears to work, but gives no data...
         die "Failed to query python for version information\n"
           if (!(defined($pyprefix) && defined($pyver)));
 
-        my $plpython = $solution->AddProject('plpython','dll','PLs','src\pl\plpython');
+        my $pymajorver = substr($pyver, 0, 1);
+        my $plpython = $solution->AddProject('plpython' . $pymajorver, 'dll',
+                                             'PLs', 'src\pl\plpython');
         $plpython->AddIncludeDir($pyprefix . '\include');
         $plpython->AddLibrary($pyprefix . "\\Libs\\python$pyver.lib");
         $plpython->AddReference($postgres);

@@ -67,6 +67,7 @@ REGRESS_OPTS = --dbname=$(PL_TESTDB)
 ifeq ($(python_majorversion),2)
 REGRESS_OPTS += --load-extension=plpythonu
 endif
+
 REGRESS = \
 	plpython_schema \
 	plpython_populate \
@@ -88,6 +89,7 @@ REGRESS = \
 	plpython_composite \
 	plpython_subtransaction \
 	plpython_drop
+
 # where to find psql for running the tests
 PSQLDIR = $(bindir)
 
@@ -105,17 +107,11 @@ distprep: spiexceptions.h
 
 
 install: all installdirs install-lib install-data
-ifeq ($(python_majorversion),2)
-	cd '$(DESTDIR)$(pkglibdir)' && rm -f plpython$(DLSUFFIX) && $(LN_S) $(shlib) plpython$(DLSUFFIX)
-endif
 
 installdirs: installdirs-lib
 	$(MKDIR_P) '$(DESTDIR)$(datadir)/extension'
 
 uninstall: uninstall-lib uninstall-data
-ifeq ($(python_majorversion),2)
-	rm -f '$(DESTDIR)$(pkglibdir)/plpython$(DLSUFFIX)'
-endif
 
 install-data:
 	@for file in $(addprefix $(srcdir)/, $(DATA)); do \

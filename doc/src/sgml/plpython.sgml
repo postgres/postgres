@@ -148,8 +148,9 @@
     <listitem>
      <para>
       Daredevils, who want to build a Python-3-only operating system
-      environment, can change the build scripts to
-      make <literal>plpythonu</literal> be equivalent
+      environment, can change the contents of
+      <link linkend="catalog-pg-pltemplate"><structname>pg_pltemplate</structname></link>
+      to make <literal>plpythonu</literal> be equivalent
       to <literal>plpython3u</literal>, keeping in mind that this
       would make their installation incompatible with most of the rest
       of the world.
