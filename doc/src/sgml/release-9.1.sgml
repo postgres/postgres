@@ -72,17 +72,16 @@
 
        <listitem>
         <para>
-         <emphasis>Add ALTER ... SET SCHEMA support for conversions,
+         Add ALTER ... SET SCHEMA support for conversions,
          operators, operator classes, operator families, text search
          configurations, text search dictionaries, text search
-         parsers, and text search templates</emphasis>
+         parsers, and text search templates
         </para>
        </listitem>
 
        <listitem>
         <para>
-         <emphasis>Make TRUNCATE ... RESTART IDENTITY restart
-         sequences transactionally</emphasis>
+         Make TRUNCATE ... RESTART IDENTITY restart sequences transactionally
         </para>
 
         <para>
@@ -96,8 +95,8 @@
 
        <listitem>
         <para>
-         <emphasis>Prevent invoking I/O conversion casts via
-         functional/attribute notation</emphasis>
+         Prevent invoking I/O conversion casts via
+         functional/attribute notation
         </para>
         <para>
          This was found to be confusing in some cases.  The
@@ -172,13 +171,13 @@
 
        <listitem>
         <para>
-         <emphasis>Optimize the commit_siblings configuration parameter</emphasis>
+         Optimize the commit_siblings configuration parameter
         </para>
        </listitem>
 
        <listitem>
         <para>
-         <emphasis>KNN GiST, otherwise known as order-by-operator support for GiST</emphasis>
+         KNN GiST, otherwise known as order-by-operator support for GiST
         </para>
 
         <para>
@@ -187,13 +186,13 @@
        </listitem>
        <listitem>
         <para>
-         <emphasis>Improve process shutdown speed</emphasis>
+         Improve process shutdown speed
         </para>
        </listitem>
 
        <listitem>
         <para>
-         <emphasis>Speed up conversion of signed integers to C strings</emphasis>
+         Speed up conversion of signed integers to C strings
         </para>
        </listitem>
 
@@ -307,13 +306,13 @@
 
        <listitem>
         <para>
-         <emphasis>Instrument checkpoint sync calls</emphasis>
+         Instrument checkpoint sync calls
         </para>
        </listitem>
 
        <listitem>
         <para>
-         <emphasis>Use the same lexer for recovery.conf that has been used for postgresql.conf</emphasis>
+         Use the same lexer for recovery.conf that has been used for postgresql.conf
         </para>
 
         <para>
@@ -323,13 +322,13 @@
 
        <listitem>
         <para>
-         <emphasis>Add column buffers_backend_fsync to pg_stat_bgwriter</emphasis>
+         Add column buffers_backend_fsync to pg_stat_bgwriter
         </para>
        </listitem>
 
        <listitem>
         <para>
-         <emphasis>Add monitoring function pg_last_xact_replay_timestamp()</emphasis>
+         Add monitoring function pg_last_xact_replay_timestamp()
         </para>
        </listitem>
 
@@ -413,21 +412,21 @@
 
        <listitem>
         <para>
-         <emphasis>Add pg_read_binary_file() and whole-file-at-once
-         versions of pg_read_file()</emphasis>
+         Add pg_read_binary_file() and whole-file-at-once
+         versions of pg_read_file()
         </para>
        </listitem>
 
        <listitem>
         <para>
-         <emphasis>Add new function format(), for sprintf-like string formatting</emphasis>
+         Add new function format(), for sprintf-like string formatting
         </para>
        </listitem>
 
        <listitem>
         <para>
-         <emphasis>Add pg_describe_object() function to obtain textual
-         descriptions of objects as stored in pg_depend</emphasis>
+         Add pg_describe_object() function to obtain textual
+         descriptions of objects as stored in pg_depend
         </para>
        </listitem>
 
@@ -528,7 +527,7 @@
 
        <listitem>
         <para>
-         <emphasis>Add <quote>S</quote> option to \dn command in psql</emphasis>
+         Add <quote>S</quote> option to \dn command in psql
         </para>
         <para>
          System schemas are now hidden by default by \dn.
@@ -578,14 +577,14 @@
 
        <listitem>
         <para>
-         <emphasis>Add PQlibVersion() function</emphasis>
+         Add PQlibVersion() function
         </para>
        </listitem>
 
        <listitem>
         <para>
-         <emphasis>When reporting the server as not responding, if the
-         hostname was supplied, also print the IP address</emphasis>
+         When reporting the server as not responding, if the
+         hostname was supplied, also print the IP address
         </para>
         <para>
          This allows IPv4 and IPv6 failures to be distinguished.  Also
@@ -595,9 +594,9 @@
 
        <listitem>
         <para>
-         <emphasis>Add functions PQping and PQpingParams to allow
+         Add functions PQping and PQpingParams to allow
          detection of the server's status, including a status where
-         the server is running but refuses ordinary connections</emphasis>
+         the server is running but refuses ordinary connections
         </para>
         <para>
          pg_ctl uses the new function.  This fixes the case where
@@ -663,7 +662,7 @@
 
        <listitem>
         <para>
-         <emphasis>New module contrib/auth_delay</emphasis>
+         New module contrib/auth_delay
         </para>
        </listitem>
 
@@ -717,23 +716,22 @@
 
        <listitem>
         <para>
-         <emphasis>Rewrite the GiST insertion logic so that the
+         Rewrite the GiST insertion logic so that the
          post-recovery cleanup stage to finish incomplete inserts or
-         splits is not needed anymore</emphasis>
+         splits is not needed anymore
         </para>
        </listitem>
 
        <listitem>
         <para>
-         <emphasis>Add support for collecting
-         <quote>minidump</quote>-style crash dumps on
-         Windows</emphasis>
+         Add support for collecting <quote>minidump</quote>-style crash dumps
+         on Windows
         </para>
        </listitem>
 
        <listitem>
         <para>
-         <emphasis>Replace pg_class.relistemp column with relpersistence</emphasis>
+         Replace pg_class.relistemp column with relpersistence
         </para>
 
         <para>
@@ -743,13 +741,13 @@
 
        <listitem>
         <para>
-         <emphasis>GNU make 3.80 or newer is now required</emphasis>
+         GNU make 3.80 or newer is now required
         </para>
        </listitem>
 
        <listitem>
         <para>
-         <emphasis>Improved support for parallel make, make -k, and make -q</emphasis>
+         Improved support for parallel make, make -k, and make -q
         </para>
        </listitem>
 
