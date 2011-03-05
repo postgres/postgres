@@ -310,9 +310,9 @@
         </para>
         <para>
          The contents of an unlogged table are not WAL-logged; thus, they
-         are replicated and are truncated whenever the database system enters
-         recovery.  Indexes on unlogged tables are also unlogged, but GIST
-         indexes on unlogged tables are not currently supported.
+         are not replicated and are truncated whenever the database system
+         enters recovery.  Indexes on unlogged tables are also unlogged, but
+         GIST indexes on unlogged tables are not currently supported.
         </para>
        </listitem>
 
