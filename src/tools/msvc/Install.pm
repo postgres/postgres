@@ -113,6 +113,25 @@ sub Install
     CopyContribFiles($config,$target);
     CopyIncludeFiles($target);
 
+	my $pl_extension_files = [];
+	my @pldirs = ('src/pl/plpgsql/src');
+	push @pldirs,"src/pl/plperl" if $config->{perl};
+	push @pldirs,"src/pl/plpython" if $config->{python};
+	push @pldirs,"src/pl/tcl" if $config->{tcl};
+    File::Find::find(
+        {
+            wanted =>sub {
+                /^(.*--.*\.sql|.*\.control)\z/s
+                  &&push(@$pl_extension_files, $File::Find::name);
+              }
+        },
+        @pldirs
+    );
+    CopySetOfFiles(
+        'PL Extension files', $pl_extension_files,
+        $target . '/share/extension/'
+    );
+
     GenerateNLSFiles($target,$config->{nls},$majorver) if ($config->{nls});
 
     print "Installation complete.\n";
