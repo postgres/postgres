@@ -106,14 +106,14 @@ all: all-lib
 distprep: spiexceptions.h
 
 
-install: all installdirs install-lib install-data
+install: all install-lib install-data
 
 installdirs: installdirs-lib
 	$(MKDIR_P) '$(DESTDIR)$(datadir)/extension'
 
 uninstall: uninstall-lib uninstall-data
 
-install-data:
+install-data: installdirs
 	@for file in $(addprefix $(srcdir)/, $(DATA)); do \
 	  echo "$(INSTALL_DATA) $$file '$(DESTDIR)$(datadir)/extension'"; \
 	  $(INSTALL_DATA) $$file '$(DESTDIR)$(datadir)/extension'; \

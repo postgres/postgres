@@ -54,7 +54,7 @@ all: all-lib
 	$(MAKE) -C modules $@
 
 
-install: all installdirs install-lib install-data
+install: all install-lib install-data
 	$(MAKE) -C modules $@
 
 installdirs: installdirs-lib
@@ -64,7 +64,7 @@ installdirs: installdirs-lib
 uninstall: uninstall-lib uninstall-data
 	$(MAKE) -C modules $@
 
-install-data:
+install-data: installdirs
 	@for file in $(addprefix $(srcdir)/, $(DATA)); do \
 	  echo "$(INSTALL_DATA) $$file '$(DESTDIR)$(datadir)/extension'"; \
 	  $(INSTALL_DATA) $$file '$(DESTDIR)$(datadir)/extension'; \
