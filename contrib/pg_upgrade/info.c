@@ -56,11 +56,11 @@ gen_db_file_maps(DbInfo *old_db, DbInfo *new_db,
 
 		/*
 		 *	In pre-8.4, TOAST table names change during CLUSTER;  in >= 8.4
-		 *	TOAST relation names always use the heap tables oid, hence we
+		 *	TOAST relation names always use heap table oids, hence we
 		 *	cannot check relation names when upgrading from pre-8.4.
 		 */
-		if (GET_MAJOR_VERSION(old_cluster.major_version) >= 804 &&
-			(strcmp(old_rel->nspname, new_rel->nspname) != 0 ||
+		if (strcmp(old_rel->nspname, new_rel->nspname) != 0 ||
+			(GET_MAJOR_VERSION(old_cluster.major_version) >= 804 &&
 		     strcmp(old_rel->relname, new_rel->relname) != 0))
 			pg_log(PG_FATAL, "Mismatch of relation names: database \"%s\", "
 				"old rel %s.%s, new rel %s.%s\n",
