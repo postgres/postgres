@@ -107,7 +107,7 @@ create_rel_filename_map(const char *old_data, const char *new_data,
 	if (strcmp(old_rel->nspname, new_rel->nspname) != 0 ||
 	    strcmp(old_rel->relname, new_rel->relname) != 0)
 		pg_log(PG_FATAL, "mismatch of relation id: database \"%s\", old rel %s.%s, new rel %s.%s\n",
-			old_db, old_rel->nspname, old_rel->relname,
+			old_db->db_name, old_rel->nspname, old_rel->relname,
 			new_rel->nspname, new_rel->relname);
 
 	/* used only for logging and error reporing, old/new are identical */
@@ -188,8 +188,8 @@ get_db_infos(ClusterInfo *cluster)
 	/* we don't preserve pg_database.oid so we sort by name */
 							"ORDER BY 2");
 
-	i_datname = PQfnumber(res, "datname");
 	i_oid = PQfnumber(res, "oid");
+	i_datname = PQfnumber(res, "datname");
 	i_spclocation = PQfnumber(res, "spclocation");
 
 	ntups = PQntuples(res);
@@ -198,7 +198,6 @@ get_db_infos(ClusterInfo *cluster)
 	for (tupnum = 0; tupnum < ntups; tupnum++)
 	{
 		dbinfos[tupnum].db_oid = atooid(PQgetvalue(res, tupnum, i_oid));
-
 		snprintf(dbinfos[tupnum].db_name, sizeof(dbinfos[tupnum].db_name), "%s",
 				 PQgetvalue(res, tupnum, i_datname));
 		snprintf(dbinfos[tupnum].db_tblspace, sizeof(dbinfos[tupnum].db_tblspace), "%s",
