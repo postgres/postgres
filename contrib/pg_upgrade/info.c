@@ -54,7 +54,11 @@ gen_db_file_maps(DbInfo *old_db, DbInfo *new_db,
 			pg_log(PG_FATAL, "Mismatch of relation id: database \"%s\", old relid %d, new relid %d\n",
 			old_db->db_name, old_rel->reloid, new_rel->reloid);
 
-		/* toast names were not renamed to match their relfilenodes in pre-8.4 */
+		/*
+		 *	In pre-8.4, TOAST table names change during CLUSTER;  in >= 8.4
+		 *	TOAST relation names always use the heap tables oid, hence we
+		 *	cannot check relation names when upgrading from pre-8.4.
+		 */
 		if (GET_MAJOR_VERSION(old_cluster.major_version) >= 804 &&
 			(strcmp(old_rel->nspname, new_rel->nspname) != 0 ||
 		     strcmp(old_rel->relname, new_rel->relname) != 0))
