@@ -68,35 +68,35 @@ static const int oldObjectTypePriority[] =
 static const int newObjectTypePriority[] =
 {
 	1,							/* DO_NAMESPACE */
-	3,							/* DO_EXTENSION */
-	4,							/* DO_TYPE */
-	4,							/* DO_SHELL_TYPE */
-	5,							/* DO_FUNC */
-	6,							/* DO_AGG */
-	7,							/* DO_OPERATOR */
-	8,							/* DO_OPCLASS */
-	8,							/* DO_OPFAMILY */
-	10,							/* DO_CONVERSION */
-	17,							/* DO_TABLE */
-	19,							/* DO_ATTRDEF */
-	24,							/* DO_INDEX */
-	25,							/* DO_RULE */
-	26,							/* DO_TRIGGER */
-	23,							/* DO_CONSTRAINT */
-	27,							/* DO_FK_CONSTRAINT */
+	4,							/* DO_EXTENSION */
+	5,							/* DO_TYPE */
+	5,							/* DO_SHELL_TYPE */
+	6,							/* DO_FUNC */
+	7,							/* DO_AGG */
+	8,							/* DO_OPERATOR */
+	9,							/* DO_OPCLASS */
+	9,							/* DO_OPFAMILY */
+	11,							/* DO_CONVERSION */
+	18,							/* DO_TABLE */
+	20,							/* DO_ATTRDEF */
+	25,							/* DO_INDEX */
+	26,							/* DO_RULE */
+	27,							/* DO_TRIGGER */
+	24,							/* DO_CONSTRAINT */
+	28,							/* DO_FK_CONSTRAINT */
 	2,							/* DO_PROCLANG */
-	9,							/* DO_CAST */
-	21,							/* DO_TABLE_DATA */
-	18,							/* DO_DUMMY_TYPE */
-	11,							/* DO_TSPARSER */
-	13,							/* DO_TSDICT */
-	12,							/* DO_TSTEMPLATE */
-	14,							/* DO_TSCONFIG */
-	15,							/* DO_FDW */
-	16,							/* DO_FOREIGN_SERVER */
-	28,							/* DO_DEFAULT_ACL */
-	20,							/* DO_BLOB */
-	22,							/* DO_BLOB_DATA */
+	10,							/* DO_CAST */
+	22,							/* DO_TABLE_DATA */
+	19,							/* DO_DUMMY_TYPE */
+	12,							/* DO_TSPARSER */
+	14,							/* DO_TSDICT */
+	13,							/* DO_TSTEMPLATE */
+	15,							/* DO_TSCONFIG */
+	16,							/* DO_FDW */
+	17,							/* DO_FOREIGN_SERVER */
+	29,							/* DO_DEFAULT_ACL */
+	21,							/* DO_BLOB */
+	23,							/* DO_BLOB_DATA */
 	3							/* DO_COLLATION */
 };
 
