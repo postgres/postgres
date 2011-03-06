@@ -200,9 +200,10 @@ exit_nicely(bool need_cleanup)
 	/* terminate any running instance of postmaster */
 	if (os_info.postmasterPID != 0)
 		kill(os_info.postmasterPID, SIGTERM);
-
+	
 	if (need_cleanup)
 	{
+		printf("Failure, exiting\n");
 		/*
 		 * FIXME must delete intermediate files
 		 */
