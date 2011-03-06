@@ -317,13 +317,9 @@ WalReceiverMain(void)
 			while (walrcv_receive(0, &type, &buf, &len))
 				XLogWalRcvProcessMsg(type, buf, len);
 
-			/* Let the master know that we received some data. */
-			XLogWalRcvSendReply();
-			XLogWalRcvSendHSFeedback();
-
 			/*
 			 * If we've written some records, flush them to disk and let the
-			 * startup process know about them.
+			 * startup process and primary server know about them.
 			 */
 			XLogWalRcvFlush(false);
 		}
@@ -581,7 +577,10 @@ XLogWalRcvFlush(bool dying)
 
 		/* Also let the master know that we made some progress */
 		if (!dying)
+		{
 			XLogWalRcvSendReply();
+			XLogWalRcvSendHSFeedback();
+		}
 	}
 }
 

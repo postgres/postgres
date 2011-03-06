@@ -15,6 +15,7 @@
 #include "access/xlog.h"
 #include "nodes/nodes.h"
 #include "storage/latch.h"
+#include "replication/syncrep.h"
 #include "storage/spin.h"
 
 
@@ -52,11 +53,32 @@ typedef struct WalSnd
 	 * to do.
 	 */
 	Latch		latch;
+
+	/*
+	 * The priority order of the standby managed by this WALSender, as
+	 * listed in synchronous_standby_names, or 0 if not-listed.
+	 * Protected by SyncRepLock.
+	 */
+	 int	sync_standby_priority;
 } WalSnd;
+
+extern WalSnd *MyWalSnd;
 
 /* There is one WalSndCtl struct for the whole database cluster */
 typedef struct
 {
+	/*
+	 * Synchronous replication queue. Protected by SyncRepLock.
+	 */
+	SHM_QUEUE SyncRepQueue;
+
+	/*
+	 * Current location of the head of the queue. All waiters should have
+	 * a waitLSN that follows this value, or they are currently being woken
+	 * to remove themselves from the queue. Protected by SyncRepLock.
+	 */
+	XLogRecPtr	lsn;
+
 	WalSnd		walsnds[1];		/* VARIABLE LENGTH ARRAY */
 } WalSndCtlData;
 

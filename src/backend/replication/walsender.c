@@ -66,7 +66,7 @@
 WalSndCtlData *WalSndCtl = NULL;
 
 /* My slot in the shared memory array */
-static WalSnd *MyWalSnd = NULL;
+WalSnd *MyWalSnd = NULL;
 
 /* Global state */
 bool		am_walsender = false;		/* Am I a walsender process ? */
@@ -173,6 +173,8 @@ WalSenderMain(void)
 		walsnd->sentPtr = sentPtr;
 		SpinLockRelease(&walsnd->mutex);
 	}
+
+	SyncRepInitConfig();
 
 	/* Main loop of walsender */
 	return WalSndLoop();
@@ -584,6 +586,8 @@ ProcessStandbyReplyMessage(void)
 		walsnd->apply = reply.apply;
 		SpinLockRelease(&walsnd->mutex);
 	}
+
+	SyncRepReleaseWaiters();
 }
 
 /*
@@ -700,6 +704,7 @@ WalSndLoop(void)
 		{
 			got_SIGHUP = false;
 			ProcessConfigFile(PGC_SIGHUP);
+			SyncRepInitConfig();
 		}
 
 		/*
@@ -771,7 +776,12 @@ WalSndLoop(void)
 		 * that point might wait for some time.
 		 */
 		if (MyWalSnd->state == WALSNDSTATE_CATCHUP && caughtup)
+		{
+			ereport(DEBUG1,
+					(errmsg("standby \"%s\" has now caught up with primary",
+									application_name)));
 			WalSndSetState(WALSNDSTATE_STREAMING);
+		}
 
 		ProcessRepliesIfAny();
 	}
@@ -1238,6 +1248,8 @@ WalSndShmemInit(void)
 		/* First time through, so initialize */
 		MemSet(WalSndCtl, 0, WalSndShmemSize());
 
+		SHMQueueInit(&(WalSndCtl->SyncRepQueue));
+
 		for (i = 0; i < max_wal_senders; i++)
 		{
 			WalSnd	   *walsnd = &WalSndCtl->walsnds[i];
@@ -1304,12 +1316,15 @@ WalSndGetStateString(WalSndState state)
 Datum
 pg_stat_get_wal_senders(PG_FUNCTION_ARGS)
 {
-#define PG_STAT_GET_WAL_SENDERS_COLS 	6
+#define PG_STAT_GET_WAL_SENDERS_COLS 	8
 	ReturnSetInfo	   *rsinfo = (ReturnSetInfo *) fcinfo->resultinfo;
 	TupleDesc			tupdesc;
 	Tuplestorestate	   *tupstore;
 	MemoryContext		per_query_ctx;
 	MemoryContext		oldcontext;
+	int					sync_priority[max_wal_senders];
+	int					priority = 0;
+	int					sync_standby = -1;
 	int					i;
 
 	/* check to see if caller supports us returning a tuplestore */
@@ -1336,6 +1351,33 @@ pg_stat_get_wal_senders(PG_FUNCTION_ARGS)
 	rsinfo->setDesc = tupdesc;
 
 	MemoryContextSwitchTo(oldcontext);
+
+	/*
+	 * Get the priorities of sync standbys all in one go, to minimise
+	 * lock acquisitions and to allow us to evaluate who is the current
+	 * sync standby. This code must match the code in SyncRepReleaseWaiters().
+	 */
+	LWLockAcquire(SyncRepLock, LW_SHARED);
+	for (i = 0; i < max_wal_senders; i++)
+	{
+		/* use volatile pointer to prevent code rearrangement */
+		volatile WalSnd *walsnd = &WalSndCtl->walsnds[i];
+
+		if (walsnd->pid != 0)
+		{
+			sync_priority[i] = walsnd->sync_standby_priority;
+
+			if (walsnd->state == WALSNDSTATE_STREAMING &&
+				walsnd->sync_standby_priority > 0 &&
+				(priority == 0 ||
+				 priority > walsnd->sync_standby_priority))
+			{
+				priority = walsnd->sync_standby_priority;
+				sync_standby = i;
+			}
+		}
+	}
+	LWLockRelease(SyncRepLock);
 
 	for (i = 0; i < max_wal_senders; i++)
 	{
@@ -1370,11 +1412,7 @@ pg_stat_get_wal_senders(PG_FUNCTION_ARGS)
 			 * Only superusers can see details. Other users only get
 			 * the pid value to know it's a walsender, but no details.
 			 */
-			nulls[1] = true;
-			nulls[2] = true;
-			nulls[3] = true;
-			nulls[4] = true;
-			nulls[5] = true;
+			MemSet(&nulls[1], true, PG_STAT_GET_WAL_SENDERS_COLS - 1);
 		}
 		else
 		{
@@ -1401,6 +1439,19 @@ pg_stat_get_wal_senders(PG_FUNCTION_ARGS)
 			snprintf(location, sizeof(location), "%X/%X",
 					 apply.xlogid, apply.xrecoff);
 			values[5] = CStringGetTextDatum(location);
+
+			values[6] = Int32GetDatum(sync_priority[i]);
+
+			/*
+			 * More easily understood version of standby state.
+			 * This is purely informational, not different from priority.
+			 */
+			if (sync_priority[i] == 0)
+				values[7] = CStringGetTextDatum("ASYNC");
+			else if (i == sync_standby)
+				values[7] = CStringGetTextDatum("SYNC");
+			else
+				values[7] = CStringGetTextDatum("POTENTIAL");
 		}
 
 		tuplestore_putvalues(tupstore, tupdesc, values, nulls);

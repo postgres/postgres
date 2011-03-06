@@ -1527,6 +1527,13 @@ AutoVacWorkerMain(int argc, char *argv[])
 	SetConfigOption("statement_timeout", "0", PGC_SUSET, PGC_S_OVERRIDE);
 
 	/*
+	 * Force synchronous replication off to allow regular maintenance even
+	 * if we are waiting for standbys to connect. This is important to
+	 * ensure we aren't blocked from performing anti-wraparound tasks.
+	 */
+	SetConfigOption("synchronous_replication", "off", PGC_SUSET, PGC_S_OVERRIDE);
+
+	/*
 	 * Get the info about the database we're going to work on.
 	 */
 	LWLockAcquire(AutovacuumLock, LW_EXCLUSIVE);

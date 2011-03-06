@@ -56,6 +56,7 @@
 #include "pg_trace.h"
 #include "pgstat.h"
 #include "replication/walsender.h"
+#include "replication/syncrep.h"
 #include "storage/fd.h"
 #include "storage/predicate.h"
 #include "storage/procarray.h"
@@ -1071,6 +1072,14 @@ EndPrepare(GlobalTransaction gxact)
 
 	END_CRIT_SECTION();
 
+	/*
+	 * Wait for synchronous replication, if required.
+	 *
+	 * Note that at this stage we have marked the prepare, but still show as
+	 * running in the procarray (twice!) and continue to hold locks.
+	 */
+	SyncRepWaitForLSN(gxact->prepare_lsn);
+
 	records.tail = records.head = NULL;
 }
 
@@ -2030,6 +2039,14 @@ RecordTransactionCommitPrepared(TransactionId xid,
 	MyProc->inCommit = false;
 
 	END_CRIT_SECTION();
+
+	/*
+	 * Wait for synchronous replication, if required.
+	 *
+	 * Note that at this stage we have marked clog, but still show as
+	 * running in the procarray and continue to hold locks.
+	 */
+	SyncRepWaitForLSN(recptr);
 }
 
 /*
@@ -2109,4 +2126,12 @@ RecordTransactionAbortPrepared(TransactionId xid,
 	TransactionIdAbortTree(xid, nchildren, children);
 
 	END_CRIT_SECTION();
+
+	/*
+	 * Wait for synchronous replication, if required.
+	 *
+	 * Note that at this stage we have marked clog, but still show as
+	 * running in the procarray and continue to hold locks.
+	 */
+	SyncRepWaitForLSN(recptr);
 }

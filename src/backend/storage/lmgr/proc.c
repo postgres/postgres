@@ -39,6 +39,7 @@
 #include "access/xact.h"
 #include "miscadmin.h"
 #include "postmaster/autovacuum.h"
+#include "replication/syncrep.h"
 #include "storage/ipc.h"
 #include "storage/lmgr.h"
 #include "storage/pmsignal.h"
@@ -196,6 +197,7 @@ InitProcGlobal(void)
 		PGSemaphoreCreate(&(procs[i].sem));
 		procs[i].links.next = (SHM_QUEUE *) ProcGlobal->freeProcs;
 		ProcGlobal->freeProcs = &procs[i];
+		InitSharedLatch(&procs[i].waitLatch);
 	}
 
 	/*
@@ -214,6 +216,7 @@ InitProcGlobal(void)
 		PGSemaphoreCreate(&(procs[i].sem));
 		procs[i].links.next = (SHM_QUEUE *) ProcGlobal->autovacFreeProcs;
 		ProcGlobal->autovacFreeProcs = &procs[i];
+		InitSharedLatch(&procs[i].waitLatch);
 	}
 
 	/*
@@ -224,6 +227,7 @@ InitProcGlobal(void)
 	{
 		AuxiliaryProcs[i].pid = 0;		/* marks auxiliary proc as not in use */
 		PGSemaphoreCreate(&(AuxiliaryProcs[i].sem));
+		InitSharedLatch(&procs[i].waitLatch);
 	}
 
 	/* Create ProcStructLock spinlock, too */
@@ -326,6 +330,13 @@ InitProcess(void)
 		SHMQueueInit(&(MyProc->myProcLocks[i]));
 	MyProc->recoveryConflictPending = false;
 
+	/* Initialise for sync rep */
+	MyProc->waitLSN.xlogid = 0;
+	MyProc->waitLSN.xrecoff = 0;
+	MyProc->syncRepState = SYNC_REP_NOT_WAITING;
+	SHMQueueElemInit(&(MyProc->syncRepLinks));
+	OwnLatch((Latch *) &MyProc->waitLatch);
+
 	/*
 	 * We might be reusing a semaphore that belonged to a failed process. So
 	 * be careful and reinitialize its value here.	(This is not strictly
@@ -365,6 +376,7 @@ InitProcessPhase2(void)
 	/*
 	 * Arrange to clean that up at backend exit.
 	 */
+	on_shmem_exit(SyncRepCleanupAtProcExit, 0);
 	on_shmem_exit(RemoveProcFromArray, 0);
 }
 

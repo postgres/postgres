@@ -306,8 +306,11 @@ postgres: <replaceable>user</> <replaceable>database</> <replaceable>host</> <re
       location.  In addition, the standby reports the last transaction log
       position it received and wrote, the last position it flushed to disk,
       and the last position it replayed, and this information is also
-      displayed here.  The columns detailing what exactly the connection is
-      doing are only visible if the user examining the view is a superuser.
+      displayed here. If the standby's application names matches one of the
+      settings in <varname>synchronous_standby_names</> then the sync_priority
+      is shown here also, that is the order in which standbys will become
+      the synchronous standby. The columns detailing what exactly the connection
+      is doing are only visible if the user examining the view is a superuser.
       The client's hostname will be available only if
       <xref linkend="guc-log-hostname"> is set or if the user's hostname
       needed to be looked up during <filename>pg_hba.conf</filename>

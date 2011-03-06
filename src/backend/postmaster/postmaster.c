@@ -735,6 +735,9 @@ PostmasterMain(int argc, char *argv[])
 	if (max_wal_senders > 0 && wal_level == WAL_LEVEL_MINIMAL)
 		ereport(ERROR,
 				(errmsg("WAL streaming (max_wal_senders > 0) requires wal_level \"archive\" or \"hot_standby\"")));
+	if (strlen(SyncRepStandbyNames) > 0 && max_wal_senders == 0)
+		ereport(ERROR,
+				(errmsg("Synchronous replication requires WAL streaming (max_wal_senders > 0)")));
 
 	/*
 	 * Other one-time internal sanity checks can go here, if they are fast.

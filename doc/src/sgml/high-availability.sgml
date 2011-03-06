@@ -875,6 +875,209 @@ primary_conninfo = 'host=192.168.1.50 port=5432 user=foo password=foopass'
    </sect3>
 
   </sect2>
+  <sect2 id="synchronous-replication">
+   <title>Synchronous Replication</title>
+
+   <indexterm zone="high-availability">
+    <primary>Synchronous Replication</primary>
+   </indexterm>
+
+   <para>
+    <productname>PostgreSQL</> streaming replication is asynchronous by
+    default. If the primary server
+    crashes then some transactions that were committed may not have been
+    replicated to the standby server, causing data loss. The amount
+    of data loss is proportional to the replication delay at the time of
+    failover.
+   </para>
+
+   <para>
+    Synchronous replication offers the ability to confirm that all changes
+    made by a transaction have been transferred to one synchronous standby
+    server. This extends the standard level of durability
+    offered by a transaction commit. This level of protection is referred
+    to as 2-safe replication in computer science theory.
+   </para>
+
+   <para>
+    When requesting synchronous replication, each commit of a
+    write transaction will wait until confirmation is
+    received that the commit has been written to the transaction log on disk
+    of both the primary and standby server. The only possibility that data
+    can be lost is if both the primary and the standby suffer crashes at the
+    same time. This can provide a much higher level of durability, though only
+    if the sysadmin is cautious about the placement and management of the two
+    servers.  Waiting for confirmation increases the user's confidence that the
+    changes will not be lost in the event of server crashes but it also
+    necessarily increases the response time for the requesting transaction.
+    The minimum wait time is the roundtrip time between primary to standby.
+   </para>
+
+   <para>
+    Read only transactions and transaction rollbacks need not wait for
+    replies from standby servers. Subtransaction commits do not wait for
+    responses from standby servers, only top-level commits. Long
+    running actions such as data loading or index building do not wait
+    until the very final commit message. All two-phase commit actions
+    require commit waits, including both prepare and commit.
+   </para>
+
+   <sect3 id="synchronous-replication-config">
+    <title>Basic Configuration</title>
+
+   <para>
+    All parameters have useful default values, so we can enable
+    synchronous replication easily just by setting this on the primary
+
+<programlisting>
+synchronous_replication = on
+</programlisting>
+
+    When <varname>synchronous_replication</> is set, a commit will wait
+    for confirmation that the standby has received the commit record,
+    even if that takes a very long time.
+    <varname>synchronous_replication</> can be set by individual
+    users, so can be configured in the configuration file, for particular
+    users or databases, or dynamically by applications programs.
+   </para>
+
+   <para>
+    After a commit record has been written to disk on the primary the
+    WAL record is then sent to the standby. The standby sends reply
+    messages each time a new batch of WAL data is received, unless
+    <varname>wal_receiver_status_interval</> is set to zero on the standby.
+    If the standby is the first matching standby, as specified in
+    <varname>synchronous_standby_names</> on the primary, the reply
+    messages from that standby will be used to wake users waiting for
+    confirmation the commit record has been received. These parameters
+    allow the administrator to specify which standby servers should be
+    synchronous standbys. Note that the configuration of synchronous
+    replication is mainly on the master.
+   </para>
+
+   <para>
+    Users will stop waiting if a fast shutdown is requested, though the
+    server does not fully shutdown until all outstanding WAL records are
+    transferred to standby servers.
+   </para>
+
+   <para>
+    Note also that <varname>synchronous_commit</> is used when the user
+    specifies <varname>synchronous_replication</>, overriding even an
+    explicit setting of <varname>synchronous_commit</> to <literal>off</>.
+    This is because we must write WAL to disk on primary before we replicate
+    to ensure the standby never gets ahead of the primary.
+   </para>
+
+   </sect3>
+
+   <sect3 id="synchronous-replication-performance">
+    <title>Planning for Performance</title>
+
+   <para>
+    Synchronous replication usually requires carefully planned and placed
+    standby servers to ensure applications perform acceptably. Waiting
+    doesn't utilise system resources, but transaction locks continue to be
+    held until the transfer is confirmed. As a result, incautious use of
+    synchronous replication will reduce performance for database
+    applications because of increased response times and higher contention.
+   </para>
+
+   <para>
+    <productname>PostgreSQL</> allows the application developer
+    to specify the durability level required via replication. This can be
+    specified for the system overall, though it can also be specified for
+    specific users or connections, or even individual transactions.
+   </para>
+
+   <para>
+    For example, an application workload might consist of:
+    10% of changes are important customer details, while
+    90% of changes are less important data that the business can more
+    easily survive if it is lost, such as chat messages between users.
+   </para>
+
+   <para>
+    With synchronous replication options specified at the application level
+    (on the primary) we can offer sync rep for the most important changes,
+    without slowing down the bulk of the total workload. Application level
+    options are an important and practical tool for allowing the benefits of
+    synchronous replication for high performance applications.
+   </para>
+
+   <para>
+    You should consider that the network bandwidth must be higher than
+    the rate of generation of WAL data.
+    10% of changes are important customer details, while
+    90% of changes are less important data that the business can more
+    easily survive if it is lost, such as chat messages between users.
+   </para>
+
+   </sect3>
+
+   <sect3 id="synchronous-replication-ha">
+    <title>Planning for High Availability</title>
+
+   <para>
+    Commits made when synchronous_replication is set will wait until at
+    the sync standby responds. The response may never occur if the last,
+    or only, standby should crash.
+   </para>
+
+   <para>
+    The best solution for avoiding data loss is to ensure you don't lose
+    your last remaining sync standby. This can be achieved by naming multiple
+    potential synchronous standbys using <varname>synchronous_standby_names</>.
+    The first named standby will be used as the synchronous standby. Standbys
+    listed after this will takeover the role of synchronous standby if the
+    first one should fail.
+   </para>
+
+   <para>
+    When a standby first attaches to the primary, it will not yet be properly
+    synchronized. This is described as <literal>CATCHUP</> mode. Once
+    the lag between standby and primary reaches zero for the first time
+    we move to real-time <literal>STREAMING</> state.
+    The catch-up duration may be long immediately after the standby has
+    been created. If the standby is shutdown, then the catch-up period
+    will increase according to the length of time the standby has been down.
+    The standby is only able to become a synchronous standby
+    once it has reached <literal>STREAMING</> state.
+   </para>
+
+   <para>
+    If primary restarts while commits are waiting for acknowledgement, those
+    waiting transactions will be marked fully committed once the primary
+    database recovers.
+    There is no way to be certain that all standbys have received all
+    outstanding WAL data at time of the crash of the primary. Some
+    transactions may not show as committed on the standby, even though
+    they show as committed on the primary. The guarantee we offer is that
+    the application will not receive explicit acknowledgement of the
+    successful commit of a transaction until the WAL data is known to be
+    safely received by the standby.
+   </para>
+
+   <para>
+    If you really do lose your last standby server then you should disable
+    <varname>synchronous_standby_names</> and restart the primary server.
+   </para>
+
+   <para>
+    If the primary is isolated from remaining standby severs you should
+    failover to the best candidate of those other remaining standby servers.
+   </para>
+
+   <para>
+    If you need to re-create a standby server while transactions are
+    waiting, make sure that the commands to run pg_start_backup() and
+    pg_stop_backup() are run in a session with
+    synchronous_replication = off, otherwise those requests will wait
+    forever for the standby to appear.
+   </para>
+
+   </sect3>
+  </sect2>
   </sect1>
 
   <sect1 id="warm-standby-failover">

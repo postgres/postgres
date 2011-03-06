@@ -55,6 +55,7 @@
 #include "postmaster/postmaster.h"
 #include "postmaster/syslogger.h"
 #include "postmaster/walwriter.h"
+#include "replication/syncrep.h"
 #include "replication/walreceiver.h"
 #include "replication/walsender.h"
 #include "storage/bufmgr.h"
@@ -752,6 +753,14 @@ static struct config_bool ConfigureNamesBool[] =
 		},
 		&XactSyncCommit,
 		true, NULL, NULL
+	},
+	{
+		{"synchronous_replication", PGC_USERSET, WAL_REPLICATION,
+			gettext_noop("Requests synchronous replication."),
+			NULL
+		},
+		&sync_rep_mode,
+		false, NULL, NULL
 	},
 	{
 		{"zero_damaged_pages", PGC_SUSET, DEVELOPER_OPTIONS,
@@ -2714,6 +2723,16 @@ static struct config_string ConfigureNamesString[] =
 		},
 		&pgstat_temp_directory,
 		"pg_stat_tmp", assign_pgstat_temp_directory, NULL
+	},
+
+	{
+		{"synchronous_standby_names", PGC_SIGHUP, WAL_REPLICATION,
+			gettext_noop("List of potential standby names to synchronise with."),
+			NULL,
+			GUC_LIST_INPUT
+		},
+		&SyncRepStandbyNames,
+		"", assign_synchronous_standby_names, NULL
 	},
 
 	{

@@ -37,6 +37,7 @@
 #include "miscadmin.h"
 #include "pgstat.h"
 #include "replication/walsender.h"
+#include "replication/syncrep.h"
 #include "storage/bufmgr.h"
 #include "storage/fd.h"
 #include "storage/lmgr.h"
@@ -1055,7 +1056,7 @@ RecordTransactionCommit(void)
 	 * if all to-be-deleted tables are temporary though, since they are lost
 	 * anyway if we crash.)
 	 */
-	if ((wrote_xlog && XactSyncCommit) || forceSyncCommit || nrels > 0)
+	if ((wrote_xlog && XactSyncCommit) || forceSyncCommit || nrels > 0 || SyncRepRequested())
 	{
 		/*
 		 * Synchronous commit case:
@@ -1124,6 +1125,14 @@ RecordTransactionCommit(void)
 
 	/* Compute latestXid while we have the child XIDs handy */
 	latestXid = TransactionIdLatest(xid, nchildren, children);
+
+	/*
+	 * Wait for synchronous replication, if required.
+	 *
+	 * Note that at this stage we have marked clog, but still show as
+	 * running in the procarray and continue to hold locks.
+	 */
+	SyncRepWaitForLSN(XactLastRecEnd);
 
 	/* Reset XactLastRecEnd until the next transaction writes something */
 	XactLastRecEnd.xrecoff = 0;
