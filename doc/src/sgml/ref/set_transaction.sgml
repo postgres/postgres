@@ -135,6 +135,17 @@ SET SESSION CHARACTERISTICS AS TRANSACTION <replaceable class="parameter">transa
    among those listed.  This is a high-level notion of read-only that
    does not prevent all writes to disk.
   </para>
+
+  <para>
+   The <literal>DEFERRABLE</literal> transaction property has no effect
+   unless the transaction is also <literal>SERIALIZABLE</literal> and
+   <literal>READ ONLY</literal>.  When all of these properties are set on a
+   transaction, the transaction may block when first acquiring its snapshot,
+   after which it is able to run without the normal overhead of a
+   <literal>SERIALIZABLE</literal> transaction and without any risk of
+   contributing to or being cancelled by a serialization failure.  This mode
+   is well suited for long-running reports or backups.
+  </para>
  </refsect1>
 
  <refsect1>
