@@ -927,7 +927,7 @@ primary_conninfo = 'host=192.168.1.50 port=5432 user=foo password=foopass'
 
    <para>
     All parameters have useful default values, so we can enable
-    synchronous replication easily just by setting this on the primary
+    synchronous replication easily just by setting this on the primary:
 
 <programlisting>
 synchronous_replication = on
@@ -938,7 +938,7 @@ synchronous_replication = on
     even if that takes a very long time.
     <varname>synchronous_replication</> can be set by individual
     users, so can be configured in the configuration file, for particular
-    users or databases, or dynamically by applications programs.
+    users or databases, or dynamically by applications.
    </para>
 
    <para>
@@ -1008,9 +1008,6 @@ synchronous_replication = on
    <para>
     You should consider that the network bandwidth must be higher than
     the rate of generation of WAL data.
-    10% of changes are important customer details, while
-    90% of changes are less important data that the business can more
-    easily survive if it is lost, such as chat messages between users.
    </para>
 
    </sect3>
@@ -1019,7 +1016,7 @@ synchronous_replication = on
     <title>Planning for High Availability</title>
 
    <para>
-    Commits made when synchronous_replication is set will wait until at
+    Commits made when synchronous_replication is set will wait until
     the sync standby responds. The response may never occur if the last,
     or only, standby should crash.
    </para>

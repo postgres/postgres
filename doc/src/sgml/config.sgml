@@ -2092,7 +2092,7 @@ SET ENABLE_SEQSCAN TO OFF;
        </para>
        <para>
         If a standby is removed from the list of servers then it will stop
-        being the synchronous standby, allowing another to take it's place.
+        being the synchronous standby, allowing another to take its place.
         If the list is empty, synchronous replication will not be
         possible, whatever the setting of <varname>synchronous_replication</>,
         however, already waiting commits will continue to wait.
