@@ -14341,8 +14341,7 @@ postgres=# SELECT * FROM pg_xlogfile_name_offset(pg_stop_backup());
         </entry>
        <entry><type>bigint</type></entry>
        <entry>
-        Total disk space used by indexes attached to the table with the
-        specified OID or name
+        Total disk space used by indexes attached to the specified table
        </entry>
       </row>
       <row>
@@ -14353,7 +14352,7 @@ postgres=# SELECT * FROM pg_xlogfile_name_offset(pg_stop_backup());
        <entry>
         Disk space used by the specified fork (<literal>'main'</literal>,
         <literal>'fsm'</literal> or <literal>'vm'</>)
-        of the table or index with the specified OID or name
+        of the specified table or index
        </entry>
       </row>
       <row>
@@ -14378,9 +14377,8 @@ postgres=# SELECT * FROM pg_xlogfile_name_offset(pg_stop_backup());
         </entry>
        <entry><type>bigint</type></entry>
        <entry>
-        Disk space used by the table with the specified OID or name,
-        excluding indexes (but including TOAST, free space map, and visibility
-        map)
+        Disk space used by the specified table, excluding indexes
+        (but including TOAST, free space map, and visibility map)
        </entry>
       </row>
       <row>
@@ -14403,7 +14401,7 @@ postgres=# SELECT * FROM pg_xlogfile_name_offset(pg_stop_backup());
         </entry>
        <entry><type>bigint</type></entry>
        <entry>
-        Total disk space used by the table with the specified OID or name,
+        Total disk space used by the specified table,
         including all indexes and <acronym>TOAST</> data
        </entry>
       </row>
@@ -14464,6 +14462,18 @@ postgres=# SELECT * FROM pg_xlogfile_name_offset(pg_stop_backup());
    </para>
 
    <para>
+    The functions above that operate on tables or indexes accept a
+    <type>regclass</> argument, which is simply the OID of the table or index
+    in the <structname>pg_class</> system catalog.  You do not have to look up
+    the OID by hand, however, since the <type>regclass</> data type's input
+    converter will do the work for you.  Just write the table name enclosed in
+    single quotes so that it looks like a literal constant.  For compatibility
+    with the handling of ordinary <acronym>SQL</acronym> names, the string
+    will be converted to lower case unless it contains double quotes around
+    the table name.
+   </para>
+
+   <para>
     The functions shown in <xref linkend="functions-admin-dblocation"> assist
     in identifying the specific disk files associated with database objects.
    </para>
@@ -14490,7 +14500,7 @@ postgres=# SELECT * FROM pg_xlogfile_name_offset(pg_stop_backup());
         </entry>
        <entry><type>oid</type></entry>
        <entry>
-        Filenode number of the relation with the specified OID or name
+        Filenode number of the specified relation
        </entry>
       </row>
       <row>
@@ -14499,7 +14509,7 @@ postgres=# SELECT * FROM pg_xlogfile_name_offset(pg_stop_backup());
         </entry>
        <entry><type>text</type></entry>
        <entry>
-        File path name of the relation with the specified OID or name
+        File path name of the specified relation
        </entry>
       </row>
      </tbody>
@@ -14610,7 +14620,7 @@ postgres=# SELECT * FROM pg_xlogfile_name_offset(pg_stop_backup());
     can be used to read a file in a specified encoding:
 <programlisting>
 SELECT convert_from(pg_read_binary_file('file_in_utf8.txt'), 'UTF8');
-</programlisting>    
+</programlisting>
    </para>
 
    <indexterm>
