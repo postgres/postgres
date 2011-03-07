@@ -1322,7 +1322,7 @@ pg_stat_get_wal_senders(PG_FUNCTION_ARGS)
 	Tuplestorestate	   *tupstore;
 	MemoryContext		per_query_ctx;
 	MemoryContext		oldcontext;
-	int					sync_priority[max_wal_senders];
+	int					*sync_priority;
 	int					priority = 0;
 	int					sync_standby = -1;
 	int					i;
@@ -1357,6 +1357,7 @@ pg_stat_get_wal_senders(PG_FUNCTION_ARGS)
 	 * lock acquisitions and to allow us to evaluate who is the current
 	 * sync standby. This code must match the code in SyncRepReleaseWaiters().
 	 */
+	sync_priority = palloc(sizeof(int) * max_wal_senders);
 	LWLockAcquire(SyncRepLock, LW_SHARED);
 	for (i = 0; i < max_wal_senders; i++)
 	{
@@ -1456,6 +1457,7 @@ pg_stat_get_wal_senders(PG_FUNCTION_ARGS)
 
 		tuplestore_putvalues(tupstore, tupdesc, values, nulls);
 	}
+	pfree(sync_priority);
 
 	/* clean up and return the tuplestore */
 	tuplestore_donestoring(tupstore);
