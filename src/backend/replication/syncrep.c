@@ -71,7 +71,9 @@ static bool announce_next_takeover = true;
 static void SyncRepQueueInsert(void);
 
 static int SyncRepGetStandbyPriority(void);
+#ifdef USE_ASSERT_CHECKING
 static bool SyncRepQueueIsOrderedByLSN(void);
+#endif
 
 /*
  * ===========================================================
