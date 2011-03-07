@@ -214,6 +214,8 @@ static bool recoveryStopAfter;
  *
  * recoveryTargetTLI: the desired timeline that we want to end in.
  *
+ * recoveryTargetIsLatest: was the requested target timeline 'latest'?
+ *
  * expectedTLIs: an integer list of recoveryTargetTLI and the TLIs of
  * its known parents, newest first (so recoveryTargetTLI is always the
  * first list member).	Only these TLIs are expected to be seen in the WAL
@@ -227,6 +229,7 @@ static bool recoveryStopAfter;
  * to decrease.
  */
 static TimeLineID recoveryTargetTLI;
+static bool recoveryTargetIsLatest = false;
 static List *expectedTLIs;
 static TimeLineID curFileTLI;
 
@@ -637,6 +640,7 @@ static bool ValidXLOGHeader(XLogPageHeader hdr, int emode);
 static XLogRecord *ReadCheckpointRecord(XLogRecPtr RecPtr, int whichChkpt);
 static List *readTimeLineHistory(TimeLineID targetTLI);
 static bool existsTimeLineHistory(TimeLineID probeTLI);
+static bool rescanLatestTimeLine(void);
 static TimeLineID findNewestTimeLine(TimeLineID startTLI);
 static void writeTimeLineHistory(TimeLineID newTLI, TimeLineID parentTLI,
 					 TimeLineID endTLI,
@@ -4254,6 +4258,62 @@ existsTimeLineHistory(TimeLineID probeTLI)
 }
 
 /*
+ * Scan for new timelines that might have appeared in the archive since we
+ * started recovery.
+ *
+ * If there are any, the function changes recovery target TLI to the latest
+ * one and returns 'true'.
+ */
+static bool
+rescanLatestTimeLine(void)
+{
+	TimeLineID newtarget;
+	newtarget = findNewestTimeLine(recoveryTargetTLI);
+	if (newtarget != recoveryTargetTLI)
+	{
+		/*
+		 * Determine the list of expected TLIs for the new TLI
+		 */
+		List *newExpectedTLIs;
+		newExpectedTLIs = readTimeLineHistory(newtarget);
+
+		/*
+		 * If the current timeline is not part of the history of the
+		 * new timeline, we cannot proceed to it.
+		 *
+		 * XXX This isn't foolproof: The new timeline might have forked from
+		 * the current one, but before the current recovery location. In that
+		 * case we will still switch to the new timeline and proceed replaying
+		 * from it even though the history doesn't match what we already
+		 * replayed. That's not good. We will likely notice at the next online
+		 * checkpoint, as the TLI won't match what we expected, but it's
+		 * not guaranteed. The admin needs to make sure that doesn't happen.
+		 */
+		if (!list_member_int(newExpectedTLIs,
+							 (int) recoveryTargetTLI))
+			ereport(LOG,
+					(errmsg("new timeline %u is not a child of database system timeline %u",
+							newtarget,
+							ThisTimeLineID)));
+		else
+		{
+			/* Switch target */
+			recoveryTargetTLI = newtarget;
+			list_free(expectedTLIs);
+			expectedTLIs = newExpectedTLIs;
+
+			XLogCtl->RecoveryTargetTLI = recoveryTargetTLI;
+
+			ereport(LOG,
+					(errmsg("new target timeline is %u",
+							recoveryTargetTLI)));
+			return true;
+		}
+	}
+	return false;
+}
+
+/*
  * Find the newest existing timeline, assuming that startTLI exists.
  *
  * Note: while this is somewhat heuristic, it does positively guarantee
@@ -5327,11 +5387,13 @@ readRecoveryCommandFile(void)
 						(errmsg("recovery target timeline %u does not exist",
 								rtli)));
 			recoveryTargetTLI = rtli;
+			recoveryTargetIsLatest = false;
 		}
 		else
 		{
 			/* We start the "latest" search from pg_control's timeline */
 			recoveryTargetTLI = findNewestTimeLine(recoveryTargetTLI);
+			recoveryTargetIsLatest = true;
 		}
 	}
 
@@ -10032,13 +10094,24 @@ retry:
 					{
 						/*
 						 * We've exhausted all options for retrieving the
-						 * file. Retry ...
+						 * file. Retry.
 						 */
 						failedSources = 0;
 
 						/*
-						 * ... but sleep first if it hasn't been long since
-						 * last attempt.
+						 * Before we sleep, re-scan for possible new timelines
+						 * if we were requested to recover to the latest
+						 * timeline.
+						 */
+						if (recoveryTargetIsLatest)
+						{
+							if (rescanLatestTimeLine())
+								continue;
+						}
+
+						/*
+						 * If it hasn't been long since last attempt, sleep
+						 * to avoid busy-waiting.
 						 */
 						now = (pg_time_t) time(NULL);
 						if ((now - last_fail_time) < 5)

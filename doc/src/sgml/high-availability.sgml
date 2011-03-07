@@ -660,7 +660,10 @@ protocol to make nodes agree on a serializable transactional order.
     command file <filename>recovery.conf</> in the standby's cluster data
     directory, and turn on <varname>standby_mode</>. Set
     <varname>restore_command</> to a simple command to copy files from
-    the WAL archive.
+    the WAL archive. If you plan to have multiple standby servers for high
+    availability purposes, set <varname>recovery_target_timeline</> to
+    <literal>latest</>, to make the standby server follow the timeline change
+    that occurs at failover to another standby.
    </para>
 
    <note>

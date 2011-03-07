@@ -240,7 +240,9 @@ restore_command = 'copy "C:\\server\\archivedir\\%f" "%p"'  # Windows
        <para>
         Specifies recovering into a particular timeline.  The default is
         to recover along the same timeline that was current when the
-        base backup was taken.  You only need to set this parameter
+        base backup was taken. Setting this to <literal>latest</> recovers
+        to the latest timeline found in the archive, which is useful in
+        a standby server. Other than that you only need to set this parameter
         in complex re-recovery situations, where you need to return to
         a state that itself was reached after a point-in-time recovery.
         See <xref linkend="backup-timelines"> for discussion.
