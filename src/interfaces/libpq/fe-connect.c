@@ -2593,7 +2593,7 @@ error_return:
  *
  * The argument is a connection that's been started, but not completed.
  */
-PGPing
+static PGPing
 internal_ping(PGconn *conn)
 {
 	/* Say "no attempt" if we never got to PQconnectPoll */
