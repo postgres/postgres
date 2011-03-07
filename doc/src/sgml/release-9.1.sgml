@@ -196,7 +196,14 @@
 
        <listitem>
         <para>
-         <emphasis>Implement a truly serializable isolation level</emphasis>
+         <emphasis>Implement Serializable Snapshot Isolation, in order to
+         provide a more robust serializable transaction mode.</emphasis>
+        </para>
+        <para>
+         In previous releases, the REPEATABLE READ and SERIALIZABLE isolation
+         levels were identical.  The historical behavior of REPEATABLE READ is
+         unchanged in this release, but SERIALIZABLE now provides stronger
+         guarantees.
         </para>
        </listitem>
 
