@@ -1157,9 +1157,7 @@ PLy_function_handler(FunctionCallInfo fcinfo, PLyProcedure *proc)
 				PLy_function_delete_args(proc);
 
 				if (has_error)
-					ereport(ERROR,
-							(errcode(ERRCODE_DATA_EXCEPTION),
-						  errmsg("error fetching next item from iterator")));
+					PLy_elog(ERROR, "error fetching next item from iterator");
 
 				/* Disconnect from the SPI manager before returning */
 				if (SPI_finish() != SPI_OK_FINISH)
