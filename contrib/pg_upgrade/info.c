@@ -60,8 +60,9 @@ gen_db_file_maps(DbInfo *old_db, DbInfo *new_db,
 		 *	cannot check relation names when upgrading from pre-8.4.
 		 */
 		if (strcmp(old_rel->nspname, new_rel->nspname) != 0 ||
-			(GET_MAJOR_VERSION(old_cluster.major_version) >= 804 &&
-		     strcmp(old_rel->relname, new_rel->relname) != 0))
+			((GET_MAJOR_VERSION(old_cluster.major_version) >= 804 ||
+			  strcmp(old_rel->nspname, "pg_toast") != 0) &&
+			 strcmp(old_rel->relname, new_rel->relname) != 0))
 			pg_log(PG_FATAL, "Mismatch of relation names: database \"%s\", "
 				"old rel %s.%s, new rel %s.%s\n",
 				old_db->db_name, old_rel->nspname, old_rel->relname,
