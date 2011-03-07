@@ -36,37 +36,38 @@
 static void
 do_util_elog(int level, SV *msg)
 {
-    MemoryContext oldcontext = CurrentMemoryContext;
-	char *cmsg = NULL;
+	MemoryContext oldcontext = CurrentMemoryContext;
+	char	   * volatile cmsg = NULL;
 
-    PG_TRY();
-    {
+	PG_TRY();
+	{
 		cmsg = sv2cstr(msg);
-        elog(level, "%s", cmsg);
+		elog(level, "%s", cmsg);
 		pfree(cmsg);
-    }
-    PG_CATCH();
-    {
-        ErrorData  *edata;
+	}
+	PG_CATCH();
+	{
+		ErrorData  *edata;
 
-        /* Must reset elog.c's state */
-        MemoryContextSwitchTo(oldcontext);
-        edata = CopyErrorData();
-        FlushErrorState();
+		/* Must reset elog.c's state */
+		MemoryContextSwitchTo(oldcontext);
+		edata = CopyErrorData();
+		FlushErrorState();
 
 		if (cmsg)
 			pfree(cmsg);
 
-        /* Punt the error to Perl */
-        croak("%s", edata->message);
-    }
-    PG_END_TRY();
+		/* Punt the error to Perl */
+		croak("%s", edata->message);
+	}
+	PG_END_TRY();
 }
 
 static text *
 sv2text(SV *sv)
 {
-	char *str = sv2cstr(sv);
+	char	   *str = sv2cstr(sv);
+
 	return cstring_to_text(str);
 }
 

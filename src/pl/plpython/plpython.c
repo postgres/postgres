@@ -1516,7 +1516,7 @@ static PLyProcedure *
 PLy_procedure_get(Oid fn_oid, bool is_trigger)
 {
 	HeapTuple	procTup;
-	PLyProcedureEntry *entry;
+	PLyProcedureEntry * volatile entry;
 	bool		found;
 
 	procTup = SearchSysCache1(PROCOID, ObjectIdGetDatum(fn_oid));
@@ -3234,7 +3234,7 @@ PLy_spi_prepare(PyObject *self, PyObject *args)
 	void	   *tmpplan;
 	volatile MemoryContext oldcontext;
 	volatile ResourceOwner oldowner;
-	int			nargs;
+	volatile int nargs;
 
 	if (!PyArg_ParseTuple(args, "s|O", &query, &list))
 		return NULL;
@@ -3470,7 +3470,7 @@ PLy_spi_execute_plan(PyObject *ob, PyObject *list, long limit)
 
 	PG_TRY();
 	{
-		char	   *nulls;
+		char  * volatile nulls;
 		volatile int j;
 
 		if (nargs > 0)
