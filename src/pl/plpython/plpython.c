@@ -4381,8 +4381,13 @@ PLy_elog(int elevel, const char *fmt,...)
 	int			position = 0;
 
 	PyErr_Fetch(&exc, &val, &tb);
-	if (exc != NULL && PyErr_GivenExceptionMatches(val, PLy_exc_spi_error))
-		PLy_get_spi_error_data(val, &detail, &hint, &query, &position);
+	if (exc != NULL)
+	{
+		if (PyErr_GivenExceptionMatches(val, PLy_exc_spi_error))
+			PLy_get_spi_error_data(val, &detail, &hint, &query, &position);
+		else if (PyErr_GivenExceptionMatches(val, PLy_exc_fatal))
+			elevel = FATAL;
+	}
 	PyErr_Restore(exc, val, tb);
 
 	xmsg = PLy_traceback(&xlevel);
