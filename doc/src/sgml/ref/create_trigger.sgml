@@ -28,6 +28,13 @@ CREATE [ CONSTRAINT ] TRIGGER <replaceable class="PARAMETER">name</replaceable> 
     [ FOR [ EACH ] { ROW | STATEMENT } ]
     [ WHEN ( <replaceable class="parameter">condition</replaceable> ) ]
     EXECUTE PROCEDURE <replaceable class="PARAMETER">function_name</replaceable> ( <replaceable class="PARAMETER">arguments</replaceable> )
+
+<phrase>where <replaceable class="parameter">event</replaceable> can be one of:</phrase>
+
+    INSERT
+    UPDATE [ OF <replaceable class="parameter">column_name</replaceable> [, ... ] ]
+    DELETE
+    TRUNCATE
 </synopsis>
  </refsynopsisdiv>
 
@@ -212,24 +219,24 @@ CREATE [ CONSTRAINT ] TRIGGER <replaceable class="PARAMETER">name</replaceable> 
     <term><replaceable class="parameter">event</replaceable></term>
     <listitem>
      <para>
-      One of <command>INSERT</command>, <command>UPDATE</command>,
-      <command>DELETE</command>, or <command>TRUNCATE</command>;
+      One of <literal>INSERT</literal>, <literal>UPDATE</literal>,
+      <literal>DELETE</literal>, or <literal>TRUNCATE</literal>;
       this specifies the event that will fire the trigger. Multiple
       events can be specified using <literal>OR</literal>.
      </para>
 
      <para>
-      For <command>UPDATE</command> triggers, it is possible to
+      For <literal>UPDATE</literal> events, it is possible to
       specify a list of columns using this syntax:
 <synopsis>
 UPDATE OF <replaceable>column_name1</replaceable> [, <replaceable>column_name2</replaceable> ... ]
 </synopsis>
       The trigger will only fire if at least one of the listed columns
-      is mentioned as a target of the update.
+      is mentioned as a target of the <command>UPDATE</> command.
      </para>
 
      <para>
-      <literal>UPDATE INSTEAD OF</> triggers do not support lists of columns.
+      <literal>INSTEAD OF UPDATE</> events do not support lists of columns.
      </para>
     </listitem>
    </varlistentry>
@@ -365,8 +372,8 @@ UPDATE OF <replaceable>column_name1</replaceable> [, <replaceable>column_name2</
   </para>
 
   <para>
-   A column-specific trigger (<literal>FOR UPDATE OF
-   <replaceable>column_name</replaceable></literal>) will fire when any
+   A column-specific trigger (one defined using the <literal>UPDATE OF
+   <replaceable>column_name</replaceable></literal> syntax) will fire when any
    of its columns are listed as targets in the <command>UPDATE</>
    command's <literal>SET</> list.  It is possible for a column's value
    to change even when the trigger is not fired, because changes made to the
