@@ -3245,14 +3245,13 @@ pgstat_get_tab_entry(PgStat_StatDBEntry *dbentry, Oid tableoid, bool create)
 		result->changes_since_analyze = 0;
 		result->blocks_fetched = 0;
 		result->blocks_hit = 0;
-
 		result->vacuum_timestamp = 0;
-		result->autovac_vacuum_timestamp = 0;
-		result->analyze_timestamp = 0;
-		result->autovac_analyze_timestamp = 0;
 		result->vacuum_count = 0;
+		result->autovac_vacuum_timestamp = 0;
 		result->autovac_vacuum_count = 0;
+		result->analyze_timestamp = 0;
 		result->analyze_count = 0;
+		result->autovac_analyze_timestamp = 0;
 		result->autovac_analyze_count = 0;
 	}
 
@@ -3928,9 +3927,13 @@ pgstat_recv_tabstat(PgStat_MsgTabstat *msg, int len)
 			tabentry->blocks_hit = tabmsg->t_counts.t_blocks_hit;
 
 			tabentry->vacuum_timestamp = 0;
+			tabentry->vacuum_count = 0;
 			tabentry->autovac_vacuum_timestamp = 0;
+			tabentry->autovac_vacuum_count = 0;
 			tabentry->analyze_timestamp = 0;
+			tabentry->analyze_count = 0;
 			tabentry->autovac_analyze_timestamp = 0;
+			tabentry->autovac_analyze_count = 0;
 		}
 		else
 		{
@@ -4149,9 +4152,11 @@ pgstat_recv_resetsinglecounter(PgStat_MsgResetsinglecounter *msg, int len)
 
 	/* Remove object if it exists, ignore it if not */
 	if (msg->m_resettype == RESET_TABLE)
-		(void) hash_search(dbentry->tables, (void *) &(msg->m_objectid), HASH_REMOVE, NULL);
+		(void) hash_search(dbentry->tables, (void *) &(msg->m_objectid),
+						   HASH_REMOVE, NULL);
 	else if (msg->m_resettype == RESET_FUNCTION)
-		(void) hash_search(dbentry->functions, (void *) &(msg->m_objectid), HASH_REMOVE, NULL);
+		(void) hash_search(dbentry->functions, (void *) &(msg->m_objectid),
+						   HASH_REMOVE, NULL);
 }
 
 /* ----------
