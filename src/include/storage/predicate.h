@@ -36,6 +36,8 @@ extern int	max_predicate_locks_per_xact;
 extern void InitPredicateLocks(void);
 extern Size PredicateLockShmemSize(void);
 
+extern void CheckPointPredicate(void);
+
 /* predicate lock reporting */
 extern bool PageIsPredicateLocked(const Relation relation, const BlockNumber blkno);
 

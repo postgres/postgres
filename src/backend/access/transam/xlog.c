@@ -48,6 +48,7 @@
 #include "storage/ipc.h"
 #include "storage/latch.h"
 #include "storage/pmsignal.h"
+#include "storage/predicate.h"
 #include "storage/procarray.h"
 #include "storage/reinit.h"
 #include "storage/smgr.h"
@@ -7875,6 +7876,7 @@ CheckPointGuts(XLogRecPtr checkPointRedo, int flags)
 	CheckPointCLOG();
 	CheckPointSUBTRANS();
 	CheckPointMultiXact();
+	CheckPointPredicate();
 	CheckPointRelationMap();
 	CheckPointBuffers(flags);	/* performs all required fsyncs */
 	/* We deliberately delay 2PC checkpointing as long as possible */
