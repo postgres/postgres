@@ -578,6 +578,18 @@ TransactionIdIsActive(TransactionId xid)
  * This is also used to determine where to truncate pg_subtrans.  allDbs
  * must be TRUE for that case, and ignoreVacuum FALSE.
  *
+ * Note: it's possible for the calculated value to move backwards on repeated
+ * calls. The calculated value is conservative, so that anything older is
+ * definitely not considered as running by anyone anymore, but the exact
+ * value calculated depends on a number of things. For example, if allDbs is
+ * TRUE and there are no transactions running in the current database,
+ * GetOldestXmin() returns latestCompletedXid. If a transaction begins after
+ * that, its xmin will include in-progress transactions in other databases
+ * that started earlier, so another call will return an lower value. The
+ * return value is also adjusted with vacuum_defer_cleanup_age, so increasing
+ * that setting on the fly is an easy way to have GetOldestXmin() move
+ * backwards.
+ *
  * Note: we include all currently running xids in the set of considered xids.
  * This ensures that if a just-started xact has not yet set its snapshot,
  * when it does set the snapshot it cannot set xmin less than what we compute.
