@@ -21,7 +21,7 @@
 CREATE COLLATION <replaceable>name</replaceable> (
     [ LOCALE = <replaceable>locale</replaceable>, ]
     [ LC_COLLATE = <replaceable>lc_collate</replaceable>, ]
-    [ LC_CTYPE = <replaceable>lc_ctype</replaceable>, ]
+    [ LC_CTYPE = <replaceable>lc_ctype</replaceable> ]
 )
 CREATE COLLATION <replaceable>name</replaceable> FROM <replaceable>existing_collation</replaceable>
 </synopsis>
@@ -32,7 +32,8 @@ CREATE COLLATION <replaceable>name</replaceable> FROM <replaceable>existing_coll
 
   <para>
    <command>CREATE COLLATION</command> defines a new collation using
-   the specified operating system locales or from an existing collation.
+   the specified operating system locale settings,
+   or by copying an existing collation.
  </para>
 
   <para>
@@ -53,22 +54,10 @@ CREATE COLLATION <replaceable>name</replaceable> FROM <replaceable>existing_coll
       <para>
        The name of the collation. The collation name can be
        schema-qualified. If it is not, the collation is defined in the
-       current schema. The collation name must be unique within a
+       current schema. The collation name must be unique within that
        schema.  (The system catalogs can contain collations with the
-       same name for other encodings, but these are not usable if the
+       same name for other encodings, but these are ignored if the
        database encoding does not match.)
-      </para>
-     </listitem>
-    </varlistentry>
-
-    <varlistentry>
-     <term><replaceable>existing_collation</replaceable></term>
-
-     <listitem>
-      <para>
-       The name of an existing collation to copy.  The new collation
-       will have the same properties as the existing one, but they
-       will become independent objects.
       </para>
      </listitem>
     </varlistentry>
@@ -80,7 +69,7 @@ CREATE COLLATION <replaceable>name</replaceable> FROM <replaceable>existing_coll
       <para>
        This is a shortcut for setting <symbol>LC_COLLATE</symbol>
        and <symbol>LC_CTYPE</symbol> at once.  If you specify this,
-       you cannot specify either of the other parameters.
+       you cannot specify either of those parameters.
       </para>
      </listitem>
     </varlistentry>
@@ -109,6 +98,18 @@ CREATE COLLATION <replaceable>name</replaceable> FROM <replaceable>existing_coll
        must be applicable to the current database encoding.
        (See <xref linkend="sql-createdatabase"> for the precise
        rules.)
+      </para>
+     </listitem>
+    </varlistentry>
+
+    <varlistentry>
+     <term><replaceable>existing_collation</replaceable></term>
+
+     <listitem>
+      <para>
+       The name of an existing collation to copy.  The new collation
+       will have the same properties as the existing one, but they
+       will become independent objects.
       </para>
      </listitem>
     </varlistentry>
@@ -145,8 +146,8 @@ CREATE COLLATION french (LOCALE = 'fr_FR.utf8');
 <programlisting>
 CREATE COLLATION german FROM "de_DE";
 </programlisting>
-   This can be convenient to be able to use operating-system
-   independent collation names in applications.
+   This can be convenient to be able to use operating-system-independent
+   collation names in applications.
   </para>
  </refsect1>
 

@@ -94,7 +94,7 @@ DROP COLLATION german;
   <para>
    The <command>DROP COLLATION</command> command conforms to the
    <acronym>SQL</acronym> standard, apart from the <literal>IF
-   EXISTS</> option, which is a <productname>PostgreSQL</> extension..
+   EXISTS</> option, which is a <productname>PostgreSQL</> extension.
   </para>
  </refsect1>
 

@@ -1128,8 +1128,8 @@
       <entry><type>oid</type></entry>
       <entry><literal><link linkend="catalog-pg-collation"><structname>pg_collation</structname></link>.oid</literal></entry>
       <entry>
-       The defined collation of the column, zero if the column does
-       not have a collatable type.
+       The defined collation of the column, or zero if the column is
+       not of a collatable datatype.
       </entry>
      </row>
 
@@ -2088,7 +2088,7 @@
    The catalog <structname>pg_collation</structname> describes the
    available collations, which are essentially mappings from an SQL
    name to operating system locale categories.
-   See <xref linkend="locale"> for more information.
+   See <xref linkend="collation"> for more information.
   </para>
 
   <table>
@@ -2132,38 +2132,48 @@
       <entry><structfield>collencoding</structfield></entry>
       <entry><type>int4</type></entry>
       <entry></entry>
-      <entry>
-       Encoding to which the collation is applicable.  SQL-level
-       commands such as <command>ALTER COLLATION</command> only
-       operate on the collation belonging to the current database
-       encoding.  But this field is necessary because when this
-       catalog is initialized, the encoding of future databases is not
-       yet known.  For practical purposes, collations that do not
-       match the current database encoding should be considered
-       invalid or invisible.  It could be useful, however, to create
-       collations whose encoding does not match the database encoding
-       in template databases.  This would currently have to be done
-       manually.
-      </entry>
+      <entry>Encoding to which the collation is applicable</entry>
      </row>
 
      <row>
       <entry><structfield>collcollate</structfield></entry>
       <entry><type>name</type></entry>
       <entry></entry>
-      <entry>LC_COLLATE for this collation object</entry>
+      <entry><symbol>LC_COLLATE</> for this collation object</entry>
      </row>
 
      <row>
       <entry><structfield>collctype</structfield></entry>
       <entry><type>name</type></entry>
       <entry></entry>
-      <entry>LC_CTYPE for this collation object</entry>
+      <entry><symbol>LC_CTYPE</> for this collation object</entry>
      </row>
     </tbody>
    </tgroup>
   </table>
 
+  <para>
+   Note that the unique key on this catalog is (<structfield>collname</>,
+   <structfield>collencoding</>, <structfield>collnamespace</>) not just
+   (<structfield>collname</>, <structfield>collnamespace</>).
+   <productname>PostgreSQL</productname> generally ignores all
+   collations not belonging to the current database's encoding; therefore
+   it is sufficient to use a qualified SQL name
+   (<replaceable>schema</>.<replaceable>name</>) to identify a collation,
+   even though this is not unique according to the catalog definition.
+   The current database's encoding is automatically used as an additional
+   lookup key.  The reason for defining the catalog this way is that
+   <application>initdb</> fills it in at cluster initialization time with
+   entries for all locales available on the system, so it must be able to
+   hold entries for all encodings that might ever be used in the cluster.
+  </para>
+
+  <para>
+   In the <literal>template0</> database, it could be useful to create
+   collations whose encoding does not match the database encoding,
+   since they could match the encodings of databases later cloned from
+   <literal>template0</>.  This would currently have to be done manually.
+  </para>
  </sect1>
 
  <sect1 id="catalog-pg-conversion">
@@ -6123,12 +6133,11 @@
       <entry><literal><link linkend="catalog-pg-collation"><structname>pg_collation</structname></link>.oid</literal></entry>
       <entry><para>
        <structfield>typcollation</structfield> specifies the collation
-       of the type.  If a type does not support collations, this will
-       be zero, collation analysis at parse time is skipped, and
-       the use of <literal>COLLATE</literal> clauses with the type is
-       invalid.  A base type that supports collations will have
-       <symbol>DEFAULT_COLLATION_OID</symbol> here.  A domain can have
-       another collation OID, if one was defined for the domain.
+       of the type.  If the type does not support collations, this will
+       be zero.  A base type that supports collations will have
+       <symbol>DEFAULT_COLLATION_OID</symbol> here.  A domain over a
+       collatable type can have some other collation OID, if one was defined
+       for the domain.
       </para></entry>
      </row>
 

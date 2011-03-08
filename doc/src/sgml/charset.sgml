@@ -15,6 +15,8 @@
       Using the locale features of the operating system to provide
       locale-specific collation order, number formatting, translated
       messages, and other aspects.
+      This is covered in <xref linkend="locale"> and
+      <xref linkend="collation">.
      </para>
     </listitem>
 
@@ -23,6 +25,7 @@
       Providing a number of different character sets to support storing text
       in all kinds of languages, and providing character set translation
       between client and server.
+      This is covered in <xref linkend="multibyte">.
      </para>
     </listitem>
    </itemizedlist>
@@ -138,9 +141,12 @@ initdb --locale=sv_SE
     fixed when the database is created.  You can use different settings
     for different databases, but once a database is created, you cannot
     change them for that database anymore. <literal>LC_COLLATE</literal>
-    and <literal>LC_CTYPE</literal> are these type of categories.  They affect
+    and <literal>LC_CTYPE</literal> are these categories.  They affect
     the sort order of indexes, so they must be kept fixed, or indexes on
-    text columns would become corrupt.  The default values for these
+    text columns would become corrupt.
+    (But you can alleviate this restriction using collations, as discussed
+    in <xref linkend="collation">.)
+    The default values for these
     categories are determined when <command>initdb</command> is run, and
     those values are used when new databases are created, unless
     specified otherwise in the <command>CREATE DATABASE</command> command.
@@ -153,7 +159,7 @@ initdb --locale=sv_SE
     linkend="runtime-config-client-format"> for details).  The values
     that are chosen by <command>initdb</command> are actually only written
     into the configuration file <filename>postgresql.conf</filename> to
-    serve as defaults when the server is started.  If you disable these
+    serve as defaults when the server is started.  If you remove these
     assignments from <filename>postgresql.conf</filename> then the
     server will inherit the settings from its execution environment.
    </para>
@@ -308,17 +314,17 @@ initdb --locale=sv_SE
   <title>Collation Support</title>
 
   <para>
-   The collation support allows specifying the sort order and certain
-   other locale aspects of data per column or per operation at run
-   time.  This alleviates the problem that the
+   The collation feature allows specifying the sort order and certain
+   other locale aspects of data per-column, or even per-operation.
+   This alleviates the restriction that the
    <symbol>LC_COLLATE</symbol> and <symbol>LC_CTYPE</symbol> settings
    of a database cannot be changed after its creation.
   </para>
 
   <note>
    <para>
-    The collation support feature is currently only known to work on
-    Linux/glibc and Mac OS X platforms.
+    Collation support is currently only known to work on
+    Linux (glibc) and Mac OS X platforms.
    </para>
   </note>
 
@@ -326,48 +332,51 @@ initdb --locale=sv_SE
    <title>Concepts</title>
 
    <para>
-    Conceptually, every datum of a collatable data type has a
-    collation.  (Collatable data types in the base system are
+    Conceptually, every expression of a collatable data type has a
+    collation.  (The built-in collatable data types are
     <type>text</type>, <type>varchar</type>, and <type>char</type>.
     User-defined base types can also be marked collatable.)  If the
-    datum is a column reference, the collation of the datum is the
-    defined collation of the column.  If the datum is a constant, the
+    expression is a column reference, the collation of the expression is the
+    defined collation of the column.  If the expression is a constant, the
     collation is the default collation of the data type of the
-    constant.  The collation of more complex expressions is derived
-    from the input collations as described below.
+    constant.  The collation of a more complex expression is derived
+    from the collations of its inputs, as described below.
    </para>
 
    <para>
-    The collation of a datum can also be the <quote>default</quote>
-    collation, which reverts to the locale settings defined for the
-    database.  In some cases, a datum can also have no known
+    The collation of an expression can be the <quote>default</quote>
+    collation, which means the locale settings defined for the
+    database.  In some cases, an expression can also have no known
     collation.  In such cases, ordering operations and other
     operations that need to know the collation will fail.
    </para>
 
    <para>
     When the database system has to perform an ordering or a
-    comparison, it considers the collation of the input data.  This
-    happens in two situations: an <literal>ORDER BY</literal> clause
-    and a function or operator call such as <literal>&lt;</literal>.
-    The collation to apply for the performance of the <literal>ORDER
-    BY</literal> clause is simply the collation of the sort key.  The
-    collation to apply for a function or operator call is derived from
-    the arguments, as described below.  Additionally, collations are
-    taken into account by functions that convert between lower and
-    upper case letters, that is, <function>lower</function>,
-    <function>upper</function>, and <function>initcap</function>.
+    comparison, it uses the collation of the input expression.  This
+    happens, for example, with <literal>ORDER BY</literal> clauses
+    and function or operator calls such as <literal>&lt;</literal>.
+    The collation to apply for an <literal>ORDER BY</literal> clause
+    is simply the collation of the sort key.  The collation to apply for a
+    function or operator call is derived from the arguments, as described
+    below.  In addition to comparison operators, collations are taken into
+    account by functions that convert between lower and upper case
+    letters, such as <function>lower</>, <function>upper</>, and
+    <function>initcap</>.
    </para>
 
    <para>
-    For a function call, the collation that is derived from combining
-    the argument collations is both used for performing any
-    comparisons or ordering and for the collation of the function
-    result, if the result type is collatable.
+    For a function or operator call, the collation that is derived by
+    examining the argument collations is used at run time for performing
+    the specified operation.  If the result of the function or operator
+    call is of a collatable data type, the collation is also used at parse
+    time as the defined collation of the function or operator expression,
+    in case there is a surrounding expression that requires knowledge of
+    its collation.
    </para>
 
    <para>
-    The <firstterm>collation derivation</firstterm> of a datum can be
+    The <firstterm>collation derivation</firstterm> of an expression can be
     implicit or explicit.  This distinction affects how collations are
     combined when multiple different collations appear in an
     expression.  An explicit collation derivation arises when a
@@ -379,9 +388,9 @@ initdb --locale=sv_SE
     <orderedlist>
      <listitem>
       <para>
-       If any input item has an explicit collation derivation, then
-       all explicitly derived collations among the input items must be
-       the same, otherwise an error is raised.  If an explicitly
+       If any input expression has an explicit collation derivation, then
+       all explicitly derived collations among the input expressions must be
+       the same, otherwise an error is raised.  If any explicitly
        derived collation is present, that is the result of the
        collation combination.
       </para>
@@ -389,8 +398,8 @@ initdb --locale=sv_SE
 
      <listitem>
       <para>
-       Otherwise, all input items must have the same implicit
-       collation derivation or the default collation.  If an
+       Otherwise, all input expressions must have the same implicit
+       collation derivation or the default collation.  If any
        implicitly derived collation is present, that is the result of
        the collation combination.  Otherwise, the result is the
        default collation.
@@ -428,19 +437,19 @@ SELECT a || ('foo' COLLATE "y") FROM test1;
     A collation is an SQL schema object that maps an SQL name to
     operating system locales.  In particular, it maps to a combination
     of <symbol>LC_COLLATE</symbol> and <symbol>LC_CTYPE</symbol>.  (As
-    the name would indicate, the main purpose of a collation is to set
+    the name would suggest, the main purpose of a collation is to set
     <symbol>LC_COLLATE</symbol>, which controls the sort order.  But
     it is rarely necessary in practice to have an
     <symbol>LC_CTYPE</symbol> setting that is different from
     <symbol>LC_COLLATE</symbol>, so it is more convenient to collect
     these under one concept than to create another infrastructure for
-    setting <symbol>LC_CTYPE</symbol> per datum.)  Also, a collation
-    is tied to a character encoding.  The same collation name may
-    exist for different encodings.
+    setting <symbol>LC_CTYPE</symbol> per expression.)  Also, a collation
+    is tied to a character set encoding (see <xref linkend="multibyte">).
+    The same collation name may exist for different encodings.
    </para>
 
    <para>
-    When a database system is initialized, <command>initdb</command>
+    When a database cluster is initialized, <command>initdb</command>
     populates the system catalog <literal>pg_collation</literal> with
     collations based on all the locales it finds on the operating
     system at the time.  For example, the operating system might
@@ -463,8 +472,19 @@ SELECT a || ('foo' COLLATE "y") FROM test1;
     collation may be created using
     the <xref linkend="sql-createcollation"> command.  That command
     can also be used to create a new collation from an existing
-    collation, which can be useful to be able to use operating-system
-    independent collation names in applications.
+    collation, which can be useful to be able to use
+    operating-system-independent collation names in applications.
+   </para>
+
+   <para>
+    Within any particular database, only collations that use that
+    database's encoding are of interest.  Other entries in
+    <literal>pg_collation</literal> are ignored.  Thus, a stripped collation
+    name such as <literal>de_DE</literal> can be considered unique
+    within a given database even though it would not be unique globally.
+    Use of the stripped collation names is recommendable, since it will
+    make one less thing you need to change if you decide to change to
+    another database encoding.
    </para>
   </sect2>
  </sect1>
