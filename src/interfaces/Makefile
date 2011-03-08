@@ -17,3 +17,4 @@ SUBDIRS = libpq ecpg
 $(recurse)
 
 all-ecpg-recurse: all-libpq-recurse
+install-ecpg-recurse: install-libpq-recurse
