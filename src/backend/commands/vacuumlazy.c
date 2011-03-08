@@ -349,6 +349,7 @@ lazy_scan_heap(Relation onerel, LVRelStats *vacrelstats,
 		Size		freespace;
 		bool		all_visible_according_to_vm = false;
 		bool		all_visible;
+		bool		has_dead_tuples;
 
 		/*
 		 * Skip pages that don't require vacuuming according to the visibility
@@ -500,6 +501,7 @@ lazy_scan_heap(Relation onerel, LVRelStats *vacrelstats,
 		 * requiring freezing.
 		 */
 		all_visible = true;
+		has_dead_tuples = false;
 		nfrozen = 0;
 		hastup = false;
 		prev_dead_count = vacrelstats->num_dead_tuples;
@@ -640,6 +642,7 @@ lazy_scan_heap(Relation onerel, LVRelStats *vacrelstats,
 				HeapTupleHeaderAdvanceLatestRemovedXid(tuple.t_data,
 											 &vacrelstats->latestRemovedXid);
 				tups_vacuumed += 1;
+				has_dead_tuples = true;
 			}
 			else
 			{
@@ -702,9 +705,22 @@ lazy_scan_heap(Relation onerel, LVRelStats *vacrelstats,
 			PageSetAllVisible(page);
 			SetBufferCommitInfoNeedsSave(buf);
 		}
-		else if (PageIsAllVisible(page) && !all_visible)
+		/*
+		 * It's possible for the value returned by GetOldestXmin() to move
+		 * backwards, so it's not wrong for us to see tuples that appear to
+		 * not be visible to everyone yet, while PD_ALL_VISIBLE is already
+		 * set. The real safe xmin value never moves backwards, but
+		 * GetOldestXmin() is conservative and sometimes returns a value
+		 * that's unnecessarily small, so if we see that contradiction it
+		 * just means that the tuples that we think are not visible to
+		 * everyone yet actually are, and the PD_ALL_VISIBLE flag is correct.
+		 *
+		 * There should never be dead tuples on a page with PD_ALL_VISIBLE
+		 * set, however.
+		 */
+		else if (PageIsAllVisible(page) && has_dead_tuples)
 		{
-			elog(WARNING, "PD_ALL_VISIBLE flag was incorrectly set in relation \"%s\" page %u",
+			elog(WARNING, "page containing dead tuples is marked as all-visible in relation \"%s\" page %u",
 				 relname, blkno);
 			PageClearAllVisible(page);
 			SetBufferCommitInfoNeedsSave(buf);
