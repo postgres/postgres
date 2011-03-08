@@ -12,6 +12,11 @@
 *.mo
 objfiles.txt
 .deps/
+*.gcno
+*.gcda
+*.gcov
+*.gcov.out
+lcov.info
 
 # Local excludes in root directory
 /GNUmakefile
