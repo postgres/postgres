@@ -1314,15 +1314,21 @@ SummarizeOldestCommittedSxact(void)
 
 	LWLockAcquire(SerializableFinishedListLock, LW_EXCLUSIVE);
 
-#ifdef TEST_OLDSERXID
+	/*
+	 * This function is only called if there are no sxact slots available.
+	 * Some of them must belong to old, already-finished transactions, so
+	 * there should be something in FinishedSerializableTransactions list
+	 * that we can summarize. However, there's a race condition: while we
+	 * were not holding any locks, a transaction might have ended and cleaned
+	 * up all the finished sxact entries already, freeing up their sxact
+	 * slots. In that case, we have nothing to do here. The caller will find
+	 * one of the slots released by the other backend when it retries.
+	 */
 	if (SHMQueueEmpty(FinishedSerializableTransactions))
 	{
 		LWLockRelease(SerializableFinishedListLock);
 		return;
 	}
-#else
-	Assert(!SHMQueueEmpty(FinishedSerializableTransactions));
-#endif
 
 	/*
 	 * Grab the first sxact off the finished list -- this will be the earliest
