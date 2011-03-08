@@ -1014,12 +1014,12 @@ SELECT '52093.89'::money::numeric::float8;
     with spaces to the specified width <replaceable>n</>, and are
     stored and displayed that way.  However, the padding spaces are
     treated as semantically insignificant.  Trailing spaces are
-    disregarded when non-pattern comparing two values of type <type>character</type>,
+    disregarded when comparing two values of type <type>character</type>,
     and they will be removed when converting a <type>character</type> value
     to one of the other string types.  Note that trailing spaces
     <emphasis>are</> semantically significant in
     <type>character varying</type> and <type>text</type> values, and
-    when using pattern matching comparisons, e.g. <literal>LIKE</>,
+    when using pattern matching, e.g. <literal>LIKE</>,
     regular expressions.
    </para>
 
