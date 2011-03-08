@@ -11780,6 +11780,7 @@ unreserved_keyword:
 			| CLASS
 			| CLOSE
 			| CLUSTER
+			| COLLATION
 			| COMMENT
 			| COMMENTS
 			| COMMIT
@@ -11994,6 +11995,7 @@ unreserved_keyword:
 			| UPDATE
 			| VACUUM
 			| VALID
+			| VALIDATE
 			| VALIDATOR
 			| VALUE_P
 			| VARYING
