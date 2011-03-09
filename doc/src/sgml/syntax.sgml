@@ -1259,6 +1259,12 @@ SELECT 3 OPERATOR(pg_catalog.+) 4;
 
     <listitem>
      <para>
+      A collation expression
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
       A scalar subquery
      </para>
     </listitem>
@@ -1898,8 +1904,8 @@ CAST ( <replaceable>expression</replaceable> AS <replaceable>type</replaceable> 
    </note>
   </sect2>
 
-  <sect2 id="sql-syntax-collate-clause">
-   <title>COLLATE Clause</title>
+  <sect2 id="sql-syntax-collate-exprs">
+   <title>Collation Expressions</title>
 
    <indexterm>
     <primary>COLLATE</primary>
@@ -1925,7 +1931,7 @@ CAST ( <replaceable>expression</replaceable> AS <replaceable>type</replaceable> 
    </para>
 
    <para>
-    The two typical uses of the <literal>COLLATE</literal> clause are
+    The two common uses of the <literal>COLLATE</literal> clause are
     overriding the sort order in an <literal>ORDER BY</> clause, for
     example:
 <programlisting>
@@ -1934,15 +1940,28 @@ SELECT a, b, c FROM tbl WHERE ... ORDER BY a COLLATE "C";
     and overriding the collation of a function or operator call that
     has locale-sensitive results, for example:
 <programlisting>
-SELECT * FROM tbl WHERE a > 'foo' COLLATE "C";
+SELECT * FROM tbl WHERE a &gt; 'foo' COLLATE "C";
 </programlisting>
-    In the latter case it doesn't matter which argument of the
-    operator of function call the <literal>COLLATE</> clause is
-    attached to, because the collation that is applied by the operator
-    or function is derived from all arguments, and
-    the <literal>COLLATE</> clause will override the collations of all
-    other arguments.  Attaching nonmatching <literal>COLLATE</>
-    clauses to more than one argument, however, is an error.
+    Note that in the latter case the <literal>COLLATE</> clause is
+    attached to an input argument of the operator we wish to affect.
+    It doesn't matter which argument of the operator or function call the
+    <literal>COLLATE</> clause is attached to, because the collation that is
+    applied by the operator or function is derived by considering all
+    arguments, and an explicit <literal>COLLATE</> clause will override the
+    collations of all other arguments.  (Attaching non-matching
+    <literal>COLLATE</> clauses to more than one argument, however, is an
+    error.  For more details see <xref linkend="collation">.)
+    Thus, this gives the same result as the previous example:
+<programlisting>
+SELECT * FROM tbl WHERE a COLLATE "C" &gt; 'foo';
+</programlisting>
+    But this is an error:
+<programlisting>
+SELECT * FROM tbl WHERE (a &gt; 'foo') COLLATE "C";
+</programlisting>
+    because it attempts to apply a collation to the result of the
+    <literal>&gt;</> operator, which is of the non-collatable data type
+    <type>boolean</>.
    </para>
   </sect2>
 
