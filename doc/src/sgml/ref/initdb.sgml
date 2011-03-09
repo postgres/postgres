@@ -24,7 +24,7 @@ PostgreSQL documentation
    <command>initdb</command>
    <arg rep="repeat"><replaceable>option</replaceable></arg>
    <group choice="plain">
-    <arg>--pgdata=</arg>
+    <arg>--pgdata</arg>
     <arg>-D </arg>
     <replaceable>directory</replaceable>
    </group>
