@@ -244,7 +244,7 @@
        <listitem>
         <para>
          <emphasis>Allow a table's row type to be cast to the table's supertype
-         if it's a type table.</emphasis>
+         if it's a type table</emphasis>
         </para>
         <para>
          This is analagous to the existing facility that allows casting a row
@@ -255,7 +255,7 @@
        <listitem>
         <para>
          <emphasis>Make foreign data wrappers functional, and support FOREIGN
-         TABLEs.</emphasis>
+         TABLEs</emphasis>
         </para>
         <para>
          Foreign tables are component of SQL/MED, and provide a framework to
@@ -267,14 +267,14 @@
        <listitem>
         <para>
          <emphasis>Allow a unique or primary key constraint to be created
-         using an existing index.</emphasis>
+         using an existing index</emphasis>
         </para>
        </listitem>
 
        <listitem>
         <para>
          <emphasis>Implement Serializable Snapshot Isolation, in order to
-         provide a more robust serializable transaction mode.</emphasis>
+         provide a more robust serializable transaction mode</emphasis>
         </para>
         <para>
          In previous releases, the REPEATABLE READ and SERIALIZABLE isolation
@@ -308,7 +308,7 @@
 
        <listitem>
         <para>
-         <emphasis>Teach ALTER TABLE .. SET DATA TYPE to avoid a table write
+         <emphasis>Teach ALTER TABLE ... SET DATA TYPE to avoid a table write
          in some cases where it isn't necessary
          </emphasis>
         </para>
@@ -390,7 +390,7 @@
 
        <listitem>
         <para>
-         <emphasis>Support unlogged tables.</emphasis>
+         <emphasis>Support unlogged tables</emphasis>
         </para>
         <para>
          The contents of an unlogged table are not WAL-logged; thus, they
@@ -402,7 +402,7 @@
 
        <listitem>
         <para>
-         <emphasis>Hash joins now support right and full outer joins.</emphasis>
+         <emphasis>Hash joins now support right and full outer joins</emphasis>
         </para>
         <para>
          Previously, full joins could be implemented only as a merge join,
@@ -599,8 +599,7 @@
 
        <listitem>
         <para>
-         Support host names and host key
-         word <literal>all</literal>
+         Support host names and host key word <literal>all</literal>
          in <filename>pg_hba.conf</filename>
         </para>
        </listitem>
@@ -666,7 +665,7 @@
         <para>
          <emphasis>When an autovacuum worker (other than one performing an
          anti-wraparound vacuum) is unable to obtain a lock on the target
-         relation without blocking, skip the relation.</emphasis>
+         relation without blocking, skip the relation</emphasis>
         </para>
         <para>
          This avoids pinning down an autovacuum worker.  The next autovacuum
@@ -712,7 +711,7 @@
 
        <listitem>
         <para>
-         <emphasis>Add REPLICATION privilege for ROLEs.</emphasis>
+         <emphasis>Add REPLICATION privilege for ROLEs</emphasis>
         </para>
         <para>
          This makes it possible for replication to be performed by a
@@ -799,7 +798,7 @@
        <listitem>
         <para>
          <emphasis>Change pg_last_xlog_receive_location not to move
-         backwards.</emphasis>
+         backwards</emphasis>
         </para>
        </listitem>
 
