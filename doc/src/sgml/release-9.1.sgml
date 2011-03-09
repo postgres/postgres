@@ -66,6 +66,65 @@
   </sect2>
   <sect2>
     <title>Changes</title>
+
+    <sect3>
+      <title>Replication and Recovery</title>
+      <itemizedlist>
+
+       <listitem>
+        <para>
+         <emphasis>Support named restore points</emphasis>
+        </para>
+        <para>
+         Named restore points can be created using a new server function,
+         pg_create_restore_point.  A new recovery.conf parameter,
+         recovery_target_name, allows recovery to stop at a named restore
+         point.
+        </para>
+       </listitem>
+
+       <listitem>
+        <para>
+         <emphasis>Add new recovery.conf parameter, pause_at_recovery_target,
+         which defaults to on</emphasis>
+        </para>
+        <para>
+         This is a behavior change from previous releases, which entered normal
+         running upon reaching the recovery target.
+        </para>
+       </listitem>
+
+       <listitem>
+        <para>
+         <emphasis>Add pg_is_xlog_replay_paused, pg_xlog_replay_pause, and
+         pg_xlog_replay_resume functions</emphasis>
+        </para>
+       </listitem>
+
+       <listitem>
+        <para>
+         <emphasis>Allow standby servers to send information on running
+         transactions back to the master</emphasis>
+        </para>
+        <para>
+         When enabled, this prevents most recovery conflicts on the slave,
+         but may cause MVCC bloat on the master.
+        </para>
+       </listitem>
+
+       <listitem>
+        <para>
+         <emphasis>Support streaming base backups</emphasis>
+        </para>
+        <para>
+         A new client, pg_basebackup, can be used to perform a streaming base
+         backup.
+        </para>
+       </listitem>
+
+      </itemizedlist>
+    </sect3>
+
     <sect3>
       <title>SQL Features</title>
       <itemizedlist>
@@ -479,28 +538,6 @@
         </para>
        </listitem>
 
-       <listitem>
-        <para>
-         <emphasis>Add new recovery.conf parameter, pause_at_recovery_target,
-         which defaults to on.</emphasis>
-        </para>
-        <para>
-         This is a behavior change from previous releases, which entered normal
-         running upon reaching the recovery target.
-        </para>
-       </listitem>
-
-       <listitem>
-        <para>
-         <emphasis>Add new recovery.conf parameter, recovery_target_name,
-         allowing recovery to proceed to a named restore point</emphasis>
-        </para>
-        <para>
-         Named restore points can be created using a new server function,
-         pg_create_restore_point.
-        </para>
-       </listitem>
-
       </itemizedlist>
     </sect3>
     <sect3>
@@ -626,17 +663,6 @@
         </para>
        </listitem>
 
-       <listitem>
-        <para>
-         <emphasis>Allow standby servers to send information on running
-         transactions back to the master</emphasis>
-        </para>
-        <para>
-         When enabled, this prevents most recovery conflicts on the slave,
-         but may cause MVCC bloat on the master.
-        </para>
-       </listitem>
-
       </itemizedlist>
     </sect3>
     <sect3>
@@ -754,13 +780,6 @@
 
        <listitem>
         <para>
-         <emphasis>Add pg_is_xlog_replay_paused, pg_xlog_replay_pause, and
-         pg_xlog_replay_resume functions.</emphasis>
-        </para>
-       </listitem>
-
-       <listitem>
-        <para>
          <emphasis>Change pg_last_xlog_receive_location not to move
          backwards.</emphasis>
         </para>
@@ -802,16 +821,6 @@
          behavior of the backend, and a --quote-all-identifiers argument to
          pg_dump and pg_dumpall which sets the parameter and also affects the
          quoting done internally by those applications.
-        </para>
-       </listitem>
-
-       <listitem>
-        <para>
-         <emphasis>Support streaming base backups.</emphasis>
-        </para>
-        <para>
-         A new client, pg_basebackup, can be used to perform a streaming base
-         backup.
         </para>
        </listitem>
 
