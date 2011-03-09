@@ -22,9 +22,9 @@ PostgreSQL documentation
  <refsynopsisdiv>
   <cmdsynopsis>
    <command>initdb</command>
-   <arg rep="repeat"><replaceable>option</></arg>
+   <arg rep="repeat"><replaceable>option</replaceable></arg>
    <group choice="plain">
-    <arg>--pgdata </arg>
+    <arg>--pgdata=</arg>
     <arg>-D </arg>
     <replaceable>directory</replaceable>
    </group>
@@ -186,16 +186,14 @@ PostgreSQL documentation
      </varlistentry>
 
      <varlistentry>
-      <term><option>-X <replaceable class="parameter">directory</replaceable></option></term>
-      <term><option>--xlogdir=<replaceable class="parameter">directory</replaceable></option></term>
+      <term><option>--pwfile=<replaceable>filename</></option></term>
       <listitem>
        <para>
-        This option specifies the directory where the transaction log
-        should be stored.
+        Makes <command>initdb</command> read the database superuser's password
+        from a file.  The first line of the file is taken as the password.
        </para>
       </listitem>
      </varlistentry>
-
      <varlistentry>
       <term><option>-U <replaceable class="parameter">username</replaceable></option></term>
       <term><option>--username=<replaceable class="parameter">username</replaceable></option></term>
@@ -226,14 +224,16 @@ PostgreSQL documentation
      </varlistentry>
 
      <varlistentry>
-      <term><option>--pwfile=<replaceable>filename</></option></term>
+      <term><option>-X <replaceable class="parameter">directory</replaceable></option></term>
+      <term><option>--xlogdir=<replaceable class="parameter">directory</replaceable></option></term>
       <listitem>
        <para>
-        Makes <command>initdb</command> read the database superuser's password
-        from a file.  The first line of the file is taken as the password.
+        This option specifies the directory where the transaction log
+        should be stored.
        </para>
       </listitem>
      </varlistentry>
+
     </variablelist>
    </para>
 

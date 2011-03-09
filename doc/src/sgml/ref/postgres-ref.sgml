@@ -66,9 +66,9 @@ PostgreSQL documentation
    The <command>postgres</command> command can also be called in
    single-user mode.  The primary use for this mode is during
    bootstrapping by <xref linkend="app-initdb">.  Sometimes it is used
-   for debugging or disaster recovery (but note that running a single-user
+   for debugging or disaster recovery;  note that running a single-user
    server is not truly suitable for debugging the server, since no
-   realistic interprocess communication and locking will happen).
+   realistic interprocess communication and locking will happen.
    When invoked in single-user
    mode from the shell, the user can enter queries and the results
    will be printed to the screen, but in a form that is more useful
@@ -413,8 +413,8 @@ PostgreSQL documentation
       <term><option>-P</option></term>
       <listitem>
        <para>
-        Ignore system indexes when reading system tables (but still update
-        the indexes when modifying the tables).  This is useful when
+        Ignore system indexes when reading system tables, but still update
+        the indexes when modifying the tables.  This is useful when
         recovering from damaged system indexes.
        </para>
       </listitem>
@@ -763,13 +763,11 @@ PostgreSQL documentation
 
   <para>
    To start <command>postgres</command> with a specific
-   port:
+   port, e.g. 1234:
 <screen>
 <prompt>$</prompt> <userinput>postgres -p 1234</userinput>
 </screen>
-   This command will start up <command>postgres</command>
-   communicating through the port 1234. In order to connect to this
-   server using <application>psql</>, you would need to run it as
+   To connect to this server using <application>psql</>, specify this port with the -p option:
 <screen>
 <prompt>$</prompt> <userinput>psql -p 1234</userinput>
 </screen>

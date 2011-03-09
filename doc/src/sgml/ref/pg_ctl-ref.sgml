@@ -499,22 +499,22 @@ PostgreSQL documentation
    <title>Starting the Server</title>
 
    <para>
-    To start up a server:
+    To start the server:
 <screen>
 <prompt>$</prompt> <userinput>pg_ctl start</userinput>
 </screen>
    </para>
 
    <para>
-    An example of starting the server, and waiting until the server is
-    accepting connection:
+    To start the server, waiting until the server is
+    accepting connections:
 <screen>
 <prompt>$</prompt> <userinput>pg_ctl -w start</userinput>
 </screen>
    </para>
 
    <para>
-    For a server using port 5433, and
+    To start the server using port 5433, and
     running without <function>fsync</function>, use:
 <screen>
 <prompt>$</prompt> <userinput>pg_ctl -o "-F -p 5433" start</userinput>
@@ -530,7 +530,10 @@ PostgreSQL documentation
 <prompt>$</prompt> <userinput>pg_ctl stop</userinput>
 </screen>
     The <option>-m</option> option allows control over
-    <emphasis>how</emphasis> the server shuts down.
+    <emphasis>how</emphasis> the server shuts down:
+<screen>
+<prompt>$</prompt> <userinput>pg_ctl stop -m fast</userinput>
+</screen>
    </para>
   </refsect2>
 
@@ -557,7 +560,7 @@ PostgreSQL documentation
    </para>
 
    <para>
-    To restart using port 5433 and disable <function>fsync</> upon restart:
+    To restart using port 5433, disabling <function>fsync</> upon restart:
 <screen>
 <prompt>$</prompt> <userinput>pg_ctl -o "-F -p 5433" restart</userinput>
 </screen>
