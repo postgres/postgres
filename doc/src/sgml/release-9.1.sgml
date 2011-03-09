@@ -135,7 +135,7 @@
 
        <listitem>
         <para>
-         <emphasis>When recovery_target_timelines='latest', periodically
+         <emphasis>When recovery_target_timeline='latest', periodically
          rescan the archive for new timelines</emphasis>
         </para>
        </listitem>
