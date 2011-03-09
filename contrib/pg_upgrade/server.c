@@ -144,11 +144,9 @@ get_major_server_version(ClusterInfo *cluster)
 	if (fscanf(version_fd, "%63s", cluster->major_version_str) == 0 ||
 		sscanf(cluster->major_version_str, "%d.%d", &integer_version,
 			   &fractional_version) != 2)
-	{
 		pg_log(PG_FATAL, "could not get version from %s\n", datadir);
-		fclose(version_fd);
-		return 0;
-	}
+
+	fclose(version_fd);
 
 	return (100 * integer_version + fractional_version) * 100;
 }

@@ -87,9 +87,11 @@ old_8_3_check_for_name_data_type_usage(ClusterInfo *cluster)
 		PQfinish(conn);
 	}
 
+	if (script)
+		fclose(script);
+
 	if (found)
 	{
-		fclose(script);
 		pg_log(PG_REPORT, "fatal\n");
 		pg_log(PG_FATAL,
 			   "| Your installation contains the \"name\" data type in\n"
@@ -175,9 +177,11 @@ old_8_3_check_for_tsquery_usage(ClusterInfo *cluster)
 		PQfinish(conn);
 	}
 
+	if (script)
+		fclose(script);
+
 	if (found)
 	{
-		fclose(script);
 		pg_log(PG_REPORT, "fatal\n");
 		pg_log(PG_FATAL,
 			   "| Your installation contains the \"tsquery\" data type.\n"
@@ -314,10 +318,11 @@ old_8_3_rebuild_tsvector_tables(ClusterInfo *cluster, bool check_mode)
 		PQfinish(conn);
 	}
 
+	if (script)
+		fclose(script);
+
 	if (found)
 	{
-		if (!check_mode)
-			fclose(script);
 		report_status(PG_WARNING, "warning");
 		if (check_mode)
 			pg_log(PG_WARNING, "\n"
@@ -424,10 +429,11 @@ old_8_3_invalidate_hash_gin_indexes(ClusterInfo *cluster, bool check_mode)
 		PQfinish(conn);
 	}
 
+	if (script)
+		fclose(script);
+
 	if (found)
 	{
-		if (!check_mode)
-			fclose(script);
 		report_status(PG_WARNING, "warning");
 		if (check_mode)
 			pg_log(PG_WARNING, "\n"
@@ -553,10 +559,11 @@ old_8_3_invalidate_bpchar_pattern_ops_indexes(ClusterInfo *cluster,
 		PQfinish(conn);
 	}
 
+	if (script)
+		fclose(script);
+
 	if (found)
 	{
-		if (!check_mode)
-			fclose(script);
 		report_status(PG_WARNING, "warning");
 		if (check_mode)
 			pg_log(PG_WARNING, "\n"
@@ -672,7 +679,8 @@ old_8_3_create_sequence_script(ClusterInfo *cluster)
 
 		PQfinish(conn);
 	}
-	if (found)
+
+	if (script)
 		fclose(script);
 
 	check_ok();

@@ -515,9 +515,11 @@ check_for_isn_and_int8_passing_mismatch(ClusterInfo *cluster)
 		PQfinish(conn);
 	}
 
+	if (script)
+			fclose(script);
+
 	if (found)
 	{
-		fclose(script);
 		pg_log(PG_REPORT, "fatal\n");
 		pg_log(PG_FATAL,
 			   "| Your installation contains \"/contrib/isn\" functions\n"
@@ -616,9 +618,11 @@ check_for_reg_data_type_usage(ClusterInfo *cluster)
 		PQfinish(conn);
 	}
 
+	if (script)
+		fclose(script);
+
 	if (found)
 	{
-		fclose(script);
 		pg_log(PG_REPORT, "fatal\n");
 		pg_log(PG_FATAL,
 			   "| Your installation contains one of the reg* data types in\n"

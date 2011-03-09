@@ -302,7 +302,10 @@ pg_scandir_internal(const char *dirname,
 						(size_t) ((name_num + 1) * sizeof(struct dirent *)));
 
 			if (*namelist == NULL)
+			{
+				closedir(dirdesc);
 				return -1;
+			}
 
 			entrysize = sizeof(struct dirent) - sizeof(direntry->d_name) +
 				strlen(direntry->d_name) + 1;
@@ -310,7 +313,10 @@ pg_scandir_internal(const char *dirname,
 			(*namelist)[name_num] = (struct dirent *) malloc(entrysize);
 
 			if ((*namelist)[name_num] == NULL)
+			{
+				closedir(dirdesc);
 				return -1;
+			}
 
 			memcpy((*namelist)[name_num], direntry, entrysize);
 

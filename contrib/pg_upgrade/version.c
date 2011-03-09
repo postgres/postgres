@@ -62,10 +62,11 @@ new_9_0_populate_pg_largeobject_metadata(ClusterInfo *cluster, bool check_mode)
 		PQfinish(conn);
 	}
 
+	if (script)
+		fclose(script);
+
 	if (found)
 	{
-		if (!check_mode)
-			fclose(script);
 		report_status(PG_WARNING, "warning");
 		if (check_mode)
 			pg_log(PG_WARNING, "\n"
