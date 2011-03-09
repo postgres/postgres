@@ -2061,7 +2061,7 @@ SET ENABLE_SEQSCAN TO OFF;
      </varlistentry>
 
      <varlistentry id="guc-sync-standby-names" xreflabel="synchronous_standby_names">
-      <term><varname>synchronous_standby_names</varname> (<type>integer</type>)</term>
+      <term><varname>synchronous_standby_names</varname> (<type>string</type>)</term>
       <indexterm>
        <primary><varname>synchronous_standby_names</> configuration parameter</primary>
       </indexterm>
