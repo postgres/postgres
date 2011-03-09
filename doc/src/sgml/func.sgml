@@ -13588,10 +13588,10 @@ SELECT typlen FROM pg_type WHERE oid = pg_typeof(33);
    </table>
 
    <para>
-    <function>col_description</function> returns the comment for a table column,
-    which is specified by the OID of its table and its column number.
-    <function>obj_description</function> cannot be used for table columns since
-    columns do not have OIDs of their own.
+    <function>col_description</function> returns the comment for a table
+    column, which is specified by the OID of its table and its column number.
+    (<function>obj_description</function> cannot be used for table columns
+    since columns do not have OIDs of their own.)
    </para>
 
    <para>
@@ -13610,8 +13610,8 @@ SELECT typlen FROM pg_type WHERE oid = pg_typeof(33);
     <function>shobj_description</function> is used just like
     <function>obj_description</function> except it is used for retrieving
     comments on shared objects.  Some system catalogs are global to all
-    databases within each cluster and their descriptions are stored globally
-    as well.
+    databases within each cluster, and the descriptions for objects in them
+    are stored globally as well.
    </para>
 
    <indexterm>

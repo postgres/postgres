@@ -58,20 +58,7 @@ static void DelRoleMems(const char *rolename, Oid roleid,
 static bool
 have_createrole_privilege(void)
 {
-	bool		result = false;
-	HeapTuple	utup;
-
-	/* Superusers can always do everything */
-	if (superuser())
-		return true;
-
-	utup = SearchSysCache1(AUTHOID, ObjectIdGetDatum(GetUserId()));
-	if (HeapTupleIsValid(utup))
-	{
-		result = ((Form_pg_authid) GETSTRUCT(utup))->rolcreaterole;
-		ReleaseSysCache(utup);
-	}
-	return result;
+	return has_createrole_privilege(GetUserId());
 }
 
 

@@ -4736,6 +4736,36 @@ pg_extension_ownercheck(Oid ext_oid, Oid roleid)
 }
 
 /*
+ * Check whether specified role has CREATEROLE privilege (or is a superuser)
+ *
+ * Note: roles do not have owners per se; instead we use this test in
+ * places where an ownership-like permissions test is needed for a role.
+ * Be sure to apply it to the role trying to do the operation, not the
+ * role being operated on!  Also note that this generally should not be
+ * considered enough privilege if the target role is a superuser.
+ * (We don't handle that consideration here because we want to give a
+ * separate error message for such cases, so the caller has to deal with it.)
+ */
+bool
+has_createrole_privilege(Oid roleid)
+{
+	bool		result = false;
+	HeapTuple	utup;
+
+	/* Superusers bypass all permission checking. */
+	if (superuser_arg(roleid))
+		return true;
+
+	utup = SearchSysCache1(AUTHOID, ObjectIdGetDatum(roleid));
+	if (HeapTupleIsValid(utup))
+	{
+		result = ((Form_pg_authid) GETSTRUCT(utup))->rolcreaterole;
+		ReleaseSysCache(utup);
+	}
+	return result;
+}
+
+/*
  * Fetch pg_default_acl entry for given role, namespace and object type
  * (object type must be given in pg_default_acl's encoding).
  * Returns NULL if no such entry.

@@ -65,11 +65,18 @@ COMMENT ON
   </para>
 
   <para>
-    To modify a comment, issue a new <command>COMMENT</> command for the
-    same object.  Only one comment string is stored for each object.
-    To remove a comment, write <literal>NULL</literal> in place of the text
-    string.
-    Comments are automatically dropped when the object is dropped.
+   Only one comment string is stored for each object, so to modify a comment,
+   issue a new <command>COMMENT</> command for the same object.  To remove a
+   comment, write <literal>NULL</literal> in place of the text string.
+   Comments are automatically dropped when their object is dropped.
+  </para>
+
+  <para>
+   For most kinds of object, only the object's owner can set the comment.
+   Roles don't have owners, so the rule for <literal>COMMENT ON ROLE</> is
+   that you must be superuser to comment on a superuser role, or have the
+   <literal>CREATEROLE</> privilege to comment on non-superuser roles.
+   Of course, a superuser can comment on anything.
   </para>
 
   <para>
@@ -93,15 +100,15 @@ COMMENT ON
     <term><replaceable class="parameter">agg_name</replaceable></term>
     <term><replaceable class="parameter">constraint_name</replaceable></term>
     <term><replaceable class="parameter">function_name</replaceable></term>
-    <term><replaceable class="parameter">op</replaceable></term>
+    <term><replaceable class="parameter">operator_name</replaceable></term>
     <term><replaceable class="parameter">rule_name</replaceable></term>
     <term><replaceable class="parameter">trigger_name</replaceable></term>
     <listitem>
      <para>
       The name of the object to be commented.  Names of tables,
-      aggregates, domains, foreign tables, functions, indexes, operators,
-      operator classes, operator families, sequences, text search objects,
-      types, and views can be schema-qualified.
+      aggregates, collations, conversions, domains, foreign tables, functions,
+      indexes, operators, operator classes, operator families, sequences,
+      text search objects, types, and views can be schema-qualified.
      </para>
     </listitem>
    </varlistentry>
@@ -137,7 +144,6 @@ COMMENT ON
 
    <varlistentry>
     <term><replaceable class="parameter">argmode</replaceable></term>
-
     <listitem>
      <para>
       The mode of a function argument: <literal>IN</>, <literal>OUT</>,
@@ -154,7 +160,6 @@ COMMENT ON
 
    <varlistentry>
     <term><replaceable class="parameter">argname</replaceable></term>
-
     <listitem>
      <para>
       The name of a function argument.
@@ -167,7 +172,6 @@ COMMENT ON
 
    <varlistentry>
     <term><replaceable class="parameter">argtype</replaceable></term>
-
     <listitem>
      <para>
       The data type(s) of the function's arguments (optionally
@@ -185,9 +189,20 @@ COMMENT ON
     </listitem>
    </varlistentry>
 
+   <varlistentry>
+    <term><replaceable class="parameter">left_type</replaceable></term>
+    <term><replaceable class="parameter">right_type</replaceable></term>
+    <listitem>
+     <para>
+      The data type(s) of the operator's arguments (optionally
+      schema-qualified).  Write <literal>NONE</> for the missing argument
+      of a prefix or postfix operator.
+     </para>
+    </listitem>
+   </varlistentry>
+
     <varlistentry>
      <term><literal>PROCEDURAL</literal></term>
-
      <listitem>
       <para>
        This is a noise word.
@@ -212,12 +227,11 @@ COMMENT ON
   <title>Notes</title>
 
   <para>
-   There is presently no security mechanism for comments: any user
+   There is presently no security mechanism for viewing comments: any user
    connected to a database can see all the comments for objects in
-   that database (although only superusers can change comments for
-   objects that they don't own).  For shared objects such as
-   databases, roles, and tablespaces comments are stored globally
-   and any user connected to any database can see all the comments
+   that database.  For shared objects such as
+   databases, roles, and tablespaces, comments are stored globally so any
+   user connected to any database in the cluster can see all the comments
    for shared objects.  Therefore, don't put security-critical
    information in comments.
   </para>
@@ -257,7 +271,7 @@ COMMENT ON INDEX my_index IS 'Enforces uniqueness on employee ID';
 COMMENT ON LANGUAGE plpython IS 'Python support for stored procedures';
 COMMENT ON LARGE OBJECT 346344 IS 'Planning document';
 COMMENT ON OPERATOR ^ (text, text) IS 'Performs intersection of two texts';
-COMMENT ON OPERATOR - (NONE, text) IS 'This is a prefix operator on text';
+COMMENT ON OPERATOR - (NONE, integer) IS 'Unary minus';
 COMMENT ON OPERATOR CLASS int4ops USING btree IS '4 byte integer operators for btrees';
 COMMENT ON OPERATOR FAMILY integer_ops USING btree IS 'all integer operators for btrees';
 COMMENT ON ROLE my_role IS 'Administration group for finance tables';
