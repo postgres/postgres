@@ -1,6 +1,6 @@
 <!-- doc/src/sgml/release-9.1.sgml -->
 
-<!-- This is (hopefully) up-to-date with commits through 2011-03-05 -->
+<!-- This is (hopefully) up-to-date with commits through 2011-03-08 -->
 
 <sect1 id="release-9-1-alpha">
   <title>Release 9.1alpha4</title>
@@ -119,6 +119,24 @@
         <para>
          A new client, pg_basebackup, can be used to perform a streaming base
          backup.
+        </para>
+       </listitem>
+
+       <listitem>
+        <para>
+         <emphasis>Synchronous replication</emphasis>
+        </para>
+        <para>
+         When enabled, transaction commit will wait for WAL records to be
+         replicated before informing the client that a transaction has
+         successfully committed.
+        </para>
+       </listitem>
+
+       <listitem>
+        <para>
+         <emphasis>When recovery_target_timelines='latest', periodically
+         rescan the archive for new timelines</emphasis>
         </para>
        </listitem>
 
@@ -1011,15 +1029,14 @@
 
         <listitem>
          <para>
-          <emphasis>Skip dropped attributes when converting Python objects to
-          tuples</emphasis>
+          <emphasis>Make plpy.Fatal() raise FATAL, rather than ERROR</emphasis>
          </para>
         </listitem>
 
         <listitem>
          <para>
-          <emphasis>Improve messages for errors in compiling anonymous
-          PL/Python blocks</emphasis>
+          <emphasis>Skip dropped attributes when converting Python objects to
+          tuples</emphasis>
          </para>
         </listitem>
 
@@ -1043,11 +1060,17 @@
 
         <listitem>
          <para>
-          <emphasis>Do not prefix error messages with the string
-          "PL/Python: "</emphasis>
+          <emphasis>Improve error reporting</emphasis>
          </para>
-         <para>
-          It is redundant, given the error context.
+         <para>Better error messages for errors in compiling anonymous
+          PL/Python blocks.  Avoid prefixing error messages with the string
+          "PL/Python: ", which is redundant, given the error
+          context.  Provide a separate exception class for each error code
+          the backend defines, and make it possible to get the SQLSTATE from
+          the exception object.  Report Python errors from iterators
+          using PLy_elog, so that the Python exception is included in the
+          exception, and to avoid setting the errcode to
+          ERRCODE_DATA_EXCEPTION.
          </para>
         </listitem>
 
@@ -1092,14 +1115,6 @@
         <listitem>
          <para>
           <emphasis>Add a plpy.subtransaction() context manager</emphasis>
-         </para>
-        </listitem>
-
-        <listitem>
-         <para>
-          <emphasis>Provide a separate exception class for each error code
-          the backend defines, and make it possible to get the SQLSTATE from
-          the exception object</emphasis>
          </para>
         </listitem>
 
