@@ -219,7 +219,7 @@ perform_base_backup(basebackup_options *opt, DIR *tblspcdir)
 				ptr.xrecoff = logseg * XLogSegSize + TAR_SEND_SIZE * i;
 
 				/*
-				 *	Some old compilers, e.g. 2.95.3/x86, think that passing
+				 *	Some old compilers, e.g. gcc 2.95.3/x86, think that passing
 				 *	a struct in the same function as a longjump might clobber
 				 *	a variable.  bjm 2011-02-04
 				 *	http://lists.apple.com/archives/xcode-users/2003/Dec//msg00051.html
