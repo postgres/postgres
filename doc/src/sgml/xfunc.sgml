@@ -118,7 +118,7 @@
      <command>UPDATE</command>, and <command>DELETE</command>), as well as
      other SQL commands. (You cannot use transaction control commands, e.g.
      <command>COMMIT</>, <command>SAVEPOINT</>, and some utility
-     commands, e.g.  <literal>VACUUM</>, into an <acronym>SQL</acronym> function.)
+     commands, e.g.  <literal>VACUUM</>, in <acronym>SQL</acronym> functions.)
      However, the final command
      must be a <command>SELECT</command> or have a <literal>RETURNING</>
      clause that returns whatever is
