@@ -74,8 +74,7 @@ typedef struct
 
 	/*
 	 * Current location of the head of the queue. All waiters should have
-	 * a waitLSN that follows this value, or they are currently being woken
-	 * to remove themselves from the queue. Protected by SyncRepLock.
+	 * a waitLSN that follows this value. Protected by SyncRepLock.
 	 */
 	XLogRecPtr	lsn;
 
