@@ -759,7 +759,7 @@ static struct config_bool ConfigureNamesBool[] =
 			gettext_noop("Requests synchronous replication."),
 			NULL
 		},
-		&sync_rep_mode,
+		&synchronous_replication,
 		false, NULL, NULL
 	},
 	{

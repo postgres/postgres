@@ -19,7 +19,8 @@
 #include "storage/spin.h"
 #include "utils/guc.h"
 
-#define SyncRepRequested()				(sync_rep_mode)
+#define SyncRepRequested() \
+	(synchronous_replication && max_wal_senders > 0)
 
 /* syncRepState */
 #define SYNC_REP_NOT_WAITING		0
@@ -28,7 +29,7 @@
 #define SYNC_REP_MUST_DISCONNECT	3
 
 /* user-settable parameters for synchronous replication */
-extern bool sync_rep_mode;
+extern bool synchronous_replication;
 extern char *SyncRepStandbyNames;
 
 /* called by user backend */

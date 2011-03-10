@@ -62,7 +62,7 @@
 #include "utils/ps_status.h"
 
 /* User-settable parameters for sync rep */
-bool	sync_rep_mode = false;			/* Only set in user backends */
+bool	synchronous_replication = false;		/* Only set in user backends */
 char 	*SyncRepStandbyNames;
 
 static bool sync_standbys_defined = false;	/* Is there at least one name? */
