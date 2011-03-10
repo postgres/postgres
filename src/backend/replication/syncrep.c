@@ -420,9 +420,7 @@ SyncRepGetStandbyPriority(void)
 		/* syntax error in list */
 		pfree(rawstring);
 		list_free(elemlist);
-		ereport(FATAL,
-				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-		   errmsg("invalid list syntax for parameter \"synchronous_standby_names\"")));
+		/* GUC machinery will have already complained - no need to do again */
 		return 0;
 	}
 
@@ -563,7 +561,7 @@ assign_synchronous_standby_names(const char *newval, bool doit, GucSource source
 		/* syntax error in list */
 		pfree(rawstring);
 		list_free(elemlist);
-		ereport(FATAL,
+		ereport(GUC_complaint_elevel(source),
 				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
 		   errmsg("invalid list syntax for parameter \"synchronous_standby_names\"")));
 		return NULL;
