@@ -2,7 +2,7 @@
  *
  * auth_delay.c
  *
- * Copyright (C) 2010, PostgreSQL Global Development Group
+ * Copyright (C) 2010-2011, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
  *		contrib/auth_delay/auth_delay.c
