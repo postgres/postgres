@@ -447,9 +447,9 @@ SyncRepGetStandbyPriority(void)
 }
 
 /*
- * Walk queue from head setting setting the state of any backends that
- * need to be woken, remove them from the queue and then wake them.
- * Set all = true to wake whole queue, or just up to LSN.
+ * Walk queue from head.  Set the state of any backends that need to be woken,
+ * remove them from the queue, and then wake them.  Pass all = true to wake
+ * whole queue; otherwise, just wake up to the walsender's LSN.
  *
  * Must hold SyncRepLock.
  */

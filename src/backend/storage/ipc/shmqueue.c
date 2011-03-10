@@ -157,7 +157,7 @@ SHMQueueNext(const SHM_QUEUE *queue, const SHM_QUEUE *curElem, Size linkOffset)
 /*--------------------
  * SHMQueuePrev -- Get the previous element from a queue
  *
- * Same as SHMQueueNext, just starting at tail and moving towards head
+ * Same as SHMQueueNext, just starting at tail and moving towards head.
  * All other comments and usage applies.
  */
 Pointer

@@ -29,7 +29,6 @@
 
 /* user-settable parameters for synchronous replication */
 extern bool sync_rep_mode;
-extern int 	sync_rep_timeout;
 extern char *SyncRepStandbyNames;
 
 /* called by user backend */
@@ -44,6 +43,6 @@ extern void SyncRepReleaseWaiters(void);
 
 /* called by various procs */
 extern int SyncRepWakeQueue(bool all);
-const char *assign_synchronous_standby_names(const char *newval, bool doit, GucSource source);
+extern const char *assign_synchronous_standby_names(const char *newval, bool doit, GucSource source);
 
 #endif   /* _SYNCREP_H */
