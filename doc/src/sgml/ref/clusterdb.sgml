@@ -77,7 +77,7 @@ PostgreSQL documentation
 
      <varlistentry>
       <term><option><optional>-d</> <replaceable class="parameter">dbname</replaceable></></term>
-      <term><option><optional>--dbname</> <replaceable class="parameter">dbname</replaceable></></term>
+      <term><option><optional>--dbname=</><replaceable class="parameter">dbname</replaceable></></term>
       <listitem>
        <para>
         Specifies the name of the database to be clustered.
@@ -113,7 +113,7 @@ PostgreSQL documentation
 
      <varlistentry>
       <term><option>-t <replaceable class="parameter">table</replaceable></></term>
-      <term><option>--table <replaceable class="parameter">table</replaceable></></term>
+      <term><option>--table=<replaceable class="parameter">table</replaceable></></term>
       <listitem>
        <para>
         Cluster <replaceable class="parameter">table</replaceable> only.
@@ -162,7 +162,7 @@ PostgreSQL documentation
     <variablelist>
      <varlistentry>
       <term><option>-h <replaceable class="parameter">host</replaceable></></term>
-      <term><option>--host <replaceable class="parameter">host</replaceable></></term>
+      <term><option>--host=<replaceable class="parameter">host</replaceable></></term>
       <listitem>
        <para>
         Specifies the host name of the machine on which the server is
@@ -174,7 +174,7 @@ PostgreSQL documentation
 
      <varlistentry>
       <term><option>-p <replaceable class="parameter">port</replaceable></></term>
-      <term><option>--port <replaceable class="parameter">port</replaceable></></term>
+      <term><option>--port=<replaceable class="parameter">port</replaceable></></term>
       <listitem>
        <para>
         Specifies the TCP port or local Unix domain socket file
@@ -186,7 +186,7 @@ PostgreSQL documentation
 
      <varlistentry>
       <term><option>-U <replaceable class="parameter">username</replaceable></></term>
-      <term><option>--username <replaceable class="parameter">username</replaceable></></term>
+      <term><option>--username=<replaceable class="parameter">username</replaceable></></term>
       <listitem>
        <para>
         User name to connect as.

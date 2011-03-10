@@ -74,7 +74,7 @@ PostgreSQL documentation
 
     <varlistentry>
       <term><option>-c <replaceable class="parameter">command</replaceable></></term>
-      <term><option>--command <replaceable class="parameter">command</replaceable></></term>
+      <term><option>--command=<replaceable class="parameter">command</replaceable></></term>
       <listitem>
       <para>
       Specifies that <application>psql</application> is to execute one
@@ -107,7 +107,7 @@ PostgreSQL documentation
 
     <varlistentry>
       <term><option>-d <replaceable class="parameter">dbname</replaceable></></term>
-      <term><option>--dbname <replaceable class="parameter">dbname</replaceable></></term>
+      <term><option>--dbname=<replaceable class="parameter">dbname</replaceable></></term>
       <listitem>
       <para>
        Specifies the name of the database to connect to. This is
@@ -151,7 +151,7 @@ PostgreSQL documentation
 
     <varlistentry>
       <term><option>-f <replaceable class="parameter">filename</replaceable></></term>
-      <term><option>--file <replaceable class="parameter">filename</replaceable></></term>
+      <term><option>--file=<replaceable class="parameter">filename</replaceable></></term>
       <listitem>
       <para>
       Use the file <replaceable class="parameter">filename</replaceable>
@@ -183,7 +183,7 @@ PostgreSQL documentation
 
     <varlistentry>
       <term><option>-F <replaceable class="parameter">separator</replaceable></></term>
-      <term><option>--field-separator <replaceable class="parameter">separator</replaceable></></term>
+      <term><option>--field-separator=<replaceable class="parameter">separator</replaceable></></term>
       <listitem>
       <para>
       Use <replaceable class="parameter">separator</replaceable> as the
@@ -195,7 +195,7 @@ PostgreSQL documentation
 
     <varlistentry>
       <term><option>-h <replaceable class="parameter">hostname</replaceable></></term>
-      <term><option>--host <replaceable class="parameter">hostname</replaceable></></term>
+      <term><option>--host=<replaceable class="parameter">hostname</replaceable></></term>
       <listitem>
       <para>
       Specifies the host name of the machine on which the
@@ -232,7 +232,7 @@ PostgreSQL documentation
 
     <varlistentry>
       <term><option>-L <replaceable class="parameter">filename</replaceable></></term>
-      <term><option>--log-file <replaceable class="parameter">filename</replaceable></></term>
+      <term><option>--log-file=<replaceable class="parameter">filename</replaceable></></term>
       <listitem>
       <para>
        Write all query output into file <replaceable
@@ -255,7 +255,7 @@ PostgreSQL documentation
 
     <varlistentry>
       <term><option>-o <replaceable class="parameter">filename</replaceable></></term>
-      <term><option>--output <replaceable class="parameter">filename</replaceable></></term>
+      <term><option>--output=<replaceable class="parameter">filename</replaceable></></term>
       <listitem>
       <para>
       Put all query output into file <replaceable
@@ -267,7 +267,7 @@ PostgreSQL documentation
 
     <varlistentry>
       <term><option>-p <replaceable class="parameter">port</replaceable></></term>
-      <term><option>--port <replaceable class="parameter">port</replaceable></></term>
+      <term><option>--port=<replaceable class="parameter">port</replaceable></></term>
       <listitem>
       <para>
       Specifies the TCP port or the local Unix-domain
@@ -281,7 +281,7 @@ PostgreSQL documentation
 
     <varlistentry>
       <term><option>-P <replaceable class="parameter">assignment</replaceable></></term>
-      <term><option>--pset <replaceable class="parameter">assignment</replaceable></></term>
+      <term><option>--pset=<replaceable class="parameter">assignment</replaceable></></term>
       <listitem>
       <para>
       Specifies printing options, in the style of
@@ -310,7 +310,7 @@ PostgreSQL documentation
 
     <varlistentry>
       <term><option>-R <replaceable class="parameter">separator</replaceable></></term>
-      <term><option>--record-separator <replaceable class="parameter">separator</replaceable></></term>
+      <term><option>--record-separator=<replaceable class="parameter">separator</replaceable></></term>
       <listitem>
       <para>
       Use <replaceable class="parameter">separator</replaceable> as the
@@ -365,7 +365,7 @@ PostgreSQL documentation
 
     <varlistentry>
       <term><option>-T <replaceable class="parameter">table_options</replaceable></></term>
-      <term><option>--table-attr <replaceable class="parameter">table_options</replaceable></></term>
+      <term><option>--table-attr=<replaceable class="parameter">table_options</replaceable></></term>
       <listitem>
       <para>
       Specifies options to be placed within the
@@ -377,7 +377,7 @@ PostgreSQL documentation
 
     <varlistentry>
       <term><option>-U <replaceable class="parameter">username</replaceable></></term>
-      <term><option>--username <replaceable class="parameter">username</replaceable></></term>
+      <term><option>--username=<replaceable class="parameter">username</replaceable></></term>
       <listitem>
       <para>
       Connect to the database as the user <replaceable
@@ -389,8 +389,8 @@ PostgreSQL documentation
 
     <varlistentry>
       <term><option>-v <replaceable class="parameter">assignment</replaceable></></term>
-      <term><option>--set <replaceable class="parameter">assignment</replaceable></></term>
-      <term><option>--variable <replaceable class="parameter">assignment</replaceable></></term>
+      <term><option>--set=<replaceable class="parameter">assignment</replaceable></></term>
+      <term><option>--variable=<replaceable class="parameter">assignment</replaceable></></term>
       <listitem>
       <para>
       Perform a variable assignment, like the <command>\set</command>

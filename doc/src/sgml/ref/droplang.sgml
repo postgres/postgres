@@ -79,7 +79,7 @@ PostgreSQL documentation
 
      <varlistentry>
       <term><option><optional>-d</> <replaceable class="parameter">dbname</replaceable></></term>
-      <term><option><optional>--dbname</> <replaceable class="parameter">dbname</replaceable></></term>
+      <term><option><optional>--dbname=</><replaceable class="parameter">dbname</replaceable></></term>
       <listitem>
        <para>
         Specifies from which database the language should be removed.
@@ -140,7 +140,7 @@ PostgreSQL documentation
     <variablelist>
      <varlistentry>
       <term><option>-h <replaceable class="parameter">host</replaceable></></term>
-      <term><option>--host <replaceable class="parameter">host</replaceable></></term>
+      <term><option>--host=<replaceable class="parameter">host</replaceable></></term>
       <listitem>
        <para>
         Specifies the host name of the machine on which the
@@ -153,7 +153,7 @@ PostgreSQL documentation
 
      <varlistentry>
       <term><option>-p <replaceable class="parameter">port</replaceable></></term>
-      <term><option>--port <replaceable class="parameter">port</replaceable></></term>
+      <term><option>--port=<replaceable class="parameter">port</replaceable></></term>
       <listitem>
        <para>
         Specifies the Internet TCP/IP port or local Unix domain socket file
@@ -165,7 +165,7 @@ PostgreSQL documentation
 
      <varlistentry>
       <term><option>-U <replaceable class="parameter">username</replaceable></></term>
-      <term><option>--username <replaceable class="parameter">username</replaceable></></term>
+      <term><option>--username=<replaceable class="parameter">username</replaceable></></term>
       <listitem>
        <para>
         User name to connect as.

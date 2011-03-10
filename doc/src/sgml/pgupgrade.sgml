@@ -58,13 +58,13 @@
 
      <varlistentry>
       <term><option>-b</option> <replaceable>old_bindir</></term>
-      <term><option>--old-bindir</option> <replaceable>OLDBINDIR</></term>
+      <term><option>--old-bindir=</option><replaceable>OLDBINDIR</></term>
       <listitem><para>specify the old cluster executable directory</para></listitem>
      </varlistentry>
 
      <varlistentry>
       <term><option>-B</option> <replaceable>new_bindir</></term>
-      <term><option>--new-bindir</option> <replaceable>NEWBINDIR</></term>
+      <term><option>--new-bindir=</option><replaceable>NEWBINDIR</></term>
       <listitem><para>specify the new cluster executable directory</para></listitem>
      </varlistentry>
 
@@ -76,13 +76,13 @@
 
      <varlistentry>
       <term><option>-d</option> <replaceable>old_datadir</></term>
-      <term><option>--old-datadir</option> <replaceable>OLDDATADIR</></term>
+      <term><option>--old-datadir=</option><replaceable>OLDDATADIR</></term>
       <listitem><para>specify the old cluster data directory</para></listitem>
      </varlistentry>
 
      <varlistentry>
       <term><option>-D</option> <replaceable>new_datadir</></term>
-      <term><option>--new-datadir</option> <replaceable>NEWDATADIR</></term>
+      <term><option>--new-datadir=</option><replaceable>NEWDATADIR</></term>
       <listitem><para>specify the new cluster data directory</para></listitem>
      </varlistentry>
 
@@ -94,7 +94,7 @@
 
      <varlistentry>
       <term><option>-G</option> <replaceable>debug_filename</></term>
-      <term><option>--debugfile</option> <replaceable>DEBUGFILENAME</></term>
+      <term><option>--debugfile=</option><replaceable>DEBUGFILENAME</></term>
       <listitem><para>output debugging activity to file</para></listitem>
      </varlistentry>
 
@@ -106,25 +106,25 @@
 
      <varlistentry>
       <term><option>-l</option> <replaceable>log_filename</></term>
-      <term><option>--logfile</option> <replaceable>LOGFILENAME</></term>
+      <term><option>--logfile=</option><replaceable>LOGFILENAME</></term>
       <listitem><para>log session activity to file</para></listitem>
      </varlistentry>
 
      <varlistentry>
       <term><option>-p</option> <replaceable>old_portnum</></term>
-      <term><option>--old-port</option> <replaceable>portnum</></term>
+      <term><option>--old-port=</option><replaceable>portnum</></term>
       <listitem><para>specify the old cluster port number</para></listitem>
      </varlistentry>
 
      <varlistentry>
       <term><option>-P</option> <replaceable>new_portnum</></term>
-      <term><option>--new-port</option> <replaceable>portnum</></term>
+      <term><option>--new-port=</option><replaceable>portnum</></term>
       <listitem><para>specify the new cluster port number</para></listitem>
      </varlistentry>
 
      <varlistentry>
       <term><option>-u</option> <replaceable>username</></term>
-      <term><option>--user</option> <replaceable>username</></term>
+      <term><option>--user=</option><replaceable>username</></term>
       <listitem><para>clusters superuser</para></listitem>
      </varlistentry>
 
