@@ -54,10 +54,12 @@ static int	numTables;
 static int	numTypes;
 static int	numFuncs;
 static int	numOperators;
+static int	numCollations;
 static DumpableObject **tblinfoindex;
 static DumpableObject **typinfoindex;
 static DumpableObject **funinfoindex;
 static DumpableObject **oprinfoindex;
+static DumpableObject **collinfoindex;
 
 
 static void flagInhTables(TableInfo *tbinfo, int numTables,
@@ -105,7 +107,6 @@ getSchemaData(int *numTablesPtr)
 	int			numCasts;
 	int			numOpclasses;
 	int			numOpfamilies;
-	int			numCollations;
 	int			numConversions;
 	int			numTSParsers;
 	int			numTSTemplates;
@@ -187,6 +188,7 @@ getSchemaData(int *numTablesPtr)
 	if (g_verbose)
 		write_msg(NULL, "reading user-defined collations\n");
 	collinfo = getCollations(&numCollations);
+	collinfoindex = buildIndexArray(collinfo, numCollations, sizeof(CollInfo));
 
 	if (g_verbose)
 		write_msg(NULL, "reading user-defined conversions\n");
@@ -782,6 +784,17 @@ OprInfo *
 findOprByOid(Oid oid)
 {
 	return (OprInfo *) findObjectByOid(oid, oprinfoindex, numOperators);
+}
+
+/*
+ * findCollationByOid
+ *	  finds the entry (in collinfo) of the collation with the given oid
+ *	  returns NULL if not found
+ */
+CollInfo *
+findCollationByOid(Oid oid)
+{
+	return (CollInfo *) findObjectByOid(oid, collinfoindex, numCollations);
 }
 
 

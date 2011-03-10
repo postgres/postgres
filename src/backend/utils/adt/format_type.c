@@ -18,7 +18,6 @@
 #include <ctype.h>
 
 #include "catalog/namespace.h"
-#include "catalog/pg_collation.h"
 #include "catalog/pg_type.h"
 #include "utils/builtins.h"
 #include "utils/lsyscache.h"
@@ -29,8 +28,7 @@
 #define MAX_INT32_LEN 11
 
 static char *format_type_internal(Oid type_oid, int32 typemod,
-					 bool typemod_given, bool allow_invalid,
-								  Oid collation_oid);
+					 bool typemod_given, bool allow_invalid);
 static char *printTypmod(const char *typname, int32 typmod, Oid typmodout);
 static char *
 psnprintf(size_t len, const char *fmt,...)
@@ -69,7 +67,6 @@ format_type(PG_FUNCTION_ARGS)
 {
 	Oid			type_oid;
 	int32		typemod;
-	Oid			collation_oid;
 	char	   *result;
 
 	/* Since this function is not strict, we must test for null args */
@@ -77,14 +74,13 @@ format_type(PG_FUNCTION_ARGS)
 		PG_RETURN_NULL();
 
 	type_oid = PG_GETARG_OID(0);
-	collation_oid = PG_ARGISNULL(2) ? InvalidOid : PG_GETARG_OID(2);
 
 	if (PG_ARGISNULL(1))
-		result = format_type_internal(type_oid, -1, false, true, collation_oid);
+		result = format_type_internal(type_oid, -1, false, true);
 	else
 	{
 		typemod = PG_GETARG_INT32(1);
-		result = format_type_internal(type_oid, typemod, true, true, collation_oid);
+		result = format_type_internal(type_oid, typemod, true, true);
 	}
 
 	PG_RETURN_TEXT_P(cstring_to_text(result));
@@ -99,7 +95,7 @@ format_type(PG_FUNCTION_ARGS)
 char *
 format_type_be(Oid type_oid)
 {
-	return format_type_internal(type_oid, -1, false, false, InvalidOid);
+	return format_type_internal(type_oid, -1, false, false);
 }
 
 /*
@@ -108,15 +104,14 @@ format_type_be(Oid type_oid)
 char *
 format_type_with_typemod(Oid type_oid, int32 typemod)
 {
-	return format_type_internal(type_oid, typemod, true, false, InvalidOid);
+	return format_type_internal(type_oid, typemod, true, false);
 }
 
 
 
 static char *
 format_type_internal(Oid type_oid, int32 typemod,
-					 bool typemod_given, bool allow_invalid,
-					 Oid collation_oid)
+					 bool typemod_given, bool allow_invalid)
 {
 	bool		with_typemod = typemod_given && (typemod >= 0);
 	HeapTuple	tuple;
@@ -322,12 +317,6 @@ format_type_internal(Oid type_oid, int32 typemod,
 
 	ReleaseSysCache(tuple);
 
-	if (collation_oid && collation_oid != DEFAULT_COLLATION_OID)
-	{
-		char *collstr = generate_collation_name(collation_oid);
-		buf = psnprintf(strlen(buf) + 10 + strlen(collstr), "%s COLLATE %s", buf, collstr);
-	}
-
 	return buf;
 }
 
@@ -431,7 +420,7 @@ oidvectortypes(PG_FUNCTION_ARGS)
 	for (num = 0; num < numargs; num++)
 	{
 		char	   *typename = format_type_internal(oidArray->values[num], -1,
-													false, true, InvalidOid);
+													false, true);
 		size_t		slen = strlen(typename);
 
 		if (left < (slen + 2))

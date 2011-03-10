@@ -1388,6 +1388,8 @@ setup_depend(void)
 		" FROM pg_ts_template;\n",
 		"INSERT INTO pg_depend SELECT 0,0,0, tableoid,oid,0, 'p' "
 		" FROM pg_ts_config;\n",
+		"INSERT INTO pg_depend SELECT 0,0,0, tableoid,oid,0, 'p' "
+		" FROM pg_collation;\n",
 		"INSERT INTO pg_shdepend SELECT 0,0,0,0, tableoid,oid, 'p' "
 		" FROM pg_authid;\n",
 		NULL

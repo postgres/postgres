@@ -272,6 +272,7 @@ typedef struct _tableInfo
 	char	   *attalign;		/* attribute align, used by binary_upgrade */
 	bool	   *attislocal;		/* true if attr has local definition */
 	char	  **attoptions;		/* per-attribute options */
+	Oid		   *attcollation;	/* per-attribute collation selection */
 
 	/*
 	 * Note: we need to store per-attribute notnull, default, and constraint
@@ -510,6 +511,7 @@ extern TableInfo *findTableByOid(Oid oid);
 extern TypeInfo *findTypeByOid(Oid oid);
 extern FuncInfo *findFuncByOid(Oid oid);
 extern OprInfo *findOprByOid(Oid oid);
+extern CollInfo *findCollationByOid(Oid oid);
 
 extern void simple_oid_list_append(SimpleOidList *list, Oid val);
 extern void simple_string_list_append(SimpleStringList *list, const char *val);

@@ -13269,7 +13269,7 @@ SELECT pg_type_is_visible('myschema.widget'::regtype);
 
      <tbody>
       <row>
-       <entry><literal><function>format_type(<parameter>type_oid</parameter> [, <parameter>typemod</> [, <parameter>collation_oid</> ]])</function></literal></entry>
+       <entry><literal><function>format_type(<parameter>type_oid</parameter>, <parameter>typemod</>)</function></literal></entry>
        <entry><type>text</type></entry>
        <entry>get SQL name of a data type</entry>
       </row>
@@ -13410,9 +13410,7 @@ SELECT pg_type_is_visible('myschema.widget'::regtype);
   <para>
    <function>format_type</function> returns the SQL name of a data type that
    is identified by its type OID and possibly a type modifier.  Pass NULL
-   for the type modifier or omit the argument if no specific modifier is known.
-   If a collation is given as third argument, a <literal>COLLATE</> clause
-   followed by a formatted collation name is appended.
+   for the type modifier if no specific modifier is known.
   </para>
 
   <para>

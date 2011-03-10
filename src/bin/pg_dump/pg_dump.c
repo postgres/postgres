@@ -5502,6 +5502,7 @@ getTableAttrs(TableInfo *tblinfo, int numTables)
 	int			i_attalign;
 	int			i_attislocal;
 	int			i_attoptions;
+	int			i_attcollation;
 	PGresult   *res;
 	int			ntups;
 	bool		hasdefaults;
@@ -5541,13 +5542,20 @@ getTableAttrs(TableInfo *tblinfo, int numTables)
 
 		if (g_fout->remoteVersion >= 90100)
 		{
-			/* attcollation is new in 9.1 */
+			/*
+			 * attcollation is new in 9.1.  Since we only want to dump
+			 * COLLATE clauses for attributes whose collation is different
+			 * from their type's default, we use a CASE here to suppress
+			 * uninteresting attcollations cheaply.
+			 */
 			appendPQExpBuffer(q, "SELECT a.attnum, a.attname, a.atttypmod, "
 							  "a.attstattarget, a.attstorage, t.typstorage, "
 							  "a.attnotnull, a.atthasdef, a.attisdropped, "
 							  "a.attlen, a.attalign, a.attislocal, "
-				  "pg_catalog.format_type(t.oid,a.atttypmod,a.attcollation) AS atttypname, "
-						   "array_to_string(attoptions, ', ') AS attoptions "
+				  "pg_catalog.format_type(t.oid,a.atttypmod) AS atttypname, "
+						  "array_to_string(a.attoptions, ', ') AS attoptions, "
+							  "CASE WHEN a.attcollation <> t.typcollation "
+							  "THEN a.attcollation ELSE 0 END AS attcollation "
 			 "FROM pg_catalog.pg_attribute a LEFT JOIN pg_catalog.pg_type t "
 							  "ON a.atttypid = t.oid "
 							  "WHERE a.attrelid = '%u'::pg_catalog.oid "
@@ -5563,7 +5571,8 @@ getTableAttrs(TableInfo *tblinfo, int numTables)
 							  "a.attnotnull, a.atthasdef, a.attisdropped, "
 							  "a.attlen, a.attalign, a.attislocal, "
 				  "pg_catalog.format_type(t.oid,a.atttypmod) AS atttypname, "
-						   "array_to_string(attoptions, ', ') AS attoptions "
+						  "array_to_string(a.attoptions, ', ') AS attoptions, "
+							  "0 AS attcollation "
 			 "FROM pg_catalog.pg_attribute a LEFT JOIN pg_catalog.pg_type t "
 							  "ON a.atttypid = t.oid "
 							  "WHERE a.attrelid = '%u'::pg_catalog.oid "
@@ -5579,7 +5588,7 @@ getTableAttrs(TableInfo *tblinfo, int numTables)
 							  "a.attnotnull, a.atthasdef, a.attisdropped, "
 							  "a.attlen, a.attalign, a.attislocal, "
 				  "pg_catalog.format_type(t.oid,a.atttypmod) AS atttypname, "
-							  "'' AS attoptions "
+							  "'' AS attoptions, 0 AS attcollation "
 			 "FROM pg_catalog.pg_attribute a LEFT JOIN pg_catalog.pg_type t "
 							  "ON a.atttypid = t.oid "
 							  "WHERE a.attrelid = '%u'::pg_catalog.oid "
@@ -5600,7 +5609,7 @@ getTableAttrs(TableInfo *tblinfo, int numTables)
 							  "false AS attisdropped, a.attlen, "
 							  "a.attalign, false AS attislocal, "
 							  "format_type(t.oid,a.atttypmod) AS atttypname, "
-							  "'' AS attoptions "
+							  "'' AS attoptions, 0 AS attcollation "
 							  "FROM pg_attribute a LEFT JOIN pg_type t "
 							  "ON a.atttypid = t.oid "
 							  "WHERE a.attrelid = '%u'::oid "
@@ -5618,7 +5627,7 @@ getTableAttrs(TableInfo *tblinfo, int numTables)
 							  "attlen, attalign, "
 							  "false AS attislocal, "
 							  "(SELECT typname FROM pg_type WHERE oid = atttypid) AS atttypname, "
-							  "'' AS attoptions "
+							  "'' AS attoptions, 0 AS attcollation "
 							  "FROM pg_attribute a "
 							  "WHERE attrelid = '%u'::oid "
 							  "AND attnum > 0::int2 "
@@ -5645,6 +5654,7 @@ getTableAttrs(TableInfo *tblinfo, int numTables)
 		i_attalign = PQfnumber(res, "attalign");
 		i_attislocal = PQfnumber(res, "attislocal");
 		i_attoptions = PQfnumber(res, "attoptions");
+		i_attcollation = PQfnumber(res, "attcollation");
 
 		tbinfo->numatts = ntups;
 		tbinfo->attnames = (char **) malloc(ntups * sizeof(char *));
@@ -5660,6 +5670,7 @@ getTableAttrs(TableInfo *tblinfo, int numTables)
 		tbinfo->notnull = (bool *) malloc(ntups * sizeof(bool));
 		tbinfo->attrdefs = (AttrDefInfo **) malloc(ntups * sizeof(AttrDefInfo *));
 		tbinfo->attoptions = (char **) malloc(ntups * sizeof(char *));
+		tbinfo->attcollation = (Oid *) malloc(ntups * sizeof(Oid));
 		tbinfo->inhAttrs = (bool *) malloc(ntups * sizeof(bool));
 		tbinfo->inhAttrDef = (bool *) malloc(ntups * sizeof(bool));
 		tbinfo->inhNotNull = (bool *) malloc(ntups * sizeof(bool));
@@ -5685,6 +5696,7 @@ getTableAttrs(TableInfo *tblinfo, int numTables)
 			tbinfo->attislocal[j] = (PQgetvalue(res, j, i_attislocal)[0] == 't');
 			tbinfo->notnull[j] = (PQgetvalue(res, j, i_attnotnull)[0] == 't');
 			tbinfo->attoptions[j] = strdup(PQgetvalue(res, j, i_attoptions));
+			tbinfo->attcollation[j] = atooid(PQgetvalue(res, j, i_attcollation));
 			tbinfo->attrdefs[j] = NULL; /* fix below */
 			if (PQgetvalue(res, j, i_atthasdef)[0] == 't')
 				hasdefaults = true;
@@ -7359,7 +7371,7 @@ dumpBaseType(Archive *fout, TypeInfo *tyinfo)
 						  "typanalyze::pg_catalog.oid AS typanalyzeoid, "
 						  "typcategory, typispreferred, "
 						  "typdelim, typbyval, typalign, typstorage, "
-						  "(typcollation = (SELECT oid FROM pg_catalog.pg_collation WHERE collname = 'default')) AS typcollatable, "
+						  "(typcollation <> 0) AS typcollatable, "
 						  "pg_catalog.pg_get_expr(typdefaultbin, 0) AS typdefaultbin, typdefault "
 						  "FROM pg_catalog.pg_type "
 						  "WHERE oid = '%u'::pg_catalog.oid",
@@ -7736,6 +7748,7 @@ dumpDomain(Archive *fout, TypeInfo *tyinfo)
 	char	   *typnotnull;
 	char	   *typdefn;
 	char	   *typdefault;
+	Oid			typcollation;
 	bool		typdefault_is_literal = false;
 
 	/* Set proper schema search path so type references list correctly */
@@ -7745,11 +7758,14 @@ dumpDomain(Archive *fout, TypeInfo *tyinfo)
 	if (g_fout->remoteVersion >= 90100)
 	{
 		/* typcollation is new in 9.1 */
-		appendPQExpBuffer(query, "SELECT typnotnull, "
-						  "pg_catalog.format_type(typbasetype, typtypmod, typcollation) AS typdefn, "
-						  "pg_catalog.pg_get_expr(typdefaultbin, 'pg_catalog.pg_type'::pg_catalog.regclass) AS typdefaultbin, "
-						  "typdefault "
+		appendPQExpBuffer(query, "SELECT t.typnotnull, "
+						  "pg_catalog.format_type(t.typbasetype, t.typtypmod) AS typdefn, "
+						  "pg_catalog.pg_get_expr(t.typdefaultbin, 'pg_catalog.pg_type'::pg_catalog.regclass) AS typdefaultbin, "
+						  "t.typdefault, "
+						  "CASE WHEN t.typcollation <> u.typcollation "
+						  "THEN t.typcollation ELSE 0 END AS typcollation "
 						  "FROM pg_catalog.pg_type t "
+						  "LEFT JOIN pg_catalog.pg_type u ON (t.typbasetype = u.oid) "
 						  "WHERE t.oid = '%u'::pg_catalog.oid",
 						  tyinfo->dobj.catId.oid);
 	}
@@ -7759,7 +7775,7 @@ dumpDomain(Archive *fout, TypeInfo *tyinfo)
 		appendPQExpBuffer(query, "SELECT typnotnull, "
 						  "pg_catalog.format_type(typbasetype, typtypmod) AS typdefn, "
 						  "pg_catalog.pg_get_expr(typdefaultbin, 'pg_catalog.pg_type'::pg_catalog.regclass) AS typdefaultbin, "
-						  "typdefault "
+						  "typdefault, 0 AS typcollation "
 						  "FROM pg_catalog.pg_type "
 						  "WHERE oid = '%u'::pg_catalog.oid",
 						  tyinfo->dobj.catId.oid);
@@ -7790,6 +7806,7 @@ dumpDomain(Archive *fout, TypeInfo *tyinfo)
 	}
 	else
 		typdefault = NULL;
+	typcollation = atooid(PQgetvalue(res, 0, PQfnumber(res, "typcollation")));
 
 	if (binary_upgrade)
 		binary_upgrade_set_type_oids_by_type_oid(q, tyinfo->dobj.catId.oid);
@@ -7798,6 +7815,22 @@ dumpDomain(Archive *fout, TypeInfo *tyinfo)
 					  "CREATE DOMAIN %s AS %s",
 					  fmtId(tyinfo->dobj.name),
 					  typdefn);
+
+	/* Print collation only if different from base type's collation */
+	if (OidIsValid(typcollation))
+	{
+		CollInfo *coll;
+
+		coll = findCollationByOid(typcollation);
+		if (coll)
+		{
+			/* always schema-qualify, don't try to be smart */
+			appendPQExpBuffer(q, " COLLATE %s.",
+							  fmtId(coll->dobj.namespace->dobj.name));
+			appendPQExpBuffer(q, "%s",
+							  fmtId(coll->dobj.name));
+		}
+	}
 
 	if (typnotnull[0] == 't')
 		appendPQExpBuffer(q, " NOT NULL");
@@ -11964,6 +11997,22 @@ dumpTableSchema(Archive *fout, TableInfo *tbinfo)
 					appendPQExpBuffer(q, "%s",
 									  myFormatType(tbinfo->atttypnames[j],
 												   tbinfo->atttypmod[j]));
+				}
+
+				/* Add collation if not default for the type */
+				if (OidIsValid(tbinfo->attcollation[j]))
+				{
+					CollInfo *coll;
+
+					coll = findCollationByOid(tbinfo->attcollation[j]);
+					if (coll)
+					{
+						/* always schema-qualify, don't try to be smart */
+						appendPQExpBuffer(q, " COLLATE %s.",
+										  fmtId(coll->dobj.namespace->dobj.name));
+						appendPQExpBuffer(q, "%s",
+										  fmtId(coll->dobj.name));
+					}
 				}
 
 				if (has_default)

@@ -694,9 +694,5 @@ COMMENT ON FUNCTION ts_debug(text) IS
 --
 
 CREATE OR REPLACE FUNCTION
-  format_type(oid, int DEFAULT NULL, oid DEFAULT NULL)
-  RETURNS text STABLE LANGUAGE internal AS 'format_type';
-
-CREATE OR REPLACE FUNCTION
   pg_start_backup(label text, fast boolean DEFAULT false)
   RETURNS text STRICT VOLATILE LANGUAGE internal AS 'pg_start_backup';

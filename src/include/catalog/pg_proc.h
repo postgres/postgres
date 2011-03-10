@@ -1100,8 +1100,8 @@ DATA(insert OID = 1078 (  bpcharcmp		   PGNSP PGUID 12 1 0 0 f f f t f i 2 0 23 
 DESCR("less-equal-greater");
 DATA(insert OID = 1080 (  hashbpchar	   PGNSP PGUID 12 1 0 0 f f f t f i 1 0 23 "1042" _null_ _null_ _null_ _null_	hashbpchar _null_ _null_ _null_ ));
 DESCR("hash");
-DATA(insert OID = 1081 (  format_type	   PGNSP PGUID 12 1 0 0 f f f f f s 3 0 25 "26 23 26" _null_ _null_ _null_ _null_ format_type _null_ _null_ _null_ ));
-DESCR("format a type OID, atttypmod, and collation OID to canonical SQL");
+DATA(insert OID = 1081 (  format_type	   PGNSP PGUID 12 1 0 0 f f f f f s 2 0 25 "26 23" _null_ _null_ _null_ _null_ format_type _null_ _null_ _null_ ));
+DESCR("format a type oid and atttypmod to canonical SQL");
 DATA(insert OID = 1084 (  date_in		   PGNSP PGUID 12 1 0 0 f f f t f s 1 0 1082 "2275" _null_ _null_ _null_ _null_ date_in _null_ _null_ _null_ ));
 DESCR("I/O");
 DATA(insert OID = 1085 (  date_out		   PGNSP PGUID 12 1 0 0 f f f t f s 1 0 2275 "1082" _null_ _null_ _null_ _null_ date_out _null_ _null_ _null_ ));
