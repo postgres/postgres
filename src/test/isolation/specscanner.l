@@ -32,10 +32,9 @@ static void addlitchar(const char c);
 %x qstr
 
 non_newline		[^\n\r]
-space			[ \t\n\r\f]
+space			[ \t\r\f]
 
 comment			("#"{non_newline}*)
-whitespace		({space}+|{comment})
 
 %%
 
@@ -46,10 +45,10 @@ step			{ return(STEP); }
 teardown		{ return(TEARDOWN); }
 
 [\n]			{ yyline++; }
-{whitespace}	{
-					/* ignore */
-				}
+{comment}		{ /* ignore */ }
+{space}			{ /* ignore */ }
 
+ /* Quoted strings: "foo" */
 \"				{
 					litbufpos = 0;
 					BEGIN(qstr);
@@ -61,27 +60,36 @@ teardown		{ return(TEARDOWN); }
 					return(string);
 				}
 <qstr>.			{ addlitchar(yytext[0]); }
+<qstr>\n		{ yyerror("unexpected newline in quoted string"); }
+<qstr><<EOF>>	{ yyerror("unterminated quoted string"); }
 
+ /* SQL blocks: { UPDATE ... } */
 "{"				{
 
 					litbufpos = 0;
 					BEGIN(sql);
 				}
-
 <sql>"}"		{
 					litbuf[litbufpos] = '\0';
 					yylval.str = strdup(litbuf);
 					BEGIN(INITIAL);
 					return(sqlblock);
 				}
-<sql>[^}]		{ addlitchar(yytext[0]);}
-
+<sql>.			{
+					addlitchar(yytext[0]);
+				}
+<sql>\n			{
+					yyline++;
+					addlitchar(yytext[0]);
+				}
+<sql><<EOF>>	{
+					yyerror("unterminated sql block");
+				}
 
 .				{
 					fprintf(stderr, "syntax error at line %d: unexpected character \"%s\"\n", yyline, yytext);
 					exit(1);
 				}
-
 %%
 
 static void
