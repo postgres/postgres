@@ -6482,6 +6482,9 @@ StartupXLOG(void)
 				{
 					if (recoveryPauseAtTarget)
 					{
+						ereport(LOG,
+								(errmsg("recovery has paused"),
+								 errhint("Execute pg_xlog_replay_resume() to continue.")));
 						SetRecoveryPause(true);
 						recoveryPausesHere();
 					}
