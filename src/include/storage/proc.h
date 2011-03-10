@@ -122,7 +122,7 @@ struct PGPROC
 	 * Info to allow us to wait for synchronous replication, if needed.
 	 * waitLSN is InvalidXLogRecPtr if not waiting; set only by user backend.
 	 * syncRepState must not be touched except by owning process or WALSender.
-	 * syncRep_links used only while holding SyncRepLock.
+	 * syncRepLinks used only while holding SyncRepLock.
 	 */
 	Latch		waitLatch;			/* allow us to wait for sync rep */
 	XLogRecPtr	waitLSN;			/* waiting for this LSN or higher */

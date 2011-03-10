@@ -225,7 +225,7 @@ SyncRepWaitForLSN(XLogRecPtr XactCommitLSN)
 /*
  * Insert MyProc into SyncRepQueue, maintaining sorted invariant.
  *
- * Usually we will go at tail of queue, though its possible that we arrive
+ * Usually we will go at tail of queue, though it's possible that we arrive
  * here out of order, so start at tail and work back to insertion point.
  */
 static void
