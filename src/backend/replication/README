@@ -4,18 +4,17 @@ Walreceiver - libpqwalreceiver API
 ----------------------------------
 
 The transport-specific part of walreceiver, responsible for connecting to
-the primary server and receiving WAL files, is loaded dynamically to avoid
-having to link the main server binary with libpq. The dynamically loaded
-module is in libpqwalreceiver subdirectory.
+the primary server, receiving WAL files and sending messages, is loaded
+dynamically to avoid having to link the main server binary with libpq.
+The dynamically loaded module is in libpqwalreceiver subdirectory.
 
-The dynamically loaded module implements three functions:
+The dynamically loaded module implements four functions:
 
 
 bool walrcv_connect(char *conninfo, XLogRecPtr startpoint)
 
 Establish connection to the primary, and starts streaming from 'startpoint'.
 Returns true on success.
-
 
 bool walrcv_receive(int timeout, unsigned char *type, char **buffer, int *len)
 
@@ -25,6 +24,10 @@ otherwise false. On success, a pointer to the message payload is stored in
 *buffer, length in *len, and the type of message received in *type. The
 returned buffer is valid until the next call to walrcv_* functions, the
 caller should not attempt freeing it.
+
+void walrcv_send(const char *buffer, int nbytes)
+
+Send a message to XLOG stream.
 
 void walrcv_disconnect(void);
 
@@ -45,11 +48,15 @@ to fetch more WAL (if streaming replication is configured).
 Walreceiver is a postmaster subprocess, so the startup process can't fork it
 directly. Instead, it sends a signal to postmaster, asking postmaster to launch
 it. Before that, however, startup process fills in WalRcvData->conninfo,
-and initializes the starting point in WalRcvData->receivedUpto.
+and initializes the starting point in WalRcvData->receiveStart.
 
 As walreceiver receives WAL from the master server, and writes and flushes
-it to disk (in pg_xlog), it updates WalRcvData->receivedUpto. Startup process
-polls that to know how far it can proceed with WAL replay.
+it to disk (in pg_xlog), it updates WalRcvData->receivedUpto and signals
+the startup process to know how far WAL replay can advance.
+
+Walreceiver sends information about replication progress to the master server
+whenever either it writes or flushes new WAL, or the specified interval elapses.
+This is used for reporting purpose.
 
 Walsender IPC
 -------------
@@ -80,11 +87,9 @@ phase. A walsenders will look like a regular backends until it's done with the
 initialization and has marked itself in PMSignal array, and at process
 termination, after unmarking the PMSignal slot.
 
-Each walsender allocates an entry from the WalSndCtl array, and advertises
-there how far it has streamed WAL already. This is used at checkpoints, to
-avoid recycling WAL that hasn't been streamed to a slave yet. However,
-that doesn't stop such WAL from being recycled when the connection is not
-established.
+Each walsender allocates an entry from the WalSndCtl array, and tracks
+information about replication progress. User can monitor them via
+statistics views.
 
 
 Walsender - walreceiver protocol
