@@ -98,7 +98,7 @@ DefineCollation(List *names, List *parameters)
 		Oid			collid;
 		HeapTuple	tp;
 
-		collid = LookupCollation(NULL, defGetQualifiedName(fromEl), -1);
+		collid =  get_collation_oid(defGetQualifiedName(fromEl), false);
 		tp = SearchSysCache1(COLLOID, ObjectIdGetDatum(collid));
 		if (!HeapTupleIsValid(tp))
 			elog(ERROR, "cache lookup failed for collation %u", collid);

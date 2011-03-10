@@ -5082,8 +5082,9 @@ get_rule_expr(Node *node, deparse_context *context,
 
 				if (!PRETTY_PAREN(context))
 					appendStringInfoChar(buf, '(');
-				get_rule_expr_paren(arg, context, false, node);
-				appendStringInfo(buf, " COLLATE %s", generate_collation_name(collate->collOid));
+				get_rule_expr_paren(arg, context, showimplicit, node);
+				appendStringInfo(buf, " COLLATE %s",
+								 generate_collation_name(collate->collOid));
 				if (!PRETTY_PAREN(context))
 					appendStringInfoChar(buf, ')');
 			}

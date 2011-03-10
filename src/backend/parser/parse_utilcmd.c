@@ -627,13 +627,16 @@ transformInhRelation(CreateStmtContext *cxt, InhRelation *inhRelation)
 		def = makeNode(ColumnDef);
 		def->colname = pstrdup(attributeName);
 		def->typeName = makeTypeNameFromOid(attribute->atttypid,
-											attribute->atttypmod,
-											attribute->attcollation);
+											attribute->atttypmod);
 		def->inhcount = 0;
 		def->is_local = true;
 		def->is_not_null = attribute->attnotnull;
+		def->is_from_type = false;
+		def->storage = 0;
 		def->raw_default = NULL;
 		def->cooked_default = NULL;
+		def->collClause = NULL;
+		def->collOid = attribute->attcollation;
 		def->constraints = NIL;
 
 		/*
@@ -822,7 +825,7 @@ transformOfType(CreateStmtContext *cxt, TypeName *ofTypename)
 
 	AssertArg(ofTypename);
 
-	tuple = typenameType(NULL, ofTypename, NULL, NULL);
+	tuple = typenameType(NULL, ofTypename, NULL);
 	typ = (Form_pg_type) GETSTRUCT(tuple);
 	ofTypeId = HeapTupleGetOid(tuple);
 	ofTypename->typeOid = ofTypeId;		/* cached for later */
@@ -837,16 +840,24 @@ transformOfType(CreateStmtContext *cxt, TypeName *ofTypename)
 	for (i = 0; i < tupdesc->natts; i++)
 	{
 		Form_pg_attribute attr = tupdesc->attrs[i];
-		ColumnDef  *n = makeNode(ColumnDef);
+		ColumnDef  *n;
 
 		if (attr->attisdropped)
 			continue;
 
+		n = makeNode(ColumnDef);
 		n->colname = pstrdup(NameStr(attr->attname));
-		n->typeName = makeTypeNameFromOid(attr->atttypid, attr->atttypmod, attr->attcollation);
-		n->constraints = NULL;
+		n->typeName = makeTypeNameFromOid(attr->atttypid, attr->atttypmod);
+		n->inhcount = 0;
 		n->is_local = true;
+		n->is_not_null = false;
 		n->is_from_type = true;
+		n->storage = 0;
+		n->raw_default = NULL;
+		n->cooked_default = NULL;
+		n->collClause = NULL;
+		n->collOid = attr->attcollation;
+		n->constraints = NIL;
 		cxt->columns = lappend(cxt->columns, n);
 	}
 	DecrTupleDescRefCount(tupdesc);
@@ -2445,9 +2456,28 @@ static void
 transformColumnType(CreateStmtContext *cxt, ColumnDef *column)
 {
 	/*
-	 * All we really need to do here is verify that the type is valid.
+	 * All we really need to do here is verify that the type is valid,
+	 * including any collation spec that might be present.
 	 */
-	Type		ctype = typenameType(cxt->pstate, column->typeName, NULL, NULL);
+	Type		ctype = typenameType(cxt->pstate, column->typeName, NULL);
+
+	if (column->collClause)
+	{
+		Form_pg_type typtup = (Form_pg_type) GETSTRUCT(ctype);
+		Oid		collOid;
+
+		collOid = LookupCollation(cxt->pstate,
+								  column->collClause->collnames,
+								  column->collClause->location);
+		/* Complain if COLLATE is applied to an uncollatable type */
+		if (!OidIsValid(typtup->typcollation))
+			ereport(ERROR,
+					(errcode(ERRCODE_DATATYPE_MISMATCH),
+					 errmsg("collations are not supported by type %s",
+							format_type_be(HeapTupleGetOid(ctype))),
+					 parser_errposition(cxt->pstate,
+										column->collClause->location)));
+	}
 
 	ReleaseSysCache(ctype);
 }

@@ -2067,9 +2067,12 @@ _outColumnDef(StringInfo str, ColumnDef *node)
 	WRITE_INT_FIELD(inhcount);
 	WRITE_BOOL_FIELD(is_local);
 	WRITE_BOOL_FIELD(is_not_null);
+	WRITE_BOOL_FIELD(is_from_type);
 	WRITE_INT_FIELD(storage);
 	WRITE_NODE_FIELD(raw_default);
 	WRITE_NODE_FIELD(cooked_default);
+	WRITE_NODE_FIELD(collClause);
+	WRITE_OID_FIELD(collOid);
 	WRITE_NODE_FIELD(constraints);
 }
 
@@ -2085,8 +2088,6 @@ _outTypeName(StringInfo str, TypeName *node)
 	WRITE_NODE_FIELD(typmods);
 	WRITE_INT_FIELD(typemod);
 	WRITE_NODE_FIELD(arrayBounds);
-	WRITE_NODE_FIELD(collnames);
-	WRITE_OID_FIELD(collOid);
 	WRITE_LOCATION_FIELD(location);
 }
 

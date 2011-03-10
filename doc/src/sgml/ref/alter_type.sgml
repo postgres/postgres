@@ -32,9 +32,9 @@ ALTER TYPE <replaceable class="PARAMETER">name</replaceable> ADD VALUE <replacea
 
 <phrase>where <replaceable class="PARAMETER">action</replaceable> is one of:</phrase>
 
-    ADD ATTRIBUTE <replaceable class="PARAMETER">attribute_name</replaceable> <replaceable class="PARAMETER">data_type</replaceable> [ CASCADE | RESTRICT ]
+    ADD ATTRIBUTE <replaceable class="PARAMETER">attribute_name</replaceable> <replaceable class="PARAMETER">data_type</replaceable> [ COLLATE <replaceable class="PARAMETER">collation</replaceable> ] [ CASCADE | RESTRICT ]
     DROP ATTRIBUTE [ IF EXISTS ] <replaceable class="PARAMETER">attribute_name</replaceable> [ CASCADE | RESTRICT ]
-    ALTER ATTRIBUTE <replaceable class="PARAMETER">attribute_name</replaceable> [ SET DATA ] TYPE <replaceable class="PARAMETER">data_type</replaceable> [ CASCADE | RESTRICT ]
+    ALTER ATTRIBUTE <replaceable class="PARAMETER">attribute_name</replaceable> [ SET DATA ] TYPE <replaceable class="PARAMETER">data_type</replaceable> [ COLLATE <replaceable class="PARAMETER">collation</replaceable> ] [ CASCADE | RESTRICT ]
 </synopsis>
  </refsynopsisdiv>
 

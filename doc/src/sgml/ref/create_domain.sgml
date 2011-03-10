@@ -89,8 +89,9 @@ CREATE DOMAIN <replaceable class="parameter">name</replaceable> [ AS ] <replacea
       <listitem>
        <para>
         An optional collation for the domain.  If no collation is
-        specified, the database default collation is used (which can
-        be overridden when the domain is used to define a column).
+        specified, the underlying data type's default collation is used.
+        The underlying type must be collatable when <literal>COLLATE</>
+        is specified.
        </para>
       </listitem>
      </varlistentry>

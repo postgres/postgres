@@ -248,9 +248,9 @@ CREATE [ [ GLOBAL | LOCAL ] { TEMPORARY | TEMP } | UNLOGGED ] TABLE [ IF NOT EXI
     <term><literal>COLLATE <replaceable>collation</replaceable></literal></term>
     <listitem>
      <para>
-      The <literal>COLLATE</> clause assigns a nondefault collation to
-      the column.  By default, the locale settings of the database are
-      used.
+      The <literal>COLLATE</> clause assigns a collation to
+      the column (which must be of a collatable data type).
+      If not specified, the column data type's default collation is used.
      </para>
     </listitem>
    </varlistentry>

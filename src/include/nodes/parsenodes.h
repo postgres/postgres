@@ -168,8 +168,7 @@ typedef struct Query
  * specify the type by OID than by name.  If "names" is NIL then the
  * actual type OID is given by typeOid, otherwise typeOid is unused.
  * Similarly, if "typmods" is NIL then the actual typmod is expected to
- * be prespecified in typemod, otherwise typemod is unused.  Similarly
- * for collnames/collOid.
+ * be prespecified in typemod, otherwise typemod is unused.
  *
  * If pct_type is TRUE, then names is actually a field name and we look up
  * the type of that field.	Otherwise (the normal case), names is a type
@@ -185,8 +184,6 @@ typedef struct TypeName
 	List	   *typmods;		/* type modifier expression(s) */
 	int32		typemod;		/* prespecified type modifier */
 	List	   *arrayBounds;	/* array bounds */
-	List	   *collnames;		/* collation name */
-	Oid			collOid;		/* collation by OID */
 	int			location;		/* token location, or -1 if unknown */
 } TypeName;
 
@@ -468,6 +465,10 @@ typedef struct RangeFunction
  * how this ColumnDef node was created (by parsing, or by inheritance
  * from an existing relation).	We should never have both in the same node!
  *
+ * Similarly, we may have a COLLATE specification in either raw form
+ * (represented as a CollateClause with arg==NULL) or cooked form
+ * (the collation's OID).
+ *
  * The constraints list may contain a CONSTR_DEFAULT item in a raw
  * parsetree produced by gram.y, but transformCreateStmt will remove
  * the item and set raw_default instead.  CONSTR_DEFAULT items
@@ -485,6 +486,8 @@ typedef struct ColumnDef
 	char		storage;		/* attstorage setting, or 0 for default */
 	Node	   *raw_default;	/* default value (untransformed parse tree) */
 	Node	   *cooked_default; /* default value (transformed expr tree) */
+	CollateClause *collClause;	/* untransformed COLLATE spec, if any */
+	Oid			collOid;		/* collation OID (InvalidOid if not set) */
 	List	   *constraints;	/* other constraints on column */
 } ColumnDef;
 
@@ -1202,9 +1205,8 @@ typedef struct AlterTableCmd	/* one subcommand of an ALTER TABLE */
 	AlterTableType subtype;		/* Type of table alteration to apply */
 	char	   *name;			/* column, constraint, or trigger to act on,
 								 * or new owner or tablespace */
-	Node	   *def;			/* definition of new column, column type,
-								 * index, constraint, or parent table */
-	Node	   *transform;		/* transformation expr for ALTER TYPE */
+	Node	   *def;			/* definition of new column, index,
+								 * constraint, or parent table */
 	DropBehavior behavior;		/* RESTRICT or CASCADE for DROP cases */
 	bool		missing_ok;		/* skip error if missing? */
 	bool		validated;
@@ -1819,6 +1821,7 @@ typedef struct CreateDomainStmt
 	NodeTag		type;
 	List	   *domainname;		/* qualified name (list of Value strings) */
 	TypeName   *typeName;		/* the base type */
+	CollateClause *collClause;	/* untransformed COLLATE spec, if any */
 	List	   *constraints;	/* constraints (list of Constraint nodes) */
 } CreateDomainStmt;
 

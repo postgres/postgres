@@ -20,21 +20,21 @@ CREATE TABLE collate_test_fail (
 );
 ERROR:  collation "ja_JP.eucjp" for current database encoding "UTF8" does not exist
 LINE 3:     b text COLLATE "ja_JP.eucjp"
-              ^
+                   ^
 CREATE TABLE collate_test_fail (
     a int,
     b text COLLATE "foo"
 );
 ERROR:  collation "foo" for current database encoding "UTF8" does not exist
 LINE 3:     b text COLLATE "foo"
-              ^
+                   ^
 CREATE TABLE collate_test_fail (
     a int COLLATE "en_US.utf8",
     b text
 );
 ERROR:  collations are not supported by type integer
 LINE 2:     a int COLLATE "en_US.utf8",
-              ^
+                  ^
 CREATE TABLE collate_test_like (
     LIKE collate_test1
 );
@@ -632,9 +632,9 @@ ERROR:  no collation was derived for column "b" with collatable type text
 HINT:  Use the COLLATE clause to set the collation explicitly.
 -- casting
 SELECT CAST('42' AS text COLLATE "C");
-ERROR:  COLLATE clause not allowed in cast target
+ERROR:  syntax error at or near "COLLATE"
 LINE 1: SELECT CAST('42' AS text COLLATE "C");
-                            ^
+                                 ^
 SELECT a, CAST(b AS varchar) FROM collate_test1 ORDER BY 2;
  a |  b  
 ---+-----
@@ -727,6 +727,8 @@ CREATE INDEX collate_test1_idx4 ON collate_test1 (a COLLATE "C"); -- fail
 ERROR:  collations are not supported by type integer
 CREATE INDEX collate_test1_idx5 ON collate_test1 ((a COLLATE "C")); -- fail
 ERROR:  collations are not supported by type integer
+LINE 1: ...ATE INDEX collate_test1_idx5 ON collate_test1 ((a COLLATE "C...
+                                                             ^
 SELECT relname, pg_get_indexdef(oid) FROM pg_class WHERE relname LIKE 'collate_test%_idx%';
       relname       |                                       pg_get_indexdef                                        
 --------------------+----------------------------------------------------------------------------------------------

@@ -120,14 +120,23 @@ DefineVirtualRelation(const RangeVar *relation, List *tlist, bool replace)
 
 			def->colname = pstrdup(tle->resname);
 			def->typeName = makeTypeNameFromOid(exprType((Node *) tle->expr),
-												exprTypmod((Node *) tle->expr),
-												exprCollation((Node *) tle->expr));
+												exprTypmod((Node *) tle->expr));
 			def->inhcount = 0;
 			def->is_local = true;
 			def->is_not_null = false;
+			def->is_from_type = false;
 			def->storage = 0;
 			def->raw_default = NULL;
 			def->cooked_default = NULL;
+			def->collClause = NULL;
+			/*
+			 * XXX Temporary kluge to make regression tests pass.  We should
+			 * be able to trust the result of exprCollation more than this.
+			 */
+			if (type_is_collatable(exprType((Node *) tle->expr)))
+				def->collOid = exprCollation((Node *) tle->expr);
+			else
+				def->collOid = InvalidOid;
 			def->constraints = NIL;
 
 			attrList = lappend(attrList, def);

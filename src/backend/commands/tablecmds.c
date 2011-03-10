@@ -339,7 +339,7 @@ static void ATPrepAlterColumnType(List **wqueue,
 					  AlterTableCmd *cmd, LOCKMODE lockmode);
 static bool ATColumnChangeRequiresRewrite(Node *expr, AttrNumber varattno);
 static void ATExecAlterColumnType(AlteredTableInfo *tab, Relation rel,
-					  const char *colName, TypeName *typeName, LOCKMODE lockmode);
+								  AlterTableCmd *cmd, LOCKMODE lockmode);
 static void ATPostAlterTypeCleanup(List **wqueue, AlteredTableInfo *tab, LOCKMODE lockmode);
 static void ATPostAlterTypeParse(char *cmd, List **wqueue, LOCKMODE lockmode);
 static void change_owner_recurse_to_sequences(Oid relationOid,
@@ -1433,7 +1433,7 @@ MergeAttributes(List *schema, List *supers, char relpersistence,
 						(errmsg("merging multiple inherited definitions of column \"%s\"",
 								attributeName)));
 				def = (ColumnDef *) list_nth(inhSchema, exist_attno - 1);
-				typenameTypeIdModColl(NULL, def->typeName, &defTypeId, &deftypmod, &defCollId);
+				typenameTypeIdAndMod(NULL, def->typeName, &defTypeId, &deftypmod);
 				if (defTypeId != attribute->atttypid ||
 					deftypmod != attribute->atttypmod)
 					ereport(ERROR,
@@ -1443,6 +1443,7 @@ MergeAttributes(List *schema, List *supers, char relpersistence,
 							 errdetail("%s versus %s",
 									   TypeNameToString(def->typeName),
 									   format_type_be(attribute->atttypid))));
+				defCollId = GetColumnDefCollation(NULL, def, defTypeId);
 				if (defCollId != attribute->attcollation)
 					ereport(ERROR,
 							(errcode(ERRCODE_COLLATION_MISMATCH),
@@ -1478,14 +1479,16 @@ MergeAttributes(List *schema, List *supers, char relpersistence,
 				def = makeNode(ColumnDef);
 				def->colname = pstrdup(attributeName);
 				def->typeName = makeTypeNameFromOid(attribute->atttypid,
-													attribute->atttypmod,
-													attribute->attcollation);
+													attribute->atttypmod);
 				def->inhcount = 1;
 				def->is_local = false;
 				def->is_not_null = attribute->attnotnull;
+				def->is_from_type = false;
 				def->storage = attribute->attstorage;
 				def->raw_default = NULL;
 				def->cooked_default = NULL;
+				def->collClause = NULL;
+				def->collOid = attribute->attcollation;
 				def->constraints = NIL;
 				inhSchema = lappend(inhSchema, def);
 				newattno[parent_attno - 1] = ++child_attno;
@@ -1616,8 +1619,8 @@ MergeAttributes(List *schema, List *supers, char relpersistence,
 				   (errmsg("merging column \"%s\" with inherited definition",
 						   attributeName)));
 				def = (ColumnDef *) list_nth(inhSchema, exist_attno - 1);
-				typenameTypeIdModColl(NULL, def->typeName, &defTypeId, &deftypmod, &defcollid);
-				typenameTypeIdModColl(NULL, newdef->typeName, &newTypeId, &newtypmod, &newcollid);
+				typenameTypeIdAndMod(NULL, def->typeName, &defTypeId, &deftypmod);
+				typenameTypeIdAndMod(NULL, newdef->typeName, &newTypeId, &newtypmod);
 				if (defTypeId != newTypeId || deftypmod != newtypmod)
 					ereport(ERROR,
 							(errcode(ERRCODE_DATATYPE_MISMATCH),
@@ -1626,6 +1629,8 @@ MergeAttributes(List *schema, List *supers, char relpersistence,
 							 errdetail("%s versus %s",
 									   TypeNameToString(def->typeName),
 									   TypeNameToString(newdef->typeName))));
+				defcollid = GetColumnDefCollation(NULL, def, defTypeId);
+				newcollid = GetColumnDefCollation(NULL, newdef, newTypeId);
 				if (defcollid != newcollid)
 					ereport(ERROR,
 							(errcode(ERRCODE_COLLATION_MISMATCH),
@@ -3092,7 +3097,7 @@ ATExecCmd(List **wqueue, AlteredTableInfo *tab, Relation rel,
 								 cmd->missing_ok, lockmode);
 			break;
 		case AT_AlterColumnType:		/* ALTER COLUMN TYPE */
-			ATExecAlterColumnType(tab, rel, cmd->name, (TypeName *) cmd->def, lockmode);
+			ATExecAlterColumnType(tab, rel, cmd, lockmode);
 			break;
 		case AT_ChangeOwner:	/* ALTER OWNER */
 			ATExecChangeOwner(RelationGetRelid(rel),
@@ -4129,13 +4134,14 @@ ATExecAddColumn(AlteredTableInfo *tab, Relation rel,
 			Oid			ccollid;
 
 			/* Child column must match by type */
-			typenameTypeIdModColl(NULL, colDef->typeName, &ctypeId, &ctypmod, &ccollid);
+			typenameTypeIdAndMod(NULL, colDef->typeName, &ctypeId, &ctypmod);
 			if (ctypeId != childatt->atttypid ||
 				ctypmod != childatt->atttypmod)
 				ereport(ERROR,
 						(errcode(ERRCODE_DATATYPE_MISMATCH),
 						 errmsg("child table \"%s\" has different type for column \"%s\"",
 							RelationGetRelationName(rel), colDef->colname)));
+			ccollid = GetColumnDefCollation(NULL, colDef, ctypeId);
 			if (ccollid != childatt->attcollation)
 				ereport(ERROR,
 						(errcode(ERRCODE_COLLATION_MISMATCH),
@@ -4201,9 +4207,10 @@ ATExecAddColumn(AlteredTableInfo *tab, Relation rel,
 							MaxHeapAttributeNumber)));
 	}
 
-	typeTuple = typenameType(NULL, colDef->typeName, &typmod, &collOid);
+	typeTuple = typenameType(NULL, colDef->typeName, &typmod);
 	tform = (Form_pg_type) GETSTRUCT(typeTuple);
 	typeOid = HeapTupleGetOid(typeTuple);
+	collOid = GetColumnDefCollation(NULL, colDef, typeOid);
 
 	/* make sure datatype is legal for a column */
 	CheckAttributeType(colDef->colname, typeOid, collOid, false);
@@ -4413,7 +4420,7 @@ ATPrepAddOids(List **wqueue, Relation rel, bool recurse, AlterTableCmd *cmd, LOC
 		ColumnDef  *cdef = makeNode(ColumnDef);
 
 		cdef->colname = pstrdup("oid");
-		cdef->typeName = makeTypeNameFromOid(OIDOID, -1, InvalidOid);
+		cdef->typeName = makeTypeNameFromOid(OIDOID, -1);
 		cdef->inhcount = 0;
 		cdef->is_local = true;
 		cdef->is_not_null = true;
@@ -6471,14 +6478,15 @@ ATPrepAlterColumnType(List **wqueue,
 					  AlterTableCmd *cmd, LOCKMODE lockmode)
 {
 	char	   *colName = cmd->name;
-	TypeName   *typeName = (TypeName *) cmd->def;
+	ColumnDef  *def = (ColumnDef *) cmd->def;
+	TypeName   *typeName = def->typeName;
+	Node	   *transform = def->raw_default;
 	HeapTuple	tuple;
 	Form_pg_attribute attTup;
 	AttrNumber	attnum;
 	Oid			targettype;
 	int32		targettypmod;
 	Oid			targetcollid;
-	Node	   *transform;
 	NewColumnValue *newval;
 	ParseState *pstate = make_parsestate(NULL);
 
@@ -6512,7 +6520,10 @@ ATPrepAlterColumnType(List **wqueue,
 						colName)));
 
 	/* Look up the target type */
-	typenameTypeIdModColl(NULL, typeName, &targettype, &targettypmod, &targetcollid);
+	typenameTypeIdAndMod(NULL, typeName, &targettype, &targettypmod);
+
+	/* And the collation */
+	targetcollid = GetColumnDefCollation(NULL, def, targettype);
 
 	/* make sure datatype is legal for a column */
 	CheckAttributeType(colName, targettype, targetcollid, false);
@@ -6527,7 +6538,7 @@ ATPrepAlterColumnType(List **wqueue,
 		 * because we need the expression to be parsed against the original table
 		 * rowtype.
 		 */
-		if (cmd->transform)
+		if (transform)
 		{
 			RangeTblEntry *rte;
 
@@ -6539,7 +6550,7 @@ ATPrepAlterColumnType(List **wqueue,
 												true);
 			addRTEtoQuery(pstate, rte, false, true, true);
 
-			transform = transformExpr(pstate, cmd->transform);
+			transform = transformExpr(pstate, transform);
 
 			/* It can't return a set */
 			if (expression_returns_set(transform))
@@ -6592,16 +6603,13 @@ ATPrepAlterColumnType(List **wqueue,
 		if (ATColumnChangeRequiresRewrite(transform, attnum))
 			tab->rewrite = true;
 	}
-	else if (tab->relkind == RELKIND_FOREIGN_TABLE)
-	{
-		if (cmd->transform)
-			ereport(ERROR,
-					(errcode(ERRCODE_WRONG_OBJECT_TYPE),
-					 errmsg("ALTER TYPE USING is not supported on foreign tables")));
-	}
+	else if (transform)
+		ereport(ERROR,
+				(errcode(ERRCODE_WRONG_OBJECT_TYPE),
+				 errmsg("ALTER TYPE USING is only supported on plain tables")));
 
-	if (tab->relkind == RELKIND_COMPOSITE_TYPE
-		|| tab->relkind == RELKIND_FOREIGN_TABLE)
+	if (tab->relkind == RELKIND_COMPOSITE_TYPE ||
+		tab->relkind == RELKIND_FOREIGN_TABLE)
 	{
 		/*
 		 * For composite types, do this check now.  Tables will check
@@ -6667,8 +6675,11 @@ ATColumnChangeRequiresRewrite(Node *expr, AttrNumber varattno)
 
 static void
 ATExecAlterColumnType(AlteredTableInfo *tab, Relation rel,
-					  const char *colName, TypeName *typeName, LOCKMODE lockmode)
+					  AlterTableCmd *cmd, LOCKMODE lockmode)
 {
+	char	   *colName = cmd->name;
+	ColumnDef  *def = (ColumnDef *) cmd->def;
+	TypeName   *typeName = def->typeName;
 	HeapTuple	heapTup;
 	Form_pg_attribute attTup;
 	AttrNumber	attnum;
@@ -6705,9 +6716,11 @@ ATExecAlterColumnType(AlteredTableInfo *tab, Relation rel,
 						colName)));
 
 	/* Look up the target type (should not fail, since prep found it) */
-	typeTuple = typenameType(NULL, typeName, &targettypmod, &targetcollid);
+	typeTuple = typenameType(NULL, typeName, &targettypmod);
 	tform = (Form_pg_type) GETSTRUCT(typeTuple);
 	targettype = HeapTupleGetOid(typeTuple);
+	/* And the collation */
+	targetcollid = GetColumnDefCollation(NULL, def, targettype);
 
 	/*
 	 * If there is a default expression for the column, get it and ensure we

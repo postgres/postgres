@@ -32,9 +32,9 @@ ALTER TABLE <replaceable class="PARAMETER">name</replaceable>
 
 <phrase>where <replaceable class="PARAMETER">action</replaceable> is one of:</phrase>
 
-    ADD [ COLUMN ] <replaceable class="PARAMETER">column</replaceable> <replaceable class="PARAMETER">data_type</replaceable> [ <replaceable class="PARAMETER">column_constraint</replaceable> [ ... ] ]
+    ADD [ COLUMN ] <replaceable class="PARAMETER">column</replaceable> <replaceable class="PARAMETER">data_type</replaceable> [ COLLATE <replaceable class="PARAMETER">collation</replaceable> ] [ <replaceable class="PARAMETER">column_constraint</replaceable> [ ... ] ]
     DROP [ COLUMN ] [ IF EXISTS ] <replaceable class="PARAMETER">column</replaceable> [ RESTRICT | CASCADE ]
-    ALTER [ COLUMN ] <replaceable class="PARAMETER">column</replaceable> [ SET DATA ] TYPE <replaceable class="PARAMETER">type</replaceable> [ USING <replaceable class="PARAMETER">expression</replaceable> ]
+    ALTER [ COLUMN ] <replaceable class="PARAMETER">column</replaceable> [ SET DATA ] TYPE <replaceable class="PARAMETER">data_type</replaceable> [ COLLATE <replaceable class="PARAMETER">collation</replaceable> ] [ USING <replaceable class="PARAMETER">expression</replaceable> ]
     ALTER [ COLUMN ] <replaceable class="PARAMETER">column</replaceable> SET DEFAULT <replaceable class="PARAMETER">expression</replaceable>
     ALTER [ COLUMN ] <replaceable class="PARAMETER">column</replaceable> DROP DEFAULT
     ALTER [ COLUMN ] <replaceable class="PARAMETER">column</replaceable> { SET | DROP } NOT NULL
@@ -115,7 +115,11 @@ ALTER TABLE <replaceable class="PARAMETER">name</replaceable>
       This form changes the type of a column of a table. Indexes and
       simple table constraints involving the column will be automatically
       converted to use the new column type by reparsing the originally
-      supplied expression.  The optional <literal>USING</literal>
+      supplied expression.
+      The optional <literal>COLLATE</literal> clause specifies a collation
+      for the new column; if omitted, the collation is the default for the
+      new column type.
+      The optional <literal>USING</literal>
       clause specifies how to compute the new column value from the old;
       if omitted, the default conversion is the same as an assignment
       cast from old data type to new.  A  <literal>USING</literal>

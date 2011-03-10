@@ -1313,7 +1313,7 @@ FuncNameAsType(List *funcname)
 	Oid			result;
 	Type		typtup;
 
-	typtup = LookupTypeName(NULL, makeTypeNameFromNameList(funcname), NULL, NULL);
+	typtup = LookupTypeName(NULL, makeTypeNameFromNameList(funcname), NULL);
 	if (typtup == NULL)
 		return InvalidOid;
 
@@ -1500,7 +1500,7 @@ LookupTypeNameOid(const TypeName *typename)
 	Oid			result;
 	Type		typtup;
 
-	typtup = LookupTypeName(NULL, typename, NULL, NULL);
+	typtup = LookupTypeName(NULL, typename, NULL);
 	if (typtup == NULL)
 		ereport(ERROR,
 				(errcode(ERRCODE_UNDEFINED_OBJECT),

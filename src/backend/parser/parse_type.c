@@ -29,8 +29,6 @@
 
 static int32 typenameTypeMod(ParseState *pstate, const TypeName *typeName,
 				Type typ);
-static Oid typenameCollation(ParseState *pstate, const TypeName *typeName,
-				Type typ);
 
 
 /*
@@ -38,8 +36,7 @@ static Oid typenameCollation(ParseState *pstate, const TypeName *typeName,
  *		Given a TypeName object, lookup the pg_type syscache entry of the type.
  *		Returns NULL if no such type can be found.	If the type is found,
  *		the typmod value represented in the TypeName struct is computed and
- *		stored into *typmod_p, and the collation is looked up and stored into
- *      *colloid_p.
+ *		stored into *typmod_p.
  *
  * NB: on success, the caller must ReleaseSysCache the type tuple when done
  * with it.
@@ -54,18 +51,15 @@ static Oid typenameCollation(ParseState *pstate, const TypeName *typeName,
  * found but is a shell, and there is typmod decoration, an error will be
  * thrown --- this is intentional.
  *
- * colloid_p can also be null.
- *
  * pstate is only used for error location info, and may be NULL.
  */
 Type
 LookupTypeName(ParseState *pstate, const TypeName *typeName,
-			   int32 *typmod_p, Oid *collid_p)
+			   int32 *typmod_p)
 {
 	Oid			typoid;
 	HeapTuple	tup;
 	int32		typmod;
-	Oid			collid;
 
 	if (typeName->names == NIL)
 	{
@@ -180,28 +174,22 @@ LookupTypeName(ParseState *pstate, const TypeName *typeName,
 	if (typmod_p)
 		*typmod_p = typmod;
 
-	collid = typenameCollation(pstate, typeName, (Type) tup);
-
-	if (collid_p)
-		*collid_p = collid;
-
 	return (Type) tup;
 }
 
 /*
- * typenameType - given a TypeName, return a Type structure, typmod, and
- * collation
+ * typenameType - given a TypeName, return a Type structure and typmod
  *
  * This is equivalent to LookupTypeName, except that this will report
  * a suitable error message if the type cannot be found or is not defined.
  * Callers of this can therefore assume the result is a fully valid type.
  */
 Type
-typenameType(ParseState *pstate, const TypeName *typeName, int32 *typmod_p, Oid *collid_p)
+typenameType(ParseState *pstate, const TypeName *typeName, int32 *typmod_p)
 {
 	Type		tup;
 
-	tup = LookupTypeName(pstate, typeName, typmod_p, collid_p);
+	tup = LookupTypeName(pstate, typeName, typmod_p);
 	if (tup == NULL)
 		ereport(ERROR,
 				(errcode(ERRCODE_UNDEFINED_OBJECT),
@@ -229,7 +217,7 @@ typenameTypeId(ParseState *pstate, const TypeName *typeName)
 	Oid			typoid;
 	Type		tup;
 
-	tup = typenameType(pstate, typeName, NULL, NULL);
+	tup = typenameType(pstate, typeName, NULL);
 	typoid = HeapTupleGetOid(tup);
 	ReleaseSysCache(tup);
 
@@ -248,25 +236,7 @@ typenameTypeIdAndMod(ParseState *pstate, const TypeName *typeName,
 {
 	Type		tup;
 
-	tup = typenameType(pstate, typeName, typmod_p, NULL);
-	*typeid_p = HeapTupleGetOid(tup);
-	ReleaseSysCache(tup);
-}
-
-/*
- * typenameTypeIdModColl - given a TypeName, return the type's OID,
- * typmod, and collation
- *
- * This is equivalent to typenameType, but we only hand back the type OID,
- * typmod, and collation, not the syscache entry.
- */
-void
-typenameTypeIdModColl(ParseState *pstate, const TypeName *typeName,
-					  Oid *typeid_p, int32 *typmod_p, Oid *collid_p)
-{
-	Type		tup;
-
-	tup = typenameType(pstate, typeName, typmod_p, collid_p);
+	tup = typenameType(pstate, typeName, typmod_p);
 	*typeid_p = HeapTupleGetOid(tup);
 	ReleaseSysCache(tup);
 }
@@ -381,62 +351,6 @@ typenameTypeMod(ParseState *pstate, const TypeName *typeName, Type typ)
 }
 
 /*
- * typenameCollation - given a TypeName, return the collation OID
- *
- * This will throw an error if the TypeName includes a collation but
- * the data type does not support collations.
- *
- * The actual type OID represented by the TypeName must already have been
- * looked up, and is passed as "typ".
- *
- * pstate is only used for error location info, and may be NULL.
- */
-static Oid
-typenameCollation(ParseState *pstate, const TypeName *typeName, Type typ)
-{
-	Oid typcollation = ((Form_pg_type) GETSTRUCT(typ))->typcollation;
-
-	/* return prespecified collation OID if no collation name specified */
-	if (typeName->collnames == NIL)
-	{
-		if (typeName->collOid == InvalidOid)
-			return typcollation;
-		else
-			return typeName->collOid;
-	}
-
-	if (!OidIsValid(typcollation))
-		ereport(ERROR,
-				(errcode(ERRCODE_SYNTAX_ERROR),
-				 errmsg("collations are not supported by type %s",
-						format_type_be(HeapTupleGetOid(typ))),
-				 parser_errposition(pstate, typeName->location)));
-
-	return LookupCollation(pstate, typeName->collnames, typeName->location);
-}
-
-/*
- * LookupCollation
- *
- * Look up collation by name, return OID, with support for error
- * location.
- */
-Oid
-LookupCollation(ParseState *pstate, List *collnames, int location)
-{
-	Oid			colloid;
-	ParseCallbackState pcbstate;
-
-	setup_parser_errposition_callback(&pcbstate, pstate, location);
-
-	colloid = get_collation_oid(collnames, false);
-
-	cancel_parser_errposition_callback(&pcbstate);
-
-	return colloid;
-}
-
-/*
  * appendTypeNameToBuffer
  *		Append a string representing the name of a TypeName to a StringInfo.
  *		This is the shared guts of TypeNameToString and TypeNameListToString.
@@ -514,6 +428,72 @@ TypeNameListToString(List *typenames)
 		appendTypeNameToBuffer(typeName, &string);
 	}
 	return string.data;
+}
+
+/*
+ * LookupCollation
+ *
+ * Look up collation by name, return OID, with support for error location.
+ */
+Oid
+LookupCollation(ParseState *pstate, List *collnames, int location)
+{
+	Oid			colloid;
+	ParseCallbackState pcbstate;
+
+	if (pstate)
+		setup_parser_errposition_callback(&pcbstate, pstate, location);
+
+	colloid = get_collation_oid(collnames, false);
+
+	if (pstate)
+		cancel_parser_errposition_callback(&pcbstate);
+
+	return colloid;
+}
+
+/*
+ * GetColumnDefCollation
+ *
+ * Get the collation to be used for a column being defined, given the
+ * ColumnDef node and the previously-determined column type OID.
+ *
+ * pstate is only used for error location purposes, and can be NULL.
+ */
+Oid
+GetColumnDefCollation(ParseState *pstate, ColumnDef *coldef, Oid typeOid)
+{
+	Oid			result;
+	Oid			typcollation = get_typcollation(typeOid);
+	int			location = -1;
+
+	if (coldef->collClause)
+	{
+		/* We have a raw COLLATE clause, so look up the collation */
+		location = coldef->collClause->location;
+		result = LookupCollation(pstate, coldef->collClause->collnames,
+								 location);
+	}
+	else if (OidIsValid(coldef->collOid))
+	{
+		/* Precooked collation spec, use that */
+		result = coldef->collOid;
+	}
+	else
+	{
+		/* Use the type's default collation if any */
+		result = typcollation;
+	}
+
+	/* Complain if COLLATE is applied to an uncollatable type */
+	if (OidIsValid(result) && !OidIsValid(typcollation))
+		ereport(ERROR,
+				(errcode(ERRCODE_DATATYPE_MISMATCH),
+				 errmsg("collations are not supported by type %s",
+						format_type_be(typeOid)),
+				 parser_errposition(pstate, location)));
+
+	return result;
 }
 
 /* return a Type structure, given a type id */

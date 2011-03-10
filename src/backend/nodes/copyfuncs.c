@@ -2183,8 +2183,6 @@ _copyTypeName(TypeName *from)
 	COPY_NODE_FIELD(typmods);
 	COPY_SCALAR_FIELD(typemod);
 	COPY_NODE_FIELD(arrayBounds);
-	COPY_NODE_FIELD(collnames);
-	COPY_SCALAR_FIELD(collOid);
 	COPY_LOCATION_FIELD(location);
 
 	return newnode;
@@ -2295,9 +2293,12 @@ _copyColumnDef(ColumnDef *from)
 	COPY_SCALAR_FIELD(inhcount);
 	COPY_SCALAR_FIELD(is_local);
 	COPY_SCALAR_FIELD(is_not_null);
+	COPY_SCALAR_FIELD(is_from_type);
 	COPY_SCALAR_FIELD(storage);
 	COPY_NODE_FIELD(raw_default);
 	COPY_NODE_FIELD(cooked_default);
+	COPY_NODE_FIELD(collClause);
+	COPY_SCALAR_FIELD(collOid);
 	COPY_NODE_FIELD(constraints);
 
 	return newnode;
@@ -2515,7 +2516,6 @@ _copyAlterTableCmd(AlterTableCmd *from)
 	COPY_SCALAR_FIELD(subtype);
 	COPY_STRING_FIELD(name);
 	COPY_NODE_FIELD(def);
-	COPY_NODE_FIELD(transform);
 	COPY_SCALAR_FIELD(behavior);
 	COPY_SCALAR_FIELD(missing_ok);
 
@@ -3063,6 +3063,7 @@ _copyCreateDomainStmt(CreateDomainStmt *from)
 
 	COPY_NODE_FIELD(domainname);
 	COPY_NODE_FIELD(typeName);
+	COPY_NODE_FIELD(collClause);
 	COPY_NODE_FIELD(constraints);
 
 	return newnode;

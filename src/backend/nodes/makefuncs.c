@@ -427,16 +427,15 @@ makeTypeNameFromNameList(List *names)
 
 /*
  * makeTypeNameFromOid -
- *	build a TypeName node to represent a type already known by OID/typmod/collation.
+ *	build a TypeName node to represent a type already known by OID/typmod.
  */
 TypeName *
-makeTypeNameFromOid(Oid typeOid, int32 typmod, Oid collOid)
+makeTypeNameFromOid(Oid typeOid, int32 typmod)
 {
 	TypeName   *n = makeNode(TypeName);
 
 	n->typeOid = typeOid;
 	n->typemod = typmod;
-	n->collOid = collOid;
 	n->location = -1;
 	return n;
 }
