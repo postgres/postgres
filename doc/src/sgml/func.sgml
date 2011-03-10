@@ -14219,6 +14219,16 @@ postgres=# SELECT * FROM pg_xlogfile_name_offset(pg_stop_backup());
     </tgroup>
    </table>
 
+   <indexterm>
+    <primary>pg_is_xlog_replay_paused</primary>
+   </indexterm>
+   <indexterm>
+    <primary>pg_xlog_replay_pause</primary>
+   </indexterm>
+   <indexterm>
+    <primary>pg_xlog_replay_resume</primary>
+   </indexterm>
+
    <para>
     The functions shown in <xref
     linkend="functions-recovery-control-table"> control the progress of recovery.
