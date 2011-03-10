@@ -29,7 +29,7 @@ all: isolationtester pg_isolation_regress
 isolationtester: $(OBJS) | submake-libpq submake-libpgport
 	$(CC) $(CFLAGS) $(OBJS) $(libpq_pgport) $(LDFLAGS) $(LDFLAGS_EX) $(LIBS) -o $@$(X)
 
-distprep: specparse.c
+distprep: specparse.c specscanner.c
 
 # There is no correct way to write a rule that generates two files.
 # Rules with two targets don't have that meaning, they are merely
@@ -58,7 +58,9 @@ ifdef FLEX
 else
 	@$(missing) flex $< $@
 endif
-# specparse.c is in the distribution tarball, so is not cleaned here
+
+# specparse.c and specscanner.c are in the distribution tarball,
+# so do not clean them here
 clean distclean:
 	rm -f isolationtester$(X) pg_isolation_regress$(X) $(OBJS) isolation_main.o
 	rm -f pg_regress.o

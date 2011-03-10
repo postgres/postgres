@@ -193,10 +193,12 @@ utils/probes.o: utils/probes.d $(SUBDIROBJS)
 
 ##########################################################################
 
+# Be sure that these files get removed by the maintainer-clean target
 distprep:
 	$(MAKE) -C parser	gram.c gram.h scan.c
 	$(MAKE) -C bootstrap	bootparse.c bootscanner.c
 	$(MAKE) -C catalog	schemapg.h postgres.bki postgres.description postgres.shdescription
+	$(MAKE) -C replication	repl_gram.c repl_scanner.c
 	$(MAKE) -C utils	fmgrtab.c fmgroids.h errcodes.h
 	$(MAKE) -C utils/misc	guc-file.c
 
@@ -300,12 +302,14 @@ maintainer-clean: distclean
 	rm -f bootstrap/bootparse.c \
 	      bootstrap/bootscanner.c \
 	      parser/gram.c \
-	      parser/scan.c \
 	      parser/gram.h \
+	      parser/scan.c \
 	      catalog/schemapg.h \
 	      catalog/postgres.bki \
 	      catalog/postgres.description \
 	      catalog/postgres.shdescription \
+	      replication/repl_gram.c \
+	      replication/repl_scanner.c \
 	      utils/fmgroids.h \
 	      utils/fmgrtab.c \
 	      utils/errcodes.h \
