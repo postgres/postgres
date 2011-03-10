@@ -116,9 +116,9 @@
      Besides <command>SELECT</command> queries, the commands can include data
      modification queries (<command>INSERT</command>,
      <command>UPDATE</command>, and <command>DELETE</command>), as well as
-     other SQL commands. (The only exception is that you cannot put
-     <command>BEGIN</>, <command>COMMIT</>, <command>ROLLBACK</>, or
-     <command>SAVEPOINT</> commands into a <acronym>SQL</acronym> function.)
+     other SQL commands. (You cannot put transaction commands, e.g.
+     <command>COMMIT</>, <command>SAVEPOINT</>, and some utility
+     commands, e.g.  <literal>VACUUM</>, into an <acronym>SQL</acronym> function.)
      However, the final command
      must be a <command>SELECT</command> or have a <literal>RETURNING</>
      clause that returns whatever is
