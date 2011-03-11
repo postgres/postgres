@@ -23,7 +23,7 @@
 #define XLOG_BLCKSZ_K	(XLOG_BLCKSZ / 1024)
 
 #define LABEL_FORMAT		"        %-32s"
-#define NA_FORMAT			LABEL_FORMAT "%18s"
+#define NA_FORMAT			"%18s"
 #define OPS_FORMAT			"%9.3f ops/sec"
 
 static const char *progname;
@@ -134,6 +134,11 @@ handle_args(int argc, char *argv[])
 	}
 
 	printf("%d operations per test\n", ops_per_test);
+#if PG_O_DIRECT != 0
+	printf("O_DIRECT supported on this platform for open_datasync and open_sync.\n");
+#else
+	printf("Direct I/O is not supported on this platform.\n");
+#endif
 }
 
 static void
@@ -184,43 +189,19 @@ test_sync(int writes_per_op)
 	/*
 	 * Test open_datasync if available
 	 */
-#ifdef OPEN_DATASYNC_FLAG
-	printf(LABEL_FORMAT, "open_datasync"
-#if PG_O_DIRECT != 0
-		" (non-direct I/O)*"
-#endif
-		);
+	printf(LABEL_FORMAT, "open_datasync");
 	fflush(stdout);
 
-	if ((tmpfile = open(filename, O_RDWR | O_DSYNC, 0)) == -1)
-		die("could not open output file");
-	gettimeofday(&start_t, NULL);
-	for (ops = 0; ops < ops_per_test; ops++)
-	{
-		for (writes = 0; writes < writes_per_op; writes++)
-			if (write(tmpfile, buf, XLOG_BLCKSZ) != XLOG_BLCKSZ)
-				die("write failed");
-		if (lseek(tmpfile, 0, SEEK_SET) == -1)
-			die("seek failed");
-	}
-	gettimeofday(&stop_t, NULL);
-	close(tmpfile);
-	print_elapse(start_t, stop_t);
-
-	/*
-	 * If O_DIRECT is enabled, test that with open_datasync
-	 */
-#if PG_O_DIRECT != 0
+#ifdef OPEN_DATASYNC_FLAG
 	if ((tmpfile = open(filename, O_RDWR | O_DSYNC | PG_O_DIRECT, 0)) == -1)
 	{
-		printf(NA_FORMAT, "o_direct", "n/a**\n");
+		printf(NA_FORMAT, "n/a*\n");
 		fs_warning = true;
 	}
 	else
 	{
-		printf(LABEL_FORMAT, "open_datasync (direct I/O)");
-		fflush(stdout);
-
+		if ((tmpfile = open(filename, O_RDWR | O_DSYNC | PG_O_DIRECT, 0)) == -1)
+			die("could not open output file");
 		gettimeofday(&start_t, NULL);
 		for (ops = 0; ops < ops_per_test; ops++)
 		{
@@ -234,19 +215,17 @@ test_sync(int writes_per_op)
 		close(tmpfile);
 		print_elapse(start_t, stop_t);
 	}
-#endif
-
 #else
-	printf(NA_FORMAT, "open_datasync", "n/a\n");
+	printf(NA_FORMAT, "n/a\n");
 #endif
 
 /*
  * Test fdatasync if available
  */
-#ifdef HAVE_FDATASYNC
 	printf(LABEL_FORMAT, "fdatasync");
 	fflush(stdout);
 
+#ifdef HAVE_FDATASYNC
 	if ((tmpfile = open(filename, O_RDWR, 0)) == -1)
 		die("could not open output file");
 	gettimeofday(&start_t, NULL);
@@ -263,7 +242,7 @@ test_sync(int writes_per_op)
 	close(tmpfile);
 	print_elapse(start_t, stop_t);
 #else
-	printf(NA_FORMAT, "fdatasync", "n/a\n");
+	printf(NA_FORMAT, "n/a\n");
 #endif
 
 /*
@@ -292,10 +271,10 @@ test_sync(int writes_per_op)
 /*
  * If fsync_writethrough is available, test as well
  */
-#ifdef HAVE_FSYNC_WRITETHROUGH
 	printf(LABEL_FORMAT, "fsync_writethrough");
 	fflush(stdout);
 
+#ifdef HAVE_FSYNC_WRITETHROUGH
 	if ((tmpfile = open(filename, O_RDWR, 0)) == -1)
 		die("could not open output file");
 	gettimeofday(&start_t, NULL);
@@ -313,49 +292,23 @@ test_sync(int writes_per_op)
 	close(tmpfile);
 	print_elapse(start_t, stop_t);
 #else
-	printf(NA_FORMAT, "fsync_writethrough", "n/a\n");
+	printf(NA_FORMAT, "n/a\n");
 #endif
 
 /*
  * Test open_sync if available
  */
-#ifdef OPEN_SYNC_FLAG
-	printf(LABEL_FORMAT, "open_sync"
-#if PG_O_DIRECT != 0
-		" (non-direct I/O)*"
-#endif
-		);
+	printf(LABEL_FORMAT, "open_sync");
 	fflush(stdout);
 
-	if ((tmpfile = open(filename, O_RDWR | OPEN_SYNC_FLAG, 0)) == -1)
-		die("could not open output file");
-	gettimeofday(&start_t, NULL);
-	for (ops = 0; ops < ops_per_test; ops++)
-	{
-		for (writes = 0; writes < writes_per_op; writes++)
-			if (write(tmpfile, buf, XLOG_BLCKSZ) != XLOG_BLCKSZ)
-				die("write failed");
-		if (lseek(tmpfile, 0, SEEK_SET) == -1)
-			die("seek failed");
-	}
-	gettimeofday(&stop_t, NULL);
-	close(tmpfile);
-	print_elapse(start_t, stop_t);
-
-	/*
-	 * If O_DIRECT is enabled, test that with open_sync
-	 */
-#if PG_O_DIRECT != 0
+#ifdef OPEN_SYNC_FLAG
 	if ((tmpfile = open(filename, O_RDWR | OPEN_SYNC_FLAG | PG_O_DIRECT, 0)) == -1)
 	{
-		printf(NA_FORMAT, "o_direct", "n/a**\n");
+		printf(NA_FORMAT, "n/a*\n");
 		fs_warning = true;
 	}
 	else
 	{
-		printf(LABEL_FORMAT, "open_sync (direct I/O)");
-		fflush(stdout);
-
 		gettimeofday(&start_t, NULL);
 		for (ops = 0; ops < ops_per_test; ops++)
 		{
@@ -369,20 +322,13 @@ test_sync(int writes_per_op)
 		close(tmpfile);
 		print_elapse(start_t, stop_t);
 	}
-#endif
-
 #else
-	printf(NA_FORMAT, "open_sync", "n/a\n");
-#endif
-
-#if defined(OPEN_DATASYNC_FLAG) || defined(OPEN_SYNC_FLAG)
-	if (PG_O_DIRECT != 0)
-		printf("* This non-direct I/O mode is not used by Postgres.\n");
+	printf(NA_FORMAT, "n/a\n");
 #endif
 
 	if (fs_warning)
 	{
-		printf("** This file system and its mount options do not support direct\n");
+		printf("* This file system and its mount options do not support direct\n");
 		printf("I/O, e.g. ext4 in journaled mode.\n");
 	}
 }
@@ -407,16 +353,16 @@ test_open_syncs(void)
 static void
 test_open_sync(const char *msg, int writes_size)
 {
-#ifdef OPEN_SYNC_FLAG
 	int		tmpfile, ops, writes;
 
+	printf(LABEL_FORMAT, msg);
+	fflush(stdout);
+
+#ifdef OPEN_SYNC_FLAG
 	if ((tmpfile = open(filename, O_RDWR | OPEN_SYNC_FLAG | PG_O_DIRECT, 0)) == -1)
-		printf(NA_FORMAT, "o_direct", "n/a**\n");
+		printf(NA_FORMAT, "n/a*\n");
 	else
 	{
-		printf(LABEL_FORMAT, msg);
-		fflush(stdout);
-
 		gettimeofday(&start_t, NULL);
 		for (ops = 0; ops < ops_per_test; ops++)
 		{
@@ -433,7 +379,7 @@ test_open_sync(const char *msg, int writes_size)
 	}
 
 #else
-	printf(NA_FORMAT, "open_sync", "n/a\n");
+	printf(NA_FORMAT, "n/a\n");
 #endif
 }
 
