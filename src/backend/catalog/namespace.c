@@ -1617,13 +1617,11 @@ OpfamilyIsVisible(Oid opfid)
  * CollationGetCollid
  *		Try to resolve an unqualified collation name.
  *		Returns OID if collation found in search path, else InvalidOid.
- *
- * This is essentially the same as RelnameGetRelid.
  */
 Oid
 CollationGetCollid(const char *collname)
 {
-	Oid			collid;
+	int32		dbencoding = GetDatabaseEncoding();
 	ListCell   *l;
 
 	recomputeNamespacePath();
@@ -1631,13 +1629,23 @@ CollationGetCollid(const char *collname)
 	foreach(l, activeSearchPath)
 	{
 		Oid			namespaceId = lfirst_oid(l);
+		Oid			collid;
 
 		if (namespaceId == myTempNamespace)
 			continue;			/* do not look in temp namespace */
 
+		/* Check for database-encoding-specific entry */
 		collid = GetSysCacheOid3(COLLNAMEENCNSP,
 								 PointerGetDatum(collname),
-								 Int32GetDatum(GetDatabaseEncoding()),
+								 Int32GetDatum(dbencoding),
+								 ObjectIdGetDatum(namespaceId));
+		if (OidIsValid(collid))
+			return collid;
+
+		/* Check for any-encoding entry */
+		collid = GetSysCacheOid3(COLLNAMEENCNSP,
+								 PointerGetDatum(collname),
+								 Int32GetDatum(-1),
 								 ObjectIdGetDatum(namespaceId));
 		if (OidIsValid(collid))
 			return collid;
@@ -2901,12 +2909,10 @@ get_collation_oid(List *name, bool missing_ok)
 {
 	char	   *schemaname;
 	char	   *collation_name;
+	int32		dbencoding = GetDatabaseEncoding();
 	Oid			namespaceId;
-	Oid			colloid = InvalidOid;
+	Oid			colloid;
 	ListCell   *l;
-	int			encoding;
-
-	encoding = GetDatabaseEncoding();
 
 	/* deconstruct the name list */
 	DeconstructQualifiedName(name, &schemaname, &collation_name);
@@ -2915,10 +2921,20 @@ get_collation_oid(List *name, bool missing_ok)
 	{
 		/* use exact schema given */
 		namespaceId = LookupExplicitNamespace(schemaname);
+
+		/* first try for encoding-specific entry, then any-encoding */
 		colloid = GetSysCacheOid3(COLLNAMEENCNSP,
 								  PointerGetDatum(collation_name),
-								  Int32GetDatum(encoding),
+								  Int32GetDatum(dbencoding),
 								  ObjectIdGetDatum(namespaceId));
+		if (OidIsValid(colloid))
+			return colloid;
+		colloid = GetSysCacheOid3(COLLNAMEENCNSP,
+								  PointerGetDatum(collation_name),
+								  Int32GetDatum(-1),
+								  ObjectIdGetDatum(namespaceId));
+		if (OidIsValid(colloid))
+			return colloid;
 	}
 	else
 	{
@@ -2934,7 +2950,13 @@ get_collation_oid(List *name, bool missing_ok)
 
 			colloid = GetSysCacheOid3(COLLNAMEENCNSP,
 									  PointerGetDatum(collation_name),
-									  Int32GetDatum(encoding),
+									  Int32GetDatum(dbencoding),
+									  ObjectIdGetDatum(namespaceId));
+			if (OidIsValid(colloid))
+				return colloid;
+			colloid = GetSysCacheOid3(COLLNAMEENCNSP,
+									  PointerGetDatum(collation_name),
+									  Int32GetDatum(-1),
 									  ObjectIdGetDatum(namespaceId));
 			if (OidIsValid(colloid))
 				return colloid;
@@ -2942,12 +2964,12 @@ get_collation_oid(List *name, bool missing_ok)
 	}
 
 	/* Not found in path */
-	if (!OidIsValid(colloid) && !missing_ok)
+	if (!missing_ok)
 		ereport(ERROR,
 				(errcode(ERRCODE_UNDEFINED_OBJECT),
-				 errmsg("collation \"%s\" for current database encoding \"%s\" does not exist",
+				 errmsg("collation \"%s\" for encoding \"%s\" does not exist",
 						NameListToString(name), GetDatabaseEncodingName())));
-	return colloid;
+	return InvalidOid;
 }
 
 /*

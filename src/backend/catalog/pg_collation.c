@@ -14,6 +14,7 @@
  */
 #include "postgres.h"
 
+#include "access/genam.h"
 #include "access/heapam.h"
 #include "access/sysattr.h"
 #include "catalog/dependency.h"
@@ -22,15 +23,12 @@
 #include "catalog/pg_collation.h"
 #include "catalog/pg_collation_fn.h"
 #include "catalog/pg_namespace.h"
-#include "catalog/pg_proc.h"
 #include "mb/pg_wchar.h"
-#include "miscadmin.h"
-#include "utils/acl.h"
 #include "utils/builtins.h"
 #include "utils/fmgroids.h"
-#include "utils/rel.h"
 #include "utils/syscache.h"
 #include "utils/tqual.h"
+
 
 /*
  * CollationCreate
@@ -43,12 +41,11 @@ CollationCreate(const char *collname, Oid collnamespace,
 				int32 collencoding,
 				const char *collcollate, const char *collctype)
 {
-	int			i;
 	Relation	rel;
 	TupleDesc	tupDesc;
 	HeapTuple	tup;
-	bool		nulls[Natts_pg_collation];
 	Datum		values[Natts_pg_collation];
+	bool		nulls[Natts_pg_collation];
 	NameData	name_name, name_collate, name_ctype;
 	Oid			oid;
 	ObjectAddress myself,
@@ -60,7 +57,13 @@ CollationCreate(const char *collname, Oid collnamespace,
 	AssertArg(collcollate);
 	AssertArg(collctype);
 
-	/* make sure there is no existing collation of same name */
+	/*
+	 * Make sure there is no existing collation of same name & encoding.
+	 *
+	 * This would be caught by the unique index anyway; we're just giving
+	 * a friendlier error message.  The unique index provides a backstop
+	 * against race conditions.
+	 */
 	if (SearchSysCacheExists3(COLLNAMEENCNSP,
 							  PointerGetDatum(collname),
 							  Int32GetDatum(collencoding),
@@ -70,18 +73,27 @@ CollationCreate(const char *collname, Oid collnamespace,
 				 errmsg("collation \"%s\" for encoding \"%s\" already exists",
 						collname, pg_encoding_to_char(collencoding))));
 
+	/*
+	 * Also forbid matching an any-encoding entry.  This test of course is
+	 * not backed up by the unique index, but it's not a problem since we
+	 * don't support adding any-encoding entries after initdb.
+	 */
+	if (SearchSysCacheExists3(COLLNAMEENCNSP,
+							  PointerGetDatum(collname),
+							  Int32GetDatum(-1),
+							  ObjectIdGetDatum(collnamespace)))
+		ereport(ERROR,
+				(errcode(ERRCODE_DUPLICATE_OBJECT),
+				 errmsg("collation \"%s\" already exists",
+						collname)));
+
 	/* open pg_collation */
 	rel = heap_open(CollationRelationId, RowExclusiveLock);
-	tupDesc = rel->rd_att;
-
-	/* initialize nulls and values */
-	for (i = 0; i < Natts_pg_collation; i++)
-	{
-		nulls[i] = false;
-		values[i] = (Datum) NULL;
-	}
+	tupDesc = RelationGetDescr(rel);
 
 	/* form a tuple */
+	memset(nulls, 0, sizeof(nulls));
+
 	namestrcpy(&name_name, collname);
 	values[Anum_pg_collation_collname - 1] = NameGetDatum(&name_name);
 	values[Anum_pg_collation_collnamespace - 1] = ObjectIdGetDatum(collnamespace);
@@ -101,8 +113,9 @@ CollationCreate(const char *collname, Oid collnamespace,
 	/* update the index if any */
 	CatalogUpdateIndexes(rel, tup);
 
+	/* set up dependencies for the new collation */
 	myself.classId = CollationRelationId;
-	myself.objectId = HeapTupleGetOid(tup);
+	myself.objectId = oid;
 	myself.objectSubId = 0;
 
 	/* create dependency on namespace */
@@ -120,7 +133,7 @@ CollationCreate(const char *collname, Oid collnamespace,
 
 	/* Post creation hook for new collation */
 	InvokeObjectAccessHook(OAT_POST_CREATE,
-						   CollationRelationId, HeapTupleGetOid(tup), 0);
+						   CollationRelationId, oid, 0);
 
 	heap_freetuple(tup);
 	heap_close(rel, RowExclusiveLock);
@@ -138,26 +151,28 @@ void
 RemoveCollationById(Oid collationOid)
 {
 	Relation	rel;
-	HeapTuple	tuple;
-	HeapScanDesc scan;
 	ScanKeyData scanKeyData;
+	SysScanDesc scandesc;
+	HeapTuple	tuple;
+
+	rel = heap_open(CollationRelationId, RowExclusiveLock);
 
 	ScanKeyInit(&scanKeyData,
 				ObjectIdAttributeNumber,
 				BTEqualStrategyNumber, F_OIDEQ,
 				ObjectIdGetDatum(collationOid));
 
-	/* open pg_collation */
-	rel = heap_open(CollationRelationId, RowExclusiveLock);
+	scandesc = systable_beginscan(rel, CollationOidIndexId, true,
+								  SnapshotNow, 1, &scanKeyData);
 
-	scan = heap_beginscan(rel, SnapshotNow,
-						  1, &scanKeyData);
+	tuple = systable_getnext(scandesc);
 
-	/* search for the target tuple */
-	if (HeapTupleIsValid(tuple = heap_getnext(scan, ForwardScanDirection)))
+	if (HeapTupleIsValid(tuple))
 		simple_heap_delete(rel, &tuple->t_self);
 	else
 		elog(ERROR, "could not find tuple for collation %u", collationOid);
-	heap_endscan(scan);
+
+	systable_endscan(scandesc);
+
 	heap_close(rel, RowExclusiveLock);
 }

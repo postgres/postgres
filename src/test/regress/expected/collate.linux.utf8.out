@@ -18,14 +18,14 @@ CREATE TABLE collate_test_fail (
     a int,
     b text COLLATE "ja_JP.eucjp"
 );
-ERROR:  collation "ja_JP.eucjp" for current database encoding "UTF8" does not exist
+ERROR:  collation "ja_JP.eucjp" for encoding "UTF8" does not exist
 LINE 3:     b text COLLATE "ja_JP.eucjp"
                    ^
 CREATE TABLE collate_test_fail (
     a int,
     b text COLLATE "foo"
 );
-ERROR:  collation "foo" for current database encoding "UTF8" does not exist
+ERROR:  collation "foo" for encoding "UTF8" does not exist
 LINE 3:     b text COLLATE "foo"
                    ^
 CREATE TABLE collate_test_fail (
@@ -752,7 +752,7 @@ ERROR:  parameter "lc_ctype" must be specified
 CREATE COLLATION testx (locale = 'nonsense'); -- fail
 ERROR:  could not create locale "nonsense": No such file or directory
 CREATE COLLATION test4 FROM nonsense;
-ERROR:  collation "nonsense" for current database encoding "UTF8" does not exist
+ERROR:  collation "nonsense" for encoding "UTF8" does not exist
 CREATE COLLATION test5 FROM test0;
 SELECT collname, collencoding, collcollate, collctype FROM pg_collation WHERE collname LIKE 'test%' ORDER BY 1;
  collname | collencoding | collcollate | collctype  
@@ -764,9 +764,9 @@ SELECT collname, collencoding, collcollate, collctype FROM pg_collation WHERE co
 
 ALTER COLLATION test1 RENAME TO test11;
 ALTER COLLATION test0 RENAME TO test11; -- fail
-ERROR:  collation "test11" for current database encoding "UTF8" already exists in schema "public"
+ERROR:  collation "test11" for encoding "UTF8" already exists in schema "public"
 ALTER COLLATION test1 RENAME TO test22; -- fail
-ERROR:  collation "test1" for current database encoding "UTF8" does not exist
+ERROR:  collation "test1" for encoding "UTF8" does not exist
 ALTER COLLATION test11 OWNER TO regress_test_role;
 ALTER COLLATION test11 OWNER TO nonsense;
 ERROR:  role "nonsense" does not exist
@@ -785,7 +785,7 @@ SELECT collname, nspname, obj_description(pg_collation.oid, 'pg_collation')
 
 DROP COLLATION test0, test_schema.test11, test5;
 DROP COLLATION test0; -- fail
-ERROR:  collation "test0" for current database encoding "UTF8" does not exist
+ERROR:  collation "test0" for encoding "UTF8" does not exist
 DROP COLLATION IF EXISTS test0;
 NOTICE:  collation "test0" does not exist, skipping
 SELECT collname FROM pg_collation WHERE collname LIKE 'test%';

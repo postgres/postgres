@@ -2132,7 +2132,8 @@
       <entry><structfield>collencoding</structfield></entry>
       <entry><type>int4</type></entry>
       <entry></entry>
-      <entry>Encoding to which the collation is applicable</entry>
+      <entry>Encoding in which the collation is applicable, or -1 if it
+       works for any encoding</entry>
      </row>
 
      <row>
@@ -2157,12 +2158,13 @@
    <structfield>collencoding</>, <structfield>collnamespace</>) not just
    (<structfield>collname</>, <structfield>collnamespace</>).
    <productname>PostgreSQL</productname> generally ignores all
-   collations not belonging to the current database's encoding; therefore
-   it is sufficient to use a qualified SQL name
+   collations that do not have <structfield>collencoding</> equal to
+   either the current database's encoding or -1, and creation of new
+   entries matching an entry with <structfield>collencoding</> = -1
+   is forbidden.  Therefore it is sufficient to use a qualified SQL name
    (<replaceable>schema</>.<replaceable>name</>) to identify a collation,
    even though this is not unique according to the catalog definition.
-   The current database's encoding is automatically used as an additional
-   lookup key.  The reason for defining the catalog this way is that
+   The reason for defining the catalog this way is that
    <application>initdb</> fills it in at cluster initialization time with
    entries for all locales available on the system, so it must be able to
    hold entries for all encodings that might ever be used in the cluster.

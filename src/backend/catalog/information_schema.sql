@@ -448,7 +448,7 @@ CREATE VIEW collations AS
            CAST('NO PAD' AS character_data) AS pad_attribute
     FROM pg_collation c, pg_namespace nc
     WHERE c.collnamespace = nc.oid
-          AND collencoding = (SELECT encoding FROM pg_catalog.pg_database WHERE datname = pg_catalog.current_database());
+          AND collencoding IN (-1, (SELECT encoding FROM pg_database WHERE datname = current_database()));
 
 GRANT SELECT ON collations TO PUBLIC;
 
@@ -467,7 +467,7 @@ CREATE VIEW collation_character_set_applicability AS
            CAST(getdatabaseencoding() AS sql_identifier) AS character_set_name
     FROM pg_collation c, pg_namespace nc
     WHERE c.collnamespace = nc.oid
-          AND collencoding = (SELECT encoding FROM pg_catalog.pg_database WHERE datname = pg_catalog.current_database());
+          AND collencoding IN (-1, (SELECT encoding FROM pg_database WHERE datname = current_database()));
 
 GRANT SELECT ON collation_character_set_applicability TO PUBLIC;
 
@@ -2036,7 +2036,7 @@ CREATE VIEW usage_privileges AS
 
     WHERE u.oid = c.collowner
           AND c.collnamespace = n.oid
-          AND c.collencoding = (SELECT encoding FROM pg_catalog.pg_database WHERE datname = pg_catalog.current_database())
+          AND collencoding IN (-1, (SELECT encoding FROM pg_database WHERE datname = current_database()))
 
     UNION ALL
 
