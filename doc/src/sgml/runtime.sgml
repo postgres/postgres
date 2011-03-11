@@ -1028,14 +1028,14 @@ sysctl -w kern.sysv.shmall
 
 
      <varlistentry>
-      <term><systemitem class="osname">Solaris</></term>
+      <term><systemitem class="osname">Solaris</> 2.6 to 2.9 (Solaris
+      6 to Solaris 9)</term>
       <indexterm><primary>Solaris</><secondary>IPC configuration</></>
       <listitem>
        <para>
-        At least in version 2.6, the default maximum size of a shared
-        memory segment is too low for <productname>PostgreSQL</>. The
-        relevant settings can be changed in <filename>/etc/system</>,
-        for example:
+        The default maximum size of a shared memory segment is too low for
+        <productname>PostgreSQL</>. The relevant settings can be changed in
+        <filename>/etc/system</>, for example:
 <programlisting>
 set shmsys:shminfo_shmmax=0x2000000
 set shmsys:shminfo_shmmin=1
@@ -1047,14 +1047,59 @@ set semsys:seminfo_semmni=512
 set semsys:seminfo_semmns=512
 set semsys:seminfo_semmsl=32
 </programlisting>
-        You need to reboot for the changes to take effect.
+        You need to reboot for the changes to take effect.  See also
+        <ulink url="http://sunsite.uakom.sk/sunworldonline/swol-09-1997/swol-09-insidesolaris.html"></ulink>
+        for information on shared memory under older versions of Solaris.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term><systemitem class="osname">Solaris</> 2.10 (Solaris
+      10)</term>
+      <term><systemitem class="osname">OpenSolaris</></term>
+      <indexterm><primary>Solaris</><secondary>IPC configuration</></>
+      <listitem>
+       <para>
+        In Solaris 10 and OpenSolaris, the default shared memory and
+        semaphore settings are good enough for most
+        <productname>PostgreSQL</> applications.  Solaris now defaults
+        to a <varname>SHMMAX</> of one-quarter of system <acronym>RAM</>.  If
+        you need to increase this in order to set shared memory settings
+        slightly higher, you should use a project setting associated
+        with the <literal>postgres</> user.  For example, run the
+        following as <literal>root</>:
+<programlisting>
+projadd -c "PostgreSQL DB User" -K "project.max-shm-memory=(privileged,8GB,deny)" -U postgres -G postgres user.postgres
+</programlisting>
        </para>
 
        <para>
-        See also <ulink
-        url="http://sunsite.uakom.sk/sunworldonline/swol-09-1997/swol-09-insidesolaris.html"></>
-        for information on shared memory under
-        <productname>Solaris</>.
+        This command adds the <literal>user.postgres</> project and
+        raises the shared memory maximum for the <literal>postgres</>
+        user to 8GB, and takes effect the next time that user logs
+        in, or when you restart <productname>PostgreSQL</> (not reload).
+        The above assumes that <productname>PostgreSQL</> is run by
+        the <literal>postgres</> user in the <literal>postgres</>
+        group.  No server reboot is required.
+       </para>
+
+       <para>
+        Other recommended kernel setting changes for database servers which will
+        have a large number of connections are:
+<programlisting>
+project.max-shm-ids=(priv,32768,deny)
+project.max-sem-ids=(priv,4096,deny)
+project.max-msg-ids=(priv,4096,deny)
+</programlisting>
+       </para>
+
+       <para>
+        Additionally, if you are running <productname>PostgreSQL</>
+        inside a zone, you may need to raise the zone resource usage
+        limits as well.  See "Chapter2:  Projects and Tasks" in the
+        <citetitle>Solaris 10 System Administrator's Guide</> for more
+        information on <literal>projects</> and <command>prctl</>.
        </para>
       </listitem>
      </varlistentry>
