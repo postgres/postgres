@@ -6605,13 +6605,20 @@ SELECT EXTRACT(CENTURY FROM TIMESTAMP '2001-02-16 20:38:40');
       <term><literal>day</literal></term>
       <listitem>
        <para>
-        The day (of the month) field (1 - 31)
+        For <type>timestamp</type> values, the day (of the month) field
+        (1 - 31) ; for <type>interval</type> values, the number of days
        </para>
 
 <screen>
 SELECT EXTRACT(DAY FROM TIMESTAMP '2001-02-16 20:38:40');
 <lineannotation>Result: </lineannotation><computeroutput>16</computeroutput>
+
+SELECT EXTRACT(DAY FROM INTERVAL '40 days 1 minute');
+<lineannotation>Result: </lineannotation><computeroutput>40</computeroutput>
 </screen>
+
+
+
       </listitem>
      </varlistentry>
 
@@ -6827,7 +6834,7 @@ SELECT EXTRACT(MINUTE FROM TIMESTAMP '2001-02-16 20:38:40');
       <listitem>
        <para>
         For <type>timestamp</type> values, the number of the month
-        within the year (1 - 12) ; for <type>interval</type> values
+        within the year (1 - 12) ; for <type>interval</type> values,
         the number of months, modulo 12 (0 - 11)
        </para>
 
