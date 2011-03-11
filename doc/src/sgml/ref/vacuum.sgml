@@ -70,7 +70,7 @@ VACUUM [ FULL ] [ FREEZE ] [ VERBOSE ] ANALYZE [ <replaceable class="PARAMETER">
    When the option list is surrounded by parentheses, the options can be
    written in any order.  Without parentheses, options must be specified
    in exactly the order shown above.
-   The unparenthesized syntax was added in
+   The parenthesized syntax was added in
    <productname>PostgreSQL</productname> 9.0;  the unparenthesized
    syntax is deprecated.
   </para>
