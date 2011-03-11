@@ -8600,7 +8600,7 @@ get_sync_bit(int method)
 
 	/*
 	 * Optimize writes by bypassing kernel cache with O_DIRECT when using
-	 * O_SYNC, O_DSYNC or O_FSYNC. But only if archiving and streaming are
+	 * O_SYNC/O_FSYNC and O_DSYNC.  But only if archiving and streaming are
 	 * disabled, otherwise the archive command or walsender process will read
 	 * the WAL soon after writing it, which is guaranteed to cause a physical
 	 * read if we bypassed the kernel cache. We also skip the
