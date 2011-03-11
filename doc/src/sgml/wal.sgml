@@ -85,8 +85,9 @@
     <listitem>
       <para>
         On <productname>FreeBSD</>, IDE drives can be queried using
-        <command>atacontrol</command>, and SCSI drives using
-        <command>sdparm</command>.
+        <command>atacontrol</command> and write caching turned off using
+        <literal>hw.ata.wc=0</> in <filename>/boot/loader.conf</>;
+        SCSI drives use <command>sdparm</command>.
       </para>
     </listitem>
 
