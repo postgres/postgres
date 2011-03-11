@@ -866,7 +866,7 @@ do_stop(void)
 
 			write_stderr(_("%s: server does not shut down\n"), progname);
 			if (shutdown_mode == SMART_MODE)
-				write_stderr(_("TIP: the \"-m fast\" option immediately disconnects sessions rather than\n"
+				write_stderr(_("HINT: The \"-m fast\" option immediately disconnects sessions rather than\n"
 							"waiting for session-initiated disconnection.\n"));
 			exit(1);
 		}
@@ -956,7 +956,7 @@ do_restart(void)
 
 			write_stderr(_("%s: server does not shut down\n"), progname);
 			if (shutdown_mode == SMART_MODE)
-				write_stderr(_("TIP: the \"-m fast\" option immediately disconnects sessions rather than\n"
+				write_stderr(_("HINT: The \"-m fast\" option immediately disconnects sessions rather than\n"
 							"waiting for session-initiated disconnection.\n"));
 			exit(1);
 		}
