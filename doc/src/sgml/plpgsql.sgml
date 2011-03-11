@@ -2169,21 +2169,20 @@ CREATE FUNCTION cs_refresh_mviews() RETURNS integer AS $$
 DECLARE
     mviews RECORD;
 BEGIN
-    PERFORM cs_log('Refreshing materialized views...');
+    RAISE NOTICE 'Refreshing materialized views...';
 
     FOR mviews IN SELECT * FROM cs_materialized_views ORDER BY sort_key LOOP
 
         -- Now "mviews" has one record from cs_materialized_views
 
-        PERFORM cs_log('Refreshing materialized view '
-                   || quote_ident(mviews.mv_name) || ' ...');
+        RAISE NOTICE 'Refreshing materialized view %s ...', quote_ident(mviews.mv_name);
         EXECUTE 'TRUNCATE TABLE ' || quote_ident(mviews.mv_name);
         EXECUTE 'INSERT INTO '
                    || quote_ident(mviews.mv_name) || ' '
                    || mviews.mv_query;
     END LOOP;
 
-    PERFORM cs_log('Done refreshing materialized views.');
+    RAISE NOTICE 'Done refreshing materialized views.';
     RETURN 1;
 END;
 $$ LANGUAGE plpgsql;
