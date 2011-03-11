@@ -1,6 +1,8 @@
 #!/bin/bash
 
-# Parameters:
+# This script is used to produce git context diffs
+
+# Supplied parameters:
 # $1   $2       $3       $4       $5       $6       $7
 # path old-file old-hash old-mode new-file new-hash new-mode
 # 'path' is the git-tree-relative path of the file being diff'ed
