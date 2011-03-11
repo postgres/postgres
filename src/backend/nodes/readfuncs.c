@@ -744,22 +744,6 @@ _readRelabelType(void)
 }
 
 /*
- * _readCollateClause
- */
-static CollateClause *
-_readCollateClause(void)
-{
-	READ_LOCALS(CollateClause);
-
-	READ_NODE_FIELD(arg);
-	READ_NODE_FIELD(collnames);
-	READ_OID_FIELD(collOid);
-	READ_LOCATION_FIELD(location);
-
-	READ_DONE();
-}
-
-/*
  * _readCoerceViaIO
  */
 static CoerceViaIO *
@@ -805,6 +789,21 @@ _readConvertRowtypeExpr(void)
 	READ_NODE_FIELD(arg);
 	READ_OID_FIELD(resulttype);
 	READ_ENUM_FIELD(convertformat, CoercionForm);
+	READ_LOCATION_FIELD(location);
+
+	READ_DONE();
+}
+
+/*
+ * _readCollateExpr
+ */
+static CollateExpr *
+_readCollateExpr(void)
+{
+	READ_LOCALS(CollateExpr);
+
+	READ_NODE_FIELD(arg);
+	READ_OID_FIELD(collOid);
 	READ_LOCATION_FIELD(location);
 
 	READ_DONE();
@@ -1286,14 +1285,14 @@ parseNodeString(void)
 		return_value = _readFieldStore();
 	else if (MATCH("RELABELTYPE", 11))
 		return_value = _readRelabelType();
-	else if (MATCH("COLLATE", 7))
-		return_value = _readCollateClause();
 	else if (MATCH("COERCEVIAIO", 11))
 		return_value = _readCoerceViaIO();
 	else if (MATCH("ARRAYCOERCEEXPR", 15))
 		return_value = _readArrayCoerceExpr();
 	else if (MATCH("CONVERTROWTYPEEXPR", 18))
 		return_value = _readConvertRowtypeExpr();
+	else if (MATCH("COLLATE", 7))
+		return_value = _readCollateExpr();
 	else if (MATCH("CASE", 4))
 		return_value = _readCaseExpr();
 	else if (MATCH("WHEN", 4))

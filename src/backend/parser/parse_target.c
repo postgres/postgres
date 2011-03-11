@@ -1583,7 +1583,7 @@ FigureColnameInternal(Node *node, char **name)
 			}
 			break;
 		case T_CollateClause:
-			return FigureColnameInternal((Node *) ((CollateClause *) node)->arg, name);
+			return FigureColnameInternal(((CollateClause *) node)->arg, name);
 		case T_CaseExpr:
 			strength = FigureColnameInternal((Node *) ((CaseExpr *) node)->defresult,
 											 name);

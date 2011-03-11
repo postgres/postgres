@@ -279,11 +279,17 @@ coerce_type(ParseState *pstate, Node *node,
 		if (result)
 			return result;
 	}
-	if (IsA(node, CollateClause))
+	if (IsA(node, CollateExpr))
 	{
-		CollateClause *cc = (CollateClause *) node;
+		/*
+		 * XXX very ugly kluge to push the coercion underneath the CollateExpr.
+		 * This needs to be rethought, as it almost certainly doesn't cover
+		 * all cases.
+		 */
+		CollateExpr *cc = (CollateExpr *) node;
 
-		cc->arg = (Expr *) coerce_type(pstate, (Node *) cc->arg, inputTypeId, targetTypeId, targetTypeMod,
+		cc->arg = (Expr *) coerce_type(pstate, (Node *) cc->arg,
+									   inputTypeId, targetTypeId, targetTypeMod,
 									   ccontext, cformat, location);
 		return (Node *) cc;
 	}
@@ -2121,7 +2127,7 @@ select_common_collation(ParseState *pstate, List *exprs, bool none_ok)
 	{
 		Node	   *pexpr = (Node *) lfirst(lc);
 		Oid			pcoll = exprCollation(pexpr);
-		bool		pexplicit = IsA(pexpr, CollateClause);
+		bool		pexplicit = IsA(pexpr, CollateExpr);
 
 		if (pcoll && pexplicit)
 		{
@@ -2130,7 +2136,7 @@ select_common_collation(ParseState *pstate, List *exprs, bool none_ok)
 			{
 				Node	   *nexpr = (Node *) lfirst(lc2);
 				Oid			ncoll = exprCollation(nexpr);
-				bool		nexplicit = IsA(nexpr, CollateClause);
+				bool		nexplicit = IsA(nexpr, CollateExpr);
 
 				if (!ncoll || !nexplicit)
 					continue;

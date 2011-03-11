@@ -1357,6 +1357,9 @@ recordDependencyOnSingleRelExpr(const ObjectAddress *depender,
  * on the datatype, and OpExpr nodes depend on the operator which depends on
  * the datatype.  However we do need a type dependency if there is no such
  * indirect dependency, as for example in Const and CoerceToDomain nodes.
+ *
+ * Similarly, we don't need to create dependencies on collations except where
+ * the collation is being freshly introduced to the expression.
  */
 static bool
 find_expr_references_walker(Node *node,
@@ -1425,7 +1428,15 @@ find_expr_references_walker(Node *node,
 		/* A constant must depend on the constant's datatype */
 		add_object_address(OCLASS_TYPE, con->consttype, 0,
 						   context->addrs);
-		if (OidIsValid(con->constcollid))
+
+		/*
+		 * We must also depend on the constant's collation: it could be
+		 * different from the datatype's, if a CollateExpr was const-folded
+		 * to a simple constant.  However we can save work in the most common
+		 * case where the collation is "default", since we know that's pinned.
+		 */
+		if (OidIsValid(con->constcollid) &&
+			con->constcollid != DEFAULT_COLLATION_OID)
 			add_object_address(OCLASS_COLLATION, con->constcollid, 0,
 							   context->addrs);
 
@@ -1494,7 +1505,9 @@ find_expr_references_walker(Node *node,
 		/* A parameter must depend on the parameter's datatype */
 		add_object_address(OCLASS_TYPE, param->paramtype, 0,
 						   context->addrs);
-		if (OidIsValid(param->paramcollation))
+		/* and its collation, just as for Consts */
+		if (OidIsValid(param->paramcollation) &&
+			param->paramcollation != DEFAULT_COLLATION_OID)
 			add_object_address(OCLASS_COLLATION, param->paramcollation, 0,
 							   context->addrs);
 	}
@@ -1567,13 +1580,6 @@ find_expr_references_walker(Node *node,
 		add_object_address(OCLASS_TYPE, relab->resulttype, 0,
 						   context->addrs);
 	}
-	else if (IsA(node, CollateClause))
-	{
-		CollateClause *coll = (CollateClause *) node;
-
-		add_object_address(OCLASS_COLLATION, coll->collOid, 0,
-						   context->addrs);
-	}
 	else if (IsA(node, CoerceViaIO))
 	{
 		CoerceViaIO *iocoerce = (CoerceViaIO *) node;
@@ -1599,6 +1605,13 @@ find_expr_references_walker(Node *node,
 
 		/* since there is no function dependency, need to depend on type */
 		add_object_address(OCLASS_TYPE, cvt->resulttype, 0,
+						   context->addrs);
+	}
+	else if (IsA(node, CollateExpr))
+	{
+		CollateExpr *coll = (CollateExpr *) node;
+
+		add_object_address(OCLASS_COLLATION, coll->collOid, 0,
 						   context->addrs);
 	}
 	else if (IsA(node, RowExpr))
@@ -1652,10 +1665,11 @@ find_expr_references_walker(Node *node,
 
 		/*
 		 * Add whole-relation refs for each plain relation mentioned in the
-		 * subquery's rtable, as well as datatype refs for any datatypes used
-		 * as a RECORD function's output.  (Note: query_tree_walker takes care
-		 * of recursing into RTE_FUNCTION RTEs, subqueries, etc, so no need to
-		 * do that here.  But keep it from looking at join alias lists.)
+		 * subquery's rtable, as well as refs for any datatypes and collations
+		 * used in a RECORD function's output.  (Note: query_tree_walker takes
+		 * care of recursing into RTE_FUNCTION RTEs, subqueries, etc, so no
+		 * need to do that here.  But keep it from looking at join alias
+		 * lists.)
 		 */
 		foreach(lc, query->rtable)
 		{
@@ -1678,7 +1692,8 @@ find_expr_references_walker(Node *node,
 					{
 						Oid collid = lfirst_oid(ct);
 
-						if (OidIsValid(collid))
+						if (OidIsValid(collid) &&
+							collid != DEFAULT_COLLATION_OID)
 							add_object_address(OCLASS_COLLATION, collid, 0,
 											   context->addrs);
 					}

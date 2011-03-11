@@ -653,18 +653,6 @@ typedef struct RelabelType
 	int			location;		/* token location, or -1 if unknown */
 } RelabelType;
 
-/*
- * CollateClause - COLLATE
- */
-typedef struct CollateClause
-{
-	Expr		xpr;
-	Expr	   *arg;			/* original expression */
-	List	   *collnames;		/* assigned collation */
-	Oid			collOid;		/* resolved collation OID */
-	int			location;		/* token location, or -1 if unknown */
-} CollateClause;
-
 /* ----------------
  * CoerceViaIO
  *
@@ -729,6 +717,18 @@ typedef struct ConvertRowtypeExpr
 	CoercionForm convertformat; /* how to display this node */
 	int			location;		/* token location, or -1 if unknown */
 } ConvertRowtypeExpr;
+
+/*----------
+ * CollateExpr - COLLATE
+ *----------
+ */
+typedef struct CollateExpr
+{
+	Expr		xpr;
+	Expr	   *arg;			/* input expression */
+	Oid			collOid;		/* collation's OID */
+	int			location;		/* token location, or -1 if unknown */
+} CollateExpr;
 
 /*----------
  * CaseExpr - a CASE expression

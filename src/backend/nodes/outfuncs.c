@@ -1196,6 +1196,16 @@ _outConvertRowtypeExpr(StringInfo str, ConvertRowtypeExpr *node)
 }
 
 static void
+_outCollateExpr(StringInfo str, CollateExpr *node)
+{
+	WRITE_NODE_TYPE("COLLATE");
+
+	WRITE_NODE_FIELD(arg);
+	WRITE_OID_FIELD(collOid);
+	WRITE_LOCATION_FIELD(location);
+}
+
+static void
 _outCaseExpr(StringInfo str, CaseExpr *node)
 {
 	WRITE_NODE_TYPE("CASE");
@@ -2104,11 +2114,10 @@ _outTypeCast(StringInfo str, TypeCast *node)
 static void
 _outCollateClause(StringInfo str, CollateClause *node)
 {
-	WRITE_NODE_TYPE("COLLATE");
+	WRITE_NODE_TYPE("COLLATECLAUSE");
 
 	WRITE_NODE_FIELD(arg);
-	WRITE_NODE_FIELD(collnames);
-	WRITE_OID_FIELD(collOid);
+	WRITE_NODE_FIELD(collname);
 	WRITE_LOCATION_FIELD(location);
 }
 
@@ -2829,9 +2838,6 @@ _outNode(StringInfo str, void *obj)
 			case T_RelabelType:
 				_outRelabelType(str, obj);
 				break;
-			case T_CollateClause:
-				_outCollateClause(str, obj);
-				break;
 			case T_CoerceViaIO:
 				_outCoerceViaIO(str, obj);
 				break;
@@ -2840,6 +2846,9 @@ _outNode(StringInfo str, void *obj)
 				break;
 			case T_ConvertRowtypeExpr:
 				_outConvertRowtypeExpr(str, obj);
+				break;
+			case T_CollateExpr:
+				_outCollateExpr(str, obj);
 				break;
 			case T_CaseExpr:
 				_outCaseExpr(str, obj);
@@ -3019,6 +3028,9 @@ _outNode(StringInfo str, void *obj)
 				break;
 			case T_TypeCast:
 				_outTypeCast(str, obj);
+				break;
+			case T_CollateClause:
+				_outCollateClause(str, obj);
 				break;
 			case T_IndexElem:
 				_outIndexElem(str, obj);

@@ -162,9 +162,6 @@ exprType(Node *expr)
 		case T_RelabelType:
 			type = ((RelabelType *) expr)->resulttype;
 			break;
-		case T_CollateClause:
-			type = exprType((Node *) ((CollateClause *) expr)->arg);
-			break;
 		case T_CoerceViaIO:
 			type = ((CoerceViaIO *) expr)->resulttype;
 			break;
@@ -173,6 +170,9 @@ exprType(Node *expr)
 			break;
 		case T_ConvertRowtypeExpr:
 			type = ((ConvertRowtypeExpr *) expr)->resulttype;
+			break;
+		case T_CollateExpr:
+			type = exprType((Node *) ((CollateExpr *) expr)->arg);
 			break;
 		case T_CaseExpr:
 			type = ((CaseExpr *) expr)->casetype;
@@ -321,6 +321,8 @@ exprTypmod(Node *expr)
 			return ((RelabelType *) expr)->resulttypmod;
 		case T_ArrayCoerceExpr:
 			return ((ArrayCoerceExpr *) expr)->resulttypmod;
+		case T_CollateExpr:
+			return exprTypmod((Node *) ((CollateExpr *) expr)->arg);
 		case T_CaseExpr:
 			{
 				/*
@@ -571,9 +573,6 @@ exprCollation(Node *expr)
 		case T_RelabelType:
 			coll = exprCollation((Node *) ((RelabelType *) expr)->arg);
 			break;
-		case T_CollateClause:
-			coll = ((CollateClause *) expr)->collOid;
-			break;
 		case T_CoerceViaIO:
 		{
 			CoerceViaIO *cvio = (CoerceViaIO *) expr;
@@ -592,6 +591,9 @@ exprCollation(Node *expr)
 			coll = coercion_expression_result_collation(cre->resulttype, (Node *) cre->arg);
 			break;
 		}
+		case T_CollateExpr:
+			coll = ((CollateExpr *) expr)->collOid;
+			break;
 		case T_CaseExpr:
 			coll = ((CaseExpr *) expr)->casecollation;
 			break;
@@ -989,6 +991,10 @@ exprLocation(Node *expr)
 								  exprLocation((Node *) cexpr->arg));
 			}
 			break;
+		case T_CollateExpr:
+			/* just use argument's location */
+			loc = exprLocation((Node *) ((CollateExpr *) expr)->arg);
+			break;
 		case T_CaseExpr:
 			/* CASE keyword should always be the first thing */
 			loc = ((CaseExpr *) expr)->location;
@@ -1122,7 +1128,8 @@ exprLocation(Node *expr)
 			}
 			break;
 		case T_CollateClause:
-			loc = ((CollateClause *) expr)->location;
+			/* just use argument's location */
+			loc = exprLocation(((CollateClause *) expr)->arg);
 			break;
 		case T_SortBy:
 			/* just use argument's location (ignore operator, if any) */
@@ -1436,14 +1443,14 @@ expression_tree_walker(Node *node,
 			break;
 		case T_RelabelType:
 			return walker(((RelabelType *) node)->arg, context);
-		case T_CollateClause:
-			return walker(((CollateClause *) node)->arg, context);
 		case T_CoerceViaIO:
 			return walker(((CoerceViaIO *) node)->arg, context);
 		case T_ArrayCoerceExpr:
 			return walker(((ArrayCoerceExpr *) node)->arg, context);
 		case T_ConvertRowtypeExpr:
 			return walker(((ConvertRowtypeExpr *) node)->arg, context);
+		case T_CollateExpr:
+			return walker(((CollateExpr *) node)->arg, context);
 		case T_CaseExpr:
 			{
 				CaseExpr   *caseexpr = (CaseExpr *) node;
@@ -1993,16 +2000,6 @@ expression_tree_mutator(Node *node,
 				return (Node *) newnode;
 			}
 			break;
-		case T_CollateClause:
-			{
-				CollateClause *collate = (CollateClause *) node;
-				CollateClause *newnode;
-
-				FLATCOPY(newnode, collate, CollateClause);
-				MUTATE(newnode->arg, collate->arg, Expr *);
-				return (Node *) newnode;
-			}
-			break;
 		case T_CoerceViaIO:
 			{
 				CoerceViaIO *iocoerce = (CoerceViaIO *) node;
@@ -2030,6 +2027,16 @@ expression_tree_mutator(Node *node,
 
 				FLATCOPY(newnode, convexpr, ConvertRowtypeExpr);
 				MUTATE(newnode->arg, convexpr->arg, Expr *);
+				return (Node *) newnode;
+			}
+			break;
+		case T_CollateExpr:
+			{
+				CollateExpr *collate = (CollateExpr *) node;
+				CollateExpr *newnode;
+
+				FLATCOPY(newnode, collate, CollateExpr);
+				MUTATE(newnode->arg, collate->arg, Expr *);
 				return (Node *) newnode;
 			}
 			break;

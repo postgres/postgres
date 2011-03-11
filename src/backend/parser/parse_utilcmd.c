@@ -2467,7 +2467,7 @@ transformColumnType(CreateStmtContext *cxt, ColumnDef *column)
 		Oid		collOid;
 
 		collOid = LookupCollation(cxt->pstate,
-								  column->collClause->collnames,
+								  column->collClause->collname,
 								  column->collClause->location);
 		/* Complain if COLLATE is applied to an uncollatable type */
 		if (!OidIsValid(typtup->typcollation))

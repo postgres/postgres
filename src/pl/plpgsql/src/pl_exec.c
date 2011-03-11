@@ -5350,6 +5350,9 @@ exec_simple_check_node(Node *node)
 		case T_ConvertRowtypeExpr:
 			return exec_simple_check_node((Node *) ((ConvertRowtypeExpr *) node)->arg);
 
+		case T_CollateExpr:
+			return exec_simple_check_node((Node *) ((CollateExpr *) node)->arg);
+
 		case T_CaseExpr:
 			{
 				CaseExpr   *expr = (CaseExpr *) node;

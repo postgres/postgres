@@ -1435,6 +1435,21 @@ _copyConvertRowtypeExpr(ConvertRowtypeExpr *from)
 }
 
 /*
+ * _copyCollateExpr
+ */
+static CollateExpr *
+_copyCollateExpr(CollateExpr *from)
+{
+	CollateExpr   *newnode = makeNode(CollateExpr);
+
+	COPY_NODE_FIELD(arg);
+	COPY_SCALAR_FIELD(collOid);
+	COPY_LOCATION_FIELD(location);
+
+	return newnode;
+}
+
+/*
  * _copyCaseExpr
  */
 static CaseExpr *
@@ -2260,8 +2275,7 @@ _copyCollateClause(CollateClause *from)
 	CollateClause   *newnode = makeNode(CollateClause);
 
 	COPY_NODE_FIELD(arg);
-	COPY_NODE_FIELD(collnames);
-	COPY_SCALAR_FIELD(collOid);
+	COPY_NODE_FIELD(collname);
 	COPY_LOCATION_FIELD(location);
 
 	return newnode;
@@ -4016,6 +4030,9 @@ copyObject(void *from)
 			break;
 		case T_ConvertRowtypeExpr:
 			retval = _copyConvertRowtypeExpr(from);
+			break;
+		case T_CollateExpr:
+			retval = _copyCollateExpr(from);
 			break;
 		case T_CaseExpr:
 			retval = _copyCaseExpr(from);

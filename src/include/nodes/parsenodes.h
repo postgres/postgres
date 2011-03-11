@@ -266,6 +266,17 @@ typedef struct TypeCast
 } TypeCast;
 
 /*
+ * CollateClause - a COLLATE expression
+ */
+typedef struct CollateClause
+{
+	NodeTag		type;
+	Node	   *arg;			/* input expression */
+	List	   *collname;		/* possibly-qualified collation name */
+	int			location;		/* token location, or -1 if unknown */
+} CollateClause;
+
+/*
  * FuncCall - a function or aggregate invocation
  *
  * agg_order (if not NIL) indicates we saw 'foo(... ORDER BY ...)'.

@@ -107,11 +107,11 @@ SELECT * FROM collate_test1 WHERE b COLLATE "C" >= 'bbc' COLLATE "C";
 
 SELECT * FROM collate_test1 WHERE b COLLATE "C" >= 'bbc' COLLATE "en_US.utf8";
 ERROR:  collation mismatch between explicit collations "C" and "en_US.utf8"
-LINE 1: ...* FROM collate_test1 WHERE b COLLATE "C" >= 'bbc' COLLATE "e...
+LINE 1: ...ELECT * FROM collate_test1 WHERE b COLLATE "C" >= 'bbc' COLL...
                                                              ^
 SELECT * FROM collate_test1 WHERE b COLLATE "C" >= 'bbc' COLLATE "en_US";
 ERROR:  collation mismatch between explicit collations "C" and "en_US"
-LINE 1: ...* FROM collate_test1 WHERE b COLLATE "C" >= 'bbc' COLLATE "e...
+LINE 1: ...ELECT * FROM collate_test1 WHERE b COLLATE "C" >= 'bbc' COLL...
                                                              ^
 CREATE DOMAIN testdomain_sv AS text COLLATE "sv_SE.utf8";
 CREATE DOMAIN testdomain_i AS int COLLATE "sv_SE.utf8"; -- fails

@@ -226,6 +226,7 @@ static void get_coercion_expr(Node *arg, deparse_context *context,
 				  Node *parentNode);
 static void get_const_expr(Const *constval, deparse_context *context,
 			   int showtype);
+static void get_const_collation(Const *constval, deparse_context *context);
 static void simple_quote_literal(StringInfo buf, const char *val);
 static void get_sublink_expr(SubLink *sublink, deparse_context *context);
 static void get_from_clause(Query *query, const char *prefix,
@@ -5075,21 +5076,6 @@ get_rule_expr(Node *node, deparse_context *context,
 			}
 			break;
 
-		case T_CollateClause:
-			{
-				CollateClause *collate = (CollateClause *) node;
-				Node	   *arg = (Node *) collate->arg;
-
-				if (!PRETTY_PAREN(context))
-					appendStringInfoChar(buf, '(');
-				get_rule_expr_paren(arg, context, showimplicit, node);
-				appendStringInfo(buf, " COLLATE %s",
-								 generate_collation_name(collate->collOid));
-				if (!PRETTY_PAREN(context))
-					appendStringInfoChar(buf, ')');
-			}
-			break;
-
 		case T_CoerceViaIO:
 			{
 				CoerceViaIO *iocoerce = (CoerceViaIO *) node;
@@ -5149,6 +5135,21 @@ get_rule_expr(Node *node, deparse_context *context,
 									  convert->resulttype, -1,
 									  node);
 				}
+			}
+			break;
+
+		case T_CollateExpr:
+			{
+				CollateExpr *collate = (CollateExpr *) node;
+				Node	   *arg = (Node *) collate->arg;
+
+				if (!PRETTY_PAREN(context))
+					appendStringInfoChar(buf, '(');
+				get_rule_expr_paren(arg, context, showimplicit, node);
+				appendStringInfo(buf, " COLLATE %s",
+								 generate_collation_name(collate->collOid));
+				if (!PRETTY_PAREN(context))
+					appendStringInfoChar(buf, ')');
 			}
 			break;
 
@@ -5974,6 +5975,10 @@ get_coercion_expr(Node *arg, deparse_context *context,
  * showtype can be -1 to never show "::typename" decoration, or +1 to always
  * show it, or 0 to show it only if the constant wouldn't be assumed to be
  * the right type by default.
+ *
+ * If the Const's collation isn't default for its type, show that too.
+ * This can only happen in trees that have been through constant-folding.
+ * We assume we don't need to do this when showtype is -1.
  * ----------
  */
 static void
@@ -5994,9 +5999,12 @@ get_const_expr(Const *constval, deparse_context *context, int showtype)
 		 */
 		appendStringInfo(buf, "NULL");
 		if (showtype >= 0)
+		{
 			appendStringInfo(buf, "::%s",
 							 format_type_with_typemod(constval->consttype,
 													  constval->consttypmod));
+			get_const_collation(constval, context);
+		}
 		return;
 	}
 
@@ -6097,6 +6105,28 @@ get_const_expr(Const *constval, deparse_context *context, int showtype)
 		appendStringInfo(buf, "::%s",
 						 format_type_with_typemod(constval->consttype,
 												  constval->consttypmod));
+
+	get_const_collation(constval, context);
+}
+
+/*
+ * helper for get_const_expr: append COLLATE if needed
+ */
+static void
+get_const_collation(Const *constval, deparse_context *context)
+{
+	StringInfo	buf = context->buf;
+
+	if (OidIsValid(constval->constcollid))
+	{
+		Oid		typcollation = get_typcollation(constval->consttype);
+
+		if (constval->constcollid != typcollation)
+		{
+			appendStringInfo(buf, " COLLATE %s",
+							 generate_collation_name(constval->constcollid));
+		}
+	}
 }
 
 /*

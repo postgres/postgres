@@ -471,7 +471,7 @@ GetColumnDefCollation(ParseState *pstate, ColumnDef *coldef, Oid typeOid)
 	{
 		/* We have a raw COLLATE clause, so look up the collation */
 		location = coldef->collClause->location;
-		result = LookupCollation(pstate, coldef->collClause->collnames,
+		result = LookupCollation(pstate, coldef->collClause->collname,
 								 location);
 	}
 	else if (OidIsValid(coldef->collOid))

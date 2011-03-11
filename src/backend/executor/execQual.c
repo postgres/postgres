@@ -120,6 +120,9 @@ static Datum ExecEvalAnd(BoolExprState *andExpr, ExprContext *econtext,
 static Datum ExecEvalConvertRowtype(ConvertRowtypeExprState *cstate,
 					   ExprContext *econtext,
 					   bool *isNull, ExprDoneCond *isDone);
+static Datum ExecEvalCollateExpr(GenericExprState *exprstate,
+					ExprContext *econtext,
+					bool *isNull, ExprDoneCond *isDone);
 static Datum ExecEvalCase(CaseExprState *caseExpr, ExprContext *econtext,
 			 bool *isNull, ExprDoneCond *isDone);
 static Datum ExecEvalCaseTestExpr(ExprState *exprstate,
@@ -164,9 +167,6 @@ static Datum ExecEvalFieldStore(FieldStoreState *fstate,
 				   ExprContext *econtext,
 				   bool *isNull, ExprDoneCond *isDone);
 static Datum ExecEvalRelabelType(GenericExprState *exprstate,
-					ExprContext *econtext,
-					bool *isNull, ExprDoneCond *isDone);
-static Datum ExecEvalCollateClause(GenericExprState *exprstate,
 					ExprContext *econtext,
 					bool *isNull, ExprDoneCond *isDone);
 static Datum ExecEvalCoerceViaIO(CoerceViaIOState *iostate,
@@ -2754,6 +2754,20 @@ ExecEvalConvertRowtype(ConvertRowtypeExprState *cstate,
 }
 
 /* ----------------------------------------------------------------
+ *		ExecEvalCollateExpr
+ *
+ *		Evaluate a CollateExpr node.
+ * ----------------------------------------------------------------
+ */
+static Datum
+ExecEvalCollateExpr(GenericExprState *exprstate,
+					ExprContext *econtext,
+					bool *isNull, ExprDoneCond *isDone)
+{
+	return ExecEvalExpr(exprstate->arg, econtext, isNull, isDone);
+}
+
+/* ----------------------------------------------------------------
  *		ExecEvalCase
  *
  *		Evaluate a CASE clause. Will have boolean expressions
@@ -4029,20 +4043,6 @@ ExecEvalRelabelType(GenericExprState *exprstate,
 }
 
 /* ----------------------------------------------------------------
- *		ExecEvalCollateClause
- *
- *		Evaluate a CollateClause node.
- * ----------------------------------------------------------------
- */
-static Datum
-ExecEvalCollateClause(GenericExprState *exprstate,
-					ExprContext *econtext,
-					bool *isNull, ExprDoneCond *isDone)
-{
-	return ExecEvalExpr(exprstate->arg, econtext, isNull, isDone);
-}
-
-/* ----------------------------------------------------------------
  *		ExecEvalCoerceViaIO
  *
  *		Evaluate a CoerceViaIO node.
@@ -4501,16 +4501,6 @@ ExecInitExpr(Expr *node, PlanState *parent)
 				state = (ExprState *) gstate;
 			}
 			break;
-		case T_CollateClause:
-			{
-				CollateClause *collate = (CollateClause *) node;
-				GenericExprState *gstate = makeNode(GenericExprState);
-
-				gstate->xprstate.evalfunc = (ExprStateEvalFunc) ExecEvalCollateClause;
-				gstate->arg = ExecInitExpr(collate->arg, parent);
-				state = (ExprState *) gstate;
-			}
-			break;
 		case T_CoerceViaIO:
 			{
 				CoerceViaIO *iocoerce = (CoerceViaIO *) node;
@@ -4559,6 +4549,16 @@ ExecInitExpr(Expr *node, PlanState *parent)
 				cstate->xprstate.evalfunc = (ExprStateEvalFunc) ExecEvalConvertRowtype;
 				cstate->arg = ExecInitExpr(convert->arg, parent);
 				state = (ExprState *) cstate;
+			}
+			break;
+		case T_CollateExpr:
+			{
+				CollateExpr *collate = (CollateExpr *) node;
+				GenericExprState *gstate = makeNode(GenericExprState);
+
+				gstate->xprstate.evalfunc = (ExprStateEvalFunc) ExecEvalCollateExpr;
+				gstate->arg = ExecInitExpr(collate->arg, parent);
+				state = (ExprState *) gstate;
 			}
 			break;
 		case T_CaseExpr:

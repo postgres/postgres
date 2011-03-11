@@ -1308,6 +1308,12 @@ find_nonnullable_rels_walker(Node *node, bool top_level)
 
 		result = find_nonnullable_rels_walker((Node *) expr->arg, top_level);
 	}
+	else if (IsA(node, CollateExpr))
+	{
+		CollateExpr *expr = (CollateExpr *) node;
+
+		result = find_nonnullable_rels_walker((Node *) expr->arg, top_level);
+	}
 	else if (IsA(node, NullTest))
 	{
 		/* IS NOT NULL can be considered strict, but only at top level */
@@ -1507,6 +1513,12 @@ find_nonnullable_vars_walker(Node *node, bool top_level)
 	{
 		/* not clear this is useful, but it can't hurt */
 		ConvertRowtypeExpr *expr = (ConvertRowtypeExpr *) node;
+
+		result = find_nonnullable_vars_walker((Node *) expr->arg, top_level);
+	}
+	else if (IsA(node, CollateExpr))
+	{
+		CollateExpr *expr = (CollateExpr *) node;
 
 		result = find_nonnullable_vars_walker((Node *) expr->arg, top_level);
 	}
@@ -2579,6 +2591,42 @@ eval_const_expressions_mutator(Node *node,
 
 		/* Else we must return the partially-simplified node */
 		return (Node *) newexpr;
+	}
+	if (IsA(node, CollateExpr))
+	{
+		/*
+		 * If we can simplify the input to a constant, then we don't need the
+		 * CollateExpr node anymore: just change the constcollid field of the
+		 * Const node.  Otherwise, must copy the CollateExpr node.
+		 */
+		CollateExpr *collate = (CollateExpr *) node;
+		Node	   *arg;
+
+		arg = eval_const_expressions_mutator((Node *) collate->arg,
+											 context);
+
+		/*
+		 * If we find stacked CollateExprs, we can discard all but the top one.
+		 */
+		while (arg && IsA(arg, CollateExpr))
+			arg = (Node *) ((CollateExpr *) arg)->arg;
+
+		if (arg && IsA(arg, Const))
+		{
+			Const	   *con = (Const *) arg;
+
+			con->constcollid = collate->collOid;
+			return (Node *) con;
+		}
+		else
+		{
+			CollateExpr *newcollate = makeNode(CollateExpr);
+
+			newcollate->arg = (Expr *) arg;
+			newcollate->collOid = collate->collOid;
+			newcollate->location = collate->location;
+			return (Node *) newcollate;
+		}
 	}
 	if (IsA(node, CaseExpr))
 	{

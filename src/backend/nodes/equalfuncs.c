@@ -494,6 +494,16 @@ _equalConvertRowtypeExpr(ConvertRowtypeExpr *a, ConvertRowtypeExpr *b)
 }
 
 static bool
+_equalCollateExpr(CollateExpr *a, CollateExpr *b)
+{
+	COMPARE_NODE_FIELD(arg);
+	COMPARE_SCALAR_FIELD(collOid);
+	COMPARE_LOCATION_FIELD(location);
+
+	return true;
+}
+
+static bool
 _equalCaseExpr(CaseExpr *a, CaseExpr *b)
 {
 	COMPARE_SCALAR_FIELD(casetype);
@@ -2149,8 +2159,7 @@ static bool
 _equalCollateClause(CollateClause *a, CollateClause *b)
 {
 	COMPARE_NODE_FIELD(arg);
-	COMPARE_NODE_FIELD(collnames);
-	COMPARE_SCALAR_FIELD(collOid);
+	COMPARE_NODE_FIELD(collname);
 	COMPARE_LOCATION_FIELD(location);
 
 	return true;
@@ -2582,6 +2591,9 @@ equal(void *a, void *b)
 			break;
 		case T_ConvertRowtypeExpr:
 			retval = _equalConvertRowtypeExpr(a, b);
+			break;
+		case T_CollateExpr:
+			retval = _equalCollateExpr(a, b);
 			break;
 		case T_CaseExpr:
 			retval = _equalCaseExpr(a, b);

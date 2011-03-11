@@ -148,6 +148,7 @@ typedef enum NodeTag
 	T_CoerceViaIO,
 	T_ArrayCoerceExpr,
 	T_ConvertRowtypeExpr,
+	T_CollateExpr,
 	T_CaseExpr,
 	T_CaseWhen,
 	T_CaseTestExpr,
@@ -169,7 +170,6 @@ typedef enum NodeTag
 	T_JoinExpr,
 	T_FromExpr,
 	T_IntoClause,
-	T_CollateClause,
 
 	/*
 	 * TAGS FOR EXPRESSION STATE NODES (execnodes.h)
@@ -377,6 +377,7 @@ typedef enum NodeTag
 	T_A_ArrayExpr,
 	T_ResTarget,
 	T_TypeCast,
+	T_CollateClause,
 	T_SortBy,
 	T_WindowDef,
 	T_RangeSubselect,

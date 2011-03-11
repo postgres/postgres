@@ -831,7 +831,7 @@ DefineDomain(CreateDomainStmt *stmt)
 	 */
 	baseColl = baseType->typcollation;
 	if (stmt->collClause)
-		domaincoll = get_collation_oid(stmt->collClause->collnames, false);
+		domaincoll = get_collation_oid(stmt->collClause->collname, false);
 	else
 		domaincoll = baseColl;
 

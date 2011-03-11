@@ -1993,8 +1993,7 @@ opt_collate_clause:
 				{
 					CollateClause *n = makeNode(CollateClause);
 					n->arg = NULL;
-					n->collnames = $2;
-					n->collOid = InvalidOid;
+					n->collname = $2;
 					n->location = @1;
 					$$ = (Node *) n;
 				}
@@ -2537,8 +2536,7 @@ ColConstraint:
 					 */
 					CollateClause *n = makeNode(CollateClause);
 					n->arg = NULL;
-					n->collnames = $2;
-					n->collOid = InvalidOid;
+					n->collname = $2;
 					n->location = @1;
 					$$ = (Node *) n;
 				}
@@ -9690,8 +9688,8 @@ a_expr:		c_expr									{ $$ = $1; }
 			| a_expr COLLATE any_name
 				{
 					CollateClause *n = makeNode(CollateClause);
-					n->arg = (Expr *) $1;
-					n->collnames = $3;
+					n->arg = $1;
+					n->collname = $3;
 					n->location = @2;
 					$$ = (Node *) n;
 				}
