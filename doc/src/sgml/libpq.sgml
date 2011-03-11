@@ -3846,6 +3846,15 @@ PGresult *PQgetResult(PGconn *conn);
        active and the necessary response data has not yet been read by
        <function>PQconsumeInput</function>.
       </para>
+
+      <note>
+       <para>
+        Even when <function>PQresultStatus</function> indicates a fatal
+        error, <function>PQgetResult</function> should be called until it
+        returns a null pointer to allow <application>libpq</> to
+        process the error information completely.
+       </para>
+      </note>
      </listitem>
     </varlistentry>
    </variablelist>
