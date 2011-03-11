@@ -245,7 +245,7 @@ ECPGdump_a_type(FILE *o, const char *name, struct ECPGtype * type, const int bra
 	struct variable *var;
 
 	if (type->type != ECPGt_descriptor && type->type != ECPGt_sqlda &&
-		type->type != ECPGt_char_variable &&
+		type->type != ECPGt_char_variable && type->type != ECPGt_const &&
 		brace_level >= 0)
 	{
 		char	   *str;
