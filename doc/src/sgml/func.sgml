@@ -9695,7 +9695,7 @@ nextval('foo')              <lineannotation>searches search path for <literal>fo
     Before <productname>PostgreSQL</productname> 8.1, the arguments of the
     sequence functions were of type <type>text</>, not <type>regclass</>, and
     the above-described conversion from a text string to an OID value would
-    happen at run time during each call.  For backwards compatibility, this
+    happen at run time during each call.  For backward compatibility, this
     facility still exists, but internally it is now handled as an implicit
     coercion from <type>text</> to <type>regclass</> before the function is
     invoked.

@@ -5357,7 +5357,7 @@ dynamic_library_path = 'C:\tools\postgresql;H:\my_project\lib;$libdir'
         null values to be entered.  However, <productname>PostgreSQL</> versions
         before 8.2 did not support null values in arrays, and therefore would
         treat <literal>NULL</> as specifying a normal array element with
-        the string value <quote>NULL</>.  For backwards compatibility with
+        the string value <quote>NULL</>.  For backward compatibility with
         applications that require the old behavior, this variable can be
         turned <literal>off</>.
        </para>

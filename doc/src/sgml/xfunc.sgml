@@ -1368,7 +1368,7 @@ CREATE FUNCTION test(int, int) RETURNS int
     The <quote>body</quote> of the function definition
     specifies the C-language name of the function, which need not be the
     same as the name being declared for SQL use.
-    (For reasons of backwards compatibility, an empty body
+    (For reasons of backward compatibility, an empty body
     is accepted as meaning that the C-language function name is the
     same as the SQL name.)
    </para>
@@ -2701,7 +2701,7 @@ typedef struct
     /*
      * OPTIONAL pointer to result slot
      *
-     * This is obsolete and only present for backwards compatibility, viz,
+     * This is obsolete and only present for backward compatibility, viz,
      * user-defined SRFs that use the deprecated TupleDescGetSlot().
      */
     TupleTableSlot *slot;

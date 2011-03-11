@@ -384,7 +384,7 @@ RESET ROLE;
     roles being used as SQL roles the <literal>INHERIT</> attribute, while
     giving roles being used as SQL users the <literal>NOINHERIT</> attribute.
     However, <productname>PostgreSQL</productname> defaults to giving all roles
-    the <literal>INHERIT</> attribute, for backwards compatibility with pre-8.1
+    the <literal>INHERIT</> attribute, for backward compatibility with pre-8.1
     releases in which users always had use of permissions granted to groups
     they were members of.
    </para>

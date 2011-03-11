@@ -202,7 +202,7 @@ select returns_array();
   <para>
    Perl passes <productname>PostgreSQL</productname> arrays as a blessed
    PostgreSQL::InServer::ARRAY object. This object may be treated as an array
-   reference or a string, allowing for backwards compatibility with Perl
+   reference or a string, allowing for backward compatibility with Perl
    code written for <productname>PostgreSQL</productname> versions below 9.1 to
    run.  For example:
 

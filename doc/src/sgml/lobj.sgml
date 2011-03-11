@@ -114,7 +114,7 @@ Oid lo_creat(PGconn *conn, int mode);
 
      <replaceable class="parameter">mode</replaceable> is unused and
      ignored as of <productname>PostgreSQL</productname> 8.1; however, for
-     backwards compatibility with earlier releases it is best to
+     backward compatibility with earlier releases it is best to
      set it to <symbol>INV_READ</symbol>, <symbol>INV_WRITE</symbol>,
      or <symbol>INV_READ</symbol> <literal>|</> <symbol>INV_WRITE</symbol>.
      (These symbolic constants are defined
