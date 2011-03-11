@@ -1058,7 +1058,6 @@ set semsys:seminfo_semmsl=32
       <term><systemitem class="osname">Solaris</> 2.10 (Solaris
       10)</term>
       <term><systemitem class="osname">OpenSolaris</></term>
-      <indexterm><primary>Solaris</><secondary>IPC configuration</></>
       <listitem>
        <para>
         In Solaris 10 and OpenSolaris, the default shared memory and
