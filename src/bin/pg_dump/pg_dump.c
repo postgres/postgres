@@ -481,10 +481,6 @@ main(int argc, char **argv)
 					outputNoTablespaces = 1;
 				else if (strcmp(optarg, "use-set-session-authorization") == 0)
 					use_setsessauth = 1;
-				else if (strcmp(optarg, "no-security-label") == 0)
-					no_security_label = 1;
-				else if (strcmp(optarg, "no-unlogged-table-data") == 0)
-					no_unlogged_table_data = 1;
 				else
 				{
 					fprintf(stderr,
