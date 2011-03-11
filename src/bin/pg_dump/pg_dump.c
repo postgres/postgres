@@ -469,7 +469,10 @@ main(int argc, char **argv)
 				break;
 
 			case 'X':
-				/* -X is a deprecated alternative to long options */
+				/*
+				 *	-X is a deprecated alternative to long options;
+				 *	no new -X options are to be added.
+				 */
 				if (strcmp(optarg, "disable-dollar-quoting") == 0)
 					disable_dollar_quoting = 1;
 				else if (strcmp(optarg, "disable-triggers") == 0)
