@@ -12509,6 +12509,10 @@ postgres=# SELECT * FROM unnest2(ARRAY[[1,2],[3,4]]);
    </indexterm>
 
    <indexterm>
+    <primary>session_user</primary>
+   </indexterm>
+
+   <indexterm>
     <primary>user</primary>
     <secondary>current</secondary>
    </indexterm>
@@ -12767,21 +12771,6 @@ SET search_path TO <replaceable>schema</> <optional>, <replaceable>schema</>, ..
        <entry>does current user have privilege for schema</entry>
       </row>
       <row>
-       <entry><literal><function>has_server_privilege</function>(<parameter>user</parameter>,
-                                  <parameter>server</parameter>,
-                                  <parameter>privilege</parameter>)</literal>
-       </entry>
-       <entry><type>boolean</type></entry>
-       <entry>does user have privilege for foreign server</entry>
-      </row>
-      <row>
-       <entry><literal><function>has_server_privilege</function>(<parameter>server</parameter>,
-                                  <parameter>privilege</parameter>)</literal>
-       </entry>
-       <entry><type>boolean</type></entry>
-       <entry>does current user have privilege for foreign server</entry>
-      </row>
-      <row>
        <entry><literal><function>has_sequence_privilege</function>(<parameter>user</parameter>,
                                   <parameter>sequence</parameter>,
                                   <parameter>privilege</parameter>)</literal>
@@ -12795,6 +12784,21 @@ SET search_path TO <replaceable>schema</> <optional>, <replaceable>schema</>, ..
        </entry>
        <entry><type>boolean</type></entry>
        <entry>does current user have privilege for sequence</entry>
+      </row>
+      <row>
+       <entry><literal><function>has_server_privilege</function>(<parameter>user</parameter>,
+                                  <parameter>server</parameter>,
+                                  <parameter>privilege</parameter>)</literal>
+       </entry>
+       <entry><type>boolean</type></entry>
+       <entry>does user have privilege for foreign server</entry>
+      </row>
+      <row>
+       <entry><literal><function>has_server_privilege</function>(<parameter>server</parameter>,
+                                  <parameter>privilege</parameter>)</literal>
+       </entry>
+       <entry><type>boolean</type></entry>
+       <entry>does current user have privilege for foreign server</entry>
       </row>
       <row>
        <entry><literal><function>has_table_privilege</function>(<parameter>user</parameter>,
@@ -13199,6 +13203,10 @@ SELECT pg_type_is_visible('myschema.widget'::regtype);
    </indexterm>
 
    <indexterm>
+    <primary>pg_describe_object</primary>
+   </indexterm>
+
+   <indexterm>
     <primary>pg_get_constraintdef</primary>
    </indexterm>
 
@@ -13279,6 +13287,11 @@ SELECT pg_type_is_visible('myschema.widget'::regtype);
        <entry><literal><function>format_type(<parameter>type_oid</parameter>, <parameter>typemod</>)</function></literal></entry>
        <entry><type>text</type></entry>
        <entry>get SQL name of a data type</entry>
+      </row>
+      <row>
+       <entry><literal><function>pg_describe_object(<parameter>catalog_id</parameter>, <parameter>object_id</parameter>, <parameter>object_sub_id</parameter>)</function></literal></entry>
+       <entry><type>text</type></entry>
+       <entry>get description of a database object</entry>
       </row>
       <row>
        <entry><literal><function>pg_get_constraintdef(<parameter>constraint_oid</parameter>)</function></literal></entry>
@@ -13399,11 +13412,6 @@ SELECT pg_type_is_visible('myschema.widget'::regtype);
        <entry><literal><function>pg_tablespace_databases(<parameter>tablespace_oid</parameter>)</function></literal></entry>
        <entry><type>setof oid</type></entry>
        <entry>get the set of database OIDs that have objects in the tablespace</entry>
-      </row>
-      <row>
-       <entry><literal><function>pg_describe_object(<parameter>catalog_id</parameter>, <parameter>object_id</parameter>, <parameter>object_sub_id</parameter>)</function>)</literal></entry>
-       <entry><type>text</type></entry>
-       <entry>get description of a database object</entry>
       </row>
       <row>
        <entry><literal><function>pg_typeof(<parameter>any</parameter>)</function></literal></entry>
