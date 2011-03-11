@@ -142,7 +142,8 @@ PostgreSQL documentation
       <listitem>
        <para>
         Output commands to clean (drop)
-        database objects prior to (the commands for) creating them.
+        database objects prior to outputing the commands for creating them.
+        (Restore might generate some harmless errors.)
        </para>
 
        <para>
