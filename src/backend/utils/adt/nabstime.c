@@ -179,13 +179,13 @@ tm2abstime(struct pg_tm * tm, int tz)
 
 	/* validate, before going out of range on some members */
 	if (tm->tm_year < 1901 || tm->tm_year > 2038 ||
-		tm->tm_mon < 1 || tm->tm_mon > 12 ||
+		tm->tm_mon < 1 || tm->tm_mon > MONTHS_PER_YEAR ||
 		tm->tm_mday < 1 || tm->tm_mday > 31 ||
 		tm->tm_hour < 0 ||
-		tm->tm_hour > 24 ||		/* test for > 24:00:00 */
-		(tm->tm_hour == 24 && (tm->tm_min > 0 || tm->tm_sec > 0)) ||
-		tm->tm_min < 0 || tm->tm_min > 59 ||
-		tm->tm_sec < 0 || tm->tm_sec > 60)
+		tm->tm_hour > HOURS_PER_DAY ||		/* test for > 24:00:00 */
+		(tm->tm_hour == HOURS_PER_DAY && (tm->tm_min > 0 || tm->tm_sec > 0)) ||
+		tm->tm_min < 0 || tm->tm_min > MINS_PER_HOUR - 1 ||
+		tm->tm_sec < 0 || tm->tm_sec > SECS_PER_MINUTE)
 		return INVALID_ABSTIME;
 
 	day = date2j(tm->tm_year, tm->tm_mon, tm->tm_mday) - UNIX_EPOCH_JDATE;

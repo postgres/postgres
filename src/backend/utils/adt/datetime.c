@@ -342,7 +342,7 @@ j2date(int jd, int *year, int *month, int *day)
 	*year = y - 4800;
 	quad = julian * 2141 / 65536;
 	*day = julian - 7834 * quad / 256;
-	*month = (quad + 10) % 12 + 1;
+	*month = (quad + 10) % MONTHS_PER_YEAR + 1;
 
 	return;
 }	/* j2date() */
@@ -952,8 +952,8 @@ DecodeDateTime(char **field, int *ftype, int nf,
 				 * DecodeTime()
 				 */
 				/* test for > 24:00:00 */
-				if (tm->tm_hour > 24 ||
-					(tm->tm_hour == 24 &&
+				if (tm->tm_hour > HOURS_PER_DAY ||
+					(tm->tm_hour == HOURS_PER_DAY &&
 					 (tm->tm_min > 0 || tm->tm_sec > 0 || *fsec > 0)))
 					return DTERR_FIELD_OVERFLOW;
 				break;
@@ -1371,12 +1371,12 @@ DecodeDateTime(char **field, int *ftype, int nf,
 		return dterr;
 
 	/* handle AM/PM */
-	if (mer != HR24 && tm->tm_hour > 12)
+	if (mer != HR24 && tm->tm_hour > HOURS_PER_DAY / 2)
 		return DTERR_FIELD_OVERFLOW;
-	if (mer == AM && tm->tm_hour == 12)
+	if (mer == AM && tm->tm_hour == HOURS_PER_DAY / 2)
 		tm->tm_hour = 0;
-	else if (mer == PM && tm->tm_hour != 12)
-		tm->tm_hour += 12;
+	else if (mer == PM && tm->tm_hour != HOURS_PER_DAY / 2)
+		tm->tm_hour += HOURS_PER_DAY / 2;
 
 	/* do additional checking for full date specs... */
 	if (*dtype == DTK_DATE)
@@ -2058,17 +2058,18 @@ DecodeTimeOnly(char **field, int *ftype, int nf,
 		return dterr;
 
 	/* handle AM/PM */
-	if (mer != HR24 && tm->tm_hour > 12)
+	if (mer != HR24 && tm->tm_hour > HOURS_PER_DAY / 2)
 		return DTERR_FIELD_OVERFLOW;
-	if (mer == AM && tm->tm_hour == 12)
+	if (mer == AM && tm->tm_hour == HOURS_PER_DAY / 2)
 		tm->tm_hour = 0;
-	else if (mer == PM && tm->tm_hour != 12)
-		tm->tm_hour += 12;
+	else if (mer == PM && tm->tm_hour != HOURS_PER_DAY / 2)
+		tm->tm_hour += HOURS_PER_DAY / 2;
 
-	if (tm->tm_hour < 0 || tm->tm_min < 0 || tm->tm_min > 59 ||
-		tm->tm_sec < 0 || tm->tm_sec > 60 || tm->tm_hour > 24 ||
+	if (tm->tm_hour < 0 || tm->tm_min < 0 || tm->tm_min > MINS_PER_HOUR - 1 ||
+		tm->tm_sec < 0 || tm->tm_sec > SECS_PER_MINUTE ||
+		tm->tm_hour > HOURS_PER_DAY ||
 	/* test for > 24:00:00 */
-		(tm->tm_hour == 24 &&
+		(tm->tm_hour == HOURS_PER_DAY &&
 		 (tm->tm_min > 0 || tm->tm_sec > 0 || *fsec > 0)) ||
 #ifdef HAVE_INT64_TIMESTAMP
 		*fsec < INT64CONST(0) || *fsec > USECS_PER_SEC
@@ -2396,13 +2397,15 @@ DecodeTime(char *str, int fmask, int range,
 
 	/* do a sanity check */
 #ifdef HAVE_INT64_TIMESTAMP
-	if (tm->tm_hour < 0 || tm->tm_min < 0 || tm->tm_min > 59 ||
-		tm->tm_sec < 0 || tm->tm_sec > 60 || *fsec < INT64CONST(0) ||
+	if (tm->tm_hour < 0 || tm->tm_min < 0 || tm->tm_min > MINS_PER_HOUR -1 ||
+		tm->tm_sec < 0 || tm->tm_sec > SECS_PER_MINUTE ||
+		*fsec < INT64CONST(0) ||
 		*fsec > USECS_PER_SEC)
 		return DTERR_FIELD_OVERFLOW;
 #else
-	if (tm->tm_hour < 0 || tm->tm_min < 0 || tm->tm_min > 59 ||
-		tm->tm_sec < 0 || tm->tm_sec > 60 || *fsec < 0 || *fsec > 1)
+	if (tm->tm_hour < 0 || tm->tm_min < 0 || tm->tm_min > MINS_PER_HOUR - 1 ||
+		tm->tm_sec < 0 || tm->tm_sec > SECS_PER_MINUTE ||
+		*fsec < 0 || *fsec > 1)
 		return DTERR_FIELD_OVERFLOW;
 #endif
 
@@ -2748,9 +2751,9 @@ DecodeTimezone(char *str, int *tzp)
 
 	if (hr < 0 || hr > 14)
 		return DTERR_TZDISP_OVERFLOW;
-	if (min < 0 || min >= 60)
+	if (min < 0 || min >= MINS_PER_HOUR)
 		return DTERR_TZDISP_OVERFLOW;
-	if (sec < 0 || sec >= 60)
+	if (sec < 0 || sec >= SECS_PER_MINUTE)
 		return DTERR_TZDISP_OVERFLOW;
 
 	tz = (hr * MINS_PER_HOUR + min) * SECS_PER_MINUTE + sec;
@@ -3324,7 +3327,7 @@ DecodeISO8601Interval(char *str,
 			{
 				case 'Y':
 					tm->tm_year += val;
-					tm->tm_mon += (fval * 12);
+					tm->tm_mon += (fval * MONTHS_PER_YEAR);
 					break;
 				case 'M':
 					tm->tm_mon += val;
@@ -3359,7 +3362,7 @@ DecodeISO8601Interval(char *str,
 						return DTERR_BAD_FORMAT;
 
 					tm->tm_year += val;
-					tm->tm_mon += (fval * 12);
+					tm->tm_mon += (fval * MONTHS_PER_YEAR);
 					if (unit == '\0')
 						return 0;
 					if (unit == 'T')
@@ -4155,7 +4158,7 @@ InstallTimeZoneAbbrevs(tzEntry *abbrevs, int n)
 	{
 		strncpy(newtbl[i].token, abbrevs[i].abbrev, TOKMAXLEN);
 		newtbl[i].type = abbrevs[i].is_dst ? DTZ : TZ;
-		TOVAL(&newtbl[i], abbrevs[i].offset / 60);
+		TOVAL(&newtbl[i], abbrevs[i].offset / MINS_PER_HOUR);
 	}
 
 	/* Check the ordering, if testing */

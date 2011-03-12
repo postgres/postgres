@@ -2612,7 +2612,7 @@ timetz_zone(PG_FUNCTION_ARGS)
 	type = DecodeSpecial(0, lowzone, &val);
 
 	if (type == TZ || type == DTZ)
-		tz = val * 60;
+		tz = val * MINS_PER_HOUR;
 	else
 	{
 		tzp = pg_tzset(tzname);

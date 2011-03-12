@@ -2129,7 +2129,7 @@ DCH_to_char(FormatNode *node, bool is_interval, TmToChar *in, char *out, Oid col
 				 * intervals
 				 */
 				sprintf(s, "%0*d", S_FM(n->suffix) ? 0 : 2,
-						tm->tm_hour % (HOURS_PER_DAY / 2) == 0 ? 12 :
+						tm->tm_hour % (HOURS_PER_DAY / 2) == 0 ? HOURS_PER_DAY / 2 :
 						tm->tm_hour % (HOURS_PER_DAY / 2));
 				if (S_THth(n->suffix))
 					str_numth(s, s, S_TH_TYPE(n->suffix));
@@ -2486,14 +2486,14 @@ DCH_to_char(FormatNode *node, bool is_interval, TmToChar *in, char *out, Oid col
 				if (!tm->tm_mon)
 					break;
 				sprintf(s, "%*s", S_FM(n->suffix) ? 0 : -4,
-						rm_months_upper[12 - tm->tm_mon]);
+						rm_months_upper[MONTHS_PER_YEAR - tm->tm_mon]);
 				s += strlen(s);
 				break;
 			case DCH_rm:
 				if (!tm->tm_mon)
 					break;
 				sprintf(s, "%*s", S_FM(n->suffix) ? 0 : -4,
-						rm_months_lower[12 - tm->tm_mon]);
+						rm_months_lower[MONTHS_PER_YEAR - tm->tm_mon]);
 				s += strlen(s);
 				break;
 			case DCH_W:
@@ -2779,12 +2779,12 @@ DCH_from_char(FormatNode *node, char *in, TmFromChar *out)
 			case DCH_RM:
 				from_char_seq_search(&value, &s, rm_months_upper,
 									 ALL_UPPER, MAX_RM_LEN, n);
-				from_char_set_int(&out->mm, 12 - value, n);
+				from_char_set_int(&out->mm, MONTHS_PER_YEAR - value, n);
 				break;
 			case DCH_rm:
 				from_char_seq_search(&value, &s, rm_months_lower,
 									 ALL_LOWER, MAX_RM_LEN, n);
-				from_char_set_int(&out->mm, 12 - value, n);
+				from_char_set_int(&out->mm, MONTHS_PER_YEAR - value, n);
 				break;
 			case DCH_W:
 				from_char_parse_int(&out->w, &s, n);
@@ -3236,16 +3236,16 @@ do_to_timestamp(text *date_txt, text *fmt,
 
 	if (tmfc.clock == CLOCK_12_HOUR)
 	{
-		if (tm->tm_hour < 1 || tm->tm_hour > 12)
+		if (tm->tm_hour < 1 || tm->tm_hour > HOURS_PER_DAY / 2)
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_DATETIME_FORMAT),
 					 errmsg("hour \"%d\" is invalid for the 12-hour clock",
 							tm->tm_hour),
 					 errhint("Use the 24-hour clock, or give an hour between 1 and 12.")));
 
-		if (tmfc.pm && tm->tm_hour < 12)
-			tm->tm_hour += 12;
-		else if (!tmfc.pm && tm->tm_hour == 12)
+		if (tmfc.pm && tm->tm_hour < HOURS_PER_DAY / 2)
+			tm->tm_hour += HOURS_PER_DAY / 2;
+		else if (!tmfc.pm && tm->tm_hour == HOURS_PER_DAY / 2)
 			tm->tm_hour = 0;
 	}
 
@@ -3347,7 +3347,7 @@ do_to_timestamp(text *date_txt, text *fmt,
 
 			y = ysum[isleap(tm->tm_year)];
 
-			for (i = 1; i <= 12; i++)
+			for (i = 1; i <= MONTHS_PER_YEAR; i++)
 			{
 				if (tmfc.ddd < y[i])
 					break;

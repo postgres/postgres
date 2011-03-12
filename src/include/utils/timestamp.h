@@ -81,6 +81,8 @@ typedef struct
  */
 #define DAYS_PER_MONTH	30		/* assumes exactly 30 days per month */
 #define HOURS_PER_DAY	24		/* assume no daylight savings time changes */
+#define MINS_PER_HOUR	60		/* assume no daylight savings time changes */
+#define SECS_PER_MINUTE	60		/* assume no daylight savings time changes */
 
 /*
  *	This doesn't adjust for uneven daylight savings time intervals or leap

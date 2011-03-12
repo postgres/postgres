@@ -4422,7 +4422,7 @@ timestamp_zone(PG_FUNCTION_ARGS)
 
 	if (type == TZ || type == DTZ)
 	{
-		tz = -(val * 60);
+		tz = -(val * MINS_PER_HOUR);
 		result = dt2local(timestamp, tz);
 	}
 	else
@@ -4596,7 +4596,7 @@ timestamptz_zone(PG_FUNCTION_ARGS)
 
 	if (type == TZ || type == DTZ)
 	{
-		tz = val * 60;
+		tz = val * MINS_PER_HOUR;
 		result = dt2local(timestamp, tz);
 	}
 	else
