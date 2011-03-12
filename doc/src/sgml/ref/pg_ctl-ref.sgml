@@ -134,7 +134,7 @@ PostgreSQL documentation
    <application>pg_ctl</application> is a utility for initializing a
    <productname>PostgreSQL</productname> database cluster, starting,
    stopping, or restarting the <productname>PostgreSQL</productname>
-   backend server (<xref linkend="app-postgres">), or displaying the
+   database server (<xref linkend="app-postgres">), or displaying the
    status of a running server.  Although the server can be started
    manually, <application>pg_ctl</application> encapsulates tasks such
    as redirecting log output and properly detaching from the terminal

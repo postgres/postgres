@@ -22,7 +22,7 @@
  *	how to handle signalling.
  *
  *	signal(2) handling - this is here because it affects some of
- *	the frontend commands as well as the backend server.
+ *	the frontend commands as well as the backend processes.
  *
  *	Ultrix and SunOS provide BSD signal(2) semantics by default.
  *

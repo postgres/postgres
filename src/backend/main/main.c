@@ -310,7 +310,7 @@ help(const char *progname)
 	printf(_("  -O              allow system table structure changes\n"));
 	printf(_("  -P              disable system indexes\n"));
 	printf(_("  -t pa|pl|ex     show timings after each query\n"));
-	printf(_("  -T              send SIGSTOP to all backend servers if one dies\n"));
+	printf(_("  -T              send SIGSTOP to all backend processes if one dies\n"));
 	printf(_("  -W NUM          wait NUM seconds to allow attach from a debugger\n"));
 
 	printf(_("\nOptions for single-user mode:\n"));

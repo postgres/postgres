@@ -1612,7 +1612,7 @@ int PQsocket(const PGconn *conn);
       <para>
        Returns the process <acronym>ID</acronym>
        (PID)<indexterm><primary>PID</><secondary>determining PID of
-       server process</><tertiary>in libpq</></> of the backend server
+       server process</><tertiary>in libpq</></> of the backend
        process handling this connection.
 
 <synopsis>

@@ -78,7 +78,7 @@
     </listitem>
    </itemizedlist>
 
-   Here <quote>program</quote> refers to any executable, not only the backend server.
+   Here <quote>program</quote> refers to any executable, not only the backend process.
   </para>
 
   <para>
@@ -280,9 +280,9 @@
    When writing a bug report, please avoid confusing terminology.
    The software package in total is called <quote>PostgreSQL</quote>,
    sometimes <quote>Postgres</quote> for short. If you
-   are specifically talking about the backend server, mention that, do not
+   are specifically talking about the backend process, mention that, do not
    just say <quote>PostgreSQL crashes</quote>.  A crash of a single
-   backend server process is quite different from crash of the parent
+   backend process is quite different from crash of the parent
    <quote>postgres</> process; please don't say <quote>the server
    crashed</> when you mean a single backend process went down, nor vice versa.
    Also, client programs such as the interactive frontend <quote><application>psql</application></quote>

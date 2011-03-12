@@ -264,8 +264,8 @@ INSERT INTO weather (date, city, temp_hi, temp_lo)
 COPY weather FROM '/home/user/weather.txt';
 </programlisting>
 
-    where the file name for the source file must be available to the
-    backend server machine, not the client, since the backend server
+    where the file name for the source file must be available on the
+    machine running the backend process, not the client, since the backend process
     reads the file directly.  You can read more about the
     <command>COPY</command> command in <xref linkend="sql-copy">.
    </para>
