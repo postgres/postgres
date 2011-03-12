@@ -714,9 +714,13 @@ int4div(PG_FUNCTION_ARGS)
 	int32		result;
 
 	if (arg2 == 0)
+	{
 		ereport(ERROR,
 				(errcode(ERRCODE_DIVISION_BY_ZERO),
 				 errmsg("division by zero")));
+		/* ensure compiler realizes we mustn't reach the division (gcc bug) */
+		PG_RETURN_NULL();
+	}
 
 #ifdef WIN32
 
@@ -854,9 +858,13 @@ int2div(PG_FUNCTION_ARGS)
 	int16		result;
 
 	if (arg2 == 0)
+	{
 		ereport(ERROR,
 				(errcode(ERRCODE_DIVISION_BY_ZERO),
 				 errmsg("division by zero")));
+		/* ensure compiler realizes we mustn't reach the division (gcc bug) */
+		PG_RETURN_NULL();
+	}
 
 	result = arg1 / arg2;
 
@@ -948,10 +956,16 @@ int24div(PG_FUNCTION_ARGS)
 	int32		arg2 = PG_GETARG_INT32(1);
 
 	if (arg2 == 0)
+	{
 		ereport(ERROR,
 				(errcode(ERRCODE_DIVISION_BY_ZERO),
 				 errmsg("division by zero")));
+		/* ensure compiler realizes we mustn't reach the division (gcc bug) */
+		PG_RETURN_NULL();
+	}
+
 	/* No overflow is possible */
+
 	PG_RETURN_INT32((int32) arg1 / arg2);
 }
 
@@ -1032,9 +1046,13 @@ int42div(PG_FUNCTION_ARGS)
 	int32		result;
 
 	if (arg2 == 0)
+	{
 		ereport(ERROR,
 				(errcode(ERRCODE_DIVISION_BY_ZERO),
 				 errmsg("division by zero")));
+		/* ensure compiler realizes we mustn't reach the division (gcc bug) */
+		PG_RETURN_NULL();
+	}
 
 	result = arg1 / arg2;
 
@@ -1057,9 +1075,13 @@ int4mod(PG_FUNCTION_ARGS)
 	int32		arg2 = PG_GETARG_INT32(1);
 
 	if (arg2 == 0)
+	{
 		ereport(ERROR,
 				(errcode(ERRCODE_DIVISION_BY_ZERO),
 				 errmsg("division by zero")));
+		/* ensure compiler realizes we mustn't reach the division (gcc bug) */
+		PG_RETURN_NULL();
+	}
 
 	/* SELECT ((-2147483648)::int4) % (-1); causes a floating point exception */
 	if (arg1 == INT_MIN && arg2 == -1)
@@ -1077,9 +1099,14 @@ int2mod(PG_FUNCTION_ARGS)
 	int16		arg2 = PG_GETARG_INT16(1);
 
 	if (arg2 == 0)
+	{
 		ereport(ERROR,
 				(errcode(ERRCODE_DIVISION_BY_ZERO),
 				 errmsg("division by zero")));
+		/* ensure compiler realizes we mustn't reach the division (gcc bug) */
+		PG_RETURN_NULL();
+	}
+
 	/* No overflow is possible */
 
 	PG_RETURN_INT16(arg1 % arg2);
@@ -1092,9 +1119,14 @@ int24mod(PG_FUNCTION_ARGS)
 	int32		arg2 = PG_GETARG_INT32(1);
 
 	if (arg2 == 0)
+	{
 		ereport(ERROR,
 				(errcode(ERRCODE_DIVISION_BY_ZERO),
 				 errmsg("division by zero")));
+		/* ensure compiler realizes we mustn't reach the division (gcc bug) */
+		PG_RETURN_NULL();
+	}
+
 	/* No overflow is possible */
 
 	PG_RETURN_INT32(arg1 % arg2);
@@ -1107,9 +1139,14 @@ int42mod(PG_FUNCTION_ARGS)
 	int16		arg2 = PG_GETARG_INT16(1);
 
 	if (arg2 == 0)
+	{
 		ereport(ERROR,
 				(errcode(ERRCODE_DIVISION_BY_ZERO),
 				 errmsg("division by zero")));
+		/* ensure compiler realizes we mustn't reach the division (gcc bug) */
+		PG_RETURN_NULL();
+	}
+
 	/* No overflow is possible */
 
 	PG_RETURN_INT32(arg1 % arg2);
