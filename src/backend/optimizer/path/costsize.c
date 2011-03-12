@@ -2056,7 +2056,6 @@ cached_scansel(PlannerInfo *root, RestrictInfo *rinfo, PathKey *pathkey)
 	mergejoinscansel(root,
 					 (Node *) rinfo->clause,
 					 pathkey->pk_opfamily,
-					 pathkey->pk_collation,
 					 pathkey->pk_strategy,
 					 pathkey->pk_nulls_first,
 					 &leftstartsel,

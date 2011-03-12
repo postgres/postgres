@@ -24,6 +24,7 @@
 #include "catalog/index.h"
 #include "catalog/indexing.h"
 #include "catalog/namespace.h"
+#include "catalog/pg_collation.h"
 #include "catalog/pg_inherits_fn.h"
 #include "catalog/pg_namespace.h"
 #include "commands/dbcommands.h"
@@ -862,13 +863,11 @@ examine_attribute(Relation onerel, int attnum, Node *index_expr)
 	{
 		stats->attrtypid = exprType(index_expr);
 		stats->attrtypmod = exprTypmod(index_expr);
-		stats->attrcollation = exprCollation(index_expr);
 	}
 	else
 	{
 		stats->attrtypid = attr->atttypid;
 		stats->attrtypmod = attr->atttypmod;
-		stats->attrcollation = attr->attcollation;
 	}
 
 	typtuple = SearchSysCache1(TYPEOID, ObjectIdGetDatum(stats->attrtypid));
@@ -1931,7 +1930,8 @@ compute_minimal_stats(VacAttrStatsP stats,
 	track_cnt = 0;
 
 	fmgr_info(mystats->eqfunc, &f_cmpeq);
-	fmgr_info_collation(stats->attrcollation, &f_cmpeq);
+	/* We always use the default collation for statistics */
+	fmgr_info_collation(DEFAULT_COLLATION_OID, &f_cmpeq);
 
 	for (i = 0; i < samplerows; i++)
 	{
@@ -2253,7 +2253,8 @@ compute_scalar_stats(VacAttrStatsP stats,
 
 	SelectSortFunction(mystats->ltopr, false, &cmpFn, &cmpFlags);
 	fmgr_info(cmpFn, &f_cmpfn);
-	fmgr_info_collation(stats->attrcollation, &f_cmpfn);
+	/* We always use the default collation for statistics */
+	fmgr_info_collation(DEFAULT_COLLATION_OID, &f_cmpfn);
 
 	/* Initial scan to find sortable values */
 	for (i = 0; i < samplerows; i++)

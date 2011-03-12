@@ -145,7 +145,7 @@ static double eqjoinsel_inner(Oid operator,
 static double eqjoinsel_semi(Oid operator,
 			   VariableStatData *vardata1, VariableStatData *vardata2);
 static bool convert_to_scalar(Datum value, Oid valuetypid, double *scaledvalue,
-				  Datum lobound, Datum hibound, Oid boundstypid, Oid boundscollid,
+				  Datum lobound, Datum hibound, Oid boundstypid,
 				  double *scaledlobound, double *scaledhibound);
 static double convert_numeric_to_scalar(Datum value, Oid typid);
 static void convert_string_to_scalar(char *value,
@@ -164,10 +164,10 @@ static double convert_one_string_to_scalar(char *value,
 							 int rangelo, int rangehi);
 static double convert_one_bytea_to_scalar(unsigned char *value, int valuelen,
 							int rangelo, int rangehi);
-static char *convert_string_datum(Datum value, Oid typid, Oid collid);
+static char *convert_string_datum(Datum value, Oid typid);
 static double convert_timevalue_to_scalar(Datum value, Oid typid);
 static bool get_variable_range(PlannerInfo *root, VariableStatData *vardata,
-				   Oid sortop, Oid collation, Datum *min, Datum *max);
+				   Oid sortop, Datum *min, Datum *max);
 static bool get_actual_variable_range(PlannerInfo *root,
 						  VariableStatData *vardata,
 						  Oid sortop,
@@ -285,6 +285,7 @@ var_eq_const(VariableStatData *vardata, Oid operator,
 			FmgrInfo	eqproc;
 
 			fmgr_info(get_opcode(operator), &eqproc);
+			fmgr_info_collation(DEFAULT_COLLATION_OID, &eqproc);
 
 			for (i = 0; i < nvalues; i++)
 			{
@@ -514,7 +515,7 @@ scalarineqsel(PlannerInfo *root, Oid operator, bool isgt,
 	stats = (Form_pg_statistic) GETSTRUCT(vardata->statsTuple);
 
 	fmgr_info(get_opcode(operator), &opproc);
-	fmgr_info_collation(vardata->attcollation, &opproc);
+	fmgr_info_collation(DEFAULT_COLLATION_OID, &opproc);
 
 	/*
 	 * If we have most-common-values info, add up the fractions of the MCV
@@ -839,7 +840,7 @@ ineq_histogram_selectivity(PlannerInfo *root,
 				 */
 				if (convert_to_scalar(constval, consttype, &val,
 									  values[i - 1], values[i],
-									  vardata->vartype, vardata->attcollation,
+									  vardata->vartype,
 									  &low, &high))
 				{
 					if (high <= low)
@@ -1700,6 +1701,7 @@ scalararraysel(PlannerInfo *root,
 	if (!oprsel)
 		return (Selectivity) 0.5;
 	fmgr_info(oprsel, &oprselproc);
+	fmgr_info_collation(DEFAULT_COLLATION_OID, &oprselproc);
 
 	/* deconstruct the expression */
 	Assert(list_length(clause->args) == 2);
@@ -2116,6 +2118,7 @@ eqjoinsel_inner(Oid operator,
 					nmatches;
 
 		fmgr_info(get_opcode(operator), &eqproc);
+		fmgr_info_collation(DEFAULT_COLLATION_OID, &eqproc);
 		hasmatch1 = (bool *) palloc0(nvalues1 * sizeof(bool));
 		hasmatch2 = (bool *) palloc0(nvalues2 * sizeof(bool));
 
@@ -2338,6 +2341,7 @@ eqjoinsel_semi(Oid operator,
 					nmatches;
 
 		fmgr_info(get_opcode(operator), &eqproc);
+		fmgr_info_collation(DEFAULT_COLLATION_OID, &eqproc);
 		hasmatch1 = (bool *) palloc0(nvalues1 * sizeof(bool));
 		hasmatch2 = (bool *) palloc0(nvalues2 * sizeof(bool));
 
@@ -2588,7 +2592,7 @@ icnlikejoinsel(PG_FUNCTION_ARGS)
  */
 void
 mergejoinscansel(PlannerInfo *root, Node *clause,
-				 Oid opfamily, Oid collation, int strategy, bool nulls_first,
+				 Oid opfamily, int strategy, bool nulls_first,
 				 Selectivity *leftstart, Selectivity *leftend,
 				 Selectivity *rightstart, Selectivity *rightend)
 {
@@ -2757,20 +2761,20 @@ mergejoinscansel(PlannerInfo *root, Node *clause,
 	/* Try to get ranges of both inputs */
 	if (!isgt)
 	{
-		if (!get_variable_range(root, &leftvar, lstatop, collation,
+		if (!get_variable_range(root, &leftvar, lstatop,
 								&leftmin, &leftmax))
 			goto fail;			/* no range available from stats */
-		if (!get_variable_range(root, &rightvar, rstatop, collation,
+		if (!get_variable_range(root, &rightvar, rstatop,
 								&rightmin, &rightmax))
 			goto fail;			/* no range available from stats */
 	}
 	else
 	{
 		/* need to swap the max and min */
-		if (!get_variable_range(root, &leftvar, lstatop, collation,
+		if (!get_variable_range(root, &leftvar, lstatop,
 								&leftmax, &leftmin))
 			goto fail;			/* no range available from stats */
-		if (!get_variable_range(root, &rightvar, rstatop, collation,
+		if (!get_variable_range(root, &rightvar, rstatop,
 								&rightmax, &rightmin))
 			goto fail;			/* no range available from stats */
 	}
@@ -3371,7 +3375,7 @@ estimate_hash_bucketsize(PlannerInfo *root, Node *hashkey, double nbuckets)
  */
 static bool
 convert_to_scalar(Datum value, Oid valuetypid, double *scaledvalue,
-				  Datum lobound, Datum hibound, Oid boundstypid, Oid boundscollid,
+				  Datum lobound, Datum hibound, Oid boundstypid,
 				  double *scaledlobound, double *scaledhibound)
 {
 	/*
@@ -3424,9 +3428,9 @@ convert_to_scalar(Datum value, Oid valuetypid, double *scaledvalue,
 		case TEXTOID:
 		case NAMEOID:
 			{
-				char	   *valstr = convert_string_datum(value, valuetypid, boundscollid);
-				char	   *lostr = convert_string_datum(lobound, boundstypid, boundscollid);
-				char	   *histr = convert_string_datum(hibound, boundstypid, boundscollid);
+				char	   *valstr = convert_string_datum(value, valuetypid);
+				char	   *lostr = convert_string_datum(lobound, boundstypid);
+				char	   *histr = convert_string_datum(hibound, boundstypid);
 
 				convert_string_to_scalar(valstr, scaledvalue,
 										 lostr, scaledlobound,
@@ -3670,7 +3674,7 @@ convert_one_string_to_scalar(char *value, int rangelo, int rangehi)
  * before continuing, so as to generate correct locale-specific results.
  */
 static char *
-convert_string_datum(Datum value, Oid typid, Oid collid)
+convert_string_datum(Datum value, Oid typid)
 {
 	char	   *val;
 
@@ -3703,7 +3707,7 @@ convert_string_datum(Datum value, Oid typid, Oid collid)
 			return NULL;
 	}
 
-	if (!lc_collate_is_c(collid))
+	if (!lc_collate_is_c(DEFAULT_COLLATION_OID))
 	{
 		char	   *xfrmstr;
 		size_t		xfrmlen;
@@ -4102,7 +4106,6 @@ examine_variable(PlannerInfo *root, Node *node, int varRelid,
 		vardata->rel = find_base_rel(root, var->varno);
 		vardata->atttype = var->vartype;
 		vardata->atttypmod = var->vartypmod;
-		vardata->attcollation = var->varcollid;
 		vardata->isunique = has_unique_index(vardata->rel, var->varattno);
 
 		rte = root->simple_rte_array[var->varno];
@@ -4188,7 +4191,6 @@ examine_variable(PlannerInfo *root, Node *node, int varRelid,
 	vardata->var = node;
 	vardata->atttype = exprType(node);
 	vardata->atttypmod = exprTypmod(node);
-	vardata->attcollation = exprCollation(node);
 
 	if (onerel)
 	{
@@ -4397,7 +4399,7 @@ get_variable_numdistinct(VariableStatData *vardata)
  * be "<" not ">", as only the former is likely to be found in pg_statistic.
  */
 static bool
-get_variable_range(PlannerInfo *root, VariableStatData *vardata, Oid sortop, Oid collation,
+get_variable_range(PlannerInfo *root, VariableStatData *vardata, Oid sortop,
 				   Datum *min, Datum *max)
 {
 	Datum		tmin = 0;
@@ -4482,7 +4484,7 @@ get_variable_range(PlannerInfo *root, VariableStatData *vardata, Oid sortop, Oid
 		FmgrInfo	opproc;
 
 		fmgr_info(get_opcode(sortop), &opproc);
-		fmgr_info_collation(collation, &opproc);
+		fmgr_info_collation(DEFAULT_COLLATION_OID, &opproc);
 
 		for (i = 0; i < nvalues; i++)
 		{
@@ -5109,6 +5111,7 @@ prefix_selectivity(PlannerInfo *root, VariableStatData *vardata,
 	if (cmpopr == InvalidOid)
 		elog(ERROR, "no >= operator for opfamily %u", opfamily);
 	fmgr_info(get_opcode(cmpopr), &opproc);
+	fmgr_info_collation(DEFAULT_COLLATION_OID, &opproc);
 
 	prefixsel = ineq_histogram_selectivity(root, vardata, &opproc, true,
 										   prefixcon->constvalue,
@@ -5130,6 +5133,7 @@ prefix_selectivity(PlannerInfo *root, VariableStatData *vardata,
 	if (cmpopr == InvalidOid)
 		elog(ERROR, "no < operator for opfamily %u", opfamily);
 	fmgr_info(get_opcode(cmpopr), &opproc);
+	fmgr_info_collation(DEFAULT_COLLATION_OID, &opproc);
 
 	greaterstrcon = make_greater_string(prefixcon, &opproc);
 	if (greaterstrcon)

@@ -50,6 +50,10 @@
  * the information to be stored in a pg_statistic row for the column.  Be
  * careful to allocate any pointed-to data in anl_context, which will NOT
  * be CurrentMemoryContext when compute_stats is called.
+ *
+ * Note: for the moment, all comparisons done for statistical purposes
+ * should use the database's default collation (DEFAULT_COLLATION_OID).
+ * This might change in some future release.
  *----------
  */
 typedef struct VacAttrStats *VacAttrStatsP;
@@ -66,13 +70,12 @@ typedef struct VacAttrStats
 	 * Note: do not assume that the data being analyzed has the same datatype
 	 * shown in attr, ie do not trust attr->atttypid, attlen, etc.  This is
 	 * because some index opclasses store a different type than the underlying
-	 * column/expression.  Instead use attrtypid, attrtypmod, attrcollation, and attrtype for
+	 * column/expression.  Instead use attrtypid, attrtypmod, and attrtype for
 	 * information about the datatype being fed to the typanalyze function.
 	 */
 	Form_pg_attribute attr;		/* copy of pg_attribute row for column */
 	Oid			attrtypid;		/* type of data being analyzed */
 	int32		attrtypmod;		/* typmod of data being analyzed */
-	Oid			attrcollation;	/* collation of the data being analyzed */
 	Form_pg_type attrtype;		/* copy of pg_type row for attrtypid */
 	MemoryContext anl_context;	/* where to save long-lived data */
 

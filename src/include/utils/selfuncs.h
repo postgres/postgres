@@ -74,7 +74,6 @@ typedef struct VariableStatData
 	Oid			vartype;		/* exposed type of expression */
 	Oid			atttype;		/* type to pass to get_attstatsslot */
 	int32		atttypmod;		/* typmod to pass to get_attstatsslot */
-	Oid			attcollation;	/* collation of the variable */
 	bool		isunique;		/* true if matched to a unique index */
 } VariableStatData;
 
@@ -179,7 +178,7 @@ extern Selectivity rowcomparesel(PlannerInfo *root,
 			  int varRelid, JoinType jointype, SpecialJoinInfo *sjinfo);
 
 extern void mergejoinscansel(PlannerInfo *root, Node *clause,
-				 Oid opfamily, Oid collation, int strategy, bool nulls_first,
+				 Oid opfamily, int strategy, bool nulls_first,
 				 Selectivity *leftstart, Selectivity *leftend,
 				 Selectivity *rightstart, Selectivity *rightend);
 
