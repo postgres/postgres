@@ -190,6 +190,13 @@ SELECT a, b FROM collate_test1 EXCEPT SELECT a, b FROM collate_test3 ORDER BY 2;
 
 CREATE TABLE test_u AS SELECT a, b FROM collate_test1 UNION ALL SELECT a, b FROM collate_test3; -- fail
 
+-- collation mismatch between recursive and non-recursive term
+WITH RECURSIVE foo(x) AS
+   (SELECT x FROM (VALUES('a' COLLATE "en_US"),('b')) t(x)
+   UNION ALL
+   SELECT (x || 'c') COLLATE "de_DE" FROM foo WHERE length(x) < 10)
+SELECT * FROM foo;
+
 
 -- casting
 

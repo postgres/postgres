@@ -630,6 +630,16 @@ HINT:  You can override the collation by applying the COLLATE clause to one or b
 CREATE TABLE test_u AS SELECT a, b FROM collate_test1 UNION ALL SELECT a, b FROM collate_test3; -- fail
 ERROR:  no collation was derived for column "b" with collatable type text
 HINT:  Use the COLLATE clause to set the collation explicitly.
+-- collation mismatch between recursive and non-recursive term
+WITH RECURSIVE foo(x) AS
+   (SELECT x FROM (VALUES('a' COLLATE "en_US"),('b')) t(x)
+   UNION ALL
+   SELECT (x || 'c') COLLATE "de_DE" FROM foo WHERE length(x) < 10)
+SELECT * FROM foo;
+ERROR:  recursive query "foo" column 1 has collation "en_US" in non-recursive term but collation "de_DE" overall
+LINE 2:    (SELECT x FROM (VALUES('a' COLLATE "en_US"),('b')) t(x)
+                   ^
+HINT:  Use the COLLATE clause to set the collation of the non-recursive term.
 -- casting
 SELECT CAST('42' AS text COLLATE "C");
 ERROR:  syntax error at or near "COLLATE"
