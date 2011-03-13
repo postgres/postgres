@@ -254,8 +254,9 @@ add_path(RelOptInfo *parent_rel, Path *new_path)
 {
 	bool		accept_new = true;		/* unless we find a superior old path */
 	ListCell   *insert_after = NULL;	/* where to insert new item */
-	ListCell   *p1_prev = NULL;
 	ListCell   *p1;
+	ListCell   *p1_prev;
+	ListCell   *p1_next;
 
 	/*
 	 * This is a convenient place to check for query cancel --- no part of the
@@ -267,13 +268,18 @@ add_path(RelOptInfo *parent_rel, Path *new_path)
 	 * Loop to check proposed new path against old paths.  Note it is possible
 	 * for more than one old path to be tossed out because new_path dominates
 	 * it.
+	 *
+	 * We can't use foreach here because the loop body may delete the current
+	 * list cell.
 	 */
-	p1 = list_head(parent_rel->pathlist);		/* cannot use foreach here */
-	while (p1 != NULL)
+	p1_prev = NULL;
+	for (p1 = list_head(parent_rel->pathlist); p1 != NULL; p1 = p1_next)
 	{
 		Path	   *old_path = (Path *) lfirst(p1);
 		bool		remove_old = false; /* unless new proves superior */
 		int			costcmp;
+
+		p1_next = lnext(p1);
 
 		/*
 		 * As of Postgres 8.0, we use fuzzy cost comparison to avoid wasting
@@ -343,20 +349,15 @@ add_path(RelOptInfo *parent_rel, Path *new_path)
 			 */
 			if (!IsA(old_path, IndexPath))
 				pfree(old_path);
-			/* Advance list pointer */
-			if (p1_prev)
-				p1 = lnext(p1_prev);
-			else
-				p1 = list_head(parent_rel->pathlist);
+			/* p1_prev does not advance */
 		}
 		else
 		{
 			/* new belongs after this old path if it has cost >= old's */
 			if (costcmp >= 0)
 				insert_after = p1;
-			/* Advance list pointers */
+			/* p1_prev advances */
 			p1_prev = p1;
-			p1 = lnext(p1);
 		}
 
 		/*
