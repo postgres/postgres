@@ -433,7 +433,8 @@ select distinct array_ndims(histogram_bounds) from pg_stats
 where histogram_bounds is not null;
 
 -- such functions must protect themselves if varying element type isn't OK
-select max(histogram_bounds) from pg_stats;
+-- (WHERE clause here is to avoid possibly getting a collation error instead)
+select max(histogram_bounds) from pg_stats where tablename = 'pg_am';
 
 -- test variadic polymorphic functions
 

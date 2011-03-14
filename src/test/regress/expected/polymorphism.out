@@ -623,7 +623,8 @@ where histogram_bounds is not null;
 (1 row)
 
 -- such functions must protect themselves if varying element type isn't OK
-select max(histogram_bounds) from pg_stats;
+-- (WHERE clause here is to avoid possibly getting a collation error instead)
+select max(histogram_bounds) from pg_stats where tablename = 'pg_am';
 ERROR:  cannot compare arrays of different element types
 -- test variadic polymorphic functions
 create function myleast(variadic anyarray) returns anyelement as $$
