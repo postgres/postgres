@@ -2045,9 +2045,11 @@ SET ENABLE_SEQSCAN TO OFF;
         for confirmation of successful replication. That delay will
         increase depending upon the physical distance and network activity
         between primary and standby. The commit wait will last until a
-        reply from the current synchronous standby indicates it has received
-        the commit record of the transaction. Synchronous standbys must
-        already have been defined (see <xref linkend="guc-sync-standby-names">).
+        reply from the current synchronous standby indicates it has written
+        the commit record of the transaction to durable storage.  This
+        parameter has no effect if
+        <xref linkend="guc-synchronous-standby-names"> is empty or
+        <xref linkend="guc-max-wal-senders"> is zero.
        </para>
        <para>
         This parameter can be changed at any time; the
@@ -2062,7 +2064,7 @@ SET ENABLE_SEQSCAN TO OFF;
       </listitem>
      </varlistentry>
 
-     <varlistentry id="guc-sync-standby-names" xreflabel="synchronous_standby_names">
+     <varlistentry id="guc-synchronous-standby-names" xreflabel="synchronous_standby_names">
       <term><varname>synchronous_standby_names</varname> (<type>string</type>)</term>
       <indexterm>
        <primary><varname>synchronous_standby_names</> configuration parameter</primary>
