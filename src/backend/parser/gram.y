@@ -489,8 +489,8 @@ static void SplitColQualList(List *qualList,
 	CHARACTER CHARACTERISTICS CHECK CHECKPOINT CLASS CLOSE
 	CLUSTER COALESCE COLLATE COLLATION COLUMN COMMENT COMMENTS COMMIT
 	COMMITTED CONCURRENTLY CONFIGURATION CONNECTION CONSTRAINT CONSTRAINTS
-	CONTENT_P CONTINUE_P CONVERSION_P COPY COST CREATE CREATEDB
-	CREATEROLE CREATEUSER CROSS CSV CURRENT_P
+	CONTENT_P CONTINUE_P CONVERSION_P COPY COST CREATE
+	CROSS CSV CURRENT_P
 	CURRENT_CATALOG CURRENT_DATE CURRENT_ROLE CURRENT_SCHEMA
 	CURRENT_TIME CURRENT_TIMESTAMP CURRENT_USER CURSOR CYCLE
 
@@ -520,13 +520,12 @@ static void SplitColQualList(List *qualList,
 
 	LABEL LANGUAGE LARGE_P LAST_P LC_COLLATE_P LC_CTYPE_P LEADING
 	LEAST LEFT LEVEL LIKE LIMIT LISTEN LOAD LOCAL LOCALTIME LOCALTIMESTAMP
-	LOCATION LOCK_P LOGIN_P
+	LOCATION LOCK_P
 
 	MAPPING MATCH MAXVALUE MINUTE_P MINVALUE MODE MONTH_P MOVE
 
-	NAME_P NAMES NATIONAL NATURAL NCHAR NEXT NO NOCREATEDB
-	NOCREATEROLE NOCREATEUSER NOINHERIT NOLOGIN_P NONE NOREPLICATION_P
-	NOSUPERUSER NOT NOTHING NOTIFY NOTNULL NOWAIT NULL_P NULLIF
+	NAME_P NAMES NATIONAL NATURAL NCHAR NEXT NO NONE
+	NOT NOTHING NOTIFY NOTNULL NOWAIT NULL_P NULLIF
 	NULLS_P NUMERIC
 
 	OBJECT_P OF OFF OFFSET OIDS ON ONLY OPERATOR OPTION OPTIONS OR
@@ -539,14 +538,14 @@ static void SplitColQualList(List *qualList,
 	QUOTE
 
 	RANGE READ REAL REASSIGN RECHECK RECURSIVE REF REFERENCES REINDEX
-	RELATIVE_P RELEASE RENAME REPEATABLE REPLACE REPLICA REPLICATION_P
+	RELATIVE_P RELEASE RENAME REPEATABLE REPLACE REPLICA
 	RESET RESTART RESTRICT RETURNING RETURNS REVOKE RIGHT ROLE ROLLBACK
 	ROW ROWS RULE
 
 	SAVEPOINT SCHEMA SCROLL SEARCH SECOND_P SECURITY SELECT SEQUENCE SEQUENCES
 	SERIALIZABLE SERVER SESSION SESSION_USER SET SETOF SHARE
 	SHOW SIMILAR SIMPLE SMALLINT SOME STABLE STANDALONE_P START STATEMENT
-	STATISTICS STDIN STDOUT STORAGE STRICT_P STRIP_P SUBSTRING SUPERUSER_P
+	STATISTICS STDIN STDOUT STORAGE STRICT_P STRIP_P SUBSTRING
 	SYMMETRIC SYSID SYSTEM_P
 
 	TABLE TABLES TABLESPACE TEMP TEMPLATE TEMPORARY TEXT_P THEN TIME TIMESTAMP
@@ -838,62 +837,9 @@ AlterOptRoleElem:
 					$$ = makeDefElem("unencryptedPassword",
 									 (Node *)makeString($3));
 				}
-			| SUPERUSER_P
-				{
-					$$ = makeDefElem("superuser", (Node *)makeInteger(TRUE));
-				}
-			| NOSUPERUSER
-				{
-					$$ = makeDefElem("superuser", (Node *)makeInteger(FALSE));
-				}
 			| INHERIT
 				{
 					$$ = makeDefElem("inherit", (Node *)makeInteger(TRUE));
-				}
-			| NOINHERIT
-				{
-					$$ = makeDefElem("inherit", (Node *)makeInteger(FALSE));
-				}
-			| CREATEDB
-				{
-					$$ = makeDefElem("createdb", (Node *)makeInteger(TRUE));
-				}
-			| NOCREATEDB
-				{
-					$$ = makeDefElem("createdb", (Node *)makeInteger(FALSE));
-				}
-			| CREATEROLE
-				{
-					$$ = makeDefElem("createrole", (Node *)makeInteger(TRUE));
-				}
-			| NOCREATEROLE
-				{
-					$$ = makeDefElem("createrole", (Node *)makeInteger(FALSE));
-				}
-			| CREATEUSER
-				{
-					/* For backwards compatibility, synonym for SUPERUSER */
-					$$ = makeDefElem("superuser", (Node *)makeInteger(TRUE));
-				}
-			| NOCREATEUSER
-				{
-					$$ = makeDefElem("superuser", (Node *)makeInteger(FALSE));
-				}
-			| LOGIN_P
-				{
-					$$ = makeDefElem("canlogin", (Node *)makeInteger(TRUE));
-				}
-			| NOLOGIN_P
-				{
-					$$ = makeDefElem("canlogin", (Node *)makeInteger(FALSE));
-				}
-			| REPLICATION_P
-				{
-					$$ = makeDefElem("isreplication", (Node *)makeInteger(TRUE));
-				}
-			| NOREPLICATION_P
-				{
-					$$ = makeDefElem("isreplication", (Node *)makeInteger(FALSE));
 				}
 			| CONNECTION LIMIT SignedIconst
 				{
@@ -907,6 +853,57 @@ AlterOptRoleElem:
 			| USER name_list
 				{
 					$$ = makeDefElem("rolemembers", (Node *)$2);
+				}
+			| IDENT
+				{
+					/*
+					 * We handle identifiers that aren't parser keywords with
+					 * the following special-case codes, to avoid bloating the
+					 * size of the main parser.
+					 */
+					if (strcmp($1, "superuser") == 0)
+						$$ = makeDefElem("superuser", (Node *)makeInteger(TRUE));
+					else if (strcmp($1, "nosuperuser") == 0)
+						$$ = makeDefElem("superuser", (Node *)makeInteger(FALSE));
+					else if (strcmp($1, "createuser") == 0)
+					{
+						/* For backwards compatibility, synonym for SUPERUSER */
+						$$ = makeDefElem("superuser", (Node *)makeInteger(TRUE));
+					}
+					else if (strcmp($1, "nocreateuser") == 0)
+					{
+						/* For backwards compatibility, synonym for SUPERUSER */
+						$$ = makeDefElem("superuser", (Node *)makeInteger(FALSE));
+					}
+					else if (strcmp($1, "createrole") == 0)
+						$$ = makeDefElem("createrole", (Node *)makeInteger(TRUE));
+					else if (strcmp($1, "nocreaterole") == 0)
+						$$ = makeDefElem("createrole", (Node *)makeInteger(FALSE));
+					else if (strcmp($1, "replication") == 0)
+						$$ = makeDefElem("isreplication", (Node *)makeInteger(TRUE));
+					else if (strcmp($1, "noreplication") == 0)
+						$$ = makeDefElem("isreplication", (Node *)makeInteger(FALSE));
+					else if (strcmp($1, "createdb") == 0)
+						$$ = makeDefElem("createdb", (Node *)makeInteger(TRUE));
+					else if (strcmp($1, "nocreatedb") == 0)
+						$$ = makeDefElem("createdb", (Node *)makeInteger(FALSE));
+					else if (strcmp($1, "login") == 0)
+						$$ = makeDefElem("canlogin", (Node *)makeInteger(TRUE));
+					else if (strcmp($1, "nologin") == 0)
+						$$ = makeDefElem("canlogin", (Node *)makeInteger(FALSE));
+					else if (strcmp($1, "noinherit") == 0)
+					{
+						/*
+						 * Note that INHERIT is a keyword, so it's handled by main parser, but
+						 * NOINHERIT is handled here.
+						 */
+						$$ = makeDefElem("inherit", (Node *)makeInteger(FALSE));
+					}
+					else
+						ereport(ERROR,
+								(errcode(ERRCODE_SYNTAX_ERROR),
+								 errmsg("unrecognized role option \"%s\"", $1),
+									 parser_errposition(@1)));
 				}
 		;
 
@@ -11853,9 +11850,6 @@ unreserved_keyword:
 			| CONVERSION_P
 			| COPY
 			| COST
-			| CREATEDB
-			| CREATEROLE
-			| CREATEUSER
 			| CSV
 			| CURRENT_P
 			| CURSOR
@@ -11935,7 +11929,6 @@ unreserved_keyword:
 			| LOCAL
 			| LOCATION
 			| LOCK_P
-			| LOGIN_P
 			| MAPPING
 			| MATCH
 			| MAXVALUE
@@ -11948,13 +11941,6 @@ unreserved_keyword:
 			| NAMES
 			| NEXT
 			| NO
-			| NOCREATEDB
-			| NOCREATEROLE
-			| NOCREATEUSER
-			| NOINHERIT
-			| NOLOGIN_P
-			| NOREPLICATION_P
-			| NOSUPERUSER
 			| NOTHING
 			| NOTIFY
 			| NOWAIT
@@ -11996,7 +11982,6 @@ unreserved_keyword:
 			| REPEATABLE
 			| REPLACE
 			| REPLICA
-			| REPLICATION_P
 			| RESET
 			| RESTART
 			| RESTRICT
@@ -12031,7 +12016,6 @@ unreserved_keyword:
 			| STORAGE
 			| STRICT_P
 			| STRIP_P
-			| SUPERUSER_P
 			| SYSID
 			| SYSTEM_P
 			| TABLES
