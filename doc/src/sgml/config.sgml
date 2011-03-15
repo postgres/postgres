@@ -5651,7 +5651,7 @@ dynamic_library_path = 'C:\tools\postgresql;H:\my_project\lib;$libdir'
         value set to true is normally the best way to maximize the availability
         of the database.  However, in some circumstances, such as when
         <productname>PostgreSQL</> is being invoked by clusterware, it may be
-        useful to disable this behavior, so that the clusterware can gain
+        useful to disable the restart so that the clusterware can gain
         control and take any actions it deems appropriate.
        </para>
       </listitem>
