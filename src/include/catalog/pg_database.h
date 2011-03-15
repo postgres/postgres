@@ -71,7 +71,7 @@ typedef FormData_pg_database *Form_pg_database;
 #define Anum_pg_database_datacl			12
 
 DATA(insert OID = 1 (  template1 PGUID ENCODING "LC_COLLATE" "LC_CTYPE" t t -1 0 0 1663 _null_));
-SHDESCR("default template database");
+SHDESCR("default template for new databases");
 #define TemplateDbOid			1
 
 #endif   /* PG_DATABASE_H */

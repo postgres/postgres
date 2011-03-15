@@ -1976,6 +1976,8 @@ make_template0(void)
 		"REVOKE CREATE,TEMPORARY ON DATABASE template1 FROM public;\n",
 		"REVOKE CREATE,TEMPORARY ON DATABASE template0 FROM public;\n",
 
+		"COMMENT ON DATABASE template0 IS 'unmodifiable empty database';\n",
+
 		/*
 		 * Finally vacuum to clean up dead rows in pg_database
 		 */
@@ -2011,6 +2013,7 @@ make_postgres(void)
 	const char **line;
 	static const char *postgres_setup[] = {
 		"CREATE DATABASE postgres;\n",
+		"COMMENT ON DATABASE postgres IS 'default administrative connection database';\n",
 		NULL
 	};
 
