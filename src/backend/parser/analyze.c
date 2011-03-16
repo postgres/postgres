@@ -52,9 +52,9 @@ static Query *transformSelectStmt(ParseState *pstate, SelectStmt *stmt);
 static Query *transformValuesClause(ParseState *pstate, SelectStmt *stmt);
 static Query *transformSetOperationStmt(ParseState *pstate, SelectStmt *stmt);
 static Node *transformSetOperationTree(ParseState *pstate, SelectStmt *stmt,
-						  bool isTopLevel, List **colInfo);
+						  bool isTopLevel, List **targetlist);
 static void determineRecursiveColTypes(ParseState *pstate,
-						   Node *larg, List *lcolinfo);
+						   Node *larg, List *nrtargetlist);
 static void applyColumnNames(List *dst, List *src);
 static Query *transformUpdateStmt(ParseState *pstate, UpdateStmt *stmt);
 static List *transformReturningList(ParseState *pstate, List *returningList);
@@ -1197,7 +1197,6 @@ transformSetOperationStmt(ParseState *pstate, SelectStmt *stmt)
 	int			leftmostRTI;
 	Query	   *leftmostQuery;
 	SetOperationStmt *sostmt;
-	List	   *socolinfo;
 	List	   *intoColNames = NIL;
 	List	   *sortClause;
 	Node	   *limitOffset;
@@ -1271,7 +1270,7 @@ transformSetOperationStmt(ParseState *pstate, SelectStmt *stmt)
 	 */
 	sostmt = (SetOperationStmt *) transformSetOperationTree(pstate, stmt,
 															true,
-															&socolinfo);
+															NULL);
 	Assert(sostmt && IsA(sostmt, SetOperationStmt));
 	qry->setOperations = (Node *) sostmt;
 
@@ -1425,16 +1424,19 @@ transformSetOperationStmt(ParseState *pstate, SelectStmt *stmt)
  * transformSetOperationTree
  *		Recursively transform leaves and internal nodes of a set-op tree
  *
- * In addition to returning the transformed node, we return a list of
- * expression nodes showing the type, typmod, collation, and location (for error messages)
- * of each output column of the set-op node.  This is used only during the
- * internal recursion of this function.  At the upper levels we use
- * SetToDefault nodes for this purpose, since they carry exactly the fields
- * needed, but any other expression node type would do as well.
+ * In addition to returning the transformed node, if targetlist isn't NULL
+ * then we return a list of its non-resjunk TargetEntry nodes.  For a leaf
+ * set-op node these are the actual targetlist entries; otherwise they are
+ * dummy entries created to carry the type, typmod, collation, and location
+ * (for error messages) of each output column of the set-op node.  This info
+ * is needed only during the internal recursion of this function, so outside
+ * callers pass NULL for targetlist.  Note: the reason for passing the
+ * actual targetlist entries of a leaf node is so that upper levels can
+ * replace UNKNOWN Consts with properly-coerced constants.
  */
 static Node *
 transformSetOperationTree(ParseState *pstate, SelectStmt *stmt,
-						  bool isTopLevel, List **colInfo)
+						  bool isTopLevel, List **targetlist)
 {
 	bool		isLeaf;
 
@@ -1512,15 +1514,18 @@ transformSetOperationTree(ParseState *pstate, SelectStmt *stmt,
 		}
 
 		/*
-		 * Extract a list of the result expressions for upper-level checking.
+		 * Extract a list of the non-junk TLEs for upper-level processing.
 		 */
-		*colInfo = NIL;
-		foreach(tl, selectQuery->targetList)
+		if (targetlist)
 		{
-			TargetEntry *tle = (TargetEntry *) lfirst(tl);
+			*targetlist = NIL;
+			foreach(tl, selectQuery->targetList)
+			{
+				TargetEntry *tle = (TargetEntry *) lfirst(tl);
 
-			if (!tle->resjunk)
-				*colInfo = lappend(*colInfo, tle->expr);
+				if (!tle->resjunk)
+					*targetlist = lappend(*targetlist, tle);
+			}
 		}
 
 		/*
@@ -1546,10 +1551,10 @@ transformSetOperationTree(ParseState *pstate, SelectStmt *stmt,
 	{
 		/* Process an internal node (set operation node) */
 		SetOperationStmt *op = makeNode(SetOperationStmt);
-		List	   *lcolinfo;
-		List	   *rcolinfo;
-		ListCell   *lci;
-		ListCell   *rci;
+		List	   *ltargetlist;
+		List	   *rtargetlist;
+		ListCell   *ltl;
+		ListCell   *rtl;
 		const char *context;
 
 		context = (stmt->op == SETOP_UNION ? "UNION" :
@@ -1564,7 +1569,7 @@ transformSetOperationTree(ParseState *pstate, SelectStmt *stmt,
 		 */
 		op->larg = transformSetOperationTree(pstate, stmt->larg,
 											 false,
-											 &lcolinfo);
+											 &ltargetlist);
 
 		/*
 		 * If we are processing a recursive union query, now is the time to
@@ -1575,42 +1580,45 @@ transformSetOperationTree(ParseState *pstate, SelectStmt *stmt,
 		if (isTopLevel &&
 			pstate->p_parent_cte &&
 			pstate->p_parent_cte->cterecursive)
-			determineRecursiveColTypes(pstate, op->larg, lcolinfo);
+			determineRecursiveColTypes(pstate, op->larg, ltargetlist);
 
 		/*
 		 * Recursively transform the right child node.
 		 */
 		op->rarg = transformSetOperationTree(pstate, stmt->rarg,
 											 false,
-											 &rcolinfo);
+											 &rtargetlist);
 
 		/*
 		 * Verify that the two children have the same number of non-junk
 		 * columns, and determine the types of the merged output columns.
 		 */
-		if (list_length(lcolinfo) != list_length(rcolinfo))
+		if (list_length(ltargetlist) != list_length(rtargetlist))
 			ereport(ERROR,
 					(errcode(ERRCODE_SYNTAX_ERROR),
 				 errmsg("each %s query must have the same number of columns",
 						context),
 					 parser_errposition(pstate,
-										exprLocation((Node *) rcolinfo))));
+										exprLocation((Node *) rtargetlist))));
 
-		*colInfo = NIL;
+		if (targetlist)
+			*targetlist = NIL;
 		op->colTypes = NIL;
 		op->colTypmods = NIL;
 		op->colCollations = NIL;
 		op->groupClauses = NIL;
-		forboth(lci, lcolinfo, rci, rcolinfo)
+		forboth(ltl, ltargetlist, rtl, rtargetlist)
 		{
-			Node	   *lcolnode = (Node *) lfirst(lci);
-			Node	   *rcolnode = (Node *) lfirst(rci);
+			TargetEntry *ltle = (TargetEntry *) lfirst(ltl);
+			TargetEntry *rtle = (TargetEntry *) lfirst(rtl);
+			Node	   *lcolnode = (Node *) ltle->expr;
+			Node	   *rcolnode = (Node *) rtle->expr;
 			Oid			lcoltype = exprType(lcolnode);
 			Oid			rcoltype = exprType(rcolnode);
 			int32		lcoltypmod = exprTypmod(lcolnode);
 			int32		rcoltypmod = exprTypmod(rcolnode);
 			Node	   *bestexpr;
-			SetToDefault *rescolnode;
+			int			bestlocation;
 			Oid			rescoltype;
 			int32		rescoltypmod;
 			Oid			rescolcoll;
@@ -1620,6 +1628,7 @@ transformSetOperationTree(ParseState *pstate, SelectStmt *stmt,
 											list_make2(lcolnode, rcolnode),
 											context,
 											&bestexpr);
+			bestlocation = exprLocation(bestexpr);
 			/* if same type and same typmod, use typmod; else default */
 			if (lcoltype == rcoltype && lcoltypmod == rcoltypmod)
 				rescoltypmod = lcoltypmod;
@@ -1637,32 +1646,44 @@ transformSetOperationTree(ParseState *pstate, SelectStmt *stmt,
 			 * later anyway, but we want to fail now while we have sufficient
 			 * context to produce an error cursor position.
 			 *
-			 * The if-tests might look wrong, but they are correct: we should
-			 * verify if the input is non-UNKNOWN *or* if it is an UNKNOWN
-			 * Const (to verify the literal is valid for the target data type)
-			 * or Param (to possibly resolve the Param's type).  We should do
-			 * nothing if the input is say an UNKNOWN Var, which can happen in
-			 * some cases.	The planner is sometimes able to fold the Var to a
+			 * For all non-UNKNOWN-type cases, we verify coercibility but we
+			 * don't modify the child's expression, for fear of changing the
+			 * child query's semantics.
+			 *
+			 * If a child expression is an UNKNOWN-type Const or Param, we
+			 * want to replace it with the coerced expression.  This can only
+			 * happen when the child is a leaf set-op node.  It's safe to
+			 * replace the expression because if the child query's semantics
+			 * depended on the type of this output column, it'd have already
+			 * coerced the UNKNOWN to something else.  We want to do this
+			 * because (a) we want to verify that a Const is valid for the
+			 * target type, or resolve the actual type of an UNKNOWN Param,
+			 * and (b) we want to avoid unnecessary discrepancies between the
+			 * output type of the child query and the resolved target type.
+			 * Such a discrepancy would disable optimization in the planner.
+			 *
+			 * If it's some other UNKNOWN-type node, eg a Var, we do nothing.
+			 * The planner is sometimes able to fold an UNKNOWN Var to a
 			 * constant before it has to coerce the type, so failing now would
 			 * just break cases that might work.
 			 */
-			if (lcoltype != UNKNOWNOID ||
-				IsA(lcolnode, Const) ||IsA(lcolnode, Param))
+			if (lcoltype != UNKNOWNOID)
 				(void) coerce_to_common_type(pstate, lcolnode,
 											 rescoltype, context);
-			if (rcoltype != UNKNOWNOID ||
-				IsA(rcolnode, Const) ||IsA(rcolnode, Param))
+			else if (IsA(lcolnode, Const) ||IsA(lcolnode, Param))
+				ltle->expr = (Expr *)
+					coerce_to_common_type(pstate, lcolnode,
+										  rescoltype, context);
+
+			if (rcoltype != UNKNOWNOID)
 				(void) coerce_to_common_type(pstate, rcolnode,
 											 rescoltype, context);
+			else if (IsA(rcolnode, Const) ||IsA(rcolnode, Param))
+				rtle->expr = (Expr *)
+					coerce_to_common_type(pstate, rcolnode,
+										  rescoltype, context);
 
 			/* emit results */
-			rescolnode = makeNode(SetToDefault);
-			rescolnode->typeId = rescoltype;
-			rescolnode->typeMod = rescoltypmod;
-			rescolnode->collid = rescolcoll;
-			rescolnode->location = exprLocation(bestexpr);
-			*colInfo = lappend(*colInfo, rescolnode);
-
 			op->colTypes = lappend_oid(op->colTypes, rescoltype);
 			op->colTypmods = lappend_int(op->colTypmods, rescoltypmod);
 			op->colCollations = lappend_oid(op->colCollations, rescolcoll);
@@ -1681,7 +1702,7 @@ transformSetOperationTree(ParseState *pstate, SelectStmt *stmt,
 				ParseCallbackState pcbstate;
 
 				setup_parser_errposition_callback(&pcbstate, pstate,
-												  rescolnode->location);
+												  bestlocation);
 
 				/* determine the eqop and optional sortop */
 				get_sort_group_operators(rescoltype,
@@ -1700,6 +1721,27 @@ transformSetOperationTree(ParseState *pstate, SelectStmt *stmt,
 
 				op->groupClauses = lappend(op->groupClauses, grpcl);
 			}
+
+			/*
+			 * Construct a dummy tlist entry to return.  We use a SetToDefault
+			 * node for the expression, since it carries exactly the fields
+			 * needed, but any other expression node type would do as well.
+			 */
+			if (targetlist)
+			{
+				SetToDefault *rescolnode = makeNode(SetToDefault);
+				TargetEntry *restle;
+
+				rescolnode->typeId = rescoltype;
+				rescolnode->typeMod = rescoltypmod;
+				rescolnode->collid = rescolcoll;
+				rescolnode->location = bestlocation;
+				restle = makeTargetEntry((Expr *) rescolnode,
+										 0,			/* no need to set resno */
+										 NULL,
+										 false);
+				*targetlist = lappend(*targetlist, restle);
+			}
 		}
 
 		return (Node *) op;
@@ -1711,14 +1753,14 @@ transformSetOperationTree(ParseState *pstate, SelectStmt *stmt,
  * to set up the parent CTE's columns
  */
 static void
-determineRecursiveColTypes(ParseState *pstate, Node *larg, List *lcolinfo)
+determineRecursiveColTypes(ParseState *pstate, Node *larg, List *nrtargetlist)
 {
 	Node	   *node;
 	int			leftmostRTI;
 	Query	   *leftmostQuery;
 	List	   *targetList;
 	ListCell   *left_tlist;
-	ListCell   *lci;
+	ListCell   *nrtl;
 	int			next_resno;
 
 	/*
@@ -1740,16 +1782,16 @@ determineRecursiveColTypes(ParseState *pstate, Node *larg, List *lcolinfo)
 	left_tlist = list_head(leftmostQuery->targetList);
 	next_resno = 1;
 
-	foreach(lci, lcolinfo)
+	foreach(nrtl, nrtargetlist)
 	{
-		Expr	   *lcolexpr = (Expr *) lfirst(lci);
+		TargetEntry *nrtle = (TargetEntry *) lfirst(nrtl);
 		TargetEntry *lefttle = (TargetEntry *) lfirst(left_tlist);
 		char	   *colName;
 		TargetEntry *tle;
 
 		Assert(!lefttle->resjunk);
 		colName = pstrdup(lefttle->resname);
-		tle = makeTargetEntry(lcolexpr,
+		tle = makeTargetEntry(nrtle->expr,
 							  next_resno++,
 							  colName,
 							  false);
