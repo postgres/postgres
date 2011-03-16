@@ -372,7 +372,7 @@ SELECT CAST ( 2 AS numeric ) + 4.0;
 
   <note>
    <para>
-    There's an exception to the exception, too: I/O conversion casts from
+    There is also an exception to the exception: I/O conversion casts from
     composite types to string types cannot be invoked using functional
     syntax, but must be written in explicit cast syntax (either
     <literal>CAST</> or <literal>::</> notation).  This exception was added
