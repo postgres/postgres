@@ -126,7 +126,16 @@ CREATE FOREIGN TABLE [ IF NOT EXISTS ] <replaceable class="PARAMETER">table_name
    </varlistentry>
 
    <varlistentry>
-    <term><literal>OPTIONS ( <replaceable class="PARAMETER">option</replaceable> = '<replaceable class="PARAMETER">value</replaceable>' [, ...] )</literal></term>
+    <term><replaceable class="PARAMETER">server_name</replaceable></term>
+    <listitem>
+     <para>
+      The name of an existing server for the foreign table.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><literal>OPTIONS ( <replaceable class="PARAMETER">option</replaceable> '<replaceable class="PARAMETER">value</replaceable>' [, ...] )</literal></term>
     <listitem>
      <para>
       Options to be associated with the new foreign table.
