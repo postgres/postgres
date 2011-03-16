@@ -2828,6 +2828,24 @@ psql_completion(char *text, int start, int end)
 
 		COMPLETE_WITH_LIST(my_list);
 	}
+	else if (strcmp(prev2_wd, "\\pset") == 0)
+	{
+		if (strcmp(prev_wd, "format") == 0)
+		{
+			static const char *const my_list[] =
+				{"unaligned", "aligned", "wrapped", "html", "latex", 
+					"troff-ms", NULL};
+
+			COMPLETE_WITH_LIST(my_list);
+		}
+		else if (strcmp(prev_wd, "linestyle") == 0)
+		{
+			static const char *const my_list[] =
+				{"ascii", "old-ascii", "unicode", NULL};
+
+			COMPLETE_WITH_LIST(my_list);
+		}
+	}
 	else if (strcmp(prev_wd, "\\set") == 0)
 	{
 		matches = complete_from_variables(text, "", "");
