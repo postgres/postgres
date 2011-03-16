@@ -17,9 +17,6 @@ static int	copy_file(const char *fromfile, const char *tofile, bool force);
 #ifdef WIN32
 static int	win32_pghardlink(const char *src, const char *dst);
 #endif
-#ifdef NOT_USED
-static int	copy_dir(const char *from, const char *to, bool force);
-#endif
 
 #ifndef HAVE_SCANDIR
 static int pg_scandir_internal(const char *dirname,
@@ -380,98 +377,4 @@ win32_pghardlink(const char *src, const char *dst)
 	else
 		return 0;
 }
-#endif
-
-
-#ifdef NOT_USED
-/*
- * copy_dir()
- *
- *	Copies either a directory or a single file within a directory.	If the
- *	source argument names a directory, we recursively copy that directory,
- *	otherwise we copy a single file.
- */
-static int
-copy_dir(const char *src, const char *dst, bool force)
-{
-	DIR		   *srcdir;
-	struct dirent *de = NULL;
-	struct stat fst;
-
-	if (src == NULL || dst == NULL)
-		return -1;
-
-	/*
-	 * Try to open the source directory - if it turns out not to be a
-	 * directory, assume that it's a file and copy that instead.
-	 */
-	if ((srcdir = opendir(src)) == NULL)
-	{
-		if (errno == ENOTDIR)
-			return copy_file(src, dst, true);
-		return -1;
-	}
-
-	if (mkdir(dst, S_IRWXU) != 0)
-	{
-		/*
-		 * ignore directory already exist error
-		 */
-		if (errno != EEXIST)
-			return -1;
-	}
-
-	while ((de = readdir(srcdir)) != NULL)
-	{
-		char		src_file[MAXPGPATH];
-		char		dest_file[MAXPGPATH];
-
-		if (strcmp(de->d_name, ".") == 0 || strcmp(de->d_name, "..") == 0)
-			continue;
-
-		memset(src_file, 0, sizeof(src_file));
-		memset(dest_file, 0, sizeof(dest_file));
-
-		snprintf(src_file, sizeof(src_file), "%s/%s", src, de->d_name);
-		snprintf(dest_file, sizeof(dest_file), "%s/%s", dst, de->d_name);
-
-		if (stat(src_file, &fst) < 0)
-		{
-			if (srcdir != NULL)
-			{
-				closedir(srcdir);
-				srcdir = NULL;
-			}
-
-			return -1;
-		}
-
-		if (S_ISDIR(fst.st_mode))
-		{
-			/* recurse to handle subdirectories */
-			if (force)
-				copy_dir(src_file, dest_file, true);
-		}
-		else if (S_ISREG(fst.st_mode))
-		{
-			if ((copy_file(src_file, dest_file, 1)) == -1)
-			{
-				if (srcdir != NULL)
-				{
-					closedir(srcdir);
-					srcdir = NULL;
-				}
-				return -1;
-			}
-		}
-	}
-
-	if (srcdir != NULL)
-	{
-		closedir(srcdir);
-		srcdir = NULL;
-	}
-	return 1;
-}
-
 #endif
