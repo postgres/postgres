@@ -26,7 +26,6 @@
 #define SYNC_REP_NOT_WAITING		0
 #define SYNC_REP_WAITING			1
 #define SYNC_REP_WAIT_COMPLETE		2
-#define SYNC_REP_MUST_DISCONNECT	3
 
 /* user-settable parameters for synchronous replication */
 extern bool synchronous_replication;
@@ -41,6 +40,9 @@ extern void SyncRepCleanupAtProcExit(int code, Datum arg);
 /* called by wal sender */
 extern void SyncRepInitConfig(void);
 extern void SyncRepReleaseWaiters(void);
+
+/* called by wal writer */
+extern void SyncRepUpdateSyncStandbysDefined(void);
 
 /* called by various procs */
 extern int SyncRepWakeQueue(bool all);

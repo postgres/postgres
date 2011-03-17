@@ -2643,6 +2643,9 @@ die(SIGNAL_ARGS)
 			InterruptHoldoffCount--;
 			ProcessInterrupts();
 		}
+
+		/* Interrupt any sync rep wait which is currently in progress. */
+		SetLatch(&(MyProc->waitLatch));
 	}
 
 	errno = save_errno;
@@ -2681,6 +2684,9 @@ StatementCancelHandler(SIGNAL_ARGS)
 			InterruptHoldoffCount--;
 			ProcessInterrupts();
 		}
+
+		/* Interrupt any sync rep wait which is currently in progress. */
+		SetLatch(&(MyProc->waitLatch));
 	}
 
 	errno = save_errno;

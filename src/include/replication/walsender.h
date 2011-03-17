@@ -78,6 +78,13 @@ typedef struct
 	 */
 	XLogRecPtr	lsn;
 
+	/*
+	 * Are any sync standbys defined?  Waiting backends can't reload the
+	 * config file safely, so WAL writer updates this value as needed.
+	 * Protected by SyncRepLock.
+	 */
+	bool		sync_standbys_defined;
+
 	WalSnd		walsnds[1];		/* VARIABLE LENGTH ARRAY */
 } WalSndCtlData;
 
