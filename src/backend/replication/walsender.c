@@ -534,8 +534,7 @@ ProcessStandbyMessage(void)
 	}
 
 	/*
-	 * Check message type from the first byte. At the moment, there is only
-	 * one type.
+	 * Check message type from the first byte.
 	 */
 	msgtype = pq_getmsgbyte(&reply_message);
 
