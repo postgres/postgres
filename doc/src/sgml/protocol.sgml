@@ -1471,9 +1471,9 @@ The commands accepted in walsender mode are:
      </para>
 
      <para>
-       The receiving process can send a status update back to the sender at
-       any time, using the following message format (also in the payload of
-       a CopyData message):
+       The receiving process can send replies back to the sender at any time,
+       using one of the following message formats (also in the payload of a
+       CopyData message):
      </para>
 
      <para>
@@ -1536,6 +1536,63 @@ The commands accepted in walsender mode are:
       <para>
           The server's system clock at the time of transmission,
           given in TimestampTz format.
+      </para>
+      </listitem>
+      </varlistentry>
+      </variablelist>
+      </para>
+      </listitem>
+      </varlistentry>
+      </variablelist>
+     </para>
+
+     <para>
+      <variablelist>
+      <varlistentry>
+      <term>
+          Hot Standby feedback message (F)
+      </term>
+      <listitem>
+      <para>
+      <variablelist>
+      <varlistentry>
+      <term>
+          Byte1('h')
+      </term>
+      <listitem>
+      <para>
+          Identifies the message as a Hot Standby feedback message.
+      </para>
+      </listitem>
+      </varlistentry>
+      <varlistentry>
+      <term>
+          Byte8
+      </term>
+      <listitem>
+      <para>
+          The server's system clock at the time of transmission,
+          given in TimestampTz format.
+      </para>
+      </listitem>
+      </varlistentry>
+      <varlistentry>
+      <term>
+          Byte4
+      </term>
+      <listitem>
+      <para>
+          The standby's current xmin.
+      </para>
+      </listitem>
+      </varlistentry>
+      <varlistentry>
+      <term>
+          Byte4
+      </term>
+      <listitem>
+      <para>
+          The standby's current epoch.
       </para>
       </listitem>
       </varlistentry>
