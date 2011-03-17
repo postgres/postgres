@@ -2261,14 +2261,9 @@ PLy_result_ass_item(PyObject * arg, Py_ssize_t idx, PyObject * item)
 static PyObject *
 PLy_result_slice(PyObject * arg, Py_ssize_t lidx, Py_ssize_t hidx)
 {
-	PyObject   *rv;
 	PLyResultObject *ob = (PLyResultObject *) arg;
 
-	rv = PyList_GetSlice(ob->rows, lidx, hidx);
-	if (rv == NULL)
-		return NULL;
-	Py_INCREF(rv);
-	return rv;
+	return PyList_GetSlice(ob->rows, lidx, hidx);
 }
 
 static int
