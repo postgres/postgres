@@ -817,8 +817,10 @@ initialize_environment(void)
 		add_to_path("LD_LIBRARY_PATH", ':', libdir);
 		add_to_path("DYLD_LIBRARY_PATH", ':', libdir);
 		add_to_path("LIBPATH", ':', libdir);
-#if defined(WIN32) || defined(__CYGWIN__)
+#if defined(WIN32)
 		add_to_path("PATH", ';', libdir);
+#elif defined(__CYGWIN__)
+		add_to_path("PATH", ':', libdir);
 #endif
 	}
 	else
