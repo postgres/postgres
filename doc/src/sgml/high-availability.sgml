@@ -873,7 +873,7 @@ primary_conninfo = 'host=192.168.1.50 port=5432 user=foo password=foopass'
      might indicate that the master server is under heavy load, while
      differences between <literal>sent_location</> and 
      <function>pg_last_xlog_receive_location</> on the standby might indicate
-     network delay, or that the the standby is under heavy load.
+     network delay, or that the standby is under heavy load.
     </para>
    </sect3>
 
@@ -952,7 +952,7 @@ synchronous_replication = on
     If the standby is the first matching standby, as specified in
     <varname>synchronous_standby_names</> on the primary, the reply
     messages from that standby will be used to wake users waiting for
-    confirmation the commit record has been received. These parameters
+    confirmation that the commit record has been received. These parameters
     allow the administrator to specify which standby servers should be
     synchronous standbys. Note that the configuration of synchronous
     replication is mainly on the master.
@@ -1002,10 +1002,10 @@ synchronous_replication = on
 
    <para>
     With synchronous replication options specified at the application level
-    (on the primary) we can offer sync rep for the most important changes,
-    without slowing down the bulk of the total workload. Application level
-    options are an important and practical tool for allowing the benefits of
-    synchronous replication for high performance applications.
+    (on the primary) we can offer synchronous replication for the most
+    important changes, without slowing down the bulk of the total workload.
+    Application level options are an important and practical tool for allowing
+    the benefits of synchronous replication for high performance applications.
    </para>
 
    <para>
@@ -1029,7 +1029,7 @@ synchronous_replication = on
     your last remaining sync standby. This can be achieved by naming multiple
     potential synchronous standbys using <varname>synchronous_standby_names</>.
     The first named standby will be used as the synchronous standby. Standbys
-    listed after this will takeover the role of synchronous standby if the
+    listed after this will take over the role of synchronous standby if the
     first one should fail.
    </para>
 
@@ -1039,7 +1039,7 @@ synchronous_replication = on
     the lag between standby and primary reaches zero for the first time
     we move to real-time <literal>STREAMING</> state.
     The catch-up duration may be long immediately after the standby has
-    been created. If the standby is shutdown, then the catch-up period
+    been created. If the standby is shut down, then the catch-up period
     will increase according to the length of time the standby has been down.
     The standby is only able to become a synchronous standby
     once it has reached <literal>STREAMING</> state.
@@ -1060,12 +1060,13 @@ synchronous_replication = on
 
    <para>
     If you really do lose your last standby server then you should disable
-    <varname>synchronous_standby_names</> and restart the primary server.
+    <varname>synchronous_standby_names</> and reload the configuration file
+    on the primary server.
    </para>
 
    <para>
-    If the primary is isolated from remaining standby severs you should
-    failover to the best candidate of those other remaining standby servers.
+    If the primary is isolated from remaining standby servers you should
+    fail over to the best candidate of those other remaining standby servers.
    </para>
 
    <para>
@@ -1130,7 +1131,7 @@ synchronous_replication = on
     and might stay down.  To return to normal operation, a standby server
     must be recreated,
     either on the former primary system when it comes up, or on a third,
-    possibly new, system. Once complete the primary and standby can be
+    possibly new, system. Once complete, the primary and standby can be
     considered to have switched roles. Some people choose to use a third
     server to provide backup for the new primary until the new standby
     server is recreated,
@@ -1155,8 +1156,7 @@ synchronous_replication = on
     <command>pg_ctl promote</> to fail over, <varname>trigger_file</> is
     not required. If you're setting up the reporting servers that are
     only used to offload read-only queries from the primary, not for high
-    availability purposes, you don't need to exit recovery in the standby
-    and promote it to a master.
+    availability purposes, you don't need to promote it.
    </para>
   </sect1>
 
