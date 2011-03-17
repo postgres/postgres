@@ -1436,7 +1436,7 @@ static struct config_int ConfigureNamesInt[] =
 			GUC_UNIT_MS
 		},
 		&DeadlockTimeout,
-		1000, 1, INT_MAX / 1000, NULL, NULL
+		1000, 1, INT_MAX, NULL, NULL
 	},
 
 	{
@@ -1446,7 +1446,7 @@ static struct config_int ConfigureNamesInt[] =
 			GUC_UNIT_MS
 		},
 		&max_standby_archive_delay,
-		30 * 1000, -1, INT_MAX / 1000, NULL, NULL
+		30 * 1000, -1, INT_MAX, NULL, NULL
 	},
 
 	{
@@ -1456,7 +1456,7 @@ static struct config_int ConfigureNamesInt[] =
 			GUC_UNIT_MS
 		},
 		&max_standby_streaming_delay,
-		30 * 1000, -1, INT_MAX / 1000, NULL, NULL
+		30 * 1000, -1, INT_MAX, NULL, NULL
 	},
 
 	{
@@ -1894,7 +1894,7 @@ static struct config_int ConfigureNamesInt[] =
 			GUC_UNIT_MS
 		},
 		&log_min_duration_statement,
-		-1, -1, INT_MAX / 1000, NULL, NULL
+		-1, -1, INT_MAX, NULL, NULL
 	},
 
 	{
@@ -1905,7 +1905,7 @@ static struct config_int ConfigureNamesInt[] =
 			GUC_UNIT_MS
 		},
 		&Log_autovacuum_min_duration,
-		-1, -1, INT_MAX / 1000, NULL, NULL
+		-1, -1, INT_MAX, NULL, NULL
 	},
 
 	{
