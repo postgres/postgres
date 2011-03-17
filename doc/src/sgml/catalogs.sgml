@@ -7628,7 +7628,7 @@
      <row>
       <entry><structfield>context</structfield></entry>
       <entry><type>text</type></entry>
-      <entry>Context required to set the parameter's value</entry>
+      <entry>Context required to set the parameter's value (see below)</entry>
      </row>
      <row>
       <entry><structfield>vartype</structfield></entry>
@@ -7691,6 +7691,98 @@
     </tbody>
    </tgroup>
   </table>
+
+  <para>
+   There are several possible values of <structfield>context</structfield>.
+   In order of decreasing difficulty of changing the setting, they are:
+  </para>
+
+  <variablelist>
+   <varlistentry>
+    <term><literal>internal</literal></term>
+    <listitem>
+     <para>
+      These settings cannot be changed directly; they reflect internally
+      determined values.  Some of them may be adjustable by rebuilding the
+      server with different configuration options, or by changing options
+      supplied to <command>initdb</command>.
+     </para>
+    </listitem>
+   </varlistentry>
+   <varlistentry>
+    <term><literal>postmaster</literal></term>
+    <listitem>
+     <para>
+      These settings can only be applied when the server starts, so any change
+      requires restarting the server.  Values for these settings are typically
+      stored in the <filename>postgresql.conf</filename> file, or passed on
+      the command line when starting the server.  Of course, settings with any
+      of the lower <structfield>context</structfield> types can also be
+      set at server start time.
+     </para>
+    </listitem>
+   </varlistentry>
+   <varlistentry>
+    <term><literal>sighup</literal></term>
+    <listitem>
+     <para>
+      Changes to these settings can be made in
+      <filename>postgresql.conf</filename> without restarting the server.
+      Send a <systemitem>SIGHUP</systemitem> signal to the postmaster to
+      cause it to re-read <filename>postgresql.conf</filename> and apply
+      the changes.  The postmaster will also forward the
+      <systemitem>SIGHUP</systemitem> signal to its child processes so that
+      they all pick up the new value.
+     </para>
+    </listitem>
+   </varlistentry>
+   <varlistentry>
+    <term><literal>backend</literal></term>
+    <listitem>
+     <para>
+      Changes to these settings can be made in
+      <filename>postgresql.conf</filename> without restarting the server;
+      they can also be set for a particular session in the connection request
+      packet (for example, via <application>libpq</>'s <literal>PGOPTIONS</>
+      environment variable).  However, these settings never change in a
+      session after it is started.  If you change them in
+      <filename>postgresql.conf</filename>, send a
+      <systemitem>SIGHUP</systemitem> signal to the postmaster to cause it to
+      re-read <filename>postgresql.conf</filename>.  The new values will only
+      affect subsequently-launched sessions.
+     </para>
+    </listitem>
+   </varlistentry>
+   <varlistentry>
+    <term><literal>superuser</literal></term>
+    <listitem>
+     <para>
+      These settings can be set from <filename>postgresql.conf</filename>,
+      or within a session via the <command>SET</> command; but only superusers
+      can change them via <command>SET</>.  Changes in
+      <filename>postgresql.conf</filename> will affect existing sessions
+      only if no session-local value has been established with <command>SET</>.
+     </para>
+    </listitem>
+   </varlistentry>
+   <varlistentry>
+    <term><literal>user</literal></term>
+    <listitem>
+     <para>
+      These settings can be set from <filename>postgresql.conf</filename>,
+      or within a session via the <command>SET</> command.  Any user is
+      allowed to change his session-local value.  Changes in
+      <filename>postgresql.conf</filename> will affect existing sessions
+      only if no session-local value has been established with <command>SET</>.
+     </para>
+    </listitem>
+   </varlistentry>
+  </variablelist>
+
+  <para>
+   See <xref linkend="config-setting"> for more information about the various
+   ways to change these parameters.
+  </para>
 
   <para>
    The <structname>pg_settings</structname> view cannot be inserted into or

@@ -166,10 +166,12 @@ SET ENABLE_SEQSCAN TO OFF;
    </para>
 
    <para>
-    The virtual table <structname>pg_settings</structname>
-    (described in <xref linkend="view-pg-settings">) also allows
-    displaying and updating session run-time parameters.  It is equivalent
-    to <command>SHOW</> and <command>SET</>, but can be more convenient
+    The virtual table <structname>pg_settings</structname> also allows
+    displaying and updating session run-time parameters;  see <xref
+    linkend="view-pg-settings"> for details and a description of the
+    different variable types and when they can be changed.
+    <structname>pg_settings</structname> is equivalent to <command>SHOW</>
+    and <command>SET</>, but can be more convenient
     to use because it can be joined with other tables, or selected from using
     any desired selection condition. It also contains more information about
     what values are allowed for the parameters.
