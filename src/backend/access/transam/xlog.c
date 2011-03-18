@@ -5687,11 +5687,11 @@ recoveryStopsHere(XLogRecord *record, bool *includeThis)
 static void
 recoveryPausesHere(void)
 {
-	while (RecoveryIsPaused());
+	while (RecoveryIsPaused())
 	{
 		pg_usleep(1000000L);		/* 1000 ms */
 		HandleStartupProcInterrupts();
-	};
+	}
 }
 
 static bool
