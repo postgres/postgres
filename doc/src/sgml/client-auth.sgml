@@ -241,7 +241,9 @@ hostnossl  <replaceable>database</replaceable>  <replaceable>user</replaceable> 
        <literal>172.20.143.89/32</literal> for a single host, or
        <literal>172.20.143.0/24</literal> for a small network, or
        <literal>10.6.0.0/16</literal> for a larger one.
-       <literal>0.0.0.0/0</literal> (<quote>all balls</>) represents all addresses.
+       <literal>0.0.0.0/0</literal> (<quote>all balls</>) represents all
+       IPv4 addresses, and <literal>::</literal> represents
+       all IPv6 addresses.
        To specify a single host, use a CIDR mask of 32 for IPv4 or
        128 for IPv6.  In a network address, do not omit trailing zeroes.
       </para>
