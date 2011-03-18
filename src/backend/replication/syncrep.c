@@ -204,8 +204,8 @@ SyncRepWaitForLSN(XLogRecPtr XactCommitLSN)
 		{
 			ereport(WARNING,
 					(errcode(ERRCODE_ADMIN_SHUTDOWN),
-					 errmsg("canceling the wait for replication and terminating connection due to administrator command"),
-					 errdetail("The transaction has already been committed locally but might have not been replicated to the standby.")));
+					 errmsg("canceling the wait for synchronous replication and terminating connection due to administrator command"),
+					 errdetail("The transaction has already committed locally, but may not have been replicated to the standby.")));
 			whereToSendOutput = DestNone;
 			SyncRepCancelWait();
 			break;
@@ -222,7 +222,7 @@ SyncRepWaitForLSN(XLogRecPtr XactCommitLSN)
 			QueryCancelPending = false;
 			ereport(WARNING,
 					(errmsg("canceling wait for synchronous replication due to user request"),
-					 errdetail("The transaction has committed locally, but may not have replicated to the standby.")));
+					 errdetail("The transaction has already committed locally, but may not have been replicated to the standby.")));
 			SyncRepCancelWait();
 			break;
 		}
