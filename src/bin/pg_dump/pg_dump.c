@@ -468,35 +468,12 @@ main(int argc, char **argv)
 				aclsSkip = true;
 				break;
 
-			case 'X':
-				/*
-				 *	-X is a deprecated alternative to long options;
-				 *	no new -X options are to be added.
-				 */
-				if (strcmp(optarg, "disable-dollar-quoting") == 0)
-					disable_dollar_quoting = 1;
-				else if (strcmp(optarg, "disable-triggers") == 0)
-					disable_triggers = 1;
-				else if (strcmp(optarg, "no-tablespaces") == 0)
-					outputNoTablespaces = 1;
-				else if (strcmp(optarg, "use-set-session-authorization") == 0)
-					use_setsessauth = 1;
-				else
-				{
-					fprintf(stderr,
-							_("%s: invalid -X option -- %s\n"),
-							progname, optarg);
-					fprintf(stderr, _("Try \"%s --help\" for more information.\n"), progname);
-					exit(1);
-				}
-				break;
-
 			case 'Z':			/* Compression Level */
 				compressLevel = atoi(optarg);
 				break;
 
 			case 0:
-				/* This covers the long options equivalent to -X xxx. */
+				/* This covers the long options. */
 				break;
 
 			case 2:				/* lock-wait-timeout */

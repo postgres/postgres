@@ -280,30 +280,6 @@ main(int argc, char *argv[])
 				appendPQExpBuffer(pgdumpopts, " -x");
 				break;
 
-			case 'X':
-				/* -X is a deprecated alternative to long options */
-				if (strcmp(optarg, "disable-dollar-quoting") == 0)
-					disable_dollar_quoting = 1;
-				else if (strcmp(optarg, "disable-triggers") == 0)
-					disable_triggers = 1;
-				else if (strcmp(optarg, "no-tablespaces") == 0)
-					no_tablespaces = 1;
-				else if (strcmp(optarg, "use-set-session-authorization") == 0)
-					use_setsessauth = 1;
-				else if (strcmp(optarg, "no-security-label") == 0)
-					no_security_label = 1;
-				else if (strcmp(optarg, "no-unlogged-table-data") == 0)
-					no_unlogged_table_data = 1;
-				else
-				{
-					fprintf(stderr,
-							_("%s: invalid -X option -- %s\n"),
-							progname, optarg);
-					fprintf(stderr, _("Try \"%s --help\" for more information.\n"), progname);
-					exit(1);
-				}
-				break;
-
 			case 0:
 				break;
 

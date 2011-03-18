@@ -254,28 +254,6 @@ main(int argc, char **argv)
 				opts->aclsSkip = 1;
 				break;
 
-			case 'X':
-				/* -X is a deprecated alternative to long options */
-				if (strcmp(optarg, "disable-triggers") == 0)
-					disable_triggers = 1;
-				else if (strcmp(optarg, "no-data-for-failed-tables") == 0)
-					no_data_for_failed_tables = 1;
-				else if (strcmp(optarg, "no-tablespaces") == 0)
-					outputNoTablespaces = 1;
-				else if (strcmp(optarg, "use-set-session-authorization") == 0)
-					use_setsessauth = 1;
-				else if (strcmp(optarg, "no-security-label") == 0)
-					skip_seclabel = 1;
-				else
-				{
-					fprintf(stderr,
-							_("%s: invalid -X option -- %s\n"),
-							progname, optarg);
-					fprintf(stderr, _("Try \"%s --help\" for more information.\n"), progname);
-					exit(1);
-				}
-				break;
-
 			case '1':			/* Restore data in a single transaction */
 				opts->single_txn = true;
 				opts->exit_on_error = true;
@@ -284,8 +262,7 @@ main(int argc, char **argv)
 			case 0:
 
 				/*
-				 * This covers the long options without a short equivalent,
-				 * including those equivalent to -X xxx.
+				 * This covers the long options without a short equivalent.
 				 */
 				break;
 
