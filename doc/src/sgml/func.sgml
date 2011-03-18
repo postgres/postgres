@@ -14219,7 +14219,7 @@ postgres=# SELECT * FROM pg_xlogfile_name_offset(pg_stop_backup());
        <entry><type>timestamp with time zone</type></entry>
        <entry>Get timestamp of last transaction replayed during recovery.
         This is the time at which the commit or abort WAL record for that
-        transaction was generated.
+        transaction was generated on the primary.
         If no transactions have been replayed during recovery, this function
         returns NULL.  Otherwise, if recovery is still in progress this will
         increase monotonically.  If recovery has completed then this value will
