@@ -55,6 +55,7 @@
 #include "miscadmin.h"
 #include "pgstat.h"
 #include "postmaster/bgwriter.h"
+#include "replication/syncrep.h"
 #include "storage/bufmgr.h"
 #include "storage/fd.h"
 #include "storage/ipc.h"
@@ -363,6 +364,9 @@ BackgroundWriterMain(void)
 	if (RecoveryInProgress())
 		ThisTimeLineID = GetRecoveryTargetTLI();
 
+	/* Do this once before starting the loop, then just at SIGHUP time. */
+	SyncRepUpdateSyncStandbysDefined();
+
 	/*
 	 * Loop forever
 	 */
@@ -389,6 +393,8 @@ BackgroundWriterMain(void)
 		{
 			got_SIGHUP = false;
 			ProcessConfigFile(PGC_SIGHUP);
+			/* update global shmem state for sync rep */
+			SyncRepUpdateSyncStandbysDefined();
 		}
 		if (checkpoint_requested)
 		{
@@ -704,6 +710,8 @@ CheckpointWriteDelay(int flags, double progress)
 		{
 			got_SIGHUP = false;
 			ProcessConfigFile(PGC_SIGHUP);
+			/* update global shmem state for sync rep */
+			SyncRepUpdateSyncStandbysDefined();
 		}
 
 		AbsorbFsyncRequests();

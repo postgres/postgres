@@ -49,7 +49,6 @@
 #include "libpq/pqsignal.h"
 #include "miscadmin.h"
 #include "postmaster/walwriter.h"
-#include "replication/syncrep.h"
 #include "storage/bufmgr.h"
 #include "storage/fd.h"
 #include "storage/ipc.h"
@@ -217,9 +216,6 @@ WalWriterMain(void)
 	 */
 	PG_SETMASK(&UnBlockSig);
 
-	/* Do this once before starting the loop, then just at SIGHUP time. */
-	SyncRepUpdateSyncStandbysDefined();
-
 	/*
 	 * Loop forever
 	 */
@@ -241,8 +237,6 @@ WalWriterMain(void)
 		{
 			got_SIGHUP = false;
 			ProcessConfigFile(PGC_SIGHUP);
-			/* update global shmem state for sync rep */
-			SyncRepUpdateSyncStandbysDefined();
 		}
 		if (shutdown_requested)
 		{

@@ -557,9 +557,9 @@ SyncRepWakeQueue(bool all)
 }
 
 /*
- * WAL writer calls this as needed to update the shared sync_standbys_defined
- * flag, so that backends don't remain permanently wedged if
- * synchronous_standby_names is unset.  It's safe to check the current value
+ * The background writer calls this as needed to update the shared
+ * sync_standbys_defined flag, so that backends don't remain permanently wedged
+ * if synchronous_standby_names is unset.  It's safe to check the current value
  * without the lock, because it's only ever updated by one process.  But we
  * must take the lock to change it.
  */
