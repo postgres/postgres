@@ -60,7 +60,10 @@ static int	recv_and_check_password_packet(Port *port);
 /* Standard TCP port number for Ident service.	Assigned by IANA */
 #define IDENT_PORT 113
 
-static int	authident(hbaPort *port);
+static int	ident_inet(hbaPort *port);
+#ifdef HAVE_UNIX_SOCKETS
+static int	auth_peer(hbaPort *port);
+#endif
 
 
 /*----------------------------------------------------------------
@@ -268,6 +271,9 @@ auth_failed(Port *port, int status)
 			break;
 		case uaIdent:
 			errstr = gettext_noop("Ident authentication failed for user \"%s\"");
+			break;
+		case uaPeer:
+			errstr = gettext_noop("Peer authentication failed for user \"%s\"");
 			break;
 		case uaPassword:
 		case uaMD5:
@@ -506,11 +512,12 @@ ClientAuthentication(Port *port)
 #endif
 			break;
 
-		case uaIdent:
+		case uaPeer:
+#ifdef HAVE_UNIX_SOCKETS
 
 			/*
-			 * If we are doing ident on unix-domain sockets, use SCM_CREDS
-			 * only if it is defined and SO_PEERCRED isn't.
+			 * If we are doing peer on unix-domain sockets, use SCM_CREDS only
+			 * if it is defined and SO_PEERCRED isn't.
 			 */
 #if !defined(HAVE_GETPEEREID) && !defined(SO_PEERCRED) && \
 	(defined(HAVE_STRUCT_CMSGCRED) || defined(HAVE_STRUCT_FCRED) || \
@@ -535,7 +542,14 @@ ClientAuthentication(Port *port)
 				sendAuthRequest(port, AUTH_REQ_SCM_CREDS);
 			}
 #endif
-			status = authident(port);
+			status = auth_peer(port);
+#else /* HAVE_UNIX_SOCKETS */
+			Assert(false);
+#endif
+			break;
+
+		case uaIdent:
+			status = ident_inet(port);
 			break;
 
 		case uaMD5:
@@ -1599,11 +1613,12 @@ interpret_ident_response(const char *ident_response,
  *
  *	But iff we're unable to get the information from ident, return false.
  */
-static bool
-ident_inet(const SockAddr remote_addr,
-		   const SockAddr local_addr,
-		   char *ident_user)
+static int
+ident_inet(hbaPort *port)
 {
+	const SockAddr remote_addr = port->raddr;
+	const SockAddr local_addr = port->laddr;
+	char		ident_user[IDENT_USERNAME_MAX + 1];
 	pgsocket	sock_fd,		/* File descriptor for socket on which we talk
 								 * to Ident */
 				rc;				/* Return code from a locally called function */
@@ -1646,7 +1661,7 @@ ident_inet(const SockAddr remote_addr,
 	{
 		if (ident_serv)
 			pg_freeaddrinfo_all(hints.ai_family, ident_serv);
-		return false;			/* we don't expect this to happen */
+		return STATUS_ERROR;	/* we don't expect this to happen */
 	}
 
 	hints.ai_flags = AI_NUMERICHOST;
@@ -1662,7 +1677,7 @@ ident_inet(const SockAddr remote_addr,
 	{
 		if (la)
 			pg_freeaddrinfo_all(hints.ai_family, la);
-		return false;			/* we don't expect this to happen */
+		return STATUS_ERROR;	/* we don't expect this to happen */
 	}
 
 	sock_fd = socket(ident_serv->ai_family, ident_serv->ai_socktype,
@@ -1751,7 +1766,11 @@ ident_inet_done:
 		closesocket(sock_fd);
 	pg_freeaddrinfo_all(remote_addr.addr.ss_family, ident_serv);
 	pg_freeaddrinfo_all(local_addr.addr.ss_family, la);
-	return ident_return;
+
+	if (ident_return)
+		/* Success! Check the usermap */
+		return check_usermap(port->hba->usermap, port->user_name, ident_user, false);
+	return STATUS_ERROR;
 }
 
 /*
@@ -1763,9 +1782,12 @@ ident_inet_done:
  */
 #ifdef HAVE_UNIX_SOCKETS
 
-static bool
-ident_unix(int sock, char *ident_user)
+static int
+auth_peer(hbaPort *port)
 {
+	int			sock = port->sock;
+	char		ident_user[IDENT_USERNAME_MAX + 1];
+
 #if defined(HAVE_GETPEEREID)
 	/* OpenBSD style:  */
 	uid_t		uid;
@@ -1779,7 +1801,7 @@ ident_unix(int sock, char *ident_user)
 		ereport(LOG,
 				(errcode_for_socket_access(),
 				 errmsg("could not get peer credentials: %m")));
-		return false;
+		return STATUS_ERROR;
 	}
 
 	pass = getpwuid(uid);
@@ -1789,12 +1811,11 @@ ident_unix(int sock, char *ident_user)
 		ereport(LOG,
 				(errmsg("local user with ID %d does not exist",
 						(int) uid)));
-		return false;
+		return STATUS_ERROR;
 	}
 
 	strlcpy(ident_user, pass->pw_name, IDENT_USERNAME_MAX + 1);
 
-	return true;
 #elif defined(SO_PEERCRED)
 	/* Linux style: use getsockopt(SO_PEERCRED) */
 	struct ucred peercred;
@@ -1809,7 +1830,7 @@ ident_unix(int sock, char *ident_user)
 		ereport(LOG,
 				(errcode_for_socket_access(),
 				 errmsg("could not get peer credentials: %m")));
-		return false;
+		return STATUS_ERROR;
 	}
 
 	pass = getpwuid(peercred.uid);
@@ -1819,12 +1840,11 @@ ident_unix(int sock, char *ident_user)
 		ereport(LOG,
 				(errmsg("local user with ID %d does not exist",
 						(int) peercred.uid)));
-		return false;
+		return STATUS_ERROR;
 	}
 
 	strlcpy(ident_user, pass->pw_name, IDENT_USERNAME_MAX + 1);
 
-	return true;
 #elif defined(HAVE_GETPEERUCRED)
 	/* Solaris > 10 */
 	uid_t		uid;
@@ -1837,7 +1857,7 @@ ident_unix(int sock, char *ident_user)
 		ereport(LOG,
 				(errcode_for_socket_access(),
 				 errmsg("could not get peer credentials: %m")));
-		return false;
+		return STATUS_ERROR;
 	}
 
 	if ((uid = ucred_geteuid(ucred)) == -1)
@@ -1845,7 +1865,7 @@ ident_unix(int sock, char *ident_user)
 		ereport(LOG,
 				(errcode_for_socket_access(),
 		   errmsg("could not get effective UID from peer credentials: %m")));
-		return false;
+		return STATUS_ERROR;
 	}
 
 	ucred_free(ucred);
@@ -1856,12 +1876,11 @@ ident_unix(int sock, char *ident_user)
 		ereport(LOG,
 				(errmsg("local user with ID %d does not exist",
 						(int) uid)));
-		return false;
+		return STATUS_ERROR;
 	}
 
 	strlcpy(ident_user, pass->pw_name, IDENT_USERNAME_MAX + 1);
 
-	return true;
 #elif defined(HAVE_STRUCT_CMSGCRED) || defined(HAVE_STRUCT_FCRED) || (defined(HAVE_STRUCT_SOCKCRED) && defined(LOCAL_CREDS))
 	struct msghdr msg;
 
@@ -1913,7 +1932,7 @@ ident_unix(int sock, char *ident_user)
 		ereport(LOG,
 				(errcode_for_socket_access(),
 				 errmsg("could not get peer credentials: %m")));
-		return false;
+		return STATUS_ERROR;
 	}
 
 	cred = (Cred *) CMSG_DATA(cmsg);
@@ -1925,59 +1944,22 @@ ident_unix(int sock, char *ident_user)
 		ereport(LOG,
 				(errmsg("local user with ID %d does not exist",
 						(int) cred->cruid)));
-		return false;
+		return STATUS_ERROR;
 	}
 
 	strlcpy(ident_user, pw->pw_name, IDENT_USERNAME_MAX + 1);
 
-	return true;
 #else
 	ereport(LOG,
 			(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 			 errmsg("Ident authentication is not supported on local connections on this platform")));
 
-	return false;
+	return STATUS_ERROR;
 #endif
-}
-#endif   /* HAVE_UNIX_SOCKETS */
-
-
-/*
- *	Determine the username of the initiator of the connection described
- *	by "port".	Then look in the usermap file under the usermap
- *	port->hba->usermap and see if that user is equivalent to Postgres user
- *	port->user.
- *
- *	Return STATUS_OK if yes, STATUS_ERROR if no match (or couldn't get info).
- */
-static int
-authident(hbaPort *port)
-{
-	char		ident_user[IDENT_USERNAME_MAX + 1];
-
-	switch (port->raddr.addr.ss_family)
-	{
-		case AF_INET:
-#ifdef	HAVE_IPV6
-		case AF_INET6:
-#endif
-			if (!ident_inet(port->raddr, port->laddr, ident_user))
-				return STATUS_ERROR;
-			break;
-
-#ifdef HAVE_UNIX_SOCKETS
-		case AF_UNIX:
-			if (!ident_unix(port->sock, ident_user))
-				return STATUS_ERROR;
-			break;
-#endif
-
-		default:
-			return STATUS_ERROR;
-	}
 
 	return check_usermap(port->hba->usermap, port->user_name, ident_user, false);
 }
+#endif   /* HAVE_UNIX_SOCKETS */
 
 
 /*----------------------------------------------------------------

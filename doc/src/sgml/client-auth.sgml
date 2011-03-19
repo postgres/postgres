@@ -457,12 +457,25 @@ hostnossl  <replaceable>database</replaceable>  <replaceable>user</replaceable> 
         <term><literal>ident</></term>
         <listitem>
          <para>
-          Obtain the operating system user name of the client (for
-          TCP/IP connections by contacting the ident server on the
-          client, for local connections by getting it from the
-          operating system) and check if it matches the requested
-          database user name.
+          Obtain the operating system user name of the client
+          by contacting the ident server on the client
+          and check if it matches the requested database user name.
+          Ident authentication can only be used on TCP/IP
+          connections. When specified for local connections, peer
+          authentication will be used instead.
           See <xref linkend="auth-ident"> for details.
+         </para>
+        </listitem>
+       </varlistentry>
+
+       <varlistentry>
+        <term><literal>peer</></term>
+        <listitem>
+         <para>
+          Obtain the operating system user name from the operating system
+          and check if it matches the requested database user name.
+          This is only available for local connections.
+          See <xref linkend="auth-peer"> for details.
          </para>
         </listitem>
        </varlistentry>
@@ -1200,7 +1213,7 @@ omicron         bryanh                  guest1
   </sect2>
 
   <sect2 id="auth-ident">
-   <title>Ident-based Authentication</title>
+   <title>Ident Authentication</title>
 
    <indexterm>
     <primary>ident</primary>
@@ -1208,12 +1221,18 @@ omicron         bryanh                  guest1
 
    <para>
     The ident authentication method works by obtaining the client's
-    operating system user name and using it as the allowed database user
-    name (with an optional user name mapping).
-    The determination of the client's
-    user name is the security-critical point, and it works differently
-    depending on the connection type, as described below.
+    operating system user name from an ident server and using it as
+    the allowed database user name (with an optional user name mapping).
+    This is only supported on TCP/IP connections.
    </para>
+
+   <note>
+    <para>
+     When ident is specified for a local (non-TCP/IP) connection,
+     peer authentication (see <xref linkend="auth-peer">) will be
+     used instead.
+    </para>
+   </note>
 
    <para>
     The following configuration options are supported for <productname>ident</productname>:
@@ -1229,9 +1248,6 @@ omicron         bryanh                  guest1
      </varlistentry>
     </variablelist>
    </para>
-
-   <sect3>
-    <title>Ident Authentication Over TCP/IP</title>
 
    <para>
     The <quote>Identification Protocol</quote> is described in
@@ -1275,35 +1291,47 @@ omicron         bryanh                  guest1
     since <productname>PostgreSQL</> does not have any way to decrypt the
     returned string to determine the actual user name.
    </para>
-   </sect3>
+  </sect2>
 
-   <sect3>
-    <title>Ident Authentication Over Local Sockets</title>
+  <sect2 id="auth-peer">
+   <title>Peer Authentication</title>
+
+   <indexterm>
+    <primary>peer</primary>
+   </indexterm>
 
    <para>
-    On systems supporting <symbol>SO_PEERCRED</symbol> requests for
+    The peer authentication method works by obtaining the client's
+    operating system user name from the kernel and using it as the
+    allowed database user name (with optional user name mapping). This
+    is only supported on local connections.
+   </para>
+
+   <para>
+    The following configuration options are supported for <productname>peer</productname>:
+    <variablelist>
+     <varlistentry>
+      <term><literal>map</literal></term>
+      <listitem>
+       <para>
+        Allows for mapping between system and database user names. See
+        <xref linkend="auth-username-maps"> for details.
+       </para>
+      </listitem>
+     </varlistentry>
+    </variablelist>
+   </para>
+
+   <para>
+    Peer authentication is only available on  systems supporting
+    <symbol>SO_PEERCRED</symbol> requests for
     Unix-domain sockets (currently <systemitem
     class="osname">Linux</>, <systemitem class="osname">FreeBSD</>,
     <systemitem class="osname">NetBSD</>, <systemitem class="osname">OpenBSD</>,
-    <systemitem class="osname">BSD/OS</>, and <systemitem class="osname">Solaris</systemitem>), ident authentication can also
-    be applied to local connections.
+    <systemitem class="osname">BSD/OS</>, and <systemitem class="osname">Solaris</systemitem>).
     <productname>PostgreSQL</> uses <symbol>SO_PEERCRED</symbol> to find out
     the operating system name of the connected client process.
-    In this case, no security risk is added by
-    using ident authentication; indeed it is a preferable choice for
-    local connections on such systems.
    </para>
-
-    <para>
-     On systems without <symbol>SO_PEERCRED</> requests, ident
-     authentication is only available for TCP/IP connections. As a
-     work-around, it is possible to specify the <systemitem
-     class="systemname">localhost</> address <systemitem
-     class="systemname">127.0.0.1</> and make connections to this
-     address.  This method is trustworthy to the extent that you trust
-     the local ident server.
-    </para>
-    </sect3>
 
   </sect2>
 

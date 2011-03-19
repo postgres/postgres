@@ -29,7 +29,8 @@ typedef enum UserAuth
 	uaPAM,
 	uaLDAP,
 	uaCert,
-	uaRADIUS
+	uaRADIUS,
+	uaPeer
 } UserAuth;
 
 typedef enum IPCompareMethod

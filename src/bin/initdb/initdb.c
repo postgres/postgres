@@ -82,6 +82,7 @@ static char *username = "";
 static bool pwprompt = false;
 static char *pwfilename = NULL;
 static char *authmethod = "";
+static char *authmethodlocal = "";
 static bool debug = false;
 static bool noclean = false;
 static bool show_setting = false;
@@ -1076,6 +1077,9 @@ setup_config(void)
 	conflines = replace_token(conflines,
 							  "@authmethod@",
 							  authmethod);
+	conflines = replace_token(conflines,
+							  "@authmethodlocal@",
+							  authmethodlocal);
 
 	conflines = replace_token(conflines,
 							  "@authcomment@",
@@ -2637,6 +2641,7 @@ main(int argc, char *argv[])
 	}
 
 	if (strcmp(authmethod, "md5") &&
+		strcmp(authmethod, "peer") &&
 		strcmp(authmethod, "ident") &&
 		strcmp(authmethod, "trust") &&
 #ifdef USE_PAM
@@ -2665,6 +2670,20 @@ main(int argc, char *argv[])
 		fprintf(stderr, _("%s: must specify a password for the superuser to enable %s authentication\n"), progname, authmethod);
 		exit(1);
 	}
+
+	/*
+	 * When ident is specified, use peer for local connections. Mirrored, when
+	 * peer is specified, use ident for TCP connections.
+	 */
+	if (strcmp(authmethod, "ident") == 0)
+		authmethodlocal = "peer";
+	else if (strcmp(authmethod, "peer") == 0)
+	{
+		authmethodlocal = "peer";
+		authmethod = "ident";
+	}
+	else
+		authmethodlocal = authmethod;
 
 	if (strlen(pg_data) == 0)
 	{

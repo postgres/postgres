@@ -148,7 +148,7 @@ postgres$ <userinput>initdb -D /usr/local/pgsql/data</userinput>
    mode is not used; or modify the generated <filename>pg_hba.conf</filename>
    file after running <command>initdb</command>, but
    <emphasis>before</> you start the server for the first time. (Other
-   reasonable approaches include using <literal>ident</literal> authentication
+   reasonable approaches include using <literal>peer</literal> authentication
    or file system permissions to restrict connections. See <xref
    linkend="client-authentication"> for more information.)
   </para>

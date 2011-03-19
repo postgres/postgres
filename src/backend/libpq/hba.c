@@ -1060,6 +1060,8 @@ parse_hba_line(List *line, int line_num, HbaLine *parsedline)
 		parsedline->auth_method = uaTrust;
 	else if (strcmp(token, "ident") == 0)
 		parsedline->auth_method = uaIdent;
+	else if (strcmp(token, "peer") == 0)
+		parsedline->auth_method = uaPeer;
 	else if (strcmp(token, "password") == 0)
 		parsedline->auth_method = uaPassword;
 	else if (strcmp(token, "krb5") == 0)
@@ -1137,6 +1139,14 @@ parse_hba_line(List *line, int line_num, HbaLine *parsedline)
 		return false;
 	}
 
+	/*
+	 * XXX: When using ident on local connections, change it to peer, for
+	 * backwards compatibility.
+	 */
+	if (parsedline->conntype == ctLocal &&
+		parsedline->auth_method == uaIdent)
+		parsedline->auth_method = uaPeer;
+
 	/* Invalid authentication combinations */
 	if (parsedline->conntype == ctLocal &&
 		parsedline->auth_method == uaKrb5)
@@ -1155,6 +1165,17 @@ parse_hba_line(List *line, int line_num, HbaLine *parsedline)
 		ereport(LOG,
 				(errcode(ERRCODE_CONFIG_FILE_ERROR),
 		   errmsg("gssapi authentication is not supported on local sockets"),
+				 errcontext("line %d of configuration file \"%s\"",
+							line_num, HbaFileName)));
+		return false;
+	}
+
+	if (parsedline->conntype != ctLocal &&
+		parsedline->auth_method == uaPeer)
+	{
+		ereport(LOG,
+				(errcode(ERRCODE_CONFIG_FILE_ERROR),
+			errmsg("peer authentication is only supported on local sockets"),
 				 errcontext("line %d of configuration file \"%s\"",
 							line_num, HbaFileName)));
 		return false;
@@ -1203,11 +1224,12 @@ parse_hba_line(List *line, int line_num, HbaLine *parsedline)
 			if (strcmp(token, "map") == 0)
 			{
 				if (parsedline->auth_method != uaIdent &&
+					parsedline->auth_method != uaPeer &&
 					parsedline->auth_method != uaKrb5 &&
 					parsedline->auth_method != uaGSS &&
 					parsedline->auth_method != uaSSPI &&
 					parsedline->auth_method != uaCert)
-					INVALID_AUTH_OPTION("map", gettext_noop("ident, krb5, gssapi, sspi and cert"));
+					INVALID_AUTH_OPTION("map", gettext_noop("ident, peer, krb5, gssapi, sspi and cert"));
 				parsedline->usermap = pstrdup(c);
 			}
 			else if (strcmp(token, "clientcert") == 0)
