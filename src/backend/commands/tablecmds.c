@@ -1345,7 +1345,14 @@ MergeAttributes(List *schema, List *supers, char relpersistence,
 		AttrNumber *newattno;
 		AttrNumber	parent_attno;
 
-		relation = heap_openrv(parent, AccessShareLock);
+		/*
+		 * A self-exclusive lock is needed here.  If two backends attempt to
+		 * add children to the same parent simultaneously, and that parent has
+		 * no pre-existing children, then both will attempt to update the
+		 * parent's relhassubclass field, leading to a "tuple concurrently
+		 * updated" error.
+		 */
+		relation = heap_openrv(parent, ShareUpdateExclusiveLock);
 
 		if (relation->rd_rel->relkind != RELKIND_RELATION)
 			ereport(ERROR,
@@ -7942,10 +7949,10 @@ ATExecAddInherit(Relation child_rel, RangeVar *parent, LOCKMODE lockmode)
 	List	   *children;
 
 	/*
-	 * AccessShareLock on the parent is what's obtained during normal CREATE
-	 * TABLE ... INHERITS ..., so should be enough here.
+	 * A self-exclusive lock is needed here.  See the similar case in
+	 * MergeAttributes() for a full explanation.
 	 */
-	parent_rel = heap_openrv(parent, AccessShareLock);
+	parent_rel = heap_openrv(parent, ShareUpdateExclusiveLock);
 
 	/*
 	 * Must be owner of both parent and child -- child was checked by
