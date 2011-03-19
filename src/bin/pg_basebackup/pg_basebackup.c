@@ -207,11 +207,24 @@ progress_report(int tablespacenum, char *fn)
 		percent = 100;
 
 	if (verbose)
-		fprintf(stderr,
-				INT64_FORMAT "/" INT64_FORMAT " kB (%i%%) %i/%i tablespaces (%-30s)\r",
-				totaldone / 1024, totalsize,
-				percent,
-				tablespacenum, tablespacecount, fn);
+	{
+		if (!fn)
+
+			/*
+			 * No filename given, so clear the status line (used for last
+			 * call)
+			 */
+			fprintf(stderr,
+					INT64_FORMAT "/" INT64_FORMAT " kB (100%%) %i/%i tablespaces %35s\r",
+					totaldone / 1024, totalsize,
+					tablespacenum, tablespacecount, "");
+		else
+			fprintf(stderr,
+					INT64_FORMAT "/" INT64_FORMAT " kB (%i%%) %i/%i tablespaces (%-30.30s)\r",
+					totaldone / 1024, totalsize,
+					percent,
+					tablespacenum, tablespacecount, fn);
+	}
 	else
 		fprintf(stderr, INT64_FORMAT "/" INT64_FORMAT " kB (%i%%) %i/%i tablespaces\r",
 				totaldone / 1024, totalsize,
@@ -871,7 +884,7 @@ BaseBackup()
 
 	if (showprogress)
 	{
-		progress_report(PQntuples(res), "");
+		progress_report(PQntuples(res), NULL);
 		fprintf(stderr, "\n");	/* Need to move to next line */
 	}
 	PQclear(res);
