@@ -1412,7 +1412,7 @@ $1[10:42]
    </para>
   </sect2>
 
-  <sect2>
+  <sect2 id="field-selection">
    <title>Field Selection</title>
 
    <indexterm>

@@ -2613,7 +2613,7 @@ cc-1020 cc: ERROR File = pqcomm.c, Line = 427
     buffering issues.
    </para>
 
-   <sect3>
+   <sect3 id="windows-crash-dumps">
     <title>Collecting Crash Dumps on Windows</title>
 
     <para>

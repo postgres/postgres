@@ -354,7 +354,7 @@
     considered members of the extension.
    </para>
 
-   <sect2>
+   <sect2 id="extension">
     <title>Extension Files</title>
 
    <indexterm>

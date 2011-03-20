@@ -1512,7 +1512,7 @@
       </row>
 
       <row>
-       <entry>
+       <entry id="format">
         <indexterm>
          <primary>format</primary>
         </indexterm>
@@ -9121,7 +9121,7 @@ SELECT xmlagg(x) FROM (SELECT * FROM test ORDER BY y DESC) AS tab;
     </para>
    </sect3>
 
-   <sect3>
+   <sect3 id="xml-exists">
     <title>XMLEXISTS</title>
 
     <indexterm>
@@ -9163,7 +9163,7 @@ SELECT xmlexists('//town[text() = ''Toronto'']' PASSING BY REF '<towns><town>Tor
     </para>
    </sect3>
 
-   <sect3>
+   <sect3 id="xml-is-well-formed">
     <title>xml_is_well_formed</title>
 
     <indexterm>
