@@ -1014,7 +1014,7 @@
       <para>
        Previously asking for serializable isolation produced
        snapshot isolation, which had certain documented anomalies.
-       The old snapshot isolation level is still accessible by the
+       The old snapshot isolation level is still accessible by
        requesting <link linkend="xact-repeatable-read"><literal>REPEATABLE
        READ</></link> isolation level.
       </para>
