@@ -89,6 +89,7 @@ test: namespace
 test: prepared_xacts
 test: privileges
 test: security_label
+test: collate
 test: misc
 test: rules
 test: select_views
