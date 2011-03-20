@@ -1785,7 +1785,6 @@ ident_inet_done:
 static int
 auth_peer(hbaPort *port)
 {
-	int			sock = port->sock;
 	char		ident_user[IDENT_USERNAME_MAX + 1];
 
 #if defined(HAVE_GETPEEREID)
@@ -1795,7 +1794,7 @@ auth_peer(hbaPort *port)
 	struct passwd *pass;
 
 	errno = 0;
-	if (getpeereid(sock, &uid, &gid) != 0)
+	if (getpeereid(port->sock, &uid, &gid) != 0)
 	{
 		/* We didn't get a valid credentials struct. */
 		ereport(LOG,
@@ -1823,7 +1822,7 @@ auth_peer(hbaPort *port)
 	struct passwd *pass;
 
 	errno = 0;
-	if (getsockopt(sock, SOL_SOCKET, SO_PEERCRED, &peercred, &so_len) != 0 ||
+	if (getsockopt(port->sock, SOL_SOCKET, SO_PEERCRED, &peercred, &so_len) != 0 ||
 		so_len != sizeof(peercred))
 	{
 		/* We didn't get a valid credentials struct. */
@@ -1852,7 +1851,7 @@ auth_peer(hbaPort *port)
 	ucred_t    *ucred;
 
 	ucred = NULL;				/* must be initialized to NULL */
-	if (getpeerucred(sock, &ucred) == -1)
+	if (getpeerucred(port->sock, &ucred) == -1)
 	{
 		ereport(LOG,
 				(errcode_for_socket_access(),
@@ -1925,7 +1924,7 @@ auth_peer(hbaPort *port)
 	iov.iov_base = &buf;
 	iov.iov_len = 1;
 
-	if (recvmsg(sock, &msg, 0) < 0 ||
+	if (recvmsg(port->sock, &msg, 0) < 0 ||
 		cmsg->cmsg_len < sizeof(cmsgmem) ||
 		cmsg->cmsg_type != SCM_CREDS)
 	{
