@@ -40,6 +40,11 @@ typedef Datum (*PGFunction) (FunctionCallInfo fcinfo);
  * before a function can be called through fmgr.  If the same function is
  * to be called multiple times, the lookup need be done only once and the
  * info struct saved for re-use.
+ *
+ * Note that fn_collation and fn_expr really are parse-time-determined
+ * information about the arguments, rather than about the function itself.
+ * But it's convenient to store them here rather than in FunctionCallInfoData,
+ * where they might more logically belong.
  */
 typedef struct FmgrInfo
 {
@@ -50,7 +55,7 @@ typedef struct FmgrInfo
 	bool		fn_strict;		/* function is "strict" (NULL in => NULL out) */
 	bool		fn_retset;		/* function returns a set */
 	unsigned char fn_stats;		/* collect stats if track_functions > this */
-	Oid			fn_collation;	/* collation to use */
+	Oid			fn_collation;	/* collation that function should use */
 	void	   *fn_extra;		/* extra space for use by handler */
 	MemoryContext fn_mcxt;		/* memory context to store fn_extra in */
 	fmNodePtr	fn_expr;		/* expression parse tree for call, or NULL */
@@ -84,15 +89,11 @@ extern void fmgr_info(Oid functionId, FmgrInfo *finfo);
 extern void fmgr_info_cxt(Oid functionId, FmgrInfo *finfo,
 			  MemoryContext mcxt);
 
-/*
- * Initialize the fn_collation field
- */
-extern void fmgr_info_collation(Oid collationId, FmgrInfo *finfo);
-
-/*
- * Initialize the fn_expr field and set the collation based on it
- */
-extern void fmgr_info_expr(fmNodePtr expr, FmgrInfo *finfo);
+/* Macros for setting the fn_collation and fn_expr fields */
+#define fmgr_info_set_collation(collationId, finfo) \
+	((finfo)->fn_collation = (collationId))
+#define fmgr_info_set_expr(expr, finfo) \
+	((finfo)->fn_expr = (expr))
 
 /*
  * Copy an FmgrInfo struct
@@ -145,6 +146,12 @@ extern void fmgr_info_copy(FmgrInfo *dstinfo, FmgrInfo *srcinfo,
 
 /* Standard parameter list for fmgr-compatible functions */
 #define PG_FUNCTION_ARGS	FunctionCallInfo fcinfo
+
+/*
+ * Get collation function should use.
+ */
+#define PG_GET_COLLATION() \
+	(fcinfo->flinfo ? fcinfo->flinfo->fn_collation : InvalidOid)
 
 /*
  * Get number of arguments passed to function.
@@ -307,7 +314,6 @@ extern struct varlena *pg_detoast_datum_packed(struct varlena * datum);
 #define PG_RETURN_VARCHAR_P(x) PG_RETURN_POINTER(x)
 #define PG_RETURN_HEAPTUPLEHEADER(x)  PG_RETURN_POINTER(x)
 
-#define PG_GET_COLLATION()		(fcinfo->flinfo ? fcinfo->flinfo->fn_collation : InvalidOid)
 
 /*-------------------------------------------------------------------------
  *		Support for detecting call convention of dynamically-loaded functions
@@ -450,7 +456,7 @@ extern Datum DirectFunctionCall9(PGFunction func, Datum arg1, Datum arg2,
 					Datum arg6, Datum arg7, Datum arg8,
 					Datum arg9);
 
-/* the same but passing a collation */
+/* The same, but passing a collation to use */
 extern Datum DirectFunctionCall1WithCollation(PGFunction func, Oid collation,
 											  Datum arg1);
 extern Datum DirectFunctionCall2WithCollation(PGFunction func, Oid collation,

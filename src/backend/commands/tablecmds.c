@@ -58,6 +58,7 @@
 #include "optimizer/clauses.h"
 #include "parser/parse_clause.h"
 #include "parser/parse_coerce.h"
+#include "parser/parse_collate.h"
 #include "parser/parse_expr.h"
 #include "parser/parse_oper.h"
 #include "parser/parse_relation.h"
@@ -6597,6 +6598,9 @@ ATPrepAlterColumnType(List **wqueue,
 					(errcode(ERRCODE_DATATYPE_MISMATCH),
 					 errmsg("column \"%s\" cannot be cast to type %s",
 							colName, format_type_be(targettype))));
+
+		/* Fix collations after all else */
+		assign_expr_collations(pstate, transform);
 
 		/*
 		 * Add a work queue item to make ATRewriteTable update the column

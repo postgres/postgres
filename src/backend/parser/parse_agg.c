@@ -709,6 +709,7 @@ check_ungrouped_columns_walker(Node *node,
  * agg_input_types, agg_state_type, agg_result_type identify the input,
  * transition, and result types of the aggregate.  These should all be
  * resolved to actual types (ie, none should ever be ANYELEMENT etc).
+ * agg_input_collation is the aggregate function's input collation.
  *
  * transfn_oid and finalfn_oid identify the funcs to be called; the latter
  * may be InvalidOid.
@@ -721,9 +722,9 @@ build_aggregate_fnexprs(Oid *agg_input_types,
 						int agg_num_inputs,
 						Oid agg_state_type,
 						Oid agg_result_type,
+						Oid agg_input_collation,
 						Oid transfn_oid,
 						Oid finalfn_oid,
-						Oid collation,
 						Expr **transfnexpr,
 						Expr **finalfnexpr)
 {
@@ -742,7 +743,7 @@ build_aggregate_fnexprs(Oid *agg_input_types,
 	argp->paramid = -1;
 	argp->paramtype = agg_state_type;
 	argp->paramtypmod = -1;
-	argp->paramcollation = collation;
+	argp->paramcollid = agg_input_collation;
 	argp->location = -1;
 
 	args = list_make1(argp);
@@ -754,7 +755,7 @@ build_aggregate_fnexprs(Oid *agg_input_types,
 		argp->paramid = -1;
 		argp->paramtype = agg_input_types[i];
 		argp->paramtypmod = -1;
-		argp->paramcollation = collation;
+		argp->paramcollid = agg_input_collation;
 		argp->location = -1;
 		args = lappend(args, argp);
 	}
@@ -762,7 +763,8 @@ build_aggregate_fnexprs(Oid *agg_input_types,
 	*transfnexpr = (Expr *) makeFuncExpr(transfn_oid,
 										 agg_state_type,
 										 args,
-										 collation,
+										 InvalidOid,
+										 agg_input_collation,
 										 COERCE_DONTCARE);
 
 	/* see if we have a final function */
@@ -780,13 +782,14 @@ build_aggregate_fnexprs(Oid *agg_input_types,
 	argp->paramid = -1;
 	argp->paramtype = agg_state_type;
 	argp->paramtypmod = -1;
-	argp->paramcollation = collation;
+	argp->paramcollid = agg_input_collation;
 	argp->location = -1;
 	args = list_make1(argp);
 
 	*finalfnexpr = (Expr *) makeFuncExpr(finalfn_oid,
 										 agg_result_type,
 										 args,
-										 collation,
+										 InvalidOid,
+										 agg_input_collation,
 										 COERCE_DONTCARE);
 }

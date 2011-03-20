@@ -2148,14 +2148,14 @@ create_mergejoin_plan(PlannerInfo *root,
 
 		/* pathkeys should match each other too (more debugging) */
 		if (opathkey->pk_opfamily != ipathkey->pk_opfamily ||
-			opathkey->pk_collation != ipathkey->pk_collation ||
+			opathkey->pk_eclass->ec_collation != ipathkey->pk_eclass->ec_collation ||
 			opathkey->pk_strategy != ipathkey->pk_strategy ||
 			opathkey->pk_nulls_first != ipathkey->pk_nulls_first)
 			elog(ERROR, "left and right pathkeys do not match in mergejoin");
 
 		/* OK, save info for executor */
 		mergefamilies[i] = opathkey->pk_opfamily;
-		mergecollations[i] = opathkey->pk_collation;
+		mergecollations[i] = opathkey->pk_eclass->ec_collation;
 		mergestrategies[i] = opathkey->pk_strategy;
 		mergenullsfirst[i] = opathkey->pk_nulls_first;
 		i++;
@@ -3603,7 +3603,7 @@ prepare_sort_from_pathkeys(PlannerInfo *root, Plan *lefttree, List *pathkeys,
 		 */
 		numsortkeys = add_sort_column(tle->resno,
 									  sortop,
-									  pathkey->pk_collation,
+									  pathkey->pk_eclass->ec_collation,
 									  pathkey->pk_nulls_first,
 									  numsortkeys,
 									  sortColIdx, sortOperators, collations, nullsFirst);

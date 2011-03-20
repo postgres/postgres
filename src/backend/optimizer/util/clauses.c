@@ -100,7 +100,8 @@ static List *simplify_and_arguments(List *args,
 					   bool *haveNull, bool *forceFalse);
 static Node *simplify_boolean_equality(Oid opno, List *args);
 static Expr *simplify_function(Oid funcid,
-				  Oid result_type, int32 result_typmod, Oid collid, List **args,
+				  Oid result_type, int32 result_typmod,
+				  Oid input_collid, List **args,
 				  bool has_named_args,
 				  bool allow_inline,
 				  eval_const_expressions_context *context);
@@ -114,8 +115,8 @@ static List *fetch_function_defaults(HeapTuple func_tuple);
 static void recheck_cast_function_args(List *args, Oid result_type,
 						   HeapTuple func_tuple);
 static Expr *evaluate_function(Oid funcid,
-				  Oid result_type, int32 result_typmod, Oid collid, List *args,
-				  HeapTuple func_tuple,
+				  Oid result_type, int32 result_typmod,
+				  Oid input_collid, List *args, HeapTuple func_tuple,
 				  eval_const_expressions_context *context);
 static Expr *inline_function(Oid funcid, Oid result_type, List *args,
 				HeapTuple func_tuple,
@@ -139,12 +140,14 @@ static bool tlist_matches_coltypelist(List *tlist, List *coltypelist);
 
 /*
  * make_opclause
- *	  Creates an operator clause given its operator info, left operand,
- *	  and right operand (pass NULL to create single-operand clause).
+ *	  Creates an operator clause given its operator info, left operand
+ *	  and right operand (pass NULL to create single-operand clause),
+ *	  and collation info.
  */
 Expr *
 make_opclause(Oid opno, Oid opresulttype, bool opretset,
-			  Expr *leftop, Expr *rightop)
+			  Expr *leftop, Expr *rightop,
+			  Oid opcollid, Oid inputcollid)
 {
 	OpExpr	   *expr = makeNode(OpExpr);
 
@@ -152,11 +155,12 @@ make_opclause(Oid opno, Oid opresulttype, bool opretset,
 	expr->opfuncid = InvalidOid;
 	expr->opresulttype = opresulttype;
 	expr->opretset = opretset;
+	expr->opcollid = opcollid;
+	expr->inputcollid = inputcollid;
 	if (rightop)
 		expr->args = list_make2(leftop, rightop);
 	else
 		expr->args = list_make1(leftop);
-	expr->collid = select_common_collation(NULL, expr->args, false);
 	expr->location = -1;
 	return (Expr *) expr;
 }
@@ -709,6 +713,8 @@ expression_returns_set_rows_walker(Node *node, double *count)
 		return false;
 	if (IsA(node, DistinctExpr))
 		return false;
+	if (IsA(node, NullIfExpr))
+		return false;
 	if (IsA(node, ScalarArrayOpExpr))
 		return false;
 	if (IsA(node, BoolExpr))
@@ -730,8 +736,6 @@ expression_returns_set_rows_walker(Node *node, double *count)
 	if (IsA(node, MinMaxExpr))
 		return false;
 	if (IsA(node, XmlExpr))
-		return false;
-	if (IsA(node, NullIfExpr))
 		return false;
 
 	return expression_tree_walker(node, expression_returns_set_rows_walker,
@@ -826,6 +830,15 @@ contain_mutable_functions_walker(Node *node, void *context)
 			return true;
 		/* else fall through to check args */
 	}
+	else if (IsA(node, NullIfExpr))
+	{
+		NullIfExpr *expr = (NullIfExpr *) node;
+
+		set_opfuncid((OpExpr *) expr);	/* rely on struct equivalence */
+		if (func_volatile(expr->opfuncid) != PROVOLATILE_IMMUTABLE)
+			return true;
+		/* else fall through to check args */
+	}
 	else if (IsA(node, ScalarArrayOpExpr))
 	{
 		ScalarArrayOpExpr *expr = (ScalarArrayOpExpr *) node;
@@ -860,15 +873,6 @@ contain_mutable_functions_walker(Node *node, void *context)
 
 		if (OidIsValid(expr->elemfuncid) &&
 			func_volatile(expr->elemfuncid) != PROVOLATILE_IMMUTABLE)
-			return true;
-		/* else fall through to check args */
-	}
-	else if (IsA(node, NullIfExpr))
-	{
-		NullIfExpr *expr = (NullIfExpr *) node;
-
-		set_opfuncid((OpExpr *) expr);	/* rely on struct equivalence */
-		if (func_volatile(expr->opfuncid) != PROVOLATILE_IMMUTABLE)
 			return true;
 		/* else fall through to check args */
 	}
@@ -941,6 +945,15 @@ contain_volatile_functions_walker(Node *node, void *context)
 			return true;
 		/* else fall through to check args */
 	}
+	else if (IsA(node, NullIfExpr))
+	{
+		NullIfExpr *expr = (NullIfExpr *) node;
+
+		set_opfuncid((OpExpr *) expr);	/* rely on struct equivalence */
+		if (func_volatile(expr->opfuncid) == PROVOLATILE_VOLATILE)
+			return true;
+		/* else fall through to check args */
+	}
 	else if (IsA(node, ScalarArrayOpExpr))
 	{
 		ScalarArrayOpExpr *expr = (ScalarArrayOpExpr *) node;
@@ -975,15 +988,6 @@ contain_volatile_functions_walker(Node *node, void *context)
 
 		if (OidIsValid(expr->elemfuncid) &&
 			func_volatile(expr->elemfuncid) == PROVOLATILE_VOLATILE)
-			return true;
-		/* else fall through to check args */
-	}
-	else if (IsA(node, NullIfExpr))
-	{
-		NullIfExpr *expr = (NullIfExpr *) node;
-
-		set_opfuncid((OpExpr *) expr);	/* rely on struct equivalence */
-		if (func_volatile(expr->opfuncid) == PROVOLATILE_VOLATILE)
 			return true;
 		/* else fall through to check args */
 	}
@@ -1071,6 +1075,8 @@ contain_nonstrict_functions_walker(Node *node, void *context)
 		/* IS DISTINCT FROM is inherently non-strict */
 		return true;
 	}
+	if (IsA(node, NullIfExpr))
+		return true;
 	if (IsA(node, ScalarArrayOpExpr))
 	{
 		ScalarArrayOpExpr *expr = (ScalarArrayOpExpr *) node;
@@ -1118,8 +1124,6 @@ contain_nonstrict_functions_walker(Node *node, void *context)
 	if (IsA(node, MinMaxExpr))
 		return true;
 	if (IsA(node, XmlExpr))
-		return true;
-	if (IsA(node, NullIfExpr))
 		return true;
 	if (IsA(node, NullTest))
 		return true;
@@ -1874,6 +1878,7 @@ CommuteRowCompareExpr(RowCompareExpr *clause)
 	/*
 	 * Note: we need not change the opfamilies list; we assume any btree
 	 * opfamily containing an operator will also contain its commutator.
+	 * Collations don't change either.
 	 */
 
 	temp = clause->largs;
@@ -1986,7 +1991,8 @@ set_coercionform_dontcare_walker(Node *node, void *context)
  */
 static bool
 rowtype_field_matches(Oid rowtypeid, int fieldnum,
-					  Oid expectedtype, int32 expectedtypmod, Oid expectedcollation)
+					  Oid expectedtype, int32 expectedtypmod,
+					  Oid expectedcollation)
 {
 	TupleDesc	tupdesc;
 	Form_pg_attribute attr;
@@ -2144,12 +2150,12 @@ eval_const_expressions_mutator(Node *node,
 					else
 						pval = datumCopy(prm->value, typByVal, typLen);
 					cnst = makeConst(param->paramtype,
-											  param->paramtypmod,
-											  (int) typLen,
-											  pval,
-											  prm->isnull,
-											  typByVal);
-					cnst->constcollid = param->paramcollation;
+									 param->paramtypmod,
+									 (int) typLen,
+									 pval,
+									 prm->isnull,
+									 typByVal);
+					cnst->constcollid = param->paramcollid;
 					return (Node *) cnst;
 				}
 			}
@@ -2190,7 +2196,7 @@ eval_const_expressions_mutator(Node *node,
 		 */
 		simple = simplify_function(expr->funcid,
 								   expr->funcresulttype, exprTypmod(node),
-								   expr->collid,
+								   expr->inputcollid,
 								   &args,
 								   has_named_args, true, context);
 		if (simple)				/* successfully simplified it */
@@ -2207,8 +2213,9 @@ eval_const_expressions_mutator(Node *node,
 		newexpr->funcresulttype = expr->funcresulttype;
 		newexpr->funcretset = expr->funcretset;
 		newexpr->funcformat = expr->funcformat;
+		newexpr->funccollid = expr->funccollid;
+		newexpr->inputcollid = expr->inputcollid;
 		newexpr->args = args;
-		newexpr->collid = expr->collid;
 		newexpr->location = expr->location;
 		return (Node *) newexpr;
 	}
@@ -2240,7 +2247,7 @@ eval_const_expressions_mutator(Node *node,
 		 */
 		simple = simplify_function(expr->opfuncid,
 								   expr->opresulttype, -1,
-								   expr->collid,
+								   expr->inputcollid,
 								   &args,
 								   false, true, context);
 		if (simple)				/* successfully simplified it */
@@ -2269,8 +2276,9 @@ eval_const_expressions_mutator(Node *node,
 		newexpr->opfuncid = expr->opfuncid;
 		newexpr->opresulttype = expr->opresulttype;
 		newexpr->opretset = expr->opretset;
+		newexpr->opcollid = expr->opcollid;
+		newexpr->inputcollid = expr->inputcollid;
 		newexpr->args = args;
-		newexpr->collid = expr->collid;
 		newexpr->location = expr->location;
 		return (Node *) newexpr;
 	}
@@ -2335,7 +2343,7 @@ eval_const_expressions_mutator(Node *node,
 			 */
 			simple = simplify_function(expr->opfuncid,
 									   expr->opresulttype, -1,
-									   expr->collid,
+									   expr->inputcollid,
 									   &args,
 									   false, false, context);
 			if (simple)			/* successfully simplified it */
@@ -2363,8 +2371,9 @@ eval_const_expressions_mutator(Node *node,
 		newexpr->opfuncid = expr->opfuncid;
 		newexpr->opresulttype = expr->opresulttype;
 		newexpr->opretset = expr->opretset;
+		newexpr->opcollid = expr->opcollid;
+		newexpr->inputcollid = expr->inputcollid;
 		newexpr->args = args;
-		newexpr->collid = expr->collid;
 		newexpr->location = expr->location;
 		return (Node *) newexpr;
 	}
@@ -2473,6 +2482,7 @@ eval_const_expressions_mutator(Node *node,
 
 			con->consttype = relabel->resulttype;
 			con->consttypmod = relabel->resulttypmod;
+			con->constcollid = relabel->resultcollid;
 			return (Node *) con;
 		}
 		else
@@ -2482,6 +2492,7 @@ eval_const_expressions_mutator(Node *node,
 			newrelabel->arg = (Expr *) arg;
 			newrelabel->resulttype = relabel->resulttype;
 			newrelabel->resulttypmod = relabel->resulttypmod;
+			newrelabel->resultcollid = relabel->resultcollid;
 			newrelabel->relabelformat = relabel->relabelformat;
 			newrelabel->location = relabel->location;
 			return (Node *) newrelabel;
@@ -2511,12 +2522,16 @@ eval_const_expressions_mutator(Node *node,
 		 * then the result type's input function.  So, try to simplify it as
 		 * though it were a stack of two such function calls.  First we need
 		 * to know what the functions are.
+		 *
+		 * Note that the coercion functions are assumed not to care about
+		 * input collation, so we just pass InvalidOid for that.
 		 */
 		getTypeOutputInfo(exprType((Node *) arg), &outfunc, &outtypisvarlena);
 		getTypeInputInfo(expr->resulttype, &infunc, &intypioparam);
 
 		simple = simplify_function(outfunc,
-								   CSTRINGOID, -1, InvalidOid,
+								   CSTRINGOID, -1,
+								   InvalidOid,
 								   &args,
 								   false, true, context);
 		if (simple)				/* successfully simplified output fn */
@@ -2533,11 +2548,9 @@ eval_const_expressions_mutator(Node *node,
 										Int32GetDatum(-1),
 										false, true));
 
-			/* preserve collation of input expression */
 			simple = simplify_function(infunc,
-									   expr->resulttype,
-									   -1,
-									   exprCollation((Node *) arg),
+									   expr->resulttype, -1,
+									   InvalidOid,
 									   &args,
 									   false, true, context);
 			if (simple)			/* successfully simplified input fn */
@@ -2552,6 +2565,7 @@ eval_const_expressions_mutator(Node *node,
 		newexpr = makeNode(CoerceViaIO);
 		newexpr->arg = arg;
 		newexpr->resulttype = expr->resulttype;
+		newexpr->resultcollid = expr->resultcollid;
 		newexpr->coerceformat = expr->coerceformat;
 		newexpr->location = expr->location;
 		return (Node *) newexpr;
@@ -2574,6 +2588,7 @@ eval_const_expressions_mutator(Node *node,
 		newexpr->elemfuncid = expr->elemfuncid;
 		newexpr->resulttype = expr->resulttype;
 		newexpr->resulttypmod = expr->resulttypmod;
+		newexpr->resultcollid = expr->resultcollid;
 		newexpr->isExplicit = expr->isExplicit;
 		newexpr->coerceformat = expr->coerceformat;
 		newexpr->location = expr->location;
@@ -2596,20 +2611,16 @@ eval_const_expressions_mutator(Node *node,
 	{
 		/*
 		 * If we can simplify the input to a constant, then we don't need the
-		 * CollateExpr node anymore: just change the constcollid field of the
-		 * Const node.  Otherwise, must copy the CollateExpr node.
+		 * CollateExpr node at all: just change the constcollid field of the
+		 * Const node.  Otherwise, replace the CollateExpr with a RelabelType.
+		 * (We do that so as to improve uniformity of expression representation
+		 * and thus simplify comparison of expressions.)
 		 */
 		CollateExpr *collate = (CollateExpr *) node;
 		Node	   *arg;
 
 		arg = eval_const_expressions_mutator((Node *) collate->arg,
 											 context);
-
-		/*
-		 * If we find stacked CollateExprs, we can discard all but the top one.
-		 */
-		while (arg && IsA(arg, CollateExpr))
-			arg = (Node *) ((CollateExpr *) arg)->arg;
 
 		if (arg && IsA(arg, Const))
 		{
@@ -2618,14 +2629,27 @@ eval_const_expressions_mutator(Node *node,
 			con->constcollid = collate->collOid;
 			return (Node *) con;
 		}
+		else if (collate->collOid == exprCollation(arg))
+		{
+			/* Don't need a RelabelType either... */
+			return arg;
+		}
 		else
 		{
-			CollateExpr *newcollate = makeNode(CollateExpr);
+			RelabelType *relabel = makeNode(RelabelType);
 
-			newcollate->arg = (Expr *) arg;
-			newcollate->collOid = collate->collOid;
-			newcollate->location = collate->location;
-			return (Node *) newcollate;
+			relabel->resulttype = exprType(arg);
+			relabel->resulttypmod = exprTypmod(arg);
+			relabel->resultcollid = collate->collOid;
+			relabel->relabelformat = COERCE_DONTCARE;
+			relabel->location = collate->location;
+
+			/* Don't create stacked RelabelTypes */
+			while (arg && IsA(arg, RelabelType))
+				arg = (Node *) ((RelabelType *) arg)->arg;
+			relabel->arg = (Expr *) arg;
+
+			return (Node *) relabel;
 		}
 	}
 	if (IsA(node, CaseExpr))
@@ -2752,7 +2776,7 @@ eval_const_expressions_mutator(Node *node,
 		/* Otherwise we need a new CASE node */
 		newcase = makeNode(CaseExpr);
 		newcase->casetype = caseexpr->casetype;
-		newcase->casecollation = caseexpr->casecollation;
+		newcase->casecollid = caseexpr->casecollid;
 		newcase->arg = (Expr *) newarg;
 		newcase->args = newargs;
 		newcase->defresult = (Expr *) defresult;
@@ -2793,6 +2817,7 @@ eval_const_expressions_mutator(Node *node,
 
 		newarray = makeNode(ArrayExpr);
 		newarray->array_typeid = arrayexpr->array_typeid;
+		newarray->array_collid = arrayexpr->array_collid;
 		newarray->element_typeid = arrayexpr->element_typeid;
 		newarray->elements = newelems;
 		newarray->multidims = arrayexpr->multidims;
@@ -2845,7 +2870,7 @@ eval_const_expressions_mutator(Node *node,
 
 		newcoalesce = makeNode(CoalesceExpr);
 		newcoalesce->coalescetype = coalesceexpr->coalescetype;
-		newcoalesce->coalescecollation = coalesceexpr->coalescecollation;
+		newcoalesce->coalescecollid = coalesceexpr->coalescecollid;
 		newcoalesce->args = newargs;
 		newcoalesce->location = coalesceexpr->location;
 		return (Node *) newcoalesce;
@@ -2876,12 +2901,12 @@ eval_const_expressions_mutator(Node *node,
 									  fselect->fieldnum,
 									  fselect->resulttype,
 									  fselect->resulttypmod,
-									  fselect->resultcollation))
+									  fselect->resultcollid))
 				return (Node *) makeVar(((Var *) arg)->varno,
 										fselect->fieldnum,
 										fselect->resulttype,
 										fselect->resulttypmod,
-										fselect->resultcollation,
+										fselect->resultcollid,
 										((Var *) arg)->varlevelsup);
 		}
 		if (arg && IsA(arg, RowExpr))
@@ -2898,10 +2923,10 @@ eval_const_expressions_mutator(Node *node,
 										  fselect->fieldnum,
 										  fselect->resulttype,
 										  fselect->resulttypmod,
-										  fselect->resultcollation) &&
+										  fselect->resultcollid) &&
 					fselect->resulttype == exprType(fld) &&
 					fselect->resulttypmod == exprTypmod(fld) &&
-					fselect->resultcollation == exprCollation(fld))
+					fselect->resultcollid == exprCollation(fld))
 					return fld;
 			}
 		}
@@ -2910,7 +2935,7 @@ eval_const_expressions_mutator(Node *node,
 		newfselect->fieldnum = fselect->fieldnum;
 		newfselect->resulttype = fselect->resulttype;
 		newfselect->resulttypmod = fselect->resulttypmod;
-		newfselect->resultcollation = fselect->resultcollation;
+		newfselect->resultcollid = fselect->resultcollid;
 		return (Node *) newfselect;
 	}
 	if (IsA(node, NullTest))
@@ -3355,7 +3380,8 @@ simplify_boolean_equality(Oid opno, List *args)
  * (which might originally have been an operator; we don't care)
  *
  * Inputs are the function OID, actual result type OID (which is needed for
- * polymorphic functions) and typmod, and the pre-simplified argument list;
+ * polymorphic functions) and typmod, input collation to use for the function,
+ * the pre-simplified argument list, and some flags;
  * also the context data for eval_const_expressions.
  *
  * Returns a simplified expression if successful, or NULL if cannot
@@ -3368,7 +3394,8 @@ simplify_boolean_equality(Oid opno, List *args)
  * pass-by-reference, and it may get modified even if simplification fails.
  */
 static Expr *
-simplify_function(Oid funcid, Oid result_type, int32 result_typmod, Oid collid,
+simplify_function(Oid funcid, Oid result_type, int32 result_typmod,
+				  Oid input_collid,
 				  List **args,
 				  bool has_named_args,
 				  bool allow_inline,
@@ -3399,7 +3426,8 @@ simplify_function(Oid funcid, Oid result_type, int32 result_typmod, Oid collid,
 	else if (((Form_pg_proc) GETSTRUCT(func_tuple))->pronargs > list_length(*args))
 		*args = add_function_defaults(*args, result_type, func_tuple, context);
 
-	newexpr = evaluate_function(funcid, result_type, result_typmod, collid, *args,
+	newexpr = evaluate_function(funcid, result_type, result_typmod,
+								input_collid, *args,
 								func_tuple, context);
 
 	if (!newexpr && allow_inline)
@@ -3650,9 +3678,8 @@ recheck_cast_function_args(List *args, Oid result_type, HeapTuple func_tuple)
  * simplify the function.
  */
 static Expr *
-evaluate_function(Oid funcid, Oid result_type, int32 result_typmod, Oid collid,
-				  List *args,
-				  HeapTuple func_tuple,
+evaluate_function(Oid funcid, Oid result_type, int32 result_typmod,
+				  Oid input_collid, List *args, HeapTuple func_tuple,
 				  eval_const_expressions_context *context)
 {
 	Form_pg_proc funcform = (Form_pg_proc) GETSTRUCT(func_tuple);
@@ -3733,8 +3760,9 @@ evaluate_function(Oid funcid, Oid result_type, int32 result_typmod, Oid collid,
 	newexpr->funcresulttype = result_type;
 	newexpr->funcretset = false;
 	newexpr->funcformat = COERCE_DONTCARE;		/* doesn't matter */
+	newexpr->funccollid = InvalidOid;			/* doesn't matter */
+	newexpr->inputcollid = input_collid;
 	newexpr->args = args;
-	newexpr->collid = collid;
 	newexpr->location = -1;
 
 	return evaluate_expr((Expr *) newexpr, result_type, result_typmod);

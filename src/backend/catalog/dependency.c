@@ -1506,9 +1506,9 @@ find_expr_references_walker(Node *node,
 		add_object_address(OCLASS_TYPE, param->paramtype, 0,
 						   context->addrs);
 		/* and its collation, just as for Consts */
-		if (OidIsValid(param->paramcollation) &&
-			param->paramcollation != DEFAULT_COLLATION_OID)
-			add_object_address(OCLASS_COLLATION, param->paramcollation, 0,
+		if (OidIsValid(param->paramcollid) &&
+			param->paramcollid != DEFAULT_COLLATION_OID)
+			add_object_address(OCLASS_COLLATION, param->paramcollid, 0,
 							   context->addrs);
 	}
 	else if (IsA(node, FuncExpr))
@@ -1535,19 +1535,19 @@ find_expr_references_walker(Node *node,
 						   context->addrs);
 		/* fall through to examine arguments */
 	}
-	else if (IsA(node, ScalarArrayOpExpr))
-	{
-		ScalarArrayOpExpr *opexpr = (ScalarArrayOpExpr *) node;
-
-		add_object_address(OCLASS_OPERATOR, opexpr->opno, 0,
-						   context->addrs);
-		/* fall through to examine arguments */
-	}
 	else if (IsA(node, NullIfExpr))
 	{
 		NullIfExpr *nullifexpr = (NullIfExpr *) node;
 
 		add_object_address(OCLASS_OPERATOR, nullifexpr->opno, 0,
+						   context->addrs);
+		/* fall through to examine arguments */
+	}
+	else if (IsA(node, ScalarArrayOpExpr))
+	{
+		ScalarArrayOpExpr *opexpr = (ScalarArrayOpExpr *) node;
+
+		add_object_address(OCLASS_OPERATOR, opexpr->opno, 0,
 						   context->addrs);
 		/* fall through to examine arguments */
 	}
@@ -1579,6 +1579,11 @@ find_expr_references_walker(Node *node,
 		/* since there is no function dependency, need to depend on type */
 		add_object_address(OCLASS_TYPE, relab->resulttype, 0,
 						   context->addrs);
+		/* the collation might not be referenced anywhere else, either */
+		if (OidIsValid(relab->resultcollid) &&
+			relab->resultcollid != DEFAULT_COLLATION_OID)
+			add_object_address(OCLASS_COLLATION, relab->resultcollid, 0,
+							   context->addrs);
 	}
 	else if (IsA(node, CoerceViaIO))
 	{

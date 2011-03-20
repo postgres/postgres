@@ -87,6 +87,4 @@ extern CoercionPathType find_coercion_pathway(Oid targetTypeId,
 extern CoercionPathType find_typmod_coercion_function(Oid typeId,
 							  Oid *funcid);
 
-extern Oid select_common_collation(ParseState *pstate, List *exprs, bool none_ok);
-
 #endif   /* PARSE_COERCE_H */

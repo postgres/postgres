@@ -174,7 +174,7 @@ _equalParam(Param *a, Param *b)
 	COMPARE_SCALAR_FIELD(paramid);
 	COMPARE_SCALAR_FIELD(paramtype);
 	COMPARE_SCALAR_FIELD(paramtypmod);
-	COMPARE_SCALAR_FIELD(paramcollation);
+	COMPARE_SCALAR_FIELD(paramcollid);
 	COMPARE_LOCATION_FIELD(location);
 
 	return true;
@@ -185,12 +185,13 @@ _equalAggref(Aggref *a, Aggref *b)
 {
 	COMPARE_SCALAR_FIELD(aggfnoid);
 	COMPARE_SCALAR_FIELD(aggtype);
+	COMPARE_SCALAR_FIELD(aggcollid);
+	COMPARE_SCALAR_FIELD(inputcollid);
 	COMPARE_NODE_FIELD(args);
 	COMPARE_NODE_FIELD(aggorder);
 	COMPARE_NODE_FIELD(aggdistinct);
 	COMPARE_SCALAR_FIELD(aggstar);
 	COMPARE_SCALAR_FIELD(agglevelsup);
-	COMPARE_SCALAR_FIELD(collid);
 	COMPARE_LOCATION_FIELD(location);
 
 	return true;
@@ -201,11 +202,12 @@ _equalWindowFunc(WindowFunc *a, WindowFunc *b)
 {
 	COMPARE_SCALAR_FIELD(winfnoid);
 	COMPARE_SCALAR_FIELD(wintype);
+	COMPARE_SCALAR_FIELD(wincollid);
+	COMPARE_SCALAR_FIELD(inputcollid);
 	COMPARE_NODE_FIELD(args);
 	COMPARE_SCALAR_FIELD(winref);
 	COMPARE_SCALAR_FIELD(winstar);
 	COMPARE_SCALAR_FIELD(winagg);
-	COMPARE_SCALAR_FIELD(collid);
 	COMPARE_LOCATION_FIELD(location);
 
 	return true;
@@ -242,8 +244,9 @@ _equalFuncExpr(FuncExpr *a, FuncExpr *b)
 		b->funcformat != COERCE_DONTCARE)
 		return false;
 
+	COMPARE_SCALAR_FIELD(funccollid);
+	COMPARE_SCALAR_FIELD(inputcollid);
 	COMPARE_NODE_FIELD(args);
-	COMPARE_SCALAR_FIELD(collid);
 	COMPARE_LOCATION_FIELD(location);
 
 	return true;
@@ -278,8 +281,9 @@ _equalOpExpr(OpExpr *a, OpExpr *b)
 
 	COMPARE_SCALAR_FIELD(opresulttype);
 	COMPARE_SCALAR_FIELD(opretset);
+	COMPARE_SCALAR_FIELD(opcollid);
+	COMPARE_SCALAR_FIELD(inputcollid);
 	COMPARE_NODE_FIELD(args);
-	COMPARE_SCALAR_FIELD(collid);
 	COMPARE_LOCATION_FIELD(location);
 
 	return true;
@@ -303,8 +307,35 @@ _equalDistinctExpr(DistinctExpr *a, DistinctExpr *b)
 
 	COMPARE_SCALAR_FIELD(opresulttype);
 	COMPARE_SCALAR_FIELD(opretset);
+	COMPARE_SCALAR_FIELD(opcollid);
+	COMPARE_SCALAR_FIELD(inputcollid);
 	COMPARE_NODE_FIELD(args);
-	COMPARE_SCALAR_FIELD(collid);
+	COMPARE_LOCATION_FIELD(location);
+
+	return true;
+}
+
+static bool
+_equalNullIfExpr(NullIfExpr *a, NullIfExpr *b)
+{
+	COMPARE_SCALAR_FIELD(opno);
+
+	/*
+	 * Special-case opfuncid: it is allowable for it to differ if one node
+	 * contains zero and the other doesn't.  This just means that the one node
+	 * isn't as far along in the parse/plan pipeline and hasn't had the
+	 * opfuncid cache filled yet.
+	 */
+	if (a->opfuncid != b->opfuncid &&
+		a->opfuncid != 0 &&
+		b->opfuncid != 0)
+		return false;
+
+	COMPARE_SCALAR_FIELD(opresulttype);
+	COMPARE_SCALAR_FIELD(opretset);
+	COMPARE_SCALAR_FIELD(opcollid);
+	COMPARE_SCALAR_FIELD(inputcollid);
+	COMPARE_NODE_FIELD(args);
 	COMPARE_LOCATION_FIELD(location);
 
 	return true;
@@ -327,8 +358,8 @@ _equalScalarArrayOpExpr(ScalarArrayOpExpr *a, ScalarArrayOpExpr *b)
 		return false;
 
 	COMPARE_SCALAR_FIELD(useOr);
+	COMPARE_SCALAR_FIELD(inputcollid);
 	COMPARE_NODE_FIELD(args);
-	COMPARE_SCALAR_FIELD(collid);
 	COMPARE_LOCATION_FIELD(location);
 
 	return true;
@@ -393,7 +424,7 @@ _equalFieldSelect(FieldSelect *a, FieldSelect *b)
 	COMPARE_SCALAR_FIELD(fieldnum);
 	COMPARE_SCALAR_FIELD(resulttype);
 	COMPARE_SCALAR_FIELD(resulttypmod);
-	COMPARE_SCALAR_FIELD(resultcollation);
+	COMPARE_SCALAR_FIELD(resultcollid);
 
 	return true;
 }
@@ -415,6 +446,7 @@ _equalRelabelType(RelabelType *a, RelabelType *b)
 	COMPARE_NODE_FIELD(arg);
 	COMPARE_SCALAR_FIELD(resulttype);
 	COMPARE_SCALAR_FIELD(resulttypmod);
+	COMPARE_SCALAR_FIELD(resultcollid);
 
 	/*
 	 * Special-case COERCE_DONTCARE, so that planner can build coercion nodes
@@ -435,6 +467,7 @@ _equalCoerceViaIO(CoerceViaIO *a, CoerceViaIO *b)
 {
 	COMPARE_NODE_FIELD(arg);
 	COMPARE_SCALAR_FIELD(resulttype);
+	COMPARE_SCALAR_FIELD(resultcollid);
 
 	/*
 	 * Special-case COERCE_DONTCARE, so that planner can build coercion nodes
@@ -457,6 +490,7 @@ _equalArrayCoerceExpr(ArrayCoerceExpr *a, ArrayCoerceExpr *b)
 	COMPARE_SCALAR_FIELD(elemfuncid);
 	COMPARE_SCALAR_FIELD(resulttype);
 	COMPARE_SCALAR_FIELD(resulttypmod);
+	COMPARE_SCALAR_FIELD(resultcollid);
 	COMPARE_SCALAR_FIELD(isExplicit);
 
 	/*
@@ -507,7 +541,7 @@ static bool
 _equalCaseExpr(CaseExpr *a, CaseExpr *b)
 {
 	COMPARE_SCALAR_FIELD(casetype);
-	COMPARE_SCALAR_FIELD(casecollation);
+	COMPARE_SCALAR_FIELD(casecollid);
 	COMPARE_NODE_FIELD(arg);
 	COMPARE_NODE_FIELD(args);
 	COMPARE_NODE_FIELD(defresult);
@@ -540,6 +574,7 @@ static bool
 _equalArrayExpr(ArrayExpr *a, ArrayExpr *b)
 {
 	COMPARE_SCALAR_FIELD(array_typeid);
+	COMPARE_SCALAR_FIELD(array_collid);
 	COMPARE_SCALAR_FIELD(element_typeid);
 	COMPARE_NODE_FIELD(elements);
 	COMPARE_SCALAR_FIELD(multidims);
@@ -575,7 +610,7 @@ _equalRowCompareExpr(RowCompareExpr *a, RowCompareExpr *b)
 	COMPARE_SCALAR_FIELD(rctype);
 	COMPARE_NODE_FIELD(opnos);
 	COMPARE_NODE_FIELD(opfamilies);
-	COMPARE_NODE_FIELD(collids);
+	COMPARE_NODE_FIELD(inputcollids);
 	COMPARE_NODE_FIELD(largs);
 	COMPARE_NODE_FIELD(rargs);
 
@@ -586,7 +621,7 @@ static bool
 _equalCoalesceExpr(CoalesceExpr *a, CoalesceExpr *b)
 {
 	COMPARE_SCALAR_FIELD(coalescetype);
-	COMPARE_SCALAR_FIELD(coalescecollation);
+	COMPARE_SCALAR_FIELD(coalescecollid);
 	COMPARE_NODE_FIELD(args);
 	COMPARE_LOCATION_FIELD(location);
 
@@ -597,9 +632,10 @@ static bool
 _equalMinMaxExpr(MinMaxExpr *a, MinMaxExpr *b)
 {
 	COMPARE_SCALAR_FIELD(minmaxtype);
+	COMPARE_SCALAR_FIELD(minmaxcollid);
+	COMPARE_SCALAR_FIELD(inputcollid);
 	COMPARE_SCALAR_FIELD(op);
 	COMPARE_NODE_FIELD(args);
-	COMPARE_SCALAR_FIELD(collid);
 	COMPARE_LOCATION_FIELD(location);
 
 	return true;
@@ -616,30 +652,6 @@ _equalXmlExpr(XmlExpr *a, XmlExpr *b)
 	COMPARE_SCALAR_FIELD(xmloption);
 	COMPARE_SCALAR_FIELD(type);
 	COMPARE_SCALAR_FIELD(typmod);
-	COMPARE_LOCATION_FIELD(location);
-
-	return true;
-}
-
-static bool
-_equalNullIfExpr(NullIfExpr *a, NullIfExpr *b)
-{
-	COMPARE_SCALAR_FIELD(opno);
-
-	/*
-	 * Special-case opfuncid: it is allowable for it to differ if one node
-	 * contains zero and the other doesn't.  This just means that the one node
-	 * isn't as far along in the parse/plan pipeline and hasn't had the
-	 * opfuncid cache filled yet.
-	 */
-	if (a->opfuncid != b->opfuncid &&
-		a->opfuncid != 0 &&
-		b->opfuncid != 0)
-		return false;
-
-	COMPARE_SCALAR_FIELD(opresulttype);
-	COMPARE_SCALAR_FIELD(opretset);
-	COMPARE_NODE_FIELD(args);
 	COMPARE_LOCATION_FIELD(location);
 
 	return true;
@@ -670,6 +682,7 @@ _equalCoerceToDomain(CoerceToDomain *a, CoerceToDomain *b)
 	COMPARE_NODE_FIELD(arg);
 	COMPARE_SCALAR_FIELD(resulttype);
 	COMPARE_SCALAR_FIELD(resulttypmod);
+	COMPARE_SCALAR_FIELD(resultcollid);
 
 	/*
 	 * Special-case COERCE_DONTCARE, so that planner can build coercion nodes
@@ -690,6 +703,7 @@ _equalCoerceToDomainValue(CoerceToDomainValue *a, CoerceToDomainValue *b)
 {
 	COMPARE_SCALAR_FIELD(typeId);
 	COMPARE_SCALAR_FIELD(typeMod);
+	COMPARE_SCALAR_FIELD(collation);
 	COMPARE_LOCATION_FIELD(location);
 
 	return true;
@@ -700,7 +714,7 @@ _equalSetToDefault(SetToDefault *a, SetToDefault *b)
 {
 	COMPARE_SCALAR_FIELD(typeId);
 	COMPARE_SCALAR_FIELD(typeMod);
-	COMPARE_SCALAR_FIELD(collid);
+	COMPARE_SCALAR_FIELD(collation);
 	COMPARE_LOCATION_FIELD(location);
 
 	return true;
@@ -787,7 +801,6 @@ _equalPathKey(PathKey *a, PathKey *b)
 	if (a_eclass != b_eclass)
 		return false;
 	COMPARE_SCALAR_FIELD(pk_opfamily);
-	COMPARE_SCALAR_FIELD(pk_collation);
 	COMPARE_SCALAR_FIELD(pk_strategy);
 	COMPARE_SCALAR_FIELD(pk_nulls_first);
 
@@ -2559,6 +2572,9 @@ equal(void *a, void *b)
 		case T_DistinctExpr:
 			retval = _equalDistinctExpr(a, b);
 			break;
+		case T_NullIfExpr:
+			retval = _equalNullIfExpr(a, b);
+			break;
 		case T_ScalarArrayOpExpr:
 			retval = _equalScalarArrayOpExpr(a, b);
 			break;
@@ -2621,9 +2637,6 @@ equal(void *a, void *b)
 			break;
 		case T_XmlExpr:
 			retval = _equalXmlExpr(a, b);
-			break;
-		case T_NullIfExpr:
-			retval = _equalNullIfExpr(a, b);
 			break;
 		case T_NullTest:
 			retval = _equalNullTest(a, b);

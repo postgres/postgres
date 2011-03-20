@@ -61,7 +61,7 @@ initGinState(GinState *state, Relation index)
 		fmgr_info_copy(&(state->compareFn[i]),
 					   index_getprocinfo(index, i + 1, GIN_COMPARE_PROC),
 					   CurrentMemoryContext);
-		fmgr_info_collation(get_typcollation(index->rd_att->attrs[i]->atttypid),
+		fmgr_info_set_collation(get_typcollation(index->rd_att->attrs[i]->atttypid),
 							&(state->compareFn[i]));
 		fmgr_info_copy(&(state->extractValueFn[i]),
 					   index_getprocinfo(index, i + 1, GIN_EXTRACTVALUE_PROC),

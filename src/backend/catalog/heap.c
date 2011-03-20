@@ -58,6 +58,7 @@
 #include "nodes/nodeFuncs.h"
 #include "optimizer/var.h"
 #include "parser/parse_coerce.h"
+#include "parser/parse_collate.h"
 #include "parser/parse_expr.h"
 #include "parser/parse_relation.h"
 #include "storage/bufmgr.h"
@@ -2387,6 +2388,11 @@ cookDefault(ParseState *pstate,
 			   errhint("You will need to rewrite or cast the expression.")));
 	}
 
+	/*
+	 * Finally, take care of collations in the finished expression.
+	 */
+	assign_expr_collations(pstate, expr);
+
 	return expr;
 }
 
@@ -2413,6 +2419,11 @@ cookConstraint(ParseState *pstate,
 	 * Make sure it yields a boolean result.
 	 */
 	expr = coerce_to_boolean(pstate, expr, "CHECK");
+
+	/*
+	 * Take care of collations.
+	 */
+	assign_expr_collations(pstate, expr);
 
 	/*
 	 * Make sure no outside relations are referred to.

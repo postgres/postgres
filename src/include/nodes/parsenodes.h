@@ -787,7 +787,12 @@ typedef struct RangeTblEntry
  *
  * In an ORDER BY item, all fields must be valid.  (The eqop isn't essential
  * here, but it's cheap to get it along with the sortop, and requiring it
- * to be valid eases comparisons to grouping items.)
+ * to be valid eases comparisons to grouping items.)  Note that this isn't
+ * actually enough information to determine an ordering: if the sortop is
+ * collation-sensitive, a collation OID is needed too.  We don't store the
+ * collation in SortGroupClause because it's not available at the time the
+ * parser builds the SortGroupClause; instead, consult the exposed collation
+ * of the referenced targetlist expression to find out what it is.
  *
  * In a grouping item, eqop must be valid.	If the eqop is a btree equality
  * operator, then sortop should be set to a compatible ordering operator.

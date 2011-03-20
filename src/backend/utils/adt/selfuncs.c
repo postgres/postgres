@@ -285,7 +285,7 @@ var_eq_const(VariableStatData *vardata, Oid operator,
 			FmgrInfo	eqproc;
 
 			fmgr_info(get_opcode(operator), &eqproc);
-			fmgr_info_collation(DEFAULT_COLLATION_OID, &eqproc);
+			fmgr_info_set_collation(DEFAULT_COLLATION_OID, &eqproc);
 
 			for (i = 0; i < nvalues; i++)
 			{
@@ -515,7 +515,7 @@ scalarineqsel(PlannerInfo *root, Oid operator, bool isgt,
 	stats = (Form_pg_statistic) GETSTRUCT(vardata->statsTuple);
 
 	fmgr_info(get_opcode(operator), &opproc);
-	fmgr_info_collation(DEFAULT_COLLATION_OID, &opproc);
+	fmgr_info_set_collation(DEFAULT_COLLATION_OID, &opproc);
 
 	/*
 	 * If we have most-common-values info, add up the fractions of the MCV
@@ -1252,7 +1252,7 @@ patternsel(PG_FUNCTION_ARGS, Pattern_Type ptype, bool negate)
 
 		/* Try to use the histogram entries to get selectivity */
 		fmgr_info(get_opcode(operator), &opproc);
-		fmgr_info_collation(DEFAULT_COLLATION_OID, &opproc);
+		fmgr_info_set_collation(DEFAULT_COLLATION_OID, &opproc);
 
 		selec = histogram_selectivity(&vardata, &opproc, constval, true,
 									  10, 1, &hist_size);
@@ -1701,7 +1701,7 @@ scalararraysel(PlannerInfo *root,
 	if (!oprsel)
 		return (Selectivity) 0.5;
 	fmgr_info(oprsel, &oprselproc);
-	fmgr_info_collation(DEFAULT_COLLATION_OID, &oprselproc);
+	fmgr_info_set_collation(DEFAULT_COLLATION_OID, &oprselproc);
 
 	/* deconstruct the expression */
 	Assert(list_length(clause->args) == 2);
@@ -1839,6 +1839,7 @@ scalararraysel(PlannerInfo *root,
 		dummyexpr = makeNode(CaseTestExpr);
 		dummyexpr->typeId = nominal_element_type;
 		dummyexpr->typeMod = -1;
+		dummyexpr->collation = clause->inputcollid;
 		args = list_make2(leftop, dummyexpr);
 		if (is_join_clause)
 			s2 = DatumGetFloat8(FunctionCall5(&oprselproc,
@@ -2118,7 +2119,7 @@ eqjoinsel_inner(Oid operator,
 					nmatches;
 
 		fmgr_info(get_opcode(operator), &eqproc);
-		fmgr_info_collation(DEFAULT_COLLATION_OID, &eqproc);
+		fmgr_info_set_collation(DEFAULT_COLLATION_OID, &eqproc);
 		hasmatch1 = (bool *) palloc0(nvalues1 * sizeof(bool));
 		hasmatch2 = (bool *) palloc0(nvalues2 * sizeof(bool));
 
@@ -2341,7 +2342,7 @@ eqjoinsel_semi(Oid operator,
 					nmatches;
 
 		fmgr_info(get_opcode(operator), &eqproc);
-		fmgr_info_collation(DEFAULT_COLLATION_OID, &eqproc);
+		fmgr_info_set_collation(DEFAULT_COLLATION_OID, &eqproc);
 		hasmatch1 = (bool *) palloc0(nvalues1 * sizeof(bool));
 		hasmatch2 = (bool *) palloc0(nvalues2 * sizeof(bool));
 
@@ -4484,7 +4485,7 @@ get_variable_range(PlannerInfo *root, VariableStatData *vardata, Oid sortop,
 		FmgrInfo	opproc;
 
 		fmgr_info(get_opcode(sortop), &opproc);
-		fmgr_info_collation(DEFAULT_COLLATION_OID, &opproc);
+		fmgr_info_set_collation(DEFAULT_COLLATION_OID, &opproc);
 
 		for (i = 0; i < nvalues; i++)
 		{
@@ -5111,7 +5112,7 @@ prefix_selectivity(PlannerInfo *root, VariableStatData *vardata,
 	if (cmpopr == InvalidOid)
 		elog(ERROR, "no >= operator for opfamily %u", opfamily);
 	fmgr_info(get_opcode(cmpopr), &opproc);
-	fmgr_info_collation(DEFAULT_COLLATION_OID, &opproc);
+	fmgr_info_set_collation(DEFAULT_COLLATION_OID, &opproc);
 
 	prefixsel = ineq_histogram_selectivity(root, vardata, &opproc, true,
 										   prefixcon->constvalue,
@@ -5133,7 +5134,7 @@ prefix_selectivity(PlannerInfo *root, VariableStatData *vardata,
 	if (cmpopr == InvalidOid)
 		elog(ERROR, "no < operator for opfamily %u", opfamily);
 	fmgr_info(get_opcode(cmpopr), &opproc);
-	fmgr_info_collation(DEFAULT_COLLATION_OID, &opproc);
+	fmgr_info_set_collation(DEFAULT_COLLATION_OID, &opproc);
 
 	greaterstrcon = make_greater_string(prefixcon, &opproc);
 	if (greaterstrcon)

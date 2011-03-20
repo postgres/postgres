@@ -1103,7 +1103,7 @@ _copyParam(Param *from)
 	COPY_SCALAR_FIELD(paramid);
 	COPY_SCALAR_FIELD(paramtype);
 	COPY_SCALAR_FIELD(paramtypmod);
-	COPY_SCALAR_FIELD(paramcollation);
+	COPY_SCALAR_FIELD(paramcollid);
 	COPY_LOCATION_FIELD(location);
 
 	return newnode;
@@ -1119,12 +1119,13 @@ _copyAggref(Aggref *from)
 
 	COPY_SCALAR_FIELD(aggfnoid);
 	COPY_SCALAR_FIELD(aggtype);
+	COPY_SCALAR_FIELD(aggcollid);
+	COPY_SCALAR_FIELD(inputcollid);
 	COPY_NODE_FIELD(args);
 	COPY_NODE_FIELD(aggorder);
 	COPY_NODE_FIELD(aggdistinct);
 	COPY_SCALAR_FIELD(aggstar);
 	COPY_SCALAR_FIELD(agglevelsup);
-	COPY_SCALAR_FIELD(collid);
 	COPY_LOCATION_FIELD(location);
 
 	return newnode;
@@ -1140,11 +1141,12 @@ _copyWindowFunc(WindowFunc *from)
 
 	COPY_SCALAR_FIELD(winfnoid);
 	COPY_SCALAR_FIELD(wintype);
+	COPY_SCALAR_FIELD(wincollid);
+	COPY_SCALAR_FIELD(inputcollid);
 	COPY_NODE_FIELD(args);
 	COPY_SCALAR_FIELD(winref);
 	COPY_SCALAR_FIELD(winstar);
 	COPY_SCALAR_FIELD(winagg);
-	COPY_SCALAR_FIELD(collid);
 	COPY_LOCATION_FIELD(location);
 
 	return newnode;
@@ -1182,8 +1184,9 @@ _copyFuncExpr(FuncExpr *from)
 	COPY_SCALAR_FIELD(funcresulttype);
 	COPY_SCALAR_FIELD(funcretset);
 	COPY_SCALAR_FIELD(funcformat);
+	COPY_SCALAR_FIELD(funccollid);
+	COPY_SCALAR_FIELD(inputcollid);
 	COPY_NODE_FIELD(args);
-	COPY_SCALAR_FIELD(collid);
 	COPY_LOCATION_FIELD(location);
 
 	return newnode;
@@ -1217,8 +1220,9 @@ _copyOpExpr(OpExpr *from)
 	COPY_SCALAR_FIELD(opfuncid);
 	COPY_SCALAR_FIELD(opresulttype);
 	COPY_SCALAR_FIELD(opretset);
+	COPY_SCALAR_FIELD(opcollid);
+	COPY_SCALAR_FIELD(inputcollid);
 	COPY_NODE_FIELD(args);
-	COPY_SCALAR_FIELD(collid);
 	COPY_LOCATION_FIELD(location);
 
 	return newnode;
@@ -1236,8 +1240,29 @@ _copyDistinctExpr(DistinctExpr *from)
 	COPY_SCALAR_FIELD(opfuncid);
 	COPY_SCALAR_FIELD(opresulttype);
 	COPY_SCALAR_FIELD(opretset);
+	COPY_SCALAR_FIELD(opcollid);
+	COPY_SCALAR_FIELD(inputcollid);
 	COPY_NODE_FIELD(args);
-	COPY_SCALAR_FIELD(collid);
+	COPY_LOCATION_FIELD(location);
+
+	return newnode;
+}
+
+/*
+ * _copyNullIfExpr (same as OpExpr)
+ */
+static NullIfExpr *
+_copyNullIfExpr(NullIfExpr *from)
+{
+	NullIfExpr *newnode = makeNode(NullIfExpr);
+
+	COPY_SCALAR_FIELD(opno);
+	COPY_SCALAR_FIELD(opfuncid);
+	COPY_SCALAR_FIELD(opresulttype);
+	COPY_SCALAR_FIELD(opretset);
+	COPY_SCALAR_FIELD(opcollid);
+	COPY_SCALAR_FIELD(inputcollid);
+	COPY_NODE_FIELD(args);
 	COPY_LOCATION_FIELD(location);
 
 	return newnode;
@@ -1254,8 +1279,8 @@ _copyScalarArrayOpExpr(ScalarArrayOpExpr *from)
 	COPY_SCALAR_FIELD(opno);
 	COPY_SCALAR_FIELD(opfuncid);
 	COPY_SCALAR_FIELD(useOr);
+	COPY_SCALAR_FIELD(inputcollid);
 	COPY_NODE_FIELD(args);
-	COPY_SCALAR_FIELD(collid);
 	COPY_LOCATION_FIELD(location);
 
 	return newnode;
@@ -1345,7 +1370,7 @@ _copyFieldSelect(FieldSelect *from)
 	COPY_SCALAR_FIELD(fieldnum);
 	COPY_SCALAR_FIELD(resulttype);
 	COPY_SCALAR_FIELD(resulttypmod);
-	COPY_SCALAR_FIELD(resultcollation);
+	COPY_SCALAR_FIELD(resultcollid);
 
 	return newnode;
 }
@@ -1377,6 +1402,7 @@ _copyRelabelType(RelabelType *from)
 	COPY_NODE_FIELD(arg);
 	COPY_SCALAR_FIELD(resulttype);
 	COPY_SCALAR_FIELD(resulttypmod);
+	COPY_SCALAR_FIELD(resultcollid);
 	COPY_SCALAR_FIELD(relabelformat);
 	COPY_LOCATION_FIELD(location);
 
@@ -1393,6 +1419,7 @@ _copyCoerceViaIO(CoerceViaIO *from)
 
 	COPY_NODE_FIELD(arg);
 	COPY_SCALAR_FIELD(resulttype);
+	COPY_SCALAR_FIELD(resultcollid);
 	COPY_SCALAR_FIELD(coerceformat);
 	COPY_LOCATION_FIELD(location);
 
@@ -1411,6 +1438,7 @@ _copyArrayCoerceExpr(ArrayCoerceExpr *from)
 	COPY_SCALAR_FIELD(elemfuncid);
 	COPY_SCALAR_FIELD(resulttype);
 	COPY_SCALAR_FIELD(resulttypmod);
+	COPY_SCALAR_FIELD(resultcollid);
 	COPY_SCALAR_FIELD(isExplicit);
 	COPY_SCALAR_FIELD(coerceformat);
 	COPY_LOCATION_FIELD(location);
@@ -1458,7 +1486,7 @@ _copyCaseExpr(CaseExpr *from)
 	CaseExpr   *newnode = makeNode(CaseExpr);
 
 	COPY_SCALAR_FIELD(casetype);
-	COPY_SCALAR_FIELD(casecollation);
+	COPY_SCALAR_FIELD(casecollid);
 	COPY_NODE_FIELD(arg);
 	COPY_NODE_FIELD(args);
 	COPY_NODE_FIELD(defresult);
@@ -1506,6 +1534,7 @@ _copyArrayExpr(ArrayExpr *from)
 	ArrayExpr  *newnode = makeNode(ArrayExpr);
 
 	COPY_SCALAR_FIELD(array_typeid);
+	COPY_SCALAR_FIELD(array_collid);
 	COPY_SCALAR_FIELD(element_typeid);
 	COPY_NODE_FIELD(elements);
 	COPY_SCALAR_FIELD(multidims);
@@ -1542,7 +1571,7 @@ _copyRowCompareExpr(RowCompareExpr *from)
 	COPY_SCALAR_FIELD(rctype);
 	COPY_NODE_FIELD(opnos);
 	COPY_NODE_FIELD(opfamilies);
-	COPY_NODE_FIELD(collids);
+	COPY_NODE_FIELD(inputcollids);
 	COPY_NODE_FIELD(largs);
 	COPY_NODE_FIELD(rargs);
 
@@ -1558,7 +1587,7 @@ _copyCoalesceExpr(CoalesceExpr *from)
 	CoalesceExpr *newnode = makeNode(CoalesceExpr);
 
 	COPY_SCALAR_FIELD(coalescetype);
-	COPY_SCALAR_FIELD(coalescecollation);
+	COPY_SCALAR_FIELD(coalescecollid);
 	COPY_NODE_FIELD(args);
 	COPY_LOCATION_FIELD(location);
 
@@ -1574,9 +1603,10 @@ _copyMinMaxExpr(MinMaxExpr *from)
 	MinMaxExpr *newnode = makeNode(MinMaxExpr);
 
 	COPY_SCALAR_FIELD(minmaxtype);
+	COPY_SCALAR_FIELD(minmaxcollid);
+	COPY_SCALAR_FIELD(inputcollid);
 	COPY_SCALAR_FIELD(op);
 	COPY_NODE_FIELD(args);
-	COPY_SCALAR_FIELD(collid);
 	COPY_LOCATION_FIELD(location);
 
 	return newnode;
@@ -1598,24 +1628,6 @@ _copyXmlExpr(XmlExpr *from)
 	COPY_SCALAR_FIELD(xmloption);
 	COPY_SCALAR_FIELD(type);
 	COPY_SCALAR_FIELD(typmod);
-	COPY_LOCATION_FIELD(location);
-
-	return newnode;
-}
-
-/*
- * _copyNullIfExpr (same as OpExpr)
- */
-static NullIfExpr *
-_copyNullIfExpr(NullIfExpr *from)
-{
-	NullIfExpr *newnode = makeNode(NullIfExpr);
-
-	COPY_SCALAR_FIELD(opno);
-	COPY_SCALAR_FIELD(opfuncid);
-	COPY_SCALAR_FIELD(opresulttype);
-	COPY_SCALAR_FIELD(opretset);
-	COPY_NODE_FIELD(args);
 	COPY_LOCATION_FIELD(location);
 
 	return newnode;
@@ -1661,6 +1673,7 @@ _copyCoerceToDomain(CoerceToDomain *from)
 	COPY_NODE_FIELD(arg);
 	COPY_SCALAR_FIELD(resulttype);
 	COPY_SCALAR_FIELD(resulttypmod);
+	COPY_SCALAR_FIELD(resultcollid);
 	COPY_SCALAR_FIELD(coercionformat);
 	COPY_LOCATION_FIELD(location);
 
@@ -1677,6 +1690,7 @@ _copyCoerceToDomainValue(CoerceToDomainValue *from)
 
 	COPY_SCALAR_FIELD(typeId);
 	COPY_SCALAR_FIELD(typeMod);
+	COPY_SCALAR_FIELD(collation);
 	COPY_LOCATION_FIELD(location);
 
 	return newnode;
@@ -1692,7 +1706,7 @@ _copySetToDefault(SetToDefault *from)
 
 	COPY_SCALAR_FIELD(typeId);
 	COPY_SCALAR_FIELD(typeMod);
-	COPY_SCALAR_FIELD(collid);
+	COPY_SCALAR_FIELD(collation);
 	COPY_LOCATION_FIELD(location);
 
 	return newnode;
@@ -1798,7 +1812,6 @@ _copyPathKey(PathKey *from)
 	/* EquivalenceClasses are never moved, so just shallow-copy the pointer */
 	COPY_SCALAR_FIELD(pk_eclass);
 	COPY_SCALAR_FIELD(pk_opfamily);
-	COPY_SCALAR_FIELD(pk_collation);
 	COPY_SCALAR_FIELD(pk_strategy);
 	COPY_SCALAR_FIELD(pk_nulls_first);
 
@@ -3998,6 +4011,9 @@ copyObject(void *from)
 		case T_DistinctExpr:
 			retval = _copyDistinctExpr(from);
 			break;
+		case T_NullIfExpr:
+			retval = _copyNullIfExpr(from);
+			break;
 		case T_ScalarArrayOpExpr:
 			retval = _copyScalarArrayOpExpr(from);
 			break;
@@ -4060,9 +4076,6 @@ copyObject(void *from)
 			break;
 		case T_XmlExpr:
 			retval = _copyXmlExpr(from);
-			break;
-		case T_NullIfExpr:
-			retval = _copyNullIfExpr(from);
 			break;
 		case T_NullTest:
 			retval = _copyNullTest(from);

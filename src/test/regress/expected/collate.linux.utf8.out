@@ -107,11 +107,11 @@ SELECT * FROM collate_test1 WHERE b COLLATE "C" >= 'bbc' COLLATE "C";
 
 SELECT * FROM collate_test1 WHERE b COLLATE "C" >= 'bbc' COLLATE "en_US.utf8";
 ERROR:  collation mismatch between explicit collations "C" and "en_US.utf8"
-LINE 1: ...ELECT * FROM collate_test1 WHERE b COLLATE "C" >= 'bbc' COLL...
+LINE 1: ...* FROM collate_test1 WHERE b COLLATE "C" >= 'bbc' COLLATE "e...
                                                              ^
 SELECT * FROM collate_test1 WHERE b COLLATE "C" >= 'bbc' COLLATE "en_US";
 ERROR:  collation mismatch between explicit collations "C" and "en_US"
-LINE 1: ...ELECT * FROM collate_test1 WHERE b COLLATE "C" >= 'bbc' COLL...
+LINE 1: ...* FROM collate_test1 WHERE b COLLATE "C" >= 'bbc' COLLATE "e...
                                                              ^
 CREATE DOMAIN testdomain_sv AS text COLLATE "sv_SE.utf8";
 CREATE DOMAIN testdomain_i AS int COLLATE "sv_SE.utf8"; -- fails
@@ -586,10 +586,7 @@ SELECT a, b FROM collate_test3 EXCEPT SELECT a, b FROM collate_test3 WHERE a < 2
 (3 rows)
 
 SELECT a, b FROM collate_test1 UNION ALL SELECT a, b FROM collate_test3 ORDER BY 2; -- fail
-ERROR:  no collation was derived for the sort expression
-LINE 1: ...e_test1 UNION ALL SELECT a, b FROM collate_test3 ORDER BY 2;
-                                                                     ^
-HINT:  Use the COLLATE clause to set the collation explicitly.
+ERROR:  locale operation to be invoked, but no collation was derived
 SELECT a, b FROM collate_test1 UNION ALL SELECT a, b FROM collate_test3; -- ok
  a |  b  
 ---+-----
@@ -607,7 +604,7 @@ SELECT a, b FROM collate_test1 UNION SELECT a, b FROM collate_test3 ORDER BY 2; 
 ERROR:  collation mismatch between implicit collations "en_US.utf8" and "C"
 LINE 1: SELECT a, b FROM collate_test1 UNION SELECT a, b FROM collat...
                                                        ^
-HINT:  You can override the collation by applying the COLLATE clause to one or both expressions.
+HINT:  You can choose the collation by applying the COLLATE clause to one or both expressions.
 SELECT a, b COLLATE "C" FROM collate_test1 UNION SELECT a, b FROM collate_test3 ORDER BY 2; -- ok
  a |  b  
 ---+-----
@@ -621,15 +618,25 @@ SELECT a, b FROM collate_test1 INTERSECT SELECT a, b FROM collate_test3 ORDER BY
 ERROR:  collation mismatch between implicit collations "en_US.utf8" and "C"
 LINE 1: ...ELECT a, b FROM collate_test1 INTERSECT SELECT a, b FROM col...
                                                              ^
-HINT:  You can override the collation by applying the COLLATE clause to one or both expressions.
+HINT:  You can choose the collation by applying the COLLATE clause to one or both expressions.
 SELECT a, b FROM collate_test1 EXCEPT SELECT a, b FROM collate_test3 ORDER BY 2; -- fail
 ERROR:  collation mismatch between implicit collations "en_US.utf8" and "C"
 LINE 1: SELECT a, b FROM collate_test1 EXCEPT SELECT a, b FROM colla...
                                                         ^
-HINT:  You can override the collation by applying the COLLATE clause to one or both expressions.
+HINT:  You can choose the collation by applying the COLLATE clause to one or both expressions.
 CREATE TABLE test_u AS SELECT a, b FROM collate_test1 UNION ALL SELECT a, b FROM collate_test3; -- fail
 ERROR:  no collation was derived for column "b" with collatable type text
 HINT:  Use the COLLATE clause to set the collation explicitly.
+-- ideally this would be a parse-time error, but for now it must be run-time:
+select x < y from collate_test10; -- fail
+ERROR:  locale operation to be invoked, but no collation was derived
+select x || y from collate_test10; -- ok, because || is not collation aware
+ ?column? 
+----------
+ hijhij
+ HIJHIJ
+(2 rows)
+
 -- collation mismatch between recursive and non-recursive term
 WITH RECURSIVE foo(x) AS
    (SELECT x FROM (VALUES('a' COLLATE "en_US"),('b')) t(x)

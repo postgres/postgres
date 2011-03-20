@@ -18,8 +18,6 @@
 #include "postgres.h"
 
 #include "access/skey.h"
-#include "catalog/pg_collation.h"
-#include "catalog/pg_type.h"
 #include "nodes/makefuncs.h"
 #include "nodes/nodeFuncs.h"
 #include "nodes/plannodes.h"
@@ -31,10 +29,10 @@
 #include "utils/lsyscache.h"
 
 
-static PathKey *makePathKey(EquivalenceClass *eclass, Oid opfamily, Oid collation,
+static PathKey *makePathKey(EquivalenceClass *eclass, Oid opfamily,
 			int strategy, bool nulls_first);
 static PathKey *make_canonical_pathkey(PlannerInfo *root,
-					   EquivalenceClass *eclass, Oid opfamily, Oid collation,
+					   EquivalenceClass *eclass, Oid opfamily,
 					   int strategy, bool nulls_first);
 static bool pathkey_is_redundant(PathKey *new_pathkey, List *pathkeys);
 static Var *find_indexkey_var(PlannerInfo *root, RelOptInfo *rel,
@@ -54,14 +52,13 @@ static bool right_merge_direction(PlannerInfo *root, PathKey *pathkey);
  * convenience routine to build the specified node.
  */
 static PathKey *
-makePathKey(EquivalenceClass *eclass, Oid opfamily, Oid collation,
+makePathKey(EquivalenceClass *eclass, Oid opfamily,
 			int strategy, bool nulls_first)
 {
 	PathKey    *pk = makeNode(PathKey);
 
 	pk->pk_eclass = eclass;
 	pk->pk_opfamily = opfamily;
-	pk->pk_collation = collation;
 	pk->pk_strategy = strategy;
 	pk->pk_nulls_first = nulls_first;
 
@@ -79,7 +76,7 @@ makePathKey(EquivalenceClass *eclass, Oid opfamily, Oid collation,
  */
 static PathKey *
 make_canonical_pathkey(PlannerInfo *root,
-					   EquivalenceClass *eclass, Oid opfamily, Oid collation,
+					   EquivalenceClass *eclass, Oid opfamily,
 					   int strategy, bool nulls_first)
 {
 	PathKey    *pk;
@@ -95,7 +92,6 @@ make_canonical_pathkey(PlannerInfo *root,
 		pk = (PathKey *) lfirst(lc);
 		if (eclass == pk->pk_eclass &&
 			opfamily == pk->pk_opfamily &&
-			collation == pk->pk_collation &&
 			strategy == pk->pk_strategy &&
 			nulls_first == pk->pk_nulls_first)
 			return pk;
@@ -107,7 +103,7 @@ make_canonical_pathkey(PlannerInfo *root,
 	 */
 	oldcontext = MemoryContextSwitchTo(root->planner_cxt);
 
-	pk = makePathKey(eclass, opfamily, collation, strategy, nulls_first);
+	pk = makePathKey(eclass, opfamily, strategy, nulls_first);
 	root->canon_pathkeys = lappend(root->canon_pathkeys, pk);
 
 	MemoryContextSwitchTo(oldcontext);
@@ -209,7 +205,6 @@ canonicalize_pathkeys(PlannerInfo *root, List *pathkeys)
 		cpathkey = make_canonical_pathkey(root,
 										  eclass,
 										  pathkey->pk_opfamily,
-										  pathkey->pk_collation,
 										  pathkey->pk_strategy,
 										  pathkey->pk_nulls_first);
 
@@ -241,6 +236,7 @@ make_pathkey_from_sortinfo(PlannerInfo *root,
 						   Expr *expr,
 						   Oid opfamily,
 						   Oid opcintype,
+						   Oid collation,
 						   bool reverse_sort,
 						   bool nulls_first,
 						   Index sortref,
@@ -251,7 +247,6 @@ make_pathkey_from_sortinfo(PlannerInfo *root,
 	Oid			equality_op;
 	List	   *opfamilies;
 	EquivalenceClass *eclass;
-	Oid			collation;
 
 	strategy = reverse_sort ? BTGreaterStrategyNumber : BTLessStrategyNumber;
 
@@ -273,47 +268,21 @@ make_pathkey_from_sortinfo(PlannerInfo *root,
 		elog(ERROR, "could not find opfamilies for equality operator %u",
 			 equality_op);
 
-	/*
-	 * When dealing with binary-compatible opclasses, we have to ensure that
-	 * the exposed type of the expression tree matches the declared input type
-	 * of the opclass, except when that is a polymorphic type (compare the
-	 * behavior of parse_coerce.c).  This ensures that we can correctly match
-	 * the indexkey or sortclause expression to other expressions we find in
-	 * the query, because arguments of ordinary operator expressions will be
-	 * cast that way.  (We have to do this for indexkeys because they are
-	 * represented without any explicit relabel in pg_index, and for sort
-	 * clauses because the parser is likewise cavalier about putting relabels
-	 * on them.)
-	 */
-	if (exprType((Node *) expr) != opcintype &&
-		!IsPolymorphicType(opcintype))
-	{
-		/* Strip any existing RelabelType, and add a new one if needed */
-		while (expr && IsA(expr, RelabelType))
-			expr = (Expr *) ((RelabelType *) expr)->arg;
-		if (exprType((Node *) expr) != opcintype)
-			expr = (Expr *) makeRelabelType(expr,
-											opcintype,
-											-1,
-											COERCE_DONTCARE);
-	}
-
 	/* Now find or (optionally) create a matching EquivalenceClass */
-	eclass = get_eclass_for_sort_expr(root, expr, opcintype, opfamilies,
+	eclass = get_eclass_for_sort_expr(root, expr, opfamilies,
+									  opcintype, collation,
 									  sortref, create_it);
 
 	/* Fail if no EC and !create_it */
 	if (!eclass)
 		return NULL;
 
-	collation = exprCollation((Node *) expr);
-
 	/* And finally we can find or create a PathKey node */
 	if (canonicalize)
-		return make_canonical_pathkey(root, eclass, opfamily, collation,
+		return make_canonical_pathkey(root, eclass, opfamily,
 									  strategy, nulls_first);
 	else
-		return makePathKey(eclass, opfamily, collation, strategy, nulls_first);
+		return makePathKey(eclass, opfamily, strategy, nulls_first);
 }
 
 /*
@@ -333,7 +302,8 @@ make_pathkey_from_sortop(PlannerInfo *root,
 						 bool canonicalize)
 {
 	Oid			opfamily,
-				opcintype;
+				opcintype,
+				collation;
 	int16		strategy;
 
 	/* Find the operator in pg_amop --- failure shouldn't happen */
@@ -341,10 +311,15 @@ make_pathkey_from_sortop(PlannerInfo *root,
 									&opfamily, &opcintype, &strategy))
 		elog(ERROR, "operator %u is not a valid ordering operator",
 			 ordering_op);
+
+	/* Because SortGroupClause doesn't carry collation, consult the expr */
+	collation = exprCollation((Node *) expr);
+
 	return make_pathkey_from_sortinfo(root,
 									  expr,
 									  opfamily,
 									  opcintype,
+									  collation,
 									  (strategy == BTGreaterStrategyNumber),
 									  nulls_first,
 									  sortref,
@@ -575,6 +550,7 @@ build_index_pathkeys(PlannerInfo *root,
 											  indexkey,
 											  index->sortopfamily[i],
 											  index->opcintype[i],
+											  index->indexcollations[i],
 											  reverse_sort,
 											  nulls_first,
 											  0,
@@ -698,8 +674,9 @@ convert_subquery_pathkeys(PlannerInfo *root, RelOptInfo *rel,
 				outer_ec =
 					get_eclass_for_sort_expr(root,
 											 outer_expr,
-											 sub_member->em_datatype,
 											 sub_eclass->ec_opfamilies,
+											 sub_member->em_datatype,
+											 sub_eclass->ec_collation,
 											 0,
 											 false);
 
@@ -712,7 +689,6 @@ convert_subquery_pathkeys(PlannerInfo *root, RelOptInfo *rel,
 						make_canonical_pathkey(root,
 											   outer_ec,
 											   sub_pathkey->pk_opfamily,
-											   sub_pathkey->pk_collation,
 											   sub_pathkey->pk_strategy,
 											   sub_pathkey->pk_nulls_first);
 			}
@@ -742,23 +718,14 @@ convert_subquery_pathkeys(PlannerInfo *root, RelOptInfo *rel,
 			{
 				EquivalenceMember *sub_member = (EquivalenceMember *) lfirst(j);
 				Expr	   *sub_expr = sub_member->em_expr;
-				Expr	   *sub_stripped;
+				Oid			sub_expr_type = sub_member->em_datatype;
+				Oid			sub_expr_coll = sub_eclass->ec_collation;
 				ListCell   *k;
-
-				/*
-				 * We handle two cases: the sub_pathkey key can be either an
-				 * exact match for a targetlist entry, or it could match after
-				 * stripping RelabelType nodes.  (We need that case since
-				 * make_pathkey_from_sortinfo could add or remove
-				 * RelabelType.)
-				 */
-				sub_stripped = sub_expr;
-				while (sub_stripped && IsA(sub_stripped, RelabelType))
-					sub_stripped = ((RelabelType *) sub_stripped)->arg;
 
 				foreach(k, sub_tlist)
 				{
 					TargetEntry *tle = (TargetEntry *) lfirst(k);
+					Expr	   *tle_expr;
 					Expr	   *outer_expr;
 					EquivalenceClass *outer_ec;
 					PathKey    *outer_pk;
@@ -768,40 +735,31 @@ convert_subquery_pathkeys(PlannerInfo *root, RelOptInfo *rel,
 					if (tle->resjunk)
 						continue;
 
-					if (equal(tle->expr, sub_expr))
-					{
-						/* Exact match */
-						outer_expr = (Expr *) makeVarFromTargetEntry(rel->relid, tle);
-					}
-					else
-					{
-						Expr	   *tle_stripped;
+					/*
+					 * The targetlist entry is considered to match if it
+					 * matches after sort-key canonicalization.  That is
+					 * needed since the sub_expr has been through the same
+					 * process.
+					 */
+					tle_expr = canonicalize_ec_expression(tle->expr,
+														  sub_expr_type,
+														  sub_expr_coll);
+					if (!equal(tle_expr, sub_expr))
+						continue;
 
-						tle_stripped = tle->expr;
-						while (tle_stripped && IsA(tle_stripped, RelabelType))
-							tle_stripped = ((RelabelType *) tle_stripped)->arg;
+					/*
+					 * Build a representation of this targetlist entry as
+					 * an outer Var.
+					 */
+					outer_expr = (Expr *) makeVarFromTargetEntry(rel->relid,
+																 tle);
 
-						if (equal(tle_stripped, sub_stripped))
-						{
-							/* Match after discarding RelabelType */
-							outer_expr = (Expr *) makeVarFromTargetEntry(rel->relid, tle);
-							if (exprType((Node *) outer_expr) !=
-								exprType((Node *) sub_expr))
-								outer_expr = (Expr *)
-									makeRelabelType(outer_expr,
-												 exprType((Node *) sub_expr),
-													-1,
-													COERCE_DONTCARE);
-						}
-						else
-							continue;
-					}
-
-					/* Found a representation for this sub_pathkey */
+					/* See if we have a matching EC for that */
 					outer_ec = get_eclass_for_sort_expr(root,
 														outer_expr,
-													 sub_member->em_datatype,
 												   sub_eclass->ec_opfamilies,
+														sub_expr_type,
+														sub_expr_coll,
 														0,
 														false);
 
@@ -815,7 +773,6 @@ convert_subquery_pathkeys(PlannerInfo *root, RelOptInfo *rel,
 					outer_pk = make_canonical_pathkey(root,
 													  outer_ec,
 													sub_pathkey->pk_opfamily,
-													sub_pathkey->pk_collation,
 													sub_pathkey->pk_strategy,
 												sub_pathkey->pk_nulls_first);
 					/* score = # of equivalence peers */
@@ -1024,15 +981,17 @@ initialize_mergeclause_eclasses(PlannerInfo *root, RestrictInfo *restrictinfo)
 	restrictinfo->left_ec =
 		get_eclass_for_sort_expr(root,
 								 (Expr *) get_leftop(clause),
-								 lefttype,
 								 restrictinfo->mergeopfamilies,
+								 lefttype,
+								 ((OpExpr *) clause)->inputcollid,
 								 0,
 								 true);
 	restrictinfo->right_ec =
 		get_eclass_for_sort_expr(root,
 								 (Expr *) get_rightop(clause),
-								 righttype,
 								 restrictinfo->mergeopfamilies,
+								 righttype,
+								 ((OpExpr *) clause)->inputcollid,
 								 0,
 								 true);
 }
@@ -1337,7 +1296,6 @@ select_outer_pathkeys_for_merge(PlannerInfo *root,
 		pathkey = make_canonical_pathkey(root,
 										 ec,
 										 linitial_oid(ec->ec_opfamilies),
-										 DEFAULT_COLLATION_OID,
 										 BTLessStrategyNumber,
 										 false);
 		/* can't be redundant because no duplicate ECs */
@@ -1431,7 +1389,6 @@ make_inner_pathkeys_for_merge(PlannerInfo *root,
 			pathkey = make_canonical_pathkey(root,
 											 ieclass,
 											 opathkey->pk_opfamily,
-											 opathkey->pk_collation,
 											 opathkey->pk_strategy,
 											 opathkey->pk_nulls_first);
 
@@ -1552,7 +1509,6 @@ right_merge_direction(PlannerInfo *root, PathKey *pathkey)
 		PathKey    *query_pathkey = (PathKey *) lfirst(l);
 
 		if (pathkey->pk_eclass == query_pathkey->pk_eclass &&
-			pathkey->pk_collation == query_pathkey->pk_collation &&
 			pathkey->pk_opfamily == query_pathkey->pk_opfamily)
 		{
 			/*

@@ -455,7 +455,7 @@ _readParam(void)
 	READ_INT_FIELD(paramid);
 	READ_OID_FIELD(paramtype);
 	READ_INT_FIELD(paramtypmod);
-	READ_OID_FIELD(paramcollation);
+	READ_OID_FIELD(paramcollid);
 	READ_LOCATION_FIELD(location);
 
 	READ_DONE();
@@ -471,12 +471,13 @@ _readAggref(void)
 
 	READ_OID_FIELD(aggfnoid);
 	READ_OID_FIELD(aggtype);
+	READ_OID_FIELD(aggcollid);
+	READ_OID_FIELD(inputcollid);
 	READ_NODE_FIELD(args);
 	READ_NODE_FIELD(aggorder);
 	READ_NODE_FIELD(aggdistinct);
 	READ_BOOL_FIELD(aggstar);
 	READ_UINT_FIELD(agglevelsup);
-	READ_OID_FIELD(collid);
 	READ_LOCATION_FIELD(location);
 
 	READ_DONE();
@@ -492,11 +493,12 @@ _readWindowFunc(void)
 
 	READ_OID_FIELD(winfnoid);
 	READ_OID_FIELD(wintype);
+	READ_OID_FIELD(wincollid);
+	READ_OID_FIELD(inputcollid);
 	READ_NODE_FIELD(args);
 	READ_UINT_FIELD(winref);
 	READ_BOOL_FIELD(winstar);
 	READ_BOOL_FIELD(winagg);
-	READ_OID_FIELD(collid);
 	READ_LOCATION_FIELD(location);
 
 	READ_DONE();
@@ -513,7 +515,7 @@ _readArrayRef(void)
 	READ_OID_FIELD(refarraytype);
 	READ_OID_FIELD(refelemtype);
 	READ_INT_FIELD(reftypmod);
-	READ_INT_FIELD(refcollid);
+	READ_OID_FIELD(refcollid);
 	READ_NODE_FIELD(refupperindexpr);
 	READ_NODE_FIELD(reflowerindexpr);
 	READ_NODE_FIELD(refexpr);
@@ -534,8 +536,9 @@ _readFuncExpr(void)
 	READ_OID_FIELD(funcresulttype);
 	READ_BOOL_FIELD(funcretset);
 	READ_ENUM_FIELD(funcformat, CoercionForm);
+	READ_OID_FIELD(funccollid);
+	READ_OID_FIELD(inputcollid);
 	READ_NODE_FIELD(args);
-	READ_OID_FIELD(collid);
 	READ_LOCATION_FIELD(location);
 
 	READ_DONE();
@@ -580,8 +583,9 @@ _readOpExpr(void)
 
 	READ_OID_FIELD(opresulttype);
 	READ_BOOL_FIELD(opretset);
+	READ_OID_FIELD(opcollid);
+	READ_OID_FIELD(inputcollid);
 	READ_NODE_FIELD(args);
-	READ_OID_FIELD(collid);
 	READ_LOCATION_FIELD(location);
 
 	READ_DONE();
@@ -610,8 +614,40 @@ _readDistinctExpr(void)
 
 	READ_OID_FIELD(opresulttype);
 	READ_BOOL_FIELD(opretset);
+	READ_OID_FIELD(opcollid);
+	READ_OID_FIELD(inputcollid);
 	READ_NODE_FIELD(args);
-	READ_OID_FIELD(collid);
+	READ_LOCATION_FIELD(location);
+
+	READ_DONE();
+}
+
+/*
+ * _readNullIfExpr
+ */
+static NullIfExpr *
+_readNullIfExpr(void)
+{
+	READ_LOCALS(NullIfExpr);
+
+	READ_OID_FIELD(opno);
+	READ_OID_FIELD(opfuncid);
+
+	/*
+	 * The opfuncid is stored in the textual format primarily for debugging
+	 * and documentation reasons.  We want to always read it as zero to force
+	 * it to be re-looked-up in the pg_operator entry.	This ensures that
+	 * stored rules don't have hidden dependencies on operators' functions.
+	 * (We don't currently support an ALTER OPERATOR command, but might
+	 * someday.)
+	 */
+	local_node->opfuncid = InvalidOid;
+
+	READ_OID_FIELD(opresulttype);
+	READ_BOOL_FIELD(opretset);
+	READ_OID_FIELD(opcollid);
+	READ_OID_FIELD(inputcollid);
+	READ_NODE_FIELD(args);
 	READ_LOCATION_FIELD(location);
 
 	READ_DONE();
@@ -639,8 +675,8 @@ _readScalarArrayOpExpr(void)
 	local_node->opfuncid = InvalidOid;
 
 	READ_BOOL_FIELD(useOr);
+	READ_OID_FIELD(inputcollid);
 	READ_NODE_FIELD(args);
-	READ_OID_FIELD(collid);
 	READ_LOCATION_FIELD(location);
 
 	READ_DONE();
@@ -705,7 +741,7 @@ _readFieldSelect(void)
 	READ_INT_FIELD(fieldnum);
 	READ_OID_FIELD(resulttype);
 	READ_INT_FIELD(resulttypmod);
-	READ_OID_FIELD(resultcollation);
+	READ_OID_FIELD(resultcollid);
 
 	READ_DONE();
 }
@@ -737,6 +773,7 @@ _readRelabelType(void)
 	READ_NODE_FIELD(arg);
 	READ_OID_FIELD(resulttype);
 	READ_INT_FIELD(resulttypmod);
+	READ_OID_FIELD(resultcollid);
 	READ_ENUM_FIELD(relabelformat, CoercionForm);
 	READ_LOCATION_FIELD(location);
 
@@ -753,6 +790,7 @@ _readCoerceViaIO(void)
 
 	READ_NODE_FIELD(arg);
 	READ_OID_FIELD(resulttype);
+	READ_OID_FIELD(resultcollid);
 	READ_ENUM_FIELD(coerceformat, CoercionForm);
 	READ_LOCATION_FIELD(location);
 
@@ -771,6 +809,7 @@ _readArrayCoerceExpr(void)
 	READ_OID_FIELD(elemfuncid);
 	READ_OID_FIELD(resulttype);
 	READ_INT_FIELD(resulttypmod);
+	READ_OID_FIELD(resultcollid);
 	READ_BOOL_FIELD(isExplicit);
 	READ_ENUM_FIELD(coerceformat, CoercionForm);
 	READ_LOCATION_FIELD(location);
@@ -818,7 +857,7 @@ _readCaseExpr(void)
 	READ_LOCALS(CaseExpr);
 
 	READ_OID_FIELD(casetype);
-	READ_OID_FIELD(casecollation);
+	READ_OID_FIELD(casecollid);
 	READ_NODE_FIELD(arg);
 	READ_NODE_FIELD(args);
 	READ_NODE_FIELD(defresult);
@@ -866,6 +905,7 @@ _readArrayExpr(void)
 	READ_LOCALS(ArrayExpr);
 
 	READ_OID_FIELD(array_typeid);
+	READ_OID_FIELD(array_collid);
 	READ_OID_FIELD(element_typeid);
 	READ_NODE_FIELD(elements);
 	READ_BOOL_FIELD(multidims);
@@ -902,7 +942,7 @@ _readRowCompareExpr(void)
 	READ_ENUM_FIELD(rctype, RowCompareType);
 	READ_NODE_FIELD(opnos);
 	READ_NODE_FIELD(opfamilies);
-	READ_NODE_FIELD(collids);
+	READ_NODE_FIELD(inputcollids);
 	READ_NODE_FIELD(largs);
 	READ_NODE_FIELD(rargs);
 
@@ -918,7 +958,7 @@ _readCoalesceExpr(void)
 	READ_LOCALS(CoalesceExpr);
 
 	READ_OID_FIELD(coalescetype);
-	READ_OID_FIELD(coalescecollation);
+	READ_OID_FIELD(coalescecollid);
 	READ_NODE_FIELD(args);
 	READ_LOCATION_FIELD(location);
 
@@ -934,9 +974,10 @@ _readMinMaxExpr(void)
 	READ_LOCALS(MinMaxExpr);
 
 	READ_OID_FIELD(minmaxtype);
+	READ_OID_FIELD(minmaxcollid);
+	READ_OID_FIELD(inputcollid);
 	READ_ENUM_FIELD(op, MinMaxOp);
 	READ_NODE_FIELD(args);
-	READ_OID_FIELD(collid);
 	READ_LOCATION_FIELD(location);
 
 	READ_DONE();
@@ -958,35 +999,6 @@ _readXmlExpr(void)
 	READ_ENUM_FIELD(xmloption, XmlOptionType);
 	READ_OID_FIELD(type);
 	READ_INT_FIELD(typmod);
-	READ_LOCATION_FIELD(location);
-
-	READ_DONE();
-}
-
-/*
- * _readNullIfExpr
- */
-static NullIfExpr *
-_readNullIfExpr(void)
-{
-	READ_LOCALS(NullIfExpr);
-
-	READ_OID_FIELD(opno);
-	READ_OID_FIELD(opfuncid);
-
-	/*
-	 * The opfuncid is stored in the textual format primarily for debugging
-	 * and documentation reasons.  We want to always read it as zero to force
-	 * it to be re-looked-up in the pg_operator entry.	This ensures that
-	 * stored rules don't have hidden dependencies on operators' functions.
-	 * (We don't currently support an ALTER OPERATOR command, but might
-	 * someday.)
-	 */
-	local_node->opfuncid = InvalidOid;
-
-	READ_OID_FIELD(opresulttype);
-	READ_BOOL_FIELD(opretset);
-	READ_NODE_FIELD(args);
 	READ_LOCATION_FIELD(location);
 
 	READ_DONE();
@@ -1032,6 +1044,7 @@ _readCoerceToDomain(void)
 	READ_NODE_FIELD(arg);
 	READ_OID_FIELD(resulttype);
 	READ_INT_FIELD(resulttypmod);
+	READ_OID_FIELD(resultcollid);
 	READ_ENUM_FIELD(coercionformat, CoercionForm);
 	READ_LOCATION_FIELD(location);
 
@@ -1048,6 +1061,7 @@ _readCoerceToDomainValue(void)
 
 	READ_OID_FIELD(typeId);
 	READ_INT_FIELD(typeMod);
+	READ_OID_FIELD(collation);
 	READ_LOCATION_FIELD(location);
 
 	READ_DONE();
@@ -1063,7 +1077,7 @@ _readSetToDefault(void)
 
 	READ_OID_FIELD(typeId);
 	READ_INT_FIELD(typeMod);
-	READ_OID_FIELD(collid);
+	READ_OID_FIELD(collation);
 	READ_LOCATION_FIELD(location);
 
 	READ_DONE();
@@ -1273,6 +1287,8 @@ parseNodeString(void)
 		return_value = _readOpExpr();
 	else if (MATCH("DISTINCTEXPR", 12))
 		return_value = _readDistinctExpr();
+	else if (MATCH("NULLIFEXPR", 10))
+		return_value = _readNullIfExpr();
 	else if (MATCH("SCALARARRAYOPEXPR", 17))
 		return_value = _readScalarArrayOpExpr();
 	else if (MATCH("BOOLEXPR", 8))
@@ -1311,8 +1327,6 @@ parseNodeString(void)
 		return_value = _readMinMaxExpr();
 	else if (MATCH("XMLEXPR", 7))
 		return_value = _readXmlExpr();
-	else if (MATCH("NULLIFEXPR", 10))
-		return_value = _readNullIfExpr();
 	else if (MATCH("NULLTEST", 8))
 		return_value = _readNullTest();
 	else if (MATCH("BOOLEANTEST", 11))

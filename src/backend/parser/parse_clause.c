@@ -28,6 +28,7 @@
 #include "parser/parsetree.h"
 #include "parser/parse_clause.h"
 #include "parser/parse_coerce.h"
+#include "parser/parse_collate.h"
 #include "parser/parse_expr.h"
 #include "parser/parse_oper.h"
 #include "parser/parse_relation.h"
@@ -558,6 +559,11 @@ transformRangeFunction(ParseState *pstate, RangeFunction *r)
 	funcexpr = transformExpr(pstate, r->funccallnode);
 
 	/*
+	 * We must assign collations now so that we can fill funccolcollations.
+	 */
+	assign_expr_collations(pstate, funcexpr);
+
+	/*
 	 * The function parameters cannot make use of any variables from other
 	 * FROM items.	(Compare to transformRangeSubselect(); the coding is
 	 * different though because we didn't parse as a sub-select with its own
@@ -1072,6 +1078,7 @@ buildMergedJoinVar(ParseState *pstate, JoinType jointype,
 	else if (l_colvar->vartypmod != outcoltypmod)
 		l_node = (Node *) makeRelabelType((Expr *) l_colvar,
 										  outcoltype, outcoltypmod,
+										  InvalidOid,		/* fixed below */
 										  COERCE_IMPLICIT_CAST);
 	else
 		l_node = (Node *) l_colvar;
@@ -1083,6 +1090,7 @@ buildMergedJoinVar(ParseState *pstate, JoinType jointype,
 	else if (r_colvar->vartypmod != outcoltypmod)
 		r_node = (Node *) makeRelabelType((Expr *) r_colvar,
 										  outcoltype, outcoltypmod,
+										  InvalidOid,		/* fixed below */
 										  COERCE_IMPLICIT_CAST);
 	else
 		r_node = (Node *) r_colvar;
@@ -1121,6 +1129,7 @@ buildMergedJoinVar(ParseState *pstate, JoinType jointype,
 				CoalesceExpr *c = makeNode(CoalesceExpr);
 
 				c->coalescetype = outcoltype;
+				/* coalescecollid will get set below */
 				c->args = list_make2(l_node, r_node);
 				c->location = -1;
 				res_node = (Node *) c;
@@ -1131,6 +1140,13 @@ buildMergedJoinVar(ParseState *pstate, JoinType jointype,
 			res_node = NULL;	/* keep compiler quiet */
 			break;
 	}
+
+	/*
+	 * Apply assign_expr_collations to fix up the collation info in the
+	 * coercion and CoalesceExpr nodes, if we made any.  This must be done
+	 * now so that the join node's alias vars show correct collation info.
+	 */
+	assign_expr_collations(pstate, res_node);
 
 	return res_node;
 }
@@ -1936,7 +1952,6 @@ addTargetToSortList(ParseState *pstate, TargetEntry *tle,
 					bool resolveUnknown)
 {
 	Oid			restype = exprType((Node *) tle->expr);
-	Oid			rescollation = exprCollation((Node *) tle->expr);
 	Oid			sortop;
 	Oid			eqop;
 	bool		hashable;
@@ -2019,12 +2034,6 @@ addTargetToSortList(ParseState *pstate, TargetEntry *tle,
 			reverse = false;
 			break;
 	}
-
-	if (type_is_collatable(restype) && !OidIsValid(rescollation))
-		ereport(ERROR,
-				(errcode(ERRCODE_INDETERMINATE_COLLATION),
-				 errmsg("no collation was derived for the sort expression"),
-				 errhint("Use the COLLATE clause to set the collation explicitly.")));
 
 	cancel_parser_errposition_callback(&pcbstate);
 

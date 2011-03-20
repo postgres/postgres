@@ -270,7 +270,6 @@ transformArrayType(Oid *arrayType, int32 *arrayTypmod)
  * elementType	OID of array's element type (fetch with transformArrayType,
  *				or pass InvalidOid to do it here)
  * arrayTypMod	typmod for the array (which is also typmod for the elements)
- * arrayColl	OID of collation of array and array's elements
  * indirection	Untransformed list of subscripts (must not be NIL)
  * assignFrom	NULL for array fetch, else transformed expression for source.
  */
@@ -280,7 +279,6 @@ transformArraySubscripts(ParseState *pstate,
 						 Oid arrayType,
 						 Oid elementType,
 						 int32 arrayTypMod,
-						 Oid arrayColl,
 						 List *indirection,
 						 Node *assignFrom)
 {
@@ -407,7 +405,7 @@ transformArraySubscripts(ParseState *pstate,
 	aref->refarraytype = arrayType;
 	aref->refelemtype = elementType;
 	aref->reftypmod = arrayTypMod;
-	aref->refcollid = arrayColl;
+	/* refcollid will be set by parse_collate.c */
 	aref->refupperindexpr = upperIndexpr;
 	aref->reflowerindexpr = lowerIndexpr;
 	aref->refexpr = (Expr *) arrayBase;

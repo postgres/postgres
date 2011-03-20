@@ -51,6 +51,7 @@
 #include "miscadmin.h"
 #include "optimizer/var.h"
 #include "parser/parse_coerce.h"
+#include "parser/parse_collate.h"
 #include "parser/parse_expr.h"
 #include "parser/parse_func.h"
 #include "parser/parse_type.h"
@@ -334,6 +335,7 @@ examine_parameter_list(List *parameters, Oid languageOid,
 
 			def = transformExpr(pstate, fp->defexpr);
 			def = coerce_to_specific_type(pstate, def, toid, "DEFAULT");
+			assign_expr_collations(pstate, def);
 
 			/*
 			 * Make sure no variables are referred to.

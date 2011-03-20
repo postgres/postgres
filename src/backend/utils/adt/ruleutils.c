@@ -4869,6 +4869,16 @@ get_rule_expr(Node *node, deparse_context *context,
 			}
 			break;
 
+		case T_NullIfExpr:
+			{
+				NullIfExpr *nullifexpr = (NullIfExpr *) node;
+
+				appendStringInfo(buf, "NULLIF(");
+				get_rule_expr((Node *) nullifexpr->args, context, true);
+				appendStringInfoChar(buf, ')');
+			}
+			break;
+
 		case T_ScalarArrayOpExpr:
 			{
 				ScalarArrayOpExpr *expr = (ScalarArrayOpExpr *) node;
@@ -5529,22 +5539,13 @@ get_rule_expr(Node *node, deparse_context *context,
 
 				}
 				if (xexpr->op == IS_XMLSERIALIZE)
-					appendStringInfo(buf, " AS %s", format_type_with_typemod(xexpr->type,
-															 xexpr->typmod));
+					appendStringInfo(buf, " AS %s",
+									 format_type_with_typemod(xexpr->type,
+															  xexpr->typmod));
 				if (xexpr->op == IS_DOCUMENT)
 					appendStringInfoString(buf, " IS DOCUMENT");
 				else
 					appendStringInfoChar(buf, ')');
-			}
-			break;
-
-		case T_NullIfExpr:
-			{
-				NullIfExpr *nullifexpr = (NullIfExpr *) node;
-
-				appendStringInfo(buf, "NULLIF(");
-				get_rule_expr((Node *) nullifexpr->args, context, true);
-				appendStringInfoChar(buf, ')');
 			}
 			break;
 

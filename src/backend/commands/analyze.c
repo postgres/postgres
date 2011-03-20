@@ -1931,7 +1931,7 @@ compute_minimal_stats(VacAttrStatsP stats,
 
 	fmgr_info(mystats->eqfunc, &f_cmpeq);
 	/* We always use the default collation for statistics */
-	fmgr_info_collation(DEFAULT_COLLATION_OID, &f_cmpeq);
+	fmgr_info_set_collation(DEFAULT_COLLATION_OID, &f_cmpeq);
 
 	for (i = 0; i < samplerows; i++)
 	{
@@ -2254,7 +2254,7 @@ compute_scalar_stats(VacAttrStatsP stats,
 	SelectSortFunction(mystats->ltopr, false, &cmpFn, &cmpFlags);
 	fmgr_info(cmpFn, &f_cmpfn);
 	/* We always use the default collation for statistics */
-	fmgr_info_collation(DEFAULT_COLLATION_OID, &f_cmpfn);
+	fmgr_info_set_collation(DEFAULT_COLLATION_OID, &f_cmpfn);
 
 	/* Initial scan to find sortable values */
 	for (i = 0; i < samplerows; i++)

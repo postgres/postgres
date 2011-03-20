@@ -192,7 +192,7 @@ fmgr_info_cxt_security(Oid functionId, FmgrInfo *finfo, MemoryContext mcxt,
 	 * elogs.
 	 */
 	finfo->fn_oid = InvalidOid;
-	finfo->fn_collation = InvalidOid;
+	finfo->fn_collation = InvalidOid;		/* caller may set this later */
 	finfo->fn_extra = NULL;
 	finfo->fn_mcxt = mcxt;
 	finfo->fn_expr = NULL;		/* caller may set this later */
@@ -418,25 +418,6 @@ fmgr_info_other_lang(Oid functionId, FmgrInfo *finfo, HeapTuple procedureTuple)
 		elog(ERROR, "language %u has old-style handler", language);
 
 	ReleaseSysCache(languageTuple);
-}
-
-/*
- * Initialize the fn_collation field
- */
-void
-fmgr_info_collation(Oid collationId, FmgrInfo *finfo)
-{
-	finfo->fn_collation = collationId;
-}
-
-/*
- * Initialize the fn_expr field and set the collation based on it
- */
-void
-fmgr_info_expr(Node *expr, FmgrInfo *finfo)
-{
-	finfo->fn_expr = expr;
-	finfo->fn_collation = exprCollation(expr);
 }
 
 /*
@@ -920,6 +901,7 @@ fmgr_security_definer(PG_FUNCTION_ARGS)
 
 		fmgr_info_cxt_security(fcinfo->flinfo->fn_oid, &fcache->flinfo,
 							   fcinfo->flinfo->fn_mcxt, true);
+		fcache->flinfo.fn_collation = fcinfo->flinfo->fn_collation;
 		fcache->flinfo.fn_expr = fcinfo->flinfo->fn_expr;
 
 		tuple = SearchSysCache1(PROCOID,
@@ -1293,6 +1275,11 @@ DirectFunctionCall9(PGFunction func, Datum arg1, Datum arg2,
 	return result;
 }
 
+
+/*
+ * These are the same as DirectFunctionCallN except that a nonzero
+ * collation can be specified.  No other fields of FmgrInfo are made valid.
+ */
 Datum
 DirectFunctionCall1WithCollation(PGFunction func, Oid collation, Datum arg1)
 {
@@ -1300,8 +1287,9 @@ DirectFunctionCall1WithCollation(PGFunction func, Oid collation, Datum arg1)
 	FmgrInfo	flinfo;
 	Datum		result;
 
+	MemSet(&flinfo, 0, sizeof(flinfo));
+	flinfo.fn_collation = collation;
 	InitFunctionCallInfoData(fcinfo, &flinfo, 1, NULL, NULL);
-	fcinfo.flinfo->fn_collation = collation;
 
 	fcinfo.arg[0] = arg1;
 	fcinfo.argnull[0] = false;
@@ -1316,14 +1304,16 @@ DirectFunctionCall1WithCollation(PGFunction func, Oid collation, Datum arg1)
 }
 
 Datum
-DirectFunctionCall2WithCollation(PGFunction func, Oid collation, Datum arg1, Datum arg2)
+DirectFunctionCall2WithCollation(PGFunction func, Oid collation,
+								 Datum arg1, Datum arg2)
 {
 	FunctionCallInfoData fcinfo;
 	FmgrInfo	flinfo;
 	Datum		result;
 
+	MemSet(&flinfo, 0, sizeof(flinfo));
+	flinfo.fn_collation = collation;
 	InitFunctionCallInfoData(fcinfo, &flinfo, 2, NULL, NULL);
-	fcinfo.flinfo->fn_collation = collation;
 
 	fcinfo.arg[0] = arg1;
 	fcinfo.arg[1] = arg2;

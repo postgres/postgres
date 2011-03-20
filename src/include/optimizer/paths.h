@@ -111,11 +111,14 @@ extern bool have_join_order_restriction(PlannerInfo *root,
  */
 extern bool process_equivalence(PlannerInfo *root, RestrictInfo *restrictinfo,
 					bool below_outer_join);
+extern Expr *canonicalize_ec_expression(Expr *expr,
+										Oid req_type, Oid req_collation);
 extern void reconsider_outer_join_clauses(PlannerInfo *root);
 extern EquivalenceClass *get_eclass_for_sort_expr(PlannerInfo *root,
 						 Expr *expr,
-						 Oid expr_datatype,
 						 List *opfamilies,
+						 Oid opcintype,
+						 Oid collation,
 						 Index sortref,
 						 bool create_it);
 extern void generate_base_implied_equalities(PlannerInfo *root);

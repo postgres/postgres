@@ -1795,7 +1795,7 @@ cost_mergejoin(MergePath *path, PlannerInfo *root, SpecialJoinInfo *sjinfo)
 		ipathkey = (PathKey *) linitial(ipathkeys);
 		/* debugging check */
 		if (opathkey->pk_opfamily != ipathkey->pk_opfamily ||
-			opathkey->pk_collation != ipathkey->pk_collation ||
+			opathkey->pk_eclass->ec_collation != ipathkey->pk_eclass->ec_collation ||
 			opathkey->pk_strategy != ipathkey->pk_strategy ||
 			opathkey->pk_nulls_first != ipathkey->pk_nulls_first)
 			elog(ERROR, "left and right pathkeys do not match in mergejoin");
@@ -2046,7 +2046,7 @@ cached_scansel(PlannerInfo *root, RestrictInfo *rinfo, PathKey *pathkey)
 	{
 		cache = (MergeScanSelCache *) lfirst(lc);
 		if (cache->opfamily == pathkey->pk_opfamily &&
-			cache->collation == pathkey->pk_collation &&
+			cache->collation == pathkey->pk_eclass->ec_collation &&
 			cache->strategy == pathkey->pk_strategy &&
 			cache->nulls_first == pathkey->pk_nulls_first)
 			return cache;
@@ -2068,7 +2068,7 @@ cached_scansel(PlannerInfo *root, RestrictInfo *rinfo, PathKey *pathkey)
 
 	cache = (MergeScanSelCache *) palloc(sizeof(MergeScanSelCache));
 	cache->opfamily = pathkey->pk_opfamily;
-	cache->collation = pathkey->pk_collation;
+	cache->collation = pathkey->pk_eclass->ec_collation;
 	cache->strategy = pathkey->pk_strategy;
 	cache->nulls_first = pathkey->pk_nulls_first;
 	cache->leftstartsel = leftstartsel;

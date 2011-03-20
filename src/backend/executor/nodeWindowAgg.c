@@ -1561,7 +1561,9 @@ ExecInitWindowAgg(WindowAgg *node, EState *estate, int eflags)
 
 		fmgr_info_cxt(wfunc->winfnoid, &perfuncstate->flinfo,
 					  econtext->ecxt_per_query_memory);
-		fmgr_info_expr((Node *) wfunc, &perfuncstate->flinfo);
+		fmgr_info_set_collation(wfunc->inputcollid, &perfuncstate->flinfo);
+		fmgr_info_set_expr((Node *) wfunc, &perfuncstate->flinfo);
+
 		get_typlenbyval(wfunc->wintype,
 						&perfuncstate->resulttypeLen,
 						&perfuncstate->resulttypeByVal);
@@ -1792,19 +1794,21 @@ initialize_peragg(WindowAggState *winstate, WindowFunc *wfunc,
 							numArguments,
 							aggtranstype,
 							wfunc->wintype,
+							wfunc->inputcollid,
 							transfn_oid,
 							finalfn_oid,
-							wfunc->collid,
 							&transfnexpr,
 							&finalfnexpr);
 
 	fmgr_info(transfn_oid, &peraggstate->transfn);
-	fmgr_info_expr((Node *) transfnexpr, &peraggstate->transfn);
+	fmgr_info_set_collation(wfunc->inputcollid, &peraggstate->transfn);
+	fmgr_info_set_expr((Node *) transfnexpr, &peraggstate->transfn);
 
 	if (OidIsValid(finalfn_oid))
 	{
 		fmgr_info(finalfn_oid, &peraggstate->finalfn);
-		fmgr_info_expr((Node *) finalfnexpr, &peraggstate->finalfn);
+		fmgr_info_set_collation(wfunc->inputcollid, &peraggstate->finalfn);
+		fmgr_info_set_expr((Node *) finalfnexpr, &peraggstate->finalfn);
 	}
 
 	get_typlenbyval(wfunc->wintype,

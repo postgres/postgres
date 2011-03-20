@@ -1669,19 +1669,21 @@ ExecInitAgg(Agg *node, EState *estate, int eflags)
 								numArguments,
 								aggtranstype,
 								aggref->aggtype,
+								aggref->inputcollid,
 								transfn_oid,
 								finalfn_oid,
-								aggref->collid,
 								&transfnexpr,
 								&finalfnexpr);
 
 		fmgr_info(transfn_oid, &peraggstate->transfn);
-		fmgr_info_expr((Node *) transfnexpr, &peraggstate->transfn);
+		fmgr_info_set_collation(aggref->inputcollid, &peraggstate->transfn);
+		fmgr_info_set_expr((Node *) transfnexpr, &peraggstate->transfn);
 
 		if (OidIsValid(finalfn_oid))
 		{
 			fmgr_info(finalfn_oid, &peraggstate->finalfn);
-			fmgr_info_expr((Node *) finalfnexpr, &peraggstate->finalfn);
+			fmgr_info_set_collation(aggref->inputcollid, &peraggstate->finalfn);
+			fmgr_info_set_expr((Node *) finalfnexpr, &peraggstate->finalfn);
 		}
 
 		get_typlenbyval(aggref->aggtype,
@@ -1831,6 +1833,8 @@ ExecInitAgg(Agg *node, EState *estate, int eflags)
 				SortGroupClause *sortcl = (SortGroupClause *) lfirst(lc);
 
 				fmgr_info(get_opcode(sortcl->eqop), &peraggstate->equalfns[i]);
+				fmgr_info_set_collation(aggref->inputcollid,
+										&peraggstate->equalfns[i]);
 				i++;
 			}
 			Assert(i == numDistinctCols);

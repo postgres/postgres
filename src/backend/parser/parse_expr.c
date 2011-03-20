@@ -23,6 +23,7 @@
 #include "optimizer/var.h"
 #include "parser/analyze.h"
 #include "parser/parse_coerce.h"
+#include "parser/parse_collate.h"
 #include "parser/parse_expr.h"
 #include "parser/parse_func.h"
 #include "parser/parse_oper.h"
@@ -309,8 +310,8 @@ transformExpr(ParseState *pstate, Node *expr)
 		case T_FuncExpr:
 		case T_OpExpr:
 		case T_DistinctExpr:
-		case T_ScalarArrayOpExpr:
 		case T_NullIfExpr:
+		case T_ScalarArrayOpExpr:
 		case T_BoolExpr:
 		case T_FieldSelect:
 		case T_FieldStore:
@@ -429,7 +430,6 @@ transformIndirection(ParseState *pstate, Node *basenode, List *indirection)
 														   exprType(result),
 														   InvalidOid,
 														   exprTypmod(result),
-														   exprCollation(result),
 														   subscripts,
 														   NULL);
 			subscripts = NIL;
@@ -451,7 +451,6 @@ transformIndirection(ParseState *pstate, Node *basenode, List *indirection)
 												   exprType(result),
 												   InvalidOid,
 												   exprTypmod(result),
-												   exprCollation(result),
 												   subscripts,
 												   NULL);
 
@@ -1001,25 +1000,34 @@ transformAExprNullIf(ParseState *pstate, A_Expr *a)
 {
 	Node	   *lexpr = transformExpr(pstate, a->lexpr);
 	Node	   *rexpr = transformExpr(pstate, a->rexpr);
-	Node	   *result;
+	OpExpr	   *result;
 
-	result = (Node *) make_op(pstate,
-							  a->name,
-							  lexpr,
-							  rexpr,
-							  a->location);
-	if (((OpExpr *) result)->opresulttype != BOOLOID)
+	result = (OpExpr *) make_op(pstate,
+								a->name,
+								lexpr,
+								rexpr,
+								a->location);
+
+	/*
+	 * The comparison operator itself should yield boolean ...
+	 */
+	if (result->opresulttype != BOOLOID)
 		ereport(ERROR,
 				(errcode(ERRCODE_DATATYPE_MISMATCH),
 				 errmsg("NULLIF requires = operator to yield boolean"),
 				 parser_errposition(pstate, a->location)));
 
 	/*
+	 * ... but the NullIfExpr will yield the first operand's type.
+	 */
+	result->opresulttype = exprType((Node *) linitial(result->args));
+
+	/*
 	 * We rely on NullIfExpr and OpExpr being the same struct
 	 */
 	NodeSetTag(result, T_NullIfExpr);
 
-	return result;
+	return (Node *) result;
 }
 
 static Node *
@@ -1153,6 +1161,7 @@ transformAExprIn(ParseState *pstate, A_Expr *a)
 			}
 			newa = makeNode(ArrayExpr);
 			newa->array_typeid = array_type;
+			/* array_collid will be set by parse_collate.c */
 			newa->element_typeid = scalar_type;
 			newa->elements = aexprs;
 			newa->multidims = false;
@@ -1272,6 +1281,14 @@ transformCaseExpr(ParseState *pstate, CaseExpr *c)
 		if (exprType(arg) == UNKNOWNOID)
 			arg = coerce_to_common_type(pstate, arg, TEXTOID, "CASE");
 
+		/*
+		 * Run collation assignment on the test expression so that we know
+		 * what collation to mark the placeholder with.  In principle we
+		 * could leave it to parse_collate.c to do that later, but propagating
+		 * the result to the CaseTestExpr would be unnecessarily complicated.
+		 */
+		assign_expr_collations(pstate, arg);
+
 		placeholder = makeNode(CaseTestExpr);
 		placeholder->typeId = exprType(arg);
 		placeholder->typeMod = exprTypmod(arg);
@@ -1340,6 +1357,7 @@ transformCaseExpr(ParseState *pstate, CaseExpr *c)
 	ptype = select_common_type(pstate, resultexprs, "CASE", NULL);
 	Assert(OidIsValid(ptype));
 	newc->casetype = ptype;
+	/* casecollid will be set by parse_collate.c */
 
 	/* Convert default result clause, if necessary */
 	newc->defresult = (Expr *)
@@ -1359,8 +1377,6 @@ transformCaseExpr(ParseState *pstate, CaseExpr *c)
 								  ptype,
 								  "CASE/WHEN");
 	}
-
-	newc->casecollation = select_common_collation(pstate, resultexprs, true);
 
 	newc->location = c->location;
 
@@ -1472,7 +1488,7 @@ transformSubLink(ParseState *pstate, SubLink *sublink)
 			param->paramid = tent->resno;
 			param->paramtype = exprType((Node *) tent->expr);
 			param->paramtypmod = exprTypmod((Node *) tent->expr);
-			param->paramcollation = exprCollation((Node *) tent->expr);
+			param->paramcollid = exprCollation((Node *) tent->expr);
 			param->location = -1;
 
 			right_list = lappend(right_list, param);
@@ -1660,6 +1676,7 @@ transformArrayExpr(ParseState *pstate, A_ArrayExpr *a,
 	}
 
 	newa->array_typeid = array_type;
+	/* array_collid will be set by parse_collate.c */
 	newa->element_typeid = element_type;
 	newa->elements = newcoercedelems;
 	newa->location = a->location;
@@ -1702,6 +1719,7 @@ transformCoalesceExpr(ParseState *pstate, CoalesceExpr *c)
 	}
 
 	newc->coalescetype = select_common_type(pstate, newargs, "COALESCE", NULL);
+	/* coalescecollid will be set by parse_collate.c */
 
 	/* Convert arguments if necessary */
 	foreach(args, newargs)
@@ -1716,7 +1734,6 @@ transformCoalesceExpr(ParseState *pstate, CoalesceExpr *c)
 	}
 
 	newc->args = newcoercedargs;
-	newc->coalescecollation = select_common_collation(pstate, newcoercedargs, true);
 	newc->location = c->location;
 	return (Node *) newc;
 }
@@ -1741,7 +1758,7 @@ transformMinMaxExpr(ParseState *pstate, MinMaxExpr *m)
 	}
 
 	newm->minmaxtype = select_common_type(pstate, newargs, funcname, NULL);
-	newm->collid = select_common_collation(pstate, newargs, false);
+	/* minmaxcollid and inputcollid will be set by parse_collate.c */
 
 	/* Convert arguments if necessary */
 	foreach(args, newargs)
@@ -2149,7 +2166,6 @@ make_row_comparison_op(ParseState *pstate, List *opname,
 	List	   *opexprs;
 	List	   *opnos;
 	List	   *opfamilies;
-	List	   *collids;
 	ListCell   *l,
 			   *r;
 	List	  **opfamily_lists;
@@ -2320,7 +2336,6 @@ make_row_comparison_op(ParseState *pstate, List *opname,
 	 * possibility that make_op inserted coercion operations.
 	 */
 	opnos = NIL;
-	collids = NIL;
 	largs = NIL;
 	rargs = NIL;
 	foreach(l, opexprs)
@@ -2328,7 +2343,6 @@ make_row_comparison_op(ParseState *pstate, List *opname,
 		OpExpr	   *cmp = (OpExpr *) lfirst(l);
 
 		opnos = lappend_oid(opnos, cmp->opno);
-		collids = lappend_oid(collids, cmp->collid);
 		largs = lappend(largs, linitial(cmp->args));
 		rargs = lappend(rargs, lsecond(cmp->args));
 	}
@@ -2337,7 +2351,7 @@ make_row_comparison_op(ParseState *pstate, List *opname,
 	rcexpr->rctype = rctype;
 	rcexpr->opnos = opnos;
 	rcexpr->opfamilies = opfamilies;
-	rcexpr->collids = collids;
+	rcexpr->inputcollids = NIL;	/* assign_expr_collations will fix this */
 	rcexpr->largs = largs;
 	rcexpr->rargs = rargs;
 

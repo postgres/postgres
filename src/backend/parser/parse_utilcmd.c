@@ -46,6 +46,7 @@
 #include "nodes/nodeFuncs.h"
 #include "parser/analyze.h"
 #include "parser/parse_clause.h"
+#include "parser/parse_collate.h"
 #include "parser/parse_expr.h"
 #include "parser/parse_relation.h"
 #include "parser/parse_target.h"
@@ -1797,6 +1798,9 @@ transformIndexStmt(IndexStmt *stmt, const char *queryString)
 
 			/* Now do parse transformation of the expression */
 			ielem->expr = transformExpr(pstate, ielem->expr);
+
+			/* We have to fix its collations too */
+			assign_expr_collations(pstate, ielem->expr);
 
 			/*
 			 * We check only that the result type is legitimate; this is for

@@ -146,7 +146,6 @@ extern ArrayRef *transformArraySubscripts(ParseState *pstate,
 						 Oid arrayType,
 						 Oid elementType,
 						 int32 arrayTypMod,
-						 Oid arrayColl,
 						 List *indirection,
 						 Node *assignFrom);
 extern Const *make_const(ParseState *pstate, Value *value, int location);

@@ -242,7 +242,7 @@ MJExamineQuals(List *mergeclauses,
 
 		/* Set up the fmgr lookup information */
 		fmgr_info(cmpproc, &(clause->cmpfinfo));
-		fmgr_info_collation(collation, &(clause->cmpfinfo));
+		fmgr_info_set_collation(collation, &(clause->cmpfinfo));
 
 		/* Fill the additional comparison-strategy flags */
 		if (opstrategy == BTLessStrategyNumber)

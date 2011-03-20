@@ -28,9 +28,9 @@ extern void build_aggregate_fnexprs(Oid *agg_input_types,
 						int agg_num_inputs,
 						Oid agg_state_type,
 						Oid agg_result_type,
+						Oid agg_input_collation,
 						Oid transfn_oid,
 						Oid finalfn_oid,
-						Oid collation,
 						Expr **transfnexpr,
 						Expr **finalfnexpr);
 

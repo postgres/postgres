@@ -836,7 +836,7 @@ tuplesort_begin_datum(Oid datumType,
 		elog(ERROR, "operator %u is not a valid ordering operator",
 			 sortOperator);
 	fmgr_info(sortFunction, &state->sortOpFn);
-	fmgr_info_collation(sortCollation, &state->sortOpFn);
+	fmgr_info_set_collation(sortCollation, &state->sortOpFn);
 
 	/* set ordering flags */
 	state->sortFnFlags = reverse ? SK_BT_DESC : 0;

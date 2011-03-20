@@ -114,7 +114,7 @@ fixed_paramref_hook(ParseState *pstate, ParamRef *pref)
 	param->paramid = paramno;
 	param->paramtype = parstate->paramTypes[paramno - 1];
 	param->paramtypmod = -1;
-	param->paramcollation = get_typcollation(param->paramtype);
+	param->paramcollid = get_typcollation(param->paramtype);
 	param->location = pref->location;
 
 	return (Node *) param;
@@ -167,7 +167,7 @@ variable_paramref_hook(ParseState *pstate, ParamRef *pref)
 	param->paramid = paramno;
 	param->paramtype = *pptype;
 	param->paramtypmod = -1;
-	param->paramcollation = get_typcollation(param->paramtype);
+	param->paramcollid = get_typcollation(param->paramtype);
 	param->location = pref->location;
 
 	return (Node *) param;
@@ -230,6 +230,8 @@ variable_coerce_param_hook(ParseState *pstate, Param *param,
 		 * run-time length check/coercion will occur if needed.
 		 */
 		param->paramtypmod = -1;
+
+		param->paramcollid = get_typcollation(param->paramtype);
 
 		/* Use the leftmost of the param's and coercion's locations */
 		if (location >= 0 &&

@@ -939,7 +939,7 @@ _outParam(StringInfo str, Param *node)
 	WRITE_INT_FIELD(paramid);
 	WRITE_OID_FIELD(paramtype);
 	WRITE_INT_FIELD(paramtypmod);
-	WRITE_OID_FIELD(paramcollation);
+	WRITE_OID_FIELD(paramcollid);
 	WRITE_LOCATION_FIELD(location);
 }
 
@@ -950,12 +950,13 @@ _outAggref(StringInfo str, Aggref *node)
 
 	WRITE_OID_FIELD(aggfnoid);
 	WRITE_OID_FIELD(aggtype);
+	WRITE_OID_FIELD(aggcollid);
+	WRITE_OID_FIELD(inputcollid);
 	WRITE_NODE_FIELD(args);
 	WRITE_NODE_FIELD(aggorder);
 	WRITE_NODE_FIELD(aggdistinct);
 	WRITE_BOOL_FIELD(aggstar);
 	WRITE_UINT_FIELD(agglevelsup);
-	WRITE_OID_FIELD(collid);
 	WRITE_LOCATION_FIELD(location);
 }
 
@@ -966,11 +967,12 @@ _outWindowFunc(StringInfo str, WindowFunc *node)
 
 	WRITE_OID_FIELD(winfnoid);
 	WRITE_OID_FIELD(wintype);
+	WRITE_OID_FIELD(wincollid);
+	WRITE_OID_FIELD(inputcollid);
 	WRITE_NODE_FIELD(args);
 	WRITE_UINT_FIELD(winref);
 	WRITE_BOOL_FIELD(winstar);
 	WRITE_BOOL_FIELD(winagg);
-	WRITE_OID_FIELD(collid);
 	WRITE_LOCATION_FIELD(location);
 }
 
@@ -982,7 +984,7 @@ _outArrayRef(StringInfo str, ArrayRef *node)
 	WRITE_OID_FIELD(refarraytype);
 	WRITE_OID_FIELD(refelemtype);
 	WRITE_INT_FIELD(reftypmod);
-	WRITE_INT_FIELD(refcollid);
+	WRITE_OID_FIELD(refcollid);
 	WRITE_NODE_FIELD(refupperindexpr);
 	WRITE_NODE_FIELD(reflowerindexpr);
 	WRITE_NODE_FIELD(refexpr);
@@ -998,8 +1000,9 @@ _outFuncExpr(StringInfo str, FuncExpr *node)
 	WRITE_OID_FIELD(funcresulttype);
 	WRITE_BOOL_FIELD(funcretset);
 	WRITE_ENUM_FIELD(funcformat, CoercionForm);
+	WRITE_OID_FIELD(funccollid);
+	WRITE_OID_FIELD(inputcollid);
 	WRITE_NODE_FIELD(args);
-	WRITE_OID_FIELD(collid);
 	WRITE_LOCATION_FIELD(location);
 }
 
@@ -1023,8 +1026,9 @@ _outOpExpr(StringInfo str, OpExpr *node)
 	WRITE_OID_FIELD(opfuncid);
 	WRITE_OID_FIELD(opresulttype);
 	WRITE_BOOL_FIELD(opretset);
+	WRITE_OID_FIELD(opcollid);
+	WRITE_OID_FIELD(inputcollid);
 	WRITE_NODE_FIELD(args);
-	WRITE_OID_FIELD(collid);
 	WRITE_LOCATION_FIELD(location);
 }
 
@@ -1037,8 +1041,24 @@ _outDistinctExpr(StringInfo str, DistinctExpr *node)
 	WRITE_OID_FIELD(opfuncid);
 	WRITE_OID_FIELD(opresulttype);
 	WRITE_BOOL_FIELD(opretset);
+	WRITE_OID_FIELD(opcollid);
+	WRITE_OID_FIELD(inputcollid);
 	WRITE_NODE_FIELD(args);
-	WRITE_OID_FIELD(collid);
+	WRITE_LOCATION_FIELD(location);
+}
+
+static void
+_outNullIfExpr(StringInfo str, NullIfExpr *node)
+{
+	WRITE_NODE_TYPE("NULLIFEXPR");
+
+	WRITE_OID_FIELD(opno);
+	WRITE_OID_FIELD(opfuncid);
+	WRITE_OID_FIELD(opresulttype);
+	WRITE_BOOL_FIELD(opretset);
+	WRITE_OID_FIELD(opcollid);
+	WRITE_OID_FIELD(inputcollid);
+	WRITE_NODE_FIELD(args);
 	WRITE_LOCATION_FIELD(location);
 }
 
@@ -1050,8 +1070,8 @@ _outScalarArrayOpExpr(StringInfo str, ScalarArrayOpExpr *node)
 	WRITE_OID_FIELD(opno);
 	WRITE_OID_FIELD(opfuncid);
 	WRITE_BOOL_FIELD(useOr);
+	WRITE_OID_FIELD(inputcollid);
 	WRITE_NODE_FIELD(args);
-	WRITE_OID_FIELD(collid);
 	WRITE_LOCATION_FIELD(location);
 }
 
@@ -1133,7 +1153,7 @@ _outFieldSelect(StringInfo str, FieldSelect *node)
 	WRITE_INT_FIELD(fieldnum);
 	WRITE_OID_FIELD(resulttype);
 	WRITE_INT_FIELD(resulttypmod);
-	WRITE_OID_FIELD(resultcollation);
+	WRITE_OID_FIELD(resultcollid);
 }
 
 static void
@@ -1155,6 +1175,7 @@ _outRelabelType(StringInfo str, RelabelType *node)
 	WRITE_NODE_FIELD(arg);
 	WRITE_OID_FIELD(resulttype);
 	WRITE_INT_FIELD(resulttypmod);
+	WRITE_OID_FIELD(resultcollid);
 	WRITE_ENUM_FIELD(relabelformat, CoercionForm);
 	WRITE_LOCATION_FIELD(location);
 }
@@ -1166,6 +1187,7 @@ _outCoerceViaIO(StringInfo str, CoerceViaIO *node)
 
 	WRITE_NODE_FIELD(arg);
 	WRITE_OID_FIELD(resulttype);
+	WRITE_OID_FIELD(resultcollid);
 	WRITE_ENUM_FIELD(coerceformat, CoercionForm);
 	WRITE_LOCATION_FIELD(location);
 }
@@ -1179,6 +1201,7 @@ _outArrayCoerceExpr(StringInfo str, ArrayCoerceExpr *node)
 	WRITE_OID_FIELD(elemfuncid);
 	WRITE_OID_FIELD(resulttype);
 	WRITE_INT_FIELD(resulttypmod);
+	WRITE_OID_FIELD(resultcollid);
 	WRITE_BOOL_FIELD(isExplicit);
 	WRITE_ENUM_FIELD(coerceformat, CoercionForm);
 	WRITE_LOCATION_FIELD(location);
@@ -1211,7 +1234,7 @@ _outCaseExpr(StringInfo str, CaseExpr *node)
 	WRITE_NODE_TYPE("CASE");
 
 	WRITE_OID_FIELD(casetype);
-	WRITE_OID_FIELD(casecollation);
+	WRITE_OID_FIELD(casecollid);
 	WRITE_NODE_FIELD(arg);
 	WRITE_NODE_FIELD(args);
 	WRITE_NODE_FIELD(defresult);
@@ -1244,6 +1267,7 @@ _outArrayExpr(StringInfo str, ArrayExpr *node)
 	WRITE_NODE_TYPE("ARRAY");
 
 	WRITE_OID_FIELD(array_typeid);
+	WRITE_OID_FIELD(array_collid);
 	WRITE_OID_FIELD(element_typeid);
 	WRITE_NODE_FIELD(elements);
 	WRITE_BOOL_FIELD(multidims);
@@ -1270,7 +1294,7 @@ _outRowCompareExpr(StringInfo str, RowCompareExpr *node)
 	WRITE_ENUM_FIELD(rctype, RowCompareType);
 	WRITE_NODE_FIELD(opnos);
 	WRITE_NODE_FIELD(opfamilies);
-	WRITE_NODE_FIELD(collids);
+	WRITE_NODE_FIELD(inputcollids);
 	WRITE_NODE_FIELD(largs);
 	WRITE_NODE_FIELD(rargs);
 }
@@ -1281,7 +1305,7 @@ _outCoalesceExpr(StringInfo str, CoalesceExpr *node)
 	WRITE_NODE_TYPE("COALESCE");
 
 	WRITE_OID_FIELD(coalescetype);
-	WRITE_OID_FIELD(coalescecollation);
+	WRITE_OID_FIELD(coalescecollid);
 	WRITE_NODE_FIELD(args);
 	WRITE_LOCATION_FIELD(location);
 }
@@ -1292,9 +1316,10 @@ _outMinMaxExpr(StringInfo str, MinMaxExpr *node)
 	WRITE_NODE_TYPE("MINMAX");
 
 	WRITE_OID_FIELD(minmaxtype);
+	WRITE_OID_FIELD(minmaxcollid);
+	WRITE_OID_FIELD(inputcollid);
 	WRITE_ENUM_FIELD(op, MinMaxOp);
 	WRITE_NODE_FIELD(args);
-	WRITE_OID_FIELD(collid);
 	WRITE_LOCATION_FIELD(location);
 }
 
@@ -1311,19 +1336,6 @@ _outXmlExpr(StringInfo str, XmlExpr *node)
 	WRITE_ENUM_FIELD(xmloption, XmlOptionType);
 	WRITE_OID_FIELD(type);
 	WRITE_INT_FIELD(typmod);
-	WRITE_LOCATION_FIELD(location);
-}
-
-static void
-_outNullIfExpr(StringInfo str, NullIfExpr *node)
-{
-	WRITE_NODE_TYPE("NULLIFEXPR");
-
-	WRITE_OID_FIELD(opno);
-	WRITE_OID_FIELD(opfuncid);
-	WRITE_OID_FIELD(opresulttype);
-	WRITE_BOOL_FIELD(opretset);
-	WRITE_NODE_FIELD(args);
 	WRITE_LOCATION_FIELD(location);
 }
 
@@ -1354,6 +1366,7 @@ _outCoerceToDomain(StringInfo str, CoerceToDomain *node)
 	WRITE_NODE_FIELD(arg);
 	WRITE_OID_FIELD(resulttype);
 	WRITE_INT_FIELD(resulttypmod);
+	WRITE_OID_FIELD(resultcollid);
 	WRITE_ENUM_FIELD(coercionformat, CoercionForm);
 	WRITE_LOCATION_FIELD(location);
 }
@@ -1365,6 +1378,7 @@ _outCoerceToDomainValue(StringInfo str, CoerceToDomainValue *node)
 
 	WRITE_OID_FIELD(typeId);
 	WRITE_INT_FIELD(typeMod);
+	WRITE_OID_FIELD(collation);
 	WRITE_LOCATION_FIELD(location);
 }
 
@@ -1375,7 +1389,7 @@ _outSetToDefault(StringInfo str, SetToDefault *node)
 
 	WRITE_OID_FIELD(typeId);
 	WRITE_INT_FIELD(typeMod);
-	WRITE_OID_FIELD(collid);
+	WRITE_OID_FIELD(collation);
 	WRITE_LOCATION_FIELD(location);
 }
 
@@ -1766,6 +1780,7 @@ _outEquivalenceClass(StringInfo str, EquivalenceClass *node)
 	WRITE_NODE_TYPE("EQUIVALENCECLASS");
 
 	WRITE_NODE_FIELD(ec_opfamilies);
+	WRITE_OID_FIELD(ec_collation);
 	WRITE_NODE_FIELD(ec_members);
 	WRITE_NODE_FIELD(ec_sources);
 	WRITE_NODE_FIELD(ec_derives);
@@ -1796,7 +1811,6 @@ _outPathKey(StringInfo str, PathKey *node)
 
 	WRITE_NODE_FIELD(pk_eclass);
 	WRITE_OID_FIELD(pk_opfamily);
-	WRITE_OID_FIELD(pk_collation);
 	WRITE_INT_FIELD(pk_strategy);
 	WRITE_BOOL_FIELD(pk_nulls_first);
 }
@@ -2814,6 +2828,9 @@ _outNode(StringInfo str, void *obj)
 			case T_DistinctExpr:
 				_outDistinctExpr(str, obj);
 				break;
+			case T_NullIfExpr:
+				_outNullIfExpr(str, obj);
+				break;
 			case T_ScalarArrayOpExpr:
 				_outScalarArrayOpExpr(str, obj);
 				break;
@@ -2876,9 +2893,6 @@ _outNode(StringInfo str, void *obj)
 				break;
 			case T_XmlExpr:
 				_outXmlExpr(str, obj);
-				break;
-			case T_NullIfExpr:
-				_outNullIfExpr(str, obj);
 				break;
 			case T_NullTest:
 				_outNullTest(str, obj);

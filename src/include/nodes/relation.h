@@ -488,10 +488,13 @@ typedef struct IndexOptInfo
  * require merging two existing EquivalenceClasses.  At the end of the qual
  * distribution process, we have sets of values that are known all transitively
  * equal to each other, where "equal" is according to the rules of the btree
- * operator family(s) shown in ec_opfamilies.  (We restrict an EC to contain
- * only equalities whose operators belong to the same set of opfamilies.  This
- * could probably be relaxed, but for now it's not worth the trouble, since
- * nearly all equality operators belong to only one btree opclass anyway.)
+ * operator family(s) shown in ec_opfamilies, as well as the collation shown
+ * by ec_collation.  (We restrict an EC to contain only equalities whose
+ * operators belong to the same set of opfamilies.  This could probably be
+ * relaxed, but for now it's not worth the trouble, since nearly all equality
+ * operators belong to only one btree opclass anyway.  Similarly, we suppose
+ * that all or none of the input datatypes are collatable, so that a single
+ * collation value is sufficient.)
  *
  * We also use EquivalenceClasses as the base structure for PathKeys, letting
  * us represent knowledge about different sort orderings being equivalent.
@@ -520,6 +523,7 @@ typedef struct EquivalenceClass
 	NodeTag		type;
 
 	List	   *ec_opfamilies;	/* btree operator family OIDs */
+	Oid			ec_collation;	/* collation, if datatypes are collatable */
 	List	   *ec_members;		/* list of EquivalenceMembers */
 	List	   *ec_sources;		/* list of generating RestrictInfos */
 	List	   *ec_derives;		/* list of derived RestrictInfos */
@@ -574,9 +578,10 @@ typedef struct EquivalenceMember
  * represents the primary sort key, the second the first secondary sort key,
  * etc.  The value being sorted is represented by linking to an
  * EquivalenceClass containing that value and including pk_opfamily among its
- * ec_opfamilies.  This is a convenient method because it makes it trivial
- * to detect equivalent and closely-related orderings.	(See optimizer/README
- * for more information.)
+ * ec_opfamilies.  The EquivalenceClass tells which collation to use, too.
+ * This is a convenient method because it makes it trivial to detect
+ * equivalent and closely-related orderings. (See optimizer/README for more
+ * information.)
  *
  * Note: pk_strategy is either BTLessStrategyNumber (for ASC) or
  * BTGreaterStrategyNumber (for DESC).	We assume that all ordering-capable
@@ -589,7 +594,6 @@ typedef struct PathKey
 
 	EquivalenceClass *pk_eclass;	/* the value that is ordered */
 	Oid			pk_opfamily;	/* btree opfamily defining the ordering */
-	Oid			pk_collation;	/* collation */
 	int			pk_strategy;	/* sort direction (ASC or DESC) */
 	bool		pk_nulls_first; /* do NULLs come before normal values? */
 } PathKey;
@@ -1117,7 +1121,7 @@ typedef struct MergeScanSelCache
 {
 	/* Ordering details (cache lookup key) */
 	Oid			opfamily;		/* btree opfamily defining the ordering */
-	Oid			collation;
+	Oid			collation;		/* collation for the ordering */
 	int			strategy;		/* sort direction (ASC or DESC) */
 	bool		nulls_first;	/* do NULLs come before normal values? */
 	/* Results */

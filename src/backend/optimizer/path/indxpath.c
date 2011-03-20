@@ -1201,13 +1201,14 @@ match_clause_to_indexcol(IndexOptInfo *index,
 						 SaOpControl saop_control)
 {
 	Expr	   *clause = rinfo->clause;
-	Oid			collation = index->indexcollations[indexcol];
 	Oid			opfamily = index->opfamily[indexcol];
+	Oid			collation = index->indexcollations[indexcol];
 	Node	   *leftop,
 			   *rightop;
 	Relids		left_relids;
 	Relids		right_relids;
 	Oid			expr_op;
+	Oid			expr_coll;
 	bool		plain_op;
 
 	/*
@@ -1241,6 +1242,7 @@ match_clause_to_indexcol(IndexOptInfo *index,
 		left_relids = rinfo->left_relids;
 		right_relids = rinfo->right_relids;
 		expr_op = ((OpExpr *) clause)->opno;
+		expr_coll = ((OpExpr *) clause)->inputcollid;
 		plain_op = true;
 	}
 	else if (saop_control != SAOP_FORBID &&
@@ -1256,6 +1258,7 @@ match_clause_to_indexcol(IndexOptInfo *index,
 		left_relids = NULL;		/* not actually needed */
 		right_relids = pull_varnos(rightop);
 		expr_op = saop->opno;
+		expr_coll = saop->inputcollid;
 		plain_op = false;
 	}
 	else if (clause && IsA(clause, RowCompareExpr))
@@ -1284,8 +1287,8 @@ match_clause_to_indexcol(IndexOptInfo *index,
 		bms_is_subset(right_relids, outer_relids) &&
 		!contain_volatile_functions(rightop))
 	{
-		if (is_indexable_operator(expr_op, opfamily, true) &&
-			(!collation || collation == exprCollation((Node *) clause)))
+		if (collation == expr_coll &&
+			is_indexable_operator(expr_op, opfamily, true))
 			return true;
 
 		/*
@@ -1303,8 +1306,8 @@ match_clause_to_indexcol(IndexOptInfo *index,
 		bms_is_subset(left_relids, outer_relids) &&
 		!contain_volatile_functions(leftop))
 	{
-		if (is_indexable_operator(expr_op, opfamily, false) &&
-			(!collation || collation == exprCollation((Node *) clause)))
+		if (collation == expr_coll &&
+			is_indexable_operator(expr_op, opfamily, false))
 			return true;
 
 		/*
@@ -1397,7 +1400,7 @@ match_rowcompare_to_indexcol(IndexOptInfo *index,
 	else
 		return false;
 
-	if (index->indexcollations[indexcol] != linitial_oid(clause->collids))
+	if (index->indexcollations[indexcol] != linitial_oid(clause->inputcollids))
 		return false;
 
 	/* We're good if the operator is the right type of opfamily member */
@@ -1808,6 +1811,7 @@ eclass_matches_any_index(EquivalenceClass *ec, EquivalenceMember *em,
 		for (indexcol = 0; indexcol < index->ncolumns; indexcol++)
 		{
 			Oid			curFamily = index->opfamily[indexcol];
+			Oid			curCollation = index->indexcollations[indexcol];
 
 			/*
 			 * If it's a btree index, we can reject it if its opfamily isn't
@@ -1818,9 +1822,12 @@ eclass_matches_any_index(EquivalenceClass *ec, EquivalenceMember *em,
 			 * mean we return "true" for a useless index, but that will just
 			 * cause some wasted planner cycles; it's better than ignoring
 			 * useful indexes.
+			 *
+			 * We insist on collation match for all index types, though.
 			 */
 			if ((index->relam != BTREE_AM_OID ||
 				 list_member_oid(ec->ec_opfamilies, curFamily)) &&
+				ec->ec_collation == curCollation &&
 				match_index_to_operand((Node *) em->em_expr, indexcol, index))
 				return true;
 		}
@@ -2671,7 +2678,8 @@ expand_boolean_index_clause(Node *clause,
 		/* convert to indexkey = TRUE */
 		return make_opclause(BooleanEqualOperator, BOOLOID, false,
 							 (Expr *) clause,
-							 (Expr *) makeBoolConst(true, false));
+							 (Expr *) makeBoolConst(true, false),
+							 InvalidOid, InvalidOid);
 	}
 	/* NOT clause? */
 	if (not_clause(clause))
@@ -2683,7 +2691,8 @@ expand_boolean_index_clause(Node *clause,
 		/* convert to indexkey = FALSE */
 		return make_opclause(BooleanEqualOperator, BOOLOID, false,
 							 (Expr *) arg,
-							 (Expr *) makeBoolConst(false, false));
+							 (Expr *) makeBoolConst(false, false),
+							 InvalidOid, InvalidOid);
 	}
 	if (clause && IsA(clause, BooleanTest))
 	{
@@ -2697,14 +2706,16 @@ expand_boolean_index_clause(Node *clause,
 			/* convert to indexkey = TRUE */
 			return make_opclause(BooleanEqualOperator, BOOLOID, false,
 								 (Expr *) arg,
-								 (Expr *) makeBoolConst(true, false));
+								 (Expr *) makeBoolConst(true, false),
+								 InvalidOid, InvalidOid);
 		}
 		if (btest->booltesttype == IS_FALSE)
 		{
 			/* convert to indexkey = FALSE */
 			return make_opclause(BooleanEqualOperator, BOOLOID, false,
 								 (Expr *) arg,
-								 (Expr *) makeBoolConst(false, false));
+								 (Expr *) makeBoolConst(false, false),
+								 InvalidOid, InvalidOid);
 		}
 		/* Oops */
 		Assert(false);
@@ -2876,7 +2887,7 @@ expand_indexqual_rowcompare(RestrictInfo *rinfo,
 	largs_cell = lnext(list_head(clause->largs));
 	rargs_cell = lnext(list_head(clause->rargs));
 	opnos_cell = lnext(list_head(clause->opnos));
-	collids_cell = lnext(list_head(clause->collids));
+	collids_cell = lnext(list_head(clause->inputcollids));
 
 	while (largs_cell != NULL)
 	{
@@ -3010,8 +3021,8 @@ expand_indexqual_rowcompare(RestrictInfo *rinfo,
 		rc->opnos = new_ops;
 		rc->opfamilies = list_truncate(list_copy(clause->opfamilies),
 									   matching_cols);
-		rc->collids = list_truncate(list_copy(clause->collids),
-									matching_cols);
+		rc->inputcollids = list_truncate(list_copy(clause->inputcollids),
+										 matching_cols);
 		rc->largs = list_truncate((List *) copyObject(clause->largs),
 								  matching_cols);
 		rc->rargs = list_truncate((List *) copyObject(clause->rargs),
@@ -3024,7 +3035,9 @@ expand_indexqual_rowcompare(RestrictInfo *rinfo,
 
 		opexpr = make_opclause(linitial_oid(new_ops), BOOLOID, false,
 							   copyObject(linitial(clause->largs)),
-							   copyObject(linitial(clause->rargs)));
+							   copyObject(linitial(clause->rargs)),
+							   InvalidOid,
+							   linitial_oid(clause->inputcollids));
 		return make_simple_restrictinfo(opexpr);
 	}
 }
@@ -3033,7 +3046,7 @@ expand_indexqual_rowcompare(RestrictInfo *rinfo,
  * Given a fixed prefix that all the "leftop" values must have,
  * generate suitable indexqual condition(s).  opfamily is the index
  * operator family; we use it to deduce the appropriate comparison
- * operators and operand datatypes.
+ * operators and operand datatypes.  collation is the input collation to use.
  */
 static List *
 prefix_quals(Node *leftop, Oid opfamily, Oid collation,
@@ -3110,7 +3123,8 @@ prefix_quals(Node *leftop, Oid opfamily, Oid collation,
 		if (oproid == InvalidOid)
 			elog(ERROR, "no = operator for opfamily %u", opfamily);
 		expr = make_opclause(oproid, BOOLOID, false,
-							 (Expr *) leftop, (Expr *) prefix_const);
+							 (Expr *) leftop, (Expr *) prefix_const,
+							 InvalidOid, collation);
 		result = list_make1(make_simple_restrictinfo(expr));
 		return result;
 	}
@@ -3125,7 +3139,8 @@ prefix_quals(Node *leftop, Oid opfamily, Oid collation,
 	if (oproid == InvalidOid)
 		elog(ERROR, "no >= operator for opfamily %u", opfamily);
 	expr = make_opclause(oproid, BOOLOID, false,
-						 (Expr *) leftop, (Expr *) prefix_const);
+						 (Expr *) leftop, (Expr *) prefix_const,
+						 InvalidOid, collation);
 	result = list_make1(make_simple_restrictinfo(expr));
 
 	/*-------
@@ -3138,12 +3153,13 @@ prefix_quals(Node *leftop, Oid opfamily, Oid collation,
 	if (oproid == InvalidOid)
 		elog(ERROR, "no < operator for opfamily %u", opfamily);
 	fmgr_info(get_opcode(oproid), &ltproc);
-	fmgr_info_collation(collation, &ltproc);
+	fmgr_info_set_collation(collation, &ltproc);
 	greaterstr = make_greater_string(prefix_const, &ltproc);
 	if (greaterstr)
 	{
 		expr = make_opclause(oproid, BOOLOID, false,
-							 (Expr *) leftop, (Expr *) greaterstr);
+							 (Expr *) leftop, (Expr *) greaterstr,
+							 InvalidOid, collation);
 		result = lappend(result, make_simple_restrictinfo(expr));
 	}
 
@@ -3206,7 +3222,8 @@ network_prefix_quals(Node *leftop, Oid expr_op, Oid opfamily, Datum rightop)
 	expr = make_opclause(opr1oid, BOOLOID, false,
 						 (Expr *) leftop,
 						 (Expr *) makeConst(datatype, -1, -1, opr1right,
-											false, false));
+											false, false),
+						 InvalidOid, InvalidOid);
 	result = list_make1(make_simple_restrictinfo(expr));
 
 	/* create clause "key <= network_scan_last( rightop )" */
@@ -3221,7 +3238,8 @@ network_prefix_quals(Node *leftop, Oid expr_op, Oid opfamily, Datum rightop)
 	expr = make_opclause(opr2oid, BOOLOID, false,
 						 (Expr *) leftop,
 						 (Expr *) makeConst(datatype, -1, -1, opr2right,
-											false, false));
+											false, false),
+						 InvalidOid, InvalidOid);
 	result = lappend(result, make_simple_restrictinfo(expr));
 
 	return result;

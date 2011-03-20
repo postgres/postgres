@@ -17,6 +17,7 @@ analyze.c	top level of parse analysis for optimizable queries
 parse_agg.c	handle aggregates, like SUM(col1),  AVG(col2), ...
 parse_clause.c	handle clauses like WHERE, ORDER BY, GROUP BY, ...
 parse_coerce.c	handle coercing expressions to different data types
+parse_collate.c	assign collation information in completed expressions
 parse_cte.c	handle Common Table Expressions (WITH clauses)
 parse_expr.c	handle expressions like col, col + 3, x = 3 or x = 4
 parse_func.c	handle functions, table.column and column identifiers

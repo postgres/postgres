@@ -33,6 +33,7 @@
 #include "parser/parse_agg.h"
 #include "parser/parse_clause.h"
 #include "parser/parse_coerce.h"
+#include "parser/parse_collate.h"
 #include "parser/parse_cte.h"
 #include "parser/parse_oper.h"
 #include "parser/parse_param.h"
@@ -323,6 +324,8 @@ transformDeleteStmt(ParseState *pstate, DeleteStmt *stmt)
 	if (pstate->p_hasWindowFuncs)
 		parseCheckWindowFuncs(pstate, qry);
 
+	assign_query_collations(pstate, qry);
+
 	return qry;
 }
 
@@ -566,6 +569,14 @@ transformInsertStmt(ParseState *pstate, InsertStmt *stmt)
 										 stmt->cols,
 										 icolumns, attrnos);
 
+			/*
+			 * We must assign collations now because assign_query_collations
+			 * doesn't process rangetable entries.  We just assign all the
+			 * collations independently in each row, and don't worry about
+			 * whether they are consistent vertically either.
+			 */
+			assign_list_collations(pstate, sublist);
+
 			exprsLists = lappend(exprsLists, sublist);
 		}
 
@@ -704,6 +715,8 @@ transformInsertStmt(ParseState *pstate, InsertStmt *stmt)
 				 errmsg("cannot use window function in VALUES"),
 				 parser_errposition(pstate,
 									locate_windowfunc((Node *) qry))));
+
+	assign_query_collations(pstate, qry);
 
 	return qry;
 }
@@ -960,6 +973,8 @@ transformSelectStmt(ParseState *pstate, SelectStmt *stmt)
 							   (LockingClause *) lfirst(l), false);
 	}
 
+	assign_query_collations(pstate, qry);
+
 	return qry;
 }
 
@@ -1082,6 +1097,14 @@ transformValuesClause(ParseState *pstate, SelectStmt *stmt)
 			i++;
 		}
 
+		/*
+		 * We must assign collations now because assign_query_collations
+		 * doesn't process rangetable entries.  We just assign all the
+		 * collations independently in each row, and don't worry about
+		 * whether they are consistent vertically either.
+		 */
+		assign_list_collations(pstate, newsublist);
+
 		newExprsLists = lappend(newExprsLists, newsublist);
 	}
 
@@ -1175,6 +1198,8 @@ transformValuesClause(ParseState *pstate, SelectStmt *stmt)
 				 errmsg("cannot use window function in VALUES"),
 				 parser_errposition(pstate,
 								locate_windowfunc((Node *) newExprsLists))));
+
+	assign_query_collations(pstate, qry);
 
 	return qry;
 }
@@ -1417,6 +1442,8 @@ transformSetOperationStmt(ParseState *pstate, SelectStmt *stmt)
 							   (LockingClause *) lfirst(l), false);
 	}
 
+	assign_query_collations(pstate, qry);
+
 	return qry;
 }
 
@@ -1634,12 +1661,6 @@ transformSetOperationTree(ParseState *pstate, SelectStmt *stmt,
 				rescoltypmod = lcoltypmod;
 			else
 				rescoltypmod = -1;
-			/* Select common collation.  A common collation is
-			 * required for all set operators except UNION ALL; see
-			 * SQL:2008-2 7.13 SR 15c. */
-			rescolcoll = select_common_collation(pstate,
-												 list_make2(lcolnode, rcolnode),
-												 (op->op == SETOP_UNION && op->all));
 
 			/*
 			 * Verify the coercions are actually possible.	If not, we'd fail
@@ -1662,26 +1683,46 @@ transformSetOperationTree(ParseState *pstate, SelectStmt *stmt,
 			 * output type of the child query and the resolved target type.
 			 * Such a discrepancy would disable optimization in the planner.
 			 *
-			 * If it's some other UNKNOWN-type node, eg a Var, we do nothing.
-			 * The planner is sometimes able to fold an UNKNOWN Var to a
-			 * constant before it has to coerce the type, so failing now would
-			 * just break cases that might work.
+			 * If it's some other UNKNOWN-type node, eg a Var, we do nothing
+			 * (knowing that coerce_to_common_type would fail).  The planner
+			 * is sometimes able to fold an UNKNOWN Var to a constant before
+			 * it has to coerce the type, so failing now would just break
+			 * cases that might work.
 			 */
 			if (lcoltype != UNKNOWNOID)
-				(void) coerce_to_common_type(pstate, lcolnode,
-											 rescoltype, context);
-			else if (IsA(lcolnode, Const) ||IsA(lcolnode, Param))
-				ltle->expr = (Expr *)
-					coerce_to_common_type(pstate, lcolnode,
-										  rescoltype, context);
+				lcolnode = coerce_to_common_type(pstate, lcolnode,
+												 rescoltype, context);
+			else if (IsA(lcolnode, Const) ||
+					 IsA(lcolnode, Param))
+			{
+				lcolnode = coerce_to_common_type(pstate, lcolnode,
+												 rescoltype, context);
+				ltle->expr = (Expr *) lcolnode;
+			}
 
 			if (rcoltype != UNKNOWNOID)
-				(void) coerce_to_common_type(pstate, rcolnode,
-											 rescoltype, context);
-			else if (IsA(rcolnode, Const) ||IsA(rcolnode, Param))
-				rtle->expr = (Expr *)
-					coerce_to_common_type(pstate, rcolnode,
-										  rescoltype, context);
+				rcolnode = coerce_to_common_type(pstate, rcolnode,
+												 rescoltype, context);
+			else if (IsA(rcolnode, Const) ||
+					 IsA(rcolnode, Param))
+			{
+				rcolnode = coerce_to_common_type(pstate, rcolnode,
+												 rescoltype, context);
+				rtle->expr = (Expr *) rcolnode;
+			}
+
+			/*
+			 * Select common collation.  A common collation is required for
+			 * all set operators except UNION ALL; see SQL:2008 7.13 <query
+			 * expression> Syntax Rule 15c.  (If we fail to identify a common
+			 * collation for a UNION ALL column, the curCollations element
+			 * will be set to InvalidOid, which may result in a runtime error
+			 * if something at a higher query level wants to use the column's
+			 * collation.)
+			 */
+			rescolcoll = select_common_collation(pstate,
+												 list_make2(lcolnode, rcolnode),
+												 (op->op == SETOP_UNION && op->all));
 
 			/* emit results */
 			op->colTypes = lappend_oid(op->colTypes, rescoltype);
@@ -1734,7 +1775,7 @@ transformSetOperationTree(ParseState *pstate, SelectStmt *stmt,
 
 				rescolnode->typeId = rescoltype;
 				rescolnode->typeMod = rescoltypmod;
-				rescolnode->collid = rescolcoll;
+				rescolnode->collation = rescolcoll;
 				rescolnode->location = bestlocation;
 				restle = makeTargetEntry((Expr *) rescolnode,
 										 0,			/* no need to set resno */
@@ -1965,6 +2006,8 @@ transformUpdateStmt(ParseState *pstate, UpdateStmt *stmt)
 	}
 	if (origTargetList != NULL)
 		elog(ERROR, "UPDATE target count mismatch --- internal error");
+
+	assign_query_collations(pstate, qry);
 
 	return qry;
 }

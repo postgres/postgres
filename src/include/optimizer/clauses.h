@@ -36,7 +36,8 @@ typedef struct
 
 
 extern Expr *make_opclause(Oid opno, Oid opresulttype, bool opretset,
-			  Expr *leftop, Expr *rightop);
+			  Expr *leftop, Expr *rightop,
+			  Oid opcollid, Oid inputcollid);
 extern Node *get_leftop(Expr *clause);
 extern Node *get_rightop(Expr *clause);
 

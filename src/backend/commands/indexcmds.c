@@ -883,17 +883,34 @@ ComputeIndexAttrs(IndexInfo *indexInfo,
 		}
 
 		/*
-		 * Collation override
+		 * Apply collation override if any
 		 */
 		if (attribute->collation)
+			attcollation = get_collation_oid(attribute->collation, false);
+
+		/*
+		 * Check we have a collation iff it's a collatable type.  The only
+		 * expected failures here are (1) COLLATE applied to a noncollatable
+		 * type, or (2) index expression had an unresolved collation.  But
+		 * we might as well code this to be a complete consistency check.
+		 */
+		if (type_is_collatable(atttype))
 		{
-			if (!type_is_collatable(atttype))
+			if (!OidIsValid(attcollation))
 				ereport(ERROR,
-						(errcode(ERRCODE_SYNTAX_ERROR),
+						(errcode(ERRCODE_INDETERMINATE_COLLATION),
+						 errmsg("no collation was derived for the index expression"),
+						 errhint("Use the COLLATE clause to set the collation explicitly.")));
+		}
+		else
+		{
+			if (OidIsValid(attcollation))
+				ereport(ERROR,
+						(errcode(ERRCODE_DATATYPE_MISMATCH),
 						 errmsg("collations are not supported by type %s",
 								format_type_be(atttype))));
-			attcollation = get_collation_oid(attribute->collation, false);
 		}
+
 		collationOidP[attn] = attcollation;
 
 		/*

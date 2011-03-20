@@ -16,7 +16,6 @@
 
 #include "catalog/pg_cast.h"
 #include "catalog/pg_class.h"
-#include "catalog/pg_collation.h"
 #include "catalog/pg_inherits_fn.h"
 #include "catalog/pg_proc.h"
 #include "catalog/pg_type.h"
@@ -123,6 +122,9 @@ coerce_to_target_type(ParseState *pstate, Node *expr, Oid exprtype,
  * pstate is only used in the case that we are able to resolve the type of
  * a previously UNKNOWN Param.	It is okay to pass pstate = NULL if the
  * caller does not want type information updated for Params.
+ *
+ * Note: this function must not modify the given expression tree, only add
+ * decoration on top of it.  See transformSetOperationTree, for example.
  */
 Node *
 coerce_type(ParseState *pstate, Node *node,
@@ -282,16 +284,21 @@ coerce_type(ParseState *pstate, Node *node,
 	if (IsA(node, CollateExpr))
 	{
 		/*
-		 * XXX very ugly kluge to push the coercion underneath the CollateExpr.
-		 * This needs to be rethought, as it almost certainly doesn't cover
-		 * all cases.
+		 * If we have a COLLATE clause, we have to push the coercion
+		 * underneath the COLLATE.  This is really ugly, but there is little
+		 * choice because the above hacks on Consts and Params wouldn't happen
+		 * otherwise.
 		 */
-		CollateExpr *cc = (CollateExpr *) node;
+		CollateExpr *coll = (CollateExpr *) node;
+		CollateExpr *newcoll = makeNode(CollateExpr);
 
-		cc->arg = (Expr *) coerce_type(pstate, (Node *) cc->arg,
-									   inputTypeId, targetTypeId, targetTypeMod,
-									   ccontext, cformat, location);
-		return (Node *) cc;
+		newcoll->arg = (Expr *)
+			coerce_type(pstate, (Node *) coll->arg,
+						inputTypeId, targetTypeId, targetTypeMod,
+						ccontext, cformat, location);
+		newcoll->collOid = coll->collOid;
+		newcoll->location = coll->location;
+		return (Node *) newcoll;
 	}
 	pathtype = find_coercion_pathway(targetTypeId, inputTypeId, ccontext,
 									 &funcId);
@@ -352,6 +359,7 @@ coerce_type(ParseState *pstate, Node *node,
 				 */
 				RelabelType *r = makeRelabelType((Expr *) result,
 												 targetTypeId, -1,
+												 InvalidOid,
 												 cformat);
 
 				r->location = location;
@@ -591,6 +599,7 @@ coerce_to_domain(Node *arg, Oid baseTypeId, int32 baseTypeMod, Oid typeId,
 	result->arg = (Expr *) arg;
 	result->resulttype = typeId;
 	result->resulttypmod = -1;	/* currently, always -1 for domains */
+	/* resultcollid will be set by parse_collate.c */
 	result->coercionformat = cformat;
 	result->location = location;
 
@@ -734,7 +743,6 @@ build_coercion_expression(Node *node,
 		FuncExpr   *fexpr;
 		List	   *args;
 		Const	   *cons;
-		Oid			collation;
 
 		Assert(OidIsValid(funcId));
 
@@ -766,9 +774,8 @@ build_coercion_expression(Node *node,
 			args = lappend(args, cons);
 		}
 
-		collation = coercion_expression_result_collation(targetTypeId, node);
-
-		fexpr = makeFuncExpr(funcId, targetTypeId, args, collation, cformat);
+		fexpr = makeFuncExpr(funcId, targetTypeId, args,
+							 InvalidOid, InvalidOid, cformat);
 		fexpr->location = location;
 		return (Node *) fexpr;
 	}
@@ -2099,121 +2106,4 @@ typeIsOfTypedTable(Oid reltypeId, Oid reloftypeId)
 	}
 
 	return result;
-}
-
-
-/*
- * select_common_collation() -- determine one collation to apply for
- * an expression node, for evaluating the expression itself or to
- * label the result of the expression node.
- *
- * none_ok means that it is permitted to return "no" collation.  It is
- * then not possible to sort the result value of whatever expression
- * is applying this.  none_ok = true reflects the rules of SQL
- * standard clause "Result of data type combinations", none_ok = false
- * reflects the rules of clause "Collation determination" (in some
- * cases invoked via "Grouping operations").
- */
-Oid
-select_common_collation(ParseState *pstate, List *exprs, bool none_ok)
-{
-	ListCell   *lc;
-
-	/*
-	 * Check if there are any explicit collation derivations.  If so,
-	 * they must all be the same.
-	 */
-	foreach(lc, exprs)
-	{
-		Node	   *pexpr = (Node *) lfirst(lc);
-		Oid			pcoll = exprCollation(pexpr);
-		bool		pexplicit = IsA(pexpr, CollateExpr);
-
-		if (pcoll && pexplicit)
-		{
-			ListCell	*lc2;
-			for_each_cell(lc2, lnext(lc))
-			{
-				Node	   *nexpr = (Node *) lfirst(lc2);
-				Oid			ncoll = exprCollation(nexpr);
-				bool		nexplicit = IsA(nexpr, CollateExpr);
-
-				if (!ncoll || !nexplicit)
-					continue;
-
-				if (ncoll != pcoll)
-					ereport(ERROR,
-							(errcode(ERRCODE_COLLATION_MISMATCH),
-							 errmsg("collation mismatch between explicit collations \"%s\" and \"%s\"",
-									get_collation_name(pcoll),
-									get_collation_name(ncoll)),
-							 parser_errposition(pstate, exprLocation(nexpr))));
-			}
-
-			return pcoll;
-		}
-	}
-
-	/*
-	 * Check if there are any implicit collation derivations.
-	 */
-	foreach(lc, exprs)
-	{
-		Node	   *pexpr = (Node *) lfirst(lc);
-		Oid			pcoll = exprCollation(pexpr);
-
-		if (pcoll && pcoll != DEFAULT_COLLATION_OID)
-		{
-			ListCell	*lc2;
-			for_each_cell(lc2, lnext(lc))
-			{
-				Node	   *nexpr = (Node *) lfirst(lc2);
-				Oid			ncoll = exprCollation(nexpr);
-
-				if (!ncoll || ncoll == DEFAULT_COLLATION_OID)
-					continue;
-
-				if (ncoll != pcoll)
-				{
-					if (none_ok)
-						return InvalidOid;
-					ereport(ERROR,
-							(errcode(ERRCODE_COLLATION_MISMATCH),
-							 errmsg("collation mismatch between implicit collations \"%s\" and \"%s\"",
-									get_collation_name(pcoll),
-									get_collation_name(ncoll)),
-							 errhint("You can override the collation by applying the COLLATE clause to one or both expressions."),
-							 parser_errposition(pstate, exprLocation(nexpr))));
-				}
-			}
-
-			return pcoll;
-		}
-	}
-
-	foreach(lc, exprs)
-	{
-		Node	   *pexpr = (Node *) lfirst(lc);
-		Oid			pcoll = exprCollation(pexpr);
-
-		if (pcoll == DEFAULT_COLLATION_OID)
-		{
-			ListCell	*lc2;
-			for_each_cell(lc2, lnext(lc))
-			{
-				Node	   *nexpr = (Node *) lfirst(lc2);
-				Oid			ncoll = exprCollation(nexpr);
-
-				if (ncoll != pcoll)
-					break;
-			}
-
-			return pcoll;
-		}
-	}
-
-	/*
-	 * Else use default
-	 */
-	return InvalidOid;
 }

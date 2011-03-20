@@ -54,6 +54,7 @@
 #include "optimizer/planner.h"
 #include "optimizer/var.h"
 #include "parser/parse_coerce.h"
+#include "parser/parse_collate.h"
 #include "parser/parse_expr.h"
 #include "parser/parse_func.h"
 #include "parser/parse_type.h"
@@ -2341,6 +2342,7 @@ domainAddConstraint(Oid domainOid, Oid domainNamespace, Oid baseTypeOid,
 	domVal = makeNode(CoerceToDomainValue);
 	domVal->typeId = baseTypeOid;
 	domVal->typeMod = typMod;
+	domVal->collation = get_typcollation(baseTypeOid);
 	domVal->location = -1;		/* will be set when/if used */
 
 	pstate->p_value_substitute = (Node *) domVal;
@@ -2351,6 +2353,11 @@ domainAddConstraint(Oid domainOid, Oid domainNamespace, Oid baseTypeOid,
 	 * Make sure it yields a boolean result.
 	 */
 	expr = coerce_to_boolean(pstate, expr, "CHECK");
+
+	/*
+	 * Fix up collation information.
+	 */
+	assign_expr_collations(pstate, expr);
 
 	/*
 	 * Make sure no outside relations are referred to.

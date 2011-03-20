@@ -398,7 +398,7 @@ transformAssignedExpr(ParseState *pstate,
 
 		def->typeId = attrtype;
 		def->typeMod = attrtypmod;
-		def->collid = attrcollation;
+		def->collation = attrcollation;
 		if (indirection)
 		{
 			if (IsA(linitial(indirection), A_Indices))
@@ -785,7 +785,6 @@ transformAssignmentSubscripts(ParseState *pstate,
 											   arrayType,
 											   elementTypeId,
 											   arrayTypMod,
-											   InvalidOid,
 											   subscripts,
 											   rhs);
 
@@ -1267,7 +1266,8 @@ ExpandRowReference(ParseState *pstate, Node *expr,
 		fselect->fieldnum = i + 1;
 		fselect->resulttype = att->atttypid;
 		fselect->resulttypmod = att->atttypmod;
-		fselect->resultcollation = att->attcollation;
+		/* resultcollid may get overridden by parse_collate.c */
+		fselect->resultcollid = att->attcollation;
 
 		if (targetlist)
 		{

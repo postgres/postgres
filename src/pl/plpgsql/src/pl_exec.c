@@ -5303,6 +5303,18 @@ exec_simple_check_node(Node *node)
 				return TRUE;
 			}
 
+		case T_NullIfExpr:
+			{
+				NullIfExpr *expr = (NullIfExpr *) node;
+
+				if (expr->opretset)
+					return FALSE;
+				if (!exec_simple_check_node((Node *) expr->args))
+					return FALSE;
+
+				return TRUE;
+			}
+
 		case T_ScalarArrayOpExpr:
 			{
 				ScalarArrayOpExpr *expr = (ScalarArrayOpExpr *) node;
@@ -5349,9 +5361,6 @@ exec_simple_check_node(Node *node)
 
 		case T_ConvertRowtypeExpr:
 			return exec_simple_check_node((Node *) ((ConvertRowtypeExpr *) node)->arg);
-
-		case T_CollateExpr:
-			return exec_simple_check_node((Node *) ((CollateExpr *) node)->arg);
 
 		case T_CaseExpr:
 			{
@@ -5439,18 +5448,6 @@ exec_simple_check_node(Node *node)
 				XmlExpr    *expr = (XmlExpr *) node;
 
 				if (!exec_simple_check_node((Node *) expr->named_args))
-					return FALSE;
-				if (!exec_simple_check_node((Node *) expr->args))
-					return FALSE;
-
-				return TRUE;
-			}
-
-		case T_NullIfExpr:
-			{
-				NullIfExpr *expr = (NullIfExpr *) node;
-
-				if (expr->opretset)
 					return FALSE;
 				if (!exec_simple_check_node((Node *) expr->args))
 					return FALSE;

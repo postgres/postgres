@@ -405,12 +405,16 @@ analyzeCTETargetList(ParseState *pstate, CommonTableExpr *cte, List *tlist)
 		 * might see "unknown" as a result of an untyped literal in the
 		 * non-recursive term's select list, and if we don't convert to text
 		 * then we'll have a mismatch against the UNION result.
+		 *
+		 * The column might contain 'foo' COLLATE "bar", so don't override
+		 * collation if it's already set.
 		 */
 		if (cte->cterecursive && coltype == UNKNOWNOID)
 		{
 			coltype = TEXTOID;
 			coltypmod = -1;		/* should be -1 already, but be sure */
-			colcoll = DEFAULT_COLLATION_OID;
+			if (!OidIsValid(colcoll))
+				colcoll = DEFAULT_COLLATION_OID;
 		}
 		cte->ctecoltypes = lappend_oid(cte->ctecoltypes, coltype);
 		cte->ctecoltypmods = lappend_int(cte->ctecoltypmods, coltypmod);

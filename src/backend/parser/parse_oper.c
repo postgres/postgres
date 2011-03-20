@@ -782,7 +782,6 @@ make_op(ParseState *pstate, List *opname, Node *ltree, Node *rtree,
 	List	   *args;
 	Oid			rettype;
 	OpExpr	   *result;
-	Oid			opcollid;
 
 	/* Select the operator */
 	if (rtree == NULL)
@@ -862,20 +861,14 @@ make_op(ParseState *pstate, List *opname, Node *ltree, Node *rtree,
 	/* perform the necessary typecasting of arguments */
 	make_fn_arguments(pstate, args, actual_arg_types, declared_arg_types);
 
-	/* XXX: If we knew which functions required collation information,
-	 * we could selectively set the last argument to true here. */
-	opcollid = select_common_collation(pstate, args, false);
-	if (!OidIsValid(opcollid))
-		opcollid = get_typcollation(rettype);
-
 	/* and build the expression node */
 	result = makeNode(OpExpr);
 	result->opno = oprid(tup);
 	result->opfuncid = opform->oprcode;
 	result->opresulttype = rettype;
 	result->opretset = get_func_retset(opform->oprcode);
+	/* opcollid and inputcollid will be set by parse_collate.c */
 	result->args = args;
-	result->collid = opcollid;
 	result->location = location;
 
 	ReleaseSysCache(tup);
@@ -904,7 +897,6 @@ make_scalar_array_op(ParseState *pstate, List *opname,
 	List	   *args;
 	Oid			rettype;
 	ScalarArrayOpExpr *result;
-	Oid			opcollid;
 
 	ltypeId = exprType(ltree);
 	atypeId = exprType(rtree);
@@ -999,19 +991,13 @@ make_scalar_array_op(ParseState *pstate, List *opname,
 	/* perform the necessary typecasting of arguments */
 	make_fn_arguments(pstate, args, actual_arg_types, declared_arg_types);
 
-	/* XXX: If we knew which functions required collation information,
-	 * we could selectively set the last argument to true here. */
-	opcollid = select_common_collation(pstate, args, false);
-	if (!OidIsValid(opcollid))
-		opcollid = get_typcollation(rettype);
-
 	/* and build the expression node */
 	result = makeNode(ScalarArrayOpExpr);
 	result->opno = oprid(tup);
 	result->opfuncid = opform->oprcode;
 	result->useOr = useOr;
+	/* inputcollid will be set by parse_collate.c */
 	result->args = args;
-	result->collid = opcollid;
 	result->location = location;
 
 	ReleaseSysCache(tup);

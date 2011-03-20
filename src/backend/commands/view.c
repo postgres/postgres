@@ -129,14 +129,22 @@ DefineVirtualRelation(const RangeVar *relation, List *tlist, bool replace)
 			def->raw_default = NULL;
 			def->cooked_default = NULL;
 			def->collClause = NULL;
+			def->collOid = exprCollation((Node *) tle->expr);
 			/*
-			 * XXX Temporary kluge to make regression tests pass.  We should
-			 * be able to trust the result of exprCollation more than this.
+			 * It's possible that the column is of a collatable type but the
+			 * collation could not be resolved, so double-check.
 			 */
 			if (type_is_collatable(exprType((Node *) tle->expr)))
-				def->collOid = exprCollation((Node *) tle->expr);
+			{
+				if (!OidIsValid(def->collOid))
+					ereport(ERROR,
+							(errcode(ERRCODE_INDETERMINATE_COLLATION),
+							 errmsg("no collation was derived for view column \"%s\"",
+									def->colname),
+							 errhint("Use the COLLATE clause to set the collation explicitly.")));
+			}
 			else
-				def->collOid = InvalidOid;
+				Assert(!OidIsValid(def->collOid));
 			def->constraints = NIL;
 
 			attrList = lappend(attrList, def);

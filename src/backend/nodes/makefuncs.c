@@ -362,13 +362,15 @@ makeAlias(const char *aliasname, List *colnames)
  *	  creates a RelabelType node
  */
 RelabelType *
-makeRelabelType(Expr *arg, Oid rtype, int32 rtypmod, CoercionForm rformat)
+makeRelabelType(Expr *arg, Oid rtype, int32 rtypmod, Oid rcollid,
+				CoercionForm rformat)
 {
 	RelabelType *r = makeNode(RelabelType);
 
 	r->arg = arg;
 	r->resulttype = rtype;
 	r->resulttypmod = rtypmod;
+	r->resultcollid = rcollid;
 	r->relabelformat = rformat;
 	r->location = -1;
 
@@ -447,7 +449,8 @@ makeTypeNameFromOid(Oid typeOid, int32 typmod)
  * The argument expressions must have been transformed already.
  */
 FuncExpr *
-makeFuncExpr(Oid funcid, Oid rettype, List *args, Oid collid, CoercionForm fformat)
+makeFuncExpr(Oid funcid, Oid rettype, List *args,
+			 Oid funccollid, Oid inputcollid, CoercionForm fformat)
 {
 	FuncExpr   *funcexpr;
 
@@ -456,8 +459,9 @@ makeFuncExpr(Oid funcid, Oid rettype, List *args, Oid collid, CoercionForm fform
 	funcexpr->funcresulttype = rettype;
 	funcexpr->funcretset = false;		/* only allowed case here */
 	funcexpr->funcformat = fformat;
+	funcexpr->funccollid = funccollid;
+	funcexpr->inputcollid = inputcollid;
 	funcexpr->args = args;
-	funcexpr->collid = collid;
 	funcexpr->location = -1;
 
 	return funcexpr;

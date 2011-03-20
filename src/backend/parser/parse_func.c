@@ -78,7 +78,6 @@ ParseFuncOrColumn(ParseState *pstate, List *funcname, List *fargs,
 	bool		retset;
 	int			nvargs;
 	FuncDetailCode fdresult;
-	Oid			funccollid;
 
 	/*
 	 * Most of the rest of the parser just assumes that functions do not have
@@ -344,12 +343,6 @@ ParseFuncOrColumn(ParseState *pstate, List *funcname, List *fargs,
 	/* perform the necessary typecasting of arguments */
 	make_fn_arguments(pstate, fargs, actual_arg_types, declared_arg_types);
 
-	/* XXX: If we knew which functions required collation information,
-	 * we could selectively set the last argument to true here. */
-	funccollid = select_common_collation(pstate, fargs, false);
-	if (!OidIsValid(funccollid))
-		funccollid = get_typcollation(rettype);
-
 	/*
 	 * If it's a variadic function call, transform the last nvargs arguments
 	 * into an array --- unless it's an "any" variadic.
@@ -374,6 +367,7 @@ ParseFuncOrColumn(ParseState *pstate, List *funcname, List *fargs,
 					 errmsg("could not find array type for data type %s",
 							format_type_be(newa->element_typeid)),
 				  parser_errposition(pstate, exprLocation((Node *) vargs))));
+		/* array_collid will be set by parse_collate.c */
 		newa->multidims = false;
 		newa->location = exprLocation((Node *) vargs);
 
@@ -389,8 +383,8 @@ ParseFuncOrColumn(ParseState *pstate, List *funcname, List *fargs,
 		funcexpr->funcresulttype = rettype;
 		funcexpr->funcretset = retset;
 		funcexpr->funcformat = COERCE_EXPLICIT_CALL;
+		/* funccollid and inputcollid will be set by parse_collate.c */
 		funcexpr->args = fargs;
-		funcexpr->collid = funccollid;
 		funcexpr->location = location;
 
 		retval = (Node *) funcexpr;
@@ -402,9 +396,9 @@ ParseFuncOrColumn(ParseState *pstate, List *funcname, List *fargs,
 
 		aggref->aggfnoid = funcid;
 		aggref->aggtype = rettype;
+		/* aggcollid and inputcollid will be set by parse_collate.c */
 		/* args, aggorder, aggdistinct will be set by transformAggregateCall */
 		aggref->aggstar = agg_star;
-		aggref->collid = funccollid;
 		/* agglevelsup will be set by transformAggregateCall */
 		aggref->location = location;
 
@@ -458,11 +452,11 @@ ParseFuncOrColumn(ParseState *pstate, List *funcname, List *fargs,
 
 		wfunc->winfnoid = funcid;
 		wfunc->wintype = rettype;
+		/* wincollid and inputcollid will be set by parse_collate.c */
 		wfunc->args = fargs;
 		/* winref will be set by transformWindowFuncCall */
 		wfunc->winstar = agg_star;
 		wfunc->winagg = (fdresult == FUNCDETAIL_AGGREGATE);
-		wfunc->collid = funccollid;
 		wfunc->location = location;
 
 		/*
@@ -1390,7 +1384,8 @@ ParseComplexProjection(ParseState *pstate, char *funcname, Node *first_arg,
 			fselect->fieldnum = i + 1;
 			fselect->resulttype = att->atttypid;
 			fselect->resulttypmod = att->atttypmod;
-			fselect->resultcollation = att->attcollation;
+			/* resultcollid may get overridden by parse_collate.c */
+			fselect->resultcollid = att->attcollation;
 			return (Node *) fselect;
 		}
 	}

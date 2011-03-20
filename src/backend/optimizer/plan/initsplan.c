@@ -1371,6 +1371,7 @@ distribute_restrictinfo_to_rels(PlannerInfo *root,
 void
 process_implied_equality(PlannerInfo *root,
 						 Oid opno,
+						 Oid collation,
 						 Expr *item1,
 						 Expr *item2,
 						 Relids qualscope,
@@ -1387,7 +1388,9 @@ process_implied_equality(PlannerInfo *root,
 						   BOOLOID,		/* opresulttype */
 						   false,		/* opretset */
 						   (Expr *) copyObject(item1),
-						   (Expr *) copyObject(item2));
+						   (Expr *) copyObject(item2),
+						   InvalidOid,
+						   collation);
 
 	/* If both constant, try to reduce to a boolean constant. */
 	if (both_const)
@@ -1427,6 +1430,7 @@ process_implied_equality(PlannerInfo *root,
  */
 RestrictInfo *
 build_implied_join_equality(Oid opno,
+							Oid collation,
 							Expr *item1,
 							Expr *item2,
 							Relids qualscope)
@@ -1442,7 +1446,9 @@ build_implied_join_equality(Oid opno,
 						   BOOLOID,		/* opresulttype */
 						   false,		/* opretset */
 						   (Expr *) copyObject(item1),
-						   (Expr *) copyObject(item2));
+						   (Expr *) copyObject(item2),
+						   InvalidOid,
+						   collation);
 
 	/* Make a copy of qualscope to avoid problems if source EC changes */
 	qualscope = bms_copy(qualscope);
