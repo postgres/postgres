@@ -524,7 +524,7 @@
 
       <listitem>
        <para>
-        Add new buffers_backend_fsync field to <link
+        Add buffers_backend_fsync field to <link
         linkend="monitoring-stats-views-table"><structname>pg_stat_bgwriter</></link>
         (Greg Smith)
        </para>
@@ -578,7 +578,7 @@
    </sect3>
 
    <sect3>
-    <title>Continuous Archiving and Streaming Replication</title>
+    <title>Streaming Replication and Continuous Archiving</title>
 
     <itemizedlist>
 
@@ -632,7 +632,7 @@
 
      <listitem>
       <para>
-       Add new replication <link linkend="SQL-CREATEROLE">permission</link>
+       Add replication <link linkend="SQL-CREATEROLE">permission</link>
        for roles (Magnus Hagander)
       </para>
 
@@ -831,7 +831,7 @@
       <listitem>
        <para>
         Add per-column <link
-        linkend="sql-syntax-collate-exprs">collation</link> support
+        linkend="collation">collation</link> support
         (Peter Eisentraut, Tom Lane)
        </para>
 
@@ -918,21 +918,9 @@
     </sect4>
 
     <sect4>
-     <title><link linkend="SQL-CREATETABLE"><command>CREATE TABLE</></link></title>
+     <title><link linkend="SQL-CREATETABLE"><command>CREATE/ALTER TABLE</></link></title>
 
      <itemizedlist>
-
-      <listitem>
-       <para>
-        Add <link linkend="SQL-CREATETABLE"><command>CREATE TABLE IF
-        NOT EXISTS</></link> syntax (Robert Haas)
-       </para>
-
-       <para>
-        This allows table creation without causing an error if the
-        table already exists.
-       </para>
-      </listitem>
 
       <listitem>
        <para>
@@ -974,6 +962,18 @@
        </para>
       </listitem>
 
+      <listitem>
+       <para>
+        Add <link linkend="SQL-CREATETABLE"><command>CREATE TABLE IF
+        NOT EXISTS</></link> syntax (Robert Haas)
+       </para>
+
+       <para>
+        This allows table creation without causing an error if the
+        table already exists.
+       </para>
+      </listitem>
+
      </itemizedlist>
 
     </sect4>
@@ -1007,15 +1007,16 @@
 
      <listitem>
       <para>
-       Add true a <link linkend="xact-serializable">serializable
-       isolation level</link> (Kevin Grittner, Dan Ports)
+       Add a true <link linkend="xact-serializable"><literal>serializable</>
+       </link> isolation level (Kevin Grittner, Dan Ports)
       </para>
 
       <para>
-       Previously asking for serializable isolation level produced
+       Previously asking for serializable isolation produced
        snapshot isolation, which had certain documented anomalies.
-       The old snapshot isolation is still accessible by the requesting
-       repeatable read isolation level.
+       The old snapshot isolation level is still accessible by the
+       requesting <link linkend="xact-repeatable-read"><literal>REPEATABLE
+       READ</></link> isolation level.
       </para>
      </listitem>
 
@@ -1087,15 +1088,14 @@
 
       <listitem>
        <para>
-         Have <link linkend="SQL-EXPLAIN"><command>EXPLAIN</></link>
-         show the function call expression in <literal>VERBOSE </>
-        mode (Tom Lane)
+         Have <command>EXPLAIN VERBOSE</>
+         show the function call expression (Tom Lane)
        </para>
       </listitem>
 
       <listitem>
        <para>
-        Fix <link linkend="SQL-EXPLAIN"><command>EXPLAIN ANALYZE</></link>
+        Fix <command>EXPLAIN ANALYZE</>
         with rules to use the same snapshot behavior as ordinary
         queries (Marko Tiikkaja)
        </para>
@@ -1290,7 +1290,7 @@
 
       <listitem>
        <para>
-        Add new SQL function, <link
+        Add SQL function <link
         linkend="format"><function>format(text)</></link>, which
         behaves like C's <function>printf()</> (Pavel Stehule, Robert
         Haas)
@@ -1304,7 +1304,7 @@
 
       <listitem>
        <para>
-        Add string functions: <link
+        Add string functions <link
         linkend="functions-string-other"><function>concat()</></link>,
         <link
         linkend="functions-string-other"><function>concat_ws()</></link>,
@@ -1452,8 +1452,8 @@
         Reduce lock levels for <link
         linkend="SQL-CREATETRIGGER"><command>CREATE TRIGGER</></link>
         and some <link linkend="SQL-ALTERTABLE"><command>ALTER
-        TABLE</></link>, <link linkend="SQL-CREATERULE"><command>CREATE
-        RULE</></link> actions (Simon Riggs)
+        TABLE</></link> and <link linkend="SQL-CREATERULE"><command>CREATE
+        RULE</></link> operations (Simon Riggs)
        </para>
 
        <para>
@@ -1470,26 +1470,21 @@
    <sect3>
     <title>Server-Side Languages</title>
 
-    <sect4>
-     <title><link linkend="plpgsql">PL/pgSQL</link> Server-Side Language</title>
+    <itemizedlist>
 
-     <itemizedlist>
+     <listitem>
+      <para>
+       Add <link linkend="plpgsql-foreach-array"><command>FOREACH IN
+       ARRAY</></link> to <link linkend="plpgsql">PL/pgSQL</link> to
+       allow array iteration (Pavel Stehule)
+      </para>
 
-      <listitem>
-       <para>
-        Add <link linkend="plpgsql-foreach-array"><command>FOREACH IN
-        ARRAY</></link> to plpgsql to allow array iteration (Pavel
-        Stehule)
-       </para>
+      <para>
+       This is more efficient than previous methods.
+      </para>
+     </listitem>
 
-       <para>
-        This is more efficient than previous methods.
-       </para>
-      </listitem>
-
-     </itemizedlist>
-
-    </sect4>
+    </itemizedlist>
 
     <sect4>
      <title><link linkend="plperl">PL/Perl</link> Server-Side Language</title>
@@ -1656,21 +1651,15 @@
 
       <listitem>
        <para>
-        Allow <application>psql</>'s <literal>\e</> and <literal>\ef</>
-        commands to accept a line number to be used to position the
-        cursor in the editor (Pavel Stehule)
-       </para>
-
-       <para>
-        This is passed to the editor using the
-        <literal>EDITOR_LINENUMBER_SWITCH</> environment variable.
+         Add <application>psql</> command <literal>\sf</> command to
+         show a function's definition (Pavel Stehule)
        </para>
       </listitem>
 
       <listitem>
        <para>
-         Add <application>psql</> command <literal>\sf</> command to
-         show a function's definition (Pavel Stehule)
+         Add <application>psql</> <literal>\dL</> command
+         <literal>\dL</> to list languages (Fernando Ike)
        </para>
       </listitem>
 
@@ -1688,8 +1677,14 @@
 
       <listitem>
        <para>
-         Add new <application>psql</> <literal>\dL</> command
-         <literal>\dL</> to list languages (Fernando Ike)
+        Allow <application>psql</>'s <literal>\e</> and <literal>\ef</>
+        commands to accept a line number to be used to position the
+        cursor in the editor (Pavel Stehule)
+       </para>
+
+       <para>
+        This is passed to the editor using the
+        <literal>EDITOR_LINENUMBER_SWITCH</> environment variable.
        </para>
       </listitem>
 
