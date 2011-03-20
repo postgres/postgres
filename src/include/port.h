@@ -155,6 +155,8 @@ extern int	pg_strcasecmp(const char *s1, const char *s2);
 extern int	pg_strncasecmp(const char *s1, const char *s2, size_t n);
 extern unsigned char pg_toupper(unsigned char ch);
 extern unsigned char pg_tolower(unsigned char ch);
+extern unsigned char pg_ascii_toupper(unsigned char ch);
+extern unsigned char pg_ascii_tolower(unsigned char ch);
 
 #ifdef USE_REPL_SNPRINTF
 

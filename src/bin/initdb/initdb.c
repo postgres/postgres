@@ -1616,17 +1616,21 @@ setup_collation(void)
 		 */
 		skip = false;
 		for (i = 0; i < len; i++)
+		{
 			if (IS_HIGHBIT_SET(localebuf[i]))
 			{
-				if (debug)
-					fprintf(stderr, _("%s: locale name has non-ASCII characters, skipped: %s\n"),
-							progname, localebuf);
-				skipped++;
 				skip = true;
 				break;
 			}
+		}
 		if (skip)
+		{
+			if (debug)
+				fprintf(stderr, _("%s: locale name has non-ASCII characters, skipped: %s\n"),
+						progname, localebuf);
+			skipped++;
 			continue;
+		}
 
 		enc = pg_get_encoding_from_locale(localebuf, debug);
 		if (enc < 0)
@@ -1635,7 +1639,7 @@ setup_collation(void)
 			continue;			/* error message printed by pg_get_encoding_from_locale() */
 		}
 		if (enc == PG_SQL_ASCII)
-			continue;			/* SQL_ASCII is handled separately */
+			continue;			/* C/POSIX are already in the catalog */
 
 		PG_CMD_PRINTF2("INSERT INTO tmp_pg_collation (locale, encoding) VALUES ('%s', %d);",
 					   escape_quotes(localebuf), enc);
@@ -1650,10 +1654,6 @@ setup_collation(void)
 			PG_CMD_PRINTF3("INSERT INTO tmp_pg_collation (collname, locale, encoding) VALUES ('%s', '%s', %d);",
 						   escape_quotes(alias), escape_quotes(localebuf), enc);
 	}
-
-	for (i = PG_SQL_ASCII; i <= PG_ENCODING_BE_LAST; i++)
-		PG_CMD_PRINTF2("INSERT INTO tmp_pg_collation (locale, encoding) VALUES ('C', %d), ('POSIX', %d);",
-					   i, i);
 
 	/* Add an SQL-standard name */
 	PG_CMD_PRINTF1("INSERT INTO tmp_pg_collation (collname, locale, encoding) VALUES ('ucs_basic', 'C', %d);", PG_UTF8);

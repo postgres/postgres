@@ -68,7 +68,7 @@ initdb --locale=sv_SE
    <para>
     This example for Unix systems sets the locale to Swedish
     (<literal>sv</>) as spoken
-    in Sweden (<literal>SE</>).  Other possibilities might be
+    in Sweden (<literal>SE</>).  Other possibilities might include
     <literal>en_US</> (U.S. English) and <literal>fr_CA</> (French
     Canadian).  If more than one character set can be used for a
     locale then the specifications can take the form
@@ -133,7 +133,8 @@ initdb --locale=sv_SE
 
    <para>
     If you want the system to behave as if it had no locale support,
-    use the special locale <literal>C</> or <literal>POSIX</>.
+    use the special locale name <literal>C</>, or equivalently
+    <literal>POSIX</>.
    </para>
 
    <para>
@@ -257,7 +258,9 @@ initdb --locale=sv_SE
     operator classes exist. These allow the creation of an index that
     performs a strict character-by-character comparison, ignoring
     locale comparison rules. Refer to <xref linkend="indexes-opclass">
-    for more information.
+    for more information.  Another approach is to create indexes using
+    the <literal>C</> collation, as discussed in
+    <xref linkend="collation">.
    </para>
   </sect2>
 
@@ -321,13 +324,6 @@ initdb --locale=sv_SE
    of a database cannot be changed after its creation.
   </para>
 
-  <note>
-   <para>
-    Collation support is currently only known to work on
-    Linux (glibc) and Mac OS X platforms.
-   </para>
-  </note>
-
   <sect2>
    <title>Concepts</title>
 
@@ -335,7 +331,8 @@ initdb --locale=sv_SE
     Conceptually, every expression of a collatable data type has a
     collation.  (The built-in collatable data types are
     <type>text</type>, <type>varchar</type>, and <type>char</type>.
-    User-defined base types can also be marked collatable.)  If the
+    User-defined base types can also be marked collatable, and of course
+    a domain over a collatable data type is collatable.)  If the
     expression is a column reference, the collation of the expression is the
     defined collation of the column.  If the expression is a constant, the
     collation is the default collation of the data type of the
@@ -346,8 +343,8 @@ initdb --locale=sv_SE
    <para>
     The collation of an expression can be the <quote>default</quote>
     collation, which means the locale settings defined for the
-    database.  In some cases, an expression can also have no known
-    collation.  In such cases, ordering operations and other
+    database.  It is also possible for an expression's collation to be
+    indeterminate.  In such cases, ordering operations and other
     operations that need to know the collation will fail.
    </para>
 
@@ -379,7 +376,7 @@ initdb --locale=sv_SE
     The <firstterm>collation derivation</firstterm> of an expression can be
     implicit or explicit.  This distinction affects how collations are
     combined when multiple different collations appear in an
-    expression.  An explicit collation derivation arises when a
+    expression.  An explicit collation derivation occurs when a
     <literal>COLLATE</literal> clause is used; all other collation
     derivations are implicit.  When multiple collations need to be
     combined, for example in a function call, the following rules are
@@ -399,34 +396,90 @@ initdb --locale=sv_SE
      <listitem>
       <para>
        Otherwise, all input expressions must have the same implicit
-       collation derivation or the default collation.  If any
-       implicitly derived collation is present, that is the result of
-       the collation combination.  Otherwise, the result is the
-       default collation.
+       collation derivation or the default collation.  If any non-default
+       collation is present, that is the result of the collation combination.
+       Otherwise, the result is the default collation.
+      </para>
+     </listitem>
+
+     <listitem>
+      <para>
+       If there are conflicting non-default implicit collations among the
+       input expressions, then the combination is deemed to have indeterminate
+       collation.  This is not an error condition unless the particular
+       function being invoked requires knowledge of the collation it should
+       apply.  If it does, an error will be raised at run-time.
       </para>
      </listitem>
     </orderedlist>
 
-    For example, take this table definition:
+    For example, consider this table definition:
 <programlisting>
 CREATE TABLE test1 (
-    a text COLLATE "x",
+    a text COLLATE "de_DE",
+    b text COLLATE "es_ES",
     ...
 );
 </programlisting>
 
     Then in
 <programlisting>
-SELECT a || 'foo' FROM test1;
+SELECT a &lt; 'foo' FROM test1;
 </programlisting>
-    the result collation of the <literal>||</literal> operator is
-    <literal>"x"</literal> because it combines an implicitly derived
-    collation with the default collation.  But in
+    the <literal>&lt;</literal> comparison is performed according to
+    <literal>de_DE</literal> rules, because the expression combines an
+    implicitly derived collation with the default collation.  But in
 <programlisting>
-SELECT a || ('foo' COLLATE "y") FROM test1;
+SELECT a &lt; ('foo' COLLATE "fr_FR") FROM test1;
 </programlisting>
-    the result collation is <literal>"y"</literal> because the explicit
-    collation derivation overrides the implicit one.
+    the comparison is performed using <literal>fr_FR</literal> rules,
+    because the explicit collation derivation overrides the implicit one.
+    Furthermore, given
+<programlisting>
+SELECT a &lt; b FROM test1;
+</programlisting>
+    the parser cannot determine which collation to apply, since the
+    <structfield>a</> and <structfield>b</> columns have conflicting
+    implicit collations.  Since the <literal>&lt;</literal> operator
+    does need to know which collation to use, this will result in an
+    error.  The error can be resolved by attaching an explicit collation
+    specifier to either input expression, thus:
+<programlisting>
+SELECT a &lt; b COLLATE "de_DE" FROM test1;
+</programlisting>
+    or equivalently
+<programlisting>
+SELECT a COLLATE "de_DE" &lt; b FROM test1;
+</programlisting>
+    On the other hand, the structurally similar case
+<programlisting>
+SELECT a || b FROM test1;
+</programlisting>
+    does not result in an error, because the <literal>||</> operator
+    does not care about collations: its result is the same regardless
+    of the collation.
+   </para>
+
+   <para>
+    The collation assigned to a function or operator's combined input
+    expressions is also considered to apply to the function or operator's
+    result, if the function or operator delivers a result of a collatable
+    data type.  So, in
+<programlisting>
+SELECT * FROM test1 ORDER BY a || 'foo';
+</programlisting>
+    the ordering will be done according to <literal>de_DE</literal> rules.
+    But this query:
+<programlisting>
+SELECT * FROM test1 ORDER BY a || b;
+</programlisting>
+    results in an error, because even though the <literal>||</> operator
+    doesn't need to know a collation, the <literal>ORDER BY</> clause does.
+    As before, the conflict can be resolved with an explicit collation
+    specifier:
+<programlisting>
+SELECT * FROM test1 ORDER BY a || b COLLATE "fr_FR";
+</programlisting>
    </para>
   </sect2>
 
@@ -449,7 +502,22 @@ SELECT a || ('foo' COLLATE "y") FROM test1;
    </para>
 
    <para>
-    When a database cluster is initialized, <command>initdb</command>
+    On all platforms, the collations named <literal>default</>,
+    <literal>C</>, and <literal>POSIX</> are available.  Additional
+    collations may be available depending on operating system support.
+    The <literal>default</> collation selects the <symbol>LC_COLLATE</symbol>
+    and <symbol>LC_CTYPE</symbol> values specified at database creation time.
+    The <literal>C</> and <literal>POSIX</> collations both specify
+    <quote>traditional C</> behavior, in which only the ASCII letters
+    <quote><literal>A</></quote> through <quote><literal>Z</></quote>
+    are treated as letters, and sorting is done strictly by character
+    code byte values.
+   </para>
+
+   <para>
+    If the operating system provides support for using multiple locales
+    within a single program (<function>newlocale</> and related functions),
+    then when a database cluster is initialized, <command>initdb</command>
     populates the system catalog <literal>pg_collation</literal> with
     collations based on all the locales it finds on the operating
     system at the time.  For example, the operating system might
@@ -484,7 +552,21 @@ SELECT a || ('foo' COLLATE "y") FROM test1;
     within a given database even though it would not be unique globally.
     Use of the stripped collation names is recommendable, since it will
     make one less thing you need to change if you decide to change to
-    another database encoding.
+    another database encoding.  Note however that the <literal>default</>,
+    <literal>C</>, and <literal>POSIX</> collations can be used
+    regardless of the database encoding.
+   </para>
+
+   <para>
+    <productname>PostgreSQL</productname> considers distinct collation
+    objects to be incompatible even when they have identical properties.
+    Thus for example,
+<programlisting>
+SELECT a COLLATE "C" &lt; b COLLATE "POSIX" FROM test1;
+</programlisting>
+    will draw an error even though the <literal>C</> and <literal>POSIX</>
+    collations have identical behaviors.  Mixing stripped and non-stripped
+    collation names is therefore not recommended.
    </para>
   </sect2>
  </sect1>

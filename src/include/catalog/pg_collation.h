@@ -58,8 +58,19 @@ typedef FormData_pg_collation *Form_pg_collation;
 #define Anum_pg_collation_collcollate	5
 #define Anum_pg_collation_collctype		6
 
-DATA(insert OID = 100 ( default PGNSP PGUID -1 "" "" ));
+/* ----------------
+ *		initial contents of pg_collation
+ * ----------------
+ */
+
+DATA(insert OID = 100 ( default		PGNSP PGUID -1 "" "" ));
 DESCR("database's default collation");
-#define DEFAULT_COLLATION_OID			100
+#define DEFAULT_COLLATION_OID	100
+DATA(insert OID = 950 ( C			PGNSP PGUID -1 "C" "C" ));
+DESCR("standard C collation");
+#define C_COLLATION_OID			950
+DATA(insert OID = 951 ( POSIX		PGNSP PGUID -1 "POSIX" "POSIX" ));
+DESCR("standard POSIX collation");
+#define POSIX_COLLATION_OID		951
 
 #endif   /* PG_COLLATION_H */
