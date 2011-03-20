@@ -141,7 +141,7 @@
       <para>
        Change <link
        linkend="array-functions-table"><function>string_to_array()</></link>
-       to return an empty array for for a zero-length string (Pavel
+       to return an empty array for a zero-length string (Pavel
        Stehule)
       </para>
 
@@ -185,7 +185,7 @@
 
      <listitem>
       <para>
-        Require superuser or <literal>CREATEROLE</> permissions to
+        Require superuser or <literal>CREATEROLE</> permissions in order to
         set role comments (Tom Lane)
       </para>
      </listitem>
@@ -333,9 +333,9 @@
 
        <para>
         This is a read-only permission used for streaming replication
-        and allows non-super users to initiate replication connections.
-        Previously only super-users could initiate replication
-        connections;  super-users have this permission by default.
+        and allows non-superusers to initiate replication connections.
+        Previously only superusers could initiate replication
+        connections;  superusers have this permission by default.
        </para>
       </listitem>
 
@@ -355,7 +355,7 @@
         </para>
 
         <para>
-         This reports that status of all connected standby servers.
+         This reports the status of all connected standby servers.
         </para>
        </listitem>
 
@@ -368,7 +368,7 @@
 
         <para>
          This returns the time on the primary that generated the most
-         recently commit or abort record applied on the standby.
+         recent commit or abort record applied on the standby.
         </para>
        </listitem>
 
@@ -413,8 +413,8 @@
        <listitem>
         <para>
          Add <filename>recovery.conf</> setting <link
-         linkend="pause-at-recovery-target"><varname>pause_at_recovery_target
-         to pause</></link> recovery at target (Simon Riggs)
+         linkend="pause-at-recovery-target"><varname>pause_at_recovery_target</></link>
+         to pause recovery at target (Simon Riggs)
         </para>
 
         <para>
@@ -573,7 +573,7 @@
 
       <listitem>
        <para>
-        Support they keyword 'all' in the host column of <link
+        Support the keyword 'all' in the host column of <link
         linkend="auth-pg-hba-conf"><filename>pg_hba.conf</></link>
         (Peter Eisentraut)
        </para>
@@ -657,7 +657,7 @@
        </para>
 
        <para>
-        This are like the database-wide statistics counter views but
+        These are like the database-wide statistics counter views but
         reflect counts for only the current transaction.
        </para>
       </listitem>
@@ -787,7 +787,7 @@
        </para>
 
        <para>
-        Specifically, let <command>SELECT</> query results be feed
+        Specifically, let <command>SELECT</> query results be fed
         into <command>INSERT</>, <command>UPDATE</>, <command>DELETE</>
         statements.
        </para>
@@ -869,7 +869,7 @@
      <listitem>
       <para>
          Allow new values to be added to an existing enum type via
-         <link linkend="SQL-ALTERTYPE"><command>ALTER TYPE</></link>(Andrew
+         <link linkend="SQL-ALTERTYPE"><command>ALTER TYPE</></link> (Andrew
          Dunstan)
       </para>
      </listitem>
@@ -1406,7 +1406,7 @@
        <para>
         Allow <literal>public</> as a pseudo-role name in <link
         linkend="functions-info-access-table"><function>has_table_privilege()</></link>
-        and and related functions (Alvaro Herrera)
+        and related functions (Alvaro Herrera)
        </para>
 
        <para>
@@ -1478,7 +1478,7 @@
       <listitem>
        <para>
         Add <link linkend="plpgsql-foreach-array"><command>FOREACH IN
-        ARRAY</></link> to plpgsql to allow array interation (Pavel
+        ARRAY</></link> to plpgsql to allow array iteration (Pavel
         Stehule)
        </para>
 
@@ -2145,7 +2145,7 @@
       </para>
 
       <para>
-       Previously a empty-array query that used an index might return
+       Previously an empty-array query that used an index might return
        different results from one that used a sequential scan.
       </para>
      </listitem>
