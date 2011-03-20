@@ -41,40 +41,6 @@
    </para>
 
    <sect3>
-    <title>Server Settings</title>
-
-    <itemizedlist>
-
-     <listitem>
-      <para>
-       Change <link
-       linkend="functions-recovery-info-table"><function>pg_last_xlog_receive_location()</></link>
-       so it never moves backwards (Fujii Masao)
-      </para>
-
-      <para>
-       Previously <function>pg_last_xlog_receive_location()</> could
-       move backward when streaming replication is restarted.
-      </para>
-     </listitem>
-
-     <listitem>
-      <para>
-       Have logging of replication connections honor <link
-       linkend="guc-log-connections"><varname>log_connections</></link>
-       (Magnus Hagander)
-      </para>
-
-      <para>
-       Previously replication connections were always logged.
-      </para>
-     </listitem>
-
-    </itemizedlist>
-
-   </sect3>
-
-   <sect3>
     <title>Strings</title>
 
     <itemizedlist>
@@ -195,6 +161,40 @@
    </sect3>
 
    <sect3>
+    <title>Server Settings</title>
+
+    <itemizedlist>
+
+     <listitem>
+      <para>
+       Change <link
+       linkend="functions-recovery-info-table"><function>pg_last_xlog_receive_location()</></link>
+       so it never moves backwards (Fujii Masao)
+      </para>
+
+      <para>
+       Previously <function>pg_last_xlog_receive_location()</> could
+       move backward when streaming replication is restarted.
+      </para>
+     </listitem>
+
+     <listitem>
+      <para>
+       Have logging of replication connections honor <link
+       linkend="guc-log-connections"><varname>log_connections</></link>
+       (Magnus Hagander)
+      </para>
+
+      <para>
+       Previously replication connections were always logged.
+      </para>
+     </listitem>
+
+    </itemizedlist>
+
+   </sect3>
+
+   <sect3>
     <title><link linkend="plpgsql">PL/pgSQL</link> Server-Side Language</title>
 
     <itemizedlist>
@@ -271,188 +271,6 @@
 
    <sect3>
     <title>Server</title>
-
-    <sect4>
-     <title>Continuous Archiving and Streaming Replication</title>
-
-     <itemizedlist>
-
-      <listitem>
-       <para>
-        Add a <link
-        linkend="guc-synchronous-replication"><varname>synchronous_replication</></link>
-        option (Simon Riggs, Fujii Masao)
-       </para>
-
-       <para>
-        This allows the primary to wait for the standby to receive
-        transaction information before acknowledging the commit.
-       </para>
-      </listitem>
-
-      <listitem>
-       <para>
-        Add variable <link
-        linkend="guc-hot-standby-feedback"><varname>hot_standby_feedback</></link>
-        to enable standbys to communicate their needed snapshots to
-        the primary (Simon Riggs)
-       </para>
-
-       <para>
-        This helps avoid cancelling long-running queries on the standby.
-       </para>
-      </listitem>
-
-      <listitem>
-       <para>
-        Add support for sending file system backups to standbys using
-        the streaming replication network connection (Magnus Hagander,
-        Heikki Linnakangas)
-       </para>
-
-       <para>
-        This avoids the requirement of manually transferring a file
-        system backup when creating a standby server.
-       </para>
-      </listitem>
-
-      <listitem>
-       <para>
-        Add command-line tool <link
-        linkend="app-pgbasebackup"><application>pg_basebackup</></link>
-        for creating a new standby server or database backup (Magnus
-        Hagander)
-       </para>
-      </listitem>
-
-      <listitem>
-       <para>
-        Add new replication <link linkend="SQL-CREATEROLE">permission</link>
-        for roles (Magnus Hagander)
-       </para>
-
-       <para>
-        This is a read-only permission used for streaming replication
-        and allows non-superusers to initiate replication connections.
-        Previously only superusers could initiate replication
-        connections;  superusers have this permission by default.
-       </para>
-      </listitem>
-
-     </itemizedlist>
-
-     <sect5>
-      <title>Monitoring</title>
-
-      <itemizedlist>
-
-       <listitem>
-        <para>
-         Add system view <link
-         linkend="monitoring-stats-views-table"><structname>pg_stat_replication</></link>
-         which displays activity of WAL sender processes (Itagaki
-         Takahiro, Simon Riggs)
-        </para>
-
-        <para>
-         This reports the status of all connected standby servers.
-        </para>
-       </listitem>
-
-       <listitem>
-        <para>
-         Add monitoring function <link
-         linkend="functions-recovery-info-table"><function>pg_last_xact_replay_timestamp()</></link>
-         (Fujii Masao)
-        </para>
-
-        <para>
-         This returns the time on the primary that generated the most
-         recent commit or abort record applied on the standby.
-        </para>
-       </listitem>
-
-      </itemizedlist>
-
-     </sect5>
-
-     <sect5>
-      <title>Recovery Control</title>
-
-      <itemizedlist>
-
-       <listitem>
-        <para>
-         Add functions to control streaming replication replay (Simon
-         Riggs)
-        </para>
-
-        <para>
-         The new functions are <link
-         linkend="functions-recovery-control-table"><function>pg_xlog_replay_pause()</></link>,
-         <link
-         linkend="functions-recovery-control-table"><function>pg_xlog_replay_resume()</></link>,
-         and the status function <link
-         linkend="functions-recovery-control-table"><function>pg_is_xlog_replay_paused()</></link>.
-        </para>
-       </listitem>
-
-       <listitem>
-        <para>
-         Add the ability to create named restore points using <link
-         linkend="functions-admin-backup-table"><function>pg_create_restore_point()</></link>
-         (Jaime Casanova)
-        </para>
-
-        <para>
-         These named restore points can be specified as recovery
-         targets in <filename>recovery.conf</>.
-        </para>
-       </listitem>
-
-       <listitem>
-        <para>
-         Add <filename>recovery.conf</> setting <link
-         linkend="pause-at-recovery-target"><varname>pause_at_recovery_target</></link>
-         to pause recovery at target (Simon Riggs)
-        </para>
-
-        <para>
-         This allows a recovery server to be queried to check if the
-         recovery point is the one desired.
-        </para>
-       </listitem>
-
-       <listitem>
-        <para>
-         Allow standby recovery to switch to a new timeline automatically
-         (Heikki Linnakangas)
-        </para>
-
-        <para>
-         Now standby servers scan the archive directory for new
-         timelines periodically.
-        </para>
-       </listitem>
-
-       <listitem>
-        <para>
-         Allow <link
-         linkend="recovery-config"><filename>recovery.conf</></link>
-         to use the same quoting behavior as <filename>postgresql.conf</>
-         (Dimitri Fontaine)
-        </para>
-
-        <para>
-         Previously all values had to be quoted.
-        </para>
-       </listitem>
-
-      </itemizedlist>
-
-     </sect5>
-
-    </sect4>
 
     <sect4>
      <title>Performance</title>
@@ -754,6 +572,188 @@
       </listitem>
 
       </itemizedlist>
+
+    </sect4>
+
+   </sect3>
+
+   <sect3>
+    <title>Continuous Archiving and Streaming Replication</title>
+
+    <itemizedlist>
+
+     <listitem>
+      <para>
+       Add a <link
+       linkend="guc-synchronous-replication"><varname>synchronous_replication</></link>
+       option (Simon Riggs, Fujii Masao)
+      </para>
+
+      <para>
+       This allows the primary to wait for the standby to receive
+       transaction information before acknowledging the commit.
+      </para>
+     </listitem>
+
+     <listitem>
+      <para>
+       Add variable <link
+       linkend="guc-hot-standby-feedback"><varname>hot_standby_feedback</></link>
+       to enable standbys to communicate their needed snapshots to
+       the primary (Simon Riggs)
+      </para>
+
+      <para>
+       This helps avoid cancelling long-running queries on the standby.
+      </para>
+     </listitem>
+
+     <listitem>
+      <para>
+       Add support for sending file system backups to standbys using
+       the streaming replication network connection (Magnus Hagander,
+       Heikki Linnakangas)
+      </para>
+
+      <para>
+       This avoids the requirement of manually transferring a file
+       system backup when creating a standby server.
+      </para>
+     </listitem>
+
+     <listitem>
+      <para>
+       Add command-line tool <link
+       linkend="app-pgbasebackup"><application>pg_basebackup</></link>
+       for creating a new standby server or database backup (Magnus
+       Hagander)
+      </para>
+     </listitem>
+
+     <listitem>
+      <para>
+       Add new replication <link linkend="SQL-CREATEROLE">permission</link>
+       for roles (Magnus Hagander)
+      </para>
+
+      <para>
+       This is a read-only permission used for streaming replication
+       and allows non-superusers to initiate replication connections.
+       Previously only superusers could initiate replication
+       connections;  superusers have this permission by default.
+      </para>
+     </listitem>
+
+    </itemizedlist>
+
+    <sect4>
+     <title>Monitoring</title>
+
+     <itemizedlist>
+
+      <listitem>
+       <para>
+        Add system view <link
+        linkend="monitoring-stats-views-table"><structname>pg_stat_replication</></link>
+        which displays activity of WAL sender processes (Itagaki
+        Takahiro, Simon Riggs)
+       </para>
+
+       <para>
+        This reports the status of all connected standby servers.
+       </para>
+      </listitem>
+
+      <listitem>
+       <para>
+        Add monitoring function <link
+        linkend="functions-recovery-info-table"><function>pg_last_xact_replay_timestamp()</></link>
+        (Fujii Masao)
+       </para>
+
+       <para>
+        This returns the time on the primary that generated the most
+        recent commit or abort record applied on the standby.
+       </para>
+      </listitem>
+
+     </itemizedlist>
+
+    </sect4>
+
+    <sect4>
+     <title>Recovery Control</title>
+
+     <itemizedlist>
+
+      <listitem>
+       <para>
+        Add functions to control streaming replication replay (Simon
+        Riggs)
+       </para>
+
+       <para>
+        The new functions are <link
+        linkend="functions-recovery-control-table"><function>pg_xlog_replay_pause()</></link>,
+        <link
+        linkend="functions-recovery-control-table"><function>pg_xlog_replay_resume()</></link>,
+        and the status function <link
+        linkend="functions-recovery-control-table"><function>pg_is_xlog_replay_paused()</></link>.
+       </para>
+      </listitem>
+
+      <listitem>
+       <para>
+        Add the ability to create named restore points using <link
+        linkend="functions-admin-backup-table"><function>pg_create_restore_point()</></link>
+        (Jaime Casanova)
+       </para>
+
+       <para>
+        These named restore points can be specified as recovery
+        targets in <filename>recovery.conf</>.
+       </para>
+      </listitem>
+
+      <listitem>
+       <para>
+        Add <filename>recovery.conf</> setting <link
+        linkend="pause-at-recovery-target"><varname>pause_at_recovery_target</></link>
+        to pause recovery at target (Simon Riggs)
+       </para>
+
+       <para>
+        This allows a recovery server to be queried to check if the
+        recovery point is the one desired.
+       </para>
+      </listitem>
+
+      <listitem>
+       <para>
+        Allow standby recovery to switch to a new timeline automatically
+        (Heikki Linnakangas)
+       </para>
+
+       <para>
+        Now standby servers scan the archive directory for new
+        timelines periodically.
+       </para>
+      </listitem>
+
+      <listitem>
+       <para>
+        Allow <link
+        linkend="recovery-config"><filename>recovery.conf</></link>
+        to use the same quoting behavior as <filename>postgresql.conf</>
+        (Dimitri Fontaine)
+       </para>
+
+       <para>
+        Previously all values had to be quoted.
+       </para>
+      </listitem>
+
+     </itemizedlist>
 
     </sect4>
 
@@ -1740,9 +1740,8 @@
 
       <listitem>
        <para>
-        Add <literal>directory</> format to <link
-        linkend="APP-PG-DUMPALL"><application>pg_dump</></link> (Joachim
-        Wieland, Heikki Linnakangas)
+        Add <literal>directory</> format to <application>pg_dump</>
+        (Joachim Wieland, Heikki Linnakangas)
        </para>
 
        <para>
@@ -1762,7 +1761,7 @@
 
       <listitem>
        <para>
-        Fix <link linkend="app-pg-ctl"><application>pg_ctl</></link>
+        Fix <application>pg_ctl</>
         so it no longer incorrectly reports that the server is not
         running (Bruce Momjian)
        </para>
@@ -1775,7 +1774,7 @@
 
       <listitem>
        <para>
-        Improve <link linkend="app-pg-ctl"><application>pg_ctl</></link>
+        Improve <application>pg_ctl</>
         start's "wait" (<option>-w</>) mode to handle non-standard
         port numbers, non-standard unix-domain socket locations,
         permission problems, and stale postmaster lock files (Bruce
@@ -1785,9 +1784,8 @@
 
       <listitem>
        <para>
-         Add <literal>promote</> option to <link
-         linkend="app-pg-ctl"><application>pg_ctl</></link> to change
-         a standby server to primary (Fujii Masao)
+         Add <literal>promote</> option to <application>pg_ctl</> to
+         change a standby server to primary (Fujii Masao)
        </para>
       </listitem>
 
