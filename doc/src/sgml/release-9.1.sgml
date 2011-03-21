@@ -254,7 +254,7 @@
 
      <listitem>
       <para>
-       Treat ECPG cursor names as case-insensitive (Zoltan Boszormenyi)
+       Treat <application>ECPG</> cursor names as case-insensitive (Zoltan Boszormenyi)
       </para>
      </listitem>
 
@@ -385,13 +385,14 @@
        </para>
 
        <para>
-        Previously only host IP addresses and CIDR values were supported.
+        Previously only host <acronym>IP</> addresses and <acronym>CIDR</>
+        values were supported.
        </para>
       </listitem>
 
       <listitem>
        <para>
-        Support the keyword 'all' in the host column of <link
+        Support the keyword <literal>all</> in the host column of <link
         linkend="auth-pg-hba-conf"><filename>pg_hba.conf</></link>
         (Peter Eisentraut)
        </para>
@@ -404,14 +405,14 @@
 
       <listitem>
        <para>
-        Allow <link linkend="gssapi-auth">GSSAPI</link> to be used to
-        authenticate to servers via <link linkend="sspi-auth">SSPI</link>
-        (Christian Ullrich)
+        Allow <link linkend="gssapi-auth"><acronym>GSSAPI</></link>
+        to be used to authenticate to servers via <link
+        linkend="sspi-auth"><acronym>SSPI</></link> (Christian Ullrich)
        </para>
 
        <para>
-        Specifically this allows Unix-based GSSAPI clients to authenticate
-        to Windows SSPI servers.
+        Specifically this allows Unix-based <acronym>GSSAPI</> clients
+        to <acronym>SSPI</> authenticate to Windows servers.
        </para>
       </listitem>
 
@@ -426,14 +427,14 @@
 
       <listitem>
        <para>
-        Add details to the logging of restart points and checkpoints,
+        Add details to the logging of restartpoints and checkpoints,
         which is controlled by <link
         linkend="guc-log-checkpoints"><varname>log_checkpoints</></link>
         (Fujii Masao, Greg Smith)
        </para>
 
        <para>
-        New details show WAL file and sync activity.
+        New details show <acronym>WAL</> file and sync activity.
        </para>
       </listitem>
 
@@ -655,7 +656,7 @@
        <para>
         Add system view <link
         linkend="monitoring-stats-views-table"><structname>pg_stat_replication</></link>
-        which displays activity of WAL sender processes (Itagaki
+        which displays activity of <acronym>WAL</> sender processes (Itagaki
         Takahiro, Simon Riggs)
        </para>
 
@@ -1152,29 +1153,29 @@
       <listitem>
        <para>
         Add nearest-neighbor (order-by-operator) searching to <link
-        linkend="GiST">GiST indexes</link> (Teodor Sigaev, Tom Lane)
+        linkend="GiST"><acronym>GiST</> indexes</link> (Teodor Sigaev, Tom Lane)
        </para>
 
        <para>
-        This allows GiST indexes to quickly return
+        This allows <acronym>GiST</> indexes to quickly return
         <literal>LIMIT</>-specified closest values.
        </para>
       </listitem>
 
       <listitem>
        <para>
-        Allow <link linkend="GIN">GIN indexes</link> to index null
+        Allow <link linkend="GIN"><acronym>GIN</> indexes</link> to index null
         and empty values (Tom Lane)
        </para>
 
        <para>
-        This allows full GIN index scans.
+        This allows full <acronym>GIN</> index scans.
        </para>
       </listitem>
 
       <listitem>
        <para>
-        Fix <link linkend="GiST">GiST indexes</link> to be fully
+        Fix <link linkend="GiST"><acronym>GiST</> indexes</link> to be fully
         crash-safe (Heikki Linnakangas)
        </para>
 
@@ -1244,13 +1245,13 @@
     </sect4>
 
     <sect4>
-     <title><link linkend="functions-xml">XML</link></title>
+     <title><link linkend="functions-xml"><acronym>XML</></link></title>
 
      <itemizedlist>
 
       <listitem>
        <para>
-        Add XML function <link
+        Add <acronym>XML</> function <link
         linkend="xml-exists"><literal>XMLEXISTS</></link> and <link
         linkend="xml-exists"><function>xpath_exists()</></link>
         functions (Mike Fowler)
@@ -1263,7 +1264,7 @@
 
       <listitem>
        <para>
-        Add XML functions <link
+        Add <acronym>XML</> functions <link
         linkend="xml-is-well-formed"><function>xml_is_well_formed()</></link>,
         <link
         linkend="xml-is-well-formed"><function>xml_is_well_formed_document()</></link>,
@@ -1273,7 +1274,7 @@
        </para>
 
        <para>
-        These check whether the input is properly-formed XML.
+        These check whether the input is properly-formed <acronym>XML</>.
        </para>
       </listitem>
 
@@ -1330,7 +1331,7 @@
 
       <listitem>
        <para>
-         Add single-parameter version of function <link
+         Add a single-parameter version of function <link
          linkend="functions-admin-genfile"><function>pg_read_file()</></link>
          to read an entire file (Dimitri Fontaine, Itagaki Takahiro)
        </para>
@@ -1355,7 +1356,7 @@
 
       <listitem>
        <para>
-        Add <link
+        Add the <link
         linkend="functions-info-catalog-table"><function>pg_describe_object()</></link>
         function (Alvaro Herrera)
        </para>
@@ -1378,7 +1379,7 @@
         Add variable <link
         linkend="guc-quote-all-identifiers"><varname>quote_all_identifiers</></link>
         to force the quoting of all identifiers in <command>EXPLAIN</>
-        and system catalog functions like <link
+        and in system catalog functions like <link
         linkend="functions-info-catalog-table"><function>pg_get_viewdef()</></link>
         (Robert Haas)
        </para>
@@ -1599,7 +1600,7 @@
 
       <listitem>
        <para>
-         Report PL/Python errors from iterators with PLy_elog (Jan
+         Report PL/Python errors from iterators with <literal>PLy_elog</> (Jan
          Urbanski)
        </para>
       </listitem>
@@ -1651,15 +1652,15 @@
 
       <listitem>
        <para>
-         Add <application>psql</> command <literal>\sf</> command to
+         Add <application>psql</> command <literal>\sf</> to
          show a function's definition (Pavel Stehule)
        </para>
       </listitem>
 
       <listitem>
        <para>
-         Add <application>psql</> <literal>\dL</> command
-         <literal>\dL</> to list languages (Fernando Ike)
+         Add <application>psql</> command <literal>\dL</> to list
+         languages (Fernando Ike)
        </para>
       </listitem>
 
@@ -1684,7 +1685,7 @@
 
        <para>
         This is passed to the editor using the
-        <literal>EDITOR_LINENUMBER_SWITCH</> environment variable.
+        <envar>EDITOR_LINENUMBER_SWITCH</> environment variable.
        </para>
       </listitem>
 
@@ -1695,14 +1696,14 @@
        </para>
 
        <para>
-        This only happens if the <literal>PGCLIENTENCODING</> environment
+        This only happens if the <envar>PGCLIENTENCODING</> environment
         variable is not set.
        </para>
       </listitem>
 
       <listitem>
        <para>
-         Allow tab completion of <application>psql</> variables (Pavel
+         Additional tab completion of <application>psql</> variables (Pavel
          Stehule)
        </para>
       </listitem>
@@ -1780,7 +1781,7 @@
       <listitem>
        <para>
          Add <literal>promote</> option to <application>pg_ctl</> to
-         change a standby server to primary (Fujii Masao)
+         switch a standby server to primary (Fujii Masao)
        </para>
       </listitem>
 
@@ -1800,9 +1801,9 @@
 
       <listitem>
        <para>
-        Add a libpq connection option client_encoding which behaves
-        like the <literal>PGCLIENTENCODING</> environment variable
-        (Heikki Linnakangas)
+        Add a libpq connection option <literal>client_encoding</>
+        which behaves like the <envar>PGCLIENTENCODING</> environment
+        variable (Heikki Linnakangas)
        </para>
 
        <para>
@@ -1890,7 +1891,7 @@
 
       <listitem>
        <para>
-         Require GNU <link
+         Require <acronym>GNU</> <link
          linkend="install-requirements"><application>make</></link>
          3.80 or newer (Peter Eisentraut)
        </para>
@@ -1990,7 +1991,7 @@
 
       <listitem>
        <para>
-         Add support for DragonFly BSD (Rumko)
+         Add support for DragonFly <acronym>BSD</> (Rumko)
        </para>
       </listitem>
 
@@ -2165,7 +2166,7 @@
       <listitem>
        <para>
         Add <link linkend="sepgsql"><filename>contrib/sepgsql</></link>
-        to interface permission checks with SE-Linux (KaiGai Kohei)
+        to interface permission checks with <acronym>SE</>-Linux (KaiGai Kohei)
        </para>
 
        <para>
@@ -2305,7 +2306,7 @@
 
      <listitem>
       <para>
-        Extensive <link linkend="ecpg">ECPG documentation</link>
+        Extensive <link linkend="ecpg"><application>ECPG</> documentation</link>
         improvements (Satoshi Nagayasu)
       </para>
      </listitem>
