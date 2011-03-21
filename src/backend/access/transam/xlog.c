@@ -355,10 +355,13 @@ typedef struct XLogCtlInsert
 	 * exclusiveBackup is true if a backup started with pg_start_backup() is
 	 * in progress, and nonExclusiveBackups is a counter indicating the number
 	 * of streaming base backups currently in progress. forcePageWrites is
-	 * set to true when either of these is non-zero.
+	 * set to true when either of these is non-zero. lastBackupStart is the
+	 * latest checkpoint redo location used as a starting point for an online
+	 * backup.
 	 */
 	bool		exclusiveBackup;
 	int			nonExclusiveBackups;
+	XLogRecPtr	lastBackupStart;
 } XLogCtlInsert;
 
 /*
@@ -8809,6 +8812,19 @@ do_pg_start_backup(const char *backupidstr, bool fast, char **labelfile)
 						MAXPGPATH)));
 
 	/*
+	 * Force an XLOG file switch before the checkpoint, to ensure that the WAL
+	 * segment the checkpoint is written to doesn't contain pages with old
+	 * timeline IDs. That would otherwise happen if you called
+	 * pg_start_backup() right after restoring from a PITR archive: the first
+	 * WAL segment containing the startup checkpoint has pages in the
+	 * beginning with the old timeline ID. That can cause trouble at recovery:
+	 * we won't have a history file covering the old timeline if pg_xlog
+	 * directory was not included in the base backup and the WAL archive was
+	 * cleared too before starting the backup.
+	 */
+	RequestXLogSwitch();
+
+	/*
 	 * Mark backup active in shared memory.  We must do full-page WAL writes
 	 * during an on-line backup even if not doing so at other times, because
 	 * it's quite possible for the backup dump to obtain a "torn" (partially
@@ -8843,43 +8859,54 @@ do_pg_start_backup(const char *backupidstr, bool fast, char **labelfile)
 	XLogCtl->Insert.forcePageWrites = true;
 	LWLockRelease(WALInsertLock);
 
-	/*
-	 * Force an XLOG file switch before the checkpoint, to ensure that the WAL
-	 * segment the checkpoint is written to doesn't contain pages with old
-	 * timeline IDs. That would otherwise happen if you called
-	 * pg_start_backup() right after restoring from a PITR archive: the first
-	 * WAL segment containing the startup checkpoint has pages in the
-	 * beginning with the old timeline ID. That can cause trouble at recovery:
-	 * we won't have a history file covering the old timeline if pg_xlog
-	 * directory was not included in the base backup and the WAL archive was
-	 * cleared too before starting the backup.
-	 */
-	RequestXLogSwitch();
-
 	/* Ensure we release forcePageWrites if fail below */
 	PG_ENSURE_ERROR_CLEANUP(pg_start_backup_callback, (Datum) BoolGetDatum(exclusive));
 	{
-		/*
-		 * Force a CHECKPOINT.	Aside from being necessary to prevent torn
-		 * page problems, this guarantees that two successive backup runs will
-		 * have different checkpoint positions and hence different history
-		 * file names, even if nothing happened in between.
-		 *
-		 * We use CHECKPOINT_IMMEDIATE only if requested by user (via passing
-		 * fast = true).  Otherwise this can take awhile.
-		 */
-		RequestCheckpoint(CHECKPOINT_FORCE | CHECKPOINT_WAIT |
-						  (fast ? CHECKPOINT_IMMEDIATE : 0));
+		bool gotUniqueStartpoint = false;
+		do
+		{
+			/*
+			 * Force a CHECKPOINT.	Aside from being necessary to prevent torn
+			 * page problems, this guarantees that two successive backup runs will
+			 * have different checkpoint positions and hence different history
+			 * file names, even if nothing happened in between.
+			 *
+			 * We use CHECKPOINT_IMMEDIATE only if requested by user (via passing
+			 * fast = true).  Otherwise this can take awhile.
+			 */
+			RequestCheckpoint(CHECKPOINT_FORCE | CHECKPOINT_WAIT |
+							  (fast ? CHECKPOINT_IMMEDIATE : 0));
 
-		/*
-		 * Now we need to fetch the checkpoint record location, and also its
-		 * REDO pointer.  The oldest point in WAL that would be needed to
-		 * restore starting from the checkpoint is precisely the REDO pointer.
-		 */
-		LWLockAcquire(ControlFileLock, LW_SHARED);
-		checkpointloc = ControlFile->checkPoint;
-		startpoint = ControlFile->checkPointCopy.redo;
-		LWLockRelease(ControlFileLock);
+			/*
+			 * Now we need to fetch the checkpoint record location, and also its
+			 * REDO pointer.  The oldest point in WAL that would be needed to
+			 * restore starting from the checkpoint is precisely the REDO pointer.
+			 */
+			LWLockAcquire(ControlFileLock, LW_SHARED);
+			checkpointloc = ControlFile->checkPoint;
+			startpoint = ControlFile->checkPointCopy.redo;
+			LWLockRelease(ControlFileLock);
+
+			/*
+			 * If two base backups are started at the same time (in WAL
+			 * sender processes), we need to make sure that they use
+			 * different checkpoints as starting locations, because we use
+			 * the starting WAL location as a unique identifier for the base
+			 * backup in the end-of-backup WAL record and when we write the
+			 * backup history file. Perhaps it would be better generate a
+			 * separate unique ID for each backup instead of forcing another
+			 * checkpoint, but taking a checkpoint right after another is
+			 * not that expensive either because only few buffers have been
+			 * dirtied yet.
+			 */
+			LWLockAcquire(WALInsertLock, LW_SHARED);
+			if (XLByteLT(XLogCtl->Insert.lastBackupStart, startpoint))
+			{
+				XLogCtl->Insert.lastBackupStart = startpoint;
+				gotUniqueStartpoint = true;
+			}
+			LWLockRelease(WALInsertLock);
+		} while(!gotUniqueStartpoint);
 
 		XLByteToSeg(startpoint, _logId, _logSeg);
 		XLogFileName(xlogfilename, ThisTimeLineID, _logId, _logSeg);
