@@ -947,7 +947,7 @@ synchronous_replication = on
    <para>
     After a commit record has been written to disk on the primary the
     WAL record is then sent to the standby. The standby sends reply
-    messages each time a new batch of WAL data is received, unless
+    messages each time a new batch of WAL data is written to disk, unless
     <varname>wal_receiver_status_interval</> is set to zero on the standby.
     If the standby is the first matching standby, as specified in
     <varname>synchronous_standby_names</> on the primary, the reply
@@ -1011,6 +1011,12 @@ synchronous_replication = on
    <para>
     You should consider that the network bandwidth must be higher than
     the rate of generation of WAL data.
+   </para>
+
+   <para>
+    Replies are only sent when WAL is written to disk, so setting
+    <varname>fsync</> to <literal>off</> on the standby will significantly
+    reduce performance of synchronous replication and should be avoided.
    </para>
 
    </sect3>
