@@ -1199,7 +1199,7 @@ $$ LANGUAGE plpythonu;
    ad-hoc queries.  A PL/Python equivalent of dynamic SQL from <xref
    linkend="plpgsql-quote-literal-example"> would be:
 <programlisting>
-plpy.execute("UPDATE tbl SET %s = %s where key = %s" % (
+plpy.execute("UPDATE tbl SET %s = %s WHERE key = %s" % (
     plpy.quote_ident(colname),
     plpy.quote_nullable(newvalue),
     plpy.quote_literal(keyvalue)))
