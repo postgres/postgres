@@ -141,7 +141,7 @@ DefineCollation(List *names, List *parameters)
 
 	/* check that the locales can be loaded */
 	CommandCounterIncrement();
-	pg_newlocale_from_collation(newoid);
+	(void) pg_newlocale_from_collation(newoid);
 }
 
 /*

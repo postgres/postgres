@@ -139,7 +139,7 @@ DefineVirtualRelation(const RangeVar *relation, List *tlist, bool replace)
 				if (!OidIsValid(def->collOid))
 					ereport(ERROR,
 							(errcode(ERRCODE_INDETERMINATE_COLLATION),
-							 errmsg("no collation was derived for view column \"%s\"",
+							 errmsg("could not determine which collation to use for view column \"%s\"",
 									def->colname),
 							 errhint("Use the COLLATE clause to set the collation explicitly.")));
 			}

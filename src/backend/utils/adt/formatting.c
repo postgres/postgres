@@ -1503,7 +1503,20 @@ str_tolower(const char *buff, size_t nbytes, Oid collid)
 		size_t		result_size;
 
 		if (collid != DEFAULT_COLLATION_OID)
+		{
+			if (!OidIsValid(collid))
+			{
+				/*
+				 * This typically means that the parser could not resolve a
+				 * conflict of implicit collations, so report it that way.
+				 */
+				ereport(ERROR,
+						(errcode(ERRCODE_INDETERMINATE_COLLATION),
+						 errmsg("could not determine which collation to use for lower() function"),
+						 errhint("Use the COLLATE clause to set the collation explicitly.")));
+			}
 			mylocale = pg_newlocale_from_collation(collid);
+		}
 
 		/* Overflow paranoia */
 		if ((nbytes + 1) > (INT_MAX / sizeof(wchar_t)))
@@ -1540,7 +1553,20 @@ str_tolower(const char *buff, size_t nbytes, Oid collid)
 		char	   *p;
 
 		if (collid != DEFAULT_COLLATION_OID)
+		{
+			if (!OidIsValid(collid))
+			{
+				/*
+				 * This typically means that the parser could not resolve a
+				 * conflict of implicit collations, so report it that way.
+				 */
+				ereport(ERROR,
+						(errcode(ERRCODE_INDETERMINATE_COLLATION),
+						 errmsg("could not determine which collation to use for lower() function"),
+						 errhint("Use the COLLATE clause to set the collation explicitly.")));
+			}
 			mylocale = pg_newlocale_from_collation(collid);
+		}
 
 		result = pnstrdup(buff, nbytes);
 
@@ -1598,7 +1624,20 @@ str_toupper(const char *buff, size_t nbytes, Oid collid)
 		size_t		result_size;
 
 		if (collid != DEFAULT_COLLATION_OID)
+		{
+			if (!OidIsValid(collid))
+			{
+				/*
+				 * This typically means that the parser could not resolve a
+				 * conflict of implicit collations, so report it that way.
+				 */
+				ereport(ERROR,
+						(errcode(ERRCODE_INDETERMINATE_COLLATION),
+						 errmsg("could not determine which collation to use for upper() function"),
+						 errhint("Use the COLLATE clause to set the collation explicitly.")));
+			}
 			mylocale = pg_newlocale_from_collation(collid);
+		}
 
 		/* Overflow paranoia */
 		if ((nbytes + 1) > (INT_MAX / sizeof(wchar_t)))
@@ -1635,7 +1674,20 @@ str_toupper(const char *buff, size_t nbytes, Oid collid)
 		char	   *p;
 
 		if (collid != DEFAULT_COLLATION_OID)
+		{
+			if (!OidIsValid(collid))
+			{
+				/*
+				 * This typically means that the parser could not resolve a
+				 * conflict of implicit collations, so report it that way.
+				 */
+				ereport(ERROR,
+						(errcode(ERRCODE_INDETERMINATE_COLLATION),
+						 errmsg("could not determine which collation to use for upper() function"),
+						 errhint("Use the COLLATE clause to set the collation explicitly.")));
+			}
 			mylocale = pg_newlocale_from_collation(collid);
+		}
 
 		result = pnstrdup(buff, nbytes);
 
@@ -1705,7 +1757,20 @@ str_initcap(const char *buff, size_t nbytes, Oid collid)
 		size_t		result_size;
 
 		if (collid != DEFAULT_COLLATION_OID)
+		{
+			if (!OidIsValid(collid))
+			{
+				/*
+				 * This typically means that the parser could not resolve a
+				 * conflict of implicit collations, so report it that way.
+				 */
+				ereport(ERROR,
+						(errcode(ERRCODE_INDETERMINATE_COLLATION),
+						 errmsg("could not determine which collation to use for initcap() function"),
+						 errhint("Use the COLLATE clause to set the collation explicitly.")));
+			}
 			mylocale = pg_newlocale_from_collation(collid);
+		}
 
 		/* Overflow paranoia */
 		if ((nbytes + 1) > (INT_MAX / sizeof(wchar_t)))
@@ -1754,7 +1819,20 @@ str_initcap(const char *buff, size_t nbytes, Oid collid)
 		char	   *p;
 
 		if (collid != DEFAULT_COLLATION_OID)
+		{
+			if (!OidIsValid(collid))
+			{
+				/*
+				 * This typically means that the parser could not resolve a
+				 * conflict of implicit collations, so report it that way.
+				 */
+				ereport(ERROR,
+						(errcode(ERRCODE_INDETERMINATE_COLLATION),
+						 errmsg("could not determine which collation to use for initcap() function"),
+						 errhint("Use the COLLATE clause to set the collation explicitly.")));
+			}
 			mylocale = pg_newlocale_from_collation(collid);
+		}
 
 		result = pnstrdup(buff, nbytes);
 

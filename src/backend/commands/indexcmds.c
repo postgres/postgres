@@ -899,7 +899,7 @@ ComputeIndexAttrs(IndexInfo *indexInfo,
 			if (!OidIsValid(attcollation))
 				ereport(ERROR,
 						(errcode(ERRCODE_INDETERMINATE_COLLATION),
-						 errmsg("no collation was derived for the index expression"),
+						 errmsg("could not determine which collation to use for index expression"),
 						 errhint("Use the COLLATE clause to set the collation explicitly.")));
 		}
 		else

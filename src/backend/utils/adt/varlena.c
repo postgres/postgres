@@ -1302,7 +1302,20 @@ varstr_cmp(char *arg1, int len1, char *arg2, int len2, Oid collid)
 		pg_locale_t	mylocale = 0;
 
 		if (collid != DEFAULT_COLLATION_OID)
+		{
+			if (!OidIsValid(collid))
+			{
+				/*
+				 * This typically means that the parser could not resolve a
+				 * conflict of implicit collations, so report it that way.
+				 */
+				ereport(ERROR,
+						(errcode(ERRCODE_INDETERMINATE_COLLATION),
+						 errmsg("could not determine which collation to use for string comparison"),
+						 errhint("Use the COLLATE clause to set the collation explicitly.")));
+			}
 			mylocale = pg_newlocale_from_collation(collid);
+		}
 
 #ifdef WIN32
 		/* Win32 does not have UTF-8, so we need to map to UTF-16 */

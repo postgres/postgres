@@ -932,20 +932,12 @@ pg_newlocale_from_collation(Oid collid)
 {
 	collation_cache_entry *cache_entry;
 
+	/* Callers must pass a valid OID */
+	Assert(OidIsValid(collid));
+
 	/* Return 0 for "default" collation, just in case caller forgets */
 	if (collid == DEFAULT_COLLATION_OID)
 		return (pg_locale_t) 0;
-
-	/*
-	 * This is where we'll fail if a collation-aware function is invoked
-	 * and no collation OID is passed.  This typically means that the
-	 * parser could not resolve a conflict of implicit collations, so
-	 * report it that way.
-	 */
-	if (!OidIsValid(collid))
-		ereport(ERROR,
-				(errcode(ERRCODE_INDETERMINATE_COLLATION),
-				 errmsg("locale operation to be invoked, but no collation was derived")));
 
 	cache_entry = lookup_collation_cache(collid, false);
 
