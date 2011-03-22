@@ -1541,6 +1541,12 @@ RelationClose(Relation relation)
  *	We assume that at the time we are called, we have at least AccessShareLock
  *	on the target index.  (Note: in the calls from RelationClearRelation,
  *	this is legitimate because we know the rel has positive refcount.)
+ *
+ *	If the target index is an index on pg_class or pg_index, we'd better have
+ *	previously gotten at least AccessShareLock on its underlying catalog,
+ *	else we are at risk of deadlock against someone trying to exclusive-lock
+ *	the heap and index in that order.  This is ensured in current usage by
+ *	only applying this to indexes being opened or having positive refcount.
  */
 static void
 RelationReloadClassinfo(Relation relation)
