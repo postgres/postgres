@@ -1638,6 +1638,8 @@ setup_collation(void)
 			skipped++;
 			continue;			/* error message printed by pg_get_encoding_from_locale() */
 		}
+		if (!PG_VALID_BE_ENCODING(enc))
+			continue;			/* ignore locales for client-only encodings */
 		if (enc == PG_SQL_ASCII)
 			continue;			/* C/POSIX are already in the catalog */
 
