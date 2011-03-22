@@ -42,14 +42,6 @@ extern void debug_print_rel(PlannerInfo *root, RelOptInfo *rel);
  * indxpath.c
  *	  routines to generate index paths
  */
-typedef enum
-{
-	/* Whether to use ScalarArrayOpExpr to build index qualifications */
-	SAOP_FORBID,				/* Do not use ScalarArrayOpExpr */
-	SAOP_ALLOW,					/* OK to use ScalarArrayOpExpr */
-	SAOP_REQUIRE				/* Require ScalarArrayOpExpr */
-} SaOpControl;
-
 extern void create_index_paths(PlannerInfo *root, RelOptInfo *rel);
 extern List *generate_bitmap_or_paths(PlannerInfo *root, RelOptInfo *rel,
 						 List *clauses, List *outer_clauses,
@@ -59,11 +51,6 @@ extern void best_inner_indexscan(PlannerInfo *root, RelOptInfo *rel,
 					 Path **cheapest_startup, Path **cheapest_total);
 extern bool relation_has_unique_index_for(PlannerInfo *root, RelOptInfo *rel,
 							  List *restrictlist);
-extern List *group_clauses_by_indexkey(IndexOptInfo *index,
-						  List *clauses, List *outer_clauses,
-						  Relids outer_relids,
-						  SaOpControl saop_control,
-						  bool *found_clause);
 extern bool eclass_matches_any_index(EquivalenceClass *ec,
 						 EquivalenceMember *em,
 						 RelOptInfo *rel);
@@ -176,9 +163,6 @@ extern List *make_pathkeys_for_sortclauses(PlannerInfo *root,
 							  List *sortclauses,
 							  List *tlist,
 							  bool canonicalize);
-extern List *make_pathkeys_for_aggregate(PlannerInfo *root,
-										 Expr *aggtarget,
-										 Oid aggsortop);
 extern void initialize_mergeclause_eclasses(PlannerInfo *root,
 											RestrictInfo *restrictinfo);
 extern void update_mergeclause_eclasses(PlannerInfo *root,

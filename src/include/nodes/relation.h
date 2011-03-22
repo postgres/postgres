@@ -1387,9 +1387,6 @@ typedef struct PlaceHolderInfo
 /*
  * For each potentially index-optimizable MIN/MAX aggregate function,
  * root->minmax_aggs stores a MinMaxAggInfo describing it.
- *
- * Note: a MIN/MAX agg doesn't really care about the nulls_first property,
- * so the pathkey's nulls_first flag should be ignored.
  */
 typedef struct MinMaxAggInfo
 {
@@ -1398,7 +1395,10 @@ typedef struct MinMaxAggInfo
 	Oid			aggfnoid;		/* pg_proc Oid of the aggregate */
 	Oid			aggsortop;		/* Oid of its sort operator */
 	Expr	   *target;			/* expression we are aggregating on */
-	List	   *pathkeys;		/* pathkeys representing needed sort order */
+	PlannerInfo *subroot;		/* modified "root" for planning the subquery */
+	Path	   *path;			/* access path for subquery */
+	Cost		pathcost;		/* estimated cost to fetch first row */
+	Param	   *param;			/* param for subplan's output */
 } MinMaxAggInfo;
 
 /*

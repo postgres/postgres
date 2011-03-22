@@ -1914,7 +1914,10 @@ _outMinMaxAggInfo(StringInfo str, MinMaxAggInfo *node)
 	WRITE_OID_FIELD(aggfnoid);
 	WRITE_OID_FIELD(aggsortop);
 	WRITE_NODE_FIELD(target);
-	WRITE_NODE_FIELD(pathkeys);
+	/* We intentionally omit subroot --- too large, not interesting enough */
+	WRITE_NODE_FIELD(path);
+	WRITE_FLOAT_FIELD(pathcost, "%.2f");
+	WRITE_NODE_FIELD(param);
 }
 
 static void

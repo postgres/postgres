@@ -1930,22 +1930,6 @@ _copyPlaceHolderInfo(PlaceHolderInfo *from)
 	return newnode;
 }
 
-/*
- * _copyMinMaxAggInfo
- */
-static MinMaxAggInfo *
-_copyMinMaxAggInfo(MinMaxAggInfo *from)
-{
-	MinMaxAggInfo *newnode = makeNode(MinMaxAggInfo);
-
-	COPY_SCALAR_FIELD(aggfnoid);
-	COPY_SCALAR_FIELD(aggsortop);
-	COPY_NODE_FIELD(target);
-	COPY_NODE_FIELD(pathkeys);
-
-	return newnode;
-}
-
 /* ****************************************************************
  *					parsenodes.h copy functions
  * ****************************************************************
@@ -4128,9 +4112,6 @@ copyObject(void *from)
 			break;
 		case T_PlaceHolderInfo:
 			retval = _copyPlaceHolderInfo(from);
-			break;
-		case T_MinMaxAggInfo:
-			retval = _copyMinMaxAggInfo(from);
 			break;
 
 			/*

@@ -1042,7 +1042,10 @@ grouping_planner(PlannerInfo *root, double tuple_fraction)
 			count_agg_clauses(parse->havingQual, &agg_counts);
 
 			/*
-			 * Preprocess MIN/MAX aggregates, if any.
+			 * Preprocess MIN/MAX aggregates, if any.  Note: be careful about
+			 * adding logic between here and the optimize_minmax_aggregates
+			 * call.  Anything that is needed in MIN/MAX-optimizable cases
+			 * will have to be duplicated in planagg.c.
 			 */
 			preprocess_minmax_aggregates(root, tlist);
 		}

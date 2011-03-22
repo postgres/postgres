@@ -440,18 +440,9 @@ query_planner(PlannerInfo *root, List *tlist,
 static void
 canonicalize_all_pathkeys(PlannerInfo *root)
 {
-	ListCell   *lc;
-
 	root->query_pathkeys = canonicalize_pathkeys(root, root->query_pathkeys);
 	root->group_pathkeys = canonicalize_pathkeys(root, root->group_pathkeys);
 	root->window_pathkeys = canonicalize_pathkeys(root, root->window_pathkeys);
 	root->distinct_pathkeys = canonicalize_pathkeys(root, root->distinct_pathkeys);
 	root->sort_pathkeys = canonicalize_pathkeys(root, root->sort_pathkeys);
-
-	foreach(lc, root->minmax_aggs)
-	{
-		MinMaxAggInfo *mminfo = (MinMaxAggInfo *) lfirst(lc);
-
-		mminfo->pathkeys = canonicalize_pathkeys(root, mminfo->pathkeys);
-	}
 }
