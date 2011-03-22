@@ -193,6 +193,7 @@ CREATE TABLE test_u AS SELECT a, b FROM collate_test1 UNION ALL SELECT a, b FROM
 -- ideally this would be a parse-time error, but for now it must be run-time:
 select x < y from collate_test10; -- fail
 select x || y from collate_test10; -- ok, because || is not collation aware
+select x, y from collate_test10 order by x || y; -- not so ok
 
 -- collation mismatch between recursive and non-recursive term
 WITH RECURSIVE foo(x) AS

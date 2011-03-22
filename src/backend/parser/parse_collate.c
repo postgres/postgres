@@ -533,6 +533,30 @@ assign_collations_walker(Node *node, assign_collations_context *context)
 			collation = loccontext.collation;
 			strength = loccontext.strength;
 			location = loccontext.location;
+
+			/*
+			 * Throw error if the collation is indeterminate for a TargetEntry
+			 * that is a sort/group target.  We prefer to do this now, instead
+			 * of leaving the comparison functions to fail at runtime, because
+			 * we can give a syntax error pointer to help locate the problem.
+			 * There are some cases where there might not be a failure, for
+			 * example if the planner chooses to use hash aggregation instead
+			 * of sorting for grouping; but it seems better to predictably
+			 * throw an error.  (Compare transformSetOperationTree, which will
+			 * throw error for indeterminate collation of set-op columns,
+			 * even though the planner might be able to implement the set-op
+			 * without sorting.)
+			 */
+			if (strength == COLLATE_CONFLICT &&
+				((TargetEntry *) node)->ressortgroupref != 0)
+				ereport(ERROR,
+						(errcode(ERRCODE_COLLATION_MISMATCH),
+						 errmsg("collation mismatch between implicit collations \"%s\" and \"%s\"",
+								get_collation_name(loccontext.collation),
+								get_collation_name(loccontext.collation2)),
+						 errhint("You can choose the collation by applying the COLLATE clause to one or both expressions."),
+						 parser_errposition(context->pstate,
+											loccontext.location2)));
 			break;
 		case T_RangeTblRef:
 		case T_JoinExpr:
