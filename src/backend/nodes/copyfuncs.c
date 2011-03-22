@@ -2341,6 +2341,7 @@ _copyConstraint(Constraint *from)
 	COPY_SCALAR_FIELD(fk_upd_action);
 	COPY_SCALAR_FIELD(fk_del_action);
 	COPY_SCALAR_FIELD(skip_validation);
+	COPY_SCALAR_FIELD(initially_valid);
 
 	return newnode;
 }

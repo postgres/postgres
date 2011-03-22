@@ -1696,6 +1696,7 @@ transformFKConstraints(CreateStmtContext *cxt,
 			Constraint *constraint = (Constraint *) lfirst(fkclist);
 
 			constraint->skip_validation = true;
+			constraint->initially_valid  = true;
 		}
 	}
 

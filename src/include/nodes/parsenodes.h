@@ -1536,6 +1536,7 @@ typedef struct Constraint
 	char		fk_upd_action;	/* ON UPDATE action */
 	char		fk_del_action;	/* ON DELETE action */
 	bool		skip_validation;	/* skip validation of existing rows? */
+	bool		initially_valid;	/* start the new constraint as valid */
 } Constraint;
 
 /* ----------------------

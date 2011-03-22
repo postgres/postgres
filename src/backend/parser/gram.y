@@ -2621,6 +2621,7 @@ ColConstraintElem:
 					n->fk_upd_action	= (char) ($5 >> 8);
 					n->fk_del_action	= (char) ($5 & 0xFF);
 					n->skip_validation  = FALSE;
+					n->initially_valid  = true;
 					$$ = (Node *)n;
 				}
 		;
@@ -2820,6 +2821,7 @@ ConstraintElem:
 					n->deferrable		= ($11 & 1) != 0;
 					n->initdeferred		= ($11 & 2) != 0;
 					n->skip_validation  = false;
+					n->initially_valid  = true;
 					$$ = (Node *)n;
 				}
 			| FOREIGN KEY '(' columnList ')' REFERENCES qualified_name
@@ -2836,6 +2838,7 @@ ConstraintElem:
 					n->fk_upd_action	= (char) ($10 >> 8);
 					n->fk_del_action	= (char) ($10 & 0xFF);
 					n->skip_validation  = true;
+					n->initially_valid  = false;
 					$$ = (Node *)n;
 				}
 		;
