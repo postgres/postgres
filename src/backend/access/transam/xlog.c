@@ -5691,6 +5691,10 @@ recoveryStopsHere(XLogRecord *record, bool *includeThis)
 static void
 recoveryPausesHere(void)
 {
+	ereport(LOG,
+			(errmsg("recovery has paused"),
+			 errhint("Execute pg_xlog_replay_resume() to continue.")));
+
 	while (RecoveryIsPaused())
 	{
 		pg_usleep(1000000L);		/* 1000 ms */
@@ -6357,13 +6361,6 @@ StartupXLOG(void)
 				StandbyRecoverPreparedTransactions(false);
 			}
 		}
-		else
-		{
-			/*
-			 * Must not pause unless we are going to enter Hot Standby.
-			 */
-			recoveryPauseAtTarget = false;
-		}
 
 		/* Initialize resource managers */
 		for (rmid = 0; rmid <= RM_MAX_ID; rmid++)
@@ -6485,11 +6482,11 @@ StartupXLOG(void)
 				 */
 				if (recoveryStopsHere(record, &recoveryApply))
 				{
-					if (recoveryPauseAtTarget)
+					/*
+					 * Pause only if users can connect to send a resume message
+					 */
+					if (recoveryPauseAtTarget && standbyState == STANDBY_SNAPSHOT_READY)
 					{
-						ereport(LOG,
-								(errmsg("recovery has paused"),
-								 errhint("Execute pg_xlog_replay_resume() to continue.")));
 						SetRecoveryPause(true);
 						recoveryPausesHere();
 					}
@@ -6522,7 +6519,10 @@ StartupXLOG(void)
 				recoveryPause = xlogctl->recoveryPause;
 				SpinLockRelease(&xlogctl->info_lck);
 
-				if (recoveryPause)
+				/*
+				 * Pause only if users can connect to send a resume message
+				 */
+				if (recoveryPause && standbyState == STANDBY_SNAPSHOT_READY)
 					recoveryPausesHere();
 
 				/*
