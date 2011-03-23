@@ -70,7 +70,7 @@ SELECT sum(a) FROM test_complex;
    expects <function>sum</function> to behave that way.  We can do this simply by
    omitting the <literal>initcond</literal> phrase, so that the initial state
    condition is null.  Ordinarily this would mean that the <literal>sfunc</literal>
-   would need to check for a null state-condition input, but for
+   would need to check for a null state-condition input.  But for
    <function>sum</function> and some other simple aggregates like
    <function>max</> and <function>min</>,
    it is sufficient to insert the first nonnull input value into
@@ -95,8 +95,8 @@ SELECT sum(a) FROM test_complex;
    It requires
    two pieces of running state: the sum of the inputs and the count
    of the number of inputs.  The final result is obtained by dividing
-   these quantities.  Average is typically implemented by using a
-   two-element array as the state value.  For example,
+   these quantities.  Average is typically implemented by using an
+   array as the state value.  For example,
    the built-in implementation of <function>avg(float8)</function>
    looks like:
 
@@ -109,6 +109,11 @@ CREATE AGGREGATE avg (float8)
     initcond = '{0,0,0}'
 );
 </programlisting>
+
+   (<function>float8_accum</> requires a three-element array, not just
+   two elements, because it accumulates the sum of squares as well as
+   the sum and count of the inputs.  This is so that it can be used for
+   some other aggregates besides <function>avg</>.)
   </para>
 
   <para>
@@ -178,12 +183,13 @@ SELECT attrelid::regclass, array_accum(atttypid::regtype)
    One reason for checking this is that when it is true for a transition
    function, the first input
    must be a temporary transition value and can therefore safely be modified
-   in-place rather than allocating a new copy.  (This is the <emphasis>only</>
+   in-place rather than allocating a new copy.
+   See <literal>int8inc()</> for an example.
+   (This is the <emphasis>only</>
    case where it is safe for a function to modify a pass-by-reference input.
    In particular, aggregate final functions should not modify their inputs in
    any case, because in some cases they will be re-executed on the same
    final transition value.)
-   See <literal>int8inc()</> for an example.
   </para>
 
   <para>
