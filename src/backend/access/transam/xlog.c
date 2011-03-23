@@ -49,6 +49,7 @@
 #include "storage/latch.h"
 #include "storage/pmsignal.h"
 #include "storage/predicate.h"
+#include "storage/proc.h"
 #include "storage/procarray.h"
 #include "storage/reinit.h"
 #include "storage/smgr.h"
@@ -6406,6 +6407,7 @@ StartupXLOG(void)
 		 */
 		if (InArchiveRecovery && IsUnderPostmaster)
 		{
+			PublishStartupProcessInformation();
 			SetForwardFsyncRequests();
 			SendPostmasterSignal(PMSIGNAL_RECOVERY_STARTED);
 			bgwriterLaunched = true;

@@ -69,11 +69,6 @@ InitRecoveryTransactionEnvironment(void)
 	SharedInvalBackendInit(true);
 
 	/*
-	 * Record the PID and PGPROC structure of the startup process.
-	 */
-	PublishStartupProcessInformation();
-
-	/*
 	 * Lock a virtual transaction id for Startup process.
 	 *
 	 * We need to do GetNextLocalTransactionId() because
