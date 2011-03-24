@@ -135,9 +135,35 @@ PostgreSQL documentation
      <term><option>-r <replaceable>option</replaceable></option></term>
      <listitem>
       <para>
-       Selects a run-time behavior.  Currently,
-       <replaceable>option</replaceable> can only be
-       <literal>no_indicator</literal>.
+       Selects run-time behavior.  <replaceable>Option</replaceable> can be
+       one of the following:
+       <variablelist>
+	<varlistentry>
+	 <term><option>no_indicator</option></term>
+	 <listitem>
+	 <para>
+	 Do not use indicators but instead use special values to represent
+	 NULLs. Historically there have been databases using this approach.
+	 </para>
+	</varlistentry>
+	<varlistentry>
+	 <term><option>prepare</option></term>
+	 <listitem>
+	 <para>
+	 Prepare all statements before using them. Libecpg will keep a cache of
+	 prepared statments and reuse a statement if it gets executed again. If the
+	 cache runs full, libecpg will free the least used statement.
+	 </para>
+        </varlistentry>
+	<varlistentry>
+	 <term><option>questionmarks</option></term>
+	 <listitem>
+	 <para>
+	 Allow questionmark as placeholder for compatibility reasons. 
+	 This used to be the default long ago.
+	 </para>
+        </varlistentry>
+       </variablelist>
       </para>
      </listitem>
     </varlistentry>
