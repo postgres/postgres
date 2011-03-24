@@ -231,11 +231,12 @@ SELECT a, (dup(b)).* FROM collate_test3 ORDER BY 2;
 CREATE INDEX collate_test1_idx1 ON collate_test1 (b);
 CREATE INDEX collate_test1_idx2 ON collate_test1 (b COLLATE "C");
 CREATE INDEX collate_test1_idx3 ON collate_test1 ((b COLLATE "C")); -- this is different grammatically
+CREATE INDEX collate_test1_idx4 ON collate_test1 (((b||'foo') COLLATE "POSIX"));
 
-CREATE INDEX collate_test1_idx4 ON collate_test1 (a COLLATE "C"); -- fail
-CREATE INDEX collate_test1_idx5 ON collate_test1 ((a COLLATE "C")); -- fail
+CREATE INDEX collate_test1_idx5 ON collate_test1 (a COLLATE "C"); -- fail
+CREATE INDEX collate_test1_idx6 ON collate_test1 ((a COLLATE "C")); -- fail
 
-SELECT relname, pg_get_indexdef(oid) FROM pg_class WHERE relname LIKE 'collate_test%_idx%';
+SELECT relname, pg_get_indexdef(oid) FROM pg_class WHERE relname LIKE 'collate_test%_idx%' ORDER BY 1;
 
 
 -- schema manipulation commands

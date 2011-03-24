@@ -794,7 +794,6 @@ pg_get_indexdef_worker(Oid indexrelid, int colno,
 	List	   *context;
 	Oid			indrelid;
 	int			keyno;
-	Oid			keycoltype;
 	Datum		indcollDatum;
 	Datum		indclassDatum;
 	Datum		indoptionDatum;
@@ -902,6 +901,8 @@ pg_get_indexdef_worker(Oid indexrelid, int colno,
 	{
 		AttrNumber	attnum = idxrec->indkey.values[keyno];
 		int16		opt = indoption->values[keyno];
+		Oid			keycoltype;
+		Oid			keycolcollation;
 
 		if (!colno)
 			appendStringInfoString(&buf, sep);
@@ -916,6 +917,7 @@ pg_get_indexdef_worker(Oid indexrelid, int colno,
 			if (!colno || colno == keyno + 1)
 				appendStringInfoString(&buf, quote_identifier(attname));
 			keycoltype = get_atttype(indrelid, attnum);
+			keycolcollation = get_attcollation(indrelid, attnum);
 		}
 		else
 		{
@@ -939,16 +941,18 @@ pg_get_indexdef_worker(Oid indexrelid, int colno,
 					appendStringInfo(&buf, "(%s)", str);
 			}
 			keycoltype = exprType(indexkey);
+			keycolcollation = exprCollation(indexkey);
 		}
 
 		if (!attrsOnly && (!colno || colno == keyno + 1))
 		{
-			Oid coll;
+			Oid		indcoll;
 
-			/* Add collation, if not default */
-			coll = indcollation->values[keyno];
-			if (coll && coll != DEFAULT_COLLATION_OID && coll != get_attcollation(indrelid, attnum))
-				appendStringInfo(&buf, " COLLATE %s", generate_collation_name((indcollation->values[keyno])));
+			/* Add collation, if not default for column */
+			indcoll = indcollation->values[keyno];
+			if (OidIsValid(indcoll) && indcoll != keycolcollation)
+				appendStringInfo(&buf, " COLLATE %s",
+								 generate_collation_name((indcoll)));
 
 			/* Add the operator class name, if not default */
 			get_opclass_name(indclass->values[keyno], keycoltype, &buf);
@@ -6646,7 +6650,8 @@ get_from_clause_coldeflist(List *names, List *types, List *typmods, List *collat
 						 quote_identifier(attname),
 						 format_type_with_typemod(atttypid, atttypmod));
 		if (attcollation && attcollation != DEFAULT_COLLATION_OID)
-			appendStringInfo(buf, " COLLATE %s", generate_collation_name(attcollation));
+			appendStringInfo(buf, " COLLATE %s",
+							 generate_collation_name(attcollation));
 		i++;
 	}
 

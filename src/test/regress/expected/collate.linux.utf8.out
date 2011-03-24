@@ -747,19 +747,21 @@ SELECT a, (dup(b)).* FROM collate_test3 ORDER BY 2;
 CREATE INDEX collate_test1_idx1 ON collate_test1 (b);
 CREATE INDEX collate_test1_idx2 ON collate_test1 (b COLLATE "C");
 CREATE INDEX collate_test1_idx3 ON collate_test1 ((b COLLATE "C")); -- this is different grammatically
-CREATE INDEX collate_test1_idx4 ON collate_test1 (a COLLATE "C"); -- fail
+CREATE INDEX collate_test1_idx4 ON collate_test1 (((b||'foo') COLLATE "POSIX"));
+CREATE INDEX collate_test1_idx5 ON collate_test1 (a COLLATE "C"); -- fail
 ERROR:  collations are not supported by type integer
-CREATE INDEX collate_test1_idx5 ON collate_test1 ((a COLLATE "C")); -- fail
+CREATE INDEX collate_test1_idx6 ON collate_test1 ((a COLLATE "C")); -- fail
 ERROR:  collations are not supported by type integer
-LINE 1: ...ATE INDEX collate_test1_idx5 ON collate_test1 ((a COLLATE "C...
+LINE 1: ...ATE INDEX collate_test1_idx6 ON collate_test1 ((a COLLATE "C...
                                                              ^
-SELECT relname, pg_get_indexdef(oid) FROM pg_class WHERE relname LIKE 'collate_test%_idx%';
-      relname       |                                       pg_get_indexdef                                        
---------------------+----------------------------------------------------------------------------------------------
+SELECT relname, pg_get_indexdef(oid) FROM pg_class WHERE relname LIKE 'collate_test%_idx%' ORDER BY 1;
+      relname       |                                           pg_get_indexdef                                           
+--------------------+-----------------------------------------------------------------------------------------------------
  collate_test1_idx1 | CREATE INDEX collate_test1_idx1 ON collate_test1 USING btree (b)
  collate_test1_idx2 | CREATE INDEX collate_test1_idx2 ON collate_test1 USING btree (b COLLATE "C")
- collate_test1_idx3 | CREATE INDEX collate_test1_idx3 ON collate_test1 USING btree (((b COLLATE "C")) COLLATE "C")
-(3 rows)
+ collate_test1_idx3 | CREATE INDEX collate_test1_idx3 ON collate_test1 USING btree (b COLLATE "C")
+ collate_test1_idx4 | CREATE INDEX collate_test1_idx4 ON collate_test1 USING btree (((b || 'foo'::text)) COLLATE "POSIX")
+(4 rows)
 
 -- schema manipulation commands
 CREATE ROLE regress_test_role;

@@ -837,49 +837,62 @@ ComputeIndexAttrs(IndexInfo *indexInfo,
 			attcollation = attform->attcollation;
 			ReleaseSysCache(atttuple);
 		}
-		else if (attribute->expr && IsA(attribute->expr, Var) &&
-				 ((Var *) attribute->expr)->varattno != InvalidAttrNumber)
-		{
-			/* Tricky tricky, he wrote (column) ... treat as simple attr */
-			Var		   *var = (Var *) attribute->expr;
-
-			indexInfo->ii_KeyAttrNumbers[attn] = var->varattno;
-			atttype = get_atttype(relId, var->varattno);
-			attcollation = var->varcollid;
-		}
 		else
 		{
 			/* Index expression */
-			Assert(attribute->expr != NULL);
-			indexInfo->ii_KeyAttrNumbers[attn] = 0;		/* marks expression */
-			indexInfo->ii_Expressions = lappend(indexInfo->ii_Expressions,
-												attribute->expr);
-			atttype = exprType(attribute->expr);
-			attcollation = exprCollation(attribute->expr);
+			Node   *expr = attribute->expr;
+
+			Assert(expr != NULL);
+			atttype = exprType(expr);
+			attcollation = exprCollation(expr);
 
 			/*
-			 * We don't currently support generation of an actual query plan
-			 * for an index expression, only simple scalar expressions; hence
-			 * these restrictions.
+			 * Strip any top-level COLLATE clause.  This ensures that we treat
+			 * "x COLLATE y" and "(x COLLATE y)" alike.
 			 */
-			if (contain_subplans(attribute->expr))
-				ereport(ERROR,
-						(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-						 errmsg("cannot use subquery in index expression")));
-			if (contain_agg_clause(attribute->expr))
-				ereport(ERROR,
-						(errcode(ERRCODE_GROUPING_ERROR),
-				errmsg("cannot use aggregate function in index expression")));
+			while (IsA(expr, CollateExpr))
+				expr = (Node *) ((CollateExpr *) expr)->arg;
 
-			/*
-			 * A expression using mutable functions is probably wrong, since
-			 * if you aren't going to get the same result for the same data
-			 * every time, it's not clear what the index entries mean at all.
-			 */
-			if (CheckMutability((Expr *) attribute->expr))
-				ereport(ERROR,
-						(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
-						 errmsg("functions in index expression must be marked IMMUTABLE")));
+			if (IsA(expr, Var) &&
+				((Var *) expr)->varattno != InvalidAttrNumber)
+			{
+				/*
+				 * User wrote "(column)" or "(column COLLATE something)".
+				 * Treat it like simple attribute anyway.
+				 */
+				indexInfo->ii_KeyAttrNumbers[attn] = ((Var *) expr)->varattno;
+			}
+			else
+			{
+				indexInfo->ii_KeyAttrNumbers[attn] = 0;	/* marks expression */
+				indexInfo->ii_Expressions = lappend(indexInfo->ii_Expressions,
+													expr);
+
+				/*
+				 * We don't currently support generation of an actual query
+				 * plan for an index expression, only simple scalar
+				 * expressions; hence these restrictions.
+				 */
+				if (contain_subplans(expr))
+					ereport(ERROR,
+							(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+							 errmsg("cannot use subquery in index expression")));
+				if (contain_agg_clause(expr))
+					ereport(ERROR,
+							(errcode(ERRCODE_GROUPING_ERROR),
+							 errmsg("cannot use aggregate function in index expression")));
+
+				/*
+				 * A expression using mutable functions is probably wrong,
+				 * since if you aren't going to get the same result for the
+				 * same data every time, it's not clear what the index entries
+				 * mean at all.
+				 */
+				if (CheckMutability((Expr *) expr))
+					ereport(ERROR,
+							(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
+							 errmsg("functions in index expression must be marked IMMUTABLE")));
+			}
 		}
 
 		/*
