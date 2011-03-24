@@ -32,6 +32,7 @@
 #include "catalog/dependency.h"
 #include "catalog/indexing.h"
 #include "catalog/namespace.h"
+#include "catalog/objectaccess.h"
 #include "catalog/pg_depend.h"
 #include "catalog/pg_extension.h"
 #include "catalog/pg_namespace.h"
@@ -1546,6 +1547,9 @@ InsertExtensionTuple(const char *extName, Oid extOwner,
 
 		recordDependencyOn(&myself, &otherext, DEPENDENCY_NORMAL);
 	}
+	/* Post creation hook for new extension */
+	InvokeObjectAccessHook(OAT_POST_CREATE,
+						   ExtensionRelationId, extensionOid, 0);
 
 	return extensionOid;
 }
