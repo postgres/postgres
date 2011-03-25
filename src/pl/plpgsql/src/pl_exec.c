@@ -1516,7 +1516,9 @@ exec_stmt_case(PLpgSQL_execstate *estate, PLpgSQL_stmt_case *stmt)
 		 * this doesn't affect the originally stored function parse tree.
 		 */
 		if (t_var->datatype->typoid != t_oid)
-			t_var->datatype = plpgsql_build_datatype(t_oid, -1);
+			t_var->datatype = plpgsql_build_datatype(t_oid,
+													 -1,
+													 estate->func->fn_input_collation);
 
 		/* now we can assign to the variable */
 		exec_assign_value(estate,
@@ -4307,33 +4309,64 @@ exec_get_datum_type(PLpgSQL_execstate *estate,
 }
 
 /*
- * exec_get_rec_fieldtype				Get datatype of a PLpgSQL record field
- *
- * Also returns the field number to *fieldno.
+ * exec_get_datum_collation				Get collation of a PLpgSQL_datum
  */
 Oid
-exec_get_rec_fieldtype(PLpgSQL_rec *rec, const char *fieldname,
-					   int *fieldno)
+exec_get_datum_collation(PLpgSQL_execstate *estate,
+						 PLpgSQL_datum *datum)
 {
-	Oid			typeid;
-	int			fno;
+	Oid			collid;
 
-	if (rec->tupdesc == NULL)
-		ereport(ERROR,
-				(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
-				 errmsg("record \"%s\" is not assigned yet",
-						rec->refname),
-				 errdetail("The tuple structure of a not-yet-assigned record is indeterminate.")));
-	fno = SPI_fnumber(rec->tupdesc, fieldname);
-	if (fno == SPI_ERROR_NOATTRIBUTE)
-		ereport(ERROR,
-				(errcode(ERRCODE_UNDEFINED_COLUMN),
-				 errmsg("record \"%s\" has no field \"%s\"",
-						rec->refname, fieldname)));
-	typeid = SPI_gettypeid(rec->tupdesc, fno);
+	switch (datum->dtype)
+	{
+		case PLPGSQL_DTYPE_VAR:
+			{
+				PLpgSQL_var *var = (PLpgSQL_var *) datum;
 
-	*fieldno = fno;
-	return typeid;
+				collid = var->datatype->collation;
+				break;
+			}
+
+		case PLPGSQL_DTYPE_ROW:
+		case PLPGSQL_DTYPE_REC:
+			/* composite types are never collatable */
+			collid = InvalidOid;
+			break;
+
+		case PLPGSQL_DTYPE_RECFIELD:
+			{
+				PLpgSQL_recfield *recfield = (PLpgSQL_recfield *) datum;
+				PLpgSQL_rec *rec;
+				int			fno;
+
+				rec = (PLpgSQL_rec *) (estate->datums[recfield->recparentno]);
+				if (rec->tupdesc == NULL)
+					ereport(ERROR,
+						  (errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
+						   errmsg("record \"%s\" is not assigned yet",
+								  rec->refname),
+						   errdetail("The tuple structure of a not-yet-assigned record is indeterminate.")));
+				fno = SPI_fnumber(rec->tupdesc, recfield->fieldname);
+				if (fno == SPI_ERROR_NOATTRIBUTE)
+					ereport(ERROR,
+							(errcode(ERRCODE_UNDEFINED_COLUMN),
+							 errmsg("record \"%s\" has no field \"%s\"",
+									rec->refname, recfield->fieldname)));
+				/* XXX there's no SPI_getcollid, as yet */
+				if (fno > 0)
+					collid = rec->tupdesc->attrs[fno - 1]->attcollation;
+				else			/* no system column types have collation */
+					collid = InvalidOid;
+				break;
+			}
+
+		default:
+			elog(ERROR, "unrecognized dtype: %d", datum->dtype);
+			collid = InvalidOid;	/* keep compiler quiet */
+			break;
+	}
+
+	return collid;
 }
 
 /* ----------

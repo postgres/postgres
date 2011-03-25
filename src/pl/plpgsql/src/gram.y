@@ -487,7 +487,8 @@ decl_statement	: decl_varname decl_const decl_datatype decl_notnull decl_defval
 						new = (PLpgSQL_var *)
 							plpgsql_build_variable($1.name, $1.lineno,
 												   plpgsql_build_datatype(REFCURSOROID,
-																		  -1),
+																		  -1,
+																		  InvalidOid),
 												   true);
 
 						curname_def = palloc0(sizeof(PLpgSQL_expr));
@@ -1248,7 +1249,8 @@ for_control		: for_variable K_IN
 									plpgsql_build_variable($1.name,
 														   $1.lineno,
 														   plpgsql_build_datatype(INT4OID,
-																				  -1),
+																				  -1,
+																				  InvalidOid),
 														   true);
 
 								new = palloc0(sizeof(PLpgSQL_stmt_fori));
@@ -1932,13 +1934,17 @@ exception_sect	:
 						PLpgSQL_variable *var;
 
 						var = plpgsql_build_variable("sqlstate", lineno,
-													 plpgsql_build_datatype(TEXTOID, -1),
+													 plpgsql_build_datatype(TEXTOID,
+																			-1,
+																			plpgsql_curr_compile->fn_input_collation),
 													 true);
 						((PLpgSQL_var *) var)->isconst = true;
 						new->sqlstate_varno = var->dno;
 
 						var = plpgsql_build_variable("sqlerrm", lineno,
-													 plpgsql_build_datatype(TEXTOID, -1),
+													 plpgsql_build_datatype(TEXTOID,
+																			-1,
+																			plpgsql_curr_compile->fn_input_collation),
 													 true);
 						((PLpgSQL_var *) var)->isconst = true;
 						new->sqlerrm_varno = var->dno;
@@ -3227,7 +3233,8 @@ parse_datatype(const char *string, int location)
 	error_context_stack = syntax_errcontext.previous;
 
 	/* Okay, build a PLpgSQL_type data structure for it */
-	return plpgsql_build_datatype(type_id, typmod);
+	return plpgsql_build_datatype(type_id, typmod,
+								  plpgsql_curr_compile->fn_input_collation);
 }
 
 /*
@@ -3400,7 +3407,9 @@ make_case(int location, PLpgSQL_expr *t_expr,
 		 */
 		t_var = (PLpgSQL_var *)
 			plpgsql_build_variable(varname, new->lineno,
-								   plpgsql_build_datatype(INT4OID, -1),
+								   plpgsql_build_datatype(INT4OID,
+														  -1,
+														  InvalidOid),
 								   true);
 		new->t_varno = t_var->dno;
 

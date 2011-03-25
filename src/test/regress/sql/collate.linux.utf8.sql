@@ -212,7 +212,8 @@ SELECT a, CAST(b AS varchar) FROM collate_test2 ORDER BY 2;
 SELECT a, CAST(b AS varchar) FROM collate_test3 ORDER BY 2;
 
 
--- propagation of collation in inlined and non-inlined cases
+-- propagation of collation in SQL functions (inlined and non-inlined cases)
+-- and plpgsql functions too
 
 CREATE FUNCTION mylt (text, text) RETURNS boolean LANGUAGE sql
     AS $$ select $1 < $2 $$;
@@ -220,13 +221,17 @@ CREATE FUNCTION mylt (text, text) RETURNS boolean LANGUAGE sql
 CREATE FUNCTION mylt_noninline (text, text) RETURNS boolean LANGUAGE sql
     AS $$ select $1 < $2 limit 1 $$;
 
+CREATE FUNCTION mylt_plpgsql (text, text) RETURNS boolean LANGUAGE plpgsql
+    AS $$ begin return $1 < $2; end $$;
+
 SELECT a.b AS a, b.b AS b, a.b < b.b AS lt,
-       mylt(a.b, b.b), mylt_noninline(a.b, b.b)
+       mylt(a.b, b.b), mylt_noninline(a.b, b.b), mylt_plpgsql(a.b, b.b)
 FROM collate_test1 a, collate_test1 b
 ORDER BY a.b, b.b;
 
 SELECT a.b AS a, b.b AS b, a.b < b.b COLLATE "C" AS lt,
-       mylt(a.b, b.b COLLATE "C"), mylt_noninline(a.b, b.b COLLATE "C")
+       mylt(a.b, b.b COLLATE "C"), mylt_noninline(a.b, b.b COLLATE "C"),
+       mylt_plpgsql(a.b, b.b COLLATE "C")
 FROM collate_test1 a, collate_test1 b
 ORDER BY a.b, b.b;
 

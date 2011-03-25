@@ -167,6 +167,7 @@ typedef struct
 	bool		typbyval;
 	Oid			typrelid;
 	Oid			typioparam;
+	Oid			collation;		/* from pg_type, but can be overridden */
 	FmgrInfo	typinput;		/* lookup info for typinput function */
 	int32		atttypmod;		/* typmod (taken from someplace else) */
 } PLpgSQL_type;
@@ -634,11 +635,18 @@ typedef struct PLpgSQL_func_hashkey
 
 	/*
 	 * For a trigger function, the OID of the relation triggered on is part of
-	 * the hashkey --- we want to compile the trigger separately for each
+	 * the hash key --- we want to compile the trigger separately for each
 	 * relation it is used with, in case the rowtype is different.	Zero if
 	 * not called as a trigger.
 	 */
 	Oid			trigrelOid;
+
+	/*
+	 * We must include the input collation as part of the hash key too,
+	 * because we have to generate different plans (with different Param
+	 * collations) for different collation settings.
+	 */
+	Oid			inputCollation;
 
 	/*
 	 * We include actual argument types in the hash key to support polymorphic
@@ -655,6 +663,7 @@ typedef struct PLpgSQL_function
 	TransactionId fn_xmin;
 	ItemPointerData fn_tid;
 	bool		fn_is_trigger;
+	Oid			fn_input_collation;
 	PLpgSQL_func_hashkey *fn_hashkey;	/* back-link to hashtable key */
 	MemoryContext fn_cxt;
 
@@ -860,7 +869,8 @@ extern PLpgSQL_type *plpgsql_parse_wordtype(char *ident);
 extern PLpgSQL_type *plpgsql_parse_cwordtype(List *idents);
 extern PLpgSQL_type *plpgsql_parse_wordrowtype(char *ident);
 extern PLpgSQL_type *plpgsql_parse_cwordrowtype(List *idents);
-extern PLpgSQL_type *plpgsql_build_datatype(Oid typeOid, int32 typmod);
+extern PLpgSQL_type *plpgsql_build_datatype(Oid typeOid, int32 typmod,
+											Oid collation);
 extern PLpgSQL_variable *plpgsql_build_variable(const char *refname, int lineno,
 					   PLpgSQL_type *dtype,
 					   bool add2namespace);
@@ -895,8 +905,8 @@ extern void plpgsql_subxact_cb(SubXactEvent event, SubTransactionId mySubid,
 				   SubTransactionId parentSubid, void *arg);
 extern Oid exec_get_datum_type(PLpgSQL_execstate *estate,
 					PLpgSQL_datum *datum);
-extern Oid exec_get_rec_fieldtype(PLpgSQL_rec *rec, const char *fieldname,
-					   int *fieldno);
+extern Oid exec_get_datum_collation(PLpgSQL_execstate *estate,
+					PLpgSQL_datum *datum);
 
 /* ----------
  * Functions for namespace handling in pl_funcs.c

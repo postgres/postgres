@@ -104,7 +104,7 @@ static Node *resolve_column_ref(ParseState *pstate, PLpgSQL_expr *expr,
 static Node *make_datum_param(PLpgSQL_expr *expr, int dno, int location);
 static PLpgSQL_row *build_row_from_class(Oid classOid);
 static PLpgSQL_row *build_row_from_vars(PLpgSQL_variable **vars, int numvars);
-static PLpgSQL_type *build_datatype(HeapTuple typeTup, int32 typmod);
+static PLpgSQL_type *build_datatype(HeapTuple typeTup, int32 typmod, Oid collation);
 static void compute_function_hashkey(FunctionCallInfo fcinfo,
 						 Form_pg_proc procStruct,
 						 PLpgSQL_func_hashkey *hashkey,
@@ -348,6 +348,7 @@ do_compile(FunctionCallInfo fcinfo,
 	function->fn_xmin = HeapTupleHeaderGetXmin(procTup->t_data);
 	function->fn_tid = procTup->t_self;
 	function->fn_is_trigger = is_trigger;
+	function->fn_input_collation = fcinfo->flinfo->fn_collation;
 	function->fn_cxt = func_cxt;
 	function->out_param_varno = -1;		/* set up for no OUT param */
 	function->resolve_option = plpgsql_variable_conflict;
@@ -411,7 +412,9 @@ do_compile(FunctionCallInfo fcinfo,
 				snprintf(buf, sizeof(buf), "$%d", i + 1);
 
 				/* Create datatype info */
-				argdtype = plpgsql_build_datatype(argtypeid, -1);
+				argdtype = plpgsql_build_datatype(argtypeid,
+												  -1,
+												  function->fn_input_collation);
 
 				/* Disallow pseudotype argument */
 				/* (note we already replaced polymorphic types) */
@@ -556,7 +559,9 @@ do_compile(FunctionCallInfo fcinfo,
 					num_out_args == 0)
 				{
 					(void) plpgsql_build_variable("$0", 0,
-												  build_datatype(typeTup, -1),
+												  build_datatype(typeTup,
+																 -1,
+																 function->fn_input_collation),
 												  true);
 				}
 			}
@@ -587,61 +592,81 @@ do_compile(FunctionCallInfo fcinfo,
 
 			/* Add the variable tg_name */
 			var = plpgsql_build_variable("tg_name", 0,
-										 plpgsql_build_datatype(NAMEOID, -1),
+										 plpgsql_build_datatype(NAMEOID,
+																-1,
+																InvalidOid),
 										 true);
 			function->tg_name_varno = var->dno;
 
 			/* Add the variable tg_when */
 			var = plpgsql_build_variable("tg_when", 0,
-										 plpgsql_build_datatype(TEXTOID, -1),
+										 plpgsql_build_datatype(TEXTOID,
+																-1,
+																function->fn_input_collation),
 										 true);
 			function->tg_when_varno = var->dno;
 
 			/* Add the variable tg_level */
 			var = plpgsql_build_variable("tg_level", 0,
-										 plpgsql_build_datatype(TEXTOID, -1),
+										 plpgsql_build_datatype(TEXTOID,
+																-1,
+																function->fn_input_collation),
 										 true);
 			function->tg_level_varno = var->dno;
 
 			/* Add the variable tg_op */
 			var = plpgsql_build_variable("tg_op", 0,
-										 plpgsql_build_datatype(TEXTOID, -1),
+										 plpgsql_build_datatype(TEXTOID,
+																-1,
+																function->fn_input_collation),
 										 true);
 			function->tg_op_varno = var->dno;
 
 			/* Add the variable tg_relid */
 			var = plpgsql_build_variable("tg_relid", 0,
-										 plpgsql_build_datatype(OIDOID, -1),
+										 plpgsql_build_datatype(OIDOID,
+																-1,
+																InvalidOid),
 										 true);
 			function->tg_relid_varno = var->dno;
 
 			/* Add the variable tg_relname */
 			var = plpgsql_build_variable("tg_relname", 0,
-										 plpgsql_build_datatype(NAMEOID, -1),
+										 plpgsql_build_datatype(NAMEOID,
+																-1,
+																InvalidOid),
 										 true);
 			function->tg_relname_varno = var->dno;
 
 			/* tg_table_name is now preferred to tg_relname */
 			var = plpgsql_build_variable("tg_table_name", 0,
-										 plpgsql_build_datatype(NAMEOID, -1),
+										 plpgsql_build_datatype(NAMEOID,
+																-1,
+																InvalidOid),
 										 true);
 			function->tg_table_name_varno = var->dno;
 
 			/* add the variable tg_table_schema */
 			var = plpgsql_build_variable("tg_table_schema", 0,
-										 plpgsql_build_datatype(NAMEOID, -1),
+										 plpgsql_build_datatype(NAMEOID,
+																-1,
+																InvalidOid),
 										 true);
 			function->tg_table_schema_varno = var->dno;
 
 			/* Add the variable tg_nargs */
 			var = plpgsql_build_variable("tg_nargs", 0,
-										 plpgsql_build_datatype(INT4OID, -1),
+										 plpgsql_build_datatype(INT4OID,
+																-1,
+																InvalidOid),
 										 true);
 			function->tg_nargs_varno = var->dno;
 
 			/* Add the variable tg_argv */
 			var = plpgsql_build_variable("tg_argv", 0,
-									plpgsql_build_datatype(TEXTARRAYOID, -1),
+										 plpgsql_build_datatype(TEXTARRAYOID,
+																-1,
+																function->fn_input_collation),
 										 true);
 			function->tg_argv_varno = var->dno;
 
@@ -659,7 +684,9 @@ do_compile(FunctionCallInfo fcinfo,
 	 * Create the magic FOUND variable.
 	 */
 	var = plpgsql_build_variable("found", 0,
-								 plpgsql_build_datatype(BOOLOID, -1),
+								 plpgsql_build_datatype(BOOLOID,
+														-1,
+														InvalidOid),
 								 true);
 	function->found_varno = var->dno;
 
@@ -777,6 +804,7 @@ plpgsql_compile_inline(char *proc_source)
 
 	function->fn_name = pstrdup(func_name);
 	function->fn_is_trigger = false;
+	function->fn_input_collation = InvalidOid;
 	function->fn_cxt = func_cxt;
 	function->out_param_varno = -1;		/* set up for no OUT param */
 	function->resolve_option = plpgsql_variable_conflict;
@@ -810,7 +838,9 @@ plpgsql_compile_inline(char *proc_source)
 	 * Create the magic FOUND variable.
 	 */
 	var = plpgsql_build_variable("found", 0,
-								 plpgsql_build_datatype(BOOLOID, -1),
+								 plpgsql_build_datatype(BOOLOID,
+														-1,
+														InvalidOid),
 								 true);
 	function->found_varno = var->dno;
 
@@ -1218,13 +1248,14 @@ static Node *
 make_datum_param(PLpgSQL_expr *expr, int dno, int location)
 {
 	PLpgSQL_execstate *estate;
+	PLpgSQL_datum *datum;
 	Param	   *param;
 	MemoryContext oldcontext;
 
 	/* see comment in resolve_column_ref */
 	estate = expr->func->cur_estate;
-
 	Assert(dno >= 0 && dno < estate->ndatums);
+	datum = estate->datums[dno];
 
 	/*
 	 * Bitmapset must be allocated in function's permanent memory context
@@ -1236,9 +1267,9 @@ make_datum_param(PLpgSQL_expr *expr, int dno, int location)
 	param = makeNode(Param);
 	param->paramkind = PARAM_EXTERN;
 	param->paramid = dno + 1;
-	param->paramtype = exec_get_datum_type(estate, estate->datums[dno]);
+	param->paramtype = exec_get_datum_type(estate, datum);
 	param->paramtypmod = -1;
-	param->paramcollid = get_typcollation(param->paramtype);
+	param->paramcollid = exec_get_datum_collation(estate, datum);
 	param->location = location;
 
 	return (Node *) param;
@@ -1578,7 +1609,8 @@ plpgsql_parse_wordtype(char *ident)
 			return NULL;
 		}
 
-		dtype = build_datatype(typeTup, -1);
+		dtype = build_datatype(typeTup, -1,
+							   plpgsql_curr_compile->fn_input_collation);
 
 		ReleaseSysCache(typeTup);
 		return dtype;
@@ -1687,7 +1719,9 @@ plpgsql_parse_cwordtype(List *idents)
 	 * return it
 	 */
 	MemoryContextSwitchTo(oldCxt);
-	dtype = build_datatype(typetup, attrStruct->atttypmod);
+	dtype = build_datatype(typetup,
+						   attrStruct->atttypmod,
+						   attrStruct->attcollation);
 	MemoryContextSwitchTo(compile_tmp_cxt);
 
 done:
@@ -1720,7 +1754,7 @@ plpgsql_parse_wordrowtype(char *ident)
 				 errmsg("relation \"%s\" does not exist", ident)));
 
 	/* Build and return the row type struct */
-	return plpgsql_build_datatype(get_rel_type_id(classOid), -1);
+	return plpgsql_build_datatype(get_rel_type_id(classOid), -1, InvalidOid);
 }
 
 /* ----------
@@ -1755,7 +1789,7 @@ plpgsql_parse_cwordrowtype(List *idents)
 	MemoryContextSwitchTo(oldCxt);
 
 	/* Build and return the row type struct */
-	return plpgsql_build_datatype(get_rel_type_id(classOid), -1);
+	return plpgsql_build_datatype(get_rel_type_id(classOid), -1, InvalidOid);
 }
 
 /*
@@ -1935,7 +1969,8 @@ build_row_from_class(Oid classOid)
 			 */
 			var = plpgsql_build_variable(refname, 0,
 								 plpgsql_build_datatype(attrStruct->atttypid,
-													  attrStruct->atttypmod),
+														attrStruct->atttypmod,
+														attrStruct->attcollation),
 										 false);
 
 			/* Add the variable to the row */
@@ -2013,10 +2048,13 @@ build_row_from_vars(PLpgSQL_variable **vars, int numvars)
 
 /*
  * plpgsql_build_datatype
- *		Build PLpgSQL_type struct given type OID and typmod.
+ *		Build PLpgSQL_type struct given type OID, typmod, and collation.
+ *
+ * If collation is not InvalidOid then it overrides the type's default
+ * collation.  But collation is ignored if the datatype is non-collatable.
  */
 PLpgSQL_type *
-plpgsql_build_datatype(Oid typeOid, int32 typmod)
+plpgsql_build_datatype(Oid typeOid, int32 typmod, Oid collation)
 {
 	HeapTuple	typeTup;
 	PLpgSQL_type *typ;
@@ -2025,7 +2063,7 @@ plpgsql_build_datatype(Oid typeOid, int32 typmod)
 	if (!HeapTupleIsValid(typeTup))
 		elog(ERROR, "cache lookup failed for type %u", typeOid);
 
-	typ = build_datatype(typeTup, typmod);
+	typ = build_datatype(typeTup, typmod, collation);
 
 	ReleaseSysCache(typeTup);
 
@@ -2036,7 +2074,7 @@ plpgsql_build_datatype(Oid typeOid, int32 typmod)
  * Utility subroutine to make a PLpgSQL_type struct given a pg_type entry
  */
 static PLpgSQL_type *
-build_datatype(HeapTuple typeTup, int32 typmod)
+build_datatype(HeapTuple typeTup, int32 typmod, Oid collation)
 {
 	Form_pg_type typeStruct = (Form_pg_type) GETSTRUCT(typeTup);
 	PLpgSQL_type *typ;
@@ -2077,6 +2115,9 @@ build_datatype(HeapTuple typeTup, int32 typmod)
 	typ->typbyval = typeStruct->typbyval;
 	typ->typrelid = typeStruct->typrelid;
 	typ->typioparam = getTypeIOParam(typeTup);
+	typ->collation = typeStruct->typcollation;
+	if (OidIsValid(collation) && OidIsValid(typ->collation))
+		typ->collation = collation;
 	fmgr_info(typeStruct->typinput, &(typ->typinput));
 	typ->atttypmod = typmod;
 
@@ -2284,6 +2325,9 @@ compute_function_hashkey(FunctionCallInfo fcinfo,
 
 		hashkey->trigrelOid = RelationGetRelid(trigdata->tg_relation);
 	}
+
+	/* get input collation, if known */
+	hashkey->inputCollation = fcinfo->flinfo->fn_collation;
 
 	if (procStruct->pronargs > 0)
 	{
