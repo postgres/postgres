@@ -1100,6 +1100,61 @@ SELECT concat_values('|', 1, 4, 2);
 </screen>
     </para>
    </sect2>
+
+   <sect2>
+    <title><acronym>SQL</acronym> Functions with Collations</title>
+
+    <indexterm>
+     <primary>collation</>
+     <secondary>in SQL functions</>
+    </indexterm>
+
+    <para>
+     When a SQL function has one or more parameters of collatable data types,
+     a collation is identified for each function call depending on the
+     collations assigned to the actual arguments, as described in <xref
+     linkend="collation">.  If a collation is successfully identified
+     (i.e., there are no conflicts of implicit collations among the arguments)
+     then all the collatable parameters are treated as having that collation
+     implicitly.  This will affect the behavior of collation-sensitive
+     operations within the function.  For example, using the
+     <function>anyleast</> function described above, the result of
+<programlisting>
+SELECT anyleast('abc'::text, 'ABC');
+</programlisting>
+     will depend on the database's default collation.  In <literal>C</> locale
+     the result will be <literal>ABC</>, but in many other locales it will
+     be <literal>abc</>.  The collation to use can be forced by adding
+     a <literal>COLLATE</> clause to any of the arguments, for example
+<programlisting>
+SELECT anyleast('abc'::text, 'ABC' COLLATE "C");
+</programlisting>
+     Alternatively, if you wish a function to operate with a particular
+     collation regardless of what it is called with, insert
+     <literal>COLLATE</> clauses as needed in the function definition.
+     This version of <function>anyleast</> would always use <literal>en_US</>
+     locale to compare strings:
+<programlisting>
+CREATE FUNCTION anyleast (VARIADIC anyarray) RETURNS anyelement AS $$
+    SELECT min($1[i] COLLATE "en_US") FROM generate_subscripts($1, 1) g(i);
+$$ LANGUAGE SQL;
+</programlisting>
+     But note that this will throw an error if applied to a non-collatable
+     data type.
+    </para>
+
+    <para>
+     If no common collation can be identified among the actual arguments,
+     then a SQL function treats its parameters as having their data types'
+     default collation (which is usually the database's default collation,
+     but could be different for parameters of domain types).
+    </para>
+
+    <para>
+     The behavior of collatable parameters can be thought of as a limited
+     form of polymorphism, applicable only to textual data types.
+    </para>
+   </sect2>
   </sect1>
 
   <sect1 id="xfunc-overload">

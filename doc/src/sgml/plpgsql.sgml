@@ -706,6 +706,81 @@ SELECT merge_fields(t.*) FROM table1 t WHERE ... ;
     structure on-the-fly.
    </para>
   </sect2>
+
+  <sect2 id="plpgsql-declaration-collation">
+   <title>Collation of <application>PL/pgSQL</application> Variables</title>
+
+   <indexterm>
+    <primary>collation</>
+    <secondary>in PL/pgSQL</>
+   </indexterm>
+
+   <para>
+    When a <application>PL/pgSQL</application> function has one or more
+    parameters of collatable data types, a collation is identified for each
+    function call depending on the collations assigned to the actual
+    arguments, as described in <xref linkend="collation">.  If a collation is
+    successfully identified (i.e., there are no conflicts of implicit
+    collations among the arguments) then all the collatable parameters are
+    treated as having that collation implicitly.  This will affect the
+    behavior of collation-sensitive operations within the function.
+    For example, consider
+
+<programlisting>
+CREATE FUNCTION less_than(a text, b text) RETURNS boolean AS $$
+BEGIN
+    RETURN a &lt; b;
+END;
+$$ LANGUAGE plpgsql;
+
+SELECT less_than(text_field_1, text_field_2) FROM table1;
+SELECT less_than(text_field_1, text_field_2 COLLATE "C") FROM table1;
+</programlisting>
+
+    The first use of <function>less_than</> will use the common collation
+    of <structfield>text_field_1</> and <structfield>text_field_2</> for
+    the comparison, while the second use will use <literal>C</> collation.
+   </para>
+
+   <para>
+    Furthermore, the identified collation is also assumed as the collation of
+    any local variables that are of collatable types.  Thus this function
+    would not work any differently if it were written as
+
+<programlisting>
+CREATE FUNCTION less_than(a text, b text) RETURNS boolean AS $$
+DECLARE
+    local_a text := a;
+    local_b text := b;
+BEGIN
+    RETURN local_a &lt; local_b;
+END;
+$$ LANGUAGE plpgsql;
+</programlisting>
+   </para>
+
+   <para>
+    If there are no parameters of collatable data types, or no common
+    collation can be identified for them, then parameters and local variables
+    use the default collation of their data type (which is usually the
+    database's default collation, but could be different for variables of
+    domain types).
+   </para>
+
+   <para>
+    Explicit <literal>COLLATE</> clauses can be written inside a function
+    if it is desired to force a particular collation to be used regardless
+    of what the function is called with.  For example,
+
+<programlisting>
+CREATE FUNCTION less_than_c(a text, b text) RETURNS boolean AS $$
+BEGIN
+    RETURN a &lt; b COLLATE "C";
+END;
+$$ LANGUAGE plpgsql;
+</programlisting>
+   </para>
+  </sect2>
   </sect1>
 
   <sect1 id="plpgsql-expressions">

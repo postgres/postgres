@@ -316,6 +316,8 @@ initdb --locale=sv_SE
  <sect1 id="collation">
   <title>Collation Support</title>
 
+  <indexterm zone="collation"><primary>collation</></>
+
   <para>
    The collation feature allows specifying the sort order and certain
    other locale aspects of data per-column, or even per-operation.
