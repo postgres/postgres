@@ -118,8 +118,8 @@ static Expr *evaluate_function(Oid funcid,
 				  Oid result_type, int32 result_typmod,
 				  Oid input_collid, List *args, HeapTuple func_tuple,
 				  eval_const_expressions_context *context);
-static Expr *inline_function(Oid funcid, Oid result_type, List *args,
-				HeapTuple func_tuple,
+static Expr *inline_function(Oid funcid, Oid result_type, Oid input_collid,
+				List *args, HeapTuple func_tuple,
 				eval_const_expressions_context *context);
 static Node *substitute_actual_parameters(Node *expr, int nargs, List *args,
 							 int *usecounts);
@@ -3431,7 +3431,7 @@ simplify_function(Oid funcid, Oid result_type, int32 result_typmod,
 								func_tuple, context);
 
 	if (!newexpr && allow_inline)
-		newexpr = inline_function(funcid, result_type, *args,
+		newexpr = inline_function(funcid, result_type, input_collid, *args,
 								  func_tuple, context);
 
 	ReleaseSysCache(func_tuple);
@@ -3798,12 +3798,11 @@ evaluate_function(Oid funcid, Oid result_type, int32 result_typmod,
  * simplify the function.
  */
 static Expr *
-inline_function(Oid funcid, Oid result_type, List *args,
+inline_function(Oid funcid, Oid result_type, Oid input_collid, List *args,
 				HeapTuple func_tuple,
 				eval_const_expressions_context *context)
 {
 	Form_pg_proc funcform = (Form_pg_proc) GETSTRUCT(func_tuple);
-	Oid		   *argtypes;
 	char	   *src;
 	Datum		tmp;
 	bool		isNull;
@@ -3812,6 +3811,9 @@ inline_function(Oid funcid, Oid result_type, List *args,
 	MemoryContext mycxt;
 	inline_error_callback_arg callback_arg;
 	ErrorContextCallback sqlerrcontext;
+	FuncExpr   *fexpr;
+	SQLFunctionParseInfoPtr pinfo;
+	ParseState *pstate;
 	List	   *raw_parsetree_list;
 	Query	   *querytree;
 	Node	   *newexpr;
@@ -3875,17 +3877,25 @@ inline_function(Oid funcid, Oid result_type, List *args,
 	sqlerrcontext.previous = error_context_stack;
 	error_context_stack = &sqlerrcontext;
 
-	/* Check for polymorphic arguments, and substitute actual arg types */
-	argtypes = (Oid *) palloc(funcform->pronargs * sizeof(Oid));
-	memcpy(argtypes, funcform->proargtypes.values,
-		   funcform->pronargs * sizeof(Oid));
-	for (i = 0; i < funcform->pronargs; i++)
-	{
-		if (IsPolymorphicType(argtypes[i]))
-		{
-			argtypes[i] = exprType((Node *) list_nth(args, i));
-		}
-	}
+	/*
+	 * Set up to handle parameters while parsing the function body.  We need a
+	 * dummy FuncExpr node containing the already-simplified arguments to pass
+	 * to prepare_sql_fn_parse_info.  (It is really only needed if there are
+	 * some polymorphic arguments, but for simplicity we always build it.)
+	 */
+	fexpr = makeNode(FuncExpr);
+	fexpr->funcid = funcid;
+	fexpr->funcresulttype = result_type;
+	fexpr->funcretset = false;
+	fexpr->funcformat = COERCE_DONTCARE;		/* doesn't matter */
+	fexpr->funccollid = InvalidOid;				/* doesn't matter */
+	fexpr->inputcollid = input_collid;
+	fexpr->args = args;
+	fexpr->location = -1;
+
+	pinfo = prepare_sql_fn_parse_info(func_tuple,
+									  (Node *) fexpr,
+									  input_collid);
 
 	/*
 	 * We just do parsing and parse analysis, not rewriting, because rewriting
@@ -3897,8 +3907,13 @@ inline_function(Oid funcid, Oid result_type, List *args,
 	if (list_length(raw_parsetree_list) != 1)
 		goto fail;
 
-	querytree = parse_analyze(linitial(raw_parsetree_list), src,
-							  argtypes, funcform->pronargs);
+	pstate = make_parsestate(NULL);
+	pstate->p_sourcetext = src;
+	sql_fn_parser_setup(pstate, pinfo);
+
+	querytree = transformStmt(pstate, linitial(raw_parsetree_list));
+
+	free_parsestate(pstate);
 
 	/*
 	 * The single command must be a simple "SELECT expression".
@@ -4029,6 +4044,28 @@ inline_function(Oid funcid, Oid result_type, List *args,
 	newexpr = copyObject(newexpr);
 
 	MemoryContextDelete(mycxt);
+
+	/*
+	 * If the result is of a collatable type, force the result to expose
+	 * the correct collation.  In most cases this does not matter, but
+	 * it's possible that the function result is used directly as a sort key
+	 * or in other places where we expect exprCollation() to tell the truth.
+	 */
+	if (OidIsValid(input_collid))
+	{
+		Oid		exprcoll = exprCollation(newexpr);
+
+		if (OidIsValid(exprcoll) && exprcoll != input_collid)
+		{
+			CollateExpr   *newnode = makeNode(CollateExpr);
+
+			newnode->arg = (Expr *) newexpr;
+			newnode->collOid = input_collid;
+			newnode->location = -1;
+
+			newexpr = (Node *) newnode;
+		}
+	}
 
 	/*
 	 * Since there is now no trace of the function in the plan tree, we must
@@ -4219,7 +4256,6 @@ inline_set_returning_function(PlannerInfo *root, RangeTblEntry *rte)
 	Oid			func_oid;
 	HeapTuple	func_tuple;
 	Form_pg_proc funcform;
-	Oid		   *argtypes;
 	char	   *src;
 	Datum		tmp;
 	bool		isNull;
@@ -4229,10 +4265,10 @@ inline_set_returning_function(PlannerInfo *root, RangeTblEntry *rte)
 	List	   *saveInvalItems;
 	inline_error_callback_arg callback_arg;
 	ErrorContextCallback sqlerrcontext;
+	SQLFunctionParseInfoPtr pinfo;
 	List	   *raw_parsetree_list;
 	List	   *querytree_list;
 	Query	   *querytree;
-	int			i;
 
 	Assert(rte->rtekind == RTE_FUNCTION);
 
@@ -4366,17 +4402,14 @@ inline_set_returning_function(PlannerInfo *root, RangeTblEntry *rte)
 	if (list_length(fexpr->args) != funcform->pronargs)
 		goto fail;
 
-	/* Check for polymorphic arguments, and substitute actual arg types */
-	argtypes = (Oid *) palloc(funcform->pronargs * sizeof(Oid));
-	memcpy(argtypes, funcform->proargtypes.values,
-		   funcform->pronargs * sizeof(Oid));
-	for (i = 0; i < funcform->pronargs; i++)
-	{
-		if (IsPolymorphicType(argtypes[i]))
-		{
-			argtypes[i] = exprType((Node *) list_nth(fexpr->args, i));
-		}
-	}
+	/*
+	 * Set up to handle parameters while parsing the function body.  We
+	 * can use the FuncExpr just created as the input for
+	 * prepare_sql_fn_parse_info.
+	 */
+	pinfo = prepare_sql_fn_parse_info(func_tuple,
+									  (Node *) fexpr,
+									  fexpr->inputcollid);
 
 	/*
 	 * Parse, analyze, and rewrite (unlike inline_function(), we can't skip
@@ -4387,8 +4420,10 @@ inline_set_returning_function(PlannerInfo *root, RangeTblEntry *rte)
 	if (list_length(raw_parsetree_list) != 1)
 		goto fail;
 
-	querytree_list = pg_analyze_and_rewrite(linitial(raw_parsetree_list), src,
-											argtypes, funcform->pronargs);
+	querytree_list = pg_analyze_and_rewrite_params(linitial(raw_parsetree_list),
+												   src,
+												   (ParserSetupHook) sql_fn_parser_setup,
+												   pinfo);
 	if (list_length(querytree_list) != 1)
 		goto fail;
 	querytree = linitial(querytree_list);
@@ -4460,6 +4495,11 @@ inline_set_returning_function(PlannerInfo *root, RangeTblEntry *rte)
 	MemoryContextDelete(mycxt);
 	error_context_stack = sqlerrcontext.previous;
 	ReleaseSysCache(func_tuple);
+
+	/*
+	 * We don't have to fix collations here because the upper query is
+	 * already parsed, ie, the collations in the RTE are what count.
+	 */
 
 	/*
 	 * Since there is now no trace of the function in the plan tree, we must

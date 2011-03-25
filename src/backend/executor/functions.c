@@ -81,7 +81,8 @@ typedef struct
 	char	   *fname;			/* function name (for error msgs) */
 	char	   *src;			/* function body text (for error msgs) */
 
-	Oid		   *argtypes;		/* resolved types of arguments */
+	SQLFunctionParseInfoPtr pinfo;	/* data for parser callback hooks */
+
 	Oid			rettype;		/* actual return type */
 	int16		typlen;			/* length of the return type */
 	bool		typbyval;		/* true if return type is pass by value */
@@ -108,8 +109,21 @@ typedef struct
 
 typedef SQLFunctionCache *SQLFunctionCachePtr;
 
+/*
+ * Data structure needed by the parser callback hooks to resolve parameter
+ * references during parsing of a SQL function's body.  This is separate from
+ * SQLFunctionCache since we sometimes do parsing separately from execution.
+ */
+typedef struct SQLFunctionParseInfo
+{
+	Oid		   *argtypes;		/* resolved types of input arguments */
+	int			nargs;			/* number of input arguments */
+	Oid			collation;		/* function's input collation, if known */
+} SQLFunctionParseInfo;
+
 
 /* non-export function prototypes */
+static Node *sql_fn_param_ref(ParseState *pstate, ParamRef *pref);
 static List *init_execution_state(List *queryTree_list,
 					 SQLFunctionCachePtr fcache,
 					 bool lazyEvalOK);
@@ -130,6 +144,112 @@ static void sqlfunction_receive(TupleTableSlot *slot, DestReceiver *self);
 static void sqlfunction_shutdown(DestReceiver *self);
 static void sqlfunction_destroy(DestReceiver *self);
 
+
+/*
+ * Prepare the SQLFunctionParseInfo struct for parsing a SQL function body
+ *
+ * This includes resolving actual types of polymorphic arguments.
+ *
+ * call_expr can be passed as NULL, but then we will fail if there are any
+ * polymorphic arguments.
+ */
+SQLFunctionParseInfoPtr
+prepare_sql_fn_parse_info(HeapTuple procedureTuple,
+						  Node *call_expr,
+						  Oid inputCollation)
+{
+	SQLFunctionParseInfoPtr pinfo;
+	Form_pg_proc procedureStruct = (Form_pg_proc) GETSTRUCT(procedureTuple);
+	int			nargs;
+
+	pinfo = (SQLFunctionParseInfoPtr) palloc0(sizeof(SQLFunctionParseInfo));
+
+	/* Save the function's input collation */
+	pinfo->collation = inputCollation;
+
+	/*
+	 * Copy input argument types from the pg_proc entry, then resolve any
+	 * polymorphic types.
+	 */
+	pinfo->nargs = nargs = procedureStruct->pronargs;
+	if (nargs > 0)
+	{
+		Oid		   *argOidVect;
+		int			argnum;
+
+		argOidVect = (Oid *) palloc(nargs * sizeof(Oid));
+		memcpy(argOidVect,
+			   procedureStruct->proargtypes.values,
+			   nargs * sizeof(Oid));
+
+		for (argnum = 0; argnum < nargs; argnum++)
+		{
+			Oid			argtype = argOidVect[argnum];
+
+			if (IsPolymorphicType(argtype))
+			{
+				argtype = get_call_expr_argtype(call_expr, argnum);
+				if (argtype == InvalidOid)
+					ereport(ERROR,
+							(errcode(ERRCODE_DATATYPE_MISMATCH),
+							 errmsg("could not determine actual type of argument declared %s",
+									format_type_be(argOidVect[argnum]))));
+				argOidVect[argnum] = argtype;
+			}
+		}
+
+		pinfo->argtypes = argOidVect;
+	}
+
+	return pinfo;
+}
+
+/*
+ * Parser setup hook for parsing a SQL function body.
+ */
+void
+sql_fn_parser_setup(struct ParseState *pstate, SQLFunctionParseInfoPtr pinfo)
+{
+	/* Later we might use these hooks to support parameter names */
+	pstate->p_pre_columnref_hook = NULL;
+	pstate->p_post_columnref_hook = NULL;
+	pstate->p_paramref_hook = sql_fn_param_ref;
+	/* no need to use p_coerce_param_hook */
+	pstate->p_ref_hook_state = (void *) pinfo;
+}
+
+/*
+ * sql_fn_param_ref		parser callback for ParamRefs ($n symbols)
+ */
+static Node *
+sql_fn_param_ref(ParseState *pstate, ParamRef *pref)
+{
+	SQLFunctionParseInfoPtr pinfo = (SQLFunctionParseInfoPtr) pstate->p_ref_hook_state;
+	int			paramno = pref->number;
+	Param	   *param;
+
+	/* Check parameter number is valid */
+	if (paramno <= 0 || paramno > pinfo->nargs)
+		return NULL;			/* unknown parameter number */
+
+	param = makeNode(Param);
+	param->paramkind = PARAM_EXTERN;
+	param->paramid = paramno;
+	param->paramtype = pinfo->argtypes[paramno - 1];
+	param->paramtypmod = -1;
+	param->paramcollid = get_typcollation(param->paramtype);
+	param->location = pref->location;
+
+	/*
+	 * If we have a function input collation, allow it to override the
+	 * type-derived collation for parameter symbols.  (XXX perhaps this should
+	 * not happen if the type collation is not default?)
+	 */
+	if (OidIsValid(pinfo->collation) && OidIsValid(param->paramcollid))
+		param->paramcollid = pinfo->collation;
+
+	return (Node *) param;
+}
 
 /*
  * Set up the per-query execution_state records for a SQL function.
@@ -239,7 +359,9 @@ init_execution_state(List *queryTree_list,
 	return eslist;
 }
 
-/* Initialize the SQLFunctionCache for a SQL function */
+/*
+ * Initialize the SQLFunctionCache for a SQL function
+ */
 static void
 init_sql_fcache(FmgrInfo *finfo, bool lazyEvalOK)
 {
@@ -248,8 +370,6 @@ init_sql_fcache(FmgrInfo *finfo, bool lazyEvalOK)
 	HeapTuple	procedureTuple;
 	Form_pg_proc procedureStruct;
 	SQLFunctionCachePtr fcache;
-	Oid		   *argOidVect;
-	int			nargs;
 	List	   *raw_parsetree_list;
 	List	   *queryTree_list;
 	List	   *flat_query_list;
@@ -302,37 +422,13 @@ init_sql_fcache(FmgrInfo *finfo, bool lazyEvalOK)
 		(procedureStruct->provolatile != PROVOLATILE_VOLATILE);
 
 	/*
-	 * We need the actual argument types to pass to the parser.
+	 * We need the actual argument types to pass to the parser.  Also make
+	 * sure that parameter symbols are considered to have the function's
+	 * resolved input collation.
 	 */
-	nargs = procedureStruct->pronargs;
-	if (nargs > 0)
-	{
-		int			argnum;
-
-		argOidVect = (Oid *) palloc(nargs * sizeof(Oid));
-		memcpy(argOidVect,
-			   procedureStruct->proargtypes.values,
-			   nargs * sizeof(Oid));
-		/* Resolve any polymorphic argument types */
-		for (argnum = 0; argnum < nargs; argnum++)
-		{
-			Oid			argtype = argOidVect[argnum];
-
-			if (IsPolymorphicType(argtype))
-			{
-				argtype = get_fn_expr_argtype(finfo, argnum);
-				if (argtype == InvalidOid)
-					ereport(ERROR,
-							(errcode(ERRCODE_DATATYPE_MISMATCH),
-							 errmsg("could not determine actual type of argument declared %s",
-									format_type_be(argOidVect[argnum]))));
-				argOidVect[argnum] = argtype;
-			}
-		}
-	}
-	else
-		argOidVect = NULL;
-	fcache->argtypes = argOidVect;
+	fcache->pinfo = prepare_sql_fn_parse_info(procedureTuple,
+											  finfo->fn_expr,
+											  finfo->fn_collation);
 
 	/*
 	 * And of course we need the function body text.
@@ -364,10 +460,10 @@ init_sql_fcache(FmgrInfo *finfo, bool lazyEvalOK)
 		Node	   *parsetree = (Node *) lfirst(lc);
 		List	   *queryTree_sublist;
 
-		queryTree_sublist = pg_analyze_and_rewrite(parsetree,
-												   fcache->src,
-												   argOidVect,
-												   nargs);
+		queryTree_sublist = pg_analyze_and_rewrite_params(parsetree,
+														  fcache->src,
+														  (ParserSetupHook) sql_fn_parser_setup,
+														  fcache->pinfo);
 		queryTree_list = lappend(queryTree_list, queryTree_sublist);
 		flat_query_list = list_concat(flat_query_list,
 									  list_copy(queryTree_sublist));
@@ -583,7 +679,7 @@ postquel_sub_params(SQLFunctionCachePtr fcache,
 			prm->value = fcinfo->arg[i];
 			prm->isnull = fcinfo->argnull[i];
 			prm->pflags = 0;
-			prm->ptype = fcache->argtypes[i];
+			prm->ptype = fcache->pinfo->argtypes[i];
 		}
 	}
 	else

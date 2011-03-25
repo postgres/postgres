@@ -231,6 +231,11 @@ variable_coerce_param_hook(ParseState *pstate, Param *param,
 		 */
 		param->paramtypmod = -1;
 
+		/*
+		 * This module always sets a Param's collation to be the default for
+		 * its datatype.  If that's not what you want, you should be using
+		 * the more general parser substitution hooks.
+		 */
 		param->paramcollid = get_typcollation(param->paramtype);
 
 		/* Use the leftmost of the param's and coercion's locations */

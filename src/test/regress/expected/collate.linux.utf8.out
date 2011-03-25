@@ -686,6 +686,59 @@ SELECT a, CAST(b AS varchar) FROM collate_test3 ORDER BY 2;
  2 | äbc
 (4 rows)
 
+-- propagation of collation in inlined and non-inlined cases
+CREATE FUNCTION mylt (text, text) RETURNS boolean LANGUAGE sql
+    AS $$ select $1 < $2 $$;
+CREATE FUNCTION mylt_noninline (text, text) RETURNS boolean LANGUAGE sql
+    AS $$ select $1 < $2 limit 1 $$;
+SELECT a.b AS a, b.b AS b, a.b < b.b AS lt,
+       mylt(a.b, b.b), mylt_noninline(a.b, b.b)
+FROM collate_test1 a, collate_test1 b
+ORDER BY a.b, b.b;
+  a  |  b  | lt | mylt | mylt_noninline 
+-----+-----+----+------+----------------
+ abc | abc | f  | f    | f
+ abc | ABC | t  | t    | t
+ abc | äbc | t  | t    | t
+ abc | bbc | t  | t    | t
+ ABC | abc | f  | f    | f
+ ABC | ABC | f  | f    | f
+ ABC | äbc | t  | t    | t
+ ABC | bbc | t  | t    | t
+ äbc | abc | f  | f    | f
+ äbc | ABC | f  | f    | f
+ äbc | äbc | f  | f    | f
+ äbc | bbc | t  | t    | t
+ bbc | abc | f  | f    | f
+ bbc | ABC | f  | f    | f
+ bbc | äbc | f  | f    | f
+ bbc | bbc | f  | f    | f
+(16 rows)
+
+SELECT a.b AS a, b.b AS b, a.b < b.b COLLATE "C" AS lt,
+       mylt(a.b, b.b COLLATE "C"), mylt_noninline(a.b, b.b COLLATE "C")
+FROM collate_test1 a, collate_test1 b
+ORDER BY a.b, b.b;
+  a  |  b  | lt | mylt | mylt_noninline 
+-----+-----+----+------+----------------
+ abc | abc | f  | f    | f
+ abc | ABC | f  | f    | f
+ abc | äbc | t  | t    | t
+ abc | bbc | t  | t    | t
+ ABC | abc | t  | t    | t
+ ABC | ABC | f  | f    | f
+ ABC | äbc | t  | t    | t
+ ABC | bbc | t  | t    | t
+ äbc | abc | f  | f    | f
+ äbc | ABC | f  | f    | f
+ äbc | äbc | f  | f    | f
+ äbc | bbc | f  | f    | f
+ bbc | abc | f  | f    | f
+ bbc | ABC | f  | f    | f
+ bbc | äbc | t  | t    | t
+ bbc | bbc | f  | f    | f
+(16 rows)
+
 -- polymorphism
 SELECT * FROM unnest((SELECT array_agg(b ORDER BY b) FROM collate_test1)) ORDER BY 1;
  unnest 

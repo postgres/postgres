@@ -845,16 +845,21 @@ fmgr_sql_validator(PG_FUNCTION_ARGS)
 			 * OK to do full precheck: analyze and rewrite the queries,
 			 * then verify the result type.
 			 */
+			SQLFunctionParseInfoPtr pinfo;
+
+			/* But first, set up parameter information */
+			pinfo = prepare_sql_fn_parse_info(tuple, NULL, InvalidOid);
+
 			querytree_list = NIL;
 			foreach(lc, raw_parsetree_list)
 			{
 				Node	   *parsetree = (Node *) lfirst(lc);
 				List	   *querytree_sublist;
 
-				querytree_sublist = pg_analyze_and_rewrite(parsetree,
-														   prosrc,
-														   proc->proargtypes.values,
-														   proc->pronargs);
+				querytree_sublist = pg_analyze_and_rewrite_params(parsetree,
+																  prosrc,
+																  (ParserSetupHook) sql_fn_parser_setup,
+																  pinfo);
 				querytree_list = list_concat(querytree_list,
 											 querytree_sublist);
 			}
