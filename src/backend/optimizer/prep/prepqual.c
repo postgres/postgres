@@ -104,6 +104,8 @@ negate_clause(Node *node)
 					newopexpr->opfuncid = InvalidOid;
 					newopexpr->opresulttype = opexpr->opresulttype;
 					newopexpr->opretset = opexpr->opretset;
+					newopexpr->opcollid = opexpr->opcollid;
+					newopexpr->inputcollid = opexpr->inputcollid;
 					newopexpr->args = opexpr->args;
 					newopexpr->location = opexpr->location;
 					return (Node *) newopexpr;
@@ -126,6 +128,7 @@ negate_clause(Node *node)
 					newopexpr->opno = negator;
 					newopexpr->opfuncid = InvalidOid;
 					newopexpr->useOr = !saopexpr->useOr;
+					newopexpr->inputcollid = saopexpr->inputcollid;
 					newopexpr->args = saopexpr->args;
 					newopexpr->location = saopexpr->location;
 					return (Node *) newopexpr;
