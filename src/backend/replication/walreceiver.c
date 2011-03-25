@@ -317,6 +317,9 @@ WalReceiverMain(void)
 			while (walrcv_receive(0, &type, &buf, &len))
 				XLogWalRcvProcessMsg(type, buf, len);
 
+			/* Let the master know that we received some data. */
+			XLogWalRcvSendReply();
+
 			/*
 			 * If we've written some records, flush them to disk and let the
 			 * startup process and primary server know about them.
