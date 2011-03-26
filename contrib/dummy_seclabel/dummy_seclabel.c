@@ -14,6 +14,7 @@
 
 #include "commands/seclabel.h"
 #include "miscadmin.h"
+#include "utils/rel.h"
 
 PG_MODULE_MAGIC;
 

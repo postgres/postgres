@@ -15,7 +15,7 @@
 
 #include "nodes/parsenodes.h"
 #include "storage/lock.h"
-#include "utils/rel.h"
+#include "utils/relcache.h"
 
 /*
  * An ObjectAddress represents a database object of any type.

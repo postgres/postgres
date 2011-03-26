@@ -31,6 +31,7 @@
 #include "utils/builtins.h"
 #include "utils/lsyscache.h"
 #include "utils/pg_locale.h"
+#include "utils/rel.h"
 #include "utils/syscache.h"
 
 static void AlterCollationOwner_internal(Relation rel, Oid collationOid,
