@@ -12,6 +12,8 @@
 #define SEPGSQL_H
 
 #include "catalog/objectaddress.h"
+#include "fmgr.h"
+
 #include <selinux/selinux.h>
 
 /*
