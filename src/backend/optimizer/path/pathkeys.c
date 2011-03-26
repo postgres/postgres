@@ -603,8 +603,7 @@ find_indexkey_var(PlannerInfo *root, RelOptInfo *rel, AttrNumber varattno)
 
 	relid = rel->relid;
 	reloid = getrelid(relid, root->parse->rtable);
-	get_atttypetypmod(reloid, varattno, &vartypeid, &type_mod);
-	varcollid = get_attcollation(reloid, varattno);
+	get_atttypetypmodcoll(reloid, varattno, &vartypeid, &type_mod, &varcollid);
 
 	return makeVar(relid, varattno, vartypeid, type_mod, varcollid, 0);
 }

@@ -912,12 +912,14 @@ pg_get_indexdef_worker(Oid indexrelid, int colno,
 		{
 			/* Simple index column */
 			char	   *attname;
+			int32		keycoltypmod;
 
 			attname = get_relid_attribute_name(indrelid, attnum);
 			if (!colno || colno == keyno + 1)
 				appendStringInfoString(&buf, quote_identifier(attname));
-			keycoltype = get_atttype(indrelid, attnum);
-			keycolcollation = get_attcollation(indrelid, attnum);
+			get_atttypetypmodcoll(indrelid, attnum,
+								  &keycoltype, &keycoltypmod,
+								  &keycolcollation);
 		}
 		else
 		{

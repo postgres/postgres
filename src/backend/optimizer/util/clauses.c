@@ -1816,7 +1816,7 @@ CommuteOpExpr(OpExpr *clause)
 	 */
 	clause->opno = opoid;
 	clause->opfuncid = InvalidOid;
-	/* opresulttype and opretset are assumed not to change */
+	/* opresulttype, opretset, opcollid, inputcollid need not change */
 
 	temp = linitial(clause->args);
 	linitial(clause->args) = lsecond(clause->args);

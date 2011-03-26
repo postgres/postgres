@@ -60,9 +60,8 @@ extern char *get_relid_attribute_name(Oid relid, AttrNumber attnum);
 extern AttrNumber get_attnum(Oid relid, const char *attname);
 extern Oid	get_atttype(Oid relid, AttrNumber attnum);
 extern int32 get_atttypmod(Oid relid, AttrNumber attnum);
-extern Oid	get_attcollation(Oid relid, AttrNumber attnum);
-extern void get_atttypetypmod(Oid relid, AttrNumber attnum,
-				  Oid *typid, int32 *typmod);
+extern void get_atttypetypmodcoll(Oid relid, AttrNumber attnum,
+				  Oid *typid, int32 *typmod, Oid *collid);
 extern char *get_collation_name(Oid colloid);
 extern char *get_constraint_name(Oid conoid);
 extern Oid	get_opclass_family(Oid opclass);

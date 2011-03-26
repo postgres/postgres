@@ -904,44 +904,17 @@ get_atttypmod(Oid relid, AttrNumber attnum)
 }
 
 /*
- * get_attcollation
+ * get_atttypetypmodcoll
  *
- *		Given the relation id and the attribute number,
- *		return the "attcollation" field from the attribute relation.
- */
-Oid
-get_attcollation(Oid relid, AttrNumber attnum)
-{
-	HeapTuple	tp;
-
-	tp = SearchSysCache2(ATTNUM,
-						 ObjectIdGetDatum(relid),
-						 Int16GetDatum(attnum));
-	if (HeapTupleIsValid(tp))
-	{
-		Form_pg_attribute att_tup = (Form_pg_attribute) GETSTRUCT(tp);
-		Oid		result;
-
-		result = att_tup->attcollation;
-		ReleaseSysCache(tp);
-		return result;
-	}
-	else
-		return InvalidOid;
-}
-
-/*
- * get_atttypetypmod
- *
- *		A two-fer: given the relation id and the attribute number,
- *		fetch both type OID and atttypmod in a single cache lookup.
+ *		A three-fer: given the relation id and the attribute number,
+ *		fetch atttypid, atttypmod, and attcollation in a single cache lookup.
  *
  * Unlike the otherwise-similar get_atttype/get_atttypmod, this routine
  * raises an error if it can't obtain the information.
  */
 void
-get_atttypetypmod(Oid relid, AttrNumber attnum,
-				  Oid *typid, int32 *typmod)
+get_atttypetypmodcoll(Oid relid, AttrNumber attnum,
+					  Oid *typid, int32 *typmod, Oid *collid)
 {
 	HeapTuple	tp;
 	Form_pg_attribute att_tup;
@@ -956,6 +929,7 @@ get_atttypetypmod(Oid relid, AttrNumber attnum,
 
 	*typid = att_tup->atttypid;
 	*typmod = att_tup->atttypmod;
+	*collid = att_tup->attcollation;
 	ReleaseSysCache(tp);
 }
 

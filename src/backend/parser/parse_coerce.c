@@ -796,6 +796,7 @@ build_coercion_expression(Node *node,
 		 * one argument.
 		 */
 		acoerce->resulttypmod = (nargs >= 2) ? targetTypMod : -1;
+		/* resultcollid will be set by parse_collate.c */
 		acoerce->isExplicit = isExplicit;
 		acoerce->coerceformat = cformat;
 		acoerce->location = location;
@@ -811,6 +812,7 @@ build_coercion_expression(Node *node,
 
 		iocoerce->arg = (Expr *) node;
 		iocoerce->resulttype = targetTypeId;
+		/* resultcollid will be set by parse_collate.c */
 		iocoerce->coerceformat = cformat;
 		iocoerce->location = location;
 

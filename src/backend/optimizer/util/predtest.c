@@ -906,6 +906,8 @@ arrayconst_startup_fn(Node *clause, PredIterInfo info)
 	state->opexpr.opfuncid = saop->opfuncid;
 	state->opexpr.opresulttype = BOOLOID;
 	state->opexpr.opretset = false;
+	state->opexpr.opcollid = InvalidOid;
+	state->opexpr.inputcollid = saop->inputcollid;
 	state->opexpr.args = list_copy(saop->args);
 
 	/* Set up a dummy Const node to hold the per-element values */
@@ -972,6 +974,8 @@ arrayexpr_startup_fn(Node *clause, PredIterInfo info)
 	state->opexpr.opfuncid = saop->opfuncid;
 	state->opexpr.opresulttype = BOOLOID;
 	state->opexpr.opretset = false;
+	state->opexpr.opcollid = InvalidOid;
+	state->opexpr.inputcollid = saop->inputcollid;
 	state->opexpr.args = list_copy(saop->args);
 
 	/* Initialize iteration variable to first member of ArrayExpr */
