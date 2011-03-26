@@ -114,21 +114,28 @@ SyncRepWaitForLSN(XLogRecPtr XactCommitLSN)
 	/* Reset the latch before adding ourselves to the queue. */
 	ResetLatch(&MyProc->waitLatch);
 
+	LWLockAcquire(SyncRepLock, LW_EXCLUSIVE);
+	Assert(MyProc->syncRepState == SYNC_REP_NOT_WAITING);
+
+	/*
+	 * We don't wait for sync rep if WalSndCtl->sync_standbys_defined is
+	 * not set.  See SyncRepUpdateSyncStandbysDefined.
+	 *
+	 * Also check that the standby hasn't already replied. Unlikely
+	 * race condition but we'll be fetching that cache line anyway
+	 * so its likely to be a low cost check.
+	 */
+	if (!WalSndCtl->sync_standbys_defined ||
+		XLByteLE(XactCommitLSN, WalSndCtl->lsn))
+	{
+		LWLockRelease(SyncRepLock);
+		return;
+	}
+
 	/*
 	 * Set our waitLSN so WALSender will know when to wake us, and add
 	 * ourselves to the queue.
 	 */
-	LWLockAcquire(SyncRepLock, LW_EXCLUSIVE);
-	Assert(MyProc->syncRepState == SYNC_REP_NOT_WAITING);
-	if (!WalSndCtl->sync_standbys_defined)
-	{
-		/*
-		 * We don't wait for sync rep if WalSndCtl->sync_standbys_defined is
-		 * not set.  See SyncRepUpdateSyncStandbysDefined.
-		 */
-		LWLockRelease(SyncRepLock);
-		return;
-	}
 	MyProc->waitLSN = XactCommitLSN;
 	MyProc->syncRepState = SYNC_REP_WAITING;
 	SyncRepQueueInsert();
