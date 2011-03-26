@@ -621,6 +621,7 @@ tuplesort_begin_heap(TupleDesc tupDesc,
 	{
 		Oid			sortFunction;
 		bool		reverse;
+		int			flags;
 
 		AssertArg(attNums[i] != 0);
 		AssertArg(sortOperators[i] != 0);
@@ -630,25 +631,25 @@ tuplesort_begin_heap(TupleDesc tupDesc,
 			elog(ERROR, "operator %u is not a valid ordering operator",
 				 sortOperators[i]);
 
+		/* We use btree's conventions for encoding directionality */
+		flags = 0;
+		if (reverse)
+			flags |= SK_BT_DESC;
+		if (nullsFirstFlags[i])
+			flags |= SK_BT_NULLS_FIRST;
+
 		/*
 		 * We needn't fill in sk_strategy or sk_subtype since these scankeys
 		 * will never be passed to an index.
 		 */
-		ScanKeyInit(&state->scanKeys[i],
-					attNums[i],
-					InvalidStrategy,
-					sortFunction,
-					(Datum) 0);
-
-		if (collations)
-			ScanKeyEntryInitializeCollation(&state->scanKeys[i],
-											collations[i]);
-
-		/* However, we use btree's conventions for encoding directionality */
-		if (reverse)
-			state->scanKeys[i].sk_flags |= SK_BT_DESC;
-		if (nullsFirstFlags[i])
-			state->scanKeys[i].sk_flags |= SK_BT_NULLS_FIRST;
+		ScanKeyEntryInitialize(&state->scanKeys[i],
+							   flags,
+							   attNums[i],
+							   InvalidStrategy,
+							   InvalidOid,
+							   collations ? collations[i] : InvalidOid,
+							   sortFunction,
+							   (Datum) 0);
 	}
 
 	MemoryContextSwitchTo(oldcontext);

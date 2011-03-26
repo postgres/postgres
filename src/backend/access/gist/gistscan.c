@@ -168,7 +168,8 @@ gistrescan(PG_FUNCTION_ARGS)
 		 * all comparisons. The original operator is passed to the Consistent
 		 * function in the form of its strategy number, which is available
 		 * from the sk_strategy field, and its subtype from the sk_subtype
-		 * field.
+		 * field.  Also, preserve sk_func.fn_collation which is the input
+		 * collation for the operator.
 		 *
 		 * Next, if any of keys is a NULL and that key is not marked with
 		 * SK_SEARCHNULL/SK_SEARCHNOTNULL then nothing can be found (ie, we
@@ -179,8 +180,10 @@ gistrescan(PG_FUNCTION_ARGS)
 		for (i = 0; i < scan->numberOfKeys; i++)
 		{
 			ScanKey		skey = scan->keyData + i;
+			Oid			collation = skey->sk_func.fn_collation;
 
 			skey->sk_func = so->giststate->consistentFn[skey->sk_attno - 1];
+			skey->sk_func.fn_collation = collation;
 
 			if (skey->sk_flags & SK_ISNULL)
 			{
@@ -201,13 +204,16 @@ gistrescan(PG_FUNCTION_ARGS)
 		 * all comparisons. The original operator is passed to the Distance
 		 * function in the form of its strategy number, which is available
 		 * from the sk_strategy field, and its subtype from the sk_subtype
-		 * field.
+		 * field.  Also, preserve sk_func.fn_collation which is the input
+		 * collation for the operator.
 		 */
 		for (i = 0; i < scan->numberOfOrderBys; i++)
 		{
 			ScanKey		skey = scan->orderByData + i;
+			Oid			collation = skey->sk_func.fn_collation;
 
 			skey->sk_func = so->giststate->distanceFn[skey->sk_attno - 1];
+			skey->sk_func.fn_collation = collation;
 
 			/* Check we actually have a distance function ... */
 			if (!OidIsValid(skey->sk_func.fn_oid))

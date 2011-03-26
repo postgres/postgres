@@ -2011,12 +2011,14 @@ build_row_from_vars(PLpgSQL_variable **vars, int numvars)
 		PLpgSQL_variable *var = vars[i];
 		Oid			typoid = RECORDOID;
 		int32		typmod = -1;
+		Oid			typcoll = InvalidOid;
 
 		switch (var->dtype)
 		{
 			case PLPGSQL_DTYPE_VAR:
 				typoid = ((PLpgSQL_var *) var)->datatype->typoid;
 				typmod = ((PLpgSQL_var *) var)->datatype->atttypmod;
+				typcoll = ((PLpgSQL_var *) var)->datatype->collation;
 				break;
 
 			case PLPGSQL_DTYPE_REC:
@@ -2027,6 +2029,7 @@ build_row_from_vars(PLpgSQL_variable **vars, int numvars)
 				{
 					typoid = ((PLpgSQL_row *) var)->rowtupdesc->tdtypeid;
 					typmod = ((PLpgSQL_row *) var)->rowtupdesc->tdtypmod;
+					/* composite types have no collation */
 				}
 				break;
 
@@ -2041,6 +2044,7 @@ build_row_from_vars(PLpgSQL_variable **vars, int numvars)
 						   var->refname,
 						   typoid, typmod,
 						   0);
+		TupleDescInitEntryCollation(row->rowtupdesc, i + 1, typcoll);
 	}
 
 	return row;

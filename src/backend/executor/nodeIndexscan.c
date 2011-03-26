@@ -829,10 +829,9 @@ ExecIndexBuildScanKeys(PlanState *planstate, Relation index, Index scanrelid,
 								   varattno,	/* attribute number to scan */
 								   op_strategy, /* op's strategy */
 								   op_righttype,		/* strategy subtype */
+								   ((OpExpr *) clause)->inputcollid,	/* collation */
 								   opfuncid,	/* reg proc to use */
 								   scanvalue);	/* constant */
-			ScanKeyEntryInitializeCollation(this_scan_key,
-											((OpExpr *) clause)->inputcollid);
 		}
 		else if (IsA(clause, RowCompareExpr))
 		{
@@ -957,10 +956,9 @@ ExecIndexBuildScanKeys(PlanState *planstate, Relation index, Index scanrelid,
 									   varattno,		/* attribute number */
 									   op_strategy,		/* op's strategy */
 									   op_righttype,	/* strategy subtype */
+									   inputcollation,	/* collation */
 									   opfuncid,		/* reg proc to use */
 									   scanvalue);		/* constant */
-				ScanKeyEntryInitializeCollation(this_sub_key,
-												inputcollation);
 				n_sub_key++;
 			}
 
@@ -1042,10 +1040,9 @@ ExecIndexBuildScanKeys(PlanState *planstate, Relation index, Index scanrelid,
 								   varattno,	/* attribute number to scan */
 								   op_strategy, /* op's strategy */
 								   op_righttype,		/* strategy subtype */
+								   saop->inputcollid,	/* collation */
 								   opfuncid,	/* reg proc to use */
 								   (Datum) 0);	/* constant */
-			ScanKeyEntryInitializeCollation(this_scan_key,
-											saop->inputcollid);
 		}
 		else if (IsA(clause, NullTest))
 		{
@@ -1094,6 +1091,7 @@ ExecIndexBuildScanKeys(PlanState *planstate, Relation index, Index scanrelid,
 								   varattno,	/* attribute number to scan */
 								   InvalidStrategy,		/* no strategy */
 								   InvalidOid,	/* no strategy subtype */
+								   InvalidOid,	/* no collation */
 								   InvalidOid,	/* no reg proc for this */
 								   (Datum) 0);	/* constant */
 		}

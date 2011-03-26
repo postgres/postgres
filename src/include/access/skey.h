@@ -52,6 +52,9 @@ typedef uint16 StrategyNumber;
  * the operator.  When using a ScanKey in a heap scan, these fields are not
  * used and may be set to InvalidStrategy/InvalidOid.
  *
+ * If the operator is collation-sensitive, sk_func.fn_collation must be set
+ * correctly as well.
+ *
  * A ScanKey can also represent a condition "column IS NULL" or "column
  * IS NOT NULL"; these cases are signaled by the SK_SEARCHNULL and
  * SK_SEARCHNOTNULL flag bits respectively.  The argument is always NULL,
@@ -143,6 +146,7 @@ extern void ScanKeyEntryInitialize(ScanKey entry,
 					   AttrNumber attributeNumber,
 					   StrategyNumber strategy,
 					   Oid subtype,
+					   Oid collation,
 					   RegProcedure procedure,
 					   Datum argument);
 extern void ScanKeyEntryInitializeWithInfo(ScanKey entry,
@@ -150,9 +154,8 @@ extern void ScanKeyEntryInitializeWithInfo(ScanKey entry,
 							   AttrNumber attributeNumber,
 							   StrategyNumber strategy,
 							   Oid subtype,
+							   Oid collation,
 							   FmgrInfo *finfo,
 							   Datum argument);
-extern void ScanKeyEntryInitializeCollation(ScanKey entry,
-											Oid collation);
 
 #endif   /* SKEY_H */

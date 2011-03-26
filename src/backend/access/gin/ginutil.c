@@ -56,6 +56,8 @@ initGinState(GinState *state, Relation index)
 							   origTupdesc->attrs[i]->atttypid,
 							   origTupdesc->attrs[i]->atttypmod,
 							   origTupdesc->attrs[i]->attndims);
+			TupleDescInitEntryCollation(state->tupdesc[i], (AttrNumber) 2,
+										origTupdesc->attrs[i]->attcollation);
 		}
 
 		fmgr_info_copy(&(state->compareFn[i]),

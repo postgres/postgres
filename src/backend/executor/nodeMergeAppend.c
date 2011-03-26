@@ -134,30 +134,32 @@ ExecInitMergeAppend(MergeAppend *node, EState *estate, int eflags)
 	{
 		Oid		sortFunction;
 		bool	reverse;
+		int		flags;
 
 		if (!get_compare_function_for_ordering_op(node->sortOperators[i],
 												  &sortFunction, &reverse))
 			elog(ERROR, "operator %u is not a valid ordering operator",
 				 node->sortOperators[i]);
 
+		/* We use btree's conventions for encoding directionality */
+		flags = 0;
+		if (reverse)
+			flags |= SK_BT_DESC;
+		if (node->nullsFirst[i])
+			flags |= SK_BT_NULLS_FIRST;
+
 		/*
 		 * We needn't fill in sk_strategy or sk_subtype since these scankeys
 		 * will never be passed to an index.
 		 */
-		ScanKeyInit(&mergestate->ms_scankeys[i],
-					node->sortColIdx[i],
-					InvalidStrategy,
-					sortFunction,
-					(Datum) 0);
-
-		ScanKeyEntryInitializeCollation(&mergestate->ms_scankeys[i],
-										node->collations[i]);
-
-		/* However, we use btree's conventions for encoding directionality */
-		if (reverse)
-			mergestate->ms_scankeys[i].sk_flags |= SK_BT_DESC;
-		if (node->nullsFirst[i])
-			mergestate->ms_scankeys[i].sk_flags |= SK_BT_NULLS_FIRST;
+		ScanKeyEntryInitialize(&mergestate->ms_scankeys[i],
+							   flags,
+							   node->sortColIdx[i],
+							   InvalidStrategy,
+							   InvalidOid,
+							   node->collations[i],
+							   sortFunction,
+							   (Datum) 0);
 	}
 
 	/*

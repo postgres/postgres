@@ -427,6 +427,10 @@ equalTupleDescs(TupleDesc tupdesc1, TupleDesc tupdesc2)
  * TupleDescInitEntry
  *		This function initializes a single attribute structure in
  *		a previously allocated tuple descriptor.
+ *
+ * Note that attcollation is set to the default for the specified datatype.
+ * If a nondefault collation is needed, insert it afterwards using
+ * TupleDescInitEntryCollation.
  */
 void
 TupleDescInitEntry(TupleDesc desc,
@@ -496,8 +500,8 @@ TupleDescInitEntry(TupleDesc desc,
 /*
  * TupleDescInitEntryCollation
  *
- * Fill in the collation for an attribute in a previously initialized
- * tuple descriptor.
+ * Assign a nondefault collation to a previously initialized tuple descriptor
+ * entry.
  */
 void
 TupleDescInitEntryCollation(TupleDesc desc,
@@ -571,9 +575,9 @@ BuildDescForRelation(List *schema)
 
 		TupleDescInitEntry(desc, attnum, attname,
 						   atttypid, atttypmod, attdim);
-		TupleDescInitEntryCollation(desc, attnum, attcollation);
 
 		/* Override TupleDescInitEntry's settings as requested */
+		TupleDescInitEntryCollation(desc, attnum, attcollation);
 		if (entry->storage)
 			desc->attrs[attnum - 1]->attstorage = entry->storage;
 

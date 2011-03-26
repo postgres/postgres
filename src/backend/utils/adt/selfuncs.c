@@ -4649,6 +4649,7 @@ get_actual_variable_range(PlannerInfo *root, VariableStatData *vardata,
 								   1,	/* index col to scan */
 								   InvalidStrategy,		/* no strategy */
 								   InvalidOid,	/* no strategy subtype */
+								   InvalidOid,	/* no collation */
 								   InvalidOid,	/* no reg proc for this */
 								   (Datum) 0);	/* constant */
 

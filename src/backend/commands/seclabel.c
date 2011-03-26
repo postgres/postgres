@@ -15,7 +15,6 @@
 #include "catalog/catalog.h"
 #include "catalog/indexing.h"
 #include "catalog/namespace.h"
-#include "catalog/pg_collation.h"
 #include "catalog/pg_seclabel.h"
 #include "commands/seclabel.h"
 #include "miscadmin.h"
@@ -166,7 +165,6 @@ GetSecurityLabel(const ObjectAddress *object, const char *provider)
 				Anum_pg_seclabel_provider,
 				BTEqualStrategyNumber, F_TEXTEQ,
 				CStringGetTextDatum(provider));
-	ScanKeyEntryInitializeCollation(&keys[3], DEFAULT_COLLATION_OID);
 
 	pg_seclabel = heap_open(SecLabelRelationId, AccessShareLock);
 
@@ -236,7 +234,6 @@ SetSecurityLabel(const ObjectAddress *object,
 				Anum_pg_seclabel_provider,
 				BTEqualStrategyNumber, F_TEXTEQ,
 				CStringGetTextDatum(provider));
-	ScanKeyEntryInitializeCollation(&keys[3], DEFAULT_COLLATION_OID);
 
 	pg_seclabel = heap_open(SecLabelRelationId, RowExclusiveLock);
 

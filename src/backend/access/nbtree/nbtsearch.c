@@ -721,10 +721,9 @@ _bt_first(IndexScanDesc scan, ScanDirection dir)
 											   cur->sk_attno,
 											   InvalidStrategy,
 											   cur->sk_subtype,
+											   cur->sk_func.fn_collation,
 											   procinfo,
 											   cur->sk_argument);
-				ScanKeyEntryInitializeCollation(scankeys + i,
-												cur->sk_func.fn_collation);
 			}
 			else
 			{
@@ -743,10 +742,9 @@ _bt_first(IndexScanDesc scan, ScanDirection dir)
 									   cur->sk_attno,
 									   InvalidStrategy,
 									   cur->sk_subtype,
+									   cur->sk_func.fn_collation,
 									   cmp_proc,
 									   cur->sk_argument);
-				ScanKeyEntryInitializeCollation(scankeys + i,
-												cur->sk_func.fn_collation);
 			}
 		}
 	}
