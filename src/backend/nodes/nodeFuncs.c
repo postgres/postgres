@@ -3027,6 +3027,8 @@ bool
 					return true;
 				if (walker(coldef->raw_default, context))
 					return true;
+				if (walker(coldef->collClause, context))
+					return true;
 				/* for now, constraints are ignored */
 			}
 			break;

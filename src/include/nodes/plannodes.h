@@ -508,11 +508,11 @@ typedef struct NestLoopParam
  *		merge join node
  *
  * The expected ordering of each mergeable column is described by a btree
- * opfamily OID, a direction (BTLessStrategyNumber or BTGreaterStrategyNumber)
- * and a nulls-first flag.	Note that the two sides of each mergeclause may
- * be of different datatypes, but they are ordered the same way according to
- * the common opfamily.  The operator in each mergeclause must be an equality
- * operator of the indicated opfamily.
+ * opfamily OID, a collation OID, a direction (BTLessStrategyNumber or
+ * BTGreaterStrategyNumber) and a nulls-first flag.  Note that the two sides
+ * of each mergeclause may be of different datatypes, but they are ordered the
+ * same way according to the common opfamily and collation.  The operator in
+ * each mergeclause must be an equality operator of the indicated opfamily.
  * ----------------
  */
 typedef struct MergeJoin

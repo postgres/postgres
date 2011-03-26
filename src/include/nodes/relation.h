@@ -423,7 +423,9 @@ typedef struct RelOptInfo
  * IndexOptInfo
  *		Per-index information for planning/optimization
  *
- *		opfamily[], indexkeys[], and opcintype[] each have ncolumns entries.
+ *		indexkeys[], indexcollations[], opfamily[], and opcintype[]
+ *		each have ncolumns entries.
+ *
  *		sortopfamily[], reverse_sort[], and nulls_first[] likewise have
  *		ncolumns entries, if the index is ordered; but if it is unordered,
  *		those pointers are NULL.
@@ -453,9 +455,9 @@ typedef struct IndexOptInfo
 
 	/* index descriptor information */
 	int			ncolumns;		/* number of columns in index */
-	Oid		   *opfamily;		/* OIDs of operator families for columns */
 	int		   *indexkeys;		/* column numbers of index's keys, or 0 */
 	Oid		   *indexcollations;	/* OIDs of collations of index columns */
+	Oid		   *opfamily;		/* OIDs of operator families for columns */
 	Oid		   *opcintype;		/* OIDs of opclass declared input data types */
 	Oid		   *sortopfamily;	/* OIDs of btree opfamilies, if orderable */
 	bool	   *reverse_sort;	/* is sort order descending? */

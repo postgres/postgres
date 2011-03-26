@@ -1152,7 +1152,7 @@ addRangeTableEntryForFunction(ParseState *pstate,
 
 		/*
 		 * Use the column definition list to form the alias list and
-		 * funccoltypes/funccoltypmods lists.
+		 * funccoltypes/funccoltypmods/funccolcollations lists.
 		 */
 		foreach(col, coldeflist)
 		{

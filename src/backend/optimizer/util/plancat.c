@@ -190,9 +190,9 @@ get_relation_info(PlannerInfo *root, Oid relationObjectId, bool inhparent,
 			info->rel = rel;
 			info->ncolumns = ncolumns = index->indnatts;
 			info->indexkeys = (int *) palloc(sizeof(int) * ncolumns);
+			info->indexcollations = (Oid *) palloc(sizeof(Oid) * ncolumns);
 			info->opfamily = (Oid *) palloc(sizeof(Oid) * ncolumns);
 			info->opcintype = (Oid *) palloc(sizeof(Oid) * ncolumns);
-			info->indexcollations = (Oid *) palloc(sizeof(Oid) * ncolumns);
 
 			for (i = 0; i < ncolumns; i++)
 			{
