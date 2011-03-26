@@ -271,6 +271,7 @@ makeFromExpr(List *fromlist, Node *quals)
 Const *
 makeConst(Oid consttype,
 		  int32 consttypmod,
+		  Oid constcollid,
 		  int constlen,
 		  Datum constvalue,
 		  bool constisnull,
@@ -280,7 +281,7 @@ makeConst(Oid consttype,
 
 	cnst->consttype = consttype;
 	cnst->consttypmod = consttypmod;
-	cnst->constcollid = get_typcollation(consttype);
+	cnst->constcollid = constcollid;
 	cnst->constlen = constlen;
 	cnst->constvalue = constvalue;
 	cnst->constisnull = constisnull;
@@ -298,7 +299,7 @@ makeConst(Oid consttype,
  * storage properties.
  */
 Const *
-makeNullConst(Oid consttype, int32 consttypmod)
+makeNullConst(Oid consttype, int32 consttypmod, Oid constcollid)
 {
 	int16		typLen;
 	bool		typByVal;
@@ -306,6 +307,7 @@ makeNullConst(Oid consttype, int32 consttypmod)
 	get_typlenbyval(consttype, &typLen, &typByVal);
 	return makeConst(consttype,
 					 consttypmod,
+					 constcollid,
 					 (int) typLen,
 					 (Datum) 0,
 					 true,
@@ -320,7 +322,7 @@ Node *
 makeBoolConst(bool value, bool isnull)
 {
 	/* note that pg_type.h hardwires size of bool as 1 ... duplicate it */
-	return (Node *) makeConst(BOOLOID, -1, 1,
+	return (Node *) makeConst(BOOLOID, -1, InvalidOid, 1,
 							  BoolGetDatum(value), isnull, true);
 }
 

@@ -2084,6 +2084,7 @@ get_typdefault(Oid typid)
 			/* Build a Const node containing the value */
 			expr = (Node *) makeConst(typid,
 									  -1,
+									  type->typcollation,
 									  type->typlen,
 									  datum,
 									  false,

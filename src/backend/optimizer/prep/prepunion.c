@@ -910,6 +910,7 @@ generate_setop_tlist(List *colTypes, int flag,
 		/* flag value is the given constant */
 		expr = (Node *) makeConst(INT4OID,
 								  -1,
+								  InvalidOid,
 								  sizeof(int4),
 								  Int32GetDatum(flag),
 								  false,

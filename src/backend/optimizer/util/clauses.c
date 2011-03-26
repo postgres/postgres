@@ -101,7 +101,7 @@ static List *simplify_and_arguments(List *args,
 static Node *simplify_boolean_equality(Oid opno, List *args);
 static Expr *simplify_function(Oid funcid,
 				  Oid result_type, int32 result_typmod,
-				  Oid input_collid, List **args,
+				  Oid result_collid, Oid input_collid, List **args,
 				  bool has_named_args,
 				  bool allow_inline,
 				  eval_const_expressions_context *context);
@@ -114,19 +114,21 @@ static List *add_function_defaults(List *args, Oid result_type,
 static List *fetch_function_defaults(HeapTuple func_tuple);
 static void recheck_cast_function_args(List *args, Oid result_type,
 						   HeapTuple func_tuple);
-static Expr *evaluate_function(Oid funcid,
-				  Oid result_type, int32 result_typmod,
-				  Oid input_collid, List *args, HeapTuple func_tuple,
+static Expr *evaluate_function(Oid funcid, Oid result_type, int32 result_typmod,
+				  Oid result_collid, Oid input_collid, List *args,
+				  HeapTuple func_tuple,
 				  eval_const_expressions_context *context);
-static Expr *inline_function(Oid funcid, Oid result_type, Oid input_collid,
-				List *args, HeapTuple func_tuple,
+static Expr *inline_function(Oid funcid, Oid result_type, Oid result_collid,
+				Oid input_collid, List *args,
+				HeapTuple func_tuple,
 				eval_const_expressions_context *context);
 static Node *substitute_actual_parameters(Node *expr, int nargs, List *args,
 							 int *usecounts);
 static Node *substitute_actual_parameters_mutator(Node *node,
 							  substitute_actual_parameters_context *context);
 static void sql_inline_error_callback(void *arg);
-static Expr *evaluate_expr(Expr *expr, Oid result_type, int32 result_typmod);
+static Expr *evaluate_expr(Expr *expr, Oid result_type, int32 result_typmod,
+			  Oid result_collation);
 static Query *substitute_actual_srf_parameters(Query *expr,
 								 int nargs, List *args);
 static Node *substitute_actual_srf_parameters_mutator(Node *node,
@@ -2141,7 +2143,6 @@ eval_const_expressions_mutator(Node *node,
 					int16		typLen;
 					bool		typByVal;
 					Datum		pval;
-					Const	   *cnst;
 
 					Assert(prm->ptype == param->paramtype);
 					get_typlenbyval(param->paramtype, &typLen, &typByVal);
@@ -2149,14 +2150,13 @@ eval_const_expressions_mutator(Node *node,
 						pval = prm->value;
 					else
 						pval = datumCopy(prm->value, typByVal, typLen);
-					cnst = makeConst(param->paramtype,
-									 param->paramtypmod,
-									 (int) typLen,
-									 pval,
-									 prm->isnull,
-									 typByVal);
-					cnst->constcollid = param->paramcollid;
-					return (Node *) cnst;
+					return (Node *) makeConst(param->paramtype,
+											  param->paramtypmod,
+											  param->paramcollid,
+											  (int) typLen,
+											  pval,
+											  prm->isnull,
+											  typByVal);
 				}
 			}
 		}
@@ -2196,6 +2196,7 @@ eval_const_expressions_mutator(Node *node,
 		 */
 		simple = simplify_function(expr->funcid,
 								   expr->funcresulttype, exprTypmod(node),
+								   expr->funccollid,
 								   expr->inputcollid,
 								   &args,
 								   has_named_args, true, context);
@@ -2247,6 +2248,7 @@ eval_const_expressions_mutator(Node *node,
 		 */
 		simple = simplify_function(expr->opfuncid,
 								   expr->opresulttype, -1,
+								   expr->opcollid,
 								   expr->inputcollid,
 								   &args,
 								   false, true, context);
@@ -2343,6 +2345,7 @@ eval_const_expressions_mutator(Node *node,
 			 */
 			simple = simplify_function(expr->opfuncid,
 									   expr->opresulttype, -1,
+									   expr->opcollid,
 									   expr->inputcollid,
 									   &args,
 									   false, false, context);
@@ -2532,6 +2535,7 @@ eval_const_expressions_mutator(Node *node,
 		simple = simplify_function(outfunc,
 								   CSTRINGOID, -1,
 								   InvalidOid,
+								   InvalidOid,
 								   &args,
 								   false, true, context);
 		if (simple)				/* successfully simplified output fn */
@@ -2541,15 +2545,16 @@ eval_const_expressions_mutator(Node *node,
 			 * all three, trusting that nothing downstream will complain.
 			 */
 			args = list_make3(simple,
-							  makeConst(OIDOID, -1, sizeof(Oid),
+							  makeConst(OIDOID, -1, InvalidOid, sizeof(Oid),
 										ObjectIdGetDatum(intypioparam),
 										false, true),
-							  makeConst(INT4OID, -1, sizeof(int32),
+							  makeConst(INT4OID, -1, InvalidOid, sizeof(int32),
 										Int32GetDatum(-1),
 										false, true));
 
 			simple = simplify_function(infunc,
 									   expr->resulttype, -1,
+									   expr->resultcollid,
 									   InvalidOid,
 									   &args,
 									   false, true, context);
@@ -2602,7 +2607,8 @@ eval_const_expressions_mutator(Node *node,
 			 func_volatile(newexpr->elemfuncid) == PROVOLATILE_IMMUTABLE))
 			return (Node *) evaluate_expr((Expr *) newexpr,
 										  newexpr->resulttype,
-										  newexpr->resulttypmod);
+										  newexpr->resulttypmod,
+										  newexpr->resultcollid);
 
 		/* Else we must return the partially-simplified node */
 		return (Node *) newexpr;
@@ -2826,7 +2832,8 @@ eval_const_expressions_mutator(Node *node,
 		if (all_const)
 			return (Node *) evaluate_expr((Expr *) newarray,
 										  newarray->array_typeid,
-										  exprTypmod(node));
+										  exprTypmod(node),
+										  newarray->array_collid);
 
 		return (Node *) newarray;
 	}
@@ -2866,7 +2873,9 @@ eval_const_expressions_mutator(Node *node,
 
 		/* If all the arguments were constant null, the result is just null */
 		if (newargs == NIL)
-			return (Node *) makeNullConst(coalesceexpr->coalescetype, -1);
+			return (Node *) makeNullConst(coalesceexpr->coalescetype,
+										  -1,
+										  coalesceexpr->coalescecollid);
 
 		newcoalesce = makeNode(CoalesceExpr);
 		newcoalesce->coalescetype = coalesceexpr->coalescetype;
@@ -3380,7 +3389,8 @@ simplify_boolean_equality(Oid opno, List *args)
  * (which might originally have been an operator; we don't care)
  *
  * Inputs are the function OID, actual result type OID (which is needed for
- * polymorphic functions) and typmod, input collation to use for the function,
+ * polymorphic functions), result typmod, result collation,
+ * the input collation to use for the function,
  * the pre-simplified argument list, and some flags;
  * also the context data for eval_const_expressions.
  *
@@ -3395,8 +3405,7 @@ simplify_boolean_equality(Oid opno, List *args)
  */
 static Expr *
 simplify_function(Oid funcid, Oid result_type, int32 result_typmod,
-				  Oid input_collid,
-				  List **args,
+				  Oid result_collid, Oid input_collid, List **args,
 				  bool has_named_args,
 				  bool allow_inline,
 				  eval_const_expressions_context *context)
@@ -3427,11 +3436,12 @@ simplify_function(Oid funcid, Oid result_type, int32 result_typmod,
 		*args = add_function_defaults(*args, result_type, func_tuple, context);
 
 	newexpr = evaluate_function(funcid, result_type, result_typmod,
-								input_collid, *args,
+								result_collid, input_collid, *args,
 								func_tuple, context);
 
 	if (!newexpr && allow_inline)
-		newexpr = inline_function(funcid, result_type, input_collid, *args,
+		newexpr = inline_function(funcid, result_type, result_collid,
+								  input_collid, *args,
 								  func_tuple, context);
 
 	ReleaseSysCache(func_tuple);
@@ -3679,7 +3689,8 @@ recheck_cast_function_args(List *args, Oid result_type, HeapTuple func_tuple)
  */
 static Expr *
 evaluate_function(Oid funcid, Oid result_type, int32 result_typmod,
-				  Oid input_collid, List *args, HeapTuple func_tuple,
+				  Oid result_collid, Oid input_collid, List *args,
+				  HeapTuple func_tuple,
 				  eval_const_expressions_context *context)
 {
 	Form_pg_proc funcform = (Form_pg_proc) GETSTRUCT(func_tuple);
@@ -3726,7 +3737,8 @@ evaluate_function(Oid funcid, Oid result_type, int32 result_typmod,
 	 * function is not otherwise immutable.
 	 */
 	if (funcform->proisstrict && has_null_input)
-		return (Expr *) makeNullConst(result_type, result_typmod);
+		return (Expr *) makeNullConst(result_type, result_typmod,
+									  result_collid);
 
 	/*
 	 * Otherwise, can simplify only if all inputs are constants. (For a
@@ -3760,12 +3772,13 @@ evaluate_function(Oid funcid, Oid result_type, int32 result_typmod,
 	newexpr->funcresulttype = result_type;
 	newexpr->funcretset = false;
 	newexpr->funcformat = COERCE_DONTCARE;		/* doesn't matter */
-	newexpr->funccollid = InvalidOid;			/* doesn't matter */
+	newexpr->funccollid = result_collid;		/* doesn't matter */
 	newexpr->inputcollid = input_collid;
 	newexpr->args = args;
 	newexpr->location = -1;
 
-	return evaluate_expr((Expr *) newexpr, result_type, result_typmod);
+	return evaluate_expr((Expr *) newexpr, result_type, result_typmod,
+						 result_collid);
 }
 
 /*
@@ -3798,7 +3811,8 @@ evaluate_function(Oid funcid, Oid result_type, int32 result_typmod,
  * simplify the function.
  */
 static Expr *
-inline_function(Oid funcid, Oid result_type, Oid input_collid, List *args,
+inline_function(Oid funcid, Oid result_type, Oid result_collid,
+				Oid input_collid, List *args,
 				HeapTuple func_tuple,
 				eval_const_expressions_context *context)
 {
@@ -3888,7 +3902,7 @@ inline_function(Oid funcid, Oid result_type, Oid input_collid, List *args,
 	fexpr->funcresulttype = result_type;
 	fexpr->funcretset = false;
 	fexpr->funcformat = COERCE_DONTCARE;		/* doesn't matter */
-	fexpr->funccollid = InvalidOid;				/* doesn't matter */
+	fexpr->funccollid = result_collid;			/* doesn't matter */
 	fexpr->inputcollid = input_collid;
 	fexpr->args = args;
 	fexpr->location = -1;
@@ -4051,16 +4065,16 @@ inline_function(Oid funcid, Oid result_type, Oid input_collid, List *args,
 	 * it's possible that the function result is used directly as a sort key
 	 * or in other places where we expect exprCollation() to tell the truth.
 	 */
-	if (OidIsValid(input_collid))
+	if (OidIsValid(result_collid))
 	{
 		Oid		exprcoll = exprCollation(newexpr);
 
-		if (OidIsValid(exprcoll) && exprcoll != input_collid)
+		if (OidIsValid(exprcoll) && exprcoll != result_collid)
 		{
 			CollateExpr   *newnode = makeNode(CollateExpr);
 
 			newnode->arg = (Expr *) newexpr;
-			newnode->collOid = input_collid;
+			newnode->collOid = result_collid;
 			newnode->location = -1;
 
 			newexpr = (Node *) newnode;
@@ -4165,7 +4179,8 @@ sql_inline_error_callback(void *arg)
  * code and ensure we get the same result as the executor would get.
  */
 static Expr *
-evaluate_expr(Expr *expr, Oid result_type, int32 result_typmod)
+evaluate_expr(Expr *expr, Oid result_type, int32 result_typmod,
+			  Oid result_collation)
 {
 	EState	   *estate;
 	ExprState  *exprstate;
@@ -4231,7 +4246,8 @@ evaluate_expr(Expr *expr, Oid result_type, int32 result_typmod)
 	/*
 	 * Make the constant result node.
 	 */
-	return (Expr *) makeConst(result_type, result_typmod, resultTypLen,
+	return (Expr *) makeConst(result_type, result_typmod, result_collation,
+							  resultTypLen,
 							  const_val, const_is_null,
 							  resultTypByVal);
 }

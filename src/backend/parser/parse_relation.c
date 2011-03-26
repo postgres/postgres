@@ -1870,7 +1870,8 @@ expandTupleDesc(TupleDesc tupdesc, Alias *eref,
 					 * can't use atttypid here, but it doesn't really matter
 					 * what type the Const claims to be.
 					 */
-					*colvars = lappend(*colvars, makeNullConst(INT4OID, -1));
+					*colvars = lappend(*colvars,
+									   makeNullConst(INT4OID, -1, InvalidOid));
 				}
 			}
 			continue;

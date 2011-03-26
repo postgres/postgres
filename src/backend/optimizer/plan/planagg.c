@@ -429,7 +429,8 @@ build_minmax_path(PlannerInfo *root, MinMaxAggInfo *mminfo,
 
 	/* set up expressions for LIMIT 1 */
 	parse->limitOffset = NULL;
-	parse->limitCount = (Node *) makeConst(INT8OID, -1, sizeof(int64),
+	parse->limitCount = (Node *) makeConst(INT8OID, -1, InvalidOid,
+										   sizeof(int64),
 										   Int64GetDatum(1), false,
 										   FLOAT8PASSBYVAL);
 

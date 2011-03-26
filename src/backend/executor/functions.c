@@ -1501,6 +1501,7 @@ check_sql_fn_retval(Oid func_id, Oid rettype, List *queryTreeList,
 					/* The type of the null we insert isn't important */
 					null_expr = (Expr *) makeConst(INT4OID,
 												   -1,
+												   InvalidOid,
 												   sizeof(int32),
 												   (Datum) 0,
 												   true,		/* isnull */
@@ -1562,6 +1563,7 @@ check_sql_fn_retval(Oid func_id, Oid rettype, List *queryTreeList,
 				/* The type of the null we insert isn't important */
 				null_expr = (Expr *) makeConst(INT4OID,
 											   -1,
+											   InvalidOid,
 											   sizeof(int32),
 											   (Datum) 0,
 											   true,	/* isnull */

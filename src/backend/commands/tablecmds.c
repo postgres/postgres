@@ -4337,10 +4337,12 @@ ATExecAddColumn(AlteredTableInfo *tab, Relation rel,
 		{
 			Oid			baseTypeId;
 			int32		baseTypeMod;
+			Oid			baseTypeColl;
 
 			baseTypeMod = typmod;
 			baseTypeId = getBaseTypeAndTypmod(typeOid, &baseTypeMod);
-			defval = (Expr *) makeNullConst(baseTypeId, baseTypeMod);
+			baseTypeColl = get_typcollation(baseTypeId);
+			defval = (Expr *) makeNullConst(baseTypeId, baseTypeMod, baseTypeColl);
 			defval = (Expr *) coerce_to_target_type(NULL,
 													(Node *) defval,
 													baseTypeId,

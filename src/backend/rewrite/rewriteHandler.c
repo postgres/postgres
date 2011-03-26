@@ -208,7 +208,7 @@ AcquireRewriteLocks(Query *parsetree, bool forUpdatePushedDown)
 							 * now-dropped type OID, but it doesn't really
 							 * matter what type the Const claims to be.
 							 */
-							aliasvar = (Var *) makeNullConst(INT4OID, -1);
+							aliasvar = (Var *) makeNullConst(INT4OID, -1, InvalidOid);
 						}
 					}
 					newaliasvars = lappend(newaliasvars, aliasvar);
@@ -719,6 +719,7 @@ rewriteTargetListIU(Query *parsetree, Relation target_relation,
 				{
 					new_expr = (Node *) makeConst(att_tup->atttypid,
 												  -1,
+												  att_tup->attcollation,
 												  att_tup->attlen,
 												  (Datum) 0,
 												  true, /* isnull */
@@ -1082,6 +1083,7 @@ rewriteValuesRTE(RangeTblEntry *rte, Relation target_relation, List *attrnos)
 				{
 					new_expr = (Node *) makeConst(att_tup->atttypid,
 												  -1,
+												  att_tup->attcollation,
 												  att_tup->attlen,
 												  (Datum) 0,
 												  true, /* isnull */

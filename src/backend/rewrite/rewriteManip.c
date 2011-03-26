@@ -1281,7 +1281,8 @@ ResolveNew_callback(Var *var,
 			/* Otherwise replace unmatched var with a null */
 			/* need coerce_to_domain in case of NOT NULL domain constraint */
 			return coerce_to_domain((Node *) makeNullConst(var->vartype,
-														   var->vartypmod),
+														   var->vartypmod,
+														   var->varcollid),
 									InvalidOid, -1,
 									var->vartype,
 									COERCE_IMPLICIT_CAST,

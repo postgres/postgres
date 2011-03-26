@@ -347,6 +347,7 @@ transformArraySubscripts(ParseState *pstate,
 				/* Make a constant 1 */
 				subexpr = (Node *) makeConst(INT4OID,
 											 -1,
+											 InvalidOid,
 											 sizeof(int32),
 											 Int32GetDatum(1),
 											 false,
@@ -526,6 +527,7 @@ make_const(ParseState *pstate, Value *value, int location)
 			/* return a null const */
 			con = makeConst(UNKNOWNOID,
 							-1,
+							InvalidOid,
 							-2,
 							(Datum) 0,
 							true,
@@ -540,6 +542,7 @@ make_const(ParseState *pstate, Value *value, int location)
 
 	con = makeConst(typeid,
 					-1,			/* typmod -1 is OK for all cases */
+					InvalidOid,	/* all cases are uncollatable types */
 					typelen,
 					val,
 					false,

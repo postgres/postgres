@@ -48,12 +48,13 @@ extern FromExpr *makeFromExpr(List *fromlist, Node *quals);
 
 extern Const *makeConst(Oid consttype,
 		  int32 consttypmod,
+		  Oid constcollid,
 		  int constlen,
 		  Datum constvalue,
 		  bool constisnull,
 		  bool constbyval);
 
-extern Const *makeNullConst(Oid consttype, int32 consttypmod);
+extern Const *makeNullConst(Oid consttype, int32 consttypmod, Oid constcollid);
 
 extern Node *makeBoolConst(bool value, bool isnull);
 

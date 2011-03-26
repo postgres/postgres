@@ -434,7 +434,8 @@ transformAssignedExpr(ParseState *pstate,
 			 * is not really a source value to work with. Insert a NULL
 			 * constant as the source value.
 			 */
-			colVar = (Node *) makeNullConst(attrtype, attrtypmod);
+			colVar = (Node *) makeNullConst(attrtype, attrtypmod,
+											attrcollation);
 		}
 		else
 		{

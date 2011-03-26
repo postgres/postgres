@@ -753,6 +753,7 @@ build_coercion_expression(Node *node,
 			/* Pass target typmod as an int4 constant */
 			cons = makeConst(INT4OID,
 							 -1,
+							 InvalidOid,
 							 sizeof(int32),
 							 Int32GetDatum(targetTypMod),
 							 false,
@@ -766,6 +767,7 @@ build_coercion_expression(Node *node,
 			/* Pass it a boolean isExplicit parameter, too */
 			cons = makeConst(BOOLOID,
 							 -1,
+							 InvalidOid,
 							 sizeof(bool),
 							 BoolGetDatum(isExplicit),
 							 false,
@@ -890,7 +892,8 @@ coerce_record_to_complex(ParseState *pstate, Node *node,
 			 * can't use atttypid here, but it doesn't really matter what type
 			 * the Const claims to be.
 			 */
-			newargs = lappend(newargs, makeNullConst(INT4OID, -1));
+			newargs = lappend(newargs,
+							  makeNullConst(INT4OID, -1, InvalidOid));
 			continue;
 		}
 

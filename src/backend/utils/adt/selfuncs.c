@@ -1686,6 +1686,7 @@ scalararraysel(PlannerInfo *root,
 	Node	   *leftop;
 	Node	   *rightop;
 	Oid			nominal_element_type;
+	Oid			nominal_element_collation;
 	RegProcedure oprsel;
 	FmgrInfo	oprselproc;
 	Selectivity s1;
@@ -1712,6 +1713,8 @@ scalararraysel(PlannerInfo *root,
 	nominal_element_type = get_base_element_type(exprType(rightop));
 	if (!OidIsValid(nominal_element_type))
 		return (Selectivity) 0.5;		/* probably shouldn't happen */
+	/* get nominal collation, too, for generating constants */
+	nominal_element_collation = exprCollation(rightop);
 
 	/* look through any binary-compatible relabeling of rightop */
 	rightop = strip_array_coercion(rightop);
@@ -1759,6 +1762,7 @@ scalararraysel(PlannerInfo *root,
 			args = list_make2(leftop,
 							  makeConst(nominal_element_type,
 										-1,
+										nominal_element_collation,
 										elmlen,
 										elem_values[i],
 										elem_nulls[i],
@@ -5616,9 +5620,39 @@ static Const *
 string_to_const(const char *str, Oid datatype)
 {
 	Datum		conval = string_to_datum(str, datatype);
+	Oid			collation;
+	int			constlen;
 
-	return makeConst(datatype, -1,
-					 ((datatype == NAMEOID) ? NAMEDATALEN : -1),
+	/*
+	 * We only need to support a few datatypes here, so hard-wire properties
+	 * instead of incurring the expense of catalog lookups.
+	 */
+	switch (datatype)
+	{
+		case TEXTOID:
+		case VARCHAROID:
+		case BPCHAROID:
+			collation = DEFAULT_COLLATION_OID;
+			constlen = -1;
+			break;
+
+		case NAMEOID:
+			collation = InvalidOid;
+			constlen = NAMEDATALEN;
+			break;
+
+		case BYTEAOID:
+			collation = InvalidOid;
+			constlen = -1;
+			break;
+
+		default:
+			elog(ERROR, "unexpected datatype in string_to_const: %u",
+				 datatype);
+			return NULL;
+	}
+
+	return makeConst(datatype, -1, collation, constlen,
 					 conval, false, false);
 }
 
@@ -5635,7 +5669,7 @@ string_to_bytea_const(const char *str, size_t str_len)
 	SET_VARSIZE(bstr, VARHDRSZ + str_len);
 	conval = PointerGetDatum(bstr);
 
-	return makeConst(BYTEAOID, -1, -1, conval, false, false);
+	return makeConst(BYTEAOID, -1, InvalidOid, -1, conval, false, false);
 }
 
 /*-------------------------------------------------------------------------
