@@ -64,7 +64,7 @@ static PGconn *GetConnection(void);
 
 static void ReceiveTarFile(PGconn *conn, PGresult *res, int rownum);
 static void ReceiveAndUnpackTarFile(PGconn *conn, PGresult *res, int rownum);
-static void BaseBackup();
+static void BaseBackup(void);
 
 #ifdef HAVE_LIBZ
 static const char *
@@ -752,7 +752,7 @@ GetConnection(void)
 }
 
 static void
-BaseBackup()
+BaseBackup(void)
 {
 	PGresult   *res;
 	uint32		timeline;

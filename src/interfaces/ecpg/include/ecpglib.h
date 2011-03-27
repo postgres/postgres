@@ -92,7 +92,7 @@ void	   *ECPGget_var(int number);
 void		ECPGfree_auto_mem(void);
 
 #ifdef ENABLE_THREAD_SAFETY
-void		ecpg_pthreads_init();
+void		ecpg_pthreads_init(void);
 #endif
 
 #ifdef __cplusplus
