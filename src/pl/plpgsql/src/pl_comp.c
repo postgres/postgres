@@ -2417,11 +2417,8 @@ delete_function(PLpgSQL_function *func)
 	plpgsql_HashTableDelete(func);
 
 	/* release the function's storage if safe and not done already */
-	if (func->use_count == 0 && func->fn_cxt)
-	{
-		MemoryContextDelete(func->fn_cxt);
-		func->fn_cxt = NULL;
-	}
+	if (func->use_count == 0)
+		plpgsql_free_function_memory(func);
 }
 
 /* exported so we can call it from plpgsql_init() */

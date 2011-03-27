@@ -172,6 +172,9 @@ plpgsql_inline_handler(PG_FUNCTION_ARGS)
 	/* Compile the anonymous code block */
 	func = plpgsql_compile_inline(codeblock->source_text);
 
+	/* Mark the function as busy, just pro forma */
+	func->use_count++;
+
 	/*
 	 * Set up a fake fcinfo with just enough info to satisfy
 	 * plpgsql_exec_function().  In particular note that this sets things up
@@ -184,6 +187,13 @@ plpgsql_inline_handler(PG_FUNCTION_ARGS)
 	flinfo.fn_mcxt = CurrentMemoryContext;
 
 	retval = plpgsql_exec_function(func, &fake_fcinfo);
+
+	/* Function should now have no remaining use-counts ... */
+	func->use_count--;
+	Assert(func->use_count == 0);
+
+	/* ... so we can free subsidiary storage */
+	plpgsql_free_function_memory(func);
 
 	/*
 	 * Disconnect from SPI manager

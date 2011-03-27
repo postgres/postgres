@@ -15,6 +15,8 @@
 
 #include "plpgsql.h"
 
+#include "utils/memutils.h"
+
 
 /* ----------
  * Local variables for namespace handling
@@ -261,6 +263,402 @@ plpgsql_stmt_typename(PLpgSQL_stmt *stmt)
 	}
 
 	return "unknown";
+}
+
+
+/**********************************************************************
+ * Release memory when a PL/pgSQL function is no longer needed
+ *
+ * The code for recursing through the function tree is really only
+ * needed to locate PLpgSQL_expr nodes, which may contain references
+ * to saved SPI Plans that must be freed.  The function tree itself,
+ * along with subsidiary data, is freed in one swoop by freeing the
+ * function's permanent memory context.
+ **********************************************************************/
+static void free_stmt(PLpgSQL_stmt *stmt);
+static void free_block(PLpgSQL_stmt_block *block);
+static void free_assign(PLpgSQL_stmt_assign *stmt);
+static void free_if(PLpgSQL_stmt_if *stmt);
+static void free_case(PLpgSQL_stmt_case *stmt);
+static void free_loop(PLpgSQL_stmt_loop *stmt);
+static void free_while(PLpgSQL_stmt_while *stmt);
+static void free_fori(PLpgSQL_stmt_fori *stmt);
+static void free_fors(PLpgSQL_stmt_fors *stmt);
+static void free_forc(PLpgSQL_stmt_forc *stmt);
+static void free_foreach_a(PLpgSQL_stmt_foreach_a *stmt);
+static void free_exit(PLpgSQL_stmt_exit *stmt);
+static void free_return(PLpgSQL_stmt_return *stmt);
+static void free_return_next(PLpgSQL_stmt_return_next *stmt);
+static void free_return_query(PLpgSQL_stmt_return_query *stmt);
+static void free_raise(PLpgSQL_stmt_raise *stmt);
+static void free_execsql(PLpgSQL_stmt_execsql *stmt);
+static void free_dynexecute(PLpgSQL_stmt_dynexecute *stmt);
+static void free_dynfors(PLpgSQL_stmt_dynfors *stmt);
+static void free_getdiag(PLpgSQL_stmt_getdiag *stmt);
+static void free_open(PLpgSQL_stmt_open *stmt);
+static void free_fetch(PLpgSQL_stmt_fetch *stmt);
+static void free_close(PLpgSQL_stmt_close *stmt);
+static void free_perform(PLpgSQL_stmt_perform *stmt);
+static void free_expr(PLpgSQL_expr *expr);
+
+
+static void
+free_stmt(PLpgSQL_stmt *stmt)
+{
+	switch ((enum PLpgSQL_stmt_types) stmt->cmd_type)
+	{
+		case PLPGSQL_STMT_BLOCK:
+			free_block((PLpgSQL_stmt_block *) stmt);
+			break;
+		case PLPGSQL_STMT_ASSIGN:
+			free_assign((PLpgSQL_stmt_assign *) stmt);
+			break;
+		case PLPGSQL_STMT_IF:
+			free_if((PLpgSQL_stmt_if *) stmt);
+			break;
+		case PLPGSQL_STMT_CASE:
+			free_case((PLpgSQL_stmt_case *) stmt);
+			break;
+		case PLPGSQL_STMT_LOOP:
+			free_loop((PLpgSQL_stmt_loop *) stmt);
+			break;
+		case PLPGSQL_STMT_WHILE:
+			free_while((PLpgSQL_stmt_while *) stmt);
+			break;
+		case PLPGSQL_STMT_FORI:
+			free_fori((PLpgSQL_stmt_fori *) stmt);
+			break;
+		case PLPGSQL_STMT_FORS:
+			free_fors((PLpgSQL_stmt_fors *) stmt);
+			break;
+		case PLPGSQL_STMT_FORC:
+			free_forc((PLpgSQL_stmt_forc *) stmt);
+			break;
+		case PLPGSQL_STMT_FOREACH_A:
+			free_foreach_a((PLpgSQL_stmt_foreach_a *) stmt);
+			break;
+		case PLPGSQL_STMT_EXIT:
+			free_exit((PLpgSQL_stmt_exit *) stmt);
+			break;
+		case PLPGSQL_STMT_RETURN:
+			free_return((PLpgSQL_stmt_return *) stmt);
+			break;
+		case PLPGSQL_STMT_RETURN_NEXT:
+			free_return_next((PLpgSQL_stmt_return_next *) stmt);
+			break;
+		case PLPGSQL_STMT_RETURN_QUERY:
+			free_return_query((PLpgSQL_stmt_return_query *) stmt);
+			break;
+		case PLPGSQL_STMT_RAISE:
+			free_raise((PLpgSQL_stmt_raise *) stmt);
+			break;
+		case PLPGSQL_STMT_EXECSQL:
+			free_execsql((PLpgSQL_stmt_execsql *) stmt);
+			break;
+		case PLPGSQL_STMT_DYNEXECUTE:
+			free_dynexecute((PLpgSQL_stmt_dynexecute *) stmt);
+			break;
+		case PLPGSQL_STMT_DYNFORS:
+			free_dynfors((PLpgSQL_stmt_dynfors *) stmt);
+			break;
+		case PLPGSQL_STMT_GETDIAG:
+			free_getdiag((PLpgSQL_stmt_getdiag *) stmt);
+			break;
+		case PLPGSQL_STMT_OPEN:
+			free_open((PLpgSQL_stmt_open *) stmt);
+			break;
+		case PLPGSQL_STMT_FETCH:
+			free_fetch((PLpgSQL_stmt_fetch *) stmt);
+			break;
+		case PLPGSQL_STMT_CLOSE:
+			free_close((PLpgSQL_stmt_close *) stmt);
+			break;
+		case PLPGSQL_STMT_PERFORM:
+			free_perform((PLpgSQL_stmt_perform *) stmt);
+			break;
+		default:
+			elog(ERROR, "unrecognized cmd_type: %d", stmt->cmd_type);
+			break;
+	}
+}
+
+static void
+free_stmts(List *stmts)
+{
+	ListCell   *s;
+
+	foreach(s, stmts)
+	{
+		free_stmt((PLpgSQL_stmt *) lfirst(s));
+	}
+}
+
+static void
+free_block(PLpgSQL_stmt_block *block)
+{
+	free_stmts(block->body);
+	if (block->exceptions)
+	{
+		ListCell   *e;
+
+		foreach(e, block->exceptions->exc_list)
+		{
+			PLpgSQL_exception *exc = (PLpgSQL_exception *) lfirst(e);
+
+			free_stmts(exc->action);
+		}
+	}
+}
+
+static void
+free_assign(PLpgSQL_stmt_assign *stmt)
+{
+	free_expr(stmt->expr);
+}
+
+static void
+free_if(PLpgSQL_stmt_if *stmt)
+{
+	free_expr(stmt->cond);
+	free_stmts(stmt->true_body);
+	free_stmts(stmt->false_body);
+}
+
+static void
+free_case(PLpgSQL_stmt_case *stmt)
+{
+	ListCell   *l;
+
+	free_expr(stmt->t_expr);
+	foreach(l, stmt->case_when_list)
+	{
+		PLpgSQL_case_when *cwt = (PLpgSQL_case_when *) lfirst(l);
+
+		free_expr(cwt->expr);
+		free_stmts(cwt->stmts);
+	}
+	free_stmts(stmt->else_stmts);
+}
+
+static void
+free_loop(PLpgSQL_stmt_loop *stmt)
+{
+	free_stmts(stmt->body);
+}
+
+static void
+free_while(PLpgSQL_stmt_while *stmt)
+{
+	free_expr(stmt->cond);
+	free_stmts(stmt->body);
+}
+
+static void
+free_fori(PLpgSQL_stmt_fori *stmt)
+{
+	free_expr(stmt->lower);
+	free_expr(stmt->upper);
+	free_expr(stmt->step);
+	free_stmts(stmt->body);
+}
+
+static void
+free_fors(PLpgSQL_stmt_fors *stmt)
+{
+	free_stmts(stmt->body);
+	free_expr(stmt->query);
+}
+
+static void
+free_forc(PLpgSQL_stmt_forc *stmt)
+{
+	free_stmts(stmt->body);
+	free_expr(stmt->argquery);
+}
+
+static void
+free_foreach_a(PLpgSQL_stmt_foreach_a *stmt)
+{
+	free_expr(stmt->expr);
+	free_stmts(stmt->body);
+}
+
+static void
+free_open(PLpgSQL_stmt_open *stmt)
+{
+	ListCell   *lc;
+
+	free_expr(stmt->argquery);
+	free_expr(stmt->query);
+	free_expr(stmt->dynquery);
+	foreach(lc, stmt->params)
+	{
+		free_expr((PLpgSQL_expr *) lfirst(lc));
+	}
+}
+
+static void
+free_fetch(PLpgSQL_stmt_fetch *stmt)
+{
+	free_expr(stmt->expr);
+}
+
+static void
+free_close(PLpgSQL_stmt_close *stmt)
+{
+}
+
+static void
+free_perform(PLpgSQL_stmt_perform *stmt)
+{
+	free_expr(stmt->expr);
+}
+
+static void
+free_exit(PLpgSQL_stmt_exit *stmt)
+{
+	free_expr(stmt->cond);
+}
+
+static void
+free_return(PLpgSQL_stmt_return *stmt)
+{
+	free_expr(stmt->expr);
+}
+
+static void
+free_return_next(PLpgSQL_stmt_return_next *stmt)
+{
+	free_expr(stmt->expr);
+}
+
+static void
+free_return_query(PLpgSQL_stmt_return_query *stmt)
+{
+	ListCell   *lc;
+
+	free_expr(stmt->query);
+	free_expr(stmt->dynquery);
+	foreach(lc, stmt->params)
+	{
+		free_expr((PLpgSQL_expr *) lfirst(lc));
+	}
+}
+
+static void
+free_raise(PLpgSQL_stmt_raise *stmt)
+{
+	ListCell   *lc;
+
+	foreach(lc, stmt->params)
+	{
+		free_expr((PLpgSQL_expr *) lfirst(lc));
+	}
+	foreach(lc, stmt->options)
+	{
+		PLpgSQL_raise_option *opt = (PLpgSQL_raise_option *) lfirst(lc);
+
+		free_expr(opt->expr);
+	}
+}
+
+static void
+free_execsql(PLpgSQL_stmt_execsql *stmt)
+{
+	free_expr(stmt->sqlstmt);
+}
+
+static void
+free_dynexecute(PLpgSQL_stmt_dynexecute *stmt)
+{
+	ListCell   *lc;
+
+	free_expr(stmt->query);
+	foreach(lc, stmt->params)
+	{
+		free_expr((PLpgSQL_expr *) lfirst(lc));
+	}
+}
+
+static void
+free_dynfors(PLpgSQL_stmt_dynfors *stmt)
+{
+	ListCell   *lc;
+
+	free_stmts(stmt->body);
+	free_expr(stmt->query);
+	foreach(lc, stmt->params)
+	{
+		free_expr((PLpgSQL_expr *) lfirst(lc));
+	}
+}
+
+static void
+free_getdiag(PLpgSQL_stmt_getdiag *stmt)
+{
+}
+
+static void
+free_expr(PLpgSQL_expr *expr)
+{
+	if (expr && expr->plan)
+	{
+		SPI_freeplan(expr->plan);
+		expr->plan = NULL;
+	}
+}
+
+void
+plpgsql_free_function_memory(PLpgSQL_function *func)
+{
+	int			i;
+
+	/* Better not call this on an in-use function */
+	Assert(func->use_count == 0);
+
+	/* Release plans associated with variable declarations */
+	for (i = 0; i < func->ndatums; i++)
+	{
+		PLpgSQL_datum *d = func->datums[i];
+
+		switch (d->dtype)
+		{
+			case PLPGSQL_DTYPE_VAR:
+				{
+					PLpgSQL_var *var = (PLpgSQL_var *) d;
+
+					free_expr(var->default_val);
+					free_expr(var->cursor_explicit_expr);
+				}
+				break;
+			case PLPGSQL_DTYPE_ROW:
+				break;
+			case PLPGSQL_DTYPE_REC:
+				break;
+			case PLPGSQL_DTYPE_RECFIELD:
+				break;
+			case PLPGSQL_DTYPE_ARRAYELEM:
+				free_expr(((PLpgSQL_arrayelem *) d)->subscript);
+				break;
+			default:
+				elog(ERROR, "unrecognized data type: %d", d->dtype);
+		}
+	}
+	func->ndatums = 0;
+
+	/* Release plans in statement tree */
+	if (func->action)
+		free_block(func->action);
+	func->action = NULL;
+
+	/*
+	 * And finally, release all memory except the PLpgSQL_function struct
+	 * itself (which has to be kept around because there may be multiple
+	 * fn_extra pointers to it).
+	 */
+	if (func->fn_cxt)
+		MemoryContextDelete(func->fn_cxt);
+	func->fn_cxt = NULL;
 }
 
 

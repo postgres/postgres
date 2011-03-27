@@ -928,6 +928,7 @@ extern PLpgSQL_nsitem *plpgsql_ns_lookup_label(PLpgSQL_nsitem *ns_cur,
  * ----------
  */
 extern const char *plpgsql_stmt_typename(PLpgSQL_stmt *stmt);
+extern void plpgsql_free_function_memory(PLpgSQL_function *func);
 extern void plpgsql_dumptree(PLpgSQL_function *func);
 
 /* ----------
