@@ -1158,6 +1158,7 @@ check_exclusion_constraint(Relation heap, Relation index, IndexInfo *indexInfo,
 {
 	Oid		   *constr_procs = indexInfo->ii_ExclusionProcs;
 	uint16	   *constr_strats = indexInfo->ii_ExclusionStrats;
+	Oid		   *index_collations = index->rd_indcollation;
 	int			index_natts = index->rd_index->indnatts;
 	IndexScanDesc index_scan;
 	HeapTuple	tup;
@@ -1188,11 +1189,14 @@ check_exclusion_constraint(Relation heap, Relation index, IndexInfo *indexInfo,
 
 	for (i = 0; i < index_natts; i++)
 	{
-		ScanKeyInit(&scankeys[i],
-					i + 1,
-					constr_strats[i],
-					constr_procs[i],
-					values[i]);
+		ScanKeyEntryInitialize(&scankeys[i],
+							   0,
+							   i + 1,
+							   constr_strats[i],
+							   InvalidOid,
+							   index_collations[i],
+							   constr_procs[i],
+							   values[i]);
 	}
 
 	/*
