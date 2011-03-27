@@ -1013,12 +1013,6 @@ synchronous_replication = on
     the rate of generation of WAL data.
    </para>
 
-   <para>
-    Replies are only sent when WAL is written to disk, so setting
-    <varname>fsync</> to <literal>off</> on the standby will significantly
-    reduce performance of synchronous replication and should be avoided.
-   </para>
-
    </sect3>
 
    <sect3 id="synchronous-replication-ha">
