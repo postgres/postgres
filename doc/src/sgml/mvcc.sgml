@@ -635,7 +635,7 @@ ERROR:  could not serialize access due to read/write dependencies among transact
       <para>
        Control the number of active connections, using a connection pool if
        needed.  This is always an important performance consideration, but
-       it can be paricularly important in a busy system using Serializable
+       it can be particularly important in a busy system using Serializable
        transactions.
       </para>
      </listitem>
