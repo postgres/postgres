@@ -646,7 +646,8 @@
 
      <listitem>
       <para>
-       Allow synchronous replication (Simon Riggs, Fujii Masao)
+       Allow <link linkend="synchronous-replication">synchronous
+       replication</link> (Simon Riggs, Fujii Masao)
       </para>
 
       <para>
