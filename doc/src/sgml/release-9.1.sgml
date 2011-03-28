@@ -619,11 +619,12 @@
 
       <listitem>
        <para>
-        Increase the maximum values for <varname>deadlock_timeout</>,
-        <varname>max_standby_archive_delay</>,
-        <varname>max_standby_streaming_delay</>,
-        <varname>log_min_duration_statement</>, and
-        <varname>log_autovacuum_min_duration</>.
+        Increase the maximum values for
+        <link linkend="guc-deadlock-timeout"><varname>deadlock_timeout</varname></link>,
+        <link linkend="guc-max-standby-archive-delay"><varname>max_standby_archive_delay</varname></link>,
+        <link linkend="guc-max-standby-streaming-delay"><varname>max_standby_streaming_delay</varname></link>,
+        <link linkend="guc-log-min-duration-statement"><varname>log_min_duration_statement</varname></link>, and
+        <link linkend="guc-log-autovacuum-min-duration"><varname>log_autovacuum_min_duration</varname></link>.
        </para>
 
        <para>
@@ -1074,9 +1075,9 @@
        </para>
 
        <para>
-        <command>ALTER TABLE INHERIT</> now takes a stronger lock on the
-        parent table, so that both children do not try to update it
-        simultaneously.
+        <link linkend="sql-altertable"><command>ALTER TABLE</command></link>
+        now takes a stronger lock on the parent table, so that both children do
+        not try to update it simultaneously.
        </para>
       </listitem>
 
