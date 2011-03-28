@@ -258,7 +258,8 @@ ConstructTupleDescriptor(Relation heapRelation,
 			 * whether a table column is of a safe type (which is why we
 			 * needn't check for the non-expression case).
 			 */
-			CheckAttributeType(NameStr(to->attname), to->atttypid, false);
+			CheckAttributeType(NameStr(to->attname), to->atttypid,
+							   NIL, false);
 		}
 
 		/*
