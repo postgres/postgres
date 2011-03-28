@@ -4221,7 +4221,9 @@ ATExecAddColumn(AlteredTableInfo *tab, Relation rel,
 	collOid = GetColumnDefCollation(NULL, colDef, typeOid);
 
 	/* make sure datatype is legal for a column */
-	CheckAttributeType(colDef->colname, typeOid, collOid, false);
+	CheckAttributeType(colDef->colname, typeOid, collOid,
+					   list_make1_oid(rel->rd_rel->reltype),
+					   false);
 
 	/* construct new attribute's pg_attribute entry */
 	attribute.attrelid = myrelid;
@@ -6536,7 +6538,9 @@ ATPrepAlterColumnType(List **wqueue,
 	targetcollid = GetColumnDefCollation(NULL, def, targettype);
 
 	/* make sure datatype is legal for a column */
-	CheckAttributeType(colName, targettype, targetcollid, false);
+	CheckAttributeType(colName, targettype, targetcollid,
+					   list_make1_oid(rel->rd_rel->reltype),
+					   false);
 
 	if (tab->relkind == RELKIND_RELATION)
 	{

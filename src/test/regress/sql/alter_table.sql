@@ -1112,6 +1112,15 @@ create table tab1 (a int, b text);
 create table tab2 (x int, y tab1);
 alter table tab1 alter column b type varchar; -- fails
 
+-- disallow recursive containment of row types
+create temp table recur1 (f1 int);
+alter table recur1 add column f2 recur1; -- fails
+alter table recur1 add column f2 recur1[]; -- fails
+create temp table recur2 (f1 int, f2 recur1);
+alter table recur1 add column f2 recur2; -- fails
+alter table recur1 add column f2 int;
+alter table recur1 alter column f2 type recur2; -- fails
+
 --
 -- lock levels
 --
