@@ -1384,6 +1384,18 @@ select * from another;
 (3 rows)
 
 drop table another;
+-- disallow recursive containment of row types
+create temp table recur1 (f1 int);
+alter table recur1 add column f2 recur1; -- fails
+ERROR:  composite type recur1 cannot be made a member of itself
+alter table recur1 add column f2 recur1[]; -- fails
+ERROR:  composite type recur1 cannot be made a member of itself
+create temp table recur2 (f1 int, f2 recur1);
+alter table recur1 add column f2 recur2; -- fails
+ERROR:  composite type recur1 cannot be made a member of itself
+alter table recur1 add column f2 int;
+alter table recur1 alter column f2 type recur2; -- fails
+ERROR:  composite type recur1 cannot be made a member of itself
 --
 -- alter function
 --
