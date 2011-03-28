@@ -619,11 +619,11 @@
 
       <listitem>
        <para>
-        Increase the maximum values for <xref linkend="guc-deadlock-timeout">,
-        <xref linkend="guc-max-standby-archive-delay">,
-        <xref linkend="guc-max-standby-streaming-delay">,
-        <xref linkend="guc-log-min-duration-statement">, and
-        <xref linkend="guc-log-autovacuum-min-duration">.
+        Increase the maximum values for <varname>deadlock_timeout</>,
+        <varname>max_standby_archive_delay</>,
+        <varname>max_standby_streaming_delay</>,
+        <varname>log_min_duration_statement</>, and
+        <varname>log_autovacuum_min_duration</>.
        </para>
 
        <para>
@@ -1016,8 +1016,8 @@
 
       <listitem>
        <para>
-        Add <link linkend="SQL-ALTERTABLE"><command>ALTER TABLE ...
-        ADD UNIQUE/PRIMARY KEY USING INDEX</command></link>
+        Add <command>ALTER TABLE ...
+        ADD UNIQUE/PRIMARY KEY USING INDEX</command>
         (Gurjeet Singh)
        </para>
 
@@ -1029,7 +1029,7 @@
 
       <listitem>
        <para>
-        Allow <link linkend="SQL-ALTERTABLE"><command>ALTER TABLE</></link>
+        Allow <command>ALTER TABLE</>
         to add foreign keys without validation (Simon Riggs)
        </para>
 
@@ -1074,7 +1074,7 @@
        </para>
 
        <para>
-        <xref linkend="sql-altertable"> now takes a stronger lock on the
+        <command>ALTER TABLE INHERIT</> now takes a stronger lock on the
         parent table, so that both children do not try to update it
         simultaneously.
        </para>
