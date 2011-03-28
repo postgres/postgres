@@ -65,6 +65,8 @@ $(call recurse,check-world,src/test src/pl src/interfaces/ecpg,check)
 
 $(call recurse,installcheck-world,src/test src/pl src/interfaces/ecpg contrib,installcheck)
 
+$(call recurse,maintainer-check,doc src config contrib)
+
 GNUmakefile: GNUmakefile.in $(top_builddir)/config.status
 	./config.status $@
 

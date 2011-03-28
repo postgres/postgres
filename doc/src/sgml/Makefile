@@ -279,7 +279,7 @@ MAKEINFO = makeinfo
 ##
 
 # Quick syntax check without style processing
-check: postgres.sgml $(ALMOSTALLSGML) check-tabs
+check maintainer-check: postgres.sgml $(ALMOSTALLSGML) check-tabs
 	$(NSGMLS) $(SPFLAGS) $(SGMLINCLUDE) -s $<
 
 

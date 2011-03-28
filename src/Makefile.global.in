@@ -18,9 +18,9 @@
 #
 # Meta configuration
 
-standard_targets = all install installdirs uninstall distprep clean distclean maintainer-clean coverage check installcheck
+standard_targets = all install installdirs uninstall distprep clean distclean maintainer-clean coverage check installcheck maintainer-check
 
-.PHONY: $(standard_targets) install-strip maintainer-check html man installcheck-parallel
+.PHONY: $(standard_targets) install-strip html man installcheck-parallel
 
 # make `all' the default target
 all:
