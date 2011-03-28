@@ -246,7 +246,7 @@ createdb: database creation failed: ERROR:  permission denied to create database
     You can also create databases with other names.
     <productname>PostgreSQL</productname> allows you to create any
     number of databases at a given site.  Database names must have an
-    alphabetic first character and are limited to 63 characters in
+    alphabetic first character and are limited to 63 bytes in
     length.  A convenient choice is to create a database with the same
     name as your current user name.  Many tools assume that database
     name as the default, so it can save you some typing.  To create
