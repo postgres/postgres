@@ -22,6 +22,9 @@ sed -n	-e 's/^DATA(insert *OID *= *\([0-9][0-9]*\).*$/\1/p' \
 	-e 's/^DECLARE_TOAST([^,]*, *\([0-9][0-9]*\), *\([0-9][0-9]*\).*$/\1,\2/p' | \
 tr ',' '\n' | \
 sort -n | \
-uniq -d
+uniq -d | \
+grep '.'
 
-exit 0
+# nonzero exit code if lines were produced
+[ $? -eq 1 ]
+exit
