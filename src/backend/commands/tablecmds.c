@@ -3944,23 +3944,34 @@ find_composite_type_dependencies(Oid typeOid, Relation origRelation,
 
 		if (rel->rd_rel->relkind == RELKIND_RELATION)
 		{
-			const char *msg;
-
-			if (origTypeName
-				|| origRelation->rd_rel->relkind == RELKIND_COMPOSITE_TYPE)
-				msg = gettext_noop("cannot alter type \"%s\" because column \"%s\".\"%s\" uses it");
+			if (origTypeName)
+				ereport(ERROR,
+						(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+						 errmsg("cannot alter type \"%s\" because column \"%s\".\"%s\" uses it",
+								origTypeName,
+								RelationGetRelationName(rel),
+								NameStr(att->attname))));
+			else if (origRelation->rd_rel->relkind == RELKIND_COMPOSITE_TYPE)
+				ereport(ERROR,
+						(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+						 errmsg("cannot alter type \"%s\" because column \"%s\".\"%s\" uses it",
+								RelationGetRelationName(origRelation),
+								RelationGetRelationName(rel),
+								NameStr(att->attname))));
 			else if (origRelation->rd_rel->relkind == RELKIND_FOREIGN_TABLE)
-				msg = gettext_noop("cannot alter foreign table \"%s\" because column \"%s\".\"%s\" uses its rowtype");
+				ereport(ERROR,
+						(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+						 errmsg("cannot alter foreign table \"%s\" because column \"%s\".\"%s\" uses its rowtype",
+								RelationGetRelationName(origRelation),
+								RelationGetRelationName(rel),
+								NameStr(att->attname))));
 			else
-				msg = gettext_noop("cannot alter table \"%s\" because column \"%s\".\"%s\" uses its rowtype");
-
-			ereport(ERROR,
-					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-					 errmsg(msg,
-							origTypeName ? origTypeName
-								: RelationGetRelationName(origRelation),
-							RelationGetRelationName(rel),
-							NameStr(att->attname))));
+				ereport(ERROR,
+						(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+						 errmsg("cannot alter table \"%s\" because column \"%s\".\"%s\" uses its rowtype",
+								RelationGetRelationName(origRelation),
+								RelationGetRelationName(rel),
+								NameStr(att->attname))));
 		}
 		else if (OidIsValid(rel->rd_rel->reltype))
 		{
