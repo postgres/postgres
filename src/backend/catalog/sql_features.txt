@@ -283,7 +283,7 @@ F661	Simple tables			YES
 F671	Subqueries in CHECK			NO	intentionally omitted
 F672	Retrospective check constraints			YES	
 F690	Collation support			YES	but no character set support
-F692	Enhanced collation support			NO	
+F692	Extended collation support			YES	
 F693	SQL-session and client module collations			NO	
 F695	Translation support			NO	
 F696	Additional translation documentation			NO	
