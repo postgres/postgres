@@ -169,7 +169,11 @@ start_postmaster(ClusterInfo *cluster, bool quiet)
 	 * same file because we get the error: "The process cannot access the file
 	 * because it is being used by another process." so we have to send all
 	 * other output to 'nul'.
-	 */
+	 *
+	 * Using autovacuum=off disables cleanup vacuum and analyze, but
+	 * freeze vacuums can still happen, so we set
+	 * autovacuum_freeze_max_age high too.
+	 */	
 	snprintf(cmd, sizeof(cmd),
 			 SYSTEMQUOTE "\"%s/pg_ctl\" -l \"%s\" -D \"%s\" "
 			 "-o \"-p %d -c autovacuum=off "
