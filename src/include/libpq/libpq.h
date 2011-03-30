@@ -60,7 +60,10 @@ extern int	pq_peekbyte(void);
 extern int	pq_getbyte_if_available(unsigned char *c);
 extern int	pq_putbytes(const char *s, size_t len);
 extern int	pq_flush(void);
+extern int	pq_flush_if_writable(void);
+extern bool	pq_is_send_pending(void);
 extern int	pq_putmessage(char msgtype, const char *s, size_t len);
+extern void pq_putmessage_noblock(char msgtype, const char *s, size_t len);
 extern void pq_startcopyout(void);
 extern void pq_endcopyout(bool errorAbort);
 

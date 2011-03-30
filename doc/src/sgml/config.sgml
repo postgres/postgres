@@ -2019,6 +2019,29 @@ SET ENABLE_SEQSCAN TO OFF;
        </para>
       </listitem>
      </varlistentry>
+
+     <varlistentry id="guc-replication-timeout" xreflabel="replication_timeout">
+      <term><varname>replication_timeout</varname> (<type>integer</type>)</term>
+      <indexterm>
+       <primary><varname>replication_timeout</> configuration parameter</primary>
+      </indexterm>
+      <listitem>
+       <para>
+        Terminate replication connections that are inactive longer
+        than the specified number of milliseconds. This is useful for
+        the primary server to detect a standby crash or network outage.
+        A value of zero means wait forever.  This parameter can only be set in
+        the <filename>postgresql.conf</> file or on the server command line.
+        The default value is 60 seconds.
+       </para>
+       <para>
+        To prevent connections from being terminated prematurely,
+        <xref linkend="guc-wal-receiver-status-interval">
+        must be enabled on the standby, and its value must be less than the
+        value of <varname>replication_timeout</>.
+       </para>
+      </listitem>
+     </varlistentry>
      </variablelist>
     </sect2>
 
@@ -2215,6 +2238,11 @@ SET ENABLE_SEQSCAN TO OFF;
        disables status updates completely.  This parameter can only be set in
        the <filename>postgresql.conf</> file or on the server command line.
        The default value is 10 seconds.
+      </para>
+      <para>
+       When <xref linkend="guc-replication-timeout"> is enabled on the primary,
+       <varname>wal_receiver_status_interval</> must be enabled, and its value
+       must be less than the value of <varname>replication_timeout</>.
       </para>
       </listitem>
      </varlistentry>

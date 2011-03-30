@@ -40,7 +40,7 @@ extern void OwnLatch(volatile Latch *latch);
 extern void DisownLatch(volatile Latch *latch);
 extern bool WaitLatch(volatile Latch *latch, long timeout);
 extern int	WaitLatchOrSocket(volatile Latch *latch, pgsocket sock,
-				  long timeout);
+				  bool forRead, bool forWrite, long timeout);
 extern void SetLatch(volatile Latch *latch);
 extern void ResetLatch(volatile Latch *latch);
 #define TestLatch(latch) (((volatile Latch *) latch)->is_set)

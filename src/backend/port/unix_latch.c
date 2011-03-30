@@ -193,19 +193,21 @@ DisownLatch(volatile Latch *latch)
 bool
 WaitLatch(volatile Latch *latch, long timeout)
 {
-	return WaitLatchOrSocket(latch, PGINVALID_SOCKET, timeout) > 0;
+	return WaitLatchOrSocket(latch, PGINVALID_SOCKET, false, false, timeout) > 0;
 }
 
 /*
  * Like WaitLatch, but will also return when there's data available in
- * 'sock' for reading. Returns 0 if timeout was reached, 1 if the latch
- * was set, or 2 if the scoket became readable.
+ * 'sock' for reading or writing. Returns 0 if timeout was reached,
+ * 1 if the latch was set, 2 if the socket became readable or writable.
  */
 int
-WaitLatchOrSocket(volatile Latch *latch, pgsocket sock, long timeout)
+WaitLatchOrSocket(volatile Latch *latch, pgsocket sock, bool forRead,
+				  bool forWrite, long timeout)
 {
 	struct timeval tv, *tvp = NULL;
 	fd_set		input_mask;
+	fd_set		output_mask;
 	int			rc;
 	int			result = 0;
 
@@ -241,14 +243,22 @@ WaitLatchOrSocket(volatile Latch *latch, pgsocket sock, long timeout)
 		FD_ZERO(&input_mask);
 		FD_SET(selfpipe_readfd, &input_mask);
 		hifd = selfpipe_readfd;
-		if (sock != PGINVALID_SOCKET)
+		if (sock != PGINVALID_SOCKET && forRead)
 		{
 			FD_SET(sock, &input_mask);
 			if (sock > hifd)
 				hifd = sock;
 		}
 
-		rc = select(hifd + 1, &input_mask, NULL, NULL, tvp);
+		FD_ZERO(&output_mask);
+		if (sock != PGINVALID_SOCKET && forWrite)
+		{
+			FD_SET(sock, &output_mask);
+			if (sock > hifd)
+				hifd = sock;
+		}
+
+		rc = select(hifd + 1, &input_mask, &output_mask, NULL, tvp);
 		if (rc < 0)
 		{
 			if (errno == EINTR)
@@ -263,7 +273,9 @@ WaitLatchOrSocket(volatile Latch *latch, pgsocket sock, long timeout)
 			result = 0;
 			break;
 		}
-		if (sock != PGINVALID_SOCKET && FD_ISSET(sock, &input_mask))
+		if (sock != PGINVALID_SOCKET &&
+			((forRead && FD_ISSET(sock, &input_mask)) ||
+			 (forWrite && FD_ISSET(sock, &output_mask))))
 		{
 			result = 2;
 			break;		/* data available in socket */

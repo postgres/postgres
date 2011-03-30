@@ -85,11 +85,12 @@ DisownLatch(volatile Latch *latch)
 bool
 WaitLatch(volatile Latch *latch, long timeout)
 {
-	return WaitLatchOrSocket(latch, PGINVALID_SOCKET, timeout) > 0;
+	return WaitLatchOrSocket(latch, PGINVALID_SOCKET, false, false, timeout) > 0;
 }
 
 int
-WaitLatchOrSocket(volatile Latch *latch, SOCKET sock, long timeout)
+WaitLatchOrSocket(volatile Latch *latch, SOCKET sock, bool forRead,
+				  bool forWrite, long timeout)
 {
 	DWORD		rc;
 	HANDLE		events[3];
@@ -103,10 +104,17 @@ WaitLatchOrSocket(volatile Latch *latch, SOCKET sock, long timeout)
 	events[0] = latchevent;
 	events[1] = pgwin32_signal_event;
 	numevents = 2;
-	if (sock != PGINVALID_SOCKET)
+	if (sock != PGINVALID_SOCKET && (forRead || forWrite))
 	{
+		int		flags = 0;
+
+		if (forRead)
+			flags |= FD_READ;
+		if (forWrite)
+			flags |= FD_WRITE;
+
 		sockevent = WSACreateEvent();
-		WSAEventSelect(sock, sockevent, FD_READ);
+		WSAEventSelect(sock, sockevent, flags);
 		events[numevents++] = sockevent;
 	}
 
@@ -139,8 +147,18 @@ WaitLatchOrSocket(volatile Latch *latch, SOCKET sock, long timeout)
 			pgwin32_dispatch_queued_signals();
 		else if (rc == WAIT_OBJECT_0 + 2)
 		{
+			WSANETWORKEVENTS resEvents;
+
 			Assert(sock != PGINVALID_SOCKET);
-			result = 2;
+
+			ZeroMemory(&resEvents, sizeof(resEvents));
+			if (WSAEnumNetworkEvents(sock, sockevent, &resEvents) == SOCKET_ERROR)
+				ereport(FATAL,
+						(errmsg_internal("failed to enumerate network events: %i", (int) GetLastError())));
+
+			if ((forRead && resEvents.lNetworkEvents & FD_READ) ||
+				(forWrite && resEvents.lNetworkEvents & FD_WRITE))
+				result = 2;
 			break;
 		}
 		else if (rc != WAIT_OBJECT_0)
@@ -148,7 +166,7 @@ WaitLatchOrSocket(volatile Latch *latch, SOCKET sock, long timeout)
 	}
 
 	/* Clean up the handle we created for the socket */
-		if (sock != PGINVALID_SOCKET)
+	if (sock != PGINVALID_SOCKET && (forRead || forWrite))
 	{
 		WSAEventSelect(sock, sockevent, 0);
 		WSACloseEvent(sockevent);

@@ -200,6 +200,7 @@
 #wal_sender_delay = 1s		# walsender cycle time, 1-10000 milliseconds
 #wal_keep_segments = 0		# in logfile segments, 16MB each; 0 disables
 #vacuum_defer_cleanup_age = 0	# number of xacts by which cleanup is delayed
+#replication_timeout = 60s # in milliseconds, 0 is disabled
 
 # - Standby Servers -
 

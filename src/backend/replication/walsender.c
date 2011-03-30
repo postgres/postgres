@@ -74,6 +74,7 @@ bool		am_walsender = false;		/* Am I a walsender process ? */
 /* User-settable parameters for walsender */
 int			max_wal_senders = 0;	/* the maximum number of concurrent walsenders */
 int			WalSndDelay = 1000;	/* max sleep time between some actions */
+int			replication_timeout = 60 * 1000;	/* maximum time to send one WAL data message */
 
 /*
  * These variables are used similarly to openLogFile/Id/Seg/Off,
@@ -95,6 +96,11 @@ static XLogRecPtr sentPtr = {0, 0};
  */
 static StringInfoData reply_message;
 
+/*
+ * Timestamp of the last receipt of the reply from the standby.
+ */
+static TimestampTz last_reply_timestamp;
+
 /* Flags set by signal handlers for later service in main loop */
 static volatile sig_atomic_t got_SIGHUP = false;
 volatile sig_atomic_t walsender_shutdown_requested = false;
@@ -113,7 +119,7 @@ static int	WalSndLoop(void);
 static void InitWalSnd(void);
 static void WalSndHandshake(void);
 static void WalSndKill(int code, Datum arg);
-static bool XLogSend(char *msgbuf, bool *caughtup);
+static void XLogSend(char *msgbuf, bool *caughtup);
 static void IdentifySystem(void);
 static void StartReplication(StartReplicationCmd * cmd);
 static void ProcessStandbyMessage(void);
@@ -469,6 +475,7 @@ ProcessRepliesIfAny(void)
 {
 	unsigned char firstchar;
 	int			r;
+	int		received = false;
 
 	for (;;)
 	{
@@ -484,7 +491,7 @@ ProcessRepliesIfAny(void)
 		if (r == 0)
 		{
 			/* no data available without blocking */
-			return;
+			break;
 		}
 
 		/* Handle the very limited subset of commands expected in this phase */
@@ -495,6 +502,7 @@ ProcessRepliesIfAny(void)
 				 */
 			case 'd':
 				ProcessStandbyMessage();
+				received = true;
 				break;
 
 				/*
@@ -510,6 +518,12 @@ ProcessRepliesIfAny(void)
 								firstchar)));
 		}
 	}
+	/*
+	 * Save the last reply timestamp if we've received at least
+	 * one reply.
+	 */
+	if (received)
+		last_reply_timestamp = GetCurrentTimestamp();
 }
 
 /*
@@ -688,6 +702,9 @@ WalSndLoop(void)
 	 */
 	initStringInfo(&reply_message);
 
+	/* Initialize the last reply timestamp */
+	last_reply_timestamp = GetCurrentTimestamp();
+
 	/* Loop forever, unless we get an error */
 	for (;;)
 	{
@@ -706,19 +723,6 @@ WalSndLoop(void)
 			SyncRepInitConfig();
 		}
 
-		/*
-		 * When SIGUSR2 arrives, we send all outstanding logs up to the
-		 * shutdown checkpoint record (i.e., the latest record) and exit.
-		 */
-		if (walsender_ready_to_stop)
-		{
-			if (!XLogSend(output_message, &caughtup))
-				break;
-			ProcessRepliesIfAny();
-			if (caughtup)
-				walsender_shutdown_requested = true;
-		}
-
 		/* Normal exit from the walsender is here */
 		if (walsender_shutdown_requested)
 		{
@@ -730,11 +734,13 @@ WalSndLoop(void)
 		}
 
 		/*
-		 * If we had sent all accumulated WAL in last round, nap for the
-		 * configured time before retrying.
+		 * If we don't have any pending data in the output buffer, try to
+		 * send some more.
 		 */
-		if (caughtup)
+		if (!pq_is_send_pending())
 		{
+			XLogSend(output_message, &caughtup);
+
 			/*
 			 * Even if we wrote all the WAL that was available when we started
 			 * sending, more might have arrived while we were sending this
@@ -742,28 +748,79 @@ WalSndLoop(void)
 			 * received any signals from that time. Let's arm the latch
 			 * again, and after that check that we're still up-to-date.
 			 */
-			ResetLatch(&MyWalSnd->latch);
-
-			if (!XLogSend(output_message, &caughtup))
-				break;
-			if (caughtup && !got_SIGHUP && !walsender_ready_to_stop && !walsender_shutdown_requested)
+			if (caughtup && !pq_is_send_pending())
 			{
-				/*
-				 * XXX: We don't really need the periodic wakeups anymore,
-				 * WaitLatchOrSocket should reliably wake up as soon as
-				 * something interesting happens.
-				 */
+				ResetLatch(&MyWalSnd->latch);
 
-				/* Sleep */
-				WaitLatchOrSocket(&MyWalSnd->latch, MyProcPort->sock,
-								  WalSndDelay * 1000L);
+				XLogSend(output_message, &caughtup);
 			}
 		}
-		else
+
+		/* Flush pending output to the client */
+		if (pq_flush_if_writable() != 0)
+			break;
+
+		/*
+		 * When SIGUSR2 arrives, we send any outstanding logs up to the
+		 * shutdown checkpoint record (i.e., the latest record) and exit.
+		 */
+		if (walsender_ready_to_stop && !pq_is_send_pending())
 		{
-			/* Attempt to send the log once every loop */
-			if (!XLogSend(output_message, &caughtup))
+			XLogSend(output_message, &caughtup);
+			ProcessRepliesIfAny();
+			if (caughtup && !pq_is_send_pending())
+				walsender_shutdown_requested = true;
+		}
+
+		if ((caughtup || pq_is_send_pending()) &&
+			!got_SIGHUP &&
+			!walsender_shutdown_requested)
+		{
+			TimestampTz	finish_time;
+			long		sleeptime;
+
+			/* Reschedule replication timeout */
+			if (replication_timeout > 0)
+			{
+				long		secs;
+				int		usecs;
+
+				finish_time = TimestampTzPlusMilliseconds(last_reply_timestamp,
+														  replication_timeout);
+				TimestampDifference(GetCurrentTimestamp(),
+									finish_time, &secs, &usecs);
+				sleeptime = secs * 1000 + usecs / 1000;
+				if (WalSndDelay < sleeptime)
+					sleeptime = WalSndDelay;
+			}
+			else
+			{
+				/*
+				 * XXX: Without timeout, we don't really need the periodic
+				 * wakeups anymore, WaitLatchOrSocket should reliably wake up
+				 * as soon as something interesting happens.
+				 */
+				sleeptime = WalSndDelay;
+			}
+
+			/* Sleep */
+			WaitLatchOrSocket(&MyWalSnd->latch, MyProcPort->sock,
+							  true, pq_is_send_pending(),
+							  sleeptime * 1000L);
+
+			/* Check for replication timeout */
+			if (replication_timeout > 0 &&
+				GetCurrentTimestamp() >= finish_time)
+			{
+				/*
+				 * Since typically expiration of replication timeout means
+				 * communication problem, we don't send the error message
+				 * to the standby.
+				 */
+				ereport(COMMERROR,
+						(errmsg("terminating walsender process due to replication timeout")));
 				break;
+			}
 		}
 
 		/*
@@ -993,7 +1050,8 @@ XLogRead(char *buf, XLogRecPtr recptr, Size nbytes)
 
 /*
  * Read up to MAX_SEND_SIZE bytes of WAL that's been flushed to disk,
- * but not yet sent to the client, and send it.
+ * but not yet sent to the client, and buffer it in the libpq output
+ * buffer.
  *
  * msgbuf is a work area in which the output message is constructed.  It's
  * passed in just so we can avoid re-palloc'ing the buffer on each cycle.
@@ -1001,10 +1059,9 @@ XLogRead(char *buf, XLogRecPtr recptr, Size nbytes)
  *
  * If there is no unsent WAL remaining, *caughtup is set to true, otherwise
  * *caughtup is set to false.
- *
- * Returns true if OK, false if trouble.
+
  */
-static bool
+static void
 XLogSend(char *msgbuf, bool *caughtup)
 {
 	XLogRecPtr	SendRqstPtr;
@@ -1027,7 +1084,7 @@ XLogSend(char *msgbuf, bool *caughtup)
 	if (XLByteLE(SendRqstPtr, sentPtr))
 	{
 		*caughtup = true;
-		return true;
+		return;
 	}
 
 	/*
@@ -1099,11 +1156,7 @@ XLogSend(char *msgbuf, bool *caughtup)
 
 	memcpy(msgbuf + 1, &msghdr, sizeof(WalDataMessageHeader));
 
-	pq_putmessage('d', msgbuf, 1 + sizeof(WalDataMessageHeader) + nbytes);
-
-	/* Flush pending output to the client */
-	if (pq_flush())
-		return false;
+	pq_putmessage_noblock('d', msgbuf, 1 + sizeof(WalDataMessageHeader) + nbytes);
 
 	sentPtr = endptr;
 
@@ -1127,7 +1180,7 @@ XLogSend(char *msgbuf, bool *caughtup)
 		set_ps_display(activitymsg, false);
 	}
 
-	return true;
+	return;
 }
 
 /* SIGHUP: set flag to re-read config file at next convenient time */

@@ -14,7 +14,8 @@
 #include "postgres.h"
 
 /*
- * Indicate if pgwin32_recv() should operate in non-blocking mode.
+ * Indicate if pgwin32_recv() and pgwin32_send() should operate
+ * in non-blocking mode.
  *
  * Since the socket emulation layer always sets the actual socket to
  * non-blocking mode in order to be able to deliver signals, we must
@@ -396,6 +397,16 @@ pgwin32_send(SOCKET s, char *buf, int len, int flags)
 			WSAGetLastError() != WSAEWOULDBLOCK)
 		{
 			TranslateSocketError();
+			return -1;
+		}
+
+		if (pgwin32_noblock)
+		{
+			/*
+			 * No data sent, and we are in "emulated non-blocking mode", so
+			 * return indicating that we'd block if we were to continue.
+			 */
+			errno = EWOULDBLOCK;
 			return -1;
 		}
 

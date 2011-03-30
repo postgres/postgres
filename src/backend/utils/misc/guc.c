@@ -1856,6 +1856,16 @@ static struct config_int ConfigureNamesInt[] =
 	},
 
 	{
+		{"replication_timeout", PGC_SIGHUP, WAL_REPLICATION,
+			gettext_noop("Sets the maximum time to wait for WAL replication."),
+			NULL,
+			GUC_UNIT_MS
+		},
+		&replication_timeout,
+		60 * 1000, 0, INT_MAX, NULL, NULL
+	},
+
+	{
 		{"commit_delay", PGC_USERSET, WAL_SETTINGS,
 			gettext_noop("Sets the delay in microseconds between transaction commit and "
 						 "flushing WAL to disk."),
