@@ -2869,7 +2869,7 @@ PQparamtype(const PGresult *res, int param_num)
 
 /* PQsetnonblocking:
  *	sets the PGconn's database connection non-blocking if the arg is TRUE
- *	or makes it non-blocking if the arg is FALSE, this will not protect
+ *	or makes it blocking if the arg is FALSE, this will not protect
  *	you from PQexec(), you'll only be safe when using the non-blocking API.
  *	Needs to be called only on a connected database connection.
  */

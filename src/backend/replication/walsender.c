@@ -506,7 +506,7 @@ ProcessRepliesIfAny(void)
 			default:
 				ereport(FATAL,
 						(errcode(ERRCODE_PROTOCOL_VIOLATION),
-						 errmsg("invalid standby closing message type %d",
+						 errmsg("invalid standby message type %d",
 								firstchar)));
 		}
 	}
