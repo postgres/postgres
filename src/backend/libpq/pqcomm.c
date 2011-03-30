@@ -663,7 +663,7 @@ StreamConnection(pgsocket server_fd, Port *port)
 		 * This is a Win32 socket optimization.  The ideal size is 32k.
 		 * http://support.microsoft.com/kb/823764/EN-US/
 		 */
-		on = PQ_BUFFER_SIZE * 4;
+		on = PQ_SEND_BUFFER_SIZE * 4;
 		if (setsockopt(port->sock, SOL_SOCKET, SO_SNDBUF, (char *) &on,
 					   sizeof(on)) < 0)
 		{
