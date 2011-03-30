@@ -5997,8 +5997,7 @@ StartupXLOG(void)
 		}
 
 		/*
-		 * set backupStartupPoint if we're starting archive recovery from a
-		 * base backup
+		 * set backupStartPoint if we're starting recovery from a base backup
 		 */
 		if (haveBackupLabel)
 			ControlFile->backupStartPoint = checkPoint.redo;
@@ -6319,7 +6318,7 @@ StartupXLOG(void)
 	 * be further ahead --- ControlFile->minRecoveryPoint cannot have been
 	 * advanced beyond the WAL we processed.
 	 */
-	if (InArchiveRecovery &&
+	if (InRecovery &&
 		(XLByteLT(EndOfLog, minRecoveryPoint) ||
 		 !XLogRecPtrIsInvalid(ControlFile->backupStartPoint)))
 	{
@@ -7911,8 +7910,7 @@ xlog_redo(XLogRecPtr lsn, XLogRecord *record)
 		 * record, the backup was cancelled and the end-of-backup record will
 		 * never arrive.
 		 */
-		if (InArchiveRecovery &&
-			!XLogRecPtrIsInvalid(ControlFile->backupStartPoint))
+		if (!XLogRecPtrIsInvalid(ControlFile->backupStartPoint))
 			ereport(ERROR,
 					(errmsg("online backup was cancelled, recovery cannot continue")));
 
