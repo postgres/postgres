@@ -592,7 +592,7 @@ plpython_inline_handler(PG_FUNCTION_ARGS)
 	FunctionCallInfoData fake_fcinfo;
 	FmgrInfo	flinfo;
 	PLyProcedure *save_curr_proc;
-	PLyProcedure *volatile proc = NULL;
+	PLyProcedure proc;
 	ErrorContextCallback plerrcontext;
 
 	if (SPI_connect() != SPI_OK_CONNECT)
@@ -613,26 +613,26 @@ plpython_inline_handler(PG_FUNCTION_ARGS)
 	flinfo.fn_oid = InvalidOid;
 	flinfo.fn_mcxt = CurrentMemoryContext;
 
-	proc = PLy_malloc0(sizeof(PLyProcedure));
-	proc->pyname = PLy_strdup("__plpython_inline_block");
-	proc->result.out.d.typoid = VOIDOID;
+	MemSet(&proc, 0, sizeof(PLyProcedure));
+	proc.pyname = PLy_strdup("__plpython_inline_block");
+	proc.result.out.d.typoid = VOIDOID;
 
 	PG_TRY();
 	{
-		PLy_procedure_compile(proc, codeblock->source_text);
-		PLy_curr_procedure = proc;
-		PLy_function_handler(&fake_fcinfo, proc);
+		PLy_procedure_compile(&proc, codeblock->source_text);
+		PLy_curr_procedure = &proc;
+		PLy_function_handler(&fake_fcinfo, &proc);
 	}
 	PG_CATCH();
 	{
-		PLy_procedure_delete(proc);
+		PLy_procedure_delete(&proc);
 		PLy_curr_procedure = save_curr_proc;
 		PyErr_Clear();
 		PG_RE_THROW();
 	}
 	PG_END_TRY();
 
-	PLy_procedure_delete(proc);
+	PLy_procedure_delete(&proc);
 
 	/* Pop the error context stack */
 	error_context_stack = plerrcontext.previous;
