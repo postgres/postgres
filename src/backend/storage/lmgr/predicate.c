@@ -1755,9 +1755,8 @@ CoarserLockCovers(const PREDICATELOCKTARGETTAG *newtargettag)
 }
 
 /*
- * Check whether both the list of related predicate locks and the pointer to
- * a prior version of the row (if this is a tuple lock target) are empty for
- * a predicate lock target, and remove the target if they are.
+ * Check whether the list of related predicate locks is empty for a
+ * predicate lock target, and remove the target if it is.
  */
 static void
 RemoveTargetIfNoLongerUsed(PREDICATELOCKTARGET *target, uint32 targettaghash)
@@ -3120,11 +3119,11 @@ ClearOldPredicateLocks(void)
 	/*
 	 * Loop through predicate locks on dummy transaction for summarized data.
 	 */
+	LWLockAcquire(SerializablePredicateLockListLock, LW_SHARED);
 	predlock = (PREDICATELOCK *)
 		SHMQueueNext(&OldCommittedSxact->predicateLocks,
 					 &OldCommittedSxact->predicateLocks,
 					 offsetof(PREDICATELOCK, xactLink));
-	LWLockAcquire(SerializablePredicateLockListLock, LW_SHARED);
 	while (predlock)
 	{
 		PREDICATELOCK *nextpredlock;
