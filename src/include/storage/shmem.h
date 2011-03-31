@@ -50,7 +50,7 @@ extern void RequestAddinShmemSpace(Size size);
  /* max size of data structure string name */
 #define SHMEM_INDEX_KEYSIZE		 (48)
  /* estimated size of the shmem index table (not a hard limit) */
-#define SHMEM_INDEX_SIZE		 (32)
+#define SHMEM_INDEX_SIZE		 (64)
 
 /* this is a hash bucket in the shmem index table */
 typedef struct
