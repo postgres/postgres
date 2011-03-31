@@ -6616,7 +6616,12 @@ StartupXLOG(void)
 		if (reachedStopPoint)	/* stopped because of stop request */
 			ereport(FATAL,
 					(errmsg("requested recovery stop point is before consistent recovery point")));
-		else	/* ran off end of WAL */
+		/* ran off end of WAL */
+		if (!XLogRecPtrIsInvalid(ControlFile->backupStartPoint))
+			ereport(FATAL,
+					(errmsg("WAL ends before end of online backup"),
+					 errhint("Online backup started with pg_start_backup() must be ended with pg_stop_backup(), and all WAL up to that point must be available at recovery.")));
+		else
 			ereport(FATAL,
 					(errmsg("WAL ends before consistent recovery point")));
 	}
