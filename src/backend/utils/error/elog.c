@@ -1668,10 +1668,14 @@ write_console(const char *line, int len)
 	/*
 	 * WriteConsoleW() will fail of stdout is redirected, so just fall through
 	 * to writing unconverted to the logfile in this case.
+	 *
+	 * Since we palloc the structure required for conversion, also fall through
+	 * to writing unconverted if we have not yet set up CurrentMemoryContext.
 	 */
 	if (GetDatabaseEncoding() != GetPlatformEncoding() &&
 		!in_error_recursion_trouble() &&
-		!redirection_done)
+		!redirection_done &&
+		CurrentMemoryContext != NULL)
 	{
 		WCHAR	   *utf16;
 		int			utf16len;
