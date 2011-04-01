@@ -153,7 +153,7 @@ InternalIpcMemoryCreate(IpcMemoryKey memKey, Size size)
 		  "segment exceeded your kernel's SHMMAX parameter.  You can either "
 						 "reduce the request size or reconfigure the kernel with larger SHMMAX.  "
 				  "To reduce the request size (currently %lu bytes), reduce "
-					   "PostgreSQL's shared memory usage, perhaps by reducing shared_buffers"
+					   "PostgreSQL's shared memory usage, perhaps by reducing shared_buffers "
 						 "or max_connections.\n"
 						 "If the request size is already small, it's possible that it is less than "
 						 "your kernel's SHMMIN parameter, in which case raising the request size or "
@@ -167,7 +167,7 @@ InternalIpcMemoryCreate(IpcMemoryKey memKey, Size size)
 						 "or exceeded your kernel's SHMALL parameter.  You can either "
 						 "reduce the request size or reconfigure the kernel with larger SHMALL.  "
 				  "To reduce the request size (currently %lu bytes), reduce "
-					   "PostgreSQL's shared memory usage, perhaps by reducing shared_buffers"
+					   "PostgreSQL's shared memory usage, perhaps by reducing shared_buffers "
 						 "or max_connections.\n"
 		"The PostgreSQL documentation contains more information about shared "
 						 "memory configuration.",
