@@ -11059,6 +11059,11 @@ dumpForeignDataWrapper(Archive *fout, FdwInfo *fdwinfo)
 			NULL, fdwinfo->rolname,
 			fdwinfo->fdwacl);
 
+	/* Dump Foreign Data Wrapper Comments */
+	dumpComment(fout, labelq->data,
+				NULL, fdwinfo->rolname,
+				fdwinfo->dobj.catId, 0, fdwinfo->dobj.dumpId);
+
 	free(qfdwname);
 
 	destroyPQExpBuffer(q);
@@ -11162,6 +11167,11 @@ dumpForeignServer(Archive *fout, ForeignServerInfo *srvinfo)
 					 srvinfo->dobj.name, NULL,
 					 srvinfo->rolname,
 					 srvinfo->dobj.catId, srvinfo->dobj.dumpId);
+
+	/* Dump Foreign Server Comments */
+	dumpComment(fout, labelq->data,
+				NULL, srvinfo->rolname,
+				srvinfo->dobj.catId, 0, srvinfo->dobj.dumpId);
 
 	free(qsrvname);
 
