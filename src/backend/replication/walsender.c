@@ -776,7 +776,7 @@ WalSndLoop(void)
 			!got_SIGHUP &&
 			!walsender_shutdown_requested)
 		{
-			TimestampTz	finish_time;
+			TimestampTz	finish_time = 0;
 			long		sleeptime;
 
 			/* Reschedule replication timeout */
