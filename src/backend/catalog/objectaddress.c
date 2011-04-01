@@ -30,6 +30,8 @@
 #include "catalog/pg_conversion.h"
 #include "catalog/pg_database.h"
 #include "catalog/pg_extension.h"
+#include "catalog/pg_foreign_data_wrapper.h"
+#include "catalog/pg_foreign_server.h"
 #include "catalog/pg_language.h"
 #include "catalog/pg_largeobject.h"
 #include "catalog/pg_largeobject_metadata.h"
@@ -52,6 +54,7 @@
 #include "commands/proclang.h"
 #include "commands/tablespace.h"
 #include "commands/trigger.h"
+#include "foreign/foreign.h"
 #include "libpq/be-fsstubs.h"
 #include "miscadmin.h"
 #include "nodes/makefuncs.h"
@@ -140,6 +143,8 @@ get_object_address(ObjectType objtype, List *objname, List *objargs,
 		case OBJECT_ROLE:
 		case OBJECT_SCHEMA:
 		case OBJECT_LANGUAGE:
+		case OBJECT_FDW:
+		case OBJECT_FOREIGN_SERVER:
 			address = get_object_address_unqualified(objtype, objname);
 			break;
 		case OBJECT_TYPE:
@@ -295,6 +300,12 @@ get_object_address_unqualified(ObjectType objtype, List *qualname)
 			case OBJECT_LANGUAGE:
 				msg = gettext_noop("language name cannot be qualified");
 				break;
+			case OBJECT_FDW:
+				msg = gettext_noop("foreign-data wrapper name cannot be qualified");
+				break;
+			case OBJECT_FOREIGN_SERVER:
+				msg = gettext_noop("server name cannot be qualified");
+				break;
 			default:
 				elog(ERROR, "unrecognized objtype: %d", (int) objtype);
 				msg = NULL;			/* placate compiler */
@@ -338,6 +349,16 @@ get_object_address_unqualified(ObjectType objtype, List *qualname)
 		case OBJECT_LANGUAGE:
 			address.classId = LanguageRelationId;
 			address.objectId = get_language_oid(name, false);
+			address.objectSubId = 0;
+			break;
+		case OBJECT_FDW:
+			address.classId = ForeignDataWrapperRelationId;
+			address.objectId = get_foreign_data_wrapper_oid(name, false);
+			address.objectSubId = 0;
+			break;
+		case OBJECT_FOREIGN_SERVER:
+			address.classId = ForeignServerRelationId;
+			address.objectId = get_foreign_server_oid(name, false);
 			address.objectSubId = 0;
 			break;
 		default:
@@ -655,6 +676,12 @@ object_exists(ObjectAddress address)
 		case CastRelationId:
 			indexoid = CastOidIndexId;
 			break;
+		case ForeignDataWrapperRelationId:
+			cache = FOREIGNDATAWRAPPEROID;
+			break;
+		case ForeignServerRelationId:
+			cache = FOREIGNSERVEROID;
+			break;
 		case TSParserRelationId:
 			cache = TSPARSEROID;
 			break;
@@ -758,6 +785,11 @@ check_object_ownership(Oid roleid, ObjectType objtype, ObjectAddress address,
 				aclcheck_error(ACLCHECK_NOT_OWNER, ACL_KIND_EXTENSION,
 							   NameListToString(objname));
 			break;
+		case OBJECT_FDW:
+			if (!pg_foreign_data_wrapper_ownercheck(address.objectId, roleid))
+				aclcheck_error(ACLCHECK_NOT_OWNER, ACL_KIND_FDW,
+							   NameListToString(objname));
+			break;
 		case OBJECT_FOREIGN_SERVER:
 			if (!pg_foreign_server_ownercheck(address.objectId, roleid))
 				aclcheck_error(ACLCHECK_NOT_OWNER, ACL_KIND_FOREIGN_SERVER,
@@ -838,7 +870,6 @@ check_object_ownership(Oid roleid, ObjectType objtype, ObjectAddress address,
 							 errmsg("must have CREATEROLE privilege")));
 			}
 			break;
-		case OBJECT_FDW:
 		case OBJECT_TSPARSER:
 		case OBJECT_TSTEMPLATE:
 			/* We treat these object types as being owned by superusers */

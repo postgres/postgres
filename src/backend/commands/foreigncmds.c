@@ -686,7 +686,7 @@ RemoveForeignDataWrapper(DropFdwStmt *stmt)
 	Oid			fdwId;
 	ObjectAddress object;
 
-	fdwId = GetForeignDataWrapperOidByName(stmt->fdwname, true);
+	fdwId = get_foreign_data_wrapper_oid(stmt->fdwname, true);
 
 	if (!superuser())
 		ereport(ERROR,
@@ -959,7 +959,7 @@ RemoveForeignServer(DropForeignServerStmt *stmt)
 	Oid			srvId;
 	ObjectAddress object;
 
-	srvId = GetForeignServerOidByName(stmt->servername, true);
+	srvId = get_foreign_server_oid(stmt->servername, true);
 
 	if (!OidIsValid(srvId))
 	{

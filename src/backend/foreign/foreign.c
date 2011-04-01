@@ -79,26 +79,6 @@ GetForeignDataWrapper(Oid fdwid)
 }
 
 
-/*
- * GetForeignDataWrapperOidByName - look up the foreign-data wrapper
- * OID by name.
- */
-Oid
-GetForeignDataWrapperOidByName(const char *fdwname, bool missing_ok)
-{
-	Oid			fdwId;
-
-	fdwId = GetSysCacheOid1(FOREIGNDATAWRAPPERNAME, CStringGetDatum(fdwname));
-
-	if (!OidIsValid(fdwId) && !missing_ok)
-		ereport(ERROR,
-				(errcode(ERRCODE_UNDEFINED_OBJECT),
-				 errmsg("foreign-data wrapper \"%s\" does not exist",
-						fdwname)));
-
-	return fdwId;
-}
-
 
 /*
  * GetForeignDataWrapperByName - look up the foreign-data wrapper
@@ -107,7 +87,7 @@ GetForeignDataWrapperOidByName(const char *fdwname, bool missing_ok)
 ForeignDataWrapper *
 GetForeignDataWrapperByName(const char *fdwname, bool missing_ok)
 {
-	Oid			fdwId = GetForeignDataWrapperOidByName(fdwname, missing_ok);
+	Oid			fdwId = get_foreign_data_wrapper_oid(fdwname, missing_ok);
 
 	if (!OidIsValid(fdwId))
 		return NULL;
@@ -172,31 +152,12 @@ GetForeignServer(Oid serverid)
 
 
 /*
- * GetForeignServerByName - look up the foreign server oid by name.
- */
-Oid
-GetForeignServerOidByName(const char *srvname, bool missing_ok)
-{
-	Oid			serverid;
-
-	serverid = GetSysCacheOid1(FOREIGNSERVERNAME, CStringGetDatum(srvname));
-
-	if (!OidIsValid(serverid) && !missing_ok)
-		ereport(ERROR,
-				(errcode(ERRCODE_UNDEFINED_OBJECT),
-				 errmsg("server \"%s\" does not exist", srvname)));
-
-	return serverid;
-}
-
-
-/*
  * GetForeignServerByName - look up the foreign server definition by name.
  */
 ForeignServer *
 GetForeignServerByName(const char *srvname, bool missing_ok)
 {
-	Oid			serverid = GetForeignServerOidByName(srvname, missing_ok);
+	Oid			serverid = get_foreign_server_oid(srvname, missing_ok);
 
 	if (!OidIsValid(serverid))
 		return NULL;
@@ -537,4 +498,43 @@ postgresql_fdw_validator(PG_FUNCTION_ARGS)
 	}
 
 	PG_RETURN_BOOL(true);
+}
+
+/*
+ * get_foreign_data_wrapper_oid - given a FDW name, look up the OID
+ *
+ * If missing_ok is false, throw an error if name not found.  If true, just
+ * return InvalidOid.
+ */
+Oid
+get_foreign_data_wrapper_oid(const char *fdwname, bool missing_ok)
+{
+	Oid			oid;
+
+	oid = GetSysCacheOid1(FOREIGNDATAWRAPPERNAME, CStringGetDatum(fdwname));
+	if (!OidIsValid(oid) && !missing_ok)
+		ereport(ERROR,
+				(errcode(ERRCODE_UNDEFINED_OBJECT),
+				 errmsg("foreign-data wrapper \"%s\" does not exist",
+						fdwname)));
+	return oid;
+}
+
+/*
+ * get_foreign_server_oid - given a FDW name, look up the OID
+ *
+ * If missing_ok is false, throw an error if name not found.  If true, just
+ * return InvalidOid.
+ */
+Oid
+get_foreign_server_oid(const char *servername, bool missing_ok)
+{
+	Oid			oid;
+
+	oid = GetSysCacheOid1(FOREIGNSERVERNAME, CStringGetDatum(servername));
+	if (!OidIsValid(oid) && !missing_ok)
+		ereport(ERROR,
+				(errcode(ERRCODE_UNDEFINED_OBJECT),
+				 errmsg("server \"%s\" does not exist", servername)));
+	return oid;
 }

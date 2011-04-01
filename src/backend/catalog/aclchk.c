@@ -683,7 +683,7 @@ objectNamesToOids(GrantObjectType objtype, List *objnames)
 			foreach(cell, objnames)
 			{
 				char	   *fdwname = strVal(lfirst(cell));
-				Oid			fdwid = GetForeignDataWrapperOidByName(fdwname, false);
+				Oid			fdwid = get_foreign_data_wrapper_oid(fdwname, false);
 
 				objects = lappend_oid(objects, fdwid);
 			}
@@ -692,7 +692,7 @@ objectNamesToOids(GrantObjectType objtype, List *objnames)
 			foreach(cell, objnames)
 			{
 				char	   *srvname = strVal(lfirst(cell));
-				Oid			srvid = GetForeignServerOidByName(srvname, false);
+				Oid			srvid = get_foreign_server_oid(srvname, false);
 
 				objects = lappend_oid(objects, srvid);
 			}
@@ -4582,6 +4582,33 @@ pg_ts_config_ownercheck(Oid cfg_oid, Oid roleid)
 					  cfg_oid)));
 
 	ownerId = ((Form_pg_ts_config) GETSTRUCT(tuple))->cfgowner;
+
+	ReleaseSysCache(tuple);
+
+	return has_privs_of_role(roleid, ownerId);
+}
+
+/*
+ * Ownership check for a foreign-data wrapper (specified by OID).
+ */
+bool
+pg_foreign_data_wrapper_ownercheck(Oid srv_oid, Oid roleid)
+{
+	HeapTuple	tuple;
+	Oid			ownerId;
+
+	/* Superusers bypass all permission checking. */
+	if (superuser_arg(roleid))
+		return true;
+
+	tuple = SearchSysCache1(FOREIGNDATAWRAPPEROID, ObjectIdGetDatum(srv_oid));
+	if (!HeapTupleIsValid(tuple))
+		ereport(ERROR,
+				(errcode(ERRCODE_UNDEFINED_OBJECT),
+				 errmsg("foreign-data wrapper with OID %u does not exist",
+						srv_oid)));
+
+	ownerId = ((Form_pg_foreign_data_wrapper) GETSTRUCT(tuple))->fdwowner;
 
 	ReleaseSysCache(tuple);
 

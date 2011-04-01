@@ -3162,7 +3162,7 @@ convert_foreign_data_wrapper_name(text *fdwname)
 {
 	char	   *fdwstr = text_to_cstring(fdwname);
 
-	return GetForeignDataWrapperOidByName(fdwstr, false);
+	return get_foreign_data_wrapper_oid(fdwstr, false);
 }
 
 /*
@@ -3928,7 +3928,7 @@ convert_server_name(text *servername)
 {
 	char	   *serverstr = text_to_cstring(servername);
 
-	return GetForeignServerOidByName(serverstr, false);
+	return get_foreign_server_oid(serverstr, false);
 }
 
 /*
