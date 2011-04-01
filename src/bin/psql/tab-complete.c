@@ -714,7 +714,8 @@ psql_completion(char *text, int start, int end)
 			   *prev2_wd,
 			   *prev3_wd,
 			   *prev4_wd,
-			   *prev5_wd;
+			   *prev5_wd,
+			   *prev6_wd;
 
 	static const char *const sql_commands[] = {
 		"ABORT", "ALTER", "ANALYZE", "BEGIN", "CHECKPOINT", "CLOSE", "CLUSTER",
@@ -762,6 +763,7 @@ psql_completion(char *text, int start, int end)
 	prev3_wd = previous_word(start, 2);
 	prev4_wd = previous_word(start, 3);
 	prev5_wd = previous_word(start, 4);
+	prev6_wd = previous_word(start, 5);
 
 	/* If a backslash command was started, continue */
 	if (text[0] == '\\')
@@ -1547,12 +1549,22 @@ psql_completion(char *text, int start, int end)
 			 pg_strcasecmp(prev_wd, "ON") == 0)
 	{
 		static const char *const list_COMMENT[] =
-		{"CAST", "COLLATION", "CONVERSION", "DATABASE", "FOREIGN TABLE", "INDEX", "LANGUAGE", "RULE", "SCHEMA",
+		{"CAST", "COLLATION", "CONVERSION", "DATABASE", "FOREIGN DATA WRAPPER",
+			"SERVER", "FOREIGN TABLE", "INDEX", "LANGUAGE", "RULE", "SCHEMA",
 			"SEQUENCE", "TABLE", "TYPE", "VIEW", "COLUMN", "AGGREGATE", "FUNCTION",
 			"OPERATOR", "TRIGGER", "CONSTRAINT", "DOMAIN", "LARGE OBJECT",
 		"TABLESPACE", "TEXT SEARCH", "ROLE", NULL};
 
 		COMPLETE_WITH_LIST(list_COMMENT);
+	}
+	else if (pg_strcasecmp(prev3_wd, "COMMENT") == 0 &&
+			 pg_strcasecmp(prev2_wd, "ON") == 0 &&
+			 pg_strcasecmp(prev_wd, "FOREIGN") == 0)
+	{
+		static const char *const list_TRANS2[] =
+		{"DATA WRAPPER", "TABLE", NULL};
+
+		COMPLETE_WITH_LIST(list_TRANS2);
 	}
 	else if (pg_strcasecmp(prev4_wd, "COMMENT") == 0 &&
 			 pg_strcasecmp(prev3_wd, "ON") == 0 &&
@@ -1566,6 +1578,8 @@ psql_completion(char *text, int start, int end)
 	}
 	else if ((pg_strcasecmp(prev4_wd, "COMMENT") == 0 &&
 			  pg_strcasecmp(prev3_wd, "ON") == 0) ||
+			 (pg_strcasecmp(prev6_wd, "COMMENT") == 0 &&
+			  pg_strcasecmp(prev5_wd, "ON") == 0) ||
 			 (pg_strcasecmp(prev5_wd, "ON") == 0 &&
 			  pg_strcasecmp(prev4_wd, "TEXT") == 0 &&
 			  pg_strcasecmp(prev3_wd, "SEARCH") == 0))
