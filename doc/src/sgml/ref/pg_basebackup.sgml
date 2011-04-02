@@ -406,7 +406,7 @@ PostgreSQL documentation
    To create a backup of a single-tablespace local database and compress
    this with <productname>bzip2</productname>:
    <screen>
-    <prompt>$</prompt> <userinput>pg_basebackup -D - -Ft | bzip2 > backup.tar.bz2</userinput>
+    <prompt>$</prompt> <userinput>pg_basebackup -D - -Ft | bzip2 &gt; backup.tar.bz2</userinput>
    </screen>
    (this command will fail if there are multiple tablespaces in the
    database)

@@ -105,7 +105,7 @@ $ initdb
 $ vi $PGDATA/postgresql.conf
 $ for DBNAME in template0 template1 postgres; do
   postgres --single -F -O -c exit_on_error=true $DBNAME \
-      < /usr/local/pgsql/share/contrib/sepgsql.sql > /dev/null
+      &lt; /usr/local/pgsql/share/contrib/sepgsql.sql &gt; /dev/null
   done
 </screen>
 
