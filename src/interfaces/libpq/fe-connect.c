@@ -491,7 +491,7 @@ PQconnectStartParams(const char **keywords,
 	{
 		conn->status = CONNECTION_BAD;
 		/* errorMessage is already set */
-		return false;
+		return conn;
 	}
 
 	/*
