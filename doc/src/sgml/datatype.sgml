@@ -346,13 +346,13 @@
         <entry><type>decimal</></entry>
         <entry>variable</entry>
         <entry>user-specified precision, exact</entry>
-        <entry>no limit</entry>
+        <entry>up to 131072 digits before the decimal point; up to 16383 digits after the decimal point</entry>
        </row>
        <row>
         <entry><type>numeric</></entry>
         <entry>variable</entry>
         <entry>user-specified precision, exact</entry>
-        <entry>no limit</entry>
+        <entry>up to 131072 digits before the decimal point; up to 16383 digits after the decimal point</entry>
        </row>
 
        <row>
@@ -476,8 +476,8 @@
     </indexterm>
 
     <para>
-     The type <type>numeric</type> can store numbers with up to 1000
-     digits of precision and perform calculations exactly. It is
+     The type <type>numeric</type> can store numbers with a
+     very large number of digits and perform calculations exactly. It is
      especially recommended for storing monetary amounts and other
      quantities where exactness is required. However, arithmetic on
      <type>numeric</type> values is very slow compared to the integer
@@ -524,6 +524,15 @@ NUMERIC
      about portability, always specify the precision and scale
      explicitly.)
     </para>
+
+    <note>
+     <para>
+      The maximum allowed precision when explicitely specified in the
+      type declaration is 1000; otherwise the current implementation
+      of the <type>NUMERIC</type> is subject to the limits described
+      in <xref linkend="datatype-numeric-table">.
+     </para>
+    </note>
 
     <para>
      If the scale of a value to be stored is greater than the declared
