@@ -361,6 +361,7 @@ StartReplication(StartReplicationCmd * cmd)
 	 * after this.
 	 */
 	MarkPostmasterChildWalSender();
+	SendPostmasterSignal(PMSIGNAL_ADVANCE_STATE_MACHINE);
 
 	/*
 	 * Check that we're logging enough information in the WAL for

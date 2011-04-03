@@ -2890,8 +2890,8 @@ LogChildExit(int lev, const char *procname, int pid, int exitstatus)
 /*
  * Advance the postmaster's state machine and take actions as appropriate
  *
- * This is common code for pmdie() and reaper(), which receive the signals
- * that might mean we need to change state.
+ * This is common code for pmdie(), reaper() and sigusr1_handler(), which
+ * receive the signals that might mean we need to change state.
  */
 static void
 PostmasterStateMachine(void)
@@ -4282,6 +4282,13 @@ sigusr1_handler(SIGNAL_ARGS)
 	{
 		/* Startup Process wants us to start the walreceiver process. */
 		WalReceiverPID = StartWalReceiver();
+	}
+
+	if (CheckPostmasterSignal(PMSIGNAL_ADVANCE_STATE_MACHINE) &&
+		(pmState == PM_WAIT_BACKUP || pmState == PM_WAIT_BACKENDS))
+	{
+		/* Advance postmaster's state machine */
+		PostmasterStateMachine();
 	}
 
 	if (CheckPromoteSignal() && StartupPID != 0 &&
