@@ -52,8 +52,15 @@ extern bool XactReadOnly;
 extern bool DefaultXactDeferrable;
 extern bool XactDeferrable;
 
-/* Asynchronous commits */
-extern bool XactSyncCommit;
+typedef enum
+{
+	SYNCHRONOUS_COMMIT_OFF,		/* asynchronous commit */
+	SYNCHRONOUS_COMMIT_LOCAL,	/* wait for only local flush */
+	SYNCHRONOUS_COMMIT_ON		/* wait for local flush and sync rep */
+} SyncCommitLevel;
+
+/* Synchronous commit level */
+extern int	synchronous_commit;
 
 /* Kluge for 2PC support */
 extern bool MyXactAccessedTempRel;

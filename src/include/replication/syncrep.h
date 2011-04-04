@@ -20,7 +20,7 @@
 #include "utils/guc.h"
 
 #define SyncRepRequested() \
-	(synchronous_replication && max_wal_senders > 0)
+	(max_wal_senders > 0 && synchronous_commit == SYNCHRONOUS_COMMIT_ON)
 
 /* syncRepState */
 #define SYNC_REP_NOT_WAITING		0
@@ -28,7 +28,6 @@
 #define SYNC_REP_WAIT_COMPLETE		2
 
 /* user-settable parameters for synchronous replication */
-extern bool synchronous_replication;
 extern char *SyncRepStandbyNames;
 
 /* called by user backend */

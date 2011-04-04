@@ -68,7 +68,7 @@ bool		XactReadOnly;
 bool		DefaultXactDeferrable = false;
 bool		XactDeferrable;
 
-bool		XactSyncCommit = true;
+int			synchronous_commit = SYNCHRONOUS_COMMIT_ON;
 
 int			CommitDelay = 0;	/* precommit delay in microseconds */
 int			CommitSiblings = 5; /* # concurrent xacts needed to sleep */
@@ -1056,7 +1056,8 @@ RecordTransactionCommit(void)
 	 * if all to-be-deleted tables are temporary though, since they are lost
 	 * anyway if we crash.)
 	 */
-	if ((wrote_xlog && XactSyncCommit) || forceSyncCommit || nrels > 0 || SyncRepRequested())
+	if ((wrote_xlog && synchronous_commit >= SYNCHRONOUS_COMMIT_LOCAL) ||
+		forceSyncCommit || nrels > 0)
 	{
 		/*
 		 * Synchronous commit case:

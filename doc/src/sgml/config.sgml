@@ -1507,8 +1507,9 @@ SET ENABLE_SEQSCAN TO OFF;
        <para>
         Specifies whether transaction commit will wait for WAL records
         to be written to disk before the command returns a <quote>success</>
-        indication to the client.  The default, and safe, setting is
-        <literal>on</>.  When <literal>off</>, there can be a delay between
+        indication to the client.  Valid values are <literal>on</>,
+        <literal>local</>, and <literal>off</>.  The default, and safe, value
+        is <literal>on</>.  When <literal>off</>, there can be a delay between
         when success is reported to the client and when the transaction is
         really guaranteed to be safe against a server crash.  (The maximum
         delay is three times <xref linkend="guc-wal-writer-delay">.)  Unlike
@@ -1521,6 +1522,19 @@ SET ENABLE_SEQSCAN TO OFF;
         can be a useful alternative when performance is more important than
         exact certainty about the durability of a transaction.  For more
         discussion see <xref linkend="wal-async-commit">.
+       </para>
+       <para>
+        If <xref linkend="guc-synchronous-standby-names"> is set, this
+        parameter also controls whether or not transaction commit will wait
+        for the transaction's WAL records to be flushed to disk and replicated
+        to the standby server.  The commit wait will last until a reply from
+        the current synchronous standby indicates it has written the commit
+        record of the transaction to durable storage.  If synchronous
+        replication is in use, it will normally be sensible either to wait
+        both for WAL records to reach both the local and remote disks, or
+        to allow the transaction to commit asynchronously.  However, the
+        special value <literal>local</> is available for transactions that
+        wish to wait for local flush to disk, but not synchronous replication.
        </para>
        <para>
         This parameter can be changed at any time; the behavior for any
@@ -2057,39 +2071,6 @@ SET ENABLE_SEQSCAN TO OFF;
      </para>
 
      <variablelist>
-     <varlistentry id="guc-synchronous-replication" xreflabel="synchronous_replication">
-      <term><varname>synchronous_replication</varname> (<type>boolean</type>)</term>
-      <indexterm>
-       <primary><varname>synchronous_replication</> configuration parameter</primary>
-      </indexterm>
-      <listitem>
-       <para>
-        Specifies whether transaction commit will wait for WAL records
-        to be replicated before the command returns a <quote>success</>
-        indication to the client.  The default setting is <literal>off</>.
-        When <literal>on</>, there will be a delay while the client waits
-        for confirmation of successful replication. That delay will
-        increase depending upon the physical distance and network activity
-        between primary and standby. The commit wait will last until a
-        reply from the current synchronous standby indicates it has written
-        the commit record of the transaction to durable storage.  This
-        parameter has no effect if
-        <xref linkend="guc-synchronous-standby-names"> is empty or
-        <xref linkend="guc-max-wal-senders"> is zero.
-       </para>
-       <para>
-        This parameter can be changed at any time; the
-        behavior for any one transaction is determined by the setting in
-        effect when it commits.  It is therefore possible, and useful, to have
-        some transactions replicate synchronously and others asynchronously.
-        For example, to make a single multistatement transaction commit
-        asynchronously when the default is synchronous replication, issue
-        <command>SET LOCAL synchronous_replication TO OFF</> within the
-        transaction.
-       </para>
-      </listitem>
-     </varlistentry>
-
      <varlistentry id="guc-synchronous-standby-names" xreflabel="synchronous_standby_names">
       <term><varname>synchronous_standby_names</varname> (<type>string</type>)</term>
       <indexterm>
@@ -2098,7 +2079,7 @@ SET ENABLE_SEQSCAN TO OFF;
       <listitem>
        <para>
         Specifies a priority ordered list of standby names that can offer
-        synchronous replication.  At any one time there will be just one
+        synchronous replication.  At any one time there will be at most one
         synchronous standby that will wake sleeping users following commit.
         The synchronous standby will be the first named standby that is
         both currently connected and streaming in real-time to the standby
@@ -2114,18 +2095,17 @@ SET ENABLE_SEQSCAN TO OFF;
         not enforced for uniqueness. In case of duplicates one of the standbys
         will be chosen to be the synchronous standby, though exactly which
         one is indeterminate.
-       </para>
-       <para>
-        No value is set by default.
         The special entry <literal>*</> matches any application_name, including
         the default application name of <literal>walreceiver</>.
        </para>
        <para>
-        If a standby is removed from the list of servers then it will stop
-        being the synchronous standby, allowing another to take its place.
-        If the list is empty, synchronous replication will not be
-        possible, whatever the setting of <varname>synchronous_replication</>.
-        Standbys may also be added to the list without restarting the server.
+        If no synchronous standby names are specified, then synchronous
+        replication is not enabled and transaction commit will never wait for
+        replication.  This is the default configuration.  Even when
+        synchronous replication is enabled, individual transactions can be
+        configured not to wait for replication by setting the
+        <xref linkend="guc-synchronous-commit"> parameter to
+        <literal>local</> or <literal>off</>.
        </para>
       </listitem>
      </varlistentry>

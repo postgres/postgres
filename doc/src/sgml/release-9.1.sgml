@@ -651,14 +651,15 @@
       </para>
 
       <para>
+       This allows the primary to wait for a standby to write the transaction
+       information to disk before acknowledging the commit.
        One standby at a time can take the role of the synchronous standby,
        as controlled by the
        <link linkend="guc-synchronous-standby-names"><varname>synchronous_standby_names</varname></link>
        setting.  Synchronous replication can be enabled or disabled on a
        per-transaction basis using the
-       <link linkend="guc-synchronous-replication"><varname>synchronous_replication</></link>
-       setting.  This allows the primary to wait for a standby to write the
-       transaction information to disk before acknowledging the commit.
+       <link linkend="guc-synchronous-commit"><varname>synchronous_commit</></link>
+       setting.
       </para>
      </listitem>
 

@@ -929,19 +929,18 @@ primary_conninfo = 'host=192.168.1.50 port=5432 user=foo password=foopass'
     <title>Basic Configuration</title>
 
    <para>
-    All parameters have useful default values, so we can enable
-    synchronous replication easily just by setting this on the primary:
-
-<programlisting>
-synchronous_replication = on
-</programlisting>
-
-    When <varname>synchronous_replication</> is set, a commit will wait
-    for confirmation that the standby has received the commit record,
-    even if that takes a very long time.
-    <varname>synchronous_replication</> can be set by individual
+    Once streaming replication has been configured, configuring synchronous
+    replication requires only one additional configuration step:
+    <xref linkend="guc-synchronous-standby-names"> must be set to
+    a non-empty value.  <varname>synchronous_commit</> must also be set to
+    <literal>on</>, but since this is the default value, typically no change is
+    required.  This configuration will cause each commit to wait for
+    confirmation that the standby has written the commit record to durable
+    storage, even if that takes a very long time.
+    <varname>synchronous_commit</> can be set by individual
     users, so can be configured in the configuration file, for particular
-    users or databases, or dynamically by applications.
+    users or databases, or dynamically by applications, in order to control
+    the durability guarantee on a per-transaction basis.
    </para>
 
    <para>
@@ -959,17 +958,10 @@ synchronous_replication = on
    </para>
 
    <para>
-    Users will stop waiting if a fast shutdown is requested, though the
-    server does not fully shutdown until all outstanding WAL records are
-    transferred to standby servers.
-   </para>
-
-   <para>
-    Note also that <varname>synchronous_commit</> is used when the user
-    specifies <varname>synchronous_replication</>, overriding even an
-    explicit setting of <varname>synchronous_commit</> to <literal>off</>.
-    This is because we must write WAL to disk on primary before we replicate
-    to ensure the standby never gets ahead of the primary.
+    Users will stop waiting if a fast shutdown is requested.  However, as
+    when using asynchronous replication, the server will does not fully
+    shutdown until all outstanding WAL records are transferred to the currently
+    connected standby servers.
    </para>
 
    </sect3>
@@ -1019,9 +1011,9 @@ synchronous_replication = on
     <title>Planning for High Availability</title>
 
    <para>
-    Commits made when synchronous_replication is set will wait until
-    the sync standby responds. The response may never occur if the last,
-    or only, standby should crash.
+    Commits made when <varname>synchronous_commit</> is set to <literal>on</>
+    will wait until the sync standby responds. The response may never occur
+    if the last, or only, standby should crash.
    </para>
 
    <para>
@@ -1073,8 +1065,8 @@ synchronous_replication = on
     If you need to re-create a standby server while transactions are
     waiting, make sure that the commands to run pg_start_backup() and
     pg_stop_backup() are run in a session with
-    synchronous_replication = off, otherwise those requests will wait
-    forever for the standby to appear.
+    <varname>synchronous_commit</> = <literal>off</>, otherwise those
+    requests will wait forever for the standby to appear.
    </para>
 
    </sect3>

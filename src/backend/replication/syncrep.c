@@ -63,7 +63,6 @@
 #include "utils/ps_status.h"
 
 /* User-settable parameters for sync rep */
-bool	synchronous_replication = false;		/* Only set in user backends */
 char 	*SyncRepStandbyNames;
 
 #define SyncStandbysDefined() \

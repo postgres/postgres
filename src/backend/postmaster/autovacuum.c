@@ -1531,7 +1531,8 @@ AutoVacWorkerMain(int argc, char *argv[])
 	 * if we are waiting for standbys to connect. This is important to
 	 * ensure we aren't blocked from performing anti-wraparound tasks.
 	 */
-	SetConfigOption("synchronous_replication", "off", PGC_SUSET, PGC_S_OVERRIDE);
+	if (synchronous_commit == SYNCHRONOUS_COMMIT_ON)
+		SetConfigOption("synchronous_commit", "local", PGC_SUSET, PGC_S_OVERRIDE);
 
 	/*
 	 * Get the info about the database we're going to work on.

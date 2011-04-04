@@ -153,7 +153,7 @@
 #wal_level = minimal			# minimal, archive, or hot_standby
 					# (change requires restart)
 #fsync = on				# turns forced synchronization on or off
-#synchronous_commit = on		# immediate fsync at commit
+#synchronous_commit = on		# synchronization level; on, off, or local
 #wal_sync_method = fsync		# the default is the first option
 					# supported by the operating system:
 					#   open_datasync
@@ -183,10 +183,6 @@
 #archive_command = ''		# command to use to archive a logfile segment
 #archive_timeout = 0		# force a logfile segment switch after this
 				# number of seconds; 0 disables
-
-# - Replication - User Settings
-
-#synchronous_replication = off		# does commit wait for reply from standby
 
 # - Streaming Replication - Server Settings
 

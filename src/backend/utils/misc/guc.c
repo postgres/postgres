@@ -351,6 +351,23 @@ static const struct config_enum_entry constraint_exclusion_options[] = {
 };
 
 /*
+ * Although only "on", "off", and "local" are documented, we
+ * accept all the likely variants of "on" and "off".
+ */
+static const struct config_enum_entry synchronous_commit_options[] = {
+	{"local", SYNCHRONOUS_COMMIT_LOCAL, false},
+	{"on", SYNCHRONOUS_COMMIT_ON, false},
+	{"off", SYNCHRONOUS_COMMIT_OFF, false},
+	{"true", SYNCHRONOUS_COMMIT_ON, true},
+	{"false", SYNCHRONOUS_COMMIT_OFF, true},
+	{"yes", SYNCHRONOUS_COMMIT_ON, true},
+	{"no", SYNCHRONOUS_COMMIT_OFF, true},
+	{"1", SYNCHRONOUS_COMMIT_ON, true},
+	{"0", SYNCHRONOUS_COMMIT_OFF, true},
+	{NULL, 0, false}
+};
+
+/*
  * Options for enum values stored in other modules
  */
 extern const struct config_enum_entry wal_level_options[];
@@ -745,22 +762,6 @@ static struct config_bool ConfigureNamesBool[] =
 		},
 		&enableFsync,
 		true, NULL, NULL
-	},
-	{
-		{"synchronous_commit", PGC_USERSET, WAL_SETTINGS,
-			gettext_noop("Sets immediate fsync at commit."),
-			NULL
-		},
-		&XactSyncCommit,
-		true, NULL, NULL
-	},
-	{
-		{"synchronous_replication", PGC_USERSET, WAL_REPLICATION,
-			gettext_noop("Requests synchronous replication."),
-			NULL
-		},
-		&synchronous_replication,
-		false, NULL, NULL
 	},
 	{
 		{"zero_damaged_pages", PGC_SUSET, DEVELOPER_OPTIONS,
@@ -2906,6 +2907,16 @@ static struct config_enum ConfigureNamesEnum[] =
 		&SessionReplicationRole,
 		SESSION_REPLICATION_ROLE_ORIGIN, session_replication_role_options,
 		assign_session_replication_role, NULL
+	},
+
+	{
+		{"synchronous_commit", PGC_USERSET, WAL_SETTINGS,
+			gettext_noop("Sets the current transaction's synchronization level."),
+			NULL
+		},
+		&synchronous_commit,
+		SYNCHRONOUS_COMMIT_ON, synchronous_commit_options,
+		NULL, NULL
 	},
 
 	{
