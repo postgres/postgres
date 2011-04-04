@@ -944,6 +944,18 @@ order by relname, attnum;
 
 drop table p1, p2 cascade;
 
+-- test attinhcount tracking with merged columns
+
+create table depth0();
+create table depth1(c text) inherits (depth0);
+create table depth2() inherits (depth1);
+alter table depth0 add c text;
+
+select attrelid::regclass, attname, attinhcount, attislocal
+from pg_attribute
+where attnum > 0 and attrelid::regclass in ('depth0', 'depth1', 'depth2')
+order by attrelid::regclass::text, attnum;
+
 --
 -- Test the ALTER TABLE SET WITH/WITHOUT OIDS command
 --
