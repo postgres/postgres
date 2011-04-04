@@ -25,6 +25,7 @@ PostgreSQL documentation
  </indexterm>
 
  <refsynopsisdiv>
+<!-- Note the "direction" bit is also in ref/move.sgml -->
 <synopsis>
 FETCH [ <replaceable class="PARAMETER">direction</replaceable> [ FROM | IN ] ] <replaceable class="PARAMETER">cursor_name</replaceable>
 

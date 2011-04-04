@@ -25,8 +25,26 @@ PostgreSQL documentation
  </indexterm>
 
  <refsynopsisdiv>
+<!-- Note the "direction" bit is also in ref/fetch.sgml -->
 <synopsis>
 MOVE [ <replaceable class="PARAMETER">direction</replaceable> [ FROM | IN ] ] <replaceable class="PARAMETER">cursor_name</replaceable>
+
+<phrase>where <replaceable class="PARAMETER">direction</replaceable> can be empty or one of:</phrase>
+
+    NEXT
+    PRIOR
+    FIRST
+    LAST
+    ABSOLUTE <replaceable class="PARAMETER">count</replaceable>
+    RELATIVE <replaceable class="PARAMETER">count</replaceable>
+    <replaceable class="PARAMETER">count</replaceable>
+    ALL
+    FORWARD
+    FORWARD <replaceable class="PARAMETER">count</replaceable>
+    FORWARD ALL
+    BACKWARD
+    BACKWARD <replaceable class="PARAMETER">count</replaceable>
+    BACKWARD ALL
 </synopsis>
  </refsynopsisdiv>
 
