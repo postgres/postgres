@@ -389,8 +389,8 @@ EOF
 
     open(O, ">doc/src/sgml/version.sgml") || croak "Could not write to version.sgml\n";
     print O <<EOF;
-<!entity version "$self->{strver}">
-<!entity majorversion "$self->{majorver}">
+<!ENTITY version "$self->{strver}">
+<!ENTITY majorversion "$self->{majorver}">
 EOF
     close(O);
 }
