@@ -126,8 +126,8 @@ bookindex.sgml: HTML.index
 # changes.
 version.sgml: $(top_srcdir)/configure
 	{ \
-	  echo "<!entity version \"$(VERSION)\">"; \
-	  echo "<!entity majorversion \"$(MAJORVERSION)\">"; \
+	  echo "<!ENTITY version \"$(VERSION)\">"; \
+	  echo "<!ENTITY majorversion \"$(MAJORVERSION)\">"; \
 	} > $@
 
 features-supported.sgml: $(top_srcdir)/src/backend/catalog/sql_feature_packages.txt $(top_srcdir)/src/backend/catalog/sql_features.txt
@@ -220,9 +220,9 @@ HISTORY.html: generate_history.pl $(wildcard $(srcdir)/release*.sgml)
 	rm tempfile_HISTORY.sgml
 
 regress_README.html: regress.sgml
-	( echo '<!doctype chapter PUBLIC "-//OASIS//DTD DocBook V4.2//EN" ['; \
-	  echo '<!entity % standalone-ignore "IGNORE">'; \
-	  echo '<!entity % standalone-include "INCLUDE"> ]>'; \
+	( echo '<!DOCTYPE chapter PUBLIC "-//OASIS//DTD DocBook V4.2//EN" ['; \
+	  echo '<!ENTITY % standalone-ignore "IGNORE">'; \
+	  echo '<!ENTITY % standalone-include "INCLUDE"> ]>'; \
 	  cat $< ) >tempfile_regress_README.sgml
 	$(JADE.text) -V nochunks tempfile_regress_README.sgml > $@
 	rm tempfile_regress_README.sgml
