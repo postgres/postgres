@@ -1,4 +1,8 @@
-policy_module(sepgsql-regtest, 1.01)
+policy_module(sepgsql-regtest, 1.02)
+
+gen_require(`
+	all_userspace_class_perms
+')
 
 ## <desc>
 ## <p>
@@ -7,6 +11,12 @@ policy_module(sepgsql-regtest, 1.01)
 ## </p>
 ## </desc>
 gen_tunable(sepgsql_regression_test_mode, false)
+
+#
+# Type definitions for regression test
+#
+type sepgsql_regtest_trusted_proc_exec_t;
+postgresql_procedure_object(sepgsql_regtest_trusted_proc_exec_t)
 
 #
 # Test domains for database administrators
@@ -56,4 +66,20 @@ optional_policy(`
 	role unconfined_r types sepgsql_regtest_dba_t;
 	role unconfined_r types sepgsql_regtest_user_t;
 	role unconfined_r types sepgsql_trusted_proc_t;
+')
+
+#
+# Rule to check 
+#
+optional_policy(`
+	# These rules intends sepgsql_regtest_user_t domain to translate
+	# sepgsql_regtest_dba_t on execution of procedures labeled as
+	# sepgsql_regtest_trusted_proc_exec_t, but does not allow transition
+	# permission from sepgsql_regtest_user_t to sepgsql_regtest_dba_t.
+	#
+	gen_require(`
+		attribute sepgsql_client_type;
+	')
+	allow sepgsql_client_type sepgsql_regtest_trusted_proc_exec_t:db_procedure { getattr execute install };
+	type_transition sepgsql_regtest_user_t sepgsql_regtest_trusted_proc_exec_t:process sepgsql_regtest_dba_t;
 ')

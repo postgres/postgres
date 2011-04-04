@@ -251,6 +251,7 @@ sepgsql_fmgr_hook(FmgrHookEventType event,
 			if (!stack)
 			{
 				MemoryContext	oldcxt;
+				const char	   *cur_label = sepgsql_get_client_label();
 
 				oldcxt = MemoryContextSwitchTo(flinfo->fn_mcxt);
 				stack = palloc(sizeof(*stack));
@@ -259,6 +260,19 @@ sepgsql_fmgr_hook(FmgrHookEventType event,
 				stack->next_private = 0;
 
 				MemoryContextSwitchTo(oldcxt);
+
+				if (strcmp(cur_label, stack->new_label) != 0)
+				{
+					/*
+					 * process:transition permission between old and new
+					 * label, when user tries to switch security label of
+					 * the client on execution of trusted procedure.
+					 */
+					sepgsql_check_perms(cur_label, stack->new_label,
+										SEPG_CLASS_PROCESS,
+										SEPG_PROCESS__TRANSITION,
+										NULL, true);
+				}
 
 				*private = PointerGetDatum(stack);
 			}

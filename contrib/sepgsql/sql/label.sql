@@ -27,6 +27,12 @@ CREATE FUNCTION f3 () RETURNS text
 SECURITY LABEL ON FUNCTION f3()
     IS 'system_u:object_r:sepgsql_trusted_proc_exec_t:s0';
 
+CREATE FUNCTION f4 () RETURNS text
+    AS 'SELECT sepgsql_getcon()'
+    LANGUAGE sql;
+SECURITY LABEL ON FUNCTION f4()
+    IS 'system_u:object_r:sepgsql_regtest_trusted_proc_exec_t:s0';
+
 --
 -- Tests for default labeling behavior
 --
@@ -59,6 +65,7 @@ SECURITY LABEL ON COLUMN t2.b
 SELECT f1();			-- normal procedure
 SELECT f2();			-- trusted procedure
 SELECT f3();			-- trusted procedure that raises an error
+SELECT f4();			-- failed on domain transition
 SELECT sepgsql_getcon();	-- client's label must be restored
 
 --
@@ -71,3 +78,4 @@ DROP TABLE IF EXISTS t3 CASCADE;
 DROP FUNCTION IF EXISTS f1() CASCADE;
 DROP FUNCTION IF EXISTS f2() CASCADE;
 DROP FUNCTION IF EXISTS f3() CASCADE;
+DROP FUNCTION IF EXISTS f4() CASCADE;

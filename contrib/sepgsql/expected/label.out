@@ -22,6 +22,11 @@ CREATE FUNCTION f3 () RETURNS text
         END;' LANGUAGE plpgsql;
 SECURITY LABEL ON FUNCTION f3()
     IS 'system_u:object_r:sepgsql_trusted_proc_exec_t:s0';
+CREATE FUNCTION f4 () RETURNS text
+    AS 'SELECT sepgsql_getcon()'
+    LANGUAGE sql;
+SECURITY LABEL ON FUNCTION f4()
+    IS 'system_u:object_r:sepgsql_regtest_trusted_proc_exec_t:s0';
 --
 -- Tests for default labeling behavior
 --
@@ -86,6 +91,8 @@ SELECT f2();			-- trusted procedure
 
 SELECT f3();			-- trusted procedure that raises an error
 ERROR:  an exception from f3()
+SELECT f4();			-- failed on domain transition
+ERROR:  SELinux: security policy violation
 SELECT sepgsql_getcon();	-- client's label must be restored
                    sepgsql_getcon                    
 -----------------------------------------------------
@@ -107,3 +114,4 @@ DROP TABLE IF EXISTS t3 CASCADE;
 DROP FUNCTION IF EXISTS f1() CASCADE;
 DROP FUNCTION IF EXISTS f2() CASCADE;
 DROP FUNCTION IF EXISTS f3() CASCADE;
+DROP FUNCTION IF EXISTS f4() CASCADE;
