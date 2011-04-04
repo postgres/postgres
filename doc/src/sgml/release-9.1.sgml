@@ -528,32 +528,6 @@
 
       <listitem>
        <para>
-        Add the <link
-        linkend="monitoring-stats-views-table"><structname>pg_stat_database_conflicts</></link>
-        system view to show queries that have been canceled and the
-        reason (Magnus Hagander)
-       </para>
-
-       <para>
-        Cancelations can occur because of dropped tablespaces, lock
-        timeouts, old snapshots, pinned buffers, and deadlocks.
-       </para>
-      </listitem>
-
-      <listitem>
-       <para>
-        Add a <literal>conflicts</> count to <link
-        linkend="monitoring-stats-views-table"><structname>pg_stat_database</></link>
-        (Magnus Hagander)
-       </para>
-
-       <para>
-        This is the number of conflicts that occurred in the database.
-       </para>
-      </listitem>
-
-      <listitem>
-       <para>
          Add record of last reset in database and background writer-level
          statistics views (Tomas Vondra)
        </para>
@@ -605,24 +579,8 @@
 
       <listitem>
        <para>
-        Add <link
-        linkend="guc-restart-after-crash"><varname>restart_after_crash</></link>
-        which disables server restart after a backend crash (Robert
-        Haas)
-       </para>
-
-       <para>
-        This is designed for cluster managers that want to control
-        restarts.
-       </para>
-      </listitem>
-
-      <listitem>
-       <para>
         Increase the maximum values for
         <link linkend="guc-deadlock-timeout"><varname>deadlock_timeout</varname></link>,
-        <link linkend="guc-max-standby-archive-delay"><varname>max_standby_archive_delay</varname></link>,
-        <link linkend="guc-max-standby-streaming-delay"><varname>max_standby_streaming_delay</varname></link>,
         <link linkend="guc-log-min-duration-statement"><varname>log_min_duration_statement</varname></link>, and
         <link linkend="guc-log-autovacuum-min-duration"><varname>log_autovacuum_min_duration</varname></link>.
        </para>
@@ -640,6 +598,9 @@
    </sect3>
 
    <sect3>
+    <title>Replication and Recovery</title>
+
+   <sect4>
     <title>Streaming Replication and Continuous Archiving</title>
 
     <itemizedlist>
@@ -665,20 +626,7 @@
 
      <listitem>
       <para>
-       Add variable <link
-       linkend="guc-hot-standby-feedback"><varname>hot_standby_feedback</></link>
-       to enable standbys to postpone cleanup of old row versions on the
-       primary (Simon Riggs)
-      </para>
-
-      <para>
-       This helps avoid cancelling long-running queries on the standby.
-      </para>
-     </listitem>
-
-     <listitem>
-      <para>
-       Add support for sending file system backups to standbys using
+       Add protocol support for sending file system backups to standbys using
        the streaming replication network connection (Magnus Hagander,
        Heikki Linnakangas)
       </para>
@@ -727,8 +675,10 @@
 
     </itemizedlist>
 
+    </sect4>
+
     <sect4>
-     <title>Monitoring</title>
+     <title>Replication Monitoring</title>
 
      <itemizedlist>
 
@@ -763,6 +713,80 @@
     </sect4>
 
     <sect4>
+     <title>Hot Standby</title>
+
+     <itemizedlist>
+
+     <listitem>
+      <para>
+       Add variable <link
+       linkend="guc-hot-standby-feedback"><varname>hot_standby_feedback</></link>
+       to enable standbys to postpone cleanup of old row versions on the
+       primary (Simon Riggs)
+      </para>
+
+      <para>
+       This helps avoid cancelling long-running queries on the standby.
+      </para>
+     </listitem>
+
+      <listitem>
+       <para>
+        Add the <link
+        linkend="monitoring-stats-views-table"><structname>pg_stat_database_conflicts</></link>
+        system view to show queries that have been canceled and the
+        reason (Magnus Hagander)
+       </para>
+
+       <para>
+        Cancelations can occur because of dropped tablespaces, lock
+        timeouts, old snapshots, pinned buffers, and deadlocks.
+       </para>
+      </listitem>
+
+      <listitem>
+       <para>
+        Add a <literal>conflicts</> count to <link
+        linkend="monitoring-stats-views-table"><structname>pg_stat_database</></link>
+        (Magnus Hagander)
+       </para>
+
+       <para>
+        This is the number of conflicts that occurred in the database.
+       </para>
+      </listitem>
+
+      <listitem>
+       <para>
+        Increase the maximum values for
+        <link linkend="guc-max-standby-archive-delay"><varname>max_standby_archive_delay</varname></link> and
+        <link linkend="guc-max-standby-streaming-delay"><varname>max_standby_streaming_delay</varname></link>.
+       </para>
+
+       <para>
+        The maximum value for each of these parameters was previously
+        only about 35 minutes.  Much larger values are now allowed.
+       </para>
+      </listitem>
+
+      <listitem>
+       <para>
+        Add <link
+        linkend="errcodes-table"><literal>ERRCODE_T_R_DATABASE_DROPPED</></link>
+        error code to report recovery conflicts due to dropped databases
+        (Tatsuo Ishii)
+       </para>
+
+       <para>
+        This is useful for connection pooling software.
+       </para>
+      </listitem>
+
+     </itemizedlist>
+
+    </sect4>
+
+    <sect4>
      <title>Recovery Control</title>
 
      <itemizedlist>
@@ -785,6 +809,19 @@
 
       <listitem>
        <para>
+        Add <filename>recovery.conf</> setting <link
+        linkend="pause-at-recovery-target"><varname>pause_at_recovery_target</></link>
+        to pause recovery at target (Simon Riggs)
+       </para>
+
+       <para>
+        This allows a recovery server to be queried to check if the
+        recovery point is the one desired.
+       </para>
+      </listitem>
+
+      <listitem>
+       <para>
         Add the ability to create named restore points using <link
         linkend="functions-admin-backup-table"><function>pg_create_restore_point()</></link>
         (Jaime Casanova)
@@ -799,19 +836,6 @@
 
       <listitem>
        <para>
-        Add <filename>recovery.conf</> setting <link
-        linkend="pause-at-recovery-target"><varname>pause_at_recovery_target</></link>
-        to pause recovery at target (Simon Riggs)
-       </para>
-
-       <para>
-        This allows a recovery server to be queried to check if the
-        recovery point is the one desired.
-       </para>
-      </listitem>
-
-      <listitem>
-       <para>
         Allow standby recovery to switch to a new timeline automatically
         (Heikki Linnakangas)
        </para>
@@ -819,6 +843,20 @@
        <para>
         Now standby servers scan the archive directory for new
         timelines periodically.
+       </para>
+      </listitem>
+
+      <listitem>
+       <para>
+        Add <link
+        linkend="guc-restart-after-crash"><varname>restart_after_crash</></link>
+        which disables server restart after a backend crash (Robert
+        Haas)
+       </para>
+
+       <para>
+        This allows external cluster management software to take control
+        of whether servers restart or not.
        </para>
       </listitem>
 
@@ -1556,19 +1594,6 @@
 
        <para>
         This allows checking for public permissions.
-       </para>
-      </listitem>
-
-      <listitem>
-       <para>
-        Add <link
-        linkend="errcodes-table"><literal>ERRCODE_T_R_DATABASE_DROPPED</></link>
-        error code to report recovery conflicts due to dropped databases
-        (Tatsuo Ishii)
-       </para>
-
-       <para>
-        This is useful for connection pooling software.
        </para>
       </listitem>
 
