@@ -20,7 +20,7 @@
 #include "utils/guc.h"
 
 #define SyncRepRequested() \
-	(max_wal_senders > 0 && synchronous_commit == SYNCHRONOUS_COMMIT_ON)
+	(max_wal_senders > 0 && synchronous_commit > SYNCHRONOUS_COMMIT_LOCAL_FLUSH)
 
 /* syncRepState */
 #define SYNC_REP_NOT_WAITING		0

@@ -1056,7 +1056,7 @@ RecordTransactionCommit(void)
 	 * if all to-be-deleted tables are temporary though, since they are lost
 	 * anyway if we crash.)
 	 */
-	if ((wrote_xlog && synchronous_commit >= SYNCHRONOUS_COMMIT_LOCAL) ||
+	if ((wrote_xlog && synchronous_commit > SYNCHRONOUS_COMMIT_OFF) ||
 		forceSyncCommit || nrels > 0)
 	{
 		/*

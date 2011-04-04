@@ -1531,7 +1531,7 @@ AutoVacWorkerMain(int argc, char *argv[])
 	 * if we are waiting for standbys to connect. This is important to
 	 * ensure we aren't blocked from performing anti-wraparound tasks.
 	 */
-	if (synchronous_commit == SYNCHRONOUS_COMMIT_ON)
+	if (synchronous_commit > SYNCHRONOUS_COMMIT_LOCAL_FLUSH)
 		SetConfigOption("synchronous_commit", "local", PGC_SUSET, PGC_S_OVERRIDE);
 
 	/*

@@ -355,7 +355,7 @@ static const struct config_enum_entry constraint_exclusion_options[] = {
  * accept all the likely variants of "on" and "off".
  */
 static const struct config_enum_entry synchronous_commit_options[] = {
-	{"local", SYNCHRONOUS_COMMIT_LOCAL, false},
+	{"local", SYNCHRONOUS_COMMIT_LOCAL_FLUSH, false},
 	{"on", SYNCHRONOUS_COMMIT_ON, false},
 	{"off", SYNCHRONOUS_COMMIT_OFF, false},
 	{"true", SYNCHRONOUS_COMMIT_ON, true},
