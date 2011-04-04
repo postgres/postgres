@@ -1039,7 +1039,8 @@
        <para>
         The new option is called <literal>NOT VALID</>, which can
         later be modified to <literal>VALIDATED</> and validation
-        checks performed.
+        checks performed. Together these allow you to add a Foreign Key
+        with minimal impact on read and write operations.
        </para>
       </listitem>
 
@@ -1587,21 +1588,21 @@
        </para>
 
        <para>
-        This feature can be used to implement updatable views.
+        This feature can be used to implement fully updatable views.
        </para>
       </listitem>
 
       <listitem>
        <para>
-        Reduce lock levels for <link
+        Minimise lock levels for <link
         linkend="SQL-CREATETRIGGER"><command>CREATE TRIGGER</></link>
-        and some <link linkend="SQL-ALTERTABLE"><command>ALTER
+        and many <link linkend="SQL-ALTERTABLE"><command>ALTER
         TABLE</></link> and <link linkend="SQL-CREATERULE"><command>CREATE
         RULE</></link> operations (Simon Riggs)
        </para>
 
        <para>
-        This improves concurrency.
+        This improves database availability when altering active databases.
        </para>
       </listitem>
 
@@ -2548,6 +2549,13 @@
       <para>
         Extensive <link linkend="ecpg"><application>ECPG</> documentation</link>
         improvements (Satoshi Nagayasu)
+      </para>
+     </listitem>
+
+     <listitem>
+      <para>
+        Extensive proofreading and documentation improvements
+        (Thom Brown, Josh Kupershmidt, Susanne Ebrecht)
       </para>
      </listitem>
 
