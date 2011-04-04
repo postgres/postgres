@@ -368,7 +368,10 @@ pg_lock_status(PG_FUNCTION_ARGS)
 		/* lock holder */
 		values[10] = VXIDGetDatum(xact->vxid.backendId,
 								  xact->vxid.localTransactionId);
-		nulls[11] = true;		/* pid */
+		if (xact->pid != 0)
+			values[11] = Int32GetDatum(xact->pid);
+		else
+			nulls[11] = true;
 
 		/*
 		 * Lock mode. Currently all predicate locks are SIReadLocks, which are
