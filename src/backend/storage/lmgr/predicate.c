@@ -3757,6 +3757,17 @@ CheckTargetForConflictsIn(PREDICATELOCKTARGETTAG *targettag)
 					LWLockRelease(partitionLock);
 					LWLockRelease(SerializablePredicateLockListLock);
 					LWLockAcquire(partitionLock, LW_SHARED);
+
+					/*
+					 * The list may have been altered by another process
+					 * while we weren't holding the partition lock.  Start
+					 * over at the front.
+					 */
+					nextpredlock = (PREDICATELOCK *)
+						SHMQueueNext(&(target->predicateLocks),
+									 &(target->predicateLocks),
+									 offsetof(PREDICATELOCK, targetLink));
+
 					LWLockAcquire(SerializableXactHashLock, LW_SHARED);
 				}
 			}
@@ -3770,7 +3781,19 @@ CheckTargetForConflictsIn(PREDICATELOCKTARGETTAG *targettag)
 			LWLockRelease(SerializableXactHashLock);
 			LWLockAcquire(SerializableXactHashLock, LW_EXCLUSIVE);
 
-			FlagRWConflict(sxact, (SERIALIZABLEXACT *) MySerializableXact);
+			/*
+			 * Re-check after getting exclusive lock because the other
+			 * transaction may have flagged a conflict.
+			 */
+			if (!SxactIsRolledBack(sxact)
+				&& (!SxactIsCommitted(sxact)
+					|| TransactionIdPrecedes(GetTransactionSnapshot()->xmin,
+											 sxact->finishedBefore))
+				&& !RWConflictExists(sxact,
+									 (SERIALIZABLEXACT *) MySerializableXact))
+			{
+				FlagRWConflict(sxact, (SERIALIZABLEXACT *) MySerializableXact);
+			}
 
 			LWLockRelease(SerializableXactHashLock);
 			LWLockAcquire(SerializableXactHashLock, LW_SHARED);
