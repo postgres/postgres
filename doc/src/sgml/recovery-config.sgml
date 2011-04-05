@@ -1,6 +1,6 @@
 <!-- doc/src/sgml/recovery-config.sgml -->
 
-<chapter Id="recovery-config">
+<chapter id="recovery-config">
   <title>Recovery Configuration</title>
 
   <indexterm>
