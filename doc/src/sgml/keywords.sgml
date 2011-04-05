@@ -369,7 +369,7 @@
    </row>
    <row>
     <entry><token>ATTRIBUTE</token></entry>
-    <entry></entry>
+    <entry>non-reserved</entry>
     <entry>non-reserved</entry>
     <entry>non-reserved</entry>
     <entry></entry>
@@ -817,7 +817,7 @@
    </row>
    <row>
     <entry><token>COLLATION</token></entry>
-    <entry></entry>
+    <entry>non-reserved</entry>
     <entry>non-reserved</entry>
     <entry>non-reserved</entry>
     <entry>reserved</entry>
@@ -1150,30 +1150,6 @@
     <entry>reserved</entry>
     <entry>reserved</entry>
     <entry>reserved</entry>
-   </row>
-   <row>
-    <entry><token>CREATEDB</token></entry>
-    <entry>non-reserved</entry>
-    <entry></entry>
-    <entry></entry>
-    <entry></entry>
-    <entry></entry>
-   </row>
-   <row>
-    <entry><token>CREATEROLE</token></entry>
-    <entry>non-reserved</entry>
-    <entry></entry>
-    <entry></entry>
-    <entry></entry>
-    <entry></entry>
-   </row>
-   <row>
-    <entry><token>CREATEUSER</token></entry>
-    <entry>non-reserved</entry>
-    <entry></entry>
-    <entry></entry>
-    <entry></entry>
-    <entry></entry>
    </row>
    <row>
     <entry><token>CROSS</token></entry>
@@ -1976,6 +1952,14 @@
     <entry></entry>
    </row>
    <row>
+    <entry><token>EXTENSION</token></entry>
+    <entry>non-reserved</entry>
+    <entry></entry>
+    <entry></entry>
+    <entry></entry>
+    <entry></entry>
+   </row>
+   <row>
     <entry><token>EXTERNAL</token></entry>
     <entry>non-reserved</entry>
     <entry>reserved</entry>
@@ -2744,6 +2728,14 @@
     <entry></entry>
    </row>
    <row>
+    <entry><token>LABEL</token></entry>
+    <entry>non-reserved</entry>
+    <entry></entry>
+    <entry></entry>
+    <entry></entry>
+    <entry></entry>
+   </row>
+   <row>
     <entry><token>LAG</token></entry>
     <entry></entry>
     <entry>reserved</entry>
@@ -2969,14 +2961,6 @@
    </row>
    <row>
     <entry><token>LOCK</token></entry>
-    <entry>non-reserved</entry>
-    <entry></entry>
-    <entry></entry>
-    <entry></entry>
-    <entry></entry>
-   </row>
-   <row>
-    <entry><token>LOGIN</token></entry>
     <entry>non-reserved</entry>
     <entry></entry>
     <entry></entry>
@@ -3336,46 +3320,6 @@
     <entry>reserved</entry>
    </row>
    <row>
-    <entry><token>NOCREATEDB</token></entry>
-    <entry>non-reserved</entry>
-    <entry></entry>
-    <entry></entry>
-    <entry></entry>
-    <entry></entry>
-   </row>
-   <row>
-    <entry><token>NOCREATEROLE</token></entry>
-    <entry>non-reserved</entry>
-    <entry></entry>
-    <entry></entry>
-    <entry></entry>
-    <entry></entry>
-   </row>
-   <row>
-    <entry><token>NOCREATEUSER</token></entry>
-    <entry>non-reserved</entry>
-    <entry></entry>
-    <entry></entry>
-    <entry></entry>
-    <entry></entry>
-   </row>
-   <row>
-    <entry><token>NOINHERIT</token></entry>
-    <entry>non-reserved</entry>
-    <entry></entry>
-    <entry></entry>
-    <entry></entry>
-    <entry></entry>
-   </row>
-   <row>
-    <entry><token>NOLOGIN</token></entry>
-    <entry>non-reserved</entry>
-    <entry></entry>
-    <entry></entry>
-    <entry></entry>
-    <entry></entry>
-   </row>
-   <row>
     <entry><token>NONE</token></entry>
     <entry>non-reserved (cannot be function or type)</entry>
     <entry>reserved</entry>
@@ -3396,14 +3340,6 @@
     <entry></entry>
     <entry>non-reserved</entry>
     <entry>non-reserved</entry>
-    <entry></entry>
-    <entry></entry>
-   </row>
-   <row>
-    <entry><token>NOSUPERUSER</token></entry>
-    <entry>non-reserved</entry>
-    <entry></entry>
-    <entry></entry>
     <entry></entry>
     <entry></entry>
    </row>
@@ -3865,7 +3801,7 @@
    </row>
    <row>
     <entry><token>PASSING</token></entry>
-    <entry></entry>
+    <entry>non-reserved</entry>
     <entry>non-reserved</entry>
     <entry></entry>
     <entry></entry>
@@ -4169,7 +4105,7 @@
    </row>
    <row>
     <entry><token>REF</token></entry>
-    <entry></entry>
+    <entry>non-reserved</entry>
     <entry>reserved</entry>
     <entry>reserved</entry>
     <entry>reserved</entry>
@@ -5088,14 +5024,6 @@
     <entry>reserved</entry>
    </row>
    <row>
-    <entry><token>SUPERUSER</token></entry>
-    <entry>non-reserved</entry>
-    <entry></entry>
-    <entry></entry>
-    <entry></entry>
-    <entry></entry>
-   </row>
-   <row>
     <entry><token>SYMMETRIC</token></entry>
     <entry>reserved</entry>
     <entry>reserved</entry>
@@ -5544,6 +5472,14 @@
     <entry></entry>
    </row>
    <row>
+    <entry><token>UNLOGGED</token></entry>
+    <entry>non-reserved</entry>
+    <entry></entry>
+    <entry></entry>
+    <entry></entry>
+    <entry></entry>
+   </row>
+   <row>
     <entry><token>UNNAMED</token></entry>
     <entry></entry>
     <entry>non-reserved</entry>
@@ -5667,6 +5603,14 @@
     <entry><token>VALID</token></entry>
     <entry>non-reserved</entry>
     <entry>non-reserved</entry>
+    <entry></entry>
+    <entry></entry>
+    <entry></entry>
+   </row>
+   <row>
+    <entry><token>VALIDATE</token></entry>
+    <entry>non-reserved</entry>
+    <entry></entry>
     <entry></entry>
     <entry></entry>
     <entry></entry>
@@ -5961,7 +5905,7 @@
    </row>
    <row>
     <entry><token>XMLEXISTS</token></entry>
-    <entry></entry>
+    <entry>non-reserved (cannot be function or type)</entry>
     <entry>reserved</entry>
     <entry></entry>
     <entry></entry>
