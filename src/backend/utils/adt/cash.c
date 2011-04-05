@@ -26,6 +26,7 @@
 #include "libpq/pqformat.h"
 #include "utils/builtins.h"
 #include "utils/cash.h"
+#include "utils/int8.h"
 #include "utils/numeric.h"
 #include "utils/pg_locale.h"
 
@@ -91,7 +92,6 @@ num_word(Cash value)
 
 	return buf;
 }	/* num_word() */
-
 
 /* cash_in()
  * Convert a string to a cash data type.
@@ -935,6 +935,66 @@ numeric_cash(PG_FUNCTION_ARGS)
 
 	/* note that numeric_int8 will round to nearest integer for us */
 	result = DatumGetInt64(DirectFunctionCall1(numeric_int8, amount));
+
+	PG_RETURN_CASH(result);
+}
+
+/* int4_cash()
+ * Convert int4 (int) to cash
+ */
+Datum
+int4_cash(PG_FUNCTION_ARGS)
+{
+	int32	amount = PG_GETARG_INT32(0);
+	Cash	result;
+	int		fpoint;
+	int64   scale;
+	int		i;
+	struct lconv *lconvert = PGLC_localeconv();
+
+	/* see comments about frac_digits in cash_in() */
+	fpoint = lconvert->frac_digits;
+	if (fpoint < 0 || fpoint > 10)
+		fpoint = 2;
+
+	/* compute required scale factor */
+	scale = 1;
+	for (i = 0; i < fpoint; i++)
+		scale *= 10;
+
+	/* compute amount * scale, checking for overflow */
+	result = DatumGetInt64(DirectFunctionCall2(int8mul, Int64GetDatum(amount),
+						   Int64GetDatum(scale)));
+
+	PG_RETURN_CASH(result);
+}
+
+/* int8_cash()
+ * Convert int8 (bigint) to cash
+ */
+Datum
+int8_cash(PG_FUNCTION_ARGS)
+{
+	int64	amount = PG_GETARG_INT64(0);
+	Cash	result;
+	int		fpoint;
+	int64   scale;
+	int		i;
+	struct lconv *lconvert = PGLC_localeconv();
+
+	/* see comments about frac_digits in cash_in() */
+	fpoint = lconvert->frac_digits;
+	if (fpoint < 0 || fpoint > 10)
+		fpoint = 2;
+
+	/* compute required scale factor */
+	scale = 1;
+	for (i = 0; i < fpoint; i++)
+		scale *= 10;
+
+	/* compute amount * scale, checking for overflow */
+	result = DatumGetInt64(DirectFunctionCall2(int8mul, Int64GetDatum(amount),
+						   Int64GetDatum(scale)));
 
 	PG_RETURN_CASH(result);
 }

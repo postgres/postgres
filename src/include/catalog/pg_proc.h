@@ -971,6 +971,10 @@ DATA(insert OID = 3823 (  numeric		   PGNSP PGUID 12 1 0 0 f f f t f s 1 0 1700 
 DESCR("convert money to numeric");
 DATA(insert OID = 3824 (  money			   PGNSP PGUID 12 1 0 0 f f f t f s 1 0 790 "1700" _null_ _null_ _null_ _null_	numeric_cash _null_ _null_ _null_ ));
 DESCR("convert numeric to money");
+DATA(insert OID = 3811 (  money			   PGNSP PGUID 12 1 0 0 f f f t f s 1 0 790 "23" _null_ _null_ _null_ _null_	int4_cash _null_ _null_ _null_ ));
+DESCR("convert int4 to money");
+DATA(insert OID = 3812 (  money			   PGNSP PGUID 12 1 0 0 f f f t f s 1 0 790 "20" _null_ _null_ _null_ _null_	int8_cash _null_ _null_ _null_ ));
+DESCR("convert int8 to money");
 
 /* OIDS 900 - 999 */
 

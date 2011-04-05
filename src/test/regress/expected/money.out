@@ -185,3 +185,66 @@ SELECT * FROM money_data;
  $123.46
 (1 row)
 
+-- Cast int4/int8 to money
+SELECT 1234567890::money;
+       money       
+-------------------
+ $1,234,567,890.00
+(1 row)
+
+SELECT 12345678901234567::money;
+           money            
+----------------------------
+ $12,345,678,901,234,567.00
+(1 row)
+
+SELECT 123456789012345678::money;
+ERROR:  bigint out of range
+SELECT 9223372036854775807::money;
+ERROR:  bigint out of range
+SELECT (-12345)::money;
+    money    
+-------------
+ -$12,345.00
+(1 row)
+
+SELECT (-1234567890)::money;
+       money        
+--------------------
+ -$1,234,567,890.00
+(1 row)
+
+SELECT (-12345678901234567)::money;
+            money            
+-----------------------------
+ -$12,345,678,901,234,567.00
+(1 row)
+
+SELECT (-123456789012345678)::money;
+ERROR:  bigint out of range
+SELECT (-9223372036854775808)::money;
+ERROR:  bigint out of range
+SELECT 1234567890::int4::money;
+       money       
+-------------------
+ $1,234,567,890.00
+(1 row)
+
+SELECT 12345678901234567::int8::money;
+           money            
+----------------------------
+ $12,345,678,901,234,567.00
+(1 row)
+
+SELECT (-1234567890)::int4::money;
+       money        
+--------------------
+ -$1,234,567,890.00
+(1 row)
+
+SELECT (-12345678901234567)::int8::money;
+            money            
+-----------------------------
+ -$12,345,678,901,234,567.00
+(1 row)
+

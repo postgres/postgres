@@ -886,15 +886,22 @@ ALTER SEQUENCE <replaceable class="parameter">tablename</replaceable>_<replaceab
    </para>
 
    <para>
-    Values of the <type>numeric</type> data type can be cast to
-    <type>money</type>.  Other numeric types can be converted to
-    <type>money</type> by casting to <type>numeric</type> first, for example:
+    Values of the <type>numeric</type>, <type>int</type>, and
+    <type>bigint</type> data types can be cast to <type>money</type>.
+    Conversion from the <type>real</type> and <type>double precision</type>
+    data types can be done by casting to <type>numeric</type> first, for
+    example:
 <programlisting>
-SELECT 1234::numeric::money;
+SELECT '12.34'::float8::numeric::money;
 </programlisting>
+    However, this is not recommended.  Floating point numbers should not be
+    used to handle money due to the potential for rounding errors.
+   </para>
+
+   <para>
     A <type>money</type> value can be cast to <type>numeric</type> without
     loss of precision. Conversion to other types could potentially lose
-    precision, and it must be done in two stages, for example:
+    precision, and must also be done in two stages:
 <programlisting>
 SELECT '52093.89'::money::numeric::float8;
 </programlisting>

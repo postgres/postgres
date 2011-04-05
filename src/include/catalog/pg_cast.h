@@ -126,6 +126,8 @@ DATA(insert ( 1700	700 1745 i f ));
 DATA(insert ( 1700	701 1746 i f ));
 DATA(insert (  790 1700 3823 a f ));
 DATA(insert ( 1700	790 3824 a f ));
+DATA(insert ( 23	790 3811 a f ));
+DATA(insert ( 20	790 3812 a f ));
 
 /* Allow explicit coercions between int4 and bool */
 DATA(insert (	23	16	2557 e f ));
