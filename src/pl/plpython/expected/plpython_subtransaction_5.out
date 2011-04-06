@@ -47,7 +47,10 @@ ERROR:  spiexceptions.InvalidTextRepresentation: invalid input syntax for intege
 LINE 1: INSERT INTO subtransaction_tbl VALUES ('oops')
                                                ^
 QUERY:  INSERT INTO subtransaction_tbl VALUES ('oops')
-CONTEXT:  PL/Python function "subtransaction_test"
+CONTEXT:  Traceback (most recent call last):
+  PL/Python function "subtransaction_test", line 11, in <module>
+    plpy.execute("INSERT INTO subtransaction_tbl VALUES ('oops')")
+PL/Python function "subtransaction_test"
 SELECT * FROM subtransaction_tbl;
  i 
 ---
@@ -56,7 +59,10 @@ SELECT * FROM subtransaction_tbl;
 TRUNCATE subtransaction_tbl;
 SELECT subtransaction_test('Python');
 ERROR:  AttributeError: 'module' object has no attribute 'attribute_error'
-CONTEXT:  PL/Python function "subtransaction_test"
+CONTEXT:  Traceback (most recent call last):
+  PL/Python function "subtransaction_test", line 13, in <module>
+    plpy.attribute_error
+PL/Python function "subtransaction_test"
 SELECT * FROM subtransaction_tbl;
  i 
 ---
@@ -223,7 +229,10 @@ ERROR:  could not compile PL/Python function "subtransaction_exit_subtransaction
 DETAIL:  SyntaxError: invalid syntax (<string>, line 3)
 SELECT subtransaction_exit_without_enter();
 ERROR:  ValueError: this subtransaction has not been entered
-CONTEXT:  PL/Python function "subtransaction_exit_without_enter"
+CONTEXT:  Traceback (most recent call last):
+  PL/Python function "subtransaction_exit_without_enter", line 2, in <module>
+    plpy.subtransaction().__exit__(None, None, None)
+PL/Python function "subtransaction_exit_without_enter"
 SELECT subtransaction_enter_without_exit();
 WARNING:  forcibly aborting a subtransaction that has not been exited
 CONTEXT:  PL/Python function "subtransaction_enter_without_exit"
@@ -236,7 +245,10 @@ SELECT subtransaction_exit_twice();
 WARNING:  forcibly aborting a subtransaction that has not been exited
 CONTEXT:  PL/Python function "subtransaction_exit_twice"
 ERROR:  ValueError: this subtransaction has not been entered
-CONTEXT:  PL/Python function "subtransaction_exit_twice"
+CONTEXT:  Traceback (most recent call last):
+  PL/Python function "subtransaction_exit_twice", line 3, in <module>
+    plpy.subtransaction().__exit__(None, None, None)
+PL/Python function "subtransaction_exit_twice"
 SELECT subtransaction_enter_twice();
 WARNING:  forcibly aborting a subtransaction that has not been exited
 CONTEXT:  PL/Python function "subtransaction_enter_twice"
@@ -249,12 +261,18 @@ CONTEXT:  PL/Python function "subtransaction_enter_twice"
 
 SELECT subtransaction_exit_same_subtransaction_twice();
 ERROR:  ValueError: this subtransaction has already been exited
-CONTEXT:  PL/Python function "subtransaction_exit_same_subtransaction_twice"
+CONTEXT:  Traceback (most recent call last):
+  PL/Python function "subtransaction_exit_same_subtransaction_twice", line 5, in <module>
+    s.__exit__(None, None, None)
+PL/Python function "subtransaction_exit_same_subtransaction_twice"
 SELECT subtransaction_enter_same_subtransaction_twice();
 WARNING:  forcibly aborting a subtransaction that has not been exited
 CONTEXT:  PL/Python function "subtransaction_enter_same_subtransaction_twice"
 ERROR:  ValueError: this subtransaction has already been entered
-CONTEXT:  PL/Python function "subtransaction_enter_same_subtransaction_twice"
+CONTEXT:  Traceback (most recent call last):
+  PL/Python function "subtransaction_enter_same_subtransaction_twice", line 4, in <module>
+    s.__enter__()
+PL/Python function "subtransaction_enter_same_subtransaction_twice"
 SELECT subtransaction_enter_subtransaction_in_with();
 ERROR:  function subtransaction_enter_subtransaction_in_with() does not exist
 LINE 1: SELECT subtransaction_enter_subtransaction_in_with();

@@ -131,6 +131,111 @@ return None
 
 SELECT valid_type('rick');
 
+/* error in nested functions to get a traceback
+*/
+CREATE FUNCTION nested_error() RETURNS text
+	AS
+'def fun1():
+	plpy.error("boom")
+
+def fun2():
+	fun1()
+
+def fun3():
+	fun2()
+
+fun3()
+return "not reached"
+'
+	LANGUAGE plpythonu;
+
+SELECT nested_error();
+
+/* raising plpy.Error is just like calling plpy.error
+*/
+CREATE FUNCTION nested_error_raise() RETURNS text
+	AS
+'def fun1():
+	raise plpy.Error("boom")
+
+def fun2():
+	fun1()
+
+def fun3():
+	fun2()
+
+fun3()
+return "not reached"
+'
+	LANGUAGE plpythonu;
+
+SELECT nested_error_raise();
+
+/* using plpy.warning should not produce a traceback
+*/
+CREATE FUNCTION nested_warning() RETURNS text
+	AS
+'def fun1():
+	plpy.warning("boom")
+
+def fun2():
+	fun1()
+
+def fun3():
+	fun2()
+
+fun3()
+return "you''ve been warned"
+'
+	LANGUAGE plpythonu;
+
+SELECT nested_warning();
+
+/* AttributeError at toplevel used to give segfaults with the traceback
+*/
+CREATE FUNCTION toplevel_attribute_error() RETURNS void AS
+$$
+plpy.nonexistent
+$$ LANGUAGE plpythonu;
+
+SELECT toplevel_attribute_error();
+
+/* Calling PL/Python functions from SQL and vice versa should not lose context.
+ */
+CREATE OR REPLACE FUNCTION python_traceback() RETURNS void AS $$
+def first():
+  second()
+
+def second():
+  third()
+
+def third():
+  plpy.execute("select sql_error()")
+
+first()
+$$ LANGUAGE plpythonu;
+
+CREATE OR REPLACE FUNCTION sql_error() RETURNS void AS $$
+begin
+  select 1/0;
+end
+$$ LANGUAGE plpgsql;
+
+CREATE OR REPLACE FUNCTION python_from_sql_error() RETURNS void AS $$
+begin
+  select python_traceback();
+end
+$$ LANGUAGE plpgsql;
+
+CREATE OR REPLACE FUNCTION sql_from_python_error() RETURNS void AS $$
+plpy.execute("select sql_error()")
+$$ LANGUAGE plpythonu;
+
+SELECT python_traceback();
+SELECT sql_error();
+SELECT python_from_sql_error();
+SELECT sql_from_python_error();
+
 /* check catching specific types of exceptions
  */
 CREATE TABLE specific (

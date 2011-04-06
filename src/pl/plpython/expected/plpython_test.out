@@ -74,4 +74,7 @@ CONTEXT:  PL/Python function "elog_test"
 WARNING:  warning
 CONTEXT:  PL/Python function "elog_test"
 ERROR:  plpy.Error: error
-CONTEXT:  PL/Python function "elog_test"
+CONTEXT:  Traceback (most recent call last):
+  PL/Python function "elog_test", line 10, in <module>
+    plpy.error('error')
+PL/Python function "elog_test"

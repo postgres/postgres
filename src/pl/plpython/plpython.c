@@ -71,6 +71,7 @@ typedef int Py_ssize_t;
  */
 #if PY_MAJOR_VERSION >= 3
 #define PyInt_FromLong(x) PyLong_FromLong(x)
+#define PyInt_AsLong(x) PyLong_AsLong(x)
 #endif
 
 /*
@@ -217,6 +218,7 @@ typedef struct PLyProcedure
 								 * type */
 	bool		is_setof;		/* true, if procedure returns result set */
 	PyObject   *setof;			/* contents of result set. */
+	char	   *src;			/* textual procedure code, after mangling */
 	char	  **argnames;		/* Argument names */
 	PLyTypeInfo args[FUNC_MAX_ARGS];
 	int			nargs;
@@ -342,7 +344,7 @@ static void
 PLy_elog(int, const char *,...)
 __attribute__((format(printf, 2, 3)));
 static void PLy_get_spi_error_data(PyObject *exc, char **detail, char **hint, char **query, int *position);
-static char *PLy_traceback(int *);
+static void PLy_traceback(char **, char **, int *);
 
 static void *PLy_malloc(size_t);
 static void *PLy_malloc0(size_t);
@@ -1602,6 +1604,7 @@ PLy_procedure_create(HeapTuple procTup, Oid fn_oid, bool is_trigger)
 	proc->globals = NULL;
 	proc->is_setof = procStruct->proretset;
 	proc->setof = NULL;
+	proc->src = NULL;
 	proc->argnames = NULL;
 
 	PG_TRY();
@@ -1788,6 +1791,8 @@ PLy_procedure_compile(PLyProcedure *proc, const char *src)
 	 * insert the function code into the interpreter
 	 */
 	msrc = PLy_procedure_munge_source(proc->pyname, src);
+	/* Save the mangled source for later inclusion in tracebacks */
+	proc->src = PLy_strdup(msrc);
 	crv = PyRun_String(msrc, Py_file_input, proc->globals, NULL);
 	pfree(msrc);
 
@@ -1885,6 +1890,8 @@ PLy_procedure_delete(PLyProcedure *proc)
 		if (proc->argnames && proc->argnames[i])
 			PLy_free(proc->argnames[i]);
 	}
+	if (proc->src)
+		PLy_free(proc->src);
 	if (proc->argnames)
 		PLy_free(proc->argnames);
 }
@@ -4361,15 +4368,18 @@ failure:
  * the current Python error, previously set by PLy_exception_set().
  * This should be used to propagate Python errors into PG.	If fmt is
  * NULL, the Python error becomes the primary error message, otherwise
- * it becomes the detail.
+ * it becomes the detail.  If there is a Python traceback, it is put
+ * in the context.
  */
 static void
 PLy_elog(int elevel, const char *fmt,...)
 {
 	char	   *xmsg;
-	int			xlevel;
+	char	   *tbmsg;
+	int			tb_depth;
 	StringInfoData emsg;
 	PyObject	*exc, *val, *tb;
+	const char	*primary = NULL;
 	char		*detail = NULL;
 	char		*hint = NULL;
 	char		*query = NULL;
@@ -4385,7 +4395,7 @@ PLy_elog(int elevel, const char *fmt,...)
 	}
 	PyErr_Restore(exc, val, tb);
 
-	xmsg = PLy_traceback(&xlevel);
+	PLy_traceback(&xmsg, &tbmsg, &tb_depth);
 
 	if (fmt)
 	{
@@ -4402,24 +4412,30 @@ PLy_elog(int elevel, const char *fmt,...)
 				break;
 			enlargeStringInfo(&emsg, emsg.maxlen);
 		}
+		primary = emsg.data;
+
+		/* Since we have a format string, we cannot have a SPI detail. */
+		Assert(detail == NULL);
+
+		/* If there's an exception message, it goes in the detail. */
+		if (xmsg)
+			detail = xmsg;
+	}
+	else
+	{
+		if (xmsg)
+			primary = xmsg;
 	}
 
 	PG_TRY();
 	{
-		if (fmt)
-			ereport(elevel,
-					(errmsg("%s", emsg.data),
-					 (xmsg) ? errdetail("%s", xmsg) : 0,
-					 (hint) ? errhint("%s", hint) : 0,
-					 (query) ? internalerrquery(query) : 0,
-					 (position) ? internalerrposition(position) : 0));
-		else
-			ereport(elevel,
-					(errmsg("%s", xmsg),
-					 (detail) ? errdetail("%s", detail) : 0,
-					 (hint) ? errhint("%s", hint) : 0,
-					 (query) ? internalerrquery(query) : 0,
-					 (position) ? internalerrposition(position) : 0));
+		ereport(elevel,
+				(errmsg("%s", primary ? primary : "no exception data"),
+				 (detail) ? errdetail("%s", detail) : 0,
+				 (tb_depth > 0 && tbmsg) ? errcontext("%s", tbmsg) : 0,
+				 (hint) ? errhint("%s", hint) : 0,
+				 (query) ? internalerrquery(query) : 0,
+				 (position) ? internalerrposition(position) : 0));
 	}
 	PG_CATCH();
 	{
@@ -4427,6 +4443,8 @@ PLy_elog(int elevel, const char *fmt,...)
 			pfree(emsg.data);
 		if (xmsg)
 			pfree(xmsg);
+		if (tbmsg)
+			pfree(tbmsg);
 		PG_RE_THROW();
 	}
 	PG_END_TRY();
@@ -4435,6 +4453,8 @@ PLy_elog(int elevel, const char *fmt,...)
 		pfree(emsg.data);
 	if (xmsg)
 		pfree(xmsg);
+	if (tbmsg)
+		pfree(tbmsg);
 }
 
 /*
@@ -4458,9 +4478,47 @@ cleanup:
 	Py_XDECREF(spidata);
 }
 
-
+/*
+ * Get the given source line as a palloc'd string
+ */
 static char *
-PLy_traceback(int *xlevel)
+get_source_line(const char *src, int lineno)
+{
+	const char *s;
+	const char *next;
+	int		current = 0;
+
+	next = src;
+	while (current != lineno)
+	{
+		s = next;
+		next = strchr(s + 1, '\n');
+		current++;
+		if (next == NULL)
+			break;
+	}
+
+	if (current != lineno)
+		return NULL;
+
+	while (s && isspace((unsigned char) *s))
+		s++;
+
+	if (next == NULL)
+		return pstrdup(s);
+
+	return pnstrdup(s, next - s);
+}
+
+/*
+ * Extract a Python traceback from the current exception.
+ *
+ * The exception error message is returned in xmsg, the traceback in
+ * tbmsg (both as palloc'd strings) and the traceback depth in
+ * tb_depth.
+ */
+static void
+PLy_traceback(char **xmsg, char **tbmsg, int *tb_depth)
 {
 	PyObject   *e,
 			   *v,
@@ -4472,6 +4530,7 @@ PLy_traceback(int *xlevel)
 	PyObject   *vob = NULL;
 	char	   *vstr;
 	StringInfoData xstr;
+	StringInfoData tbstr;
 
 	/*
 	 * get the current exception
@@ -4483,12 +4542,18 @@ PLy_traceback(int *xlevel)
 	 */
 	if (e == NULL)
 	{
-		*xlevel = WARNING;
-		return NULL;
+		*xmsg = NULL;
+		*tbmsg = NULL;
+		*tb_depth = 0;
+
+		return;
 	}
 
 	PyErr_NormalizeException(&e, &v, &tb);
-	Py_XDECREF(tb);
+
+	/*
+	 * Format the exception and its value and put it in xmsg.
+	 */
 
 	e_type_o = PyObject_GetAttrString(e, "__name__");
 	e_module_o = PyObject_GetAttrString(e, "__module__");
@@ -4521,23 +4586,124 @@ PLy_traceback(int *xlevel)
 		appendStringInfo(&xstr, "%s.%s", e_module_s, e_type_s);
 	appendStringInfo(&xstr, ": %s", vstr);
 
+	*xmsg = xstr.data;
+
+	/*
+	 * Now format the traceback and put it in tbmsg.
+	 */
+
+	*tb_depth = 0;
+	initStringInfo(&tbstr);
+	/* Mimick Python traceback reporting as close as possible. */
+	appendStringInfoString(&tbstr, "Traceback (most recent call last):");
+	while (tb != NULL && tb != Py_None)
+	{
+		PyObject	*volatile tb_prev = NULL;
+		PyObject	*volatile frame = NULL;
+		PyObject	*volatile code = NULL;
+		PyObject	*volatile name = NULL;
+		PyObject	*volatile lineno = NULL;
+
+		PG_TRY();
+		{
+			lineno = PyObject_GetAttrString(tb, "tb_lineno");
+			if (lineno == NULL)
+				elog(ERROR, "could not get line number from Python traceback");
+
+			frame = PyObject_GetAttrString(tb, "tb_frame");
+			if (frame == NULL)
+				elog(ERROR, "could not get frame from Python traceback");
+
+			code = PyObject_GetAttrString(frame, "f_code");
+			if (code == NULL)
+				elog(ERROR, "could not get code object from Python frame");
+
+			name = PyObject_GetAttrString(code, "co_name");
+			if (name == NULL)
+				elog(ERROR, "could not get function name from Python code object");
+		}
+		PG_CATCH();
+		{
+			Py_XDECREF(frame);
+			Py_XDECREF(code);
+			Py_XDECREF(name);
+			Py_XDECREF(lineno);
+			PG_RE_THROW();
+		}
+		PG_END_TRY();
+
+		/* The first frame always points at <module>, skip it. */
+		if (*tb_depth > 0)
+		{
+			char	*proname;
+			char	*fname;
+			char	*line;
+			long	plain_lineno;
+
+			/*
+			 * The second frame points at the internal function, but
+			 * to mimick Python error reporting we want to say
+			 * <module>.
+			 */
+			if (*tb_depth == 1)
+				fname = "<module>";
+			else
+				fname = PyString_AsString(name);
+
+			proname = PLy_procedure_name(PLy_curr_procedure);
+			plain_lineno = PyInt_AsLong(lineno);
+
+			if (proname == NULL)
+				appendStringInfo(
+					&tbstr, "\n  PL/Python anonymous code block, line %ld, in %s",
+					plain_lineno - 1, fname);
+			else
+				appendStringInfo(
+					&tbstr, "\n  PL/Python function \"%s\", line %ld, in %s",
+					proname, plain_lineno - 1, fname);
+
+			if (PLy_curr_procedure)
+			{
+				/*
+				 * If we know the current procedure, append the exact
+				 * line from the source, again mimicking Python's
+				 * traceback.py module behavior.  We could store the
+				 * already line-split source to avoid splitting it
+				 * every time, but producing a traceback is not the
+				 * most important scenario to optimize for.
+				 */
+				line = get_source_line(PLy_curr_procedure->src, plain_lineno);
+				if (line)
+				{
+					appendStringInfo(&tbstr, "\n    %s", line);
+					pfree(line);
+				}
+			}
+		}
+
+		Py_DECREF(frame);
+		Py_DECREF(code);
+		Py_DECREF(name);
+		Py_DECREF(lineno);
+
+		/* Release the current frame and go to the next one. */
+		tb_prev = tb;
+		tb = PyObject_GetAttrString(tb, "tb_next");
+		Assert(tb_prev != Py_None);
+		Py_DECREF(tb_prev);
+		if (tb == NULL)
+			elog(ERROR, "could not traverse Python traceback");
+		(*tb_depth)++;
+	}
+
+	/* Return the traceback. */
+	*tbmsg = tbstr.data;
+
 	Py_XDECREF(e_type_o);
 	Py_XDECREF(e_module_o);
 	Py_XDECREF(vob);
 	Py_XDECREF(v);
-
-	/*
-	 * intuit an appropriate error level based on the exception type
-	 */
-	if (PLy_exc_error && PyErr_GivenExceptionMatches(e, PLy_exc_error))
-		*xlevel = ERROR;
-	else if (PLy_exc_fatal && PyErr_GivenExceptionMatches(e, PLy_exc_fatal))
-		*xlevel = FATAL;
-	else
-		*xlevel = ERROR;
-
 	Py_DECREF(e);
-	return xstr.data;
 }
 
 /* python module code */
