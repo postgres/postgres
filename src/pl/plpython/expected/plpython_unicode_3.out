@@ -41,7 +41,10 @@ SELECT * FROM unicode_test;
 SELECT unicode_plan1();
 ERROR:  spiexceptions.InternalError: could not convert Python Unicode object to PostgreSQL server encoding
 DETAIL:  UnicodeEncodeError: 'ascii' codec can't encode character u'\x80' in position 0: ordinal not in range(128)
-CONTEXT:  PL/Python function "unicode_plan1"
+CONTEXT:  Traceback (most recent call last):
+  PL/Python function "unicode_plan1", line 3, in <module>
+    rv = plpy.execute(plan, [u"\x80"], 1)
+PL/Python function "unicode_plan1"
 SELECT unicode_plan2();
  unicode_plan2 
 ---------------
