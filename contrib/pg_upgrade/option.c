@@ -77,12 +77,12 @@ parseCommandLine(int argc, char *argv[])
 			strcmp(argv[1], "-?") == 0)
 		{
 			usage();
-			exit_nicely(false);
+			exit(0);
 		}
 		if (strcmp(argv[1], "--version") == 0 || strcmp(argv[1], "-V") == 0)
 		{
 			pg_log(PG_REPORT, "pg_upgrade " PG_VERSION "\n");
-			exit_nicely(false);
+			exit(0);
 		}
 	}
 
@@ -125,7 +125,7 @@ parseCommandLine(int argc, char *argv[])
 				if ((log_opts.debug_fd = fopen(optarg, "w")) == NULL)
 				{
 					pg_log(PG_FATAL, "cannot open debug file\n");
-					exit_nicely(false);
+					exit(1);
 				}
 				break;
 
@@ -141,7 +141,7 @@ parseCommandLine(int argc, char *argv[])
 				if ((old_cluster.port = atoi(optarg)) <= 0)
 				{
 					pg_log(PG_FATAL, "invalid old port number\n");
-					exit_nicely(false);
+					exit(1);
 				}
 				break;
 
@@ -149,7 +149,7 @@ parseCommandLine(int argc, char *argv[])
 				if ((new_cluster.port = atoi(optarg)) <= 0)
 				{
 					pg_log(PG_FATAL, "invalid new port number\n");
-					exit_nicely(false);
+					exit(1);
 				}
 				break;
 

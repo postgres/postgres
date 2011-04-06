@@ -23,7 +23,7 @@ static bool test_server_conn(ClusterInfo *cluster, int timeout);
  *
  *	Connects to the desired database on the designated server.
  *	If the connection attempt fails, this function logs an error
- *	message and calls exit_nicely() to kill the program.
+ *	message and calls exit() to kill the program.
  */
 PGconn *
 connectToServer(ClusterInfo *cluster, const char *db_name)
@@ -45,7 +45,8 @@ connectToServer(ClusterInfo *cluster, const char *db_name)
 		if (conn)
 			PQfinish(conn);
 
-		exit_nicely(true);
+		printf("Failure, exiting\n");
+		exit(1);
 	}
 
 	return conn;
@@ -57,7 +58,7 @@ connectToServer(ClusterInfo *cluster, const char *db_name)
  *
  *	Formats a query string from the given arguments and executes the
  *	resulting query.  If the query fails, this function logs an error
- *	message and calls exit_nicely() to kill the program.
+ *	message and calls exit() to kill the program.
  */
 PGresult *
 executeQueryOrDie(PGconn *conn, const char *fmt,...)
@@ -81,8 +82,8 @@ executeQueryOrDie(PGconn *conn, const char *fmt,...)
 			   PQerrorMessage(conn));
 		PQclear(result);
 		PQfinish(conn);
-		exit_nicely(true);
-		return NULL;			/* Never get here, but keeps compiler happy */
+		printf("Failure, exiting\n");
+		exit(1);
 	}
 	else
 		return result;
@@ -152,6 +153,18 @@ get_major_server_version(ClusterInfo *cluster)
 }
 
 
+static void
+#ifdef HAVE_ATEXIT
+stop_postmaster_atexit(void)
+#else
+stop_postmaster_on_exit(int exitstatus, void *arg)
+#endif
+{
+	stop_postmaster(true, true);
+
+}
+
+
 void
 start_postmaster(ClusterInfo *cluster, bool quiet)
 {
@@ -159,10 +172,21 @@ start_postmaster(ClusterInfo *cluster, bool quiet)
 	const char *bindir;
 	const char *datadir;
 	unsigned short port;
+	bool		exit_hook_registered = false;
 
 	bindir = cluster->bindir;
 	datadir = cluster->pgdata;
 	port = cluster->port;
+
+	if (!exit_hook_registered)
+	{
+#ifdef HAVE_ATEXIT
+		atexit(stop_postmaster_atexit);
+#else
+		on_exit(stop_postmaster_on_exit);
+#endif
+		exit_hook_registered = true;
+	}
 
 	/*
 	 * On Win32, we can't send both pg_upgrade output and pg_ctl output to the

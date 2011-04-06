@@ -99,7 +99,8 @@ pg_log(eLogType type, char *fmt,...)
 		case PG_FATAL:
 			printf("%s", "\n");
 			printf("%s", _(message));
-			exit_nicely(true);
+			printf("Failure, exiting\n");
+			exit(1);
 			break;
 
 		case PG_DEBUG:
@@ -181,36 +182,6 @@ get_user_info(char **user_name)
 	*user_name = pg_strdup(pw->pw_name);
 
 	return user_id;
-}
-
-
-void
-exit_nicely(bool need_cleanup)
-{
-	stop_postmaster(true, true);
-
-	pg_free(log_opts.filename);
-
-	if (log_opts.fd)
-		fclose(log_opts.fd);
-
-	if (log_opts.debug_fd)
-		fclose(log_opts.debug_fd);
-
-	/* terminate any running instance of postmaster */
-	if (os_info.postmasterPID != 0)
-		kill(os_info.postmasterPID, SIGTERM);
-	
-	if (need_cleanup)
-	{
-		printf("Failure, exiting\n");
-		/*
-		 * FIXME must delete intermediate files
-		 */
-		exit(1);
-	}
-	else
-		exit(0);
 }
 
 

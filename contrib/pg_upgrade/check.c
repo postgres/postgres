@@ -131,7 +131,7 @@ report_clusters_compatible(void)
 		pg_log(PG_REPORT, "\n*Clusters are compatible*\n");
 		/* stops new cluster */
 		stop_postmaster(false, false);
-		exit_nicely(false);
+		exit(0);
 	}
 
 	pg_log(PG_REPORT, "\n"

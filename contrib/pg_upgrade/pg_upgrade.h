@@ -363,7 +363,6 @@ void		check_for_libpq_envvars(void);
 
 /* util.c */
 
-void		exit_nicely(bool need_cleanup);
 char	   *quote_identifier(const char *s);
 int			get_user_info(char **user_name);
 void		check_ok(void);
