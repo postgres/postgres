@@ -93,6 +93,7 @@ extern TSDictionaryCacheEntry *lookup_ts_dictionary_cache(Oid dictId);
 extern TSConfigCacheEntry *lookup_ts_config_cache(Oid cfgId);
 
 extern Oid	getTSCurrentConfig(bool emitError);
-extern const char *assignTSCurrentConfig(const char *newval, bool doit, GucSource source);
+extern bool check_TSCurrentConfig(char **newval, void **extra, GucSource source);
+extern void assign_TSCurrentConfig(const char *newval, void *extra);
 
 #endif   /* TS_CACHE_H */

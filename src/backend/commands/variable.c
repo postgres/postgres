@@ -33,10 +33,10 @@
  */
 
 /*
- * assign_datestyle: GUC assign_hook for datestyle
+ * check_datestyle: GUC check_hook for datestyle
  */
-const char *
-assign_datestyle(const char *value, bool doit, GucSource source)
+bool
+check_datestyle(char **newval, void **extra, GucSource source)
 {
 	int			newDateStyle = DateStyle;
 	int			newDateOrder = DateOrder;
@@ -44,23 +44,22 @@ assign_datestyle(const char *value, bool doit, GucSource source)
 	bool		have_order = false;
 	bool		ok = true;
 	char	   *rawstring;
+	int		   *myextra;
 	char	   *result;
 	List	   *elemlist;
 	ListCell   *l;
 
 	/* Need a modifiable copy of string */
-	rawstring = pstrdup(value);
+	rawstring = pstrdup(*newval);
 
 	/* Parse string into list of identifiers */
 	if (!SplitIdentifierString(rawstring, ',', &elemlist))
 	{
 		/* syntax error in list */
+		GUC_check_errdetail("List syntax is invalid.");
 		pfree(rawstring);
 		list_free(elemlist);
-		ereport(GUC_complaint_elevel(source),
-				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-				 errmsg("invalid list syntax for parameter \"datestyle\"")));
-		return NULL;
+		return false;
 	}
 
 	foreach(l, elemlist)
@@ -130,38 +129,38 @@ assign_datestyle(const char *value, bool doit, GucSource source)
 			 * Easiest way to get the current DEFAULT state is to fetch the
 			 * DEFAULT string from guc.c and recursively parse it.
 			 *
-			 * We can't simply "return assign_datestyle(...)" because we need
+			 * We can't simply "return check_datestyle(...)" because we need
 			 * to handle constructs like "DEFAULT, ISO".
 			 */
-			int			saveDateStyle = DateStyle;
-			int			saveDateOrder = DateOrder;
-			const char *subval;
+			char   *subval;
+			void   *subextra = NULL;
 
-			subval = assign_datestyle(GetConfigOptionResetString("datestyle"),
-									  true, source);
-			if (!have_style)
-				newDateStyle = DateStyle;
-			if (!have_order)
-				newDateOrder = DateOrder;
-			DateStyle = saveDateStyle;
-			DateOrder = saveDateOrder;
+			subval = strdup(GetConfigOptionResetString("datestyle"));
 			if (!subval)
 			{
 				ok = false;
 				break;
 			}
-			/* Here we know that our own return value is always malloc'd */
-			/* when doit is true */
-			free((char *) subval);
+			if (!check_datestyle(&subval, &subextra, source))
+			{
+				free(subval);
+				ok = false;
+				break;
+			}
+			myextra = (int *) subextra;
+			if (!have_style)
+				newDateStyle = myextra[0];
+			if (!have_order)
+				newDateOrder = myextra[1];
+			free(subval);
+			free(subextra);
 		}
 		else
 		{
-			ereport(GUC_complaint_elevel(source),
-					(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-					 errmsg("unrecognized \"datestyle\" key word: \"%s\"",
-							tok)));
-			ok = false;
-			break;
+			GUC_check_errdetail("Unrecognized key word: \"%s\".", tok);
+			pfree(rawstring);
+			list_free(elemlist);
+			return false;
 		}
 	}
 
@@ -170,24 +169,16 @@ assign_datestyle(const char *value, bool doit, GucSource source)
 
 	if (!ok)
 	{
-		ereport(GUC_complaint_elevel(source),
-				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-				 errmsg("conflicting \"datestyle\" specifications")));
-		return NULL;
+		GUC_check_errdetail("Conflicting \"datestyle\" specifications.");
+		return false;
 	}
-
-	/*
-	 * If we aren't going to do the assignment, just return OK indicator.
-	 */
-	if (!doit)
-		return value;
 
 	/*
 	 * Prepare the canonical string to return.	GUC wants it malloc'd.
 	 */
 	result = (char *) malloc(32);
 	if (!result)
-		return NULL;
+		return false;
 
 	switch (newDateStyle)
 	{
@@ -217,14 +208,32 @@ assign_datestyle(const char *value, bool doit, GucSource source)
 			break;
 	}
 
-	/*
-	 * Finally, it's safe to assign to the global variables; the assignment
-	 * cannot fail now.
-	 */
-	DateStyle = newDateStyle;
-	DateOrder = newDateOrder;
+	free(*newval);
+	*newval = result;
 
-	return result;
+	/*
+	 * Set up the "extra" struct actually used by assign_datestyle.
+	 */
+	myextra = (int *) malloc(2 * sizeof(int));
+	if (!myextra)
+		return false;
+	myextra[0] = newDateStyle;
+	myextra[1] = newDateOrder;
+	*extra = (void *) myextra;
+
+	return true;
+}
+
+/*
+ * assign_datestyle: GUC assign_hook for datestyle
+ */
+void
+assign_datestyle(const char *newval, void *extra)
+{
+	int		   *myextra = (int *) extra;
+
+	DateStyle = myextra[0];
+	DateOrder = myextra[1];
 }
 
 
@@ -232,22 +241,58 @@ assign_datestyle(const char *value, bool doit, GucSource source)
  * TIMEZONE
  */
 
-/*
- * assign_timezone: GUC assign_hook for timezone
- */
-const char *
-assign_timezone(const char *value, bool doit, GucSource source)
+typedef struct
 {
-	char	   *result;
+	pg_tz	   *session_timezone;
+	int			CTimeZone;
+	bool		HasCTZSet;
+} timezone_extra;
+
+/*
+ * check_timezone: GUC check_hook for timezone
+ */
+bool
+check_timezone(char **newval, void **extra, GucSource source)
+{
+	timezone_extra myextra;
 	char	   *endptr;
 	double		hours;
 
-	/*
-	 * Check for INTERVAL 'foo'
-	 */
-	if (pg_strncasecmp(value, "interval", 8) == 0)
+	if (*newval == NULL)
 	{
-		const char *valueptr = value;
+		/*
+		 * The boot_val given for TimeZone in guc.c is NULL.  When we see this
+		 * we just do nothing.  If this isn't overridden from the config file
+		 * then pg_timezone_initialize() will eventually select a default
+		 * value from the environment.  This hack has two purposes: to avoid
+		 * wasting cycles loading values that might soon be overridden from
+		 * the config file, and to avoid trying to read the timezone files
+		 * during InitializeGUCOptions().  The latter doesn't work in an
+		 * EXEC_BACKEND subprocess because my_exec_path hasn't been set yet
+		 * and so we can't locate PGSHAREDIR.
+		 */
+		Assert(source == PGC_S_DEFAULT);
+		return true;
+	}
+
+	/*
+	 * Initialize the "extra" struct that will be passed to assign_timezone.
+	 * We don't want to change any of the three global variables except as
+	 * specified by logic below.  To avoid leaking memory during failure
+	 * returns, we set up the struct contents in a local variable, and only
+	 * copy it to *extra at the end.
+	 */
+	myextra.session_timezone = session_timezone;
+	myextra.CTimeZone = CTimeZone;
+	myextra.HasCTZSet = HasCTZSet;
+
+	if (pg_strncasecmp(*newval, "interval", 8) == 0)
+	{
+		/*
+		 * Support INTERVAL 'foo'.  This is for SQL spec compliance, not
+		 * because it has any actual real-world usefulness.
+		 */
+		const char *valueptr = *newval;
 		char	   *val;
 		Interval   *interval;
 
@@ -255,14 +300,14 @@ assign_timezone(const char *value, bool doit, GucSource source)
 		while (isspace((unsigned char) *valueptr))
 			valueptr++;
 		if (*valueptr++ != '\'')
-			return NULL;
+			return false;
 		val = pstrdup(valueptr);
 		/* Check and remove trailing quote */
 		endptr = strchr(val, '\'');
 		if (!endptr || endptr[1] != '\0')
 		{
 			pfree(val);
-			return NULL;
+			return false;
 		}
 		*endptr = '\0';
 
@@ -280,31 +325,25 @@ assign_timezone(const char *value, bool doit, GucSource source)
 		pfree(val);
 		if (interval->month != 0)
 		{
-			ereport(GUC_complaint_elevel(source),
-					(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-					 errmsg("invalid interval value for time zone: month not allowed")));
+			GUC_check_errdetail("Cannot specify months in time zone interval.");
 			pfree(interval);
-			return NULL;
+			return false;
 		}
 		if (interval->day != 0)
 		{
-			ereport(GUC_complaint_elevel(source),
-					(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-			errmsg("invalid interval value for time zone: day not allowed")));
+			GUC_check_errdetail("Cannot specify days in time zone interval.");
 			pfree(interval);
-			return NULL;
+			return false;
 		}
-		if (doit)
-		{
-			/* Here we change from SQL to Unix sign convention */
-#ifdef HAVE_INT64_TIMESTAMP
-			CTimeZone = -(interval->time / USECS_PER_SEC);
-#else
-			CTimeZone = -interval->time;
-#endif
 
-			HasCTZSet = true;
-		}
+		/* Here we change from SQL to Unix sign convention */
+#ifdef HAVE_INT64_TIMESTAMP
+		myextra.CTimeZone = -(interval->time / USECS_PER_SEC);
+#else
+		myextra.CTimeZone = -interval->time;
+#endif
+		myextra.HasCTZSet = true;
+
 		pfree(interval);
 	}
 	else
@@ -312,38 +351,12 @@ assign_timezone(const char *value, bool doit, GucSource source)
 		/*
 		 * Try it as a numeric number of hours (possibly fractional).
 		 */
-		hours = strtod(value, &endptr);
-		if (endptr != value && *endptr == '\0')
+		hours = strtod(*newval, &endptr);
+		if (endptr != *newval && *endptr == '\0')
 		{
-			if (doit)
-			{
-				/* Here we change from SQL to Unix sign convention */
-				CTimeZone = -hours * SECS_PER_HOUR;
-				HasCTZSet = true;
-			}
-		}
-		else if (pg_strcasecmp(value, "UNKNOWN") == 0)
-		{
-			/*
-			 * UNKNOWN is the value shown as the "default" for TimeZone in
-			 * guc.c.  We interpret it as being a complete no-op; we don't
-			 * change the timezone setting.  Note that if there is a known
-			 * timezone setting, we will return that name rather than UNKNOWN
-			 * as the canonical spelling.
-			 *
-			 * During GUC initialization, since the timezone library isn't set
-			 * up yet, pg_get_timezone_name will return NULL and we will leave
-			 * the setting as UNKNOWN.	If this isn't overridden from the
-			 * config file then pg_timezone_initialize() will eventually
-			 * select a default value from the environment.
-			 */
-			if (doit)
-			{
-				const char *curzone = pg_get_timezone_name(session_timezone);
-
-				if (curzone)
-					value = curzone;
-			}
+			/* Here we change from SQL to Unix sign convention */
+			myextra.CTimeZone = -hours * SECS_PER_HOUR;
+			myextra.HasCTZSet = true;
 		}
 		else
 		{
@@ -352,61 +365,83 @@ assign_timezone(const char *value, bool doit, GucSource source)
 			 */
 			pg_tz	   *new_tz;
 
-			new_tz = pg_tzset(value);
+			new_tz = pg_tzset(*newval);
 
 			if (!new_tz)
 			{
-				ereport(GUC_complaint_elevel(source),
-						(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-						 errmsg("unrecognized time zone name: \"%s\"",
-								value)));
-				return NULL;
+				/* Doesn't seem to be any great value in errdetail here */
+				return false;
 			}
 
 			if (!tz_acceptable(new_tz))
 			{
-				ereport(GUC_complaint_elevel(source),
-						(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-					   errmsg("time zone \"%s\" appears to use leap seconds",
-							  value),
-					errdetail("PostgreSQL does not support leap seconds.")));
-				return NULL;
+				GUC_check_errmsg("time zone \"%s\" appears to use leap seconds",
+								 *newval);
+				GUC_check_errdetail("PostgreSQL does not support leap seconds.");
+				return false;
 			}
 
-			if (doit)
-			{
-				/* Save the changed TZ */
-				session_timezone = new_tz;
-				HasCTZSet = false;
-			}
+			myextra.session_timezone = new_tz;
+			myextra.HasCTZSet = false;
 		}
 	}
 
 	/*
-	 * If we aren't going to do the assignment, just return OK indicator.
+	 * Prepare the canonical string to return.	GUC wants it malloc'd.
+	 *
+	 * Note: the result string should be something that we'd accept as input.
+	 * We use the numeric format for interval cases, because it's simpler to
+	 * reload.  In the named-timezone case, *newval is already OK and need not
+	 * be changed; it might not have the canonical casing, but that's taken
+	 * care of by show_timezone.
 	 */
-	if (!doit)
-		return value;
+	if (myextra.HasCTZSet)
+	{
+		char	*result = (char *) malloc(64);
+
+		if (!result)
+			return false;
+		snprintf(result, 64, "%.5f",
+				 (double) (-myextra.CTimeZone) / (double) SECS_PER_HOUR);
+		free(*newval);
+		*newval = result;
+	}
 
 	/*
-	 * Prepare the canonical string to return.	GUC wants it malloc'd.
+	 * Pass back data for assign_timezone to use
 	 */
-	if (HasCTZSet)
-	{
-		result = (char *) malloc(64);
-		if (!result)
-			return NULL;
-		snprintf(result, 64, "%.5f",
-				 (double) (-CTimeZone) / (double) SECS_PER_HOUR);
-	}
-	else
-		result = strdup(value);
+	*extra = malloc(sizeof(timezone_extra));
+	if (!*extra)
+		return false;
+	memcpy(*extra, &myextra, sizeof(timezone_extra));
 
-	return result;
+	return true;
+}
+
+/*
+ * assign_timezone: GUC assign_hook for timezone
+ */
+void
+assign_timezone(const char *newval, void *extra)
+{
+	timezone_extra *myextra = (timezone_extra *) extra;
+
+	/* Do nothing for the boot_val default of NULL */
+	if (!myextra)
+		return;
+
+	session_timezone = myextra->session_timezone;
+	CTimeZone = myextra->CTimeZone;
+	HasCTZSet = myextra->HasCTZSet;
 }
 
 /*
  * show_timezone: GUC show_hook for timezone
+ *
+ * We wouldn't need this, except that historically interval values have been
+ * shown without an INTERVAL prefix, so the display format isn't what would
+ * be accepted as input.  Otherwise we could have check_timezone return the
+ * preferred string to begin with.
  */
 const char *
 show_timezone(void)
@@ -447,83 +482,66 @@ show_timezone(void)
  */
 
 /*
- * assign_log_timezone: GUC assign_hook for log_timezone
+ * check_log_timezone: GUC check_hook for log_timezone
  */
-const char *
-assign_log_timezone(const char *value, bool doit, GucSource source)
+bool
+check_log_timezone(char **newval, void **extra, GucSource source)
 {
-	char	   *result;
+	pg_tz	   *new_tz;
 
-	if (pg_strcasecmp(value, "UNKNOWN") == 0)
+	if (*newval == NULL)
 	{
 		/*
-		 * UNKNOWN is the value shown as the "default" for log_timezone in
-		 * guc.c.  We interpret it as being a complete no-op; we don't change
-		 * the timezone setting.  Note that if there is a known timezone
-		 * setting, we will return that name rather than UNKNOWN as the
-		 * canonical spelling.
-		 *
-		 * During GUC initialization, since the timezone library isn't set up
-		 * yet, pg_get_timezone_name will return NULL and we will leave the
-		 * setting as UNKNOWN.	If this isn't overridden from the config file
-		 * then pg_timezone_initialize() will eventually select a default
+		 * The boot_val given for log_timezone in guc.c is NULL.  When we see
+		 * this we just do nothing.  If this isn't overridden from the config
+		 * file then pg_timezone_initialize() will eventually select a default
 		 * value from the environment.
 		 */
-		if (doit)
-		{
-			const char *curzone = pg_get_timezone_name(log_timezone);
-
-			if (curzone)
-				value = curzone;
-		}
+		Assert(source == PGC_S_DEFAULT);
+		return true;
 	}
-	else
+
+	/*
+	 * Otherwise assume it is a timezone name, and try to load it.
+	 */
+	new_tz = pg_tzset(*newval);
+
+	if (!new_tz)
 	{
-		/*
-		 * Otherwise assume it is a timezone name, and try to load it.
-		 */
-		pg_tz	   *new_tz;
+		/* Doesn't seem to be any great value in errdetail here */
+		return false;
+	}
 
-		new_tz = pg_tzset(value);
-
-		if (!new_tz)
-		{
-			ereport(GUC_complaint_elevel(source),
-					(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-					 errmsg("unrecognized time zone name: \"%s\"",
-							value)));
-			return NULL;
-		}
-
-		if (!tz_acceptable(new_tz))
-		{
-			ereport(GUC_complaint_elevel(source),
-					(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-					 errmsg("time zone \"%s\" appears to use leap seconds",
-							value),
-					 errdetail("PostgreSQL does not support leap seconds.")));
-			return NULL;
-		}
-
-		if (doit)
-		{
-			/* Save the changed TZ */
-			log_timezone = new_tz;
-		}
+	if (!tz_acceptable(new_tz))
+	{
+		GUC_check_errmsg("time zone \"%s\" appears to use leap seconds",
+						 *newval);
+		GUC_check_errdetail("PostgreSQL does not support leap seconds.");
+		return false;
 	}
 
 	/*
-	 * If we aren't going to do the assignment, just return OK indicator.
+	 * Pass back data for assign_log_timezone to use
 	 */
-	if (!doit)
-		return value;
+	*extra = malloc(sizeof(pg_tz *));
+	if (!*extra)
+		return false;
+	memcpy(*extra, &new_tz, sizeof(pg_tz *));
 
-	/*
-	 * Prepare the canonical string to return.	GUC wants it malloc'd.
-	 */
-	result = strdup(value);
+	return true;
+}
 
-	return result;
+/*
+ * assign_log_timezone: GUC assign_hook for log_timezone
+ */
+void
+assign_log_timezone(const char *newval, void *extra)
+{
+	/* Do nothing for the boot_val default of NULL */
+	if (!extra)
+		return;
+
+	log_timezone = *((pg_tz **) extra);
 }
 
 /*
@@ -548,38 +566,33 @@ show_log_timezone(void)
  *
  * We allow idempotent changes (r/w -> r/w and r/o -> r/o) at any time, and
  * we also always allow changes from read-write to read-only.  However,
- * read-only to read-write may be changed only when source == PGC_S_OVERRIDE
- * (i.e. we're aborting a read only transaction and restoring the previous
- * setting) or in a top-level transaction that has not yet taken an initial
- * snapshot.
+ * read-only may be changed to read-write only when in a top-level transaction
+ * that has not yet taken an initial snapshot.  Can't do it in a hot standby
+ * slave, either.
  */
 bool
-assign_transaction_read_only(bool newval, bool doit, GucSource source)
+check_transaction_read_only(bool *newval, void **extra, GucSource source)
 {
-	if (source != PGC_S_OVERRIDE && newval == false && XactReadOnly)
+	if (*newval == false && XactReadOnly)
 	{
 		/* Can't go to r/w mode inside a r/o transaction */
 		if (IsSubTransaction())
 		{
-			ereport(GUC_complaint_elevel(source),
-					(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-					 errmsg("cannot set transaction read-write mode inside a read-only transaction")));
+			GUC_check_errcode(ERRCODE_ACTIVE_SQL_TRANSACTION);
+			GUC_check_errmsg("cannot set transaction read-write mode inside a read-only transaction");
 			return false;
 		}
 		/* Top level transaction can't change to r/w after first snapshot. */
 		if (FirstSnapshotSet)
 		{
-			ereport(GUC_complaint_elevel(source),
-					(errcode(ERRCODE_ACTIVE_SQL_TRANSACTION),
-					 errmsg("transaction read-write mode must be set before any query")));
+			GUC_check_errcode(ERRCODE_ACTIVE_SQL_TRANSACTION);
+			GUC_check_errmsg("transaction read-write mode must be set before any query");
 			return false;
 		}
 		/* Can't go to r/w mode while recovery is still active */
 		if (RecoveryInProgress())
 		{
-			ereport(GUC_complaint_elevel(source),
-					(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-					 errmsg("cannot set transaction read-write mode during recovery")));
+			GUC_check_errmsg("cannot set transaction read-write mode during recovery");
 			return false;
 		}
 	}
@@ -591,76 +604,78 @@ assign_transaction_read_only(bool newval, bool doit, GucSource source)
  * SET TRANSACTION ISOLATION LEVEL
  *
  * We allow idempotent changes at any time, but otherwise this can only be
- * changed from a toplevel transaction that has not yet taken a snapshot, or
- * when source == PGC_S_OVERRIDE (i.e. we're aborting a transaction and
- * restoring the previously set value).
+ * changed in a toplevel transaction that has not yet taken a snapshot.
  */
-const char *
-assign_XactIsoLevel(const char *value, bool doit, GucSource source)
+bool
+check_XactIsoLevel(char **newval, void **extra, GucSource source)
 {
-	/* source == PGC_S_OVERRIDE means do it anyway, eg at xact abort */
-	if (source != PGC_S_OVERRIDE && strcmp(value, XactIsoLevel_string) != 0)
+	int			newXactIsoLevel;
+
+	if (strcmp(*newval, "serializable") == 0)
+	{
+		newXactIsoLevel = XACT_SERIALIZABLE;
+	}
+	else if (strcmp(*newval, "repeatable read") == 0)
+	{
+		newXactIsoLevel = XACT_REPEATABLE_READ;
+	}
+	else if (strcmp(*newval, "read committed") == 0)
+	{
+		newXactIsoLevel = XACT_READ_COMMITTED;
+	}
+	else if (strcmp(*newval, "read uncommitted") == 0)
+	{
+		newXactIsoLevel = XACT_READ_UNCOMMITTED;
+	}
+	else if (strcmp(*newval, "default") == 0)
+	{
+		newXactIsoLevel = DefaultXactIsoLevel;
+	}
+	else
+		return false;
+
+	if (newXactIsoLevel != XactIsoLevel)
 	{
 		if (FirstSnapshotSet)
 		{
-			ereport(GUC_complaint_elevel(source),
-					(errcode(ERRCODE_ACTIVE_SQL_TRANSACTION),
-					 errmsg("SET TRANSACTION ISOLATION LEVEL must be called before any query")));
-			return NULL;
+			GUC_check_errcode(ERRCODE_ACTIVE_SQL_TRANSACTION);
+			GUC_check_errmsg("SET TRANSACTION ISOLATION LEVEL must be called before any query");
+			return false;
 		}
 		/* We ignore a subtransaction setting it to the existing value. */
 		if (IsSubTransaction())
 		{
-			ereport(GUC_complaint_elevel(source),
-					(errcode(ERRCODE_ACTIVE_SQL_TRANSACTION),
-					 errmsg("SET TRANSACTION ISOLATION LEVEL must not be called in a subtransaction")));
-			return NULL;
+			GUC_check_errcode(ERRCODE_ACTIVE_SQL_TRANSACTION);
+			GUC_check_errmsg("SET TRANSACTION ISOLATION LEVEL must not be called in a subtransaction");
+			return false;
 		}
 		/* Can't go to serializable mode while recovery is still active */
-		if (RecoveryInProgress() && strcmp(value, "serializable") == 0)
+		if (newXactIsoLevel == XACT_SERIALIZABLE && RecoveryInProgress())
 		{
-			ereport(GUC_complaint_elevel(source),
-					(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-					 errmsg("cannot use serializable mode in a hot standby"),
-					 errhint("You can use REPEATABLE READ instead.")));
+			GUC_check_errmsg("cannot use serializable mode in a hot standby");
+			GUC_check_errhint("You can use REPEATABLE READ instead.");
 			return false;
 		}
 	}
 
-	if (strcmp(value, "serializable") == 0)
-	{
-		if (doit)
-			XactIsoLevel = XACT_SERIALIZABLE;
-	}
-	else if (strcmp(value, "repeatable read") == 0)
-	{
-		if (doit)
-			XactIsoLevel = XACT_REPEATABLE_READ;
-	}
-	else if (strcmp(value, "read committed") == 0)
-	{
-		if (doit)
-			XactIsoLevel = XACT_READ_COMMITTED;
-	}
-	else if (strcmp(value, "read uncommitted") == 0)
-	{
-		if (doit)
-			XactIsoLevel = XACT_READ_UNCOMMITTED;
-	}
-	else if (strcmp(value, "default") == 0)
-	{
-		if (doit)
-			XactIsoLevel = DefaultXactIsoLevel;
-	}
-	else
-		return NULL;
+	*extra = malloc(sizeof(int));
+	if (!*extra)
+		return false;
+	*((int *) *extra) = newXactIsoLevel;
 
-	return value;
+	return true;
+}
+
+void
+assign_XactIsoLevel(const char *newval, void *extra)
+{
+	XactIsoLevel = *((int *) extra);
 }
 
 const char *
 show_XactIsoLevel(void)
 {
+	/* We need this because we don't want to show "default". */
 	switch (XactIsoLevel)
 	{
 		case XACT_READ_UNCOMMITTED:
@@ -681,25 +696,18 @@ show_XactIsoLevel(void)
  */
 
 bool
-assign_transaction_deferrable(bool newval, bool doit, GucSource source)
+check_transaction_deferrable(bool *newval, void **extra, GucSource source)
 {
-	/* source == PGC_S_OVERRIDE means do it anyway, eg at xact abort */
-	if (source == PGC_S_OVERRIDE)
-		return true;
-
 	if (IsSubTransaction())
 	{
-		ereport(GUC_complaint_elevel(source),
-				(errcode(ERRCODE_ACTIVE_SQL_TRANSACTION),
-				 errmsg("SET TRANSACTION [NOT] DEFERRABLE cannot be called within a subtransaction")));
+		GUC_check_errcode(ERRCODE_ACTIVE_SQL_TRANSACTION);
+		GUC_check_errmsg("SET TRANSACTION [NOT] DEFERRABLE cannot be called within a subtransaction");
 		return false;
 	}
-
 	if (FirstSnapshotSet)
 	{
-		ereport(GUC_complaint_elevel(source),
-				(errcode(ERRCODE_ACTIVE_SQL_TRANSACTION),
-				 errmsg("SET TRANSACTION [NOT] DEFERRABLE must be called before any query")));
+		GUC_check_errcode(ERRCODE_ACTIVE_SQL_TRANSACTION);
+		GUC_check_errmsg("SET TRANSACTION [NOT] DEFERRABLE must be called before any query");
 		return false;
 	}
 
@@ -708,15 +716,32 @@ assign_transaction_deferrable(bool newval, bool doit, GucSource source)
 
 /*
  * Random number seed
+ *
+ * We can't roll back the random sequence on error, and we don't want
+ * config file reloads to affect it, so we only want interactive SET SEED
+ * commands to set it.  We use the "extra" storage to ensure that rollbacks
+ * don't try to do the operation again.
  */
 
 bool
-assign_random_seed(double value, bool doit, GucSource source)
+check_random_seed(double *newval, void **extra, GucSource source)
 {
-	/* Can't really roll back on error, so ignore non-interactive setting */
-	if (doit && source >= PGC_S_INTERACTIVE)
-		DirectFunctionCall1(setseed, Float8GetDatum(value));
+	*extra = malloc(sizeof(int));
+	if (!*extra)
+		return false;
+	/* Arm the assign only if source of value is an interactive SET */
+	*((int *) *extra) = (source >= PGC_S_INTERACTIVE);
+
 	return true;
+}
+
+void
+assign_random_seed(double newval, void *extra)
+{
+	/* We'll do this at most once for any setting of the GUC variable */
+	if (*((int *) extra))
+		DirectFunctionCall1(setseed, Float8GetDatum(newval));
+	*((int *) extra) = 0;
 }
 
 const char *
@@ -727,214 +752,189 @@ show_random_seed(void)
 
 
 /*
- * encoding handling functions
+ * SET CLIENT_ENCODING
  */
 
-const char *
-assign_client_encoding(const char *value, bool doit, GucSource source)
+bool
+check_client_encoding(char **newval, void **extra, GucSource source)
 {
 	int			encoding;
 
-	encoding = pg_valid_client_encoding(value);
+	/* Look up the encoding by name */
+	encoding = pg_valid_client_encoding(*newval);
 	if (encoding < 0)
-		return NULL;
+		return false;
 
 	/*
-	 * Note: if we are in startup phase then SetClientEncoding may not be able
-	 * to really set the encoding.	In this case we will assume that the
-	 * encoding is okay, and InitializeClientEncoding() will fix things once
-	 * initialization is complete.
+	 * If we are not within a transaction then PrepareClientEncoding will not
+	 * be able to look up the necessary conversion procs.  If we are still
+	 * starting up, it will return "OK" anyway, and InitializeClientEncoding
+	 * will fix things once initialization is far enough along.  After
+	 * startup, we'll fail.  This would only happen if someone tries to change
+	 * client_encoding in postgresql.conf and then SIGHUP existing sessions.
+	 * It seems like a bad idea for client_encoding to change that way anyhow,
+	 * so we don't go out of our way to support it.
+	 *
+	 * Note: in the postmaster, or any other process that never calls
+	 * InitializeClientEncoding, PrepareClientEncoding will always succeed,
+	 * and so will SetClientEncoding; but they won't do anything, which is OK.
 	 */
-	if (SetClientEncoding(encoding, doit) < 0)
+	if (PrepareClientEncoding(encoding) < 0)
 	{
-		ereport(GUC_complaint_elevel(source),
-				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-				 errmsg("conversion between %s and %s is not supported",
-						value, GetDatabaseEncodingName())));
-		return NULL;
+		if (IsTransactionState())
+		{
+			/* Must be a genuine no-such-conversion problem */
+			GUC_check_errcode(ERRCODE_FEATURE_NOT_SUPPORTED);
+			GUC_check_errdetail("Conversion between %s and %s is not supported.",
+								pg_encoding_to_char(encoding),
+								GetDatabaseEncodingName());
+		}
+		else
+		{
+			/* Provide a useful complaint */
+			GUC_check_errdetail("Cannot change \"client_encoding\" now.");
+		}
+		return false;
 	}
-	return value;
+
+	/*
+	 * Return the encoding's canonical name, and save its ID in *extra.
+	 */
+	free(*newval);
+	*newval = strdup(pg_encoding_to_char(encoding));
+	if (!*newval)
+		return false;
+
+	*extra = malloc(sizeof(int));
+	if (!*extra)
+		return false;
+	*((int *) *extra) = encoding;
+
+	return true;
+}
+
+void
+assign_client_encoding(const char *newval, void *extra)
+{
+	int			encoding = *((int *) extra);
+
+	/* We do not expect an error if PrepareClientEncoding succeeded */
+	if (SetClientEncoding(encoding) < 0)
+		elog(LOG, "SetClientEncoding(%d) failed", encoding);
 }
 
 
 /*
  * SET SESSION AUTHORIZATION
- *
- * When resetting session auth after an error, we can't expect to do catalog
- * lookups.  Hence, the stored form of the value must provide a numeric oid
- * that can be re-used directly.  We store the string in the form of
- * NAMEDATALEN 'x's, followed by T or F to indicate superuserness, followed
- * by the numeric oid, followed by a comma, followed by the role name.
- * This cannot be confused with a plain role name because of the NAMEDATALEN
- * limit on names, so we can tell whether we're being passed an initial
- * role name or a saved/restored value.  (NOTE: we rely on guc.c to have
- * properly truncated any incoming value, but not to truncate already-stored
- * values.	See GUC_IS_NAME processing.)
  */
-extern char *session_authorization_string;		/* in guc.c */
 
-const char *
-assign_session_authorization(const char *value, bool doit, GucSource source)
+typedef struct
 {
-	Oid			roleid = InvalidOid;
-	bool		is_superuser = false;
-	const char *actual_rolename = NULL;
-	char	   *result;
+	/* This is the "extra" state for both SESSION AUTHORIZATION and ROLE */
+	Oid			roleid;
+	bool		is_superuser;
+} role_auth_extra;
 
-	if (strspn(value, "x") == NAMEDATALEN &&
-		(value[NAMEDATALEN] == 'T' || value[NAMEDATALEN] == 'F'))
+bool
+check_session_authorization(char **newval, void **extra, GucSource source)
+{
+	HeapTuple	roleTup;
+	Oid			roleid;
+	bool		is_superuser;
+	role_auth_extra *myextra;
+
+	/* Do nothing for the boot_val default of NULL */
+	if (*newval == NULL)
+		return true;
+
+	if (!IsTransactionState())
 	{
-		/* might be a saved userid string */
-		Oid			savedoid;
-		char	   *endptr;
-
-		savedoid = (Oid) strtoul(value + NAMEDATALEN + 1, &endptr, 10);
-
-		if (endptr != value + NAMEDATALEN + 1 && *endptr == ',')
-		{
-			/* syntactically valid, so break out the data */
-			roleid = savedoid;
-			is_superuser = (value[NAMEDATALEN] == 'T');
-			actual_rolename = endptr + 1;
-		}
+		/*
+		 * Can't do catalog lookups, so fail.  The result of this is that
+		 * session_authorization cannot be set in postgresql.conf, which
+		 * seems like a good thing anyway, so we don't work hard to avoid it.
+		 */
+		return false;
 	}
 
-	if (roleid == InvalidOid)
+	/* Look up the username */
+	roleTup = SearchSysCache1(AUTHNAME, PointerGetDatum(*newval));
+	if (!HeapTupleIsValid(roleTup))
 	{
-		/* not a saved ID, so look it up */
-		HeapTuple	roleTup;
-
-		if (!IsTransactionState())
-		{
-			/*
-			 * Can't do catalog lookups, so fail.  The upshot of this is that
-			 * session_authorization cannot be set in postgresql.conf, which
-			 * seems like a good thing anyway.
-			 */
-			return NULL;
-		}
-
-		roleTup = SearchSysCache1(AUTHNAME, PointerGetDatum(value));
-		if (!HeapTupleIsValid(roleTup))
-		{
-			ereport(GUC_complaint_elevel(source),
-					(errcode(ERRCODE_UNDEFINED_OBJECT),
-					 errmsg("role \"%s\" does not exist", value)));
-			return NULL;
-		}
-
-		roleid = HeapTupleGetOid(roleTup);
-		is_superuser = ((Form_pg_authid) GETSTRUCT(roleTup))->rolsuper;
-		actual_rolename = value;
-
-		ReleaseSysCache(roleTup);
+		GUC_check_errmsg("role \"%s\" does not exist", *newval);
+		return false;
 	}
 
-	if (doit)
-		SetSessionAuthorization(roleid, is_superuser);
+	roleid = HeapTupleGetOid(roleTup);
+	is_superuser = ((Form_pg_authid) GETSTRUCT(roleTup))->rolsuper;
 
-	result = (char *) malloc(NAMEDATALEN + 32 + strlen(actual_rolename));
-	if (!result)
-		return NULL;
+	ReleaseSysCache(roleTup);
 
-	memset(result, 'x', NAMEDATALEN);
+	/* Set up "extra" struct for assign_session_authorization to use */
+	myextra = (role_auth_extra *) malloc(sizeof(role_auth_extra));
+	if (!myextra)
+		return false;
+	myextra->roleid = roleid;
+	myextra->is_superuser = is_superuser;
+	*extra = (void *) myextra;
 
-	sprintf(result + NAMEDATALEN, "%c%u,%s",
-			is_superuser ? 'T' : 'F',
-			roleid,
-			actual_rolename);
-
-	return result;
+	return true;
 }
 
-const char *
-show_session_authorization(void)
+void
+assign_session_authorization(const char *newval, void *extra)
 {
-	/*
-	 * Extract the user name from the stored string; see
-	 * assign_session_authorization
-	 */
-	const char *value = session_authorization_string;
-	Oid			savedoid;
-	char	   *endptr;
+	role_auth_extra *myextra = (role_auth_extra *) extra;
 
-	/* If session_authorization hasn't been set in this process, return "" */
-	if (value == NULL || value[0] == '\0')
-		return "";
+	/* Do nothing for the boot_val default of NULL */
+	if (!myextra)
+		return;
 
-	Assert(strspn(value, "x") == NAMEDATALEN &&
-		   (value[NAMEDATALEN] == 'T' || value[NAMEDATALEN] == 'F'));
-
-	savedoid = (Oid) strtoul(value + NAMEDATALEN + 1, &endptr, 10);
-
-	Assert(endptr != value + NAMEDATALEN + 1 && *endptr == ',');
-
-	return endptr + 1;
+	SetSessionAuthorization(myextra->roleid, myextra->is_superuser);
 }
 
 
 /*
  * SET ROLE
  *
- * When resetting session auth after an error, we can't expect to do catalog
- * lookups.  Hence, the stored form of the value must provide a numeric oid
- * that can be re-used directly.  We implement this exactly like SET
- * SESSION AUTHORIZATION.
- *
  * The SQL spec requires "SET ROLE NONE" to unset the role, so we hardwire
- * a translation of "none" to InvalidOid.
+ * a translation of "none" to InvalidOid.  Otherwise this is much like
+ * SET SESSION AUTHORIZATION.
  */
 extern char *role_string;		/* in guc.c */
 
-const char *
-assign_role(const char *value, bool doit, GucSource source)
+bool
+check_role(char **newval, void **extra, GucSource source)
 {
-	Oid			roleid = InvalidOid;
-	bool		is_superuser = false;
-	const char *actual_rolename = value;
-	char	   *result;
+	HeapTuple	roleTup;
+	Oid			roleid;
+	bool		is_superuser;
+	role_auth_extra *myextra;
 
-	if (strspn(value, "x") == NAMEDATALEN &&
-		(value[NAMEDATALEN] == 'T' || value[NAMEDATALEN] == 'F'))
+	if (strcmp(*newval, "none") == 0)
 	{
-		/* might be a saved userid string */
-		Oid			savedoid;
-		char	   *endptr;
-
-		savedoid = (Oid) strtoul(value + NAMEDATALEN + 1, &endptr, 10);
-
-		if (endptr != value + NAMEDATALEN + 1 && *endptr == ',')
-		{
-			/* syntactically valid, so break out the data */
-			roleid = savedoid;
-			is_superuser = (value[NAMEDATALEN] == 'T');
-			actual_rolename = endptr + 1;
-		}
+		/* hardwired translation */
+		roleid = InvalidOid;
+		is_superuser = false;
 	}
-
-	if (roleid == InvalidOid &&
-		strcmp(actual_rolename, "none") != 0)
+	else
 	{
-		/* not a saved ID, so look it up */
-		HeapTuple	roleTup;
-
 		if (!IsTransactionState())
 		{
 			/*
-			 * Can't do catalog lookups, so fail.  The upshot of this is that
+			 * Can't do catalog lookups, so fail.  The result of this is that
 			 * role cannot be set in postgresql.conf, which seems like a good
-			 * thing anyway.
+			 * thing anyway, so we don't work hard to avoid it.
 			 */
-			return NULL;
+			return false;
 		}
 
-		roleTup = SearchSysCache1(AUTHNAME, PointerGetDatum(value));
+		/* Look up the username */
+		roleTup = SearchSysCache1(AUTHNAME, PointerGetDatum(*newval));
 		if (!HeapTupleIsValid(roleTup))
 		{
-			ereport(GUC_complaint_elevel(source),
-					(errcode(ERRCODE_UNDEFINED_OBJECT),
-					 errmsg("role \"%s\" does not exist", value)));
-			return NULL;
+			GUC_check_errmsg("role \"%s\" does not exist", *newval);
+			return false;
 		}
 
 		roleid = HeapTupleGetOid(roleTup);
@@ -947,61 +947,45 @@ assign_role(const char *value, bool doit, GucSource source)
 		 */
 		if (!is_member_of_role(GetSessionUserId(), roleid))
 		{
-			ereport(GUC_complaint_elevel(source),
-					(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
-					 errmsg("permission denied to set role \"%s\"",
-							value)));
-			return NULL;
+			GUC_check_errcode(ERRCODE_INSUFFICIENT_PRIVILEGE);
+			GUC_check_errmsg("permission denied to set role \"%s\"",
+							 *newval);
+			return false;
 		}
 	}
 
-	if (doit)
-		SetCurrentRoleId(roleid, is_superuser);
+	/* Set up "extra" struct for assign_role to use */
+	myextra = (role_auth_extra *) malloc(sizeof(role_auth_extra));
+	if (!myextra)
+		return false;
+	myextra->roleid = roleid;
+	myextra->is_superuser = is_superuser;
+	*extra = (void *) myextra;
 
-	result = (char *) malloc(NAMEDATALEN + 32 + strlen(actual_rolename));
-	if (!result)
-		return NULL;
+	return true;
+}
 
-	memset(result, 'x', NAMEDATALEN);
+void
+assign_role(const char *newval, void *extra)
+{
+	role_auth_extra *myextra = (role_auth_extra *) extra;
 
-	sprintf(result + NAMEDATALEN, "%c%u,%s",
-			is_superuser ? 'T' : 'F',
-			roleid,
-			actual_rolename);
-
-	return result;
+	SetCurrentRoleId(myextra->roleid, myextra->is_superuser);
 }
 
 const char *
 show_role(void)
 {
 	/*
-	 * Extract the role name from the stored string; see assign_role
+	 * Check whether SET ROLE is active; if not return "none".  This is a
+	 * kluge to deal with the fact that SET SESSION AUTHORIZATION logically
+	 * resets SET ROLE to NONE, but we cannot set the GUC role variable from
+	 * assign_session_authorization (because we haven't got enough info to
+	 * call set_config_option).
 	 */
-	const char *value = role_string;
-	Oid			savedoid;
-	char	   *endptr;
-
-	/* This special case only applies if no SET ROLE has been done */
-	if (value == NULL || strcmp(value, "none") == 0)
+	if (!OidIsValid(GetCurrentRoleId()))
 		return "none";
 
-	Assert(strspn(value, "x") == NAMEDATALEN &&
-		   (value[NAMEDATALEN] == 'T' || value[NAMEDATALEN] == 'F'));
-
-	savedoid = (Oid) strtoul(value + NAMEDATALEN + 1, &endptr, 10);
-
-	Assert(endptr != value + NAMEDATALEN + 1 && *endptr == ',');
-
-	/*
-	 * Check that the stored string still matches the effective setting, else
-	 * return "none".  This is a kluge to deal with the fact that SET SESSION
-	 * AUTHORIZATION logically resets SET ROLE to NONE, but we cannot set the
-	 * GUC role variable from assign_session_authorization (because we haven't
-	 * got enough info to call set_config_option).
-	 */
-	if (savedoid != GetCurrentRoleId())
-		return "none";
-
-	return endptr + 1;
+	/* Otherwise we can just use the GUC string */
+	return role_string ? role_string : "none";
 }

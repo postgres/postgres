@@ -141,7 +141,8 @@ ProcessConfigFile(GucContext context)
 	 */
 	cvc_struct = (struct config_string *)
 		find_option("custom_variable_classes", false, elevel);
-	if (cvc_struct && cvc_struct->gen.reset_source > PGC_S_FILE)
+	Assert(cvc_struct);
+	if (cvc_struct->gen.reset_source > PGC_S_FILE)
 	{
 		cvc = guc_strdup(elevel, cvc_struct->reset_val);
 		if (cvc == NULL)
@@ -151,19 +152,18 @@ ProcessConfigFile(GucContext context)
 			 guc_name_compare(head->name, "custom_variable_classes") == 0)
 	{
 		/*
-		 * Need to canonicalize the value via the assign hook.  Casting away
-		 * const is a bit ugly, but we know the result is malloc'd.
+		 * Need to canonicalize the value by calling the check hook.
 		 */
-		cvc = (char *) assign_custom_variable_classes(head->value,
-													  false, PGC_S_FILE);
+		void   *extra = NULL;
+
+		cvc = guc_strdup(elevel, head->value);
 		if (cvc == NULL)
-		{
-			ereport(elevel,
-					(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-					 errmsg("invalid value for parameter \"%s\": \"%s\"",
-							head->name, head->value)));
 			goto cleanup_list;
-		}
+		if (!call_string_check_hook(cvc_struct, &cvc, &extra,
+									PGC_S_FILE, elevel))
+			goto cleanup_list;
+		if (extra)
+			free(extra);
 	}
 
 	/*

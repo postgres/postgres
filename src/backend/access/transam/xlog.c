@@ -4887,36 +4887,60 @@ GetSystemIdentifier(void)
 /*
  * Auto-tune the number of XLOG buffers.
  *
- * If the user-set value of wal_buffers is -1, we auto-tune to about 3% of
- * shared_buffers, with a maximum of one XLOG segment and a minimum of 8
- * blocks (8 was the default value prior to PostgreSQL 9.1, when auto-tuning
- * was added).  We also clamp manually-set values to at least 4 blocks; prior
- * to PostgreSQL 9.1, a minimum of 4 was enforced by guc.c, but since that
- * is no longer possible, we just silently treat such values as a request for
- * the minimum.
+ * The preferred setting for wal_buffers is about 3% of shared_buffers, with
+ * a maximum of one XLOG segment (there is little reason to think that more
+ * is helpful, at least so long as we force an fsync when switching log files)
+ * and a minimum of 8 blocks (which was the default value prior to PostgreSQL
+ * 9.1, when auto-tuning was added).
+ *
+ * This should not be called until NBuffers has received its final value.
  */
-static void
-XLOGTuneNumBuffers(void)
+static int
+XLOGChooseNumBuffers(void)
 {
-	int			xbuffers = XLOGbuffers;
-	char		buf[32];
+	int			xbuffers;
 
-	if (xbuffers == -1)
-	{
-		xbuffers = NBuffers / 32;
-		if (xbuffers > XLOG_SEG_SIZE / XLOG_BLCKSZ)
-			xbuffers = XLOG_SEG_SIZE / XLOG_BLCKSZ;
-		if (xbuffers < 8)
-			xbuffers = 8;
-	}
-	else if (xbuffers < 4)
-		xbuffers = 4;
+	xbuffers = NBuffers / 32;
+	if (xbuffers > XLOG_SEG_SIZE / XLOG_BLCKSZ)
+		xbuffers = XLOG_SEG_SIZE / XLOG_BLCKSZ;
+	if (xbuffers < 8)
+		xbuffers = 8;
+	return xbuffers;
+}
 
-	if (xbuffers != XLOGbuffers)
+/*
+ * GUC check_hook for wal_buffers
+ */
+bool
+check_wal_buffers(int *newval, void **extra, GucSource source)
+{
+	/*
+	 * -1 indicates a request for auto-tune.
+	 */
+	if (*newval == -1)
 	{
-		snprintf(buf, sizeof(buf), "%d", xbuffers);
-		SetConfigOption("wal_buffers", buf, PGC_POSTMASTER, PGC_S_OVERRIDE);
+		/*
+		 * If we haven't yet changed the boot_val default of -1, just let it
+		 * be.  We'll fix it when XLOGShmemSize is called.
+		 */
+		if (XLOGbuffers == -1)
+			return true;
+
+		/* Otherwise, substitute the auto-tune value */
+		*newval = XLOGChooseNumBuffers();
 	}
+
+	/*
+	 * We clamp manually-set values to at least 4 blocks.  Prior to PostgreSQL
+	 * 9.1, a minimum of 4 was enforced by guc.c, but since that is no longer
+	 * the case, we just silently treat such values as a request for the
+	 * minimum.  (We could throw an error instead, but that doesn't seem very
+	 * helpful.)
+	 */
+	if (*newval < 4)
+		*newval = 4;
+
+	return true;
 }
 
 /*
@@ -4927,8 +4951,19 @@ XLOGShmemSize(void)
 {
 	Size		size;
 
-	/* Figure out how many XLOG buffers we need. */
-	XLOGTuneNumBuffers();
+	/*
+	 * If the value of wal_buffers is -1, use the preferred auto-tune value.
+	 * This isn't an amazingly clean place to do this, but we must wait till
+	 * NBuffers has received its final value, and must do it before using
+	 * the value of XLOGbuffers to do anything important.
+	 */
+	if (XLOGbuffers == -1)
+	{
+		char		buf[32];
+
+		snprintf(buf, sizeof(buf), "%d", XLOGChooseNumBuffers());
+		SetConfigOption("wal_buffers", buf, PGC_POSTMASTER, PGC_S_OVERRIDE);
+	}
 	Assert(XLOGbuffers > 0);
 
 	/* XLogCtl */
@@ -8653,12 +8688,9 @@ get_sync_bit(int method)
 /*
  * GUC support
  */
-bool
-assign_xlog_sync_method(int new_sync_method, bool doit, GucSource source)
+void
+assign_xlog_sync_method(int new_sync_method, void *extra)
 {
-	if (!doit)
-		return true;
-
 	if (sync_method != new_sync_method)
 	{
 		/*
@@ -8678,8 +8710,6 @@ assign_xlog_sync_method(int new_sync_method, bool doit, GucSource source)
 				XLogFileClose();
 		}
 	}
-
-	return true;
 }
 
 

@@ -587,8 +587,9 @@ getTSCurrentConfig(bool emitError)
 	return TSCurrentConfigCache;
 }
 
-const char *
-assignTSCurrentConfig(const char *newval, bool doit, GucSource source)
+/* GUC check_hook for default_text_search_config */
+bool
+check_TSCurrentConfig(char **newval, void **extra, GucSource source)
 {
 	/*
 	 * If we aren't inside a transaction, we cannot do database access so
@@ -601,10 +602,10 @@ assignTSCurrentConfig(const char *newval, bool doit, GucSource source)
 		Form_pg_ts_config cfg;
 		char	   *buf;
 
-		cfgId = get_ts_config_oid(stringToQualifiedNameList(newval), true);
+		cfgId = get_ts_config_oid(stringToQualifiedNameList(*newval), true);
 
 		if (!OidIsValid(cfgId))
-			return NULL;
+			return false;
 
 		/*
 		 * Modify the actually stored value to be fully qualified, to ensure
@@ -622,17 +623,20 @@ assignTSCurrentConfig(const char *newval, bool doit, GucSource source)
 		ReleaseSysCache(tuple);
 
 		/* GUC wants it malloc'd not palloc'd */
-		newval = strdup(buf);
+		free(*newval);
+		*newval = strdup(buf);
 		pfree(buf);
-
-		if (doit && newval)
-			TSCurrentConfigCache = cfgId;
-	}
-	else
-	{
-		if (doit)
-			TSCurrentConfigCache = InvalidOid;
+		if (!newval)
+			return false;
 	}
 
-	return newval;
+	return true;
+}
+
+/* GUC assign_hook for default_text_search_config */
+void
+assign_TSCurrentConfig(const char *newval, void *extra)
+{
+	/* Just reset the cache to force a lookup on first use */
+	TSCurrentConfigCache = InvalidOid;
 }

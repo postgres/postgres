@@ -1023,9 +1023,9 @@ AlterTableSpaceOptions(AlterTableSpaceOptionsStmt *stmt)
  * Routines for handling the GUC variable 'default_tablespace'.
  */
 
-/* assign_hook: validate new default_tablespace, do extra actions as needed */
-const char *
-assign_default_tablespace(const char *newval, bool doit, GucSource source)
+/* check_hook: validate new default_tablespace */
+bool
+check_default_tablespace(char **newval, void **extra, GucSource source)
 {
 	/*
 	 * If we aren't inside a transaction, we cannot do database access so
@@ -1033,18 +1033,16 @@ assign_default_tablespace(const char *newval, bool doit, GucSource source)
 	 */
 	if (IsTransactionState())
 	{
-		if (newval[0] != '\0' &&
-			!OidIsValid(get_tablespace_oid(newval, true)))
+		if (**newval != '\0' &&
+			!OidIsValid(get_tablespace_oid(*newval, true)))
 		{
-			ereport(GUC_complaint_elevel(source),
-					(errcode(ERRCODE_UNDEFINED_OBJECT),
-					 errmsg("tablespace \"%s\" does not exist",
-							newval)));
-			return NULL;
+			GUC_check_errdetail("Tablespace \"%s\" does not exist.",
+								*newval);
+			return false;
 		}
 	}
 
-	return newval;
+	return true;
 }
 
 /*
@@ -1100,23 +1098,30 @@ GetDefaultTablespace(char relpersistence)
  * Routines for handling the GUC variable 'temp_tablespaces'.
  */
 
-/* assign_hook: validate new temp_tablespaces, do extra actions as needed */
-const char *
-assign_temp_tablespaces(const char *newval, bool doit, GucSource source)
+typedef struct
+{
+	int			numSpcs;
+	Oid			tblSpcs[1];		/* VARIABLE LENGTH ARRAY */
+} temp_tablespaces_extra;
+
+/* check_hook: validate new temp_tablespaces */
+bool
+check_temp_tablespaces(char **newval, void **extra, GucSource source)
 {
 	char	   *rawname;
 	List	   *namelist;
 
 	/* Need a modifiable copy of string */
-	rawname = pstrdup(newval);
+	rawname = pstrdup(*newval);
 
 	/* Parse string into list of identifiers */
 	if (!SplitIdentifierString(rawname, ',', &namelist))
 	{
 		/* syntax error in name list */
+		GUC_check_errdetail("List syntax is invalid.");
 		pfree(rawname);
 		list_free(namelist);
-		return NULL;
+		return false;
 	}
 
 	/*
@@ -1126,17 +1131,13 @@ assign_temp_tablespaces(const char *newval, bool doit, GucSource source)
 	 */
 	if (IsTransactionState())
 	{
-		/*
-		 * If we error out below, or if we are called multiple times in one
-		 * transaction, we'll leak a bit of TopTransactionContext memory.
-		 * Doesn't seem worth worrying about.
-		 */
+		temp_tablespaces_extra *myextra;
 		Oid		   *tblSpcs;
 		int			numSpcs;
 		ListCell   *l;
 
-		tblSpcs = (Oid *) MemoryContextAlloc(TopTransactionContext,
-										list_length(namelist) * sizeof(Oid));
+		/* temporary workspace until we are done verifying the list */
+		tblSpcs = (Oid *) palloc(list_length(namelist) * sizeof(Oid));
 		numSpcs = 0;
 		foreach(l, namelist)
 		{
@@ -1169,7 +1170,7 @@ assign_temp_tablespaces(const char *newval, bool doit, GucSource source)
 				continue;
 			}
 
-			/* Check permissions similarly */
+			/* Check permissions, similarly complaining only if interactive */
 			aclresult = pg_tablespace_aclcheck(curoid, GetUserId(),
 											   ACL_CREATE);
 			if (aclresult != ACLCHECK_OK)
@@ -1182,17 +1183,41 @@ assign_temp_tablespaces(const char *newval, bool doit, GucSource source)
 			tblSpcs[numSpcs++] = curoid;
 		}
 
-		/* If actively "doing it", give the new list to fd.c */
-		if (doit)
-			SetTempTablespaces(tblSpcs, numSpcs);
-		else
-			pfree(tblSpcs);
+		/* Now prepare an "extra" struct for assign_temp_tablespaces */
+		myextra = malloc(offsetof(temp_tablespaces_extra, tblSpcs) +
+						 numSpcs * sizeof(Oid));
+		if (!myextra)
+			return false;
+		myextra->numSpcs = numSpcs;
+		memcpy(myextra->tblSpcs, tblSpcs, numSpcs * sizeof(Oid));
+		*extra = (void *) myextra;
+
+		pfree(tblSpcs);
 	}
 
 	pfree(rawname);
 	list_free(namelist);
 
-	return newval;
+	return true;
+}
+
+/* assign_hook: do extra actions as needed */
+void
+assign_temp_tablespaces(const char *newval, void *extra)
+{
+	temp_tablespaces_extra *myextra = (temp_tablespaces_extra *) extra;
+
+	/*
+	 * If check_temp_tablespaces was executed inside a transaction, then pass
+	 * the list it made to fd.c.  Otherwise, clear fd.c's list; we must be
+	 * still outside a transaction, or else restoring during transaction exit,
+	 * and in either case we can just let the next PrepareTempTablespaces call
+	 * make things sane.
+	 */
+	if (myextra)
+		SetTempTablespaces(myextra->tblSpcs, myextra->numSpcs);
+	else
+		SetTempTablespaces(NULL, 0);
 }
 
 /*

@@ -63,7 +63,7 @@ _PG_init(void)
 							 PLPGSQL_RESOLVE_ERROR,
 							 variable_conflict_options,
 							 PGC_SUSET, 0,
-							 NULL, NULL);
+							 NULL, NULL, NULL);
 
 	EmitWarningsOnPlaceholders("plpgsql");
 

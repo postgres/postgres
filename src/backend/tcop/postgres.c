@@ -2804,7 +2804,8 @@ RecoveryConflictInterrupt(ProcSignalReason reason)
 				break;
 
 			default:
-				elog(FATAL, "Unknown conflict mode");
+				elog(FATAL, "unrecognized conflict mode: %d",
+					 (int) reason);
 		}
 
 		Assert(RecoveryConflictPending && (QueryCancelPending || ProcDiePending));
@@ -3062,25 +3063,30 @@ check_stack_depth(void)
 #endif /* IA64 */
 }
 
-/* GUC assign hook for max_stack_depth */
+/* GUC check hook for max_stack_depth */
 bool
-assign_max_stack_depth(int newval, bool doit, GucSource source)
+check_max_stack_depth(int *newval, void **extra, GucSource source)
 {
-	long		newval_bytes = newval * 1024L;
+	long		newval_bytes = *newval * 1024L;
 	long		stack_rlimit = get_stack_depth_rlimit();
 
 	if (stack_rlimit > 0 && newval_bytes > stack_rlimit - STACK_DEPTH_SLOP)
 	{
-		ereport(GUC_complaint_elevel(source),
-				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-				 errmsg("\"max_stack_depth\" must not exceed %ldkB",
-						(stack_rlimit - STACK_DEPTH_SLOP) / 1024L),
-				 errhint("Increase the platform's stack depth limit via \"ulimit -s\" or local equivalent.")));
+		GUC_check_errdetail("\"max_stack_depth\" must not exceed %ldkB.",
+							(stack_rlimit - STACK_DEPTH_SLOP) / 1024L);
+		GUC_check_errhint("Increase the platform's stack depth limit via \"ulimit -s\" or local equivalent.");
 		return false;
 	}
-	if (doit)
-		max_stack_depth_bytes = newval_bytes;
 	return true;
+}
+
+/* GUC assign hook for max_stack_depth */
+void
+assign_max_stack_depth(int newval, void *extra)
+{
+	long		newval_bytes = newval * 1024L;
+
+	max_stack_depth_bytes = newval_bytes;
 }
 
 

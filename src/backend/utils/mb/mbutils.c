@@ -77,12 +77,16 @@ static int	cliplen(const char *str, int len, int limit);
 
 
 /*
- * Set the client encoding and save fmgrinfo for the conversion
- * function if necessary.  Returns 0 if okay, -1 if not (bad encoding
- * or can't support conversion)
+ * Prepare for a future call to SetClientEncoding.  Success should mean
+ * that SetClientEncoding is guaranteed to succeed for this encoding request.
+ *
+ * (But note that success before backend_startup_complete does not guarantee
+ * success after ...)
+ *
+ * Returns 0 if okay, -1 if not (bad encoding or can't support conversion)
  */
 int
-SetClientEncoding(int encoding, bool doit)
+PrepareClientEncoding(int encoding)
 {
 	int			current_server_encoding;
 	ListCell   *lc;
@@ -92,11 +96,7 @@ SetClientEncoding(int encoding, bool doit)
 
 	/* Can't do anything during startup, per notes above */
 	if (!backend_startup_complete)
-	{
-		if (doit)
-			pending_client_encoding = encoding;
 		return 0;
-	}
 
 	current_server_encoding = GetDatabaseEncoding();
 
@@ -106,15 +106,7 @@ SetClientEncoding(int encoding, bool doit)
 	if (current_server_encoding == encoding ||
 		current_server_encoding == PG_SQL_ASCII ||
 		encoding == PG_SQL_ASCII)
-	{
-		if (doit)
-		{
-			ClientEncoding = &pg_enc2name_tbl[encoding];
-			ToServerConvProc = NULL;
-			ToClientConvProc = NULL;
-		}
 		return 0;
-	}
 
 	if (IsTransactionState())
 	{
@@ -139,12 +131,6 @@ SetClientEncoding(int encoding, bool doit)
 			return -1;
 
 		/*
-		 * Done if not wanting to actually apply setting.
-		 */
-		if (!doit)
-			return 0;
-
-		/*
 		 * Load the fmgr info into TopMemoryContext (could still fail here)
 		 */
 		convinfo = (ConvProcInfo *) MemoryContextAlloc(TopMemoryContext,
@@ -162,30 +148,9 @@ SetClientEncoding(int encoding, bool doit)
 		MemoryContextSwitchTo(oldcontext);
 
 		/*
-		 * Everything is okay, so apply the setting.
+		 * We cannot yet remove any older entry for the same encoding pair,
+		 * since it could still be in use.  SetClientEncoding will clean up.
 		 */
-		ClientEncoding = &pg_enc2name_tbl[encoding];
-		ToServerConvProc = &convinfo->to_server_info;
-		ToClientConvProc = &convinfo->to_client_info;
-
-		/*
-		 * Remove any older entry for the same encoding pair (this is just to
-		 * avoid memory leakage).
-		 */
-		foreach(lc, ConvProcList)
-		{
-			ConvProcInfo *oldinfo = (ConvProcInfo *) lfirst(lc);
-
-			if (oldinfo == convinfo)
-				continue;
-			if (oldinfo->s_encoding == convinfo->s_encoding &&
-				oldinfo->c_encoding == convinfo->c_encoding)
-			{
-				ConvProcList = list_delete_ptr(ConvProcList, oldinfo);
-				pfree(oldinfo);
-				break;			/* need not look further */
-			}
-		}
 
 		return 0;				/* success */
 	}
@@ -205,15 +170,7 @@ SetClientEncoding(int encoding, bool doit)
 
 			if (oldinfo->s_encoding == current_server_encoding &&
 				oldinfo->c_encoding == encoding)
-			{
-				if (doit)
-				{
-					ClientEncoding = &pg_enc2name_tbl[encoding];
-					ToServerConvProc = &oldinfo->to_server_info;
-					ToClientConvProc = &oldinfo->to_client_info;
-				}
 				return 0;
-			}
 		}
 
 		return -1;				/* it's not cached, so fail */
@@ -221,8 +178,83 @@ SetClientEncoding(int encoding, bool doit)
 }
 
 /*
- * Initialize client encoding if necessary.
- *		called from InitPostgres() once during backend startup.
+ * Set the active client encoding and set up the conversion-function pointers.
+ * PrepareClientEncoding should have been called previously for this encoding.
+ *
+ * Returns 0 if okay, -1 if not (bad encoding or can't support conversion)
+ */
+int
+SetClientEncoding(int encoding)
+{
+	int			current_server_encoding;
+	bool		found;
+	ListCell   *lc;
+
+	if (!PG_VALID_FE_ENCODING(encoding))
+		return -1;
+
+	/* Can't do anything during startup, per notes above */
+	if (!backend_startup_complete)
+	{
+		pending_client_encoding = encoding;
+		return 0;
+	}
+
+	current_server_encoding = GetDatabaseEncoding();
+
+	/*
+	 * Check for cases that require no conversion function.
+	 */
+	if (current_server_encoding == encoding ||
+		current_server_encoding == PG_SQL_ASCII ||
+		encoding == PG_SQL_ASCII)
+	{
+		ClientEncoding = &pg_enc2name_tbl[encoding];
+		ToServerConvProc = NULL;
+		ToClientConvProc = NULL;
+		return 0;
+	}
+
+	/*
+	 * Search the cache for the entry previously prepared by
+	 * PrepareClientEncoding; if there isn't one, we lose.  While at it,
+	 * release any duplicate entries so that repeated Prepare/Set cycles
+	 * don't leak memory.
+	 */
+	found = false;
+	foreach(lc, ConvProcList)
+	{
+		ConvProcInfo *convinfo = (ConvProcInfo *) lfirst(lc);
+
+		if (convinfo->s_encoding == current_server_encoding &&
+			convinfo->c_encoding == encoding)
+		{
+			if (!found)
+			{
+				/* Found newest entry, so set up */
+				ClientEncoding = &pg_enc2name_tbl[encoding];
+				ToServerConvProc = &convinfo->to_server_info;
+				ToClientConvProc = &convinfo->to_client_info;
+				found = true;
+			}
+			else
+			{
+				/* Duplicate entry, release it */
+				ConvProcList = list_delete_ptr(ConvProcList, convinfo);
+				pfree(convinfo);
+			}
+		}
+	}
+
+	if (found)
+		return 0;				/* success */
+	else
+		return -1;				/* it's not cached, so fail */
+}
+
+/*
+ * Initialize client encoding conversions.
+ *		Called from InitPostgres() once during backend startup.
  */
 void
 InitializeClientEncoding(void)
@@ -230,7 +262,8 @@ InitializeClientEncoding(void)
 	Assert(!backend_startup_complete);
 	backend_startup_complete = true;
 
-	if (SetClientEncoding(pending_client_encoding, true) < 0)
+	if (PrepareClientEncoding(pending_client_encoding) < 0 ||
+		SetClientEncoding(pending_client_encoding) < 0)
 	{
 		/*
 		 * Oops, the requested conversion is not available. We couldn't fail

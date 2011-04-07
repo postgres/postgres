@@ -45,6 +45,6 @@ extern void SyncRepUpdateSyncStandbysDefined(void);
 
 /* called by various procs */
 extern int SyncRepWakeQueue(bool all);
-extern const char *assign_synchronous_standby_names(const char *newval, bool doit, GucSource source);
+extern bool check_synchronous_standby_names(char **newval, void **extra, GucSource source);
 
 #endif   /* _SYNCREP_H */

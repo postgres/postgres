@@ -57,7 +57,8 @@ extern PlannedStmt *pg_plan_query(Query *querytree, int cursorOptions,
 extern List *pg_plan_queries(List *querytrees, int cursorOptions,
 				ParamListInfo boundParams);
 
-extern bool assign_max_stack_depth(int newval, bool doit, GucSource source);
+extern bool check_max_stack_depth(int *newval, void **extra, GucSource source);
+extern void assign_max_stack_depth(int newval, void *extra);
 
 extern void die(SIGNAL_ARGS);
 extern void quickdie(SIGNAL_ARGS);

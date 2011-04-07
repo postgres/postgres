@@ -13,6 +13,8 @@
 #ifndef TZPARSER_H
 #define TZPARSER_H
 
+#include "utils/datetime.h"
+
 /*
  * The result of parsing a timezone configuration file is an array of
  * these structs, in order by abbrev.  We export this because datetime.c
@@ -30,6 +32,6 @@ typedef struct tzEntry
 } tzEntry;
 
 
-extern bool load_tzoffsets(const char *filename, bool doit, int elevel);
+extern TimeZoneAbbrevTable *load_tzoffsets(const char *filename);
 
 #endif   /* TZPARSER_H */

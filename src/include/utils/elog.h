@@ -200,6 +200,15 @@ elog_finish(int elevel, const char *fmt,...)
 __attribute__((format(printf, 2, 3)));
 
 
+/* Support for constructing error strings separately from ereport() calls */
+
+extern void pre_format_elog_string(int errnumber, const char *domain);
+extern char *format_elog_string(const char *fmt,...)
+/* This extension allows gcc to check the format string for consistency with
+   the supplied arguments. */
+__attribute__((format(printf, 1, 2)));
+
+
 /* Support for attaching context information to error reports */
 
 typedef struct ErrorContextCallback

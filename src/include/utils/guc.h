@@ -97,7 +97,8 @@ typedef enum
 } GucSource;
 
 /*
- * Parsing the configuation file will return a list of name-value pairs
+ * Parsing the configuration file will return a list of name-value pairs
+ * with source location info.
  */
 typedef struct ConfigVariable
 {
@@ -117,7 +118,9 @@ extern bool ParseConfigFp(FILE *fp, const char *config_file,
 extern void FreeConfigVariables(ConfigVariable *list);
 
 /*
- * Enum values are made up of an array of name-value pairs
+ * The possible values of an enum variable are specified by an array of
+ * name-value pairs.  The "hidden" flag means the value is accepted but
+ * won't be displayed when guc.c is asked for a list of acceptable values.
  */
 struct config_enum_entry
 {
@@ -126,15 +129,26 @@ struct config_enum_entry
 	bool		hidden;
 };
 
+/*
+ * Signatures for per-variable check/assign/show hook functions
+ */
+typedef bool (*GucBoolCheckHook) (bool *newval, void **extra, GucSource source);
+typedef bool (*GucIntCheckHook) (int *newval, void **extra, GucSource source);
+typedef bool (*GucRealCheckHook) (double *newval, void **extra, GucSource source);
+typedef bool (*GucStringCheckHook) (char **newval, void **extra, GucSource source);
+typedef bool (*GucEnumCheckHook) (int *newval, void **extra, GucSource source);
 
-typedef const char *(*GucStringAssignHook) (const char *newval, bool doit, GucSource source);
-typedef bool (*GucBoolAssignHook) (bool newval, bool doit, GucSource source);
-typedef bool (*GucIntAssignHook) (int newval, bool doit, GucSource source);
-typedef bool (*GucRealAssignHook) (double newval, bool doit, GucSource source);
-typedef bool (*GucEnumAssignHook) (int newval, bool doit, GucSource source);
+typedef void (*GucBoolAssignHook) (bool newval, void *extra);
+typedef void (*GucIntAssignHook) (int newval, void *extra);
+typedef void (*GucRealAssignHook) (double newval, void *extra);
+typedef void (*GucStringAssignHook) (const char *newval, void *extra);
+typedef void (*GucEnumAssignHook) (int newval, void *extra);
 
 typedef const char *(*GucShowHook) (void);
 
+/*
+ * Miscellaneous
+ */
 typedef enum
 {
 	/* Types of set_config_option actions */
@@ -201,7 +215,6 @@ extern char *ConfigFileName;
 extern char *HbaFileName;
 extern char *IdentFileName;
 extern char *external_pid_file;
-extern char *XactIsoLevel_string;
 
 extern char *application_name;
 
@@ -209,6 +222,9 @@ extern int	tcp_keepalives_idle;
 extern int	tcp_keepalives_interval;
 extern int	tcp_keepalives_count;
 
+/*
+ * Functions exported by guc.c
+ */
 extern void SetConfigOption(const char *name, const char *value,
 				GucContext context, GucSource source);
 
@@ -220,6 +236,7 @@ extern void DefineCustomBoolVariable(
 						 bool bootValue,
 						 GucContext context,
 						 int flags,
+						 GucBoolCheckHook check_hook,
 						 GucBoolAssignHook assign_hook,
 						 GucShowHook show_hook);
 
@@ -233,6 +250,7 @@ extern void DefineCustomIntVariable(
 						int maxValue,
 						GucContext context,
 						int flags,
+						GucIntCheckHook check_hook,
 						GucIntAssignHook assign_hook,
 						GucShowHook show_hook);
 
@@ -246,6 +264,7 @@ extern void DefineCustomRealVariable(
 						 double maxValue,
 						 GucContext context,
 						 int flags,
+						 GucRealCheckHook check_hook,
 						 GucRealAssignHook assign_hook,
 						 GucShowHook show_hook);
 
@@ -257,6 +276,7 @@ extern void DefineCustomStringVariable(
 						   const char *bootValue,
 						   GucContext context,
 						   int flags,
+						   GucStringCheckHook check_hook,
 						   GucStringAssignHook assign_hook,
 						   GucShowHook show_hook);
 
@@ -269,6 +289,7 @@ extern void DefineCustomEnumVariable(
 						 const struct config_enum_entry * options,
 						 GucContext context,
 						 int flags,
+						 GucEnumCheckHook check_hook,
 						 GucEnumAssignHook assign_hook,
 						 GucShowHook show_hook);
 
@@ -308,14 +329,33 @@ extern ArrayType *GUCArrayAdd(ArrayType *array, const char *name, const char *va
 extern ArrayType *GUCArrayDelete(ArrayType *array, const char *name);
 extern ArrayType *GUCArrayReset(ArrayType *array);
 
-extern int	GUC_complaint_elevel(GucSource source);
-
 extern void pg_timezone_abbrev_initialize(void);
 
 #ifdef EXEC_BACKEND
 extern void write_nondefault_variables(GucContext context);
 extern void read_nondefault_variables(void);
 #endif
+
+/* Support for messages reported from GUC check hooks */
+
+extern PGDLLIMPORT char *GUC_check_errmsg_string;
+extern PGDLLIMPORT char *GUC_check_errdetail_string;
+extern PGDLLIMPORT char *GUC_check_errhint_string;
+
+extern void GUC_check_errcode(int sqlerrcode);
+
+#define GUC_check_errmsg \
+	pre_format_elog_string(errno, TEXTDOMAIN), \
+	GUC_check_errmsg_string = format_elog_string
+
+#define GUC_check_errdetail \
+	pre_format_elog_string(errno, TEXTDOMAIN), \
+	GUC_check_errdetail_string = format_elog_string
+
+#define GUC_check_errhint \
+	pre_format_elog_string(errno, TEXTDOMAIN), \
+	GUC_check_errhint_string = format_elog_string
+
 
 /*
  * The following functions are not in guc.c, but are declared here to avoid
@@ -324,17 +364,16 @@ extern void read_nondefault_variables(void);
  */
 
 /* in commands/tablespace.c */
-extern const char *assign_default_tablespace(const char *newval,
-						  bool doit, GucSource source);
-extern const char *assign_temp_tablespaces(const char *newval,
-						bool doit, GucSource source);
+extern bool check_default_tablespace(char **newval, void **extra, GucSource source);
+extern bool check_temp_tablespaces(char **newval, void **extra, GucSource source);
+extern void assign_temp_tablespaces(const char *newval, void *extra);
 
 /* in catalog/namespace.c */
-extern const char *assign_search_path(const char *newval,
-				   bool doit, GucSource source);
+extern bool check_search_path(char **newval, void **extra, GucSource source);
+extern void assign_search_path(const char *newval, void *extra);
 
 /* in access/transam/xlog.c */
-extern bool assign_xlog_sync_method(int newval,
-						bool doit, GucSource source);
+extern bool check_wal_buffers(int *newval, void **extra, GucSource source);
+extern void assign_xlog_sync_method(int new_sync_method, void *extra);
 
 #endif   /* GUC_H */

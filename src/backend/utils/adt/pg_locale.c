@@ -236,52 +236,53 @@ check_locale(int category, const char *value)
 	return ret;
 }
 
-/* GUC assign hooks */
 
 /*
- * This is common code for several locale categories.  This doesn't
- * actually set the locale permanently, it only tests if the locale is
- * valid.  (See explanation at the top of this file.)
+ * GUC check/assign hooks
+ *
+ * For most locale categories, the assign hook doesn't actually set the locale
+ * permanently, just reset flags so that the next use will cache the
+ * appropriate values.  (See explanation at the top of this file.)
  *
  * Note: we accept value = "" as selecting the postmaster's environment
  * value, whatever it was (so long as the environment setting is legal).
  * This will have been locked down by an earlier call to pg_perm_setlocale.
  */
-static const char *
-locale_xxx_assign(int category, const char *value, bool doit, GucSource source)
+bool
+check_locale_monetary(char **newval, void **extra, GucSource source)
 {
-	if (!check_locale(category, value))
-		value = NULL;			/* set failure return marker */
-
-	/* need to reload cache next time? */
-	if (doit && value != NULL)
-	{
-		CurrentLocaleConvValid = false;
-		CurrentLCTimeValid = false;
-	}
-
-	return value;
+	return check_locale(LC_MONETARY, *newval);
 }
 
-
-const char *
-locale_monetary_assign(const char *value, bool doit, GucSource source)
+void
+assign_locale_monetary(const char *newval, void *extra)
 {
-	return locale_xxx_assign(LC_MONETARY, value, doit, source);
+	CurrentLocaleConvValid = false;
 }
 
-const char *
-locale_numeric_assign(const char *value, bool doit, GucSource source)
+bool
+check_locale_numeric(char **newval, void **extra, GucSource source)
 {
-	return locale_xxx_assign(LC_NUMERIC, value, doit, source);
+	return check_locale(LC_NUMERIC, *newval);
 }
 
-const char *
-locale_time_assign(const char *value, bool doit, GucSource source)
+void
+assign_locale_numeric(const char *newval, void *extra)
 {
-	return locale_xxx_assign(LC_TIME, value, doit, source);
+	CurrentLocaleConvValid = false;
 }
 
+bool
+check_locale_time(char **newval, void **extra, GucSource source)
+{
+	return check_locale(LC_TIME, *newval);
+}
+
+void
+assign_locale_time(const char *newval, void *extra)
+{
+	CurrentLCTimeValid = false;
+}
 
 /*
  * We allow LC_MESSAGES to actually be set globally.
@@ -293,31 +294,39 @@ locale_time_assign(const char *value, bool doit, GucSource source)
  * The idea there is just to accept the environment setting *if possible*
  * during startup, until we can read the proper value from postgresql.conf.
  */
-const char *
-locale_messages_assign(const char *value, bool doit, GucSource source)
+bool
+check_locale_messages(char **newval, void **extra, GucSource source)
 {
-	if (*value == '\0' && source != PGC_S_DEFAULT)
-		return NULL;
+	if (**newval == '\0')
+	{
+		if (source == PGC_S_DEFAULT)
+			return true;
+		else
+			return false;
+	}
 
 	/*
 	 * LC_MESSAGES category does not exist everywhere, but accept it anyway
 	 *
-	 * On Windows, we can't even check the value, so the non-doit case is a
-	 * no-op
+	 * On Windows, we can't even check the value, so accept blindly
+	 */
+#if defined(LC_MESSAGES) && !defined(WIN32)
+	return check_locale(LC_MESSAGES, *newval);
+#else
+	return true;
+#endif
+}
+
+void
+assign_locale_messages(const char *newval, void *extra)
+{
+	/*
+	 * LC_MESSAGES category does not exist everywhere, but accept it anyway.
+	 * We ignore failure, as per comment above.
 	 */
 #ifdef LC_MESSAGES
-	if (doit)
-	{
-		if (!pg_perm_setlocale(LC_MESSAGES, value))
-			if (source != PGC_S_DEFAULT)
-				return NULL;
-	}
-#ifndef WIN32
-	else
-		value = locale_xxx_assign(LC_MESSAGES, value, false, source);
-#endif   /* WIN32 */
-#endif   /* LC_MESSAGES */
-	return value;
+	(void) pg_perm_setlocale(LC_MESSAGES, newval);
+#endif
 }
 
 

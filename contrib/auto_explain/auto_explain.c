@@ -74,6 +74,7 @@ _PG_init(void)
 							PGC_SUSET,
 							GUC_UNIT_MS,
 							NULL,
+							NULL,
 							NULL);
 
 	DefineCustomBoolVariable("auto_explain.log_analyze",
@@ -83,6 +84,7 @@ _PG_init(void)
 							 false,
 							 PGC_SUSET,
 							 0,
+							 NULL,
 							 NULL,
 							 NULL);
 
@@ -94,6 +96,7 @@ _PG_init(void)
 							 PGC_SUSET,
 							 0,
 							 NULL,
+							 NULL,
 							 NULL);
 
 	DefineCustomBoolVariable("auto_explain.log_buffers",
@@ -103,6 +106,7 @@ _PG_init(void)
 							 false,
 							 PGC_SUSET,
 							 0,
+							 NULL,
 							 NULL,
 							 NULL);
 
@@ -115,6 +119,7 @@ _PG_init(void)
 							 PGC_SUSET,
 							 0,
 							 NULL,
+							 NULL,
 							 NULL);
 
 	DefineCustomBoolVariable("auto_explain.log_nested_statements",
@@ -124,6 +129,7 @@ _PG_init(void)
 							 false,
 							 PGC_SUSET,
 							 0,
+							 NULL,
 							 NULL,
 							 NULL);
 

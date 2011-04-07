@@ -1156,6 +1156,62 @@ elog_finish(int elevel, const char *fmt,...)
 	errfinish(0);
 }
 
+
+/*
+ * Functions to allow construction of error message strings separately from
+ * the ereport() call itself.
+ *
+ * The expected calling convention is
+ *
+ *	pre_format_elog_string(errno, domain), var = format_elog_string(format,...)
+ *
+ * which can be hidden behind a macro such as GUC_check_errdetail().  We
+ * assume that any functions called in the arguments of format_elog_string()
+ * cannot result in re-entrant use of these functions --- otherwise the wrong
+ * text domain might be used, or the wrong errno substituted for %m.  This is
+ * okay for the current usage with GUC check hooks, but might need further
+ * effort someday.
+ *
+ * The result of format_elog_string() is stored in ErrorContext, and will
+ * therefore survive until FlushErrorState() is called.
+ */
+static int save_format_errnumber;
+static const char *save_format_domain;
+
+void
+pre_format_elog_string(int errnumber, const char *domain)
+{
+	/* Save errno before evaluation of argument functions can change it */
+	save_format_errnumber = errnumber;
+	/* Save caller's text domain */
+	save_format_domain = domain;
+}
+
+char *
+format_elog_string(const char *fmt, ...)
+{
+	ErrorData	errdata;
+	ErrorData  *edata;
+	MemoryContext oldcontext;
+
+	/* Initialize a mostly-dummy error frame */
+	edata = &errdata;
+	MemSet(edata, 0, sizeof(ErrorData));
+	/* the default text domain is the backend's */
+	edata->domain = save_format_domain ? save_format_domain : PG_TEXTDOMAIN("postgres");
+	/* set the errno to be used to interpret %m */
+	edata->saved_errno = save_format_errnumber;
+
+	oldcontext = MemoryContextSwitchTo(ErrorContext);
+
+	EVALUATE_MESSAGE(message, false, true);
+
+	MemoryContextSwitchTo(oldcontext);
+
+	return edata->message;
+}
+
+
 /*
  * Actual output of the top-of-stack error message
  *

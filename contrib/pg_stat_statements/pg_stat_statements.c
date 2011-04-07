@@ -219,6 +219,7 @@ _PG_init(void)
 							PGC_POSTMASTER,
 							0,
 							NULL,
+							NULL,
 							NULL);
 
 	DefineCustomEnumVariable("pg_stat_statements.track",
@@ -230,6 +231,7 @@ _PG_init(void)
 							 PGC_SUSET,
 							 0,
 							 NULL,
+							 NULL,
 							 NULL);
 
 	DefineCustomBoolVariable("pg_stat_statements.track_utility",
@@ -240,6 +242,7 @@ _PG_init(void)
 							 PGC_SUSET,
 							 0,
 							 NULL,
+							 NULL,
 							 NULL);
 
 	DefineCustomBoolVariable("pg_stat_statements.save",
@@ -249,6 +252,7 @@ _PG_init(void)
 							 true,
 							 PGC_SIGHUP,
 							 0,
+							 NULL,
 							 NULL,
 							 NULL);
 

@@ -33,14 +33,14 @@ extern char *localized_abbrev_months[];
 extern char *localized_full_months[];
 
 
-extern const char *locale_messages_assign(const char *value,
-					   bool doit, GucSource source);
-extern const char *locale_monetary_assign(const char *value,
-					   bool doit, GucSource source);
-extern const char *locale_numeric_assign(const char *value,
-					  bool doit, GucSource source);
-extern const char *locale_time_assign(const char *value,
-				   bool doit, GucSource source);
+extern bool check_locale_messages(char **newval, void **extra, GucSource source);
+extern void assign_locale_messages(const char *newval, void *extra);
+extern bool check_locale_monetary(char **newval, void **extra, GucSource source);
+extern void assign_locale_monetary(const char *newval, void *extra);
+extern bool check_locale_numeric(char **newval, void **extra, GucSource source);
+extern void assign_locale_numeric(const char *newval, void *extra);
+extern bool check_locale_time(char **newval, void **extra, GucSource source);
+extern void assign_locale_time(const char *newval, void *extra);
 
 extern bool check_locale(int category, const char *locale);
 extern char *pg_perm_setlocale(int category, const char *locale);

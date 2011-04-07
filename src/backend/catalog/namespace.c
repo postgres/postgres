@@ -3468,31 +3468,33 @@ ResetTempTableNamespace(void)
  * Routines for handling the GUC variable 'search_path'.
  */
 
-/* assign_hook: validate new search_path, do extra actions as needed */
-const char *
-assign_search_path(const char *newval, bool doit, GucSource source)
+/* check_hook: validate new search_path, if possible */
+bool
+check_search_path(char **newval, void **extra, GucSource source)
 {
+	bool		result = true;
 	char	   *rawname;
 	List	   *namelist;
 	ListCell   *l;
 
 	/* Need a modifiable copy of string */
-	rawname = pstrdup(newval);
+	rawname = pstrdup(*newval);
 
 	/* Parse string into list of identifiers */
 	if (!SplitIdentifierString(rawname, ',', &namelist))
 	{
 		/* syntax error in name list */
+		GUC_check_errdetail("List syntax is invalid.");
 		pfree(rawname);
 		list_free(namelist);
-		return NULL;
+		return false;
 	}
 
 	/*
 	 * If we aren't inside a transaction, we cannot do database access so
 	 * cannot verify the individual names.	Must accept the list on faith.
 	 */
-	if (source >= PGC_S_INTERACTIVE && IsTransactionState())
+	if (IsTransactionState())
 	{
 		/*
 		 * Verify that all the names are either valid namespace names or
@@ -3504,7 +3506,7 @@ assign_search_path(const char *newval, bool doit, GucSource source)
 		 * DATABASE SET or ALTER USER SET command.	It could be that the
 		 * intended use of the search path is for some other database, so we
 		 * should not error out if it mentions schemas not present in the
-		 * current database.  We reduce the message to NOTICE instead.
+		 * current database.  We issue a NOTICE instead.
 		 */
 		foreach(l, namelist)
 		{
@@ -3516,24 +3518,37 @@ assign_search_path(const char *newval, bool doit, GucSource source)
 				continue;
 			if (!SearchSysCacheExists1(NAMESPACENAME,
 									   CStringGetDatum(curname)))
-				ereport((source == PGC_S_TEST) ? NOTICE : ERROR,
-						(errcode(ERRCODE_UNDEFINED_SCHEMA),
-						 errmsg("schema \"%s\" does not exist", curname)));
+			{
+				if (source == PGC_S_TEST)
+					ereport(NOTICE,
+							(errcode(ERRCODE_UNDEFINED_SCHEMA),
+							 errmsg("schema \"%s\" does not exist", curname)));
+				else
+				{
+					GUC_check_errdetail("schema \"%s\" does not exist", curname);
+					result = false;
+					break;
+				}
+			}
 		}
 	}
 
 	pfree(rawname);
 	list_free(namelist);
 
+	return result;
+}
+
+/* assign_hook: do extra actions as needed */
+void
+assign_search_path(const char *newval, void *extra)
+{
 	/*
 	 * We mark the path as needing recomputation, but don't do anything until
 	 * it's needed.  This avoids trying to do database access during GUC
-	 * initialization.
+	 * initialization, or outside a transaction.
 	 */
-	if (doit)
-		baseSearchPathValid = false;
-
-	return newval;
+	baseSearchPathValid = false;
 }
 
 /*

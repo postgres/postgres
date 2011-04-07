@@ -622,7 +622,8 @@ alter function report_guc(text) set search_path = no_such_schema;
 NOTICE:  schema "no_such_schema" does not exist
 -- with error occurring here
 select report_guc('work_mem'), current_setting('work_mem');
-ERROR:  schema "no_such_schema" does not exist
+ERROR:  invalid value for parameter "search_path": "no_such_schema"
+DETAIL:  schema "no_such_schema" does not exist
 alter function report_guc(text) reset search_path set work_mem = '2MB';
 select report_guc('work_mem'), current_setting('work_mem');
  report_guc | current_setting 

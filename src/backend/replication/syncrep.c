@@ -639,25 +639,23 @@ SyncRepQueueIsOrderedByLSN(void)
  * ===========================================================
  */
 
-const char *
-assign_synchronous_standby_names(const char *newval, bool doit, GucSource source)
+bool
+check_synchronous_standby_names(char **newval, void **extra, GucSource source)
 {
 	char	   *rawstring;
 	List	   *elemlist;
 
 	/* Need a modifiable copy of string */
-	rawstring = pstrdup(newval);
+	rawstring = pstrdup(*newval);
 
 	/* Parse string into list of identifiers */
 	if (!SplitIdentifierString(rawstring, ',', &elemlist))
 	{
 		/* syntax error in list */
+		GUC_check_errdetail("List syntax is invalid.");
 		pfree(rawstring);
 		list_free(elemlist);
-		ereport(GUC_complaint_elevel(source),
-				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-		   errmsg("invalid list syntax for parameter \"synchronous_standby_names\"")));
-		return NULL;
+		return false;
 	}
 
 	/*
@@ -671,5 +669,5 @@ assign_synchronous_standby_names(const char *newval, bool doit, GucSource source
 	pfree(rawstring);
 	list_free(elemlist);
 
-	return newval;
+	return true;
 }

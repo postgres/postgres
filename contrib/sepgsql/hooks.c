@@ -394,6 +394,7 @@ _PG_init(void)
 							 PGC_SIGHUP,
 							 GUC_NOT_IN_SAMPLE,
 							 NULL,
+							 NULL,
 							 NULL);
 
 	/*
@@ -411,6 +412,7 @@ _PG_init(void)
 							 false,
 							 PGC_USERSET,
 							 GUC_NOT_IN_SAMPLE,
+							 NULL,
 							 NULL,
 							 NULL);
 

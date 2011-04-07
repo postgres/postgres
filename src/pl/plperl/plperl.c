@@ -363,7 +363,7 @@ _PG_init(void)
 							 &plperl_use_strict,
 							 false,
 							 PGC_USERSET, 0,
-							 NULL, NULL);
+							 NULL, NULL, NULL);
 
 	/*
 	 * plperl.on_init is marked PGC_SIGHUP to support the idea that it might
@@ -377,7 +377,7 @@ _PG_init(void)
 							   &plperl_on_init,
 							   NULL,
 							   PGC_SIGHUP, 0,
-							   NULL, NULL);
+							   NULL, NULL, NULL);
 
 	/*
 	 * plperl.on_plperl_init is marked PGC_SUSET to avoid issues whereby a
@@ -399,7 +399,7 @@ _PG_init(void)
 							   &plperl_on_plperl_init,
 							   NULL,
 							   PGC_SUSET, 0,
-							   NULL, NULL);
+							   NULL, NULL, NULL);
 
 	DefineCustomStringVariable("plperl.on_plperlu_init",
 							   gettext_noop("Perl initialization code to execute once when plperlu is first used."),
@@ -407,7 +407,7 @@ _PG_init(void)
 							   &plperl_on_plperlu_init,
 							   NULL,
 							   PGC_SUSET, 0,
-							   NULL, NULL);
+							   NULL, NULL, NULL);
 
 	EmitWarningsOnPlaceholders("plperl");
 

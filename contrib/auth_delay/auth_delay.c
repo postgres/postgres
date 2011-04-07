@@ -53,7 +53,7 @@ auth_delay_checks(Port *port, int status)
 void
 _PG_init(void)
 {
-	/* Define custome GUC variables */
+	/* Define custom GUC variables */
 	DefineCustomIntVariable("auth_delay.milliseconds",
 							"Milliseconds to delay before reporting authentication failure",
 							NULL,
@@ -62,6 +62,7 @@ _PG_init(void)
 							0, INT_MAX,
 							PGC_SIGHUP,
 							GUC_UNIT_MS,
+							NULL,
 							NULL,
 							NULL);
 	/* Install Hooks */
