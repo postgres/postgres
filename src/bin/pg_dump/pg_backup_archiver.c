@@ -1003,11 +1003,8 @@ SortTocFromFile(Archive *AHX, RestoreOptions *ropt)
 {
 	ArchiveHandle *AH = (ArchiveHandle *) AHX;
 	FILE	   *fh;
-	char		buf[1024];
-	char	   *cmnt;
-	char	   *endptr;
-	DumpId		id;
-	TocEntry   *te;
+	char		buf[100];
+	bool		incomplete_line;
 
 	/* Allocate space for the 'wanted' array, and init it */
 	ropt->idWanted = (bool *) malloc(sizeof(bool) * AH->maxDumpId);
@@ -1019,8 +1016,30 @@ SortTocFromFile(Archive *AHX, RestoreOptions *ropt)
 		die_horribly(AH, modulename, "could not open TOC file \"%s\": %s\n",
 					 ropt->tocFile, strerror(errno));
 
+	incomplete_line = false;
 	while (fgets(buf, sizeof(buf), fh) != NULL)
 	{
+		bool		prev_incomplete_line = incomplete_line;
+		int			buflen;
+		char	   *cmnt;
+		char	   *endptr;
+		DumpId		id;
+		TocEntry   *te;
+
+		/*
+		 * Some lines in the file might be longer than sizeof(buf).  This is
+		 * no problem, since we only care about the leading numeric ID which
+		 * can be at most a few characters; but we have to skip continuation
+		 * bufferloads when processing a long line.
+		 */
+		buflen = strlen(buf);
+		if (buflen > 0 && buf[buflen - 1] == '\n')
+			incomplete_line = false;
+		else
+			incomplete_line = true;
+		if (prev_incomplete_line)
+			continue;
+
 		/* Truncate line at comment, if any */
 		cmnt = strchr(buf, ';');
 		if (cmnt != NULL)
