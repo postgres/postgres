@@ -57,7 +57,7 @@ BSD44_derived_dlerror(void)
 void *
 BSD44_derived_dlopen(const char *file, int num)
 {
-#if defined(__mips__)
+#if !defined(HAVE_DLOPEN)
 	snprintf(error_message, sizeof(error_message),
 			 "dlopen (%s) not supported", file);
 	return NULL;
@@ -74,14 +74,14 @@ BSD44_derived_dlopen(const char *file, int num)
 void *
 BSD44_derived_dlsym(void *handle, const char *name)
 {
-#if defined(__mips__)
+#if !defined(HAVE_DLOPEN)
 	snprintf(error_message, sizeof(error_message),
 			 "dlsym (%s) failed", name);
 	return NULL;
-#elif defined(__ELF__)
-	return dlsym(handle, name);
 #else
 	void	   *vp;
+
+#ifndef __ELF__
 	char		buf[BUFSIZ];
 
 	if (*name != '_')
@@ -89,6 +89,7 @@ BSD44_derived_dlsym(void *handle, const char *name)
 		snprintf(buf, sizeof(buf), "_%s", name);
 		name = buf;
 	}
+#endif /* !__ELF__ */
 	if ((vp = dlsym(handle, (char *) name)) == NULL)
 		snprintf(error_message, sizeof(error_message),
 				 "dlsym (%s) failed", name);
@@ -99,8 +100,7 @@ BSD44_derived_dlsym(void *handle, const char *name)
 void
 BSD44_derived_dlclose(void *handle)
 {
-#if defined(__mips__)
-#else
+#if defined(HAVE_DLOPEN)
 	dlclose(handle);
 #endif
 }
