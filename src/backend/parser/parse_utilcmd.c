@@ -1829,9 +1829,13 @@ transformIndexStmt(IndexStmt *stmt, const char *queryString)
 
 	/* take care of the where clause */
 	if (stmt->whereClause)
+	{
 		stmt->whereClause = transformWhereClause(pstate,
 												 stmt->whereClause,
 												 "WHERE");
+		/* we have to fix its collations too */
+		assign_expr_collations(pstate, stmt->whereClause);
+	}
 
 	/* take care of any index expressions */
 	foreach(l, stmt->indexParams)
@@ -1959,6 +1963,8 @@ transformRuleStmt(RuleStmt *stmt, const char *queryString,
 	*whereClause = transformWhereClause(pstate,
 									  (Node *) copyObject(stmt->whereClause),
 										"WHERE");
+	/* we have to fix its collations too */
+	assign_expr_collations(pstate, *whereClause);
 
 	if (list_length(pstate->p_rtable) != 2)		/* naughty, naughty... */
 		ereport(ERROR,

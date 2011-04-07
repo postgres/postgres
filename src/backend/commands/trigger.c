@@ -36,6 +36,7 @@
 #include "optimizer/clauses.h"
 #include "optimizer/var.h"
 #include "parser/parse_clause.h"
+#include "parser/parse_collate.h"
 #include "parser/parse_func.h"
 #include "parser/parse_relation.h"
 #include "parser/parsetree.h"
@@ -282,6 +283,8 @@ CreateTrigger(CreateTrigStmt *stmt, const char *queryString,
 		whenClause = transformWhereClause(pstate,
 										  copyObject(stmt->whenClause),
 										  "WHEN");
+		/* we have to fix its collations too */
+		assign_expr_collations(pstate, whenClause);
 
 		/*
 		 * No subplans or aggregates, please
