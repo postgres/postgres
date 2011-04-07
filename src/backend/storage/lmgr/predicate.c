@@ -1604,12 +1604,7 @@ RegisterPredicateLockingXid(const TransactionId xid)
 	sxid = (SERIALIZABLEXID *) hash_search(SerializableXidHash,
 										   &sxidtag,
 										   HASH_ENTER, &found);
-	if (!sxid)
-		/* This should not be possible, based on allocation. */
-		ereport(ERROR,
-				(errcode(ERRCODE_OUT_OF_MEMORY),
-				 errmsg("out of shared memory")));
-
+	Assert(sxid != NULL);
 	Assert(!found);
 
 	/* Initialize the structure. */
@@ -2045,7 +2040,7 @@ CreatePredicateLock(const PREDICATELOCKTARGETTAG *targettag,
 	target = (PREDICATELOCKTARGET *)
 		hash_search_with_hash_value(PredicateLockTargetHash,
 									targettag, targettaghash,
-									HASH_ENTER, &found);
+									HASH_ENTER_NULL, &found);
 	if (!target)
 		ereport(ERROR,
 				(errcode(ERRCODE_OUT_OF_MEMORY),
@@ -2060,7 +2055,7 @@ CreatePredicateLock(const PREDICATELOCKTARGETTAG *targettag,
 	lock = (PREDICATELOCK *)
 		hash_search_with_hash_value(PredicateLockHash, &locktag,
 			PredicateLockHashCodeFromTargetHashCode(&locktag, targettaghash),
-									HASH_ENTER, &found);
+									HASH_ENTER_NULL, &found);
 	if (!lock)
 		ereport(ERROR,
 				(errcode(ERRCODE_OUT_OF_MEMORY),
@@ -3251,7 +3246,7 @@ ReleaseOneSerializableXact(SERIALIZABLEXACT *sxact, bool partial,
 			predlock = hash_search_with_hash_value(PredicateLockHash, &tag,
 								PredicateLockHashCodeFromTargetHashCode(&tag,
 															  targettaghash),
-												   HASH_ENTER, &found);
+												   HASH_ENTER_NULL, &found);
 			if (!predlock)
 				ereport(ERROR,
 						(errcode(ERRCODE_OUT_OF_MEMORY),
@@ -4301,10 +4296,7 @@ predicatelock_twophase_recover(TransactionId xid, uint16 info,
 		sxid = (SERIALIZABLEXID *) hash_search(SerializableXidHash,
 											   &sxidtag,
 											   HASH_ENTER, &found);
-		if (!sxid)
-			ereport(ERROR,
-					(errcode(ERRCODE_OUT_OF_MEMORY),
-					 errmsg("out of shared memory")));
+		Assert(sxid != NULL);
 		Assert(!found);
 		sxid->myXact = (SERIALIZABLEXACT *) sxact;
 
