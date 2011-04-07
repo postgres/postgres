@@ -326,21 +326,26 @@ check_for_libpq_envvars(void)
 
 	/* Get valid libpq env vars from the PQconndefaults function */
 
-	start = option = PQconndefaults();
+	start = PQconndefaults();
 
-	while (option->keyword != NULL)
+	for (option = start; option->keyword != NULL; option++)
 	{
-		const char *value;
-
-		if (option->envvar && (value = getenv(option->envvar)) && strlen(value) > 0)
+		if (option->envvar)
 		{
-			found = true;
+			const char *value;
 
-			pg_log(PG_WARNING,
-				   "libpq env var %-20s is currently set to: %s\n", option->envvar, value);
+			if (strcmp(option->envvar, "PGCLIENTENCODING") == 0)
+				continue;
+
+			value = getenv(option->envvar);
+			if (value && strlen(value) > 0)
+			{
+				found = true;
+
+				pg_log(PG_WARNING,
+					   "libpq env var %-20s is currently set to: %s\n", option->envvar, value);
+			}
 		}
-
-		option++;
 	}
 
 	/* Free the memory that libpq allocated on our behalf */
