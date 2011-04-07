@@ -50,6 +50,7 @@
 #include "catalog/pg_class.h"
 #include "catalog/pg_default_acl.h"
 #include "catalog/pg_largeobject.h"
+#include "catalog/pg_largeobject_metadata.h"
 #include "catalog/pg_proc.h"
 #include "catalog/pg_trigger.h"
 #include "catalog/pg_type.h"
@@ -1920,8 +1921,8 @@ dumpDatabase(Archive *AH)
 				 NULL);			/* Dumper Arg */
 
 	/*
-	 * pg_largeobject comes from the old system intact, so set its
-	 * relfrozenxid.
+	 * pg_largeobject and pg_largeobject_metadata come from the old system
+	 * intact, so set their relfrozenxids.
 	 */
 	if (binary_upgrade)
 	{
@@ -1930,6 +1931,9 @@ dumpDatabase(Archive *AH)
 		PQExpBuffer loOutQry = createPQExpBuffer();
 		int			i_relfrozenxid;
 
+		/*
+		 *	pg_largeobject
+		 */
 		appendPQExpBuffer(loFrozenQry, "SELECT relfrozenxid\n"
 						  "FROM pg_catalog.pg_class\n"
 						  "WHERE oid = %u;\n",
@@ -1946,7 +1950,7 @@ dumpDatabase(Archive *AH)
 
 		i_relfrozenxid = PQfnumber(lo_res, "relfrozenxid");
 
-		appendPQExpBuffer(loOutQry, "\n-- For binary upgrade, set pg_largeobject relfrozenxid.\n");
+		appendPQExpBuffer(loOutQry, "\n-- For binary upgrade, set pg_largeobject.relfrozenxid\n");
 		appendPQExpBuffer(loOutQry, "UPDATE pg_catalog.pg_class\n"
 						  "SET relfrozenxid = '%u'\n"
 						  "WHERE oid = %u;\n",
@@ -1960,6 +1964,47 @@ dumpDatabase(Archive *AH)
 					 NULL, NULL);
 
 		PQclear(lo_res);
+
+		/*
+		 *	pg_largeobject_metadata
+		 */
+		if (g_fout->remoteVersion >= 90000)
+		{
+			resetPQExpBuffer(loFrozenQry);
+			resetPQExpBuffer(loOutQry);
+	
+			appendPQExpBuffer(loFrozenQry, "SELECT relfrozenxid\n"
+							  "FROM pg_catalog.pg_class\n"
+							  "WHERE oid = %u;\n",
+							  LargeObjectMetadataRelationId);
+	
+			lo_res = PQexec(g_conn, loFrozenQry->data);
+			check_sql_result(lo_res, g_conn, loFrozenQry->data, PGRES_TUPLES_OK);
+	
+			if (PQntuples(lo_res) != 1)
+			{
+				write_msg(NULL, "dumpDatabase(): could not find pg_largeobject_metadata.relfrozenxid\n");
+				exit_nicely();
+			}
+	
+			i_relfrozenxid = PQfnumber(lo_res, "relfrozenxid");
+	
+			appendPQExpBuffer(loOutQry, "\n-- For binary upgrade, set pg_largeobject_metadata.relfrozenxid\n");
+			appendPQExpBuffer(loOutQry, "UPDATE pg_catalog.pg_class\n"
+							  "SET relfrozenxid = '%u'\n"
+							  "WHERE oid = %u;\n",
+							  atoi(PQgetvalue(lo_res, 0, i_relfrozenxid)),
+							  LargeObjectMetadataRelationId);
+			ArchiveEntry(AH, nilCatalogId, createDumpId(),
+						 "pg_largeobject_metadata", NULL, NULL, "",
+						 false, "pg_largeobject_metadata", SECTION_PRE_DATA,
+						 loOutQry->data, "", NULL,
+						 NULL, 0,
+						 NULL, NULL);
+	
+			PQclear(lo_res);
+		}
+
 		destroyPQExpBuffer(loFrozenQry);
 		destroyPQExpBuffer(loOutQry);
 	}
@@ -12176,7 +12221,7 @@ dumpTableSchema(Archive *fout, TableInfo *tbinfo)
 				}
 			}
 
-			appendPQExpBuffer(q, "\n-- For binary upgrade, set relfrozenxid.\n");
+			appendPQExpBuffer(q, "\n-- For binary upgrade, set relfrozenxid\n");
 			appendPQExpBuffer(q, "UPDATE pg_catalog.pg_class\n"
 							  "SET relfrozenxid = '%u'\n"
 							  "WHERE oid = ",
