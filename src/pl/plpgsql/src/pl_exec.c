@@ -18,6 +18,7 @@
 #include <ctype.h>
 
 #include "access/transam.h"
+#include "access/tupconvert.h"
 #include "catalog/pg_proc.h"
 #include "catalog/pg_type.h"
 #include "executor/spi_priv.h"
@@ -189,8 +190,6 @@ static Datum exec_simple_cast_value(Datum value, Oid valtype,
 					   Oid reqtype, int32 reqtypmod,
 					   bool isnull);
 static void exec_init_tuple_store(PLpgSQL_execstate *estate);
-static void validate_tupdesc_compat(TupleDesc expected, TupleDesc returned,
-						const char *msg);
 static void exec_set_found(PLpgSQL_execstate *estate, bool state);
 static void plpgsql_create_econtext(PLpgSQL_execstate *estate);
 static void plpgsql_destroy_econtext(PLpgSQL_execstate *estate);
@@ -381,14 +380,21 @@ plpgsql_exec_function(PLpgSQL_function *func, FunctionCallInfo fcinfo)
 			 * expected result type.  XXX would be better to cache the tupdesc
 			 * instead of repeating get_call_result_type()
 			 */
+			HeapTuple	rettup = (HeapTuple) DatumGetPointer(estate.retval);
 			TupleDesc	tupdesc;
+			TupleConversionMap *tupmap;
 
 			switch (get_call_result_type(fcinfo, NULL, &tupdesc))
 			{
 				case TYPEFUNC_COMPOSITE:
 					/* got the expected result rowtype, now check it */
-					validate_tupdesc_compat(tupdesc, estate.rettupdesc,
-											"returned record type does not match expected record type");
+					tupmap = convert_tuples_by_position(estate.rettupdesc,
+														tupdesc,
+														gettext_noop("returned record type does not match expected record type"));
+					/* it might need conversion */
+					if (tupmap)
+						rettup = do_convert_tuple(rettup, tupmap);
+					/* no need to free map, we're about to return anyway */
 					break;
 				case TYPEFUNC_RECORD:
 
@@ -413,9 +419,7 @@ plpgsql_exec_function(PLpgSQL_function *func, FunctionCallInfo fcinfo)
 			 * Copy tuple to upper executor memory, as a tuple Datum. Make
 			 * sure it is labeled with the caller-supplied tuple type.
 			 */
-			estate.retval =
-				PointerGetDatum(SPI_returntuple((HeapTuple) DatumGetPointer(estate.retval),
-												tupdesc));
+			estate.retval = PointerGetDatum(SPI_returntuple(rettup, tupdesc));
 		}
 		else
 		{
@@ -704,11 +708,20 @@ plpgsql_exec_trigger(PLpgSQL_function *func,
 		rettup = NULL;
 	else
 	{
-		validate_tupdesc_compat(trigdata->tg_relation->rd_att,
-								estate.rettupdesc,
-								"returned row structure does not match the structure of the triggering table");
+		TupleConversionMap *tupmap;
+
+		rettup = (HeapTuple) DatumGetPointer(estate.retval);
+		/* check rowtype compatibility */
+		tupmap = convert_tuples_by_position(estate.rettupdesc,
+											trigdata->tg_relation->rd_att,
+											gettext_noop("returned row structure does not match the structure of the triggering table"));
+		/* it might need conversion */
+		if (tupmap)
+			rettup = do_convert_tuple(rettup, tupmap);
+		/* no need to free map, we're about to return anyway */
+
 		/* Copy tuple to upper executor memory */
-		rettup = SPI_copytuple((HeapTuple) DatumGetPointer(estate.retval));
+		rettup = SPI_copytuple(rettup);
 	}
 
 	/*
@@ -2190,6 +2203,7 @@ exec_stmt_return_next(PLpgSQL_execstate *estate,
 			case PLPGSQL_DTYPE_REC:
 				{
 					PLpgSQL_rec *rec = (PLpgSQL_rec *) retvar;
+					TupleConversionMap *tupmap;
 
 					if (!HeapTupleIsValid(rec->tup))
 						ereport(ERROR,
@@ -2198,9 +2212,16 @@ exec_stmt_return_next(PLpgSQL_execstate *estate,
 								  rec->refname),
 						errdetail("The tuple structure of a not-yet-assigned"
 								  " record is indeterminate.")));
-					validate_tupdesc_compat(tupdesc, rec->tupdesc,
-								"wrong record type supplied in RETURN NEXT");
+					tupmap = convert_tuples_by_position(rec->tupdesc,
+														tupdesc,
+														gettext_noop("wrong record type supplied in RETURN NEXT"));
 					tuple = rec->tup;
+					/* it might need conversion */
+					if (tupmap)
+					{
+						tuple = do_convert_tuple(tuple, tupmap);
+						free_conversion_map(tupmap);
+					}
 				}
 				break;
 
@@ -2280,6 +2301,7 @@ exec_stmt_return_query(PLpgSQL_execstate *estate,
 {
 	Portal		portal;
 	uint32		processed = 0;
+	TupleConversionMap *tupmap;
 
 	if (!estate->retisset)
 		ereport(ERROR,
@@ -2302,8 +2324,9 @@ exec_stmt_return_query(PLpgSQL_execstate *estate,
 										   stmt->params);
 	}
 
-	validate_tupdesc_compat(estate->rettupdesc, portal->tupDesc,
-				   "structure of query does not match function result type");
+	tupmap = convert_tuples_by_position(portal->tupDesc,
+										estate->rettupdesc,
+										gettext_noop("structure of query does not match function result type"));
 
 	while (true)
 	{
@@ -2317,12 +2340,19 @@ exec_stmt_return_query(PLpgSQL_execstate *estate,
 		{
 			HeapTuple	tuple = SPI_tuptable->vals[i];
 
+			if (tupmap)
+				tuple = do_convert_tuple(tuple, tupmap);
 			tuplestore_puttuple(estate->tuple_store, tuple);
+			if (tupmap)
+				heap_freetuple(tuple);
 			processed++;
 		}
 
 		SPI_freetuptable(SPI_tuptable);
 	}
+
+	if (tupmap)
+		free_conversion_map(tupmap);
 
 	SPI_freetuptable(SPI_tuptable);
 	SPI_cursor_close(portal);
@@ -5215,45 +5245,6 @@ exec_simple_check_plan(PLpgSQL_expr *expr)
 	expr->expr_simple_lxid = InvalidLocalTransactionId;
 	/* Also stash away the expression result type */
 	expr->expr_simple_type = exprType((Node *) tle->expr);
-}
-
-/*
- * Validates compatibility of supplied TupleDesc pair by checking number and type
- * of attributes.
- */
-static void
-validate_tupdesc_compat(TupleDesc expected, TupleDesc returned, const char *msg)
-{
-	int			i;
-	const char *dropped_column_type = gettext_noop("N/A (dropped column)");
-
-	if (!expected || !returned)
-		ereport(ERROR,
-				(errcode(ERRCODE_DATATYPE_MISMATCH),
-				 errmsg("%s", _(msg))));
-
-	if (expected->natts != returned->natts)
-		ereport(ERROR,
-				(errcode(ERRCODE_DATATYPE_MISMATCH),
-				 errmsg("%s", _(msg)),
-				 errdetail("Number of returned columns (%d) does not match "
-						   "expected column count (%d).",
-						   returned->natts, expected->natts)));
-
-	for (i = 0; i < expected->natts; i++)
-		if (expected->attrs[i]->atttypid != returned->attrs[i]->atttypid)
-			ereport(ERROR,
-					(errcode(ERRCODE_DATATYPE_MISMATCH),
-					 errmsg("%s", _(msg)),
-				   errdetail("Returned type %s does not match expected type "
-							 "%s in column \"%s\".",
-							 OidIsValid(returned->attrs[i]->atttypid) ?
-							 format_type_be(returned->attrs[i]->atttypid) :
-							 _(dropped_column_type),
-							 OidIsValid(expected->attrs[i]->atttypid) ?
-							 format_type_be(expected->attrs[i]->atttypid) :
-							 _(dropped_column_type),
-							 NameStr(expected->attrs[i]->attname))));
 }
 
 /* ----------

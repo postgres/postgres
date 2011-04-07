@@ -2684,6 +2684,36 @@ select * from return_dquery();
 
 drop function return_dquery();
 
+-- test RETURN QUERY with dropped columns
+
+create table tabwithcols(a int, b int, c int, d int);
+insert into tabwithcols values(10,20,30,40),(50,60,70,80);
+
+create or replace function returnqueryf()
+returns setof tabwithcols as $$
+begin
+  return query select * from tabwithcols;
+  return query execute 'select * from tabwithcols';
+end;
+$$ language plpgsql;
+
+select * from returnqueryf();
+
+alter table tabwithcols drop column b;
+
+select * from returnqueryf();
+
+alter table tabwithcols drop column d;
+
+select * from returnqueryf();
+
+alter table tabwithcols add column d int;
+
+select * from returnqueryf();
+
+drop function returnqueryf();
+drop table tabwithcols;
+
 -- Tests for 8.4's new RAISE features
 
 create or replace function raise_test() returns void as $$
