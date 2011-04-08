@@ -4484,12 +4484,11 @@ cleanup:
 static char *
 get_source_line(const char *src, int lineno)
 {
-	const char *s;
-	const char *next;
-	int		current = 0;
+	const char	*s		 = NULL;
+	const char	*next	 = src;
+	int			 current = 0;
 
-	next = src;
-	while (current != lineno)
+	while (current < lineno)
 	{
 		s = next;
 		next = strchr(s + 1, '\n');
@@ -4501,7 +4500,7 @@ get_source_line(const char *src, int lineno)
 	if (current != lineno)
 		return NULL;
 
-	while (s && isspace((unsigned char) *s))
+	while (*s && isspace((unsigned char) *s))
 		s++;
 
 	if (next == NULL)
