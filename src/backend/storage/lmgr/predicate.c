@@ -3638,14 +3638,20 @@ CheckTargetForConflictsIn(PREDICATELOCKTARGETTAG *targettag)
 		if (sxact == MySerializableXact)
 		{
 			/*
-			 * If we're getting a write lock on the tuple, we don't need a
-			 * predicate (SIREAD) lock. At this point our transaction already
-			 * has an ExclusiveRowLock on the relation, so we are OK to drop
-			 * the predicate lock on the tuple, if found, without fearing that
-			 * another write against the tuple will occur before the MVCC
-			 * information makes it to the buffer.
+			 * If we're getting a write lock on the tuple and we're not in a
+			 * subtransaction, we don't need a predicate (SIREAD) lock.  We
+			 * can't use this optimization within a subtransaction because
+			 * the subtransaction could be rolled back, and we would be left
+			 * without any lock at the top level.
+			 * 
+			 * At this point our transaction already has an ExclusiveRowLock
+			 * on the relation, so we are OK to drop the predicate lock on
+			 * the tuple, if found, without fearing that another write
+			 * against the tuple will occur before the MVCC information
+			 * makes it to the buffer.
 			 */
-			if (GET_PREDICATELOCKTARGETTAG_OFFSET(*targettag))
+			if (!IsSubTransaction()
+				&& GET_PREDICATELOCKTARGETTAG_OFFSET(*targettag))
 			{
 				uint32		predlockhashcode;
 				PREDICATELOCKTARGET *rmtarget = NULL;
