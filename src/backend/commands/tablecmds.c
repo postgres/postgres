@@ -4014,7 +4014,7 @@ find_typed_table_dependencies(Oid typeOid, const char *typeName, DropBehavior be
 
 	scan = heap_beginscan(classRel, SnapshotNow, 1, key);
 
-	if (HeapTupleIsValid(tuple = heap_getnext(scan, ForwardScanDirection)))
+	while ((tuple = heap_getnext(scan, ForwardScanDirection)) != NULL)
 	{
 		if (behavior == DROP_RESTRICT)
 			ereport(ERROR,
