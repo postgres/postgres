@@ -300,6 +300,20 @@ INSERT INTO distributors (did, dname) VALUES (DEFAULT, 'XYZ Widgets')
    RETURNING did;
 </programlisting>
   </para>
+
+  <para>
+   Increment the sales count of the salesperson who manages the
+   account for Acme Corporation, and record the whole updated row
+   along with current time in a log table:
+<programlisting>
+WITH upd AS (
+  UPDATE employees SET sales_count = sales_count + 1 WHERE id =
+    (SELECT sales_person FROM accounts WHERE name = 'Acme Corporation')
+    RETURNING *
+)
+INSERT INTO employees_log SELECT *, current_timestamp FROM upd;
+</programlisting>
+  </para>
  </refsect1>
 
  <refsect1>
