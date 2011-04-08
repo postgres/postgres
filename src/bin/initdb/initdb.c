@@ -1564,7 +1564,7 @@ setup_collation(void)
 	int i;
 	FILE   *locale_a_handle;
 	char	localebuf[NAMEDATALEN];
-	int		skipped = 0;
+	int		count = 0;
 	PG_CMD_DECL;
 #endif
 
@@ -1579,7 +1579,7 @@ setup_collation(void)
 
 	locale_a_handle = popen_check("locale -a", "r");
 	if (!locale_a_handle)
-		return;
+		return;					/* complaint already printed */
 
 	PG_CMD_OPEN;
 
@@ -1597,12 +1597,11 @@ setup_collation(void)
 
 		len = strlen(localebuf);
 
-		if (localebuf[len - 1] != '\n')
+		if (len == 0 || localebuf[len - 1] != '\n')
 		{
 			if (debug)
 				fprintf(stderr, _("%s: locale name too long, skipped: %s\n"),
 						progname, localebuf);
-			skipped++;
 			continue;
 		}
 		localebuf[len - 1] = '\0';
@@ -1628,22 +1627,23 @@ setup_collation(void)
 			if (debug)
 				fprintf(stderr, _("%s: locale name has non-ASCII characters, skipped: %s\n"),
 						progname, localebuf);
-			skipped++;
 			continue;
 		}
 
 		enc = pg_get_encoding_from_locale(localebuf, debug);
 		if (enc < 0)
 		{
-			skipped++;
-			continue;			/* error message printed by pg_get_encoding_from_locale() */
+			/* error message printed by pg_get_encoding_from_locale() */
+			continue;
 		}
 		if (!PG_VALID_BE_ENCODING(enc))
 			continue;			/* ignore locales for client-only encodings */
 		if (enc == PG_SQL_ASCII)
 			continue;			/* C/POSIX are already in the catalog */
 
-		PG_CMD_PRINTF2("INSERT INTO tmp_pg_collation (locale, encoding) VALUES ('%s', %d);",
+		count++;
+
+		PG_CMD_PRINTF2("INSERT INTO tmp_pg_collation (locale, encoding) VALUES ('%s', %d);\n",
 					   escape_quotes(localebuf), enc);
 
 		/*
@@ -1653,12 +1653,12 @@ setup_collation(void)
 		 * "en_US" for LATIN1, say.
 		 */
 		if (normalize_locale_name(alias, localebuf))
-			PG_CMD_PRINTF3("INSERT INTO tmp_pg_collation (collname, locale, encoding) VALUES ('%s', '%s', %d);",
+			PG_CMD_PRINTF3("INSERT INTO tmp_pg_collation (collname, locale, encoding) VALUES ('%s', '%s', %d);\n",
 						   escape_quotes(alias), escape_quotes(localebuf), enc);
 	}
 
 	/* Add an SQL-standard name */
-	PG_CMD_PRINTF1("INSERT INTO tmp_pg_collation (collname, locale, encoding) VALUES ('ucs_basic', 'C', %d);", PG_UTF8);
+	PG_CMD_PRINTF1("INSERT INTO tmp_pg_collation (collname, locale, encoding) VALUES ('ucs_basic', 'C', %d);\n", PG_UTF8);
 
 	/*
 	 * When copying collations to the final location, eliminate
@@ -1674,8 +1674,7 @@ setup_collation(void)
 				"   COALESCE(collname, locale) AS final_collname, "
 				"   (SELECT oid FROM pg_namespace WHERE nspname = 'pg_catalog') AS collnamespace, "
 				"   (SELECT relowner FROM pg_class WHERE relname = 'pg_collation') AS collowner, "
-				"   encoding, "
-				"   locale, locale "
+				"   encoding, locale, locale "
 				"  FROM tmp_pg_collation"
 				"  ORDER BY final_collname, collnamespace, encoding, (collname = locale) DESC, locale;\n");
 
@@ -1683,12 +1682,9 @@ setup_collation(void)
 	PG_CMD_CLOSE;
 
 	check_ok();
-	if (skipped && !debug)
+	if (count == 0 && !debug)
 	{
-		printf(ngettext("%d system locale has been omitted because it cannot supported by PostgreSQL.\n",
-						"%d system locales have been omitted because they cannot be supported by PostgreSQL.\n",
-						skipped),
-			   skipped);
+		printf(_("No usable system locales were found.\n"));
 		printf(_("Use the option \"--debug\" to see details.\n"));
 	}
 #else /* not HAVE_LOCALE_T */
