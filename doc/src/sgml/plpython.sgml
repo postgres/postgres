@@ -398,7 +398,7 @@ $$ LANGUAGE plpythonu;
    <title>Null, None</title>
   <para>
    If an SQL null value<indexterm><primary>null value</primary><secondary
-   sortas="PL/Python">PL/Python</secondary></indexterm> is passed to a
+   sortas="PL/Python">in PL/Python</secondary></indexterm> is passed to a
    function, the argument value will appear as <symbol>None</symbol> in
    Python. The above function definition will return the wrong answer for null
    inputs. We could add <literal>STRICT</literal> to the function definition
@@ -716,8 +716,8 @@ SELECT * FROM multiout_simple_setof(3);
    data between function calls.  This variable is private static data.
    The global dictionary <varname>GD</varname> is public data,
    available to all Python functions within a session.  Use with
-   care.<indexterm><primary>global data</><secondary>in
-   PL/Python</></indexterm>
+   care.<indexterm><primary>global data</>
+   <secondary>in PL/Python</></indexterm>
   </para>
 
   <para>

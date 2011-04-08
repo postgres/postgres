@@ -242,9 +242,12 @@
    </para>
 
    <para>
+    <indexterm>
+     <primary>trigger</>
+     <secondary>arguments for trigger functions</>
+    </indexterm>
     When a trigger is being defined, arguments can be specified for
-    it.<indexterm><primary>trigger</><secondary>arguments for trigger
-    functions</></indexterm> The purpose of including arguments in the
+    it. The purpose of including arguments in the
     trigger definition is to allow different triggers with similar
     requirements to call the same function.  As an example, there
     could be a generalized trigger function that takes as its

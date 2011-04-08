@@ -3983,13 +3983,16 @@ $$ LANGUAGE plpgsql;
    </para>
 
    <para>
+    <indexterm>
+     <primary>preparing a query</>
+     <secondary>in PL/pgSQL</>
+    </indexterm>
     As each expression and <acronym>SQL</acronym> command is first
     executed in the function, the <application>PL/pgSQL</> interpreter
     creates a prepared execution plan (using the
     <acronym>SPI</acronym> manager's <function>SPI_prepare</function>
-    and <function>SPI_saveplan</function>
-    functions).<indexterm><primary>preparing a query</><secondary>in
-    PL/pgSQL</></> Subsequent visits to that expression or command
+    and <function>SPI_saveplan</function> functions).
+    Subsequent visits to that expression or command
     reuse the prepared plan.  Thus, a function with conditional code
     that contains many statements for which execution plans might be
     required will only prepare and save those plans that are really

@@ -344,8 +344,8 @@ spi_exec -array C "SELECT * FROM pg_class" {
        <para>
         Prepares and saves a query plan for later execution.  The
         saved plan will be retained for the life of the current
-        session.<indexterm><primary>preparing a query</><secondary>in
-        PL/Tcl</></>
+        session.<indexterm><primary>preparing a query</>
+        <secondary>in PL/Tcl</></>
        </para>
        <para>
         The query can use parameters, that is, placeholders for

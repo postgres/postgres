@@ -189,9 +189,13 @@ UPDATE "my_table" SET "a" = 5;
     ampersands.  The length limitation still applies.
    </para>
 
+   <indexterm>
+     <primary>Unicode escape</primary>
+     <secondary>in identifiers</secondary>
+   </indexterm>
+
    <para>
-    <indexterm><primary>Unicode escape</primary><secondary>in
-    identifiers</secondary></indexterm> A variant of quoted
+    A variant of quoted
     identifiers allows including escaped Unicode characters identified
     by their code points.  This variant starts
     with <literal>U&amp;</literal> (upper or lower case U followed by

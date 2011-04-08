@@ -78,6 +78,8 @@ SELECT datname FROM pg_database;
  <sect1 id="manage-ag-createdb">
   <title>Creating a Database</title>
 
+  <indexterm><primary>CREATE DATABASE</></>
+
   <para>
    In order to create a database, the <productname>PostgreSQL</>
    server must be up and running (see <xref
@@ -86,8 +88,7 @@ SELECT datname FROM pg_database;
 
   <para>
    Databases are created with the SQL command
-   <xref linkend="sql-createdatabase">:<indexterm><primary>CREATE
-   DATABASE</></>
+   <xref linkend="sql-createdatabase">:
 <synopsis>
 CREATE DATABASE <replaceable>name</>;
 </synopsis>

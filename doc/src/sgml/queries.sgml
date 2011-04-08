@@ -895,16 +895,16 @@ SELECT product_id, p.name, (sum(s.units) * p.price) AS sales
     all sales of the product.
    </para>
 
+   <indexterm><primary>functional dependency</primary></indexterm>
+
    <para>
-    If the products table is set up so that,
-    say, <literal>product_id</literal> is the primary key, then it
-    would be enough to group by <literal>product_id</literal> in the
-    above example, since name and price would
-    be <firstterm>functionally
-    dependent</firstterm><indexterm><primary>functional
-    dependency</primary></indexterm> on the product ID, and so there
-    would be no ambiguity about which name and price value to return
-    for each product ID group.
+    If the products table is set up so that, say,
+    <literal>product_id</literal> is the primary key, then it would be
+    enough to group by <literal>product_id</literal> in the above example,
+    since name and price would be <firstterm>functionally
+    dependent</firstterm> on the product ID, and so there would be no
+    ambiguity about which name and price value to return for each product
+    ID group.
    </para>
 
    <para>
@@ -1170,9 +1170,12 @@ SELECT DISTINCT <replaceable>select_list</replaceable> ...
     can be used to specify the default behavior of retaining all rows.)
    </para>
 
+   <indexterm>
+    <primary>null value</>
+    <secondary sortas="DISTINCT">in DISTINCT</>
+   </indexterm>
+
    <para>
-    <indexterm><primary>null value</><secondary sortas="DISTINCT">in
-    DISTINCT</></indexterm>
     Obviously, two rows are considered distinct if they differ in at
     least one column value.  Null values are considered equal in this
     comparison.

@@ -3188,9 +3188,12 @@ char * SPI_getnspname(Relation <parameter>rel</parameter>)
   <title>Memory Management</title>
 
   <para>
+    <indexterm>
+     <primary>memory context</primary>
+     <secondary>in SPI</secondary>
+    </indexterm>
    <productname>PostgreSQL</productname> allocates memory within
-   <firstterm>memory contexts</firstterm><indexterm><primary>memory
-   context</primary><secondary>in SPI</secondary></indexterm>, which provide a convenient method of
+   <firstterm>memory contexts</firstterm>, which provide a convenient method of
    managing allocations made in many different places that need to
    live for differing amounts of time.  Destroying a context releases
    all the memory that was allocated in it.  Thus, it is not necessary

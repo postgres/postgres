@@ -32,10 +32,7 @@
   <indexterm>
    <primary>output function</primary>
   </indexterm>
-  A user-defined type must always have input and output
-  functions.<indexterm><primary>input function</primary><secondary>of
-  a data type</secondary></indexterm><indexterm><primary>output
-  function</primary><secondary>of a data type</secondary></indexterm>
+  A user-defined type must always have input and output functions.
   These functions determine how the type appears in strings (for input
   by the user and output to the user) and how the type is organized in
   memory.  The input function takes a null-terminated character string
@@ -218,11 +215,13 @@ CREATE TYPE complex (
  </para>
 
  <para>
+  <indexterm>
+    <primary>array</primary>
+    <secondary>of user-defined type</secondary>
+  </indexterm>
   When you define a new base type,
   <productname>PostgreSQL</productname> automatically provides support
-  for arrays of that
-  type.<indexterm><primary>array</primary><secondary>of user-defined
-  type</secondary></indexterm>  The array type typically
+  for arrays of that type.  The array type typically
   has the same name as the base type with the underscore character
   (<literal>_</>) prepended.
  </para>

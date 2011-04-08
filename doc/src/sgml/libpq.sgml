@@ -188,7 +188,7 @@ PGconn *PQconnectdbParams(const char **keywords, const char **values, int expand
               the value for <literal>hostaddr</> gives the server network address.
               The value for <literal>host</> is ignored unless the
               authentication method requires it, in which case it will be
-              used as the host name.  
+              used as the host name.
              </para>
             </listitem>
            </itemizedlist>
@@ -1610,10 +1610,12 @@ int PQsocket(const PGconn *conn);
      <term><function>PQbackendPID</function><indexterm><primary>PQbackendPID</></></term>
      <listitem>
       <para>
-       Returns the process <acronym>ID</acronym>
-       (PID)<indexterm><primary>PID</><secondary>determining PID of
-       server process</><tertiary>in libpq</></> of the backend
-       process handling this connection.
+       Returns the process <acronym>ID</acronym> (PID)<indexterm>
+        <primary>PID</>
+        <secondary>determining PID of server process</>
+        <tertiary>in libpq</>
+       </indexterm>
+       of the backend process handling this connection.
 
 <synopsis>
 int PQbackendPID(const PGconn *conn);
@@ -4201,7 +4203,7 @@ int PQcancel(PGcancel *cancel, char *errbuf, int errbufsize);
      <listitem>
       <para>
        <function>PQrequestCancel</function> is a deprecated variant of
-       <function>PQcancel</function>.  
+       <function>PQcancel</function>.
 <synopsis>
 int PQrequestCancel(PGconn *conn);
 </synopsis>
@@ -5459,12 +5461,12 @@ int PQlibVersion(void);
 
   <para>
    The function <function>PQsetNoticeReceiver</function>
-   <indexterm><primary>notice
-   receiver</></><indexterm><primary>PQsetNoticeReceiver</></> sets or
+   <indexterm><primary>notice receiver</></>
+   <indexterm><primary>PQsetNoticeReceiver</></> sets or
    examines the current notice receiver for a connection object.
    Similarly, <function>PQsetNoticeProcessor</function>
-   <indexterm><primary>notice
-   processor</></><indexterm><primary>PQsetNoticeProcessor</></> sets or
+   <indexterm><primary>notice processor</></>
+   <indexterm><primary>PQsetNoticeProcessor</></> sets or
    examines the current notice processor.
 
 <synopsis>

@@ -1080,14 +1080,15 @@ su - postgres
          pointed to works correctly with <productname>PostgreSQL</>.
         </para>
 
+        <indexterm><primary>cross compilation</primary></indexterm>
+
         <para>
          This option is mainly aimed at binary package distributors
          who know their target operating system well.  The main
          advantage of using this option is that the PostgreSQL package
          won't need to be upgraded whenever any of the many local
          daylight-saving time rules change.  Another advantage is that
-         PostgreSQL can be cross-compiled<indexterm><primary>cross
-         compilation</primary></indexterm> more straightforwardly if the
+         PostgreSQL can be cross-compiled more straightforwardly if the
          time zone database files do not need to be built during the
          installation.
         </para>
