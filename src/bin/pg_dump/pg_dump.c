@@ -3812,6 +3812,8 @@ getTables(int *numTables)
 	int			i_relhasrules;
 	int			i_relhasoids;
 	int			i_relfrozenxid;
+	int			i_toastoid;
+	int			i_toastfrozenxid;
 	int			i_relpersistence;
 	int			i_owning_tab;
 	int			i_owning_col;
@@ -3855,7 +3857,9 @@ getTables(int *numTables)
 						  "(%s c.relowner) AS rolname, "
 						  "c.relchecks, c.relhastriggers, "
 						  "c.relhasindex, c.relhasrules, c.relhasoids, "
-						  "c.relfrozenxid, c.relpersistence, "
+						  "c.relfrozenxid, tc.oid AS toid, "
+						  "tc.relfrozenxid AS tfrozenxid, "
+						  "c.relpersistence, "
 						  "CASE WHEN c.reloftype <> 0 THEN c.reloftype::pg_catalog.regtype ELSE NULL END AS reloftype, "
 						  "d.refobjid AS owning_tab, "
 						  "d.refobjsubid AS owning_col, "
@@ -3889,7 +3893,9 @@ getTables(int *numTables)
 						  "(%s c.relowner) AS rolname, "
 						  "c.relchecks, c.relhastriggers, "
 						  "c.relhasindex, c.relhasrules, c.relhasoids, "
-						  "c.relfrozenxid, 'p' AS relpersistence, "
+						  "c.relfrozenxid, tc.oid AS toid, "
+						  "tc.relfrozenxid AS tfrozenxid, "
+						  "'p' AS relpersistence, "
 						  "CASE WHEN c.reloftype <> 0 THEN c.reloftype::pg_catalog.regtype ELSE NULL END AS reloftype, "
 						  "d.refobjid AS owning_tab, "
 						  "d.refobjsubid AS owning_col, "
@@ -3922,7 +3928,9 @@ getTables(int *numTables)
 						  "(%s c.relowner) AS rolname, "
 						  "c.relchecks, c.relhastriggers, "
 						  "c.relhasindex, c.relhasrules, c.relhasoids, "
-						  "c.relfrozenxid, 'p' AS relpersistence, "
+						  "c.relfrozenxid, tc.oid AS toid, "
+						  "tc.relfrozenxid AS tfrozenxid, "
+						  "'p' AS relpersistence, "
 						  "NULL AS reloftype, "
 						  "d.refobjid AS owning_tab, "
 						  "d.refobjsubid AS owning_col, "
@@ -3955,7 +3963,10 @@ getTables(int *numTables)
 						  "(%s relowner) AS rolname, "
 						  "relchecks, (reltriggers <> 0) AS relhastriggers, "
 						  "relhasindex, relhasrules, relhasoids, "
-						  "relfrozenxid, 'p' AS relpersistence, "
+						  "relfrozenxid, "
+						  "0 AS toid, "
+						  "0 AS tfrozenxid, "
+						  "'p' AS relpersistence, "
 						  "NULL AS reloftype, "
 						  "d.refobjid AS owning_tab, "
 						  "d.refobjsubid AS owning_col, "
@@ -3987,7 +3998,10 @@ getTables(int *numTables)
 						  "(%s relowner) AS rolname, "
 						  "relchecks, (reltriggers <> 0) AS relhastriggers, "
 						  "relhasindex, relhasrules, relhasoids, "
-						  "0 AS relfrozenxid, 'p' AS relpersistence, "
+						  "0 AS relfrozenxid, "
+						  "0 AS toid, "
+						  "0 AS tfrozenxid, "
+						  "'p' AS relpersistence, "
 						  "NULL AS reloftype, "
 						  "d.refobjid AS owning_tab, "
 						  "d.refobjsubid AS owning_col, "
@@ -4019,7 +4033,10 @@ getTables(int *numTables)
 						  "(%s relowner) AS rolname, "
 						  "relchecks, (reltriggers <> 0) AS relhastriggers, "
 						  "relhasindex, relhasrules, relhasoids, "
-						  "0 AS relfrozenxid, 'p' AS relpersistence, "
+						  "0 AS relfrozenxid, "
+						  "0 AS toid, "
+						  "0 AS tfrozenxid, "
+						  "'p' AS relpersistence, "
 						  "NULL AS reloftype, "
 						  "d.refobjid AS owning_tab, "
 						  "d.refobjsubid AS owning_col, "
@@ -4047,7 +4064,10 @@ getTables(int *numTables)
 						  "(%s relowner) AS rolname, "
 						  "relchecks, (reltriggers <> 0) AS relhastriggers, "
 						  "relhasindex, relhasrules, relhasoids, "
-						  "0 AS relfrozenxid, 'p' AS relpersistence, "
+						  "0 AS relfrozenxid, "
+						  "0 AS toid, "
+						  "0 AS tfrozenxid, "
+						  "'p' AS relpersistence, "
 						  "NULL AS reloftype, "
 						  "NULL::oid AS owning_tab, "
 						  "NULL::int4 AS owning_col, "
@@ -4070,7 +4090,10 @@ getTables(int *numTables)
 						  "relchecks, (reltriggers <> 0) AS relhastriggers, "
 						  "relhasindex, relhasrules, "
 						  "'t'::bool AS relhasoids, "
-						  "0 AS relfrozenxid, 'p' AS relpersistence, "
+						  "0 AS relfrozenxid, "
+						  "0 AS toid, "
+						  "0 AS tfrozenxid, "
+						  "'p' AS relpersistence, "
 						  "NULL AS reloftype, "
 						  "NULL::oid AS owning_tab, "
 						  "NULL::int4 AS owning_col, "
@@ -4103,7 +4126,10 @@ getTables(int *numTables)
 						  "relchecks, (reltriggers <> 0) AS relhastriggers, "
 						  "relhasindex, relhasrules, "
 						  "'t'::bool AS relhasoids, "
-						  "0 as relfrozenxid, 'p' AS relpersistence, "
+						  "0 as relfrozenxid, "
+						  "0 AS toid, "
+						  "0 AS tfrozenxid, "
+						  "'p' AS relpersistence, "
 						  "NULL AS reloftype, "
 						  "NULL::oid AS owning_tab, "
 						  "NULL::int4 AS owning_col, "
@@ -4149,6 +4175,8 @@ getTables(int *numTables)
 	i_relhasrules = PQfnumber(res, "relhasrules");
 	i_relhasoids = PQfnumber(res, "relhasoids");
 	i_relfrozenxid = PQfnumber(res, "relfrozenxid");
+	i_toastoid = PQfnumber(res, "toid");
+	i_toastfrozenxid = PQfnumber(res, "tfrozenxid");
 	i_relpersistence = PQfnumber(res, "relpersistence");
 	i_owning_tab = PQfnumber(res, "owning_tab");
 	i_owning_col = PQfnumber(res, "owning_col");
@@ -4190,6 +4218,8 @@ getTables(int *numTables)
 		tblinfo[i].hastriggers = (strcmp(PQgetvalue(res, i, i_relhastriggers), "t") == 0);
 		tblinfo[i].hasoids = (strcmp(PQgetvalue(res, i, i_relhasoids), "t") == 0);
 		tblinfo[i].frozenxid = atooid(PQgetvalue(res, i, i_relfrozenxid));
+		tblinfo[i].toast_oid = atooid(PQgetvalue(res, i, i_toastoid));
+		tblinfo[i].toast_frozenxid = atooid(PQgetvalue(res, i, i_toastfrozenxid));
 		if (PQgetisnull(res, i, i_reloftype))
 			tblinfo[i].reloftype = NULL;
 		else
@@ -12221,13 +12251,23 @@ dumpTableSchema(Archive *fout, TableInfo *tbinfo)
 				}
 			}
 
-			appendPQExpBuffer(q, "\n-- For binary upgrade, set relfrozenxid\n");
+			appendPQExpBuffer(q, "\n-- For binary upgrade, set heap's relfrozenxid\n");
 			appendPQExpBuffer(q, "UPDATE pg_catalog.pg_class\n"
 							  "SET relfrozenxid = '%u'\n"
 							  "WHERE oid = ",
 							  tbinfo->frozenxid);
 			appendStringLiteralAH(q, fmtId(tbinfo->dobj.name), fout);
 			appendPQExpBuffer(q, "::pg_catalog.regclass;\n");
+
+			if (tbinfo->toast_oid)
+			{
+				/* We preserve the toast oids, so we can use it during restore */
+				appendPQExpBuffer(q, "\n-- For binary upgrade, set toast's relfrozenxid\n");
+				appendPQExpBuffer(q, "UPDATE pg_catalog.pg_class\n"
+								  "SET relfrozenxid = '%u'\n"
+								  "WHERE oid = '%u';\n",
+								  tbinfo->toast_frozenxid, tbinfo->toast_oid);
+			}
 		}
 
 		/* Loop dumping statistics and storage statements */
