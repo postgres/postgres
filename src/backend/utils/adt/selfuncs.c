@@ -5436,7 +5436,8 @@ pattern_selectivity(Const *patt, Pattern_Type ptype)
  * in the form of a Const node; else return NULL.
  *
  * The caller must provide the appropriate "less than" comparison function
- * for testing the strings.
+ * for testing the strings.  In particular, ltproc->fn_collation specifies
+ * the locale for comparisons.
  *
  * The key requirement here is that given a prefix string, say "foo",
  * we must be able to generate another string "fop" that is greater than
@@ -5504,19 +5505,21 @@ make_greater_string(const Const *str_const, FmgrInfo *ltproc)
 		{
 			/* If first time through, determine the suffix to use */
 			static char suffixchar = 0;
+			static Oid	suffixcollation = 0;
 
-			if (!suffixchar)
+			if (!suffixchar || suffixcollation != ltproc->fn_collation)
 			{
 				char	   *best;
 
 				best = "Z";
-				if (varstr_cmp(best, 1, "z", 1, DEFAULT_COLLATION_OID) < 0)
+				if (varstr_cmp(best, 1, "z", 1, ltproc->fn_collation) < 0)
 					best = "z";
-				if (varstr_cmp(best, 1, "y", 1, DEFAULT_COLLATION_OID) < 0)
+				if (varstr_cmp(best, 1, "y", 1, ltproc->fn_collation) < 0)
 					best = "y";
-				if (varstr_cmp(best, 1, "9", 1, DEFAULT_COLLATION_OID) < 0)
+				if (varstr_cmp(best, 1, "9", 1, ltproc->fn_collation) < 0)
 					best = "9";
 				suffixchar = *best;
+				suffixcollation = ltproc->fn_collation;
 			}
 
 			/* And build the string to compare to */
