@@ -2522,14 +2522,25 @@ listTables(const char *tabtypes, const char *pattern, bool verbose, bool showSys
 						  ",\n c2.relname as \"%s\"",
 						  gettext_noop("Table"));
 
-	if (verbose && pset.sversion >= 80100)
-		appendPQExpBuffer(&buf,
-						  ",\n  pg_catalog.pg_size_pretty(pg_catalog.pg_relation_size(c.oid)) as \"%s\"",
-						  gettext_noop("Size"));
 	if (verbose)
+	{
+		/*
+		 * As of PostgreSQL 9.0, use pg_table_size() to show a more acurate size
+		 * of a table, including FSM, VM and TOAST tables.
+		 */
+		if (pset.sversion >= 90000)
+			appendPQExpBuffer(&buf,
+							  ",\n  pg_catalog.pg_size_pretty(pg_catalog.pg_table_size(c.oid)) as \"%s\"",
+							  gettext_noop("Size"));
+		else if (pset.sversion >= 80100)
+			appendPQExpBuffer(&buf,
+							  ",\n  pg_catalog.pg_size_pretty(pg_catalog.pg_relation_size(c.oid)) as \"%s\"",
+							  gettext_noop("Size"));
+
 		appendPQExpBuffer(&buf,
 			  ",\n  pg_catalog.obj_description(c.oid, 'pg_class') as \"%s\"",
 						  gettext_noop("Description"));
+	}
 
 	appendPQExpBuffer(&buf,
 					  "\nFROM pg_catalog.pg_class c"
