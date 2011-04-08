@@ -219,7 +219,7 @@ coerce_type(ParseState *pstate, Node *node,
 
 		newcon->consttype = baseTypeId;
 		newcon->consttypmod = inputTypeMod;
-		newcon->constcollid = get_typcollation(newcon->consttype);
+		newcon->constcollid = typeTypeCollation(targetType);
 		newcon->constlen = typeLen(targetType);
 		newcon->constbyval = typeByVal(targetType);
 		newcon->constisnull = con->constisnull;

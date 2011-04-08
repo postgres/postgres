@@ -528,7 +528,7 @@ typeLen(Type t)
 	return typ->typlen;
 }
 
-/* given type (as type struct), return the value of its 'byval' attribute.*/
+/* given type (as type struct), return its 'byval' attribute */
 bool
 typeByVal(Type t)
 {
@@ -538,7 +538,7 @@ typeByVal(Type t)
 	return typ->typbyval;
 }
 
-/* given type (as type struct), return the name of type */
+/* given type (as type struct), return the type's name */
 char *
 typeTypeName(Type t)
 {
@@ -549,14 +549,24 @@ typeTypeName(Type t)
 	return pstrdup(NameStr(typ->typname));
 }
 
+/* given type (as type struct), return its 'typrelid' attribute */
 Oid
 typeTypeRelid(Type typ)
 {
 	Form_pg_type typtup;
 
 	typtup = (Form_pg_type) GETSTRUCT(typ);
-
 	return typtup->typrelid;
+}
+
+/* given type (as type struct), return its 'typcollation' attribute */
+Oid
+typeTypeCollation(Type typ)
+{
+	Form_pg_type typtup;
+
+	typtup = (Form_pg_type) GETSTRUCT(typ);
+	return typtup->typcollation;
 }
 
 /*
