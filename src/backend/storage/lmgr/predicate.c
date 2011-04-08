@@ -920,26 +920,38 @@ CheckPointPredicate(void)
 	else
 	{
 		/*
-		 * The SLRU is no longer needed. Truncate everything but the last
-		 * page. We don't dare to touch the last page in case the SLRU is
-		 * taken back to use, and the new tail falls on the same page.
+		 * The SLRU is no longer needed. Truncate everything.  If we try to
+		 * leave the head page around to avoid re-zeroing it, we might not
+		 * use the SLRU again until we're past the wrap-around point, which
+		 * makes SLRU unhappy.
+		 *
+		 * While the API asks you to specify truncation by page, it silently
+		 * ignores the request unless the specified page is in a segment
+		 * past some allocated portion of the SLRU.  We don't care which
+		 * page in a later segment we hit, so just add the number of pages
+		 * per segment to the head page to land us *somewhere* in the next
+		 * segment.
 		 */
-		tailPage = oldSerXidControl->headPage;
+		tailPage = oldSerXidControl->headPage + SLRU_PAGES_PER_SEGMENT;
 		oldSerXidControl->headPage = -1;
 	}
 
 	LWLockRelease(OldSerXidLock);
+
+	/* Truncate away pages that are no longer required */
+	SimpleLruTruncate(OldSerXidSlruCtl, tailPage);
 
 	/*
 	 * Flush dirty SLRU pages to disk
 	 *
 	 * This is not actually necessary from a correctness point of view. We do
 	 * it merely as a debugging aid.
+	 *
+	 * We're doing this after the truncation to avoid writing pages right
+	 * before deleting the file in which they sit, which would be completely
+	 * pointless.
 	 */
 	SimpleLruFlush(OldSerXidSlruCtl, true);
-
-	/* Truncate away pages that are no longer required */
-	SimpleLruTruncate(OldSerXidSlruCtl, tailPage);
 }
 
 /*------------------------------------------------------------------------*/
