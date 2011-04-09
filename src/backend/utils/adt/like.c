@@ -19,8 +19,10 @@
 
 #include <ctype.h>
 
+#include "catalog/pg_collation.h"
 #include "mb/pg_wchar.h"
 #include "utils/builtins.h"
+#include "utils/pg_locale.h"
 
 
 #define LIKE_TRUE						1
@@ -28,15 +30,19 @@
 #define LIKE_ABORT						(-1)
 
 
-static int	SB_MatchText(char *t, int tlen, char *p, int plen);
+static int	SB_MatchText(char *t, int tlen, char *p, int plen,
+						 pg_locale_t locale, bool locale_is_c);
 static text *SB_do_like_escape(text *, text *);
 
-static int	MB_MatchText(char *t, int tlen, char *p, int plen);
+static int	MB_MatchText(char *t, int tlen, char *p, int plen,
+						 pg_locale_t locale, bool locale_is_c);
 static text *MB_do_like_escape(text *, text *);
 
-static int	UTF8_MatchText(char *t, int tlen, char *p, int plen);
+static int	UTF8_MatchText(char *t, int tlen, char *p, int plen,
+						   pg_locale_t locale, bool locale_is_c);
 
-static int	SB_IMatchText(char *t, int tlen, char *p, int plen);
+static int	SB_IMatchText(char *t, int tlen, char *p, int plen,
+						  pg_locale_t locale, bool locale_is_c);
 
 static int	GenericMatchText(char *s, int slen, char *p, int plen);
 static int	Generic_Text_IC_like(text *str, text *pat, Oid collation);
@@ -78,6 +84,24 @@ wchareq(char *p1, char *p2)
  * comparison.	This should be revisited when we install better locale support.
  */
 
+/*
+ * We do handle case-insensitive matching for single-byte encodings using
+ * fold-on-the-fly processing, however.
+ */
+static char
+SB_lower_char(unsigned char c, pg_locale_t locale, bool locale_is_c)
+{
+	if (locale_is_c)
+		return pg_ascii_tolower(c);
+#ifdef HAVE_LOCALE_T
+	else if (locale)
+		return tolower_l(c, locale);
+#endif
+	else
+		return pg_tolower(c);
+}
+
+
 #define NextByte(p, plen)	((p)++, (plen)--)
 
 /* Set up to compile like_match.c for multibyte characters */
@@ -107,7 +131,7 @@ wchareq(char *p1, char *p2)
 #include "like_match.c"
 
 /* setup to compile like_match.c for single byte case insensitive matches */
-#define MATCH_LOWER
+#define MATCH_LOWER(t) SB_lower_char((unsigned char) (t), locale, locale_is_c)
 #define NextChar(p, plen) NextByte((p), (plen))
 #define MatchText SB_IMatchText
 
@@ -121,15 +145,16 @@ wchareq(char *p1, char *p2)
 
 #include "like_match.c"
 
+/* Generic for all cases not requiring inline case-folding */
 static inline int
 GenericMatchText(char *s, int slen, char *p, int plen)
 {
 	if (pg_database_encoding_max_length() == 1)
-		return SB_MatchText(s, slen, p, plen);
+		return SB_MatchText(s, slen, p, plen, 0, true);
 	else if (GetDatabaseEncoding() == PG_UTF8)
-		return UTF8_MatchText(s, slen, p, plen);
+		return UTF8_MatchText(s, slen, p, plen, 0, true);
 	else
-		return MB_MatchText(s, slen, p, plen);
+		return MB_MatchText(s, slen, p, plen, 0, true);
 }
 
 static inline int
@@ -142,8 +167,8 @@ Generic_Text_IC_like(text *str, text *pat, Oid collation)
 
 	/*
 	 * For efficiency reasons, in the single byte case we don't call lower()
-	 * on the pattern and text, but instead call to_lower on each character.
-	 * In the multi-byte case we don't have much choice :-(
+	 * on the pattern and text, but instead call SB_lower_char on each
+	 * character.  In the multi-byte case we don't have much choice :-(
 	 */
 
 	if (pg_database_encoding_max_length() > 1)
@@ -156,17 +181,42 @@ Generic_Text_IC_like(text *str, text *pat, Oid collation)
 		s = VARDATA(str);
 		slen = (VARSIZE(str) - VARHDRSZ);
 		if (GetDatabaseEncoding() == PG_UTF8)
-			return UTF8_MatchText(s, slen, p, plen);
+			return UTF8_MatchText(s, slen, p, plen, 0, true);
 		else
-			return MB_MatchText(s, slen, p, plen);
+			return MB_MatchText(s, slen, p, plen, 0, true);
 	}
 	else
 	{
+		/*
+		 * Here we need to prepare locale information for SB_lower_char.
+		 * This should match the methods used in str_tolower().
+		 */
+		pg_locale_t	locale = 0;
+		bool	locale_is_c = false;
+
+		if (lc_ctype_is_c(collation))
+			locale_is_c = true;
+		else if (collation != DEFAULT_COLLATION_OID)
+		{
+			if (!OidIsValid(collation))
+			{
+				/*
+				 * This typically means that the parser could not resolve a
+				 * conflict of implicit collations, so report it that way.
+				 */
+				ereport(ERROR,
+						(errcode(ERRCODE_INDETERMINATE_COLLATION),
+						 errmsg("could not determine which collation to use for ILIKE"),
+						 errhint("Use the COLLATE clause to set the collation explicitly.")));
+			}
+			locale = pg_newlocale_from_collation(collation);
+		}
+
 		p = VARDATA_ANY(pat);
 		plen = VARSIZE_ANY_EXHDR(pat);
 		s = VARDATA_ANY(str);
 		slen = VARSIZE_ANY_EXHDR(str);
-		return SB_IMatchText(s, slen, p, plen);
+		return SB_IMatchText(s, slen, p, plen, locale, locale_is_c);
 	}
 }
 
@@ -274,7 +324,7 @@ bytealike(PG_FUNCTION_ARGS)
 	p = VARDATA_ANY(pat);
 	plen = VARSIZE_ANY_EXHDR(pat);
 
-	result = (SB_MatchText(s, slen, p, plen) == LIKE_TRUE);
+	result = (SB_MatchText(s, slen, p, plen, 0, true) == LIKE_TRUE);
 
 	PG_RETURN_BOOL(result);
 }
@@ -295,7 +345,7 @@ byteanlike(PG_FUNCTION_ARGS)
 	p = VARDATA_ANY(pat);
 	plen = VARSIZE_ANY_EXHDR(pat);
 
-	result = (SB_MatchText(s, slen, p, plen) != LIKE_TRUE);
+	result = (SB_MatchText(s, slen, p, plen, 0, true) != LIKE_TRUE);
 
 	PG_RETURN_BOOL(result);
 }

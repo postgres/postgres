@@ -5,7 +5,7 @@
  *
  * This file is included by like.c four times, to provide matching code for
  * (1) single-byte encodings, (2) UTF8, (3) other multi-byte encodings,
- * and (4) case insensitive matches in single byte encodings.
+ * and (4) case insensitive matches in single-byte encodings.
  * (UTF8 is a special case because we can use a much more efficient version
  * of NextChar than can be used for general multi-byte encodings.)
  *
@@ -14,7 +14,7 @@
  * NextChar
  * MatchText - to name of function wanted
  * do_like_escape - name of function if wanted - needs CHAREQ and CopyAdvChar
- * MATCH_LOWER - define for case (4), using to_lower on single-byte chars
+ * MATCH_LOWER - define for case (4) to specify case folding for 1-byte chars
  *
  * Copyright (c) 1996-2011, PostgreSQL Global Development Group
  *
@@ -70,13 +70,14 @@
  */
 
 #ifdef MATCH_LOWER
-#define GETCHAR(t) ((char) tolower((unsigned char) (t)))
+#define GETCHAR(t) MATCH_LOWER(t)
 #else
 #define GETCHAR(t) (t)
 #endif
 
 static int
-MatchText(char *t, int tlen, char *p, int plen)
+MatchText(char *t, int tlen, char *p, int plen,
+		  pg_locale_t locale, bool locale_is_c)
 {
 	/* Fast path for match-everything pattern */
 	if (plen == 1 && *p == '%')
@@ -170,7 +171,8 @@ MatchText(char *t, int tlen, char *p, int plen)
 			{
 				if (GETCHAR(*t) == firstpat)
 				{
-					int			matched = MatchText(t, tlen, p, plen);
+					int			matched = MatchText(t, tlen, p, plen,
+													locale, locale_is_c);
 
 					if (matched != LIKE_FALSE)
 						return matched; /* TRUE or ABORT */
