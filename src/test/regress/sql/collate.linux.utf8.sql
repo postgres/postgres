@@ -8,7 +8,7 @@ SET client_encoding TO UTF8;
 
 CREATE TABLE collate_test1 (
     a int,
-    b text COLLATE "en_US.utf8" NOT NULL
+    b text COLLATE "en_US" NOT NULL
 );
 
 \d collate_test1
@@ -24,7 +24,7 @@ CREATE TABLE collate_test_fail (
 );
 
 CREATE TABLE collate_test_fail (
-    a int COLLATE "en_US.utf8",
+    a int COLLATE "en_US",
     b text
 );
 
@@ -36,7 +36,7 @@ CREATE TABLE collate_test_like (
 
 CREATE TABLE collate_test2 (
     a int,
-    b text COLLATE "sv_SE.utf8"
+    b text COLLATE "sv_SE"
 );
 
 CREATE TABLE collate_test3 (
@@ -56,12 +56,11 @@ SELECT * FROM collate_test3 WHERE b >= 'BBC';
 SELECT * FROM collate_test1 WHERE b COLLATE "C" >= 'bbc';
 SELECT * FROM collate_test1 WHERE b >= 'bbc' COLLATE "C";
 SELECT * FROM collate_test1 WHERE b COLLATE "C" >= 'bbc' COLLATE "C";
-SELECT * FROM collate_test1 WHERE b COLLATE "C" >= 'bbc' COLLATE "en_US.utf8";
 SELECT * FROM collate_test1 WHERE b COLLATE "C" >= 'bbc' COLLATE "en_US";
 
 
-CREATE DOMAIN testdomain_sv AS text COLLATE "sv_SE.utf8";
-CREATE DOMAIN testdomain_i AS int COLLATE "sv_SE.utf8"; -- fails
+CREATE DOMAIN testdomain_sv AS text COLLATE "sv_SE";
+CREATE DOMAIN testdomain_i AS int COLLATE "sv_SE"; -- fails
 CREATE TABLE collate_test4 (
     a int,
     b testdomain_sv
@@ -71,7 +70,7 @@ SELECT a, b FROM collate_test4 ORDER BY b;
 
 CREATE TABLE collate_test5 (
     a int,
-    b testdomain_sv COLLATE "en_US.utf8"
+    b testdomain_sv COLLATE "en_US"
 );
 INSERT INTO collate_test5 SELECT * FROM collate_test1;
 SELECT a, b FROM collate_test5 ORDER BY b;
@@ -89,15 +88,15 @@ SELECT * FROM collate_test2 ORDER BY b;
 SELECT * FROM collate_test3 ORDER BY b;
 
 -- constant expression folding
-SELECT 'bbc' COLLATE "en_US.utf8" > 'äbc' COLLATE "en_US.utf8" AS "true";
-SELECT 'bbc' COLLATE "sv_SE.utf8" > 'äbc' COLLATE "sv_SE.utf8" AS "false";
+SELECT 'bbc' COLLATE "en_US" > 'äbc' COLLATE "en_US" AS "true";
+SELECT 'bbc' COLLATE "sv_SE" > 'äbc' COLLATE "sv_SE" AS "false";
 
 -- upper/lower
 
 CREATE TABLE collate_test10 (
     a int,
-    x text COLLATE "en_US.utf8",
-    y text COLLATE "tr_TR.utf8"
+    x text COLLATE "en_US",
+    y text COLLATE "tr_TR"
 );
 
 INSERT INTO collate_test10 VALUES (1, 'hij', 'hij'), (2, 'HIJ', 'HIJ');
@@ -116,8 +115,11 @@ SELECT * FROM collate_test1 WHERE b ILIKE 'abc';
 SELECT * FROM collate_test1 WHERE b ILIKE 'abc%';
 SELECT * FROM collate_test1 WHERE b ILIKE '%bc%';
 
-SELECT 'Türkiye' COLLATE "en_US.utf8" ILIKE '%KI%' AS "true";
-SELECT 'Türkiye' COLLATE "tr_TR.utf8" ILIKE '%KI%' AS "false";
+SELECT 'Türkiye' COLLATE "en_US" ILIKE '%KI%' AS "true";
+SELECT 'Türkiye' COLLATE "tr_TR" ILIKE '%KI%' AS "false";
+
+SELECT 'bıt' ILIKE 'BIT' COLLATE "en_US" AS "false";
+SELECT 'bıt' ILIKE 'BIT' COLLATE "tr_TR" AS "true";
 
 -- The following actually exercises the selectivity estimation for ILIKE.
 SELECT relname FROM pg_class WHERE relname ILIKE 'abc%';
@@ -125,9 +127,9 @@ SELECT relname FROM pg_class WHERE relname ILIKE 'abc%';
 
 -- to_char
 
-SET lc_time TO 'tr_TR.utf8';
+SET lc_time TO 'tr_TR';
 SELECT to_char(date '2010-04-01', 'DD TMMON YYYY');
-SELECT to_char(date '2010-04-01', 'DD TMMON YYYY' COLLATE "tr_TR.utf8");
+SELECT to_char(date '2010-04-01', 'DD TMMON YYYY' COLLATE "tr_TR");
 
 
 -- backwards parsing
@@ -268,17 +270,29 @@ SELECT relname, pg_get_indexdef(oid) FROM pg_class WHERE relname LIKE 'collate_t
 CREATE ROLE regress_test_role;
 CREATE SCHEMA test_schema;
 
-CREATE COLLATION test0 (locale = 'en_US.utf8');
-CREATE COLLATION test0 (locale = 'en_US.utf8'); -- fail
-CREATE COLLATION test1 (lc_collate = 'en_US.utf8', lc_ctype = 'de_DE.utf8');
-CREATE COLLATION test2 (locale = 'en_US'); -- fail
-CREATE COLLATION test3 (lc_collate = 'en_US.utf8'); -- fail
+-- We need to do this this way to cope with varying names for encodings:
+do $$
+BEGIN
+  EXECUTE 'CREATE COLLATION test0 (locale = ' ||
+          quote_literal(current_setting('lc_collate')) || ');';
+END
+$$;
+CREATE COLLATION test0 FROM "C"; -- fail, duplicate name
+do $$
+BEGIN
+  EXECUTE 'CREATE COLLATION test1 (lc_collate = ' ||
+          quote_literal(current_setting('lc_collate')) ||
+          ', lc_ctype = ' ||
+          quote_literal(current_setting('lc_ctype')) || ');';
+END
+$$;
+CREATE COLLATION test3 (lc_collate = 'en_US.utf8'); -- fail, need lc_ctype
 CREATE COLLATION testx (locale = 'nonsense'); -- fail
 
 CREATE COLLATION test4 FROM nonsense;
 CREATE COLLATION test5 FROM test0;
 
-SELECT collname, collencoding, collcollate, collctype FROM pg_collation WHERE collname LIKE 'test%' ORDER BY 1;
+SELECT collname FROM pg_collation WHERE collname LIKE 'test%' ORDER BY 1;
 
 ALTER COLLATION test1 RENAME TO test11;
 ALTER COLLATION test0 RENAME TO test11; -- fail
@@ -307,7 +321,7 @@ DROP ROLE regress_test_role;
 
 -- dependencies
 
-CREATE COLLATION test0 (locale = 'en_US.utf8');
+CREATE COLLATION test0 FROM "C";
 
 CREATE TABLE collate_dep_test1 (a int, b text COLLATE test0);
 CREATE DOMAIN collate_dep_dom1 AS text COLLATE test0;
