@@ -1,11 +1,14 @@
 float4:out:i.86-pc-mingw32=float4-exp-three-digits.out
+float4:out:x86_64-w64-mingw32=float4-exp-three-digits.out
 float4:out:i.86-pc-win32vc=float4-exp-three-digits.out
 float8:out:i.86-.*-freebsd=float8-small-is-zero.out
 float8:out:i.86-.*-openbsd=float8-small-is-zero.out
 float8:out:i.86-.*-netbsd=float8-small-is-zero.out
 float8:out:m68k-.*-netbsd=float8-small-is-zero.out
 float8:out:i.86-pc-mingw32=float8-exp-three-digits-win32.out
+float8:out:x86_64-w64-mingw32=float8-exp-three-digits-win32.out
 float8:out:i.86-pc-win32vc=float8-exp-three-digits-win32.out
 float8:out:i.86-pc-cygwin=float8-small-is-zero.out
 int8:out:i.86-pc-mingw32=int8-exp-three-digits.out
+int8:out:x86_64-w64-mingw32=int8-exp-three-digits.out
 int8:out:i.86-pc-win32vc=int8-exp-three-digits.out
