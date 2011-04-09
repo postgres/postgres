@@ -971,8 +971,12 @@ pg_newlocale_from_collation(Oid collid)
 		if (strcmp(collcollate, collctype) == 0)
 		{
 			/* Normal case where they're the same */
+#ifndef WIN32
 			result = newlocale(LC_COLLATE_MASK | LC_CTYPE_MASK, collcollate,
 							   NULL);
+#else
+			result = _create_locale(LC_ALL, collcollate);
+#endif
 			if (!result)
 				ereport(ERROR,
 						(errcode_for_file_access(),
@@ -981,6 +985,7 @@ pg_newlocale_from_collation(Oid collid)
 		}
 		else
 		{
+#ifndef WIN32
 			/* We need two newlocale() steps */
 			locale_t loc1;
 
@@ -996,6 +1001,16 @@ pg_newlocale_from_collation(Oid collid)
 						(errcode_for_file_access(),
 						 errmsg("could not create locale \"%s\": %m",
 								collctype)));
+#else
+			/*
+			 * XXX The _create_locale() API doesn't appear to support
+			 * this.  Could perhaps be worked around by changing
+			 * pg_locale_t to contain two separate fields.
+			 */
+			ereport(ERROR,
+					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+					 errmsg("collations with different collate and ctype values are not supported on this platform")));
+#endif
 		}
 
 		cache_entry->locale = result;

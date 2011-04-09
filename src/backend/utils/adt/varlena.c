@@ -1374,6 +1374,11 @@ varstr_cmp(char *arg1, int len1, char *arg2, int len2, Oid collid)
 			((LPWSTR) a2p)[r] = 0;
 
 			errno = 0;
+#ifdef HAVE_LOCALE_T
+			if (mylocale)
+				result = wcscoll_l((LPWSTR) a1p, (LPWSTR) a2p, mylocale);
+			else
+#endif
 			result = wcscoll((LPWSTR) a1p, (LPWSTR) a2p);
 			if (result == 2147483647)	/* _NLSCMPERROR; missing from mingw
 										 * headers */

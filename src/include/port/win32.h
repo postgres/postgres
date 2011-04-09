@@ -275,6 +275,20 @@ typedef int pid_t;
 #define EBADFD WSAENOTSOCK
 #define EOPNOTSUPP WSAEOPNOTSUPP
 
+/*
+ * Extended locale functions with gratuitous underscore prefixes.
+ * (These APIs are nevertheless fully documented by Microsoft.)
+ */
+#define locale_t _locale_t
+#define tolower_l _tolower_l
+#define toupper_l _toupper_l
+#define towlower_l _towlower_l
+#define towupper_l _towupper_l
+#define isalnum_l _isalnum_l
+#define iswalnum_l _iswalnum_l
+#define strcoll_l _strcoll_l
+#define wcscoll_l _wcscoll_l
+
 
 /* In backend/port/win32/signal.c */
 extern PGDLLIMPORT volatile int pg_signal_queue;

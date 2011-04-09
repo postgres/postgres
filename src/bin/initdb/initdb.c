@@ -1571,7 +1571,7 @@ setup_collation(void)
 	fputs(_("creating collations ... "), stdout);
 	fflush(stdout);
 
-#ifdef HAVE_LOCALE_T
+#if defined(HAVE_LOCALE_T) && !defined(WIN32)
 	snprintf(cmd, sizeof(cmd),
 			 "\"%s\" %s template1 >%s",
 			 backend_exec, backend_options,
