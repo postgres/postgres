@@ -771,33 +771,33 @@ SELECT * FROM unnest((SELECT array_agg(b ORDER BY b) FROM collate_test3)) ORDER 
  äbc
 (4 rows)
 
-CREATE FUNCTION dup (f1 anyelement, f2 out anyelement, f3 out anyarray)
-    AS 'select $1, array[$1,$1]' LANGUAGE sql;
-SELECT a, (dup(b)).* FROM collate_test1 ORDER BY 2;
- a | f2  |    f3     
----+-----+-----------
- 1 | abc | {abc,abc}
- 4 | ABC | {ABC,ABC}
- 2 | äbc | {äbc,äbc}
- 3 | bbc | {bbc,bbc}
+CREATE FUNCTION dup (anyelement) RETURNS anyelement
+    AS 'select $1' LANGUAGE sql;
+SELECT a, dup(b) FROM collate_test1 ORDER BY 2;
+ a | dup 
+---+-----
+ 1 | abc
+ 4 | ABC
+ 2 | äbc
+ 3 | bbc
 (4 rows)
 
-SELECT a, (dup(b)).* FROM collate_test2 ORDER BY 2;
- a | f2  |    f3     
----+-----+-----------
- 1 | abc | {abc,abc}
- 4 | ABC | {ABC,ABC}
- 3 | bbc | {bbc,bbc}
- 2 | äbc | {äbc,äbc}
+SELECT a, dup(b) FROM collate_test2 ORDER BY 2;
+ a | dup 
+---+-----
+ 1 | abc
+ 4 | ABC
+ 3 | bbc
+ 2 | äbc
 (4 rows)
 
-SELECT a, (dup(b)).* FROM collate_test3 ORDER BY 2;
- a | f2  |    f3     
----+-----+-----------
- 4 | ABC | {ABC,ABC}
- 1 | abc | {abc,abc}
- 3 | bbc | {bbc,bbc}
- 2 | äbc | {äbc,äbc}
+SELECT a, dup(b) FROM collate_test3 ORDER BY 2;
+ a | dup 
+---+-----
+ 4 | ABC
+ 1 | abc
+ 3 | bbc
+ 2 | äbc
 (4 rows)
 
 -- indexes

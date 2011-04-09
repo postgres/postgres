@@ -242,12 +242,12 @@ SELECT * FROM unnest((SELECT array_agg(b ORDER BY b) FROM collate_test1)) ORDER 
 SELECT * FROM unnest((SELECT array_agg(b ORDER BY b) FROM collate_test2)) ORDER BY 1;
 SELECT * FROM unnest((SELECT array_agg(b ORDER BY b) FROM collate_test3)) ORDER BY 1;
 
-CREATE FUNCTION dup (f1 anyelement, f2 out anyelement, f3 out anyarray)
-    AS 'select $1, array[$1,$1]' LANGUAGE sql;
+CREATE FUNCTION dup (anyelement) RETURNS anyelement
+    AS 'select $1' LANGUAGE sql;
 
-SELECT a, (dup(b)).* FROM collate_test1 ORDER BY 2;
-SELECT a, (dup(b)).* FROM collate_test2 ORDER BY 2;
-SELECT a, (dup(b)).* FROM collate_test3 ORDER BY 2;
+SELECT a, dup(b) FROM collate_test1 ORDER BY 2;
+SELECT a, dup(b) FROM collate_test2 ORDER BY 2;
+SELECT a, dup(b) FROM collate_test3 ORDER BY 2;
 
 
 -- indexes

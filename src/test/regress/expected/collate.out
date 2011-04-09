@@ -502,24 +502,24 @@ SELECT * FROM unnest((SELECT array_agg(b ORDER BY b) FROM collate_test2)) ORDER 
  bbc
 (4 rows)
 
-CREATE FUNCTION dup (f1 anyelement, f2 out anyelement, f3 out anyarray)
-    AS 'select $1, array[$1,$1]' LANGUAGE sql;
-SELECT a, (dup(b)).* FROM collate_test1 ORDER BY 2;
- a | f2  |    f3     
----+-----+-----------
- 4 | ABD | {ABD,ABD}
- 2 | Abc | {Abc,Abc}
- 1 | abc | {abc,abc}
- 3 | bbc | {bbc,bbc}
+CREATE FUNCTION dup (anyelement) RETURNS anyelement
+    AS 'select $1' LANGUAGE sql;
+SELECT a, dup(b) FROM collate_test1 ORDER BY 2;
+ a | dup 
+---+-----
+ 4 | ABD
+ 2 | Abc
+ 1 | abc
+ 3 | bbc
 (4 rows)
 
-SELECT a, (dup(b)).* FROM collate_test2 ORDER BY 2;
- a | f2  |    f3     
----+-----+-----------
- 4 | ABD | {ABD,ABD}
- 2 | Abc | {Abc,Abc}
- 1 | abc | {abc,abc}
- 3 | bbc | {bbc,bbc}
+SELECT a, dup(b) FROM collate_test2 ORDER BY 2;
+ a | dup 
+---+-----
+ 4 | ABD
+ 2 | Abc
+ 1 | abc
+ 3 | bbc
 (4 rows)
 
 -- indexes

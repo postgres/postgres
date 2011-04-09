@@ -289,10 +289,11 @@ assign_collations_walker(Node *node, assign_collations_context *context)
 		case T_FieldSelect:
 			{
 				/*
-				 * FieldSelect is a special case because the field may have
-				 * a non-default collation, in which case we should use that.
-				 * The field's collation was already looked up and saved
-				 * in the node.
+				 * For FieldSelect, the result has the field's declared
+				 * collation, independently of what happened in the arguments.
+				 * (The immediate argument must be composite and thus not
+				 * collatable, anyhow.)  The field's collation was already
+				 * looked up and saved in the node.
 				 */
 				FieldSelect *expr = (FieldSelect *) node;
 
@@ -304,24 +305,6 @@ assign_collations_walker(Node *node, assign_collations_context *context)
 				if (OidIsValid(expr->resultcollid))
 				{
 					/* Node's result type is collatable. */
-					if (expr->resultcollid == DEFAULT_COLLATION_OID)
-					{
-						/*
-						 * The immediate input node necessarily yields a
-						 * composite type, so it will have no exposed
-						 * collation.  However, if we are selecting a field
-						 * from a function returning composite, see if we
-						 * can bubble up a collation from the function's
-						 * input.  XXX this is a bit of a hack, rethink ...
-						 */
-						if (IsA(expr->arg, FuncExpr))
-						{
-							FuncExpr *fexpr = (FuncExpr *) expr->arg;
-
-							if (OidIsValid(fexpr->inputcollid))
-								expr->resultcollid = fexpr->inputcollid;
-						}
-					}
 					/* Pass up field's collation as an implicit choice. */
 					collation = expr->resultcollid;
 					strength = COLLATE_IMPLICIT;

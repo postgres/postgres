@@ -1384,7 +1384,7 @@ ParseComplexProjection(ParseState *pstate, char *funcname, Node *first_arg,
 			fselect->fieldnum = i + 1;
 			fselect->resulttype = att->atttypid;
 			fselect->resulttypmod = att->atttypmod;
-			/* resultcollid may get overridden by parse_collate.c */
+			/* save attribute's collation for parse_collate.c */
 			fselect->resultcollid = att->attcollation;
 			return (Node *) fselect;
 		}
