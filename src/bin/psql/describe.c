@@ -2883,7 +2883,7 @@ listCasts(const char *pattern)
 /*
  * \dO
  *
- * Describes collations
+ * Describes collations.
  */
 bool
 listCollations(const char *pattern, bool verbose, bool showSystem)
@@ -2907,16 +2907,24 @@ listCollations(const char *pattern, bool verbose, bool showSystem)
 
 	if (verbose)
 		appendPQExpBuffer(&buf,
-		  ",\n  pg_catalog.obj_description(c.oid, 'pg_collation') AS \"%s\"",
+		  ",\n       pg_catalog.obj_description(c.oid, 'pg_collation') AS \"%s\"",
 						  gettext_noop("Description"));
 
 	appendPQExpBuffer(&buf,
-					  "FROM pg_catalog.pg_collation c, pg_catalog.pg_namespace n\n"
+					  "\nFROM pg_catalog.pg_collation c, pg_catalog.pg_namespace n\n"
 					  "WHERE n.oid = c.collnamespace\n");
 
 	if (!showSystem && !pattern)
 		appendPQExpBuffer(&buf, "      AND n.nspname <> 'pg_catalog'\n"
 						  "      AND n.nspname <> 'information_schema'\n");
+
+	/*
+	 * Hide collations that aren't usable in the current database's encoding.
+	 * If you think to change this, note that pg_collation_is_visible rejects
+	 * unusable collations, so you will need to hack name pattern processing
+	 * somehow to avoid inconsistent behavior.
+	 */
+	appendPQExpBuffer(&buf, "      AND c.collencoding IN (-1, pg_catalog.pg_char_to_encoding(pg_catalog.getdatabaseencoding()))\n");
 
 	processSQLNamePattern(pset.db, &buf, pattern, true, false,
 						  "n.nspname", "c.collname", NULL,

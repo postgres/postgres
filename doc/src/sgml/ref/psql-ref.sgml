@@ -1264,7 +1264,7 @@ testdb=&gt;
         <term><literal>\dL[S+] [ <link linkend="APP-PSQL-patterns"><replaceable class="parameter">pattern</replaceable></link> ]</literal></term>
         <listitem>
         <para>
-        Lists all procedural languages. If <replaceable
+        Lists procedural languages. If <replaceable
         class="parameter">pattern</replaceable>
         is specified, only languages whose names match the pattern are listed.
         By default, only user-created languages
@@ -1311,7 +1311,6 @@ testdb=&gt;
 
       <varlistentry>
         <term><literal>\dO[S+] [ <link linkend="APP-PSQL-patterns"><replaceable class="parameter">pattern</replaceable></link> ]</literal></term>
-
         <listitem>
         <para>
         Lists collations.
@@ -1320,8 +1319,11 @@ testdb=&gt;
         listed.  By default, only user-created objects are shown;
         supply a pattern or the <literal>S</literal> modifier to
         include system objects.  If <literal>+</literal> is appended
-        to the command name, each object is listed with its associated
+        to the command name, each collation is listed with its associated
         description, if any.
+        Note that only collations usable with the current database's encoding
+        are shown, so the results may vary in different databases of the
+        same installation.
         </para>
         </listitem>
       </varlistentry>
