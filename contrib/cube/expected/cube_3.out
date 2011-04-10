@@ -1,0 +1,1128 @@
+--
+--  Test cube datatype
+--
+CREATE EXTENSION cube;
+--
+-- testing the input and output functions
+--
+-- Any number (a one-dimensional point)
+SELECT '1'::cube AS cube;
+ cube 
+------
+ (1)
+(1 row)
+
+SELECT '-1'::cube AS cube;
+ cube 
+------
+ (-1)
+(1 row)
+
+SELECT '1.'::cube AS cube;
+ cube 
+------
+ (1)
+(1 row)
+
+SELECT '-1.'::cube AS cube;
+ cube 
+------
+ (-1)
+(1 row)
+
+SELECT '.1'::cube AS cube;
+ cube  
+-------
+ (0.1)
+(1 row)
+
+SELECT '-.1'::cube AS cube;
+  cube  
+--------
+ (-0.1)
+(1 row)
+
+SELECT '1.0'::cube AS cube;
+ cube 
+------
+ (1)
+(1 row)
+
+SELECT '-1.0'::cube AS cube;
+ cube 
+------
+ (-1)
+(1 row)
+
+SELECT '1e27'::cube AS cube;
+   cube   
+----------
+ (1e+027)
+(1 row)
+
+SELECT '-1e27'::cube AS cube;
+   cube    
+-----------
+ (-1e+027)
+(1 row)
+
+SELECT '1.0e27'::cube AS cube;
+   cube   
+----------
+ (1e+027)
+(1 row)
+
+SELECT '-1.0e27'::cube AS cube;
+   cube    
+-----------
+ (-1e+027)
+(1 row)
+
+SELECT '1e+27'::cube AS cube;
+   cube   
+----------
+ (1e+027)
+(1 row)
+
+SELECT '-1e+27'::cube AS cube;
+   cube    
+-----------
+ (-1e+027)
+(1 row)
+
+SELECT '1.0e+27'::cube AS cube;
+   cube   
+----------
+ (1e+027)
+(1 row)
+
+SELECT '-1.0e+27'::cube AS cube;
+   cube    
+-----------
+ (-1e+027)
+(1 row)
+
+SELECT '1e-7'::cube AS cube;
+   cube   
+----------
+ (1e-007)
+(1 row)
+
+SELECT '-1e-7'::cube AS cube;
+   cube    
+-----------
+ (-1e-007)
+(1 row)
+
+SELECT '1.0e-7'::cube AS cube;
+   cube   
+----------
+ (1e-007)
+(1 row)
+
+SELECT '-1.0e-7'::cube AS cube;
+   cube    
+-----------
+ (-1e-007)
+(1 row)
+
+SELECT '1e-700'::cube AS cube;
+ cube 
+------
+ (0)
+(1 row)
+
+SELECT '-1e-700'::cube AS cube;
+ cube 
+------
+ (-0)
+(1 row)
+
+SELECT '1234567890123456'::cube AS cube;
+          cube           
+-------------------------
+ (1.23456789012346e+015)
+(1 row)
+
+SELECT '+1234567890123456'::cube AS cube;
+          cube           
+-------------------------
+ (1.23456789012346e+015)
+(1 row)
+
+SELECT '-1234567890123456'::cube AS cube;
+           cube           
+--------------------------
+ (-1.23456789012346e+015)
+(1 row)
+
+SELECT '.1234567890123456'::cube AS cube;
+        cube         
+---------------------
+ (0.123456789012346)
+(1 row)
+
+SELECT '+.1234567890123456'::cube AS cube;
+        cube         
+---------------------
+ (0.123456789012346)
+(1 row)
+
+SELECT '-.1234567890123456'::cube AS cube;
+         cube         
+----------------------
+ (-0.123456789012346)
+(1 row)
+
+-- simple lists (points)
+SELECT '1,2'::cube AS cube;
+  cube  
+--------
+ (1, 2)
+(1 row)
+
+SELECT '(1,2)'::cube AS cube;
+  cube  
+--------
+ (1, 2)
+(1 row)
+
+SELECT '1,2,3,4,5'::cube AS cube;
+      cube       
+-----------------
+ (1, 2, 3, 4, 5)
+(1 row)
+
+SELECT '(1,2,3,4,5)'::cube AS cube;
+      cube       
+-----------------
+ (1, 2, 3, 4, 5)
+(1 row)
+
+-- double lists (cubes)
+SELECT '(0),(0)'::cube AS cube;
+ cube 
+------
+ (0)
+(1 row)
+
+SELECT '(0),(1)'::cube AS cube;
+  cube   
+---------
+ (0),(1)
+(1 row)
+
+SELECT '[(0),(0)]'::cube AS cube;
+ cube 
+------
+ (0)
+(1 row)
+
+SELECT '[(0),(1)]'::cube AS cube;
+  cube   
+---------
+ (0),(1)
+(1 row)
+
+SELECT '(0,0,0,0),(0,0,0,0)'::cube AS cube;
+     cube     
+--------------
+ (0, 0, 0, 0)
+(1 row)
+
+SELECT '(0,0,0,0),(1,0,0,0)'::cube AS cube;
+           cube            
+---------------------------
+ (0, 0, 0, 0),(1, 0, 0, 0)
+(1 row)
+
+SELECT '[(0,0,0,0),(0,0,0,0)]'::cube AS cube;
+     cube     
+--------------
+ (0, 0, 0, 0)
+(1 row)
+
+SELECT '[(0,0,0,0),(1,0,0,0)]'::cube AS cube;
+           cube            
+---------------------------
+ (0, 0, 0, 0),(1, 0, 0, 0)
+(1 row)
+
+-- invalid input: parse errors
+SELECT ''::cube AS cube;
+ERROR:  bad cube representation
+LINE 1: SELECT ''::cube AS cube;
+               ^
+DETAIL:  syntax error at end of input
+SELECT 'ABC'::cube AS cube;
+ERROR:  bad cube representation
+LINE 1: SELECT 'ABC'::cube AS cube;
+               ^
+DETAIL:  syntax error at or near "A"
+SELECT '()'::cube AS cube;
+ERROR:  bad cube representation
+LINE 1: SELECT '()'::cube AS cube;
+               ^
+DETAIL:  syntax error at or near ")"
+SELECT '[]'::cube AS cube;
+ERROR:  bad cube representation
+LINE 1: SELECT '[]'::cube AS cube;
+               ^
+DETAIL:  syntax error at or near "]"
+SELECT '[()]'::cube AS cube;
+ERROR:  bad cube representation
+LINE 1: SELECT '[()]'::cube AS cube;
+               ^
+DETAIL:  syntax error at or near ")"
+SELECT '[(1)]'::cube AS cube;
+ERROR:  bad cube representation
+LINE 1: SELECT '[(1)]'::cube AS cube;
+               ^
+DETAIL:  syntax error at or near "]"
+SELECT '[(1),]'::cube AS cube;
+ERROR:  bad cube representation
+LINE 1: SELECT '[(1),]'::cube AS cube;
+               ^
+DETAIL:  syntax error at or near "]"
+SELECT '[(1),2]'::cube AS cube;
+ERROR:  bad cube representation
+LINE 1: SELECT '[(1),2]'::cube AS cube;
+               ^
+DETAIL:  syntax error at or near "2"
+SELECT '[(1),(2),(3)]'::cube AS cube;
+ERROR:  bad cube representation
+LINE 1: SELECT '[(1),(2),(3)]'::cube AS cube;
+               ^
+DETAIL:  syntax error at or near ","
+SELECT '1,'::cube AS cube;
+ERROR:  bad cube representation
+LINE 1: SELECT '1,'::cube AS cube;
+               ^
+DETAIL:  syntax error at end of input
+SELECT '1,2,'::cube AS cube;
+ERROR:  bad cube representation
+LINE 1: SELECT '1,2,'::cube AS cube;
+               ^
+DETAIL:  syntax error at end of input
+SELECT '1,,2'::cube AS cube;
+ERROR:  bad cube representation
+LINE 1: SELECT '1,,2'::cube AS cube;
+               ^
+DETAIL:  syntax error at or near ","
+SELECT '(1,)'::cube AS cube;
+ERROR:  bad cube representation
+LINE 1: SELECT '(1,)'::cube AS cube;
+               ^
+DETAIL:  syntax error at or near ")"
+SELECT '(1,2,)'::cube AS cube;
+ERROR:  bad cube representation
+LINE 1: SELECT '(1,2,)'::cube AS cube;
+               ^
+DETAIL:  syntax error at or near ")"
+SELECT '(1,,2)'::cube AS cube;
+ERROR:  bad cube representation
+LINE 1: SELECT '(1,,2)'::cube AS cube;
+               ^
+DETAIL:  syntax error at or near ","
+-- invalid input: semantic errors and trailing garbage
+SELECT '[(1),(2)],'::cube AS cube; -- 0
+ERROR:  bad cube representation
+LINE 1: SELECT '[(1),(2)],'::cube AS cube;
+               ^
+DETAIL:  syntax error at or near ","
+SELECT '[(1,2,3),(2,3)]'::cube AS cube; -- 1
+ERROR:  bad cube representation
+LINE 1: SELECT '[(1,2,3),(2,3)]'::cube AS cube;
+               ^
+DETAIL:  Different point dimensions in (1,2,3) and (2,3).
+SELECT '[(1,2),(1,2,3)]'::cube AS cube; -- 1
+ERROR:  bad cube representation
+LINE 1: SELECT '[(1,2),(1,2,3)]'::cube AS cube;
+               ^
+DETAIL:  Different point dimensions in (1,2) and (1,2,3).
+SELECT '(1),(2),'::cube AS cube; -- 2
+ERROR:  bad cube representation
+LINE 1: SELECT '(1),(2),'::cube AS cube;
+               ^
+DETAIL:  syntax error at or near ","
+SELECT '(1,2,3),(2,3)'::cube AS cube; -- 3
+ERROR:  bad cube representation
+LINE 1: SELECT '(1,2,3),(2,3)'::cube AS cube;
+               ^
+DETAIL:  Different point dimensions in (1,2,3) and (2,3).
+SELECT '(1,2),(1,2,3)'::cube AS cube; -- 3
+ERROR:  bad cube representation
+LINE 1: SELECT '(1,2),(1,2,3)'::cube AS cube;
+               ^
+DETAIL:  Different point dimensions in (1,2) and (1,2,3).
+SELECT '(1,2,3)ab'::cube AS cube; -- 4
+ERROR:  bad cube representation
+LINE 1: SELECT '(1,2,3)ab'::cube AS cube;
+               ^
+DETAIL:  syntax error at or near "a"
+SELECT '(1,2,3)a'::cube AS cube; -- 5
+ERROR:  bad cube representation
+LINE 1: SELECT '(1,2,3)a'::cube AS cube;
+               ^
+DETAIL:  syntax error at or near "a"
+SELECT '(1,2)('::cube AS cube; -- 5
+ERROR:  bad cube representation
+LINE 1: SELECT '(1,2)('::cube AS cube;
+               ^
+DETAIL:  syntax error at or near "("
+SELECT '1,2ab'::cube AS cube; -- 6
+ERROR:  bad cube representation
+LINE 1: SELECT '1,2ab'::cube AS cube;
+               ^
+DETAIL:  syntax error at or near "a"
+SELECT '1 e7'::cube AS cube; -- 6
+ERROR:  bad cube representation
+LINE 1: SELECT '1 e7'::cube AS cube;
+               ^
+DETAIL:  syntax error at or near "e"
+SELECT '1,2a'::cube AS cube; -- 7
+ERROR:  bad cube representation
+LINE 1: SELECT '1,2a'::cube AS cube;
+               ^
+DETAIL:  syntax error at or near "a"
+SELECT '1..2'::cube AS cube; -- 7
+ERROR:  bad cube representation
+LINE 1: SELECT '1..2'::cube AS cube;
+               ^
+DETAIL:  syntax error at or near ".2"
+--
+-- Testing building cubes from float8 values
+--
+SELECT cube(0::float8);
+ cube 
+------
+ (0)
+(1 row)
+
+SELECT cube(1::float8);
+ cube 
+------
+ (1)
+(1 row)
+
+SELECT cube(1,2);
+  cube   
+---------
+ (1),(2)
+(1 row)
+
+SELECT cube(cube(1,2),3);
+     cube      
+---------------
+ (1, 3),(2, 3)
+(1 row)
+
+SELECT cube(cube(1,2),3,4);
+     cube      
+---------------
+ (1, 3),(2, 4)
+(1 row)
+
+SELECT cube(cube(cube(1,2),3,4),5);
+        cube         
+---------------------
+ (1, 3, 5),(2, 4, 5)
+(1 row)
+
+SELECT cube(cube(cube(1,2),3,4),5,6);
+        cube         
+---------------------
+ (1, 3, 5),(2, 4, 6)
+(1 row)
+
+--
+-- Test that the text -> cube cast was installed.
+--
+SELECT '(0)'::text::cube;
+ cube 
+------
+ (0)
+(1 row)
+
+--
+-- Test the float[] -> cube cast
+--
+SELECT cube('{0,1,2}'::float[], '{3,4,5}'::float[]);
+        cube         
+---------------------
+ (0, 1, 2),(3, 4, 5)
+(1 row)
+
+SELECT cube('{0,1,2}'::float[], '{3}'::float[]);
+ERROR:  UR and LL arrays must be of same length
+SELECT cube(NULL::float[], '{3}'::float[]);
+ cube 
+------
+ 
+(1 row)
+
+SELECT cube('{0,1,2}'::float[]);
+   cube    
+-----------
+ (0, 1, 2)
+(1 row)
+
+SELECT cube_subset(cube('(1,3,5),(6,7,8)'), ARRAY[3,2,1,1]);
+        cube_subset        
+---------------------------
+ (5, 3, 1, 1),(8, 7, 6, 6)
+(1 row)
+
+SELECT cube_subset(cube('(1,3,5),(6,7,8)'), ARRAY[4,0]);
+ERROR:  Index out of bounds
+--
+-- Testing limit of CUBE_MAX_DIM dimensions check in cube_in.
+--
+select '(0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0)'::cube;
+ERROR:  bad cube representation
+LINE 1: select '(0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0...
+               ^
+DETAIL:  A cube cannot have more than 100 dimensions.
+select '(0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0),(0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0)'::cube;
+ERROR:  bad cube representation
+LINE 1: select '(0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0...
+               ^
+DETAIL:  A cube cannot have more than 100 dimensions.
+--
+-- testing the  operators
+--
+-- equality/inequality:
+--
+SELECT '24, 33.20'::cube    =  '24, 33.20'::cube AS bool;
+ bool 
+------
+ t
+(1 row)
+
+SELECT '24, 33.20'::cube    != '24, 33.20'::cube AS bool;
+ bool 
+------
+ f
+(1 row)
+
+SELECT '24, 33.20'::cube    =  '24, 33.21'::cube AS bool;
+ bool 
+------
+ f
+(1 row)
+
+SELECT '24, 33.20'::cube    != '24, 33.21'::cube AS bool;
+ bool 
+------
+ t
+(1 row)
+
+SELECT '(2,0),(3,1)'::cube  =  '(2,0,0,0,0),(3,1,0,0,0)'::cube AS bool;
+ bool 
+------
+ f
+(1 row)
+
+SELECT '(2,0),(3,1)'::cube  =  '(2,0,0,0,0),(3,1,0,0,1)'::cube AS bool;
+ bool 
+------
+ f
+(1 row)
+
+-- "lower than" / "greater than"
+-- (these operators are not useful for anything but ordering)
+--
+SELECT '1'::cube   > '2'::cube AS bool;
+ bool 
+------
+ f
+(1 row)
+
+SELECT '1'::cube   < '2'::cube AS bool;
+ bool 
+------
+ t
+(1 row)
+
+SELECT '1,1'::cube > '1,2'::cube AS bool;
+ bool 
+------
+ f
+(1 row)
+
+SELECT '1,1'::cube < '1,2'::cube AS bool;
+ bool 
+------
+ t
+(1 row)
+
+SELECT '(2,0),(3,1)'::cube             > '(2,0,0,0,0),(3,1,0,0,1)'::cube AS bool;
+ bool 
+------
+ f
+(1 row)
+
+SELECT '(2,0),(3,1)'::cube             < '(2,0,0,0,0),(3,1,0,0,1)'::cube AS bool;
+ bool 
+------
+ t
+(1 row)
+
+SELECT '(2,0),(3,1)'::cube             > '(2,0,0,0,1),(3,1,0,0,0)'::cube AS bool;
+ bool 
+------
+ f
+(1 row)
+
+SELECT '(2,0),(3,1)'::cube             < '(2,0,0,0,1),(3,1,0,0,0)'::cube AS bool;
+ bool 
+------
+ t
+(1 row)
+
+SELECT '(2,0),(3,1)'::cube             > '(2,0,0,0,0),(3,1,0,0,0)'::cube AS bool;
+ bool 
+------
+ f
+(1 row)
+
+SELECT '(2,0),(3,1)'::cube             < '(2,0,0,0,0),(3,1,0,0,0)'::cube AS bool;
+ bool 
+------
+ t
+(1 row)
+
+SELECT '(2,0,0,0,0),(3,1,0,0,1)'::cube > '(2,0),(3,1)'::cube AS bool;
+ bool 
+------
+ t
+(1 row)
+
+SELECT '(2,0,0,0,0),(3,1,0,0,1)'::cube < '(2,0),(3,1)'::cube AS bool;
+ bool 
+------
+ f
+(1 row)
+
+SELECT '(2,0,0,0,1),(3,1,0,0,0)'::cube > '(2,0),(3,1)'::cube AS bool;
+ bool 
+------
+ t
+(1 row)
+
+SELECT '(2,0,0,0,1),(3,1,0,0,0)'::cube < '(2,0),(3,1)'::cube AS bool;
+ bool 
+------
+ f
+(1 row)
+
+SELECT '(2,0,0,0,0),(3,1,0,0,0)'::cube > '(2,0),(3,1)'::cube AS bool;
+ bool 
+------
+ t
+(1 row)
+
+SELECT '(2,0,0,0,0),(3,1,0,0,0)'::cube < '(2,0),(3,1)'::cube AS bool;
+ bool 
+------
+ f
+(1 row)
+
+-- "overlap"
+--
+SELECT '1'::cube && '1'::cube AS bool;
+ bool 
+------
+ t
+(1 row)
+
+SELECT '1'::cube && '2'::cube AS bool;
+ bool 
+------
+ f
+(1 row)
+
+SELECT '[(-1,-1,-1),(1,1,1)]'::cube && '0'::cube AS bool;
+ bool 
+------
+ t
+(1 row)
+
+SELECT '[(-1,-1,-1),(1,1,1)]'::cube && '1'::cube AS bool;
+ bool 
+------
+ t
+(1 row)
+
+SELECT '[(-1,-1,-1),(1,1,1)]'::cube && '1,1,1'::cube AS bool;
+ bool 
+------
+ t
+(1 row)
+
+SELECT '[(-1,-1,-1),(1,1,1)]'::cube && '[(1,1,1),(2,2,2)]'::cube AS bool;
+ bool 
+------
+ t
+(1 row)
+
+SELECT '[(-1,-1,-1),(1,1,1)]'::cube && '[(1,1),(2,2)]'::cube AS bool;
+ bool 
+------
+ t
+(1 row)
+
+SELECT '[(-1,-1,-1),(1,1,1)]'::cube && '[(2,1,1),(2,2,2)]'::cube AS bool;
+ bool 
+------
+ f
+(1 row)
+
+-- "contained in" (the left operand is the cube entirely enclosed by
+-- the right operand):
+--
+SELECT '0'::cube                 <@ '0'::cube                        AS bool;
+ bool 
+------
+ t
+(1 row)
+
+SELECT '0,0,0'::cube             <@ '0,0,0'::cube                    AS bool;
+ bool 
+------
+ t
+(1 row)
+
+SELECT '0,0'::cube               <@ '0,0,1'::cube                    AS bool;
+ bool 
+------
+ t
+(1 row)
+
+SELECT '0,0,0'::cube             <@ '0,0,1'::cube                    AS bool;
+ bool 
+------
+ f
+(1 row)
+
+SELECT '1,0,0'::cube             <@ '0,0,1'::cube                    AS bool;
+ bool 
+------
+ f
+(1 row)
+
+SELECT '(1,0,0),(0,0,1)'::cube   <@ '(1,0,0),(0,0,1)'::cube          AS bool;
+ bool 
+------
+ t
+(1 row)
+
+SELECT '(1,0,0),(0,0,1)'::cube   <@ '(-1,-1,-1),(1,1,1)'::cube       AS bool;
+ bool 
+------
+ t
+(1 row)
+
+SELECT '(1,0,0),(0,0,1)'::cube   <@ '(-1,-1,-1,-1),(1,1,1,1)'::cube  AS bool;
+ bool 
+------
+ t
+(1 row)
+
+SELECT '0'::cube                 <@ '(-1),(1)'::cube                 AS bool;
+ bool 
+------
+ t
+(1 row)
+
+SELECT '1'::cube                 <@ '(-1),(1)'::cube                 AS bool;
+ bool 
+------
+ t
+(1 row)
+
+SELECT '-1'::cube                <@ '(-1),(1)'::cube                 AS bool;
+ bool 
+------
+ t
+(1 row)
+
+SELECT '(-1),(1)'::cube          <@ '(-1),(1)'::cube                 AS bool;
+ bool 
+------
+ t
+(1 row)
+
+SELECT '(-1),(1)'::cube          <@ '(-1,-1),(1,1)'::cube            AS bool;
+ bool 
+------
+ t
+(1 row)
+
+SELECT '(-2),(1)'::cube          <@ '(-1),(1)'::cube                 AS bool;
+ bool 
+------
+ f
+(1 row)
+
+SELECT '(-2),(1)'::cube          <@ '(-1,-1),(1,1)'::cube            AS bool;
+ bool 
+------
+ f
+(1 row)
+
+-- "contains" (the left operand is the cube that entirely encloses the
+-- right operand)
+--
+SELECT '0'::cube                        @> '0'::cube                 AS bool;
+ bool 
+------
+ t
+(1 row)
+
+SELECT '0,0,0'::cube                    @> '0,0,0'::cube             AS bool;
+ bool 
+------
+ t
+(1 row)
+
+SELECT '0,0,1'::cube                    @> '0,0'::cube               AS bool;
+ bool 
+------
+ t
+(1 row)
+
+SELECT '0,0,1'::cube                    @> '0,0,0'::cube             AS bool;
+ bool 
+------
+ f
+(1 row)
+
+SELECT '0,0,1'::cube                    @> '1,0,0'::cube             AS bool;
+ bool 
+------
+ f
+(1 row)
+
+SELECT '(1,0,0),(0,0,1)'::cube          @> '(1,0,0),(0,0,1)'::cube   AS bool;
+ bool 
+------
+ t
+(1 row)
+
+SELECT '(-1,-1,-1),(1,1,1)'::cube       @> '(1,0,0),(0,0,1)'::cube   AS bool;
+ bool 
+------
+ t
+(1 row)
+
+SELECT '(-1,-1,-1,-1),(1,1,1,1)'::cube  @> '(1,0,0),(0,0,1)'::cube   AS bool;
+ bool 
+------
+ t
+(1 row)
+
+SELECT '(-1),(1)'::cube                 @> '0'::cube                 AS bool;
+ bool 
+------
+ t
+(1 row)
+
+SELECT '(-1),(1)'::cube                 @> '1'::cube                 AS bool;
+ bool 
+------
+ t
+(1 row)
+
+SELECT '(-1),(1)'::cube                 @> '-1'::cube                AS bool;
+ bool 
+------
+ t
+(1 row)
+
+SELECT '(-1),(1)'::cube                 @> '(-1),(1)'::cube          AS bool;
+ bool 
+------
+ t
+(1 row)
+
+SELECT '(-1,-1),(1,1)'::cube            @> '(-1),(1)'::cube          AS bool;
+ bool 
+------
+ t
+(1 row)
+
+SELECT '(-1),(1)'::cube                 @> '(-2),(1)'::cube          AS bool;
+ bool 
+------
+ f
+(1 row)
+
+SELECT '(-1,-1),(1,1)'::cube            @> '(-2),(1)'::cube          AS bool;
+ bool 
+------
+ f
+(1 row)
+
+-- Test of distance function
+--
+SELECT cube_distance('(0)'::cube,'(2,2,2,2)'::cube);
+ cube_distance 
+---------------
+             4
+(1 row)
+
+SELECT cube_distance('(0)'::cube,'(.3,.4)'::cube);
+ cube_distance 
+---------------
+           0.5
+(1 row)
+
+-- Test of cube function (text to cube)
+--
+SELECT cube('(1,1.2)'::text);
+   cube   
+----------
+ (1, 1.2)
+(1 row)
+
+SELECT cube(NULL);
+ cube 
+------
+ 
+(1 row)
+
+-- Test of cube_dim function (dimensions stored in cube)
+--
+SELECT cube_dim('(0)'::cube);
+ cube_dim 
+----------
+        1
+(1 row)
+
+SELECT cube_dim('(0,0)'::cube);
+ cube_dim 
+----------
+        2
+(1 row)
+
+SELECT cube_dim('(0,0,0)'::cube);
+ cube_dim 
+----------
+        3
+(1 row)
+
+-- Test of cube_ll_coord function (retrieves LL coodinate values)
+--
+SELECT cube_ll_coord('(-1,1),(2,-2)'::cube, 1);
+ cube_ll_coord 
+---------------
+            -1
+(1 row)
+
+SELECT cube_ll_coord('(-1,1),(2,-2)'::cube, 2);
+ cube_ll_coord 
+---------------
+            -2
+(1 row)
+
+SELECT cube_ll_coord('(-1,1),(2,-2)'::cube, 3);
+ cube_ll_coord 
+---------------
+             0
+(1 row)
+
+-- Test of cube_ur_coord function (retrieves UR coodinate values)
+--
+SELECT cube_ur_coord('(-1,1),(2,-2)'::cube, 1);
+ cube_ur_coord 
+---------------
+             2
+(1 row)
+
+SELECT cube_ur_coord('(-1,1),(2,-2)'::cube, 2);
+ cube_ur_coord 
+---------------
+             1
+(1 row)
+
+SELECT cube_ur_coord('(-1,1),(2,-2)'::cube, 3);
+ cube_ur_coord 
+---------------
+             0
+(1 row)
+
+-- Test of cube_is_point
+--
+SELECT cube_is_point('(0)'::cube);
+ cube_is_point 
+---------------
+ t
+(1 row)
+
+SELECT cube_is_point('(0,1,2)'::cube);
+ cube_is_point 
+---------------
+ t
+(1 row)
+
+SELECT cube_is_point('(0,1,2),(0,1,2)'::cube);
+ cube_is_point 
+---------------
+ t
+(1 row)
+
+SELECT cube_is_point('(0,1,2),(-1,1,2)'::cube);
+ cube_is_point 
+---------------
+ f
+(1 row)
+
+SELECT cube_is_point('(0,1,2),(0,-1,2)'::cube);
+ cube_is_point 
+---------------
+ f
+(1 row)
+
+SELECT cube_is_point('(0,1,2),(0,1,-2)'::cube);
+ cube_is_point 
+---------------
+ f
+(1 row)
+
+-- Test of cube_enlarge (enlarging and shrinking cubes)
+--
+SELECT cube_enlarge('(0)'::cube, 0, 0);
+ cube_enlarge 
+--------------
+ (0)
+(1 row)
+
+SELECT cube_enlarge('(0)'::cube, 0, 1);
+ cube_enlarge 
+--------------
+ (0)
+(1 row)
+
+SELECT cube_enlarge('(0)'::cube, 0, 2);
+ cube_enlarge 
+--------------
+ (0)
+(1 row)
+
+SELECT cube_enlarge('(2),(-2)'::cube, 0, 4);
+ cube_enlarge 
+--------------
+ (-2),(2)
+(1 row)
+
+SELECT cube_enlarge('(0)'::cube, 1, 0);
+ cube_enlarge 
+--------------
+ (-1),(1)
+(1 row)
+
+SELECT cube_enlarge('(0)'::cube, 1, 1);
+ cube_enlarge 
+--------------
+ (-1),(1)
+(1 row)
+
+SELECT cube_enlarge('(0)'::cube, 1, 2);
+  cube_enlarge   
+-----------------
+ (-1, -1),(1, 1)
+(1 row)
+
+SELECT cube_enlarge('(2),(-2)'::cube, 1, 4);
+         cube_enlarge          
+-------------------------------
+ (-3, -1, -1, -1),(3, 1, 1, 1)
+(1 row)
+
+SELECT cube_enlarge('(0)'::cube, -1, 0);
+ cube_enlarge 
+--------------
+ (0)
+(1 row)
+
+SELECT cube_enlarge('(0)'::cube, -1, 1);
+ cube_enlarge 
+--------------
+ (0)
+(1 row)
+
+SELECT cube_enlarge('(0)'::cube, -1, 2);
+ cube_enlarge 
+--------------
+ (0)
+(1 row)
+
+SELECT cube_enlarge('(2),(-2)'::cube, -1, 4);
+ cube_enlarge 
+--------------
+ (-1),(1)
+(1 row)
+
+SELECT cube_enlarge('(0,0,0)'::cube, 1, 0);
+      cube_enlarge      
+------------------------
+ (-1, -1, -1),(1, 1, 1)
+(1 row)
+
+SELECT cube_enlarge('(0,0,0)'::cube, 1, 2);
+      cube_enlarge      
+------------------------
+ (-1, -1, -1),(1, 1, 1)
+(1 row)
+
+SELECT cube_enlarge('(2,-2),(-3,7)'::cube, 1, 2);
+  cube_enlarge   
+-----------------
+ (-4, -3),(3, 8)
+(1 row)
+
+SELECT cube_enlarge('(2,-2),(-3,7)'::cube, 3, 2);
+   cube_enlarge   
+------------------
+ (-6, -5),(5, 10)
+(1 row)
+
+SELECT cube_enlarge('(2,-2),(-3,7)'::cube, -1, 2);
+  cube_enlarge   
+-----------------
+ (-2, -1),(1, 6)
+(1 row)
+
+SELECT cube_enlarge('(2,-2),(-3,7)'::cube, -3, 2);
+    cube_enlarge     
+---------------------
+ (-0.5, 1),(-0.5, 4)
+(1 row)
+
+-- Load some example data and build the index
+--
+CREATE TABLE test_cube (c cube);
+\copy test_cube from 'data/test_cube.data'
+CREATE INDEX test_cube_ix ON test_cube USING gist (c);
+SELECT * FROM test_cube WHERE c && '(3000,1000),(0,0)' ORDER BY c;
+            c             
+--------------------------
+ (337, 455),(240, 359)
+ (759, 187),(662, 163)
+ (1444, 403),(1346, 344)
+ (1594, 1043),(1517, 971)
+ (2424, 160),(2424, 81)
+(5 rows)
+
+-- Test sorting
+SELECT * FROM test_cube WHERE c && '(3000,1000),(0,0)' GROUP BY c ORDER BY c;
+            c             
+--------------------------
+ (337, 455),(240, 359)
+ (759, 187),(662, 163)
+ (1444, 403),(1346, 344)
+ (1594, 1043),(1517, 971)
+ (2424, 160),(2424, 81)
+(5 rows)
+
