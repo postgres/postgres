@@ -306,6 +306,7 @@ pg_wc_isdigit(pg_wchar c)
 			return (c <= (pg_wchar) UCHAR_MAX &&
 					isdigit_l((unsigned char) c, pg_regex_locale));
 #endif
+			break;
 	}
 	return 0;					/* can't get here, but keep compiler quiet */
 }
@@ -338,6 +339,7 @@ pg_wc_isalpha(pg_wchar c)
 			return (c <= (pg_wchar) UCHAR_MAX &&
 					isalpha_l((unsigned char) c, pg_regex_locale));
 #endif
+			break;
 	}
 	return 0;					/* can't get here, but keep compiler quiet */
 }
@@ -370,6 +372,7 @@ pg_wc_isalnum(pg_wchar c)
 			return (c <= (pg_wchar) UCHAR_MAX &&
 					isalnum_l((unsigned char) c, pg_regex_locale));
 #endif
+			break;
 	}
 	return 0;					/* can't get here, but keep compiler quiet */
 }
@@ -402,6 +405,7 @@ pg_wc_isupper(pg_wchar c)
 			return (c <= (pg_wchar) UCHAR_MAX &&
 					isupper_l((unsigned char) c, pg_regex_locale));
 #endif
+			break;
 	}
 	return 0;					/* can't get here, but keep compiler quiet */
 }
@@ -434,6 +438,7 @@ pg_wc_islower(pg_wchar c)
 			return (c <= (pg_wchar) UCHAR_MAX &&
 					islower_l((unsigned char) c, pg_regex_locale));
 #endif
+			break;
 	}
 	return 0;					/* can't get here, but keep compiler quiet */
 }
@@ -466,6 +471,7 @@ pg_wc_isgraph(pg_wchar c)
 			return (c <= (pg_wchar) UCHAR_MAX &&
 					isgraph_l((unsigned char) c, pg_regex_locale));
 #endif
+			break;
 	}
 	return 0;					/* can't get here, but keep compiler quiet */
 }
@@ -498,6 +504,7 @@ pg_wc_isprint(pg_wchar c)
 			return (c <= (pg_wchar) UCHAR_MAX &&
 					isprint_l((unsigned char) c, pg_regex_locale));
 #endif
+			break;
 	}
 	return 0;					/* can't get here, but keep compiler quiet */
 }
@@ -530,6 +537,7 @@ pg_wc_ispunct(pg_wchar c)
 			return (c <= (pg_wchar) UCHAR_MAX &&
 					ispunct_l((unsigned char) c, pg_regex_locale));
 #endif
+			break;
 	}
 	return 0;					/* can't get here, but keep compiler quiet */
 }
@@ -562,6 +570,7 @@ pg_wc_isspace(pg_wchar c)
 			return (c <= (pg_wchar) UCHAR_MAX &&
 					isspace_l((unsigned char) c, pg_regex_locale));
 #endif
+			break;
 	}
 	return 0;					/* can't get here, but keep compiler quiet */
 }
