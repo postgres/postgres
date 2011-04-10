@@ -192,6 +192,9 @@ pg_regexec(regex_t *re,
 	if (re->re_csize != sizeof(chr))
 		return REG_MIXED;
 
+	/* Initialize locale-dependent support */
+	pg_set_regex_collation(re->re_collation);
+
 	/* setup */
 	v->re = re;
 	v->g = (struct guts *) re->re_guts;

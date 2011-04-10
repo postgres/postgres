@@ -221,14 +221,7 @@ initdb --locale=sv_SE
 
      <listitem>
       <para>
-       The ability to use indexes with <literal>LIKE</> clauses
-       <indexterm><primary>LIKE</><secondary>and locales</></indexterm>
-      </para>
-     </listitem>
-
-     <listitem>
-      <para>
-       The <function>upper</>,  <function>lower</>,  and <function>initcap</>
+       The <function>upper</>, <function>lower</>, and <function>initcap</>
        functions
        <indexterm><primary>upper</><secondary>and locales</></indexterm>
        <indexterm><primary>lower</><secondary>and locales</></indexterm>
@@ -237,8 +230,25 @@ initdb --locale=sv_SE
 
      <listitem>
       <para>
+       Pattern matching operators (<literal>LIKE</>, <literal>SIMILAR TO</>,
+       and POSIX-style regular expressions); locales affect both case
+       insensitive matching and the classification of characters by
+       character-class regular expressions
+       <indexterm><primary>LIKE</><secondary>and locales</></indexterm>
+       <indexterm><primary>regular expressions</><secondary>and locales</></indexterm>
+      </para>
+     </listitem>
+
+     <listitem>
+      <para>
        The <function>to_char</> family of functions
        <indexterm><primary>to_char</><secondary>and locales</></indexterm>
+      </para>
+     </listitem>
+
+     <listitem>
+      <para>
+       The ability to use indexes with <literal>LIKE</> clauses
       </para>
      </listitem>
     </itemizedlist>
@@ -319,8 +329,8 @@ initdb --locale=sv_SE
   <indexterm zone="collation"><primary>collation</></>
 
   <para>
-   The collation feature allows specifying the sort order and certain
-   other locale aspects of data per-column, or even per-operation.
+   The collation feature allows specifying the sort order and character
+   classification behavior of data per-column, or even per-operation.
    This alleviates the restriction that the
    <symbol>LC_COLLATE</symbol> and <symbol>LC_CTYPE</symbol> settings
    of a database cannot be changed after its creation.
@@ -351,8 +361,8 @@ initdb --locale=sv_SE
    </para>
 
    <para>
-    When the database system has to perform an ordering or a
-    comparison, it uses the collation of the input expression.  This
+    When the database system has to perform an ordering or a character
+    classification, it uses the collation of the input expression.  This
     happens, for example, with <literal>ORDER BY</literal> clauses
     and function or operator calls such as <literal>&lt;</literal>.
     The collation to apply for an <literal>ORDER BY</literal> clause
@@ -361,7 +371,8 @@ initdb --locale=sv_SE
     below.  In addition to comparison operators, collations are taken into
     account by functions that convert between lower and upper case
     letters, such as <function>lower</>, <function>upper</>, and
-    <function>initcap</>.
+    <function>initcap</>; by pattern matching operators; and by
+    <function>to_char</> and related functions.
    </para>
 
    <para>

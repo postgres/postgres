@@ -14,6 +14,7 @@
 
 #include "postgres.h"
 
+#include "catalog/pg_collation.h"
 #include "tsearch/dicts/spell.h"
 #include "tsearch/ts_locale.h"
 #include "utils/memutils.h"
@@ -425,7 +426,9 @@ NIAddAffix(IspellDict *Conf, int flag, char flagflags, const char *mask, const c
 		wmask = (pg_wchar *) tmpalloc((masklen + 1) * sizeof(pg_wchar));
 		wmasklen = pg_mb2wchar_with_len(tmask, wmask, masklen);
 
-		err = pg_regcomp(&(Affix->reg.regex), wmask, wmasklen, REG_ADVANCED | REG_NOSUB);
+		err = pg_regcomp(&(Affix->reg.regex), wmask, wmasklen,
+						 REG_ADVANCED | REG_NOSUB,
+						 DEFAULT_COLLATION_OID);
 		if (err)
 		{
 			char		errstr[100];

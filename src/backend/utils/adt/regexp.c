@@ -96,6 +96,7 @@ typedef struct cached_re_str
 	char	   *cre_pat;		/* original RE (not null terminated!) */
 	int			cre_pat_len;	/* length of original RE, in bytes */
 	int			cre_flags;		/* compile flags: extended,icase etc */
+	Oid			cre_collation;	/* collation to use */
 	regex_t		cre_re;			/* the compiled regular expression */
 } cached_re_str;
 
@@ -106,6 +107,7 @@ static cached_re_str re_array[MAX_CACHED_RES];	/* cached re's */
 /* Local functions */
 static regexp_matches_ctx *setup_regexp_matches(text *orig_str, text *pattern,
 					 text *flags,
+					 Oid collation,
 					 bool force_glob,
 					 bool use_subpatterns,
 					 bool ignore_degenerate);
@@ -121,12 +123,13 @@ static Datum build_regexp_split_result(regexp_matches_ctx *splitctx);
  *
  *	text_re --- the pattern, expressed as a TEXT object
  *	cflags --- compile options for the pattern
+ *	collation --- collation to use for LC_CTYPE-dependent behavior
  *
  * Pattern is given in the database encoding.  We internally convert to
  * an array of pg_wchar, which is what Spencer's regex package wants.
  */
 static regex_t *
-RE_compile_and_cache(text *text_re, int cflags)
+RE_compile_and_cache(text *text_re, int cflags, Oid collation)
 {
 	int			text_re_len = VARSIZE_ANY_EXHDR(text_re);
 	char	   *text_re_val = VARDATA_ANY(text_re);
@@ -146,6 +149,7 @@ RE_compile_and_cache(text *text_re, int cflags)
 	{
 		if (re_array[i].cre_pat_len == text_re_len &&
 			re_array[i].cre_flags == cflags &&
+			re_array[i].cre_collation == collation &&
 			memcmp(re_array[i].cre_pat, text_re_val, text_re_len) == 0)
 		{
 			/*
@@ -176,7 +180,8 @@ RE_compile_and_cache(text *text_re, int cflags)
 	regcomp_result = pg_regcomp(&re_temp.cre_re,
 								pattern,
 								pattern_len,
-								cflags);
+								cflags,
+								collation);
 
 	pfree(pattern);
 
@@ -207,6 +212,7 @@ RE_compile_and_cache(text *text_re, int cflags)
 	memcpy(re_temp.cre_pat, text_re_val, text_re_len);
 	re_temp.cre_pat_len = text_re_len;
 	re_temp.cre_flags = cflags;
+	re_temp.cre_collation = collation;
 
 	/*
 	 * Okay, we have a valid new item in re_temp; insert it into the storage
@@ -313,6 +319,7 @@ RE_execute(regex_t *re, char *dat, int dat_len,
  *	dat --- the data to match against (need not be null-terminated)
  *	dat_len --- the length of the data string
  *	cflags --- compile options for the pattern
+ *	collation --- collation to use for LC_CTYPE-dependent behavior
  *	nmatch, pmatch	--- optional return area for match details
  *
  * Both pattern and data are given in the database encoding.  We internally
@@ -320,12 +327,13 @@ RE_execute(regex_t *re, char *dat, int dat_len,
  */
 static bool
 RE_compile_and_execute(text *text_re, char *dat, int dat_len,
-					   int cflags, int nmatch, regmatch_t *pmatch)
+					   int cflags, Oid collation,
+					   int nmatch, regmatch_t *pmatch)
 {
 	regex_t    *re;
 
 	/* Compile RE */
-	re = RE_compile_and_cache(text_re, cflags);
+	re = RE_compile_and_cache(text_re, cflags, collation);
 
 	return RE_execute(re, dat, dat_len, nmatch, pmatch);
 }
@@ -424,6 +432,7 @@ nameregexeq(PG_FUNCTION_ARGS)
 										  NameStr(*n),
 										  strlen(NameStr(*n)),
 										  REG_ADVANCED,
+										  PG_GET_COLLATION(),
 										  0, NULL));
 }
 
@@ -437,6 +446,7 @@ nameregexne(PG_FUNCTION_ARGS)
 										   NameStr(*n),
 										   strlen(NameStr(*n)),
 										   REG_ADVANCED,
+										   PG_GET_COLLATION(),
 										   0, NULL));
 }
 
@@ -450,6 +460,7 @@ textregexeq(PG_FUNCTION_ARGS)
 										  VARDATA_ANY(s),
 										  VARSIZE_ANY_EXHDR(s),
 										  REG_ADVANCED,
+										  PG_GET_COLLATION(),
 										  0, NULL));
 }
 
@@ -463,6 +474,7 @@ textregexne(PG_FUNCTION_ARGS)
 										   VARDATA_ANY(s),
 										   VARSIZE_ANY_EXHDR(s),
 										   REG_ADVANCED,
+										   PG_GET_COLLATION(),
 										   0, NULL));
 }
 
@@ -483,6 +495,7 @@ nameicregexeq(PG_FUNCTION_ARGS)
 										  NameStr(*n),
 										  strlen(NameStr(*n)),
 										  REG_ADVANCED | REG_ICASE,
+										  PG_GET_COLLATION(),
 										  0, NULL));
 }
 
@@ -496,6 +509,7 @@ nameicregexne(PG_FUNCTION_ARGS)
 										   NameStr(*n),
 										   strlen(NameStr(*n)),
 										   REG_ADVANCED | REG_ICASE,
+										   PG_GET_COLLATION(),
 										   0, NULL));
 }
 
@@ -509,6 +523,7 @@ texticregexeq(PG_FUNCTION_ARGS)
 										  VARDATA_ANY(s),
 										  VARSIZE_ANY_EXHDR(s),
 										  REG_ADVANCED | REG_ICASE,
+										  PG_GET_COLLATION(),
 										  0, NULL));
 }
 
@@ -522,6 +537,7 @@ texticregexne(PG_FUNCTION_ARGS)
 										   VARDATA_ANY(s),
 										   VARSIZE_ANY_EXHDR(s),
 										   REG_ADVANCED | REG_ICASE,
+										   PG_GET_COLLATION(),
 										   0, NULL));
 }
 
@@ -541,7 +557,7 @@ textregexsubstr(PG_FUNCTION_ARGS)
 				eo;
 
 	/* Compile RE */
-	re = RE_compile_and_cache(p, REG_ADVANCED);
+	re = RE_compile_and_cache(p, REG_ADVANCED, PG_GET_COLLATION());
 
 	/*
 	 * We pass two regmatch_t structs to get info about the overall match and
@@ -597,7 +613,7 @@ textregexreplace_noopt(PG_FUNCTION_ARGS)
 	text	   *r = PG_GETARG_TEXT_PP(2);
 	regex_t    *re;
 
-	re = RE_compile_and_cache(p, REG_ADVANCED);
+	re = RE_compile_and_cache(p, REG_ADVANCED, PG_GET_COLLATION());
 
 	PG_RETURN_TEXT_P(replace_text_regexp(s, (void *) re, r, false));
 }
@@ -618,7 +634,7 @@ textregexreplace(PG_FUNCTION_ARGS)
 
 	parse_re_flags(&flags, opt);
 
-	re = RE_compile_and_cache(p, flags.cflags);
+	re = RE_compile_and_cache(p, flags.cflags, PG_GET_COLLATION());
 
 	PG_RETURN_TEXT_P(replace_text_regexp(s, (void *) re, r, flags.glob));
 }
@@ -781,7 +797,9 @@ regexp_matches(PG_FUNCTION_ARGS)
 
 		/* be sure to copy the input string into the multi-call ctx */
 		matchctx = setup_regexp_matches(PG_GETARG_TEXT_P_COPY(0), pattern,
-										flags, false, true, false);
+										flags,
+										PG_GET_COLLATION(),
+										false, true, false);
 
 		/* Pre-create workspace that build_regexp_matches_result needs */
 		matchctx->elems = (Datum *) palloc(sizeof(Datum) * matchctx->npatterns);
@@ -830,6 +848,7 @@ regexp_matches_no_flags(PG_FUNCTION_ARGS)
  */
 static regexp_matches_ctx *
 setup_regexp_matches(text *orig_str, text *pattern, text *flags,
+					 Oid collation,
 					 bool force_glob, bool use_subpatterns,
 					 bool ignore_degenerate)
 {
@@ -868,7 +887,7 @@ setup_regexp_matches(text *orig_str, text *pattern, text *flags,
 	}
 
 	/* set up the compiled pattern */
-	cpattern = RE_compile_and_cache(pattern, re_flags.cflags);
+	cpattern = RE_compile_and_cache(pattern, re_flags.cflags, collation);
 
 	/* do we want to remember subpatterns? */
 	if (use_subpatterns && cpattern->re_nsub > 0)
@@ -1039,7 +1058,9 @@ regexp_split_to_table(PG_FUNCTION_ARGS)
 
 		/* be sure to copy the input string into the multi-call ctx */
 		splitctx = setup_regexp_matches(PG_GETARG_TEXT_P_COPY(0), pattern,
-										flags, true, false, true);
+										flags,
+										PG_GET_COLLATION(),
+										true, false, true);
 
 		MemoryContextSwitchTo(oldcontext);
 		funcctx->user_fctx = (void *) splitctx;
@@ -1083,6 +1104,7 @@ regexp_split_to_array(PG_FUNCTION_ARGS)
 	splitctx = setup_regexp_matches(PG_GETARG_TEXT_PP(0),
 									PG_GETARG_TEXT_PP(1),
 									PG_GETARG_TEXT_PP_IF_EXISTS(2),
+									PG_GET_COLLATION(),
 									true, false, true);
 
 	while (splitctx->next_match <= splitctx->nmatches)

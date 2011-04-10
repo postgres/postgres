@@ -319,6 +319,80 @@ SELECT relname FROM pg_class WHERE relname ILIKE 'abc%';
 ---------
 (0 rows)
 
+-- regular expressions
+SELECT * FROM collate_test1 WHERE b ~ '^abc$';
+ a |  b  
+---+-----
+ 1 | abc
+(1 row)
+
+SELECT * FROM collate_test1 WHERE b ~ '^abc';
+ a |  b  
+---+-----
+ 1 | abc
+(1 row)
+
+SELECT * FROM collate_test1 WHERE b ~ 'bc';
+ a |  b  
+---+-----
+ 1 | abc
+ 2 | äbc
+ 3 | bbc
+(3 rows)
+
+SELECT * FROM collate_test1 WHERE b ~* '^abc$';
+ a |  b  
+---+-----
+ 1 | abc
+ 4 | ABC
+(2 rows)
+
+SELECT * FROM collate_test1 WHERE b ~* '^abc';
+ a |  b  
+---+-----
+ 1 | abc
+ 4 | ABC
+(2 rows)
+
+SELECT * FROM collate_test1 WHERE b ~* 'bc';
+ a |  b  
+---+-----
+ 1 | abc
+ 2 | äbc
+ 3 | bbc
+ 4 | ABC
+(4 rows)
+
+SELECT 'Türkiye' COLLATE "en_US" ~* 'KI' AS "true";
+ true 
+------
+ t
+(1 row)
+
+SELECT 'Türkiye' COLLATE "tr_TR" ~* 'KI' AS "false";
+ false 
+-------
+ f
+(1 row)
+
+SELECT 'bıt' ~* 'BIT' COLLATE "en_US" AS "false";
+ false 
+-------
+ f
+(1 row)
+
+SELECT 'bıt' ~* 'BIT' COLLATE "tr_TR" AS "true";
+ true 
+------
+ t
+(1 row)
+
+-- The following actually exercises the selectivity estimation for ~*.
+SELECT relname FROM pg_class WHERE relname ~* '^abc';
+ relname 
+---------
+(0 rows)
+
 -- to_char
 SET lc_time TO 'tr_TR';
 SELECT to_char(date '2010-04-01', 'DD TMMON YYYY');

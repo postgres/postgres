@@ -172,7 +172,7 @@ static void addrange(struct cvec *, chr, chr);
 static struct cvec *getcvec(struct vars *, int, int);
 static void freecvec(struct cvec *);
 
-/* === regc_locale.c === */
+/* === regc_pg_locale.c === */
 static int	pg_wc_isdigit(pg_wchar c);
 static int	pg_wc_isalpha(pg_wchar c);
 static int	pg_wc_isalnum(pg_wchar c);
@@ -184,6 +184,8 @@ static int	pg_wc_ispunct(pg_wchar c);
 static int	pg_wc_isspace(pg_wchar c);
 static pg_wchar pg_wc_toupper(pg_wchar c);
 static pg_wchar pg_wc_tolower(pg_wchar c);
+
+/* === regc_locale.c === */
 static celt element(struct vars *, const chr *, const chr *);
 static struct cvec *range(struct vars *, celt, celt, int);
 static int	before(celt, celt);
@@ -281,7 +283,8 @@ int
 pg_regcomp(regex_t *re,
 		   const chr *string,
 		   size_t len,
-		   int flags)
+		   int flags,
+		   Oid collation)
 {
 	struct vars var;
 	struct vars *v = &var;
@@ -306,6 +309,9 @@ pg_regcomp(regex_t *re,
 		return REG_INVARG;
 	if (!(flags & REG_EXTENDED) && (flags & REG_ADVF))
 		return REG_INVARG;
+
+	/* Initialize locale-dependent support */
+	pg_set_regex_collation(collation);
 
 	/* initial setup (after which freev() is callable) */
 	v->re = re;
@@ -333,6 +339,7 @@ pg_regcomp(regex_t *re,
 	re->re_magic = REMAGIC;
 	re->re_info = 0;			/* bits get set during parse */
 	re->re_csize = sizeof(chr);
+	re->re_collation = collation;
 	re->re_guts = NULL;
 	re->re_fns = VS(&functions);
 
@@ -1987,4 +1994,5 @@ stid(struct subre * t,
 #include "regc_color.c"
 #include "regc_nfa.c"
 #include "regc_cvec.c"
+#include "regc_pg_locale.c"
 #include "regc_locale.c"

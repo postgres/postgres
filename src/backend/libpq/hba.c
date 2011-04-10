@@ -25,6 +25,7 @@
 #include <arpa/inet.h>
 #include <unistd.h>
 
+#include "catalog/pg_collation.h"
 #include "libpq/ip.h"
 #include "libpq/libpq.h"
 #include "regex/regex.h"
@@ -1781,7 +1782,7 @@ parse_ident_usermap(List *line, int line_number, const char *usermap_name,
 		 * XXX: Major room for optimization: regexps could be compiled when
 		 * the file is loaded and then re-used in every connection.
 		 */
-		r = pg_regcomp(&re, wstr, wlen, REG_ADVANCED);
+		r = pg_regcomp(&re, wstr, wlen, REG_ADVANCED, C_COLLATION_OID);
 		if (r)
 		{
 			char		errstr[100];

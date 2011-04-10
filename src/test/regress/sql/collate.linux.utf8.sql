@@ -124,6 +124,24 @@ SELECT 'bıt' ILIKE 'BIT' COLLATE "tr_TR" AS "true";
 -- The following actually exercises the selectivity estimation for ILIKE.
 SELECT relname FROM pg_class WHERE relname ILIKE 'abc%';
 
+-- regular expressions
+
+SELECT * FROM collate_test1 WHERE b ~ '^abc$';
+SELECT * FROM collate_test1 WHERE b ~ '^abc';
+SELECT * FROM collate_test1 WHERE b ~ 'bc';
+SELECT * FROM collate_test1 WHERE b ~* '^abc$';
+SELECT * FROM collate_test1 WHERE b ~* '^abc';
+SELECT * FROM collate_test1 WHERE b ~* 'bc';
+
+SELECT 'Türkiye' COLLATE "en_US" ~* 'KI' AS "true";
+SELECT 'Türkiye' COLLATE "tr_TR" ~* 'KI' AS "false";
+
+SELECT 'bıt' ~* 'BIT' COLLATE "en_US" AS "false";
+SELECT 'bıt' ~* 'BIT' COLLATE "tr_TR" AS "true";
+
+-- The following actually exercises the selectivity estimation for ~*.
+SELECT relname FROM pg_class WHERE relname ~* '^abc';
+
 
 -- to_char
 

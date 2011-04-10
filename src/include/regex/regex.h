@@ -73,6 +73,7 @@ typedef struct
 #define  REG_USHORTEST		 020000
 	int			re_csize;		/* sizeof(character) */
 	char	   *re_endp;		/* backward compatibility kludge */
+	Oid			re_collation;	/* Collation that defines LC_CTYPE behavior */
 	/* the rest is opaque pointers to hidden innards */
 	char	   *re_guts;		/* `char *' is more portable than `void *' */
 	char	   *re_fns;
@@ -161,9 +162,10 @@ typedef struct
 /*
  * the prototypes for exported functions
  */
-extern int	pg_regcomp(regex_t *, const pg_wchar *, size_t, int);
+extern int	pg_regcomp(regex_t *, const pg_wchar *, size_t, int, Oid);
 extern int	pg_regexec(regex_t *, const pg_wchar *, size_t, size_t, rm_detail_t *, size_t, regmatch_t[], int);
 extern void pg_regfree(regex_t *);
 extern size_t pg_regerror(int, const regex_t *, char *, size_t);
+extern void pg_set_regex_collation(Oid collation);
 
 #endif   /* _REGEX_H_ */
