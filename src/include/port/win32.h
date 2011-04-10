@@ -284,8 +284,24 @@ typedef int pid_t;
 #define toupper_l _toupper_l
 #define towlower_l _towlower_l
 #define towupper_l _towupper_l
+#define isdigit_l _isdigit_l
+#define iswdigit_l _iswdigit_l
+#define isalpha_l _isalpha_l
+#define iswalpha_l _iswalpha_l
 #define isalnum_l _isalnum_l
 #define iswalnum_l _iswalnum_l
+#define isupper_l _isupper_l
+#define iswupper_l _iswupper_l
+#define islower_l _islower_l
+#define iswlower_l _iswlower_l
+#define isgraph_l _isgraph_l
+#define iswgraph_l _iswgraph_l
+#define isprint_l _isprint_l
+#define iswprint_l _iswprint_l
+#define ispunct_l _ispunct_l
+#define iswpunct_l _iswpunct_l
+#define isspace_l _isspace_l
+#define iswspace_l _iswspace_l
 #define strcoll_l _strcoll_l
 #define wcscoll_l _wcscoll_l
 
