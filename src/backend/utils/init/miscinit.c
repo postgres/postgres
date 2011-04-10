@@ -394,8 +394,8 @@ SetUserIdAndContext(Oid userid, bool sec_def_context)
 bool
 is_authenticated_user_replication_role(void)
 {
-	bool            result = false;
-	HeapTuple       utup;
+	bool		result = false;
+	HeapTuple	utup;
 
 	utup = SearchSysCache1(AUTHOID, ObjectIdGetDatum(AuthenticatedUserId));
 	if (HeapTupleIsValid(utup))
@@ -866,7 +866,7 @@ CreateLockFile(const char *filename, bool amPostmaster,
 									"(key %lu, ID %lu) is still in use",
 									id1, id2),
 							 errhint("If you're sure there are no old "
-								"server processes still running, remove "
+									 "server processes still running, remove "
 									 "the shared memory block "
 									 "or just delete the file \"%s\".",
 									 filename)));
@@ -889,8 +889,8 @@ CreateLockFile(const char *filename, bool amPostmaster,
 	}
 
 	/*
-	 * Successfully created the file, now fill it.  See comment in miscadmin.h
-	 * about the contents.  Note that we write the same info into both datadir
+	 * Successfully created the file, now fill it.	See comment in miscadmin.h
+	 * about the contents.	Note that we write the same info into both datadir
 	 * and socket lockfiles; although more stuff may get added to the datadir
 	 * lockfile later.
 	 */
@@ -904,7 +904,7 @@ CreateLockFile(const char *filename, bool amPostmaster,
 #else
 			 ""
 #endif
-			 );
+		);
 
 	errno = 0;
 	if (write(fd, buffer, strlen(buffer)) != strlen(buffer))

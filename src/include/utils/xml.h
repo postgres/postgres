@@ -66,7 +66,7 @@ typedef enum
 	XML_STANDALONE_NO,
 	XML_STANDALONE_NO_VALUE,
 	XML_STANDALONE_OMITTED
-} XmlStandaloneType;
+}	XmlStandaloneType;
 
 extern void pg_xml_init(void);
 extern void xml_ereport(int level, int sqlcode, const char *msg);
@@ -87,7 +87,7 @@ typedef enum
 {
 	XMLBINARY_BASE64,
 	XMLBINARY_HEX
-} XmlBinaryType;
+}	XmlBinaryType;
 
 extern int	xmlbinary;			/* XmlBinaryType, but int for guc enum */
 

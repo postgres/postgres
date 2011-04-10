@@ -90,9 +90,9 @@ static float8
 gdb_date_dist(const void *a, const void *b)
 {
 	/* we assume the difference can't overflow */
-	Datum diff = DirectFunctionCall2(date_mi,
+	Datum		diff = DirectFunctionCall2(date_mi,
 									 DateADTGetDatum(*((const DateADT *) a)),
-									 DateADTGetDatum(*((const DateADT *) b)));
+									DateADTGetDatum(*((const DateADT *) b)));
 
 	return (float8) Abs(DatumGetInt32(diff));
 }
@@ -113,14 +113,14 @@ static const gbtree_ninfo tinfo =
 
 
 PG_FUNCTION_INFO_V1(date_dist);
-Datum       date_dist(PG_FUNCTION_ARGS);
+Datum		date_dist(PG_FUNCTION_ARGS);
 Datum
 date_dist(PG_FUNCTION_ARGS)
 {
 	/* we assume the difference can't overflow */
-	Datum diff = DirectFunctionCall2(date_mi,
-									 PG_GETARG_DATUM(0),
-									 PG_GETARG_DATUM(1));
+	Datum		diff = DirectFunctionCall2(date_mi,
+										   PG_GETARG_DATUM(0),
+										   PG_GETARG_DATUM(1));
 
 	PG_RETURN_INT32(Abs(DatumGetInt32(diff)));
 }
@@ -181,7 +181,7 @@ gbt_date_distance(PG_FUNCTION_ARGS)
 	key.upper = (GBT_NUMKEY *) &kkk->upper;
 
 	PG_RETURN_FLOAT8(
-				   gbt_num_distance(&key, (void *) &query, GIST_LEAF(entry), &tinfo)
+			gbt_num_distance(&key, (void *) &query, GIST_LEAF(entry), &tinfo)
 		);
 }
 

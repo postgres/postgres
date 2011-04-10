@@ -132,8 +132,8 @@ check_datestyle(char **newval, void **extra, GucSource source)
 			 * We can't simply "return check_datestyle(...)" because we need
 			 * to handle constructs like "DEFAULT, ISO".
 			 */
-			char   *subval;
-			void   *subextra = NULL;
+			char	   *subval;
+			void	   *subextra = NULL;
 
 			subval = strdup(GetConfigOptionResetString("datestyle"));
 			if (!subval)
@@ -262,9 +262,9 @@ check_timezone(char **newval, void **extra, GucSource source)
 	{
 		/*
 		 * The boot_val given for TimeZone in guc.c is NULL.  When we see this
-		 * we just do nothing.  If this isn't overridden from the config file
+		 * we just do nothing.	If this isn't overridden from the config file
 		 * then pg_timezone_initialize() will eventually select a default
-		 * value from the environment.  This hack has two purposes: to avoid
+		 * value from the environment.	This hack has two purposes: to avoid
 		 * wasting cycles loading values that might soon be overridden from
 		 * the config file, and to avoid trying to read the timezone files
 		 * during InitializeGUCOptions().  The latter doesn't work in an
@@ -289,7 +289,7 @@ check_timezone(char **newval, void **extra, GucSource source)
 	if (pg_strncasecmp(*newval, "interval", 8) == 0)
 	{
 		/*
-		 * Support INTERVAL 'foo'.  This is for SQL spec compliance, not
+		 * Support INTERVAL 'foo'.	This is for SQL spec compliance, not
 		 * because it has any actual real-world usefulness.
 		 */
 		const char *valueptr = *newval;
@@ -391,13 +391,13 @@ check_timezone(char **newval, void **extra, GucSource source)
 	 *
 	 * Note: the result string should be something that we'd accept as input.
 	 * We use the numeric format for interval cases, because it's simpler to
-	 * reload.  In the named-timezone case, *newval is already OK and need not
+	 * reload.	In the named-timezone case, *newval is already OK and need not
 	 * be changed; it might not have the canonical casing, but that's taken
 	 * care of by show_timezone.
 	 */
 	if (myextra.HasCTZSet)
 	{
-		char	*result = (char *) malloc(64);
+		char	   *result = (char *) malloc(64);
 
 		if (!result)
 			return false;
@@ -567,7 +567,7 @@ show_log_timezone(void)
  * We allow idempotent changes (r/w -> r/w and r/o -> r/o) at any time, and
  * we also always allow changes from read-write to read-only.  However,
  * read-only may be changed to read-write only when in a top-level transaction
- * that has not yet taken an initial snapshot.  Can't do it in a hot standby
+ * that has not yet taken an initial snapshot.	Can't do it in a hot standby
  * slave, either.
  */
 bool
@@ -719,7 +719,7 @@ check_transaction_deferrable(bool *newval, void **extra, GucSource source)
  *
  * We can't roll back the random sequence on error, and we don't want
  * config file reloads to affect it, so we only want interactive SET SEED
- * commands to set it.  We use the "extra" storage to ensure that rollbacks
+ * commands to set it.	We use the "extra" storage to ensure that rollbacks
  * don't try to do the operation again.
  */
 
@@ -851,8 +851,8 @@ check_session_authorization(char **newval, void **extra, GucSource source)
 	{
 		/*
 		 * Can't do catalog lookups, so fail.  The result of this is that
-		 * session_authorization cannot be set in postgresql.conf, which
-		 * seems like a good thing anyway, so we don't work hard to avoid it.
+		 * session_authorization cannot be set in postgresql.conf, which seems
+		 * like a good thing anyway, so we don't work hard to avoid it.
 		 */
 		return false;
 	}
@@ -977,7 +977,7 @@ const char *
 show_role(void)
 {
 	/*
-	 * Check whether SET ROLE is active; if not return "none".  This is a
+	 * Check whether SET ROLE is active; if not return "none".	This is a
 	 * kluge to deal with the fact that SET SESSION AUTHORIZATION logically
 	 * resets SET ROLE to NONE, but we cannot set the GUC role variable from
 	 * assign_session_authorization (because we haven't got enough info to

@@ -98,11 +98,11 @@ GinFormTuple(GinState *ginstate,
 		if (errorTooBig)
 			ereport(ERROR,
 					(errcode(ERRCODE_PROGRAM_LIMIT_EXCEEDED),
-					 errmsg("index row size %lu exceeds maximum %lu for index \"%s\"",
-							(unsigned long) newsize,
-							(unsigned long) Min(INDEX_SIZE_MASK,
-												GinMaxItemSize),
-							RelationGetRelationName(ginstate->index))));
+			errmsg("index row size %lu exceeds maximum %lu for index \"%s\"",
+				   (unsigned long) newsize,
+				   (unsigned long) Min(INDEX_SIZE_MASK,
+									   GinMaxItemSize),
+				   RelationGetRelationName(ginstate->index))));
 		pfree(itup);
 		return NULL;
 	}
@@ -164,7 +164,7 @@ GinShortenTuple(IndexTuple itup, uint32 nipd)
  * Form a non-leaf entry tuple by copying the key data from the given tuple,
  * which can be either a leaf or non-leaf entry tuple.
  *
- * Any posting list in the source tuple is not copied.  The specified child
+ * Any posting list in the source tuple is not copied.	The specified child
  * block number is inserted into t_tid.
  */
 static IndexTuple
@@ -225,7 +225,7 @@ entryIsMoveRight(GinBtree btree, Page page)
 	key = gintuple_get_key(btree->ginstate, itup, &category);
 
 	if (ginCompareAttEntries(btree->ginstate,
-							 btree->entryAttnum, btree->entryKey, btree->entryCategory,
+				   btree->entryAttnum, btree->entryKey, btree->entryCategory,
 							 attnum, key, category) > 0)
 		return TRUE;
 
@@ -488,6 +488,7 @@ entryPlaceToPage(GinBtree btree, Buffer buf, OffsetNumber off, XLogRecData **prd
 	Page		page = BufferGetPage(buf);
 	OffsetNumber placed;
 	int			cnt = 0;
+
 	/* these must be static so they can be returned to caller */
 	static XLogRecData rdata[3];
 	static ginxlogInsert data;
@@ -561,6 +562,7 @@ entrySplitPage(GinBtree btree, Buffer lbuf, Buffer rbuf, OffsetNumber off, XLogR
 	Page		lpage = PageGetTempPageCopy(BufferGetPage(lbuf));
 	Page		rpage = BufferGetPage(rbuf);
 	Size		pageSize = PageGetPageSize(lpage);
+
 	/* these must be static so they can be returned to caller */
 	static XLogRecData rdata[2];
 	static ginxlogSplit data;

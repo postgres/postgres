@@ -216,7 +216,7 @@ ECPGnoticeReceiver(void *arg, const PGresult *result)
 	struct sqlca_t *sqlca = ECPGget_sqlca();
 	int			sqlcode;
 
-	(void) arg; /* keep the compiler quiet */
+	(void) arg;					/* keep the compiler quiet */
 	if (sqlstate == NULL)
 		sqlstate = ECPG_SQLSTATE_ECPG_INTERNAL_ERROR;
 

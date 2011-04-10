@@ -238,7 +238,7 @@ struct vars
 #define NOERR() {if (ISERR()) return;}	/* if error seen, return */
 #define NOERRN()	{if (ISERR()) return NULL;} /* NOERR with retval */
 #define NOERRZ()	{if (ISERR()) return 0;}	/* NOERR with retval */
-#define INSIST(c, e) do { if (!(c)) ERR(e); } while (0)	/* error if c false */
+#define INSIST(c, e) do { if (!(c)) ERR(e); } while (0) /* error if c false */
 #define NOTE(b) (v->re->re_info |= (b)) /* note visible condition */
 #define EMPTYARC(x, y)	newarc(v->nfa, EMPTY, 0, x, y)
 

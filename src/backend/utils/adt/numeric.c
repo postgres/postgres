@@ -94,11 +94,11 @@ typedef int16 NumericDigit;
  * If the high bits of the first word of a NumericChoice (n_header, or
  * n_short.n_header, or n_long.n_sign_dscale) are NUMERIC_SHORT, then the
  * numeric follows the NumericShort format; if they are NUMERIC_POS or
- * NUMERIC_NEG, it follows the NumericLong format.  If they are NUMERIC_NAN,
+ * NUMERIC_NEG, it follows the NumericLong format.	If they are NUMERIC_NAN,
  * it is a NaN.  We currently always store a NaN using just two bytes (i.e.
  * only n_header), but previous releases used only the NumericLong format,
  * so we might find 4-byte NaNs on disk if a database has been migrated using
- * pg_upgrade.  In either case, when the high bits indicate a NaN, the
+ * pg_upgrade.	In either case, when the high bits indicate a NaN, the
  * remaining bits are never examined.  Currently, we always initialize these
  * to zero, but it might be possible to use them for some other purpose in
  * the future.
@@ -134,14 +134,14 @@ struct NumericLong
 union NumericChoice
 {
 	uint16		n_header;		/* Header word */
-	struct NumericLong	n_long;	/* Long form (4-byte header) */
-	struct NumericShort	n_short;	/* Short form (2-byte header) */
+	struct NumericLong n_long;	/* Long form (4-byte header) */
+	struct NumericShort n_short;	/* Short form (2-byte header) */
 };
 
 struct NumericData
 {
 	int32		vl_len_;		/* varlena header (do not touch directly!) */
-	union NumericChoice	choice;	/* choice of format */
+	union NumericChoice choice; /* choice of format */
 };
 
 
@@ -160,7 +160,7 @@ struct NumericData
 #define NUMERIC_IS_SHORT(n)		(NUMERIC_FLAGBITS(n) == NUMERIC_SHORT)
 
 #define NUMERIC_HDRSZ	(VARHDRSZ + sizeof(uint16) + sizeof(int16))
-#define NUMERIC_HDRSZ_SHORT	(VARHDRSZ + sizeof(uint16))
+#define NUMERIC_HDRSZ_SHORT (VARHDRSZ + sizeof(uint16))
 
 /*
  * If the flag bits are NUMERIC_SHORT or NUMERIC_NAN, we want the short header;
@@ -189,7 +189,7 @@ struct NumericData
  * Extract sign, display scale, weight.
  */
 
-#define NUMERIC_DSCALE_MASK 		0x3FFF
+#define NUMERIC_DSCALE_MASK			0x3FFF
 
 #define NUMERIC_SIGN(n) \
 	(NUMERIC_IS_SHORT(n) ? \
@@ -551,7 +551,7 @@ numeric_out(PG_FUNCTION_ARGS)
 /*
  * numeric_is_nan() -
  *
- *  Is Numeric value a NaN?
+ *	Is Numeric value a NaN?
  */
 bool
 numeric_is_nan(Numeric num)
@@ -562,13 +562,13 @@ numeric_is_nan(Numeric num)
 /*
  * numeric_maximum_size() -
  *
- *  Maximum size of a numeric with given typmod, or -1 if unlimited/unknown.
+ *	Maximum size of a numeric with given typmod, or -1 if unlimited/unknown.
  */
 int32
 numeric_maximum_size(int32 typmod)
 {
-	int precision;
-	int numeric_digits;
+	int			precision;
+	int			numeric_digits;
 
 	if (typmod < (int32) (VARHDRSZ))
 		return -1;
@@ -577,23 +577,23 @@ numeric_maximum_size(int32 typmod)
 	precision = ((typmod - VARHDRSZ) >> 16) & 0xffff;
 
 	/*
-	 * This formula computes the maximum number of NumericDigits we could
-	 * need in order to store the specified number of decimal digits.
-	 * Because the weight is stored as a number of NumericDigits rather
-	 * than a number of decimal digits, it's possible that the first
-	 * NumericDigit will contain only a single decimal digit.  Thus, the
-	 * first two decimal digits can require two NumericDigits to store,
-	 * but it isn't until we reach DEC_DIGITS + 2 decimal digits that we
-	 * potentially need a third NumericDigit.
+	 * This formula computes the maximum number of NumericDigits we could need
+	 * in order to store the specified number of decimal digits. Because the
+	 * weight is stored as a number of NumericDigits rather than a number of
+	 * decimal digits, it's possible that the first NumericDigit will contain
+	 * only a single decimal digit.  Thus, the first two decimal digits can
+	 * require two NumericDigits to store, but it isn't until we reach
+	 * DEC_DIGITS + 2 decimal digits that we potentially need a third
+	 * NumericDigit.
 	 */
 	numeric_digits = (precision + 2 * (DEC_DIGITS - 1)) / DEC_DIGITS;
 
 	/*
 	 * In most cases, the size of a numeric will be smaller than the value
 	 * computed below, because the varlena header will typically get toasted
-	 * down to a single byte before being stored on disk, and it may also
-	 * be possible to use a short numeric header.  But our job here is to
-	 * compute the worst case.
+	 * down to a single byte before being stored on disk, and it may also be
+	 * possible to use a short numeric header.	But our job here is to compute
+	 * the worst case.
 	 */
 	return NUMERIC_HDRSZ + (numeric_digits * sizeof(NumericDigit));
 }
@@ -761,12 +761,13 @@ numeric		(PG_FUNCTION_ARGS)
 	 * If the number is certainly in bounds and due to the target scale no
 	 * rounding could be necessary, just make a copy of the input and modify
 	 * its scale fields, unless the larger scale forces us to abandon the
-	 * short representation.  (Note we assume the existing dscale is honest...)
+	 * short representation.  (Note we assume the existing dscale is
+	 * honest...)
 	 */
 	ddigits = (NUMERIC_WEIGHT(num) + 1) * DEC_DIGITS;
 	if (ddigits <= maxdigits && scale >= NUMERIC_DSCALE(num)
 		&& (NUMERIC_CAN_BE_SHORT(scale, NUMERIC_WEIGHT(num))
-		|| !NUMERIC_IS_SHORT(num)))
+			|| !NUMERIC_IS_SHORT(num)))
 	{
 		new = (Numeric) palloc(VARSIZE(num));
 		memcpy(new, num, VARSIZE(num));
@@ -1427,7 +1428,7 @@ hash_numeric(PG_FUNCTION_ARGS)
 	int			end_offset;
 	int			i;
 	int			hash_len;
-	NumericDigit   *digits;
+	NumericDigit *digits;
 
 	/* If it's NaN, don't try to hash the rest of the fields */
 	if (NUMERIC_IS_NAN(key))
@@ -3727,7 +3728,7 @@ make_result(NumericVar *var)
 		SET_VARSIZE(result, len);
 		result->choice.n_short.n_header =
 			(sign == NUMERIC_NEG ? (NUMERIC_SHORT | NUMERIC_SHORT_SIGN_MASK)
-				: NUMERIC_SHORT)
+			 : NUMERIC_SHORT)
 			| (var->dscale << NUMERIC_SHORT_DSCALE_SHIFT)
 			| (weight < 0 ? NUMERIC_SHORT_WEIGHT_SIGN_MASK : 0)
 			| (weight & NUMERIC_SHORT_WEIGHT_MASK);

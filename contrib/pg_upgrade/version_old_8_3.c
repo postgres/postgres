@@ -288,7 +288,7 @@ old_8_3_rebuild_tsvector_tables(ClusterInfo *cluster, bool check_mode)
 
 				/* Rebuild all tsvector collumns with one ALTER TABLE command */
 				if (strcmp(PQgetvalue(res, rowno, i_nspname), nspname) != 0 ||
-				 strcmp(PQgetvalue(res, rowno, i_relname), relname) != 0)
+					strcmp(PQgetvalue(res, rowno, i_relname), relname) != 0)
 				{
 					if (strlen(nspname) != 0 || strlen(relname) != 0)
 						fprintf(script, ";\n\n");

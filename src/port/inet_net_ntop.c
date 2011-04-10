@@ -78,11 +78,11 @@ char *
 inet_net_ntop(int af, const void *src, int bits, char *dst, size_t size)
 {
 	/*
-	 * We need to cover both the address family constants used by the PG
-	 * inet type (PGSQL_AF_INET and PGSQL_AF_INET6) and those used by the
-	 * system libraries (AF_INET and AF_INET6).  We can safely assume
-	 * PGSQL_AF_INET == AF_INET, but the INET6 constants are very likely
-	 * to be different.  If AF_INET6 isn't defined, silently ignore it.
+	 * We need to cover both the address family constants used by the PG inet
+	 * type (PGSQL_AF_INET and PGSQL_AF_INET6) and those used by the system
+	 * libraries (AF_INET and AF_INET6).  We can safely assume PGSQL_AF_INET
+	 * == AF_INET, but the INET6 constants are very likely to be different.
+	 * If AF_INET6 isn't defined, silently ignore it.
 	 */
 	switch (af)
 	{

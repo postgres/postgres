@@ -1268,9 +1268,9 @@ _bt_pagedel(Relation rel, Buffer buf, BTStack stack)
 
 	/*
 	 * Check that the parent-page index items we're about to delete/overwrite
-	 * contain what we expect.  This can fail if the index has become
-	 * corrupt for some reason.  We want to throw any error before entering
-	 * the critical section --- otherwise it'd be a PANIC.
+	 * contain what we expect.	This can fail if the index has become corrupt
+	 * for some reason.  We want to throw any error before entering the
+	 * critical section --- otherwise it'd be a PANIC.
 	 *
 	 * The test on the target item is just an Assert because _bt_getstackbuf
 	 * should have guaranteed it has the expected contents.  The test on the

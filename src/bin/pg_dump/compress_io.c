@@ -1,8 +1,8 @@
 /*-------------------------------------------------------------------------
  *
  * compress_io.c
- *   Routines for archivers to write an uncompressed or compressed data
- *   stream.
+ *	 Routines for archivers to write an uncompressed or compressed data
+ *	 stream.
  *
  * Portions Copyright (c) 1996-2011, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
@@ -18,36 +18,36 @@
  * Compressor API
  * --------------
  *
- *  The interface for writing to an archive consists of three functions:
- *  AllocateCompressor, WriteDataToArchive and EndCompressor. First you call
- *  AllocateCompressor, then write all the data by calling WriteDataToArchive
- *  as many times as needed, and finally EndCompressor. WriteDataToArchive
- *  and EndCompressor will call the WriteFunc that was provided to
- *  AllocateCompressor for each chunk of compressed data.
+ *	The interface for writing to an archive consists of three functions:
+ *	AllocateCompressor, WriteDataToArchive and EndCompressor. First you call
+ *	AllocateCompressor, then write all the data by calling WriteDataToArchive
+ *	as many times as needed, and finally EndCompressor. WriteDataToArchive
+ *	and EndCompressor will call the WriteFunc that was provided to
+ *	AllocateCompressor for each chunk of compressed data.
  *
- *  The interface for reading an archive consists of just one function:
- *  ReadDataFromArchive. ReadDataFromArchive reads the whole compressed input
- *  stream, by repeatedly calling the given ReadFunc. ReadFunc returns the
- *  compressed data chunk at a time, and ReadDataFromArchive decompresses it
- *  and passes the decompressed data to ahwrite(), until ReadFunc returns 0
- *  to signal EOF.
+ *	The interface for reading an archive consists of just one function:
+ *	ReadDataFromArchive. ReadDataFromArchive reads the whole compressed input
+ *	stream, by repeatedly calling the given ReadFunc. ReadFunc returns the
+ *	compressed data chunk at a time, and ReadDataFromArchive decompresses it
+ *	and passes the decompressed data to ahwrite(), until ReadFunc returns 0
+ *	to signal EOF.
  *
- *  The interface is the same for compressed and uncompressed streams.
+ *	The interface is the same for compressed and uncompressed streams.
  *
  * Compressed stream API
  * ----------------------
  *
- *  The compressed stream API is a wrapper around the C standard fopen() and
- *  libz's gzopen() APIs. It allows you to use the same functions for
- *  compressed and uncompressed streams. cfopen_read() first tries to open
- *  the file with given name, and if it fails, it tries to open the same
- *  file with the .gz suffix. cfopen_write() opens a file for writing, an
- *  extra argument specifies if the file should be compressed, and adds the
- *  .gz suffix to the filename if so. This allows you to easily handle both
- *  compressed and uncompressed files.
+ *	The compressed stream API is a wrapper around the C standard fopen() and
+ *	libz's gzopen() APIs. It allows you to use the same functions for
+ *	compressed and uncompressed streams. cfopen_read() first tries to open
+ *	the file with given name, and if it fails, it tries to open the same
+ *	file with the .gz suffix. cfopen_write() opens a file for writing, an
+ *	extra argument specifies if the file should be compressed, and adds the
+ *	.gz suffix to the filename if so. This allows you to easily handle both
+ *	compressed and uncompressed files.
  *
  * IDENTIFICATION
- *     src/bin/pg_dump/compress_io.c
+ *	   src/bin/pg_dump/compress_io.c
  *
  *-------------------------------------------------------------------------
  */
@@ -63,36 +63,35 @@
 struct CompressorState
 {
 	CompressionAlgorithm comprAlg;
-	WriteFunc			writeF;
+	WriteFunc	writeF;
 
 #ifdef HAVE_LIBZ
-	z_streamp			zp;
-	char			   *zlibOut;
-	size_t				zlibOutSize;
+	z_streamp	zp;
+	char	   *zlibOut;
+	size_t		zlibOutSize;
 #endif
 };
 
 static const char *modulename = gettext_noop("compress_io");
 
 static void ParseCompressionOption(int compression, CompressionAlgorithm *alg,
-								   int *level);
+					   int *level);
 
 /* Routines that support zlib compressed data I/O */
 #ifdef HAVE_LIBZ
 static void InitCompressorZlib(CompressorState *cs, int level);
 static void DeflateCompressorZlib(ArchiveHandle *AH, CompressorState *cs,
-								  bool flush);
+					  bool flush);
 static void ReadDataFromArchiveZlib(ArchiveHandle *AH, ReadFunc readF);
 static size_t WriteDataToArchiveZlib(ArchiveHandle *AH, CompressorState *cs,
-									 const char *data, size_t dLen);
+					   const char *data, size_t dLen);
 static void EndCompressorZlib(ArchiveHandle *AH, CompressorState *cs);
-
 #endif
 
 /* Routines that support uncompressed data I/O */
 static void ReadDataFromArchiveNone(ArchiveHandle *AH, ReadFunc readF);
 static size_t WriteDataToArchiveNone(ArchiveHandle *AH, CompressorState *cs,
-									 const char *data, size_t dLen);
+					   const char *data, size_t dLen);
 
 /*
  * Interprets a numeric 'compression' value. The algorithm implied by the
@@ -127,7 +126,7 @@ AllocateCompressor(int compression, WriteFunc writeF)
 {
 	CompressorState *cs;
 	CompressionAlgorithm alg;
-	int level;
+	int			level;
 
 	ParseCompressionOption(compression, &alg, &level);
 
@@ -183,7 +182,7 @@ size_t
 WriteDataToArchive(ArchiveHandle *AH, CompressorState *cs,
 				   const void *data, size_t dLen)
 {
-	switch(cs->comprAlg)
+	switch (cs->comprAlg)
 	{
 		case COMPR_ALG_LIBZ:
 #ifdef HAVE_LIBZ
@@ -194,7 +193,7 @@ WriteDataToArchive(ArchiveHandle *AH, CompressorState *cs,
 		case COMPR_ALG_NONE:
 			return WriteDataToArchiveNone(AH, cs, data, dLen);
 	}
-	return 0; /* keep compiler quiet */
+	return 0;					/* keep compiler quiet */
 }
 
 /*
@@ -220,7 +219,7 @@ EndCompressor(ArchiveHandle *AH, CompressorState *cs)
 static void
 InitCompressorZlib(CompressorState *cs, int level)
 {
-	z_streamp			zp;
+	z_streamp	zp;
 
 	zp = cs->zp = (z_streamp) malloc(sizeof(z_stream));
 	if (cs->zp == NULL)
@@ -230,9 +229,9 @@ InitCompressorZlib(CompressorState *cs, int level)
 	zp->opaque = Z_NULL;
 
 	/*
-	 * zlibOutSize is the buffer size we tell zlib it can output
-	 * to.  We actually allocate one extra byte because some routines
-	 * want to append a trailing zero byte to the zlib output.
+	 * zlibOutSize is the buffer size we tell zlib it can output to.  We
+	 * actually allocate one extra byte because some routines want to append a
+	 * trailing zero byte to the zlib output.
 	 */
 	cs->zlibOut = (char *) malloc(ZLIB_OUT_SIZE + 1);
 	cs->zlibOutSize = ZLIB_OUT_SIZE;
@@ -253,7 +252,7 @@ InitCompressorZlib(CompressorState *cs, int level)
 static void
 EndCompressorZlib(ArchiveHandle *AH, CompressorState *cs)
 {
-	z_streamp			zp = cs->zp;
+	z_streamp	zp = cs->zp;
 
 	zp->next_in = NULL;
 	zp->avail_in = 0;
@@ -295,10 +294,11 @@ DeflateCompressorZlib(ArchiveHandle *AH, CompressorState *cs, bool flush)
 			if (zp->avail_out < cs->zlibOutSize)
 			{
 				/*
-				 * Any write function shoud do its own error checking but
-				 * to make sure we do a check here as well...
+				 * Any write function shoud do its own error checking but to
+				 * make sure we do a check here as well...
 				 */
-				size_t len = cs->zlibOutSize - zp->avail_out;
+				size_t		len = cs->zlibOutSize - zp->avail_out;
+
 				if (cs->writeF(AH, out, len) != len)
 					die_horribly(AH, modulename,
 								 "could not write to output file: %s\n",
@@ -320,8 +320,11 @@ WriteDataToArchiveZlib(ArchiveHandle *AH, CompressorState *cs,
 	cs->zp->next_in = (void *) data;
 	cs->zp->avail_in = dLen;
 	DeflateCompressorZlib(AH, cs, false);
-	/* we have either succeeded in writing dLen bytes or we have called
-	 * die_horribly() */
+
+	/*
+	 * we have either succeeded in writing dLen bytes or we have called
+	 * die_horribly()
+	 */
 	return dLen;
 }
 
@@ -400,8 +403,7 @@ ReadDataFromArchiveZlib(ArchiveHandle *AH, ReadFunc readF)
 	free(out);
 	free(zp);
 }
-
-#endif  /* HAVE_LIBZ */
+#endif   /* HAVE_LIBZ */
 
 
 /*
@@ -433,8 +435,8 @@ WriteDataToArchiveNone(ArchiveHandle *AH, CompressorState *cs,
 					   const char *data, size_t dLen)
 {
 	/*
-	 * Any write function should do its own error checking but to make
-	 * sure we do a check here as well...
+	 * Any write function should do its own error checking but to make sure we
+	 * do a check here as well...
 	 */
 	if (cs->writeF(AH, data, dLen) != dLen)
 		die_horribly(AH, modulename,
@@ -455,9 +457,9 @@ WriteDataToArchiveNone(ArchiveHandle *AH, CompressorState *cs,
  */
 struct cfp
 {
-	FILE *uncompressedfp;
+	FILE	   *uncompressedfp;
 #ifdef HAVE_LIBZ
-	gzFile compressedfp;
+	gzFile		compressedfp;
 #endif
 };
 
@@ -476,7 +478,7 @@ static int	hasSuffix(const char *filename, const char *suffix);
 cfp *
 cfopen_read(const char *path, const char *mode)
 {
-	cfp *fp;
+	cfp		   *fp;
 
 #ifdef HAVE_LIBZ
 	if (hasSuffix(path, ".gz"))
@@ -488,8 +490,9 @@ cfopen_read(const char *path, const char *mode)
 #ifdef HAVE_LIBZ
 		if (fp == NULL)
 		{
-			int fnamelen = strlen(path) + 4;
-			char *fname = malloc(fnamelen);
+			int			fnamelen = strlen(path) + 4;
+			char	   *fname = malloc(fnamelen);
+
 			if (fname == NULL)
 				die_horribly(NULL, modulename, "Out of memory\n");
 
@@ -514,15 +517,16 @@ cfopen_read(const char *path, const char *mode)
 cfp *
 cfopen_write(const char *path, const char *mode, int compression)
 {
-	cfp *fp;
+	cfp		   *fp;
 
 	if (compression == 0)
 		fp = cfopen(path, mode, 0);
 	else
 	{
 #ifdef HAVE_LIBZ
-		int fnamelen = strlen(path) + 4;
-		char *fname = malloc(fnamelen);
+		int			fnamelen = strlen(path) + 4;
+		char	   *fname = malloc(fnamelen);
+
 		if (fname == NULL)
 			die_horribly(NULL, modulename, "Out of memory\n");
 
@@ -543,7 +547,8 @@ cfopen_write(const char *path, const char *mode, int compression)
 cfp *
 cfopen(const char *path, const char *mode, int compression)
 {
-	cfp *fp = malloc(sizeof(cfp));
+	cfp		   *fp = malloc(sizeof(cfp));
+
 	if (fp == NULL)
 		die_horribly(NULL, modulename, "Out of memory\n");
 
@@ -625,7 +630,7 @@ cfgets(cfp *fp, char *buf, int len)
 int
 cfclose(cfp *fp)
 {
-	int result;
+	int			result;
 
 	if (fp == NULL)
 	{
@@ -664,14 +669,15 @@ cfeof(cfp *fp)
 static int
 hasSuffix(const char *filename, const char *suffix)
 {
-	int filenamelen = strlen(filename);
-	int suffixlen = strlen(suffix);
+	int			filenamelen = strlen(filename);
+	int			suffixlen = strlen(suffix);
 
 	if (filenamelen < suffixlen)
 		return 0;
 
 	return memcmp(&filename[filenamelen - suffixlen],
-					suffix,
-					suffixlen) == 0;
+				  suffix,
+				  suffixlen) == 0;
 }
+
 #endif

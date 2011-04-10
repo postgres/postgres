@@ -75,7 +75,7 @@ struct RBTree
  */
 #define RBNIL (&sentinel)
 
-static RBNode	sentinel = {InitialState, RBBLACK, RBNIL, RBNIL, NULL};
+static RBNode sentinel = {InitialState, RBBLACK, RBNIL, RBNIL, NULL};
 
 
 /*
@@ -99,10 +99,10 @@ static RBNode	sentinel = {InitialState, RBBLACK, RBNIL, RBNIL, NULL};
  *
  * The freefunc should just be pfree or equivalent; it should NOT attempt
  * to free any subsidiary data, because the node passed to it may not contain
- * valid data!  freefunc can be NULL if caller doesn't require retail
+ * valid data!	freefunc can be NULL if caller doesn't require retail
  * space reclamation.
  *
- * The RBTree node is palloc'd in the caller's memory context.  Note that
+ * The RBTree node is palloc'd in the caller's memory context.	Note that
  * all contents of the tree are actually allocated by the caller, not here.
  *
  * Since tree contents are managed by the caller, there is currently not
@@ -130,6 +130,7 @@ rb_create(Size node_size,
 	tree->combiner = combiner;
 	tree->allocfunc = allocfunc;
 	tree->freefunc = freefunc;
+
 	tree->arg = arg;
 
 	return tree;
@@ -161,7 +162,7 @@ rb_find(RBTree *rb, const RBNode *data)
 
 	while (node != RBNIL)
 	{
-		int		cmp = rb->comparator(data, node, rb->arg);
+		int			cmp = rb->comparator(data, node, rb->arg);
 
 		if (cmp == 0)
 			return node;
@@ -434,10 +435,11 @@ rb_insert(RBTree *rb, const RBNode *data, bool *isNew)
 	 */
 	*isNew = true;
 
-	x = rb->allocfunc(rb->arg);
+	x = rb->allocfunc (rb->arg);
 
 	x->iteratorState = InitialState;
 	x->color = RBRED;
+
 	x->left = RBNIL;
 	x->right = RBNIL;
 	x->parent = parent;
@@ -629,7 +631,7 @@ rb_delete_node(RBTree *rb, RBNode *z)
 
 	/* Now we can recycle the y node */
 	if (rb->freefunc)
-		rb->freefunc(y, rb->arg);
+		rb->freefunc (y, rb->arg);
 }
 
 /*

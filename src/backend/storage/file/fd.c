@@ -1063,15 +1063,15 @@ FileClose(File file)
 		 * If we get an error, as could happen within the ereport/elog calls,
 		 * we'll come right back here during transaction abort.  Reset the
 		 * flag to ensure that we can't get into an infinite loop.  This code
-		 * is arranged to ensure that the worst-case consequence is failing
-		 * to emit log message(s), not failing to attempt the unlink.
+		 * is arranged to ensure that the worst-case consequence is failing to
+		 * emit log message(s), not failing to attempt the unlink.
 		 */
 		vfdP->fdstate &= ~FD_TEMPORARY;
 
 		if (log_temp_files >= 0)
 		{
 			struct stat filestats;
-			int		stat_errno;
+			int			stat_errno;
 
 			/* first try the stat() */
 			if (stat(vfdP->fileName, &filestats))
@@ -1900,7 +1900,7 @@ RemovePgTempFiles(void)
 		RemovePgTempFilesInDir(temp_path);
 
 		snprintf(temp_path, sizeof(temp_path), "pg_tblspc/%s/%s",
-			spc_de->d_name, TABLESPACE_VERSION_DIRECTORY);
+				 spc_de->d_name, TABLESPACE_VERSION_DIRECTORY);
 		RemovePgTempRelationFiles(temp_path);
 	}
 
@@ -1977,7 +1977,7 @@ RemovePgTempRelationFiles(const char *tsdirname)
 
 	while ((de = ReadDir(ts_dir, tsdirname)) != NULL)
 	{
-		int		i = 0;
+		int			i = 0;
 
 		/*
 		 * We're only interested in the per-database directories, which have
@@ -2023,7 +2023,7 @@ RemovePgTempRelationFilesInDbspace(const char *dbspacedirname)
 		snprintf(rm_path, sizeof(rm_path), "%s/%s",
 				 dbspacedirname, de->d_name);
 
-		unlink(rm_path);	/* note we ignore any error */
+		unlink(rm_path);		/* note we ignore any error */
 	}
 
 	FreeDir(dbspace_dir);
@@ -2055,15 +2055,17 @@ looks_like_temp_rel_name(const char *name)
 	/* We might have _forkname or .segment or both. */
 	if (name[pos] == '_')
 	{
-		int		forkchar = forkname_chars(&name[pos+1], NULL);
+		int			forkchar = forkname_chars(&name[pos + 1], NULL);
+
 		if (forkchar <= 0)
 			return false;
 		pos += forkchar + 1;
 	}
 	if (name[pos] == '.')
 	{
-		int		segchar;
-		for (segchar = 1; isdigit((unsigned char) name[pos+segchar]); ++segchar)
+		int			segchar;
+
+		for (segchar = 1; isdigit((unsigned char) name[pos + segchar]); ++segchar)
 			;
 		if (segchar <= 1)
 			return false;

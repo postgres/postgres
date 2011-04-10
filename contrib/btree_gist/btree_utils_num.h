@@ -46,7 +46,7 @@ typedef struct
 	bool		(*f_le) (const void *, const void *);	/* less or equal */
 	bool		(*f_lt) (const void *, const void *);	/* less than */
 	int			(*f_cmp) (const void *, const void *);	/* key compare function */
-	float8		(*f_dist) (const void *, const void *);	/* key distance function */
+	float8		(*f_dist) (const void *, const void *); /* key distance function */
 } gbtree_ninfo;
 
 
@@ -94,7 +94,7 @@ typedef struct
 
 #define GET_FLOAT_DISTANCE(t, arg1, arg2)	Abs( ((float8) *((const t *) (arg1))) - ((float8) *((const t *) (arg2))) )
 
-#define SAMESIGN(a,b)   (((a) < 0) == ((b) < 0))
+#define SAMESIGN(a,b)	(((a) < 0) == ((b) < 0))
 
 /*
  * check to see if a float4/8 val has underflowed or overflowed
@@ -121,7 +121,7 @@ extern bool gbt_num_consistent(const GBT_NUMKEY_R *key, const void *query,
 				   const gbtree_ninfo *tinfo);
 
 extern float8 gbt_num_distance(const GBT_NUMKEY_R *key, const void *query,
-				   bool is_leaf, const gbtree_ninfo *tinfo);
+				 bool is_leaf, const gbtree_ninfo *tinfo);
 
 extern GIST_SPLITVEC *gbt_num_picksplit(const GistEntryVector *entryvec, GIST_SPLITVEC *v,
 				  const gbtree_ninfo *tinfo);

@@ -644,17 +644,17 @@ BufferAlloc(SMgrRelation smgr, char relpersistence, ForkNumber forkNum,
 
 				/* OK, do the I/O */
 				TRACE_POSTGRESQL_BUFFER_WRITE_DIRTY_START(forkNum, blockNum,
-												smgr->smgr_rnode.node.spcNode,
-												 smgr->smgr_rnode.node.dbNode,
-											   smgr->smgr_rnode.node.relNode);
+											   smgr->smgr_rnode.node.spcNode,
+												smgr->smgr_rnode.node.dbNode,
+											  smgr->smgr_rnode.node.relNode);
 
 				FlushBuffer(buf, NULL);
 				LWLockRelease(buf->content_lock);
 
 				TRACE_POSTGRESQL_BUFFER_WRITE_DIRTY_DONE(forkNum, blockNum,
-												smgr->smgr_rnode.node.spcNode,
-												 smgr->smgr_rnode.node.dbNode,
-											   smgr->smgr_rnode.node.relNode);
+											   smgr->smgr_rnode.node.spcNode,
+												smgr->smgr_rnode.node.dbNode,
+											  smgr->smgr_rnode.node.relNode);
 			}
 			else
 			{
@@ -2029,7 +2029,7 @@ PrintBufferDescs(void)
 			 "[%02d] (freeNext=%d, rel=%s, "
 			 "blockNum=%u, flags=0x%x, refcount=%u %d)",
 			 i, buf->freeNext,
-			 relpathbackend(buf->tag.rnode, InvalidBackendId, buf->tag.forkNum),
+		  relpathbackend(buf->tag.rnode, InvalidBackendId, buf->tag.forkNum),
 			 buf->tag.blockNum, buf->flags,
 			 buf->refcount, PrivateRefCount[i]);
 	}
@@ -2765,7 +2765,7 @@ local_buffer_write_error_callback(void *arg)
 	if (bufHdr != NULL)
 	{
 		char	   *path = relpathbackend(bufHdr->tag.rnode, MyBackendId,
-										 bufHdr->tag.forkNum);
+										  bufHdr->tag.forkNum);
 
 		errcontext("writing block %u of relation %s",
 				   bufHdr->tag.blockNum, path);

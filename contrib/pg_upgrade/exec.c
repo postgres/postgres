@@ -15,7 +15,7 @@
 
 static void check_data_dir(const char *pg_data);
 static void check_bin_dir(ClusterInfo *cluster);
-static void	validate_exec(const char *dir, const char *cmdName);
+static void validate_exec(const char *dir, const char *cmdName);
 
 
 /*

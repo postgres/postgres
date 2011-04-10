@@ -582,7 +582,7 @@ getTSCurrentConfig(bool emitError)
 	/* Look up the config */
 	TSCurrentConfigCache =
 		get_ts_config_oid(stringToQualifiedNameList(TSCurrentConfig),
-						 !emitError);
+						  !emitError);
 
 	return TSCurrentConfigCache;
 }

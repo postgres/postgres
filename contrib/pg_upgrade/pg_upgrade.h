@@ -85,6 +85,7 @@ typedef struct
 {
 	char		old_dir[MAXPGPATH];
 	char		new_dir[MAXPGPATH];
+
 	/*
 	 * old/new relfilenodes might differ for pg_largeobject(_metadata) indexes
 	 * due to VACUUM FULL or REINDEX.  Other relfilenodes are preserved.
@@ -92,7 +93,7 @@ typedef struct
 	Oid			old_relfilenode;
 	Oid			new_relfilenode;
 	/* the rest are used only for logging and error reporting */
-	char		nspname[NAMEDATALEN];		/* namespaces */
+	char		nspname[NAMEDATALEN];	/* namespaces */
 	char		relname[NAMEDATALEN];
 } FileNameMap;
 
@@ -180,7 +181,7 @@ typedef struct
 	char	   *bindir;			/* pathname for cluster's executable directory */
 	unsigned short port;		/* port number where postmaster is waiting */
 	uint32		major_version;	/* PG_VERSION of cluster */
-	char	   major_version_str[64];		/* string PG_VERSION of cluster */
+	char		major_version_str[64];	/* string PG_VERSION of cluster */
 	Oid			pg_database_oid;	/* OID of pg_database relation */
 	char	   *libpath;		/* pathname for cluster's pkglibdir */
 	char	   *tablespace_suffix;		/* directory specification */
@@ -232,9 +233,10 @@ typedef struct
 /*
  * Global variables
  */
-extern LogOpts	log_opts;
+extern LogOpts log_opts;
 extern UserOpts user_opts;
-extern ClusterInfo old_cluster, new_cluster;
+extern ClusterInfo old_cluster,
+			new_cluster;
 extern OSInfo os_info;
 extern char scandir_file_pattern[];
 
@@ -246,8 +248,8 @@ void check_old_cluster(bool live_check,
 				  char **sequence_script_file_name);
 void		check_new_cluster(void);
 void		report_clusters_compatible(void);
-void issue_warnings(char *sequence_script_file_name);
-void output_completion_banner(char *deletion_script_file_name);
+void		issue_warnings(char *sequence_script_file_name);
+void		output_completion_banner(char *deletion_script_file_name);
 void		check_cluster_versions(void);
 void		check_cluster_compatibility(bool live_check);
 void		create_script_for_old_cluster_deletion(char **deletion_script_file_name);
@@ -309,11 +311,11 @@ typedef void *pageCnvCtx;
 
 int			dir_matching_filenames(const struct dirent * scan_ent);
 int pg_scandir(const char *dirname, struct dirent *** namelist,
-			   int (*selector) (const struct dirent *));
+		   int (*selector) (const struct dirent *));
 const char *copyAndUpdateFile(pageCnvCtx *pageConverter, const char *src,
 				  const char *dst, bool force);
 const char *linkAndUpdateFile(pageCnvCtx *pageConverter, const char *src,
-							  const char *dst);
+				  const char *dst);
 
 void		check_hard_link(void);
 
@@ -329,10 +331,10 @@ void		check_loadable_libraries(void);
 FileNameMap *gen_db_file_maps(DbInfo *old_db,
 				 DbInfo *new_db, int *nmaps, const char *old_pgdata,
 				 const char *new_pgdata);
-void 		get_db_and_rel_infos(ClusterInfo *cluster);
+void		get_db_and_rel_infos(ClusterInfo *cluster);
 void		free_db_and_rel_infos(DbInfoArr *db_arr);
-void		print_maps(FileNameMap *maps, int n,
-				const char *db_name);
+void print_maps(FileNameMap *maps, int n,
+		   const char *db_name);
 
 /* option.c */
 
@@ -352,12 +354,12 @@ void		init_tablespaces(void);
 
 /* server.c */
 
-PGconn *connectToServer(ClusterInfo *cluster, const char *db_name);
-PGresult *executeQueryOrDie(PGconn *conn, const char *fmt,...);
+PGconn	   *connectToServer(ClusterInfo *cluster, const char *db_name);
+PGresult   *executeQueryOrDie(PGconn *conn, const char *fmt,...);
 
 void		start_postmaster(ClusterInfo *cluster, bool quiet);
 void		stop_postmaster(bool fast, bool quiet);
-uint32 get_major_server_version(ClusterInfo *cluster);
+uint32		get_major_server_version(ClusterInfo *cluster);
 void		check_for_libpq_envvars(void);
 
 
@@ -380,14 +382,14 @@ unsigned int str2uint(const char *str);
 /* version.c */
 
 void new_9_0_populate_pg_largeobject_metadata(ClusterInfo *cluster,
-											  bool check_mode);
+										 bool check_mode);
 
 /* version_old_8_3.c */
 
 void		old_8_3_check_for_name_data_type_usage(ClusterInfo *cluster);
 void		old_8_3_check_for_tsquery_usage(ClusterInfo *cluster);
-void old_8_3_rebuild_tsvector_tables(ClusterInfo *cluster, bool check_mode);
-void old_8_3_invalidate_hash_gin_indexes(ClusterInfo *cluster, bool check_mode);
+void		old_8_3_rebuild_tsvector_tables(ClusterInfo *cluster, bool check_mode);
+void		old_8_3_invalidate_hash_gin_indexes(ClusterInfo *cluster, bool check_mode);
 void old_8_3_invalidate_bpchar_pattern_ops_indexes(ClusterInfo *cluster,
-												   bool check_mode);
+											  bool check_mode);
 char	   *old_8_3_create_sequence_script(ClusterInfo *cluster);

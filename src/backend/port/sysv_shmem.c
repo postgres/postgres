@@ -153,7 +153,7 @@ InternalIpcMemoryCreate(IpcMemoryKey memKey, Size size)
 		  "segment exceeded your kernel's SHMMAX parameter.  You can either "
 						 "reduce the request size or reconfigure the kernel with larger SHMMAX.  "
 				  "To reduce the request size (currently %lu bytes), reduce "
-					   "PostgreSQL's shared memory usage, perhaps by reducing shared_buffers "
+						 "PostgreSQL's shared memory usage, perhaps by reducing shared_buffers "
 						 "or max_connections.\n"
 						 "If the request size is already small, it's possible that it is less than "
 						 "your kernel's SHMMIN parameter, in which case raising the request size or "
@@ -164,10 +164,10 @@ InternalIpcMemoryCreate(IpcMemoryKey memKey, Size size)
 				 (errno == ENOMEM) ?
 				 errhint("This error usually means that PostgreSQL's request for a shared "
 				   "memory segment exceeded available memory or swap space, "
-						 "or exceeded your kernel's SHMALL parameter.  You can either "
+			   "or exceeded your kernel's SHMALL parameter.  You can either "
 						 "reduce the request size or reconfigure the kernel with larger SHMALL.  "
 				  "To reduce the request size (currently %lu bytes), reduce "
-					   "PostgreSQL's shared memory usage, perhaps by reducing shared_buffers "
+						 "PostgreSQL's shared memory usage, perhaps by reducing shared_buffers "
 						 "or max_connections.\n"
 		"The PostgreSQL documentation contains more information about shared "
 						 "memory configuration.",
@@ -203,7 +203,7 @@ InternalIpcMemoryCreate(IpcMemoryKey memKey, Size size)
 	 * hurt, but might confuse humans).
 	 */
 	{
-		char line[64];
+		char		line[64];
 
 		sprintf(line, "%9lu %9lu",
 				(unsigned long) memKey, (unsigned long) shmid);

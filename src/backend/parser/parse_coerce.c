@@ -285,7 +285,7 @@ coerce_type(ParseState *pstate, Node *node,
 	{
 		/*
 		 * If we have a COLLATE clause, we have to push the coercion
-		 * underneath the COLLATE.  This is really ugly, but there is little
+		 * underneath the COLLATE.	This is really ugly, but there is little
 		 * choice because the above hacks on Consts and Params wouldn't happen
 		 * otherwise.
 		 */
@@ -1959,7 +1959,7 @@ find_coercion_pathway(Oid targetTypeId, Oid sourceTypeId,
 			Oid			sourceElem;
 
 			if ((targetElem = get_element_type(targetTypeId)) != InvalidOid &&
-				(sourceElem = get_base_element_type(sourceTypeId)) != InvalidOid)
+			(sourceElem = get_base_element_type(sourceTypeId)) != InvalidOid)
 			{
 				CoercionPathType elempathtype;
 				Oid			elemfuncid;
@@ -2091,8 +2091,8 @@ is_complex_array(Oid typid)
 static bool
 typeIsOfTypedTable(Oid reltypeId, Oid reloftypeId)
 {
-	Oid relid = typeidTypeRelid(reltypeId);
-	bool result = false;
+	Oid			relid = typeidTypeRelid(reltypeId);
+	bool		result = false;
 
 	if (relid)
 	{

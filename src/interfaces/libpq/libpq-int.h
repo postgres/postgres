@@ -295,7 +295,7 @@ struct pg_conn
 	char	   *pgtty;			/* tty on which the backend messages is
 								 * displayed (OBSOLETE, NOT USED) */
 	char	   *connect_timeout;	/* connection timeout (numeric string) */
-	char	   *client_encoding_initial; /* encoding to use */
+	char	   *client_encoding_initial;		/* encoding to use */
 	char	   *pgoptions;		/* options to start the backend with */
 	char	   *appname;		/* application name */
 	char	   *fbappname;		/* fallback application name */
@@ -337,7 +337,7 @@ struct pg_conn
 	PGTransactionStatusType xactStatus; /* never changes to ACTIVE */
 	PGQueryClass queryclass;
 	char	   *last_query;		/* last SQL command, or NULL if unknown */
-	char		last_sqlstate[6];	/* last reported SQLSTATE */
+	char		last_sqlstate[6];		/* last reported SQLSTATE */
 	bool		options_valid;	/* true if OK to attempt connection */
 	bool		nonblocking;	/* whether this connection is using nonblock
 								 * sending semantics */
@@ -353,7 +353,8 @@ struct pg_conn
 	SockAddr	raddr;			/* Remote address */
 	ProtocolVersion pversion;	/* FE/BE protocol version in use */
 	int			sversion;		/* server version, e.g. 70401 for 7.4.1 */
-	bool		auth_req_received;	/* true if any type of auth req received */
+	bool		auth_req_received;		/* true if any type of auth req
+										 * received */
 	bool		password_needed;	/* true if server demanded a password */
 	bool		dot_pgpass_used;	/* true if used .pgpass */
 	bool		sigpipe_so;		/* have we masked SIGPIPE via SO_NOSIGPIPE? */

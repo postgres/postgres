@@ -489,8 +489,8 @@ resolve_polymorphic_tupdesc(TupleDesc tupdesc, oidvector *declared_args,
 		return false;
 
 	/*
-	 * Identify the collation to use for polymorphic OUT parameters.
-	 * (It'll necessarily be the same for both anyelement and anyarray.)
+	 * Identify the collation to use for polymorphic OUT parameters. (It'll
+	 * necessarily be the same for both anyelement and anyarray.)
 	 */
 	anycollation = get_typcollation(OidIsValid(anyelement_type) ? anyelement_type : anyarray_type);
 	if (OidIsValid(anycollation))
@@ -500,7 +500,7 @@ resolve_polymorphic_tupdesc(TupleDesc tupdesc, oidvector *declared_args,
 		 * collation.  We do so if we can identify the input collation used
 		 * for the function.
 		 */
-		Oid		inputcollation = exprInputCollation(call_expr);
+		Oid			inputcollation = exprInputCollation(call_expr);
 
 		if (OidIsValid(inputcollation))
 			anycollation = inputcollation;

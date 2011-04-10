@@ -23,7 +23,7 @@ extern void ExecEndHash(HashState *node);
 extern void ExecReScanHash(HashState *node);
 
 extern HashJoinTable ExecHashTableCreate(Hash *node, List *hashOperators,
-										 bool keepNulls);
+					bool keepNulls);
 extern void ExecHashTableDestroy(HashJoinTable hashtable);
 extern void ExecHashTableInsert(HashJoinTable hashtable,
 					TupleTableSlot *slot,
@@ -41,7 +41,7 @@ extern void ExecHashGetBucketAndBatch(HashJoinTable hashtable,
 extern bool ExecScanHashBucket(HashJoinState *hjstate, ExprContext *econtext);
 extern void ExecPrepHashTableForUnmatched(HashJoinState *hjstate);
 extern bool ExecScanHashTableForUnmatched(HashJoinState *hjstate,
-										  ExprContext *econtext);
+							  ExprContext *econtext);
 extern void ExecHashTableReset(HashJoinTable hashtable);
 extern void ExecHashTableResetMatchFlags(HashJoinTable hashtable);
 extern void ExecChooseHashTableSize(double ntuples, int tupwidth, bool useskew,

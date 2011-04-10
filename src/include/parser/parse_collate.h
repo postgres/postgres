@@ -22,6 +22,6 @@ extern void assign_list_collations(ParseState *pstate, List *exprs);
 
 extern void assign_expr_collations(ParseState *pstate, Node *expr);
 
-extern Oid select_common_collation(ParseState *pstate, List *exprs, bool none_ok);
+extern Oid	select_common_collation(ParseState *pstate, List *exprs, bool none_ok);
 
 #endif   /* PARSE_COLLATE_H */

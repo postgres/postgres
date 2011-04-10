@@ -527,7 +527,7 @@ vac_update_relstats(Relation relation,
 
 	/*
 	 * If we have discovered that there are no indexes, then there's no
-	 * primary key either.  This could be done more thoroughly...
+	 * primary key either.	This could be done more thoroughly...
 	 */
 	if (pgcform->relhaspkey && !hasindex)
 	{
@@ -839,8 +839,8 @@ vacuum_rel(Oid relid, VacuumStmt *vacstmt, bool do_toast, bool for_wraparound,
 	 * There's a race condition here: the rel may have gone away since the
 	 * last time we saw it.  If so, we don't need to vacuum it.
 	 *
-	 * If we've been asked not to wait for the relation lock, acquire it
-	 * first in non-blocking mode, before calling try_relation_open().
+	 * If we've been asked not to wait for the relation lock, acquire it first
+	 * in non-blocking mode, before calling try_relation_open().
 	 */
 	if (!(vacstmt->options & VACOPT_NOWAIT))
 		onerel = try_relation_open(relid, lmode);
@@ -852,8 +852,8 @@ vacuum_rel(Oid relid, VacuumStmt *vacstmt, bool do_toast, bool for_wraparound,
 		if (IsAutoVacuumWorkerProcess() && Log_autovacuum_min_duration >= 0)
 			ereport(LOG,
 					(errcode(ERRCODE_LOCK_NOT_AVAILABLE),
-					 errmsg("skipping vacuum of \"%s\" --- lock not available",
-						vacstmt->relation->relname)));
+				   errmsg("skipping vacuum of \"%s\" --- lock not available",
+						  vacstmt->relation->relname)));
 	}
 
 	if (!onerel)

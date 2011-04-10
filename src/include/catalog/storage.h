@@ -30,7 +30,7 @@ extern void RelationTruncate(Relation rel, BlockNumber nblocks);
  * naming
  */
 extern void smgrDoPendingDeletes(bool isCommit);
-extern int smgrGetPendingDeletes(bool forCommit, RelFileNode **ptr);
+extern int	smgrGetPendingDeletes(bool forCommit, RelFileNode **ptr);
 extern void AtSubCommit_smgr(void);
 extern void AtSubAbort_smgr(void);
 extern void PostPrepare_smgr(void);

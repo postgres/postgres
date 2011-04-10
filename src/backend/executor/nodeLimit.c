@@ -346,14 +346,14 @@ pass_down_bound(LimitState *node, PlanState *child_node)
 	else if (IsA(child_node, ResultState))
 	{
 		/*
-		 * An extra consideration here is that if the Result is projecting
-		 * a targetlist that contains any SRFs, we can't assume that every
-		 * input tuple generates an output tuple, so a Sort underneath
-		 * might need to return more than N tuples to satisfy LIMIT N.
-		 * So we cannot use bounded sort.
+		 * An extra consideration here is that if the Result is projecting a
+		 * targetlist that contains any SRFs, we can't assume that every input
+		 * tuple generates an output tuple, so a Sort underneath might need to
+		 * return more than N tuples to satisfy LIMIT N. So we cannot use
+		 * bounded sort.
 		 *
-		 * If Result supported qual checking, we'd have to punt on seeing
-		 * a qual, too.  Note that having a resconstantqual is not a
+		 * If Result supported qual checking, we'd have to punt on seeing a
+		 * qual, too.  Note that having a resconstantqual is not a
 		 * showstopper: if that fails we're not getting any rows at all.
 		 */
 		if (outerPlanState(child_node) &&

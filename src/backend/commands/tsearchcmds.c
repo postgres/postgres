@@ -407,7 +407,8 @@ RenameTSParser(List *oldname, const char *newname)
 void
 AlterTSParserNamespace(List *name, const char *newschema)
 {
-	Oid			prsId, nspOid;
+	Oid			prsId,
+				nspOid;
 	Relation	rel;
 
 	rel = heap_open(TSParserRelationId, RowExclusiveLock);
@@ -429,7 +430,7 @@ AlterTSParserNamespace(List *name, const char *newschema)
 Oid
 AlterTSParserNamespace_oid(Oid prsId, Oid newNspOid)
 {
-	Oid         oldNspOid;
+	Oid			oldNspOid;
 	Relation	rel;
 
 	rel = heap_open(TSParserRelationId, RowExclusiveLock);
@@ -685,7 +686,8 @@ RenameTSDictionary(List *oldname, const char *newname)
 void
 AlterTSDictionaryNamespace(List *name, const char *newschema)
 {
-	Oid			dictId, nspOid;
+	Oid			dictId,
+				nspOid;
 	Relation	rel;
 
 	rel = heap_open(TSDictionaryRelationId, RowExclusiveLock);
@@ -708,7 +710,7 @@ AlterTSDictionaryNamespace(List *name, const char *newschema)
 Oid
 AlterTSDictionaryNamespace_oid(Oid dictId, Oid newNspOid)
 {
-	Oid         oldNspOid;
+	Oid			oldNspOid;
 	Relation	rel;
 
 	rel = heap_open(TSDictionaryRelationId, RowExclusiveLock);
@@ -1218,7 +1220,8 @@ RenameTSTemplate(List *oldname, const char *newname)
 void
 AlterTSTemplateNamespace(List *name, const char *newschema)
 {
-	Oid			tmplId, nspOid;
+	Oid			tmplId,
+				nspOid;
 	Relation	rel;
 
 	rel = heap_open(TSTemplateRelationId, RowExclusiveLock);
@@ -1240,7 +1243,7 @@ AlterTSTemplateNamespace(List *name, const char *newschema)
 Oid
 AlterTSTemplateNamespace_oid(Oid tmplId, Oid newNspOid)
 {
-	Oid         oldNspOid;
+	Oid			oldNspOid;
 	Relation	rel;
 
 	rel = heap_open(TSTemplateRelationId, RowExclusiveLock);
@@ -1668,7 +1671,8 @@ RenameTSConfiguration(List *oldname, const char *newname)
 void
 AlterTSConfigurationNamespace(List *name, const char *newschema)
 {
-	Oid			cfgId, nspOid;
+	Oid			cfgId,
+				nspOid;
 	Relation	rel;
 
 	rel = heap_open(TSConfigRelationId, RowExclusiveLock);
@@ -1691,7 +1695,7 @@ AlterTSConfigurationNamespace(List *name, const char *newschema)
 Oid
 AlterTSConfigurationNamespace_oid(Oid cfgId, Oid newNspOid)
 {
-	Oid         oldNspOid;
+	Oid			oldNspOid;
 	Relation	rel;
 
 	rel = heap_open(TSConfigRelationId, RowExclusiveLock);

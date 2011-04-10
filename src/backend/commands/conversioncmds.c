@@ -335,7 +335,8 @@ AlterConversionOwner_internal(Relation rel, Oid conversionOid, Oid newOwnerId)
 void
 AlterConversionNamespace(List *name, const char *newschema)
 {
-	Oid			convOid, nspOid;
+	Oid			convOid,
+				nspOid;
 	Relation	rel;
 
 	rel = heap_open(ConversionRelationId, RowExclusiveLock);
@@ -361,7 +362,7 @@ AlterConversionNamespace(List *name, const char *newschema)
 Oid
 AlterConversionNamespace_oid(Oid convOid, Oid newNspOid)
 {
-	Oid         oldNspOid;
+	Oid			oldNspOid;
 	Relation	rel;
 
 	rel = heap_open(ConversionRelationId, RowExclusiveLock);

@@ -199,7 +199,7 @@ typedef struct AggStatePerAggData
 	 */
 
 	Tuplesortstate *sortstate;	/* sort object, if DISTINCT or ORDER BY */
-} AggStatePerAggData;
+}	AggStatePerAggData;
 
 /*
  * AggStatePerGroupData - per-aggregate-per-group working state
@@ -246,7 +246,7 @@ typedef struct AggHashEntryData
 	TupleHashEntryData shared;	/* common header for hash table entries */
 	/* per-aggregate transition status array - must be last! */
 	AggStatePerGroupData pergroup[1];	/* VARIABLE LENGTH ARRAY */
-} AggHashEntryData;				/* VARIABLE LENGTH STRUCT */
+}	AggHashEntryData;	/* VARIABLE LENGTH STRUCT */
 
 
 static void initialize_aggregates(AggState *aggstate,
@@ -827,7 +827,7 @@ build_hash_table(AggState *aggstate)
 	Assert(node->numGroups > 0);
 
 	entrysize = sizeof(AggHashEntryData) +
-		(aggstate->numaggs - 1) *sizeof(AggStatePerGroupData);
+		(aggstate->numaggs - 1) * sizeof(AggStatePerGroupData);
 
 	aggstate->hashtable = BuildTupleHashTable(node->numCols,
 											  node->grpColIdx,
@@ -899,7 +899,7 @@ hash_agg_entry_size(int numAggs)
 
 	/* This must match build_hash_table */
 	entrysize = sizeof(AggHashEntryData) +
-		(numAggs - 1) *sizeof(AggStatePerGroupData);
+		(numAggs - 1) * sizeof(AggStatePerGroupData);
 	entrysize = MAXALIGN(entrysize);
 	/* Account for hashtable overhead (assuming fill factor = 1) */
 	entrysize += 3 * sizeof(void *);

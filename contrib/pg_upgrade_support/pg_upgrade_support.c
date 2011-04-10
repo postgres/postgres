@@ -178,9 +178,9 @@ create_empty_extension(PG_FUNCTION_ARGS)
 						  &textDatums, NULL, &ndatums);
 		for (i = 0; i < ndatums; i++)
 		{
-			text   *txtname = DatumGetTextPP(textDatums[i]);
-			char   *extName = text_to_cstring(txtname);
-			Oid		extOid = get_extension_oid(extName, false);
+			text	   *txtname = DatumGetTextPP(textDatums[i]);
+			char	   *extName = text_to_cstring(txtname);
+			Oid			extOid = get_extension_oid(extName, false);
 
 			requiredExtensions = lappend_oid(requiredExtensions, extOid);
 		}
@@ -188,7 +188,7 @@ create_empty_extension(PG_FUNCTION_ARGS)
 
 	InsertExtensionTuple(text_to_cstring(extName),
 						 GetUserId(),
-						 get_namespace_oid(text_to_cstring(schemaName), false),
+					   get_namespace_oid(text_to_cstring(schemaName), false),
 						 relocatable,
 						 text_to_cstring(extVersion),
 						 extConfig,

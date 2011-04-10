@@ -126,7 +126,7 @@ recordMultipleDependencies(const ObjectAddress *depender,
 
 /*
  * If we are executing a CREATE EXTENSION operation, mark the given object
- * as being a member of the extension.  Otherwise, do nothing.
+ * as being a member of the extension.	Otherwise, do nothing.
  *
  * This must be called during creation of any user-definable object type
  * that could be a member of an extension.
@@ -136,7 +136,7 @@ recordDependencyOnCurrentExtension(const ObjectAddress *object)
 {
 	if (creating_extension)
 	{
-		ObjectAddress	extension;
+		ObjectAddress extension;
 
 		extension.classId = ExtensionRelationId;
 		extension.objectId = CurrentExtensionObject;
@@ -155,7 +155,7 @@ recordDependencyOnCurrentExtension(const ObjectAddress *object)
  * (possibly with some differences from before).
  *
  * If skipExtensionDeps is true, we do not delete any dependencies that
- * show that the given object is a member of an extension.  This avoids
+ * show that the given object is a member of an extension.	This avoids
  * needing a lot of extra logic to fetch and recreate that dependency.
  */
 long
@@ -185,7 +185,7 @@ deleteDependencyRecordsFor(Oid classId, Oid objectId,
 	while (HeapTupleIsValid(tup = systable_getnext(scan)))
 	{
 		if (skipExtensionDeps &&
-			((Form_pg_depend) GETSTRUCT(tup))->deptype == DEPENDENCY_EXTENSION)
+		  ((Form_pg_depend) GETSTRUCT(tup))->deptype == DEPENDENCY_EXTENSION)
 			continue;
 
 		simple_heap_delete(depRel, &tup->t_self);

@@ -227,7 +227,7 @@ extern bool is_member_of_role(Oid member, Oid role);
 extern bool is_member_of_role_nosuper(Oid member, Oid role);
 extern bool is_admin_of_role(Oid member, Oid role);
 extern void check_is_member_of_role(Oid member, Oid role);
-extern Oid get_role_oid(const char *rolname, bool missing_ok);
+extern Oid	get_role_oid(const char *rolname, bool missing_ok);
 
 extern void select_best_grantor(Oid roleId, AclMode privileges,
 					const Acl *acl, Oid ownerId,

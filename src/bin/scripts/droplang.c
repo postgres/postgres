@@ -195,8 +195,8 @@ main(int argc, char *argv[])
 	PQclear(result);
 
 	/*
-	 * Attempt to drop the language.  We do not use CASCADE, so that
-	 * the drop will fail if there are any functions in the language.
+	 * Attempt to drop the language.  We do not use CASCADE, so that the drop
+	 * will fail if there are any functions in the language.
 	 */
 	printfPQExpBuffer(&sql, "DROP EXTENSION \"%s\";\n", langname);
 

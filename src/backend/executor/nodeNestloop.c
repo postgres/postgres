@@ -137,9 +137,8 @@ ExecNestLoop(NestLoopState *node)
 			node->nl_MatchedOuter = false;
 
 			/*
-			 * fetch the values of any outer Vars that must be passed to
-			 * the inner scan, and store them in the appropriate PARAM_EXEC
-			 * slots.
+			 * fetch the values of any outer Vars that must be passed to the
+			 * inner scan, and store them in the appropriate PARAM_EXEC slots.
 			 */
 			foreach(lc, nl->nestParams)
 			{
@@ -330,9 +329,9 @@ ExecInitNestLoop(NestLoop *node, EState *estate, int eflags)
 	 *
 	 * If we have no parameters to pass into the inner rel from the outer,
 	 * tell the inner child that cheap rescans would be good.  If we do have
-	 * such parameters, then there is no point in REWIND support at all in
-	 * the inner child, because it will always be rescanned with fresh
-	 * parameter values.
+	 * such parameters, then there is no point in REWIND support at all in the
+	 * inner child, because it will always be rescanned with fresh parameter
+	 * values.
 	 */
 	outerPlanState(nlstate) = ExecInitNode(outerPlan(node), estate, eflags);
 	if (node->nestParams == NIL)

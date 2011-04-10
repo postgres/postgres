@@ -253,7 +253,7 @@ make_pathkey_from_sortinfo(PlannerInfo *root,
 	/*
 	 * EquivalenceClasses need to contain opfamily lists based on the family
 	 * membership of mergejoinable equality operators, which could belong to
-	 * more than one opfamily.  So we have to look up the opfamily's equality
+	 * more than one opfamily.	So we have to look up the opfamily's equality
 	 * operator and get its membership.
 	 */
 	equality_op = get_opfamily_member(opfamily,
@@ -558,9 +558,9 @@ build_index_pathkeys(PlannerInfo *root,
 											  true);
 
 		/*
-		 * If the sort key isn't already present in any EquivalenceClass,
-		 * then it's not an interesting sort order for this query.  So
-		 * we can stop now --- lower-order sort keys aren't useful either.
+		 * If the sort key isn't already present in any EquivalenceClass, then
+		 * it's not an interesting sort order for this query.  So we can stop
+		 * now --- lower-order sort keys aren't useful either.
 		 */
 		if (!cpathkey)
 			break;
@@ -747,8 +747,8 @@ convert_subquery_pathkeys(PlannerInfo *root, RelOptInfo *rel,
 						continue;
 
 					/*
-					 * Build a representation of this targetlist entry as
-					 * an outer Var.
+					 * Build a representation of this targetlist entry as an
+					 * outer Var.
 					 */
 					outer_expr = (Expr *) makeVarFromTargetEntry(rel->relid,
 																 tle);
@@ -923,7 +923,7 @@ make_pathkeys_for_sortclauses(PlannerInfo *root,
  * right sides.
  *
  * Note this is called before EC merging is complete, so the links won't
- * necessarily point to canonical ECs.  Before they are actually used for
+ * necessarily point to canonical ECs.	Before they are actually used for
  * anything, update_mergeclause_eclasses must be called to ensure that
  * they've been updated to point to canonical ECs.
  */

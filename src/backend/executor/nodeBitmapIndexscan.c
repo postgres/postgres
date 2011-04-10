@@ -307,8 +307,8 @@ ExecInitBitmapIndexScan(BitmapIndexScan *node, EState *estate, int eflags)
 							   indexstate->biss_NumScanKeys);
 
 	/*
-	 * If no run-time keys to calculate, go ahead and pass the scankeys to
-	 * the index AM.
+	 * If no run-time keys to calculate, go ahead and pass the scankeys to the
+	 * index AM.
 	 */
 	if (indexstate->biss_NumRuntimeKeys == 0 &&
 		indexstate->biss_NumArrayKeys == 0)

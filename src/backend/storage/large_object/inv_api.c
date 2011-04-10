@@ -844,8 +844,8 @@ inv_truncate(LargeObjectDesc *obj_desc, int len)
 	{
 		/*
 		 * If the first page we found was after the truncation point, we're in
-		 * a hole that we'll fill, but we need to delete the later page because
-		 * the loop below won't visit it again.
+		 * a hole that we'll fill, but we need to delete the later page
+		 * because the loop below won't visit it again.
 		 */
 		if (olddata != NULL)
 		{

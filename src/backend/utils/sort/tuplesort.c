@@ -351,7 +351,7 @@ struct Tuplesortstate
 	 * indexScanKey.
 	 */
 	IndexInfo  *indexInfo;		/* info about index being used for reference */
-	EState 	   *estate;			/* for evaluating index expressions */
+	EState	   *estate;			/* for evaluating index expressions */
 
 	/*
 	 * These variables are specific to the IndexTuple case; they are set by
@@ -469,12 +469,12 @@ static void readtup_heap(Tuplesortstate *state, SortTuple *stup,
 			 int tapenum, unsigned int len);
 static void reversedirection_heap(Tuplesortstate *state);
 static int comparetup_cluster(const SortTuple *a, const SortTuple *b,
-							  Tuplesortstate *state);
+				   Tuplesortstate *state);
 static void copytup_cluster(Tuplesortstate *state, SortTuple *stup, void *tup);
 static void writetup_cluster(Tuplesortstate *state, int tapenum,
-							 SortTuple *stup);
+				 SortTuple *stup);
 static void readtup_cluster(Tuplesortstate *state, SortTuple *stup,
-							int tapenum, unsigned int len);
+				int tapenum, unsigned int len);
 static int comparetup_index_btree(const SortTuple *a, const SortTuple *b,
 					   Tuplesortstate *state);
 static int comparetup_index_hash(const SortTuple *a, const SortTuple *b,
@@ -582,7 +582,7 @@ tuplesort_begin_common(int workMem, bool randomAccess)
 Tuplesortstate *
 tuplesort_begin_heap(TupleDesc tupDesc,
 					 int nkeys, AttrNumber *attNums,
-					 Oid *sortOperators, Oid *collations, bool *nullsFirstFlags,
+				  Oid *sortOperators, Oid *collations, bool *nullsFirstFlags,
 					 int workMem, bool randomAccess)
 {
 	Tuplesortstate *state = tuplesort_begin_common(workMem, randomAccess);
@@ -699,7 +699,7 @@ tuplesort_begin_cluster(TupleDesc tupDesc,
 	if (state->indexInfo->ii_Expressions != NULL)
 	{
 		TupleTableSlot *slot;
-		ExprContext	   *econtext;
+		ExprContext *econtext;
 
 		/*
 		 * We will need to use FormIndexDatum to evaluate the index
@@ -796,7 +796,7 @@ tuplesort_begin_index_hash(Relation indexRel,
 
 Tuplesortstate *
 tuplesort_begin_datum(Oid datumType,
-					  Oid sortOperator, Oid sortCollation, bool nullsFirstFlag,
+					Oid sortOperator, Oid sortCollation, bool nullsFirstFlag,
 					  int workMem, bool randomAccess)
 {
 	Tuplesortstate *state = tuplesort_begin_common(workMem, randomAccess);
@@ -945,7 +945,7 @@ tuplesort_end(Tuplesortstate *state)
 	/* Free any execution state created for CLUSTER case */
 	if (state->estate != NULL)
 	{
-		ExprContext	   *econtext = GetPerTupleExprContext(state->estate);
+		ExprContext *econtext = GetPerTupleExprContext(state->estate);
 
 		ExecDropSingleTupleTableSlot(econtext->ecxt_scantuple);
 		FreeExecutorState(state->estate);
@@ -1546,7 +1546,7 @@ tuplesort_gettupleslot(Tuplesortstate *state, bool forward,
 
 /*
  * Fetch the next tuple in either forward or back direction.
- * Returns NULL if no more tuples.  If *should_free is set, the
+ * Returns NULL if no more tuples.	If *should_free is set, the
  * caller must pfree the returned tuple when done with it.
  */
 HeapTuple

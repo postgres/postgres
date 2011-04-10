@@ -4,7 +4,7 @@
  *
  *	This file is copied from the 'files' format file, but dumps data into
  *	one temp file then sends it to the output TAR archive.
- * 
+ *
  *	NOTE: If you untar the created 'tar' file, the resulting files are
  *	compatible with the 'directory' format. Please keep the two formats in
  *	sync.

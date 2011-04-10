@@ -505,8 +505,7 @@ check_control_data(ControlData *oldctrl,
 			   "\nOld and new pg_controldata date/time storage types do not match.\n");
 
 		/*
-		 * This is a common 8.3 -> 8.4 upgrade problem, so we are more
-		 * verbose
+		 * This is a common 8.3 -> 8.4 upgrade problem, so we are more verbose
 		 */
 		pg_log(PG_FATAL,
 			   "You will need to rebuild the new server with configure\n"

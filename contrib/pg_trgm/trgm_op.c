@@ -273,9 +273,9 @@ get_wildcard_part(const char *str, int lenstr,
 	const char *beginword = str;
 	const char *endword;
 	char	   *s = buf;
-	bool        in_wildcard_meta = false;
-	bool        in_escape = false;
-	int         clen;
+	bool		in_wildcard_meta = false;
+	bool		in_escape = false;
+	int			clen;
 
 	/*
 	 * Find the first word character remembering whether last character was
@@ -410,14 +410,14 @@ generate_wildcard_trgm(const char *str, int slen)
 {
 	TRGM	   *trg;
 	char	   *buf,
-		       *buf2;
+			   *buf2;
 	trgm	   *tptr;
 	int			len,
 				charlen,
 				bytelen;
 	const char *eword;
 
-	trg = (TRGM *) palloc(TRGMHDRSIZE + sizeof(trgm) * (slen / 2 + 1) * 3);
+	trg = (TRGM *) palloc(TRGMHDRSIZE + sizeof(trgm) * (slen / 2 + 1) *3);
 	trg->flag = ARRKEY;
 	SET_VARSIZE(trg, TRGMHDRSIZE);
 
@@ -638,6 +638,7 @@ similarity_dist(PG_FUNCTION_ARGS)
 	float4		res = DatumGetFloat4(DirectFunctionCall2(similarity,
 														 PG_GETARG_DATUM(0),
 														 PG_GETARG_DATUM(1)));
+
 	PG_RETURN_FLOAT4(1.0 - res);
 }
 

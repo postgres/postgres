@@ -61,6 +61,7 @@ static int	recv_and_check_password_packet(Port *port);
 #define IDENT_PORT 113
 
 static int	ident_inet(hbaPort *port);
+
 #ifdef HAVE_UNIX_SOCKETS
 static int	auth_peer(hbaPort *port);
 #endif
@@ -182,7 +183,7 @@ static int	pg_GSS_recvauth(Port *port);
  *----------------------------------------------------------------
  */
 #ifdef ENABLE_SSPI
-typedef		SECURITY_STATUS
+typedef SECURITY_STATUS
 			(WINAPI * QUERY_SECURITY_CONTEXT_TOKEN_FN) (
 													   PCtxtHandle, void **);
 static int	pg_SSPI_recvauth(Port *port);
@@ -543,7 +544,7 @@ ClientAuthentication(Port *port)
 			}
 #endif
 			status = auth_peer(port);
-#else /* HAVE_UNIX_SOCKETS */
+#else							/* HAVE_UNIX_SOCKETS */
 			Assert(false);
 #endif
 			break;
@@ -598,7 +599,7 @@ ClientAuthentication(Port *port)
 	}
 
 	if (ClientAuthentication_hook)
-		(*ClientAuthentication_hook)(port, status);
+		(*ClientAuthentication_hook) (port, status);
 
 	if (status == STATUS_OK)
 		sendAuthRequest(port, AUTH_REQ_OK);
@@ -844,7 +845,7 @@ pg_krb5_recvauth(Port *port)
 		return ret;
 
 	retval = krb5_recvauth(pg_krb5_context, &auth_context,
-						   (krb5_pointer) & port->sock, pg_krb_srvnam,
+						   (krb5_pointer) &port->sock, pg_krb_srvnam,
 						   pg_krb5_server, 0, pg_krb5_keytab, &ticket);
 	if (retval)
 	{
@@ -1814,7 +1815,6 @@ auth_peer(hbaPort *port)
 	}
 
 	strlcpy(ident_user, pass->pw_name, IDENT_USERNAME_MAX + 1);
-
 #elif defined(SO_PEERCRED)
 	/* Linux style: use getsockopt(SO_PEERCRED) */
 	struct ucred peercred;
@@ -1843,7 +1843,6 @@ auth_peer(hbaPort *port)
 	}
 
 	strlcpy(ident_user, pass->pw_name, IDENT_USERNAME_MAX + 1);
-
 #elif defined(HAVE_GETPEERUCRED)
 	/* Solaris > 10 */
 	uid_t		uid;
@@ -1879,7 +1878,6 @@ auth_peer(hbaPort *port)
 	}
 
 	strlcpy(ident_user, pass->pw_name, IDENT_USERNAME_MAX + 1);
-
 #elif defined(HAVE_STRUCT_CMSGCRED) || defined(HAVE_STRUCT_FCRED) || (defined(HAVE_STRUCT_SOCKCRED) && defined(LOCAL_CREDS))
 	struct msghdr msg;
 
@@ -1947,7 +1945,6 @@ auth_peer(hbaPort *port)
 	}
 
 	strlcpy(ident_user, pw->pw_name, IDENT_USERNAME_MAX + 1);
-
 #else
 	ereport(LOG,
 			(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
@@ -2768,10 +2765,10 @@ CheckRADIUSAuth(Port *port)
 	pg_freeaddrinfo_all(hint.ai_family, serveraddrs);
 
 	/*
-	 * Figure out at what time we should time out. We can't just use
-	 * a single call to select() with a timeout, since somebody can
-	 * be sending invalid packets to our port thus causing us to
-	 * retry in a loop and never time out.
+	 * Figure out at what time we should time out. We can't just use a single
+	 * call to select() with a timeout, since somebody can be sending invalid
+	 * packets to our port thus causing us to retry in a loop and never time
+	 * out.
 	 */
 	gettimeofday(&endtime, NULL);
 	endtime.tv_sec += RADIUS_TIMEOUT;
@@ -2780,7 +2777,7 @@ CheckRADIUSAuth(Port *port)
 	{
 		struct timeval timeout;
 		struct timeval now;
-		int64 timeoutval;
+		int64		timeoutval;
 
 		gettimeofday(&now, NULL);
 		timeoutval = (endtime.tv_sec * 1000000 + endtime.tv_usec) - (now.tv_sec * 1000000 + now.tv_usec);
@@ -2820,12 +2817,12 @@ CheckRADIUSAuth(Port *port)
 		/*
 		 * Attempt to read the response packet, and verify the contents.
 		 *
-		 * Any packet that's not actually a RADIUS packet, or otherwise
-		 * does not validate as an explicit reject, is just ignored and
-		 * we retry for another packet (until we reach the timeout). This
-		 * is to avoid the possibility to denial-of-service the login by
-		 * flooding the server with invalid packets on the port that
-		 * we're expecting the RADIUS response on.
+		 * Any packet that's not actually a RADIUS packet, or otherwise does
+		 * not validate as an explicit reject, is just ignored and we retry
+		 * for another packet (until we reach the timeout). This is to avoid
+		 * the possibility to denial-of-service the login by flooding the
+		 * server with invalid packets on the port that we're expecting the
+		 * RADIUS response on.
 		 */
 
 		addrsize = sizeof(remoteaddr);
@@ -2846,12 +2843,12 @@ CheckRADIUSAuth(Port *port)
 		{
 #ifdef HAVE_IPV6
 			ereport(LOG,
-					(errmsg("RADIUS response was sent from incorrect port: %i",
-							ntohs(remoteaddr.sin6_port))));
+				  (errmsg("RADIUS response was sent from incorrect port: %i",
+						  ntohs(remoteaddr.sin6_port))));
 #else
 			ereport(LOG,
-					(errmsg("RADIUS response was sent from incorrect port: %i",
-							ntohs(remoteaddr.sin_port))));
+				  (errmsg("RADIUS response was sent from incorrect port: %i",
+						  ntohs(remoteaddr.sin_port))));
 #endif
 			continue;
 		}
@@ -2885,12 +2882,12 @@ CheckRADIUSAuth(Port *port)
 		 */
 		cryptvector = palloc(packetlength + strlen(port->hba->radiussecret));
 
-		memcpy(cryptvector, receivepacket, 4);		/* code+id+length */
-		memcpy(cryptvector + 4, packet->vector, RADIUS_VECTOR_LENGTH);		/* request
-																			 * authenticator, from
-																			 * original packet */
-		if (packetlength > RADIUS_HEADER_LENGTH)	/* there may be no attributes
-													 * at all */
+		memcpy(cryptvector, receivepacket, 4);	/* code+id+length */
+		memcpy(cryptvector + 4, packet->vector, RADIUS_VECTOR_LENGTH);	/* request
+																		 * authenticator, from
+																		 * original packet */
+		if (packetlength > RADIUS_HEADER_LENGTH)		/* there may be no
+														 * attributes at all */
 			memcpy(cryptvector + RADIUS_HEADER_LENGTH, receive_buffer + RADIUS_HEADER_LENGTH, packetlength - RADIUS_HEADER_LENGTH);
 		memcpy(cryptvector + packetlength, port->hba->radiussecret, strlen(port->hba->radiussecret));
 
@@ -2899,7 +2896,7 @@ CheckRADIUSAuth(Port *port)
 						   encryptedpassword))
 		{
 			ereport(LOG,
-					(errmsg("could not perform MD5 encryption of received packet")));
+			(errmsg("could not perform MD5 encryption of received packet")));
 			pfree(cryptvector);
 			continue;
 		}
@@ -2925,9 +2922,9 @@ CheckRADIUSAuth(Port *port)
 		else
 		{
 			ereport(LOG,
-					(errmsg("RADIUS response has invalid code (%i) for user \"%s\"",
-							receivepacket->code, port->user_name)));
+			 (errmsg("RADIUS response has invalid code (%i) for user \"%s\"",
+					 receivepacket->code, port->user_name)));
 			continue;
 		}
-	} /* while (true) */
+	}							/* while (true) */
 }

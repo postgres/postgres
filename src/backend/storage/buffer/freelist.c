@@ -77,7 +77,7 @@ typedef struct BufferAccessStrategyData
 	 * struct.
 	 */
 	Buffer		buffers[1];		/* VARIABLE SIZE ARRAY */
-} BufferAccessStrategyData;
+}	BufferAccessStrategyData;
 
 
 /* Prototypes for internal functions */

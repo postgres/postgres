@@ -286,9 +286,9 @@ static void ATWrongRelkindError(Relation rel, int allowed_targets);
 static void ATSimpleRecursion(List **wqueue, Relation rel,
 				  AlterTableCmd *cmd, bool recurse, LOCKMODE lockmode);
 static void ATTypedTableRecursion(List **wqueue, Relation rel, AlterTableCmd *cmd,
-								  LOCKMODE lockmode);
+					  LOCKMODE lockmode);
 static List *find_typed_table_dependencies(Oid typeOid, const char *typeName,
-										   DropBehavior behavior);
+							  DropBehavior behavior);
 static void ATPrepAddColumn(List **wqueue, Relation rel, bool recurse, bool recursing,
 				AlterTableCmd *cmd, LOCKMODE lockmode);
 static void ATExecAddColumn(List **wqueue, AlteredTableInfo *tab, Relation rel,
@@ -311,7 +311,7 @@ static void ATExecSetOptions(Relation rel, const char *colName,
 static void ATExecSetStorage(Relation rel, const char *colName,
 				 Node *newValue, LOCKMODE lockmode);
 static void ATPrepDropColumn(List **wqueue, Relation rel, bool recurse, bool recursing,
-							 AlterTableCmd *cmd, LOCKMODE lockmode);
+				 AlterTableCmd *cmd, LOCKMODE lockmode);
 static void ATExecDropColumn(List **wqueue, Relation rel, const char *colName,
 				 DropBehavior behavior,
 				 bool recurse, bool recursing,
@@ -320,9 +320,9 @@ static void ATExecAddIndex(AlteredTableInfo *tab, Relation rel,
 			   IndexStmt *stmt, bool is_rebuild, LOCKMODE lockmode);
 static void ATExecAddConstraint(List **wqueue,
 					AlteredTableInfo *tab, Relation rel,
-					Constraint *newConstraint, bool recurse, LOCKMODE lockmode);
+				 Constraint *newConstraint, bool recurse, LOCKMODE lockmode);
 static void ATExecAddIndexConstraint(AlteredTableInfo *tab, Relation rel,
-			   IndexStmt *stmt, LOCKMODE lockmode);
+						 IndexStmt *stmt, LOCKMODE lockmode);
 static void ATAddCheckConstraint(List **wqueue,
 					 AlteredTableInfo *tab, Relation rel,
 					 Constraint *constr,
@@ -339,7 +339,7 @@ static void ATPrepAlterColumnType(List **wqueue,
 					  AlterTableCmd *cmd, LOCKMODE lockmode);
 static bool ATColumnChangeRequiresRewrite(Node *expr, AttrNumber varattno);
 static void ATExecAlterColumnType(AlteredTableInfo *tab, Relation rel,
-								  AlterTableCmd *cmd, LOCKMODE lockmode);
+					  AlterTableCmd *cmd, LOCKMODE lockmode);
 static void ATPostAlterTypeCleanup(List **wqueue, AlteredTableInfo *tab, LOCKMODE lockmode);
 static void ATPostAlterTypeParse(char *cmd, List **wqueue, LOCKMODE lockmode);
 static void change_owner_recurse_to_sequences(Oid relationOid,
@@ -351,7 +351,7 @@ static void ATPrepSetTableSpace(AlteredTableInfo *tab, Relation rel,
 static void ATExecSetTableSpace(Oid tableOid, Oid newTableSpace, LOCKMODE lockmode);
 static void ATExecSetRelOptions(Relation rel, List *defList, bool isReset, LOCKMODE lockmode);
 static void ATExecEnableDisableTrigger(Relation rel, char *trigname,
-						   char fires_when, bool skip_system, LOCKMODE lockmode);
+					   char fires_when, bool skip_system, LOCKMODE lockmode);
 static void ATExecEnableDisableRule(Relation rel, char *rulename,
 						char fires_when, LOCKMODE lockmode);
 static void ATPrepAddInherit(Relation child_rel);
@@ -412,7 +412,7 @@ DefineRelation(CreateStmt *stmt, char relkind, Oid ownerId)
 	/*
 	 * Check consistency of arguments
 	 */
-	if (stmt->oncommit != ONCOMMIT_NOOP 
+	if (stmt->oncommit != ONCOMMIT_NOOP
 		&& stmt->relation->relpersistence != RELPERSISTENCE_TEMP)
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_TABLE_DEFINITION),
@@ -547,7 +547,7 @@ DefineRelation(CreateStmt *stmt, char relkind, Oid ownerId)
 			if (relkind == RELKIND_FOREIGN_TABLE)
 				ereport(ERROR,
 						(errcode(ERRCODE_WRONG_OBJECT_TYPE),
-					 errmsg("default values on foreign tables are not supported")));
+						 errmsg("default values on foreign tables are not supported")));
 
 			Assert(colDef->cooked_default == NULL);
 
@@ -706,7 +706,7 @@ DropErrorMsgWrongType(const char *relname, char wrongkind, char rightkind)
 /*
  * RemoveRelations
  *		Implements DROP TABLE, DROP INDEX, DROP SEQUENCE, DROP VIEW,
- *      DROP FOREIGN TABLE
+ *		DROP FOREIGN TABLE
  */
 void
 RemoveRelations(DropStmt *drop)
@@ -1454,11 +1454,11 @@ MergeAttributes(List *schema, List *supers, char relpersistence,
 				if (defCollId != attribute->attcollation)
 					ereport(ERROR,
 							(errcode(ERRCODE_COLLATION_MISMATCH),
-							 errmsg("inherited column \"%s\" has a collation conflict",
-									attributeName),
+					errmsg("inherited column \"%s\" has a collation conflict",
+						   attributeName),
 							 errdetail("\"%s\" versus \"%s\"",
 									   get_collation_name(defCollId),
-									   get_collation_name(attribute->attcollation))));
+							  get_collation_name(attribute->attcollation))));
 
 				/* Copy storage parameter */
 				if (def->storage == 0)
@@ -2061,8 +2061,8 @@ renameatt_internal(Oid myrelid,
 		relkind != RELKIND_FOREIGN_TABLE)
 		ereport(ERROR,
 				(errcode(ERRCODE_WRONG_OBJECT_TYPE),
-			   errmsg("\"%s\" is not a table, view, composite type, index or foreign table",
-					  RelationGetRelationName(targetrelation))));
+				 errmsg("\"%s\" is not a table, view, composite type, index or foreign table",
+						RelationGetRelationName(targetrelation))));
 
 	/*
 	 * permissions checking.  only the owner of a class can change its schema.
@@ -2138,7 +2138,7 @@ renameatt_internal(Oid myrelid,
 		ListCell   *lo;
 
 		child_oids = find_typed_table_dependencies(targetrelation->rd_rel->reltype,
-												   RelationGetRelationName(targetrelation),
+									 RelationGetRelationName(targetrelation),
 												   behavior);
 
 		foreach(lo, child_oids)
@@ -2211,11 +2211,11 @@ void
 renameatt(Oid myrelid, RenameStmt *stmt)
 {
 	renameatt_internal(myrelid,
-					   stmt->subname,		/* old att name */
-					   stmt->newname,		/* new att name */
-					   interpretInhOption(stmt->relation->inhOpt),	/* recursive? */
-					   false,  /* recursing? */
-					   0,	/* expected inhcount */
+					   stmt->subname,	/* old att name */
+					   stmt->newname,	/* new att name */
+					   interpretInhOption(stmt->relation->inhOpt),		/* recursive? */
+					   false,	/* recursing? */
+					   0,		/* expected inhcount */
 					   stmt->behavior);
 }
 
@@ -2460,7 +2460,7 @@ void
 AlterTable(AlterTableStmt *stmt)
 {
 	Relation	rel;
-	LOCKMODE lockmode = AlterTableGetLockLevel(stmt->cmds);
+	LOCKMODE	lockmode = AlterTableGetLockLevel(stmt->cmds);
 
 	/*
 	 * Acquire same level of lock as already acquired during parsing.
@@ -2531,7 +2531,7 @@ AlterTable(AlterTableStmt *stmt)
 	}
 
 	ATController(rel, stmt->cmds, interpretInhOption(stmt->relation->inhOpt),
-						lockmode);
+				 lockmode);
 }
 
 /*
@@ -2549,7 +2549,7 @@ void
 AlterTableInternal(Oid relid, List *cmds, bool recurse)
 {
 	Relation	rel;
-	LOCKMODE lockmode = AlterTableGetLockLevel(cmds);
+	LOCKMODE	lockmode = AlterTableGetLockLevel(cmds);
 
 	rel = relation_open(relid, lockmode);
 
@@ -2581,31 +2581,33 @@ LOCKMODE
 AlterTableGetLockLevel(List *cmds)
 {
 	ListCell   *lcmd;
-	LOCKMODE lockmode = ShareUpdateExclusiveLock;
+	LOCKMODE	lockmode = ShareUpdateExclusiveLock;
 
 	foreach(lcmd, cmds)
 	{
 		AlterTableCmd *cmd = (AlterTableCmd *) lfirst(lcmd);
-		LOCKMODE cmd_lockmode  = AccessExclusiveLock; /* default for compiler */
+		LOCKMODE	cmd_lockmode = AccessExclusiveLock; /* default for compiler */
 
 		switch (cmd->subtype)
 		{
-			/*
-			 * Need AccessExclusiveLock for these subcommands because they
-			 * affect or potentially affect both read and write operations.
-			 *
-			 * New subcommand types should be added here by default.
-			 */
-			case AT_AddColumn:			/* may rewrite heap, in some cases and visible to SELECT */
-			case AT_DropColumn:			/* change visible to SELECT */
+				/*
+				 * Need AccessExclusiveLock for these subcommands because they
+				 * affect or potentially affect both read and write
+				 * operations.
+				 *
+				 * New subcommand types should be added here by default.
+				 */
+			case AT_AddColumn:	/* may rewrite heap, in some cases and visible
+								 * to SELECT */
+			case AT_DropColumn:	/* change visible to SELECT */
 			case AT_AddColumnToView:	/* CREATE VIEW */
 			case AT_AlterColumnType:	/* must rewrite heap */
 			case AT_DropConstraint:		/* as DROP INDEX */
-			case AT_AddOids:			/* must rewrite heap */
-			case AT_DropOids:			/* calls AT_DropColumn */
+			case AT_AddOids:	/* must rewrite heap */
+			case AT_DropOids:	/* calls AT_DropColumn */
 			case AT_EnableAlwaysRule:	/* may change SELECT rules */
 			case AT_EnableReplicaRule:	/* may change SELECT rules */
-			case AT_EnableRule:			/* may change SELECT rules */
+			case AT_EnableRule:	/* may change SELECT rules */
 			case AT_DisableRule:		/* may change SELECT rules */
 			case AT_ChangeOwner:		/* change visible to SELECT */
 			case AT_SetTableSpace:		/* must rewrite heap */
@@ -2615,12 +2617,12 @@ AlterTableGetLockLevel(List *cmds)
 				cmd_lockmode = AccessExclusiveLock;
 				break;
 
-			/*
-			 * These subcommands affect write operations only.
-			 */
+				/*
+				 * These subcommands affect write operations only.
+				 */
 			case AT_ColumnDefault:
-			case AT_ProcessedConstraint:	/* becomes AT_AddConstraint */
-			case AT_AddConstraintRecurse:	/* becomes AT_AddConstraint */
+			case AT_ProcessedConstraint:		/* becomes AT_AddConstraint */
+			case AT_AddConstraintRecurse:		/* becomes AT_AddConstraint */
 			case AT_EnableTrig:
 			case AT_EnableAlwaysTrig:
 			case AT_EnableReplicaTrig:
@@ -2629,7 +2631,7 @@ AlterTableGetLockLevel(List *cmds)
 			case AT_DisableTrig:
 			case AT_DisableTrigAll:
 			case AT_DisableTrigUser:
-			case AT_AddIndex:				/* from ADD CONSTRAINT */
+			case AT_AddIndex:	/* from ADD CONSTRAINT */
 			case AT_AddIndexConstraint:
 				cmd_lockmode = ShareRowExclusiveLock;
 				break;
@@ -2644,14 +2646,17 @@ AlterTableGetLockLevel(List *cmds)
 						case CONSTR_EXCLUSION:
 						case CONSTR_PRIMARY:
 						case CONSTR_UNIQUE:
+
 							/*
 							 * Cases essentially the same as CREATE INDEX. We
-							 * could reduce the lock strength to ShareLock if we
-							 * can work out how to allow concurrent catalog updates.
+							 * could reduce the lock strength to ShareLock if
+							 * we can work out how to allow concurrent catalog
+							 * updates.
 							 */
 							cmd_lockmode = ShareRowExclusiveLock;
 							break;
 						case CONSTR_FOREIGN:
+
 							/*
 							 * We add triggers to both tables when we add a
 							 * Foreign Key, so the lock level must be at least
@@ -2666,26 +2671,29 @@ AlterTableGetLockLevel(List *cmds)
 				}
 				break;
 
-			/*
-			 * These subcommands affect inheritance behaviour. Queries started before us
-			 * will continue to see the old inheritance behaviour, while queries started
-			 * after we commit will see new behaviour. No need to prevent reads or writes
-			 * to the subtable while we hook it up though. In both cases the parent table
-			 * is locked with AccessShareLock.
-			 */
+				/*
+				 * These subcommands affect inheritance behaviour. Queries
+				 * started before us will continue to see the old inheritance
+				 * behaviour, while queries started after we commit will see
+				 * new behaviour. No need to prevent reads or writes to the
+				 * subtable while we hook it up though. In both cases the
+				 * parent table is locked with AccessShareLock.
+				 */
 			case AT_AddInherit:
 			case AT_DropInherit:
 				cmd_lockmode = ShareUpdateExclusiveLock;
 				break;
 
-			/*
-			 * These subcommands affect general strategies for performance and maintenance,
-			 * though don't change the semantic results from normal data reads and writes.
-			 * Delaying an ALTER TABLE behind currently active writes only delays the point
-			 * where the new strategy begins to take effect, so there is no benefit in waiting.
-			 * In this case the minimum restriction applies: we don't currently allow
-			 * concurrent catalog updates.
-			 */
+				/*
+				 * These subcommands affect general strategies for performance
+				 * and maintenance, though don't change the semantic results
+				 * from normal data reads and writes. Delaying an ALTER TABLE
+				 * behind currently active writes only delays the point where
+				 * the new strategy begins to take effect, so there is no
+				 * benefit in waiting. In this case the minimum restriction
+				 * applies: we don't currently allow concurrent catalog
+				 * updates.
+				 */
 			case AT_SetStatistics:
 			case AT_ClusterOn:
 			case AT_DropCluster:
@@ -2698,7 +2706,7 @@ AlterTableGetLockLevel(List *cmds)
 				cmd_lockmode = ShareUpdateExclusiveLock;
 				break;
 
-			default:				/* oops */
+			default:			/* oops */
 				elog(ERROR, "unrecognized alter table type: %d",
 					 (int) cmd->subtype);
 				break;
@@ -2773,7 +2781,7 @@ ATPrepCmd(List **wqueue, Relation rel, AlterTableCmd *cmd,
 	{
 		case AT_AddColumn:		/* ADD COLUMN */
 			ATSimplePermissions(rel,
-				ATT_TABLE|ATT_COMPOSITE_TYPE|ATT_FOREIGN_TABLE);
+						 ATT_TABLE | ATT_COMPOSITE_TYPE | ATT_FOREIGN_TABLE);
 			ATPrepAddColumn(wqueue, rel, recurse, recursing, cmd, lockmode);
 			/* Recursion occurs during execution phase */
 			pass = AT_PASS_ADD_COL;
@@ -2793,19 +2801,19 @@ ATPrepCmd(List **wqueue, Relation rel, AlterTableCmd *cmd,
 			 * substitutes default values into INSERTs before it expands
 			 * rules.
 			 */
-			ATSimplePermissions(rel, ATT_TABLE|ATT_VIEW);
+			ATSimplePermissions(rel, ATT_TABLE | ATT_VIEW);
 			ATSimpleRecursion(wqueue, rel, cmd, recurse, lockmode);
 			/* No command-specific prep needed */
 			pass = cmd->def ? AT_PASS_ADD_CONSTR : AT_PASS_DROP;
 			break;
 		case AT_DropNotNull:	/* ALTER COLUMN DROP NOT NULL */
-			ATSimplePermissions(rel, ATT_TABLE|ATT_FOREIGN_TABLE);
+			ATSimplePermissions(rel, ATT_TABLE | ATT_FOREIGN_TABLE);
 			ATSimpleRecursion(wqueue, rel, cmd, recurse, lockmode);
 			/* No command-specific prep needed */
 			pass = AT_PASS_DROP;
 			break;
 		case AT_SetNotNull:		/* ALTER COLUMN SET NOT NULL */
-			ATSimplePermissions(rel, ATT_TABLE|ATT_FOREIGN_TABLE);
+			ATSimplePermissions(rel, ATT_TABLE | ATT_FOREIGN_TABLE);
 			ATSimpleRecursion(wqueue, rel, cmd, recurse, lockmode);
 			/* No command-specific prep needed */
 			pass = AT_PASS_ADD_CONSTR;
@@ -2818,7 +2826,7 @@ ATPrepCmd(List **wqueue, Relation rel, AlterTableCmd *cmd,
 			break;
 		case AT_SetOptions:		/* ALTER COLUMN SET ( options ) */
 		case AT_ResetOptions:	/* ALTER COLUMN RESET ( options ) */
-			ATSimplePermissions(rel, ATT_TABLE|ATT_INDEX);
+			ATSimplePermissions(rel, ATT_TABLE | ATT_INDEX);
 			/* This command never recurses */
 			pass = AT_PASS_MISC;
 			break;
@@ -2830,7 +2838,7 @@ ATPrepCmd(List **wqueue, Relation rel, AlterTableCmd *cmd,
 			break;
 		case AT_DropColumn:		/* DROP COLUMN */
 			ATSimplePermissions(rel,
-				ATT_TABLE|ATT_COMPOSITE_TYPE|ATT_FOREIGN_TABLE);
+						 ATT_TABLE | ATT_COMPOSITE_TYPE | ATT_FOREIGN_TABLE);
 			ATPrepDropColumn(wqueue, rel, recurse, recursing, cmd, lockmode);
 			/* Recursion occurs during execution phase */
 			pass = AT_PASS_DROP;
@@ -2849,7 +2857,7 @@ ATPrepCmd(List **wqueue, Relation rel, AlterTableCmd *cmd,
 				cmd->subtype = AT_AddConstraintRecurse;
 			pass = AT_PASS_ADD_CONSTR;
 			break;
-		case AT_AddIndexConstraint:	/* ADD CONSTRAINT USING INDEX */
+		case AT_AddIndexConstraint:		/* ADD CONSTRAINT USING INDEX */
 			ATSimplePermissions(rel, ATT_TABLE);
 			/* This command never recurses */
 			/* No command-specific prep needed */
@@ -2865,7 +2873,7 @@ ATPrepCmd(List **wqueue, Relation rel, AlterTableCmd *cmd,
 			break;
 		case AT_AlterColumnType:		/* ALTER COLUMN TYPE */
 			ATSimplePermissions(rel,
-				ATT_TABLE|ATT_COMPOSITE_TYPE|ATT_FOREIGN_TABLE);
+						 ATT_TABLE | ATT_COMPOSITE_TYPE | ATT_FOREIGN_TABLE);
 			/* Performs own recursion */
 			ATPrepAlterColumnType(wqueue, tab, rel, recurse, recursing, cmd, lockmode);
 			pass = AT_PASS_ALTER_TYPE;
@@ -2904,14 +2912,14 @@ ATPrepCmd(List **wqueue, Relation rel, AlterTableCmd *cmd,
 			pass = AT_PASS_DROP;
 			break;
 		case AT_SetTableSpace:	/* SET TABLESPACE */
-			ATSimplePermissions(rel, ATT_TABLE|ATT_INDEX);
+			ATSimplePermissions(rel, ATT_TABLE | ATT_INDEX);
 			/* This command never recurses */
 			ATPrepSetTableSpace(tab, rel, cmd->name, lockmode);
 			pass = AT_PASS_MISC;	/* doesn't actually matter */
 			break;
 		case AT_SetRelOptions:	/* SET (...) */
 		case AT_ResetRelOptions:		/* RESET (...) */
-			ATSimplePermissions(rel, ATT_TABLE|ATT_INDEX);
+			ATSimplePermissions(rel, ATT_TABLE | ATT_INDEX);
 			/* This command never recurses */
 			/* No command-specific prep needed */
 			pass = AT_PASS_MISC;
@@ -3072,11 +3080,11 @@ ATExecCmd(List **wqueue, AlteredTableInfo *tab, Relation rel,
 			break;
 		case AT_DropColumn:		/* DROP COLUMN */
 			ATExecDropColumn(wqueue, rel, cmd->name,
-							 cmd->behavior, false, false, cmd->missing_ok, lockmode);
+					 cmd->behavior, false, false, cmd->missing_ok, lockmode);
 			break;
 		case AT_DropColumnRecurse:		/* DROP COLUMN with recursion */
 			ATExecDropColumn(wqueue, rel, cmd->name,
-							 cmd->behavior, true, false, cmd->missing_ok, lockmode);
+					  cmd->behavior, true, false, cmd->missing_ok, lockmode);
 			break;
 		case AT_AddIndex:		/* ADD INDEX */
 			ATExecAddIndex(tab, rel, (IndexStmt *) cmd->def, false, lockmode);
@@ -3092,7 +3100,7 @@ ATExecCmd(List **wqueue, AlteredTableInfo *tab, Relation rel,
 			ATExecAddConstraint(wqueue, tab, rel, (Constraint *) cmd->def,
 								true, lockmode);
 			break;
-		case AT_AddIndexConstraint:	/* ADD CONSTRAINT USING INDEX */
+		case AT_AddIndexConstraint:		/* ADD CONSTRAINT USING INDEX */
 			ATExecAddIndexConstraint(tab, rel, (IndexStmt *) cmd->def, lockmode);
 			break;
 		case AT_ValidateConstraint:
@@ -3156,7 +3164,7 @@ ATExecCmd(List **wqueue, AlteredTableInfo *tab, Relation rel,
 
 		case AT_EnableTrig:		/* ENABLE TRIGGER name */
 			ATExecEnableDisableTrigger(rel, cmd->name,
-									   TRIGGER_FIRES_ON_ORIGIN, false, lockmode);
+								   TRIGGER_FIRES_ON_ORIGIN, false, lockmode);
 			break;
 		case AT_EnableAlwaysTrig:		/* ENABLE ALWAYS TRIGGER name */
 			ATExecEnableDisableTrigger(rel, cmd->name,
@@ -3164,7 +3172,7 @@ ATExecCmd(List **wqueue, AlteredTableInfo *tab, Relation rel,
 			break;
 		case AT_EnableReplicaTrig:		/* ENABLE REPLICA TRIGGER name */
 			ATExecEnableDisableTrigger(rel, cmd->name,
-									   TRIGGER_FIRES_ON_REPLICA, false, lockmode);
+								  TRIGGER_FIRES_ON_REPLICA, false, lockmode);
 			break;
 		case AT_DisableTrig:	/* DISABLE TRIGGER name */
 			ATExecEnableDisableTrigger(rel, cmd->name,
@@ -3172,7 +3180,7 @@ ATExecCmd(List **wqueue, AlteredTableInfo *tab, Relation rel,
 			break;
 		case AT_EnableTrigAll:	/* ENABLE TRIGGER ALL */
 			ATExecEnableDisableTrigger(rel, NULL,
-									   TRIGGER_FIRES_ON_ORIGIN, false, lockmode);
+								   TRIGGER_FIRES_ON_ORIGIN, false, lockmode);
 			break;
 		case AT_DisableTrigAll:	/* DISABLE TRIGGER ALL */
 			ATExecEnableDisableTrigger(rel, NULL,
@@ -3180,7 +3188,7 @@ ATExecCmd(List **wqueue, AlteredTableInfo *tab, Relation rel,
 			break;
 		case AT_EnableTrigUser:	/* ENABLE TRIGGER USER */
 			ATExecEnableDisableTrigger(rel, NULL,
-									   TRIGGER_FIRES_ON_ORIGIN, true, lockmode);
+									TRIGGER_FIRES_ON_ORIGIN, true, lockmode);
 			break;
 		case AT_DisableTrigUser:		/* DISABLE TRIGGER USER */
 			ATExecEnableDisableTrigger(rel, NULL,
@@ -3254,8 +3262,8 @@ ATRewriteTables(List **wqueue, LOCKMODE lockmode)
 		 * (Eventually we'll probably need to check for composite type
 		 * dependencies even when we're just scanning the table without a
 		 * rewrite, but at the moment a composite type does not enforce any
-		 * constraints, so it's not necessary/appropriate to enforce them
-		 * just during ALTER.)
+		 * constraints, so it's not necessary/appropriate to enforce them just
+		 * during ALTER.)
 		 */
 		if (tab->newvals != NIL || tab->rewrite)
 		{
@@ -3386,8 +3394,8 @@ ATRewriteTables(List **wqueue, LOCKMODE lockmode)
 											 con->conid);
 
 				/*
-				 * No need to mark the constraint row as validated,
-				 * we did that when we inserted the row earlier.
+				 * No need to mark the constraint row as validated, we did
+				 * that when we inserted the row earlier.
 				 */
 
 				heap_close(refrel, NoLock);
@@ -3723,7 +3731,7 @@ ATGetQueueEntry(List **wqueue, Relation rel)
 static void
 ATSimplePermissions(Relation rel, int allowed_targets)
 {
-	int		actual_target;
+	int			actual_target;
 
 	switch (rel->rd_rel->relkind)
 	{
@@ -3779,16 +3787,16 @@ ATWrongRelkindError(Relation rel, int allowed_targets)
 		case ATT_TABLE:
 			msg = _("\"%s\" is not a table");
 			break;
-		case ATT_TABLE|ATT_INDEX:
+		case ATT_TABLE | ATT_INDEX:
 			msg = _("\"%s\" is not a table or index");
 			break;
-		case ATT_TABLE|ATT_VIEW:
+		case ATT_TABLE | ATT_VIEW:
 			msg = _("\"%s\" is not a table or view");
 			break;
-		case ATT_TABLE|ATT_FOREIGN_TABLE:
+		case ATT_TABLE | ATT_FOREIGN_TABLE:
 			msg = _("\"%s\" is not a table or foreign table");
 			break;
-		case ATT_TABLE|ATT_COMPOSITE_TYPE|ATT_FOREIGN_TABLE:
+		case ATT_TABLE | ATT_COMPOSITE_TYPE | ATT_FOREIGN_TABLE:
 			msg = _("\"%s\" is not a table, composite type, or foreign table");
 			break;
 		case ATT_VIEW:
@@ -4032,7 +4040,7 @@ find_typed_table_dependencies(Oid typeOid, const char *typeName, DropBehavior be
 					(errcode(ERRCODE_DEPENDENT_OBJECTS_STILL_EXIST),
 					 errmsg("cannot alter type \"%s\" because it is the type of a typed table",
 							typeName),
-					 errhint("Use ALTER ... CASCADE to alter the typed tables too.")));
+			errhint("Use ALTER ... CASCADE to alter the typed tables too.")));
 		else
 			result = lappend_oid(result, HeapTupleGetOid(tuple));
 	}
@@ -4103,9 +4111,9 @@ ATExecAddColumn(List **wqueue, AlteredTableInfo *tab, Relation rel,
 
 	/*
 	 * Are we adding the column to a recursion child?  If so, check whether to
-	 * merge with an existing definition for the column.  If we do merge,
-	 * we must not recurse.  Children will already have the column, and
-     * recursing into them would mess up attinhcount.
+	 * merge with an existing definition for the column.  If we do merge, we
+	 * must not recurse.  Children will already have the column, and recursing
+	 * into them would mess up attinhcount.
 	 */
 	if (colDef->inhcount > 0)
 	{
@@ -4133,10 +4141,10 @@ ATExecAddColumn(List **wqueue, AlteredTableInfo *tab, Relation rel,
 				ereport(ERROR,
 						(errcode(ERRCODE_COLLATION_MISMATCH),
 						 errmsg("child table \"%s\" has different collation for column \"%s\"",
-								RelationGetRelationName(rel), colDef->colname),
+							  RelationGetRelationName(rel), colDef->colname),
 						 errdetail("\"%s\" versus \"%s\"",
 								   get_collation_name(ccollid),
-								   get_collation_name(childatt->attcollation))));
+							   get_collation_name(childatt->attcollation))));
 
 			/* If it's OID, child column must actually be OID */
 			if (isOid && childatt->attnum != ObjectIdAttributeNumber)
@@ -4265,7 +4273,7 @@ ATExecAddColumn(List **wqueue, AlteredTableInfo *tab, Relation rel,
 		if (relkind == RELKIND_FOREIGN_TABLE)
 			ereport(ERROR,
 					(errcode(ERRCODE_WRONG_OBJECT_TYPE),
-					 errmsg("default values on foreign tables are not supported")));
+			  errmsg("default values on foreign tables are not supported")));
 
 		rawEnt = (RawColumnDefault *) palloc(sizeof(RawColumnDefault));
 		rawEnt->attnum = attribute.attnum;
@@ -5170,10 +5178,11 @@ ATExecAddIndexConstraint(AlteredTableInfo *tab, Relation rel,
 		elog(ERROR, "index \"%s\" is not unique", indexName);
 
 	/*
-	 * Determine name to assign to constraint.  We require a constraint to
+	 * Determine name to assign to constraint.	We require a constraint to
 	 * have the same name as the underlying index; therefore, use the index's
-	 * existing name as the default constraint name, and if the user explicitly
-	 * gives some other name for the constraint, rename the index to match.
+	 * existing name as the default constraint name, and if the user
+	 * explicitly gives some other name for the constraint, rename the index
+	 * to match.
 	 */
 	constraintName = stmt->idxname;
 	if (constraintName == NULL)
@@ -5216,7 +5225,7 @@ ATExecAddIndexConstraint(AlteredTableInfo *tab, Relation rel,
  */
 static void
 ATExecAddConstraint(List **wqueue, AlteredTableInfo *tab, Relation rel,
-					Constraint *newConstraint, bool recurse, LOCKMODE lockmode)
+				  Constraint *newConstraint, bool recurse, LOCKMODE lockmode)
 {
 	Assert(IsA(newConstraint, Constraint));
 
@@ -5337,9 +5346,9 @@ ATAddCheckConstraint(List **wqueue, AlteredTableInfo *tab, Relation rel,
 
 	/*
 	 * If the constraint got merged with an existing constraint, we're done.
-	 * We mustn't recurse to child tables in this case, because they've already
-	 * got the constraint, and visiting them again would lead to an incorrect
-	 * value for coninhcount.
+	 * We mustn't recurse to child tables in this case, because they've
+	 * already got the constraint, and visiting them again would lead to an
+	 * incorrect value for coninhcount.
 	 */
 	if (newcons == NIL)
 		return;
@@ -5655,8 +5664,8 @@ ATAddForeignKeyConstraint(AlteredTableInfo *tab, Relation rel,
 
 	/*
 	 * Tell Phase 3 to check that the constraint is satisfied by existing rows
-	 * We can skip this during table creation or if requested explicitly
-	 * by specifying NOT VALID on an alter table statement.
+	 * We can skip this during table creation or if requested explicitly by
+	 * specifying NOT VALID on an alter table statement.
 	 */
 	if (!fkconstraint->skip_validation)
 	{
@@ -5718,8 +5727,8 @@ ATExecValidateConstraint(Relation rel, const char *constrName)
 	if (!found)
 		ereport(ERROR,
 				(errcode(ERRCODE_UNDEFINED_OBJECT),
-			errmsg("foreign key constraint \"%s\" of relation \"%s\" does not exist",
-				   constrName, RelationGetRelationName(rel))));
+				 errmsg("foreign key constraint \"%s\" of relation \"%s\" does not exist",
+						constrName, RelationGetRelationName(rel))));
 
 	if (!con->convalidated)
 	{
@@ -5729,17 +5738,16 @@ ATExecValidateConstraint(Relation rel, const char *constrName)
 		Relation	refrel;
 
 		/*
-		 * Triggers are already in place on both tables, so a
-		 * concurrent write that alters the result here is not
-		 * possible. Normally we can run a query here to do the
-		 * validation, which would only require AccessShareLock.
-		 * In some cases, it is possible that we might need to
-		 * fire triggers to perform the check, so we take a lock
-		 * at RowShareLock level just in case.
+		 * Triggers are already in place on both tables, so a concurrent write
+		 * that alters the result here is not possible. Normally we can run a
+		 * query here to do the validation, which would only require
+		 * AccessShareLock. In some cases, it is possible that we might need
+		 * to fire triggers to perform the check, so we take a lock at
+		 * RowShareLock level just in case.
 		 */
 		refrel = heap_open(con->confrelid, RowShareLock);
 
-		validateForeignKeyConstraint((char *)constrName, rel, refrel,
+		validateForeignKeyConstraint((char *) constrName, rel, refrel,
 									 con->conindid,
 									 conid);
 
@@ -6571,12 +6579,12 @@ ATPrepAlterColumnType(List **wqueue,
 	if (tab->relkind == RELKIND_RELATION)
 	{
 		/*
-		 * Set up an expression to transform the old data value to the new type.
-		 * If a USING option was given, transform and use that expression, else
-		 * just take the old value and try to coerce it.  We do this first so that
-		 * type incompatibility can be detected before we waste effort, and
-		 * because we need the expression to be parsed against the original table
-		 * rowtype.
+		 * Set up an expression to transform the old data value to the new
+		 * type. If a USING option was given, transform and use that
+		 * expression, else just take the old value and try to coerce it.  We
+		 * do this first so that type incompatibility can be detected before
+		 * we waste effort, and because we need the expression to be parsed
+		 * against the original table rowtype.
 		 */
 		if (transform)
 		{
@@ -6596,13 +6604,13 @@ ATPrepAlterColumnType(List **wqueue,
 			if (expression_returns_set(transform))
 				ereport(ERROR,
 						(errcode(ERRCODE_DATATYPE_MISMATCH),
-						 errmsg("transform expression must not return a set")));
+					  errmsg("transform expression must not return a set")));
 
 			/* No subplans or aggregates, either... */
 			if (pstate->p_hasSubLinks)
 				ereport(ERROR,
 						(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-						 errmsg("cannot use subquery in transform expression")));
+					 errmsg("cannot use subquery in transform expression")));
 			if (pstate->p_hasAggs)
 				ereport(ERROR,
 						(errcode(ERRCODE_GROUPING_ERROR),
@@ -6615,7 +6623,7 @@ ATPrepAlterColumnType(List **wqueue,
 		else
 		{
 			transform = (Node *) makeVar(1, attnum,
-										 attTup->atttypid, attTup->atttypmod, attTup->attcollation,
+				   attTup->atttypid, attTup->atttypmod, attTup->attcollation,
 										 0);
 		}
 
@@ -6649,14 +6657,14 @@ ATPrepAlterColumnType(List **wqueue,
 	else if (transform)
 		ereport(ERROR,
 				(errcode(ERRCODE_WRONG_OBJECT_TYPE),
-				 errmsg("ALTER TYPE USING is only supported on plain tables")));
+			  errmsg("ALTER TYPE USING is only supported on plain tables")));
 
 	if (tab->relkind == RELKIND_COMPOSITE_TYPE ||
 		tab->relkind == RELKIND_FOREIGN_TABLE)
 	{
 		/*
-		 * For composite types, do this check now.  Tables will check
-		 * it later when the table is being rewritten.
+		 * For composite types, do this check now.	Tables will check it later
+		 * when the table is being rewritten.
 		 */
 		find_composite_type_dependencies(rel->rd_rel->reltype, rel, NULL);
 	}
@@ -6699,7 +6707,7 @@ ATColumnChangeRequiresRewrite(Node *expr, AttrNumber varattno)
 	for (;;)
 	{
 		/* only one varno, so no need to check that */
-		if (IsA(expr, Var) && ((Var *) expr)->varattno == varattno)
+		if (IsA(expr, Var) &&((Var *) expr)->varattno == varattno)
 			return false;
 		else if (IsA(expr, RelabelType))
 			expr = (Node *) ((RelabelType *) expr)->arg;
@@ -6924,13 +6932,14 @@ ATExecAlterColumnType(AlteredTableInfo *tab, Relation rel,
 				break;
 
 			case OCLASS_TRIGGER:
+
 				/*
 				 * A trigger can depend on a column because the column is
 				 * specified as an update target, or because the column is
 				 * used in the trigger's WHEN condition.  The first case would
 				 * not require any extra work, but the second case would
 				 * require updating the WHEN expression, which will take a
-				 * significant amount of new code.  Since we can't easily tell
+				 * significant amount of new code.	Since we can't easily tell
 				 * which case applies, we punt for both.  FIXME someday.
 				 */
 				ereport(ERROR,
@@ -7940,7 +7949,7 @@ copy_relation_data(SMgrRelation src, SMgrRelation dst,
  */
 static void
 ATExecEnableDisableTrigger(Relation rel, char *trigname,
-						   char fires_when, bool skip_system, LOCKMODE lockmode)
+						char fires_when, bool skip_system, LOCKMODE lockmode)
 {
 	EnableDisableTrigger(rel, trigname, fires_when, skip_system);
 }
@@ -8558,18 +8567,18 @@ ATExecDropInherit(Relation rel, RangeVar *parent, LOCKMODE lockmode)
 static void
 ATExecGenericOptions(Relation rel, List *options)
 {
-	Relation		ftrel;
-	ForeignServer  *server;
+	Relation	ftrel;
+	ForeignServer *server;
 	ForeignDataWrapper *fdw;
-	HeapTuple		tuple;
-	bool			isnull;
-	Datum			repl_val[Natts_pg_foreign_table];
-	bool			repl_null[Natts_pg_foreign_table];
-	bool			repl_repl[Natts_pg_foreign_table];
-	Datum			datum;
-	Form_pg_foreign_table	tableform;
+	HeapTuple	tuple;
+	bool		isnull;
+	Datum		repl_val[Natts_pg_foreign_table];
+	bool		repl_null[Natts_pg_foreign_table];
+	bool		repl_repl[Natts_pg_foreign_table];
+	Datum		datum;
+	Form_pg_foreign_table tableform;
 
-	if (options == NIL) 
+	if (options == NIL)
 		return;
 
 	ftrel = heap_open(ForeignTableRelationId, RowExclusiveLock);
@@ -8579,7 +8588,7 @@ ATExecGenericOptions(Relation rel, List *options)
 		ereport(ERROR,
 				(errcode(ERRCODE_UNDEFINED_OBJECT),
 				 errmsg("foreign table \"%s\" does not exist",
-										RelationGetRelationName(rel))));
+						RelationGetRelationName(rel))));
 	tableform = (Form_pg_foreign_table) GETSTRUCT(tuple);
 	server = GetForeignServer(tableform->ftserver);
 	fdw = GetForeignDataWrapper(server->fdwid);
@@ -8718,8 +8727,8 @@ AlterTableNamespace(RangeVar *relation, const char *newschema,
 		default:
 			ereport(ERROR,
 					(errcode(ERRCODE_WRONG_OBJECT_TYPE),
-					 errmsg("\"%s\" is not a table, view, sequence, or foreign table",
-							RelationGetRelationName(rel))));
+			errmsg("\"%s\" is not a table, view, sequence, or foreign table",
+				   RelationGetRelationName(rel))));
 	}
 
 	/* get schema OID and check its permissions */
@@ -8836,7 +8845,7 @@ AlterIndexNamespaces(Relation classRel, Relation rel,
  */
 static void
 AlterSeqNamespaces(Relation classRel, Relation rel,
-				   Oid oldNspOid, Oid newNspOid, const char *newNspName, LOCKMODE lockmode)
+	 Oid oldNspOid, Oid newNspOid, const char *newNspName, LOCKMODE lockmode)
 {
 	Relation	depRel;
 	SysScanDesc scan;

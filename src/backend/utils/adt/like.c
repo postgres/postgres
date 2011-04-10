@@ -30,19 +30,19 @@
 #define LIKE_ABORT						(-1)
 
 
-static int	SB_MatchText(char *t, int tlen, char *p, int plen,
-						 pg_locale_t locale, bool locale_is_c);
+static int SB_MatchText(char *t, int tlen, char *p, int plen,
+			 pg_locale_t locale, bool locale_is_c);
 static text *SB_do_like_escape(text *, text *);
 
-static int	MB_MatchText(char *t, int tlen, char *p, int plen,
-						 pg_locale_t locale, bool locale_is_c);
+static int MB_MatchText(char *t, int tlen, char *p, int plen,
+			 pg_locale_t locale, bool locale_is_c);
 static text *MB_do_like_escape(text *, text *);
 
-static int	UTF8_MatchText(char *t, int tlen, char *p, int plen,
-						   pg_locale_t locale, bool locale_is_c);
+static int UTF8_MatchText(char *t, int tlen, char *p, int plen,
+			   pg_locale_t locale, bool locale_is_c);
 
-static int	SB_IMatchText(char *t, int tlen, char *p, int plen,
-						  pg_locale_t locale, bool locale_is_c);
+static int SB_IMatchText(char *t, int tlen, char *p, int plen,
+			  pg_locale_t locale, bool locale_is_c);
 
 static int	GenericMatchText(char *s, int slen, char *p, int plen);
 static int	Generic_Text_IC_like(text *str, text *pat, Oid collation);
@@ -188,11 +188,11 @@ Generic_Text_IC_like(text *str, text *pat, Oid collation)
 	else
 	{
 		/*
-		 * Here we need to prepare locale information for SB_lower_char.
-		 * This should match the methods used in str_tolower().
+		 * Here we need to prepare locale information for SB_lower_char. This
+		 * should match the methods used in str_tolower().
 		 */
-		pg_locale_t	locale = 0;
-		bool	locale_is_c = false;
+		pg_locale_t locale = 0;
+		bool		locale_is_c = false;
 
 		if (lc_ctype_is_c(collation))
 			locale_is_c = true;

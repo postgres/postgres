@@ -146,7 +146,7 @@ typedef enum ObjectClass
 	OCLASS_FOREIGN_SERVER,		/* pg_foreign_server */
 	OCLASS_USER_MAPPING,		/* pg_user_mapping */
 	OCLASS_DEFACL,				/* pg_default_acl */
-	OCLASS_EXTENSION,           /* pg_extension */
+	OCLASS_EXTENSION,			/* pg_extension */
 	MAX_OCLASS					/* MUST BE LAST */
 } ObjectClass;
 
@@ -204,7 +204,7 @@ extern void recordMultipleDependencies(const ObjectAddress *depender,
 extern void recordDependencyOnCurrentExtension(const ObjectAddress *object);
 
 extern long deleteDependencyRecordsFor(Oid classId, Oid objectId,
-									   bool skipExtensionDeps);
+						   bool skipExtensionDeps);
 
 extern long deleteDependencyRecordsForClass(Oid classId, Oid objectId,
 								Oid refclassId, char deptype);

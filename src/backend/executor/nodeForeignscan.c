@@ -40,7 +40,7 @@ static TupleTableSlot *
 ForeignNext(ForeignScanState *node)
 {
 	TupleTableSlot *slot;
-	ForeignScan	   *plan = (ForeignScan *) node->ss.ps.plan;
+	ForeignScan *plan = (ForeignScan *) node->ss.ps.plan;
 	ExprContext *econtext = node->ss.ps.ps_ExprContext;
 	MemoryContext oldcontext;
 

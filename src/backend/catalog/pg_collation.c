@@ -46,7 +46,9 @@ CollationCreate(const char *collname, Oid collnamespace,
 	HeapTuple	tup;
 	Datum		values[Natts_pg_collation];
 	bool		nulls[Natts_pg_collation];
-	NameData	name_name, name_collate, name_ctype;
+	NameData	name_name,
+				name_collate,
+				name_ctype;
 	Oid			oid;
 	ObjectAddress myself,
 				referenced;
@@ -60,9 +62,9 @@ CollationCreate(const char *collname, Oid collnamespace,
 	/*
 	 * Make sure there is no existing collation of same name & encoding.
 	 *
-	 * This would be caught by the unique index anyway; we're just giving
-	 * a friendlier error message.  The unique index provides a backstop
-	 * against race conditions.
+	 * This would be caught by the unique index anyway; we're just giving a
+	 * friendlier error message.  The unique index provides a backstop against
+	 * race conditions.
 	 */
 	if (SearchSysCacheExists3(COLLNAMEENCNSP,
 							  PointerGetDatum(collname),
@@ -74,9 +76,9 @@ CollationCreate(const char *collname, Oid collnamespace,
 						collname, pg_encoding_to_char(collencoding))));
 
 	/*
-	 * Also forbid matching an any-encoding entry.  This test of course is
-	 * not backed up by the unique index, but it's not a problem since we
-	 * don't support adding any-encoding entries after initdb.
+	 * Also forbid matching an any-encoding entry.	This test of course is not
+	 * backed up by the unique index, but it's not a problem since we don't
+	 * support adding any-encoding entries after initdb.
 	 */
 	if (SearchSysCacheExists3(COLLNAMEENCNSP,
 							  PointerGetDatum(collname),

@@ -464,7 +464,8 @@ AlterOperatorNamespace(List *names, List *argtypes, const char *newschema)
 	List	   *operatorName = names;
 	TypeName   *typeName1 = (TypeName *) linitial(argtypes);
 	TypeName   *typeName2 = (TypeName *) lsecond(argtypes);
-	Oid			operOid, nspOid;
+	Oid			operOid,
+				nspOid;
 	Relation	rel;
 
 	rel = heap_open(OperatorRelationId, RowExclusiveLock);
@@ -490,7 +491,7 @@ AlterOperatorNamespace(List *names, List *argtypes, const char *newschema)
 Oid
 AlterOperatorNamespace_oid(Oid operOid, Oid newNspOid)
 {
-	Oid         oldNspOid;
+	Oid			oldNspOid;
 	Relation	rel;
 
 	rel = heap_open(OperatorRelationId, RowExclusiveLock);

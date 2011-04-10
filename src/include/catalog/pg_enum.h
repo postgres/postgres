@@ -65,6 +65,6 @@ typedef FormData_pg_enum *Form_pg_enum;
 extern void EnumValuesCreate(Oid enumTypeOid, List *vals);
 extern void EnumValuesDelete(Oid enumTypeOid);
 extern void AddEnumLabel(Oid enumTypeOid, const char *newVal,
-						 const char *neighbor, bool newValIsAfter);
+			 const char *neighbor, bool newValIsAfter);
 
 #endif   /* PG_ENUM_H */

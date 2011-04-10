@@ -76,7 +76,7 @@ typedef struct SetOpHashEntryData
 {
 	TupleHashEntryData shared;	/* common header for hash table entries */
 	SetOpStatePerGroupData pergroup;
-} SetOpHashEntryData;
+}	SetOpHashEntryData;
 
 
 static TupleTableSlot *setop_retrieve_direct(SetOpState *setopstate);

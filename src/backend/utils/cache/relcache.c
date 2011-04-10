@@ -1070,9 +1070,9 @@ RelationInitIndexAccessInfo(Relation relation)
 		MemoryContextAllocZero(indexcxt, natts * sizeof(int16));
 
 	/*
-	 * indcollation cannot be referenced directly through the C struct, because it
-	 * comes after the variable-width indkey field.  Must extract the datum
-	 * the hard way...
+	 * indcollation cannot be referenced directly through the C struct,
+	 * because it comes after the variable-width indkey field.	Must extract
+	 * the datum the hard way...
 	 */
 	indcollDatum = fastgetattr(relation->rd_indextuple,
 							   Anum_pg_index_indcollation,
@@ -1096,7 +1096,7 @@ RelationInitIndexAccessInfo(Relation relation)
 
 	/*
 	 * Fill the support procedure OID array, as well as the info about
-	 * opfamilies and opclass input types.  (aminfo and supportinfo are left
+	 * opfamilies and opclass input types.	(aminfo and supportinfo are left
 	 * as zeroes, and are filled on-the-fly when used)
 	 */
 	IndexSupportInitialize(indclass, relation->rd_support,

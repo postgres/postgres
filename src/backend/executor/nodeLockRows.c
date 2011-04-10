@@ -291,7 +291,7 @@ ExecInitLockRows(LockRows *node, EState *estate, int eflags)
 
 	/*
 	 * Locate the ExecRowMark(s) that this node is responsible for, and
-	 * construct ExecAuxRowMarks for them.  (InitPlan should already have
+	 * construct ExecAuxRowMarks for them.	(InitPlan should already have
 	 * built the global list of ExecRowMarks.)
 	 */
 	lrstate->lr_arowMarks = NIL;

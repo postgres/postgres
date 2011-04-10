@@ -30,7 +30,7 @@ char		scandir_file_pattern[MAXPGPATH];
  */
 const char *
 transfer_all_new_dbs(DbInfoArr *old_db_arr,
-					 DbInfoArr *new_db_arr, char *old_pgdata, char *new_pgdata)
+				   DbInfoArr *new_db_arr, char *old_pgdata, char *new_pgdata)
 {
 	int			dbnum;
 	const char *msg = NULL;
@@ -39,7 +39,7 @@ transfer_all_new_dbs(DbInfoArr *old_db_arr,
 
 	if (old_db_arr->ndbs != new_db_arr->ndbs)
 		pg_log(PG_FATAL, "old and new clusters have a different number of databases\n");
-	
+
 	for (dbnum = 0; dbnum < old_db_arr->ndbs; dbnum++)
 	{
 		DbInfo	   *old_db = &old_db_arr->dbs[dbnum];
@@ -50,8 +50,8 @@ transfer_all_new_dbs(DbInfoArr *old_db_arr,
 
 		if (strcmp(old_db->db_name, new_db->db_name) != 0)
 			pg_log(PG_FATAL, "old and new databases have different names: old \"%s\", new \"%s\"\n",
-				old_db->db_name, new_db->db_name);
-		
+				   old_db->db_name, new_db->db_name);
+
 		n_maps = 0;
 		mappings = gen_db_file_maps(old_db, new_db, &n_maps, old_pgdata,
 									new_pgdata);
@@ -169,7 +169,7 @@ transfer_single_new_db(pageCnvCtx *pageConverter,
 			for (fileno = 0; fileno < numFiles; fileno++)
 			{
 				if (strncmp(namelist[fileno]->d_name, scandir_file_pattern,
-					strlen(scandir_file_pattern)) == 0)
+							strlen(scandir_file_pattern)) == 0)
 				{
 					snprintf(old_file, sizeof(old_file), "%s/%s", maps[mapnum].old_dir,
 							 namelist[fileno]->d_name);
@@ -178,7 +178,7 @@ transfer_single_new_db(pageCnvCtx *pageConverter,
 
 					unlink(new_file);
 					transfer_relfile(pageConverter, old_file, new_file,
-							  maps[mapnum].nspname, maps[mapnum].relname);
+								 maps[mapnum].nspname, maps[mapnum].relname);
 				}
 			}
 		}
@@ -196,7 +196,7 @@ transfer_single_new_db(pageCnvCtx *pageConverter,
 		for (fileno = 0; fileno < numFiles; fileno++)
 		{
 			if (strncmp(namelist[fileno]->d_name, scandir_file_pattern,
-				strlen(scandir_file_pattern)) == 0)
+						strlen(scandir_file_pattern)) == 0)
 			{
 				snprintf(old_file, sizeof(old_file), "%s/%s", maps[mapnum].old_dir,
 						 namelist[fileno]->d_name);
@@ -205,7 +205,7 @@ transfer_single_new_db(pageCnvCtx *pageConverter,
 
 				unlink(new_file);
 				transfer_relfile(pageConverter, old_file, new_file,
-							  maps[mapnum].nspname, maps[mapnum].relname);
+								 maps[mapnum].nspname, maps[mapnum].relname);
 			}
 		}
 	}
@@ -227,7 +227,7 @@ transfer_single_new_db(pageCnvCtx *pageConverter,
  */
 static void
 transfer_relfile(pageCnvCtx *pageConverter, const char *old_file,
-		 const char *new_file, const char *nspname, const char *relname)
+			  const char *new_file, const char *nspname, const char *relname)
 {
 	const char *msg;
 
@@ -249,7 +249,7 @@ transfer_relfile(pageCnvCtx *pageConverter, const char *old_file,
 
 		if ((msg = linkAndUpdateFile(pageConverter, old_file, new_file)) != NULL)
 			pg_log(PG_FATAL,
-			   "error while creating link from %s.%s (%s to %s): %s\n",
+				   "error while creating link from %s.%s (%s to %s): %s\n",
 				   nspname, relname, old_file, new_file, msg);
 	}
 	return;

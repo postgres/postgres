@@ -65,7 +65,7 @@ _bt_search(Relation rel, int keysz, ScanKey scankey, bool nextkey,
 	/* If index is empty and access = BT_READ, no root page is created. */
 	if (!BufferIsValid(*bufP))
 	{
-		PredicateLockRelation(rel);  /* Nothing finer to lock exists. */
+		PredicateLockRelation(rel);		/* Nothing finer to lock exists. */
 		return (BTStack) NULL;
 	}
 
@@ -1364,7 +1364,7 @@ _bt_get_endpoint(Relation rel, uint32 level, bool rightmost)
 	if (!BufferIsValid(buf))
 	{
 		/* empty index... */
-		PredicateLockRelation(rel);  /* Nothing finer to lock exists. */
+		PredicateLockRelation(rel);		/* Nothing finer to lock exists. */
 		return InvalidBuffer;
 	}
 
@@ -1444,7 +1444,7 @@ _bt_endpoint(IndexScanDesc scan, ScanDirection dir)
 	if (!BufferIsValid(buf))
 	{
 		/* empty index... */
-		PredicateLockRelation(rel);  /* Nothing finer to lock exists. */
+		PredicateLockRelation(rel);		/* Nothing finer to lock exists. */
 		so->currPos.buf = InvalidBuffer;
 		return false;
 	}

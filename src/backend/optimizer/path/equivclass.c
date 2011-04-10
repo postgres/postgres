@@ -385,7 +385,7 @@ process_equivalence(PlannerInfo *root, RestrictInfo *restrictinfo,
  * Also, the expression's exposed collation must match the EC's collation.
  * This is important because in comparisons like "foo < bar COLLATE baz",
  * only one of the expressions has the correct exposed collation as we receive
- * it from the parser.  Forcing both of them to have it ensures that all
+ * it from the parser.	Forcing both of them to have it ensures that all
  * variant spellings of such a construct behave the same.  Again, we can
  * stick on a RelabelType to force the right exposed collation.  (It might
  * work to not label the collation at all in EC members, but this is risky
@@ -414,13 +414,13 @@ canonicalize_ec_expression(Expr *expr, Oid req_type, Oid req_collation)
 		exprCollation((Node *) expr) != req_collation)
 	{
 		/*
-		 * Strip any existing RelabelType, then add a new one if needed.
-		 * This is to preserve the invariant of no redundant RelabelTypes.
+		 * Strip any existing RelabelType, then add a new one if needed. This
+		 * is to preserve the invariant of no redundant RelabelTypes.
 		 *
 		 * If we have to change the exposed type of the stripped expression,
 		 * set typmod to -1 (since the new type may not have the same typmod
-		 * interpretation).  If we only have to change collation, preserve
-		 * the exposed typmod.
+		 * interpretation).  If we only have to change collation, preserve the
+		 * exposed typmod.
 		 */
 		while (expr && IsA(expr, RelabelType))
 			expr = (Expr *) ((RelabelType *) expr)->arg;
@@ -1784,8 +1784,8 @@ add_child_rel_equivalences(PlannerInfo *root,
 		ListCell   *lc2;
 
 		/*
-		 * If this EC contains a constant, then it's not useful for sorting
-		 * or driving an inner index-scan, so we skip generating child EMs.
+		 * If this EC contains a constant, then it's not useful for sorting or
+		 * driving an inner index-scan, so we skip generating child EMs.
 		 *
 		 * If this EC contains a volatile expression, then generating child
 		 * EMs would be downright dangerous.  We rely on a volatile EC having

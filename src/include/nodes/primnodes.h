@@ -74,7 +74,7 @@ typedef struct RangeVar
 	char	   *relname;		/* the relation/sequence name */
 	InhOption	inhOpt;			/* expand rel by inheritance? recursively act
 								 * on children? */
-	char		relpersistence;	/* see RELPERSISTENCE_* in pg_class.h */
+	char		relpersistence; /* see RELPERSISTENCE_* in pg_class.h */
 	Alias	   *alias;			/* table alias & optional column aliases */
 	int			location;		/* token location, or -1 if unknown */
 } RangeVar;
@@ -565,7 +565,8 @@ typedef struct SubPlan
 	/* Extra data useful for determining subplan's output type: */
 	Oid			firstColType;	/* Type of first column of subplan result */
 	int32		firstColTypmod; /* Typmod of first column of subplan result */
-	Oid			firstColCollation;	/* Collation of first column of subplan result */
+	Oid			firstColCollation;		/* Collation of first column of
+										 * subplan result */
 	/* Information about execution strategy: */
 	bool		useHashTable;	/* TRUE to store subselect output in a hash
 								 * table (implies we are doing "IN") */
@@ -909,7 +910,7 @@ typedef struct CoalesceExpr
 {
 	Expr		xpr;
 	Oid			coalescetype;	/* type of expression result */
-	Oid			coalescecollid;	/* OID of collation, or InvalidOid if none */
+	Oid			coalescecollid; /* OID of collation, or InvalidOid if none */
 	List	   *args;			/* the arguments */
 	int			location;		/* token location, or -1 if unknown */
 } CoalesceExpr;
@@ -942,7 +943,7 @@ typedef struct MinMaxExpr
  * 'args' carries all other arguments.
  *
  * Note: result type/typmod/collation are not stored, but can be deduced
- * from the XmlExprOp.  The type/typmod fields are just used for display
+ * from the XmlExprOp.	The type/typmod fields are just used for display
  * purposes, and are NOT the true result type of the node.
  */
 typedef enum XmlExprOp

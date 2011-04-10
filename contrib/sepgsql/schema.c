@@ -26,21 +26,21 @@
 void
 sepgsql_schema_post_create(Oid namespaceId)
 {
-	char		   *scontext = sepgsql_get_client_label();
-	char		   *tcontext;
-	char		   *ncontext;
-	ObjectAddress	object;
+	char	   *scontext = sepgsql_get_client_label();
+	char	   *tcontext;
+	char	   *ncontext;
+	ObjectAddress object;
 
 	/*
-	 * FIXME: Right now, we assume pg_database object has a fixed
-	 * security label, because pg_seclabel does not support to store
-	 * label of shared database objects.
+	 * FIXME: Right now, we assume pg_database object has a fixed security
+	 * label, because pg_seclabel does not support to store label of shared
+	 * database objects.
 	 */
 	tcontext = "system_u:object_r:sepgsql_db_t:s0";
 
 	/*
-	 * Compute a default security label when we create a new schema
-	 * object under the working database.
+	 * Compute a default security label when we create a new schema object
+	 * under the working database.
 	 */
 	ncontext = sepgsql_compute_create(scontext, tcontext,
 									  SEPG_CLASS_DB_SCHEMA);

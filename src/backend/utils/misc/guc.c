@@ -146,23 +146,23 @@ extern bool optimize_bounded_sort;
 static int	GUC_check_errcode_value;
 
 /* global variables for check hook support */
-char   *GUC_check_errmsg_string;
-char   *GUC_check_errdetail_string;
-char   *GUC_check_errhint_string;
+char	   *GUC_check_errmsg_string;
+char	   *GUC_check_errdetail_string;
+char	   *GUC_check_errhint_string;
 
 
 static void set_config_sourcefile(const char *name, char *sourcefile,
 					  int sourceline);
-static bool call_bool_check_hook(struct config_bool *conf, bool *newval,
-								 void **extra, GucSource source, int elevel);
-static bool call_int_check_hook(struct config_int *conf, int *newval,
-								void **extra, GucSource source, int elevel);
-static bool call_real_check_hook(struct config_real *conf, double *newval,
-								 void **extra, GucSource source, int elevel);
-static bool call_string_check_hook(struct config_string *conf, char **newval,
-								   void **extra, GucSource source, int elevel);
-static bool call_enum_check_hook(struct config_enum *conf, int *newval,
-								 void **extra, GucSource source, int elevel);
+static bool call_bool_check_hook(struct config_bool * conf, bool *newval,
+					 void **extra, GucSource source, int elevel);
+static bool call_int_check_hook(struct config_int * conf, int *newval,
+					void **extra, GucSource source, int elevel);
+static bool call_real_check_hook(struct config_real * conf, double *newval,
+					 void **extra, GucSource source, int elevel);
+static bool call_string_check_hook(struct config_string * conf, char **newval,
+					   void **extra, GucSource source, int elevel);
+static bool call_enum_check_hook(struct config_enum * conf, int *newval,
+					 void **extra, GucSource source, int elevel);
 
 static bool check_log_destination(char **newval, void **extra, GucSource source);
 static void assign_log_destination(const char *newval, void *extra);
@@ -1571,7 +1571,7 @@ static struct config_int ConfigureNamesInt[] =
 			GUC_UNIT_S
 		},
 		&wal_receiver_status_interval,
-		10, 0, INT_MAX/1000,
+		10, 0, INT_MAX / 1000,
 		NULL, NULL, NULL
 	},
 
@@ -1878,7 +1878,7 @@ static struct config_int ConfigureNamesInt[] =
 		{"max_pred_locks_per_transaction", PGC_POSTMASTER, LOCK_MANAGEMENT,
 			gettext_noop("Sets the maximum number of predicate locks per transaction."),
 			gettext_noop("The shared predicate lock table is sized on the assumption that "
-			  "at most max_pred_locks_per_transaction * max_connections distinct "
+						 "at most max_pred_locks_per_transaction * max_connections distinct "
 						 "objects will need to be locked at any one time.")
 		},
 		&max_predicate_locks_per_xact,
@@ -3165,9 +3165,10 @@ static struct config_enum ConfigureNamesEnum[] =
 						 " the level, the fewer messages are sent.")
 		},
 		&trace_recovery_messages,
+
 		/*
-		 * client_message_level_options allows too many values, really,
-		 * but it's not worth having a separate options array for this.
+		 * client_message_level_options allows too many values, really, but
+		 * it's not worth having a separate options array for this.
 		 */
 		LOG, client_message_level_options,
 		NULL, NULL, NULL
@@ -5100,8 +5101,8 @@ set_config_option(const char *name, const char *value,
 			{
 				/*
 				 * Historically we've just silently ignored attempts to set
-				 * PGC_INTERNAL variables from the config file.  Maybe it'd
-				 * be better to use the prohibitValueChange logic for this?
+				 * PGC_INTERNAL variables from the config file.  Maybe it'd be
+				 * better to use the prohibitValueChange logic for this?
 				 */
 				return true;
 			}
@@ -5559,8 +5560,8 @@ set_config_option(const char *name, const char *value,
 				if (value)
 				{
 					/*
-					 * The value passed by the caller could be transient,
-					 * so we always strdup it.
+					 * The value passed by the caller could be transient, so
+					 * we always strdup it.
 					 */
 					newval = guc_strdup(elevel, value);
 					if (newval == NULL)
@@ -7922,7 +7923,7 @@ validate_option_array_item(const char *name, const char *value,
  * ERRCODE_INVALID_PARAMETER_VALUE SQLSTATE for check hook failures.
  *
  * Note that GUC_check_errmsg() etc are just macros that result in a direct
- * assignment to the associated variables.  That is ugly, but forced by the
+ * assignment to the associated variables.	That is ugly, but forced by the
  * limitations of C's macro mechanisms.
  */
 void
@@ -7939,7 +7940,7 @@ GUC_check_errcode(int sqlerrcode)
  */
 
 static bool
-call_bool_check_hook(struct config_bool *conf, bool *newval, void **extra,
+call_bool_check_hook(struct config_bool * conf, bool *newval, void **extra,
 					 GucSource source, int elevel)
 {
 	/* Quick success if no hook */
@@ -7973,7 +7974,7 @@ call_bool_check_hook(struct config_bool *conf, bool *newval, void **extra,
 }
 
 static bool
-call_int_check_hook(struct config_int *conf, int *newval, void **extra,
+call_int_check_hook(struct config_int * conf, int *newval, void **extra,
 					GucSource source, int elevel)
 {
 	/* Quick success if no hook */
@@ -8007,7 +8008,7 @@ call_int_check_hook(struct config_int *conf, int *newval, void **extra,
 }
 
 static bool
-call_real_check_hook(struct config_real *conf, double *newval, void **extra,
+call_real_check_hook(struct config_real * conf, double *newval, void **extra,
 					 GucSource source, int elevel)
 {
 	/* Quick success if no hook */
@@ -8041,7 +8042,7 @@ call_real_check_hook(struct config_real *conf, double *newval, void **extra,
 }
 
 static bool
-call_string_check_hook(struct config_string *conf, char **newval, void **extra,
+call_string_check_hook(struct config_string * conf, char **newval, void **extra,
 					   GucSource source, int elevel)
 {
 	/* Quick success if no hook */
@@ -8075,7 +8076,7 @@ call_string_check_hook(struct config_string *conf, char **newval, void **extra,
 }
 
 static bool
-call_enum_check_hook(struct config_enum *conf, int *newval, void **extra,
+call_enum_check_hook(struct config_enum * conf, int *newval, void **extra,
 					 GucSource source, int elevel)
 {
 	/* Quick success if no hook */
@@ -8365,9 +8366,9 @@ static bool
 check_canonical_path(char **newval, void **extra, GucSource source)
 {
 	/*
-	 * Since canonicalize_path never enlarges the string, we can just
-	 * modify newval in-place.  But watch out for NULL, which is the
-	 * default value for external_pid_file.
+	 * Since canonicalize_path never enlarges the string, we can just modify
+	 * newval in-place.  But watch out for NULL, which is the default value
+	 * for external_pid_file.
 	 */
 	if (*newval)
 		canonicalize_path(*newval);
@@ -8378,12 +8379,12 @@ static bool
 check_timezone_abbreviations(char **newval, void **extra, GucSource source)
 {
 	/*
-	 * The boot_val given above for timezone_abbreviations is NULL.
-	 * When we see this we just do nothing.  If this value isn't overridden
-	 * from the config file then pg_timezone_abbrev_initialize() will
-	 * eventually replace it with "Default".  This hack has two purposes: to
-	 * avoid wasting cycles loading values that might soon be overridden from
-	 * the config file, and to avoid trying to read the timezone abbrev files
+	 * The boot_val given above for timezone_abbreviations is NULL. When we
+	 * see this we just do nothing.  If this value isn't overridden from the
+	 * config file then pg_timezone_abbrev_initialize() will eventually
+	 * replace it with "Default".  This hack has two purposes: to avoid
+	 * wasting cycles loading values that might soon be overridden from the
+	 * config file, and to avoid trying to read the timezone abbrev files
 	 * during InitializeGUCOptions().  The latter doesn't work in an
 	 * EXEC_BACKEND subprocess because my_exec_path hasn't been set yet and so
 	 * we can't locate PGSHAREDIR.
@@ -8443,15 +8444,15 @@ static void
 assign_tcp_keepalives_idle(int newval, void *extra)
 {
 	/*
-	 * The kernel API provides no way to test a value without setting it;
-	 * and once we set it we might fail to unset it.  So there seems little
-	 * point in fully implementing the check-then-assign GUC API for these
+	 * The kernel API provides no way to test a value without setting it; and
+	 * once we set it we might fail to unset it.  So there seems little point
+	 * in fully implementing the check-then-assign GUC API for these
 	 * variables.  Instead we just do the assignment on demand.  pqcomm.c
 	 * reports any problems via elog(LOG).
 	 *
-	 * This approach means that the GUC value might have little to do with
-	 * the actual kernel value, so we use a show_hook that retrieves the
-	 * kernel value rather than trusting GUC's copy.
+	 * This approach means that the GUC value might have little to do with the
+	 * actual kernel value, so we use a show_hook that retrieves the kernel
+	 * value rather than trusting GUC's copy.
 	 */
 	(void) pq_setkeepalivesidle(newval, MyProcPort);
 }
@@ -8574,7 +8575,7 @@ check_effective_io_concurrency(int *newval, void **extra, GucSource source)
 	/* This range check shouldn't fail, but let's be paranoid */
 	if (new_prefetch_pages >= 0.0 && new_prefetch_pages < (double) INT_MAX)
 	{
-		int	   *myextra = (int *) guc_malloc(ERROR, sizeof(int));
+		int		   *myextra = (int *) guc_malloc(ERROR, sizeof(int));
 
 		*myextra = (int) rint(new_prefetch_pages);
 		*extra = (void *) myextra;

@@ -25,7 +25,7 @@
 /* Local functions */
 static Relids find_placeholders_recurse(PlannerInfo *root, Node *jtnode);
 static void find_placeholders_in_qual(PlannerInfo *root, Node *qual,
-									  Relids relids);
+						  Relids relids);
 
 
 /*
@@ -179,7 +179,7 @@ find_placeholders_recurse(PlannerInfo *root, Node *jtnode)
 	{
 		elog(ERROR, "unrecognized node type: %d",
 			 (int) nodeTag(jtnode));
-		jtrelids = NULL;			/* keep compiler quiet */
+		jtrelids = NULL;		/* keep compiler quiet */
 	}
 	return jtrelids;
 }

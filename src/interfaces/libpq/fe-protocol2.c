@@ -100,11 +100,11 @@ pqSetenvPoll(PGconn *conn)
 	{
 		switch (conn->setenv_state)
 		{
-			/*
-			 * The _CLIENT_ENCODING_SEND code is slightly different
-			 * from _OPTION_SEND below (e.g., no getenv() call), which
-			 * is why a different state is used.
-			 */
+				/*
+				 * The _CLIENT_ENCODING_SEND code is slightly different from
+				 * _OPTION_SEND below (e.g., no getenv() call), which is why a
+				 * different state is used.
+				 */
 			case SETENV_STATE_CLIENT_ENCODING_SEND:
 				{
 					char		setQuery[100];	/* note length limit in
@@ -601,9 +601,10 @@ pqParseInput2(PGconn *conn)
 				case 'H':		/* Start Copy Out */
 					conn->asyncStatus = PGASYNC_COPY_OUT;
 					break;
+
 					/*
-					 * Don't need to process CopyBothResponse here because
-					 * it never arrives from the server during protocol 2.0.
+					 * Don't need to process CopyBothResponse here because it
+					 * never arrives from the server during protocol 2.0.
 					 */
 				default:
 					printfPQExpBuffer(&conn->errorMessage,

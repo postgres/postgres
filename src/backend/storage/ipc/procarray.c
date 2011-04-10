@@ -475,10 +475,10 @@ ProcArrayApplyRecoveryInfo(RunningTransactions running)
 		return;
 
 	/*
-	 * If our initial RunningTransactionsData had an overflowed snapshot then we knew
-	 * we were missing some subxids from our snapshot. We can use this data as
-	 * an initial snapshot, but we cannot yet mark it valid. We know that the
-	 * missing subxids are equal to or earlier than nextXid. After we
+	 * If our initial RunningTransactionsData had an overflowed snapshot then
+	 * we knew we were missing some subxids from our snapshot. We can use this
+	 * data as an initial snapshot, but we cannot yet mark it valid. We know
+	 * that the missing subxids are equal to or earlier than nextXid. After we
 	 * initialise we continue to apply changes during recovery, so once the
 	 * oldestRunningXid is later than the nextXid from the initial snapshot we
 	 * know that we no longer have missing information and can mark the
@@ -510,8 +510,8 @@ ProcArrayApplyRecoveryInfo(RunningTransactions running)
 	 */
 
 	/*
-	 * Release any locks belonging to old transactions that are not
-	 * running according to the running-xacts record.
+	 * Release any locks belonging to old transactions that are not running
+	 * according to the running-xacts record.
 	 */
 	StandbyReleaseOldLocks(running->nextXid);
 
@@ -582,9 +582,8 @@ ProcArrayApplyRecoveryInfo(RunningTransactions running)
 	 * Now we've got the running xids we need to set the global values that
 	 * are used to track snapshots as they evolve further.
 	 *
-	 * - latestCompletedXid which will be the xmax for snapshots
-	 * - lastOverflowedXid which shows whether snapshots overflow
-	 * - nextXid
+	 * - latestCompletedXid which will be the xmax for snapshots -
+	 * lastOverflowedXid which shows whether snapshots overflow - nextXid
 	 *
 	 * If the snapshot overflowed, then we still initialise with what we know,
 	 * but the recovery snapshot isn't fully valid yet because we know there
@@ -611,9 +610,8 @@ ProcArrayApplyRecoveryInfo(RunningTransactions running)
 
 	/*
 	 * If a transaction wrote a commit record in the gap between taking and
-	 * logging the snapshot then latestCompletedXid may already be higher
-	 * than the value from the snapshot, so check before we use the incoming
-	 * value.
+	 * logging the snapshot then latestCompletedXid may already be higher than
+	 * the value from the snapshot, so check before we use the incoming value.
 	 */
 	if (TransactionIdPrecedes(ShmemVariableCache->latestCompletedXid,
 							  running->latestCompletedXid))
@@ -1048,7 +1046,7 @@ GetOldestXmin(bool allDbs, bool ignoreVacuum)
 
 		if (allDbs ||
 			proc->databaseId == MyDatabaseId ||
-			proc->databaseId == 0)	/* include WalSender */
+			proc->databaseId == 0)		/* include WalSender */
 		{
 			/* Fetch xid just once - see GetNewTransactionId */
 			TransactionId xid = proc->xid;
@@ -1075,8 +1073,8 @@ GetOldestXmin(bool allDbs, bool ignoreVacuum)
 	if (RecoveryInProgress())
 	{
 		/*
-		 * Check to see whether KnownAssignedXids contains an xid value
-		 * older than the main procarray.
+		 * Check to see whether KnownAssignedXids contains an xid value older
+		 * than the main procarray.
 		 */
 		TransactionId kaxmin = KnownAssignedXidsGetOldestXmin();
 
@@ -1084,7 +1082,7 @@ GetOldestXmin(bool allDbs, bool ignoreVacuum)
 
 		if (TransactionIdIsNormal(kaxmin) &&
 			TransactionIdPrecedes(kaxmin, result))
-				result = kaxmin;
+			result = kaxmin;
 	}
 	else
 	{
@@ -1100,9 +1098,9 @@ GetOldestXmin(bool allDbs, bool ignoreVacuum)
 		 * vacuum_defer_cleanup_age provides some additional "slop" for the
 		 * benefit of hot standby queries on slave servers.  This is quick and
 		 * dirty, and perhaps not all that useful unless the master has a
-		 * predictable transaction rate, but it's what we've got.  Note that we
-		 * are assuming vacuum_defer_cleanup_age isn't large enough to cause
-		 * wraparound --- so guc.c should limit it to no more than the
+		 * predictable transaction rate, but it's what we've got.  Note that
+		 * we are assuming vacuum_defer_cleanup_age isn't large enough to
+		 * cause wraparound --- so guc.c should limit it to no more than the
 		 * xidStopLimit threshold in varsup.c.
 		 */
 		result -= vacuum_defer_cleanup_age;
@@ -1483,9 +1481,9 @@ GetRunningTransactionData(void)
 				suboverflowed = true;
 
 			/*
-			 * Top-level XID of a transaction is always less than any of
-			 * its subxids, so we don't need to check if any of the subxids
-			 * are smaller than oldestRunningXid
+			 * Top-level XID of a transaction is always less than any of its
+			 * subxids, so we don't need to check if any of the subxids are
+			 * smaller than oldestRunningXid
 			 */
 		}
 	}

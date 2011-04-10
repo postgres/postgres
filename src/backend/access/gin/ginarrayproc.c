@@ -82,7 +82,8 @@ ginqueryarrayextract(PG_FUNCTION_ARGS)
 	ArrayType  *array = PG_GETARG_ARRAYTYPE_P_COPY(0);
 	int32	   *nkeys = (int32 *) PG_GETARG_POINTER(1);
 	StrategyNumber strategy = PG_GETARG_UINT16(2);
-	/* bool	  **pmatch = (bool **) PG_GETARG_POINTER(3); */
+
+	/* bool   **pmatch = (bool **) PG_GETARG_POINTER(3); */
 	/* Pointer	   *extra_data = (Pointer *) PG_GETARG_POINTER(4); */
 	bool	  **nullFlags = (bool **) PG_GETARG_POINTER(5);
 	int32	   *searchMode = (int32 *) PG_GETARG_POINTER(6);
@@ -112,7 +113,7 @@ ginqueryarrayextract(PG_FUNCTION_ARGS)
 		case GinContainsStrategy:
 			if (nelems > 0)
 				*searchMode = GIN_SEARCH_MODE_DEFAULT;
-			else				/* everything contains the empty set */
+			else	/* everything contains the empty set */
 				*searchMode = GIN_SEARCH_MODE_ALL;
 			break;
 		case GinContainedStrategy:
@@ -142,10 +143,13 @@ ginarrayconsistent(PG_FUNCTION_ARGS)
 {
 	bool	   *check = (bool *) PG_GETARG_POINTER(0);
 	StrategyNumber strategy = PG_GETARG_UINT16(1);
+
 	/* ArrayType  *query = PG_GETARG_ARRAYTYPE_P(2); */
 	int32		nkeys = PG_GETARG_INT32(3);
+
 	/* Pointer	   *extra_data = (Pointer *) PG_GETARG_POINTER(4); */
 	bool	   *recheck = (bool *) PG_GETARG_POINTER(5);
+
 	/* Datum	   *queryKeys = (Datum *) PG_GETARG_POINTER(6); */
 	bool	   *nullFlags = (bool *) PG_GETARG_POINTER(7);
 	bool		res;
@@ -190,10 +194,11 @@ ginarrayconsistent(PG_FUNCTION_ARGS)
 		case GinEqualStrategy:
 			/* we will need recheck */
 			*recheck = true;
+
 			/*
 			 * Must have all elements in check[] true; no discrimination
-			 * against nulls here.  This is because array_contain_compare
-			 * and array_eq handle nulls differently ...
+			 * against nulls here.	This is because array_contain_compare and
+			 * array_eq handle nulls differently ...
 			 */
 			res = true;
 			for (i = 0; i < nkeys; i++)

@@ -126,7 +126,7 @@ OpFamilyCacheLookup(Oid amID, List *opfamilyname, bool missing_ok)
 
 	if (!HeapTupleIsValid(htup) && !missing_ok)
 	{
-		HeapTuple amtup;
+		HeapTuple	amtup;
 
 		amtup = SearchSysCache1(AMOID, ObjectIdGetDatum(amID));
 		if (!HeapTupleIsValid(amtup))
@@ -134,8 +134,8 @@ OpFamilyCacheLookup(Oid amID, List *opfamilyname, bool missing_ok)
 		ereport(ERROR,
 				(errcode(ERRCODE_UNDEFINED_OBJECT),
 				 errmsg("operator family \"%s\" does not exist for access method \"%s\"",
-				   NameListToString(opfamilyname),
-				   NameStr(((Form_pg_am) GETSTRUCT(amtup))->amname))));
+						NameListToString(opfamilyname),
+						NameStr(((Form_pg_am) GETSTRUCT(amtup))->amname))));
 	}
 
 	return htup;
@@ -143,7 +143,7 @@ OpFamilyCacheLookup(Oid amID, List *opfamilyname, bool missing_ok)
 
 /*
  * get_opfamily_oid
- *    find an opfamily OID by possibly qualified name
+ *	  find an opfamily OID by possibly qualified name
  *
  * If not found, returns InvalidOid if missing_ok, else throws error.
  */
@@ -202,7 +202,7 @@ OpClassCacheLookup(Oid amID, List *opclassname, bool missing_ok)
 
 	if (!HeapTupleIsValid(htup) && !missing_ok)
 	{
-		HeapTuple amtup;
+		HeapTuple	amtup;
 
 		amtup = SearchSysCache1(AMOID, ObjectIdGetDatum(amID));
 		if (!HeapTupleIsValid(amtup))
@@ -219,7 +219,7 @@ OpClassCacheLookup(Oid amID, List *opclassname, bool missing_ok)
 
 /*
  * get_opclass_oid
- *    find an opclass OID by possibly qualified name
+ *	  find an opclass OID by possibly qualified name
  *
  * If not found, returns InvalidOid if missing_ok, else throws error.
  */
@@ -1088,11 +1088,11 @@ assignOperTypes(OpFamilyMember *member, Oid amoid, Oid typeoid)
 	if (OidIsValid(member->sortfamily))
 	{
 		/*
-		 * Ordering op, check index supports that.  (We could perhaps also
+		 * Ordering op, check index supports that.	(We could perhaps also
 		 * check that the operator returns a type supported by the sortfamily,
 		 * but that seems more trouble than it's worth here.  If it does not,
-		 * the operator will never be matchable to any ORDER BY clause, but
-		 * no worse consequences can ensue.  Also, trying to check that would
+		 * the operator will never be matchable to any ORDER BY clause, but no
+		 * worse consequences can ensue.  Also, trying to check that would
 		 * create an ordering hazard during dump/reload: it's possible that
 		 * the family has been created but not yet populated with the required
 		 * operators.)
@@ -1108,8 +1108,8 @@ assignOperTypes(OpFamilyMember *member, Oid amoid, Oid typeoid)
 		if (!pg_am->amcanorderbyop)
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
-					 errmsg("access method \"%s\" does not support ordering operators",
-							NameStr(pg_am->amname))));
+			errmsg("access method \"%s\" does not support ordering operators",
+				   NameStr(pg_am->amname))));
 
 		ReleaseSysCache(amtup);
 	}
@@ -1276,7 +1276,7 @@ storeOperators(List *opfamilyname, Oid amoid,
 	foreach(l, operators)
 	{
 		OpFamilyMember *op = (OpFamilyMember *) lfirst(l);
-		char	oppurpose;
+		char		oppurpose;
 
 		/*
 		 * If adding to an existing family, check for conflict with an
@@ -1566,7 +1566,7 @@ RemoveOpClass(RemoveOpClassStmt *stmt)
 	{
 		ereport(NOTICE,
 				(errmsg("operator class \"%s\" does not exist for access method \"%s\"",
-					NameListToString(stmt->opclassname), stmt->amname)));
+						NameListToString(stmt->opclassname), stmt->amname)));
 		return;
 	}
 
@@ -1617,7 +1617,7 @@ RemoveOpFamily(RemoveOpFamilyStmt *stmt)
 		ereport(ERROR,
 				(errcode(ERRCODE_UNDEFINED_OBJECT),
 				 errmsg("operator family \"%s\" does not exist for access method \"%s\"",
-				   NameListToString(stmt->opfamilyname), stmt->amname)));
+						NameListToString(stmt->opfamilyname), stmt->amname)));
 		return;
 	}
 
@@ -2029,7 +2029,7 @@ AlterOpClassNamespace(List *name, char *access_method, const char *newschema)
 Oid
 AlterOpClassNamespace_oid(Oid opclassOid, Oid newNspOid)
 {
-	Oid         oldNspOid;
+	Oid			oldNspOid;
 	Relation	rel;
 
 	rel = heap_open(OperatorClassRelationId, RowExclusiveLock);
@@ -2238,7 +2238,7 @@ AlterOpFamilyNamespace(List *name, char *access_method, const char *newschema)
 Oid
 AlterOpFamilyNamespace_oid(Oid opfamilyOid, Oid newNspOid)
 {
-	Oid         oldNspOid;
+	Oid			oldNspOid;
 	Relation	rel;
 
 	rel = heap_open(OperatorFamilyRelationId, RowExclusiveLock);

@@ -24,14 +24,15 @@
 #include "utils/memutils.h"
 
 static void ResetUnloggedRelationsInTablespaceDir(const char *tsdirname,
-									 int op);
+									  int op);
 static void ResetUnloggedRelationsInDbspaceDir(const char *dbspacedirname,
 								   int op);
 static bool parse_filename_for_nontemp_relation(const char *name,
 									int *oidchars, ForkNumber *fork);
 
-typedef struct {
-	char oid[OIDCHARS+1];
+typedef struct
+{
+	char		oid[OIDCHARS + 1];
 } unlogged_relation_entry;
 
 /*
@@ -49,13 +50,14 @@ ResetUnloggedRelations(int op)
 	char		temp_path[MAXPGPATH];
 	DIR		   *spc_dir;
 	struct dirent *spc_de;
-	MemoryContext tmpctx, oldctx;
+	MemoryContext tmpctx,
+				oldctx;
 
 	/* Log it. */
 	ereport(DEBUG1,
 			(errmsg("resetting unlogged relations: cleanup %d init %d",
-			 (op & UNLOGGED_RELATION_CLEANUP) != 0,
-			 (op & UNLOGGED_RELATION_INIT) != 0)));
+					(op & UNLOGGED_RELATION_CLEANUP) != 0,
+					(op & UNLOGGED_RELATION_INIT) != 0)));
 
 	/*
 	 * Just to be sure we don't leak any memory, let's create a temporary
@@ -85,7 +87,7 @@ ResetUnloggedRelations(int op)
 			continue;
 
 		snprintf(temp_path, sizeof(temp_path), "pg_tblspc/%s/%s",
-			spc_de->d_name, TABLESPACE_VERSION_DIRECTORY);
+				 spc_de->d_name, TABLESPACE_VERSION_DIRECTORY);
 		ResetUnloggedRelationsInTablespaceDir(temp_path, op);
 	}
 
@@ -119,7 +121,7 @@ ResetUnloggedRelationsInTablespaceDir(const char *tsdirname, int op)
 
 	while ((de = ReadDir(ts_dir, tsdirname)) != NULL)
 	{
-		int		i = 0;
+		int			i = 0;
 
 		/*
 		 * We're only interested in the per-database directories, which have
@@ -184,8 +186,8 @@ ResetUnloggedRelationsInDbspaceDir(const char *dbspacedirname, int op)
 		/* Scan the directory. */
 		while ((de = ReadDir(dbspace_dir, dbspacedirname)) != NULL)
 		{
-			ForkNumber forkNum;
-			int		oidchars;
+			ForkNumber	forkNum;
+			int			oidchars;
 			unlogged_relation_entry ent;
 
 			/* Skip anything that doesn't look like a relation data file. */
@@ -198,8 +200,8 @@ ResetUnloggedRelationsInDbspaceDir(const char *dbspacedirname, int op)
 				continue;
 
 			/*
-			 * Put the OID portion of the name into the hash table, if it isn't
-			 * already.
+			 * Put the OID portion of the name into the hash table, if it
+			 * isn't already.
 			 */
 			memset(ent.oid, 0, sizeof(ent.oid));
 			memcpy(ent.oid, de->d_name, oidchars);
@@ -236,9 +238,9 @@ ResetUnloggedRelationsInDbspaceDir(const char *dbspacedirname, int op)
 		/* Scan the directory. */
 		while ((de = ReadDir(dbspace_dir, dbspacedirname)) != NULL)
 		{
-			ForkNumber forkNum;
-			int		oidchars;
-			bool	found;
+			ForkNumber	forkNum;
+			int			oidchars;
+			bool		found;
 			unlogged_relation_entry ent;
 
 			/* Skip anything that doesn't look like a relation data file. */
@@ -262,7 +264,8 @@ ResetUnloggedRelationsInDbspaceDir(const char *dbspacedirname, int op)
 			if (found)
 			{
 				snprintf(rm_path, sizeof(rm_path), "%s/%s",
-					dbspacedirname, de->d_name);
+						 dbspacedirname, de->d_name);
+
 				/*
 				 * It's tempting to actually throw an error here, but since
 				 * this code gets run during database startup, that could
@@ -284,9 +287,9 @@ ResetUnloggedRelationsInDbspaceDir(const char *dbspacedirname, int op)
 	/*
 	 * Initialization happens after cleanup is complete: we copy each init
 	 * fork file to the corresponding main fork file.  Note that if we are
-	 * asked to do both cleanup and init, we may never get here: if the cleanup
-	 * code determines that there are no init forks in this dbspace, it will
-	 * return before we get to this point.
+	 * asked to do both cleanup and init, we may never get here: if the
+	 * cleanup code determines that there are no init forks in this dbspace,
+	 * it will return before we get to this point.
 	 */
 	if ((op & UNLOGGED_RELATION_INIT) != 0)
 	{
@@ -304,11 +307,11 @@ ResetUnloggedRelationsInDbspaceDir(const char *dbspacedirname, int op)
 		/* Scan the directory. */
 		while ((de = ReadDir(dbspace_dir, dbspacedirname)) != NULL)
 		{
-			ForkNumber forkNum;
-			int		oidchars;
-			char	oidbuf[OIDCHARS+1];
-			char	srcpath[MAXPGPATH];
-			char	dstpath[MAXPGPATH];
+			ForkNumber	forkNum;
+			int			oidchars;
+			char		oidbuf[OIDCHARS + 1];
+			char		srcpath[MAXPGPATH];
+			char		dstpath[MAXPGPATH];
 
 			/* Skip anything that doesn't look like a relation data file. */
 			if (!parse_filename_for_nontemp_relation(de->d_name, &oidchars,
@@ -370,9 +373,9 @@ parse_filename_for_nontemp_relation(const char *name, int *oidchars,
 		*fork = MAIN_FORKNUM;
 	else
 	{
-		int		forkchar;
+		int			forkchar;
 
-		forkchar = forkname_chars(&name[pos+1], fork);
+		forkchar = forkname_chars(&name[pos + 1], fork);
 		if (forkchar <= 0)
 			return false;
 		pos += forkchar + 1;
@@ -381,8 +384,9 @@ parse_filename_for_nontemp_relation(const char *name, int *oidchars,
 	/* Check for a segment number. */
 	if (name[pos] == '.')
 	{
-		int		segchar;
-		for (segchar = 1; isdigit((unsigned char) name[pos+segchar]); ++segchar)
+		int			segchar;
+
+		for (segchar = 1; isdigit((unsigned char) name[pos + segchar]); ++segchar)
 			;
 		if (segchar <= 1)
 			return false;

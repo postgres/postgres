@@ -1319,9 +1319,9 @@ retry:
 	/*
 	 * Ordinarily, at this point the search should have found the originally
 	 * inserted tuple, unless we exited the loop early because of conflict.
-	 * However, it is possible to define exclusion constraints for which
-	 * that wouldn't be true --- for instance, if the operator is <>.
-	 * So we no longer complain if found_self is still false.
+	 * However, it is possible to define exclusion constraints for which that
+	 * wouldn't be true --- for instance, if the operator is <>. So we no
+	 * longer complain if found_self is still false.
 	 */
 
 	econtext->ecxt_scantuple = save_scantuple;

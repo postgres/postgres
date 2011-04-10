@@ -98,7 +98,7 @@ gettoken(WORKSTATE *state, int4 *val)
 				}
 				else
 				{
-					long	lval;
+					long		lval;
 
 					nnn[innn] = '\0';
 					errno = 0;
@@ -355,8 +355,8 @@ gin_bool_consistent(QUERYTYPE *query, bool *check)
 		return FALSE;
 
 	/*
-	 * Set up data for checkcondition_gin.  This must agree with the
-	 * query extraction code in ginint4_queryextract.
+	 * Set up data for checkcondition_gin.	This must agree with the query
+	 * extraction code in ginint4_queryextract.
 	 */
 	gcv.first = items;
 	gcv.mapped_check = (bool *) palloc(sizeof(bool) * query->size);

@@ -78,7 +78,7 @@ static Relation get_relation_by_qualified_name(ObjectType objtype,
 static ObjectAddress get_object_address_relobject(ObjectType objtype,
 							 List *objname, Relation *relp);
 static ObjectAddress get_object_address_attribute(ObjectType objtype,
-							 List *objname, Relation *relp, LOCKMODE lockmode);
+						   List *objname, Relation *relp, LOCKMODE lockmode);
 static ObjectAddress get_object_address_opcf(ObjectType objtype, List *objname,
 						List *objargs);
 static bool object_exists(ObjectAddress address);
@@ -108,8 +108,8 @@ ObjectAddress
 get_object_address(ObjectType objtype, List *objname, List *objargs,
 				   Relation *relp, LOCKMODE lockmode)
 {
-	ObjectAddress	address;
-	Relation		relation = NULL;
+	ObjectAddress address;
+	Relation	relation = NULL;
 
 	/* Some kind of lock must be taken. */
 	Assert(lockmode != NoLock);
@@ -130,7 +130,7 @@ get_object_address(ObjectType objtype, List *objname, List *objargs,
 		case OBJECT_COLUMN:
 			address =
 				get_object_address_attribute(objtype, objname, &relation,
-					lockmode);
+											 lockmode);
 			break;
 		case OBJECT_RULE:
 		case OBJECT_TRIGGER:
@@ -201,10 +201,10 @@ get_object_address(ObjectType objtype, List *objname, List *objargs,
 			break;
 		case OBJECT_CAST:
 			{
-				TypeName *sourcetype = (TypeName *) linitial(objname);
-				TypeName *targettype = (TypeName *) linitial(objargs);
-				Oid sourcetypeid = typenameTypeId(NULL, sourcetype);
-				Oid targettypeid = typenameTypeId(NULL, targettype);
+				TypeName   *sourcetype = (TypeName *) linitial(objname);
+				TypeName   *targettype = (TypeName *) linitial(objargs);
+				Oid			sourcetypeid = typenameTypeId(NULL, sourcetype);
+				Oid			targettypeid = typenameTypeId(NULL, targettype);
 
 				address.classId = CastRelationId;
 				address.objectId =
@@ -242,8 +242,8 @@ get_object_address(ObjectType objtype, List *objname, List *objargs,
 
 	/*
 	 * If we're dealing with a relation or attribute, then the relation is
-	 * already locked.  If we're dealing with any other type of object, we need
-	 * to lock it and then verify that it still exists.
+	 * already locked.	If we're dealing with any other type of object, we
+	 * need to lock it and then verify that it still exists.
 	 */
 	if (address.classId != RelationRelationId)
 	{
@@ -308,7 +308,7 @@ get_object_address_unqualified(ObjectType objtype, List *qualname)
 				break;
 			default:
 				elog(ERROR, "unrecognized objtype: %d", (int) objtype);
-				msg = NULL;			/* placate compiler */
+				msg = NULL;		/* placate compiler */
 		}
 		ereport(ERROR,
 				(errcode(ERRCODE_SYNTAX_ERROR),
@@ -379,7 +379,7 @@ static Relation
 get_relation_by_qualified_name(ObjectType objtype, List *objname,
 							   LOCKMODE lockmode)
 {
-	Relation relation;
+	Relation	relation;
 
 	relation = relation_openrv(makeRangeVarFromNameList(objname), lockmode);
 	switch (objtype)
@@ -449,7 +449,7 @@ get_object_address_relobject(ObjectType objtype, List *objname, Relation *relp)
 	nnames = list_length(objname);
 	if (nnames < 2)
 	{
-		Oid		reloid;
+		Oid			reloid;
 
 		/*
 		 * For compatibility with very old releases, we sometimes allow users
@@ -514,7 +514,7 @@ static ObjectAddress
 get_object_address_attribute(ObjectType objtype, List *objname,
 							 Relation *relp, LOCKMODE lockmode)
 {
-	ObjectAddress	address;
+	ObjectAddress address;
 	List	   *relname;
 	Oid			reloid;
 	Relation	relation;
@@ -534,7 +534,7 @@ get_object_address_attribute(ObjectType objtype, List *objname,
 		ereport(ERROR,
 				(errcode(ERRCODE_UNDEFINED_COLUMN),
 				 errmsg("column \"%s\" of relation \"%s\" does not exist",
-				 attname, RelationGetRelationName(relation))));
+						attname, RelationGetRelationName(relation))));
 
 	*relp = relation;
 	return address;
@@ -584,8 +584,8 @@ object_exists(ObjectAddress address)
 	int			cache = -1;
 	Oid			indexoid = InvalidOid;
 	Relation	rel;
-	ScanKeyData	skey[1];
-	SysScanDesc	sd;
+	ScanKeyData skey[1];
+	SysScanDesc sd;
 	bool		found;
 
 	/* Sub-objects require special treatment. */
@@ -609,9 +609,9 @@ object_exists(ObjectAddress address)
 
 	/*
 	 * For object types that have a relevant syscache, we use it; for
-	 * everything else, we'll have to do an index-scan.  This switch
-	 * sets either the cache to be used for the syscache lookup, or the
-	 * index to be used for the index scan.
+	 * everything else, we'll have to do an index-scan.  This switch sets
+	 * either the cache to be used for the syscache lookup, or the index to be
+	 * used for the index scan.
 	 */
 	switch (address.classId)
 	{
@@ -664,6 +664,7 @@ object_exists(ObjectAddress address)
 			cache = OPFAMILYOID;
 			break;
 		case LargeObjectRelationId:
+
 			/*
 			 * Weird backward compatibility hack: ObjectAddress notation uses
 			 * LargeObjectRelationId for large objects, but since PostgreSQL
@@ -816,15 +817,15 @@ check_object_ownership(Oid roleid, ObjectType objtype, ObjectAddress address,
 				ereport(ERROR,
 						(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
 						 errmsg("must be owner of large object %u",
-							address.objectId)));
+								address.objectId)));
 			break;
 		case OBJECT_CAST:
 			{
 				/* We can only check permissions on the source/target types */
-				TypeName *sourcetype = (TypeName *) linitial(objname);
-				TypeName *targettype = (TypeName *) linitial(objargs);
-				Oid sourcetypeid = typenameTypeId(NULL, sourcetype);
-				Oid targettypeid = typenameTypeId(NULL, targettype);
+				TypeName   *sourcetype = (TypeName *) linitial(objname);
+				TypeName   *targettype = (TypeName *) linitial(objargs);
+				Oid			sourcetypeid = typenameTypeId(NULL, sourcetype);
+				Oid			targettypeid = typenameTypeId(NULL, targettype);
 
 				if (!pg_type_ownercheck(sourcetypeid, roleid)
 					&& !pg_type_ownercheck(targettypeid, roleid))
@@ -851,6 +852,7 @@ check_object_ownership(Oid roleid, ObjectType objtype, ObjectAddress address,
 							   NameListToString(objname));
 			break;
 		case OBJECT_ROLE:
+
 			/*
 			 * We treat roles as being "owned" by those with CREATEROLE priv,
 			 * except that superusers are only owned by superusers.

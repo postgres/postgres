@@ -61,7 +61,7 @@ static text *pgxml_result_to_text(xmlXPathObjectPtr res, xmlChar *toptag,
 static xmlChar *pgxml_texttoxmlchar(text *textstring);
 
 static xmlXPathObjectPtr pgxml_xpath(text *document, xmlChar *xpath,
-									 xpath_workspace *workspace);
+			xpath_workspace *workspace);
 
 static void cleanup_workspace(xpath_workspace *workspace);
 
@@ -234,7 +234,7 @@ Datum
 xpath_nodeset(PG_FUNCTION_ARGS)
 {
 	text	   *document = PG_GETARG_TEXT_P(0);
-	text	   *xpathsupp = PG_GETARG_TEXT_P(1);	/* XPath expression */
+	text	   *xpathsupp = PG_GETARG_TEXT_P(1);		/* XPath expression */
 	xmlChar    *toptag = pgxml_texttoxmlchar(PG_GETARG_TEXT_P(2));
 	xmlChar    *septag = pgxml_texttoxmlchar(PG_GETARG_TEXT_P(3));
 	xmlChar    *xpath;
@@ -267,7 +267,7 @@ Datum
 xpath_list(PG_FUNCTION_ARGS)
 {
 	text	   *document = PG_GETARG_TEXT_P(0);
-	text	   *xpathsupp = PG_GETARG_TEXT_P(1);	/* XPath expression */
+	text	   *xpathsupp = PG_GETARG_TEXT_P(1);		/* XPath expression */
 	xmlChar    *plainsep = pgxml_texttoxmlchar(PG_GETARG_TEXT_P(2));
 	xmlChar    *xpath;
 	text	   *xpres;
@@ -296,7 +296,7 @@ Datum
 xpath_string(PG_FUNCTION_ARGS)
 {
 	text	   *document = PG_GETARG_TEXT_P(0);
-	text	   *xpathsupp = PG_GETARG_TEXT_P(1);	/* XPath expression */
+	text	   *xpathsupp = PG_GETARG_TEXT_P(1);		/* XPath expression */
 	xmlChar    *xpath;
 	int32		pathsize;
 	text	   *xpres;
@@ -337,7 +337,7 @@ Datum
 xpath_number(PG_FUNCTION_ARGS)
 {
 	text	   *document = PG_GETARG_TEXT_P(0);
-	text	   *xpathsupp = PG_GETARG_TEXT_P(1);	/* XPath expression */
+	text	   *xpathsupp = PG_GETARG_TEXT_P(1);		/* XPath expression */
 	xmlChar    *xpath;
 	float4		fRes;
 	xmlXPathObjectPtr res;
@@ -369,7 +369,7 @@ Datum
 xpath_bool(PG_FUNCTION_ARGS)
 {
 	text	   *document = PG_GETARG_TEXT_P(0);
-	text	   *xpathsupp = PG_GETARG_TEXT_P(1);	/* XPath expression */
+	text	   *xpathsupp = PG_GETARG_TEXT_P(1);		/* XPath expression */
 	xmlChar    *xpath;
 	int			bRes;
 	xmlXPathObjectPtr res;

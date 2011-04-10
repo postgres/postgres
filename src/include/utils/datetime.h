@@ -328,7 +328,7 @@ extern int	j2day(int jd);
 extern bool CheckDateTokenTables(void);
 
 extern void ConvertTimeZoneAbbrevs(TimeZoneAbbrevTable *tbl,
-								   struct tzEntry *abbrevs, int n);
+					   struct tzEntry *abbrevs, int n);
 extern void InstallTimeZoneAbbrevs(TimeZoneAbbrevTable *tbl);
 
 extern Datum pg_timezone_abbrevs(PG_FUNCTION_ARGS);

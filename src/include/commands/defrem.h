@@ -68,7 +68,7 @@ extern void AlterFunctionNamespace(List *name, List *argtypes, bool isagg,
 					   const char *newschema);
 extern Oid	AlterFunctionNamespace_oid(Oid procOid, Oid nspOid);
 extern void ExecuteDoStmt(DoStmt *stmt);
-extern Oid get_cast_oid(Oid sourcetypeid, Oid targettypeid, bool missing_ok);
+extern Oid	get_cast_oid(Oid sourcetypeid, Oid targettypeid, bool missing_ok);
 
 /* commands/operatorcmds.c */
 extern void DefineOperator(List *names, List *parameters);
@@ -107,9 +107,9 @@ extern void AlterOpFamilyOwner(List *name, const char *access_method, Oid newOwn
 extern void AlterOpFamilyOwner_oid(Oid opfamilyOid, Oid newOwnerId);
 extern void AlterOpFamilyNamespace(List *name, char *access_method, const char *newschema);
 extern Oid	AlterOpFamilyNamespace_oid(Oid opfamilyOid, Oid newNspOid);
-extern Oid get_am_oid(const char *amname, bool missing_ok);
-extern Oid get_opclass_oid(Oid amID, List *opclassname, bool missing_ok);
-extern Oid get_opfamily_oid(Oid amID, List *opfamilyname, bool missing_ok);
+extern Oid	get_am_oid(const char *amname, bool missing_ok);
+extern Oid	get_opclass_oid(Oid amID, List *opclassname, bool missing_ok);
+extern Oid	get_opfamily_oid(Oid amID, List *opfamilyname, bool missing_ok);
 
 /* commands/tsearchcmds.c */
 extern void DefineTSParser(List *names, List *parameters);
@@ -164,9 +164,9 @@ extern void RemoveUserMapping(DropUserMappingStmt *stmt);
 extern void RemoveUserMappingById(Oid umId);
 extern void CreateForeignTable(CreateForeignTableStmt *stmt, Oid relid);
 extern Datum transformGenericOptions(Oid catalogId,
-									 Datum oldOptions,
-									 List *options,
-									 Oid fdwvalidator);
+						Datum oldOptions,
+						List *options,
+						Oid fdwvalidator);
 
 /* support routines in commands/define.c */
 

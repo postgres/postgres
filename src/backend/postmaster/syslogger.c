@@ -137,7 +137,7 @@ static void process_pipe_input(char *logbuffer, int *bytes_in_logbuffer);
 static void flush_pipe_input(char *logbuffer, int *bytes_in_logbuffer);
 static void open_csvlogfile(void);
 static FILE *logfile_open(const char *filename, const char *mode,
-						  bool allow_errors);
+			 bool allow_errors);
 
 #ifdef WIN32
 static unsigned int __stdcall pipeThread(void *arg);
@@ -1017,8 +1017,8 @@ logfile_open(const char *filename, const char *mode, bool allow_errors)
 	mode_t		oumask;
 
 	/*
-	 * Note we do not let Log_file_mode disable IWUSR, since we certainly
-	 * want to be able to write the files ourselves.
+	 * Note we do not let Log_file_mode disable IWUSR, since we certainly want
+	 * to be able to write the files ourselves.
 	 */
 	oumask = umask((mode_t) ((~(Log_file_mode | S_IWUSR)) & (S_IRWXU | S_IRWXG | S_IRWXO)));
 	fh = fopen(filename, mode);
@@ -1035,7 +1035,7 @@ logfile_open(const char *filename, const char *mode, bool allow_errors)
 	}
 	else
 	{
-		int		save_errno = errno;
+		int			save_errno = errno;
 
 		ereport(allow_errors ? LOG : FATAL,
 				(errcode_for_file_access(),

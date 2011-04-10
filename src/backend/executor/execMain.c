@@ -19,7 +19,7 @@
  *	ExecutorRun accepts direction and count arguments that specify whether
  *	the plan is to be executed forwards, backwards, and for how many tuples.
  *	In some cases ExecutorRun may be called multiple times to process all
- *	the tuples for a plan.  It is also acceptable to stop short of executing
+ *	the tuples for a plan.	It is also acceptable to stop short of executing
  *	the whole plan (but only if it is a SELECT).
  *
  *	ExecutorFinish must be called after the final ExecutorRun call and
@@ -168,6 +168,7 @@ standard_ExecutorStart(QueryDesc *queryDesc, int eflags)
 	switch (queryDesc->operation)
 	{
 		case CMD_SELECT:
+
 			/*
 			 * SELECT INTO, SELECT FOR UPDATE/SHARE and modifying CTEs need to
 			 * mark tuples
@@ -332,12 +333,12 @@ standard_ExecutorRun(QueryDesc *queryDesc,
  *		ExecutorFinish
  *
  *		This routine must be called after the last ExecutorRun call.
- *		It performs cleanup such as firing AFTER triggers.  It is
+ *		It performs cleanup such as firing AFTER triggers.	It is
  *		separate from ExecutorEnd because EXPLAIN ANALYZE needs to
  *		include these actions in the total runtime.
  *
  *		We provide a function hook variable that lets loadable plugins
- *		get control when ExecutorFinish is called.  Such a plugin would
+ *		get control when ExecutorFinish is called.	Such a plugin would
  *		normally call standard_ExecutorFinish().
  *
  * ----------------------------------------------------------------
@@ -425,9 +426,9 @@ standard_ExecutorEnd(QueryDesc *queryDesc)
 	Assert(estate != NULL);
 
 	/*
-	 * Check that ExecutorFinish was called, unless in EXPLAIN-only mode.
-	 * This Assert is needed because ExecutorFinish is new as of 9.1, and
-	 * callers might forget to call it.
+	 * Check that ExecutorFinish was called, unless in EXPLAIN-only mode. This
+	 * Assert is needed because ExecutorFinish is new as of 9.1, and callers
+	 * might forget to call it.
 	 */
 	Assert(estate->es_finished ||
 		   (estate->es_top_eflags & EXEC_FLAG_EXPLAIN_ONLY));
@@ -519,7 +520,7 @@ ExecCheckRTPerms(List *rangeTable, bool ereport_on_violation)
 
 	foreach(l, rangeTable)
 	{
-		RangeTblEntry  *rte = (RangeTblEntry *) lfirst(l);
+		RangeTblEntry *rte = (RangeTblEntry *) lfirst(l);
 
 		result = ExecCheckRTEPerms(rte);
 		if (!result)
@@ -533,8 +534,8 @@ ExecCheckRTPerms(List *rangeTable, bool ereport_on_violation)
 	}
 
 	if (ExecutorCheckPerms_hook)
-		result = (*ExecutorCheckPerms_hook)(rangeTable,
-											ereport_on_violation);
+		result = (*ExecutorCheckPerms_hook) (rangeTable,
+											 ereport_on_violation);
 	return result;
 }
 
@@ -980,7 +981,7 @@ InitPlan(QueryDesc *queryDesc, int eflags)
 void
 CheckValidResultRel(Relation resultRel, CmdType operation)
 {
-	TriggerDesc	*trigDesc = resultRel->trigdesc;
+	TriggerDesc *trigDesc = resultRel->trigdesc;
 
 	switch (resultRel->rd_rel->relkind)
 	{
@@ -1005,26 +1006,26 @@ CheckValidResultRel(Relation resultRel, CmdType operation)
 				case CMD_INSERT:
 					if (!trigDesc || !trigDesc->trig_insert_instead_row)
 						ereport(ERROR,
-								(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
-								 errmsg("cannot insert into view \"%s\"",
-										RelationGetRelationName(resultRel)),
-								 errhint("You need an unconditional ON INSERT DO INSTEAD rule or an INSTEAD OF INSERT trigger.")));
+						  (errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
+						   errmsg("cannot insert into view \"%s\"",
+								  RelationGetRelationName(resultRel)),
+						   errhint("You need an unconditional ON INSERT DO INSTEAD rule or an INSTEAD OF INSERT trigger.")));
 					break;
 				case CMD_UPDATE:
 					if (!trigDesc || !trigDesc->trig_update_instead_row)
 						ereport(ERROR,
-								(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
-								 errmsg("cannot update view \"%s\"",
-										RelationGetRelationName(resultRel)),
-								 errhint("You need an unconditional ON UPDATE DO INSTEAD rule or an INSTEAD OF UPDATE trigger.")));
+						  (errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
+						   errmsg("cannot update view \"%s\"",
+								  RelationGetRelationName(resultRel)),
+						   errhint("You need an unconditional ON UPDATE DO INSTEAD rule or an INSTEAD OF UPDATE trigger.")));
 					break;
 				case CMD_DELETE:
 					if (!trigDesc || !trigDesc->trig_delete_instead_row)
 						ereport(ERROR,
-								(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
-								 errmsg("cannot delete from view \"%s\"",
-										RelationGetRelationName(resultRel)),
-								 errhint("You need an unconditional ON DELETE DO INSTEAD rule or an INSTEAD OF DELETE trigger.")));
+						  (errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
+						   errmsg("cannot delete from view \"%s\"",
+								  RelationGetRelationName(resultRel)),
+						   errhint("You need an unconditional ON DELETE DO INSTEAD rule or an INSTEAD OF DELETE trigger.")));
 					break;
 				default:
 					elog(ERROR, "unrecognized CmdType: %d", (int) operation);
@@ -1137,8 +1138,8 @@ ExecGetTriggerResultRel(EState *estate, Oid relid)
 	/*
 	 * Open the target relation's relcache entry.  We assume that an
 	 * appropriate lock is still held by the backend from whenever the trigger
-	 * event got queued, so we need take no new lock here.  Also, we need
-	 * not recheck the relkind, so no need for CheckValidResultRel.
+	 * event got queued, so we need take no new lock here.	Also, we need not
+	 * recheck the relkind, so no need for CheckValidResultRel.
 	 */
 	rel = heap_open(relid, NoLock);
 
@@ -1238,12 +1239,12 @@ ExecPostprocessPlan(EState *estate)
 
 	/*
 	 * Run any secondary ModifyTable nodes to completion, in case the main
-	 * query did not fetch all rows from them.  (We do this to ensure that
+	 * query did not fetch all rows from them.	(We do this to ensure that
 	 * such nodes have predictable results.)
 	 */
 	foreach(lc, estate->es_auxmodifytables)
 	{
-		PlanState *ps = (PlanState *) lfirst(lc);
+		PlanState  *ps = (PlanState *) lfirst(lc);
 
 		for (;;)
 		{
@@ -2220,9 +2221,9 @@ EvalPlanQualStart(EPQState *epqstate, EState *parentestate, Plan *planTree)
 	 * ExecInitSubPlan expects to be able to find these entries. Some of the
 	 * SubPlans might not be used in the part of the plan tree we intend to
 	 * run, but since it's not easy to tell which, we just initialize them
-	 * all.  (However, if the subplan is headed by a ModifyTable node, then
-	 * it must be a data-modifying CTE, which we will certainly not need to
-	 * re-run, so we can skip initializing it.  This is just an efficiency
+	 * all.  (However, if the subplan is headed by a ModifyTable node, then it
+	 * must be a data-modifying CTE, which we will certainly not need to
+	 * re-run, so we can skip initializing it.	This is just an efficiency
 	 * hack; it won't skip data-modifying CTEs for which the ModifyTable node
 	 * is not at the top.)
 	 */

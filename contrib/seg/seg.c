@@ -356,7 +356,7 @@ gseg_picksplit(GistEntryVector *entryvec,
 	{
 		seg = (SEG *) DatumGetPointer(entryvec->vector[i].key);
 		/* center calculation is done this way to avoid possible overflow */
-		sort_items[i - 1].center = seg->lower*0.5f + seg->upper*0.5f;
+		sort_items[i - 1].center = seg->lower * 0.5f + seg->upper * 0.5f;
 		sort_items[i - 1].index = i;
 		sort_items[i - 1].data = seg;
 	}

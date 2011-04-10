@@ -77,7 +77,7 @@ typedef struct TypeCacheEnumData
 	Oid			bitmap_base;	/* OID corresponding to bit 0 of bitmapset */
 	Bitmapset  *sorted_values;	/* Set of OIDs known to be in order */
 	int			num_values;		/* total number of values in enum */
-	EnumItem	enum_values[1];	/* VARIABLE LENGTH ARRAY */
+	EnumItem	enum_values[1]; /* VARIABLE LENGTH ARRAY */
 } TypeCacheEnumData;
 
 /*
@@ -227,10 +227,10 @@ lookup_type_cache(Oid type_id, int flags)
 		{
 			/*
 			 * In case we find a btree opclass where previously we only found
-			 * a hash opclass, reset eq_opr and derived information so that
-			 * we can fetch the btree equality operator instead of the hash
-			 * equality operator.  (They're probably the same operator, but
-			 * we don't assume that here.)
+			 * a hash opclass, reset eq_opr and derived information so that we
+			 * can fetch the btree equality operator instead of the hash
+			 * equality operator.  (They're probably the same operator, but we
+			 * don't assume that here.)
 			 */
 			typentry->eq_opr = InvalidOid;
 			typentry->eq_opr_finfo.fn_oid = InvalidOid;
@@ -612,7 +612,8 @@ TypeCacheRelCallback(Datum arg, Oid relid)
 	while ((typentry = (TypeCacheEntry *) hash_seq_search(&status)) != NULL)
 	{
 		if (typentry->tupDesc == NULL)
-			continue;	/* not composite, or tupdesc hasn't been requested */
+			continue;			/* not composite, or tupdesc hasn't been
+								 * requested */
 
 		/* Delete if match, or if we're zapping all composite types */
 		if (relid == typentry->typrelid || relid == InvalidOid)
@@ -671,8 +672,8 @@ compare_values_of_enum(TypeCacheEntry *tcache, Oid arg1, Oid arg2)
 	EnumItem   *item2;
 
 	/*
-	 * Equal OIDs are certainly equal --- this case was probably handled
-	 * by our caller, but we may as well check.
+	 * Equal OIDs are certainly equal --- this case was probably handled by
+	 * our caller, but we may as well check.
 	 */
 	if (arg1 == arg2)
 		return 0;
@@ -704,8 +705,8 @@ compare_values_of_enum(TypeCacheEntry *tcache, Oid arg1, Oid arg2)
 	{
 		/*
 		 * We couldn't find one or both values.  That means the enum has
-		 * changed under us, so re-initialize the cache and try again.
-		 * We don't bother retrying the known-sorted case in this path.
+		 * changed under us, so re-initialize the cache and try again. We
+		 * don't bother retrying the known-sorted case in this path.
 		 */
 		load_enum_cache_data(tcache);
 		enumdata = tcache->enumData;
@@ -714,8 +715,8 @@ compare_values_of_enum(TypeCacheEntry *tcache, Oid arg1, Oid arg2)
 		item2 = find_enumitem(enumdata, arg2);
 
 		/*
-		 * If we still can't find the values, complain: we must have
-		 * corrupt data.
+		 * If we still can't find the values, complain: we must have corrupt
+		 * data.
 		 */
 		if (item1 == NULL)
 			elog(ERROR, "enum value %u not found in cache for enum %s",
@@ -761,21 +762,21 @@ load_enum_cache_data(TypeCacheEntry *tcache)
 						format_type_be(tcache->type_id))));
 
 	/*
-	 * Read all the information for members of the enum type.  We collect
-	 * the info in working memory in the caller's context, and then transfer
-	 * it to permanent memory in CacheMemoryContext.  This minimizes the risk
-	 * of leaking memory from CacheMemoryContext in the event of an error
-	 * partway through.
+	 * Read all the information for members of the enum type.  We collect the
+	 * info in working memory in the caller's context, and then transfer it to
+	 * permanent memory in CacheMemoryContext.	This minimizes the risk of
+	 * leaking memory from CacheMemoryContext in the event of an error partway
+	 * through.
 	 */
 	maxitems = 64;
 	items = (EnumItem *) palloc(sizeof(EnumItem) * maxitems);
 	numitems = 0;
 
 	/*
-	 * Scan pg_enum for the members of the target enum type.  We use a
-	 * current MVCC snapshot, *not* SnapshotNow, so that we see a consistent
-	 * set of rows even if someone commits a renumbering of the enum meanwhile.
-	 * See comments for RenumberEnumType in catalog/pg_enum.c for more info.
+	 * Scan pg_enum for the members of the target enum type.  We use a current
+	 * MVCC snapshot, *not* SnapshotNow, so that we see a consistent set of
+	 * rows even if someone commits a renumbering of the enum meanwhile. See
+	 * comments for RenumberEnumType in catalog/pg_enum.c for more info.
 	 */
 	ScanKeyInit(&skey,
 				Anum_pg_enum_enumtypid,
@@ -817,8 +818,8 @@ load_enum_cache_data(TypeCacheEntry *tcache)
 	 * and we'd rather not do binary searches unnecessarily.
 	 *
 	 * This is somewhat heuristic, and might identify a subset of OIDs that
-	 * isn't exactly what the type started with.  That's okay as long as
-	 * the subset is correctly sorted.
+	 * isn't exactly what the type started with.  That's okay as long as the
+	 * subset is correctly sorted.
 	 */
 	bitmap_base = InvalidOid;
 	bitmap = NULL;
@@ -829,15 +830,15 @@ load_enum_cache_data(TypeCacheEntry *tcache)
 		/*
 		 * Identify longest sorted subsequence starting at start_pos
 		 */
-		Bitmapset *this_bitmap = bms_make_singleton(0);
-		int		this_bm_size = 1;
-		Oid		start_oid = items[start_pos].enum_oid;
-		float4	prev_order = items[start_pos].sort_order;
-		int		i;
+		Bitmapset  *this_bitmap = bms_make_singleton(0);
+		int			this_bm_size = 1;
+		Oid			start_oid = items[start_pos].enum_oid;
+		float4		prev_order = items[start_pos].sort_order;
+		int			i;
 
 		for (i = start_pos + 1; i < numitems; i++)
 		{
-			Oid		offset;
+			Oid			offset;
 
 			offset = items[i].enum_oid - start_oid;
 			/* quit if bitmap would be too large; cutoff is arbitrary */
@@ -864,10 +865,10 @@ load_enum_cache_data(TypeCacheEntry *tcache)
 			bms_free(this_bitmap);
 
 		/*
-		 * Done if it's not possible to find a longer sequence in the rest
-		 * of the list.  In typical cases this will happen on the first
-		 * iteration, which is why we create the bitmaps on the fly instead
-		 * of doing a second pass over the list.
+		 * Done if it's not possible to find a longer sequence in the rest of
+		 * the list.  In typical cases this will happen on the first
+		 * iteration, which is why we create the bitmaps on the fly instead of
+		 * doing a second pass over the list.
 		 */
 		if (bm_size >= (numitems - start_pos - 1))
 			break;

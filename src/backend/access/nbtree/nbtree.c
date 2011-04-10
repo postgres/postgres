@@ -220,7 +220,7 @@ btbuildempty(PG_FUNCTION_ARGS)
 	metapage = (Page) palloc(BLCKSZ);
 	_bt_initmetapage(metapage, P_NONE, 0);
 
-	/* Write the page.  If archiving/streaming, XLOG it. */
+	/* Write the page.	If archiving/streaming, XLOG it. */
 	smgrwrite(index->rd_smgr, INIT_FORKNUM, BTREE_METAPAGE,
 			  (char *) metapage, true);
 	if (XLogIsNeeded())
@@ -403,6 +403,7 @@ btrescan(PG_FUNCTION_ARGS)
 {
 	IndexScanDesc scan = (IndexScanDesc) PG_GETARG_POINTER(0);
 	ScanKey		scankey = (ScanKey) PG_GETARG_POINTER(1);
+
 	/* remaining arguments are ignored */
 	BTScanOpaque so = (BTScanOpaque) scan->opaque;
 

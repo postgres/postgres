@@ -19,7 +19,7 @@
 extern char *GetSecurityLabel(const ObjectAddress *object,
 				 const char *provider);
 extern void SetSecurityLabel(const ObjectAddress *object,
-			     const char *provider, const char *label);
+				 const char *provider, const char *label);
 extern void DeleteSecurityLabel(const ObjectAddress *object);
 
 /*
@@ -27,9 +27,9 @@ extern void DeleteSecurityLabel(const ObjectAddress *object);
  */
 extern void ExecSecLabelStmt(SecLabelStmt *stmt);
 
-typedef void (*check_object_relabel_type)(const ObjectAddress *object,
-										  const char *seclabel);
+typedef void (*check_object_relabel_type) (const ObjectAddress *object,
+													   const char *seclabel);
 extern void register_label_provider(const char *provider,
-								    check_object_relabel_type hook);
+						check_object_relabel_type hook);
 
-#endif	/* SECLABEL_H */
+#endif   /* SECLABEL_H */

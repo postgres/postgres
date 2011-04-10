@@ -187,18 +187,18 @@ index_check_primary_key(Relation heapRel,
 	int			i;
 
 	/*
-	 * If ALTER TABLE, check that there isn't already a PRIMARY KEY. In
-	 * CREATE TABLE, we have faith that the parser rejected multiple pkey
-	 * clauses; and CREATE INDEX doesn't have a way to say PRIMARY KEY, so
-	 * it's no problem either.
+	 * If ALTER TABLE, check that there isn't already a PRIMARY KEY. In CREATE
+	 * TABLE, we have faith that the parser rejected multiple pkey clauses;
+	 * and CREATE INDEX doesn't have a way to say PRIMARY KEY, so it's no
+	 * problem either.
 	 */
 	if (is_alter_table &&
 		relationHasPrimaryKey(heapRel))
 	{
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_TABLE_DEFINITION),
-				 errmsg("multiple primary keys for table \"%s\" are not allowed",
-						RelationGetRelationName(heapRel))));
+			 errmsg("multiple primary keys for table \"%s\" are not allowed",
+					RelationGetRelationName(heapRel))));
 	}
 
 	/*
@@ -222,7 +222,7 @@ index_check_primary_key(Relation heapRel,
 			continue;
 
 		atttuple = SearchSysCache2(ATTNUM,
-								   ObjectIdGetDatum(RelationGetRelid(heapRel)),
+								 ObjectIdGetDatum(RelationGetRelid(heapRel)),
 								   Int16GetDatum(attnum));
 		if (!HeapTupleIsValid(atttuple))
 			elog(ERROR, "cache lookup failed for attribute %d of relation %u",
@@ -243,15 +243,14 @@ index_check_primary_key(Relation heapRel,
 	}
 
 	/*
-	 * XXX: Shouldn't the ALTER TABLE .. SET NOT NULL cascade to child
-	 * tables?	Currently, since the PRIMARY KEY itself doesn't cascade,
-	 * we don't cascade the notnull constraint(s) either; but this is
-	 * pretty debatable.
+	 * XXX: Shouldn't the ALTER TABLE .. SET NOT NULL cascade to child tables?
+	 * Currently, since the PRIMARY KEY itself doesn't cascade, we don't
+	 * cascade the notnull constraint(s) either; but this is pretty debatable.
 	 *
-	 * XXX: possible future improvement: when being called from ALTER
-	 * TABLE, it would be more efficient to merge this with the outer
-	 * ALTER TABLE, so as to avoid two scans.  But that seems to
-	 * complicate DefineIndex's API unduly.
+	 * XXX: possible future improvement: when being called from ALTER TABLE,
+	 * it would be more efficient to merge this with the outer ALTER TABLE, so
+	 * as to avoid two scans.  But that seems to complicate DefineIndex's API
+	 * unduly.
 	 */
 	if (cmds)
 		AlterTableInternal(RelationGetRelid(heapRel), cmds, false);
@@ -788,8 +787,8 @@ index_create(Relation heapRelation,
 	if (!OidIsValid(indexRelationId))
 	{
 		/*
-		 *	Use binary-upgrade override for pg_class.oid/relfilenode,
-		 *	if supplied.
+		 * Use binary-upgrade override for pg_class.oid/relfilenode, if
+		 * supplied.
 		 */
 		if (OidIsValid(binary_upgrade_next_index_pg_class_oid))
 		{
@@ -872,7 +871,7 @@ index_create(Relation heapRelation,
 	 * ----------------
 	 */
 	UpdateIndexRelation(indexRelationId, heapRelationId, indexInfo,
-						collationObjectId, classObjectId, coloptions, isprimary, is_exclusion,
+	   collationObjectId, classObjectId, coloptions, isprimary, is_exclusion,
 						!deferrable,
 						!concurrent);
 
@@ -947,7 +946,7 @@ index_create(Relation heapRelation,
 
 			/*
 			 * If there are no simply-referenced columns, give the index an
-			 * auto dependency on the whole table.  In most cases, this will
+			 * auto dependency on the whole table.	In most cases, this will
 			 * be redundant, but it might not be if the index expressions and
 			 * predicate contain no Vars or only whole-row Vars.
 			 */
@@ -1067,7 +1066,7 @@ index_create(Relation heapRelation,
 
 	/*
 	 * Close the index; but we keep the lock that we acquired above until end
-	 * of transaction.  Closing the heap is caller's responsibility.
+	 * of transaction.	Closing the heap is caller's responsibility.
 	 */
 	index_close(indexRelation, NoLock);
 
@@ -1176,8 +1175,8 @@ index_constraint_create(Relation heapRelation,
 
 	/*
 	 * If the constraint is deferrable, create the deferred uniqueness
-	 * checking trigger.  (The trigger will be given an internal
-	 * dependency on the constraint by CreateTrigger.)
+	 * checking trigger.  (The trigger will be given an internal dependency on
+	 * the constraint by CreateTrigger.)
 	 */
 	if (deferrable)
 	{
@@ -1213,7 +1212,7 @@ index_constraint_create(Relation heapRelation,
 	 * have been so marked already, so no need to clear the flag in the other
 	 * case.
 	 *
-	 * Note: this might better be done by callers.  We do it here to avoid
+	 * Note: this might better be done by callers.	We do it here to avoid
 	 * exposing index_update_stats() globally, but that wouldn't be necessary
 	 * if relhaspkey went away.
 	 */
@@ -1235,10 +1234,10 @@ index_constraint_create(Relation heapRelation,
 	 */
 	if (update_pgindex && (mark_as_primary || deferrable))
 	{
-		Relation		pg_index;
-		HeapTuple		indexTuple;
-		Form_pg_index	indexForm;
-		bool			dirty = false;
+		Relation	pg_index;
+		HeapTuple	indexTuple;
+		Form_pg_index indexForm;
+		bool		dirty = false;
 
 		pg_index = heap_open(IndexRelationId, RowExclusiveLock);
 
@@ -1303,8 +1302,8 @@ index_drop(Oid indexId)
 	userIndexRelation = index_open(indexId, AccessExclusiveLock);
 
 	/*
-	 * There can no longer be anyone *else* touching the index, but we
-	 * might still have open queries using it in our own session.
+	 * There can no longer be anyone *else* touching the index, but we might
+	 * still have open queries using it in our own session.
 	 */
 	CheckTableNotInUse(userIndexRelation, "DROP INDEX");
 
@@ -1739,7 +1738,8 @@ index_build(Relation heapRelation,
 	 */
 	if (heapRelation->rd_rel->relpersistence == RELPERSISTENCE_UNLOGGED)
 	{
-		RegProcedure	ambuildempty = indexRelation->rd_am->ambuildempty;
+		RegProcedure ambuildempty = indexRelation->rd_am->ambuildempty;
+
 		RelationOpenSmgr(indexRelation);
 		smgrcreate(indexRelation->rd_smgr, INIT_FORKNUM, false);
 		OidFunctionCall1(ambuildempty, PointerGetDatum(indexRelation));
@@ -2410,7 +2410,7 @@ validate_index(Oid heapId, Oid indexId, Snapshot snapshot)
 	ivinfo.strategy = NULL;
 
 	state.tuplesort = tuplesort_begin_datum(TIDOID,
-											TIDLessOperator, InvalidOid, false,
+										  TIDLessOperator, InvalidOid, false,
 											maintenance_work_mem,
 											false);
 	state.htups = state.itups = state.tups_inserted = 0;
@@ -2834,7 +2834,7 @@ reindex_index(Oid indexId, bool skip_constraint_checks)
  * use catalog indexes while collecting the list.)
  *
  * To avoid deadlocks, VACUUM FULL or CLUSTER on a system catalog must omit the
- * REINDEX_CHECK_CONSTRAINTS flag.  REINDEX should be used to rebuild an index
+ * REINDEX_CHECK_CONSTRAINTS flag.	REINDEX should be used to rebuild an index
  * if constraint inconsistency is suspected.  For optimal performance, other
  * callers should include the flag only after transforming the data in a manner
  * that risks a change in constraint validity.

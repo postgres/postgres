@@ -163,6 +163,7 @@ transformExpr(ParseState *pstate, Node *expr)
 
 					typenameTypeIdAndMod(pstate, tc->typeName,
 										 &targetType, &targetTypmod);
+
 					/*
 					 * If target is a domain over array, work with the base
 					 * array type here.  transformTypeCast below will cast the
@@ -1283,9 +1284,9 @@ transformCaseExpr(ParseState *pstate, CaseExpr *c)
 
 		/*
 		 * Run collation assignment on the test expression so that we know
-		 * what collation to mark the placeholder with.  In principle we
-		 * could leave it to parse_collate.c to do that later, but propagating
-		 * the result to the CaseTestExpr would be unnecessarily complicated.
+		 * what collation to mark the placeholder with.  In principle we could
+		 * leave it to parse_collate.c to do that later, but propagating the
+		 * result to the CaseTestExpr would be unnecessarily complicated.
 		 */
 		assign_expr_collations(pstate, arg);
 
@@ -2122,15 +2123,16 @@ static Node *
 transformCollateClause(ParseState *pstate, CollateClause *c)
 {
 	CollateExpr *newc;
-	Oid		argtype;
+	Oid			argtype;
 
 	newc = makeNode(CollateExpr);
 	newc->arg = (Expr *) transformExpr(pstate, c->arg);
 
 	argtype = exprType((Node *) newc->arg);
+
 	/*
-	 * The unknown type is not collatable, but coerce_type() takes
-	 * care of it separately, so we'll let it go here.
+	 * The unknown type is not collatable, but coerce_type() takes care of it
+	 * separately, so we'll let it go here.
 	 */
 	if (!type_is_collatable(argtype) && argtype != UNKNOWNOID)
 		ereport(ERROR,
@@ -2351,7 +2353,7 @@ make_row_comparison_op(ParseState *pstate, List *opname,
 	rcexpr->rctype = rctype;
 	rcexpr->opnos = opnos;
 	rcexpr->opfamilies = opfamilies;
-	rcexpr->inputcollids = NIL;	/* assign_expr_collations will fix this */
+	rcexpr->inputcollids = NIL; /* assign_expr_collations will fix this */
 	rcexpr->largs = largs;
 	rcexpr->rargs = rargs;
 

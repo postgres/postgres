@@ -960,13 +960,11 @@ void
 ExecPrepHashTableForUnmatched(HashJoinState *hjstate)
 {
 	/*
-	 *----------
-	 * During this scan we use the HashJoinState fields as follows:
+	 * ---------- During this scan we use the HashJoinState fields as follows:
 	 *
-	 * hj_CurBucketNo: next regular bucket to scan
-	 * hj_CurSkewBucketNo: next skew bucket (an index into skewBucketNums)
-	 * hj_CurTuple: last tuple returned, or NULL to start next bucket
-	 *----------
+	 * hj_CurBucketNo: next regular bucket to scan hj_CurSkewBucketNo: next
+	 * skew bucket (an index into skewBucketNums) hj_CurTuple: last tuple
+	 * returned, or NULL to start next bucket ----------
 	 */
 	hjstate->hj_CurBucketNo = 0;
 	hjstate->hj_CurSkewBucketNo = 0;
@@ -1003,7 +1001,7 @@ ExecScanHashTableForUnmatched(HashJoinState *hjstate, ExprContext *econtext)
 		}
 		else if (hjstate->hj_CurSkewBucketNo < hashtable->nSkewBuckets)
 		{
-			int		j = hashtable->skewBucketNums[hjstate->hj_CurSkewBucketNo];
+			int			j = hashtable->skewBucketNums[hjstate->hj_CurSkewBucketNo];
 
 			hashTuple = hashtable->skewBucket[j]->tuples;
 			hjstate->hj_CurSkewBucketNo++;
@@ -1020,7 +1018,7 @@ ExecScanHashTableForUnmatched(HashJoinState *hjstate, ExprContext *econtext)
 				/* insert hashtable's tuple into exec slot */
 				inntuple = ExecStoreMinimalTuple(HJTUPLE_MINTUPLE(hashTuple),
 												 hjstate->hj_HashTupleSlot,
-												 false);	/* do not pfree */
+												 false);		/* do not pfree */
 				econtext->ecxt_innertuple = inntuple;
 
 				/*
@@ -1091,7 +1089,7 @@ ExecHashTableResetMatchFlags(HashJoinTable hashtable)
 	/* ... and the same for the skew buckets, if any */
 	for (i = 0; i < hashtable->nSkewBuckets; i++)
 	{
-		int		j = hashtable->skewBucketNums[i];
+		int			j = hashtable->skewBucketNums[i];
 		HashSkewBucket *skewBucket = hashtable->skewBucket[j];
 
 		for (tuple = skewBucket->tuples; tuple != NULL; tuple = tuple->next)

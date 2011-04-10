@@ -241,9 +241,9 @@ DefineQueryRewrite(char *rulename,
 	/*
 	 * If we are installing an ON SELECT rule, we had better grab
 	 * AccessExclusiveLock to ensure no SELECTs are currently running on the
-	 * event relation.	For other types of rules, it is sufficient to
-	 * grab ShareRowExclusiveLock to lock out insert/update/delete actions
-	 * and to ensure that we lock out current CREATE RULE statements.
+	 * event relation.	For other types of rules, it is sufficient to grab
+	 * ShareRowExclusiveLock to lock out insert/update/delete actions and to
+	 * ensure that we lock out current CREATE RULE statements.
 	 */
 	if (event_type == CMD_SELECT)
 		event_relation = heap_open(event_relid, AccessExclusiveLock);

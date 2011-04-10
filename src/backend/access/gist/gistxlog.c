@@ -41,12 +41,12 @@ static void
 gistRedoClearFollowRight(RelFileNode node, XLogRecPtr lsn,
 						 BlockNumber leftblkno)
 {
-	Buffer buffer;
+	Buffer		buffer;
 
 	buffer = XLogReadBuffer(node, leftblkno, false);
 	if (BufferIsValid(buffer))
 	{
-		Page page = (Page) BufferGetPage(buffer);
+		Page		page = (Page) BufferGetPage(buffer);
 
 		/*
 		 * Note that we still update the page even if page LSN is equal to the
@@ -103,6 +103,7 @@ gistRedoPageUpdateRecord(XLogRecPtr lsn, XLogRecord *record)
 	{
 		int			i;
 		OffsetNumber *todelete = (OffsetNumber *) data;
+
 		data += sizeof(OffsetNumber) * xldata->ntodelete;
 
 		for (i = 0; i < xldata->ntodelete; i++)
@@ -115,12 +116,14 @@ gistRedoPageUpdateRecord(XLogRecPtr lsn, XLogRecord *record)
 	if (data - begin < record->xl_len)
 	{
 		OffsetNumber off = (PageIsEmpty(page)) ? FirstOffsetNumber :
-			OffsetNumberNext(PageGetMaxOffsetNumber(page));
+		OffsetNumberNext(PageGetMaxOffsetNumber(page));
+
 		while (data - begin < record->xl_len)
 		{
-			IndexTuple itup = (IndexTuple) data;
+			IndexTuple	itup = (IndexTuple) data;
 			Size		sz = IndexTupleSize(itup);
 			OffsetNumber l;
+
 			data += sz;
 
 			l = PageAddItem(page, (Item) itup, sz, off, false, false);
@@ -418,7 +421,7 @@ gistXLogSplit(RelFileNode node, BlockNumber blkno, bool page_is_leaf,
 	SplitedPageLayout *ptr;
 	int			npage = 0,
 				cur;
-	XLogRecPtr recptr;
+	XLogRecPtr	recptr;
 
 	for (ptr = dist; ptr; ptr = ptr->next)
 		npage++;
@@ -540,8 +543,8 @@ gistXLogUpdate(RelFileNode node, Buffer buffer,
 	}
 
 	/*
-	 * Include a full page image of the child buf. (only necessary if
-	 * a checkpoint happened since the child page was split)
+	 * Include a full page image of the child buf. (only necessary if a
+	 * checkpoint happened since the child page was split)
 	 */
 	if (BufferIsValid(leftchildbuf))
 	{

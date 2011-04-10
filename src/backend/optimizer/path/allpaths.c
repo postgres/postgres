@@ -66,7 +66,7 @@ static void set_cte_pathlist(PlannerInfo *root, RelOptInfo *rel,
 static void set_worktable_pathlist(PlannerInfo *root, RelOptInfo *rel,
 					   RangeTblEntry *rte);
 static void set_foreign_pathlist(PlannerInfo *root, RelOptInfo *rel,
-					   RangeTblEntry *rte);
+					 RangeTblEntry *rte);
 static RelOptInfo *make_rel_from_joinlist(PlannerInfo *root, List *joinlist);
 static bool subquery_is_pushdown_safe(Query *subquery, Query *topquery,
 						  bool *differentTypes);
@@ -413,11 +413,11 @@ set_append_rel_pathlist(PlannerInfo *root, RelOptInfo *rel,
 
 		/*
 		 * We have to make child entries in the EquivalenceClass data
-		 * structures as well.  This is needed either if the parent
-		 * participates in some eclass joins (because we will want to
-		 * consider inner-indexscan joins on the individual children)
-		 * or if the parent has useful pathkeys (because we should try
-		 * to build MergeAppend paths that produce those sort orderings).
+		 * structures as well.	This is needed either if the parent
+		 * participates in some eclass joins (because we will want to consider
+		 * inner-indexscan joins on the individual children) or if the parent
+		 * has useful pathkeys (because we should try to build MergeAppend
+		 * paths that produce those sort orderings).
 		 */
 		if (rel->has_eclass_joins || has_useful_pathkeys(root, rel))
 			add_child_rel_equivalences(root, appinfo, rel, childrel);
@@ -462,7 +462,7 @@ set_append_rel_pathlist(PlannerInfo *root, RelOptInfo *rel,
 			/* Have we already seen this ordering? */
 			foreach(lpk, all_child_pathkeys)
 			{
-				List   *existing_pathkeys = (List *) lfirst(lpk);
+				List	   *existing_pathkeys = (List *) lfirst(lpk);
 
 				if (compare_pathkeys(existing_pathkeys,
 									 childkeys) == PATHKEYS_EQUAL)
@@ -540,18 +540,18 @@ set_append_rel_pathlist(PlannerInfo *root, RelOptInfo *rel,
 
 	/*
 	 * Next, build MergeAppend paths based on the collected list of child
-	 * pathkeys.  We consider both cheapest-startup and cheapest-total
-	 * cases, ie, for each interesting ordering, collect all the cheapest
-	 * startup subpaths and all the cheapest total paths, and build a
-	 * MergeAppend path for each list.
+	 * pathkeys.  We consider both cheapest-startup and cheapest-total cases,
+	 * ie, for each interesting ordering, collect all the cheapest startup
+	 * subpaths and all the cheapest total paths, and build a MergeAppend path
+	 * for each list.
 	 */
 	foreach(l, all_child_pathkeys)
 	{
-		List   *pathkeys = (List *) lfirst(l);
-		List   *startup_subpaths = NIL;
-		List   *total_subpaths = NIL;
-		bool	startup_neq_total = false;
-		ListCell *lcr;
+		List	   *pathkeys = (List *) lfirst(l);
+		List	   *startup_subpaths = NIL;
+		List	   *total_subpaths = NIL;
+		bool		startup_neq_total = false;
+		ListCell   *lcr;
 
 		/* Select the child paths for this ordering... */
 		foreach(lcr, live_childrels)
@@ -581,8 +581,8 @@ set_append_rel_pathlist(PlannerInfo *root, RelOptInfo *rel,
 
 			/*
 			 * Notice whether we actually have different paths for the
-			 * "cheapest" and "total" cases; frequently there will be no
-			 * point in two create_merge_append_path() calls.
+			 * "cheapest" and "total" cases; frequently there will be no point
+			 * in two create_merge_append_path() calls.
 			 */
 			if (cheapest_startup != cheapest_total)
 				startup_neq_total = true;
@@ -623,7 +623,7 @@ accumulate_append_subpath(List *subpaths, Path *path)
 {
 	if (IsA(path, AppendPath))
 	{
-		AppendPath	*apath = (AppendPath *) path;
+		AppendPath *apath = (AppendPath *) path;
 
 		/* list_copy is important here to avoid sharing list substructure */
 		return list_concat(subpaths, list_copy(apath->subpaths));

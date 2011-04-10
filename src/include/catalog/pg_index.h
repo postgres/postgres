@@ -35,7 +35,7 @@ CATALOG(pg_index,2610) BKI_WITHOUT_OIDS BKI_SCHEMA_MACRO
 	int2		indnatts;		/* number of columns in index */
 	bool		indisunique;	/* is this a unique index? */
 	bool		indisprimary;	/* is this index for primary key? */
-	bool		indisexclusion;	/* is this index for exclusion constraint? */
+	bool		indisexclusion; /* is this index for exclusion constraint? */
 	bool		indimmediate;	/* is uniqueness enforced immediately? */
 	bool		indisclustered; /* is this the index last clustered by? */
 	bool		indisvalid;		/* is this index valid for use by queries? */

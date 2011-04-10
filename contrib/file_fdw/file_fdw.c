@@ -45,17 +45,17 @@ struct FileFdwOption
  */
 static struct FileFdwOption valid_options[] = {
 	/* File options */
-	{ "filename",		ForeignTableRelationId },
+	{"filename", ForeignTableRelationId},
 
 	/* Format options */
 	/* oids option is not supported */
-	{ "format",			ForeignTableRelationId },
-	{ "header",			ForeignTableRelationId },
-	{ "delimiter",		ForeignTableRelationId },
-	{ "quote",			ForeignTableRelationId },
-	{ "escape",			ForeignTableRelationId },
-	{ "null",			ForeignTableRelationId },
-	{ "encoding",		ForeignTableRelationId },
+	{"format", ForeignTableRelationId},
+	{"header", ForeignTableRelationId},
+	{"delimiter", ForeignTableRelationId},
+	{"quote", ForeignTableRelationId},
+	{"escape", ForeignTableRelationId},
+	{"null", ForeignTableRelationId},
+	{"encoding", ForeignTableRelationId},
 
 	/*
 	 * force_quote is not supported by file_fdw because it's for COPY TO.
@@ -68,7 +68,7 @@ static struct FileFdwOption valid_options[] = {
 	 */
 
 	/* Sentinel */
-	{ NULL,			InvalidOid }
+	{NULL, InvalidOid}
 };
 
 /*
@@ -76,9 +76,9 @@ static struct FileFdwOption valid_options[] = {
  */
 typedef struct FileFdwExecutionState
 {
-	char		   *filename;	/* file to read */
-	List		   *options;	/* merged COPY options, excluding filename */
-	CopyState		cstate;		/* state of reading file */
+	char	   *filename;		/* file to read */
+	List	   *options;		/* merged COPY options, excluding filename */
+	CopyState	cstate;			/* state of reading file */
 } FileFdwExecutionState;
 
 /*
@@ -94,8 +94,8 @@ PG_FUNCTION_INFO_V1(file_fdw_validator);
  * FDW callback routines
  */
 static FdwPlan *filePlanForeignScan(Oid foreigntableid,
-									PlannerInfo *root,
-									RelOptInfo *baserel);
+					PlannerInfo *root,
+					RelOptInfo *baserel);
 static void fileExplainForeignScan(ForeignScanState *node, ExplainState *es);
 static void fileBeginForeignScan(ForeignScanState *node, int eflags);
 static TupleTableSlot *fileIterateForeignScan(ForeignScanState *node);
@@ -109,8 +109,8 @@ static bool is_valid_option(const char *option, Oid context);
 static void fileGetOptions(Oid foreigntableid,
 			   char **filename, List **other_options);
 static void estimate_costs(PlannerInfo *root, RelOptInfo *baserel,
-						   const char *filename,
-						   Cost *startup_cost, Cost *total_cost);
+			   const char *filename,
+			   Cost *startup_cost, Cost *total_cost);
 
 
 /*
@@ -149,16 +149,16 @@ file_fdw_validator(PG_FUNCTION_ARGS)
 
 	/*
 	 * Only superusers are allowed to set options of a file_fdw foreign table.
-	 * This is because the filename is one of those options, and we don't
-	 * want non-superusers to be able to determine which file gets read.
+	 * This is because the filename is one of those options, and we don't want
+	 * non-superusers to be able to determine which file gets read.
 	 *
 	 * Putting this sort of permissions check in a validator is a bit of a
 	 * crock, but there doesn't seem to be any other place that can enforce
 	 * the check more cleanly.
 	 *
-	 * Note that the valid_options[] array disallows setting filename at
-	 * any options level other than foreign table --- otherwise there'd
-	 * still be a security hole.
+	 * Note that the valid_options[] array disallows setting filename at any
+	 * options level other than foreign table --- otherwise there'd still be a
+	 * security hole.
 	 */
 	if (catalog == ForeignTableRelationId && !superuser())
 		ereport(ERROR,
@@ -171,7 +171,7 @@ file_fdw_validator(PG_FUNCTION_ARGS)
 	 */
 	foreach(cell, options_list)
 	{
-		DefElem	   *def = (DefElem *) lfirst(cell);
+		DefElem    *def = (DefElem *) lfirst(cell);
 
 		if (!is_valid_option(def->defname, catalog))
 		{
@@ -276,7 +276,7 @@ fileGetOptions(Oid foreigntableid,
 	prev = NULL;
 	foreach(lc, options)
 	{
-		DefElem	   *def = (DefElem *) lfirst(lc);
+		DefElem    *def = (DefElem *) lfirst(lc);
 
 		if (strcmp(def->defname, "filename") == 0)
 		{
@@ -302,7 +302,7 @@ filePlanForeignScan(Oid foreigntableid,
 					PlannerInfo *root,
 					RelOptInfo *baserel)
 {
-	FdwPlan	   *fdwplan;
+	FdwPlan    *fdwplan;
 	char	   *filename;
 	List	   *options;
 
@@ -313,7 +313,7 @@ filePlanForeignScan(Oid foreigntableid,
 	fdwplan = makeNode(FdwPlan);
 	estimate_costs(root, baserel, filename,
 				   &fdwplan->startup_cost, &fdwplan->total_cost);
-	fdwplan->fdw_private = NIL;				/* not used */
+	fdwplan->fdw_private = NIL; /* not used */
 
 	return fdwplan;
 }
@@ -337,7 +337,7 @@ fileExplainForeignScan(ForeignScanState *node, ExplainState *es)
 	/* Suppress file size if we're not showing cost details */
 	if (es->costs)
 	{
-		struct stat		stat_buf;
+		struct stat stat_buf;
 
 		if (stat(filename, &stat_buf) == 0)
 			ExplainPropertyLong("Foreign File Size", (long) stat_buf.st_size,
@@ -368,8 +368,8 @@ fileBeginForeignScan(ForeignScanState *node, int eflags)
 				   &filename, &options);
 
 	/*
-	 * Create CopyState from FDW options.  We always acquire all columns,
-	 * so as to match the expected ScanTupleSlot signature.
+	 * Create CopyState from FDW options.  We always acquire all columns, so
+	 * as to match the expected ScanTupleSlot signature.
 	 */
 	cstate = BeginCopyFrom(node->ss.ss_currentRelation,
 						   filename,
@@ -398,7 +398,7 @@ fileIterateForeignScan(ForeignScanState *node)
 {
 	FileFdwExecutionState *festate = (FileFdwExecutionState *) node->fdw_state;
 	TupleTableSlot *slot = node->ss.ss_ScanTupleSlot;
-	bool			found;
+	bool		found;
 	ErrorContextCallback errcontext;
 
 	/* Set up callback to identify error line number. */
@@ -410,8 +410,8 @@ fileIterateForeignScan(ForeignScanState *node)
 	/*
 	 * The protocol for loading a virtual tuple into a slot is first
 	 * ExecClearTuple, then fill the values/isnull arrays, then
-	 * ExecStoreVirtualTuple.  If we don't find another row in the file,
-	 * we just skip the last step, leaving the slot empty as required.
+	 * ExecStoreVirtualTuple.  If we don't find another row in the file, we
+	 * just skip the last step, leaving the slot empty as required.
 	 *
 	 * We can pass ExprContext = NULL because we read all columns from the
 	 * file, so no need to evaluate default expressions.
@@ -471,17 +471,17 @@ estimate_costs(PlannerInfo *root, RelOptInfo *baserel,
 			   const char *filename,
 			   Cost *startup_cost, Cost *total_cost)
 {
-	struct stat		stat_buf;
-	BlockNumber		pages;
-	int				tuple_width;
-	double			ntuples;
-	double			nrows;
-	Cost			run_cost = 0;
-	Cost			cpu_per_tuple;
+	struct stat stat_buf;
+	BlockNumber pages;
+	int			tuple_width;
+	double		ntuples;
+	double		nrows;
+	Cost		run_cost = 0;
+	Cost		cpu_per_tuple;
 
 	/*
-	 * Get size of the file.  It might not be there at plan time, though,
-	 * in which case we have to use a default estimate.
+	 * Get size of the file.  It might not be there at plan time, though, in
+	 * which case we have to use a default estimate.
 	 */
 	if (stat(filename, &stat_buf) < 0)
 		stat_buf.st_size = 10 * BLCKSZ;
@@ -489,7 +489,7 @@ estimate_costs(PlannerInfo *root, RelOptInfo *baserel,
 	/*
 	 * Convert size to pages for use in I/O cost estimate below.
 	 */
-	pages = (stat_buf.st_size + (BLCKSZ-1)) / BLCKSZ;
+	pages = (stat_buf.st_size + (BLCKSZ - 1)) / BLCKSZ;
 	if (pages < 1)
 		pages = 1;
 
@@ -505,10 +505,9 @@ estimate_costs(PlannerInfo *root, RelOptInfo *baserel,
 	ntuples = clamp_row_est((double) stat_buf.st_size / (double) tuple_width);
 
 	/*
-	 * Now estimate the number of rows returned by the scan after applying
-	 * the baserestrictinfo quals.  This is pretty bogus too, since the
-	 * planner will have no stats about the relation, but it's better than
-	 * nothing.
+	 * Now estimate the number of rows returned by the scan after applying the
+	 * baserestrictinfo quals.	This is pretty bogus too, since the planner
+	 * will have no stats about the relation, but it's better than nothing.
 	 */
 	nrows = ntuples *
 		clauselist_selectivity(root,
@@ -523,7 +522,7 @@ estimate_costs(PlannerInfo *root, RelOptInfo *baserel,
 	baserel->rows = nrows;
 
 	/*
-	 * Now estimate costs.  We estimate costs almost the same way as
+	 * Now estimate costs.	We estimate costs almost the same way as
 	 * cost_seqscan(), thus assuming that I/O costs are equivalent to a
 	 * regular table file of the same size.  However, we take per-tuple CPU
 	 * costs as 10x of a seqscan, to account for the cost of parsing records.

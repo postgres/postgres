@@ -169,11 +169,11 @@ static void set_deparse_planstate(deparse_namespace *dpns, PlanState *ps);
 static void push_child_plan(deparse_namespace *dpns, PlanState *ps,
 				deparse_namespace *save_dpns);
 static void pop_child_plan(deparse_namespace *dpns,
-						   deparse_namespace *save_dpns);
+			   deparse_namespace *save_dpns);
 static void push_ancestor_plan(deparse_namespace *dpns, ListCell *ancestor_cell,
 				   deparse_namespace *save_dpns);
 static void pop_ancestor_plan(deparse_namespace *dpns,
-							  deparse_namespace *save_dpns);
+				  deparse_namespace *save_dpns);
 static void make_ruledef(StringInfo buf, HeapTuple ruletup, TupleDesc rulettc,
 			 int prettyFlags);
 static void make_viewdef(StringInfo buf, HeapTuple ruletup, TupleDesc rulettc,
@@ -948,7 +948,7 @@ pg_get_indexdef_worker(Oid indexrelid, int colno,
 
 		if (!attrsOnly && (!colno || colno == keyno + 1))
 		{
-			Oid		indcoll;
+			Oid			indcoll;
 
 			/* Add collation, if not default for column */
 			indcoll = indcollation->values[keyno];
@@ -2207,7 +2207,7 @@ set_deparse_planstate(deparse_namespace *dpns, PlanState *ps)
 	 * We special-case Append and MergeAppend to pretend that the first child
 	 * plan is the OUTER referent; we have to interpret OUTER Vars in their
 	 * tlists according to one of the children, and the first one is the most
-	 * natural choice.  Likewise special-case ModifyTable to pretend that the
+	 * natural choice.	Likewise special-case ModifyTable to pretend that the
 	 * first child plan is the OUTER referent; this is to support RETURNING
 	 * lists containing references to non-target relations.
 	 */
@@ -2263,8 +2263,8 @@ push_child_plan(deparse_namespace *dpns, PlanState *ps,
 
 	/*
 	 * Currently we don't bother to adjust the ancestors list, because an
-	 * OUTER or INNER reference really shouldn't contain any Params that
-	 * would be set by the parent node itself.  If we did want to adjust it,
+	 * OUTER or INNER reference really shouldn't contain any Params that would
+	 * be set by the parent node itself.  If we did want to adjust it,
 	 * lcons'ing dpns->planstate onto dpns->ancestors would be the appropriate
 	 * thing --- and pop_child_plan would need to undo the change to the list.
 	 */
@@ -3780,8 +3780,8 @@ get_variable(Var *var, int levelsup, bool showstar, deparse_context *context)
 	 * subquery's alias, that's not possible for resjunk items since they have
 	 * no alias.  So in that case, drill down to the subplan and print the
 	 * contents of the referenced tlist item.  This works because in a plan
-	 * tree, such Vars can only occur in a SubqueryScan or CteScan node,
-	 * and we'll have set dpns->inner_plan to reference the child plan node.
+	 * tree, such Vars can only occur in a SubqueryScan or CteScan node, and
+	 * we'll have set dpns->inner_plan to reference the child plan node.
 	 */
 	if ((rte->rtekind == RTE_SUBQUERY || rte->rtekind == RTE_CTE) &&
 		attnum > list_length(rte->eref->colnames) &&
@@ -4145,7 +4145,7 @@ get_name_for_var_field(Var *var, int fieldno,
 				if (lc != NULL)
 				{
 					Query	   *ctequery = (Query *) cte->ctequery;
-					TargetEntry	*ste = get_tle_by_resno(GetCTETargetList(cte),
+					TargetEntry *ste = get_tle_by_resno(GetCTETargetList(cte),
 														attnum);
 
 					if (ste == NULL || ste->resjunk)
@@ -4279,11 +4279,11 @@ static void
 get_parameter(Param *param, deparse_context *context)
 {
 	/*
-	 * If it's a PARAM_EXEC parameter, try to locate the expression from
-	 * which the parameter was computed.  This will necessarily be in some
-	 * ancestor of the current expression's PlanState.  Note that failing
-	 * to find a referent isn't an error, since the Param might well be a
-	 * subplan output rather than an input.
+	 * If it's a PARAM_EXEC parameter, try to locate the expression from which
+	 * the parameter was computed.	This will necessarily be in some ancestor
+	 * of the current expression's PlanState.  Note that failing to find a
+	 * referent isn't an error, since the Param might well be a subplan output
+	 * rather than an input.
 	 */
 	if (param->paramkind == PARAM_EXEC)
 	{
@@ -4302,9 +4302,9 @@ get_parameter(Param *param, deparse_context *context)
 			ListCell   *lc2;
 
 			/*
-			 * NestLoops transmit params to their inner child only; also,
-			 * once we've crawled up out of a subplan, this couldn't
-			 * possibly be the right match.
+			 * NestLoops transmit params to their inner child only; also, once
+			 * we've crawled up out of a subplan, this couldn't possibly be
+			 * the right match.
 			 */
 			if (IsA(ps, NestLoopState) &&
 				child_ps == innerPlanState(ps) &&
@@ -4314,7 +4314,7 @@ get_parameter(Param *param, deparse_context *context)
 
 				foreach(lc2, nl->nestParams)
 				{
-					NestLoopParam  *nlp = (NestLoopParam *) lfirst(lc2);
+					NestLoopParam *nlp = (NestLoopParam *) lfirst(lc2);
 
 					if (nlp->paramno == param->paramid)
 					{
@@ -4342,8 +4342,8 @@ get_parameter(Param *param, deparse_context *context)
 				/* Matched subplan, so check its arguments */
 				forboth(lc3, subplan->parParam, lc4, subplan->args)
 				{
-					int		paramid = lfirst_int(lc3);
-					Node   *arg = (Node *) lfirst(lc4);
+					int			paramid = lfirst_int(lc3);
+					Node	   *arg = (Node *) lfirst(lc4);
 
 					if (paramid == param->paramid)
 					{
@@ -4898,7 +4898,7 @@ get_rule_expr(Node *node, deparse_context *context,
 				appendStringInfo(buf, " %s %s (",
 								 generate_operator_name(expr->opno,
 														exprType(arg1),
-									   get_base_element_type(exprType(arg2))),
+									  get_base_element_type(exprType(arg2))),
 								 expr->useOr ? "ANY" : "ALL");
 				get_rule_expr_paren(arg2, context, true, node);
 				appendStringInfoChar(buf, ')');
@@ -6126,7 +6126,7 @@ get_const_collation(Const *constval, deparse_context *context)
 
 	if (OidIsValid(constval->constcollid))
 	{
-		Oid		typcollation = get_typcollation(constval->consttype);
+		Oid			typcollation = get_typcollation(constval->consttype);
 
 		if (constval->constcollid != typcollation)
 		{
@@ -6384,7 +6384,7 @@ get_from_clause_item(Node *jtnode, Query *query, deparse_context *context)
 			gavealias = true;
 		}
 		else if (rte->rtekind == RTE_RELATION &&
-				 strcmp(rte->eref->aliasname, get_relation_name(rte->relid)) != 0)
+			strcmp(rte->eref->aliasname, get_relation_name(rte->relid)) != 0)
 		{
 			/*
 			 * Apparently the rel has been renamed since the rule was made.

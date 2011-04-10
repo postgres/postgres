@@ -115,7 +115,7 @@ typedef struct CopyStateData
 	char	   *quote;			/* CSV quote char (must be 1 byte) */
 	char	   *escape;			/* CSV escape char (must be 1 byte) */
 	List	   *force_quote;	/* list of column names */
-	bool		force_quote_all; /* FORCE QUOTE *? */
+	bool		force_quote_all;	/* FORCE QUOTE *? */
 	bool	   *force_quote_flags;		/* per-column CSV FQ flags */
 	List	   *force_notnull;	/* list of column names */
 	bool	   *force_notnull_flags;	/* per-column CSV FNN flags */
@@ -161,8 +161,8 @@ typedef struct CopyStateData
 
 	/* field raw data pointers found by COPY FROM */
 
-	int max_fields;
-	char ** raw_fields;
+	int			max_fields;
+	char	  **raw_fields;
 
 	/*
 	 * Similarly, line_buf holds the whole input line being processed. The
@@ -266,10 +266,10 @@ static const char BinarySignature[11] = "PGCOPY\n\377\r\n\0";
 
 /* non-export function prototypes */
 static CopyState BeginCopy(bool is_from, Relation rel, Node *raw_query,
-				const char *queryString, List *attnamelist, List *options);
+		  const char *queryString, List *attnamelist, List *options);
 static void EndCopy(CopyState cstate);
 static CopyState BeginCopyTo(Relation rel, Node *query, const char *queryString,
-				const char *filename, List *attnamelist, List *options);
+			const char *filename, List *attnamelist, List *options);
 static void EndCopyTo(CopyState cstate);
 static uint64 DoCopyTo(CopyState cstate);
 static uint64 CopyTo(CopyState cstate);
@@ -278,8 +278,8 @@ static void CopyOneRowTo(CopyState cstate, Oid tupleOid,
 static uint64 CopyFrom(CopyState cstate);
 static bool CopyReadLine(CopyState cstate);
 static bool CopyReadLineText(CopyState cstate);
-static int CopyReadAttributesText(CopyState cstate);
-static int CopyReadAttributesCSV(CopyState cstate);
+static int	CopyReadAttributesText(CopyState cstate);
+static int	CopyReadAttributesCSV(CopyState cstate);
 static Datum CopyReadBinaryAttribute(CopyState cstate,
 						int column_no, FmgrInfo *flinfo,
 						Oid typioparam, int32 typmod,
@@ -748,17 +748,17 @@ DoCopy(const CopyStmt *stmt, const char *queryString)
 
 	if (stmt->relation)
 	{
-		TupleDesc		tupDesc;
-		AclMode			required_access = (is_from ? ACL_INSERT : ACL_SELECT);
-		RangeTblEntry  *rte;
-		List		   *attnums;
-		ListCell	   *cur;
+		TupleDesc	tupDesc;
+		AclMode		required_access = (is_from ? ACL_INSERT : ACL_SELECT);
+		RangeTblEntry *rte;
+		List	   *attnums;
+		ListCell   *cur;
 
 		Assert(!stmt->query);
 
 		/* Open and lock the relation, using the appropriate lock type. */
 		rel = heap_openrv(stmt->relation,
-							 (is_from ? RowExclusiveLock : AccessShareLock));
+						  (is_from ? RowExclusiveLock : AccessShareLock));
 
 		rte = makeNode(RangeTblEntry);
 		rte->rtekind = RTE_RELATION;
@@ -770,8 +770,8 @@ DoCopy(const CopyStmt *stmt, const char *queryString)
 		attnums = CopyGetAttnums(tupDesc, rel, stmt->attlist);
 		foreach(cur, attnums)
 		{
-			int		attno = lfirst_int(cur) -
-							FirstLowInvalidHeapAttributeNumber;
+			int			attno = lfirst_int(cur) -
+			FirstLowInvalidHeapAttributeNumber;
 
 			if (is_from)
 				rte->modifiedCols = bms_add_member(rte->modifiedCols, attno);
@@ -1136,8 +1136,8 @@ BeginCopy(bool is_from,
 	cstate = (CopyStateData *) palloc0(sizeof(CopyStateData));
 
 	/*
-	 * We allocate everything used by a cstate in a new memory context.
-	 * This avoids memory leaks during repeated use of COPY in a query.
+	 * We allocate everything used by a cstate in a new memory context. This
+	 * avoids memory leaks during repeated use of COPY in a query.
 	 */
 	cstate->copycontext = AllocSetContextCreate(CurrentMemoryContext,
 												"COPY",
@@ -1300,9 +1300,9 @@ BeginCopy(bool is_from,
 		cstate->file_encoding = pg_get_client_encoding();
 
 	/*
-	 * Set up encoding conversion info.  Even if the file and server
-	 * encodings are the same, we must apply pg_any_to_server() to validate
-	 * data in multibyte encodings.
+	 * Set up encoding conversion info.  Even if the file and server encodings
+	 * are the same, we must apply pg_any_to_server() to validate data in
+	 * multibyte encodings.
 	 */
 	cstate->need_transcoding =
 		(cstate->file_encoding != GetDatabaseEncoding() ||
@@ -1552,8 +1552,8 @@ CopyTo(CopyState cstate)
 		 */
 		if (cstate->need_transcoding)
 			cstate->null_print_client = pg_server_to_any(cstate->null_print,
-														 cstate->null_print_len,
-														 cstate->file_encoding);
+													  cstate->null_print_len,
+													  cstate->file_encoding);
 
 		/* if a header has been requested send the line */
 		if (cstate->header_line)
@@ -2001,9 +2001,9 @@ CopyFrom(CopyState cstate)
 		{
 			slot = ExecBRInsertTriggers(estate, resultRelInfo, slot);
 
-			if (slot == NULL)		/* "do nothing" */
+			if (slot == NULL)	/* "do nothing" */
 				skip_tuple = true;
-			else					/* trigger might have changed tuple */
+			else	/* trigger might have changed tuple */
 				tuple = ExecMaterializeSlot(slot);
 		}
 
@@ -2159,7 +2159,7 @@ BeginCopyFrom(Relation rel,
 			{
 				/* Initialize expressions in copycontext. */
 				defexprs[num_defaults] = ExecInitExpr(
-								expression_planner((Expr *) defexpr), NULL);
+								 expression_planner((Expr *) defexpr), NULL);
 				defmap[num_defaults] = attnum - 1;
 				num_defaults++;
 			}
@@ -2255,7 +2255,7 @@ BeginCopyFrom(Relation rel,
 	if (!cstate->binary)
 	{
 		AttrNumber	attr_count = list_length(cstate->attnumlist);
-		int	nfields = cstate->file_has_oids ? (attr_count + 1) : attr_count;
+		int			nfields = cstate->file_has_oids ? (attr_count + 1) : attr_count;
 
 		cstate->max_fields = nfields;
 		cstate->raw_fields = (char **) palloc(nfields * sizeof(char *));
@@ -2291,7 +2291,7 @@ NextCopyFromRawFields(CopyState cstate, char ***fields, int *nfields)
 	{
 		cstate->cur_lineno++;
 		if (CopyReadLine(cstate))
-			return false;	/* done */
+			return false;		/* done */
 	}
 
 	cstate->cur_lineno++;
@@ -2300,9 +2300,9 @@ NextCopyFromRawFields(CopyState cstate, char ***fields, int *nfields)
 	done = CopyReadLine(cstate);
 
 	/*
-	 * EOF at start of line means we're done.  If we see EOF after
-	 * some characters, we act as though it was newline followed by
-	 * EOF, ie, process the line and then exit loop on next iteration.
+	 * EOF at start of line means we're done.  If we see EOF after some
+	 * characters, we act as though it was newline followed by EOF, ie,
+	 * process the line and then exit loop on next iteration.
 	 */
 	if (done && cstate->line_buf.len == 0)
 		return false;
@@ -2341,7 +2341,7 @@ NextCopyFrom(CopyState cstate, ExprContext *econtext,
 	FmgrInfo   *in_functions = cstate->in_functions;
 	Oid		   *typioparams = cstate->typioparams;
 	int			i;
-	int         nfields;
+	int			nfields;
 	bool		isnull;
 	bool		file_has_oids = cstate->file_has_oids;
 	int		   *defmap = cstate->defmap;
@@ -2456,18 +2456,18 @@ NextCopyFrom(CopyState cstate, ExprContext *econtext,
 		if (fld_count == -1)
 		{
 			/*
-			 * Received EOF marker.  In a V3-protocol copy, wait for
-			 * the protocol-level EOF, and complain if it doesn't come
-			 * immediately.  This ensures that we correctly handle
-			 * CopyFail, if client chooses to send that now.
+			 * Received EOF marker.  In a V3-protocol copy, wait for the
+			 * protocol-level EOF, and complain if it doesn't come
+			 * immediately.  This ensures that we correctly handle CopyFail,
+			 * if client chooses to send that now.
 			 *
-			 * Note that we MUST NOT try to read more data in an
-			 * old-protocol copy, since there is no protocol-level EOF
-			 * marker then.  We could go either way for copy from file,
-			 * but choose to throw error if there's data after the EOF
-			 * marker, for consistency with the new-protocol case.
+			 * Note that we MUST NOT try to read more data in an old-protocol
+			 * copy, since there is no protocol-level EOF marker then.	We
+			 * could go either way for copy from file, but choose to throw
+			 * error if there's data after the EOF marker, for consistency
+			 * with the new-protocol case.
 			 */
-			char	dummy;
+			char		dummy;
 
 			if (cstate->copy_dest != COPY_OLD_FE &&
 				CopyGetData(cstate, &dummy, 1, 1) > 0)
@@ -2485,14 +2485,14 @@ NextCopyFrom(CopyState cstate, ExprContext *econtext,
 
 		if (file_has_oids)
 		{
-			Oid		loaded_oid;
+			Oid			loaded_oid;
 
 			cstate->cur_attname = "oid";
 			loaded_oid =
 				DatumGetObjectId(CopyReadBinaryAttribute(cstate,
 														 0,
-														 &cstate->oid_in_function,
-														 cstate->oid_typioparam,
+													&cstate->oid_in_function,
+													  cstate->oid_typioparam,
 														 -1,
 														 &isnull));
 			if (isnull || loaded_oid == InvalidOid)
@@ -2524,8 +2524,8 @@ NextCopyFrom(CopyState cstate, ExprContext *econtext,
 
 	/*
 	 * Now compute and insert any defaults available for the columns not
-	 * provided by the input data.	Anything not processed here or above
-	 * will remain NULL.
+	 * provided by the input data.	Anything not processed here or above will
+	 * remain NULL.
 	 */
 	for (i = 0; i < num_defaults; i++)
 	{
@@ -3023,12 +3023,12 @@ GetDecimalFromHex(char hex)
  * performing de-escaping as needed.
  *
  * The input is in line_buf.  We use attribute_buf to hold the result
- * strings.  cstate->raw_fields[k] is set to point to the k'th attribute 
- * string, or NULL when the input matches the null marker string.  
+ * strings.  cstate->raw_fields[k] is set to point to the k'th attribute
+ * string, or NULL when the input matches the null marker string.
  * This array is expanded as necessary.
  *
- * (Note that the caller cannot check for nulls since the returned 
- * string would be the post-de-escaping equivalent, which may look 
+ * (Note that the caller cannot check for nulls since the returned
+ * string would be the post-de-escaping equivalent, which may look
  * the same as some valid data string.)
  *
  * delim is the column delimiter string (must be just one byte for now).
@@ -3090,8 +3090,8 @@ CopyReadAttributesText(CopyState cstate)
 		if (fieldno >= cstate->max_fields)
 		{
 			cstate->max_fields *= 2;
-			cstate->raw_fields = 
-				repalloc(cstate->raw_fields, cstate->max_fields*sizeof(char *));
+			cstate->raw_fields =
+				repalloc(cstate->raw_fields, cstate->max_fields * sizeof(char *));
 		}
 
 		/* Remember start of field on both input and output sides */
@@ -3307,8 +3307,8 @@ CopyReadAttributesCSV(CopyState cstate)
 		if (fieldno >= cstate->max_fields)
 		{
 			cstate->max_fields *= 2;
-			cstate->raw_fields = 
-				repalloc(cstate->raw_fields, cstate->max_fields*sizeof(char *));
+			cstate->raw_fields =
+				repalloc(cstate->raw_fields, cstate->max_fields * sizeof(char *));
 		}
 
 		/* Remember start of field on both input and output sides */

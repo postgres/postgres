@@ -34,7 +34,7 @@
 #include "utils/syscache.h"
 
 static void AlterCollationOwner_internal(Relation rel, Oid collationOid,
-							  Oid newOwnerId);
+							 Oid newOwnerId);
 
 /*
  * CREATE COLLATION
@@ -46,10 +46,10 @@ DefineCollation(List *names, List *parameters)
 	Oid			collNamespace;
 	AclResult	aclresult;
 	ListCell   *pl;
-	DefElem	   *fromEl = NULL;
-	DefElem	   *localeEl = NULL;
-	DefElem	   *lccollateEl = NULL;
-	DefElem	   *lcctypeEl = NULL;
+	DefElem    *fromEl = NULL;
+	DefElem    *localeEl = NULL;
+	DefElem    *lccollateEl = NULL;
+	DefElem    *lcctypeEl = NULL;
 	char	   *collcollate = NULL;
 	char	   *collctype = NULL;
 	Oid			newoid;
@@ -63,7 +63,7 @@ DefineCollation(List *names, List *parameters)
 
 	foreach(pl, parameters)
 	{
-		DefElem	   *defel = (DefElem *) lfirst(pl);
+		DefElem    *defel = (DefElem *) lfirst(pl);
 		DefElem   **defelp;
 
 		if (pg_strcasecmp(defel->defname, "from") == 0)
@@ -97,7 +97,7 @@ DefineCollation(List *names, List *parameters)
 		Oid			collid;
 		HeapTuple	tp;
 
-		collid =  get_collation_oid(defGetQualifiedName(fromEl), false);
+		collid = get_collation_oid(defGetQualifiedName(fromEl), false);
 		tp = SearchSysCache1(COLLOID, ObjectIdGetDatum(collid));
 		if (!HeapTupleIsValid(tp))
 			elog(ERROR, "cache lookup failed for collation %u", collid);
@@ -123,7 +123,7 @@ DefineCollation(List *names, List *parameters)
 	if (!collcollate)
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
-				 errmsg("parameter \"lc_collate\" parameter must be specified")));
+			errmsg("parameter \"lc_collate\" parameter must be specified")));
 
 	if (!collctype)
 		ereport(ERROR,
@@ -391,7 +391,7 @@ AlterCollationNamespace(List *name, const char *newschema)
 Oid
 AlterCollationNamespace_oid(Oid collOid, Oid newNspOid)
 {
-	Oid         oldNspOid;
+	Oid			oldNspOid;
 	Relation	rel;
 	char	   *collation_name;
 

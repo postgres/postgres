@@ -54,7 +54,7 @@
 #define EXEC_FLAG_REWIND		0x0002	/* need efficient rescan */
 #define EXEC_FLAG_BACKWARD		0x0004	/* need backward scan */
 #define EXEC_FLAG_MARK			0x0008	/* need mark/restore */
-#define EXEC_FLAG_SKIP_TRIGGERS	0x0010	/* skip AfterTrigger calls */
+#define EXEC_FLAG_SKIP_TRIGGERS 0x0010	/* skip AfterTrigger calls */
 
 
 /*
@@ -153,7 +153,7 @@ extern JunkFilter *ExecInitJunkFilterConversion(List *targetList,
 extern AttrNumber ExecFindJunkAttribute(JunkFilter *junkfilter,
 					  const char *attrName);
 extern AttrNumber ExecFindJunkAttributeInTlist(List *targetlist,
-					  const char *attrName);
+							 const char *attrName);
 extern Datum ExecGetJunkAttribute(TupleTableSlot *slot, AttrNumber attno,
 					 bool *isNull);
 extern TupleTableSlot *ExecFilterJunk(JunkFilter *junkfilter,
@@ -194,7 +194,7 @@ extern HeapTuple EvalPlanQualFetch(EState *estate, Relation relation,
 extern void EvalPlanQualInit(EPQState *epqstate, EState *estate,
 				 Plan *subplan, List *auxrowmarks, int epqParam);
 extern void EvalPlanQualSetPlan(EPQState *epqstate,
-								Plan *subplan, List *auxrowmarks);
+					Plan *subplan, List *auxrowmarks);
 extern void EvalPlanQualSetTuple(EPQState *epqstate, Index rti,
 					 HeapTuple tuple);
 extern HeapTuple EvalPlanQualGetTuple(EPQState *epqstate, Index rti);

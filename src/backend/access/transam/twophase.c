@@ -120,7 +120,7 @@ typedef struct GlobalTransactionData
 	TransactionId locking_xid;	/* top-level XID of backend working on xact */
 	bool		valid;			/* TRUE if fully prepared */
 	char		gid[GIDSIZE];	/* The GID assigned to the prepared xact */
-} GlobalTransactionData;
+}	GlobalTransactionData;
 
 /*
  * Two Phase Commit shared state.  Access to this struct is protected
@@ -1029,8 +1029,8 @@ EndPrepare(GlobalTransaction gxact)
 	/* If we crash now, we have prepared: WAL replay will fix things */
 
 	/*
-	 * Wake up all walsenders to send WAL up to the PREPARE record
-	 * immediately if replication is enabled
+	 * Wake up all walsenders to send WAL up to the PREPARE record immediately
+	 * if replication is enabled
 	 */
 	if (max_wal_senders > 0)
 		WalSndWakeup();
@@ -2043,8 +2043,8 @@ RecordTransactionCommitPrepared(TransactionId xid,
 	/*
 	 * Wait for synchronous replication, if required.
 	 *
-	 * Note that at this stage we have marked clog, but still show as
-	 * running in the procarray and continue to hold locks.
+	 * Note that at this stage we have marked clog, but still show as running
+	 * in the procarray and continue to hold locks.
 	 */
 	SyncRepWaitForLSN(recptr);
 }
@@ -2130,8 +2130,8 @@ RecordTransactionAbortPrepared(TransactionId xid,
 	/*
 	 * Wait for synchronous replication, if required.
 	 *
-	 * Note that at this stage we have marked clog, but still show as
-	 * running in the procarray and continue to hold locks.
+	 * Note that at this stage we have marked clog, but still show as running
+	 * in the procarray and continue to hold locks.
 	 */
 	SyncRepWaitForLSN(recptr);
 }

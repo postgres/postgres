@@ -938,7 +938,7 @@ generate_setop_tlist(List *colTypes, int flag,
  * The Vars are always generated with varno 0.
  */
 static List *
-generate_append_tlist(List *colTypes, List*colCollations, bool flag,
+generate_append_tlist(List *colTypes, List *colCollations, bool flag,
 					  List *input_plans,
 					  List *refnames_tlist)
 {

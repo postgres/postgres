@@ -78,8 +78,8 @@ set_tablespace_directory_suffix(ClusterInfo *cluster)
 	{
 		/* This cluster has a version-specific subdirectory */
 		cluster->tablespace_suffix = pg_malloc(4 +
-								  strlen(cluster->major_version_str) +
-													  10 /* OIDCHARS */ + 1);
+										 strlen(cluster->major_version_str) +
+											   10 /* OIDCHARS */ + 1);
 
 		/* The leading slash is needed to start a new directory. */
 		sprintf(cluster->tablespace_suffix, "/PG_%s_%d", cluster->major_version_str,

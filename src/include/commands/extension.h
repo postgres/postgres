@@ -24,7 +24,7 @@
  * installation script.
  */
 extern bool creating_extension;
-extern Oid CurrentExtensionObject;
+extern Oid	CurrentExtensionObject;
 
 
 extern void CreateExtension(CreateExtensionStmt *stmt);
@@ -32,7 +32,7 @@ extern void CreateExtension(CreateExtensionStmt *stmt);
 extern void RemoveExtensions(DropStmt *stmt);
 extern void RemoveExtensionById(Oid extId);
 
-extern Oid	InsertExtensionTuple(const char *extName, Oid extOwner,
+extern Oid InsertExtensionTuple(const char *extName, Oid extOwner,
 					 Oid schemaOid, bool relocatable, const char *extVersion,
 					 Datum extConfig, Datum extCondition,
 					 List *requiredExtensions);

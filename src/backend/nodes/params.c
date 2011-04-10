@@ -43,7 +43,7 @@ copyParamList(ParamListInfo from)
 
 	/* sizeof(ParamListInfoData) includes the first array element */
 	size = sizeof(ParamListInfoData) +
-		(from->numParams - 1) *sizeof(ParamExternData);
+		(from->numParams - 1) * sizeof(ParamExternData);
 
 	retval = (ParamListInfo) palloc(size);
 	retval->paramFetch = NULL;

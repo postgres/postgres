@@ -33,15 +33,15 @@
 void
 sepgsql_proc_post_create(Oid functionId)
 {
-	Relation		rel;
-	ScanKeyData		skey;
-	SysScanDesc		sscan;
-	HeapTuple		tuple;
-	Oid				namespaceId;
-	ObjectAddress	object;
-	char		   *scontext;
-	char		   *tcontext;
-	char		   *ncontext;
+	Relation	rel;
+	ScanKeyData skey;
+	SysScanDesc sscan;
+	HeapTuple	tuple;
+	Oid			namespaceId;
+	ObjectAddress object;
+	char	   *scontext;
+	char	   *tcontext;
+	char	   *ncontext;
 
 	/*
 	 * Fetch namespace of the new procedure. Because pg_proc entry is not
@@ -67,8 +67,8 @@ sepgsql_proc_post_create(Oid functionId)
 	heap_close(rel, AccessShareLock);
 
 	/*
-	 * Compute a default security label when we create a new procedure
-	 * object under the specified namespace.
+	 * Compute a default security label when we create a new procedure object
+	 * under the specified namespace.
 	 */
 	scontext = sepgsql_get_client_label();
 	tcontext = sepgsql_get_label(NamespaceRelationId, namespaceId, 0);
@@ -144,9 +144,9 @@ sepgsql_proc_relabel(Oid functionId, const char *seclabel)
 char *
 sepgsql_proc_get_domtrans(Oid functionId)
 {
-	char   *scontext = sepgsql_get_client_label();
-	char   *tcontext;
-	char   *ncontext;
+	char	   *scontext = sepgsql_get_client_label();
+	char	   *tcontext;
+	char	   *ncontext;
 
 	tcontext = sepgsql_get_label(ProcedureRelationId, functionId, 0);
 

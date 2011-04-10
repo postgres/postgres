@@ -57,8 +57,8 @@ CATALOG(pg_proc,1255) BKI_BOOTSTRAP BKI_ROWTYPE_OID(81) BKI_SCHEMA_MACRO
 	Oid			proallargtypes[1];		/* all param types (NULL if IN only) */
 	char		proargmodes[1]; /* parameter modes (NULL if IN only) */
 	text		proargnames[1]; /* parameter names (NULL if no names) */
-	pg_node_tree proargdefaults; /* list of expression trees for argument
-								  * defaults (NULL if none) */
+	pg_node_tree proargdefaults;/* list of expression trees for argument
+								 * defaults (NULL if none) */
 	text		prosrc;			/* procedure source text */
 	text		probin;			/* secondary procedure info (can be NULL) */
 	text		proconfig[1];	/* procedure-local GUC settings */
@@ -544,7 +544,7 @@ DATA(insert OID = 332 (  btbulkdelete	   PGNSP PGUID 12 1 0 0 f f f t f v 4 0 22
 DESCR("btree(internal)");
 DATA(insert OID = 972 (  btvacuumcleanup   PGNSP PGUID 12 1 0 0 f f f t f v 2 0 2281 "2281 2281" _null_ _null_ _null_ _null_ btvacuumcleanup _null_ _null_ _null_ ));
 DESCR("btree(internal)");
-DATA(insert OID = 1268 (  btcostestimate   PGNSP PGUID 12 1 0 0 f f f t f v 9 0 2278 "2281 2281 2281 2281 2281 2281 2281 2281 2281" _null_ _null_ _null_ _null_	btcostestimate _null_ _null_ _null_ ));
+DATA(insert OID = 1268 (  btcostestimate   PGNSP PGUID 12 1 0 0 f f f t f v 9 0 2278 "2281 2281 2281 2281 2281 2281 2281 2281 2281" _null_ _null_ _null_ _null_ btcostestimate _null_ _null_ _null_ ));
 DESCR("btree(internal)");
 DATA(insert OID = 2785 (  btoptions		   PGNSP PGUID 12 1 0 0 f f f t f s 2 0 17 "1009 16" _null_ _null_ _null_ _null_  btoptions _null_ _null_ _null_ ));
 DESCR("btree(internal)");
@@ -638,13 +638,13 @@ DATA(insert OID = 447 (  hashrestrpos	   PGNSP PGUID 12 1 0 0 f f f t f v 1 0 22
 DESCR("hash(internal)");
 DATA(insert OID = 448 (  hashbuild		   PGNSP PGUID 12 1 0 0 f f f t f v 3 0 2281 "2281 2281 2281" _null_ _null_ _null_ _null_ hashbuild _null_ _null_ _null_ ));
 DESCR("hash(internal)");
-DATA(insert OID = 327 (  hashbuildempty	   PGNSP PGUID 12 1 0 0 f f f t f v 1 0 2278 "2281" _null_ _null_ _null_ _null_ hashbuildempty _null_ _null_ _null_ ));
+DATA(insert OID = 327 (  hashbuildempty    PGNSP PGUID 12 1 0 0 f f f t f v 1 0 2278 "2281" _null_ _null_ _null_ _null_ hashbuildempty _null_ _null_ _null_ ));
 DESCR("hash(internal)");
 DATA(insert OID = 442 (  hashbulkdelete    PGNSP PGUID 12 1 0 0 f f f t f v 4 0 2281 "2281 2281 2281 2281" _null_ _null_ _null_ _null_ hashbulkdelete _null_ _null_ _null_ ));
 DESCR("hash(internal)");
 DATA(insert OID = 425 (  hashvacuumcleanup PGNSP PGUID 12 1 0 0 f f f t f v 2 0 2281 "2281 2281" _null_ _null_ _null_ _null_ hashvacuumcleanup _null_ _null_ _null_ ));
 DESCR("hash(internal)");
-DATA(insert OID = 438 (  hashcostestimate  PGNSP PGUID 12 1 0 0 f f f t f v 9 0 2278 "2281 2281 2281 2281 2281 2281 2281 2281 2281" _null_ _null_ _null_ _null_	hashcostestimate _null_ _null_ _null_ ));
+DATA(insert OID = 438 (  hashcostestimate  PGNSP PGUID 12 1 0 0 f f f t f v 9 0 2278 "2281 2281 2281 2281 2281 2281 2281 2281 2281" _null_ _null_ _null_ _null_ hashcostestimate _null_ _null_ _null_ ));
 DESCR("hash(internal)");
 DATA(insert OID = 2786 (  hashoptions	   PGNSP PGUID 12 1 0 0 f f f t f s 2 0 17 "1009 16" _null_ _null_ _null_ _null_  hashoptions _null_ _null_ _null_ ));
 DESCR("hash(internal)");
@@ -891,13 +891,13 @@ DATA(insert OID = 781 (  gistrestrpos	   PGNSP PGUID 12 1 0 0 f f f t f v 1 0 22
 DESCR("gist(internal)");
 DATA(insert OID = 782 (  gistbuild		   PGNSP PGUID 12 1 0 0 f f f t f v 3 0 2281 "2281 2281 2281" _null_ _null_ _null_ _null_ gistbuild _null_ _null_ _null_ ));
 DESCR("gist(internal)");
-DATA(insert OID = 326 (  gistbuildempty	   PGNSP PGUID 12 1 0 0 f f f t f v 1 0 2278 "2281" _null_ _null_ _null_ _null_ gistbuildempty _null_ _null_ _null_ ));
+DATA(insert OID = 326 (  gistbuildempty    PGNSP PGUID 12 1 0 0 f f f t f v 1 0 2278 "2281" _null_ _null_ _null_ _null_ gistbuildempty _null_ _null_ _null_ ));
 DESCR("gist(internal)");
 DATA(insert OID = 776 (  gistbulkdelete    PGNSP PGUID 12 1 0 0 f f f t f v 4 0 2281 "2281 2281 2281 2281" _null_ _null_ _null_ _null_ gistbulkdelete _null_ _null_ _null_ ));
 DESCR("gist(internal)");
 DATA(insert OID = 2561 (  gistvacuumcleanup   PGNSP PGUID 12 1 0 0 f f f t f v 2 0 2281 "2281 2281" _null_ _null_ _null_ _null_ gistvacuumcleanup _null_ _null_ _null_ ));
 DESCR("gist(internal)");
-DATA(insert OID = 772 (  gistcostestimate  PGNSP PGUID 12 1 0 0 f f f t f v 9 0 2278 "2281 2281 2281 2281 2281 2281 2281 2281 2281" _null_ _null_ _null_ _null_	gistcostestimate _null_ _null_ _null_ ));
+DATA(insert OID = 772 (  gistcostestimate  PGNSP PGUID 12 1 0 0 f f f t f v 9 0 2278 "2281 2281 2281 2281 2281 2281 2281 2281 2281" _null_ _null_ _null_ _null_ gistcostestimate _null_ _null_ _null_ ));
 DESCR("gist(internal)");
 DATA(insert OID = 2787 (  gistoptions	   PGNSP PGUID 12 1 0 0 f f f t f s 2 0 17 "1009 16" _null_ _null_ _null_ _null_  gistoptions _null_ _null_ _null_ ));
 DESCR("gist(internal)");
@@ -2250,17 +2250,17 @@ DESCR("I/O");
 DATA(insert OID = 1799 (  oidout		   PGNSP PGUID 12 1 0 0 f f f t f i 1 0 2275 "26" _null_ _null_ _null_ _null_ oidout _null_ _null_ _null_ ));
 DESCR("I/O");
 
-DATA(insert OID = 3058 ( concat		PGNSP PGUID 12 1 0 2276 f f f f f s 1 0 25 "2276" "{2276}" "{v}" _null_ _null_  text_concat _null_ _null_ _null_ ));
+DATA(insert OID = 3058 ( concat		PGNSP PGUID 12 1 0 2276 f f f f f s 1 0 25 "2276" "{2276}" "{v}" _null_ _null_	text_concat _null_ _null_ _null_ ));
 DESCR("concatenate values");
-DATA(insert OID = 3059 ( concat_ws	PGNSP PGUID 12 1 0 2276 f f f f f s 2 0 25 "25 2276" "{25,2276}" "{i,v}" _null_ _null_  text_concat_ws _null_ _null_ _null_ ));
+DATA(insert OID = 3059 ( concat_ws	PGNSP PGUID 12 1 0 2276 f f f f f s 2 0 25 "25 2276" "{25,2276}" "{i,v}" _null_ _null_	text_concat_ws _null_ _null_ _null_ ));
 DESCR("concatenate values with separators");
 DATA(insert OID = 3060 ( left		PGNSP PGUID 12 1 0 0 f f f t f i 2 0 25 "25 23" _null_ _null_ _null_ _null_  text_left _null_ _null_ _null_ ));
 DESCR("extract the first n characters");
 DATA(insert OID = 3061 ( right		PGNSP PGUID 12 1 0 0 f f f t f i 2 0 25 "25 23" _null_ _null_ _null_ _null_  text_right _null_ _null_ _null_ ));
 DESCR("extract the last n characters");
-DATA(insert OID = 3062 ( reverse	PGNSP PGUID 12 1 0 0 f f f t f i 1 0 25 "25" _null_ _null_ _null_ _null_  text_reverse  _null_ _null_ _null_ ));
+DATA(insert OID = 3062 ( reverse	PGNSP PGUID 12 1 0 0 f f f t f i 1 0 25 "25" _null_ _null_ _null_ _null_  text_reverse	_null_ _null_ _null_ ));
 DESCR("reverse text");
-DATA(insert OID = 3539 ( format		PGNSP PGUID 12 1 0 2276 f f f f f s 2 0 25 "25 2276" "{25,2276}" "{i,v}" _null_ _null_  text_format _null_ _null_ _null_ ));
+DATA(insert OID = 3539 ( format		PGNSP PGUID 12 1 0 2276 f f f f f s 2 0 25 "25 2276" "{25,2276}" "{i,v}" _null_ _null_	text_format _null_ _null_ _null_ ));
 DESCR("format text message");
 DATA(insert OID = 3540 ( format		PGNSP PGUID 12 1 0 0 f f f f f s 1 0 25 "25" _null_ _null_ _null_ _null_  text_format_nv _null_ _null_ _null_ ));
 DESCR("format text message");
@@ -2602,7 +2602,7 @@ DATA(insert OID = 3069 (  pg_stat_get_db_conflict_startup_deadlock PGNSP PGUID 1
 DESCR("statistics: recovery conflicts in database caused by buffer deadlock");
 DATA(insert OID = 3070 (  pg_stat_get_db_conflict_all PGNSP PGUID 12 1 0 0 f f f t f s 1 0 20 "26" _null_ _null_ _null_ _null_ pg_stat_get_db_conflict_all _null_ _null_ _null_ ));
 DESCR("statistics: recovery conflicts in database");
-DATA(insert OID = 3074 (  pg_stat_get_db_stat_reset_time PGNSP PGUID 12 1 0 0 f f f t f s 1 0 1184 "26" _null_ _null_ _null_ _null_	pg_stat_get_db_stat_reset_time _null_ _null_ _null_ ));
+DATA(insert OID = 3074 (  pg_stat_get_db_stat_reset_time PGNSP PGUID 12 1 0 0 f f f t f s 1 0 1184 "26" _null_ _null_ _null_ _null_ pg_stat_get_db_stat_reset_time _null_ _null_ _null_ ));
 DESCR("statistics: last reset for a database");
 DATA(insert OID = 2769 ( pg_stat_get_bgwriter_timed_checkpoints PGNSP PGUID 12 1 0 0 f f f t f s 0 0 20 "" _null_ _null_ _null_ _null_ pg_stat_get_bgwriter_timed_checkpoints _null_ _null_ _null_ ));
 DESCR("statistics: number of timed checkpoints started by the bgwriter");
@@ -3818,13 +3818,13 @@ DATA(insert OID = 2739 (  ginbulkdelete    PGNSP PGUID 12 1 0 0 f f f t f v 4 0 
 DESCR("gin(internal)");
 DATA(insert OID = 2740 (  ginvacuumcleanup PGNSP PGUID 12 1 0 0 f f f t f v 2 0 2281 "2281 2281" _null_ _null_ _null_ _null_ ginvacuumcleanup _null_ _null_ _null_ ));
 DESCR("gin(internal)");
-DATA(insert OID = 2741 (  gincostestimate  PGNSP PGUID 12 1 0 0 f f f t f v 9 0 2278 "2281 2281 2281 2281 2281 2281 2281 2281 2281" _null_ _null_ _null_ _null_	gincostestimate _null_ _null_ _null_ ));
+DATA(insert OID = 2741 (  gincostestimate  PGNSP PGUID 12 1 0 0 f f f t f v 9 0 2278 "2281 2281 2281 2281 2281 2281 2281 2281 2281" _null_ _null_ _null_ _null_ gincostestimate _null_ _null_ _null_ ));
 DESCR("gin(internal)");
 DATA(insert OID = 2788 (  ginoptions	   PGNSP PGUID 12 1 0 0 f f f t f s 2 0 17 "1009 16" _null_ _null_ _null_ _null_  ginoptions _null_ _null_ _null_ ));
 DESCR("gin(internal)");
 
 /* GIN array support */
-DATA(insert OID = 2743 (  ginarrayextract	 PGNSP PGUID 12 1 0 0 f f f t f i 3 0 2281 "2277 2281 2281" _null_ _null_ _null_ _null_	ginarrayextract _null_ _null_ _null_ ));
+DATA(insert OID = 2743 (  ginarrayextract	 PGNSP PGUID 12 1 0 0 f f f t f i 3 0 2281 "2277 2281 2281" _null_ _null_ _null_ _null_ ginarrayextract _null_ _null_ _null_ ));
 DESCR("GIN array support");
 DATA(insert OID = 2774 (  ginqueryarrayextract	PGNSP PGUID 12 1 0 0 f f f t f i 7 0 2281 "2277 2281 21 2281 2281 2281 2281" _null_ _null_ _null_ _null_ ginqueryarrayextract _null_ _null_ _null_ ));
 DESCR("GIN array support");
@@ -3940,7 +3940,7 @@ DESCR("evaluate XPath expression, with namespaces support");
 DATA(insert OID = 2932 (  xpath		 PGNSP PGUID 14 1 0 0 f f f t f i 2 0 143 "25 142" _null_ _null_ _null_ _null_ "select pg_catalog.xpath($1, $2, ''{}''::pg_catalog.text[])" _null_ _null_ _null_ ));
 DESCR("evaluate XPath expression");
 
-DATA(insert OID = 2614 (  xmlexists	 PGNSP PGUID 12 1 0 0 f f f t f i 2 0 16 "25 142" _null_ _null_ _null_ _null_ xmlexists _null_ _null_ _null_ ));
+DATA(insert OID = 2614 (  xmlexists  PGNSP PGUID 12 1 0 0 f f f t f i 2 0 16 "25 142" _null_ _null_ _null_ _null_ xmlexists _null_ _null_ _null_ ));
 DESCR("test XML value against XPath expression");
 
 DATA(insert OID = 3049 (  xpath_exists	 PGNSP PGUID 12 1 0 0 f f f t f i 3 0 16 "25 142 1009" _null_ _null_ _null_ _null_ xpath_exists _null_ _null_ _null_ ));

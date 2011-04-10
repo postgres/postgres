@@ -41,7 +41,7 @@
  * CurrentSnapshot points to the only snapshot taken in transaction-snapshot
  * mode, and to the latest one taken in a read-committed transaction.
  * SecondarySnapshot is a snapshot that's always up-to-date as of the current
- * instant, even in transaction-snapshot mode.  It should only be used for
+ * instant, even in transaction-snapshot mode.	It should only be used for
  * special-purpose code (say, RI checking.)
  *
  * These SnapshotData structs are static to simplify memory allocation
@@ -533,8 +533,8 @@ void
 AtEarlyCommit_Snapshot(void)
 {
 	/*
-	 * In transaction-snapshot mode we must unregister our private refcount
-	 * to the transaction-snapshot.
+	 * In transaction-snapshot mode we must unregister our private refcount to
+	 * the transaction-snapshot.
 	 */
 	if (registered_xact_snapshot)
 		UnregisterSnapshotFromOwner(CurrentSnapshot,

@@ -62,7 +62,7 @@ CATALOG(pg_amop,2602)
 	char		amoppurpose;	/* is operator for 's'earch or 'o'rdering? */
 	Oid			amopopr;		/* the operator's pg_operator OID */
 	Oid			amopmethod;		/* the index access method this entry is for */
-	Oid			amopsortfamily;	/* ordering opfamily OID, or 0 if search op */
+	Oid			amopsortfamily; /* ordering opfamily OID, or 0 if search op */
 } FormData_pg_amop;
 
 /* allowed values of amoppurpose: */
@@ -581,15 +581,15 @@ DATA(insert (	627    2277 2277 1 s 1070 405 0 ));
  *	gist box_ops
  */
 
-DATA(insert (	2593   603 603 1 s  493 783 0 ));
-DATA(insert (	2593   603 603 2 s  494 783 0 ));
-DATA(insert (	2593   603 603 3 s  500 783 0 ));
-DATA(insert (	2593   603 603 4 s  495 783 0 ));
-DATA(insert (	2593   603 603 5 s  496 783 0 ));
-DATA(insert (	2593   603 603 6 s  499 783 0 ));
-DATA(insert (	2593   603 603 7 s  498 783 0 ));
-DATA(insert (	2593   603 603 8 s  497 783 0 ));
-DATA(insert (	2593   603 603 9 s  2571 783 0 ));
+DATA(insert (	2593   603 603 1 s	493 783 0 ));
+DATA(insert (	2593   603 603 2 s	494 783 0 ));
+DATA(insert (	2593   603 603 3 s	500 783 0 ));
+DATA(insert (	2593   603 603 4 s	495 783 0 ));
+DATA(insert (	2593   603 603 5 s	496 783 0 ));
+DATA(insert (	2593   603 603 6 s	499 783 0 ));
+DATA(insert (	2593   603 603 7 s	498 783 0 ));
+DATA(insert (	2593   603 603 8 s	497 783 0 ));
+DATA(insert (	2593   603 603 9 s	2571 783 0 ));
 DATA(insert (	2593   603 603 10 s 2570 783 0 ));
 DATA(insert (	2593   603 603 11 s 2573 783 0 ));
 DATA(insert (	2593   603 603 12 s 2572 783 0 ));
@@ -600,10 +600,10 @@ DATA(insert (	2593   603 603 14 s 2862 783 0 ));
  * gist point_ops
  */
 DATA(insert (	1029   600 600 11 s 506 783 0 ));
-DATA(insert (	1029   600 600 1 s  507 783 0 ));
-DATA(insert (	1029   600 600 5 s  508 783 0 ));
+DATA(insert (	1029   600 600 1 s	507 783 0 ));
+DATA(insert (	1029   600 600 5 s	508 783 0 ));
 DATA(insert (	1029   600 600 10 s 509 783 0 ));
-DATA(insert (	1029   600 600 6 s  510 783 0 ));
+DATA(insert (	1029   600 600 6 s	510 783 0 ));
 DATA(insert (	1029   600 600 15 o 517 783 1970 ));
 DATA(insert (	1029   603 600 27 s 433 783 0 ));
 DATA(insert (	1029   600 603 28 s 511 783 0 ));
@@ -617,15 +617,15 @@ DATA(insert (	1029   600 718 68 s 758 783 0 ));
  *	gist poly_ops (supports polygons)
  */
 
-DATA(insert (	2594   604 604 1 s  485 783 0 ));
-DATA(insert (	2594   604 604 2 s  486 783 0 ));
-DATA(insert (	2594   604 604 3 s  492 783 0 ));
-DATA(insert (	2594   604 604 4 s  487 783 0 ));
-DATA(insert (	2594   604 604 5 s  488 783 0 ));
-DATA(insert (	2594   604 604 6 s  491 783 0 ));
-DATA(insert (	2594   604 604 7 s  490 783 0 ));
-DATA(insert (	2594   604 604 8 s  489 783 0 ));
-DATA(insert (	2594   604 604 9 s  2575 783 0 ));
+DATA(insert (	2594   604 604 1 s	485 783 0 ));
+DATA(insert (	2594   604 604 2 s	486 783 0 ));
+DATA(insert (	2594   604 604 3 s	492 783 0 ));
+DATA(insert (	2594   604 604 4 s	487 783 0 ));
+DATA(insert (	2594   604 604 5 s	488 783 0 ));
+DATA(insert (	2594   604 604 6 s	491 783 0 ));
+DATA(insert (	2594   604 604 7 s	490 783 0 ));
+DATA(insert (	2594   604 604 8 s	489 783 0 ));
+DATA(insert (	2594   604 604 9 s	2575 783 0 ));
 DATA(insert (	2594   604 604 10 s 2574 783 0 ));
 DATA(insert (	2594   604 604 11 s 2577 783 0 ));
 DATA(insert (	2594   604 604 12 s 2576 783 0 ));
@@ -636,15 +636,15 @@ DATA(insert (	2594   604 604 14 s 2860 783 0 ));
  *	gist circle_ops
  */
 
-DATA(insert (	2595   718 718 1 s  1506 783 0 ));
-DATA(insert (	2595   718 718 2 s  1507 783 0 ));
-DATA(insert (	2595   718 718 3 s  1513 783 0 ));
-DATA(insert (	2595   718 718 4 s  1508 783 0 ));
-DATA(insert (	2595   718 718 5 s  1509 783 0 ));
-DATA(insert (	2595   718 718 6 s  1512 783 0 ));
-DATA(insert (	2595   718 718 7 s  1511 783 0 ));
-DATA(insert (	2595   718 718 8 s  1510 783 0 ));
-DATA(insert (	2595   718 718 9 s  2589 783 0 ));
+DATA(insert (	2595   718 718 1 s	1506 783 0 ));
+DATA(insert (	2595   718 718 2 s	1507 783 0 ));
+DATA(insert (	2595   718 718 3 s	1513 783 0 ));
+DATA(insert (	2595   718 718 4 s	1508 783 0 ));
+DATA(insert (	2595   718 718 5 s	1509 783 0 ));
+DATA(insert (	2595   718 718 6 s	1512 783 0 ));
+DATA(insert (	2595   718 718 7 s	1511 783 0 ));
+DATA(insert (	2595   718 718 8 s	1510 783 0 ));
+DATA(insert (	2595   718 718 9 s	2589 783 0 ));
 DATA(insert (	2595   718 718 10 s 1515 783 0 ));
 DATA(insert (	2595   718 718 11 s 1514 783 0 ));
 DATA(insert (	2595   718 718 12 s 2590 783 0 ));

@@ -904,7 +904,7 @@ gist_point_compress(PG_FUNCTION_ARGS)
 	PG_RETURN_POINTER(entry);
 }
 
-#define	point_point_distance(p1,p2)	\
+#define point_point_distance(p1,p2) \
 	DatumGetFloat8(DirectFunctionCall2(point_distance, \
 									   PointPGetDatum(p1), PointPGetDatum(p2)))
 
@@ -949,8 +949,8 @@ computeDistance(bool isLeaf, BOX *box, Point *point)
 	else
 	{
 		/* closest point will be a vertex */
-		Point	p;
-		double	subresult;
+		Point		p;
+		double		subresult;
 
 		result = point_point_distance(point, &box->low);
 

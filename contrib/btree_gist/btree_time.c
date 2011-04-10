@@ -119,7 +119,7 @@ gbt_time_dist(const void *a, const void *b)
 {
 	const TimeADT *aa = (const TimeADT *) a;
 	const TimeADT *bb = (const TimeADT *) b;
-	Interval	  *i;
+	Interval   *i;
 
 	i = DatumGetIntervalP(DirectFunctionCall2(time_mi_time,
 											  TimeADTGetDatumFast(*aa),
@@ -143,7 +143,7 @@ static const gbtree_ninfo tinfo =
 
 
 PG_FUNCTION_INFO_V1(time_dist);
-Datum       time_dist(PG_FUNCTION_ARGS);
+Datum		time_dist(PG_FUNCTION_ARGS);
 Datum
 time_dist(PG_FUNCTION_ARGS)
 {
@@ -239,7 +239,7 @@ gbt_time_distance(PG_FUNCTION_ARGS)
 	key.upper = (GBT_NUMKEY *) &kkk->upper;
 
 	PG_RETURN_FLOAT8(
-				   gbt_num_distance(&key, (void *) &query, GIST_LEAF(entry), &tinfo)
+			gbt_num_distance(&key, (void *) &query, GIST_LEAF(entry), &tinfo)
 		);
 }
 

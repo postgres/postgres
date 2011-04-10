@@ -107,7 +107,7 @@ typedef struct
 	bool		collate_is_c;	/* is collation's LC_COLLATE C? */
 	bool		ctype_is_c;		/* is collation's LC_CTYPE C? */
 	bool		flags_valid;	/* true if above flags are valid */
-	pg_locale_t	locale;			/* locale_t struct, or 0 if not valid */
+	pg_locale_t locale;			/* locale_t struct, or 0 if not valid */
 } collation_cache_entry;
 
 static HTAB *collation_cache = NULL;
@@ -242,7 +242,7 @@ check_locale(int category, const char *value)
  *
  * For most locale categories, the assign hook doesn't actually set the locale
  * permanently, just reset flags so that the next use will cache the
- * appropriate values.  (See explanation at the top of this file.)
+ * appropriate values.	(See explanation at the top of this file.)
  *
  * Note: we accept value = "" as selecting the postmaster's environment
  * value, whatever it was (so long as the environment setting is legal).
@@ -728,7 +728,6 @@ IsoLocaleName(const char *winlocname)
 	return NULL;				/* Not supported on this version of msvc/mingw */
 #endif   /* _MSC_VER >= 1400 */
 }
-
 #endif   /* WIN32 && LC_MESSAGES */
 
 
@@ -750,7 +749,7 @@ IsoLocaleName(const char *winlocname)
  * could fail if the locale is C, so str_tolower() shouldn't call it
  * in that case.
  *
- * Note that we currently lack any way to flush the cache.  Since we don't
+ * Note that we currently lack any way to flush the cache.	Since we don't
  * support ALTER COLLATION, this is OK.  The worst case is that someone
  * drops a collation, and a useless cache entry hangs around in existing
  * backends.
@@ -826,15 +825,15 @@ bool
 lc_collate_is_c(Oid collation)
 {
 	/*
-	 * If we're asked about "collation 0", return false, so that the code
-	 * will go into the non-C path and report that the collation is bogus.
+	 * If we're asked about "collation 0", return false, so that the code will
+	 * go into the non-C path and report that the collation is bogus.
 	 */
 	if (!OidIsValid(collation))
 		return false;
 
 	/*
-	 * If we're asked about the default collation, we have to inquire of
-	 * the C library.  Cache the result so we only have to compute it once.
+	 * If we're asked about the default collation, we have to inquire of the C
+	 * library.  Cache the result so we only have to compute it once.
 	 */
 	if (collation == DEFAULT_COLLATION_OID)
 	{
@@ -876,15 +875,15 @@ bool
 lc_ctype_is_c(Oid collation)
 {
 	/*
-	 * If we're asked about "collation 0", return false, so that the code
-	 * will go into the non-C path and report that the collation is bogus.
+	 * If we're asked about "collation 0", return false, so that the code will
+	 * go into the non-C path and report that the collation is bogus.
 	 */
 	if (!OidIsValid(collation))
 		return false;
 
 	/*
-	 * If we're asked about the default collation, we have to inquire of
-	 * the C library.  Cache the result so we only have to compute it once.
+	 * If we're asked about the default collation, we have to inquire of the C
+	 * library.  Cache the result so we only have to compute it once.
 	 */
 	if (collation == DEFAULT_COLLATION_OID)
 	{
@@ -921,7 +920,7 @@ lc_ctype_is_c(Oid collation)
 
 
 /*
- * Create a locale_t from a collation OID.  Results are cached for the
+ * Create a locale_t from a collation OID.	Results are cached for the
  * lifetime of the backend.  Thus, do not free the result with freelocale().
  *
  * As a special optimization, the default/database collation returns 0.
@@ -987,7 +986,7 @@ pg_newlocale_from_collation(Oid collid)
 		{
 #ifndef WIN32
 			/* We need two newlocale() steps */
-			locale_t loc1;
+			locale_t	loc1;
 
 			loc1 = newlocale(LC_COLLATE_MASK, collcollate, NULL);
 			if (!loc1)
@@ -1002,10 +1001,11 @@ pg_newlocale_from_collation(Oid collid)
 						 errmsg("could not create locale \"%s\": %m",
 								collctype)));
 #else
+
 			/*
-			 * XXX The _create_locale() API doesn't appear to support
-			 * this.  Could perhaps be worked around by changing
-			 * pg_locale_t to contain two separate fields.
+			 * XXX The _create_locale() API doesn't appear to support this.
+			 * Could perhaps be worked around by changing pg_locale_t to
+			 * contain two separate fields.
 			 */
 			ereport(ERROR,
 					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
@@ -1016,8 +1016,7 @@ pg_newlocale_from_collation(Oid collid)
 		cache_entry->locale = result;
 
 		ReleaseSysCache(tp);
-
-#else /* not HAVE_LOCALE_T */
+#else							/* not HAVE_LOCALE_T */
 
 		/*
 		 * For platforms that don't support locale_t, we can't do anything
@@ -1025,8 +1024,8 @@ pg_newlocale_from_collation(Oid collid)
 		 */
 		ereport(ERROR,
 				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-				 errmsg("nondefault collations are not supported on this platform")));
-#endif /* not HAVE_LOCALE_T */
+		errmsg("nondefault collations are not supported on this platform")));
+#endif   /* not HAVE_LOCALE_T */
 	}
 
 	return cache_entry->locale;

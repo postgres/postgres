@@ -37,8 +37,8 @@
 void
 CommentObject(CommentStmt *stmt)
 {
-	ObjectAddress	address;
-	Relation		relation;
+	ObjectAddress address;
+	Relation	relation;
 
 	/*
 	 * When loading a dump, we may see a COMMENT ON DATABASE for the old name
@@ -46,12 +46,13 @@ CommentObject(CommentStmt *stmt)
 	 * (which is really pg_restore's fault, but for now we will work around
 	 * the problem here).  Consensus is that the best fix is to treat wrong
 	 * database name as a WARNING not an ERROR; hence, the following special
-	 * case.  (If the length of stmt->objname is not 1, get_object_address will
-	 * throw an error below; that's OK.)
+	 * case.  (If the length of stmt->objname is not 1, get_object_address
+	 * will throw an error below; that's OK.)
 	 */
 	if (stmt->objtype == OBJECT_DATABASE && list_length(stmt->objname) == 1)
 	{
-		char   *database = strVal(linitial(stmt->objname));
+		char	   *database = strVal(linitial(stmt->objname));
+
 		if (!OidIsValid(get_database_oid(database, true)))
 		{
 			ereport(WARNING,
@@ -62,10 +63,10 @@ CommentObject(CommentStmt *stmt)
 	}
 
 	/*
-	 * Translate the parser representation that identifies this object into
-	 * an ObjectAddress.  get_object_address() will throw an error if the
-	 * object does not exist, and will also acquire a lock on the target
-     * to guard against concurrent DROP operations.
+	 * Translate the parser representation that identifies this object into an
+	 * ObjectAddress.  get_object_address() will throw an error if the object
+	 * does not exist, and will also acquire a lock on the target to guard
+	 * against concurrent DROP operations.
 	 */
 	address = get_object_address(stmt->objtype, stmt->objname, stmt->objargs,
 								 &relation, ShareUpdateExclusiveLock);
@@ -78,6 +79,7 @@ CommentObject(CommentStmt *stmt)
 	switch (stmt->objtype)
 	{
 		case OBJECT_COLUMN:
+
 			/*
 			 * Allow comments only on columns of tables, views, composite
 			 * types, and foreign tables (which are the only relkinds for

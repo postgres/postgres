@@ -544,7 +544,7 @@ ExecUpdate(ItemPointer tupleid,
 		 *
 		 * If we generate a new candidate tuple after EvalPlanQual testing, we
 		 * must loop back here and recheck constraints.  (We don't need to
-		 * redo triggers, however.  If there are any BEFORE triggers then
+		 * redo triggers, however.	If there are any BEFORE triggers then
 		 * trigger.c will have done heap_lock_tuple to lock the correct tuple,
 		 * so there's no need to do them again.)
 		 */
@@ -608,11 +608,10 @@ lreplace:;
 
 		/*
 		 * Note: instead of having to update the old index tuples associated
-		 * with the heap tuple, all we do is form and insert new index
-		 * tuples. This is because UPDATEs are actually DELETEs and INSERTs,
-		 * and index tuple deletion is done later by VACUUM (see notes in
-		 * ExecDelete). All we do here is insert new index tuples.  -cim
-		 * 9/27/89
+		 * with the heap tuple, all we do is form and insert new index tuples.
+		 * This is because UPDATEs are actually DELETEs and INSERTs, and index
+		 * tuple deletion is done later by VACUUM (see notes in ExecDelete).
+		 * All we do here is insert new index tuples.  -cim 9/27/89
 		 */
 
 		/*
@@ -713,7 +712,7 @@ ExecModifyTable(ModifyTableState *node)
 	TupleTableSlot *planSlot;
 	ItemPointer tupleid = NULL;
 	ItemPointerData tuple_ctid;
-	HeapTupleHeader	oldtuple = NULL;
+	HeapTupleHeader oldtuple = NULL;
 
 	/*
 	 * If we've already completed processing, don't try to do more.  We need
@@ -740,7 +739,7 @@ ExecModifyTable(ModifyTableState *node)
 
 	/*
 	 * es_result_relation_info must point to the currently active result
-	 * relation while we are within this ModifyTable node.  Even though
+	 * relation while we are within this ModifyTable node.	Even though
 	 * ModifyTable nodes can't be nested statically, they can be nested
 	 * dynamically (since our subplan could include a reference to a modifying
 	 * CTE).  So we have to save and restore the caller's value.
@@ -756,7 +755,7 @@ ExecModifyTable(ModifyTableState *node)
 	for (;;)
 	{
 		/*
-		 * Reset the per-output-tuple exprcontext.  This is needed because
+		 * Reset the per-output-tuple exprcontext.	This is needed because
 		 * triggers expect to use that context as workspace.  It's a bit ugly
 		 * to do this below the top level of the plan, however.  We might need
 		 * to rethink this later.
@@ -806,7 +805,8 @@ ExecModifyTable(ModifyTableState *node)
 						elog(ERROR, "ctid is NULL");
 
 					tupleid = (ItemPointer) DatumGetPointer(datum);
-					tuple_ctid = *tupleid;	/* be sure we don't free ctid!! */
+					tuple_ctid = *tupleid;		/* be sure we don't free
+												 * ctid!! */
 					tupleid = &tuple_ctid;
 				}
 				else
@@ -836,11 +836,11 @@ ExecModifyTable(ModifyTableState *node)
 				break;
 			case CMD_UPDATE:
 				slot = ExecUpdate(tupleid, oldtuple, slot, planSlot,
-								  &node->mt_epqstate, estate, node->canSetTag);
+								&node->mt_epqstate, estate, node->canSetTag);
 				break;
 			case CMD_DELETE:
 				slot = ExecDelete(tupleid, oldtuple, planSlot,
-								  &node->mt_epqstate, estate, node->canSetTag);
+								&node->mt_epqstate, estate, node->canSetTag);
 				break;
 			default:
 				elog(ERROR, "unknown operation");
@@ -922,9 +922,9 @@ ExecInitModifyTable(ModifyTable *node, EState *estate, int eflags)
 
 	/*
 	 * call ExecInitNode on each of the plans to be executed and save the
-	 * results into the array "mt_plans".  This is also a convenient place
-	 * to verify that the proposed target relations are valid and open their
-	 * indexes for insertion of new index entries.  Note we *must* set
+	 * results into the array "mt_plans".  This is also a convenient place to
+	 * verify that the proposed target relations are valid and open their
+	 * indexes for insertion of new index entries.	Note we *must* set
 	 * estate->es_result_relation_info correctly while we initialize each
 	 * sub-plan; ExecContextForcesOids depends on that!
 	 */
@@ -944,7 +944,7 @@ ExecInitModifyTable(ModifyTable *node, EState *estate, int eflags)
 		/*
 		 * If there are indices on the result relation, open them and save
 		 * descriptors in the result relation info, so that we can add new
-		 * index entries for the tuples we add/update.  We need not do this
+		 * index entries for the tuples we add/update.	We need not do this
 		 * for a DELETE, however, since deletion doesn't affect indexes.
 		 */
 		if (resultRelInfo->ri_RelationDesc->rd_rel->relhasindex &&
@@ -1147,10 +1147,10 @@ ExecInitModifyTable(ModifyTable *node, EState *estate, int eflags)
 	 * Lastly, if this is not the primary (canSetTag) ModifyTable node, add it
 	 * to estate->es_auxmodifytables so that it will be run to completion by
 	 * ExecPostprocessPlan.  (It'd actually work fine to add the primary
-	 * ModifyTable node too, but there's no need.)  Note the use of lcons
-	 * not lappend: we need later-initialized ModifyTable nodes to be shut
-	 * down before earlier ones.  This ensures that we don't throw away
-	 * RETURNING rows that need to be seen by a later CTE subplan.
+	 * ModifyTable node too, but there's no need.)  Note the use of lcons not
+	 * lappend: we need later-initialized ModifyTable nodes to be shut down
+	 * before earlier ones.  This ensures that we don't throw away RETURNING
+	 * rows that need to be seen by a later CTE subplan.
 	 */
 	if (!mtstate->canSetTag)
 		estate->es_auxmodifytables = lcons(mtstate,

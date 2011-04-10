@@ -598,7 +598,7 @@ gbt_var_consistent(
 					|| gbt_var_node_pf_match(key, query, tinfo);
 			break;
 		case BtreeGistNotEqualStrategyNumber:
-			retval = ! ((*tinfo->f_eq) (query, key->lower) && (*tinfo->f_eq) (query, key->upper));
+			retval = !((*tinfo->f_eq) (query, key->lower) && (*tinfo->f_eq) (query, key->upper));
 			break;
 		default:
 			retval = FALSE;

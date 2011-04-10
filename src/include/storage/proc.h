@@ -124,10 +124,10 @@ struct PGPROC
 	 * syncRepState must not be touched except by owning process or WALSender.
 	 * syncRepLinks used only while holding SyncRepLock.
 	 */
-	Latch		waitLatch;			/* allow us to wait for sync rep */
-	XLogRecPtr	waitLSN;			/* waiting for this LSN or higher */
-	int			syncRepState;		/* wait state for sync rep */
-	SHM_QUEUE	syncRepLinks;		/* list link if process is in syncrep queue */
+	Latch		waitLatch;		/* allow us to wait for sync rep */
+	XLogRecPtr	waitLSN;		/* waiting for this LSN or higher */
+	int			syncRepState;	/* wait state for sync rep */
+	SHM_QUEUE	syncRepLinks;	/* list link if process is in syncrep queue */
 
 	/*
 	 * All PROCLOCK objects for locks held or awaited by this backend are

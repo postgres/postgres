@@ -4,7 +4,7 @@
  *	  Functions for parsing timezone offset files
  *
  * Note: this code is invoked from the check_hook for the GUC variable
- * timezone_abbreviations.  Therefore, it should report problems using
+ * timezone_abbreviations.	Therefore, it should report problems using
  * GUC_check_errmsg() and related functions, and try to avoid throwing
  * elog(ERROR).  This is not completely bulletproof at present --- in
  * particular out-of-memory will throw an error.  Could probably fix with

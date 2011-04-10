@@ -210,7 +210,7 @@ typedef struct WorkerInfoData
 	int			wi_cost_delay;
 	int			wi_cost_limit;
 	int			wi_cost_limit_base;
-} WorkerInfoData;
+}	WorkerInfoData;
 
 typedef struct WorkerInfoData *WorkerInfo;
 
@@ -224,7 +224,7 @@ typedef enum
 	AutoVacForkFailed,			/* failed trying to start a worker */
 	AutoVacRebalance,			/* rebalance the cost limits */
 	AutoVacNumSignals			/* must be last */
-} AutoVacuumSignal;
+}	AutoVacuumSignal;
 
 /*-------------
  * The main autovacuum shmem struct.  On shared memory we store this main
@@ -1527,9 +1527,9 @@ AutoVacWorkerMain(int argc, char *argv[])
 	SetConfigOption("statement_timeout", "0", PGC_SUSET, PGC_S_OVERRIDE);
 
 	/*
-	 * Force synchronous replication off to allow regular maintenance even
-	 * if we are waiting for standbys to connect. This is important to
-	 * ensure we aren't blocked from performing anti-wraparound tasks.
+	 * Force synchronous replication off to allow regular maintenance even if
+	 * we are waiting for standbys to connect. This is important to ensure we
+	 * aren't blocked from performing anti-wraparound tasks.
 	 */
 	if (synchronous_commit > SYNCHRONOUS_COMMIT_LOCAL_FLUSH)
 		SetConfigOption("synchronous_commit", "local", PGC_SUSET, PGC_S_OVERRIDE);
@@ -1690,8 +1690,8 @@ autovac_balance_cost(void)
 {
 	/*
 	 * The idea here is that we ration out I/O equally.  The amount of I/O
-	 * that a worker can consume is determined by cost_limit/cost_delay, so
-	 * we try to equalize those ratios rather than the raw limit settings.
+	 * that a worker can consume is determined by cost_limit/cost_delay, so we
+	 * try to equalize those ratios rather than the raw limit settings.
 	 *
 	 * note: in cost_limit, zero also means use value from elsewhere, because
 	 * zero is not a valid value.
@@ -1746,7 +1746,7 @@ autovac_balance_cost(void)
 
 			/*
 			 * We put a lower bound of 1 on the cost_limit, to avoid division-
-			 * by-zero in the vacuum code.  Also, in case of roundoff trouble
+			 * by-zero in the vacuum code.	Also, in case of roundoff trouble
 			 * in these calculations, let's be sure we don't ever set
 			 * cost_limit to more than the base value.
 			 */
@@ -1785,7 +1785,7 @@ get_database_list(void)
 	Relation	rel;
 	HeapScanDesc scan;
 	HeapTuple	tup;
-	MemoryContext	resultcxt;
+	MemoryContext resultcxt;
 
 	/* This is the context that we will allocate our output data in */
 	resultcxt = CurrentMemoryContext;
@@ -1807,13 +1807,13 @@ get_database_list(void)
 	{
 		Form_pg_database pgdatabase = (Form_pg_database) GETSTRUCT(tup);
 		avw_dbase  *avdb;
-		MemoryContext	oldcxt;
+		MemoryContext oldcxt;
 
 		/*
-		 * Allocate our results in the caller's context, not the transaction's.
-		 * We do this inside the loop, and restore the original context at the
-		 * end, so that leaky things like heap_getnext() are not called in a
-		 * potentially long-lived context.
+		 * Allocate our results in the caller's context, not the
+		 * transaction's. We do this inside the loop, and restore the original
+		 * context at the end, so that leaky things like heap_getnext() are
+		 * not called in a potentially long-lived context.
 		 */
 		oldcxt = MemoryContextSwitchTo(resultcxt);
 
@@ -2217,9 +2217,9 @@ do_autovacuum(void)
 		LWLockRelease(AutovacuumScheduleLock);
 
 		/*
-		 * Remember the prevailing values of the vacuum cost GUCs.  We have
-		 * to restore these at the bottom of the loop, else we'll compute
-		 * wrong values in the next iteration of autovac_balance_cost().
+		 * Remember the prevailing values of the vacuum cost GUCs.	We have to
+		 * restore these at the bottom of the loop, else we'll compute wrong
+		 * values in the next iteration of autovac_balance_cost().
 		 */
 		stdVacuumCostDelay = VacuumCostDelay;
 		stdVacuumCostLimit = VacuumCostLimit;

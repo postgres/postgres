@@ -88,9 +88,9 @@ writeListPage(Relation index, Buffer buffer,
 	GinPageGetOpaque(page)->rightlink = rightlink;
 
 	/*
-	 * tail page may contain only whole row(s) or final part of row placed
-	 * on previous pages (a "row" here meaning all the index tuples generated
-	 * for one heap tuple)
+	 * tail page may contain only whole row(s) or final part of row placed on
+	 * previous pages (a "row" here meaning all the index tuples generated for
+	 * one heap tuple)
 	 */
 	if (rightlink == InvalidBlockNumber)
 	{
@@ -437,7 +437,7 @@ ginHeapTupleFastInsert(GinState *ginstate, GinTupleCollector *collector)
  * Create temporary index tuples for a single indexable item (one index column
  * for the heap tuple specified by ht_ctid), and append them to the array
  * in *collector.  They will subsequently be written out using
- * ginHeapTupleFastInsert.  Note that to guarantee consistent state, all
+ * ginHeapTupleFastInsert.	Note that to guarantee consistent state, all
  * temp tuples for a given heap tuple must be written in one call to
  * ginHeapTupleFastInsert.
  */
@@ -475,8 +475,8 @@ ginHeapTupleFastCollect(GinState *ginstate,
 	}
 
 	/*
-	 * Build an index tuple for each key value, and add to array.  In
-	 * pending tuples we just stick the heap TID into t_tid.
+	 * Build an index tuple for each key value, and add to array.  In pending
+	 * tuples we just stick the heap TID into t_tid.
 	 */
 	for (i = 0; i < nentries; i++)
 	{
@@ -665,7 +665,7 @@ processPendingPage(BuildAccumulator *accum, KeyArray *ka,
 	{
 		IndexTuple	itup = (IndexTuple) PageGetItem(page, PageGetItemId(page, i));
 		OffsetNumber curattnum;
-		Datum	curkey;
+		Datum		curkey;
 		GinNullCategory curcategory;
 
 		/* Check for change of heap TID or attnum */
@@ -830,7 +830,7 @@ ginInsertCleanup(GinState *ginstate,
 			 */
 			ginBeginBAScan(&accum);
 			while ((list = ginGetBAEntry(&accum,
-										 &attnum, &key, &category, &nlist)) != NULL)
+								  &attnum, &key, &category, &nlist)) != NULL)
 			{
 				ginEntryInsert(ginstate, attnum, key, category,
 							   list, nlist, NULL);
@@ -867,7 +867,7 @@ ginInsertCleanup(GinState *ginstate,
 
 				ginBeginBAScan(&accum);
 				while ((list = ginGetBAEntry(&accum,
-											 &attnum, &key, &category, &nlist)) != NULL)
+								  &attnum, &key, &category, &nlist)) != NULL)
 					ginEntryInsert(ginstate, attnum, key, category,
 								   list, nlist, NULL);
 			}

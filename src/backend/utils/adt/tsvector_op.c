@@ -711,6 +711,7 @@ tsquery_requires_match(QueryItem *curitem)
 	switch (curitem->qoperator.oper)
 	{
 		case OP_NOT:
+
 			/*
 			 * Assume there are no required matches underneath a NOT.  For
 			 * some cases with nested NOTs, we could prove there's a required

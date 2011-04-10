@@ -498,7 +498,7 @@ exec_command(const char *cmd,
 						break;
 				}
 				break;
-			case 'x':          /* Extensions */
+			case 'x':			/* Extensions */
 				if (show_verbose)
 					success = listExtensionContents(pattern);
 				else
@@ -1103,7 +1103,7 @@ exec_command(const char *cmd,
 	else if (strcmp(cmd, "sf") == 0 || strcmp(cmd, "sf+") == 0)
 	{
 		bool		show_linenumbers = (strcmp(cmd, "sf+") == 0);
-		PQExpBuffer	func_buf;
+		PQExpBuffer func_buf;
 		char	   *func;
 		Oid			foid = InvalidOid;
 
@@ -1127,8 +1127,8 @@ exec_command(const char *cmd,
 		}
 		else
 		{
-			FILE   *output;
-			bool	is_pager;
+			FILE	   *output;
+			bool		is_pager;
 
 			/* Select output stream: stdout, pager, or file */
 			if (pset.queryFout == stdout)
@@ -1174,7 +1174,7 @@ exec_command(const char *cmd,
 				 */
 				while (*lines != '\0')
 				{
-					char   *eol;
+					char	   *eol;
 
 					if (in_header && strncmp(lines, "AS ", 3) == 0)
 						in_header = false;
@@ -1573,7 +1573,7 @@ do_connect(char *dbname, char *user, char *host, char *port)
 		if (param_is_newly_set(PQhost(o_conn), PQhost(pset.db)) ||
 			param_is_newly_set(PQport(o_conn), PQport(pset.db)))
 		{
-			char	*host = PQhost(pset.db);
+			char	   *host = PQhost(pset.db);
 
 			if (host == NULL)
 				host = DEFAULT_PGSOCKET_DIR;
@@ -1778,7 +1778,7 @@ editFile(const char *fname, int lineno)
 	/* Allocate sufficient memory for command line. */
 	if (lineno > 0)
 		sys = pg_malloc(strlen(editorName)
-						+ strlen(editor_lineno_switch) + 10	/* for integer */
+						+ strlen(editor_lineno_switch) + 10		/* for integer */
 						+ 1 + strlen(fname) + 10 + 1);
 	else
 		sys = pg_malloc(strlen(editorName) + strlen(fname) + 10 + 1);
@@ -2473,8 +2473,8 @@ strip_lineno_from_funcdesc(char *func)
 	 * multibyte environment: there is no reason to believe that we are
 	 * looking at the first byte of a character, nor are we necessarily
 	 * working in a "safe" encoding.  Fortunately the bitpatterns we are
-	 * looking for are unlikely to occur as non-first bytes, but beware
-	 * of trying to expand the set of cases that can be recognized.  We must
+	 * looking for are unlikely to occur as non-first bytes, but beware of
+	 * trying to expand the set of cases that can be recognized.  We must
 	 * guard the <ctype.h> macros by using isascii() first, too.
 	 */
 

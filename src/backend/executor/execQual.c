@@ -79,9 +79,9 @@ static Datum ExecEvalWholeRowSlow(ExprState *exprstate, ExprContext *econtext,
 static Datum ExecEvalConst(ExprState *exprstate, ExprContext *econtext,
 			  bool *isNull, ExprDoneCond *isDone);
 static Datum ExecEvalParamExec(ExprState *exprstate, ExprContext *econtext,
-			  bool *isNull, ExprDoneCond *isDone);
+				  bool *isNull, ExprDoneCond *isDone);
 static Datum ExecEvalParamExtern(ExprState *exprstate, ExprContext *econtext,
-			  bool *isNull, ExprDoneCond *isDone);
+					bool *isNull, ExprDoneCond *isDone);
 static void init_fcache(Oid foid, Oid input_collation, FuncExprState *fcache,
 			MemoryContext fcacheCxt, bool needDescForSets);
 static void ShutdownFuncExpr(Datum arg);
@@ -1043,7 +1043,7 @@ ExecEvalParamExtern(ExprState *exprstate, ExprContext *econtext,
 	ereport(ERROR,
 			(errcode(ERRCODE_UNDEFINED_OBJECT),
 			 errmsg("no value found for parameter %d", thisParamId)));
-	return (Datum) 0;		/* keep compiler quiet */
+	return (Datum) 0;			/* keep compiler quiet */
 }
 
 

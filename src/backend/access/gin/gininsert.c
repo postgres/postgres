@@ -97,7 +97,7 @@ createPostingTree(Relation index, ItemPointerData *items, uint32 nitems)
  * Adds array of item pointers to tuple's posting list, or
  * creates posting tree and tuple pointing to tree in case
  * of not enough space.  Max size of tuple is defined in
- * GinFormTuple().  Returns a new, modified index tuple.
+ * GinFormTuple().	Returns a new, modified index tuple.
  * items[] must be in sorted order with no duplicates.
  */
 static IndexTuple
@@ -195,14 +195,14 @@ buildFreshLeafTuple(GinState *ginstate,
 		BlockNumber postingRoot;
 
 		/*
-		 * Build posting-tree-only result tuple.  We do this first so as
-		 * to fail quickly if the key is too big.
+		 * Build posting-tree-only result tuple.  We do this first so as to
+		 * fail quickly if the key is too big.
 		 */
 		res = GinFormTuple(ginstate, attnum, key, category, NULL, 0, true);
 
 		/*
-		 * Initialize posting tree with as many TIDs as will fit on the
-		 * first page.
+		 * Initialize posting tree with as many TIDs as will fit on the first
+		 * page.
 		 */
 		postingRoot = createPostingTree(ginstate->index,
 										items,
@@ -361,7 +361,7 @@ ginBuildCallback(Relation index, HeapTuple htup, Datum *values,
 
 		ginBeginBAScan(&buildstate->accum);
 		while ((list = ginGetBAEntry(&buildstate->accum,
-									 &attnum, &key, &category, &nlist)) != NULL)
+								  &attnum, &key, &category, &nlist)) != NULL)
 		{
 			/* there could be many entries, so be willing to abort here */
 			CHECK_FOR_INTERRUPTS();

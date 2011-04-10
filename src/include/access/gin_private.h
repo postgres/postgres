@@ -73,14 +73,14 @@ typedef struct GinMetaPageData
 	/*
 	 * Statistics for planner use (accurate as of last VACUUM)
 	 */
-	BlockNumber	nTotalPages;
-	BlockNumber	nEntryPages;
-	BlockNumber	nDataPages;
+	BlockNumber nTotalPages;
+	BlockNumber nEntryPages;
+	BlockNumber nDataPages;
 	int64		nEntries;
 
 	/*
-	 * GIN version number (ideally this should have been at the front, but
-	 * too late now.  Don't move it!)
+	 * GIN version number (ideally this should have been at the front, but too
+	 * late now.  Don't move it!)
 	 *
 	 * Currently 1 (for indexes initialized in 9.1 or later)
 	 *
@@ -207,7 +207,7 @@ typedef signed char GinNullCategory;
 #define GinGetPostingTree(itup) GinItemPointerGetBlockNumber(&(itup)->t_tid)
 
 #define GinGetPostingOffset(itup)	GinItemPointerGetBlockNumber(&(itup)->t_tid)
-#define GinSetPostingOffset(itup,n)	ItemPointerSetBlockNumber(&(itup)->t_tid,n)
+#define GinSetPostingOffset(itup,n) ItemPointerSetBlockNumber(&(itup)->t_tid,n)
 #define GinGetPosting(itup)			((ItemPointer) ((char*)(itup) + GinGetPostingOffset(itup)))
 
 #define GinMaxItemSize \
@@ -427,12 +427,12 @@ extern Buffer GinNewBuffer(Relation index);
 extern void GinInitBuffer(Buffer b, uint32 f);
 extern void GinInitPage(Page page, uint32 f, Size pageSize);
 extern void GinInitMetabuffer(Buffer b);
-extern int	ginCompareEntries(GinState *ginstate, OffsetNumber attnum,
-							  Datum a, GinNullCategory categorya,
-							  Datum b, GinNullCategory categoryb);
-extern int	ginCompareAttEntries(GinState *ginstate,
+extern int ginCompareEntries(GinState *ginstate, OffsetNumber attnum,
+				  Datum a, GinNullCategory categorya,
+				  Datum b, GinNullCategory categoryb);
+extern int ginCompareAttEntries(GinState *ginstate,
 					 OffsetNumber attnuma, Datum a, GinNullCategory categorya,
-					 OffsetNumber attnumb, Datum b, GinNullCategory categoryb);
+				   OffsetNumber attnumb, Datum b, GinNullCategory categoryb);
 extern Datum *ginExtractEntries(GinState *ginstate, OffsetNumber attnum,
 				  Datum value, bool isNull,
 				  int32 *nentries, GinNullCategory **categories);
@@ -508,7 +508,7 @@ extern GinBtreeStack *ginPrepareFindLeafPage(GinBtree btree, BlockNumber blkno);
 extern GinBtreeStack *ginFindLeafPage(GinBtree btree, GinBtreeStack *stack);
 extern void freeGinBtreeStack(GinBtreeStack *stack);
 extern void ginInsertValue(GinBtree btree, GinBtreeStack *stack,
-						   GinStatsData *buildStats);
+			   GinStatsData *buildStats);
 extern void ginFindParents(GinBtree btree, GinBtreeStack *stack, BlockNumber rootBlkno);
 
 /* ginentrypage.c */
@@ -525,8 +525,8 @@ extern IndexTuple ginPageGetLinkItup(Buffer buf);
 /* gindatapage.c */
 extern int	ginCompareItemPointers(ItemPointer a, ItemPointer b);
 extern uint32 ginMergeItemPointers(ItemPointerData *dst,
-				  ItemPointerData *a, uint32 na,
-				  ItemPointerData *b, uint32 nb);
+					 ItemPointerData *a, uint32 na,
+					 ItemPointerData *b, uint32 nb);
 
 extern void GinDataPageAddItem(Page page, void *data, OffsetNumber offset);
 extern void GinPageDeletePostingItem(Page page, OffsetNumber offset);
@@ -538,10 +538,10 @@ typedef struct
 } GinPostingTreeScan;
 
 extern GinPostingTreeScan *ginPrepareScanPostingTree(Relation index,
-					   BlockNumber rootBlkno, bool searchMode);
+						  BlockNumber rootBlkno, bool searchMode);
 extern void ginInsertItemPointers(GinPostingTreeScan *gdi,
-								  ItemPointerData *items, uint32 nitem,
-								  GinStatsData *buildStats);
+					  ItemPointerData *items, uint32 nitem,
+					  GinStatsData *buildStats);
 extern Buffer ginScanBeginPostingTree(GinPostingTreeScan *gdi);
 extern void ginDataFillRoot(GinBtree btree, Buffer root, Buffer lbuf, Buffer rbuf);
 extern void ginPrepareDataScan(GinBtree btree, Relation index);
@@ -561,7 +561,7 @@ extern void ginPrepareDataScan(GinBtree btree, Relation index);
  *
  * In each GinScanKeyData, nentries is the true number of entries, while
  * nuserentries is the number that extractQueryFn returned (which is what
- * we report to consistentFn).  The "user" entries must come first.
+ * we report to consistentFn).	The "user" entries must come first.
  */
 typedef struct GinScanKeyData *GinScanKey;
 
@@ -591,17 +591,17 @@ typedef struct GinScanKeyData
 	OffsetNumber attnum;
 
 	/*
-	 * Match status data.  curItem is the TID most recently tested (could be
-	 * a lossy-page pointer).  curItemMatches is TRUE if it passes the
+	 * Match status data.  curItem is the TID most recently tested (could be a
+	 * lossy-page pointer).  curItemMatches is TRUE if it passes the
 	 * consistentFn test; if so, recheckCurItem is the recheck flag.
-	 * isFinished means that all the input entry streams are finished, so
-	 * this key cannot succeed for any later TIDs.
+	 * isFinished means that all the input entry streams are finished, so this
+	 * key cannot succeed for any later TIDs.
 	 */
 	ItemPointerData curItem;
 	bool		curItemMatches;
 	bool		recheckCurItem;
 	bool		isFinished;
-} GinScanKeyData;
+}	GinScanKeyData;
 
 typedef struct GinScanEntryData
 {
@@ -633,7 +633,7 @@ typedef struct GinScanEntryData
 	bool		isFinished;
 	bool		reduceResult;
 	uint32		predictNumberResult;
-} GinScanEntryData;
+}	GinScanEntryData;
 
 typedef struct GinScanOpaqueData
 {

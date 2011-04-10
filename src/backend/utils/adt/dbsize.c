@@ -634,7 +634,7 @@ pg_relation_filepath(PG_FUNCTION_ARGS)
 			break;
 		default:
 			elog(ERROR, "invalid relpersistence: %c", relform->relpersistence);
-			backend = InvalidBackendId; 	/* placate compiler */
+			backend = InvalidBackendId; /* placate compiler */
 			break;
 	}
 

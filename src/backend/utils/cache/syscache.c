@@ -422,7 +422,7 @@ static const struct cachedesc cacheinfo[] = {
 		},
 		32
 	},
-	{ForeignTableRelationId,		/* FOREIGNTABLEREL */
+	{ForeignTableRelationId,	/* FOREIGNTABLEREL */
 		ForeignTableRelidIndexId,
 		1,
 		{

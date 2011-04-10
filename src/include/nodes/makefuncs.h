@@ -31,7 +31,7 @@ extern Var *makeVar(Index varno,
 		Index varlevelsup);
 
 extern Var *makeVarFromTargetEntry(Index varno,
-								   TargetEntry *tle);
+					   TargetEntry *tle);
 
 extern Var *makeWholeRowVar(RangeTblEntry *rte,
 				Index varno,
@@ -63,7 +63,7 @@ extern Expr *makeBoolExpr(BoolExprType boolop, List *args, int location);
 extern Alias *makeAlias(const char *aliasname, List *colnames);
 
 extern RelabelType *makeRelabelType(Expr *arg, Oid rtype, int32 rtypmod,
-									Oid rcollid, CoercionForm rformat);
+				Oid rcollid, CoercionForm rformat);
 
 extern RangeVar *makeRangeVar(char *schemaname, char *relname, int location);
 

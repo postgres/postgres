@@ -255,10 +255,10 @@ PortalCleanup(Portal portal)
 	if (queryDesc)
 	{
 		/*
-		 * Reset the queryDesc before anything else.  This prevents us
-		 * from trying to shut down the executor twice, in case of an
-		 * error below.  The transaction abort mechanisms will take care
-		 * of resource cleanup in such a case.
+		 * Reset the queryDesc before anything else.  This prevents us from
+		 * trying to shut down the executor twice, in case of an error below.
+		 * The transaction abort mechanisms will take care of resource cleanup
+		 * in such a case.
 		 */
 		portal->queryDesc = NULL;
 

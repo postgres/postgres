@@ -28,7 +28,7 @@ typedef enum ForkNumber
 	MAIN_FORKNUM = 0,
 	FSM_FORKNUM,
 	VISIBILITYMAP_FORKNUM,
-	INIT_FORKNUM	
+	INIT_FORKNUM
 
 	/*
 	 * NOTE: if you add a new fork, change MAX_FORKNUM below and update the
@@ -83,7 +83,7 @@ typedef struct RelFileNode
  */
 typedef struct RelFileNodeBackend
 {
-	RelFileNode	node;
+	RelFileNode node;
 	BackendId	backend;
 } RelFileNodeBackend;
 

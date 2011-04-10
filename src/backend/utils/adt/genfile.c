@@ -56,18 +56,19 @@ convert_and_check_filename(text *arg)
 		/* Disallow '/a/b/data/..' */
 		if (path_contains_parent_reference(filename))
 			ereport(ERROR,
-				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
-				(errmsg("reference to parent directory (\"..\") not allowed"))));
+					(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
+			(errmsg("reference to parent directory (\"..\") not allowed"))));
+
 		/*
-		 *	Allow absolute paths if within DataDir or Log_directory, even
-		 *	though Log_directory might be outside DataDir.
+		 * Allow absolute paths if within DataDir or Log_directory, even
+		 * though Log_directory might be outside DataDir.
 		 */
 		if (!path_is_prefix_of_path(DataDir, filename) &&
 			(!is_absolute_path(Log_directory) ||
 			 !path_is_prefix_of_path(Log_directory, filename)))
 			ereport(ERROR,
-				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
-				 (errmsg("absolute path not allowed"))));
+					(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
+					 (errmsg("absolute path not allowed"))));
 	}
 	else if (!path_is_relative_and_below_cwd(filename))
 		ereport(ERROR,

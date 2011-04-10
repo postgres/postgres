@@ -246,7 +246,7 @@ pg_krb5_sendauth(PGconn *conn)
 	}
 
 	retval = krb5_sendauth(info.pg_krb5_context, &auth_context,
-					  (krb5_pointer) & conn->sock, (char *) conn->krbsrvname,
+					   (krb5_pointer) &conn->sock, (char *) conn->krbsrvname,
 						   info.pg_krb5_client, server,
 						   AP_OPTS_MUTUAL_REQUIRED,
 						   NULL, 0,		/* no creds, use ccache instead */
@@ -892,14 +892,14 @@ pg_fe_sendauth(AuthRequest areq, PGconn *conn)
 				pgunlock_thread();
 			}
 			break;
-#else /* defined(ENABLE_GSS) || defined(ENABLE_SSPI) */
+#else							/* defined(ENABLE_GSS) || defined(ENABLE_SSPI) */
 			/* No GSSAPI *or* SSPI support */
 		case AUTH_REQ_GSS:
 		case AUTH_REQ_GSS_CONT:
 			printfPQExpBuffer(&conn->errorMessage,
 					 libpq_gettext("GSSAPI authentication not supported\n"));
 			return STATUS_ERROR;
-#endif /* defined(ENABLE_GSS) || defined(ENABLE_SSPI) */
+#endif   /* defined(ENABLE_GSS) || defined(ENABLE_SSPI) */
 
 #ifdef ENABLE_SSPI
 		case AUTH_REQ_SSPI:
@@ -919,19 +919,20 @@ pg_fe_sendauth(AuthRequest areq, PGconn *conn)
 			pgunlock_thread();
 			break;
 #else
+
 			/*
 			 * No SSPI support. However, if we have GSSAPI but not SSPI
 			 * support, AUTH_REQ_SSPI will have been handled in the codepath
-			 * for AUTH_REQ_GSSAPI above, so don't duplicate the case label
-			 * in that case.
+			 * for AUTH_REQ_GSSAPI above, so don't duplicate the case label in
+			 * that case.
 			 */
 #if !defined(ENABLE_GSS)
 		case AUTH_REQ_SSPI:
 			printfPQExpBuffer(&conn->errorMessage,
 					   libpq_gettext("SSPI authentication not supported\n"));
 			return STATUS_ERROR;
-#endif /* !define(ENABLE_GSSAPI) */
-#endif /* ENABLE_SSPI */
+#endif   /* !define(ENABLE_GSSAPI) */
+#endif   /* ENABLE_SSPI */
 
 
 		case AUTH_REQ_CRYPT:

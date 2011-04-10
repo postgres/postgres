@@ -53,9 +53,9 @@ typedef struct TypeCacheEntry
 
 	/*
 	 * Pre-set-up fmgr call info for the equality operator, the btree
-	 * comparison function, and the hash calculation function.  These are kept
+	 * comparison function, and the hash calculation function.	These are kept
 	 * in the type cache to avoid problems with memory leaks in repeated calls
-	 * to array_eq, array_cmp, hash_array.  There is not currently a need to
+	 * to array_eq, array_cmp, hash_array.	There is not currently a need to
 	 * maintain call info for the lt_opr or gt_opr.
 	 */
 	FmgrInfo	eq_opr_finfo;
@@ -70,7 +70,7 @@ typedef struct TypeCacheEntry
 	TupleDesc	tupDesc;
 
 	/*
-	 * Private information about an enum type.  NULL if not enum or
+	 * Private information about an enum type.	NULL if not enum or
 	 * information hasn't been requested.
 	 */
 	struct TypeCacheEnumData *enumData;

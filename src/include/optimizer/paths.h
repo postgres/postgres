@@ -99,7 +99,7 @@ extern bool have_join_order_restriction(PlannerInfo *root,
 extern bool process_equivalence(PlannerInfo *root, RestrictInfo *restrictinfo,
 					bool below_outer_join);
 extern Expr *canonicalize_ec_expression(Expr *expr,
-										Oid req_type, Oid req_collation);
+						   Oid req_type, Oid req_collation);
 extern void reconsider_outer_join_clauses(PlannerInfo *root);
 extern EquivalenceClass *get_eclass_for_sort_expr(PlannerInfo *root,
 						 Expr *expr,
@@ -164,9 +164,9 @@ extern List *make_pathkeys_for_sortclauses(PlannerInfo *root,
 							  List *tlist,
 							  bool canonicalize);
 extern void initialize_mergeclause_eclasses(PlannerInfo *root,
-											RestrictInfo *restrictinfo);
+								RestrictInfo *restrictinfo);
 extern void update_mergeclause_eclasses(PlannerInfo *root,
-						   RestrictInfo *restrictinfo);
+							RestrictInfo *restrictinfo);
 extern List *find_mergeclauses_for_pathkeys(PlannerInfo *root,
 							   List *pathkeys,
 							   bool outer_keys,

@@ -245,7 +245,7 @@ analyzeCTE(ParseState *pstate, CommonTableExpr *cte)
 	cte->ctequery = (Node *) query;
 
 	/*
-	 * Check that we got something reasonable.  These first two cases should
+	 * Check that we got something reasonable.	These first two cases should
 	 * be prevented by the grammar.
 	 */
 	if (!IsA(query, Query))
@@ -310,7 +310,7 @@ analyzeCTE(ParseState *pstate, CommonTableExpr *cte)
 				continue;
 			varattno++;
 			Assert(varattno == te->resno);
-			if (lctyp == NULL || lctypmod == NULL || lccoll == NULL)		/* shouldn't happen */
+			if (lctyp == NULL || lctypmod == NULL || lccoll == NULL)	/* shouldn't happen */
 				elog(ERROR, "wrong number of output columns in WITH");
 			texpr = (Node *) te->expr;
 			if (exprType(texpr) != lfirst_oid(lctyp) ||
@@ -338,7 +338,7 @@ analyzeCTE(ParseState *pstate, CommonTableExpr *cte)
 			lctypmod = lnext(lctypmod);
 			lccoll = lnext(lccoll);
 		}
-		if (lctyp != NULL || lctypmod != NULL || lccoll != NULL)	/* shouldn't happen */
+		if (lctyp != NULL || lctypmod != NULL || lccoll != NULL)		/* shouldn't happen */
 			elog(ERROR, "wrong number of output columns in WITH");
 	}
 }
@@ -645,7 +645,7 @@ checkWellFormedRecursion(CteState *cstate)
 		CommonTableExpr *cte = cstate->items[i].cte;
 		SelectStmt *stmt = (SelectStmt *) cte->ctequery;
 
-		Assert(!IsA(stmt, Query));	/* not analyzed yet */
+		Assert(!IsA(stmt, Query));		/* not analyzed yet */
 
 		/* Ignore items that weren't found to be recursive */
 		if (!cte->cterecursive)

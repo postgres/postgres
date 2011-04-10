@@ -97,11 +97,11 @@ add_paths_to_joinrel(PlannerInfo *root,
 
 	/*
 	 * 1. Consider mergejoin paths where both relations must be explicitly
-	 * sorted.  Skip this if we can't mergejoin.
+	 * sorted.	Skip this if we can't mergejoin.
 	 */
 	if (mergejoin_allowed)
 		sort_inner_and_outer(root, joinrel, outerrel, innerrel,
-							 restrictlist, mergeclause_list, jointype, sjinfo);
+						   restrictlist, mergeclause_list, jointype, sjinfo);
 
 	/*
 	 * 2. Consider paths where the outer relation need not be explicitly
@@ -112,7 +112,7 @@ add_paths_to_joinrel(PlannerInfo *root,
 	 */
 	if (mergejoin_allowed)
 		match_unsorted_outer(root, joinrel, outerrel, innerrel,
-							 restrictlist, mergeclause_list, jointype, sjinfo);
+						   restrictlist, mergeclause_list, jointype, sjinfo);
 
 #ifdef NOT_USED
 
@@ -129,7 +129,7 @@ add_paths_to_joinrel(PlannerInfo *root,
 	 */
 	if (mergejoin_allowed)
 		match_unsorted_inner(root, joinrel, outerrel, innerrel,
-							 restrictlist, mergeclause_list, jointype, sjinfo);
+						   restrictlist, mergeclause_list, jointype, sjinfo);
 #endif
 
 	/*

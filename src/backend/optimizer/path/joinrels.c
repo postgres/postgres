@@ -30,7 +30,7 @@ static bool has_legal_joinclause(PlannerInfo *root, RelOptInfo *rel);
 static bool is_dummy_rel(RelOptInfo *rel);
 static void mark_dummy_rel(RelOptInfo *rel);
 static bool restriction_is_constant_false(List *restrictlist,
-										  bool only_pushed_down);
+							  bool only_pushed_down);
 
 
 /*
@@ -604,10 +604,10 @@ make_join_rel(PlannerInfo *root, RelOptInfo *rel1, RelOptInfo *rel2)
 	 *
 	 * Also, a provably constant-false join restriction typically means that
 	 * we can skip evaluating one or both sides of the join.  We do this by
-	 * marking the appropriate rel as dummy.  For outer joins, a constant-false
-	 * restriction that is pushed down still means the whole join is dummy,
-	 * while a non-pushed-down one means that no inner rows will join so we
-	 * can treat the inner rel as dummy.
+	 * marking the appropriate rel as dummy.  For outer joins, a
+	 * constant-false restriction that is pushed down still means the whole
+	 * join is dummy, while a non-pushed-down one means that no inner rows
+	 * will join so we can treat the inner rel as dummy.
 	 *
 	 * We need only consider the jointypes that appear in join_info_list, plus
 	 * JOIN_INNER.

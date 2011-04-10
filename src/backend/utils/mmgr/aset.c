@@ -165,7 +165,7 @@ typedef struct AllocBlockData
 	AllocBlock	next;			/* next block in aset's blocks list */
 	char	   *freeptr;		/* start of free space in this block */
 	char	   *endptr;			/* end of space in this block */
-} AllocBlockData;
+}	AllocBlockData;
 
 /*
  * AllocChunk
@@ -184,7 +184,7 @@ typedef struct AllocChunkData
 	/* this is zero in a free chunk */
 	Size		requested_size;
 #endif
-} AllocChunkData;
+}	AllocChunkData;
 
 /*
  * AllocPointerIsValid

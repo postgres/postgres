@@ -1787,8 +1787,8 @@ _SPI_execute_plan(SPIPlanPtr plan, ParamListInfo paramLI,
 	 * snapshot != InvalidSnapshot, read_only = true: use exactly the given
 	 * snapshot.
 	 *
-	 * snapshot != InvalidSnapshot, read_only = false: use the given
-	 * snapshot, modified by advancing its command ID before each querytree.
+	 * snapshot != InvalidSnapshot, read_only = false: use the given snapshot,
+	 * modified by advancing its command ID before each querytree.
 	 *
 	 * snapshot == InvalidSnapshot, read_only = true: use the entry-time
 	 * ActiveSnapshot, if any (if there isn't one, we run with no snapshot).
@@ -1797,8 +1797,8 @@ _SPI_execute_plan(SPIPlanPtr plan, ParamListInfo paramLI,
 	 * snapshot for each user command, and advance its command ID before each
 	 * querytree within the command.
 	 *
-	 * In the first two cases, we can just push the snap onto the stack
-	 * once for the whole plan list.
+	 * In the first two cases, we can just push the snap onto the stack once
+	 * for the whole plan list.
 	 */
 	if (snapshot != InvalidSnapshot)
 	{
@@ -2028,7 +2028,7 @@ _SPI_convert_params(int nargs, Oid *argtypes,
 
 		/* sizeof(ParamListInfoData) includes the first array element */
 		paramLI = (ParamListInfo) palloc(sizeof(ParamListInfoData) +
-									   (nargs - 1) *sizeof(ParamExternData));
+									  (nargs - 1) * sizeof(ParamExternData));
 		/* we have static list of params, so no hooks needed */
 		paramLI->paramFetch = NULL;
 		paramLI->paramFetchArg = NULL;

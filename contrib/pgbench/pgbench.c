@@ -69,7 +69,7 @@
 typedef struct win32_pthread *pthread_t;
 typedef int pthread_attr_t;
 
-static int	pthread_create(pthread_t *thread, pthread_attr_t *attr, void *(*start_routine) (void *), void *arg);
+static int	pthread_create(pthread_t *thread, pthread_attr_t * attr, void *(*start_routine) (void *), void *arg);
 static int	pthread_join(pthread_t th, void **thread_return);
 #elif defined(ENABLE_THREAD_SAFETY)
 /* Use platform-dependent pthread capability */
@@ -87,7 +87,7 @@ static int	pthread_join(pthread_t th, void **thread_return);
 typedef struct fork_pthread *pthread_t;
 typedef int pthread_attr_t;
 
-static int	pthread_create(pthread_t *thread, pthread_attr_t *attr, void *(*start_routine) (void *), void *arg);
+static int	pthread_create(pthread_t *thread, pthread_attr_t * attr, void *(*start_routine) (void *), void *arg);
 static int	pthread_join(pthread_t th, void **thread_return);
 #endif
 
@@ -817,7 +817,7 @@ top:
 
 			INSTR_TIME_SET_CURRENT(now);
 			INSTR_TIME_ACCUM_DIFF(thread->exec_elapsed[cnum],
-			                      now, st->stmt_begin);
+								  now, st->stmt_begin);
 			thread->exec_count[cnum]++;
 		}
 
@@ -850,8 +850,8 @@ top:
 		if (commands[st->state]->type == SQL_COMMAND)
 		{
 			/*
-			 * Read and discard the query result; note this is not included
-			 * in the statement latency numbers.
+			 * Read and discard the query result; note this is not included in
+			 * the statement latency numbers.
 			 */
 			res = PQgetResult(st->con);
 			switch (PQresultStatus(res))
@@ -1716,16 +1716,16 @@ printResults(int ttype, int normal_xacts, int nclients,
 
 		for (i = 0; i < num_files; i++)
 		{
-			Command	  **commands;
+			Command   **commands;
 
 			if (num_files > 1)
-				printf("statement latencies in milliseconds, file %d:\n", i+1);
+				printf("statement latencies in milliseconds, file %d:\n", i + 1);
 			else
 				printf("statement latencies in milliseconds:\n");
 
 			for (commands = sql_files[i]; *commands != NULL; commands++)
 			{
-				Command	   *command = *commands;
+				Command    *command = *commands;
 				int			cnum = command->command_num;
 				double		total_time;
 				instr_time	total_exec_elapsed;
@@ -1737,7 +1737,7 @@ printResults(int ttype, int normal_xacts, int nclients,
 				total_exec_count = 0;
 				for (t = 0; t < nthreads; t++)
 				{
-					TState *thread = &threads[t];
+					TState	   *thread = &threads[t];
 
 					INSTR_TIME_ADD(total_exec_elapsed,
 								   thread->exec_elapsed[cnum]);
@@ -2014,9 +2014,9 @@ main(int argc, char **argv)
 	 * is_latencies only works with multiple threads in thread-based
 	 * implementations, not fork-based ones, because it supposes that the
 	 * parent can see changes made to the per-thread execution stats by child
-	 * threads.  It seems useful enough to accept despite this limitation,
-	 * but perhaps we should FIXME someday (by passing the stats data back
-	 * up through the parent-to-child pipes).
+	 * threads.  It seems useful enough to accept despite this limitation, but
+	 * perhaps we should FIXME someday (by passing the stats data back up
+	 * through the parent-to-child pipes).
 	 */
 #ifndef ENABLE_THREAD_SAFETY
 	if (is_latencies && nthreads > 1)
@@ -2161,7 +2161,7 @@ main(int argc, char **argv)
 	threads = (TState *) xmalloc(sizeof(TState) * nthreads);
 	for (i = 0; i < nthreads; i++)
 	{
-		TState *thread = &threads[i];
+		TState	   *thread = &threads[i];
 
 		thread->tid = i;
 		thread->state = &state[nclients / nthreads * i];
@@ -2170,7 +2170,7 @@ main(int argc, char **argv)
 		if (is_latencies)
 		{
 			/* Reserve memory for the thread to store per-command latencies */
-			int		t;
+			int			t;
 
 			thread->exec_elapsed = (instr_time *)
 				xmalloc(sizeof(instr_time) * num_commands);
@@ -2200,7 +2200,7 @@ main(int argc, char **argv)
 	/* start threads */
 	for (i = 0; i < nthreads; i++)
 	{
-		TState *thread = &threads[i];
+		TState	   *thread = &threads[i];
 
 		INSTR_TIME_SET_CURRENT(thread->start_time);
 
@@ -2472,7 +2472,7 @@ typedef struct fork_pthread
 
 static int
 pthread_create(pthread_t *thread,
-			   pthread_attr_t *attr,
+			   pthread_attr_t * attr,
 			   void *(*start_routine) (void *),
 			   void *arg)
 {
@@ -2586,7 +2586,7 @@ typedef struct win32_pthread
 	void	   *(*routine) (void *);
 	void	   *arg;
 	void	   *result;
-}	win32_pthread;
+} win32_pthread;
 
 static unsigned __stdcall
 win32_pthread_run(void *arg)
@@ -2600,7 +2600,7 @@ win32_pthread_run(void *arg)
 
 static int
 pthread_create(pthread_t *thread,
-			   pthread_attr_t *attr,
+			   pthread_attr_t * attr,
 			   void *(*start_routine) (void *),
 			   void *arg)
 {

@@ -138,7 +138,7 @@ DefineType(List *names, List *parameters)
 	DefElem    *byValueEl = NULL;
 	DefElem    *alignmentEl = NULL;
 	DefElem    *storageEl = NULL;
-	DefElem	   *collatableEl = NULL;
+	DefElem    *collatableEl = NULL;
 	Oid			inputOid;
 	Oid			outputOid;
 	Oid			receiveOid = InvalidOid;
@@ -537,7 +537,7 @@ DefineType(List *names, List *parameters)
 	 * now have TypeCreate do all the real work.
 	 *
 	 * Note: the pg_type.oid is stored in user tables as array elements (base
-	 * types) in ArrayType and in composite types in DatumTupleFields.  This
+	 * types) in ArrayType and in composite types in DatumTupleFields.	This
 	 * oid must be preserved by binary upgrades.
 	 */
 	typoid =
@@ -1179,7 +1179,7 @@ DefineEnum(CreateEnumStmt *stmt)
 				   -1,			/* typMod (Domains only) */
 				   0,			/* Array dimensions of typbasetype */
 				   false,		/* Type NOT NULL */
-				   InvalidOid);	/* typcollation */
+				   InvalidOid); /* typcollation */
 
 	/* Enter the enum's values into pg_enum */
 	EnumValuesCreate(enumTypeOid, stmt->vals);
@@ -2416,7 +2416,7 @@ domainAddConstraint(Oid domainOid, Oid domainNamespace, Oid baseTypeOid,
 						  CONSTRAINT_CHECK,		/* Constraint Type */
 						  false,	/* Is Deferrable */
 						  false,	/* Is Deferred */
-						  true,		/* Is Validated */
+						  true, /* Is Validated */
 						  InvalidOid,	/* not a relation constraint */
 						  NULL,
 						  0,

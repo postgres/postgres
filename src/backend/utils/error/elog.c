@@ -5,7 +5,7 @@
  *
  * Because of the extremely high rate at which log messages can be generated,
  * we need to be mindful of the performance cost of obtaining any information
- * that may be logged.  Also, it's important to keep in mind that this code may
+ * that may be logged.	Also, it's important to keep in mind that this code may
  * get called from within an aborted transaction, in which case operations
  * such as syscache lookups are unsafe.
  *
@@ -1175,7 +1175,7 @@ elog_finish(int elevel, const char *fmt,...)
  * The result of format_elog_string() is stored in ErrorContext, and will
  * therefore survive until FlushErrorState() is called.
  */
-static int save_format_errnumber;
+static int	save_format_errnumber;
 static const char *save_format_domain;
 
 void
@@ -1188,7 +1188,7 @@ pre_format_elog_string(int errnumber, const char *domain)
 }
 
 char *
-format_elog_string(const char *fmt, ...)
+format_elog_string(const char *fmt,...)
 {
 	ErrorData	errdata;
 	ErrorData  *edata;
@@ -1725,8 +1725,9 @@ write_console(const char *line, int len)
 	 * WriteConsoleW() will fail of stdout is redirected, so just fall through
 	 * to writing unconverted to the logfile in this case.
 	 *
-	 * Since we palloc the structure required for conversion, also fall through
-	 * to writing unconverted if we have not yet set up CurrentMemoryContext.
+	 * Since we palloc the structure required for conversion, also fall
+	 * through to writing unconverted if we have not yet set up
+	 * CurrentMemoryContext.
 	 */
 	if (GetDatabaseEncoding() != GetPlatformEncoding() &&
 		!in_error_recursion_trouble() &&

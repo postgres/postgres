@@ -441,7 +441,7 @@ extern Datum pg_relation_filepath(PG_FUNCTION_ARGS);
 
 /* genfile.c */
 extern bytea *read_binary_file(const char *filename,
-							   int64 seek_offset, int64 bytes_to_read);
+				 int64 seek_offset, int64 bytes_to_read);
 extern Datum pg_stat_file(PG_FUNCTION_ARGS);
 extern Datum pg_read_file(PG_FUNCTION_ARGS);
 extern Datum pg_read_file_all(PG_FUNCTION_ARGS);

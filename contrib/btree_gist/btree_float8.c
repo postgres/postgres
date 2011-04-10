@@ -76,8 +76,8 @@ gbt_float8key_cmp(const void *a, const void *b)
 static float8
 gbt_float8_dist(const void *a, const void *b)
 {
-	float8		arg1 = *(const float8 *)a;
-	float8		arg2 = *(const float8 *)b;
+	float8		arg1 = *(const float8 *) a;
+	float8		arg2 = *(const float8 *) b;
 	float8		r;
 
 	r = arg1 - arg2;
@@ -102,7 +102,7 @@ static const gbtree_ninfo tinfo =
 
 
 PG_FUNCTION_INFO_V1(float8_dist);
-Datum       float8_dist(PG_FUNCTION_ARGS);
+Datum		float8_dist(PG_FUNCTION_ARGS);
 Datum
 float8_dist(PG_FUNCTION_ARGS)
 {
@@ -113,7 +113,7 @@ float8_dist(PG_FUNCTION_ARGS)
 	r = a - b;
 	CHECKFLOATVAL(r, isinf(a) || isinf(b), true);
 
-	PG_RETURN_FLOAT8( Abs(r) );
+	PG_RETURN_FLOAT8(Abs(r));
 }
 
 /**************************************************
@@ -169,7 +169,7 @@ gbt_float8_distance(PG_FUNCTION_ARGS)
 	key.upper = (GBT_NUMKEY *) &kkk->upper;
 
 	PG_RETURN_FLOAT8(
-				   gbt_num_distance(&key, (void *) &query, GIST_LEAF(entry), &tinfo)
+			gbt_num_distance(&key, (void *) &query, GIST_LEAF(entry), &tinfo)
 		);
 }
 

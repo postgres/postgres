@@ -39,9 +39,9 @@
 typedef struct GinStatsData
 {
 	BlockNumber nPendingPages;
-	BlockNumber	nTotalPages;
-	BlockNumber	nEntryPages;
-	BlockNumber	nDataPages;
+	BlockNumber nTotalPages;
+	BlockNumber nEntryPages;
+	BlockNumber nDataPages;
 	int64		nEntries;
 	int32		ginVersion;
 } GinStatsData;

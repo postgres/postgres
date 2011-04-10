@@ -34,7 +34,7 @@
  * Hooks for function calls
  */
 PGDLLIMPORT needs_fmgr_hook_type needs_fmgr_hook = NULL;
-PGDLLIMPORT fmgr_hook_type       fmgr_hook = NULL;
+PGDLLIMPORT fmgr_hook_type fmgr_hook = NULL;
 
 /*
  * Declaration for old-style function pointer type.  This is now used only
@@ -192,7 +192,7 @@ fmgr_info_cxt_security(Oid functionId, FmgrInfo *finfo, MemoryContext mcxt,
 	 * elogs.
 	 */
 	finfo->fn_oid = InvalidOid;
-	finfo->fn_collation = InvalidOid;		/* caller may set this later */
+	finfo->fn_collation = InvalidOid;	/* caller may set this later */
 	finfo->fn_extra = NULL;
 	finfo->fn_mcxt = mcxt;
 	finfo->fn_expr = NULL;		/* caller may set this later */
@@ -951,7 +951,7 @@ fmgr_security_definer(PG_FUNCTION_ARGS)
 
 	/* function manager hook */
 	if (fmgr_hook)
-		(*fmgr_hook)(FHET_START, &fcache->flinfo, &fcache->arg);
+		(*fmgr_hook) (FHET_START, &fcache->flinfo, &fcache->arg);
 
 	/*
 	 * We don't need to restore GUC or userid settings on error, because the
@@ -982,7 +982,7 @@ fmgr_security_definer(PG_FUNCTION_ARGS)
 	{
 		fcinfo->flinfo = save_flinfo;
 		if (fmgr_hook)
-			(*fmgr_hook)(FHET_ABORT, &fcache->flinfo, &fcache->arg);
+			(*fmgr_hook) (FHET_ABORT, &fcache->flinfo, &fcache->arg);
 		PG_RE_THROW();
 	}
 	PG_END_TRY();
@@ -994,7 +994,7 @@ fmgr_security_definer(PG_FUNCTION_ARGS)
 	if (OidIsValid(fcache->userid))
 		SetUserIdAndSecContext(save_userid, save_sec_context);
 	if (fmgr_hook)
-		(*fmgr_hook)(FHET_END, &fcache->flinfo, &fcache->arg);
+		(*fmgr_hook) (FHET_END, &fcache->flinfo, &fcache->arg);
 
 	return result;
 }
@@ -1278,7 +1278,7 @@ DirectFunctionCall9(PGFunction func, Datum arg1, Datum arg2,
 
 /*
  * These are the same as DirectFunctionCallN except that a nonzero
- * collation can be specified.  No other fields of FmgrInfo are made valid.
+ * collation can be specified.	No other fields of FmgrInfo are made valid.
  */
 Datum
 DirectFunctionCall1WithCollation(PGFunction func, Oid collation, Datum arg1)

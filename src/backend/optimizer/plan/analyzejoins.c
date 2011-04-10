@@ -31,7 +31,7 @@
 /* local functions */
 static bool join_is_removable(PlannerInfo *root, SpecialJoinInfo *sjinfo);
 static void remove_rel_from_query(PlannerInfo *root, int relid,
-								  Relids joinrelids);
+					  Relids joinrelids);
 static List *remove_rel_from_joinlist(List *joinlist, int relid, int *nremoved);
 
 
@@ -238,10 +238,10 @@ join_is_removable(PlannerInfo *root, SpecialJoinInfo *sjinfo)
 			!bms_equal(restrictinfo->required_relids, joinrelids))
 		{
 			/*
-			 * If such a clause actually references the inner rel then
-			 * join removal has to be disallowed.  We have to check this
-			 * despite the previous attr_needed checks because of the
-			 * possibility of pushed-down clauses referencing the rel.
+			 * If such a clause actually references the inner rel then join
+			 * removal has to be disallowed.  We have to check this despite
+			 * the previous attr_needed checks because of the possibility of
+			 * pushed-down clauses referencing the rel.
 			 */
 			if (bms_is_member(innerrelid, restrictinfo->clause_relids))
 				return false;
@@ -365,8 +365,8 @@ remove_rel_from_query(PlannerInfo *root, int relid, Relids joinrelids)
 	 * Likewise remove references from SpecialJoinInfo data structures.
 	 *
 	 * This is relevant in case the outer join we're deleting is nested inside
-	 * other outer joins: the upper joins' relid sets have to be adjusted.
-	 * The RHS of the target outer join will be made empty here, but that's OK
+	 * other outer joins: the upper joins' relid sets have to be adjusted. The
+	 * RHS of the target outer join will be made empty here, but that's OK
 	 * since caller will delete that SpecialJoinInfo entirely.
 	 */
 	foreach(l, root->join_info_list)
@@ -426,6 +426,7 @@ remove_rel_from_query(PlannerInfo *root, int relid, Relids joinrelids)
 		{
 			/* Recheck that qual doesn't actually reference the target rel */
 			Assert(!bms_is_member(relid, rinfo->clause_relids));
+
 			/*
 			 * The required_relids probably aren't shared with anything else,
 			 * but let's copy them just to be sure.

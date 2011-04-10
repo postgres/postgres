@@ -41,9 +41,9 @@ typedef struct Tuplesortstate Tuplesortstate;
  * The "heap" API actually stores/sorts MinimalTuples, which means it doesn't
  * preserve the system columns (tuple identity and transaction visibility
  * info).  The sort keys are specified by column numbers within the tuples
- * and sort operator OIDs.  We save some cycles by passing and returning the
+ * and sort operator OIDs.	We save some cycles by passing and returning the
  * tuples in TupleTableSlots, rather than forming actual HeapTuples (which'd
- * have to be converted to MinimalTuples).  This API works well for sorts
+ * have to be converted to MinimalTuples).	This API works well for sorts
  * executed as parts of plan trees.
  *
  * The "cluster" API stores/sorts full HeapTuples including all visibility
@@ -52,7 +52,7 @@ typedef struct Tuplesortstate Tuplesortstate;
  * go with this API, not the "begin_heap" one!
  *
  * The "index_btree" API stores/sorts IndexTuples (preserving all their
- * header fields).  The sort keys are specified by a btree index definition.
+ * header fields).	The sort keys are specified by a btree index definition.
  *
  * The "index_hash" API is similar to index_btree, but the tuples are
  * actually sorted by their hash codes not the raw data.
@@ -60,11 +60,11 @@ typedef struct Tuplesortstate Tuplesortstate;
 
 extern Tuplesortstate *tuplesort_begin_heap(TupleDesc tupDesc,
 					 int nkeys, AttrNumber *attNums,
-					 Oid *sortOperators, Oid *collations, bool *nullsFirstFlags,
+				  Oid *sortOperators, Oid *collations, bool *nullsFirstFlags,
 					 int workMem, bool randomAccess);
 extern Tuplesortstate *tuplesort_begin_cluster(TupleDesc tupDesc,
-											   Relation indexRel,
-											   int workMem, bool randomAccess);
+						Relation indexRel,
+						int workMem, bool randomAccess);
 extern Tuplesortstate *tuplesort_begin_index_btree(Relation indexRel,
 							bool enforceUnique,
 							int workMem, bool randomAccess);
@@ -72,7 +72,7 @@ extern Tuplesortstate *tuplesort_begin_index_hash(Relation indexRel,
 						   uint32 hash_mask,
 						   int workMem, bool randomAccess);
 extern Tuplesortstate *tuplesort_begin_datum(Oid datumType,
-					  Oid sortOperator, Oid sortCollation, bool nullsFirstFlag,
+					Oid sortOperator, Oid sortCollation, bool nullsFirstFlag,
 					  int workMem, bool randomAccess);
 
 extern void tuplesort_set_bound(Tuplesortstate *state, int64 bound);

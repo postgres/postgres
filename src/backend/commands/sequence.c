@@ -287,7 +287,7 @@ ResetSequence(Oid seq_relid)
 	seq->log_cnt = 1;
 
 	/*
-	 * Create a new storage file for the sequence.  We want to keep the
+	 * Create a new storage file for the sequence.	We want to keep the
 	 * sequence's relfrozenxid at 0, since it won't contain any unfrozen XIDs.
 	 */
 	RelationSetNewRelfilenode(seq_rel, InvalidTransactionId);
@@ -1037,7 +1037,7 @@ init_sequence(Oid relid, SeqTable *p_elm, Relation *p_rel)
 
 	/*
 	 * If the sequence has been transactionally replaced since we last saw it,
-	 * discard any cached-but-unissued values.  We do not touch the currval()
+	 * discard any cached-but-unissued values.	We do not touch the currval()
 	 * state, however.
 	 */
 	if (seqrel->rd_rel->relfilenode != elm->filenode)

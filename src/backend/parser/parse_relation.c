@@ -1393,14 +1393,14 @@ addRangeTableEntryForCTE(ParseState *pstate,
 	 */
 	if (IsA(cte->ctequery, Query))
 	{
-		Query  *ctequery = (Query *) cte->ctequery;
+		Query	   *ctequery = (Query *) cte->ctequery;
 
 		if (ctequery->commandType != CMD_SELECT &&
 			ctequery->returningList == NIL)
 			ereport(ERROR,
 					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-					 errmsg("WITH query \"%s\" does not have a RETURNING clause",
-							cte->ctename),
+				 errmsg("WITH query \"%s\" does not have a RETURNING clause",
+						cte->ctename),
 					 parser_errposition(pstate, rv->location)));
 	}
 
@@ -1871,7 +1871,7 @@ expandTupleDesc(TupleDesc tupdesc, Alias *eref,
 					 * what type the Const claims to be.
 					 */
 					*colvars = lappend(*colvars,
-									   makeNullConst(INT4OID, -1, InvalidOid));
+									 makeNullConst(INT4OID, -1, InvalidOid));
 				}
 			}
 			continue;
@@ -1893,7 +1893,7 @@ expandTupleDesc(TupleDesc tupdesc, Alias *eref,
 			Var		   *varnode;
 
 			varnode = makeVar(rtindex, attr->attnum,
-							  attr->atttypid, attr->atttypmod, attr->attcollation,
+						 attr->atttypid, attr->atttypmod, attr->attcollation,
 							  sublevels_up);
 			varnode->location = location;
 

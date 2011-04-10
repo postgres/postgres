@@ -364,7 +364,7 @@ pg_stat_get_vacuum_count(PG_FUNCTION_ARGS)
 {
 	Oid			relid = PG_GETARG_OID(0);
 	int64		result;
-	PgStat_StatTabEntry	*tabentry;
+	PgStat_StatTabEntry *tabentry;
 
 	if ((tabentry = pgstat_fetch_stat_tabentry(relid)) == NULL)
 		result = 0;
@@ -379,7 +379,7 @@ pg_stat_get_autovacuum_count(PG_FUNCTION_ARGS)
 {
 	Oid			relid = PG_GETARG_OID(0);
 	int64		result;
-	PgStat_StatTabEntry	*tabentry;
+	PgStat_StatTabEntry *tabentry;
 
 	if ((tabentry = pgstat_fetch_stat_tabentry(relid)) == NULL)
 		result = 0;
@@ -394,7 +394,7 @@ pg_stat_get_analyze_count(PG_FUNCTION_ARGS)
 {
 	Oid			relid = PG_GETARG_OID(0);
 	int64		result;
-	PgStat_StatTabEntry	*tabentry;
+	PgStat_StatTabEntry *tabentry;
 
 	if ((tabentry = pgstat_fetch_stat_tabentry(relid)) == NULL)
 		result = 0;
@@ -409,7 +409,7 @@ pg_stat_get_autoanalyze_count(PG_FUNCTION_ARGS)
 {
 	Oid			relid = PG_GETARG_OID(0);
 	int64		result;
-	PgStat_StatTabEntry	*tabentry;
+	PgStat_StatTabEntry *tabentry;
 
 	if ((tabentry = pgstat_fetch_stat_tabentry(relid)) == NULL)
 		result = 0;
@@ -1263,11 +1263,11 @@ pg_stat_get_db_conflict_all(PG_FUNCTION_ARGS)
 		result = 0;
 	else
 		result = (int64) (
-			dbentry->n_conflict_tablespace +
-			dbentry->n_conflict_lock +
-			dbentry->n_conflict_snapshot +
-			dbentry->n_conflict_bufferpin +
-			dbentry->n_conflict_startup_deadlock);
+						  dbentry->n_conflict_tablespace +
+						  dbentry->n_conflict_lock +
+						  dbentry->n_conflict_snapshot +
+						  dbentry->n_conflict_bufferpin +
+						  dbentry->n_conflict_startup_deadlock);
 
 	PG_RETURN_INT64(result);
 }

@@ -63,7 +63,7 @@
 #include "utils/ps_status.h"
 
 /* User-settable parameters for sync rep */
-char 	*SyncRepStandbyNames;
+char	   *SyncRepStandbyNames;
 
 #define SyncStandbysDefined() \
 	(SyncRepStandbyNames != NULL && SyncRepStandbyNames[0] != '\0')
@@ -73,7 +73,8 @@ static bool announce_next_takeover = true;
 static void SyncRepQueueInsert(void);
 static void SyncRepCancelWait(void);
 
-static int SyncRepGetStandbyPriority(void);
+static int	SyncRepGetStandbyPriority(void);
+
 #ifdef USE_ASSERT_CHECKING
 static bool SyncRepQueueIsOrderedByLSN(void);
 #endif
@@ -96,13 +97,13 @@ static bool SyncRepQueueIsOrderedByLSN(void);
 void
 SyncRepWaitForLSN(XLogRecPtr XactCommitLSN)
 {
-	char 		*new_status = NULL;
+	char	   *new_status = NULL;
 	const char *old_status;
 
 	/*
-	 * Fast exit if user has not requested sync replication, or
-	 * there are no sync replication standby names defined.
-	 * Note that those standbys don't need to be connected.
+	 * Fast exit if user has not requested sync replication, or there are no
+	 * sync replication standby names defined. Note that those standbys don't
+	 * need to be connected.
 	 */
 	if (!SyncRepRequested() || !SyncStandbysDefined())
 		return;
@@ -117,12 +118,12 @@ SyncRepWaitForLSN(XLogRecPtr XactCommitLSN)
 	Assert(MyProc->syncRepState == SYNC_REP_NOT_WAITING);
 
 	/*
-	 * We don't wait for sync rep if WalSndCtl->sync_standbys_defined is
-	 * not set.  See SyncRepUpdateSyncStandbysDefined.
+	 * We don't wait for sync rep if WalSndCtl->sync_standbys_defined is not
+	 * set.  See SyncRepUpdateSyncStandbysDefined.
 	 *
-	 * Also check that the standby hasn't already replied. Unlikely
-	 * race condition but we'll be fetching that cache line anyway
-	 * so its likely to be a low cost check.
+	 * Also check that the standby hasn't already replied. Unlikely race
+	 * condition but we'll be fetching that cache line anyway so its likely to
+	 * be a low cost check.
 	 */
 	if (!WalSndCtl->sync_standbys_defined ||
 		XLByteLE(XactCommitLSN, WalSndCtl->lsn))
@@ -163,12 +164,12 @@ SyncRepWaitForLSN(XLogRecPtr XactCommitLSN)
 	 */
 	for (;;)
 	{
-		int syncRepState;
+		int			syncRepState;
 
 		/*
-		 * Wait on latch for up to 60 seconds. This allows us to
-		 * check for postmaster death regularly while waiting.
-		 * Note that timeout here does not necessarily release from loop.
+		 * Wait on latch for up to 60 seconds. This allows us to check for
+		 * postmaster death regularly while waiting. Note that timeout here
+		 * does not necessarily release from loop.
 		 */
 		WaitLatch(&MyProc->waitLatch, 60000000L);
 
@@ -176,12 +177,13 @@ SyncRepWaitForLSN(XLogRecPtr XactCommitLSN)
 		ResetLatch(&MyProc->waitLatch);
 
 		/*
-		 * Try checking the state without the lock first.  There's no guarantee
-		 * that we'll read the most up-to-date value, so if it looks like we're
-		 * still waiting, recheck while holding the lock.  But if it looks like
-		 * we're done, we must really be done, because once walsender changes
-		 * the state to SYNC_REP_WAIT_COMPLETE, it will never update it again,
-		 * so we can't be seeing a stale value in that case.
+		 * Try checking the state without the lock first.  There's no
+		 * guarantee that we'll read the most up-to-date value, so if it looks
+		 * like we're still waiting, recheck while holding the lock.  But if
+		 * it looks like we're done, we must really be done, because once
+		 * walsender changes the state to SYNC_REP_WAIT_COMPLETE, it will
+		 * never update it again, so we can't be seeing a stale value in that
+		 * case.
 		 */
 		syncRepState = MyProc->syncRepState;
 		if (syncRepState == SYNC_REP_WAITING)
@@ -195,16 +197,15 @@ SyncRepWaitForLSN(XLogRecPtr XactCommitLSN)
 
 		/*
 		 * If a wait for synchronous replication is pending, we can neither
-		 * acknowledge the commit nor raise ERROR or FATAL.  The latter
-		 * would lead the client to believe that that the transaction
-		 * aborted, which is not true: it's already committed locally.
-		 * The former is no good either: the client has requested
-		 * synchronous replication, and is entitled to assume that an
-		 * acknowledged commit is also replicated, which may not be true.
-		 * So in this case we issue a WARNING (which some clients may
-		 * be able to interpret) and shut off further output.  We do NOT
-		 * reset ProcDiePending, so that the process will die after the
-		 * commit is cleaned up.
+		 * acknowledge the commit nor raise ERROR or FATAL.  The latter would
+		 * lead the client to believe that that the transaction aborted, which
+		 * is not true: it's already committed locally. The former is no good
+		 * either: the client has requested synchronous replication, and is
+		 * entitled to assume that an acknowledged commit is also replicated,
+		 * which may not be true. So in this case we issue a WARNING (which
+		 * some clients may be able to interpret) and shut off further output.
+		 * We do NOT reset ProcDiePending, so that the process will die after
+		 * the commit is cleaned up.
 		 */
 		if (ProcDiePending)
 		{
@@ -220,8 +221,8 @@ SyncRepWaitForLSN(XLogRecPtr XactCommitLSN)
 		/*
 		 * It's unclear what to do if a query cancel interrupt arrives.  We
 		 * can't actually abort at this point, but ignoring the interrupt
-		 * altogether is not helpful, so we just terminate the wait with
-		 * a suitable warning.
+		 * altogether is not helpful, so we just terminate the wait with a
+		 * suitable warning.
 		 */
 		if (QueryCancelPending)
 		{
@@ -234,8 +235,9 @@ SyncRepWaitForLSN(XLogRecPtr XactCommitLSN)
 		}
 
 		/*
-		 * If the postmaster dies, we'll probably never get an acknowledgement,
-		 * because all the wal sender processes will exit.  So just bail out.
+		 * If the postmaster dies, we'll probably never get an
+		 * acknowledgement, because all the wal sender processes will exit.
+		 * So just bail out.
 		 */
 		if (!PostmasterIsAlive(true))
 		{
@@ -274,7 +276,7 @@ SyncRepWaitForLSN(XLogRecPtr XactCommitLSN)
 static void
 SyncRepQueueInsert(void)
 {
-	PGPROC	*proc;
+	PGPROC	   *proc;
 
 	proc = (PGPROC *) SHMQueuePrev(&(WalSndCtl->SyncRepQueue),
 								   &(WalSndCtl->SyncRepQueue),
@@ -283,8 +285,8 @@ SyncRepQueueInsert(void)
 	while (proc)
 	{
 		/*
-		 * Stop at the queue element that we should after to
-		 * ensure the queue is ordered by LSN.
+		 * Stop at the queue element that we should after to ensure the queue
+		 * is ordered by LSN.
 		 */
 		if (XLByteLT(proc->waitLSN, MyProc->waitLSN))
 			break;
@@ -339,7 +341,7 @@ SyncRepCleanupAtProcExit(int code, Datum arg)
 void
 SyncRepInitConfig(void)
 {
-	int priority;
+	int			priority;
 
 	/*
 	 * Determine if we are a potential sync standby and remember the result
@@ -352,8 +354,8 @@ SyncRepInitConfig(void)
 		MyWalSnd->sync_standby_priority = priority;
 		LWLockRelease(SyncRepLock);
 		ereport(DEBUG1,
-				(errmsg("standby \"%s\" now has synchronous standby priority %u",
-						application_name, priority)));
+			(errmsg("standby \"%s\" now has synchronous standby priority %u",
+					application_name, priority)));
 	}
 }
 
@@ -369,24 +371,24 @@ SyncRepReleaseWaiters(void)
 {
 	volatile WalSndCtlData *walsndctl = WalSndCtl;
 	volatile WalSnd *syncWalSnd = NULL;
-	int 		numprocs = 0;
+	int			numprocs = 0;
 	int			priority = 0;
 	int			i;
 
 	/*
 	 * If this WALSender is serving a standby that is not on the list of
-	 * potential standbys then we have nothing to do. If we are still
-	 * starting up or still running base backup, then leave quickly also.
+	 * potential standbys then we have nothing to do. If we are still starting
+	 * up or still running base backup, then leave quickly also.
 	 */
 	if (MyWalSnd->sync_standby_priority == 0 ||
 		MyWalSnd->state < WALSNDSTATE_STREAMING)
 		return;
 
 	/*
-	 * We're a potential sync standby. Release waiters if we are the
-	 * highest priority standby. If there are multiple standbys with
-	 * same priorities then we use the first mentioned standby.
-	 * If you change this, also change pg_stat_get_wal_senders().
+	 * We're a potential sync standby. Release waiters if we are the highest
+	 * priority standby. If there are multiple standbys with same priorities
+	 * then we use the first mentioned standby. If you change this, also
+	 * change pg_stat_get_wal_senders().
 	 */
 	LWLockAcquire(SyncRepLock, LW_EXCLUSIVE);
 
@@ -400,8 +402,8 @@ SyncRepReleaseWaiters(void)
 			(priority == 0 ||
 			 priority > walsnd->sync_standby_priority))
 		{
-			 priority = walsnd->sync_standby_priority;
-			 syncWalSnd = walsnd;
+			priority = walsnd->sync_standby_priority;
+			syncWalSnd = walsnd;
 		}
 	}
 
@@ -423,8 +425,8 @@ SyncRepReleaseWaiters(void)
 	if (XLByteLT(walsndctl->lsn, MyWalSnd->flush))
 	{
 		/*
-		 * Set the lsn first so that when we wake backends they will
-		 * release up to this location.
+		 * Set the lsn first so that when we wake backends they will release
+		 * up to this location.
 		 */
 		walsndctl->lsn = MyWalSnd->flush;
 		numprocs = SyncRepWakeQueue(false);
@@ -433,9 +435,9 @@ SyncRepReleaseWaiters(void)
 	LWLockRelease(SyncRepLock);
 
 	elog(DEBUG3, "released %d procs up to %X/%X",
-					numprocs,
-					MyWalSnd->flush.xlogid,
-					MyWalSnd->flush.xrecoff);
+		 numprocs,
+		 MyWalSnd->flush.xlogid,
+		 MyWalSnd->flush.xrecoff);
 
 	/*
 	 * If we are managing the highest priority standby, though we weren't
@@ -502,7 +504,7 @@ SyncRepGetStandbyPriority(void)
 
 /*
  * Walk queue from head.  Set the state of any backends that need to be woken,
- * remove them from the queue, and then wake them.  Pass all = true to wake
+ * remove them from the queue, and then wake them.	Pass all = true to wake
  * whole queue; otherwise, just wake up to the walsender's LSN.
  *
  * Must hold SyncRepLock.
@@ -511,9 +513,9 @@ int
 SyncRepWakeQueue(bool all)
 {
 	volatile WalSndCtlData *walsndctl = WalSndCtl;
-	PGPROC	*proc = NULL;
-	PGPROC	*thisproc = NULL;
-	int		numprocs = 0;
+	PGPROC	   *proc = NULL;
+	PGPROC	   *thisproc = NULL;
+	int			numprocs = 0;
 
 	Assert(SyncRepQueueIsOrderedByLSN());
 
@@ -539,8 +541,8 @@ SyncRepWakeQueue(bool all)
 									   offsetof(PGPROC, syncRepLinks));
 
 		/*
-		 * Set state to complete; see SyncRepWaitForLSN() for discussion
-		 * of the various states.
+		 * Set state to complete; see SyncRepWaitForLSN() for discussion of
+		 * the various states.
 		 */
 		thisproc->syncRepState = SYNC_REP_WAIT_COMPLETE;
 
@@ -603,8 +605,8 @@ SyncRepUpdateSyncStandbysDefined(void)
 static bool
 SyncRepQueueIsOrderedByLSN(void)
 {
-	PGPROC	*proc = NULL;
-	XLogRecPtr lastLSN;
+	PGPROC	   *proc = NULL;
+	XLogRecPtr	lastLSN;
 
 	lastLSN.xlogid = 0;
 	lastLSN.xrecoff = 0;
@@ -616,8 +618,8 @@ SyncRepQueueIsOrderedByLSN(void)
 	while (proc)
 	{
 		/*
-		 * Check the queue is ordered by LSN and that multiple
-		 * procs don't have matching LSNs
+		 * Check the queue is ordered by LSN and that multiple procs don't
+		 * have matching LSNs
 		 */
 		if (XLByteLE(proc->waitLSN, lastLSN))
 			return false;
@@ -662,8 +664,8 @@ check_synchronous_standby_names(char **newval, void **extra, GucSource source)
 	 * Any additional validation of standby names should go here.
 	 *
 	 * Don't attempt to set WALSender priority because this is executed by
-	 * postmaster at startup, not WALSender, so the application_name is
-	 * not yet correctly set.
+	 * postmaster at startup, not WALSender, so the application_name is not
+	 * yet correctly set.
 	 */
 
 	pfree(rawstring);

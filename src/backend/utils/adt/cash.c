@@ -945,11 +945,11 @@ numeric_cash(PG_FUNCTION_ARGS)
 Datum
 int4_cash(PG_FUNCTION_ARGS)
 {
-	int32	amount = PG_GETARG_INT32(0);
-	Cash	result;
-	int		fpoint;
-	int64   scale;
-	int		i;
+	int32		amount = PG_GETARG_INT32(0);
+	Cash		result;
+	int			fpoint;
+	int64		scale;
+	int			i;
 	struct lconv *lconvert = PGLC_localeconv();
 
 	/* see comments about frac_digits in cash_in() */
@@ -964,7 +964,7 @@ int4_cash(PG_FUNCTION_ARGS)
 
 	/* compute amount * scale, checking for overflow */
 	result = DatumGetInt64(DirectFunctionCall2(int8mul, Int64GetDatum(amount),
-						   Int64GetDatum(scale)));
+											   Int64GetDatum(scale)));
 
 	PG_RETURN_CASH(result);
 }
@@ -975,11 +975,11 @@ int4_cash(PG_FUNCTION_ARGS)
 Datum
 int8_cash(PG_FUNCTION_ARGS)
 {
-	int64	amount = PG_GETARG_INT64(0);
-	Cash	result;
-	int		fpoint;
-	int64   scale;
-	int		i;
+	int64		amount = PG_GETARG_INT64(0);
+	Cash		result;
+	int			fpoint;
+	int64		scale;
+	int			i;
 	struct lconv *lconvert = PGLC_localeconv();
 
 	/* see comments about frac_digits in cash_in() */
@@ -994,7 +994,7 @@ int8_cash(PG_FUNCTION_ARGS)
 
 	/* compute amount * scale, checking for overflow */
 	result = DatumGetInt64(DirectFunctionCall2(int8mul, Int64GetDatum(amount),
-						   Int64GetDatum(scale)));
+											   Int64GetDatum(scale)));
 
 	PG_RETURN_CASH(result);
 }

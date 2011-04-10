@@ -34,8 +34,8 @@ ginint4_queryextract(PG_FUNCTION_ARGS)
 
 		/*
 		 * If the query doesn't have any required primitive values (for
-		 * instance, it's something like '! 42'), we have to do a full
-		 * index scan.
+		 * instance, it's something like '! 42'), we have to do a full index
+		 * scan.
 		 */
 		if (query_has_required_values(query))
 			*searchMode = GIN_SEARCH_MODE_DEFAULT;
@@ -95,7 +95,7 @@ ginint4_queryextract(PG_FUNCTION_ARGS)
 			case RTOldContainsStrategyNumber:
 				if (*nentries > 0)
 					*searchMode = GIN_SEARCH_MODE_DEFAULT;
-				else				/* everything contains the empty set */
+				else	/* everything contains the empty set */
 					*searchMode = GIN_SEARCH_MODE_ALL;
 				break;
 			default:
@@ -116,6 +116,7 @@ ginint4_consistent(PG_FUNCTION_ARGS)
 	bool	   *check = (bool *) PG_GETARG_POINTER(0);
 	StrategyNumber strategy = PG_GETARG_UINT16(1);
 	int32		nkeys = PG_GETARG_INT32(3);
+
 	/* Pointer	   *extra_data = (Pointer *) PG_GETARG_POINTER(4); */
 	bool	   *recheck = (bool *) PG_GETARG_POINTER(5);
 	bool		res = FALSE;

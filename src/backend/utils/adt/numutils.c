@@ -136,7 +136,7 @@ pg_ltoa(int32 value, char *a)
 	 * Avoid problems with the most negative integer not being representable
 	 * as a positive integer.
 	 */
-	if (value == (-2147483647-1))
+	if (value == (-2147483647 - 1))
 	{
 		memcpy(a, "-2147483648", 12);
 		return;
@@ -150,8 +150,8 @@ pg_ltoa(int32 value, char *a)
 	/* Compute the result string backwards. */
 	do
 	{
-		int32	remainder;
-		int32	oldval = value;
+		int32		remainder;
+		int32		oldval = value;
 
 		value /= 10;
 		remainder = oldval - value * 10;
@@ -167,7 +167,7 @@ pg_ltoa(int32 value, char *a)
 	/* Reverse string. */
 	while (start < a)
 	{
-		char	swap = *start;
+		char		swap = *start;
 
 		*start++ = *a;
 		*a-- = swap;
@@ -190,7 +190,7 @@ pg_lltoa(int64 value, char *a)
 	 * Avoid problems with the most negative integer not being representable
 	 * as a positive integer.
 	 */
-	if (value == (-INT64CONST(0x7FFFFFFFFFFFFFFF)-1))
+	if (value == (-INT64CONST(0x7FFFFFFFFFFFFFFF) - 1))
 	{
 		memcpy(a, "-9223372036854775808", 21);
 		return;
@@ -204,8 +204,8 @@ pg_lltoa(int64 value, char *a)
 	/* Compute the result string backwards. */
 	do
 	{
-		int64	remainder;
-		int64	oldval = value;
+		int64		remainder;
+		int64		oldval = value;
 
 		value /= 10;
 		remainder = oldval - value * 10;
@@ -221,7 +221,7 @@ pg_lltoa(int64 value, char *a)
 	/* Reverse string. */
 	while (start < a)
 	{
-		char	swap = *start;
+		char		swap = *start;
 
 		*start++ = *a;
 		*a-- = swap;

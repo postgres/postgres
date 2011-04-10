@@ -70,7 +70,7 @@ initGinState(GinState *state, Relation index)
 		 * However, we may have a collatable storage type for a noncollatable
 		 * indexed data type (for instance, hstore uses text index entries).
 		 * If there's no index collation then specify default collation in
-		 * case the comparison function needs one.  This is harmless if the
+		 * case the comparison function needs one.	This is harmless if the
 		 * comparison function doesn't care about collation, so we just do it
 		 * unconditionally.  (We could alternatively call get_typcollation,
 		 * but that seems like expensive overkill --- there aren't going to be
@@ -359,9 +359,9 @@ cmpEntries(const void *a, const void *b, void *arg)
 										  aa->datum, bb->datum));
 
 	/*
-	 * Detect if we have any duplicates.  If there are equal keys, qsort
-	 * must compare them at some point, else it wouldn't know whether one
-	 * should go before or after the other.
+	 * Detect if we have any duplicates.  If there are equal keys, qsort must
+	 * compare them at some point, else it wouldn't know whether one should go
+	 * before or after the other.
 	 */
 	if (res == 0)
 		data->haveDups = true;
@@ -422,9 +422,9 @@ ginExtractEntries(GinState *ginstate, OffsetNumber attnum,
 
 	/*
 	 * If the extractValueFn didn't create a nullFlags array, create one,
-	 * assuming that everything's non-null.  Otherwise, run through the
-	 * array and make sure each value is exactly 0 or 1; this ensures
-	 * binary compatibility with the GinNullCategory representation.
+	 * assuming that everything's non-null.  Otherwise, run through the array
+	 * and make sure each value is exactly 0 or 1; this ensures binary
+	 * compatibility with the GinNullCategory representation.
 	 */
 	if (nullFlags == NULL)
 		nullFlags = (bool *) palloc0(*nentries * sizeof(bool));
@@ -440,8 +440,8 @@ ginExtractEntries(GinState *ginstate, OffsetNumber attnum,
 	 * If there's more than one key, sort and unique-ify.
 	 *
 	 * XXX Using qsort here is notationally painful, and the overhead is
-	 * pretty bad too.  For small numbers of keys it'd likely be better to
-	 * use a simple insertion sort.
+	 * pretty bad too.	For small numbers of keys it'd likely be better to use
+	 * a simple insertion sort.
 	 */
 	if (*nentries > 1)
 	{
@@ -470,7 +470,7 @@ ginExtractEntries(GinState *ginstate, OffsetNumber attnum,
 			j = 1;
 			for (i = 1; i < *nentries; i++)
 			{
-				if (cmpEntries(&keydata[i-1], &keydata[i], &arg) != 0)
+				if (cmpEntries(&keydata[i - 1], &keydata[i], &arg) != 0)
 				{
 					entries[j] = keydata[i].datum;
 					nullFlags[j] = keydata[i].isnull;
@@ -533,9 +533,9 @@ ginoptions(PG_FUNCTION_ARGS)
 void
 ginGetStats(Relation index, GinStatsData *stats)
 {
-	Buffer			metabuffer;
-	Page			metapage;
-	GinMetaPageData	*metadata;
+	Buffer		metabuffer;
+	Page		metapage;
+	GinMetaPageData *metadata;
 
 	metabuffer = ReadBuffer(index, GIN_METAPAGE_BLKNO);
 	LockBuffer(metabuffer, GIN_SHARE);
@@ -560,9 +560,9 @@ ginGetStats(Relation index, GinStatsData *stats)
 void
 ginUpdateStats(Relation index, const GinStatsData *stats)
 {
-	Buffer			metabuffer;
-	Page			metapage;
-	GinMetaPageData	*metadata;
+	Buffer		metabuffer;
+	Page		metapage;
+	GinMetaPageData *metadata;
 
 	metabuffer = ReadBuffer(index, GIN_METAPAGE_BLKNO);
 	LockBuffer(metabuffer, GIN_EXCLUSIVE);
@@ -580,9 +580,9 @@ ginUpdateStats(Relation index, const GinStatsData *stats)
 
 	if (RelationNeedsWAL(index))
 	{
-		XLogRecPtr			recptr;
-		ginxlogUpdateMeta	data;
-		XLogRecData			rdata;
+		XLogRecPtr	recptr;
+		ginxlogUpdateMeta data;
+		XLogRecData rdata;
 
 		data.node = index->rd_node;
 		data.ntuples = 0;

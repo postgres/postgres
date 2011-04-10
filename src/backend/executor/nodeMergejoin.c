@@ -143,7 +143,7 @@ typedef struct MergeJoinClauseData
 	bool		reverse;		/* if true, negate the cmpfn's output */
 	bool		nulls_first;	/* if true, nulls sort low */
 	FmgrInfo	cmpfinfo;
-} MergeJoinClauseData;
+}	MergeJoinClauseData;
 
 /* Result type for MJEvalOuterValues and MJEvalInnerValues */
 typedef enum

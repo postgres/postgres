@@ -988,4 +988,3 @@ const char *ISBN_range_new[][2] = {
 	{"10-976000", "10-999999"},
 	{NULL, NULL},
 };
-

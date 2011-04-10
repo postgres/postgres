@@ -1805,8 +1805,8 @@ create_database(const char *dbname)
 	}
 
 	/*
-	 * Install any requested extensions.  We use CREATE IF NOT EXISTS
-	 * so that this will work whether or not the extension is preinstalled.
+	 * Install any requested extensions.  We use CREATE IF NOT EXISTS so that
+	 * this will work whether or not the extension is preinstalled.
 	 */
 	for (sl = loadextension; sl != NULL; sl = sl->next)
 	{

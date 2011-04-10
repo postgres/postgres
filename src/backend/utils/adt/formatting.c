@@ -662,7 +662,7 @@ typedef enum
 
 	/* last */
 	_DCH_last_
-} DCH_poz;
+}	DCH_poz;
 
 typedef enum
 {
@@ -705,7 +705,7 @@ typedef enum
 
 	/* last */
 	_NUM_last_
-} NUM_poz;
+}	NUM_poz;
 
 /* ----------
  * KeyWords for DATE-TIME version
@@ -1497,7 +1497,7 @@ str_tolower(const char *buff, size_t nbytes, Oid collid)
 #ifdef USE_WIDE_UPPER_LOWER
 	else if (pg_database_encoding_max_length() > 1)
 	{
-		pg_locale_t	mylocale = 0;
+		pg_locale_t mylocale = 0;
 		wchar_t    *workspace;
 		size_t		curr_char;
 		size_t		result_size;
@@ -1549,7 +1549,7 @@ str_tolower(const char *buff, size_t nbytes, Oid collid)
 #endif   /* USE_WIDE_UPPER_LOWER */
 	else
 	{
-		pg_locale_t	mylocale = 0;
+		pg_locale_t mylocale = 0;
 		char	   *p;
 
 		if (collid != DEFAULT_COLLATION_OID)
@@ -1618,7 +1618,7 @@ str_toupper(const char *buff, size_t nbytes, Oid collid)
 #ifdef USE_WIDE_UPPER_LOWER
 	else if (pg_database_encoding_max_length() > 1)
 	{
-		pg_locale_t	mylocale = 0;
+		pg_locale_t mylocale = 0;
 		wchar_t    *workspace;
 		size_t		curr_char;
 		size_t		result_size;
@@ -1670,7 +1670,7 @@ str_toupper(const char *buff, size_t nbytes, Oid collid)
 #endif   /* USE_WIDE_UPPER_LOWER */
 	else
 	{
-		pg_locale_t	mylocale = 0;
+		pg_locale_t mylocale = 0;
 		char	   *p;
 
 		if (collid != DEFAULT_COLLATION_OID)
@@ -1736,7 +1736,7 @@ str_initcap(const char *buff, size_t nbytes, Oid collid)
 
 		for (p = result; *p; p++)
 		{
-			char	c;
+			char		c;
 
 			if (wasalnum)
 				*p = c = pg_ascii_tolower((unsigned char) *p);
@@ -1751,7 +1751,7 @@ str_initcap(const char *buff, size_t nbytes, Oid collid)
 #ifdef USE_WIDE_UPPER_LOWER
 	else if (pg_database_encoding_max_length() > 1)
 	{
-		pg_locale_t	mylocale = 0;
+		pg_locale_t mylocale = 0;
 		wchar_t    *workspace;
 		size_t		curr_char;
 		size_t		result_size;
@@ -1815,7 +1815,7 @@ str_initcap(const char *buff, size_t nbytes, Oid collid)
 #endif   /* USE_WIDE_UPPER_LOWER */
 	else
 	{
-		pg_locale_t	mylocale = 0;
+		pg_locale_t mylocale = 0;
 		char	   *p;
 
 		if (collid != DEFAULT_COLLATION_OID)
@@ -1838,7 +1838,7 @@ str_initcap(const char *buff, size_t nbytes, Oid collid)
 
 		/*
 		 * Note: we assume that toupper_l()/tolower_l() will not be so broken
-		 * as to need guard tests.  When using the default collation, we apply
+		 * as to need guard tests.	When using the default collation, we apply
 		 * the traditional Postgres behavior that forces ASCII-style treatment
 		 * of I/i, but in non-default collations you get exactly what the
 		 * collation says.
@@ -2318,7 +2318,7 @@ DCH_to_char(FormatNode *node, bool is_interval, TmToChar *in, char *out, Oid col
 				 * intervals
 				 */
 				sprintf(s, "%0*d", S_FM(n->suffix) ? 0 : 2,
-						tm->tm_hour % (HOURS_PER_DAY / 2) == 0 ? HOURS_PER_DAY / 2 :
+				 tm->tm_hour % (HOURS_PER_DAY / 2) == 0 ? HOURS_PER_DAY / 2 :
 						tm->tm_hour % (HOURS_PER_DAY / 2));
 				if (S_THth(n->suffix))
 					str_numth(s, s, S_TH_TYPE(n->suffix));
@@ -2423,7 +2423,7 @@ DCH_to_char(FormatNode *node, bool is_interval, TmToChar *in, char *out, Oid col
 					strcpy(s, str_toupper_z(localized_full_months[tm->tm_mon - 1], collid));
 				else
 					sprintf(s, "%*s", S_FM(n->suffix) ? 0 : -9,
-							str_toupper_z(months_full[tm->tm_mon - 1], collid));
+						 str_toupper_z(months_full[tm->tm_mon - 1], collid));
 				s += strlen(s);
 				break;
 			case DCH_Month:

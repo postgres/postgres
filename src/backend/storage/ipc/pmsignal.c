@@ -279,7 +279,7 @@ PostmasterIsAlive(bool amDirectChild)
 #ifndef WIN32
 	if (amDirectChild)
 	{
-		pid_t	ppid = getppid();
+		pid_t		ppid = getppid();
 
 		/* If the postmaster is still our parent, it must be alive. */
 		if (ppid == PostmasterPid)
@@ -297,10 +297,10 @@ PostmasterIsAlive(bool amDirectChild)
 	}
 
 	/*
-	 * Use kill() to see if the postmaster is still alive.	This can
-	 * sometimes give a false positive result, since the postmaster's PID
-	 * may get recycled, but it is good enough for existing uses by
-	 * indirect children and in debugging environments.
+	 * Use kill() to see if the postmaster is still alive.	This can sometimes
+	 * give a false positive result, since the postmaster's PID may get
+	 * recycled, but it is good enough for existing uses by indirect children
+	 * and in debugging environments.
 	 */
 	return (kill(PostmasterPid, 0) == 0);
 #else							/* WIN32 */

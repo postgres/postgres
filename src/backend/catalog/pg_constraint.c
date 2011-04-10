@@ -799,10 +799,10 @@ get_constraint_oid(Oid relid, const char *conname, bool missing_ok)
  * the rel of interest are Vars with the indicated varno/varlevelsup.
  *
  * Currently we only check to see if the rel has a primary key that is a
- * subset of the grouping_columns.  We could also use plain unique constraints
+ * subset of the grouping_columns.	We could also use plain unique constraints
  * if all their columns are known not null, but there's a problem: we need
  * to be able to represent the not-null-ness as part of the constraints added
- * to *constraintDeps.  FIXME whenever not-null constraints get represented
+ * to *constraintDeps.	FIXME whenever not-null constraints get represented
  * in pg_constraint.
  */
 bool
@@ -852,7 +852,7 @@ check_functional_grouping(Oid relid,
 		if (isNull)
 			elog(ERROR, "null conkey for constraint %u",
 				 HeapTupleGetOid(tuple));
-		arr = DatumGetArrayTypeP(adatum);	/* ensure not toasted */
+		arr = DatumGetArrayTypeP(adatum);		/* ensure not toasted */
 		numkeys = ARR_DIMS(arr)[0];
 		if (ARR_NDIM(arr) != 1 ||
 			numkeys < 0 ||

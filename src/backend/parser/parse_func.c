@@ -288,9 +288,9 @@ ParseFuncOrColumn(ParseState *pstate, List *funcname, List *fargs,
 					 errmsg("function %s does not exist",
 							func_signature_string(funcname, nargs, argnames,
 												  actual_arg_types)),
-			errhint("No aggregate function matches the given name and argument types. "
-					"Perhaps you misplaced ORDER BY; ORDER BY must appear "
-					"after all regular arguments of the aggregate."),
+					 errhint("No aggregate function matches the given name and argument types. "
+					  "Perhaps you misplaced ORDER BY; ORDER BY must appear "
+							 "after all regular arguments of the aggregate."),
 					 parser_errposition(pstate, location)));
 		}
 		else
@@ -1034,7 +1034,7 @@ func_get_detail(List *funcname,
 						case COERCION_PATH_COERCEVIAIO:
 							if ((sourceType == RECORDOID ||
 								 ISCOMPLEX(sourceType)) &&
-								TypeCategory(targetType) == TYPCATEGORY_STRING)
+							  TypeCategory(targetType) == TYPCATEGORY_STRING)
 								iscoercion = false;
 							else
 								iscoercion = true;

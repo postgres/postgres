@@ -304,9 +304,9 @@ tsquery_opr_selec(QueryItem *item, char *operand,
 
 			/*
 			 * Our strategy is to scan through the MCV list and add up the
-			 * frequencies of the ones that match the prefix, thereby
-			 * assuming that the MCVs are representative of the whole lexeme
-			 * population in this respect.  Compare histogram_selectivity().
+			 * frequencies of the ones that match the prefix, thereby assuming
+			 * that the MCVs are representative of the whole lexeme population
+			 * in this respect.  Compare histogram_selectivity().
 			 *
 			 * This is only a good plan if we have a pretty fair number of
 			 * MCVs available; we set the threshold at 100.  If no stats or
@@ -401,7 +401,7 @@ tsquery_opr_selec(QueryItem *item, char *operand,
 
 			default:
 				elog(ERROR, "unrecognized operator: %d", item->qoperator.oper);
-				selec = 0;			/* keep compiler quiet */
+				selec = 0;		/* keep compiler quiet */
 				break;
 		}
 	}

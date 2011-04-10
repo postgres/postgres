@@ -80,11 +80,11 @@ forkname_to_number(char *forkName)
 
 /*
  * forkname_chars
- * 		We use this to figure out whether a filename could be a relation
- * 		fork (as opposed to an oddly named stray file that somehow ended
- * 		up in the database directory).  If the passed string begins with
- * 		a fork name (other than the main fork name), we return its length,
- *	    and set *fork (if not NULL) to the fork number.  If not, we return 0.
+ *		We use this to figure out whether a filename could be a relation
+ *		fork (as opposed to an oddly named stray file that somehow ended
+ *		up in the database directory).	If the passed string begins with
+ *		a fork name (other than the main fork name), we return its length,
+ *		and set *fork (if not NULL) to the fork number.  If not, we return 0.
  *
  * Note that the present coding assumes that there are no fork names which
  * are prefixes of other fork names.
@@ -96,7 +96,8 @@ forkname_chars(const char *str, ForkNumber *fork)
 
 	for (forkNum = 1; forkNum <= MAX_FORKNUM; forkNum++)
 	{
-		int len = strlen(forkNames[forkNum]);
+		int			len = strlen(forkNames[forkNum]);
+
 		if (strncmp(forkNames[forkNum], str, len) == 0)
 		{
 			if (fork)
@@ -150,7 +151,7 @@ relpathbackend(RelFileNode rnode, BackendId backend, ForkNumber forknum)
 		{
 			/* OIDCHARS will suffice for an integer, too */
 			pathlen = 5 + OIDCHARS + 2 + OIDCHARS + 1 + OIDCHARS + 1
-					+ FORKNAMECHARS + 1;
+				+ FORKNAMECHARS + 1;
 			path = (char *) palloc(pathlen);
 			if (forknum != MAIN_FORKNUM)
 				snprintf(path, pathlen, "base/%u/t%d_%u_%s",
@@ -167,8 +168,8 @@ relpathbackend(RelFileNode rnode, BackendId backend, ForkNumber forknum)
 		if (backend == InvalidBackendId)
 		{
 			pathlen = 9 + 1 + OIDCHARS + 1
-					+ strlen(TABLESPACE_VERSION_DIRECTORY) + 1 + OIDCHARS + 1
-					+ OIDCHARS + 1 + FORKNAMECHARS + 1;
+				+ strlen(TABLESPACE_VERSION_DIRECTORY) + 1 + OIDCHARS + 1
+				+ OIDCHARS + 1 + FORKNAMECHARS + 1;
 			path = (char *) palloc(pathlen);
 			if (forknum != MAIN_FORKNUM)
 				snprintf(path, pathlen, "pg_tblspc/%u/%s/%u/%u_%s",
@@ -184,8 +185,8 @@ relpathbackend(RelFileNode rnode, BackendId backend, ForkNumber forknum)
 		{
 			/* OIDCHARS will suffice for an integer, too */
 			pathlen = 9 + 1 + OIDCHARS + 1
-					+ strlen(TABLESPACE_VERSION_DIRECTORY) + 1 + OIDCHARS + 2
-					+ OIDCHARS + 1 + OIDCHARS + 1 + FORKNAMECHARS + 1;
+				+ strlen(TABLESPACE_VERSION_DIRECTORY) + 1 + OIDCHARS + 2
+				+ OIDCHARS + 1 + OIDCHARS + 1 + FORKNAMECHARS + 1;
 			path = (char *) palloc(pathlen);
 			if (forknum != MAIN_FORKNUM)
 				snprintf(path, pathlen, "pg_tblspc/%u/%s/%u/t%d_%u_%s",

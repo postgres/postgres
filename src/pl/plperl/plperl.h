@@ -44,9 +44,9 @@
 
 /* supply HeUTF8 if it's missing - ppport.h doesn't supply it, unfortunately */
 #ifndef HeUTF8
-#define HeUTF8(he)             ((HeKLEN(he) == HEf_SVKEY) ?            \
-                                SvUTF8(HeKEY_sv(he)) :                 \
-                                (U32)HeKUTF8(he))
+#define HeUTF8(he)			   ((HeKLEN(he) == HEf_SVKEY) ?			   \
+								SvUTF8(HeKEY_sv(he)) :				   \
+								(U32)HeKUTF8(he))
 #endif
 
 /* declare routines from plperl.c for access by .xs files */
@@ -59,7 +59,7 @@ HV		   *plperl_spi_exec_prepared(char *, HV *, int, SV **);
 SV		   *plperl_spi_query_prepared(char *, int, SV **);
 void		plperl_spi_freeplan(char *);
 void		plperl_spi_cursor_close(char *);
-char 	   *plperl_sv_to_literal(SV *, char *);
+char	   *plperl_sv_to_literal(SV *, char *);
 
 
 

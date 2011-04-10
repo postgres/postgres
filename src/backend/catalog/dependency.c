@@ -160,7 +160,7 @@ static const Oid object_classes[MAX_OCLASS] = {
 	ForeignServerRelationId,	/* OCLASS_FOREIGN_SERVER */
 	UserMappingRelationId,		/* OCLASS_USER_MAPPING */
 	DefaultAclRelationId,		/* OCLASS_DEFACL */
-	ExtensionRelationId 		/* OCLASS_EXTENSION */
+	ExtensionRelationId			/* OCLASS_EXTENSION */
 };
 
 
@@ -1021,8 +1021,8 @@ deleteOneObject(const ObjectAddress *object, Relation depRel)
 
 	/*
 	 * Delete any comments or security labels associated with this object.
-	 * (This is a convenient place to do these things, rather than having every
-	 * object type know to do it.)
+	 * (This is a convenient place to do these things, rather than having
+	 * every object type know to do it.)
 	 */
 	DeleteComments(object->objectId, object->classId, object->objectSubId);
 	DeleteSecurityLabel(object);
@@ -1263,7 +1263,7 @@ recordDependencyOnExpr(const ObjectAddress *depender,
  * whereas 'behavior' is used for everything else.
  *
  * NOTE: the caller should ensure that a whole-table dependency on the
- * specified relation is created separately, if one is needed.  In particular,
+ * specified relation is created separately, if one is needed.	In particular,
  * a whole-row Var "relation.*" will not cause this routine to emit any
  * dependency item.  This is appropriate behavior for subexpressions of an
  * ordinary query, so other cases need to cope as necessary.
@@ -1383,7 +1383,7 @@ find_expr_references_walker(Node *node,
 
 		/*
 		 * A whole-row Var references no specific columns, so adds no new
-		 * dependency.  (We assume that there is a whole-table dependency
+		 * dependency.	(We assume that there is a whole-table dependency
 		 * arising from each underlying rangetable entry.  While we could
 		 * record such a dependency when finding a whole-row Var that
 		 * references a relation directly, it's quite unclear how to extend
@@ -1431,8 +1431,8 @@ find_expr_references_walker(Node *node,
 
 		/*
 		 * We must also depend on the constant's collation: it could be
-		 * different from the datatype's, if a CollateExpr was const-folded
-		 * to a simple constant.  However we can save work in the most common
+		 * different from the datatype's, if a CollateExpr was const-folded to
+		 * a simple constant.  However we can save work in the most common
 		 * case where the collation is "default", since we know that's pinned.
 		 */
 		if (OidIsValid(con->constcollid) &&
@@ -1695,7 +1695,7 @@ find_expr_references_walker(Node *node,
 					}
 					foreach(ct, rte->funccolcollations)
 					{
-						Oid collid = lfirst_oid(ct);
+						Oid			collid = lfirst_oid(ct);
 
 						if (OidIsValid(collid) &&
 							collid != DEFAULT_COLLATION_OID)
@@ -2224,12 +2224,12 @@ getObjectDescription(const ObjectAddress *object)
 				HeapTuple	collTup;
 
 				collTup = SearchSysCache1(COLLOID,
-										 ObjectIdGetDatum(object->objectId));
+										  ObjectIdGetDatum(object->objectId));
 				if (!HeapTupleIsValid(collTup))
 					elog(ERROR, "cache lookup failed for collation %u",
 						 object->objectId);
 				appendStringInfo(&buffer, _("collation %s"),
-				 NameStr(((Form_pg_collation) GETSTRUCT(collTup))->collname));
+				NameStr(((Form_pg_collation) GETSTRUCT(collTup))->collname));
 				ReleaseSysCache(collTup);
 				break;
 			}
@@ -2796,7 +2796,7 @@ getObjectDescription(const ObjectAddress *object)
 char *
 getObjectDescriptionOids(Oid classid, Oid objid)
 {
-	ObjectAddress	address;
+	ObjectAddress address;
 
 	address.classId = classid;
 	address.objectId = objid;

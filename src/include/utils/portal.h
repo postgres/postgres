@@ -72,7 +72,7 @@
  * all the auxiliary queries.)
  *
  * PORTAL_ONE_MOD_WITH: the portal contains one single SELECT query, but
- * it has data-modifying CTEs.  This is currently treated the same as the
+ * it has data-modifying CTEs.	This is currently treated the same as the
  * PORTAL_ONE_RETURNING case because of the possibility of needing to fire
  * triggers.  It may act more like PORTAL_ONE_SELECT in future.
  *
@@ -174,7 +174,7 @@ typedef struct PortalData
 	/* Presentation data, primarily used by the pg_cursors system view */
 	TimestampTz creation_time;	/* time at which this portal was defined */
 	bool		visible;		/* include this portal in pg_cursors? */
-} PortalData;
+}	PortalData;
 
 /*
  * PortalIsValid

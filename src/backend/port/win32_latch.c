@@ -50,8 +50,7 @@ InitSharedLatch(volatile Latch *latch)
 	latch->is_shared = true;
 
 	/*
-	 * Set up security attributes to specify that the events are
-	 * inherited.
+	 * Set up security attributes to specify that the events are inherited.
 	 */
 	ZeroMemory(&sa, sizeof(sa));
 	sa.nLength = sizeof(sa);
@@ -106,7 +105,7 @@ WaitLatchOrSocket(volatile Latch *latch, SOCKET sock, bool forRead,
 	numevents = 2;
 	if (sock != PGINVALID_SOCKET && (forRead || forWrite))
 	{
-		int		flags = 0;
+		int			flags = 0;
 
 		if (forRead)
 			flags |= FD_READ;
@@ -135,7 +134,7 @@ WaitLatchOrSocket(volatile Latch *latch, SOCKET sock, bool forRead,
 		}
 
 		rc = WaitForMultipleObjects(numevents, events, FALSE,
-								(timeout >= 0) ? (timeout / 1000) : INFINITE);
+							   (timeout >= 0) ? (timeout / 1000) : INFINITE);
 		if (rc == WAIT_FAILED)
 			elog(ERROR, "WaitForMultipleObjects() failed: error code %d", (int) GetLastError());
 		else if (rc == WAIT_TIMEOUT)
@@ -178,7 +177,7 @@ WaitLatchOrSocket(volatile Latch *latch, SOCKET sock, bool forRead,
 void
 SetLatch(volatile Latch *latch)
 {
-	HANDLE handle;
+	HANDLE		handle;
 
 	/* Quick exit if already set */
 	if (latch->is_set)
@@ -187,21 +186,22 @@ SetLatch(volatile Latch *latch)
 	latch->is_set = true;
 
 	/*
-	 * See if anyone's waiting for the latch. It can be the current process
-	 * if we're in a signal handler. Use a local variable here in case the
-	 * latch is just disowned between the test and the SetEvent call, and
-	 * event field set to NULL.
+	 * See if anyone's waiting for the latch. It can be the current process if
+	 * we're in a signal handler. Use a local variable here in case the latch
+	 * is just disowned between the test and the SetEvent call, and event
+	 * field set to NULL.
 	 *
-	 * Fetch handle field only once, in case the owner simultaneously
-	 * disowns the latch and clears handle. This assumes that HANDLE is
-	 * atomic, which isn't guaranteed to be true! In practice, it should be,
-	 * and in the worst case we end up calling SetEvent with a bogus handle,
-	 * and SetEvent will return an error with no harm done.
+	 * Fetch handle field only once, in case the owner simultaneously disowns
+	 * the latch and clears handle. This assumes that HANDLE is atomic, which
+	 * isn't guaranteed to be true! In practice, it should be, and in the
+	 * worst case we end up calling SetEvent with a bogus handle, and SetEvent
+	 * will return an error with no harm done.
 	 */
 	handle = latch->event;
 	if (handle)
 	{
 		SetEvent(handle);
+
 		/*
 		 * Note that we silently ignore any errors. We might be in a signal
 		 * handler or other critical path where it's not safe to call elog().

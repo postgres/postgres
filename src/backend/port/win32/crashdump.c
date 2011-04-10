@@ -1,7 +1,7 @@
 /*-------------------------------------------------------------------------
  *
  * win32_crashdump.c
- *         Automatic crash dump creation for PostgreSQL on Windows
+ *		   Automatic crash dump creation for PostgreSQL on Windows
  *
  * The crashdump feature traps unhandled win32 exceptions produced by the
  * backend, and tries to produce a Windows MiniDump crash
@@ -57,11 +57,11 @@
  * http://www.debuginfo.com/articles/effminidumps.html
  */
 
-typedef BOOL (WINAPI *MINIDUMPWRITEDUMP)(HANDLE hProcess, DWORD dwPid, HANDLE hFile, MINIDUMP_TYPE DumpType,
-									CONST PMINIDUMP_EXCEPTION_INFORMATION ExceptionParam,
-									CONST PMINIDUMP_USER_STREAM_INFORMATION UserStreamParam,
-									CONST PMINIDUMP_CALLBACK_INFORMATION CallbackParam
-									);
+typedef BOOL (WINAPI * MINIDUMPWRITEDUMP) (HANDLE hProcess, DWORD dwPid, HANDLE hFile, MINIDUMP_TYPE DumpType,
+						CONST PMINIDUMP_EXCEPTION_INFORMATION ExceptionParam,
+					 CONST PMINIDUMP_USER_STREAM_INFORMATION UserStreamParam,
+						   CONST PMINIDUMP_CALLBACK_INFORMATION CallbackParam
+);
 
 
 /*
@@ -76,24 +76,25 @@ typedef BOOL (WINAPI *MINIDUMPWRITEDUMP)(HANDLE hProcess, DWORD dwPid, HANDLE hF
  * any PostgreSQL functions.
  */
 static LONG WINAPI
-crashDumpHandler(struct _EXCEPTION_POINTERS *pExceptionInfo)
+crashDumpHandler(struct _EXCEPTION_POINTERS * pExceptionInfo)
 {
 	/*
-	 * We only write crash dumps if the "crashdumps" directory within
-	 * the postgres data directory exists.
+	 * We only write crash dumps if the "crashdumps" directory within the
+	 * postgres data directory exists.
 	 */
-	DWORD attribs = GetFileAttributesA("crashdumps");
-	if (attribs != INVALID_FILE_ATTRIBUTES && (attribs & FILE_ATTRIBUTE_DIRECTORY) )
+	DWORD		attribs = GetFileAttributesA("crashdumps");
+
+	if (attribs != INVALID_FILE_ATTRIBUTES && (attribs & FILE_ATTRIBUTE_DIRECTORY))
 	{
 		/* 'crashdumps' exists and is a directory. Try to write a dump' */
-		HMODULE hDll = NULL;
+		HMODULE		hDll = NULL;
 		MINIDUMPWRITEDUMP pDump = NULL;
 		MINIDUMP_TYPE dumpType;
-		char dumpPath[_MAX_PATH];
-		HANDLE selfProcHandle = GetCurrentProcess();
-		DWORD selfPid = GetProcessId(selfProcHandle);
-		HANDLE dumpFile;
-		DWORD systemTicks;
+		char		dumpPath[_MAX_PATH];
+		HANDLE		selfProcHandle = GetCurrentProcess();
+		DWORD		selfPid = GetProcessId(selfProcHandle);
+		HANDLE		dumpFile;
+		DWORD		systemTicks;
 		struct _MINIDUMP_EXCEPTION_INFORMATION ExInfo;
 
 		ExInfo.ThreadId = GetCurrentThreadId();
@@ -108,19 +109,18 @@ crashDumpHandler(struct _EXCEPTION_POINTERS *pExceptionInfo)
 			return EXCEPTION_CONTINUE_SEARCH;
 		}
 
-		pDump = (MINIDUMPWRITEDUMP)GetProcAddress(hDll, "MiniDumpWriteDump");
+		pDump = (MINIDUMPWRITEDUMP) GetProcAddress(hDll, "MiniDumpWriteDump");
 
-		if (pDump==NULL)
+		if (pDump == NULL)
 		{
 			write_stderr("could not load required functions in dbghelp.dll, cannot write crashdump\n");
 			return EXCEPTION_CONTINUE_SEARCH;
 		}
 
 		/*
-		 * Dump as much as we can, except shared memory, code segments,
-		 * and memory mapped files.
-		 * Exactly what we can dump depends on the version of dbghelp.dll,
-		 * see:
+		 * Dump as much as we can, except shared memory, code segments, and
+		 * memory mapped files. Exactly what we can dump depends on the
+		 * version of dbghelp.dll, see:
 		 * http://msdn.microsoft.com/en-us/library/ms680519(v=VS.85).aspx
 		 */
 		dumpType = MiniDumpNormal | MiniDumpWithHandleData |
@@ -135,25 +135,25 @@ crashDumpHandler(struct _EXCEPTION_POINTERS *pExceptionInfo)
 
 		systemTicks = GetTickCount();
 		snprintf(dumpPath, _MAX_PATH,
-				 "crashdumps\\postgres-pid%0i-%0i.mdmp", selfPid, systemTicks);
-		dumpPath[_MAX_PATH-1] = '\0';
+			   "crashdumps\\postgres-pid%0i-%0i.mdmp", selfPid, systemTicks);
+		dumpPath[_MAX_PATH - 1] = '\0';
 
 		dumpFile = CreateFile(dumpPath, GENERIC_WRITE, FILE_SHARE_WRITE,
 							  NULL, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL,
 							  NULL);
-		if (dumpFile==INVALID_HANDLE_VALUE)
+		if (dumpFile == INVALID_HANDLE_VALUE)
 		{
 			write_stderr("could not open crash dump file %s for writing: error code %d\n",
-					dumpPath, GetLastError());
+						 dumpPath, GetLastError());
 			return EXCEPTION_CONTINUE_SEARCH;
 		}
 
-		if ((*pDump)(selfProcHandle, selfPid, dumpFile, dumpType, &ExInfo,
-					 NULL, NULL))
+		if ((*pDump) (selfProcHandle, selfPid, dumpFile, dumpType, &ExInfo,
+					  NULL, NULL))
 			write_stderr("wrote crash dump to %s\n", dumpPath);
 		else
 			write_stderr("could not write crash dump to %s: error code %08x\n",
-					dumpPath, GetLastError());
+						 dumpPath, GetLastError());
 
 		CloseHandle(dumpFile);
 	}

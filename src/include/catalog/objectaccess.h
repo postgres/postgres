@@ -12,7 +12,7 @@
 
 /*
  * Object access hooks are intended to be called just before or just after
- * performing certain actions on a SQL object.  This is intended as
+ * performing certain actions on a SQL object.	This is intended as
  * infrastructure for security or logging pluggins.
  *
  * OAT_POST_CREATE should be invoked just after the the object is created.
@@ -30,10 +30,10 @@ typedef enum ObjectAccessType
  * Hook, and a macro to invoke it.
  */
 
-typedef void (*object_access_hook_type)(ObjectAccessType access,
-										Oid classId,
-										Oid objectId,
-										int subId);
+typedef void (*object_access_hook_type) (ObjectAccessType access,
+													 Oid classId,
+													 Oid objectId,
+													 int subId);
 
 extern PGDLLIMPORT object_access_hook_type object_access_hook;
 
@@ -43,4 +43,4 @@ extern PGDLLIMPORT object_access_hook_type object_access_hook;
 			(*object_access_hook)((access),(classId),(objectId),(subId)); \
 	} while(0)
 
-#endif	/* OBJECTACCESS_H */
+#endif   /* OBJECTACCESS_H */

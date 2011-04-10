@@ -23,11 +23,11 @@
  */
 typedef struct
 {
-	sig_atomic_t	is_set;
-	bool			is_shared;
-	int				owner_pid;
+	sig_atomic_t is_set;
+	bool		is_shared;
+	int			owner_pid;
 #ifdef WIN32
-	HANDLE			event;
+	HANDLE		event;
 #endif
 } Latch;
 
@@ -39,10 +39,11 @@ extern void InitSharedLatch(volatile Latch *latch);
 extern void OwnLatch(volatile Latch *latch);
 extern void DisownLatch(volatile Latch *latch);
 extern bool WaitLatch(volatile Latch *latch, long timeout);
-extern int	WaitLatchOrSocket(volatile Latch *latch, pgsocket sock,
+extern int WaitLatchOrSocket(volatile Latch *latch, pgsocket sock,
 				  bool forRead, bool forWrite, long timeout);
 extern void SetLatch(volatile Latch *latch);
 extern void ResetLatch(volatile Latch *latch);
+
 #define TestLatch(latch) (((volatile Latch *) latch)->is_set)
 
 /*

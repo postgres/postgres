@@ -23,15 +23,15 @@ extern Type LookupTypeName(ParseState *pstate, const TypeName *typeName,
 			   int32 *typmod_p);
 extern Type typenameType(ParseState *pstate, const TypeName *typeName,
 			 int32 *typmod_p);
-extern Oid typenameTypeId(ParseState *pstate, const TypeName *typeName);
+extern Oid	typenameTypeId(ParseState *pstate, const TypeName *typeName);
 extern void typenameTypeIdAndMod(ParseState *pstate, const TypeName *typeName,
-								 Oid *typeid_p, int32 *typmod_p);
+					 Oid *typeid_p, int32 *typmod_p);
 
 extern char *TypeNameToString(const TypeName *typeName);
 extern char *TypeNameListToString(List *typenames);
 
-extern Oid LookupCollation(ParseState *pstate, List *collnames, int location);
-extern Oid GetColumnDefCollation(ParseState *pstate, ColumnDef *coldef, Oid typeOid);
+extern Oid	LookupCollation(ParseState *pstate, List *collnames, int location);
+extern Oid	GetColumnDefCollation(ParseState *pstate, ColumnDef *coldef, Oid typeOid);
 
 extern Type typeidType(Oid id);
 

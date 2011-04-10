@@ -382,7 +382,7 @@ EvaluateParams(PreparedStatement *pstmt, List *params,
 	/* sizeof(ParamListInfoData) includes the first array element */
 	paramLI = (ParamListInfo)
 		palloc(sizeof(ParamListInfoData) +
-			   (num_params - 1) *sizeof(ParamExternData));
+			   (num_params - 1) * sizeof(ParamExternData));
 	/* we have static list of params, so no hooks needed */
 	paramLI->paramFetch = NULL;
 	paramLI->paramFetchArg = NULL;

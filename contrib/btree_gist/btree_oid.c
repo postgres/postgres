@@ -101,13 +101,13 @@ static const gbtree_ninfo tinfo =
 
 
 PG_FUNCTION_INFO_V1(oid_dist);
-Datum       oid_dist(PG_FUNCTION_ARGS);
+Datum		oid_dist(PG_FUNCTION_ARGS);
 Datum
 oid_dist(PG_FUNCTION_ARGS)
 {
-    Oid        	a = PG_GETARG_OID(0);
-	Oid        	b = PG_GETARG_OID(1);
-	Oid 		res;
+	Oid			a = PG_GETARG_OID(0);
+	Oid			b = PG_GETARG_OID(1);
+	Oid			res;
 
 	if (a < b)
 		res = b - a;
@@ -170,7 +170,7 @@ gbt_oid_distance(PG_FUNCTION_ARGS)
 	key.upper = (GBT_NUMKEY *) &kkk->upper;
 
 	PG_RETURN_FLOAT8(
-				   gbt_num_distance(&key, (void *) &query, GIST_LEAF(entry), &tinfo)
+			gbt_num_distance(&key, (void *) &query, GIST_LEAF(entry), &tinfo)
 		);
 }
 

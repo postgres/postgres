@@ -17,7 +17,7 @@
 #include "pgtime.h"
 
 extern bool am_walreceiver;
-extern int wal_receiver_status_interval;
+extern int	wal_receiver_status_interval;
 extern bool hot_standby_feedback;
 
 /*
@@ -52,17 +52,17 @@ typedef struct
 	pg_time_t	startTime;
 
 	/*
-	 * receiveStart is the first byte position that will be received.
-	 * When startup process starts the walreceiver, it sets receiveStart
-	 * to the point where it wants the streaming to begin.
+	 * receiveStart is the first byte position that will be received. When
+	 * startup process starts the walreceiver, it sets receiveStart to the
+	 * point where it wants the streaming to begin.
 	 */
 	XLogRecPtr	receiveStart;
 
 	/*
 	 * receivedUpto-1 is the last byte position that has already been
-	 * received.  At the first startup of walreceiver, receivedUpto is
-	 * set to receiveStart. After that, walreceiver updates this whenever
-	 * it flushes the received WAL to disk.
+	 * received.  At the first startup of walreceiver, receivedUpto is set to
+	 * receiveStart. After that, walreceiver updates this whenever it flushes
+	 * the received WAL to disk.
 	 */
 	XLogRecPtr	receivedUpto;
 

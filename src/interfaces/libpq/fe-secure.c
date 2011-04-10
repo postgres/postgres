@@ -589,8 +589,8 @@ static bool
 verify_peer_name_matches_certificate(PGconn *conn)
 {
 	/*
-	 * If told not to verify the peer name, don't do it. Return true indicating
-	 * that the verification was successful.
+	 * If told not to verify the peer name, don't do it. Return true
+	 * indicating that the verification was successful.
 	 */
 	if (strcmp(conn->sslmode, "verify-full") != 0)
 		return true;
@@ -839,7 +839,7 @@ initialize_SSL(PGconn *conn)
 		!(conn->sslrootcert && strlen(conn->sslrootcert) > 0) ||
 		!(conn->sslcrl && strlen(conn->sslcrl) > 0))
 		have_homedir = pqGetHomeDirectory(homedir, sizeof(homedir));
-	else						/* won't need it */
+	else	/* won't need it */
 		have_homedir = false;
 
 	/* Read the client certificate file */
@@ -1135,8 +1135,8 @@ initialize_SSL(PGconn *conn)
 												"Either provide the file or change sslmode to disable server certificate verification.\n"));
 			else
 				printfPQExpBuffer(&conn->errorMessage,
-								  libpq_gettext("root certificate file \"%s\" does not exist\n"
-												"Either provide the file or change sslmode to disable server certificate verification.\n"), fnbuf);
+				libpq_gettext("root certificate file \"%s\" does not exist\n"
+							  "Either provide the file or change sslmode to disable server certificate verification.\n"), fnbuf);
 			return -1;
 		}
 	}

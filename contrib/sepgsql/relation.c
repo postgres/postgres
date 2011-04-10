@@ -36,26 +36,27 @@
 void
 sepgsql_attribute_post_create(Oid relOid, AttrNumber attnum)
 {
-	char		   *scontext = sepgsql_get_client_label();
-	char		   *tcontext;
-	char		   *ncontext;
-	ObjectAddress	object;
+	char	   *scontext = sepgsql_get_client_label();
+	char	   *tcontext;
+	char	   *ncontext;
+	ObjectAddress object;
 
 	/*
-	 * Only attributes within regular relation have individual
-	 * security labels.
+	 * Only attributes within regular relation have individual security
+	 * labels.
 	 */
 	if (get_rel_relkind(relOid) != RELKIND_RELATION)
 		return;
 
 	/*
-	 * Compute a default security label when we create a new procedure
-	 * object under the specified namespace.
+	 * Compute a default security label when we create a new procedure object
+	 * under the specified namespace.
 	 */
 	scontext = sepgsql_get_client_label();
 	tcontext = sepgsql_get_label(RelationRelationId, relOid, 0);
 	ncontext = sepgsql_compute_create(scontext, tcontext,
 									  SEPG_CLASS_DB_COLUMN);
+
 	/*
 	 * Assign the default security label on a new procedure
 	 */
@@ -81,7 +82,7 @@ sepgsql_attribute_relabel(Oid relOid, AttrNumber attnum,
 	char	   *scontext = sepgsql_get_client_label();
 	char	   *tcontext;
 	char	   *audit_name;
-	ObjectAddress	object;
+	ObjectAddress object;
 
 	if (get_rel_relkind(relOid) != RELKIND_RELATION)
 		ereport(ERROR,
@@ -127,21 +128,21 @@ sepgsql_attribute_relabel(Oid relOid, AttrNumber attnum,
 void
 sepgsql_relation_post_create(Oid relOid)
 {
-	Relation		rel;
-	ScanKeyData		skey;
-	SysScanDesc		sscan;
-	HeapTuple		tuple;
-	Form_pg_class	classForm;
-	ObjectAddress	object;
-	uint16			tclass;
-	char		   *scontext;	/* subject */
-	char		   *tcontext;	/* schema */
-	char		   *rcontext;	/* relation */
-	char		   *ccontext;	/* column */
+	Relation	rel;
+	ScanKeyData skey;
+	SysScanDesc sscan;
+	HeapTuple	tuple;
+	Form_pg_class classForm;
+	ObjectAddress object;
+	uint16		tclass;
+	char	   *scontext;		/* subject */
+	char	   *tcontext;		/* schema */
+	char	   *rcontext;		/* relation */
+	char	   *ccontext;		/* column */
 
 	/*
-	 * Fetch catalog record of the new relation. Because pg_class entry is
-	 * not visible right now, we need to scan the catalog using SnapshotSelf.
+	 * Fetch catalog record of the new relation. Because pg_class entry is not
+	 * visible right now, we need to scan the catalog using SnapshotSelf.
 	 */
 	rel = heap_open(RelationRelationId, AccessShareLock);
 
@@ -166,11 +167,11 @@ sepgsql_relation_post_create(Oid relOid)
 	else if (classForm->relkind == RELKIND_VIEW)
 		tclass = SEPG_CLASS_DB_VIEW;
 	else
-		goto out;	/* No need to assign individual labels */
+		goto out;				/* No need to assign individual labels */
 
 	/*
-	 * Compute a default security label when we create a new relation
-	 * object under the specified namespace.
+	 * Compute a default security label when we create a new relation object
+	 * under the specified namespace.
 	 */
 	scontext = sepgsql_get_client_label();
 	tcontext = sepgsql_get_label(NamespaceRelationId,
@@ -186,8 +187,8 @@ sepgsql_relation_post_create(Oid relOid)
 	SetSecurityLabel(&object, SEPGSQL_LABEL_TAG, rcontext);
 
 	/*
-	 * We also assigns a default security label on columns of the new
-	 * regular tables.
+	 * We also assigns a default security label on columns of the new regular
+	 * tables.
 	 */
 	if (classForm->relkind == RELKIND_RELATION)
 	{

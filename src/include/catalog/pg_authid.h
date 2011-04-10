@@ -51,7 +51,7 @@ CATALOG(pg_authid,1260) BKI_SHARED_RELATION BKI_ROWTYPE_OID(2842) BKI_SCHEMA_MAC
 	bool		rolcreatedb;	/* allowed to create databases? */
 	bool		rolcatupdate;	/* allowed to alter catalogs manually? */
 	bool		rolcanlogin;	/* allowed to log in as session user? */
-	bool        rolreplication; /* role used for streaming replication */
+	bool		rolreplication; /* role used for streaming replication */
 	int4		rolconnlimit;	/* max connections allowed (-1=no limit) */
 
 	/* remaining fields may be null; use heap_getattr to read them! */

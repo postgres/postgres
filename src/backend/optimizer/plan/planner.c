@@ -345,16 +345,16 @@ subquery_planner(PlannerGlobal *glob, Query *parse,
 	inline_set_returning_functions(root);
 
 	/*
-	 * Check to see if any subqueries in the jointree can be merged into
-	 * this query.
+	 * Check to see if any subqueries in the jointree can be merged into this
+	 * query.
 	 */
 	parse->jointree = (FromExpr *)
 		pull_up_subqueries(root, (Node *) parse->jointree, NULL, NULL);
 
 	/*
-	 * If this is a simple UNION ALL query, flatten it into an appendrel.
-	 * We do this now because it requires applying pull_up_subqueries to the
-	 * leaf queries of the UNION ALL, which weren't touched above because they
+	 * If this is a simple UNION ALL query, flatten it into an appendrel. We
+	 * do this now because it requires applying pull_up_subqueries to the leaf
+	 * queries of the UNION ALL, which weren't touched above because they
 	 * weren't referenced by the jointree (they will be after we do this).
 	 */
 	if (parse->setOperations)
@@ -575,7 +575,7 @@ subquery_planner(PlannerGlobal *glob, Query *parse,
 
 			plan = (Plan *) make_modifytable(parse->commandType,
 											 parse->canSetTag,
-											 list_make1_int(parse->resultRelation),
+									   list_make1_int(parse->resultRelation),
 											 list_make1(plan),
 											 returningLists,
 											 rowMarks,
@@ -3116,9 +3116,9 @@ plan_cluster_use_sort(Oid tableOid, Oid indexOid)
 
 	/*
 	 * Determine eval cost of the index expressions, if any.  We need to
-	 * charge twice that amount for each tuple comparison that happens
-	 * during the sort, since tuplesort.c will have to re-evaluate the
-	 * index expressions each time.  (XXX that's pretty inefficient...)
+	 * charge twice that amount for each tuple comparison that happens during
+	 * the sort, since tuplesort.c will have to re-evaluate the index
+	 * expressions each time.  (XXX that's pretty inefficient...)
 	 */
 	cost_qual_eval(&indexExprCost, indexInfo->indexprs, root);
 	comparisonCost = 2.0 * (indexExprCost.startup + indexExprCost.per_tuple);

@@ -148,7 +148,7 @@ typedef struct Query
 	Node	   *setOperations;	/* set-operation tree if this is top level of
 								 * a UNION/INTERSECT/EXCEPT query */
 
-	List	   *constraintDeps;	/* a list of pg_constraint OIDs that the query
+	List	   *constraintDeps; /* a list of pg_constraint OIDs that the query
 								 * depends on to be semantically valid */
 } Query;
 
@@ -724,14 +724,14 @@ typedef struct RangeTblEntry
 	 * Fields valid for a function RTE (else NULL):
 	 *
 	 * If the function returns RECORD, funccoltypes lists the column types
-	 * declared in the RTE's column type specification, funccoltypmods
-	 * lists their declared typmods, funccolcollations their collations.
-	 * Otherwise, those fields are NIL.
+	 * declared in the RTE's column type specification, funccoltypmods lists
+	 * their declared typmods, funccolcollations their collations. Otherwise,
+	 * those fields are NIL.
 	 */
 	Node	   *funcexpr;		/* expression tree for func call */
 	List	   *funccoltypes;	/* OID list of column type OIDs */
 	List	   *funccoltypmods; /* integer list of column typmods */
-	List	   *funccolcollations; /* OID list of column collation OIDs */
+	List	   *funccolcollations;		/* OID list of column collation OIDs */
 
 	/*
 	 * Fields valid for a values RTE (else NIL):
@@ -746,7 +746,7 @@ typedef struct RangeTblEntry
 	bool		self_reference; /* is this a recursive self-reference? */
 	List	   *ctecoltypes;	/* OID list of column type OIDs */
 	List	   *ctecoltypmods;	/* integer list of column typmods */
-	List	   *ctecolcollations; /* OID list of column collation OIDs */
+	List	   *ctecolcollations;		/* OID list of column collation OIDs */
 
 	/*
 	 * Fields valid in all RTEs:
@@ -789,7 +789,7 @@ typedef struct RangeTblEntry
  * here, but it's cheap to get it along with the sortop, and requiring it
  * to be valid eases comparisons to grouping items.)  Note that this isn't
  * actually enough information to determine an ordering: if the sortop is
- * collation-sensitive, a collation OID is needed too.  We don't store the
+ * collation-sensitive, a collation OID is needed too.	We don't store the
  * collation in SortGroupClause because it's not available at the time the
  * parser builds the SortGroupClause; instead, consult the exposed collation
  * of the referenced targetlist expression to find out what it is.
@@ -914,7 +914,7 @@ typedef struct CommonTableExpr
 	List	   *ctecolnames;	/* list of output column names */
 	List	   *ctecoltypes;	/* OID list of output column type OIDs */
 	List	   *ctecoltypmods;	/* integer list of output column typmods */
-	List	   *ctecolcollations; /* OID list of column collation OIDs */
+	List	   *ctecolcollations;		/* OID list of column collation OIDs */
 } CommonTableExpr;
 
 /* Convenience macro to get the output tlist of a CTE's query */
@@ -1102,7 +1102,7 @@ typedef struct SetOperationStmt
 typedef enum ObjectType
 {
 	OBJECT_AGGREGATE,
-	OBJECT_ATTRIBUTE,		/* type's attribute, when distinct from column */
+	OBJECT_ATTRIBUTE,			/* type's attribute, when distinct from column */
 	OBJECT_CAST,
 	OBJECT_COLUMN,
 	OBJECT_CONSTRAINT,
@@ -2040,7 +2040,7 @@ typedef struct FetchStmt
  *
  * This represents creation of an index and/or an associated constraint.
  * If indexOid isn't InvalidOid, we are not creating an index, just a
- * UNIQUE/PKEY constraint using an existing index.  isconstraint must always
+ * UNIQUE/PKEY constraint using an existing index.	isconstraint must always
  * be true in this case, and the fields describing the index properties are
  * empty.
  * ----------------------
@@ -2319,8 +2319,8 @@ typedef struct AlterEnumStmt
 	NodeTag		type;
 	List	   *typeName;		/* qualified name (list of Value strings) */
 	char	   *newVal;			/* new enum value's name */
-	char	   *newValNeighbor;	/* neighboring enum value, if specified */
-	bool	    newValIsAfter;	/* place new enum value after neighbor? */
+	char	   *newValNeighbor; /* neighboring enum value, if specified */
+	bool		newValIsAfter;	/* place new enum value after neighbor? */
 } AlterEnumStmt;
 
 /* ----------------------

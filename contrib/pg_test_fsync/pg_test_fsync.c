@@ -28,24 +28,28 @@
 
 static const char *progname;
 
-static int		ops_per_test = 2000;
-static char	    full_buf[XLOG_SEG_SIZE], *buf, *filename = FSYNC_FILENAME;
-static struct timeval start_t, stop_t;
+static int	ops_per_test = 2000;
+static char full_buf[XLOG_SEG_SIZE],
+		   *buf,
+		   *filename = FSYNC_FILENAME;
+static struct timeval start_t,
+			stop_t;
 
 
-static void	handle_args(int argc, char *argv[]);
-static void	prepare_buf(void);
-static void	test_open(void);
-static void	test_non_sync(void);
-static void	test_sync(int writes_per_op);
-static void	test_open_syncs(void);
-static void	test_open_sync(const char *msg, int writes_size);
-static void	test_file_descriptor_sync(void);
+static void handle_args(int argc, char *argv[]);
+static void prepare_buf(void);
+static void test_open(void);
+static void test_non_sync(void);
+static void test_sync(int writes_per_op);
+static void test_open_syncs(void);
+static void test_open_sync(const char *msg, int writes_size);
+static void test_file_descriptor_sync(void);
+
 #ifdef HAVE_FSYNC_WRITETHROUGH
 static int	pg_fsync_writethrough(int fd);
 #endif
-static void	print_elapse(struct timeval start_t, struct timeval stop_t);
-static void	die(const char *str);
+static void print_elapse(struct timeval start_t, struct timeval stop_t);
+static void die(const char *str);
 
 
 int
@@ -103,7 +107,7 @@ handle_args(int argc, char *argv[])
 	}
 
 	while ((option = getopt_long(argc, argv, "f:o:",
-			long_options, &optindex)) != -1)
+								 long_options, &optindex)) != -1)
 	{
 		switch (option)
 		{
@@ -176,7 +180,9 @@ test_open(void)
 static void
 test_sync(int writes_per_op)
 {
-	int			tmpfile, ops, writes;
+	int			tmpfile,
+				ops,
+				writes;
 	bool		fs_warning = false;
 
 	if (writes_per_op == 1)
@@ -353,7 +359,9 @@ test_open_syncs(void)
 static void
 test_open_sync(const char *msg, int writes_size)
 {
-	int		tmpfile, ops, writes;
+	int			tmpfile,
+				ops,
+				writes;
 
 	printf(LABEL_FORMAT, msg);
 	fflush(stdout);
@@ -377,7 +385,6 @@ test_open_sync(const char *msg, int writes_size)
 		close(tmpfile);
 		print_elapse(start_t, stop_t);
 	}
-
 #else
 	printf(NA_FORMAT, "n/a\n");
 #endif
@@ -386,22 +393,22 @@ test_open_sync(const char *msg, int writes_size)
 static void
 test_file_descriptor_sync(void)
 {
-	int			tmpfile, ops;
+	int			tmpfile,
+				ops;
 
 	/*
-	 * Test whether fsync can sync data written on a different
-	 * descriptor for the same file.  This checks the efficiency
-	 * of multi-process fsyncs against the same file.
-	 * Possibly this should be done with writethrough on platforms
-	 * which support it.
+	 * Test whether fsync can sync data written on a different descriptor for
+	 * the same file.  This checks the efficiency of multi-process fsyncs
+	 * against the same file. Possibly this should be done with writethrough
+	 * on platforms which support it.
 	 */
 	printf("\nTest if fsync on non-write file descriptor is honored:\n");
 	printf("(If the times are similar, fsync() can sync data written\n");
 	printf("on a different descriptor.)\n");
 
 	/*
-	 * first write, fsync and close, which is the
-	 * normal behavior without multiple descriptors
+	 * first write, fsync and close, which is the normal behavior without
+	 * multiple descriptors
 	 */
 	printf(LABEL_FORMAT, "write, fsync, close");
 	fflush(stdout);
@@ -416,9 +423,10 @@ test_file_descriptor_sync(void)
 		if (fsync(tmpfile) != 0)
 			die("fsync failed");
 		close(tmpfile);
+
 		/*
-		 * open and close the file again to be consistent
-		 * with the following test
+		 * open and close the file again to be consistent with the following
+		 * test
 		 */
 		if ((tmpfile = open(filename, O_RDWR, 0)) == -1)
 			die("could not open output file");
@@ -428,9 +436,8 @@ test_file_descriptor_sync(void)
 	print_elapse(start_t, stop_t);
 
 	/*
-	 * Now open, write, close, open again and fsync
-	 * This simulates processes fsyncing each other's
-	 * writes.
+	 * Now open, write, close, open again and fsync This simulates processes
+	 * fsyncing each other's writes.
 	 */
 	printf(LABEL_FORMAT, "write, close, fsync");
 	fflush(stdout);
@@ -458,7 +465,8 @@ test_file_descriptor_sync(void)
 static void
 test_non_sync(void)
 {
-	int			tmpfile, ops;
+	int			tmpfile,
+				ops;
 
 	/*
 	 * Test a simple write without fsync
@@ -494,7 +502,6 @@ pg_fsync_writethrough(int fd)
 	return -1;
 #endif
 }
-
 #endif
 
 /*

@@ -745,7 +745,7 @@ create_merge_append_path(PlannerInfo *root,
 		else
 		{
 			/* We'll need to insert a Sort node, so include cost for that */
-			Path	sort_path;		/* dummy for result of cost_sort */
+			Path		sort_path;		/* dummy for result of cost_sort */
 
 			cost_sort(&sort_path,
 					  root,
@@ -1432,11 +1432,11 @@ create_foreignscan_path(PlannerInfo *root, RelOptInfo *rel)
 	ForeignPath *pathnode = makeNode(ForeignPath);
 	RangeTblEntry *rte;
 	FdwRoutine *fdwroutine;
-	FdwPlan	   *fdwplan;
+	FdwPlan    *fdwplan;
 
 	pathnode->path.pathtype = T_ForeignScan;
 	pathnode->path.parent = rel;
-	pathnode->path.pathkeys = NIL;	/* result is always unordered */
+	pathnode->path.pathkeys = NIL;		/* result is always unordered */
 
 	/* Get FDW's callback info */
 	rte = planner_rt_fetch(rel->relid, root);

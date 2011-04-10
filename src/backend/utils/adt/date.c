@@ -472,7 +472,7 @@ date2timestamptz(DateADT dateVal)
 double
 date2timestamp_no_overflow(DateADT dateVal)
 {
-	double	result;
+	double		result;
 
 	if (DATE_IS_NOBEGIN(dateVal))
 		result = -DBL_MAX;

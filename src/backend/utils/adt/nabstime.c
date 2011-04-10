@@ -182,8 +182,8 @@ tm2abstime(struct pg_tm * tm, int tz)
 		tm->tm_mon < 1 || tm->tm_mon > MONTHS_PER_YEAR ||
 		tm->tm_mday < 1 || tm->tm_mday > 31 ||
 		tm->tm_hour < 0 ||
-		tm->tm_hour > HOURS_PER_DAY ||		/* test for > 24:00:00 */
-		(tm->tm_hour == HOURS_PER_DAY && (tm->tm_min > 0 || tm->tm_sec > 0)) ||
+		tm->tm_hour > HOURS_PER_DAY ||	/* test for > 24:00:00 */
+	  (tm->tm_hour == HOURS_PER_DAY && (tm->tm_min > 0 || tm->tm_sec > 0)) ||
 		tm->tm_min < 0 || tm->tm_min > MINS_PER_HOUR - 1 ||
 		tm->tm_sec < 0 || tm->tm_sec > SECS_PER_MINUTE)
 		return INVALID_ABSTIME;
@@ -1163,7 +1163,7 @@ tintervalsame(PG_FUNCTION_ARGS)
  * 1. The interval length computations overflow at 2^31 seconds, causing
  * intervals longer than that to sort oddly compared to those shorter.
  * 2. infinity and minus infinity (NOEND_ABSTIME and NOSTART_ABSTIME) are
- * just ordinary integers.  Since this code doesn't handle them specially,
+ * just ordinary integers.	Since this code doesn't handle them specially,
  * it's possible for [a b] to be considered longer than [c infinity] for
  * finite abstimes a, b, c.  In combination with the previous point, the
  * interval [-infinity infinity] is treated as being shorter than many finite

@@ -85,7 +85,7 @@
 #ifdef HAVE_UTIME_H
 #include <utime.h>
 #endif
-#ifdef WIN32_ONLY_COMPILER /* mstcpip.h is missing on mingw */
+#ifdef WIN32_ONLY_COMPILER		/* mstcpip.h is missing on mingw */
 #include <mstcpip.h>
 #endif
 
@@ -745,7 +745,7 @@ TouchSocketFile(void)
  */
 
 /* --------------------------------
- *            pq_set_nonblocking - set socket blocking/non-blocking
+ *			  pq_set_nonblocking - set socket blocking/non-blocking
  *
  * Sets the socket non-blocking if nonblocking is TRUE, or sets it
  * blocking otherwise.
@@ -760,16 +760,17 @@ pq_set_nonblocking(bool nonblocking)
 #ifdef WIN32
 	pgwin32_noblock = nonblocking ? 1 : 0;
 #else
+
 	/*
-	 * Use COMMERROR on failure, because ERROR would try to send the error
-	 * to the client, which might require changing the mode again, leading
-	 * to infinite recursion.
+	 * Use COMMERROR on failure, because ERROR would try to send the error to
+	 * the client, which might require changing the mode again, leading to
+	 * infinite recursion.
 	 */
 	if (nonblocking)
 	{
 		if (!pg_set_noblock(MyProcPort->sock))
 			ereport(COMMERROR,
-					(errmsg("could not set socket to non-blocking mode: %m")));
+				  (errmsg("could not set socket to non-blocking mode: %m")));
 	}
 	else
 	{
@@ -903,18 +904,17 @@ pq_getbyte_if_available(unsigned char *c)
 	{
 		/*
 		 * Ok if no data available without blocking or interrupted (though
-		 * EINTR really shouldn't happen with a non-blocking socket).
-		 * Report other errors.
+		 * EINTR really shouldn't happen with a non-blocking socket). Report
+		 * other errors.
 		 */
 		if (errno == EAGAIN || errno == EWOULDBLOCK || errno == EINTR)
 			r = 0;
 		else
 		{
 			/*
-			 * Careful: an ereport() that tries to write to the client
-			 * would cause recursion to here, leading to stack overflow
-			 * and core dump!  This message must go *only* to the
-			 * postmaster log.
+			 * Careful: an ereport() that tries to write to the client would
+			 * cause recursion to here, leading to stack overflow and core
+			 * dump!  This message must go *only* to the postmaster log.
 			 */
 			ereport(COMMERROR,
 					(errcode_for_socket_access(),
@@ -1219,8 +1219,8 @@ internal_flush(void)
 				continue;		/* Ok if we were interrupted */
 
 			/*
-			 * Ok if no data writable without blocking, and the socket
-			 * is in non-blocking mode.
+			 * Ok if no data writable without blocking, and the socket is in
+			 * non-blocking mode.
 			 */
 			if (errno == EAGAIN ||
 				errno == EWOULDBLOCK)
@@ -1369,8 +1369,8 @@ fail:
 void
 pq_putmessage_noblock(char msgtype, const char *s, size_t len)
 {
-	int res;
-	int required;
+	int			res;
+	int			required;
 
 	/*
 	 * Ensure we have enough space in the output buffer for the message header
@@ -1383,7 +1383,8 @@ pq_putmessage_noblock(char msgtype, const char *s, size_t len)
 		PqSendBufferSize = required;
 	}
 	res = pq_putmessage(msgtype, s, len);
-	Assert(res == 0);	/* should not fail when the message fits in buffer */
+	Assert(res == 0);			/* should not fail when the message fits in
+								 * buffer */
 }
 
 
@@ -1434,13 +1435,13 @@ pq_endcopyout(bool errorAbort)
 static int
 pq_setkeepaliveswin32(Port *port, int idle, int interval)
 {
-	struct tcp_keepalive	ka;
-	DWORD					retsize;
+	struct tcp_keepalive ka;
+	DWORD		retsize;
 
 	if (idle <= 0)
-		idle = 2 * 60 * 60; /* default = 2 hours */
+		idle = 2 * 60 * 60;		/* default = 2 hours */
 	if (interval <= 0)
-		interval = 1;       /* default = 1 second */
+		interval = 1;			/* default = 1 second */
 
 	ka.onoff = 1;
 	ka.keepalivetime = idle * 1000;
@@ -1500,11 +1501,11 @@ pq_getkeepalivesidle(Port *port)
 			elog(LOG, "getsockopt(TCP_KEEPALIVE) failed: %m");
 			port->default_keepalives_idle = -1; /* don't know */
 		}
-#endif /* TCP_KEEPIDLE */
-#else /* WIN32 */
+#endif   /* TCP_KEEPIDLE */
+#else							/* WIN32 */
 		/* We can't get the defaults on Windows, so return "don't know" */
 		port->default_keepalives_idle = -1;
-#endif /* WIN32 */
+#endif   /* WIN32 */
 	}
 
 	return port->default_keepalives_idle;
@@ -1555,10 +1556,10 @@ pq_setkeepalivesidle(int idle, Port *port)
 #endif
 
 	port->keepalives_idle = idle;
-#else /* WIN32 */
+#else							/* WIN32 */
 	return pq_setkeepaliveswin32(port, idle, port->keepalives_interval);
 #endif
-#else /* TCP_KEEPIDLE || SIO_KEEPALIVE_VALS */
+#else							/* TCP_KEEPIDLE || SIO_KEEPALIVE_VALS */
 	if (idle != 0)
 	{
 		elog(LOG, "setting the keepalive idle time is not supported");
@@ -1593,7 +1594,7 @@ pq_getkeepalivesinterval(Port *port)
 #else
 		/* We can't get the defaults on Windows, so return "don't know" */
 		port->default_keepalives_interval = -1;
-#endif /* WIN32 */
+#endif   /* WIN32 */
 	}
 
 	return port->default_keepalives_interval;
@@ -1635,7 +1636,7 @@ pq_setkeepalivesinterval(int interval, Port *port)
 	}
 
 	port->keepalives_interval = interval;
-#else /* WIN32 */
+#else							/* WIN32 */
 	return pq_setkeepaliveswin32(port, port->keepalives_idle, interval);
 #endif
 #else

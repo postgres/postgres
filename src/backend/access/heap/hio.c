@@ -150,7 +150,7 @@ ReadBufferBI(Relation relation, BlockNumber targetBlock,
 Buffer
 RelationGetBufferForTuple(Relation relation, Size len,
 						  Buffer otherBuffer, int options,
-						  struct BulkInsertStateData *bistate)
+						  struct BulkInsertStateData * bistate)
 {
 	bool		use_fsm = !(options & HEAP_INSERT_SKIP_FSM);
 	Buffer		buffer = InvalidBuffer;

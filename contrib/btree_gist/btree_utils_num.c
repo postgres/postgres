@@ -223,8 +223,8 @@ gbt_num_consistent(const GBT_NUMKEY_R *key,
 			retval = (*tinfo->f_le) (query, key->upper);
 			break;
 		case BtreeGistNotEqualStrategyNumber:
-			retval = (! ((*tinfo->f_eq) (query, key->lower) &&
-				(*tinfo->f_eq) (query, key->upper)))  ? true : false;
+			retval = (!((*tinfo->f_eq) (query, key->lower) &&
+						(*tinfo->f_eq) (query, key->upper))) ? true : false;
 			break;
 		default:
 			retval = false;
@@ -249,9 +249,9 @@ gbt_num_distance(const GBT_NUMKEY_R *key,
 	if (tinfo->f_dist == NULL)
 		elog(ERROR, "KNN search is not supported for btree_gist type %d",
 			 (int) tinfo->t);
-	if ( tinfo->f_le(query, key->lower) )
+	if (tinfo->f_le(query, key->lower))
 		retval = tinfo->f_dist(query, key->lower);
-	else if ( tinfo->f_ge(query, key->upper) )
+	else if (tinfo->f_ge(query, key->upper))
 		retval = tinfo->f_dist(query, key->upper);
 	else
 		retval = 0.0;

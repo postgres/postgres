@@ -1078,7 +1078,7 @@ buildMergedJoinVar(ParseState *pstate, JoinType jointype,
 	else if (l_colvar->vartypmod != outcoltypmod)
 		l_node = (Node *) makeRelabelType((Expr *) l_colvar,
 										  outcoltype, outcoltypmod,
-										  InvalidOid,		/* fixed below */
+										  InvalidOid,	/* fixed below */
 										  COERCE_IMPLICIT_CAST);
 	else
 		l_node = (Node *) l_colvar;
@@ -1090,7 +1090,7 @@ buildMergedJoinVar(ParseState *pstate, JoinType jointype,
 	else if (r_colvar->vartypmod != outcoltypmod)
 		r_node = (Node *) makeRelabelType((Expr *) r_colvar,
 										  outcoltype, outcoltypmod,
-										  InvalidOid,		/* fixed below */
+										  InvalidOid,	/* fixed below */
 										  COERCE_IMPLICIT_CAST);
 	else
 		r_node = (Node *) r_colvar;
@@ -1143,8 +1143,8 @@ buildMergedJoinVar(ParseState *pstate, JoinType jointype,
 
 	/*
 	 * Apply assign_expr_collations to fix up the collation info in the
-	 * coercion and CoalesceExpr nodes, if we made any.  This must be done
-	 * now so that the join node's alias vars show correct collation info.
+	 * coercion and CoalesceExpr nodes, if we made any.  This must be done now
+	 * so that the join node's alias vars show correct collation info.
 	 */
 	assign_expr_collations(pstate, res_node);
 

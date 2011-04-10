@@ -54,13 +54,13 @@ extern bool XactDeferrable;
 
 typedef enum
 {
-	SYNCHRONOUS_COMMIT_OFF,			/* asynchronous commit */
-	SYNCHRONOUS_COMMIT_LOCAL_FLUSH,	/* wait for local flush only */
-	SYNCHRONOUS_COMMIT_REMOTE_FLUSH	/* wait for local and remote flush */
-} SyncCommitLevel;
+	SYNCHRONOUS_COMMIT_OFF,		/* asynchronous commit */
+	SYNCHRONOUS_COMMIT_LOCAL_FLUSH,		/* wait for local flush only */
+	SYNCHRONOUS_COMMIT_REMOTE_FLUSH		/* wait for local and remote flush */
+}	SyncCommitLevel;
 
 /* Define the default setting for synchonous_commit */
-#define SYNCHRONOUS_COMMIT_ON 	SYNCHRONOUS_COMMIT_REMOTE_FLUSH
+#define SYNCHRONOUS_COMMIT_ON	SYNCHRONOUS_COMMIT_REMOTE_FLUSH
 
 /* Synchronous commit level */
 extern int	synchronous_commit;

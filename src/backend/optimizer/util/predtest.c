@@ -1696,7 +1696,7 @@ get_btree_test_op(Oid pred_op, Oid clause_op, bool refute_it)
 		else if (OidIsValid(clause_op_negator))
 		{
 			clause_tuple = SearchSysCache3(AMOPOPID,
-										   ObjectIdGetDatum(clause_op_negator),
+										 ObjectIdGetDatum(clause_op_negator),
 										   CharGetDatum(AMOP_SEARCH),
 										   ObjectIdGetDatum(opfamily_id));
 			if (HeapTupleIsValid(clause_tuple))

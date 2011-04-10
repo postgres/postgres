@@ -77,7 +77,7 @@ static int	cliplen(const char *str, int len, int limit);
 
 
 /*
- * Prepare for a future call to SetClientEncoding.  Success should mean
+ * Prepare for a future call to SetClientEncoding.	Success should mean
  * that SetClientEncoding is guaranteed to succeed for this encoding request.
  *
  * (But note that success before backend_startup_complete does not guarantee
@@ -149,7 +149,7 @@ PrepareClientEncoding(int encoding)
 
 		/*
 		 * We cannot yet remove any older entry for the same encoding pair,
-		 * since it could still be in use.  SetClientEncoding will clean up.
+		 * since it could still be in use.	SetClientEncoding will clean up.
 		 */
 
 		return 0;				/* success */
@@ -218,8 +218,8 @@ SetClientEncoding(int encoding)
 	/*
 	 * Search the cache for the entry previously prepared by
 	 * PrepareClientEncoding; if there isn't one, we lose.  While at it,
-	 * release any duplicate entries so that repeated Prepare/Set cycles
-	 * don't leak memory.
+	 * release any duplicate entries so that repeated Prepare/Set cycles don't
+	 * leak memory.
 	 */
 	found = false;
 	foreach(lc, ConvProcList)
@@ -591,7 +591,7 @@ pg_any_to_server(const char *s, int len, int encoding)
 		return perform_default_encoding_conversion(s, len, true);
 	else
 		return (char *) pg_do_encoding_conversion(
-			(unsigned char *) s, len, encoding, DatabaseEncoding->encoding);
+			 (unsigned char *) s, len, encoding, DatabaseEncoding->encoding);
 }
 
 /*
@@ -626,7 +626,7 @@ pg_server_to_any(const char *s, int len, int encoding)
 		return perform_default_encoding_conversion(s, len, false);
 	else
 		return (char *) pg_do_encoding_conversion(
-			(unsigned char *) s, len, DatabaseEncoding->encoding, encoding);
+			 (unsigned char *) s, len, DatabaseEncoding->encoding, encoding);
 }
 
 /*

@@ -81,7 +81,7 @@ typedef struct
 	char	   *fname;			/* function name (for error msgs) */
 	char	   *src;			/* function body text (for error msgs) */
 
-	SQLFunctionParseInfoPtr pinfo;	/* data for parser callback hooks */
+	SQLFunctionParseInfoPtr pinfo;		/* data for parser callback hooks */
 
 	Oid			rettype;		/* actual return type */
 	int16		typlen;			/* length of the return type */
@@ -119,7 +119,7 @@ typedef struct SQLFunctionParseInfo
 	Oid		   *argtypes;		/* resolved types of input arguments */
 	int			nargs;			/* number of input arguments */
 	Oid			collation;		/* function's input collation, if known */
-} SQLFunctionParseInfo;
+}	SQLFunctionParseInfo;
 
 
 /* non-export function prototypes */
@@ -255,7 +255,7 @@ sql_fn_param_ref(ParseState *pstate, ParamRef *pref)
  * Set up the per-query execution_state records for a SQL function.
  *
  * The input is a List of Lists of parsed and rewritten, but not planned,
- * querytrees.  The sublist structure denotes the original query boundaries.
+ * querytrees.	The sublist structure denotes the original query boundaries.
  */
 static List *
 init_execution_state(List *queryTree_list,
@@ -299,8 +299,8 @@ init_execution_state(List *queryTree_list,
 				ereport(ERROR,
 						(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 				/* translator: %s is a SQL statement name */
-						 errmsg("%s is not allowed in a non-volatile function",
-								CreateCommandTag(stmt))));
+					   errmsg("%s is not allowed in a non-volatile function",
+							  CreateCommandTag(stmt))));
 
 			/* OK, build the execution_state for this query */
 			newes = (execution_state *) palloc(sizeof(execution_state));
@@ -311,8 +311,8 @@ init_execution_state(List *queryTree_list,
 
 			newes->next = NULL;
 			newes->status = F_EXEC_START;
-			newes->setsResult = false;		/* might change below */
-			newes->lazyEval = false;		/* might change below */
+			newes->setsResult = false;	/* might change below */
+			newes->lazyEval = false;	/* might change below */
 			newes->stmt = stmt;
 			newes->qd = NULL;
 
@@ -442,7 +442,7 @@ init_sql_fcache(FmgrInfo *finfo, bool lazyEvalOK)
 	fcache->src = TextDatumGetCString(tmp);
 
 	/*
-	 * Parse and rewrite the queries in the function text.  Use sublists to
+	 * Parse and rewrite the queries in the function text.	Use sublists to
 	 * keep track of the original query boundaries.  But we also build a
 	 * "flat" list of the rewritten queries to pass to check_sql_fn_retval.
 	 * This is because the last canSetTag query determines the result type
@@ -462,7 +462,7 @@ init_sql_fcache(FmgrInfo *finfo, bool lazyEvalOK)
 
 		queryTree_sublist = pg_analyze_and_rewrite_params(parsetree,
 														  fcache->src,
-														  (ParserSetupHook) sql_fn_parser_setup,
+									   (ParserSetupHook) sql_fn_parser_setup,
 														  fcache->pinfo);
 		queryTree_list = lappend(queryTree_list, queryTree_sublist);
 		flat_query_list = list_concat(flat_query_list,
@@ -657,7 +657,7 @@ postquel_sub_params(SQLFunctionCachePtr fcache,
 		{
 			/* sizeof(ParamListInfoData) includes the first array element */
 			paramLI = (ParamListInfo) palloc(sizeof(ParamListInfoData) +
-									   (nargs - 1) *sizeof(ParamExternData));
+									  (nargs - 1) * sizeof(ParamExternData));
 			/* we have static list of params, so no hooks needed */
 			paramLI->paramFetch = NULL;
 			paramLI->paramFetchArg = NULL;
@@ -748,8 +748,8 @@ fmgr_sql(PG_FUNCTION_ARGS)
 	execution_state *es;
 	TupleTableSlot *slot;
 	Datum		result;
-	List		*eslist;
-	ListCell    *eslc;
+	List	   *eslist;
+	ListCell   *eslc;
 
 	/*
 	 * Switch to context in which the fcache lives.  This ensures that
@@ -847,10 +847,10 @@ fmgr_sql(PG_FUNCTION_ARGS)
 	 *
 	 * In a non-read-only function, we rely on the fact that we'll never
 	 * suspend execution between queries of the function: the only reason to
-	 * suspend execution before completion is if we are returning a row from
-	 * a lazily-evaluated SELECT.  So, when first entering this loop, we'll
+	 * suspend execution before completion is if we are returning a row from a
+	 * lazily-evaluated SELECT.  So, when first entering this loop, we'll
 	 * either start a new query (and push a fresh snapshot) or re-establish
-	 * the active snapshot from the existing query descriptor.  If we need to
+	 * the active snapshot from the existing query descriptor.	If we need to
 	 * start a new query in a subsequent execution of the loop, either we need
 	 * a fresh snapshot (and pushed_snapshot is false) or the existing
 	 * snapshot is on the active stack and we can just bump its command ID.
@@ -927,10 +927,10 @@ fmgr_sql(PG_FUNCTION_ARGS)
 			es = (execution_state *) lfirst(eslc);
 
 			/*
-			 * Flush the current snapshot so that we will take a new one
-			 * for the new query list.  This ensures that new snaps are
-			 * taken at original-query boundaries, matching the behavior
-			 * of interactive execution.
+			 * Flush the current snapshot so that we will take a new one for
+			 * the new query list.	This ensures that new snaps are taken at
+			 * original-query boundaries, matching the behavior of interactive
+			 * execution.
 			 */
 			if (pushed_snapshot)
 			{
@@ -1183,7 +1183,7 @@ ShutdownSQLFunction(Datum arg)
 {
 	SQLFunctionCachePtr fcache = (SQLFunctionCachePtr) DatumGetPointer(arg);
 	execution_state *es;
-	ListCell		*lc;
+	ListCell   *lc;
 
 	foreach(lc, fcache->func_state)
 	{
@@ -1415,7 +1415,7 @@ check_sql_fn_retval(Oid func_id, Oid rettype, List *queryTreeList,
 		 * the function that's calling it.
 		 *
 		 * XXX Note that if rettype is RECORD, the IsBinaryCoercible check
-		 * will succeed for any composite restype.  For the moment we rely on
+		 * will succeed for any composite restype.	For the moment we rely on
 		 * runtime type checking to catch any discrepancy, but it'd be nice to
 		 * do better at parse time.
 		 */
@@ -1432,7 +1432,7 @@ check_sql_fn_retval(Oid func_id, Oid rettype, List *queryTreeList,
 					tle->expr = (Expr *) makeRelabelType(tle->expr,
 														 rettype,
 														 -1,
-														 get_typcollation(rettype),
+												   get_typcollation(rettype),
 														 COERCE_DONTCARE);
 					/* Relabel is dangerous if sort/group or setop column */
 					if (tle->ressortgroupref != 0 || parse->setOperations)
@@ -1536,7 +1536,7 @@ check_sql_fn_retval(Oid func_id, Oid rettype, List *queryTreeList,
 					tle->expr = (Expr *) makeRelabelType(tle->expr,
 														 atttype,
 														 -1,
-														 get_typcollation(atttype),
+												   get_typcollation(atttype),
 														 COERCE_DONTCARE);
 					/* Relabel is dangerous if sort/group or setop column */
 					if (tle->ressortgroupref != 0 || parse->setOperations)

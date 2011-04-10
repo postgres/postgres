@@ -705,15 +705,16 @@ lazy_scan_heap(Relation onerel, LVRelStats *vacrelstats,
 			PageSetAllVisible(page);
 			SetBufferCommitInfoNeedsSave(buf);
 		}
+
 		/*
 		 * It's possible for the value returned by GetOldestXmin() to move
 		 * backwards, so it's not wrong for us to see tuples that appear to
 		 * not be visible to everyone yet, while PD_ALL_VISIBLE is already
 		 * set. The real safe xmin value never moves backwards, but
 		 * GetOldestXmin() is conservative and sometimes returns a value
-		 * that's unnecessarily small, so if we see that contradiction it
-		 * just means that the tuples that we think are not visible to
-		 * everyone yet actually are, and the PD_ALL_VISIBLE flag is correct.
+		 * that's unnecessarily small, so if we see that contradiction it just
+		 * means that the tuples that we think are not visible to everyone yet
+		 * actually are, and the PD_ALL_VISIBLE flag is correct.
 		 *
 		 * There should never be dead tuples on a page with PD_ALL_VISIBLE
 		 * set, however.

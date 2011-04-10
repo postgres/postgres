@@ -17,13 +17,13 @@
  * RBNode is intended to be used as the first field of a larger struct,
  * whose additional fields carry whatever payload data the caller needs
  * for a tree entry.  (The total size of that larger struct is passed to
- * rb_create.)  RBNode is declared here to support this usage, but
+ * rb_create.)	RBNode is declared here to support this usage, but
  * callers must treat it as an opaque struct.
  */
 typedef struct RBNode
 {
 	char		iteratorState;	/* workspace for iterating through tree */
-	char		color;			/* node's current color, red or black */
+	char color;					/* node's current color, red or black */
 	struct RBNode *left;		/* left child, or RBNIL if none */
 	struct RBNode *right;		/* right child, or RBNIL if none */
 	struct RBNode *parent;		/* parent, or NULL (not RBNIL!) if none */
@@ -63,4 +63,4 @@ extern void rb_delete(RBTree *rb, RBNode *node);
 extern void rb_begin_iterate(RBTree *rb, RBOrderControl ctrl);
 extern RBNode *rb_iterate(RBTree *rb);
 
-#endif /* RBTREE_H */
+#endif   /* RBTREE_H */

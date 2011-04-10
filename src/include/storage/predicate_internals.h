@@ -114,7 +114,7 @@ typedef struct PredXactListElementData
 {
 	SHM_QUEUE	link;
 	SERIALIZABLEXACT sxact;
-} PredXactListElementData;
+}	PredXactListElementData;
 
 typedef struct PredXactListElementData *PredXactListElement;
 
@@ -152,7 +152,7 @@ typedef struct PredXactListData
 	SERIALIZABLEXACT *OldCommittedSxact;		/* shared copy of dummy sxact */
 
 	PredXactListElement element;
-} PredXactListData;
+}	PredXactListData;
 
 typedef struct PredXactListData *PredXactList;
 
@@ -176,7 +176,7 @@ typedef struct RWConflictData
 	SHM_QUEUE	inLink;			/* link for list of conflicts in to a sxact */
 	SERIALIZABLEXACT *sxactOut;
 	SERIALIZABLEXACT *sxactIn;
-} RWConflictData;
+}	RWConflictData;
 
 typedef struct RWConflictData *RWConflict;
 
@@ -187,7 +187,7 @@ typedef struct RWConflictPoolHeaderData
 {
 	SHM_QUEUE	availableList;
 	RWConflict	element;
-} RWConflictPoolHeaderData;
+}	RWConflictPoolHeaderData;
 
 typedef struct RWConflictPoolHeaderData *RWConflictPoolHeader;
 
@@ -266,7 +266,7 @@ typedef struct PREDICATELOCKTARGETTAG
  * version, before the reading transaction is obsolete, we need some way to
  * prevent errors from reuse of a tuple ID.  Rather than attempting to clean
  * up the targets as the related tuples are pruned or vacuumed, we check the
- * xmin on access.  This should be far less costly.
+ * xmin on access.	This should be far less costly.
  */
 typedef struct PREDICATELOCKTARGET PREDICATELOCKTARGET;
 
@@ -353,7 +353,7 @@ typedef enum PredicateLockTargetType
 	PREDLOCKTAG_PAGE,
 	PREDLOCKTAG_TUPLE
 	/* TODO SSI: Other types may be needed for index locking */
-}	PredicateLockTargetType;
+} PredicateLockTargetType;
 
 
 /*
@@ -419,7 +419,7 @@ typedef enum TwoPhasePredicateRecordType
 {
 	TWOPHASEPREDICATERECORD_XACT,
 	TWOPHASEPREDICATERECORD_LOCK
-}	TwoPhasePredicateRecordType;
+} TwoPhasePredicateRecordType;
 
 /*
  * Per-transaction information to reconstruct a SERIALIZABLEXACT. Not

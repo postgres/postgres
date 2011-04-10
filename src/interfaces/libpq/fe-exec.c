@@ -1787,8 +1787,8 @@ PQexecStart(PGconn *conn)
 		{
 			/* We don't allow PQexec during COPY BOTH */
 			printfPQExpBuffer(&conn->errorMessage,
-			 libpq_gettext("PQexec not allowed during COPY BOTH\n"));
-			return false;			
+					 libpq_gettext("PQexec not allowed during COPY BOTH\n"));
+			return false;
 		}
 		/* check for loss of connection, too */
 		if (conn->status == CONNECTION_BAD)
@@ -1813,8 +1813,8 @@ PQexecFinish(PGconn *conn)
 	 * than one --- but merge error messages if we get more than one error
 	 * result.
 	 *
-	 * We have to stop if we see copy in/out/both, however. We will resume parsing
-	 * after application performs the data transfer.
+	 * We have to stop if we see copy in/out/both, however. We will resume
+	 * parsing after application performs the data transfer.
 	 *
 	 * Also stop if the connection is lost (else we'll loop infinitely).
 	 */
@@ -3464,11 +3464,11 @@ PQunescapeBytea(const unsigned char *strtext, size_t *retbuflen)
 							(ISOCTDIGIT(strtext[i + 1])) &&
 							(ISOCTDIGIT(strtext[i + 2])))
 						{
-							int byte;
+							int			byte;
 
 							byte = OCTVAL(strtext[i++]);
-							byte = (byte <<3) +OCTVAL(strtext[i++]);
-							byte = (byte <<3) +OCTVAL(strtext[i++]);
+							byte = (byte << 3) + OCTVAL(strtext[i++]);
+							byte = (byte << 3) + OCTVAL(strtext[i++]);
 							buffer[j++] = byte;
 						}
 					}

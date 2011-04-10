@@ -311,7 +311,7 @@ static size_t
 _WriteData(ArchiveHandle *AH, const void *data, size_t dLen)
 {
 	lclContext *ctx = (lclContext *) AH->formatData;
-	CompressorState	   *cs = ctx->cs;
+	CompressorState *cs = ctx->cs;
 
 	if (dLen == 0)
 		return 0;
@@ -793,6 +793,7 @@ static void
 _DeClone(ArchiveHandle *AH)
 {
 	lclContext *ctx = (lclContext *) AH->formatData;
+
 	free(ctx);
 }
 
@@ -911,7 +912,7 @@ _CustomReadFunc(ArchiveHandle *AH, char **buf, size_t *buflen)
 						 "could not read from input file: end of file\n");
 		else
 			die_horribly(AH, modulename,
-				"could not read from input file: %s\n", strerror(errno));
+					"could not read from input file: %s\n", strerror(errno));
 	}
 	return cnt;
 }

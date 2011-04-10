@@ -40,8 +40,8 @@ static bool
 callConsistentFn(GinState *ginstate, GinScanKey key)
 {
 	/*
-	 * If we're dealing with a dummy EVERYTHING key, we don't want to call
-	 * the consistentFn; just claim it matches.
+	 * If we're dealing with a dummy EVERYTHING key, we don't want to call the
+	 * consistentFn; just claim it matches.
 	 */
 	if (key->searchMode == GIN_SEARCH_MODE_EVERYTHING)
 	{
@@ -174,14 +174,14 @@ scanPostingTree(Relation index, GinScanEntry scanEntry,
 
 /*
  * Collects TIDs into scanEntry->matchBitmap for all heap tuples that
- * match the search entry.  This supports three different match modes:
+ * match the search entry.	This supports three different match modes:
  *
  * 1. Partial-match support: scan from current point until the
- *    comparePartialFn says we're done.
+ *	  comparePartialFn says we're done.
  * 2. SEARCH_MODE_ALL: scan from current point (which should be first
- *    key for the current attnum) until we hit null items or end of attnum
+ *	  key for the current attnum) until we hit null items or end of attnum
  * 3. SEARCH_MODE_EVERYTHING: scan from current point (which should be first
- *    key for the current attnum) until we hit end of attnum
+ *	  key for the current attnum) until we hit end of attnum
  *
  * Returns true if done, false if it's necessary to restart scan from scratch
  */
@@ -189,7 +189,7 @@ static bool
 collectMatchBitmap(GinBtreeData *btree, GinBtreeStack *stack,
 				   GinScanEntry scanEntry)
 {
-	OffsetNumber	attnum;
+	OffsetNumber attnum;
 	Form_pg_attribute attr;
 
 	/* Initialize empty bitmap result */
@@ -253,8 +253,8 @@ collectMatchBitmap(GinBtreeData *btree, GinBtreeStack *stack,
 			cmp = DatumGetInt32(FunctionCall4(&btree->ginstate->comparePartialFn[attnum - 1],
 											  scanEntry->queryKey,
 											  idatum,
-											  UInt16GetDatum(scanEntry->strategy),
-											  PointerGetDatum(scanEntry->extra_data)));
+										 UInt16GetDatum(scanEntry->strategy),
+									PointerGetDatum(scanEntry->extra_data)));
 
 			if (cmp > 0)
 				return true;
@@ -269,7 +269,7 @@ collectMatchBitmap(GinBtreeData *btree, GinBtreeStack *stack,
 			/*
 			 * In ALL mode, we are not interested in null items, so we can
 			 * stop if we get to a null-item placeholder (which will be the
-			 * last entry for a given attnum).  We do want to include NULL_KEY
+			 * last entry for a given attnum).	We do want to include NULL_KEY
 			 * and EMPTY_ITEM entries, though.
 			 */
 			if (icategory == GIN_CAT_NULL_ITEM)
@@ -287,8 +287,8 @@ collectMatchBitmap(GinBtreeData *btree, GinBtreeStack *stack,
 			 * We should unlock current page (but not unpin) during tree scan
 			 * to prevent deadlock with vacuum processes.
 			 *
-			 * We save current entry value (idatum) to be able to re-find
-			 * our tuple after re-locking
+			 * We save current entry value (idatum) to be able to re-find our
+			 * tuple after re-locking
 			 */
 			if (icategory == GIN_CAT_NORM_KEY)
 				idatum = datumCopy(idatum, attr->attbyval, attr->attlen);
@@ -442,11 +442,11 @@ restartScanEntry:
 			Page		page;
 
 			/*
-			 * We should unlock entry page before touching posting tree
-			 * to prevent deadlocks with vacuum processes. Because entry is
-			 * never deleted from page and posting tree is never reduced to
-			 * the posting list, we can unlock page after getting BlockNumber
-			 * of root of posting tree.
+			 * We should unlock entry page before touching posting tree to
+			 * prevent deadlocks with vacuum processes. Because entry is never
+			 * deleted from page and posting tree is never reduced to the
+			 * posting list, we can unlock page after getting BlockNumber of
+			 * root of posting tree.
 			 */
 			LockBuffer(stackEntry->buffer, GIN_UNLOCK);
 			needUnlock = FALSE;
@@ -596,7 +596,7 @@ entryGetNextItem(GinState *ginstate, GinScanEntry entry)
 
 				if (!ItemPointerIsValid(&entry->curItem) ||
 					ginCompareItemPointers(&entry->curItem,
-										   entry->list + entry->offset - 1) == 0)
+									   entry->list + entry->offset - 1) == 0)
 				{
 					/*
 					 * First pages are deleted or empty, or we found exact
@@ -656,10 +656,10 @@ entryGetItem(GinState *ginstate, GinScanEntry entry)
 				}
 
 				/*
-				 * Reset counter to the beginning of entry->matchResult.
-				 * Note: entry->offset is still greater than
-				 * matchResult->ntuples if matchResult is lossy.  So, on next
-				 * call we will get next result from TIDBitmap.
+				 * Reset counter to the beginning of entry->matchResult. Note:
+				 * entry->offset is still greater than matchResult->ntuples if
+				 * matchResult is lossy.  So, on next call we will get next
+				 * result from TIDBitmap.
 				 */
 				entry->offset = 0;
 			}
@@ -745,10 +745,10 @@ keyGetItem(GinState *ginstate, MemoryContext tempCtx, GinScanKey key)
 	/*
 	 * Find the minimum of the active entry curItems.
 	 *
-	 * Note: a lossy-page entry is encoded by a ItemPointer with max value
-	 * for offset (0xffff), so that it will sort after any exact entries
-	 * for the same page.  So we'll prefer to return exact pointers not
-	 * lossy pointers, which is good.
+	 * Note: a lossy-page entry is encoded by a ItemPointer with max value for
+	 * offset (0xffff), so that it will sort after any exact entries for the
+	 * same page.  So we'll prefer to return exact pointers not lossy
+	 * pointers, which is good.
 	 */
 	ItemPointerSetMax(&minItem);
 
@@ -782,28 +782,27 @@ keyGetItem(GinState *ginstate, MemoryContext tempCtx, GinScanKey key)
 
 	/*
 	 * Lossy-page entries pose a problem, since we don't know the correct
-	 * entryRes state to pass to the consistentFn, and we also don't know
-	 * what its combining logic will be (could be AND, OR, or even NOT).
-	 * If the logic is OR then the consistentFn might succeed for all
-	 * items in the lossy page even when none of the other entries match.
+	 * entryRes state to pass to the consistentFn, and we also don't know what
+	 * its combining logic will be (could be AND, OR, or even NOT). If the
+	 * logic is OR then the consistentFn might succeed for all items in the
+	 * lossy page even when none of the other entries match.
 	 *
 	 * If we have a single lossy-page entry then we check to see if the
-	 * consistentFn will succeed with only that entry TRUE.  If so,
-	 * we return a lossy-page pointer to indicate that the whole heap
-	 * page must be checked.  (On subsequent calls, we'll do nothing until
-	 * minItem is past the page altogether, thus ensuring that we never return
-	 * both regular and lossy pointers for the same page.)
+	 * consistentFn will succeed with only that entry TRUE.  If so, we return
+	 * a lossy-page pointer to indicate that the whole heap page must be
+	 * checked.  (On subsequent calls, we'll do nothing until minItem is past
+	 * the page altogether, thus ensuring that we never return both regular
+	 * and lossy pointers for the same page.)
 	 *
-	 * This idea could be generalized to more than one lossy-page entry,
-	 * but ideally lossy-page entries should be infrequent so it would
-	 * seldom be the case that we have more than one at once.  So it
-	 * doesn't seem worth the extra complexity to optimize that case.
-	 * If we do find more than one, we just punt and return a lossy-page
-	 * pointer always.
+	 * This idea could be generalized to more than one lossy-page entry, but
+	 * ideally lossy-page entries should be infrequent so it would seldom be
+	 * the case that we have more than one at once.  So it doesn't seem worth
+	 * the extra complexity to optimize that case. If we do find more than
+	 * one, we just punt and return a lossy-page pointer always.
 	 *
-	 * Note that only lossy-page entries pointing to the current item's
-	 * page should trigger this processing; we might have future lossy
-	 * pages in the entry array, but they aren't relevant yet.
+	 * Note that only lossy-page entries pointing to the current item's page
+	 * should trigger this processing; we might have future lossy pages in the
+	 * entry array, but they aren't relevant yet.
 	 */
 	ItemPointerSetLossyPage(&curPageLossy,
 							GinItemPointerGetBlockNumber(&key->curItem));
@@ -853,15 +852,14 @@ keyGetItem(GinState *ginstate, MemoryContext tempCtx, GinScanKey key)
 	}
 
 	/*
-	 * At this point we know that we don't need to return a lossy
-	 * whole-page pointer, but we might have matches for individual exact
-	 * item pointers, possibly in combination with a lossy pointer.  Our
-	 * strategy if there's a lossy pointer is to try the consistentFn both
-	 * ways and return a hit if it accepts either one (forcing the hit to
-	 * be marked lossy so it will be rechecked).  An exception is that
-	 * we don't need to try it both ways if the lossy pointer is in a
-	 * "hidden" entry, because the consistentFn's result can't depend on
-	 * that.
+	 * At this point we know that we don't need to return a lossy whole-page
+	 * pointer, but we might have matches for individual exact item pointers,
+	 * possibly in combination with a lossy pointer.  Our strategy if there's
+	 * a lossy pointer is to try the consistentFn both ways and return a hit
+	 * if it accepts either one (forcing the hit to be marked lossy so it will
+	 * be rechecked).  An exception is that we don't need to try it both ways
+	 * if the lossy pointer is in a "hidden" entry, because the consistentFn's
+	 * result can't depend on that.
 	 *
 	 * Prepare entryRes array to be passed to consistentFn.
 	 */
@@ -960,7 +958,7 @@ scanGetItem(IndexScanDesc scan, ItemPointer advancePast,
 			keyGetItem(&so->ginstate, so->tempCtx, key);
 
 			if (key->isFinished)
-				return false;		/* finished one of keys */
+				return false;	/* finished one of keys */
 
 			if (ginCompareItemPointers(&key->curItem, item) < 0)
 				*item = key->curItem;
@@ -975,7 +973,7 @@ scanGetItem(IndexScanDesc scan, ItemPointer advancePast,
 		 * that exact TID, or a lossy reference to the same page.
 		 *
 		 * This logic works only if a keyGetItem stream can never contain both
-		 * exact and lossy pointers for the same page.  Else we could have a
+		 * exact and lossy pointers for the same page.	Else we could have a
 		 * case like
 		 *
 		 *		stream 1		stream 2
@@ -1011,8 +1009,8 @@ scanGetItem(IndexScanDesc scan, ItemPointer advancePast,
 			break;
 
 		/*
-		 * No hit.  Update myAdvancePast to this TID, so that on the next
-		 * pass we'll move to the next possible entry.
+		 * No hit.	Update myAdvancePast to this TID, so that on the next pass
+		 * we'll move to the next possible entry.
 		 */
 		myAdvancePast = *item;
 	}
@@ -1118,8 +1116,8 @@ scanGetCandidate(IndexScanDesc scan, pendingPosition *pos)
 
 			/*
 			 * Now pos->firstOffset points to the first tuple of current heap
-			 * row, pos->lastOffset points to the first tuple of next heap
-			 * row (or to the end of page)
+			 * row, pos->lastOffset points to the first tuple of next heap row
+			 * (or to the end of page)
 			 */
 			break;
 		}
@@ -1181,7 +1179,7 @@ matchPartialInPendingList(GinState *ginstate, Page page,
 										  entry->queryKey,
 										  datum[off - 1],
 										  UInt16GetDatum(entry->strategy),
-										  PointerGetDatum(entry->extra_data)));
+										PointerGetDatum(entry->extra_data)));
 		if (cmp == 0)
 			return true;
 		else if (cmp > 0)
@@ -1227,8 +1225,8 @@ collectMatchesForHeapRow(IndexScanDesc scan, pendingPosition *pos)
 	memset(pos->hasMatchKey, FALSE, so->nkeys);
 
 	/*
-	 * Outer loop iterates over multiple pending-list pages when a single
-	 * heap row has entries spanning those pages.
+	 * Outer loop iterates over multiple pending-list pages when a single heap
+	 * row has entries spanning those pages.
 	 */
 	for (;;)
 	{
@@ -1322,11 +1320,11 @@ collectMatchesForHeapRow(IndexScanDesc scan, pendingPosition *pos)
 					if (res == 0)
 					{
 						/*
-						 * Found exact match (there can be only one, except
-						 * in EMPTY_QUERY mode).
+						 * Found exact match (there can be only one, except in
+						 * EMPTY_QUERY mode).
 						 *
-						 * If doing partial match, scan forward from
-						 * here to end of page to check for matches.
+						 * If doing partial match, scan forward from here to
+						 * end of page to check for matches.
 						 *
 						 * See comment above about tuple's ordering.
 						 */
@@ -1355,13 +1353,12 @@ collectMatchesForHeapRow(IndexScanDesc scan, pendingPosition *pos)
 				if (StopLow >= StopHigh && entry->isPartialMatch)
 				{
 					/*
-					 * No exact match on this page.  If doing partial
-					 * match, scan from the first tuple greater than
-					 * target value to end of page.  Note that since we
-					 * don't remember whether the comparePartialFn told us
-					 * to stop early on a previous page, we will uselessly
-					 * apply comparePartialFn to the first tuple on each
-					 * subsequent page.
+					 * No exact match on this page.  If doing partial match,
+					 * scan from the first tuple greater than target value to
+					 * end of page.  Note that since we don't remember whether
+					 * the comparePartialFn told us to stop early on a
+					 * previous page, we will uselessly apply comparePartialFn
+					 * to the first tuple on each subsequent page.
 					 */
 					key->entryRes[j] =
 						matchPartialInPendingList(&so->ginstate,

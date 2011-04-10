@@ -131,7 +131,7 @@ typedef struct RewriteStateData
 								 * them */
 	HTAB	   *rs_unresolved_tups;		/* unmatched A tuples */
 	HTAB	   *rs_old_new_tid_map;		/* unmatched B tuples */
-} RewriteStateData;
+}	RewriteStateData;
 
 /*
  * The lookup keys for the hash tables are tuple TID and xmin (we must check
@@ -277,7 +277,7 @@ end_heap_rewrite(RewriteState state)
 	}
 
 	/*
-	 * If the rel is WAL-logged, must fsync before commit.  We use heap_sync
+	 * If the rel is WAL-logged, must fsync before commit.	We use heap_sync
 	 * to ensure that the toast table gets fsync'd too.
 	 *
 	 * It's obvious that we must do this when not WAL-logging. It's less

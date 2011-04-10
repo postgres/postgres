@@ -150,8 +150,8 @@ LocalBufferAlloc(SMgrRelation smgr, ForkNumber forkNum, BlockNumber blockNum,
 
 #ifdef LBDEBUG
 	fprintf(stderr, "LB ALLOC (%u,%d,%d) %d\n",
-		 smgr->smgr_rnode.node.relNode, forkNum, blockNum,
-		 -nextFreeLocalBuf - 1);
+			smgr->smgr_rnode.node.relNode, forkNum, blockNum,
+			-nextFreeLocalBuf - 1);
 #endif
 
 	/*
@@ -311,7 +311,7 @@ DropRelFileNodeLocalBuffers(RelFileNode rnode, ForkNumber forkNum,
 				elog(ERROR, "block %u of %s is still referenced (local %u)",
 					 bufHdr->tag.blockNum,
 					 relpathbackend(bufHdr->tag.rnode, MyBackendId,
-								   bufHdr->tag.forkNum),
+									bufHdr->tag.forkNum),
 					 LocalRefCount[i]);
 			/* Remove entry from hashtable */
 			hresult = (LocalBufferLookupEnt *)
@@ -413,7 +413,7 @@ GetLocalBufferStorage(void)
 		/*
 		 * We allocate local buffers in a context of their own, so that the
 		 * space eaten for them is easily recognizable in MemoryContextStats
-		 * output.  Create the context on first use.
+		 * output.	Create the context on first use.
 		 */
 		if (LocalBufferContext == NULL)
 			LocalBufferContext =

@@ -59,7 +59,7 @@ fixup_whole_row_references(Oid relOid, Bitmapset *columns)
 	result = bms_copy(columns);
 	result = bms_del_member(result, index);
 
-	for (attno=1; attno <= natts; attno++)
+	for (attno = 1; attno <= natts; attno++)
 	{
 		tuple = SearchSysCache2(ATTNUM,
 								ObjectIdGetDatum(relOid),
@@ -108,6 +108,7 @@ fixup_inherited_columns(Oid parentId, Oid childId, Bitmapset *columns)
 	while ((index = bms_first_member(tmpset)) > 0)
 	{
 		attno = index + FirstLowInvalidHeapAttributeNumber;
+
 		/*
 		 * whole-row-reference shall be fixed-up later
 		 */
@@ -158,14 +159,13 @@ check_relation_privileges(Oid relOid,
 	bool		result = true;
 
 	/*
-	 * Hardwired Policies:
-	 * SE-PostgreSQL enforces
-	 * - clients cannot modify system catalogs using DMLs
-	 * - clients cannot reference/modify toast relations using DMLs
+	 * Hardwired Policies: SE-PostgreSQL enforces - clients cannot modify
+	 * system catalogs using DMLs - clients cannot reference/modify toast
+	 * relations using DMLs
 	 */
 	if (sepgsql_getenforce() > 0)
 	{
-		Oid		relnamespace = get_rel_namespace(relOid);
+		Oid			relnamespace = get_rel_namespace(relOid);
 
 		if (IsSystemNamespace(relnamespace) &&
 			(required & (SEPG_DB_TABLE__UPDATE |
@@ -242,7 +242,7 @@ check_relation_privileges(Oid relOid,
 	{
 		AttrNumber	attnum;
 		uint32		column_perms = 0;
-		ObjectAddress	object;
+		ObjectAddress object;
 
 		if (bms_is_member(index, selected))
 			column_perms |= SEPG_DB_COLUMN__SELECT;
@@ -290,12 +290,12 @@ sepgsql_dml_privileges(List *rangeTabls, bool abort)
 {
 	ListCell   *lr;
 
-	foreach (lr, rangeTabls)
+	foreach(lr, rangeTabls)
 	{
-		RangeTblEntry  *rte = lfirst(lr);
-		uint32			required = 0;
-		List		   *tableIds;
-		ListCell	   *li;
+		RangeTblEntry *rte = lfirst(lr);
+		uint32		required = 0;
+		List	   *tableIds;
+		ListCell   *li;
 
 		/*
 		 * Only regular relations shall be checked
@@ -328,25 +328,24 @@ sepgsql_dml_privileges(List *rangeTabls, bool abort)
 
 		/*
 		 * If this RangeTblEntry is also supposed to reference inherited
-		 * tables, we need to check security label of the child tables.
-		 * So, we expand rte->relid into list of OIDs of inheritance
-		 * hierarchy, then checker routine will be invoked for each
-		 * relations.
+		 * tables, we need to check security label of the child tables. So, we
+		 * expand rte->relid into list of OIDs of inheritance hierarchy, then
+		 * checker routine will be invoked for each relations.
 		 */
 		if (!rte->inh)
 			tableIds = list_make1_oid(rte->relid);
 		else
 			tableIds = find_all_inheritors(rte->relid, NoLock, NULL);
 
-		foreach (li, tableIds)
+		foreach(li, tableIds)
 		{
 			Oid			tableOid = lfirst_oid(li);
 			Bitmapset  *selectedCols;
 			Bitmapset  *modifiedCols;
 
 			/*
-			 * child table has different attribute numbers, so we need
-			 * to fix up them.
+			 * child table has different attribute numbers, so we need to fix
+			 * up them.
 			 */
 			selectedCols = fixup_inherited_columns(rte->relid, tableOid,
 												   rte->selectedCols);

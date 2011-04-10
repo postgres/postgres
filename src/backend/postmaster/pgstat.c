@@ -1319,7 +1319,7 @@ pgstat_report_analyze(Relation rel, bool adopt_counts,
 /* --------
  * pgstat_report_recovery_conflict() -
  *
- *  Tell the collector about a Hot Standby recovery conflict.
+ *	Tell the collector about a Hot Standby recovery conflict.
  * --------
  */
 void
@@ -4075,7 +4075,7 @@ pgstat_recv_resetcounter(PgStat_MsgResetcounter *msg, int len)
 	dbentry->functions = NULL;
 
 	/*
-	 * Reset database-level stats too.  This should match the initialization
+	 * Reset database-level stats too.	This should match the initialization
 	 * code in pgstat_get_db_entry().
 	 */
 	dbentry->n_xact_commit = 0;
@@ -4280,22 +4280,23 @@ pgstat_recv_bgwriter(PgStat_MsgBgWriter *msg, int len)
 /* ----------
  * pgstat_recv_recoveryconflict() -
  *
- *  Process as RECOVERYCONFLICT message.
+ *	Process as RECOVERYCONFLICT message.
  * ----------
  */
 static void
 pgstat_recv_recoveryconflict(PgStat_MsgRecoveryConflict *msg, int len)
 {
 	PgStat_StatDBEntry *dbentry;
+
 	dbentry = pgstat_get_db_entry(msg->m_databaseid, true);
 
 	switch (msg->m_reason)
 	{
 		case PROCSIG_RECOVERY_CONFLICT_DATABASE:
+
 			/*
-			 * Since we drop the information about the database as soon
-			 * as it replicates, there is no point in counting these
-			 * conflicts.
+			 * Since we drop the information about the database as soon as it
+			 * replicates, there is no point in counting these conflicts.
 			 */
 			break;
 		case PROCSIG_RECOVERY_CONFLICT_TABLESPACE:

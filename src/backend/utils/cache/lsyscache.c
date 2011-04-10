@@ -1122,7 +1122,7 @@ op_input_types(Oid opno, Oid *lefttype, Oid *righttype)
  *
  * In some cases (currently only array_eq), mergejoinability depends on the
  * specific input data type the operator is invoked for, so that must be
- * passed as well.  We currently assume that only one input's type is needed
+ * passed as well.	We currently assume that only one input's type is needed
  * to check this --- by convention, pass the left input's data type.
  */
 bool
@@ -1172,7 +1172,7 @@ op_mergejoinable(Oid opno, Oid inputtype)
  *
  * In some cases (currently only array_eq), hashjoinability depends on the
  * specific input data type the operator is invoked for, so that must be
- * passed as well.  We currently assume that only one input's type is needed
+ * passed as well.	We currently assume that only one input's type is needed
  * to check this --- by convention, pass the left input's data type.
  */
 bool
@@ -2709,9 +2709,9 @@ get_attstatsslot(HeapTuple statstuple,
 		/*
 		 * Need to get info about the array element type.  We look at the
 		 * actual element type embedded in the array, which might be only
-		 * binary-compatible with the passed-in atttype.  The info we
-		 * extract here should be the same either way, but deconstruct_array
-		 * is picky about having an exact type OID match.
+		 * binary-compatible with the passed-in atttype.  The info we extract
+		 * here should be the same either way, but deconstruct_array is picky
+		 * about having an exact type OID match.
 		 */
 		arrayelemtype = ARR_ELEMTYPE(statarray);
 		typeTuple = SearchSysCache1(TYPEOID, ObjectIdGetDatum(arrayelemtype));

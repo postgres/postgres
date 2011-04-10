@@ -18,14 +18,14 @@
 
 /* variables */
 
-extern bool		autocommit,
+extern bool autocommit,
 			auto_create_c,
 			system_includes,
 			force_indicator,
 			questionmarks,
 			regression_mode,
 			auto_prepare;
-extern int		braces_open,
+extern int	braces_open,
 			ret_value,
 			struct_level,
 			ecpg_internal_var;

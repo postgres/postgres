@@ -41,7 +41,7 @@
 #endif
 #define near
 #include <shlobj.h>
-#ifdef WIN32_ONLY_COMPILER /* mstcpip.h is missing on mingw */
+#ifdef WIN32_ONLY_COMPILER		/* mstcpip.h is missing on mingw */
 #include <mstcpip.h>
 #endif
 #else
@@ -1011,13 +1011,13 @@ connectFailureMessage(PGconn *conn, int errorno)
 	else
 #endif   /* HAVE_UNIX_SOCKETS */
 	{
-		char	host_addr[NI_MAXHOST];
-		bool 	display_host_addr;
+		char		host_addr[NI_MAXHOST];
+		bool		display_host_addr;
 		struct sockaddr_storage *addr = &conn->raddr.addr;
 
 		/*
-		 *	Optionally display the network address with the hostname.
-		 *	This is useful to distinguish between IPv4 and IPv6 connections.
+		 * Optionally display the network address with the hostname. This is
+		 * useful to distinguish between IPv4 and IPv6 connections.
 		 */
 		if (conn->pghostaddr != NULL)
 			strlcpy(host_addr, conn->pghostaddr, NI_MAXHOST);
@@ -1033,7 +1033,7 @@ connectFailureMessage(PGconn *conn, int errorno)
 		else if (addr->ss_family == AF_INET6)
 		{
 			if (inet_net_ntop(AF_INET6,
-							  &((struct sockaddr_in6 *) addr)->sin6_addr.s6_addr,
+						  &((struct sockaddr_in6 *) addr)->sin6_addr.s6_addr,
 							  128,
 							  host_addr, sizeof(host_addr)) == NULL)
 				strcpy(host_addr, "???");
@@ -1043,25 +1043,25 @@ connectFailureMessage(PGconn *conn, int errorno)
 			strcpy(host_addr, "???");
 
 		/*
-		 *	If the user did not supply an IP address using 'hostaddr', and
-		 *	'host' was missing or does not match our lookup, display the
-		 *	looked-up IP address.
+		 * If the user did not supply an IP address using 'hostaddr', and
+		 * 'host' was missing or does not match our lookup, display the
+		 * looked-up IP address.
 		 */
 		display_host_addr = (conn->pghostaddr == NULL) &&
-							((conn->pghost == NULL) ||
-							 (strcmp(conn->pghost, host_addr) != 0));
+			((conn->pghost == NULL) ||
+			 (strcmp(conn->pghost, host_addr) != 0));
 
 		appendPQExpBuffer(&conn->errorMessage,
 						  libpq_gettext("could not connect to server: %s\n"
-					 "\tIs the server running on host \"%s\"%s%s%s and accepting\n"
+			   "\tIs the server running on host \"%s\"%s%s%s and accepting\n"
 										"\tTCP/IP connections on port %s?\n"),
 						  SOCK_STRERROR(errorno, sebuf, sizeof(sebuf)),
 						  (conn->pghostaddr && conn->pghostaddr[0] != '\0')
 						  ? conn->pghostaddr
 						  : (conn->pghost && conn->pghost[0] != '\0')
-							 ? conn->pghost
-							 : DefaultHost,
-						  /* display the IP address only if not already output */
+						  ? conn->pghost
+						  : DefaultHost,
+		/* display the IP address only if not already output */
 						  display_host_addr ? " (" : "",
 						  display_host_addr ? host_addr : "",
 						  display_host_addr ? ")" : "",
@@ -1121,10 +1121,10 @@ setKeepalivesIdle(PGconn *conn)
 	if (setsockopt(conn->sock, IPPROTO_TCP, TCP_KEEPALIVE,
 				   (char *) &idle, sizeof(idle)) < 0)
 	{
-		char	sebuf[256];
+		char		sebuf[256];
 
 		appendPQExpBuffer(&conn->errorMessage,
-						  libpq_gettext("setsockopt(TCP_KEEPALIVE) failed: %s\n"),
+					 libpq_gettext("setsockopt(TCP_KEEPALIVE) failed: %s\n"),
 						  SOCK_STRERROR(SOCK_ERRNO, sebuf, sizeof(sebuf)));
 		return 0;
 	}
@@ -1196,8 +1196,7 @@ setKeepalivesCount(PGconn *conn)
 
 	return 1;
 }
-
-#else /* Win32 */
+#else							/* Win32 */
 #ifdef SIO_KEEPALIVE_VALS
 /*
  * Enable keepalives and set the keepalive values on Win32,
@@ -1206,20 +1205,20 @@ setKeepalivesCount(PGconn *conn)
 static int
 setKeepalivesWin32(PGconn *conn)
 {
-	struct tcp_keepalive 	ka;
-	DWORD					retsize;
-	int						idle = 0;
-	int						interval = 0;
+	struct tcp_keepalive ka;
+	DWORD		retsize;
+	int			idle = 0;
+	int			interval = 0;
 
 	if (conn->keepalives_idle)
 		idle = atoi(conn->keepalives_idle);
 	if (idle <= 0)
-		idle = 2 * 60 * 60; /* 2 hours = default */
+		idle = 2 * 60 * 60;		/* 2 hours = default */
 
 	if (conn->keepalives_interval)
 		interval = atoi(conn->keepalives_interval);
 	if (interval <= 0)
-		interval = 1; /* 1 second = default */
+		interval = 1;			/* 1 second = default */
 
 	ka.onoff = 1;
 	ka.keepalivetime = idle * 1000;
@@ -1237,14 +1236,14 @@ setKeepalivesWin32(PGconn *conn)
 		!= 0)
 	{
 		appendPQExpBuffer(&conn->errorMessage,
-						  libpq_gettext("WSAIoctl(SIO_KEEPALIVE_VALS) failed: %ui\n"),
+				 libpq_gettext("WSAIoctl(SIO_KEEPALIVE_VALS) failed: %ui\n"),
 						  WSAGetLastError());
 		return 0;
 	}
 	return 1;
 }
-#endif /* SIO_KEEPALIVE_VALS */
-#endif /* WIN32 */
+#endif   /* SIO_KEEPALIVE_VALS */
+#endif   /* WIN32 */
 
 /* ----------
  * connectDBStart -
@@ -1661,12 +1660,12 @@ keep_going:						/* We will come back to here until there is
 								 || !setKeepalivesInterval(conn)
 								 || !setKeepalivesCount(conn))
 							err = 1;
-#else /* WIN32 */
+#else							/* WIN32 */
 #ifdef SIO_KEEPALIVE_VALS
 						else if (!setKeepalivesWin32(conn))
 							err = 1;
-#endif /* SIO_KEEPALIVE_VALS */
-#endif /* WIN32 */
+#endif   /* SIO_KEEPALIVE_VALS */
+#endif   /* WIN32 */
 
 						if (err)
 						{
@@ -1864,8 +1863,8 @@ keep_going:						/* We will come back to here until there is
 					if (getpeereid(conn->sock, &uid, &gid) != 0)
 					{
 						appendPQExpBuffer(&conn->errorMessage,
-										  libpq_gettext("could not get peer credentials: %s\n"),
-										  pqStrerror(errno, sebuf, sizeof(sebuf)));
+						libpq_gettext("could not get peer credentials: %s\n"),
+									pqStrerror(errno, sebuf, sizeof(sebuf)));
 						goto error_return;
 					}
 #elif defined(SO_PEERCRED)
@@ -1878,20 +1877,20 @@ keep_going:						/* We will come back to here until there is
 						so_len != sizeof(peercred))
 					{
 						appendPQExpBuffer(&conn->errorMessage,
-										  libpq_gettext("could not get peer credentials: %s\n"),
-										  pqStrerror(errno, sebuf, sizeof(sebuf)));
+						libpq_gettext("could not get peer credentials: %s\n"),
+									pqStrerror(errno, sebuf, sizeof(sebuf)));
 						goto error_return;
 					}
 					uid = peercred.uid;
 #elif defined(HAVE_GETPEERUCRED)
 					ucred_t    *ucred;
 
-					ucred = NULL;			/* must be initialized to NULL */
+					ucred = NULL;		/* must be initialized to NULL */
 					if (getpeerucred(conn->sock, &ucred) == -1)
 					{
 						appendPQExpBuffer(&conn->errorMessage,
-										  libpq_gettext("could not get peer credentials: %s\n"),
-										  pqStrerror(errno, sebuf, sizeof(sebuf)));
+						libpq_gettext("could not get peer credentials: %s\n"),
+									pqStrerror(errno, sebuf, sizeof(sebuf)));
 						goto error_return;
 					}
 
@@ -1899,7 +1898,7 @@ keep_going:						/* We will come back to here until there is
 					{
 						appendPQExpBuffer(&conn->errorMessage,
 										  libpq_gettext("could not get effective UID from peer credentials: %s\n"),
-										  pqStrerror(errno, sebuf, sizeof(sebuf)));
+									pqStrerror(errno, sebuf, sizeof(sebuf)));
 						ucred_free(ucred);
 						goto error_return;
 					}
@@ -1925,7 +1924,7 @@ keep_going:						/* We will come back to here until there is
 										  conn->requirepeer, pass->pw_name);
 						goto error_return;
 					}
-#else  /* can't support requirepeer */
+#else							/* can't support requirepeer */
 					appendPQExpBuffer(&conn->errorMessage,
 									  libpq_gettext("requirepeer parameter is not supported on this platform\n"));
 					goto error_return;
@@ -2613,18 +2612,18 @@ internal_ping(PGconn *conn)
 	 * failure in sufficient detail to decide what to return.  We do not want
 	 * to report that the server is not up just because we didn't have a valid
 	 * password, for example.  In fact, any sort of authentication request
-	 * implies the server is up.  (We need this check since the libpq side
-	 * of things might have pulled the plug on the connection before getting
-	 * an error as such from the postmaster.)
+	 * implies the server is up.  (We need this check since the libpq side of
+	 * things might have pulled the plug on the connection before getting an
+	 * error as such from the postmaster.)
 	 */
 	if (conn->auth_req_received)
 		return PQPING_OK;
 
 	/*
 	 * If we failed to get any ERROR response from the postmaster, report
-	 * PQPING_NO_RESPONSE.  This result could be somewhat misleading for a
+	 * PQPING_NO_RESPONSE.	This result could be somewhat misleading for a
 	 * pre-7.4 server, since it won't send back a SQLSTATE, but those are long
-	 * out of support.  Another corner case where the server could return a
+	 * out of support.	Another corner case where the server could return a
 	 * failure without a SQLSTATE is fork failure, but NO_RESPONSE isn't
 	 * totally unreasonable for that anyway.  We expect that every other
 	 * failure case in a modern server will produce a report with a SQLSTATE.
@@ -2638,8 +2637,8 @@ internal_ping(PGconn *conn)
 		return PQPING_NO_RESPONSE;
 
 	/*
-	 * Report PQPING_REJECT if server says it's not accepting connections.
-	 * (We distinguish this case mainly for the convenience of pg_ctl.)
+	 * Report PQPING_REJECT if server says it's not accepting connections. (We
+	 * distinguish this case mainly for the convenience of pg_ctl.)
 	 */
 	if (strcmp(conn->last_sqlstate, ERRCODE_CANNOT_CONNECT_NOW) == 0)
 		return PQPING_REJECT;

@@ -45,11 +45,11 @@ typedef struct
 	 * Our archive location. This is basically what the user specified as his
 	 * backup file but of course here it is a directory.
 	 */
-	char			   *directory;
+	char	   *directory;
 
-	cfp				   *dataFH;				/* currently open data file */
+	cfp		   *dataFH;			/* currently open data file */
 
-	cfp				   *blobsTocFH;			/* file handle for blobs.toc */
+	cfp		   *blobsTocFH;		/* file handle for blobs.toc */
 } lclContext;
 
 typedef struct
@@ -168,9 +168,10 @@ InitArchiveFmt_Directory(ArchiveHandle *AH)
 						 fname, strerror(errno));
 
 		ctx->dataFH = tocFH;
+
 		/*
-		 * The TOC of a directory format dump shares the format code of
-		 * the tar format.
+		 * The TOC of a directory format dump shares the format code of the
+		 * tar format.
 		 */
 		AH->format = archTar;
 		ReadHead(AH);
@@ -193,8 +194,8 @@ InitArchiveFmt_Directory(ArchiveHandle *AH)
 static void
 _ArchiveEntry(ArchiveHandle *AH, TocEntry *te)
 {
-	lclTocEntry	   *tctx;
-	char			fn[MAXPGPATH];
+	lclTocEntry *tctx;
+	char		fn[MAXPGPATH];
 
 	tctx = (lclTocEntry *) calloc(1, sizeof(lclTocEntry));
 	if (!tctx)
@@ -286,9 +287,9 @@ _PrintExtraToc(ArchiveHandle *AH, TocEntry *te)
 static void
 _StartData(ArchiveHandle *AH, TocEntry *te)
 {
-	lclTocEntry	   *tctx = (lclTocEntry *) te->formatData;
-	lclContext	   *ctx = (lclContext *) AH->formatData;
-	char		   *fname;
+	lclTocEntry *tctx = (lclTocEntry *) te->formatData;
+	lclContext *ctx = (lclContext *) AH->formatData;
+	char	   *fname;
 
 	fname = prependDirectory(AH, tctx->filename);
 
@@ -310,7 +311,7 @@ _StartData(ArchiveHandle *AH, TocEntry *te)
 static size_t
 _WriteData(ArchiveHandle *AH, const void *data, size_t dLen)
 {
-	lclContext		   *ctx = (lclContext *) AH->formatData;
+	lclContext *ctx = (lclContext *) AH->formatData;
 
 	if (dLen == 0)
 		return 0;
@@ -327,7 +328,7 @@ _WriteData(ArchiveHandle *AH, const void *data, size_t dLen)
 static void
 _EndData(ArchiveHandle *AH, TocEntry *te)
 {
-	lclContext	   *ctx = (lclContext *) AH->formatData;
+	lclContext *ctx = (lclContext *) AH->formatData;
 
 	/* Close the file */
 	cfclose(ctx->dataFH);
@@ -349,7 +350,8 @@ _PrintFileData(ArchiveHandle *AH, char *filename, RestoreOptions *ropt)
 	if (!filename)
 		return;
 
-	cfp  = cfopen_read(filename, PG_BINARY_R);
+	cfp = cfopen_read(filename, PG_BINARY_R);
+
 	if (!cfp)
 		die_horribly(AH, modulename, "could not open input file \"%s\": %s\n",
 					 filename, strerror(errno));
@@ -380,7 +382,8 @@ _PrintTocData(ArchiveHandle *AH, TocEntry *te, RestoreOptions *ropt)
 		_LoadBlobs(AH, ropt);
 	else
 	{
-		char   *fname = prependDirectory(AH, tctx->filename);
+		char	   *fname = prependDirectory(AH, tctx->filename);
+
 		_PrintFileData(AH, fname, ropt);
 	}
 }
@@ -388,10 +391,10 @@ _PrintTocData(ArchiveHandle *AH, TocEntry *te, RestoreOptions *ropt)
 static void
 _LoadBlobs(ArchiveHandle *AH, RestoreOptions *ropt)
 {
-	Oid				oid;
-	lclContext	   *ctx = (lclContext *) AH->formatData;
-	char		   *fname;
-	char			line[MAXPGPATH];
+	Oid			oid;
+	lclContext *ctx = (lclContext *) AH->formatData;
+	char	   *fname;
+	char		line[MAXPGPATH];
 
 	StartRestoreBlobs(AH);
 
@@ -518,10 +521,11 @@ static void
 _CloseArchive(ArchiveHandle *AH)
 {
 	lclContext *ctx = (lclContext *) AH->formatData;
+
 	if (AH->mode == archModeWrite)
 	{
-		cfp	   *tocFH;
-		char   *fname = prependDirectory(AH, "toc.dat");
+		cfp		   *tocFH;
+		char	   *fname = prependDirectory(AH, "toc.dat");
 
 		/* The TOC is always created uncompressed */
 		tocFH = cfopen_write(fname, PG_BINARY_W, 0);
@@ -529,6 +533,7 @@ _CloseArchive(ArchiveHandle *AH)
 			die_horribly(AH, modulename, "could not open output file \"%s\": %s\n",
 						 fname, strerror(errno));
 		ctx->dataFH = tocFH;
+
 		/*
 		 * Write 'tar' in the format field of the toc.dat file. The directory
 		 * is compatible with 'tar', so there's no point having a different
@@ -555,14 +560,14 @@ _CloseArchive(ArchiveHandle *AH)
  * Called by the archiver when starting to save all BLOB DATA (not schema).
  * It is called just prior to the dumper's DataDumper routine.
  *
- * We open the large object TOC file here, so that we can append a line to 
+ * We open the large object TOC file here, so that we can append a line to
  * it for each blob.
  */
 static void
 _StartBlobs(ArchiveHandle *AH, TocEntry *te)
 {
-	lclContext	   *ctx = (lclContext *) AH->formatData;
-	char		   *fname;
+	lclContext *ctx = (lclContext *) AH->formatData;
+	char	   *fname;
 
 	fname = prependDirectory(AH, "blobs.toc");
 
@@ -581,8 +586,8 @@ _StartBlobs(ArchiveHandle *AH, TocEntry *te)
 static void
 _StartBlob(ArchiveHandle *AH, TocEntry *te, Oid oid)
 {
-	lclContext	   *ctx = (lclContext *) AH->formatData;
-	char			fname[MAXPGPATH];
+	lclContext *ctx = (lclContext *) AH->formatData;
+	char		fname[MAXPGPATH];
 
 	snprintf(fname, MAXPGPATH, "%s/blob_%u.dat", ctx->directory, oid);
 
@@ -601,9 +606,9 @@ _StartBlob(ArchiveHandle *AH, TocEntry *te, Oid oid)
 static void
 _EndBlob(ArchiveHandle *AH, TocEntry *te, Oid oid)
 {
-	lclContext	   *ctx = (lclContext *) AH->formatData;
-	char			buf[50];
-	int				len;
+	lclContext *ctx = (lclContext *) AH->formatData;
+	char		buf[50];
+	int			len;
 
 	/* Close the BLOB data file itself */
 	cfclose(ctx->dataFH);
@@ -612,7 +617,7 @@ _EndBlob(ArchiveHandle *AH, TocEntry *te, Oid oid)
 	/* register the blob in blobs.toc */
 	len = snprintf(buf, sizeof(buf), "%u blob_%u.dat\n", oid, oid);
 	if (cfwrite(buf, len, ctx->blobsTocFH) != len)
-		die_horribly(AH, modulename, "could not write to blobs TOC file\n");		
+		die_horribly(AH, modulename, "could not write to blobs TOC file\n");
 }
 
 /*
@@ -632,7 +637,7 @@ _EndBlobs(ArchiveHandle *AH, TocEntry *te)
 static void
 createDirectory(const char *dir)
 {
-	struct stat		st;
+	struct stat st;
 
 	/* the directory must not exist yet. */
 	if (stat(dir, &st) == 0)
@@ -661,14 +666,14 @@ createDirectory(const char *dir)
 static char *
 prependDirectory(ArchiveHandle *AH, const char *relativeFilename)
 {
-	lclContext	   *ctx = (lclContext *) AH->formatData;
-	static char		buf[MAXPGPATH];
-	char		   *dname;
+	lclContext *ctx = (lclContext *) AH->formatData;
+	static char buf[MAXPGPATH];
+	char	   *dname;
 
 	dname = ctx->directory;
 
 	if (strlen(dname) + 1 + strlen(relativeFilename) + 1 > MAXPGPATH)
-			die_horribly(AH, modulename, "path name too long: %s", dname);
+		die_horribly(AH, modulename, "path name too long: %s", dname);
 
 	strcpy(buf, dname);
 	strcat(buf, "/");

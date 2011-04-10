@@ -31,13 +31,13 @@ typedef struct BulkInsertStateData
 {
 	BufferAccessStrategy strategy;		/* our BULKWRITE strategy object */
 	Buffer		current_buf;	/* current insertion target page */
-} BulkInsertStateData;
+}	BulkInsertStateData;
 
 
 extern void RelationPutHeapTuple(Relation relation, Buffer buffer,
 					 HeapTuple tuple);
 extern Buffer RelationGetBufferForTuple(Relation relation, Size len,
 						  Buffer otherBuffer, int options,
-						  struct BulkInsertStateData *bistate);
+						  struct BulkInsertStateData * bistate);
 
 #endif   /* HIO_H */

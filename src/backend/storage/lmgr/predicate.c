@@ -327,7 +327,7 @@ typedef struct OldSerXidControlData
 	TransactionId headXid;		/* newest valid Xid in the SLRU */
 	TransactionId tailXid;		/* oldest xmin we might be interested in */
 	bool		warningIssued;
-} OldSerXidControlData;
+}	OldSerXidControlData;
 
 typedef struct OldSerXidControlData *OldSerXidControl;
 
@@ -477,7 +477,7 @@ ReleasePredXact(SERIALIZABLEXACT *sxact)
 	ptle = (PredXactListElement)
 		(((char *) sxact)
 		 - offsetof(PredXactListElementData, sxact)
-		 +offsetof(PredXactListElementData, link));
+		 + offsetof(PredXactListElementData, link));
 	SHMQueueDelete(&ptle->link);
 	SHMQueueInsertBefore(&PredXact->availableList, &ptle->link);
 }
@@ -507,7 +507,7 @@ NextPredXact(SERIALIZABLEXACT *sxact)
 	ptle = (PredXactListElement)
 		(((char *) sxact)
 		 - offsetof(PredXactListElementData, sxact)
-		 +offsetof(PredXactListElementData, link));
+		 + offsetof(PredXactListElementData, link));
 	ptle = (PredXactListElement)
 		SHMQueueNext(&PredXact->activeList,
 					 &ptle->link,
@@ -746,10 +746,10 @@ OldSerXidAdd(TransactionId xid, SerCommitSeqNo minConflictCommitSeqNo)
 	Assert(TransactionIdIsValid(tailXid));
 
 	/*
-	 * If the SLRU is currently unused, zero out the whole active region
-	 * from tailXid to headXid before taking it into use. Otherwise zero
-	 * out only any new pages that enter the tailXid-headXid range as we
-	 * advance headXid.
+	 * If the SLRU is currently unused, zero out the whole active region from
+	 * tailXid to headXid before taking it into use. Otherwise zero out only
+	 * any new pages that enter the tailXid-headXid range as we advance
+	 * headXid.
 	 */
 	if (oldSerXidControl->headPage < 0)
 	{
@@ -855,8 +855,8 @@ OldSerXidSetActiveSerXmin(TransactionId xid)
 	/*
 	 * When no sxacts are active, nothing overlaps, set the xid values to
 	 * invalid to show that there are no valid entries.  Don't clear headPage,
-	 * though.  A new xmin might still land on that page, and we don't want
-	 * to repeatedly zero out the same page.
+	 * though.	A new xmin might still land on that page, and we don't want to
+	 * repeatedly zero out the same page.
 	 */
 	if (!TransactionIdIsValid(xid))
 	{
@@ -901,7 +901,7 @@ OldSerXidSetActiveSerXmin(TransactionId xid)
 void
 CheckPointPredicate(void)
 {
-	int tailPage;
+	int			tailPage;
 
 	LWLockAcquire(OldSerXidLock, LW_EXCLUSIVE);
 
@@ -921,16 +921,15 @@ CheckPointPredicate(void)
 	{
 		/*
 		 * The SLRU is no longer needed. Truncate everything.  If we try to
-		 * leave the head page around to avoid re-zeroing it, we might not
-		 * use the SLRU again until we're past the wrap-around point, which
-		 * makes SLRU unhappy.
+		 * leave the head page around to avoid re-zeroing it, we might not use
+		 * the SLRU again until we're past the wrap-around point, which makes
+		 * SLRU unhappy.
 		 *
 		 * While the API asks you to specify truncation by page, it silently
-		 * ignores the request unless the specified page is in a segment
-		 * past some allocated portion of the SLRU.  We don't care which
-		 * page in a later segment we hit, so just add the number of pages
-		 * per segment to the head page to land us *somewhere* in the next
-		 * segment.
+		 * ignores the request unless the specified page is in a segment past
+		 * some allocated portion of the SLRU.	We don't care which page in a
+		 * later segment we hit, so just add the number of pages per segment
+		 * to the head page to land us *somewhere* in the next segment.
 		 */
 		tailPage = oldSerXidControl->headPage + SLRU_PAGES_PER_SEGMENT;
 		oldSerXidControl->headPage = -1;
@@ -1329,12 +1328,12 @@ SummarizeOldestCommittedSxact(void)
 	/*
 	 * This function is only called if there are no sxact slots available.
 	 * Some of them must belong to old, already-finished transactions, so
-	 * there should be something in FinishedSerializableTransactions list
-	 * that we can summarize. However, there's a race condition: while we
-	 * were not holding any locks, a transaction might have ended and cleaned
-	 * up all the finished sxact entries already, freeing up their sxact
-	 * slots. In that case, we have nothing to do here. The caller will find
-	 * one of the slots released by the other backend when it retries.
+	 * there should be something in FinishedSerializableTransactions list that
+	 * we can summarize. However, there's a race condition: while we were not
+	 * holding any locks, a transaction might have ended and cleaned up all
+	 * the finished sxact entries already, freeing up their sxact slots. In
+	 * that case, we have nothing to do here. The caller will find one of the
+	 * slots released by the other backend when it retries.
 	 */
 	if (SHMQueueEmpty(FinishedSerializableTransactions))
 	{
@@ -2213,7 +2212,7 @@ PredicateLockTuple(const Relation relation, const HeapTuple tuple)
 	 */
 	if (relation->rd_index == NULL)
 	{
-		TransactionId	myxid;
+		TransactionId myxid;
 
 		targetxmin = HeapTupleHeaderGetXmin(tuple->t_data);
 
@@ -2223,6 +2222,7 @@ PredicateLockTuple(const Relation relation, const HeapTuple tuple)
 			if (TransactionIdFollowsOrEquals(targetxmin, TransactionXmin))
 			{
 				TransactionId xid = SubTransGetTopmostTransaction(targetxmin);
+
 				if (TransactionIdEquals(xid, myxid))
 				{
 					/* We wrote it; we already have a write lock. */
@@ -2272,7 +2272,7 @@ PredicateLockTupleRowVersionLink(const Relation relation,
 	PREDICATELOCKTARGETTAG oldtupletag;
 	PREDICATELOCKTARGETTAG oldpagetag;
 	PREDICATELOCKTARGETTAG newtupletag;
-	BlockNumber	oldblk,
+	BlockNumber oldblk,
 				newblk;
 	OffsetNumber oldoff,
 				newoff;
@@ -2308,10 +2308,10 @@ PredicateLockTupleRowVersionLink(const Relation relation,
 
 	/*
 	 * A page-level lock on the page containing the old tuple counts too.
-	 * Anyone holding a lock on the page is logically holding a lock on
-	 * the old tuple, so we need to acquire a lock on his behalf on the
-	 * new tuple too. However, if the new tuple is on the same page as the
-	 * old one, the old page-level lock already covers the new tuple.
+	 * Anyone holding a lock on the page is logically holding a lock on the
+	 * old tuple, so we need to acquire a lock on his behalf on the new tuple
+	 * too. However, if the new tuple is on the same page as the old one, the
+	 * old page-level lock already covers the new tuple.
 	 *
 	 * A relation-level lock always covers both tuple versions, so we don't
 	 * need to worry about those here.
@@ -2668,10 +2668,10 @@ PredicateLockPageSplit(const Relation relation, const BlockNumber oldblkno,
 		/*
 		 * Move the locks to the parent. This shouldn't fail.
 		 *
-		 * Note that here we are removing locks held by other
-		 * backends, leading to a possible inconsistency in their
-		 * local lock hash table. This is OK because we're replacing
-		 * it with a lock that covers the old one.
+		 * Note that here we are removing locks held by other backends,
+		 * leading to a possible inconsistency in their local lock hash table.
+		 * This is OK because we're replacing it with a lock that covers the
+		 * old one.
 		 */
 		success = TransferPredicateLocksToNewTarget(oldtargettag,
 													newtargettag,
@@ -2696,16 +2696,15 @@ PredicateLockPageCombine(const Relation relation, const BlockNumber oldblkno,
 						 const BlockNumber newblkno)
 {
 	/*
-	 * Page combines differ from page splits in that we ought to be
-	 * able to remove the locks on the old page after transferring
-	 * them to the new page, instead of duplicating them. However,
-	 * because we can't edit other backends' local lock tables,
-	 * removing the old lock would leave them with an entry in their
-	 * LocalPredicateLockHash for a lock they're not holding, which
-	 * isn't acceptable. So we wind up having to do the same work as a
-	 * page split, acquiring a lock on the new page and keeping the old
-	 * page locked too. That can lead to some false positives, but
-	 * should be rare in practice.
+	 * Page combines differ from page splits in that we ought to be able to
+	 * remove the locks on the old page after transferring them to the new
+	 * page, instead of duplicating them. However, because we can't edit other
+	 * backends' local lock tables, removing the old lock would leave them
+	 * with an entry in their LocalPredicateLockHash for a lock they're not
+	 * holding, which isn't acceptable. So we wind up having to do the same
+	 * work as a page split, acquiring a lock on the new page and keeping the
+	 * old page locked too. That can lead to some false positives, but should
+	 * be rare in practice.
 	 */
 	PredicateLockPageSplit(relation, oldblkno, newblkno);
 }
@@ -3652,15 +3651,15 @@ CheckTargetForConflictsIn(PREDICATELOCKTARGETTAG *targettag)
 			/*
 			 * If we're getting a write lock on the tuple and we're not in a
 			 * subtransaction, we don't need a predicate (SIREAD) lock.  We
-			 * can't use this optimization within a subtransaction because
-			 * the subtransaction could be rolled back, and we would be left
+			 * can't use this optimization within a subtransaction because the
+			 * subtransaction could be rolled back, and we would be left
 			 * without any lock at the top level.
-			 * 
+			 *
 			 * At this point our transaction already has an ExclusiveRowLock
-			 * on the relation, so we are OK to drop the predicate lock on
-			 * the tuple, if found, without fearing that another write
-			 * against the tuple will occur before the MVCC information
-			 * makes it to the buffer.
+			 * on the relation, so we are OK to drop the predicate lock on the
+			 * tuple, if found, without fearing that another write against the
+			 * tuple will occur before the MVCC information makes it to the
+			 * buffer.
 			 */
 			if (!IsSubTransaction()
 				&& GET_PREDICATELOCKTARGETTAG_OFFSET(*targettag))
@@ -3722,8 +3721,8 @@ CheckTargetForConflictsIn(PREDICATELOCKTARGETTAG *targettag)
 					/*
 					 * Remove entry in local lock table if it exists and has
 					 * no children. It's OK if it doesn't exist; that means
-					 * the lock was transferred to a new target by a
-					 * different backend.
+					 * the lock was transferred to a new target by a different
+					 * backend.
 					 */
 					if (locallock != NULL)
 					{
@@ -3733,8 +3732,8 @@ CheckTargetForConflictsIn(PREDICATELOCKTARGETTAG *targettag)
 						{
 							rmlocallock = (LOCALPREDICATELOCK *)
 								hash_search_with_hash_value(LocalPredicateLockHash,
-															targettag, targettaghash,
-															HASH_REMOVE, NULL);
+													targettag, targettaghash,
+														  HASH_REMOVE, NULL);
 							Assert(rmlocallock == locallock);
 						}
 					}
@@ -3772,9 +3771,9 @@ CheckTargetForConflictsIn(PREDICATELOCKTARGETTAG *targettag)
 					LWLockAcquire(partitionLock, LW_SHARED);
 
 					/*
-					 * The list may have been altered by another process
-					 * while we weren't holding the partition lock.  Start
-					 * over at the front.
+					 * The list may have been altered by another process while
+					 * we weren't holding the partition lock.  Start over at
+					 * the front.
 					 */
 					nextpredlock = (PREDICATELOCK *)
 						SHMQueueNext(&(target->predicateLocks),
@@ -3862,8 +3861,8 @@ CheckForSerializableConflictIn(const Relation relation, const HeapTuple tuple,
 										 relation->rd_node.dbNode,
 										 relation->rd_id,
 						 ItemPointerGetBlockNumber(&(tuple->t_data->t_ctid)),
-					   ItemPointerGetOffsetNumber(&(tuple->t_data->t_ctid)),
-					   HeapTupleHeaderGetXmin(tuple->t_data));
+						ItemPointerGetOffsetNumber(&(tuple->t_data->t_ctid)),
+									  HeapTupleHeaderGetXmin(tuple->t_data));
 		CheckTargetForConflictsIn(&targettag);
 	}
 

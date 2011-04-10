@@ -95,9 +95,9 @@ PG_MODULE_MAGIC;
  **********************************************************************/
 typedef struct pltcl_interp_desc
 {
-	Oid			user_id;				/* Hash key (must be first!) */
-	Tcl_Interp *interp;					/* The interpreter */
-	Tcl_HashTable query_hash;			/* pltcl_query_desc structs */
+	Oid			user_id;		/* Hash key (must be first!) */
+	Tcl_Interp *interp;			/* The interpreter */
+	Tcl_HashTable query_hash;	/* pltcl_query_desc structs */
 } pltcl_interp_desc;
 
 
@@ -148,18 +148,19 @@ typedef struct pltcl_query_desc
  **********************************************************************/
 typedef struct pltcl_proc_key
 {
-	Oid			proc_id;				/* Function OID */
+	Oid			proc_id;		/* Function OID */
+
 	/*
 	 * is_trigger is really a bool, but declare as Oid to ensure this struct
 	 * contains no padding
 	 */
-	Oid			is_trigger;				/* is it a trigger function? */
-	Oid			user_id;				/* User calling the function, or 0 */
+	Oid			is_trigger;		/* is it a trigger function? */
+	Oid			user_id;		/* User calling the function, or 0 */
 } pltcl_proc_key;
 
 typedef struct pltcl_proc_ptr
 {
-	pltcl_proc_key proc_key;			/* Hash key (must be first!) */
+	pltcl_proc_key proc_key;	/* Hash key (must be first!) */
 	pltcl_proc_desc *proc_ptr;
 } pltcl_proc_ptr;
 
@@ -196,7 +197,7 @@ static HeapTuple pltcl_trigger_handler(PG_FUNCTION_ARGS, bool pltrusted);
 static void throw_tcl_error(Tcl_Interp *interp, const char *proname);
 
 static pltcl_proc_desc *compile_pltcl_function(Oid fn_oid, Oid tgreloid,
-											   bool pltrusted);
+					   bool pltrusted);
 
 static int pltcl_elog(ClientData cdata, Tcl_Interp *interp,
 		   int argc, CONST84 char *argv[]);

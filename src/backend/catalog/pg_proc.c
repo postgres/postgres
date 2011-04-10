@@ -842,8 +842,8 @@ fmgr_sql_validator(PG_FUNCTION_ARGS)
 		if (!haspolyarg)
 		{
 			/*
-			 * OK to do full precheck: analyze and rewrite the queries,
-			 * then verify the result type.
+			 * OK to do full precheck: analyze and rewrite the queries, then
+			 * verify the result type.
 			 */
 			SQLFunctionParseInfoPtr pinfo;
 
@@ -858,7 +858,7 @@ fmgr_sql_validator(PG_FUNCTION_ARGS)
 
 				querytree_sublist = pg_analyze_and_rewrite_params(parsetree,
 																  prosrc,
-																  (ParserSetupHook) sql_fn_parser_setup,
+									   (ParserSetupHook) sql_fn_parser_setup,
 																  pinfo);
 				querytree_list = list_concat(querytree_list,
 											 querytree_sublist);

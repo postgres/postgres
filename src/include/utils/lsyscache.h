@@ -61,7 +61,7 @@ extern AttrNumber get_attnum(Oid relid, const char *attname);
 extern Oid	get_atttype(Oid relid, AttrNumber attnum);
 extern int32 get_atttypmod(Oid relid, AttrNumber attnum);
 extern void get_atttypetypmodcoll(Oid relid, AttrNumber attnum,
-				  Oid *typid, int32 *typmod, Oid *collid);
+					  Oid *typid, int32 *typmod, Oid *collid);
 extern char *get_collation_name(Oid colloid);
 extern char *get_constraint_name(Oid conoid);
 extern Oid	get_opclass_family(Oid opclass);
@@ -125,7 +125,7 @@ extern void getTypeOutputInfo(Oid type, Oid *typOutput, bool *typIsVarlena);
 extern void getTypeBinaryInputInfo(Oid type, Oid *typReceive, Oid *typIOParam);
 extern void getTypeBinaryOutputInfo(Oid type, Oid *typSend, bool *typIsVarlena);
 extern Oid	get_typmodin(Oid typid);
-extern Oid get_typcollation(Oid typid);
+extern Oid	get_typcollation(Oid typid);
 extern bool type_is_collatable(Oid typid);
 extern Oid	getBaseType(Oid typid);
 extern Oid	getBaseTypeAndTypmod(Oid typid, int32 *typmod);

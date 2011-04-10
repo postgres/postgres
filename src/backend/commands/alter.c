@@ -282,26 +282,26 @@ AlterObjectNamespace_oid(Oid classId, Oid objid, Oid nspOid)
 	switch (getObjectClass(&dep))
 	{
 		case OCLASS_CLASS:
-		{
-			Relation rel;
-			Relation classRel;
+			{
+				Relation	rel;
+				Relation	classRel;
 
-			rel = relation_open(objid, AccessExclusiveLock);
-			oldNspOid = RelationGetNamespace(rel);
+				rel = relation_open(objid, AccessExclusiveLock);
+				oldNspOid = RelationGetNamespace(rel);
 
-			classRel = heap_open(RelationRelationId, RowExclusiveLock);
+				classRel = heap_open(RelationRelationId, RowExclusiveLock);
 
-			AlterRelationNamespaceInternal(classRel,
-										   objid,
-										   oldNspOid,
-										   nspOid,
-										   true);
+				AlterRelationNamespaceInternal(classRel,
+											   objid,
+											   oldNspOid,
+											   nspOid,
+											   true);
 
-			heap_close(classRel, RowExclusiveLock);
+				heap_close(classRel, RowExclusiveLock);
 
-			relation_close(rel, NoLock);
-			break;
-		}
+				relation_close(rel, NoLock);
+				break;
+			}
 
 		case OCLASS_PROC:
 			oldNspOid = AlterFunctionNamespace_oid(objid, nspOid);
@@ -386,9 +386,11 @@ AlterObjectNamespace(Relation rel, int oidCacheId, int nameCacheId,
 {
 	Oid			classId = RelationGetRelid(rel);
 	Oid			oldNspOid;
-	Datum       name, namespace;
-	bool        isnull;
-	HeapTuple	tup, newtup;
+	Datum		name,
+				namespace;
+	bool		isnull;
+	HeapTuple	tup,
+				newtup;
 	Datum	   *values;
 	bool	   *nulls;
 	bool	   *replaces;
@@ -410,7 +412,7 @@ AlterObjectNamespace(Relation rel, int oidCacheId, int nameCacheId,
 	/* Permission checks ... superusers can always do it */
 	if (!superuser())
 	{
-		Datum       owner;
+		Datum		owner;
 		Oid			ownerId;
 		AclResult	aclresult;
 

@@ -29,7 +29,7 @@ typedef struct RUHashEntryData *RUHashEntry;
 typedef struct RUHashEntryData
 {
 	TupleHashEntryData shared;	/* common header for hash table entries */
-} RUHashEntryData;
+}	RUHashEntryData;
 
 
 /*

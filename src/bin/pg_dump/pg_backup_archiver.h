@@ -261,11 +261,10 @@ typedef struct _archiveHandle
 	DumpId		maxDumpId;		/* largest DumpId among all TOC entries */
 
 	struct _tocEntry *currToc;	/* Used when dumping data */
-	int			compression;	/* Compression requested on open
-								 * Possible values for compression:
-								 *  -1   Z_DEFAULT_COMPRESSION
-								 *   0	COMPRESSION_NONE
-								 *  1-9	levels for gzip compression */
+	int			compression;	/* Compression requested on open Possible
+								 * values for compression: -1
+								 * Z_DEFAULT_COMPRESSION 0	COMPRESSION_NONE
+								 * 1-9 levels for gzip compression */
 	ArchiveMode mode;			/* File mode - r or w */
 	void	   *formatData;		/* Header data specific to file format */
 

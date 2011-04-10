@@ -84,7 +84,7 @@ moddatetime(PG_FUNCTION_ARGS)
 
 	/*
 	 * This is where we check to see if the field we are supposed to update
-	 * even exists.	The above function must return -1 if name not found?
+	 * even exists. The above function must return -1 if name not found?
 	 */
 	if (attnum < 0)
 		ereport(ERROR,

@@ -385,7 +385,7 @@ typedef struct
 	HANDLE		waitHandle;
 	HANDLE		procHandle;
 	DWORD		procId;
-}	win32_deadchild_waitinfo;
+} win32_deadchild_waitinfo;
 
 HANDLE		PostmasterHandle;
 #endif
@@ -400,7 +400,7 @@ typedef struct
 	SOCKET		origsocket;		/* Original socket value, or PGINVALID_SOCKET
 								 * if not a socket */
 	WSAPROTOCOL_INFO wsainfo;
-}	InheritableSocket;
+} InheritableSocket;
 #else
 typedef int InheritableSocket;
 #endif
@@ -447,15 +447,15 @@ typedef struct
 	char		my_exec_path[MAXPGPATH];
 	char		pkglib_path[MAXPGPATH];
 	char		ExtraOptions[MAXPGPATH];
-}	BackendParameters;
+} BackendParameters;
 
 static void read_backend_variables(char *id, Port *port);
-static void restore_backend_variables(BackendParameters * param, Port *port);
+static void restore_backend_variables(BackendParameters *param, Port *port);
 
 #ifndef WIN32
-static bool save_backend_variables(BackendParameters * param, Port *port);
+static bool save_backend_variables(BackendParameters *param, Port *port);
 #else
-static bool save_backend_variables(BackendParameters * param, Port *port,
+static bool save_backend_variables(BackendParameters *param, Port *port,
 					   HANDLE childProcess, pid_t childPid);
 #endif
 
@@ -1936,9 +1936,9 @@ canAcceptConnections(void)
 	 *
 	 * In state PM_WAIT_BACKUP only superusers can connect (this must be
 	 * allowed so that a superuser can end online backup mode); we return
-	 * CAC_WAITBACKUP code to indicate that this must be checked later.
-	 * Note that neither CAC_OK nor CAC_WAITBACKUP can safely be returned
-	 * until we have checked for too many children.
+	 * CAC_WAITBACKUP code to indicate that this must be checked later. Note
+	 * that neither CAC_OK nor CAC_WAITBACKUP can safely be returned until we
+	 * have checked for too many children.
 	 */
 	if (pmState != PM_RUN)
 	{
@@ -1949,10 +1949,10 @@ canAcceptConnections(void)
 		else if (!FatalError &&
 				 (pmState == PM_STARTUP ||
 				  pmState == PM_RECOVERY))
-			return CAC_STARTUP;		/* normal startup */
+			return CAC_STARTUP; /* normal startup */
 		else if (!FatalError &&
 				 pmState == PM_HOT_STANDBY)
-			result = CAC_OK;		/* connection OK during hot standby */
+			result = CAC_OK;	/* connection OK during hot standby */
 		else
 			return CAC_RECOVERY;	/* else must be crash recovery */
 	}
@@ -2004,10 +2004,10 @@ ConnCreate(int serverFd)
 
 	/*
 	 * Precompute password salt values to use for this connection. It's
-	 * slightly annoying to do this long in advance of knowing whether
-	 * we'll need 'em or not, but we must do the random() calls before we
-	 * fork, not after.  Else the postmaster's random sequence won't get
-	 * advanced, and all backends would end up using the same salt...
+	 * slightly annoying to do this long in advance of knowing whether we'll
+	 * need 'em or not, but we must do the random() calls before we fork, not
+	 * after.  Else the postmaster's random sequence won't get advanced, and
+	 * all backends would end up using the same salt...
 	 */
 	RandomSalt(port->md5Salt);
 
@@ -2611,12 +2611,13 @@ CleanupBackend(int pid,
 	 * the active backend list.
 	 */
 #ifdef WIN32
+
 	/*
-	 * On win32, also treat ERROR_WAIT_NO_CHILDREN (128) as nonfatal
-	 * case, since that sometimes happens under load when the process fails
-	 * to start properly (long before it starts using shared memory).
-	 * Microsoft reports it is related to mutex failure:
-	 *    http://archives.postgresql.org/pgsql-hackers/2010-09/msg00790.php
+	 * On win32, also treat ERROR_WAIT_NO_CHILDREN (128) as nonfatal case,
+	 * since that sometimes happens under load when the process fails to start
+	 * properly (long before it starts using shared memory). Microsoft reports
+	 * it is related to mutex failure:
+	 * http://archives.postgresql.org/pgsql-hackers/2010-09/msg00790.php
 	 */
 	if (exitstatus == ERROR_WAIT_NO_CHILDREN)
 	{
@@ -3086,11 +3087,11 @@ PostmasterStateMachine(void)
 	}
 
 	/*
-	 * If recovery failed, or the user does not want an automatic restart after
-	 * backend crashes, wait for all non-syslogger children to exit, and then
-	 * exit postmaster. We don't try to reinitialize when recovery fails,
-	 * because more than likely it will just fail again and we will keep trying
-	 * forever.
+	 * If recovery failed, or the user does not want an automatic restart
+	 * after backend crashes, wait for all non-syslogger children to exit, and
+	 * then exit postmaster. We don't try to reinitialize when recovery fails,
+	 * because more than likely it will just fail again and we will keep
+	 * trying forever.
 	 */
 	if (pmState == PM_NO_CHILDREN && (RecoveryError || !restart_after_crash))
 		ExitPostmaster(1);
@@ -3169,9 +3170,8 @@ SignalSomeChildren(int signal, int target)
 			continue;
 
 		/*
-		 * Since target == BACKEND_TYPE_ALL is the most common case,
-		 * we test it first and avoid touching shared memory for
-		 * every child.
+		 * Since target == BACKEND_TYPE_ALL is the most common case, we test
+		 * it first and avoid touching shared memory for every child.
 		 */
 		if (target != BACKEND_TYPE_ALL)
 		{
@@ -4409,9 +4409,8 @@ CountChildren(int target)
 			continue;
 
 		/*
-		 * Since target == BACKEND_TYPE_ALL is the most common case,
-		 * we test it first and avoid touching shared memory for
-		 * every child.
+		 * Since target == BACKEND_TYPE_ALL is the most common case, we test
+		 * it first and avoid touching shared memory for every child.
 		 */
 		if (target != BACKEND_TYPE_ALL)
 		{
@@ -4686,19 +4685,19 @@ extern pgsocket pgStatSock;
 #define read_inheritable_socket(dest, src) (*(dest) = *(src))
 #else
 static bool write_duplicated_handle(HANDLE *dest, HANDLE src, HANDLE child);
-static bool write_inheritable_socket(InheritableSocket * dest, SOCKET src,
+static bool write_inheritable_socket(InheritableSocket *dest, SOCKET src,
 						 pid_t childPid);
-static void read_inheritable_socket(SOCKET * dest, InheritableSocket * src);
+static void read_inheritable_socket(SOCKET *dest, InheritableSocket *src);
 #endif
 
 
 /* Save critical backend variables into the BackendParameters struct */
 #ifndef WIN32
 static bool
-save_backend_variables(BackendParameters * param, Port *port)
+save_backend_variables(BackendParameters *param, Port *port)
 #else
 static bool
-save_backend_variables(BackendParameters * param, Port *port,
+save_backend_variables(BackendParameters *param, Port *port,
 					   HANDLE childProcess, pid_t childPid)
 #endif
 {
@@ -4790,7 +4789,7 @@ write_duplicated_handle(HANDLE *dest, HANDLE src, HANDLE childProcess)
  * straight socket inheritance.
  */
 static bool
-write_inheritable_socket(InheritableSocket * dest, SOCKET src, pid_t childpid)
+write_inheritable_socket(InheritableSocket *dest, SOCKET src, pid_t childpid)
 {
 	dest->origsocket = src;
 	if (src != 0 && src != PGINVALID_SOCKET)
@@ -4811,7 +4810,7 @@ write_inheritable_socket(InheritableSocket * dest, SOCKET src, pid_t childpid)
  * Read a duplicate socket structure back, and get the socket descriptor.
  */
 static void
-read_inheritable_socket(SOCKET * dest, InheritableSocket * src)
+read_inheritable_socket(SOCKET *dest, InheritableSocket *src)
 {
 	SOCKET		s;
 
@@ -4920,7 +4919,7 @@ read_backend_variables(char *id, Port *port)
 
 /* Restore critical backend variables from the BackendParameters struct */
 static void
-restore_backend_variables(BackendParameters * param, Port *port)
+restore_backend_variables(BackendParameters *param, Port *port)
 {
 	memcpy(port, &param->port, sizeof(Port));
 	read_inheritable_socket(&port->sock, &param->portsocket);

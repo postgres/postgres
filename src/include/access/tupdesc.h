@@ -115,8 +115,8 @@ extern void TupleDescInitEntry(TupleDesc desc,
 				   int attdim);
 
 extern void TupleDescInitEntryCollation(TupleDesc desc,
-										AttrNumber attributeNumber,
-										Oid collationid);
+							AttrNumber attributeNumber,
+							Oid collationid);
 
 extern TupleDesc BuildDescForRelation(List *schema);
 

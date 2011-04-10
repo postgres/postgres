@@ -514,7 +514,8 @@ LocalExecuteInvalidationMessage(SharedInvalidationMessage *msg)
 		 * We could have smgr entries for relations of other databases, so no
 		 * short-circuit test is possible here.
 		 */
-		RelFileNodeBackend	rnode;
+		RelFileNodeBackend rnode;
+
 		rnode.node = msg->sm.rnode;
 		rnode.backend = (msg->sm.backend_hi << 16) | (int) msg->sm.backend_lo;
 		smgrclosenode(rnode);

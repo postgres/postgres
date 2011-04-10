@@ -671,7 +671,7 @@ transformAssignmentIndirection(ParseState *pstate,
 						 parser_errposition(pstate, location)));
 
 			get_atttypetypmodcoll(typrelid, attnum,
-								  &fieldTypeId, &fieldTypMod, &fieldCollation);
+								&fieldTypeId, &fieldTypMod, &fieldCollation);
 
 			/* recurse to create appropriate RHS for field assign */
 			rhs = transformAssignmentIndirection(pstate,
@@ -783,8 +783,8 @@ transformAssignmentSubscripts(ParseState *pstate,
 
 	/*
 	 * Array normally has same collation as elements, but there's an
-	 * exception: we might be subscripting a domain over an array type.
-	 * In that case use collation of the base type.
+	 * exception: we might be subscripting a domain over an array type. In
+	 * that case use collation of the base type.
 	 */
 	if (arrayType == targetTypeId)
 		collationNeeded = targetCollation;

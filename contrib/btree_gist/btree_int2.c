@@ -94,12 +94,12 @@ static const gbtree_ninfo tinfo =
 
 
 PG_FUNCTION_INFO_V1(int2_dist);
-Datum       int2_dist(PG_FUNCTION_ARGS);
+Datum		int2_dist(PG_FUNCTION_ARGS);
 Datum
 int2_dist(PG_FUNCTION_ARGS)
 {
-	int2        a = PG_GETARG_INT16(0);
-	int2        b = PG_GETARG_INT16(1);
+	int2		a = PG_GETARG_INT16(0);
+	int2		b = PG_GETARG_INT16(1);
 	int2		r;
 	int2		ra;
 
@@ -169,7 +169,7 @@ gbt_int2_distance(PG_FUNCTION_ARGS)
 	key.upper = (GBT_NUMKEY *) &kkk->upper;
 
 	PG_RETURN_FLOAT8(
-				   gbt_num_distance(&key, (void *) &query, GIST_LEAF(entry), &tinfo)
+			gbt_num_distance(&key, (void *) &query, GIST_LEAF(entry), &tinfo)
 		);
 }
 

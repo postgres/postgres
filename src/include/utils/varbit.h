@@ -80,6 +80,7 @@ extern Datum bitle(PG_FUNCTION_ARGS);
 extern Datum bitgt(PG_FUNCTION_ARGS);
 extern Datum bitge(PG_FUNCTION_ARGS);
 extern Datum bitcmp(PG_FUNCTION_ARGS);
+
 /* avoid the names bitand and bitor, since they are C++ keywords */
 extern Datum bit_and(PG_FUNCTION_ARGS);
 extern Datum bit_or(PG_FUNCTION_ARGS);

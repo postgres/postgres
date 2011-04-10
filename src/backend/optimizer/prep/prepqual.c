@@ -54,12 +54,12 @@ static Expr *process_duplicate_ors(List *orlist);
  * Although this can be invoked on its own, it's mainly intended as a helper
  * for eval_const_expressions(), and that context drives several design
  * decisions.  In particular, if the input is already AND/OR flat, we must
- * preserve that property.  We also don't bother to recurse in situations
+ * preserve that property.	We also don't bother to recurse in situations
  * where we can assume that lower-level executions of eval_const_expressions
  * would already have simplified sub-clauses of the input.
  *
  * The difference between this and a simple make_notclause() is that this
- * tries to get rid of the NOT node by logical simplification.  It's clearly
+ * tries to get rid of the NOT node by logical simplification.	It's clearly
  * always a win if the NOT node can be eliminated altogether.  However, our
  * use of DeMorgan's laws could result in having more NOT nodes rather than
  * fewer.  We do that unconditionally anyway, because in WHERE clauses it's
@@ -141,21 +141,21 @@ negate_clause(Node *node)
 
 				switch (expr->boolop)
 				{
-					/*--------------------
-					 * Apply DeMorgan's Laws:
-					 *		(NOT (AND A B)) => (OR (NOT A) (NOT B))
-					 *		(NOT (OR A B))	=> (AND (NOT A) (NOT B))
-					 * i.e., swap AND for OR and negate each subclause.
-					 *
-					 * If the input is already AND/OR flat and has no NOT
-					 * directly above AND or OR, this transformation preserves
-					 * those properties.  For example, if no direct child of
-					 * the given AND clause is an AND or a NOT-above-OR, then
-					 * the recursive calls of negate_clause() can't return any
-					 * OR clauses.  So we needn't call pull_ors() before
-					 * building a new OR clause.  Similarly for the OR case.
-					 *--------------------
-					 */
+						/*--------------------
+						 * Apply DeMorgan's Laws:
+						 *		(NOT (AND A B)) => (OR (NOT A) (NOT B))
+						 *		(NOT (OR A B))	=> (AND (NOT A) (NOT B))
+						 * i.e., swap AND for OR and negate each subclause.
+						 *
+						 * If the input is already AND/OR flat and has no NOT
+						 * directly above AND or OR, this transformation preserves
+						 * those properties.  For example, if no direct child of
+						 * the given AND clause is an AND or a NOT-above-OR, then
+						 * the recursive calls of negate_clause() can't return any
+						 * OR clauses.	So we needn't call pull_ors() before
+						 * building a new OR clause.  Similarly for the OR case.
+						 *--------------------
+						 */
 					case AND_EXPR:
 						{
 							List	   *nargs = NIL;
@@ -183,6 +183,7 @@ negate_clause(Node *node)
 						}
 						break;
 					case NOT_EXPR:
+
 						/*
 						 * NOT underneath NOT: they cancel.  We assume the
 						 * input is already simplified, so no need to recurse.
@@ -218,8 +219,8 @@ negate_clause(Node *node)
 			break;
 		case T_BooleanTest:
 			{
-				BooleanTest   *expr = (BooleanTest *) node;
-				BooleanTest   *newexpr = makeNode(BooleanTest);
+				BooleanTest *expr = (BooleanTest *) node;
+				BooleanTest *newexpr = makeNode(BooleanTest);
 
 				newexpr->arg = expr->arg;
 				switch (expr->booltesttype)

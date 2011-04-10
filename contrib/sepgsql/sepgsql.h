@@ -218,33 +218,34 @@ extern bool sepgsql_get_debug_audit(void);
 /*
  * selinux.c
  */
-extern bool	sepgsql_is_enabled(void);
+extern bool sepgsql_is_enabled(void);
 extern int	sepgsql_get_mode(void);
 extern int	sepgsql_set_mode(int new_mode);
 extern bool sepgsql_getenforce(void);
 
 extern void sepgsql_audit_log(bool denied,
-							  const char *scontext,
-							  const char *tcontext,
-							  uint16 tclass,
-							  uint32 audited,
-							  const char *audit_name);
+				  const char *scontext,
+				  const char *tcontext,
+				  uint16 tclass,
+				  uint32 audited,
+				  const char *audit_name);
 
 extern void sepgsql_compute_avd(const char *scontext,
-								const char *tcontext,
-								uint16 tclass,
-								struct av_decision *avd);
+					const char *tcontext,
+					uint16 tclass,
+					struct av_decision * avd);
 
 extern char *sepgsql_compute_create(const char *scontext,
-									const char *tcontext,
-									uint16 tclass);
+					   const char *tcontext,
+					   uint16 tclass);
 
 extern bool sepgsql_check_perms(const char *scontext,
-								const char *tcontext,
-								uint16 tclass,
-								uint32 required,
-								const char *audit_name,
-								bool abort);
+					const char *tcontext,
+					uint16 tclass,
+					uint32 required,
+					const char *audit_name,
+					bool abort);
+
 /*
  * label.c
  */
@@ -252,8 +253,8 @@ extern char *sepgsql_get_client_label(void);
 extern char *sepgsql_set_client_label(char *new_label);
 extern char *sepgsql_get_label(Oid relOid, Oid objOid, int32 subId);
 
-extern void	 sepgsql_object_relabel(const ObjectAddress *object,
-									const char *seclabel);
+extern void sepgsql_object_relabel(const ObjectAddress *object,
+					   const char *seclabel);
 
 extern Datum sepgsql_getcon(PG_FUNCTION_ARGS);
 extern Datum sepgsql_mcstrans_in(PG_FUNCTION_ARGS);
@@ -276,7 +277,7 @@ extern void sepgsql_schema_relabel(Oid namespaceId, const char *seclabel);
  */
 extern void sepgsql_attribute_post_create(Oid relOid, AttrNumber attnum);
 extern void sepgsql_attribute_relabel(Oid relOid, AttrNumber attnum,
-									  const char *seclabel);
+						  const char *seclabel);
 extern void sepgsql_relation_post_create(Oid relOid);
 extern void sepgsql_relation_relabel(Oid relOid, const char *seclabel);
 
@@ -287,4 +288,4 @@ extern void sepgsql_proc_post_create(Oid functionId);
 extern void sepgsql_proc_relabel(Oid functionId, const char *seclabel);
 extern char *sepgsql_proc_get_domtrans(Oid functionId);
 
-#endif /* SEPGSQL_H */
+#endif   /* SEPGSQL_H */

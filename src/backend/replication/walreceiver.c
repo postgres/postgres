@@ -94,8 +94,8 @@ static struct
 	XLogRecPtr	Flush;			/* last byte + 1 flushed in the standby */
 }	LogstreamResult;
 
-static StandbyReplyMessage	reply_message;
-static StandbyHSFeedbackMessage	feedback_message;
+static StandbyReplyMessage reply_message;
+static StandbyHSFeedbackMessage feedback_message;
 
 /*
  * About SIGTERM handling:
@@ -329,8 +329,8 @@ WalReceiverMain(void)
 		else
 		{
 			/*
-			 * We didn't receive anything new, but send a status update to
-			 * the master anyway, to report any progress in applying WAL.
+			 * We didn't receive anything new, but send a status update to the
+			 * master anyway, to report any progress in applying WAL.
 			 */
 			XLogWalRcvSendReply();
 			XLogWalRcvSendHSFeedback();
@@ -595,7 +595,7 @@ static void
 XLogWalRcvSendReply(void)
 {
 	char		buf[sizeof(StandbyReplyMessage) + 1];
-	TimestampTz	now;
+	TimestampTz now;
 
 	/*
 	 * If the user doesn't want status to be reported to the master, be sure
@@ -619,7 +619,7 @@ XLogWalRcvSendReply(void)
 	if (XLByteEQ(reply_message.write, LogstreamResult.Write)
 		&& XLByteEQ(reply_message.flush, LogstreamResult.Flush)
 		&& !TimestampDifferenceExceeds(reply_message.sendTime, now,
-			wal_receiver_status_interval * 1000))
+									   wal_receiver_status_interval * 1000))
 		return;
 
 	/* Construct a new message */
@@ -629,9 +629,9 @@ XLogWalRcvSendReply(void)
 	reply_message.sendTime = now;
 
 	elog(DEBUG2, "sending write %X/%X flush %X/%X apply %X/%X",
-				 reply_message.write.xlogid, reply_message.write.xrecoff,
-				 reply_message.flush.xlogid, reply_message.flush.xrecoff,
-				 reply_message.apply.xlogid, reply_message.apply.xrecoff);
+		 reply_message.write.xlogid, reply_message.write.xrecoff,
+		 reply_message.flush.xlogid, reply_message.flush.xrecoff,
+		 reply_message.apply.xlogid, reply_message.apply.xrecoff);
 
 	/* Prepend with the message type and send it. */
 	buf[0] = 'r';
@@ -646,11 +646,11 @@ XLogWalRcvSendReply(void)
 static void
 XLogWalRcvSendHSFeedback(void)
 {
-	char			buf[sizeof(StandbyHSFeedbackMessage) + 1];
-	TimestampTz		now;
-	TransactionId	nextXid;
-	uint32			nextEpoch;
-	TransactionId	xmin;
+	char		buf[sizeof(StandbyHSFeedbackMessage) + 1];
+	TimestampTz now;
+	TransactionId nextXid;
+	uint32		nextEpoch;
+	TransactionId xmin;
 
 	/*
 	 * If the user doesn't want status to be reported to the master, be sure
@@ -666,26 +666,25 @@ XLogWalRcvSendHSFeedback(void)
 	 * Send feedback at most once per wal_receiver_status_interval.
 	 */
 	if (!TimestampDifferenceExceeds(feedback_message.sendTime, now,
-			wal_receiver_status_interval * 1000))
+									wal_receiver_status_interval * 1000))
 		return;
 
 	/*
-	 * If Hot Standby is not yet active there is nothing to send.
-	 * Check this after the interval has expired to reduce number of
-	 * calls.
+	 * If Hot Standby is not yet active there is nothing to send. Check this
+	 * after the interval has expired to reduce number of calls.
 	 */
 	if (!HotStandbyActive())
 		return;
 
 	/*
-	 * Make the expensive call to get the oldest xmin once we are
-	 * certain everything else has been checked.
+	 * Make the expensive call to get the oldest xmin once we are certain
+	 * everything else has been checked.
 	 */
 	xmin = GetOldestXmin(true, false);
 
 	/*
-	 * Get epoch and adjust if nextXid and oldestXmin are different
-	 * sides of the epoch boundary.
+	 * Get epoch and adjust if nextXid and oldestXmin are different sides of
+	 * the epoch boundary.
 	 */
 	GetNextXidAndEpoch(&nextXid, &nextEpoch);
 	if (nextXid < xmin)
@@ -699,8 +698,8 @@ XLogWalRcvSendHSFeedback(void)
 	feedback_message.epoch = nextEpoch;
 
 	elog(DEBUG2, "sending hot standby feedback xmin %u epoch %u",
-				 feedback_message.xmin,
-				 feedback_message.epoch);
+		 feedback_message.xmin,
+		 feedback_message.epoch);
 
 	/* Prepend with the message type and send it. */
 	buf[0] = 'h';

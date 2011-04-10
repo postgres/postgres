@@ -248,8 +248,8 @@ ChoosePortalStrategy(List *stmts)
 	/*
 	 * PORTAL_ONE_SELECT and PORTAL_UTIL_SELECT need only consider the
 	 * single-statement case, since there are no rewrite rules that can add
-	 * auxiliary queries to a SELECT or a utility command.
-	 * PORTAL_ONE_MOD_WITH likewise allows only one top-level statement.
+	 * auxiliary queries to a SELECT or a utility command. PORTAL_ONE_MOD_WITH
+	 * likewise allows only one top-level statement.
 	 */
 	if (list_length(stmts) == 1)
 	{
@@ -1158,7 +1158,7 @@ PortalRunUtility(Portal portal, Node *utilityStmt, bool isTopLevel,
 	 * list.  Transaction control, LOCK, and SET must *not* set a snapshot
 	 * since they need to be executable at the start of a transaction-snapshot
 	 * mode transaction without freezing a snapshot.  By extension we allow
-	 * SHOW not to set a snapshot.  The other stmts listed are just efficiency
+	 * SHOW not to set a snapshot.	The other stmts listed are just efficiency
 	 * hacks.  Beware of listing anything that can modify the database --- if,
 	 * say, it has to update an index with expressions that invoke
 	 * user-defined functions, then it had better have a snapshot.

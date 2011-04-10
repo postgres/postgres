@@ -12,7 +12,7 @@
 #include <signal.h>
 
 
-LogOpts			log_opts;
+LogOpts		log_opts;
 
 /*
  * report_status()

@@ -13,9 +13,9 @@
 
 
 static void create_rel_filename_map(const char *old_data, const char *new_data,
-			  const DbInfo *old_db, const DbInfo *new_db,
-			  const RelInfo *old_rel, const RelInfo *new_rel,
-			  FileNameMap *map);
+						const DbInfo *old_db, const DbInfo *new_db,
+						const RelInfo *old_rel, const RelInfo *new_rel,
+						FileNameMap *map);
 static void get_db_infos(ClusterInfo *cluster);
 static void get_rel_infos(ClusterInfo *cluster, DbInfo *dbinfo);
 static void free_rel_infos(RelInfoArr *rel_arr);
@@ -40,7 +40,7 @@ gen_db_file_maps(DbInfo *old_db, DbInfo *new_db,
 
 	if (old_db->rel_arr.nrels != new_db->rel_arr.nrels)
 		pg_log(PG_FATAL, "old and new databases \"%s\" have a different number of relations\n",
-					old_db->db_name);
+			   old_db->db_name);
 
 	maps = (FileNameMap *) pg_malloc(sizeof(FileNameMap) *
 									 old_db->rel_arr.nrels);
@@ -52,24 +52,24 @@ gen_db_file_maps(DbInfo *old_db, DbInfo *new_db,
 
 		if (old_rel->reloid != new_rel->reloid)
 			pg_log(PG_FATAL, "Mismatch of relation id: database \"%s\", old relid %d, new relid %d\n",
-			old_db->db_name, old_rel->reloid, new_rel->reloid);
+				   old_db->db_name, old_rel->reloid, new_rel->reloid);
 
 		/*
-		 *	In pre-8.4, TOAST table names change during CLUSTER;  in >= 8.4
-		 *	TOAST relation names always use heap table oids, hence we
-		 *	cannot check relation names when upgrading from pre-8.4.
+		 * In pre-8.4, TOAST table names change during CLUSTER;  in >= 8.4
+		 * TOAST relation names always use heap table oids, hence we cannot
+		 * check relation names when upgrading from pre-8.4.
 		 */
 		if (strcmp(old_rel->nspname, new_rel->nspname) != 0 ||
 			((GET_MAJOR_VERSION(old_cluster.major_version) >= 804 ||
 			  strcmp(old_rel->nspname, "pg_toast") != 0) &&
 			 strcmp(old_rel->relname, new_rel->relname) != 0))
 			pg_log(PG_FATAL, "Mismatch of relation names: database \"%s\", "
-				"old rel %s.%s, new rel %s.%s\n",
-				old_db->db_name, old_rel->nspname, old_rel->relname,
-				new_rel->nspname, new_rel->relname);
+				   "old rel %s.%s, new rel %s.%s\n",
+				   old_db->db_name, old_rel->nspname, old_rel->relname,
+				   new_rel->nspname, new_rel->relname);
 
 		create_rel_filename_map(old_pgdata, new_pgdata, old_db, new_db,
-				old_rel, new_rel, maps + num_maps);
+								old_rel, new_rel, maps + num_maps);
 		num_maps++;
 	}
 
@@ -85,9 +85,9 @@ gen_db_file_maps(DbInfo *old_db, DbInfo *new_db,
  */
 static void
 create_rel_filename_map(const char *old_data, const char *new_data,
-			  const DbInfo *old_db, const DbInfo *new_db,
-			  const RelInfo *old_rel, const RelInfo *new_rel,
-			  FileNameMap *map)
+						const DbInfo *old_db, const DbInfo *new_db,
+						const RelInfo *old_rel, const RelInfo *new_rel,
+						FileNameMap *map)
 {
 	if (strlen(old_rel->tablespace) == 0)
 	{
@@ -110,8 +110,8 @@ create_rel_filename_map(const char *old_data, const char *new_data,
 	}
 
 	/*
-	 *	old_relfilenode might differ from pg_class.oid (and hence
-	 *	new_relfilenode) because of CLUSTER, REINDEX, or VACUUM FULL.
+	 * old_relfilenode might differ from pg_class.oid (and hence
+	 * new_relfilenode) because of CLUSTER, REINDEX, or VACUUM FULL.
 	 */
 	map->old_relfilenode = old_rel->relfilenode;
 
@@ -185,7 +185,9 @@ get_db_infos(ClusterInfo *cluster)
 	int			ntups;
 	int			tupnum;
 	DbInfo	   *dbinfos;
-	int			i_datname, i_oid, i_spclocation;
+	int			i_datname,
+				i_oid,
+				i_spclocation;
 
 	res = executeQueryOrDie(conn,
 							"SELECT d.oid, d.datname, t.spclocation "
@@ -241,15 +243,19 @@ get_rel_infos(ClusterInfo *cluster, DbInfo *dbinfo)
 	int			num_rels = 0;
 	char	   *nspname = NULL;
 	char	   *relname = NULL;
-	int			i_spclocation, i_nspname, i_relname, i_oid, i_relfilenode;
+	int			i_spclocation,
+				i_nspname,
+				i_relname,
+				i_oid,
+				i_relfilenode;
 	char		query[QUERY_ALLOC];
 
 	/*
 	 * pg_largeobject contains user data that does not appear in pg_dumpall
 	 * --schema-only output, so we have to copy that system table heap and
-	 * index.  We could grab the pg_largeobject oids from template1, but
-	 * it is easy to treat it as a normal table.
-	 * Order by oid so we can join old/new structures efficiently.
+	 * index.  We could grab the pg_largeobject oids from template1, but it is
+	 * easy to treat it as a normal table. Order by oid so we can join old/new
+	 * structures efficiently.
 	 */
 
 	snprintf(query, sizeof(query),
@@ -263,7 +269,7 @@ get_rel_infos(ClusterInfo *cluster, DbInfo *dbinfo)
 			 "  ((n.nspname NOT IN ('pg_catalog', 'information_schema', 'binary_upgrade') AND "
 			 "	  c.oid >= %u) "
 			 "  OR (n.nspname = 'pg_catalog' AND "
-			 "    relname IN ('pg_largeobject', 'pg_largeobject_loid_pn_index'%s) )) "
+	"    relname IN ('pg_largeobject', 'pg_largeobject_loid_pn_index'%s) )) "
 	/* we preserve pg_class.oid so we sort by it to match old/new */
 			 "ORDER BY 1;",
 	/* see the comment at the top of old_8_3_create_sequence_script() */
@@ -273,7 +279,7 @@ get_rel_infos(ClusterInfo *cluster, DbInfo *dbinfo)
 			 FirstNormalObjectId,
 	/* does pg_largeobject_metadata need to be migrated? */
 			 (GET_MAJOR_VERSION(old_cluster.major_version) <= 804) ?
-			 "" : ", 'pg_largeobject_metadata', 'pg_largeobject_metadata_oid_index'");
+	"" : ", 'pg_largeobject_metadata', 'pg_largeobject_metadata_oid_index'");
 
 	res = executeQueryOrDie(conn, query);
 

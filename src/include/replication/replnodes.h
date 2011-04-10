@@ -35,7 +35,7 @@ typedef enum ReplNodeTag
 typedef struct IdentifySystemCmd
 {
 	NodeTag		type;
-}	IdentifySystemCmd;
+} IdentifySystemCmd;
 
 
 /* ----------------------
@@ -46,7 +46,7 @@ typedef struct BaseBackupCmd
 {
 	NodeTag		type;
 	List	   *options;
-}	BaseBackupCmd;
+} BaseBackupCmd;
 
 
 /* ----------------------
@@ -57,6 +57,6 @@ typedef struct StartReplicationCmd
 {
 	NodeTag		type;
 	XLogRecPtr	startpoint;
-}	StartReplicationCmd;
+} StartReplicationCmd;
 
 #endif   /* REPLNODES_H */

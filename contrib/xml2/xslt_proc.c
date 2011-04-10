@@ -42,7 +42,6 @@ extern void pgxml_parser_init(void);
 
 /* local defs */
 static const char **parse_params(text *paramstr);
-
 #endif   /* USE_LIBXSLT */
 
 
@@ -166,7 +165,7 @@ parse_params(text *paramstr)
 		{
 			max_params *= 2;
 			params = (const char **) repalloc(params,
-											  (max_params + 1) * sizeof(char *));
+										  (max_params + 1) * sizeof(char *));
 		}
 		params[nparams++] = pos;
 		pos = strstr(pos, nvsep);

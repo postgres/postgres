@@ -1555,7 +1555,7 @@ exec_bind_message(StringInfo input_message)
 
 		/* sizeof(ParamListInfoData) includes the first array element */
 		params = (ParamListInfo) palloc(sizeof(ParamListInfoData) +
-								   (numParams - 1) *sizeof(ParamExternData));
+								  (numParams - 1) * sizeof(ParamExternData));
 		/* we have static list of params, so no hooks needed */
 		params->paramFetch = NULL;
 		params->paramFetchArg = NULL;
@@ -2982,17 +2982,16 @@ ia64_get_bsp(void)
 
 #ifndef __INTEL_COMPILER
 	/* the ;; is a "stop", seems to be required before fetching BSP */
-	__asm__ __volatile__(
-		";;\n"
-		"	mov	%0=ar.bsp	\n"
-:		"=r"(ret));
+	__asm__		__volatile__(
+										 ";;\n"
+										 "	mov	%0=ar.bsp	\n"
+							 :			 "=r"(ret));
 #else
-  ret = (char *) __getReg(_IA64_REG_AR_BSP);
+	ret = (char *) __getReg(_IA64_REG_AR_BSP);
 #endif
-  return ret;
+	return ret;
 }
-
-#endif /* IA64 */
+#endif   /* IA64 */
 
 
 /*
@@ -3035,7 +3034,7 @@ check_stack_depth(void)
 				(errcode(ERRCODE_STATEMENT_TOO_COMPLEX),
 				 errmsg("stack depth limit exceeded"),
 				 errhint("Increase the configuration parameter \"max_stack_depth\" (currently %dkB), "
-						 "after ensuring the platform's stack depth limit is adequate.",
+			  "after ensuring the platform's stack depth limit is adequate.",
 						 max_stack_depth)));
 	}
 
@@ -3057,10 +3056,10 @@ check_stack_depth(void)
 				(errcode(ERRCODE_STATEMENT_TOO_COMPLEX),
 				 errmsg("stack depth limit exceeded"),
 				 errhint("Increase the configuration parameter \"max_stack_depth\" (currently %dkB), "
-						 "after ensuring the platform's stack depth limit is adequate.",
+			  "after ensuring the platform's stack depth limit is adequate.",
 						 max_stack_depth)));
 	}
-#endif /* IA64 */
+#endif   /* IA64 */
 }
 
 /* GUC check hook for max_stack_depth */

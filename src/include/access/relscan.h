@@ -50,7 +50,7 @@ typedef struct HeapScanDescData
 	int			rs_mindex;		/* marked tuple's saved index */
 	int			rs_ntuples;		/* number of visible tuples on page */
 	OffsetNumber rs_vistuples[MaxHeapTuplesPerPage];	/* their offsets */
-} HeapScanDescData;
+}	HeapScanDescData;
 
 /*
  * We use the same IndexScanDescData structure for both amgettuple-based
@@ -64,9 +64,9 @@ typedef struct IndexScanDescData
 	Relation	indexRelation;	/* index relation descriptor */
 	Snapshot	xs_snapshot;	/* snapshot to see */
 	int			numberOfKeys;	/* number of index qualifier conditions */
-	int			numberOfOrderBys;	/* number of ordering operators */
-	ScanKey		keyData;			/* array of index qualifier descriptors */
-	ScanKey		orderByData;		/* array of ordering op descriptors */
+	int			numberOfOrderBys;		/* number of ordering operators */
+	ScanKey		keyData;		/* array of index qualifier descriptors */
+	ScanKey		orderByData;	/* array of ordering op descriptors */
 
 	/* signaling to index AM about killing index tuples */
 	bool		kill_prior_tuple;		/* last-returned tuple is dead */
@@ -87,7 +87,7 @@ typedef struct IndexScanDescData
 	bool		xs_hot_dead;	/* T if all members of HOT chain are dead */
 	OffsetNumber xs_next_hot;	/* next member of HOT chain, if any */
 	TransactionId xs_prev_xmax; /* previous HOT chain member's XMAX, if any */
-} IndexScanDescData;
+}	IndexScanDescData;
 
 /* Struct for heap-or-index scans of system tables */
 typedef struct SysScanDescData
@@ -96,6 +96,6 @@ typedef struct SysScanDescData
 	Relation	irel;			/* NULL if doing heap scan */
 	HeapScanDesc scan;			/* only valid in heap-scan case */
 	IndexScanDesc iscan;		/* only valid in index-scan case */
-} SysScanDescData;
+}	SysScanDescData;
 
 #endif   /* RELSCAN_H */

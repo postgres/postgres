@@ -164,7 +164,7 @@ ECPGprepare(int lineno, const char *connection_name, const bool questionmarks, c
 	struct prepared_statement *this,
 			   *prev;
 
-	(void) questionmarks; /* quiet the compiler */
+	(void) questionmarks;		/* quiet the compiler */
 	con = ecpg_get_connection(connection_name);
 
 	if (!ecpg_init(con, connection_name, lineno))
@@ -305,7 +305,7 @@ ecpg_prepared(const char *name, struct connection * con)
 char *
 ECPGprepared_statement(const char *connection_name, const char *name, int lineno)
 {
-	(void)lineno; /* keep the compiler quiet */
+	(void) lineno;				/* keep the compiler quiet */
 	return ecpg_prepared(name, ecpg_get_connection(connection_name));
 }
 

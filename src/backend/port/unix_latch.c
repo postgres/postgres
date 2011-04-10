@@ -37,11 +37,11 @@
  *
  * for (;;)
  * {
- *     ResetLatch();
- *     if (work to do)
- *         Do Stuff();
+ *	   ResetLatch();
+ *	   if (work to do)
+ *		   Do Stuff();
  *
- *     WaitLatch();
+ *	   WaitLatch();
  * }
  *
  * It's important to reset the latch *before* checking if there's work to
@@ -100,8 +100,8 @@
 static volatile sig_atomic_t waiting = false;
 
 /* Read and write end of the self-pipe */
-static int selfpipe_readfd = -1;
-static int selfpipe_writefd = -1;
+static int	selfpipe_readfd = -1;
+static int	selfpipe_writefd = -1;
 
 /* private function prototypes */
 static void initSelfPipe(void);
@@ -205,7 +205,8 @@ int
 WaitLatchOrSocket(volatile Latch *latch, pgsocket sock, bool forRead,
 				  bool forWrite, long timeout)
 {
-	struct timeval tv, *tvp = NULL;
+	struct timeval tv,
+			   *tvp = NULL;
 	fd_set		input_mask;
 	fd_set		output_mask;
 	int			rc;
@@ -225,13 +226,13 @@ WaitLatchOrSocket(volatile Latch *latch, pgsocket sock, bool forRead,
 	waiting = true;
 	for (;;)
 	{
-		int hifd;
+		int			hifd;
 
 		/*
 		 * Clear the pipe, and check if the latch is set already. If someone
-		 * sets the latch between this and the select() below, the setter
-		 * will write a byte to the pipe (or signal us and the signal handler
-		 * will do that), and the select() will return immediately.
+		 * sets the latch between this and the select() below, the setter will
+		 * write a byte to the pipe (or signal us and the signal handler will
+		 * do that), and the select() will return immediately.
 		 */
 		drainSelfPipe();
 		if (latch->is_set)
@@ -278,7 +279,7 @@ WaitLatchOrSocket(volatile Latch *latch, pgsocket sock, bool forRead,
 			 (forWrite && FD_ISSET(sock, &output_mask))))
 		{
 			result = 2;
-			break;		/* data available in socket */
+			break;				/* data available in socket */
 		}
 	}
 	waiting = false;
@@ -293,7 +294,7 @@ WaitLatchOrSocket(volatile Latch *latch, pgsocket sock, bool forRead,
 void
 SetLatch(volatile Latch *latch)
 {
-	pid_t owner_pid;
+	pid_t		owner_pid;
 
 	/* Quick exit if already set */
 	if (latch->is_set)
@@ -302,17 +303,17 @@ SetLatch(volatile Latch *latch)
 	latch->is_set = true;
 
 	/*
-	 * See if anyone's waiting for the latch. It can be the current process
-	 * if we're in a signal handler. We use the self-pipe to wake up the
-	 * select() in that case. If it's another process, send a signal.
+	 * See if anyone's waiting for the latch. It can be the current process if
+	 * we're in a signal handler. We use the self-pipe to wake up the select()
+	 * in that case. If it's another process, send a signal.
 	 *
-	 * Fetch owner_pid only once, in case the owner simultaneously disowns
-	 * the latch and clears owner_pid. XXX: This assumes that pid_t is
-	 * atomic, which isn't guaranteed to be true! In practice, the effective
-	 * range of pid_t fits in a 32 bit integer, and so should be atomic. In
-	 * the worst case, we might end up signaling wrong process if the right
-	 * one disowns the latch just as we fetch owner_pid. Even then, you're
-	 * very unlucky if a process with that bogus pid exists.
+	 * Fetch owner_pid only once, in case the owner simultaneously disowns the
+	 * latch and clears owner_pid. XXX: This assumes that pid_t is atomic,
+	 * which isn't guaranteed to be true! In practice, the effective range of
+	 * pid_t fits in a 32 bit integer, and so should be atomic. In the worst
+	 * case, we might end up signaling wrong process if the right one disowns
+	 * the latch just as we fetch owner_pid. Even then, you're very unlucky if
+	 * a process with that bogus pid exists.
 	 */
 	owner_pid = latch->owner_pid;
 	if (owner_pid == 0)
@@ -351,15 +352,14 @@ latch_sigusr1_handler(void)
 static void
 initSelfPipe(void)
 {
-	int pipefd[2];
+	int			pipefd[2];
 
 	/*
 	 * Set up the self-pipe that allows a signal handler to wake up the
 	 * select() in WaitLatch. Make the write-end non-blocking, so that
 	 * SetLatch won't block if the event has already been set many times
-	 * filling the kernel buffer. Make the read-end non-blocking too, so
-	 * that we can easily clear the pipe by reading until EAGAIN or
-	 * EWOULDBLOCK.
+	 * filling the kernel buffer. Make the read-end non-blocking too, so that
+	 * we can easily clear the pipe by reading until EAGAIN or EWOULDBLOCK.
 	 */
 	if (pipe(pipefd) < 0)
 		elog(FATAL, "pipe() failed: %m");
@@ -376,8 +376,8 @@ initSelfPipe(void)
 static void
 sendSelfPipeByte(void)
 {
-	int rc;
-	char dummy = 0;
+	int			rc;
+	char		dummy = 0;
 
 retry:
 	rc = write(selfpipe_writefd, &dummy, 1);
@@ -388,16 +388,16 @@ retry:
 			goto retry;
 
 		/*
-		 * If the pipe is full, we don't need to retry, the data that's
-		 * there already is enough to wake up WaitLatch.
+		 * If the pipe is full, we don't need to retry, the data that's there
+		 * already is enough to wake up WaitLatch.
 		 */
 		if (errno == EAGAIN || errno == EWOULDBLOCK)
 			return;
 
 		/*
-		 * Oops, the write() failed for some other reason. We might be in
-		 * a signal handler, so it's not safe to elog(). We have no choice
-		 * but silently ignore the error.
+		 * Oops, the write() failed for some other reason. We might be in a
+		 * signal handler, so it's not safe to elog(). We have no choice but
+		 * silently ignore the error.
 		 */
 		return;
 	}
@@ -408,11 +408,11 @@ static void
 drainSelfPipe(void)
 {
 	/*
-	 * There shouldn't normally be more than one byte in the pipe, or maybe
-	 * a few more if multiple processes run SetLatch at the same instant.
+	 * There shouldn't normally be more than one byte in the pipe, or maybe a
+	 * few more if multiple processes run SetLatch at the same instant.
 	 */
-	char buf[16];
-	int rc;
+	char		buf[16];
+	int			rc;
 
 	for (;;)
 	{
@@ -420,9 +420,9 @@ drainSelfPipe(void)
 		if (rc < 0)
 		{
 			if (errno == EAGAIN || errno == EWOULDBLOCK)
-				break;		/* the pipe is empty */
+				break;			/* the pipe is empty */
 			else if (errno == EINTR)
-				continue;	/* retry */
+				continue;		/* retry */
 			else
 				elog(ERROR, "read() on self-pipe failed: %m");
 		}

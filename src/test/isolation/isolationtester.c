@@ -17,16 +17,16 @@
 
 #include "isolationtester.h"
 
-static PGconn  **conns = NULL;
-static int	   nconns = 0;
+static PGconn **conns = NULL;
+static int	nconns = 0;
 
-static void run_all_permutations(TestSpec *testspec);
-static void run_all_permutations_recurse(TestSpec *testspec, int nsteps, Step **steps);
-static void run_named_permutations(TestSpec *testspec);
-static void run_permutation(TestSpec *testspec, int nsteps, Step **steps);
+static void run_all_permutations(TestSpec * testspec);
+static void run_all_permutations_recurse(TestSpec * testspec, int nsteps, Step ** steps);
+static void run_named_permutations(TestSpec * testspec);
+static void run_permutation(TestSpec * testspec, int nsteps, Step ** steps);
 
-static int step_qsort_cmp(const void *a, const void *b);
-static int step_bsearch_cmp(const void *a, const void *b);
+static int	step_qsort_cmp(const void *a, const void *b);
+static int	step_bsearch_cmp(const void *a, const void *b);
 
 static void printResultSet(PGresult *res);
 
@@ -35,6 +35,7 @@ static void
 exit_nicely(void)
 {
 	int			i;
+
 	for (i = 0; i < nconns; i++)
 		PQfinish(conns[i]);
 	exit(1);
@@ -49,9 +50,8 @@ main(int argc, char **argv)
 
 	/*
 	 * If the user supplies a parameter on the command line, use it as the
-	 * conninfo string; otherwise default to setting dbname=postgres and
-	 * using environment variables or defaults for all other connection
-	 * parameters.
+	 * conninfo string; otherwise default to setting dbname=postgres and using
+	 * environment variables or defaults for all other connection parameters.
 	 */
 	if (argc > 1)
 		conninfo = argv[1];
@@ -68,7 +68,7 @@ main(int argc, char **argv)
 	conns = calloc(nconns, sizeof(PGconn *));
 	for (i = 0; i < testspec->nsessions; i++)
 	{
-		PGresult *res;
+		PGresult   *res;
 
 		conns[i] = PQconnectdb(conninfo);
 		if (PQstatus(conns[i]) != CONNECTION_OK)
@@ -94,8 +94,9 @@ main(int argc, char **argv)
 	/* Set the session index fields in steps. */
 	for (i = 0; i < testspec->nsessions; i++)
 	{
-		Session *session = testspec->sessions[i];
-		int		stepindex;
+		Session    *session = testspec->sessions[i];
+		int			stepindex;
+
 		for (stepindex = 0; stepindex < session->nsteps; stepindex++)
 			session->steps[stepindex]->session = i;
 	}
@@ -121,7 +122,7 @@ static int *piles;
  * Run all permutations of the steps and sessions.
  */
 static void
-run_all_permutations(TestSpec *testspec)
+run_all_permutations(TestSpec * testspec)
 {
 	int			nsteps;
 	int			i;
@@ -135,13 +136,13 @@ run_all_permutations(TestSpec *testspec)
 	steps = malloc(sizeof(Step *) * nsteps);
 
 	/*
-	 * To generate the permutations, we conceptually put the steps of
-	 * each session on a pile. To generate a permuation, we pick steps
-	 * from the piles until all piles are empty. By picking steps from
-	 * piles in different order, we get different permutations.
+	 * To generate the permutations, we conceptually put the steps of each
+	 * session on a pile. To generate a permuation, we pick steps from the
+	 * piles until all piles are empty. By picking steps from piles in
+	 * different order, we get different permutations.
 	 *
-	 * A pile is actually just an integer which tells how many steps
-	 * we've already picked from this pile.
+	 * A pile is actually just an integer which tells how many steps we've
+	 * already picked from this pile.
 	 */
 	piles = malloc(sizeof(int) * testspec->nsessions);
 	for (i = 0; i < testspec->nsessions; i++)
@@ -151,10 +152,10 @@ run_all_permutations(TestSpec *testspec)
 }
 
 static void
-run_all_permutations_recurse(TestSpec *testspec, int nsteps, Step **steps)
+run_all_permutations_recurse(TestSpec * testspec, int nsteps, Step ** steps)
 {
-	int i;
-	int found = 0;
+	int			i;
+	int			found = 0;
 
 	for (i = 0; i < testspec->nsessions; i++)
 	{
@@ -181,12 +182,13 @@ run_all_permutations_recurse(TestSpec *testspec, int nsteps, Step **steps)
  * Run permutations given in the test spec
  */
 static void
-run_named_permutations(TestSpec *testspec)
+run_named_permutations(TestSpec * testspec)
 {
-	int		i, j;
-	int		n;
-	int		nallsteps;
-	Step  **allsteps;
+	int			i,
+				j;
+	int			n;
+	int			nallsteps;
+	Step	  **allsteps;
 
 	/* First create a lookup table of all steps */
 	nallsteps = 0;
@@ -207,7 +209,7 @@ run_named_permutations(TestSpec *testspec)
 	for (i = 0; i < testspec->npermutations; i++)
 	{
 		Permutation *p = testspec->permutations[i];
-		Step **steps;
+		Step	  **steps;
 
 		steps = malloc(p->nsteps * sizeof(Step *));
 
@@ -215,7 +217,7 @@ run_named_permutations(TestSpec *testspec)
 		for (j = 0; j < p->nsteps; j++)
 		{
 			steps[j] = *((Step **) bsearch(p->stepnames[j], allsteps, nallsteps,
-										   sizeof(Step *), &step_bsearch_cmp));
+										 sizeof(Step *), &step_bsearch_cmp));
 			if (steps[j] == NULL)
 			{
 				fprintf(stderr, "undefined step \"%s\" specified in permutation\n", p->stepnames[j]);
@@ -231,8 +233,8 @@ run_named_permutations(TestSpec *testspec)
 static int
 step_qsort_cmp(const void *a, const void *b)
 {
-	Step *stepa = *((Step **) a);
-	Step *stepb = *((Step **) b);
+	Step	   *stepa = *((Step **) a);
+	Step	   *stepb = *((Step **) b);
 
 	return strcmp(stepa->name, stepb->name);
 }
@@ -240,8 +242,8 @@ step_qsort_cmp(const void *a, const void *b)
 static int
 step_bsearch_cmp(const void *a, const void *b)
 {
-	char *stepname = (char *) a;
-	Step *step = *((Step **) b);
+	char	   *stepname = (char *) a;
+	Step	   *step = *((Step **) b);
 
 	return strcmp(stepname, step->name);
 }
@@ -250,10 +252,10 @@ step_bsearch_cmp(const void *a, const void *b)
  * Run one permutation
  */
 static void
-run_permutation(TestSpec *testspec, int nsteps, Step **steps)
+run_permutation(TestSpec * testspec, int nsteps, Step ** steps)
 {
-	PGresult *res;
-	int i;
+	PGresult   *res;
+	int			i;
 
 	printf("\nstarting permutation:");
 	for (i = 0; i < nsteps; i++)
@@ -292,11 +294,12 @@ run_permutation(TestSpec *testspec, int nsteps, Step **steps)
 	/* Perform steps */
 	for (i = 0; i < nsteps; i++)
 	{
-		Step *step = steps[i];
+		Step	   *step = steps[i];
+
 		printf("step %s: %s\n", step->name, step->sql);
 		res = PQexec(conns[step->session], step->sql);
 
-		switch(PQresultStatus(res))
+		switch (PQresultStatus(res))
 		{
 			case PGRES_COMMAND_OK:
 				break;
@@ -353,20 +356,21 @@ run_permutation(TestSpec *testspec, int nsteps, Step **steps)
 static void
 printResultSet(PGresult *res)
 {
-	int		nFields;
-	int		i, j;
+	int			nFields;
+	int			i,
+				j;
 
-    /* first, print out the attribute names */
-    nFields = PQnfields(res);
-    for (i = 0; i < nFields; i++)
-        printf("%-15s", PQfname(res, i));
-    printf("\n\n");
+	/* first, print out the attribute names */
+	nFields = PQnfields(res);
+	for (i = 0; i < nFields; i++)
+		printf("%-15s", PQfname(res, i));
+	printf("\n\n");
 
-    /* next, print out the rows */
-    for (i = 0; i < PQntuples(res); i++)
-    {
-        for (j = 0; j < nFields; j++)
-            printf("%-15s", PQgetvalue(res, i, j));
-        printf("\n");
-    }
+	/* next, print out the rows */
+	for (i = 0; i < PQntuples(res); i++)
+	{
+		for (j = 0; j < nFields; j++)
+			printf("%-15s", PQgetvalue(res, i, j));
+		printf("\n");
+	}
 }

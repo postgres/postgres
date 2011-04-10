@@ -84,7 +84,7 @@ CreateRole(CreateRoleStmt *stmt)
 	bool		createrole = false;		/* Can this user create roles? */
 	bool		createdb = false;		/* Can the user create databases? */
 	bool		canlogin = false;		/* Can this user login? */
-	bool		isreplication = false; /* Is this a replication role? */
+	bool		isreplication = false;	/* Is this a replication role? */
 	int			connlimit = -1; /* maximum connections allowed */
 	List	   *addroleto = NIL;	/* roles to make this a member of */
 	List	   *rolemembers = NIL;		/* roles to be members of this role */
@@ -98,7 +98,7 @@ CreateRole(CreateRoleStmt *stmt)
 	DefElem    *dcreaterole = NULL;
 	DefElem    *dcreatedb = NULL;
 	DefElem    *dcanlogin = NULL;
-	DefElem	   *disreplication = NULL;
+	DefElem    *disreplication = NULL;
 	DefElem    *dconnlimit = NULL;
 	DefElem    *daddroleto = NULL;
 	DefElem    *drolemembers = NULL;
@@ -240,9 +240,10 @@ CreateRole(CreateRoleStmt *stmt)
 	if (dissuper)
 	{
 		issuper = intVal(dissuper->arg) != 0;
+
 		/*
-		 * Superusers get replication by default, but only if
-		 * NOREPLICATION wasn't explicitly mentioned
+		 * Superusers get replication by default, but only if NOREPLICATION
+		 * wasn't explicitly mentioned
 		 */
 		if (!(disreplication && intVal(disreplication->arg) == 0))
 			isreplication = 1;
@@ -287,7 +288,7 @@ CreateRole(CreateRoleStmt *stmt)
 		if (!superuser())
 			ereport(ERROR,
 					(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
-					 errmsg("must be superuser to create replication users")));
+				   errmsg("must be superuser to create replication users")));
 	}
 	else
 	{
@@ -384,8 +385,8 @@ CreateRole(CreateRoleStmt *stmt)
 	tuple = heap_form_tuple(pg_authid_dsc, new_record, new_record_nulls);
 
 	/*
-	 * pg_largeobject_metadata contains pg_authid.oid's, so we
-	 * use the binary-upgrade override, if specified.
+	 * pg_largeobject_metadata contains pg_authid.oid's, so we use the
+	 * binary-upgrade override, if specified.
 	 */
 	if (OidIsValid(binary_upgrade_next_pg_authid_oid))
 	{
@@ -467,7 +468,7 @@ AlterRole(AlterRoleStmt *stmt)
 	int			createrole = -1;	/* Can this user create roles? */
 	int			createdb = -1;	/* Can the user create databases? */
 	int			canlogin = -1;	/* Can this user login? */
-	int			isreplication = -1; /* Is this a replication role? */
+	int			isreplication = -1;		/* Is this a replication role? */
 	int			connlimit = -1; /* maximum connections allowed */
 	List	   *rolemembers = NIL;		/* roles to be added/removed */
 	char	   *validUntil = NULL;		/* time the login is valid until */
@@ -479,7 +480,7 @@ AlterRole(AlterRoleStmt *stmt)
 	DefElem    *dcreaterole = NULL;
 	DefElem    *dcreatedb = NULL;
 	DefElem    *dcanlogin = NULL;
-	DefElem	   *disreplication = NULL;
+	DefElem    *disreplication = NULL;
 	DefElem    *dconnlimit = NULL;
 	DefElem    *drolemembers = NULL;
 	DefElem    *dvalidUntil = NULL;

@@ -28,7 +28,7 @@ t_isdigit(const char *ptr)
 {
 	int			clen = pg_mblen(ptr);
 	wchar_t		character[2];
-	Oid			collation = DEFAULT_COLLATION_OID; /*TODO*/
+	Oid			collation = DEFAULT_COLLATION_OID;		/* TODO */
 
 	if (clen == 1 || lc_ctype_is_c(collation))
 		return isdigit(TOUCHAR(ptr));
@@ -43,7 +43,7 @@ t_isspace(const char *ptr)
 {
 	int			clen = pg_mblen(ptr);
 	wchar_t		character[2];
-	Oid			collation = DEFAULT_COLLATION_OID; /*TODO*/
+	Oid			collation = DEFAULT_COLLATION_OID;		/* TODO */
 
 	if (clen == 1 || lc_ctype_is_c(collation))
 		return isspace(TOUCHAR(ptr));
@@ -58,7 +58,7 @@ t_isalpha(const char *ptr)
 {
 	int			clen = pg_mblen(ptr);
 	wchar_t		character[2];
-	Oid			collation = DEFAULT_COLLATION_OID; /*TODO*/
+	Oid			collation = DEFAULT_COLLATION_OID;		/* TODO */
 
 	if (clen == 1 || lc_ctype_is_c(collation))
 		return isalpha(TOUCHAR(ptr));
@@ -73,7 +73,7 @@ t_isprint(const char *ptr)
 {
 	int			clen = pg_mblen(ptr);
 	wchar_t		character[2];
-	Oid			collation = DEFAULT_COLLATION_OID; /*TODO*/
+	Oid			collation = DEFAULT_COLLATION_OID;		/* TODO */
 
 	if (clen == 1 || lc_ctype_is_c(collation))
 		return isprint(TOUCHAR(ptr));
@@ -243,8 +243,9 @@ char *
 lowerstr_with_len(const char *str, int len)
 {
 	char	   *out;
+
 #ifdef USE_WIDE_UPPER_LOWER
-	Oid			collation = DEFAULT_COLLATION_OID; /*TODO*/
+	Oid			collation = DEFAULT_COLLATION_OID;		/* TODO */
 #endif
 
 	if (len == 0)

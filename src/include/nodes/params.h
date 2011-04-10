@@ -72,7 +72,7 @@ typedef struct ParamListInfoData
 	void	   *parserSetupArg;
 	int			numParams;		/* number of ParamExternDatas following */
 	ParamExternData params[1];	/* VARIABLE LENGTH ARRAY */
-} ParamListInfoData;
+}	ParamListInfoData;
 
 
 /* ----------------

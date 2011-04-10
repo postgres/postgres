@@ -145,11 +145,11 @@ typedef struct _namespaceInfo
 typedef struct _extensionInfo
 {
 	DumpableObject dobj;
-	char       *namespace;		/* schema containing extension's objects */
+	char	   *namespace;		/* schema containing extension's objects */
 	bool		relocatable;
 	char	   *extversion;
-	char       *extconfig;		/* info about configuration tables */
-	char       *extcondition;
+	char	   *extconfig;		/* info about configuration tables */
+	char	   *extcondition;
 } ExtensionInfo;
 
 typedef struct _typeInfo
@@ -239,7 +239,7 @@ typedef struct _tableInfo
 	char	   *rolname;		/* name of owner, or empty string */
 	char	   *relacl;
 	char		relkind;
-	char		relpersistence;	/* relation persistence */
+	char		relpersistence; /* relation persistence */
 	char	   *reltablespace;	/* relation tablespace */
 	char	   *reloptions;		/* options specified by WITH (...) */
 	char	   *toast_reloptions;		/* ditto, for the TOAST table */
@@ -249,7 +249,7 @@ typedef struct _tableInfo
 	bool		hasoids;		/* does it have OIDs? */
 	uint32		frozenxid;		/* for restore frozen xid */
 	Oid			toast_oid;		/* for restore toast frozen xid */
-	uint32		toast_frozenxid;/* for restore toast frozen xid */
+	uint32		toast_frozenxid;	/* for restore toast frozen xid */
 	int			ncheck;			/* # of CHECK expressions */
 	char	   *reloftype;		/* underlying type for typed table */
 	/* these two are set only if table is a sequence owned by a column: */

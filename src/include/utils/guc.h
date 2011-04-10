@@ -102,11 +102,11 @@ typedef enum
  */
 typedef struct ConfigVariable
 {
-	char       *name;
-	char       *value;
+	char	   *name;
+	char	   *value;
 	char	   *filename;
 	int			sourceline;
-	struct ConfigVariable  *next;
+	struct ConfigVariable *next;
 } ConfigVariable;
 
 extern bool ParseConfigFile(const char *config_file, const char *calling_file,

@@ -129,7 +129,7 @@ usage(void)
 	printf(_("  -Z, --compress=0-9        compress tar output\n"));
 	printf(_("\nGeneral options:\n"));
 	printf(_("  -c, --checkpoint=fast|spread\n"
-			 "                            set fast or spread checkpointing\n"));
+		  "                            set fast or spread checkpointing\n"));
 	printf(_("  -l, --label=label         set backup label\n"));
 	printf(_("  -P, --progress            show progress information\n"));
 	printf(_("  -v, --verbose             output verbose messages\n"));
@@ -202,7 +202,8 @@ verify_dir_is_empty_or_create(char *dirname)
 static void
 progress_report(int tablespacenum, char *fn)
 {
-	int percent = (int) ((totaldone / 1024) * 100 / totalsize);
+	int			percent = (int) ((totaldone / 1024) * 100 / totalsize);
+
 	if (percent > 100)
 		percent = 100;
 
@@ -502,7 +503,7 @@ ReceiveAndUnpackTarFile(PGconn *conn, PGresult *res, int rownum)
 
 		if (file == NULL)
 		{
-			int		filemode;
+			int			filemode;
 
 			/*
 			 * No current file, so this must be the header for a new file
@@ -795,7 +796,7 @@ BaseBackup(void)
 			 showprogress ? "PROGRESS" : "",
 			 includewal ? "WAL" : "",
 			 fastcheckpoint ? "FAST" : "",
-	         includewal ? "NOWAIT" : "");
+			 includewal ? "NOWAIT" : "");
 
 	if (PQsendQuery(conn, current_path) == 0)
 	{
@@ -896,7 +897,7 @@ BaseBackup(void)
 	if (PQresultStatus(res) != PGRES_TUPLES_OK)
 	{
 		fprintf(stderr, _("%s: could not get end xlog position from server.\n"),
-						  progname);
+				progname);
 		disconnect_and_exit(1);
 	}
 	if (PQntuples(res) != 1)

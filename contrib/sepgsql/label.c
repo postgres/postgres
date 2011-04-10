@@ -38,7 +38,7 @@
  *
  * security label of the client process
  */
-static char	   *client_label = NULL;
+static char *client_label = NULL;
 
 char *
 sepgsql_get_client_label(void)
@@ -49,7 +49,7 @@ sepgsql_get_client_label(void)
 char *
 sepgsql_set_client_label(char *new_label)
 {
-	char   *old_label = client_label;
+	char	   *old_label = client_label;
 
 	client_label = new_label;
 
@@ -66,22 +66,22 @@ sepgsql_set_client_label(char *new_label)
 char *
 sepgsql_get_label(Oid classId, Oid objectId, int32 subId)
 {
-	ObjectAddress	object;
-	char		   *label;
+	ObjectAddress object;
+	char	   *label;
 
-	object.classId		= classId;
-	object.objectId		= objectId;
-	object.objectSubId	= subId;
+	object.classId = classId;
+	object.objectId = objectId;
+	object.objectSubId = subId;
 
 	label = GetSecurityLabel(&object, SEPGSQL_LABEL_TAG);
-	if (!label || security_check_context_raw((security_context_t)label))
+	if (!label || security_check_context_raw((security_context_t) label))
 	{
-		security_context_t	unlabeled;
+		security_context_t unlabeled;
 
 		if (security_get_initial_context_raw("unlabeled", &unlabeled) < 0)
 			ereport(ERROR,
 					(errcode(ERRCODE_INTERNAL_ERROR),
-					 errmsg("SELinux: failed to get initial security label: %m")));
+			   errmsg("SELinux: failed to get initial security label: %m")));
 		PG_TRY();
 		{
 			label = pstrdup(unlabeled);
@@ -107,21 +107,22 @@ void
 sepgsql_object_relabel(const ObjectAddress *object, const char *seclabel)
 {
 	/*
-	 * validate format of the supplied security label,
-	 * if it is security context of selinux.
+	 * validate format of the supplied security label, if it is security
+	 * context of selinux.
 	 */
 	if (seclabel &&
 		security_check_context_raw((security_context_t) seclabel) < 0)
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_NAME),
-				 errmsg("SELinux: invalid security label: \"%s\"", seclabel)));
+			   errmsg("SELinux: invalid security label: \"%s\"", seclabel)));
+
 	/*
 	 * Do actual permission checks for each object classes
 	 */
 	switch (object->classId)
 	{
 		case NamespaceRelationId:
-		    sepgsql_schema_relabel(object->objectId, seclabel);
+			sepgsql_schema_relabel(object->objectId, seclabel);
 			break;
 		case RelationRelationId:
 			if (object->objectSubId == 0)
@@ -151,7 +152,7 @@ PG_FUNCTION_INFO_V1(sepgsql_getcon);
 Datum
 sepgsql_getcon(PG_FUNCTION_ARGS)
 {
-	char   *client_label;
+	char	   *client_label;
 
 	if (!sepgsql_is_enabled())
 		PG_RETURN_NULL();
@@ -171,9 +172,9 @@ PG_FUNCTION_INFO_V1(sepgsql_mcstrans_in);
 Datum
 sepgsql_mcstrans_in(PG_FUNCTION_ARGS)
 {
-	text   *label = PG_GETARG_TEXT_P(0);
-	char   *raw_label;
-	char   *result;
+	text	   *label = PG_GETARG_TEXT_P(0);
+	char	   *raw_label;
+	char	   *result;
 
 	if (!sepgsql_is_enabled())
 		ereport(ERROR,
@@ -211,9 +212,9 @@ PG_FUNCTION_INFO_V1(sepgsql_mcstrans_out);
 Datum
 sepgsql_mcstrans_out(PG_FUNCTION_ARGS)
 {
-	text   *label = PG_GETARG_TEXT_P(0);
-	char   *qual_label;
-	char   *result;
+	text	   *label = PG_GETARG_TEXT_P(0);
+	char	   *qual_label;
+	char	   *result;
 
 	if (!sepgsql_is_enabled())
 		ereport(ERROR,
@@ -250,8 +251,8 @@ static char *
 quote_object_name(const char *src1, const char *src2,
 				  const char *src3, const char *src4)
 {
-	StringInfoData	result;
-	const char	   *temp;
+	StringInfoData result;
+	const char *temp;
 
 	initStringInfo(&result);
 
@@ -260,28 +261,28 @@ quote_object_name(const char *src1, const char *src2,
 		temp = quote_identifier(src1);
 		appendStringInfo(&result, "%s", temp);
 		if (src1 != temp)
-			pfree((void *)temp);
+			pfree((void *) temp);
 	}
 	if (src2)
 	{
 		temp = quote_identifier(src2);
 		appendStringInfo(&result, ".%s", temp);
 		if (src2 != temp)
-			pfree((void *)temp);
+			pfree((void *) temp);
 	}
 	if (src3)
 	{
 		temp = quote_identifier(src3);
 		appendStringInfo(&result, ".%s", temp);
 		if (src3 != temp)
-			pfree((void *)temp);
+			pfree((void *) temp);
 	}
 	if (src4)
 	{
 		temp = quote_identifier(src4);
 		appendStringInfo(&result, ".%s", temp);
 		if (src4 != temp)
-			pfree((void *)temp);
+			pfree((void *) temp);
 	}
 	return result.data;
 }
@@ -294,19 +295,19 @@ quote_object_name(const char *src1, const char *src2,
  * catalog OID.
  */
 static void
-exec_object_restorecon(struct selabel_handle *sehnd, Oid catalogId)
+exec_object_restorecon(struct selabel_handle * sehnd, Oid catalogId)
 {
-	Relation		rel;
-	SysScanDesc		sscan;
-	HeapTuple		tuple;
-	char		   *database_name = get_database_name(MyDatabaseId);
-	char		   *namespace_name;
-	Oid				namespace_id;
-	char		   *relation_name;
+	Relation	rel;
+	SysScanDesc sscan;
+	HeapTuple	tuple;
+	char	   *database_name = get_database_name(MyDatabaseId);
+	char	   *namespace_name;
+	Oid			namespace_id;
+	char	   *relation_name;
 
 	/*
-	 * Open the target catalog. We don't want to allow writable
-	 * accesses by other session during initial labeling.
+	 * Open the target catalog. We don't want to allow writable accesses by
+	 * other session during initial labeling.
 	 */
 	rel = heap_open(catalogId, AccessShareLock);
 
@@ -314,18 +315,18 @@ exec_object_restorecon(struct selabel_handle *sehnd, Oid catalogId)
 							   SnapshotNow, 0, NULL);
 	while (HeapTupleIsValid(tuple = systable_getnext(sscan)))
 	{
-		Form_pg_namespace	nspForm;
-		Form_pg_class		relForm;
-		Form_pg_attribute	attForm;
-		Form_pg_proc		proForm;
-		char			   *objname;
-		int					objtype = 1234;
-		ObjectAddress		object;
-		security_context_t	context;
+		Form_pg_namespace nspForm;
+		Form_pg_class relForm;
+		Form_pg_attribute attForm;
+		Form_pg_proc proForm;
+		char	   *objname;
+		int			objtype = 1234;
+		ObjectAddress object;
+		security_context_t context;
 
 		/*
-		 * The way to determine object name depends on object classes.
-		 * So, any branches set up `objtype', `objname' and `object' here.
+		 * The way to determine object name depends on object classes. So, any
+		 * branches set up `objtype', `objname' and `object' here.
 		 */
 		switch (catalogId)
 		{
@@ -409,7 +410,7 @@ exec_object_restorecon(struct selabel_handle *sehnd, Oid catalogId)
 
 			default:
 				elog(ERROR, "unexpected catalog id: %u", catalogId);
-				objname = NULL;		/* for compiler quiet */
+				objname = NULL; /* for compiler quiet */
 				break;
 		}
 
@@ -464,8 +465,8 @@ PG_FUNCTION_INFO_V1(sepgsql_restorecon);
 Datum
 sepgsql_restorecon(PG_FUNCTION_ARGS)
 {
-	struct selabel_handle  *sehnd;
-	struct selinux_opt		seopts;
+	struct selabel_handle *sehnd;
+	struct selinux_opt seopts;
 
 	/*
 	 * SELinux has to be enabled on the running platform.
@@ -474,19 +475,19 @@ sepgsql_restorecon(PG_FUNCTION_ARGS)
 		ereport(ERROR,
 				(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
 				 errmsg("sepgsql is not currently enabled")));
+
 	/*
-	 * Check DAC permission. Only superuser can set up initial
-	 * security labels, like root-user in filesystems
+	 * Check DAC permission. Only superuser can set up initial security
+	 * labels, like root-user in filesystems
 	 */
 	if (!superuser())
 		ereport(ERROR,
 				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
-				 errmsg("SELinux: must be superuser to restore initial contexts")));
+		  errmsg("SELinux: must be superuser to restore initial contexts")));
 
 	/*
-	 * Open selabel_lookup(3) stuff. It provides a set of mapping
-	 * between an initial security label and object class/name due
-	 * to the system setting.
+	 * Open selabel_lookup(3) stuff. It provides a set of mapping between an
+	 * initial security label and object class/name due to the system setting.
 	 */
 	if (PG_ARGISNULL(0))
 	{
@@ -502,12 +503,12 @@ sepgsql_restorecon(PG_FUNCTION_ARGS)
 	if (!sehnd)
 		ereport(ERROR,
 				(errcode(ERRCODE_INTERNAL_ERROR),
-				 errmsg("SELinux: failed to initialize labeling handle: %m")));
+			   errmsg("SELinux: failed to initialize labeling handle: %m")));
 	PG_TRY();
 	{
 		/*
-		 * Right now, we have no support labeling on the shared
-		 * database objects, such as database, role, or tablespace.
+		 * Right now, we have no support labeling on the shared database
+		 * objects, such as database, role, or tablespace.
 		 */
 		exec_object_restorecon(sehnd, NamespaceRelationId);
 		exec_object_restorecon(sehnd, RelationRelationId);
@@ -519,7 +520,7 @@ sepgsql_restorecon(PG_FUNCTION_ARGS)
 		selabel_close(sehnd);
 		PG_RE_THROW();
 	}
-	PG_END_TRY();	
+	PG_END_TRY();
 
 	selabel_close(sehnd);
 

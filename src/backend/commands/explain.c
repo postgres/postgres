@@ -59,26 +59,26 @@ static void ExplainNode(PlanState *planstate, List *ancestors,
 			const char *relationship, const char *plan_name,
 			ExplainState *es);
 static void show_plan_tlist(PlanState *planstate, List *ancestors,
-							ExplainState *es);
+				ExplainState *es);
 static void show_expression(Node *node, const char *qlabel,
 				PlanState *planstate, List *ancestors,
 				bool useprefix, ExplainState *es);
 static void show_qual(List *qual, const char *qlabel,
-					  PlanState *planstate, List *ancestors,
-					  bool useprefix, ExplainState *es);
+		  PlanState *planstate, List *ancestors,
+		  bool useprefix, ExplainState *es);
 static void show_scan_qual(List *qual, const char *qlabel,
-						   PlanState *planstate, List *ancestors,
-						   ExplainState *es);
+			   PlanState *planstate, List *ancestors,
+			   ExplainState *es);
 static void show_upper_qual(List *qual, const char *qlabel,
-							PlanState *planstate, List *ancestors,
-							ExplainState *es);
+				PlanState *planstate, List *ancestors,
+				ExplainState *es);
 static void show_sort_keys(SortState *sortstate, List *ancestors,
-						   ExplainState *es);
+			   ExplainState *es);
 static void show_merge_append_keys(MergeAppendState *mstate, List *ancestors,
-								   ExplainState *es);
+					   ExplainState *es);
 static void show_sort_keys_common(PlanState *planstate,
-								  int nkeys, AttrNumber *keycols,
-								  List *ancestors, ExplainState *es);
+					  int nkeys, AttrNumber *keycols,
+					  List *ancestors, ExplainState *es);
 static void show_sort_info(SortState *sortstate, ExplainState *es);
 static void show_hash_info(HashState *hashstate, ExplainState *es);
 static void show_foreignscan_info(ForeignScanState *fsstate, ExplainState *es);
@@ -89,7 +89,7 @@ static void ExplainTargetRel(Plan *plan, Index rti, ExplainState *es);
 static void ExplainMemberNodes(List *plans, PlanState **planstates,
 				   List *ancestors, ExplainState *es);
 static void ExplainSubPlans(List *plans, List *ancestors,
-							const char *relationship, ExplainState *es);
+				const char *relationship, ExplainState *es);
 static void ExplainProperty(const char *qlabel, const char *value,
 				bool numeric, ExplainState *es);
 static void ExplainOpenGroup(const char *objtype, const char *labelname,
@@ -1358,7 +1358,7 @@ show_scan_qual(List *qual, const char *qlabel,
 {
 	bool		useprefix;
 
-	useprefix = (IsA(planstate->plan, SubqueryScan) || es->verbose);
+	useprefix = (IsA(planstate->plan, SubqueryScan) ||es->verbose);
 	show_qual(qual, qlabel, planstate, ancestors, useprefix, es);
 }
 

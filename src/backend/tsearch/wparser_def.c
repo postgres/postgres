@@ -299,16 +299,16 @@ TParserInit(char *str, int len)
 	 */
 	if (prs->charmaxlen > 1)
 	{
-		Oid			collation = DEFAULT_COLLATION_OID; /*TODO*/
-		
+		Oid			collation = DEFAULT_COLLATION_OID;	/* TODO */
+
 		prs->usewide = true;
-		if ( lc_ctype_is_c(collation) )
+		if (lc_ctype_is_c(collation))
 		{
 			/*
-			 * char2wchar doesn't work for C-locale and
-			 * sizeof(pg_wchar) could be not equal to sizeof(wchar_t)
+			 * char2wchar doesn't work for C-locale and sizeof(pg_wchar) could
+			 * be not equal to sizeof(wchar_t)
 			 */
-			prs->pgwstr = (pg_wchar*) palloc(sizeof(pg_wchar) * (prs->lenstr + 1));
+			prs->pgwstr = (pg_wchar *) palloc(sizeof(pg_wchar) * (prs->lenstr + 1));
 			pg_mb2wchar_with_len(prs->str, prs->pgwstr, prs->lenstr);
 		}
 		else
@@ -325,10 +325,11 @@ TParserInit(char *str, int len)
 	prs->state->state = TPS_Base;
 
 #ifdef WPARSER_TRACE
+
 	/*
-	 * Use of %.*s here is a bit risky since it can misbehave if the data
-	 * is not in what libc thinks is the prevailing encoding.  However,
-	 * since this is just a debugging aid, we choose to live with that.
+	 * Use of %.*s here is a bit risky since it can misbehave if the data is
+	 * not in what libc thinks is the prevailing encoding.	However, since
+	 * this is just a debugging aid, we choose to live with that.
 	 */
 	fprintf(stderr, "parsing \"%.*s\"\n", len, str);
 #endif
@@ -425,11 +426,11 @@ TParserCopyClose(TParser *prs)
 /*
  * Character-type support functions, equivalent to is* macros, but
  * working with any possible encodings and locales. Notes:
- *  - with multibyte encoding and C-locale isw* function may fail
- *    or give wrong result.
- *  - multibyte encoding and C-locale often are used for
- *    Asian languages.
- *  - if locale is C the we use pgwstr instead of wstr
+ *	- with multibyte encoding and C-locale isw* function may fail
+ *	  or give wrong result.
+ *	- multibyte encoding and C-locale often are used for
+ *	  Asian languages.
+ *	- if locale is C the we use pgwstr instead of wstr
  */
 
 #ifdef USE_WIDE_UPPER_LOWER
@@ -447,7 +448,7 @@ p_is##type(TParser *prs) {													\
 	}																		\
 																			\
 	return is##type( *(unsigned char*)( prs->str + prs->state->posbyte ) ); \
-}																			\
+}	\
 																			\
 static int																	\
 p_isnot##type(TParser *prs) {												\
@@ -719,7 +720,7 @@ p_isignore(TParser *prs)
 static int
 p_ishost(TParser *prs)
 {
-	TParser	   *tmpprs = TParserCopyInit(prs);
+	TParser    *tmpprs = TParserCopyInit(prs);
 	int			res = 0;
 
 	tmpprs->wanthost = true;
@@ -741,7 +742,7 @@ p_ishost(TParser *prs)
 static int
 p_isURLPath(TParser *prs)
 {
-	TParser	   *tmpprs = TParserCopyInit(prs);
+	TParser    *tmpprs = TParserCopyInit(prs);
 	int			res = 0;
 
 	tmpprs->state = newTParserPosition(tmpprs->state);
@@ -773,269 +774,269 @@ p_isspecial(TParser *prs)
 	/*
 	 * pg_dsplen could return -1 which means error or control character
 	 */
-	if ( pg_dsplen(prs->str + prs->state->posbyte) == 0 )
+	if (pg_dsplen(prs->str + prs->state->posbyte) == 0)
 		return 1;
 
 #ifdef USE_WIDE_UPPER_LOWER
+
 	/*
-	 * Unicode Characters in the 'Mark, Spacing Combining' Category
-	 * That characters are not alpha although they are not breakers
-	 * of word too.
-	 * Check that only in utf encoding, because other encodings
-	 * aren't supported by postgres or even exists.
+	 * Unicode Characters in the 'Mark, Spacing Combining' Category That
+	 * characters are not alpha although they are not breakers of word too.
+	 * Check that only in utf encoding, because other encodings aren't
+	 * supported by postgres or even exists.
 	 */
-	if ( GetDatabaseEncoding() == PG_UTF8 && prs->usewide )
+	if (GetDatabaseEncoding() == PG_UTF8 && prs->usewide)
 	{
-		static pg_wchar	strange_letter[] = {
-						/*
-						 * use binary search, so elements
-						 * should be ordered
-						 */
-						0x0903, /*  DEVANAGARI SIGN VISARGA */
-						0x093E, /* 	DEVANAGARI VOWEL SIGN AA */
-						0x093F, /* 	DEVANAGARI VOWEL SIGN I */
-						0x0940, /* 	DEVANAGARI VOWEL SIGN II */
-						0x0949, /* 	DEVANAGARI VOWEL SIGN CANDRA O */
-						0x094A, /* 	DEVANAGARI VOWEL SIGN SHORT O */
-						0x094B, /* 	DEVANAGARI VOWEL SIGN O */
-						0x094C, /* 	DEVANAGARI VOWEL SIGN AU */
-						0x0982, /* 	BENGALI SIGN ANUSVARA */
-						0x0983, /* 	BENGALI SIGN VISARGA */
-						0x09BE, /* 	BENGALI VOWEL SIGN AA */
-						0x09BF, /* 	BENGALI VOWEL SIGN I */
-						0x09C0, /* 	BENGALI VOWEL SIGN II */
-						0x09C7, /* 	BENGALI VOWEL SIGN E */
-						0x09C8, /* 	BENGALI VOWEL SIGN AI */
-						0x09CB, /* 	BENGALI VOWEL SIGN O */
-						0x09CC, /* 	BENGALI VOWEL SIGN AU */
-						0x09D7, /* 	BENGALI AU LENGTH MARK */
-						0x0A03, /* 	GURMUKHI SIGN VISARGA */
-						0x0A3E, /* 	GURMUKHI VOWEL SIGN AA */
-						0x0A3F, /* 	GURMUKHI VOWEL SIGN I */
-						0x0A40, /* 	GURMUKHI VOWEL SIGN II */
-						0x0A83, /* 	GUJARATI SIGN VISARGA */
-						0x0ABE, /* 	GUJARATI VOWEL SIGN AA */
-						0x0ABF, /* 	GUJARATI VOWEL SIGN I */
-						0x0AC0, /* 	GUJARATI VOWEL SIGN II */
-						0x0AC9, /* 	GUJARATI VOWEL SIGN CANDRA O */
-						0x0ACB, /* 	GUJARATI VOWEL SIGN O */
-						0x0ACC, /* 	GUJARATI VOWEL SIGN AU */
-						0x0B02, /* 	ORIYA SIGN ANUSVARA */
-						0x0B03, /* 	ORIYA SIGN VISARGA */
-						0x0B3E, /* 	ORIYA VOWEL SIGN AA */
-						0x0B40, /* 	ORIYA VOWEL SIGN II */
-						0x0B47, /* 	ORIYA VOWEL SIGN E */
-						0x0B48, /* 	ORIYA VOWEL SIGN AI */
-						0x0B4B, /* 	ORIYA VOWEL SIGN O */
-						0x0B4C, /* 	ORIYA VOWEL SIGN AU */
-						0x0B57, /* 	ORIYA AU LENGTH MARK */
-						0x0BBE, /* 	TAMIL VOWEL SIGN AA */
-						0x0BBF, /* 	TAMIL VOWEL SIGN I */
-						0x0BC1, /* 	TAMIL VOWEL SIGN U */
-						0x0BC2, /* 	TAMIL VOWEL SIGN UU */
-						0x0BC6, /* 	TAMIL VOWEL SIGN E */
-						0x0BC7, /* 	TAMIL VOWEL SIGN EE */
-						0x0BC8, /* 	TAMIL VOWEL SIGN AI */
-						0x0BCA, /* 	TAMIL VOWEL SIGN O */
-						0x0BCB, /* 	TAMIL VOWEL SIGN OO */
-						0x0BCC, /* 	TAMIL VOWEL SIGN AU */
-						0x0BD7, /* 	TAMIL AU LENGTH MARK */
-						0x0C01, /* 	TELUGU SIGN CANDRABINDU */
-						0x0C02, /* 	TELUGU SIGN ANUSVARA */
-						0x0C03, /* 	TELUGU SIGN VISARGA */
-						0x0C41, /* 	TELUGU VOWEL SIGN U */
-						0x0C42, /* 	TELUGU VOWEL SIGN UU */
-						0x0C43, /* 	TELUGU VOWEL SIGN VOCALIC R */
-						0x0C44, /* 	TELUGU VOWEL SIGN VOCALIC RR */
-						0x0C82, /* 	KANNADA SIGN ANUSVARA */
-						0x0C83, /* 	KANNADA SIGN VISARGA */
-						0x0CBE, /* 	KANNADA VOWEL SIGN AA */
-						0x0CC0, /* 	KANNADA VOWEL SIGN II */
-						0x0CC1, /* 	KANNADA VOWEL SIGN U */
-						0x0CC2, /* 	KANNADA VOWEL SIGN UU */
-						0x0CC3, /* 	KANNADA VOWEL SIGN VOCALIC R */
-						0x0CC4, /* 	KANNADA VOWEL SIGN VOCALIC RR */
-						0x0CC7, /* 	KANNADA VOWEL SIGN EE */
-						0x0CC8, /* 	KANNADA VOWEL SIGN AI */
-						0x0CCA, /* 	KANNADA VOWEL SIGN O */
-						0x0CCB, /* 	KANNADA VOWEL SIGN OO */
-						0x0CD5, /* 	KANNADA LENGTH MARK */
-						0x0CD6, /* 	KANNADA AI LENGTH MARK */
-						0x0D02, /* 	MALAYALAM SIGN ANUSVARA */
-						0x0D03, /* 	MALAYALAM SIGN VISARGA */
-						0x0D3E, /* 	MALAYALAM VOWEL SIGN AA */
-						0x0D3F, /* 	MALAYALAM VOWEL SIGN I */
-						0x0D40, /* 	MALAYALAM VOWEL SIGN II */
-						0x0D46, /* 	MALAYALAM VOWEL SIGN E */
-						0x0D47, /* 	MALAYALAM VOWEL SIGN EE */
-						0x0D48, /* 	MALAYALAM VOWEL SIGN AI */
-						0x0D4A, /* 	MALAYALAM VOWEL SIGN O */
-						0x0D4B, /* 	MALAYALAM VOWEL SIGN OO */
-						0x0D4C, /* 	MALAYALAM VOWEL SIGN AU */
-						0x0D57, /* 	MALAYALAM AU LENGTH MARK */
-						0x0D82, /* 	SINHALA SIGN ANUSVARAYA */
-						0x0D83, /* 	SINHALA SIGN VISARGAYA */
-						0x0DCF, /* 	SINHALA VOWEL SIGN AELA-PILLA */
-						0x0DD0, /* 	SINHALA VOWEL SIGN KETTI AEDA-PILLA */
-						0x0DD1, /* 	SINHALA VOWEL SIGN DIGA AEDA-PILLA */
-						0x0DD8, /* 	SINHALA VOWEL SIGN GAETTA-PILLA */
-						0x0DD9, /* 	SINHALA VOWEL SIGN KOMBUVA */
-						0x0DDA, /* 	SINHALA VOWEL SIGN DIGA KOMBUVA */
-						0x0DDB, /* 	SINHALA VOWEL SIGN KOMBU DEKA */
-						0x0DDC, /* 	SINHALA VOWEL SIGN KOMBUVA HAA AELA-PILLA */
-						0x0DDD, /* 	SINHALA VOWEL SIGN KOMBUVA HAA DIGA AELA-PILLA */
-						0x0DDE, /* 	SINHALA VOWEL SIGN KOMBUVA HAA GAYANUKITTA */
-						0x0DDF, /* 	SINHALA VOWEL SIGN GAYANUKITTA */
-						0x0DF2, /* 	SINHALA VOWEL SIGN DIGA GAETTA-PILLA */
-						0x0DF3, /* 	SINHALA VOWEL SIGN DIGA GAYANUKITTA */
-						0x0F3E, /* 	TIBETAN SIGN YAR TSHES */
-						0x0F3F, /* 	TIBETAN SIGN MAR TSHES */
-						0x0F7F, /* 	TIBETAN SIGN RNAM BCAD */
-						0x102B, /* 	MYANMAR VOWEL SIGN TALL AA */
-						0x102C, /* 	MYANMAR VOWEL SIGN AA */
-						0x1031, /* 	MYANMAR VOWEL SIGN E */
-						0x1038, /* 	MYANMAR SIGN VISARGA */
-						0x103B, /* 	MYANMAR CONSONANT SIGN MEDIAL YA */
-						0x103C, /* 	MYANMAR CONSONANT SIGN MEDIAL RA */
-						0x1056, /* 	MYANMAR VOWEL SIGN VOCALIC R */
-						0x1057, /* 	MYANMAR VOWEL SIGN VOCALIC RR */
-						0x1062, /* 	MYANMAR VOWEL SIGN SGAW KAREN EU */
-						0x1063, /* 	MYANMAR TONE MARK SGAW KAREN HATHI */
-						0x1064, /* 	MYANMAR TONE MARK SGAW KAREN KE PHO */
-						0x1067, /* 	MYANMAR VOWEL SIGN WESTERN PWO KAREN EU */
-						0x1068, /* 	MYANMAR VOWEL SIGN WESTERN PWO KAREN UE */
-						0x1069, /* 	MYANMAR SIGN WESTERN PWO KAREN TONE-1 */
-						0x106A, /* 	MYANMAR SIGN WESTERN PWO KAREN TONE-2 */
-						0x106B, /* 	MYANMAR SIGN WESTERN PWO KAREN TONE-3 */
-						0x106C, /* 	MYANMAR SIGN WESTERN PWO KAREN TONE-4 */
-						0x106D, /* 	MYANMAR SIGN WESTERN PWO KAREN TONE-5 */
-						0x1083, /* 	MYANMAR VOWEL SIGN SHAN AA */
-						0x1084, /* 	MYANMAR VOWEL SIGN SHAN E */
-						0x1087, /* 	MYANMAR SIGN SHAN TONE-2 */
-						0x1088, /* 	MYANMAR SIGN SHAN TONE-3 */
-						0x1089, /* 	MYANMAR SIGN SHAN TONE-5 */
-						0x108A, /* 	MYANMAR SIGN SHAN TONE-6 */
-						0x108B, /* 	MYANMAR SIGN SHAN COUNCIL TONE-2 */
-						0x108C, /* 	MYANMAR SIGN SHAN COUNCIL TONE-3 */
-						0x108F, /* 	MYANMAR SIGN RUMAI PALAUNG TONE-5 */
-						0x17B6, /* 	KHMER VOWEL SIGN AA */
-						0x17BE, /* 	KHMER VOWEL SIGN OE */
-						0x17BF, /* 	KHMER VOWEL SIGN YA */
-						0x17C0, /* 	KHMER VOWEL SIGN IE */
-						0x17C1, /* 	KHMER VOWEL SIGN E */
-						0x17C2, /* 	KHMER VOWEL SIGN AE */
-						0x17C3, /* 	KHMER VOWEL SIGN AI */
-						0x17C4, /* 	KHMER VOWEL SIGN OO */
-						0x17C5, /* 	KHMER VOWEL SIGN AU */
-						0x17C7, /* 	KHMER SIGN REAHMUK */
-						0x17C8, /* 	KHMER SIGN YUUKALEAPINTU */
-						0x1923, /* 	LIMBU VOWEL SIGN EE */
-						0x1924, /* 	LIMBU VOWEL SIGN AI */
-						0x1925, /* 	LIMBU VOWEL SIGN OO */
-						0x1926, /* 	LIMBU VOWEL SIGN AU */
-						0x1929, /* 	LIMBU SUBJOINED LETTER YA */
-						0x192A, /* 	LIMBU SUBJOINED LETTER RA */
-						0x192B, /* 	LIMBU SUBJOINED LETTER WA */
-						0x1930, /* 	LIMBU SMALL LETTER KA */
-						0x1931, /* 	LIMBU SMALL LETTER NGA */
-						0x1933, /* 	LIMBU SMALL LETTER TA */
-						0x1934, /* 	LIMBU SMALL LETTER NA */
-						0x1935, /* 	LIMBU SMALL LETTER PA */
-						0x1936, /* 	LIMBU SMALL LETTER MA */
-						0x1937, /* 	LIMBU SMALL LETTER RA */
-						0x1938, /* 	LIMBU SMALL LETTER LA */
-						0x19B0, /* 	NEW TAI LUE VOWEL SIGN VOWEL SHORTENER */
-						0x19B1, /* 	NEW TAI LUE VOWEL SIGN AA */
-						0x19B2, /* 	NEW TAI LUE VOWEL SIGN II */
-						0x19B3, /* 	NEW TAI LUE VOWEL SIGN U */
-						0x19B4, /* 	NEW TAI LUE VOWEL SIGN UU */
-						0x19B5, /* 	NEW TAI LUE VOWEL SIGN E */
-						0x19B6, /* 	NEW TAI LUE VOWEL SIGN AE */
-						0x19B7, /* 	NEW TAI LUE VOWEL SIGN O */
-						0x19B8, /* 	NEW TAI LUE VOWEL SIGN OA */
-						0x19B9, /* 	NEW TAI LUE VOWEL SIGN UE */
-						0x19BA, /* 	NEW TAI LUE VOWEL SIGN AY */
-						0x19BB, /* 	NEW TAI LUE VOWEL SIGN AAY */
-						0x19BC, /* 	NEW TAI LUE VOWEL SIGN UY */
-						0x19BD, /* 	NEW TAI LUE VOWEL SIGN OY */
-						0x19BE, /* 	NEW TAI LUE VOWEL SIGN OAY */
-						0x19BF, /* 	NEW TAI LUE VOWEL SIGN UEY */
-						0x19C0, /* 	NEW TAI LUE VOWEL SIGN IY */
-						0x19C8, /* 	NEW TAI LUE TONE MARK-1 */
-						0x19C9, /* 	NEW TAI LUE TONE MARK-2 */
-						0x1A19, /* 	BUGINESE VOWEL SIGN E */
-						0x1A1A, /* 	BUGINESE VOWEL SIGN O */
-						0x1A1B, /* 	BUGINESE VOWEL SIGN AE */
-						0x1B04, /* 	BALINESE SIGN BISAH */
-						0x1B35, /* 	BALINESE VOWEL SIGN TEDUNG */
-						0x1B3B, /* 	BALINESE VOWEL SIGN RA REPA TEDUNG */
-						0x1B3D, /* 	BALINESE VOWEL SIGN LA LENGA TEDUNG */
-						0x1B3E, /* 	BALINESE VOWEL SIGN TALING */
-						0x1B3F, /* 	BALINESE VOWEL SIGN TALING REPA */
-						0x1B40, /* 	BALINESE VOWEL SIGN TALING TEDUNG */
-						0x1B41, /* 	BALINESE VOWEL SIGN TALING REPA TEDUNG */
-						0x1B43, /* 	BALINESE VOWEL SIGN PEPET TEDUNG */
-						0x1B44, /* 	BALINESE ADEG ADEG */
-						0x1B82, /* 	SUNDANESE SIGN PANGWISAD */
-						0x1BA1, /* 	SUNDANESE CONSONANT SIGN PAMINGKAL */
-						0x1BA6, /* 	SUNDANESE VOWEL SIGN PANAELAENG */
-						0x1BA7, /* 	SUNDANESE VOWEL SIGN PANOLONG */
-						0x1BAA, /* 	SUNDANESE SIGN PAMAAEH */
-						0x1C24, /* 	LEPCHA SUBJOINED LETTER YA */
-						0x1C25, /* 	LEPCHA SUBJOINED LETTER RA */
-						0x1C26, /* 	LEPCHA VOWEL SIGN AA */
-						0x1C27, /* 	LEPCHA VOWEL SIGN I */
-						0x1C28, /* 	LEPCHA VOWEL SIGN O */
-						0x1C29, /* 	LEPCHA VOWEL SIGN OO */
-						0x1C2A, /* 	LEPCHA VOWEL SIGN U */
-						0x1C2B, /* 	LEPCHA VOWEL SIGN UU */
-						0x1C34, /* 	LEPCHA CONSONANT SIGN NYIN-DO */
-						0x1C35, /* 	LEPCHA CONSONANT SIGN KANG */
-						0xA823, /* 	SYLOTI NAGRI VOWEL SIGN A */
-						0xA824, /* 	SYLOTI NAGRI VOWEL SIGN I */
-						0xA827, /* 	SYLOTI NAGRI VOWEL SIGN OO */
-						0xA880, /* 	SAURASHTRA SIGN ANUSVARA */
-						0xA881, /* 	SAURASHTRA SIGN VISARGA */
-						0xA8B4, /* 	SAURASHTRA CONSONANT SIGN HAARU */
-						0xA8B5, /* 	SAURASHTRA VOWEL SIGN AA */
-						0xA8B6, /* 	SAURASHTRA VOWEL SIGN I */
-						0xA8B7, /* 	SAURASHTRA VOWEL SIGN II */
-						0xA8B8, /* 	SAURASHTRA VOWEL SIGN U */
-						0xA8B9, /* 	SAURASHTRA VOWEL SIGN UU */
-						0xA8BA, /* 	SAURASHTRA VOWEL SIGN VOCALIC R */
-						0xA8BB, /* 	SAURASHTRA VOWEL SIGN VOCALIC RR */
-						0xA8BC, /* 	SAURASHTRA VOWEL SIGN VOCALIC L */
-						0xA8BD, /* 	SAURASHTRA VOWEL SIGN VOCALIC LL */
-						0xA8BE, /* 	SAURASHTRA VOWEL SIGN E */
-						0xA8BF, /* 	SAURASHTRA VOWEL SIGN EE */
-						0xA8C0, /* 	SAURASHTRA VOWEL SIGN AI */
-						0xA8C1, /* 	SAURASHTRA VOWEL SIGN O */
-						0xA8C2, /* 	SAURASHTRA VOWEL SIGN OO */
-						0xA8C3, /* 	SAURASHTRA VOWEL SIGN AU */
-						0xA952, /* 	REJANG CONSONANT SIGN H */
-						0xA953, /* 	REJANG VIRAMA */
-						0xAA2F, /* 	CHAM VOWEL SIGN O */
-						0xAA30, /* 	CHAM VOWEL SIGN AI */
-						0xAA33, /* 	CHAM CONSONANT SIGN YA */
-						0xAA34, /* 	CHAM CONSONANT SIGN RA */
-						0xAA4D  /* 	CHAM CONSONANT SIGN FINAL H */
-					};
-		pg_wchar	*StopLow = strange_letter,
-					*StopHigh = strange_letter + lengthof(strange_letter),
-					*StopMiddle;
+		static pg_wchar strange_letter[] = {
+			/*
+			 * use binary search, so elements should be ordered
+			 */
+			0x0903,				/* DEVANAGARI SIGN VISARGA */
+			0x093E,				/* DEVANAGARI VOWEL SIGN AA */
+			0x093F,				/* DEVANAGARI VOWEL SIGN I */
+			0x0940,				/* DEVANAGARI VOWEL SIGN II */
+			0x0949,				/* DEVANAGARI VOWEL SIGN CANDRA O */
+			0x094A,				/* DEVANAGARI VOWEL SIGN SHORT O */
+			0x094B,				/* DEVANAGARI VOWEL SIGN O */
+			0x094C,				/* DEVANAGARI VOWEL SIGN AU */
+			0x0982,				/* BENGALI SIGN ANUSVARA */
+			0x0983,				/* BENGALI SIGN VISARGA */
+			0x09BE,				/* BENGALI VOWEL SIGN AA */
+			0x09BF,				/* BENGALI VOWEL SIGN I */
+			0x09C0,				/* BENGALI VOWEL SIGN II */
+			0x09C7,				/* BENGALI VOWEL SIGN E */
+			0x09C8,				/* BENGALI VOWEL SIGN AI */
+			0x09CB,				/* BENGALI VOWEL SIGN O */
+			0x09CC,				/* BENGALI VOWEL SIGN AU */
+			0x09D7,				/* BENGALI AU LENGTH MARK */
+			0x0A03,				/* GURMUKHI SIGN VISARGA */
+			0x0A3E,				/* GURMUKHI VOWEL SIGN AA */
+			0x0A3F,				/* GURMUKHI VOWEL SIGN I */
+			0x0A40,				/* GURMUKHI VOWEL SIGN II */
+			0x0A83,				/* GUJARATI SIGN VISARGA */
+			0x0ABE,				/* GUJARATI VOWEL SIGN AA */
+			0x0ABF,				/* GUJARATI VOWEL SIGN I */
+			0x0AC0,				/* GUJARATI VOWEL SIGN II */
+			0x0AC9,				/* GUJARATI VOWEL SIGN CANDRA O */
+			0x0ACB,				/* GUJARATI VOWEL SIGN O */
+			0x0ACC,				/* GUJARATI VOWEL SIGN AU */
+			0x0B02,				/* ORIYA SIGN ANUSVARA */
+			0x0B03,				/* ORIYA SIGN VISARGA */
+			0x0B3E,				/* ORIYA VOWEL SIGN AA */
+			0x0B40,				/* ORIYA VOWEL SIGN II */
+			0x0B47,				/* ORIYA VOWEL SIGN E */
+			0x0B48,				/* ORIYA VOWEL SIGN AI */
+			0x0B4B,				/* ORIYA VOWEL SIGN O */
+			0x0B4C,				/* ORIYA VOWEL SIGN AU */
+			0x0B57,				/* ORIYA AU LENGTH MARK */
+			0x0BBE,				/* TAMIL VOWEL SIGN AA */
+			0x0BBF,				/* TAMIL VOWEL SIGN I */
+			0x0BC1,				/* TAMIL VOWEL SIGN U */
+			0x0BC2,				/* TAMIL VOWEL SIGN UU */
+			0x0BC6,				/* TAMIL VOWEL SIGN E */
+			0x0BC7,				/* TAMIL VOWEL SIGN EE */
+			0x0BC8,				/* TAMIL VOWEL SIGN AI */
+			0x0BCA,				/* TAMIL VOWEL SIGN O */
+			0x0BCB,				/* TAMIL VOWEL SIGN OO */
+			0x0BCC,				/* TAMIL VOWEL SIGN AU */
+			0x0BD7,				/* TAMIL AU LENGTH MARK */
+			0x0C01,				/* TELUGU SIGN CANDRABINDU */
+			0x0C02,				/* TELUGU SIGN ANUSVARA */
+			0x0C03,				/* TELUGU SIGN VISARGA */
+			0x0C41,				/* TELUGU VOWEL SIGN U */
+			0x0C42,				/* TELUGU VOWEL SIGN UU */
+			0x0C43,				/* TELUGU VOWEL SIGN VOCALIC R */
+			0x0C44,				/* TELUGU VOWEL SIGN VOCALIC RR */
+			0x0C82,				/* KANNADA SIGN ANUSVARA */
+			0x0C83,				/* KANNADA SIGN VISARGA */
+			0x0CBE,				/* KANNADA VOWEL SIGN AA */
+			0x0CC0,				/* KANNADA VOWEL SIGN II */
+			0x0CC1,				/* KANNADA VOWEL SIGN U */
+			0x0CC2,				/* KANNADA VOWEL SIGN UU */
+			0x0CC3,				/* KANNADA VOWEL SIGN VOCALIC R */
+			0x0CC4,				/* KANNADA VOWEL SIGN VOCALIC RR */
+			0x0CC7,				/* KANNADA VOWEL SIGN EE */
+			0x0CC8,				/* KANNADA VOWEL SIGN AI */
+			0x0CCA,				/* KANNADA VOWEL SIGN O */
+			0x0CCB,				/* KANNADA VOWEL SIGN OO */
+			0x0CD5,				/* KANNADA LENGTH MARK */
+			0x0CD6,				/* KANNADA AI LENGTH MARK */
+			0x0D02,				/* MALAYALAM SIGN ANUSVARA */
+			0x0D03,				/* MALAYALAM SIGN VISARGA */
+			0x0D3E,				/* MALAYALAM VOWEL SIGN AA */
+			0x0D3F,				/* MALAYALAM VOWEL SIGN I */
+			0x0D40,				/* MALAYALAM VOWEL SIGN II */
+			0x0D46,				/* MALAYALAM VOWEL SIGN E */
+			0x0D47,				/* MALAYALAM VOWEL SIGN EE */
+			0x0D48,				/* MALAYALAM VOWEL SIGN AI */
+			0x0D4A,				/* MALAYALAM VOWEL SIGN O */
+			0x0D4B,				/* MALAYALAM VOWEL SIGN OO */
+			0x0D4C,				/* MALAYALAM VOWEL SIGN AU */
+			0x0D57,				/* MALAYALAM AU LENGTH MARK */
+			0x0D82,				/* SINHALA SIGN ANUSVARAYA */
+			0x0D83,				/* SINHALA SIGN VISARGAYA */
+			0x0DCF,				/* SINHALA VOWEL SIGN AELA-PILLA */
+			0x0DD0,				/* SINHALA VOWEL SIGN KETTI AEDA-PILLA */
+			0x0DD1,				/* SINHALA VOWEL SIGN DIGA AEDA-PILLA */
+			0x0DD8,				/* SINHALA VOWEL SIGN GAETTA-PILLA */
+			0x0DD9,				/* SINHALA VOWEL SIGN KOMBUVA */
+			0x0DDA,				/* SINHALA VOWEL SIGN DIGA KOMBUVA */
+			0x0DDB,				/* SINHALA VOWEL SIGN KOMBU DEKA */
+			0x0DDC,				/* SINHALA VOWEL SIGN KOMBUVA HAA AELA-PILLA */
+			0x0DDD,				/* SINHALA VOWEL SIGN KOMBUVA HAA DIGA
+								 * AELA-PILLA */
+			0x0DDE,				/* SINHALA VOWEL SIGN KOMBUVA HAA GAYANUKITTA */
+			0x0DDF,				/* SINHALA VOWEL SIGN GAYANUKITTA */
+			0x0DF2,				/* SINHALA VOWEL SIGN DIGA GAETTA-PILLA */
+			0x0DF3,				/* SINHALA VOWEL SIGN DIGA GAYANUKITTA */
+			0x0F3E,				/* TIBETAN SIGN YAR TSHES */
+			0x0F3F,				/* TIBETAN SIGN MAR TSHES */
+			0x0F7F,				/* TIBETAN SIGN RNAM BCAD */
+			0x102B,				/* MYANMAR VOWEL SIGN TALL AA */
+			0x102C,				/* MYANMAR VOWEL SIGN AA */
+			0x1031,				/* MYANMAR VOWEL SIGN E */
+			0x1038,				/* MYANMAR SIGN VISARGA */
+			0x103B,				/* MYANMAR CONSONANT SIGN MEDIAL YA */
+			0x103C,				/* MYANMAR CONSONANT SIGN MEDIAL RA */
+			0x1056,				/* MYANMAR VOWEL SIGN VOCALIC R */
+			0x1057,				/* MYANMAR VOWEL SIGN VOCALIC RR */
+			0x1062,				/* MYANMAR VOWEL SIGN SGAW KAREN EU */
+			0x1063,				/* MYANMAR TONE MARK SGAW KAREN HATHI */
+			0x1064,				/* MYANMAR TONE MARK SGAW KAREN KE PHO */
+			0x1067,				/* MYANMAR VOWEL SIGN WESTERN PWO KAREN EU */
+			0x1068,				/* MYANMAR VOWEL SIGN WESTERN PWO KAREN UE */
+			0x1069,				/* MYANMAR SIGN WESTERN PWO KAREN TONE-1 */
+			0x106A,				/* MYANMAR SIGN WESTERN PWO KAREN TONE-2 */
+			0x106B,				/* MYANMAR SIGN WESTERN PWO KAREN TONE-3 */
+			0x106C,				/* MYANMAR SIGN WESTERN PWO KAREN TONE-4 */
+			0x106D,				/* MYANMAR SIGN WESTERN PWO KAREN TONE-5 */
+			0x1083,				/* MYANMAR VOWEL SIGN SHAN AA */
+			0x1084,				/* MYANMAR VOWEL SIGN SHAN E */
+			0x1087,				/* MYANMAR SIGN SHAN TONE-2 */
+			0x1088,				/* MYANMAR SIGN SHAN TONE-3 */
+			0x1089,				/* MYANMAR SIGN SHAN TONE-5 */
+			0x108A,				/* MYANMAR SIGN SHAN TONE-6 */
+			0x108B,				/* MYANMAR SIGN SHAN COUNCIL TONE-2 */
+			0x108C,				/* MYANMAR SIGN SHAN COUNCIL TONE-3 */
+			0x108F,				/* MYANMAR SIGN RUMAI PALAUNG TONE-5 */
+			0x17B6,				/* KHMER VOWEL SIGN AA */
+			0x17BE,				/* KHMER VOWEL SIGN OE */
+			0x17BF,				/* KHMER VOWEL SIGN YA */
+			0x17C0,				/* KHMER VOWEL SIGN IE */
+			0x17C1,				/* KHMER VOWEL SIGN E */
+			0x17C2,				/* KHMER VOWEL SIGN AE */
+			0x17C3,				/* KHMER VOWEL SIGN AI */
+			0x17C4,				/* KHMER VOWEL SIGN OO */
+			0x17C5,				/* KHMER VOWEL SIGN AU */
+			0x17C7,				/* KHMER SIGN REAHMUK */
+			0x17C8,				/* KHMER SIGN YUUKALEAPINTU */
+			0x1923,				/* LIMBU VOWEL SIGN EE */
+			0x1924,				/* LIMBU VOWEL SIGN AI */
+			0x1925,				/* LIMBU VOWEL SIGN OO */
+			0x1926,				/* LIMBU VOWEL SIGN AU */
+			0x1929,				/* LIMBU SUBJOINED LETTER YA */
+			0x192A,				/* LIMBU SUBJOINED LETTER RA */
+			0x192B,				/* LIMBU SUBJOINED LETTER WA */
+			0x1930,				/* LIMBU SMALL LETTER KA */
+			0x1931,				/* LIMBU SMALL LETTER NGA */
+			0x1933,				/* LIMBU SMALL LETTER TA */
+			0x1934,				/* LIMBU SMALL LETTER NA */
+			0x1935,				/* LIMBU SMALL LETTER PA */
+			0x1936,				/* LIMBU SMALL LETTER MA */
+			0x1937,				/* LIMBU SMALL LETTER RA */
+			0x1938,				/* LIMBU SMALL LETTER LA */
+			0x19B0,				/* NEW TAI LUE VOWEL SIGN VOWEL SHORTENER */
+			0x19B1,				/* NEW TAI LUE VOWEL SIGN AA */
+			0x19B2,				/* NEW TAI LUE VOWEL SIGN II */
+			0x19B3,				/* NEW TAI LUE VOWEL SIGN U */
+			0x19B4,				/* NEW TAI LUE VOWEL SIGN UU */
+			0x19B5,				/* NEW TAI LUE VOWEL SIGN E */
+			0x19B6,				/* NEW TAI LUE VOWEL SIGN AE */
+			0x19B7,				/* NEW TAI LUE VOWEL SIGN O */
+			0x19B8,				/* NEW TAI LUE VOWEL SIGN OA */
+			0x19B9,				/* NEW TAI LUE VOWEL SIGN UE */
+			0x19BA,				/* NEW TAI LUE VOWEL SIGN AY */
+			0x19BB,				/* NEW TAI LUE VOWEL SIGN AAY */
+			0x19BC,				/* NEW TAI LUE VOWEL SIGN UY */
+			0x19BD,				/* NEW TAI LUE VOWEL SIGN OY */
+			0x19BE,				/* NEW TAI LUE VOWEL SIGN OAY */
+			0x19BF,				/* NEW TAI LUE VOWEL SIGN UEY */
+			0x19C0,				/* NEW TAI LUE VOWEL SIGN IY */
+			0x19C8,				/* NEW TAI LUE TONE MARK-1 */
+			0x19C9,				/* NEW TAI LUE TONE MARK-2 */
+			0x1A19,				/* BUGINESE VOWEL SIGN E */
+			0x1A1A,				/* BUGINESE VOWEL SIGN O */
+			0x1A1B,				/* BUGINESE VOWEL SIGN AE */
+			0x1B04,				/* BALINESE SIGN BISAH */
+			0x1B35,				/* BALINESE VOWEL SIGN TEDUNG */
+			0x1B3B,				/* BALINESE VOWEL SIGN RA REPA TEDUNG */
+			0x1B3D,				/* BALINESE VOWEL SIGN LA LENGA TEDUNG */
+			0x1B3E,				/* BALINESE VOWEL SIGN TALING */
+			0x1B3F,				/* BALINESE VOWEL SIGN TALING REPA */
+			0x1B40,				/* BALINESE VOWEL SIGN TALING TEDUNG */
+			0x1B41,				/* BALINESE VOWEL SIGN TALING REPA TEDUNG */
+			0x1B43,				/* BALINESE VOWEL SIGN PEPET TEDUNG */
+			0x1B44,				/* BALINESE ADEG ADEG */
+			0x1B82,				/* SUNDANESE SIGN PANGWISAD */
+			0x1BA1,				/* SUNDANESE CONSONANT SIGN PAMINGKAL */
+			0x1BA6,				/* SUNDANESE VOWEL SIGN PANAELAENG */
+			0x1BA7,				/* SUNDANESE VOWEL SIGN PANOLONG */
+			0x1BAA,				/* SUNDANESE SIGN PAMAAEH */
+			0x1C24,				/* LEPCHA SUBJOINED LETTER YA */
+			0x1C25,				/* LEPCHA SUBJOINED LETTER RA */
+			0x1C26,				/* LEPCHA VOWEL SIGN AA */
+			0x1C27,				/* LEPCHA VOWEL SIGN I */
+			0x1C28,				/* LEPCHA VOWEL SIGN O */
+			0x1C29,				/* LEPCHA VOWEL SIGN OO */
+			0x1C2A,				/* LEPCHA VOWEL SIGN U */
+			0x1C2B,				/* LEPCHA VOWEL SIGN UU */
+			0x1C34,				/* LEPCHA CONSONANT SIGN NYIN-DO */
+			0x1C35,				/* LEPCHA CONSONANT SIGN KANG */
+			0xA823,				/* SYLOTI NAGRI VOWEL SIGN A */
+			0xA824,				/* SYLOTI NAGRI VOWEL SIGN I */
+			0xA827,				/* SYLOTI NAGRI VOWEL SIGN OO */
+			0xA880,				/* SAURASHTRA SIGN ANUSVARA */
+			0xA881,				/* SAURASHTRA SIGN VISARGA */
+			0xA8B4,				/* SAURASHTRA CONSONANT SIGN HAARU */
+			0xA8B5,				/* SAURASHTRA VOWEL SIGN AA */
+			0xA8B6,				/* SAURASHTRA VOWEL SIGN I */
+			0xA8B7,				/* SAURASHTRA VOWEL SIGN II */
+			0xA8B8,				/* SAURASHTRA VOWEL SIGN U */
+			0xA8B9,				/* SAURASHTRA VOWEL SIGN UU */
+			0xA8BA,				/* SAURASHTRA VOWEL SIGN VOCALIC R */
+			0xA8BB,				/* SAURASHTRA VOWEL SIGN VOCALIC RR */
+			0xA8BC,				/* SAURASHTRA VOWEL SIGN VOCALIC L */
+			0xA8BD,				/* SAURASHTRA VOWEL SIGN VOCALIC LL */
+			0xA8BE,				/* SAURASHTRA VOWEL SIGN E */
+			0xA8BF,				/* SAURASHTRA VOWEL SIGN EE */
+			0xA8C0,				/* SAURASHTRA VOWEL SIGN AI */
+			0xA8C1,				/* SAURASHTRA VOWEL SIGN O */
+			0xA8C2,				/* SAURASHTRA VOWEL SIGN OO */
+			0xA8C3,				/* SAURASHTRA VOWEL SIGN AU */
+			0xA952,				/* REJANG CONSONANT SIGN H */
+			0xA953,				/* REJANG VIRAMA */
+			0xAA2F,				/* CHAM VOWEL SIGN O */
+			0xAA30,				/* CHAM VOWEL SIGN AI */
+			0xAA33,				/* CHAM CONSONANT SIGN YA */
+			0xAA34,				/* CHAM CONSONANT SIGN RA */
+			0xAA4D				/* CHAM CONSONANT SIGN FINAL H */
+		};
+		pg_wchar   *StopLow = strange_letter,
+				   *StopHigh = strange_letter + lengthof(strange_letter),
+				   *StopMiddle;
 		pg_wchar	c;
 
-		if ( prs->pgwstr )
+		if (prs->pgwstr)
 			c = *(prs->pgwstr + prs->state->poschar);
 		else
 			c = (pg_wchar) *(prs->wstr + prs->state->poschar);
 
-		while( StopLow < StopHigh )
+		while (StopLow < StopHigh)
 		{
 			StopMiddle = StopLow + ((StopHigh - StopLow) >> 1);
-			if ( *StopMiddle == c )
+			if (*StopMiddle == c)
 				return 1;
-			else if ( *StopMiddle < c )
+			else if (*StopMiddle < c)
 				StopLow = StopMiddle + 1;
 			else
 				StopHigh = StopMiddle;
@@ -1288,7 +1289,7 @@ static const TParserStateActionItem actionTPS_InTagFirst[] = {
 static const TParserStateActionItem actionTPS_InXMLBegin[] = {
 	{p_isEOF, 0, A_POP, TPS_Null, 0, NULL},
 	/* <?xml ... */
-    /* XXX do we wants states for the m and l ?  Right now this accepts <?xZ */
+	/* XXX do we wants states for the m and l ?  Right now this accepts <?xZ */
 	{p_iseqC, 'x', A_NEXT, TPS_InTag, 0, NULL},
 	{NULL, 0, A_POP, TPS_Null, 0, NULL}
 };
@@ -2004,10 +2005,10 @@ prsd_end(PG_FUNCTION_ARGS)
 #define COMPLEXTOKEN(x) ( (x)==URL_T || (x)==NUMHWORD || (x)==ASCIIHWORD || (x)==HWORD )
 #define ENDPUNCTOKEN(x) ( (x)==SPACE )
 
-#define TS_IDIGNORE(x)  ( (x)==TAG_T || (x)==PROTOCOL || (x)==SPACE || (x)==XMLENTITY )
-#define HLIDREPLACE(x)  ( (x)==TAG_T )
-#define HLIDSKIP(x)     ( (x)==URL_T || (x)==NUMHWORD || (x)==ASCIIHWORD || (x)==HWORD )
-#define XMLHLIDSKIP(x)  ( (x)==URL_T || (x)==NUMHWORD || (x)==ASCIIHWORD || (x)==HWORD )
+#define TS_IDIGNORE(x)	( (x)==TAG_T || (x)==PROTOCOL || (x)==SPACE || (x)==XMLENTITY )
+#define HLIDREPLACE(x)	( (x)==TAG_T )
+#define HLIDSKIP(x)		( (x)==URL_T || (x)==NUMHWORD || (x)==ASCIIHWORD || (x)==HWORD )
+#define XMLHLIDSKIP(x)	( (x)==URL_T || (x)==NUMHWORD || (x)==ASCIIHWORD || (x)==HWORD )
 #define NONWORDTOKEN(x) ( (x)==SPACE || HLIDREPLACE(x) || HLIDSKIP(x) )
 #define NOENDTOKEN(x)	( NONWORDTOKEN(x) || (x)==SCIENTIFIC || (x)==VERSIONNUMBER || (x)==DECIMAL_T || (x)==SIGNEDINT || (x)==UNSIGNEDINT || TS_IDIGNORE(x) )
 
@@ -2105,7 +2106,7 @@ hlCover(HeadlineParsedText *prs, TSQuery query, int *p, int *q)
 static void
 mark_fragment(HeadlineParsedText *prs, int highlight, int startpos, int endpos)
 {
-	int   i;
+	int			i;
 
 	for (i = startpos; i <= endpos; i++)
 	{
@@ -2115,7 +2116,7 @@ mark_fragment(HeadlineParsedText *prs, int highlight, int startpos, int endpos)
 		{
 			if (HLIDREPLACE(prs->words[i].type))
 				prs->words[i].replace = 1;
-			else if ( HLIDSKIP(prs->words[i].type) )
+			else if (HLIDSKIP(prs->words[i].type))
 				prs->words[i].skip = 1;
 		}
 		else
@@ -2130,27 +2131,29 @@ mark_fragment(HeadlineParsedText *prs, int highlight, int startpos, int endpos)
 
 typedef struct
 {
-	int4 startpos;
-	int4 endpos;
-	int4 poslen;
-	int4 curlen;
-	int2 in;
-	int2 excluded;
+	int4		startpos;
+	int4		endpos;
+	int4		poslen;
+	int4		curlen;
+	int2		in;
+	int2		excluded;
 } CoverPos;
 
 static void
 get_next_fragment(HeadlineParsedText *prs, int *startpos, int *endpos,
-			int *curlen, int *poslen, int max_words)
+				  int *curlen, int *poslen, int max_words)
 {
-	int i;
-	/* Objective: Generate a fragment of words between startpos and endpos
-	 * such that it has at most max_words and both ends has query words.
-	 * If the startpos and endpos are the endpoints of the cover and the
-	 * cover has fewer words than max_words, then this function should
-	 * just return the cover
+	int			i;
+
+	/*
+	 * Objective: Generate a fragment of words between startpos and endpos
+	 * such that it has at most max_words and both ends has query words. If
+	 * the startpos and endpos are the endpoints of the cover and the cover
+	 * has fewer words than max_words, then this function should just return
+	 * the cover
 	 */
 	/* first move startpos to an item */
-	for(i = *startpos; i <= *endpos; i++)
+	for (i = *startpos; i <= *endpos; i++)
 	{
 		*startpos = i;
 		if (prs->words[i].item && !prs->words[i].repeated)
@@ -2159,7 +2162,7 @@ get_next_fragment(HeadlineParsedText *prs, int *startpos, int *endpos,
 	/* cut endpos to have only max_words */
 	*curlen = 0;
 	*poslen = 0;
-	for(i = *startpos; i <= *endpos && *curlen < max_words; i++)
+	for (i = *startpos; i <= *endpos && *curlen < max_words; i++)
 	{
 		if (!NONWORDTOKEN(prs->words[i].type))
 			*curlen += 1;
@@ -2170,7 +2173,7 @@ get_next_fragment(HeadlineParsedText *prs, int *startpos, int *endpos,
 	if (*endpos > i)
 	{
 		*endpos = i;
-		for(i = *endpos; i >= *startpos; i --)
+		for (i = *endpos; i >= *startpos; i--)
 		{
 			*endpos = i;
 			if (prs->words[i].item && !prs->words[i].repeated)
@@ -2183,22 +2186,30 @@ get_next_fragment(HeadlineParsedText *prs, int *startpos, int *endpos,
 
 static void
 mark_hl_fragments(HeadlineParsedText *prs, TSQuery query, int highlight,
-                        int shortword, int min_words,
-			int max_words, int max_fragments)
+				  int shortword, int min_words,
+				  int max_words, int max_fragments)
 {
-	int4           	poslen, curlen, i, f, num_f = 0;
-	int4		stretch, maxstretch, posmarker;
+	int4		poslen,
+				curlen,
+				i,
+				f,
+				num_f = 0;
+	int4		stretch,
+				maxstretch,
+				posmarker;
 
-	int4           	startpos = 0,
-			endpos   = 0,
-			p        = 0,
-			q        = 0;
+	int4		startpos = 0,
+				endpos = 0,
+				p = 0,
+				q = 0;
 
 	int4		numcovers = 0,
-			maxcovers = 32;
+				maxcovers = 32;
 
-	int4          	minI, minwords, maxitems;
-	CoverPos	*covers;
+	int4		minI,
+				minwords,
+				maxitems;
+	CoverPos   *covers;
 
 	covers = palloc(maxcovers * sizeof(CoverPos));
 
@@ -2206,12 +2217,13 @@ mark_hl_fragments(HeadlineParsedText *prs, TSQuery query, int highlight,
 	while (hlCover(prs, query, &p, &q))
 	{
 		startpos = p;
-		endpos   = q;
+		endpos = q;
 
-		/* Break the cover into smaller fragments such that each fragment
-		 * has at most max_words. Also ensure that each end of the fragment
-		 * is a query word. This will allow us to stretch the fragment in
-		 * either direction
+		/*
+		 * Break the cover into smaller fragments such that each fragment has
+		 * at most max_words. Also ensure that each end of the fragment is a
+		 * query word. This will allow us to stretch the fragment in either
+		 * direction
 		 */
 
 		while (startpos <= endpos)
@@ -2220,17 +2232,17 @@ mark_hl_fragments(HeadlineParsedText *prs, TSQuery query, int highlight,
 			if (numcovers >= maxcovers)
 			{
 				maxcovers *= 2;
-				covers     = repalloc(covers, sizeof(CoverPos) * maxcovers);
+				covers = repalloc(covers, sizeof(CoverPos) * maxcovers);
 			}
 			covers[numcovers].startpos = startpos;
-			covers[numcovers].endpos   = endpos;
-			covers[numcovers].curlen   = curlen;
-			covers[numcovers].poslen   = poslen;
-			covers[numcovers].in       = 0;
+			covers[numcovers].endpos = endpos;
+			covers[numcovers].curlen = curlen;
+			covers[numcovers].poslen = poslen;
+			covers[numcovers].in = 0;
 			covers[numcovers].excluded = 0;
-			numcovers ++;
+			numcovers++;
 			startpos = endpos + 1;
-			endpos   = q;
+			endpos = q;
 		}
 		/* move p to generate the next cover */
 		p++;
@@ -2242,19 +2254,20 @@ mark_hl_fragments(HeadlineParsedText *prs, TSQuery query, int highlight,
 		maxitems = 0;
 		minwords = 0x7fffffff;
 		minI = -1;
-		/* Choose the cover that contains max items.
-		 * In case of tie choose the one with smaller
-		 * number of words.
+
+		/*
+		 * Choose the cover that contains max items. In case of tie choose the
+		 * one with smaller number of words.
 		 */
-		for (i = 0; i < numcovers; i ++)
+		for (i = 0; i < numcovers; i++)
 		{
-			if (!covers[i].in &&  !covers[i].excluded &&
+			if (!covers[i].in && !covers[i].excluded &&
 				(maxitems < covers[i].poslen || (maxitems == covers[i].poslen
-				&& minwords > covers[i].curlen)))
+											&& minwords > covers[i].curlen)))
 			{
 				maxitems = covers[i].poslen;
 				minwords = covers[i].curlen;
-				minI     = i;
+				minI = i;
 			}
 		}
 		/* if a cover was found mark it */
@@ -2263,27 +2276,27 @@ mark_hl_fragments(HeadlineParsedText *prs, TSQuery query, int highlight,
 			covers[minI].in = 1;
 			/* adjust the size of cover */
 			startpos = covers[minI].startpos;
-			endpos   = covers[minI].endpos;
-			curlen   = covers[minI].curlen;
+			endpos = covers[minI].endpos;
+			curlen = covers[minI].curlen;
 			/* stretch the cover if cover size is lower than max_words */
 			if (curlen < max_words)
 			{
 				/* divide the stretch on both sides of cover */
-				maxstretch = (max_words - curlen)/2;
-				/* first stretch the startpos
-				 * stop stretching if
-				 *	1. we hit the beginning of document
-				 *	2. exceed maxstretch
-				 *	3. we hit an already marked fragment
+				maxstretch = (max_words - curlen) / 2;
+
+				/*
+				 * first stretch the startpos stop stretching if 1. we hit the
+				 * beginning of document 2. exceed maxstretch 3. we hit an
+				 * already marked fragment
 				 */
-				stretch   = 0;
+				stretch = 0;
 				posmarker = startpos;
 				for (i = startpos - 1; i >= 0 && stretch < maxstretch && !prs->words[i].in; i--)
 				{
 					if (!NONWORDTOKEN(prs->words[i].type))
 					{
-						curlen  ++;
-						stretch ++;
+						curlen++;
+						stretch++;
 					}
 					posmarker = i;
 				}
@@ -2291,35 +2304,35 @@ mark_hl_fragments(HeadlineParsedText *prs, TSQuery query, int highlight,
 				for (i = posmarker; i < startpos && (NOENDTOKEN(prs->words[i].type) || prs->words[i].len <= shortword); i++)
 				{
 					if (!NONWORDTOKEN(prs->words[i].type))
-						curlen --;
+						curlen--;
 				}
 				startpos = i;
-				/* now stretch the endpos as much as possible*/
+				/* now stretch the endpos as much as possible */
 				posmarker = endpos;
 				for (i = endpos + 1; i < prs->curwords && curlen < max_words && !prs->words[i].in; i++)
 				{
 					if (!NONWORDTOKEN(prs->words[i].type))
-						curlen  ++;
+						curlen++;
 					posmarker = i;
 				}
 				/* cut back endpos till we find a non-short token */
-				for ( i = posmarker; i > endpos && (NOENDTOKEN(prs->words[i].type) || prs->words[i].len <= shortword); i--)
+				for (i = posmarker; i > endpos && (NOENDTOKEN(prs->words[i].type) || prs->words[i].len <= shortword); i--)
 				{
 					if (!NONWORDTOKEN(prs->words[i].type))
-						curlen --;
+						curlen--;
 				}
 				endpos = i;
 			}
 			covers[minI].startpos = startpos;
-			covers[minI].endpos   = endpos;
-			covers[minI].curlen   = curlen;
+			covers[minI].endpos = endpos;
+			covers[minI].curlen = curlen;
 			/* Mark the chosen fragments (covers) */
 			mark_fragment(prs, highlight, startpos, endpos);
-			num_f ++;
+			num_f++;
 			/* exclude overlapping covers */
-			for (i = 0; i < numcovers; i ++)
+			for (i = 0; i < numcovers; i++)
 			{
-				if (i != minI && ( (covers[i].startpos >= covers[minI].startpos && covers[i].startpos <= covers[minI].endpos)  || (covers[i].endpos >= covers[minI].startpos && covers[i].endpos <= covers[minI].endpos)))
+				if (i != minI && ((covers[i].startpos >= covers[minI].startpos && covers[i].startpos <= covers[minI].endpos) || (covers[i].endpos >= covers[minI].startpos && covers[i].endpos <= covers[minI].endpos)))
 					covers[i].excluded = 1;
 			}
 		}
@@ -2327,7 +2340,7 @@ mark_hl_fragments(HeadlineParsedText *prs, TSQuery query, int highlight,
 			break;
 	}
 
-	/* show at least min_words we have not marked anything*/
+	/* show at least min_words we have not marked anything */
 	if (num_f <= 0)
 	{
 		startpos = endpos = curlen = 0;
@@ -2344,7 +2357,7 @@ mark_hl_fragments(HeadlineParsedText *prs, TSQuery query, int highlight,
 
 static void
 mark_hl_words(HeadlineParsedText *prs, TSQuery query, int highlight,
-		int shortword, int min_words, int max_words)
+			  int shortword, int min_words, int max_words)
 {
 	int			p = 0,
 				q = 0;
@@ -2408,7 +2421,7 @@ mark_hl_words(HeadlineParsedText *prs, TSQuery query, int highlight,
 							curlen++;
 						if (prs->words[i].item && !prs->words[i].repeated)
 							poslen++;
-						if ( curlen >= max_words )
+						if (curlen >= max_words)
 							break;
 						if (NOENDTOKEN(prs->words[i].type) || prs->words[i].len <= shortword)
 							continue;
@@ -2472,7 +2485,7 @@ mark_hl_words(HeadlineParsedText *prs, TSQuery query, int highlight,
 		{
 			if (HLIDREPLACE(prs->words[i].type))
 				prs->words[i].replace = 1;
-			else if ( HLIDSKIP(prs->words[i].type) )
+			else if (HLIDSKIP(prs->words[i].type))
 				prs->words[i].skip = 1;
 		}
 		else
@@ -2494,11 +2507,11 @@ prsd_headline(PG_FUNCTION_ARGS)
 	TSQuery		query = PG_GETARG_TSQUERY(2);
 
 	/* from opt + start and and tag */
-	int			min_words     = 15;
-	int			max_words     = 35;
-	int			shortword     = 3;
+	int			min_words = 15;
+	int			max_words = 35;
+	int			shortword = 3;
 	int			max_fragments = 0;
-	int			highlight     = 0;
+	int			highlight = 0;
 	ListCell   *l;
 
 	/* config */

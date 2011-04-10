@@ -52,7 +52,7 @@ typedef FormData_pg_collation *Form_pg_collation;
  */
 #define Natts_pg_collation				6
 #define Anum_pg_collation_collname		1
-#define Anum_pg_collation_collnamespace	2
+#define Anum_pg_collation_collnamespace 2
 #define Anum_pg_collation_collowner		3
 #define Anum_pg_collation_collencoding	4
 #define Anum_pg_collation_collcollate	5

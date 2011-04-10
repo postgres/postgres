@@ -89,7 +89,7 @@ BSD44_derived_dlsym(void *handle, const char *name)
 		snprintf(buf, sizeof(buf), "_%s", name);
 		name = buf;
 	}
-#endif /* !__ELF__ */
+#endif   /* !__ELF__ */
 	if ((vp = dlsym(handle, (char *) name)) == NULL)
 		snprintf(error_message, sizeof(error_message),
 				 "dlsym (%s) failed", name);

@@ -236,7 +236,7 @@ typedef union
 #if defined(B64)
 	B64			b64;
 #endif
-}	C_block;
+} C_block;
 
 /*
  * Convert twenty-four-bit long in host-order

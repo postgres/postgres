@@ -21,13 +21,13 @@
 void
 install_support_functions_in_new_db(const char *db_name)
 {
-	PGconn *conn = connectToServer(&new_cluster, db_name);
-	
+	PGconn	   *conn = connectToServer(&new_cluster, db_name);
+
 	/* suppress NOTICE of dropped objects */
 	PQclear(executeQueryOrDie(conn,
 							  "SET client_min_messages = warning;"));
 	PQclear(executeQueryOrDie(conn,
-					   "DROP SCHEMA IF EXISTS binary_upgrade CASCADE;"));
+						   "DROP SCHEMA IF EXISTS binary_upgrade CASCADE;"));
 	PQclear(executeQueryOrDie(conn,
 							  "RESET client_min_messages;"));
 
@@ -42,31 +42,31 @@ install_support_functions_in_new_db(const char *db_name)
 							  "LANGUAGE C STRICT;"));
 	PQclear(executeQueryOrDie(conn,
 							  "CREATE OR REPLACE FUNCTION "
-							  "binary_upgrade.set_next_array_pg_type_oid(OID) "
+							"binary_upgrade.set_next_array_pg_type_oid(OID) "
 							  "RETURNS VOID "
 							  "AS '$libdir/pg_upgrade_support' "
 							  "LANGUAGE C STRICT;"));
 	PQclear(executeQueryOrDie(conn,
 							  "CREATE OR REPLACE FUNCTION "
-							  "binary_upgrade.set_next_toast_pg_type_oid(OID) "
+							"binary_upgrade.set_next_toast_pg_type_oid(OID) "
 							  "RETURNS VOID "
 							  "AS '$libdir/pg_upgrade_support' "
 							  "LANGUAGE C STRICT;"));
 	PQclear(executeQueryOrDie(conn,
 							  "CREATE OR REPLACE FUNCTION "
-							  "binary_upgrade.set_next_heap_pg_class_oid(OID) "
+							"binary_upgrade.set_next_heap_pg_class_oid(OID) "
 							  "RETURNS VOID "
 							  "AS '$libdir/pg_upgrade_support' "
 							  "LANGUAGE C STRICT;"));
 	PQclear(executeQueryOrDie(conn,
 							  "CREATE OR REPLACE FUNCTION "
-							  "binary_upgrade.set_next_index_pg_class_oid(OID) "
+						   "binary_upgrade.set_next_index_pg_class_oid(OID) "
 							  "RETURNS VOID "
 							  "AS '$libdir/pg_upgrade_support' "
 							  "LANGUAGE C STRICT;"));
 	PQclear(executeQueryOrDie(conn,
 							  "CREATE OR REPLACE FUNCTION "
-							  "binary_upgrade.set_next_toast_pg_class_oid(OID) "
+						   "binary_upgrade.set_next_toast_pg_class_oid(OID) "
 							  "RETURNS VOID "
 							  "AS '$libdir/pg_upgrade_support' "
 							  "LANGUAGE C STRICT;"));

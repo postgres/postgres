@@ -78,7 +78,7 @@ typedef struct ResourceOwnerData
 	int			nfiles;			/* number of owned temporary files */
 	File	   *files;			/* dynamically allocated array */
 	int			maxfiles;		/* currently allocated array size */
-} ResourceOwnerData;
+}	ResourceOwnerData;
 
 
 /*****************************************************************************

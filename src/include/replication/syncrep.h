@@ -44,7 +44,7 @@ extern void SyncRepReleaseWaiters(void);
 extern void SyncRepUpdateSyncStandbysDefined(void);
 
 /* called by various procs */
-extern int SyncRepWakeQueue(bool all);
+extern int	SyncRepWakeQueue(bool all);
 extern bool check_synchronous_standby_names(char **newval, void **extra, GucSource source);
 
 #endif   /* _SYNCREP_H */

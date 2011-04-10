@@ -237,6 +237,7 @@ bit_out(PG_FUNCTION_ARGS)
 	/* same as varbit output */
 	return varbit_out(fcinfo);
 #else
+
 	/*
 	 * This is how one would print a hex string, in case someone wants to
 	 * write a formatting function.

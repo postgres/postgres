@@ -562,12 +562,12 @@ standard_ProcessUtility(Node *parsetree,
 
 						/*
 						 * Unless "IF NOT EXISTS" was specified and the
-						 * relation already exists, create the pg_foreign_table
-						 * entry.
+						 * relation already exists, create the
+						 * pg_foreign_table entry.
 						 */
 						if (relOid != InvalidOid)
 							CreateForeignTable((CreateForeignTableStmt *) stmt,
-												relOid);
+											   relOid);
 					}
 					else
 					{
@@ -916,6 +916,7 @@ standard_ProcessUtility(Node *parsetree,
 			break;
 
 		case T_AlterEnumStmt:	/* ALTER TYPE (enum) */
+
 			/*
 			 * We disallow this in transaction blocks, because we can't cope
 			 * with enum OID values getting into indexes and then having their

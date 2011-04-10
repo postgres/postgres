@@ -184,7 +184,7 @@ extern int	list_length(List *l);
 
 /*
  * forthree -
- *    the same for three lists
+ *	  the same for three lists
  */
 #define forthree(cell1, list1, cell2, list2, cell3, list3)			\
 	for ((cell1) = list_head(list1), (cell2) = list_head(list2), (cell3) = list_head(list3); \

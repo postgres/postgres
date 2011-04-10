@@ -718,7 +718,7 @@ copy_heap_data(Oid OIDNewHeap, Oid OIDOldHeap, Oid OIDOldIndex,
 	TransactionId OldestXmin;
 	TransactionId FreezeXid;
 	RewriteState rwstate;
-	bool 		 use_sort;
+	bool		use_sort;
 	Tuplesortstate *tuplesort;
 	double		num_tuples = 0,
 				tups_vacuumed = 0,
@@ -813,11 +813,11 @@ copy_heap_data(Oid OIDNewHeap, Oid OIDOldHeap, Oid OIDOldIndex,
 	rwstate = begin_heap_rewrite(NewHeap, OldestXmin, FreezeXid, use_wal);
 
 	/*
-	 * Decide whether to use an indexscan or seqscan-and-optional-sort to
-	 * scan the OldHeap.  We know how to use a sort to duplicate the ordering
-	 * of a btree index, and will use seqscan-and-sort for that case if the
-	 * planner tells us it's cheaper.  Otherwise, always indexscan if an
-	 * index is provided, else plain seqscan.
+	 * Decide whether to use an indexscan or seqscan-and-optional-sort to scan
+	 * the OldHeap.  We know how to use a sort to duplicate the ordering of a
+	 * btree index, and will use seqscan-and-sort for that case if the planner
+	 * tells us it's cheaper.  Otherwise, always indexscan if an index is
+	 * provided, else plain seqscan.
 	 */
 	if (OldIndex != NULL && OldIndex->rd_rel->relam == BTREE_AM_OID)
 		use_sort = plan_cluster_use_sort(OIDOldHeap, OIDOldIndex);
@@ -869,8 +869,8 @@ copy_heap_data(Oid OIDNewHeap, Oid OIDOldHeap, Oid OIDOldIndex,
 	/*
 	 * Scan through the OldHeap, either in OldIndex order or sequentially;
 	 * copy each tuple into the NewHeap, or transiently to the tuplesort
-	 * module.  Note that we don't bother sorting dead tuples (they won't
-	 * get to the new table anyway).
+	 * module.	Note that we don't bother sorting dead tuples (they won't get
+	 * to the new table anyway).
 	 */
 	for (;;)
 	{
@@ -984,8 +984,8 @@ copy_heap_data(Oid OIDNewHeap, Oid OIDOldHeap, Oid OIDOldIndex,
 		heap_endscan(heapScan);
 
 	/*
-	 * In scan-and-sort mode, complete the sort, then read out all live
-	 * tuples from the tuplestore and write them to the new relation.
+	 * In scan-and-sort mode, complete the sort, then read out all live tuples
+	 * from the tuplestore and write them to the new relation.
 	 */
 	if (tuplesort != NULL)
 	{
@@ -1554,7 +1554,7 @@ reform_and_rewrite_tuple(HeapTuple tuple,
 						 bool newRelHasOids, RewriteState rwstate)
 {
 	HeapTuple	copiedTuple;
-	int 		i;
+	int			i;
 
 	heap_deform_tuple(tuple, oldTupDesc, values, isnull);
 

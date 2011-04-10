@@ -1200,9 +1200,10 @@ xml_parse(text *data, XmlOptionType xmloption_arg, bool preserve_whitespace,
 		{
 			/*
 			 * Note, that here we try to apply DTD defaults
-			 * (XML_PARSE_DTDATTR) according to SQL/XML:2008 GR 10.16.7.d: 'Default
-			 * values defined by internal DTD are applied'. As for external
-			 * DTDs, we try to support them too, (see SQL/XML:2008 GR 10.16.7.e)
+			 * (XML_PARSE_DTDATTR) according to SQL/XML:2008 GR 10.16.7.d:
+			 * 'Default values defined by internal DTD are applied'. As for
+			 * external DTDs, we try to support them too, (see SQL/XML:2008 GR
+			 * 10.16.7.e)
 			 */
 			doc = xmlCtxtReadDoc(ctxt, utf8string,
 								 NULL,
@@ -3435,10 +3436,10 @@ xpath_internal(text *xpath_expr_text, xmltype *data, ArrayType *namespaces,
 
 		/*
 		 * Version 2.6.27 introduces a function named
-		 * xmlXPathCompiledEvalToBoolean, which would be enough for
-		 * xmlexists, but we can derive the existence by whether any
-		 * nodes are returned, thereby preventing a library version
-		 * upgrade and keeping the code the same.
+		 * xmlXPathCompiledEvalToBoolean, which would be enough for xmlexists,
+		 * but we can derive the existence by whether any nodes are returned,
+		 * thereby preventing a library version upgrade and keeping the code
+		 * the same.
 		 */
 		xpathobj = xmlXPathCompiledEval(xpathcomp, xpathctx);
 		if (xpathobj == NULL)	/* TODO: reason? */
@@ -3488,7 +3489,7 @@ xpath_internal(text *xpath_expr_text, xmltype *data, ArrayType *namespaces,
 	xmlFreeDoc(doc);
 	xmlFreeParserCtxt(ctxt);
 }
-#endif /* USE_LIBXML */
+#endif   /* USE_LIBXML */
 
 /*
  * Evaluate XPath expression and return array of XML values.
@@ -3524,7 +3525,8 @@ xpath(PG_FUNCTION_ARGS)
  * Determines if the node specified by the supplied XPath exists
  * in a given XML document, returning a boolean.
  */
-Datum xmlexists(PG_FUNCTION_ARGS)
+Datum
+xmlexists(PG_FUNCTION_ARGS)
 {
 #ifdef USE_LIBXML
 	text	   *xpath_expr_text = PG_GETARG_TEXT_P(0);

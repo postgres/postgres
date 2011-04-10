@@ -783,7 +783,7 @@ ginvacuumcleanup(PG_FUNCTION_ARGS)
 		{
 			idxStat.nEntryPages++;
 
-			if ( GinPageIsLeaf(page) )
+			if (GinPageIsLeaf(page))
 				idxStat.nEntries += PageGetMaxOffsetNumber(page);
 		}
 

@@ -179,8 +179,8 @@ top:
 		 * The only conflict predicate locking cares about for indexes is when
 		 * an index tuple insert conflicts with an existing lock.  Since the
 		 * actual location of the insert is hard to predict because of the
-		 * random search used to prevent O(N^2) performance when there are many
-		 * duplicate entries, we can just use the "first valid" page.
+		 * random search used to prevent O(N^2) performance when there are
+		 * many duplicate entries, we can just use the "first valid" page.
 		 */
 		CheckForSerializableConflictIn(rel, NULL, buf);
 		/* do the insertion */
@@ -915,13 +915,13 @@ _bt_split(Relation rel, Buffer buf, OffsetNumber firstright,
 	/*
 	 * origpage is the original page to be split.  leftpage is a temporary
 	 * buffer that receives the left-sibling data, which will be copied back
-	 * into origpage on success.  rightpage is the new page that receives
-	 * the right-sibling data.  If we fail before reaching the critical
-	 * section, origpage hasn't been modified and leftpage is only workspace.
-	 * In principle we shouldn't need to worry about rightpage either,
-	 * because it hasn't been linked into the btree page structure; but to
-	 * avoid leaving possibly-confusing junk behind, we are careful to rewrite
-	 * rightpage as zeroes before throwing any error.
+	 * into origpage on success.  rightpage is the new page that receives the
+	 * right-sibling data.	If we fail before reaching the critical section,
+	 * origpage hasn't been modified and leftpage is only workspace. In
+	 * principle we shouldn't need to worry about rightpage either, because it
+	 * hasn't been linked into the btree page structure; but to avoid leaving
+	 * possibly-confusing junk behind, we are careful to rewrite rightpage as
+	 * zeroes before throwing any error.
 	 */
 	origpage = BufferGetPage(buf);
 	leftpage = PageGetTempPage(origpage);
@@ -1118,7 +1118,7 @@ _bt_split(Relation rel, Buffer buf, OffsetNumber firstright,
 		{
 			memset(rightpage, 0, BufferGetPageSize(rbuf));
 			elog(ERROR, "right sibling's left-link doesn't match: "
-				 "block %u links to %u instead of expected %u in index \"%s\"",
+			   "block %u links to %u instead of expected %u in index \"%s\"",
 				 oopaque->btpo_next, sopaque->btpo_prev, origpagenumber,
 				 RelationGetRelationName(rel));
 		}

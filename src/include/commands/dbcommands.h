@@ -27,14 +27,14 @@ typedef struct xl_dbase_create_rec_old
 	Oid			db_id;
 	char		src_path[1];	/* VARIABLE LENGTH STRING */
 	/* dst_path follows src_path */
-} xl_dbase_create_rec_old;
+}	xl_dbase_create_rec_old;
 
 typedef struct xl_dbase_drop_rec_old
 {
 	/* Records dropping of a single subdirectory incl. contents */
 	Oid			db_id;
 	char		dir_path[1];	/* VARIABLE LENGTH STRING */
-} xl_dbase_drop_rec_old;
+}	xl_dbase_drop_rec_old;
 
 typedef struct xl_dbase_create_rec
 {

@@ -200,8 +200,8 @@ RequestXLogStreaming(XLogRecPtr recptr, const char *conninfo)
 	walrcv->startTime = now;
 
 	/*
-	 * If this is the first startup of walreceiver, we initialize
-	 * receivedUpto and latestChunkStart to receiveStart.
+	 * If this is the first startup of walreceiver, we initialize receivedUpto
+	 * and latestChunkStart to receiveStart.
 	 */
 	if (walrcv->receiveStart.xlogid == 0 &&
 		walrcv->receiveStart.xrecoff == 0)

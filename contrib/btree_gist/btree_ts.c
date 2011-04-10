@@ -120,7 +120,7 @@ gbt_ts_dist(const void *a, const void *b)
 {
 	const Timestamp *aa = (const Timestamp *) a;
 	const Timestamp *bb = (const Timestamp *) b;
-	Interval      *i;
+	Interval   *i;
 
 	if (TIMESTAMP_NOT_FINITE(*aa) || TIMESTAMP_NOT_FINITE(*bb))
 		return get_float8_infinity();
@@ -147,17 +147,17 @@ static const gbtree_ninfo tinfo =
 
 
 PG_FUNCTION_INFO_V1(ts_dist);
-Datum       ts_dist(PG_FUNCTION_ARGS);
+Datum		ts_dist(PG_FUNCTION_ARGS);
 Datum
 ts_dist(PG_FUNCTION_ARGS)
 {
 	Timestamp	a = PG_GETARG_TIMESTAMP(0);
 	Timestamp	b = PG_GETARG_TIMESTAMP(1);
-    Interval      *r;
+	Interval   *r;
 
 	if (TIMESTAMP_NOT_FINITE(a) || TIMESTAMP_NOT_FINITE(b))
 	{
-		Interval *p = palloc(sizeof(Interval));
+		Interval   *p = palloc(sizeof(Interval));
 
 		p->day = INT_MAX;
 		p->month = INT_MAX;
@@ -169,25 +169,24 @@ ts_dist(PG_FUNCTION_ARGS)
 		PG_RETURN_INTERVAL_P(p);
 	}
 	else
-
-	r = DatumGetIntervalP(DirectFunctionCall2(timestamp_mi,
-											  PG_GETARG_DATUM(0),
-											  PG_GETARG_DATUM(1)));
-	PG_RETURN_INTERVAL_P( abs_interval(r) );
+		r = DatumGetIntervalP(DirectFunctionCall2(timestamp_mi,
+												  PG_GETARG_DATUM(0),
+												  PG_GETARG_DATUM(1)));
+	PG_RETURN_INTERVAL_P(abs_interval(r));
 }
 
 PG_FUNCTION_INFO_V1(tstz_dist);
-Datum       tstz_dist(PG_FUNCTION_ARGS);
+Datum		tstz_dist(PG_FUNCTION_ARGS);
 Datum
 tstz_dist(PG_FUNCTION_ARGS)
 {
-	TimestampTz	a = PG_GETARG_TIMESTAMPTZ(0);
-	TimestampTz	b = PG_GETARG_TIMESTAMPTZ(1);
-    Interval      *r;
+	TimestampTz a = PG_GETARG_TIMESTAMPTZ(0);
+	TimestampTz b = PG_GETARG_TIMESTAMPTZ(1);
+	Interval   *r;
 
 	if (TIMESTAMP_NOT_FINITE(a) || TIMESTAMP_NOT_FINITE(b))
 	{
-		Interval *p = palloc(sizeof(Interval));
+		Interval   *p = palloc(sizeof(Interval));
 
 		p->day = INT_MAX;
 		p->month = INT_MAX;
@@ -202,7 +201,7 @@ tstz_dist(PG_FUNCTION_ARGS)
 	r = DatumGetIntervalP(DirectFunctionCall2(timestamp_mi,
 											  PG_GETARG_DATUM(0),
 											  PG_GETARG_DATUM(1)));
-	PG_RETURN_INTERVAL_P( abs_interval(r) );
+	PG_RETURN_INTERVAL_P(abs_interval(r));
 }
 
 
@@ -309,7 +308,7 @@ gbt_ts_distance(PG_FUNCTION_ARGS)
 	key.upper = (GBT_NUMKEY *) &kkk->upper;
 
 	PG_RETURN_FLOAT8(
-				   gbt_num_distance(&key, (void *) &query, GIST_LEAF(entry), &tinfo)
+			gbt_num_distance(&key, (void *) &query, GIST_LEAF(entry), &tinfo)
 		);
 }
 
@@ -354,7 +353,7 @@ gbt_tstz_distance(PG_FUNCTION_ARGS)
 	qqq = tstz_to_ts_gmt(query);
 
 	PG_RETURN_FLOAT8(
-				   gbt_num_distance(&key, (void *) &qqq, GIST_LEAF(entry), &tinfo)
+			  gbt_num_distance(&key, (void *) &qqq, GIST_LEAF(entry), &tinfo)
 		);
 }
 

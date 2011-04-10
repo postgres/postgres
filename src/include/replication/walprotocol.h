@@ -48,9 +48,9 @@ typedef struct
 typedef struct
 {
 	/*
-	 * The xlog locations that have been written, flushed, and applied
-	 * by standby-side. These may be invalid if the standby-side is unable
-	 * to or chooses not to report these.
+	 * The xlog locations that have been written, flushed, and applied by
+	 * standby-side. These may be invalid if the standby-side is unable to or
+	 * chooses not to report these.
 	 */
 	XLogRecPtr	write;
 	XLogRecPtr	flush;
@@ -70,11 +70,11 @@ typedef struct
 {
 	/*
 	 * The current xmin and epoch from the standby, for Hot Standby feedback.
-	 * This may be invalid if the standby-side does not support feedback,
-	 * or Hot Standby is not yet available.
+	 * This may be invalid if the standby-side does not support feedback, or
+	 * Hot Standby is not yet available.
 	 */
-	TransactionId	xmin;
-	uint32			epoch;
+	TransactionId xmin;
+	uint32		epoch;
 
 	/* Sender's system clock at the time of transmission */
 	TimestampTz sendTime;

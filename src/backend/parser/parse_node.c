@@ -220,7 +220,7 @@ transformArrayType(Oid *arrayType, int32 *arrayTypmod)
 	 * If the input is a domain, smash to base type, and extract the actual
 	 * typmod to be applied to the base type.  Subscripting a domain is an
 	 * operation that necessarily works on the base array type, not the domain
-	 * itself.  (Note that we provide no method whereby the creator of a
+	 * itself.	(Note that we provide no method whereby the creator of a
 	 * domain over an array type could hide its ability to be subscripted.)
 	 */
 	*arrayType = getBaseTypeAndTypmod(*arrayType, arrayTypmod);
@@ -290,8 +290,8 @@ transformArraySubscripts(ParseState *pstate,
 
 	/*
 	 * Caller may or may not have bothered to determine elementType.  Note
-	 * that if the caller did do so, arrayType/arrayTypMod must be as
-	 * modified by transformArrayType, ie, smash domain to base type.
+	 * that if the caller did do so, arrayType/arrayTypMod must be as modified
+	 * by transformArrayType, ie, smash domain to base type.
 	 */
 	if (!OidIsValid(elementType))
 		elementType = transformArrayType(&arrayType, &arrayTypMod);
@@ -542,7 +542,7 @@ make_const(ParseState *pstate, Value *value, int location)
 
 	con = makeConst(typeid,
 					-1,			/* typmod -1 is OK for all cases */
-					InvalidOid,	/* all cases are uncollatable types */
+					InvalidOid, /* all cases are uncollatable types */
 					typelen,
 					val,
 					false,

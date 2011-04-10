@@ -395,7 +395,7 @@ DefineIndex(RangeVar *heapRelation,
 	indexRelationId =
 		index_create(rel, indexRelationName, indexRelationId,
 					 indexInfo, indexColNames,
-					 accessMethodId, tablespaceId, collationObjectId, classObjectId,
+			  accessMethodId, tablespaceId, collationObjectId, classObjectId,
 					 coloptions, reloptions, primary,
 					 isconstraint, deferrable, initdeferred,
 					 allowSystemTableMods,
@@ -840,14 +840,14 @@ ComputeIndexAttrs(IndexInfo *indexInfo,
 		else
 		{
 			/* Index expression */
-			Node   *expr = attribute->expr;
+			Node	   *expr = attribute->expr;
 
 			Assert(expr != NULL);
 			atttype = exprType(expr);
 			attcollation = exprCollation(expr);
 
 			/*
-			 * Strip any top-level COLLATE clause.  This ensures that we treat
+			 * Strip any top-level COLLATE clause.	This ensures that we treat
 			 * "x COLLATE y" and "(x COLLATE y)" alike.
 			 */
 			while (IsA(expr, CollateExpr))
@@ -864,7 +864,7 @@ ComputeIndexAttrs(IndexInfo *indexInfo,
 			}
 			else
 			{
-				indexInfo->ii_KeyAttrNumbers[attn] = 0;	/* marks expression */
+				indexInfo->ii_KeyAttrNumbers[attn] = 0; /* marks expression */
 				indexInfo->ii_Expressions = lappend(indexInfo->ii_Expressions,
 													expr);
 
@@ -876,7 +876,7 @@ ComputeIndexAttrs(IndexInfo *indexInfo,
 				if (contain_subplans(expr))
 					ereport(ERROR,
 							(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-							 errmsg("cannot use subquery in index expression")));
+						 errmsg("cannot use subquery in index expression")));
 				if (contain_agg_clause(expr))
 					ereport(ERROR,
 							(errcode(ERRCODE_GROUPING_ERROR),
@@ -904,8 +904,8 @@ ComputeIndexAttrs(IndexInfo *indexInfo,
 		/*
 		 * Check we have a collation iff it's a collatable type.  The only
 		 * expected failures here are (1) COLLATE applied to a noncollatable
-		 * type, or (2) index expression had an unresolved collation.  But
-		 * we might as well code this to be a complete consistency check.
+		 * type, or (2) index expression had an unresolved collation.  But we
+		 * might as well code this to be a complete consistency check.
 		 */
 		if (type_is_collatable(atttype))
 		{

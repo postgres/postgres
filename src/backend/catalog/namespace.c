@@ -2446,10 +2446,10 @@ CheckSetNamespace(Oid oldNspOid, Oid nspOid, Oid classid, Oid objid)
 	if (oldNspOid == nspOid)
 		ereport(ERROR,
 				(classid == RelationRelationId ?
-					errcode(ERRCODE_DUPLICATE_TABLE) :
+				 errcode(ERRCODE_DUPLICATE_TABLE) :
 				 classid == ProcedureRelationId ?
-					errcode(ERRCODE_DUPLICATE_FUNCTION) :
-					errcode(ERRCODE_DUPLICATE_OBJECT),
+				 errcode(ERRCODE_DUPLICATE_FUNCTION) :
+				 errcode(ERRCODE_DUPLICATE_OBJECT),
 				 errmsg("%s is already in schema \"%s\"",
 						getObjectDescriptionOids(classid, objid),
 						get_namespace_name(nspOid))));
@@ -2458,7 +2458,7 @@ CheckSetNamespace(Oid oldNspOid, Oid nspOid, Oid classid, Oid objid)
 	if (isAnyTempNamespace(nspOid) || isAnyTempNamespace(oldNspOid))
 		ereport(ERROR,
 				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-				 errmsg("cannot move objects into or out of temporary schemas")));
+			errmsg("cannot move objects into or out of temporary schemas")));
 
 	/* same for TOAST schema */
 	if (nspOid == PG_TOAST_NAMESPACE || oldNspOid == PG_TOAST_NAMESPACE)
@@ -2525,7 +2525,7 @@ QualifiedNameGetCreationNamespace(List *names, char **objname_p)
 /*
  * get_namespace_oid - given a namespace name, look up the OID
  *
- * If missing_ok is false, throw an error if namespace name not found.  If
+ * If missing_ok is false, throw an error if namespace name not found.	If
  * true, just return InvalidOid.
  */
 Oid
@@ -2535,9 +2535,9 @@ get_namespace_oid(const char *nspname, bool missing_ok)
 
 	oid = GetSysCacheOid1(NAMESPACENAME, CStringGetDatum(nspname));
 	if (!OidIsValid(oid) && !missing_ok)
-        ereport(ERROR,
-                (errcode(ERRCODE_UNDEFINED_SCHEMA),
-                 errmsg("schema \"%s\" does not exist", nspname)));
+		ereport(ERROR,
+				(errcode(ERRCODE_UNDEFINED_SCHEMA),
+				 errmsg("schema \"%s\" does not exist", nspname)));
 
 	return oid;
 }
@@ -2727,7 +2727,7 @@ GetTempNamespaceBackendId(Oid namespaceId)
 	/* See if the namespace name starts with "pg_temp_" or "pg_toast_temp_" */
 	nspname = get_namespace_name(namespaceId);
 	if (!nspname)
-		return InvalidBackendId;				/* no such namespace? */
+		return InvalidBackendId;	/* no such namespace? */
 	if (strncmp(nspname, "pg_temp_", 8) == 0)
 		result = atoi(nspname + 8);
 	else if (strncmp(nspname, "pg_toast_temp_", 14) == 0)
@@ -2798,8 +2798,8 @@ GetOverrideSearchPath(MemoryContext context)
  *
  * It's possible that newpath->useTemp is set but there is no longer any
  * active temp namespace, if the path was saved during a transaction that
- * created a temp namespace and was later rolled back.  In that case we just
- * ignore useTemp.  A plausible alternative would be to create a new temp
+ * created a temp namespace and was later rolled back.	In that case we just
+ * ignore useTemp.	A plausible alternative would be to create a new temp
  * namespace, but for existing callers that's not necessary because an empty
  * temp namespace wouldn't affect their results anyway.
  *
@@ -3522,7 +3522,7 @@ check_search_path(char **newval, void **extra, GucSource source)
 				if (source == PGC_S_TEST)
 					ereport(NOTICE,
 							(errcode(ERRCODE_UNDEFINED_SCHEMA),
-							 errmsg("schema \"%s\" does not exist", curname)));
+						   errmsg("schema \"%s\" does not exist", curname)));
 				else
 				{
 					GUC_check_errdetail("schema \"%s\" does not exist", curname);

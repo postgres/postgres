@@ -4,8 +4,8 @@
 #define WIN32_ONLY_COMPILER
 #endif
 
-/* 
- * Make sure _WIN32_WINNT has the minumum required value. 
+/*
+ * Make sure _WIN32_WINNT has the minumum required value.
  * Leave a higher value in place.
 */
 #if defined(_WIN32_WINNT) && _WIN32_WINNT < 0x0501
@@ -27,7 +27,7 @@
 
 #undef ERROR
 
-/* 
+/*
  * The Mingw64 headers choke if this is already defined - they
  * define it themselves.
  */
@@ -365,7 +365,7 @@ typedef unsigned short mode_t;
 /* see also S_IRGRP etc below */
 #define S_ISDIR(m) (((m) & S_IFMT) == S_IFDIR)
 #define S_ISREG(m) (((m) & S_IFMT) == S_IFREG)
-#endif /* __BORLANDC__ */
+#endif   /* __BORLANDC__ */
 
 #define F_OK 0
 #define W_OK 2
@@ -393,8 +393,7 @@ typedef unsigned short mode_t;
 #define _O_SHORT_LIVED	O_SHORT_LIVED
 #endif   /* ifndef O_RANDOM */
 #endif   /* __BORLANDC__ */
-
-#endif /* WIN32_ONLY_COMPILER */
+#endif   /* WIN32_ONLY_COMPILER */
 
 /* These aren't provided by either MingW or MSVC */
 #ifndef __BORLANDC__
@@ -406,4 +405,5 @@ typedef unsigned short mode_t;
 #define S_IWOTH 0
 #define S_IXOTH 0
 #define S_IRWXO 0
-#endif /* __BORLANDC__ */
+
+#endif   /* __BORLANDC__ */

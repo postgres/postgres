@@ -39,7 +39,7 @@ typedef struct
 	bool		fastcheckpoint;
 	bool		nowait;
 	bool		includewal;
-}	basebackup_options;
+} basebackup_options;
 
 
 static int64 sendDir(char *path, int basepathlen, bool sizeonly);
@@ -67,7 +67,7 @@ typedef struct
 	char	   *oid;
 	char	   *path;
 	int64		size;
-}	tablespaceinfo;
+} tablespaceinfo;
 
 
 /*
@@ -119,7 +119,7 @@ perform_base_backup(basebackup_options *opt, DIR *tblspcdir)
 			if (readlink(fullpath, linkpath, sizeof(linkpath) - 1) == -1)
 			{
 				ereport(WARNING,
-						(errmsg("unable to read symbolic link %s: %m", fullpath)));
+				  (errmsg("unable to read symbolic link %s: %m", fullpath)));
 				continue;
 			}
 
@@ -219,10 +219,11 @@ perform_base_backup(basebackup_options *opt, DIR *tblspcdir)
 				ptr.xrecoff = logseg * XLogSegSize + TAR_SEND_SIZE * i;
 
 				/*
-				 *	Some old compilers, e.g. gcc 2.95.3/x86, think that passing
-				 *	a struct in the same function as a longjump might clobber
-				 *	a variable.  bjm 2011-02-04
-				 *	http://lists.apple.com/archives/xcode-users/2003/Dec//msg00051.html
+				 * Some old compilers, e.g. gcc 2.95.3/x86, think that passing
+				 * a struct in the same function as a longjump might clobber a
+				 * variable.  bjm 2011-02-04
+				 * http://lists.apple.com/archives/xcode-users/2003/Dec//msg000
+				 * 51.html
 				 */
 				XLogRead(buf, ptr, TAR_SEND_SIZE);
 				if (pq_putmessage('d', buf, TAR_SEND_SIZE))
@@ -494,13 +495,14 @@ static void
 sendFileWithContent(const char *filename, const char *content)
 {
 	struct stat statbuf;
-	int pad, len;
+	int			pad,
+				len;
 
 	len = strlen(content);
 
 	/*
-	 * Construct a stat struct for the backup_label file we're injecting
-	 * in the tar.
+	 * Construct a stat struct for the backup_label file we're injecting in
+	 * the tar.
 	 */
 	/* Windows doesn't have the concept of uid and gid */
 #ifdef WIN32
@@ -522,7 +524,8 @@ sendFileWithContent(const char *filename, const char *content)
 	pad = ((len + 511) & ~511) - len;
 	if (pad > 0)
 	{
-		char buf[512];
+		char		buf[512];
+
 		MemSet(buf, 0, pad);
 		pq_putmessage('d', buf, pad);
 	}
@@ -564,13 +567,13 @@ sendDir(char *path, int basepathlen, bool sizeonly)
 			continue;
 
 		/*
-		 * Check if the postmaster has signaled us to exit, and abort
-		 * with an error in that case. The error handler further up
-		 * will call do_pg_abort_backup() for us.
+		 * Check if the postmaster has signaled us to exit, and abort with an
+		 * error in that case. The error handler further up will call
+		 * do_pg_abort_backup() for us.
 		 */
 		if (walsender_shutdown_requested || walsender_ready_to_stop)
 			ereport(ERROR,
-					(errmsg("shutdown requested, aborting active base backup")));
+				(errmsg("shutdown requested, aborting active base backup")));
 
 		snprintf(pathbuf, MAXPGPATH, "%s/%s", path, de->d_name);
 
@@ -707,7 +710,7 @@ _tarChecksum(char *header)
 
 /* Given the member, write the TAR header & send the file */
 static void
-sendFile(char *readfilename, char *tarfilename, struct stat *statbuf)
+sendFile(char *readfilename, char *tarfilename, struct stat * statbuf)
 {
 	FILE	   *fp;
 	char		buf[TAR_SEND_SIZE];
@@ -737,7 +740,7 @@ sendFile(char *readfilename, char *tarfilename, struct stat *statbuf)
 		/* Send the chunk as a CopyData message */
 		if (pq_putmessage('d', buf, cnt))
 			ereport(ERROR,
-					(errmsg("base backup could not send data, aborting backup")));
+			   (errmsg("base backup could not send data, aborting backup")));
 
 		len += cnt;
 

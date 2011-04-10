@@ -95,14 +95,14 @@ static const gbtree_ninfo tinfo =
 
 
 PG_FUNCTION_INFO_V1(int8_dist);
-Datum       int8_dist(PG_FUNCTION_ARGS);
+Datum		int8_dist(PG_FUNCTION_ARGS);
 Datum
 int8_dist(PG_FUNCTION_ARGS)
 {
-	int64       a = PG_GETARG_INT64(0);
-	int64       b = PG_GETARG_INT64(1);
-	int64       r;
-	int64       ra;
+	int64		a = PG_GETARG_INT64(0);
+	int64		b = PG_GETARG_INT64(1);
+	int64		r;
+	int64		ra;
 
 	r = a - b;
 	ra = Abs(r);
@@ -111,7 +111,7 @@ int8_dist(PG_FUNCTION_ARGS)
 	if (ra < 0 || (!SAMESIGN(a, b) && !SAMESIGN(r, a)))
 		ereport(ERROR,
 				(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
-						 errmsg("bigint out of range")));
+				 errmsg("bigint out of range")));
 
 	PG_RETURN_INT64(ra);
 }
@@ -170,7 +170,7 @@ gbt_int8_distance(PG_FUNCTION_ARGS)
 	key.upper = (GBT_NUMKEY *) &kkk->upper;
 
 	PG_RETURN_FLOAT8(
-				   gbt_num_distance(&key, (void *) &query, GIST_LEAF(entry), &tinfo)
+			gbt_num_distance(&key, (void *) &query, GIST_LEAF(entry), &tinfo)
 		);
 }
 

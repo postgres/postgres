@@ -18,7 +18,7 @@
  *	FYI, while pg_class.oid and pg_class.relfilenode are intially the same
  *	in a cluster, but they can diverge due to CLUSTER, REINDEX, or VACUUM
  *	FULL.  The new cluster will have matching pg_class.oid and
- *	pg_class.relfilenode values and be based on the old oid value.  This can
+ *	pg_class.relfilenode values and be based on the old oid value.	This can
  *	cause the old and new pg_class.relfilenode values to differ.  In summary,
  *	old and new pg_class.oid and new pg_class.relfilenode will have the
  *	same value, and old pg_class.relfilenode might differ.
@@ -34,7 +34,7 @@
  */
 
 
- 
+
 #include "pg_upgrade.h"
 
 #ifdef HAVE_LANGINFO_H
@@ -53,7 +53,8 @@ static void cleanup(void);
 /* This is the database used by pg_dumpall to restore global tables */
 #define GLOBAL_DUMP_DB	"postgres"
 
-ClusterInfo old_cluster, new_cluster;
+ClusterInfo old_cluster,
+			new_cluster;
 OSInfo		os_info;
 
 int
@@ -192,7 +193,7 @@ prepare_new_cluster(void)
 	exec_prog(true,
 			  SYSTEMQUOTE "\"%s/vacuumdb\" --port %d --username \"%s\" "
 			  "--all --analyze >> %s 2>&1" SYSTEMQUOTE,
-		   new_cluster.bindir, new_cluster.port, os_info.user, log_opts.filename);
+	  new_cluster.bindir, new_cluster.port, os_info.user, log_opts.filename);
 	check_ok();
 
 	/*
@@ -205,7 +206,7 @@ prepare_new_cluster(void)
 	exec_prog(true,
 			  SYSTEMQUOTE "\"%s/vacuumdb\" --port %d --username \"%s\" "
 			  "--all --freeze >> %s 2>&1" SYSTEMQUOTE,
-		   new_cluster.bindir, new_cluster.port, os_info.user, log_opts.filename);
+	  new_cluster.bindir, new_cluster.port, os_info.user, log_opts.filename);
 	check_ok();
 
 	get_pg_database_relfilenode(&new_cluster);
@@ -229,16 +230,16 @@ prepare_new_databases(void)
 	prep_status("Creating databases in the new cluster");
 
 	/*
-	 *	Install support functions in the global-restore database
-	 *	to preserve pg_authid.oid.
+	 * Install support functions in the global-restore database to preserve
+	 * pg_authid.oid.
 	 */
 	install_support_functions_in_new_db(GLOBAL_DUMP_DB);
 
 	/*
 	 * We have to create the databases first so we can install support
-	 * functions in all the other databases.  Ideally we could create
-	 * the support functions in template1 but pg_dumpall creates database
-	 * using the template0 template.
+	 * functions in all the other databases.  Ideally we could create the
+	 * support functions in template1 but pg_dumpall creates database using
+	 * the template0 template.
 	 */
 	exec_prog(true,
 			  SYSTEMQUOTE "\"%s/psql\" --set ON_ERROR_STOP=on "

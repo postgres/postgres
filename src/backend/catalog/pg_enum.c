@@ -29,7 +29,7 @@
 
 
 /* Potentially set by contrib/pg_upgrade_support functions */
-Oid      binary_upgrade_next_pg_enum_oid = InvalidOid;
+Oid			binary_upgrade_next_pg_enum_oid = InvalidOid;
 
 static void RenumberEnumType(Relation pg_enum, HeapTuple *existing, int nelems);
 static int	oid_cmp(const void *p1, const void *p2);
@@ -58,9 +58,9 @@ EnumValuesCreate(Oid enumTypeOid, List *vals)
 	num_elems = list_length(vals);
 
 	/*
-	 * We do not bother to check the list of values for duplicates --- if
-	 * you have any, you'll get a less-than-friendly unique-index violation.
-	 * It is probably not worth trying harder.
+	 * We do not bother to check the list of values for duplicates --- if you
+	 * have any, you'll get a less-than-friendly unique-index violation. It is
+	 * probably not worth trying harder.
 	 */
 
 	pg_enum = heap_open(EnumRelationId, RowExclusiveLock);
@@ -69,10 +69,9 @@ EnumValuesCreate(Oid enumTypeOid, List *vals)
 	 * Allocate OIDs for the enum's members.
 	 *
 	 * While this method does not absolutely guarantee that we generate no
-	 * duplicate OIDs (since we haven't entered each oid into the table
-	 * before allocating the next), trouble could only occur if the OID
-	 * counter wraps all the way around before we finish. Which seems
-	 * unlikely.
+	 * duplicate OIDs (since we haven't entered each oid into the table before
+	 * allocating the next), trouble could only occur if the OID counter wraps
+	 * all the way around before we finish. Which seems unlikely.
 	 */
 	oids = (Oid *) palloc(num_elems * sizeof(Oid));
 
@@ -83,9 +82,10 @@ EnumValuesCreate(Oid enumTypeOid, List *vals)
 		 * tells the comparison functions the OIDs are in the correct sort
 		 * order and can be compared directly.
 		 */
-		Oid		new_oid;
+		Oid			new_oid;
 
-		do {
+		do
+		{
 			new_oid = GetNewOid(pg_enum);
 		} while (new_oid & 1);
 		oids[elemno] = new_oid;
@@ -202,9 +202,9 @@ AddEnumLabel(Oid enumTypeOid,
 	/*
 	 * Acquire a lock on the enum type, which we won't release until commit.
 	 * This ensures that two backends aren't concurrently modifying the same
-	 * enum type.  Without that, we couldn't be sure to get a consistent
-	 * view of the enum members via the syscache.  Note that this does not
-	 * block other backends from inspecting the type; see comments for
+	 * enum type.  Without that, we couldn't be sure to get a consistent view
+	 * of the enum members via the syscache.  Note that this does not block
+	 * other backends from inspecting the type; see comments for
 	 * RenumberEnumType.
 	 */
 	LockDatabaseObject(TypeRelationId, enumTypeOid, 0, ExclusiveLock);
@@ -217,7 +217,7 @@ restart:
 	/* Get the list of existing members of the enum */
 	list = SearchSysCacheList1(ENUMTYPOIDNAME,
 							   ObjectIdGetDatum(enumTypeOid));
-	nelems =  list->n_members;
+	nelems = list->n_members;
 
 	/* Sort the existing members by enumsortorder */
 	existing = (HeapTuple *) palloc(nelems * sizeof(HeapTuple));
@@ -229,8 +229,8 @@ restart:
 	if (neighbor == NULL)
 	{
 		/*
-		 * Put the new label at the end of the list.
-		 * No change to existing tuples is required.
+		 * Put the new label at the end of the list. No change to existing
+		 * tuples is required.
 		 */
 		if (nelems > 0)
 		{
@@ -244,10 +244,10 @@ restart:
 	else
 	{
 		/* BEFORE or AFTER was specified */
-		int				nbr_index;
-		int				other_nbr_index;
-		Form_pg_enum	nbr_en;
-		Form_pg_enum	other_nbr_en;
+		int			nbr_index;
+		int			other_nbr_index;
+		Form_pg_enum nbr_en;
+		Form_pg_enum other_nbr_en;
 
 		/* Locate the neighbor element */
 		for (nbr_index = 0; nbr_index < nelems; nbr_index++)
@@ -265,14 +265,14 @@ restart:
 		nbr_en = (Form_pg_enum) GETSTRUCT(existing[nbr_index]);
 
 		/*
-		 * Attempt to assign an appropriate enumsortorder value: one less
-		 * than the smallest member, one more than the largest member,
-		 * or halfway between two existing members.
+		 * Attempt to assign an appropriate enumsortorder value: one less than
+		 * the smallest member, one more than the largest member, or halfway
+		 * between two existing members.
 		 *
 		 * In the "halfway" case, because of the finite precision of float4,
-		 * we might compute a value that's actually equal to one or the
-		 * other of its neighbors.  In that case we renumber the existing
-		 * members and try again.
+		 * we might compute a value that's actually equal to one or the other
+		 * of its neighbors.  In that case we renumber the existing members
+		 * and try again.
 		 */
 		if (newValIsAfter)
 			other_nbr_index = nbr_index + 1;
@@ -291,10 +291,10 @@ restart:
 
 			/*
 			 * On some machines, newelemorder may be in a register that's
-			 * wider than float4.  We need to force it to be rounded to
-			 * float4 precision before making the following comparisons,
-			 * or we'll get wrong results.  (Such behavior violates the C
-			 * standard, but fixing the compilers is out of our reach.)
+			 * wider than float4.  We need to force it to be rounded to float4
+			 * precision before making the following comparisons, or we'll get
+			 * wrong results.  (Such behavior violates the C standard, but
+			 * fixing the compilers is out of our reach.)
 			 */
 			newelemorder = DatumGetFloat4(Float4GetDatum(newelemorder));
 
@@ -314,9 +314,9 @@ restart:
 	if (OidIsValid(binary_upgrade_next_pg_enum_oid))
 	{
 		/*
-		 *	Use binary-upgrade override for pg_enum.oid, if supplied.
-		 *	During binary upgrade, all pg_enum.oid's are set this way
-		 *	so they are guaranteed to be consistent.
+		 * Use binary-upgrade override for pg_enum.oid, if supplied. During
+		 * binary upgrade, all pg_enum.oid's are set this way so they are
+		 * guaranteed to be consistent.
 		 */
 		if (neighbor != NULL)
 			ereport(ERROR,
@@ -337,7 +337,7 @@ restart:
 		 */
 		for (;;)
 		{
-			bool	sorts_ok;
+			bool		sorts_ok;
 
 			/* Get a new OID (different from all existing pg_enum tuples) */
 			newOid = GetNewOid(pg_enum);
@@ -345,8 +345,8 @@ restart:
 			/*
 			 * Detect whether it sorts correctly relative to existing
 			 * even-numbered labels of the enum.  We can ignore existing
-			 * labels with odd Oids, since a comparison involving one of
-			 * those will not take the fast path anyway.
+			 * labels with odd Oids, since a comparison involving one of those
+			 * will not take the fast path anyway.
 			 */
 			sorts_ok = true;
 			for (i = 0; i < nelems; i++)
@@ -385,9 +385,9 @@ restart:
 					break;
 
 				/*
-				 * If it's odd, and sorts OK, loop back to get another OID
-				 * and try again.  Probably, the next available even OID
-				 * will sort correctly too, so it's worth trying.
+				 * If it's odd, and sorts OK, loop back to get another OID and
+				 * try again.  Probably, the next available even OID will sort
+				 * correctly too, so it's worth trying.
 				 */
 			}
 			else
@@ -435,7 +435,7 @@ restart:
  * We avoid doing this unless absolutely necessary; in most installations
  * it will never happen.  The reason is that updating existing pg_enum
  * entries creates hazards for other backends that are concurrently reading
- * pg_enum with SnapshotNow semantics.  A concurrent SnapshotNow scan could
+ * pg_enum with SnapshotNow semantics.	A concurrent SnapshotNow scan could
  * see both old and new versions of an updated row as valid, or neither of
  * them, if the commit happens between scanning the two versions.  It's
  * also quite likely for a concurrent scan to see an inconsistent set of
@@ -510,10 +510,10 @@ oid_cmp(const void *p1, const void *p2)
 static int
 sort_order_cmp(const void *p1, const void *p2)
 {
-	HeapTuple		v1 = *((const HeapTuple *) p1);
-	HeapTuple		v2 = *((const HeapTuple *) p2);
-	Form_pg_enum	en1 = (Form_pg_enum) GETSTRUCT(v1);
-	Form_pg_enum	en2 = (Form_pg_enum) GETSTRUCT(v2);
+	HeapTuple	v1 = *((const HeapTuple *) p1);
+	HeapTuple	v2 = *((const HeapTuple *) p2);
+	Form_pg_enum en1 = (Form_pg_enum) GETSTRUCT(v1);
+	Form_pg_enum en2 = (Form_pg_enum) GETSTRUCT(v2);
 
 	if (en1->enumsortorder < en2->enumsortorder)
 		return -1;

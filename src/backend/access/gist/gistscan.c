@@ -57,9 +57,9 @@ GISTSearchTreeItemCombiner(RBNode *existing, const RBNode *newrb, void *arg)
 
 	/*
 	 * If new item is heap tuple, it goes to front of chain; otherwise insert
-	 * it before the first index-page item, so that index pages are visited
-	 * in LIFO order, ensuring depth-first search of index pages.  See
-	 * comments in gist_private.h.
+	 * it before the first index-page item, so that index pages are visited in
+	 * LIFO order, ensuring depth-first search of index pages.	See comments
+	 * in gist_private.h.
 	 */
 	if (GISTSearchItemIsHeap(*newitem))
 	{
@@ -136,6 +136,7 @@ gistrescan(PG_FUNCTION_ARGS)
 	IndexScanDesc scan = (IndexScanDesc) PG_GETARG_POINTER(0);
 	ScanKey		key = (ScanKey) PG_GETARG_POINTER(1);
 	ScanKey		orderbys = (ScanKey) PG_GETARG_POINTER(3);
+
 	/* nkeys and norderbys arguments are ignored */
 	GISTScanOpaque so = (GISTScanOpaque) scan->opaque;
 	int			i;
@@ -164,8 +165,8 @@ gistrescan(PG_FUNCTION_ARGS)
 				scan->numberOfKeys * sizeof(ScanKeyData));
 
 		/*
-		 * Modify the scan key so that the Consistent method is called for
-		 * all comparisons. The original operator is passed to the Consistent
+		 * Modify the scan key so that the Consistent method is called for all
+		 * comparisons. The original operator is passed to the Consistent
 		 * function in the form of its strategy number, which is available
 		 * from the sk_strategy field, and its subtype from the sk_subtype
 		 * field.  Also, preserve sk_func.fn_collation which is the input

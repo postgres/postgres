@@ -586,7 +586,8 @@ LockAcquireExtended(const LOCKTAG *locktag,
 	 * standby server. Only AccessExclusiveLocks can conflict with lock types
 	 * that read-only transactions can acquire in a standby server.
 	 *
-	 * Make sure this definition matches the one in GetRunningTransactionLocks().
+	 * Make sure this definition matches the one in
+	 * GetRunningTransactionLocks().
 	 *
 	 * First we prepare to log, then after lock acquired we issue log record.
 	 */

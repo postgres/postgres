@@ -79,13 +79,13 @@ typedef struct GISTSearchItem
 	BlockNumber blkno;			/* index page number, or InvalidBlockNumber */
 	union
 	{
-		GistNSN		parentlsn;		/* parent page's LSN, if index page */
+		GistNSN		parentlsn;	/* parent page's LSN, if index page */
 		/* we must store parentlsn to detect whether a split occurred */
 		GISTSearchHeapItem heap;	/* heap info, if heap tuple */
 	}			data;
-}	GISTSearchItem;
+} GISTSearchItem;
 
-#define GISTSearchItemIsHeap(item)  ((item).blkno == InvalidBlockNumber)
+#define GISTSearchItemIsHeap(item)	((item).blkno == InvalidBlockNumber)
 
 /*
  * Within a GISTSearchTreeItem's chain, heap items always appear before
@@ -132,9 +132,9 @@ typedef GISTScanOpaqueData *GISTScanOpaque;
 /* XLog stuff */
 
 #define XLOG_GIST_PAGE_UPDATE		0x00
-/* #define XLOG_GIST_NEW_ROOT			0x20 */ /* not used anymore */
+ /* #define XLOG_GIST_NEW_ROOT			 0x20 */	/* not used anymore */
 #define XLOG_GIST_PAGE_SPLIT		0x30
-/* #define XLOG_GIST_INSERT_COMPLETE	0x40 */ /* not used anymore */
+ /* #define XLOG_GIST_INSERT_COMPLETE	 0x40 */	/* not used anymore */
 #define XLOG_GIST_CREATE_INDEX		0x50
 #define XLOG_GIST_PAGE_DELETE		0x60
 
@@ -147,7 +147,7 @@ typedef struct gistxlogPageUpdate
 	 * If this operation completes a page split, by inserting a downlink for
 	 * the split page, leftchild points to the left half of the split.
 	 */
-	BlockNumber	leftchild;
+	BlockNumber leftchild;
 
 	/* number of deleted offsets */
 	uint16		ntodelete;
@@ -161,7 +161,7 @@ typedef struct gistxlogPageSplit
 {
 	RelFileNode node;
 	BlockNumber origblkno;		/* splitted page */
-	BlockNumber	origrlink;		/* rightlink of the page before split */
+	BlockNumber origrlink;		/* rightlink of the page before split */
 	GistNSN		orignsn;		/* NSN of the page before split */
 	bool		origleaf;		/* was splitted page a leaf page? */
 
@@ -210,8 +210,8 @@ typedef struct GISTInsertStack
 	Page		page;
 
 	/*
-	 * log sequence number from page->lsn to recognize page update and
-	 * compare it with page's nsn to recognize page split
+	 * log sequence number from page->lsn to recognize page update and compare
+	 * it with page's nsn to recognize page split
 	 */
 	GistNSN		lsn;
 
@@ -300,7 +300,7 @@ extern void gist_xlog_cleanup(void);
 
 extern XLogRecPtr gistXLogUpdate(RelFileNode node, Buffer buffer,
 			   OffsetNumber *todelete, int ntodelete,
-								 IndexTuple *itup, int ntup,
+			   IndexTuple *itup, int ntup,
 			   Buffer leftchild);
 
 extern XLogRecPtr gistXLogSplit(RelFileNode node,

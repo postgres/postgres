@@ -377,4 +377,5 @@ win32_pghardlink(const char *src, const char *dst)
 	else
 		return 0;
 }
+
 #endif

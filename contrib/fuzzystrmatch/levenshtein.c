@@ -23,7 +23,7 @@
  */
 #ifdef LEVENSHTEIN_LESS_EQUAL
 static int levenshtein_less_equal_internal(text *s, text *t,
-					 int ins_c, int del_c, int sub_c, int max_d);
+								int ins_c, int del_c, int sub_c, int max_d);
 #else
 static int levenshtein_internal(text *s, text *t,
 					 int ins_c, int del_c, int sub_c);
@@ -50,7 +50,7 @@ static int levenshtein_internal(text *s, text *t,
  * array.
  *
  * If max_d >= 0, we only need to provide an accurate answer when that answer
- * is less than or equal to the bound.  From any cell in the matrix, there is
+ * is less than or equal to the bound.	From any cell in the matrix, there is
  * theoretical "minimum residual distance" from that cell to the last column
  * of the final row.  This minimum residual distance is zero when the
  * untransformed portions of the strings are of equal length (because we might
@@ -87,11 +87,13 @@ levenshtein_internal(text *s, text *t,
 
 	/*
 	 * For levenshtein_less_equal_internal, we have real variables called
-	 * start_column and stop_column; otherwise it's just short-hand for 0
-	 * and m.
+	 * start_column and stop_column; otherwise it's just short-hand for 0 and
+	 * m.
 	 */
 #ifdef LEVENSHTEIN_LESS_EQUAL
-	int        start_column, stop_column;
+	int			start_column,
+				stop_column;
+
 #undef START_COLUMN
 #undef STOP_COLUMN
 #define START_COLUMN start_column
@@ -139,16 +141,16 @@ levenshtein_internal(text *s, text *t,
 	stop_column = m + 1;
 
 	/*
-	 * If max_d >= 0, determine whether the bound is impossibly tight.  If so,
+	 * If max_d >= 0, determine whether the bound is impossibly tight.	If so,
 	 * return max_d + 1 immediately.  Otherwise, determine whether it's tight
 	 * enough to limit the computation we must perform.  If so, figure out
 	 * initial stop column.
 	 */
 	if (max_d >= 0)
 	{
-		int		min_theo_d;		/* Theoretical minimum distance. */
-		int		max_theo_d;		/* Theoretical maximum distance. */
-		int		net_inserts = n - m;
+		int			min_theo_d; /* Theoretical minimum distance. */
+		int			max_theo_d; /* Theoretical maximum distance. */
+		int			net_inserts = n - m;
 
 		min_theo_d = net_inserts < 0 ?
 			-net_inserts * del_c : net_inserts * ins_c;
@@ -162,20 +164,20 @@ levenshtein_internal(text *s, text *t,
 		else if (ins_c + del_c > 0)
 		{
 			/*
-			 * Figure out how much of the first row of the notional matrix
-			 * we need to fill in.  If the string is growing, the theoretical
+			 * Figure out how much of the first row of the notional matrix we
+			 * need to fill in.  If the string is growing, the theoretical
 			 * minimum distance already incorporates the cost of deleting the
-			 * number of characters necessary to make the two strings equal
-			 * in length.  Each additional deletion forces another insertion,
-			 * so the best-case total cost increases by ins_c + del_c.
-			 * If the string is shrinking, the minimum theoretical cost
-			 * assumes no excess deletions; that is, we're starting no futher
-			 * right than column n - m.  If we do start further right, the
-			 * best-case total cost increases by ins_c + del_c for each move
-			 * right.
+			 * number of characters necessary to make the two strings equal in
+			 * length.	Each additional deletion forces another insertion, so
+			 * the best-case total cost increases by ins_c + del_c. If the
+			 * string is shrinking, the minimum theoretical cost assumes no
+			 * excess deletions; that is, we're starting no futher right than
+			 * column n - m.  If we do start further right, the best-case
+			 * total cost increases by ins_c + del_c for each move right.
 			 */
-			int slack_d = max_d - min_theo_d;
-			int best_column = net_inserts < 0 ? -net_inserts : 0;
+			int			slack_d = max_d - min_theo_d;
+			int			best_column = net_inserts < 0 ? -net_inserts : 0;
+
 			stop_column = best_column + (slack_d / (ins_c + del_c)) + 1;
 			if (stop_column > m)
 				stop_column = m + 1;
@@ -185,15 +187,15 @@ levenshtein_internal(text *s, text *t,
 
 	/*
 	 * In order to avoid calling pg_mblen() repeatedly on each character in s,
-	 * we cache all the lengths before starting the main loop -- but if all the
-	 * characters in both strings are single byte, then we skip this and use
-	 * a fast-path in the main loop.  If only one string contains multi-byte
-	 * characters, we still build the array, so that the fast-path needn't
-	 * deal with the case where the array hasn't been initialized.
+	 * we cache all the lengths before starting the main loop -- but if all
+	 * the characters in both strings are single byte, then we skip this and
+	 * use a fast-path in the main loop.  If only one string contains
+	 * multi-byte characters, we still build the array, so that the fast-path
+	 * needn't deal with the case where the array hasn't been initialized.
 	 */
 	if (m != s_bytes || n != t_bytes)
 	{
-		int		i;
+		int			i;
 		const char *cp = s_data;
 
 		s_char_len = (int *) palloc((m + 1) * sizeof(int));
@@ -214,8 +216,8 @@ levenshtein_internal(text *s, text *t,
 	curr = prev + m;
 
 	/*
-	 * To transform the first i characters of s into the first 0 characters
-	 * of t, we must perform i deletions.
+	 * To transform the first i characters of s into the first 0 characters of
+	 * t, we must perform i deletions.
 	 */
 	for (i = START_COLUMN; i < STOP_COLUMN; i++)
 		prev[i] = i * del_c;
@@ -228,6 +230,7 @@ levenshtein_internal(text *s, text *t,
 		int			y_char_len = n != t_bytes + 1 ? pg_mblen(y) : 1;
 
 #ifdef LEVENSHTEIN_LESS_EQUAL
+
 		/*
 		 * In the best case, values percolate down the diagonal unchanged, so
 		 * we must increment stop_column unless it's already on the right end
@@ -241,10 +244,10 @@ levenshtein_internal(text *s, text *t,
 		}
 
 		/*
-		 * The main loop fills in curr, but curr[0] needs a special case:
-		 * to transform the first 0 characters of s into the first j
-		 * characters of t, we must perform j insertions.  However, if
-		 * start_column > 0, this special case does not apply.
+		 * The main loop fills in curr, but curr[0] needs a special case: to
+		 * transform the first 0 characters of s into the first j characters
+		 * of t, we must perform j insertions.	However, if start_column > 0,
+		 * this special case does not apply.
 		 */
 		if (start_column == 0)
 		{
@@ -285,7 +288,7 @@ levenshtein_internal(text *s, text *t,
 				 */
 				ins = prev[i] + ins_c;
 				del = curr[i - 1] + del_c;
-				if (x[x_char_len-1] == y[y_char_len-1]
+				if (x[x_char_len - 1] == y[y_char_len - 1]
 					&& x_char_len == y_char_len &&
 					(x_char_len == 1 || rest_of_char_same(x, y, x_char_len)))
 					sub = prev[i - 1];
@@ -331,6 +334,7 @@ levenshtein_internal(text *s, text *t,
 		y += y_char_len;
 
 #ifdef LEVENSHTEIN_LESS_EQUAL
+
 		/*
 		 * This chunk of code represents a significant performance hit if used
 		 * in the case where there is no max_d bound.  This is probably not
@@ -348,15 +352,16 @@ levenshtein_internal(text *s, text *t,
 			 * string, so we want to find the value for zp where where (n - 1)
 			 * - j = (m - 1) - zp.
 			 */
-			int zp = j - (n - m);
+			int			zp = j - (n - m);
 
 			/* Check whether the stop column can slide left. */
 			while (stop_column > 0)
 			{
-				int	ii = stop_column - 1;
-				int	net_inserts = ii - zp;
+				int			ii = stop_column - 1;
+				int			net_inserts = ii - zp;
+
 				if (prev[ii] + (net_inserts > 0 ? net_inserts * ins_c :
-					-net_inserts * del_c) <= max_d)
+								-net_inserts * del_c) <= max_d)
 					break;
 				stop_column--;
 			}
@@ -364,14 +369,16 @@ levenshtein_internal(text *s, text *t,
 			/* Check whether the start column can slide right. */
 			while (start_column < stop_column)
 			{
-				int net_inserts = start_column - zp;
+				int			net_inserts = start_column - zp;
+
 				if (prev[start_column] +
 					(net_inserts > 0 ? net_inserts * ins_c :
-					-net_inserts * del_c) <= max_d)
+					 -net_inserts * del_c) <= max_d)
 					break;
+
 				/*
-				 * We'll never again update these values, so we must make
-				 * sure there's nothing here that could confuse any future
+				 * We'll never again update these values, so we must make sure
+				 * there's nothing here that could confuse any future
 				 * iteration of the outer loop.
 				 */
 				prev[start_column] = max_d + 1;

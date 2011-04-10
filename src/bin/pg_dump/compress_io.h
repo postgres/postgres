@@ -1,13 +1,13 @@
 /*-------------------------------------------------------------------------
  *
  * compress_io.h
- *   Interface to compress_io.c routines
+ *	 Interface to compress_io.c routines
  *
  * Portions Copyright (c) 1996-2011, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *     src/bin/pg_dump/compress_io.h
+ *	   src/bin/pg_dump/compress_io.h
  *
  *-------------------------------------------------------------------------
  */
@@ -29,7 +29,7 @@ typedef enum
 } CompressionAlgorithm;
 
 /* Prototype for callback function to WriteDataToArchive() */
-typedef size_t (*WriteFunc)(ArchiveHandle *AH, const char *buf, size_t len);
+typedef size_t (*WriteFunc) (ArchiveHandle *AH, const char *buf, size_t len);
 
 /*
  * Prototype for callback function to ReadDataFromArchive()
@@ -42,16 +42,16 @@ typedef size_t (*WriteFunc)(ArchiveHandle *AH, const char *buf, size_t len);
  *
  * Returns the number of bytes read into *buf, or 0 on EOF.
  */
-typedef size_t (*ReadFunc)(ArchiveHandle *AH, char **buf, size_t *buflen);
+typedef size_t (*ReadFunc) (ArchiveHandle *AH, char **buf, size_t *buflen);
 
 /* struct definition appears in compress_io.c */
 typedef struct CompressorState CompressorState;
 
 extern CompressorState *AllocateCompressor(int compression, WriteFunc writeF);
 extern void ReadDataFromArchive(ArchiveHandle *AH, int compression,
-								ReadFunc readF);
+					ReadFunc readF);
 extern size_t WriteDataToArchive(ArchiveHandle *AH, CompressorState *cs,
-								 const void *data, size_t dLen);
+				   const void *data, size_t dLen);
 extern void EndCompressor(ArchiveHandle *AH, CompressorState *cs);
 
 
@@ -60,11 +60,11 @@ typedef struct cfp cfp;
 extern cfp *cfopen(const char *path, const char *mode, int compression);
 extern cfp *cfopen_read(const char *path, const char *mode);
 extern cfp *cfopen_write(const char *path, const char *mode, int compression);
-extern int cfread(void *ptr, int size, cfp *fp);
-extern int cfwrite(const void *ptr, int size, cfp *fp);
-extern int cfgetc(cfp *fp);
+extern int	cfread(void *ptr, int size, cfp *fp);
+extern int	cfwrite(const void *ptr, int size, cfp *fp);
+extern int	cfgetc(cfp *fp);
 extern char *cfgets(cfp *fp, char *buf, int len);
-extern int cfclose(cfp *fp);
-extern int cfeof(cfp *fp);
+extern int	cfclose(cfp *fp);
+extern int	cfeof(cfp *fp);
 
 #endif

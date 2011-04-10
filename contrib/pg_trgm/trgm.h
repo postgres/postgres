@@ -51,8 +51,9 @@ uint32		trgm2int(trgm *ptr);
 #endif
 #define ISPRINTABLETRGM(t)	( ISPRINTABLECHAR( ((char*)(t)) ) && ISPRINTABLECHAR( ((char*)(t))+1 ) && ISPRINTABLECHAR( ((char*)(t))+2 ) )
 
-#define ISESCAPECHAR(x) (*(x) == '\\') /* Wildcard escape character */
-#define ISWILDCARDCHAR(x) (*(x) == '_' || *(x) == '%')  /* Wildcard meta-character */
+#define ISESCAPECHAR(x) (*(x) == '\\')	/* Wildcard escape character */
+#define ISWILDCARDCHAR(x) (*(x) == '_' || *(x) == '%')	/* Wildcard
+														 * meta-character */
 
 typedef struct
 {
@@ -105,4 +106,4 @@ TRGM	   *generate_wildcard_trgm(const char *str, int slen);
 float4		cnt_sml(TRGM *trg1, TRGM *trg2);
 bool		trgm_contained_by(TRGM *trg1, TRGM *trg2);
 
-#endif /* __TRGM_H__ */
+#endif   /* __TRGM_H__ */

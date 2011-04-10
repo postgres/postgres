@@ -586,8 +586,8 @@ AlterForeignDataWrapper(AlterFdwStmt *stmt)
 		 */
 		if (OidIsValid(fdwvalidator))
 			ereport(WARNING,
-					(errmsg("changing the foreign-data wrapper validator can cause "
-							"the options for dependent objects to become invalid")));
+			 (errmsg("changing the foreign-data wrapper validator can cause "
+					 "the options for dependent objects to become invalid")));
 	}
 	else
 	{
@@ -643,8 +643,8 @@ AlterForeignDataWrapper(AlterFdwStmt *stmt)
 		ObjectAddress referenced;
 
 		/*
-		 * Flush all existing dependency records of this FDW on functions;
-		 * we assume there can be none other than the ones we are fixing.
+		 * Flush all existing dependency records of this FDW on functions; we
+		 * assume there can be none other than the ones we are fixing.
 		 */
 		deleteDependencyRecordsForClass(ForeignDataWrapperRelationId,
 										fdwId,

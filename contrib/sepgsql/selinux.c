@@ -29,255 +29,563 @@
  */
 static struct
 {
-	const char		   *class_name;
-	uint16				class_code;
+	const char *class_name;
+	uint16		class_code;
 	struct
 	{
-		const char	   *av_name;
-		uint32			av_code;
-	} av[32];
-} selinux_catalog[] = {
+		const char *av_name;
+		uint32		av_code;
+	}			av[32];
+}	selinux_catalog[] =
+
+{
 	{
-		"process",				SEPG_CLASS_PROCESS,
+		"process", SEPG_CLASS_PROCESS,
 		{
-			{ "transition",		SEPG_PROCESS__TRANSITION },
-			{ NULL, 0UL }
+			{
+				"transition", SEPG_PROCESS__TRANSITION
+			},
+			{
+				NULL, 0UL
+			}
 		}
 	},
 	{
-		"file",					SEPG_CLASS_FILE,
+		"file", SEPG_CLASS_FILE,
 		{
-			{ "read",			SEPG_FILE__READ },
-			{ "write",			SEPG_FILE__WRITE },
-			{ "create",			SEPG_FILE__CREATE },
-			{ "getattr",		SEPG_FILE__GETATTR },
-			{ "unlink",			SEPG_FILE__UNLINK },
-			{ "rename",			SEPG_FILE__RENAME },
-			{ "append",			SEPG_FILE__APPEND },
-			{ NULL, 0UL }
+			{
+				"read", SEPG_FILE__READ
+			},
+			{
+				"write", SEPG_FILE__WRITE
+			},
+			{
+				"create", SEPG_FILE__CREATE
+			},
+			{
+				"getattr", SEPG_FILE__GETATTR
+			},
+			{
+				"unlink", SEPG_FILE__UNLINK
+			},
+			{
+				"rename", SEPG_FILE__RENAME
+			},
+			{
+				"append", SEPG_FILE__APPEND
+			},
+			{
+				NULL, 0UL
+			}
 		}
 	},
 	{
-		"dir",					SEPG_CLASS_DIR,
+		"dir", SEPG_CLASS_DIR,
 		{
-			{ "read",			SEPG_DIR__READ },
-			{ "write",			SEPG_DIR__WRITE },
-			{ "create",			SEPG_DIR__CREATE },
-			{ "getattr",		SEPG_DIR__GETATTR },
-			{ "unlink",			SEPG_DIR__UNLINK },
-			{ "rename",			SEPG_DIR__RENAME },
-			{ "search",			SEPG_DIR__SEARCH },
-			{ "add_name",		SEPG_DIR__ADD_NAME },
-			{ "remove_name",	SEPG_DIR__REMOVE_NAME },
-			{ "rmdir",			SEPG_DIR__RMDIR },
-			{ "reparent",		SEPG_DIR__REPARENT },
-			{ NULL, 0UL }
+			{
+				"read", SEPG_DIR__READ
+			},
+			{
+				"write", SEPG_DIR__WRITE
+			},
+			{
+				"create", SEPG_DIR__CREATE
+			},
+			{
+				"getattr", SEPG_DIR__GETATTR
+			},
+			{
+				"unlink", SEPG_DIR__UNLINK
+			},
+			{
+				"rename", SEPG_DIR__RENAME
+			},
+			{
+				"search", SEPG_DIR__SEARCH
+			},
+			{
+				"add_name", SEPG_DIR__ADD_NAME
+			},
+			{
+				"remove_name", SEPG_DIR__REMOVE_NAME
+			},
+			{
+				"rmdir", SEPG_DIR__RMDIR
+			},
+			{
+				"reparent", SEPG_DIR__REPARENT
+			},
+			{
+				NULL, 0UL
+			}
 		}
 	},
 	{
-		"lnk_file",				SEPG_CLASS_LNK_FILE,
+		"lnk_file", SEPG_CLASS_LNK_FILE,
 		{
-			{ "read",			SEPG_LNK_FILE__READ },
-			{ "write",			SEPG_LNK_FILE__WRITE },
-			{ "create",			SEPG_LNK_FILE__CREATE },
-			{ "getattr",		SEPG_LNK_FILE__GETATTR },
-			{ "unlink",			SEPG_LNK_FILE__UNLINK },
-			{ "rename",			SEPG_LNK_FILE__RENAME },
-			{ NULL, 0UL }
+			{
+				"read", SEPG_LNK_FILE__READ
+			},
+			{
+				"write", SEPG_LNK_FILE__WRITE
+			},
+			{
+				"create", SEPG_LNK_FILE__CREATE
+			},
+			{
+				"getattr", SEPG_LNK_FILE__GETATTR
+			},
+			{
+				"unlink", SEPG_LNK_FILE__UNLINK
+			},
+			{
+				"rename", SEPG_LNK_FILE__RENAME
+			},
+			{
+				NULL, 0UL
+			}
 		}
 	},
 	{
-		"chr_file",				SEPG_CLASS_CHR_FILE,
+		"chr_file", SEPG_CLASS_CHR_FILE,
 		{
-			{ "read",			SEPG_CHR_FILE__READ },
-			{ "write",			SEPG_CHR_FILE__WRITE },
-			{ "create",			SEPG_CHR_FILE__CREATE },
-			{ "getattr",		SEPG_CHR_FILE__GETATTR },
-			{ "unlink",			SEPG_CHR_FILE__UNLINK },
-			{ "rename",			SEPG_CHR_FILE__RENAME },
-			{ NULL, 0UL }
+			{
+				"read", SEPG_CHR_FILE__READ
+			},
+			{
+				"write", SEPG_CHR_FILE__WRITE
+			},
+			{
+				"create", SEPG_CHR_FILE__CREATE
+			},
+			{
+				"getattr", SEPG_CHR_FILE__GETATTR
+			},
+			{
+				"unlink", SEPG_CHR_FILE__UNLINK
+			},
+			{
+				"rename", SEPG_CHR_FILE__RENAME
+			},
+			{
+				NULL, 0UL
+			}
 		}
 	},
 	{
-		"blk_file",				SEPG_CLASS_BLK_FILE,
+		"blk_file", SEPG_CLASS_BLK_FILE,
 		{
-			{ "read",			SEPG_BLK_FILE__READ },
-			{ "write",			SEPG_BLK_FILE__WRITE },
-			{ "create",			SEPG_BLK_FILE__CREATE },
-			{ "getattr",		SEPG_BLK_FILE__GETATTR },
-			{ "unlink",			SEPG_BLK_FILE__UNLINK },
-			{ "rename",			SEPG_BLK_FILE__RENAME },
-			{ NULL, 0UL }
+			{
+				"read", SEPG_BLK_FILE__READ
+			},
+			{
+				"write", SEPG_BLK_FILE__WRITE
+			},
+			{
+				"create", SEPG_BLK_FILE__CREATE
+			},
+			{
+				"getattr", SEPG_BLK_FILE__GETATTR
+			},
+			{
+				"unlink", SEPG_BLK_FILE__UNLINK
+			},
+			{
+				"rename", SEPG_BLK_FILE__RENAME
+			},
+			{
+				NULL, 0UL
+			}
 		}
 	},
 	{
-		"sock_file",			SEPG_CLASS_SOCK_FILE,
+		"sock_file", SEPG_CLASS_SOCK_FILE,
 		{
-			{ "read",			SEPG_SOCK_FILE__READ },
-			{ "write",			SEPG_SOCK_FILE__WRITE },
-			{ "create",			SEPG_SOCK_FILE__CREATE },
-			{ "getattr",		SEPG_SOCK_FILE__GETATTR },
-			{ "unlink",			SEPG_SOCK_FILE__UNLINK },
-			{ "rename",			SEPG_SOCK_FILE__RENAME },
-			{ NULL, 0UL }
+			{
+				"read", SEPG_SOCK_FILE__READ
+			},
+			{
+				"write", SEPG_SOCK_FILE__WRITE
+			},
+			{
+				"create", SEPG_SOCK_FILE__CREATE
+			},
+			{
+				"getattr", SEPG_SOCK_FILE__GETATTR
+			},
+			{
+				"unlink", SEPG_SOCK_FILE__UNLINK
+			},
+			{
+				"rename", SEPG_SOCK_FILE__RENAME
+			},
+			{
+				NULL, 0UL
+			}
 		}
 	},
 	{
-		"fifo_file",			SEPG_CLASS_FIFO_FILE,
+		"fifo_file", SEPG_CLASS_FIFO_FILE,
 		{
-			{ "read",			SEPG_FIFO_FILE__READ },
-			{ "write",			SEPG_FIFO_FILE__WRITE },
-			{ "create",			SEPG_FIFO_FILE__CREATE },
-			{ "getattr",		SEPG_FIFO_FILE__GETATTR },
-			{ "unlink",			SEPG_FIFO_FILE__UNLINK },
-			{ "rename",			SEPG_FIFO_FILE__RENAME },
-			{ NULL, 0UL }
+			{
+				"read", SEPG_FIFO_FILE__READ
+			},
+			{
+				"write", SEPG_FIFO_FILE__WRITE
+			},
+			{
+				"create", SEPG_FIFO_FILE__CREATE
+			},
+			{
+				"getattr", SEPG_FIFO_FILE__GETATTR
+			},
+			{
+				"unlink", SEPG_FIFO_FILE__UNLINK
+			},
+			{
+				"rename", SEPG_FIFO_FILE__RENAME
+			},
+			{
+				NULL, 0UL
+			}
 		}
 	},
 	{
-		"db_database",			SEPG_CLASS_DB_DATABASE,
+		"db_database", SEPG_CLASS_DB_DATABASE,
 		{
-			{ "create",			SEPG_DB_DATABASE__CREATE },
-			{ "drop",			SEPG_DB_DATABASE__DROP },
-			{ "getattr",		SEPG_DB_DATABASE__GETATTR },
-			{ "setattr",		SEPG_DB_DATABASE__SETATTR },
-			{ "relabelfrom",	SEPG_DB_DATABASE__RELABELFROM },
-			{ "relabelto",		SEPG_DB_DATABASE__RELABELTO },
-			{ "access",			SEPG_DB_DATABASE__ACCESS },
-			{ "load_module",	SEPG_DB_DATABASE__LOAD_MODULE },
-			{ NULL, 0UL },
+			{
+				"create", SEPG_DB_DATABASE__CREATE
+			},
+			{
+				"drop", SEPG_DB_DATABASE__DROP
+			},
+			{
+				"getattr", SEPG_DB_DATABASE__GETATTR
+			},
+			{
+				"setattr", SEPG_DB_DATABASE__SETATTR
+			},
+			{
+				"relabelfrom", SEPG_DB_DATABASE__RELABELFROM
+			},
+			{
+				"relabelto", SEPG_DB_DATABASE__RELABELTO
+			},
+			{
+				"access", SEPG_DB_DATABASE__ACCESS
+			},
+			{
+				"load_module", SEPG_DB_DATABASE__LOAD_MODULE
+			},
+			{
+				NULL, 0UL
+			},
 		}
 	},
 	{
-		"db_schema",			SEPG_CLASS_DB_SCHEMA,
+		"db_schema", SEPG_CLASS_DB_SCHEMA,
 		{
-			{ "create",			SEPG_DB_SCHEMA__CREATE },
-			{ "drop",			SEPG_DB_SCHEMA__DROP },
-			{ "getattr",		SEPG_DB_SCHEMA__GETATTR },
-			{ "setattr",		SEPG_DB_SCHEMA__SETATTR },
-			{ "relabelfrom",	SEPG_DB_SCHEMA__RELABELFROM },
-			{ "relabelto",		SEPG_DB_SCHEMA__RELABELTO },
-			{ "search",			SEPG_DB_SCHEMA__SEARCH },
-			{ "add_name",		SEPG_DB_SCHEMA__ADD_NAME },
-			{ "remove_name",	SEPG_DB_SCHEMA__REMOVE_NAME },
-			{ NULL, 0UL },
+			{
+				"create", SEPG_DB_SCHEMA__CREATE
+			},
+			{
+				"drop", SEPG_DB_SCHEMA__DROP
+			},
+			{
+				"getattr", SEPG_DB_SCHEMA__GETATTR
+			},
+			{
+				"setattr", SEPG_DB_SCHEMA__SETATTR
+			},
+			{
+				"relabelfrom", SEPG_DB_SCHEMA__RELABELFROM
+			},
+			{
+				"relabelto", SEPG_DB_SCHEMA__RELABELTO
+			},
+			{
+				"search", SEPG_DB_SCHEMA__SEARCH
+			},
+			{
+				"add_name", SEPG_DB_SCHEMA__ADD_NAME
+			},
+			{
+				"remove_name", SEPG_DB_SCHEMA__REMOVE_NAME
+			},
+			{
+				NULL, 0UL
+			},
 		}
 	},
 	{
-		"db_table",				SEPG_CLASS_DB_TABLE,
+		"db_table", SEPG_CLASS_DB_TABLE,
 		{
-			{ "create",			SEPG_DB_TABLE__CREATE },
-			{ "drop",			SEPG_DB_TABLE__DROP },
-			{ "getattr",		SEPG_DB_TABLE__GETATTR },
-			{ "setattr",		SEPG_DB_TABLE__SETATTR },
-			{ "relabelfrom",	SEPG_DB_TABLE__RELABELFROM },
-			{ "relabelto",		SEPG_DB_TABLE__RELABELTO },
-			{ "select",			SEPG_DB_TABLE__SELECT },
-			{ "update",			SEPG_DB_TABLE__UPDATE },
-			{ "insert",			SEPG_DB_TABLE__INSERT },
-			{ "delete",			SEPG_DB_TABLE__DELETE },
-			{ "lock",			SEPG_DB_TABLE__LOCK },
-			{ NULL, 0UL },
+			{
+				"create", SEPG_DB_TABLE__CREATE
+			},
+			{
+				"drop", SEPG_DB_TABLE__DROP
+			},
+			{
+				"getattr", SEPG_DB_TABLE__GETATTR
+			},
+			{
+				"setattr", SEPG_DB_TABLE__SETATTR
+			},
+			{
+				"relabelfrom", SEPG_DB_TABLE__RELABELFROM
+			},
+			{
+				"relabelto", SEPG_DB_TABLE__RELABELTO
+			},
+			{
+				"select", SEPG_DB_TABLE__SELECT
+			},
+			{
+				"update", SEPG_DB_TABLE__UPDATE
+			},
+			{
+				"insert", SEPG_DB_TABLE__INSERT
+			},
+			{
+				"delete", SEPG_DB_TABLE__DELETE
+			},
+			{
+				"lock", SEPG_DB_TABLE__LOCK
+			},
+			{
+				NULL, 0UL
+			},
 		}
 	},
 	{
-		"db_sequence",			SEPG_CLASS_DB_SEQUENCE,
+		"db_sequence", SEPG_CLASS_DB_SEQUENCE,
 		{
-			{ "create",			SEPG_DB_SEQUENCE__CREATE },
-			{ "drop",			SEPG_DB_SEQUENCE__DROP },
-			{ "getattr",		SEPG_DB_SEQUENCE__GETATTR },
-			{ "setattr",		SEPG_DB_SEQUENCE__SETATTR },
-			{ "relabelfrom",	SEPG_DB_SEQUENCE__RELABELFROM },
-			{ "relabelto",		SEPG_DB_SEQUENCE__RELABELTO },
-			{ "get_value",		SEPG_DB_SEQUENCE__GET_VALUE },
-			{ "next_value",		SEPG_DB_SEQUENCE__NEXT_VALUE },
-			{ "set_value",		SEPG_DB_SEQUENCE__SET_VALUE },
-			{ NULL, 0UL },
+			{
+				"create", SEPG_DB_SEQUENCE__CREATE
+			},
+			{
+				"drop", SEPG_DB_SEQUENCE__DROP
+			},
+			{
+				"getattr", SEPG_DB_SEQUENCE__GETATTR
+			},
+			{
+				"setattr", SEPG_DB_SEQUENCE__SETATTR
+			},
+			{
+				"relabelfrom", SEPG_DB_SEQUENCE__RELABELFROM
+			},
+			{
+				"relabelto", SEPG_DB_SEQUENCE__RELABELTO
+			},
+			{
+				"get_value", SEPG_DB_SEQUENCE__GET_VALUE
+			},
+			{
+				"next_value", SEPG_DB_SEQUENCE__NEXT_VALUE
+			},
+			{
+				"set_value", SEPG_DB_SEQUENCE__SET_VALUE
+			},
+			{
+				NULL, 0UL
+			},
 		}
 	},
 	{
-		"db_procedure",			SEPG_CLASS_DB_PROCEDURE,
+		"db_procedure", SEPG_CLASS_DB_PROCEDURE,
 		{
-			{ "create",			SEPG_DB_PROCEDURE__CREATE },
-			{ "drop",			SEPG_DB_PROCEDURE__DROP },
-			{ "getattr",		SEPG_DB_PROCEDURE__GETATTR },
-			{ "setattr",		SEPG_DB_PROCEDURE__SETATTR },
-			{ "relabelfrom",	SEPG_DB_PROCEDURE__RELABELFROM },
-			{ "relabelto",		SEPG_DB_PROCEDURE__RELABELTO },
-			{ "execute",		SEPG_DB_PROCEDURE__EXECUTE },
-			{ "entrypoint",		SEPG_DB_PROCEDURE__ENTRYPOINT },
-			{ "install",		SEPG_DB_PROCEDURE__INSTALL },
-			{ NULL, 0UL },
+			{
+				"create", SEPG_DB_PROCEDURE__CREATE
+			},
+			{
+				"drop", SEPG_DB_PROCEDURE__DROP
+			},
+			{
+				"getattr", SEPG_DB_PROCEDURE__GETATTR
+			},
+			{
+				"setattr", SEPG_DB_PROCEDURE__SETATTR
+			},
+			{
+				"relabelfrom", SEPG_DB_PROCEDURE__RELABELFROM
+			},
+			{
+				"relabelto", SEPG_DB_PROCEDURE__RELABELTO
+			},
+			{
+				"execute", SEPG_DB_PROCEDURE__EXECUTE
+			},
+			{
+				"entrypoint", SEPG_DB_PROCEDURE__ENTRYPOINT
+			},
+			{
+				"install", SEPG_DB_PROCEDURE__INSTALL
+			},
+			{
+				NULL, 0UL
+			},
 		}
 	},
 	{
-		"db_column",			SEPG_CLASS_DB_COLUMN,
+		"db_column", SEPG_CLASS_DB_COLUMN,
 		{
-			{ "create",			SEPG_DB_COLUMN__CREATE },
-			{ "drop",			SEPG_DB_COLUMN__DROP },
-			{ "getattr",		SEPG_DB_COLUMN__GETATTR },
-			{ "setattr",		SEPG_DB_COLUMN__SETATTR },
-			{ "relabelfrom",	SEPG_DB_COLUMN__RELABELFROM },
-			{ "relabelto",		SEPG_DB_COLUMN__RELABELTO },
-			{ "select",			SEPG_DB_COLUMN__SELECT },
-			{ "update",			SEPG_DB_COLUMN__UPDATE },
-			{ "insert",			SEPG_DB_COLUMN__INSERT },
-			{ NULL, 0UL },
+			{
+				"create", SEPG_DB_COLUMN__CREATE
+			},
+			{
+				"drop", SEPG_DB_COLUMN__DROP
+			},
+			{
+				"getattr", SEPG_DB_COLUMN__GETATTR
+			},
+			{
+				"setattr", SEPG_DB_COLUMN__SETATTR
+			},
+			{
+				"relabelfrom", SEPG_DB_COLUMN__RELABELFROM
+			},
+			{
+				"relabelto", SEPG_DB_COLUMN__RELABELTO
+			},
+			{
+				"select", SEPG_DB_COLUMN__SELECT
+			},
+			{
+				"update", SEPG_DB_COLUMN__UPDATE
+			},
+			{
+				"insert", SEPG_DB_COLUMN__INSERT
+			},
+			{
+				NULL, 0UL
+			},
 		}
 	},
 	{
-		"db_tuple",				SEPG_CLASS_DB_TUPLE,
+		"db_tuple", SEPG_CLASS_DB_TUPLE,
 		{
-			{ "relabelfrom",	SEPG_DB_TUPLE__RELABELFROM },
-			{ "relabelto",		SEPG_DB_TUPLE__RELABELTO },
-			{ "select",			SEPG_DB_TUPLE__SELECT },
-			{ "update",			SEPG_DB_TUPLE__UPDATE },
-			{ "insert",			SEPG_DB_TUPLE__INSERT },
-			{ "delete",			SEPG_DB_TUPLE__DELETE },
-			{ NULL, 0UL },
+			{
+				"relabelfrom", SEPG_DB_TUPLE__RELABELFROM
+			},
+			{
+				"relabelto", SEPG_DB_TUPLE__RELABELTO
+			},
+			{
+				"select", SEPG_DB_TUPLE__SELECT
+			},
+			{
+				"update", SEPG_DB_TUPLE__UPDATE
+			},
+			{
+				"insert", SEPG_DB_TUPLE__INSERT
+			},
+			{
+				"delete", SEPG_DB_TUPLE__DELETE
+			},
+			{
+				NULL, 0UL
+			},
 		}
 	},
 	{
-		"db_blob",				SEPG_CLASS_DB_BLOB,
+		"db_blob", SEPG_CLASS_DB_BLOB,
 		{
-			{ "create",			SEPG_DB_BLOB__CREATE },
-			{ "drop",			SEPG_DB_BLOB__DROP },
-			{ "getattr",		SEPG_DB_BLOB__GETATTR },
-			{ "setattr",		SEPG_DB_BLOB__SETATTR },
-			{ "relabelfrom",	SEPG_DB_BLOB__RELABELFROM },
-			{ "relabelto",		SEPG_DB_BLOB__RELABELTO },
-			{ "read",			SEPG_DB_BLOB__READ },
-			{ "write",			SEPG_DB_BLOB__WRITE },
-			{ "import",			SEPG_DB_BLOB__IMPORT },
-			{ "export",			SEPG_DB_BLOB__EXPORT },
-			{ NULL, 0UL },
+			{
+				"create", SEPG_DB_BLOB__CREATE
+			},
+			{
+				"drop", SEPG_DB_BLOB__DROP
+			},
+			{
+				"getattr", SEPG_DB_BLOB__GETATTR
+			},
+			{
+				"setattr", SEPG_DB_BLOB__SETATTR
+			},
+			{
+				"relabelfrom", SEPG_DB_BLOB__RELABELFROM
+			},
+			{
+				"relabelto", SEPG_DB_BLOB__RELABELTO
+			},
+			{
+				"read", SEPG_DB_BLOB__READ
+			},
+			{
+				"write", SEPG_DB_BLOB__WRITE
+			},
+			{
+				"import", SEPG_DB_BLOB__IMPORT
+			},
+			{
+				"export", SEPG_DB_BLOB__EXPORT
+			},
+			{
+				NULL, 0UL
+			},
 		}
 	},
 	{
-		"db_language",			SEPG_CLASS_DB_LANGUAGE,
+		"db_language", SEPG_CLASS_DB_LANGUAGE,
 		{
-			{ "create",			SEPG_DB_LANGUAGE__CREATE },
-			{ "drop",			SEPG_DB_LANGUAGE__DROP },
-			{ "getattr",		SEPG_DB_LANGUAGE__GETATTR },
-			{ "setattr",		SEPG_DB_LANGUAGE__SETATTR },
-			{ "relabelfrom",	SEPG_DB_LANGUAGE__RELABELFROM },
-			{ "relabelto",		SEPG_DB_LANGUAGE__RELABELTO },
-			{ "implement",		SEPG_DB_LANGUAGE__IMPLEMENT },
-			{ "execute",		SEPG_DB_LANGUAGE__EXECUTE },
-			{ NULL, 0UL },
+			{
+				"create", SEPG_DB_LANGUAGE__CREATE
+			},
+			{
+				"drop", SEPG_DB_LANGUAGE__DROP
+			},
+			{
+				"getattr", SEPG_DB_LANGUAGE__GETATTR
+			},
+			{
+				"setattr", SEPG_DB_LANGUAGE__SETATTR
+			},
+			{
+				"relabelfrom", SEPG_DB_LANGUAGE__RELABELFROM
+			},
+			{
+				"relabelto", SEPG_DB_LANGUAGE__RELABELTO
+			},
+			{
+				"implement", SEPG_DB_LANGUAGE__IMPLEMENT
+			},
+			{
+				"execute", SEPG_DB_LANGUAGE__EXECUTE
+			},
+			{
+				NULL, 0UL
+			},
 		}
 	},
 	{
-		"db_view",				SEPG_CLASS_DB_VIEW,
+		"db_view", SEPG_CLASS_DB_VIEW,
 		{
-			{ "create",			SEPG_DB_VIEW__CREATE },
-			{ "drop",			SEPG_DB_VIEW__DROP },
-			{ "getattr",		SEPG_DB_VIEW__GETATTR },
-			{ "setattr",		SEPG_DB_VIEW__SETATTR },
-			{ "relabelfrom",	SEPG_DB_VIEW__RELABELFROM },
-			{ "relabelto",		SEPG_DB_VIEW__RELABELTO },
-			{ "expand",			SEPG_DB_VIEW__EXPAND },
-			{ NULL, 0UL },
+			{
+				"create", SEPG_DB_VIEW__CREATE
+			},
+			{
+				"drop", SEPG_DB_VIEW__DROP
+			},
+			{
+				"getattr", SEPG_DB_VIEW__GETATTR
+			},
+			{
+				"setattr", SEPG_DB_VIEW__SETATTR
+			},
+			{
+				"relabelfrom", SEPG_DB_VIEW__RELABELFROM
+			},
+			{
+				"relabelto", SEPG_DB_VIEW__RELABELTO
+			},
+			{
+				"expand", SEPG_DB_VIEW__EXPAND
+			},
+			{
+				NULL, 0UL
+			},
 		}
 	},
 };
@@ -316,7 +624,7 @@ sepgsql_get_mode(void)
 int
 sepgsql_set_mode(int new_mode)
 {
-	int		old_mode = sepgsql_mode;
+	int			old_mode = sepgsql_mode;
 
 	sepgsql_mode = new_mode;
 
@@ -367,10 +675,10 @@ sepgsql_audit_log(bool denied,
 				  uint32 audited,
 				  const char *audit_name)
 {
-	StringInfoData	buf;
-	const char	   *class_name;
-	const char	   *av_name;
-	int				i;
+	StringInfoData buf;
+	const char *class_name;
+	const char *av_name;
+	int			i;
 
 	/* lookup name of the object class */
 	Assert(tclass < SEPG_CLASS_MAX);
@@ -380,7 +688,7 @@ sepgsql_audit_log(bool denied,
 	initStringInfo(&buf);
 	appendStringInfo(&buf, "%s {",
 					 (denied ? "denied" : "allowed"));
-	for (i=0; selinux_catalog[tclass].av[i].av_name; i++)
+	for (i = 0; selinux_catalog[tclass].av[i].av_name; i++)
 	{
 		if (audited & (1UL << i))
 		{
@@ -418,14 +726,15 @@ void
 sepgsql_compute_avd(const char *scontext,
 					const char *tcontext,
 					uint16 tclass,
-					struct av_decision *avd)
+					struct av_decision * avd)
 {
-	const char		   *tclass_name;
-	security_class_t	tclass_ex;
-	struct av_decision	avd_ex;
-	int					i, deny_unknown = security_deny_unknown();
+	const char *tclass_name;
+	security_class_t tclass_ex;
+	struct av_decision avd_ex;
+	int			i,
+				deny_unknown = security_deny_unknown();
 
-	/* Get external code of the object class*/
+	/* Get external code of the object class */
 	Assert(tclass < SEPG_CLASS_MAX);
 	Assert(tclass == selinux_catalog[tclass].class_code);
 
@@ -436,14 +745,13 @@ sepgsql_compute_avd(const char *scontext,
 	{
 		/*
 		 * If the current security policy does not support permissions
-		 * corresponding to database objects, we fill up them with dummy
-		 * data.
+		 * corresponding to database objects, we fill up them with dummy data.
 		 * If security_deny_unknown() returns positive value, undefined
 		 * permissions should be denied. Otherwise, allowed
 		 */
 		avd->allowed = (security_deny_unknown() > 0 ? 0 : ~0);
 		avd->auditallow = 0U;
-		avd->auditdeny =  ~0U;
+		avd->auditdeny = ~0U;
 		avd->flags = 0;
 
 		return;
@@ -453,8 +761,8 @@ sepgsql_compute_avd(const char *scontext,
 	 * Ask SELinux what is allowed set of permissions on a pair of the
 	 * security contexts and the given object class.
 	 */
-	if (security_compute_av_flags_raw((security_context_t)scontext,
-									  (security_context_t)tcontext,
+	if (security_compute_av_flags_raw((security_context_t) scontext,
+									  (security_context_t) tcontext,
 									  tclass_ex, 0, &avd_ex) < 0)
 		ereport(ERROR,
 				(errcode(ERRCODE_INTERNAL_ERROR),
@@ -464,17 +772,17 @@ sepgsql_compute_avd(const char *scontext,
 
 	/*
 	 * SELinux returns its access control decision as a set of permissions
-	 * represented in external code which depends on run-time environment.
-	 * So, we need to translate it to the internal representation before
-	 * returning results for the caller.
+	 * represented in external code which depends on run-time environment. So,
+	 * we need to translate it to the internal representation before returning
+	 * results for the caller.
 	 */
 	memset(avd, 0, sizeof(struct av_decision));
 
-	for (i=0; selinux_catalog[tclass].av[i].av_name; i++)
+	for (i = 0; selinux_catalog[tclass].av[i].av_name; i++)
 	{
-		access_vector_t	av_code_ex;
-		const char	   *av_name = selinux_catalog[tclass].av[i].av_name;
-		uint32			av_code = selinux_catalog[tclass].av[i].av_code;
+		access_vector_t av_code_ex;
+		const char *av_name = selinux_catalog[tclass].av[i].av_name;
+		uint32		av_code = selinux_catalog[tclass].av[i].av_code;
 
 		av_code_ex = string_to_av_perm(tclass_ex, av_name);
 		if (av_code_ex == 0)
@@ -524,23 +832,23 @@ sepgsql_compute_create(const char *scontext,
 					   const char *tcontext,
 					   uint16 tclass)
 {
-	security_context_t	ncontext;
-	security_class_t	tclass_ex;
-	const char		   *tclass_name;
-	char			   *result;
+	security_context_t ncontext;
+	security_class_t tclass_ex;
+	const char *tclass_name;
+	char	   *result;
 
-	/* Get external code of the object class*/
+	/* Get external code of the object class */
 	Assert(tclass < SEPG_CLASS_MAX);
 
 	tclass_name = selinux_catalog[tclass].class_name;
 	tclass_ex = string_to_security_class(tclass_name);
 
 	/*
-	 * Ask SELinux what is the default context for the given object class
-	 * on a pair of security contexts
+	 * Ask SELinux what is the default context for the given object class on a
+	 * pair of security contexts
 	 */
-	if (security_compute_create_raw((security_context_t)scontext,
-									(security_context_t)tcontext,
+	if (security_compute_create_raw((security_context_t) scontext,
+									(security_context_t) tcontext,
 									tclass_ex, &ncontext) < 0)
 		ereport(ERROR,
 				(errcode(ERRCODE_INTERNAL_ERROR),
@@ -549,8 +857,8 @@ sepgsql_compute_create(const char *scontext,
 						scontext, tcontext, tclass_name)));
 
 	/*
-	 * libselinux returns malloc()'ed string, so we need to copy it
-	 * on the palloc()'ed region.
+	 * libselinux returns malloc()'ed string, so we need to copy it on the
+	 * palloc()'ed region.
 	 */
 	PG_TRY();
 	{
@@ -589,7 +897,7 @@ sepgsql_check_perms(const char *scontext,
 					const char *audit_name,
 					bool abort)
 {
-	struct av_decision	avd;
+	struct av_decision avd;
 	uint32		denied;
 	uint32		audited;
 	bool		result = true;
@@ -602,7 +910,7 @@ sepgsql_check_perms(const char *scontext,
 		audited = (denied ? denied : required);
 	else
 		audited = (denied ? (denied & avd.auditdeny)
-						  : (required & avd.auditallow));
+				   : (required & avd.auditallow));
 
 	if (denied &&
 		sepgsql_getenforce() > 0 &&
@@ -610,8 +918,8 @@ sepgsql_check_perms(const char *scontext,
 		result = false;
 
 	/*
-	 * It records a security audit for the request, if needed.
-	 * But, when SE-PgSQL performs 'internal' mode, it needs to keep silent.
+	 * It records a security audit for the request, if needed. But, when
+	 * SE-PgSQL performs 'internal' mode, it needs to keep silent.
 	 */
 	if (audited && sepgsql_mode != SEPGSQL_MODE_INTERNAL)
 	{

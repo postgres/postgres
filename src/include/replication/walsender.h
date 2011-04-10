@@ -25,7 +25,7 @@ typedef enum WalSndState
 	WALSNDSTATE_BACKUP,
 	WALSNDSTATE_CATCHUP,
 	WALSNDSTATE_STREAMING
-}	WalSndState;
+} WalSndState;
 
 /*
  * Each walsender has a WalSnd struct in shared memory.
@@ -37,9 +37,9 @@ typedef struct WalSnd
 	XLogRecPtr	sentPtr;		/* WAL has been sent up to this point */
 
 	/*
-	 * The xlog locations that have been written, flushed, and applied
-	 * by standby-side. These may be invalid if the standby-side has not
-	 * offered values yet.
+	 * The xlog locations that have been written, flushed, and applied by
+	 * standby-side. These may be invalid if the standby-side has not offered
+	 * values yet.
 	 */
 	XLogRecPtr	write;
 	XLogRecPtr	flush;
@@ -49,17 +49,17 @@ typedef struct WalSnd
 	slock_t		mutex;
 
 	/*
-	 * Latch used by backends to wake up this walsender when it has work
-	 * to do.
+	 * Latch used by backends to wake up this walsender when it has work to
+	 * do.
 	 */
 	Latch		latch;
 
 	/*
-	 * The priority order of the standby managed by this WALSender, as
-	 * listed in synchronous_standby_names, or 0 if not-listed.
-	 * Protected by SyncRepLock.
+	 * The priority order of the standby managed by this WALSender, as listed
+	 * in synchronous_standby_names, or 0 if not-listed. Protected by
+	 * SyncRepLock.
 	 */
-	 int	sync_standby_priority;
+	int			sync_standby_priority;
 } WalSnd;
 
 extern WalSnd *MyWalSnd;
@@ -70,11 +70,11 @@ typedef struct
 	/*
 	 * Synchronous replication queue. Protected by SyncRepLock.
 	 */
-	SHM_QUEUE SyncRepQueue;
+	SHM_QUEUE	SyncRepQueue;
 
 	/*
-	 * Current location of the head of the queue. All waiters should have
-	 * a waitLSN that follows this value. Protected by SyncRepLock.
+	 * Current location of the head of the queue. All waiters should have a
+	 * waitLSN that follows this value. Protected by SyncRepLock.
 	 */
 	XLogRecPtr	lsn;
 

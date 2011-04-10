@@ -543,7 +543,7 @@ check_db(const char *dbname, const char *role, Oid roleid, char *param_str)
 }
 
 static bool
-ipv4eq(struct sockaddr_in *a, struct sockaddr_in *b)
+ipv4eq(struct sockaddr_in * a, struct sockaddr_in * b)
 {
 	return (a->sin_addr.s_addr == b->sin_addr.s_addr);
 }
@@ -551,9 +551,9 @@ ipv4eq(struct sockaddr_in *a, struct sockaddr_in *b)
 #ifdef HAVE_IPV6
 
 static bool
-ipv6eq(struct sockaddr_in6 *a, struct sockaddr_in6 *b)
+ipv6eq(struct sockaddr_in6 * a, struct sockaddr_in6 * b)
 {
-	int i;
+	int			i;
 
 	for (i = 0; i < 16; i++)
 		if (a->sin6_addr.s6_addr[i] != b->sin6_addr.s6_addr[i])
@@ -561,8 +561,7 @@ ipv6eq(struct sockaddr_in6 *a, struct sockaddr_in6 *b)
 
 	return true;
 }
-
-#endif /* HAVE_IPV6 */
+#endif   /* HAVE_IPV6 */
 
 /*
  * Check whether host name matches pattern.
@@ -572,8 +571,8 @@ hostname_match(const char *pattern, const char *actual_hostname)
 {
 	if (pattern[0] == '.')		/* suffix match */
 	{
-		size_t plen = strlen(pattern);
-		size_t hlen = strlen(actual_hostname);
+		size_t		plen = strlen(pattern);
+		size_t		hlen = strlen(actual_hostname);
 
 		if (hlen < plen)
 			return false;
@@ -590,7 +589,8 @@ hostname_match(const char *pattern, const char *actual_hostname)
 static bool
 check_hostname(hbaPort *port, const char *hostname)
 {
-	struct addrinfo *gai_result, *gai;
+	struct addrinfo *gai_result,
+			   *gai;
 	int			ret;
 	bool		found;
 
@@ -632,7 +632,7 @@ check_hostname(hbaPort *port, const char *hostname)
 			if (gai->ai_addr->sa_family == AF_INET)
 			{
 				if (ipv4eq((struct sockaddr_in *) gai->ai_addr,
-						   (struct sockaddr_in *) &port->raddr.addr))
+						   (struct sockaddr_in *) & port->raddr.addr))
 				{
 					found = true;
 					break;
@@ -642,7 +642,7 @@ check_hostname(hbaPort *port, const char *hostname)
 			else if (gai->ai_addr->sa_family == AF_INET6)
 			{
 				if (ipv6eq((struct sockaddr_in6 *) gai->ai_addr,
-						   (struct sockaddr_in6 *) &port->raddr.addr))
+						   (struct sockaddr_in6 *) & port->raddr.addr))
 				{
 					found = true;
 					break;
@@ -974,8 +974,8 @@ parse_hba_line(List *line, int line_num, HbaLine *parsedline)
 							(errcode(ERRCODE_CONFIG_FILE_ERROR),
 							 errmsg("specifying both host name and CIDR mask is invalid: \"%s\"",
 									token),
-							 errcontext("line %d of configuration file \"%s\"",
-										line_num, HbaFileName)));
+						   errcontext("line %d of configuration file \"%s\"",
+									  line_num, HbaFileName)));
 					pfree(token);
 					return false;
 				}

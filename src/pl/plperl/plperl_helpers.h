@@ -7,7 +7,8 @@
 static inline char *
 utf_u2e(const char *utf8_str, size_t len)
 {
-	char *ret = (char*)pg_do_encoding_conversion((unsigned char*)utf8_str, len, PG_UTF8, GetDatabaseEncoding());
+	char	   *ret = (char *) pg_do_encoding_conversion((unsigned char *) utf8_str, len, PG_UTF8, GetDatabaseEncoding());
+
 	if (ret == utf8_str)
 		ret = pstrdup(ret);
 	return ret;
@@ -19,7 +20,8 @@ utf_u2e(const char *utf8_str, size_t len)
 static inline char *
 utf_e2u(const char *str)
 {
-	char *ret = (char*)pg_do_encoding_conversion((unsigned char*)str, strlen(str), GetDatabaseEncoding(), PG_UTF8);
+	char	   *ret = (char *) pg_do_encoding_conversion((unsigned char *) str, strlen(str), GetDatabaseEncoding(), PG_UTF8);
+
 	if (ret == str)
 		ret = pstrdup(ret);
 	return ret;
@@ -32,8 +34,8 @@ utf_e2u(const char *str)
 static inline char *
 sv2cstr(SV *sv)
 {
-	char *val;
-	STRLEN len;
+	char	   *val;
+	STRLEN		len;
 
 	/*
 	 * get a utf8 encoded char * out of perl. *note* it may not be valid utf8!
@@ -55,8 +57,8 @@ sv2cstr(SV *sv)
 static inline SV *
 cstr2sv(const char *str)
 {
-	SV *sv;
-	char *utf8_str = utf_e2u(str);
+	SV		   *sv;
+	char	   *utf8_str = utf_e2u(str);
 
 	sv = newSVpv(utf8_str, 0);
 	SvUTF8_on(sv);

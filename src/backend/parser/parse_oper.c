@@ -214,9 +214,9 @@ get_sort_group_operators(Oid argtype,
 	/*
 	 * If the datatype is an array, then we can use array_lt and friends ...
 	 * but only if there are suitable operators for the element type.
-	 * Likewise, array types are only hashable if the element type is.
-	 * Testing all three operator IDs here should be redundant, but let's do
-	 * it anyway.
+	 * Likewise, array types are only hashable if the element type is. Testing
+	 * all three operator IDs here should be redundant, but let's do it
+	 * anyway.
 	 */
 	if (lt_opr == ARRAY_LT_OP ||
 		eq_opr == ARRAY_EQ_OP ||

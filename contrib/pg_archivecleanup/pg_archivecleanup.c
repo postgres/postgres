@@ -25,9 +25,9 @@
 #ifdef HAVE_GETOPT_H
 #include <getopt.h>
 #endif
-#else	/* WIN32 */
+#else							/* WIN32 */
 extern int	getopt(int argc, char *const argv[], const char *optstring);
-#endif	/* ! WIN32 */
+#endif   /* ! WIN32 */
 
 extern char *optarg;
 extern int	optind;

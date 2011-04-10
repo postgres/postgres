@@ -190,17 +190,18 @@ gtrgm_consistent(PG_FUNCTION_ARGS)
 	GISTENTRY  *entry = (GISTENTRY *) PG_GETARG_POINTER(0);
 	text	   *query = PG_GETARG_TEXT_P(1);
 	StrategyNumber strategy = (StrategyNumber) PG_GETARG_UINT16(2);
+
 	/* Oid		subtype = PG_GETARG_OID(3); */
 	bool	   *recheck = (bool *) PG_GETARG_POINTER(4);
 	TRGM	   *key = (TRGM *) DatumGetPointer(entry->key);
 	TRGM	   *qtrg;
 	bool		res;
 	char	   *cache = (char *) fcinfo->flinfo->fn_extra,
-		       *cacheContents = cache + MAXALIGN(sizeof(StrategyNumber));
+			   *cacheContents = cache + MAXALIGN(sizeof(StrategyNumber));
 
 	/*
 	 * Store both the strategy number and extracted trigrams in cache, because
-	 * trigram extraction is relatively CPU-expensive.  We must include
+	 * trigram extraction is relatively CPU-expensive.	We must include
 	 * strategy number because trigram extraction depends on strategy.
 	 */
 	if (cache == NULL || strategy != *((StrategyNumber *) cache) ||
@@ -222,7 +223,7 @@ gtrgm_consistent(PG_FUNCTION_ARGS)
 				break;
 			default:
 				elog(ERROR, "unrecognized strategy number: %d", strategy);
-				qtrg = NULL;		/* keep compiler quiet */
+				qtrg = NULL;	/* keep compiler quiet */
 				break;
 		}
 
@@ -251,20 +252,20 @@ gtrgm_consistent(PG_FUNCTION_ARGS)
 			*recheck = false;
 
 			if (GIST_LEAF(entry))
-			{							/* all leafs contains orig trgm */
-				float4      tmpsml = cnt_sml(key, qtrg);
+			{					/* all leafs contains orig trgm */
+				float4		tmpsml = cnt_sml(key, qtrg);
 
 				/* strange bug at freebsd 5.2.1 and gcc 3.3.3 */
 				res = (*(int *) &tmpsml == *(int *) &trgm_limit || tmpsml > trgm_limit) ? true : false;
 			}
 			else if (ISALLTRUE(key))
-			{							/* non-leaf contains signature */
+			{					/* non-leaf contains signature */
 				res = true;
 			}
 			else
-			{							/* non-leaf contains signature */
-				int4 count = cnt_sml_sign_common(qtrg, GETSIGN(key));
-				int4 len = ARRNELEM(qtrg);
+			{					/* non-leaf contains signature */
+				int4		count = cnt_sml_sign_common(qtrg, GETSIGN(key));
+				int4		len = ARRNELEM(qtrg);
 
 				if (len == 0)
 					res = false;
@@ -286,20 +287,20 @@ gtrgm_consistent(PG_FUNCTION_ARGS)
 			 * nodes.
 			 */
 			if (GIST_LEAF(entry))
-			{							/* all leafs contains orig trgm */
+			{					/* all leafs contains orig trgm */
 				res = trgm_contained_by(qtrg, key);
 			}
 			else if (ISALLTRUE(key))
-			{							/* non-leaf contains signature */
+			{					/* non-leaf contains signature */
 				res = true;
 			}
 			else
-			{							/* non-leaf contains signature */
-				int32	k,
-						tmp = 0,
-						len = ARRNELEM(qtrg);
-				trgm *ptr = GETARR(qtrg);
-				BITVECP sign = GETSIGN(key);
+			{					/* non-leaf contains signature */
+				int32		k,
+							tmp = 0,
+							len = ARRNELEM(qtrg);
+				trgm	   *ptr = GETARR(qtrg);
+				BITVECP		sign = GETSIGN(key);
 
 				res = true;
 				for (k = 0; k < len; k++)
@@ -328,6 +329,7 @@ gtrgm_distance(PG_FUNCTION_ARGS)
 	GISTENTRY  *entry = (GISTENTRY *) PG_GETARG_POINTER(0);
 	text	   *query = PG_GETARG_TEXT_P(1);
 	StrategyNumber strategy = (StrategyNumber) PG_GETARG_UINT16(2);
+
 	/* Oid		subtype = PG_GETARG_OID(3); */
 	TRGM	   *key = (TRGM *) DatumGetPointer(entry->key);
 	TRGM	   *qtrg;
@@ -355,17 +357,17 @@ gtrgm_distance(PG_FUNCTION_ARGS)
 	{
 		case DistanceStrategyNumber:
 			if (GIST_LEAF(entry))
-			{							/* all leafs contains orig trgm */
+			{					/* all leafs contains orig trgm */
 				res = 1.0 - cnt_sml(key, qtrg);
 			}
 			else if (ISALLTRUE(key))
-			{							/* all leafs contains orig trgm */
+			{					/* all leafs contains orig trgm */
 				res = 0.0;
 			}
 			else
-			{							/* non-leaf contains signature */
-				int4 count = cnt_sml_sign_common(qtrg, GETSIGN(key));
-				int4 len = ARRNELEM(qtrg);
+			{					/* non-leaf contains signature */
+				int4		count = cnt_sml_sign_common(qtrg, GETSIGN(key));
+				int4		len = ARRNELEM(qtrg);
 
 				res = (len == 0) ? -1.0 : 1.0 - ((float8) count) / ((float8) len);
 			}

@@ -431,7 +431,7 @@ CheckAttributeNamesTypes(TupleDesc tupdesc, char relkind,
 		CheckAttributeType(NameStr(tupdesc->attrs[i]->attname),
 						   tupdesc->attrs[i]->atttypid,
 						   tupdesc->attrs[i]->attcollation,
-						   NIL,	/* assume we're creating a new rowtype */
+						   NIL, /* assume we're creating a new rowtype */
 						   allow_system_table_mods);
 	}
 }
@@ -497,7 +497,7 @@ CheckAttributeType(const char *attname,
 		int			i;
 
 		/*
-		 * Check for self-containment.  Eventually we might be able to allow
+		 * Check for self-containment.	Eventually we might be able to allow
 		 * this (just return without complaint, if so) but it's not clear how
 		 * many other places would require anti-recursion defenses before it
 		 * would be safe to allow tables to contain their own rowtype.
@@ -505,8 +505,8 @@ CheckAttributeType(const char *attname,
 		if (list_member_oid(containing_rowtypes, atttypid))
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_TABLE_DEFINITION),
-					 errmsg("composite type %s cannot be made a member of itself",
-							format_type_be(atttypid))));
+				errmsg("composite type %s cannot be made a member of itself",
+					   format_type_be(atttypid))));
 
 		containing_rowtypes = lcons_oid(atttypid, containing_rowtypes);
 
@@ -541,15 +541,15 @@ CheckAttributeType(const char *attname,
 	}
 
 	/*
-	 * This might not be strictly invalid per SQL standard, but it is
-	 * pretty useless, and it cannot be dumped, so we must disallow it.
+	 * This might not be strictly invalid per SQL standard, but it is pretty
+	 * useless, and it cannot be dumped, so we must disallow it.
 	 */
 	if (!OidIsValid(attcollation) && type_is_collatable(atttypid))
-			ereport(ERROR,
-					(errcode(ERRCODE_INVALID_TABLE_DEFINITION),
-					 errmsg("no collation was derived for column \"%s\" with collatable type %s",
-							attname, format_type_be(atttypid)),
-					 errhint("Use the COLLATE clause to set the collation explicitly.")));
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_TABLE_DEFINITION),
+				 errmsg("no collation was derived for column \"%s\" with collatable type %s",
+						attname, format_type_be(atttypid)),
+		errhint("Use the COLLATE clause to set the collation explicitly.")));
 }
 
 /*
@@ -921,7 +921,7 @@ AddNewRelationType(const char *typeName,
 				   -1,			/* typmod */
 				   0,			/* array dimensions for typBaseType */
 				   false,		/* Type NOT NULL */
-				   InvalidOid);	/* typcollation */
+				   InvalidOid); /* typcollation */
 }
 
 /* --------------------------------
@@ -992,9 +992,9 @@ heap_create_with_catalog(const char *relname,
 	CheckAttributeNamesTypes(tupdesc, relkind, allow_system_table_mods);
 
 	/*
-	 * If the relation already exists, it's an error, unless the user specifies
-	 * "IF NOT EXISTS".  In that case, we just print a notice and do nothing
-	 * further.
+	 * If the relation already exists, it's an error, unless the user
+	 * specifies "IF NOT EXISTS".  In that case, we just print a notice and do
+	 * nothing further.
 	 */
 	existing_relid = get_relname_relid(relname, relnamespace);
 	if (existing_relid != InvalidOid)
@@ -1004,7 +1004,7 @@ heap_create_with_catalog(const char *relname,
 			ereport(NOTICE,
 					(errcode(ERRCODE_DUPLICATE_TABLE),
 					 errmsg("relation \"%s\" already exists, skipping",
-					 relname)));
+							relname)));
 			heap_close(pg_class_desc, RowExclusiveLock);
 			return InvalidOid;
 		}
@@ -1048,8 +1048,8 @@ heap_create_with_catalog(const char *relname,
 	if (!OidIsValid(relid))
 	{
 		/*
-		 *	Use binary-upgrade override for pg_class.oid/relfilenode,
-		 *	if supplied.
+		 * Use binary-upgrade override for pg_class.oid/relfilenode, if
+		 * supplied.
 		 */
 		if (OidIsValid(binary_upgrade_next_heap_pg_class_oid) &&
 			(relkind == RELKIND_RELATION || relkind == RELKIND_SEQUENCE ||
@@ -1183,7 +1183,7 @@ heap_create_with_catalog(const char *relname,
 				   -1,			/* typmod */
 				   0,			/* array dimensions for typBaseType */
 				   false,		/* Type NOT NULL */
-				   InvalidOid);	/* typcollation */
+				   InvalidOid); /* typcollation */
 
 		pfree(relarrayname);
 	}
@@ -1285,12 +1285,12 @@ heap_create_with_catalog(const char *relname,
 		register_on_commit_action(relid, oncommit);
 
 	/*
-	 * If this is an unlogged relation, it needs an init fork so that it
-	 * can be correctly reinitialized on restart.  Since we're going to
-	 * do an immediate sync, we ony need to xlog this if archiving or
-	 * streaming is enabled.  And the immediate sync is required, because
-	 * otherwise there's no guarantee that this will hit the disk before
-	 * the next checkpoint moves the redo pointer.
+	 * If this is an unlogged relation, it needs an init fork so that it can
+	 * be correctly reinitialized on restart.  Since we're going to do an
+	 * immediate sync, we ony need to xlog this if archiving or streaming is
+	 * enabled.  And the immediate sync is required, because otherwise there's
+	 * no guarantee that this will hit the disk before the next checkpoint
+	 * moves the redo pointer.
 	 */
 	if (relpersistence == RELPERSISTENCE_UNLOGGED)
 	{
@@ -1654,8 +1654,8 @@ heap_drop_with_catalog(Oid relid)
 
 	/*
 	 * There can no longer be anyone *else* touching the relation, but we
-	 * might still have open queries or cursors, or pending trigger events,
-	 * in our own session.
+	 * might still have open queries or cursors, or pending trigger events, in
+	 * our own session.
 	 */
 	CheckTableNotInUse(rel, "DROP TABLE");
 
@@ -1664,8 +1664,8 @@ heap_drop_with_catalog(Oid relid)
 	 */
 	if (rel->rd_rel->relkind == RELKIND_FOREIGN_TABLE)
 	{
-		Relation    rel;
-		HeapTuple   tuple;
+		Relation	rel;
+		HeapTuple	tuple;
 
 		rel = heap_open(ForeignTableRelationId, RowExclusiveLock);
 
@@ -1899,7 +1899,7 @@ StoreRelCheck(Relation rel, char *ccname, Node *expr,
 						  CONSTRAINT_CHECK,		/* Constraint Type */
 						  false,	/* Is Deferrable */
 						  false,	/* Is Deferred */
-						  true,		/* Is Validated */
+						  true, /* Is Validated */
 						  RelationGetRelid(rel),		/* relation */
 						  attNos,		/* attrs in the constraint */
 						  keycount,		/* # attrs in the constraint */

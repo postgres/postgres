@@ -88,7 +88,7 @@ intr2num(const Interval *i)
 static float8
 gbt_intv_dist(const void *a, const void *b)
 {
-	return (float8)Abs(intr2num((Interval*)a) - intr2num((Interval*)b));
+	return (float8) Abs(intr2num((Interval *) a) - intr2num((Interval *) b));
 }
 
 /*
@@ -127,7 +127,7 @@ abs_interval(Interval *a)
 }
 
 PG_FUNCTION_INFO_V1(interval_dist);
-Datum       interval_dist(PG_FUNCTION_ARGS);
+Datum		interval_dist(PG_FUNCTION_ARGS);
 Datum
 interval_dist(PG_FUNCTION_ARGS)
 {
@@ -240,7 +240,7 @@ gbt_intv_distance(PG_FUNCTION_ARGS)
 	key.upper = (GBT_NUMKEY *) &kkk->upper;
 
 	PG_RETURN_FLOAT8(
-				   gbt_num_distance(&key, (void *) query, GIST_LEAF(entry), &tinfo)
+			 gbt_num_distance(&key, (void *) query, GIST_LEAF(entry), &tinfo)
 		);
 }
 

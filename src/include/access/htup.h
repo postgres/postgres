@@ -201,7 +201,7 @@ typedef HeapTupleHeaderData *HeapTupleHeader;
  * any visibility information, so we can overlay it on a visibility flag
  * instead of using up a dedicated bit.
  */
-#define HEAP_TUPLE_HAS_MATCH	HEAP_ONLY_TUPLE	/* tuple has a join match */
+#define HEAP_TUPLE_HAS_MATCH	HEAP_ONLY_TUPLE /* tuple has a join match */
 
 /*
  * HeapTupleHeader accessor macros

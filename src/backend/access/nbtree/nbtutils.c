@@ -70,8 +70,8 @@ _bt_mkscankey(Relation rel, IndexTuple itup)
 
 		/*
 		 * We can use the cached (default) support procs since no cross-type
-		 * comparison can be needed.  The cached support proc entries have
-		 * the right collation for the index, too.
+		 * comparison can be needed.  The cached support proc entries have the
+		 * right collation for the index, too.
 		 */
 		procinfo = index_getprocinfo(rel, i + 1, BTORDER_PROC);
 		arg = index_getattr(itup, i + 1, itupdesc, &null);
@@ -120,8 +120,8 @@ _bt_mkscankey_nodata(Relation rel)
 
 		/*
 		 * We can use the cached (default) support procs since no cross-type
-		 * comparison can be needed.  The cached support proc entries have
-		 * the right collation for the index, too.
+		 * comparison can be needed.  The cached support proc entries have the
+		 * right collation for the index, too.
 		 */
 		procinfo = index_getprocinfo(rel, i + 1, BTORDER_PROC);
 		flags = SK_ISNULL | (indoption[i] << SK_BT_INDOPTION_SHIFT);

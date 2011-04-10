@@ -49,7 +49,7 @@ CATALOG(pg_class,1259) BKI_BOOTSTRAP BKI_ROWTYPE_OID(83) BKI_SCHEMA_MACRO
 	Oid			reltoastidxid;	/* if toast table, OID of chunk_id index */
 	bool		relhasindex;	/* T if has (or has had) any indexes */
 	bool		relisshared;	/* T if shared across databases */
-	char		relpersistence;	/* see RELPERSISTENCE_xxx constants below */
+	char		relpersistence; /* see RELPERSISTENCE_xxx constants below */
 	char		relkind;		/* see RELKIND_xxx constants below */
 	int2		relnatts;		/* number of user attributes */
 
@@ -146,7 +146,7 @@ DESCR("");
 #define		  RELKIND_TOASTVALUE	  't'		/* for out-of-line values */
 #define		  RELKIND_VIEW			  'v'		/* view */
 #define		  RELKIND_COMPOSITE_TYPE  'c'		/* composite type */
-#define		  RELKIND_FOREIGN_TABLE	  'f'		/* foreign table */
+#define		  RELKIND_FOREIGN_TABLE   'f'		/* foreign table */
 #define		  RELKIND_UNCATALOGED	  'u'		/* not yet cataloged */
 
 #define		  RELPERSISTENCE_PERMANENT	'p'		/* regular table */

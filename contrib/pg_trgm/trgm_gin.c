@@ -67,7 +67,7 @@ gin_extract_value_trgm(PG_FUNCTION_ARGS)
 		ptr = GETARR(trg);
 		for (i = 0; i < trglen; i++)
 		{
-			int32	item = trgm2int(ptr);
+			int32		item = trgm2int(ptr);
 
 			entries[i] = Int32GetDatum(item);
 			ptr++;
@@ -83,10 +83,11 @@ gin_extract_query_trgm(PG_FUNCTION_ARGS)
 	text	   *val = (text *) PG_GETARG_TEXT_P(0);
 	int32	   *nentries = (int32 *) PG_GETARG_POINTER(1);
 	StrategyNumber strategy = PG_GETARG_UINT16(2);
-	/* bool	  **pmatch = (bool **) PG_GETARG_POINTER(3); */
-	/* Pointer    *extra_data = (Pointer *) PG_GETARG_POINTER(4); */
-	/* bool	  **nullFlags = (bool **) PG_GETARG_POINTER(5); */
-	int32      *searchMode = (int32 *) PG_GETARG_POINTER(6);
+
+	/* bool   **pmatch = (bool **) PG_GETARG_POINTER(3); */
+	/* Pointer	  *extra_data = (Pointer *) PG_GETARG_POINTER(4); */
+	/* bool   **nullFlags = (bool **) PG_GETARG_POINTER(5); */
+	int32	   *searchMode = (int32 *) PG_GETARG_POINTER(6);
 	Datum	   *entries = NULL;
 	TRGM	   *trg;
 	int32		trglen;
@@ -104,6 +105,7 @@ gin_extract_query_trgm(PG_FUNCTION_ARGS)
 #endif
 			/* FALL THRU */
 		case LikeStrategyNumber:
+
 			/*
 			 * For wildcard search we extract all the trigrams that every
 			 * potentially-matching string must include.
@@ -112,7 +114,7 @@ gin_extract_query_trgm(PG_FUNCTION_ARGS)
 			break;
 		default:
 			elog(ERROR, "unrecognized strategy number: %d", strategy);
-			trg = NULL;		/* keep compiler quiet */
+			trg = NULL;			/* keep compiler quiet */
 			break;
 	}
 
@@ -125,7 +127,7 @@ gin_extract_query_trgm(PG_FUNCTION_ARGS)
 		ptr = GETARR(trg);
 		for (i = 0; i < trglen; i++)
 		{
-			int32	item = trgm2int(ptr);
+			int32		item = trgm2int(ptr);
 
 			entries[i] = Int32GetDatum(item);
 			ptr++;
@@ -146,9 +148,11 @@ gin_trgm_consistent(PG_FUNCTION_ARGS)
 {
 	bool	   *check = (bool *) PG_GETARG_POINTER(0);
 	StrategyNumber strategy = PG_GETARG_UINT16(1);
+
 	/* text    *query = PG_GETARG_TEXT_P(2); */
 	int32		nkeys = PG_GETARG_INT32(3);
-	/* Pointer    *extra_data = (Pointer *) PG_GETARG_POINTER(4); */
+
+	/* Pointer	  *extra_data = (Pointer *) PG_GETARG_POINTER(4); */
 	bool	   *recheck = (bool *) PG_GETARG_POINTER(5);
 	bool		res;
 	int32		i,

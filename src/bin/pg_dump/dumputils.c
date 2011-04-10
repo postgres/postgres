@@ -21,7 +21,7 @@
 #include "parser/keywords.h"
 
 
-int		quote_all_identifiers = 0;
+int			quote_all_identifiers = 0;
 
 
 #define supports_grant_options(version) ((version) >= 70400)

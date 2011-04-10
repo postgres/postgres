@@ -1211,7 +1211,7 @@ plperl_sv_to_datum(SV *sv, FmgrInfo *finfo, Oid typid, Oid typioparam,
 
 		ereport(ERROR,
 				(errcode(ERRCODE_DATATYPE_MISMATCH),
-				 errmsg("PL/Perl function must return reference to hash or array")));
+		 errmsg("PL/Perl function must return reference to hash or array")));
 		return (Datum) 0;		/* shut up compiler */
 	}
 	else

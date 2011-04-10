@@ -68,7 +68,7 @@ typedef struct VacAttrStats
 	 * type-specific typanalyze function.
 	 *
 	 * Note: do not assume that the data being analyzed has the same datatype
-	 * shown in attr, ie do not trust attr->atttypid, attlen, etc.  This is
+	 * shown in attr, ie do not trust attr->atttypid, attlen, etc.	This is
 	 * because some index opclasses store a different type than the underlying
 	 * column/expression.  Instead use attrtypid, attrtypmod, and attrtype for
 	 * information about the datatype being fed to the typanalyze function.

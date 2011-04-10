@@ -194,9 +194,8 @@ CATALOG(pg_type,1247) BKI_BOOTSTRAP BKI_ROWTYPE_OID(71) BKI_SCHEMA_MACRO
 	int4		typndims;
 
 	/*
-	 * Collation: 0 if type cannot use collations,
-	 * DEFAULT_COLLATION_OID for collatable base types, possibly other
-	 * OID for domains
+	 * Collation: 0 if type cannot use collations, DEFAULT_COLLATION_OID for
+	 * collatable base types, possibly other OID for domains
 	 */
 	Oid			typcollation;
 
@@ -205,7 +204,7 @@ CATALOG(pg_type,1247) BKI_BOOTSTRAP BKI_ROWTYPE_OID(71) BKI_SCHEMA_MACRO
 	 * a default expression for the type.  Currently this is only used for
 	 * domains.
 	 */
-	pg_node_tree typdefaultbin;	/* VARIABLE LENGTH FIELD */
+	pg_node_tree typdefaultbin; /* VARIABLE LENGTH FIELD */
 
 	/*
 	 * typdefault is NULL if the type has no associated default value. If
@@ -350,7 +349,7 @@ DESCR("XML content");
 #define XMLOID 142
 DATA(insert OID = 143 ( _xml	   PGNSP PGUID -1 f b A f t \054 0 142 0 array_in array_out array_recv array_send - - - i x f 0 -1 0 0 _null_ _null_ ));
 
-DATA(insert OID = 194 (	pg_node_tree	PGNSP PGUID -1 f b S f t \054 0	0 0 pg_node_tree_in pg_node_tree_out pg_node_tree_recv pg_node_tree_send - - - i x f 0 -1 0 100 _null_ _null_ ));
+DATA(insert OID = 194 ( pg_node_tree	PGNSP PGUID -1 f b S f t \054 0 0 0 pg_node_tree_in pg_node_tree_out pg_node_tree_recv pg_node_tree_send - - - i x f 0 -1 0 100 _null_ _null_ ));
 DESCR("string representing an internal node tree");
 #define PGNODETREEOID	194
 

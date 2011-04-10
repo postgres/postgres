@@ -559,7 +559,7 @@ create_tablespace_directories(const char *location, const Oid tablespaceoid)
 					(errcode(ERRCODE_UNDEFINED_FILE),
 					 errmsg("directory \"%s\" does not exist", location),
 					 InRecovery ? errhint("Create this directory for the tablespace before "
-								   "restarting the server."): 0));
+										  "restarting the server.") : 0));
 		else
 			ereport(ERROR,
 					(errcode_for_file_access(),
@@ -573,8 +573,8 @@ create_tablespace_directories(const char *location, const Oid tablespaceoid)
 
 		/*
 		 * Our theory for replaying a CREATE is to forcibly drop the target
-		 * subdirectory if present, and then recreate it. This may be
-		 * more work than needed, but it is simple to implement.
+		 * subdirectory if present, and then recreate it. This may be more
+		 * work than needed, but it is simple to implement.
 		 */
 		if (stat(location_with_version_dir, &st) == 0 && S_ISDIR(st.st_mode))
 		{
@@ -1353,10 +1353,10 @@ get_tablespace_oid(const char *tablespacename, bool missing_ok)
 	heap_close(rel, AccessShareLock);
 
 	if (!OidIsValid(result) && !missing_ok)
-        ereport(ERROR,
-                (errcode(ERRCODE_UNDEFINED_OBJECT),
-                 errmsg("tablespace \"%s\" does not exist",
-                        tablespacename)));
+		ereport(ERROR,
+				(errcode(ERRCODE_UNDEFINED_OBJECT),
+				 errmsg("tablespace \"%s\" does not exist",
+						tablespacename)));
 
 	return result;
 }

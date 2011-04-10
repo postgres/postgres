@@ -115,7 +115,7 @@ TypeShellMake(const char *typeName, Oid typeNamespace, Oid ownerId)
 	values[i++] = ObjectIdGetDatum(InvalidOid); /* typbasetype */
 	values[i++] = Int32GetDatum(-1);	/* typtypmod */
 	values[i++] = Int32GetDatum(0);		/* typndims */
-	values[i++] = ObjectIdGetDatum(InvalidOid);	/* typcollation */
+	values[i++] = ObjectIdGetDatum(InvalidOid); /* typcollation */
 	nulls[i++] = true;			/* typdefaultbin */
 	nulls[i++] = true;			/* typdefault */
 
@@ -352,7 +352,7 @@ TypeCreate(Oid newTypeOid,
 	values[i++] = ObjectIdGetDatum(baseType);	/* typbasetype */
 	values[i++] = Int32GetDatum(typeMod);		/* typtypmod */
 	values[i++] = Int32GetDatum(typNDims);		/* typndims */
-	values[i++] = ObjectIdGetDatum(typeCollation);	/* typcollation */
+	values[i++] = ObjectIdGetDatum(typeCollation);		/* typcollation */
 
 	/*
 	 * initialize the default binary value for this type.  Check for nulls of

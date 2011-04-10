@@ -75,7 +75,7 @@ static pthread_once_t auto_mem_once = PTHREAD_ONCE_INIT;
 static void
 auto_mem_destructor(void *arg)
 {
-	(void) arg; /* keep the compiler quiet */
+	(void) arg;					/* keep the compiler quiet */
 	ECPGfree_auto_mem();
 }
 

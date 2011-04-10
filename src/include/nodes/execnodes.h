@@ -380,7 +380,7 @@ typedef struct EState
 
 	List	   *es_subplanstates;		/* List of PlanState for SubPlans */
 
-	List	   *es_auxmodifytables;	/* List of secondary ModifyTableStates */
+	List	   *es_auxmodifytables;		/* List of secondary ModifyTableStates */
 
 	/*
 	 * this ExprContext is for per-output-tuple operations, such as constraint
@@ -489,7 +489,7 @@ typedef struct TupleHashTableData
 	TupleTableSlot *inputslot;	/* current input tuple's slot */
 	FmgrInfo   *in_hash_funcs;	/* hash functions for input datatype(s) */
 	FmgrInfo   *cur_eq_funcs;	/* equality functions for input vs. table */
-} TupleHashTableData;
+}	TupleHashTableData;
 
 typedef HASH_SEQ_STATUS TupleHashIterator;
 
@@ -718,7 +718,7 @@ typedef struct SubPlanState
 	TupleHashTable hashnulls;	/* hash table for rows with null(s) */
 	bool		havehashrows;	/* TRUE if hashtable is not empty */
 	bool		havenullrows;	/* TRUE if hashnulls is not empty */
-	MemoryContext hashtablecxt;	/* memory context containing hash tables */
+	MemoryContext hashtablecxt; /* memory context containing hash tables */
 	MemoryContext hashtempcxt;	/* temp memory context for hash tables */
 	ExprContext *innerecontext; /* econtext for computing inner tuples */
 	AttrNumber *keyColIdx;		/* control data for hash tables */
@@ -1051,7 +1051,7 @@ typedef struct ModifyTableState
 	PlanState **mt_plans;		/* subplans (one per target rel) */
 	int			mt_nplans;		/* number of plans in the array */
 	int			mt_whichplan;	/* which one is being executed (0..n-1) */
-	ResultRelInfo *resultRelInfo;	/* per-subplan target relations */
+	ResultRelInfo *resultRelInfo;		/* per-subplan target relations */
 	List	  **mt_arowmarks;	/* per-subplan ExecAuxRowMark lists */
 	EPQState	mt_epqstate;	/* for evaluating EvalPlanQual rechecks */
 	bool		fireBSTriggers; /* do we need to fire stmt triggers? */
@@ -1093,9 +1093,9 @@ typedef struct MergeAppendState
 	int			ms_nkeys;
 	ScanKey		ms_scankeys;	/* array of length ms_nkeys */
 	TupleTableSlot **ms_slots;	/* array of length ms_nplans */
-	int			*ms_heap;		/* array of length ms_nplans */
+	int		   *ms_heap;		/* array of length ms_nplans */
 	int			ms_heap_size;	/* current active length of ms_heap[] */
-	bool		ms_initialized;	/* are subplans started? */
+	bool		ms_initialized; /* are subplans started? */
 	int			ms_last_slot;	/* last subplan slot we returned from */
 } MergeAppendState;
 

@@ -179,9 +179,9 @@ typedef struct RelationData
 	 * index access support info (used only for an index relation)
 	 *
 	 * Note: only default support procs for each opclass are cached, namely
-	 * those with lefttype and righttype equal to the opclass's opcintype.
-	 * The arrays are indexed by support function number, which is a
-	 * sufficient identifier given that restriction.
+	 * those with lefttype and righttype equal to the opclass's opcintype. The
+	 * arrays are indexed by support function number, which is a sufficient
+	 * identifier given that restriction.
 	 *
 	 * Note: rd_amcache is available for index AMs to cache private data about
 	 * an index.  This must be just a cache since it may get reset at any time
@@ -203,7 +203,7 @@ typedef struct RelationData
 	Oid		   *rd_exclprocs;	/* OIDs of exclusion ops' procs, if any */
 	uint16	   *rd_exclstrats;	/* exclusion ops' strategy numbers, if any */
 	void	   *rd_amcache;		/* available for use by index AM */
-	Oid		   *rd_indcollation; /* OIDs of index collations */
+	Oid		   *rd_indcollation;	/* OIDs of index collations */
 
 	/*
 	 * Hack for CLUSTER, rewriting ALTER TABLE, etc: when writing a new

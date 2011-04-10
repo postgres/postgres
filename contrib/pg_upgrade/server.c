@@ -194,12 +194,12 @@ start_postmaster(ClusterInfo *cluster, bool quiet)
 	 * because it is being used by another process." so we have to send all
 	 * other output to 'nul'.
 	 *
-	 * Using autovacuum=off disables cleanup vacuum and analyze, but
-	 * freeze vacuums can still happen, so we set
-	 * autovacuum_freeze_max_age to its maximum.  We assume all datfrozenxid
-	 * and relfrozen values are less than a gap of 2000000000 from the current
-	 * xid counter, so autovacuum will not touch them.
-	 */	
+	 * Using autovacuum=off disables cleanup vacuum and analyze, but freeze
+	 * vacuums can still happen, so we set autovacuum_freeze_max_age to its
+	 * maximum.  We assume all datfrozenxid and relfrozen values are less than
+	 * a gap of 2000000000 from the current xid counter, so autovacuum will
+	 * not touch them.
+	 */
 	snprintf(cmd, sizeof(cmd),
 			 SYSTEMQUOTE "\"%s/pg_ctl\" -l \"%s\" -D \"%s\" "
 			 "-o \"-p %d -c autovacuum=off "
@@ -251,7 +251,7 @@ stop_postmaster(bool fast, bool quiet)
 			 "\"%s\" 2>&1" SYSTEMQUOTE,
 			 bindir,
 #ifndef WIN32
-			 log_opts.filename, datadir, fast ? "-m fast" : "", log_opts.filename);
+	   log_opts.filename, datadir, fast ? "-m fast" : "", log_opts.filename);
 #else
 			 DEVNULL, datadir, fast ? "-m fast" : "", DEVNULL);
 #endif

@@ -1429,7 +1429,7 @@ pullup_replace_vars_callback(Var *var,
  *
  * If a query's setOperations tree consists entirely of simple UNION ALL
  * operations, flatten it into an append relation, which we can process more
- * intelligently than the general setops case.  Otherwise, do nothing.
+ * intelligently than the general setops case.	Otherwise, do nothing.
  *
  * In most cases, this can succeed only for a top-level query, because for a
  * subquery in FROM, the parent query's invocation of pull_up_subqueries would
@@ -1478,10 +1478,10 @@ flatten_simple_union_all(PlannerInfo *root)
 
 	/*
 	 * Make a copy of the leftmost RTE and add it to the rtable.  This copy
-	 * will represent the leftmost leaf query in its capacity as a member
-	 * of the appendrel.  The original will represent the appendrel as a
-	 * whole.  (We must do things this way because the upper query's Vars
-	 * have to be seen as referring to the whole appendrel.)
+	 * will represent the leftmost leaf query in its capacity as a member of
+	 * the appendrel.  The original will represent the appendrel as a whole.
+	 * (We must do things this way because the upper query's Vars have to be
+	 * seen as referring to the whole appendrel.)
 	 */
 	childRTE = copyObject(leftmostRTE);
 	parse->rtable = lappend(parse->rtable, childRTE);
@@ -1503,8 +1503,8 @@ flatten_simple_union_all(PlannerInfo *root)
 	parse->jointree->fromlist = list_make1(rtr);
 
 	/*
-	 * Now pretend the query has no setops.  We must do this before trying
-	 * to do subquery pullup, because of Assert in pull_up_simple_subquery.
+	 * Now pretend the query has no setops.  We must do this before trying to
+	 * do subquery pullup, because of Assert in pull_up_simple_subquery.
 	 */
 	parse->setOperations = NULL;
 
@@ -1842,9 +1842,9 @@ reduce_outer_joins_pass2(Node *jtnode,
 			 * never both, to the children of an outer join.
 			 *
 			 * Note that a SEMI join works like an inner join here: it's okay
-			 * to pass down both local and upper constraints.  (There can't
-			 * be any upper constraints affecting its inner side, but it's
-			 * not worth having a separate code path to avoid passing them.)
+			 * to pass down both local and upper constraints.  (There can't be
+			 * any upper constraints affecting its inner side, but it's not
+			 * worth having a separate code path to avoid passing them.)
 			 *
 			 * At a FULL join we just punt and pass nothing down --- is it
 			 * possible to be smarter?
@@ -1882,7 +1882,7 @@ reduce_outer_joins_pass2(Node *jtnode,
 					pass_nonnullable_vars = local_nonnullable_vars;
 					pass_forced_null_vars = local_forced_null_vars;
 				}
-				else if (jointype != JOIN_FULL)		/* ie, LEFT or ANTI */
+				else if (jointype != JOIN_FULL) /* ie, LEFT or ANTI */
 				{
 					/* can't pass local constraints to non-nullable side */
 					pass_nonnullable_rels = nonnullable_rels;

@@ -1011,8 +1011,8 @@ SetDefaultACLsInSchemas(InternalDefaultACL *iacls, List *nspnames)
 
 			/*
 			 * Note that we must do the permissions check against the target
-			 * role not the calling user.  We require CREATE privileges,
-			 * since without CREATE you won't be able to do anything using the
+			 * role not the calling user.  We require CREATE privileges, since
+			 * without CREATE you won't be able to do anything using the
 			 * default privs anyway.
 			 */
 			iacls->nspid = get_namespace_oid(nspname, false);
@@ -1707,7 +1707,7 @@ ExecGrant_Relation(InternalGrant *istmt)
 			pg_class_tuple->relkind != RELKIND_FOREIGN_TABLE)
 			ereport(ERROR,
 					(errcode(ERRCODE_WRONG_OBJECT_TYPE),
-					errmsg("\"%s\" is not a foreign table",
+					 errmsg("\"%s\" is not a foreign table",
 							NameStr(pg_class_tuple->relname))));
 
 		/* Adjust the default permissions based on object type */
@@ -1964,13 +1964,13 @@ ExecGrant_Relation(InternalGrant *istmt)
 				this_privileges &= (AclMode) ACL_SELECT;
 			}
 			else if (pg_class_tuple->relkind == RELKIND_FOREIGN_TABLE &&
-				this_privileges & ~((AclMode) ACL_SELECT))
+					 this_privileges & ~((AclMode) ACL_SELECT))
 			{
 				/* Foreign tables have the same restriction as sequences. */
 				ereport(WARNING,
-					(errcode(ERRCODE_INVALID_GRANT_OPERATION),
-					 errmsg("foreign table \"%s\" only supports SELECT column privileges",
-							NameStr(pg_class_tuple->relname))));
+						(errcode(ERRCODE_INVALID_GRANT_OPERATION),
+						 errmsg("foreign table \"%s\" only supports SELECT column privileges",
+								NameStr(pg_class_tuple->relname))));
 				this_privileges &= (AclMode) ACL_SELECT;
 			}
 
@@ -4768,7 +4768,7 @@ pg_extension_ownercheck(Oid ext_oid, Oid roleid)
  * Note: roles do not have owners per se; instead we use this test in
  * places where an ownership-like permissions test is needed for a role.
  * Be sure to apply it to the role trying to do the operation, not the
- * role being operated on!  Also note that this generally should not be
+ * role being operated on!	Also note that this generally should not be
  * considered enough privilege if the target role is a superuser.
  * (We don't handle that consideration here because we want to give a
  * separate error message for such cases, so the caller has to deal with it.)

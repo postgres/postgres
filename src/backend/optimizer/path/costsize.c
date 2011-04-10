@@ -1096,7 +1096,7 @@ cost_recursive_union(Plan *runion, Plan *nrterm, Plan *rterm)
  * accesses (XXX can't we refine that guess?)
  *
  * By default, we charge two operator evals per tuple comparison, which should
- * be in the right ballpark in most cases.  The caller can tweak this by
+ * be in the right ballpark in most cases.	The caller can tweak this by
  * specifying nonzero comparison_cost; typically that's used for any extra
  * work that has to be done to prepare the inputs to the comparison operators.
  *
@@ -1218,7 +1218,7 @@ cost_sort(Path *path, PlannerInfo *root,
  *	  Determines and returns the cost of a MergeAppend node.
  *
  * MergeAppend merges several pre-sorted input streams, using a heap that
- * at any given instant holds the next tuple from each stream.  If there
+ * at any given instant holds the next tuple from each stream.	If there
  * are N streams, we need about N*log2(N) tuple comparisons to construct
  * the heap at startup, and then for each output tuple, about log2(N)
  * comparisons to delete the top heap entry and another log2(N) comparisons
@@ -2909,7 +2909,7 @@ adjust_semi_join(PlannerInfo *root, JoinPath *path, SpecialJoinInfo *sjinfo,
 			List	   *nrclauses;
 
 			nrclauses = select_nonredundant_join_clauses(root,
-														 path->joinrestrictinfo,
+													  path->joinrestrictinfo,
 														 path->innerjoinpath);
 			*indexed_join_quals = (nrclauses == NIL);
 		}
@@ -3185,7 +3185,7 @@ set_subquery_size_estimates(PlannerInfo *root, RelOptInfo *rel,
 
 	/*
 	 * Compute per-output-column width estimates by examining the subquery's
-	 * targetlist.  For any output that is a plain Var, get the width estimate
+	 * targetlist.	For any output that is a plain Var, get the width estimate
 	 * that was made while planning the subquery.  Otherwise, fall back on a
 	 * datatype-based estimate.
 	 */
@@ -3210,7 +3210,7 @@ set_subquery_size_estimates(PlannerInfo *root, RelOptInfo *rel,
 		if (IsA(texpr, Var) &&
 			subroot->parse->setOperations == NULL)
 		{
-			Var	   *var = (Var *) texpr;
+			Var		   *var = (Var *) texpr;
 			RelOptInfo *subrel = find_base_rel(subroot, var->varno);
 
 			item_width = subrel->attr_widths[var->varattno - subrel->min_attr];
@@ -3332,7 +3332,7 @@ set_cte_size_estimates(PlannerInfo *root, RelOptInfo *rel, Plan *cteplan)
  * of estimating baserestrictcost, so we set that, and we also set up width
  * using what will be purely datatype-driven estimates from the targetlist.
  * There is no way to do anything sane with the rows value, so we just put
- * a default estimate and hope that the wrapper can improve on it.  The
+ * a default estimate and hope that the wrapper can improve on it.	The
  * wrapper's PlanForeignScan function will be called momentarily.
  *
  * The rel's targetlist and restrictinfo list must have been constructed
@@ -3396,8 +3396,8 @@ set_rel_width(PlannerInfo *root, RelOptInfo *rel)
 			ndx = var->varattno - rel->min_attr;
 
 			/*
-			 * If it's a whole-row Var, we'll deal with it below after we
-			 * have already cached as many attr widths as possible.
+			 * If it's a whole-row Var, we'll deal with it below after we have
+			 * already cached as many attr widths as possible.
 			 */
 			if (var->varattno == 0)
 			{
@@ -3406,8 +3406,8 @@ set_rel_width(PlannerInfo *root, RelOptInfo *rel)
 			}
 
 			/*
-			 * The width may have been cached already (especially if it's
-			 * a subquery), so don't duplicate effort.
+			 * The width may have been cached already (especially if it's a
+			 * subquery), so don't duplicate effort.
 			 */
 			if (rel->attr_widths[ndx] > 0)
 			{
@@ -3464,13 +3464,13 @@ set_rel_width(PlannerInfo *root, RelOptInfo *rel)
 	 */
 	if (have_wholerow_var)
 	{
-		int32	wholerow_width = sizeof(HeapTupleHeaderData);
+		int32		wholerow_width = sizeof(HeapTupleHeaderData);
 
 		if (reloid != InvalidOid)
 		{
 			/* Real relation, so estimate true tuple width */
 			wholerow_width += get_relation_data_width(reloid,
-													  rel->attr_widths - rel->min_attr);
+										   rel->attr_widths - rel->min_attr);
 		}
 		else
 		{
@@ -3484,8 +3484,8 @@ set_rel_width(PlannerInfo *root, RelOptInfo *rel)
 		rel->attr_widths[0 - rel->min_attr] = wholerow_width;
 
 		/*
-		 * Include the whole-row Var as part of the output tuple.  Yes,
-		 * that really is what happens at runtime.
+		 * Include the whole-row Var as part of the output tuple.  Yes, that
+		 * really is what happens at runtime.
 		 */
 		tuple_width += wholerow_width;
 	}

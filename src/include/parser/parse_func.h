@@ -28,7 +28,7 @@ typedef struct _InhPaths
 	int			nsupers;		/* number of superclasses */
 	Oid			self;			/* this class */
 	Oid		   *supervec;		/* vector of superclasses */
-} InhPaths;
+}	InhPaths;
 
 /* Result codes for func_get_detail */
 typedef enum

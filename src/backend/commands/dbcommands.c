@@ -680,8 +680,8 @@ createdb(const CreatedbStmt *stmt)
 void
 check_encoding_locale_matches(int encoding, const char *collate, const char *ctype)
 {
-	int ctype_encoding = pg_get_encoding_from_locale(ctype, true);
-	int collate_encoding = pg_get_encoding_from_locale(collate, true);
+	int			ctype_encoding = pg_get_encoding_from_locale(ctype, true);
+	int			collate_encoding = pg_get_encoding_from_locale(collate, true);
 
 	if (!(ctype_encoding == encoding ||
 		  ctype_encoding == PG_SQL_ASCII ||
@@ -1849,10 +1849,10 @@ get_database_oid(const char *dbname, bool missing_ok)
 	heap_close(pg_database, AccessShareLock);
 
 	if (!OidIsValid(oid) && !missing_ok)
-        ereport(ERROR,
-                (errcode(ERRCODE_UNDEFINED_DATABASE),
-                 errmsg("database \"%s\" does not exist",
-                        dbname)));
+		ereport(ERROR,
+				(errcode(ERRCODE_UNDEFINED_DATABASE),
+				 errmsg("database \"%s\" does not exist",
+						dbname)));
 
 	return oid;
 }

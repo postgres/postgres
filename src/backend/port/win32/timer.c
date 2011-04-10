@@ -27,7 +27,7 @@ typedef struct timerCA
 	struct itimerval value;
 	HANDLE		event;
 	CRITICAL_SECTION crit_sec;
-}	timerCA;
+} timerCA;
 
 static timerCA timerCommArea;
 static HANDLE timerThreadHandle = INVALID_HANDLE_VALUE;

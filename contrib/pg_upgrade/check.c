@@ -212,7 +212,10 @@ check_cluster_versions(void)
 	old_cluster.major_version = get_major_server_version(&old_cluster);
 	new_cluster.major_version = get_major_server_version(&new_cluster);
 
-	/* We allow upgrades from/to the same major version for alpha/beta upgrades */
+	/*
+	 * We allow upgrades from/to the same major version for alpha/beta
+	 * upgrades
+	 */
 
 	if (GET_MAJOR_VERSION(old_cluster.major_version) < 803)
 		pg_log(PG_FATAL, "This utility can only upgrade from PostgreSQL version 8.3 and later.\n");
@@ -516,7 +519,7 @@ check_for_isn_and_int8_passing_mismatch(ClusterInfo *cluster)
 	}
 
 	if (script)
-			fclose(script);
+		fclose(script);
 
 	if (found)
 	{

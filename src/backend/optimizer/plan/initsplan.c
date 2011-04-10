@@ -188,10 +188,11 @@ add_vars_to_targetlist(PlannerInfo *root, List *vars, Relids where_needed)
 
 			phinfo->ph_needed = bms_add_members(phinfo->ph_needed,
 												where_needed);
+
 			/*
-			 * Update ph_may_need too.  This is currently only necessary
-			 * when being called from build_base_rel_tlists, but we may as
-			 * well do it always.
+			 * Update ph_may_need too.	This is currently only necessary when
+			 * being called from build_base_rel_tlists, but we may as well do
+			 * it always.
 			 */
 			phinfo->ph_may_need = bms_add_members(phinfo->ph_may_need,
 												  where_needed);
@@ -704,8 +705,8 @@ make_outerjoininfo(PlannerInfo *root,
 	 * this join's nullable side, and it may get used above this join, then
 	 * ensure that min_righthand contains the full eval_at set of the PHV.
 	 * This ensures that the PHV actually can be evaluated within the RHS.
-	 * Note that this works only because we should already have determined
-	 * the final eval_at level for any PHV syntactically within this join.
+	 * Note that this works only because we should already have determined the
+	 * final eval_at level for any PHV syntactically within this join.
 	 */
 	foreach(l, root->placeholder_list)
 	{
@@ -1070,7 +1071,7 @@ distribute_qual_to_rels(PlannerInfo *root, Node *clause,
 	 *
 	 * In all cases, it's important to initialize the left_ec and right_ec
 	 * fields of a mergejoinable clause, so that all possibly mergejoinable
-	 * expressions have representations in EquivalenceClasses.  If
+	 * expressions have representations in EquivalenceClasses.	If
 	 * process_equivalence is successful, it will take care of that;
 	 * otherwise, we have to call initialize_mergeclause_eclasses to do it.
 	 */

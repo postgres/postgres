@@ -413,6 +413,7 @@ hashrescan(PG_FUNCTION_ARGS)
 {
 	IndexScanDesc scan = (IndexScanDesc) PG_GETARG_POINTER(0);
 	ScanKey		scankey = (ScanKey) PG_GETARG_POINTER(1);
+
 	/* remaining arguments are ignored */
 	HashScanOpaque so = (HashScanOpaque) scan->opaque;
 	Relation	rel = scan->indexRelation;

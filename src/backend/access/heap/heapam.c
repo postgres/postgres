@@ -1070,7 +1070,7 @@ relation_close(Relation relation, LOCKMODE lockmode)
  *		This is essentially relation_open plus check that the relation
  *		is not an index nor a composite type.  (The caller should also
  *		check that it's not a view or foreign table before assuming it has
- *      storage.)
+ *		storage.)
  * ----------------
  */
 Relation
@@ -1922,8 +1922,8 @@ heap_insert(Relation relation, HeapTuple tup, CommandId cid,
 
 	/*
 	 * We're about to do the actual insert -- check for conflict at the
-	 * relation or buffer level first, to avoid possibly having to roll
-	 * back work we've just done.
+	 * relation or buffer level first, to avoid possibly having to roll back
+	 * work we've just done.
 	 */
 	CheckForSerializableConflictIn(relation, NULL, buffer);
 
@@ -2228,8 +2228,8 @@ l1:
 	}
 
 	/*
-	 * We're about to do the actual delete -- check for conflict first,
-	 * to avoid possibly having to roll back work we've just done.
+	 * We're about to do the actual delete -- check for conflict first, to
+	 * avoid possibly having to roll back work we've just done.
 	 */
 	CheckForSerializableConflictIn(relation, &tp, buffer);
 
@@ -2587,8 +2587,8 @@ l2:
 	}
 
 	/*
-	 * We're about to do the actual update -- check for conflict first,
-	 * to avoid possibly having to roll back work we've just done.
+	 * We're about to do the actual update -- check for conflict first, to
+	 * avoid possibly having to roll back work we've just done.
 	 */
 	CheckForSerializableConflictIn(relation, &oldtup, buffer);
 
@@ -2737,8 +2737,8 @@ l2:
 	}
 
 	/*
-	 * We're about to create the new tuple -- check for conflict first,
-	 * to avoid possibly having to roll back work we've just done.
+	 * We're about to create the new tuple -- check for conflict first, to
+	 * avoid possibly having to roll back work we've just done.
 	 *
 	 * NOTE: For a tuple insert, we only need to check for table locks, since
 	 * predicate locking at the index level will cover ranges for anything
@@ -3860,12 +3860,12 @@ HeapTupleHeaderAdvanceLatestRemovedXid(HeapTupleHeader tuple,
 	}
 
 	/*
-	 * Ignore tuples inserted by an aborted transaction or
-	 * if the tuple was updated/deleted by the inserting transaction.
+	 * Ignore tuples inserted by an aborted transaction or if the tuple was
+	 * updated/deleted by the inserting transaction.
 	 *
 	 * Look for a committed hint bit, or if no xmin bit is set, check clog.
-	 * This needs to work on both master and standby, where it is used
-	 * to assess btree delete records.
+	 * This needs to work on both master and standby, where it is used to
+	 * assess btree delete records.
 	 */
 	if ((tuple->t_infomask & HEAP_XMIN_COMMITTED) ||
 		(!(tuple->t_infomask & HEAP_XMIN_COMMITTED) &&
@@ -3874,7 +3874,7 @@ HeapTupleHeaderAdvanceLatestRemovedXid(HeapTupleHeader tuple,
 	{
 		if (xmax != xmin &&
 			TransactionIdFollows(xmax, *latestRemovedXid))
-				*latestRemovedXid = xmax;
+			*latestRemovedXid = xmax;
 	}
 
 	/* *latestRemovedXid may still be invalid at end */
@@ -4158,8 +4158,8 @@ log_newpage(RelFileNode *rnode, ForkNumber forkNum, BlockNumber blkno,
 	recptr = XLogInsert(RM_HEAP_ID, XLOG_HEAP_NEWPAGE, rdata);
 
 	/*
-	 * The page may be uninitialized. If so, we can't set the LSN
-	 * and TLI because that would corrupt the page.
+	 * The page may be uninitialized. If so, we can't set the LSN and TLI
+	 * because that would corrupt the page.
 	 */
 	if (!PageIsNew(page))
 	{
@@ -4352,8 +4352,8 @@ heap_xlog_newpage(XLogRecPtr lsn, XLogRecord *record)
 	memcpy(page, (char *) xlrec + SizeOfHeapNewpage, BLCKSZ);
 
 	/*
-	 * The page may be uninitialized. If so, we can't set the LSN
-	 * and TLI because that would corrupt the page.
+	 * The page may be uninitialized. If so, we can't set the LSN and TLI
+	 * because that would corrupt the page.
 	 */
 	if (!PageIsNew(page))
 	{

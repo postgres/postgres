@@ -19,7 +19,7 @@
 #include "libpq-fe.h"
 #include "pqexpbuffer.h"
 
-extern int quote_all_identifiers;
+extern int	quote_all_identifiers;
 
 extern void init_parallel_dump_utils(void);
 extern const char *fmtId(const char *identifier);

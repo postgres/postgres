@@ -420,11 +420,11 @@ AssignTransactionId(TransactionState s)
 	 */
 	if (isSubXact && !TransactionIdIsValid(s->parent->transactionId))
 	{
-		TransactionState	p = s->parent;
-		TransactionState   *parents;
-		size_t	parentOffset = 0;
+		TransactionState p = s->parent;
+		TransactionState *parents;
+		size_t		parentOffset = 0;
 
-		parents = palloc(sizeof(TransactionState) *  s->nestingLevel);
+		parents = palloc(sizeof(TransactionState) * s->nestingLevel);
 		while (p != NULL && !TransactionIdIsValid(p->transactionId))
 		{
 			parents[parentOffset++] = p;
@@ -432,8 +432,8 @@ AssignTransactionId(TransactionState s)
 		}
 
 		/*
-		 * This is technically a recursive call, but the recursion will
-		 * never be more than one layer deep.
+		 * This is technically a recursive call, but the recursion will never
+		 * be more than one layer deep.
 		 */
 		while (parentOffset != 0)
 			AssignTransactionId(parents[--parentOffset]);
@@ -1037,16 +1037,17 @@ RecordTransactionCommit(void)
 	/*
 	 * Check if we want to commit asynchronously.  We can allow the XLOG flush
 	 * to happen asynchronously if synchronous_commit=off, or if the current
-	 * transaction has not performed any WAL-logged operation.  The latter case
-	 * can arise if the current transaction wrote only to temporary and/or
-	 * unlogged tables.  In case of a crash, the loss of such a transaction
-	 * will be irrelevant since temp tables will be lost anyway, and unlogged
-	 * tables will be truncated.  (Given the foregoing, you might think that it
-	 * would be unnecessary to emit the XLOG record at all in this case, but we
-	 * don't currently try to do that.  It would certainly cause problems at
-	 * least in Hot Standby mode, where the KnownAssignedXids machinery
-	 * requires tracking every XID assignment.  It might be OK to skip it only
-	 * when wal_level < hot_standby, but for now we don't.)
+	 * transaction has not performed any WAL-logged operation.	The latter
+	 * case can arise if the current transaction wrote only to temporary
+	 * and/or unlogged tables.	In case of a crash, the loss of such a
+	 * transaction will be irrelevant since temp tables will be lost anyway,
+	 * and unlogged tables will be truncated.  (Given the foregoing, you might
+	 * think that it would be unnecessary to emit the XLOG record at all in
+	 * this case, but we don't currently try to do that.  It would certainly
+	 * cause problems at least in Hot Standby mode, where the
+	 * KnownAssignedXids machinery requires tracking every XID assignment.	It
+	 * might be OK to skip it only when wal_level < hot_standby, but for now
+	 * we don't.)
 	 *
 	 * However, if we're doing cleanup of any non-temp rels or committing any
 	 * command that wanted to force sync commit, then we must flush XLOG
@@ -1130,8 +1131,8 @@ RecordTransactionCommit(void)
 	/*
 	 * Wait for synchronous replication, if required.
 	 *
-	 * Note that at this stage we have marked clog, but still show as
-	 * running in the procarray and continue to hold locks.
+	 * Note that at this stage we have marked clog, but still show as running
+	 * in the procarray and continue to hold locks.
 	 */
 	SyncRepWaitForLSN(XactLastRecEnd);
 
@@ -1785,10 +1786,10 @@ CommitTransaction(void)
 	}
 
 	/*
-	 * The remaining actions cannot call any user-defined code, so it's
-	 * safe to start shutting down within-transaction services.  But note
-	 * that most of this stuff could still throw an error, which would
-	 * switch us into the transaction-abort path.
+	 * The remaining actions cannot call any user-defined code, so it's safe
+	 * to start shutting down within-transaction services.	But note that most
+	 * of this stuff could still throw an error, which would switch us into
+	 * the transaction-abort path.
 	 */
 
 	/* Shut down the deferred-trigger manager */
@@ -1805,8 +1806,8 @@ CommitTransaction(void)
 
 	/*
 	 * Mark serializable transaction as complete for predicate locking
-	 * purposes.  This should be done as late as we can put it and still
-	 * allow errors to be raised for failure patterns found at commit.
+	 * purposes.  This should be done as late as we can put it and still allow
+	 * errors to be raised for failure patterns found at commit.
 	 */
 	PreCommit_CheckForSerializationFailure();
 
@@ -1988,10 +1989,10 @@ PrepareTransaction(void)
 	}
 
 	/*
-	 * The remaining actions cannot call any user-defined code, so it's
-	 * safe to start shutting down within-transaction services.  But note
-	 * that most of this stuff could still throw an error, which would
-	 * switch us into the transaction-abort path.
+	 * The remaining actions cannot call any user-defined code, so it's safe
+	 * to start shutting down within-transaction services.	But note that most
+	 * of this stuff could still throw an error, which would switch us into
+	 * the transaction-abort path.
 	 */
 
 	/* Shut down the deferred-trigger manager */
@@ -2008,8 +2009,8 @@ PrepareTransaction(void)
 
 	/*
 	 * Mark serializable transaction as complete for predicate locking
-	 * purposes.  This should be done as late as we can put it and still
-	 * allow errors to be raised for failure patterns found at commit.
+	 * purposes.  This should be done as late as we can put it and still allow
+	 * errors to be raised for failure patterns found at commit.
 	 */
 	PreCommit_CheckForSerializationFailure();
 

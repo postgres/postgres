@@ -144,11 +144,11 @@ CreateTrigger(CreateTrigStmt *stmt, const char *queryString,
 				referenced;
 
 	/*
-	 * ShareRowExclusiveLock is sufficient to prevent concurrent write activity
-	 * to the relation, and thus to lock out any operations that might want to
-	 * fire triggers on the relation.  If we had ON SELECT triggers we would
-	 * need to take an AccessExclusiveLock to add one of those, just as we do
-	 * with ON SELECT rules.
+	 * ShareRowExclusiveLock is sufficient to prevent concurrent write
+	 * activity to the relation, and thus to lock out any operations that
+	 * might want to fire triggers on the relation.  If we had ON SELECT
+	 * triggers we would need to take an AccessExclusiveLock to add one of
+	 * those, just as we do with ON SELECT rules.
 	 */
 	rel = heap_openrv(stmt->relation, ShareRowExclusiveLock);
 
@@ -244,7 +244,7 @@ CreateTrigger(CreateTrigStmt *stmt, const char *queryString,
 		if (stmt->whenClause)
 			ereport(ERROR,
 					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-					 errmsg("INSTEAD OF triggers cannot have WHEN conditions")));
+				 errmsg("INSTEAD OF triggers cannot have WHEN conditions")));
 		if (stmt->columns != NIL)
 			ereport(ERROR,
 					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
@@ -480,8 +480,8 @@ CreateTrigger(CreateTrigStmt *stmt, const char *queryString,
 	 * can skip this for internally generated triggers, since the name
 	 * modification above should be sufficient.
 	 *
-	 * NOTE that this is cool only because we have ShareRowExclusiveLock on the
-	 * relation, so the trigger set won't be changing underneath us.
+	 * NOTE that this is cool only because we have ShareRowExclusiveLock on
+	 * the relation, so the trigger set won't be changing underneath us.
 	 */
 	if (!isInternal)
 	{
@@ -1036,8 +1036,8 @@ DropTrigger(Oid relid, const char *trigname, DropBehavior behavior,
 	if (!OidIsValid(object.objectId))
 	{
 		ereport(NOTICE,
-				(errmsg("trigger \"%s\" for table \"%s\" does not exist, skipping",
-						trigname, get_rel_name(relid))));
+		  (errmsg("trigger \"%s\" for table \"%s\" does not exist, skipping",
+				  trigname, get_rel_name(relid))));
 		return;
 	}
 
@@ -1083,9 +1083,9 @@ RemoveTriggerById(Oid trigOid)
 
 	/*
 	 * Open and lock the relation the trigger belongs to.  As in
-	 * CreateTrigger, this is sufficient to lock out all operations that
-	 * could fire or add triggers; but it would need to be revisited if
-	 * we had ON SELECT triggers.
+	 * CreateTrigger, this is sufficient to lock out all operations that could
+	 * fire or add triggers; but it would need to be revisited if we had ON
+	 * SELECT triggers.
 	 */
 	relid = ((Form_pg_trigger) GETSTRUCT(tup))->tgrelid;
 
@@ -1960,7 +1960,7 @@ ExecBRInsertTriggers(EState *estate, ResultRelInfo *relinfo,
 	if (newtuple != slottuple)
 	{
 		/*
-		 * Return the modified tuple using the es_trig_tuple_slot.  We assume
+		 * Return the modified tuple using the es_trig_tuple_slot.	We assume
 		 * the tuple was allocated in per-tuple memory context, and therefore
 		 * will go away by itself. The tuple table slot should not try to
 		 * clear it.
@@ -2035,7 +2035,7 @@ ExecIRInsertTriggers(EState *estate, ResultRelInfo *relinfo,
 	if (newtuple != slottuple)
 	{
 		/*
-		 * Return the modified tuple using the es_trig_tuple_slot.  We assume
+		 * Return the modified tuple using the es_trig_tuple_slot.	We assume
 		 * the tuple was allocated in per-tuple memory context, and therefore
 		 * will go away by itself. The tuple table slot should not try to
 		 * clear it.
@@ -2378,7 +2378,7 @@ ExecBRUpdateTriggers(EState *estate, EPQState *epqstate,
 	if (newtuple != slottuple)
 	{
 		/*
-		 * Return the modified tuple using the es_trig_tuple_slot.  We assume
+		 * Return the modified tuple using the es_trig_tuple_slot.	We assume
 		 * the tuple was allocated in per-tuple memory context, and therefore
 		 * will go away by itself. The tuple table slot should not try to
 		 * clear it.
@@ -2461,7 +2461,7 @@ ExecIRUpdateTriggers(EState *estate, ResultRelInfo *relinfo,
 	if (newtuple != slottuple)
 	{
 		/*
-		 * Return the modified tuple using the es_trig_tuple_slot.  We assume
+		 * Return the modified tuple using the es_trig_tuple_slot.	We assume
 		 * the tuple was allocated in per-tuple memory context, and therefore
 		 * will go away by itself. The tuple table slot should not try to
 		 * clear it.
@@ -2891,7 +2891,7 @@ typedef struct AfterTriggerEventDataOneCtid
 {
 	TriggerFlags ate_flags;		/* status bits and offset to shared data */
 	ItemPointerData ate_ctid1;	/* inserted, deleted, or old updated tuple */
-} AfterTriggerEventDataOneCtid;
+}	AfterTriggerEventDataOneCtid;
 
 #define SizeofTriggerEvent(evt) \
 	(((evt)->ate_flags & AFTER_TRIGGER_2CTIDS) ? \

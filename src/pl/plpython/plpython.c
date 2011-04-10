@@ -159,7 +159,7 @@ typedef union PLyTypeInput
 
 struct PLyObToDatum;
 typedef Datum (*PLyObToDatumFunc) (struct PLyObToDatum *, int32 typmod,
-								   PyObject *);
+											   PyObject *);
 
 typedef struct PLyObToDatum
 {
@@ -288,8 +288,8 @@ static HTAB *PLy_spi_exceptions;
 
 typedef struct PLyExceptionEntry
 {
-	int			sqlstate;	/* hash key, must be first */
-	PyObject   *exc;		/* corresponding exception */
+	int			sqlstate;		/* hash key, must be first */
+	PyObject   *exc;			/* corresponding exception */
 } PLyExceptionEntry;
 
 
@@ -315,7 +315,7 @@ PG_FUNCTION_INFO_V1(plpython_inline_handler);
 /* most of the remaining of the declarations, all static */
 
 /*
- * These should only be called once from _PG_init.  Initialize the
+ * These should only be called once from _PG_init.	Initialize the
  * Python interpreter and global data.
  */
 static void PLy_init_interp(void);
@@ -374,7 +374,7 @@ static PyObject *PLy_procedure_call(PLyProcedure *, char *, PyObject *);
 static PLyProcedure *PLy_procedure_get(Oid fn_oid, bool is_trigger);
 
 static PLyProcedure *PLy_procedure_create(HeapTuple procTup,
-										  Oid fn_oid, bool is_trigger);
+					 Oid fn_oid, bool is_trigger);
 
 static void PLy_procedure_compile(PLyProcedure *, const char *);
 static char *PLy_procedure_munge_source(const char *, const char *);
@@ -660,17 +660,16 @@ PLy_trigger_handler(FunctionCallInfo fcinfo, PLyProcedure *proc)
 	HeapTuple	rv = NULL;
 	PyObject   *volatile plargs = NULL;
 	PyObject   *volatile plrv = NULL;
-	TriggerData	*tdata;
+	TriggerData *tdata;
 
 	Assert(CALLED_AS_TRIGGER(fcinfo));
 
 	/*
-	 * Input/output conversion for trigger tuples.  Use the result
-	 * TypeInfo variable to store the tuple conversion info.  We do
-	 * this over again on each call to cover the possibility that the
-	 * relation's tupdesc changed since the trigger was last called.
-	 * PLy_input_tuple_funcs and PLy_output_tuple_funcs are
-	 * responsible for not doing repetitive work.
+	 * Input/output conversion for trigger tuples.	Use the result TypeInfo
+	 * variable to store the tuple conversion info.  We do this over again on
+	 * each call to cover the possibility that the relation's tupdesc changed
+	 * since the trigger was last called. PLy_input_tuple_funcs and
+	 * PLy_output_tuple_funcs are responsible for not doing repetitive work.
 	 */
 	tdata = (TriggerData *) fcinfo->context;
 
@@ -1086,8 +1085,8 @@ PLy_function_handler(FunctionCallInfo fcinfo, PLyProcedure *proc)
 		if (!proc->is_setof || proc->setof == NULL)
 		{
 			/*
-			 * Simple type returning function or first time for SETOF function:
-			 * actually execute the function.
+			 * Simple type returning function or first time for SETOF
+			 * function: actually execute the function.
 			 */
 			plargs = PLy_function_build_args(fcinfo, proc);
 			plrv = PLy_procedure_call(proc, "args", plargs);
@@ -1304,26 +1303,26 @@ static PyObject *
 PLy_procedure_call(PLyProcedure *proc, char *kargs, PyObject *vargs)
 {
 	PyObject   *rv;
-	int			volatile save_subxact_level = list_length(explicit_subtransactions);
+	int volatile save_subxact_level = list_length(explicit_subtransactions);
 
 	PyDict_SetItemString(proc->globals, kargs, vargs);
 
 	PG_TRY();
 	{
 #if PY_VERSION_HEX >= 0x03020000
-		  rv = PyEval_EvalCode(proc->code,
-							   proc->globals, proc->globals);
+		rv = PyEval_EvalCode(proc->code,
+							 proc->globals, proc->globals);
 #else
-		  rv = PyEval_EvalCode((PyCodeObject *) proc->code,
-							   proc->globals, proc->globals);
+		rv = PyEval_EvalCode((PyCodeObject *) proc->code,
+							 proc->globals, proc->globals);
 #endif
 
-		  /*
-		   * Since plpy will only let you close subtransactions that
-		   * you started, you cannot *unnest* subtransactions, only
-		   * *nest* them without closing.
-		   */
-		  Assert(list_length(explicit_subtransactions) >= save_subxact_level);
+		/*
+		 * Since plpy will only let you close subtransactions that you
+		 * started, you cannot *unnest* subtransactions, only *nest* them
+		 * without closing.
+		 */
+		Assert(list_length(explicit_subtransactions) >= save_subxact_level);
 	}
 	PG_CATCH();
 	{
@@ -1470,8 +1469,8 @@ PLy_procedure_valid(PLyProcedure *proc, HeapTuple procTup)
 	/* If there are composite input arguments, they might have changed */
 	for (i = 0; i < proc->nargs; i++)
 	{
-		Oid				relid;
-		HeapTuple		relTup;
+		Oid			relid;
+		HeapTuple	relTup;
 
 		/* Short-circuit on first changed argument */
 		if (!valid)
@@ -1516,7 +1515,7 @@ static PLyProcedure *
 PLy_procedure_get(Oid fn_oid, bool is_trigger)
 {
 	HeapTuple	procTup;
-	PLyProcedureEntry * volatile entry;
+	PLyProcedureEntry *volatile entry;
 	bool		found;
 
 	procTup = SearchSysCache1(PROCOID, ObjectIdGetDatum(fn_oid));
@@ -1636,8 +1635,8 @@ PLy_procedure_create(HeapTuple procTup, Oid fn_oid, bool is_trigger)
 						 procStruct->prorettype != RECORDOID)
 					ereport(ERROR,
 							(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-							 errmsg("PL/Python functions cannot return type %s",
-									format_type_be(procStruct->prorettype))));
+						  errmsg("PL/Python functions cannot return type %s",
+								 format_type_be(procStruct->prorettype))));
 			}
 
 			if (rvTypeStruct->typtype == TYPTYPE_COMPOSITE ||
@@ -1986,8 +1985,11 @@ PLy_output_record_funcs(PLyTypeInfo *arg, TupleDesc desc)
 	arg->out.d.typmod = desc->tdtypmod;
 	/* proceed with normal I/O function caching */
 	PLy_output_tuple_funcs(arg, desc);
-	/* it should change is_rowtype to 1, so we won't go through this again
-	 * unless the the output record description changes */
+
+	/*
+	 * it should change is_rowtype to 1, so we won't go through this again
+	 * unless the the output record description changes
+	 */
 	Assert(arg->is_rowtype == 1);
 }
 
@@ -2373,9 +2375,9 @@ PLyDict_FromTuple(PLyTypeInfo *info, HeapTuple tuple, TupleDesc desc)
 }
 
 /*
- *  Convert a Python object to a PostgreSQL tuple, using all supported
- *  conversion methods: tuple as a sequence, as a mapping or as an object that
- *  has __getattr__ support.
+ *	Convert a Python object to a PostgreSQL tuple, using all supported
+ *	conversion methods: tuple as a sequence, as a mapping or as an object that
+ *	has __getattr__ support.
  */
 static HeapTuple
 PLyObject_ToTuple(PLyTypeInfo *info, TupleDesc desc, PyObject *plrv)
@@ -2469,7 +2471,7 @@ PLyObject_ToComposite(PLyObToDatum *arg, int32 typmod, PyObject *plrv)
 {
 	HeapTuple	tuple = NULL;
 	Datum		rv;
-	PLyTypeInfo	info;
+	PLyTypeInfo info;
 	TupleDesc	desc;
 
 	if (typmod != -1)
@@ -2977,7 +2979,7 @@ static PyTypeObject PLy_SubtransactionType = {
 	/*
 	 * methods
 	 */
-	PLy_subtransaction_dealloc,	/* tp_dealloc */
+	PLy_subtransaction_dealloc, /* tp_dealloc */
 	0,							/* tp_print */
 	0,							/* tp_getattr */
 	0,							/* tp_setattr */
@@ -3000,7 +3002,7 @@ static PyTypeObject PLy_SubtransactionType = {
 	0,							/* tp_weaklistoffset */
 	0,							/* tp_iter */
 	0,							/* tp_iternext */
-	PLy_subtransaction_methods,	/* tp_tpmethods */
+	PLy_subtransaction_methods, /* tp_tpmethods */
 };
 
 static PyMethodDef PLy_methods[] = {
@@ -3264,12 +3266,11 @@ PLy_spi_prepare(PyObject *self, PyObject *args)
 
 	PG_TRY();
 	{
-		int	i;
+		int			i;
 
 		/*
-		 * the other loop might throw an exception, if PLyTypeInfo
-		 * member isn't properly initialized the Py_DECREF(plan) will
-		 * go boom
+		 * the other loop might throw an exception, if PLyTypeInfo member
+		 * isn't properly initialized the Py_DECREF(plan) will go boom
 		 */
 		for (i = 0; i < nargs; i++)
 		{
@@ -3311,9 +3312,10 @@ PLy_spi_prepare(PyObject *self, PyObject *args)
 				elog(ERROR, "cache lookup failed for type %u", typeId);
 
 			Py_DECREF(optr);
+
 			/*
-			 * set optr to NULL, so we won't try to unref it again in
-			 * case of an error
+			 * set optr to NULL, so we won't try to unref it again in case of
+			 * an error
 			 */
 			optr = NULL;
 
@@ -3324,7 +3326,7 @@ PLy_spi_prepare(PyObject *self, PyObject *args)
 			else
 				ereport(ERROR,
 						(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-						 errmsg("plpy.prepare does not support composite types")));
+				   errmsg("plpy.prepare does not support composite types")));
 			ReleaseSysCache(typeTup);
 		}
 
@@ -3355,9 +3357,9 @@ PLy_spi_prepare(PyObject *self, PyObject *args)
 	}
 	PG_CATCH();
 	{
-		ErrorData	*edata;
+		ErrorData  *edata;
 		PLyExceptionEntry *entry;
-		PyObject	*exc;
+		PyObject   *exc;
 
 		/* Save error info */
 		MemoryContextSwitchTo(oldcontext);
@@ -3372,9 +3374,9 @@ PLy_spi_prepare(PyObject *self, PyObject *args)
 		CurrentResourceOwner = oldowner;
 
 		/*
-		 * If AtEOSubXact_SPI() popped any SPI context of the subxact, it
-		 * will have left us in a disconnected state.  We need this hack to
-		 * return to connected state.
+		 * If AtEOSubXact_SPI() popped any SPI context of the subxact, it will
+		 * have left us in a disconnected state.  We need this hack to return
+		 * to connected state.
 		 */
 		SPI_restore_connection();
 
@@ -3470,7 +3472,7 @@ PLy_spi_execute_plan(PyObject *ob, PyObject *list, long limit)
 
 	PG_TRY();
 	{
-		char  * volatile nulls;
+		char	   *volatile nulls;
 		volatile int j;
 
 		if (nargs > 0)
@@ -3535,9 +3537,9 @@ PLy_spi_execute_plan(PyObject *ob, PyObject *list, long limit)
 	PG_CATCH();
 	{
 		int			k;
-		ErrorData	*edata;
+		ErrorData  *edata;
 		PLyExceptionEntry *entry;
-		PyObject	*exc;
+		PyObject   *exc;
 
 		/* Save error info */
 		MemoryContextSwitchTo(oldcontext);
@@ -3563,9 +3565,9 @@ PLy_spi_execute_plan(PyObject *ob, PyObject *list, long limit)
 		CurrentResourceOwner = oldowner;
 
 		/*
-		 * If AtEOSubXact_SPI() popped any SPI context of the subxact, it
-		 * will have left us in a disconnected state.  We need this hack to
-		 * return to connected state.
+		 * If AtEOSubXact_SPI() popped any SPI context of the subxact, it will
+		 * have left us in a disconnected state.  We need this hack to return
+		 * to connected state.
 		 */
 		SPI_restore_connection();
 
@@ -3636,9 +3638,9 @@ PLy_spi_execute_query(char *query, long limit)
 	}
 	PG_CATCH();
 	{
-		ErrorData				*edata;
-		PLyExceptionEntry		*entry;
-		PyObject				*exc;
+		ErrorData  *edata;
+		PLyExceptionEntry *entry;
+		PyObject   *exc;
 
 		/* Save error info */
 		MemoryContextSwitchTo(oldcontext);
@@ -3651,9 +3653,9 @@ PLy_spi_execute_query(char *query, long limit)
 		CurrentResourceOwner = oldowner;
 
 		/*
-		 * If AtEOSubXact_SPI() popped any SPI context of the subxact, it
-		 * will have left us in a disconnected state.  We need this hack to
-		 * return to connected state.
+		 * If AtEOSubXact_SPI() popped any SPI context of the subxact, it will
+		 * have left us in a disconnected state.  We need this hack to return
+		 * to connected state.
 		 */
 		SPI_restore_connection();
 
@@ -3877,8 +3879,8 @@ PLy_subtransaction_exit(PyObject *self, PyObject *args)
 	PLy_free(subxactdata);
 
 	/*
-	 * AtEOSubXact_SPI() should not have popped any SPI context, but
-	 * just in case it did, make sure we remain connected.
+	 * AtEOSubXact_SPI() should not have popped any SPI context, but just in
+	 * case it did, make sure we remain connected.
 	 */
 	SPI_restore_connection();
 
@@ -3937,11 +3939,11 @@ PLy_add_exceptions(PyObject *plpy)
 	if (PyModule_AddObject(plpy, "spiexceptions", excmod) < 0)
 		PLy_elog(ERROR, "failed to add the spiexceptions module");
 
-/* 
+/*
  * XXX it appears that in some circumstances the reference count of the
  * spiexceptions module drops to zero causing a Python assert failure when
  * the garbage collector visits the module. This has been observed on the
- * buildfarm. To fix this, add an additional ref for the module here. 
+ * buildfarm. To fix this, add an additional ref for the module here.
  *
  * This shouldn't cause a memory leak - we don't want this garbage collected,
  * and this function shouldn't be called more than once per backend.
@@ -4329,9 +4331,9 @@ PLy_exception_set_plural(PyObject *exc,
 static void
 PLy_spi_exception_set(PyObject *excclass, ErrorData *edata)
 {
-	PyObject	*args = NULL;
-	PyObject	*spierror = NULL;
-	PyObject	*spidata = NULL;
+	PyObject   *args = NULL;
+	PyObject   *spierror = NULL;
+	PyObject   *spidata = NULL;
 
 	args = Py_BuildValue("(s)", edata->message);
 	if (!args)
@@ -4378,11 +4380,13 @@ PLy_elog(int elevel, const char *fmt,...)
 	char	   *tbmsg;
 	int			tb_depth;
 	StringInfoData emsg;
-	PyObject	*exc, *val, *tb;
-	const char	*primary = NULL;
-	char		*detail = NULL;
-	char		*hint = NULL;
-	char		*query = NULL;
+	PyObject   *exc,
+			   *val,
+			   *tb;
+	const char *primary = NULL;
+	char	   *detail = NULL;
+	char	   *hint = NULL;
+	char	   *query = NULL;
 	int			position = 0;
 
 	PyErr_Fetch(&exc, &val, &tb);
@@ -4463,7 +4467,7 @@ PLy_elog(int elevel, const char *fmt,...)
 static void
 PLy_get_spi_error_data(PyObject *exc, char **detail, char **hint, char **query, int *position)
 {
-	PyObject	*spidata = NULL;
+	PyObject   *spidata = NULL;
 
 	spidata = PyObject_GetAttrString(exc, "spidata");
 	if (!spidata)
@@ -4484,9 +4488,9 @@ cleanup:
 static char *
 get_source_line(const char *src, int lineno)
 {
-	const char	*s		 = NULL;
-	const char	*next	 = src;
-	int			 current = 0;
+	const char *s = NULL;
+	const char *next = src;
+	int			current = 0;
 
 	while (current < lineno)
 	{
@@ -4597,11 +4601,11 @@ PLy_traceback(char **xmsg, char **tbmsg, int *tb_depth)
 	appendStringInfoString(&tbstr, "Traceback (most recent call last):");
 	while (tb != NULL && tb != Py_None)
 	{
-		PyObject	*volatile tb_prev = NULL;
-		PyObject	*volatile frame = NULL;
-		PyObject	*volatile code = NULL;
-		PyObject	*volatile name = NULL;
-		PyObject	*volatile lineno = NULL;
+		PyObject   *volatile tb_prev = NULL;
+		PyObject   *volatile frame = NULL;
+		PyObject   *volatile code = NULL;
+		PyObject   *volatile name = NULL;
+		PyObject   *volatile lineno = NULL;
 
 		PG_TRY();
 		{
@@ -4634,15 +4638,14 @@ PLy_traceback(char **xmsg, char **tbmsg, int *tb_depth)
 		/* The first frame always points at <module>, skip it. */
 		if (*tb_depth > 0)
 		{
-			char	*proname;
-			char	*fname;
-			char	*line;
-			long	plain_lineno;
+			char	   *proname;
+			char	   *fname;
+			char	   *line;
+			long		plain_lineno;
 
 			/*
-			 * The second frame points at the internal function, but
-			 * to mimick Python error reporting we want to say
-			 * <module>.
+			 * The second frame points at the internal function, but to mimick
+			 * Python error reporting we want to say <module>.
 			 */
 			if (*tb_depth == 1)
 				fname = "<module>";
@@ -4654,22 +4657,22 @@ PLy_traceback(char **xmsg, char **tbmsg, int *tb_depth)
 
 			if (proname == NULL)
 				appendStringInfo(
-					&tbstr, "\n  PL/Python anonymous code block, line %ld, in %s",
-					plain_lineno - 1, fname);
+				&tbstr, "\n  PL/Python anonymous code block, line %ld, in %s",
+								 plain_lineno - 1, fname);
 			else
 				appendStringInfo(
 					&tbstr, "\n  PL/Python function \"%s\", line %ld, in %s",
-					proname, plain_lineno - 1, fname);
+								 proname, plain_lineno - 1, fname);
 
 			if (PLy_curr_procedure)
 			{
 				/*
-				 * If we know the current procedure, append the exact
-				 * line from the source, again mimicking Python's
-				 * traceback.py module behavior.  We could store the
-				 * already line-split source to avoid splitting it
-				 * every time, but producing a traceback is not the
-				 * most important scenario to optimize for.
+				 * If we know the current procedure, append the exact line
+				 * from the source, again mimicking Python's traceback.py
+				 * module behavior.  We could store the already line-split
+				 * source to avoid splitting it every time, but producing a
+				 * traceback is not the most important scenario to optimize
+				 * for.
 				 */
 				line = get_source_line(PLy_curr_procedure->src, plain_lineno);
 				if (line)
@@ -4813,7 +4816,6 @@ PLyUnicode_FromString(const char *s)
 
 	return o;
 }
-
 #endif   /* PY_MAJOR_VERSION >= 3 */
 
 #if PY_MAJOR_VERSION < 3

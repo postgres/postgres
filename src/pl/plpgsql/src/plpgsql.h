@@ -870,7 +870,7 @@ extern PLpgSQL_type *plpgsql_parse_cwordtype(List *idents);
 extern PLpgSQL_type *plpgsql_parse_wordrowtype(char *ident);
 extern PLpgSQL_type *plpgsql_parse_cwordrowtype(List *idents);
 extern PLpgSQL_type *plpgsql_build_datatype(Oid typeOid, int32 typmod,
-											Oid collation);
+					   Oid collation);
 extern PLpgSQL_variable *plpgsql_build_variable(const char *refname, int lineno,
 					   PLpgSQL_type *dtype,
 					   bool add2namespace);
@@ -906,7 +906,7 @@ extern void plpgsql_subxact_cb(SubXactEvent event, SubTransactionId mySubid,
 extern Oid exec_get_datum_type(PLpgSQL_execstate *estate,
 					PLpgSQL_datum *datum);
 extern Oid exec_get_datum_collation(PLpgSQL_execstate *estate,
-					PLpgSQL_datum *datum);
+						 PLpgSQL_datum *datum);
 
 /* ----------
  * Functions for namespace handling in pl_funcs.c

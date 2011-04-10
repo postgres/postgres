@@ -215,8 +215,8 @@ typedef struct PlannerInfo
 	struct Plan *non_recursive_plan;	/* plan for non-recursive term */
 
 	/* These fields are workspace for createplan.c */
-	Relids		curOuterRels;			/* outer rels above current node */
-	List	   *curOuterParams;			/* not-yet-assigned NestLoopParams */
+	Relids		curOuterRels;	/* outer rels above current node */
+	List	   *curOuterParams; /* not-yet-assigned NestLoopParams */
 
 	/* optional private data for join_search_hook, e.g., GEQO */
 	void	   *join_search_private;
@@ -472,7 +472,7 @@ typedef struct IndexOptInfo
 	bool		predOK;			/* true if predicate matches query */
 	bool		unique;			/* true if a unique index */
 	bool		hypothetical;	/* true if index doesn't really exist */
-	bool		amcanorderbyop;	/* does AM support order by operator result? */
+	bool		amcanorderbyop; /* does AM support order by operator result? */
 	bool		amoptionalkey;	/* can query omit key for the first column? */
 	bool		amsearchnulls;	/* can AM search for NULL/NOT NULL entries? */
 	bool		amhasgettuple;	/* does AM have amgettuple interface? */
@@ -492,7 +492,7 @@ typedef struct IndexOptInfo
  * equal to each other, where "equal" is according to the rules of the btree
  * operator family(s) shown in ec_opfamilies, as well as the collation shown
  * by ec_collation.  (We restrict an EC to contain only equalities whose
- * operators belong to the same set of opfamilies.  This could probably be
+ * operators belong to the same set of opfamilies.	This could probably be
  * relaxed, but for now it's not worth the trouble, since nearly all equality
  * operators belong to only one btree opclass anyway.  Similarly, we suppose
  * that all or none of the input datatypes are collatable, so that a single
@@ -1436,7 +1436,7 @@ typedef struct MinMaxAggInfo
  * to do so for Param slots.  Duplicate detection is actually *necessary*
  * in the case of NestLoop parameters since it serves to match up the usage
  * of a Param (in the inner scan) with the assignment of the value (in the
- * NestLoop node).  This might result in the same PARAM_EXEC slot being used
+ * NestLoop node).	This might result in the same PARAM_EXEC slot being used
  * by multiple NestLoop nodes or SubPlan nodes, but no harm is done since
  * the same value would be assigned anyway.
  */

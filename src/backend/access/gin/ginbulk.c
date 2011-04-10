@@ -80,8 +80,8 @@ ginAllocEntryAccumulator(void *arg)
 	GinEntryAccumulator *ea;
 
 	/*
-	 * Allocate memory by rather big chunks to decrease overhead.  We have
-	 * no need to reclaim RBNodes individually, so this costs nothing.
+	 * Allocate memory by rather big chunks to decrease overhead.  We have no
+	 * need to reclaim RBNodes individually, so this costs nothing.
 	 */
 	if (accum->entryallocator == NULL || accum->eas_used >= DEF_NENTRY)
 	{
@@ -108,7 +108,7 @@ ginInitBA(BuildAccumulator *accum)
 							cmpEntryAccumulator,
 							ginCombineData,
 							ginAllocEntryAccumulator,
-							NULL,				/* no freefunc needed */
+							NULL,		/* no freefunc needed */
 							(void *) accum);
 }
 
@@ -145,8 +145,8 @@ ginInsertBAEntry(BuildAccumulator *accum,
 	bool		isNew;
 
 	/*
-	 * For the moment, fill only the fields of eatmp that will be looked at
-	 * by cmpEntryAccumulator or ginCombineData.
+	 * For the moment, fill only the fields of eatmp that will be looked at by
+	 * cmpEntryAccumulator or ginCombineData.
 	 */
 	eatmp.attnum = attnum;
 	eatmp.key = key;

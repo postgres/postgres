@@ -2397,7 +2397,7 @@ DecodeTime(char *str, int fmask, int range,
 
 	/* do a sanity check */
 #ifdef HAVE_INT64_TIMESTAMP
-	if (tm->tm_hour < 0 || tm->tm_min < 0 || tm->tm_min > MINS_PER_HOUR -1 ||
+	if (tm->tm_hour < 0 || tm->tm_min < 0 || tm->tm_min > MINS_PER_HOUR - 1 ||
 		tm->tm_sec < 0 || tm->tm_sec > SECS_PER_MINUTE ||
 		*fsec < INT64CONST(0) ||
 		*fsec > USECS_PER_SEC)

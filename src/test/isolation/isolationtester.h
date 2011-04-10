@@ -28,7 +28,7 @@ struct Session
 
 struct Step
 {
-	int		   session;
+	int			session;
 	char	   *name;
 	char	   *sql;
 };
@@ -37,19 +37,19 @@ typedef struct
 {
 	int			nsteps;
 	char	  **stepnames;
-} Permutation;
+}	Permutation;
 
 typedef struct
 {
 	char	   *setupsql;
 	char	   *teardownsql;
-	Session	  **sessions;
+	Session   **sessions;
 	int			nsessions;
 	Permutation **permutations;
 	int			npermutations;
-} TestSpec;
+}	TestSpec;
 
-extern TestSpec	parseresult;
+extern TestSpec parseresult;
 
 extern int	spec_yyparse(void);
 

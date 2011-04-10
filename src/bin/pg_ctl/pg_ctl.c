@@ -416,7 +416,7 @@ test_postmaster_connection(bool do_checkpoint)
 	int			i;
 
 	connstr[0] = '\0';
-	
+
 	for (i = 0; i < wait_seconds; i++)
 	{
 		/* Do we need a connection string? */
@@ -433,7 +433,7 @@ test_postmaster_connection(bool do_checkpoint)
 			 *		6	9.1+ server, shared memory not created
 			 *		7	9.1+ server, shared memory created
 			 *
-			 * This code does not support pre-9.1 servers.  On Unix machines
+			 * This code does not support pre-9.1 servers.	On Unix machines
 			 * we could consider extracting the port number from the shmem
 			 * key, but that (a) is not robust, and (b) doesn't help with
 			 * finding out the socket directory.  And it wouldn't work anyway
@@ -462,11 +462,11 @@ test_postmaster_connection(bool do_checkpoint)
 						 optlines[5] != NULL)
 				{
 					/* File is complete enough for us, parse it */
-					time_t	pmstart;
-					int		portnum;
-					char   *sockdir;
-					char   *hostaddr;
-					char	host_str[MAXPGPATH];
+					time_t		pmstart;
+					int			portnum;
+					char	   *sockdir;
+					char	   *hostaddr;
+					char		host_str[MAXPGPATH];
 
 					/*
 					 * Easy cross-check that we are looking at the right data
@@ -483,8 +483,8 @@ test_postmaster_connection(bool do_checkpoint)
 					}
 
 					/*
-					 * OK, extract port number and host string to use.
-					 * Prefer using Unix socket if available.
+					 * OK, extract port number and host string to use. Prefer
+					 * using Unix socket if available.
 					 */
 					portnum = atoi(optlines[LOCK_FILE_LINE_PORT - 1]);
 
@@ -524,7 +524,7 @@ test_postmaster_connection(bool do_checkpoint)
 					 * first.
 					 */
 					snprintf(connstr, sizeof(connstr),
-							 "dbname=postgres port=%d host='%s' connect_timeout=5",
+					   "dbname=postgres port=%d host='%s' connect_timeout=5",
 							 portnum, host_str);
 				}
 			}
@@ -543,11 +543,10 @@ test_postmaster_connection(bool do_checkpoint)
 		if (do_checkpoint)
 		{
 			/*
-			 * Increment the wait hint by 6 secs (connection timeout +
-			 * sleep) We must do this to indicate to the SCM that our
-			 * startup time is changing, otherwise it'll usually send a
-			 * stop signal after 20 seconds, despite incrementing the
-			 * checkpoint counter.
+			 * Increment the wait hint by 6 secs (connection timeout + sleep)
+			 * We must do this to indicate to the SCM that our startup time is
+			 * changing, otherwise it'll usually send a stop signal after 20
+			 * seconds, despite incrementing the checkpoint counter.
 			 */
 			status.dwWaitHint += 6000;
 			status.dwCheckPoint++;
@@ -557,7 +556,7 @@ test_postmaster_connection(bool do_checkpoint)
 #endif
 			print_msg(".");
 
-		pg_usleep(1000000); /* 1 sec */
+		pg_usleep(1000000);		/* 1 sec */
 	}
 
 	/* return result of last call to PQping */
@@ -834,8 +833,8 @@ do_stop(void)
 	else
 	{
 		/*
-		 * If backup_label exists, an online backup is running. Warn the
-		 * user that smart shutdown will wait for it to finish. However, if
+		 * If backup_label exists, an online backup is running. Warn the user
+		 * that smart shutdown will wait for it to finish. However, if
 		 * recovery.conf is also present, we're recovering from an online
 		 * backup instead of performing one.
 		 */
@@ -867,7 +866,7 @@ do_stop(void)
 			write_stderr(_("%s: server does not shut down\n"), progname);
 			if (shutdown_mode == SMART_MODE)
 				write_stderr(_("HINT: The \"-m fast\" option immediately disconnects sessions rather than\n"
-							"waiting for session-initiated disconnection.\n"));
+						  "waiting for session-initiated disconnection.\n"));
 			exit(1);
 		}
 		print_msg(_(" done\n"));
@@ -922,8 +921,8 @@ do_restart(void)
 		}
 
 		/*
-		 * If backup_label exists, an online backup is running. Warn the
-		 * user that smart shutdown will wait for it to finish. However, if
+		 * If backup_label exists, an online backup is running. Warn the user
+		 * that smart shutdown will wait for it to finish. However, if
 		 * recovery.conf is also present, we're recovering from an online
 		 * backup instead of performing one.
 		 */
@@ -957,7 +956,7 @@ do_restart(void)
 			write_stderr(_("%s: server does not shut down\n"), progname);
 			if (shutdown_mode == SMART_MODE)
 				write_stderr(_("HINT: The \"-m fast\" option immediately disconnects sessions rather than\n"
-							"waiting for session-initiated disconnection.\n"));
+						  "waiting for session-initiated disconnection.\n"));
 			exit(1);
 		}
 
@@ -1259,7 +1258,7 @@ pgwin32_doRegister(void)
 	}
 
 	if ((hService = CreateService(hSCM, register_servicename, register_servicename,
-								  SERVICE_ALL_ACCESS, SERVICE_WIN32_OWN_PROCESS,
+							   SERVICE_ALL_ACCESS, SERVICE_WIN32_OWN_PROCESS,
 								  pgctl_start_type, SERVICE_ERROR_NORMAL,
 								  pgwin32_CommandLine(true),
 	   NULL, NULL, "RPCSS\0", register_username, register_password)) == NULL)
@@ -1700,7 +1699,7 @@ do_help(void)
 	printf(_("  %s kill    SIGNALNAME PID\n"), progname);
 #if defined(WIN32) || defined(__CYGWIN__)
 	printf(_("  %s register   [-N SERVICENAME] [-U USERNAME] [-P PASSWORD] [-D DATADIR]\n"
-		 "                    [-S START-TYPE] [-w] [-t SECS] [-o \"OPTIONS\"]\n"), progname);
+			 "                    [-S START-TYPE] [-w] [-t SECS] [-o \"OPTIONS\"]\n"), progname);
 	printf(_("  %s unregister [-N SERVICENAME]\n"), progname);
 #endif
 

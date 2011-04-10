@@ -503,11 +503,12 @@ gistFormTuple(GISTSTATE *giststate, Relation r,
 	}
 
 	res = index_form_tuple(giststate->tupdesc, compatt, isnull);
+
 	/*
 	 * The offset number on tuples on internal pages is unused. For historical
 	 * reasons, it is set 0xffff.
 	 */
-	ItemPointerSetOffsetNumber( &(res->t_tid), 0xffff);
+	ItemPointerSetOffsetNumber(&(res->t_tid), 0xffff);
 	return res;
 }
 

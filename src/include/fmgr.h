@@ -458,9 +458,9 @@ extern Datum DirectFunctionCall9(PGFunction func, Datum arg1, Datum arg2,
 
 /* The same, but passing a collation to use */
 extern Datum DirectFunctionCall1WithCollation(PGFunction func, Oid collation,
-											  Datum arg1);
+								 Datum arg1);
 extern Datum DirectFunctionCall2WithCollation(PGFunction func, Oid collation,
-											  Datum arg1, Datum arg2);
+								 Datum arg1, Datum arg2);
 
 /* These are for invocation of a previously-looked-up function with a
  * directly-computed parameter list.  Note that neither arguments nor result
@@ -573,7 +573,7 @@ extern int AggCheckCallContext(FunctionCallInfo fcinfo,
  * We allow plugin modules to hook function entry/exit.  This is intended
  * as support for loadable security policy modules, which may want to
  * perform additional privilege checks on function entry or exit, or to do
- * other internal bookkeeping.  To make this possible, such modules must be
+ * other internal bookkeeping.	To make this possible, such modules must be
  * able not only to support normal function entry and exit, but also to trap
  * the case where we bail out due to an error; and they must also be able to
  * prevent inlining.
@@ -585,13 +585,13 @@ typedef enum FmgrHookEventType
 	FHET_ABORT
 } FmgrHookEventType;
 
-typedef bool (*needs_fmgr_hook_type)(Oid fn_oid);
+typedef bool (*needs_fmgr_hook_type) (Oid fn_oid);
 
-typedef void (*fmgr_hook_type)(FmgrHookEventType event,
-							   FmgrInfo *flinfo, Datum *arg);
+typedef void (*fmgr_hook_type) (FmgrHookEventType event,
+											FmgrInfo *flinfo, Datum *arg);
 
-extern PGDLLIMPORT needs_fmgr_hook_type	needs_fmgr_hook;
-extern PGDLLIMPORT fmgr_hook_type		fmgr_hook;
+extern PGDLLIMPORT needs_fmgr_hook_type needs_fmgr_hook;
+extern PGDLLIMPORT fmgr_hook_type fmgr_hook;
 
 #define FmgrHookIsNeeded(fn_oid)							\
 	(!needs_fmgr_hook ? false : (*needs_fmgr_hook)(fn_oid))

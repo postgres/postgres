@@ -199,7 +199,7 @@ ginFillScanKey(GinScanOpaque so, OffsetNumber attnum,
 					break;
 				default:
 					elog(ERROR, "unexpected searchMode: %d", searchMode);
-					queryCategory = 0;		/* keep compiler quiet */
+					queryCategory = 0;	/* keep compiler quiet */
 					break;
 			}
 			isPartialMatch = false;
@@ -294,8 +294,8 @@ ginNewScanKey(IndexScanDesc scan)
 		int32		searchMode = GIN_SEARCH_MODE_DEFAULT;
 
 		/*
-		 * We assume that GIN-indexable operators are strict, so a null
-		 * query argument means an unsatisfiable query.
+		 * We assume that GIN-indexable operators are strict, so a null query
+		 * argument means an unsatisfiable query.
 		 */
 		if (skey->sk_flags & SK_ISNULL)
 		{
@@ -315,8 +315,8 @@ ginNewScanKey(IndexScanDesc scan)
 										  PointerGetDatum(&searchMode)));
 
 		/*
-		 * If bogus searchMode is returned, treat as GIN_SEARCH_MODE_ALL;
-		 * note in particular we don't allow extractQueryFn to select
+		 * If bogus searchMode is returned, treat as GIN_SEARCH_MODE_ALL; note
+		 * in particular we don't allow extractQueryFn to select
 		 * GIN_SEARCH_MODE_EVERYTHING.
 		 */
 		if (searchMode < GIN_SEARCH_MODE_DEFAULT ||
@@ -344,20 +344,20 @@ ginNewScanKey(IndexScanDesc scan)
 		 * If the extractQueryFn didn't create a nullFlags array, create one,
 		 * assuming that everything's non-null.  Otherwise, run through the
 		 * array and make sure each value is exactly 0 or 1; this ensures
-		 * binary compatibility with the GinNullCategory representation.
-		 * While at it, detect whether any null keys are present.
+		 * binary compatibility with the GinNullCategory representation. While
+		 * at it, detect whether any null keys are present.
 		 */
 		if (nullFlags == NULL)
 			nullFlags = (bool *) palloc0(nQueryValues * sizeof(bool));
 		else
 		{
-			int32 j;
+			int32		j;
 
 			for (j = 0; j < nQueryValues; j++)
 			{
 				if (nullFlags[j])
 				{
-					nullFlags[j] = true;	/* not any other nonzero value */
+					nullFlags[j] = true;		/* not any other nonzero value */
 					hasNullQuery = true;
 				}
 			}
@@ -387,11 +387,11 @@ ginNewScanKey(IndexScanDesc scan)
 	/*
 	 * If the index is version 0, it may be missing null and placeholder
 	 * entries, which would render searches for nulls and full-index scans
-	 * unreliable.  Throw an error if so.
+	 * unreliable.	Throw an error if so.
 	 */
 	if (hasNullQuery && !so->isVoidRes)
 	{
-		GinStatsData   ginStats;
+		GinStatsData ginStats;
 
 		ginGetStats(scan->indexRelation, &ginStats);
 		if (ginStats.ginVersion < 1)
@@ -410,6 +410,7 @@ ginrescan(PG_FUNCTION_ARGS)
 {
 	IndexScanDesc scan = (IndexScanDesc) PG_GETARG_POINTER(0);
 	ScanKey		scankey = (ScanKey) PG_GETARG_POINTER(1);
+
 	/* remaining arguments are ignored */
 	GinScanOpaque so = (GinScanOpaque) scan->opaque;
 

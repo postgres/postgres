@@ -759,8 +759,8 @@ transformInsertRow(ParseState *pstate, List *exprlist,
 		 * columns.  Add a suitable hint if that seems to be the problem,
 		 * because the main error message is quite misleading for this case.
 		 * (If there's no stmtcols, you'll get something about data type
-		 * mismatch, which is less misleading so we don't worry about giving
-		 * a hint in that case.)
+		 * mismatch, which is less misleading so we don't worry about giving a
+		 * hint in that case.)
 		 */
 		ereport(ERROR,
 				(errcode(ERRCODE_SYNTAX_ERROR),
@@ -809,7 +809,7 @@ transformInsertRow(ParseState *pstate, List *exprlist,
  *	  return -1 if expression isn't a RowExpr or a Var referencing one.
  *
  * This is currently used only for hint purposes, so we aren't terribly
- * tense about recognizing all possible cases.  The Var case is interesting
+ * tense about recognizing all possible cases.	The Var case is interesting
  * because that's what we'll get in the INSERT ... SELECT (...) case.
  */
 static int
@@ -1100,8 +1100,8 @@ transformValuesClause(ParseState *pstate, SelectStmt *stmt)
 		/*
 		 * We must assign collations now because assign_query_collations
 		 * doesn't process rangetable entries.  We just assign all the
-		 * collations independently in each row, and don't worry about
-		 * whether they are consistent vertically either.
+		 * collations independently in each row, and don't worry about whether
+		 * they are consistent vertically either.
 		 */
 		assign_list_collations(pstate, newsublist);
 
@@ -1452,7 +1452,7 @@ transformSetOperationStmt(ParseState *pstate, SelectStmt *stmt)
  *		Recursively transform leaves and internal nodes of a set-op tree
  *
  * In addition to returning the transformed node, if targetlist isn't NULL
- * then we return a list of its non-resjunk TargetEntry nodes.  For a leaf
+ * then we return a list of its non-resjunk TargetEntry nodes.	For a leaf
  * set-op node these are the actual targetlist entries; otherwise they are
  * dummy entries created to carry the type, typmod, collation, and location
  * (for error messages) of each output column of the set-op node.  This info
@@ -1672,7 +1672,7 @@ transformSetOperationTree(ParseState *pstate, SelectStmt *stmt,
 			 * child query's semantics.
 			 *
 			 * If a child expression is an UNKNOWN-type Const or Param, we
-			 * want to replace it with the coerced expression.  This can only
+			 * want to replace it with the coerced expression.	This can only
 			 * happen when the child is a leaf set-op node.  It's safe to
 			 * replace the expression because if the child query's semantics
 			 * depended on the type of this output column, it'd have already
@@ -1721,8 +1721,8 @@ transformSetOperationTree(ParseState *pstate, SelectStmt *stmt,
 			 * collation.)
 			 */
 			rescolcoll = select_common_collation(pstate,
-												 list_make2(lcolnode, rcolnode),
-												 (op->op == SETOP_UNION && op->all));
+											  list_make2(lcolnode, rcolnode),
+										 (op->op == SETOP_UNION && op->all));
 
 			/* emit results */
 			op->colTypes = lappend_oid(op->colTypes, rescoltype);
@@ -1778,7 +1778,7 @@ transformSetOperationTree(ParseState *pstate, SelectStmt *stmt,
 				rescolnode->collation = rescolcoll;
 				rescolnode->location = bestlocation;
 				restle = makeTargetEntry((Expr *) rescolnode,
-										 0,			/* no need to set resno */
+										 0,		/* no need to set resno */
 										 NULL,
 										 false);
 				*targetlist = lappend(*targetlist, restle);
@@ -2331,10 +2331,10 @@ transformLockingClause(ParseState *pstate, Query *qry, LockingClause *lc,
 						case RTE_RELATION:
 							if (rte->relkind == RELKIND_FOREIGN_TABLE)
 								ereport(ERROR,
-										(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-										 errmsg("SELECT FOR UPDATE/SHARE cannot be used with foreign table \"%s\"",
-												rte->eref->aliasname),
-										 parser_errposition(pstate, thisrel->location)));
+									 (errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+									  errmsg("SELECT FOR UPDATE/SHARE cannot be used with foreign table \"%s\"",
+											 rte->eref->aliasname),
+									  parser_errposition(pstate, thisrel->location)));
 							applyLockingClause(qry, i,
 											   lc->forUpdate, lc->noWait,
 											   pushedDown);

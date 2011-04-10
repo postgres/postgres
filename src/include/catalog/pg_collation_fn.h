@@ -15,9 +15,9 @@
 #define PG_COLLATION_FN_H
 
 extern Oid CollationCreate(const char *collname, Oid collnamespace,
-						   Oid collowner,
-						   int32 collencoding,
-						   const char *collcollate, const char *collctype);
+				Oid collowner,
+				int32 collencoding,
+				const char *collcollate, const char *collctype);
 extern void RemoveCollationById(Oid collationOid);
 
 #endif   /* PG_COLLATION_FN_H */

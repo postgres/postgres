@@ -413,8 +413,8 @@ MarkPortalDone(Portal portal)
 	portal->status = PORTAL_DONE;
 
 	/*
-	 * Allow portalcmds.c to clean up the state it knows about.  We might
-	 * as well do that now, since the portal can't be executed any more.
+	 * Allow portalcmds.c to clean up the state it knows about.  We might as
+	 * well do that now, since the portal can't be executed any more.
 	 *
 	 * In some cases involving execution of a ROLLBACK command in an already
 	 * aborted transaction, this prevents an assertion failure from reaching
@@ -449,7 +449,7 @@ PortalDrop(Portal portal, bool isTopCommit)
 
 	/*
 	 * Allow portalcmds.c to clean up the state it knows about, in particular
-	 * shutting down the executor if still active.  This step potentially runs
+	 * shutting down the executor if still active.	This step potentially runs
 	 * user-defined code so failure has to be expected.  It's the cleanup
 	 * hook's responsibility to not try to do that more than once, in the case
 	 * that failure occurs and then we come back to drop the portal again
@@ -577,7 +577,7 @@ PortalHashTableDeleteAll(void)
  * Holdable cursors created in this transaction need to be converted to
  * materialized form, since we are going to close down the executor and
  * release locks.  Non-holdable portals created in this transaction are
- * simply removed.  Portals remaining from prior transactions should be
+ * simply removed.	Portals remaining from prior transactions should be
  * left untouched.
  *
  * Returns TRUE if any portals changed state (possibly causing user-defined
@@ -678,9 +678,9 @@ PreCommit_Portals(bool isPrepare)
 		}
 
 		/*
-		 * After either freezing or dropping a portal, we have to restart
-		 * the iteration, because we could have invoked user-defined code
-		 * that caused a drop of the next portal in the hash chain.
+		 * After either freezing or dropping a portal, we have to restart the
+		 * iteration, because we could have invoked user-defined code that
+		 * caused a drop of the next portal in the hash chain.
 		 */
 		hash_seq_term(&status);
 		hash_seq_init(&status, PortalHashTable);

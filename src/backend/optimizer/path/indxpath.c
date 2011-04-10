@@ -119,7 +119,7 @@ static bool match_special_index_operator(Expr *clause,
 static Expr *expand_boolean_index_clause(Node *clause, int indexcol,
 							IndexOptInfo *index);
 static List *expand_indexqual_opclause(RestrictInfo *rinfo,
-									   Oid opfamily, Oid idxcollation);
+						  Oid opfamily, Oid idxcollation);
 static RestrictInfo *expand_indexqual_rowcompare(RestrictInfo *rinfo,
 							IndexOptInfo *index,
 							int indexcol);
@@ -1159,8 +1159,8 @@ group_clauses_by_indexkey(IndexOptInfo *index,
  *	  (2)  must contain an operator which is in the same family as the index
  *		   operator for this column, or is a "special" operator as recognized
  *		   by match_special_index_operator();
- *         and
- *    (3)  must match the collation of the index, if collation is relevant.
+ *		   and
+ *	  (3)  must match the collation of the index, if collation is relevant.
  *
  *	  Our definition of "const" is pretty liberal: we allow Vars belonging
  *	  to the caller-specified outer_relids relations (which had better not
@@ -1312,7 +1312,7 @@ match_clause_to_indexcol(IndexOptInfo *index,
 		 * is a "special" indexable operator.
 		 */
 		if (plain_op &&
-			match_special_index_operator(clause, opfamily, idxcollation, true))
+		  match_special_index_operator(clause, opfamily, idxcollation, true))
 			return true;
 		return false;
 	}
@@ -1438,7 +1438,7 @@ match_rowcompare_to_indexcol(IndexOptInfo *index,
 
 
 /****************************************************************************
- *				----  ROUTINES TO CHECK ORDERING OPERATORS  ----
+ *				----  ROUTINES TO CHECK ORDERING OPERATORS	----
  ****************************************************************************/
 
 /*
@@ -1461,7 +1461,7 @@ match_index_to_pathkeys(IndexOptInfo *index, List *pathkeys)
 
 	foreach(lc1, pathkeys)
 	{
-		PathKey	   *pathkey = (PathKey *) lfirst(lc1);
+		PathKey    *pathkey = (PathKey *) lfirst(lc1);
 		bool		found = false;
 		ListCell   *lc2;
 
@@ -1483,7 +1483,7 @@ match_index_to_pathkeys(IndexOptInfo *index, List *pathkeys)
 		foreach(lc2, pathkey->pk_eclass->ec_members)
 		{
 			EquivalenceMember *member = (EquivalenceMember *) lfirst(lc2);
-			int		indexcol;
+			int			indexcol;
 
 			/* No possibility of match if it references other relations */
 			if (!bms_equal(member->em_relids, index->rel->relids))
@@ -1491,7 +1491,7 @@ match_index_to_pathkeys(IndexOptInfo *index, List *pathkeys)
 
 			for (indexcol = 0; indexcol < index->ncolumns; indexcol++)
 			{
-				Expr   *expr;
+				Expr	   *expr;
 
 				expr = match_clause_to_ordering_op(index,
 												   indexcol,
@@ -1535,7 +1535,7 @@ match_index_to_pathkeys(IndexOptInfo *index, List *pathkeys)
  * Note that we currently do not consider the collation of the ordering
  * operator's result.  In practical cases the result type will be numeric
  * and thus have no collation, and it's not very clear what to match to
- * if it did have a collation.  The index's collation should match the
+ * if it did have a collation.	The index's collation should match the
  * ordering operator's input collation, not its result.
  *
  * If successful, return 'clause' as-is if the indexkey is on the left,
@@ -1598,8 +1598,8 @@ match_clause_to_ordering_op(IndexOptInfo *index,
 		return NULL;
 
 	/*
-	 * Is the (commuted) operator an ordering operator for the opfamily?
-	 * And if so, does it yield the right sorting semantics?
+	 * Is the (commuted) operator an ordering operator for the opfamily? And
+	 * if so, does it yield the right sorting semantics?
 	 */
 	sortfamily = get_op_opfamily_sortfamily(expr_op, opfamily);
 	if (sortfamily != pk_opfamily)
@@ -2198,9 +2198,9 @@ relation_has_unique_index_for(PlannerInfo *root, RelOptInfo *rel,
 					continue;
 
 				/*
-				 * XXX at some point we may need to check collations here
-				 * too.  For the moment we assume all collations reduce to
-				 * the same notion of equality.
+				 * XXX at some point we may need to check collations here too.
+				 * For the moment we assume all collations reduce to the same
+				 * notion of equality.
 				 */
 
 				/* OK, see if the condition operand matches the index key */
@@ -2544,10 +2544,10 @@ match_special_index_operator(Expr *clause, Oid opfamily, Oid idxcollation,
 	 *
 	 * The non-pattern opclasses will not sort the way we need in most non-C
 	 * locales.  We can use such an index anyway for an exact match (simple
-	 * equality), but not for prefix-match cases.  Note that we are looking
-	 * at the index's collation, not the expression's collation -- this test
-	 * is not dependent on the LIKE/regex operator's collation (which would
-	 * only affect case folding behavior of ILIKE, anyway).
+	 * equality), but not for prefix-match cases.  Note that we are looking at
+	 * the index's collation, not the expression's collation -- this test is
+	 * not dependent on the LIKE/regex operator's collation (which would only
+	 * affect case folding behavior of ILIKE, anyway).
 	 */
 	switch (expr_op)
 	{
@@ -2657,7 +2657,7 @@ expand_indexqual_conditions(IndexOptInfo *index, List *clausegroups)
 				resultquals = list_concat(resultquals,
 										  expand_indexqual_opclause(rinfo,
 																	curFamily,
-																	curCollation));
+															  curCollation));
 			}
 			else if (IsA(clause, ScalarArrayOpExpr))
 			{
@@ -3254,7 +3254,7 @@ network_prefix_quals(Node *leftop, Oid expr_op, Oid opfamily, Datum rightop)
 	expr = make_opclause(opr1oid, BOOLOID, false,
 						 (Expr *) leftop,
 						 (Expr *) makeConst(datatype, -1,
-											InvalidOid,	/* not collatable */
+											InvalidOid, /* not collatable */
 											-1, opr1right,
 											false, false),
 						 InvalidOid, InvalidOid);
@@ -3272,7 +3272,7 @@ network_prefix_quals(Node *leftop, Oid expr_op, Oid opfamily, Datum rightop)
 	expr = make_opclause(opr2oid, BOOLOID, false,
 						 (Expr *) leftop,
 						 (Expr *) makeConst(datatype, -1,
-											InvalidOid,	/* not collatable */
+											InvalidOid, /* not collatable */
 											-1, opr2right,
 											false, false),
 						 InvalidOid, InvalidOid);

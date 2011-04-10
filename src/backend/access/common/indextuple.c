@@ -237,7 +237,7 @@ nocache_index_getattr(IndexTuple tup,
 		 * Now check to see if any preceding bits are null...
 		 */
 		{
-			int byte = attnum >> 3;
+			int			byte = attnum >> 3;
 			int			finalbit = attnum & 0x07;
 
 			/* check for nulls "before" final bit of last byte */

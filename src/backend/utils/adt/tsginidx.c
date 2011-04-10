@@ -95,10 +95,12 @@ gin_extract_tsquery(PG_FUNCTION_ARGS)
 {
 	TSQuery		query = PG_GETARG_TSQUERY(0);
 	int32	   *nentries = (int32 *) PG_GETARG_POINTER(1);
+
 	/* StrategyNumber strategy = PG_GETARG_UINT16(2); */
 	bool	  **ptr_partialmatch = (bool **) PG_GETARG_POINTER(3);
 	Pointer   **extra_data = (Pointer **) PG_GETARG_POINTER(4);
-	/* bool	  **nullFlags = (bool **) PG_GETARG_POINTER(5); */
+
+	/* bool   **nullFlags = (bool **) PG_GETARG_POINTER(5); */
 	int32	   *searchMode = (int32 *) PG_GETARG_POINTER(6);
 	Datum	   *entries = NULL;
 
@@ -114,8 +116,8 @@ gin_extract_tsquery(PG_FUNCTION_ARGS)
 
 		/*
 		 * If the query doesn't have any required positive matches (for
-		 * instance, it's something like '! foo'), we have to do a full
-		 * index scan.
+		 * instance, it's something like '! foo'), we have to do a full index
+		 * scan.
 		 */
 		if (tsquery_requires_match(item))
 			*searchMode = GIN_SEARCH_MODE_DEFAULT;
@@ -235,7 +237,7 @@ gin_tsquery_consistent(PG_FUNCTION_ARGS)
  * Formerly, gin_extract_tsvector had only two arguments.  Now it has three,
  * but we still need a pg_proc entry with two args to support reloading
  * pre-9.1 contrib/tsearch2 opclass declarations.  This compatibility
- * function should go away eventually.  (Note: you might say "hey, but the
+ * function should go away eventually.	(Note: you might say "hey, but the
  * code above is only *using* two args, so let's just declare it that way".
  * If you try that you'll find the opr_sanity regression test complains.)
  */

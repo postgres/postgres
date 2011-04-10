@@ -45,8 +45,8 @@ typedef struct CheckPoint
 	/*
 	 * Oldest XID still running. This is only needed to initialize hot standby
 	 * mode from an online checkpoint, so we only bother calculating this for
-	 * online checkpoints and only when wal_level is hot_standby. Otherwise it's
-	 * set to InvalidTransactionId.
+	 * online checkpoints and only when wal_level is hot_standby. Otherwise
+	 * it's set to InvalidTransactionId.
 	 */
 	TransactionId oldestActiveXid;
 } CheckPoint;
@@ -59,7 +59,7 @@ typedef struct CheckPoint
 #define XLOG_SWITCH						0x40
 #define XLOG_BACKUP_END					0x50
 #define XLOG_PARAMETER_CHANGE			0x60
-#define	XLOG_RESTORE_POINT				0x70
+#define XLOG_RESTORE_POINT				0x70
 
 
 /*

@@ -67,7 +67,7 @@ typedef struct HashJoinTupleData
 	struct HashJoinTupleData *next;		/* link to next tuple in same bucket */
 	uint32		hashvalue;		/* tuple's hash code */
 	/* Tuple data, in MinimalTuple format, follows on a MAXALIGN boundary */
-} HashJoinTupleData;
+}	HashJoinTupleData;
 
 #define HJTUPLE_OVERHEAD  MAXALIGN(sizeof(HashJoinTupleData))
 #define HJTUPLE_MINTUPLE(hjtup)  \
@@ -158,6 +158,6 @@ typedef struct HashJoinTableData
 
 	MemoryContext hashCxt;		/* context for whole-hash-join storage */
 	MemoryContext batchCxt;		/* context for this-batch-only storage */
-} HashJoinTableData;
+}	HashJoinTableData;
 
 #endif   /* HASHJOIN_H */
