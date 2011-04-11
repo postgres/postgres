@@ -970,17 +970,15 @@ InitPredicateLocks(void)
 {
 	HASHCTL		info;
 	int			hash_flags;
-	long		init_table_size,
-				max_table_size;
+	long		max_table_size;
 	Size		requestSize;
 	bool		found;
 
 	/*
-	 * Compute init/max size to request for predicate lock target hashtable.
+	 * Compute size of predicate lock target hashtable.
 	 * Note these calculations must agree with PredicateLockShmemSize!
 	 */
 	max_table_size = NPREDICATELOCKTARGETENTS();
-	init_table_size = max_table_size / 2;
 
 	/*
 	 * Allocate hash table for PREDICATELOCKTARGET structs.  This stores
@@ -991,17 +989,16 @@ InitPredicateLocks(void)
 	info.entrysize = sizeof(PREDICATELOCKTARGET);
 	info.hash = tag_hash;
 	info.num_partitions = NUM_PREDICATELOCK_PARTITIONS;
-	hash_flags = (HASH_ELEM | HASH_FUNCTION | HASH_PARTITION);
+	hash_flags = (HASH_ELEM | HASH_FUNCTION | HASH_PARTITION | HASH_FIXED_SIZE);
 
 	PredicateLockTargetHash = ShmemInitHash("PREDICATELOCKTARGET hash",
-											init_table_size,
+											max_table_size,
 											max_table_size,
 											&info,
 											hash_flags);
 
 	/* Assume an average of 2 xacts per target */
 	max_table_size *= 2;
-	init_table_size *= 2;
 
 	/*
 	 * Reserve an entry in the hash table; we use it to make sure there's
@@ -1022,18 +1019,17 @@ InitPredicateLocks(void)
 	info.entrysize = sizeof(PREDICATELOCK);
 	info.hash = predicatelock_hash;
 	info.num_partitions = NUM_PREDICATELOCK_PARTITIONS;
-	hash_flags = (HASH_ELEM | HASH_FUNCTION | HASH_PARTITION);
+	hash_flags = (HASH_ELEM | HASH_FUNCTION | HASH_PARTITION | HASH_FIXED_SIZE);
 
 	PredicateLockHash = ShmemInitHash("PREDICATELOCK hash",
-									  init_table_size,
+									  max_table_size,
 									  max_table_size,
 									  &info,
 									  hash_flags);
 
 	/*
-	 * Compute init/max size to request for serializable transaction
-	 * hashtable. Note these calculations must agree with
-	 * PredicateLockShmemSize!
+	 * Compute size for serializable transaction hashtable.
+	 * Note these calculations must agree with PredicateLockShmemSize!
 	 */
 	max_table_size = (MaxBackends + max_prepared_xacts);
 
@@ -1104,7 +1100,7 @@ InitPredicateLocks(void)
 	info.keysize = sizeof(SERIALIZABLEXIDTAG);
 	info.entrysize = sizeof(SERIALIZABLEXID);
 	info.hash = tag_hash;
-	hash_flags = (HASH_ELEM | HASH_FUNCTION);
+	hash_flags = (HASH_ELEM | HASH_FUNCTION | HASH_FIXED_SIZE);
 
 	SerializableXidHash = ShmemInitHash("SERIALIZABLEXID hash",
 										max_table_size,

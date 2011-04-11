@@ -92,6 +92,7 @@ typedef struct HASHCTL
 #define HASH_CONTEXT	0x200	/* Set memory allocation context */
 #define HASH_COMPARE	0x400	/* Set user defined comparison function */
 #define HASH_KEYCOPY	0x800	/* Set user defined key-copying function */
+#define HASH_FIXED_SIZE	0x1000	/* Initial size is a hard limit */
 
 
 /* max_dsize value to indicate expansible directory */
