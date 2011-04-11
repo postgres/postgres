@@ -2074,7 +2074,7 @@ CreatePredicateLock(const PREDICATELOCKTARGETTAG *targettag,
 		SHMQueueInsertBefore(&(target->predicateLocks), &(lock->targetLink));
 		SHMQueueInsertBefore(&(sxact->predicateLocks),
 							 &(lock->xactLink));
-		lock->commitSeqNo = 0;
+		lock->commitSeqNo = InvalidSerCommitSeqNo;
 	}
 
 	LWLockRelease(partitionLock);
@@ -2508,6 +2508,7 @@ TransferPredicateLocksToNewTarget(const PREDICATELOCKTARGETTAG oldtargettag,
 			SHM_QUEUE  *predlocktargetlink;
 			PREDICATELOCK *nextpredlock;
 			PREDICATELOCK *newpredlock;
+			SerCommitSeqNo oldCommitSeqNo = oldpredlock->commitSeqNo;
 
 			predlocktargetlink = &(oldpredlock->targetLink);
 			nextpredlock = (PREDICATELOCK *)
@@ -2552,8 +2553,17 @@ TransferPredicateLocksToNewTarget(const PREDICATELOCKTARGETTAG oldtargettag,
 									 &(newpredlock->targetLink));
 				SHMQueueInsertBefore(&(newpredlocktag.myXact->predicateLocks),
 									 &(newpredlock->xactLink));
-				newpredlock->commitSeqNo = InvalidSerCommitSeqNo;
+				newpredlock->commitSeqNo = oldCommitSeqNo;
 			}
+			else
+			{
+				if (newpredlock->commitSeqNo < oldCommitSeqNo)
+					newpredlock->commitSeqNo = oldCommitSeqNo;
+			}
+
+			Assert(newpredlock->commitSeqNo != 0);
+			Assert((newpredlock->commitSeqNo == InvalidSerCommitSeqNo)
+				   || (newpredlock->tag.myXact == OldCommittedSxact));
 
 			oldpredlock = nextpredlock;
 		}
@@ -3137,6 +3147,8 @@ ClearOldPredicateLocks(void)
 						 offsetof(PREDICATELOCK, xactLink));
 
 		LWLockAcquire(SerializableXactHashLock, LW_SHARED);
+		Assert(predlock->commitSeqNo != 0);
+		Assert(predlock->commitSeqNo != InvalidSerCommitSeqNo);
 		canDoPartialCleanup = (predlock->commitSeqNo <= PredXact->CanPartialClearThrough);
 		LWLockRelease(SerializableXactHashLock);
 
@@ -3261,6 +3273,8 @@ ReleaseOneSerializableXact(SERIALIZABLEXACT *sxact, bool partial,
 						 errhint("You might need to increase max_pred_locks_per_transaction.")));
 			if (found)
 			{
+				Assert(predlock->commitSeqNo != 0);
+				Assert(predlock->commitSeqNo != InvalidSerCommitSeqNo);
 				if (predlock->commitSeqNo < sxact->commitSeqNo)
 					predlock->commitSeqNo = sxact->commitSeqNo;
 			}
