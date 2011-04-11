@@ -639,7 +639,6 @@ ExecMergeTupleDump(MergeJoinState *mergestate)
 TupleTableSlot *
 ExecMergeJoin(MergeJoinState *node)
 {
-	EState	   *estate;
 	List	   *joinqual;
 	List	   *otherqual;
 	bool		qualResult;
@@ -655,7 +654,6 @@ ExecMergeJoin(MergeJoinState *node)
 	/*
 	 * get information from node
 	 */
-	estate = node->js.ps.state;
 	innerPlan = innerPlanState(node);
 	outerPlan = outerPlanState(node);
 	econtext = node->js.ps.ps_ExprContext;

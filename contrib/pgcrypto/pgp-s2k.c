@@ -39,14 +39,12 @@ static int
 calc_s2k_simple(PGP_S2K *s2k, PX_MD *md, const uint8 *key,
 				unsigned key_len)
 {
-	unsigned	md_bs,
-				md_rlen;
+	unsigned	md_rlen;
 	uint8		buf[PGP_MAX_DIGEST];
 	unsigned	preload;
 	unsigned	remain;
 	uint8	   *dst = s2k->key;
 
-	md_bs = px_md_block_size(md);
 	md_rlen = px_md_result_size(md);
 
 	remain = s2k->key_len;
@@ -83,14 +81,12 @@ calc_s2k_simple(PGP_S2K *s2k, PX_MD *md, const uint8 *key,
 static int
 calc_s2k_salted(PGP_S2K *s2k, PX_MD *md, const uint8 *key, unsigned key_len)
 {
-	unsigned	md_bs,
-				md_rlen;
+	unsigned	md_rlen;
 	uint8		buf[PGP_MAX_DIGEST];
 	unsigned	preload = 0;
 	uint8	   *dst;
 	unsigned	remain;
 
-	md_bs = px_md_block_size(md);
 	md_rlen = px_md_result_size(md);
 
 	dst = s2k->key;
@@ -129,8 +125,7 @@ static int
 calc_s2k_iter_salted(PGP_S2K *s2k, PX_MD *md, const uint8 *key,
 					 unsigned key_len)
 {
-	unsigned	md_bs,
-				md_rlen;
+	unsigned	md_rlen;
 	uint8		buf[PGP_MAX_DIGEST];
 	uint8	   *dst;
 	unsigned	preload = 0;
@@ -143,7 +138,6 @@ calc_s2k_iter_salted(PGP_S2K *s2k, PX_MD *md, const uint8 *key,
 	cval = s2k->iter;
 	count = ((unsigned) 16 + (cval & 15)) << ((cval >> 4) + 6);
 
-	md_bs = px_md_block_size(md);
 	md_rlen = px_md_result_size(md);
 
 	remain = s2k->key_len;

@@ -38,8 +38,6 @@ gistvacuumcleanup(PG_FUNCTION_ARGS)
 	BlockNumber npages,
 				blkno;
 	BlockNumber totFreePages;
-	BlockNumber lastBlock = GIST_ROOT_BLKNO,
-				lastFilledBlock = GIST_ROOT_BLKNO;
 	bool		needLock;
 
 	/* No-op in ANALYZE ONLY mode */
@@ -90,11 +88,8 @@ gistvacuumcleanup(PG_FUNCTION_ARGS)
 			totFreePages++;
 			RecordFreeIndexPage(rel, blkno);
 		}
-		else
-			lastFilledBlock = blkno;
 		UnlockReleaseBuffer(buffer);
 	}
-	lastBlock = npages - 1;
 
 	/* Finally, vacuum the FSM */
 	IndexFreeSpaceMapVacuum(info->index);

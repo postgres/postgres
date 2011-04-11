@@ -79,7 +79,6 @@ ExecRecursiveUnion(RecursiveUnionState *node)
 	PlanState  *innerPlan = innerPlanState(node);
 	RecursiveUnion *plan = (RecursiveUnion *) node->ps.plan;
 	TupleTableSlot *slot;
-	RUHashEntry entry;
 	bool		isnew;
 
 	/* 1. Evaluate non-recursive term */
@@ -93,8 +92,7 @@ ExecRecursiveUnion(RecursiveUnionState *node)
 			if (plan->numCols > 0)
 			{
 				/* Find or build hashtable entry for this tuple's group */
-				entry = (RUHashEntry)
-					LookupTupleHashEntry(node->hashtable, slot, &isnew);
+				LookupTupleHashEntry(node->hashtable, slot, &isnew);
 				/* Must reset temp context after each hashtable lookup */
 				MemoryContextReset(node->tempContext);
 				/* Ignore tuple if already seen */
@@ -141,8 +139,7 @@ ExecRecursiveUnion(RecursiveUnionState *node)
 		if (plan->numCols > 0)
 		{
 			/* Find or build hashtable entry for this tuple's group */
-			entry = (RUHashEntry)
-				LookupTupleHashEntry(node->hashtable, slot, &isnew);
+			LookupTupleHashEntry(node->hashtable, slot, &isnew);
 			/* Must reset temp context after each hashtable lookup */
 			MemoryContextReset(node->tempContext);
 			/* Ignore tuple if already seen */

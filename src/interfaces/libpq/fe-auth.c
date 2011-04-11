@@ -320,14 +320,13 @@ static void
 pg_GSS_error_int(PQExpBuffer str, const char *mprefix,
 				 OM_uint32 stat, int type)
 {
-	OM_uint32	lmaj_s,
-				lmin_s;
+	OM_uint32	lmin_s;
 	gss_buffer_desc lmsg;
 	OM_uint32	msg_ctx = 0;
 
 	do
 	{
-		lmaj_s = gss_display_status(&lmin_s, stat, type,
+		gss_display_status(&lmin_s, stat, type,
 									GSS_C_NO_OID, &msg_ctx, &lmsg);
 		appendPQExpBuffer(str, "%s: %s\n", mprefix, (char *) lmsg.value);
 		gss_release_buffer(&lmin_s, &lmsg);

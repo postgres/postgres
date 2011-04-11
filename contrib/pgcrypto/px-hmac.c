@@ -52,13 +52,11 @@ static void
 hmac_init(PX_HMAC *h, const uint8 *key, unsigned klen)
 {
 	unsigned	bs,
-				hlen,
 				i;
 	uint8	   *keybuf;
 	PX_MD	   *md = h->md;
 
 	bs = px_md_block_size(md);
-	hlen = px_md_result_size(md);
 	keybuf = px_alloc(bs);
 	memset(keybuf, 0, bs);
 

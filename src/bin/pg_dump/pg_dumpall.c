@@ -91,7 +91,6 @@ main(int argc, char *argv[])
 	bool		output_clean = false;
 	bool		roles_only = false;
 	bool		tablespaces_only = false;
-	bool		schema_only = false;
 	PGconn	   *conn;
 	int			encoding;
 	const char *std_strings;
@@ -241,7 +240,6 @@ main(int argc, char *argv[])
 				break;
 
 			case 's':
-				schema_only = true;
 				appendPQExpBuffer(pgdumpopts, " -s");
 				break;
 
@@ -632,7 +630,6 @@ dumpRoles(PGconn *conn)
 				i_rolinherit,
 				i_rolcreaterole,
 				i_rolcreatedb,
-				i_rolcatupdate,
 				i_rolcanlogin,
 				i_rolconnlimit,
 				i_rolpassword,
@@ -645,7 +642,7 @@ dumpRoles(PGconn *conn)
 	if (server_version >= 90100)
 		printfPQExpBuffer(buf,
 						  "SELECT oid, rolname, rolsuper, rolinherit, "
-						  "rolcreaterole, rolcreatedb, rolcatupdate, "
+						  "rolcreaterole, rolcreatedb, "
 						  "rolcanlogin, rolconnlimit, rolpassword, "
 						  "rolvaliduntil, rolreplication, "
 			  "pg_catalog.shobj_description(oid, 'pg_authid') as rolcomment "
@@ -654,7 +651,7 @@ dumpRoles(PGconn *conn)
 	else if (server_version >= 80200)
 		printfPQExpBuffer(buf,
 						  "SELECT oid, rolname, rolsuper, rolinherit, "
-						  "rolcreaterole, rolcreatedb, rolcatupdate, "
+						  "rolcreaterole, rolcreatedb, "
 						  "rolcanlogin, rolconnlimit, rolpassword, "
 						  "rolvaliduntil, false as rolreplication, "
 			  "pg_catalog.shobj_description(oid, 'pg_authid') as rolcomment "
@@ -663,7 +660,7 @@ dumpRoles(PGconn *conn)
 	else if (server_version >= 80100)
 		printfPQExpBuffer(buf,
 						  "SELECT oid, rolname, rolsuper, rolinherit, "
-						  "rolcreaterole, rolcreatedb, rolcatupdate, "
+						  "rolcreaterole, rolcreatedb, "
 						  "rolcanlogin, rolconnlimit, rolpassword, "
 						  "rolvaliduntil, false as rolreplication, "
 						  "null as rolcomment "
@@ -676,7 +673,6 @@ dumpRoles(PGconn *conn)
 						  "true as rolinherit, "
 						  "usesuper as rolcreaterole, "
 						  "usecreatedb as rolcreatedb, "
-						  "usecatupd as rolcatupdate, "
 						  "true as rolcanlogin, "
 						  "-1 as rolconnlimit, "
 						  "passwd as rolpassword, "
@@ -690,7 +686,6 @@ dumpRoles(PGconn *conn)
 						  "true as rolinherit, "
 						  "false as rolcreaterole, "
 						  "false as rolcreatedb, "
-						  "false as rolcatupdate, "
 						  "false as rolcanlogin, "
 						  "-1 as rolconnlimit, "
 						  "null::text as rolpassword, "
@@ -710,7 +705,6 @@ dumpRoles(PGconn *conn)
 	i_rolinherit = PQfnumber(res, "rolinherit");
 	i_rolcreaterole = PQfnumber(res, "rolcreaterole");
 	i_rolcreatedb = PQfnumber(res, "rolcreatedb");
-	i_rolcatupdate = PQfnumber(res, "rolcatupdate");
 	i_rolcanlogin = PQfnumber(res, "rolcanlogin");
 	i_rolconnlimit = PQfnumber(res, "rolconnlimit");
 	i_rolpassword = PQfnumber(res, "rolpassword");

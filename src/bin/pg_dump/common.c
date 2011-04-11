@@ -80,24 +80,9 @@ static int	strInArray(const char *pattern, char **arr, int arr_size);
 TableInfo *
 getSchemaData(int *numTablesPtr)
 {
-	NamespaceInfo *nsinfo;
 	ExtensionInfo *extinfo;
-	AggInfo    *agginfo;
 	InhInfo    *inhinfo;
-	RuleInfo   *ruleinfo;
-	ProcLangInfo *proclanginfo;
-	CastInfo   *castinfo;
-	OpclassInfo *opcinfo;
-	OpfamilyInfo *opfinfo;
 	CollInfo   *collinfo;
-	ConvInfo   *convinfo;
-	TSParserInfo *prsinfo;
-	TSTemplateInfo *tmplinfo;
-	TSDictInfo *dictinfo;
-	TSConfigInfo *cfginfo;
-	FdwInfo    *fdwinfo;
-	ForeignServerInfo *srvinfo;
-	DefaultACLInfo *daclinfo;
 	int			numNamespaces;
 	int			numExtensions;
 	int			numAggregates;
@@ -118,7 +103,7 @@ getSchemaData(int *numTablesPtr)
 
 	if (g_verbose)
 		write_msg(NULL, "reading schemas\n");
-	nsinfo = getNamespaces(&numNamespaces);
+	getNamespaces(&numNamespaces);
 
 	if (g_verbose)
 		write_msg(NULL, "reading extensions\n");
@@ -138,11 +123,11 @@ getSchemaData(int *numTablesPtr)
 	/* this must be after getFuncs, too */
 	if (g_verbose)
 		write_msg(NULL, "reading procedural languages\n");
-	proclanginfo = getProcLangs(&numProcLangs);
+	getProcLangs(&numProcLangs);
 
 	if (g_verbose)
 		write_msg(NULL, "reading user-defined aggregate functions\n");
-	agginfo = getAggregates(&numAggregates);
+	getAggregates(&numAggregates);
 
 	if (g_verbose)
 		write_msg(NULL, "reading user-defined operators\n");
@@ -151,39 +136,39 @@ getSchemaData(int *numTablesPtr)
 
 	if (g_verbose)
 		write_msg(NULL, "reading user-defined operator classes\n");
-	opcinfo = getOpclasses(&numOpclasses);
+	getOpclasses(&numOpclasses);
 
 	if (g_verbose)
 		write_msg(NULL, "reading user-defined operator families\n");
-	opfinfo = getOpfamilies(&numOpfamilies);
+	getOpfamilies(&numOpfamilies);
 
 	if (g_verbose)
 		write_msg(NULL, "reading user-defined text search parsers\n");
-	prsinfo = getTSParsers(&numTSParsers);
+	getTSParsers(&numTSParsers);
 
 	if (g_verbose)
 		write_msg(NULL, "reading user-defined text search templates\n");
-	tmplinfo = getTSTemplates(&numTSTemplates);
+	getTSTemplates(&numTSTemplates);
 
 	if (g_verbose)
 		write_msg(NULL, "reading user-defined text search dictionaries\n");
-	dictinfo = getTSDictionaries(&numTSDicts);
+	getTSDictionaries(&numTSDicts);
 
 	if (g_verbose)
 		write_msg(NULL, "reading user-defined text search configurations\n");
-	cfginfo = getTSConfigurations(&numTSConfigs);
+	getTSConfigurations(&numTSConfigs);
 
 	if (g_verbose)
 		write_msg(NULL, "reading user-defined foreign-data wrappers\n");
-	fdwinfo = getForeignDataWrappers(&numForeignDataWrappers);
+	getForeignDataWrappers(&numForeignDataWrappers);
 
 	if (g_verbose)
 		write_msg(NULL, "reading user-defined foreign servers\n");
-	srvinfo = getForeignServers(&numForeignServers);
+	getForeignServers(&numForeignServers);
 
 	if (g_verbose)
 		write_msg(NULL, "reading default privileges\n");
-	daclinfo = getDefaultACLs(&numDefaultACLs);
+	getDefaultACLs(&numDefaultACLs);
 
 	if (g_verbose)
 		write_msg(NULL, "reading user-defined collations\n");
@@ -192,11 +177,11 @@ getSchemaData(int *numTablesPtr)
 
 	if (g_verbose)
 		write_msg(NULL, "reading user-defined conversions\n");
-	convinfo = getConversions(&numConversions);
+	getConversions(&numConversions);
 
 	if (g_verbose)
 		write_msg(NULL, "reading type casts\n");
-	castinfo = getCasts(&numCasts);
+	getCasts(&numCasts);
 
 	if (g_verbose)
 		write_msg(NULL, "reading user-defined tables\n");
@@ -209,7 +194,7 @@ getSchemaData(int *numTablesPtr)
 
 	if (g_verbose)
 		write_msg(NULL, "reading rewrite rules\n");
-	ruleinfo = getRules(&numRules);
+	getRules(&numRules);
 
 	/*
 	 * Identify extension member objects and mark them as not to be dumped.

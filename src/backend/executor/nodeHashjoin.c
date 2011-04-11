@@ -59,7 +59,6 @@ static bool ExecHashJoinNewBatch(HashJoinState *hjstate);
 TupleTableSlot *				/* return: a tuple or NULL */
 ExecHashJoin(HashJoinState *node)
 {
-	EState	   *estate;
 	PlanState  *outerNode;
 	HashState  *hashNode;
 	List	   *joinqual;
@@ -74,7 +73,6 @@ ExecHashJoin(HashJoinState *node)
 	/*
 	 * get information from HashJoin node
 	 */
-	estate = node->js.ps.state;
 	joinqual = node->js.joinqual;
 	otherqual = node->js.ps.qual;
 	hashNode = (HashState *) innerPlanState(node);

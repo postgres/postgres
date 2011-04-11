@@ -7389,8 +7389,6 @@ dumpBaseType(Archive *fout, TypeInfo *tyinfo)
 	char	   *typmodin;
 	char	   *typmodout;
 	char	   *typanalyze;
-	Oid			typinputoid;
-	Oid			typoutputoid;
 	Oid			typreceiveoid;
 	Oid			typsendoid;
 	Oid			typmodinoid;
@@ -7415,8 +7413,6 @@ dumpBaseType(Archive *fout, TypeInfo *tyinfo)
 		appendPQExpBuffer(query, "SELECT typlen, "
 						  "typinput, typoutput, typreceive, typsend, "
 						  "typmodin, typmodout, typanalyze, "
-						  "typinput::pg_catalog.oid AS typinputoid, "
-						  "typoutput::pg_catalog.oid AS typoutputoid, "
 						  "typreceive::pg_catalog.oid AS typreceiveoid, "
 						  "typsend::pg_catalog.oid AS typsendoid, "
 						  "typmodin::pg_catalog.oid AS typmodinoid, "
@@ -7435,8 +7431,6 @@ dumpBaseType(Archive *fout, TypeInfo *tyinfo)
 		appendPQExpBuffer(query, "SELECT typlen, "
 						  "typinput, typoutput, typreceive, typsend, "
 						  "typmodin, typmodout, typanalyze, "
-						  "typinput::pg_catalog.oid AS typinputoid, "
-						  "typoutput::pg_catalog.oid AS typoutputoid, "
 						  "typreceive::pg_catalog.oid AS typreceiveoid, "
 						  "typsend::pg_catalog.oid AS typsendoid, "
 						  "typmodin::pg_catalog.oid AS typmodinoid, "
@@ -7456,8 +7450,6 @@ dumpBaseType(Archive *fout, TypeInfo *tyinfo)
 		appendPQExpBuffer(query, "SELECT typlen, "
 						  "typinput, typoutput, typreceive, typsend, "
 						  "typmodin, typmodout, typanalyze, "
-						  "typinput::pg_catalog.oid AS typinputoid, "
-						  "typoutput::pg_catalog.oid AS typoutputoid, "
 						  "typreceive::pg_catalog.oid AS typreceiveoid, "
 						  "typsend::pg_catalog.oid AS typsendoid, "
 						  "typmodin::pg_catalog.oid AS typmodinoid, "
@@ -7477,8 +7469,6 @@ dumpBaseType(Archive *fout, TypeInfo *tyinfo)
 						  "typinput, typoutput, typreceive, typsend, "
 						  "'-' AS typmodin, '-' AS typmodout, "
 						  "typanalyze, "
-						  "typinput::pg_catalog.oid AS typinputoid, "
-						  "typoutput::pg_catalog.oid AS typoutputoid, "
 						  "typreceive::pg_catalog.oid AS typreceiveoid, "
 						  "typsend::pg_catalog.oid AS typsendoid, "
 						  "0 AS typmodinoid, 0 AS typmodoutoid, "
@@ -7497,8 +7487,6 @@ dumpBaseType(Archive *fout, TypeInfo *tyinfo)
 						  "typinput, typoutput, typreceive, typsend, "
 						  "'-' AS typmodin, '-' AS typmodout, "
 						  "'-' AS typanalyze, "
-						  "typinput::pg_catalog.oid AS typinputoid, "
-						  "typoutput::pg_catalog.oid AS typoutputoid, "
 						  "typreceive::pg_catalog.oid AS typreceiveoid, "
 						  "typsend::pg_catalog.oid AS typsendoid, "
 						  "0 AS typmodinoid, 0 AS typmodoutoid, "
@@ -7518,8 +7506,6 @@ dumpBaseType(Archive *fout, TypeInfo *tyinfo)
 						  "'-' AS typreceive, '-' AS typsend, "
 						  "'-' AS typmodin, '-' AS typmodout, "
 						  "'-' AS typanalyze, "
-						  "typinput::pg_catalog.oid AS typinputoid, "
-						  "typoutput::pg_catalog.oid AS typoutputoid, "
 						  "0 AS typreceiveoid, 0 AS typsendoid, "
 						  "0 AS typmodinoid, 0 AS typmodoutoid, "
 						  "0 AS typanalyzeoid, "
@@ -7542,8 +7528,6 @@ dumpBaseType(Archive *fout, TypeInfo *tyinfo)
 						  "'-' AS typreceive, '-' AS typsend, "
 						  "'-' AS typmodin, '-' AS typmodout, "
 						  "'-' AS typanalyze, "
-						  "typinput::oid AS typinputoid, "
-						  "typoutput::oid AS typoutputoid, "
 						  "0 AS typreceiveoid, 0 AS typsendoid, "
 						  "0 AS typmodinoid, 0 AS typmodoutoid, "
 						  "0 AS typanalyzeoid, "
@@ -7566,8 +7550,6 @@ dumpBaseType(Archive *fout, TypeInfo *tyinfo)
 						  "'-' AS typreceive, '-' AS typsend, "
 						  "'-' AS typmodin, '-' AS typmodout, "
 						  "'-' AS typanalyze, "
-						  "typinput::oid AS typinputoid, "
-						  "typoutput::oid AS typoutputoid, "
 						  "0 AS typreceiveoid, 0 AS typsendoid, "
 						  "0 AS typmodinoid, 0 AS typmodoutoid, "
 						  "0 AS typanalyzeoid, "
@@ -7586,8 +7568,6 @@ dumpBaseType(Archive *fout, TypeInfo *tyinfo)
 						  "'-' AS typreceive, '-' AS typsend, "
 						  "'-' AS typmodin, '-' AS typmodout, "
 						  "'-' AS typanalyze, "
-						  "typinput::oid AS typinputoid, "
-						  "typoutput::oid AS typoutputoid, "
 						  "0 AS typreceiveoid, 0 AS typsendoid, "
 						  "0 AS typmodinoid, 0 AS typmodoutoid, "
 						  "0 AS typanalyzeoid, "
@@ -7623,8 +7603,6 @@ dumpBaseType(Archive *fout, TypeInfo *tyinfo)
 	typmodin = PQgetvalue(res, 0, PQfnumber(res, "typmodin"));
 	typmodout = PQgetvalue(res, 0, PQfnumber(res, "typmodout"));
 	typanalyze = PQgetvalue(res, 0, PQfnumber(res, "typanalyze"));
-	typinputoid = atooid(PQgetvalue(res, 0, PQfnumber(res, "typinputoid")));
-	typoutputoid = atooid(PQgetvalue(res, 0, PQfnumber(res, "typoutputoid")));
 	typreceiveoid = atooid(PQgetvalue(res, 0, PQfnumber(res, "typreceiveoid")));
 	typsendoid = atooid(PQgetvalue(res, 0, PQfnumber(res, "typsendoid")));
 	typmodinoid = atooid(PQgetvalue(res, 0, PQfnumber(res, "typmodinoid")));
@@ -10218,10 +10196,8 @@ dumpCollation(Archive *fout, CollInfo *collinfo)
 	PQExpBuffer labelq;
 	PGresult   *res;
 	int			ntups;
-	int			i_collname;
 	int			i_collcollate;
 	int			i_collctype;
-	const char *collname;
 	const char *collcollate;
 	const char *collctype;
 
@@ -10238,7 +10214,7 @@ dumpCollation(Archive *fout, CollInfo *collinfo)
 	selectSourceSchema(collinfo->dobj.namespace->dobj.name);
 
 	/* Get conversion-specific details */
-	appendPQExpBuffer(query, "SELECT collname, "
+	appendPQExpBuffer(query, "SELECT "
 					  "collcollate, "
 					  "collctype "
 					  "FROM pg_catalog.pg_collation c "
@@ -10259,11 +10235,9 @@ dumpCollation(Archive *fout, CollInfo *collinfo)
 		exit_nicely();
 	}
 
-	i_collname = PQfnumber(res, "collname");
 	i_collcollate = PQfnumber(res, "collcollate");
 	i_collctype = PQfnumber(res, "collctype");
 
-	collname = PQgetvalue(res, 0, i_collname);
 	collcollate = PQgetvalue(res, 0, i_collcollate);
 	collctype = PQgetvalue(res, 0, i_collctype);
 
@@ -10323,12 +10297,10 @@ dumpConversion(Archive *fout, ConvInfo *convinfo)
 	PQExpBuffer labelq;
 	PGresult   *res;
 	int			ntups;
-	int			i_conname;
 	int			i_conforencoding;
 	int			i_contoencoding;
 	int			i_conproc;
 	int			i_condefault;
-	const char *conname;
 	const char *conforencoding;
 	const char *contoencoding;
 	const char *conproc;
@@ -10347,7 +10319,7 @@ dumpConversion(Archive *fout, ConvInfo *convinfo)
 	selectSourceSchema(convinfo->dobj.namespace->dobj.name);
 
 	/* Get conversion-specific details */
-	appendPQExpBuffer(query, "SELECT conname, "
+	appendPQExpBuffer(query, "SELECT "
 		 "pg_catalog.pg_encoding_to_char(conforencoding) AS conforencoding, "
 		   "pg_catalog.pg_encoding_to_char(contoencoding) AS contoencoding, "
 					  "conproc, condefault "
@@ -10369,13 +10341,11 @@ dumpConversion(Archive *fout, ConvInfo *convinfo)
 		exit_nicely();
 	}
 
-	i_conname = PQfnumber(res, "conname");
 	i_conforencoding = PQfnumber(res, "conforencoding");
 	i_contoencoding = PQfnumber(res, "contoencoding");
 	i_conproc = PQfnumber(res, "conproc");
 	i_condefault = PQfnumber(res, "condefault");
 
-	conname = PQgetvalue(res, 0, i_conname);
 	conforencoding = PQgetvalue(res, 0, i_conforencoding);
 	contoencoding = PQgetvalue(res, 0, i_contoencoding);
 	conproc = PQgetvalue(res, 0, i_conproc);
@@ -11858,7 +11828,6 @@ dumpTableSchema(Archive *fout, TableInfo *tbinfo)
 	char	   *storage;
 	int			j,
 				k;
-	bool		toast_set = false;
 	char	   *srvname;
 	char	   *ftoptions = NULL;
 
@@ -11866,7 +11835,7 @@ dumpTableSchema(Archive *fout, TableInfo *tbinfo)
 	selectSourceSchema(tbinfo->dobj.namespace->dobj.name);
 
 	if (binary_upgrade)
-		toast_set = binary_upgrade_set_type_oids_by_rel_oid(q,
+		binary_upgrade_set_type_oids_by_rel_oid(q,
 													 tbinfo->dobj.catId.oid);
 
 	/* Is it a table or a view? */

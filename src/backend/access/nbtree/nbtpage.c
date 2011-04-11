@@ -466,7 +466,6 @@ _bt_log_reuse_page(Relation rel, BlockNumber blkno, TransactionId latestRemovedX
 
 	/* XLOG stuff */
 	{
-		XLogRecPtr	recptr;
 		XLogRecData rdata[1];
 		xl_btree_reuse_page xlrec_reuse;
 
@@ -478,7 +477,7 @@ _bt_log_reuse_page(Relation rel, BlockNumber blkno, TransactionId latestRemovedX
 		rdata[0].buffer = InvalidBuffer;
 		rdata[0].next = NULL;
 
-		recptr = XLogInsert(RM_BTREE_ID, XLOG_BTREE_REUSE_PAGE, rdata);
+		XLogInsert(RM_BTREE_ID, XLOG_BTREE_REUSE_PAGE, rdata);
 
 		/*
 		 * We don't do PageSetLSN or PageSetTLI here because we're about

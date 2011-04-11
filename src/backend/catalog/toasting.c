@@ -118,7 +118,6 @@ create_toast_table(Relation rel, Oid toastOid, Oid toastIndexOid, Datum reloptio
 	Relation	toast_rel;
 	Relation	class_rel;
 	Oid			toast_relid;
-	Oid			toast_idxid;
 	Oid			toast_typid = InvalidOid;
 	Oid			namespaceid;
 	char		toast_relname[NAMEDATALEN];
@@ -274,7 +273,7 @@ create_toast_table(Relation rel, Oid toastOid, Oid toastIndexOid, Datum reloptio
 	coloptions[0] = 0;
 	coloptions[1] = 0;
 
-	toast_idxid = index_create(toast_rel, toast_idxname, toastIndexOid,
+	index_create(toast_rel, toast_idxname, toastIndexOid,
 							   indexInfo,
 							   list_make2("chunk_id", "chunk_seq"),
 							   BTREE_AM_OID,

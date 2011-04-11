@@ -92,8 +92,7 @@ vacuum(VacuumStmt *vacstmt, Oid relid, bool do_toast,
 	   BufferAccessStrategy bstrategy, bool for_wraparound, bool isTopLevel)
 {
 	const char *stmttype;
-	volatile bool all_rels,
-				in_outer_xact,
+	volatile bool in_outer_xact,
 				use_own_xacts;
 	List	   *relations;
 
@@ -152,9 +151,6 @@ vacuum(VacuumStmt *vacstmt, Oid relid, bool do_toast,
 		MemoryContextSwitchTo(old_context);
 	}
 	vac_strategy = bstrategy;
-
-	/* Remember whether we are processing everything in the DB */
-	all_rels = (!OidIsValid(relid) && vacstmt->relation == NULL);
 
 	/*
 	 * Build list of relations to process, unless caller gave us one. (If we

@@ -2523,9 +2523,8 @@ transformColumnType(CreateStmtContext *cxt, ColumnDef *column)
 	if (column->collClause)
 	{
 		Form_pg_type typtup = (Form_pg_type) GETSTRUCT(ctype);
-		Oid			collOid;
 
-		collOid = LookupCollation(cxt->pstate,
+		LookupCollation(cxt->pstate,
 								  column->collClause->collname,
 								  column->collClause->location);
 		/* Complain if COLLATE is applied to an uncollatable type */

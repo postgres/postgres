@@ -867,7 +867,6 @@ restore(char *result, float val, int n)
 		'0', '0', '0', '0', '\0'
 	};
 	char	   *p;
-	char	   *mant;
 	int			exp;
 	int			i,
 				dp,
@@ -893,7 +892,7 @@ restore(char *result, float val, int n)
 	*p = '\0';
 
 	/* get the exponent */
-	mant = (char *) strtok(strdup(result), "e");
+	strtok(strdup(result), "e");
 	exp = atoi(strtok(NULL, "e"));
 
 	if (exp == 0)

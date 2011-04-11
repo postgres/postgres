@@ -1269,7 +1269,6 @@ show_plan_tlist(PlanState *planstate, List *ancestors, ExplainState *es)
 	List	   *result = NIL;
 	bool		useprefix;
 	ListCell   *lc;
-	int			i;
 
 	/* No work if empty tlist (this occurs eg in bitmap indexscans) */
 	if (plan->targetlist == NIL)
@@ -1290,7 +1289,6 @@ show_plan_tlist(PlanState *planstate, List *ancestors, ExplainState *es)
 	useprefix = list_length(es->rtable) > 1;
 
 	/* Deparse each result column (we now include resjunk ones) */
-	i = 0;
 	foreach(lc, plan->targetlist)
 	{
 		TargetEntry *tle = (TargetEntry *) lfirst(lc);

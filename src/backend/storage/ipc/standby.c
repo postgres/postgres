@@ -334,7 +334,6 @@ static void
 ResolveRecoveryConflictWithLock(Oid dbOid, Oid relOid)
 {
 	VirtualTransactionId *backends;
-	bool		report_memory_error = false;
 	bool		lock_acquired = false;
 	int			num_attempts = 0;
 	LOCKTAG		locktag;
@@ -354,11 +353,8 @@ ResolveRecoveryConflictWithLock(Oid dbOid, Oid relOid)
 		if (++num_attempts < 3)
 			backends = GetLockConflicts(&locktag, AccessExclusiveLock);
 		else
-		{
 			backends = GetConflictingVirtualXIDs(InvalidTransactionId,
 												 InvalidOid);
-			report_memory_error = true;
-		}
 
 		ResolveRecoveryConflictWithVirtualXIDs(backends,
 											 PROCSIG_RECOVERY_CONFLICT_LOCK);

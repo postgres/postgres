@@ -2156,14 +2156,12 @@ DropConfigurationMapping(AlterTSConfigurationStmt *stmt,
 	HeapTuple	maptup;
 	int			i;
 	Oid			prsId;
-	int		   *tokens,
-				ntoken;
+	int		   *tokens;
 	ListCell   *c;
 
 	prsId = ((Form_pg_ts_config) GETSTRUCT(tup))->cfgparser;
 
 	tokens = getTokenTypes(prsId, stmt->tokentype);
-	ntoken = list_length(stmt->tokentype);
 
 	i = 0;
 	foreach(c, stmt->tokentype)

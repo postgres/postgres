@@ -341,8 +341,7 @@ ean2isn(ean13 ean, bool errorOK, ean13 *result, enum isn_type accept)
 	enum isn_type type = INVALID;
 
 	char		buf[MAXEAN13LEN + 1];
-	char	   *firstdig,
-			   *aux;
+	char	   *aux;
 	unsigned	digval;
 	unsigned	search;
 	ean13		ret = ean;
@@ -354,7 +353,7 @@ ean2isn(ean13 ean, bool errorOK, ean13 *result, enum isn_type accept)
 
 	/* convert the number */
 	search = 0;
-	firstdig = aux = buf + 13;
+	aux = buf + 13;
 	*aux = '\0';				/* terminate string; aux points to last digit */
 	do
 	{
@@ -528,8 +527,7 @@ ean2string(ean13 ean, bool errorOK, char *result, bool shortType)
 	const unsigned (*TABLE_index)[2];
 	enum isn_type type = INVALID;
 
-	char	   *firstdig,
-			   *aux;
+	char	   *aux;
 	unsigned	digval;
 	unsigned	search;
 	char		valid = '\0';	/* was the number initially written with a
@@ -546,7 +544,7 @@ ean2string(ean13 ean, bool errorOK, char *result, bool shortType)
 
 	/* convert the number */
 	search = 0;
-	firstdig = aux = result + MAXEAN13LEN;
+	aux = result + MAXEAN13LEN;
 	*aux = '\0';				/* terminate string; aux points to last digit */
 	*--aux = valid;				/* append '!' for numbers with invalid but
 								 * corrected check digit */

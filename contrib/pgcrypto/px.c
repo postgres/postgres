@@ -162,14 +162,12 @@ combo_init(PX_Combo *cx, const uint8 *key, unsigned klen,
 		   const uint8 *iv, unsigned ivlen)
 {
 	int			err;
-	unsigned	bs,
-				ks,
+	unsigned	ks,
 				ivs;
 	PX_Cipher  *c = cx->cipher;
 	uint8	   *ivbuf = NULL;
 	uint8	   *keybuf;
 
-	bs = px_cipher_block_size(c);
 	ks = px_cipher_key_size(c);
 
 	ivs = px_cipher_iv_size(c);
@@ -205,7 +203,6 @@ combo_encrypt(PX_Combo *cx, const uint8 *data, unsigned dlen,
 	int			err = 0;
 	uint8	   *bbuf;
 	unsigned	bs,
-				maxlen,
 				bpos,
 				i,
 				pad;
@@ -213,7 +210,6 @@ combo_encrypt(PX_Combo *cx, const uint8 *data, unsigned dlen,
 	PX_Cipher  *c = cx->cipher;
 
 	bbuf = NULL;
-	maxlen = *rlen;
 	bs = px_cipher_block_size(c);
 
 	/* encrypt */

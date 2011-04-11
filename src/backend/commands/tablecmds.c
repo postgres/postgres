@@ -8164,14 +8164,12 @@ MergeAttributesIntoExisting(Relation child_rel, Relation parent_rel)
 	AttrNumber	parent_attno;
 	int			parent_natts;
 	TupleDesc	tupleDesc;
-	TupleConstr *constr;
 	HeapTuple	tuple;
 
 	attrrel = heap_open(AttributeRelationId, RowExclusiveLock);
 
 	tupleDesc = RelationGetDescr(parent_rel);
 	parent_natts = tupleDesc->natts;
-	constr = tupleDesc->constr;
 
 	for (parent_attno = 1; parent_attno <= parent_natts; parent_attno++)
 	{

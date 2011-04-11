@@ -764,11 +764,8 @@ ECPGdescribe(int line, int compat, bool input, const char *connection_name, cons
 
 	for (;;)
 	{
-		enum ECPGttype type,
-					dummy_type;
-		void	   *ptr,
-				   *dummy_ptr;
-		long		dummy;
+		enum ECPGttype type;
+		void	   *ptr;
 
 		/* variable type */
 		type = va_arg(args, enum ECPGttype);
@@ -778,16 +775,16 @@ ECPGdescribe(int line, int compat, bool input, const char *connection_name, cons
 
 		/* rest of variable parameters */
 		ptr = va_arg(args, void *);
-		dummy = va_arg(args, long);
-		dummy = va_arg(args, long);
-		dummy = va_arg(args, long);
+		va_arg(args, long);		/* skip args */
+		va_arg(args, long);
+		va_arg(args, long);
 
 		/* variable indicator */
-		dummy_type = va_arg(args, enum ECPGttype);
-		dummy_ptr = va_arg(args, void *);
-		dummy = va_arg(args, long);
-		dummy = va_arg(args, long);
-		dummy = va_arg(args, long);
+		va_arg(args, enum ECPGttype);
+		va_arg(args, void *);	/* skip args */
+		va_arg(args, long);
+		va_arg(args, long);
+		va_arg(args, long);
 
 		switch (type)
 		{

@@ -1384,7 +1384,6 @@ char *
 psql_scan_slash_command(PsqlScanState state)
 {
 	PQExpBufferData mybuf;
-	int			lexresult;
 
 	/* Must be scanning already */
 	psql_assert(state->scanbufhandle);
@@ -1404,7 +1403,7 @@ psql_scan_slash_command(PsqlScanState state)
 	BEGIN(xslashcmd);
 
 	/* And lex. */
-	lexresult = yylex();
+	yylex();
 
 	/* There are no possible errors in this lex state... */
 
@@ -1641,8 +1640,6 @@ psql_scan_slash_option(PsqlScanState state,
 void
 psql_scan_slash_command_end(PsqlScanState state)
 {
-	int			lexresult;
-
 	/* Must be scanning already */
 	psql_assert(state->scanbufhandle);
 
@@ -1658,7 +1655,7 @@ psql_scan_slash_command_end(PsqlScanState state)
 	BEGIN(xslashend);
 
 	/* And lex. */
-	lexresult = yylex();
+	yylex();
 
 	/* There are no possible errors in this lex state... */
 }

@@ -957,15 +957,14 @@ static void
 pg_GSS_error(int severity, char *errmsg, OM_uint32 maj_stat, OM_uint32 min_stat)
 {
 	gss_buffer_desc gmsg;
-	OM_uint32	lmaj_s,
-				lmin_s,
+	OM_uint32	lmin_s,
 				msg_ctx;
 	char		msg_major[128],
 				msg_minor[128];
 
 	/* Fetch major status message */
 	msg_ctx = 0;
-	lmaj_s = gss_display_status(&lmin_s, maj_stat, GSS_C_GSS_CODE,
+	gss_display_status(&lmin_s, maj_stat, GSS_C_GSS_CODE,
 								GSS_C_NO_OID, &msg_ctx, &gmsg);
 	strlcpy(msg_major, gmsg.value, sizeof(msg_major));
 	gss_release_buffer(&lmin_s, &gmsg);
@@ -981,7 +980,7 @@ pg_GSS_error(int severity, char *errmsg, OM_uint32 maj_stat, OM_uint32 min_stat)
 
 	/* Fetch mechanism minor status message */
 	msg_ctx = 0;
-	lmaj_s = gss_display_status(&lmin_s, min_stat, GSS_C_MECH_CODE,
+	gss_display_status(&lmin_s, min_stat, GSS_C_MECH_CODE,
 								GSS_C_NO_OID, &msg_ctx, &gmsg);
 	strlcpy(msg_minor, gmsg.value, sizeof(msg_minor));
 	gss_release_buffer(&lmin_s, &gmsg);

@@ -901,13 +901,12 @@ void
 mdimmedsync(SMgrRelation reln, ForkNumber forknum)
 {
 	MdfdVec    *v;
-	BlockNumber curnblk;
 
 	/*
 	 * NOTE: mdnblocks makes sure we have opened all active segments, so that
 	 * fsync loop will get them all!
 	 */
-	curnblk = mdnblocks(reln, forknum);
+	mdnblocks(reln, forknum);
 
 	v = mdopen(reln, forknum, EXTENSION_FAIL);
 

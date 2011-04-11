@@ -175,7 +175,6 @@ GetForeignServerByName(const char *srvname, bool missing_ok)
 UserMapping *
 GetUserMapping(Oid userid, Oid serverid)
 {
-	Form_pg_user_mapping umform;
 	Datum		datum;
 	HeapTuple	tp;
 	bool		isnull;
@@ -198,8 +197,6 @@ GetUserMapping(Oid userid, Oid serverid)
 				(errcode(ERRCODE_UNDEFINED_OBJECT),
 				 errmsg("user mapping not found for \"%s\"",
 						MappingUserName(userid))));
-
-	umform = (Form_pg_user_mapping) GETSTRUCT(tp);
 
 	um = (UserMapping *) palloc(sizeof(UserMapping));
 	um->userid = userid;

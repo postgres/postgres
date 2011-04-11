@@ -255,7 +255,6 @@ RI_FKey_check(PG_FUNCTION_ARGS)
 	Relation	fk_rel;
 	Relation	pk_rel;
 	HeapTuple	new_row;
-	HeapTuple	old_row;
 	Buffer		new_row_buf;
 	RI_QueryKey qkey;
 	SPIPlanPtr	qplan;
@@ -274,13 +273,11 @@ RI_FKey_check(PG_FUNCTION_ARGS)
 
 	if (TRIGGER_FIRED_BY_UPDATE(trigdata->tg_event))
 	{
-		old_row = trigdata->tg_trigtuple;
 		new_row = trigdata->tg_newtuple;
 		new_row_buf = trigdata->tg_newtuplebuf;
 	}
 	else
 	{
-		old_row = NULL;
 		new_row = trigdata->tg_trigtuple;
 		new_row_buf = trigdata->tg_trigtuplebuf;
 	}

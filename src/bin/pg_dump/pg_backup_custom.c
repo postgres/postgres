@@ -237,7 +237,6 @@ _WriteExtraToc(ArchiveHandle *AH, TocEntry *te)
 static void
 _ReadExtraToc(ArchiveHandle *AH, TocEntry *te)
 {
-	int			junk;
 	lclTocEntry *ctx = (lclTocEntry *) te->formatData;
 
 	if (ctx == NULL)
@@ -253,7 +252,7 @@ _ReadExtraToc(ArchiveHandle *AH, TocEntry *te)
 	 * dump it at all.
 	 */
 	if (AH->version < K_VERS_1_7)
-		junk = ReadInt(AH);
+		ReadInt(AH);
 }
 
 /*
