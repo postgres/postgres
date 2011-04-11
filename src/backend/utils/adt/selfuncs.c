@@ -1181,9 +1181,14 @@ patternsel(PG_FUNCTION_ARGS, Pattern_Type ptype, bool negate)
 			return result;
 	}
 
-	/* divide pattern into fixed prefix and remainder */
+	/*
+	 * Divide pattern into fixed prefix and remainder.  XXX we have to assume
+	 * default collation here, because we don't have access to the actual
+	 * input collation for the operator.  FIXME ...
+	 */
 	patt = (Const *) other;
-	pstatus = pattern_fixed_prefix(patt, ptype, &prefix, &rest);
+	pstatus = pattern_fixed_prefix(patt, ptype, DEFAULT_COLLATION_OID,
+								   &prefix, &rest);
 
 	/*
 	 * If necessary, coerce the prefix constant to the right type. (The "rest"
@@ -4756,6 +4761,29 @@ get_actual_variable_range(PlannerInfo *root, VariableStatData *vardata,
  */
 
 /*
+ * Check whether char is a letter (and, hence, subject to case-folding)
+ *
+ * In multibyte character sets, we can't use isalpha, and it does not seem
+ * worth trying to convert to wchar_t to use iswalpha.  Instead, just assume
+ * any multibyte char is potentially case-varying.
+ */
+static int
+pattern_char_isalpha(char c, bool is_multibyte,
+					 pg_locale_t locale, bool locale_is_c)
+{
+	if (locale_is_c)
+		return (c >= 'A' && c <= 'Z') || (c >= 'a' && c <= 'z');
+	else if (is_multibyte && IS_HIGHBIT_SET(c))
+		return true;
+#ifdef HAVE_LOCALE_T
+	else if (locale)
+		return isalpha_l((unsigned char) c, locale);
+#endif
+	else
+		return isalpha((unsigned char) c);
+}
+
+/*
  * Extract the fixed prefix, if any, for a pattern.
  *
  * *prefix is set to a palloc'd prefix string (in the form of a Const node),
@@ -4769,7 +4797,7 @@ get_actual_variable_range(PlannerInfo *root, VariableStatData *vardata,
  */
 
 static Pattern_Prefix_Status
-like_fixed_prefix(Const *patt_const, bool case_insensitive,
+like_fixed_prefix(Const *patt_const, bool case_insensitive, Oid collation,
 				  Const **prefix_const, Const **rest_const)
 {
 	char	   *match;
@@ -4780,14 +4808,38 @@ like_fixed_prefix(Const *patt_const, bool case_insensitive,
 	int			pos,
 				match_pos;
 	bool		is_multibyte = (pg_database_encoding_max_length() > 1);
+	pg_locale_t	locale = 0;
+	bool		locale_is_c = false;
 
 	/* the right-hand const is type text or bytea */
 	Assert(typeid == BYTEAOID || typeid == TEXTOID);
 
-	if (typeid == BYTEAOID && case_insensitive)
-		ereport(ERROR,
-				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+	if (case_insensitive)
+	{
+		if (typeid == BYTEAOID)
+			ereport(ERROR,
+					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 		   errmsg("case insensitive matching not supported on type bytea")));
+
+		/* If case-insensitive, we need locale info */
+		if (lc_ctype_is_c(collation))
+			locale_is_c = true;
+		else if (collation != DEFAULT_COLLATION_OID)
+		{
+			if (!OidIsValid(collation))
+			{
+				/*
+				 * This typically means that the parser could not resolve a
+				 * conflict of implicit collations, so report it that way.
+				 */
+				ereport(ERROR,
+						(errcode(ERRCODE_INDETERMINATE_COLLATION),
+						 errmsg("could not determine which collation to use for ILIKE"),
+						 errhint("Use the COLLATE clause to set the collation explicitly.")));
+			}
+			locale = pg_newlocale_from_collation(collation);
+		}
+	}
 
 	if (typeid != BYTEAOID)
 	{
@@ -4822,23 +4874,11 @@ like_fixed_prefix(Const *patt_const, bool case_insensitive,
 				break;
 		}
 
-		/*
-		 * XXX In multibyte character sets, we can't trust isalpha, so assume
-		 * any multibyte char is potentially case-varying.
-		 */
-		if (case_insensitive)
-		{
-			if (is_multibyte && (unsigned char) patt[pos] >= 0x80)
-				break;
-			if (isalpha((unsigned char) patt[pos]))
-				break;
-		}
+		/* Stop if case-varying character (it's sort of a wildcard) */
+		if (case_insensitive &&
+			pattern_char_isalpha(patt[pos], is_multibyte, locale, locale_is_c))
+			break;
 
-		/*
-		 * NOTE: this code used to think that %% meant a literal %, but
-		 * textlike() itself does not think that, and the SQL92 spec doesn't
-		 * say any such thing either.
-		 */
 		match[match_pos++] = patt[pos];
 	}
 
@@ -4870,7 +4910,7 @@ like_fixed_prefix(Const *patt_const, bool case_insensitive,
 }
 
 static Pattern_Prefix_Status
-regex_fixed_prefix(Const *patt_const, bool case_insensitive,
+regex_fixed_prefix(Const *patt_const, bool case_insensitive, Oid collation,
 				   Const **prefix_const, Const **rest_const)
 {
 	char	   *match;
@@ -4883,6 +4923,8 @@ regex_fixed_prefix(Const *patt_const, bool case_insensitive,
 	char	   *rest;
 	Oid			typeid = patt_const->consttype;
 	bool		is_multibyte = (pg_database_encoding_max_length() > 1);
+	pg_locale_t	locale = 0;
+	bool		locale_is_c = false;
 
 	/*
 	 * Should be unnecessary, there are no bytea regex operators defined. As
@@ -4893,6 +4935,28 @@ regex_fixed_prefix(Const *patt_const, bool case_insensitive,
 		ereport(ERROR,
 				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 		 errmsg("regular-expression matching not supported on type bytea")));
+
+	if (case_insensitive)
+	{
+		/* If case-insensitive, we need locale info */
+		if (lc_ctype_is_c(collation))
+			locale_is_c = true;
+		else if (collation != DEFAULT_COLLATION_OID)
+		{
+			if (!OidIsValid(collation))
+			{
+				/*
+				 * This typically means that the parser could not resolve a
+				 * conflict of implicit collations, so report it that way.
+				 */
+				ereport(ERROR,
+						(errcode(ERRCODE_INDETERMINATE_COLLATION),
+						 errmsg("could not determine which collation to use for regular expression"),
+						 errhint("Use the COLLATE clause to set the collation explicitly.")));
+			}
+			locale = pg_newlocale_from_collation(collation);
+		}
+	}
 
 	/* the right-hand const is type text for all of these */
 	patt = TextDatumGetCString(patt_const->constvalue);
@@ -4969,17 +5033,10 @@ regex_fixed_prefix(Const *patt_const, bool case_insensitive,
 			patt[pos] == '$')
 			break;
 
-		/*
-		 * XXX In multibyte character sets, we can't trust isalpha, so assume
-		 * any multibyte char is potentially case-varying.
-		 */
-		if (case_insensitive)
-		{
-			if (is_multibyte && (unsigned char) patt[pos] >= 0x80)
-				break;
-			if (isalpha((unsigned char) patt[pos]))
-				break;
-		}
+		/* Stop if case-varying character (it's sort of a wildcard) */
+		if (case_insensitive &&
+			pattern_char_isalpha(patt[pos], is_multibyte, locale, locale_is_c))
+			break;
 
 		/*
 		 * Check for quantifiers.  Except for +, this means the preceding
@@ -5004,7 +5061,7 @@ regex_fixed_prefix(Const *patt_const, bool case_insensitive,
 		 * backslash followed by alphanumeric is an escape, not a quoted
 		 * character.  Must treat it as having multiple possible matches.
 		 * Note: since only ASCII alphanumerics are escapes, we don't have to
-		 * be paranoid about multibyte here.
+		 * be paranoid about multibyte or collations here.
 		 */
 		if (patt[pos] == '\\')
 		{
@@ -5056,7 +5113,7 @@ regex_fixed_prefix(Const *patt_const, bool case_insensitive,
 }
 
 Pattern_Prefix_Status
-pattern_fixed_prefix(Const *patt, Pattern_Type ptype,
+pattern_fixed_prefix(Const *patt, Pattern_Type ptype, Oid collation,
 					 Const **prefix, Const **rest)
 {
 	Pattern_Prefix_Status result;
@@ -5064,16 +5121,16 @@ pattern_fixed_prefix(Const *patt, Pattern_Type ptype,
 	switch (ptype)
 	{
 		case Pattern_Type_Like:
-			result = like_fixed_prefix(patt, false, prefix, rest);
+			result = like_fixed_prefix(patt, false, collation, prefix, rest);
 			break;
 		case Pattern_Type_Like_IC:
-			result = like_fixed_prefix(patt, true, prefix, rest);
+			result = like_fixed_prefix(patt, true, collation, prefix, rest);
 			break;
 		case Pattern_Type_Regex:
-			result = regex_fixed_prefix(patt, false, prefix, rest);
+			result = regex_fixed_prefix(patt, false, collation, prefix, rest);
 			break;
 		case Pattern_Type_Regex_IC:
-			result = regex_fixed_prefix(patt, true, prefix, rest);
+			result = regex_fixed_prefix(patt, true, collation, prefix, rest);
 			break;
 		default:
 			elog(ERROR, "unrecognized ptype: %d", (int) ptype);
