@@ -138,11 +138,12 @@ typedef struct MergeJoinClauseData
 
 	/*
 	 * The comparison strategy in use, and the lookup info to let us call the
-	 * btree comparison support function.
+	 * btree comparison support function, and the collation to use.
 	 */
 	bool		reverse;		/* if true, negate the cmpfn's output */
 	bool		nulls_first;	/* if true, nulls sort low */
 	FmgrInfo	cmpfinfo;
+	Oid			collation;
 }	MergeJoinClauseData;
 
 /* Result type for MJEvalOuterValues and MJEvalInnerValues */
@@ -242,7 +243,6 @@ MJExamineQuals(List *mergeclauses,
 
 		/* Set up the fmgr lookup information */
 		fmgr_info(cmpproc, &(clause->cmpfinfo));
-		fmgr_info_set_collation(collation, &(clause->cmpfinfo));
 
 		/* Fill the additional comparison-strategy flags */
 		if (opstrategy == BTLessStrategyNumber)
@@ -253,6 +253,9 @@ MJExamineQuals(List *mergeclauses,
 			elog(ERROR, "unsupported mergejoin strategy %d", opstrategy);
 
 		clause->nulls_first = nulls_first;
+
+		/* ... and the collation too */
+		clause->collation = collation;
 
 		iClause++;
 	}
@@ -429,7 +432,7 @@ MJCompare(MergeJoinState *mergestate)
 		 * OK to call the comparison function.
 		 */
 		InitFunctionCallInfoData(fcinfo, &(clause->cmpfinfo), 2,
-								 NULL, NULL);
+								 clause->collation, NULL, NULL);
 		fcinfo.arg[0] = clause->ldatum;
 		fcinfo.arg[1] = clause->rdatum;
 		fcinfo.argnull[0] = false;

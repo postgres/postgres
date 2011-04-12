@@ -70,8 +70,7 @@ _bt_mkscankey(Relation rel, IndexTuple itup)
 
 		/*
 		 * We can use the cached (default) support procs since no cross-type
-		 * comparison can be needed.  The cached support proc entries have the
-		 * right collation for the index, too.
+		 * comparison can be needed.
 		 */
 		procinfo = index_getprocinfo(rel, i + 1, BTORDER_PROC);
 		arg = index_getattr(itup, i + 1, itupdesc, &null);
@@ -81,7 +80,7 @@ _bt_mkscankey(Relation rel, IndexTuple itup)
 									   (AttrNumber) (i + 1),
 									   InvalidStrategy,
 									   InvalidOid,
-									   procinfo->fn_collation,
+									   rel->rd_indcollation[i],
 									   procinfo,
 									   arg);
 	}
@@ -120,8 +119,7 @@ _bt_mkscankey_nodata(Relation rel)
 
 		/*
 		 * We can use the cached (default) support procs since no cross-type
-		 * comparison can be needed.  The cached support proc entries have the
-		 * right collation for the index, too.
+		 * comparison can be needed.
 		 */
 		procinfo = index_getprocinfo(rel, i + 1, BTORDER_PROC);
 		flags = SK_ISNULL | (indoption[i] << SK_BT_INDOPTION_SHIFT);
@@ -130,7 +128,7 @@ _bt_mkscankey_nodata(Relation rel)
 									   (AttrNumber) (i + 1),
 									   InvalidStrategy,
 									   InvalidOid,
-									   procinfo->fn_collation,
+									   rel->rd_indcollation[i],
 									   procinfo,
 									   (Datum) 0);
 	}
@@ -604,9 +602,10 @@ _bt_compare_scankey_args(IndexScanDesc scan, ScanKey op,
 	 */
 	if (lefttype == opcintype && righttype == optype)
 	{
-		*result = DatumGetBool(FunctionCall2(&op->sk_func,
-											 leftarg->sk_argument,
-											 rightarg->sk_argument));
+		*result = DatumGetBool(FunctionCall2Coll(&op->sk_func,
+												 op->sk_collation,
+												 leftarg->sk_argument,
+												 rightarg->sk_argument));
 		return true;
 	}
 
@@ -633,9 +632,10 @@ _bt_compare_scankey_args(IndexScanDesc scan, ScanKey op,
 
 		if (RegProcedureIsValid(cmp_proc))
 		{
-			*result = DatumGetBool(OidFunctionCall2(cmp_proc,
-													leftarg->sk_argument,
-													rightarg->sk_argument));
+			*result = DatumGetBool(OidFunctionCall2Coll(cmp_proc,
+														op->sk_collation,
+														leftarg->sk_argument,
+														rightarg->sk_argument));
 			return true;
 		}
 	}
@@ -689,6 +689,10 @@ _bt_fix_scankey_strategy(ScanKey skey, int16 *indoption)
 	 * Likewise, "x IS NOT NULL" is supported.	We treat that as either "less
 	 * than NULL" in a NULLS LAST index, or "greater than NULL" in a NULLS
 	 * FIRST index.
+	 *
+	 * Note: someday we might have to fill in sk_collation from the index
+	 * column's collation.  At the moment this is a non-issue because we'll
+	 * never actually call the comparison operator on a NULL.
 	 */
 	if (skey->sk_flags & SK_ISNULL)
 	{
@@ -703,6 +707,7 @@ _bt_fix_scankey_strategy(ScanKey skey, int16 *indoption)
 		{
 			skey->sk_strategy = BTEqualStrategyNumber;
 			skey->sk_subtype = InvalidOid;
+			skey->sk_collation = InvalidOid;
 		}
 		else if (skey->sk_flags & SK_SEARCHNOTNULL)
 		{
@@ -711,6 +716,7 @@ _bt_fix_scankey_strategy(ScanKey skey, int16 *indoption)
 			else
 				skey->sk_strategy = BTLessStrategyNumber;
 			skey->sk_subtype = InvalidOid;
+			skey->sk_collation = InvalidOid;
 		}
 		else
 		{
@@ -976,7 +982,8 @@ _bt_checkkeys(IndexScanDesc scan,
 			return false;
 		}
 
-		test = FunctionCall2(&key->sk_func, datum, key->sk_argument);
+		test = FunctionCall2Coll(&key->sk_func, key->sk_collation,
+								 datum, key->sk_argument);
 
 		if (!DatumGetBool(test))
 		{
@@ -1099,9 +1106,10 @@ _bt_check_rowcompare(ScanKey skey, IndexTuple tuple, TupleDesc tupdesc,
 		}
 
 		/* Perform the test --- three-way comparison not bool operator */
-		cmpresult = DatumGetInt32(FunctionCall2(&subkey->sk_func,
-												datum,
-												subkey->sk_argument));
+		cmpresult = DatumGetInt32(FunctionCall2Coll(&subkey->sk_func,
+													subkey->sk_collation,
+													datum,
+													subkey->sk_argument));
 
 		if (subkey->sk_flags & SK_BT_DESC)
 			cmpresult = -cmpresult;

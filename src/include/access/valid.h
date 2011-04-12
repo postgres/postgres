@@ -54,8 +54,9 @@ do \
 			break; \
 		} \
  \
-		__test = FunctionCall2(&__cur_keys->sk_func, \
-							   __atp, __cur_keys->sk_argument); \
+		__test = FunctionCall2Coll(&__cur_keys->sk_func, \
+								   __cur_keys->sk_collation, \
+								   __atp, __cur_keys->sk_argument); \
  \
 		if (!DatumGetBool(__test)) \
 		{ \

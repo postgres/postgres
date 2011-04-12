@@ -348,7 +348,7 @@ do_compile(FunctionCallInfo fcinfo,
 	function->fn_xmin = HeapTupleHeaderGetXmin(procTup->t_data);
 	function->fn_tid = procTup->t_self;
 	function->fn_is_trigger = is_trigger;
-	function->fn_input_collation = fcinfo->flinfo->fn_collation;
+	function->fn_input_collation = fcinfo->fncollation;
 	function->fn_cxt = func_cxt;
 	function->out_param_varno = -1;		/* set up for no OUT param */
 	function->resolve_option = plpgsql_variable_conflict;
@@ -2331,7 +2331,7 @@ compute_function_hashkey(FunctionCallInfo fcinfo,
 	}
 
 	/* get input collation, if known */
-	hashkey->inputCollation = fcinfo->flinfo->fn_collation;
+	hashkey->inputCollation = fcinfo->fncollation;
 
 	if (procStruct->pronargs > 0)
 	{

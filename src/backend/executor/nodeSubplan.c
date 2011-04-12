@@ -831,8 +831,6 @@ ExecInitSubPlan(SubPlan *subplan, PlanState *parent)
 
 			/* Lookup the equality function (potentially cross-type) */
 			fmgr_info(opexpr->opfuncid, &sstate->cur_eq_funcs[i - 1]);
-			fmgr_info_set_collation(opexpr->inputcollid,
-									&sstate->cur_eq_funcs[i - 1]);
 			fmgr_info_set_expr((Node *) opexpr, &sstate->cur_eq_funcs[i - 1]);
 
 			/* Look up the equality function for the RHS type */
@@ -841,8 +839,6 @@ ExecInitSubPlan(SubPlan *subplan, PlanState *parent)
 				elog(ERROR, "could not find compatible hash operator for operator %u",
 					 opexpr->opno);
 			fmgr_info(get_opcode(rhs_eq_oper), &sstate->tab_eq_funcs[i - 1]);
-			fmgr_info_set_collation(opexpr->inputcollid,
-									&sstate->tab_eq_funcs[i - 1]);
 
 			/* Lookup the associated hash functions */
 			if (!get_op_hash_functions(opexpr->opno,

@@ -96,6 +96,11 @@ get_ts_parser_func(DefElem *defel, int attnum)
 			break;
 		case Anum_pg_ts_parser_prslextype:
 			nargs = 1;
+			/*
+			 * Note: because the lextype method returns type internal, it must
+			 * have an internal-type argument for security reasons.  The
+			 * argument is not actually used, but is just passed as a zero.
+			 */
 			break;
 		default:
 			/* should not be here */
@@ -1947,7 +1952,7 @@ getTokenTypes(Oid prsId, List *tokennames)
 		elog(ERROR, "method lextype isn't defined for text search parser %u",
 			 prsId);
 
-	/* OidFunctionCall0 is absent */
+	/* lextype takes one dummy argument */
 	list = (LexDescr *) DatumGetPointer(OidFunctionCall1(prs->lextypeOid,
 														 (Datum) 0));
 

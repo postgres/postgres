@@ -174,10 +174,12 @@ Generic_Text_IC_like(text *str, text *pat, Oid collation)
 	if (pg_database_encoding_max_length() > 1)
 	{
 		/* lower's result is never packed, so OK to use old macros here */
-		pat = DatumGetTextP(DirectFunctionCall1WithCollation(lower, collation, PointerGetDatum(pat)));
+		pat = DatumGetTextP(DirectFunctionCall1Coll(lower, collation,
+													PointerGetDatum(pat)));
 		p = VARDATA(pat);
 		plen = (VARSIZE(pat) - VARHDRSZ);
-		str = DatumGetTextP(DirectFunctionCall1WithCollation(lower, collation, PointerGetDatum(str)));
+		str = DatumGetTextP(DirectFunctionCall1Coll(lower, collation,
+													PointerGetDatum(str)));
 		s = VARDATA(str);
 		slen = (VARSIZE(str) - VARHDRSZ);
 		if (GetDatabaseEncoding() == PG_UTF8)

@@ -285,19 +285,20 @@ var_eq_const(VariableStatData *vardata, Oid operator,
 			FmgrInfo	eqproc;
 
 			fmgr_info(get_opcode(operator), &eqproc);
-			fmgr_info_set_collation(DEFAULT_COLLATION_OID, &eqproc);
 
 			for (i = 0; i < nvalues; i++)
 			{
 				/* be careful to apply operator right way 'round */
 				if (varonleft)
-					match = DatumGetBool(FunctionCall2(&eqproc,
-													   values[i],
-													   constval));
+					match = DatumGetBool(FunctionCall2Coll(&eqproc,
+														   DEFAULT_COLLATION_OID,
+														   values[i],
+														   constval));
 				else
-					match = DatumGetBool(FunctionCall2(&eqproc,
-													   constval,
-													   values[i]));
+					match = DatumGetBool(FunctionCall2Coll(&eqproc,
+														   DEFAULT_COLLATION_OID,
+														   constval,
+														   values[i]));
 				if (match)
 					break;
 			}
@@ -515,7 +516,6 @@ scalarineqsel(PlannerInfo *root, Oid operator, bool isgt,
 	stats = (Form_pg_statistic) GETSTRUCT(vardata->statsTuple);
 
 	fmgr_info(get_opcode(operator), &opproc);
-	fmgr_info_set_collation(DEFAULT_COLLATION_OID, &opproc);
 
 	/*
 	 * If we have most-common-values info, add up the fractions of the MCV
@@ -598,12 +598,14 @@ mcv_selectivity(VariableStatData *vardata, FmgrInfo *opproc,
 		for (i = 0; i < nvalues; i++)
 		{
 			if (varonleft ?
-				DatumGetBool(FunctionCall2(opproc,
-										   values[i],
-										   constval)) :
-				DatumGetBool(FunctionCall2(opproc,
-										   constval,
-										   values[i])))
+				DatumGetBool(FunctionCall2Coll(opproc,
+											   DEFAULT_COLLATION_OID,
+											   values[i],
+											   constval)) :
+				DatumGetBool(FunctionCall2Coll(opproc,
+											   DEFAULT_COLLATION_OID,
+											   constval,
+											   values[i])))
 				mcv_selec += numbers[i];
 			sumcommon += numbers[i];
 		}
@@ -678,12 +680,14 @@ histogram_selectivity(VariableStatData *vardata, FmgrInfo *opproc,
 			for (i = n_skip; i < nvalues - n_skip; i++)
 			{
 				if (varonleft ?
-					DatumGetBool(FunctionCall2(opproc,
-											   values[i],
-											   constval)) :
-					DatumGetBool(FunctionCall2(opproc,
-											   constval,
-											   values[i])))
+					DatumGetBool(FunctionCall2Coll(opproc,
+												   DEFAULT_COLLATION_OID,
+												   values[i],
+												   constval)) :
+					DatumGetBool(FunctionCall2Coll(opproc,
+												   DEFAULT_COLLATION_OID,
+												   constval,
+												   values[i])))
 					nmatch++;
 			}
 			result = ((double) nmatch) / ((double) (nvalues - 2 * n_skip));
@@ -802,9 +806,10 @@ ineq_histogram_selectivity(PlannerInfo *root,
 														 NULL,
 														 &values[probe]);
 
-				ltcmp = DatumGetBool(FunctionCall2(opproc,
-												   values[probe],
-												   constval));
+				ltcmp = DatumGetBool(FunctionCall2Coll(opproc,
+													   DEFAULT_COLLATION_OID,
+													   values[probe],
+													   constval));
 				if (isgt)
 					ltcmp = !ltcmp;
 				if (ltcmp)
@@ -1255,7 +1260,6 @@ patternsel(PG_FUNCTION_ARGS, Pattern_Type ptype, bool negate)
 
 		/* Try to use the histogram entries to get selectivity */
 		fmgr_info(get_opcode(operator), &opproc);
-		fmgr_info_set_collation(DEFAULT_COLLATION_OID, &opproc);
 
 		selec = histogram_selectivity(&vardata, &opproc, constval, true,
 									  10, 1, &hist_size);
@@ -1705,7 +1709,6 @@ scalararraysel(PlannerInfo *root,
 	if (!oprsel)
 		return (Selectivity) 0.5;
 	fmgr_info(oprsel, &oprselproc);
-	fmgr_info_set_collation(DEFAULT_COLLATION_OID, &oprselproc);
 
 	/* deconstruct the expression */
 	Assert(list_length(clause->args) == 2);
@@ -2126,7 +2129,6 @@ eqjoinsel_inner(Oid operator,
 					nmatches;
 
 		fmgr_info(get_opcode(operator), &eqproc);
-		fmgr_info_set_collation(DEFAULT_COLLATION_OID, &eqproc);
 		hasmatch1 = (bool *) palloc0(nvalues1 * sizeof(bool));
 		hasmatch2 = (bool *) palloc0(nvalues2 * sizeof(bool));
 
@@ -2146,9 +2148,10 @@ eqjoinsel_inner(Oid operator,
 			{
 				if (hasmatch2[j])
 					continue;
-				if (DatumGetBool(FunctionCall2(&eqproc,
-											   values1[i],
-											   values2[j])))
+				if (DatumGetBool(FunctionCall2Coll(&eqproc,
+												   DEFAULT_COLLATION_OID,
+												   values1[i],
+												   values2[j])))
 				{
 					hasmatch1[i] = hasmatch2[j] = true;
 					matchprodfreq += numbers1[i] * numbers2[j];
@@ -2349,7 +2352,6 @@ eqjoinsel_semi(Oid operator,
 					nmatches;
 
 		fmgr_info(get_opcode(operator), &eqproc);
-		fmgr_info_set_collation(DEFAULT_COLLATION_OID, &eqproc);
 		hasmatch1 = (bool *) palloc0(nvalues1 * sizeof(bool));
 		hasmatch2 = (bool *) palloc0(nvalues2 * sizeof(bool));
 
@@ -2368,9 +2370,10 @@ eqjoinsel_semi(Oid operator,
 			{
 				if (hasmatch2[j])
 					continue;
-				if (DatumGetBool(FunctionCall2(&eqproc,
-											   values1[i],
-											   values2[j])))
+				if (DatumGetBool(FunctionCall2Coll(&eqproc,
+												   DEFAULT_COLLATION_OID,
+												   values1[i],
+												   values2[j])))
 				{
 					hasmatch1[i] = hasmatch2[j] = true;
 					nmatches++;
@@ -4503,7 +4506,6 @@ get_variable_range(PlannerInfo *root, VariableStatData *vardata, Oid sortop,
 		FmgrInfo	opproc;
 
 		fmgr_info(get_opcode(sortop), &opproc);
-		fmgr_info_set_collation(DEFAULT_COLLATION_OID, &opproc);
 
 		for (i = 0; i < nvalues; i++)
 		{
@@ -4513,12 +4515,16 @@ get_variable_range(PlannerInfo *root, VariableStatData *vardata, Oid sortop,
 				tmin_is_mcv = tmax_is_mcv = have_data = true;
 				continue;
 			}
-			if (DatumGetBool(FunctionCall2(&opproc, values[i], tmin)))
+			if (DatumGetBool(FunctionCall2Coll(&opproc,
+											   DEFAULT_COLLATION_OID,
+											   values[i], tmin)))
 			{
 				tmin = values[i];
 				tmin_is_mcv = true;
 			}
-			if (DatumGetBool(FunctionCall2(&opproc, tmax, values[i])))
+			if (DatumGetBool(FunctionCall2Coll(&opproc,
+											   DEFAULT_COLLATION_OID,
+											   tmax, values[i])))
 			{
 				tmax = values[i];
 				tmax_is_mcv = true;
@@ -5183,7 +5189,6 @@ prefix_selectivity(PlannerInfo *root, VariableStatData *vardata,
 	if (cmpopr == InvalidOid)
 		elog(ERROR, "no >= operator for opfamily %u", opfamily);
 	fmgr_info(get_opcode(cmpopr), &opproc);
-	fmgr_info_set_collation(DEFAULT_COLLATION_OID, &opproc);
 
 	prefixsel = ineq_histogram_selectivity(root, vardata, &opproc, true,
 										   prefixcon->constvalue,
@@ -5205,9 +5210,8 @@ prefix_selectivity(PlannerInfo *root, VariableStatData *vardata,
 	if (cmpopr == InvalidOid)
 		elog(ERROR, "no < operator for opfamily %u", opfamily);
 	fmgr_info(get_opcode(cmpopr), &opproc);
-	fmgr_info_set_collation(DEFAULT_COLLATION_OID, &opproc);
-
-	greaterstrcon = make_greater_string(prefixcon, &opproc);
+	greaterstrcon = make_greater_string(prefixcon, &opproc,
+										DEFAULT_COLLATION_OID);
 	if (greaterstrcon)
 	{
 		Selectivity topsel;
@@ -5502,22 +5506,21 @@ pattern_selectivity(Const *patt, Pattern_Type ptype)
  * in the form of a Const node; else return NULL.
  *
  * The caller must provide the appropriate "less than" comparison function
- * for testing the strings.  In particular, ltproc->fn_collation specifies
- * the locale for comparisons.
+ * for testing the strings, along with the collation to use.
  *
  * The key requirement here is that given a prefix string, say "foo",
  * we must be able to generate another string "fop" that is greater than
  * all strings "foobar" starting with "foo".  We can test that we have
- * generated a string greater than the prefix string, but in non-C locales
+ * generated a string greater than the prefix string, but in non-C collations
  * that is not a bulletproof guarantee that an extension of the string might
  * not sort after it; an example is that "foo " is less than "foo!", but it
  * is not clear that a "dictionary" sort ordering will consider "foo!" less
  * than "foo bar".	CAUTION: Therefore, this function should be used only for
- * estimation purposes when working in a non-C locale.
+ * estimation purposes when working in a non-C collation.
  *
  * To try to catch most cases where an extended string might otherwise sort
  * before the result value, we determine which of the strings "Z", "z", "y",
- * and "9" is seen as largest by the locale, and append that to the given
+ * and "9" is seen as largest by the collation, and append that to the given
  * prefix before trying to find a string that compares as larger.
  *
  * If we max out the righthand byte, truncate off the last character
@@ -5529,7 +5532,7 @@ pattern_selectivity(Const *patt, Pattern_Type ptype)
  * won't have to try more than one or two strings before succeeding.
  */
 Const *
-make_greater_string(const Const *str_const, FmgrInfo *ltproc)
+make_greater_string(const Const *str_const, FmgrInfo *ltproc, Oid collation)
 {
 	Oid			datatype = str_const->consttype;
 	char	   *workstr;
@@ -5565,7 +5568,7 @@ make_greater_string(const Const *str_const, FmgrInfo *ltproc)
 	{
 		workstr = TextDatumGetCString(str_const->constvalue);
 		len = strlen(workstr);
-		if (lc_collate_is_c(ltproc->fn_collation) || len == 0)
+		if (lc_collate_is_c(collation) || len == 0)
 			cmpstr = str_const->constvalue;
 		else
 		{
@@ -5573,19 +5576,19 @@ make_greater_string(const Const *str_const, FmgrInfo *ltproc)
 			static char suffixchar = 0;
 			static Oid	suffixcollation = 0;
 
-			if (!suffixchar || suffixcollation != ltproc->fn_collation)
+			if (!suffixchar || suffixcollation != collation)
 			{
 				char	   *best;
 
 				best = "Z";
-				if (varstr_cmp(best, 1, "z", 1, ltproc->fn_collation) < 0)
+				if (varstr_cmp(best, 1, "z", 1, collation) < 0)
 					best = "z";
-				if (varstr_cmp(best, 1, "y", 1, ltproc->fn_collation) < 0)
+				if (varstr_cmp(best, 1, "y", 1, collation) < 0)
 					best = "y";
-				if (varstr_cmp(best, 1, "9", 1, ltproc->fn_collation) < 0)
+				if (varstr_cmp(best, 1, "9", 1, collation) < 0)
 					best = "9";
 				suffixchar = *best;
-				suffixcollation = ltproc->fn_collation;
+				suffixcollation = collation;
 			}
 
 			/* And build the string to compare to */
@@ -5621,9 +5624,10 @@ make_greater_string(const Const *str_const, FmgrInfo *ltproc)
 			else
 				workstr_const = string_to_bytea_const(workstr, len);
 
-			if (DatumGetBool(FunctionCall2(ltproc,
-										   cmpstr,
-										   workstr_const->constvalue)))
+			if (DatumGetBool(FunctionCall2Coll(ltproc,
+											   collation,
+											   cmpstr,
+											   workstr_const->constvalue)))
 			{
 				/* Successfully made a string larger than cmpstr */
 				if (cmptxt)

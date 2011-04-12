@@ -56,7 +56,8 @@ _hash_checkqual(IndexScanDesc scan, IndexTuple itup)
 		if (key->sk_flags & SK_ISNULL)
 			return false;
 
-		test = FunctionCall2(&key->sk_func, datum, key->sk_argument);
+		test = FunctionCall2Coll(&key->sk_func, key->sk_collation,
+								 datum, key->sk_argument);
 
 		if (!DatumGetBool(test))
 			return false;

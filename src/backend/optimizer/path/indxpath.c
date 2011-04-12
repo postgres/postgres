@@ -3189,8 +3189,7 @@ prefix_quals(Node *leftop, Oid opfamily, Oid collation,
 	if (oproid == InvalidOid)
 		elog(ERROR, "no < operator for opfamily %u", opfamily);
 	fmgr_info(get_opcode(oproid), &ltproc);
-	fmgr_info_set_collation(collation, &ltproc);
-	greaterstr = make_greater_string(prefix_const, &ltproc);
+	greaterstr = make_greater_string(prefix_const, &ltproc, collation);
 	if (greaterstr)
 	{
 		expr = make_opclause(oproid, BOOLOID, false,

@@ -60,7 +60,8 @@ typedef struct Tuplesortstate Tuplesortstate;
 
 extern Tuplesortstate *tuplesort_begin_heap(TupleDesc tupDesc,
 					 int nkeys, AttrNumber *attNums,
-				  Oid *sortOperators, Oid *collations, bool *nullsFirstFlags,
+					 Oid *sortOperators, Oid *sortCollations,
+					 bool *nullsFirstFlags,
 					 int workMem, bool randomAccess);
 extern Tuplesortstate *tuplesort_begin_cluster(TupleDesc tupDesc,
 						Relation indexRel,
@@ -72,7 +73,8 @@ extern Tuplesortstate *tuplesort_begin_index_hash(Relation indexRel,
 						   uint32 hash_mask,
 						   int workMem, bool randomAccess);
 extern Tuplesortstate *tuplesort_begin_datum(Oid datumType,
-					Oid sortOperator, Oid sortCollation, bool nullsFirstFlag,
+					  Oid sortOperator, Oid sortCollation,
+					  bool nullsFirstFlag,
 					  int workMem, bool randomAccess);
 
 extern void tuplesort_set_bound(Tuplesortstate *state, int64 bound);
@@ -125,6 +127,7 @@ extern void SelectSortFunction(Oid sortOperator, bool nulls_first,
  * reverse-sort and NULLs-ordering properly.
  */
 extern int32 ApplySortFunction(FmgrInfo *sortFunction, int sortFlags,
+				  Oid collation,
 				  Datum datum1, bool isNull1,
 				  Datum datum2, bool isNull2);
 

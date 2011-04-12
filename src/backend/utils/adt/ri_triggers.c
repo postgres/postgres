@@ -3963,7 +3963,10 @@ ri_AttributesEqual(Oid eq_opr, Oid typeid,
 								 BoolGetDatum(false));	/* implicit coercion */
 	}
 
-	/* Apply the comparison operator */
+	/*
+	 * Apply the comparison operator.  We assume it doesn't
+	 * care about collations.
+	 */
 	return DatumGetBool(FunctionCall2(&entry->eq_opr_finfo,
 									  oldvalue, newvalue));
 }

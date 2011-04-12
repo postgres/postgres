@@ -130,6 +130,9 @@ typedef struct AggStatePerAggData
 	FmgrInfo	transfn;
 	FmgrInfo	finalfn;
 
+	/* Input collation derived for aggregate */
+	Oid			aggCollation;
+
 	/* number of sorting columns */
 	int			numSortCols;
 
@@ -430,6 +433,7 @@ advance_transition_function(AggState *aggstate,
 	 */
 	InitFunctionCallInfoData(*fcinfo, &(peraggstate->transfn),
 							 numArguments + 1,
+							 peraggstate->aggCollation,
 							 (void *) aggstate, NULL);
 	fcinfo->arg[0] = pergroupstate->transValue;
 	fcinfo->argnull[0] = pergroupstate->transValueIsNull;
@@ -597,6 +601,8 @@ process_ordered_aggregate_single(AggState *aggstate,
 
 		/*
 		 * If DISTINCT mode, and not distinct from prior, skip it.
+		 *
+		 * Note: we assume equality functions don't care about collation.
 		 */
 		if (isDistinct &&
 			haveOldVal &&
@@ -737,6 +743,7 @@ finalize_aggregate(AggState *aggstate,
 		FunctionCallInfoData fcinfo;
 
 		InitFunctionCallInfoData(fcinfo, &(peraggstate->finalfn), 1,
+								 peraggstate->aggCollation,
 								 (void *) aggstate, NULL);
 		fcinfo.arg[0] = pergroupstate->transValue;
 		fcinfo.argnull[0] = pergroupstate->transValueIsNull;
@@ -1676,15 +1683,15 @@ ExecInitAgg(Agg *node, EState *estate, int eflags)
 								&finalfnexpr);
 
 		fmgr_info(transfn_oid, &peraggstate->transfn);
-		fmgr_info_set_collation(aggref->inputcollid, &peraggstate->transfn);
 		fmgr_info_set_expr((Node *) transfnexpr, &peraggstate->transfn);
 
 		if (OidIsValid(finalfn_oid))
 		{
 			fmgr_info(finalfn_oid, &peraggstate->finalfn);
-			fmgr_info_set_collation(aggref->inputcollid, &peraggstate->finalfn);
 			fmgr_info_set_expr((Node *) finalfnexpr, &peraggstate->finalfn);
 		}
+
+		peraggstate->aggCollation = aggref->inputcollid;
 
 		get_typlenbyval(aggref->aggtype,
 						&peraggstate->resulttypeLen,
@@ -1833,8 +1840,6 @@ ExecInitAgg(Agg *node, EState *estate, int eflags)
 				SortGroupClause *sortcl = (SortGroupClause *) lfirst(lc);
 
 				fmgr_info(get_opcode(sortcl->eqop), &peraggstate->equalfns[i]);
-				fmgr_info_set_collation(aggref->inputcollid,
-										&peraggstate->equalfns[i]);
 				i++;
 			}
 			Assert(i == numDistinctCols);

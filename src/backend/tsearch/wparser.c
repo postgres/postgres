@@ -54,7 +54,7 @@ tt_setup_firstcall(FuncCallContext *funcctx, Oid prsid)
 
 	st = (TSTokenTypeStorage *) palloc(sizeof(TSTokenTypeStorage));
 	st->cur = 0;
-	/* OidFunctionCall0 is absent */
+	/* lextype takes one dummy argument */
 	st->list = (LexDescr *) DatumGetPointer(OidFunctionCall1(prs->lextypeOid,
 															 (Datum) 0));
 	funcctx->user_fctx = (void *) st;

@@ -71,7 +71,6 @@ typedef struct
     bool        fn_strict;  /* function is "strict" (NULL in => NULL out) */
     bool        fn_retset;  /* function returns a set (over multiple calls) */
     unsigned char fn_stats; /* collect stats if track_functions > this */
-    Oid         fn_collation;   /* collation that function should use */
     void       *fn_extra;   /* extra space for use by handler */
     MemoryContext fn_mcxt;  /* memory context to store fn_extra in */
     Node       *fn_expr;    /* expression parse tree for call, or NULL */
@@ -92,14 +91,12 @@ these values come from the function's pg_proc entry.  fn_stats is also
 set up to control whether or not to track runtime statistics for calling
 this function.
 
-fn_collation supplies the collation to use for collation-sensitive
-functions.  If the function is being called as part of a SQL expression,
-fn_expr will point to the expression parse tree for the function call; this
-can be used to extract parse-time knowledge about the actual arguments.
-Note that these two fields really are information about the arguments
-rather than information about the function, but it's proven to be more
-convenient to keep them in FmgrInfo than in FunctionCallInfoData where
-they might more logically go.
+If the function is being called as part of a SQL expression, fn_expr will
+point to the expression parse tree for the function call; this can be used
+to extract parse-time knowledge about the actual arguments.  Note that this
+field really is information about the arguments rather than information
+about the function, but it's proven to be more convenient to keep it in
+FmgrInfo than in FunctionCallInfoData where it might more logically go.
 
 
 During a call of a function, the following data structure is created
@@ -110,6 +107,7 @@ typedef struct
     FmgrInfo   *flinfo;         /* ptr to lookup info used for this call */
     Node       *context;        /* pass info about context of call */
     Node       *resultinfo;     /* pass or return extra info about result */
+    Oid         fncollation;    /* collation for function to use */
     bool        isnull;         /* function must set true if result is NULL */
     short       nargs;          /* # arguments actually passed */
     Datum       arg[FUNC_MAX_ARGS];  /* Arguments passed to function */
@@ -136,6 +134,11 @@ returns more than a Datum.  (For example, resultinfo is used when calling a
 function that returns a set, as discussed below.)  Like the context field,
 resultinfo is a hook for expansion; fmgr itself doesn't constrain the use
 of the field.
+
+fncollation is the input collation derived by the parser, or InvalidOid
+when there are no inputs of collatable types or they don't share a common
+collation.  This is effectively a hidden additional argument, which
+collation-sensitive functions can use to determine their behavior.
 
 nargs, arg[], and argnull[] hold the arguments being passed to the function.
 Notice that all the arguments passed to a function (as well as its result

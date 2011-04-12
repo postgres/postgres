@@ -1349,9 +1349,10 @@ index_recheck_constraint(Relation index, Oid *constr_procs,
 		if (existing_isnull[i])
 			return false;
 
-		if (!DatumGetBool(OidFunctionCall2(constr_procs[i],
-										   existing_values[i],
-										   new_values[i])))
+		if (!DatumGetBool(OidFunctionCall2Coll(constr_procs[i],
+											   index->rd_indcollation[i],
+											   existing_values[i],
+											   new_values[i])))
 			return false;
 	}
 

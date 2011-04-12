@@ -864,6 +864,7 @@ typedef struct RowCompareExprState
 	List	   *largs;			/* the left-hand input arguments */
 	List	   *rargs;			/* the right-hand input arguments */
 	FmgrInfo   *funcs;			/* array of comparison function info */
+	Oid		   *collations;		/* array of collations to use */
 } RowCompareExprState;
 
 /* ----------------

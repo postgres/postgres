@@ -327,8 +327,9 @@ heap_compare_slots(MergeAppendState *node, SlotNumber slot1, SlotNumber slot2)
 		}
 		else
 		{
-			compare = DatumGetInt32(FunctionCall2(&scankey->sk_func,
-												  datum1, datum2));
+			compare = DatumGetInt32(FunctionCall2Coll(&scankey->sk_func,
+													  scankey->sk_collation,
+													  datum1, datum2));
 			if (compare != 0)
 			{
 				if (scankey->sk_flags & SK_BT_DESC)

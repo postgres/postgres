@@ -1930,8 +1930,6 @@ compute_minimal_stats(VacAttrStatsP stats,
 	track_cnt = 0;
 
 	fmgr_info(mystats->eqfunc, &f_cmpeq);
-	/* We always use the default collation for statistics */
-	fmgr_info_set_collation(DEFAULT_COLLATION_OID, &f_cmpeq);
 
 	for (i = 0; i < samplerows; i++)
 	{
@@ -1990,7 +1988,10 @@ compute_minimal_stats(VacAttrStatsP stats,
 		firstcount1 = track_cnt;
 		for (j = 0; j < track_cnt; j++)
 		{
-			if (DatumGetBool(FunctionCall2(&f_cmpeq, value, track[j].value)))
+			/* We always use the default collation for statistics */
+			if (DatumGetBool(FunctionCall2Coll(&f_cmpeq,
+											   DEFAULT_COLLATION_OID,
+											   value, track[j].value)))
 			{
 				match = true;
 				break;
@@ -2253,8 +2254,6 @@ compute_scalar_stats(VacAttrStatsP stats,
 
 	SelectSortFunction(mystats->ltopr, false, &cmpFn, &cmpFlags);
 	fmgr_info(cmpFn, &f_cmpfn);
-	/* We always use the default collation for statistics */
-	fmgr_info_set_collation(DEFAULT_COLLATION_OID, &f_cmpfn);
 
 	/* Initial scan to find sortable values */
 	for (i = 0; i < samplerows; i++)
@@ -2729,7 +2728,9 @@ compare_scalars(const void *a, const void *b, void *arg)
 	CompareScalarsContext *cxt = (CompareScalarsContext *) arg;
 	int32		compare;
 
+	/* We always use the default collation for statistics */
 	compare = ApplySortFunction(cxt->cmpFn, cxt->cmpFlags,
+								DEFAULT_COLLATION_OID,
 								da, false, db, false);
 	if (compare != 0)
 		return compare;

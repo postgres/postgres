@@ -935,7 +935,7 @@ CatalogCacheInitializeCache(CatCache *cache)
 		cache->cc_skey[i].sk_strategy = BTEqualStrategyNumber;
 		cache->cc_skey[i].sk_subtype = InvalidOid;
 		/* Currently, there are no catcaches on collation-aware data types */
-		cache->cc_skey[i].sk_func.fn_collation = InvalidOid;
+		cache->cc_skey[i].sk_collation = InvalidOid;
 
 		CACHE4_elog(DEBUG2, "CatalogCacheInitializeCache %s %d %p",
 					cache->cc_relname,

@@ -81,6 +81,8 @@ typedef struct WindowStatePerFuncData
 
 	FmgrInfo	flinfo;			/* fmgr lookup data for window function */
 
+	Oid			winCollation;	/* collation derived for window function */
+
 	/*
 	 * We need the len and byval info for the result of each function in order
 	 * to know how to copy/delete values.
@@ -289,6 +291,7 @@ advance_windowaggregate(WindowAggState *winstate,
 	 */
 	InitFunctionCallInfoData(*fcinfo, &(peraggstate->transfn),
 							 numArguments + 1,
+							 perfuncstate->winCollation,
 							 (void *) winstate, NULL);
 	fcinfo->arg[0] = peraggstate->transValue;
 	fcinfo->argnull[0] = peraggstate->transValueIsNull;
@@ -340,6 +343,7 @@ finalize_windowaggregate(WindowAggState *winstate,
 		FunctionCallInfoData fcinfo;
 
 		InitFunctionCallInfoData(fcinfo, &(peraggstate->finalfn), 1,
+								 perfuncstate->winCollation,
 								 (void *) winstate, NULL);
 		fcinfo.arg[0] = peraggstate->transValue;
 		fcinfo.argnull[0] = peraggstate->transValueIsNull;
@@ -627,6 +631,7 @@ eval_windowfunction(WindowAggState *winstate, WindowStatePerFunc perfuncstate,
 	 */
 	InitFunctionCallInfoData(fcinfo, &(perfuncstate->flinfo),
 							 perfuncstate->numArguments,
+							 perfuncstate->winCollation,
 							 (void *) perfuncstate->winobj, NULL);
 	/* Just in case, make all the regular argument slots be null */
 	memset(fcinfo.argnull, true, perfuncstate->numArguments);
@@ -1561,8 +1566,9 @@ ExecInitWindowAgg(WindowAgg *node, EState *estate, int eflags)
 
 		fmgr_info_cxt(wfunc->winfnoid, &perfuncstate->flinfo,
 					  econtext->ecxt_per_query_memory);
-		fmgr_info_set_collation(wfunc->inputcollid, &perfuncstate->flinfo);
 		fmgr_info_set_expr((Node *) wfunc, &perfuncstate->flinfo);
+
+		perfuncstate->winCollation = wfunc->inputcollid;
 
 		get_typlenbyval(wfunc->wintype,
 						&perfuncstate->resulttypeLen,
@@ -1801,13 +1807,11 @@ initialize_peragg(WindowAggState *winstate, WindowFunc *wfunc,
 							&finalfnexpr);
 
 	fmgr_info(transfn_oid, &peraggstate->transfn);
-	fmgr_info_set_collation(wfunc->inputcollid, &peraggstate->transfn);
 	fmgr_info_set_expr((Node *) transfnexpr, &peraggstate->transfn);
 
 	if (OidIsValid(finalfn_oid))
 	{
 		fmgr_info(finalfn_oid, &peraggstate->finalfn);
-		fmgr_info_set_collation(wfunc->inputcollid, &peraggstate->finalfn);
 		fmgr_info_set_expr((Node *) finalfnexpr, &peraggstate->finalfn);
 	}
 

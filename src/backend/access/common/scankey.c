@@ -42,11 +42,11 @@ ScanKeyEntryInitialize(ScanKey entry,
 	entry->sk_attno = attributeNumber;
 	entry->sk_strategy = strategy;
 	entry->sk_subtype = subtype;
+	entry->sk_collation = collation;
 	entry->sk_argument = argument;
 	if (RegProcedureIsValid(procedure))
 	{
 		fmgr_info(procedure, &entry->sk_func);
-		entry->sk_func.fn_collation = collation;
 	}
 	else
 	{
@@ -83,9 +83,9 @@ ScanKeyInit(ScanKey entry,
 	entry->sk_attno = attributeNumber;
 	entry->sk_strategy = strategy;
 	entry->sk_subtype = InvalidOid;
+	entry->sk_collation = DEFAULT_COLLATION_OID;
 	entry->sk_argument = argument;
 	fmgr_info(procedure, &entry->sk_func);
-	entry->sk_func.fn_collation = DEFAULT_COLLATION_OID;
 }
 
 /*
@@ -111,7 +111,7 @@ ScanKeyEntryInitializeWithInfo(ScanKey entry,
 	entry->sk_attno = attributeNumber;
 	entry->sk_strategy = strategy;
 	entry->sk_subtype = subtype;
+	entry->sk_collation = collation;
 	entry->sk_argument = argument;
 	fmgr_info_copy(&entry->sk_func, finfo, CurrentMemoryContext);
-	entry->sk_func.fn_collation = collation;
 }

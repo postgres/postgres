@@ -1206,7 +1206,7 @@ index_reloptions(RegProcedure amoptions, Datum reloptions, bool validate)
 	/* Can't use OidFunctionCallN because we might get a NULL result */
 	fmgr_info(amoptions, &flinfo);
 
-	InitFunctionCallInfoData(fcinfo, &flinfo, 2, NULL, NULL);
+	InitFunctionCallInfoData(fcinfo, &flinfo, 2, InvalidOid, NULL, NULL);
 
 	fcinfo.arg[0] = reloptions;
 	fcinfo.arg[1] = BoolGetDatum(validate);

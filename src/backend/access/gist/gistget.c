@@ -137,12 +137,13 @@ gistindex_keytest(IndexScanDesc scan,
 			 */
 			recheck = true;
 
-			test = FunctionCall5(&key->sk_func,
-								 PointerGetDatum(&de),
-								 key->sk_argument,
-								 Int32GetDatum(key->sk_strategy),
-								 ObjectIdGetDatum(key->sk_subtype),
-								 PointerGetDatum(&recheck));
+			test = FunctionCall5Coll(&key->sk_func,
+									 key->sk_collation,
+									 PointerGetDatum(&de),
+									 key->sk_argument,
+									 Int32GetDatum(key->sk_strategy),
+									 ObjectIdGetDatum(key->sk_subtype),
+									 PointerGetDatum(&recheck));
 
 			if (!DatumGetBool(test))
 				return false;
@@ -195,11 +196,12 @@ gistindex_keytest(IndexScanDesc scan,
 			 * can't tolerate lossy distance calculations on leaf tuples;
 			 * there is no opportunity to re-sort the tuples afterwards.
 			 */
-			dist = FunctionCall4(&key->sk_func,
-								 PointerGetDatum(&de),
-								 key->sk_argument,
-								 Int32GetDatum(key->sk_strategy),
-								 ObjectIdGetDatum(key->sk_subtype));
+			dist = FunctionCall4Coll(&key->sk_func,
+									 key->sk_collation,
+									 PointerGetDatum(&de),
+									 key->sk_argument,
+									 Int32GetDatum(key->sk_strategy),
+									 ObjectIdGetDatum(key->sk_subtype));
 
 			*distance_p = DatumGetFloat8(dist);
 		}

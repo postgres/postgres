@@ -127,7 +127,7 @@ static Node *sql_fn_param_ref(ParseState *pstate, ParamRef *pref);
 static List *init_execution_state(List *queryTree_list,
 					 SQLFunctionCachePtr fcache,
 					 bool lazyEvalOK);
-static void init_sql_fcache(FmgrInfo *finfo, bool lazyEvalOK);
+static void init_sql_fcache(FmgrInfo *finfo, Oid collation, bool lazyEvalOK);
 static void postquel_start(execution_state *es, SQLFunctionCachePtr fcache);
 static bool postquel_getnext(execution_state *es, SQLFunctionCachePtr fcache);
 static void postquel_end(execution_state *es);
@@ -363,7 +363,7 @@ init_execution_state(List *queryTree_list,
  * Initialize the SQLFunctionCache for a SQL function
  */
 static void
-init_sql_fcache(FmgrInfo *finfo, bool lazyEvalOK)
+init_sql_fcache(FmgrInfo *finfo, Oid collation, bool lazyEvalOK)
 {
 	Oid			foid = finfo->fn_oid;
 	Oid			rettype;
@@ -428,7 +428,7 @@ init_sql_fcache(FmgrInfo *finfo, bool lazyEvalOK)
 	 */
 	fcache->pinfo = prepare_sql_fn_parse_info(procedureTuple,
 											  finfo->fn_expr,
-											  finfo->fn_collation);
+											  collation);
 
 	/*
 	 * And of course we need the function body text.
@@ -798,7 +798,7 @@ fmgr_sql(PG_FUNCTION_ARGS)
 	fcache = (SQLFunctionCachePtr) fcinfo->flinfo->fn_extra;
 	if (fcache == NULL)
 	{
-		init_sql_fcache(fcinfo->flinfo, lazyEvalOK);
+		init_sql_fcache(fcinfo->flinfo, PG_GET_COLLATION(), lazyEvalOK);
 		fcache = (SQLFunctionCachePtr) fcinfo->flinfo->fn_extra;
 	}
 	eslist = fcache->func_state;

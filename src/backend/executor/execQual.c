@@ -1202,12 +1202,12 @@ init_fcache(Oid foid, Oid input_collation, FuncExprState *fcache,
 
 	/* Set up the primary fmgr lookup information */
 	fmgr_info_cxt(foid, &(fcache->func), fcacheCxt);
-	fmgr_info_set_collation(input_collation, &(fcache->func));
 	fmgr_info_set_expr((Node *) fcache->xprstate.expr, &(fcache->func));
 
 	/* Initialize the function call parameter struct as well */
 	InitFunctionCallInfoData(fcache->fcinfo_data, &(fcache->func),
-							 list_length(fcache->args), NULL, NULL);
+							 list_length(fcache->args),
+							 input_collation, NULL, NULL);
 
 	/* If function returns set, prepare expected tuple descriptor */
 	if (fcache->func.fn_retset && needDescForSets)
@@ -1980,6 +1980,7 @@ ExecMakeTableFunctionResult(ExprState *funcexpr,
 		returnsSet = fcache->func.fn_retset;
 		InitFunctionCallInfoData(fcinfo, &(fcache->func),
 								 list_length(fcache->args),
+								 fcache->fcinfo_data.fncollation,
 								 NULL, (Node *) &rsinfo);
 
 		/*
@@ -2017,7 +2018,7 @@ ExecMakeTableFunctionResult(ExprState *funcexpr,
 	{
 		/* Treat funcexpr as a generic expression */
 		direct_function_call = false;
-		InitFunctionCallInfoData(fcinfo, NULL, 0, NULL, NULL);
+		InitFunctionCallInfoData(fcinfo, NULL, 0, InvalidOid, NULL, NULL);
 	}
 
 	/*
@@ -3154,6 +3155,7 @@ ExecEvalRowCompare(RowCompareExprState *rstate,
 		FunctionCallInfoData locfcinfo;
 
 		InitFunctionCallInfoData(locfcinfo, &(rstate->funcs[i]), 2,
+								 rstate->collations[i],
 								 NULL, NULL);
 		locfcinfo.arg[0] = ExecEvalExpr(le, econtext,
 										&locfcinfo.argnull[0], NULL);
@@ -3234,7 +3236,9 @@ ExecEvalMinMax(MinMaxExprState *minmaxExpr, ExprContext *econtext,
 			   bool *isNull, ExprDoneCond *isDone)
 {
 	Datum		result = (Datum) 0;
-	MinMaxOp	op = ((MinMaxExpr *) minmaxExpr->xprstate.expr)->op;
+	MinMaxExpr *minmax = (MinMaxExpr *) minmaxExpr->xprstate.expr;
+	Oid			collation = minmax->inputcollid;
+	MinMaxOp	op = minmax->op;
 	FunctionCallInfoData locfcinfo;
 	ListCell   *arg;
 
@@ -3242,7 +3246,8 @@ ExecEvalMinMax(MinMaxExprState *minmaxExpr, ExprContext *econtext,
 		*isDone = ExprSingleResult;
 	*isNull = true;				/* until we get a result */
 
-	InitFunctionCallInfoData(locfcinfo, &minmaxExpr->cfunc, 2, NULL, NULL);
+	InitFunctionCallInfoData(locfcinfo, &minmaxExpr->cfunc, 2,
+							 collation, NULL, NULL);
 	locfcinfo.argnull[0] = false;
 	locfcinfo.argnull[1] = false;
 
@@ -4115,7 +4120,6 @@ ExecEvalArrayCoerceExpr(ArrayCoerceExprState *astate,
 		/* Set up the primary fmgr lookup information */
 		fmgr_info_cxt(acoerce->elemfuncid, &(astate->elemfunc),
 					  econtext->ecxt_per_query_memory);
-		/* Note: coercion functions are assumed to not use collation */
 		fmgr_info_set_expr((Node *) acoerce, &(astate->elemfunc));
 	}
 
@@ -4124,9 +4128,11 @@ ExecEvalArrayCoerceExpr(ArrayCoerceExprState *astate,
 	 *
 	 * We pass on the desttypmod and isExplicit flags whether or not the
 	 * function wants them.
+	 *
+	 * Note: coercion functions are assumed to not use collation.
 	 */
 	InitFunctionCallInfoData(locfcinfo, &(astate->elemfunc), 3,
-							 NULL, NULL);
+							 InvalidOid, NULL, NULL);
 	locfcinfo.arg[0] = PointerGetDatum(array);
 	locfcinfo.arg[1] = Int32GetDatum(acoerce->resulttypmod);
 	locfcinfo.arg[2] = BoolGetDatum(acoerce->isExplicit);
@@ -4699,6 +4705,7 @@ ExecInitExpr(Expr *node, PlanState *parent)
 				rstate->rargs = outlist;
 				Assert(list_length(rcexpr->opfamilies) == nopers);
 				rstate->funcs = (FmgrInfo *) palloc(nopers * sizeof(FmgrInfo));
+				rstate->collations = (Oid *) palloc(nopers * sizeof(Oid));
 				i = 0;
 				forthree(l, rcexpr->opnos, l2, rcexpr->opfamilies, l3, rcexpr->inputcollids)
 				{
@@ -4726,7 +4733,7 @@ ExecInitExpr(Expr *node, PlanState *parent)
 					 * does this code.
 					 */
 					fmgr_info(proc, &(rstate->funcs[i]));
-					fmgr_info_set_collation(inputcollid, &(rstate->funcs[i]));
+					rstate->collations[i] = inputcollid;
 					i++;
 				}
 				state = (ExprState *) rstate;
@@ -4786,8 +4793,6 @@ ExecInitExpr(Expr *node, PlanState *parent)
 				 * code.
 				 */
 				fmgr_info(typentry->cmp_proc, &(mstate->cfunc));
-				fmgr_info_set_collation(minmaxexpr->inputcollid,
-										&(mstate->cfunc));
 				state = (ExprState *) mstate;
 			}
 			break;

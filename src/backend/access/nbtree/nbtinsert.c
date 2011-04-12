@@ -2043,9 +2043,10 @@ _bt_isequal(TupleDesc itupdesc, Page page, OffsetNumber offnum,
 		if (isNull || (scankey->sk_flags & SK_ISNULL))
 			return false;
 
-		result = DatumGetInt32(FunctionCall2(&scankey->sk_func,
-											 datum,
-											 scankey->sk_argument));
+		result = DatumGetInt32(FunctionCall2Coll(&scankey->sk_func,
+												 scankey->sk_collation,
+												 datum,
+												 scankey->sk_argument));
 
 		if (result != 0)
 			return false;

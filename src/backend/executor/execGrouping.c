@@ -3,6 +3,10 @@
  * execGrouping.c
  *	  executor utility routines for grouping, hashing, and aggregation
  *
+ * Note: we currently assume that equality and hashing functions are not
+ * collation-sensitive, so the code in this file has no support for passing
+ * collation settings through from callers.  That may have to change someday.
+ *
  * Portions Copyright (c) 1996-2011, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *

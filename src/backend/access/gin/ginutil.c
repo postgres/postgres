@@ -63,23 +63,6 @@ initGinState(GinState *state, Relation index)
 		fmgr_info_copy(&(state->compareFn[i]),
 					   index_getprocinfo(index, i + 1, GIN_COMPARE_PROC),
 					   CurrentMemoryContext);
-
-		/*
-		 * If the index column has a specified collation, index_getprocinfo
-		 * will have installed it into the fmgr info, and we should honor it.
-		 * However, we may have a collatable storage type for a noncollatable
-		 * indexed data type (for instance, hstore uses text index entries).
-		 * If there's no index collation then specify default collation in
-		 * case the comparison function needs one.	This is harmless if the
-		 * comparison function doesn't care about collation, so we just do it
-		 * unconditionally.  (We could alternatively call get_typcollation,
-		 * but that seems like expensive overkill --- there aren't going to be
-		 * any cases where a GIN storage type has a nondefault collation.)
-		 */
-		if (!OidIsValid(state->compareFn[i].fn_collation))
-			fmgr_info_set_collation(DEFAULT_COLLATION_OID,
-									&(state->compareFn[i]));
-
 		fmgr_info_copy(&(state->extractValueFn[i]),
 					   index_getprocinfo(index, i + 1, GIN_EXTRACTVALUE_PROC),
 					   CurrentMemoryContext);
@@ -98,18 +81,29 @@ initGinState(GinState *state, Relation index)
 			fmgr_info_copy(&(state->comparePartialFn[i]),
 				   index_getprocinfo(index, i + 1, GIN_COMPARE_PARTIAL_PROC),
 						   CurrentMemoryContext);
-
-			/* As above, install collation spec in case compare fn needs it */
-			if (!OidIsValid(state->comparePartialFn[i].fn_collation))
-				fmgr_info_set_collation(DEFAULT_COLLATION_OID,
-										&(state->comparePartialFn[i]));
-
 			state->canPartialMatch[i] = true;
 		}
 		else
 		{
 			state->canPartialMatch[i] = false;
 		}
+
+		/*
+		 * If the index column has a specified collation, we should honor that
+		 * while doing comparisons.  However, we may have a collatable storage
+		 * type for a noncollatable indexed data type (for instance, hstore
+		 * uses text index entries).  If there's no index collation then
+		 * specify default collation in case the comparison function needs
+		 * collation.  This is harmless if the comparison function doesn't
+		 * care about collation, so we just do it unconditionally.  (We could
+		 * alternatively call get_typcollation, but that seems like expensive
+		 * overkill --- there aren't going to be any cases where a GIN storage
+		 * type has a nondefault collation.)
+		 */
+		if (OidIsValid(index->rd_indcollation[i]))
+			state->compareCollation[i] = index->rd_indcollation[i];
+		else
+			state->compareCollation[i] = DEFAULT_COLLATION_OID;
 	}
 }
 
@@ -298,8 +292,9 @@ ginCompareEntries(GinState *ginstate, OffsetNumber attnum,
 		return 0;
 
 	/* both not null, so safe to call the compareFn */
-	return DatumGetInt32(FunctionCall2(&ginstate->compareFn[attnum - 1],
-									   a, b));
+	return DatumGetInt32(FunctionCall2Coll(&ginstate->compareFn[attnum - 1],
+										   ginstate->compareCollation[attnum - 1],
+										   a, b));
 }
 
 /*
@@ -334,6 +329,7 @@ typedef struct
 typedef struct
 {
 	FmgrInfo   *cmpDatumFunc;
+	Oid			collation;
 	bool		haveDups;
 } cmpEntriesArg;
 
@@ -355,8 +351,9 @@ cmpEntries(const void *a, const void *b, void *arg)
 	else if (bb->isnull)
 		res = -1;				/* not-NULL "<" NULL */
 	else
-		res = DatumGetInt32(FunctionCall2(data->cmpDatumFunc,
-										  aa->datum, bb->datum));
+		res = DatumGetInt32(FunctionCall2Coll(data->cmpDatumFunc,
+											  data->collation,
+											  aa->datum, bb->datum));
 
 	/*
 	 * Detect if we have any duplicates.  If there are equal keys, qsort must
@@ -456,6 +453,7 @@ ginExtractEntries(GinState *ginstate, OffsetNumber attnum,
 		}
 
 		arg.cmpDatumFunc = &ginstate->compareFn[attnum - 1];
+		arg.collation = ginstate->compareCollation[attnum - 1];
 		arg.haveDups = false;
 		qsort_arg(keydata, *nentries, sizeof(keyEntryData),
 				  cmpEntries, (void *) &arg);

@@ -373,6 +373,7 @@ struct Tuplesortstate
 	Oid			datumType;
 	FmgrInfo	sortOpFn;		/* cached lookup data for sortOperator */
 	int			sortFnFlags;	/* equivalent to sk_flags */
+	Oid			sortCollation;	/* equivalent to sk_collation */
 	/* we need typelen and byval in order to know how to copy the Datums. */
 	int			datumTypeLen;
 	bool		datumTypeByVal;
@@ -582,7 +583,8 @@ tuplesort_begin_common(int workMem, bool randomAccess)
 Tuplesortstate *
 tuplesort_begin_heap(TupleDesc tupDesc,
 					 int nkeys, AttrNumber *attNums,
-				  Oid *sortOperators, Oid *collations, bool *nullsFirstFlags,
+					 Oid *sortOperators, Oid *sortCollations,
+					 bool *nullsFirstFlags,
 					 int workMem, bool randomAccess)
 {
 	Tuplesortstate *state = tuplesort_begin_common(workMem, randomAccess);
@@ -647,7 +649,7 @@ tuplesort_begin_heap(TupleDesc tupDesc,
 							   attNums[i],
 							   InvalidStrategy,
 							   InvalidOid,
-							   collations ? collations[i] : InvalidOid,
+							   sortCollations[i],
 							   sortFunction,
 							   (Datum) 0);
 	}
@@ -795,8 +797,8 @@ tuplesort_begin_index_hash(Relation indexRel,
 }
 
 Tuplesortstate *
-tuplesort_begin_datum(Oid datumType,
-					Oid sortOperator, Oid sortCollation, bool nullsFirstFlag,
+tuplesort_begin_datum(Oid datumType, Oid sortOperator, Oid sortCollation,
+					  bool nullsFirstFlag,
 					  int workMem, bool randomAccess)
 {
 	Tuplesortstate *state = tuplesort_begin_common(workMem, randomAccess);
@@ -837,12 +839,12 @@ tuplesort_begin_datum(Oid datumType,
 		elog(ERROR, "operator %u is not a valid ordering operator",
 			 sortOperator);
 	fmgr_info(sortFunction, &state->sortOpFn);
-	fmgr_info_set_collation(sortCollation, &state->sortOpFn);
 
-	/* set ordering flags */
+	/* set ordering flags and collation */
 	state->sortFnFlags = reverse ? SK_BT_DESC : 0;
 	if (nullsFirstFlag)
 		state->sortFnFlags |= SK_BT_NULLS_FIRST;
+	state->sortCollation = sortCollation;
 
 	/* lookup necessary attributes of the datum type */
 	get_typlenbyval(datumType, &typlen, &typbyval);
@@ -2630,15 +2632,15 @@ SelectSortFunction(Oid sortOperator,
 }
 
 /*
- * Inline-able copy of FunctionCall2() to save some cycles in sorting.
+ * Inline-able copy of FunctionCall2Coll() to save some cycles in sorting.
  */
 static inline Datum
-myFunctionCall2(FmgrInfo *flinfo, Datum arg1, Datum arg2)
+myFunctionCall2Coll(FmgrInfo *flinfo, Oid collation, Datum arg1, Datum arg2)
 {
 	FunctionCallInfoData fcinfo;
 	Datum		result;
 
-	InitFunctionCallInfoData(fcinfo, flinfo, 2, NULL, NULL);
+	InitFunctionCallInfoData(fcinfo, flinfo, 2, collation, NULL, NULL);
 
 	fcinfo.arg[0] = arg1;
 	fcinfo.arg[1] = arg2;
@@ -2661,7 +2663,7 @@ myFunctionCall2(FmgrInfo *flinfo, Datum arg1, Datum arg2)
  * NULLS_FIRST options are encoded in sk_flags the same way btree does it.
  */
 static inline int32
-inlineApplySortFunction(FmgrInfo *sortFunction, int sk_flags,
+inlineApplySortFunction(FmgrInfo *sortFunction, int sk_flags, Oid collation,
 						Datum datum1, bool isNull1,
 						Datum datum2, bool isNull2)
 {
@@ -2685,8 +2687,8 @@ inlineApplySortFunction(FmgrInfo *sortFunction, int sk_flags,
 	}
 	else
 	{
-		compare = DatumGetInt32(myFunctionCall2(sortFunction,
-												datum1, datum2));
+		compare = DatumGetInt32(myFunctionCall2Coll(sortFunction, collation,
+													datum1, datum2));
 
 		if (sk_flags & SK_BT_DESC)
 			compare = -compare;
@@ -2700,11 +2702,11 @@ inlineApplySortFunction(FmgrInfo *sortFunction, int sk_flags,
  * C99's brain-dead notions about how to implement inline functions...
  */
 int32
-ApplySortFunction(FmgrInfo *sortFunction, int sortFlags,
+ApplySortFunction(FmgrInfo *sortFunction, int sortFlags, Oid collation,
 				  Datum datum1, bool isNull1,
 				  Datum datum2, bool isNull2)
 {
-	return inlineApplySortFunction(sortFunction, sortFlags,
+	return inlineApplySortFunction(sortFunction, sortFlags, collation,
 								   datum1, isNull1,
 								   datum2, isNull2);
 }
@@ -2729,6 +2731,7 @@ comparetup_heap(const SortTuple *a, const SortTuple *b, Tuplesortstate *state)
 
 	/* Compare the leading sort key */
 	compare = inlineApplySortFunction(&scanKey->sk_func, scanKey->sk_flags,
+									  scanKey->sk_collation,
 									  a->datum1, a->isnull1,
 									  b->datum1, b->isnull1);
 	if (compare != 0)
@@ -2753,6 +2756,7 @@ comparetup_heap(const SortTuple *a, const SortTuple *b, Tuplesortstate *state)
 		datum2 = heap_getattr(&rtup, attno, tupDesc, &isnull2);
 
 		compare = inlineApplySortFunction(&scanKey->sk_func, scanKey->sk_flags,
+										  scanKey->sk_collation,
 										  datum1, isnull1,
 										  datum2, isnull2);
 		if (compare != 0)
@@ -2874,6 +2878,7 @@ comparetup_cluster(const SortTuple *a, const SortTuple *b,
 	if (state->indexInfo->ii_KeyAttrNumbers[0] != 0)
 	{
 		compare = inlineApplySortFunction(&scanKey->sk_func, scanKey->sk_flags,
+										  scanKey->sk_collation,
 										  a->datum1, a->isnull1,
 										  b->datum1, b->isnull1);
 		if (compare != 0 || state->nKeys == 1)
@@ -2910,6 +2915,7 @@ comparetup_cluster(const SortTuple *a, const SortTuple *b,
 
 			compare = inlineApplySortFunction(&scanKey->sk_func,
 											  scanKey->sk_flags,
+											  scanKey->sk_collation,
 											  datum1, isnull1,
 											  datum2, isnull2);
 			if (compare != 0)
@@ -2947,6 +2953,7 @@ comparetup_cluster(const SortTuple *a, const SortTuple *b,
 		{
 			compare = inlineApplySortFunction(&scanKey->sk_func,
 											  scanKey->sk_flags,
+											  scanKey->sk_collation,
 											  l_index_values[nkey],
 											  l_index_isnull[nkey],
 											  r_index_values[nkey],
@@ -3060,6 +3067,7 @@ comparetup_index_btree(const SortTuple *a, const SortTuple *b,
 
 	/* Compare the leading sort key */
 	compare = inlineApplySortFunction(&scanKey->sk_func, scanKey->sk_flags,
+									  scanKey->sk_collation,
 									  a->datum1, a->isnull1,
 									  b->datum1, b->isnull1);
 	if (compare != 0)
@@ -3086,6 +3094,7 @@ comparetup_index_btree(const SortTuple *a, const SortTuple *b,
 		datum2 = index_getattr(tuple2, nkey, tupDes, &isnull2);
 
 		compare = inlineApplySortFunction(&scanKey->sk_func, scanKey->sk_flags,
+										  scanKey->sk_collation,
 										  datum1, isnull1,
 										  datum2, isnull2);
 		if (compare != 0)
@@ -3293,6 +3302,7 @@ comparetup_datum(const SortTuple *a, const SortTuple *b, Tuplesortstate *state)
 	CHECK_FOR_INTERRUPTS();
 
 	return inlineApplySortFunction(&state->sortOpFn, state->sortFnFlags,
+								   state->sortCollation,
 								   a->datum1, a->isnull1,
 								   b->datum1, b->isnull1);
 }

@@ -121,7 +121,7 @@ gin_compare_prefix_##type(PG_FUNCTION_ARGS)									\
 	int32		res,														\
 				cmp;														\
 																			\
-	cmp = DatumGetInt32(DirectFunctionCall2WithCollation(					\
+	cmp = DatumGetInt32(DirectFunctionCall2Coll(							\
 				TypeInfo_##type.typecmp,									\
 				DEFAULT_COLLATION_OID,										\
 				(data->strategy == BTLessStrategyNumber ||					\
