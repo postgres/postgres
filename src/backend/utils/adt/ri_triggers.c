@@ -32,6 +32,7 @@
 
 #include "access/xact.h"
 #include "access/sysattr.h"
+#include "catalog/pg_collation.h"
 #include "catalog/pg_constraint.h"
 #include "catalog/pg_operator.h"
 #include "catalog/pg_type.h"
@@ -82,6 +83,7 @@
 
 #define RIAttName(rel, attnum)	NameStr(*attnumAttName(rel, attnum))
 #define RIAttType(rel, attnum)	attnumTypeId(rel, attnum)
+#define RIAttCollation(rel, attnum)	attnumCollationId(rel, attnum)
 
 #define RI_TRIGTYPE_INSERT 1
 #define RI_TRIGTYPE_UPDATE 2
@@ -194,6 +196,7 @@ static void ri_GenerateQual(StringInfo buf,
 				Oid opoid,
 				const char *rightop, Oid rightoptype);
 static void ri_add_cast_to(StringInfo buf, Oid typid);
+static void ri_GenerateQualCollation(StringInfo buf, Oid collation);
 static int ri_NullCheck(Relation rel, HeapTuple tup,
 			 RI_QueryKey *key, int pairidx);
 static void ri_BuildQueryKeyFull(RI_QueryKey *key,
@@ -2681,6 +2684,9 @@ RI_Initial_Check(Trigger *trigger, Relation fk_rel, Relation pk_rel)
 	 *	 (fk.keycol1 IS NOT NULL [AND ...])
 	 * For MATCH FULL:
 	 *	 (fk.keycol1 IS NOT NULL [OR ...])
+	 *
+	 * We attach COLLATE clauses to the operators when comparing columns
+	 * that have different collations.
 	 *----------
 	 */
 	initStringInfo(&querybuf);
@@ -2707,6 +2713,8 @@ RI_Initial_Check(Trigger *trigger, Relation fk_rel, Relation pk_rel)
 	{
 		Oid			pk_type = RIAttType(pk_rel, riinfo.pk_attnums[i]);
 		Oid			fk_type = RIAttType(fk_rel, riinfo.fk_attnums[i]);
+		Oid			pk_coll = RIAttCollation(pk_rel, riinfo.pk_attnums[i]);
+		Oid			fk_coll = RIAttCollation(fk_rel, riinfo.fk_attnums[i]);
 
 		quoteOneName(pkattname + 3,
 					 RIAttName(pk_rel, riinfo.pk_attnums[i]));
@@ -2716,6 +2724,8 @@ RI_Initial_Check(Trigger *trigger, Relation fk_rel, Relation pk_rel)
 						pkattname, pk_type,
 						riinfo.pf_eq_oprs[i],
 						fkattname, fk_type);
+		if (pk_coll != fk_coll)
+			ri_GenerateQualCollation(&querybuf, pk_coll);
 		sep = "AND";
 	}
 
@@ -2976,6 +2986,53 @@ ri_add_cast_to(StringInfo buf, Oid typid)
 					 quote_identifier(nspname), quote_identifier(typname));
 
 	ReleaseSysCache(typetup);
+}
+
+/*
+ * ri_GenerateQualCollation --- add a COLLATE spec to a WHERE clause
+ *
+ * At present, we intentionally do not use this function for RI queries that
+ * compare a variable to a $n parameter.  Since parameter symbols always have
+ * default collation, the effect will be to use the variable's collation.
+ * Now that is only strictly correct when testing the referenced column, since
+ * the SQL standard specifies that RI comparisons should use the referenced
+ * column's collation.  However, so long as all collations have the same
+ * notion of equality (which they do, because texteq reduces to bitwise
+ * equality), there's no visible semantic impact from using the referencing
+ * column's collation when testing it, and this is a good thing to do because
+ * it lets us use a normal index on the referencing column.  However, we do
+ * have to use this function when directly comparing the referencing and
+ * referenced columns, if they are of different collations; else the parser
+ * will fail to resolve the collation to use.
+ */
+static void
+ri_GenerateQualCollation(StringInfo buf, Oid collation)
+{
+	HeapTuple	tp;
+	Form_pg_collation colltup;
+	char	   *collname;
+	char		onename[MAX_QUOTED_NAME_LEN];
+
+	/* Nothing to do if it's a noncollatable data type */
+	if (!OidIsValid(collation))
+		return;
+
+	tp = SearchSysCache1(COLLOID, ObjectIdGetDatum(collation));
+	if (!HeapTupleIsValid(tp))
+		elog(ERROR, "cache lookup failed for collation %u", collation);
+	colltup = (Form_pg_collation) GETSTRUCT(tp);
+	collname = NameStr(colltup->collname);
+
+	/*
+	 * We qualify the name always, for simplicity and to ensure the query
+	 * is not search-path-dependent.
+	 */
+	quoteOneName(onename, get_namespace_name(colltup->collnamespace));
+	appendStringInfo(buf, " COLLATE %s", onename);
+	quoteOneName(onename, collname);
+	appendStringInfo(buf, ".%s", onename);
+
+	ReleaseSysCache(tp);
 }
 
 /* ----------

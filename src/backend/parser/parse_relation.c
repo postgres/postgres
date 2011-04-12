@@ -2399,6 +2399,24 @@ attnumTypeId(Relation rd, int attid)
 }
 
 /*
+ * given attribute id, return collation of that attribute
+ *
+ *	This should only be used if the relation is already heap_open()'ed.
+ */
+Oid
+attnumCollationId(Relation rd, int attid)
+{
+	if (attid <= 0)
+	{
+		/* All system attributes are of noncollatable types. */
+		return InvalidOid;
+	}
+	if (attid > rd->rd_att->natts)
+		elog(ERROR, "invalid attribute number %d", attid);
+	return rd->rd_att->attrs[attid - 1]->attcollation;
+}
+
+/*
  * Generate a suitable error about a missing RTE.
  *
  * Since this is a very common type of error, we work rather hard to

@@ -89,5 +89,6 @@ extern List *expandRelAttrs(ParseState *pstate, RangeTblEntry *rte,
 extern int	attnameAttNum(Relation rd, const char *attname, bool sysColOK);
 extern Name attnumAttName(Relation rd, int attid);
 extern Oid	attnumTypeId(Relation rd, int attid);
+extern Oid	attnumCollationId(Relation rd, int attid);
 
 #endif   /* PARSE_RELATION_H */
