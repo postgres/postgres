@@ -775,16 +775,16 @@ ECPGdescribe(int line, int compat, bool input, const char *connection_name, cons
 
 		/* rest of variable parameters */
 		ptr = va_arg(args, void *);
-		va_arg(args, long);		/* skip args */
-		va_arg(args, long);
-		va_arg(args, long);
+		(void) va_arg(args, long);		/* skip args */
+		(void) va_arg(args, long);
+		(void) va_arg(args, long);
 
 		/* variable indicator */
-		va_arg(args, enum ECPGttype);
-		va_arg(args, void *);	/* skip args */
-		va_arg(args, long);
-		va_arg(args, long);
-		va_arg(args, long);
+		(void) va_arg(args, enum ECPGttype);
+		(void) va_arg(args, void *);	/* skip args */
+		(void) va_arg(args, long);
+		(void) va_arg(args, long);
+		(void) va_arg(args, long);
 
 		switch (type)
 		{
