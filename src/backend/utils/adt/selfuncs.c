@@ -2261,7 +2261,9 @@ eqjoinsel_semi(Oid operator,
 		bool	   *hasmatch1;
 		bool	   *hasmatch2;
 		double		nullfrac1 = stats1->stanullfrac;
-		double		matchfreq1;
+		double		matchfreq1,
+					uncertainfrac,
+					uncertain;
 		int			i,
 					nmatches;
 
@@ -2314,18 +2316,26 @@ eqjoinsel_semi(Oid operator,
 		 * the uncertain rows that a fraction nd2/nd1 have join partners. We
 		 * can discount the known-matched MCVs from the distinct-values counts
 		 * before doing the division.
+		 *
+		 * Crude as the above is, it's completely useless if we don't have
+		 * reliable ndistinct values for both sides.  Hence, if either nd1
+		 * or nd2 is default, punt and assume half of the uncertain rows
+		 * have join partners.
 		 */
-		nd1 -= nmatches;
-		nd2 -= nmatches;
-		if (nd1 <= nd2 || nd2 <= 0)
-			selec = Max(matchfreq1, 1.0 - nullfrac1);
-		else
+		if (nd1 != DEFAULT_NUM_DISTINCT && nd2 != DEFAULT_NUM_DISTINCT)
 		{
-			double		uncertain = 1.0 - matchfreq1 - nullfrac1;
-
-			CLAMP_PROBABILITY(uncertain);
-			selec = matchfreq1 + (nd2 / nd1) * uncertain;
+			nd1 -= nmatches;
+			nd2 -= nmatches;
+			if (nd1 <= nd2 || nd2 <= 0)
+				uncertainfrac = 1.0;
+			else
+				uncertainfrac = nd2 / nd1;
 		}
+		else
+			uncertainfrac = 0.5;
+		uncertain = 1.0 - matchfreq1 - nullfrac1;
+		CLAMP_PROBABILITY(uncertain);
+		selec = matchfreq1 + uncertainfrac * uncertain;
 	}
 	else
 	{
@@ -2335,15 +2345,20 @@ eqjoinsel_semi(Oid operator,
 		 */
 		double		nullfrac1 = stats1 ? stats1->stanullfrac : 0.0;
 
-		if (vardata1->rel)
-			nd1 = Min(nd1, vardata1->rel->rows);
-		if (vardata2->rel)
-			nd2 = Min(nd2, vardata2->rel->rows);
+		if (nd1 != DEFAULT_NUM_DISTINCT && nd2 != DEFAULT_NUM_DISTINCT)
+		{
+			if (vardata1->rel)
+				nd1 = Min(nd1, vardata1->rel->rows);
+			if (vardata2->rel)
+				nd2 = Min(nd2, vardata2->rel->rows);
 
-		if (nd1 <= nd2 || nd2 <= 0)
-			selec = 1.0 - nullfrac1;
+			if (nd1 <= nd2 || nd2 <= 0)
+				selec = 1.0 - nullfrac1;
+			else
+				selec = (nd2 / nd1) * (1.0 - nullfrac1);
+		}
 		else
-			selec = (nd2 / nd1) * (1.0 - nullfrac1);
+			selec = 0.5 * (1.0 - nullfrac1);
 	}
 
 	if (have_mcvs1)
