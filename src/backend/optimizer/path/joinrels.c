@@ -17,6 +17,7 @@
 #include "optimizer/joininfo.h"
 #include "optimizer/pathnode.h"
 #include "optimizer/paths.h"
+#include "utils/memutils.h"
 
 
 static void make_rels_by_clause_joins(PlannerInfo *root,
@@ -933,11 +934,32 @@ is_dummy_rel(RelOptInfo *rel)
 }
 
 /*
- * Mark a rel as proven empty.
+ * Mark a relation as proven empty.
+ *
+ * During GEQO planning, this can get invoked more than once on the same
+ * baserel struct, so it's worth checking to see if the rel is already marked
+ * dummy.
+ *
+ * Also, when called during GEQO join planning, we are in a short-lived
+ * memory context.  We must make sure that the dummy path attached to a
+ * baserel survives the GEQO cycle, else the baserel is trashed for future
+ * GEQO cycles.  On the other hand, when we are marking a joinrel during GEQO,
+ * we don't want the dummy path to clutter the main planning context.  Upshot
+ * is that the best solution is to explicitly make the dummy path in the same
+ * context the given RelOptInfo is in.
  */
 static void
 mark_dummy_rel(RelOptInfo *rel)
 {
+	MemoryContext oldcontext;
+
+	/* Already marked? */
+	if (is_dummy_rel(rel))
+		return;
+
+	/* No, so choose correct context to make the dummy path in */
+	oldcontext = MemoryContextSwitchTo(GetMemoryChunkContext(rel));
+
 	/* Set dummy size estimate */
 	rel->rows = 0;
 
@@ -949,6 +971,8 @@ mark_dummy_rel(RelOptInfo *rel)
 
 	/* Set or update cheapest_total_path */
 	set_cheapest(rel);
+
+	MemoryContextSwitchTo(oldcontext);
 }
 
 
