@@ -6322,12 +6322,28 @@ StartupXLOG(void)
 		(XLByteLT(EndOfLog, minRecoveryPoint) ||
 		 !XLogRecPtrIsInvalid(ControlFile->backupStartPoint)))
 	{
-		if (reachedStopPoint)	/* stopped because of stop request */
+		if (reachedStopPoint)
+		{
+			/* stopped because of stop request */
 			ereport(FATAL,
 					(errmsg("requested recovery stop point is before consistent recovery point")));
-		else	/* ran off end of WAL */
-			ereport(FATAL,
-					(errmsg("WAL ends before consistent recovery point")));
+		}
+		else
+		{
+			/*
+			 * Ran off end of WAL before reaching end-of-backup WAL record,
+			 * or minRecoveryPoint. That's usually a bad sign, indicating that
+			 * you tried to recover from an online backup but never called
+			 * pg_stop_backup(), or you didn't archive all the WAL up to that
+			 * point. However, this also happens in crash recovery, if the
+			 * system crashes while an online backup is in progress. We
+			 * must not treat that as an error, or the database will refuse
+			 * to start up.
+			 */
+			if (InArchiveRecovery)
+				ereport(FATAL,
+						(errmsg("WAL ends before consistent recovery point")));
+		}
 	}
 
 	/*
@@ -7910,7 +7926,8 @@ xlog_redo(XLogRecPtr lsn, XLogRecord *record)
 		 * record, the backup was cancelled and the end-of-backup record will
 		 * never arrive.
 		 */
-		if (!XLogRecPtrIsInvalid(ControlFile->backupStartPoint))
+		if (InArchiveRecovery &&
+			!XLogRecPtrIsInvalid(ControlFile->backupStartPoint))
 			ereport(ERROR,
 					(errmsg("online backup was cancelled, recovery cannot continue")));
 
