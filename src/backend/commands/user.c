@@ -245,7 +245,7 @@ CreateRole(CreateRoleStmt *stmt)
 		 * Superusers get replication by default, but only if NOREPLICATION
 		 * wasn't explicitly mentioned
 		 */
-		if (!(disreplication && intVal(disreplication->arg) == 0))
+		if (issuper && !(disreplication && intVal(disreplication->arg) == 0))
 			isreplication = 1;
 	}
 	if (dinherit)
