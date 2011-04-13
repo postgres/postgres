@@ -46,11 +46,6 @@ CREATE EXTENSION [ IF NOT EXISTS ] <replaceable class="parameter">extension_name
   </para>
 
   <para>
-   For information about writing new extensions, see
-   <xref linkend="extend-extensions">.
-  </para>
-
-  <para>
    Loading an extension requires the same privileges that would be
    required to create its component objects.  For most extensions this
    means superuser or database owner privileges are needed.
@@ -72,7 +67,7 @@ CREATE EXTENSION [ IF NOT EXISTS ] <replaceable class="parameter">extension_name
         Do not throw an error if an extension with the same name already
         exists.  A notice is issued in this case.  Note that there is no
         guarantee that the existing extension is anything like the one that
-        would have been created.
+        would have been created from the currently-available script file.
        </para>
       </listitem>
      </varlistentry>
@@ -140,6 +135,31 @@ CREATE EXTENSION [ IF NOT EXISTS ] <replaceable class="parameter">extension_name
       </listitem>
      </varlistentry>
   </variablelist>
+ </refsect1>
+
+ <refsect1>
+  <title>Notes</title>
+
+  <para>
+   Before you can use <command>CREATE EXTENSION</> to load an extension
+   into a database, the extension's supporting files must be installed.
+   Information about installing the extensions supplied with
+   <productname>PostgreSQL</productname> can be found in
+   <link linkend="contrib">Additional Supplied Modules</link>.
+  </para>
+
+  <para>
+   The extensions currently available for loading can be identified from the
+   <link linkend="view-pg-available-extensions"><structname>pg_available_extensions</structname></link>
+   or
+   <link linkend="view-pg-available-extension-versions"><structname>pg_available_extension_versions</structname></link>
+   system views.
+  </para>
+
+  <para>
+   For information about writing new extensions, see
+   <xref linkend="extend-extensions">.
+  </para>
  </refsect1>
 
  <refsect1>
