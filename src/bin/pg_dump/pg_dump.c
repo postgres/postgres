@@ -3415,6 +3415,8 @@ getTables(int *numTables)
 						  "relhasindex, relhasrules, "
 						  "'t'::bool AS relhasoids, "
 						  "0 as relfrozenxid, "
+						  "0 AS toid, "
+						  "0 AS tfrozenxid, "
 						  "NULL::oid AS owning_tab, "
 						  "NULL::int4 AS owning_col, "
 						  "NULL AS reltablespace, "
