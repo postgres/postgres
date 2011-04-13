@@ -46,6 +46,10 @@ transfer_all_new_dbs(migratorContext *ctx, DbInfoArr *olddb_arr,
 		int			n_maps;
 		pageCnvCtx *pageConverter = NULL;
 
+		if (!old_db)
+			pg_log(ctx, PG_FATAL,
+			   "the new cluster database %s was not found in the old cluster\n", new_db->db_name);
+		
 		n_maps = 0;
 		mappings = gen_db_file_maps(ctx, old_db, new_db, &n_maps, old_pgdata,
 									new_pgdata);
