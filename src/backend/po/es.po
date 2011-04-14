@@ -25,7 +25,7 @@ msgstr ""
 "Project-Id-Version: postgres (PostgreSQL 8.2)\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2010-12-09 03:17+0000\n"
-"PO-Revision-Date: 2010-12-09 13:47-0300\n"
+"PO-Revision-Date: 2011-03-15 18:59-0300\n"
 "Last-Translator: Álvaro Herrera <alvherre@dcc.uchile.cl>\n"
 "Language-Team: Spanish <pgsql-es-ayuda@postgresql.org>\n"
 "Language: es\n"
@@ -4680,7 +4680,7 @@ msgstr "la columna «%s» está duplicada"
 #: commands/tablecmds.c:829 parser/analyze.c:1365 parser/analyze.c:1630
 #, c-format
 msgid "inherited relation \"%s\" is not a table"
-msgstr "la relación de herencia «%s» no es una tabla"
+msgstr "la relación heredada «%s» no es una tabla"
 
 #: commands/tablecmds.c:835 commands/tablecmds.c:6251
 #, c-format
