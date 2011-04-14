@@ -1,6 +1,169 @@
 <!-- doc/src/sgml/release-8.3.sgml -->
 <!-- See header comment in release.sgml about typical markup -->
 
+ <sect1 id="release-8-3-15">
+  <title>Release 8.3.15</title>
+
+  <note>
+  <title>Release Date</title>
+  <simpara>2011-04-18</simpara>
+  </note>
+
+  <para>
+   This release contains a variety of fixes from 8.3.14.
+   For information about new features in the 8.3 major release, see
+   <xref linkend="release-8-3">.
+  </para>
+
+  <sect2>
+   <title>Migration to Version 8.3.15</title>
+
+   <para>
+    A dump/restore is not required for those running 8.3.X.
+    However, if you are upgrading from a version earlier than 8.3.8,
+    see the release notes for 8.3.8.
+   </para>
+
+  </sect2>
+
+  <sect2>
+   <title>Changes</title>
+
+   <itemizedlist>
+
+    <listitem>
+     <para>
+      Disallow including a composite type in itself (Tom Lane)
+     </para>
+
+     <para>
+      This prevents scenarios wherein the server could recurse infinitely
+      while processing the composite type.  While there are some possible
+      uses for such a structure, they don't seem compelling enough to
+      justify the effort required to make sure it always works safely.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Avoid potential deadlock during catalog cache initialization
+      (Nikhil Sontakke)
+     </para>
+
+     <para>
+      In some cases the cache loading code would acquire share lock on a
+      system index before locking the index's catalog.  This could deadlock
+      against processes trying to acquire exclusive locks in the other,
+      more standard order.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix dangling-pointer problem in <literal>BEFORE ROW UPDATE</> trigger
+      handling when there was a concurrent update to the target tuple
+      (Tom Lane)
+     </para>
+
+     <para>
+      This bug has been observed to result in intermittent <quote>cannot
+      extract system attribute from virtual tuple</> failures while trying to
+      do <literal>UPDATE RETURNING ctid</>.  There is a very small probability
+      of more serious errors, such as generating incorrect index entries for
+      the updated tuple.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Disallow <command>DROP TABLE</> when there are pending deferred trigger
+      events for the table (Tom Lane)
+     </para>
+
+     <para>
+      Formerly the <command>DROP</> would go through, leading to
+      <quote>could not open relation with OID nnn</> errors when the
+      triggers were eventually fired.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix PL/Python memory leak involving array slices (Daniel Popowich)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix <application>pg_restore</> to cope with long lines (over 1KB) in
+      TOC files (Tom Lane)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Put in more safeguards against crashing due to division-by-zero
+      with overly enthusiastic compiler optimization (Aurelien Jarno)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Support use of dlopen() in FreeBSD and OpenBSD on MIPS (Tom Lane)
+     </para>
+
+     <para>
+      There was a hard-wired assumption that this system function was not
+      available on MIPS hardware on these systems.  Use a compile-time test
+      instead, since more recent versions have it.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix compilation failures on HP-UX (Heikki Linnakangas)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix version-incompatibility problem with <application>libintl</> on
+      Windows (Hiroshi Inoue)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix usage of <application>xcopy</> in Windows build scripts to
+      work correctly under Windows 7 (Andrew Dunstan)
+     </para>
+
+     <para>
+      This affects the build scripts only, not installation or usage.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix path separator used by <application>pg_regress</> on Cygwin
+      (Andrew Dunstan)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Update time zone data files to <application>tzdata</> release 2011f
+      for DST law changes in Chile, Cuba, Falkland Islands, Morocco, Samoa,
+      and Turkey; also historical corrections for South Australia, Alaska,
+      and Hawaii.
+     </para>
+    </listitem>
+
+   </itemizedlist>
+
+  </sect2>
+ </sect1>
+
  <sect1 id="release-8-3-14">
   <title>Release 8.3.14</title>
 
