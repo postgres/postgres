@@ -43,7 +43,7 @@ msgstr ""
 "Project-Id-Version: PostgreSQL server 8.4\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
 "POT-Creation-Date: 2010-12-09 03:08+0000\n"
-"PO-Revision-Date: 2010-12-09 14:14-0300\n"
+"PO-Revision-Date: 2011-03-15 18:59-0300\n"
 "Last-Translator: Álvaro Herrera <alvherre@alvh.no-ip.org>\n"
 "Language-Team: PgSQL Español <pgsql-es-ayuda@postgresql.org>\n"
 "Language: \n"
@@ -6185,7 +6185,7 @@ msgstr "no se pueden truncar tablas temporales de otras sesiones"
 #: parser/parse_utilcmd.c:1163
 #, c-format
 msgid "inherited relation \"%s\" is not a table"
-msgstr "la relación de herencia «%s» no es una tabla"
+msgstr "la relación heredada «%s» no es una tabla"
 
 #: commands/tablecmds.c:1219 commands/tablecmds.c:6954
 #, c-format
