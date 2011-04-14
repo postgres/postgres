@@ -268,7 +268,7 @@ CATALOG "docbook/4.2/catalog"
     available for <productname>Debian GNU/Linux</productname>.
     To install, simply use:
 <programlisting>
-apt-get install docbook docbook-dsssl docbook-xsl openjade xsltproc
+apt-get install docbook docbook-dsssl docbook-xsl openjade1.3 xsltproc
 </programlisting>
    </para>
   </sect2>
@@ -309,6 +309,19 @@ make install
         installed and you want to install the rest of the toolchain
         locally.)
        </para>
+
+       <note>
+       <para>
+        Some users have reported encountering a segmentation fault using
+        openjade 1.4devel to build the PDFs, with a message like:
+<screen>
+openjade:./stylesheet.dsl:664:2:E: flow object not accepted by port; only display flow objects accepted
+make: *** [postgres-A4.tex-pdf] Segmentation fault
+</screen>
+        Downgrading to openjade 1.3 should get rid of this error.
+       </para>
+       </note>
+
       </step>
 
       <step id="doc-openjade-install">
