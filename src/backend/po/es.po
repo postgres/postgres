@@ -3,7 +3,7 @@
 # Alvaro Herrera <alvherre@dcc.uchile.cl> 2003-2008
 # Jaime Casanova <systemguards@gmail.com> 2005, 2006
 #
-# pgtranslation Id: postgres.po,v 1.11.2.4 2010/12/09 17:13:25 alvherre Exp $
+# pgtranslation Id: postgres.po,v 1.11.2.5 2011/03/15 22:00:57 alvherre Exp $
 # $PostgreSQL$
 #
 # FIXME -- quizas sea necesario buscar un termino mejor que
@@ -35,7 +35,7 @@ msgstr ""
 "Project-Id-Version: PostgreSQL 8.3\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2010-12-09 03:13+0000\n"
-"PO-Revision-Date: 2010-12-09 13:49-0300\n"
+"PO-Revision-Date: 2011-03-15 18:59-0300\n"
 "Last-Translator: Álvaro Herrera <alvherre@alvh.no-ip.org>\n"
 "Language-Team: PgSQL-es-Ayuda <pgsql-es-ayuda@postgresql.org>\n"
 "Language: \n"
@@ -4956,7 +4956,7 @@ msgstr "no se pueden truncar tablas temporales de otras sesiones"
 #: parser/parse_utilcmd.c:1144
 #, c-format
 msgid "inherited relation \"%s\" is not a table"
-msgstr "la relación de herencia «%s» no es una tabla"
+msgstr "la relación heredada «%s» no es una tabla"
 
 #: commands/tablecmds.c:837 commands/tablecmds.c:6094
 #, c-format

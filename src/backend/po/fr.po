@@ -10,8 +10,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: postgres-83-fr\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2010-12-09 21:12+0000\n"
-"PO-Revision-Date: 2010-12-11 10:41+0100\n"
+"POT-Creation-Date: 2011-04-11 21:17+0000\n"
+"PO-Revision-Date: 2011-04-12 08:53+0100\n"
 "Last-Translator: Guillaume Lelarge <guillaume@lelarge.info>\n"
 "Language-Team:  <pgsql-fr-generale@postgresql.org>\n"
 "Language: \n"
@@ -112,7 +112,7 @@ msgstr "format des données binaires incorrect dans l'argument de la fonction %d"
 #: tcop/postgres.c:391
 #: tcop/postgres.c:402
 #: tcop/postgres.c:414
-#: tcop/postgres.c:3916
+#: tcop/postgres.c:3918
 #, c-format
 msgid "invalid frontend message type %d"
 msgstr "type %d du message de l'interface invalide"
@@ -264,74 +264,74 @@ msgstr "annulation de la tâche d'autovacuum"
 msgid "canceling statement due to user request"
 msgstr "annulation de la requête à la demande de l'utilisateur"
 
-#: tcop/postgres.c:2760
-#: tcop/postgres.c:2781
+#: tcop/postgres.c:2762
+#: tcop/postgres.c:2783
 msgid "stack depth limit exceeded"
 msgstr "dépassement de limite (en profondeur) de la pile"
 
-#: tcop/postgres.c:2761
-#: tcop/postgres.c:2782
+#: tcop/postgres.c:2763
+#: tcop/postgres.c:2784
 msgid "Increase the configuration parameter \"max_stack_depth\", after ensuring the platform's stack depth limit is adequate."
 msgstr ""
 "Augmenter le paramètre « max_stack_depth » après vous être assuré que la\n"
 "limite de profondeur de la pile de la plateforme est adéquate."
 
-#: tcop/postgres.c:2799
+#: tcop/postgres.c:2801
 #, c-format
 msgid "\"max_stack_depth\" must not exceed %ldkB"
 msgstr "« max_stack_depth » ne doit pas dépasser %ld Ko"
 
-#: tcop/postgres.c:2801
+#: tcop/postgres.c:2803
 msgid "Increase the platform's stack depth limit via \"ulimit -s\" or local equivalent."
 msgstr ""
 "Augmenter la limite de profondeur de la pile sur votre plateforme via\n"
 "« ulimit -s » ou l'équivalent local."
 
-#: tcop/postgres.c:3181
+#: tcop/postgres.c:3183
 #: bootstrap/bootstrap.c:293
-#: postmaster/postmaster.c:633
+#: postmaster/postmaster.c:634
 #, c-format
 msgid "--%s requires a value"
 msgstr "--%s requiert une valeur"
 
-#: tcop/postgres.c:3186
+#: tcop/postgres.c:3188
 #: bootstrap/bootstrap.c:298
-#: postmaster/postmaster.c:638
+#: postmaster/postmaster.c:639
 #, c-format
 msgid "-c %s requires a value"
 msgstr "-c %s requiert une valeur"
 
-#: tcop/postgres.c:3321
+#: tcop/postgres.c:3323
 msgid "invalid command-line arguments for server process"
 msgstr "arguments invalides en ligne de commande pour le processus serveur"
 
-#: tcop/postgres.c:3322
-#: tcop/postgres.c:3336
+#: tcop/postgres.c:3324
+#: tcop/postgres.c:3338
 #, c-format
 msgid "Try \"%s --help\" for more information."
 msgstr "Essayez « %s --help » pour plus d'informations."
 
-#: tcop/postgres.c:3334
+#: tcop/postgres.c:3336
 #, c-format
 msgid "%s: invalid command-line arguments"
 msgstr "%s : arguments invalides en ligne de commande"
 
-#: tcop/postgres.c:3344
+#: tcop/postgres.c:3346
 #, c-format
 msgid "%s: no database nor user name specified"
 msgstr "%s : aucune base de données et aucun utilisateur spécifiés"
 
-#: tcop/postgres.c:3826
+#: tcop/postgres.c:3828
 #, c-format
 msgid "invalid CLOSE message subtype %d"
 msgstr "sous-type %d du message CLOSE invalide"
 
-#: tcop/postgres.c:3859
+#: tcop/postgres.c:3861
 #, c-format
 msgid "invalid DESCRIBE message subtype %d"
 msgstr "sous-type %d du message DESCRIBE invalide"
 
-#: tcop/postgres.c:4067
+#: tcop/postgres.c:4069
 #: catalog/pg_shdepend.c:676
 #: commands/user.c:914
 #: storage/lmgr/deadlock.c:918
@@ -344,7 +344,7 @@ msgstr "sous-type %d du message DESCRIBE invalide"
 msgid "%s"
 msgstr "%s"
 
-#: tcop/postgres.c:4097
+#: tcop/postgres.c:4099
 #, c-format
 msgid "disconnection: session time: %d:%02d:%02d.%03d user=%s database=%s host=%s%s%s"
 msgstr ""
@@ -502,7 +502,7 @@ msgstr "Utilisez DROP TYPE pour supprimer un type."
 #: commands/tablecmds.c:1658
 #: commands/tablecmds.c:2768
 #: commands/tablecmds.c:2797
-#: commands/tablecmds.c:3999
+#: commands/tablecmds.c:4000
 #: commands/trigger.c:113
 #: commands/trigger.c:840
 #, c-format
@@ -1135,7 +1135,7 @@ msgstr "n'a pas pu ouvrir le fichier « %s » (journal de transactions %u, segment
 #: access/transam/xlog.c:3698
 #: access/transam/xlog.c:6626
 #: access/transam/xlog.c:6753
-#: postmaster/postmaster.c:3319
+#: postmaster/postmaster.c:3320
 #: ../port/copydir.c:126
 #, c-format
 msgid "could not create file \"%s\": %m"
@@ -1148,8 +1148,8 @@ msgstr "n'a pas pu créer le fichier « %s » : %m"
 #: commands/copy.c:1274
 #: commands/tablespace.c:703
 #: commands/tablespace.c:709
-#: postmaster/postmaster.c:3329
-#: postmaster/postmaster.c:3339
+#: postmaster/postmaster.c:3330
+#: postmaster/postmaster.c:3340
 #: utils/init/miscinit.c:1115
 #: utils/init/miscinit.c:1124
 #: utils/init/miscinit.c:1131
@@ -2319,8 +2319,8 @@ msgstr "« %s » est un index"
 #: access/heap/heapam.c:1068
 #: access/heap/heapam.c:1096
 #: catalog/aclchk.c:579
-#: commands/tablecmds.c:5475
-#: commands/tablecmds.c:6587
+#: commands/tablecmds.c:5477
+#: commands/tablecmds.c:6589
 #, c-format
 msgid "\"%s\" is a composite type"
 msgstr "« %s » est un type composite"
@@ -2373,8 +2373,8 @@ msgid "version mismatch in index \"%s\": file version %d, code version %d"
 msgstr "la version ne correspond pas dans l'index « %s » : version du fichier %d, version du code %d"
 
 #: bootstrap/bootstrap.c:309
-#: postmaster/postmaster.c:650
-#: postmaster/postmaster.c:663
+#: postmaster/postmaster.c:651
+#: postmaster/postmaster.c:664
 #, c-format
 msgid "Try \"%s --help\" for more information.\n"
 msgstr "Essayez « %s --help » pour plus d'informations.\n"
@@ -2496,13 +2496,13 @@ msgstr "le schéma « %s » n'existe pas"
 #: commands/dbcommands.c:312
 #: commands/indexcmds.c:208
 #: commands/tablecmds.c:343
-#: commands/tablecmds.c:5734
+#: commands/tablecmds.c:5736
 #: commands/tablespace.c:412
 #: commands/tablespace.c:767
 #: commands/tablespace.c:834
 #: commands/tablespace.c:928
 #: commands/tablespace.c:1052
-#: executor/execMain.c:2706
+#: executor/execMain.c:2690
 #: utils/adt/acl.c:2582
 #: utils/adt/dbsize.c:246
 #, c-format
@@ -2988,28 +2988,33 @@ msgstr "le nom de la colonne « %s » entre en conflit avec le nom d'une colonne s
 msgid "column name \"%s\" specified more than once"
 msgstr "colonne « %s » spécifiée plus d'une fois"
 
-#: catalog/heap.c:416
+#: catalog/heap.c:426
 #, c-format
 msgid "column \"%s\" has type \"unknown\""
 msgstr "la colonne « %s » est de type « unknown »"
 
-#: catalog/heap.c:417
+#: catalog/heap.c:427
 msgid "Proceeding with relation creation anyway."
 msgstr "Poursuit malgré tout la création de la relation."
 
-#: catalog/heap.c:428
+#: catalog/heap.c:438
 #, c-format
 msgid "column \"%s\" has pseudo-type %s"
 msgstr "la colonne « %s » a le pseudo type %s"
 
-#: catalog/heap.c:817
+#: catalog/heap.c:461
+#, c-format
+msgid "composite type %s cannot be made a member of itself"
+msgstr "le type composite %s ne peut pas être membre de lui-même"
+
+#: catalog/heap.c:852
 #: catalog/index.c:568
 #: commands/tablecmds.c:1695
 #, c-format
 msgid "relation \"%s\" already exists"
 msgstr "la relation « %s » existe déjà"
 
-#: catalog/heap.c:834
+#: catalog/heap.c:869
 #: catalog/pg_type.c:316
 #: catalog/pg_type.c:592
 #: commands/typecmds.c:180
@@ -3019,68 +3024,68 @@ msgstr "la relation « %s » existe déjà"
 msgid "type \"%s\" already exists"
 msgstr "le type « %s » existe déjà"
 
-#: catalog/heap.c:835
+#: catalog/heap.c:870
 msgid "A relation has an associated type of the same name, so you must use a name that doesn't conflict with any existing type."
 msgstr ""
 "Une relation a un type associé du même nom, donc vous devez utiliser un nom\n"
 "qui n'entre pas en conflit avec un type existant."
 
-#: catalog/heap.c:856
+#: catalog/heap.c:891
 #: catalog/index.c:562
-#: commands/tablecmds.c:5869
+#: commands/tablecmds.c:5871
 msgid "only shared relations can be placed in pg_global tablespace"
 msgstr "seules les relations partagées peuvent être placées dans le tablespace pg_global"
 
-#: catalog/heap.c:1786
+#: catalog/heap.c:1828
 #, c-format
 msgid "only table \"%s\" can be referenced in check constraint"
 msgstr "seule la table « %s » peut être référencée dans la contrainte de vérification"
 
-#: catalog/heap.c:1795
+#: catalog/heap.c:1837
 #: commands/typecmds.c:2168
 msgid "cannot use subquery in check constraint"
 msgstr "ne peut pas utiliser une sous-requête dans la contrainte de vérification"
 
-#: catalog/heap.c:1799
+#: catalog/heap.c:1841
 #: commands/typecmds.c:2172
 msgid "cannot use aggregate function in check constraint"
 msgstr "ne peut pas utiliser une fonction d'aggrégat dans une contrainte de vérification"
 
-#: catalog/heap.c:1816
+#: catalog/heap.c:1858
 #: catalog/pg_constraint.c:609
-#: commands/tablecmds.c:3920
+#: commands/tablecmds.c:3921
 #, c-format
 msgid "constraint \"%s\" for relation \"%s\" already exists"
 msgstr "la contrainte « %s » de la relation « %s » existe déjà"
 
-#: catalog/heap.c:1825
+#: catalog/heap.c:1867
 #, c-format
 msgid "check constraint \"%s\" already exists"
 msgstr "la contrainte de vérification « %s » existe déjà"
 
-#: catalog/heap.c:1973
+#: catalog/heap.c:2015
 msgid "cannot use column references in default expression"
 msgstr "ne peut pas utiliser les références de colonnes dans l'expression par défaut"
 
-#: catalog/heap.c:1981
+#: catalog/heap.c:2023
 msgid "default expression must not return a set"
 msgstr "l'expression par défaut ne doit pas renvoyer un ensemble"
 
-#: catalog/heap.c:1989
+#: catalog/heap.c:2031
 msgid "cannot use subquery in default expression"
 msgstr "ne peut pas utiliser une sous-requête dans l'expression par défaut"
 
-#: catalog/heap.c:1993
+#: catalog/heap.c:2035
 msgid "cannot use aggregate function in default expression"
 msgstr "ne peut pas utiliser une fonction d'agrégat dans une expression par défaut"
 
-#: catalog/heap.c:2011
+#: catalog/heap.c:2053
 #: rewrite/rewriteHandler.c:933
 #, c-format
 msgid "column \"%s\" is of type %s but default expression is of type %s"
 msgstr "la colonne « %s » est de type %s alors que l'expression par défaut est de type %s"
 
-#: catalog/heap.c:2016
+#: catalog/heap.c:2058
 #: commands/prepare.c:357
 #: parser/parse_node.c:298
 #: parser/parse_target.c:439
@@ -3090,27 +3095,27 @@ msgstr "la colonne « %s » est de type %s alors que l'expression par défaut est d
 msgid "You will need to rewrite or cast the expression."
 msgstr "Vous devez réécrire l'expression ou lui appliquer une transformation de type."
 
-#: catalog/heap.c:2293
+#: catalog/heap.c:2335
 msgid "unsupported ON COMMIT and foreign key combination"
 msgstr "combinaison ON COMMIT et clé étrangère non supportée"
 
-#: catalog/heap.c:2294
+#: catalog/heap.c:2336
 #, c-format
 msgid "Table \"%s\" references \"%s\", but they do not have the same ON COMMIT setting."
 msgstr ""
 "La table « %s » référence « %s » mais elles n'ont pas la même valeur pour le\n"
 "paramètre ON COMMIT."
 
-#: catalog/heap.c:2299
+#: catalog/heap.c:2341
 msgid "cannot truncate a table referenced in a foreign key constraint"
 msgstr "ne peut pas tronquer une table référencée dans une contrainte de clé étrangère"
 
-#: catalog/heap.c:2300
+#: catalog/heap.c:2342
 #, c-format
 msgid "Table \"%s\" references \"%s\"."
 msgstr "La table « %s » référence « %s »."
 
-#: catalog/heap.c:2302
+#: catalog/heap.c:2344
 #, c-format
 msgid "Truncate table \"%s\" at the same time, or use TRUNCATE ... CASCADE."
 msgstr "Tronquez la table « %s » en même temps, ou utilisez TRUNCATE ... CASCADE."
@@ -3129,18 +3134,18 @@ msgstr ""
 msgid "shared indexes cannot be created after initdb"
 msgstr "les index partagés ne peuvent pas être créés après initdb"
 
-#: catalog/index.c:2244
+#: catalog/index.c:2250
 msgid "cannot reindex temporary tables of other sessions"
 msgstr "ne peut pas ré-indexer les tables temporaires des autres sessions"
 
-#: catalog/index.c:2266
+#: catalog/index.c:2272
 #, c-format
 msgid "shared index \"%s\" can only be reindexed in stand-alone mode"
 msgstr "un index partagé « %s » peut seulement être réindexé en mode autonome"
 
 #: catalog/namespace.c:226
 #: catalog/namespace.c:300
-#: commands/trigger.c:3313
+#: commands/trigger.c:3345
 #, c-format
 msgid "cross-database references are not implemented: \"%s.%s.%s\""
 msgstr "les références entre bases de données ne sont pas implémentées : « %s.%s.%s »"
@@ -3601,14 +3606,14 @@ msgstr "analyse « %s.%s »"
 #: commands/comment.c:577
 #: commands/copy.c:3372
 #: commands/sequence.c:1235
-#: commands/tablecmds.c:3301
-#: commands/tablecmds.c:3393
-#: commands/tablecmds.c:3440
-#: commands/tablecmds.c:3536
-#: commands/tablecmds.c:3597
-#: commands/tablecmds.c:3663
-#: commands/tablecmds.c:4798
-#: commands/tablecmds.c:4931
+#: commands/tablecmds.c:3302
+#: commands/tablecmds.c:3394
+#: commands/tablecmds.c:3441
+#: commands/tablecmds.c:3537
+#: commands/tablecmds.c:3598
+#: commands/tablecmds.c:3664
+#: commands/tablecmds.c:4799
+#: commands/tablecmds.c:4933
 #: parser/analyze.c:1568
 #: parser/parse_relation.c:1607
 #: parser/parse_relation.c:1662
@@ -3650,7 +3655,7 @@ msgid "there is no previously clustered index for table \"%s\""
 msgstr "Il n'existe pas d'index CLUSTER pour la table « %s »"
 
 #: commands/cluster.c:163
-#: commands/tablecmds.c:5698
+#: commands/tablecmds.c:5700
 #, c-format
 msgid "index \"%s\" for table \"%s\" does not exist"
 msgstr "l'index « %s » pour la table « %s » n'existe pas"
@@ -4643,13 +4648,13 @@ msgid "function \"%s\" is already in schema \"%s\""
 msgstr "la fonction « %s » existe déjà dans le schéma « %s »"
 
 #: commands/functioncmds.c:1708
-#: commands/tablecmds.c:6615
+#: commands/tablecmds.c:6617
 #: commands/typecmds.c:2597
 msgid "cannot move objects into or out of temporary schemas"
 msgstr "ne peut pas déplacer les objets dans ou à partir des schémas temporaires"
 
 #: commands/functioncmds.c:1714
-#: commands/tablecmds.c:6621
+#: commands/tablecmds.c:6623
 #: commands/typecmds.c:2603
 msgid "cannot move objects into or out of TOAST schema"
 msgstr "ne peut pas déplacer les objets dans ou à partir des schémas TOAST"
@@ -5146,12 +5151,12 @@ msgstr "setval : la valeur %s est en dehors des limites de la séquence « %s » (%
 #: storage/ipc/procarray.c:378
 #: storage/ipc/procarray.c:697
 #: storage/ipc/procarray.c:704
-#: postmaster/postmaster.c:1783
-#: postmaster/postmaster.c:1816
-#: postmaster/postmaster.c:2820
-#: postmaster/postmaster.c:3539
-#: postmaster/postmaster.c:3620
-#: postmaster/postmaster.c:4177
+#: postmaster/postmaster.c:1784
+#: postmaster/postmaster.c:1817
+#: postmaster/postmaster.c:2821
+#: postmaster/postmaster.c:3540
+#: postmaster/postmaster.c:3621
+#: postmaster/postmaster.c:4178
 #: utils/adt/oracle_compat.c:76
 #: utils/adt/oracle_compat.c:128
 #: utils/adt/oracle_compat.c:176
@@ -5210,7 +5215,7 @@ msgid "Specify OWNED BY table.column or OWNED BY NONE."
 msgstr "Indiquer OWNED BY table.colonne ou OWNED BY NONE."
 
 #: commands/sequence.c:1217
-#: commands/tablecmds.c:3987
+#: commands/tablecmds.c:3988
 #, c-format
 msgid "referenced relation \"%s\" is not a table"
 msgstr "la relation référencée « %s » n'est pas une table"
@@ -5224,12 +5229,12 @@ msgid "sequence must be in same schema as table it is linked to"
 msgstr "la séquence doit être dans le même schéma que la table avec laquelle elle est liée"
 
 #: commands/tablecmds.c:303
-#: executor/execMain.c:2672
+#: executor/execMain.c:2656
 msgid "ON COMMIT can only be used on temporary tables"
 msgstr "ON COMMIT peut seulement être utilisé sur des tables temporaires"
 
 #: commands/tablecmds.c:313
-#: executor/execMain.c:2682
+#: executor/execMain.c:2666
 msgid "cannot create temporary table within security-restricted operation"
 msgstr "ne peut pas créer la table temporaire dans la fonction restreinte pour sécurité"
 
@@ -5255,13 +5260,13 @@ msgid "inherited relation \"%s\" is not a table"
 msgstr "la relation héritée « %s » n'est pas une table"
 
 #: commands/tablecmds.c:837
-#: commands/tablecmds.c:6094
+#: commands/tablecmds.c:6096
 #, c-format
 msgid "cannot inherit from temporary relation \"%s\""
 msgstr "ine peut pas hériter à partir d'une relation temporaire « %s »"
 
 #: commands/tablecmds.c:854
-#: commands/tablecmds.c:6122
+#: commands/tablecmds.c:6124
 #, c-format
 msgid "relation \"%s\" would be inherited from more than once"
 msgstr "la relation « %s » serait héritée plus d'une fois"
@@ -5373,7 +5378,7 @@ msgid "\"%s\" is not a table or view"
 msgstr "« %s » n'est pas une table ou une vue"
 
 #: commands/tablecmds.c:2786
-#: commands/tablecmds.c:3490
+#: commands/tablecmds.c:3491
 #, c-format
 msgid "\"%s\" is not a table or index"
 msgstr "« %s » n'est pas une table ou un index"
@@ -5395,7 +5400,7 @@ msgid "column must be added to child tables too"
 msgstr "la colonne doit aussi être ajoutée aux tables filles"
 
 #: commands/tablecmds.c:3067
-#: commands/tablecmds.c:6253
+#: commands/tablecmds.c:6255
 #, c-format
 msgid "child table \"%s\" has different type for column \"%s\""
 msgstr "la table fille « %s » a un type différent pour la colonne « %s »"
@@ -5405,260 +5410,260 @@ msgstr "la table fille « %s » a un type différent pour la colonne « %s »"
 msgid "merging definition of column \"%s\" for child \"%s\""
 msgstr "assemblage de la définition de la colonne « %s » pour le fils « %s »"
 
-#: commands/tablecmds.c:3310
-#: commands/tablecmds.c:3402
-#: commands/tablecmds.c:3447
-#: commands/tablecmds.c:3543
-#: commands/tablecmds.c:3604
-#: commands/tablecmds.c:4807
+#: commands/tablecmds.c:3311
+#: commands/tablecmds.c:3403
+#: commands/tablecmds.c:3448
+#: commands/tablecmds.c:3544
+#: commands/tablecmds.c:3605
+#: commands/tablecmds.c:4808
 #, c-format
 msgid "cannot alter system column \"%s\""
 msgstr "n'a pas pu modifier la colonne système « %s »"
 
-#: commands/tablecmds.c:3346
+#: commands/tablecmds.c:3347
 #, c-format
 msgid "column \"%s\" is in a primary key"
 msgstr "la colonne « %s » est dans une clé primaire"
 
-#: commands/tablecmds.c:3517
+#: commands/tablecmds.c:3518
 #, c-format
 msgid "statistics target %d is too low"
 msgstr "la cible statistique %d est trop basse"
 
-#: commands/tablecmds.c:3525
+#: commands/tablecmds.c:3526
 #, c-format
 msgid "lowering statistics target to %d"
 msgstr "abaissement de la cible statistique à %d"
 
-#: commands/tablecmds.c:3585
+#: commands/tablecmds.c:3586
 #, c-format
 msgid "invalid storage type \"%s\""
 msgstr "type « %s » de stockage invalide"
 
-#: commands/tablecmds.c:3616
+#: commands/tablecmds.c:3617
 #, c-format
 msgid "column data type %s can only have storage PLAIN"
 msgstr ""
 "le type de données %s de la colonne peut seulement avoir un stockage texte\n"
 "(PLAIN)"
 
-#: commands/tablecmds.c:3673
+#: commands/tablecmds.c:3674
 #, c-format
 msgid "cannot drop system column \"%s\""
 msgstr "ne peut pas supprimer la colonne système « %s »"
 
-#: commands/tablecmds.c:3680
+#: commands/tablecmds.c:3681
 #, c-format
 msgid "cannot drop inherited column \"%s\""
 msgstr "ne peut pas supprimer la colonne héritée « %s »"
 
-#: commands/tablecmds.c:4021
+#: commands/tablecmds.c:4022
 msgid "cannot reference temporary table from permanent table constraint"
 msgstr ""
 "ne peut pas référencer une table temporaire à partir d'une contrainte de\n"
 "table permanente"
 
-#: commands/tablecmds.c:4028
+#: commands/tablecmds.c:4029
 msgid "cannot reference permanent table from temporary table constraint"
 msgstr ""
 "ne peut pas référencer une table permanente à partir de la contrainte de\n"
 "table temporaire"
 
-#: commands/tablecmds.c:4082
+#: commands/tablecmds.c:4083
 msgid "number of referencing and referenced columns for foreign key disagree"
 msgstr "nombre de colonnes de référence et référencées pour la clé étrangère en désaccord"
 
-#: commands/tablecmds.c:4173
+#: commands/tablecmds.c:4174
 #, c-format
 msgid "foreign key constraint \"%s\" cannot be implemented"
 msgstr "la contrainte de clé étrangère « %s » ne peut pas être implémentée"
 
-#: commands/tablecmds.c:4176
+#: commands/tablecmds.c:4177
 #, c-format
 msgid "Key columns \"%s\" and \"%s\" are of incompatible types: %s and %s."
 msgstr "Les colonnes clés « %s » et « %s » sont de types incompatibles : %s et %s."
 
-#: commands/tablecmds.c:4267
+#: commands/tablecmds.c:4268
 #, c-format
 msgid "column \"%s\" referenced in foreign key constraint does not exist"
 msgstr "la colonne « %s » référencée dans la contrainte de clé étrangère n'existe pas"
 
-#: commands/tablecmds.c:4272
+#: commands/tablecmds.c:4273
 #, c-format
 msgid "cannot have more than %d keys in a foreign key"
 msgstr "ne peut pas avoir plus de %d clés dans une clé étrangère"
 
-#: commands/tablecmds.c:4345
+#: commands/tablecmds.c:4346
 #, c-format
 msgid "there is no primary key for referenced table \"%s\""
 msgstr "il n'existe pas de clé étrangère pour la table « %s » référencée"
 
-#: commands/tablecmds.c:4479
+#: commands/tablecmds.c:4480
 #, c-format
 msgid "there is no unique constraint matching given keys for referenced table \"%s\""
 msgstr ""
 "il n'existe aucune contrainte unique correspondant aux clés données pour la\n"
 "table « %s » référencée"
 
-#: commands/tablecmds.c:4763
-#: commands/trigger.c:3433
+#: commands/tablecmds.c:4764
+#: commands/trigger.c:3465
 #, c-format
 msgid "constraint \"%s\" does not exist"
 msgstr "la contrainte « %s » n'existe pas"
 
-#: commands/tablecmds.c:4768
+#: commands/tablecmds.c:4769
 #, c-format
 msgid "multiple constraints named \"%s\" were dropped"
 msgstr "les contraintes multiples nommées « %s » ont été supprimées"
 
-#: commands/tablecmds.c:4814
+#: commands/tablecmds.c:4815
 #, c-format
 msgid "cannot alter inherited column \"%s\""
 msgstr "ne peut pas modifier la colonne héritée « %s »"
 
-#: commands/tablecmds.c:4849
+#: commands/tablecmds.c:4851
 msgid "transform expression must not return a set"
 msgstr "l'expression de transformation ne doit pas renvoyer un ensemble"
 
-#: commands/tablecmds.c:4855
+#: commands/tablecmds.c:4857
 msgid "cannot use subquery in transform expression"
 msgstr "ne peut pas utiliser une sous-requête dans l'expression de transformation"
 
-#: commands/tablecmds.c:4859
+#: commands/tablecmds.c:4861
 msgid "cannot use aggregate function in transform expression"
 msgstr "ne peut pas utiliser la fonction d'agrégat dans l'expression de la transformation"
 
-#: commands/tablecmds.c:4876
+#: commands/tablecmds.c:4878
 #, c-format
 msgid "column \"%s\" cannot be cast to type \"%s\""
 msgstr "la colonne « %s » ne peut pas être convertie vers le type %s"
 
-#: commands/tablecmds.c:4902
+#: commands/tablecmds.c:4904
 #, c-format
 msgid "type of inherited column \"%s\" must be changed in child tables too"
 msgstr "le type de colonne héritée « %s » doit aussi être renommée pour les tables filles"
 
-#: commands/tablecmds.c:4941
+#: commands/tablecmds.c:4943
 #, c-format
 msgid "cannot alter type of column \"%s\" twice"
 msgstr "ne peut pas modifier la colonne « %s » deux fois"
 
-#: commands/tablecmds.c:4974
+#: commands/tablecmds.c:4976
 #, c-format
 msgid "default for column \"%s\" cannot be cast to type \"%s\""
 msgstr ""
 "la valeur par défaut de la colonne « %s » ne peut pas être convertie vers le\n"
 "type « %s »"
 
-#: commands/tablecmds.c:5100
+#: commands/tablecmds.c:5102
 msgid "cannot alter type of a column used by a view or rule"
 msgstr "ne peut pas modifier le type d'une colonne utilisée dans une vue ou une règle"
 
-#: commands/tablecmds.c:5101
+#: commands/tablecmds.c:5103
 #, c-format
 msgid "%s depends on column \"%s\""
 msgstr "%s dépend de la colonne « %s »"
 
-#: commands/tablecmds.c:5445
+#: commands/tablecmds.c:5447
 #, c-format
 msgid "cannot change owner of index \"%s\""
 msgstr "ne peut pas modifier le propriétaire de l'index « %s »"
 
-#: commands/tablecmds.c:5447
+#: commands/tablecmds.c:5449
 msgid "Change the ownership of the index's table, instead."
 msgstr "Modifier à la place le propriétaire de la table concernée par l'index."
 
-#: commands/tablecmds.c:5463
+#: commands/tablecmds.c:5465
 #, c-format
 msgid "cannot change owner of sequence \"%s\""
 msgstr "ne peut pas modifier le propriétaire de la séquence « %s »"
 
-#: commands/tablecmds.c:5465
-#: commands/tablecmds.c:6579
+#: commands/tablecmds.c:5467
+#: commands/tablecmds.c:6581
 #, c-format
 msgid "Sequence \"%s\" is linked to table \"%s\"."
 msgstr "La séquence « %s » est liée à la table « %s »."
 
-#: commands/tablecmds.c:5477
-#: commands/tablecmds.c:6589
+#: commands/tablecmds.c:5479
+#: commands/tablecmds.c:6591
 msgid "Use ALTER TYPE instead."
 msgstr "Utilisez ALTER TYPE à la place."
 
-#: commands/tablecmds.c:5486
-#: commands/tablecmds.c:6597
+#: commands/tablecmds.c:5488
+#: commands/tablecmds.c:6599
 #, c-format
 msgid "\"%s\" is not a table, view, or sequence"
 msgstr "« %s » n'est pas une table, une vue ou une séquence"
 
-#: commands/tablecmds.c:5745
+#: commands/tablecmds.c:5747
 msgid "cannot have multiple SET TABLESPACE subcommands"
 msgstr "ne peut pas avoir de nombreuses sous-commandes SET TABLESPACE"
 
-#: commands/tablecmds.c:5798
+#: commands/tablecmds.c:5800
 #, c-format
 msgid "\"%s\" is not a table, index, or TOAST table"
 msgstr "« %s » n'est pas une table, un index ou une table TOAST"
 
-#: commands/tablecmds.c:5862
+#: commands/tablecmds.c:5864
 #, c-format
 msgid "cannot move system relation \"%s\""
 msgstr "ne peut pas déplacer la colonne système « %s »"
 
-#: commands/tablecmds.c:5878
+#: commands/tablecmds.c:5880
 msgid "cannot move temporary tables of other sessions"
 msgstr "ne peut pas déplacer les tables temporaires d'autres sessions"
 
-#: commands/tablecmds.c:6146
+#: commands/tablecmds.c:6148
 msgid "circular inheritance not allowed"
 msgstr "héritage circulaire interdit"
 
-#: commands/tablecmds.c:6147
+#: commands/tablecmds.c:6149
 #, c-format
 msgid "\"%s\" is already a child of \"%s\"."
 msgstr "« %s » est déjà un enfant de « %s »."
 
-#: commands/tablecmds.c:6155
+#: commands/tablecmds.c:6157
 #, c-format
 msgid "table \"%s\" without OIDs cannot inherit from table \"%s\" with OIDs"
 msgstr "la table « %s » qui n'a pas d'OID ne peut pas hériter de la table « %s » qui en a"
 
-#: commands/tablecmds.c:6260
+#: commands/tablecmds.c:6262
 #, c-format
 msgid "column \"%s\" in child table must be marked NOT NULL"
 msgstr "la colonne « %s » de la table enfant doit être marquée comme NOT NULL"
 
-#: commands/tablecmds.c:6276
+#: commands/tablecmds.c:6278
 #, c-format
 msgid "child table is missing column \"%s\""
 msgstr "la colonne « %s » manque à la table enfant"
 
-#: commands/tablecmds.c:6368
+#: commands/tablecmds.c:6370
 #, c-format
 msgid "child table is missing constraint \"%s\""
 msgstr "la contrainte « %s » manque à la table enfant"
 
-#: commands/tablecmds.c:6377
+#: commands/tablecmds.c:6379
 #, c-format
 msgid "constraint definition for check constraint \"%s\" does not match"
 msgstr ""
 "la définition de la contrainte « %s » pour la contrainte de vérification ne\n"
 "correspond pas"
 
-#: commands/tablecmds.c:6458
+#: commands/tablecmds.c:6460
 #, c-format
 msgid "relation \"%s\" is not a parent of relation \"%s\""
 msgstr "la relation « %s » n'est pas un parent de la relation « %s »"
 
-#: commands/tablecmds.c:6578
+#: commands/tablecmds.c:6580
 msgid "cannot move an owned sequence into another schema"
 msgstr "ne peut pas déplacer une séquence OWNED BY dans un autre schéma"
 
-#: commands/tablecmds.c:6607
+#: commands/tablecmds.c:6609
 #, c-format
 msgid "relation \"%s\" is already in schema \"%s\""
 msgstr "la relation « %s » existe déjà dans le schéma « %s »"
 
-#: commands/tablecmds.c:6672
+#: commands/tablecmds.c:6674
 #, c-format
 msgid "relation \"%s\" already exists in schema \"%s\""
 msgstr "la relation « %s » existe déjà dans le schéma « %s »"
@@ -5849,14 +5854,14 @@ msgstr "la fonction trigger %u a renvoyé la valeur NULL"
 msgid "BEFORE STATEMENT trigger cannot return a value"
 msgstr "le trigger BEFORE STATEMENT ne peut pas renvoyer une valeur"
 
-#: commands/trigger.c:2074
+#: commands/trigger.c:2106
 #: executor/execMain.c:1413
 #: executor/execMain.c:1720
-#: executor/execMain.c:1898
+#: executor/execMain.c:1882
 msgid "could not serialize access due to concurrent update"
 msgstr "n'a pas pu sérialiser un accès à cause d'une mise à jour en parallèle"
 
-#: commands/trigger.c:3407
+#: commands/trigger.c:3439
 #, c-format
 msgid "constraint \"%s\" is not deferrable"
 msgstr "la contrainte « %s » n'est pas DEFERRABLE"
@@ -6699,12 +6704,12 @@ msgstr ""
 msgid "Query has too few columns."
 msgstr "La requête n'a pas assez de colonnes."
 
-#: executor/execMain.c:2036
+#: executor/execMain.c:2020
 #, c-format
 msgid "null value in column \"%s\" violates not-null constraint"
 msgstr "une valeur NULL viole la contrainte NOT NULL de la colonne « %s »"
 
-#: executor/execMain.c:2048
+#: executor/execMain.c:2032
 #, c-format
 msgid "new row for relation \"%s\" violates check constraint \"%s\""
 msgstr "la nouvelle ligne viole la contrainte de vérification « %s » de la relation « %s »"
@@ -6716,7 +6721,7 @@ msgstr "la nouvelle ligne viole la contrainte de vérification « %s » de la relat
 #: utils/adt/arrayfuncs.c:198
 #: utils/adt/arrayfuncs.c:450
 #: utils/adt/arrayfuncs.c:1191
-#: utils/adt/arrayfuncs.c:2808
+#: utils/adt/arrayfuncs.c:2812
 #, c-format
 msgid "number of array dimensions (%d) exceeds the maximum allowed (%d)"
 msgstr "le nombre de dimensions du tableau (%d) dépasse le maximum autorisé (%d)"
@@ -6840,7 +6845,7 @@ msgid "ROW() column has type %s instead of type %s"
 msgstr "une colonne ROW() a le type %s au lieu du type %s"
 
 #: executor/execQual.c:4357
-#: utils/adt/arrayfuncs.c:3228
+#: utils/adt/arrayfuncs.c:3232
 #, c-format
 msgid "could not identify a comparison function for type %s"
 msgstr "n'a pas pu identifier une fonction de comparaison pour le type %s"
@@ -8306,7 +8311,7 @@ msgstr ""
 #: storage/ipc/procarray.c:148
 #: storage/ipc/sinval.c:80
 #: storage/lmgr/proc.c:276
-#: postmaster/postmaster.c:1665
+#: postmaster/postmaster.c:1666
 msgid "sorry, too many clients already"
 msgstr "désolé, trop de clients sont déjà connectés"
 
@@ -8482,7 +8487,7 @@ msgstr ""
 msgid "SELECT FOR UPDATE/SHARE is not allowed with UNION/INTERSECT/EXCEPT"
 msgstr "SELECT FOR UPDATE/SHARE n'est pas autorisé avec UNION/INTERSECT/EXCEPT"
 
-#: optimizer/util/clauses.c:3346
+#: optimizer/util/clauses.c:3360
 #, c-format
 msgid "SQL function \"%s\" during inlining"
 msgstr "fonction SQL « %s » durant « inlining »"
@@ -9100,8 +9105,8 @@ msgid "operator does not exist: %s"
 msgstr "l'opérateur n'existe pas : %s"
 
 #: parser/parse_oper.c:219
-#: utils/adt/arrayfuncs.c:3027
-#: utils/adt/arrayfuncs.c:3428
+#: utils/adt/arrayfuncs.c:3031
+#: utils/adt/arrayfuncs.c:3432
 #, c-format
 msgid "could not identify an equality operator for type %s"
 msgstr "n'a pas pu identifier un opérateur d'égalité pour le type %s"
@@ -9965,7 +9970,7 @@ msgid "archive command was terminated by exception 0x%X"
 msgstr "la commande d'archivage a été terminée par l'exception 0x%X"
 
 #: postmaster/pgarch.c:579
-#: postmaster/postmaster.c:2545
+#: postmaster/postmaster.c:2546
 msgid "See C include file \"ntstatus.h\" for a description of the hexadecimal value."
 msgstr ""
 "Voir le fichier d'en-tête C « ntstatus.h » pour une description de la valeur\n"
@@ -10134,106 +10139,106 @@ msgstr ""
 "corruption de la table hachée de la base de données lors du lancement\n"
 "--- annulation"
 
-#: postmaster/postmaster.c:524
+#: postmaster/postmaster.c:525
 #, c-format
 msgid "%s: invalid argument for option -f: \"%s\"\n"
 msgstr "%s : argument invalide pour l'option -f : « %s »\n"
 
-#: postmaster/postmaster.c:610
+#: postmaster/postmaster.c:611
 #, c-format
 msgid "%s: invalid argument for option -t: \"%s\"\n"
 msgstr "%s : argument invalide pour l'option -t : « %s »\n"
 
-#: postmaster/postmaster.c:661
+#: postmaster/postmaster.c:662
 #, c-format
 msgid "%s: invalid argument: \"%s\"\n"
 msgstr "%s : argument invalide : « %s »\n"
 
-#: postmaster/postmaster.c:673
+#: postmaster/postmaster.c:674
 #, c-format
 msgid "%s: could not locate matching postgres executable"
 msgstr "%s : n'a pas pu localiser l'exécutable postgres correspondant"
 
-#: postmaster/postmaster.c:699
+#: postmaster/postmaster.c:700
 #, c-format
 msgid "%s: the number of buffers (-B) must be at least twice the number of allowed connections (-N) and at least 16\n"
 msgstr ""
 "%s : le nombre de tampons (-B) doit être au moins deux fois le nombre de\n"
 "connexions disponibles (-N) et au moins 16\n"
 
-#: postmaster/postmaster.c:705
+#: postmaster/postmaster.c:706
 #, c-format
 msgid "%s: superuser_reserved_connections must be less than max_connections\n"
 msgstr "%s : superuser_reserved_connections doit être inférieur à max_connections\n"
 
-#: postmaster/postmaster.c:715
+#: postmaster/postmaster.c:716
 #, c-format
 msgid "%s: invalid datetoken tables, please fix\n"
 msgstr "%s : tables datetoken invalide, merci de corriger\n"
 
-#: postmaster/postmaster.c:821
+#: postmaster/postmaster.c:822
 msgid "invalid list syntax for \"listen_addresses\""
 msgstr "syntaxe de liste invalide pour le paramètre « listen_addresses »"
 
-#: postmaster/postmaster.c:842
+#: postmaster/postmaster.c:843
 #, c-format
 msgid "could not create listen socket for \"%s\""
 msgstr "n'a pas pu créer le socket d'écoute pour « %s »"
 
-#: postmaster/postmaster.c:848
+#: postmaster/postmaster.c:849
 msgid "could not create any TCP/IP sockets"
 msgstr "n'a pas pu créer de socket TCP/IP"
 
-#: postmaster/postmaster.c:875
+#: postmaster/postmaster.c:876
 msgid "could not create Unix-domain socket"
 msgstr "n'a pas pu créer le socket domaine Unix"
 
-#: postmaster/postmaster.c:883
+#: postmaster/postmaster.c:884
 msgid "no socket created for listening"
 msgstr "pas de socket créé pour l'écoute"
 
-#: postmaster/postmaster.c:915
+#: postmaster/postmaster.c:916
 msgid "could not create I/O completion port for child queue"
 msgstr "n'a pas pu créer un port de terminaison I/O pour la queue"
 
-#: postmaster/postmaster.c:959
+#: postmaster/postmaster.c:960
 #, c-format
 msgid "%s: could not write external PID file \"%s\": %s\n"
 msgstr "%s : n'a pas pu écrire le fichier PID externe « %s » : %s\n"
 
-#: postmaster/postmaster.c:1059
+#: postmaster/postmaster.c:1060
 #, c-format
 msgid "data directory \"%s\" does not exist"
 msgstr "le répertoire des données « %s » n'existe pas"
 
-#: postmaster/postmaster.c:1064
+#: postmaster/postmaster.c:1065
 #, c-format
 msgid "could not read permissions of directory \"%s\": %m"
 msgstr "n'a pas pu lire les droits du répertoire « %s » : %m"
 
-#: postmaster/postmaster.c:1081
+#: postmaster/postmaster.c:1082
 #, c-format
 msgid "data directory \"%s\" has wrong ownership"
 msgstr "le répertoire des données « %s » a un mauvais propriétaire"
 
-#: postmaster/postmaster.c:1083
+#: postmaster/postmaster.c:1084
 msgid "The server must be started by the user that owns the data directory."
 msgstr ""
 "Le serveur doit être en cours d'exécution par l'utilisateur qui possède le\n"
 "répertoire des données."
 
-#: postmaster/postmaster.c:1103
+#: postmaster/postmaster.c:1104
 #, c-format
 msgid "data directory \"%s\" has group or world access"
 msgstr ""
 "le répertoire des données « %s » est accessible par le groupe et/ou par les\n"
 "autres"
 
-#: postmaster/postmaster.c:1105
+#: postmaster/postmaster.c:1106
 msgid "Permissions should be u=rwx (0700)."
 msgstr "Les droits devraient être u=rwx (0700)."
 
-#: postmaster/postmaster.c:1116
+#: postmaster/postmaster.c:1117
 #, c-format
 msgid ""
 "%s: could not find the database system\n"
@@ -10244,278 +10249,278 @@ msgstr ""
 "S'attendait à le trouver dans le répertoire « %s »,\n"
 "mais n'a pas réussi à ouvrir le fichier « %s »: %s\n"
 
-#: postmaster/postmaster.c:1151
+#: postmaster/postmaster.c:1152
 #, c-format
 msgid "%s: could not fork background process: %s\n"
 msgstr "%s : n'a pas pu créer un processus fils : %s\n"
 
-#: postmaster/postmaster.c:1172
+#: postmaster/postmaster.c:1173
 #, c-format
 msgid "%s: could not dissociate from controlling TTY: %s\n"
 msgstr "%s : n'a pas pu se dissocier du TTY contrôlant : %s\n"
 
-#: postmaster/postmaster.c:1252
+#: postmaster/postmaster.c:1253
 #, c-format
 msgid "select() failed in postmaster: %m"
 msgstr "échec de select() dans postmaster : %m"
 
-#: postmaster/postmaster.c:1406
-#: postmaster/postmaster.c:1437
+#: postmaster/postmaster.c:1407
+#: postmaster/postmaster.c:1438
 msgid "incomplete startup packet"
 msgstr "paquet de démarrage incomplet"
 
-#: postmaster/postmaster.c:1418
+#: postmaster/postmaster.c:1419
 msgid "invalid length of startup packet"
 msgstr "longueur invalide du paquet de démarrage"
 
-#: postmaster/postmaster.c:1474
+#: postmaster/postmaster.c:1475
 #, c-format
 msgid "failed to send SSL negotiation response: %m"
 msgstr "échec lors de l'envoi de la réponse de négotiation SSL : %m"
 
-#: postmaster/postmaster.c:1503
+#: postmaster/postmaster.c:1504
 #, c-format
 msgid "unsupported frontend protocol %u.%u: server supports %u.0 to %u.%u"
 msgstr ""
 "Protocole non supportée de l'interface %u.%u : le serveur supporte de %u.0 à\n"
 "%u.%u"
 
-#: postmaster/postmaster.c:1569
+#: postmaster/postmaster.c:1570
 msgid "invalid startup packet layout: expected terminator as last byte"
 msgstr ""
 "configuration invalide du paquet de démarrage : terminaison attendue comme\n"
 "dernier octet"
 
-#: postmaster/postmaster.c:1597
+#: postmaster/postmaster.c:1598
 msgid "no PostgreSQL user name specified in startup packet"
 msgstr "aucun nom d'utilisateur PostgreSQL n'a été spécifié dans le paquet de démarrage"
 
-#: postmaster/postmaster.c:1650
+#: postmaster/postmaster.c:1651
 msgid "the database system is starting up"
 msgstr "le système de bases de données se lance"
 
-#: postmaster/postmaster.c:1655
+#: postmaster/postmaster.c:1656
 msgid "the database system is shutting down"
 msgstr "le système de base de données s'arrête"
 
-#: postmaster/postmaster.c:1660
+#: postmaster/postmaster.c:1661
 msgid "the database system is in recovery mode"
 msgstr "le système de bases de données est en cours de restauration"
 
-#: postmaster/postmaster.c:1724
+#: postmaster/postmaster.c:1725
 #, c-format
 msgid "wrong key in cancel request for process %d"
 msgstr "mauvaise clé dans la demande d'annulation pour le processus %d"
 
-#: postmaster/postmaster.c:1732
+#: postmaster/postmaster.c:1733
 #, c-format
 msgid "PID %d in cancel request did not match any process"
 msgstr "le PID %d dans la demande d'annulation ne correspond à aucun processus"
 
-#: postmaster/postmaster.c:1913
+#: postmaster/postmaster.c:1914
 msgid "received SIGHUP, reloading configuration files"
 msgstr "a reçu SIGHUP, rechargement des fichiers de configuration"
 
-#: postmaster/postmaster.c:1971
+#: postmaster/postmaster.c:1972
 msgid "received smart shutdown request"
 msgstr "a reçu une demande d'arrêt intelligent"
 
-#: postmaster/postmaster.c:2005
+#: postmaster/postmaster.c:2006
 msgid "received fast shutdown request"
 msgstr "a reçu une demande d'arrêt rapide"
 
-#: postmaster/postmaster.c:2013
+#: postmaster/postmaster.c:2014
 msgid "aborting any active transactions"
 msgstr "annulation des transactions actives"
 
-#: postmaster/postmaster.c:2041
+#: postmaster/postmaster.c:2042
 msgid "received immediate shutdown request"
 msgstr "a reçu une demande d'arrêt immédiat"
 
-#: postmaster/postmaster.c:2112
+#: postmaster/postmaster.c:2113
 msgid "startup process"
 msgstr "processus de lancement"
 
-#: postmaster/postmaster.c:2115
+#: postmaster/postmaster.c:2116
 msgid "aborting startup due to startup process failure"
 msgstr "annulation du démarrage à cause d'un échec dans le processus de lancement"
 
-#: postmaster/postmaster.c:2169
+#: postmaster/postmaster.c:2170
 msgid "database system is ready to accept connections"
 msgstr "le système de bases de données est prêt pour accepter les connexions"
 
-#: postmaster/postmaster.c:2221
+#: postmaster/postmaster.c:2222
 msgid "background writer process"
 msgstr "processus d'écriture en tâche de fond"
 
-#: postmaster/postmaster.c:2237
+#: postmaster/postmaster.c:2238
 msgid "WAL writer process"
 msgstr "processus d'écriture des journaux de transaction"
 
-#: postmaster/postmaster.c:2252
+#: postmaster/postmaster.c:2253
 msgid "autovacuum launcher process"
 msgstr "processus de l'autovacuum"
 
-#: postmaster/postmaster.c:2266
+#: postmaster/postmaster.c:2267
 msgid "archiver process"
 msgstr "processus d'archivage"
 
-#: postmaster/postmaster.c:2284
+#: postmaster/postmaster.c:2285
 msgid "statistics collector process"
 msgstr "processus de récupération des statistiques"
 
-#: postmaster/postmaster.c:2298
+#: postmaster/postmaster.c:2299
 msgid "system logger process"
 msgstr "processus des journaux applicatifs"
 
-#: postmaster/postmaster.c:2333
-#: postmaster/postmaster.c:2349
-#: postmaster/postmaster.c:2356
+#: postmaster/postmaster.c:2334
+#: postmaster/postmaster.c:2350
+#: postmaster/postmaster.c:2357
 msgid "server process"
 msgstr "processus serveur"
 
-#: postmaster/postmaster.c:2400
+#: postmaster/postmaster.c:2401
 msgid "terminating any other active server processes"
 msgstr "arrêt des autres processus serveur actifs"
 
 #. translator: %s is a noun phrase describing a child process, such as
 #. "server process"
-#: postmaster/postmaster.c:2534
+#: postmaster/postmaster.c:2535
 #, c-format
 msgid "%s (PID %d) exited with exit code %d"
 msgstr "%s (PID %d) quitte avec le code de sortie %d"
 
 #. translator: %s is a noun phrase describing a child process, such as
 #. "server process"
-#: postmaster/postmaster.c:2543
+#: postmaster/postmaster.c:2544
 #, c-format
 msgid "%s (PID %d) was terminated by exception 0x%X"
 msgstr "%s (PID %d) a été arrêté par l'exception 0x%X"
 
 #. translator: %s is a noun phrase describing a child process, such as
 #. "server process"
-#: postmaster/postmaster.c:2552
+#: postmaster/postmaster.c:2553
 #, c-format
 msgid "%s (PID %d) was terminated by signal %d: %s"
 msgstr "%s (PID %d) a été arrêté par le signal %d : %s"
 
 #. translator: %s is a noun phrase describing a child process, such as
 #. "server process"
-#: postmaster/postmaster.c:2562
+#: postmaster/postmaster.c:2563
 #, c-format
 msgid "%s (PID %d) was terminated by signal %d"
 msgstr "%s (PID %d) a été arrêté par le signal %d"
 
 #. translator: %s is a noun phrase describing a child process, such as
 #. "server process"
-#: postmaster/postmaster.c:2571
+#: postmaster/postmaster.c:2572
 #, c-format
 msgid "%s (PID %d) exited with unrecognized status %d"
 msgstr "%s (PID %d) a quitté avec le statut inattendu %d"
 
-#: postmaster/postmaster.c:2699
+#: postmaster/postmaster.c:2700
 msgid "abnormal database system shutdown"
 msgstr "le système de base de données a été arrêté anormalement"
 
-#: postmaster/postmaster.c:2716
+#: postmaster/postmaster.c:2717
 msgid "all server processes terminated; reinitializing"
 msgstr "tous les processus serveur se sont arrêtés, réinitialisation"
 
-#: postmaster/postmaster.c:2868
+#: postmaster/postmaster.c:2869
 #, c-format
 msgid "could not fork new process for connection: %m"
 msgstr "n'a pas pu lancer le nouveau processus fils pour la connexion : %m"
 
-#: postmaster/postmaster.c:2911
+#: postmaster/postmaster.c:2912
 msgid "could not fork new process for connection: "
 msgstr "n'a pas pu lancer le nouveau processus fils pour la connexion : "
 
-#: postmaster/postmaster.c:3051
+#: postmaster/postmaster.c:3052
 #, c-format
 msgid "connection received: host=%s%s%s"
 msgstr "connexion reçue : hôte=%s%s%s"
 
-#: postmaster/postmaster.c:3122
+#: postmaster/postmaster.c:3123
 #, c-format
 msgid "connection authorized: user=%s database=%s"
 msgstr "connexion autorisée : utilisateur=%s, base de données=%s"
 
-#: postmaster/postmaster.c:3358
+#: postmaster/postmaster.c:3359
 #, c-format
 msgid "could not execute server process \"%s\": %m"
 msgstr "n'a pas pu exécuter le processus serveur « %s » : %m"
 
-#: postmaster/postmaster.c:4089
+#: postmaster/postmaster.c:4090
 #, c-format
 msgid "could not fork startup process: %m"
 msgstr "n'a pas pu lancer le processus fils de démarrage : %m"
 
-#: postmaster/postmaster.c:4093
+#: postmaster/postmaster.c:4094
 #, c-format
 msgid "could not fork background writer process: %m"
 msgstr ""
 "n'a pas pu créer un processus fils du processus d'écriture en tâche de\n"
 "fond : %m"
 
-#: postmaster/postmaster.c:4097
+#: postmaster/postmaster.c:4098
 #, c-format
 msgid "could not fork WAL writer process: %m"
 msgstr ""
 "n'a pas pu créer un processus fils du processus d'écriture des journaux de\n"
 "transaction : %m"
 
-#: postmaster/postmaster.c:4101
+#: postmaster/postmaster.c:4102
 #, c-format
 msgid "could not fork process: %m"
 msgstr "n'a pas pu lancer le processus fils : %m"
 
-#: postmaster/postmaster.c:4351
+#: postmaster/postmaster.c:4352
 #, c-format
 msgid "could not duplicate socket %d for use in backend: error code %d"
 msgstr "n'a pas pu dupliquer la socket %d pour le serveur : code d'erreur %d"
 
-#: postmaster/postmaster.c:4380
+#: postmaster/postmaster.c:4381
 #, c-format
 msgid "could not create inherited socket: error code %d\n"
 msgstr "n'a pas pu créer la socket héritée : code d'erreur %d\n"
 
-#: postmaster/postmaster.c:4409
-#: postmaster/postmaster.c:4416
+#: postmaster/postmaster.c:4410
+#: postmaster/postmaster.c:4417
 #, c-format
 msgid "could not read from backend variables file \"%s\": %s\n"
 msgstr "n'a pas pu lire le fichier de configuration serveur « %s » : %s\n"
 
-#: postmaster/postmaster.c:4425
+#: postmaster/postmaster.c:4426
 #, c-format
 msgid "could not remove file \"%s\": %s\n"
 msgstr "n'a pas pu supprimer le fichier « %s » : %s\n"
 
-#: postmaster/postmaster.c:4438
+#: postmaster/postmaster.c:4439
 #, c-format
 msgid "could not map view of backend variables: error code %d\n"
 msgstr ""
 "n'a pas pu exécuter MapViewOfFile sur les variables de configuration : code\n"
 "d'erreur %d\n"
 
-#: postmaster/postmaster.c:4447
+#: postmaster/postmaster.c:4448
 #, c-format
 msgid "could not unmap view of backend variables: error code %d\n"
 msgstr ""
 "n'a pas pu exécuter UnmapViewOfFile sur les variables de configuration : code\n"
 "d'erreur %d\n"
 
-#: postmaster/postmaster.c:4454
+#: postmaster/postmaster.c:4455
 #, c-format
 msgid "could not close handle to backend parameter variables: error code %d\n"
 msgstr ""
 "n'a pas pu fermer le lien vers les variables des paramètres du serveur :\n"
 "code d'erreur %d\n"
 
-#: postmaster/postmaster.c:4616
+#: postmaster/postmaster.c:4617
 msgid "could not read exit code for process\n"
 msgstr "n'a pas pu lire le code de sortie du processus\n"
 
-#: postmaster/postmaster.c:4621
+#: postmaster/postmaster.c:4622
 msgid "could not post child completion status\n"
 msgstr "n'a pas pu poster le statut de fin de l'enfant\n"
 
@@ -11044,11 +11049,11 @@ msgstr "code d'erreur libxml inconnu : %d"
 #: utils/adt/xml.c:1770
 #: utils/adt/xml.c:1790
 #: utils/adt/xml.c:1796
-#: utils/adt/date.c:806
-#: utils/adt/date.c:849
-#: utils/adt/date.c:1389
-#: utils/adt/date.c:1426
-#: utils/adt/date.c:2290
+#: utils/adt/date.c:832
+#: utils/adt/date.c:875
+#: utils/adt/date.c:1415
+#: utils/adt/date.c:1452
+#: utils/adt/date.c:2316
 #: utils/adt/formatting.c:3198
 #: utils/adt/formatting.c:3230
 #: utils/adt/formatting.c:3298
@@ -11244,18 +11249,18 @@ msgstr "aucun type de données n'est un tableau"
 #: utils/adt/int.c:663
 #: utils/adt/int.c:683
 #: utils/adt/int.c:705
-#: utils/adt/int.c:730
-#: utils/adt/int.c:743
-#: utils/adt/int.c:758
-#: utils/adt/int.c:892
-#: utils/adt/int.c:913
-#: utils/adt/int.c:940
-#: utils/adt/int.c:975
-#: utils/adt/int.c:996
-#: utils/adt/int.c:1023
-#: utils/adt/int.c:1049
-#: utils/adt/int.c:1133
-#: utils/adt/int8.c:1012
+#: utils/adt/int.c:734
+#: utils/adt/int.c:747
+#: utils/adt/int.c:762
+#: utils/adt/int.c:900
+#: utils/adt/int.c:921
+#: utils/adt/int.c:948
+#: utils/adt/int.c:989
+#: utils/adt/int.c:1010
+#: utils/adt/int.c:1037
+#: utils/adt/int.c:1067
+#: utils/adt/int.c:1170
+#: utils/adt/int8.c:1031
 #: utils/adt/numeric.c:1934
 #: utils/adt/numeric.c:1943
 #: utils/adt/varbit.c:1392
@@ -11303,7 +11308,7 @@ msgstr ""
 
 #: utils/adt/array_userfuncs.c:424
 #: utils/adt/arrayfuncs.c:1187
-#: utils/adt/arrayfuncs.c:2804
+#: utils/adt/arrayfuncs.c:2808
 #, c-format
 msgid "invalid number of dimensions: %d"
 msgstr "nombre de dimensions invalides : %d"
@@ -11361,8 +11366,8 @@ msgstr "tableau litéral mal formé : « %s »"
 
 #: utils/adt/arrayfuncs.c:814
 #: utils/adt/arrayfuncs.c:1408
-#: utils/adt/arrayfuncs.c:2688
-#: utils/adt/arrayfuncs.c:2836
+#: utils/adt/arrayfuncs.c:2692
+#: utils/adt/arrayfuncs.c:2840
 #: utils/adt/arrayutils.c:93
 #: utils/adt/arrayutils.c:102
 #: utils/adt/arrayutils.c:109
@@ -11427,13 +11432,13 @@ msgstr ""
 msgid "source array too small"
 msgstr "tableau source trop petit"
 
-#: utils/adt/arrayfuncs.c:2943
+#: utils/adt/arrayfuncs.c:2947
 msgid "null array element not allowed in this context"
 msgstr "élément NULL de tableau interdit dans ce contexte"
 
-#: utils/adt/arrayfuncs.c:3004
-#: utils/adt/arrayfuncs.c:3211
-#: utils/adt/arrayfuncs.c:3411
+#: utils/adt/arrayfuncs.c:3008
+#: utils/adt/arrayfuncs.c:3215
+#: utils/adt/arrayfuncs.c:3415
 msgid "cannot compare arrays of different element types"
 msgstr "ne peut pas comparer des tableaux ayant des types d'éléments différents"
 
@@ -11474,18 +11479,18 @@ msgstr "syntaxe en entrée invalide pour le type money : « %s »"
 #: utils/adt/float.c:2467
 #: utils/adt/float.c:2530
 #: utils/adt/geo_ops.c:3965
-#: utils/adt/int.c:719
-#: utils/adt/int.c:859
-#: utils/adt/int.c:953
-#: utils/adt/int.c:1037
-#: utils/adt/int.c:1062
-#: utils/adt/int.c:1082
-#: utils/adt/int.c:1097
-#: utils/adt/int.c:1112
-#: utils/adt/int8.c:604
-#: utils/adt/int8.c:650
-#: utils/adt/int8.c:826
-#: utils/adt/int8.c:920
+#: utils/adt/int.c:720
+#: utils/adt/int.c:864
+#: utils/adt/int.c:962
+#: utils/adt/int.c:1052
+#: utils/adt/int.c:1081
+#: utils/adt/int.c:1105
+#: utils/adt/int.c:1125
+#: utils/adt/int.c:1145
+#: utils/adt/int8.c:605
+#: utils/adt/int8.c:655
+#: utils/adt/int8.c:836
+#: utils/adt/int8.c:934
 #: utils/adt/numeric.c:4075
 #: utils/adt/timestamp.c:2900
 msgid "division by zero"
@@ -11528,23 +11533,23 @@ msgstr "date en dehors des limites : « %s »"
 msgid "date out of range for timestamp"
 msgstr "date en dehors des limites pour un timestamp"
 
-#: utils/adt/date.c:876
+#: utils/adt/date.c:902
 msgid "cannot convert reserved abstime value to date"
 msgstr "ne peut pas convertir la valeur réservée abstime en date"
 
-#: utils/adt/date.c:1666
-#: utils/adt/date.c:1685
+#: utils/adt/date.c:1692
+#: utils/adt/date.c:1711
 #, c-format
 msgid "\"time\" units \"%s\" not recognized"
 msgstr "l'unité « %s » n'est pas reconnu pour le type « time »"
 
-#: utils/adt/date.c:2413
-#: utils/adt/date.c:2432
+#: utils/adt/date.c:2439
+#: utils/adt/date.c:2458
 #, c-format
 msgid "\"time with time zone\" units \"%s\" not recognized"
 msgstr "L'unité « %s » n'est pas reconnu pour le type « time with time zone »"
 
-#: utils/adt/date.c:2495
+#: utils/adt/date.c:2521
 #: utils/adt/datetime.c:817
 #: utils/adt/datetime.c:1554
 #: utils/adt/timestamp.c:4487
@@ -11553,7 +11558,7 @@ msgstr "L'unité « %s » n'est pas reconnu pour le type « time with time zone »"
 msgid "time zone \"%s\" not recognized"
 msgstr "le fuseau horaire « %s » n'est pas reconnu"
 
-#: utils/adt/date.c:2535
+#: utils/adt/date.c:2561
 #, c-format
 msgid "\"interval\" time zone \"%s\" not valid"
 msgstr "le fuseau horaire « %s » n'est pas valide pour le type « interval »"
@@ -11699,13 +11704,13 @@ msgstr "« %s » est en dehors des limites du type double precision"
 #: utils/adt/float.c:1123
 #: utils/adt/float.c:1181
 #: utils/adt/int.c:339
-#: utils/adt/int.c:774
-#: utils/adt/int.c:803
-#: utils/adt/int.c:824
-#: utils/adt/int.c:844
-#: utils/adt/int.c:871
-#: utils/adt/int.c:1148
-#: utils/adt/int8.c:1037
+#: utils/adt/int.c:778
+#: utils/adt/int.c:807
+#: utils/adt/int.c:828
+#: utils/adt/int.c:848
+#: utils/adt/int.c:879
+#: utils/adt/int.c:1185
+#: utils/adt/int8.c:1056
 #: utils/adt/numeric.c:2035
 #: utils/adt/numeric.c:2046
 msgid "smallint out of range"
@@ -12159,8 +12164,8 @@ msgstr "int2vector a trop d'éléments"
 msgid "invalid int2vector data"
 msgstr "données int2vector invalide"
 
-#: utils/adt/int.c:1336
-#: utils/adt/int8.c:1174
+#: utils/adt/int.c:1373
+#: utils/adt/int8.c:1193
 msgid "step size cannot equal zero"
 msgstr "la taille du pas ne peut pas valoir zéro"
 
@@ -12182,25 +12187,25 @@ msgstr "la valeur « %s » est en dehors des limites du type bigint"
 #: utils/adt/int8.c:535
 #: utils/adt/int8.c:556
 #: utils/adt/int8.c:589
-#: utils/adt/int8.c:616
-#: utils/adt/int8.c:634
-#: utils/adt/int8.c:679
-#: utils/adt/int8.c:695
-#: utils/adt/int8.c:764
-#: utils/adt/int8.c:785
-#: utils/adt/int8.c:812
-#: utils/adt/int8.c:838
-#: utils/adt/int8.c:859
-#: utils/adt/int8.c:880
-#: utils/adt/int8.c:907
-#: utils/adt/int8.c:1075
-#: utils/adt/int8.c:1114
+#: utils/adt/int8.c:620
+#: utils/adt/int8.c:638
+#: utils/adt/int8.c:688
+#: utils/adt/int8.c:704
+#: utils/adt/int8.c:773
+#: utils/adt/int8.c:794
+#: utils/adt/int8.c:821
+#: utils/adt/int8.c:851
+#: utils/adt/int8.c:872
+#: utils/adt/int8.c:893
+#: utils/adt/int8.c:920
+#: utils/adt/int8.c:1094
+#: utils/adt/int8.c:1133
 #: utils/adt/numeric.c:1987
 #: utils/adt/varbit.c:1476
 msgid "bigint out of range"
 msgstr "bigint en dehors des limites"
 
-#: utils/adt/int8.c:1131
+#: utils/adt/int8.c:1150
 msgid "OID out of range"
 msgstr "OID en dehors des limites"
 
@@ -12585,8 +12590,8 @@ msgstr "il existe plus d'un opérateur nommé%s"
 
 #: utils/adt/regproc.c:638
 #: utils/adt/regproc.c:1498
-#: utils/adt/ruleutils.c:4339
-#: utils/adt/ruleutils.c:4367
+#: utils/adt/ruleutils.c:4335
+#: utils/adt/ruleutils.c:4363
 msgid "too many arguments"
 msgstr "trop d'arguments"
 
@@ -12762,13 +12767,13 @@ msgstr "format binaire invalide dans l'enregistrement de la colonne %d"
 msgid "rule \"%s\" has unsupported event type %d"
 msgstr "la règle « %s » a un type d'événement %d non supporté"
 
-#: utils/adt/selfuncs.c:4118
-#: utils/adt/selfuncs.c:4544
+#: utils/adt/selfuncs.c:4117
+#: utils/adt/selfuncs.c:4543
 msgid "case insensitive matching not supported on type bytea"
 msgstr "la recherche insensible à la casse n'est pas supportée avec le type bytea"
 
-#: utils/adt/selfuncs.c:4224
-#: utils/adt/selfuncs.c:4704
+#: utils/adt/selfuncs.c:4223
+#: utils/adt/selfuncs.c:4703
 msgid "regular-expression matching not supported on type bytea"
 msgstr "la recherche par expression rationnelle n'est pas supportée sur le type bytea"
 
@@ -13173,12 +13178,12 @@ msgstr "aucune fonction en sortie disponible pour le type %s"
 msgid "cached plan must not change result type"
 msgstr "le plan en cache ne doit pas modifier le type en résultat"
 
-#: utils/cache/relcache.c:3839
+#: utils/cache/relcache.c:3849
 #, c-format
 msgid "could not create relation-cache initialization file \"%s\": %m"
 msgstr "n'a pas pu créer le fichier d'initialisation relation-cache « %s » : %m"
 
-#: utils/cache/relcache.c:3841
+#: utils/cache/relcache.c:3851
 msgid "Continuing anyway, but there's something wrong."
 msgstr "Continue malgré tout, mais quelque chose s'est mal passé."
 
