@@ -1,7 +1,7 @@
 # translation of libpq.po to fr_fr
 # french message translation file for libpq
 #
-# $PostgreSQL: pgsql/src/interfaces/libpq/po/fr.po,v 1.26.2.1 2010/07/29 19:39:47 petere Exp $
+# $PostgreSQL$
 #
 # Use these quotes: « %s »
 #
@@ -11,10 +11,11 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PostgreSQL 8.4\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
-"POT-Creation-Date: 2010-07-19 02:11+0000\n"
-"PO-Revision-Date: 2010-07-19 19:11+0100\n"
+"POT-Creation-Date: 2011-03-08 20:57+0000\n"
+"PO-Revision-Date: 2011-03-10 20:48+0100\n"
 "Last-Translator: Guillaume Lelarge <guillaume@lelarge.info>\n"
 "Language-Team: PostgreSQLfr <pgsql-fr-generale@postgresql.org>\n"
+"Language: \n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=ISO-8859-15\n"
 "Content-Transfer-Encoding: 8bit\n"
@@ -759,27 +760,27 @@ msgstr "n'a pas pu établir la connexion SSL : %s\n"
 
 #: fe-secure.c:349
 #: fe-secure.c:436
-#: fe-secure.c:1162
+#: fe-secure.c:1180
 #, c-format
 msgid "SSL SYSCALL error: %s\n"
 msgstr "erreur SYSCALL SSL : %s\n"
 
 #: fe-secure.c:355
 #: fe-secure.c:442
-#: fe-secure.c:1166
+#: fe-secure.c:1184
 msgid "SSL SYSCALL error: EOF detected\n"
 msgstr "erreur SYSCALL SSL : EOF détecté\n"
 
 #: fe-secure.c:367
 #: fe-secure.c:453
-#: fe-secure.c:1175
+#: fe-secure.c:1193
 #, c-format
 msgid "SSL error: %s\n"
 msgstr "erreur SSL : %s\n"
 
 #: fe-secure.c:377
 #: fe-secure.c:463
-#: fe-secure.c:1184
+#: fe-secure.c:1202
 #, c-format
 msgid "unrecognized SSL error code: %d\n"
 msgstr "code d'erreur SSL inconnu : %d\n"
@@ -797,12 +798,6 @@ msgstr "le nom courant du serveur « %s » ne correspond pas au nom d'hôte « %s »\
 #, c-format
 msgid "could not create SSL context: %s\n"
 msgstr "n'a pas pu créer le contexte SSL : %s\n"
-
-#: fe-secure.c:843
-msgid "could not get home directory to locate client certificate files\n"
-msgstr ""
-"n'a pas pu récupérer le répertoire personnel pour trouver les certificats\n"
-"du client\n"
 
 #: fe-secure.c:868
 #, c-format
@@ -835,12 +830,12 @@ msgstr "n'a pas pu lire la clé privée SSL « %s » à partir du moteur « %s » : %s\
 msgid "could not load private SSL key \"%s\" from engine \"%s\": %s\n"
 msgstr "n'a pas pu charger la clé privée SSL « %s » à partir du moteur « %s » : %s\n"
 
-#: fe-secure.c:1017
+#: fe-secure.c:1019
 #, c-format
 msgid "certificate present, but not private key file \"%s\"\n"
 msgstr "le certificat est présent, mais la clé privée « %s » est absente\n"
 
-#: fe-secure.c:1025
+#: fe-secure.c:1027
 #, c-format
 msgid "private key file \"%s\" has group or world access; permissions should be u=rw (0600) or less\n"
 msgstr ""
@@ -848,27 +843,36 @@ msgstr ""
 "pour le groupe ou universel ; les droits devraient être u=rw (0600)\n"
 "ou inférieur\n"
 
-#: fe-secure.c:1036
+#: fe-secure.c:1038
 #, c-format
 msgid "could not load private key file \"%s\": %s\n"
 msgstr "n'a pas pu charger le fichier de clé privée « %s » : %s\n"
 
-#: fe-secure.c:1050
+#: fe-secure.c:1052
 #, c-format
 msgid "certificate does not match private key file \"%s\": %s\n"
 msgstr "le certificat ne correspond pas à la clé privée « %s » : %s\n"
 
-#: fe-secure.c:1075
+#: fe-secure.c:1080
 #, c-format
 msgid "could not read root certificate file \"%s\": %s\n"
 msgstr "n'a pas pu lire le certificat racine « %s » : %s\n"
 
-#: fe-secure.c:1099
+#: fe-secure.c:1107
 #, c-format
 msgid "SSL library does not support CRL certificates (file \"%s\")\n"
 msgstr "la bibliothèque SSL ne supporte pas les certificats CRL (fichier « %s »)\n"
 
-#: fe-secure.c:1120
+#: fe-secure.c:1134
+msgid ""
+"could not get home directory to locate root certificate file\n"
+"Either provide the file or change sslmode to disable server certificate verification.\n"
+msgstr ""
+"n'a pas pu obtenir le répertoire personnel pour situer le fichier de certificat racine.\n"
+"Fournissez le fichier ou modifiez sslmode pour désactiver la vérification du\n"
+"certificat par le serveur.\n"
+
+#: fe-secure.c:1138
 #, c-format
 msgid ""
 "root certificate file \"%s\" does not exist\n"
@@ -878,24 +882,29 @@ msgstr ""
 "Fournissez le fichier ou modifiez sslmode pour désactiver la vérification du\n"
 "certificat par le serveur.\n"
 
-#: fe-secure.c:1203
+#: fe-secure.c:1221
 #, c-format
 msgid "certificate could not be obtained: %s\n"
 msgstr "le certificat n'a pas pu être obtenu : %s\n"
 
-#: fe-secure.c:1231
+#: fe-secure.c:1249
 msgid "SSL certificate's common name contains embedded null\n"
 msgstr "le nom commun du certificat SSL contient des NULL\n"
 
-#: fe-secure.c:1307
+#: fe-secure.c:1325
 msgid "no SSL error reported"
 msgstr "aucune erreur SSL reportée"
 
-#: fe-secure.c:1316
+#: fe-secure.c:1334
 #, c-format
 msgid "SSL error code %lu"
 msgstr "erreur SSL %lu"
 
+#~ msgid "could not get home directory to locate client certificate files\n"
+#~ msgstr ""
+#~ "n'a pas pu récupérer le répertoire personnel pour trouver les "
+#~ "certificats\n"
+#~ "du client\n"
 #~ msgid ""
 #~ "verified SSL connections are only supported when connecting to a host "
 #~ "name\n"

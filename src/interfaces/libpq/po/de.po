@@ -1,7 +1,7 @@
 # German message translation file for libpq
-# Peter Eisentraut <peter_e@gmx.net>, 2001 - 2010.
+# Peter Eisentraut <peter_e@gmx.net>, 2001 - 2011.
 #
-# pgtranslation Id: libpq.po,v 1.21 2010/07/22 19:01:38 petere Exp $
+# pgtranslation Id: libpq.po,v 1.22 2011/04/11 19:19:39 petere Exp $
 #
 # Use these quotes: »%s«
 #
@@ -9,10 +9,11 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PostgreSQL 9.0\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
-"POT-Creation-Date: 2010-07-21 12:10+0000\n"
-"PO-Revision-Date: 2010-07-22 17:58+0300\n"
+"POT-Creation-Date: 2011-04-10 22:59+0000\n"
+"PO-Revision-Date: 2011-04-11 22:19+0300\n"
 "Last-Translator: Peter Eisentraut <peter_e@gmx.net>\n"
 "Language-Team: German <peter_e@gmx.net>\n"
+"Language: de\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
@@ -600,8 +601,8 @@ msgid ""
 "server sent binary data (\"B\" message) without prior row description (\"T\" "
 "message)"
 msgstr ""
-"Server sendete binäre Daten (»B«-Nachricht) ohne vorherige Zeilenbeschreibung "
-"(»T«-Nachricht)"
+"Server sendete binäre Daten (»B«-Nachricht) ohne vorherige "
+"Zeilenbeschreibung (»T«-Nachricht)"
 
 #: fe-protocol2.c:547 fe-protocol3.c:382
 #, c-format
@@ -644,7 +645,8 @@ msgstr ""
 #, c-format
 msgid "lost synchronization with server: got message type \"%c\", length %d\n"
 msgstr ""
-"Synchronisation mit Server verloren: Nachrichtentyp »%c« empfangen, Länge %d\n"
+"Synchronisation mit Server verloren: Nachrichtentyp »%c« empfangen, Länge "
+"%d\n"
 
 #: fe-protocol3.c:646
 msgid "unexpected field count in \"D\" message\n"
@@ -704,21 +706,21 @@ msgstr "PQgetline: Text COPY OUT nicht ausgeführt\n"
 msgid "could not establish SSL connection: %s\n"
 msgstr "konnte SSL-Verbindung nicht aufbauen: %s\n"
 
-#: fe-secure.c:349 fe-secure.c:436 fe-secure.c:1162
+#: fe-secure.c:349 fe-secure.c:436 fe-secure.c:1180
 #, c-format
 msgid "SSL SYSCALL error: %s\n"
 msgstr "SSL-SYSCALL-Fehler: %s\n"
 
-#: fe-secure.c:355 fe-secure.c:442 fe-secure.c:1166
+#: fe-secure.c:355 fe-secure.c:442 fe-secure.c:1184
 msgid "SSL SYSCALL error: EOF detected\n"
 msgstr "SSL-SYSCALL-Fehler: Dateiende entdeckt\n"
 
-#: fe-secure.c:367 fe-secure.c:453 fe-secure.c:1175
+#: fe-secure.c:367 fe-secure.c:453 fe-secure.c:1193
 #, c-format
 msgid "SSL error: %s\n"
 msgstr "SSL-Fehler: %s\n"
 
-#: fe-secure.c:377 fe-secure.c:463 fe-secure.c:1184
+#: fe-secure.c:377 fe-secure.c:463 fe-secure.c:1202
 #, c-format
 msgid "unrecognized SSL error code: %d\n"
 msgstr "unbekannter SSL-Fehlercode: %d\n"
@@ -736,12 +738,6 @@ msgstr "Server-Common-Name »%s« stimmt nicht mit dem Hostnamen »%s« überein
 #, c-format
 msgid "could not create SSL context: %s\n"
 msgstr "konnte SSL-Kontext nicht erzeugen: %s\n"
-
-#: fe-secure.c:843
-msgid "could not get home directory to locate client certificate files\n"
-msgstr ""
-"konnte Home-Verzeichnis nicht ermitteln, um Client-Zertifikat-Dateien zu "
-"finden\n"
 
 #: fe-secure.c:868
 #, c-format
@@ -773,12 +769,12 @@ msgstr "konnte privaten SSL-Schlüssel »%s« nicht von Engine »%s« lesen: %s\
 msgid "could not load private SSL key \"%s\" from engine \"%s\": %s\n"
 msgstr "konnte privaten SSL-Schlüssel »%s« nicht von Engine »%s« laden: %s\n"
 
-#: fe-secure.c:1017
+#: fe-secure.c:1019
 #, c-format
 msgid "certificate present, but not private key file \"%s\"\n"
 msgstr "Zertifikat vorhanden, aber keine private Schlüsseldatei »%s«\n"
 
-#: fe-secure.c:1025
+#: fe-secure.c:1027
 #, c-format
 msgid ""
 "private key file \"%s\" has group or world access; permissions should be "
@@ -787,27 +783,36 @@ msgstr ""
 "WARNUNG: private Schlüsseldatei »%s« erlaubt Lesezugriff für Gruppe oder "
 "Andere; Rechte sollten u=rw (0600) oder weniger sein\n"
 
-#: fe-secure.c:1036
+#: fe-secure.c:1038
 #, c-format
 msgid "could not load private key file \"%s\": %s\n"
 msgstr "konnte private Schlüsseldatei »%s« nicht laden: %s\n"
 
-#: fe-secure.c:1050
+#: fe-secure.c:1052
 #, c-format
 msgid "certificate does not match private key file \"%s\": %s\n"
 msgstr "Zertifikat passt nicht zur privaten Schlüsseldatei »%s«: %s\n"
 
-#: fe-secure.c:1075
+#: fe-secure.c:1080
 #, c-format
 msgid "could not read root certificate file \"%s\": %s\n"
 msgstr "konnte Root-Zertifikat-Datei »%s« nicht lesen: %s\n"
 
-#: fe-secure.c:1099
+#: fe-secure.c:1107
 #, c-format
 msgid "SSL library does not support CRL certificates (file \"%s\")\n"
 msgstr "SSL-Bibliothek unterstützt keine CRL-Zertifikate (Datei »%s«)\n"
 
-#: fe-secure.c:1120
+#: fe-secure.c:1134
+msgid ""
+"could not get home directory to locate root certificate file\n"
+"Either provide the file or change sslmode to disable server certificate "
+"verification.\n"
+msgstr ""
+"konnte Home-Verzeichnis nicht ermitteln, um Root-Zertifikat-Datei zu finden\n"
+"Legen Sie entweder die Datei an oder ändern Sie sslmode, um die Überprüfung der Serverzertifikate abzuschalten.\n"
+
+#: fe-secure.c:1138
 #, c-format
 msgid ""
 "root certificate file \"%s\" does not exist\n"
@@ -818,20 +823,20 @@ msgstr ""
 "Legen Sie entweder die Datei an oder ändern Sie sslmode, um die Überprüfung "
 "der Serverzertifikate abzuschalten.\n"
 
-#: fe-secure.c:1203
+#: fe-secure.c:1221
 #, c-format
 msgid "certificate could not be obtained: %s\n"
 msgstr "Zertifikat konnte nicht ermittelt werden: %s\n"
 
-#: fe-secure.c:1231
+#: fe-secure.c:1249
 msgid "SSL certificate's common name contains embedded null\n"
 msgstr "Common-Name im SSL-Zertifikat enthält Null-Byte\n"
 
-#: fe-secure.c:1307
+#: fe-secure.c:1325
 msgid "no SSL error reported"
 msgstr "kein SSL-Fehler berichtet"
 
-#: fe-secure.c:1316
+#: fe-secure.c:1334
 #, c-format
 msgid "SSL error code %lu"
 msgstr "SSL-Fehlercode %lu"

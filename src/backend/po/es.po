@@ -8,7 +8,7 @@
 # Jaime Casanova <systemguards@gmail.com> 2005, 2006
 # Emanuel Calvo Franco <postgres-arg@gmail.com> 2008
 #
-# pgtranslation Id: postgres.po,v 1.32 2010/12/09 19:42:30 alvherre Exp $
+# pgtranslation Id: postgres.po,v 1.33 2011/03/15 22:01:30 alvherre Exp $
 #
 #
 # Glosario:
@@ -54,7 +54,7 @@ msgstr ""
 "Project-Id-Version: PostgreSQL server 9.0\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
 "POT-Creation-Date: 2010-12-09 02:56+0000\n"
-"PO-Revision-Date: 2010-12-09 16:42-0300\n"
+"PO-Revision-Date: 2011-03-15 18:59-0300\n"
 "Last-Translator: Álvaro Herrera <alvherre@alvh.no-ip.org>\n"
 "Language-Team: PgSQL Español <pgsql-es-ayuda@postgresql.org>\n"
 "Language: \n"
@@ -6104,7 +6104,7 @@ msgstr "no se pueden truncar tablas temporales de otras sesiones"
 #: parser/parse_utilcmd.c:1408
 #, c-format
 msgid "inherited relation \"%s\" is not a table"
-msgstr "la relación de herencia «%s» no es una tabla"
+msgstr "la relación heredada «%s» no es una tabla"
 
 #: commands/tablecmds.c:1320 commands/tablecmds.c:7223
 #, c-format
