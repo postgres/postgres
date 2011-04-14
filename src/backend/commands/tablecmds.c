@@ -2676,8 +2676,7 @@ AlterTableGetLockLevel(List *cmds)
 				 * started before us will continue to see the old inheritance
 				 * behaviour, while queries started after we commit will see
 				 * new behaviour. No need to prevent reads or writes to the
-				 * subtable while we hook it up though. In both cases the
-				 * parent table is locked with AccessShareLock.
+				 * subtable while we hook it up though.
 				 */
 			case AT_AddInherit:
 			case AT_DropInherit:
