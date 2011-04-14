@@ -1133,6 +1133,16 @@ alter table recur1 add column f2 recur2; -- fails
 alter table recur1 add column f2 int;
 alter table recur1 alter column f2 type recur2; -- fails
 
+-- SET STORAGE may need to add a TOAST table
+create table test_storage (a text);
+alter table test_storage alter a set storage plain;
+alter table test_storage add b int default 0; -- rewrite table to remove its TOAST table
+alter table test_storage alter a set storage extended; -- re-add TOAST table
+
+select reltoastrelid <> 0 as has_toast_table
+from pg_class
+where oid = 'test_storage'::regclass;
+
 --
 -- lock levels
 --

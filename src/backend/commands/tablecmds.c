@@ -3022,18 +3022,12 @@ ATRewriteCatalogs(List **wqueue, LOCKMODE lockmode)
 		}
 	}
 
-	/*
-	 * Check to see if a toast table must be added, if we executed any
-	 * subcommands that might have added a column or changed column storage.
-	 */
+	/* Check to see if a toast table must be added. */
 	foreach(ltab, *wqueue)
 	{
 		AlteredTableInfo *tab = (AlteredTableInfo *) lfirst(ltab);
 
-		if (tab->relkind == RELKIND_RELATION &&
-			(tab->subcmds[AT_PASS_ADD_COL] ||
-			 tab->subcmds[AT_PASS_ALTER_TYPE] ||
-			 tab->subcmds[AT_PASS_COL_ATTRS]))
+		if (tab->relkind == RELKIND_RELATION)
 			AlterTableCreateToastTable(tab->relid, (Datum) 0);
 	}
 }

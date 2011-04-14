@@ -376,6 +376,17 @@ SELECT * FROM e_star*;
 
 ALTER TABLE a_star* ADD COLUMN a text;
 NOTICE:  merging definition of column "a" for child "d_star"
+-- That ALTER TABLE should have added TOAST tables.
+SELECT relname, reltoastrelid <> 0 AS has_toast_table
+   FROM pg_class
+   WHERE oid::regclass IN ('a_star', 'c_star')
+   ORDER BY 1;
+ relname | has_toast_table 
+---------+-----------------
+ a_star  | t
+ c_star  | t
+(2 rows)
+
 --UPDATE b_star*
 --   SET a = text 'gazpacho'
 --   WHERE aa > 4;

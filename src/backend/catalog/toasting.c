@@ -59,11 +59,11 @@ AlterTableCreateToastTable(Oid relOid, Datum reloptions)
 	Relation	rel;
 
 	/*
-	 * Grab an exclusive lock on the target table, which we will NOT release
-	 * until end of transaction.  (This is probably redundant in all present
-	 * uses...)
+	 * Grab a DDL-exclusive lock on the target table, since we'll update the
+	 * pg_class tuple.  This is redundant for all present users.  Tuple toasting
+	 * behaves safely in the face of a concurrent TOAST table add.
 	 */
-	rel = heap_open(relOid, AccessExclusiveLock);
+	rel = heap_open(relOid, ShareUpdateExclusiveLock);
 
 	/* create_toast_table does all the work */
 	(void) create_toast_table(rel, InvalidOid, InvalidOid, reloptions);
@@ -103,7 +103,7 @@ BootstrapToastTable(char *relName, Oid toastOid, Oid toastIndexOid)
 /*
  * create_toast_table --- internal workhorse
  *
- * rel is already opened and exclusive-locked
+ * rel is already opened and locked
  * toastOid and toastIndexOid are normally InvalidOid, but during
  * bootstrap they can be nonzero to specify hand-assigned OIDs
  */
