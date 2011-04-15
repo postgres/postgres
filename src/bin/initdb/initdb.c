@@ -185,7 +185,6 @@ static int	locale_date_order(const char *locale);
 static bool check_locale_name(const char *locale);
 static bool check_locale_encoding(const char *locale, int encoding);
 static void setlocales(void);
-static void strreplace(char *str, char *needle, char *replacement);
 static char *localemap(char *locale);
 static void usage(const char *progname);
 
@@ -2252,6 +2251,8 @@ check_locale_encoding(const char *locale, int user_enc)
 	return true;
 }
 
+#ifdef WIN32
+
 /*
  * Replace 'needle' with 'replacement' in 'str' . Note that the replacement
  * is done in-place, so 'replacement' must be shorter than 'needle'.
@@ -2271,6 +2272,8 @@ strreplace(char *str, char *needle, char *replacement)
 		memmove(s + replacementlen, rest, strlen(rest) + 1);
 	}
 }
+
+#endif /* WIN32 */
 
 /*
  * Windows has a problem with locale names that have a dot or apostrophe in
@@ -2321,7 +2324,7 @@ localemap(char *locale)
 	strreplace(locale, "Chinese_Macau S.A.R..950", "ZHM");
 	strreplace(locale, "Chinese (Traditional)_Macao S.A.R..950", "ZHM");
 	strreplace(locale, "Chinese_Macao S.A.R..950", "ZHM");
-#endif
+#endif /* WIN32 */
 
 	return locale;
 }
