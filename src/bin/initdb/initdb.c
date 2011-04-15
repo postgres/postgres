@@ -185,6 +185,8 @@ static int	locale_date_order(const char *locale);
 static bool check_locale_name(const char *locale);
 static bool check_locale_encoding(const char *locale, int encoding);
 static void setlocales(void);
+static void strreplace(char *str, char *needle, char *replacement);
+static char *localemap(char *locale);
 static void usage(const char *progname);
 
 #ifdef WIN32
@@ -2250,6 +2252,79 @@ check_locale_encoding(const char *locale, int user_enc)
 	return true;
 }
 
+/*
+ * Replace 'needle' with 'replacement' in 'str' . Note that the replacement
+ * is done in-place, so 'replacement' must be shorter than 'needle'.
+ */
+static void
+strreplace(char *str, char *needle, char *replacement)
+{
+	char *s;
+
+	s = strstr(str, needle);
+	if (s != NULL)
+	{
+		int replacementlen = strlen(replacement);
+		char *rest = s + strlen(needle);
+
+		memcpy(s, replacement, replacementlen);
+		memmove(s + replacementlen, rest, strlen(rest) + 1);
+	}
+}
+
+/*
+ * Windows has a problem with locale names that have a dot or apostrophe in
+ * the country name. For example:
+ *
+ * "Chinese (Traditional)_Hong Kong S.A.R..950"
+ *
+ * For some reason, setlocale() doesn't accept that. Fortunately, Windows'
+ * setlocale() accepts various alternative names for such countries, so we
+ * map the full country names to accepted aliases.
+ *
+ * The returned string is always malloc'd - if no mapping is done it is
+ * just a malloc'd copy of the original.
+ */
+static char *
+localemap(char *locale)
+{
+	locale = xstrdup(locale);
+
+#ifdef WIN32
+	/*
+	 * Map the full country name to an abbreviation that setlocale() accepts
+	 * "China" and "HKG" are listed here:
+	 * http://msdn.microsoft.com/en-us/library/cdax410z%28v=vs.71%29.aspx
+	 * (Country/Region Strings).
+	 *
+	 * "ARE" is the ISO-3166 three-letter code for U.A.E. It is not on the
+	 * above list, but seems to work anyway.
+	 */
+	strreplace(locale, "People's Republic of China", "China");
+	strreplace(locale, "Hong Kong S.A.R.", "HKG");
+	strreplace(locale, "U.A.E.", "ARE");
+
+	/*
+	 * The ISO-3166 country code for Macau S.A.R. is MAC, but Windows doesn't
+	 * seem to recognize that. And Macau isn't listed in the table of
+	 * accepted abbreviations linked above.
+	 *
+	 * Fortunately, "ZHM" seems to be accepted as an alias for
+	 * "Chinese (Traditional)_Macau S.A.R..950", so we use that. Note that
+	 * it's unlike HKG and ARE, ZHM is an alias for the whole locale name,
+	 * not just the country part. I'm not sure where that "ZHM" comes from,
+	 * must be some legacy naming scheme. But hey, it works.
+	 *
+	 * Some versions of Windows spell it "Macau", others "Macao".
+	 */
+	strreplace(locale, "Chinese (Traditional)_Macau S.A.R..950", "ZHM");
+	strreplace(locale, "Chinese_Macau S.A.R..950", "ZHM");
+	strreplace(locale, "Chinese (Traditional)_Macao S.A.R..950", "ZHM");
+	strreplace(locale, "Chinese_Macao S.A.R..950", "ZHM");
+#endif
+
+	return locale;
+}
 
 /*
  * set up the locale variables
@@ -2282,25 +2357,25 @@ setlocales(void)
 	 */
 
 	if (strlen(lc_ctype) == 0 || !check_locale_name(lc_ctype))
-		lc_ctype = xstrdup(setlocale(LC_CTYPE, NULL));
+		lc_ctype = localemap(setlocale(LC_CTYPE, NULL));
 	if (strlen(lc_collate) == 0 || !check_locale_name(lc_collate))
-		lc_collate = xstrdup(setlocale(LC_COLLATE, NULL));
+		lc_collate = localemap(setlocale(LC_COLLATE, NULL));
 	if (strlen(lc_numeric) == 0 || !check_locale_name(lc_numeric))
-		lc_numeric = xstrdup(setlocale(LC_NUMERIC, NULL));
+		lc_numeric = localemap(setlocale(LC_NUMERIC, NULL));
 	if (strlen(lc_time) == 0 || !check_locale_name(lc_time))
-		lc_time = xstrdup(setlocale(LC_TIME, NULL));
+		lc_time = localemap(setlocale(LC_TIME, NULL));
 	if (strlen(lc_monetary) == 0 || !check_locale_name(lc_monetary))
-		lc_monetary = xstrdup(setlocale(LC_MONETARY, NULL));
+		lc_monetary = localemap(setlocale(LC_MONETARY, NULL));
 	if (strlen(lc_messages) == 0 || !check_locale_name(lc_messages))
 #if defined(LC_MESSAGES) && !defined(WIN32)
 	{
 		/* when available get the current locale setting */
-		lc_messages = xstrdup(setlocale(LC_MESSAGES, NULL));
+		lc_messages = localemap(setlocale(LC_MESSAGES, NULL));
 	}
 #else
 	{
 		/* when not available, get the CTYPE setting */
-		lc_messages = xstrdup(setlocale(LC_CTYPE, NULL));
+		lc_messages = localemap(setlocale(LC_CTYPE, NULL));
 	}
 #endif
 
