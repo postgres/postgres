@@ -2906,7 +2906,19 @@ main(int argc, char *argv[])
 		}
 		else if (!pg_valid_server_encoding_id(ctype_enc))
 		{
-			/* We recognized it, but it's not a legal server encoding */
+			/*
+			 * We recognized it, but it's not a legal server encoding.
+			 * On Windows, UTF-8 works with any locale, so we can fall back
+			 * to UTF-8.
+			 */
+#ifdef WIN32
+			printf(_("Encoding %s implied by locale is not allowed as a server-side encoding.\n"
+					 "The default database encoding will be set to %s instead.\n"),
+				   pg_encoding_to_char(ctype_enc),
+				   pg_encoding_to_char(PG_UTF8));
+			ctype_enc = PG_UTF8;
+			encodingid = encodingid_to_string(ctype_enc);
+#else
 			fprintf(stderr,
 					_("%s: locale %s requires unsupported encoding %s\n"),
 					progname, lc_ctype, pg_encoding_to_char(ctype_enc));
@@ -2915,6 +2927,7 @@ main(int argc, char *argv[])
 					"Rerun %s with a different locale selection.\n"),
 					pg_encoding_to_char(ctype_enc), progname);
 			exit(1);
+#endif
 		}
 		else
 		{
