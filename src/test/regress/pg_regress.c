@@ -727,7 +727,7 @@ initialize_environment(void)
 	putenv("LC_MESSAGES=C");
 
 	/*
-	 * Set multibyte as requested
+	 * Set encoding as requested
 	 */
 	if (encoding)
 		doputenv("PGCLIENTENCODING", encoding);
@@ -1880,7 +1880,7 @@ help(void)
 	printf(_("  --create-role=ROLE        create the specified role before testing\n"));
 	printf(_("  --max-connections=N       maximum number of concurrent connections\n"));
 	printf(_("                            (default is 0 meaning unlimited)\n"));
-	printf(_("  --multibyte=ENCODING      use ENCODING as the multibyte encoding\n"));
+	printf(_("  --encoding=ENCODING       use ENCODING as the encoding\n"));
 	printf(_("  --outputdir=DIR           place output files in DIR (default \".\")\n"));
 	printf(_("  --schedule=FILE           use test ordering schedule from FILE\n"));
 	printf(_("                            (can be used multiple times to concatenate)\n"));
@@ -1925,7 +1925,7 @@ regression_main(int argc, char *argv[], init_function ifunc, test_function tfunc
 		{"inputdir", required_argument, NULL, 3},
 		{"load-language", required_argument, NULL, 4},
 		{"max-connections", required_argument, NULL, 5},
-		{"multibyte", required_argument, NULL, 6},
+		{"encoding", required_argument, NULL, 6},
 		{"outputdir", required_argument, NULL, 7},
 		{"schedule", required_argument, NULL, 8},
 		{"temp-install", required_argument, NULL, 9},

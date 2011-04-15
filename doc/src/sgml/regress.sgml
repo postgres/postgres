@@ -221,9 +221,9 @@ gmake check LC_COLLATE=en_US.utf8 LC_CTYPE=fr_CA.utf8
 
    <para>
     You can also choose the database encoding explicitly by setting
-    the variable <envar>MULTIBYTE</envar>, for example:
+    the variable <envar>ENCODING</envar>, for example:
 <screen>
-gmake check LANG=C MULTIBYTE=EUC_JP
+gmake check LANG=C ENCODING=EUC_JP
 </screen>
     Setting the database encoding this way typically only makes sense
     if the locale is C; otherwise the encoding is chosen automatically

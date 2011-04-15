@@ -16,14 +16,8 @@ override CPPFLAGS := \
 # where to find psql for testing an existing installation
 PSQLDIR = $(bindir)
 
-# default encoding
-MULTIBYTE = SQL_ASCII
-
-# locale
-NOLOCALE =
-ifdef NO_LOCALE
-NOLOCALE += --no-locale
-endif
+# default encoding for regression tests
+ENCODING = SQL_ASCII
 
 ifneq ($(build_os),mingw32)
 abs_builddir := $(shell pwd)
@@ -83,11 +77,11 @@ endif
 
 
 check: all
-	./pg_regress  --dbname=regress1,connectdb --top-builddir=$(top_builddir) --temp-install=./tmp_check --multibyte=$(MULTIBYTE) $(NOLOCALE) $(THREAD) --schedule=$(srcdir)/ecpg_schedule --create-role=connectuser,connectdb
+	./pg_regress  --dbname=regress1,connectdb --top-builddir=$(top_builddir) --temp-install=./tmp_check $(pg_regress_locale_flags) $(THREAD) --schedule=$(srcdir)/ecpg_schedule --create-role=connectuser,connectdb
 
 # the same options, but with --listen-on-tcp
 checktcp: all
-	./pg_regress  --dbname=regress1,connectdb --top-builddir=$(top_builddir) --temp-install=./tmp_check --multibyte=$(MULTIBYTE) $(NOLOCALE) $(THREAD) --schedule=$(srcdir)/ecpg_schedule_tcp --create-role=connectuser,connectdb --host=localhost
+	./pg_regress  --dbname=regress1,connectdb --top-builddir=$(top_builddir) --temp-install=./tmp_check $(pg_regress_locale_flags) $(THREAD) --schedule=$(srcdir)/ecpg_schedule_tcp --create-role=connectuser,connectdb --host=localhost
 
 installcheck: all
-	./pg_regress  --psqldir=$(PSQLDIR) --dbname=regress1,connectdb --top-builddir=$(top_builddir) --multibyte=$(MULTIBYTE) $(NOLOCALE) $(THREAD) --schedule=$(srcdir)/ecpg_schedule --create-role=connectuser,connectdb
+	./pg_regress  --psqldir=$(PSQLDIR) --dbname=regress1,connectdb --top-builddir=$(top_builddir) $(pg_regress_locale_flags) $(THREAD) --schedule=$(srcdir)/ecpg_schedule --create-role=connectuser,connectdb

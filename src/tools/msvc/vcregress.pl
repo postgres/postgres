@@ -88,7 +88,7 @@ sub installcheck
     my @args = (
         "../../../$Config/pg_regress/pg_regress","--dlpath=.",
         "--psqldir=../../../$Config/psql","--schedule=${schedule}_schedule",
-        "--multibyte=SQL_ASCII","--no-locale"
+        "--encoding=SQL_ASCII","--no-locale"
     );
     push(@args,$maxconn) if $maxconn;
     system(@args);
@@ -101,7 +101,7 @@ sub check
     my @args = (
         "../../../$Config/pg_regress/pg_regress","--dlpath=.",
         "--psqldir=../../../$Config/psql","--schedule=${schedule}_schedule",
-        "--multibyte=SQL_ASCII","--no-locale",
+        "--encoding=SQL_ASCII","--no-locale",
         "--temp-install=./tmp_check","--top-builddir=\"$topdir\""
     );
     push(@args,$maxconn) if $maxconn;
@@ -125,7 +125,7 @@ sub ecpgcheck
         "--dbname=regress1,connectdb",
         "--create-role=connectuser,connectdb",
         "--schedule=${schedule}_schedule",
-        "--multibyte=SQL_ASCII",
+        "--encoding=SQL_ASCII",
         "--no-locale",
         "--temp-install=./tmp_chk",
         "--top-builddir=\"$topdir\""

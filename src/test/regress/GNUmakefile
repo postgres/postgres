@@ -29,12 +29,6 @@ ifdef MAX_CONNECTIONS
 MAXCONNOPT += --max-connections=$(MAX_CONNECTIONS)
 endif
 
-# locale
-NOLOCALE =
-ifdef NO_LOCALE
-NOLOCALE += --no-locale
-endif
-
 # stuff to pass into build of pg_regress
 EXTRADEFS = '-DHOST_TUPLE="$(host_tuple)"' \
 	'-DMAKEPROG="$(MAKE)"' \
@@ -138,7 +132,7 @@ tablespace-setup:
 ## Run tests
 ##
 
-REGRESS_OPTS = --dlpath=. $(if $(MULTIBYTE),--multibyte=$(MULTIBYTE)) $(NOLOCALE)
+REGRESS_OPTS = --dlpath=.
 
 check: all tablespace-setup
 	$(pg_regress_check) $(REGRESS_OPTS) --schedule=$(srcdir)/parallel_schedule $(MAXCONNOPT) $(TEMP_CONF) $(EXTRA_TESTS)
