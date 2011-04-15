@@ -346,7 +346,7 @@ InitLocks(void)
 	hash_flags = (HASH_ELEM | HASH_FUNCTION);
 
 	LockMethodLocalHash = hash_create("LOCALLOCK hash",
-									  128,
+									  16,
 									  &info,
 									  hash_flags);
 }
