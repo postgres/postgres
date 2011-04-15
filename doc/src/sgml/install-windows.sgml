@@ -19,7 +19,7 @@
  <para>
   There are several different ways of building PostgreSQL on
   <productname>Windows</productname>. The simplest way to build with
-  Microsoft tools is to install a modern version of the
+  Microsoft tools is to install a supported version of the
   <productname>Microsoft Platform SDK</productname> and use use the included
   compiler. It is also possible to build with the full
   <productname>Microsoft Visual C++ 2005 or 2008</productname>. In some cases
@@ -74,7 +74,7 @@
  <para>
   PostgreSQL can be built using the Visual C++ compiler suite from Microsoft.
   These compilers can be either from <productname>Visual Studio</productname>,
-  <productname>Visual Studio Express</productname> or recent versions of the
+  <productname>Visual Studio Express</productname> or some versions of the
   <productname>Platform SDK</productname>. If you do not already have a
   <productname>Visual Studio</productname> environment set up, the easiest
   way us to use the compilers in the <productname>Platform SDK</productname>,
@@ -87,6 +87,14 @@
   <productname>Visual Studio 2008</productname>. When using the Platform SDK
   only, or when building for 64-bit Windows, only
   <productname>Visual Studio 2008</productname> is supported.
+  <productname>Visual Studio 2010</productname> is not yet supported.
+ </para>
+
+ <para>
+  When building using the <productname>Platform SDK</productname>, versions
+  6.0 to 7.0 of the SDK are supported. Older or newer versions will not work.
+  In particular, versions from 7.0a and later will not work, since
+  they include compilers from <productname>Visual Studio 2010</productname>.
  </para>
 
  <para>
