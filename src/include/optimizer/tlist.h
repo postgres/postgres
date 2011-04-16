@@ -25,6 +25,7 @@ extern List *add_to_flat_tlist(List *tlist, List *exprs);
 
 extern List *get_tlist_exprs(List *tlist, bool includeJunk);
 extern bool tlist_same_datatypes(List *tlist, List *colTypes, bool junkOK);
+extern bool tlist_same_collations(List *tlist, List *colCollations, bool junkOK);
 
 extern TargetEntry *get_sortgroupref_tle(Index sortref,
 					 List *targetList);

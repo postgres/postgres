@@ -195,6 +195,40 @@ tlist_same_datatypes(List *tlist, List *colTypes, bool junkOK)
 	return true;
 }
 
+/*
+ * Does tlist have same exposed collations as listed in colCollations?
+ *
+ * Identical logic to the above, but for collations.
+ */
+bool
+tlist_same_collations(List *tlist, List *colCollations, bool junkOK)
+{
+	ListCell   *l;
+	ListCell   *curColColl = list_head(colCollations);
+
+	foreach(l, tlist)
+	{
+		TargetEntry *tle = (TargetEntry *) lfirst(l);
+
+		if (tle->resjunk)
+		{
+			if (!junkOK)
+				return false;
+		}
+		else
+		{
+			if (curColColl == NULL)
+				return false;	/* tlist longer than colCollations */
+			if (exprCollation((Node *) tle->expr) != lfirst_oid(curColColl))
+				return false;
+			curColColl = lnext(curColColl);
+		}
+	}
+	if (curColColl != NULL)
+		return false;			/* tlist shorter than colCollations */
+	return true;
+}
+
 
 /*
  * get_sortgroupref_tle
