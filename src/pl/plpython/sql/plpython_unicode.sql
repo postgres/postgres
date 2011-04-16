@@ -2,6 +2,8 @@
 -- Unicode handling
 --
 
+SET client_encoding TO UTF8;
+
 CREATE TABLE unicode_test (
 	testvalue  text NOT NULL
 );
