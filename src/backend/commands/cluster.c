@@ -1399,10 +1399,10 @@ finish_heap_swap(Oid OIDOldHeap, Oid OIDNewHeap,
 	 * so no chance to reclaim disk space before commit.  We do not need a
 	 * final CommandCounterIncrement() because reindex_relation does it.
 	 */
-	reindex_flags = REINDEX_SUPPRESS_INDEX_USE;
+	reindex_flags = REINDEX_REL_SUPPRESS_INDEX_USE;
 	if (check_constraints)
-		reindex_flags |= REINDEX_CHECK_CONSTRAINTS;
-	reindex_relation(OIDOldHeap, false, reindex_flags);
+		reindex_flags |= REINDEX_REL_CHECK_CONSTRAINTS;
+	reindex_relation(OIDOldHeap, reindex_flags);
 
 	/* Destroy new heap with old filenode */
 	object.classId = RelationRelationId;

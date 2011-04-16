@@ -2841,29 +2841,33 @@ reindex_index(Oid indexId, bool skip_constraint_checks)
  * reindex_relation - This routine is used to recreate all indexes
  * of a relation (and optionally its toast relation too, if any).
  *
- * "flags" can include REINDEX_SUPPRESS_INDEX_USE and REINDEX_CHECK_CONSTRAINTS.
+ * "flags" is a bitmask that can include any combination of these bits:
  *
- * If flags has REINDEX_SUPPRESS_INDEX_USE, the relation was just completely
+ * REINDEX_REL_PROCESS_TOAST: if true, process the toast table too (if any).
+ *
+ * REINDEX_REL_SUPPRESS_INDEX_USE: if true, the relation was just completely
  * rebuilt by an operation such as VACUUM FULL or CLUSTER, and therefore its
  * indexes are inconsistent with it.  This makes things tricky if the relation
  * is a system catalog that we might consult during the reindexing.  To deal
  * with that case, we mark all of the indexes as pending rebuild so that they
  * won't be trusted until rebuilt.  The caller is required to call us *without*
- * having made the rebuilt versions visible by doing CommandCounterIncrement;
+ * having made the rebuilt table visible by doing CommandCounterIncrement;
  * we'll do CCI after having collected the index list.  (This way we can still
  * use catalog indexes while collecting the list.)
  *
- * To avoid deadlocks, VACUUM FULL or CLUSTER on a system catalog must omit the
- * REINDEX_CHECK_CONSTRAINTS flag.	REINDEX should be used to rebuild an index
- * if constraint inconsistency is suspected.  For optimal performance, other
- * callers should include the flag only after transforming the data in a manner
- * that risks a change in constraint validity.
+ * REINDEX_REL_CHECK_CONSTRAINTS: if true, recheck unique and exclusion
+ * constraint conditions, else don't.  To avoid deadlocks, VACUUM FULL or
+ * CLUSTER on a system catalog must omit this flag.  REINDEX should be used to
+ * rebuild an index if constraint inconsistency is suspected.  For optimal
+ * performance, other callers should include the flag only after transforming
+ * the data in a manner that risks a change in constraint validity.
  *
- * Returns true if any indexes were rebuilt.  Note that a
- * CommandCounterIncrement will occur after each index rebuild.
+ * Returns true if any indexes were rebuilt (including toast table's index
+ * when relevant).  Note that a CommandCounterIncrement will occur after each
+ * index rebuild.
  */
 bool
-reindex_relation(Oid relid, bool toast_too, int flags)
+reindex_relation(Oid relid, int flags)
 {
 	Relation	rel;
 	Oid			toast_relid;
@@ -2919,7 +2923,7 @@ reindex_relation(Oid relid, bool toast_too, int flags)
 		List	   *doneIndexes;
 		ListCell   *indexId;
 
-		if (flags & REINDEX_SUPPRESS_INDEX_USE)
+		if (flags & REINDEX_REL_SUPPRESS_INDEX_USE)
 		{
 			/* Suppress use of all the indexes until they are rebuilt */
 			SetReindexPending(indexIds);
@@ -2940,11 +2944,11 @@ reindex_relation(Oid relid, bool toast_too, int flags)
 			if (is_pg_class)
 				RelationSetIndexList(rel, doneIndexes, InvalidOid);
 
-			reindex_index(indexOid, !(flags & REINDEX_CHECK_CONSTRAINTS));
+			reindex_index(indexOid, !(flags & REINDEX_REL_CHECK_CONSTRAINTS));
 
 			CommandCounterIncrement();
 
-			if (flags & REINDEX_SUPPRESS_INDEX_USE)
+			if (flags & REINDEX_REL_SUPPRESS_INDEX_USE)
 				RemoveReindexPending(indexOid);
 
 			if (is_pg_class)
@@ -2972,12 +2976,10 @@ reindex_relation(Oid relid, bool toast_too, int flags)
 
 	/*
 	 * If the relation has a secondary toast rel, reindex that too while we
-	 * still hold the lock on the master table.  There's never a reason to
-	 * reindex the toast table right after rebuilding the heap.
+	 * still hold the lock on the master table.
 	 */
-	Assert(!(toast_too && (flags & REINDEX_SUPPRESS_INDEX_USE)));
-	if (toast_too && OidIsValid(toast_relid))
-		result |= reindex_relation(toast_relid, false, flags);
+	if ((flags & REINDEX_REL_PROCESS_TOAST) && OidIsValid(toast_relid))
+		result |= reindex_relation(toast_relid, flags);
 
 	return result;
 }

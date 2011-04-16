@@ -1566,7 +1566,7 @@ ReindexTable(RangeVar *relation)
 
 	ReleaseSysCache(tuple);
 
-	if (!reindex_relation(heapOid, true, 0))
+	if (!reindex_relation(heapOid, REINDEX_REL_PROCESS_TOAST))
 		ereport(NOTICE,
 				(errmsg("table \"%s\" has no indexes",
 						relation->relname)));
@@ -1679,7 +1679,7 @@ ReindexDatabase(const char *databaseName, bool do_system, bool do_user)
 		StartTransactionCommand();
 		/* functions in indexes may want a snapshot set */
 		PushActiveSnapshot(GetTransactionSnapshot());
-		if (reindex_relation(relid, true, 0))
+		if (reindex_relation(relid, REINDEX_REL_PROCESS_TOAST))
 			ereport(NOTICE,
 					(errmsg("table \"%s.%s\" was reindexed",
 							get_namespace_name(get_rel_namespace(relid)),
