@@ -65,6 +65,7 @@
 #include "access/relscan.h"
 #include "access/transam.h"
 #include "access/xact.h"
+#include "catalog/index.h"
 #include "pgstat.h"
 #include "storage/bufmgr.h"
 #include "storage/lmgr.h"
@@ -76,12 +77,21 @@
 
 /* ----------------------------------------------------------------
  *					macros used in index_ routines
+ *
+ * Note: the ReindexIsProcessingIndex() check in RELATION_CHECKS is there
+ * to check that we don't try to scan or do retail insertions into an index
+ * that is currently being rebuilt or pending rebuild.  This helps to catch
+ * things that don't work when reindexing system catalogs.  The assertion
+ * doesn't prevent the actual rebuild because we don't use RELATION_CHECKS
+ * when calling the index AM's ambuild routine, and there is no reason for
+ * ambuild to call its subsidiary routines through this file.
  * ----------------------------------------------------------------
  */
 #define RELATION_CHECKS \
 ( \
 	AssertMacro(RelationIsValid(indexRelation)), \
-	AssertMacro(PointerIsValid(indexRelation->rd_am)) \
+	AssertMacro(PointerIsValid(indexRelation->rd_am)), \
+	AssertMacro(!ReindexIsProcessingIndex(RelationGetRelid(indexRelation))) \
 )
 
 #define SCAN_CHECKS \
