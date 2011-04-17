@@ -1287,11 +1287,12 @@ describeOneTableDetails(const char *schemaname,
 					  "\n  (SELECT substring(pg_catalog.pg_get_expr(d.adbin, d.adrelid) for 128)"
 					  "\n   FROM pg_catalog.pg_attrdef d"
 					  "\n   WHERE d.adrelid = a.attrelid AND d.adnum = a.attnum AND a.atthasdef),"
-					  "\n  a.attnotnull, a.attnum");
+					  "\n  a.attnotnull, a.attnum,");
 	if (pset.sversion >= 90100)
-		appendPQExpBuffer(&buf, ",\n  (SELECT collname FROM pg_collation WHERE oid = a.attcollation AND collname <> 'default') AS attcollation");
+		appendPQExpBuffer(&buf, "\n  (SELECT c.collname FROM pg_catalog.pg_collation c, pg_catalog.pg_type t\n"
+						  "   WHERE c.oid = a.attcollation AND t.oid = a.atttypid AND a.attcollation <> t.typcollation) AS attcollation");
 	else
-		appendPQExpBuffer(&buf, ",\n  NULL AS attcollation");
+		appendPQExpBuffer(&buf, "\n  NULL AS attcollation");
 	if (tableinfo.relkind == 'i')
 		appendPQExpBuffer(&buf, ",\n  pg_catalog.pg_get_indexdef(a.attrelid, a.attnum, TRUE) AS indexdef");
 	if (verbose)
@@ -1362,7 +1363,7 @@ describeOneTableDetails(const char *schemaname,
 	cols = 2;
 
 	if (tableinfo.relkind == 'r' || tableinfo.relkind == 'v' ||
-		tableinfo.relkind == 'f')
+		tableinfo.relkind == 'f' || tableinfo.relkind == 'c')
 	{
 		show_modifiers = true;
 		headers[cols++] = gettext_noop("Modifiers");
@@ -2697,22 +2698,27 @@ listDomains(const char *pattern, bool showSystem)
 	printfPQExpBuffer(&buf,
 					  "SELECT n.nspname as \"%s\",\n"
 					  "       t.typname as \"%s\",\n"
-	 "       pg_catalog.format_type(t.typbasetype, t.typtypmod) as \"%s\",\n"
-					  "       CASE WHEN t.typnotnull AND t.typdefault IS NOT NULL THEN 'not null default '||t.typdefault\n"
-	"            WHEN t.typnotnull AND t.typdefault IS NULL THEN 'not null'\n"
-					  "            WHEN NOT t.typnotnull AND t.typdefault IS NOT NULL THEN 'default '||t.typdefault\n"
-					  "            ELSE ''\n"
-					  "       END as \"%s\",\n"
+					  "       pg_catalog.format_type(t.typbasetype, t.typtypmod) as \"%s\",\n"
+					  "       TRIM(LEADING\n",
+					  gettext_noop("Schema"),
+					  gettext_noop("Name"),
+					  gettext_noop("Type"));
+	if (pset.sversion >= 90100)
+		appendPQExpBuffer(&buf,
+						  "            COALESCE((SELECT ' collate ' || c.collname FROM pg_catalog.pg_collation c, pg_catalog.pg_type bt\n"
+						  "                      WHERE c.oid = t.typcollation AND bt.oid = t.typbasetype AND t.typcollation <> bt.typcollation), '') ||\n");
+	appendPQExpBuffer(&buf,
+					  "            CASE WHEN t.typnotnull THEN ' not null' ELSE '' END ||\n"
+					  "            CASE WHEN t.typdefault IS NOT NULL THEN ' default ' || t.typdefault ELSE '' END\n"
+					  "       ) as \"%s\",\n",
+					  gettext_noop("Modifier"));
+	appendPQExpBuffer(&buf,
 					  "       pg_catalog.array_to_string(ARRAY(\n"
 					  "         SELECT pg_catalog.pg_get_constraintdef(r.oid, true) FROM pg_catalog.pg_constraint r WHERE t.oid = r.contypid\n"
 					  "       ), ' ') as \"%s\"\n"
 					  "FROM pg_catalog.pg_type t\n"
 	   "     LEFT JOIN pg_catalog.pg_namespace n ON n.oid = t.typnamespace\n"
 					  "WHERE t.typtype = 'd'\n",
-					  gettext_noop("Schema"),
-					  gettext_noop("Name"),
-					  gettext_noop("Type"),
-					  gettext_noop("Modifier"),
 					  gettext_noop("Check"));
 
 	if (!showSystem && !pattern)

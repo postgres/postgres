@@ -1041,9 +1041,9 @@ Table "public.collate_dep_test1"
 
 \d collate_dep_test2
 Composite type "public.collate_dep_test2"
- Column |  Type   
---------+---------
- x      | integer
+ Column |  Type   | Modifiers 
+--------+---------+-----------
+ x      | integer | 
 
 DROP TABLE collate_dep_test1, collate_dep_test4t;
 DROP TYPE collate_dep_test2;

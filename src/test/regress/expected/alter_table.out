@@ -1779,44 +1779,44 @@ drop cascades to text search dictionary dict
 CREATE TYPE test_type AS (a int);
 \d test_type
 Composite type "public.test_type"
- Column |  Type   
---------+---------
- a      | integer
+ Column |  Type   | Modifiers 
+--------+---------+-----------
+ a      | integer | 
 
 ALTER TYPE nosuchtype ADD ATTRIBUTE b text; -- fails
 ERROR:  relation "nosuchtype" does not exist
 ALTER TYPE test_type ADD ATTRIBUTE b text;
 \d test_type
 Composite type "public.test_type"
- Column |  Type   
---------+---------
- a      | integer
- b      | text
+ Column |  Type   | Modifiers 
+--------+---------+-----------
+ a      | integer | 
+ b      | text    | 
 
 ALTER TYPE test_type ADD ATTRIBUTE b text; -- fails
 ERROR:  column "b" of relation "test_type" already exists
 ALTER TYPE test_type ALTER ATTRIBUTE b SET DATA TYPE varchar;
 \d test_type
-Composite type "public.test_type"
- Column |       Type        
---------+-------------------
- a      | integer
- b      | character varying
+   Composite type "public.test_type"
+ Column |       Type        | Modifiers 
+--------+-------------------+-----------
+ a      | integer           | 
+ b      | character varying | 
 
 ALTER TYPE test_type ALTER ATTRIBUTE b SET DATA TYPE integer;
 \d test_type
 Composite type "public.test_type"
- Column |  Type   
---------+---------
- a      | integer
- b      | integer
+ Column |  Type   | Modifiers 
+--------+---------+-----------
+ a      | integer | 
+ b      | integer | 
 
 ALTER TYPE test_type DROP ATTRIBUTE b;
 \d test_type
 Composite type "public.test_type"
- Column |  Type   
---------+---------
- a      | integer
+ Column |  Type   | Modifiers 
+--------+---------+-----------
+ a      | integer | 
 
 ALTER TYPE test_type DROP ATTRIBUTE c; -- fails
 ERROR:  column "c" of relation "test_type" does not exist
@@ -1825,18 +1825,18 @@ NOTICE:  column "c" of relation "test_type" does not exist, skipping
 ALTER TYPE test_type DROP ATTRIBUTE a, ADD ATTRIBUTE d boolean;
 \d test_type
 Composite type "public.test_type"
- Column |  Type   
---------+---------
- d      | boolean
+ Column |  Type   | Modifiers 
+--------+---------+-----------
+ d      | boolean | 
 
 ALTER TYPE test_type RENAME ATTRIBUTE a TO aa;
 ERROR:  column "a" does not exist
 ALTER TYPE test_type RENAME ATTRIBUTE d TO dd;
 \d test_type
 Composite type "public.test_type"
- Column |  Type   
---------+---------
- dd     | boolean
+ Column |  Type   | Modifiers 
+--------+---------+-----------
+ dd     | boolean | 
 
 DROP TYPE test_type;
 CREATE TYPE test_type1 AS (a int, b text);
@@ -1847,10 +1847,10 @@ CREATE TYPE test_type2 AS (a int, b text);
 CREATE TABLE test_tbl2 OF test_type2;
 \d test_type2
 Composite type "public.test_type2"
- Column |  Type   
---------+---------
- a      | integer
- b      | text
+ Column |  Type   | Modifiers 
+--------+---------+-----------
+ a      | integer | 
+ b      | text    | 
 
 \d test_tbl2
    Table "public.test_tbl2"
@@ -1866,11 +1866,11 @@ HINT:  Use ALTER ... CASCADE to alter the typed tables too.
 ALTER TYPE test_type2 ADD ATTRIBUTE c text CASCADE;
 \d test_type2
 Composite type "public.test_type2"
- Column |  Type   
---------+---------
- a      | integer
- b      | text
- c      | text
+ Column |  Type   | Modifiers 
+--------+---------+-----------
+ a      | integer | 
+ b      | text    | 
+ c      | text    | 
 
 \d test_tbl2
    Table "public.test_tbl2"
@@ -1886,12 +1886,12 @@ ERROR:  cannot alter type "test_type2" because it is the type of a typed table
 HINT:  Use ALTER ... CASCADE to alter the typed tables too.
 ALTER TYPE test_type2 ALTER ATTRIBUTE b TYPE varchar CASCADE;
 \d test_type2
-Composite type "public.test_type2"
- Column |       Type        
---------+-------------------
- a      | integer
- b      | character varying
- c      | text
+   Composite type "public.test_type2"
+ Column |       Type        | Modifiers 
+--------+-------------------+-----------
+ a      | integer           | 
+ b      | character varying | 
+ c      | text              | 
 
 \d test_tbl2
         Table "public.test_tbl2"
@@ -1908,10 +1908,10 @@ HINT:  Use ALTER ... CASCADE to alter the typed tables too.
 ALTER TYPE test_type2 DROP ATTRIBUTE b CASCADE;
 \d test_type2
 Composite type "public.test_type2"
- Column |  Type   
---------+---------
- a      | integer
- c      | text
+ Column |  Type   | Modifiers 
+--------+---------+-----------
+ a      | integer | 
+ c      | text    | 
 
 \d test_tbl2
    Table "public.test_tbl2"
@@ -1927,10 +1927,10 @@ HINT:  Use ALTER ... CASCADE to alter the typed tables too.
 ALTER TYPE test_type2 RENAME ATTRIBUTE a TO aa CASCADE;
 \d test_type2
 Composite type "public.test_type2"
- Column |  Type   
---------+---------
- aa     | integer
- c      | text
+ Column |  Type   | Modifiers 
+--------+---------+-----------
+ aa     | integer | 
+ c      | text    | 
 
 \d test_tbl2
    Table "public.test_tbl2"
