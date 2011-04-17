@@ -7944,6 +7944,7 @@ dumpCompositeType(Archive *fout, TypeInfo *tyinfo)
 	int			ntups;
 	int			i_attname;
 	int			i_atttypdefn;
+	int			i_attcollation;
 	int			i_typrelid;
 	int			i;
 
@@ -7951,17 +7952,42 @@ dumpCompositeType(Archive *fout, TypeInfo *tyinfo)
 	selectSourceSchema(tyinfo->dobj.namespace->dobj.name);
 
 	/* Fetch type specific details */
-	/* We assume here that remoteVersion must be at least 70300 */
-
-	appendPQExpBuffer(query, "SELECT a.attname, "
-			"pg_catalog.format_type(a.atttypid, a.atttypmod) AS atttypdefn, "
-					  "typrelid "
-					  "FROM pg_catalog.pg_type t, pg_catalog.pg_attribute a "
-					  "WHERE t.oid = '%u'::pg_catalog.oid "
-					  "AND a.attrelid = t.typrelid "
-					  "AND NOT a.attisdropped "
-					  "ORDER BY a.attnum ",
-					  tyinfo->dobj.catId.oid);
+	if (fout->remoteVersion >= 90100)
+	{
+		/*
+		 * attcollation is new in 9.1.	Since we only want to dump COLLATE
+		 * clauses for attributes whose collation is different from their
+		 * type's default, we use a CASE here to suppress uninteresting
+		 * attcollations cheaply.
+		 */
+		appendPQExpBuffer(query, "SELECT a.attname, "
+						  "pg_catalog.format_type(a.atttypid, a.atttypmod) AS atttypdefn, "
+						  "CASE WHEN a.attcollation <> at.typcollation "
+						  "THEN a.attcollation ELSE 0 END AS attcollation, "
+						  "ct.typrelid "
+						  "FROM pg_catalog.pg_type ct, pg_catalog.pg_attribute a, "
+						  "pg_catalog.pg_type at "
+						  "WHERE ct.oid = '%u'::pg_catalog.oid "
+						  "AND a.attrelid = ct.typrelid "
+						  "AND a.atttypid = at.oid "
+						  "AND NOT a.attisdropped "
+						  "ORDER BY a.attnum ",
+						  tyinfo->dobj.catId.oid);
+	}
+	else
+	{
+		/* We assume here that remoteVersion must be at least 70300 */
+		appendPQExpBuffer(query, "SELECT a.attname, "
+						  "pg_catalog.format_type(a.atttypid, a.atttypmod) AS atttypdefn, "
+						  "0 AS attcollation, "
+						  "ct.typrelid "
+						  "FROM pg_catalog.pg_type ct, pg_catalog.pg_attribute a "
+						  "WHERE ct.oid = '%u'::pg_catalog.oid "
+						  "AND a.attrelid = ct.typrelid "
+						  "AND NOT a.attisdropped "
+						  "ORDER BY a.attnum ",
+						  tyinfo->dobj.catId.oid);
+	}
 
 	res = PQexec(g_conn, query->data);
 	check_sql_result(res, g_conn, query->data, PGRES_TUPLES_OK);
@@ -7970,6 +7996,7 @@ dumpCompositeType(Archive *fout, TypeInfo *tyinfo)
 
 	i_attname = PQfnumber(res, "attname");
 	i_atttypdefn = PQfnumber(res, "atttypdefn");
+	i_attcollation = PQfnumber(res, "attcollation");
 	i_typrelid = PQfnumber(res, "typrelid");
 
 	if (binary_upgrade)
@@ -7987,11 +8014,30 @@ dumpCompositeType(Archive *fout, TypeInfo *tyinfo)
 	{
 		char	   *attname;
 		char	   *atttypdefn;
+		Oid			attcollation;
 
 		attname = PQgetvalue(res, i, i_attname);
 		atttypdefn = PQgetvalue(res, i, i_atttypdefn);
+		attcollation = atooid(PQgetvalue(res, i, i_attcollation));
 
 		appendPQExpBuffer(q, "\n\t%s %s", fmtId(attname), atttypdefn);
+
+		/* Add collation if not default for the column type */
+		if (OidIsValid(attcollation))
+		{
+			CollInfo   *coll;
+
+			coll = findCollationByOid(attcollation);
+			if (coll)
+			{
+				/* always schema-qualify, don't try to be smart */
+				appendPQExpBuffer(q, " COLLATE %s.",
+								  fmtId(coll->dobj.namespace->dobj.name));
+				appendPQExpBuffer(q, "%s",
+								  fmtId(coll->dobj.name));
+			}
+		}
+
 		if (i < ntups - 1)
 			appendPQExpBuffer(q, ",");
 	}
