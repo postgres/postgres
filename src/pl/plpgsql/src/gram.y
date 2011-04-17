@@ -21,6 +21,7 @@
 #include "parser/parse_type.h"
 #include "parser/scanner.h"
 #include "parser/scansup.h"
+#include "utils/builtins.h"
 
 
 /* Location tracking support --- simpler than bison's default */
@@ -122,6 +123,7 @@ static	List			*read_raise_options(void);
 		PLcword					cword;
 		PLwdatum				wdatum;
 		bool					boolean;
+		Oid						oid;
 		struct
 		{
 			char *name;
@@ -167,6 +169,7 @@ static	List			*read_raise_options(void);
 %type <boolean>	decl_const decl_notnull exit_type
 %type <expr>	decl_defval decl_cursor_query
 %type <dtype>	decl_datatype
+%type <oid>		decl_collate
 %type <datum>	decl_cursor_args
 %type <list>	decl_cursor_arglist
 %type <nsitem>	decl_aliasitem
@@ -245,6 +248,7 @@ static	List			*read_raise_options(void);
 %token <keyword>	K_BY
 %token <keyword>	K_CASE
 %token <keyword>	K_CLOSE
+%token <keyword>	K_COLLATE
 %token <keyword>	K_CONSTANT
 %token <keyword>	K_CONTINUE
 %token <keyword>	K_CURSOR
@@ -428,9 +432,26 @@ decl_stmt		: decl_statement
 					}
 				;
 
-decl_statement	: decl_varname decl_const decl_datatype decl_notnull decl_defval
+decl_statement	: decl_varname decl_const decl_datatype decl_collate decl_notnull decl_defval
 					{
 						PLpgSQL_variable	*var;
+
+						/*
+						 * If a collation is supplied, insert it into the
+						 * datatype.  We assume decl_datatype always returns
+						 * a freshly built struct not shared with other
+						 * variables.
+						 */
+						if (OidIsValid($4))
+						{
+							if (!OidIsValid($3->collation))
+								ereport(ERROR,
+										(errcode(ERRCODE_DATATYPE_MISMATCH),
+										 errmsg("collations are not supported by type %s",
+												format_type_be($3->typoid)),
+										 parser_errposition(@4)));
+							$3->collation = $4;
+						}
 
 						var = plpgsql_build_variable($1.name, $1.lineno,
 													 $3, true);
@@ -444,10 +465,10 @@ decl_statement	: decl_varname decl_const decl_datatype decl_notnull decl_defval
 										 errmsg("row or record variable cannot be CONSTANT"),
 										 parser_errposition(@2)));
 						}
-						if ($4)
+						if ($5)
 						{
 							if (var->dtype == PLPGSQL_DTYPE_VAR)
-								((PLpgSQL_var *) var)->notnull = $4;
+								((PLpgSQL_var *) var)->notnull = $5;
 							else
 								ereport(ERROR,
 										(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
@@ -455,10 +476,10 @@ decl_statement	: decl_varname decl_const decl_datatype decl_notnull decl_defval
 										 parser_errposition(@4)));
 
 						}
-						if ($5 != NULL)
+						if ($6 != NULL)
 						{
 							if (var->dtype == PLPGSQL_DTYPE_VAR)
-								((PLpgSQL_var *) var)->default_val = $5;
+								((PLpgSQL_var *) var)->default_val = $6;
 							else
 								ereport(ERROR,
 										(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
@@ -682,6 +703,19 @@ decl_datatype	:
 						 */
 						$$ = read_datatype(yychar);
 						yyclearin;
+					}
+				;
+
+decl_collate	:
+					{ $$ = InvalidOid; }
+				| K_COLLATE T_WORD
+					{
+						$$ = get_collation_oid(list_make1(makeString($2.ident)),
+											   false);
+					}
+				| K_COLLATE T_CWORD
+					{
+						$$ = get_collation_oid($2.idents, false);
 					}
 				;
 
@@ -2432,7 +2466,8 @@ read_datatype(int tok)
 				yyerror("incomplete data type declaration");
 		}
 		/* Possible followers for datatype in a declaration */
-		if (tok == K_NOT || tok == '=' || tok == COLON_EQUALS || tok == K_DEFAULT)
+		if (tok == K_COLLATE || tok == K_NOT ||
+			tok == '=' || tok == COLON_EQUALS || tok == K_DEFAULT)
 			break;
 		/* Possible followers for datatype in a cursor_arg list */
 		if ((tok == ',' || tok == ')') && parenlevel == 0)

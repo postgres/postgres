@@ -328,15 +328,17 @@ arow RECORD;
     <para>
      The general syntax of a variable declaration is:
 <synopsis>
-<replaceable>name</replaceable> <optional> CONSTANT </optional> <replaceable>type</replaceable> <optional> NOT NULL </optional> <optional> { DEFAULT | := } <replaceable>expression</replaceable> </optional>;
+<replaceable>name</replaceable> <optional> CONSTANT </optional> <replaceable>type</replaceable> <optional> COLLATE <replaceable>collation_name</replaceable> </optional> <optional> NOT NULL </optional> <optional> { DEFAULT | := } <replaceable>expression</replaceable> </optional>;
 </synopsis>
       The <literal>DEFAULT</> clause, if given, specifies the initial value assigned
       to the variable when the block is entered.  If the <literal>DEFAULT</> clause
       is not given then the variable is initialized to the
       <acronym>SQL</acronym> null value.
       The <literal>CONSTANT</> option prevents the variable from being
-      assigned to, so that its value will remain constant for the duration of
-      the block.
+      assigned to after initialization, so that its value will remain constant
+      for the duration of the block.
+      The <literal>COLLATE</> option specifies a collation to use for the
+      variable (see <xref linkend="plpgsql-declaration-collation">).
       If <literal>NOT NULL</>
       is specified, an assignment of a null value results in a run-time
       error. All variables declared as <literal>NOT NULL</>
@@ -768,9 +770,23 @@ $$ LANGUAGE plpgsql;
    </para>
 
    <para>
-    Explicit <literal>COLLATE</> clauses can be written inside a function
-    if it is desired to force a particular collation to be used regardless
-    of what the function is called with.  For example,
+    A local variable of a collatable data type can have a different collation
+    associated with it by including the <literal>COLLATE</> option in its
+    declaration, for example
+
+<programlisting>
+DECLARE
+    local_a text COLLATE "en_US";
+</programlisting>
+
+    This option overrides the collation that would otherwise be
+    given to the variable according to the rules above.
+   </para>
+
+   <para>
+    Also, of course explicit <literal>COLLATE</> clauses can be written inside
+    a function if it is desired to force a particular collation to be used in
+    a particular operation.  For example,
 
 <programlisting>
 CREATE FUNCTION less_than_c(a text, b text) RETURNS boolean AS $$
@@ -779,6 +795,10 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 </programlisting>
+
+    This overrides the collations associated with the table columns,
+    parameters, or local variables used in the expression, just as would
+    happen in a plain SQL command.
    </para>
   </sect2>
   </sect1>

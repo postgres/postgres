@@ -825,6 +825,46 @@ ORDER BY a.b, b.b;
  bbc | bbc | f  | f    | f              | f
 (16 rows)
 
+-- collation override in plpgsql
+CREATE FUNCTION mylt2 (x text, y text) RETURNS boolean LANGUAGE plpgsql AS $$
+declare
+  xx text := x;
+  yy text := y;
+begin
+  return xx < yy;
+end
+$$;
+SELECT mylt2('a', 'B' collate "en_US") as t, mylt2('a', 'B' collate "C") as f;
+ t | f 
+---+---
+ t | f
+(1 row)
+
+CREATE OR REPLACE FUNCTION
+  mylt2 (x text, y text) RETURNS boolean LANGUAGE plpgsql AS $$
+declare
+  xx text COLLATE "POSIX" := x;
+  yy text := y;
+begin
+  return xx < yy;
+end
+$$;
+SELECT mylt2('a', 'B') as f;
+ f 
+---
+ f
+(1 row)
+
+SELECT mylt2('a', 'B' collate "C") as fail; -- conflicting collations
+ERROR:  could not determine which collation to use for string comparison
+HINT:  Use the COLLATE clause to set the collation explicitly.
+CONTEXT:  PL/pgSQL function "mylt2" line 6 at RETURN
+SELECT mylt2('a', 'B' collate "POSIX") as f;
+ f 
+---
+ f
+(1 row)
+
 -- polymorphism
 SELECT * FROM unnest((SELECT array_agg(b ORDER BY b) FROM collate_test1)) ORDER BY 1;
  unnest 

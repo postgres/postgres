@@ -256,6 +256,34 @@ FROM collate_test1 a, collate_test1 b
 ORDER BY a.b, b.b;
 
 
+-- collation override in plpgsql
+
+CREATE FUNCTION mylt2 (x text, y text) RETURNS boolean LANGUAGE plpgsql AS $$
+declare
+  xx text := x;
+  yy text := y;
+begin
+  return xx < yy;
+end
+$$;
+
+SELECT mylt2('a', 'B' collate "en_US") as t, mylt2('a', 'B' collate "C") as f;
+
+CREATE OR REPLACE FUNCTION
+  mylt2 (x text, y text) RETURNS boolean LANGUAGE plpgsql AS $$
+declare
+  xx text COLLATE "POSIX" := x;
+  yy text := y;
+begin
+  return xx < yy;
+end
+$$;
+
+SELECT mylt2('a', 'B') as f;
+SELECT mylt2('a', 'B' collate "C") as fail; -- conflicting collations
+SELECT mylt2('a', 'B' collate "POSIX") as f;
+
+
 -- polymorphism
 
 SELECT * FROM unnest((SELECT array_agg(b ORDER BY b) FROM collate_test1)) ORDER BY 1;
