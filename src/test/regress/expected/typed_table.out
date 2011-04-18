@@ -91,6 +91,8 @@ DETAIL:  drop cascades to table persons
 drop cascades to function get_all_persons()
 drop cascades to table persons2
 drop cascades to table persons3
+CREATE TABLE persons5 OF stuff; -- only CREATE TYPE AS types may be used
+ERROR:  type stuff is not a composite type
 DROP TABLE stuff;
 -- implicit casting
 CREATE TYPE person_type AS (id int, name text);

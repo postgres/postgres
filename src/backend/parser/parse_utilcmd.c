@@ -825,6 +825,7 @@ transformOfType(CreateStmtContext *cxt, TypeName *ofTypename)
 	TupleDesc	tupdesc;
 	int			i;
 	Oid			ofTypeId;
+	bool		typeOk = false;
 
 	AssertArg(ofTypename);
 
@@ -833,7 +834,21 @@ transformOfType(CreateStmtContext *cxt, TypeName *ofTypename)
 	ofTypeId = HeapTupleGetOid(tuple);
 	ofTypename->typeOid = ofTypeId;		/* cached for later */
 
-	if (typ->typtype != TYPTYPE_COMPOSITE)
+	if (typ->typtype == TYPTYPE_COMPOSITE)
+	{
+		Relation	typeRelation;
+
+		Assert(OidIsValid(typ->typrelid));
+		typeRelation = relation_open(typ->typrelid, AccessShareLock);
+		typeOk = (typeRelation->rd_rel->relkind == RELKIND_COMPOSITE_TYPE);
+		/*
+		 * Close the parent rel, but keep our AccessShareLock on it until xact
+		 * commit.	That will prevent someone else from deleting or ALTERing
+		 * the type before the typed table creation commits.
+		 */
+		relation_close(typeRelation, NoLock);
+	}
+	if (!typeOk)
 		ereport(ERROR,
 				(errcode(ERRCODE_WRONG_OBJECT_TYPE),
 				 errmsg("type %s is not a composite type",
