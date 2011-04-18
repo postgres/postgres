@@ -1951,6 +1951,7 @@ _copyRangeTblEntry(RangeTblEntry *from)
 	COPY_NODE_FIELD(funccoltypmods);
 	COPY_NODE_FIELD(funccolcollations);
 	COPY_NODE_FIELD(values_lists);
+	COPY_NODE_FIELD(values_collations);
 	COPY_STRING_FIELD(ctename);
 	COPY_SCALAR_FIELD(ctelevelsup);
 	COPY_SCALAR_FIELD(self_reference);

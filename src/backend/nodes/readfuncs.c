@@ -1203,6 +1203,7 @@ _readRangeTblEntry(void)
 			break;
 		case RTE_VALUES:
 			READ_NODE_FIELD(values_lists);
+			READ_NODE_FIELD(values_collations);
 			break;
 		case RTE_CTE:
 			READ_STRING_FIELD(ctename);

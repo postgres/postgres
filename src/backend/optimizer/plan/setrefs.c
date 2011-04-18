@@ -216,6 +216,7 @@ set_plan_references(PlannerGlobal *glob, Plan *plan,
 		newrte->funccoltypmods = NIL;
 		newrte->funccolcollations = NIL;
 		newrte->values_lists = NIL;
+		newrte->values_collations = NIL;
 		newrte->ctecoltypes = NIL;
 		newrte->ctecoltypmods = NIL;
 		newrte->ctecolcollations = NIL;

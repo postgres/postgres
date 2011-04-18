@@ -2310,6 +2310,7 @@ _equalRangeTblEntry(RangeTblEntry *a, RangeTblEntry *b)
 	COMPARE_NODE_FIELD(funccoltypmods);
 	COMPARE_NODE_FIELD(funccolcollations);
 	COMPARE_NODE_FIELD(values_lists);
+	COMPARE_NODE_FIELD(values_collations);
 	COMPARE_STRING_FIELD(ctename);
 	COMPARE_SCALAR_FIELD(ctelevelsup);
 	COMPARE_SCALAR_FIELD(self_reference);

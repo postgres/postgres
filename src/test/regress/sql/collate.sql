@@ -154,6 +154,9 @@ WITH RECURSIVE foo(x) AS
    SELECT (x || 'c') COLLATE "POSIX" FROM foo WHERE length(x) < 10)
 SELECT * FROM foo;
 
+SELECT a, b, a < b as lt FROM
+  (VALUES ('a', 'B'), ('A', 'b' COLLATE "C")) v(a,b);
+
 
 -- casting
 

@@ -1671,10 +1671,15 @@ find_expr_references_walker(Node *node,
 		/*
 		 * Add whole-relation refs for each plain relation mentioned in the
 		 * subquery's rtable, as well as refs for any datatypes and collations
-		 * used in a RECORD function's output.  (Note: query_tree_walker takes
-		 * care of recursing into RTE_FUNCTION RTEs, subqueries, etc, so no
-		 * need to do that here.  But keep it from looking at join alias
-		 * lists.)
+		 * used in a RECORD function's output.
+		 *
+		 * Note: query_tree_walker takes care of recursing into RTE_FUNCTION
+		 * RTEs, subqueries, etc, so no need to do that here.  But keep it
+		 * from looking at join alias lists.
+		 *
+		 * Note: we don't need to worry about collations mentioned in
+		 * RTE_VALUES or RTE_CTE RTEs, because those must just duplicate
+		 * collations referenced in other parts of the Query.
 		 */
 		foreach(lc, query->rtable)
 		{

@@ -2324,6 +2324,7 @@ _outRangeTblEntry(StringInfo str, RangeTblEntry *node)
 			break;
 		case RTE_VALUES:
 			WRITE_NODE_FIELD(values_lists);
+			WRITE_NODE_FIELD(values_collations);
 			break;
 		case RTE_CTE:
 			WRITE_STRING_FIELD(ctename);
