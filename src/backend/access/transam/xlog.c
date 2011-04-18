@@ -5583,21 +5583,21 @@ recoveryStopsHere(XLogRecord *record, bool *includeThis)
 	if (record->xl_rmid != RM_XACT_ID && record->xl_rmid != RM_XLOG_ID)
 		return false;
 	record_info = record->xl_info & ~XLR_INFO_MASK;
-	if (record_info == XLOG_XACT_COMMIT)
+	if (record->xl_rmid == RM_XACT_ID && record_info == XLOG_XACT_COMMIT)
 	{
 		xl_xact_commit *recordXactCommitData;
 
 		recordXactCommitData = (xl_xact_commit *) XLogRecGetData(record);
 		recordXtime = recordXactCommitData->xact_time;
 	}
-	else if (record_info == XLOG_XACT_ABORT)
+	else if (record->xl_rmid == RM_XACT_ID && record_info == XLOG_XACT_ABORT)
 	{
 		xl_xact_abort *recordXactAbortData;
 
 		recordXactAbortData = (xl_xact_abort *) XLogRecGetData(record);
 		recordXtime = recordXactAbortData->xact_time;
 	}
-	else if (record_info == XLOG_RESTORE_POINT)
+	else if (record->xl_rmid == RM_XLOG_ID && record_info == XLOG_RESTORE_POINT)
 	{
 		xl_restore_point *recordRestorePointData;
 
