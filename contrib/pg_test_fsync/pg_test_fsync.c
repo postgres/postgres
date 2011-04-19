@@ -359,9 +359,11 @@ test_open_syncs(void)
 static void
 test_open_sync(const char *msg, int writes_size)
 {
+#ifdef OPEN_SYNC_FLAG
 	int			tmpfile,
 				ops,
 				writes;
+#endif
 
 	printf(LABEL_FORMAT, msg);
 	fflush(stdout);
