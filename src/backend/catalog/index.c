@@ -1770,13 +1770,6 @@ index_build(Relation heapRelation,
 		HeapTuple	indexTuple;
 		Form_pg_index indexForm;
 
-		/*
-		 * Broken HOT chains should not get reported in system catalogs; in
-		 * particular it would be quite dangerous to try to modify the index's
-		 * pg_index entry if we are reindexing pg_index itself.
-		 */
-		Assert(!IsSystemRelation(heapRelation));
-
 		pg_index = heap_open(IndexRelationId, RowExclusiveLock);
 
 		indexTuple = SearchSysCacheCopy1(INDEXRELID,
@@ -1834,13 +1827,7 @@ index_build(Relation heapRelation,
  * A side effect is to set indexInfo->ii_BrokenHotChain to true if we detect
  * any potentially broken HOT chains.  Currently, we set this if there are
  * any RECENTLY_DEAD entries in a HOT chain, without trying very hard to
- * detect whether they're really incompatible with the chain tip.  However,
- * we do not ever set ii_BrokenHotChain true when the relation is a system
- * catalog.  This is to avoid problematic behavior when reindexing pg_index
- * itself: we can't safely change the index's indcheckxmin field when we're
- * partway through such an operation.  It should be okay since the set of
- * indexes on a system catalog ought not change during concurrent operations,
- * so that no HOT chain in it could ever become broken.
+ * detect whether they're really incompatible with the chain tip.
  */
 double
 IndexBuildHeapScan(Relation heapRelation,
@@ -2017,8 +2004,7 @@ IndexBuildHeapScan(Relation heapRelation,
 					{
 						indexIt = false;
 						/* mark the index as unsafe for old snapshots */
-						if (!is_system_catalog)
-							indexInfo->ii_BrokenHotChain = true;
+						indexInfo->ii_BrokenHotChain = true;
 					}
 					else if (indexInfo->ii_BrokenHotChain)
 						indexIt = false;
@@ -2106,8 +2092,7 @@ IndexBuildHeapScan(Relation heapRelation,
 					{
 						indexIt = false;
 						/* mark the index as unsafe for old snapshots */
-						if (!is_system_catalog)
-							indexInfo->ii_BrokenHotChain = true;
+						indexInfo->ii_BrokenHotChain = true;
 					}
 					else if (indexInfo->ii_BrokenHotChain)
 						indexIt = false;
@@ -2802,13 +2787,8 @@ reindex_index(Oid indexId, bool skip_constraint_checks)
 	 * We can also reset indcheckxmin, because we have now done a
 	 * non-concurrent index build, *except* in the case where index_build
 	 * found some still-broken HOT chains.
-	 *
-	 * When reindexing a system catalog, don't do any of this --- it would be
-	 * particularly risky to try to modify pg_index while we are reindexing
-	 * pg_index itself.  We don't support CREATE INDEX CONCURRENTLY on system
-	 * catalogs anyway, and they should never have indcheckxmin set either.
 	 */
-	if (!skipped_constraint && !IsSystemRelation(heapRelation))
+	if (!skipped_constraint)
 	{
 		pg_index = heap_open(IndexRelationId, RowExclusiveLock);
 
