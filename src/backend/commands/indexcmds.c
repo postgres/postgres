@@ -584,7 +584,7 @@ DefineIndex(RangeVar *heapRelation,
 	indexInfo->ii_BrokenHotChain = false;
 
 	/* Now build the index */
-	index_build(rel, indexRelation, indexInfo, primary);
+	index_build(rel, indexRelation, indexInfo, primary, false);
 
 	/* Close both the relations, but keep the locks */
 	heap_close(rel, NoLock);

@@ -59,7 +59,8 @@ extern void FormIndexDatum(IndexInfo *indexInfo,
 extern void index_build(Relation heapRelation,
 			Relation indexRelation,
 			IndexInfo *indexInfo,
-			bool isprimary);
+			bool isprimary,
+			bool isreindex);
 
 extern double IndexBuildHeapScan(Relation heapRelation,
 				   Relation indexRelation,
