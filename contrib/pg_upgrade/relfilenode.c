@@ -37,6 +37,12 @@ transfer_all_new_dbs(DbInfoArr *old_db_arr,
 
 	prep_status("Restoring user relation files\n");
 
+	/*
+	 *	If the user removed the 'postgres' database from the old cluster,
+	 *	this will cause the database counts to not match and throw an error.
+	 *	We could allow this to work because the new database is empty (we
+	 *	checked), but we don't.
+	 */
 	if (old_db_arr->ndbs != new_db_arr->ndbs)
 		pg_log(PG_FATAL, "old and new clusters have a different number of databases\n");
 
