@@ -1530,7 +1530,9 @@ keep_going:						/* We will come back to here until there is
 
 					if (!IS_AF_UNIX(addr_cur->ai_family))
 					{
+#ifndef WIN32
 						int			on = 1;
+#endif
 						int			usekeepalives = useKeepalives(conn);
 						int			err = 0;
 
