@@ -13,7 +13,8 @@ my $startdir = getcwd();
 
 chdir "../../.." if (-d "../../../src/tools/msvc");
 
-require 'src/tools/msvc/config.pl';
+require 'src/tools/msvc/config_default.pl';
+require 'src/tools/msvc/config.pl' if (-f 'src/tools/msvc/config.pl');
 
 # buildenv.pl is for specifying the build environment settings
 # it should contian lines like:
