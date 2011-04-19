@@ -866,7 +866,7 @@ index_create(Oid heapRelationId,
 	}
 	else
 	{
-		index_build(heapRelation, indexRelation, indexInfo, isprimary);
+		index_build(heapRelation, indexRelation, indexInfo, isprimary, false);
 	}
 
 	/*
@@ -1357,8 +1357,11 @@ setNewRelfilenode(Relation relation, TransactionId freezeXid)
  * entries of the index and heap relation as needed, using statistics
  * returned by ambuild as well as data passed by the caller.
  *
- * Note: when reindexing an existing index, isprimary can be false;
- * the index is already properly marked and need not be re-marked.
+ * isprimary tells whether to mark the index as a primary-key index.
+ * isreindex indicates we are recreating a previously-existing index.
+ *
+ * Note: when reindexing an existing index, isprimary can be false even if
+ * the index is a PK; it's already properly marked and need not be re-marked.
  *
  * Note: before Postgres 8.2, the passed-in heap and index Relations
  * were automatically closed by this routine.  This is no longer the case.
@@ -1368,7 +1371,8 @@ void
 index_build(Relation heapRelation,
 			Relation indexRelation,
 			IndexInfo *indexInfo,
-			bool isprimary)
+			bool isprimary,
+			bool isreindex)
 {
 	RegProcedure procedure;
 	IndexBuildResult *stats;
@@ -1415,8 +1419,15 @@ index_build(Relation heapRelation,
 	 * If we found any potentially broken HOT chains, mark the index as not
 	 * being usable until the current transaction is below the event horizon.
 	 * See src/backend/access/heap/README.HOT for discussion.
+	 *
+	 * However, when reindexing an existing index, we should do nothing here.
+	 * Any HOT chains that are broken with respect to the index must predate
+	 * the index's original creation, so there is no need to change the
+	 * index's usability horizon.  Moreover, we *must not* try to change
+	 * the index's pg_index entry while reindexing pg_index itself, and this
+	 * optimization nicely prevents that.
 	 */
-	if (indexInfo->ii_BrokenHotChain)
+	if (indexInfo->ii_BrokenHotChain && !isreindex)
 	{
 		Oid			indexId = RelationGetRelid(indexRelation);
 		Relation	pg_index;
@@ -1431,6 +1442,9 @@ index_build(Relation heapRelation,
 		if (!HeapTupleIsValid(indexTuple))
 			elog(ERROR, "cache lookup failed for index %u", indexId);
 		indexForm = (Form_pg_index) GETSTRUCT(indexTuple);
+
+		/* If it's a new index, indcheckxmin shouldn't be set ... */
+		Assert(!indexForm->indcheckxmin);
 
 		indexForm->indcheckxmin = true;
 		simple_heap_update(pg_index, &indexTuple->t_self, indexTuple);
@@ -2333,7 +2347,7 @@ reindex_index(Oid indexId)
 
 		/* Initialize the index and rebuild */
 		/* Note: we do not need to re-establish pkey setting */
-		index_build(heapRelation, iRel, indexInfo, false);
+		index_build(heapRelation, iRel, indexInfo, false, true);
 	}
 	PG_CATCH();
 	{
@@ -2352,6 +2366,16 @@ reindex_index(Oid indexId)
 	 * We can also reset indcheckxmin, because we have now done a
 	 * non-concurrent index build, *except* in the case where index_build
 	 * found some still-broken HOT chains.
+	 *
+	 * Note that it is important to not update the pg_index entry if we don't
+	 * have to, because updating it will move the index's usability horizon
+	 * (recorded as the tuple's xmin value) if indcheckxmin is true.  We don't
+	 * really want REINDEX to move the usability horizon forward ever, but we
+	 * have no choice if we are to fix indisvalid or indisready.  Of course,
+	 * clearing indcheckxmin eliminates the issue, so we're happy to do that
+	 * if we can.  Another reason for caution here is that while reindexing
+	 * pg_index itself, we must not try to update it.  We assume that
+	 * pg_index's indexes will always have these flags in their clean state.
 	 */
 	pg_index = heap_open(IndexRelationId, RowExclusiveLock);
 

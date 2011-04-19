@@ -626,6 +626,12 @@ rebuild_relation(Relation OldHeap, Oid indexOid)
 	 * Rebuild each index on the relation (but not the toast table, which is
 	 * all-new at this point).	We do not need CommandCounterIncrement()
 	 * because reindex_relation does it.
+	 *
+	 * Note: because index_build is called via reindex_relation, it will never
+	 * set indcheckxmin true for the indexes.  This is OK even though in some
+	 * sense we are building new indexes rather than rebuilding existing ones,
+	 * because the new heap won't contain any HOT chains at all, let alone
+	 * broken ones, so it can't be necessary to set indcheckxmin.
 	 */
 	reindex_relation(tableOid, false);
 
