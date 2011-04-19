@@ -17,8 +17,14 @@ objfiles.txt
 *.gcov
 *.gcov.out
 lcov.info
+*.vcproj
+win32ver.rc
 
 # Local excludes in root directory
 /GNUmakefile
 /config.log
 /config.status
+/pgsql.sln
+/pgsql.sln.cache
+/Debug/
+/Release/
