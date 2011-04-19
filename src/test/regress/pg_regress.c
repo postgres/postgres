@@ -2277,8 +2277,14 @@ regression_main(int argc, char *argv[], init_function ifunc, test_function tfunc
 
 		postmaster_running = true;
 
+#ifdef WIN64
+/* need a series of two casts to convert HANDLE without compiler warning */
+#define ULONGPID(x) (unsigned long) (unsigned long long) (x)
+#else
+#define ULONGPID(x) (unsigned long) (x)
+#endif
 		printf(_("running on port %d with pid %lu\n"),
-			   port, (unsigned long) postmaster_pid);
+			   port, ULONGPID(postmaster_pid));
 	}
 	else
 	{
