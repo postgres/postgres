@@ -759,11 +759,15 @@ bool
 check_client_encoding(char **newval, void **extra, GucSource source)
 {
 	int			encoding;
+	const char *canonical_name;
 
 	/* Look up the encoding by name */
 	encoding = pg_valid_client_encoding(*newval);
 	if (encoding < 0)
 		return false;
+
+	/* Get the canonical name (no aliases, uniform case) */
+	canonical_name = pg_encoding_to_char(encoding);
 
 	/*
 	 * If we are not within a transaction then PrepareClientEncoding will not
@@ -786,7 +790,7 @@ check_client_encoding(char **newval, void **extra, GucSource source)
 			/* Must be a genuine no-such-conversion problem */
 			GUC_check_errcode(ERRCODE_FEATURE_NOT_SUPPORTED);
 			GUC_check_errdetail("Conversion between %s and %s is not supported.",
-								pg_encoding_to_char(encoding),
+								canonical_name,
 								GetDatabaseEncodingName());
 		}
 		else
@@ -798,13 +802,27 @@ check_client_encoding(char **newval, void **extra, GucSource source)
 	}
 
 	/*
-	 * Return the encoding's canonical name, and save its ID in *extra.
+	 * Replace the user-supplied string with the encoding's canonical name.
+	 * This gets rid of aliases and case-folding variations.
+	 *
+	 * XXX Although canonicalizing seems like a good idea in the abstract, it
+	 * breaks pre-9.1 JDBC drivers, which expect that if they send "UNICODE"
+	 * as the client_encoding setting then it will read back the same way.
+	 * As a workaround, don't replace the string if it's "UNICODE".  Remove
+	 * that hack when pre-9.1 JDBC drivers are no longer in use.
 	 */
-	free(*newval);
-	*newval = strdup(pg_encoding_to_char(encoding));
-	if (!*newval)
-		return false;
+	if (strcmp(*newval, canonical_name) != 0 &&
+		strcmp(*newval, "UNICODE") != 0)
+	{
+		free(*newval);
+		*newval = strdup(canonical_name);
+		if (!*newval)
+			return false;
+	}
 
+	/*
+	 * Save the encoding's ID in *extra, for use by assign_client_encoding.
+	 */
 	*extra = malloc(sizeof(int));
 	if (!*extra)
 		return false;
