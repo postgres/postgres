@@ -228,6 +228,14 @@ sub fetchRegressOpts
         # ignore anything that isn't an option staring with --
         @opts = grep { $_ !~ /\$\(/ && $_ =~ /^--/ } split(/\s+/,$1);
     }
+    if ($m =~ /^\s*ENCODING\s*=\s*(\S+)/m)
+    {
+        push @opts, "--encoding=$1";
+    }
+    if ($m =~ /^\s*NO_LOCALE\s*=\s*\S+/m)
+    {
+        push @opts, "--no-locale";
+    }
     return @opts;
 }
 
