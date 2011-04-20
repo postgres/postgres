@@ -4510,6 +4510,14 @@ get_source_line(const char *src, int lineno)
 	if (next == NULL)
 		return pstrdup(s);
 
+	/*
+	 * Sanity check, next < s if the line was all-whitespace, which should
+	 * never happen if Python reported a frame created on that line, but
+	 * check anyway.
+	 */
+	if (next < s)
+		return NULL;
+
 	return pnstrdup(s, next - s);
 }
 
@@ -4606,6 +4614,7 @@ PLy_traceback(char **xmsg, char **tbmsg, int *tb_depth)
 		PyObject   *volatile code = NULL;
 		PyObject   *volatile name = NULL;
 		PyObject   *volatile lineno = NULL;
+		PyObject   *volatile filename = NULL;
 
 		PG_TRY();
 		{
@@ -4624,6 +4633,10 @@ PLy_traceback(char **xmsg, char **tbmsg, int *tb_depth)
 			name = PyObject_GetAttrString(code, "co_name");
 			if (name == NULL)
 				elog(ERROR, "could not get function name from Python code object");
+
+			filename = PyObject_GetAttrString(code, "co_filename");
+			if (filename == NULL)
+				elog(ERROR, "could not get file name from Python code object");
 		}
 		PG_CATCH();
 		{
@@ -4631,6 +4644,7 @@ PLy_traceback(char **xmsg, char **tbmsg, int *tb_depth)
 			Py_XDECREF(code);
 			Py_XDECREF(name);
 			Py_XDECREF(lineno);
+			Py_XDECREF(filename);
 			PG_RE_THROW();
 		}
 		PG_END_TRY();
@@ -4641,6 +4655,7 @@ PLy_traceback(char **xmsg, char **tbmsg, int *tb_depth)
 			char	   *proname;
 			char	   *fname;
 			char	   *line;
+			char	   *plain_filename;
 			long		plain_lineno;
 
 			/*
@@ -4653,6 +4668,7 @@ PLy_traceback(char **xmsg, char **tbmsg, int *tb_depth)
 				fname = PyString_AsString(name);
 
 			proname = PLy_procedure_name(PLy_curr_procedure);
+			plain_filename = PyString_AsString(filename);
 			plain_lineno = PyInt_AsLong(lineno);
 
 			if (proname == NULL)
@@ -4664,7 +4680,9 @@ PLy_traceback(char **xmsg, char **tbmsg, int *tb_depth)
 					&tbstr, "\n  PL/Python function \"%s\", line %ld, in %s",
 								 proname, plain_lineno - 1, fname);
 
-			if (PLy_curr_procedure)
+			/* function code object was compiled with "<string>" as the filename */
+			if (PLy_curr_procedure && plain_filename != NULL &&
+				strcmp(plain_filename, "<string>") == 0)
 			{
 				/*
 				 * If we know the current procedure, append the exact line
@@ -4672,7 +4690,8 @@ PLy_traceback(char **xmsg, char **tbmsg, int *tb_depth)
 				 * module behavior.  We could store the already line-split
 				 * source to avoid splitting it every time, but producing a
 				 * traceback is not the most important scenario to optimize
-				 * for.
+				 * for.  But we do not go as far as traceback.py in reading
+				 * the source of imported modules.
 				 */
 				line = get_source_line(PLy_curr_procedure->src, plain_lineno);
 				if (line)
@@ -4687,6 +4706,7 @@ PLy_traceback(char **xmsg, char **tbmsg, int *tb_depth)
 		Py_DECREF(code);
 		Py_DECREF(name);
 		Py_DECREF(lineno);
+		Py_DECREF(filename);
 
 		/* Release the current frame and go to the next one. */
 		tb_prev = tb;
