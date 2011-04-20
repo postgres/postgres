@@ -2800,7 +2800,12 @@ reindex_index(Oid indexId, bool skip_constraint_checks)
 	 *
 	 * We can also reset indcheckxmin, because we have now done a
 	 * non-concurrent index build, *except* in the case where index_build
-	 * found some still-broken HOT chains.
+	 * found some still-broken HOT chains.  If it did, we normally leave
+	 * indcheckxmin alone (note that index_build won't have changed it,
+	 * because this is a reindex).  But if the index was invalid or not ready
+	 * and there were broken HOT chains, it seems best to force indcheckxmin
+	 * true, because the normal argument that the HOT chains couldn't conflict
+	 * with the index is suspect for an invalid index.
 	 *
 	 * Note that it is important to not update the pg_index entry if we don't
 	 * have to, because updating it will move the index's usability horizon
@@ -2825,10 +2830,12 @@ reindex_index(Oid indexId, bool skip_constraint_checks)
 		if (!indexForm->indisvalid || !indexForm->indisready ||
 			(indexForm->indcheckxmin && !indexInfo->ii_BrokenHotChain))
 		{
-			indexForm->indisvalid = true;
-			indexForm->indisready = true;
 			if (!indexInfo->ii_BrokenHotChain)
 				indexForm->indcheckxmin = false;
+			else if (!indexForm->indisvalid || !indexForm->indisready)
+				indexForm->indcheckxmin = true;
+			indexForm->indisvalid = true;
+			indexForm->indisready = true;
 			simple_heap_update(pg_index, &indexTuple->t_self, indexTuple);
 			CatalogUpdateIndexes(pg_index, indexTuple);
 		}
