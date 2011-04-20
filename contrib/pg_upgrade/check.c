@@ -11,7 +11,8 @@
 
 
 static void set_locale_and_encoding(ClusterInfo *cluster);
-static void check_new_db_is_empty(void);
+static void check_new_cluster_is_empty(void);
+static void check_old_cluster_has_new_cluster_dbs(void);
 static void check_locale_and_encoding(ControlData *oldctrl,
 						  ControlData *newctrl);
 static void check_for_isn_and_int8_passing_mismatch(ClusterInfo *cluster);
@@ -112,7 +113,10 @@ check_new_cluster(void)
 {
 	set_locale_and_encoding(&new_cluster);
 
-	check_new_db_is_empty();
+	get_db_and_rel_infos(&new_cluster);
+
+	check_new_cluster_is_empty();
+	check_old_cluster_has_new_cluster_dbs();
 
 	check_loadable_libraries();
 
@@ -341,12 +345,9 @@ check_locale_and_encoding(ControlData *oldctrl,
 
 
 static void
-check_new_db_is_empty(void)
+check_new_cluster_is_empty(void)
 {
 	int			dbnum;
-	bool		found = false;
-
-	get_db_and_rel_infos(&new_cluster);
 
 	for (dbnum = 0; dbnum < new_cluster.dbarr.ndbs; dbnum++)
 	{
@@ -358,15 +359,36 @@ check_new_db_is_empty(void)
 		{
 			/* pg_largeobject and its index should be skipped */
 			if (strcmp(rel_arr->rels[relnum].nspname, "pg_catalog") != 0)
-			{
-				found = true;
-				break;
-			}
+				pg_log(PG_FATAL, "New cluster database \"%s\" is not empty\n",
+					new_cluster.dbarr.dbs[dbnum].db_name);
 		}
 	}
 
-	if (found)
-		pg_log(PG_FATAL, "New cluster is not empty; exiting\n");
+}
+
+
+/*
+ *	If someone removes the 'postgres' database from the old cluster and
+ *	the new cluster has a 'postgres' database, the number of databases
+ *	will not match.  We actually could upgrade such a setup, but it would
+ *	violate the 1-to-1 mapping of database counts, so we throw an error
+ *	instead.
+ */
+static void
+check_old_cluster_has_new_cluster_dbs(void)
+{
+	int			old_dbnum, new_dbnum;
+
+	for (new_dbnum = 0; new_dbnum < new_cluster.dbarr.ndbs; new_dbnum++)
+	{
+		for (old_dbnum = 0; old_dbnum < old_cluster.dbarr.ndbs; old_dbnum++)
+			if (strcmp(old_cluster.dbarr.dbs[old_dbnum].db_name,
+				new_cluster.dbarr.dbs[new_dbnum].db_name) == 0)
+				break;
+		if (old_dbnum == old_cluster.dbarr.ndbs)
+			pg_log(PG_FATAL, "New cluster database \"%s\" does not exist in the old cluster\n",
+				new_cluster.dbarr.dbs[new_dbnum].db_name);
+	}
 }
 
 
