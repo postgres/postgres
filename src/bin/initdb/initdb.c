@@ -1165,9 +1165,9 @@ bootstrap_template1(void)
 
 	bki_lines = replace_token(bki_lines, "ENCODING", encodingid);
 
-	bki_lines = replace_token(bki_lines, "LC_COLLATE", lc_collate);
+	bki_lines = replace_token(bki_lines, "LC_COLLATE", escape_quotes(lc_collate));
 
-	bki_lines = replace_token(bki_lines, "LC_CTYPE", lc_ctype);
+	bki_lines = replace_token(bki_lines, "LC_CTYPE", escape_quotes(lc_ctype));
 
 	/*
 	 * Pass correct LC_xxx environment to bootstrap.
@@ -2276,8 +2276,8 @@ strreplace(char *str, char *needle, char *replacement)
 #endif /* WIN32 */
 
 /*
- * Windows has a problem with locale names that have a dot or apostrophe in
- * the country name. For example:
+ * Windows has a problem with locale names that have a dot in the country
+ * name. For example:
  *
  * "Chinese (Traditional)_Hong Kong S.A.R..950"
  *
@@ -2295,15 +2295,15 @@ localemap(char *locale)
 
 #ifdef WIN32
 	/*
-	 * Map the full country name to an abbreviation that setlocale() accepts
-	 * "China" and "HKG" are listed here:
+	 * Map the full country name to an abbreviation that setlocale() accepts.
+	 *
+	 * "HKG" is listed here:
 	 * http://msdn.microsoft.com/en-us/library/cdax410z%28v=vs.71%29.aspx
 	 * (Country/Region Strings).
 	 *
 	 * "ARE" is the ISO-3166 three-letter code for U.A.E. It is not on the
 	 * above list, but seems to work anyway.
 	 */
-	strreplace(locale, "People's Republic of China", "China");
 	strreplace(locale, "Hong Kong S.A.R.", "HKG");
 	strreplace(locale, "U.A.E.", "ARE");
 
