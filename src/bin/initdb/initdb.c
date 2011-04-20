@@ -1313,9 +1313,9 @@ bootstrap_template1(void)
 
 	bki_lines = replace_token(bki_lines, "ENCODING", encodingid);
 
-	bki_lines = replace_token(bki_lines, "LC_COLLATE", lc_collate);
+	bki_lines = replace_token(bki_lines, "LC_COLLATE", escape_quotes(lc_collate));
 
-	bki_lines = replace_token(bki_lines, "LC_CTYPE", lc_ctype);
+	bki_lines = replace_token(bki_lines, "LC_CTYPE", escape_quotes(lc_ctype));
 
 	/*
 	 * Pass correct LC_xxx environment to bootstrap.
