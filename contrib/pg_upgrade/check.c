@@ -372,7 +372,9 @@ check_new_cluster_is_empty(void)
  *	the new cluster has a 'postgres' database, the number of databases
  *	will not match.  We actually could upgrade such a setup, but it would
  *	violate the 1-to-1 mapping of database counts, so we throw an error
- *	instead.
+ *	instead.  We would detect this as a database count mismatch during
+ *	upgrade, but we want to detect it during the check phase and report
+ *	the database name.
  */
 static void
 check_old_cluster_has_new_cluster_dbs(void)
