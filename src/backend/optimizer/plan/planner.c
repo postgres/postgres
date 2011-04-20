@@ -3093,15 +3093,6 @@ plan_cluster_use_sort(Oid tableOid, Oid indexOid)
 	/* Build RelOptInfo */
 	rel = build_simple_rel(root, 1, RELOPT_BASEREL);
 
-	/*
-	 * Rather than doing all the pushups that would be needed to use
-	 * set_baserel_size_estimates, just do a quick hack for rows and width.
-	 */
-	rel->rows = rel->tuples;
-	rel->width = get_relation_data_width(tableOid, NULL);
-
-	root->total_table_pages = rel->pages;
-
 	/* Locate IndexOptInfo for the target index */
 	indexInfo = NULL;
 	foreach(lc, rel->indexlist)
@@ -3110,9 +3101,25 @@ plan_cluster_use_sort(Oid tableOid, Oid indexOid)
 		if (indexInfo->indexoid == indexOid)
 			break;
 	}
+
+	/*
+	 * It's possible that get_relation_info did not generate an IndexOptInfo
+	 * for the desired index; this could happen if it's not yet reached its
+	 * indcheckxmin usability horizon, or if it's a system index and we're
+	 * ignoring system indexes.  In such cases we should tell CLUSTER to not
+	 * trust the index contents but use seqscan-and-sort.
+	 */
 	if (lc == NULL)				/* not in the list? */
-		elog(ERROR, "index %u does not belong to table %u",
-			 indexOid, tableOid);
+		return true;			/* use sort */
+
+	/*
+	 * Rather than doing all the pushups that would be needed to use
+	 * set_baserel_size_estimates, just do a quick hack for rows and width.
+	 */
+	rel->rows = rel->tuples;
+	rel->width = get_relation_data_width(tableOid, NULL);
+
+	root->total_table_pages = rel->pages;
 
 	/*
 	 * Determine eval cost of the index expressions, if any.  We need to
