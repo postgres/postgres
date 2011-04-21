@@ -1332,7 +1332,7 @@ RemoveRoleFromObjectACL(Oid roleid, Oid classid, Oid objid)
 			case DEFACLOBJ_RELATION:
 				iacls.objtype = ACL_OBJECT_RELATION;
 				break;
-			case ACL_OBJECT_SEQUENCE:
+			case DEFACLOBJ_SEQUENCE:
 				iacls.objtype = ACL_OBJECT_SEQUENCE;
 				break;
 			case DEFACLOBJ_FUNCTION:
