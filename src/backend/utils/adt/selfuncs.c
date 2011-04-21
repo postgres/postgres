@@ -6458,6 +6458,10 @@ gincostestimate(PG_FUNCTION_ARGS)
 		numDataPages = Min(numDataPages, numPages - numEntryPages);
 	}
 
+	/* In an empty index, numEntries could be zero.  Avoid divide-by-zero */
+	if (numEntries < 1)
+		numEntries = 1;
+
 	/*
 	 * Include predicate in selectivityQuals (should match
 	 * genericcostestimate)
