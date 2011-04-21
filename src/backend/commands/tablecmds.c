@@ -4068,7 +4068,7 @@ find_typed_table_dependencies(Oid typeOid, const char *typeName, DropBehavior be
  *
  * Check whether a type is suitable for CREATE TABLE OF/ALTER TABLE OF.  If it
  * isn't suitable, throw an error.  Currently, we require that the type
- * originated with CREATE TABLE AS.  We could support any row type, but doing so
+ * originated with CREATE TYPE AS.  We could support any row type, but doing so
  * would require handling a number of extra corner cases in the DDL commands.
  */
 void
