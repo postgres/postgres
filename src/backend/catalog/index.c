@@ -1495,8 +1495,9 @@ index_build(Relation heapRelation,
  *
  * A side effect is to set indexInfo->ii_BrokenHotChain to true if we detect
  * any potentially broken HOT chains.  Currently, we set this if there are
- * any RECENTLY_DEAD entries in a HOT chain, without trying very hard to
- * detect whether they're really incompatible with the chain tip.
+ * any RECENTLY_DEAD or DELETE_IN_PROGRESS entries in a HOT chain, without
+ * trying very hard to detect whether they're really incompatible with the
+ * chain tip.
  */
 double
 IndexBuildHeapScan(Relation heapRelation,
@@ -1599,8 +1600,14 @@ IndexBuildHeapScan(Relation heapRelation,
 		 * buffer continuously while visiting the page, so no pruning
 		 * operation can occur either.
 		 *
+		 * Also, although our opinions about tuple liveness could change while
+		 * we scan the page (due to concurrent transaction commits/aborts),
+		 * the chain root locations won't, so this info doesn't need to be
+		 * rebuilt after waiting for another transaction.
+		 *
 		 * Note the implied assumption that there is no more than one live
-		 * tuple per HOT-chain ...
+		 * tuple per HOT-chain --- else we could create more than one index
+		 * entry pointing to the same root tuple.
 		 */
 		if (scan->rs_cblock != root_blkno)
 		{
@@ -1653,11 +1660,6 @@ IndexBuildHeapScan(Relation heapRelation,
 					 * the live tuple at the end of the HOT-chain.	Since this
 					 * breaks semantics for pre-existing snapshots, mark the
 					 * index as unusable for them.
-					 *
-					 * If we've already decided that the index will be unsafe
-					 * for old snapshots, we may as well stop indexing
-					 * recently-dead tuples, since there's no longer any
-					 * point.
 					 */
 					if (HeapTupleIsHotUpdated(heapTuple))
 					{
@@ -1665,8 +1667,6 @@ IndexBuildHeapScan(Relation heapRelation,
 						/* mark the index as unsafe for old snapshots */
 						indexInfo->ii_BrokenHotChain = true;
 					}
-					else if (indexInfo->ii_BrokenHotChain)
-						indexIt = false;
 					else
 						indexIt = true;
 					/* In any case, exclude the tuple from unique-checking */
@@ -1714,16 +1714,8 @@ IndexBuildHeapScan(Relation heapRelation,
 				case HEAPTUPLE_DELETE_IN_PROGRESS:
 
 					/*
-					 * Since caller should hold ShareLock or better, we should
-					 * not see any tuples deleted by open transactions ---
-					 * unless it's our own transaction. (Consider DELETE
-					 * followed by CREATE INDEX within a transaction.)	An
-					 * exception occurs when reindexing a system catalog,
-					 * because we often release lock on system catalogs before
-					 * committing.	In that case we wait for the deleting
-					 * transaction to finish and check again.  (We could do
-					 * that on user tables too, but since the case is not
-					 * expected it seems better to throw an error.)
+					 * As with INSERT_IN_PROGRESS case, this is unexpected
+					 * unless it's our own deletion or a system catalog.
 					 */
 					Assert(!(heapTuple->t_data->t_infomask & HEAP_XMAX_IS_MULTI));
 					if (!TransactionIdIsCurrentTransactionId(
@@ -1742,22 +1734,35 @@ IndexBuildHeapScan(Relation heapRelation,
 							XactLockTableWait(xwait);
 							goto recheck;
 						}
-					}
 
-					/*
-					 * Otherwise, we have to treat these tuples just like
-					 * RECENTLY_DELETED ones.
-					 */
-					if (HeapTupleIsHotUpdated(heapTuple))
+						/*
+						 * Otherwise index it but don't check for uniqueness,
+						 * the same as a RECENTLY_DEAD tuple.  (We can't
+						 * actually get here, but keep compiler quiet.)
+						 */
+						indexIt = true;
+					}
+					else if (HeapTupleIsHotUpdated(heapTuple))
 					{
+						/*
+						 * It's a HOT-updated tuple deleted by our own xact.
+						 * We can assume the deletion will commit (else the
+						 * index contents don't matter), so treat the same
+						 * as RECENTLY_DEAD HOT-updated tuples.
+						 */
 						indexIt = false;
 						/* mark the index as unsafe for old snapshots */
 						indexInfo->ii_BrokenHotChain = true;
 					}
-					else if (indexInfo->ii_BrokenHotChain)
-						indexIt = false;
 					else
+					{
+						/*
+						 * It's a regular tuple deleted by our own xact.
+						 * Index it but don't check for uniqueness, the same
+						 * as a RECENTLY_DEAD tuple.
+						 */
 						indexIt = true;
+					}
 					/* In any case, exclude the tuple from unique-checking */
 					tupleIsAlive = false;
 					break;
