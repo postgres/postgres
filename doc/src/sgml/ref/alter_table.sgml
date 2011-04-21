@@ -63,6 +63,8 @@ ALTER TABLE <replaceable class="PARAMETER">name</replaceable>
     RESET ( <replaceable class="PARAMETER">storage_parameter</replaceable> [, ... ] )
     INHERIT <replaceable class="PARAMETER">parent_table</replaceable>
     NO INHERIT <replaceable class="PARAMETER">parent_table</replaceable>
+    OF <replaceable class="PARAMETER">type_name</replaceable>
+    NOT OF
     OWNER TO <replaceable class="PARAMETER">new_owner</replaceable>
     SET TABLESPACE <replaceable class="PARAMETER">new_tablespace</replaceable>
 
@@ -486,6 +488,30 @@ ALTER TABLE <replaceable class="PARAMETER">name</replaceable>
       specified parent table.
       Queries against the parent table will no longer include records drawn
       from the target table.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><literal>OF <replaceable class="PARAMETER">type_name</replaceable></literal></term>
+    <listitem>
+     <para>
+      This form links the table to a composite type as though <command>CREATE
+      TABLE OF</> had formed it.  The table's list of column names and types
+      must precisely match that of the composite type; the presence of
+      an <literal>oid</> system column is permitted to differ.  The table must
+      not inherit from any other table.  These restrictions ensure
+      that <command>CREATE TABLE OF</> would permit an equivalent table
+      definition.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><literal>NOT OF</literal></term>
+    <listitem>
+     <para>
+      This form dissociates a typed table from its type.
      </para>
     </listitem>
    </varlistentry>

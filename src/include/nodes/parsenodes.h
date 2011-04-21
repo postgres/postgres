@@ -1219,6 +1219,8 @@ typedef enum AlterTableType
 	AT_DisableRule,				/* DISABLE RULE name */
 	AT_AddInherit,				/* INHERIT parent */
 	AT_DropInherit,				/* NO INHERIT parent */
+	AT_AddOf,					/* OF <type_name> */
+	AT_DropOf,					/* NOT OF */
 	AT_GenericOptions,			/* OPTIONS (...) */
 } AlterTableType;
 
