@@ -1344,6 +1344,7 @@ ALTER TYPE test_type1 ALTER ATTRIBUTE b TYPE varchar; -- fails
 
 CREATE TYPE test_type2 AS (a int, b text);
 CREATE TABLE test_tbl2 OF test_type2;
+CREATE TABLE test_tbl2_subclass () INHERITS (test_tbl2);
 \d test_type2
 \d test_tbl2
 
@@ -1366,6 +1367,9 @@ ALTER TYPE test_type2 RENAME ATTRIBUTE a TO aa; -- fails
 ALTER TYPE test_type2 RENAME ATTRIBUTE a TO aa CASCADE;
 \d test_type2
 \d test_tbl2
+\d test_tbl2_subclass
+
+DROP TABLE test_tbl2_subclass;
 
 CREATE TYPE test_type_empty AS ();
 DROP TYPE test_type_empty;

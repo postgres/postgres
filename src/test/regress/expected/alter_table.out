@@ -1845,6 +1845,7 @@ ALTER TYPE test_type1 ALTER ATTRIBUTE b TYPE varchar; -- fails
 ERROR:  cannot alter type "test_type1" because column "test_tbl1"."y" uses it
 CREATE TYPE test_type2 AS (a int, b text);
 CREATE TABLE test_tbl2 OF test_type2;
+CREATE TABLE test_tbl2_subclass () INHERITS (test_tbl2);
 \d test_type2
 Composite type "public.test_type2"
  Column |  Type   | Modifiers 
@@ -1858,6 +1859,7 @@ Composite type "public.test_type2"
 --------+---------+-----------
  a      | integer | 
  b      | text    | 
+Number of child tables: 1 (Use \d+ to list them.)
 Typed table of type: test_type2
 
 ALTER TYPE test_type2 ADD ATTRIBUTE c text; -- fails
@@ -1879,6 +1881,7 @@ Composite type "public.test_type2"
  a      | integer | 
  b      | text    | 
  c      | text    | 
+Number of child tables: 1 (Use \d+ to list them.)
 Typed table of type: test_type2
 
 ALTER TYPE test_type2 ALTER ATTRIBUTE b TYPE varchar; -- fails
@@ -1900,6 +1903,7 @@ ALTER TYPE test_type2 ALTER ATTRIBUTE b TYPE varchar CASCADE;
  a      | integer           | 
  b      | character varying | 
  c      | text              | 
+Number of child tables: 1 (Use \d+ to list them.)
 Typed table of type: test_type2
 
 ALTER TYPE test_type2 DROP ATTRIBUTE b; -- fails
@@ -1919,6 +1923,7 @@ Composite type "public.test_type2"
 --------+---------+-----------
  a      | integer | 
  c      | text    | 
+Number of child tables: 1 (Use \d+ to list them.)
 Typed table of type: test_type2
 
 ALTER TYPE test_type2 RENAME ATTRIBUTE a TO aa; -- fails
@@ -1938,8 +1943,18 @@ Composite type "public.test_type2"
 --------+---------+-----------
  aa     | integer | 
  c      | text    | 
+Number of child tables: 1 (Use \d+ to list them.)
 Typed table of type: test_type2
 
+\d test_tbl2_subclass
+Table "public.test_tbl2_subclass"
+ Column |  Type   | Modifiers 
+--------+---------+-----------
+ aa     | integer | 
+ c      | text    | 
+Inherits: test_tbl2
+
+DROP TABLE test_tbl2_subclass;
 CREATE TYPE test_type_empty AS ();
 DROP TYPE test_type_empty;
 --

@@ -122,7 +122,7 @@ ALTER TYPE <replaceable class="PARAMETER">name</replaceable> ADD VALUE <replacea
     <listitem>
      <para>
       Automatically propagate the operation to typed tables of the
-      type being altered.
+      type being altered, and their descendants.
      </para>
     </listitem>
    </varlistentry>

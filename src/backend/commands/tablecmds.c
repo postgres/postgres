@@ -3876,7 +3876,8 @@ ATSimpleRecursion(List **wqueue, Relation rel,
  * ATTypedTableRecursion
  *
  * Propagate ALTER TYPE operations to the typed tables of that type.
- * Also check the RESTRICT/CASCADE behavior.
+ * Also check the RESTRICT/CASCADE behavior.  Given CASCADE, also permit
+ * recursion to inheritance children of the typed tables.
  */
 static void
 ATTypedTableRecursion(List **wqueue, Relation rel, AlterTableCmd *cmd,
@@ -3898,7 +3899,7 @@ ATTypedTableRecursion(List **wqueue, Relation rel, AlterTableCmd *cmd,
 
 		childrel = relation_open(childrelid, lockmode);
 		CheckTableNotInUse(childrel, "ALTER TABLE");
-		ATPrepCmd(wqueue, childrel, cmd, false, true, lockmode);
+		ATPrepCmd(wqueue, childrel, cmd, true, true, lockmode);
 		relation_close(childrel, NoLock);
 	}
 }
