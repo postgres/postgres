@@ -238,7 +238,7 @@ gmake check LANG=C ENCODING=EUC_JP
   </sect2>
 
   <sect2>
-   <title>Extra tests</title>
+   <title>Extra Tests</title>
 
    <para>
     The regression test suite contains a few test files that are not
@@ -253,8 +253,8 @@ gmake check EXTRA_TESTS=numeric_big
 <screen>
 gmake check EXTRA_TESTS=collate.linux.utf8 LANG=en_US.utf8
 </screen>
-    This test works only on Linux/glibc platforms and when run in a
-    UTF-8 locale.
+    The <literal>collate.linux.utf8</> test works only on Linux/glibc
+    platforms, and only when run in a locale that uses UTF-8 encoding.
    </para>
   </sect2>
   </sect1>

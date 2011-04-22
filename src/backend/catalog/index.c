@@ -351,7 +351,6 @@ ConstructTupleDescriptor(Relation heapRelation,
 			to->atthasdef = false;
 			to->attislocal = true;
 			to->attinhcount = 0;
-
 			to->attcollation = collationObjectId[i];
 		}
 		else
@@ -388,7 +387,6 @@ ConstructTupleDescriptor(Relation heapRelation,
 			to->attcacheoff = -1;
 			to->atttypmod = -1;
 			to->attislocal = true;
-
 			to->attcollation = collationObjectId[i];
 
 			ReleaseSysCache(tuple);
@@ -653,6 +651,7 @@ UpdateIndexRelation(Oid indexoid,
  * indexColNames: column names to use for index (List of char *)
  * accessMethodObjectId: OID of index AM to use
  * tableSpaceId: OID of tablespace to use
+ * collationObjectId: array of collation OIDs, one per index column
  * classObjectId: array of index opclass OIDs, one per index column
  * coloptions: array of per-index-column indoption settings
  * reloptions: AM-specific options
@@ -871,7 +870,8 @@ index_create(Relation heapRelation,
 	 * ----------------
 	 */
 	UpdateIndexRelation(indexRelationId, heapRelationId, indexInfo,
-	   collationObjectId, classObjectId, coloptions, isprimary, is_exclusion,
+						collationObjectId, classObjectId, coloptions,
+						isprimary, is_exclusion,
 						!deferrable,
 						!concurrent);
 
@@ -965,9 +965,11 @@ index_create(Relation heapRelation,
 		}
 
 		/* Store dependency on collations */
+		/* The default collation is pinned, so don't bother recording it */
 		for (i = 0; i < indexInfo->ii_NumIndexAttrs; i++)
 		{
-			if (OidIsValid(collationObjectId[i]))
+			if (OidIsValid(collationObjectId[i]) &&
+				collationObjectId[i] != DEFAULT_COLLATION_OID)
 			{
 				referenced.classId = CollationRelationId;
 				referenced.objectId = collationObjectId[i];
@@ -2445,8 +2447,8 @@ validate_index(Oid heapId, Oid indexId, Snapshot snapshot)
 	ivinfo.num_heap_tuples = heapRelation->rd_rel->reltuples;
 	ivinfo.strategy = NULL;
 
-	state.tuplesort = tuplesort_begin_datum(TIDOID,
-										  TIDLessOperator, InvalidOid, false,
+	state.tuplesort = tuplesort_begin_datum(TIDOID, TIDLessOperator,
+											InvalidOid, false,
 											maintenance_work_mem,
 											false);
 	state.htups = state.itups = state.tups_inserted = 0;

@@ -571,7 +571,7 @@ DefineType(List *names, List *parameters)
 				   -1,			/* typMod (Domains only) */
 				   0,			/* Array Dimensions of typbasetype */
 				   false,		/* Type NOT NULL */
-				   collation);
+				   collation);	/* type's collation */
 
 	/*
 	 * Create the array type that goes with it.
@@ -611,7 +611,7 @@ DefineType(List *names, List *parameters)
 			   -1,				/* typMod (Domains only) */
 			   0,				/* Array dimensions of typbasetype */
 			   false,			/* Type NOT NULL */
-			   collation);
+			   collation);		/* type's collation */
 
 	pfree(array_type);
 }
@@ -1069,7 +1069,7 @@ DefineDomain(CreateDomainStmt *stmt)
 				   basetypeMod, /* typeMod value */
 				   typNDims,	/* Array dimensions for base type */
 				   typNotNull,	/* Type NOT NULL */
-				   domaincoll);
+				   domaincoll);	/* type's collation */
 
 	/*
 	 * Process constraints which refer to the domain ID returned by TypeCreate
@@ -1179,7 +1179,7 @@ DefineEnum(CreateEnumStmt *stmt)
 				   -1,			/* typMod (Domains only) */
 				   0,			/* Array dimensions of typbasetype */
 				   false,		/* Type NOT NULL */
-				   InvalidOid); /* typcollation */
+				   InvalidOid); /* type's collation */
 
 	/* Enter the enum's values into pg_enum */
 	EnumValuesCreate(enumTypeOid, stmt->vals);
@@ -1219,7 +1219,7 @@ DefineEnum(CreateEnumStmt *stmt)
 			   -1,				/* typMod (Domains only) */
 			   0,				/* Array dimensions of typbasetype */
 			   false,			/* Type NOT NULL */
-			   InvalidOid);		/* typcollation */
+			   InvalidOid);		/* type's collation */
 
 	pfree(enumArrayName);
 }

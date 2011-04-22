@@ -108,7 +108,8 @@ static TidScan *make_tidscan(List *qptlist, List *qpqual, Index scanrelid,
 			 List *tidquals);
 static FunctionScan *make_functionscan(List *qptlist, List *qpqual,
 				  Index scanrelid, Node *funcexpr, List *funccolnames,
-		  List *funccoltypes, List *funccoltypmods, List *funccolcollations);
+				  List *funccoltypes, List *funccoltypmods,
+				  List *funccolcollations);
 static ValuesScan *make_valuesscan(List *qptlist, List *qpqual,
 				Index scanrelid, List *values_lists);
 static CteScan *make_ctescan(List *qptlist, List *qpqual,
@@ -143,9 +144,9 @@ static MergeJoin *make_mergejoin(List *tlist,
 			   bool *mergenullsfirst,
 			   Plan *lefttree, Plan *righttree,
 			   JoinType jointype);
-static Sort *
-make_sort(PlannerInfo *root, Plan *lefttree, int numCols,
-AttrNumber *sortColIdx, Oid *sortOperators, Oid *collations, bool *nullsFirst,
+static Sort *make_sort(PlannerInfo *root, Plan *lefttree, int numCols,
+		  AttrNumber *sortColIdx, Oid *sortOperators,
+		  Oid *collations, bool *nullsFirst,
 		  double limit_tuples);
 static Plan *prepare_sort_from_pathkeys(PlannerInfo *root,
 						   Plan *lefttree, List *pathkeys,
@@ -738,7 +739,8 @@ create_merge_append_plan(PlannerInfo *root, MergeAppendPath *best_path)
 		/* Now, insert a Sort node if subplan isn't sufficiently ordered */
 		if (!pathkeys_contained_in(pathkeys, subpath->pathkeys))
 			subplan = (Plan *) make_sort(root, subplan, numsortkeys,
-						   sortColIdx, sortOperators, collations, nullsFirst,
+										 sortColIdx, sortOperators,
+										 collations, nullsFirst,
 										 best_path->limit_tuples);
 
 		subplans = lappend(subplans, subplan);
@@ -2013,10 +2015,10 @@ create_mergejoin_plan(PlannerInfo *root,
 	}
 
 	/*
-	 * Compute the opfamily/strategy/nullsfirst arrays needed by the executor.
-	 * The information is in the pathkeys for the two inputs, but we need to
-	 * be careful about the possibility of mergeclauses sharing a pathkey
-	 * (compare find_mergeclauses_for_pathkeys()).
+	 * Compute the opfamily/collation/strategy/nullsfirst arrays needed by the
+	 * executor.  The information is in the pathkeys for the two inputs, but
+	 * we need to be careful about the possibility of mergeclauses sharing a
+	 * pathkey (compare find_mergeclauses_for_pathkeys()).
 	 */
 	nClauses = list_length(mergeclauses);
 	Assert(nClauses == list_length(best_path->path_mergeclauses));
@@ -3316,13 +3318,14 @@ make_mergejoin(List *tlist,
 /*
  * make_sort --- basic routine to build a Sort plan node
  *
- * Caller must have built the sortColIdx, sortOperators, and nullsFirst
- * arrays already.	limit_tuples is as for cost_sort (in particular, pass
- * -1 if no limit)
+ * Caller must have built the sortColIdx, sortOperators, collations, and
+ * nullsFirst arrays already.
+ * limit_tuples is as for cost_sort (in particular, pass -1 if no limit)
  */
 static Sort *
 make_sort(PlannerInfo *root, Plan *lefttree, int numCols,
-AttrNumber *sortColIdx, Oid *sortOperators, Oid *collations, bool *nullsFirst,
+		  AttrNumber *sortColIdx, Oid *sortOperators,
+		  Oid *collations, bool *nullsFirst,
 		  double limit_tuples)
 {
 	Sort	   *node = makeNode(Sort);
@@ -3378,6 +3381,11 @@ add_sort_column(AttrNumber colIdx, Oid sortOp, Oid coll, bool nulls_first,
 		 * values that < considers equal.  We need not check nulls_first
 		 * however because a lower-order column with the same sortop but
 		 * opposite nulls direction is redundant.
+		 *
+		 * We could probably consider sort keys with the same sortop and
+		 * different collations to be redundant too, but for the moment
+		 * treat them as not redundant.  This will be needed if we ever
+		 * support collations with different notions of equality.
 		 */
 		if (sortColIdx[i] == colIdx &&
 			sortOperators[numCols] == sortOp &&
@@ -3410,8 +3418,9 @@ add_sort_column(AttrNumber colIdx, Oid sortOp, Oid coll, bool nulls_first,
  *	  'adjust_tlist_in_place' is TRUE if lefttree must be modified in-place
  *
  * We must convert the pathkey information into arrays of sort key column
- * numbers and sort operator OIDs, which is the representation the executor
- * wants.  These are returned into the output parameters *p_numsortkeys etc.
+ * numbers, sort operator OIDs, collation OIDs, and nulls-first flags,
+ * which is the representation the executor wants.  These are returned into
+ * the output parameters *p_numsortkeys etc.
  *
  * If the pathkeys include expressions that aren't simple Vars, we will
  * usually need to add resjunk items to the input plan's targetlist to
@@ -3610,7 +3619,8 @@ prepare_sort_from_pathkeys(PlannerInfo *root, Plan *lefttree, List *pathkeys,
 									  pathkey->pk_eclass->ec_collation,
 									  pathkey->pk_nulls_first,
 									  numsortkeys,
-						  sortColIdx, sortOperators, collations, nullsFirst);
+									  sortColIdx, sortOperators,
+									  collations, nullsFirst);
 	}
 
 	Assert(numsortkeys > 0);
@@ -3655,7 +3665,8 @@ make_sort_from_pathkeys(PlannerInfo *root, Plan *lefttree, List *pathkeys,
 
 	/* Now build the Sort node */
 	return make_sort(root, lefttree, numsortkeys,
-			sortColIdx, sortOperators, collations, nullsFirst, limit_tuples);
+					 sortColIdx, sortOperators, collations,
+					 nullsFirst, limit_tuples);
 }
 
 /*
@@ -3701,13 +3712,15 @@ make_sort_from_sortclauses(PlannerInfo *root, List *sortcls, Plan *lefttree)
 									  exprCollation((Node *) tle->expr),
 									  sortcl->nulls_first,
 									  numsortkeys,
-						  sortColIdx, sortOperators, collations, nullsFirst);
+									  sortColIdx, sortOperators,
+									  collations, nullsFirst);
 	}
 
 	Assert(numsortkeys > 0);
 
 	return make_sort(root, lefttree, numsortkeys,
-					 sortColIdx, sortOperators, collations, nullsFirst, -1.0);
+					 sortColIdx, sortOperators, collations,
+					 nullsFirst, -1.0);
 }
 
 /*
@@ -3763,14 +3776,16 @@ make_sort_from_groupcols(PlannerInfo *root,
 									  exprCollation((Node *) tle->expr),
 									  grpcl->nulls_first,
 									  numsortkeys,
-						  sortColIdx, sortOperators, collations, nullsFirst);
+									  sortColIdx, sortOperators,
+									  collations, nullsFirst);
 		grpno++;
 	}
 
 	Assert(numsortkeys > 0);
 
 	return make_sort(root, lefttree, numsortkeys,
-					 sortColIdx, sortOperators, collations, nullsFirst, -1.0);
+					 sortColIdx, sortOperators, collations,
+					 nullsFirst, -1.0);
 }
 
 static Material *

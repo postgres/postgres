@@ -2159,8 +2159,8 @@
    (<structfield>collname</>, <structfield>collnamespace</>).
    <productname>PostgreSQL</productname> generally ignores all
    collations that do not have <structfield>collencoding</> equal to
-   either the current database's encoding or -1, and creation of new
-   entries matching an entry with <structfield>collencoding</> = -1
+   either the current database's encoding or -1, and creation of new entries
+   with the same name as an entry with <structfield>collencoding</> = -1
    is forbidden.  Therefore it is sufficient to use a qualified SQL name
    (<replaceable>schema</>.<replaceable>name</>) to identify a collation,
    even though this is not unique according to the catalog definition.
@@ -6138,8 +6138,8 @@
        of the type.  If the type does not support collations, this will
        be zero.  A base type that supports collations will have
        <symbol>DEFAULT_COLLATION_OID</symbol> here.  A domain over a
-       collatable type can have some other collation OID, if one was defined
-       for the domain.
+       collatable type can have some other collation OID, if one was
+       specified for the domain.
       </para></entry>
      </row>
 

@@ -643,8 +643,9 @@ GenerateTypeDependencies(Oid typeNamespace,
 		recordDependencyOn(&myself, &referenced, DEPENDENCY_NORMAL);
 	}
 
-	/* Normal dependency from a domain to its base type's collation. */
-	if (OidIsValid(typeCollation))
+	/* Normal dependency from a domain to its collation. */
+	/* We know the default collation is pinned, so don't bother recording it */
+	if (OidIsValid(typeCollation) && typeCollation != DEFAULT_COLLATION_OID)
 	{
 		referenced.classId = CollationRelationId;
 		referenced.objectId = typeCollation;

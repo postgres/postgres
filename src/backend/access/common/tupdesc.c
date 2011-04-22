@@ -360,6 +360,8 @@ equalTupleDescs(TupleDesc tupdesc1, TupleDesc tupdesc2)
 			return false;
 		if (attr1->attinhcount != attr2->attinhcount)
 			return false;
+		if (attr1->attcollation != attr2->attcollation)
+			return false;
 		/* attacl and attoptions are not even present... */
 	}
 
@@ -611,7 +613,9 @@ BuildDescForRelation(List *schema)
  * BuildDescFromLists
  *
  * Build a TupleDesc given lists of column names (as String nodes),
- * column type OIDs, and column typmods.  No constraints are generated.
+ * column type OIDs, typmods, and collation OIDs.
+ *
+ * No constraints are generated.
  *
  * This is essentially a cut-down version of BuildDescForRelation for use
  * with functions returning RECORD.

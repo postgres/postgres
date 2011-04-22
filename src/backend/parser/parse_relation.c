@@ -1174,7 +1174,8 @@ addRangeTableEntryForFunction(ParseState *pstate,
 			eref->colnames = lappend(eref->colnames, makeString(attrname));
 			rte->funccoltypes = lappend_oid(rte->funccoltypes, attrtype);
 			rte->funccoltypmods = lappend_int(rte->funccoltypmods, attrtypmod);
-			rte->funccolcollations = lappend_oid(rte->funccolcollations, attrcollation);
+			rte->funccolcollations = lappend_oid(rte->funccolcollations,
+												 attrcollation);
 		}
 	}
 	else
@@ -1902,7 +1903,8 @@ expandTupleDesc(TupleDesc tupdesc, Alias *eref,
 			Var		   *varnode;
 
 			varnode = makeVar(rtindex, attr->attnum,
-						 attr->atttypid, attr->atttypmod, attr->attcollation,
+							  attr->atttypid, attr->atttypmod,
+							  attr->attcollation,
 							  sublevels_up);
 			varnode->location = location;
 
@@ -2009,7 +2011,7 @@ get_rte_attribute_name(RangeTblEntry *rte, AttrNumber attnum)
 
 /*
  * get_rte_attribute_type
- *		Get attribute type information from a RangeTblEntry
+ *		Get attribute type/typmod/collation information from a RangeTblEntry
  */
 void
 get_rte_attribute_type(RangeTblEntry *rte, AttrNumber attnum,

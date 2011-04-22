@@ -2227,14 +2227,16 @@ getObjectDescription(const ObjectAddress *object)
 		case OCLASS_COLLATION:
 			{
 				HeapTuple	collTup;
+				Form_pg_collation coll;
 
 				collTup = SearchSysCache1(COLLOID,
 										  ObjectIdGetDatum(object->objectId));
 				if (!HeapTupleIsValid(collTup))
 					elog(ERROR, "cache lookup failed for collation %u",
 						 object->objectId);
+				coll = (Form_pg_collation) GETSTRUCT(collTup);
 				appendStringInfo(&buffer, _("collation %s"),
-				NameStr(((Form_pg_collation) GETSTRUCT(collTup))->collname));
+								 NameStr(coll->collname));
 				ReleaseSysCache(collTup);
 				break;
 			}

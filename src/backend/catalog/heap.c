@@ -644,7 +644,7 @@ AddNewAttributeTuples(Oid new_rel_oid,
 
 	/*
 	 * First we add the user attributes.  This is also a convenient place to
-	 * add dependencies on their datatypes.
+	 * add dependencies on their datatypes and collations.
 	 */
 	for (i = 0; i < natts; i++)
 	{
@@ -666,7 +666,9 @@ AddNewAttributeTuples(Oid new_rel_oid,
 		referenced.objectSubId = 0;
 		recordDependencyOn(&myself, &referenced, DEPENDENCY_NORMAL);
 
-		if (OidIsValid(attr->attcollation))
+		/* The default collation is pinned, so don't bother recording it */
+		if (OidIsValid(attr->attcollation) &&
+			attr->attcollation != DEFAULT_COLLATION_OID)
 		{
 			referenced.classId = CollationRelationId;
 			referenced.objectId = attr->attcollation;
@@ -921,7 +923,7 @@ AddNewRelationType(const char *typeName,
 				   -1,			/* typmod */
 				   0,			/* array dimensions for typBaseType */
 				   false,		/* Type NOT NULL */
-				   InvalidOid); /* typcollation */
+				   InvalidOid); /* rowtypes never have a collation */
 }
 
 /* --------------------------------
@@ -1183,7 +1185,7 @@ heap_create_with_catalog(const char *relname,
 				   -1,			/* typmod */
 				   0,			/* array dimensions for typBaseType */
 				   false,		/* Type NOT NULL */
-				   InvalidOid); /* typcollation */
+				   InvalidOid); /* rowtypes never have a collation */
 
 		pfree(relarrayname);
 	}

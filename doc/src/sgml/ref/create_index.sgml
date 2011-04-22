@@ -188,9 +188,8 @@ CREATE [ UNIQUE ] INDEX [ CONCURRENTLY ] [ <replaceable class="parameter">name</
         The name of the collation to use for the index.  By default,
         the index uses the collation declared for the column to be
         indexed or the result collation of the expression to be
-        indexed.  Indexes with nondefault collations are
-        available for use by queries that involve expressions using
-        nondefault collations.
+        indexed.  Indexes with non-default collations can be useful for
+        queries that involve expressions using non-default collations.
        </para>
       </listitem>
      </varlistentry>
@@ -535,6 +534,13 @@ CREATE INDEX ON films ((lower(title)));
 </programlisting>
    (In this example we have chosen to omit the index name, so the system
    will choose a name, typically <literal>films_lower_idx</>.)
+  </para>
+
+  <para>
+   To create an index with non-default collation:
+<programlisting>
+CREATE INDEX title_idx_german ON films (title COLLATE "de_DE");
+</programlisting>
   </para>
 
   <para>

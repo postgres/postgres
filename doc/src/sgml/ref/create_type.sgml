@@ -355,10 +355,10 @@ CREATE TYPE <replaceable class="parameter">name</replaceable>
   </para>
 
   <para>
-   If the optional
+   If the optional boolean
    parameter <replaceable class="parameter">collatable</replaceable>
    is true, column definitions and expressions of the type may carry
-   collation information and allow the use of
+   collation information through use of
    the <literal>COLLATE</literal> clause.  It is up to the
    implementations of the functions operating on the type to actually
    make use of the collation information; this does not happen

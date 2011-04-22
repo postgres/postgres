@@ -295,7 +295,8 @@ static void ATPrepAddColumn(List **wqueue, Relation rel, bool recurse, bool recu
 static void ATExecAddColumn(List **wqueue, AlteredTableInfo *tab, Relation rel,
 				ColumnDef *colDef, bool isOid,
 				bool recurse, bool recursing, LOCKMODE lockmode);
-static void add_column_datatype_dependency(Oid relid, int32 attnum, Oid typid, Oid collid);
+static void add_column_datatype_dependency(Oid relid, int32 attnum, Oid typid);
+static void add_column_collation_dependency(Oid relid, int32 attnum, Oid collid);
 static void ATPrepAddOids(List **wqueue, Relation rel, bool recurse,
 			  AlterTableCmd *cmd, LOCKMODE lockmode);
 static void ATExecDropNotNull(Relation rel, const char *colName, LOCKMODE lockmode);
@@ -4423,7 +4424,8 @@ ATExecAddColumn(List **wqueue, AlteredTableInfo *tab, Relation rel,
 	/*
 	 * Add needed dependency entries for the new column.
 	 */
-	add_column_datatype_dependency(myrelid, newattnum, attribute.atttypid, attribute.attcollation);
+	add_column_datatype_dependency(myrelid, newattnum, attribute.atttypid);
+	add_column_collation_dependency(myrelid, newattnum, attribute.attcollation);
 
 	/*
 	 * Propagate to children as appropriate.  Unlike most other ALTER
@@ -4474,7 +4476,7 @@ ATExecAddColumn(List **wqueue, AlteredTableInfo *tab, Relation rel,
  * Install a column's dependency on its datatype.
  */
 static void
-add_column_datatype_dependency(Oid relid, int32 attnum, Oid typid, Oid collid)
+add_column_datatype_dependency(Oid relid, int32 attnum, Oid typid)
 {
 	ObjectAddress myself,
 				referenced;
@@ -4486,9 +4488,23 @@ add_column_datatype_dependency(Oid relid, int32 attnum, Oid typid, Oid collid)
 	referenced.objectId = typid;
 	referenced.objectSubId = 0;
 	recordDependencyOn(&myself, &referenced, DEPENDENCY_NORMAL);
+}
 
-	if (collid)
+/*
+ * Install a column's dependency on its collation.
+ */
+static void
+add_column_collation_dependency(Oid relid, int32 attnum, Oid collid)
+{
+	ObjectAddress myself,
+				referenced;
+
+	/* We know the default collation is pinned, so don't bother recording it */
+	if (OidIsValid(collid) && collid != DEFAULT_COLLATION_OID)
 	{
+		myself.classId = RelationRelationId;
+		myself.objectId = relid;
+		myself.objectSubId = attnum;
 		referenced.classId = CollationRelationId;
 		referenced.objectId = collid;
 		referenced.objectSubId = 0;
@@ -6671,7 +6687,8 @@ ATPrepAlterColumnType(List **wqueue,
 		else
 		{
 			transform = (Node *) makeVar(1, attnum,
-				   attTup->atttypid, attTup->atttypmod, attTup->attcollation,
+										 attTup->atttypid, attTup->atttypmod,
+										 attTup->attcollation,
 										 0);
 		}
 
@@ -7052,7 +7069,7 @@ ATExecAlterColumnType(AlteredTableInfo *tab, Relation rel,
 	/*
 	 * Now scan for dependencies of this column on other things.  The only
 	 * thing we should find is the dependency on the column datatype, which we
-	 * want to remove, and possibly an associated collation.
+	 * want to remove, and possibly a collation dependency.
 	 */
 	ScanKeyInit(&key[0],
 				Anum_pg_depend_classid,
@@ -7091,8 +7108,8 @@ ATExecAlterColumnType(AlteredTableInfo *tab, Relation rel,
 	heap_close(depRel, RowExclusiveLock);
 
 	/*
-	 * Here we go --- change the recorded column type.	(Note heapTup is a
-	 * copy of the syscache entry, so okay to scribble on.)
+	 * Here we go --- change the recorded column type and collation.  (Note
+	 * heapTup is a copy of the syscache entry, so okay to scribble on.)
 	 */
 	attTup->atttypid = targettype;
 	attTup->atttypmod = targettypmod;
@@ -7112,8 +7129,9 @@ ATExecAlterColumnType(AlteredTableInfo *tab, Relation rel,
 
 	heap_close(attrelation, RowExclusiveLock);
 
-	/* Install dependency on new datatype */
-	add_column_datatype_dependency(RelationGetRelid(rel), attnum, targettype, targetcollid);
+	/* Install dependencies on new datatype and collation */
+	add_column_datatype_dependency(RelationGetRelid(rel), attnum, targettype);
+	add_column_collation_dependency(RelationGetRelid(rel), attnum, targetcollid);
 
 	/*
 	 * Drop any pg_statistic entry for the column, since it's now wrong type

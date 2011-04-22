@@ -170,13 +170,13 @@ typedef enum
  * the two expressions from the original clause.
  *
  * In addition to the expressions themselves, the planner passes the btree
- * opfamily OID, btree strategy number (BTLessStrategyNumber or
+ * opfamily OID, collation OID, btree strategy number (BTLessStrategyNumber or
  * BTGreaterStrategyNumber), and nulls-first flag that identify the intended
  * sort ordering for each merge key.  The mergejoinable operator is an
- * equality operator in this opfamily, and the two inputs are guaranteed to be
+ * equality operator in the opfamily, and the two inputs are guaranteed to be
  * ordered in either increasing or decreasing (respectively) order according
- * to this opfamily, with nulls at the indicated end of the range.	This
- * allows us to obtain the needed comparison function from the opfamily.
+ * to the opfamily and collation, with nulls at the indicated end of the range.
+ * This allows us to obtain the needed comparison function from the opfamily.
  */
 static MergeJoinClause
 MJExamineQuals(List *mergeclauses,

@@ -350,7 +350,8 @@ DefineIndex(RangeVar *heapRelation,
 	collationObjectId = (Oid *) palloc(numberOfAttributes * sizeof(Oid));
 	classObjectId = (Oid *) palloc(numberOfAttributes * sizeof(Oid));
 	coloptions = (int16 *) palloc(numberOfAttributes * sizeof(int16));
-	ComputeIndexAttrs(indexInfo, collationObjectId, classObjectId, coloptions, attributeList,
+	ComputeIndexAttrs(indexInfo, collationObjectId, classObjectId,
+					  coloptions, attributeList,
 					  exclusionOpNames, relationId,
 					  accessMethodName, accessMethodId,
 					  amcanorder, isconstraint);
@@ -395,7 +396,8 @@ DefineIndex(RangeVar *heapRelation,
 	indexRelationId =
 		index_create(rel, indexRelationName, indexRelationId,
 					 indexInfo, indexColNames,
-			  accessMethodId, tablespaceId, collationObjectId, classObjectId,
+					 accessMethodId, tablespaceId,
+					 collationObjectId, classObjectId,
 					 coloptions, reloptions, primary,
 					 isconstraint, deferrable, initdeferred,
 					 allowSystemTableMods,

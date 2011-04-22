@@ -108,8 +108,8 @@ CREATE COLLATION <replaceable>name</replaceable> FROM <replaceable>existing_coll
      <listitem>
       <para>
        The name of an existing collation to copy.  The new collation
-       will have the same properties as the existing one, but they
-       will become independent objects.
+       will have the same properties as the existing one, but it
+       will be an independent object.
       </para>
      </listitem>
     </varlistentry>
@@ -134,7 +134,8 @@ CREATE COLLATION <replaceable>name</replaceable> FROM <replaceable>existing_coll
   <title>Examples</title>
 
   <para>
-   To create a collation from the locale <literal>fr_FR.utf8</literal>
+   To create a collation from the operating system locale
+   <literal>fr_FR.utf8</literal>
    (assuming the current database encoding is <literal>UTF8</literal>):
 <programlisting>
 CREATE COLLATION french (LOCALE = 'fr_FR.utf8');

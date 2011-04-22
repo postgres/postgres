@@ -1004,12 +1004,11 @@ SELECT am.amname AS index_method,
 
 
  <sect1 id="indexes-collations">
-  <title>Collations and Indexes</title>
+  <title>Indexes and Collations</title>
 
   <para>
-   An index can only support one collation for one column or
-   expression.  If multiple collations are of interest, multiple
-   indexes may be created.
+   An index can support only one collation per index column.
+   If multiple collations are of interest, multiple indexes may be needed.
   </para>
 
   <para>
@@ -1022,23 +1021,21 @@ CREATE TABLE test1c (
 
 CREATE INDEX test1c_content_index ON test1c (content);
 </programlisting>
-   The created index automatically follows the collation of the
-   underlying column, and so a query of the form
+   The index automatically uses the collation of the
+   underlying column.  So a query of the form
 <programlisting>
-SELECT * FROM test1c WHERE content = <replaceable>constant</replaceable>;
+SELECT * FROM test1c WHERE content &gt; <replaceable>constant</replaceable>;
 </programlisting>
-   could use the index.
-  </para>
-
-  <para>
-   If in addition, a query of the form, say,
+   could use the index, because the comparison will by default use the
+   collation of the column.  However, this index cannot accelerate queries
+   that involve some other collation.  So if queries of the form, say,
 <programlisting>
 SELECT * FROM test1c WHERE content &gt; <replaceable>constant</replaceable> COLLATE "y";
 </programlisting>
-   is of interest, an additional index could be created that supports
-   the <literal>"y"</literal> collation, like so:
+   are also of interest, an additional index could be created that supports
+   the <literal>"y"</literal> collation, like this:
 <programlisting>
-CREATE INDEX test1c_content_index ON test1c (content COLLATE "y");
+CREATE INDEX test1c_content_y_index ON test1c (content COLLATE "y");
 </programlisting>
   </para>
  </sect1>

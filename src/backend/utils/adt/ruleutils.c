@@ -235,7 +235,8 @@ static void get_from_clause_item(Node *jtnode, Query *query,
 					 deparse_context *context);
 static void get_from_clause_alias(Alias *alias, RangeTblEntry *rte,
 					  deparse_context *context);
-static void get_from_clause_coldeflist(List *names, List *types, List *typmods, List *collations,
+static void get_from_clause_coldeflist(List *names,
+						   List *types, List *typmods, List *collations,
 						   deparse_context *context);
 static void get_opclass_name(Oid opclass, Oid actual_datatype,
 				 StringInfo buf);
@@ -6617,7 +6618,8 @@ get_from_clause_alias(Alias *alias, RangeTblEntry *rte,
  * responsible for ensuring that an alias or AS is present before it.
  */
 static void
-get_from_clause_coldeflist(List *names, List *types, List *typmods, List *collations,
+get_from_clause_coldeflist(List *names,
+						   List *types, List *typmods, List *collations,
 						   deparse_context *context)
 {
 	StringInfo	buf = context->buf;
@@ -6651,7 +6653,8 @@ get_from_clause_coldeflist(List *names, List *types, List *typmods, List *collat
 		appendStringInfo(buf, "%s %s",
 						 quote_identifier(attname),
 						 format_type_with_typemod(atttypid, atttypmod));
-		if (attcollation && attcollation != DEFAULT_COLLATION_OID)
+		if (OidIsValid(attcollation) &&
+			attcollation != get_typcollation(atttypid))
 			appendStringInfo(buf, " COLLATE %s",
 							 generate_collation_name(attcollation));
 		i++;

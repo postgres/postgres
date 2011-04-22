@@ -286,10 +286,10 @@ analyzeCTE(ParseState *pstate, CommonTableExpr *cte)
 	else
 	{
 		/*
-		 * Verify that the previously determined output column types match
-		 * what the query really produced.	We have to check this because the
-		 * recursive term could have overridden the non-recursive term, and we
-		 * don't have any easy way to fix that.
+		 * Verify that the previously determined output column types and
+		 * collations match what the query really produced.  We have to check
+		 * this because the recursive term could have overridden the
+		 * non-recursive term, and we don't have any easy way to fix that.
 		 */
 		ListCell   *lctlist,
 				   *lctyp,
@@ -366,11 +366,11 @@ analyzeCTETargetList(ParseState *pstate, CommonTableExpr *cte, List *tlist)
 	Assert(cte->ctecolnames == NIL);
 
 	/*
-	 * We need to determine column names and types.  The alias column names
-	 * override anything coming from the query itself.	(Note: the SQL spec
-	 * says that the alias list must be empty or exactly as long as the output
-	 * column set; but we allow it to be shorter for consistency with Alias
-	 * handling.)
+	 * We need to determine column names, types, and collations.  The alias
+	 * column names override anything coming from the query itself.  (Note:
+	 * the SQL spec says that the alias list must be empty or exactly as long
+	 * as the output column set; but we allow it to be shorter for consistency
+	 * with Alias handling.)
 	 */
 	cte->ctecolnames = copyObject(cte->aliascolnames);
 	cte->ctecoltypes = cte->ctecoltypmods = cte->ctecolcollations = NIL;

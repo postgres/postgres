@@ -281,7 +281,7 @@ SS_assign_special_param(PlannerInfo *root)
 }
 
 /*
- * Get the datatype of the first column of the plan's output.
+ * Get the datatype/typmod/collation of the first column of the plan's output.
  *
  * This information is stored for ARRAY_SUBLINK execution and for
  * exprType()/exprTypmod()/exprCollation(), which have no way to get at the
@@ -290,7 +290,8 @@ SS_assign_special_param(PlannerInfo *root)
  * always.
  */
 static void
-get_first_col_type(Plan *plan, Oid *coltype, int32 *coltypmod, Oid *colcollation)
+get_first_col_type(Plan *plan, Oid *coltype, int32 *coltypmod,
+				   Oid *colcollation)
 {
 	/* In cases such as EXISTS, tlist might be empty; arbitrarily use VOID */
 	if (plan->targetlist)
@@ -478,7 +479,8 @@ build_subplan(PlannerInfo *root, Plan *plan, List *rtable, List *rowmarks,
 	splan->subLinkType = subLinkType;
 	splan->testexpr = NULL;
 	splan->paramIds = NIL;
-	get_first_col_type(plan, &splan->firstColType, &splan->firstColTypmod, &splan->firstColCollation);
+	get_first_col_type(plan, &splan->firstColType, &splan->firstColTypmod,
+					   &splan->firstColCollation);
 	splan->useHashTable = false;
 	splan->unknownEqFalse = unknownEqFalse;
 	splan->setParam = NIL;
@@ -976,7 +978,8 @@ SS_process_ctes(PlannerInfo *root)
 		splan->subLinkType = CTE_SUBLINK;
 		splan->testexpr = NULL;
 		splan->paramIds = NIL;
-		get_first_col_type(plan, &splan->firstColType, &splan->firstColTypmod, &splan->firstColCollation);
+		get_first_col_type(plan, &splan->firstColType, &splan->firstColTypmod,
+						   &splan->firstColCollation);
 		splan->useHashTable = false;
 		splan->unknownEqFalse = false;
 		splan->setParam = NIL;

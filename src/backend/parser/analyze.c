@@ -1357,9 +1357,9 @@ transformSetOperationStmt(ParseState *pstate, SelectStmt *stmt)
 
 	/*
 	 * Generate dummy targetlist for outer query using column names of
-	 * leftmost select and common datatypes of topmost set operation. Also
-	 * make lists of the dummy vars and their names for use in parsing ORDER
-	 * BY.
+	 * leftmost select and common datatypes/collations of topmost set
+	 * operation.  Also make lists of the dummy vars and their names for use
+	 * in parsing ORDER BY.
 	 *
 	 * Note: we use leftmostRTI as the varno of the dummy variables. It
 	 * shouldn't matter too much which RT index they have, as long as they
@@ -1371,7 +1371,9 @@ transformSetOperationStmt(ParseState *pstate, SelectStmt *stmt)
 	targetnames = NIL;
 	left_tlist = list_head(leftmostQuery->targetList);
 
-	forthree(lct, sostmt->colTypes, lcm, sostmt->colTypmods, lcc, sostmt->colCollations)
+	forthree(lct, sostmt->colTypes,
+			 lcm, sostmt->colTypmods,
+			 lcc, sostmt->colCollations)
 	{
 		Oid			colType = lfirst_oid(lct);
 		int32		colTypmod = lfirst_int(lcm);
