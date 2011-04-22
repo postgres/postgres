@@ -1090,7 +1090,7 @@ OFFSET <replaceable class="parameter">start</replaceable>
    </para>
 
    <para>
-    SQL:2008 introduced a different syntax to achieve the same thing,
+    SQL:2008 introduced a different syntax to achieve the same result,
     which <productname>PostgreSQL</> also supports.  It is:
 <synopsis>
 OFFSET <replaceable class="parameter">start</replaceable> { ROW | ROWS }
