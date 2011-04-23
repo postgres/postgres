@@ -80,11 +80,13 @@ uint32
 _hash_datum2hashkey(Relation rel, Datum key)
 {
 	FmgrInfo   *procinfo;
+	Oid			collation;
 
 	/* XXX assumes index has only one attribute */
 	procinfo = index_getprocinfo(rel, 1, HASHPROC);
+	collation = rel->rd_indcollation[0];
 
-	return DatumGetUInt32(FunctionCall1(procinfo, key));
+	return DatumGetUInt32(FunctionCall1Coll(procinfo, collation, key));
 }
 
 /*
@@ -98,6 +100,7 @@ uint32
 _hash_datum2hashkey_type(Relation rel, Datum key, Oid keytype)
 {
 	RegProcedure hash_proc;
+	Oid			collation;
 
 	/* XXX assumes index has only one attribute */
 	hash_proc = get_opfamily_proc(rel->rd_opfamily[0],
@@ -108,8 +111,9 @@ _hash_datum2hashkey_type(Relation rel, Datum key, Oid keytype)
 		elog(ERROR, "missing support function %d(%u,%u) for index \"%s\"",
 			 HASHPROC, keytype, keytype,
 			 RelationGetRelationName(rel));
+	collation = rel->rd_indcollation[0];
 
-	return DatumGetUInt32(OidFunctionCall1(hash_proc, key));
+	return DatumGetUInt32(OidFunctionCall1Coll(hash_proc, collation, key));
 }
 
 /*
