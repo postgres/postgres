@@ -59,9 +59,9 @@ $AWK -F'[ \.]' '\
 	}
 	{
 		printf "\
-SELECT	ctid, %s \n\
-FROM	%s.%s fk \n\
-WHERE	%s != 0 AND \n\
+SELECT	ctid, %s\n\
+FROM	%s.%s fk\n\
+WHERE	%s != 0 AND\n\
 	NOT EXISTS(SELECT 1 FROM %s.%s pk WHERE pk.oid = fk.%s);\n",
 	$4, $2, $3, $4,
 	$6, $7, $4;

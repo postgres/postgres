@@ -121,6 +121,14 @@ WHERE	ambuild != 0 AND
 ------+---------
 (0 rows)
 
+SELECT	ctid, ambuildempty
+FROM	pg_catalog.pg_am fk
+WHERE	ambuildempty != 0 AND
+	NOT EXISTS(SELECT 1 FROM pg_catalog.pg_proc pk WHERE pk.oid = fk.ambuildempty);
+ ctid | ambuildempty 
+------+--------------
+(0 rows)
+
 SELECT	ctid, ambulkdelete
 FROM	pg_catalog.pg_am fk
 WHERE	ambulkdelete != 0 AND
@@ -193,6 +201,14 @@ WHERE	amopmethod != 0 AND
 ------+------------
 (0 rows)
 
+SELECT	ctid, amopsortfamily
+FROM	pg_catalog.pg_amop fk
+WHERE	amopsortfamily != 0 AND
+	NOT EXISTS(SELECT 1 FROM pg_catalog.pg_opfamily pk WHERE pk.oid = fk.amopsortfamily);
+ ctid | amopsortfamily 
+------+----------------
+(0 rows)
+
 SELECT	ctid, amprocfamily
 FROM	pg_catalog.pg_amproc fk
 WHERE	amprocfamily != 0 AND
@@ -239,6 +255,14 @@ WHERE	atttypid != 0 AND
 	NOT EXISTS(SELECT 1 FROM pg_catalog.pg_type pk WHERE pk.oid = fk.atttypid);
  ctid | atttypid 
 ------+----------
+(0 rows)
+
+SELECT	ctid, attcollation
+FROM	pg_catalog.pg_attribute fk
+WHERE	attcollation != 0 AND
+	NOT EXISTS(SELECT 1 FROM pg_catalog.pg_collation pk WHERE pk.oid = fk.attcollation);
+ ctid | attcollation 
+------+--------------
 (0 rows)
 
 SELECT	ctid, castsource
@@ -319,6 +343,22 @@ WHERE	reltoastidxid != 0 AND
 	NOT EXISTS(SELECT 1 FROM pg_catalog.pg_class pk WHERE pk.oid = fk.reltoastidxid);
  ctid | reltoastidxid 
 ------+---------------
+(0 rows)
+
+SELECT	ctid, collnamespace
+FROM	pg_catalog.pg_collation fk
+WHERE	collnamespace != 0 AND
+	NOT EXISTS(SELECT 1 FROM pg_catalog.pg_namespace pk WHERE pk.oid = fk.collnamespace);
+ ctid | collnamespace 
+------+---------------
+(0 rows)
+
+SELECT	ctid, collowner
+FROM	pg_catalog.pg_collation fk
+WHERE	collowner != 0 AND
+	NOT EXISTS(SELECT 1 FROM pg_catalog.pg_authid pk WHERE pk.oid = fk.collowner);
+ ctid | collowner 
+------+-----------
 (0 rows)
 
 SELECT	ctid, connamespace
@@ -407,6 +447,22 @@ WHERE	classoid != 0 AND
 	NOT EXISTS(SELECT 1 FROM pg_catalog.pg_class pk WHERE pk.oid = fk.classoid);
  ctid | classoid 
 ------+----------
+(0 rows)
+
+SELECT	ctid, extowner
+FROM	pg_catalog.pg_extension fk
+WHERE	extowner != 0 AND
+	NOT EXISTS(SELECT 1 FROM pg_catalog.pg_authid pk WHERE pk.oid = fk.extowner);
+ ctid | extowner 
+------+----------
+(0 rows)
+
+SELECT	ctid, extnamespace
+FROM	pg_catalog.pg_extension fk
+WHERE	extnamespace != 0 AND
+	NOT EXISTS(SELECT 1 FROM pg_catalog.pg_namespace pk WHERE pk.oid = fk.extnamespace);
+ ctid | extnamespace 
+------+--------------
 (0 rows)
 
 SELECT	ctid, indexrelid
@@ -639,6 +695,14 @@ WHERE	prolang != 0 AND
 	NOT EXISTS(SELECT 1 FROM pg_catalog.pg_language pk WHERE pk.oid = fk.prolang);
  ctid | prolang 
 ------+---------
+(0 rows)
+
+SELECT	ctid, provariadic
+FROM	pg_catalog.pg_proc fk
+WHERE	provariadic != 0 AND
+	NOT EXISTS(SELECT 1 FROM pg_catalog.pg_type pk WHERE pk.oid = fk.provariadic);
+ ctid | provariadic 
+------+-------------
 (0 rows)
 
 SELECT	ctid, prorettype
@@ -951,5 +1015,13 @@ WHERE	typbasetype != 0 AND
 	NOT EXISTS(SELECT 1 FROM pg_catalog.pg_type pk WHERE pk.oid = fk.typbasetype);
  ctid | typbasetype 
 ------+-------------
+(0 rows)
+
+SELECT	ctid, typcollation
+FROM	pg_catalog.pg_type fk
+WHERE	typcollation != 0 AND
+	NOT EXISTS(SELECT 1 FROM pg_catalog.pg_collation pk WHERE pk.oid = fk.typcollation);
+ ctid | typcollation 
+------+--------------
 (0 rows)
 

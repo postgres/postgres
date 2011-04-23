@@ -61,6 +61,10 @@ SELECT	ctid, ambuild
 FROM	pg_catalog.pg_am fk
 WHERE	ambuild != 0 AND
 	NOT EXISTS(SELECT 1 FROM pg_catalog.pg_proc pk WHERE pk.oid = fk.ambuild);
+SELECT	ctid, ambuildempty
+FROM	pg_catalog.pg_am fk
+WHERE	ambuildempty != 0 AND
+	NOT EXISTS(SELECT 1 FROM pg_catalog.pg_proc pk WHERE pk.oid = fk.ambuildempty);
 SELECT	ctid, ambulkdelete
 FROM	pg_catalog.pg_am fk
 WHERE	ambulkdelete != 0 AND
@@ -97,6 +101,10 @@ SELECT	ctid, amopmethod
 FROM	pg_catalog.pg_amop fk
 WHERE	amopmethod != 0 AND
 	NOT EXISTS(SELECT 1 FROM pg_catalog.pg_am pk WHERE pk.oid = fk.amopmethod);
+SELECT	ctid, amopsortfamily
+FROM	pg_catalog.pg_amop fk
+WHERE	amopsortfamily != 0 AND
+	NOT EXISTS(SELECT 1 FROM pg_catalog.pg_opfamily pk WHERE pk.oid = fk.amopsortfamily);
 SELECT	ctid, amprocfamily
 FROM	pg_catalog.pg_amproc fk
 WHERE	amprocfamily != 0 AND
@@ -121,6 +129,10 @@ SELECT	ctid, atttypid
 FROM	pg_catalog.pg_attribute fk
 WHERE	atttypid != 0 AND
 	NOT EXISTS(SELECT 1 FROM pg_catalog.pg_type pk WHERE pk.oid = fk.atttypid);
+SELECT	ctid, attcollation
+FROM	pg_catalog.pg_attribute fk
+WHERE	attcollation != 0 AND
+	NOT EXISTS(SELECT 1 FROM pg_catalog.pg_collation pk WHERE pk.oid = fk.attcollation);
 SELECT	ctid, castsource
 FROM	pg_catalog.pg_cast fk
 WHERE	castsource != 0 AND
@@ -161,6 +173,14 @@ SELECT	ctid, reltoastidxid
 FROM	pg_catalog.pg_class fk
 WHERE	reltoastidxid != 0 AND
 	NOT EXISTS(SELECT 1 FROM pg_catalog.pg_class pk WHERE pk.oid = fk.reltoastidxid);
+SELECT	ctid, collnamespace
+FROM	pg_catalog.pg_collation fk
+WHERE	collnamespace != 0 AND
+	NOT EXISTS(SELECT 1 FROM pg_catalog.pg_namespace pk WHERE pk.oid = fk.collnamespace);
+SELECT	ctid, collowner
+FROM	pg_catalog.pg_collation fk
+WHERE	collowner != 0 AND
+	NOT EXISTS(SELECT 1 FROM pg_catalog.pg_authid pk WHERE pk.oid = fk.collowner);
 SELECT	ctid, connamespace
 FROM	pg_catalog.pg_constraint fk
 WHERE	connamespace != 0 AND
@@ -205,6 +225,14 @@ SELECT	ctid, classoid
 FROM	pg_catalog.pg_description fk
 WHERE	classoid != 0 AND
 	NOT EXISTS(SELECT 1 FROM pg_catalog.pg_class pk WHERE pk.oid = fk.classoid);
+SELECT	ctid, extowner
+FROM	pg_catalog.pg_extension fk
+WHERE	extowner != 0 AND
+	NOT EXISTS(SELECT 1 FROM pg_catalog.pg_authid pk WHERE pk.oid = fk.extowner);
+SELECT	ctid, extnamespace
+FROM	pg_catalog.pg_extension fk
+WHERE	extnamespace != 0 AND
+	NOT EXISTS(SELECT 1 FROM pg_catalog.pg_namespace pk WHERE pk.oid = fk.extnamespace);
 SELECT	ctid, indexrelid
 FROM	pg_catalog.pg_index fk
 WHERE	indexrelid != 0 AND
@@ -321,6 +349,10 @@ SELECT	ctid, prolang
 FROM	pg_catalog.pg_proc fk
 WHERE	prolang != 0 AND
 	NOT EXISTS(SELECT 1 FROM pg_catalog.pg_language pk WHERE pk.oid = fk.prolang);
+SELECT	ctid, provariadic
+FROM	pg_catalog.pg_proc fk
+WHERE	provariadic != 0 AND
+	NOT EXISTS(SELECT 1 FROM pg_catalog.pg_type pk WHERE pk.oid = fk.provariadic);
 SELECT	ctid, prorettype
 FROM	pg_catalog.pg_proc fk
 WHERE	prorettype != 0 AND
@@ -477,3 +509,7 @@ SELECT	ctid, typbasetype
 FROM	pg_catalog.pg_type fk
 WHERE	typbasetype != 0 AND
 	NOT EXISTS(SELECT 1 FROM pg_catalog.pg_type pk WHERE pk.oid = fk.typbasetype);
+SELECT	ctid, typcollation
+FROM	pg_catalog.pg_type fk
+WHERE	typcollation != 0 AND
+	NOT EXISTS(SELECT 1 FROM pg_catalog.pg_collation pk WHERE pk.oid = fk.typcollation);
