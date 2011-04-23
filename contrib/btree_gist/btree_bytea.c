@@ -27,41 +27,51 @@ Datum		gbt_bytea_same(PG_FUNCTION_ARGS);
 /* define for comparison */
 
 static bool
-gbt_byteagt(const void *a, const void *b)
+gbt_byteagt(const void *a, const void *b, Oid collation)
 {
-	return (DatumGetBool(DirectFunctionCall2(byteagt, PointerGetDatum(a), PointerGetDatum(b))));
+	return DatumGetBool(DirectFunctionCall2(byteagt,
+											PointerGetDatum(a),
+											PointerGetDatum(b)));
 }
 
 static bool
-gbt_byteage(const void *a, const void *b)
+gbt_byteage(const void *a, const void *b, Oid collation)
 {
-	return (DatumGetBool(DirectFunctionCall2(byteage, PointerGetDatum(a), PointerGetDatum(b))));
+	return DatumGetBool(DirectFunctionCall2(byteage,
+											PointerGetDatum(a),
+											PointerGetDatum(b)));
 }
 
 static bool
-gbt_byteaeq(const void *a, const void *b)
+gbt_byteaeq(const void *a, const void *b, Oid collation)
 {
-	return (DatumGetBool(DirectFunctionCall2(byteaeq, PointerGetDatum(a), PointerGetDatum(b))));
+	return DatumGetBool(DirectFunctionCall2(byteaeq,
+											PointerGetDatum(a),
+											PointerGetDatum(b)));
 }
 
 static bool
-gbt_byteale(const void *a, const void *b)
+gbt_byteale(const void *a, const void *b, Oid collation)
 {
-	return (DatumGetBool(DirectFunctionCall2(byteale, PointerGetDatum(a), PointerGetDatum(b))));
+	return DatumGetBool(DirectFunctionCall2(byteale,
+											PointerGetDatum(a),
+											PointerGetDatum(b)));
 }
 
 static bool
-gbt_bytealt(const void *a, const void *b)
+gbt_bytealt(const void *a, const void *b, Oid collation)
 {
-	return (DatumGetBool(DirectFunctionCall2(bytealt, PointerGetDatum(a), PointerGetDatum(b))));
+	return DatumGetBool(DirectFunctionCall2(bytealt,
+											PointerGetDatum(a),
+											PointerGetDatum(b)));
 }
-
 
 static int32
-gbt_byteacmp(const bytea *a, const bytea *b)
+gbt_byteacmp(const void *a, const void *b, Oid collation)
 {
-	return
-		(DatumGetInt32(DirectFunctionCall2(byteacmp, PointerGetDatum(a), PointerGetDatum(b))));
+	return DatumGetInt32(DirectFunctionCall2(byteacmp,
+											 PointerGetDatum(a),
+											 PointerGetDatum(b)));
 }
 
 
@@ -111,7 +121,8 @@ gbt_bytea_consistent(PG_FUNCTION_ARGS)
 	/* All cases served by this function are exact */
 	*recheck = false;
 
-	retval = gbt_var_consistent(&r, query, &strategy, GIST_LEAF(entry), &tinfo);
+	retval = gbt_var_consistent(&r, query, strategy, PG_GET_COLLATION(),
+								GIST_LEAF(entry), &tinfo);
 	PG_RETURN_BOOL(retval);
 }
 
@@ -123,7 +134,8 @@ gbt_bytea_union(PG_FUNCTION_ARGS)
 	GistEntryVector *entryvec = (GistEntryVector *) PG_GETARG_POINTER(0);
 	int32	   *size = (int *) PG_GETARG_POINTER(1);
 
-	PG_RETURN_POINTER(gbt_var_union(entryvec, size, &tinfo));
+	PG_RETURN_POINTER(gbt_var_union(entryvec, size, PG_GET_COLLATION(),
+									&tinfo));
 }
 
 
@@ -133,7 +145,8 @@ gbt_bytea_picksplit(PG_FUNCTION_ARGS)
 	GistEntryVector *entryvec = (GistEntryVector *) PG_GETARG_POINTER(0);
 	GIST_SPLITVEC *v = (GIST_SPLITVEC *) PG_GETARG_POINTER(1);
 
-	gbt_var_picksplit(entryvec, v, &tinfo);
+	gbt_var_picksplit(entryvec, v, PG_GET_COLLATION(),
+					  &tinfo);
 	PG_RETURN_POINTER(v);
 }
 
@@ -144,7 +157,8 @@ gbt_bytea_same(PG_FUNCTION_ARGS)
 	Datum		d2 = PG_GETARG_DATUM(1);
 	bool	   *result = (bool *) PG_GETARG_POINTER(2);
 
-	PG_RETURN_POINTER(gbt_var_same(result, d1, d2, &tinfo));
+	*result = gbt_var_same(d1, d2, PG_GET_COLLATION(), &tinfo);
+	PG_RETURN_POINTER(result);
 }
 
 
@@ -155,5 +169,6 @@ gbt_bytea_penalty(PG_FUNCTION_ARGS)
 	GISTENTRY  *n = (GISTENTRY *) PG_GETARG_POINTER(1);
 	float	   *result = (float *) PG_GETARG_POINTER(2);
 
-	PG_RETURN_POINTER(gbt_var_penalty(result, o, n, &tinfo));
+	PG_RETURN_POINTER(gbt_var_penalty(result, o, n, PG_GET_COLLATION(),
+									  &tinfo));
 }

@@ -29,40 +29,51 @@ Datum		gbt_bit_same(PG_FUNCTION_ARGS);
 /* define for comparison */
 
 static bool
-gbt_bitgt(const void *a, const void *b)
+gbt_bitgt(const void *a, const void *b, Oid collation)
 {
-	return (DatumGetBool(DirectFunctionCall2(bitgt, PointerGetDatum(a), PointerGetDatum(b))));
+	return DatumGetBool(DirectFunctionCall2(bitgt,
+											PointerGetDatum(a),
+											PointerGetDatum(b)));
 }
 
 static bool
-gbt_bitge(const void *a, const void *b)
+gbt_bitge(const void *a, const void *b, Oid collation)
 {
-	return (DatumGetBool(DirectFunctionCall2(bitge, PointerGetDatum(a), PointerGetDatum(b))));
+	return DatumGetBool(DirectFunctionCall2(bitge,
+											PointerGetDatum(a),
+											PointerGetDatum(b)));
 }
 
 static bool
-gbt_biteq(const void *a, const void *b)
+gbt_biteq(const void *a, const void *b, Oid collation)
 {
-	return (DatumGetBool(DirectFunctionCall2(biteq, PointerGetDatum(a), PointerGetDatum(b))));
+	return DatumGetBool(DirectFunctionCall2(biteq,
+											PointerGetDatum(a),
+											PointerGetDatum(b)));
 }
 
 static bool
-gbt_bitle(const void *a, const void *b)
+gbt_bitle(const void *a, const void *b, Oid collation)
 {
-	return (DatumGetBool(DirectFunctionCall2(bitle, PointerGetDatum(a), PointerGetDatum(b))));
+	return DatumGetBool(DirectFunctionCall2(bitle,
+											PointerGetDatum(a),
+											PointerGetDatum(b)));
 }
 
 static bool
-gbt_bitlt(const void *a, const void *b)
+gbt_bitlt(const void *a, const void *b, Oid collation)
 {
-	return (DatumGetBool(DirectFunctionCall2(bitlt, PointerGetDatum(a), PointerGetDatum(b))));
+	return DatumGetBool(DirectFunctionCall2(bitlt,
+											PointerGetDatum(a),
+											PointerGetDatum(b)));
 }
 
 static int32
-gbt_bitcmp(const bytea *a, const bytea *b)
+gbt_bitcmp(const void *a, const void *b, Oid collation)
 {
-	return
-		(DatumGetInt32(DirectFunctionCall2(byteacmp, PointerGetDatum(a), PointerGetDatum(b))));
+	return DatumGetInt32(DirectFunctionCall2(byteacmp,
+											 PointerGetDatum(a),
+											 PointerGetDatum(b)));
 }
 
 
@@ -134,7 +145,7 @@ gbt_bit_consistent(PG_FUNCTION_ARGS)
 
 	/* Oid		subtype = PG_GETARG_OID(3); */
 	bool	   *recheck = (bool *) PG_GETARG_POINTER(4);
-	bool		retval = FALSE;
+	bool		retval;
 	GBT_VARKEY *key = (GBT_VARKEY *) DatumGetPointer(entry->key);
 	GBT_VARKEY_R r = gbt_var_key_readable(key);
 
@@ -142,12 +153,14 @@ gbt_bit_consistent(PG_FUNCTION_ARGS)
 	*recheck = false;
 
 	if (GIST_LEAF(entry))
-		retval = gbt_var_consistent(&r, query, &strategy, TRUE, &tinfo);
+		retval = gbt_var_consistent(&r, query, strategy, PG_GET_COLLATION(),
+									TRUE, &tinfo);
 	else
 	{
 		bytea	   *q = gbt_bit_xfrm((bytea *) query);
 
-		retval = gbt_var_consistent(&r, (void *) q, &strategy, FALSE, &tinfo);
+		retval = gbt_var_consistent(&r, q, strategy, PG_GET_COLLATION(),
+									FALSE, &tinfo);
 	}
 	PG_RETURN_BOOL(retval);
 }
@@ -160,7 +173,8 @@ gbt_bit_union(PG_FUNCTION_ARGS)
 	GistEntryVector *entryvec = (GistEntryVector *) PG_GETARG_POINTER(0);
 	int32	   *size = (int *) PG_GETARG_POINTER(1);
 
-	PG_RETURN_POINTER(gbt_var_union(entryvec, size, &tinfo));
+	PG_RETURN_POINTER(gbt_var_union(entryvec, size, PG_GET_COLLATION(),
+									&tinfo));
 }
 
 
@@ -170,7 +184,8 @@ gbt_bit_picksplit(PG_FUNCTION_ARGS)
 	GistEntryVector *entryvec = (GistEntryVector *) PG_GETARG_POINTER(0);
 	GIST_SPLITVEC *v = (GIST_SPLITVEC *) PG_GETARG_POINTER(1);
 
-	gbt_var_picksplit(entryvec, v, &tinfo);
+	gbt_var_picksplit(entryvec, v, PG_GET_COLLATION(),
+					  &tinfo);
 	PG_RETURN_POINTER(v);
 }
 
@@ -181,7 +196,8 @@ gbt_bit_same(PG_FUNCTION_ARGS)
 	Datum		d2 = PG_GETARG_DATUM(1);
 	bool	   *result = (bool *) PG_GETARG_POINTER(2);
 
-	PG_RETURN_POINTER(gbt_var_same(result, d1, d2, &tinfo));
+	*result = gbt_var_same(d1, d2, PG_GET_COLLATION(), &tinfo);
+	PG_RETURN_POINTER(result);
 }
 
 
@@ -192,5 +208,6 @@ gbt_bit_penalty(PG_FUNCTION_ARGS)
 	GISTENTRY  *n = (GISTENTRY *) PG_GETARG_POINTER(1);
 	float	   *result = (float *) PG_GETARG_POINTER(2);
 
-	PG_RETURN_POINTER(gbt_var_penalty(result, o, n, &tinfo));
+	PG_RETURN_POINTER(gbt_var_penalty(result, o, n, PG_GET_COLLATION(),
+									  &tinfo));
 }

@@ -3,7 +3,6 @@
  */
 #include "btree_gist.h"
 #include "btree_utils_var.h"
-#include "catalog/pg_collation.h"
 #include "utils/builtins.h"
 
 /*
@@ -31,55 +30,55 @@ Datum		gbt_text_same(PG_FUNCTION_ARGS);
 /* define for comparison */
 
 static bool
-gbt_textgt(const void *a, const void *b)
+gbt_textgt(const void *a, const void *b, Oid collation)
 {
 	return DatumGetBool(DirectFunctionCall2Coll(text_gt,
-												DEFAULT_COLLATION_OID,
+												collation,
 												PointerGetDatum(a),
 												PointerGetDatum(b)));
 }
 
 static bool
-gbt_textge(const void *a, const void *b)
+gbt_textge(const void *a, const void *b, Oid collation)
 {
 	return DatumGetBool(DirectFunctionCall2Coll(text_ge,
-												DEFAULT_COLLATION_OID,
+												collation,
 												PointerGetDatum(a),
 												PointerGetDatum(b)));
 }
 
 static bool
-gbt_texteq(const void *a, const void *b)
+gbt_texteq(const void *a, const void *b, Oid collation)
 {
 	return DatumGetBool(DirectFunctionCall2Coll(texteq,
-												DEFAULT_COLLATION_OID,
+												collation,
 												PointerGetDatum(a),
 												PointerGetDatum(b)));
 }
 
 static bool
-gbt_textle(const void *a, const void *b)
+gbt_textle(const void *a, const void *b, Oid collation)
 {
 	return DatumGetBool(DirectFunctionCall2Coll(text_le,
-												DEFAULT_COLLATION_OID,
+												collation,
 												PointerGetDatum(a),
 												PointerGetDatum(b)));
 }
 
 static bool
-gbt_textlt(const void *a, const void *b)
+gbt_textlt(const void *a, const void *b, Oid collation)
 {
 	return DatumGetBool(DirectFunctionCall2Coll(text_lt,
-												DEFAULT_COLLATION_OID,
+												collation,
 												PointerGetDatum(a),
 												PointerGetDatum(b)));
 }
 
 static int32
-gbt_textcmp(const bytea *a, const bytea *b)
+gbt_textcmp(const void *a, const void *b, Oid collation)
 {
 	return DatumGetInt32(DirectFunctionCall2Coll(bttextcmp,
-												 DEFAULT_COLLATION_OID,
+												 collation,
 												 PointerGetDatum(a),
 												 PointerGetDatum(b)));
 }
@@ -169,7 +168,8 @@ gbt_text_consistent(PG_FUNCTION_ARGS)
 		tinfo.eml = pg_database_encoding_max_length();
 	}
 
-	retval = gbt_var_consistent(&r, query, &strategy, GIST_LEAF(entry), &tinfo);
+	retval = gbt_var_consistent(&r, query, strategy, PG_GET_COLLATION(),
+								GIST_LEAF(entry), &tinfo);
 
 	PG_RETURN_BOOL(retval);
 }
@@ -197,7 +197,8 @@ gbt_bpchar_consistent(PG_FUNCTION_ARGS)
 		tinfo.eml = pg_database_encoding_max_length();
 	}
 
-	retval = gbt_var_consistent(&r, trim, &strategy, GIST_LEAF(entry), &tinfo);
+	retval = gbt_var_consistent(&r, trim, strategy, PG_GET_COLLATION(),
+								GIST_LEAF(entry), &tinfo);
 	PG_RETURN_BOOL(retval);
 }
 
@@ -208,7 +209,8 @@ gbt_text_union(PG_FUNCTION_ARGS)
 	GistEntryVector *entryvec = (GistEntryVector *) PG_GETARG_POINTER(0);
 	int32	   *size = (int *) PG_GETARG_POINTER(1);
 
-	PG_RETURN_POINTER(gbt_var_union(entryvec, size, &tinfo));
+	PG_RETURN_POINTER(gbt_var_union(entryvec, size, PG_GET_COLLATION(),
+									&tinfo));
 }
 
 
@@ -218,7 +220,8 @@ gbt_text_picksplit(PG_FUNCTION_ARGS)
 	GistEntryVector *entryvec = (GistEntryVector *) PG_GETARG_POINTER(0);
 	GIST_SPLITVEC *v = (GIST_SPLITVEC *) PG_GETARG_POINTER(1);
 
-	gbt_var_picksplit(entryvec, v, &tinfo);
+	gbt_var_picksplit(entryvec, v, PG_GET_COLLATION(),
+					  &tinfo);
 	PG_RETURN_POINTER(v);
 }
 
@@ -229,7 +232,8 @@ gbt_text_same(PG_FUNCTION_ARGS)
 	Datum		d2 = PG_GETARG_DATUM(1);
 	bool	   *result = (bool *) PG_GETARG_POINTER(2);
 
-	PG_RETURN_POINTER(gbt_var_same(result, d1, d2, &tinfo));
+	*result = gbt_var_same(d1, d2, PG_GET_COLLATION(), &tinfo);
+	PG_RETURN_POINTER(result);
 }
 
 
@@ -240,5 +244,6 @@ gbt_text_penalty(PG_FUNCTION_ARGS)
 	GISTENTRY  *n = (GISTENTRY *) PG_GETARG_POINTER(1);
 	float	   *result = (float *) PG_GETARG_POINTER(2);
 
-	PG_RETURN_POINTER(gbt_var_penalty(result, o, n, &tinfo));
+	PG_RETURN_POINTER(gbt_var_penalty(result, o, n, PG_GET_COLLATION(),
+									  &tinfo));
 }

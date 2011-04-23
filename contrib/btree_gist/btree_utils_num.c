@@ -184,9 +184,11 @@ gbt_num_bin_union(Datum *u, GBT_NUMKEY *e, const gbtree_ninfo *tinfo)
 
 
 /*
-** The GiST consistent method
-*/
-
+ * The GiST consistent method
+ *
+ * Note: we currently assume that no datatypes that use this routine are
+ * collation-aware; so we don't bother passing collation through.
+ */
 bool
 gbt_num_consistent(const GBT_NUMKEY_R *key,
 				   const void *query,
