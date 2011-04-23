@@ -2,7 +2,7 @@
 
 # src/tools/findoidjoins/make_oidjoins_check
 
-# You first run findoidjoins on the template1 database, and send that
+# You first run findoidjoins on the regression database, then send that
 # output into this script to generate a list of SQL statements.
 
 # NOTE: any field that findoidjoins thinks joins to more than one table
@@ -12,17 +12,16 @@
 # Caution: you may need to use GNU awk.
 AWK=${AWK:-awk}
 
-TMP="${TMPDIR:-/tmp}/make_oidjoins_check.$$"
-trap "rm -rf $TMP" 0 1 2 3 15
-
 # Create a temporary directory with the proper permissions so no one can
 # intercept our temporary files and cause a security breach.
+TMP="${TMPDIR:-/tmp}/make_oidjoins_check.$$"
 OMASK="`umask`"
 umask 077
 if ! mkdir $TMP
 then	echo "Can't create temporary directory $TMP." 1>&2
 	exit 1
 fi
+trap "rm -rf $TMP" 0 1 2 3 15
 umask "$OMASK"
 unset OMASK
 
@@ -40,7 +39,7 @@ if [ -s $DUPSFILE ] ; then
 	cat $DUPSFILE 1>&2
 fi
 
-# Get the non-multiply-referenced fields.
+# Get the fields without multiple references.
 cat $INPUTFILE | while read LINE
 do
 	set -- $LINE
@@ -49,7 +48,7 @@ done >$NONDUPSFILE
 
 # Generate the output.
 cat $NONDUPSFILE |
-$AWK -F'[ \.]' '\
+$AWK -F'[ .]' '\
 	BEGIN \
 	{
 		printf "\
@@ -57,6 +56,7 @@ $AWK -F'[ \.]' '\
 -- This is created by pgsql/src/tools/findoidjoins/make_oidjoins_check\n\
 --\n";
 	}
+	$5 == "=>" \
 	{
 		printf "\
 SELECT	ctid, %s\n\
@@ -64,6 +64,16 @@ FROM	%s.%s fk\n\
 WHERE	%s != 0 AND\n\
 	NOT EXISTS(SELECT 1 FROM %s.%s pk WHERE pk.oid = fk.%s);\n",
 	$4, $2, $3, $4,
+	$6, $7, $4;
+	}
+	$5 == "[]=>" \
+	{
+		printf "\
+SELECT	ctid, %s\n\
+FROM	(SELECT ctid, unnest(%s) AS %s FROM %s.%s) fk\n\
+WHERE	%s != 0 AND\n\
+	NOT EXISTS(SELECT 1 FROM %s.%s pk WHERE pk.oid = fk.%s);\n",
+	$4, $4, $4, $2, $3, $4,
 	$6, $7, $4;
 	}'
 

@@ -241,6 +241,14 @@ WHERE	amproc != 0 AND
 ------+--------
 (0 rows)
 
+SELECT	ctid, adrelid
+FROM	pg_catalog.pg_attrdef fk
+WHERE	adrelid != 0 AND
+	NOT EXISTS(SELECT 1 FROM pg_catalog.pg_class pk WHERE pk.oid = fk.adrelid);
+ ctid | adrelid 
+------+---------
+(0 rows)
+
 SELECT	ctid, attrelid
 FROM	pg_catalog.pg_attribute fk
 WHERE	attrelid != 0 AND
@@ -303,6 +311,14 @@ WHERE	reltype != 0 AND
 	NOT EXISTS(SELECT 1 FROM pg_catalog.pg_type pk WHERE pk.oid = fk.reltype);
  ctid | reltype 
 ------+---------
+(0 rows)
+
+SELECT	ctid, reloftype
+FROM	pg_catalog.pg_class fk
+WHERE	reloftype != 0 AND
+	NOT EXISTS(SELECT 1 FROM pg_catalog.pg_type pk WHERE pk.oid = fk.reloftype);
+ ctid | reloftype 
+------+-----------
 (0 rows)
 
 SELECT	ctid, relowner
@@ -369,12 +385,36 @@ WHERE	connamespace != 0 AND
 ------+--------------
 (0 rows)
 
+SELECT	ctid, conrelid
+FROM	pg_catalog.pg_constraint fk
+WHERE	conrelid != 0 AND
+	NOT EXISTS(SELECT 1 FROM pg_catalog.pg_class pk WHERE pk.oid = fk.conrelid);
+ ctid | conrelid 
+------+----------
+(0 rows)
+
 SELECT	ctid, contypid
 FROM	pg_catalog.pg_constraint fk
 WHERE	contypid != 0 AND
 	NOT EXISTS(SELECT 1 FROM pg_catalog.pg_type pk WHERE pk.oid = fk.contypid);
  ctid | contypid 
 ------+----------
+(0 rows)
+
+SELECT	ctid, conindid
+FROM	pg_catalog.pg_constraint fk
+WHERE	conindid != 0 AND
+	NOT EXISTS(SELECT 1 FROM pg_catalog.pg_class pk WHERE pk.oid = fk.conindid);
+ ctid | conindid 
+------+----------
+(0 rows)
+
+SELECT	ctid, confrelid
+FROM	pg_catalog.pg_constraint fk
+WHERE	confrelid != 0 AND
+	NOT EXISTS(SELECT 1 FROM pg_catalog.pg_class pk WHERE pk.oid = fk.confrelid);
+ ctid | confrelid 
+------+-----------
 (0 rows)
 
 SELECT	ctid, connamespace
@@ -449,6 +489,14 @@ WHERE	classoid != 0 AND
 ------+----------
 (0 rows)
 
+SELECT	ctid, enumtypid
+FROM	pg_catalog.pg_enum fk
+WHERE	enumtypid != 0 AND
+	NOT EXISTS(SELECT 1 FROM pg_catalog.pg_type pk WHERE pk.oid = fk.enumtypid);
+ ctid | enumtypid 
+------+-----------
+(0 rows)
+
 SELECT	ctid, extowner
 FROM	pg_catalog.pg_extension fk
 WHERE	extowner != 0 AND
@@ -479,6 +527,22 @@ WHERE	indrelid != 0 AND
 	NOT EXISTS(SELECT 1 FROM pg_catalog.pg_class pk WHERE pk.oid = fk.indrelid);
  ctid | indrelid 
 ------+----------
+(0 rows)
+
+SELECT	ctid, inhrelid
+FROM	pg_catalog.pg_inherits fk
+WHERE	inhrelid != 0 AND
+	NOT EXISTS(SELECT 1 FROM pg_catalog.pg_class pk WHERE pk.oid = fk.inhrelid);
+ ctid | inhrelid 
+------+----------
+(0 rows)
+
+SELECT	ctid, inhparent
+FROM	pg_catalog.pg_inherits fk
+WHERE	inhparent != 0 AND
+	NOT EXISTS(SELECT 1 FROM pg_catalog.pg_class pk WHERE pk.oid = fk.inhparent);
+ ctid | inhparent 
+------+-----------
 (0 rows)
 
 SELECT	ctid, lanowner
@@ -777,6 +841,46 @@ WHERE	spcowner != 0 AND
 ------+----------
 (0 rows)
 
+SELECT	ctid, tgrelid
+FROM	pg_catalog.pg_trigger fk
+WHERE	tgrelid != 0 AND
+	NOT EXISTS(SELECT 1 FROM pg_catalog.pg_class pk WHERE pk.oid = fk.tgrelid);
+ ctid | tgrelid 
+------+---------
+(0 rows)
+
+SELECT	ctid, tgfoid
+FROM	pg_catalog.pg_trigger fk
+WHERE	tgfoid != 0 AND
+	NOT EXISTS(SELECT 1 FROM pg_catalog.pg_proc pk WHERE pk.oid = fk.tgfoid);
+ ctid | tgfoid 
+------+--------
+(0 rows)
+
+SELECT	ctid, tgconstrrelid
+FROM	pg_catalog.pg_trigger fk
+WHERE	tgconstrrelid != 0 AND
+	NOT EXISTS(SELECT 1 FROM pg_catalog.pg_class pk WHERE pk.oid = fk.tgconstrrelid);
+ ctid | tgconstrrelid 
+------+---------------
+(0 rows)
+
+SELECT	ctid, tgconstrindid
+FROM	pg_catalog.pg_trigger fk
+WHERE	tgconstrindid != 0 AND
+	NOT EXISTS(SELECT 1 FROM pg_catalog.pg_class pk WHERE pk.oid = fk.tgconstrindid);
+ ctid | tgconstrindid 
+------+---------------
+(0 rows)
+
+SELECT	ctid, tgconstraint
+FROM	pg_catalog.pg_trigger fk
+WHERE	tgconstraint != 0 AND
+	NOT EXISTS(SELECT 1 FROM pg_catalog.pg_constraint pk WHERE pk.oid = fk.tgconstraint);
+ ctid | tgconstraint 
+------+--------------
+(0 rows)
+
 SELECT	ctid, cfgnamespace
 FROM	pg_catalog.pg_ts_config fk
 WHERE	cfgnamespace != 0 AND
@@ -1023,5 +1127,37 @@ WHERE	typcollation != 0 AND
 	NOT EXISTS(SELECT 1 FROM pg_catalog.pg_collation pk WHERE pk.oid = fk.typcollation);
  ctid | typcollation 
 ------+--------------
+(0 rows)
+
+SELECT	ctid, conpfeqop
+FROM	(SELECT ctid, unnest(conpfeqop) AS conpfeqop FROM pg_catalog.pg_constraint) fk
+WHERE	conpfeqop != 0 AND
+	NOT EXISTS(SELECT 1 FROM pg_catalog.pg_operator pk WHERE pk.oid = fk.conpfeqop);
+ ctid | conpfeqop 
+------+-----------
+(0 rows)
+
+SELECT	ctid, conppeqop
+FROM	(SELECT ctid, unnest(conppeqop) AS conppeqop FROM pg_catalog.pg_constraint) fk
+WHERE	conppeqop != 0 AND
+	NOT EXISTS(SELECT 1 FROM pg_catalog.pg_operator pk WHERE pk.oid = fk.conppeqop);
+ ctid | conppeqop 
+------+-----------
+(0 rows)
+
+SELECT	ctid, conffeqop
+FROM	(SELECT ctid, unnest(conffeqop) AS conffeqop FROM pg_catalog.pg_constraint) fk
+WHERE	conffeqop != 0 AND
+	NOT EXISTS(SELECT 1 FROM pg_catalog.pg_operator pk WHERE pk.oid = fk.conffeqop);
+ ctid | conffeqop 
+------+-----------
+(0 rows)
+
+SELECT	ctid, proallargtypes
+FROM	(SELECT ctid, unnest(proallargtypes) AS proallargtypes FROM pg_catalog.pg_proc) fk
+WHERE	proallargtypes != 0 AND
+	NOT EXISTS(SELECT 1 FROM pg_catalog.pg_type pk WHERE pk.oid = fk.proallargtypes);
+ ctid | proallargtypes 
+------+----------------
 (0 rows)
 
