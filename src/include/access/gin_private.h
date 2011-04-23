@@ -303,8 +303,8 @@ typedef struct GinState
 	FmgrInfo	comparePartialFn[INDEX_MAX_KEYS];		/* optional method */
 	/* canPartialMatch[i] is true if comparePartialFn[i] is valid */
 	bool		canPartialMatch[INDEX_MAX_KEYS];
-	/* Collations to supply to the compareFns and comparePartialFns */
-	Oid			compareCollation[INDEX_MAX_KEYS];
+	/* Collations to pass to the support functions */
+	Oid			supportCollation[INDEX_MAX_KEYS];
 } GinState;
 
 /* XLog stuff */

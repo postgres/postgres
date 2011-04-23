@@ -93,17 +93,17 @@ initGinState(GinState *state, Relation index)
 		 * while doing comparisons.  However, we may have a collatable storage
 		 * type for a noncollatable indexed data type (for instance, hstore
 		 * uses text index entries).  If there's no index collation then
-		 * specify default collation in case the comparison function needs
-		 * collation.  This is harmless if the comparison function doesn't
+		 * specify default collation in case the support functions need
+		 * collation.  This is harmless if the support functions don't
 		 * care about collation, so we just do it unconditionally.  (We could
 		 * alternatively call get_typcollation, but that seems like expensive
 		 * overkill --- there aren't going to be any cases where a GIN storage
 		 * type has a nondefault collation.)
 		 */
 		if (OidIsValid(index->rd_indcollation[i]))
-			state->compareCollation[i] = index->rd_indcollation[i];
+			state->supportCollation[i] = index->rd_indcollation[i];
 		else
-			state->compareCollation[i] = DEFAULT_COLLATION_OID;
+			state->supportCollation[i] = DEFAULT_COLLATION_OID;
 	}
 }
 
@@ -293,7 +293,7 @@ ginCompareEntries(GinState *ginstate, OffsetNumber attnum,
 
 	/* both not null, so safe to call the compareFn */
 	return DatumGetInt32(FunctionCall2Coll(&ginstate->compareFn[attnum - 1],
-										   ginstate->compareCollation[attnum - 1],
+										   ginstate->supportCollation[attnum - 1],
 										   a, b));
 }
 
@@ -399,10 +399,11 @@ ginExtractEntries(GinState *ginstate, OffsetNumber attnum,
 	/* OK, call the opclass's extractValueFn */
 	nullFlags = NULL;			/* in case extractValue doesn't set it */
 	entries = (Datum *)
-		DatumGetPointer(FunctionCall3(&ginstate->extractValueFn[attnum - 1],
-									  value,
-									  PointerGetDatum(nentries),
-									  PointerGetDatum(&nullFlags)));
+		DatumGetPointer(FunctionCall3Coll(&ginstate->extractValueFn[attnum - 1],
+										  ginstate->supportCollation[attnum - 1],
+										  value,
+										  PointerGetDatum(nentries),
+										  PointerGetDatum(&nullFlags)));
 
 	/*
 	 * Generate a placeholder if the item contained no keys.
@@ -453,7 +454,7 @@ ginExtractEntries(GinState *ginstate, OffsetNumber attnum,
 		}
 
 		arg.cmpDatumFunc = &ginstate->compareFn[attnum - 1];
-		arg.collation = ginstate->compareCollation[attnum - 1];
+		arg.collation = ginstate->supportCollation[attnum - 1];
 		arg.haveDups = false;
 		qsort_arg(keydata, *nentries, sizeof(keyEntryData),
 				  cmpEntries, (void *) &arg);

@@ -17,6 +17,7 @@
 #include "access/genam.h"
 #include "access/gist_private.h"
 #include "catalog/index.h"
+#include "catalog/pg_collation.h"
 #include "miscadmin.h"
 #include "storage/bufmgr.h"
 #include "storage/indexfsm.h"
@@ -1394,6 +1395,22 @@ initGISTstate(GISTSTATE *giststate, Relation index)
 						   CurrentMemoryContext);
 		else
 			giststate->distanceFn[i].fn_oid = InvalidOid;
+
+		/*
+		 * If the index column has a specified collation, we should honor that
+		 * while doing comparisons.  However, we may have a collatable storage
+		 * type for a noncollatable indexed data type.  If there's no index
+		 * collation then specify default collation in case the support
+		 * functions need collation.  This is harmless if the support
+		 * functions don't care about collation, so we just do it
+		 * unconditionally.  (We could alternatively call get_typcollation,
+		 * but that seems like expensive overkill --- there aren't going to be
+		 * any cases where a GIST storage type has a nondefault collation.)
+		 */
+		if (OidIsValid(index->rd_indcollation[i]))
+			giststate->supportCollation[i] = index->rd_indcollation[i];
+		else
+			giststate->supportCollation[i] = DEFAULT_COLLATION_OID;
 	}
 }
 

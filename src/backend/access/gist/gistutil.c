@@ -207,9 +207,10 @@ gistMakeUnionItVec(GISTSTATE *giststate, IndexTuple *itvec, int len, int startke
 			}
 
 			/* Make union and store in attr array */
-			attr[i] = FunctionCall2(&giststate->unionFn[i],
-									PointerGetDatum(evec),
-									PointerGetDatum(&attrsize));
+			attr[i] = FunctionCall2Coll(&giststate->unionFn[i],
+										giststate->supportCollation[i],
+										PointerGetDatum(evec),
+										PointerGetDatum(&attrsize));
 
 			isnull[i] = FALSE;
 		}
@@ -271,9 +272,10 @@ gistMakeUnionKey(GISTSTATE *giststate, int attno,
 		}
 
 		*dstisnull = FALSE;
-		*dst = FunctionCall2(&giststate->unionFn[attno],
-							 PointerGetDatum(evec),
-							 PointerGetDatum(&dstsize));
+		*dst = FunctionCall2Coll(&giststate->unionFn[attno],
+								 giststate->supportCollation[attno],
+								 PointerGetDatum(evec),
+								 PointerGetDatum(&dstsize));
 	}
 }
 
@@ -282,9 +284,10 @@ gistKeyIsEQ(GISTSTATE *giststate, int attno, Datum a, Datum b)
 {
 	bool		result;
 
-	FunctionCall3(&giststate->equalFn[attno],
-				  a, b,
-				  PointerGetDatum(&result));
+	FunctionCall3Coll(&giststate->equalFn[attno],
+					  giststate->supportCollation[attno],
+					  a, b,
+					  PointerGetDatum(&result));
 	return result;
 }
 
@@ -442,8 +445,9 @@ gistdentryinit(GISTSTATE *giststate, int nkey, GISTENTRY *e,
 
 		gistentryinit(*e, k, r, pg, o, l);
 		dep = (GISTENTRY *)
-			DatumGetPointer(FunctionCall1(&giststate->decompressFn[nkey],
-										  PointerGetDatum(e)));
+			DatumGetPointer(FunctionCall1Coll(&giststate->decompressFn[nkey],
+											  giststate->supportCollation[nkey],
+											  PointerGetDatum(e)));
 		/* decompressFn may just return the given pointer */
 		if (dep != e)
 			gistentryinit(*e, dep->key, dep->rel, dep->page, dep->offset,
@@ -468,8 +472,9 @@ gistcentryinit(GISTSTATE *giststate, int nkey,
 
 		gistentryinit(*e, k, r, pg, o, l);
 		cep = (GISTENTRY *)
-			DatumGetPointer(FunctionCall1(&giststate->compressFn[nkey],
-										  PointerGetDatum(e)));
+			DatumGetPointer(FunctionCall1Coll(&giststate->compressFn[nkey],
+											  giststate->supportCollation[nkey],
+											  PointerGetDatum(e)));
 		/* compressFn may just return the given pointer */
 		if (cep != e)
 			gistentryinit(*e, cep->key, cep->rel, cep->page, cep->offset,
@@ -519,11 +524,13 @@ gistpenalty(GISTSTATE *giststate, int attno,
 {
 	float		penalty = 0.0;
 
-	if (giststate->penaltyFn[attno].fn_strict == FALSE || (isNullOrig == FALSE && isNullAdd == FALSE))
-		FunctionCall3(&giststate->penaltyFn[attno],
-					  PointerGetDatum(orig),
-					  PointerGetDatum(add),
-					  PointerGetDatum(&penalty));
+	if (giststate->penaltyFn[attno].fn_strict == FALSE ||
+		(isNullOrig == FALSE && isNullAdd == FALSE))
+		FunctionCall3Coll(&giststate->penaltyFn[attno],
+						  giststate->supportCollation[attno],
+						  PointerGetDatum(orig),
+						  PointerGetDatum(add),
+						  PointerGetDatum(&penalty));
 	else if (isNullOrig && isNullAdd)
 		penalty = 0.0;
 	else

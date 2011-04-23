@@ -305,14 +305,15 @@ ginNewScanKey(IndexScanDesc scan)
 
 		/* OK to call the extractQueryFn */
 		queryValues = (Datum *)
-			DatumGetPointer(FunctionCall7(&so->ginstate.extractQueryFn[skey->sk_attno - 1],
-										  skey->sk_argument,
-										  PointerGetDatum(&nQueryValues),
-										  UInt16GetDatum(skey->sk_strategy),
-										  PointerGetDatum(&partial_matches),
-										  PointerGetDatum(&extra_data),
-										  PointerGetDatum(&nullFlags),
-										  PointerGetDatum(&searchMode)));
+			DatumGetPointer(FunctionCall7Coll(&so->ginstate.extractQueryFn[skey->sk_attno - 1],
+											  so->ginstate.supportCollation[skey->sk_attno - 1],
+											  skey->sk_argument,
+											  PointerGetDatum(&nQueryValues),
+											  UInt16GetDatum(skey->sk_strategy),
+											  PointerGetDatum(&partial_matches),
+											  PointerGetDatum(&extra_data),
+											  PointerGetDatum(&nullFlags),
+											  PointerGetDatum(&searchMode)));
 
 		/*
 		 * If bogus searchMode is returned, treat as GIN_SEARCH_MODE_ALL; note

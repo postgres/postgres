@@ -325,16 +325,18 @@ genericPickSplit(GISTSTATE *giststate, GistEntryVector *entryvec, GIST_SPLITVEC 
 	evec->n = v->spl_nleft;
 	memcpy(evec->vector, entryvec->vector + FirstOffsetNumber,
 		   sizeof(GISTENTRY) * evec->n);
-	v->spl_ldatum = FunctionCall2(&giststate->unionFn[attno],
-								  PointerGetDatum(evec),
-								  PointerGetDatum(&nbytes));
+	v->spl_ldatum = FunctionCall2Coll(&giststate->unionFn[attno],
+									  giststate->supportCollation[attno],
+									  PointerGetDatum(evec),
+									  PointerGetDatum(&nbytes));
 
 	evec->n = v->spl_nright;
 	memcpy(evec->vector, entryvec->vector + FirstOffsetNumber + v->spl_nleft,
 		   sizeof(GISTENTRY) * evec->n);
-	v->spl_rdatum = FunctionCall2(&giststate->unionFn[attno],
-								  PointerGetDatum(evec),
-								  PointerGetDatum(&nbytes));
+	v->spl_rdatum = FunctionCall2Coll(&giststate->unionFn[attno],
+									  giststate->supportCollation[attno],
+									  PointerGetDatum(evec),
+									  PointerGetDatum(&nbytes));
 }
 
 /*
@@ -361,9 +363,10 @@ gistUserPicksplit(Relation r, GistEntryVector *entryvec, int attno, GistSplitVec
 	sv->spl_ldatum = v->spl_lattr[attno];
 	sv->spl_rdatum = v->spl_rattr[attno];
 
-	FunctionCall2(&giststate->picksplitFn[attno],
-				  PointerGetDatum(entryvec),
-				  PointerGetDatum(sv));
+	FunctionCall2Coll(&giststate->picksplitFn[attno],
+					  giststate->supportCollation[attno],
+					  PointerGetDatum(entryvec),
+					  PointerGetDatum(sv));
 
 	if (sv->spl_nleft == 0 || sv->spl_nright == 0)
 	{
