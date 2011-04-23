@@ -135,7 +135,8 @@ crashDumpHandler(struct _EXCEPTION_POINTERS * pExceptionInfo)
 
 		systemTicks = GetTickCount();
 		snprintf(dumpPath, _MAX_PATH,
-			   "crashdumps\\postgres-pid%0i-%0i.mdmp", selfPid, systemTicks);
+				 "crashdumps\\postgres-pid%0i-%0i.mdmp", 
+				 (int) selfPid, (int) systemTicks);
 		dumpPath[_MAX_PATH - 1] = '\0';
 
 		dumpFile = CreateFile(dumpPath, GENERIC_WRITE, FILE_SHARE_WRITE,
@@ -143,8 +144,8 @@ crashDumpHandler(struct _EXCEPTION_POINTERS * pExceptionInfo)
 							  NULL);
 		if (dumpFile == INVALID_HANDLE_VALUE)
 		{
-			write_stderr("could not open crash dump file %s for writing: error code %d\n",
-						 dumpPath, GetLastError());
+			write_stderr("could not open crash dump file %s for writing: error code %u\n",
+						 dumpPath, (unsigned int) GetLastError());
 			return EXCEPTION_CONTINUE_SEARCH;
 		}
 
@@ -153,7 +154,7 @@ crashDumpHandler(struct _EXCEPTION_POINTERS * pExceptionInfo)
 			write_stderr("wrote crash dump to %s\n", dumpPath);
 		else
 			write_stderr("could not write crash dump to %s: error code %08x\n",
-						 dumpPath, GetLastError());
+						 dumpPath, (unsigned int) GetLastError());
 
 		CloseHandle(dumpFile);
 	}

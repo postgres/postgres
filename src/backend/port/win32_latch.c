@@ -94,7 +94,7 @@ WaitLatchOrSocket(volatile Latch *latch, SOCKET sock, bool forRead,
 	DWORD		rc;
 	HANDLE		events[3];
 	HANDLE		latchevent;
-	HANDLE		sockevent;
+	HANDLE		sockevent = WSA_INVALID_EVENT; /* silence compiler */
 	int			numevents;
 	int			result = 0;
 
@@ -161,7 +161,7 @@ WaitLatchOrSocket(volatile Latch *latch, SOCKET sock, bool forRead,
 			break;
 		}
 		else if (rc != WAIT_OBJECT_0)
-			elog(ERROR, "unexpected return code from WaitForMultipleObjects(): %d", rc);
+			elog(ERROR, "unexpected return code from WaitForMultipleObjects(): %d", (int) rc);
 	}
 
 	/* Clean up the handle we created for the socket */
