@@ -13,7 +13,6 @@
 #include "mb/pg_wchar.h"
 #include "utils/builtins.h"
 #include "utils/memutils.h"
-#include "utils/pg_locale.h"
 #include "utils/syscache.h"
 
 /*
@@ -688,126 +687,6 @@ perform_default_encoding_conversion(const char *src, int len, bool is_client_to_
 	return result;
 }
 
-
-
-#ifdef USE_WIDE_UPPER_LOWER
-
-/*
- * wchar2char --- convert wide characters to multibyte format
- *
- * This has the same API as the standard wcstombs() function; in particular,
- * tolen is the maximum number of bytes to store at *to, and *from must be
- * zero-terminated.  The output will be zero-terminated iff there is room.
- */
-size_t
-wchar2char(char *to, const wchar_t *from, size_t tolen, Oid collation)
-{
-	size_t		result;
-
-	if (tolen == 0)
-		return 0;
-
-#ifdef WIN32
-
-	/*
-	 * On Windows, the "Unicode" locales assume UTF16 not UTF8 encoding, and
-	 * for some reason mbstowcs and wcstombs won't do this for us, so we use
-	 * MultiByteToWideChar().
-	 */
-	if (GetDatabaseEncoding() == PG_UTF8)
-	{
-		result = WideCharToMultiByte(CP_UTF8, 0, from, -1, to, tolen,
-									 NULL, NULL);
-		/* A zero return is failure */
-		if (result <= 0)
-			result = -1;
-		else
-		{
-			Assert(result <= tolen);
-			/* Microsoft counts the zero terminator in the result */
-			result--;
-		}
-	}
-	else
-#endif   /* WIN32 */
-	{
-		Assert(!lc_ctype_is_c(collation));
-		result = wcstombs(to, from, tolen);
-	}
-	return result;
-}
-
-/*
- * char2wchar --- convert multibyte characters to wide characters
- *
- * This has almost the API of mbstowcs(), except that *from need not be
- * null-terminated; instead, the number of input bytes is specified as
- * fromlen.  Also, we ereport() rather than returning -1 for invalid
- * input encoding.	tolen is the maximum number of wchar_t's to store at *to.
- * The output will be zero-terminated iff there is room.
- */
-size_t
-char2wchar(wchar_t *to, size_t tolen, const char *from, size_t fromlen, Oid collation)
-{
-	size_t		result;
-
-	if (tolen == 0)
-		return 0;
-
-#ifdef WIN32
-	/* See WIN32 "Unicode" comment above */
-	if (GetDatabaseEncoding() == PG_UTF8)
-	{
-		/* Win32 API does not work for zero-length input */
-		if (fromlen == 0)
-			result = 0;
-		else
-		{
-			result = MultiByteToWideChar(CP_UTF8, 0, from, fromlen, to, tolen - 1);
-			/* A zero return is failure */
-			if (result == 0)
-				result = -1;
-		}
-
-		if (result != -1)
-		{
-			Assert(result < tolen);
-			/* Append trailing null wchar (MultiByteToWideChar() does not) */
-			to[result] = 0;
-		}
-	}
-	else
-#endif   /* WIN32 */
-	{
-		/* mbstowcs requires ending '\0' */
-		char	   *str = pnstrdup(from, fromlen);
-
-		Assert(!lc_ctype_is_c(collation));
-		result = mbstowcs(to, str, tolen);
-		pfree(str);
-	}
-
-	if (result == -1)
-	{
-		/*
-		 * Invalid multibyte character encountered.  We try to give a useful
-		 * error message by letting pg_verifymbstr check the string.  But it's
-		 * possible that the string is OK to us, and not OK to mbstowcs ---
-		 * this suggests that the LC_CTYPE locale is different from the
-		 * database encoding.  Give a generic error message if verifymbstr
-		 * can't find anything wrong.
-		 */
-		pg_verifymbstr(from, fromlen, false);	/* might not return */
-		/* but if it does ... */
-		ereport(ERROR,
-				(errcode(ERRCODE_CHARACTER_NOT_IN_REPERTOIRE),
-				 errmsg("invalid multibyte character for locale"),
-				 errhint("The server's LC_CTYPE locale is probably incompatible with the database encoding.")));
-	}
-
-	return result;
-}
-#endif
 
 /* convert a multibyte string to a wchar */
 int

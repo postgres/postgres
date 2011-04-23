@@ -300,13 +300,14 @@ TParserInit(char *str, int len)
 	if (prs->charmaxlen > 1)
 	{
 		Oid			collation = DEFAULT_COLLATION_OID;	/* TODO */
+		pg_locale_t	mylocale = 0;	/* TODO */
 
 		prs->usewide = true;
 		if (lc_ctype_is_c(collation))
 		{
 			/*
 			 * char2wchar doesn't work for C-locale and sizeof(pg_wchar) could
-			 * be not equal to sizeof(wchar_t)
+			 * be different from sizeof(wchar_t)
 			 */
 			prs->pgwstr = (pg_wchar *) palloc(sizeof(pg_wchar) * (prs->lenstr + 1));
 			pg_mb2wchar_with_len(prs->str, prs->pgwstr, prs->lenstr);
@@ -314,7 +315,8 @@ TParserInit(char *str, int len)
 		else
 		{
 			prs->wstr = (wchar_t *) palloc(sizeof(wchar_t) * (prs->lenstr + 1));
-			char2wchar(prs->wstr, prs->lenstr + 1, prs->str, prs->lenstr, collation);
+			char2wchar(prs->wstr, prs->lenstr + 1, prs->str, prs->lenstr,
+					   mylocale);
 		}
 	}
 	else

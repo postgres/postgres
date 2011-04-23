@@ -538,6 +538,9 @@
 /* Define to 1 if you have the `wcstombs' function. */
 #define HAVE_WCSTOMBS 1
 
+/* Define to 1 if you have the `wcstombs_l' function. */
+#define HAVE_WCSTOMBS_L 1
+
 /* Define to 1 if you have the <wctype.h> header file. */
 #define HAVE_WCTYPE_H 1
 

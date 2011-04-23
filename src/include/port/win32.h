@@ -304,6 +304,8 @@ typedef int pid_t;
 #define iswspace_l _iswspace_l
 #define strcoll_l _strcoll_l
 #define wcscoll_l _wcscoll_l
+#define wcstombs_l _wcstombs_l
+#define mbstowcs_l _mbstowcs_l
 
 
 /* In backend/port/win32/signal.c */

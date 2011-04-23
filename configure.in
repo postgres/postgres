@@ -1187,7 +1187,7 @@ PGAC_VAR_INT_TIMEZONE
 AC_FUNC_ACCEPT_ARGTYPES
 PGAC_FUNC_GETTIMEOFDAY_1ARG
 
-AC_CHECK_FUNCS([cbrt dlopen fcvt fdatasync getifaddrs getpeereid getpeerucred getrlimit memmove poll pstat readlink scandir setproctitle setsid sigprocmask symlink sysconf towlower utime utimes waitpid wcstombs])
+AC_CHECK_FUNCS([cbrt dlopen fcvt fdatasync getifaddrs getpeereid getpeerucred getrlimit memmove poll pstat readlink scandir setproctitle setsid sigprocmask symlink sysconf towlower utime utimes waitpid wcstombs wcstombs_l])
 
 AC_REPLACE_FUNCS(fseeko)
 case $host_os in

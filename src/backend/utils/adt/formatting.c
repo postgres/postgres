@@ -1454,6 +1454,10 @@ str_numth(char *dest, char *num, int type)
 	return dest;
 }
 
+/*****************************************************************************
+ *			upper/lower/initcap functions
+ *****************************************************************************/
+
 /*
  * If the system provides the needed functions for wide-character manipulation
  * (which are all standardized by C99), then we implement upper/lower/initcap
@@ -1527,7 +1531,7 @@ str_tolower(const char *buff, size_t nbytes, Oid collid)
 		/* Output workspace cannot have more codes than input bytes */
 		workspace = (wchar_t *) palloc((nbytes + 1) * sizeof(wchar_t));
 
-		char2wchar(workspace, nbytes + 1, buff, nbytes, collid);
+		char2wchar(workspace, nbytes + 1, buff, nbytes, mylocale);
 
 		for (curr_char = 0; workspace[curr_char] != 0; curr_char++)
 		{
@@ -1543,7 +1547,7 @@ str_tolower(const char *buff, size_t nbytes, Oid collid)
 		result_size = curr_char * pg_database_encoding_max_length() + 1;
 		result = palloc(result_size);
 
-		wchar2char(result, workspace, result_size, collid);
+		wchar2char(result, workspace, result_size, mylocale);
 		pfree(workspace);
 	}
 #endif   /* USE_WIDE_UPPER_LOWER */
@@ -1648,7 +1652,7 @@ str_toupper(const char *buff, size_t nbytes, Oid collid)
 		/* Output workspace cannot have more codes than input bytes */
 		workspace = (wchar_t *) palloc((nbytes + 1) * sizeof(wchar_t));
 
-		char2wchar(workspace, nbytes + 1, buff, nbytes, collid);
+		char2wchar(workspace, nbytes + 1, buff, nbytes, mylocale);
 
 		for (curr_char = 0; workspace[curr_char] != 0; curr_char++)
 		{
@@ -1664,7 +1668,7 @@ str_toupper(const char *buff, size_t nbytes, Oid collid)
 		result_size = curr_char * pg_database_encoding_max_length() + 1;
 		result = palloc(result_size);
 
-		wchar2char(result, workspace, result_size, collid);
+		wchar2char(result, workspace, result_size, mylocale);
 		pfree(workspace);
 	}
 #endif   /* USE_WIDE_UPPER_LOWER */
@@ -1781,7 +1785,7 @@ str_initcap(const char *buff, size_t nbytes, Oid collid)
 		/* Output workspace cannot have more codes than input bytes */
 		workspace = (wchar_t *) palloc((nbytes + 1) * sizeof(wchar_t));
 
-		char2wchar(workspace, nbytes + 1, buff, nbytes, collid);
+		char2wchar(workspace, nbytes + 1, buff, nbytes, mylocale);
 
 		for (curr_char = 0; workspace[curr_char] != 0; curr_char++)
 		{
@@ -1809,7 +1813,7 @@ str_initcap(const char *buff, size_t nbytes, Oid collid)
 		result_size = curr_char * pg_database_encoding_max_length() + 1;
 		result = palloc(result_size);
 
-		wchar2char(result, workspace, result_size, collid);
+		wchar2char(result, workspace, result_size, mylocale);
 		pfree(workspace);
 	}
 #endif   /* USE_WIDE_UPPER_LOWER */
