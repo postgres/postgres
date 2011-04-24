@@ -163,6 +163,22 @@
 ;; Add more here if needed...
 
 
+;; Replace a sequence of whitespace in a string by a single space
+(define (normalize-whitespace str #!optional (whitespace '(#\space #\U-000D)))
+  (let loop ((characters (string->list str))
+             (result '())
+             (prev-was-space #f))
+    (if (null? characters)
+        (list->string (reverse result))
+        (let ((c (car characters))
+              (rest (cdr characters)))
+          (if (member c whitespace)
+              (if prev-was-space
+                  (loop rest result #t)
+                  (loop rest (cons #\space result) #t))
+              (loop rest (cons c result) #f))))))
+
+
 <!-- HTML output customization ..................................... -->
 
 <![ %output-html; [
@@ -412,6 +428,26 @@
       (if (not (last-sibling?))
 	  (literal " | ")
 	  (literal "")))))
+
+
+;; Changed to strip and normalize index term content (overrides
+;; dbindex.dsl)
+(define (htmlindexterm)
+  (let* ((attr    (gi (current-node)))
+         (content (data (current-node)))
+         (string  (strip (normalize-whitespace content))) ;; changed
+         (sortas  (attribute-string (normalize "sortas"))))
+    (make sequence
+      (make formatting-instruction data: attr)
+      (if sortas
+          (make sequence
+            (make formatting-instruction data: "[")
+            (make formatting-instruction data: sortas)
+            (make formatting-instruction data: "]"))
+          (empty-sosofo))
+      (make formatting-instruction data: " ")
+      (make formatting-instruction data: string)
+      (htmlnewline))))
 
 
 ]]> <!-- %output-html -->
