@@ -50,6 +50,12 @@
 
 typedef struct
 {
+	PlannerInfo *root;
+	AggClauseCosts *costs;
+} count_agg_clauses_context;
+
+typedef struct
+{
 	ParamListInfo boundParams;
 	PlannerGlobal *glob;
 	List	   *active_fns;
@@ -79,7 +85,8 @@ typedef struct
 
 static bool contain_agg_clause_walker(Node *node, void *context);
 static bool pull_agg_clause_walker(Node *node, List **context);
-static bool count_agg_clauses_walker(Node *node, AggClauseCounts *counts);
+static bool count_agg_clauses_walker(Node *node,
+									 count_agg_clauses_context *context);
 static bool find_window_functions_walker(Node *node, WindowFuncLists *lists);
 static bool expression_returns_set_rows_walker(Node *node, double *count);
 static bool contain_subplans_walker(Node *node, void *context);
@@ -448,48 +455,80 @@ pull_agg_clause_walker(Node *node, List **context)
 
 /*
  * count_agg_clauses
- *	  Recursively count the Aggref nodes in an expression tree.
+ *	  Recursively count the Aggref nodes in an expression tree, and
+ *	  accumulate other cost information about them too.
  *
  *	  Note: this also checks for nested aggregates, which are an error.
  *
- * We not only count the nodes, but attempt to estimate the total space
- * needed for their transition state values if all are evaluated in parallel
- * (as would be done in a HashAgg plan).  See AggClauseCounts for the exact
- * set of statistics returned.
+ * We not only count the nodes, but estimate their execution costs, and
+ * attempt to estimate the total space needed for their transition state
+ * values if all are evaluated in parallel (as would be done in a HashAgg
+ * plan).  See AggClauseCosts for the exact set of statistics collected.
  *
- * NOTE that the counts are ADDED to those already in *counts ... so the
- * caller is responsible for zeroing the struct initially.
+ * NOTE that the counts/costs are ADDED to those already in *costs ... so
+ * the caller is responsible for zeroing the struct initially.
  *
  * This does not descend into subqueries, and so should be used only after
  * reduction of sublinks to subplans, or in contexts where it's known there
  * are no subqueries.  There mustn't be outer-aggregate references either.
  */
 void
-count_agg_clauses(Node *clause, AggClauseCounts *counts)
+count_agg_clauses(PlannerInfo *root, Node *clause, AggClauseCosts *costs)
 {
-	/* no setup needed */
-	count_agg_clauses_walker(clause, counts);
+	count_agg_clauses_context context;
+
+	context.root = root;
+	context.costs = costs;
+	(void) count_agg_clauses_walker(clause, &context);
 }
 
 static bool
-count_agg_clauses_walker(Node *node, AggClauseCounts *counts)
+count_agg_clauses_walker(Node *node, count_agg_clauses_context *context)
 {
 	if (node == NULL)
 		return false;
 	if (IsA(node, Aggref))
 	{
 		Aggref	   *aggref = (Aggref *) node;
-		Oid		   *inputTypes;
-		int			numArguments;
+		AggClauseCosts *costs = context->costs;
 		HeapTuple	aggTuple;
 		Form_pg_aggregate aggform;
+		Oid			aggtransfn;
+		Oid			aggfinalfn;
 		Oid			aggtranstype;
+		QualCost	argcosts;
+		Oid		   *inputTypes;
+		int			numArguments;
 		ListCell   *l;
 
 		Assert(aggref->agglevelsup == 0);
-		counts->numAggs++;
+
+		/* fetch info about aggregate from pg_aggregate */
+		aggTuple = SearchSysCache1(AGGFNOID,
+								   ObjectIdGetDatum(aggref->aggfnoid));
+		if (!HeapTupleIsValid(aggTuple))
+			elog(ERROR, "cache lookup failed for aggregate %u",
+				 aggref->aggfnoid);
+		aggform = (Form_pg_aggregate) GETSTRUCT(aggTuple);
+		aggtransfn = aggform->aggtransfn;
+		aggfinalfn = aggform->aggfinalfn;
+		aggtranstype = aggform->aggtranstype;
+		ReleaseSysCache(aggTuple);
+
+		/* count it */
+		costs->numAggs++;
 		if (aggref->aggorder != NIL || aggref->aggdistinct != NIL)
-			counts->numOrderedAggs++;
+			costs->numOrderedAggs++;
+
+		/* add component function execution costs to appropriate totals */
+		costs->transCost.per_tuple += get_func_cost(aggtransfn) * cpu_operator_cost;
+		if (OidIsValid(aggfinalfn))
+			costs->finalCost += get_func_cost(aggfinalfn) * cpu_operator_cost;
+
+		/* also add the input expressions' cost to per-input-row costs */
+		cost_qual_eval_node(&argcosts, (Node *) aggref->args, context->root);
+		costs->transCost.startup += argcosts.startup;
+		costs->transCost.per_tuple += argcosts.per_tuple;
 
 		/* extract argument types (ignoring any ORDER BY expressions) */
 		inputTypes = (Oid *) palloc(sizeof(Oid) * list_length(aggref->args));
@@ -501,16 +540,6 @@ count_agg_clauses_walker(Node *node, AggClauseCounts *counts)
 			if (!tle->resjunk)
 				inputTypes[numArguments++] = exprType((Node *) tle->expr);
 		}
-
-		/* fetch aggregate transition datatype from pg_aggregate */
-		aggTuple = SearchSysCache1(AGGFNOID,
-								   ObjectIdGetDatum(aggref->aggfnoid));
-		if (!HeapTupleIsValid(aggTuple))
-			elog(ERROR, "cache lookup failed for aggregate %u",
-				 aggref->aggfnoid);
-		aggform = (Form_pg_aggregate) GETSTRUCT(aggTuple);
-		aggtranstype = aggform->aggtranstype;
-		ReleaseSysCache(aggTuple);
 
 		/* resolve actual type of transition state, if polymorphic */
 		if (IsPolymorphicType(aggtranstype))
@@ -554,7 +583,7 @@ count_agg_clauses_walker(Node *node, AggClauseCounts *counts)
 			avgwidth = get_typavgwidth(aggtranstype, aggtranstypmod);
 			avgwidth = MAXALIGN(avgwidth);
 
-			counts->transitionSpace += avgwidth + 2 * sizeof(void *);
+			costs->transitionSpace += avgwidth + 2 * sizeof(void *);
 		}
 		else if (aggtranstype == INTERNALOID)
 		{
@@ -566,7 +595,7 @@ count_agg_clauses_walker(Node *node, AggClauseCounts *counts)
 			 * being kept in a private memory context, as is done by
 			 * array_agg() for instance.
 			 */
-			counts->transitionSpace += ALLOCSET_DEFAULT_INITSIZE;
+			costs->transitionSpace += ALLOCSET_DEFAULT_INITSIZE;
 		}
 
 		/*
@@ -585,7 +614,7 @@ count_agg_clauses_walker(Node *node, AggClauseCounts *counts)
 	}
 	Assert(!IsA(node, SubLink));
 	return expression_tree_walker(node, count_agg_clauses_walker,
-								  (void *) counts);
+								  (void *) context);
 }
 
 

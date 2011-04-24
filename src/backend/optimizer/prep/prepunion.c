@@ -732,12 +732,12 @@ make_union_unique(SetOperationStmt *op, Plan *plan,
 								 plan->targetlist,
 								 NIL,
 								 AGG_HASHED,
+								 NULL,
 								 list_length(groupList),
 								 extract_grouping_cols(groupList,
 													   plan->targetlist),
 								 extract_grouping_ops(groupList),
 								 numGroups,
-								 0,
 								 plan);
 		/* Hashed aggregation produces randomly-ordered results */
 		*sortClauses = NIL;
@@ -814,7 +814,7 @@ choose_hashed_setop(PlannerInfo *root, List *groupClauses,
 	 * These path variables are dummies that just hold cost fields; we don't
 	 * make actual Paths for these steps.
 	 */
-	cost_agg(&hashed_p, root, AGG_HASHED, 0,
+	cost_agg(&hashed_p, root, AGG_HASHED, NULL,
 			 numGroupCols, dNumGroups,
 			 input_plan->startup_cost, input_plan->total_cost,
 			 input_plan->plan_rows);

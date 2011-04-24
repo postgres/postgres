@@ -74,7 +74,7 @@ static bool choose_hashed_grouping(PlannerInfo *root,
 					   double tuple_fraction, double limit_tuples,
 					   double path_rows, int path_width,
 					   Path *cheapest_path, Path *sorted_path,
-					   double dNumGroups, AggClauseCounts *agg_counts);
+					   double dNumGroups, AggClauseCosts *agg_costs);
 static bool choose_hashed_distinct(PlannerInfo *root,
 					   double tuple_fraction, double limit_tuples,
 					   double path_rows, int path_width,
@@ -979,7 +979,7 @@ grouping_planner(PlannerInfo *root, double tuple_fraction)
 		Path	   *sorted_path;
 		Path	   *best_path;
 		long		numGroups = 0;
-		AggClauseCounts agg_counts;
+		AggClauseCosts agg_costs;
 		int			numGroupCols;
 		double		path_rows;
 		int			path_width;
@@ -987,7 +987,7 @@ grouping_planner(PlannerInfo *root, double tuple_fraction)
 		WindowFuncLists *wflists = NULL;
 		List	   *activeWindows = NIL;
 
-		MemSet(&agg_counts, 0, sizeof(AggClauseCounts));
+		MemSet(&agg_costs, 0, sizeof(AggClauseCosts));
 
 		/* A recursive query should always have setOperations */
 		Assert(!root->hasRecursion);
@@ -1034,12 +1034,12 @@ grouping_planner(PlannerInfo *root, double tuple_fraction)
 		if (parse->hasAggs)
 		{
 			/*
-			 * Will need actual number of aggregates for estimating costs.
+			 * Collect statistics about aggregates for estimating costs.
 			 * Note: we do not attempt to detect duplicate aggregates here; a
-			 * somewhat-overestimated count is okay for our present purposes.
+			 * somewhat-overestimated cost is okay for our present purposes.
 			 */
-			count_agg_clauses((Node *) tlist, &agg_counts);
-			count_agg_clauses(parse->havingQual, &agg_counts);
+			count_agg_clauses(root, (Node *) tlist, &agg_costs);
+			count_agg_clauses(root, parse->havingQual, &agg_costs);
 
 			/*
 			 * Preprocess MIN/MAX aggregates, if any.  Note: be careful about
@@ -1176,7 +1176,7 @@ grouping_planner(PlannerInfo *root, double tuple_fraction)
 									   tuple_fraction, limit_tuples,
 									   path_rows, path_width,
 									   cheapest_path, sorted_path,
-									   dNumGroups, &agg_counts);
+									   dNumGroups, &agg_costs);
 			/* Also convert # groups to long int --- but 'ware overflow! */
 			numGroups = (long) Min(dNumGroups, (double) LONG_MAX);
 		}
@@ -1219,6 +1219,7 @@ grouping_planner(PlannerInfo *root, double tuple_fraction)
 		 */
 		result_plan = optimize_minmax_aggregates(root,
 												 tlist,
+												 &agg_costs,
 												 best_path);
 		if (result_plan != NULL)
 		{
@@ -1330,11 +1331,11 @@ grouping_planner(PlannerInfo *root, double tuple_fraction)
 												tlist,
 												(List *) parse->havingQual,
 												AGG_HASHED,
+												&agg_costs,
 												numGroupCols,
 												groupColIdx,
 									extract_grouping_ops(parse->groupClause),
 												numGroups,
-												agg_counts.numAggs,
 												result_plan);
 				/* Hashed aggregation produces randomly-ordered results */
 				current_pathkeys = NIL;
@@ -1373,11 +1374,11 @@ grouping_planner(PlannerInfo *root, double tuple_fraction)
 												tlist,
 												(List *) parse->havingQual,
 												aggstrategy,
+												&agg_costs,
 												numGroupCols,
 												groupColIdx,
 									extract_grouping_ops(parse->groupClause),
 												numGroups,
-												agg_counts.numAggs,
 												result_plan);
 			}
 			else if (parse->groupClause)
@@ -1559,7 +1560,7 @@ grouping_planner(PlannerInfo *root, double tuple_fraction)
 				result_plan = (Plan *)
 					make_windowagg(root,
 								   (List *) copyObject(window_tlist),
-							   list_length(wflists->windowFuncs[wc->winref]),
+								   wflists->windowFuncs[wc->winref],
 								   wc->winref,
 								   partNumCols,
 								   partColIdx,
@@ -1625,12 +1626,12 @@ grouping_planner(PlannerInfo *root, double tuple_fraction)
 											result_plan->targetlist,
 											NIL,
 											AGG_HASHED,
+											NULL,
 										  list_length(parse->distinctClause),
 								 extract_grouping_cols(parse->distinctClause,
 													result_plan->targetlist),
 								 extract_grouping_ops(parse->distinctClause),
 											numDistinctRows,
-											0,
 											result_plan);
 			/* Hashed aggregation produces randomly-ordered results */
 			current_pathkeys = NIL;
@@ -2213,7 +2214,7 @@ choose_hashed_grouping(PlannerInfo *root,
 					   double tuple_fraction, double limit_tuples,
 					   double path_rows, int path_width,
 					   Path *cheapest_path, Path *sorted_path,
-					   double dNumGroups, AggClauseCounts *agg_counts)
+					   double dNumGroups, AggClauseCosts *agg_costs)
 {
 	Query	   *parse = root->parse;
 	int			numGroupCols = list_length(parse->groupClause);
@@ -2231,7 +2232,7 @@ choose_hashed_grouping(PlannerInfo *root,
 	 * the hash table, and/or running many sorts in parallel, either of which
 	 * seems like a certain loser.)
 	 */
-	can_hash = (agg_counts->numOrderedAggs == 0 &&
+	can_hash = (agg_costs->numOrderedAggs == 0 &&
 				grouping_is_hashable(parse->groupClause));
 	can_sort = grouping_is_sortable(parse->groupClause);
 
@@ -2261,9 +2262,9 @@ choose_hashed_grouping(PlannerInfo *root,
 	/* Estimate per-hash-entry space at tuple width... */
 	hashentrysize = MAXALIGN(path_width) + MAXALIGN(sizeof(MinimalTupleData));
 	/* plus space for pass-by-ref transition values... */
-	hashentrysize += agg_counts->transitionSpace;
+	hashentrysize += agg_costs->transitionSpace;
 	/* plus the per-hash-entry overhead */
-	hashentrysize += hash_agg_entry_size(agg_counts->numAggs);
+	hashentrysize += hash_agg_entry_size(agg_costs->numAggs);
 
 	if (hashentrysize * dNumGroups > work_mem * 1024L)
 		return false;
@@ -2297,7 +2298,7 @@ choose_hashed_grouping(PlannerInfo *root,
 	 * These path variables are dummies that just hold cost fields; we don't
 	 * make actual Paths for these steps.
 	 */
-	cost_agg(&hashed_p, root, AGG_HASHED, agg_counts->numAggs,
+	cost_agg(&hashed_p, root, AGG_HASHED, agg_costs,
 			 numGroupCols, dNumGroups,
 			 cheapest_path->startup_cost, cheapest_path->total_cost,
 			 path_rows);
@@ -2328,7 +2329,7 @@ choose_hashed_grouping(PlannerInfo *root,
 	}
 
 	if (parse->hasAggs)
-		cost_agg(&sorted_p, root, AGG_SORTED, agg_counts->numAggs,
+		cost_agg(&sorted_p, root, AGG_SORTED, agg_costs,
 				 numGroupCols, dNumGroups,
 				 sorted_p.startup_cost, sorted_p.total_cost,
 				 path_rows);
@@ -2447,7 +2448,7 @@ choose_hashed_distinct(PlannerInfo *root,
 	 * These path variables are dummies that just hold cost fields; we don't
 	 * make actual Paths for these steps.
 	 */
-	cost_agg(&hashed_p, root, AGG_HASHED, 0,
+	cost_agg(&hashed_p, root, AGG_HASHED, NULL,
 			 numDistinctCols, dNumDistinctRows,
 			 cheapest_startup_cost, cheapest_total_cost,
 			 path_rows);

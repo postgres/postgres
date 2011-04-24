@@ -939,11 +939,11 @@ create_unique_plan(PlannerInfo *root, UniquePath *best_path)
 								 build_relation_tlist(best_path->path.parent),
 								 NIL,
 								 AGG_HASHED,
+								 NULL,
 								 numGroupCols,
 								 groupColIdx,
 								 groupOperators,
 								 numGroups,
-								 0,
 								 subplan);
 	}
 	else
@@ -3841,9 +3841,9 @@ materialize_finished_plan(Plan *subplan)
 
 Agg *
 make_agg(PlannerInfo *root, List *tlist, List *qual,
-		 AggStrategy aggstrategy,
+		 AggStrategy aggstrategy, const AggClauseCosts *aggcosts,
 		 int numGroupCols, AttrNumber *grpColIdx, Oid *grpOperators,
-		 long numGroups, int numAggs,
+		 long numGroups,
 		 Plan *lefttree)
 {
 	Agg		   *node = makeNode(Agg);
@@ -3859,7 +3859,7 @@ make_agg(PlannerInfo *root, List *tlist, List *qual,
 
 	copy_plan_costsize(plan, lefttree); /* only care about copying size */
 	cost_agg(&agg_path, root,
-			 aggstrategy, numAggs,
+			 aggstrategy, aggcosts,
 			 numGroupCols, numGroups,
 			 lefttree->startup_cost,
 			 lefttree->total_cost,
@@ -3907,7 +3907,7 @@ make_agg(PlannerInfo *root, List *tlist, List *qual,
 
 WindowAgg *
 make_windowagg(PlannerInfo *root, List *tlist,
-			   int numWindowFuncs, Index winref,
+			   List *windowFuncs, Index winref,
 			   int partNumCols, AttrNumber *partColIdx, Oid *partOperators,
 			   int ordNumCols, AttrNumber *ordColIdx, Oid *ordOperators,
 			   int frameOptions, Node *startOffset, Node *endOffset,
@@ -3931,7 +3931,7 @@ make_windowagg(PlannerInfo *root, List *tlist,
 
 	copy_plan_costsize(plan, lefttree); /* only care about copying size */
 	cost_windowagg(&windowagg_path, root,
-				   numWindowFuncs, partNumCols, ordNumCols,
+				   windowFuncs, partNumCols, ordNumCols,
 				   lefttree->startup_cost,
 				   lefttree->total_cost,
 				   lefttree->plan_rows);

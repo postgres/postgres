@@ -1103,7 +1103,7 @@ create_unique_path(PlannerInfo *root, RelOptInfo *rel, Path *subpath,
 			all_hash = false;	/* don't try to hash */
 		else
 			cost_agg(&agg_path, root,
-					 AGG_HASHED, 0,
+					 AGG_HASHED, NULL,
 					 numCols, pathnode->rows,
 					 subpath->startup_cost,
 					 subpath->total_cost,

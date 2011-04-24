@@ -34,7 +34,7 @@ extern void query_planner(PlannerInfo *root, List *tlist,
  */
 extern void preprocess_minmax_aggregates(PlannerInfo *root, List *tlist);
 extern Plan *optimize_minmax_aggregates(PlannerInfo *root, List *tlist,
-						   Path *best_path);
+						   const AggClauseCosts *aggcosts, Path *best_path);
 
 /*
  * prototypes for plan/createplan.c
@@ -54,12 +54,12 @@ extern Sort *make_sort_from_sortclauses(PlannerInfo *root, List *sortcls,
 extern Sort *make_sort_from_groupcols(PlannerInfo *root, List *groupcls,
 						 AttrNumber *grpColIdx, Plan *lefttree);
 extern Agg *make_agg(PlannerInfo *root, List *tlist, List *qual,
-		 AggStrategy aggstrategy,
+		 AggStrategy aggstrategy, const AggClauseCosts *aggcosts,
 		 int numGroupCols, AttrNumber *grpColIdx, Oid *grpOperators,
-		 long numGroups, int numAggs,
+		 long numGroups,
 		 Plan *lefttree);
 extern WindowAgg *make_windowagg(PlannerInfo *root, List *tlist,
-			   int numWindowFuncs, Index winref,
+			   List *windowFuncs, Index winref,
 			   int partNumCols, AttrNumber *partColIdx, Oid *partOperators,
 			   int ordNumCols, AttrNumber *ordColIdx, Oid *ordOperators,
 			   int frameOptions, Node *startOffset, Node *endOffset,

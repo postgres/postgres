@@ -187,11 +187,13 @@ preprocess_minmax_aggregates(PlannerInfo *root, List *tlist)
  * Should we skip even trying to build the standard plan, if
  * preprocess_minmax_aggregates succeeds?
  *
- * We are passed the preprocessed tlist, as well as the best path devised for
+ * We are passed the preprocessed tlist, as well as the estimated costs for
+ * doing the aggregates the regular way, and the best path devised for
  * computing the input of a standard Agg node.
  */
 Plan *
-optimize_minmax_aggregates(PlannerInfo *root, List *tlist, Path *best_path)
+optimize_minmax_aggregates(PlannerInfo *root, List *tlist,
+						   const AggClauseCosts *aggcosts, Path *best_path)
 {
 	Query	   *parse = root->parse;
 	Cost		total_cost;
@@ -221,7 +223,7 @@ optimize_minmax_aggregates(PlannerInfo *root, List *tlist, Path *best_path)
 		total_cost += mminfo->pathcost;
 	}
 
-	cost_agg(&agg_p, root, AGG_PLAIN, list_length(root->minmax_aggs),
+	cost_agg(&agg_p, root, AGG_PLAIN, aggcosts,
 			 0, 0,
 			 best_path->startup_cost, best_path->total_cost,
 			 best_path->parent->rows);
