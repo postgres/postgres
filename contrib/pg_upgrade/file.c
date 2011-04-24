@@ -12,9 +12,10 @@
 #include <fcntl.h>
 
 
-static int	copy_file(const char *fromfile, const char *tofile, bool force);
 
-#ifdef WIN32
+#ifndef WIN32
+static int	copy_file(const char *fromfile, const char *tofile, bool force);
+#else
 static int	win32_pghardlink(const char *src, const char *dst);
 #endif
 
@@ -126,6 +127,7 @@ linkAndUpdateFile(pageCnvCtx *pageConverter,
 }
 
 
+#ifndef WIN32
 static int
 copy_file(const char *srcfile, const char *dstfile, bool force)
 {
@@ -220,6 +222,7 @@ copy_file(const char *srcfile, const char *dstfile, bool force)
 
 	return 1;
 }
+#endif
 
 
 /*
