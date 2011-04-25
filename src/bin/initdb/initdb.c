@@ -1561,7 +1561,7 @@ normalize_locale_name(char *new, const char *old)
 static void
 setup_collation(void)
 {
-#ifdef HAVE_LOCALE_T
+#if defined(HAVE_LOCALE_T) && !defined(WIN32)
 	int			i;
 	FILE	   *locale_a_handle;
 	char		localebuf[NAMEDATALEN];
@@ -1687,10 +1687,10 @@ setup_collation(void)
 		printf(_("No usable system locales were found.\n"));
 		printf(_("Use the option \"--debug\" to see details.\n"));
 	}
-#else							/* not HAVE_LOCALE_T */
+#else							/* not HAVE_LOCALE_T && not WIN32 */
 	printf(_("not supported on this platform\n"));
 	fflush(stdout);
-#endif   /* not HAVE_LOCALE_T */
+#endif   /* not HAVE_LOCALE_T  && not WIN32*/
 }
 
 /*
@@ -2387,7 +2387,10 @@ setlocales(void)
 #ifdef WIN32
 typedef BOOL (WINAPI * __CreateRestrictedToken) (HANDLE, DWORD, DWORD, PSID_AND_ATTRIBUTES, DWORD, PLUID_AND_ATTRIBUTES, DWORD, PSID_AND_ATTRIBUTES, PHANDLE);
 
+/* Windows API define missing from some versions of MingW headers */
+#ifndef  DISABLE_MAX_PRIVILEGE
 #define DISABLE_MAX_PRIVILEGE	0x1
+#endif
 
 /*
  * Create a restricted token and execute the specified process with it.

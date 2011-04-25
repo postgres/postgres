@@ -63,7 +63,16 @@
 #include "utils/syscache.h"
 
 #ifdef WIN32
+/*
+ * This Windows file defines StrNCpy. We don't need it here, so we undefine
+ * it to keep the compiler quiet, and undefine it again after the file is
+ * included, so we don't accidentally use theirs.
+ */
+#undef StrNCpy
 #include <shlwapi.h>
+#ifdef StrNCpy
+#undef STrNCpy
+#endif
 #endif
 
 #define		MAX_L10N_DATA		80
@@ -555,7 +564,9 @@ strftime_win32(char *dst, size_t dstlen, const wchar_t *format, const struct tm 
 	dst[len] = '\0';
 	if (encoding != PG_UTF8)
 	{
-		char	   *convstr = pg_do_encoding_conversion(dst, len, PG_UTF8, encoding);
+		char	   *convstr = 
+			(char *) pg_do_encoding_conversion((unsigned char *) dst, 
+											   len, PG_UTF8, encoding);
 
 		if (dst != convstr)
 		{

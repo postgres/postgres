@@ -1158,7 +1158,7 @@ identify_system_timezone(void)
 
 		memset(zonename, 0, sizeof(zonename));
 		namesize = sizeof(zonename);
-		if ((r = RegQueryValueEx(key, "Std", NULL, NULL, zonename, &namesize)) != ERROR_SUCCESS)
+		if ((r = RegQueryValueEx(key, "Std", NULL, NULL, (unsigned char *) zonename, &namesize)) != ERROR_SUCCESS)
 		{
 			ereport(LOG,
 					(errmsg_internal("could not query value for key \"std\" to identify system time zone \"%s\": %i",
@@ -1175,7 +1175,7 @@ identify_system_timezone(void)
 		}
 		memset(zonename, 0, sizeof(zonename));
 		namesize = sizeof(zonename);
-		if ((r = RegQueryValueEx(key, "Dlt", NULL, NULL, zonename, &namesize)) != ERROR_SUCCESS)
+		if ((r = RegQueryValueEx(key, "Dlt", NULL, NULL, (unsigned char *) zonename, &namesize)) != ERROR_SUCCESS)
 		{
 			ereport(LOG,
 					(errmsg_internal("could not query value for key \"dlt\" to identify system time zone \"%s\": %i",

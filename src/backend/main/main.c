@@ -392,7 +392,7 @@ get_current_username(const char *progname)
 	/* Allocate new memory because later getpwuid() calls can overwrite it. */
 	return strdup(pw->pw_name);
 #else
-	long		namesize = 256 /* UNLEN */ + 1;
+	unsigned long	namesize = 256 /* UNLEN */ + 1;
 	char	   *name;
 
 	name = malloc(namesize);

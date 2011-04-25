@@ -369,8 +369,18 @@ pgwin32_recv(SOCKET s, char *buf, int len, int f)
 	return -1;
 }
 
+/*
+ * The second argument to send() is defined by SUS to be a "const void *"
+ * and so we use the same signature here to keep compilers happy when
+ * handling callers.
+ * 
+ * But the buf member of a WSABUF struct is defined as "char *", so we cast
+ * the second argument to that here when assigning it, also to keep compilers
+ * happy.
+ */
+
 int
-pgwin32_send(SOCKET s, char *buf, int len, int flags)
+pgwin32_send(SOCKET s, const void *buf, int len, int flags)
 {
 	WSABUF		wbuf;
 	int			r;
@@ -380,7 +390,7 @@ pgwin32_send(SOCKET s, char *buf, int len, int flags)
 		return -1;
 
 	wbuf.len = len;
-	wbuf.buf = buf;
+	wbuf.buf = (char *) buf;
 
 	/*
 	 * Readiness of socket to send data to UDP socket may be not true: socket

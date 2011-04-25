@@ -3551,7 +3551,7 @@ hv_store_string(HV *hv, const char *key, SV *val)
 	 * does not appear that hashes track UTF-8-ness of keys at all in Perl
 	 * 5.6.
 	 */
-	hlen = -strlen(hkey);
+	hlen = - (int) strlen(hkey);
 	ret = hv_store(hv, hkey, hlen, val, 0);
 
 	if (hkey != key)
@@ -3576,7 +3576,7 @@ hv_fetch_string(HV *hv, const char *key)
 								  GetDatabaseEncoding(), PG_UTF8);
 
 	/* See notes in hv_store_string */
-	hlen = -strlen(hkey);
+	hlen = - (int) strlen(hkey);
 	ret = hv_fetch(hv, hkey, hlen, 0);
 
 	if (hkey != key)
