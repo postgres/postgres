@@ -62,4 +62,21 @@ select * from inserttest;
     2 |    3 | values are fun!
 (7 rows)
 
+--
+-- TOASTed value test
+--
+insert into inserttest values(30, 50, repeat('x', 10000));
+select col1, col2, char_length(col3) from inserttest;
+ col1 | col2 | char_length 
+------+------+-------------
+      |    3 |           7
+      |    5 |           7
+      |    5 |           4
+      |    7 |           7
+   10 |   20 |           2
+   -1 |    2 |           7
+    2 |    3 |          15
+   30 |   50 |       10000
+(8 rows)
+
 drop table inserttest;

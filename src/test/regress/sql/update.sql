@@ -54,4 +54,8 @@ UPDATE update_test SET (a,b) = (select a,b FROM update_test where c = 'foo')
 -- to the original table name
 UPDATE update_test AS t SET b = update_test.b + 10 WHERE t.a = 10;
 
+-- Make sure that we can update to a TOASTed value.
+UPDATE update_test SET c = repeat('x', 10000) WHERE c = 'car';
+SELECT a, b, char_length(c) FROM update_test;
+
 DROP TABLE update_test;

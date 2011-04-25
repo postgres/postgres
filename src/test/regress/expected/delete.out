@@ -1,11 +1,12 @@
 CREATE TABLE delete_test (
     id SERIAL PRIMARY KEY,
-    a INT
+    a INT,
+    b text
 );
 NOTICE:  CREATE TABLE will create implicit sequence "delete_test_id_seq" for serial column "delete_test.id"
 NOTICE:  CREATE TABLE / PRIMARY KEY will create implicit index "delete_test_pkey" for table "delete_test"
 INSERT INTO delete_test (a) VALUES (10);
-INSERT INTO delete_test (a) VALUES (50);
+INSERT INTO delete_test (a, b) VALUES (50, repeat('x', 10000));
 INSERT INTO delete_test (a) VALUES (100);
 -- allow an alias to be specified for DELETE's target table
 DELETE FROM delete_test AS dt WHERE dt.a > 75;
@@ -16,11 +17,19 @@ ERROR:  invalid reference to FROM-clause entry for table "delete_test"
 LINE 1: DELETE FROM delete_test dt WHERE delete_test.a > 25;
                                          ^
 HINT:  Perhaps you meant to reference the table alias "dt".
-SELECT * FROM delete_test;
- id | a  
-----+----
-  1 | 10
-  2 | 50
+SELECT id, a, char_length(b) FROM delete_test;
+ id | a  | char_length 
+----+----+-------------
+  1 | 10 |            
+  2 | 50 |       10000
 (2 rows)
+
+-- delete a row with a TOASTed value
+DELETE FROM delete_test WHERE a > 25;
+SELECT id, a, char_length(b) FROM delete_test;
+ id | a  | char_length 
+----+----+-------------
+  1 | 10 |            
+(1 row)
 
 DROP TABLE delete_test;
