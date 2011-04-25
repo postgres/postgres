@@ -58,7 +58,9 @@
 #define atooid(x)  ((Oid) strtoul((x), NULL, 10))
 
 /* OID system catalog preservation added during PG 9.0 development */
-#define TABLE_SPACE_SUBDIRS 201001111
+#define TABLE_SPACE_SUBDIRS_CAT_VER 201001111
+/* postmaster/postgres -b (binary_upgrade) flag added during PG 9.1 development */
+#define BINARY_UPGRADE_SERVER_FLAG_CAT_VER 201104251
 
 /*
  * Each relation is represented by a relinfo structure.

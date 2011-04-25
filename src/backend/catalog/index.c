@@ -789,7 +789,8 @@ index_create(Relation heapRelation,
 		 * Use binary-upgrade override for pg_class.oid/relfilenode, if
 		 * supplied.
 		 */
-		if (OidIsValid(binary_upgrade_next_index_pg_class_oid))
+		if (IsBinaryUpgrade &&
+			OidIsValid(binary_upgrade_next_index_pg_class_oid))
 		{
 			indexRelationId = binary_upgrade_next_index_pg_class_oid;
 			binary_upgrade_next_index_pg_class_oid = InvalidOid;

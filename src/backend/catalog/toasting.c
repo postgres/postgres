@@ -157,7 +157,8 @@ create_toast_table(Relation rel, Oid toastOid, Oid toastIndexOid, Datum reloptio
 	 * creation even if it seems not to need one.
 	 */
 	if (!needs_toast_table(rel) &&
-		!OidIsValid(binary_upgrade_next_toast_pg_class_oid))
+		(!IsBinaryUpgrade ||
+		 !OidIsValid(binary_upgrade_next_toast_pg_class_oid)))
 		return false;
 
 	/*
@@ -202,7 +203,7 @@ create_toast_table(Relation rel, Oid toastOid, Oid toastIndexOid, Datum reloptio
 		namespaceid = PG_TOAST_NAMESPACE;
 
 	/* Use binary-upgrade override for pg_type.oid, if supplied. */
-	if (OidIsValid(binary_upgrade_next_toast_pg_type_oid))
+	if (IsBinaryUpgrade && OidIsValid(binary_upgrade_next_toast_pg_type_oid))
 	{
 		toast_typid = binary_upgrade_next_toast_pg_type_oid;
 		binary_upgrade_next_toast_pg_type_oid = InvalidOid;

@@ -173,6 +173,11 @@ start_postmaster(ClusterInfo *cluster, bool quiet)
 	const char *datadir;
 	unsigned short port;
 	bool		exit_hook_registered = false;
+#ifndef WIN32
+	char		*output_filename = log_opts.filename;
+#else
+	char		*output_filename = DEVNULL;
+#endif
 
 	bindir = cluster->bindir;
 	datadir = cluster->pgdata;
@@ -193,7 +198,6 @@ start_postmaster(ClusterInfo *cluster, bool quiet)
 	 * same file because we get the error: "The process cannot access the file
 	 * because it is being used by another process." so we have to send all
 	 * other output to 'nul'.
-	 *
 	 * Using autovacuum=off disables cleanup vacuum and analyze, but freeze
 	 * vacuums can still happen, so we set autovacuum_freeze_max_age to its
 	 * maximum.  We assume all datfrozenxid and relfrozen values are less than
@@ -202,15 +206,13 @@ start_postmaster(ClusterInfo *cluster, bool quiet)
 	 */
 	snprintf(cmd, sizeof(cmd),
 			 SYSTEMQUOTE "\"%s/pg_ctl\" -l \"%s\" -D \"%s\" "
-			 "-o \"-p %d -c autovacuum=off "
-			 "-c autovacuum_freeze_max_age=2000000000\" "
-			 "start >> \"%s\" 2>&1" SYSTEMQUOTE,
-			 bindir,
-#ifndef WIN32
-			 log_opts.filename, datadir, port, log_opts.filename);
-#else
-			 DEVNULL, datadir, port, DEVNULL);
-#endif
+			 "-o \"-p %d %s\" start >> \"%s\" 2>&1" SYSTEMQUOTE,
+			 bindir, output_filename, datadir, port,
+			 (cluster->controldata.cat_ver >=
+				BINARY_UPGRADE_SERVER_FLAG_CAT_VER) ? "-b" :
+				"-c autovacuum=off -c autovacuum_freeze_max_age=2000000000",
+			 log_opts.filename);
+
 	exec_prog(true, "%s", cmd);
 
 	/* wait for the server to start properly */

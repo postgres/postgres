@@ -21,6 +21,7 @@
 #include "catalog/pg_enum.h"
 #include "catalog/pg_type.h"
 #include "storage/lmgr.h"
+#include "miscadmin.h"
 #include "utils/builtins.h"
 #include "utils/fmgroids.h"
 #include "utils/rel.h"
@@ -311,7 +312,7 @@ restart:
 	}
 
 	/* Get a new OID for the new label */
-	if (OidIsValid(binary_upgrade_next_pg_enum_oid))
+	if (IsBinaryUpgrade && OidIsValid(binary_upgrade_next_pg_enum_oid))
 	{
 		/*
 		 * Use binary-upgrade override for pg_enum.oid, if supplied. During

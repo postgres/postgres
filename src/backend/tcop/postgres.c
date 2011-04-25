@@ -3238,7 +3238,7 @@ process_postgres_switches(int argc, char *argv[], GucContext ctx)
 	 * postmaster/postmaster.c (the option sets should not conflict) and with
 	 * the common help() function in main/main.c.
 	 */
-	while ((flag = getopt(argc, argv, "A:B:c:D:d:EeFf:h:ijk:lN:nOo:Pp:r:S:sTt:v:W:-:")) != -1)
+	while ((flag = getopt(argc, argv, "A:B:bc:D:d:EeFf:h:ijk:lN:nOo:Pp:r:S:sTt:v:W:-:")) != -1)
 	{
 		switch (flag)
 		{
@@ -3248,6 +3248,11 @@ process_postgres_switches(int argc, char *argv[], GucContext ctx)
 
 			case 'B':
 				SetConfigOption("shared_buffers", optarg, ctx, gucsource);
+				break;
+
+			case 'b':
+				/* Undocumented flag used for binary upgrades */
+				IsBinaryUpgrade = true;
 				break;
 
 			case 'D':
