@@ -2859,7 +2859,7 @@ l2:
 	 * Any existing SIREAD locks on the old tuple must be linked to the new
 	 * tuple for conflict detection purposes.
 	 */
-	PredicateLockTupleRowVersionLink(relation, &oldtup, newtup);
+	PredicateLockTupleRowVersionLink(relation, &oldtup, heaptup);
 
 	if (newbuf != buffer)
 		LockBuffer(newbuf, BUFFER_LOCK_UNLOCK);
