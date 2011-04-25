@@ -973,8 +973,7 @@ heap_create_with_catalog(const char *relname,
 						 OnCommitAction oncommit,
 						 Datum reloptions,
 						 bool use_user_acl,
-						 bool allow_system_table_mods,
-						 bool if_not_exists)
+						 bool allow_system_table_mods)
 {
 	Relation	pg_class_desc;
 	Relation	new_rel_desc;
@@ -994,26 +993,14 @@ heap_create_with_catalog(const char *relname,
 	CheckAttributeNamesTypes(tupdesc, relkind, allow_system_table_mods);
 
 	/*
-	 * If the relation already exists, it's an error, unless the user
-	 * specifies "IF NOT EXISTS".  In that case, we just print a notice and do
-	 * nothing further.
+	 * This would fail later on anyway, if the relation already exists.  But
+	 * by catching it here we can emit a nicer error message.
 	 */
 	existing_relid = get_relname_relid(relname, relnamespace);
 	if (existing_relid != InvalidOid)
-	{
-		if (if_not_exists)
-		{
-			ereport(NOTICE,
-					(errcode(ERRCODE_DUPLICATE_TABLE),
-					 errmsg("relation \"%s\" already exists, skipping",
-							relname)));
-			heap_close(pg_class_desc, RowExclusiveLock);
-			return InvalidOid;
-		}
 		ereport(ERROR,
 				(errcode(ERRCODE_DUPLICATE_TABLE),
 				 errmsg("relation \"%s\" already exists", relname)));
-	}
 
 	/*
 	 * Since we are going to create a rowtype as well, also check for

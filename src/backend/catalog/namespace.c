@@ -361,6 +361,35 @@ RangeVarGetCreationNamespace(const RangeVar *newRelation)
 }
 
 /*
+ * RangeVarGetAndCheckCreationNamespace
+ *      As RangeVarGetCreationNamespace, but with a permissions check.
+ */
+Oid
+RangeVarGetAndCheckCreationNamespace(const RangeVar *newRelation)
+{
+	Oid			namespaceId;
+
+	namespaceId = RangeVarGetCreationNamespace(newRelation);
+
+	/*
+	 * Check we have permission to create there. Skip check if bootstrapping,
+	 * since permissions machinery may not be working yet.
+	 */
+	if (!IsBootstrapProcessingMode())
+	{
+		AclResult	aclresult;
+
+		aclresult = pg_namespace_aclcheck(namespaceId, GetUserId(),
+										  ACL_CREATE);
+		if (aclresult != ACLCHECK_OK)
+			aclcheck_error(aclresult, ACL_KIND_NAMESPACE,
+						   get_namespace_name(namespaceId));
+	}
+
+	return namespaceId;
+}
+
+/*
  * RelnameGetRelid
  *		Try to resolve an unqualified relation name.
  *		Returns OID if relation found in search path, else InvalidOid.

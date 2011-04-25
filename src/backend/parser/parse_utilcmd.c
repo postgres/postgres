@@ -148,12 +148,40 @@ transformCreateStmt(CreateStmt *stmt, const char *queryString)
 	List	   *result;
 	List	   *save_alist;
 	ListCell   *elements;
+	Oid			namespaceid;
 
 	/*
 	 * We must not scribble on the passed-in CreateStmt, so copy it.  (This is
 	 * overkill, but easy.)
 	 */
 	stmt = (CreateStmt *) copyObject(stmt);
+
+	/*
+	 * Look up the creation namespace.  This also checks permissions on the
+	 * target namespace, so that we throw any permissions error as early as
+	 * possible.
+	 */
+	namespaceid = RangeVarGetAndCheckCreationNamespace(stmt->relation);
+
+	/*
+	 * If the relation already exists and the user specified "IF NOT EXISTS",
+	 * bail out with a NOTICE.
+	 */
+	if (stmt->if_not_exists)
+	{
+		Oid		existing_relid;
+
+		existing_relid = get_relname_relid(stmt->relation->relname,
+										   namespaceid);
+		if (existing_relid != InvalidOid)
+		{
+			ereport(NOTICE,
+					(errcode(ERRCODE_DUPLICATE_TABLE),
+					 errmsg("relation \"%s\" already exists, skipping",
+						 stmt->relation->relname)));
+			return NIL;
+		}
+	}
 
 	/*
 	 * If the target relation name isn't schema-qualified, make it so.  This
@@ -164,11 +192,7 @@ transformCreateStmt(CreateStmt *stmt, const char *queryString)
 	 */
 	if (stmt->relation->schemaname == NULL
 		&& stmt->relation->relpersistence != RELPERSISTENCE_TEMP)
-	{
-		Oid			namespaceid = RangeVarGetCreationNamespace(stmt->relation);
-
 		stmt->relation->schemaname = get_namespace_name(namespaceid);
-	}
 
 	/* Set up pstate and CreateStmtContext */
 	pstate = make_parsestate(NULL);

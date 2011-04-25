@@ -439,22 +439,10 @@ DefineRelation(CreateStmt *stmt, char relkind, Oid ownerId)
 				 errmsg("cannot create temporary table within security-restricted operation")));
 
 	/*
-	 * Look up the namespace in which we are supposed to create the relation.
-	 * Check we have permission to create there. Skip check if bootstrapping,
-	 * since permissions machinery may not be working yet.
+	 * Look up the namespace in which we are supposed to create the relation,
+	 * and check we have permission to create there.
 	 */
-	namespaceId = RangeVarGetCreationNamespace(stmt->relation);
-
-	if (!IsBootstrapProcessingMode())
-	{
-		AclResult	aclresult;
-
-		aclresult = pg_namespace_aclcheck(namespaceId, GetUserId(),
-										  ACL_CREATE);
-		if (aclresult != ACLCHECK_OK)
-			aclcheck_error(aclresult, ACL_KIND_NAMESPACE,
-						   get_namespace_name(namespaceId));
-	}
+	namespaceId = RangeVarGetAndCheckCreationNamespace(stmt->relation);
 
 	/*
 	 * Select tablespace to use.  If not specified, use default tablespace
@@ -602,16 +590,7 @@ DefineRelation(CreateStmt *stmt, char relkind, Oid ownerId)
 										  stmt->oncommit,
 										  reloptions,
 										  true,
-										  allowSystemTableMods,
-										  stmt->if_not_exists);
-
-	/*
-	 * If heap_create_with_catalog returns InvalidOid, it means that the user
-	 * specified "IF NOT EXISTS" and the relation already exists.  In that
-	 * case we do nothing further.
-	 */
-	if (relationId == InvalidOid)
-		return InvalidOid;
+										  allowSystemTableMods);
 
 	/* Store inheritance information for new rel. */
 	StoreCatalogInheritance(relationId, inheritOids);

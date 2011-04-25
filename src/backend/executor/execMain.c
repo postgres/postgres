@@ -2341,7 +2341,6 @@ OpenIntoRel(QueryDesc *queryDesc)
 	Oid			namespaceId;
 	Oid			tablespaceId;
 	Datum		reloptions;
-	AclResult	aclresult;
 	Oid			intoRelationId;
 	TupleDesc	tupdesc;
 	DR_intorel *myState;
@@ -2378,13 +2377,7 @@ OpenIntoRel(QueryDesc *queryDesc)
 	 * Find namespace to create in, check its permissions
 	 */
 	intoName = into->rel->relname;
-	namespaceId = RangeVarGetCreationNamespace(into->rel);
-
-	aclresult = pg_namespace_aclcheck(namespaceId, GetUserId(),
-									  ACL_CREATE);
-	if (aclresult != ACLCHECK_OK)
-		aclcheck_error(aclresult, ACL_KIND_NAMESPACE,
-					   get_namespace_name(namespaceId));
+	namespaceId = RangeVarGetAndCheckCreationNamespace(into->rel);
 
 	/*
 	 * Select tablespace to use.  If not specified, use default tablespace
@@ -2444,8 +2437,7 @@ OpenIntoRel(QueryDesc *queryDesc)
 											  into->onCommit,
 											  reloptions,
 											  true,
-											  allowSystemTableMods,
-											  false);
+											  allowSystemTableMods);
 	Assert(intoRelationId != InvalidOid);
 
 	FreeTupleDesc(tupdesc);

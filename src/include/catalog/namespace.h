@@ -49,6 +49,7 @@ typedef struct OverrideSearchPath
 
 extern Oid	RangeVarGetRelid(const RangeVar *relation, bool failOK);
 extern Oid	RangeVarGetCreationNamespace(const RangeVar *newRelation);
+extern Oid	RangeVarGetAndCheckCreationNamespace(const RangeVar *newRelation);
 extern Oid	RelnameGetRelid(const char *relname);
 extern bool RelationIsVisible(Oid relid);
 

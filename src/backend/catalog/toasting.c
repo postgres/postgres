@@ -227,8 +227,7 @@ create_toast_table(Relation rel, Oid toastOid, Oid toastIndexOid, Datum reloptio
 										   ONCOMMIT_NOOP,
 										   reloptions,
 										   false,
-										   true,
-										   false);
+										   true);
 	Assert(toast_relid != InvalidOid);
 
 	/* make the toast relation visible, else heap_open will fail */
