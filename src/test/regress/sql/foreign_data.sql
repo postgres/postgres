@@ -443,7 +443,11 @@ DROP SERVER s5 CASCADE;
 DROP SERVER t1 CASCADE;
 DROP SERVER t2;
 DROP USER MAPPING FOR regress_test_role SERVER s6;
+-- This test causes some order dependent cascade detail output,
+-- so switch to terse mode for it. 
+\set VERBOSITY terse
 DROP FOREIGN DATA WRAPPER foo CASCADE;
+\set VERBOSITY default
 DROP SERVER s8 CASCADE;
 DROP ROLE regress_test_indirect;
 DROP ROLE regress_test_role;

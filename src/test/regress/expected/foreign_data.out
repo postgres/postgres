@@ -1086,13 +1086,12 @@ DROP SERVER t1 CASCADE;
 NOTICE:  drop cascades to user mapping for public
 DROP SERVER t2;
 DROP USER MAPPING FOR regress_test_role SERVER s6;
+-- This test causes some order dependent cascade detail output,
+-- so switch to terse mode for it. 
+\set VERBOSITY terse
 DROP FOREIGN DATA WRAPPER foo CASCADE;
 NOTICE:  drop cascades to 5 other objects
-DETAIL:  drop cascades to server s4
-drop cascades to user mapping for foreign_data_user
-drop cascades to server s6
-drop cascades to server s9
-drop cascades to user mapping for unprivileged_role
+\set VERBOSITY default
 DROP SERVER s8 CASCADE;
 NOTICE:  drop cascades to 2 other objects
 DETAIL:  drop cascades to user mapping for foreign_data_user
