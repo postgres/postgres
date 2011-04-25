@@ -102,6 +102,7 @@ static bool port_specified_by_user = false;
 static char *dlpath = PKGLIBDIR;
 static char *user = NULL;
 static _stringlist *extraroles = NULL;
+static _stringlist *extra_install = NULL;
 
 /* internal variables */
 static const char *progname;
@@ -1896,6 +1897,7 @@ help(void)
 	printf(_("  --top-builddir=DIR        (relative) path to top level build directory\n"));
 	printf(_("  --port=PORT               start postmaster on PORT\n"));
 	printf(_("  --temp-config=PATH        append contents of PATH to temporary config\n"));
+	printf(_("  --extra-install=DIR       additional directory to install (e.g., contrib\n"));
 	printf(_("\n"));
 	printf(_("Options for using an existing installation:\n"));
 	printf(_("  --host=HOST               use postmaster running on HOST\n"));
@@ -1943,6 +1945,7 @@ regression_main(int argc, char *argv[], init_function ifunc, test_function tfunc
 		{"use-existing", no_argument, NULL, 20},
 		{"launcher", required_argument, NULL, 21},
 		{"load-extension", required_argument, NULL, 22},
+		{"extra-install", required_argument, NULL, 23},
 		{NULL, 0, NULL, 0}
 	};
 
@@ -2042,6 +2045,9 @@ regression_main(int argc, char *argv[], init_function ifunc, test_function tfunc
 			case 22:
 				add_stringlist_item(&loadextension, optarg);
 				break;
+			case 23:
+				add_stringlist_item(&extra_install, optarg);
+				break;
 			default:
 				/* getopt_long already emitted a complaint */
 				fprintf(stderr, _("\nTry \"%s -h\" for more information.\n"),
@@ -2086,6 +2092,7 @@ regression_main(int argc, char *argv[], init_function ifunc, test_function tfunc
 	if (temp_install)
 	{
 		FILE	   *pg_conf;
+		_stringlist *sl;
 
 		/*
 		 * Prepare the temp installation
@@ -2126,6 +2133,24 @@ regression_main(int argc, char *argv[], init_function ifunc, test_function tfunc
 		{
 			fprintf(stderr, _("\n%s: installation failed\nExamine %s/log/install.log for the reason.\nCommand was: %s\n"), progname, outputdir, buf);
 			exit_nicely(2);
+		}
+
+		for (sl = extra_install; sl != NULL; sl = sl->next)
+		{
+#ifndef WIN32_ONLY_COMPILER
+			snprintf(buf, sizeof(buf),
+					 SYSTEMQUOTE "\"%s\" -C \"%s/%s\" DESTDIR=\"%s/install\" install >> \"%s/log/install.log\" 2>&1" SYSTEMQUOTE,
+					 makeprog, top_builddir, sl->str, temp_install, outputdir);
+#else
+			fprintf(stderr, _("\n%s: --extra-install option not supported on this platform\n", progname));
+			exit_nicely(2);
+#endif
+
+			if (system(buf))
+			{
+				fprintf(stderr, _("\n%s: installation failed\nExamine %s/log/install.log for the reason.\nCommand was: %s\n"), progname, outputdir, buf);
+				exit_nicely(2);
+			}
 		}
 
 		/* initdb */

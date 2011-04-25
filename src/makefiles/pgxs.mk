@@ -281,13 +281,14 @@ endif
 installcheck: submake
 	$(pg_regress_installcheck) $(REGRESS_OPTS) $(REGRESS)
 
-# in-tree test doesn't work yet (no way to install my shared library)
-#check: all submake
-#	$(pg_regress_check) $(REGRESS_OPTS) $(REGRESS)
+ifdef PGXS
 check:
-	@echo "'make check' is not supported."
-	@echo "Do 'make install', then 'make installcheck' instead."
-	@exit 1
+	@echo '"$(MAKE) check" is not supported.'
+	@echo 'Do "$(MAKE) install", then "$(MAKE) installcheck" instead.'
+else
+check: all submake
+	$(pg_regress_check) --extra-install=$(subdir) $(REGRESS_OPTS) $(REGRESS)
+endif
 endif # REGRESS
 
 

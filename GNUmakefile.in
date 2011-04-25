@@ -60,8 +60,7 @@ check: all
 check installcheck installcheck-parallel:
 	$(MAKE) -C src/test $@
 
-# TODO: add contrib
-$(call recurse,check-world,src/test src/pl src/interfaces/ecpg,check)
+$(call recurse,check-world,src/test src/pl src/interfaces/ecpg contrib,check)
 
 $(call recurse,installcheck-world,src/test src/pl src/interfaces/ecpg contrib,installcheck)
 
