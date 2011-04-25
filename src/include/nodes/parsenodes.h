@@ -1282,7 +1282,6 @@ typedef enum GrantObjectType
 	ACL_OBJECT_DATABASE,		/* database */
 	ACL_OBJECT_FDW,				/* foreign-data wrapper */
 	ACL_OBJECT_FOREIGN_SERVER,	/* foreign server */
-	ACL_OBJECT_FOREIGN_TABLE,	/* foreign table */
 	ACL_OBJECT_FUNCTION,		/* function */
 	ACL_OBJECT_LANGUAGE,		/* procedural language */
 	ACL_OBJECT_LARGEOBJECT,		/* largeobject */

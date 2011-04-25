@@ -5408,14 +5408,6 @@ privilege_target:
 					n->objs = $3;
 					$$ = n;
 				}
-			| FOREIGN TABLE qualified_name_list
-				{
-					PrivTarget *n = (PrivTarget *) palloc(sizeof(PrivTarget));
-					n->targtype = ACL_TARGET_OBJECT;
-					n->objtype = ACL_OBJECT_FOREIGN_TABLE;
-					n->objs = $3;
-					$$ = n;
-				}
 			| FUNCTION function_with_argtypes_list
 				{
 					PrivTarget *n = (PrivTarget *) palloc(sizeof(PrivTarget));
