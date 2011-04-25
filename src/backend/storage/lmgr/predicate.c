@@ -2275,6 +2275,18 @@ PredicateLockTupleRowVersionLink(const Relation relation,
 	TransactionId oldxmin,
 				newxmin;
 
+	/*
+	 * Bail out quickly if there are no serializable transactions
+	 * running.
+	 *
+	 * It's safe to do this check without taking any additional
+	 * locks. Even if a serializable transaction starts concurrently,
+	 * we know it can't take any SIREAD locks on the modified tuple
+	 * because the caller is holding the associated buffer page lock.
+	 */
+	if (!TransactionIdIsValid(PredXact->SxactGlobalXmin))
+		return;
+
 	oldblk = ItemPointerGetBlockNumber(&(oldTuple->t_self));
 	oldoff = ItemPointerGetOffsetNumber(&(oldTuple->t_self));
 	oldxmin = HeapTupleHeaderGetXmin(oldTuple->t_data);
@@ -2632,6 +2644,15 @@ PredicateLockPageSplit(const Relation relation, const BlockNumber oldblkno,
 	PREDICATELOCKTARGETTAG oldtargettag;
 	PREDICATELOCKTARGETTAG newtargettag;
 	bool		success;
+
+	/*
+	 * Bail out quickly if there are no serializable transactions
+	 * running. As with PredicateLockTupleRowVersionLink, it's safe to
+	 * check this without taking locks because the caller is holding
+	 * the buffer page lock.
+	 */
+	if (!TransactionIdIsValid(PredXact->SxactGlobalXmin))
+		return;
 
 	if (SkipSplitTracking(relation))
 		return;
