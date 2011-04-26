@@ -46,7 +46,7 @@ check_old_cluster(bool live_check,
 	/* -- OLD -- */
 
 	if (!live_check)
-		start_postmaster(&old_cluster, false);
+		start_postmaster(&old_cluster);
 
 	set_locale_and_encoding(&old_cluster);
 
@@ -104,7 +104,7 @@ check_old_cluster(bool live_check,
 	}
 
 	if (!live_check)
-		stop_postmaster(false, false);
+		stop_postmaster(false);
 }
 
 
@@ -134,7 +134,7 @@ report_clusters_compatible(void)
 	{
 		pg_log(PG_REPORT, "\n*Clusters are compatible*\n");
 		/* stops new cluster */
-		stop_postmaster(false, false);
+		stop_postmaster(false);
 		exit(0);
 	}
 
@@ -152,7 +152,7 @@ issue_warnings(char *sequence_script_file_name)
 	/* old = PG 8.3 warnings? */
 	if (GET_MAJOR_VERSION(old_cluster.major_version) <= 803)
 	{
-		start_postmaster(&new_cluster, true);
+		start_postmaster(&new_cluster);
 
 		/* restore proper sequence values using file created from old server */
 		if (sequence_script_file_name)
@@ -171,15 +171,15 @@ issue_warnings(char *sequence_script_file_name)
 		old_8_3_rebuild_tsvector_tables(&new_cluster, false);
 		old_8_3_invalidate_hash_gin_indexes(&new_cluster, false);
 		old_8_3_invalidate_bpchar_pattern_ops_indexes(&new_cluster, false);
-		stop_postmaster(false, true);
+		stop_postmaster(false);
 	}
 
 	/* Create dummy large object permissions for old < PG 9.0? */
 	if (GET_MAJOR_VERSION(old_cluster.major_version) <= 804)
 	{
-		start_postmaster(&new_cluster, true);
+		start_postmaster(&new_cluster);
 		new_9_0_populate_pg_largeobject_metadata(&new_cluster, false);
-		stop_postmaster(false, true);
+		stop_postmaster(false);
 	}
 }
 

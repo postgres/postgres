@@ -359,8 +359,8 @@ void		init_tablespaces(void);
 PGconn	   *connectToServer(ClusterInfo *cluster, const char *db_name);
 PGresult   *executeQueryOrDie(PGconn *conn, const char *fmt,...);
 
-void		start_postmaster(ClusterInfo *cluster, bool quiet);
-void		stop_postmaster(bool fast, bool quiet);
+void		start_postmaster(ClusterInfo *cluster);
+void		stop_postmaster(bool fast);
 uint32		get_major_server_version(ClusterInfo *cluster);
 void		check_for_libpq_envvars(void);
 

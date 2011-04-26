@@ -77,7 +77,7 @@ main(int argc, char **argv)
 
 
 	/* -- NEW -- */
-	start_postmaster(&new_cluster, false);
+	start_postmaster(&new_cluster);
 
 	check_new_cluster();
 	report_clusters_compatible();
@@ -88,7 +88,7 @@ main(int argc, char **argv)
 	disable_old_cluster();
 	prepare_new_cluster();
 
-	stop_postmaster(false, false);
+	stop_postmaster(false);
 
 	/*
 	 * Destructive Changes to New Cluster
@@ -98,9 +98,14 @@ main(int argc, char **argv)
 
 	/* New now using xids of the old system */
 
+	/* -- NEW -- */
+	start_postmaster(&new_cluster);
+
 	prepare_new_databases();
 
 	create_new_objects();
+
+	stop_postmaster(false);
 
 	transfer_all_new_dbs(&old_cluster.dbarr, &new_cluster.dbarr,
 						 old_cluster.pgdata, new_cluster.pgdata);
@@ -216,9 +221,6 @@ prepare_new_cluster(void)
 static void
 prepare_new_databases(void)
 {
-	/* -- NEW -- */
-	start_postmaster(&new_cluster, false);
-
 	/*
 	 * We set autovacuum_freeze_max_age to its maximum value so autovacuum
 	 * does not launch here and delete clog files, before the frozen xids are
@@ -252,8 +254,6 @@ prepare_new_databases(void)
 
 	/* we load this to get a current list of databases */
 	get_db_and_rel_infos(&new_cluster);
-
-	stop_postmaster(false, false);
 }
 
 
@@ -261,9 +261,6 @@ static void
 create_new_objects(void)
 {
 	int			dbnum;
-
-	/* -- NEW -- */
-	start_postmaster(&new_cluster, false);
 
 	prep_status("Adding support functions to new cluster");
 
@@ -290,8 +287,6 @@ create_new_objects(void)
 	get_db_and_rel_infos(&new_cluster);
 
 	uninstall_support_functions_from_new_cluster();
-
-	stop_postmaster(false, false);
 }
 
 

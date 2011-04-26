@@ -160,13 +160,13 @@ stop_postmaster_atexit(void)
 stop_postmaster_on_exit(int exitstatus, void *arg)
 #endif
 {
-	stop_postmaster(true, true);
+	stop_postmaster(true);
 
 }
 
 
 void
-start_postmaster(ClusterInfo *cluster, bool quiet)
+start_postmaster(ClusterInfo *cluster)
 {
 	char		cmd[MAXPGPATH];
 	const char *bindir;
@@ -205,7 +205,7 @@ start_postmaster(ClusterInfo *cluster, bool quiet)
 	 * not touch them.
 	 */
 	snprintf(cmd, sizeof(cmd),
-			 SYSTEMQUOTE "\"%s/pg_ctl\" -l \"%s\" -D \"%s\" "
+			 SYSTEMQUOTE "\"%s/pg_ctl\" -w -l \"%s\" -D \"%s\" "
 			 "-o \"-p %d %s\" start >> \"%s\" 2>&1" SYSTEMQUOTE,
 			 bindir, output_filename, datadir, port,
 			 (cluster->controldata.cat_ver >=
@@ -228,7 +228,7 @@ start_postmaster(ClusterInfo *cluster, bool quiet)
 
 
 void
-stop_postmaster(bool fast, bool quiet)
+stop_postmaster(bool fast)
 {
 	char		cmd[MAXPGPATH];
 	const char *bindir;
@@ -249,7 +249,7 @@ stop_postmaster(bool fast, bool quiet)
 
 	/* See comment in start_postmaster() about why win32 output is ignored. */
 	snprintf(cmd, sizeof(cmd),
-			 SYSTEMQUOTE "\"%s/pg_ctl\" -l \"%s\" -D \"%s\" %s stop >> "
+			 SYSTEMQUOTE "\"%s/pg_ctl\" -w -l \"%s\" -D \"%s\" %s stop >> "
 			 "\"%s\" 2>&1" SYSTEMQUOTE,
 			 bindir,
 #ifndef WIN32
