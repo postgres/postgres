@@ -2247,8 +2247,7 @@ RenameRelation(Oid myrelid, const char *newrelname, ObjectType reltype)
 		ereport(ERROR,
 				(errcode(ERRCODE_WRONG_OBJECT_TYPE),
 				 errmsg("\"%s\" is not a foreign table",
-						RelationGetRelationName(targetrelation)),
-				 errhint("Use ALTER FOREIGN TABLE instead.")));
+						RelationGetRelationName(targetrelation))));
 
 	/*
 	 * Don't allow ALTER TABLE on composite types. We want people to use ALTER
