@@ -9,13 +9,8 @@
 
 #include "pg_upgrade.h"
 
-#define POSTMASTER_UPTIME 20
 
-#define STARTUP_WARNING_TRIES 2
-
-
-static pgpid_t get_postmaster_pid(const char *datadir);
-static bool test_server_conn(ClusterInfo *cluster, int timeout);
+static PGconn *get_db_conn(ClusterInfo *cluster, const char *db_name);
 
 
 /*
@@ -28,14 +23,7 @@ static bool test_server_conn(ClusterInfo *cluster, int timeout);
 PGconn *
 connectToServer(ClusterInfo *cluster, const char *db_name)
 {
-	unsigned short port = cluster->port;
-	char		connectString[MAXPGPATH];
-	PGconn	   *conn;
-
-	snprintf(connectString, sizeof(connectString),
-		 "dbname = '%s' user = '%s' port = %d", db_name, os_info.user, port);
-
-	conn = PQconnectdb(connectString);
+	PGconn	   *conn = get_db_conn(cluster, db_name);
 
 	if (conn == NULL || PQstatus(conn) != CONNECTION_OK)
 	{
@@ -50,6 +38,24 @@ connectToServer(ClusterInfo *cluster, const char *db_name)
 	}
 
 	return conn;
+}
+
+
+/*
+ * get_db_conn()
+ *
+ * get database connection
+ */
+static PGconn *
+get_db_conn(ClusterInfo *cluster, const char *db_name)
+{
+	char		conn_opts[MAXPGPATH];
+
+	snprintf(conn_opts, sizeof(conn_opts),
+		 "dbname = '%s' user = '%s' port = %d", db_name, os_info.user,
+		 cluster->port);
+
+	return PQconnectdb(conn_opts);
 }
 
 
@@ -87,38 +93,6 @@ executeQueryOrDie(PGconn *conn, const char *fmt,...)
 	}
 	else
 		return result;
-}
-
-
-/*
- * get_postmaster_pid()
- *
- * Returns the pid of the postmaster running on datadir. pid is retrieved
- * from the postmaster.pid file
- */
-static pgpid_t
-get_postmaster_pid(const char *datadir)
-{
-	FILE	   *pidf;
-	long		pid;
-	char		pid_file[MAXPGPATH];
-
-	snprintf(pid_file, sizeof(pid_file), "%s/postmaster.pid", datadir);
-	pidf = fopen(pid_file, "r");
-
-	if (pidf == NULL)
-		return (pgpid_t) 0;
-
-	if (fscanf(pidf, "%ld", &pid) != 1)
-	{
-		fclose(pidf);
-		pg_log(PG_FATAL, "%s: invalid data in PID file \"%s\"\n",
-			   os_info.progname, pid_file);
-	}
-
-	fclose(pidf);
-
-	return (pgpid_t) pid;
 }
 
 
@@ -169,19 +143,19 @@ void
 start_postmaster(ClusterInfo *cluster)
 {
 	char		cmd[MAXPGPATH];
-	const char *bindir;
-	const char *datadir;
-	unsigned short port;
+	PGconn	   *conn;
 	bool		exit_hook_registered = false;
 #ifndef WIN32
 	char		*output_filename = log_opts.filename;
 #else
+	/*
+	 * On Win32, we can't send both pg_upgrade output and pg_ctl output to the
+	 * same file because we get the error: "The process cannot access the file
+	 * because it is being used by another process." so we have to send all
+	 * other output to 'nul'.
+	 */
 	char		*output_filename = DEVNULL;
 #endif
-
-	bindir = cluster->bindir;
-	datadir = cluster->pgdata;
-	port = cluster->port;
 
 	if (!exit_hook_registered)
 	{
@@ -194,10 +168,6 @@ start_postmaster(ClusterInfo *cluster)
 	}
 
 	/*
-	 * On Win32, we can't send both pg_upgrade output and pg_ctl output to the
-	 * same file because we get the error: "The process cannot access the file
-	 * because it is being used by another process." so we have to send all
-	 * other output to 'nul'.
 	 * Using autovacuum=off disables cleanup vacuum and analyze, but freeze
 	 * vacuums can still happen, so we set autovacuum_freeze_max_age to its
 	 * maximum.  We assume all datfrozenxid and relfrozen values are less than
@@ -207,7 +177,7 @@ start_postmaster(ClusterInfo *cluster)
 	snprintf(cmd, sizeof(cmd),
 			 SYSTEMQUOTE "\"%s/pg_ctl\" -w -l \"%s\" -D \"%s\" "
 			 "-o \"-p %d %s\" start >> \"%s\" 2>&1" SYSTEMQUOTE,
-			 bindir, output_filename, datadir, port,
+			 cluster->bindir, output_filename, cluster->pgdata, cluster->port,
 			 (cluster->controldata.cat_ver >=
 				BINARY_UPGRADE_SERVER_FLAG_CAT_VER) ? "-b" :
 				"-c autovacuum=off -c autovacuum_freeze_max_age=2000000000",
@@ -215,14 +185,18 @@ start_postmaster(ClusterInfo *cluster)
 
 	exec_prog(true, "%s", cmd);
 
-	/* wait for the server to start properly */
-
-	if (test_server_conn(cluster, POSTMASTER_UPTIME) == false)
-		pg_log(PG_FATAL, " Unable to start %s postmaster with the command: %s\nPerhaps pg_hba.conf was not set to \"trust\".",
+	/* Check to see if we can connect to the server; if not, report it. */
+	if ((conn = get_db_conn(cluster, "template1")) == NULL ||
+		PQstatus(conn) != CONNECTION_OK)
+	{
+		if (conn)
+			PQfinish(conn);
+		pg_log(PG_FATAL, "unable to connect to %s postmaster started with the command: %s\n"
+			   "Perhaps pg_hba.conf was not set to \"trust\".",
 			   CLUSTER_NAME(cluster), cmd);
+	}
+	PQfinish(conn);
 
-	if ((os_info.postmasterPID = get_postmaster_pid(datadir)) == 0)
-		pg_log(PG_FATAL, " Unable to get postmaster pid\n");
 	os_info.running_cluster = cluster;
 }
 
@@ -233,6 +207,12 @@ stop_postmaster(bool fast)
 	char		cmd[MAXPGPATH];
 	const char *bindir;
 	const char *datadir;
+#ifndef WIN32
+	char		*output_filename = log_opts.filename;
+#else
+	/* See comment in start_postmaster() about why win32 output is ignored. */
+	char		*output_filename = DEVNULL;
+#endif
 
 	if (os_info.running_cluster == &old_cluster)
 	{
@@ -247,66 +227,15 @@ stop_postmaster(bool fast)
 	else
 		return;					/* no cluster running */
 
-	/* See comment in start_postmaster() about why win32 output is ignored. */
 	snprintf(cmd, sizeof(cmd),
 			 SYSTEMQUOTE "\"%s/pg_ctl\" -w -l \"%s\" -D \"%s\" %s stop >> "
 			 "\"%s\" 2>&1" SYSTEMQUOTE,
-			 bindir,
-#ifndef WIN32
-	   log_opts.filename, datadir, fast ? "-m fast" : "", log_opts.filename);
-#else
-			 DEVNULL, datadir, fast ? "-m fast" : "", DEVNULL);
-#endif
+			 bindir, output_filename, datadir, fast ? "-m fast" : "",
+			 output_filename);
+
 	exec_prog(fast ? false : true, "%s", cmd);
 
-	os_info.postmasterPID = 0;
 	os_info.running_cluster = NULL;
-}
-
-
-/*
- * test_server_conn()
- *
- * tests whether postmaster is running or not by trying to connect
- * to it. If connection is unsuccessfull we do a sleep of 1 sec and then
- * try the connection again. This process continues "timeout" times.
- *
- * Returns true if the connection attempt was successfull, false otherwise.
- */
-static bool
-test_server_conn(ClusterInfo *cluster, int timeout)
-{
-	unsigned short port = cluster->port;
-	PGconn	   *conn = NULL;
-	char		con_opts[MAX_STRING];
-	int			tries;
-	bool		ret = false;
-
-	snprintf(con_opts, sizeof(con_opts),
-		  "dbname = 'template1' user = '%s' port = %d ", os_info.user, port);
-
-	for (tries = 0; tries < timeout; tries++)
-	{
-		sleep(1);
-		if ((conn = PQconnectdb(con_opts)) != NULL &&
-			PQstatus(conn) == CONNECTION_OK)
-		{
-			PQfinish(conn);
-			ret = true;
-			break;
-		}
-
-		if (tries == STARTUP_WARNING_TRIES)
-			prep_status("Trying to start %s server ",
-						CLUSTER_NAME(cluster));
-		else if (tries > STARTUP_WARNING_TRIES)
-			pg_log(PG_REPORT, ".");
-	}
-
-	if (tries > STARTUP_WARNING_TRIES)
-		check_ok();
-
-	return ret;
 }
 
 

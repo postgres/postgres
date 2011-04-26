@@ -227,7 +227,6 @@ typedef struct
 	int			num_tablespaces;
 	char	  **libraries;		/* loadable libraries */
 	int			num_libraries;
-	pgpid_t		postmasterPID;	/* PID of currently running postmaster */
 	ClusterInfo *running_cluster;
 } OSInfo;
 
