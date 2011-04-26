@@ -27,6 +27,7 @@
 
 #include "libpq/ip.h"
 #include "libpq/libpq.h"
+#include "postmaster/postmaster.h"
 #include "regex/regex.h"
 #include "storage/fd.h"
 #include "utils/flatfiles.h"
@@ -646,8 +647,20 @@ parse_hba_line(List *line, int line_num, HbaLine *parsedline)
 
 		if (token[4] == 's')	/* "hostssl" */
 		{
+			/* SSL support must be actually active, else complain */
 #ifdef USE_SSL
-			parsedline->conntype = ctHostSSL;
+			if (EnableSSL)
+				parsedline->conntype = ctHostSSL;
+			else
+			{
+				ereport(LOG,
+						(errcode(ERRCODE_CONFIG_FILE_ERROR),
+						 errmsg("hostssl requires SSL to be turned on"),
+						 errhint("Set ssl = on in postgresql.conf."),
+						 errcontext("line %d of configuration file \"%s\"",
+									line_num, HbaFileName)));
+				return false;
+			}
 #else
 			ereport(LOG,
 					(errcode(ERRCODE_CONFIG_FILE_ERROR),
