@@ -850,7 +850,7 @@ parse_hba_line(List *line, int line_num, HbaLine *parsedline)
 #else
 			ereport(LOG,
 					(errcode(ERRCODE_CONFIG_FILE_ERROR),
-					 errmsg("hostssl not supported on this platform"),
+					 errmsg("hostssl is not supported by this build"),
 			  errhint("Compile with --with-openssl to use SSL connections."),
 					 errcontext("line %d of configuration file \"%s\"",
 								line_num, HbaFileName)));
@@ -1148,7 +1148,7 @@ parse_hba_line(List *line, int line_num, HbaLine *parsedline)
 	{
 		ereport(LOG,
 				(errcode(ERRCODE_CONFIG_FILE_ERROR),
-				 errmsg("invalid authentication method \"%s\": not supported on this platform",
+				 errmsg("invalid authentication method \"%s\": not supported by this build",
 						token),
 				 errcontext("line %d of configuration file \"%s\"",
 							line_num, HbaFileName)));
