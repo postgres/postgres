@@ -527,10 +527,9 @@ NUMERIC
 
     <note>
      <para>
-      The maximum allowed precision when explicitely specified in the
-      type declaration is 1000; otherwise the current implementation
-      of <type>NUMERIC</type> (when the precision is not specified)
-      is subject to the limits described in <xref
+      The maximum allowed precision when explicitly specified in the
+      type declaration is 1000; <type>NUMERIC</type> with no specified
+      precision is subject to the limits described in <xref
       linkend="datatype-numeric-table">.
      </para>
     </note>
