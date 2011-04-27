@@ -689,12 +689,12 @@ ecpg_store_input(const int lineno, const bool force_indicator, const struct vari
 					strcpy(mallocedval, "array [");
 
 					for (element = 0; element < asize; element++)
-						sprintf(mallocedval + strlen(mallocedval), "%lld,", ((long long int *) var->value)[element]);
+						sprintf(mallocedval + strlen(mallocedval), INT64_FORMAT ",", ((long long int *) var->value)[element]);
 
 					strcpy(mallocedval + strlen(mallocedval) - 1, "]");
 				}
 				else
-					sprintf(mallocedval, "%lld", *((long long int *) var->value));
+					sprintf(mallocedval, INT64_FORMAT, *((long long int *) var->value));
 
 				*tobeinserted_p = mallocedval;
 				break;
@@ -708,12 +708,12 @@ ecpg_store_input(const int lineno, const bool force_indicator, const struct vari
 					strcpy(mallocedval, "array [");
 
 					for (element = 0; element < asize; element++)
-						sprintf(mallocedval + strlen(mallocedval), "%llu,", ((unsigned long long int *) var->value)[element]);
+						sprintf(mallocedval + strlen(mallocedval), UINT64_FORMAT ",", ((unsigned long long int *) var->value)[element]);
 
 					strcpy(mallocedval + strlen(mallocedval) - 1, "]");
 				}
 				else
-					sprintf(mallocedval, "%llu", *((unsigned long long int *) var->value));
+					sprintf(mallocedval, UINT64_FORMAT, *((unsigned long long int *) var->value));
 
 				*tobeinserted_p = mallocedval;
 				break;

@@ -3795,7 +3795,7 @@ internal_forkexec(int argc, char *argv[], Port *port)
 
 	/* Insert temp file name after --fork argument */
 #ifdef _WIN64
-	sprintf(paramHandleStr, "%llu", (LONG_PTR) paramHandle);
+	sprintf(paramHandleStr, UINT64_FORMAT, (LONG_PTR) paramHandle);
 #else
 	sprintf(paramHandleStr, "%lu", (DWORD) paramHandle);
 #endif
