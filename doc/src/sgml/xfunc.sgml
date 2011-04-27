@@ -1680,6 +1680,15 @@ typedef struct
      itself.
     </para>
 
+    <para>
+     Another important point is to avoid leaving any uninitialized bits
+     within data type values; for example, take care to zero out any
+     alignment padding bytes that might be present in structs.  Without
+     this, logically-equivalent constants of your data type might be
+     seen as unequal by the planner, leading to inefficient (though not
+     incorrect) plans.
+    </para>
+
     <warning>
      <para>
       <emphasis>Never</> modify the contents of a pass-by-reference input
@@ -1723,7 +1732,7 @@ typedef struct {
 char buffer[40]; /* our source data */
 ...
 text *destination = (text *) palloc(VARHDRSZ + 40);
-destination->length = VARHDRSZ + 40;
+SET_VARSIZE(destination, VARHDRSZ + 40);
 memcpy(destination->data, buffer, 40);
 ...
 ]]>
@@ -1732,6 +1741,8 @@ memcpy(destination->data, buffer, 40);
      <literal>VARHDRSZ</> is the same as <literal>sizeof(int4)</>, but
      it's considered good style to use the macro <literal>VARHDRSZ</>
      to refer to the size of the overhead for a variable-length type.
+     Also, the length field <emphasis>must</> be set using the
+     <literal>SET_VARSIZE</> macro, not by simple assignment.
     </para>
 
     <para>
@@ -2345,13 +2356,16 @@ concat_text(PG_FUNCTION_ARGS)
 
       <listitem>
        <para>
-        Always zero the bytes of your structures using
-        <function>memset</function>.  Without this, it's difficult to
+        Always zero the bytes of your structures using <function>memset</>
+        (or allocate them with <function>palloc0</> in the first place).
+        Even if you assign to each field of your structure, there might be
+        alignment padding (holes in the structure) that contain
+        garbage values.  Without this, it's difficult to
         support hash indexes or hash joins, as you must pick out only
         the significant bits of your data structure to compute a hash.
-        Even if you initialize all fields of your structure, there might be
-        alignment padding (holes in the structure) that contain
-        garbage values.
+        The planner also sometimes relies on comparing constants via
+        bitwise equality, so you can get undesirable planning results if
+        logically-equivalent values aren't bitwise equal.
        </para>
       </listitem>
 
