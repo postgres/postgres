@@ -756,7 +756,6 @@ static void
 BaseBackup(void)
 {
 	PGresult   *res;
-	uint32		timeline;
 	char		current_path[MAXPGPATH];
 	char		escaped_label[MAXPGPATH];
 	int			i;
@@ -767,25 +766,6 @@ BaseBackup(void)
 	 * Connect in replication mode to the server
 	 */
 	conn = GetConnection();
-
-	/*
-	 * Run IDENFITY_SYSTEM so we can get the timeline
-	 */
-	res = PQexec(conn, "IDENTIFY_SYSTEM");
-	if (PQresultStatus(res) != PGRES_TUPLES_OK)
-	{
-		fprintf(stderr, _("%s: could not identify system: %s\n"),
-				progname, PQerrorMessage(conn));
-		disconnect_and_exit(1);
-	}
-	if (PQntuples(res) != 1)
-	{
-		fprintf(stderr, _("%s: could not identify system, got %i rows\n"),
-				progname, PQntuples(res));
-		disconnect_and_exit(1);
-	}
-	timeline = atoi(PQgetvalue(res, 0, 1));
-	PQclear(res);
 
 	/*
 	 * Start the actual backup
