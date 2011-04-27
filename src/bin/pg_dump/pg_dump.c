@@ -12004,7 +12004,11 @@ dumpTableSchema(Archive *fout, TableInfo *tbinfo)
 						  "UNLOGGED " : "",
 						  reltypename,
 						  fmtId(tbinfo->dobj.name));
-		if (tbinfo->reloftype)
+		/*
+		 * In case of a binary upgrade, we dump the table normally and attach
+		 * it to the type afterward.
+		 */
+		if (tbinfo->reloftype && !binary_upgrade)
 			appendPQExpBuffer(q, " OF %s", tbinfo->reloftype);
 		actual_atts = 0;
 		for (j = 0; j < tbinfo->numatts; j++)
@@ -12032,7 +12036,7 @@ dumpTableSchema(Archive *fout, TableInfo *tbinfo)
 				bool		has_notnull = (tbinfo->notnull[j]
 							  && (!tbinfo->inhNotNull[j] || binary_upgrade));
 
-				if (tbinfo->reloftype && !has_default && !has_notnull)
+				if (tbinfo->reloftype && !has_default && !has_notnull && !binary_upgrade)
 					continue;
 
 				/* Format properly if not first attr */
@@ -12060,7 +12064,7 @@ dumpTableSchema(Archive *fout, TableInfo *tbinfo)
 				}
 
 				/* Attribute type */
-				if (tbinfo->reloftype)
+				if (tbinfo->reloftype && !binary_upgrade)
 				{
 					appendPQExpBuffer(q, "WITH OPTIONS");
 				}
@@ -12126,7 +12130,7 @@ dumpTableSchema(Archive *fout, TableInfo *tbinfo)
 
 		if (actual_atts)
 			appendPQExpBuffer(q, "\n)");
-		else if (!tbinfo->reloftype)
+		else if (!(tbinfo->reloftype && !binary_upgrade))
 		{
 			/*
 			 * We must have a parenthesized attribute list, even though empty,
@@ -12192,6 +12196,7 @@ dumpTableSchema(Archive *fout, TableInfo *tbinfo)
 		 * an INHERITS clause --- the latter would possibly mess up the column
 		 * order.  That also means we have to take care about setting
 		 * attislocal correctly, plus fix up any inherited CHECK constraints.
+		 * Analogously, we set up typed tables using ALTER TABLE / OF here.
 		 */
 		if (binary_upgrade && tbinfo->relkind == RELKIND_RELATION)
 		{
@@ -12266,6 +12271,14 @@ dumpTableSchema(Archive *fout, TableInfo *tbinfo)
 					appendPQExpBuffer(q, "%s;\n",
 									  fmtId(parentRel->dobj.name));
 				}
+			}
+
+			if (tbinfo->reloftype)
+			{
+				appendPQExpBuffer(q, "\n-- For binary upgrade, set up typed tables this way.\n");
+				appendPQExpBuffer(q, "ALTER TABLE ONLY %s OF %s;\n",
+								  fmtId(tbinfo->dobj.name),
+								  tbinfo->reloftype);
 			}
 
 			appendPQExpBuffer(q, "\n-- For binary upgrade, set heap's relfrozenxid\n");
