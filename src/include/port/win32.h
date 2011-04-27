@@ -88,6 +88,19 @@
 #define PGDLLEXPORT
 #endif
 
+/*
+ * MinGW compilers accept both "%I64d" and "%lld" for 64 bit ints,
+ * but whine about the latter, so force the former, regardless of what
+ * configure found.
+ */
+#if __GNUC__
+#ifdef INT64_FORMAT
+#undef INT64_FORMAT
+#undef UINT64_FORMAT
+#endif
+#define INT64_FORMAT "%I64d"
+#define UINT64_FORMAT "%I64u"
+#endif
 
 /*
  *	IPC defines
