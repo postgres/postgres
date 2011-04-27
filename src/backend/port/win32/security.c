@@ -48,7 +48,7 @@ pgwin32_is_admin(void)
 	if (!pgwin32_get_dynamic_tokeninfo(AccessToken, TokenGroups,
 									   &InfoBuffer, errbuf, sizeof(errbuf)))
 	{
-		write_stderr(errbuf);
+		write_stderr("%s", errbuf);
 		exit(1);
 	}
 
@@ -138,7 +138,7 @@ pgwin32_is_service(void)
 	if (!pgwin32_get_dynamic_tokeninfo(AccessToken, TokenUser, &InfoBuffer,
 									   errbuf, sizeof(errbuf)))
 	{
-		fprintf(stderr, errbuf);
+		fprintf(stderr, "%s", errbuf);
 		return -1;
 	}
 
@@ -169,7 +169,7 @@ pgwin32_is_service(void)
 	if (!pgwin32_get_dynamic_tokeninfo(AccessToken, TokenGroups, &InfoBuffer,
 									   errbuf, sizeof(errbuf)))
 	{
-		fprintf(stderr, errbuf);
+		fprintf(stderr, "%s", errbuf);
 		return -1;
 	}
 
