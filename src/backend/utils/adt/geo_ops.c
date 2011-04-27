@@ -1476,6 +1476,8 @@ path_recv(PG_FUNCTION_ARGS)
 	path->size = size;
 	path->npts = npts;
 	path->closed = (closed ? 1 : 0);
+	/* prevent instability in unused pad bytes */
+	path->dummy = 0;
 
 	for (i = 0; i < npts; i++)
 	{
@@ -4090,6 +4092,8 @@ path_add(PG_FUNCTION_ARGS)
 	result->size = size;
 	result->npts = (p1->npts + p2->npts);
 	result->closed = p1->closed;
+	/* prevent instability in unused pad bytes */
+	result->dummy = 0;
 
 	for (i = 0; i < p1->npts; i++)
 	{
@@ -4323,6 +4327,8 @@ poly_path(PG_FUNCTION_ARGS)
 	path->size = size;
 	path->npts = poly->npts;
 	path->closed = TRUE;
+	/* prevent instability in unused pad bytes */
+	path->dummy = 0;
 
 	for (i = 0; i < poly->npts; i++)
 	{
