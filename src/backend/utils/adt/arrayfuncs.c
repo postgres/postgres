@@ -1274,7 +1274,7 @@ array_recv(PG_FUNCTION_ARGS)
 		dataoffset = 0;			/* marker for no null bitmap */
 		nbytes += ARR_OVERHEAD_NONULLS(ndim);
 	}
-	retval = (ArrayType *) palloc(nbytes);
+	retval = (ArrayType *) palloc0(nbytes);
 	SET_VARSIZE(retval, nbytes);
 	retval->ndim = ndim;
 	retval->dataoffset = dataoffset;
@@ -1874,7 +1874,7 @@ array_get_slice(ArrayType *array,
 		bytes += ARR_OVERHEAD_NONULLS(ndim);
 	}
 
-	newarray = (ArrayType *) palloc(bytes);
+	newarray = (ArrayType *) palloc0(bytes);
 	SET_VARSIZE(newarray, bytes);
 	newarray->ndim = ndim;
 	newarray->dataoffset = dataoffset;
@@ -2127,7 +2127,7 @@ array_set(ArrayType *array,
 	/*
 	 * OK, create the new array and fill in header/dimensions
 	 */
-	newarray = (ArrayType *) palloc(newsize);
+	newarray = (ArrayType *) palloc0(newsize);
 	SET_VARSIZE(newarray, newsize);
 	newarray->ndim = ndim;
 	newarray->dataoffset = newhasnulls ? overheadlen : 0;
@@ -2457,7 +2457,7 @@ array_set_slice(ArrayType *array,
 
 	newsize = overheadlen + olddatasize - olditemsize + newitemsize;
 
-	newarray = (ArrayType *) palloc(newsize);
+	newarray = (ArrayType *) palloc0(newsize);
 	SET_VARSIZE(newarray, newsize);
 	newarray->ndim = ndim;
 	newarray->dataoffset = newhasnulls ? overheadlen : 0;
@@ -2716,7 +2716,7 @@ array_map(FunctionCallInfo fcinfo, Oid inpType, Oid retType,
 		dataoffset = 0;			/* marker for no null bitmap */
 		nbytes += ARR_OVERHEAD_NONULLS(ndim);
 	}
-	result = (ArrayType *) palloc(nbytes);
+	result = (ArrayType *) palloc0(nbytes);
 	SET_VARSIZE(result, nbytes);
 	result->ndim = ndim;
 	result->dataoffset = dataoffset;
@@ -2852,7 +2852,7 @@ construct_md_array(Datum *elems,
 		dataoffset = 0;			/* marker for no null bitmap */
 		nbytes += ARR_OVERHEAD_NONULLS(ndims);
 	}
-	result = (ArrayType *) palloc(nbytes);
+	result = (ArrayType *) palloc0(nbytes);
 	SET_VARSIZE(result, nbytes);
 	result->ndim = ndims;
 	result->dataoffset = dataoffset;
@@ -2876,7 +2876,7 @@ construct_empty_array(Oid elmtype)
 {
 	ArrayType  *result;
 
-	result = (ArrayType *) palloc(sizeof(ArrayType));
+	result = (ArrayType *) palloc0(sizeof(ArrayType));
 	SET_VARSIZE(result, sizeof(ArrayType));
 	result->ndim = 0;
 	result->dataoffset = 0;
