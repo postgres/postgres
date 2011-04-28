@@ -501,17 +501,22 @@ dttofmtasc_replace(timestamp * ts, date dDate, int dow, struct tm * tm,
 					 * 4-digit year corresponding to the ISO week number.
 					 */
 				case 'G':
-					tm->tm_mon -= 1;
-					i = strftime(q, *pstr_len, "%G", tm);
-					if (i == 0)
-						return -1;
-					while (*q)
 					{
-						q++;
-						(*pstr_len)--;
+						/* Keep compiler quiet - Don't use a literal format */
+						const char *fmt = "%G"; 
+
+						tm->tm_mon -= 1;
+						i = strftime(q, *pstr_len, fmt, tm);
+						if (i == 0)
+							return -1;
+						while (*q)
+						{
+							q++;
+							(*pstr_len)--;
+						}
+						tm->tm_mon += 1;
+						replace_type = PGTYPES_TYPE_NOTHING;
 					}
-					tm->tm_mon += 1;
-					replace_type = PGTYPES_TYPE_NOTHING;
 					break;
 
 					/*
@@ -682,15 +687,20 @@ dttofmtasc_replace(timestamp * ts, date dDate, int dow, struct tm * tm,
 					 * decimal number.
 					 */
 				case 'V':
-					i = strftime(q, *pstr_len, "%V", tm);
-					if (i == 0)
-						return -1;
-					while (*q)
 					{
-						q++;
-						(*pstr_len)--;
+						/* Keep compiler quiet - Don't use a literal format */
+						const char *fmt = "%V"; 
+
+						i = strftime(q, *pstr_len, fmt, tm);
+						if (i == 0)
+							return -1;
+						while (*q)
+						{
+							q++;
+							(*pstr_len)--;
+						}
+						replace_type = PGTYPES_TYPE_NOTHING;
 					}
-					replace_type = PGTYPES_TYPE_NOTHING;
 					break;
 
 					/*
