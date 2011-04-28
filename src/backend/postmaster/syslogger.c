@@ -634,7 +634,7 @@ syslogger_forkexec(void)
 #else							/* WIN32 */
 	if (syslogFile != NULL)
 		snprintf(filenobuf, sizeof(filenobuf), "%ld",
-				 _get_osfhandle(_fileno(syslogFile)));
+				 (long) _get_osfhandle(_fileno(syslogFile)));
 	else
 		strcpy(filenobuf, "0");
 #endif   /* WIN32 */

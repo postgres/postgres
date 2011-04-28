@@ -3304,7 +3304,7 @@ BackendStartup(Port *port)
 	/* in parent, successful fork */
 	ereport(DEBUG2,
 			(errmsg_internal("forked new backend, pid=%d socket=%d",
-							 (int) pid, port->sock)));
+							 (int) pid, (int) port->sock)));
 
 	/*
 	 * Everything's been successful, it's safe to add this backend to our list
@@ -4809,7 +4809,7 @@ write_inheritable_socket(InheritableSocket *dest, SOCKET src, pid_t childpid)
 		{
 			ereport(LOG,
 					(errmsg("could not duplicate socket %d for use in backend: error code %d",
-							src, WSAGetLastError())));
+							(int) src, WSAGetLastError())));
 			return false;
 		}
 	}
