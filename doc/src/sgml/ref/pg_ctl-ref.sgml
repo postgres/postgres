@@ -98,8 +98,8 @@ PostgreSQL documentation
   <cmdsynopsis>
    <command>pg_ctl</command>
    <arg choice="plain">kill</arg>
-   <arg><replaceable>signal_name</replaceable></arg>
-   <arg><replaceable>process_id</replaceable></arg>
+   <arg choice="plain"><replaceable>signal_name</replaceable></arg>
+   <arg choice="plain"><replaceable>process_id</replaceable></arg>
   </cmdsynopsis>
 
   <cmdsynopsis>
