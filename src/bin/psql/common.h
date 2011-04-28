@@ -36,7 +36,7 @@ extern bool setQFout(const char *fname);
 extern void
 psql_error(const char *fmt,...)
 /* This lets gcc check the format string for consistency. */
-__attribute__((format(printf, 1, 2)));
+__attribute__((format(PG_PRINTF_ATTRIBUTE, 1, 2)));
 
 extern void NoticeProcessor(void *arg, const char *message);
 

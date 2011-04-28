@@ -95,7 +95,7 @@ extern void resetStringInfo(StringInfo str);
 extern void
 appendStringInfo(StringInfo str, const char *fmt,...)
 /* This extension allows gcc to check the format string */
-__attribute__((format(printf, 2, 3)));
+__attribute__((format(PG_PRINTF_ATTRIBUTE, 2, 3)));
 
 /*------------------------
  * appendStringInfoVA

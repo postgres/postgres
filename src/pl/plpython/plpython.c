@@ -324,14 +324,14 @@ static void PLy_init_plpy(void);
 /* call PyErr_SetString with a vprint interface and translation support */
 static void
 PLy_exception_set(PyObject *, const char *,...)
-__attribute__((format(printf, 2, 3)));
+__attribute__((format(PG_PRINTF_ATTRIBUTE, 2, 3)));
 
 /* same, with pluralized message */
 static void
 PLy_exception_set_plural(PyObject *, const char *, const char *,
 						 unsigned long n,...)
-__attribute__((format(printf, 2, 5)))
-__attribute__((format(printf, 3, 5)));
+__attribute__((format(PG_PRINTF_ATTRIBUTE, 2, 5)))
+__attribute__((format(PG_PRINTF_ATTRIBUTE, 3, 5)));
 
 /* like PLy_exception_set, but conserve more fields from ErrorData */
 static void PLy_spi_exception_set(PyObject *excclass, ErrorData *edata);
@@ -342,7 +342,7 @@ static char *PLy_procedure_name(PLyProcedure *);
 /* some utility functions */
 static void
 PLy_elog(int, const char *,...)
-__attribute__((format(printf, 2, 3)));
+__attribute__((format(PG_PRINTF_ATTRIBUTE, 2, 3)));
 static void PLy_get_spi_error_data(PyObject *exc, char **detail, char **hint, char **query, int *position);
 static void PLy_traceback(char **, char **, int *);
 

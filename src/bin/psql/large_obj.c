@@ -14,7 +14,7 @@
 
 static void
 print_lo_result(const char *fmt,...)
-__attribute__((format(printf, 1, 2)));
+__attribute__((format(PG_PRINTF_ATTRIBUTE, 1, 2)));
 
 static void
 print_lo_result(const char *fmt,...)

@@ -115,7 +115,7 @@ static void
 write_stderr(const char *fmt,...)
 /* This extension allows gcc to check the format string for consistency with
    the supplied arguments. */
-__attribute__((format(printf, 1, 2)));
+__attribute__((format(PG_PRINTF_ATTRIBUTE, 1, 2)));
 static void *pg_malloc(size_t size);
 static char *xstrdup(const char *s);
 static void do_advice(void);

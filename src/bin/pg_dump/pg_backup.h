@@ -152,7 +152,7 @@ typedef struct _restoreOptions
 
 extern void
 exit_horribly(Archive *AH, const char *modulename, const char *fmt,...)
-__attribute__((format(printf, 3, 4)));
+__attribute__((format(PG_PRINTF_ATTRIBUTE, 3, 4)));
 
 
 /* Lets the archive know we have a DB connection to shutdown if it dies */
@@ -207,7 +207,7 @@ extern int	archputs(const char *s, Archive *AH);
 extern int
 archprintf(Archive *AH, const char *fmt,...)
 /* This extension allows gcc to check the format string */
-__attribute__((format(printf, 2, 3)));
+__attribute__((format(PG_PRINTF_ATTRIBUTE, 2, 3)));
 
 #define appendStringLiteralAH(buf,str,AH) \
 	appendStringLiteral(buf, str, (AH)->encoding, (AH)->std_strings)

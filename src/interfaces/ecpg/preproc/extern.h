@@ -76,7 +76,7 @@ extern char *mm_strdup(const char *);
 extern void
 mmerror(int, enum errortype, const char *,...)
 /* This extension allows gcc to check the format string */
-__attribute__((format(printf, 3, 4)));
+__attribute__((format(PG_PRINTF_ATTRIBUTE, 3, 4)));
 extern void output_get_descr_header(char *);
 extern void output_get_descr(char *, char *);
 extern void output_set_descr_header(char *);

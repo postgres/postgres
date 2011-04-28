@@ -33,7 +33,7 @@ static char *printTypmod(const char *typname, int32 typmod, Oid typmodout);
 static char *
 psnprintf(size_t len, const char *fmt,...)
 /* This lets gcc check the format string for consistency. */
-__attribute__((format(printf, 2, 3)));
+__attribute__((format(PG_PRINTF_ATTRIBUTE, 2, 3)));
 
 
 /*
