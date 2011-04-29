@@ -1212,27 +1212,11 @@ HeapTupleSatisfiesVacuum(HeapTupleHeader tuple, TransactionId OldestXmin,
 	}
 
 	/*
-	 * Deleter committed, but check special cases.
+	 * Deleter committed, but perhaps it was recent enough that some open
+	 * transactions could still see the tuple.
 	 */
-
-	if (TransactionIdEquals(HeapTupleHeaderGetXmin(tuple),
-							HeapTupleHeaderGetXmax(tuple)))
-	{
-		/*
-		 * Inserter also deleted it, so it was never visible to anyone else.
-		 * However, we can only remove it early if it's not an updated tuple;
-		 * else its parent tuple is linking to it via t_ctid, and this tuple
-		 * mustn't go away before the parent does.
-		 */
-		if (!(tuple->t_infomask & HEAP_UPDATED))
-			return HEAPTUPLE_DEAD;
-	}
-
 	if (!TransactionIdPrecedes(HeapTupleHeaderGetXmax(tuple), OldestXmin))
-	{
-		/* deleting xact is too recent, tuple could still be visible */
 		return HEAPTUPLE_RECENTLY_DEAD;
-	}
 
 	/* Otherwise, it's dead and removable */
 	return HEAPTUPLE_DEAD;
