@@ -473,39 +473,33 @@ pg_size_pretty(PG_FUNCTION_ARGS)
 	int64		size = PG_GETARG_INT64(0);
 	char		buf[64];
 	int64		limit = 10 * 1024;
-	int64		mult = 1;
+	int64		limit2 = limit * 2 - 1;
 
-	if (size < limit * mult)
+	if (size < limit)
 		snprintf(buf, sizeof(buf), INT64_FORMAT " bytes", size);
 	else
 	{
-		mult *= 1024;
-		if (size < limit * mult)
+		size >>= 9;				/* keep one extra bit for rounding */
+		if (size < limit2)
 			snprintf(buf, sizeof(buf), INT64_FORMAT " kB",
-					 (size + mult / 2) / mult);
+					 (size + 1) / 2);
 		else
 		{
-			mult *= 1024;
-			if (size < limit * mult)
+			size >>= 10;
+			if (size < limit2)
 				snprintf(buf, sizeof(buf), INT64_FORMAT " MB",
-						 (size + mult / 2) / mult);
+						 (size + 1) / 2);
 			else
 			{
-				mult *= 1024;
-				if (size < limit * mult)
+				size >>= 10;
+				if (size < limit2)
 					snprintf(buf, sizeof(buf), INT64_FORMAT " GB",
-							 (size + mult / 2) / mult);
+							 (size + 1) / 2);
 				else
 				{
-					/* Here we have to worry about avoiding overflow */
-					int64	val;
-
-					mult *= 1024;
-					val = size / mult;
-					if ((size % mult) >= (mult / 2))
-						val++;
+					size >>= 10;
 					snprintf(buf, sizeof(buf), INT64_FORMAT " TB",
-							 val);
+							 (size + 1) / 2);
 				}
 			}
 		}
