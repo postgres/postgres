@@ -1350,13 +1350,13 @@ WalSndGetStateString(WalSndState state)
 	switch (state)
 	{
 		case WALSNDSTATE_STARTUP:
-			return "STARTUP";
+			return "startup";
 		case WALSNDSTATE_BACKUP:
-			return "BACKUP";
+			return "backup";
 		case WALSNDSTATE_CATCHUP:
-			return "CATCHUP";
+			return "catchup";
 		case WALSNDSTATE_STREAMING:
-			return "STREAMING";
+			return "streaming";
 	}
 	return "UNKNOWN";
 }
@@ -1501,11 +1501,11 @@ pg_stat_get_wal_senders(PG_FUNCTION_ARGS)
 			 * informational, not different from priority.
 			 */
 			if (sync_priority[i] == 0)
-				values[7] = CStringGetTextDatum("ASYNC");
+				values[7] = CStringGetTextDatum("async");
 			else if (i == sync_standby)
-				values[7] = CStringGetTextDatum("SYNC");
+				values[7] = CStringGetTextDatum("sync");
 			else
-				values[7] = CStringGetTextDatum("POTENTIAL");
+				values[7] = CStringGetTextDatum("potential");
 		}
 
 		tuplestore_putvalues(tupstore, tupdesc, values, nulls);
