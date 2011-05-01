@@ -103,51 +103,30 @@ endif # MODULE_big
 
 install: all installdirs
 ifneq (,$(EXTENSION))
-	@for file in $(addprefix $(srcdir)/, $(addsuffix .control, $(EXTENSION))); do \
-	  echo "$(INSTALL_DATA) $$file '$(DESTDIR)$(datadir)/extension'"; \
-	  $(INSTALL_DATA) $$file '$(DESTDIR)$(datadir)/extension'; \
-	done
+	$(INSTALL_DATA) $(addprefix $(srcdir)/, $(addsuffix .control, $(EXTENSION))) '$(DESTDIR)$(datadir)/extension/'
 endif # EXTENSION
 ifneq (,$(DATA)$(DATA_built))
-	@for file in $(addprefix $(srcdir)/, $(DATA)) $(DATA_built); do \
-	  echo "$(INSTALL_DATA) $$file '$(DESTDIR)$(datadir)/$(datamoduledir)'"; \
-	  $(INSTALL_DATA) $$file '$(DESTDIR)$(datadir)/$(datamoduledir)'; \
-	done
+	$(INSTALL_DATA) $(addprefix $(srcdir)/, $(DATA)) $(DATA_built) '$(DESTDIR)$(datadir)/$(datamoduledir)/'
 endif # DATA
 ifneq (,$(DATA_TSEARCH))
-	@for file in $(addprefix $(srcdir)/, $(DATA_TSEARCH)); do \
-	  echo "$(INSTALL_DATA) $$file '$(DESTDIR)$(datadir)/tsearch_data'"; \
-	  $(INSTALL_DATA) $$file '$(DESTDIR)$(datadir)/tsearch_data'; \
-	done
+	$(INSTALL_DATA) $(addprefix $(srcdir)/, $(DATA_TSEARCH)) '$(DESTDIR)$(datadir)/tsearch_data/'
 endif # DATA_TSEARCH
 ifdef MODULES
-	@for file in $(addsuffix $(DLSUFFIX), $(MODULES)); do \
-	  echo "$(INSTALL_SHLIB) $$file '$(DESTDIR)$(pkglibdir)'"; \
-	  $(INSTALL_SHLIB) $$file '$(DESTDIR)$(pkglibdir)'; \
-	done
+	$(INSTALL_SHLIB) $(addsuffix $(DLSUFFIX), $(MODULES)) '$(DESTDIR)$(pkglibdir)/'
 endif # MODULES
 ifdef DOCS
 ifdef docdir
-	@for file in $(addprefix $(srcdir)/, $(DOCS)); do \
-	  echo "$(INSTALL_DATA) $$file '$(DESTDIR)$(docdir)/$(docmoduledir)'"; \
-	  $(INSTALL_DATA) $$file '$(DESTDIR)$(docdir)/$(docmoduledir)'; \
-	done
+	$(INSTALL_DATA) $(addprefix $(srcdir)/, $(DOCS)) '$(DESTDIR)$(docdir)/$(docmoduledir)/'
 endif # docdir
 endif # DOCS
 ifdef PROGRAM
 	$(INSTALL_PROGRAM) $(PROGRAM)$(X) '$(DESTDIR)$(bindir)'
 endif # PROGRAM
 ifdef SCRIPTS
-	@for file in $(addprefix $(srcdir)/, $(SCRIPTS)); do \
-	  echo "$(INSTALL_SCRIPT) $$file '$(DESTDIR)$(bindir)'"; \
-	  $(INSTALL_SCRIPT) $$file '$(DESTDIR)$(bindir)'; \
-	done
+	$(INSTALL_SCRIPT) $(addprefix $(srcdir)/, $(SCRIPTS)) '$(DESTDIR)$(bindir)/'
 endif # SCRIPTS
 ifdef SCRIPTS_built
-	@for file in $(SCRIPTS_built); do \
-	  echo "$(INSTALL_SCRIPT) $$file '$(DESTDIR)$(bindir)'"; \
-	  $(INSTALL_SCRIPT) $$file '$(DESTDIR)$(bindir)'; \
-	done
+	$(INSTALL_SCRIPT) $(SCRIPTS_built) '$(DESTDIR)$(bindir)/'
 endif # SCRIPTS_built
 
 ifdef MODULE_big

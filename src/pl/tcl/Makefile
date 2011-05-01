@@ -65,10 +65,7 @@ uninstall: uninstall-lib uninstall-data
 	$(MAKE) -C modules $@
 
 install-data: installdirs
-	@for file in $(addprefix $(srcdir)/, $(DATA)); do \
-	  echo "$(INSTALL_DATA) $$file '$(DESTDIR)$(datadir)/extension'"; \
-	  $(INSTALL_DATA) $$file '$(DESTDIR)$(datadir)/extension'; \
-	done
+	$(INSTALL_DATA) $(addprefix $(srcdir)/, $(DATA)) '$(DESTDIR)$(datadir)/extension/'
 
 uninstall-data:
 	rm -f $(addprefix '$(DESTDIR)$(datadir)/extension'/, $(notdir $(DATA)))
