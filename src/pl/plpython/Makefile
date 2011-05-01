@@ -138,7 +138,7 @@ prep3:
 	      -e "s/LANGUAGE plpython2u/LANGUAGE plpython3u/g" \
 	      -e "s/EXTENSION plpythonu/EXTENSION plpython3u/g" \
 	      -e "s/EXTENSION plpython2u/EXTENSION plpython3u/g" \
-	    $$file >`echo $$file | sed 's,$(srcdir),python3,'`; \
+	    $$file >`echo $$file | sed 's,$(srcdir),python3,'` || exit; \
 	done
 
 clean3:
