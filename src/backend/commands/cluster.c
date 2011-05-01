@@ -38,6 +38,7 @@
 #include "miscadmin.h"
 #include "optimizer/planner.h"
 #include "storage/bufmgr.h"
+#include "storage/lmgr.h"
 #include "storage/procarray.h"
 #include "storage/smgr.h"
 #include "utils/acl.h"
@@ -749,6 +750,22 @@ copy_heap_data(Oid OIDNewHeap, Oid OIDOldHeap, Oid OIDOldIndex,
 	natts = newTupDesc->natts;
 	values = (Datum *) palloc(natts * sizeof(Datum));
 	isnull = (bool *) palloc(natts * sizeof(bool));
+
+	/*
+	 * If the OldHeap has a toast table, get lock on the toast table to keep
+	 * it from being vacuumed.  This is needed because autovacuum processes
+	 * toast tables independently of their main tables, with no lock on the
+	 * latter.  If an autovacuum were to start on the toast table after we
+	 * compute our OldestXmin below, it would use a later OldestXmin, and then
+	 * possibly remove as DEAD toast tuples belonging to main tuples we think
+	 * are only RECENTLY_DEAD.  Then we'd fail while trying to copy those
+	 * tuples.
+	 *
+	 * We don't need to open the toast relation here, just lock it.  The lock
+	 * will be held till end of transaction.
+	 */
+	if (OldHeap->rd_rel->reltoastrelid)
+		LockRelationOid(OldHeap->rd_rel->reltoastrelid, AccessExclusiveLock);
 
 	/*
 	 * We need to log the copied data in WAL iff WAL archiving/streaming is
