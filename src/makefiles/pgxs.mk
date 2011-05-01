@@ -98,26 +98,26 @@ install: all installdirs
 ifneq (,$(DATA)$(DATA_built))
 	@for file in $(addprefix $(srcdir)/, $(DATA)) $(DATA_built); do \
 	  echo "$(INSTALL_DATA) $$file '$(DESTDIR)$(datadir)/$(datamoduledir)'"; \
-	  $(INSTALL_DATA) $$file '$(DESTDIR)$(datadir)/$(datamoduledir)'; \
+	  $(INSTALL_DATA) $$file '$(DESTDIR)$(datadir)/$(datamoduledir)' || exit; \
 	done
 endif # DATA
 ifneq (,$(DATA_TSEARCH))
 	@for file in $(addprefix $(srcdir)/, $(DATA_TSEARCH)); do \
 	  echo "$(INSTALL_DATA) $$file '$(DESTDIR)$(datadir)/tsearch_data'"; \
-	  $(INSTALL_DATA) $$file '$(DESTDIR)$(datadir)/tsearch_data'; \
+	  $(INSTALL_DATA) $$file '$(DESTDIR)$(datadir)/tsearch_data' || exit; \
 	done
 endif # DATA_TSEARCH
 ifdef MODULES
 	@for file in $(addsuffix $(DLSUFFIX), $(MODULES)); do \
 	  echo "$(INSTALL_SHLIB) $$file '$(DESTDIR)$(pkglibdir)'"; \
-	  $(INSTALL_SHLIB) $$file '$(DESTDIR)$(pkglibdir)'; \
+	  $(INSTALL_SHLIB) $$file '$(DESTDIR)$(pkglibdir)' || exit; \
 	done
 endif # MODULES
 ifdef DOCS
 ifdef docdir
 	@for file in $(addprefix $(srcdir)/, $(DOCS)); do \
 	  echo "$(INSTALL_DATA) $$file '$(DESTDIR)$(docdir)/$(docmoduledir)'"; \
-	  $(INSTALL_DATA) $$file '$(DESTDIR)$(docdir)/$(docmoduledir)'; \
+	  $(INSTALL_DATA) $$file '$(DESTDIR)$(docdir)/$(docmoduledir)' || exit; \
 	done
 endif # docdir
 endif # DOCS
@@ -127,13 +127,13 @@ endif # PROGRAM
 ifdef SCRIPTS
 	@for file in $(addprefix $(srcdir)/, $(SCRIPTS)); do \
 	  echo "$(INSTALL_SCRIPT) $$file '$(DESTDIR)$(bindir)'"; \
-	  $(INSTALL_SCRIPT) $$file '$(DESTDIR)$(bindir)'; \
+	  $(INSTALL_SCRIPT) $$file '$(DESTDIR)$(bindir)' || exit; \
 	done
 endif # SCRIPTS
 ifdef SCRIPTS_built
 	@for file in $(SCRIPTS_built); do \
 	  echo "$(INSTALL_SCRIPT) $$file '$(DESTDIR)$(bindir)'"; \
-	  $(INSTALL_SCRIPT) $$file '$(DESTDIR)$(bindir)'; \
+	  $(INSTALL_SCRIPT) $$file '$(DESTDIR)$(bindir)' || exit; \
 	done
 endif # SCRIPTS_built
 
