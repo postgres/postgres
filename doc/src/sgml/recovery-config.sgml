@@ -95,7 +95,7 @@ restore_command = 'copy "C:\\server\\archivedir\\%f" "%p"'  # Windows
         The <xref linkend="pgarchivecleanup"> module
         is often used in <varname>archive_cleanup_command</> for
         single-standby configurations, for example:
-<programlisting> archive_cleanup_command = 'pg_archivecleanup /mnt/server/archivedir %r' </programlisting>
+<programlisting>archive_cleanup_command = 'pg_archivecleanup /mnt/server/archivedir %r'</programlisting>
         Note however that if multiple standby servers are restoring from the
         same archive directory, you will need to ensure that you do not delete
         WAL files until they are no longer needed by any of the servers.

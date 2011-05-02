@@ -388,26 +388,26 @@ PostgreSQL documentation
    To create a base backup of the server at <literal>mydbserver</literal>
    and store it in the local directory
    <filename>/usr/local/pgsql/data</filename>:
-   <screen>
-    <prompt>$</prompt> <userinput>pg_basebackup -h mydbserver -D /usr/local/pgsql/data</userinput>
-   </screen>
+<screen>
+<prompt>$</prompt> <userinput>pg_basebackup -h mydbserver -D /usr/local/pgsql/data</userinput>
+</screen>
   </para>
 
   <para>
    To create a backup of the local server with one maximum compressed
    tar file for each tablespace, and store it in the directory
    <filename>backup</filename>, showing a progress report while running:
-   <screen>
-    <prompt>$</prompt> <userinput>pg_basebackup -D backup -Ft -Z9 -P</userinput>
-   </screen>
+<screen>
+<prompt>$</prompt> <userinput>pg_basebackup -D backup -Ft -Z9 -P</userinput>
+</screen>
   </para>
 
   <para>
    To create a backup of a single-tablespace local database and compress
    this with <productname>bzip2</productname>:
-   <screen>
-    <prompt>$</prompt> <userinput>pg_basebackup -D - -Ft | bzip2 &gt; backup.tar.bz2</userinput>
-   </screen>
+<screen>
+<prompt>$</prompt> <userinput>pg_basebackup -D - -Ft | bzip2 &gt; backup.tar.bz2</userinput>
+</screen>
    (this command will fail if there are multiple tablespaces in the
    database)
   </para>
