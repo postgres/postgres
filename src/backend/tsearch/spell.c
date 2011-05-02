@@ -75,7 +75,7 @@ NIFinishBuild(IspellDict *Conf)
  * doesn't need that.  The cpalloc and cpalloc0 macros are just documentation
  * to indicate which allocations actually require zeroing.
  */
-#define COMPACT_ALLOC_CHUNK 8192	/* must be > aset.c's allocChunkLimit */
+#define COMPACT_ALLOC_CHUNK 8192	/* amount to get from palloc at once */
 #define COMPACT_MAX_REQ		1024	/* must be < COMPACT_ALLOC_CHUNK */
 
 static void *

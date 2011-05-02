@@ -89,7 +89,9 @@
  *
  * With the current parameters, request sizes up to 8K are treated as chunks,
  * larger requests go into dedicated blocks.  Change ALLOCSET_NUM_FREELISTS
- * to adjust the boundary point.
+ * to adjust the boundary point.  (But in contexts with small maxBlockSize,
+ * we may set the allocChunkLimit to less than 8K, so as to avoid space
+ * wastage.)
  *--------------------
  */
 
@@ -97,6 +99,8 @@
 #define ALLOCSET_NUM_FREELISTS	11
 #define ALLOC_CHUNK_LIMIT	(1 << (ALLOCSET_NUM_FREELISTS-1+ALLOC_MINBITS))
 /* Size of largest chunk that we use a fixed size for */
+#define ALLOC_CHUNK_FRACTION	4
+/* We allow chunks to be at most 1/4 of maxBlockSize (less overhead) */
 
 /*--------------------
  * The first block allocated for an allocset has size initBlockSize.
@@ -380,15 +384,20 @@ AllocSetContextCreate(MemoryContext parent,
 	/*
 	 * Compute the allocation chunk size limit for this context.  It can't be
 	 * more than ALLOC_CHUNK_LIMIT because of the fixed number of freelists.
-	 * If maxBlockSize is small then requests exceeding the maxBlockSize
-	 * should be treated as large chunks, too.	We have to have
-	 * allocChunkLimit a power of two, because the requested and
-	 * actually-allocated sizes of any chunk must be on the same side of the
-	 * limit, else we get confused about whether the chunk is "big".
+	 * If maxBlockSize is small then requests exceeding the maxBlockSize, or
+	 * even a significant fraction of it, should be treated as large chunks
+	 * too.  For the typical case of maxBlockSize a power of 2, the chunk size
+	 * limit will be at most 1/8th maxBlockSize, so that given a stream of
+	 * requests that are all the maximum chunk size we will waste at most
+	 * 1/8th of the allocated space.
+	 *
+	 * We have to have allocChunkLimit a power of two, because the requested
+	 * and actually-allocated sizes of any chunk must be on the same side of
+	 * the limit, else we get confused about whether the chunk is "big".
 	 */
 	context->allocChunkLimit = ALLOC_CHUNK_LIMIT;
-	while (context->allocChunkLimit >
-		   (Size) (maxBlockSize - ALLOC_BLOCKHDRSZ - ALLOC_CHUNKHDRSZ))
+	while ((Size) (context->allocChunkLimit + ALLOC_CHUNKHDRSZ) >
+		   (Size) ((maxBlockSize - ALLOC_BLOCKHDRSZ) / ALLOC_CHUNK_FRACTION))
 		context->allocChunkLimit >>= 1;
 
 	/*
