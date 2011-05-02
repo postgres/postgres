@@ -8717,7 +8717,7 @@ CREATE TYPE rainbow AS ENUM ('red', 'orange', 'yellow', 'green', 'blue', 'purple
    with <command>configure --with-libxml</>.
   </para>
 
-  <sect2>
+  <sect2 id="functions-producing-xml">
    <title>Producing XML Content</title>
 
    <para>
@@ -9093,7 +9093,7 @@ SELECT xmlagg(x) FROM (SELECT * FROM test ORDER BY y DESC) AS tab;
    </sect3>
    </sect2>
 
-   <sect2>
+   <sect2 id="functions-xml-predicates">
     <title>XML Predicates</title>
 
     <para>
@@ -9854,7 +9854,7 @@ SELECT setval('foo', 42, false);    <lineannotation>Next <function>nextval</> wi
    </para>
   </tip>
 
-  <sect2>
+  <sect2 id="functions-case">
    <title><literal>CASE</></title>
 
   <para>
@@ -9966,7 +9966,7 @@ SELECT ... WHERE CASE WHEN x &lt;&gt; 0 THEN y/x &gt; 1.5 ELSE false END;
    </para>
   </sect2>
 
-  <sect2>
+  <sect2 id="functions-coalesce-nvl-ifnull">
    <title><literal>COALESCE</></title>
 
   <indexterm>
@@ -10005,7 +10005,7 @@ SELECT COALESCE(description, short_description, '(none)') ...
    </para>
   </sect2>
 
-  <sect2>
+  <sect2 id="functions-nullif">
    <title><literal>NULLIF</></title>
 
   <indexterm>
@@ -10034,7 +10034,7 @@ SELECT NULLIF(value, '(none)') ...
 
   </sect2>
 
-  <sect2>
+  <sect2 id="functions-greatest-least">
    <title><literal>GREATEST</literal> and <literal>LEAST</literal></title>
 
   <indexterm>
@@ -11492,7 +11492,7 @@ SELECT xmlagg(x) FROM (SELECT x FROM test ORDER BY y DESC) AS tab;
    Boolean (true/false) results.
   </para>
 
-  <sect2>
+  <sect2 id="functions-subquery-exists">
    <title><literal>EXISTS</literal></title>
 
 <synopsis>
@@ -11542,7 +11542,7 @@ WHERE EXISTS (SELECT 1 FROM tab2 WHERE col2 = tab1.col2);
   </para>
   </sect2>
 
-  <sect2>
+  <sect2 id="functions-subquery-in">
    <title><literal>IN</literal></title>
 
 <synopsis>
@@ -11598,7 +11598,7 @@ WHERE EXISTS (SELECT 1 FROM tab2 WHERE col2 = tab1.col2);
   </para>
   </sect2>
 
-  <sect2>
+  <sect2 id="functions-subquery-notin">
    <title><literal>NOT IN</literal></title>
 
 <synopsis>
@@ -11654,7 +11654,7 @@ WHERE EXISTS (SELECT 1 FROM tab2 WHERE col2 = tab1.col2);
   </para>
   </sect2>
 
-  <sect2>
+  <sect2 id="functions-subquery-any-some">
    <title><literal>ANY</literal>/<literal>SOME</literal></title>
 
 <synopsis>
@@ -11719,7 +11719,7 @@ WHERE EXISTS (SELECT 1 FROM tab2 WHERE col2 = tab1.col2);
   </para>
   </sect2>
 
-  <sect2>
+  <sect2 id="functions-subquery-all">
    <title><literal>ALL</literal></title>
 
 <synopsis>
