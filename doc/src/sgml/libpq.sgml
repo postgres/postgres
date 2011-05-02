@@ -6387,7 +6387,7 @@ myEventProc(PGEventId evtId, void *evtInfo, void *passThrough)
   <para>
    The following environment variables can be used to specify default
    behavior for each <productname>PostgreSQL</productname> session.  (See
-   also the <xref linkend="sql-alteruser">
+   also the <xref linkend="sql-alterrole">
    and <xref linkend="sql-alterdatabase">
    commands for ways to set default behavior on a per-user or per-database
    basis.)

@@ -135,7 +135,7 @@ env PGOPTIONS='-c geqo=off' psql
     Furthermore, it is possible to assign a set of parameter settings to
     a user or a database.  Whenever a session is started, the default
     settings for the user and database involved are loaded.  The
-    commands <xref linkend="sql-alteruser">
+    commands <xref linkend="sql-alterrole">
     and <xref linkend="sql-alterdatabase">,
     respectively, are used to configure these settings.  Per-database
     settings override anything received from the
@@ -705,7 +705,7 @@ SET ENABLE_SEQSCAN TO OFF;
        <para>
         When a password is specified in <xref
         linkend="sql-createuser"> or
-        <xref linkend="sql-alteruser">
+        <xref linkend="sql-alterrole">
         without writing either <literal>ENCRYPTED</> or
         <literal>UNENCRYPTED</>, this parameter determines whether the
         password is to be encrypted. The default is <literal>on</>
@@ -5205,7 +5205,7 @@ dynamic_library_path = 'C:\tools\postgresql;H:\my_project\lib;$libdir'
         libraries to be loaded into specific sessions without an explicit
         <command>LOAD</> command being given.  For example, debugging could
         be enabled for all sessions under a given user name by setting
-        this parameter with <command>ALTER USER SET</>.
+        this parameter with <command>ALTER ROLE SET</>.
        </para>
 
        <para>

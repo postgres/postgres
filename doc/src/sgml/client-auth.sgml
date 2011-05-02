@@ -889,7 +889,7 @@ omicron         bryanh                  guest1
     each database user is stored in the <literal>pg_authid</> system
     catalog. Passwords can be managed with the SQL commands
     <xref linkend="sql-createuser"> and
-    <xref linkend="sql-alteruser">,
+    <xref linkend="sql-alterrole">,
     e.g., <userinput>CREATE USER foo WITH PASSWORD 'secret'</userinput>.
     If no password has been set up for a user, the stored password
     is null and password authentication will always fail for that user.
