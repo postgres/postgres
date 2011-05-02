@@ -1065,6 +1065,11 @@ SS_process_ctes(PlannerInfo *root)
  * (Notionally, we replace the SubLink with a constant TRUE, then elide the
  * redundant constant from the qual.)
  *
+ * On success, the caller is also responsible for recursively applying
+ * pull_up_sublinks processing to the rarg and quals of the returned JoinExpr.
+ * (On failure, there is no need to do anything, since pull_up_sublinks will
+ * be applied when we recursively plan the sub-select.)
+ *
  * Side effects of a successful conversion include adding the SubLink's
  * subselect to the query's rangetable, so that it can be referenced in
  * the JoinExpr's rarg.
