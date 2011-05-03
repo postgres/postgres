@@ -188,9 +188,10 @@ protocol to make nodes agree on a serializable transactional order.
     <para>
      With statement-based replication middleware, a program intercepts
      every SQL query and sends it to one or all servers.  Each server
-     operates independently.  Read-write queries are sent to all servers,
-     while read-only queries can be sent to just one server, allowing
-     the read workload to be distributed.
+     operates independently.  Read-write queries must be sent to all servers,
+     so that every server receives any changes.  But read-only queries can be
+     sent to just one server, allowing the read workload to be distributed
+     among them.
     </para>
 
     <para>
