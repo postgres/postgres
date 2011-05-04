@@ -554,7 +554,7 @@ help(void)
 	printf(_("  --quote-all-identifiers     quote all identifiers, even if not keywords\n"));
 	printf(_("  --role=ROLENAME             do SET ROLE before dump\n"));
 	printf(_("  --no-security-label         do not dump security label assignments\n"));
-	printf(_("  --no-unlogged-table-data	do not dump unlogged table data\n"));
+	printf(_("  --no-unlogged-table-data    do not dump unlogged table data\n"));
 	printf(_("  --use-set-session-authorization\n"
 			 "                              use SET SESSION AUTHORIZATION commands instead of\n"
 	"                              ALTER OWNER commands to set ownership\n"));
