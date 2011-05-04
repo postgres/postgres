@@ -1003,12 +1003,6 @@ main(int argc, char **argv)
 				dbhost = xstrdup(optarg);
 				break;
 			case 'p':
-				if (atoi(optarg) <= 0)
-				{
-					fprintf(stderr, _("%s: invalid port number \"%s\"\n"),
-							progname, optarg);
-					exit(1);
-				}
 				dbport = xstrdup(optarg);
 				break;
 			case 'U':
