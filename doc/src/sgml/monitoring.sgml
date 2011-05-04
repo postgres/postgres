@@ -1357,9 +1357,10 @@ SELECT pg_stat_get_backend_pid(s.backendid) AS procpid,
 
   <para>
    A number of standard probes are provided in the source code,
-   as shown in <xref linkend="dtrace-probe-point-table">.
-   More can certainly be added to enhance <productname>PostgreSQL</>'s
-   observability.
+   as shown in <xref linkend="dtrace-probe-point-table">;
+   <xref linkend="typedefs-table">
+   shows the types used in the probes.  More probes can certainly be
+   added to enhance <productname>PostgreSQL</>'s observability.
   </para>
 
  <table id="dtrace-probe-point-table">

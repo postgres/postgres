@@ -55,7 +55,8 @@
   </para>
 
   <para>
-   The following functions are provided:
+   The provided functions are shown
+   in <xref linkend="earthdistance-cube-functions">.
   </para>
 
   <table id="earthdistance-cube-functions">
@@ -148,7 +149,8 @@
   </para>
 
   <para>
-   A single operator is provided:
+   A single operator is provided, shown
+   in <xref linkend="earthdistance-point-operators">.
   </para>
 
   <table id="earthdistance-point-operators">

@@ -2097,12 +2097,11 @@ pg_dumpall -p 5432 | psql -d postgres -p 5433
 
   <sect2 id="ssl-server-files">
    <title>SSL Server File Usage</title>
-  <para>
-   The files <filename>server.key</>, <filename>server.crt</>,
-   <filename>root.crt</filename>, and <filename>root.crl</filename>
-   are only examined during server start; so you must restart
-   the server for changes in them to take effect.
-  </para>
+
+   <para>
+    <xref linkend="ssl-file-usage"> summarizes the files that are
+    relevant to the SSL setup on the server.
+   </para>
 
   <table id="ssl-file-usage">
    <title>SSL Server File Usage</title>
@@ -2146,6 +2145,13 @@ pg_dumpall -p 5432 | psql -d postgres -p 5433
     </tbody>
    </tgroup>
   </table>
+
+   <para>
+    The files <filename>server.key</>, <filename>server.crt</>,
+    <filename>root.crt</filename>, and <filename>root.crl</filename>
+    are only examined during server start; so you must restart
+    the server for changes in them to take effect.
+   </para>
   </sect2>
 
   <sect2 id="ssl-certificate-creation">

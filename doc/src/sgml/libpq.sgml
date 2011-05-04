@@ -385,63 +385,70 @@ PGconn *PQconnectdbParams(const char **keywords, const char **values, int expand
            This option determines whether or with what priority a secure
            <acronym>SSL</> TCP/IP connection will be negotiated with the
            server. There are six modes:
-          </para>
 
-          <table id="libpq-connect-sslmode-options">
-           <title><literal>sslmode</literal> Options</title>
-           <tgroup cols="2">
-            <thead>
-             <row>
-              <entry>Option</entry>
-              <entry>Description</entry>
-             </row>
-            </thead>
+           <variablelist>
+            <varlistentry>
+             <term><literal>disable</literal></term>
+             <listitem>
+              <para>
+               only try a non-<acronym>SSL</> connection
+              </para>
+             </listitem>
+            </varlistentry>
 
-            <tbody>
+            <varlistentry>
+             <term><literal>allow</literal></term>
+             <listitem>
+              <para>
+               first try a non-<acronym>SSL</> connection; if that
+               fails, try an <acronym>SSL</> connection
+              </para>
+             </listitem>
+            </varlistentry>
 
-             <row>
-              <entry><literal>disable</></entry>
-              <entry>only try a non-<acronym>SSL</> connection</entry>
-             </row>
+            <varlistentry>
+             <term><literal>prefer</literal> (default)</term>
+             <listitem>
+              <para>
+               first try an <acronym>SSL</> connection; if that fails,
+               try a non-<acronym>SSL</> connection
+              </para>
+             </listitem>
+            </varlistentry>
 
-             <row>
-              <entry><literal>allow</></entry>
-              <entry>first try a non-<acronym>SSL</>
-               connection;  if that fails, try an <acronym>SSL</>
-               connection</entry>
-             </row>
+            <varlistentry>
+             <term><literal>require</literal></term>
+             <listitem>
+              <para>
+               only try an <acronym>SSL</> connection
+              </para>
+             </listitem>
+            </varlistentry>
 
-             <row>
-              <entry><literal>prefer</> (default)</entry>
-              <entry>first try an <acronym>SSL</> connection;  if
-              that fails, try a non-<acronym>SSL</>
-              connection</entry>
-             </row>
+            <varlistentry>
+             <term><literal>verify-ca</literal></term>
+             <listitem>
+              <para>
+               only try an <acronym>SSL</> connection, and verify that
+               the server certificate is issued by a trusted
+               certificate authority (<acronym>CA</>)
+              </para>
+             </listitem>
+            </varlistentry>
 
-             <row>
-              <entry><literal>require</></entry>
-              <entry>only try an <acronym>SSL</> connection</entry>
-             </row>
+            <varlistentry>
+             <term><literal>verify-full</literal></term>
+             <listitem>
+              <para>
+               only try an <acronym>SSL</> connection, verify that the
+               server certificate is issued by a
+               trusted <acronym>CA</> and that the server host name
+               matches that in the certificate
+              </para>
+             </listitem>
+            </varlistentry>
+           </variablelist>
 
-             <row>
-              <entry><literal>verify-ca</></entry>
-              <entry>only try an <acronym>SSL</> connection, and verify that
-              the server certificate is issued by a trusted certificate
-              authority (<acronym>CA</>)</entry>
-             </row>
-
-             <row>
-              <entry><literal>verify-full</></entry>
-              <entry>only try an <acronym>SSL</> connection, verify that
-              the server certificate is issued by a trusted <acronym>CA</> and
-              that the server host name matches that in the certificate</entry>
-             </row>
-
-            </tbody>
-           </tgroup>
-          </table>
-
-          <para>
            See <xref linkend="libpq-ssl"> for a detailed description of how
            these options work.
           </para>
@@ -6773,30 +6780,23 @@ ldap://ldap.acme.com/cn=dbserver,cn=hosts?pgconnectinfo?base?(objectclass=*)
    The different values for the <literal>sslmode</> parameter provide different
    levels of protection. SSL can provide
    protection against three types of attacks:
-  </para>
-  <table id="libpq-ssl-protect-attacks">
-   <title>SSL Attacks</title>
-   <tgroup cols="2">
-    <thead>
-     <row>
-      <entry>Type</entry>
-      <entry>Description</entry>
-     </row>
-    </thead>
 
-    <tbody>
-     <row>
-      <entry>Eavesdropping</entry>
-      <entry>If a third party can examine the network traffic between the
+   <variablelist>
+    <varlistentry>
+     <term>Eavesdropping</term>
+     <listitem>
+      <para>If a third party can examine the network traffic between the
        client and the server, it can read both connection information (including
        the user name and password) and the data that is passed. <acronym>SSL</>
        uses encryption to prevent this.
-      </entry>
-     </row>
+      </para>
+     </listitem>
+    </varlistentry>
 
-     <row>
-      <entry>Man in the middle (<acronym>MITM</>)</entry>
-      <entry>If a third party can modify the data while passing between the
+    <varlistentry>
+     <term>Man in the middle (<acronym>MITM</>)</term>
+     <listitem>
+      <para>If a third party can modify the data while passing between the
        client and server, it can pretend to be the server and therefore see and
        modify data <emphasis>even if it is encrypted</>. The third party can then
        forward the connection information and data to the original server,
@@ -6805,21 +6805,23 @@ ldap://ldap.acme.com/cn=dbserver,cn=hosts?pgconnectinfo?base?(objectclass=*)
        to a different server than intended. There are also several other
        attack methods that can accomplish this. <acronym>SSL</> uses certificate
        verification to prevent this, by authenticating the server to the client.
-      </entry>
-     </row>
+      </para>
+     </listitem>
+    </varlistentry>
 
-     <row>
-      <entry>Impersonation</entry>
-      <entry>If a third party can pretend to be an authorized client, it can
+    <varlistentry>
+     <term>Impersonation</term>
+     <listitem>
+      <para>If a third party can pretend to be an authorized client, it can
        simply access data it should not have access to. Typically this can
        happen through insecure password management. <acronym>SSL</> uses
        client certificates to prevent this, by making sure that only holders
        of valid certificates can access the server.
-      </entry>
-     </row>
-    </tbody>
-   </tgroup>
-  </table>
+      </para>
+     </listitem>
+    </varlistentry>
+   </variablelist>
+  </para>
 
   <para>
    For a connection to be known secure, SSL usage must be configured
@@ -6844,9 +6846,9 @@ ldap://ldap.acme.com/cn=dbserver,cn=hosts?pgconnectinfo?base?(objectclass=*)
   <para>
    All <acronym>SSL</> options carry overhead in the form of encryption and
    key-exchange, so there is a tradeoff that has to be made between performance
-   and security. The following table illustrates the risks the different
-   <literal>sslmode</> values protect against, and what statement they make
-   about security and overhead:
+   and security. <xref linkend="libpq-ssl-sslmode-statements">
+   illustrates the risks the different <literal>sslmode</> values
+   protect against, and what statement they make about security and overhead.
   </para>
 
   <table id="libpq-ssl-sslmode-statements">
@@ -6942,6 +6944,12 @@ ldap://ldap.acme.com/cn=dbserver,cn=hosts?pgconnectinfo?base?(objectclass=*)
 
  <sect2 id="libpq-ssl-fileusage">
   <title>SSL Client File Usage</title>
+
+  <para>
+   <xref linkend="libpq-ssl-file-usage"> summarizes the files that are
+   relevant to the SSL setup on the client.
+  </para>
+
   <table id="libpq-ssl-file-usage">
    <title>Libpq/Client SSL File Usage</title>
    <tgroup cols="3">

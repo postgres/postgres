@@ -182,8 +182,8 @@ Europe &amp; Russia*@ &amp; !Transportation
    <literal>=</>, <literal>&lt;&gt;</literal>,
    <literal>&lt;</>, <literal>&gt;</>, <literal>&lt;=</>, <literal>&gt;=</>.
    Comparison sorts in the order of a tree traversal, with the children
-   of a node sorted by label text.  In addition, there are the following
-   specialized operators:
+   of a node sorted by label text.  In addition, the specialized
+   operators shown in <xref linkend="ltree-op-table"> are available.
   </para>
 
   <table id="ltree-op-table">
@@ -362,7 +362,7 @@ Europe &amp; Russia*@ &amp; !Transportation
   </para>
 
   <para>
-   The following functions are available:
+   The available functions are shown in <xref linkend="ltree-func-table">.
   </para>
 
   <table id="ltree-func-table">

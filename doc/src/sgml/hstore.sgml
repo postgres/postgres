@@ -85,6 +85,12 @@ key =&gt; NULL
  <sect2>
   <title><type>hstore</> Operators and Functions</title>
 
+  <para>
+   The operators provided by the <literal>hstore</literal> module are
+   shown in <xref linkend="hstore-op-table">, the functions
+   in <xref linkend="hstore-func-table">.
+  </para>
+
   <table id="hstore-op-table">
    <title><type>hstore</> Operators</title>
 
