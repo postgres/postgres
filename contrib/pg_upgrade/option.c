@@ -213,24 +213,26 @@ parseCommandLine(int argc, char *argv[])
 static void
 usage(void)
 {
-	printf(_("\nUsage: pg_upgrade [OPTIONS]...\n\
+	printf(_("pg_upgrade upgrades a PostgreSQL cluster to a different major version.\n\
+\nUsage:\n\
+  pg_upgrade [OPTIONS]...\n\
 \n\
 Options:\n\
- -b, --old-bindir=old_bindir      old cluster executable directory\n\
- -B, --new-bindir=new_bindir      new cluster executable directory\n\
- -c, --check                      check clusters only, don't change any data\n\
- -d, --old-datadir=old_datadir    old cluster data directory\n\
- -D, --new-datadir=new_datadir    new cluster data directory\n\
- -g, --debug                      enable debugging\n\
- -G, --debugfile=debug_filename   output debugging activity to file\n\
- -k, --link                       link instead of copying files to new cluster\n\
- -l, --logfile=log_filename       log session activity to file\n\
- -p, --old-port=old_portnum       old cluster port number (default %d)\n\
- -P, --new-port=new_portnum       new cluster port number (default %d)\n\
- -u, --user=username              clusters superuser (default \"%s\")\n\
- -v, --verbose                    enable verbose output\n\
- -V, --version                    display version information, then exit\n\
- -h, --help                       show this help, then exit\n\
+  -b, --old-bindir=OLDBINDIR    old cluster executable directory\n\
+  -B, --new-bindir=NEWBINDIR    new cluster executable directory\n\
+  -c, --check                   check clusters only, don't change any data\n\
+  -d, --old-datadir=OLDDATADIR  old cluster data directory\n\
+  -D, --new-datadir=NEWDATADIR  new cluster data directory\n\
+  -g, --debug                   enable debugging\n\
+  -G, --debugfile=FILENAME      output debugging activity to file\n\
+  -k, --link                    link instead of copying files to new cluster\n\
+  -l, --logfile=FILENAME        log session activity to file\n\
+  -p, --old-port=OLDPORT        old cluster port number (default %d)\n\
+  -P, --new-port=NEWPORT        new cluster port number (default %d)\n\
+  -u, --user=NAME               clusters superuser (default \"%s\")\n\
+  -v, --verbose                 enable verbose output\n\
+  -V, --version                 display version information, then exit\n\
+  -h, --help                    show this help, then exit\n\
 \n\
 Before running pg_upgrade you must:\n\
   create a new database cluster (using the new version of initdb)\n\
@@ -240,8 +242,8 @@ Before running pg_upgrade you must:\n\
 When you run pg_upgrade, you must provide the following information:\n\
   the data directory for the old cluster  (-d OLDDATADIR)\n\
   the data directory for the new cluster  (-D NEWDATADIR)\n\
-  the 'bin' directory for the old version (-b OLDBINDIR)\n\
-  the 'bin' directory for the new version (-B NEWBINDIR)\n\
+  the \"bin\" directory for the old version (-b OLDBINDIR)\n\
+  the \"bin\" directory for the new version (-B NEWBINDIR)\n\
 \n\
 For example:\n\
   pg_upgrade -d oldCluster/data -D newCluster/data -b oldCluster/bin -B newCluster/bin\n\
