@@ -203,19 +203,19 @@ usage(void)
 	printf("%s removes older WAL files from PostgreSQL archives.\n\n", progname);
 	printf("Usage:\n");
 	printf("  %s [OPTION]... ARCHIVELOCATION OLDESTKEPTWALFILE\n", progname);
-	printf("\n"
-		   "for use as an archive_cleanup_command in the recovery.conf when standby_mode = on:\n"
-		   "  archive_cleanup_command = 'pg_archivecleanup [OPTION]... ARCHIVELOCATION %%r'\n"
-		   "e.g.\n"
-		   "  archive_cleanup_command = 'pg_archivecleanup /mnt/server/archiverdir %%r'\n");
-	printf("\n"
-		   "or for use as a standalone archive cleaner:\n"
-		   "e.g.\n"
-		   "  pg_archivecleanup /mnt/server/archiverdir 000000010000000000000010.00000020.backup\n");
 	printf("\nOptions:\n");
 	printf("  -d                 generates debug output (verbose mode)\n");
 	printf("  --help             show this help, then exit\n");
 	printf("  --version          output version information, then exit\n");
+	printf("\n"
+		   "For use as archive_cleanup_command in recovery.conf when standby_mode = on:\n"
+		   "  archive_cleanup_command = 'pg_archivecleanup [OPTION]... ARCHIVELOCATION %%r'\n"
+		   "e.g.\n"
+		   "  archive_cleanup_command = 'pg_archivecleanup /mnt/server/archiverdir %%r'\n");
+	printf("\n"
+		   "Or for use as a standalone archive cleaner:\n"
+		   "e.g.\n"
+		   "  pg_archivecleanup /mnt/server/archiverdir 000000010000000000000010.00000020.backup\n");
 	printf("\nReport bugs to <pgsql-bugs@postgresql.org>.\n");
 }
 

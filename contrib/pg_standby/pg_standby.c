@@ -515,11 +515,6 @@ usage(void)
 	printf("%s allows PostgreSQL warm standby servers to be configured.\n\n", progname);
 	printf("Usage:\n");
 	printf("  %s [OPTION]... ARCHIVELOCATION NEXTWALFILE XLOGFILEPATH [RESTARTWALFILE]\n", progname);
-	printf("\n"
-		"with main intended use as a restore_command in the recovery.conf:\n"
-		   "  restore_command = 'pg_standby [OPTION]... ARCHIVELOCATION %%f %%p %%r'\n"
-		   "e.g.\n"
-		   "  restore_command = 'pg_standby -l /mnt/server/archiverdir %%f %%p %%r'\n");
 	printf("\nOptions:\n");
 	printf("  -c                 copies file from archive (default)\n");
 	printf("  -d                 generate lots of debugging output (testing only)\n");
@@ -534,6 +529,11 @@ usage(void)
 	printf("  -w MAXWAITTIME     max seconds to wait for a file (0=no limit) (default=0)\n");
 	printf("  --help             show this help, then exit\n");
 	printf("  --version          output version information, then exit\n");
+	printf("\n"
+		   "Main intended use as restore_command in recovery.conf:\n"
+		   "  restore_command = 'pg_standby [OPTION]... ARCHIVELOCATION %%f %%p %%r'\n"
+		   "e.g.\n"
+		   "  restore_command = 'pg_standby /mnt/server/archiverdir %%f %%p %%r'\n");
 	printf("\nReport bugs to <pgsql-bugs@postgresql.org>.\n");
 }
 
