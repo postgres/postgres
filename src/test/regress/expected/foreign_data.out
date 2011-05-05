@@ -670,7 +670,7 @@ Has OIDs: no
 (1 row)
 
 CREATE INDEX id_ft1_c2 ON ft1 (c2);                             -- ERROR
-ERROR:  "ft1" is not a table
+ERROR:  cannot create index on foreign table "ft1"
 SELECT * FROM ft1;                                              -- ERROR
 ERROR:  foreign-data wrapper "dummy" has no handler
 EXPLAIN SELECT * FROM ft1;                                      -- ERROR
