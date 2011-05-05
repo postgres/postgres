@@ -183,10 +183,22 @@ DefineIndex(RangeVar *heapRelation,
 	/* Note: during bootstrap may see uncataloged relation */
 	if (rel->rd_rel->relkind != RELKIND_RELATION &&
 		rel->rd_rel->relkind != RELKIND_UNCATALOGED)
-		ereport(ERROR,
-				(errcode(ERRCODE_WRONG_OBJECT_TYPE),
-				 errmsg("\"%s\" is not a table",
-						heapRelation->relname)));
+	{
+		if (rel->rd_rel->relkind == RELKIND_FOREIGN_TABLE)
+			/*
+			 * Custom error message for FOREIGN TABLE since the term is
+			 * close to a regular table and can confuse the user.
+			 */
+			ereport(ERROR,
+					(errcode(ERRCODE_WRONG_OBJECT_TYPE),
+					 errmsg("cannot create index on foreign table \"%s\"",
+						 heapRelation->relname)));
+		else
+			ereport(ERROR,
+					(errcode(ERRCODE_WRONG_OBJECT_TYPE),
+					 errmsg("\"%s\" is not a table",
+							heapRelation->relname)));
+	}
 
 	/*
 	 * Don't try to CREATE INDEX on temp tables of other backends.
