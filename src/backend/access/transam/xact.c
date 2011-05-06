@@ -455,6 +455,13 @@ AssignTransactionId(TransactionState s)
 		SubTransSetParent(s->transactionId, s->parent->transactionId, false);
 
 	/*
+	 * If it's a top-level transaction, the predicate locking system needs to
+	 * be told about it too.
+	 */
+	if (!isSubXact)
+		RegisterPredicateLockingXid(s->transactionId);
+
+	/*
 	 * Acquire lock on the transaction XID.  (We assume this cannot block.) We
 	 * have to ensure that the lock is assigned to the transaction's own
 	 * ResourceOwner.

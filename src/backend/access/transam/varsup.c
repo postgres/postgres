@@ -21,7 +21,6 @@
 #include "miscadmin.h"
 #include "postmaster/autovacuum.h"
 #include "storage/pmsignal.h"
-#include "storage/predicate.h"
 #include "storage/proc.h"
 #include "utils/builtins.h"
 #include "utils/syscache.h"
@@ -161,10 +160,6 @@ GetNewTransactionId(bool isSubXact)
 	 */
 	ExtendCLOG(xid);
 	ExtendSUBTRANS(xid);
-
-	/* If it's top level, the predicate locking system also needs to know. */
-	if (!isSubXact)
-		RegisterPredicateLockingXid(xid);
 
 	/*
 	 * Now advance the nextXid counter.  This must not happen until after we
