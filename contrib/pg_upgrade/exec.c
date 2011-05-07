@@ -46,7 +46,7 @@ exec_prog(bool throw_error, const char *fmt,...)
 	if (result != 0)
 	{
 		pg_log(throw_error ? PG_FATAL : PG_INFO,
-			   "\nThere were problems executing %s\n", cmd);
+			   "There were problems executing %s\n", cmd);
 		return 1;
 	}
 
@@ -71,7 +71,7 @@ is_server_running(const char *datadir)
 	if ((fd = open(path, O_RDONLY, 0)) < 0)
 	{
 		if (errno != ENOENT)
-			pg_log(PG_FATAL, "\ncould not open file \"%s\" for reading\n",
+			pg_log(PG_FATAL, "could not open file \"%s\" for reading\n",
 				   path);
 
 		return false;
@@ -139,10 +139,10 @@ check_data_dir(const char *pg_data)
 				 requiredSubdirs[subdirnum]);
 
 		if (stat(subDirName, &statBuf) != 0)
-			report_status(PG_FATAL, "check for %s failed:  %s",
+			report_status(PG_FATAL, "check for %s failed:  %s\n",
 						  requiredSubdirs[subdirnum], getErrorText(errno));
 		else if (!S_ISDIR(statBuf.st_mode))
-			report_status(PG_FATAL, "%s is not a directory",
+			report_status(PG_FATAL, "%s is not a directory\n",
 						  requiredSubdirs[subdirnum]);
 	}
 }

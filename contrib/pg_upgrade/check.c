@@ -253,7 +253,7 @@ check_cluster_compatibility(bool live_check)
 
 	if ((lib_test = fopen(libfile, "r")) == NULL)
 		pg_log(PG_FATAL,
-			   "\npg_upgrade_support%s must be created and installed in %s\n", DLSUFFIX, libfile);
+			   "pg_upgrade_support%s must be created and installed in %s\n", DLSUFFIX, libfile);
 	else
 		fclose(lib_test);
 

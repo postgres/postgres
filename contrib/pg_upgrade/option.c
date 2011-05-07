@@ -180,10 +180,10 @@ parseCommandLine(int argc, char *argv[])
 		 */
 		/* truncate */
 		if ((log_opts.fd = fopen(log_opts.filename, "w")) == NULL)
-			pg_log(PG_FATAL, "Cannot write to log file %s\n", log_opts.filename);
+			pg_log(PG_FATAL, "cannot write to log file %s\n", log_opts.filename);
 		fclose(log_opts.fd);
 		if ((log_opts.fd = fopen(log_opts.filename, "a")) == NULL)
-			pg_log(PG_FATAL, "Cannot write to log file %s\n", log_opts.filename);
+			pg_log(PG_FATAL, "cannot write to log file %s\n", log_opts.filename);
 	}
 	else
 		log_opts.filename = strdup(DEVNULL);
@@ -193,7 +193,7 @@ parseCommandLine(int argc, char *argv[])
 	{
 		log_opts.debug_fd = fopen(DEVTTY, "w");
 		if (!log_opts.debug_fd)
-			pg_log(PG_FATAL, "Cannot write to terminal\n");
+			pg_log(PG_FATAL, "cannot write to terminal\n");
 	}
 
 	/* Get values from env if not already set */

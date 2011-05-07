@@ -46,7 +46,7 @@ report_status(eLogType type, const char *fmt,...)
  *		if(( message = flarbFiles(fileCount)) == NULL)
  *		  report_status(PG_REPORT, "ok" );
  *		else
- *		  pg_log(PG_FATAL, "failed - %s", message );
+ *		  pg_log(PG_FATAL, "failed - %s\n", message );
  */
 void
 prep_status(const char *fmt,...)
@@ -97,8 +97,7 @@ pg_log(eLogType type, char *fmt,...)
 			break;
 
 		case PG_FATAL:
-			printf("%s", "\n");
-			printf("%s", _(message));
+			printf("\n%s", _(message));
 			printf("Failure, exiting\n");
 			exit(1);
 			break;

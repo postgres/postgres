@@ -70,7 +70,7 @@ old_8_3_check_for_name_data_type_usage(ClusterInfo *cluster)
 		{
 			found = true;
 			if (script == NULL && (script = fopen(output_path, "w")) == NULL)
-				pg_log(PG_FATAL, "Could not create necessary file:  %s\n", output_path);
+				pg_log(PG_FATAL, "could not create necessary file:  %s\n", output_path);
 			if (!db_used)
 			{
 				fprintf(script, "Database:  %s\n", active_db->db_name);
@@ -160,7 +160,7 @@ old_8_3_check_for_tsquery_usage(ClusterInfo *cluster)
 		{
 			found = true;
 			if (script == NULL && (script = fopen(output_path, "w")) == NULL)
-				pg_log(PG_FATAL, "Could not create necessary file:  %s\n", output_path);
+				pg_log(PG_FATAL, "could not create necessary file:  %s\n", output_path);
 			if (!db_used)
 			{
 				fprintf(script, "Database:  %s\n", active_db->db_name);
@@ -278,7 +278,7 @@ old_8_3_rebuild_tsvector_tables(ClusterInfo *cluster, bool check_mode)
 			if (!check_mode)
 			{
 				if (script == NULL && (script = fopen(output_path, "w")) == NULL)
-					pg_log(PG_FATAL, "Could not create necessary file:  %s\n", output_path);
+					pg_log(PG_FATAL, "could not create necessary file:  %s\n", output_path);
 				if (!db_used)
 				{
 					fprintf(script, "\\connect %s\n\n",
@@ -398,7 +398,7 @@ old_8_3_invalidate_hash_gin_indexes(ClusterInfo *cluster, bool check_mode)
 			if (!check_mode)
 			{
 				if (script == NULL && (script = fopen(output_path, "w")) == NULL)
-					pg_log(PG_FATAL, "Could not create necessary file:  %s\n", output_path);
+					pg_log(PG_FATAL, "could not create necessary file:  %s\n", output_path);
 				if (!db_used)
 				{
 					fprintf(script, "\\connect %s\n",
@@ -523,7 +523,7 @@ old_8_3_invalidate_bpchar_pattern_ops_indexes(ClusterInfo *cluster,
 			if (!check_mode)
 			{
 				if (script == NULL && (script = fopen(output_path, "w")) == NULL)
-					pg_log(PG_FATAL, "Could not create necessary file:  %s\n", output_path);
+					pg_log(PG_FATAL, "could not create necessary file:  %s\n", output_path);
 				if (!db_used)
 				{
 					fprintf(script, "\\connect %s\n",
@@ -648,7 +648,7 @@ old_8_3_create_sequence_script(ClusterInfo *cluster)
 			found = true;
 
 			if (script == NULL && (script = fopen(output_path, "w")) == NULL)
-				pg_log(PG_FATAL, "Could not create necessary file:  %s\n", output_path);
+				pg_log(PG_FATAL, "could not create necessary file:  %s\n", output_path);
 			if (!db_used)
 			{
 				fprintf(script, "\\connect %s\n\n",

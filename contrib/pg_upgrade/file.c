@@ -287,7 +287,7 @@ pg_scandir_internal(const char *dirname,
 	size_t		entrysize;
 
 	if ((dirdesc = opendir(dirname)) == NULL)
-		pg_log(PG_FATAL, "Could not open directory \"%s\": %m\n", dirname);
+		pg_log(PG_FATAL, "could not open directory \"%s\": %m\n", dirname);
 
 	*namelist = NULL;
 

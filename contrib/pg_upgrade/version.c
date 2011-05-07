@@ -49,7 +49,7 @@ new_9_0_populate_pg_largeobject_metadata(ClusterInfo *cluster, bool check_mode)
 			if (!check_mode)
 			{
 				if (script == NULL && (script = fopen(output_path, "w")) == NULL)
-					pg_log(PG_FATAL, "Could not create necessary file:  %s\n", output_path);
+					pg_log(PG_FATAL, "could not create necessary file:  %s\n", output_path);
 				fprintf(script, "\\connect %s\n",
 						quote_identifier(active_db->db_name));
 				fprintf(script,
