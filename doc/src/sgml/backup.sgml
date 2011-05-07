@@ -401,7 +401,7 @@ tar -cf backup.tar /usr/local/pgsql/data
   <para>
    If simultaneous snapshots are not possible, one option is to shut down
    the database server long enough to establish all the frozen snapshots.
-   Another option is perform a continuous archiving base backup (<xref
+   Another option is to perform a continuous archiving base backup (<xref
    linkend="backup-base-backup">) because such backups are immune to file
    system changes during the backup.  This requires enabling continuous
    archiving just during the backup process; restore is done using
