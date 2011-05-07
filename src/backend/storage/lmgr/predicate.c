@@ -2283,6 +2283,9 @@ PredicateLockTupleRowVersionLink(const Relation relation,
 	 * locks. Even if a serializable transaction starts concurrently,
 	 * we know it can't take any SIREAD locks on the modified tuple
 	 * because the caller is holding the associated buffer page lock.
+	 * Memory reordering isn't an issue; the memory barrier in the
+	 * LWLock acquisition guarantees that this read occurs while the
+	 * buffer page lock is held.
 	 */
 	if (!TransactionIdIsValid(PredXact->SxactGlobalXmin))
 		return;
