@@ -491,7 +491,8 @@ check_is_super_user(ClusterInfo *cluster)
 							"WHERE rolname = current_user");
 
 	if (PQntuples(res) != 1 || strcmp(PQgetvalue(res, 0, 0), "t") != 0)
-		pg_log(PG_FATAL, "the database user is not a superuser\n");
+		pg_log(PG_FATAL, "database user \"%s\" is not a superuser\n",
+		os_info.user);
 
 	PQclear(res);
 
