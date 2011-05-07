@@ -27,7 +27,7 @@ connectToServer(ClusterInfo *cluster, const char *db_name)
 
 	if (conn == NULL || PQstatus(conn) != CONNECTION_OK)
 	{
-		pg_log(PG_REPORT, "Connection to database failed: %s\n",
+		pg_log(PG_REPORT, "connection to database failed: %s\n",
 			   PQerrorMessage(conn));
 
 		if (conn)
@@ -189,7 +189,9 @@ start_postmaster(ClusterInfo *cluster)
 	if ((conn = get_db_conn(cluster, "template1")) == NULL ||
 		PQstatus(conn) != CONNECTION_OK)
 	{
-		if (conn)
+		pg_log(PG_REPORT, "\nconnection to database failed: %s\n",
+			   PQerrorMessage(conn));
+ 		if (conn)
 			PQfinish(conn);
 		pg_log(PG_FATAL, "unable to connect to %s postmaster started with the command: %s\n"
 			   "Perhaps pg_hba.conf was not set to \"trust\".\n",

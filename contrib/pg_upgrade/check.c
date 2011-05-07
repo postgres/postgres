@@ -15,6 +15,7 @@ static void check_new_cluster_is_empty(void);
 static void check_old_cluster_has_new_cluster_dbs(void);
 static void check_locale_and_encoding(ControlData *oldctrl,
 						  ControlData *newctrl);
+static void check_is_super_user(ClusterInfo *cluster);
 static void check_for_isn_and_int8_passing_mismatch(ClusterInfo *cluster);
 static void check_for_reg_data_type_usage(ClusterInfo *cluster);
 
@@ -63,7 +64,7 @@ check_old_cluster(bool live_check,
 	/*
 	 * Check for various failure cases
 	 */
-
+	check_is_super_user(&old_cluster);
 	check_for_reg_data_type_usage(&old_cluster);
 	check_for_isn_and_int8_passing_mismatch(&old_cluster);
 
@@ -469,6 +470,32 @@ create_script_for_old_cluster_deletion(
 #endif
 
 	check_ok();
+}
+
+
+/*
+ *	check_is_super_user()
+ *
+ *	Make sure we are the super-user.
+ */
+static void
+check_is_super_user(ClusterInfo *cluster)
+{
+	PGresult   *res;
+	PGconn	   *conn = connectToServer(cluster, "template1");
+
+	/* Can't use pg_authid because only superusers can view it. */
+	res = executeQueryOrDie(conn,
+							"SELECT rolsuper "
+							"FROM pg_catalog.pg_roles "
+							"WHERE rolname = current_user");
+
+	if (PQntuples(res) != 1 || strcmp(PQgetvalue(res, 0, 0), "t") != 0)
+		pg_log(PG_FATAL, "the database user is not a superuser\n");
+
+	PQclear(res);
+
+	PQfinish(conn);
 }
 
 
