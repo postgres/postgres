@@ -10,7 +10,7 @@
  *-------------------------------------------------------------------------
  */
 
-#include "../regress/pg_regress.h"
+#include "pg_regress.h"
 
 /*
  * start an isolation tester process for specified file (including

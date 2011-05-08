@@ -10,7 +10,7 @@ ifeq ($(PORTNAME), win32)
 LDLIBS += -lws2_32
 endif
 
-override CPPFLAGS := -I$(srcdir) -I$(libpq_srcdir) $(CPPFLAGS)
+override CPPFLAGS := -I$(srcdir) -I$(libpq_srcdir) -I$(srcdir)/../regress $(CPPFLAGS)
 override LDLIBS := $(libpq_pgport) $(LDLIBS)
 
 OBJS =  specparse.o isolationtester.o
@@ -64,7 +64,7 @@ endif
 clean distclean:
 	rm -f isolationtester$(X) pg_isolation_regress$(X) $(OBJS) isolation_main.o
 	rm -f pg_regress.o
-	rm -rf results
+	rm -rf $(pg_regress_clean_files)
 
 maintainer-clean: distclean
 	rm -f specparse.c specscanner.c

@@ -5,14 +5,12 @@
  *		Runs an isolation test specified by a spec file.
  */
 
+#include "postgres_fe.h"
+
 #ifdef WIN32
 #include <windows.h>
 #endif
 
-#include <stddef.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
 #include "libpq-fe.h"
 
 #include "isolationtester.h"
