@@ -1,6 +1,6 @@
 <!-- doc/src/sgml/earthdistance.sgml -->
 
-<sect1 id="earthdistance">
+<sect1 id="earthdistance" xreflabel="earthdistance">
  <title>earthdistance</title>
 
  <indexterm zone="earthdistance">

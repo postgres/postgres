@@ -1,6 +1,6 @@
 <!-- doc/src/sgml/seg.sgml -->
 
-<sect1 id="seg">
+<sect1 id="seg" xreflabel="seg">
  <title>seg</title>
 
  <indexterm zone="seg">

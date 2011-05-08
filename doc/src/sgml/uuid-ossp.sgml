@@ -1,6 +1,6 @@
 <!-- doc/src/sgml/uuid-ossp.sgml -->
 
-<sect1 id="uuid-ossp">
+<sect1 id="uuid-ossp" xreflabel="uuid-ossp">
  <title>uuid-ossp</title>
 
  <indexterm zone="uuid-ossp">

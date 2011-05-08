@@ -1,6 +1,6 @@
 <!-- doc/src/sgml/file-fdw.sgml -->
 
-<sect1 id="file-fdw">
+<sect1 id="file-fdw" xreflabel="file_fdw">
  <title>file_fdw</title>
 
  <indexterm zone="file-fdw">

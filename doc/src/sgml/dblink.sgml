@@ -1,6 +1,6 @@
 <!-- doc/src/sgml/dblink.sgml -->
 
-<sect1 id="dblink">
+<sect1 id="dblink" xreflabel="dblink">
  <title>dblink</title>
 
  <indexterm zone="dblink">

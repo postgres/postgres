@@ -1,6 +1,6 @@
 <!-- doc/src/sgml/cube.sgml -->
 
-<sect1 id="cube">
+<sect1 id="cube" xreflabel="cube">
  <title>cube</title>
 
  <indexterm zone="cube">

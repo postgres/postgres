@@ -1,6 +1,6 @@
 <!-- doc/src/sgml/pgstandby.sgml -->
 
-<sect1 id="pgstandby">
+<sect1 id="pgstandby" xreflabel="pg_standby">
  <title>pg_standby</title>
 
  <indexterm zone="pgstandby">

@@ -1,6 +1,6 @@
 <!-- doc/src/sgml/intarray.sgml -->
 
-<sect1 id="intarray">
+<sect1 id="intarray" xreflabel="intarray">
  <title>intarray</title>
 
  <indexterm zone="intarray">

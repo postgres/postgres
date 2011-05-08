@@ -1,6 +1,6 @@
 <!-- doc/src/sgml/chkpass.sgml -->
 
-<sect1 id="chkpass">
+<sect1 id="chkpass" xreflabel="chkpass">
  <title>chkpass</title>
 
  <indexterm zone="chkpass">

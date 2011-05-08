@@ -1,6 +1,6 @@
 <!-- doc/src/sgml/pgtrgm.sgml -->
 
-<sect1 id="pgtrgm">
+<sect1 id="pgtrgm" xreflabel="pg_trgm">
  <title>pg_trgm</title>
 
  <indexterm zone="pgtrgm">

@@ -1,6 +1,6 @@
 <!-- doc/src/sgml/pgupgrade.sgml -->
 
-<sect1 id="pgupgrade">
+<sect1 id="pgupgrade" xreflabel="pg_upgrade">
  <title>pg_upgrade</title>
 
  <indexterm zone="pgupgrade">

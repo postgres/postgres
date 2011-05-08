@@ -1,6 +1,6 @@
 <!-- doc/src/sgml/pgcrypto.sgml -->
 
-<sect1 id="pgcrypto">
+<sect1 id="pgcrypto" xreflabel="pgcrypto">
  <title>pgcrypto</title>
 
  <indexterm zone="pgcrypto">

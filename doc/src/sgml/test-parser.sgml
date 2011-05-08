@@ -1,6 +1,6 @@
 <!-- doc/src/sgml/test-parser.sgml -->
 
-<sect1 id="test-parser">
+<sect1 id="test-parser" xreflabel="test_parser">
  <title>test_parser</title>
 
  <indexterm zone="test-parser">

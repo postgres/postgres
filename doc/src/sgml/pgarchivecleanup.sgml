@@ -1,6 +1,6 @@
 <!-- doc/src/sgml/pgarchivecleanup.sgml -->
 
-<sect1 id="pgarchivecleanup">
+<sect1 id="pgarchivecleanup" xreflabel="pg_archivecleanup">
  <title>pg_archivecleanup</title>
 
  <indexterm zone="pgarchivecleanup">

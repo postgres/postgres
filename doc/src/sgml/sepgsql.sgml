@@ -1,6 +1,6 @@
 <!-- doc/src/sgml/sepgsql.sgml -->
 
-<sect1 id="sepgsql">
+<sect1 id="sepgsql" xreflabel="sepgsql">
  <title>sepgsql</title>
 
  <indexterm zone="sepgsql">

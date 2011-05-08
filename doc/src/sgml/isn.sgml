@@ -1,6 +1,6 @@
 <!-- doc/src/sgml/isn.sgml -->
 
-<sect1 id="isn">
+<sect1 id="isn" xreflabel="isn">
  <title>isn</title>
 
  <indexterm zone="isn">

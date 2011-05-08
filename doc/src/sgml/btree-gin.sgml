@@ -1,6 +1,6 @@
 <!-- doc/src/sgml/btree-gin.sgml -->
 
-<sect1 id="btree-gin">
+<sect1 id="btree-gin" xreflabel="btree_gin">
  <title>btree_gin</title>
 
  <indexterm zone="btree-gin">

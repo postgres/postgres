@@ -1,6 +1,6 @@
 <!-- doc/src/sgml/pageinspect.sgml -->
 
-<sect1 id="pageinspect">
+<sect1 id="pageinspect" xreflabel="pageinspect">
  <title>pageinspect</title>
 
  <indexterm zone="pageinspect">

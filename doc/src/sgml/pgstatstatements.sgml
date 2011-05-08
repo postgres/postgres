@@ -1,6 +1,6 @@
 <!-- doc/src/sgml/pgstatstatements.sgml -->
 
-<sect1 id="pgstatstatements">
+<sect1 id="pgstatstatements" xreflabel="pg_stat_statements">
  <title>pg_stat_statements</title>
 
  <indexterm zone="pgstatstatements">

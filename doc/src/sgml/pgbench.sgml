@@ -1,6 +1,6 @@
 <!-- doc/src/sgml/pgbench.sgml -->
 
-<sect1 id="pgbench">
+<sect1 id="pgbench" xreflabel="pgbench">
  <title>pgbench</title>
 
  <indexterm zone="pgbench">

@@ -1,6 +1,6 @@
 <!-- doc/src/sgml/pgrowlocks.sgml -->
 
-<sect1 id="pgrowlocks">
+<sect1 id="pgrowlocks" xreflabel="pgrowlocks">
  <title>pgrowlocks</title>
 
  <indexterm zone="pgrowlocks">

@@ -1,6 +1,6 @@
 <!-- doc/src/sgml/vacuumlo.sgml -->
 
-<sect1 id="vacuumlo">
+<sect1 id="vacuumlo" xreflabel="vacuumlo">
  <title>vacuumlo</title>
 
  <indexterm zone="vacuumlo">

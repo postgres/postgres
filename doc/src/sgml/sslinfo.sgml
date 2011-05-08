@@ -1,6 +1,6 @@
 <!-- doc/src/sgml/sslinfo.sgml -->
 
-<sect1 id="sslinfo">
+<sect1 id="sslinfo" xreflabel="sslinfo">
  <title>sslinfo</title>
 
  <indexterm zone="sslinfo">

@@ -1,6 +1,6 @@
 <!-- doc/src/sgml/pgfreespacemap.sgml -->
 
-<sect1 id="pgfreespacemap">
+<sect1 id="pgfreespacemap" xreflabel="pg_freespacemap">
  <title>pg_freespacemap</title>
 
  <indexterm zone="pgfreespacemap">

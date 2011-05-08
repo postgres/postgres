@@ -1,6 +1,6 @@
 <!-- doc/src/sgml/auto-explain.sgml -->
 
-<sect1 id="auto-explain">
+<sect1 id="auto-explain" xreflabel="auto_explain">
  <title>auto_explain</title>
 
  <indexterm zone="auto-explain">

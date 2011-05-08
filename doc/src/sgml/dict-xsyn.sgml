@@ -1,6 +1,6 @@
 <!-- doc/src/sgml/dict-xsyn.sgml -->
 
-<sect1 id="dict-xsyn">
+<sect1 id="dict-xsyn" xreflabel="dict_xsyn">
  <title>dict_xsyn</title>
 
  <indexterm zone="dict-xsyn">

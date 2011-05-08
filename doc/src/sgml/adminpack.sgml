@@ -1,6 +1,6 @@
 <!-- doc/src/sgml/adminpack.sgml -->
 
-<sect1 id="adminpack">
+<sect1 id="adminpack" xreflabel="adminpack">
  <title>adminpack</title>
 
  <indexterm zone="adminpack">

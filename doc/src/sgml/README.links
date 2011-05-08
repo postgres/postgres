@@ -7,8 +7,8 @@ Intra-document Linking
 ----------------------
 
 <xref>
-	use to get link text from the title of the target link; has no
-	close tag
+	use to get chapter/section # from the title of the target
+	link, or xreflabel if defined at the target; has no close tag
 	http://www.oasis-open.org/docbook/documentation/reference/html/xref.html
 
 <link>
@@ -28,7 +28,8 @@ External Linking
 
 <ulink>
 	like <link>, but uses a URL (not a document target);  requires
-	</ulink>; if no text is specified, the URL appears as the link text
+	</ulink>; if no text is specified, the URL appears as the link
+	text
 	http://www.oasis-open.org/docbook/documentation/reference/html/ulink.html
 
 url=
@@ -40,4 +41,5 @@ Guidelines
 
 o  If you want to supply text, use <link>, else <xref>
 o  Do not use text with <ulink> so the URL appears in printed output
-o  You can supply text at the target location with 'xreflabel'
+o  Specific nouns like GUC variables, SQL commands, and contrib modules
+   usually have xreflabels

@@ -1,6 +1,6 @@
 <!-- doc/src/sgml/citext.sgml -->
 
-<sect1 id="citext">
+<sect1 id="citext" xreflabel="citext">
  <title>citext</title>
 
  <indexterm zone="citext">

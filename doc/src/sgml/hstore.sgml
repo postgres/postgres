@@ -1,6 +1,6 @@
 <!-- doc/src/sgml/hstore.sgml -->
 
-<sect1 id="hstore">
+<sect1 id="hstore" xreflabel="hstore">
  <title>hstore</title>
 
  <indexterm zone="hstore">

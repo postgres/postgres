@@ -1,6 +1,6 @@
 <!-- doc/src/sgml/unaccent.sgml -->
 
-<sect1 id="unaccent">
+<sect1 id="unaccent" xreflabel="unaccent">
  <title>unaccent</title>
 
  <indexterm zone="unaccent">

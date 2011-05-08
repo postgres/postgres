@@ -1,6 +1,6 @@
 <!-- doc/src/sgml/dict-int.sgml -->
 
-<sect1 id="dict-int">
+<sect1 id="dict-int" xreflabel="dict_int">
  <title>dict_int</title>
 
  <indexterm zone="dict-int">

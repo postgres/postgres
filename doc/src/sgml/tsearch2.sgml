@@ -1,6 +1,6 @@
 <!-- doc/src/sgml/tsearch2.sgml -->
 
-<sect1 id="tsearch2">
+<sect1 id="tsearch2" xreflabel="tsearch2">
  <title>tsearch2</title>
 
  <indexterm zone="tsearch2">

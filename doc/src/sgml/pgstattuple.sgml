@@ -1,6 +1,6 @@
 <!-- doc/src/sgml/pgstattuple.sgml -->
 
-<sect1 id="pgstattuple">
+<sect1 id="pgstattuple" xreflabel="pgstattuple">
  <title>pgstattuple</title>
 
  <indexterm zone="pgstattuple">

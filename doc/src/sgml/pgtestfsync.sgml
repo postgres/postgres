@@ -1,6 +1,6 @@
 <!-- doc/src/sgml/pgtestfsync.sgml -->
 
-<sect1 id="pgtestfsync">
+<sect1 id="pgtestfsync" xreflabel="pg_test_fsync">
  <title>pg_test_fsync</title>
 
  <indexterm zone="pgtestfsync">

@@ -1,6 +1,6 @@
 <!-- doc/src/sgml/oid2name.sgml -->
 
-<sect1 id="oid2name">
+<sect1 id="oid2name" xreflabel="oid2name">
  <title>oid2name</title>
 
  <indexterm zone="oid2name">

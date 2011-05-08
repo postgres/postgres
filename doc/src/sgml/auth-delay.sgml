@@ -1,6 +1,6 @@
 <!-- doc/src/sgml/auth-delay.sgml -->
 
-<sect1 id="auth-delay">
+<sect1 id="auth-delay" xreflabel="auth_delay">
  <title>auth_delay</title>
 
  <indexterm zone="auth-delay">

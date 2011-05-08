@@ -1,6 +1,6 @@
 <!-- doc/src/sgml/dummy_seclabel.sgml -->
 
-<sect1 id="dummy-seclabel">
+<sect1 id="dummy-seclabel" xreflabel="dummy_seclabel">
  <title>dummy_seclabel</title>
 
  <indexterm zone="dummy-seclabel">

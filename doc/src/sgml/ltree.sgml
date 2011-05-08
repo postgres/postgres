@@ -1,6 +1,6 @@
 <!-- doc/src/sgml/ltree.sgml -->
 
-<sect1 id="ltree">
+<sect1 id="ltree" xreflabel="ltree">
  <title>ltree</title>
 
  <indexterm zone="ltree">
