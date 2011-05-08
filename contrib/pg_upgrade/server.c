@@ -267,6 +267,7 @@ check_for_libpq_envvars(void)
 		{
 			const char *value;
 
+			/* This allows us to see error messages in the local encoding */
 			if (strcmp(option->envvar, "PGCLIENTENCODING") == 0)
 				continue;
 
