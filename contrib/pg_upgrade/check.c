@@ -484,6 +484,8 @@ check_is_super_user(ClusterInfo *cluster)
 	PGresult   *res;
 	PGconn	   *conn = connectToServer(cluster, "template1");
 
+	prep_status("Checking database user is a superuser");
+
 	/* Can't use pg_authid because only superusers can view it. */
 	res = executeQueryOrDie(conn,
 							"SELECT rolsuper "
@@ -497,6 +499,8 @@ check_is_super_user(ClusterInfo *cluster)
 	PQclear(res);
 
 	PQfinish(conn);
+
+	check_ok();
 }
 
 
