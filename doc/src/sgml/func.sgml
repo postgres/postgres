@@ -82,8 +82,9 @@
      <member><literal>NOT</></member>
     </simplelist>
 
-    <acronym>SQL</acronym> uses a three-valued Boolean logic where the null value represents
-    <quote>unknown</quote>.  Observe the following truth tables:
+    <acronym>SQL</acronym> uses a three-valued logic system with true,
+    false, and <literal>null</>, which represents <quote>unknown</quote>.
+    Observe the following truth tables:
 
     <informaltable>
      <tgroup cols="4">
