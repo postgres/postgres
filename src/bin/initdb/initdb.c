@@ -1595,6 +1595,7 @@ setup_collation(void)
 		size_t		len;
 		int			enc;
 		bool		skip;
+		char	   *quoted_locale;
 		char		alias[NAMEDATALEN];
 
 		len = strlen(localebuf);
@@ -1645,8 +1646,10 @@ setup_collation(void)
 
 		count++;
 
-		PG_CMD_PRINTF2("INSERT INTO tmp_pg_collation (locale, encoding) VALUES ('%s', %d);\n",
-					   escape_quotes(localebuf), enc);
+		quoted_locale = escape_quotes(localebuf);
+
+		PG_CMD_PRINTF3("INSERT INTO tmp_pg_collation VALUES (E'%s', E'%s', %d);\n",
+					   quoted_locale, quoted_locale, enc);
 
 		/*
 		 * Generate aliases such as "en_US" in addition to "en_US.utf8" for
@@ -1654,29 +1657,33 @@ setup_collation(void)
 		 * only, so this doesn't clash with "en_US" for LATIN1, say.
 		 */
 		if (normalize_locale_name(alias, localebuf))
-			PG_CMD_PRINTF3("INSERT INTO tmp_pg_collation (collname, locale, encoding) VALUES ('%s', '%s', %d);\n",
-						escape_quotes(alias), escape_quotes(localebuf), enc);
+			PG_CMD_PRINTF3("INSERT INTO tmp_pg_collation VALUES (E'%s', E'%s', %d);\n",
+						escape_quotes(alias), quoted_locale, enc);
 	}
 
 	/* Add an SQL-standard name */
-	PG_CMD_PRINTF1("INSERT INTO tmp_pg_collation (collname, locale, encoding) VALUES ('ucs_basic', 'C', %d);\n", PG_UTF8);
+	PG_CMD_PRINTF1("INSERT INTO tmp_pg_collation VALUES ('ucs_basic', 'C', %d);\n", PG_UTF8);
 
 	/*
 	 * When copying collations to the final location, eliminate aliases that
 	 * conflict with an existing locale name for the same encoding.  For
 	 * example, "br_FR.iso88591" is normalized to "br_FR", both for encoding
 	 * LATIN1.	But the unnormalized locale "br_FR" already exists for LATIN1.
-	 * Prefer the collation that matches the OS locale name, else the first
+	 * Prefer the alias that matches the OS locale name, else the first locale
 	 * name by sort order (arbitrary choice to be deterministic).
+	 *
+	 * Also, eliminate any aliases that conflict with pg_collation's
+	 * hard-wired entries for "C" etc.
 	 */
 	PG_CMD_PUTS("INSERT INTO pg_collation (collname, collnamespace, collowner, collencoding, collcollate, collctype) "
-			  " SELECT DISTINCT ON (final_collname, collnamespace, encoding)"
-				"   COALESCE(collname, locale) AS final_collname, "
+				" SELECT DISTINCT ON (collname, encoding)"
+				"   collname, "
 				"   (SELECT oid FROM pg_namespace WHERE nspname = 'pg_catalog') AS collnamespace, "
 				"   (SELECT relowner FROM pg_class WHERE relname = 'pg_collation') AS collowner, "
 				"   encoding, locale, locale "
 				"  FROM tmp_pg_collation"
-				"  ORDER BY final_collname, collnamespace, encoding, (collname = locale) DESC, locale;\n");
+				"  WHERE NOT EXISTS (SELECT 1 FROM pg_collation WHERE collname = tmp_pg_collation.collname)"
+				"  ORDER BY collname, encoding, (collname = locale) DESC, locale;\n");
 
 	pclose(locale_a_handle);
 	PG_CMD_CLOSE;
