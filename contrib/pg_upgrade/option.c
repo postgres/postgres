@@ -81,7 +81,7 @@ parseCommandLine(int argc, char *argv[])
 		}
 		if (strcmp(argv[1], "--version") == 0 || strcmp(argv[1], "-V") == 0)
 		{
-			pg_log(PG_REPORT, "pg_upgrade " PG_VERSION "\n");
+			puts("pg_upgrade (PostgreSQL) " PG_VERSION);
 			exit(0);
 		}
 	}
