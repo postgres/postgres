@@ -192,6 +192,11 @@ main(int argc, char *argv[])
 
 	appendPQExpBuffer(&sql, ";\n");
 
+    /*
+     * Connect to the 'postgres' database by default, except have
+     * the 'postgres' user use 'template1' so he can create the
+     * 'postgres' database.
+     */
 	conn = connectDatabase(strcmp(dbname, "postgres") == 0 ? "template1" : "postgres",
 						   host, port, username, prompt_password, progname);
 
@@ -208,12 +213,9 @@ main(int argc, char *argv[])
 	}
 
 	PQclear(result);
-	PQfinish(conn);
 
 	if (comment)
 	{
-		conn = connectDatabase(dbname, host, port, username, prompt_password, progname);
-
 		printfPQExpBuffer(&sql, "COMMENT ON DATABASE %s IS ", fmtId(dbname));
 		appendStringLiteralConn(&sql, comment, conn);
 		appendPQExpBuffer(&sql, ";\n");
@@ -231,8 +233,9 @@ main(int argc, char *argv[])
 		}
 
 		PQclear(result);
-		PQfinish(conn);
 	}
+
+	PQfinish(conn);
 
 	exit(0);
 }
