@@ -263,6 +263,7 @@ or\n"), old_cluster.port, new_cluster.port, os_info.user);
   C:\\> set NEWBINDIR=newCluster/bin\n\
   C:\\> pg_upgrade\n"));
 #endif
+	printf(_("\nReport bugs to <pgsql-bugs@postgresql.org>.\n"));
 }
 
 
