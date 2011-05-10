@@ -193,8 +193,7 @@ start_postmaster(ClusterInfo *cluster)
 			   PQerrorMessage(conn));
  		if (conn)
 			PQfinish(conn);
-		pg_log(PG_FATAL, "unable to connect to %s postmaster started with the command: %s\n"
-			   "Perhaps pg_hba.conf was not set to \"trust\".\n",
+		pg_log(PG_FATAL, "unable to connect to %s postmaster started with the command: %s\n",
 			   CLUSTER_NAME(cluster), cmd);
 	}
 	PQfinish(conn);
