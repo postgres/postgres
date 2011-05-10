@@ -107,6 +107,19 @@ PostgreSQL documentation
      </varlistentry>
 
      <varlistentry>
+      <term><option>-E <replaceable class="parameter">encoding</replaceable></></term>
+      <term><option>--encoding=<replaceable class="parameter">encoding</replaceable></></term>
+      <listitem>
+       <para>
+        Specifies the character encoding scheme to be used in this
+        database. The character sets supported by the
+        <productname>PostgreSQL</productname> server are described in
+        <xref linkend="multibyte-charset-supported">.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
       <term><option>-l <replaceable class="parameter">locale</replaceable></></term>
       <term><option>--locale=<replaceable class="parameter">locale</replaceable></></term>
       <listitem>
@@ -131,19 +144,6 @@ PostgreSQL documentation
       <listitem>
        <para>
         Specifies the LC_CTYPE setting to be used in this database.
-       </para>
-      </listitem>
-     </varlistentry>
-
-     <varlistentry>
-      <term><option>-E <replaceable class="parameter">encoding</replaceable></></term>
-      <term><option>--encoding=<replaceable class="parameter">encoding</replaceable></></term>
-      <listitem>
-       <para>
-        Specifies the character encoding scheme to be used in this
-        database. The character sets supported by the
-        <productname>PostgreSQL</productname> server are described in
-        <xref linkend="multibyte-charset-supported">.
        </para>
       </listitem>
      </varlistentry>
