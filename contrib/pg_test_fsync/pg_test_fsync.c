@@ -96,12 +96,12 @@ handle_args(int argc, char *argv[])
 		if (strcmp(argv[1], "--help") == 0 || strcmp(argv[1], "-h") == 0 ||
 			strcmp(argv[1], "-?") == 0)
 		{
-			fprintf(stderr, "%s [-f filename] [-o ops-per-test]\n", progname);
+			printf("Usage: %s [-f FILENAME] [-o OPS-PER-TEST]\n", progname);
 			exit(0);
 		}
 		if (strcmp(argv[1], "--version") == 0 || strcmp(argv[1], "-V") == 0)
 		{
-			fprintf(stderr, "%s %s\n", progname, PG_VERSION);
+			puts("pg_test_fsync (PostgreSQL) " PG_VERSION);
 			exit(0);
 		}
 	}
