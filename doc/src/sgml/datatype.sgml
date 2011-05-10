@@ -2784,9 +2784,9 @@ P <optional> <replaceable>years</>-<replaceable>months</>-<replaceable>days</> <
     <productname>PostgreSQL</productname> provides the
     standard <acronym>SQL</acronym> type <type>boolean</type>;
     see <xref linkend="datatype-boolean-table">.
-    The <type>boolean</type> type can have one of only two states:
-    <quote>true</quote> or <quote>false</quote>.  A third state,
-    <quote>unknown</quote>, is represented by the
+    The <type>boolean</type> type can have several states:
+    <quote>true</quote>, <quote>false</quote>, and a third state,
+    <quote>unknown</quote>, which is represented by the
     <acronym>SQL</acronym> null value.
    </para>
 
