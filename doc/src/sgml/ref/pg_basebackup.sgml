@@ -408,8 +408,8 @@ PostgreSQL documentation
 <screen>
 <prompt>$</prompt> <userinput>pg_basebackup -D - -Ft | bzip2 &gt; backup.tar.bz2</userinput>
 </screen>
-   (this command will fail if there are multiple tablespaces in the
-   database)
+   (This command will fail if there are multiple tablespaces in the
+   database.)
   </para>
  </refsect1>
 
