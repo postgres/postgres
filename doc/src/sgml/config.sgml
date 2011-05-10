@@ -3869,11 +3869,11 @@ FROM pg_stat_activity;
       </indexterm>
       <listitem>
        <para>
-        Sets the time zone used for timestamps written in the log.
+        Sets the time zone used for timestamps written in the server log.
         Unlike <xref linkend="guc-timezone">, this value is cluster-wide,
         so that all sessions will report timestamps consistently.
-        The default is <literal>unknown</>, which means use whatever
-        the system environment specifies as the time zone.  See <xref
+        If not explicitly set, the server initializes this variable to the
+        time zone specified by its system environment.  See <xref
         linkend="datatype-timezones"> for more information.
         This parameter can only be set in the <filename>postgresql.conf</>
         file or on the server command line.
@@ -4918,10 +4918,9 @@ SET XML OPTION { DOCUMENT | CONTENT };
       <listitem>
        <para>
         Sets the time zone for displaying and interpreting time stamps.
-        The default is <literal>unknown</>, which means to use whatever
-        the system environment specifies as the time zone.  See <xref
-        linkend="datatype-timezones"> for more
-        information.
+        If not explicitly set, the server initializes this variable to the
+        time zone specified by its system environment.  See <xref
+        linkend="datatype-timezones"> for more information.
        </para>
       </listitem>
      </varlistentry>
