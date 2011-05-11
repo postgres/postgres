@@ -62,7 +62,7 @@
        standard;  <link
        linkend="guc-escape-string-warning"><varname>escape_string_warning</></link>
        has produced warnings about this usage for years.  <literal>E''</>
-       strings are the proper way to embed escapes in strings and are
+       strings are the proper way to embed backslash escapes in strings and are
        unaffected by this change.
       </para>
      </listitem>
