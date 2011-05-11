@@ -58,8 +58,9 @@
       </para>
 
       <para>
-       This removes a long-standing incompatibility with the SQL
-       standard;  <link
+       By default, backslashes are now ordinary characters in string literals,
+       not escape characters.  This change removes a long-standing
+       incompatibility with the SQL standard.  <link
        linkend="guc-escape-string-warning"><varname>escape_string_warning</></link>
        has produced warnings about this usage for years.  <literal>E''</>
        strings are the proper way to embed backslash escapes in strings and are
