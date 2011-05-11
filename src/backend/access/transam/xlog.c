@@ -6289,12 +6289,11 @@ StartupXLOG(void)
 	}
 
 	/*
-	 * If we launched a WAL receiver, it should be gone by now. It will trump
-	 * over the startup checkpoint and subsequent records if it's still alive,
-	 * so be extra sure that it's gone.
+	 * Kill WAL receiver, if it's still running, before we continue to write
+	 * the startup checkpoint record. It will trump over the checkpoint and
+	 * subsequent records if it's still alive when we start writing WAL.
 	 */
-	if (WalRcvInProgress())
-		elog(PANIC, "wal receiver still active");
+	ShutdownWalRcv();
 
 	/*
 	 * We are now done reading the xlog from stream. Turn off streaming
