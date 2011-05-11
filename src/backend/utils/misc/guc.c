@@ -502,6 +502,7 @@ const char *const GucContext_Names[] =
 const char *const GucSource_Names[] =
 {
 	 /* PGC_S_DEFAULT */ "default",
+	 /* PGC_S_DYNAMIC_DEFAULT */ "default",
 	 /* PGC_S_ENV_VAR */ "environment variable",
 	 /* PGC_S_FILE */ "configuration file",
 	 /* PGC_S_ARGV */ "command line",
@@ -3269,6 +3270,7 @@ static int	GUCNestLevel = 0;	/* 1 when in main transaction */
 
 static int	guc_var_compare(const void *a, const void *b);
 static int	guc_name_compare(const char *namea, const char *nameb);
+static void InitializeGUCOptionsFromEnvironment(void);
 static void InitializeOneGUCOption(struct config_generic * gconf);
 static void push_old_value(struct config_generic * gconf, GucAction action);
 static void ReportGUCOption(struct config_generic * record);
@@ -3812,8 +3814,6 @@ void
 InitializeGUCOptions(void)
 {
 	int			i;
-	char	   *env;
-	long		stack_rlimit;
 
 	/*
 	 * Before log_line_prefix could possibly receive a nonempty setting, make
@@ -3852,9 +3852,25 @@ InitializeGUCOptions(void)
 
 	/*
 	 * For historical reasons, some GUC parameters can receive defaults from
-	 * environment variables.  Process those settings.	NB: if you add or
-	 * remove anything here, see also ProcessConfigFile().
+	 * environment variables.  Process those settings.
 	 */
+	InitializeGUCOptionsFromEnvironment();
+}
+
+/*
+ * Assign any GUC values that can come from the server's environment.
+ *
+ * This is called from InitializeGUCOptions, and also from ProcessConfigFile
+ * to deal with the possibility that a setting has been removed from
+ * postgresql.conf and should now get a value from the environment.
+ * (The latter is a kludge that should probably go away someday; if so,
+ * fold this back into InitializeGUCOptions.)
+ */
+static void
+InitializeGUCOptionsFromEnvironment(void)
+{
+	char	   *env;
+	long		stack_rlimit;
 
 	env = getenv("PGPORT");
 	if (env != NULL)
@@ -6334,6 +6350,7 @@ define_custom_variable(struct config_generic * variable)
 	switch (pHolder->gen.source)
 	{
 		case PGC_S_DEFAULT:
+		case PGC_S_DYNAMIC_DEFAULT:
 		case PGC_S_ENV_VAR:
 		case PGC_S_FILE:
 		case PGC_S_ARGV:
@@ -8420,15 +8437,13 @@ assign_timezone_abbreviations(const char *newval, void *extra)
  *
  * This is called after initial loading of postgresql.conf.  If no
  * timezone_abbreviations setting was found therein, select default.
+ * If a non-default value is already installed, nothing will happen.
  */
 void
 pg_timezone_abbrev_initialize(void)
 {
-	if (timezone_abbreviations_string == NULL)
-	{
-		SetConfigOption("timezone_abbreviations", "Default",
-						PGC_POSTMASTER, PGC_S_DEFAULT);
-	}
+	SetConfigOption("timezone_abbreviations", "Default",
+					PGC_POSTMASTER, PGC_S_DYNAMIC_DEFAULT);
 }
 
 static const char *

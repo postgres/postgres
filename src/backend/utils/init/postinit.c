@@ -324,7 +324,7 @@ CheckMyDatabase(const char *name, bool am_superuser)
 					PGC_INTERNAL, PGC_S_OVERRIDE);
 	/* If we have no other source of client_encoding, use server encoding */
 	SetConfigOption("client_encoding", GetDatabaseEncodingName(),
-					PGC_BACKEND, PGC_S_DEFAULT);
+					PGC_BACKEND, PGC_S_DYNAMIC_DEFAULT);
 
 	/* assign locale variables */
 	collate = NameStr(dbform->datcollate);

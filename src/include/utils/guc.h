@@ -82,7 +82,8 @@ typedef enum
  */
 typedef enum
 {
-	PGC_S_DEFAULT,				/* wired-in default */
+	PGC_S_DEFAULT,				/* hard-wired default ("boot_val") */
+	PGC_S_DYNAMIC_DEFAULT,		/* default computed during initialization */
 	PGC_S_ENV_VAR,				/* postmaster environment variable */
 	PGC_S_FILE,					/* postgresql.conf */
 	PGC_S_ARGV,					/* postmaster command line */

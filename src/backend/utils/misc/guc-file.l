@@ -14,6 +14,7 @@
 #include <ctype.h>
 #include <unistd.h>
 
+#include "mb/pg_wchar.h"
 #include "miscadmin.h"
 #include "storage/fd.h"
 #include "utils/guc.h"
@@ -109,7 +110,6 @@ ProcessConfigFile(GucContext context)
 				   *tail;
 	char	   *cvc = NULL;
 	struct config_string *cvc_struct;
-	const char *envvar;
 	int			i;
 
 	Assert(context == PGC_POSTMASTER || context == PGC_SIGHUP);
@@ -265,7 +265,7 @@ ProcessConfigFile(GucContext context)
 				stack->source = PGC_S_DEFAULT;
 		}
 
-		/* Now we can re-apply the wired-in default */
+		/* Now we can re-apply the wired-in default (i.e., the boot_val) */
 		set_config_option(gconf->name, NULL, context, PGC_S_DEFAULT,
 						  GUC_ACTION_SET, true);
 		if (context == PGC_SIGHUP)
@@ -275,25 +275,28 @@ ProcessConfigFile(GucContext context)
 	}
 
 	/*
-	 * Restore any variables determined by environment variables.  This
-	 * is a no-op except in the case where one of these had been in the
-	 * config file and is now removed.  PGC_S_ENV_VAR will override the
-	 * wired-in default we just applied, but cannot override any other source.
+	 * Restore any variables determined by environment variables or
+	 * dynamically-computed defaults.  This is a no-op except in the case
+	 * where one of these had been in the config file and is now removed.
 	 *
-	 * Keep this list in sync with InitializeGUCOptions()!
-	 * PGPORT can be ignored, because it cannot be changed without restart.
-	 * We assume rlimit hasn't changed, either.
+	 * In particular, we *must not* do this during the postmaster's
+	 * initial loading of the file, since the timezone functions in
+	 * particular should be run only after initialization is complete.
+	 *
+	 * XXX this is an unmaintainable crock, because we have to know how
+	 * to set (or at least what to call to set) every variable that could
+	 * potentially have PGC_S_DYNAMIC_DEFAULT or PGC_S_ENV_VAR source.
+	 * However, there's no time to redesign it for 9.1.
 	 */
-	envvar = getenv("PGDATESTYLE");
-	if (envvar != NULL)
-		set_config_option("datestyle", envvar, PGC_POSTMASTER,
-						  PGC_S_ENV_VAR, GUC_ACTION_SET, true);
-
-	envvar = getenv("PGCLIENTENCODING");
-	if (envvar != NULL)
-		set_config_option("client_encoding", envvar, PGC_POSTMASTER,
-						  PGC_S_ENV_VAR, GUC_ACTION_SET, true);
-
+	if (context == PGC_SIGHUP)
+	{
+		InitializeGUCOptionsFromEnvironment();
+		pg_timezone_initialize();
+		pg_timezone_abbrev_initialize();
+		/* this selects SQL_ASCII in processes not connected to a database */
+		SetConfigOption("client_encoding", GetDatabaseEncodingName(),
+						PGC_BACKEND, PGC_S_DYNAMIC_DEFAULT);
+	}
 
 	/* If we got here all the options checked out okay, so apply them. */
 	for (item = head; item; item = item->next)
