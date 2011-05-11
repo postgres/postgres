@@ -3569,24 +3569,27 @@ DateTimeParseError(int dterr, const char *str, const char *datatype)
 static const datetkn *
 datebsearch(const char *key, const datetkn *base, int nel)
 {
-	const datetkn *last = base + nel - 1,
-			   *position;
-	int			result;
-
-	while (last >= base)
+	if (nel > 0)
 	{
-		position = base + ((last - base) >> 1);
-		result = key[0] - position->token[0];
-		if (result == 0)
+		const datetkn *last = base + nel - 1,
+				   *position;
+		int			result;
+
+		while (last >= base)
 		{
-			result = strncmp(key, position->token, TOKMAXLEN);
+			position = base + ((last - base) >> 1);
+			result = key[0] - position->token[0];
 			if (result == 0)
-				return position;
+			{
+				result = strncmp(key, position->token, TOKMAXLEN);
+				if (result == 0)
+					return position;
+			}
+			if (result < 0)
+				last = position - 1;
+			else
+				base = position + 1;
 		}
-		if (result < 0)
-			last = position - 1;
-		else
-			base = position + 1;
 	}
 	return NULL;
 }
