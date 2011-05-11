@@ -4126,9 +4126,7 @@ TriggerFuncArg:
 				}
 			| FCONST								{ $$ = makeString($1); }
 			| Sconst								{ $$ = makeString($1); }
-			| BCONST								{ $$ = makeString($1); }
-			| XCONST								{ $$ = makeString($1); }
-			| ColId									{ $$ = makeString($1); }
+			| ColLabel								{ $$ = makeString($1); }
 		;
 
 OptConstrFromTable:
