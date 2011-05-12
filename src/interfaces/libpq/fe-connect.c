@@ -2833,10 +2833,11 @@ ldapServiceLookup(const char *purl, PQconninfoOption *options,
 		return 1;
 	}
 
-	/* concatenate values to a single string */
-	for (size = 0, i = 0; values[i] != NULL; ++i)
+	/* concatenate values into a single string with newline terminators */
+	size = 1;					/* for the trailing null */
+	for (i = 0; values[i] != NULL; i++)
 		size += values[i]->bv_len + 1;
-	if ((result = malloc(size + 1)) == NULL)
+	if ((result = malloc(size)) == NULL)
 	{
 		printfPQExpBuffer(errorMessage,
 						  libpq_gettext("out of memory\n"));
@@ -2844,14 +2845,14 @@ ldapServiceLookup(const char *purl, PQconninfoOption *options,
 		ldap_unbind(ld);
 		return 3;
 	}
-	for (p = result, i = 0; values[i] != NULL; ++i)
+	p = result;
+	for (i = 0; values[i] != NULL; i++)
 	{
-		strncpy(p, values[i]->bv_val, values[i]->bv_len);
+		memcpy(p, values[i]->bv_val, values[i]->bv_len);
 		p += values[i]->bv_len;
 		*(p++) = '\n';
-		if (values[i + 1] == NULL)
-			*(p + 1) = '\0';
 	}
+	*p = '\0';
 
 	ldap_value_free_len(values);
 	ldap_unbind(ld);
@@ -2880,6 +2881,7 @@ ldapServiceLookup(const char *purl, PQconninfoOption *options,
 					printfPQExpBuffer(errorMessage, libpq_gettext(
 					"missing \"=\" after \"%s\" in connection info string\n"),
 									  optname);
+					free(result);
 					return 3;
 				}
 				else if (*p == '=')
@@ -2898,6 +2900,7 @@ ldapServiceLookup(const char *purl, PQconninfoOption *options,
 					printfPQExpBuffer(errorMessage, libpq_gettext(
 					"missing \"=\" after \"%s\" in connection info string\n"),
 									  optname);
+					free(result);
 					return 3;
 				}
 				break;
@@ -2961,6 +2964,7 @@ ldapServiceLookup(const char *purl, PQconninfoOption *options,
 				printfPQExpBuffer(errorMessage,
 						 libpq_gettext("invalid connection option \"%s\"\n"),
 								  optname);
+				free(result);
 				return 1;
 			}
 			optname = NULL;
@@ -2968,6 +2972,8 @@ ldapServiceLookup(const char *purl, PQconninfoOption *options,
 		}
 		oldstate = state;
 	}
+
+	free(result);
 
 	if (state == 5 || state == 6)
 	{
