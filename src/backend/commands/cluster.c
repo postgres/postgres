@@ -769,7 +769,7 @@ copy_heap_data(Oid OIDNewHeap, Oid OIDOldHeap, Oid OIDOldIndex,
 
 	/*
 	 * We need to log the copied data in WAL iff WAL archiving/streaming is
-	 * enabled AND it's not a WAL-logged rel.
+	 * enabled AND it's a WAL-logged rel.
 	 */
 	use_wal = XLogIsNeeded() && RelationNeedsWAL(NewHeap);
 
