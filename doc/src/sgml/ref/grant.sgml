@@ -101,7 +101,7 @@ GRANT <replaceable class="PARAMETER">role_name</replaceable> [, ...] TO <replace
    There is also an option to grant privileges on all objects of the same
    type within one or more schemas.  This functionality is currently supported
    only for tables, sequences, and functions (but note that <literal>ALL
-   TABLES</> is considered to include views).
+   TABLES</> is considered to include views and foreign tables).
   </para>
 
   <para>

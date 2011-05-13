@@ -2234,7 +2234,6 @@ psql_completion(char *text, int start, int end)
 								   " UNION SELECT 'DATABASE'"
 								   " UNION SELECT 'FOREIGN DATA WRAPPER'"
 								   " UNION SELECT 'FOREIGN SERVER'"
-								   " UNION SELECT 'FOREIGN TABLE'"
 								   " UNION SELECT 'FUNCTION'"
 								   " UNION SELECT 'LANGUAGE'"
 								   " UNION SELECT 'LARGE OBJECT'"
@@ -2246,7 +2245,7 @@ psql_completion(char *text, int start, int end)
 			 pg_strcasecmp(prev_wd, "FOREIGN") == 0)
 	{
 		static const char *const list_privilege_foreign[] =
-		{"DATA WRAPPER", "SERVER", "TABLE", NULL};
+		{"DATA WRAPPER", "SERVER", NULL};
 
 		COMPLETE_WITH_LIST(list_privilege_foreign);
 	}

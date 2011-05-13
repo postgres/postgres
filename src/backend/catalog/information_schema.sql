@@ -2557,8 +2557,8 @@ CREATE VIEW _pg_foreign_tables AS
     WHERE w.oid = s.srvfdw
           AND u.oid = c.relowner
           AND (pg_has_role(c.relowner, 'USAGE')
-               OR has_table_privilege(c.oid, 'SELECT')
-               OR has_any_column_privilege(c.oid, 'SELECT'))
+               OR has_table_privilege(c.oid, 'SELECT, INSERT, UPDATE, DELETE, TRUNCATE, REFERENCES, TRIGGER')
+               OR has_any_column_privilege(c.oid, 'SELECT, INSERT, UPDATE, REFERENCES'))
           AND n.oid = c.relnamespace
           AND c.oid = t.ftrelid
           AND c.relkind = 'f'
