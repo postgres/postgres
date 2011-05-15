@@ -26,7 +26,7 @@ if ( -e "src/tools/msvc/buildenv.pl")
 }
 
 my $what = shift || "";
-if ($what =~ /^(check|installcheck|plcheck|contribcheck|ecpgcheck)$/i)
+if ($what =~ /^(check|installcheck|plcheck|contribcheck|ecpgcheck|isolationcheck)$/i)
 {
     $what = uc $what;
 }
@@ -134,6 +134,20 @@ sub ecpgcheck
     push(@args,$maxconn) if $maxconn;
     system(@args);
     $status = $? >>8;
+    exit $status if $status;
+}
+
+sub isolationcheck
+{
+	chdir "../isolation";
+	copy("../../../$Config/isolation_tester/isolation_tester.exe",".");
+    my @args = (
+        "../../../$Config/pg_isolation_regress/pg_isolation_regress",
+			"--inputdir=.",  "--schedule=./isolation_schedule"
+    );
+    push(@args,$maxconn) if $maxconn;
+    system(@args);
+    my $status = $? >>8;
     exit $status if $status;
 }
 

@@ -272,6 +272,28 @@ sub mkvcbuild
     $pgregress_ecpg->AddDefine('FRONTEND');
     $pgregress_ecpg->AddReference($libpgport);
 
+    my $isolation_tester = $solution->AddProject('isolation_tester','exe','misc');
+    $isolation_tester->AddFile('src\test\isolation\isolationtester.c');
+    $isolation_tester->AddFile('src\test\isolation\specparse.y');
+    $isolation_tester->AddFile('src\test\isolation\specscanner.l');
+    $isolation_tester->AddFile('src\test\isolation\specparse.c');
+    $isolation_tester->AddIncludeDir('src\test\isolation');
+    $isolation_tester->AddIncludeDir('src\port');
+    $isolation_tester->AddIncludeDir('src\test\regress');
+    $isolation_tester->AddIncludeDir('src\interfaces\libpq');
+    $isolation_tester->AddDefine('HOST_TUPLE="i686-pc-win32vc"');
+    $isolation_tester->AddDefine('FRONTEND');
+    $isolation_tester->AddReference($libpq, $libpgport);
+
+    my $pgregress_isolation = $solution->AddProject('pg_isolation_regress','exe','misc');
+    $pgregress_isolation->AddFile('src\test\isolation\isolation_main.c');
+    $pgregress_isolation->AddFile('src\test\regress\pg_regress.c');
+    $pgregress_isolation->AddIncludeDir('src\port');
+    $pgregress_isolation->AddIncludeDir('src\test\regress');
+    $pgregress_isolation->AddDefine('HOST_TUPLE="i686-pc-win32vc"');
+    $pgregress_isolation->AddDefine('FRONTEND');
+    $pgregress_isolation->AddReference($libpgport);
+
     # src/bin
     my $initdb = AddSimpleFrontend('initdb');
     $initdb->AddIncludeDir('src\interfaces\libpq');
