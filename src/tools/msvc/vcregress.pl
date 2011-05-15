@@ -71,7 +71,8 @@ my %command = (
     PLCHECK => \&plcheck,
     INSTALLCHECK => \&installcheck,
     ECPGCHECK => \&ecpgcheck,
-    CONTRIBCHECK => \&contribcheck
+    CONTRIBCHECK => \&contribcheck,
+	ISOLATIONCHECK => \&isolationcheck,
 );
 
 my $proc = $command{$what};
