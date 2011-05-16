@@ -155,17 +155,13 @@ setup(char *argv0, bool live_check)
 
 	/* no postmasters should be running */
 	if (!live_check && is_server_running(old_cluster.pgdata))
-	{
 		pg_log(PG_FATAL, "There seems to be a postmaster servicing the old cluster.\n"
 			   "Please shutdown that postmaster and try again.\n");
-	}
 
 	/* same goes for the new postmaster */
 	if (is_server_running(new_cluster.pgdata))
-	{
 		pg_log(PG_FATAL, "There seems to be a postmaster servicing the new cluster.\n"
 			   "Please shutdown that postmaster and try again.\n");
-	}
 
 	/* get path to pg_upgrade executable */
 	if (find_my_exec(argv0, exec_path) < 0)
