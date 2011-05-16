@@ -143,9 +143,11 @@ sub isolationcheck
 	chdir "../isolation";
 	copy("../../../$Config/isolation_tester/isolation_tester.exe",".");
     my @args = (
-        "../../../$Config/pg_isolation_regress/pg_isolation_regress",
-			"--inputdir=.",  "--schedule=./isolation_schedule"
-    );
+				"../../../$Config/pg_isolation_regress/pg_isolation_regress",
+				"--psqldir=../../../$Config/psql",
+				"--inputdir=.",  
+				"--schedule=./isolation_schedule"
+			   );
     push(@args,$maxconn) if $maxconn;
     system(@args);
     my $status = $? >>8;
