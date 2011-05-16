@@ -58,7 +58,7 @@ isolation_start_test(const char *testname,
 						   "%s ", launcher);
 
 	snprintf(psql_cmd + offset, sizeof(psql_cmd) - offset,
-			 SYSTEMQUOTE "./isolationtester \"dbname=%s\" < \"%s\" > \"%s\" 2>&1" SYSTEMQUOTE,
+			 SYSTEMQUOTE "\"./isolationtester\" \"dbname=%s\" < \"%s\" > \"%s\" 2>&1" SYSTEMQUOTE,
 			 dblist->str,
 			 infile,
 			 outfile);
