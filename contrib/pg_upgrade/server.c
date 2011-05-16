@@ -145,6 +145,7 @@ start_postmaster(ClusterInfo *cluster)
 	char		cmd[MAXPGPATH];
 	PGconn	   *conn;
 	bool		exit_hook_registered = false;
+	int			pg_ctl_return = 0;
 #ifndef WIN32
 	char		*output_filename = log_opts.filename;
 #else
@@ -183,7 +184,11 @@ start_postmaster(ClusterInfo *cluster)
 				"-c autovacuum=off -c autovacuum_freeze_max_age=2000000000",
 			 log_opts.filename);
 
-	exec_prog(true, "%s", cmd);
+	/*
+	 * Don't throw an error right away, let connecting throw the error
+	 * because it might supply a reason for the failure.
+	 */
+	pg_ctl_return = exec_prog(false, "%s", cmd);
 
 	/* Check to see if we can connect to the server; if not, report it. */
 	if ((conn = get_db_conn(cluster, "template1")) == NULL ||
@@ -198,6 +203,11 @@ start_postmaster(ClusterInfo *cluster)
 	}
 	PQfinish(conn);
 
+	/* If the connection didn't fail, fail now */
+	if (pg_ctl_return != 0)
+		pg_log(PG_FATAL, "pg_ctl failed to start the %s server\n",
+				CLUSTER_NAME(cluster));
+	
 	os_info.running_cluster = cluster;
 }
 
@@ -241,20 +251,15 @@ stop_postmaster(bool fast)
 
 
 /*
- * check_for_libpq_envvars()
+ * check_pghost_envvar()
  *
- * tests whether any libpq environment variables are set.
- * Since pg_upgrade connects to both the old and the new server,
- * it is potentially dangerous to have any of these set.
- *
- * If any are found, will log them and cancel.
+ * Tests that PGHOST does not point to a non-local server
  */
 void
-check_for_libpq_envvars(void)
+check_pghost_envvar(void)
 {
 	PQconninfoOption *option;
 	PQconninfoOption *start;
-	bool		found = false;
 
 	/* Get valid libpq env vars from the PQconndefaults function */
 
@@ -262,29 +267,21 @@ check_for_libpq_envvars(void)
 
 	for (option = start; option->keyword != NULL; option++)
 	{
-		if (option->envvar)
+		if (option->envvar && (strcmp(option->envvar, "PGHOST") == 0 ||
+			strcmp(option->envvar, "PGHOSTADDR") == 0))
 		{
-			const char *value;
+			const char *value = getenv(option->envvar);
 
-			/* This allows us to see error messages in the local encoding */
-			if (strcmp(option->envvar, "PGCLIENTENCODING") == 0)
-				continue;
-
-			value = getenv(option->envvar);
-			if (value && strlen(value) > 0)
-			{
-				found = true;
-
-				pg_log(PG_WARNING,
-					   "libpq env var %-20s is currently set to: %s\n", option->envvar, value);
-			}
+			if (value && strlen(value) > 0 &&
+				/* check for 'local' host values */
+				(strcmp(value, "localhost") != 0 && strcmp(value, "127.0.0.1") != 0 &&
+				 strcmp(value, "::1") != 0 && value[0] != '/'))
+				pg_log(PG_FATAL,
+					"libpq environment variable %s has a non-local server value: %s\n",
+					option->envvar, value);
 		}
 	}
 
 	/* Free the memory that libpq allocated on our behalf */
 	PQconninfoFree(start);
-
-	if (found)
-		pg_log(PG_FATAL,
-			   "libpq env vars have been found and listed above, please unset them for pg_upgrade\n");
 }

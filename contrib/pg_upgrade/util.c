@@ -244,3 +244,41 @@ str2uint(const char *str)
 {
 	return strtoul(str, NULL, 10);
 }
+
+
+/*
+ *	pg_putenv()
+ *
+ *	This is like putenv(), but takes two arguments.
+ *	It also does unsetenv() if val is NULL.
+ */
+void
+pg_putenv(const char *var, const char *val)
+{
+	if (val)
+	{
+#ifndef WIN32
+		char	   *envstr = (char *) pg_malloc(strlen(var) +
+												strlen(val) + 2);
+
+		sprintf(envstr, "%s=%s", var, val);
+		putenv(envstr);
+
+		/*
+		 * Do not free envstr because it becomes part of the environment on
+		 * some operating systems.	See port/unsetenv.c::unsetenv.
+		 */
+#else
+		SetEnvironmentVariableA(var, val);
+#endif
+	}
+	else
+	{
+#ifndef WIN32
+		unsetenv(var);
+#else
+		SetEnvironmentVariableA(var, "");
+#endif
+	}
+}
+

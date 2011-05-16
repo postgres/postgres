@@ -149,7 +149,7 @@ setup(char *argv0, bool live_check)
 	 * make sure the user has a clean environment, otherwise, we may confuse
 	 * libpq when we connect to one (or both) of the servers.
 	 */
-	check_for_libpq_envvars();
+	check_pghost_envvar();
 
 	verify_directories();
 

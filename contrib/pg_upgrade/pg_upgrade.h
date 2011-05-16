@@ -361,7 +361,7 @@ PGresult   *executeQueryOrDie(PGconn *conn, const char *fmt,...);
 void		start_postmaster(ClusterInfo *cluster);
 void		stop_postmaster(bool fast);
 uint32		get_major_server_version(ClusterInfo *cluster);
-void		check_for_libpq_envvars(void);
+void		check_pghost_envvar(void);
 
 
 /* util.c */
@@ -378,6 +378,7 @@ void	   *pg_malloc(int size);
 void		pg_free(void *ptr);
 const char *getErrorText(int errNum);
 unsigned int str2uint(const char *str);
+void 		pg_putenv(const char *var, const char *val);
 
 
 /* version.c */

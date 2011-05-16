@@ -53,23 +53,24 @@ parseCommandLine(int argc, char *argv[])
 	};
 	int			option;			/* Command line option */
 	int			optindex = 0;	/* used by getopt_long */
-	int			user_id;
-
-	if (getenv("PGUSER"))
-	{
-		pg_free(os_info.user);
-		os_info.user = pg_strdup(getenv("PGUSER"));
-	}
-
-	os_info.progname = get_progname(argv[0]);
-	old_cluster.port = getenv("PGPORT") ? atoi(getenv("PGPORT")) : DEF_PGPORT;
-	new_cluster.port = getenv("PGPORT") ? atoi(getenv("PGPORT")) : DEF_PGPORT;
-	/* must save value, getenv()'s pointer is not stable */
+	int			os_user_effective_id;
 
 	user_opts.transfer_mode = TRANSFER_MODE_COPY;
 
-	/* user lookup and 'root' test must be split because of usage() */
-	user_id = get_user_info(&os_info.user);
+	os_info.progname = get_progname(argv[0]);
+
+	/* Process libpq env. variables; load values here for usage() output */
+	old_cluster.port = getenv("PGPORT") ? atoi(getenv("PGPORT")) : DEF_PGPORT;
+	new_cluster.port = getenv("PGPORT") ? atoi(getenv("PGPORT")) : DEF_PGPORT;
+
+	os_user_effective_id = get_user_info(&os_info.user);
+	/* we override just the database user name;  we got the OS id above */
+	if (getenv("PGUSER"))
+	{
+		pg_free(os_info.user);
+		/* must save value, getenv()'s pointer is not stable */
+		os_info.user = pg_strdup(getenv("PGUSER"));
+	}
 
 	if (argc > 1)
 	{
@@ -86,7 +87,8 @@ parseCommandLine(int argc, char *argv[])
 		}
 	}
 
-	if (user_id == 0)
+	/* Allow help and version to be run as root, so do the test here. */
+	if (os_user_effective_id == 0)
 		pg_log(PG_FATAL, "%s: cannot be run as root\n", os_info.progname);
 
 	getcwd(os_info.cwd, MAXPGPATH);
@@ -96,14 +98,6 @@ parseCommandLine(int argc, char *argv[])
 	{
 		switch (option)
 		{
-			case 'd':
-				old_cluster.pgdata = pg_strdup(optarg);
-				break;
-
-			case 'D':
-				new_cluster.pgdata = pg_strdup(optarg);
-				break;
-
 			case 'b':
 				old_cluster.bindir = pg_strdup(optarg);
 				break;
@@ -114,6 +108,14 @@ parseCommandLine(int argc, char *argv[])
 
 			case 'c':
 				user_opts.check = true;
+				break;
+
+			case 'd':
+				old_cluster.pgdata = pg_strdup(optarg);
+				break;
+
+			case 'D':
+				new_cluster.pgdata = pg_strdup(optarg);
 				break;
 
 			case 'g':
@@ -156,6 +158,11 @@ parseCommandLine(int argc, char *argv[])
 			case 'u':
 				pg_free(os_info.user);
 				os_info.user = pg_strdup(optarg);
+				/*
+				 * Push the user name into the environment so pre-9.1
+				 * pg_ctl/libpq uses it.
+				 */
+				pg_putenv("PGUSER", os_info.user);
 				break;
 
 			case 'v':
@@ -197,14 +204,14 @@ parseCommandLine(int argc, char *argv[])
 	}
 
 	/* Get values from env if not already set */
-	validateDirectoryOption(&old_cluster.pgdata, "OLDDATADIR", "-d",
-							"old cluster data resides");
-	validateDirectoryOption(&new_cluster.pgdata, "NEWDATADIR", "-D",
-							"new cluster data resides");
 	validateDirectoryOption(&old_cluster.bindir, "OLDBINDIR", "-b",
 							"old cluster binaries reside");
 	validateDirectoryOption(&new_cluster.bindir, "NEWBINDIR", "-B",
 							"new cluster binaries reside");
+	validateDirectoryOption(&old_cluster.pgdata, "OLDDATADIR", "-d",
+							"old cluster data resides");
+	validateDirectoryOption(&new_cluster.pgdata, "NEWDATADIR", "-D",
+							"new cluster data resides");
 
 	get_pkglibdirs();
 }

@@ -11,8 +11,6 @@
 
 #include <ctype.h>
 
-static void putenv2(const char *var, const char *val);
-
 /*
  * get_control_data()
  *
@@ -85,21 +83,21 @@ get_control_data(ClusterInfo *cluster, bool live_check)
 	if (getenv("LC_MESSAGES"))
 		lc_messages = pg_strdup(getenv("LC_MESSAGES"));
 
-	putenv2("LC_COLLATE", NULL);
-	putenv2("LC_CTYPE", NULL);
-	putenv2("LC_MONETARY", NULL);
-	putenv2("LC_NUMERIC", NULL);
-	putenv2("LC_TIME", NULL);
-	putenv2("LANG",
+	pg_putenv("LC_COLLATE", NULL);
+	pg_putenv("LC_CTYPE", NULL);
+	pg_putenv("LC_MONETARY", NULL);
+	pg_putenv("LC_NUMERIC", NULL);
+	pg_putenv("LC_TIME", NULL);
+	pg_putenv("LANG",
 #ifndef WIN32
 			NULL);
 #else
 	/* On Windows the default locale cannot be English, so force it */
 			"en");
 #endif
-	putenv2("LANGUAGE", NULL);
-	putenv2("LC_ALL", NULL);
-	putenv2("LC_MESSAGES", "C");
+	pg_putenv("LANGUAGE", NULL);
+	pg_putenv("LC_ALL", NULL);
+	pg_putenv("LC_MESSAGES", "C");
 
 	snprintf(cmd, sizeof(cmd), SYSTEMQUOTE "\"%s/%s \"%s\"" SYSTEMQUOTE,
 			 cluster->bindir,
@@ -374,15 +372,15 @@ get_control_data(ClusterInfo *cluster, bool live_check)
 	/*
 	 * Restore environment variables
 	 */
-	putenv2("LC_COLLATE", lc_collate);
-	putenv2("LC_CTYPE", lc_ctype);
-	putenv2("LC_MONETARY", lc_monetary);
-	putenv2("LC_NUMERIC", lc_numeric);
-	putenv2("LC_TIME", lc_time);
-	putenv2("LANG", lang);
-	putenv2("LANGUAGE", language);
-	putenv2("LC_ALL", lc_all);
-	putenv2("LC_MESSAGES", lc_messages);
+	pg_putenv("LC_COLLATE", lc_collate);
+	pg_putenv("LC_CTYPE", lc_ctype);
+	pg_putenv("LC_MONETARY", lc_monetary);
+	pg_putenv("LC_NUMERIC", lc_numeric);
+	pg_putenv("LC_TIME", lc_time);
+	pg_putenv("LANG", lang);
+	pg_putenv("LANGUAGE", language);
+	pg_putenv("LC_ALL", lc_all);
+	pg_putenv("LC_MESSAGES", lc_messages);
 
 	pg_free(lc_collate);
 	pg_free(lc_ctype);
@@ -528,41 +526,4 @@ rename_old_pg_control(void)
 	if (pg_mv_file(old_path, new_path) != 0)
 		pg_log(PG_FATAL, "Unable to rename %s to %s.\n", old_path, new_path);
 	check_ok();
-}
-
-
-/*
- *	putenv2()
- *
- *	This is like putenv(), but takes two arguments.
- *	It also does unsetenv() if val is NULL.
- */
-static void
-putenv2(const char *var, const char *val)
-{
-	if (val)
-	{
-#ifndef WIN32
-		char	   *envstr = (char *) pg_malloc(strlen(var) +
-												strlen(val) + 2);
-
-		sprintf(envstr, "%s=%s", var, val);
-		putenv(envstr);
-
-		/*
-		 * Do not free envstr because it becomes part of the environment on
-		 * some operating systems.	See port/unsetenv.c::unsetenv.
-		 */
-#else
-		SetEnvironmentVariableA(var, val);
-#endif
-	}
-	else
-	{
-#ifndef WIN32
-		unsetenv(var);
-#else
-		SetEnvironmentVariableA(var, "");
-#endif
-	}
 }
