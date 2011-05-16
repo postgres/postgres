@@ -96,7 +96,7 @@ verify_directories(void)
 
 	if (access(".", R_OK | W_OK | X_OK) != 0)
 		pg_log(PG_FATAL,
-		"You must have full access permissions in the current directory.\n");
+		"You must have read and write access in the current directory.\n");
 
 	prep_status("Checking old data directory (%s)", old_cluster.pgdata);
 	check_data_dir(old_cluster.pgdata);
