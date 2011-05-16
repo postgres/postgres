@@ -1419,18 +1419,10 @@ ALTER TABLE products RENAME TO items;
    (or a superuser) can do anything with the object. To allow
    other roles to use it, <firstterm>privileges</firstterm> must be
    granted.
-   There are several different kinds of privilege: <literal>SELECT</>,
-   <literal>INSERT</>, <literal>UPDATE</>, <literal>DELETE</>,
-   <literal>TRUNCATE</>, <literal>REFERENCES</>, <literal>TRIGGER</>,
-   <literal>CREATE</>, <literal>CONNECT</>, <literal>TEMPORARY</>,
-   <literal>EXECUTE</>, and <literal>USAGE</>.
-   For more information on the different types of privileges supported by
-   <productname>PostgreSQL</productname>, see the
-   <xref linkend="sql-grant"> reference page.
   </para>
 
   <para>
-   There are several different privileges: <literal>SELECT</>,
+   There are different kinds of privileges: <literal>SELECT</>,
    <literal>INSERT</>, <literal>UPDATE</>, <literal>DELETE</>,
    <literal>TRUNCATE</>, <literal>REFERENCES</>, <literal>TRIGGER</>,
    <literal>CREATE</>, <literal>CONNECT</>, <literal>TEMPORARY</>,
