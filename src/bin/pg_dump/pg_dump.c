@@ -8252,6 +8252,9 @@ dumpShellType(Archive *fout, ShellTypeInfo *stinfo)
  * For some backwards compatibility with the older behavior, we forcibly
  * dump a PL if its handler function (and validator if any) are in a
  * dumpable namespace.	That case is not checked here.
+ *
+ * Also, if the PL belongs to an extension, we do not use this heuristic.
+ * That case isn't checked here either.
  */
 static bool
 shouldDumpProcLangs(void)
@@ -8316,13 +8319,22 @@ dumpProcLang(Archive *fout, ProcLangInfo *plang)
 	 * If the functions are dumpable then emit a traditional CREATE LANGUAGE
 	 * with parameters.  Otherwise, dump only if shouldDumpProcLangs() says to
 	 * dump it.
+	 *
+	 * However, for a language that belongs to an extension, we must not use
+	 * the shouldDumpProcLangs heuristic, but just dump the language iff we're
+	 * told to (via dobj.dump).  Generally the support functions will belong
+	 * to the same extension and so have the same dump flags ... if they don't,
+	 * this might not work terribly nicely.
 	 */
 	useParams = (funcInfo != NULL &&
 				 (inlineInfo != NULL || !OidIsValid(plang->laninline)) &&
 				 (validatorInfo != NULL || !OidIsValid(plang->lanvalidator)));
 
-	if (!useParams && !shouldDumpProcLangs())
-		return;
+	if (!plang->dobj.ext_member)
+	{
+		if (!useParams && !shouldDumpProcLangs())
+			return;
+	}
 
 	defqry = createPQExpBuffer();
 	delqry = createPQExpBuffer();
@@ -9013,13 +9025,12 @@ dumpCast(Archive *fout, CastInfo *cast)
 	PQExpBuffer delqry;
 	PQExpBuffer labelq;
 	FuncInfo   *funcInfo = NULL;
-	TypeInfo   *sourceInfo;
-	TypeInfo   *targetInfo;
 
 	/* Skip if not to be dumped */
 	if (!cast->dobj.dump || dataOnly)
 		return;
 
+	/* Cannot dump if we don't have the cast function's info */
 	if (OidIsValid(cast->castfunc))
 	{
 		funcInfo = findFuncByOid(cast->castfunc);
@@ -9032,43 +9043,49 @@ dumpCast(Archive *fout, CastInfo *cast)
 	 * objects (the conversion function and the two data types) are not
 	 * builtin AND if all of the non-builtin objects are included in the dump.
 	 * Builtin meaning, the namespace name does not start with "pg_".
+	 *
+	 * However, for a cast that belongs to an extension, we must not use this
+	 * heuristic, but just dump the cast iff we're told to (via dobj.dump).
 	 */
-	sourceInfo = findTypeByOid(cast->castsource);
-	targetInfo = findTypeByOid(cast->casttarget);
+	if (!cast->dobj.ext_member)
+	{
+		TypeInfo   *sourceInfo = findTypeByOid(cast->castsource);
+		TypeInfo   *targetInfo = findTypeByOid(cast->casttarget);
 
-	if (sourceInfo == NULL || targetInfo == NULL)
-		return;
+		if (sourceInfo == NULL || targetInfo == NULL)
+			return;
 
-	/*
-	 * Skip this cast if all objects are from pg_
-	 */
-	if ((funcInfo == NULL ||
-		 strncmp(funcInfo->dobj.namespace->dobj.name, "pg_", 3) == 0) &&
-		strncmp(sourceInfo->dobj.namespace->dobj.name, "pg_", 3) == 0 &&
-		strncmp(targetInfo->dobj.namespace->dobj.name, "pg_", 3) == 0)
-		return;
+		/*
+		 * Skip this cast if all objects are from pg_
+		 */
+		if ((funcInfo == NULL ||
+			 strncmp(funcInfo->dobj.namespace->dobj.name, "pg_", 3) == 0) &&
+			strncmp(sourceInfo->dobj.namespace->dobj.name, "pg_", 3) == 0 &&
+			strncmp(targetInfo->dobj.namespace->dobj.name, "pg_", 3) == 0)
+			return;
 
-	/*
-	 * Skip cast if function isn't from pg_ and is not to be dumped.
-	 */
-	if (funcInfo &&
-		strncmp(funcInfo->dobj.namespace->dobj.name, "pg_", 3) != 0 &&
-		!funcInfo->dobj.dump)
-		return;
+		/*
+		 * Skip cast if function isn't from pg_ and is not to be dumped.
+		 */
+		if (funcInfo &&
+			strncmp(funcInfo->dobj.namespace->dobj.name, "pg_", 3) != 0 &&
+			!funcInfo->dobj.dump)
+			return;
 
-	/*
-	 * Same for the source type
-	 */
-	if (strncmp(sourceInfo->dobj.namespace->dobj.name, "pg_", 3) != 0 &&
-		!sourceInfo->dobj.dump)
-		return;
+		/*
+		 * Same for the source type
+		 */
+		if (strncmp(sourceInfo->dobj.namespace->dobj.name, "pg_", 3) != 0 &&
+			!sourceInfo->dobj.dump)
+			return;
 
-	/*
-	 * and the target type.
-	 */
-	if (strncmp(targetInfo->dobj.namespace->dobj.name, "pg_", 3) != 0 &&
-		!targetInfo->dobj.dump)
-		return;
+		/*
+		 * and the target type.
+		 */
+		if (strncmp(targetInfo->dobj.namespace->dobj.name, "pg_", 3) != 0 &&
+			!targetInfo->dobj.dump)
+			return;
+	}
 
 	/* Make sure we are in proper schema (needed for getFormattedTypeName) */
 	selectSourceSchema("pg_catalog");
