@@ -71,7 +71,8 @@ is_server_running(const char *datadir)
 	if ((fd = open(path, O_RDONLY, 0)) < 0)
 	{
 		if (errno != ENOENT)
-			pg_log(PG_FATAL, "could not open file \"%s\" for reading\n",
+			/* issue a warning but continue so we can throw a clearer error later */
+			pg_log(PG_WARNING, "could not open file \"%s\" for reading\n",
 				   path);
 
 		return false;
@@ -94,6 +95,8 @@ void
 verify_directories(void)
 {
 
+	prep_status("Checking current, bin, and data directories");
+
 	if (access(".", R_OK | W_OK
 #ifndef WIN32
 	/*
@@ -107,20 +110,10 @@ verify_directories(void)
 		pg_log(PG_FATAL,
 		"You must have read and write access in the current directory.\n");
 
-	prep_status("Checking old data directory (%s)", old_cluster.pgdata);
-	check_data_dir(old_cluster.pgdata);
-	check_ok();
-
-	prep_status("Checking old bin directory (%s)", old_cluster.bindir);
 	check_bin_dir(&old_cluster);
-	check_ok();
-
-	prep_status("Checking new data directory (%s)", new_cluster.pgdata);
-	check_data_dir(new_cluster.pgdata);
-	check_ok();
-
-	prep_status("Checking new bin directory (%s)", new_cluster.bindir);
+	check_data_dir(old_cluster.pgdata);
 	check_bin_dir(&new_cluster);
+	check_data_dir(new_cluster.pgdata);
 	check_ok();
 }
 
@@ -139,25 +132,25 @@ check_data_dir(const char *pg_data)
 {
 	char		subDirName[MAXPGPATH];
 	int			subdirnum;
-	const char *requiredSubdirs[] = {"base", "global", "pg_clog",
+	/* start check with top-most directory */
+	const char *requiredSubdirs[] = {"", "base", "global", "pg_clog",
 		"pg_multixact", "pg_subtrans", "pg_tblspc", "pg_twophase",
-	"pg_xlog"};
+		"pg_xlog"};
 
 	for (subdirnum = 0;
 		 subdirnum < sizeof(requiredSubdirs) / sizeof(requiredSubdirs[0]);
 		 ++subdirnum)
 	{
 		struct stat statBuf;
-
 		snprintf(subDirName, sizeof(subDirName), "%s/%s", pg_data,
 				 requiredSubdirs[subdirnum]);
 
 		if (stat(subDirName, &statBuf) != 0)
 			report_status(PG_FATAL, "check for %s failed:  %s\n",
-						  requiredSubdirs[subdirnum], getErrorText(errno));
+						  subDirName, getErrorText(errno));
 		else if (!S_ISDIR(statBuf.st_mode))
 			report_status(PG_FATAL, "%s is not a directory\n",
-						  requiredSubdirs[subdirnum]);
+						  subDirName);
 	}
 }
 
@@ -173,6 +166,16 @@ check_data_dir(const char *pg_data)
 static void
 check_bin_dir(ClusterInfo *cluster)
 {
+	struct stat statBuf;
+
+	/* check bindir */
+	if (stat(cluster->bindir, &statBuf) != 0)
+		report_status(PG_FATAL, "check for %s failed:  %s\n",
+					  cluster->bindir, getErrorText(errno));
+	else if (!S_ISDIR(statBuf.st_mode))
+			report_status(PG_FATAL, "%s is not a directory\n",
+						  cluster->bindir);
+
 	validate_exec(cluster->bindir, "postgres");
 	validate_exec(cluster->bindir, "pg_ctl");
 	validate_exec(cluster->bindir, "pg_resetxlog");
@@ -211,11 +214,10 @@ validate_exec(const char *dir, const char *cmdName)
 	 */
 	if (stat(path, &buf) < 0)
 		pg_log(PG_FATAL, "check for %s failed - %s\n",
-			   cmdName, getErrorText(errno));
-
-	if (!S_ISREG(buf.st_mode))
+			   path, getErrorText(errno));
+	else if (!S_ISREG(buf.st_mode))
 		pg_log(PG_FATAL, "check for %s failed - not an executable file\n",
-			   cmdName);
+			   path);
 
 	/*
 	 * Ensure that the file is both executable and readable (required for
@@ -227,7 +229,7 @@ validate_exec(const char *dir, const char *cmdName)
 	if ((buf.st_mode & S_IRUSR) == 0)
 #endif
 		pg_log(PG_FATAL, "check for %s failed - cannot read file (permission denied)\n",
-			   cmdName);
+			   path);
 
 #ifndef WIN32
 	if (access(path, X_OK) != 0)
@@ -235,5 +237,5 @@ validate_exec(const char *dir, const char *cmdName)
 	if ((buf.st_mode & S_IXUSR) == 0)
 #endif
 		pg_log(PG_FATAL, "check for %s failed - cannot execute (permission denied)\n",
-			   cmdName);
+			   path);
 }
