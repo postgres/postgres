@@ -507,7 +507,7 @@ check_is_super_user(ClusterInfo *cluster)
 /*
  *	check_for_isn_and_int8_passing_mismatch()
  *
- *	/contrib/isn relies on data type int8, and in 8.4 int8 can now be passed
+ *	contrib/isn relies on data type int8, and in 8.4 int8 can now be passed
  *	by value.  The schema dumps the CREATE TYPE PASSEDBYVALUE setting so
  *	it must match for the old and new servers.
  */
@@ -519,7 +519,7 @@ check_for_isn_and_int8_passing_mismatch(ClusterInfo *cluster)
 	bool		found = false;
 	char		output_path[MAXPGPATH];
 
-	prep_status("Checking for /contrib/isn with bigint-passing mismatch");
+	prep_status("Checking for contrib/isn with bigint-passing mismatch");
 
 	if (old_cluster.controldata.float8_pass_by_value ==
 		new_cluster.controldata.float8_pass_by_value)
@@ -581,12 +581,12 @@ check_for_isn_and_int8_passing_mismatch(ClusterInfo *cluster)
 	{
 		pg_log(PG_REPORT, "fatal\n");
 		pg_log(PG_FATAL,
-			   "| Your installation contains \"/contrib/isn\" functions\n"
+			   "| Your installation contains \"contrib/isn\" functions\n"
 			   "| which rely on the bigint data type.  Your old and\n"
 			   "| new clusters pass bigint values differently so this\n"
 			   "| cluster cannot currently be upgraded.  You can\n"
-			   "| manually upgrade data that use \"/contrib/isn\"\n"
-			   "| facilities and remove \"/contrib/isn\" from the\n"
+			   "| manually upgrade data that use \"contrib/isn\"\n"
+			   "| facilities and remove \"contrib/isn\" from the\n"
 			   "| old cluster and restart the upgrade.  A list\n"
 			   "| of the problem functions is in the file:\n"
 			   "| \t%s\n\n", output_path);

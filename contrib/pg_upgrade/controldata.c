@@ -330,7 +330,7 @@ get_control_data(ClusterInfo *cluster, bool live_check)
 				pg_log(PG_FATAL, "%d: controldata retrieval problem\n", __LINE__);
 
 			p++;				/* removing ':' char */
-			/* used later for /contrib check */
+			/* used later for contrib check */
 			cluster->controldata.float8_pass_by_value = strstr(p, "by value") != NULL;
 			got_float8_pass_by_value = true;
 		}

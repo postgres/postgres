@@ -2272,7 +2272,7 @@
 
      <listitem>
       <para>
-       Modify <filename>/contrib</> modules and stored procedure
+       Modify <filename>contrib</> modules and stored procedure
        languages to install via the new <link
        linkend="extension">extension</link> mechanism (Tom Lane,
        Dimitri Fontaine)
