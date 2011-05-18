@@ -97,9 +97,9 @@ verify_directories(void)
 	if (access(".", R_OK | W_OK
 #ifndef WIN32
 	/*
-	 *	Directory execute permission on NTFS means "can execute scripts",
-	 *	which we don't care about, so skip the check.  Also, X_OK is not
-	 *	defined in the API.
+	 *	Do a directory execute check only on Unix because execute permission
+	 *	on NTFS means "can execute scripts", which we don't care about.
+	 *	Also, X_OK is not defined in the Windows API.
 	 */
 					| X_OK
 #endif
