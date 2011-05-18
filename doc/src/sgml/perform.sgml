@@ -440,14 +440,14 @@ WHERE t1.unique1 &lt; 100 AND t1.unique2 = t2.unique2;
     the related Insert, Update, or Delete node, although time spent executing
     <literal>AFTER</> triggers is not.  The time spent in each trigger
     (either <literal>BEFORE</> or <literal>AFTER</>) is also shown separately
-    and is included in total runtime.
+    and is included in total run time.
     Note, however, that deferred constraint triggers will not be executed
     until end of transaction and are thus not shown by
     <command>EXPLAIN ANALYZE</command>.
    </para>
 
    <para>
-    There are two significant ways in which runtimes measured by
+    There are two significant ways in which run times measured by
     <command>EXPLAIN ANALYZE</command> can deviate from normal execution of
     the same query.  First, since no output rows are delivered to the client,
     network transmission costs and I/O formatting costs are not included.

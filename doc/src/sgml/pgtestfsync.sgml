@@ -36,7 +36,7 @@ pg_test_fsync [options]
       <term><option>--filename</option></term>
       <listitem>
        <para>
-        Specifies the filename to write test data in.
+        Specifies the file name to write test data in.
         This file should be in the same file system that the
         <filename>pg_xlog</> directory is or will be placed in.
         (<filename>pg_xlog</> contains the <acronym>WAL</> files.)

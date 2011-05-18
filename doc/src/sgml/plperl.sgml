@@ -129,7 +129,7 @@ $$ LANGUAGE plperl;
   <note>
     <para>
       Arguments will be converted from the database's encoding to UTF-8
-      for use inside plperl, and then converted from UTF-8 back to the
+      for use inside PL/Perl, and then converted from UTF-8 back to the
       database encoding upon return.
     </para>
   </note>
@@ -786,7 +786,7 @@ SELECT release_hosts_query();
      <term><literal><function>encode_typed_literal(<replaceable>value</replaceable>, <replaceable>typename</replaceable>)</function></literal></term>
       <listitem>
        <para>
-         Converts a Perl variable to the value of the datatype passed as a
+         Converts a Perl variable to the value of the data type passed as a
          second argument and returns a string representation of this value.
          Correctly handles nested arrays and values of composite types.
        </para>
@@ -1277,7 +1277,7 @@ DO 'elog(WARNING, join ", ", sort keys %INC)' language plperl;
         child processes.
        </para>
        <para>
-       This parameter can only be set in the postgresql.conf file or on the server command line.
+       This parameter can only be set in the <filename>postgresql.conf</filename> file or on the server command line.
        </para>
       </listitem>
      </varlistentry>

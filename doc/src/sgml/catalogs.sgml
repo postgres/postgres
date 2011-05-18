@@ -1129,7 +1129,7 @@
       <entry><literal><link linkend="catalog-pg-collation"><structname>pg_collation</structname></link>.oid</literal></entry>
       <entry>
        The defined collation of the column, or zero if the column is
-       not of a collatable datatype.
+       not of a collatable data type.
       </entry>
      </row>
 
@@ -1294,7 +1294,7 @@
        Password (possibly encrypted); null if none.  If the password
        is encrypted, this column will begin with the string <literal>md5</>
        followed by a 32-character hexadecimal MD5 hash.  The MD5 hash
-       will be of the user's password concatenated to their username.
+       will be of the user's password concatenated to their user name.
        For example, if user <literal>joe</> has password <literal>xyzzy</>,
        <productname>PostgreSQL</> will store the md5 hash of
        <literal>xyzzyjoe</>.  A password that does not follow that

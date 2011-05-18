@@ -407,7 +407,7 @@ EXEC SQL SELECT foo INTO :FooBar FROM table1 WHERE ascii = 'doodad';
   </para>
 
   <para>
-   Also, a configuration parameter can be retreived with the
+   Also, a configuration parameter can be retrieved with the
    <literal>SHOW</literal> command:
 <programlisting>
 EXEC SQL SHOW search_path INTO :var;
@@ -983,7 +983,7 @@ VARCHAR v2[128];
      the pgtypes library.  The pgtypes library, described in detail
      in <xref linkend="ecpg-pgtypes"> contains basic functions to deal
      with those types, such that you do not need to send a query to
-     the SQL server just for adding an interval to a timestamp for
+     the SQL server just for adding an interval to a time stamp for
      example.
     </para>
 
@@ -1038,9 +1038,9 @@ ts = 2010-06-27 18:03:56.949343
 
      <para>
       In addition, the DATE type can be handled in the same way. The
-      program has to include pg_types_date.h, declare a host variable
+      program has to include <filename>pg_types_date.h</filename>, declare a host variable
       as the date type and convert a DATE value into a text form using
-      PGTYPESdate_to_asc() function. For more details about the
+      <function>PGTYPESdate_to_asc()</function> function. For more details about the
       pgtypes library functions, see <xref linkend="ecpg-pgtypes">.
      </para>
     </sect4>
@@ -1173,12 +1173,12 @@ EXEC SQL END DECLARE SECTION;
       is a way to store some text string in <type>char[]</type>
       or <type>VARCHAR[]</type>, as
       explained <xref linkend="ecpg-char">.  The second use case is to
-      retreive multiple rows from a query result without using a
+      retrieve multiple rows from a query result without using a
       cursor.  Without an array, to process a query result consisting
       of multiple rows, it is required to use a cursor and
       the <command>FETCH</command> command.  But with array host
       variables, multiple rows can be received at once.  The length of
-      the array has to be defined to be able to accomodate all rows,
+      the array has to be defined to be able to accommodate all rows,
       otherwise a buffer overflow will likely occur.
      </para>
 
@@ -1239,7 +1239,7 @@ oid=0, dbname=
 
      <para>
       The following example retrieves OIDs, names, and sizes of the
-      avilable databases from the <literal>pg_database</literal>
+      available databases from the <literal>pg_database</literal>
       system table and using
       the <function>pg_database_size()</function> function.  In this
       example, a structure variable <varname>dbinfo_t</varname> with
@@ -3006,7 +3006,7 @@ int PGTYPEStimestamp_fmt_asc(timestamp *ts, char *output, int str_len, char *fmt
          <listitem>
           <para>
            <literal>%p</literal> - is replaced by national representation of
-           either "ante meridiem" or "post meridiem" as appropriate.
+           either <quote>ante meridiem</quote> or <quote>post meridiem</quote> as appropriate.
           </para>
          </listitem>
          <listitem>
@@ -3852,7 +3852,7 @@ EXEC SQL DESCRIBE prepared_statement INTO mysqlda;
     </procedure>
 
    <sect3>
-    <title>SQLDA Datac Structure</title>
+    <title>SQLDA Data Structure</title>
 
     <para>
      SQLDA uses three data structure
@@ -4080,7 +4080,7 @@ struct sqlname
    </sect3>
 
    <sect3 id="ecpg-sqlda-output">
-    <title>Retreiving a Result Set Using an SQLDA</title>
+    <title>Retrieving a Result Set Using an SQLDA</title>
 
     <procedure>
      <para>
@@ -4265,9 +4265,9 @@ free(sqlda2);
 
     <para>
      This application joins two system tables, pg_database and
-     pg_stat_database on the database oid, and also fetches and shows
-     the database statistics which are retreived by two input
-     parameters (a database "postgres", and oid "1").
+     pg_stat_database on the database OID, and also fetches and shows
+     the database statistics which are retrieved by two input
+     parameters (a database <literal>postgres</literal>, and OID <literal>1</literal>).
     </para>
 
     <para>
@@ -5832,7 +5832,7 @@ ECPG = ecpg
   <para>
    Large object functions have to be called in a transaction block, so
    when autocommit is off, <command>BEGIN</command> commands have to
-   be isssued explicitly.
+   be issued explicitly.
   </para>
 
   <para>
@@ -6616,7 +6616,7 @@ DECLARE <replaceable class="PARAMETER">cursor_name</replaceable> [ BINARY ] [ IN
       <term><replaceable class="PARAMETER">prepared_name</replaceable></term>
       <listitem>
        <para>
-        The name of a prepared query, either as an SQL identfier or a
+        The name of a prepared query, either as an SQL identifier or a
         host variable.
        </para>
       </listitem>
@@ -7477,7 +7477,7 @@ SET DESCRIPTOR <replaceable class="PARAMETER">descriptor_name</replaceable> VALU
       <term><replaceable class="PARAMETER">descriptor_item</replaceable></term>
       <listitem>
        <para>
-        A token identifiying which item of information to set in the
+        A token identifying which item of information to set in the
         descriptor.  See <xref linkend="ecpg-named-descriptors"> for a
         list of supported items.
        </para>
@@ -8461,7 +8461,7 @@ int dectoasc(decimal *np, char *cp, int len, int right)
         <literal>right</> to -1 indicates that all available decimal digits
         should be included in the output. If the length of the output buffer,
         which is indicated by <literal>len</> is not sufficient to hold the
-        textual representation including the trailing NUL character, only a
+        textual representation including the trailing zero byte, only a
         single <literal>*</> character is stored in the result and -1 is
         returned.
        </para>
@@ -8556,7 +8556,7 @@ int rdatestr(date d, char *str);
         The function receives two arguments, the first one is the date to
         convert (<literal>d</> and the second one is a pointer to the target
         string. The output format is always <literal>yyyy-mm-dd</>, so you need
-        to allocate at least 11 bytes (including the NUL-terminator) for the
+        to allocate at least 11 bytes (including the zero-byte terminator) for the
         string.
        </para>
        <para>

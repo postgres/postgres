@@ -9103,7 +9103,7 @@ SELECT xmlagg(x) FROM (SELECT * FROM test ORDER BY y DESC) AS tab;
     </para>
 
    <sect3>
-    <title>IS DOCUMENT</title>
+    <title><literal>IS DOCUMENT</literal></title>
 
     <indexterm>
      <primary>IS DOCUMENT</primary>
@@ -9123,7 +9123,7 @@ SELECT xmlagg(x) FROM (SELECT * FROM test ORDER BY y DESC) AS tab;
    </sect3>
 
    <sect3 id="xml-exists">
-    <title>XMLEXISTS</title>
+    <title><literal>XMLEXISTS</literal></title>
 
     <indexterm>
      <primary>XMLEXISTS</primary>
@@ -9165,7 +9165,7 @@ SELECT xmlexists('//town[text() = ''Toronto'']' PASSING BY REF '<towns><town>Tor
    </sect3>
 
    <sect3 id="xml-is-well-formed">
-    <title>xml_is_well_formed</title>
+    <title><literal>xml_is_well_formed</literal></title>
 
     <indexterm>
      <primary>xml_is_well_formed</primary>
@@ -9187,7 +9187,7 @@ SELECT xmlexists('//town[text() = ''Toronto'']' PASSING BY REF '<towns><town>Tor
 
     <para>
      These functions check whether a <type>text</> string is well-formed XML,
-     returning a boolean result.
+     returning a Boolean result.
      <function>xml_is_well_formed_document</function> checks for a well-formed
      document, while <function>xml_is_well_formed_content</function> checks
      for well-formed content.  <function>xml_is_well_formed</function> does
@@ -9324,7 +9324,7 @@ SELECT xpath('//mydefns:b/text()', '<a xmlns="http://example.com"><b>test</b></a
     The function <function>xpath_exists</function> is a specialized form
     of the <function>xpath</function> function.  Instead of returning the
     individual XML values that satisfy the XPath, this function returns a
-    boolean indicating whether the query was satisfied or not.  This
+    Boolean indicating whether the query was satisfied or not.  This
     function is equivalent to the standard <literal>XMLEXISTS</> predicate,
     except that it also offers support for a namespace mapping argument.
    </para>
@@ -13685,12 +13685,12 @@ SELECT typlen FROM pg_type WHERE oid = pg_typeof(33);
       <row>
        <entry><literal><function>txid_snapshot_xmax(<parameter>txid_snapshot</parameter>)</function></literal></entry>
        <entry><type>bigint</type></entry>
-       <entry>get xmax of snapshot</entry>
+       <entry>get <literal>xmax</literal> of snapshot</entry>
       </row>
       <row>
        <entry><literal><function>txid_snapshot_xmin(<parameter>txid_snapshot</parameter>)</function></literal></entry>
        <entry><type>bigint</type></entry>
-       <entry>get xmin of snapshot</entry>
+       <entry>get <literal>xmin</literal> of snapshot</entry>
       </row>
       <row>
        <entry><literal><function>txid_visible_in_snapshot(<parameter>bigint</parameter>, <parameter>txid_snapshot</parameter>)</function></literal></entry>
@@ -14218,7 +14218,7 @@ postgres=# SELECT * FROM pg_xlogfile_name_offset(pg_stop_backup());
         <literal><function>pg_last_xact_replay_timestamp()</function></literal>
         </entry>
        <entry><type>timestamp with time zone</type></entry>
-       <entry>Get timestamp of last transaction replayed during recovery.
+       <entry>Get time stamp of last transaction replayed during recovery.
         This is the time at which the commit or abort WAL record for that
         transaction was generated on the primary.
         If no transactions have been replayed during recovery, this function
@@ -14638,7 +14638,7 @@ postgres=# SELECT * FROM pg_xlogfile_name_offset(pg_stop_backup());
    </indexterm>
    <para>
     <function>pg_read_binary_file</> is similar to
-    <function>pg_read_file</>, except that the result is a bytea value;
+    <function>pg_read_file</>, except that the result is a <type>bytea</type> value;
     accordingly, no encoding checks are performed.
     In combination with the <function>convert_from</> function, this function
     can be used to read a file in a specified encoding:

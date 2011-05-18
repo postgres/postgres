@@ -1662,7 +1662,7 @@ $ <userinput>kill -INT `head -1 /usr/local/pgsql/data/postmaster.pid`</userinput
 <userinput>/etc/rc.d/init.d/postgresql stop</userinput>
 </screen>
       See <xref linkend="runtime"> for details about starting and
-      stoping the server.
+      stopping the server.
      </para>
     </step>
 

@@ -1586,7 +1586,7 @@ GROUP BY region, product;
    <structname>top_regions</> and the output of <structname>top_regions</>
    is used in the primary <command>SELECT</> query.
    This example could have been written without <literal>WITH</>,
-   but we'd have needed two levels of nested sub-SELECTs.  It's a bit
+   but we'd have needed two levels of nested sub-<command>SELECT</command>s.  It's a bit
    easier to follow this way.
   </para>
 

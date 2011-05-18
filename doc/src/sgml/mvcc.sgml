@@ -613,7 +613,7 @@ ERROR:  could not serialize access due to read/write dependencies among transact
     with a SQLSTATE value of '40001'), because it will be very hard to
     predict exactly which transactions might contribute to the read/write
     dependencies and need to be rolled back to prevent serialization
-    anomalies.  The monitoring of read/write dependences has a cost, as does
+    anomalies.  The monitoring of read/write dependencies has a cost, as does
     the restart of transactions which are terminated with a serialization
     failure, but balanced against the cost and blocking involved in use of
     explicit locks and <literal>SELECT FOR UPDATE</> or <literal>SELECT FOR

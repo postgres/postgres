@@ -355,7 +355,7 @@ CREATE TYPE <replaceable class="parameter">name</replaceable>
   </para>
 
   <para>
-   If the optional boolean
+   If the optional Boolean
    parameter <replaceable class="parameter">collatable</replaceable>
    is true, column definitions and expressions of the type may carry
    collation information through use of

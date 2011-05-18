@@ -143,7 +143,7 @@ PostgreSQL documentation
          <listitem>
          <para>
          Do not use indicators but instead use special values to represent
-         NULLs. Historically there have been databases using this approach.
+         null values. Historically there have been databases using this approach.
          </para>
          </listitem>
         </varlistentry>
@@ -152,7 +152,7 @@ PostgreSQL documentation
          <listitem>
          <para>
          Prepare all statements before using them. Libecpg will keep a cache of
-         prepared statments and reuse a statement if it gets executed again. If the
+         prepared statements and reuse a statement if it gets executed again. If the
          cache runs full, libecpg will free the least used statement.
          </para>
          </listitem>
@@ -161,7 +161,7 @@ PostgreSQL documentation
          <term><option>questionmarks</option></term>
          <listitem>
          <para>
-         Allow questionmark as placeholder for compatibility reasons. 
+         Allow question mark as placeholder for compatibility reasons.
          This used to be the default long ago.
          </para>
          </listitem>

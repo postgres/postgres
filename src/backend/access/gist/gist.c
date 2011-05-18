@@ -227,7 +227,7 @@ gistbuildempty(PG_FUNCTION_ARGS)
 {
 	ereport(ERROR,
 			(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-			 errmsg("unlogged GIST indexes are not supported")));
+			 errmsg("unlogged GiST indexes are not supported")));
 
 	PG_RETURN_VOID();
 }
@@ -1405,7 +1405,7 @@ initGISTstate(GISTSTATE *giststate, Relation index)
 		 * functions don't care about collation, so we just do it
 		 * unconditionally.  (We could alternatively call get_typcollation,
 		 * but that seems like expensive overkill --- there aren't going to be
-		 * any cases where a GIST storage type has a nondefault collation.)
+		 * any cases where a GiST storage type has a nondefault collation.)
 		 */
 		if (OidIsValid(index->rd_indcollation[i]))
 			giststate->supportCollation[i] = index->rd_indcollation[i];

@@ -3892,7 +3892,7 @@ FROM pg_stat_activity;
         This option emits log lines in comma-separated-values
         (<acronym>CSV</>) format,
         with these columns:
-        timestamp with milliseconds,
+        time stamp with milliseconds,
         user name,
         database name,
         process ID,
@@ -4936,7 +4936,7 @@ SET XML OPTION { DOCUMENT | CONTENT };
         Sets the collection of time zone abbreviations that will be accepted
         by the server for datetime input.  The default is <literal>'Default'</>,
         which is a collection that works in most of the world; there are
-        also 'Australia' and 'India', and other collections can be defined
+        also <literal>'Australia'</literal> and <literal>'India'</literal>, and other collections can be defined
         for a particular installation.  See <xref
         linkend="datetime-appendix"> for more information.
        </para>
@@ -6284,7 +6284,7 @@ LOG:  CleanUpLock: deleting: lock(0xb7acd844) id(24688,24696,0,0,0,1)
         be present in the table.  It is useful for recovering data if
         corruption has occurred due to a hardware or software error.  You should
         generally not set this on until you have given up hope of recovering
-        data from the damaged pages of a table.  Zerod-out pages are not
+        data from the damaged pages of a table.  Zeroed-out pages are not
         forced to disk so it is recommended to recreate the table or
         the index before turning this parameter off again.  The
         default setting is <literal>off</>, and it can only be changed

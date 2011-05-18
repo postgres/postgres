@@ -10,7 +10,7 @@
  <para>
   The <filename>file_fdw</> module provides the foreign-data wrapper
   <function>file_fdw</function>, which can be used to access data
-  files in the server's filesystem.  Data files must be in a format
+  files in the server's file system.  Data files must be in a format
   that can be read by <command>COPY FROM</command>;
   see <xref linkend="sql-copy"> for details.
  </para>

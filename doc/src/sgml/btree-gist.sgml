@@ -25,7 +25,7 @@
   standard B-tree code: the ability to enforce uniqueness.  However,
   they provide some other features that are not available with a B-tree
   index, as described below.  Also, these operator classes are useful
-  when a multi-column GiST index is needed, wherein some of the columns
+  when a multicolumn GiST index is needed, wherein some of the columns
   are of data types that are only indexable with GiST but other columns
   are just simple data types.  Lastly, these operator classes are useful for
   GiST testing and as a base for developing other GiST operator classes.
@@ -55,7 +55,7 @@
   <title>Example Usage</title>
 
   <para>
-   Simple example using btree_gist instead of btree:
+   Simple example using <literal>btree_gist</literal> instead of <literal>btree</literal>:
   </para>
 
 <programlisting>

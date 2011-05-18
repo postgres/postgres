@@ -288,7 +288,7 @@
 
    <para>
     A useful extension to <productname>PostgreSQL</> typically includes
-    multiple SQL objects; for example, a new datatype will require new
+    multiple SQL objects; for example, a new data type will require new
     functions, new operators, and probably new index operator classes.
     It is helpful to collect all these objects into a single package
     to simplify database management.  <productname>PostgreSQL</> calls

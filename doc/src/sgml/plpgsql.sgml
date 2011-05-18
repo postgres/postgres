@@ -3586,7 +3586,7 @@ AFTER INSERT OR UPDATE OR DELETE ON emp
     <para>
      This example uses a trigger on the view to make it updatable, and
      ensure that any insert, update or delete of a row in the view is
-     recorded (i.e., audited) in the emp_audit table. The current time
+     recorded (i.e., audited) in the <literal>emp_audit</literal> table. The current time
      and user name are recorded, together with the type of operation
      performed, and the view displays the last modified time of each row.
     </para>

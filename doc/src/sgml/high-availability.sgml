@@ -1144,7 +1144,7 @@ primary_conninfo = 'host=192.168.1.50 port=5432 user=foo password=foopass'
    <para>
     To trigger failover of a log-shipping standby server,
     run <command>pg_ctl promote</> or create a trigger
-    file with the filename and path specified by the <varname>trigger_file</>
+    file with the file name and path specified by the <varname>trigger_file</>
     setting in <filename>recovery.conf</>. If you're planning to use
     <command>pg_ctl promote</> to fail over, <varname>trigger_file</> is
     not required. If you're setting up the reporting servers that are

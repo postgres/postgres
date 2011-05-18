@@ -128,7 +128,7 @@ CLUSTER [VERBOSE]
    </para>
 
    <para>
-    <command>CLUSTER</> can re-sort the table using either an indexscan
+    <command>CLUSTER</> can re-sort the table using either an index scan
     on the specified index, or (if the index is a b-tree) a sequential
     scan followed by sorting.  It will attempt to choose the method that
     will be faster, based on planner cost parameters and available statistical
@@ -136,7 +136,7 @@ CLUSTER [VERBOSE]
    </para>
 
    <para>
-    When an indexscan is used, a temporary copy of the table is created that
+    When an index scan is used, a temporary copy of the table is created that
     contains the table data in the index order.  Temporary copies of each
     index on the table are created as well.  Therefore, you need free space on
     disk at least equal to the sum of the table size and the index sizes.
@@ -146,7 +146,7 @@ CLUSTER [VERBOSE]
     When a sequential scan and sort is used, a temporary sort file is
     also created, so that the peak temporary space requirement is as much
     as double the table size, plus the index sizes.  This method is often
-    faster than the indexscan method, but if the disk space requirement is
+    faster than the index scan method, but if the disk space requirement is
     intolerable, you can disable this choice by temporarily setting <xref
     linkend="guc-enable-sort"> to <literal>off</>.
    </para>

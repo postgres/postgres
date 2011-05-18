@@ -343,7 +343,7 @@ WHERE t.author_id = p.person_id;
 
    <para>
     The <function>xpath_table</> function assumes that the results of each XPath query
-    might be multi-valued, so the number of rows returned by the function
+    might be multivalued, so the number of rows returned by the function
     may not be the same as the number of input documents. The first row
     returned contains the first result from each query, the second row the
     second result from each query. If one of the queries has fewer values

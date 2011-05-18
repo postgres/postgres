@@ -356,7 +356,7 @@ $$ LANGUAGE plpythonu;
       <para>
        When the PostgreSQL return type is <type>bytea</type>, the
        return value will be converted to a string (Python 2) or bytes
-       (Python 3) using the respective Python builtins, with the
+       (Python 3) using the respective Python built-ins, with the
        result being converted <type>bytea</type>.
       </para>
      </listitem>
@@ -365,7 +365,7 @@ $$ LANGUAGE plpythonu;
       <para>
        For all other PostgreSQL return types, the returned Python
        value is converted to a string using the Python
-       builtin <literal>str</literal>, and the result is passed to the
+       built-in <literal>str</literal>, and the result is passed to the
        input function of the PostgreSQL data type.
       </para>
 
@@ -1101,7 +1101,7 @@ $$ LANGUAGE plpythonu;
     inserted into it.  The subtransaction context manager does not
     trap errors, it only assures that all database operations executed
     inside its scope will be atomically committed or rolled back.  A
-    rollback of the subtransaction block occurrs on any kind of
+    rollback of the subtransaction block occurs on any kind of
     exception exit, not only ones caused by errors originating from
     database access.  A regular Python exception raised inside an
     explicit subtransaction block would also cause the subtransaction

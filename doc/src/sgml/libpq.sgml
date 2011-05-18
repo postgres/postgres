@@ -556,7 +556,7 @@ PGconn *PQconnectdbParams(const char **keywords, const char **values, int expand
            parameter can be used to achieve the kind of server
            authentication that SSL certificates achieve on TCP/IP
            connections.  (Note that if the Unix-domain socket is
-           in <filename>/tmp</filename> or another publically writable
+           in <filename>/tmp</filename> or another publicly writable
            location, any user could start a server there.  Use this
            parameter to ensure that you are connected to a server run
            by a trusted user,
@@ -5410,7 +5410,7 @@ int PQlibVersion(void);
 
      <para>
       The result of this function can be used to determine, at
-      runtime, if specific functionality is available in the currently
+      run time, if specific functionality is available in the currently
       loaded version of libpq. The function can be used, for example,
       to determine which connection options are available for
       <function>PQconnectdb</> or if the <literal>hex</> <type>bytea</>

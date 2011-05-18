@@ -245,15 +245,15 @@ postgres: <replaceable>user</> <replaceable>database</> <replaceable>host</> <re
       <entry><structname>pg_stat_activity</><indexterm><primary>pg_stat_activity</primary></indexterm></entry>
       <entry>One row per server process, showing database OID, database
       name, process <acronym>ID</>, user OID, user name, application name,
-      client's address, hostname (if available), and port number, times at
+      client's address, host name (if available), and port number, times at
       which the server process, current transaction, and current query began
       execution, process's waiting status, and text of the current query.
       The columns that report data on the current query are available unless
       the parameter <varname>track_activities</varname> has been turned off.
       Furthermore, these columns are only visible if the user examining
       the view is a superuser or the same as the user owning the process
-      being reported on.  The client's hostname will be available only if
-      <xref linkend="guc-log-hostname"> is set or if the user's hostname
+      being reported on.  The client's host name will be available only if
+      <xref linkend="guc-log-hostname"> is set or if the user's host name
       needed to be looked up during <filename>pg_hba.conf</filename>
       processing.
      </entry>
@@ -300,7 +300,7 @@ postgres: <replaceable>user</> <replaceable>database</> <replaceable>host</> <re
      <row>
       <entry><structname>pg_stat_replication</><indexterm><primary>pg_stat_replication</primary></indexterm></entry>
       <entry>One row per WAL sender process, showing process <acronym>ID</>,
-      user OID, user name, application name, client's address, hostname
+      user OID, user name, application name, client's address, host name
       (if available) and port number, time at which the server process began
       execution, and the current WAL sender state and transaction log
       location.  In addition, the standby reports the last transaction log
@@ -311,8 +311,8 @@ postgres: <replaceable>user</> <replaceable>database</> <replaceable>host</> <re
       is shown here also, that is the order in which standbys will become
       the synchronous standby. The columns detailing what exactly the connection
       is doing are only visible if the user examining the view is a superuser.
-      The client's hostname will be available only if
-      <xref linkend="guc-log-hostname"> is set or if the user's hostname
+      The client's host name will be available only if
+      <xref linkend="guc-log-hostname"> is set or if the user's host name
       needed to be looked up during <filename>pg_hba.conf</filename>
       processing.
      </entry>

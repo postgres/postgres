@@ -1989,7 +1989,7 @@ kill `cat /usr/local/pgsql/data/postmaster.pid`
    <para>
     PostgreSQL works on AIX, but getting it installed properly can be
     challenging.  AIX versions from 4.3.3 to 6.1 are considered supported.
-    You can use GCC or the native IBM compiler xlc.  In
+    You can use GCC or the native IBM compiler <command>xlc</command>.  In
     general, using recent versions of AIX and PostgreSQL helps.  Check
     the build farm for up to date information about which versions of
     AIX are known to work.
@@ -2817,7 +2817,7 @@ MANPATH=/usr/lib/scohelp/%L/man:/usr/dt/man:/usr/man:/usr/share/man:scohelp:/usr
      You can build with either GCC or Sun's compiler suite.  For
      better code optimization, Sun's compiler is strongly recommended
      on the SPARC architecture.  We have heard reports of problems
-     when using GCC 2.95.1; gcc 2.95.3 or later is recommended.  If
+     when using GCC 2.95.1; GCC 2.95.3 or later is recommended.  If
      you are using Sun's compiler, be careful not to select
      <filename>/usr/ucb/cc</filename>;
      use <filename>/opt/SUNWspro/bin/cc</filename>.

@@ -491,7 +491,7 @@
 
       <listitem>
        <para>
-        Add client_hostname field to <link
+        Add <structfield>client_hostname</structfield> field to <link
         linkend="monitoring-stats-views-table"><structname>pg_stat_activity</></link>
         (Peter Eisentraut)
        </para>
@@ -1227,7 +1227,7 @@
       <listitem>
        <para>
         Make <command>EXPLAIN VERBOSE</> show the function call expression
-        in a FunctionScan node (Tom Lane)
+        in a <literal>FunctionScan</literal> node (Tom Lane)
        </para>
       </listitem>
 
@@ -1428,7 +1428,7 @@
        </para>
 
        <para>
-        These are used for xpath matching.
+        These are used for XPath matching.
        </para>
       </listitem>
 
@@ -2046,7 +2046,7 @@
 
       <listitem>
        <para>
-         Allow ecpg to accept dynamic cursor names even in
+         Allow ECPG to accept dynamic cursor names even in
          <literal>WHERE CURRENT OF</literal> clauses
        </para>
       </listitem>
@@ -2139,7 +2139,7 @@
 
       <listitem>
        <para>
-        Enable building with the Mingw64 compiler (Andrew Dunstan)
+        Enable building with the MinGW64 compiler (Andrew Dunstan)
        </para>
 
        <para>
@@ -2175,7 +2175,7 @@
 
       <listitem>
        <para>
-         Add missing get_{object}_oid() functions, for consistency
+         Add missing <function>get_<replaceable>object</>_oid()</function> functions, for consistency
          (Robert Haas)
        </para>
       </listitem>
@@ -2316,7 +2316,7 @@
       <para>
         Allow <link
         linkend="fuzzystrmatch"><filename>contrib/fuzzystrmatch</></link>'s
-        <function>levenshtein()</> function handle multi-byte characters
+        <function>levenshtein()</> function handle multibyte characters
         (Alexander Korotkov)
       </para>
      </listitem>

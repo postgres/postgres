@@ -397,7 +397,7 @@ T052	MAX and MIN for row types			NO
 T053	Explicit aliases for all-fields reference			NO	
 T061	UCS support			NO	
 T071	BIGINT data type			YES	
-T101	Enhanced nullability determiniation			NO	
+T101	Enhanced nullability determination			NO	
 T111	Updatable joins, unions, and columns			NO	
 T121	WITH (excluding RECURSIVE) in query expression			YES	
 T122	WITH (excluding RECURSIVE) in subquery			YES	

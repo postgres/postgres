@@ -920,7 +920,7 @@ WHERE p1.amprocfamily = p3.oid AND p3.opfmethod = p2.oid AND
 
 -- Detect missing pg_amproc entries: should have as many support functions
 -- as AM expects for each datatype combination supported by the opfamily.
--- GIST/GIN are special cases because each has an optional support function.
+-- GiST/GIN are special cases because each has an optional support function.
 
 SELECT p1.amname, p2.opfname, p3.amproclefttype, p3.amprocrighttype
 FROM pg_am AS p1, pg_opfamily AS p2, pg_amproc AS p3
@@ -931,7 +931,7 @@ WHERE p2.opfmethod = p1.oid AND p3.amprocfamily = p2.oid AND
                            p4.amproclefttype = p3.amproclefttype AND
                            p4.amprocrighttype = p3.amprocrighttype);
 
--- Similar check for GIST/GIN, allowing one optional proc
+-- Similar check for GiST/GIN, allowing one optional proc
 
 SELECT p1.amname, p2.opfname, p3.amproclefttype, p3.amprocrighttype
 FROM pg_am AS p1, pg_opfamily AS p2, pg_amproc AS p3
@@ -944,7 +944,7 @@ WHERE p2.opfmethod = p1.oid AND p3.amprocfamily = p2.oid AND
       NOT IN (p1.amsupport, p1.amsupport - 1);
 
 -- Also, check if there are any pg_opclass entries that don't seem to have
--- pg_amproc support.  Again, GIST/GIN have to be checked specially.
+-- pg_amproc support.  Again, GiST/GIN have to be checked specially.
 
 SELECT amname, opcname, count(*)
 FROM pg_am am JOIN pg_opclass op ON opcmethod = am.oid

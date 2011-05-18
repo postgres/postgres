@@ -26,7 +26,7 @@
 
   <para>
    This module integrates with <productname>SELinux</> to provide an
-   additional layer of security checking above and beyond what is normaly
+   additional layer of security checking above and beyond what is normally
    provided by <productname>PostgreSQL</productname>.  From the perspective of
    <productname>SELinux</>, this module allows
    <productname>PostgreSQL</productname> to function as a user-space object
@@ -97,7 +97,7 @@ Policy from config file:        targeted
   <para>
    The following instructions that assume your installation is under the
    <filename>/usr/local/pgsql</> directory. Adjust the paths shown below as
-   appropriate for your installaton.
+   appropriate for your installation.
   </para>
 
 <screen>

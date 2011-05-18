@@ -59,7 +59,7 @@ PostgreSQL documentation
   </para>
 
   <para>
-   There can be multiple pg_basebackups running at the same time, but it is
+   There can be multiple <command>pg_basebackup</command>s running at the same time, but it is
    better from a performance point of view to take only one backup, and copy
    the result.
   </para>
@@ -127,7 +127,7 @@ PostgreSQL documentation
             Write the output as tar files in the target directory. The main
             data directory will be written to a file named
             <filename>base.tar</filename>, and all other tablespaces will
-            be named after the tablespace oid.
+            be named after the tablespace OID.
             </para>
            <para>
             If the value <literal>-</literal> (dash) is specified as
@@ -235,7 +235,7 @@ PostgreSQL documentation
       <listitem>
        <para>
         Enables verbose mode. Will output some extra steps during startup and
-        shutdown, as well as show the exact filename that is currently being
+        shutdown, as well as show the exact file name that is currently being
         processed if progress reporting is also enabled.
        </para>
       </listitem>

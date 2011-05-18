@@ -71,7 +71,7 @@ gistindex_keytest(IndexScanDesc scan,
 		int			i;
 
 		if (GistPageIsLeaf(page))		/* shouldn't happen */
-			elog(ERROR, "invalid GIST tuple found on leaf page");
+			elog(ERROR, "invalid GiST tuple found on leaf page");
 		for (i = 0; i < scan->numberOfOrderBys; i++)
 			so->distances[i] = -get_float8_infinity();
 		return true;

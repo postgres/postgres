@@ -818,8 +818,8 @@ SELECT pg_stop_backup();
     the equivalent of <function>pg_start_backup()</>, copy and
     <function>pg_stop_backup()</> steps automatically, and transfers the
     backup over a regular <productname>PostgreSQL</productname> connection
-    using the replication protocol, instead of requiring filesystem level
-    access. pg_basebackup does not interfere with filesystem level backups
+    using the replication protocol, instead of requiring file system level
+    access. <command>pg_basebackup</command> does not interfere with file system level backups
     taken using <function>pg_start_backup()</>/<function>pg_stop_backup()</>.
    </para>
 

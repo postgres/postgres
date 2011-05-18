@@ -184,7 +184,7 @@ CREATE OPERATOR CLASS <replaceable class="parameter">name</replaceable> [ DEFAUL
     <term><replaceable class="parameter">sort_family_name</replaceable></term>
     <listitem>
      <para>
-      The name (optionally schema-qualified) of an existing btree operator
+      The name (optionally schema-qualified) of an existing <literal>btree</literal> operator
       family that describes the sort ordering associated with an ordering
       operator.
      </para>
