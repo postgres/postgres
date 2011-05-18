@@ -52,11 +52,6 @@
  </para>
 
 
-<!--
- The following table should correspond to the contents of
- src/include/utils/errcodes.h and src/pl/plpgsql/src/plerrcodes.h.
--->
-
 <table id="errcodes-table">
  <title><productname>PostgreSQL</productname> Error Codes</title>
 
