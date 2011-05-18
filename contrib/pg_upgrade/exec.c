@@ -94,7 +94,16 @@ void
 verify_directories(void)
 {
 
-	if (access(".", R_OK | W_OK | X_OK) != 0)
+	if (access(".", R_OK | W_OK
+#ifndef WIN32
+	/*
+	 *	Directory execute permission on NTFS means "can execute scripts",
+	 *	which we don't care about, so skip the check.  Also, X_OK is not
+	 *	defined in the API.
+	 */
+					| X_OK
+#endif
+		) != 0)
 		pg_log(PG_FATAL,
 		"You must have read and write access in the current directory.\n");
 
