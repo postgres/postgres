@@ -116,16 +116,14 @@ InternalIpcSemaphoreCreate(IpcSemaphoreKey semKey, int numSems)
 						   (unsigned long) semKey, numSems,
 						   IPC_CREAT | IPC_EXCL | IPCProtection),
 				 (errno == ENOSPC) ?
-				 errhint("This error does *not* mean that you have run out of disk space.\n"
+				 errhint("This error does *not* mean that you have run out of disk space.  "
 		  "It occurs when either the system limit for the maximum number of "
 			 "semaphore sets (SEMMNI), or the system wide maximum number of "
 			"semaphores (SEMMNS), would be exceeded.  You need to raise the "
 		  "respective kernel parameter.  Alternatively, reduce PostgreSQL's "
-		"consumption of semaphores by reducing its max_connections parameter "
-						 "(currently %d).\n"
+		"consumption of semaphores by reducing its max_connections parameter.\n"
 			  "The PostgreSQL documentation contains more information about "
-						 "configuring your system for PostgreSQL.",
-						 MaxBackends) : 0));
+						 "configuring your system for PostgreSQL.") : 0));
 	}
 
 	return semId;
