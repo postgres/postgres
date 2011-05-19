@@ -70,9 +70,9 @@ is_server_running(const char *datadir)
 
 	if ((fd = open(path, O_RDONLY, 0)) < 0)
 	{
-		if (errno != ENOENT)
-			/* issue a warning but continue so we can throw a clearer error later */
-			pg_log(PG_WARNING, "could not open file \"%s\" for reading\n",
+		/* ENOTDIR means we will throw a more useful error later */
+		if (errno != ENOENT && errno != ENOTDIR)
+			pg_log(PG_FATAL, "could not open file \"%s\" for reading\n",
 				   path);
 
 		return false;
