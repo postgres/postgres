@@ -255,6 +255,35 @@ SELECT * FROM trigger_test;
  5 | third line(modified by trigger)(modified by trigger) | ("(5)")
 (4 rows)
 
+DROP TRIGGER "test_valid_id_trig" ON trigger_test;
+CREATE OR REPLACE FUNCTION trigger_recurse() RETURNS trigger AS $$
+	use strict;
+
+	if ($_TD->{new}{i} == 10000)
+	{
+		spi_exec_query("insert into trigger_test (i, v) values (20000, 'child');");
+
+		if ($_TD->{new}{i} != 10000)
+		{
+			die "recursive trigger modified: ". $_TD->{new}{i};
+		}
+	}
+    return;
+$$ LANGUAGE plperl;
+CREATE TRIGGER "test_trigger_recurse" BEFORE INSERT ON trigger_test
+FOR EACH ROW EXECUTE PROCEDURE "trigger_recurse"();
+INSERT INTO trigger_test (i, v) values (10000, 'top');
+SELECT * FROM trigger_test;
+   i   |                          v                           |   foo   
+-------+------------------------------------------------------+---------
+     1 | first line(modified by trigger)                      | ("(2)")
+     2 | second line(modified by trigger)                     | ("(3)")
+     4 | immortal                                             | ("(4)")
+     5 | third line(modified by trigger)(modified by trigger) | ("(5)")
+ 20000 | child                                                | 
+ 10000 | top                                                  | 
+(6 rows)
+
 CREATE OR REPLACE FUNCTION immortal() RETURNS trigger AS $$
     if ($_TD->{old}{v} eq $_TD->{args}[0])
     {

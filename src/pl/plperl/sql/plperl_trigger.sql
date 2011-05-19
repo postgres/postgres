@@ -122,6 +122,30 @@ UPDATE trigger_test SET i = 100 where i=1;
 
 SELECT * FROM trigger_test;
 
+DROP TRIGGER "test_valid_id_trig" ON trigger_test;
+
+CREATE OR REPLACE FUNCTION trigger_recurse() RETURNS trigger AS $$
+	use strict;
+
+	if ($_TD->{new}{i} == 10000)
+	{
+		spi_exec_query("insert into trigger_test (i, v) values (20000, 'child');");
+
+		if ($_TD->{new}{i} != 10000)
+		{
+			die "recursive trigger modified: ". $_TD->{new}{i};
+		}
+	}
+    return;
+$$ LANGUAGE plperl;
+
+CREATE TRIGGER "test_trigger_recurse" BEFORE INSERT ON trigger_test
+FOR EACH ROW EXECUTE PROCEDURE "trigger_recurse"();
+
+INSERT INTO trigger_test (i, v) values (10000, 'top');
+
+SELECT * FROM trigger_test;
+
 CREATE OR REPLACE FUNCTION immortal() RETURNS trigger AS $$
     if ($_TD->{old}{v} eq $_TD->{args}[0])
     {

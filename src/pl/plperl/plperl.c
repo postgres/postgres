@@ -1976,8 +1976,11 @@ plperl_call_perl_trigger_func(plperl_proc_desc *desc, FunctionCallInfo fcinfo,
 	ENTER;
 	SAVETMPS;
 
-	TDsv = get_sv("_TD", GV_ADD);
-	SAVESPTR(TDsv);				/* local $_TD */
+	TDsv = get_sv("_TD", 0);
+	if (!TDsv)
+		elog(ERROR, "couldn't fetch $_TD");
+
+	save_item(TDsv);				/* local $_TD */
 	sv_setsv(TDsv, td);
 
 	PUSHMARK(sp);
