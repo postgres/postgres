@@ -929,7 +929,7 @@ restore(char *result, float val, int n)
 	*p = '\0';
 
 	/* get the exponent */
-	mant = (char *) strtok(strdup(result), "e");
+	mant = (char *) strtok(pstrdup(result), "e");
 	exp = atoi(strtok(NULL, "e"));
 
 	if (exp == 0)
