@@ -135,7 +135,7 @@ static int	binary_upgrade = 0;
 static int	disable_dollar_quoting = 0;
 static int	dump_inserts = 0;
 static int	column_inserts = 0;
-static int	no_security_label = 0;
+static int	no_security_labels = 0;
 static int	no_unlogged_table_data = 0;
 static int	serializable_deferrable = 0;
 
@@ -329,7 +329,7 @@ main(int argc, char **argv)
 		{"role", required_argument, NULL, 3},
 		{"serializable-deferrable", no_argument, &serializable_deferrable, 1},
 		{"use-set-session-authorization", no_argument, &use_setsessauth, 1},
-		{"no-security-label", no_argument, &no_security_label, 1},
+		{"no-security-labels", no_argument, &no_security_labels, 1},
 		{"no-unlogged-table-data", no_argument, &no_unlogged_table_data, 1},
 
 		{NULL, 0, NULL, 0}
@@ -651,8 +651,8 @@ main(int argc, char **argv)
 	/*
 	 * Disables security label support if server version < v9.1.x
 	 */
-	if (!no_security_label && g_fout->remoteVersion < 90100)
-		no_security_label = 1;
+	if (!no_security_labels && g_fout->remoteVersion < 90100)
+		no_security_labels = 1;
 
 	/*
 	 * Start transaction-snapshot mode transaction to dump consistent data.
@@ -862,7 +862,7 @@ help(const char *progname)
 	printf(_("  --quote-all-identifiers     quote all identifiers, even if not keywords\n"));
 	printf(_("  --serializable-deferrable   wait until the dump can run without anomalies\n"));
 	printf(_("  --role=ROLENAME             do SET ROLE before dump\n"));
-	printf(_("  --no-security-label         do not dump security label assignments\n"));
+	printf(_("  --no-security-labels        do not dump security label assignments\n"));
 	printf(_("  --no-unlogged-table-data    do not dump unlogged table data\n"));
 	printf(_("  --use-set-session-authorization\n"
 			 "                              use SET SESSION AUTHORIZATION commands instead of\n"
@@ -11535,8 +11535,8 @@ dumpSecLabel(Archive *fout, const char *target,
 	int			i;
 	PQExpBuffer query;
 
-	/* do nothing, if --no-security-label is supplied */
-	if (no_security_label)
+	/* do nothing, if --no-security-labels is supplied */
+	if (no_security_labels)
 		return;
 
 	/* Comments are schema not data ... except blob comments are data */
@@ -11598,8 +11598,8 @@ dumpTableSecLabel(Archive *fout, TableInfo *tbinfo, const char *reltypename)
 	PQExpBuffer query;
 	PQExpBuffer target;
 
-	/* do nothing, if --no-security-label is supplied */
-	if (no_security_label)
+	/* do nothing, if --no-security-labels is supplied */
+	if (no_security_labels)
 		return;
 
 	/* SecLabel are SCHEMA not data */

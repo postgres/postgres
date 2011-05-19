@@ -69,7 +69,7 @@ static int	disable_triggers = 0;
 static int	inserts = 0;
 static int	no_tablespaces = 0;
 static int	use_setsessauth = 0;
-static int	no_security_label = 0;
+static int	no_security_labels = 0;
 static int	no_unlogged_table_data = 0;
 static int	server_version;
 
@@ -134,7 +134,7 @@ main(int argc, char *argv[])
 		{"quote-all-identifiers", no_argument, &quote_all_identifiers, 1},
 		{"role", required_argument, NULL, 3},
 		{"use-set-session-authorization", no_argument, &use_setsessauth, 1},
-		{"no-security-label", no_argument, &no_security_label, 1},
+		{"no-security-labels", no_argument, &no_security_labels, 1},
 		{"no-unlogged-table-data", no_argument, &no_unlogged_table_data, 1},
 
 		{NULL, 0, NULL, 0}
@@ -353,8 +353,8 @@ main(int argc, char *argv[])
 		appendPQExpBuffer(pgdumpopts, " --quote-all-identifiers");
 	if (use_setsessauth)
 		appendPQExpBuffer(pgdumpopts, " --use-set-session-authorization");
-	if (no_security_label)
-		appendPQExpBuffer(pgdumpopts, " --no-security-label");
+	if (no_security_labels)
+		appendPQExpBuffer(pgdumpopts, " --no-security-labels");
 	if (no_unlogged_table_data)
 		appendPQExpBuffer(pgdumpopts, " --no-unlogged-table-data");
 
@@ -553,7 +553,7 @@ help(void)
 	printf(_("  --no-tablespaces            do not dump tablespace assignments\n"));
 	printf(_("  --quote-all-identifiers     quote all identifiers, even if not keywords\n"));
 	printf(_("  --role=ROLENAME             do SET ROLE before dump\n"));
-	printf(_("  --no-security-label         do not dump security label assignments\n"));
+	printf(_("  --no-security-labels        do not dump security label assignments\n"));
 	printf(_("  --no-unlogged-table-data    do not dump unlogged table data\n"));
 	printf(_("  --use-set-session-authorization\n"
 			 "                              use SET SESSION AUTHORIZATION commands instead of\n"

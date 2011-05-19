@@ -340,7 +340,7 @@
      </varlistentry>
 
      <varlistentry>
-      <term><option>--no-security-label</option></term>
+      <term><option>--no-security-labels</option></term>
       <listitem>
        <para>
         Do not output commands to restore security labels,

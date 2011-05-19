@@ -2352,7 +2352,7 @@ _tocEntryRequired(TocEntry *te, RestoreOptions *ropt, bool include_acls)
 		return 0;
 
 	/* If it's security labels, maybe ignore it */
-	if (ropt->skip_seclabel && strcmp(te->desc, "SECURITY LABEL") == 0)
+	if (ropt->no_security_labels && strcmp(te->desc, "SECURITY LABEL") == 0)
 		return 0;
 
 	/* Ignore DATABASE entry unless we should create it */

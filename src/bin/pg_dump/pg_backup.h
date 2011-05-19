@@ -104,7 +104,7 @@ typedef struct _restoreOptions
 										 * restore */
 	int			use_setsessauth;/* Use SET SESSION AUTHORIZATION commands
 								 * instead of OWNER TO */
-	int			skip_seclabel;	/* Skip security label entries */
+	int			no_security_labels;	/* Skip security label entries */
 	char	   *superuser;		/* Username to use as superuser */
 	char	   *use_role;		/* Issue SET ROLE to this */
 	int			dataOnly;

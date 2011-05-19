@@ -702,7 +702,7 @@ PostgreSQL documentation
      </varlistentry>
 
      <varlistentry>
-      <term><option>--no-security-label</option></term>
+      <term><option>--no-security-labels</option></term>
       <listitem>
        <para>
         Do not dump security labels.
