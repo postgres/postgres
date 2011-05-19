@@ -22,7 +22,9 @@
 # plain TCP/IP socket.
 #
 # DATABASE can be "all", "sameuser", "samerole", "replication", a
-# database name, or a comma-separated list thereof.
+# database name, or a comma-separated list thereof. The "all"
+# keyword does not match "replication". Access to replication
+# must be enabled in a separate record (see example below).
 #
 # USER can be "all", a user name, a group name prefixed with "+", or a
 # comma-separated list thereof.  In both the DATABASE and USER fields
@@ -80,3 +82,7 @@
 host    all             all             127.0.0.1/32            @authmethod@
 # IPv6 local connections:
 host    all             all             ::1/128                 @authmethod@
+# Allow replication connections from localhost, by a user with the
+# replication privilege.
+# host    replication     @default_username@        127.0.0.1/32            @authmethod@
+# host    replication     @default_username@        ::1/128                 @authmethod@
