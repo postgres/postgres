@@ -2060,7 +2060,7 @@ exec_stmt_foreach_a(PLpgSQL_execstate *estate, PLpgSQL_stmt_foreach_a *stmt)
 	if (isnull)
 		ereport(ERROR,
 				(errcode(ERRCODE_NULL_VALUE_NOT_ALLOWED),
-				 errmsg("FOREACH expression must not be NULL")));
+				 errmsg("FOREACH expression must not be null")));
 
 	/* check the type of the expression - must be an array */
 	if (!OidIsValid(get_element_type(arrtype)))

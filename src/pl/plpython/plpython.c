@@ -3937,7 +3937,7 @@ PLy_add_exceptions(PyObject *plpy)
 	excmod = PyModule_Create(&PLy_exc_module);
 #endif
 	if (PyModule_AddObject(plpy, "spiexceptions", excmod) < 0)
-		PLy_elog(ERROR, "failed to add the spiexceptions module");
+		PLy_elog(ERROR, "could not add the spiexceptions module");
 
 /*
  * XXX it appears that in some circumstances the reference count of the
