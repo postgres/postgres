@@ -59,6 +59,7 @@ typedef struct MemoryContextData
 	MemoryContext firstchild;	/* head of linked list of children */
 	MemoryContext nextchild;	/* next child of same parent */
 	char	   *name;			/* context name (just for debugging) */
+	bool		isReset;		/* T = no space alloced since last reset */
 } MemoryContextData;
 
 /* utils/palloc.h contains typedef struct MemoryContextData *MemoryContext */

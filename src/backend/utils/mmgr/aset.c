@@ -128,7 +128,7 @@ typedef void *AllocPointer;
 /*
  * AllocSetContext is our standard implementation of MemoryContext.
  *
- * Note: isReset means there is nothing for AllocSetReset to do.  This is
+ * Note: header.isReset means there is nothing for AllocSetReset to do.  This is
  * different from the aset being physically empty (empty blocks list) because
  * we may still have a keeper block.  It's also different from the set being
  * logically empty, because we don't attempt to detect pfree'ing the last
@@ -140,7 +140,6 @@ typedef struct AllocSetContext
 	/* Info about storage allocated in this context: */
 	AllocBlock	blocks;			/* head of list of blocks in this set */
 	AllocChunk	freelist[ALLOCSET_NUM_FREELISTS];		/* free chunk lists */
-	bool		isReset;		/* T = no space alloced since last reset */
 	/* Allocation parameters for this context: */
 	Size		initBlockSize;	/* initial block size */
 	Size		maxBlockSize;	/* maximum block size */
@@ -427,8 +426,6 @@ AllocSetContextCreate(MemoryContext parent,
 		context->keeper = block;
 	}
 
-	context->isReset = true;
-
 	return (MemoryContext) context;
 }
 
@@ -471,10 +468,6 @@ AllocSetReset(MemoryContext context)
 	AllocBlock	block;
 
 	AssertArg(AllocSetIsValid(set));
-
-	/* Nothing to do if no pallocs since startup or last reset */
-	if (set->isReset)
-		return;
 
 #ifdef MEMORY_CONTEXT_CHECKING
 	/* Check for corruption and leaks before freeing */
@@ -519,8 +512,6 @@ AllocSetReset(MemoryContext context)
 
 	/* Reset block size allocation sequence, too */
 	set->nextBlockSize = set->initBlockSize;
-
-	set->isReset = true;
 }
 
 /*
@@ -629,8 +620,6 @@ AllocSetAlloc(MemoryContext context, Size size)
 			set->blocks = block;
 		}
 
-		set->isReset = false;
-
 		AllocAllocInfo(set, chunk);
 		return AllocChunkGetPointer(chunk);
 	}
@@ -661,9 +650,6 @@ AllocSetAlloc(MemoryContext context, Size size)
 		/* fill the allocated space with junk */
 		randomize_mem((char *) AllocChunkGetPointer(chunk), size);
 #endif
-
-		/* isReset must be false already */
-		Assert(!set->isReset);
 
 		AllocAllocInfo(set, chunk);
 		return AllocChunkGetPointer(chunk);
@@ -822,8 +808,6 @@ AllocSetAlloc(MemoryContext context, Size size)
 	randomize_mem((char *) AllocChunkGetPointer(chunk), size);
 #endif
 
-	set->isReset = false;
-
 	AllocAllocInfo(set, chunk);
 	return AllocChunkGetPointer(chunk);
 }
@@ -921,9 +905,6 @@ AllocSetRealloc(MemoryContext context, void *pointer, Size size)
 			elog(WARNING, "detected write past chunk end in %s %p",
 				 set->header.name, chunk);
 #endif
-
-	/* isReset must be false already */
-	Assert(!set->isReset);
 
 	/*
 	 * Chunk sizes are aligned to power of 2 in AllocSetAlloc(). Maybe the
@@ -1059,15 +1040,13 @@ AllocSetGetChunkSpace(MemoryContext context, void *pointer)
 static bool
 AllocSetIsEmpty(MemoryContext context)
 {
-	AllocSet	set = (AllocSet) context;
-
 	/*
 	 * For now, we say "empty" only if the context is new or just reset. We
 	 * could examine the freelists to determine if all space has been freed,
 	 * but it's not really worth the trouble for present uses of this
 	 * functionality.
 	 */
-	if (set->isReset)
+	if (context->isReset)
 		return true;
 	return false;
 }

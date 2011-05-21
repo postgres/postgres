@@ -127,7 +127,12 @@ MemoryContextReset(MemoryContext context)
 	if (context->firstchild != NULL)
 		MemoryContextResetChildren(context);
 
-	(*context->methods->reset) (context);
+	/* Nothing to do if no pallocs since startup or last reset */
+	if (!context->isReset)
+	{
+		(*context->methods->reset) (context);
+		context->isReset = true;
+	}
 }
 
 /*
@@ -476,6 +481,7 @@ MemoryContextCreate(NodeTag tag, Size size,
 	node->parent = NULL;		/* for the moment */
 	node->firstchild = NULL;
 	node->nextchild = NULL;
+	node->isReset = true;
 	node->name = ((char *) node) + size;
 	strcpy(node->name, name);
 
@@ -504,13 +510,16 @@ MemoryContextCreate(NodeTag tag, Size size,
 void *
 MemoryContextAlloc(MemoryContext context, Size size)
 {
+	void	   *ret;
 	AssertArg(MemoryContextIsValid(context));
 
 	if (!AllocSizeIsValid(size))
 		elog(ERROR, "invalid memory alloc request size %lu",
 			 (unsigned long) size);
 
-	return (*context->methods->alloc) (context, size);
+	ret = (*context->methods->alloc) (context, size);
+	context->isReset = false;
+	return ret;
 }
 
 /*
@@ -535,6 +544,7 @@ MemoryContextAllocZero(MemoryContext context, Size size)
 
 	MemSetAligned(ret, 0, size);
 
+	context->isReset = false;
 	return ret;
 }
 
@@ -560,6 +570,7 @@ MemoryContextAllocZeroAligned(MemoryContext context, Size size)
 
 	MemSetLoop(ret, 0, size);
 
+	context->isReset = false;
 	return ret;
 }
 
@@ -619,6 +630,9 @@ repalloc(void *pointer, Size size)
 	if (!AllocSizeIsValid(size))
 		elog(ERROR, "invalid memory alloc request size %lu",
 			 (unsigned long) size);
+
+	/* isReset must be false already */
+	Assert(!header->context->isReset);
 
 	return (*header->context->methods->realloc) (header->context,
 												 pointer, size);
