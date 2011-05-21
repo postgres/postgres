@@ -7937,6 +7937,7 @@ static void
 dumpCompositeType(Archive *fout, TypeInfo *tyinfo)
 {
 	PQExpBuffer q = createPQExpBuffer();
+	PQExpBuffer dropped = createPQExpBuffer();
 	PQExpBuffer delq = createPQExpBuffer();
 	PQExpBuffer labelq = createPQExpBuffer();
 	PQExpBuffer query = createPQExpBuffer();
@@ -7944,9 +7945,13 @@ dumpCompositeType(Archive *fout, TypeInfo *tyinfo)
 	int			ntups;
 	int			i_attname;
 	int			i_atttypdefn;
+	int			i_attlen;
+	int			i_attalign;
+	int			i_attisdropped;
 	int			i_attcollation;
 	int			i_typrelid;
 	int			i;
+	int			actual_atts;
 
 	/* Set proper schema search path so type references list correctly */
 	selectSourceSchema(tyinfo->dobj.namespace->dobj.name);
@@ -7958,33 +7963,37 @@ dumpCompositeType(Archive *fout, TypeInfo *tyinfo)
 		 * attcollation is new in 9.1.	Since we only want to dump COLLATE
 		 * clauses for attributes whose collation is different from their
 		 * type's default, we use a CASE here to suppress uninteresting
-		 * attcollations cheaply.
+		 * attcollations cheaply.  atttypid will be 0 for dropped columns;
+		 * collation does not matter for those.
 		 */
 		appendPQExpBuffer(query, "SELECT a.attname, "
 						  "pg_catalog.format_type(a.atttypid, a.atttypmod) AS atttypdefn, "
+						  "a.attlen, a.attalign, a.attisdropped, "
 						  "CASE WHEN a.attcollation <> at.typcollation "
 						  "THEN a.attcollation ELSE 0 END AS attcollation, "
 						  "ct.typrelid "
-						  "FROM pg_catalog.pg_type ct, pg_catalog.pg_attribute a, "
-						  "pg_catalog.pg_type at "
+						  "FROM pg_catalog.pg_type ct "
+						  "JOIN pg_catalog.pg_attribute a ON a.attrelid = ct.typrelid "
+						  "LEFT JOIN pg_catalog.pg_type at ON at.oid = a.atttypid "
 						  "WHERE ct.oid = '%u'::pg_catalog.oid "
-						  "AND a.attrelid = ct.typrelid "
-						  "AND a.atttypid = at.oid "
-						  "AND NOT a.attisdropped "
 						  "ORDER BY a.attnum ",
 						  tyinfo->dobj.catId.oid);
 	}
 	else
 	{
-		/* We assume here that remoteVersion must be at least 70300 */
+		/*
+		 * We assume here that remoteVersion must be at least 70300.  Since
+		 * ALTER TYPE could not drop columns until 9.1, attisdropped should
+		 * always be false.
+		 */
 		appendPQExpBuffer(query, "SELECT a.attname, "
 						  "pg_catalog.format_type(a.atttypid, a.atttypmod) AS atttypdefn, "
+						  "a.attlen, a.attalign, a.attisdropped, "
 						  "0 AS attcollation, "
 						  "ct.typrelid "
 						  "FROM pg_catalog.pg_type ct, pg_catalog.pg_attribute a "
 						  "WHERE ct.oid = '%u'::pg_catalog.oid "
 						  "AND a.attrelid = ct.typrelid "
-						  "AND NOT a.attisdropped "
 						  "ORDER BY a.attnum ",
 						  tyinfo->dobj.catId.oid);
 	}
@@ -7996,6 +8005,9 @@ dumpCompositeType(Archive *fout, TypeInfo *tyinfo)
 
 	i_attname = PQfnumber(res, "attname");
 	i_atttypdefn = PQfnumber(res, "atttypdefn");
+	i_attlen = PQfnumber(res, "attlen");
+	i_attalign = PQfnumber(res, "attalign");
+	i_attisdropped = PQfnumber(res, "attisdropped");
 	i_attcollation = PQfnumber(res, "attcollation");
 	i_typrelid = PQfnumber(res, "typrelid");
 
@@ -8010,38 +8022,81 @@ dumpCompositeType(Archive *fout, TypeInfo *tyinfo)
 	appendPQExpBuffer(q, "CREATE TYPE %s AS (",
 					  fmtId(tyinfo->dobj.name));
 
+	actual_atts = 0;
 	for (i = 0; i < ntups; i++)
 	{
 		char	   *attname;
 		char	   *atttypdefn;
+		char	   *attlen;
+		char	   *attalign;
+		bool		attisdropped;
 		Oid			attcollation;
 
 		attname = PQgetvalue(res, i, i_attname);
 		atttypdefn = PQgetvalue(res, i, i_atttypdefn);
+		attlen = PQgetvalue(res, i, i_attlen);
+		attalign = PQgetvalue(res, i, i_attalign);
+		attisdropped = (PQgetvalue(res, i, i_attisdropped)[0] == 't');
 		attcollation = atooid(PQgetvalue(res, i, i_attcollation));
 
-		appendPQExpBuffer(q, "\n\t%s %s", fmtId(attname), atttypdefn);
+		if (attisdropped && !binary_upgrade)
+			continue;
 
-		/* Add collation if not default for the column type */
-		if (OidIsValid(attcollation))
+		/* Format properly if not first attr */
+		if (actual_atts++ > 0)
+			appendPQExpBuffer(q, ",");
+		appendPQExpBuffer(q, "\n\t");
+
+		if (!attisdropped)
 		{
-			CollInfo   *coll;
+			appendPQExpBuffer(q, "%s %s", fmtId(attname), atttypdefn);
 
-			coll = findCollationByOid(attcollation);
-			if (coll)
+			/* Add collation if not default for the column type */
+			if (OidIsValid(attcollation))
 			{
-				/* always schema-qualify, don't try to be smart */
-				appendPQExpBuffer(q, " COLLATE %s.",
-								  fmtId(coll->dobj.namespace->dobj.name));
-				appendPQExpBuffer(q, "%s",
-								  fmtId(coll->dobj.name));
+				CollInfo   *coll;
+
+				coll = findCollationByOid(attcollation);
+				if (coll)
+				{
+					/* always schema-qualify, don't try to be smart */
+					appendPQExpBuffer(q, " COLLATE %s.",
+									  fmtId(coll->dobj.namespace->dobj.name));
+					appendPQExpBuffer(q, "%s",
+									  fmtId(coll->dobj.name));
+				}
 			}
 		}
+		else
+		{
+			/*
+			 * This is a dropped attribute and we're in binary_upgrade mode.
+			 * Insert a placeholder for it in the CREATE TYPE command, and
+			 * set length and alignment with direct UPDATE to the catalogs
+			 * afterwards. See similar code in dumpTableSchema().
+			 */
+			appendPQExpBuffer(q, "%s INTEGER /* dummy */", fmtId(attname));
 
-		if (i < ntups - 1)
-			appendPQExpBuffer(q, ",");
+			/* stash separately for insertion after the CREATE TYPE */
+			appendPQExpBuffer(dropped,
+							  "\n-- For binary upgrade, recreate dropped column.\n");
+			appendPQExpBuffer(dropped, "UPDATE pg_catalog.pg_attribute\n"
+							  "SET attlen = %s, "
+							  "attalign = '%s', attbyval = false\n"
+							  "WHERE attname = ", attlen, attalign);
+			appendStringLiteralAH(dropped, attname, fout);
+			appendPQExpBuffer(dropped, "\n  AND attrelid = ");
+			appendStringLiteralAH(dropped, fmtId(tyinfo->dobj.name), fout);
+			appendPQExpBuffer(dropped, "::pg_catalog.regclass;\n");
+
+			appendPQExpBuffer(dropped, "ALTER TYPE %s ",
+							  fmtId(tyinfo->dobj.name));
+			appendPQExpBuffer(dropped, "DROP ATTRIBUTE %s;\n",
+							  fmtId(attname));
+		}
 	}
 	appendPQExpBuffer(q, "\n);\n");
+	appendPQExpBufferStr(q, dropped->data);
 
 	/*
 	 * DROP must be fully qualified in case same name appears in pg_catalog
@@ -8077,6 +8132,7 @@ dumpCompositeType(Archive *fout, TypeInfo *tyinfo)
 
 	PQclear(res);
 	destroyPQExpBuffer(q);
+	destroyPQExpBuffer(dropped);
 	destroyPQExpBuffer(delq);
 	destroyPQExpBuffer(labelq);
 	destroyPQExpBuffer(query);
