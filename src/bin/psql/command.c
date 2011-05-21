@@ -302,7 +302,7 @@ exec_command(const char *cmd,
 		char	   *host = PQhost(pset.db);
 
 		if (db == NULL)
-			printf(_("You are not connected.\n"));
+			printf(_("You are currently not connected to a database.\n"));
 		else
 		{
 			if (host == NULL)
