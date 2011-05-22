@@ -34,13 +34,13 @@
   </para>
 
   <para>
-   This problem can appear when querying information schema views like
-   <literal>referential_constraints</>, <literal>check_constraints</>,
-   <literal>domain_constraints</>, and
-   <literal>check_constraint_routine_usage</>.  Some other views have
-   similar issues but contain the table name to help distinguish
-   duplicate rows, e.g. <literal>table_constraints</>,
-   <literal>constraint_table_usage</>, <literal>constraint_column_usage</>.
+   This problem can appear when querying information schema views such
+   as <literal>check_constraint_routine_usage</>,
+   <literal>check_constraints</>, <literal>domain_constraints</>, and
+   <literal>referential_constraints</>.  Some other views have similar
+   issues but contain the table name to help distinguish duplicate
+   rows, e.g., <literal>constraint_column_usage</>,
+   <literal>constraint_table_usage</>, <literal>table_constraints</>.
   </para>
  </note>
 
