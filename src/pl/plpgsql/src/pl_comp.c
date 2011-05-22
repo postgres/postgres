@@ -1267,9 +1267,11 @@ make_datum_param(PLpgSQL_expr *expr, int dno, int location)
 	param = makeNode(Param);
 	param->paramkind = PARAM_EXTERN;
 	param->paramid = dno + 1;
-	param->paramtype = exec_get_datum_type(estate, datum);
-	param->paramtypmod = -1;
-	param->paramcollid = exec_get_datum_collation(estate, datum);
+	exec_get_datum_type_info(estate,
+							 datum,
+							 &param->paramtype,
+							 &param->paramtypmod,
+							 &param->paramcollid);
 	param->location = location;
 
 	return (Node *) param;

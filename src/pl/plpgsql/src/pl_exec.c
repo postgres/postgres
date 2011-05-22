@@ -4307,29 +4307,63 @@ exec_get_datum_type(PLpgSQL_execstate *estate,
 }
 
 /*
- * exec_get_datum_collation				Get collation of a PLpgSQL_datum
+ * exec_get_datum_type_info			Get datatype etc of a PLpgSQL_datum
+ *
+ * An extended version of exec_get_datum_type, which also retrieves the
+ * typmod and collation of the datum.
  */
-Oid
-exec_get_datum_collation(PLpgSQL_execstate *estate,
-						 PLpgSQL_datum *datum)
+void
+exec_get_datum_type_info(PLpgSQL_execstate *estate,
+						 PLpgSQL_datum *datum,
+						 Oid *typeid, int32 *typmod, Oid *collation)
 {
-	Oid			collid;
-
 	switch (datum->dtype)
 	{
 		case PLPGSQL_DTYPE_VAR:
 			{
 				PLpgSQL_var *var = (PLpgSQL_var *) datum;
 
-				collid = var->datatype->collation;
+				*typeid = var->datatype->typoid;
+				*typmod = var->datatype->atttypmod;
+				*collation = var->datatype->collation;
 				break;
 			}
 
 		case PLPGSQL_DTYPE_ROW:
+			{
+				PLpgSQL_row *row = (PLpgSQL_row *) datum;
+
+				if (!row->rowtupdesc)	/* should not happen */
+					elog(ERROR, "row variable has no tupdesc");
+				/* Make sure we have a valid type/typmod setting */
+				BlessTupleDesc(row->rowtupdesc);
+				*typeid = row->rowtupdesc->tdtypeid;
+				/* do NOT return the mutable typmod of a RECORD variable */
+				*typmod = -1;
+				/* composite types are never collatable */
+				*collation = InvalidOid;
+				break;
+			}
+
 		case PLPGSQL_DTYPE_REC:
-			/* composite types are never collatable */
-			collid = InvalidOid;
-			break;
+			{
+				PLpgSQL_rec *rec = (PLpgSQL_rec *) datum;
+
+				if (rec->tupdesc == NULL)
+					ereport(ERROR,
+						  (errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
+						   errmsg("record \"%s\" is not assigned yet",
+								  rec->refname),
+						   errdetail("The tuple structure of a not-yet-assigned record is indeterminate.")));
+				/* Make sure we have a valid type/typmod setting */
+				BlessTupleDesc(rec->tupdesc);
+				*typeid = rec->tupdesc->tdtypeid;
+				/* do NOT return the mutable typmod of a RECORD variable */
+				*typmod = -1;
+				/* composite types are never collatable */
+				*collation = InvalidOid;
+				break;
+			}
 
 		case PLPGSQL_DTYPE_RECFIELD:
 			{
@@ -4350,21 +4384,27 @@ exec_get_datum_collation(PLpgSQL_execstate *estate,
 							(errcode(ERRCODE_UNDEFINED_COLUMN),
 							 errmsg("record \"%s\" has no field \"%s\"",
 									rec->refname, recfield->fieldname)));
-				/* XXX there's no SPI_getcollid, as yet */
+				*typeid = SPI_gettypeid(rec->tupdesc, fno);
+				/* XXX there's no SPI_gettypmod, for some reason */
 				if (fno > 0)
-					collid = rec->tupdesc->attrs[fno - 1]->attcollation;
+					*typmod = rec->tupdesc->attrs[fno - 1]->atttypmod;
+				else
+					*typmod = -1;
+				/* XXX there's no SPI_getcollation either */
+				if (fno > 0)
+					*collation = rec->tupdesc->attrs[fno - 1]->attcollation;
 				else	/* no system column types have collation */
-					collid = InvalidOid;
+					*collation = InvalidOid;
 				break;
 			}
 
 		default:
 			elog(ERROR, "unrecognized dtype: %d", datum->dtype);
-			collid = InvalidOid;	/* keep compiler quiet */
+			*typeid = InvalidOid;	/* keep compiler quiet */
+			*typmod = -1;
+			*collation = InvalidOid;
 			break;
 	}
-
-	return collid;
 }
 
 /* ----------

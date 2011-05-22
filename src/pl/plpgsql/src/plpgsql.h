@@ -905,8 +905,9 @@ extern void plpgsql_subxact_cb(SubXactEvent event, SubTransactionId mySubid,
 				   SubTransactionId parentSubid, void *arg);
 extern Oid exec_get_datum_type(PLpgSQL_execstate *estate,
 					PLpgSQL_datum *datum);
-extern Oid exec_get_datum_collation(PLpgSQL_execstate *estate,
-						 PLpgSQL_datum *datum);
+extern void exec_get_datum_type_info(PLpgSQL_execstate *estate,
+						 PLpgSQL_datum *datum,
+						 Oid *typeid, int32 *typmod, Oid *collation);
 
 /* ----------
  * Functions for namespace handling in pl_funcs.c
