@@ -6,6 +6,9 @@ subdir = src/test/isolation
 top_builddir = ../../..
 include $(top_builddir)/src/Makefile.global
 
+# where to find psql for testing an existing installation
+PSQLDIR = $(bindir)
+
 ifeq ($(PORTNAME), win32)
 LDLIBS += -lws2_32
 endif
@@ -70,7 +73,7 @@ maintainer-clean: distclean
 	rm -f specparse.c specscanner.c
 
 installcheck: all
-	./pg_isolation_regress --inputdir=$(srcdir) --schedule=$(srcdir)/isolation_schedule
+	./pg_isolation_regress --psqldir=$(PSQLDIR) --inputdir=$(srcdir) --schedule=$(srcdir)/isolation_schedule
 
 # We can't support "make check" because isolationtester requires libpq, and
 # in fact (on typical platforms using shared libraries) requires libpq to
