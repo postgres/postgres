@@ -829,7 +829,7 @@ help(const char *progname)
 	printf(_("  %s [OPTION]... [DBNAME]\n"), progname);
 
 	printf(_("\nGeneral options:\n"));
-	printf(_("  -f, --file=OUTPUT           output file or directory name\n"));
+	printf(_("  -f, --file=FILENAME         output file or directory name\n"));
 	printf(_("  -F, --format=c|d|t|p        output file format (custom, directory, tar, plain text)\n"));
 	printf(_("  -v, --verbose               verbose mode\n"));
 	printf(_("  -Z, --compress=0-9          compression level for compressed formats\n"));
@@ -859,7 +859,7 @@ help(const char *progname)
 	printf(_("  --disable-dollar-quoting    disable dollar quoting, use SQL standard quoting\n"));
 	printf(_("  --disable-triggers          disable triggers during data-only restore\n"));
 	printf(_("  --no-tablespaces            do not dump tablespace assignments\n"));
-	printf(_("  --quote-all-identifiers     quote all identifiers, even if not keywords\n"));
+	printf(_("  --quote-all-identifiers     quote all identifiers, even if not key words\n"));
 	printf(_("  --serializable-deferrable   wait until the dump can run without anomalies\n"));
 	printf(_("  --role=ROLENAME             do SET ROLE before dump\n"));
 	printf(_("  --no-security-labels        do not dump security label assignments\n"));
@@ -2541,7 +2541,7 @@ binary_upgrade_extension_member(PQExpBuffer upgrade_buffer,
 	}
 	if (extobj == NULL)
 	{
-		write_msg(NULL, "failed to find parent extension for %s", objlabel);
+		write_msg(NULL, "could not find parent extension for %s", objlabel);
 		exit_nicely();
 	}
 

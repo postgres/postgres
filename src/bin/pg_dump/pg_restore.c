@@ -345,7 +345,7 @@ main(int argc, char **argv)
 				break;
 
 			default:
-				write_msg(NULL, "unrecognized archive format \"%s\"; please specify \"c\", \"d\" or \"t\"\n",
+				write_msg(NULL, "unrecognized archive format \"%s\"; please specify \"c\", \"d\", or \"t\"\n",
 						  opts->formatName);
 				exit(1);
 		}
