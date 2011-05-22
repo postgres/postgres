@@ -713,7 +713,7 @@ PGAC_ARG_BOOL(with, libedit-preferred, no,
 #
 # OSSP UUID library
 #
-PGAC_ARG_BOOL(with, ossp-uuid, no, [use OSSP UUID library when building contrib/uuid-ossp])
+PGAC_ARG_BOOL(with, ossp-uuid, no, [build contrib/uuid-ossp, requires OSSP UUID library])
 AC_SUBST(with_ossp_uuid)
 
 

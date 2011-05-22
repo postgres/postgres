@@ -861,11 +861,12 @@ su - postgres
        <term><option>--with-ossp-uuid</option></term>
        <listitem>
         <para>
-         Use the <ulink url="http://www.ossp.org/pkg/lib/uuid/">OSSP UUID
-         library</ulink> when building the
+         Build components using the <ulink
+         url="http://www.ossp.org/pkg/lib/uuid/">OSSP UUID
+         library</ulink>.  Specifically, build the
          <![%standalone-include[uuid-ossp]]>
-         <![%standalone-ignore[<xref linkend="uuid-ossp">]]>
-         module.  The library provides functions to generate
+         <![%standalone-ignore[<xref linkend="uuid-ossp">]]> module,
+         which provides functions to generate
          UUIDs.<indexterm><primary>UUID</primary></indexterm>
         </para>
        </listitem>
