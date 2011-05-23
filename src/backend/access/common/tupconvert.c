@@ -100,7 +100,8 @@ convert_tuples_by_position(TupleDesc indesc,
 			nincols++;
 			/* Found matching column, check type */
 			if (atttypid != att->atttypid ||
-				(atttypmod != att->atttypmod && atttypmod >= 0))
+				(atttypmod != att->atttypmod && atttypmod >= 0 &&
+				 att->atttypmod >= 0))
 				ereport(ERROR,
 						(errcode(ERRCODE_DATATYPE_MISMATCH),
 						 errmsg_internal("%s", _(msg)),
