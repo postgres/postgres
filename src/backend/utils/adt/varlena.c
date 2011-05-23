@@ -3827,7 +3827,19 @@ text_format(PG_FUNCTION_ARGS)
 		 * to the next one.  If they have, we must parse it.
 		 */
 		if (*cp < '0' || *cp > '9')
+		{
 			++arg;
+			if (arg <= 0)						/* overflow? */
+			{
+				/*
+				 * Should not happen, as you can't pass billions of arguments
+				 * to a function, but better safe than sorry.
+				 */
+				ereport(ERROR,
+						(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
+						 errmsg("argument number is out of range")));
+			}
+		}
 		else
 		{
 			bool		unterminated = false;
@@ -3836,10 +3848,13 @@ text_format(PG_FUNCTION_ARGS)
 			arg = 0;
 			do
 			{
-				/* Treat overflowing arg position as unterminated. */
-				if (arg > INT_MAX / 10)
-					break;
-				arg = arg * 10 + (*cp - '0');
+				int		newarg = arg * 10 + (*cp - '0');
+
+				if (newarg / 10 != arg)			/* overflow? */
+					ereport(ERROR,
+							(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
+							 errmsg("argument number is out of range")));
+				arg = newarg;
 				++cp;
 			} while (cp < end_ptr && *cp >= '0' && *cp <= '9');
 
@@ -3954,7 +3969,9 @@ text_format_string_conversion(StringInfo buf, char conversion,
 /*
  * text_format_nv - nonvariadic wrapper for text_format function.
  *
- * note: this wrapper is necessary to be sanity_checks test ok
+ * note: this wrapper is necessary to pass the sanity check in opr_sanity,
+ * which checks that all built-in functions that share the implementing C
+ * function take the same number of arguments.
  */
 Datum
 text_format_nv(PG_FUNCTION_ARGS)
