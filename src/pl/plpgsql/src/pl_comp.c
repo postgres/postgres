@@ -95,6 +95,7 @@ static PLpgSQL_function *do_compile(FunctionCallInfo fcinfo,
 		   PLpgSQL_func_hashkey *hashkey,
 		   bool forValidator);
 static void plpgsql_compile_error_callback(void *arg);
+static void add_parameter_name(int itemtype, int itemno, const char *name);
 static void add_dummy_return(PLpgSQL_function *function);
 static Node *plpgsql_pre_column_ref(ParseState *pstate, ColumnRef *cref);
 static Node *plpgsql_post_column_ref(ParseState *pstate, ColumnRef *cref, Node *var);
@@ -451,11 +452,11 @@ do_compile(FunctionCallInfo fcinfo,
 					out_arg_variables[num_out_args++] = argvariable;
 
 				/* Add to namespace under the $n name */
-				plpgsql_ns_additem(argitemtype, argvariable->dno, buf);
+				add_parameter_name(argitemtype, argvariable->dno, buf);
 
 				/* If there's a name for the argument, make an alias */
 				if (argnames && argnames[i][0] != '\0')
-					plpgsql_ns_additem(argitemtype, argvariable->dno,
+					add_parameter_name(argitemtype, argvariable->dno,
 									   argnames[i]);
 			}
 
@@ -912,6 +913,31 @@ plpgsql_compile_error_callback(void *arg)
 				   plpgsql_error_funcname, plpgsql_latest_lineno());
 }
 
+
+/*
+ * Add a name for a function parameter to the function's namespace
+ */
+static void
+add_parameter_name(int itemtype, int itemno, const char *name)
+{
+	/*
+	 * Before adding the name, check for duplicates.  We need this even though
+	 * functioncmds.c has a similar check, because that code explicitly
+	 * doesn't complain about conflicting IN and OUT parameter names.  In
+	 * plpgsql, such names are in the same namespace, so there is no way to
+	 * disambiguate.
+	 */
+	if (plpgsql_ns_lookup(plpgsql_ns_top(), true,
+						  name, NULL, NULL,
+						  NULL) != NULL)
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_FUNCTION_DEFINITION),
+				 errmsg("parameter name \"%s\" used more than once",
+						name)));
+
+	/* OK, add the name */
+	plpgsql_ns_additem(itemtype, itemno, name);
+}
 
 /*
  * Add a dummy RETURN statement to the given function's body
