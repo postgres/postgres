@@ -19,6 +19,7 @@
 #include "postgres.h"
 
 #include "executor/executor.h"
+#include "miscadmin.h"
 #include "parser/parse_oper.h"
 #include "utils/lsyscache.h"
 #include "utils/memutils.h"
@@ -276,7 +277,7 @@ TupleHashTable
 BuildTupleHashTable(int numCols, AttrNumber *keyColIdx,
 					FmgrInfo *eqfunctions,
 					FmgrInfo *hashfunctions,
-					int nbuckets, Size entrysize,
+					long nbuckets, Size entrysize,
 					MemoryContext tablecxt, MemoryContext tempcxt)
 {
 	TupleHashTable hashtable;
@@ -284,6 +285,9 @@ BuildTupleHashTable(int numCols, AttrNumber *keyColIdx,
 
 	Assert(nbuckets > 0);
 	Assert(entrysize >= sizeof(TupleHashEntryData));
+
+	/* Limit initial table size request to not more than work_mem */
+	nbuckets = Min(nbuckets, (long) ((work_mem * 1024L) / entrysize));
 
 	hashtable = (TupleHashTable) MemoryContextAlloc(tablecxt,
 												 sizeof(TupleHashTableData));
@@ -306,7 +310,7 @@ BuildTupleHashTable(int numCols, AttrNumber *keyColIdx,
 	hash_ctl.hash = TupleHashTableHash;
 	hash_ctl.match = TupleHashTableMatch;
 	hash_ctl.hcxt = tablecxt;
-	hashtable->hashtab = hash_create("TupleHashTable", (long) nbuckets,
+	hashtable->hashtab = hash_create("TupleHashTable", nbuckets,
 									 &hash_ctl,
 					HASH_ELEM | HASH_FUNCTION | HASH_COMPARE | HASH_CONTEXT);
 

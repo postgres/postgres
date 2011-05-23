@@ -432,7 +432,7 @@ buildSubPlanHash(SubPlanState *node, ExprContext *econtext)
 	int			ncols = list_length(subplan->paramIds);
 	ExprContext *innerecontext = node->innerecontext;
 	MemoryContext oldcontext;
-	int			nbuckets;
+	long		nbuckets;
 	TupleTableSlot *slot;
 
 	Assert(subplan->subLinkType == ANY_SUBLINK);
@@ -458,7 +458,7 @@ buildSubPlanHash(SubPlanState *node, ExprContext *econtext)
 	node->havehashrows = false;
 	node->havenullrows = false;
 
-	nbuckets = (int) ceil(planstate->plan->plan_rows);
+	nbuckets = (long) Min(planstate->plan->plan_rows, (double) LONG_MAX);
 	if (nbuckets < 1)
 		nbuckets = 1;
 
