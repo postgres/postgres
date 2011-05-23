@@ -272,7 +272,7 @@ sub mkvcbuild
     $pgregress_ecpg->AddDefine('FRONTEND');
     $pgregress_ecpg->AddReference($libpgport);
 
-    my $isolation_tester = $solution->AddProject('isolation_tester','exe','misc');
+    my $isolation_tester = $solution->AddProject('isolationtester','exe','misc');
     $isolation_tester->AddFile('src\test\isolation\isolationtester.c');
     $isolation_tester->AddFile('src\test\isolation\specparse.y');
     $isolation_tester->AddFile('src\test\isolation\specscanner.l');
