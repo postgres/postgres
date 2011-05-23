@@ -15,6 +15,7 @@
 #include "postgres.h"
 
 #include "executor/executor.h"
+#include "miscadmin.h"
 #include "parser/parse_oper.h"
 #include "utils/lsyscache.h"
 #include "utils/memutils.h"
@@ -278,8 +279,19 @@ BuildTupleHashTable(int numCols, AttrNumber *keyColIdx,
 	TupleHashTable hashtable;
 	HASHCTL		hash_ctl;
 
-	Assert(nbuckets > 0);
+	/*
+	 * Many callers pass "long" values for nbuckets, which means that we can
+	 * receive a bogus value on 64-bit machines.  It seems unwise to change
+	 * this function's signature in released branches, so instead assume that
+	 * a negative input means long->int overflow occurred.
+	 */
+	if (nbuckets <= 0)
+		nbuckets = INT_MAX;
+
 	Assert(entrysize >= sizeof(TupleHashEntryData));
+
+	/* Limit initial table size request to not more than work_mem */
+	nbuckets = Min(nbuckets, (long) ((work_mem * 1024L) / entrysize));
 
 	hashtable = (TupleHashTable) MemoryContextAlloc(tablecxt,
 												 sizeof(TupleHashTableData));
