@@ -3533,7 +3533,7 @@ hash_array(PG_FUNCTION_ARGS)
 	int			ndims = ARR_NDIM(array);
 	int		   *dims = ARR_DIMS(array);
 	Oid			element_type = ARR_ELEMTYPE(array);
-	uint32		result = 0;
+	uint32		result = 1;
 	int			nitems;
 	TypeCacheEntry *typentry;
 	int			typlen;
@@ -3617,11 +3617,17 @@ hash_array(PG_FUNCTION_ARGS)
 		}
 
 		/*
-		 * Combine hash values of successive elements by rotating the previous
-		 * value left 1 bit, then XOR'ing in the new element's hash value.
+		 * Combine hash values of successive elements by multiplying the
+		 * current value by 31 and adding on the new element's hash value.
+		 *
+		 * The result is a sum in which each element's hash value is
+		 * multiplied by a different power of 31. This is modulo 2^32
+		 * arithmetic, and the powers of 31 modulo 2^32 form a cyclic group of
+		 * order 2^27. So for arrays of up to 2^27 elements, each element's
+		 * hash value is multiplied by a different (odd) number, resulting in
+		 * a good mixing of all the elements' hash values.
 		 */
-		result = (result << 1) | (result >> 31);
-		result ^= elthash;
+		result = (result << 5) - result + elthash;
 	}
 
 	/* Avoid leaking memory when handed toasted input. */
