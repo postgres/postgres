@@ -4,7 +4,7 @@ Isolation tests
 ===============
 
 This directory contains a set of tests for the serializable isolation level.
-Testing isolation requires running multiple overlapping transactions, so
+Testing isolation requires running multiple overlapping transactions,
 which requires multiple concurrent connections, and can't therefore be
 tested using the normal pg_regress program.
 
@@ -13,10 +13,10 @@ file with a custom syntax, described in the next section.
 
 isolationtester is program that uses libpq to open multiple connections,
 and executes a test specified by a spec file. A libpq connection string
-to specify the server and database to connect to, the defaults derived from
+specifies the server and database to connect to; defaults derived from
 environment variables are used otherwise.
 
-pg_isolation_regress is a tool identical to pg_regress, but instead of using
+pg_isolation_regress is a tool similar to pg_regress, but instead of using
 psql to execute a test, it uses isolationtester.
 
 To run the tests, you need to have a server up and running. Run
@@ -58,7 +58,7 @@ session "<name>"
 
 permutation "<step name>" ...
 
-  A permutation line specifies a list of steps that are ran in that order.
+  A permutation line specifies a list of steps that are run in that order.
   If no permutation lines are given, the test program automatically generates
   all possible overlapping orderings of the given sessions.
 
