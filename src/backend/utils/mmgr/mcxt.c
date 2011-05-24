@@ -234,7 +234,7 @@ MemoryContextResetAndDeleteChildren(MemoryContext context)
 	AssertArg(MemoryContextIsValid(context));
 
 	MemoryContextDeleteChildren(context);
-	(*context->methods->reset) (context);
+	MemoryContextReset(context);
 }
 
 /*
@@ -510,16 +510,15 @@ MemoryContextCreate(NodeTag tag, Size size,
 void *
 MemoryContextAlloc(MemoryContext context, Size size)
 {
-	void	   *ret;
 	AssertArg(MemoryContextIsValid(context));
 
 	if (!AllocSizeIsValid(size))
 		elog(ERROR, "invalid memory alloc request size %lu",
 			 (unsigned long) size);
 
-	ret = (*context->methods->alloc) (context, size);
 	context->isReset = false;
-	return ret;
+
+	return (*context->methods->alloc) (context, size);
 }
 
 /*
@@ -540,11 +539,12 @@ MemoryContextAllocZero(MemoryContext context, Size size)
 		elog(ERROR, "invalid memory alloc request size %lu",
 			 (unsigned long) size);
 
+	context->isReset = false;
+
 	ret = (*context->methods->alloc) (context, size);
 
 	MemSetAligned(ret, 0, size);
 
-	context->isReset = false;
 	return ret;
 }
 
@@ -566,11 +566,12 @@ MemoryContextAllocZeroAligned(MemoryContext context, Size size)
 		elog(ERROR, "invalid memory alloc request size %lu",
 			 (unsigned long) size);
 
+	context->isReset = false;
+
 	ret = (*context->methods->alloc) (context, size);
 
 	MemSetLoop(ret, 0, size);
 
-	context->isReset = false;
 	return ret;
 }
 
