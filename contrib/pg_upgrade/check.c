@@ -333,13 +333,14 @@ static void
 check_locale_and_encoding(ControlData *oldctrl,
 						  ControlData *newctrl)
 {
-	if (strcmp(oldctrl->lc_collate, newctrl->lc_collate) != 0)
+	/* These are often defined with inconsistent case, so use pg_strcasecmp(). */
+	if (pg_strcasecmp(oldctrl->lc_collate, newctrl->lc_collate) != 0)
 		pg_log(PG_FATAL,
 			   "old and new cluster lc_collate values do not match\n");
-	if (strcmp(oldctrl->lc_ctype, newctrl->lc_ctype) != 0)
+	if (pg_strcasecmp(oldctrl->lc_ctype, newctrl->lc_ctype) != 0)
 		pg_log(PG_FATAL,
 			   "old and new cluster lc_ctype values do not match\n");
-	if (strcmp(oldctrl->encoding, newctrl->encoding) != 0)
+	if (pg_strcasecmp(oldctrl->encoding, newctrl->encoding) != 0)
 		pg_log(PG_FATAL,
 			   "old and new cluster encoding values do not match\n");
 }
