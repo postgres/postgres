@@ -574,7 +574,7 @@ ReceiveAndUnpackTarFile(PGconn *conn, PGresult *res, int rownum)
 					if (symlink(&copybuf[157], fn) != 0)
 					{
 						fprintf(stderr,
-								_("%s: could not create symbolic link from %s to %s: %s\n"),
+								_("%s: could not create symbolic link from \"%s\" to \"%s\": %s\n"),
 								progname, fn, &copybuf[157], strerror(errno));
 						disconnect_and_exit(1);
 					}
@@ -659,7 +659,7 @@ ReceiveAndUnpackTarFile(PGconn *conn, PGresult *res, int rownum)
 
 	if (file != NULL)
 	{
-		fprintf(stderr, _("%s: last file was never finished\n"), progname);
+		fprintf(stderr, _("%s: COPY stream ended before last file was finished\n"), progname);
 		disconnect_and_exit(1);
 	}
 
@@ -780,7 +780,7 @@ BaseBackup(void)
 
 	if (PQsendQuery(conn, current_path) == 0)
 	{
-		fprintf(stderr, _("%s: could not start base backup: %s"),
+		fprintf(stderr, _("%s: could not send base backup command: %s"),
 				progname, PQerrorMessage(conn));
 		disconnect_and_exit(1);
 	}
@@ -876,7 +876,7 @@ BaseBackup(void)
 	res = PQgetResult(conn);
 	if (PQresultStatus(res) != PGRES_TUPLES_OK)
 	{
-		fprintf(stderr, _("%s: could not get end xlog position from server\n"),
+		fprintf(stderr, _("%s: could not get WAL end position from server\n"),
 				progname);
 		disconnect_and_exit(1);
 	}
