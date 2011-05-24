@@ -9389,9 +9389,9 @@ fi
 # for contrib/sepgsql
 if test "$with_selinux" = yes; then
 
-{ $as_echo "$as_me:$LINENO: checking for getpeercon_raw in -lselinux" >&5
-$as_echo_n "checking for getpeercon_raw in -lselinux... " >&6; }
-if test "${ac_cv_lib_selinux_getpeercon_raw+set}" = set; then
+{ $as_echo "$as_me:$LINENO: checking for selinux_sepgsql_context_path in -lselinux" >&5
+$as_echo_n "checking for selinux_sepgsql_context_path in -lselinux... " >&6; }
+if test "${ac_cv_lib_selinux_selinux_sepgsql_context_path+set}" = set; then
   $as_echo_n "(cached) " >&6
 else
   ac_check_lib_save_LIBS=$LIBS
@@ -9409,11 +9409,11 @@ cat >>conftest.$ac_ext <<_ACEOF
 #ifdef __cplusplus
 extern "C"
 #endif
-char getpeercon_raw ();
+char selinux_sepgsql_context_path ();
 int
 main ()
 {
-return getpeercon_raw ();
+return selinux_sepgsql_context_path ();
   ;
   return 0;
 }
@@ -9439,12 +9439,12 @@ $as_echo "$ac_try_echo") >&5
 	 test "$cross_compiling" = yes ||
 	 $as_test_x conftest$ac_exeext
        }; then
-  ac_cv_lib_selinux_getpeercon_raw=yes
+  ac_cv_lib_selinux_selinux_sepgsql_context_path=yes
 else
   $as_echo "$as_me: failed program was:" >&5
 sed 's/^/| /' conftest.$ac_ext >&5
 
-	ac_cv_lib_selinux_getpeercon_raw=no
+	ac_cv_lib_selinux_selinux_sepgsql_context_path=no
 fi
 
 rm -rf conftest.dSYM
@@ -9452,9 +9452,9 @@ rm -f core conftest.err conftest.$ac_objext conftest_ipa8_conftest.oo \
       conftest$ac_exeext conftest.$ac_ext
 LIBS=$ac_check_lib_save_LIBS
 fi
-{ $as_echo "$as_me:$LINENO: result: $ac_cv_lib_selinux_getpeercon_raw" >&5
-$as_echo "$ac_cv_lib_selinux_getpeercon_raw" >&6; }
-if test "x$ac_cv_lib_selinux_getpeercon_raw" = x""yes; then
+{ $as_echo "$as_me:$LINENO: result: $ac_cv_lib_selinux_selinux_sepgsql_context_path" >&5
+$as_echo "$ac_cv_lib_selinux_selinux_sepgsql_context_path" >&6; }
+if test "x$ac_cv_lib_selinux_selinux_sepgsql_context_path" = x""yes; then
   cat >>confdefs.h <<_ACEOF
 #define HAVE_LIBSELINUX 1
 _ACEOF
@@ -9462,8 +9462,8 @@ _ACEOF
   LIBS="-lselinux $LIBS"
 
 else
-  { { $as_echo "$as_me:$LINENO: error: library 'libselinux' is required for SELinux support" >&5
-$as_echo "$as_me: error: library 'libselinux' is required for SELinux support" >&2;}
+  { { $as_echo "$as_me:$LINENO: error: library 'libselinux', version 2.0.93 or newer, is required for SELinux support" >&5
+$as_echo "$as_me: error: library 'libselinux', version 2.0.93 or newer, is required for SELinux support" >&2;}
    { (exit 1); exit 1; }; }
 fi
 
