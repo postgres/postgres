@@ -336,7 +336,7 @@ QTN2QT(QTNode *in)
 	cntsize(in, &sumlen, &nnode);
 	len = COMPUTESIZE(nnode, sumlen);
 
-	out = (TSQuery) palloc(len);
+	out = (TSQuery) palloc0(len);
 	SET_VARSIZE(out, len);
 	out->size = nnode;
 
