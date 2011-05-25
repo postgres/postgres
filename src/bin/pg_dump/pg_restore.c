@@ -424,18 +424,17 @@ usage(const char *progname)
 	printf(_("  -t, --table=NAME         restore named table\n"));
 	printf(_("  -T, --trigger=NAME       restore named trigger\n"));
 	printf(_("  -x, --no-privileges      skip restoration of access privileges (grant/revoke)\n"));
+	printf(_("  -1, --single-transaction\n"
+			 "                           restore as a single transaction\n"));
 	printf(_("  --disable-triggers       disable triggers during data-only restore\n"));
 	printf(_("  --no-data-for-failed-tables\n"
 			 "                           do not restore data of tables that could not be\n"
 			 "                           created\n"));
-	printf(_("  --no-tablespaces         do not restore tablespace assignments\n"));
 	printf(_("  --no-security-labels     do not restore security labels\n"));
-	printf(_("  --role=ROLENAME          do SET ROLE before restore\n"));
+	printf(_("  --no-tablespaces         do not restore tablespace assignments\n"));
 	printf(_("  --use-set-session-authorization\n"
 			 "                           use SET SESSION AUTHORIZATION commands instead of\n"
 	  "                           ALTER OWNER commands to set ownership\n"));
-	printf(_("  -1, --single-transaction\n"
-			 "                           restore as a single transaction\n"));
 
 	printf(_("\nConnection options:\n"));
 	printf(_("  -h, --host=HOSTNAME      database server host or socket directory\n"));
@@ -443,6 +442,7 @@ usage(const char *progname)
 	printf(_("  -U, --username=NAME      connect as specified database user\n"));
 	printf(_("  -w, --no-password        never prompt for password\n"));
 	printf(_("  -W, --password           force password prompt (should happen automatically)\n"));
+	printf(_("  --role=ROLENAME          do SET ROLE before restore\n"));
 
 	printf(_("\nIf no input file name is supplied, then standard input is used.\n\n"));
 	printf(_("Report bugs to <pgsql-bugs@postgresql.org>.\n"));

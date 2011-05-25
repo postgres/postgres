@@ -168,11 +168,22 @@
 
        <variablelist>
         <varlistentry>
+         <term><literal>c</></term>
+         <term><literal>custom</></term>
+         <listitem>
+          <para>
+           The archive is in the custom format of
+           <application>pg_dump</application>.
+          </para>
+         </listitem>
+        </varlistentry>
+
+        <varlistentry>
          <term><literal>d</></term>
          <term><literal>directory</></term>
          <listitem>
           <para>
-           The archive is a <command>directory</command> archive.
+           The archive is a directory archive.
           </para>
          </listitem>
         </varlistentry>
@@ -183,17 +194,6 @@
          <listitem>
           <para>
            The archive is a <command>tar</command> archive.
-          </para>
-         </listitem>
-        </varlistentry>
-
-        <varlistentry>
-         <term><literal>c</></term>
-         <term><literal>custom</></term>
-         <listitem>
-          <para>
-           The archive is in the custom format of
-           <application>pg_dump</application>.
           </para>
          </listitem>
         </varlistentry>
@@ -329,27 +329,6 @@
      </varlistentry>
 
      <varlistentry>
-      <term><option>--no-tablespaces</option></term>
-      <listitem>
-       <para>
-        Do not output commands to select tablespaces.
-        With this option, all objects will be created in whichever
-        tablespace is the default during restore.
-       </para>
-      </listitem>
-     </varlistentry>
-
-     <varlistentry>
-      <term><option>--no-security-labels</option></term>
-      <listitem>
-       <para>
-        Do not output commands to restore security labels,
-        even if the archive contains them.
-       </para>
-      </listitem>
-     </varlistentry>
-
-     <varlistentry>
       <term><option>-P <replaceable class="parameter">function-name(argtype [, ...])</replaceable></option></term>
       <term><option>--function=<replaceable class="parameter">function-name(argtype [, ...])</replaceable></option></term>
       <listitem>
@@ -449,6 +428,20 @@
      </varlistentry>
 
      <varlistentry>
+      <term><option>-1</option></term>
+      <term><option>--single-transaction</option></term>
+      <listitem>
+       <para>
+        Execute the restore as a single transaction (that is, wrap the
+        emitted commands in <command>BEGIN</>/<command>COMMIT</>).  This
+        ensures that either all the commands complete successfully, or no
+        changes are applied. This option implies
+        <option>--exit-on-error</>.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
       <term><option>--disable-triggers</></term>
       <listitem>
        <para>
@@ -466,19 +459,6 @@
         should also specify a superuser name with <option>-S</>, or
         preferably run <application>pg_restore</application> as a
         <productname>PostgreSQL</> superuser.
-       </para>
-      </listitem>
-     </varlistentry>
-
-     <varlistentry>
-      <term><option>--use-set-session-authorization</option></term>
-      <listitem>
-       <para>
-        Output SQL-standard <command>SET SESSION AUTHORIZATION</> commands
-        instead of <command>ALTER OWNER</> commands to determine object
-        ownership.  This makes the dump more standards-compatible, but
-        depending on the history of the objects in the dump, might not restore
-        properly.
        </para>
       </listitem>
      </varlistentry>
@@ -506,15 +486,35 @@
      </varlistentry>
 
      <varlistentry>
-      <term><option>-1</option></term>
-      <term><option>--single-transaction</option></term>
+      <term><option>--no-security-labels</option></term>
       <listitem>
        <para>
-        Execute the restore as a single transaction (that is, wrap the
-        emitted commands in <command>BEGIN</>/<command>COMMIT</>).  This
-        ensures that either all the commands complete successfully, or no
-        changes are applied. This option implies
-        <option>--exit-on-error</>.
+        Do not output commands to restore security labels,
+        even if the archive contains them.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term><option>--no-tablespaces</option></term>
+      <listitem>
+       <para>
+        Do not output commands to select tablespaces.
+        With this option, all objects will be created in whichever
+        tablespace is the default during restore.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term><option>--use-set-session-authorization</option></term>
+      <listitem>
+       <para>
+        Output SQL-standard <command>SET SESSION AUTHORIZATION</> commands
+        instead of <command>ALTER OWNER</> commands to determine object
+        ownership.  This makes the dump more standards-compatible, but
+        depending on the history of the objects in the dump, might not restore
+        properly.
        </para>
       </listitem>
      </varlistentry>
