@@ -1153,10 +1153,11 @@ selectDumpableDefaultACL(DefaultACLInfo *dinfo)
  * selectDumpableExtension: policy-setting subroutine
  *		Mark an extension as to be dumped or not
  *
- * Normally, we just dump all extensions.  However, in binary-upgrade mode
- * it's necessary to skip built-in extensions, since we assume those will
- * already be installed in the target database.  We identify such extensions
- * by their having OIDs in the range reserved for initdb.
+ * Normally, we dump all extensions, or none of them if include_everything
+ * is false (i.e., a --schema or --table switch was given).  However, in
+ * binary-upgrade mode it's necessary to skip built-in extensions, since we
+ * assume those will already be installed in the target database.  We identify
+ * such extensions by their having OIDs in the range reserved for initdb.
  */
 static void
 selectDumpableExtension(ExtensionInfo *extinfo)
@@ -1164,7 +1165,7 @@ selectDumpableExtension(ExtensionInfo *extinfo)
 	if (binary_upgrade && extinfo->dobj.catId.oid < (Oid) FirstNormalObjectId)
 		extinfo->dobj.dump = false;
 	else
-		extinfo->dobj.dump = true;
+		extinfo->dobj.dump = include_everything;
 }
 
 /*
