@@ -130,9 +130,12 @@ AC_DEFUN([PGAC_PROG_CC_CFLAGS_OPT],
 AC_CACHE_CHECK([whether $CC supports $1], [Ac_cachevar],
 [pgac_save_CFLAGS=$CFLAGS
 CFLAGS="$pgac_save_CFLAGS $1"
+ac_save_c_werror_flag=$ac_c_werror_flag
+ac_c_werror_flag=yes
 _AC_COMPILE_IFELSE([AC_LANG_PROGRAM()],
                    [Ac_cachevar=yes],
                    [Ac_cachevar=no])
+ac_c_werror_flag=$ac_save_c_werror_flag
 CFLAGS="$pgac_save_CFLAGS"])
 if test x"$Ac_cachevar" = x"yes"; then
   CFLAGS="$CFLAGS $1"
