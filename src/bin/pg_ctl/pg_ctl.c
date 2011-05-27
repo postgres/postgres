@@ -411,9 +411,13 @@ start_postmaster(void)
 static PGPing
 test_postmaster_connection(bool do_checkpoint)
 {
-	PGPing		ret = PQPING_OK;	/* assume success for wait == zero */
+	PGPing		ret = PQPING_NO_RESPONSE;
 	char		connstr[MAXPGPATH * 2 + 256];
 	int			i;
+
+	/* if requested wait time is zero, return "still starting up" code */
+	if (wait_seconds <= 0)
+		return PQPING_REJECT;
 
 	connstr[0] = '\0';
 
@@ -536,6 +540,19 @@ test_postmaster_connection(bool do_checkpoint)
 			ret = PQping(connstr);
 			if (ret == PQPING_OK || ret == PQPING_NO_ATTEMPT)
 				break;
+		}
+
+		/*
+		 * The postmaster should create postmaster.pid very soon after being
+		 * started.  If it's not there after we've waited 5 or more seconds,
+		 * assume startup failed and give up waiting.
+		 */
+		if (i >= 5)
+		{
+			struct stat statbuf;
+
+			if (stat(pid_file, &statbuf) != 0)
+				return PQPING_NO_RESPONSE;
 		}
 
 		/* No response, or startup still in process; wait */
