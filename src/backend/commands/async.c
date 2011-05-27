@@ -1090,6 +1090,7 @@ Exec_UnlistenAllCommit(void)
 void
 ProcessCompletedNotifies(void)
 {
+	MemoryContext caller_context;
 	bool		signalled;
 
 	/* Nothing to do if we didn't send any notifications */
@@ -1102,6 +1103,12 @@ ProcessCompletedNotifies(void)
 	 * right back here after error cleanup.
 	 */
 	backendHasSentNotifications = false;
+
+	/*
+	 * We must preserve the caller's memory context (probably MessageContext)
+	 * across the transaction we do here.
+	 */
+	caller_context = CurrentMemoryContext;
 
 	if (Trace_notify)
 		elog(DEBUG1, "ProcessCompletedNotifies");
@@ -1134,6 +1141,8 @@ ProcessCompletedNotifies(void)
 	}
 
 	CommitTransactionCommand();
+
+	MemoryContextSwitchTo(caller_context);
 
 	/* We don't need pq_flush() here since postgres.c will do one shortly */
 }
