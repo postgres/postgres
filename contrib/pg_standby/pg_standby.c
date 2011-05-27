@@ -722,20 +722,20 @@ main(int argc, char **argv)
 
 	if (debug)
 	{
-		fprintf(stderr, "Trigger file 		: %s\n", triggerPath ? triggerPath : "<not set>");
-		fprintf(stderr, "Waiting for WAL file	: %s\n", nextWALFileName);
-		fprintf(stderr, "WAL file path		: %s\n", WALFilePath);
-		fprintf(stderr, "Restoring to		: %s\n", xlogFilePath);
-		fprintf(stderr, "Sleep interval		: %d second%s\n",
+		fprintf(stderr, "Trigger file:         %s\n", triggerPath ? triggerPath : "<not set>");
+		fprintf(stderr, "Waiting for WAL file: %s\n", nextWALFileName);
+		fprintf(stderr, "WAL file path:        %s\n", WALFilePath);
+		fprintf(stderr, "Restoring to:         %s\n", xlogFilePath);
+		fprintf(stderr, "Sleep interval:       %d second%s\n",
 				sleeptime, (sleeptime > 1 ? "s" : " "));
-		fprintf(stderr, "Max wait interval	: %d %s\n",
+		fprintf(stderr, "Max wait interval:    %d %s\n",
 				maxwaittime, (maxwaittime > 0 ? "seconds" : "forever"));
-		fprintf(stderr, "Command for restore	: %s\n", restoreCommand);
-		fprintf(stderr, "Keep archive history	: ");
+		fprintf(stderr, "Command for restore:  %s\n", restoreCommand);
+		fprintf(stderr, "Keep archive history: ");
 		if (need_cleanup)
 			fprintf(stderr, "%s and later\n", exclusiveCleanupFileName);
 		else
-			fprintf(stderr, "No cleanup required\n");
+			fprintf(stderr, "no cleanup required\n");
 		fflush(stderr);
 	}
 
