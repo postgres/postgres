@@ -150,6 +150,7 @@ main(int argc, char *argv[])
 	pthread_t	thread1,
 				thread2;
 	int			fd;
+	int			rc;
 
 #ifdef WIN32
 	WSADATA		wsaData;
@@ -199,8 +200,23 @@ main(int argc, char *argv[])
 	/* Hold lock until we are ready for the child threads to exit. */
 	pthread_mutex_lock(&init_mutex);
 
-	pthread_create(&thread1, NULL, (void *(*) (void *)) func_call_1, NULL);
-	pthread_create(&thread2, NULL, (void *(*) (void *)) func_call_2, NULL);
+	rc = pthread_create(&thread1, NULL, (void *(*) (void *)) func_call_1, NULL);
+	if (rc != 0)
+	{
+		fprintf(stderr, "Failed to create thread 1: %s **\nexiting\n",
+				strerror(rc));
+		exit(1);
+	}
+	rc = pthread_create(&thread2, NULL, (void *(*) (void *)) func_call_2, NULL);
+	if (rc != 0)
+	{
+		/*
+		 * strerror() might not be thread-safe, and we already spawned thread
+		 * 1 that uses it
+		 */
+		fprintf(stderr, "Failed to create thread 2 **\nexiting\n");
+		exit(1);
+	}
 
 	while (thread1_done == 0 || thread2_done == 0)
 		sched_yield();			/* if this is a portability problem, remove it */
