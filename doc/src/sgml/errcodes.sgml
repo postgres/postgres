@@ -42,11 +42,9 @@
  </para>
 
  <para>
-  The <application>PL/pgSQL</> condition name for each error code is the
-  same as the phrase shown in the table, with underscores substituted
-  for spaces.  For example, code <literal>22012</>, DIVISION BY ZERO,
-  has condition name <literal>DIVISION_BY_ZERO</>.  Condition names can
-  be written in either upper or lower case.  (Note that
+  The symbol shown in the column <quote>Condition Name</quote> is also
+  the condition name to use in <application>PL/pgSQL</>.  Condition
+  names can be written in either upper or lower case.  (Note that
   <application>PL/pgSQL</> does not recognize warning, as opposed to error,
   condition names; those are classes 00, 01, and 02.)
  </para>
@@ -55,15 +53,14 @@
 <table id="errcodes-table">
  <title><productname>PostgreSQL</productname> Error Codes</title>
 
- <tgroup cols="3">
+ <tgroup cols="2">
   <colspec colnum="1" colname="errorcode">
-  <colspec colnum="3" colname="condname">
-  <spanspec namest="errorcode" nameend="condname" spanname="span13">
+  <colspec colnum="2" colname="condname">
+  <spanspec namest="errorcode" nameend="condname" spanname="span12">
 
   <thead>
    <row>
     <entry>Error Code</entry>
-    <entry>Meaning</entry>
     <entry>Condition Name</entry>
    </row>
   </thead>

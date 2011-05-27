@@ -29,7 +29,7 @@ while (<$errcodes>) {
 
 	print "\n\n";
 	print "<row>\n";
-	print "<entry spanname=\"span13\">";
+	print "<entry spanname=\"span12\">";
 	print "<emphasis role=\"bold\">$_</></entry>\n";
 	print "</row>\n";
 
@@ -46,17 +46,10 @@ while (<$errcodes>) {
     # Skip lines without PL/pgSQL condition names
     next unless defined($condition_name);
 
-    my $meaning = $condition_name;
-    # Remove underscores
-    $meaning =~ s/_/ /g;
-    # And capitalize
-    $meaning =~ tr/[a-z]/[A-Z]/;
-
     print "\n";
     print "<row>\n";
     print "<entry><literal>$sqlstate</literal></entry>\n";
-    print "<entry>$meaning</entry>\n";
-    print "<entry>$condition_name</entry>\n";
+    print "<entry><symbol>$condition_name</symbol></entry>\n";
     print "</row>\n";
 }
 
