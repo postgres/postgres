@@ -535,6 +535,7 @@ cfopen_write(const char *path, const char *mode, int compression)
 		free(fname);
 #else
 		die_horribly(NULL, modulename, "not built with zlib support\n");
+		fp = NULL;				/* keep compiler quiet */
 #endif
 	}
 	return fp;
