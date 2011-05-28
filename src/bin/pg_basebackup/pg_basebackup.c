@@ -261,7 +261,22 @@ ReceiveTarFile(PGconn *conn, PGresult *res, int rownum)
 		 * Base tablespaces
 		 */
 		if (strcmp(basedir, "-") == 0)
-			tarfile = stdout;
+		{
+#ifdef HAVE_LIBZ
+			if (compresslevel > 0)
+			{
+				ztarfile = gzdopen(dup(fileno(stdout)), "wb");
+				if (gzsetparams(ztarfile, compresslevel, Z_DEFAULT_STRATEGY) != Z_OK)
+				{
+					fprintf(stderr, _("%s: could not set compression level %i: %s\n"),
+							progname, compresslevel, get_gz_error(ztarfile));
+					disconnect_and_exit(1);
+				}
+			}
+			else
+#endif
+				tarfile = stdout;
+		}
 		else
 		{
 #ifdef HAVE_LIBZ
@@ -384,7 +399,14 @@ ReceiveTarFile(PGconn *conn, PGresult *res, int rownum)
 				}
 			}
 
-			if (strcmp(basedir, "-") != 0)
+			if (strcmp(basedir, "-") == 0)
+			{
+#ifdef HAVE_LIBZ
+				if (ztarfile)
+					gzclose(ztarfile);
+#endif
+			}
+			else
 			{
 #ifdef HAVE_LIBZ
 				if (ztarfile != NULL)
@@ -1073,14 +1095,6 @@ main(int argc, char **argv)
 	{
 		fprintf(stderr,
 				_("%s: this build does not support compression\n"),
-				progname);
-		exit(1);
-	}
-#else
-	if (compresslevel > 0 && strcmp(basedir, "-") == 0)
-	{
-		fprintf(stderr,
-				_("%s: compression is not supported on standard output\n"),
 				progname);
 		exit(1);
 	}

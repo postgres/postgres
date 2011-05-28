@@ -174,8 +174,7 @@ PostgreSQL documentation
       <listitem>
        <para>
         Enables gzip compression of tar file output. Compression is only
-        available when generating tar files, and is not available when sending
-        output to standard output.
+        available when using the tar format.
        </para>
       </listitem>
      </varlistentry>
