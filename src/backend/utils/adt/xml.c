@@ -1067,13 +1067,15 @@ parse_xml_decl(const xmlChar *str, size_t *lenp,
 		if (xmlStrncmp(p, (xmlChar *) "'yes'", 5) == 0 ||
 			xmlStrncmp(p, (xmlChar *) "\"yes\"", 5) == 0)
 		{
-			*standalone = 1;
+			if (standalone)
+				*standalone = 1;
 			p += 5;
 		}
 		else if (xmlStrncmp(p, (xmlChar *) "'no'", 4) == 0 ||
 				 xmlStrncmp(p, (xmlChar *) "\"no\"", 4) == 0)
 		{
-			*standalone = 0;
+			if (standalone)
+				*standalone = 0;
 			p += 4;
 		}
 		else
@@ -1217,8 +1219,8 @@ xml_parse(text *data, XmlOptionType xmloption_arg, bool preserve_whitespace,
 		{
 			int			res_code;
 			size_t		count;
-			xmlChar    *version = NULL;
-			int			standalone = -1;
+			xmlChar    *version;
+			int			standalone;
 
 			res_code = parse_xml_decl(utf8string,
 									  &count, &version, NULL, &standalone);
