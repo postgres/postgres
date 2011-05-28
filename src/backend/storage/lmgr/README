@@ -60,20 +60,29 @@ identical lock mode sets.  See src/tools/backend/index.html and
 src/include/storage/lock.h for more details.  (Lock modes are also called
 lock types in some places in the code and documentation.)
 
-There are two fundamental lock structures in shared memory: the
-per-lockable-object LOCK struct, and the per-lock-and-requestor PROCLOCK
-struct.  A LOCK object exists for each lockable object that currently has
-locks held or requested on it.  A PROCLOCK struct exists for each backend
-that is holding or requesting lock(s) on each LOCK object.
+There are two main methods for recording locks in shared memory.  The primary
+mechanism uses two main structures: the per-lockable-object LOCK struct, and
+the per-lock-and-requestor PROCLOCK struct.  A LOCK object exists for each
+lockable object that currently has locks held or requested on it.  A PROCLOCK
+struct exists for each backend that is holding or requesting lock(s) on each
+LOCK object.
 
-In addition to these, each backend maintains an unshared LOCALLOCK structure
-for each lockable object and lock mode that it is currently holding or
-requesting.  The shared lock structures only allow a single lock grant to
-be made per lockable object/lock mode/backend.  Internally to a backend,
-however, the same lock may be requested and perhaps released multiple times
-in a transaction, and it can also be held both transactionally and session-
-wide.  The internal request counts are held in LOCALLOCK so that the shared
-data structures need not be accessed to alter them.
+There is also a special "fast path" mechanism which backends may use to
+record a limited number of locks with very specific characteristics: they must
+use the DEFAULT lockmethod; they must represent a lock on a database relation
+(not a shared relation), they must be a "weak" lock which is unlikely to
+conflict (AccessShareLock, RowShareLock, or RowExclusiveLock); and the system
+must be able to quickly verify that no conflicting locks could possibly be
+present.  See "Fast Path Locking", below, for more details.
+
+Each backend also maintains an unshared LOCALLOCK structure for each lockable
+object and lock mode that it is currently holding or requesting.  The shared
+lock structures only allow a single lock grant to be made per lockable
+object/lock mode/backend.  Internally to a backend, however, the same lock may
+be requested and perhaps released multiple times in a transaction, and it can
+also be held both transactionally and session-wide.  The internal request
+counts are held in LOCALLOCK so that the shared data structures need not be
+accessed to alter them.
 
 ---------------------------------------------------------------------------
 
@@ -248,6 +257,65 @@ a copy of the locktag hash code in LOCALLOCK table entries, from which the
 partition number can be computed, but this is a straight speed-for-space
 tradeoff: we could instead recalculate the partition number from the LOCKTAG
 when needed.
+
+
+Fast Path Locking
+-----------------
+
+Fast path locking is a special purpose mechanism designed to reduce the
+overhead of taking and releasing weak relation locks.  SELECT, INSERT,
+UPDATE, and DELETE must acquire a lock on every relation they operate on,
+as well as various system catalogs that can be used internally.  These locks
+are notable not only for the very high frequency with which they are taken
+and released, but also for the fact that they virtually never conflict.
+Many DML operations can proceed in parallel against the same table at the
+same time; only DDL operations such as CLUSTER, ALTER TABLE, or DROP -- or
+explicit user action such as LOCK TABLE -- will create lock conflicts with
+the "weak" locks (AccessShareLock, RowShareLock, RowExclusiveLock) acquired
+by DML operations.
+
+The primary locking mechanism does not cope well with this workload.  Even
+though the lock manager locks are partitioned, the locktag for any given
+relation still falls in one, and only one, partition.  Thus, if many short
+queries are accessing the same relation, the lock manager partition lock for
+that partition becomes a contention bottleneck.  This effect is measurable
+even on 2-core servers, and becomes very pronounced as core count increases.
+
+To alleviate this bottleneck, beginning in PostgreSQL 9.2, each backend is
+permitted to record a limited number of locks on unshared relations in an
+array within its PGPROC structure, rather than using the primary lock table.
+This is called the "fast path" mechanism, and can only be used when the
+locker can verify that no conflicting locks can possibly exist.
+
+A key point of this algorithm is that it must be possible to verify the
+absence of possibly conflicting locks without fighting over a shared LWLock or
+spinlock.  Otherwise, this effort would simply move the contention bottleneck
+from one place to another.  We accomplish this using an array of 1024 integer
+counters, which are in effect a 1024-way partitioning of the lock space.  Each
+counter records the number of "strong" locks (that is, ShareLock,
+ShareRowExclusiveLock, ExclusiveLock, and AccessExclusiveLock) on unshared
+relations that fall into that partition.  When this counter is non-zero, the
+fast path mechanism may not be used for relation locks in that partition.  A
+strong locker bumps the counter and then scans each per-backend array for
+matching fast-path locks; any which are found must be transferred to the
+primary lock table before attempting to acquire the lock, to ensure proper
+lock conflict and deadlock detection.
+
+On an SMP system, we must guarantee proper memory synchronization.  Here we
+rely on the fact that LWLock acquisition acts as a memory sequence point: if
+A performs a store, A and B both acquire an LWLock in either order, and B
+then performs a load on the same memory location, it is guaranteed to see
+A's store.  In this case, each backend's fast-path lock queue is protected
+by an LWLock.  A backend wishing to acquire a fast-path lock grabs this
+LWLock before examining FastPathStrongLocks to check for the presence of a
+conflicting strong lock.  And the backend attempting to acquire a strong
+lock, because it must transfer any matching weak locks taken via the fast-path
+mechanism to the shared lock table, will acquire every LWLock protecting
+a backend fast-path queue in turn.  Thus, if we examine FastPathStrongLocks
+and see a zero, then either the value is truly zero, or if it is a stale value,
+the strong locker has yet to acquire the per-backend LWLock we now hold (or,
+indeed, even the first per-backend LWLock) and will notice any weak lock we
+take when it does.
 
 
 The Deadlock Detection Algorithm

@@ -67,7 +67,7 @@ PGPROC	   *MyProc = NULL;
 NON_EXEC_STATIC slock_t *ProcStructLock = NULL;
 
 /* Pointers to shared-memory structures */
-NON_EXEC_STATIC PROC_HDR *ProcGlobal = NULL;
+PROC_HDR *ProcGlobal = NULL;
 NON_EXEC_STATIC PGPROC *AuxiliaryProcs = NULL;
 
 /* If we are waiting for a lock, this points to the associated LOCALLOCK */
@@ -183,6 +183,8 @@ InitProcGlobal(void)
 	 * one of these purposes, and they do not move between groups.
 	 */
 	procs = (PGPROC *) ShmemAlloc(TotalProcs * sizeof(PGPROC));
+	ProcGlobal->allProcs = procs;
+	ProcGlobal->allProcCount = TotalProcs;
 	if (!procs)
 		ereport(FATAL,
 				(errcode(ERRCODE_OUT_OF_MEMORY),
@@ -192,6 +194,7 @@ InitProcGlobal(void)
 	{
 		/* Common initialization for all PGPROCs, regardless of type. */
 		PGSemaphoreCreate(&(procs[i].sem));
+		procs[i].backendLock = LWLockAssign();
 		InitSharedLatch(&procs[i].waitLatch);
 
 		/*

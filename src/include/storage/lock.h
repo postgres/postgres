@@ -412,6 +412,7 @@ typedef struct LOCALLOCK
 	int64		nLocks;			/* total number of times lock is held */
 	int			numLockOwners;	/* # of relevant ResourceOwners */
 	int			maxLockOwners;	/* allocated size of array */
+	bool		holdsStrongLockCount;	/* did we bump FastPathStrongLocks? */
 	LOCALLOCKOWNER *lockOwners; /* dynamically resizable array */
 } LOCALLOCK;
 
@@ -419,19 +420,25 @@ typedef struct LOCALLOCK
 
 
 /*
- * This struct holds information passed from lmgr internals to the lock
- * listing user-level functions (in lockfuncs.c).	For each PROCLOCK in
- * the system, copies of the PROCLOCK object and associated PGPROC and
- * LOCK objects are stored.  Note there will often be multiple copies
- * of the same PGPROC or LOCK --- to detect whether two are the same,
- * compare the PROCLOCK tag fields.
+ * These structures hold information passed from lmgr internals to the lock
+ * listing user-level functions (in lockfuncs.c).
  */
+
+typedef struct LockInstanceData
+{
+	LOCKTAG		locktag;		/* locked object */
+	LOCKMASK	holdMask;		/* locks held by this PGPROC */
+	LOCKMODE	waitLockMode;	/* lock awaited by this PGPROC, if any */
+	BackendId	backend;		/* backend ID of this PGPROC */
+	LocalTransactionId	lxid;	/* local transaction ID of this PGPROC */
+	int			pid;			/* pid of this PGPROC */
+	bool		fastpath;		/* taken via fastpath? */
+} LockInstanceData;
+
 typedef struct LockData
 {
-	int			nelements;		/* The length of each of the arrays */
-	PROCLOCK   *proclocks;
-	PGPROC	   *procs;
-	LOCK	   *locks;
+	int			nelements;		/* The length of the array */
+	LockInstanceData   *locks;
 } LockData;
 
 

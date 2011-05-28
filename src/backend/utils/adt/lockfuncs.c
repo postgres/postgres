@@ -49,6 +49,8 @@ typedef struct
 	int			predLockIdx;	/* current index for pred lock */
 } PG_Lock_Status;
 
+/* Number of columns in pg_locks output */
+#define NUM_LOCK_STATUS_COLUMNS		15
 
 /*
  * VXIDGetDatum - Construct a text representation of a VXID
@@ -96,7 +98,7 @@ pg_lock_status(PG_FUNCTION_ARGS)
 
 		/* build tupdesc for result tuples */
 		/* this had better match pg_locks view in system_views.sql */
-		tupdesc = CreateTemplateTupleDesc(14, false);
+		tupdesc = CreateTemplateTupleDesc(NUM_LOCK_STATUS_COLUMNS, false);
 		TupleDescInitEntry(tupdesc, (AttrNumber) 1, "locktype",
 						   TEXTOID, -1, 0);
 		TupleDescInitEntry(tupdesc, (AttrNumber) 2, "database",
@@ -125,6 +127,8 @@ pg_lock_status(PG_FUNCTION_ARGS)
 						   TEXTOID, -1, 0);
 		TupleDescInitEntry(tupdesc, (AttrNumber) 14, "granted",
 						   BOOLOID, -1, 0);
+		TupleDescInitEntry(tupdesc, (AttrNumber) 15, "fastpath",
+						   BOOLOID, -1, 0);
 
 		funcctx->tuple_desc = BlessTupleDesc(tupdesc);
 
@@ -149,21 +153,17 @@ pg_lock_status(PG_FUNCTION_ARGS)
 
 	while (mystatus->currIdx < lockData->nelements)
 	{
-		PROCLOCK   *proclock;
-		LOCK	   *lock;
-		PGPROC	   *proc;
 		bool		granted;
 		LOCKMODE	mode = 0;
 		const char *locktypename;
 		char		tnbuf[32];
-		Datum		values[14];
-		bool		nulls[14];
+		Datum		values[NUM_LOCK_STATUS_COLUMNS];
+		bool		nulls[NUM_LOCK_STATUS_COLUMNS];
 		HeapTuple	tuple;
 		Datum		result;
+		LockInstanceData   *instance;
 
-		proclock = &(lockData->proclocks[mystatus->currIdx]);
-		lock = &(lockData->locks[mystatus->currIdx]);
-		proc = &(lockData->procs[mystatus->currIdx]);
+		instance = &(lockData->locks[mystatus->currIdx]);
 
 		/*
 		 * Look to see if there are any held lock modes in this PROCLOCK. If
@@ -171,14 +171,14 @@ pg_lock_status(PG_FUNCTION_ARGS)
 		 * again.
 		 */
 		granted = false;
-		if (proclock->holdMask)
+		if (instance->holdMask)
 		{
 			for (mode = 0; mode < MAX_LOCKMODES; mode++)
 			{
-				if (proclock->holdMask & LOCKBIT_ON(mode))
+				if (instance->holdMask & LOCKBIT_ON(mode))
 				{
 					granted = true;
-					proclock->holdMask &= LOCKBIT_OFF(mode);
+					instance->holdMask &= LOCKBIT_OFF(mode);
 					break;
 				}
 			}
@@ -190,10 +190,10 @@ pg_lock_status(PG_FUNCTION_ARGS)
 		 */
 		if (!granted)
 		{
-			if (proc->waitLock == proclock->tag.myLock)
+			if (instance->waitLockMode != NoLock)
 			{
 				/* Yes, so report it with proper mode */
-				mode = proc->waitLockMode;
+				mode = instance->waitLockMode;
 
 				/*
 				 * We are now done with this PROCLOCK, so advance pointer to
@@ -218,22 +218,22 @@ pg_lock_status(PG_FUNCTION_ARGS)
 		MemSet(values, 0, sizeof(values));
 		MemSet(nulls, false, sizeof(nulls));
 
-		if (lock->tag.locktag_type <= LOCKTAG_LAST_TYPE)
-			locktypename = LockTagTypeNames[lock->tag.locktag_type];
+		if (instance->locktag.locktag_type <= LOCKTAG_LAST_TYPE)
+			locktypename = LockTagTypeNames[instance->locktag.locktag_type];
 		else
 		{
 			snprintf(tnbuf, sizeof(tnbuf), "unknown %d",
-					 (int) lock->tag.locktag_type);
+					 (int) instance->locktag.locktag_type);
 			locktypename = tnbuf;
 		}
 		values[0] = CStringGetTextDatum(locktypename);
 
-		switch ((LockTagType) lock->tag.locktag_type)
+		switch ((LockTagType) instance->locktag.locktag_type)
 		{
 			case LOCKTAG_RELATION:
 			case LOCKTAG_RELATION_EXTEND:
-				values[1] = ObjectIdGetDatum(lock->tag.locktag_field1);
-				values[2] = ObjectIdGetDatum(lock->tag.locktag_field2);
+				values[1] = ObjectIdGetDatum(instance->locktag.locktag_field1);
+				values[2] = ObjectIdGetDatum(instance->locktag.locktag_field2);
 				nulls[3] = true;
 				nulls[4] = true;
 				nulls[5] = true;
@@ -243,9 +243,9 @@ pg_lock_status(PG_FUNCTION_ARGS)
 				nulls[9] = true;
 				break;
 			case LOCKTAG_PAGE:
-				values[1] = ObjectIdGetDatum(lock->tag.locktag_field1);
-				values[2] = ObjectIdGetDatum(lock->tag.locktag_field2);
-				values[3] = UInt32GetDatum(lock->tag.locktag_field3);
+				values[1] = ObjectIdGetDatum(instance->locktag.locktag_field1);
+				values[2] = ObjectIdGetDatum(instance->locktag.locktag_field2);
+				values[3] = UInt32GetDatum(instance->locktag.locktag_field3);
 				nulls[4] = true;
 				nulls[5] = true;
 				nulls[6] = true;
@@ -254,10 +254,10 @@ pg_lock_status(PG_FUNCTION_ARGS)
 				nulls[9] = true;
 				break;
 			case LOCKTAG_TUPLE:
-				values[1] = ObjectIdGetDatum(lock->tag.locktag_field1);
-				values[2] = ObjectIdGetDatum(lock->tag.locktag_field2);
-				values[3] = UInt32GetDatum(lock->tag.locktag_field3);
-				values[4] = UInt16GetDatum(lock->tag.locktag_field4);
+				values[1] = ObjectIdGetDatum(instance->locktag.locktag_field1);
+				values[2] = ObjectIdGetDatum(instance->locktag.locktag_field2);
+				values[3] = UInt32GetDatum(instance->locktag.locktag_field3);
+				values[4] = UInt16GetDatum(instance->locktag.locktag_field4);
 				nulls[5] = true;
 				nulls[6] = true;
 				nulls[7] = true;
@@ -265,7 +265,8 @@ pg_lock_status(PG_FUNCTION_ARGS)
 				nulls[9] = true;
 				break;
 			case LOCKTAG_TRANSACTION:
-				values[6] = TransactionIdGetDatum(lock->tag.locktag_field1);
+				values[6] =
+					TransactionIdGetDatum(instance->locktag.locktag_field1);
 				nulls[1] = true;
 				nulls[2] = true;
 				nulls[3] = true;
@@ -276,8 +277,8 @@ pg_lock_status(PG_FUNCTION_ARGS)
 				nulls[9] = true;
 				break;
 			case LOCKTAG_VIRTUALTRANSACTION:
-				values[5] = VXIDGetDatum(lock->tag.locktag_field1,
-										 lock->tag.locktag_field2);
+				values[5] = VXIDGetDatum(instance->locktag.locktag_field1,
+										 instance->locktag.locktag_field2);
 				nulls[1] = true;
 				nulls[2] = true;
 				nulls[3] = true;
@@ -291,10 +292,10 @@ pg_lock_status(PG_FUNCTION_ARGS)
 			case LOCKTAG_USERLOCK:
 			case LOCKTAG_ADVISORY:
 			default:			/* treat unknown locktags like OBJECT */
-				values[1] = ObjectIdGetDatum(lock->tag.locktag_field1);
-				values[7] = ObjectIdGetDatum(lock->tag.locktag_field2);
-				values[8] = ObjectIdGetDatum(lock->tag.locktag_field3);
-				values[9] = Int16GetDatum(lock->tag.locktag_field4);
+				values[1] = ObjectIdGetDatum(instance->locktag.locktag_field1);
+				values[7] = ObjectIdGetDatum(instance->locktag.locktag_field2);
+				values[8] = ObjectIdGetDatum(instance->locktag.locktag_field3);
+				values[9] = Int16GetDatum(instance->locktag.locktag_field4);
 				nulls[2] = true;
 				nulls[3] = true;
 				nulls[4] = true;
@@ -303,13 +304,14 @@ pg_lock_status(PG_FUNCTION_ARGS)
 				break;
 		}
 
-		values[10] = VXIDGetDatum(proc->backendId, proc->lxid);
-		if (proc->pid != 0)
-			values[11] = Int32GetDatum(proc->pid);
+		values[10] = VXIDGetDatum(instance->backend, instance->lxid);
+		if (instance->pid != 0)
+			values[11] = Int32GetDatum(instance->pid);
 		else
 			nulls[11] = true;
-		values[12] = CStringGetTextDatum(GetLockmodeName(LOCK_LOCKMETHOD(*lock), mode));
+		values[12] = CStringGetTextDatum(GetLockmodeName(instance->locktag.locktag_lockmethodid, mode));
 		values[13] = BoolGetDatum(granted);
+		values[14] = BoolGetDatum(instance->fastpath);
 
 		tuple = heap_form_tuple(funcctx->tuple_desc, values, nulls);
 		result = HeapTupleGetDatum(tuple);
@@ -327,8 +329,8 @@ pg_lock_status(PG_FUNCTION_ARGS)
 
 		PREDICATELOCKTARGETTAG *predTag = &(predLockData->locktags[mystatus->predLockIdx]);
 		SERIALIZABLEXACT *xact = &(predLockData->xacts[mystatus->predLockIdx]);
-		Datum		values[14];
-		bool		nulls[14];
+		Datum		values[NUM_LOCK_STATUS_COLUMNS];
+		bool		nulls[NUM_LOCK_STATUS_COLUMNS];
 		HeapTuple	tuple;
 		Datum		result;
 
@@ -374,11 +376,12 @@ pg_lock_status(PG_FUNCTION_ARGS)
 			nulls[11] = true;
 
 		/*
-		 * Lock mode. Currently all predicate locks are SIReadLocks, which are
-		 * always held (never waiting)
+		 * Lock mode. Currently all predicate locks are SIReadLocks, which
+		 * are always held (never waiting) and have no fast path
 		 */
 		values[12] = CStringGetTextDatum("SIReadLock");
 		values[13] = BoolGetDatum(true);
+		values[14] = BoolGetDatum(false);
 
 		tuple = heap_form_tuple(funcctx->tuple_desc, values, nulls);
 		result = HeapTupleGetDatum(tuple);

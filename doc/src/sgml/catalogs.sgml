@@ -7040,6 +7040,12 @@
       <entry></entry>
       <entry>True if lock is held, false if lock is awaited</entry>
      </row>
+     <row>
+      <entry><structfield>fastpath</structfield></entry>
+      <entry><type>boolean</type></entry>
+      <entry></entry>
+      <entry>True if lock was taken via fast path, false if taken via main lock table</entry>
+     </row>
     </tbody>
    </tgroup>
   </table>
@@ -7090,16 +7096,29 @@
   <para>
    The <structname>pg_locks</structname> view displays data from both the
    regular lock manager and the predicate lock manager, which are
-   separate systems.  When this view is accessed, the internal data
-   structures of each lock manager are momentarily locked, and copies are
-   made for the view to display.  Each lock manager will therefore
-   produce a consistent set of results, but as we do not lock both lock
-   managers simultaneously, it is possible for locks to be taken or
-   released after we interrogate the regular lock manager and before we
-   interrogate the predicate lock manager.  Each lock manager is only
-   locked for the minimum possible time so as to reduce the performance
-   impact of querying this view, but there could nevertheless be some
-   impact on database performance if it is frequently accessed.
+   separate systems.  This data is not guaranteed to be entirely consistent.
+   Data on fast-path locks (with <structfield>fastpath</> = <literal>true</>)
+   is gathered from each backend one at a time, without freezing the state of
+   the entire lock manager, so it is possible for locks to be taken and
+   released as information is gathered.  Note, however, that these locks are
+   known not to conflict with any other lock currently in place.  After
+   all backends have been queried for fast-path locks, the remainder of the
+   lock manager is locked as a unit, and a consistent snapshot of all
+   remaining locks is dumped as an atomic action.  Once the lock manager has
+   been unlocked, the predicate lock manager is similarly locked and all
+   predicate locks are dumped as an atomic action.  Thus, with the exception
+   of fast-path locks, each lock manager will deliver a consistent set of
+   results, but as we do not lock both lock managers simultaneously, it is
+   possible for locks to be taken or released after we interrogate the regular
+   lock manager and before we interrogate the predicate lock manager.
+  </para>
+
+  <para>
+   Locking the lock manger and/or predicate lock manager could have some
+   impact on database performance if this view is very frequently accessed.
+   The locks are held only for the minimum amount of time necessary to
+   obtain data from the lock manager, but this does not completely eliminate
+   the possibility of a performance impact.
   </para>
 
   <para>
