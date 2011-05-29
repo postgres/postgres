@@ -126,7 +126,8 @@ usage(void)
 	printf(_("  -D, --pgdata=DIRECTORY   receive base backup into directory\n"));
 	printf(_("  -F, --format=p|t         output format (plain, tar)\n"));
 	printf(_("  -x, --xlog               include required WAL files in backup\n"));
-	printf(_("  -Z, --compress=0-9       compress tar output\n"));
+	printf(_("  -z, --gzip               compress tar output\n"));
+	printf(_("  -Z, --compress=0-9       compress tar output with given compression level\n"));
 	printf(_("\nGeneral options:\n"));
 	printf(_("  -c, --checkpoint=fast|spread\n"
 			 "                           set fast or spread checkpointing\n"));
@@ -941,6 +942,7 @@ main(int argc, char **argv)
 		{"format", required_argument, NULL, 'F'},
 		{"checkpoint", required_argument, NULL, 'c'},
 		{"xlog", no_argument, NULL, 'x'},
+		{"gzip", no_argument, NULL, 'z'},
 		{"compress", required_argument, NULL, 'Z'},
 		{"label", required_argument, NULL, 'l'},
 		{"host", required_argument, NULL, 'h'},
@@ -999,6 +1001,13 @@ main(int argc, char **argv)
 				break;
 			case 'l':
 				label = xstrdup(optarg);
+				break;
+			case 'z':
+#ifdef HAVE_LIBZ
+				compresslevel = Z_DEFAULT_COMPRESSION;
+#else
+				compresslevel = 1; /* will be rejected below */
+#endif
 				break;
 			case 'Z':
 				compresslevel = atoi(optarg);
