@@ -3527,8 +3527,8 @@ local0.*    /var/log/postgresql
        <para>
         Causes each attempted connection to the server to be logged,
         as well as successful completion of client authentication.
-        This parameter can only be set in the <filename>postgresql.conf</>
-        file or on the server command line.  The default is off.
+        This parameter cannot be changed after session start.
+        The default is off.
        </para>
 
        <note>
@@ -3553,8 +3553,7 @@ local0.*    /var/log/postgresql
         <varname>log_connections</varname> but at session termination,
         and includes the duration of the session.  This is off by
         default.
-        This parameter can only be set in the <filename>postgresql.conf</>
-        file or on the server command line.
+        This parameter cannot be changed after session start.
        </para>
       </listitem>
      </varlistentry>
