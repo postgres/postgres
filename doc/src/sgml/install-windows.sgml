@@ -150,9 +150,10 @@ $ENV{PATH}=$ENV{PATH} . ';c:\some\where\bison\bin';
     <varlistentry>
      <term><productname>Microsoft Platform SDK</productname></term>
      <listitem><para>
-      It is recommended that you upgrade to the latest available version
-      of the <productname>Microsoft Platform SDK</productname>, available
-      for download from <ulink url="http://www.microsoft.com/downloads/"></>.
+      It is recommended that you upgrade to the latest supported version
+      of the <productname>Microsoft Platform SDK</productname> (currently
+      version 7.0), available for download from
+      <ulink url="http://www.microsoft.com/downloads/"></>.
      </para>
      <para>
       You must always include the
