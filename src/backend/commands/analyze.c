@@ -82,8 +82,7 @@ static MemoryContext anl_context = NULL;
 static BufferAccessStrategy vac_strategy;
 
 
-static void do_analyze_rel(Relation onerel, VacuumStmt *vacstmt,
-			   bool update_reltuples, bool inh);
+static void do_analyze_rel(Relation onerel, VacuumStmt *vacstmt, bool inh);
 static void BlockSampler_Init(BlockSampler bs, BlockNumber nblocks,
 				  int samplesize);
 static bool BlockSampler_HasMore(BlockSampler bs);
@@ -113,18 +112,9 @@ static bool std_typanalyze(VacAttrStats *stats);
 
 /*
  *	analyze_rel() -- analyze one relation
- *
- * If update_reltuples is true, we update reltuples and relpages columns
- * in pg_class.  Caller should pass false if we're part of VACUUM ANALYZE,
- * and the VACUUM didn't skip any pages.  We only have an approximate count,
- * so we don't want to overwrite the accurate values already inserted by the
- * VACUUM in that case.  VACUUM always scans all indexes, however, so the
- * pg_class entries for indexes are never updated if we're part of VACUUM
- * ANALYZE.
  */
 void
-analyze_rel(Oid relid, VacuumStmt *vacstmt,
-			BufferAccessStrategy bstrategy, bool update_reltuples)
+analyze_rel(Oid relid, VacuumStmt *vacstmt, BufferAccessStrategy bstrategy)
 {
 	Relation	onerel;
 
@@ -224,13 +214,13 @@ analyze_rel(Oid relid, VacuumStmt *vacstmt,
 	/*
 	 * Do the normal non-recursive ANALYZE.
 	 */
-	do_analyze_rel(onerel, vacstmt, update_reltuples, false);
+	do_analyze_rel(onerel, vacstmt, false);
 
 	/*
 	 * If there are child tables, do recursive ANALYZE.
 	 */
 	if (onerel->rd_rel->relhassubclass)
-		do_analyze_rel(onerel, vacstmt, false, true);
+		do_analyze_rel(onerel, vacstmt, true);
 
 	/*
 	 * Close source relation now, but keep lock so that no one deletes it
@@ -253,8 +243,7 @@ analyze_rel(Oid relid, VacuumStmt *vacstmt,
  *	do_analyze_rel() -- analyze one relation, recursively or not
  */
 static void
-do_analyze_rel(Relation onerel, VacuumStmt *vacstmt,
-			   bool update_reltuples, bool inh)
+do_analyze_rel(Relation onerel, VacuumStmt *vacstmt, bool inh)
 {
 	int			attr_cnt,
 				tcnt,
@@ -423,9 +412,9 @@ do_analyze_rel(Relation onerel, VacuumStmt *vacstmt,
 	}
 
 	/*
-	 * Quit if no analyzable columns and no pg_class update needed.
+	 * Quit if no analyzable columns.
 	 */
-	if (attr_cnt <= 0 && !analyzableindex && !update_reltuples)
+	if (attr_cnt <= 0 && !analyzableindex)
 		goto cleanup;
 
 	/*
@@ -535,10 +524,10 @@ do_analyze_rel(Relation onerel, VacuumStmt *vacstmt,
 	}
 
 	/*
-	 * Update pages/tuples stats in pg_class, but not if we're inside a VACUUM
-	 * that got a more precise number.
+	 * Update pages/tuples stats in pg_class ... but not if we're doing
+	 * inherited stats.
 	 */
-	if (update_reltuples)
+	if (!inh)
 		vac_update_relstats(onerel,
 							RelationGetNumberOfBlocks(onerel),
 							totalrows, hasindex, InvalidTransactionId);
@@ -548,7 +537,7 @@ do_analyze_rel(Relation onerel, VacuumStmt *vacstmt,
 	 * VACUUM ANALYZE, don't overwrite the accurate count already inserted by
 	 * VACUUM.
 	 */
-	if (!(vacstmt->options & VACOPT_VACUUM))
+	if (!inh && !(vacstmt->options & VACOPT_VACUUM))
 	{
 		for (ind = 0; ind < nindexes; ind++)
 		{
@@ -563,13 +552,12 @@ do_analyze_rel(Relation onerel, VacuumStmt *vacstmt,
 	}
 
 	/*
-	 * Report ANALYZE to the stats collector, too; likewise, tell it to adopt
-	 * these numbers only if we're not inside a VACUUM that got a better
-	 * number.	However, a call with inh = true shouldn't reset the stats.
+	 * Report ANALYZE to the stats collector, too.  However, if doing
+	 * inherited stats we shouldn't report, because the stats collector only
+	 * tracks per-table stats.
 	 */
 	if (!inh)
-		pgstat_report_analyze(onerel, update_reltuples,
-							  totalrows, totaldeadrows);
+		pgstat_report_analyze(onerel, totalrows, totaldeadrows);
 
 	/* We skip to here if there were no analyzable columns */
 cleanup:
@@ -1229,18 +1217,19 @@ acquire_sample_rows(Relation onerel, HeapTuple *rows, int targrows,
 		qsort((void *) rows, numrows, sizeof(HeapTuple), compare_rows);
 
 	/*
-	 * Estimate total numbers of rows in relation.
+	 * Estimate total numbers of rows in relation.  For live rows, use
+	 * vac_estimate_reltuples; for dead rows, we have no source of old
+	 * information, so we have to assume the density is the same in unseen
+	 * pages as in the pages we scanned.
 	 */
+	*totalrows = vac_estimate_reltuples(onerel, true,
+										totalblocks,
+										bs.m,
+										liverows);
 	if (bs.m > 0)
-	{
-		*totalrows = floor((liverows * totalblocks) / bs.m + 0.5);
-		*totaldeadrows = floor((deadrows * totalblocks) / bs.m + 0.5);
-	}
+		*totaldeadrows = floor((deadrows / bs.m) * totalblocks + 0.5);
 	else
-	{
-		*totalrows = 0.0;
 		*totaldeadrows = 0.0;
-	}
 
 	/*
 	 * Emit some interesting relation info

@@ -321,7 +321,6 @@ typedef struct PgStat_MsgVacuum
 	PgStat_MsgHdr m_hdr;
 	Oid			m_databaseid;
 	Oid			m_tableoid;
-	bool		m_adopt_counts;
 	bool		m_autovacuum;
 	TimestampTz m_vacuumtime;
 	PgStat_Counter m_tuples;
@@ -338,7 +337,6 @@ typedef struct PgStat_MsgAnalyze
 	PgStat_MsgHdr m_hdr;
 	Oid			m_databaseid;
 	Oid			m_tableoid;
-	bool		m_adopt_counts;
 	bool		m_autovacuum;
 	TimestampTz m_analyzetime;
 	PgStat_Counter m_live_tuples;
@@ -678,9 +676,9 @@ extern void pgstat_reset_shared_counters(const char *);
 extern void pgstat_reset_single_counter(Oid objectid, PgStat_Single_Reset_Type type);
 
 extern void pgstat_report_autovac(Oid dboid);
-extern void pgstat_report_vacuum(Oid tableoid, bool shared, bool adopt_counts,
+extern void pgstat_report_vacuum(Oid tableoid, bool shared,
 					 PgStat_Counter tuples);
-extern void pgstat_report_analyze(Relation rel, bool adopt_counts,
+extern void pgstat_report_analyze(Relation rel,
 					  PgStat_Counter livetuples, PgStat_Counter deadtuples);
 
 extern void pgstat_initialize(void);

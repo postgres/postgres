@@ -138,6 +138,10 @@ extern void vacuum(VacuumStmt *vacstmt, Oid relid, bool do_toast,
 extern void vac_open_indexes(Relation relation, LOCKMODE lockmode,
 				 int *nindexes, Relation **Irel);
 extern void vac_close_indexes(int nindexes, Relation *Irel, LOCKMODE lockmode);
+extern double vac_estimate_reltuples(Relation relation, bool is_analyze,
+					   BlockNumber total_pages,
+					   BlockNumber scanned_pages,
+					   double scanned_tuples);
 extern void vac_update_relstats(Relation relation,
 					BlockNumber num_pages,
 					double num_tuples,
@@ -153,10 +157,10 @@ extern void vacuum_delay_point(void);
 
 /* in commands/vacuumlazy.c */
 extern void lazy_vacuum_rel(Relation onerel, VacuumStmt *vacstmt,
-				BufferAccessStrategy bstrategy, bool *scanned_all);
+				BufferAccessStrategy bstrategy);
 
 /* in commands/analyze.c */
 extern void analyze_rel(Oid relid, VacuumStmt *vacstmt,
-			BufferAccessStrategy bstrategy, bool update_reltuples);
+			BufferAccessStrategy bstrategy);
 
 #endif   /* VACUUM_H */
