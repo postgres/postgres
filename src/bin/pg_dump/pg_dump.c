@@ -11180,6 +11180,14 @@ dumpForeignDataWrapper(Archive *fout, FdwInfo *fdwinfo)
 	if (!fdwinfo->dobj.dump || dataOnly)
 		return;
 
+	/*
+	 * FDWs that belong to an extension are dumped based on their "dump" field.
+	 * Otherwise omit them if we are only dumping some specific object.
+	 */
+	if (!fdwinfo->dobj.ext_member)
+		if (!include_everything)
+			return;
+
 	q = createPQExpBuffer();
 	delq = createPQExpBuffer();
 	labelq = createPQExpBuffer();
@@ -11255,7 +11263,7 @@ dumpForeignServer(Archive *fout, ForeignServerInfo *srvinfo)
 	char	   *fdwname;
 
 	/* Skip if not to be dumped */
-	if (!srvinfo->dobj.dump || dataOnly)
+	if (!srvinfo->dobj.dump || dataOnly || !include_everything)
 		return;
 
 	q = createPQExpBuffer();
