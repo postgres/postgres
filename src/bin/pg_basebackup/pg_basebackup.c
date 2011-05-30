@@ -905,7 +905,7 @@ BaseBackup(void)
 	}
 	if (PQntuples(res) != 1)
 	{
-		fprintf(stderr, _("%s: no end point returned from server\n"),
+		fprintf(stderr, _("%s: no WAL end position returned from server\n"),
 				progname);
 		disconnect_and_exit(1);
 	}
