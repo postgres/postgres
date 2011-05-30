@@ -284,7 +284,6 @@ typedef struct PgStat_MsgVacuum
 	Oid			m_tableoid;
 	bool		m_analyze;
 	bool		m_autovacuum;
-	bool		m_scanned_all;
 	TimestampTz m_vacuumtime;
 	PgStat_Counter m_tuples;
 } PgStat_MsgVacuum;
@@ -632,7 +631,7 @@ extern void pgstat_clear_snapshot(void);
 extern void pgstat_reset_counters(void);
 
 extern void pgstat_report_autovac(Oid dboid);
-extern void pgstat_report_vacuum(Oid tableoid, bool shared, bool scanned_all,
+extern void pgstat_report_vacuum(Oid tableoid, bool shared,
 					 bool analyze, PgStat_Counter tuples);
 extern void pgstat_report_analyze(Relation rel,
 					  PgStat_Counter livetuples,

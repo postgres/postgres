@@ -102,18 +102,9 @@ static bool std_typanalyze(VacAttrStats *stats);
 
 /*
  *	analyze_rel() -- analyze one relation
- *
- * If update_reltuples is true, we update reltuples and relpages columns
- * in pg_class.  Caller should pass false if we're part of VACUUM ANALYZE,
- * and the VACUUM didn't skip any pages.  We only have an approximate count,
- * so we don't want to overwrite the accurate values already inserted by the
- * VACUUM in that case.  VACUUM always scans all indexes, however, so the
- * pg_class entries for indexes are never updated if we're part of VACUUM
- * ANALYZE.
  */
 void
-analyze_rel(Oid relid, VacuumStmt *vacstmt,
-			BufferAccessStrategy bstrategy, bool update_reltuples)
+analyze_rel(Oid relid, VacuumStmt *vacstmt, BufferAccessStrategy bstrategy)
 {
 	Relation	onerel;
 	int			attr_cnt,
@@ -368,9 +359,9 @@ analyze_rel(Oid relid, VacuumStmt *vacstmt,
 	}
 
 	/*
-	 * Quit if no analyzable columns and no pg_class update needed.
+	 * Quit if no analyzable columns.
 	 */
-	if (attr_cnt <= 0 && !analyzableindex && !update_reltuples)
+	if (attr_cnt <= 0 && !analyzableindex)
 		goto cleanup;
 
 	/*
@@ -461,14 +452,11 @@ analyze_rel(Oid relid, VacuumStmt *vacstmt,
 	/*
 	 * Update pages/tuples stats in pg_class.
 	 */
-	if (update_reltuples)
-	{
-		vac_update_relstats(onerel,
-							RelationGetNumberOfBlocks(onerel),
-							totalrows, hasindex, InvalidTransactionId);
-		/* report results to the stats collector, too */
-		pgstat_report_analyze(onerel, totalrows, totaldeadrows);
-	}
+	vac_update_relstats(onerel,
+						RelationGetNumberOfBlocks(onerel),
+						totalrows, hasindex, InvalidTransactionId);
+	/* report results to the stats collector, too */
+	pgstat_report_analyze(onerel, totalrows, totaldeadrows);
 
 	/*
 	 * Same for indexes. Vacuum always scans all indexes, so if we're part of
@@ -1122,18 +1110,19 @@ acquire_sample_rows(Relation onerel, HeapTuple *rows, int targrows,
 		qsort((void *) rows, numrows, sizeof(HeapTuple), compare_rows);
 
 	/*
-	 * Estimate total numbers of rows in relation.
+	 * Estimate total numbers of rows in relation.  For live rows, use
+	 * vac_estimate_reltuples; for dead rows, we have no source of old
+	 * information, so we have to assume the density is the same in unseen
+	 * pages as in the pages we scanned.
 	 */
+	*totalrows = vac_estimate_reltuples(onerel, true,
+										totalblocks,
+										bs.m,
+										liverows);
 	if (bs.m > 0)
-	{
-		*totalrows = floor((liverows * totalblocks) / bs.m + 0.5);
-		*totaldeadrows = floor((deadrows * totalblocks) / bs.m + 0.5);
-	}
+		*totaldeadrows = floor((deadrows / bs.m) * totalblocks + 0.5);
 	else
-	{
-		*totalrows = 0.0;
 		*totaldeadrows = 0.0;
-	}
 
 	/*
 	 * Emit some interesting relation info
