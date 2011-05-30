@@ -693,11 +693,12 @@ pg_local_sendauth(PGconn *conn)
 	struct msghdr msg;
 
 #ifdef HAVE_STRUCT_CMSGCRED
-	/* Prevent padding */
-	char		cmsgmem[sizeof(struct cmsghdr) + sizeof(struct cmsgcred)];
-
-	/* Point to start of first structure */
-	struct cmsghdr *cmsg = (struct cmsghdr *) cmsgmem;
+	struct cmsghdr *cmsg;
+	union
+	{
+		struct cmsghdr	hdr;
+		unsigned char	buf[CMSG_SPACE(sizeof(struct cmsgcred))];
+	} cmsgbuf;
 #endif
 
 	/*
@@ -713,11 +714,12 @@ pg_local_sendauth(PGconn *conn)
 	msg.msg_iovlen = 1;
 
 #ifdef HAVE_STRUCT_CMSGCRED
-	/* Create control header, FreeBSD */
-	msg.msg_control = cmsg;
-	msg.msg_controllen = sizeof(cmsgmem);
-	memset(cmsg, 0, sizeof(cmsgmem));
-	cmsg->cmsg_len = sizeof(cmsgmem);
+	/* FreeBSD needs us to set up a message that will be filled in by kernel */
+	memset(&cmsgbuf, 0, sizeof(cmsgbuf));
+	msg.msg_control = &cmsgbuf.buf;
+	msg.msg_controllen = sizeof(cmsgbuf.buf);
+	cmsg = CMSG_FIRSTHDR(&msg);
+	cmsg->cmsg_len = CMSG_LEN(sizeof(struct cmsgcred));
 	cmsg->cmsg_level = SOL_SOCKET;
 	cmsg->cmsg_type = SCM_CREDS;
 #endif
