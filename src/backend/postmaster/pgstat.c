@@ -1246,8 +1246,7 @@ pgstat_report_autovac(Oid dboid)
  * ---------
  */
 void
-pgstat_report_vacuum(Oid tableoid, bool shared, bool adopt_counts,
-					 PgStat_Counter tuples)
+pgstat_report_vacuum(Oid tableoid, bool shared, PgStat_Counter tuples)
 {
 	PgStat_MsgVacuum msg;
 
@@ -1257,7 +1256,6 @@ pgstat_report_vacuum(Oid tableoid, bool shared, bool adopt_counts,
 	pgstat_setheader(&msg.m_hdr, PGSTAT_MTYPE_VACUUM);
 	msg.m_databaseid = shared ? InvalidOid : MyDatabaseId;
 	msg.m_tableoid = tableoid;
-	msg.m_adopt_counts = adopt_counts;
 	msg.m_autovacuum = IsAutoVacuumWorkerProcess();
 	msg.m_vacuumtime = GetCurrentTimestamp();
 	msg.m_tuples = tuples;
@@ -1271,7 +1269,7 @@ pgstat_report_vacuum(Oid tableoid, bool shared, bool adopt_counts,
  * --------
  */
 void
-pgstat_report_analyze(Relation rel, bool adopt_counts,
+pgstat_report_analyze(Relation rel,
 					  PgStat_Counter livetuples, PgStat_Counter deadtuples)
 {
 	PgStat_MsgAnalyze msg;
@@ -1308,7 +1306,6 @@ pgstat_report_analyze(Relation rel, bool adopt_counts,
 	pgstat_setheader(&msg.m_hdr, PGSTAT_MTYPE_ANALYZE);
 	msg.m_databaseid = rel->rd_rel->relisshared ? InvalidOid : MyDatabaseId;
 	msg.m_tableoid = RelationGetRelid(rel);
-	msg.m_adopt_counts = adopt_counts;
 	msg.m_autovacuum = IsAutoVacuumWorkerProcess();
 	msg.m_analyzetime = GetCurrentTimestamp();
 	msg.m_live_tuples = livetuples;
@@ -4197,8 +4194,7 @@ pgstat_recv_vacuum(PgStat_MsgVacuum *msg, int len)
 
 	tabentry = pgstat_get_tab_entry(dbentry, msg->m_tableoid, true);
 
-	if (msg->m_adopt_counts)
-		tabentry->n_live_tuples = msg->m_tuples;
+	tabentry->n_live_tuples = msg->m_tuples;
 	/* Resetting dead_tuples to 0 is an approximation ... */
 	tabentry->n_dead_tuples = 0;
 
@@ -4233,11 +4229,8 @@ pgstat_recv_analyze(PgStat_MsgAnalyze *msg, int len)
 
 	tabentry = pgstat_get_tab_entry(dbentry, msg->m_tableoid, true);
 
-	if (msg->m_adopt_counts)
-	{
-		tabentry->n_live_tuples = msg->m_live_tuples;
-		tabentry->n_dead_tuples = msg->m_dead_tuples;
-	}
+	tabentry->n_live_tuples = msg->m_live_tuples;
+	tabentry->n_dead_tuples = msg->m_dead_tuples;
 
 	/*
 	 * We reset changes_since_analyze to zero, forgetting any changes that
