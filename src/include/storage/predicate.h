@@ -47,7 +47,6 @@ extern void RegisterPredicateLockingXid(const TransactionId xid);
 extern void PredicateLockRelation(const Relation relation);
 extern void PredicateLockPage(const Relation relation, const BlockNumber blkno);
 extern void PredicateLockTuple(const Relation relation, const HeapTuple tuple);
-extern void PredicateLockTupleRowVersionLink(const Relation relation, const HeapTuple oldTuple, const HeapTuple newTuple);
 extern void PredicateLockPageSplit(const Relation relation, const BlockNumber oldblkno, const BlockNumber newblkno);
 extern void PredicateLockPageCombine(const Relation relation, const BlockNumber oldblkno, const BlockNumber newblkno);
 extern void ReleasePredicateLocks(const bool isCommit);

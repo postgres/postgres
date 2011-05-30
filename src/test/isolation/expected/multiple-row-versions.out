@@ -19,6 +19,6 @@ id             txt
 1                             
 step c4:  COMMIT; 
 step c3:  COMMIT; 
-ERROR:  could not serialize access due to read/write dependencies among transactions
 step wz1:  UPDATE t SET txt = 'a' WHERE id = 1; 
+ERROR:  could not serialize access due to read/write dependencies among transactions
 step c1:  COMMIT; 

@@ -612,8 +612,7 @@ index_getnext(IndexScanDesc scan, ScanDirection direction)
 				 * any more members.  Otherwise, check for continuation of the
 				 * HOT-chain, and set state for next time.
 				 */
-				if (IsMVCCSnapshot(scan->xs_snapshot)
-					&& !IsolationIsSerializable())
+				if (IsMVCCSnapshot(scan->xs_snapshot))
 					scan->xs_next_hot = InvalidOffsetNumber;
 				else if (HeapTupleIsHotUpdated(heapTuple))
 				{

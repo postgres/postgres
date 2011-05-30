@@ -1,8 +1,7 @@
 # Multiple Row Versions test
 #
-# This test is designed to ensure that predicate locks taken on one version
-# of a row are detected as conflicts when a later version of the row is
-# updated or deleted by a transaction concurrent to the reader.
+# This test is designed to cover some code paths which only occur with
+# four or more transactions interacting with particular timings.
 #
 # Due to long permutation setup time, we are only testing one specific
 # permutation, which should get a serialization error.

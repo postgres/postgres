@@ -1529,7 +1529,6 @@ heap_hot_search_buffer(ItemPointer tid, Relation relation, Buffer buffer,
 	OffsetNumber offnum;
 	bool		at_chain_start;
 	bool		valid;
-	bool		match_found;
 
 	if (all_dead)
 		*all_dead = true;
@@ -1539,7 +1538,6 @@ heap_hot_search_buffer(ItemPointer tid, Relation relation, Buffer buffer,
 	Assert(ItemPointerGetBlockNumber(tid) == BufferGetBlockNumber(buffer));
 	offnum = ItemPointerGetOffsetNumber(tid);
 	at_chain_start = true;
-	match_found = false;
 
 	/* Scan through possible multiple members of HOT-chain */
 	for (;;)
@@ -1597,10 +1595,7 @@ heap_hot_search_buffer(ItemPointer tid, Relation relation, Buffer buffer,
 			PredicateLockTuple(relation, &heapTuple);
 			if (all_dead)
 				*all_dead = false;
-			if (IsolationIsSerializable())
-				match_found = true;
-			else
-				return true;
+			return true;
 		}
 
 		/*
@@ -1629,7 +1624,7 @@ heap_hot_search_buffer(ItemPointer tid, Relation relation, Buffer buffer,
 			break;				/* end of chain */
 	}
 
-	return match_found;
+	return false;
 }
 
 /*
@@ -2854,12 +2849,6 @@ l2:
 	}
 
 	END_CRIT_SECTION();
-
-	/*
-	 * Any existing SIREAD locks on the old tuple must be linked to the new
-	 * tuple for conflict detection purposes.
-	 */
-	PredicateLockTupleRowVersionLink(relation, &oldtup, heaptup);
 
 	if (newbuf != buffer)
 		LockBuffer(newbuf, BUFFER_LOCK_UNLOCK);
