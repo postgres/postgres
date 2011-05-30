@@ -1357,7 +1357,13 @@ make_array_ref(plperl_array_info *info, int first, int last)
 	for (i = first; i < last; i++)
 	{
 		if (info->nulls[i])
-			av_push(result, &PL_sv_undef);
+		{
+			/*
+			 * We can't use &PL_sv_undef here.  See "AVs, HVs and undefined
+			 * values" in perlguts.
+			 */
+			av_push(result, newSV(0));
+		}
 		else
 		{
 			Datum		itemvalue = info->elements[i];
@@ -2639,8 +2645,12 @@ plperl_hash_from_tuple(HeapTuple tuple, TupleDesc tupdesc)
 
 		if (isnull)
 		{
-			/* Store (attname => undef) and move on. */
-			hv_store_string(hv, attname, &PL_sv_undef);
+			/*
+			 * Store (attname => undef) and move on.  Note we can't use
+			 * &PL_sv_undef here; see "AVs, HVs and undefined values" in
+			 * perlguts for an explanation.
+			 */
+			hv_store_string(hv, attname, newSV(0));
 			continue;
 		}
 
