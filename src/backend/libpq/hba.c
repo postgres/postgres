@@ -1453,7 +1453,7 @@ static bool
 ident_unix(int sock, char *ident_user)
 {
 #if defined(HAVE_GETPEEREID)
-	/* OpenBSD style:  */
+	/* OpenBSD (also Mac OS X) style: use getpeereid() */
 	uid_t		uid;
 	gid_t		gid;
 	struct passwd *pass;
@@ -1512,9 +1512,7 @@ ident_unix(int sock, char *ident_user)
 
 	return true;
 #elif defined(HAVE_STRUCT_CMSGCRED) || defined(HAVE_STRUCT_FCRED) || (defined(HAVE_STRUCT_SOCKCRED) && defined(LOCAL_CREDS))
-	struct msghdr msg;
-
-/* Credentials structure */
+	/* Assorted BSDen: use a credentials control message */
 #if defined(HAVE_STRUCT_CMSGCRED)
 	typedef struct cmsgcred Cred;
 
@@ -1528,40 +1526,52 @@ ident_unix(int sock, char *ident_user)
 
 #define cruid sc_uid
 #endif
-	Cred	   *cred;
 
-	/* Compute size without padding */
-	char		cmsgmem[ALIGN(sizeof(struct cmsghdr)) + ALIGN(sizeof(Cred))];	/* for NetBSD */
-
-	/* Point to start of first structure */
-	struct cmsghdr *cmsg = (struct cmsghdr *) cmsgmem;
-
+	struct msghdr msg;
+	struct cmsghdr *cmsg;
+	union
+	{
+		struct cmsghdr	hdr;
+		unsigned char	buf[CMSG_SPACE(sizeof(Cred))];
+	} cmsgbuf;
 	struct iovec iov;
 	char		buf;
+	Cred	   *cred;
 	struct passwd *pw;
 
-	memset(&msg, 0, sizeof(msg));
-	msg.msg_iov = &iov;
-	msg.msg_iovlen = 1;
-	msg.msg_control = (char *) cmsg;
-	msg.msg_controllen = sizeof(cmsgmem);
-	memset(cmsg, 0, sizeof(cmsgmem));
-
 	/*
-	 * The one character which is received here is not meaningful; its
-	 * purposes is only to make sure that recvmsg() blocks long enough for the
-	 * other side to send its credentials.
+	 * The one character that is received here is not meaningful; its purpose
+	 * is only to make sure that recvmsg() blocks long enough for the other
+	 * side to send its credentials.
 	 */
 	iov.iov_base = &buf;
 	iov.iov_len = 1;
 
-	if (recvmsg(sock, &msg, 0) < 0 ||
-		cmsg->cmsg_len < sizeof(cmsgmem) ||
-		cmsg->cmsg_type != SCM_CREDS)
+	memset(&msg, 0, sizeof(msg));
+	msg.msg_iov = &iov;
+	msg.msg_iovlen = 1;
+	msg.msg_control = &cmsgbuf.buf;
+	msg.msg_controllen = sizeof(cmsgbuf.buf);
+	memset(&cmsgbuf, 0, sizeof(cmsgbuf));
+
+	if (recvmsg(sock, &msg, 0) < 0)
 	{
 		ereport(LOG,
 				(errcode_for_socket_access(),
 				 errmsg("could not get peer credentials: %m")));
+		return false;
+	}
+
+	cmsg = CMSG_FIRSTHDR(&msg);
+	if (msg.msg_flags & (MSG_TRUNC | MSG_CTRUNC) ||
+		cmsg == NULL ||
+		cmsg->cmsg_len < CMSG_LEN(sizeof(Cred)) ||
+		cmsg->cmsg_level != SOL_SOCKET ||
+		cmsg->cmsg_type != SCM_CREDS)
+	{
+		ereport(LOG,
+				(errcode(ERRCODE_PROTOCOL_VIOLATION),
+				 errmsg("could not get peer credentials: incorrect control message")));
 		return false;
 	}
 
