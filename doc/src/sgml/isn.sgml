@@ -377,7 +377,7 @@ SELECT isbn13(id) FROM test;
  <sect2>
   <title>Author</title>
   <para>
-   Germán Méndez Bravo (Kronuz), 2004 - 2006
+   Germ&aacute;n M&eacute;ndez Bravo (Kronuz), 2004 - 2006
   </para>
 
   <para>

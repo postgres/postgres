@@ -5467,7 +5467,7 @@ WITH w AS (SELECT * FROM foo) SELECT * FROM w, bar ... FOR UPDATE
        <para>
         Allow <application>pg_dump</>, <application>pg_dumpall</>, and
         <application>pg_restore</> to use a specified role (Benedek
-        László)
+        L&aacute;szl&oacute;)
        </para>
       </listitem>
 

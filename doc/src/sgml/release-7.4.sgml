@@ -4143,7 +4143,7 @@ DROP SCHEMA information_schema CASCADE;
    </listitem>
 
    <listitem>
-    <para>Fix <literal>date_trunc('quarter', ...)</literal> (Böjthe Zoltán)</para>
+    <para>Fix <literal>date_trunc('quarter', ...)</literal> (B&ouml;jthe Zolt&aacute;n)</para>
     <para>
      Prior releases returned an incorrect value for this function call.
     </para>
@@ -4613,8 +4613,8 @@ DROP SCHEMA information_schema CASCADE;
    <listitem><para>Improve pgstattuple (Rod)</para></listitem>
    <listitem><para>Fix bug in <function>metaphone()</function> in fuzzystrmatch</para></listitem>
    <listitem><para>Improve adddepend (Rod)</para></listitem>
-   <listitem><para>Update spi/timetravel (Böjthe Zoltán)</para></listitem>
-   <listitem><para>Fix dbase <option>-s</> option and improve non-ASCII handling (Thomas Behr, Márcio Smiderle)</para></listitem>
+   <listitem><para>Update spi/timetravel (B&ouml;jthe Zolt&aacute;n)</para></listitem>
+   <listitem><para>Fix dbase <option>-s</> option and improve non-ASCII handling (Thomas Behr, M&aacute;rcio Smiderle)</para></listitem>
    <listitem><para>Remove array module because features now included by default (Joe)</para></listitem>
   </itemizedlist>
  </sect3>
