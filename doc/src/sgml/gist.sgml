@@ -374,6 +374,8 @@ my_decompress(PG_FUNCTION_ARGS)
        Returns a value indicating the <quote>cost</quote> of inserting the new
        entry into a particular branch of the tree.  Items will be inserted
        down the path of least <function>penalty</function> in the tree.
+       Values returned by <function>penalty</function> should be non-negative.
+       If a negative value is returned, it will be treated as zero.
       </para>
 
       <para>
