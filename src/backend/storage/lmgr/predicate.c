@@ -10,9 +10,9 @@
  *
  *	Michael J. Cahill, Uwe Röhm, and Alan D. Fekete. 2008.
  *	Serializable isolation for snapshot databases.
- *	In SIGMOD ’08: Proceedings of the 2008 ACM SIGMOD
+ *	In SIGMOD '08: Proceedings of the 2008 ACM SIGMOD
  *	international conference on Management of data,
- *	pages 729–738, New York, NY, USA. ACM.
+ *	pages 729-738, New York, NY, USA. ACM.
  *	http://doi.acm.org/10.1145/1376616.1376690
  *
  * and further elaborated in Cahill's doctoral thesis:

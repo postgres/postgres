@@ -19,9 +19,9 @@ Jeff Davis.  It is based on work published in these papers:
 
 	Michael J. Cahill, Uwe Röhm, and Alan D. Fekete. 2008.
 	Serializable isolation for snapshot databases.
-	In SIGMOD ’08: Proceedings of the 2008 ACM SIGMOD
+	In SIGMOD '08: Proceedings of the 2008 ACM SIGMOD
 	international conference on Management of data,
-	pages 729–738, New York, NY, USA. ACM.
+	pages 729-738, New York, NY, USA. ACM.
 	http://doi.acm.org/10.1145/1376616.1376690
 
 	Michael James Cahill. 2009.
@@ -576,7 +576,7 @@ Search for serial execution to find the relevant section.
 [2] http://db.cs.berkeley.edu/papers/fntdb07-architecture.pdf
 Joseph M. Hellerstein, Michael Stonebraker and James Hamilton. 2007.
 Architecture of a Database System. Foundations and Trends(R) in
-Databases Vol. 1, No. 2 (2007) 141–259.
+Databases Vol. 1, No. 2 (2007) 141-259.
   Of particular interest:
     * 6.1 A Note on ACID
     * 6.2 A Brief Review of Serializability
