@@ -13,6 +13,8 @@
  */
 #include "postgres.h"
 
+#include <math.h>
+
 #include "access/gist_private.h"
 #include "access/reloptions.h"
 #include "storage/freespace.h"
@@ -526,16 +528,21 @@ gistpenalty(GISTSTATE *giststate, int attno,
 
 	if (giststate->penaltyFn[attno].fn_strict == FALSE ||
 		(isNullOrig == FALSE && isNullAdd == FALSE))
+	{
 		FunctionCall3Coll(&giststate->penaltyFn[attno],
 						  giststate->supportCollation[attno],
 						  PointerGetDatum(orig),
 						  PointerGetDatum(add),
 						  PointerGetDatum(&penalty));
+		/* disallow negative or NaN penalty */
+		if (isnan(penalty) || penalty < 0.0)
+			penalty = 0.0;
+	}
 	else if (isNullOrig && isNullAdd)
 		penalty = 0.0;
 	else
-		penalty = 1e10;			/* try to prevent to mix null and non-null
-								 * value */
+		penalty = 1e10;			/* try to prevent mixing null and non-null
+								 * values */
 
 	return penalty;
 }
