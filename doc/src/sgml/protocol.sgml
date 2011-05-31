@@ -314,6 +314,8 @@
         the credential message.)  If the credential is acceptable,
         the server responds with an
         AuthenticationOk, otherwise it responds with an ErrorResponse.
+        (This message type is only issued by pre-9.1 servers.  It may
+        eventually be removed from the protocol specification.)
        </para>
       </listitem>
      </varlistentry>

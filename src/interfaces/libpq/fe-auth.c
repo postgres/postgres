@@ -27,11 +27,9 @@
 #else
 #include <unistd.h>
 #include <fcntl.h>
-#include <sys/types.h>
 #include <sys/param.h>			/* for MAXHOSTNAMELEN on most */
 #include <sys/socket.h>
-#if defined(HAVE_STRUCT_CMSGCRED) || defined(HAVE_STRUCT_FCRED) || defined(HAVE_STRUCT_SOCKCRED)
-#include <sys/uio.h>
+#ifdef HAVE_SYS_UCRED_H
 #include <sys/ucred.h>
 #endif
 #ifndef  MAXHOSTNAMELEN
@@ -679,27 +677,25 @@ pg_SSPI_startup(PGconn *conn, int use_negotiate)
 /*
  * Respond to AUTH_REQ_SCM_CREDS challenge.
  *
- * Note: current backends will not use this challenge if HAVE_GETPEEREID
- * or SO_PEERCRED is defined, but pre-7.4 backends might, so compile the
- * code anyway.
+ * Note: this is dead code as of Postgres 9.1, because current backends will
+ * never send this challenge.  But we must keep it as long as libpq needs to
+ * interoperate with pre-9.1 servers.  It is believed to be needed only on
+ * Debian/kFreeBSD (ie, FreeBSD kernel with Linux userland, so that the
+ * getpeereid() function isn't provided by libc).
  */
 static int
 pg_local_sendauth(PGconn *conn)
 {
-#if defined(HAVE_STRUCT_CMSGCRED) || defined(HAVE_STRUCT_FCRED) || \
-	(defined(HAVE_STRUCT_SOCKCRED) && defined(LOCAL_CREDS))
+#ifdef HAVE_STRUCT_CMSGCRED
 	char		buf;
 	struct iovec iov;
 	struct msghdr msg;
-
-#ifdef HAVE_STRUCT_CMSGCRED
 	struct cmsghdr *cmsg;
 	union
 	{
 		struct cmsghdr	hdr;
 		unsigned char	buf[CMSG_SPACE(sizeof(struct cmsgcred))];
 	} cmsgbuf;
-#endif
 
 	/*
 	 * The backend doesn't care what we send here, but it wants exactly one
@@ -713,8 +709,7 @@ pg_local_sendauth(PGconn *conn)
 	msg.msg_iov = &iov;
 	msg.msg_iovlen = 1;
 
-#ifdef HAVE_STRUCT_CMSGCRED
-	/* FreeBSD needs us to set up a message that will be filled in by kernel */
+	/* We must set up a message that will be filled in by kernel */
 	memset(&cmsgbuf, 0, sizeof(cmsgbuf));
 	msg.msg_control = &cmsgbuf.buf;
 	msg.msg_controllen = sizeof(cmsgbuf.buf);
@@ -722,7 +717,6 @@ pg_local_sendauth(PGconn *conn)
 	cmsg->cmsg_len = CMSG_LEN(sizeof(struct cmsgcred));
 	cmsg->cmsg_level = SOL_SOCKET;
 	cmsg->cmsg_type = SCM_CREDS;
-#endif
 
 	if (sendmsg(conn->sock, &msg, 0) == -1)
 	{

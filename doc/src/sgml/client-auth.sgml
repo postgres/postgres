@@ -48,7 +48,8 @@
   runs. If all the users of a particular server also have accounts on
   the server's machine, it makes sense to assign database user names
   that match their operating system user names. However, a server that
-  accepts remote connections might have many database users who have no local operating system
+  accepts remote connections might have many database users who have no local
+  operating system
   account, and in such cases there need be no connection between
   database user names and OS user names.
  </para>
@@ -472,8 +473,8 @@ hostnossl  <replaceable>database</replaceable>  <replaceable>user</replaceable> 
         <term><literal>peer</></term>
         <listitem>
          <para>
-          Obtain the operating system user name from the operating system
-          and check if it matches the requested database user name.
+          Obtain the client's operating system user name from the operating
+          system and check if it matches the requested database user name.
           This is only available for local connections.
           See <xref linkend="auth-peer"> for details.
          </para>
@@ -1304,7 +1305,7 @@ omicron         bryanh                  guest1
     The peer authentication method works by obtaining the client's
     operating system user name from the kernel and using it as the
     allowed database user name (with optional user name mapping). This
-    is only supported on local connections.
+    method is only supported on local connections.
    </para>
 
    <para>
@@ -1323,14 +1324,13 @@ omicron         bryanh                  guest1
    </para>
 
    <para>
-    Peer authentication is only available on  systems supporting
-    <symbol>SO_PEERCRED</symbol> requests for
-    Unix-domain sockets (currently <systemitem
-    class="osname">Linux</>, <systemitem class="osname">FreeBSD</>,
-    <systemitem class="osname">NetBSD</>, <systemitem class="osname">OpenBSD</>,
-    <systemitem class="osname">BSD/OS</>, and <systemitem class="osname">Solaris</systemitem>).
-    <productname>PostgreSQL</> uses <symbol>SO_PEERCRED</symbol> to find out
-    the operating system name of the connected client process.
+    Peer authentication is only available on operating systems providing
+    the <function>getpeereid()</> function, the <symbol>SO_PEERCRED</symbol>
+    socket parameter, or similar mechanisms.  Currently that includes
+    <systemitem class="osname">Linux</>,
+    most flavors of <systemitem class="osname">BSD</> including
+    <systemitem class="osname">Mac OS X</>,
+    and <systemitem class="osname">Solaris</systemitem>.
    </para>
 
   </sect2>

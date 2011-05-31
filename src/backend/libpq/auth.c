@@ -17,17 +17,15 @@
 
 #include <sys/param.h>
 #include <sys/socket.h>
-#if defined(HAVE_STRUCT_CMSGCRED) || defined(HAVE_STRUCT_FCRED) || defined(HAVE_STRUCT_SOCKCRED)
-#include <sys/uio.h>
-#include <sys/ucred.h>
-#endif
 #ifdef HAVE_UCRED_H
 #include <ucred.h>
+#endif
+#ifdef HAVE_SYS_UCRED_H
+#include <sys/ucred.h>
 #endif
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include <unistd.h>
-#include <stddef.h>
 
 #include "libpq/auth.h"
 #include "libpq/crypt.h"
@@ -515,36 +513,8 @@ ClientAuthentication(Port *port)
 
 		case uaPeer:
 #ifdef HAVE_UNIX_SOCKETS
-
-			/*
-			 * If we are doing peer on unix-domain sockets, use SCM_CREDS only
-			 * if it is defined and SO_PEERCRED isn't.
-			 */
-#if !defined(HAVE_GETPEEREID) && !defined(SO_PEERCRED) && \
-	(defined(HAVE_STRUCT_CMSGCRED) || defined(HAVE_STRUCT_FCRED) || \
-	 (defined(HAVE_STRUCT_SOCKCRED) && defined(LOCAL_CREDS)))
-			if (port->raddr.addr.ss_family == AF_UNIX)
-			{
-#if defined(HAVE_STRUCT_FCRED) || defined(HAVE_STRUCT_SOCKCRED)
-
-				/*
-				 * Receive credentials on next message receipt, BSD/OS,
-				 * NetBSD. We need to set this before the client sends the
-				 * next packet.
-				 */
-				int			on = 1;
-
-				if (setsockopt(port->sock, 0, LOCAL_CREDS, &on, sizeof(on)) < 0)
-					ereport(FATAL,
-							(errcode_for_socket_access(),
-					   errmsg("could not enable credential reception: %m")));
-#endif
-
-				sendAuthRequest(port, AUTH_REQ_SCM_CREDS);
-			}
-#endif
 			status = auth_peer(port);
-#else							/* HAVE_UNIX_SOCKETS */
+#else
 			Assert(false);
 #endif
 			break;
@@ -1774,11 +1744,11 @@ ident_inet_done:
 }
 
 /*
- *	Ask kernel about the credentials of the connecting process and
- *	determine the symbolic name of the corresponding user.
+ *	Ask kernel about the credentials of the connecting process,
+ *	determine the symbolic name of the corresponding user, and check
+ *	if valid per the usermap.
  *
- *	Returns either true and the username put into "ident_user",
- *	or false if we were unable to determine the username.
+ *	Iff authorized, return STATUS_OK, otherwise return STATUS_ERROR.
  */
 #ifdef HAVE_UNIX_SOCKETS
 
@@ -1786,12 +1756,12 @@ static int
 auth_peer(hbaPort *port)
 {
 	char		ident_user[IDENT_USERNAME_MAX + 1];
+	uid_t		uid = 0;
+	struct passwd *pass;
 
 #if defined(HAVE_GETPEEREID)
-	/* OpenBSD (also Mac OS X) style: use getpeereid() */
-	uid_t		uid;
+	/* Most BSDen, including OS X: use getpeereid() */
 	gid_t		gid;
-	struct passwd *pass;
 
 	errno = 0;
 	if (getpeereid(port->sock, &uid, &gid) != 0)
@@ -1802,23 +1772,10 @@ auth_peer(hbaPort *port)
 				 errmsg("could not get peer credentials: %m")));
 		return STATUS_ERROR;
 	}
-
-	pass = getpwuid(uid);
-
-	if (pass == NULL)
-	{
-		ereport(LOG,
-				(errmsg("local user with ID %d does not exist",
-						(int) uid)));
-		return STATUS_ERROR;
-	}
-
-	strlcpy(ident_user, pass->pw_name, IDENT_USERNAME_MAX + 1);
 #elif defined(SO_PEERCRED)
-	/* Linux style: use getsockopt(SO_PEERCRED) */
+	/* Linux: use getsockopt(SO_PEERCRED) */
 	struct ucred peercred;
 	ACCEPT_TYPE_ARG3 so_len = sizeof(peercred);
-	struct passwd *pass;
 
 	errno = 0;
 	if (getsockopt(port->sock, SOL_SOCKET, SO_PEERCRED, &peercred, &so_len) != 0 ||
@@ -1830,22 +1787,26 @@ auth_peer(hbaPort *port)
 				 errmsg("could not get peer credentials: %m")));
 		return STATUS_ERROR;
 	}
+	uid = peercred.uid;
+#elif defined(LOCAL_PEERCRED)
+	/* Debian with FreeBSD kernel: use getsockopt(LOCAL_PEERCRED) */
+	struct xucred peercred;
+	ACCEPT_TYPE_ARG3 so_len = sizeof(peercred);
 
-	pass = getpwuid(peercred.uid);
-
-	if (pass == NULL)
+	errno = 0;
+	if (getsockopt(port->sock, 0, LOCAL_PEERCRED, &peercred, &so_len) != 0 ||
+		so_len != sizeof(peercred) ||
+		peercred.cr_version != XUCRED_VERSION)
 	{
+		/* We didn't get a valid credentials struct. */
 		ereport(LOG,
-				(errmsg("local user with ID %d does not exist",
-						(int) peercred.uid)));
+				(errcode_for_socket_access(),
+				 errmsg("could not get peer credentials: %m")));
 		return STATUS_ERROR;
 	}
-
-	strlcpy(ident_user, pass->pw_name, IDENT_USERNAME_MAX + 1);
+	uid = peercred.cr_uid;
 #elif defined(HAVE_GETPEERUCRED)
-	/* Solaris > 10: use getpeerucred() */
-	uid_t		uid;
-	struct passwd *pass;
+	/* Solaris: use getpeerucred() */
 	ucred_t    *ucred;
 
 	ucred = NULL;				/* must be initialized to NULL */
@@ -1866,8 +1827,16 @@ auth_peer(hbaPort *port)
 	}
 
 	ucred_free(ucred);
+#else
+	ereport(LOG,
+			(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+			 errmsg("Peer authentication is not supported on local connections on this platform")));
+
+	return STATUS_ERROR;
+#endif
 
 	pass = getpwuid(uid);
+
 	if (pass == NULL)
 	{
 		ereport(LOG,
@@ -1877,90 +1846,6 @@ auth_peer(hbaPort *port)
 	}
 
 	strlcpy(ident_user, pass->pw_name, IDENT_USERNAME_MAX + 1);
-#elif defined(HAVE_STRUCT_CMSGCRED) || defined(HAVE_STRUCT_FCRED) || (defined(HAVE_STRUCT_SOCKCRED) && defined(LOCAL_CREDS))
-	/* Assorted BSDen: use a credentials control message */
-#if defined(HAVE_STRUCT_CMSGCRED)
-	typedef struct cmsgcred Cred;
-
-#define cruid cmcred_uid
-#elif defined(HAVE_STRUCT_FCRED)
-	typedef struct fcred Cred;
-
-#define cruid fc_uid
-#elif defined(HAVE_STRUCT_SOCKCRED)
-	typedef struct sockcred Cred;
-
-#define cruid sc_uid
-#endif
-
-	struct msghdr msg;
-	struct cmsghdr *cmsg;
-	union
-	{
-		struct cmsghdr	hdr;
-		unsigned char	buf[CMSG_SPACE(sizeof(Cred))];
-	} cmsgbuf;
-	struct iovec iov;
-	char		buf;
-	Cred	   *cred;
-	struct passwd *pw;
-
-	/*
-	 * The one character that is received here is not meaningful; its purpose
-	 * is only to make sure that recvmsg() blocks long enough for the other
-	 * side to send its credentials.
-	 */
-	iov.iov_base = &buf;
-	iov.iov_len = 1;
-
-	memset(&msg, 0, sizeof(msg));
-	msg.msg_iov = &iov;
-	msg.msg_iovlen = 1;
-	msg.msg_control = &cmsgbuf.buf;
-	msg.msg_controllen = sizeof(cmsgbuf.buf);
-	memset(&cmsgbuf, 0, sizeof(cmsgbuf));
-
-	if (recvmsg(port->sock, &msg, 0) < 0)
-	{
-		ereport(LOG,
-				(errcode_for_socket_access(),
-				 errmsg("could not get peer credentials: %m")));
-		return STATUS_ERROR;
-	}
-
-	cmsg = CMSG_FIRSTHDR(&msg);
-	if (msg.msg_flags & (MSG_TRUNC | MSG_CTRUNC) ||
-		cmsg == NULL ||
-		cmsg->cmsg_len < CMSG_LEN(sizeof(Cred)) ||
-		cmsg->cmsg_level != SOL_SOCKET ||
-		cmsg->cmsg_type != SCM_CREDS)
-	{
-		ereport(LOG,
-				(errcode(ERRCODE_PROTOCOL_VIOLATION),
-				 errmsg("could not get peer credentials: incorrect control message")));
-		return STATUS_ERROR;
-	}
-
-	cred = (Cred *) CMSG_DATA(cmsg);
-
-	pw = getpwuid(cred->cruid);
-
-	if (pw == NULL)
-	{
-		ereport(LOG,
-				(errmsg("local user with ID %d does not exist",
-						(int) cred->cruid)));
-		return STATUS_ERROR;
-	}
-
-	strlcpy(ident_user, pw->pw_name, IDENT_USERNAME_MAX + 1);
-#else
-	ereport(LOG,
-			(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-			 errmsg("Ident authentication is not supported on local connections on this platform")));
-
-	return STATUS_ERROR;
-#endif
 
 	return check_usermap(port->hba->usermap, port->user_name, ident_user, false);
 }

@@ -549,20 +549,21 @@ PGconn *PQconnectdbParams(const char **keywords, const char **values, int expand
          <term><literal>requirepeer</literal></term>
          <listitem>
           <para>
-           For Unix-domain socket connections, if this parameter is
-           set, the client checks at the beginning of the connection
-           that the server process runs under the specified user name,
-           otherwise the connection is aborted with an error.  This
-           parameter can be used to achieve the kind of server
-           authentication that SSL certificates achieve on TCP/IP
-           connections.  (Note that if the Unix-domain socket is
-           in <filename>/tmp</filename> or another publicly writable
-           location, any user could start a server there.  Use this
-           parameter to ensure that you are connected to a server run
-           by a trusted user,
-           e.g., <literal>requirepeer=postgres</literal>.)  This
-           option is only supported on some platforms, currently
-           Linux, FreeBSD, NetBSD, OpenBSD, and Solaris.
+           This parameter specifies the operating-system user name of the
+           server, for example <literal>requirepeer=postgres</literal>.
+           When making a Unix-domain socket connection, if this
+           parameter is set, the client checks at the beginning of the
+           connection that the server process is running under the specified
+           user name; if it is not, the connection is aborted with an error.
+           This parameter can be used to provide server authentication similar
+           to that available with SSL certificates on TCP/IP connections.
+           (Note that if the Unix-domain socket is in
+           <filename>/tmp</filename> or another publicly writable location,
+           any user could start a server listening there.  Use this parameter
+           to ensure that you are connected to a server run by a trusted user.)
+           This option is only supported on platforms for which the
+           <literal>peer</> authentication method is implemented; see
+           <xref linkend="auth-peer">.
           </para>
          </listitem>
         </varlistentry>

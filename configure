@@ -9990,7 +9990,8 @@ done
 
 
 
-for ac_header in crypt.h dld.h fp_class.h getopt.h ieeefp.h ifaddrs.h langinfo.h poll.h pwd.h sys/ioctl.h sys/ipc.h sys/poll.h sys/pstat.h sys/resource.h sys/select.h sys/sem.h sys/shm.h sys/socket.h sys/sockio.h sys/tas.h sys/time.h sys/un.h termios.h ucred.h utime.h wchar.h wctype.h kernel/OS.h kernel/image.h SupportDefs.h
+
+for ac_header in crypt.h dld.h fp_class.h getopt.h ieeefp.h ifaddrs.h langinfo.h poll.h pwd.h sys/ioctl.h sys/ipc.h sys/poll.h sys/pstat.h sys/resource.h sys/select.h sys/sem.h sys/shm.h sys/socket.h sys/sockio.h sys/tas.h sys/time.h sys/ucred.h sys/un.h termios.h ucred.h utime.h wchar.h wctype.h kernel/OS.h kernel/image.h SupportDefs.h
 do
 as_ac_Header=`$as_echo "ac_cv_header_$ac_header" | $as_tr_sh`
 if { as_var=$as_ac_Header; eval "test \"\${$as_var+set}\" = set"; }; then
@@ -17037,10 +17038,10 @@ _ACEOF
 cat confdefs.h >>conftest.$ac_ext
 cat >>conftest.$ac_ext <<_ACEOF
 /* end confdefs.h.  */
-#include <sys/param.h>
-#include <sys/types.h>
 #include <sys/socket.h>
+#ifdef HAVE_SYS_UCRED_H
 #include <sys/ucred.h>
+#endif
 
 int
 main ()
@@ -17075,10 +17076,10 @@ _ACEOF
 cat confdefs.h >>conftest.$ac_ext
 cat >>conftest.$ac_ext <<_ACEOF
 /* end confdefs.h.  */
-#include <sys/param.h>
-#include <sys/types.h>
 #include <sys/socket.h>
+#ifdef HAVE_SYS_UCRED_H
 #include <sys/ucred.h>
+#endif
 
 int
 main ()
@@ -17131,226 +17132,6 @@ if test "x$ac_cv_type_struct_cmsgcred" = x""yes; then
 
 cat >>confdefs.h <<_ACEOF
 #define HAVE_STRUCT_CMSGCRED 1
-_ACEOF
-
-
-fi
-{ $as_echo "$as_me:$LINENO: checking for struct fcred" >&5
-$as_echo_n "checking for struct fcred... " >&6; }
-if test "${ac_cv_type_struct_fcred+set}" = set; then
-  $as_echo_n "(cached) " >&6
-else
-  ac_cv_type_struct_fcred=no
-cat >conftest.$ac_ext <<_ACEOF
-/* confdefs.h.  */
-_ACEOF
-cat confdefs.h >>conftest.$ac_ext
-cat >>conftest.$ac_ext <<_ACEOF
-/* end confdefs.h.  */
-#include <sys/param.h>
-#include <sys/types.h>
-#include <sys/socket.h>
-#include <sys/ucred.h>
-
-int
-main ()
-{
-if (sizeof (struct fcred))
-       return 0;
-  ;
-  return 0;
-}
-_ACEOF
-rm -f conftest.$ac_objext
-if { (ac_try="$ac_compile"
-case "(($ac_try" in
-  *\"* | *\`* | *\\*) ac_try_echo=\$ac_try;;
-  *) ac_try_echo=$ac_try;;
-esac
-eval ac_try_echo="\"\$as_me:$LINENO: $ac_try_echo\""
-$as_echo "$ac_try_echo") >&5
-  (eval "$ac_compile") 2>conftest.er1
-  ac_status=$?
-  grep -v '^ *+' conftest.er1 >conftest.err
-  rm -f conftest.er1
-  cat conftest.err >&5
-  $as_echo "$as_me:$LINENO: \$? = $ac_status" >&5
-  (exit $ac_status); } && {
-	 test -z "$ac_c_werror_flag" ||
-	 test ! -s conftest.err
-       } && test -s conftest.$ac_objext; then
-  cat >conftest.$ac_ext <<_ACEOF
-/* confdefs.h.  */
-_ACEOF
-cat confdefs.h >>conftest.$ac_ext
-cat >>conftest.$ac_ext <<_ACEOF
-/* end confdefs.h.  */
-#include <sys/param.h>
-#include <sys/types.h>
-#include <sys/socket.h>
-#include <sys/ucred.h>
-
-int
-main ()
-{
-if (sizeof ((struct fcred)))
-	  return 0;
-  ;
-  return 0;
-}
-_ACEOF
-rm -f conftest.$ac_objext
-if { (ac_try="$ac_compile"
-case "(($ac_try" in
-  *\"* | *\`* | *\\*) ac_try_echo=\$ac_try;;
-  *) ac_try_echo=$ac_try;;
-esac
-eval ac_try_echo="\"\$as_me:$LINENO: $ac_try_echo\""
-$as_echo "$ac_try_echo") >&5
-  (eval "$ac_compile") 2>conftest.er1
-  ac_status=$?
-  grep -v '^ *+' conftest.er1 >conftest.err
-  rm -f conftest.er1
-  cat conftest.err >&5
-  $as_echo "$as_me:$LINENO: \$? = $ac_status" >&5
-  (exit $ac_status); } && {
-	 test -z "$ac_c_werror_flag" ||
-	 test ! -s conftest.err
-       } && test -s conftest.$ac_objext; then
-  :
-else
-  $as_echo "$as_me: failed program was:" >&5
-sed 's/^/| /' conftest.$ac_ext >&5
-
-	ac_cv_type_struct_fcred=yes
-fi
-
-rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
-else
-  $as_echo "$as_me: failed program was:" >&5
-sed 's/^/| /' conftest.$ac_ext >&5
-
-
-fi
-
-rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
-fi
-{ $as_echo "$as_me:$LINENO: result: $ac_cv_type_struct_fcred" >&5
-$as_echo "$ac_cv_type_struct_fcred" >&6; }
-if test "x$ac_cv_type_struct_fcred" = x""yes; then
-
-cat >>confdefs.h <<_ACEOF
-#define HAVE_STRUCT_FCRED 1
-_ACEOF
-
-
-fi
-{ $as_echo "$as_me:$LINENO: checking for struct sockcred" >&5
-$as_echo_n "checking for struct sockcred... " >&6; }
-if test "${ac_cv_type_struct_sockcred+set}" = set; then
-  $as_echo_n "(cached) " >&6
-else
-  ac_cv_type_struct_sockcred=no
-cat >conftest.$ac_ext <<_ACEOF
-/* confdefs.h.  */
-_ACEOF
-cat confdefs.h >>conftest.$ac_ext
-cat >>conftest.$ac_ext <<_ACEOF
-/* end confdefs.h.  */
-#include <sys/param.h>
-#include <sys/types.h>
-#include <sys/socket.h>
-#include <sys/ucred.h>
-
-int
-main ()
-{
-if (sizeof (struct sockcred))
-       return 0;
-  ;
-  return 0;
-}
-_ACEOF
-rm -f conftest.$ac_objext
-if { (ac_try="$ac_compile"
-case "(($ac_try" in
-  *\"* | *\`* | *\\*) ac_try_echo=\$ac_try;;
-  *) ac_try_echo=$ac_try;;
-esac
-eval ac_try_echo="\"\$as_me:$LINENO: $ac_try_echo\""
-$as_echo "$ac_try_echo") >&5
-  (eval "$ac_compile") 2>conftest.er1
-  ac_status=$?
-  grep -v '^ *+' conftest.er1 >conftest.err
-  rm -f conftest.er1
-  cat conftest.err >&5
-  $as_echo "$as_me:$LINENO: \$? = $ac_status" >&5
-  (exit $ac_status); } && {
-	 test -z "$ac_c_werror_flag" ||
-	 test ! -s conftest.err
-       } && test -s conftest.$ac_objext; then
-  cat >conftest.$ac_ext <<_ACEOF
-/* confdefs.h.  */
-_ACEOF
-cat confdefs.h >>conftest.$ac_ext
-cat >>conftest.$ac_ext <<_ACEOF
-/* end confdefs.h.  */
-#include <sys/param.h>
-#include <sys/types.h>
-#include <sys/socket.h>
-#include <sys/ucred.h>
-
-int
-main ()
-{
-if (sizeof ((struct sockcred)))
-	  return 0;
-  ;
-  return 0;
-}
-_ACEOF
-rm -f conftest.$ac_objext
-if { (ac_try="$ac_compile"
-case "(($ac_try" in
-  *\"* | *\`* | *\\*) ac_try_echo=\$ac_try;;
-  *) ac_try_echo=$ac_try;;
-esac
-eval ac_try_echo="\"\$as_me:$LINENO: $ac_try_echo\""
-$as_echo "$ac_try_echo") >&5
-  (eval "$ac_compile") 2>conftest.er1
-  ac_status=$?
-  grep -v '^ *+' conftest.er1 >conftest.err
-  rm -f conftest.er1
-  cat conftest.err >&5
-  $as_echo "$as_me:$LINENO: \$? = $ac_status" >&5
-  (exit $ac_status); } && {
-	 test -z "$ac_c_werror_flag" ||
-	 test ! -s conftest.err
-       } && test -s conftest.$ac_objext; then
-  :
-else
-  $as_echo "$as_me: failed program was:" >&5
-sed 's/^/| /' conftest.$ac_ext >&5
-
-	ac_cv_type_struct_sockcred=yes
-fi
-
-rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
-else
-  $as_echo "$as_me: failed program was:" >&5
-sed 's/^/| /' conftest.$ac_ext >&5
-
-
-fi
-
-rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
-fi
-{ $as_echo "$as_me:$LINENO: result: $ac_cv_type_struct_sockcred" >&5
-$as_echo "$ac_cv_type_struct_sockcred" >&6; }
-if test "x$ac_cv_type_struct_sockcred" = x""yes; then
-
-cat >>confdefs.h <<_ACEOF
-#define HAVE_STRUCT_SOCKCRED 1
 _ACEOF
 
 
