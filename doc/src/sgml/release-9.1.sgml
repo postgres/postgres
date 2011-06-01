@@ -132,7 +132,7 @@
       </para>
 
       <para>
-       Previously this returned <literal>NULL</>.
+       Previously this returned a null value.
       </para>
      </listitem>
 
@@ -145,7 +145,7 @@
       </para>
 
       <para>
-       Previously this returned <literal>NULL</>.
+       Previously this returned a null value.
       </para>
      </listitem>
 
@@ -164,9 +164,10 @@
       </para>
 
       <para>
-       Triggers can now be fired in three cases: BEFORE, AFTER, or INSTEAD OF
-       some action.  Trigger function authors should verify that their logic
-       behaves sanely in all three cases.
+       Triggers can now be fired in three cases: <literal>BEFORE</>,
+       <literal>AFTER</>, or <literal>INSTEAD OF</> some action.
+       Trigger function authors should verify that their logic behaves
+       sanely in all three cases.
       </para>
      </listitem>
 
@@ -302,9 +303,9 @@
 
       <listitem>
        <para>
-        Allow unlogged tables using <link
+        Allow unlogged tables using the <link
         linkend="SQL-CREATETABLE-description"><literal>UNLOGGED</></link>
-        during <link linkend="SQL-CREATETABLE"><command>CREATE
+        clause in <link linkend="SQL-CREATETABLE"><command>CREATE
         TABLE</></link> (Robert Haas)
        </para>
 
@@ -345,7 +346,8 @@
        </para>
 
        <para>
-        This allows the use of commit_siblings with less overhead.
+        This allows the use of <varname>commit_siblings</varname> with
+        less overhead.
        </para>
       </listitem>
 
@@ -412,8 +414,9 @@
 
       <listitem>
        <para>
-        Support host names and host suffixes (e.g. .example.com) in
-        <link linkend="auth-pg-hba-conf"><filename>pg_hba.conf</></link>
+        Support host names and host suffixes
+        (e.g. <literal>.example.com</>) in <link
+        linkend="auth-pg-hba-conf"><filename>pg_hba.conf</></link>
         (Peter Eisentraut)
        </para>
 
@@ -425,7 +428,7 @@
 
       <listitem>
        <para>
-        Support the keyword <literal>all</> in the host column of <link
+        Support the key word <literal>all</> in the host column of <link
         linkend="auth-pg-hba-conf"><filename>pg_hba.conf</></link>
         (Peter Eisentraut)
        </para>
@@ -476,7 +479,7 @@
          Add <link
          linkend="guc-log-file-mode"><varname>log_file_mode</></link>
          which controls the permissions on log files created by the
-         logging_collector (Martin Pihlak)
+         logging collector (Martin Pihlak)
        </para>
       </listitem>
 
@@ -491,7 +494,7 @@
 
       <listitem>
        <para>
-        Add <structfield>client_hostname</structfield> field to <link
+        Add <structfield>client_hostname</structfield> column to <link
         linkend="monitoring-stats-views-table"><structname>pg_stat_activity</></link>
         (Peter Eisentraut)
        </para>
@@ -532,13 +535,13 @@
 
       <listitem>
        <para>
-        Add buffers_backend_fsync field to <link
+        Add <structfield>buffers_backend_fsync</> column to <link
         linkend="monitoring-stats-views-table"><structname>pg_stat_bgwriter</></link>
         (Greg Smith)
        </para>
 
        <para>
-        This new field counts the number of times a backend fsyncs a
+        This new column counts the number of times a backend fsyncs a
         buffer.
        </para>
       </listitem>
@@ -560,8 +563,8 @@
        </para>
 
        <para>
-        wal_buffers is now auto-tuned by default based on the size of
-        shared_buffers.
+        <varname>wal_buffers</> is now auto-tuned by default based on
+        the size of <varname>shared_buffers</>.
        </para>
       </listitem>
 
@@ -708,7 +711,7 @@
 
      <listitem>
       <para>
-       Add variable <link
+       Add configuration parameter <link
        linkend="guc-hot-standby-feedback"><varname>hot_standby_feedback</></link>
        to enable standbys to postpone cleanup of old row versions on the
        primary (Simon Riggs)
@@ -804,8 +807,8 @@
        </para>
 
        <para>
-        This allows a recovery server to be queried to check if the
-        recovery point is the one desired.
+        This allows a recovery server to be queried to check whether
+        the recovery point is the one desired.
        </para>
       </listitem>
 
@@ -876,7 +879,7 @@
       <listitem>
        <para>
         Add a true <link
-        linkend="xact-serializable"><literal>serializable</></link> isolation
+        linkend="xact-serializable">serializable</link> isolation
         level (Kevin Grittner, Dan Ports)
        </para>
 
@@ -928,14 +931,14 @@
 
       <listitem>
        <para>
-        Allow use of the keyword <literal>DISTINCT</> in <link
+        Allow use of the key word <literal>DISTINCT</> in <link
         linkend="queries-union"><literal>UNION</>/<literal>INTERSECT</>/<literal>EXCEPT</></link>
         clauses (Tom Lane)
        </para>
 
        <para>
         <literal>DISTINCT</> is the default behavior so use of this
-        keyword is redundant, but the SQL standard allows it.
+        key word is redundant, but the SQL standard allows it.
        </para>
       </listitem>
 
@@ -1082,7 +1085,7 @@
        <para>
         The new option is called <literal>NOT VALID</>, which can
         later be modified to <literal>VALIDATED</> and validation
-        checks performed. Together these allow you to add a Foreign Key
+        checks performed. Together these allow you to add a foreign key
         with minimal impact on read and write operations.
        </para>
       </listitem>
@@ -1095,9 +1098,10 @@
        </para>
 
        <para>
-        For example, converting a varchar column to text no longer
-        requires a rewrite of the table.  However, increasing the length
-        constraint on a varchar column still requires a table rewrite.
+        For example, converting a <type>varchar</> column to
+        <type>text</> no longer requires a rewrite of the table.
+        However, increasing the length constraint on a
+        <type>varchar</> column still requires a table rewrite.
        </para>
       </listitem>
 
@@ -1115,9 +1119,9 @@
 
       <listitem>
        <para>
-        Fix possible "tuple concurrently updated" error when two server
-        backends attempted to add an inheritance parent to the same
-        table at the same time (Robert Haas)
+        Fix possible <quote>tuple concurrently updated</quote> error
+        when two server backends attempted to add an inheritance
+        parent to the same table at the same time (Robert Haas)
        </para>
 
        <para>
@@ -1515,7 +1519,7 @@
          linkend="array-functions-table"><function>array_to_string()</></link>
          and <link
          linkend="array-functions-table"><function>string_to_array()</></link>
-         for <literal>NULL</> processing control (Pavel Stehule)
+         for null value processing control (Pavel Stehule)
        </para>
       </listitem>
 
@@ -1565,14 +1569,14 @@
 
       <listitem>
        <para>
-        Add fields to the <link
+        Add columns to the <link
         linkend="infoschema-sequences"><structname>information_schema.sequences</></link>
         system view (Peter Eisentraut)
        </para>
 
        <para>
-        Previously, though the view existed, all of these view fields
-        were unimplemented.
+        Previously, though the view existed, the columns about the
+        sequence parameters were unimplemented.
        </para>
       </listitem>
 
@@ -1777,22 +1781,12 @@
 
       <listitem>
        <para>
-        <function>plpy.Fatal</function> now raises <literal>FATAL</>, rather
-        than <literal>ERROR</literal> (Jan Urbanski)
+        Fix exception handling with Python 3 (Jan Urbanski)
        </para>
 
        <para>
-        The old behavior was incorrect.
-       </para>
-      </listitem>
-
-      <listitem>
-       <para>
-        Overhaul of PL/Python (Jan Urbanski)
-       </para>
-
-       <para>
-        This includes exception support for Python 3.  **More detail?
+        Exception classes were previously not available in
+        <literal>plpy</> under Python 3.
        </para>
       </listitem>
 
@@ -1885,7 +1879,7 @@
       <listitem>
        <para>
         Make <application>psql</application> distinguish between unique
-        indices and unique constraints (Josh Kupershmidt)
+        indexes and unique constraints (Josh Kupershmidt)
        </para>
       </listitem>
 
@@ -1951,11 +1945,10 @@
 
       <listitem>
        <para>
-        Improve <application>pg_ctl</>
-        start's "wait" (<option>-w</>) mode to handle non-standard
-        port numbers, non-standard Unix-domain socket locations,
-        permission problems, and stale postmaster lock files (Bruce
-        Momjian)
+        Improve <application>pg_ctl</> start's <quote>wait</quote>
+        (<option>-w</>) mode to handle non-standard port numbers,
+        non-standard Unix-domain socket locations, permission
+        problems, and stale postmaster lock files (Bruce Momjian)
        </para>
       </listitem>
 
@@ -2091,8 +2084,8 @@
        </para>
 
        <para>
-        This allows for faster compiles.  Also, make <option>-k</>
-        and make <option>-q</> now work properly in a parallel build.
+        This allows for faster compiles.  Also, <literal>make -k</>
+        now works properly.
        </para>
       </listitem>
 
@@ -2183,8 +2176,8 @@
       <listitem>
        <para>
          Improve ability to use C++ compilers for <link
-         linkend="xfunc-c">backend compiles</link> by removing
-         conflicting keywords (Tom Lane)
+         linkend="xfunc-c">compiling add-on modules</link> by removing
+         conflicting key words (Tom Lane)
        </para>
       </listitem>
 
@@ -2346,7 +2339,7 @@
      <listitem>
       <para>
        Allow <link linkend="intarray"><filename>contrib/intarray</></link>
-       to work properly on multi-dimensional arrays (Tom Lane)
+       to work properly on multidimensional arrays (Tom Lane)
       </para>
      </listitem>
 
@@ -2582,9 +2575,10 @@
 
      <listitem>
       <para>
-       Document that it is possible to access all composite fields
-       using <link linkend="field-selection"><literal>(compositeval).*
-       syntax</></link> (Peter Eisentraut)
+       Document that it is possible to access all composite type
+       fields using <link
+       linkend="field-selection"><literal>(compositeval).*</></link>
+       syntax (Peter Eisentraut)
       </para>
      </listitem>
 
