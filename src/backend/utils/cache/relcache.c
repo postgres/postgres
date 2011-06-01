@@ -3251,6 +3251,7 @@ CheckConstraintFetch(Relation relation)
 			elog(ERROR, "unexpected constraint record found for rel %s",
 				 RelationGetRelationName(relation));
 
+		check[found].ccvalid = conform->convalidated;
 		check[found].ccname = MemoryContextStrdup(CacheMemoryContext,
 												  NameStr(conform->conname));
 

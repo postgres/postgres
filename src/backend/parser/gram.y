@@ -2759,8 +2759,9 @@ ConstraintElem:
 					n->raw_expr = $3;
 					n->cooked_expr = NULL;
 					processCASbits($5, @5, "CHECK",
-								   NULL, NULL, NULL,
+								   NULL, NULL, &n->skip_validation,
 								   yyscanner);
+					n->initially_valid = !n->skip_validation;
 					$$ = (Node *)n;
 				}
 			| UNIQUE '(' columnList ')' opt_definition OptConsTableSpace
@@ -7557,6 +7558,15 @@ AlterDomainStmt:
 					n->typeName = $3;
 					n->name = $6;
 					n->behavior = $7;
+					$$ = (Node *)n;
+				}
+			/* ALTER DOMAIN <domain> VALIDATE CONSTRAINT <name> */
+			| ALTER DOMAIN_P any_name VALIDATE CONSTRAINT name
+				{
+					AlterDomainStmt *n = makeNode(AlterDomainStmt);
+					n->subtype = 'V';
+					n->typeName = $3;
+					n->name = $6;
 					$$ = (Node *)n;
 				}
 			;

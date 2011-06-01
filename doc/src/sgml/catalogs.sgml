@@ -1899,7 +1899,7 @@
       <entry><type>bool</type></entry>
       <entry></entry>
       <entry>Has the constraint been validated?
-       Currently, can only be false for foreign keys</entry>
+       Currently, can only be false for foreign keys and CHECK constraints</entry>
      </row>
 
      <row>

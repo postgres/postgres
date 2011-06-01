@@ -28,9 +28,11 @@ ALTER DOMAIN <replaceable class="PARAMETER">name</replaceable>
 ALTER DOMAIN <replaceable class="PARAMETER">name</replaceable>
     { SET | DROP } NOT NULL
 ALTER DOMAIN <replaceable class="PARAMETER">name</replaceable>
-    ADD <replaceable class="PARAMETER">domain_constraint</replaceable>
+    ADD <replaceable class="PARAMETER">domain_constraint</replaceable> [ NOT VALID ]
 ALTER DOMAIN <replaceable class="PARAMETER">name</replaceable>
     DROP CONSTRAINT <replaceable class="PARAMETER">constraint_name</replaceable> [ RESTRICT | CASCADE ]
+ALTER DOMAIN <replaceable class="PARAMETER">name</replaceable>
+    VALIDATE CONSTRAINT <replaceable class="PARAMETER">constraint_name</replaceable>
 ALTER DOMAIN <replaceable class="PARAMETER">name</replaceable>
     OWNER TO <replaceable class="PARAMETER">new_owner</replaceable>
 ALTER DOMAIN <replaceable class="PARAMETER">name</replaceable>
@@ -70,13 +72,19 @@ ALTER DOMAIN <replaceable class="PARAMETER">name</replaceable>
    </varlistentry>
 
    <varlistentry>
-    <term>ADD <replaceable class="PARAMETER">domain_constraint</replaceable></term>
+    <term>ADD <replaceable class="PARAMETER">domain_constraint</replaceable> [ NOT VALID ]</term>
     <listitem>
      <para>
       This form adds a new constraint to a domain using the same syntax as
       <xref linkend="SQL-CREATEDOMAIN">.
-      This will only succeed if all columns using the domain satisfy the
-      new constraint.
+      When a new constraint is added to a domain, all columns using that
+      domain will be checked against the newly added constraint.  These
+      checks can be suppressed by adding the new constraint using the
+      <literal>NOT VALID</literal> option; the constraint can later be made
+      valid using <command>ALTER DOMAIN ... VALIDATE CONSTRAINT</command>.
+      Newly inserted or updated rows are always checked against all
+      constraints, even those marked <literal>NOT VALID</literal>.
+      <literal>NOT VALID</> is only accepted for <literal>CHECK</> constraints.
      </para>
     </listitem>
    </varlistentry>
@@ -86,6 +94,17 @@ ALTER DOMAIN <replaceable class="PARAMETER">name</replaceable>
     <listitem>
      <para>
       This form drops constraints on a domain.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term>VALIDATE CONSTRAINT</term>
+    <listitem>
+     <para>
+      This form validates a constraint previously added as
+      <literal>NOT VALID</>, that is, verify that all data in columns using the
+      domain satisfy the specified constraint.
      </para>
     </listitem>
    </varlistentry>
@@ -154,6 +173,16 @@ ALTER DOMAIN <replaceable class="PARAMETER">name</replaceable>
        </para>
       </listitem>
      </varlistentry>
+
+     <varlistentry>
+      <term><replaceable class="PARAMETER">NOT VALID</replaceable></term>
+      <listitem>
+       <para>
+        Do not verify existing column data for constraint validity.
+       </para>
+      </listitem>
+     </varlistentry>
+
 
      <varlistentry>
       <term><literal>CASCADE</literal></term>
@@ -250,9 +279,11 @@ ALTER DOMAIN zipcode SET SCHEMA customers;
 
   <para>
    <command>ALTER DOMAIN</command> conforms to the <acronym>SQL</acronym>
-   standard,
-   except for the <literal>OWNER</> and <literal>SET SCHEMA</> variants,
-   which are <productname>PostgreSQL</productname> extensions.
+   standard, except for the <literal>OWNER</>, <literal>SET SCHEMA</> and
+   <literal>VALIDATE CONSTRAINT</> variants, which are
+   <productname>PostgreSQL</productname> extensions.  The <literal>NOT VALID</>
+   clause of the <literal>ADD CONSTRAINT</> variant is also a
+   <productname>PostgreSQL</productname> extension.
   </para>
  </refsect1>
 

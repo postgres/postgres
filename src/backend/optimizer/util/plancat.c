@@ -552,7 +552,7 @@ get_relation_data_width(Oid relid, int32 *attr_widths)
 /*
  * get_relation_constraints
  *
- * Retrieve the CHECK constraint expressions of the given relation.
+ * Retrieve the validated CHECK constraint expressions of the given relation.
  *
  * Returns a List (possibly empty) of constraint expressions.  Each one
  * has been canonicalized, and its Vars are changed to have the varno
@@ -590,6 +590,13 @@ get_relation_constraints(PlannerInfo *root,
 		for (i = 0; i < num_check; i++)
 		{
 			Node	   *cexpr;
+
+			/*
+			 * If this constraint hasn't been fully validated yet, we must
+			 * ignore it here.
+			 */
+			if (!constr->check[i].ccvalid)
+				continue;
 
 			cexpr = stringToNode(constr->check[i].ccbin);
 
@@ -663,7 +670,7 @@ get_relation_constraints(PlannerInfo *root,
  *
  * Detect whether the relation need not be scanned because it has either
  * self-inconsistent restrictions, or restrictions inconsistent with the
- * relation's CHECK constraints.
+ * relation's validated CHECK constraints.
  *
  * Note: this examines only rel->relid, rel->reloptkind, and
  * rel->baserestrictinfo; therefore it can be called before filling in

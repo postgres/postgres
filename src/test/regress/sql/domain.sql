@@ -259,6 +259,16 @@ alter domain con drop constraint t;
 insert into domcontest values (-5); --fails
 insert into domcontest values (42);
 
+-- Test ALTER DOMAIN .. CONSTRAINT .. NOT VALID
+create domain things AS INT;
+CREATE TABLE thethings (stuff things);
+INSERT INTO thethings (stuff) VALUES (55);
+ALTER DOMAIN things ADD CONSTRAINT meow CHECK (VALUE < 11);
+ALTER DOMAIN things ADD CONSTRAINT meow CHECK (VALUE < 11) NOT VALID;
+ALTER DOMAIN things VALIDATE CONSTRAINT meow;
+UPDATE thethings SET stuff = 10;
+ALTER DOMAIN things VALIDATE CONSTRAINT meow;
+
 -- Confirm ALTER DOMAIN with RULES.
 create table domtab (col1 integer);
 create domain dom as integer;

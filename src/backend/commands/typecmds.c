@@ -86,6 +86,7 @@ static Oid	findTypeSendFunction(List *procname, Oid typeOid);
 static Oid	findTypeTypmodinFunction(List *procname);
 static Oid	findTypeTypmodoutFunction(List *procname);
 static Oid	findTypeAnalyzeFunction(List *procname, Oid typeOid);
+static void	validateDomainConstraint(Oid domainoid, char *ccbin);
 static List *get_rels_with_domain(Oid domainOid, LOCKMODE lockmode);
 static void checkDomainOwner(HeapTuple tup);
 static void checkEnumOwner(HeapTuple tup);
@@ -1941,14 +1942,8 @@ AlterDomainAddConstraint(List *names, Node *newConstraint)
 	Relation	typrel;
 	HeapTuple	tup;
 	Form_pg_type typTup;
-	List	   *rels;
-	ListCell   *rt;
-	EState	   *estate;
-	ExprContext *econtext;
-	char	   *ccbin;
-	Expr	   *expr;
-	ExprState  *exprstate;
 	Constraint *constr;
+	char	   *ccbin;
 
 	/* Make a TypeName so we can use standard type lookup machinery */
 	typename = makeTypeNameFromNameList(names);
@@ -2027,10 +2022,129 @@ AlterDomainAddConstraint(List *names, Node *newConstraint)
 								constr, NameStr(typTup->typname));
 
 	/*
-	 * Test all values stored in the attributes based on the domain the
-	 * constraint is being added to.
+	 * If requested to validate the constraint, test all values stored in the
+	 * attributes based on the domain the constraint is being added to.
 	 */
-	expr = (Expr *) stringToNode(ccbin);
+	if (!constr->skip_validation)
+		validateDomainConstraint(domainoid, ccbin);
+
+	/* Clean up */
+	heap_close(typrel, RowExclusiveLock);
+}
+
+/*
+ * AlterDomainValidateConstraint
+ *
+ * Implements the ALTER DOMAIN .. VALIDATE CONSTRAINT statement.
+ */
+void
+AlterDomainValidateConstraint(List *names, char *constrName)
+{
+	TypeName   *typename;
+	Oid			domainoid;
+	Relation	typrel;
+	Relation	conrel;
+	HeapTuple	tup;
+	Form_pg_type typTup;
+	Form_pg_constraint con;
+	Form_pg_constraint copy_con;
+	char	   *conbin;
+	SysScanDesc	scan;
+	Datum		val;
+	bool		found = false;
+	bool		isnull;
+	HeapTuple	tuple;
+	HeapTuple	copyTuple;
+	ScanKeyData	key;
+
+	/* Make a TypeName so we can use standard type lookup machinery */
+	typename = makeTypeNameFromNameList(names);
+	domainoid = typenameTypeId(NULL, typename);
+
+	/* Look up the domain in the type table */
+	typrel = heap_open(TypeRelationId, AccessShareLock);
+
+	tup = SearchSysCache1(TYPEOID, ObjectIdGetDatum(domainoid));
+	if (!HeapTupleIsValid(tup))
+		elog(ERROR, "cache lookup failed for type %u", domainoid);
+	typTup = (Form_pg_type) GETSTRUCT(tup);
+
+	/* Check it's a domain and check user has permission for ALTER DOMAIN */
+	checkDomainOwner(tup);
+
+	/*
+	 * Find and check the target constraint
+	 */
+	conrel = heap_open(ConstraintRelationId, RowExclusiveLock);
+	ScanKeyInit(&key,
+				Anum_pg_constraint_contypid,
+				BTEqualStrategyNumber, F_OIDEQ,
+				ObjectIdGetDatum(domainoid));
+	scan = systable_beginscan(conrel, ConstraintTypidIndexId,
+							  true, SnapshotNow, 1, &key);
+
+	while (HeapTupleIsValid(tuple = systable_getnext(scan)))
+	{
+		con = (Form_pg_constraint) GETSTRUCT(tuple);
+		if (strcmp(NameStr(con->conname), constrName) == 0)
+		{
+			found = true;
+			break;
+		}
+	}
+
+	if (!found)
+	{
+		con = NULL;		/* keep compiler quiet */
+		ereport(ERROR,
+				(errcode(ERRCODE_UNDEFINED_OBJECT),
+				 errmsg("constraint \"%s\" of domain \"%s\" does not exist",
+						constrName, NameStr(con->conname))));
+	}
+
+	if (con->contype != CONSTRAINT_CHECK)
+		ereport(ERROR,
+				(errcode(ERRCODE_WRONG_OBJECT_TYPE),
+				 errmsg("constraint \"%s\" of domain \"%s\" is not a check constraint",
+						constrName, NameStr(con->conname))));
+
+	val = SysCacheGetAttr(CONSTROID, tuple,
+						  Anum_pg_constraint_conbin,
+						  &isnull);
+	if (isnull)
+		elog(ERROR, "null conbin for constraint %u",
+			 HeapTupleGetOid(tuple));
+	conbin = TextDatumGetCString(val);
+
+	validateDomainConstraint(domainoid, conbin);
+
+	/*
+	 * Now update the catalog, while we have the door open.
+	 */
+	copyTuple = heap_copytuple(tuple);
+	copy_con = (Form_pg_constraint) GETSTRUCT(copyTuple);
+	copy_con->convalidated = true;
+	simple_heap_update(conrel, &copyTuple->t_self, copyTuple);
+	CatalogUpdateIndexes(conrel, copyTuple);
+	heap_freetuple(copyTuple);
+
+	systable_endscan(scan);
+
+	heap_close(typrel, AccessShareLock);
+	heap_close(conrel, RowExclusiveLock);
+
+	ReleaseSysCache(tup);
+}
+
+static void
+validateDomainConstraint(Oid domainoid, char *ccbin)
+{
+	Expr	   *expr = (Expr *) stringToNode(ccbin);
+	List	   *rels;
+	ListCell   *rt;
+	EState	   *estate;
+	ExprContext *econtext;
+	ExprState  *exprstate;
 
 	/* Need an EState to run ExecEvalExpr */
 	estate = CreateExecutorState();
@@ -2092,11 +2206,7 @@ AlterDomainAddConstraint(List *names, Node *newConstraint)
 	}
 
 	FreeExecutorState(estate);
-
-	/* Clean up */
-	heap_close(typrel, RowExclusiveLock);
 }
-
 /*
  * get_rels_with_domain
  *
@@ -2416,7 +2526,7 @@ domainAddConstraint(Oid domainOid, Oid domainNamespace, Oid baseTypeOid,
 						  CONSTRAINT_CHECK,		/* Constraint Type */
 						  false,	/* Is Deferrable */
 						  false,	/* Is Deferred */
-						  true, /* Is Validated */
+						  !constr->skip_validation, /* Is Validated */
 						  InvalidOid,	/* not a relation constraint */
 						  NULL,
 						  0,

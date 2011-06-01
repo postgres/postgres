@@ -200,6 +200,7 @@ CreateTupleDescCopyConstr(TupleDesc tupdesc)
 					cpy->check[i].ccname = pstrdup(constr->check[i].ccname);
 				if (constr->check[i].ccbin)
 					cpy->check[i].ccbin = pstrdup(constr->check[i].ccbin);
+				cpy->check[i].ccvalid = constr->check[i].ccvalid;
 			}
 		}
 

@@ -29,6 +29,7 @@ typedef struct constrCheck
 {
 	char	   *ccname;
 	char	   *ccbin;			/* nodeToString representation of expr */
+	bool		ccvalid;
 } ConstrCheck;
 
 /* This structure contains constraints of a tuple */

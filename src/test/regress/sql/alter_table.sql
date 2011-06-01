@@ -236,11 +236,40 @@ DELETE FROM tmp3 where a=5;
 ALTER TABLE tmp3 validate constraint tmpconstr;
 ALTER TABLE tmp3 validate constraint tmpconstr;
 
+-- Try a non-verified CHECK constraint
+ALTER TABLE tmp3 ADD CONSTRAINT b_greater_than_ten CHECK (b > 10); -- fail
+ALTER TABLE tmp3 ADD CONSTRAINT b_greater_than_ten CHECK (b > 10) NOT VALID; -- succeeds
+ALTER TABLE tmp3 VALIDATE CONSTRAINT b_greater_than_ten; -- fails
+DELETE FROM tmp3 WHERE NOT b > 10;
+ALTER TABLE tmp3 VALIDATE CONSTRAINT b_greater_than_ten; -- succeeds
+ALTER TABLE tmp3 VALIDATE CONSTRAINT b_greater_than_ten; -- succeeds
+
+-- Test inherited NOT VALID CHECK constraints
+select * from tmp3;
+CREATE TABLE tmp6 () INHERITS (tmp3);
+CREATE TABLE tmp7 () INHERITS (tmp3);
+
+INSERT INTO tmp6 VALUES (6, 30), (7, 16);
+ALTER TABLE tmp3 ADD CONSTRAINT b_le_20 CHECK (b <= 20) NOT VALID;
+ALTER TABLE tmp3 VALIDATE CONSTRAINT b_le_20;	-- fails
+DELETE FROM tmp6 WHERE b > 20;
+ALTER TABLE tmp3 VALIDATE CONSTRAINT b_le_20;	-- succeeds
+
+-- An already validated constraint must not be revalidated
+CREATE FUNCTION boo(int) RETURNS int IMMUTABLE STRICT LANGUAGE plpgsql AS $$ BEGIN RAISE NOTICE 'boo: %', $1; RETURN $1; END; $$;
+INSERT INTO tmp7 VALUES (8, 18);
+ALTER TABLE tmp7 ADD CONSTRAINT identity CHECK (b = boo(b));
+ALTER TABLE tmp3 ADD CONSTRAINT IDENTITY check (b = boo(b)) NOT VALID;
+ALTER TABLE tmp3 VALIDATE CONSTRAINT identity;
 
 -- Try (and fail) to create constraint from tmp5(a) to tmp4(a) - unique constraint on
 -- tmp4 is a,b
 
 ALTER TABLE tmp5 add constraint tmpconstr foreign key(a) references tmp4(a) match full;
+
+DROP TABLE tmp7;
+
+DROP TABLE tmp6;
 
 DROP TABLE tmp5;
 
@@ -249,6 +278,23 @@ DROP TABLE tmp4;
 DROP TABLE tmp3;
 
 DROP TABLE tmp2;
+
+-- NOT VALID with plan invalidation -- ensure we don't use a constraint for
+-- exclusion until validated
+set constraint_exclusion TO 'partition';
+create table nv_parent (d date); 
+create table nv_child_2010 () inherits (nv_parent);
+create table nv_child_2011 () inherits (nv_parent);
+alter table nv_child_2010 add check (d between '2010-01-01'::date and '2010-12-31'::date) not valid;
+alter table nv_child_2011 add check (d between '2011-01-01'::date and '2011-12-31'::date) not valid;
+explain (costs off) select * from nv_parent where d between '2011-08-01' and '2011-08-31';
+create table nv_child_2009 (check (d between '2009-01-01'::date and '2009-12-31'::date)) inherits (nv_parent);
+explain (costs off) select * from nv_parent where d between '2011-08-01'::date and '2011-08-31'::date;
+explain (costs off) select * from nv_parent where d between '2009-08-01'::date and '2009-08-31'::date;
+-- after validation, the constraint should be used
+alter table nv_child_2011 VALIDATE CONSTRAINT nv_child_2011_d_check;
+explain (costs off) select * from nv_parent where d between '2009-08-01'::date and '2009-08-31'::date;
+
 
 -- Foreign key adding test with mixed types
 

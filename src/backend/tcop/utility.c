@@ -820,6 +820,10 @@ standard_ProcessUtility(Node *parsetree,
 												  stmt->name,
 												  stmt->behavior);
 						break;
+					case 'V':	/* VALIDATE CONSTRAINT */
+						AlterDomainValidateConstraint(stmt->typeName,
+													  stmt->name);
+						break;
 					default:	/* oops */
 						elog(ERROR, "unrecognized alter domain type: %d",
 							 (int) stmt->subtype);
