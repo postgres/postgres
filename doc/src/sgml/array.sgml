@@ -369,7 +369,7 @@ UPDATE sal_emp SET pay_by_quarter = ARRAY[25000,25000,27000,27000]
 <programlisting>
 UPDATE sal_emp SET pay_by_quarter[4] = 15000
     WHERE name = 'Bill';
-</programListing>
+</programlisting>
 
   or updated in a slice:
 

@@ -4154,7 +4154,7 @@ switch (v.sqltype)
 {
     case ECPGt_char:
         memset(&amp;var_buf, 0, sizeof(var_buf));
-        memcpy(&amp;var_buf, sqldata, (sizeof(var_buf) <= sqllen ? sizeof(var_buf) - 1 : sqllen));
+        memcpy(&amp;var_buf, sqldata, (sizeof(var_buf) &lt;= sqllen ? sizeof(var_buf) - 1 : sqllen));
         break;
 
     case ECPGt_int: /* integer */
@@ -4390,7 +4390,7 @@ main(void)
 
                 case ECPGt_char:
                     memset(&amp;var_buf, 0, sizeof(var_buf));
-                    memcpy(&amp;var_buf, sqldata, (sizeof(var_buf) <= sqllen ? sizeof(var_buf)-1 : sqllen));
+                    memcpy(&amp;var_buf, sqldata, (sizeof(var_buf) &lt;= sqllen ? sizeof(var_buf)-1 : sqllen));
                     break;
 
                 case ECPGt_int: /* integer */
@@ -5871,39 +5871,39 @@ main(void)
 
     /* create */
     loid = lo_create(conn, 0);
-    if (loid < 0)
+    if (loid &lt; 0)
         printf("lo_create() failed: %s", PQerrorMessage(conn));
 
     printf("loid = %d\n", loid);
 
     /* write test */
     fd = lo_open(conn, loid, INV_READ|INV_WRITE);
-    if (fd < 0)
+    if (fd &lt; 0)
         printf("lo_open() failed: %s", PQerrorMessage(conn));
 
     printf("fd = %d\n", fd);
 
     rc = lo_write(conn, fd, buf, buflen);
-    if (rc < 0)
+    if (rc &lt; 0)
         printf("lo_write() failed\n");
 
     rc = lo_close(conn, fd);
-    if (rc < 0)
+    if (rc &lt; 0)
         printf("lo_close() failed: %s", PQerrorMessage(conn));
 
     /* read test */
     fd = lo_open(conn, loid, INV_READ);
-    if (fd < 0)
+    if (fd &lt; 0)
         printf("lo_open() failed: %s", PQerrorMessage(conn));
 
     printf("fd = %d\n", fd);
 
     rc = lo_read(conn, fd, buf2, buflen);
-    if (rc < 0)
+    if (rc &lt; 0)
         printf("lo_read() failed\n");
 
     rc = lo_close(conn, fd);
-    if (rc < 0)
+    if (rc &lt; 0)
         printf("lo_close() failed: %s", PQerrorMessage(conn));
 
     /* check */
@@ -5912,7 +5912,7 @@ main(void)
 
     /* cleanup */
     rc = lo_unlink(conn, loid);
-    if (rc < 0)
+    if (rc &lt; 0)
         printf("lo_unlink() failed: %s", PQerrorMessage(conn));
 
     EXEC SQL COMMIT;
