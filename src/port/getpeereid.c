@@ -69,7 +69,7 @@ getpeereid(int sock, uid_t *uid, gid_t *gid)
 	*gid = ucred_getegid(ucred);
 	ucred_free(ucred);
 
-	if (*uid == (pid_t)(-1) || *gid == (gid_t)(-1))
+	if (*uid == (uid_t)(-1) || *gid == (gid_t)(-1))
 		return -1;
 	return 0;
 #else
