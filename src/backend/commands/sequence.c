@@ -950,6 +950,22 @@ read_info(SeqTable elm, Relation rel, Buffer *buf)
 	Assert(ItemIdIsUsed(lp));
 	tuple.t_data = (HeapTupleHeader) PageGetItem((Page) page, lp);
 
+	/*
+	 * Previous releases of Postgres neglected to prevent SELECT FOR UPDATE
+	 * on a sequence, which would leave a non-frozen XID in the sequence
+	 * tuple's xmax, which eventually leads to clog access failures or worse.
+	 * If we see this has happened, clean up after it.  We treat this like a
+	 * hint bit update, ie, don't bother to WAL-log it, since we can certainly
+	 * do this again if the update gets lost.
+	 */
+	if (HeapTupleHeaderGetXmax(tuple.t_data) != InvalidTransactionId)
+	{
+		HeapTupleHeaderSetXmax(tuple.t_data, InvalidTransactionId);
+		tuple.t_data->t_infomask &= ~HEAP_XMAX_COMMITTED;
+		tuple.t_data->t_infomask |= HEAP_XMAX_INVALID;
+		SetBufferCommitInfoNeedsSave(*buf);
+	}
+
 	seq = (Form_pg_sequence) GETSTRUCT(&tuple);
 
 	elm->increment = seq->increment_by;
