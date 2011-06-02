@@ -74,6 +74,7 @@ ExecutorCheckPerms_hook_type ExecutorCheckPerms_hook = NULL;
 
 /* decls for local routines only used within this module */
 static void InitPlan(QueryDesc *queryDesc, int eflags);
+static void CheckValidRowMarkRel(Relation rel, RowMarkType markType);
 static void ExecPostprocessPlan(EState *estate);
 static void ExecEndPlan(PlanState *planstate, EState *estate);
 static void ExecutePlan(EState *estate, PlanState *planstate,
@@ -837,12 +838,9 @@ InitPlan(QueryDesc *queryDesc, int eflags)
 				break;
 		}
 
-		/* if foreign table, tuples can't be locked */
-		if (relation && relation->rd_rel->relkind == RELKIND_FOREIGN_TABLE)
-			ereport(ERROR,
-					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-					 errmsg("SELECT FOR UPDATE/SHARE cannot be used with foreign table \"%s\"",
-							RelationGetRelationName(relation))));
+		/* Check that relation is a legal target for marking */
+		if (relation)
+			CheckValidRowMarkRel(relation, rc->markType);
 
 		erm = (ExecRowMark *) palloc(sizeof(ExecRowMark));
 		erm->relation = relation;
@@ -977,6 +975,9 @@ InitPlan(QueryDesc *queryDesc, int eflags)
  * In most cases parser and/or planner should have noticed this already, but
  * let's make sure.  In the view case we do need a test here, because if the
  * view wasn't rewritten by a rule, it had better have an INSTEAD trigger.
+ *
+ * Note: when changing this function, you probably also need to look at
+ * CheckValidRowMarkRel.
  */
 void
 CheckValidResultRel(Relation resultRel, CmdType operation)
@@ -1043,6 +1044,57 @@ CheckValidResultRel(Relation resultRel, CmdType operation)
 					(errcode(ERRCODE_WRONG_OBJECT_TYPE),
 					 errmsg("cannot change relation \"%s\"",
 							RelationGetRelationName(resultRel))));
+			break;
+	}
+}
+
+/*
+ * Check that a proposed rowmark target relation is a legal target
+ *
+ * In most cases parser and/or planner should have noticed this already, but
+ * they don't cover all cases.
+ */
+static void
+CheckValidRowMarkRel(Relation rel, RowMarkType markType)
+{
+	switch (rel->rd_rel->relkind)
+	{
+		case RELKIND_RELATION:
+			/* OK */
+			break;
+		case RELKIND_SEQUENCE:
+			/* Must disallow this because we don't vacuum sequences */
+			ereport(ERROR,
+					(errcode(ERRCODE_WRONG_OBJECT_TYPE),
+					 errmsg("cannot lock rows in sequence \"%s\"",
+							RelationGetRelationName(rel))));
+			break;
+		case RELKIND_TOASTVALUE:
+			/* We could allow this, but there seems no good reason to */
+			ereport(ERROR,
+					(errcode(ERRCODE_WRONG_OBJECT_TYPE),
+					 errmsg("cannot lock rows in TOAST relation \"%s\"",
+							RelationGetRelationName(rel))));
+			break;
+		case RELKIND_VIEW:
+			/* Should not get here */
+			ereport(ERROR,
+					(errcode(ERRCODE_WRONG_OBJECT_TYPE),
+					 errmsg("cannot lock rows in view \"%s\"",
+							RelationGetRelationName(rel))));
+			break;
+		case RELKIND_FOREIGN_TABLE:
+			/* Perhaps we can support this someday, but not today */
+			ereport(ERROR,
+					(errcode(ERRCODE_WRONG_OBJECT_TYPE),
+					 errmsg("cannot lock rows in foreign table \"%s\"",
+							RelationGetRelationName(rel))));
+			break;
+		default:
+			ereport(ERROR,
+					(errcode(ERRCODE_WRONG_OBJECT_TYPE),
+					 errmsg("cannot lock rows in relation \"%s\"",
+							RelationGetRelationName(rel))));
 			break;
 	}
 }
