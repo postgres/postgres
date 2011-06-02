@@ -1741,9 +1741,14 @@ index_build(Relation heapRelation,
 	Assert(PointerIsValid(stats));
 
 	/*
-	 * If this is an unlogged index, we need to write out an init fork for it.
+	 * If this is an unlogged index, we may need to write out an init fork for
+	 * it -- but we must first check whether one already exists.  If, for
+	 * example, an unlogged relation is truncated in the transaction that
+	 * created it, or truncated twice in a subsequent transaction, the
+	 * relfilenode won't change, and nothing needs to be done here.
 	 */
-	if (heapRelation->rd_rel->relpersistence == RELPERSISTENCE_UNLOGGED)
+	if (heapRelation->rd_rel->relpersistence == RELPERSISTENCE_UNLOGGED
+	    && !smgrexists(indexRelation->rd_smgr, INIT_FORKNUM))
 	{
 		RegProcedure ambuildempty = indexRelation->rd_am->ambuildempty;
 
