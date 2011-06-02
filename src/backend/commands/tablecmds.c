@@ -7387,7 +7387,7 @@ ATExecChangeOwner(Oid relationOid, Oid newOwnerId, bool recursing, LOCKMODE lock
 		default:
 			ereport(ERROR,
 					(errcode(ERRCODE_WRONG_OBJECT_TYPE),
-					 errmsg("\"%s\" is not a table, view, sequence, or foreign tabl, or foreign tablee",
+					 errmsg("\"%s\" is not a table, view, sequence, or foreign table",
 							NameStr(tuple_class->relname))));
 	}
 
