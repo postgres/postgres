@@ -581,6 +581,43 @@ InitPlan(QueryDesc *queryDesc, int eflags)
 		ExecRowMark *erm;
 
 		relation = heap_open(relid, RowShareLock);
+
+		/*
+		 * Check that relation is a legal target for marking.
+		 *
+		 * In most cases parser and/or planner should have noticed this
+		 * already, but they don't cover all cases.
+		 */
+		switch (relation->rd_rel->relkind)
+		{
+			case RELKIND_RELATION:
+				/* OK */
+				break;
+			case RELKIND_SEQUENCE:
+				/* Must disallow this because we don't vacuum sequences */
+				ereport(ERROR,
+						(errcode(ERRCODE_WRONG_OBJECT_TYPE),
+						 errmsg("cannot lock rows in sequence \"%s\"",
+								RelationGetRelationName(relation))));
+				break;
+			case RELKIND_TOASTVALUE:
+				/* This will be disallowed in 9.1, but for now OK */
+				break;
+			case RELKIND_VIEW:
+				/* Should not get here */
+				ereport(ERROR,
+						(errcode(ERRCODE_WRONG_OBJECT_TYPE),
+						 errmsg("cannot lock rows in view \"%s\"",
+								RelationGetRelationName(relation))));
+				break;
+			default:
+				ereport(ERROR,
+						(errcode(ERRCODE_WRONG_OBJECT_TYPE),
+						 errmsg("cannot lock rows in relation \"%s\"",
+								RelationGetRelationName(relation))));
+				break;
+		}
+
 		erm = (ExecRowMark *) palloc(sizeof(ExecRowMark));
 		erm->relation = relation;
 		erm->rti = rc->rti;
