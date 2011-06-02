@@ -1373,6 +1373,9 @@ pg_get_constraintdef_worker(Oid constraintId, bool fullCommand,
 	if (conForm->condeferred)
 		appendStringInfo(&buf, " INITIALLY DEFERRED");
 
+	if (!conForm->convalidated)
+		appendStringInfoString(&buf, " NOT VALID");
+
 	/* Cleanup */
 	ReleaseSysCache(tup);
 
