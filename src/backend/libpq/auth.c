@@ -17,12 +17,6 @@
 
 #include <sys/param.h>
 #include <sys/socket.h>
-#ifdef HAVE_UCRED_H
-#include <ucred.h>
-#endif
-#ifdef HAVE_SYS_UCRED_H
-#include <sys/ucred.h>
-#endif
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include <unistd.h>
@@ -1756,84 +1750,24 @@ static int
 auth_peer(hbaPort *port)
 {
 	char		ident_user[IDENT_USERNAME_MAX + 1];
-	uid_t		uid = 0;
-	struct passwd *pass;
-
-#if defined(HAVE_GETPEEREID)
-	/* Most BSDen, including OS X: use getpeereid() */
+	uid_t		uid;
 	gid_t		gid;
+	struct passwd *pass;
 
 	errno = 0;
 	if (getpeereid(port->sock, &uid, &gid) != 0)
 	{
-		/* We didn't get a valid credentials struct. */
-		ereport(LOG,
-				(errcode_for_socket_access(),
-				 errmsg("could not get peer credentials: %m")));
+		/* Provide special error message if getpeereid is a stub */
+		if (errno == ENOSYS)
+			ereport(LOG,
+					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+					 errmsg("peer authentication is not supported on this platform")));
+		else
+			ereport(LOG,
+					(errcode_for_socket_access(),
+					 errmsg("could not get peer credentials: %m")));
 		return STATUS_ERROR;
 	}
-#elif defined(SO_PEERCRED)
-	/* Linux: use getsockopt(SO_PEERCRED) */
-	struct ucred peercred;
-	ACCEPT_TYPE_ARG3 so_len = sizeof(peercred);
-
-	errno = 0;
-	if (getsockopt(port->sock, SOL_SOCKET, SO_PEERCRED, &peercred, &so_len) != 0 ||
-		so_len != sizeof(peercred))
-	{
-		/* We didn't get a valid credentials struct. */
-		ereport(LOG,
-				(errcode_for_socket_access(),
-				 errmsg("could not get peer credentials: %m")));
-		return STATUS_ERROR;
-	}
-	uid = peercred.uid;
-#elif defined(LOCAL_PEERCRED)
-	/* Debian with FreeBSD kernel: use getsockopt(LOCAL_PEERCRED) */
-	struct xucred peercred;
-	ACCEPT_TYPE_ARG3 so_len = sizeof(peercred);
-
-	errno = 0;
-	if (getsockopt(port->sock, 0, LOCAL_PEERCRED, &peercred, &so_len) != 0 ||
-		so_len != sizeof(peercred) ||
-		peercred.cr_version != XUCRED_VERSION)
-	{
-		/* We didn't get a valid credentials struct. */
-		ereport(LOG,
-				(errcode_for_socket_access(),
-				 errmsg("could not get peer credentials: %m")));
-		return STATUS_ERROR;
-	}
-	uid = peercred.cr_uid;
-#elif defined(HAVE_GETPEERUCRED)
-	/* Solaris: use getpeerucred() */
-	ucred_t    *ucred;
-
-	ucred = NULL;				/* must be initialized to NULL */
-	if (getpeerucred(port->sock, &ucred) == -1)
-	{
-		ereport(LOG,
-				(errcode_for_socket_access(),
-				 errmsg("could not get peer credentials: %m")));
-		return STATUS_ERROR;
-	}
-
-	if ((uid = ucred_geteuid(ucred)) == -1)
-	{
-		ereport(LOG,
-				(errcode_for_socket_access(),
-		   errmsg("could not get effective UID from peer credentials: %m")));
-		return STATUS_ERROR;
-	}
-
-	ucred_free(ucred);
-#else
-	ereport(LOG,
-			(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-			 errmsg("Peer authentication is not supported on local connections on this platform")));
-
-	return STATUS_ERROR;
-#endif
 
 	pass = getpwuid(uid);
 

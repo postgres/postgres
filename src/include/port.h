@@ -395,6 +395,10 @@ extern void srand48(long seed);
 extern int	getopt(int nargc, char *const * nargv, const char *ostr);
 #endif
 
+#ifndef HAVE_GETPEEREID
+extern int	getpeereid(int sock, uid_t *uid, gid_t *gid);
+#endif
+
 #ifndef HAVE_ISINF
 extern int	isinf(double x);
 #endif

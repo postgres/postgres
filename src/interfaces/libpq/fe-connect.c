@@ -21,12 +21,6 @@
 #include <ctype.h>
 #include <time.h>
 #include <unistd.h>
-#ifdef HAVE_UCRED_H
-#include <ucred.h>
-#endif
-#ifdef HAVE_SYS_UCRED_H
-#include <sys/ucred.h>
-#endif
 
 #include "libpq-fe.h"
 #include "libpq-int.h"
@@ -1859,6 +1853,7 @@ keep_going:						/* We will come back to here until there is
 				char	   *startpacket;
 				int			packetlen;
 
+#ifdef HAVE_UNIX_SOCKETS
 				/*
 				 * Implement requirepeer check, if requested and it's a
 				 * Unix-domain socket.
@@ -1866,82 +1861,25 @@ keep_going:						/* We will come back to here until there is
 				if (conn->requirepeer && conn->requirepeer[0] &&
 					IS_AF_UNIX(conn->raddr.addr.ss_family))
 				{
-#if defined(HAVE_GETPEEREID) || defined(SO_PEERCRED) || defined(LOCAL_PEERCRED) || defined(HAVE_GETPEERUCRED)
 					char		pwdbuf[BUFSIZ];
 					struct passwd pass_buf;
 					struct passwd *pass;
 					uid_t		uid;
-
-#if defined(HAVE_GETPEEREID)
-					/* Most BSDen, including OS X: use getpeereid() */
 					gid_t		gid;
 
 					errno = 0;
 					if (getpeereid(conn->sock, &uid, &gid) != 0)
 					{
-						appendPQExpBuffer(&conn->errorMessage,
-						libpq_gettext("could not get peer credentials: %s\n"),
-									pqStrerror(errno, sebuf, sizeof(sebuf)));
+						/* Provide special error message if getpeereid is a stub */
+						if (errno == ENOSYS)
+							appendPQExpBuffer(&conn->errorMessage,
+											  libpq_gettext("requirepeer parameter is not supported on this platform\n"));
+						else
+							appendPQExpBuffer(&conn->errorMessage,
+											  libpq_gettext("could not get peer credentials: %s\n"),
+											  pqStrerror(errno, sebuf, sizeof(sebuf)));
 						goto error_return;
 					}
-#elif defined(SO_PEERCRED)
-					/* Linux: use getsockopt(SO_PEERCRED) */
-					struct ucred peercred;
-					ACCEPT_TYPE_ARG3 so_len = sizeof(peercred);
-
-					errno = 0;
-					if (getsockopt(conn->sock, SOL_SOCKET, SO_PEERCRED,
-								   &peercred, &so_len) != 0 ||
-						so_len != sizeof(peercred))
-					{
-						appendPQExpBuffer(&conn->errorMessage,
-						libpq_gettext("could not get peer credentials: %s\n"),
-									pqStrerror(errno, sebuf, sizeof(sebuf)));
-						goto error_return;
-					}
-					uid = peercred.uid;
-#elif defined(LOCAL_PEERCRED)
-					/* Debian with FreeBSD kernel: use LOCAL_PEERCRED */
-					struct xucred peercred;
-					ACCEPT_TYPE_ARG3 so_len = sizeof(peercred);
-
-					errno = 0;
-					if (getsockopt(conn->sock, 0, LOCAL_PEERCRED,
-								   &peercred, &so_len) != 0 ||
-						so_len != sizeof(peercred) ||
-						peercred.cr_version != XUCRED_VERSION)
-					{
-						appendPQExpBuffer(&conn->errorMessage,
-						libpq_gettext("could not get peer credentials: %s\n"),
-									pqStrerror(errno, sebuf, sizeof(sebuf)));
-						goto error_return;
-					}
-					uid = peercred.cr_uid;
-#elif defined(HAVE_GETPEERUCRED)
-					/* Solaris: use getpeerucred() */
-					ucred_t    *ucred;
-
-					ucred = NULL;		/* must be initialized to NULL */
-					if (getpeerucred(conn->sock, &ucred) == -1)
-					{
-						appendPQExpBuffer(&conn->errorMessage,
-						libpq_gettext("could not get peer credentials: %s\n"),
-									pqStrerror(errno, sebuf, sizeof(sebuf)));
-						goto error_return;
-					}
-
-					if ((uid = ucred_geteuid(ucred)) == -1)
-					{
-						appendPQExpBuffer(&conn->errorMessage,
-										  libpq_gettext("could not get effective UID from peer credentials: %s\n"),
-									pqStrerror(errno, sebuf, sizeof(sebuf)));
-						ucred_free(ucred);
-						goto error_return;
-					}
-					ucred_free(ucred);
-#else
-#error missing implementation method for requirepeer
-#endif
 
 					pqGetpwuid(uid, &pass_buf, pwdbuf, sizeof(pwdbuf), &pass);
 
@@ -1960,12 +1898,8 @@ keep_going:						/* We will come back to here until there is
 										  conn->requirepeer, pass->pw_name);
 						goto error_return;
 					}
-#else							/* can't support requirepeer */
-					appendPQExpBuffer(&conn->errorMessage,
-									  libpq_gettext("requirepeer parameter is not supported on this platform\n"));
-					goto error_return;
-#endif
 				}
+#endif /* HAVE_UNIX_SOCKETS */
 
 #ifdef USE_SSL
 
