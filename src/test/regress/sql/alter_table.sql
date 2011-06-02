@@ -1128,6 +1128,8 @@ alter table tab1 alter column b type varchar; -- fails
 create temp table recur1 (f1 int);
 alter table recur1 add column f2 recur1; -- fails
 alter table recur1 add column f2 recur1[]; -- fails
+create domain array_of_recur1 as recur1[];
+alter table recur1 add column f2 array_of_recur1; -- fails
 create temp table recur2 (f1 int, f2 recur1);
 alter table recur1 add column f2 recur2; -- fails
 alter table recur1 add column f2 int;

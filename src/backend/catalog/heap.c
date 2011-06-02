@@ -485,12 +485,19 @@ CheckAttributeType(const char *attname,
 					 errmsg("column \"%s\" has pseudo-type %s",
 							attname, format_type_be(atttypid))));
 	}
+	else if (att_typtype == TYPTYPE_DOMAIN)
+	{
+		/*
+		 * If it's a domain, recurse to check its base type.
+		 */
+		CheckAttributeType(attname, getBaseType(atttypid), attcollation,
+						   containing_rowtypes,
+						   allow_system_table_mods);
+	}
 	else if (att_typtype == TYPTYPE_COMPOSITE)
 	{
 		/*
-		 * For a composite type, recurse into its attributes.  You might think
-		 * this isn't necessary, but since we allow system catalogs to break
-		 * the rule, we have to guard against the case.
+		 * For a composite type, recurse into its attributes.
 		 */
 		Relation	relation;
 		TupleDesc	tupdesc;

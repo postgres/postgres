@@ -1516,6 +1516,9 @@ alter table recur1 add column f2 recur1; -- fails
 ERROR:  composite type recur1 cannot be made a member of itself
 alter table recur1 add column f2 recur1[]; -- fails
 ERROR:  composite type recur1 cannot be made a member of itself
+create domain array_of_recur1 as recur1[];
+alter table recur1 add column f2 array_of_recur1; -- fails
+ERROR:  composite type recur1 cannot be made a member of itself
 create temp table recur2 (f1 int, f2 recur1);
 alter table recur1 add column f2 recur2; -- fails
 ERROR:  composite type recur1 cannot be made a member of itself
