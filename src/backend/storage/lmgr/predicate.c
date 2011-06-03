@@ -245,6 +245,11 @@
 #define SxactIsReadOnly(sxact) (((sxact)->flags & SXACT_FLAG_READ_ONLY) != 0)
 #define SxactHasSummaryConflictIn(sxact) (((sxact)->flags & SXACT_FLAG_SUMMARY_CONFLICT_IN) != 0)
 #define SxactHasSummaryConflictOut(sxact) (((sxact)->flags & SXACT_FLAG_SUMMARY_CONFLICT_OUT) != 0)
+/*
+ * The following macro actually means that the specified transaction has a
+ * conflict out *to a transaction which committed ahead of it*.  It's hard
+ * to get that into a name of a reasonable length.
+ */
 #define SxactHasConflictOut(sxact) (((sxact)->flags & SXACT_FLAG_CONFLICT_OUT) != 0)
 #define SxactIsDeferrableWaiting(sxact) (((sxact)->flags & SXACT_FLAG_DEFERRABLE_WAITING) != 0)
 #define SxactIsROSafe(sxact) (((sxact)->flags & SXACT_FLAG_RO_SAFE) != 0)
@@ -2708,7 +2713,7 @@ SetNewSxactGlobalXmin(void)
  * up in some relatively timely fashion.
  *
  * If this transaction is committing and is holding any predicate locks,
- * it must be added to a list of completed serializable transaction still
+ * it must be added to a list of completed serializable transactions still
  * holding locks.
  */
 void
@@ -2753,12 +2758,13 @@ ReleasePredicateLocks(const bool isCommit)
 	LWLockAcquire(SerializableXactHashLock, LW_EXCLUSIVE);
 
 	/*
-	 * We don't hold a lock here, assuming that TransactionId is atomic!
+	 * We don't hold XidGenLock lock here, assuming that TransactionId is
+	 * atomic!
 	 *
 	 * If this value is changing, we don't care that much whether we get the
 	 * old or new value -- it is just used to determine how far
-	 * GlobalSerizableXmin must advance before this transaction can be cleaned
-	 * fully cleaned up.  The worst that could happen is we wait for ome more
+	 * GlobalSerizableXmin must advance before this transaction can be fully
+	 * cleaned up.  The worst that could happen is we wait for one more
 	 * transaction to complete before freeing some RAM; correctness of visible
 	 * behavior is not affected.
 	 */
@@ -3860,8 +3866,8 @@ OnConflict_CheckForSerializationFailure(const SERIALIZABLEXACT *reader,
 	 * Because T2 must've committed first, there is no anomaly if:
 	 * - the reader committed before T2
 	 * - the writer committed before T2
-	 * - the reader is a READ ONLY transaction and the reader was not
-	 *   concurrent with T2 (= reader acquired its snapshot after T2 committed)
+	 * - the reader is a READ ONLY transaction and the reader was concurrent
+	 *	 with T2 (= reader acquired its snapshot before T2 committed)
 	 */
 	if (!failure)
 	{

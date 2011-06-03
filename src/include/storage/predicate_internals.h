@@ -92,6 +92,11 @@ typedef struct SERIALIZABLEXACT
 
 #define SXACT_FLAG_ROLLED_BACK				0x00000001
 #define SXACT_FLAG_COMMITTED				0x00000002
+/*
+ * The following flag actually means that the flagged transaction has a
+ * conflict out *to a transaction which committed ahead of it*.  It's hard
+ * to get that into a name of a reasonable length.
+ */
 #define SXACT_FLAG_CONFLICT_OUT				0x00000004
 #define SXACT_FLAG_READ_ONLY				0x00000008
 #define SXACT_FLAG_DID_WRITE				0x00000010
