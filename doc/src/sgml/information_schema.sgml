@@ -825,7 +825,7 @@
   </table>
  </sect1>
 
- <sect1 id="infoschema-collation-character-set-applicability">
+ <sect1 id="infoschema-collation-character-set-applicab"> <!-- max 44 characters -->
   <title><literal>collation_character_set_applicability</literal></title>
 
   <para>
