@@ -2,6 +2,7 @@
 /chklocale.c
 /crypt.c
 /getaddrinfo.c
+/getpeereid.c
 /inet_aton.c
 /inet_net_ntop.c
 /noblock.c
