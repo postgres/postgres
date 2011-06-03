@@ -10,11 +10,11 @@
  * be used for grouping and sorting the type (GROUP BY, ORDER BY ASC/DESC).
  *
  * Several seemingly-odd choices have been made to support use of the type
- * cache by the generic array handling routines array_eq(), array_cmp(),
- * and hash_array().  Because those routines are used as index support
- * operations, they cannot leak memory.  To allow them to execute efficiently,
- * all information that they would like to re-use across calls is kept in the
- * type cache.
+ * cache by generic array and record handling routines, such as array_eq(),
+ * record_cmp(), and hash_array().  Because those routines are used as index
+ * support operations, they cannot leak memory.  To allow them to execute
+ * efficiently, all information that they would like to re-use across calls
+ * is kept in the type cache.
  *
  * Once created, a type cache entry lives as long as the backend does, so
  * there is no need for a call to release a cache entry.  (For present uses,
@@ -28,8 +28,9 @@
  * doesn't cope with opclasses changing under it, either, so this seems
  * a low-priority problem.
  *
- * We do support clearing the tuple descriptor part of a rowtype's cache
- * entry, since that may need to change as a consequence of ALTER TABLE.
+ * We do support clearing the tuple descriptor and operator/function parts
+ * of a rowtype's cache entry, since those may need to change as a consequence
+ * of ALTER TABLE.
  *
  *
  * Portions Copyright (c) 1996-2011, PostgreSQL Global Development Group
@@ -49,6 +50,7 @@
 #include "access/nbtree.h"
 #include "catalog/indexing.h"
 #include "catalog/pg_enum.h"
+#include "catalog/pg_operator.h"
 #include "catalog/pg_type.h"
 #include "commands/defrem.h"
 #include "utils/builtins.h"
@@ -64,6 +66,15 @@
 
 /* The main type cache hashtable searched by lookup_type_cache */
 static HTAB *TypeCacheHash = NULL;
+
+/* Private flag bits in the TypeCacheEntry.flags field */
+#define TCFLAGS_CHECKED_ELEM_PROPERTIES		0x0001
+#define TCFLAGS_HAVE_ELEM_EQUALITY			0x0002
+#define TCFLAGS_HAVE_ELEM_COMPARE			0x0004
+#define TCFLAGS_HAVE_ELEM_HASHING			0x0008
+#define TCFLAGS_CHECKED_FIELD_PROPERTIES	0x0010
+#define TCFLAGS_HAVE_FIELD_EQUALITY			0x0020
+#define TCFLAGS_HAVE_FIELD_COMPARE			0x0040
 
 /* Private information to support comparisons of enum values */
 typedef struct
@@ -109,6 +120,14 @@ static TupleDesc *RecordCacheArray = NULL;
 static int32 RecordCacheArrayLen = 0;	/* allocated length of array */
 static int32 NextRecordTypmod = 0;		/* number of entries used */
 
+static void load_typcache_tupdesc(TypeCacheEntry *typentry);
+static bool array_element_has_equality(TypeCacheEntry *typentry);
+static bool array_element_has_compare(TypeCacheEntry *typentry);
+static bool array_element_has_hashing(TypeCacheEntry *typentry);
+static void cache_array_element_properties(TypeCacheEntry *typentry);
+static bool record_fields_have_equality(TypeCacheEntry *typentry);
+static bool record_fields_have_compare(TypeCacheEntry *typentry);
+static void cache_record_field_properties(TypeCacheEntry *typentry);
 static void TypeCacheRelCallback(Datum arg, Oid relid);
 static void load_enum_cache_data(TypeCacheEntry *tcache);
 static EnumItem *find_enumitem(TypeCacheEnumData *enumdata, Oid arg);
@@ -257,17 +276,34 @@ lookup_type_cache(Oid type_id, int flags)
 	if ((flags & (TYPECACHE_EQ_OPR | TYPECACHE_EQ_OPR_FINFO)) &&
 		typentry->eq_opr == InvalidOid)
 	{
+		Oid		eq_opr = InvalidOid;
+
 		if (typentry->btree_opf != InvalidOid)
-			typentry->eq_opr = get_opfamily_member(typentry->btree_opf,
-												   typentry->btree_opintype,
-												   typentry->btree_opintype,
-												   BTEqualStrategyNumber);
-		if (typentry->eq_opr == InvalidOid &&
+			eq_opr = get_opfamily_member(typentry->btree_opf,
+										 typentry->btree_opintype,
+										 typentry->btree_opintype,
+										 BTEqualStrategyNumber);
+		if (eq_opr == InvalidOid &&
 			typentry->hash_opf != InvalidOid)
-			typentry->eq_opr = get_opfamily_member(typentry->hash_opf,
-												   typentry->hash_opintype,
-												   typentry->hash_opintype,
-												   HTEqualStrategyNumber);
+			eq_opr = get_opfamily_member(typentry->hash_opf,
+										 typentry->hash_opintype,
+										 typentry->hash_opintype,
+										 HTEqualStrategyNumber);
+
+		/*
+		 * If the proposed equality operator is array_eq or record_eq,
+		 * check to see if the element type or column types support equality.
+		 * If not, array_eq or record_eq would fail at runtime, so we don't
+		 * want to report that the type has equality.
+		 */
+		if (eq_opr == ARRAY_EQ_OP &&
+			!array_element_has_equality(typentry))
+			eq_opr = InvalidOid;
+		else if (eq_opr == RECORD_EQ_OP &&
+				 !record_fields_have_equality(typentry))
+			eq_opr = InvalidOid;
+
+		typentry->eq_opr = eq_opr;
 
 		/*
 		 * Reset info about hash function whenever we pick up new info about
@@ -279,32 +315,70 @@ lookup_type_cache(Oid type_id, int flags)
 	}
 	if ((flags & TYPECACHE_LT_OPR) && typentry->lt_opr == InvalidOid)
 	{
+		Oid		lt_opr = InvalidOid;
+
 		if (typentry->btree_opf != InvalidOid)
-			typentry->lt_opr = get_opfamily_member(typentry->btree_opf,
-												   typentry->btree_opintype,
-												   typentry->btree_opintype,
-												   BTLessStrategyNumber);
+			lt_opr = get_opfamily_member(typentry->btree_opf,
+										 typentry->btree_opintype,
+										 typentry->btree_opintype,
+										 BTLessStrategyNumber);
+
+		/* As above, make sure array_cmp or record_cmp will succeed */
+		if (lt_opr == ARRAY_LT_OP &&
+			!array_element_has_compare(typentry))
+			lt_opr = InvalidOid;
+		else if (lt_opr == RECORD_LT_OP &&
+				 !record_fields_have_compare(typentry))
+			lt_opr = InvalidOid;
+
+		typentry->lt_opr = lt_opr;
 	}
 	if ((flags & TYPECACHE_GT_OPR) && typentry->gt_opr == InvalidOid)
 	{
+		Oid		gt_opr = InvalidOid;
+
 		if (typentry->btree_opf != InvalidOid)
-			typentry->gt_opr = get_opfamily_member(typentry->btree_opf,
-												   typentry->btree_opintype,
-												   typentry->btree_opintype,
-												   BTGreaterStrategyNumber);
+			gt_opr = get_opfamily_member(typentry->btree_opf,
+										 typentry->btree_opintype,
+										 typentry->btree_opintype,
+										 BTGreaterStrategyNumber);
+
+		/* As above, make sure array_cmp or record_cmp will succeed */
+		if (gt_opr == ARRAY_GT_OP &&
+			!array_element_has_compare(typentry))
+			gt_opr = InvalidOid;
+		else if (gt_opr == RECORD_GT_OP &&
+				 !record_fields_have_compare(typentry))
+			gt_opr = InvalidOid;
+
+		typentry->gt_opr = gt_opr;
 	}
 	if ((flags & (TYPECACHE_CMP_PROC | TYPECACHE_CMP_PROC_FINFO)) &&
 		typentry->cmp_proc == InvalidOid)
 	{
+		Oid		cmp_proc = InvalidOid;
+
 		if (typentry->btree_opf != InvalidOid)
-			typentry->cmp_proc = get_opfamily_proc(typentry->btree_opf,
-												   typentry->btree_opintype,
-												   typentry->btree_opintype,
-												   BTORDER_PROC);
+			cmp_proc = get_opfamily_proc(typentry->btree_opf,
+										 typentry->btree_opintype,
+										 typentry->btree_opintype,
+										 BTORDER_PROC);
+
+		/* As above, make sure array_cmp or record_cmp will succeed */
+		if (cmp_proc == F_BTARRAYCMP &&
+			!array_element_has_compare(typentry))
+			cmp_proc = InvalidOid;
+		else if (cmp_proc == F_BTRECORDCMP &&
+				 !record_fields_have_compare(typentry))
+			cmp_proc = InvalidOid;
+
+		typentry->cmp_proc = cmp_proc;
 	}
 	if ((flags & (TYPECACHE_HASH_PROC | TYPECACHE_HASH_PROC_FINFO)) &&
 		typentry->hash_proc == InvalidOid)
 	{
+		Oid		hash_proc = InvalidOid;
+
 		/*
 		 * We insist that the eq_opr, if one has been determined, match the
 		 * hash opclass; else report there is no hash function.
@@ -315,10 +389,21 @@ lookup_type_cache(Oid type_id, int flags)
 													 typentry->hash_opintype,
 													 typentry->hash_opintype,
 													 HTEqualStrategyNumber)))
-			typentry->hash_proc = get_opfamily_proc(typentry->hash_opf,
-													typentry->hash_opintype,
-													typentry->hash_opintype,
-													HASHPROC);
+			hash_proc = get_opfamily_proc(typentry->hash_opf,
+										  typentry->hash_opintype,
+										  typentry->hash_opintype,
+										  HASHPROC);
+
+		/*
+		 * As above, make sure hash_array will succeed.  We don't currently
+		 * support hashing for composite types, but when we do, we'll need
+		 * more logic here to check that case too.
+		 */
+		if (hash_proc == F_HASH_ARRAY &&
+			!array_element_has_hashing(typentry))
+			hash_proc = InvalidOid;
+
+		typentry->hash_proc = hash_proc;
 	}
 
 	/*
@@ -361,30 +446,165 @@ lookup_type_cache(Oid type_id, int flags)
 		typentry->tupDesc == NULL &&
 		typentry->typtype == TYPTYPE_COMPOSITE)
 	{
-		Relation	rel;
-
-		if (!OidIsValid(typentry->typrelid))	/* should not happen */
-			elog(ERROR, "invalid typrelid for composite type %u",
-				 typentry->type_id);
-		rel = relation_open(typentry->typrelid, AccessShareLock);
-		Assert(rel->rd_rel->reltype == typentry->type_id);
-
-		/*
-		 * Link to the tupdesc and increment its refcount (we assert it's a
-		 * refcounted descriptor).	We don't use IncrTupleDescRefCount() for
-		 * this, because the reference mustn't be entered in the current
-		 * resource owner; it can outlive the current query.
-		 */
-		typentry->tupDesc = RelationGetDescr(rel);
-
-		Assert(typentry->tupDesc->tdrefcount > 0);
-		typentry->tupDesc->tdrefcount++;
-
-		relation_close(rel, AccessShareLock);
+		load_typcache_tupdesc(typentry);
 	}
 
 	return typentry;
 }
+
+/*
+ * load_typcache_tupdesc --- helper routine to set up composite type's tupDesc
+ */
+static void
+load_typcache_tupdesc(TypeCacheEntry *typentry)
+{
+	Relation	rel;
+
+	if (!OidIsValid(typentry->typrelid))	/* should not happen */
+		elog(ERROR, "invalid typrelid for composite type %u",
+			 typentry->type_id);
+	rel = relation_open(typentry->typrelid, AccessShareLock);
+	Assert(rel->rd_rel->reltype == typentry->type_id);
+
+	/*
+	 * Link to the tupdesc and increment its refcount (we assert it's a
+	 * refcounted descriptor).	We don't use IncrTupleDescRefCount() for
+	 * this, because the reference mustn't be entered in the current
+	 * resource owner; it can outlive the current query.
+	 */
+	typentry->tupDesc = RelationGetDescr(rel);
+
+	Assert(typentry->tupDesc->tdrefcount > 0);
+	typentry->tupDesc->tdrefcount++;
+
+	relation_close(rel, AccessShareLock);
+}
+
+
+/*
+ * array_element_has_equality and friends are helper routines to check
+ * whether we should believe that array_eq and related functions will work
+ * on the given array type or composite type.
+ *
+ * The logic above may call these repeatedly on the same type entry, so we
+ * make use of the typentry->flags field to cache the results once known.
+ * Also, we assume that we'll probably want all these facts about the type
+ * if we want any, so we cache them all using only one lookup of the
+ * component datatype(s).
+ */
+
+static bool
+array_element_has_equality(TypeCacheEntry *typentry)
+{
+	if (!(typentry->flags & TCFLAGS_CHECKED_ELEM_PROPERTIES))
+		cache_array_element_properties(typentry);
+	return (typentry->flags & TCFLAGS_HAVE_ELEM_EQUALITY) != 0;
+}
+
+static bool
+array_element_has_compare(TypeCacheEntry *typentry)
+{
+	if (!(typentry->flags & TCFLAGS_CHECKED_ELEM_PROPERTIES))
+		cache_array_element_properties(typentry);
+	return (typentry->flags & TCFLAGS_HAVE_ELEM_COMPARE) != 0;
+}
+
+static bool
+array_element_has_hashing(TypeCacheEntry *typentry)
+{
+	if (!(typentry->flags & TCFLAGS_CHECKED_ELEM_PROPERTIES))
+		cache_array_element_properties(typentry);
+	return (typentry->flags & TCFLAGS_HAVE_ELEM_HASHING) != 0;
+}
+
+static void
+cache_array_element_properties(TypeCacheEntry *typentry)
+{
+	Oid		elem_type = get_base_element_type(typentry->type_id);
+
+	if (OidIsValid(elem_type))
+	{
+		TypeCacheEntry *elementry;
+
+		elementry = lookup_type_cache(elem_type,
+									  TYPECACHE_EQ_OPR |
+									  TYPECACHE_CMP_PROC |
+									  TYPECACHE_HASH_PROC);
+		if (OidIsValid(elementry->eq_opr))
+			typentry->flags |= TCFLAGS_HAVE_ELEM_EQUALITY;
+		if (OidIsValid(elementry->cmp_proc))
+			typentry->flags |= TCFLAGS_HAVE_ELEM_COMPARE;
+		if (OidIsValid(elementry->hash_proc))
+			typentry->flags |= TCFLAGS_HAVE_ELEM_HASHING;
+	}
+	typentry->flags |= TCFLAGS_CHECKED_ELEM_PROPERTIES;
+}
+
+static bool
+record_fields_have_equality(TypeCacheEntry *typentry)
+{
+	if (!(typentry->flags & TCFLAGS_CHECKED_FIELD_PROPERTIES))
+		cache_record_field_properties(typentry);
+	return (typentry->flags & TCFLAGS_HAVE_FIELD_EQUALITY) != 0;
+}
+
+static bool
+record_fields_have_compare(TypeCacheEntry *typentry)
+{
+	if (!(typentry->flags & TCFLAGS_CHECKED_FIELD_PROPERTIES))
+		cache_record_field_properties(typentry);
+	return (typentry->flags & TCFLAGS_HAVE_FIELD_COMPARE) != 0;
+}
+
+static void
+cache_record_field_properties(TypeCacheEntry *typentry)
+{
+	/*
+	 * For type RECORD, we can't really tell what will work, since we don't
+	 * have access here to the specific anonymous type.  Just assume that
+	 * everything will (we may get a failure at runtime ...)
+	 */
+	if (typentry->type_id == RECORDOID)
+		typentry->flags |= (TCFLAGS_HAVE_FIELD_EQUALITY |
+							TCFLAGS_HAVE_FIELD_COMPARE);
+	else if (typentry->typtype == TYPTYPE_COMPOSITE)
+	{
+		TupleDesc	tupdesc;
+		int			newflags;
+		int 		i;
+
+		/* Fetch composite type's tupdesc if we don't have it already */
+		if (typentry->tupDesc == NULL)
+			load_typcache_tupdesc(typentry);
+		tupdesc = typentry->tupDesc;
+
+		/* Have each property if all non-dropped fields have the property */
+		newflags = (TCFLAGS_HAVE_FIELD_EQUALITY |
+					TCFLAGS_HAVE_FIELD_COMPARE);
+		for (i = 0; i < tupdesc->natts; i++)
+		{
+			TypeCacheEntry *fieldentry;
+
+			if (tupdesc->attrs[i]->attisdropped)
+				continue;
+
+			fieldentry = lookup_type_cache(tupdesc->attrs[i]->atttypid,
+										   TYPECACHE_EQ_OPR |
+										   TYPECACHE_CMP_PROC);
+			if (!OidIsValid(fieldentry->eq_opr))
+				newflags &= ~TCFLAGS_HAVE_FIELD_EQUALITY;
+			if (!OidIsValid(fieldentry->cmp_proc))
+				newflags &= ~TCFLAGS_HAVE_FIELD_COMPARE;
+
+			/* We can drop out of the loop once we disprove all bits */
+			if (newflags == 0)
+				break;
+		}
+		typentry->flags |= newflags;
+	}
+	typentry->flags |= TCFLAGS_CHECKED_FIELD_PROPERTIES;
+}
+
 
 /*
  * lookup_rowtype_tupdesc_internal --- internal routine to lookup a rowtype
@@ -585,7 +805,8 @@ assign_record_type_typmod(TupleDesc tupDesc)
  *		Relcache inval callback function
  *
  * Delete the cached tuple descriptor (if any) for the given rel's composite
- * type, or for all composite types if relid == InvalidOid.
+ * type, or for all composite types if relid == InvalidOid.  Also reset
+ * whatever info we have cached about the composite type's comparability.
  *
  * This is called when a relcache invalidation event occurs for the given
  * relid.  We must scan the whole typcache hash since we don't know the
@@ -611,12 +832,15 @@ TypeCacheRelCallback(Datum arg, Oid relid)
 	hash_seq_init(&status, TypeCacheHash);
 	while ((typentry = (TypeCacheEntry *) hash_seq_search(&status)) != NULL)
 	{
-		if (typentry->tupDesc == NULL)
-			continue;			/* not composite, or tupdesc hasn't been
-								 * requested */
+		if (typentry->typtype != TYPTYPE_COMPOSITE)
+			continue;			/* skip non-composites */
 
-		/* Delete if match, or if we're zapping all composite types */
-		if (relid == typentry->typrelid || relid == InvalidOid)
+		/* Skip if no match, unless we're zapping all composite types */
+		if (relid != typentry->typrelid && relid != InvalidOid)
+			continue;
+
+		/* Delete tupdesc if we have it */
+		if (typentry->tupDesc != NULL)
 		{
 			/*
 			 * Release our refcount, and free the tupdesc if none remain.
@@ -628,6 +852,17 @@ TypeCacheRelCallback(Datum arg, Oid relid)
 				FreeTupleDesc(typentry->tupDesc);
 			typentry->tupDesc = NULL;
 		}
+
+		/* Reset equality/comparison/hashing information */
+		typentry->eq_opr = InvalidOid;
+		typentry->lt_opr = InvalidOid;
+		typentry->gt_opr = InvalidOid;
+		typentry->cmp_proc = InvalidOid;
+		typentry->hash_proc = InvalidOid;
+		typentry->eq_opr_finfo.fn_oid = InvalidOid;
+		typentry->cmp_proc_finfo.fn_oid = InvalidOid;
+		typentry->hash_proc_finfo.fn_oid = InvalidOid;
+		typentry->flags = 0;
 	}
 }
 

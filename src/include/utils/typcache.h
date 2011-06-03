@@ -39,7 +39,9 @@ typedef struct TypeCacheEntry
 	 * Information obtained from opfamily entries
 	 *
 	 * These will be InvalidOid if no match could be found, or if the
-	 * information hasn't yet been requested.
+	 * information hasn't yet been requested.  Also note that for array and
+	 * composite types, typcache.c checks that the contained types are
+	 * comparable or hashable before allowing eq_opr etc to become set.
 	 */
 	Oid			btree_opf;		/* the default btree opclass' family */
 	Oid			btree_opintype; /* the default btree opclass' opcintype */
@@ -55,8 +57,8 @@ typedef struct TypeCacheEntry
 	 * Pre-set-up fmgr call info for the equality operator, the btree
 	 * comparison function, and the hash calculation function.	These are kept
 	 * in the type cache to avoid problems with memory leaks in repeated calls
-	 * to array_eq, array_cmp, hash_array.	There is not currently a need to
-	 * maintain call info for the lt_opr or gt_opr.
+	 * to functions such as array_eq, array_cmp, hash_array.  There is not
+	 * currently a need to maintain call info for the lt_opr or gt_opr.
 	 */
 	FmgrInfo	eq_opr_finfo;
 	FmgrInfo	cmp_proc_finfo;
@@ -68,6 +70,9 @@ typedef struct TypeCacheEntry
 	 * reference-counted tupledesc.)
 	 */
 	TupleDesc	tupDesc;
+
+	/* Private data, for internal use of typcache.c only */
+	int			flags;			/* flags about what we've computed */
 
 	/*
 	 * Private information about an enum type.	NULL if not enum or

@@ -286,6 +286,16 @@ select row(1,1.1) = any (array[ row(7,7.7), row(1,1.0), row(0,0.0) ]);
  f
 (1 row)
 
+-- Check behavior with a non-comparable rowtype
+create type cantcompare as (p point, r float8);
+create temp table cc (f1 cantcompare);
+insert into cc values('("(1,2)",3)');
+insert into cc values('("(4,5)",6)');
+select * from cc order by f1; -- fail, but should complain about cantcompare
+ERROR:  could not identify an ordering operator for type cantcompare
+LINE 1: select * from cc order by f1;
+                                  ^
+HINT:  Use an explicit ordering operator or modify the query.
 --
 -- Test case derived from bug #5716: check multiple uses of a rowtype result
 --

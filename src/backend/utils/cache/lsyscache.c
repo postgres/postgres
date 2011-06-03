@@ -33,6 +33,7 @@
 #include "utils/array.h"
 #include "utils/builtins.h"
 #include "utils/datum.h"
+#include "utils/fmgroids.h"
 #include "utils/lsyscache.h"
 #include "utils/syscache.h"
 #include "utils/typcache.h"
@@ -1120,34 +1121,35 @@ op_input_types(Oid opno, Oid *lefttype, Oid *righttype)
  * opfamily entries for this operator and associated sortops.  The pg_operator
  * flag is just a hint to tell the planner whether to bother looking.)
  *
- * In some cases (currently only array_eq), mergejoinability depends on the
- * specific input data type the operator is invoked for, so that must be
- * passed as well.	We currently assume that only one input's type is needed
- * to check this --- by convention, pass the left input's data type.
+ * In some cases (currently only array_eq and record_eq), mergejoinability
+ * depends on the specific input data type the operator is invoked for, so
+ * that must be passed as well. We currently assume that only one input's type
+ * is needed to check this --- by convention, pass the left input's data type.
  */
 bool
 op_mergejoinable(Oid opno, Oid inputtype)
 {
-	HeapTuple	tp;
 	bool		result = false;
+	HeapTuple	tp;
+	TypeCacheEntry *typentry;
 
+	/*
+	 * For array_eq or record_eq, we can sort if the element or field types
+	 * are all sortable.  We could implement all the checks for that here, but
+	 * the typcache already does that and caches the results too, so let's
+	 * rely on the typcache.
+	 */
 	if (opno == ARRAY_EQ_OP)
 	{
-		/*
-		 * For array_eq, can sort if element type has a default btree opclass.
-		 * We could use GetDefaultOpClass, but that's fairly expensive and not
-		 * cached, so let's use the typcache instead.
-		 */
-		Oid			elem_type = get_base_element_type(inputtype);
-
-		if (OidIsValid(elem_type))
-		{
-			TypeCacheEntry *typentry;
-
-			typentry = lookup_type_cache(elem_type, TYPECACHE_BTREE_OPFAMILY);
-			if (OidIsValid(typentry->btree_opf))
-				result = true;
-		}
+		typentry = lookup_type_cache(inputtype, TYPECACHE_CMP_PROC);
+		if (typentry->cmp_proc == F_BTARRAYCMP)
+			result = true;
+	}
+	else if (opno == RECORD_EQ_OP)
+	{
+		typentry = lookup_type_cache(inputtype, TYPECACHE_CMP_PROC);
+		if (typentry->cmp_proc == F_BTRECORDCMP)
+			result = true;
 	}
 	else
 	{
@@ -1178,22 +1180,17 @@ op_mergejoinable(Oid opno, Oid inputtype)
 bool
 op_hashjoinable(Oid opno, Oid inputtype)
 {
-	HeapTuple	tp;
 	bool		result = false;
+	HeapTuple	tp;
+	TypeCacheEntry *typentry;
 
+	/* As in op_mergejoinable, let the typcache handle the hard cases */
+	/* Eventually we'll need a similar case for record_eq ... */
 	if (opno == ARRAY_EQ_OP)
 	{
-		/* For array_eq, can hash if element type has a default hash opclass */
-		Oid			elem_type = get_base_element_type(inputtype);
-
-		if (OidIsValid(elem_type))
-		{
-			TypeCacheEntry *typentry;
-
-			typentry = lookup_type_cache(elem_type, TYPECACHE_HASH_OPFAMILY);
-			if (OidIsValid(typentry->hash_opf))
-				result = true;
-		}
+		typentry = lookup_type_cache(inputtype, TYPECACHE_HASH_PROC);
+		if (typentry->hash_proc == F_HASH_ARRAY)
+			result = true;
 	}
 	else
 	{

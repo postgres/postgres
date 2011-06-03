@@ -211,42 +211,6 @@ get_sort_group_operators(Oid argtype,
 	gt_opr = typentry->gt_opr;
 	hashable = OidIsValid(typentry->hash_proc);
 
-	/*
-	 * If the datatype is an array, then we can use array_lt and friends ...
-	 * but only if there are suitable operators for the element type.
-	 * Likewise, array types are only hashable if the element type is. Testing
-	 * all three operator IDs here should be redundant, but let's do it
-	 * anyway.
-	 */
-	if (lt_opr == ARRAY_LT_OP ||
-		eq_opr == ARRAY_EQ_OP ||
-		gt_opr == ARRAY_GT_OP)
-	{
-		Oid			elem_type = get_base_element_type(argtype);
-
-		if (OidIsValid(elem_type))
-		{
-			typentry = lookup_type_cache(elem_type, cache_flags);
-			if (!OidIsValid(typentry->eq_opr))
-			{
-				/* element type is neither sortable nor hashable */
-				lt_opr = eq_opr = gt_opr = InvalidOid;
-			}
-			else if (!OidIsValid(typentry->lt_opr) ||
-					 !OidIsValid(typentry->gt_opr))
-			{
-				/* element type is hashable but not sortable */
-				lt_opr = gt_opr = InvalidOid;
-			}
-			hashable = OidIsValid(typentry->hash_proc);
-		}
-		else
-		{
-			lt_opr = eq_opr = gt_opr = InvalidOid;		/* bogus array type? */
-			hashable = false;
-		}
-	}
-
 	/* Report errors if needed */
 	if ((needLT && !OidIsValid(lt_opr)) ||
 		(needGT && !OidIsValid(gt_opr)))

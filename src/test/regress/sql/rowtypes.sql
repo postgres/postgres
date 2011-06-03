@@ -118,6 +118,13 @@ select array[ row(1,2), row(3,4), row(5,6) ];
 select row(1,1.1) = any (array[ row(7,7.7), row(1,1.1), row(0,0.0) ]);
 select row(1,1.1) = any (array[ row(7,7.7), row(1,1.0), row(0,0.0) ]);
 
+-- Check behavior with a non-comparable rowtype
+create type cantcompare as (p point, r float8);
+create temp table cc (f1 cantcompare);
+insert into cc values('("(1,2)",3)');
+insert into cc values('("(4,5)",6)');
+select * from cc order by f1; -- fail, but should complain about cantcompare
+
 --
 -- Test case derived from bug #5716: check multiple uses of a rowtype result
 --

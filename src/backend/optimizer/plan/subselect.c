@@ -891,6 +891,7 @@ hash_ok_operator(OpExpr *expr)
 	if (opid == ARRAY_EQ_OP)
 	{
 		/* array_eq is strict, but must check input type to ensure hashable */
+		/* XXX record_eq will need same treatment when it becomes hashable */
 		Node	   *leftarg = linitial(expr->args);
 
 		return op_hashjoinable(opid, exprType(leftarg));
