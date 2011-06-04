@@ -43,6 +43,11 @@
 #undef bool
 #endif
 
+/* supply GvCV_set if it's missing - ppport.h doesn't supply it, unfortunately */
+#ifndef GvCV_set
+#define GvCV_set(gv, cv)		(GvCV(gv) = cv)
+#endif
+
 /* routines from spi_internal.c */
 int			spi_DEBUG(void);
 int			spi_LOG(void);
