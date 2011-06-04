@@ -909,7 +909,7 @@ transformSelectStmt(ParseState *pstate, SelectStmt *stmt)
  *	  transforms a VALUES clause that's being used as a standalone SELECT
  *
  * We build a Query containing a VALUES RTE, rather as if one had written
- *			SELECT * FROM (VALUES ...)
+ *			SELECT * FROM (VALUES ...) AS "*VALUES*"
  */
 static Query *
 transformValuesClause(ParseState *pstate, SelectStmt *stmt)
@@ -1034,6 +1034,7 @@ transformValuesClause(ParseState *pstate, SelectStmt *stmt)
 	rtr->rtindex = list_length(pstate->p_rtable);
 	Assert(rte == rt_fetch(rtr->rtindex, pstate->p_rtable));
 	pstate->p_joinlist = lappend(pstate->p_joinlist, rtr);
+	pstate->p_relnamespace = lappend(pstate->p_relnamespace, rte);
 	pstate->p_varnamespace = lappend(pstate->p_varnamespace, rte);
 
 	/*
