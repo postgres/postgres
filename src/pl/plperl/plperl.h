@@ -85,6 +85,11 @@
 								(U32)HeKUTF8(he))
 #endif
 
+/* supply GvCV_set if it's missing - ppport.h doesn't supply it, unfortunately */
+#ifndef GvCV_set
+#define GvCV_set(gv, cv)		(GvCV(gv) = cv)
+#endif
+
 /* declare routines from plperl.c for access by .xs files */
 HV		   *plperl_spi_exec(char *, int);
 void		plperl_return_next(SV *);

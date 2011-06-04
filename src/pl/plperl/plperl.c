@@ -926,7 +926,7 @@ plperl_trusted_init(void)
 		if (!isGV_with_GP(sv) || !GvCV(sv))
 			continue;
 		SvREFCNT_dec(GvCV(sv)); /* free the CV */
-		GvCV(sv) = NULL;		/* prevent call via GV */
+		GvCV_set(sv, NULL);		/* prevent call via GV */
 	}
 	hv_clear(stash);
 
