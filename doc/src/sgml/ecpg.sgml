@@ -3586,7 +3586,8 @@ risnull(CINTTYPE, (char *) &i);
       <term><literal>ECPG_INFORMIX_DATE_CONVERT</></term>
       <listitem>
        <para>
-        Functions return this value if Internally it is defined to -1210 (the
+        Functions return this value if an error occurred during date
+        formatting.  Internally it is defined to -1210 (the
         <productname>Informix</productname> definition).
        </para>
       </listitem>
@@ -3596,7 +3597,8 @@ risnull(CINTTYPE, (char *) &i);
       <term><literal>ECPG_INFORMIX_OUT_OF_MEMORY</></term>
       <listitem>
        <para>
-        Functions return this value if Internally it is defined to -1211 (the
+        Functions return this value if memory was exhausted during
+        their operation.  Internally it is defined to -1211 (the
         <productname>Informix</productname> definition).
        </para>
       </listitem>
