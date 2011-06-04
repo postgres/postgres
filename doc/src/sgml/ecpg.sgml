@@ -2752,8 +2752,9 @@ typedef struct sqlda_struct     sqlda_t;
       <term><literal>desc_next</></term>
       <listitem>
        <para>
-        If the query returns more than one records, multiple linked SQLDA structures
-        are returned, the first record is stored in the SQLDA returned in the
+        If the query returns more than one records, multiple linked
+        SQLDA structures are returned, and <literal>desc_next</> holds
+        a pointer to the next entry in the list.
        </para>
       </listitem>
      </varlistentry>
@@ -3040,7 +3041,7 @@ typedef struct sqlda_compat     sqlda_t;
      <term><literal>desc_next</></term>
       <listitem>
        <para>
-        Pointer to the next SQLDA structure if the result set contains more than one records.
+        Pointer to the next SQLDA structure if the result set contains more than one record.
        </para>
       </listitem>
      </varlistentry>
