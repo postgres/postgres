@@ -410,7 +410,8 @@ $$ LANGUAGE plpythonu;
    If an SQL null value<indexterm><primary>null value</primary><secondary
    sortas="PL/Python">PL/Python</secondary></indexterm> is passed to a
    function, the argument value will appear as <symbol>None</symbol> in
-   Python. The above function definition will return the wrong answer for null
+   Python. For example, the function definition of <function>pymax</function>
+   shown in <xref linkend="plpython-funcs"> will return the wrong answer for null
    inputs. We could add <literal>STRICT</literal> to the function definition
    to make <productname>PostgreSQL</productname> do something more reasonable:
    if a null value is passed, the function will not be called at all,
