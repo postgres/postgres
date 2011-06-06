@@ -397,6 +397,9 @@ INSERT INTO circles VALUES('<(20,20), 10>', '<(10,10), 5>');
 ALTER TABLE circles ADD EXCLUDE USING gist
   (c1 WITH &&, (c2::circle) WITH &&);
 
+-- try reindexing an existing constraint
+REINDEX INDEX circles_c1_c2_excl;
+
 DROP TABLE circles;
 
 -- Check deferred exclusion constraint

@@ -115,6 +115,7 @@ static void validate_index_heapscan(Relation heapRelation,
 						Snapshot snapshot,
 						v_i_state *state);
 static Oid	IndexGetRelation(Oid indexId);
+static bool ReindexIsCurrentlyProcessingIndex(Oid indexOid);
 static void SetReindexProcessing(Oid heapOid, Oid indexOid);
 static void ResetReindexProcessing(void);
 static void SetReindexPending(List *indexes);
@@ -1747,8 +1748,8 @@ index_build(Relation heapRelation,
 	 * created it, or truncated twice in a subsequent transaction, the
 	 * relfilenode won't change, and nothing needs to be done here.
 	 */
-	if (heapRelation->rd_rel->relpersistence == RELPERSISTENCE_UNLOGGED
-	    && !smgrexists(indexRelation->rd_smgr, INIT_FORKNUM))
+	if (heapRelation->rd_rel->relpersistence == RELPERSISTENCE_UNLOGGED &&
+		!smgrexists(indexRelation->rd_smgr, INIT_FORKNUM))
 	{
 		RegProcedure ambuildempty = indexRelation->rd_am->ambuildempty;
 
@@ -1756,19 +1757,6 @@ index_build(Relation heapRelation,
 		smgrcreate(indexRelation->rd_smgr, INIT_FORKNUM, false);
 		OidFunctionCall1(ambuildempty, PointerGetDatum(indexRelation));
 	}
-
-	/*
-	 * If it's for an exclusion constraint, make a second pass over the heap
-	 * to verify that the constraint is satisfied.
-	 */
-	if (indexInfo->ii_ExclusionOps != NULL)
-		IndexCheckExclusion(heapRelation, indexRelation, indexInfo);
-
-	/* Roll back any GUC changes executed by index functions */
-	AtEOXact_GUC(false, save_nestlevel);
-
-	/* Restore userid and security context */
-	SetUserIdAndSecContext(save_userid, save_sec_context);
 
 	/*
 	 * If we found any potentially broken HOT chains, mark the index as not
@@ -1824,8 +1812,23 @@ index_build(Relation heapRelation,
 					   InvalidOid,
 					   stats->index_tuples);
 
-	/* Make the updated versions visible */
+	/* Make the updated catalog row versions visible */
 	CommandCounterIncrement();
+
+	/*
+	 * If it's for an exclusion constraint, make a second pass over the heap
+	 * to verify that the constraint is satisfied.  We must not do this until
+	 * the index is fully valid.  (Broken HOT chains shouldn't matter, though;
+	 * see comments for IndexCheckExclusion.)
+	 */
+	if (indexInfo->ii_ExclusionOps != NULL)
+		IndexCheckExclusion(heapRelation, indexRelation, indexInfo);
+
+	/* Roll back any GUC changes executed by index functions */
+	AtEOXact_GUC(false, save_nestlevel);
+
+	/* Restore userid and security context */
+	SetUserIdAndSecContext(save_userid, save_sec_context);
 }
 
 
@@ -2268,6 +2271,15 @@ IndexCheckExclusion(Relation heapRelation,
 	TupleTableSlot *slot;
 	EState	   *estate;
 	ExprContext *econtext;
+
+	/*
+	 * If we are reindexing the target index, mark it as no longer being
+	 * reindexed, to forestall an Assert in index_beginscan when we try to
+	 * use the index for probes.  This is OK because the index is now
+	 * fully valid.
+	 */
+	if (ReindexIsCurrentlyProcessingIndex(RelationGetRelid(indexRelation)))
+		ResetReindexProcessing();
 
 	/*
 	 * Need an EState for evaluation of index expressions and partial-index
@@ -2989,8 +3001,8 @@ reindex_relation(Oid relid, int flags)
 
 			CommandCounterIncrement();
 
-			if (flags & REINDEX_REL_SUPPRESS_INDEX_USE)
-				RemoveReindexPending(indexOid);
+			/* Index should no longer be in the pending list */
+			Assert(!ReindexIsProcessingIndex(indexOid));
 
 			if (is_pg_class)
 				doneIndexes = lappend_oid(doneIndexes, indexOid);
@@ -3030,7 +3042,9 @@ reindex_relation(Oid relid, int flags)
  *		System index reindexing support
  *
  * When we are busy reindexing a system index, this code provides support
- * for preventing catalog lookups from using that index.
+ * for preventing catalog lookups from using that index.  We also make use
+ * of this to catch attempted uses of user indexes during reindexing of
+ * those indexes.
  * ----------------------------------------------------------------
  */
 
@@ -3046,6 +3060,16 @@ bool
 ReindexIsProcessingHeap(Oid heapOid)
 {
 	return heapOid == currentlyReindexedHeap;
+}
+
+/*
+ * ReindexIsCurrentlyProcessingIndex
+ *		True if index specified by OID is currently being reindexed.
+ */
+static bool
+ReindexIsCurrentlyProcessingIndex(Oid indexOid)
+{
+	return indexOid == currentlyReindexedIndex;
 }
 
 /*
@@ -3075,6 +3099,8 @@ SetReindexProcessing(Oid heapOid, Oid indexOid)
 		elog(ERROR, "cannot reindex while reindexing");
 	currentlyReindexedHeap = heapOid;
 	currentlyReindexedIndex = indexOid;
+	/* Index is no longer "pending" reindex. */
+	RemoveReindexPending(indexOid);
 }
 
 /*

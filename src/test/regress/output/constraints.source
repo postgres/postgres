@@ -543,6 +543,8 @@ ALTER TABLE circles ADD EXCLUDE USING gist
 NOTICE:  ALTER TABLE / ADD EXCLUDE will create implicit index "circles_c1_c2_excl1" for table "circles"
 ERROR:  could not create exclusion constraint "circles_c1_c2_excl1"
 DETAIL:  Key (c1, (c2::circle))=(<(0,0),5>, <(0,0),5>) conflicts with key (c1, (c2::circle))=(<(0,0),5>, <(0,0),4>).
+-- try reindexing an existing constraint
+REINDEX INDEX circles_c1_c2_excl;
 DROP TABLE circles;
 -- Check deferred exclusion constraint
 CREATE TABLE deferred_excl (
