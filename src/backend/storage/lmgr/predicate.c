@@ -3814,7 +3814,7 @@ FlagRWConflict(SERIALIZABLEXACT *reader, SERIALIZABLEXACT *writer)
 		SetRWConflict(reader, writer);
 }
 
-/*
+/*----------------------------------------------------------------------------
  * We are about to add a RW-edge to the dependency graph - check that we don't
  * introduce a dangerous structure by doing so, and abort one of the
  * transactions if so.
@@ -3823,13 +3823,14 @@ FlagRWConflict(SERIALIZABLEXACT *reader, SERIALIZABLEXACT *writer)
  * in the dependency graph:
  *
  *		Tin ------> Tpivot ------> Tout
- *	   		  rw			 rw
+ *			  rw			 rw
  *
  * Furthermore, Tout must commit first.
  *
  * One more optimization is that if Tin is declared READ ONLY (or commits
  * without writing), we can only have a problem if Tout committed before Tin
  * acquired its snapshot.
+ *----------------------------------------------------------------------------
  */
 static void
 OnConflict_CheckForSerializationFailure(const SERIALIZABLEXACT *reader,
@@ -3842,32 +3843,34 @@ OnConflict_CheckForSerializationFailure(const SERIALIZABLEXACT *reader,
 
 	failure = false;
 
-	/*
+	/*------------------------------------------------------------------------
 	 * Check for already-committed writer with rw-conflict out flagged
 	 * (conflict-flag on W means that T2 committed before W):
 	 *
 	 *		R ------> W ------> T2
-	 *			rw        rw
+	 *			rw		  rw
 	 *
 	 * That is a dangerous structure, so we must abort. (Since the writer
 	 * has already committed, we must be the reader)
+	 *------------------------------------------------------------------------
 	 */
 	if (SxactIsCommitted(writer)
 	  && (SxactHasConflictOut(writer) || SxactHasSummaryConflictOut(writer)))
 		failure = true;
 
-	/*
+	/*------------------------------------------------------------------------
 	 * Check whether the writer has become a pivot with an out-conflict
 	 * committed transaction (T2), and T2 committed first:
 	 *
 	 *		R ------> W ------> T2
-	 *			rw        rw
+	 *			rw		  rw
 	 *
 	 * Because T2 must've committed first, there is no anomaly if:
 	 * - the reader committed before T2
 	 * - the writer committed before T2
 	 * - the reader is a READ ONLY transaction and the reader was concurrent
 	 *	 with T2 (= reader acquired its snapshot before T2 committed)
+	 *------------------------------------------------------------------------
 	 */
 	if (!failure)
 	{
@@ -3891,7 +3894,7 @@ OnConflict_CheckForSerializationFailure(const SERIALIZABLEXACT *reader,
 				&& (!SxactIsCommitted(writer)
 					|| t2->commitSeqNo <= writer->commitSeqNo)
 				&& (!SxactIsReadOnly(reader)
-					|| t2->commitSeqNo <= reader->SeqNo.lastCommitBeforeSnapshot))
+			   || t2->commitSeqNo <= reader->SeqNo.lastCommitBeforeSnapshot))
 			{
 				failure = true;
 				break;
@@ -3903,16 +3906,17 @@ OnConflict_CheckForSerializationFailure(const SERIALIZABLEXACT *reader,
 		}
 	}
 
-	/*
+	/*------------------------------------------------------------------------
 	 * Check whether the reader has become a pivot with a committed writer:
 	 *
 	 *		T0 ------> R ------> W
-	 *			 rw        rw
+	 *			 rw		   rw
 	 *
 	 * Because W must've committed first for an anomaly to occur, there is no
 	 * anomaly if:
 	 * - T0 committed before the writer
 	 * - T0 is READ ONLY, and overlaps the writer
+	 *------------------------------------------------------------------------
 	 */
 	if (!failure && SxactIsCommitted(writer) && !SxactIsReadOnly(reader))
 	{
@@ -3934,7 +3938,7 @@ OnConflict_CheckForSerializationFailure(const SERIALIZABLEXACT *reader,
 				&& (!SxactIsCommitted(t0)
 					|| t0->commitSeqNo >= writer->commitSeqNo)
 				&& (!SxactIsReadOnly(t0)
-					|| t0->SeqNo.lastCommitBeforeSnapshot >= writer->commitSeqNo))
+			   || t0->SeqNo.lastCommitBeforeSnapshot >= writer->commitSeqNo))
 			{
 				failure = true;
 				break;
@@ -3950,8 +3954,8 @@ OnConflict_CheckForSerializationFailure(const SERIALIZABLEXACT *reader,
 	{
 		/*
 		 * We have to kill a transaction to avoid a possible anomaly from
-		 * occurring. If the writer is us, we can just ereport() to cause
-		 * a transaction abort. Otherwise we flag the writer for termination,
+		 * occurring. If the writer is us, we can just ereport() to cause a
+		 * transaction abort. Otherwise we flag the writer for termination,
 		 * causing it to abort when it tries to commit. However, if the writer
 		 * is a prepared transaction, already prepared, we can't abort it
 		 * anymore, so we have to kill the reader instead.
@@ -3962,7 +3966,7 @@ OnConflict_CheckForSerializationFailure(const SERIALIZABLEXACT *reader,
 			ereport(ERROR,
 					(errcode(ERRCODE_T_R_SERIALIZATION_FAILURE),
 					 errmsg("could not serialize access due to read/write dependencies among transactions"),
-			errdetail("Cancelled on identification as a pivot, during write."),
+					 errdetail("Cancelled on identification as a pivot, during write."),
 					 errhint("The transaction might succeed if retried.")));
 		}
 		else if (SxactIsPrepared(writer))
