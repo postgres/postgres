@@ -455,6 +455,44 @@ rewriteRuleAction(Query *parsetree,
 	}
 
 	/*
+	 * If the original query has any CTEs, copy them into the rule action.
+	 * But we don't need them for a utility action.
+	 */
+	if (parsetree->cteList != NIL && sub_action->commandType != CMD_UTILITY)
+	{
+		ListCell   *lc;
+
+		/*
+		 * Annoying implementation restriction: because CTEs are identified
+		 * by name within a cteList, we can't merge a CTE from the original
+		 * query if it has the same name as any CTE in the rule action.
+		 *
+		 * This could possibly be fixed by using some sort of internally
+		 * generated ID, instead of names, to link CTE RTEs to their CTEs.
+		 */
+		foreach(lc, parsetree->cteList)
+		{
+			CommonTableExpr *cte = (CommonTableExpr *) lfirst(lc);
+			ListCell   *lc2;
+
+			foreach(lc2, sub_action->cteList)
+			{
+				CommonTableExpr *cte2 = (CommonTableExpr *) lfirst(lc2);
+
+				if (strcmp(cte->ctename, cte2->ctename) == 0)
+					ereport(ERROR,
+							(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+							 errmsg("WITH query name \"%s\" appears in both a rule action and the query being rewritten",
+									cte->ctename)));
+			}
+		}
+
+		/* OK, it's safe to combine the CTE lists */
+		sub_action->cteList = list_concat(sub_action->cteList,
+										  copyObject(parsetree->cteList));
+	}
+
+	/*
 	 * Event Qualification forces copying of parsetree and splitting into two
 	 * queries one w/rule_qual, one w/NOT rule_qual. Also add user query qual
 	 * onto rule action
@@ -1806,6 +1844,69 @@ RewriteQuery(Query *parsetree, List *rewrite_events)
 	ListCell   *lc1;
 
 	/*
+	 * First, recursively process any insert/update/delete statements in WITH
+	 * clauses.  (We have to do this first because the WITH clauses may get
+	 * copied into rule actions below.)
+	 */
+	foreach(lc1, parsetree->cteList)
+	{
+		CommonTableExpr *cte = (CommonTableExpr *) lfirst(lc1);
+		Query	   *ctequery = (Query *) cte->ctequery;
+		List	   *newstuff;
+
+		Assert(IsA(ctequery, Query));
+
+		if (ctequery->commandType == CMD_SELECT)
+			continue;
+
+		newstuff = RewriteQuery(ctequery, rewrite_events);
+
+		/*
+		 * Currently we can only handle unconditional, single-statement DO
+		 * INSTEAD rules correctly; we have to get exactly one Query out of
+		 * the rewrite operation to stuff back into the CTE node.
+		 */
+		if (list_length(newstuff) == 1)
+		{
+			/* Push the single Query back into the CTE node */
+			ctequery = (Query *) linitial(newstuff);
+			Assert(IsA(ctequery, Query));
+			/* WITH queries should never be canSetTag */
+			Assert(!ctequery->canSetTag);
+			cte->ctequery = (Node *) ctequery;
+		}
+		else if (newstuff == NIL)
+		{
+			ereport(ERROR,
+					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+					 errmsg("DO INSTEAD NOTHING rules are not supported for data-modifying statements in WITH")));
+		}
+		else
+		{
+			ListCell   *lc2;
+
+			/* examine queries to determine which error message to issue */
+			foreach(lc2, newstuff)
+			{
+				Query	   *q = (Query *) lfirst(lc2);
+
+				if (q->querySource == QSRC_QUAL_INSTEAD_RULE)
+					ereport(ERROR,
+							(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+							 errmsg("conditional DO INSTEAD rules are not supported for data-modifying statements in WITH")));
+				if (q->querySource == QSRC_NON_INSTEAD_RULE)
+					ereport(ERROR,
+							(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+							 errmsg("DO ALSO rules are not supported for data-modifying statements in WITH")));
+			}
+
+			ereport(ERROR,
+					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+					 errmsg("multi-statement DO INSTEAD rules are not supported for data-modifying statements in WITH")));
+		}
+	}
+
+	/*
 	 * If the statement is an insert, update, or delete, adjust its targetlist
 	 * as needed, and then fire INSERT/UPDATE/DELETE rules on it.
 	 *
@@ -1984,67 +2085,6 @@ RewriteQuery(Query *parsetree, List *rewrite_events)
 	}
 
 	/*
-	 * Recursively process any insert/update/delete statements in WITH clauses
-	 */
-	foreach(lc1, parsetree->cteList)
-	{
-		CommonTableExpr *cte = (CommonTableExpr *) lfirst(lc1);
-		Query	   *ctequery = (Query *) cte->ctequery;
-		List	   *newstuff;
-
-		Assert(IsA(ctequery, Query));
-
-		if (ctequery->commandType == CMD_SELECT)
-			continue;
-
-		newstuff = RewriteQuery(ctequery, rewrite_events);
-
-		/*
-		 * Currently we can only handle unconditional, single-statement DO
-		 * INSTEAD rules correctly; we have to get exactly one Query out of
-		 * the rewrite operation to stuff back into the CTE node.
-		 */
-		if (list_length(newstuff) == 1)
-		{
-			/* Push the single Query back into the CTE node */
-			ctequery = (Query *) linitial(newstuff);
-			Assert(IsA(ctequery, Query));
-			/* WITH queries should never be canSetTag */
-			Assert(!ctequery->canSetTag);
-			cte->ctequery = (Node *) ctequery;
-		}
-		else if (newstuff == NIL)
-		{
-			ereport(ERROR,
-					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-					 errmsg("DO INSTEAD NOTHING rules are not supported for data-modifying statements in WITH")));
-		}
-		else
-		{
-			ListCell   *lc2;
-
-			/* examine queries to determine which error message to issue */
-			foreach(lc2, newstuff)
-			{
-				Query	   *q = (Query *) lfirst(lc2);
-
-				if (q->querySource == QSRC_QUAL_INSTEAD_RULE)
-					ereport(ERROR,
-							(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-							 errmsg("conditional DO INSTEAD rules are not supported for data-modifying statements in WITH")));
-				if (q->querySource == QSRC_NON_INSTEAD_RULE)
-					ereport(ERROR,
-							(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-							 errmsg("DO ALSO rules are not supported for data-modifying statements in WITH")));
-			}
-
-			ereport(ERROR,
-					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-					 errmsg("multi-statement DO INSTEAD rules are not supported for data-modifying statements in WITH")));
-		}
-	}
-
-	/*
 	 * For INSERTs, the original query is done first; for UPDATE/DELETE, it is
 	 * done last.  This is needed because update and delete rule actions might
 	 * not do anything if they are invoked after the update or delete is
@@ -2072,6 +2112,31 @@ RewriteQuery(Query *parsetree, List *rewrite_events)
 			else
 				rewritten = lappend(rewritten, parsetree);
 		}
+	}
+
+	/*
+	 * If the original query has a CTE list, and we generated more than one
+	 * non-utility result query, we have to fail because we'll have copied
+	 * the CTE list into each result query.  That would break the expectation
+	 * of single evaluation of CTEs.  This could possibly be fixed by
+	 * restructuring so that a CTE list can be shared across multiple Query
+	 * and PlannableStatement nodes.
+	 */
+	if (parsetree->cteList != NIL)
+	{
+		int		qcount = 0;
+
+		foreach(lc1, rewritten)
+		{
+			Query	   *q = (Query *) lfirst(lc1);
+
+			if (q->commandType != CMD_UTILITY)
+				qcount++;
+		}
+		if (qcount > 1)
+			ereport(ERROR,
+					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+					 errmsg("WITH cannot be used in a query that is rewritten by rules into multiple queries")));
 	}
 
 	return rewritten;

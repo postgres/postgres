@@ -610,6 +610,29 @@ SELECT * FROM y;
 
 DROP RULE y_rule ON y;
 
+-- check merging of outer CTE with CTE in a rule action
+CREATE TEMP TABLE bug6051 AS
+  select i from generate_series(1,3) as t(i);
+
+SELECT * FROM bug6051;
+
+WITH t1 AS ( DELETE FROM bug6051 RETURNING * )
+INSERT INTO bug6051 SELECT * FROM t1;
+
+SELECT * FROM bug6051;
+
+CREATE TEMP TABLE bug6051_2 (i int);
+
+CREATE RULE bug6051_ins AS ON INSERT TO bug6051 DO INSTEAD
+ INSERT INTO bug6051_2
+ SELECT NEW.i;
+
+WITH t1 AS ( DELETE FROM bug6051 RETURNING * )
+INSERT INTO bug6051 SELECT * FROM t1;
+
+SELECT * FROM bug6051;
+SELECT * FROM bug6051_2;
+
 -- a truly recursive CTE in the same list
 WITH RECURSIVE t(a) AS (
 	SELECT 0
