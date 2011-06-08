@@ -1746,10 +1746,8 @@ describeOneTableDetails(const char *schemaname,
 		{
 			printfPQExpBuffer(&buf,
 							  "SELECT conname,\n"
-			   "  pg_catalog.pg_get_constraintdef(r.oid, true) as condef\n");
-			if (pset.sversion >= 90100)
-				appendPQExpBuffer(&buf, "  ,convalidated\n");
-			appendPQExpBuffer(&buf, "FROM pg_catalog.pg_constraint r\n"
+			   "  pg_catalog.pg_get_constraintdef(r.oid, true) as condef\n"
+							  "FROM pg_catalog.pg_constraint r\n"
 					"WHERE r.conrelid = '%s' AND r.contype = 'f' ORDER BY 1",
 							  oid);
 			result = PSQLexec(buf.data, false);
@@ -1767,9 +1765,6 @@ describeOneTableDetails(const char *schemaname,
 					printfPQExpBuffer(&buf, "    \"%s\" %s",
 									  PQgetvalue(result, i, 0),
 									  PQgetvalue(result, i, 1));
-
-					if (pset.sversion >= 90100 && strcmp(PQgetvalue(result, i, 2), "f") == 0)
-						appendPQExpBuffer(&buf, " NOT VALID");
 
 					printTableAddFooter(&cont, buf.data);
 				}
