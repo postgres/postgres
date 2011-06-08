@@ -127,6 +127,16 @@ select testint4arr[1], testchar4arr[2:2] from domarrtest;
              | {{d,e,f}}
 (5 rows)
 
+select array_dims(testint4arr), array_dims(testchar4arr) from domarrtest;
+ array_dims | array_dims 
+------------+------------
+ [1:2]      | [1:2][1:2]
+ [1:2][1:2] | [1:1][1:2]
+ [1:2]      | [1:3][1:2]
+ [1:2]      | [1:2][1:1]
+            | [1:2][1:3]
+(5 rows)
+
 COPY domarrtest FROM stdin;
 COPY domarrtest FROM stdin;	-- fail
 ERROR:  value too long for type character varying(4)
@@ -146,6 +156,32 @@ select * from domarrtest;
 drop table domarrtest;
 drop domain domainint4arr restrict;
 drop domain domainchar4arr restrict;
+create domain dia as int[];
+select '{1,2,3}'::dia;
+   dia   
+---------
+ {1,2,3}
+(1 row)
+
+select array_dims('{1,2,3}'::dia);
+ array_dims 
+------------
+ [1:3]
+(1 row)
+
+select pg_typeof('{1,2,3}'::dia);
+ pg_typeof 
+-----------
+ dia
+(1 row)
+
+select pg_typeof('{1,2,3}'::dia || 42); -- should be int[] not dia
+ pg_typeof 
+-----------
+ integer[]
+(1 row)
+
+drop domain dia;
 create domain dnotnull varchar(15) NOT NULL;
 create domain dnull    varchar(15);
 create domain dcheck   varchar(15) NOT NULL CHECK (VALUE = 'a' OR VALUE = 'c' OR VALUE = 'd');

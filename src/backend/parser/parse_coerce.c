@@ -143,9 +143,7 @@ coerce_type(ParseState *pstate, Node *node,
 	}
 	if (targetTypeId == ANYOID ||
 		targetTypeId == ANYELEMENTOID ||
-		targetTypeId == ANYNONARRAYOID ||
-		(targetTypeId == ANYARRAYOID && inputTypeId != UNKNOWNOID) ||
-		(targetTypeId == ANYENUMOID && inputTypeId != UNKNOWNOID))
+		targetTypeId == ANYNONARRAYOID)
 	{
 		/*
 		 * Assume can_coerce_type verified that implicit coercion is okay.
@@ -154,14 +152,47 @@ coerce_type(ParseState *pstate, Node *node,
 		 * it's OK to treat an UNKNOWN constant as a valid input for a
 		 * function accepting ANY, ANYELEMENT, or ANYNONARRAY.	This should be
 		 * all right, since an UNKNOWN value is still a perfectly valid Datum.
-		 * However an UNKNOWN value is definitely *not* an array, and so we
-		 * mustn't accept it for ANYARRAY.  (Instead, we will call anyarray_in
-		 * below, which will produce an error.)  Likewise, UNKNOWN input is no
-		 * good for ANYENUM.
 		 *
-		 * NB: we do NOT want a RelabelType here.
+		 * NB: we do NOT want a RelabelType here: the exposed type of the
+		 * function argument must be its actual type, not the polymorphic
+		 * pseudotype.
 		 */
 		return node;
+	}
+	if (targetTypeId == ANYARRAYOID ||
+		targetTypeId == ANYENUMOID)
+	{
+		/*
+		 * Assume can_coerce_type verified that implicit coercion is okay.
+		 *
+		 * These cases are unlike the ones above because the exposed type of
+		 * the argument must be an actual array or enum type.  In particular
+		 * the argument must *not* be an UNKNOWN constant.  If it is, we just
+		 * fall through; below, we'll call anyarray_in or anyenum_in, which
+		 * will produce an error.  Also, if what we have is a domain over
+		 * array or enum, we have to relabel it to its base type.
+		 *
+		 * Note: currently, we can't actually see a domain-over-enum here,
+		 * since the other functions in this file will not match such a
+		 * parameter to ANYENUM.  But that should get changed eventually.
+		 */
+		if (inputTypeId != UNKNOWNOID)
+		{
+			Oid			baseTypeId = getBaseType(inputTypeId);
+
+			if (baseTypeId != inputTypeId)
+			{
+				RelabelType *r = makeRelabelType((Expr *) node,
+												 baseTypeId, -1,
+												 InvalidOid,
+												 cformat);
+
+				r->location = location;
+				return (Node *) r;
+			}
+			/* Not a domain type, so return it as-is */
+			return node;
+		}
 	}
 	if (inputTypeId == UNKNOWNOID && IsA(node, Const))
 	{
@@ -1257,6 +1288,11 @@ coerce_to_common_type(ParseState *pstate, Node *node,
  *	  (This is a no-op if used in combination with ANYARRAY or ANYENUM, but
  *	  is an extra restriction if not.)
  *
+ * Domains over arrays match ANYARRAY, and are immediately flattened to their
+ * base type.  (Thus, for example, we will consider it a match if one ANYARRAY
+ * argument is a domain over int4[] while another one is just int4[].)  Also
+ * notice that such a domain does *not* match ANYNONARRAY.
+ *
  * If we have UNKNOWN input (ie, an untyped literal) for any polymorphic
  * argument, assume it is okay.
  *
@@ -1309,6 +1345,7 @@ check_generic_type_consistency(Oid *actual_arg_types,
 		{
 			if (actual_type == UNKNOWNOID)
 				continue;
+			actual_type = getBaseType(actual_type);		/* flatten domains */
 			if (OidIsValid(array_typeid) && actual_type != array_typeid)
 				return false;
 			array_typeid = actual_type;
@@ -1346,8 +1383,8 @@ check_generic_type_consistency(Oid *actual_arg_types,
 
 	if (have_anynonarray)
 	{
-		/* require the element type to not be an array */
-		if (type_is_array(elem_typeid))
+		/* require the element type to not be an array or domain over array */
+		if (type_is_array_domain(elem_typeid))
 			return false;
 	}
 
@@ -1405,6 +1442,10 @@ check_generic_type_consistency(Oid *actual_arg_types,
  *	  we add the extra condition that the ANYELEMENT type must not be an array.
  *	  (This is a no-op if used in combination with ANYARRAY or ANYENUM, but
  *	  is an extra restriction if not.)
+ *
+ * Domains over arrays match ANYARRAY arguments, and are immediately flattened
+ * to their base type.  (In particular, if the return type is also ANYARRAY,
+ * we'll set it to the base type not the domain type.)
  *
  * When allow_poly is false, we are not expecting any of the actual_arg_types
  * to be polymorphic, and we should not return a polymorphic result type
@@ -1485,6 +1526,7 @@ enforce_generic_type_consistency(Oid *actual_arg_types,
 			}
 			if (allow_poly && decl_type == actual_type)
 				continue;		/* no new information here */
+			actual_type = getBaseType(actual_type);		/* flatten domains */
 			if (OidIsValid(array_typeid) && actual_type != array_typeid)
 				ereport(ERROR,
 						(errcode(ERRCODE_DATATYPE_MISMATCH),
@@ -1557,8 +1599,8 @@ enforce_generic_type_consistency(Oid *actual_arg_types,
 
 	if (have_anynonarray && elem_typeid != ANYELEMENTOID)
 	{
-		/* require the element type to not be an array */
-		if (type_is_array(elem_typeid))
+		/* require the element type to not be an array or domain over array */
+		if (type_is_array_domain(elem_typeid))
 			ereport(ERROR,
 					(errcode(ERRCODE_DATATYPE_MISMATCH),
 				   errmsg("type matched to anynonarray is an array type: %s",
@@ -1655,15 +1697,19 @@ resolve_generic_type(Oid declared_type,
 	{
 		if (context_declared_type == ANYARRAYOID)
 		{
-			/* Use actual type, but it must be an array */
-			Oid			array_typelem = get_element_type(context_actual_type);
+			/*
+			 * Use actual type, but it must be an array; or if it's a domain
+			 * over array, use the base array type.
+			 */
+			Oid			context_base_type = getBaseType(context_actual_type);
+			Oid			array_typelem = get_element_type(context_base_type);
 
 			if (!OidIsValid(array_typelem))
 				ereport(ERROR,
 						(errcode(ERRCODE_DATATYPE_MISMATCH),
 						 errmsg("argument declared \"anyarray\" is not an array but type %s",
-								format_type_be(context_actual_type))));
-			return context_actual_type;
+								format_type_be(context_base_type))));
+			return context_base_type;
 		}
 		else if (context_declared_type == ANYELEMENTOID ||
 				 context_declared_type == ANYNONARRAYOID ||
@@ -1687,13 +1733,14 @@ resolve_generic_type(Oid declared_type,
 		if (context_declared_type == ANYARRAYOID)
 		{
 			/* Use the element type corresponding to actual type */
-			Oid			array_typelem = get_element_type(context_actual_type);
+			Oid			context_base_type = getBaseType(context_actual_type);
+			Oid			array_typelem = get_element_type(context_base_type);
 
 			if (!OidIsValid(array_typelem))
 				ereport(ERROR,
 						(errcode(ERRCODE_DATATYPE_MISMATCH),
 						 errmsg("argument declared \"anyarray\" is not an array but type %s",
-								format_type_be(context_actual_type))));
+								format_type_be(context_base_type))));
 			return array_typelem;
 		}
 		else if (context_declared_type == ANYELEMENTOID ||
@@ -1796,12 +1843,12 @@ IsBinaryCoercible(Oid srctype, Oid targettype)
 
 	/* Also accept any array type as coercible to ANYARRAY */
 	if (targettype == ANYARRAYOID)
-		if (type_is_array(srctype))
+		if (type_is_array_domain(srctype))
 			return true;
 
 	/* Also accept any non-array type as coercible to ANYNONARRAY */
 	if (targettype == ANYNONARRAYOID)
-		if (!type_is_array(srctype))
+		if (!type_is_array_domain(srctype))
 			return true;
 
 	/* Also accept any enum type as coercible to ANYENUM */
