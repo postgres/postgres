@@ -54,6 +54,7 @@
 #include "parser/parser.h"
 #include "storage/bufmgr.h"
 #include "storage/lmgr.h"
+#include "storage/predicate.h"
 #include "storage/procarray.h"
 #include "storage/smgr.h"
 #include "utils/builtins.h"
@@ -1310,6 +1311,12 @@ index_drop(Oid indexId)
 	 * still have open queries using it in our own session.
 	 */
 	CheckTableNotInUse(userIndexRelation, "DROP INDEX");
+
+	/*
+	 * All predicate locks on the index are about to be made invalid. Promote
+	 * them to relation locks on the heap.
+	 */
+	TransferPredicateLocksToHeapRelation(userIndexRelation);
 
 	/*
 	 * Schedule physical removal of the files
@@ -2798,6 +2805,12 @@ reindex_index(Oid indexId, bool skip_constraint_checks)
 	 * don't want to reindex underneath an open indexscan.
 	 */
 	CheckTableNotInUse(iRel, "REINDEX INDEX");
+
+	/*
+	 * All predicate locks on the index are about to be made invalid. Promote
+	 * them to relation locks on the heap.
+	 */
+	TransferPredicateLocksToHeapRelation(iRel);
 
 	PG_TRY();
 	{

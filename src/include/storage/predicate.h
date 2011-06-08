@@ -49,11 +49,13 @@ extern void PredicateLockPage(const Relation relation, const BlockNumber blkno);
 extern void PredicateLockTuple(const Relation relation, const HeapTuple tuple);
 extern void PredicateLockPageSplit(const Relation relation, const BlockNumber oldblkno, const BlockNumber newblkno);
 extern void PredicateLockPageCombine(const Relation relation, const BlockNumber oldblkno, const BlockNumber newblkno);
+extern void TransferPredicateLocksToHeapRelation(const Relation relation);
 extern void ReleasePredicateLocks(const bool isCommit);
 
 /* conflict detection (may also trigger rollback) */
 extern void CheckForSerializableConflictOut(const bool valid, const Relation relation, const HeapTuple tuple, const Buffer buffer);
 extern void CheckForSerializableConflictIn(const Relation relation, const HeapTuple tuple, const Buffer buffer);
+extern void CheckTableForSerializableConflictIn(const Relation relation);
 
 /* final rollback checking */
 extern void PreCommit_CheckForSerializationFailure(void);

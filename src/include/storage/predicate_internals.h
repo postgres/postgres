@@ -273,9 +273,7 @@ typedef struct PREDICATELOCKTARGETTAG
  * up the targets as the related tuples are pruned or vacuumed, we check the
  * xmin on access.	This should be far less costly.
  */
-typedef struct PREDICATELOCKTARGET PREDICATELOCKTARGET;
-
-struct PREDICATELOCKTARGET
+typedef struct PREDICATELOCKTARGET
 {
 	/* hash key */
 	PREDICATELOCKTARGETTAG tag; /* unique identifier of lockable object */
@@ -283,7 +281,7 @@ struct PREDICATELOCKTARGET
 	/* data */
 	SHM_QUEUE	predicateLocks; /* list of PREDICATELOCK objects assoc. with
 								 * predicate lock target */
-};
+} PREDICATELOCKTARGET;
 
 
 /*

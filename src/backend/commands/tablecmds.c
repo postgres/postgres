@@ -70,6 +70,7 @@
 #include "storage/bufmgr.h"
 #include "storage/lmgr.h"
 #include "storage/lock.h"
+#include "storage/predicate.h"
 #include "storage/smgr.h"
 #include "utils/acl.h"
 #include "utils/builtins.h"
@@ -1038,6 +1039,14 @@ ExecuteTruncate(TruncateStmt *stmt)
 		{
 			Oid			heap_relid;
 			Oid			toast_relid;
+
+			/*
+			 * This effectively deletes all rows in the table, and may be done
+			 * in a serializable transaction.  In that case we must record a
+			 * rw-conflict in to this transaction from each transaction
+			 * holding a predicate lock on the table.
+			 */
+			CheckTableForSerializableConflictIn(rel);
 
 			/*
 			 * Need the full transaction-safe pushups.
@@ -3528,6 +3537,16 @@ ATRewriteTable(AlteredTableInfo *tab, Oid OIDNewHeap, LOCKMODE lockmode)
 			ereport(DEBUG1,
 					(errmsg("verifying table \"%s\"",
 							RelationGetRelationName(oldrel))));
+
+		if (newrel)
+		{
+			/*
+			 * All predicate locks on the tuples or pages are about to be made
+			 * invalid, because we move tuples around.	Promote them to
+			 * relation locks.
+			 */
+			TransferPredicateLocksToHeapRelation(oldrel);
+		}
 
 		econtext = GetPerTupleExprContext(estate);
 

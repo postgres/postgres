@@ -39,6 +39,7 @@
 #include "optimizer/planner.h"
 #include "storage/bufmgr.h"
 #include "storage/lmgr.h"
+#include "storage/predicate.h"
 #include "storage/procarray.h"
 #include "storage/smgr.h"
 #include "utils/acl.h"
@@ -384,6 +385,14 @@ cluster_rel(Oid tableOid, Oid indexOid, bool recheck, bool verbose,
 	/* Check heap and index are valid to cluster on */
 	if (OidIsValid(indexOid))
 		check_index_is_clusterable(OldHeap, indexOid, recheck, AccessExclusiveLock);
+
+	/*
+	 * All predicate locks on the tuples or pages are about to be made
+	 * invalid, because we move tuples around.	Promote them to relation
+	 * locks.  Predicate locks on indexes will be promoted when they are
+	 * reindexed.
+	 */
+	TransferPredicateLocksToHeapRelation(OldHeap);
 
 	/* rebuild_relation does all the dirty work */
 	rebuild_relation(OldHeap, indexOid, freeze_min_age, freeze_table_age,
