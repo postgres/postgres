@@ -58,9 +58,9 @@ SELECT * FROM tab WHERE lower(col) = LOWER(?);
     The <type>citext</> data type allows you to eliminate calls
     to <function>lower</> in SQL queries, and allows a primary key to
     be case-insensitive. <type>citext</> is locale-aware, just
-    like <type>text</>, which means that the comparison of upper case and
+    like <type>text</>, which means that the matching of upper case and
     lower case characters is dependent on the rules of
-    the <literal>LC_CTYPE</> locale setting. Again, this behavior is
+    the database's <literal>LC_CTYPE</> setting. Again, this behavior is
     identical to the use of <function>lower</> in queries. But because it's
     done transparently by the data type, you don't have to remember to do
     anything special in your queries.
@@ -97,17 +97,25 @@ SELECT * FROM users WHERE nick = 'Larry';
 
  <sect2>
   <title>String Comparison Behavior</title>
+
+  <para>
+   <type>citext</> performs comparisons by converting each string to lower
+   case (as though <function>lower</> were called) and then comparing the
+   results normally.  Thus, for example, two strings are considered equal
+   if <function>lower</> would produce identical results for them.
+  </para>
+
   <para>
    In order to emulate a case-insensitive collation as closely as possible,
-   there are <type>citext</>-specific versions of a number of the comparison
+   there are <type>citext</>-specific versions of a number of string-processing
    operators and functions.  So, for example, the regular expression
    operators <literal>~</> and <literal>~*</> exhibit the same behavior when
-   applied to <type>citext</>: they both compare case-insensitively.
+   applied to <type>citext</>: they both match case-insensitively.
    The same is true
    for <literal>!~</> and <literal>!~*</>, as well as for the
    <literal>LIKE</> operators <literal>~~</> and <literal>~~*</>, and
    <literal>!~~</> and <literal>!~~*</>. If you'd like to match
-   case-sensitively, you can always cast to <type>text</> before comparing.
+   case-sensitively, you can cast the operator's arguments to <type>text</>.
   </para>
 
   <para>
@@ -168,16 +176,30 @@ SELECT * FROM users WHERE nick = 'Larry';
    <itemizedlist>
     <listitem>
      <para>
-      <type>citext</>'s behavior depends on
+      <type>citext</>'s case-folding behavior depends on
       the <literal>LC_CTYPE</> setting of your database. How it compares
-      values is therefore determined when
-      <application>initdb</> is run to create the cluster. It is not truly
+      values is therefore determined when the database is created.
+      It is not truly
       case-insensitive in the terms defined by the Unicode standard.
       Effectively, what this means is that, as long as you're happy with your
       collation, you should be happy with <type>citext</>'s comparisons. But
       if you have data in different languages stored in your database, users
       of one language may find their query results are not as expected if the
       collation is for another language.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      As of <productname>PostgreSQL</> 9.1, you can attach a
+      <literal>COLLATE</> specification to <type>citext</> columns or data
+      values.  Currently, <type>citext</> operators will honor a non-default
+      <literal>COLLATE</> specification while comparing case-folded strings,
+      but the initial folding to lower case is always done according to the
+      database's <literal>LC_CTYPE</> setting (that is, as though
+      <literal>COLLATE "default"</> were given).  This may be changed in a
+      future release so that both steps follow the input <literal>COLLATE</>
+      specification.
      </para>
     </listitem>
 
@@ -198,11 +220,11 @@ SELECT * FROM users WHERE nick = 'Larry';
       contexts.  The standard answer is to use the <type>text</> type and
       manually use the <function>lower</> function when you need to compare
       case-insensitively; this works all right if case-insensitive comparison
-      is needed only infrequently.  If you need case-insensitive most of
-      the time and case-sensitive infrequently, consider storing the data
+      is needed only infrequently.  If you need case-insensitive behavior most
+      of the time and case-sensitive infrequently, consider storing the data
       as <type>citext</> and explicitly casting the column to <type>text</>
-      when you want case-sensitive comparison.  In either situation, you
-      will need two indexes if you want both types of searches to be fast.
+      when you want case-sensitive comparison.  In either situation, you will
+      need two indexes if you want both types of searches to be fast.
     </para>
     </listitem>
 
@@ -210,8 +232,8 @@ SELECT * FROM users WHERE nick = 'Larry';
      <para>
       The schema containing the <type>citext</> operators must be
       in the current <varname>search_path</> (typically <literal>public</>);
-      if it is not, a normal case-sensitive <type>text</> comparison
-      is performed.
+      if it is not, the normal case-sensitive <type>text</> operators
+      will be invoked instead.
     </para>
     </listitem>
    </itemizedlist>

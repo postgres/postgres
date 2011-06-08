@@ -4,6 +4,7 @@
 #include "postgres.h"
 
 #include "access/hash.h"
+#include "catalog/pg_collation.h"
 #include "fmgr.h"
 #include "utils/builtins.h"
 #include "utils/formatting.h"
@@ -48,8 +49,16 @@ citextcmp(text *left, text *right, Oid collid)
 			   *rcstr;
 	int32		result;
 
-	lcstr = str_tolower(VARDATA_ANY(left), VARSIZE_ANY_EXHDR(left), collid);
-	rcstr = str_tolower(VARDATA_ANY(right), VARSIZE_ANY_EXHDR(right), collid);
+	/*
+	 * We must do our str_tolower calls with DEFAULT_COLLATION_OID, not the
+	 * input collation as you might expect.  This is so that the behavior of
+	 * citext's equality and hashing functions is not collation-dependent.  We
+	 * should change this once the core infrastructure is able to cope with
+	 * collation-dependent equality and hashing functions.
+	 */
+
+	lcstr = str_tolower(VARDATA_ANY(left), VARSIZE_ANY_EXHDR(left), DEFAULT_COLLATION_OID);
+	rcstr = str_tolower(VARDATA_ANY(right), VARSIZE_ANY_EXHDR(right), DEFAULT_COLLATION_OID);
 
 	result = varstr_cmp(lcstr, strlen(lcstr),
 						rcstr, strlen(rcstr),
@@ -93,7 +102,7 @@ citext_hash(PG_FUNCTION_ARGS)
 	char	   *str;
 	Datum		result;
 
-	str = str_tolower(VARDATA_ANY(txt), VARSIZE_ANY_EXHDR(txt), PG_GET_COLLATION());
+	str = str_tolower(VARDATA_ANY(txt), VARSIZE_ANY_EXHDR(txt), DEFAULT_COLLATION_OID);
 	result = hash_any((unsigned char *) str, strlen(str));
 	pfree(str);
 
@@ -122,8 +131,8 @@ citext_eq(PG_FUNCTION_ARGS)
 
 	/* We can't compare lengths in advance of downcasing ... */
 
-	lcstr = str_tolower(VARDATA_ANY(left), VARSIZE_ANY_EXHDR(left), PG_GET_COLLATION());
-	rcstr = str_tolower(VARDATA_ANY(right), VARSIZE_ANY_EXHDR(right), PG_GET_COLLATION());
+	lcstr = str_tolower(VARDATA_ANY(left), VARSIZE_ANY_EXHDR(left), DEFAULT_COLLATION_OID);
+	rcstr = str_tolower(VARDATA_ANY(right), VARSIZE_ANY_EXHDR(right), DEFAULT_COLLATION_OID);
 
 	/*
 	 * Since we only care about equality or not-equality, we can avoid all the
@@ -152,8 +161,8 @@ citext_ne(PG_FUNCTION_ARGS)
 
 	/* We can't compare lengths in advance of downcasing ... */
 
-	lcstr = str_tolower(VARDATA_ANY(left), VARSIZE_ANY_EXHDR(left), PG_GET_COLLATION());
-	rcstr = str_tolower(VARDATA_ANY(right), VARSIZE_ANY_EXHDR(right), PG_GET_COLLATION());
+	lcstr = str_tolower(VARDATA_ANY(left), VARSIZE_ANY_EXHDR(left), DEFAULT_COLLATION_OID);
+	rcstr = str_tolower(VARDATA_ANY(right), VARSIZE_ANY_EXHDR(right), DEFAULT_COLLATION_OID);
 
 	/*
 	 * Since we only care about equality or not-equality, we can avoid all the
