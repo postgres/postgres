@@ -62,9 +62,9 @@ typedef enum
 	START_COMMAND,
 	STOP_COMMAND,
 	RESTART_COMMAND,
-	PROMOTE_COMMAND,
 	RELOAD_COMMAND,
 	STATUS_COMMAND,
+	PROMOTE_COMMAND,
 	KILL_COMMAND,
 	REGISTER_COMMAND,
 	UNREGISTER_COMMAND,
@@ -126,9 +126,9 @@ static void do_init(void);
 static void do_start(void);
 static void do_stop(void);
 static void do_restart(void);
-static void do_promote(void);
 static void do_reload(void);
 static void do_status(void);
+static void do_promote(void);
 static void do_kill(pgpid_t pid);
 static void print_msg(const char *msg);
 
@@ -922,7 +922,7 @@ do_stop(void)
 
 
 /*
- *	restart/promote/reload routines
+ *	restart/reload routines
  */
 
 static void
@@ -1019,6 +1019,43 @@ do_restart(void)
 }
 
 static void
+do_reload(void)
+{
+	pgpid_t		pid;
+
+	pid = get_pgpid();
+	if (pid == 0)				/* no pid file */
+	{
+		write_stderr(_("%s: PID file \"%s\" does not exist\n"), progname, pid_file);
+		write_stderr(_("Is server running?\n"));
+		exit(1);
+	}
+	else if (pid < 0)			/* standalone backend, not postmaster */
+	{
+		pid = -pid;
+		write_stderr(_("%s: cannot reload server; "
+					   "single-user server is running (PID: %ld)\n"),
+					 progname, pid);
+		write_stderr(_("Please terminate the single-user server and try again.\n"));
+		exit(1);
+	}
+
+	if (kill((pid_t) pid, sig) != 0)
+	{
+		write_stderr(_("%s: could not send reload signal (PID: %ld): %s\n"),
+					 progname, pid, strerror(errno));
+		exit(1);
+	}
+
+	print_msg(_("server signaled\n"));
+}
+
+
+/*
+ * promote
+ */
+
+static void
 do_promote(void)
 {
 	FILE	   *prmfile;
@@ -1078,38 +1115,6 @@ do_promote(void)
 	print_msg(_("server promoting\n"));
 }
 
-
-static void
-do_reload(void)
-{
-	pgpid_t		pid;
-
-	pid = get_pgpid();
-	if (pid == 0)				/* no pid file */
-	{
-		write_stderr(_("%s: PID file \"%s\" does not exist\n"), progname, pid_file);
-		write_stderr(_("Is server running?\n"));
-		exit(1);
-	}
-	else if (pid < 0)			/* standalone backend, not postmaster */
-	{
-		pid = -pid;
-		write_stderr(_("%s: cannot reload server; "
-					   "single-user server is running (PID: %ld)\n"),
-					 progname, pid);
-		write_stderr(_("Please terminate the single-user server and try again.\n"));
-		exit(1);
-	}
-
-	if (kill((pid_t) pid, sig) != 0)
-	{
-		write_stderr(_("%s: could not send reload signal (PID: %ld): %s\n"),
-					 progname, pid, strerror(errno));
-		exit(1);
-	}
-
-	print_msg(_("server signaled\n"));
-}
 
 /*
  *	utility routines
@@ -1732,17 +1737,16 @@ do_advice(void)
 static void
 do_help(void)
 {
-	printf(_("%s is a utility to start, stop, restart, promote, reload configuration files,\n"
-			 "report the status of a PostgreSQL server, or signal a PostgreSQL process.\n\n"), progname);
+	printf(_("%s is a utility to initialize, start, stop, or control a PostgreSQL server.\n\n"), progname);
 	printf(_("Usage:\n"));
 	printf(_("  %s init[db]               [-D DATADIR] [-s] [-o \"OPTIONS\"]\n"), progname);
 	printf(_("  %s start   [-w] [-t SECS] [-D DATADIR] [-s] [-l FILENAME] [-o \"OPTIONS\"]\n"), progname);
 	printf(_("  %s stop    [-W] [-t SECS] [-D DATADIR] [-s] [-m SHUTDOWN-MODE]\n"), progname);
 	printf(_("  %s restart [-w] [-t SECS] [-D DATADIR] [-s] [-m SHUTDOWN-MODE]\n"
 			 "                 [-o \"OPTIONS\"]\n"), progname);
-	printf(_("  %s promote [-D DATADIR] [-s]\n"), progname);
 	printf(_("  %s reload  [-D DATADIR] [-s]\n"), progname);
 	printf(_("  %s status  [-D DATADIR]\n"), progname);
+	printf(_("  %s promote [-D DATADIR] [-s]\n"), progname);
 	printf(_("  %s kill    SIGNALNAME PID\n"), progname);
 #if defined(WIN32) || defined(__CYGWIN__)
 	printf(_("  %s register   [-N SERVICENAME] [-U USERNAME] [-P PASSWORD] [-D DATADIR]\n"
@@ -2066,12 +2070,12 @@ main(int argc, char **argv)
 				ctl_command = STOP_COMMAND;
 			else if (strcmp(argv[optind], "restart") == 0)
 				ctl_command = RESTART_COMMAND;
-			else if (strcmp(argv[optind], "promote") == 0)
-				ctl_command = PROMOTE_COMMAND;
 			else if (strcmp(argv[optind], "reload") == 0)
 				ctl_command = RELOAD_COMMAND;
 			else if (strcmp(argv[optind], "status") == 0)
 				ctl_command = STATUS_COMMAND;
+			else if (strcmp(argv[optind], "promote") == 0)
+				ctl_command = PROMOTE_COMMAND;
 			else if (strcmp(argv[optind], "kill") == 0)
 			{
 				if (argc - optind < 3)
@@ -2174,11 +2178,11 @@ main(int argc, char **argv)
 		case RESTART_COMMAND:
 			do_restart();
 			break;
-		case PROMOTE_COMMAND:
-			do_promote();
-			break;
 		case RELOAD_COMMAND:
 			do_reload();
+			break;
+		case PROMOTE_COMMAND:
+			do_promote();
 			break;
 		case KILL_COMMAND:
 			do_kill(killproc);

@@ -12,7 +12,7 @@ PostgreSQL documentation
 
  <refnamediv>
   <refname>pg_ctl</refname>
-  <refpurpose>initialize, start, stop, or restart a <productname>PostgreSQL</productname> server</refpurpose>
+  <refpurpose>initialize, start, stop, or control a <productname>PostgreSQL</productname> server</refpurpose>
  </refnamediv>
 
  <indexterm zone="app-pg-ctl">
@@ -77,13 +77,6 @@ PostgreSQL documentation
 
   <cmdsynopsis>
    <command>pg_ctl</command>
-   <arg choice="plain">promote</arg>
-   <arg>-s</arg>
-   <arg>-D <replaceable>datadir</replaceable></arg>
-  </cmdsynopsis>
-
-  <cmdsynopsis>
-   <command>pg_ctl</command>
    <arg choice="plain">reload</arg>
    <arg>-s</arg>
    <arg>-D <replaceable>datadir</replaceable></arg>
@@ -92,6 +85,13 @@ PostgreSQL documentation
   <cmdsynopsis>
    <command>pg_ctl</command>
    <arg choice="plain">status</arg>
+   <arg>-D <replaceable>datadir</replaceable></arg>
+  </cmdsynopsis>
+
+  <cmdsynopsis>
+   <command>pg_ctl</command>
+   <arg choice="plain">promote</arg>
+   <arg>-s</arg>
    <arg>-D <replaceable>datadir</replaceable></arg>
   </cmdsynopsis>
 
@@ -191,12 +191,6 @@ PostgreSQL documentation
   </para>
 
   <para>
-   In <option>promote</option> mode, the standby server that is
-   running in the specified data directory is commanded to exit
-   recovery and begin read-write operations.
-  </para>
-
-  <para>
    <option>reload</option> mode simply sends the
    <command>postgres</command> process a <systemitem>SIGHUP</>
    signal, causing it to reread its configuration files
@@ -211,6 +205,12 @@ PostgreSQL documentation
    the specified data directory. If it is, the <acronym>PID</acronym>
    and the command line options that were used to invoke it are
    displayed.
+  </para>
+
+  <para>
+   In <option>promote</option> mode, the standby server that is
+   running in the specified data directory is commanded to exit
+   recovery and begin read-write operations.
   </para>
 
   <para>
@@ -397,16 +397,6 @@ PostgreSQL documentation
     </varlistentry>
 
     <varlistentry>
-     <term><option>-U <replaceable class="parameter">username</replaceable></option></term>
-     <listitem>
-      <para>
-       User name for the user to start the service. For domain users, use the
-       format <literal>DOMAIN\username</literal>.
-      </para>
-     </listitem>
-    </varlistentry>
-
-    <varlistentry>
      <term><option>-P <replaceable class="parameter">password</replaceable></option></term>
      <listitem>
       <para>
@@ -423,6 +413,16 @@ PostgreSQL documentation
        be <literal>auto</literal>, or <literal>demand</literal>, or
        the first letter of one of these two. If this is omitted,
        <literal>auto</literal> is used.
+      </para>
+     </listitem>
+    </varlistentry>
+
+    <varlistentry>
+     <term><option>-U <replaceable class="parameter">username</replaceable></option></term>
+     <listitem>
+      <para>
+       User name for the user to start the service. For domain users, use the
+       format <literal>DOMAIN\username</literal>.
       </para>
      </listitem>
     </varlistentry>
