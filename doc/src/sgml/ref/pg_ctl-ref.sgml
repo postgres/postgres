@@ -117,6 +117,7 @@ PostgreSQL documentation
    </arg>
    <arg>-w</arg>
    <arg>-t <replaceable>seconds</replaceable></arg>
+   <arg>-s</arg>
    <arg>-o <replaceable>options</replaceable></arg>
   </cmdsynopsis>
 
