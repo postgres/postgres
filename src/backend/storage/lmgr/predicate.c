@@ -330,7 +330,7 @@ typedef struct OldSerXidControlData
 	int			headPage;		/* newest initialized page */
 	TransactionId headXid;		/* newest valid Xid in the SLRU */
 	TransactionId tailXid;		/* oldest xmin we might be interested in */
-	bool		warningIssued;
+	bool		warningIssued;	/* have we issued SLRU wrap-around warning? */
 }	OldSerXidControlData;
 
 typedef struct OldSerXidControlData *OldSerXidControl;
@@ -738,7 +738,6 @@ OldSerXidAdd(TransactionId xid, SerCommitSeqNo minConflictCommitSeqNo)
 	int			targetPage;
 	int			slotno;
 	int			firstZeroPage;
-	int			xidSpread;
 	bool		isNewPage;
 
 	Assert(TransactionIdIsValid(xid));
@@ -779,18 +778,45 @@ OldSerXidAdd(TransactionId xid, SerCommitSeqNo minConflictCommitSeqNo)
 	if (isNewPage)
 		oldSerXidControl->headPage = targetPage;
 
-	xidSpread = (((uint32) xid) - ((uint32) tailXid));
+	/*
+	 * Give a warning if we're about to run out of SLRU pages.
+	 *
+	 * slru.c has a maximum of 64k segments, with 32 (SLRU_PAGES_PER_SEGMENT)
+	 * pages each. We need to store a 64-bit integer for each Xid, and with
+	 * default 8k block size, 65536*32 pages is only enough to cover 2^30
+	 * XIDs. If we're about to hit that limit and wrap around, warn the user.
+	 *
+	 * To avoid spamming the user, we only give one warning when we've used 1
+	 * billion XIDs, and stay silent until the situation is fixed and the
+	 * number of XIDs used falls below 800 million again.
+	 *
+	 * XXX: We have no safeguard to actually *prevent* the wrap-around,
+	 * though. All you get is a warning.
+	 */
 	if (oldSerXidControl->warningIssued)
 	{
-		if (xidSpread < 800000000)
+		TransactionId lowWatermark;
+
+		lowWatermark = tailXid + 800000000;
+		if (lowWatermark < FirstNormalTransactionId)
+			lowWatermark = FirstNormalTransactionId;
+		if (TransactionIdPrecedes(xid, lowWatermark))
 			oldSerXidControl->warningIssued = false;
 	}
-	else if (xidSpread >= 1000000000)
+	else
 	{
-		oldSerXidControl->warningIssued = true;
-		ereport(WARNING,
-				(errmsg("memory for serializable conflict tracking is nearly exhausted"),
-				 errhint("There may be an idle transaction or a forgotten prepared transaction causing this.")));
+		TransactionId highWatermark;
+
+		highWatermark = tailXid + 1000000000;
+		if (highWatermark < FirstNormalTransactionId)
+			highWatermark = FirstNormalTransactionId;
+		if (TransactionIdFollows(xid, highWatermark))
+		{
+			oldSerXidControl->warningIssued = true;
+			ereport(WARNING,
+					(errmsg("memory for serializable conflict tracking is nearly exhausted"),
+					 errhint("There may be an idle transaction or a forgotten prepared transaction causing this.")));
+		}
 	}
 
 	if (isNewPage)
@@ -931,18 +957,16 @@ CheckPointPredicate(void)
 	else
 	{
 		/*
-		 * The SLRU is no longer needed. Truncate everything.  If we try to
-		 * leave the head page around to avoid re-zeroing it, we might not use
-		 * the SLRU again until we're past the wrap-around point, which makes
-		 * SLRU unhappy.
+		 * The SLRU is no longer needed. Truncate to head before we set head
+		 * invalid.
 		 *
-		 * While the API asks you to specify truncation by page, it silently
-		 * ignores the request unless the specified page is in a segment past
-		 * some allocated portion of the SLRU.	We don't care which page in a
-		 * later segment we hit, so just add the number of pages per segment
-		 * to the head page to land us *somewhere* in the next segment.
+		 * XXX: It's possible that the SLRU is not needed again until XID
+		 * wrap-around has happened, so that the segment containing headPage
+		 * that we leave behind will appear to be new again. In that case it
+		 * won't be removed until XID horizon advances enough to make it
+		 * current again.
 		 */
-		tailPage = oldSerXidControl->headPage + SLRU_PAGES_PER_SEGMENT;
+		tailPage = oldSerXidControl->headPage;
 		oldSerXidControl->headPage = -1;
 	}
 
