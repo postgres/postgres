@@ -152,6 +152,9 @@ write_eventlog(int level, const char *line)
 {
 	static HANDLE evtHandle = INVALID_HANDLE_VALUE;
 
+	if (silent_mode && level == EVENTLOG_INFORMATION_TYPE)
+		return;
+
 	if (evtHandle == INVALID_HANDLE_VALUE)
 	{
 		evtHandle = RegisterEventSource(NULL, "PostgreSQL");
@@ -1058,6 +1061,9 @@ pgwin32_CommandLine(bool registration)
 	if (registration && wait_seconds != DEFAULT_WAIT)
 		/* concatenate */
 		sprintf(cmdLine + strlen(cmdLine), " -t %d", wait_seconds);
+
+	if (registration && silent_mode)
+		strcat(cmdLine, " -s");
 
 	if (post_opts)
 	{
