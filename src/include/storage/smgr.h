@@ -62,7 +62,6 @@ typedef struct SMgrRelationData
 	 * submodules.	Do not touch them from elsewhere.
 	 */
 	int			smgr_which;		/* storage manager selector */
-	bool		smgr_transient;	/* T if files are to be closed at EOXact */
 
 	/* for md.c; NULL for forks that are not open */
 	struct _MdfdVec *md_fd[MAX_FORKNUM + 1];
@@ -75,7 +74,6 @@ typedef SMgrRelationData *SMgrRelation;
 
 extern void smgrinit(void);
 extern SMgrRelation smgropen(RelFileNode rnode, BackendId backend);
-extern void smgrsettransient(SMgrRelation reln);
 extern bool smgrexists(SMgrRelation reln, ForkNumber forknum);
 extern void smgrsetowner(SMgrRelation *owner, SMgrRelation reln);
 extern void smgrclose(SMgrRelation reln);
