@@ -9,10 +9,11 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PostgreSQL 9.0\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
-"POT-Creation-Date: 2010-05-08 21:44-0300\n"
+"POT-Creation-Date: 2010-07-08 21:12-0300\n"
 "PO-Revision-Date: 2005-10-04 22:55-0300\n"
 "Last-Translator: Euler Taveira de Oliveira <euler@timbira.com>\n"
 "Language-Team: Brazilian Portuguese <pgbr-dev@listas.postgresql.org.br>\n"
+"Language: pt_BR\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
@@ -242,9 +243,9 @@ msgid "Latest checkpoint's oldestXID:        %u\n"
 msgstr "Último ponto de controle oldestXID:              %u\n"
 
 #: pg_resetxlog.c:583
-#, fuzzy, c-format
+#, c-format
 msgid "Latest checkpoint's oldestXID's DB:   %u\n"
-msgstr "Último ponto de controle do BD oldestXID:        %u\n"
+msgstr "BD do oldestXID do último ponto de controle:     %u\n"
 
 #: pg_resetxlog.c:585
 #, c-format

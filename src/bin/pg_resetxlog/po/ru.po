@@ -4,7 +4,7 @@
 # Copyright (c) 2002-2005 Serguei A. Mokhov, mokhov@cs.concordia.ca
 # Distributed under the same licensing terms as PostgreSQL itself.
 #
-# src/bin/pg_resetxlog/po/ru.po
+# pgtranslation Id: pg_resetxlog.po,v 1.3 2009/10/14 21:08:40 petere Exp $
 #
 # translation of subject-specific terminology, see:
 # перевод некоторых специфичных терминов:

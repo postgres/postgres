@@ -75,7 +75,7 @@ msgid ""
 "  --includedir          show location of C header files of the client\n"
 "                        interfaces\n"
 msgstr ""
-"  --includedir          வாங்கியிக்கான C முதற் கோப்புகளின் இருப்பிடத்தைக் காட்டுக\n"
+"  --includedir          வாங்கிக்கான C முதற் கோப்புகளின் இருப்பிடத்தைக் காட்டுக\n"
 "                        இடைமுகப்புகள்\n"
 
 #: pg_config.c:406

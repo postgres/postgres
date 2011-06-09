@@ -1,7 +1,7 @@
 # translation of pgscripts.po to fr_fr
 # french message translation file for pgscripts
 #
-# src/bin/scripts/po/fr.po
+# $PostgreSQL$
 #
 # Use these quotes: « %s »
 #

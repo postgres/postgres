@@ -6,9 +6,9 @@ msgid ""
 msgstr ""
 "Project-Id-Version: pg_config-tr\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
-"POT-Creation-Date: 2009-04-29 07:09+0000\n"
-"PO-Revision-Date: 2009-04-29 16:28+0200\n"
-"Last-Translator: Devrim GÜNDÜZ <devrim@commandprompt.com>\n"
+"POT-Creation-Date: 2010-08-31 20:02+0000\n"
+"PO-Revision-Date: 2010-09-01 11:05+0200\n"
+"Last-Translator: Devrim GÜNDÜZ <devrim@gunduz.org>\n"
 "Language-Team: Turkish <ceviri@postgresql.org.tr>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
@@ -25,11 +25,12 @@ msgstr ""
 #: pg_config.c:323
 #: pg_config.c:339
 #: pg_config.c:355
+#: pg_config.c:371
 #, c-format
 msgid "not recorded\n"
 msgstr "kayıtlı değil\n"
 
-#: pg_config.c:411
+#: pg_config.c:428
 #, c-format
 msgid ""
 "\n"
@@ -40,12 +41,12 @@ msgstr ""
 "%s kurulu PostgreSQL sürümü hakkında bilgi verir.\n"
 "\n"
 
-#: pg_config.c:412
+#: pg_config.c:429
 #, c-format
 msgid "Usage:\n"
 msgstr "Kullanımı:\n"
 
-#: pg_config.c:413
+#: pg_config.c:430
 #, c-format
 msgid ""
 "  %s [OPTION]...\n"
@@ -54,27 +55,27 @@ msgstr ""
 "  %s [SEÇENEK]...\n"
 "\n"
 
-#: pg_config.c:414
+#: pg_config.c:431
 #, c-format
 msgid "Options:\n"
 msgstr "Seçenekler:\n"
 
-#: pg_config.c:415
+#: pg_config.c:432
 #, c-format
 msgid "  --bindir              show location of user executables\n"
 msgstr "  --bindir              kullanıcı tarafından çalıştırılabilir dosyaların yerlerini göster\n"
 
-#: pg_config.c:416
+#: pg_config.c:433
 #, c-format
 msgid "  --docdir              show location of documentation files\n"
 msgstr "  --docdir              dokümantasyon dosyaların yerini göster\n"
 
-#: pg_config.c:417
+#: pg_config.c:434
 #, c-format
 msgid "  --htmldir             show location of HTML documentation files\n"
 msgstr "  --docdir              HTML belge dosyalarının yerini göster\n"
 
-#: pg_config.c:418
+#: pg_config.c:435
 #, c-format
 msgid ""
 "  --includedir          show location of C header files of the client\n"
@@ -83,52 +84,52 @@ msgstr ""
 "  --includedir         İstemci arabirimlerinin C başlık dosyalarının yerlerini\n"
 "                        göster\n"
 
-#: pg_config.c:420
+#: pg_config.c:437
 #, c-format
 msgid "  --pkgincludedir       show location of other C header files\n"
 msgstr "  --pkgincludedir       diğer C başlık dosyalarının yerlerini göster\n"
 
-#: pg_config.c:421
+#: pg_config.c:438
 #, c-format
 msgid "  --includedir-server   show location of C header files for the server\n"
 msgstr "  --includedir-server   Sunucu için C başlık dosyalarının yerlerini göster\n"
 
-#: pg_config.c:422
+#: pg_config.c:439
 #, c-format
 msgid "  --libdir              show location of object code libraries\n"
 msgstr "  --libdir              nesne kod kütüphanelerinin yerini göster\n"
 
-#: pg_config.c:423
+#: pg_config.c:440
 #, c-format
 msgid "  --pkglibdir           show location of dynamically loadable modules\n"
 msgstr "  --pkglibdir           Dinamik olarak yüklenebilen modüllerin yerlerini göster\n"
 
-#: pg_config.c:424
+#: pg_config.c:441
 #, c-format
 msgid "  --localedir           show location of locale support files\n"
 msgstr "  --localedir           yerel dil destek dosyalarının yerini göster\n"
 
-#: pg_config.c:425
+#: pg_config.c:442
 #, c-format
 msgid "  --mandir              show location of manual pages\n"
 msgstr "  --mandir              kullanıcı kılavuzu (man) dosyaların yerini göster\n"
 
-#: pg_config.c:426
+#: pg_config.c:443
 #, c-format
 msgid "  --sharedir            show location of architecture-independent support files\n"
 msgstr "  --sharedir            platform bağımsız dosyaların yerini göster\n"
 
-#: pg_config.c:427
+#: pg_config.c:444
 #, c-format
 msgid "  --sysconfdir          show location of system-wide configuration files\n"
 msgstr "  --sysconfdir          sistem geneli parametre dosyaların yerini göster\n"
 
-#: pg_config.c:428
+#: pg_config.c:445
 #, c-format
 msgid "  --pgxs                show location of extension makefile\n"
 msgstr "  --pgxs                extension makefile dosyasının yerini göster\n"
 
-#: pg_config.c:429
+#: pg_config.c:446
 #, c-format
 msgid ""
 "  --configure           show options given to \"configure\" script when\n"
@@ -137,52 +138,57 @@ msgstr ""
 "  --configure           PostgreSQL yapılandırıldığında \"configure\" betiğine verilen\n"
 "                        seçeneklerin listesini göster\n"
 
-#: pg_config.c:431
+#: pg_config.c:448
 #, c-format
 msgid "  --cc                  show CC value used when PostgreSQL was built\n"
 msgstr "  --ldflags             PostgreSQL derleme sırasında kullanılan CC değerini göster\n"
 
-#: pg_config.c:432
+#: pg_config.c:449
 #, c-format
 msgid "  --cppflags            show CPPFLAGS value used when PostgreSQL was built\n"
 msgstr "  --ldflags             PostgreSQL derleme sırasında kullanılan CPPFLAGS değerini göster\n"
 
-#: pg_config.c:433
+#: pg_config.c:450
 #, c-format
 msgid "  --cflags              show CFLAGS value used when PostgreSQL was built\n"
 msgstr "  --ldflags             PostgreSQL derleme sırasında kullanılan CFLAGS değerini göster\n"
 
-#: pg_config.c:434
+#: pg_config.c:451
 #, c-format
 msgid "  --cflags_sl           show CFLAGS_SL value used when PostgreSQL was built\n"
 msgstr "  --ldflags             PostgreSQL derleme sırasında kullanılan CFLAGS_SL değerini göster\n"
 
-#: pg_config.c:435
+#: pg_config.c:452
 #, c-format
 msgid "  --ldflags             show LDFLAGS value used when PostgreSQL was built\n"
 msgstr "  --ldflags             PostgreSQL derleme sırasında kullanılan LDFLAGS değerini göster\n"
 
-#: pg_config.c:436
+#: pg_config.c:453
+#, c-format
+msgid "  --ldflags_ex          show LDFLAGS_EX value used when PostgreSQL was built\n"
+msgstr "  --ldflags_ex             PostgreSQL derlemesi sırasında kullanılan LDFLAGS_EX değerini göster\n"
+
+#: pg_config.c:454
 #, c-format
 msgid "  --ldflags_sl          show LDFLAGS_SL value used when PostgreSQL was built\n"
 msgstr "  --ldflags             PostgreSQL derleme sırasında kullanılan LDFLAGS_SL değerini göster\n"
 
-#: pg_config.c:437
+#: pg_config.c:455
 #, c-format
 msgid "  --libs                show LIBS value used when PostgreSQL was built\n"
 msgstr "  --libs                PostgreSQL derleme sırasında kullanılan LIBS değerini göster\n"
 
-#: pg_config.c:438
+#: pg_config.c:456
 #, c-format
 msgid "  --version             show the PostgreSQL version\n"
 msgstr "  --version             PostgreSQL sürümünü göster ve çık\n"
 
-#: pg_config.c:439
+#: pg_config.c:457
 #, c-format
 msgid "  --help                show this help, then exit\n"
 msgstr "  --help                bu yardımı göster ve çık\n"
 
-#: pg_config.c:440
+#: pg_config.c:458
 #, c-format
 msgid ""
 "\n"
@@ -193,80 +199,80 @@ msgstr ""
 "Parametre verilmediyse, tüm değerleri gösterilmektedir.\n"
 "\n"
 
-#: pg_config.c:441
+#: pg_config.c:459
 #, c-format
 msgid "Report bugs to <pgsql-bugs@postgresql.org>.\n"
 msgstr "Hataları <pgsql-bugs@postgresql.org> adresine bildirebilirsiniz.\n"
 
-#: pg_config.c:447
+#: pg_config.c:465
 #, c-format
 msgid "Try \"%s --help\" for more information.\n"
 msgstr "Daha fazla bilgi için\"%s --help\" parametresini kullanabilirsiniz\n"
 
-#: pg_config.c:486
+#: pg_config.c:504
 #, c-format
 msgid "%s: could not find own program executable\n"
 msgstr "%s: çalıştırılabilir dosya bulunamadı\n"
 
-#: pg_config.c:509
+#: pg_config.c:527
 #, c-format
 msgid "%s: invalid argument: %s\n"
 msgstr "%s: geçersiz argüman: %s\n"
 
-#: ../../port/exec.c:195
-#: ../../port/exec.c:309
-#: ../../port/exec.c:352
+#: ../../port/exec.c:125
+#: ../../port/exec.c:239
+#: ../../port/exec.c:282
 #, c-format
 msgid "could not identify current directory: %s"
 msgstr "geçerli dizin tespit edilemedi: %s"
 
-#: ../../port/exec.c:214
+#: ../../port/exec.c:144
 #, c-format
 msgid "invalid binary \"%s\""
 msgstr "geçersiz ikili (binary) \"%s\""
 
-#: ../../port/exec.c:263
+#: ../../port/exec.c:193
 #, c-format
 msgid "could not read binary \"%s\""
 msgstr "\"%s\" ikili (binary) dosyası okunamadı"
 
-#: ../../port/exec.c:270
+#: ../../port/exec.c:200
 #, c-format
 msgid "could not find a \"%s\" to execute"
 msgstr "\"%s\"  çalıştırmak için bulunamadı"
 
-#: ../../port/exec.c:325
-#: ../../port/exec.c:361
+#: ../../port/exec.c:255
+#: ../../port/exec.c:291
 #, c-format
 msgid "could not change directory to \"%s\""
 msgstr "çalışma dizini \"%s\" olarak değiştirilemedi"
 
-#: ../../port/exec.c:340
+#: ../../port/exec.c:270
 #, c-format
 msgid "could not read symbolic link \"%s\""
 msgstr "symbolic link \"%s\" okuma hatası"
 
-#: ../../port/exec.c:586
+#: ../../port/exec.c:516
 #, c-format
 msgid "child process exited with exit code %d"
 msgstr "alt süreç %d çıkış koduyla sonuçlandı"
 
-#: ../../port/exec.c:590
+#: ../../port/exec.c:520
 #, c-format
 msgid "child process was terminated by exception 0x%X"
 msgstr "alt süreç 0x%X exception tarafından sonlandırıldı"
 
-#: ../../port/exec.c:599
+#: ../../port/exec.c:529
 #, c-format
 msgid "child process was terminated by signal %s"
 msgstr "alt süreç %s sinyali tarafından sonlandırıldı"
 
-#: ../../port/exec.c:602
+#: ../../port/exec.c:532
 #, c-format
 msgid "child process was terminated by signal %d"
 msgstr "alt süreç %d sinyali tarafından sonlandırıldı"
 
-#: ../../port/exec.c:606
+#: ../../port/exec.c:536
 #, c-format
 msgid "child process exited with unrecognized status %d"
 msgstr "alt süreç %d bilinmeyen durumu ile sonlandırıldı"
@@ -277,4 +283,3 @@ msgstr "alt süreç %d bilinmeyen durumu ile sonlandırıldı"
 #~ msgstr ""
 #~ "  %s [ SEÇENEK ... ]\n"
 #~ "\n"
-

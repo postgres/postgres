@@ -1,7 +1,7 @@
 # translation of libpq-cs.po to Czech
 # Czech translation of libpq messages
 #
-# src/interfaces/libpq/po/cs.po
+# pgtranslation Id: libpq.po,v 1.4 2009/10/14 21:08:40 petere Exp $
 # Karel Žák, 2001-2003, 2004.
 # Zdeněk Kotala, 2009.
 #

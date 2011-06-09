@@ -24,7 +24,7 @@ msgstr ""
 "Project-Id-Version: PostgreSQL 8.4\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
 "POT-Creation-Date: 2010-03-26 13:16+0000\n"
-"PO-Revision-Date: 2010-03-27 12:44:19+0100\n"
+"PO-Revision-Date: 2010-09-25 00:44+0300\n"
 "Last-Translator: Gabriele Bartolini <gabriele.bartolini@2ndquadrant.it>\n"
 "Language-Team: Gruppo traduzioni ITPUG <traduzioni@itpug.org>\n"
 "MIME-Version: 1.0\n"
@@ -177,12 +177,12 @@ msgstr "%s: il file \"%s\" non è un file regolare\n"
 #: initdb.c:1033
 #, c-format
 msgid "selecting default max_connections ... "
-msgstr "selezione del parametro max_connections predefinito ..."
+msgstr "selezione del parametro max_connections predefinito ... "
 
 #: initdb.c:1062
 #, c-format
 msgid "selecting default shared_buffers ... "
-msgstr "si sta selezionando lo shared_buffers predefinito ..."
+msgstr "si sta selezionando lo shared_buffers predefinito ... "
 
 #: initdb.c:1105
 msgid "creating configuration files ... "
@@ -205,7 +205,7 @@ msgstr ""
 
 #: initdb.c:1373
 msgid "initializing pg_authid ... "
-msgstr "inizializzazione di pg_authid ..."
+msgstr "inizializzazione di pg_authid ... "
 
 #: initdb.c:1407
 msgid "Enter new superuser password: "
@@ -228,15 +228,15 @@ msgstr "%s: impossibile leggere il file delle password \"%s\": %s\n"
 #: initdb.c:1451
 #, c-format
 msgid "setting password ... "
-msgstr "impostazione password ..."
+msgstr "impostazione password ... "
 
 #: initdb.c:1549
 msgid "initializing dependencies ... "
-msgstr "inizializzazione delle dipendenze ..."
+msgstr "inizializzazione delle dipendenze ... "
 
 #: initdb.c:1577
 msgid "creating system views ... "
-msgstr "creazione delle viste di sistema ..."
+msgstr "creazione delle viste di sistema ... "
 
 #: initdb.c:1613
 msgid "loading system objects' descriptions ... "
@@ -244,15 +244,15 @@ msgstr "caricamento delle descrizioni degli oggetti di sistema"
 
 #: initdb.c:1665
 msgid "creating conversions ... "
-msgstr "creazione delle conversioni ..."
+msgstr "creazione delle conversioni ... "
 
 #: initdb.c:1700
 msgid "creating dictionaries ... "
-msgstr "creazione dizionari... "
+msgstr "creazione dizionari ... "
 
 #: initdb.c:1754
 msgid "setting privileges on built-in objects ... "
-msgstr "impostazione dei privilegi per gli oggetti incorporati ..."
+msgstr "impostazione dei privilegi per gli oggetti incorporati ... "
 
 #: initdb.c:1812
 msgid "creating information schema ... "
@@ -260,7 +260,7 @@ msgstr "creazione dello schema informazioni ... "
 
 #: initdb.c:1868
 msgid "loading PL/pgSQL server-side language ... "
-msgstr "caricamento sul server del linguaggio PL/pgSQL ..."
+msgstr "caricamento sul server del linguaggio PL/pgSQL ... "
 
 #: initdb.c:1893
 msgid "vacuuming database template1 ... "

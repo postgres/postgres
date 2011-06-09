@@ -1,0 +1,954 @@
+# Traditional Chinese message translation file for pgscripts
+# Copyright (C) 2011 PostgreSQL Global Development Group
+# This file is distributed under the same license as the PostgreSQL package.
+# 2004-11-11 Zhenbang Wei <forth@zbwei.net>
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: PostgreSQL 9.1\n"
+"Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
+"POT-Creation-Date: 2011-05-13 20:41+0000\n"
+"PO-Revision-Date: 2011-05-12 14:01+0800\n"
+"Last-Translator: Zhenbang Wei <znbang@gmail.com>\n"
+"Language-Team: EnterpriseDB translation team <dev-escalations@enterprisedb."
+"com>\n"
+"Language: \n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=1; plural=0;\n"
+
+#: createdb.c:114 createdb.c:133 createlang.c:89 createlang.c:110
+#: createlang.c:163 createuser.c:149 createuser.c:164 dropdb.c:83 dropdb.c:92
+#: dropdb.c:100 droplang.c:88 droplang.c:109 droplang.c:163 dropuser.c:83
+#: dropuser.c:98 clusterdb.c:104 clusterdb.c:119 vacuumdb.c:127 vacuumdb.c:142
+#: reindexdb.c:114 reindexdb.c:128
+#, c-format
+msgid "Try \"%s --help\" for more information.\n"
+msgstr "執行 \"%s --help\" 取得更多資訊。\n"
+
+#: createdb.c:131 createlang.c:108 createuser.c:162 dropdb.c:98 droplang.c:107
+#: dropuser.c:96 clusterdb.c:117 vacuumdb.c:140 reindexdb.c:127
+#, c-format
+msgid "%s: too many command-line arguments (first is \"%s\")\n"
+msgstr "%s: 命令列參數過多(第一個是 \"%s\")\n"
+
+#: createdb.c:141
+#, c-format
+msgid "%s: only one of --locale and --lc-ctype can be specified\n"
+msgstr "%s: 只可以指定 --locale 和 --lc-ctype 其中一個\n"
+
+#: createdb.c:147
+#, c-format
+msgid "%s: only one of --locale and --lc-collate can be specified\n"
+msgstr "%s: 只可以指定 --locale 和 --lc-collate 其中一個\n"
+
+#: createdb.c:159
+#, c-format
+msgid "%s: \"%s\" is not a valid encoding name\n"
+msgstr "%s: \"%s\"不是有效的編碼名稱\n"
+
+#: createdb.c:209
+#, c-format
+msgid "%s: database creation failed: %s"
+msgstr "%s: 建立資料庫失敗: %s"
+
+#: createdb.c:229
+#, c-format
+msgid "%s: comment creation failed (database was created): %s"
+msgstr "%s: 建立註解失敗(資料庫已建立): %s"
+
+#: createdb.c:247
+#, c-format
+msgid ""
+"%s creates a PostgreSQL database.\n"
+"\n"
+msgstr ""
+"%s 建立 PostgreSQL 資料庫。\n"
+"\n"
+
+#: createdb.c:248 createlang.c:223 createuser.c:300 dropdb.c:145
+#: droplang.c:224 dropuser.c:139 clusterdb.c:236 vacuumdb.c:328
+#: reindexdb.c:313
+#, c-format
+msgid "Usage:\n"
+msgstr "使用方法:\n"
+
+#: createdb.c:249
+#, c-format
+msgid "  %s [OPTION]... [DBNAME] [DESCRIPTION]\n"
+msgstr "  %s [選項]... [資料庫名稱] [說明]\n"
+
+#: createdb.c:250 createlang.c:225 createuser.c:302 dropdb.c:147
+#: droplang.c:226 dropuser.c:141 clusterdb.c:238 vacuumdb.c:330
+#: reindexdb.c:315
+#, c-format
+msgid ""
+"\n"
+"Options:\n"
+msgstr ""
+"\n"
+"選項:\n"
+
+#: createdb.c:251
+#, c-format
+msgid "  -D, --tablespace=TABLESPACE  default tablespace for the database\n"
+msgstr "  -D, --tablespace=TABLESPACE  資料庫預設表空間\n"
+
+#: createdb.c:252
+#, c-format
+msgid ""
+"  -e, --echo                   show the commands being sent to the server\n"
+msgstr "  -e, --echo                   顯示被送到伺服器的命令\n"
+
+#: createdb.c:253
+#, c-format
+msgid "  -E, --encoding=ENCODING      encoding for the database\n"
+msgstr "  -E, --encoding=編碼名稱      指定資料庫的編碼\n"
+
+#: createdb.c:254
+#, c-format
+msgid "  -l, --locale=LOCALE          locale settings for the database\n"
+msgstr "  -l, --locale=區域          資料庫的區域設定\n"
+
+#: createdb.c:255
+#, c-format
+msgid "      --lc-collate=LOCALE      LC_COLLATE setting for the database\n"
+msgstr "      --lc-collate=區域      資料庫的 LC_COLLATE 設定\n"
+
+#: createdb.c:256
+#, c-format
+msgid "      --lc-ctype=LOCALE        LC_CTYPE setting for the database\n"
+msgstr "      --lc-ctype=區域        資料庫的 LC_CTYPE 設定\n"
+
+#: createdb.c:257
+#, c-format
+msgid "  -O, --owner=OWNER            database user to own the new database\n"
+msgstr "  -O, --owner=擁有者           指定新資料庫的擁有者\n"
+
+#: createdb.c:258
+#, c-format
+msgid "  -T, --template=TEMPLATE      template database to copy\n"
+msgstr "  -T, --template=樣版名稱      指定要使用的資料庫樣板\n"
+
+#: createdb.c:259
+#, c-format
+msgid "  --help                       show this help, then exit\n"
+msgstr "  --help                       顯示說明然後結束\n"
+
+#: createdb.c:260
+#, c-format
+msgid "  --version                    output version information, then exit\n"
+msgstr "  --version                    顯示版本資訊然後結束\n"
+
+#: createdb.c:261 createlang.c:231 createuser.c:321 dropdb.c:152
+#: droplang.c:232 dropuser.c:146 clusterdb.c:247 vacuumdb.c:343
+#: reindexdb.c:325
+#, c-format
+msgid ""
+"\n"
+"Connection options:\n"
+msgstr ""
+"\n"
+"連線選項:\n"
+
+#: createdb.c:262
+#, c-format
+msgid ""
+"  -h, --host=HOSTNAME          database server host or socket directory\n"
+msgstr "  -h, --host=主機名稱          資料庫伺服器主機或 socket 目錄\n"
+
+#: createdb.c:263
+#, c-format
+msgid "  -p, --port=PORT              database server port\n"
+msgstr "  -p, --port=連接埠            資料庫伺服器連接埠\n"
+
+#: createdb.c:264
+#, c-format
+msgid "  -U, --username=USERNAME      user name to connect as\n"
+msgstr "  -U, --username=使用者名稱    用來連線的使用者\n"
+
+#: createdb.c:265
+#, c-format
+msgid "  -w, --no-password            never prompt for password\n"
+msgstr "  -w, --no-password            絕不提示密碼\n"
+
+#: createdb.c:266
+#, c-format
+msgid "  -W, --password               force password prompt\n"
+msgstr "  -W, --password               強制密碼提示\n"
+
+#: createdb.c:267
+#, c-format
+msgid ""
+"\n"
+"By default, a database with the same name as the current user is created.\n"
+msgstr ""
+"\n"
+"預設會建立與使用者同名的資料庫。\n"
+
+#: createdb.c:268 createlang.c:237 createuser.c:329 dropdb.c:158
+#: droplang.c:238 dropuser.c:152 clusterdb.c:254 vacuumdb.c:350
+#: reindexdb.c:332
+#, c-format
+msgid ""
+"\n"
+"Report bugs to <pgsql-bugs@postgresql.org>.\n"
+msgstr ""
+"\n"
+"回報錯誤至 <pgsql-bugs@postgresql.org>。\n"
+
+#: createlang.c:140 droplang.c:139
+msgid "Name"
+msgstr "名稱"
+
+#: createlang.c:141 droplang.c:140
+msgid "yes"
+msgstr "是"
+
+#: createlang.c:141 droplang.c:140
+msgid "no"
+msgstr "否"
+
+#: createlang.c:142 droplang.c:141
+msgid "Trusted?"
+msgstr "是否信任？"
+
+#: createlang.c:151 droplang.c:150
+msgid "Procedural Languages"
+msgstr "程序語言"
+
+#: createlang.c:162 droplang.c:161
+#, c-format
+msgid "%s: missing required argument language name\n"
+msgstr "%s: 缺少必要參數語言名稱\n"
+
+#: createlang.c:184
+#, c-format
+msgid "%s: language \"%s\" is already installed in database \"%s\"\n"
+msgstr "%s: 語言 \"%s\" 已被安裝至資料庫 \"%s\"\n"
+
+#: createlang.c:206
+#, c-format
+msgid "%s: language installation failed: %s"
+msgstr "%s: 安裝語言失敗: %s"
+
+#: createlang.c:222
+#, c-format
+msgid ""
+"%s installs a procedural language into a PostgreSQL database.\n"
+"\n"
+msgstr ""
+"%s 將程序語言安裝至 PostgreSQL 資料庫。\n"
+"\n"
+
+#: createlang.c:224 droplang.c:225
+#, c-format
+msgid "  %s [OPTION]... LANGNAME [DBNAME]\n"
+msgstr "  %s [選項]... 語言 [資料庫名稱]\n"
+
+#: createlang.c:226
+#, c-format
+msgid "  -d, --dbname=DBNAME       database to install language in\n"
+msgstr "  -d, --dbname=資料庫名稱       指定安裝語言的資料庫\n"
+
+#: createlang.c:227 createuser.c:306 dropdb.c:148 droplang.c:228
+#: dropuser.c:142 clusterdb.c:241 reindexdb.c:318
+#, c-format
+msgid ""
+"  -e, --echo                show the commands being sent to the server\n"
+msgstr "  -e, --echo                顯示被送到伺服器的命令\n"
+
+#: createlang.c:228 droplang.c:229
+#, c-format
+msgid ""
+"  -l, --list                show a list of currently installed languages\n"
+msgstr "  -l, --list                顯示目前已安裝的語言\n"
+
+#: createlang.c:229 createuser.c:319 dropdb.c:150 droplang.c:230
+#: dropuser.c:144 clusterdb.c:245 reindexdb.c:323
+#, c-format
+msgid "  --help                    show this help, then exit\n"
+msgstr "  --help                    顯示說明然後結束\n"
+
+#: createlang.c:230 createuser.c:320 dropdb.c:151 droplang.c:231
+#: dropuser.c:145 clusterdb.c:246 reindexdb.c:324
+#, c-format
+msgid "  --version                 output version information, then exit\n"
+msgstr "  --version                 顯示版本資訊然後結束\n"
+
+#: createlang.c:232 createuser.c:322 dropdb.c:153 droplang.c:233
+#: dropuser.c:147 clusterdb.c:248 vacuumdb.c:344 reindexdb.c:326
+#, c-format
+msgid "  -h, --host=HOSTNAME       database server host or socket directory\n"
+msgstr "  -h, --host=主機名稱       資料庫伺服器主機或 socket 目錄\n"
+
+#: createlang.c:233 createuser.c:323 dropdb.c:154 droplang.c:234
+#: dropuser.c:148 clusterdb.c:249 vacuumdb.c:345 reindexdb.c:327
+#, c-format
+msgid "  -p, --port=PORT           database server port\n"
+msgstr "  -p, --port=連接埠         資料庫伺服器連接埠\n"
+
+#: createlang.c:234 dropdb.c:155 droplang.c:235 clusterdb.c:250 vacuumdb.c:346
+#: reindexdb.c:328
+#, c-format
+msgid "  -U, --username=USERNAME   user name to connect as\n"
+msgstr "  -U, --username=使用者名稱 用來連線的使用者\n"
+
+#: createlang.c:235 createuser.c:325 dropdb.c:156 droplang.c:236
+#: dropuser.c:150 clusterdb.c:251 vacuumdb.c:347 reindexdb.c:329
+#, c-format
+msgid "  -w, --no-password         never prompt for password\n"
+msgstr "  -w, --no-password         絕不提示密碼\n"
+
+#: createlang.c:236 createuser.c:326 dropdb.c:157 droplang.c:237
+#: dropuser.c:151 clusterdb.c:252 vacuumdb.c:348 reindexdb.c:330
+#, c-format
+msgid "  -W, --password            force password prompt\n"
+msgstr "  -W, --password            強制密碼提示\n"
+
+#: createuser.c:169
+msgid "Enter name of role to add: "
+msgstr "輸入新身份的名稱:"
+
+#: createuser.c:176
+msgid "Enter password for new role: "
+msgstr "輸入新身份的密碼:"
+
+#: createuser.c:177
+msgid "Enter it again: "
+msgstr "再輸入一次: "
+
+#: createuser.c:180
+#, c-format
+msgid "Passwords didn't match.\n"
+msgstr "密碼不符。\n"
+
+# utils/misc/guc.c:434
+#: createuser.c:189
+msgid "Shall the new role be a superuser?"
+msgstr "新身份是否要成為超級用戶?"
+
+#: createuser.c:204
+msgid "Shall the new role be allowed to create databases?"
+msgstr "是否允許新身份建立資料庫?"
+
+#: createuser.c:212
+msgid "Shall the new role be allowed to create more new roles?"
+msgstr "是否允許新身份建立更多身份 ?"
+
+#: createuser.c:245
+#, c-format
+msgid "Password encryption failed.\n"
+msgstr "密碼加密失敗.\n"
+
+#: createuser.c:284
+#, c-format
+msgid "%s: creation of new role failed: %s"
+msgstr "%s: 建立新身份失敗:%s"
+
+#: createuser.c:299
+#, c-format
+msgid ""
+"%s creates a new PostgreSQL role.\n"
+"\n"
+msgstr ""
+"%s 會建立新的 PostgreSQL 身份。\n"
+"\n"
+
+#: createuser.c:301 dropuser.c:140
+#, c-format
+msgid "  %s [OPTION]... [ROLENAME]\n"
+msgstr "  %s [選項]...[身份\n"
+
+#: createuser.c:303
+#, c-format
+msgid ""
+"  -c, --connection-limit=N  connection limit for role (default: no limit)\n"
+msgstr "  -c, --connection-limit=N  身份的連線限制(預設: 無限制)\n"
+
+#: createuser.c:304
+#, c-format
+msgid "  -d, --createdb            role can create new databases\n"
+msgstr "  -d, --createdb            身份可以建立新資料庫\n"
+
+#: createuser.c:305
+#, c-format
+msgid "  -D, --no-createdb         role cannot create databases\n"
+msgstr "  -D, --no-createdb         身份無法建立資料庫\n"
+
+#: createuser.c:307
+#, c-format
+msgid "  -E, --encrypted           encrypt stored password\n"
+msgstr "  -E, --encrypted           加密儲存的密碼\n"
+
+#: createuser.c:308
+#, c-format
+msgid ""
+"  -i, --inherit             role inherits privileges of roles it is a\n"
+"                            member of (default)\n"
+msgstr ""
+"  -i, --inherit             身份會繼承父身份的\n"
+"                            權限(預設)\n"
+
+#: createuser.c:310
+#, c-format
+msgid "  -I, --no-inherit          role does not inherit privileges\n"
+msgstr "  -I, --no-inherit          身份不會繼承權限\n"
+
+#: createuser.c:311
+#, c-format
+msgid "  -l, --login               role can login (default)\n"
+msgstr "  -l, --login               身份可以登入(預設)\n"
+
+#: createuser.c:312
+#, c-format
+msgid "  -L, --no-login            role cannot login\n"
+msgstr "  -L, --no-login            身份不能登入\n"
+
+#: createuser.c:313
+#, c-format
+msgid "  -N, --unencrypted         do not encrypt stored password\n"
+msgstr "  -N, --unencrypted         不加密儲存的密碼\n"
+
+#: createuser.c:314
+#, c-format
+msgid "  -P, --pwprompt            assign a password to new role\n"
+msgstr "  -P, --pwprompt            指派密碼給新身份\n"
+
+#: createuser.c:315
+#, c-format
+msgid "  -r, --createrole          role can create new roles\n"
+msgstr "  -r, --createrole          身份可以建立新身份\n"
+
+#: createuser.c:316
+#, c-format
+msgid "  -R, --no-createrole       role cannot create roles\n"
+msgstr "  -R, --no-createrole       身份不能建立身份\n"
+
+#: createuser.c:317
+#, c-format
+msgid "  -s, --superuser           role will be superuser\n"
+msgstr "  -s, --superuser           身份將是超級用戶\n"
+
+#: createuser.c:318
+#, c-format
+msgid "  -S, --no-superuser        role will not be superuser\n"
+msgstr "  -S, --no-superuser        身份不會是超級用戶\n"
+
+#: createuser.c:324
+#, c-format
+msgid ""
+"  -U, --username=USERNAME   user name to connect as (not the one to create)\n"
+msgstr "  -U, --username=使用者     用來連線的使用者(不是要建立的)\n"
+
+#: createuser.c:327
+#, c-format
+msgid ""
+"\n"
+"If one of -d, -D, -r, -R, -s, -S, and ROLENAME is not specified, you will\n"
+"be prompted interactively.\n"
+msgstr ""
+"\n"
+"如果沒有指定 -d、-D、-r、-R、-s、-S 或身份，系統會\n"
+"以互動方式提示您輸入。\n"
+
+#: dropdb.c:91
+#, c-format
+msgid "%s: missing required argument database name\n"
+msgstr "%s: 缺少必要參數資料庫名稱\n"
+
+#: dropdb.c:106
+#, c-format
+msgid "Database \"%s\" will be permanently removed.\n"
+msgstr "資料庫 \"%s\" 會被永久刪除。\n"
+
+#: dropdb.c:107 dropuser.c:108
+msgid "Are you sure?"
+msgstr "您確定嗎?"
+
+#: dropdb.c:129
+#, c-format
+msgid "%s: database removal failed: %s"
+msgstr "%s: 刪除資料庫失敗: %s"
+
+#: dropdb.c:144
+#, c-format
+msgid ""
+"%s removes a PostgreSQL database.\n"
+"\n"
+msgstr ""
+"%s 刪除 PostgreSQL 資料庫。\n"
+"\n"
+
+#: dropdb.c:146
+#, c-format
+msgid "  %s [OPTION]... DBNAME\n"
+msgstr "  %s [選項]... 資料庫名稱\n"
+
+#: dropdb.c:149 dropuser.c:143
+#, c-format
+msgid "  -i, --interactive         prompt before deleting anything\n"
+msgstr "  -i, --interactive         刪除任何東西前要先詢問\n"
+
+#: droplang.c:190
+#, c-format
+msgid "%s: language \"%s\" is not installed in database \"%s\"\n"
+msgstr "%s: 語言 \"%s\" 未被安裝至資料庫 \"%s\"\n"
+
+#: droplang.c:208
+#, c-format
+msgid "%s: language removal failed: %s"
+msgstr "%s: 刪除語言失敗: %s"
+
+#: droplang.c:223
+#, c-format
+msgid ""
+"%s removes a procedural language from a database.\n"
+"\n"
+msgstr ""
+"%s 刪除資料庫中的程序語言。\n"
+"\n"
+
+#: droplang.c:227
+#, c-format
+msgid ""
+"  -d, --dbname=DBNAME       database from which to remove the language\n"
+msgstr "  -d, --dbname=資料庫       指定要刪除語言的資料庫\n"
+
+#: dropuser.c:103
+msgid "Enter name of role to drop: "
+msgstr "輸入要刪除的身份:"
+
+#: dropuser.c:107
+#, c-format
+msgid "Role \"%s\" will be permanently removed.\n"
+msgstr "身份 \"%s\"  將被永久刪除。\n"
+
+#: dropuser.c:123
+#, c-format
+msgid "%s: removal of role \"%s\" failed: %s"
+msgstr "%s: 刪除身份 \"%s\" 失敗:%s"
+
+#: dropuser.c:138
+#, c-format
+msgid ""
+"%s removes a PostgreSQL role.\n"
+"\n"
+msgstr ""
+"%s 會刪除 PostgreSQL 身份。\n"
+"\n"
+
+#: dropuser.c:149
+#, c-format
+msgid ""
+"  -U, --username=USERNAME   user name to connect as (not the one to drop)\n"
+msgstr "  -U, --username=使用者名稱 用來連線的使用者(不是要刪除的)\n"
+
+#: clusterdb.c:129
+#, c-format
+msgid "%s: cannot cluster all databases and a specific one at the same time\n"
+msgstr "%s: 不能同時重新排列所有資料庫和重新排列指定資料庫\n"
+
+#: clusterdb.c:135
+#, c-format
+msgid "%s: cannot cluster a specific table in all databases\n"
+msgstr "%s: 不能對所有資料庫指定重新排列資料表\n"
+
+#: clusterdb.c:187
+#, c-format
+msgid "%s: clustering of table \"%s\" in database \"%s\" failed: %s"
+msgstr "%s: 重新排列資料表 \"%s\" 於資料庫 \"%s\" 失敗: %s"
+
+#: clusterdb.c:190
+#, c-format
+msgid "%s: clustering of database \"%s\" failed: %s"
+msgstr "%s: 重新排列資料庫 \"%s\" 失敗: %s"
+
+#: clusterdb.c:219
+#, c-format
+msgid "%s: clustering database \"%s\"\n"
+msgstr "%s: 重新排列資料庫 \"%s\"\n"
+
+#: clusterdb.c:235
+#, c-format
+msgid ""
+"%s clusters all previously clustered tables in a database.\n"
+"\n"
+msgstr ""
+"%s 重新排列所有資料庫中曾經重排的資料庫。\n"
+"\n"
+
+#: clusterdb.c:237 vacuumdb.c:329 reindexdb.c:314
+#, c-format
+msgid "  %s [OPTION]... [DBNAME]\n"
+msgstr "  %s [選項]... [資料庫]\n"
+
+#: clusterdb.c:239
+#, c-format
+msgid "  -a, --all                 cluster all databases\n"
+msgstr "  -a, --all                 重新排列所有資料庫\n"
+
+#: clusterdb.c:240
+#, c-format
+msgid "  -d, --dbname=DBNAME       database to cluster\n"
+msgstr "  -d, --dbname=資料庫       重新排列指定的資料庫\n"
+
+#: clusterdb.c:242 reindexdb.c:320
+#, c-format
+msgid "  -q, --quiet               don't write any messages\n"
+msgstr "  -q, --quiet               不顯示任何訊息\n"
+
+#: clusterdb.c:243
+#, c-format
+msgid "  -t, --table=TABLE         cluster specific table only\n"
+msgstr "  -t, --table=資料表        重新排列指定的資料表\n"
+
+#: clusterdb.c:244
+#, c-format
+msgid "  -v, --verbose             write a lot of output\n"
+msgstr "  -v, --verbose             顯示詳細的執行訊息\n"
+
+#: clusterdb.c:253
+#, c-format
+msgid ""
+"\n"
+"Read the description of the SQL command CLUSTER for details.\n"
+msgstr ""
+"\n"
+"請參考 SQL 命令 CLUSTER 的說明。\n"
+
+#: vacuumdb.c:150
+#, c-format
+msgid "%s: cannot use the \"full\" option when performing only analyze\n"
+msgstr "%s: 只執行分析時無法使用 \"full\" 選項\n"
+
+#: vacuumdb.c:156
+#, c-format
+msgid "%s: cannot use the \"freeze\" option when performing only analyze\n"
+msgstr "%s: 只執行分析時無法使用 \"freeze\" 選項\n"
+
+#: vacuumdb.c:169
+#, c-format
+msgid "%s: cannot vacuum all databases and a specific one at the same time\n"
+msgstr "%s: 不能同時重整所有資料庫和重整指定資料庫\n"
+
+#: vacuumdb.c:175
+#, c-format
+msgid "%s: cannot vacuum a specific table in all databases\n"
+msgstr "%s: 不能對所有資料庫指定重整資料表\n"
+
+#: vacuumdb.c:278
+#, c-format
+msgid "%s: vacuuming of table \"%s\" in database \"%s\" failed: %s"
+msgstr "%s: 重整資料表 \"%s\" 於資料庫 \"%s\" 失敗: %s"
+
+#: vacuumdb.c:281
+#, c-format
+msgid "%s: vacuuming of database \"%s\" failed: %s"
+msgstr "%s: 重整資料庫 \"%s\" 失敗: %s"
+
+#: vacuumdb.c:311
+#, c-format
+msgid "%s: vacuuming database \"%s\"\n"
+msgstr "%s: 重整資料庫 \"%s\"\n"
+
+#: vacuumdb.c:327
+#, c-format
+msgid ""
+"%s cleans and analyzes a PostgreSQL database.\n"
+"\n"
+msgstr ""
+"%s 整理並分析 PostgreSQL 資料庫。\n"
+"\n"
+
+#: vacuumdb.c:331
+#, c-format
+msgid "  -a, --all                       vacuum all databases\n"
+msgstr "  -a, --all                       重整所有資料庫\n"
+
+#: vacuumdb.c:332
+#, c-format
+msgid "  -d, --dbname=DBNAME             database to vacuum\n"
+msgstr "  -d, --dbname=資料庫             重整指定的資料庫\n"
+
+#: vacuumdb.c:333
+#, c-format
+msgid ""
+"  -e, --echo                      show the commands being sent to the "
+"server\n"
+msgstr "  -e, --echo                      顯示被送到伺服器的命令\n"
+
+#: vacuumdb.c:334
+#, c-format
+msgid "  -f, --full                      do full vacuuming\n"
+msgstr "  -f, --full                      進行完整的資料庫重整\n"
+
+#: vacuumdb.c:335
+#, c-format
+msgid "  -F, --freeze                    freeze row transaction information\n"
+msgstr "  -F, --freeze                    凍結資料列交易資訊\n"
+
+#: vacuumdb.c:336
+#, c-format
+msgid "  -q, --quiet                     don't write any messages\n"
+msgstr "  -q, --quiet                     不顯示任何訊息\n"
+
+#: vacuumdb.c:337
+#, c-format
+msgid "  -t, --table='TABLE[(COLUMNS)]'  vacuum specific table only\n"
+msgstr "  -t, --table='資料表[(欄位)]'    重整指定的資料表\n"
+
+#: vacuumdb.c:338
+#, c-format
+msgid "  -v, --verbose                   write a lot of output\n"
+msgstr "  -v, --verbose                   顯示詳細的執行訊息\n"
+
+#: vacuumdb.c:339
+#, c-format
+msgid "  -z, --analyze                   update optimizer statistics\n"
+msgstr "  -z, --analyze                   更新最佳化處理器統計資料\n"
+
+#: vacuumdb.c:340
+#, c-format
+msgid "  -Z, --analyze-only              only update optimizer statistics\n"
+msgstr "  -Z, --analyze-only              只更新最佳化處理器統計資料\n"
+
+#: vacuumdb.c:341
+#, c-format
+msgid "  --help                          show this help, then exit\n"
+msgstr "  --help                          顯示這份說明然後結束\n"
+
+#: vacuumdb.c:342
+#, c-format
+msgid ""
+"  --version                       output version information, then exit\n"
+msgstr "  --version                       顯示版本資訊然後結束\n"
+
+#: vacuumdb.c:349
+#, c-format
+msgid ""
+"\n"
+"Read the description of the SQL command VACUUM for details.\n"
+msgstr ""
+"\n"
+"請參考 SQL 命令 VACUUM 的說明。\n"
+
+#: reindexdb.c:138
+#, c-format
+msgid "%s: cannot reindex all databases and a specific one at the same time\n"
+msgstr "%s: 無法同時對所有資料庫和特定資料庫進行索引重建\n"
+
+#: reindexdb.c:143
+#, c-format
+msgid "%s: cannot reindex all databases and system catalogs at the same time\n"
+msgstr "%s: 無法同時對所有資料庫和系統目錄進行索引重建\n"
+
+#: reindexdb.c:148
+#, c-format
+msgid "%s: cannot reindex a specific table in all databases\n"
+msgstr "%s: 無法對所有資料庫中的特定資料表進行索引重建\n"
+
+#: reindexdb.c:153
+#, c-format
+msgid "%s: cannot reindex a specific index in all databases\n"
+msgstr "%s: 無法對所有資料庫中的特定索引進行索引重建\n"
+
+#: reindexdb.c:164
+#, c-format
+msgid ""
+"%s: cannot reindex a specific table and system catalogs at the same time\n"
+msgstr "%s: 無法同時對特定資料表和系統目錄進行索引重建\n"
+
+#: reindexdb.c:169
+#, c-format
+msgid ""
+"%s: cannot reindex a specific index and system catalogs at the same time\n"
+msgstr "%s: 無法同時對特定索引和系統目錄進行索引重建\n"
+
+#: reindexdb.c:238
+#, c-format
+msgid "%s: reindexing of table \"%s\" in database \"%s\" failed: %s"
+msgstr "%s: 對資料表 \"%s\" (位於資料庫 \"%s\" 中) 進行索引重建失敗:%s"
+
+#: reindexdb.c:241
+#, c-format
+msgid "%s: reindexing of index \"%s\" in database \"%s\" failed: %s"
+msgstr "%s: 對索引 \"%s\" (位於資料庫 \"%s\" 中) 進行索引重建失敗:%s"
+
+#: reindexdb.c:244
+#, c-format
+msgid "%s: reindexing of database \"%s\" failed: %s"
+msgstr "%s: 對資料庫 \"%s\" 進行索引重建失敗:%s"
+
+#: reindexdb.c:273
+#, c-format
+msgid "%s: reindexing database \"%s\"\n"
+msgstr "%s: 對資料庫 \"%s\" 進行索引重建\n"
+
+#: reindexdb.c:300
+#, c-format
+msgid "%s: reindexing of system catalogs failed: %s"
+msgstr "%s: 對系統目錄進行索引重建失敗:%s"
+
+#: reindexdb.c:312
+#, c-format
+msgid ""
+"%s reindexes a PostgreSQL database.\n"
+"\n"
+msgstr ""
+"%s 重建 PostgreSQL 資料庫索引。\n"
+"\n"
+
+#: reindexdb.c:316
+#, c-format
+msgid "  -a, --all                 reindex all databases\n"
+msgstr "  -a, --all                 重建所有資料庫索引\n"
+
+#: reindexdb.c:317
+#, c-format
+msgid "  -d, --dbname=DBNAME       database to reindex\n"
+msgstr "  -d, --dbname=資料庫名稱       要重建索引的資料庫\n"
+
+#: reindexdb.c:319
+#, c-format
+msgid "  -i, --index=INDEX         recreate specific index only\n"
+msgstr "  -i, --index=索引         只重建指定索引\n"
+
+#: reindexdb.c:321
+#, c-format
+msgid "  -s, --system              reindex system catalogs\n"
+msgstr "  -s, --system              重建系統目錄索引\n"
+
+#: reindexdb.c:322
+#, c-format
+msgid "  -t, --table=TABLE         reindex specific table only\n"
+msgstr "  -t, --table=資料表         重建指定資料表索引\n"
+
+#: reindexdb.c:331
+#, c-format
+msgid ""
+"\n"
+"Read the description of the SQL command REINDEX for details.\n"
+msgstr ""
+"\n"
+"請閱讀 SQL 指令 REINDEX 的描述以取得詳細資訊。\n"
+
+#: common.c:45
+#, c-format
+msgid "%s: could not obtain information about current user: %s\n"
+msgstr "%s: 無法取得目前使用者的資訊: %s\n"
+
+#: common.c:56
+#, c-format
+msgid "%s: could not get current user name: %s\n"
+msgstr "%s: 無法取得目前使用者的名稱: %s\n"
+
+#: common.c:103 common.c:155
+msgid "Password: "
+msgstr "密碼: "
+
+#: common.c:117
+#, c-format
+msgid "%s: out of memory\n"
+msgstr "%s: 記憶體用盡\n"
+
+#: common.c:144
+#, c-format
+msgid "%s: could not connect to database %s\n"
+msgstr "%s: 無法連線至資料庫 %s\n"
+
+#: common.c:166
+#, c-format
+msgid "%s: could not connect to database %s: %s"
+msgstr "%s: 無法連線至資料庫 %s: %s"
+
+#: common.c:190 common.c:218
+#, c-format
+msgid "%s: query failed: %s"
+msgstr "%s: 查詢失敗: %s"
+
+#: common.c:192 common.c:220
+#, c-format
+msgid "%s: query was: %s\n"
+msgstr "%s: 查詢是: %s\n"
+
+# common.c:78
+#: common.c:266
+#, c-format
+msgid "pg_strdup: cannot duplicate null pointer (internal error)\n"
+msgstr "pg_strdup: 無法複製 null 指標(內部錯誤)\n"
+
+# commands/sequence.c:798 executor/execGrouping.c:328
+# executor/execGrouping.c:388 executor/nodeIndexscan.c:1051 lib/dllist.c:43
+# lib/dllist.c:88 libpq/auth.c:637 postmaster/pgstat.c:1006
+# postmaster/pgstat.c:1023 postmaster/pgstat.c:2452 postmaster/pgstat.c:2527
+# postmaster/pgstat.c:2572 postmaster/pgstat.c:2623
+# postmaster/postmaster.c:755 postmaster/postmaster.c:1625
+# postmaster/postmaster.c:2344 storage/buffer/localbuf.c:139
+# storage/file/fd.c:587 storage/file/fd.c:620 storage/file/fd.c:766
+# storage/ipc/sinval.c:789 storage/lmgr/lock.c:497 storage/smgr/md.c:138
+# storage/smgr/md.c:848 storage/smgr/smgr.c:213 utils/adt/cash.c:297
+# utils/adt/cash.c:312 utils/adt/oracle_compat.c:73
+# utils/adt/oracle_compat.c:124 utils/adt/regexp.c:191
+# utils/adt/ri_triggers.c:3471 utils/cache/relcache.c:164
+# utils/cache/relcache.c:178 utils/cache/relcache.c:1130
+# utils/cache/typcache.c:165 utils/cache/typcache.c:487
+# utils/fmgr/dfmgr.c:127 utils/fmgr/fmgr.c:521 utils/fmgr/fmgr.c:532
+# utils/init/miscinit.c:213 utils/init/miscinit.c:234
+# utils/init/miscinit.c:244 utils/misc/guc.c:1898 utils/misc/guc.c:1911
+# utils/misc/guc.c:1924 utils/mmgr/aset.c:337 utils/mmgr/aset.c:503
+# utils/mmgr/aset.c:700 utils/mmgr/aset.c:893 utils/mmgr/portalmem.c:75
+#: common.c:272
+#, c-format
+msgid "out of memory\n"
+msgstr "記憶體用盡\n"
+
+#  translator: Make sure the (y/n) prompts match the translation of this.
+#. translator: abbreviation for "yes"
+#: common.c:283
+msgid "y"
+msgstr "y"
+
+#  translator: Make sure the (y/n) prompts match the translation of this.
+#. translator: abbreviation for "no"
+#: common.c:285
+msgid "n"
+msgstr "n"
+
+#: common.c:296
+#, c-format
+msgid "%s (%s/%s) "
+msgstr "%s (%s/%s) "
+
+#: common.c:317
+#, c-format
+msgid "Please answer \"%s\" or \"%s\".\n"
+msgstr "請回應 \"%s\" 或 \"%s\"。\n"
+
+#: common.c:395 common.c:428
+#, c-format
+msgid "Cancel request sent\n"
+msgstr "已傳送取消要求\n"
+
+# fe-connect.c:1427
+#: common.c:397 common.c:430
+#, c-format
+msgid "Could not send cancel request: %s"
+msgstr "無法傳送取消要求:%s"
+
+#~ msgid ""
+#~ "%s: still %s functions declared in language \"%s\"; language not removed\n"
+#~ msgstr "%s: 仍有 %s 個函式以語言\"%s\"宣告，不予刪除\n"
+
+#~ msgid ""
+#~ "Supported languages are plpgsql, pltcl, pltclu, plperl, plperlu, and "
+#~ "plpythonu.\n"
+#~ msgstr "支援的語言有plpgsql、pltcl、pltclu、plperl、plperlu和plpythonu。\n"
+
+#~ msgid ""
+#~ "  -L, --pglib=DIRECTORY     find language interpreter file in DIRECTORY\n"
+#~ msgstr "  -L, --pglib=目錄          在指定的目錄中尋找語言直譯器檔案\n"
+
+#~ msgid "%s: user ID must be a positive number\n"
+#~ msgstr "%s: 使用者ID必須是正數\n"

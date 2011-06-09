@@ -24,7 +24,7 @@ msgstr ""
 "Project-Id-Version: Postgresql 8.4\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
 "POT-Creation-Date: 2010-03-26 13:21+0000\n"
-"PO-Revision-Date: 2010-03-27 12:44:19+0100\n"
+"PO-Revision-Date: 2011-01-27 21:32+0200\n"
 "Last-Translator: Gabriele Bartolini <gabriele.bartolini@2ndquadrant.it>\n"
 "Language-Team: Gruppo traduzioni ITPUG <traduzioni@itpug.org>\n"
 "MIME-Version: 1.0\n"
@@ -350,14 +350,14 @@ msgstr "  -h, --host=NOMEHOST      host server di database o directory socket\n"
 #: pg_dumpall.c:568
 #, c-format
 msgid "  -p, --port=PORT          database server port number\n"
-msgstr "p, --port=PORTA          numero porta del server di database\n"
+msgstr "  -p, --port=PORTA         numero porta del server di database\n"
 
 #: pg_dump.c:840
 #: pg_restore.c:444
 #: pg_dumpall.c:569
 #, c-format
 msgid "  -U, --username=NAME      connect as specified database user\n"
-msgstr "U, --username=NOME      connessione come utente di database specificato\n"
+msgstr "  -U, --username=NOME      connessione come utente di database specificato\n"
 
 #: pg_dump.c:841
 #: pg_restore.c:445

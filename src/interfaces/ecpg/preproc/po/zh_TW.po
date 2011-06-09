@@ -1,0 +1,646 @@
+# Traditional Chinese message translation file for ecpg
+# Copyright (C) 2010 PostgreSQL Global Development Group
+# This file is distributed under the same license as the PostgreSQL package.
+msgid ""
+msgstr ""
+"Project-Id-Version: PostgreSQL 9.1\n"
+"Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
+"POT-Creation-Date: 2011-05-11 20:42+0000\n"
+"PO-Revision-Date: 2011-05-09 10:38+0800\n"
+"Last-Translator: Zhenbang Wei <znbang@gmail.com>\n"
+"Language-Team: EnterpriseDB translation team <dev-escalations@enterprisedb."
+"com>\n"
+"Language: \n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=1; plural=0;\n"
+
+#: descriptor.c:64
+#, c-format
+msgid "variable \"%s\" must have a numeric type"
+msgstr "變數 \"%s\" 必須具有數值型別"
+
+#: descriptor.c:124 descriptor.c:146
+#, c-format
+msgid "descriptor \"%s\" does not exist"
+msgstr "描述子 \"%s\" 不存在"
+
+#: descriptor.c:161 descriptor.c:210
+#, c-format
+msgid "descriptor header item \"%d\" does not exist"
+msgstr "描述子標頭項目 \"%d\" 不存在"
+
+#: descriptor.c:182
+msgid "nullable is always 1"
+msgstr "Nullable 一律為 1"
+
+#: descriptor.c:185
+msgid "key_member is always 0"
+msgstr "key_member 一律為 0"
+
+#: descriptor.c:277
+#, c-format
+msgid "descriptor item \"%s\" is not implemented"
+msgstr "未實作描述子項目 \"%s\""
+
+#: descriptor.c:287
+#, c-format
+msgid "descriptor item \"%s\" cannot be set"
+msgstr "不能設定描述子項目 \"%s\""
+
+#: ecpg.c:35
+#, c-format
+msgid ""
+"%s is the PostgreSQL embedded SQL preprocessor for C programs.\n"
+"\n"
+msgstr ""
+"%s 是 PostgreSQL 內嵌 SQL 前置處理器，適用於 C 程式。\n"
+"\n"
+
+#: ecpg.c:37
+#, c-format
+msgid ""
+"Usage:\n"
+"  %s [OPTION]... FILE...\n"
+"\n"
+msgstr ""
+"使用方法:\n"
+"%s [選項]...檔案...\n"
+"\n"
+
+# postmaster/postmaster.c:1017 tcop/postgres.c:2115
+#: ecpg.c:40
+#, c-format
+msgid "Options:\n"
+msgstr "選項：\n"
+
+#: ecpg.c:41
+#, c-format
+msgid ""
+"  -c             automatically generate C code from embedded SQL code;\n"
+"                 this affects EXEC SQL TYPE\n"
+msgstr ""
+"  -c             自動從內嵌 SQL 程式碼產生 C 程式碼，\n"
+"                 EXEC SQL TYPE 會受到影響\n"
+
+#: ecpg.c:43
+#, c-format
+msgid ""
+"  -C MODE        set compatibility mode; MODE can be one of\n"
+"                 \"INFORMIX\", \"INFORMIX_SE\"\n"
+msgstr ""
+"  -C 模式        設定相容性模式，模式可以是下列其中一項\n"
+"                 \"INFORMIX\"、\"INFORMIX_SE\"\n"
+
+#: ecpg.c:46
+#, c-format
+msgid "  -d             generate parser debug output\n"
+msgstr "  -d             產生解譯器偵錯輸出\n"
+
+#: ecpg.c:48
+#, c-format
+msgid "  -D SYMBOL      define SYMBOL\n"
+msgstr "  -D 符號      定義符號\n"
+
+#: ecpg.c:49
+#, c-format
+msgid ""
+"  -h             parse a header file, this option includes option \"-c\"\n"
+msgstr "  -h             解譯標頭檔，此選項包含選項 \"-c\"\n"
+
+#: ecpg.c:50
+#, c-format
+msgid "  -i             parse system include files as well\n"
+msgstr "  -i             同時解譯系統引用檔案\n"
+
+#: ecpg.c:51
+#, c-format
+msgid "  -I DIRECTORY   search DIRECTORY for include files\n"
+msgstr "  -I 目錄   搜尋引用檔案的目錄\n"
+
+#: ecpg.c:52
+#, c-format
+msgid "  -o OUTFILE     write result to OUTFILE\n"
+msgstr "  -o 輸出檔     將結果寫入輸出檔\n"
+
+#: ecpg.c:53
+#, c-format
+msgid ""
+"  -r OPTION      specify run-time behavior; OPTION can be:\n"
+"                 \"no_indicator\", \"prepare\", \"questionmarks\"\n"
+msgstr ""
+"  -r 選項      指定執行階段行為，選項可以是:\n"
+"                 \"no_indicator\"、\"prepare\"、\"questionmarks\"\n"
+
+#: ecpg.c:55
+#, c-format
+msgid "  --regression   run in regression testing mode\n"
+msgstr "  --regression   以迴歸測試模式執行\n"
+
+#: ecpg.c:56
+#, c-format
+msgid "  -t             turn on autocommit of transactions\n"
+msgstr "  -t             開啟交易自動提交功能\n"
+
+#: ecpg.c:57
+#, c-format
+msgid "  --help         show this help, then exit\n"
+msgstr "  --help         顯示此說明然後結束\n"
+
+#: ecpg.c:58
+#, c-format
+msgid "  --version      output version information, then exit\n"
+msgstr "  --version      輸出版本資訊然後結束\n"
+
+#: ecpg.c:59
+#, c-format
+msgid ""
+"\n"
+"If no output file is specified, the name is formed by adding .c to the\n"
+"input file name, after stripping off .pgc if present.\n"
+msgstr ""
+"\n"
+"如果未指定輸出檔，檔名就是將輸入檔的檔名\n"
+"去掉 .pgc  (如果有的話) 再加上 .c。\n"
+
+# tcop/postgres.c:2140
+#: ecpg.c:61
+#, c-format
+msgid ""
+"\n"
+"Report bugs to <pgsql-bugs@postgresql.org>.\n"
+msgstr ""
+"\n"
+"回報錯誤給 <pgsql-bugs@postgresql.org>。\n"
+
+#: ecpg.c:182 ecpg.c:333 ecpg.c:343
+#, c-format
+msgid "%s: could not open file \"%s\": %s\n"
+msgstr "%s: 無法開啟檔案\"%s\": %s\n"
+
+# postmaster/postmaster.c:512 postmaster/postmaster.c:525
+#: ecpg.c:221 ecpg.c:234 ecpg.c:250 ecpg.c:275
+#, c-format
+msgid "Try \"%s --help\" for more information.\n"
+msgstr "執行\"%s --help\"顯示更多資訊。\n"
+
+#: ecpg.c:245
+#, c-format
+msgid "%s: parser debug support (-d) not available\n"
+msgstr "%s: 解譯器偵錯支援 (-d) 無法使用\n"
+
+#: ecpg.c:263
+#, c-format
+msgid "%s, the PostgreSQL embedded C preprocessor, version %d.%d.%d\n"
+msgstr "%s，PostgreSQL 內嵌 C 前置處理器，版本 %d.%d.%d\n"
+
+#: ecpg.c:265
+#, c-format
+msgid "EXEC SQL INCLUDE ... search starts here:\n"
+msgstr "EXEC SQL INCLUDE ... 在此處開始搜尋:\n"
+
+#: ecpg.c:268
+#, c-format
+msgid "end of search list\n"
+msgstr "搜尋清單結尾\n"
+
+#: ecpg.c:274
+#, c-format
+msgid "%s: no input files specified\n"
+msgstr "%s: 未指定輸入檔\n"
+
+#: ecpg.c:466
+#, c-format
+msgid "cursor \"%s\" has been declared but not opened"
+msgstr "指標 \"%s\" 已宣告但尚未開啟"
+
+#: ecpg.c:479 preproc.y:109
+#, c-format
+msgid "could not remove output file \"%s\"\n"
+msgstr "無法移除輸出檔 \"%s\"\n"
+
+# scan.l:312
+#: pgc.l:402
+msgid "unterminated /* comment"
+msgstr "未結束的 /* 註解"
+
+#: pgc.l:415
+msgid "invalid bit string literal"
+msgstr "位元字串實量無效"
+
+# scan.l:339
+#: pgc.l:424
+msgid "unterminated bit string literal"
+msgstr "未結束的位元字串實量"
+
+# scan.l:358
+#: pgc.l:440
+msgid "unterminated hexadecimal string literal"
+msgstr "未結束的十六進位字串實量"
+
+# scan.l:407
+#: pgc.l:518
+msgid "unterminated quoted string"
+msgstr "未結束的引號字串"
+
+#: pgc.l:573 pgc.l:586
+msgid "zero-length delimited identifier"
+msgstr "長度為零的分隔識別字"
+
+#: pgc.l:594
+msgid "unterminated quoted identifier"
+msgstr "未結束的引號識別字"
+
+#: pgc.l:940
+msgid "missing identifier in EXEC SQL UNDEF command"
+msgstr "EXEC SQL UNDEF 指令遺漏識別字"
+
+#: pgc.l:986 pgc.l:1000
+msgid "missing matching \"EXEC SQL IFDEF\" / \"EXEC SQL IFNDEF\""
+msgstr "遺漏相符的 \"EXEC SQL IFDEF\" / \"EXEC SQL IFNDEF\""
+
+#: pgc.l:989 pgc.l:1002 pgc.l:1178
+msgid "missing \"EXEC SQL ENDIF;\""
+msgstr "遺漏 \"EXEC SQL ENDIF;\""
+
+#: pgc.l:1018 pgc.l:1037
+msgid "more than one EXEC SQL ELSE"
+msgstr "多個 EXEC SQL ELSE"
+
+#: pgc.l:1059 pgc.l:1073
+msgid "unmatched EXEC SQL ENDIF"
+msgstr "EXEC SQL ENDIF 不相符"
+
+#: pgc.l:1093
+msgid "too many nested EXEC SQL IFDEF conditions"
+msgstr "過多巢狀 EXEC SQL IFDEF 條件"
+
+#: pgc.l:1126
+msgid "missing identifier in EXEC SQL IFDEF command"
+msgstr "EXEC SQL IFDEF 指令遺漏識別字"
+
+#: pgc.l:1135
+msgid "missing identifier in EXEC SQL DEFINE command"
+msgstr "EXEC SQL DEFINE 指令遺漏識別字"
+
+#: pgc.l:1168
+msgid "syntax error in EXEC SQL INCLUDE command"
+msgstr "EXEC SQL INCLUDE 指令的語法錯誤"
+
+#: pgc.l:1217
+msgid ""
+"internal error: unreachable state; please report this to <pgsql-"
+"bugs@postgresql.org>"
+msgstr "內部錯誤: 無法連線狀態，請將錯誤回報給 <pgsql-bugs@postgresql.org>"
+
+#: pgc.l:1342
+#, c-format
+msgid "Error: include path \"%s/%s\" is too long on line %d, skipping\n"
+msgstr "錯誤: 引用檔路徑 \"%s/%s\" 太長 (位於行 %d)，略過\n"
+
+#: pgc.l:1364
+#, c-format
+msgid "could not open include file \"%s\" on line %d"
+msgstr "無法開啟引用檔 \"%s\" (位於行 %d)"
+
+# gram.y:8218 gram.y:8220 y.tab.c:19175
+#: preproc.y:31
+msgid "syntax error"
+msgstr "語法錯誤"
+
+#: preproc.y:81
+#, c-format
+msgid "WARNING: "
+msgstr "警告:"
+
+#: preproc.y:85
+#, c-format
+msgid "ERROR: "
+msgstr "錯誤:"
+
+# commands/portalcmds.c:182 commands/portalcmds.c:229
+#: preproc.y:391
+#, c-format
+msgid "cursor \"%s\" does not exist"
+msgstr "指標 \"%s\"不存在"
+
+#: preproc.y:419
+msgid "initializer not allowed in type definition"
+msgstr "型別定義中不允許使用初始設定式"
+
+# commands/user.c:1396
+#: preproc.y:421
+msgid "type name \"string\" is reserved in Informix mode"
+msgstr "型別名稱 \"string\" 在 Informix 是保留字"
+
+#: preproc.y:428 preproc.y:13035
+#, c-format
+msgid "type \"%s\" is already defined"
+msgstr "型別 \"%s\" 已定義"
+
+#: preproc.y:452 preproc.y:13675 preproc.y:13996 variable.c:610
+msgid "multidimensional arrays for simple data types are not supported"
+msgstr "不支援簡單資料型別的多維度陣列"
+
+#: preproc.y:1426
+msgid "AT option not allowed in CLOSE DATABASE statement"
+msgstr "CLOSE DATABASE 陳述式中不允許使用 AT 選項"
+
+#: preproc.y:1496 preproc.y:1640
+msgid "AT option not allowed in DEALLOCATE statement"
+msgstr "DEALLOCATE 陳述式中不允許使用 AT 選項"
+
+#: preproc.y:1626
+msgid "AT option not allowed in CONNECT statement"
+msgstr "CONNECT 陳述式中不允許使用 AT 選項"
+
+#: preproc.y:1662
+msgid "AT option not allowed in DISCONNECT statement"
+msgstr "DISCONNECT 陳述式中不允許使用 AT 選項"
+
+#: preproc.y:1717
+msgid "AT option not allowed in SET CONNECTION statement"
+msgstr "SET CONNECTION 陳述式中不允許使用 AT 選項"
+
+#: preproc.y:1739
+msgid "AT option not allowed in TYPE statement"
+msgstr "TYPE 陳述式中不允許使用 AT 選項"
+
+#: preproc.y:1748
+msgid "AT option not allowed in VAR statement"
+msgstr "VAR 陳述式中不允許使用 AT 選項"
+
+#: preproc.y:1755
+msgid "AT option not allowed in WHENEVER statement"
+msgstr "WHENEVER 陳述式中不允許使用 AT 選項"
+
+#: preproc.y:2101 preproc.y:3272 preproc.y:3344 preproc.y:4550 preproc.y:4559
+#: preproc.y:4840 preproc.y:7127 preproc.y:7132 preproc.y:7137 preproc.y:9471
+#: preproc.y:10014
+msgid "unsupported feature will be passed to server"
+msgstr "不支援的功能將會傳遞到伺服器"
+
+#: preproc.y:2327
+msgid "SHOW ALL is not implemented"
+msgstr "未實作 SHOW ALL"
+
+#: preproc.y:2750 preproc.y:2761
+msgid "COPY TO STDIN is not possible"
+msgstr "COPY TO STDIN 不可行"
+
+#: preproc.y:2752
+msgid "COPY FROM STDOUT is not possible"
+msgstr "COPY FROM STDOUT 不可行"
+
+#: preproc.y:2754
+msgid "COPY FROM STDIN is not implemented"
+msgstr "未實作 COPY FROM STDIN"
+
+#: preproc.y:4490 preproc.y:4501
+msgid "constraint declared INITIALLY DEFERRED must be DEFERRABLE"
+msgstr "限制宣告的 INITIALLY DEFERRED 必須是 DEFERRABLE"
+
+#: preproc.y:7933 preproc.y:12624
+#, c-format
+msgid "using variable \"%s\" in different declare statements is not supported"
+msgstr "在多個宣告陳述式中使用變數 \"%s\" 未被支援"
+
+#: preproc.y:7935 preproc.y:12626
+#, c-format
+msgid "cursor \"%s\" is already defined"
+msgstr "指標 \"%s\" 已定義"
+
+#: preproc.y:8353
+msgid "no longer supported LIMIT #,# syntax passed to server"
+msgstr "不再支援的 LIMIT #,# 語法已傳遞到伺服器"
+
+# gram.y:5166 parser/parse_clause.c:423
+#: preproc.y:8588
+msgid "subquery in FROM must have an alias"
+msgstr "FROM中的子查詢要有別名"
+
+#: preproc.y:12356
+msgid "CREATE TABLE AS cannot specify INTO"
+msgstr "CREATE TABLE AS 不能指定 INTO"
+
+#: preproc.y:12393
+#, c-format
+msgid "expected \"@\", found \"%s\""
+msgstr "預期 \"@\"，找到 \"%s\""
+
+#: preproc.y:12405
+msgid ""
+"only protocols \"tcp\" and \"unix\" and database type \"postgresql\" are "
+"supported"
+msgstr "只支援通訊協定 \"tcp\" 和 \"unix\" 以及資料庫類型 \"postgresql\""
+
+#: preproc.y:12408
+#, c-format
+msgid "expected \"://\", found \"%s\""
+msgstr "預期 \"://\"，找到 \"%s\""
+
+#: preproc.y:12413
+#, c-format
+msgid "Unix-domain sockets only work on \"localhost\" but not on \"%s\""
+msgstr "Unix-可用域通訊端僅適用 \"localhost\"，不適用 \"%s\""
+
+#: preproc.y:12439
+#, c-format
+msgid "expected \"postgresql\", found \"%s\""
+msgstr "預期 \"postgresql\"，找到 \"%s\""
+
+#: preproc.y:12442
+#, c-format
+msgid "invalid connection type: %s"
+msgstr "連線類型無效:%s"
+
+#: preproc.y:12451
+#, c-format
+msgid "expected \"@\" or \"://\", found \"%s\""
+msgstr "預期 \"@\" 或 \"://\"，找到 \"%s\""
+
+#: preproc.y:12526 preproc.y:12544
+msgid "invalid data type"
+msgstr "資料型別無效"
+
+#: preproc.y:12555 preproc.y:12570
+msgid "incomplete statement"
+msgstr "陳述式不完整"
+
+#: preproc.y:12558 preproc.y:12573
+#, c-format
+msgid "unrecognized token \"%s\""
+msgstr "無法辨識的 token \"%s\""
+
+#: preproc.y:12846
+msgid "only data types numeric and decimal have precision/scale argument"
+msgstr "只有數值和十進位資料型別有精確度/小數位數參數"
+
+#: preproc.y:12858
+msgid "interval specification not allowed here"
+msgstr "這裡不允許使用間隔規格"
+
+#: preproc.y:13010 preproc.y:13062
+msgid "too many levels in nested structure/union definition"
+msgstr "巢狀結構/聯集定義中的層級過多"
+
+#: preproc.y:13193
+msgid "pointers to varchar are not implemented"
+msgstr "Varchar 的指標未實作"
+
+#: preproc.y:13380 preproc.y:13405
+msgid "using unsupported DESCRIBE statement"
+msgstr "使用不支援的 DESCRIBE 陳述式"
+
+#: preproc.y:13642
+msgid "initializer not allowed in EXEC SQL VAR command"
+msgstr "EXEC SQL VAR 指令中不允許使用初始設定式"
+
+#: preproc.y:13954
+msgid "arrays of indicators are not allowed on input"
+msgstr "輸入中不允許使用指標陣列"
+
+#  translator: first %s is typically "syntax error"
+# scan.l:629
+#. translator: %s is typically the translation of "syntax error"
+#: preproc.y:14208
+#, c-format
+msgid "%s at or near \"%s\""
+msgstr "在\"%s\"附近發生 %s"
+
+# commands/sequence.c:798 executor/execGrouping.c:328
+# executor/execGrouping.c:388 executor/nodeIndexscan.c:1051 lib/dllist.c:43
+# lib/dllist.c:88 libpq/auth.c:637 postmaster/pgstat.c:1006
+# postmaster/pgstat.c:1023 postmaster/pgstat.c:2452 postmaster/pgstat.c:2527
+# postmaster/pgstat.c:2572 postmaster/pgstat.c:2623
+# postmaster/postmaster.c:755 postmaster/postmaster.c:1625
+# postmaster/postmaster.c:2344 storage/buffer/localbuf.c:139
+# storage/file/fd.c:587 storage/file/fd.c:620 storage/file/fd.c:766
+# storage/ipc/sinval.c:789 storage/lmgr/lock.c:497 storage/smgr/md.c:138
+# storage/smgr/md.c:848 storage/smgr/smgr.c:213 utils/adt/cash.c:297
+# utils/adt/cash.c:312 utils/adt/oracle_compat.c:73
+# utils/adt/oracle_compat.c:124 utils/adt/regexp.c:191
+# utils/adt/ri_triggers.c:3471 utils/cache/relcache.c:164
+# utils/cache/relcache.c:178 utils/cache/relcache.c:1130
+# utils/cache/typcache.c:165 utils/cache/typcache.c:487
+# utils/fmgr/dfmgr.c:127 utils/fmgr/fmgr.c:521 utils/fmgr/fmgr.c:532
+# utils/init/miscinit.c:213 utils/init/miscinit.c:234
+# utils/init/miscinit.c:244 utils/misc/guc.c:1898 utils/misc/guc.c:1911
+# utils/misc/guc.c:1924 utils/mmgr/aset.c:337 utils/mmgr/aset.c:503
+# utils/mmgr/aset.c:700 utils/mmgr/aset.c:893 utils/mmgr/portalmem.c:75
+#: type.c:18 type.c:30
+msgid "out of memory"
+msgstr "記憶體用盡"
+
+#: type.c:212 type.c:594
+#, c-format
+msgid "unrecognized variable type code %d"
+msgstr "無法辨識的變數型別程式碼 %d "
+
+#: type.c:261
+#, c-format
+msgid "variable \"%s\" is hidden by a local variable of a different type"
+msgstr "變數 \"%s\" 被不同型別的區域變數遮蔽"
+
+#: type.c:263
+#, c-format
+msgid "variable \"%s\" is hidden by a local variable"
+msgstr "變數 \"%s\" 被區域變數遮蔽"
+
+#: type.c:275
+#, c-format
+msgid ""
+"indicator variable \"%s\" is hidden by a local variable of a different type"
+msgstr "指標變數 \"%s\" 被不同型別的區域變數遮蔽"
+
+#: type.c:277
+#, c-format
+msgid "indicator variable \"%s\" is hidden by a local variable"
+msgstr "指標變數 \"%s\" 被區域變數遮蔽"
+
+#: type.c:285
+msgid "indicator for array/pointer has to be array/pointer"
+msgstr "陣列/指標的指標必須是陣列/指標"
+
+#: type.c:289
+msgid "nested arrays are not supported (except strings)"
+msgstr "不支援巢狀陣列 (字串除外)"
+
+#: type.c:322
+msgid "indicator for struct has to be a struct"
+msgstr "建構的指標必須是建構"
+
+#: type.c:331 type.c:339 type.c:347
+msgid "indicator for simple data type has to be simple"
+msgstr "簡單資料型別的指標必須簡單"
+
+#: type.c:653
+#, c-format
+msgid "unrecognized descriptor item code %d"
+msgstr "無法辨識的描述子項目程式碼 %d"
+
+#: variable.c:89 variable.c:112
+#, c-format
+msgid "incorrectly formed variable \"%s\""
+msgstr "變數 \"%s\" 的格式不正確"
+
+#: variable.c:135
+#, c-format
+msgid "variable \"%s\" is not a pointer"
+msgstr "變數 \"%s\" 不是指標"
+
+#: variable.c:138 variable.c:163
+#, c-format
+msgid "variable \"%s\" is not a pointer to a structure or a union"
+msgstr "變數 \"%s\" 不是結構或聯集的指標"
+
+#: variable.c:150
+#, c-format
+msgid "variable \"%s\" is neither a structure nor a union"
+msgstr "變數 \"%s\" 不是結構或聯集"
+
+#: variable.c:160
+#, c-format
+msgid "variable \"%s\" is not an array"
+msgstr "變數 \"%s\" 不是陣列"
+
+#: variable.c:229 variable.c:251
+#, c-format
+msgid "variable \"%s\" is not declared"
+msgstr "變數 \"%s\" 未宣告"
+
+#: variable.c:484
+msgid "indicator variable must have an integer type"
+msgstr "指標變數必須是整數型別"
+
+#: variable.c:496
+#, c-format
+msgid "unrecognized data type name \"%s\""
+msgstr " 無法辨識的資料型別名稱 \"%s\""
+
+#: variable.c:507 variable.c:515 variable.c:532 variable.c:535
+msgid "multidimensional arrays are not supported"
+msgstr "不支援多維度陣列"
+
+#: variable.c:524
+#, c-format
+msgid ""
+"multilevel pointers (more than 2 levels) are not supported; found %d level"
+msgid_plural ""
+"multilevel pointers (more than 2 levels) are not supported; found %d levels"
+msgstr[0] "不支援多層指標(2層以上)，發現 %d 層"
+
+#: variable.c:529
+msgid "pointer to pointer is not supported for this data type"
+msgstr "此資料型別不支援指標的指標"
+
+#: variable.c:549
+msgid "multidimensional arrays for structures are not supported"
+msgstr "不支援多維度的結構陣列"
+
+#~ msgid "OLD used in query that is not in a rule"
+#~ msgstr "查詢中使用的 OLD 不在規則中"
+
+#~ msgid "NEW used in query that is not in a rule"
+#~ msgstr "查詢中使用的 NEW 不在規則中"

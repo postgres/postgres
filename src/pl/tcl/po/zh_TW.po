@@ -1,0 +1,56 @@
+# Traditional Chinese message translation file for pltcl
+# Copyright (C) 2011 PostgreSQL Global Development Group
+# This file is distributed under the same license as the PostgreSQL package.
+# Zhenbang Wei <znbang@gmail.com>, 2011.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: PostgreSQL 9.1\n"
+"Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
+"POT-Creation-Date: 2011-05-13 20:39+0000\n"
+"PO-Revision-Date: 2011-05-12 16:15+0800\n"
+"Last-Translator: Zhenbang Wei <znbang@gmail.com>\n"
+"Language-Team: Traditional Chinese\n"
+"Language: \n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+
+# commands/vacuum.c:2258 commands/vacuumlazy.c:489 commands/vacuumlazy.c:770
+# nodes/print.c:86 storage/lmgr/deadlock.c:888 tcop/postgres.c:3285
+#: pltcl.c:1149
+#, c-format
+msgid "%s"
+msgstr "%s"
+
+#: pltcl.c:1150
+#, c-format
+msgid ""
+"%s\n"
+"in PL/Tcl function \"%s\""
+msgstr ""
+"%s\n"
+"於 PL/Tcl 函式  \"%s\""
+
+# common.c:123
+#: pltcl.c:1254 pltcl.c:1261
+msgid "out of memory"
+msgstr "記憶體用盡"
+
+#: pltcl.c:1308
+msgid "trigger functions can only be called as triggers"
+msgstr "觸發函式只能當做觸發程序呼叫"
+
+#: pltcl.c:1317
+#, c-format
+msgid "PL/Tcl functions cannot return type %s"
+msgstr "PL/Tcl 函式不能傳回型別 %s"
+
+#: pltcl.c:1329
+msgid "PL/Tcl functions cannot return composite types"
+msgstr "PL/Tcl 函式不能傳回複合型別"
+
+#: pltcl.c:1368
+#, c-format
+msgid "PL/Tcl functions cannot accept type %s"
+msgstr "PL/Tcl 函式不能接受型別 %s"

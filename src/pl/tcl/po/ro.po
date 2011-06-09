@@ -1,0 +1,55 @@
+# LANGUAGE message translation file for pltcl
+# Copyright (C) 2010 PostgreSQL Global Development Group
+# This file is distributed under the same license as the PostgreSQL package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2010.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: PostgreSQL 9.0\n"
+"Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
+"POT-Creation-Date: 2010-09-04 19:59+0000\n"
+"PO-Revision-Date: 2010-09-15 13:14-0000\n"
+"Last-Translator: Max <max@oceanline.co.uk>\n"
+"Language-Team: ROMÂNĂ <max@oceanline.co.uk>\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"X-Poedit-Language: Romanian\n"
+"X-Poedit-Country: România\n"
+
+#: pltcl.c:1075
+#, c-format
+msgid "%s"
+msgstr "%s"
+
+#: pltcl.c:1076
+#, c-format
+msgid ""
+"%s\n"
+"in PL/Tcl function \"%s\""
+msgstr ""
+"%s\n"
+"în funcția PL/Tcl \"%s\""
+
+#: pltcl.c:1173
+msgid "out of memory"
+msgstr "memorie insuficientă"
+
+#: pltcl.c:1234
+msgid "trigger functions can only be called as triggers"
+msgstr "funcţiile trigger pot fi apelate doar ca triggere"
+
+#: pltcl.c:1243
+#, c-format
+msgid "PL/Tcl functions cannot return type %s"
+msgstr "funcțiile PL/Tcl nu pot returna tipul %s"
+
+#: pltcl.c:1255
+msgid "PL/Tcl functions cannot return composite types"
+msgstr "funcțiile PL/Tcl nu pot returna tipul compozit"
+
+#: pltcl.c:1294
+#, c-format
+msgid "PL/Tcl functions cannot accept type %s"
+msgstr "funcțiile PL/Tcl nu pot accepta tipul %s"
+

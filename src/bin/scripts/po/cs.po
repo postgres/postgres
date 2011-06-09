@@ -1,7 +1,7 @@
 # translation of pgscripts-cs.po to Czech
 # Czech translation of pg_scripts messages.
 #
-# src/bin/scripts/po/cs.po
+# pgtranslation Id: pgscripts.po,v 1.3 2009/10/14 21:08:40 petere Exp $
 # Karel Žák, 2001-2003, 2004.
 # Zdeněk Kotala, 2009.
 #

@@ -1,0 +1,592 @@
+# Korean message translation file for ecpg
+# Copyright (C) 2010 PostgreSQL Global Development Group
+# This file is distributed under the same license as the PostgreSQL package.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: PostgreSQL 8.4\n"
+"Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
+"POT-Creation-Date: 2010-09-09 16:34+0000\n"
+"PO-Revision-Date: 2010-09-09 17:00+0000\n"
+"Last-Translator: EnterpriseDB translation team <dev-escalations@enterprisedb.com>\n"
+"Language-Team: EnterpriseDB translation team <dev-escalations@enterprisedb.com>\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=1; plural=0;\n"
+
+#: descriptor.c:64
+#, c-format
+msgid "variable \"%s\" must have a numeric type"
+msgstr "\"%s\" 변수는 숫자 형식이어야 함"
+
+#: descriptor.c:124 descriptor.c:146
+#, c-format
+msgid "descriptor \"%s\" does not exist"
+msgstr "\"%s\" 설명자가 없음"
+
+#: descriptor.c:161 descriptor.c:210
+#, c-format
+msgid "descriptor header item \"%d\" does not exist"
+msgstr "설명자 헤더 항목 \"%d\"이(가) 없음"
+
+#: descriptor.c:182
+msgid "nullable is always 1"
+msgstr "null 허용 여부는 항상 1"
+
+#: descriptor.c:185
+msgid "key_member is always 0"
+msgstr "key_member는 항상 0"
+
+#: descriptor.c:277
+#, c-format
+msgid "descriptor item \"%s\" is not implemented"
+msgstr "설명자 항목 \"%s\"이(가) 구현되지 않음"
+
+#: descriptor.c:287
+#, c-format
+msgid "descriptor item \"%s\" cannot be set"
+msgstr "설명자 항목 \"%s\"을(를) 설정할 수 없음"
+
+#: ecpg.c:36
+#, c-format
+msgid ""
+"%s is the PostgreSQL embedded SQL preprocessor for C programs.\n"
+"\n"
+msgstr ""
+"%s은(는) C 프로그램용 PostgreSQL 포함 SQL 전처리기입니다.\n"
+"\n"
+
+#: ecpg.c:38
+#, c-format
+msgid ""
+"Usage:\n"
+"  %s [OPTION]... FILE...\n"
+"\n"
+msgstr ""
+"사용:\n"
+"  %s [OPTION]... 파일...\n"
+"\n"
+
+#: ecpg.c:41
+#, c-format
+msgid "Options:\n"
+msgstr "옵션들:\n"
+
+#: ecpg.c:42
+#, c-format
+msgid ""
+"  -c             automatically generate C code from embedded SQL code;\n"
+"                 this affects EXEC SQL TYPE\n"
+msgstr ""
+"  -c             포함된 SQL 코드에서 자동으로 C 코드를 생성합니다.\n"
+"                 EXEC SQL TYPE에 영향을 줍니다.\n"
+
+#: ecpg.c:44
+#, c-format
+msgid ""
+"  -C MODE        set compatibility mode; MODE can be one of\n"
+"                 \"INFORMIX\", \"INFORMIX_SE\"\n"
+msgstr ""
+"  -C MODE        호환성 모드를 설정합니다. MODE는 다음 중 하나일 수 있습니"
+"다.\n"
+"                 \"INFORMIX\", \"INFORMIX_SE\"\n"
+
+#: ecpg.c:47
+#, c-format
+msgid "  -d             generate parser debug output\n"
+msgstr "  -d             파서 디버그 출력 생성\n"
+
+#: ecpg.c:49
+#, c-format
+msgid "  -D SYMBOL      define SYMBOL\n"
+msgstr "  -D SYMBOL      SYMBOL 정의\n"
+
+#: ecpg.c:50
+#, c-format
+msgid ""
+"  -h             parse a header file, this option includes option \"-c\"\n"
+msgstr "  -h             헤더 파일 구문 분석. 이 옵션은 \"-c\" 옵션 포함\n"
+
+#: ecpg.c:51
+#, c-format
+msgid "  -i             parse system include files as well\n"
+msgstr "  -i             시스템 포함 파일도 구문 분석\n"
+
+#: ecpg.c:52
+#, c-format
+msgid "  -I DIRECTORY   search DIRECTORY for include files\n"
+msgstr "  -I DIRECTORY   DIRECTORY에서 포함 파일 검색\n"
+
+#: ecpg.c:53
+#, c-format
+msgid "  -o OUTFILE     write result to OUTFILE\n"
+msgstr "  -o OUTFILE     OUTFILE에 결과 쓰기\n"
+
+#: ecpg.c:54
+#, c-format
+msgid ""
+"  -r OPTION      specify run-time behavior; OPTION can be:\n"
+"                 \"no_indicator\", \"prepare\", \"questionmarks\"\n"
+msgstr ""
+"  -r OPTION      런타임 동작을 지정합니다. 사용 가능한 OPTION은 다음과 같습니"
+"다.\n"
+"                 \"no_indicator\", \"prepare\", \"questionmarks\"\n"
+
+#: ecpg.c:56
+#, c-format
+msgid "  --regression   run in regression testing mode\n"
+msgstr "  --regression   회귀 테스트 모드에서 실행\n"
+
+#: ecpg.c:57
+#, c-format
+msgid "  -t             turn on autocommit of transactions\n"
+msgstr "  -t             트랜잭션 자동 커밋 설정\n"
+
+#: ecpg.c:58
+#, c-format
+msgid "  --help         show this help, then exit\n"
+msgstr "  --help         이 도움말을 표시하고 종료\n"
+
+#: ecpg.c:59
+#, c-format
+msgid "  --version      output version information, then exit\n"
+msgstr "  --version      버전 정보를 출력하고 종료\n"
+
+#: ecpg.c:60
+#, c-format
+msgid ""
+"\n"
+"If no output file is specified, the name is formed by adding .c to the\n"
+"input file name, after stripping off .pgc if present.\n"
+msgstr ""
+"\n"
+"출력 파일 이름을 지정하지 않으면 입력 파일 이름에 .pgc가 있을 경우 제거하고\n"
+".c를 추가하여 이름이 지정됩니다.\n"
+
+#: ecpg.c:62
+#, c-format
+msgid ""
+"\n"
+"Report bugs to <pgsql-bugs@postgresql.org>.\n"
+msgstr ""
+"\n"
+"오류보고: <pgsql-bugs@postgresql.org>.\n"
+
+#: ecpg.c:183 ecpg.c:334 ecpg.c:344
+#, c-format
+msgid "%s: could not open file \"%s\": %s\n"
+msgstr "%s: \"%s\" 파일 열 수 없음: %s\n"
+
+#: ecpg.c:222 ecpg.c:235 ecpg.c:251 ecpg.c:276
+#, c-format
+msgid "Try \"%s --help\" for more information.\n"
+msgstr "자제한 사항은 \"%s --help\" 명령으로 살펴보십시오.\n"
+
+#: ecpg.c:246
+#, c-format
+msgid "%s: parser debug support (-d) not available\n"
+msgstr "%s: 파서 디버그 지원(-d)을 사용할 수 없음\n"
+
+#: ecpg.c:264
+#, c-format
+msgid "%s, the PostgreSQL embedded C preprocessor, version %d.%d.%d\n"
+msgstr "PostgreSQL 포함 C 전처리기 %s의 버전 %d.%d.%d\n"
+
+#: ecpg.c:266
+#, c-format
+msgid "EXEC SQL INCLUDE ... search starts here:\n"
+msgstr "EXEC SQL INCLUDE ... 여기서 검색 시작:\n"
+
+#: ecpg.c:269
+#, c-format
+msgid "end of search list\n"
+msgstr "검색 목록의 끝\n"
+
+#: ecpg.c:275
+#, c-format
+msgid "%s: no input files specified\n"
+msgstr "%s: 지정된 입력 파일 없음\n"
+
+#: ecpg.c:464
+#, c-format
+msgid "cursor \"%s\" has been declared but not opened"
+msgstr "\"%s\" 커서가 선언되었지만 열리지 않음"
+
+# # advance 끝
+#: pgc.l:386
+msgid "unterminated /* comment"
+msgstr "마무리 안된 /* 주석"
+
+#: pgc.l:399
+msgid "invalid bit string literal"
+msgstr "잘못된 비트 문자열 리터럴"
+
+#: pgc.l:408
+msgid "unterminated bit string literal"
+msgstr "마무리 안된 비트 문자열 문자"
+
+#: pgc.l:424
+msgid "unterminated hexadecimal string literal"
+msgstr "마무리 안된 16진수 문자열 문자"
+
+#: pgc.l:501
+msgid "unterminated quoted string"
+msgstr "마무리 안된 따옴표 안의 문자열"
+
+#: pgc.l:556 pgc.l:569
+msgid "zero-length delimited identifier"
+msgstr "길이가 0인 구분 식별자"
+
+#: pgc.l:577
+msgid "unterminated quoted identifier"
+msgstr "마무리 안된 따옴표 안의 식별자"
+
+#: pgc.l:898
+msgid "missing identifier in EXEC SQL UNDEF command"
+msgstr "EXEC SQL UNDEF 명령에 식별자 누락"
+
+#: pgc.l:944 pgc.l:958
+msgid "missing matching \"EXEC SQL IFDEF\" / \"EXEC SQL IFNDEF\""
+msgstr "일치하는 \"EXEC SQL IFDEF\" / \"EXEC SQL IFNDEF\" 누락"
+
+#: pgc.l:947 pgc.l:960 pgc.l:1136
+msgid "missing \"EXEC SQL ENDIF;\""
+msgstr "\"EXEC SQL ENDIF;\" 누락"
+
+#: pgc.l:976 pgc.l:995
+msgid "more than one EXEC SQL ELSE"
+msgstr "두 개 이상의 EXEC SQL ELSE"
+
+#: pgc.l:1017 pgc.l:1031
+msgid "unmatched EXEC SQL ENDIF"
+msgstr "일치하지 않는 EXEC SQL ENDIF"
+
+#: pgc.l:1051
+msgid "too many nested EXEC SQL IFDEF conditions"
+msgstr "중첩된 EXEC SQL IFDEF 조건이 너무 많음"
+
+#: pgc.l:1084
+msgid "missing identifier in EXEC SQL IFDEF command"
+msgstr "EXEC SQL IFDEF 명령에 식별자 누락"
+
+#: pgc.l:1093
+msgid "missing identifier in EXEC SQL DEFINE command"
+msgstr "EXEC SQL DEFINE 명령에 식별자 누락"
+
+#: pgc.l:1126
+msgid "syntax error in EXEC SQL INCLUDE command"
+msgstr "EXEC SQL INCLUDE 명령에 구문 오류 발생"
+
+#: pgc.l:1175
+msgid ""
+"internal error: unreachable state; please report this to <pgsql-"
+"bugs@postgresql.org>"
+msgstr ""
+"내부 오류: 연결할 수 없습니다. 이 문제를 <pgsql-bugs@postgresql.org&gt;로 알"
+"려주십시오."
+
+#: pgc.l:1298
+#, c-format
+msgid "Error: include path \"%s/%s\" is too long on line %d, skipping\n"
+msgstr "오류: 포함 경로 \"%s/%s\"이(가) %d줄에서 너무 길어서 건너뜀\n"
+
+#: pgc.l:1314
+#, c-format
+msgid "could not open include file \"%s\" on line %d"
+msgstr "포함 파일 \"%s\"을(를) %d줄에서 열 수 없음"
+
+#: preproc.y:30
+msgid "syntax error"
+msgstr "구문 오류"
+
+#: preproc.y:78
+#, c-format
+msgid "WARNING: "
+msgstr "경고: "
+
+#: preproc.y:82
+#, c-format
+msgid "ERROR: "
+msgstr "오류: "
+
+#: preproc.y:106
+#, c-format
+msgid "could not remove output file \"%s\"\n"
+msgstr "출력 파일 \"%s\"을(를) 제거할 수 없음\n"
+
+#: preproc.y:314
+#, c-format
+msgid "cursor \"%s\" does not exist"
+msgstr "\"%s\" 이름의 커서가 없음"
+
+#: preproc.y:342
+msgid "initializer not allowed in type definition"
+msgstr "형식 정의에 이니셜라이저가 허용되지 않음"
+
+#: preproc.y:349 preproc.y:11533
+#, c-format
+msgid "type \"%s\" is already defined"
+msgstr "\"%s\" 형식이 이미 정의됨"
+
+#: preproc.y:372 preproc.y:12132 preproc.y:12442 variable.c:584
+msgid "multidimensional arrays for simple data types are not supported"
+msgstr "단순 데이터 형식에 다차원 배열이 지원되지 않음"
+
+#: preproc.y:1238
+msgid "AT option not allowed in CLOSE DATABASE statement"
+msgstr "CLOSE DATABASE 문에 AT 옵션이 허용되지 않음"
+
+#: preproc.y:1304 preproc.y:1444
+msgid "AT option not allowed in DEALLOCATE statement"
+msgstr "DEALLOCATE 문에 AT 옵션이 허용되지 않음"
+
+#: preproc.y:1430
+msgid "AT option not allowed in CONNECT statement"
+msgstr "CONNECT 문에 AT 옵션이 허용되지 않음"
+
+#: preproc.y:1466
+msgid "AT option not allowed in DISCONNECT statement"
+msgstr "DISCONNECT 문에 AT 옵션이 허용되지 않음"
+
+#: preproc.y:1518
+msgid "AT option not allowed in SET CONNECTION statement"
+msgstr "SET CONNECTION 문에 AT 옵션이 허용되지 않음"
+
+#: preproc.y:1540
+msgid "AT option not allowed in TYPE statement"
+msgstr "TYPE 문에 AT 옵션이 허용되지 않음"
+
+#: preproc.y:1549
+msgid "AT option not allowed in VAR statement"
+msgstr "VAR 문에 AT 옵션이 허용되지 않음"
+
+#: preproc.y:1556
+msgid "AT option not allowed in WHENEVER statement"
+msgstr "WHENEVER 문에 AT 옵션이 허용되지 않음"
+
+#: preproc.y:1912 preproc.y:2908 preproc.y:3802 preproc.y:3811 preproc.y:4042
+#: preproc.y:5851 preproc.y:5856 preproc.y:5861 preproc.y:8035 preproc.y:8565
+#: preproc.y:8570
+msgid "unsupported feature will be passed to server"
+msgstr "지원되지 않는 기능이 서버에 전달됨"
+
+#: preproc.y:2142
+msgid "SHOW ALL is not implemented"
+msgstr "SHOW ALL이 구현되지 않음"
+
+#: preproc.y:2477 preproc.y:2488
+msgid "COPY TO STDIN is not possible"
+msgstr "COPY TO STDIN을 실행할 수 없음"
+
+#: preproc.y:2479
+msgid "COPY FROM STDOUT is not possible"
+msgstr "COPY FROM STDOUT을 실행할 수 없음"
+
+#: preproc.y:2481
+msgid "COPY FROM STDIN is not implemented"
+msgstr "COPY FROM STDIN이 구현되지 않음"
+
+#: preproc.y:3742 preproc.y:3753
+msgid "constraint declared INITIALLY DEFERRED must be DEFERRABLE"
+msgstr "INITIALLY DEFERRED 로 선언된 조건문은 반드시 DEFERABLE 여야만 한다"
+
+#: preproc.y:6561 preproc.y:11149
+#, c-format
+msgid "cursor \"%s\" is already defined"
+msgstr "\"%s\" 커서가 이미 정의됨"
+
+#: preproc.y:6922
+msgid "no longer supported LIMIT #,# syntax passed to server"
+msgstr "더 이상 지원되지 않는 LIMIT #,# 구문이 서버에 전달됨"
+
+#: preproc.y:7164
+msgid "subquery in FROM must have an alias"
+msgstr "FROM 절 내의 subquery 에는 반드시 alias 를 가져야만 합니다"
+
+#: preproc.y:10838
+msgid "OLD used in query that is not in a rule"
+msgstr "rule이 아닌 쿼리에서 OLD 예약어가 사용되었습니다"
+
+#: preproc.y:10845
+msgid "NEW used in query that is not in a rule"
+msgstr "rule이 아닌 쿼리에서 NEW 예약어가 사용되었습니다"
+
+#: preproc.y:10877
+msgid "CREATE TABLE AS cannot specify INTO"
+msgstr "CREATE TABLE AS에서 INTO를 지정할 수 없음"
+
+#: preproc.y:10924
+#, c-format
+msgid "expected \"@\", found \"%s\""
+msgstr "\"@\"이 필요한데 \"%s\"이(가) 있음"
+
+#: preproc.y:10936
+msgid ""
+"only protocols \"tcp\" and \"unix\" and database type \"postgresql\" are "
+"supported"
+msgstr ""
+"\"tcp\" 및 \"unix\" 프로토콜과 데이터베이스 형식 \"postgresql\"만 지원됨"
+
+#: preproc.y:10939
+#, c-format
+msgid "expected \"://\", found \"%s\""
+msgstr "\"://\"가 필요한데 \"%s\"이(가) 있음"
+
+#: preproc.y:10944
+#, c-format
+msgid "Unix-domain sockets only work on \"localhost\" but not on \"%s\""
+msgstr ""
+"Unix-domain 소켓은 \"localhost\"에서만 작동하며 \"%s\"에서는 작동하지 않음"
+
+#: preproc.y:10970
+#, c-format
+msgid "expected \"postgresql\", found \"%s\""
+msgstr "\"postgresql\"이 필요한데 \"%s\"이(가) 있음"
+
+#: preproc.y:10973
+#, c-format
+msgid "invalid connection type: %s"
+msgstr "잘못된 연결 형식: %s"
+
+#: preproc.y:10982
+#, c-format
+msgid "expected \"@\" or \"://\", found \"%s\""
+msgstr "\"@\" 또는 \"://\"가 필요한데 \"%s\"이(가) 있음"
+
+#: preproc.y:11057 preproc.y:11074
+msgid "invalid data type"
+msgstr "잘못된 데이터 형식"
+
+#: preproc.y:11085 preproc.y:11100
+msgid "incomplete statement"
+msgstr "불완전한 문"
+
+#: preproc.y:11088 preproc.y:11103
+#, c-format
+msgid "unrecognized token \"%s\""
+msgstr "인식할 수 없는 토큰 \"%s\""
+
+#: preproc.y:11352
+msgid "only data types numeric and decimal have precision/scale argument"
+msgstr "숫자 및 10진수 데이터 형식에만 전체 자릿수/소수 자릿수 인수 포함"
+
+#: preproc.y:11364
+msgid "interval specification not allowed here"
+msgstr "여기에는 간격 지정이 허용되지 않음"
+
+#: preproc.y:11508 preproc.y:11560
+msgid "too many levels in nested structure/union definition"
+msgstr "중첩된 구조/union 정의에 수준이 너무 많음"
+
+#: preproc.y:11691
+msgid "pointers to varchar are not implemented"
+msgstr "varchar에 대한 포인터가 구현되지 않음"
+
+#: preproc.y:11855 preproc.y:11862 preproc.y:11869
+msgid "using unsupported DESCRIBE statement"
+msgstr "지원되지 않는 DESCRIBE 문 사용"
+
+#: preproc.y:12100
+msgid "initializer not allowed in EXEC SQL VAR command"
+msgstr "EXEC SQL VAR 명령에 이니셜라이저가 허용되지 않음"
+
+#: preproc.y:12411
+msgid "arrays of indicators are not allowed on input"
+msgstr "입력에서 표시기의 배열이 허용되지 않음"
+
+#. translator: %s is typically the translation of "syntax error"
+#: preproc.y:12638
+#, c-format
+msgid "%s at or near \"%s\""
+msgstr "%s, \"%s\" 부근"
+
+#: type.c:18 type.c:30
+msgid "out of memory"
+msgstr "메모리 부족"
+
+#: type.c:204 type.c:556
+#, c-format
+msgid "unrecognized variable type code %d"
+msgstr "인식할 수 없는 변수 형식 코드 %d"
+
+#: type.c:241
+msgid "indicator for array/pointer has to be array/pointer"
+msgstr "배열/포인터의 표시기는 배열/포인터여야 함"
+
+#: type.c:245
+msgid "nested arrays are not supported (except strings)"
+msgstr "중첩된 배열은 지원되지 않음(문자열 제외)"
+
+#: type.c:278
+msgid "indicator for struct has to be a struct"
+msgstr "구조의 표시기는 구조여야 함"
+
+#: type.c:287 type.c:295 type.c:303
+msgid "indicator for simple data type has to be simple"
+msgstr "단순 데이터 형식의 표시기는 단순이어야 함"
+
+#: type.c:615
+#, c-format
+msgid "unrecognized descriptor item code %d"
+msgstr "인식할 수 없는 설명자 항목 코드 %d"
+
+#: variable.c:89 variable.c:112
+#, c-format
+msgid "incorrectly formed variable \"%s\""
+msgstr "잘못된 형식의 변수 \"%s\""
+
+#: variable.c:135
+#, c-format
+msgid "variable \"%s\" is not a pointer"
+msgstr "\"%s\" 변수가 포인터가 아님"
+
+#: variable.c:138 variable.c:163
+#, c-format
+msgid "variable \"%s\" is not a pointer to a structure or a union"
+msgstr "\"%s\" 변수가 구조나 union의 포인터가 아님"
+
+#: variable.c:150
+#, c-format
+msgid "variable \"%s\" is neither a structure nor a union"
+msgstr "\"%s\" 변수가 구조나 union이 아님"
+
+#: variable.c:160
+#, c-format
+msgid "variable \"%s\" is not an array"
+msgstr "\"%s\" 변수가 배열이 아님"
+
+#: variable.c:229 variable.c:251
+#, c-format
+msgid "variable \"%s\" is not declared"
+msgstr "\"%s\" 변수가 선언되지 않음"
+
+#: variable.c:459
+msgid "indicator variable must have an integer type"
+msgstr "표시기 변수에 정수 형식이 있어야 함"
+
+#: variable.c:471
+#, c-format
+msgid "unrecognized data type name \"%s\""
+msgstr "인식할 수 없는 데이터 형식 이름 \"%s\""
+
+#: variable.c:482 variable.c:490 variable.c:507 variable.c:510
+msgid "multidimensional arrays are not supported"
+msgstr "다차원 배열이 지원되지 않음"
+
+#: variable.c:499
+#, c-format
+msgid ""
+"multilevel pointers (more than 2 levels) are not supported; found %d level"
+msgid_plural ""
+"multilevel pointers (more than 2 levels) are not supported; found %d levels"
+msgstr[0] ""
+msgstr[1] ""
+
+#: variable.c:504
+msgid "pointer to pointer is not supported for this data type"
+msgstr "이 데이터 형식에는 포인터에 대한 포인터가 지원되지 않음"
+
+#: variable.c:524
+msgid "multidimensional arrays for structures are not supported"
+msgstr "구조에는 다차원 배열이 지원되지 않음"
