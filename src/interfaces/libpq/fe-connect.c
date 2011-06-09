@@ -1054,18 +1054,18 @@ connectFailureMessage(PGconn *conn, int errorno)
 		if ((conn->pghostaddr == NULL) &&
 			(conn->pghost == NULL || strcmp(conn->pghost, host_addr) != 0))
 			appendPQExpBuffer(&conn->errorMessage,
-							  libpq_gettext("could not connect to server: %s\n"
-											"\tIs the server running on host \"%s\" (%s) and accepting\n"
-											"\tTCP/IP connections on port %s?\n"),
+							libpq_gettext("could not connect to server: %s\n"
+				"\tIs the server running on host \"%s\" (%s) and accepting\n"
+									   "\tTCP/IP connections on port %s?\n"),
 							  SOCK_STRERROR(errorno, sebuf, sizeof(sebuf)),
 							  displayed_host,
 							  host_addr,
 							  conn->pgport);
 		else
 			appendPQExpBuffer(&conn->errorMessage,
-							  libpq_gettext("could not connect to server: %s\n"
-											"\tIs the server running on host \"%s\" and accepting\n"
-											"\tTCP/IP connections on port %s?\n"),
+							libpq_gettext("could not connect to server: %s\n"
+					 "\tIs the server running on host \"%s\" and accepting\n"
+									   "\tTCP/IP connections on port %s?\n"),
 							  SOCK_STRERROR(errorno, sebuf, sizeof(sebuf)),
 							  displayed_host,
 							  conn->pgport);
@@ -1854,6 +1854,7 @@ keep_going:						/* We will come back to here until there is
 				int			packetlen;
 
 #ifdef HAVE_UNIX_SOCKETS
+
 				/*
 				 * Implement requirepeer check, if requested and it's a
 				 * Unix-domain socket.
@@ -1870,14 +1871,17 @@ keep_going:						/* We will come back to here until there is
 					errno = 0;
 					if (getpeereid(conn->sock, &uid, &gid) != 0)
 					{
-						/* Provide special error message if getpeereid is a stub */
+						/*
+						 * Provide special error message if getpeereid is a
+						 * stub
+						 */
 						if (errno == ENOSYS)
 							appendPQExpBuffer(&conn->errorMessage,
 											  libpq_gettext("requirepeer parameter is not supported on this platform\n"));
 						else
 							appendPQExpBuffer(&conn->errorMessage,
 											  libpq_gettext("could not get peer credentials: %s\n"),
-											  pqStrerror(errno, sebuf, sizeof(sebuf)));
+									pqStrerror(errno, sebuf, sizeof(sebuf)));
 						goto error_return;
 					}
 
@@ -1899,7 +1903,7 @@ keep_going:						/* We will come back to here until there is
 						goto error_return;
 					}
 				}
-#endif /* HAVE_UNIX_SOCKETS */
+#endif   /* HAVE_UNIX_SOCKETS */
 
 #ifdef USE_SSL
 

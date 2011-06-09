@@ -185,14 +185,15 @@ DefineIndex(RangeVar *heapRelation,
 		rel->rd_rel->relkind != RELKIND_UNCATALOGED)
 	{
 		if (rel->rd_rel->relkind == RELKIND_FOREIGN_TABLE)
+
 			/*
-			 * Custom error message for FOREIGN TABLE since the term is
-			 * close to a regular table and can confuse the user.
+			 * Custom error message for FOREIGN TABLE since the term is close
+			 * to a regular table and can confuse the user.
 			 */
 			ereport(ERROR,
 					(errcode(ERRCODE_WRONG_OBJECT_TYPE),
 					 errmsg("cannot create index on foreign table \"%s\"",
-						 heapRelation->relname)));
+							heapRelation->relname)));
 		else
 			ereport(ERROR,
 					(errcode(ERRCODE_WRONG_OBJECT_TYPE),

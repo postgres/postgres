@@ -566,7 +566,7 @@ do_analyze_rel(Relation onerel, VacuumStmt *vacstmt, bool inh)
 	}
 
 	/*
-	 * Report ANALYZE to the stats collector, too.  However, if doing
+	 * Report ANALYZE to the stats collector, too.	However, if doing
 	 * inherited stats we shouldn't report, because the stats collector only
 	 * tracks per-table stats.
 	 */
@@ -1231,7 +1231,7 @@ acquire_sample_rows(Relation onerel, HeapTuple *rows, int targrows,
 		qsort((void *) rows, numrows, sizeof(HeapTuple), compare_rows);
 
 	/*
-	 * Estimate total numbers of rows in relation.  For live rows, use
+	 * Estimate total numbers of rows in relation.	For live rows, use
 	 * vac_estimate_reltuples; for dead rows, we have no source of old
 	 * information, so we have to assume the density is the same in unseen
 	 * pages as in the pages we scanned.

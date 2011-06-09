@@ -99,16 +99,17 @@ verify_directories(void)
 
 	if (access(".", R_OK | W_OK
 #ifndef WIN32
+
 	/*
-	 *	Do a directory execute check only on Unix because execute permission
-	 *	on NTFS means "can execute scripts", which we don't care about.
-	 *	Also, X_OK is not defined in the Windows API.
+	 * Do a directory execute check only on Unix because execute permission on
+	 * NTFS means "can execute scripts", which we don't care about. Also, X_OK
+	 * is not defined in the Windows API.
 	 */
-					| X_OK
+			   | X_OK
 #endif
-		) != 0)
+			   ) != 0)
 		pg_log(PG_FATAL,
-		"You must have read and write access in the current directory.\n");
+		  "You must have read and write access in the current directory.\n");
 
 	check_bin_dir(&old_cluster);
 	check_data_dir(old_cluster.pgdata);
@@ -132,16 +133,18 @@ check_data_dir(const char *pg_data)
 {
 	char		subDirName[MAXPGPATH];
 	int			subdirnum;
+
 	/* start check with top-most directory */
 	const char *requiredSubdirs[] = {"", "base", "global", "pg_clog",
 		"pg_multixact", "pg_subtrans", "pg_tblspc", "pg_twophase",
-		"pg_xlog"};
+	"pg_xlog"};
 
 	for (subdirnum = 0;
 		 subdirnum < sizeof(requiredSubdirs) / sizeof(requiredSubdirs[0]);
 		 ++subdirnum)
 	{
 		struct stat statBuf;
+
 		snprintf(subDirName, sizeof(subDirName), "%s/%s", pg_data,
 				 requiredSubdirs[subdirnum]);
 
@@ -173,8 +176,8 @@ check_bin_dir(ClusterInfo *cluster)
 		report_status(PG_FATAL, "check for %s failed:  %s\n",
 					  cluster->bindir, getErrorText(errno));
 	else if (!S_ISDIR(statBuf.st_mode))
-			report_status(PG_FATAL, "%s is not a directory\n",
-						  cluster->bindir);
+		report_status(PG_FATAL, "%s is not a directory\n",
+					  cluster->bindir);
 
 	validate_exec(cluster->bindir, "postgres");
 	validate_exec(cluster->bindir, "pg_ctl");

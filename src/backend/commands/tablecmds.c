@@ -2679,7 +2679,8 @@ AlterTableGetLockLevel(List *cmds)
 				 * These subcommands affect implicit row type conversion. They
 				 * have affects similar to CREATE/DROP CAST on queries.  We
 				 * don't provide for invalidating parse trees as a result of
-				 * such changes.  Do avoid concurrent pg_class updates, though.
+				 * such changes.  Do avoid concurrent pg_class updates,
+				 * though.
 				 */
 			case AT_AddOf:
 			case AT_DropOf:
@@ -2946,7 +2947,7 @@ ATPrepCmd(List **wqueue, Relation rel, AlterTableCmd *cmd,
 		case AT_DisableRule:
 		case AT_DropInherit:	/* NO INHERIT */
 		case AT_AddOf:			/* OF */
-		case AT_DropOf:			/* NOT OF */
+		case AT_DropOf: /* NOT OF */
 			ATSimplePermissions(rel, ATT_TABLE);
 			/* These commands never recurse */
 			/* No command-specific prep needed */
@@ -4067,7 +4068,7 @@ find_typed_table_dependencies(Oid typeOid, const char *typeName, DropBehavior be
  *
  * Check whether a type is suitable for CREATE TABLE OF/ALTER TABLE OF.  If it
  * isn't suitable, throw an error.  Currently, we require that the type
- * originated with CREATE TYPE AS.  We could support any row type, but doing so
+ * originated with CREATE TYPE AS.	We could support any row type, but doing so
  * would require handling a number of extra corner cases in the DDL commands.
  */
 void
@@ -4083,6 +4084,7 @@ check_of_type(HeapTuple typetuple)
 		Assert(OidIsValid(typ->typrelid));
 		typeRelation = relation_open(typ->typrelid, AccessShareLock);
 		typeOk = (typeRelation->rd_rel->relkind == RELKIND_COMPOSITE_TYPE);
+
 		/*
 		 * Close the parent rel, but keep our AccessShareLock on it until xact
 		 * commit.	That will prevent someone else from deleting or ALTERing
@@ -7406,8 +7408,8 @@ ATExecChangeOwner(Oid relationOid, Oid newOwnerId, bool recursing, LOCKMODE lock
 		default:
 			ereport(ERROR,
 					(errcode(ERRCODE_WRONG_OBJECT_TYPE),
-					 errmsg("\"%s\" is not a table, view, sequence, or foreign table",
-							NameStr(tuple_class->relname))));
+			errmsg("\"%s\" is not a table, view, sequence, or foreign table",
+				   NameStr(tuple_class->relname))));
 	}
 
 	/*
@@ -8603,7 +8605,7 @@ ATExecDropInherit(Relation rel, RangeVar *parent, LOCKMODE lockmode)
  * Drop the dependency created by StoreCatalogInheritance1 (CREATE TABLE
  * INHERITS/ALTER TABLE INHERIT -- refclassid will be RelationRelationId) or
  * heap_create_with_catalog (CREATE TABLE OF/ALTER TABLE OF -- refclassid will
- * be TypeRelationId).  There's no convenient way to do this, so go trawling
+ * be TypeRelationId).	There's no convenient way to do this, so go trawling
  * through pg_depend.
  */
 static void
@@ -8730,8 +8732,8 @@ ATExecAddOf(Relation rel, const TypeName *ofTypename, LOCKMODE lockmode)
 		if (strncmp(table_attname, type_attname, NAMEDATALEN) != 0)
 			ereport(ERROR,
 					(errcode(ERRCODE_DATATYPE_MISMATCH),
-					 errmsg("table has column \"%s\" where type requires \"%s\"",
-							table_attname, type_attname)));
+				 errmsg("table has column \"%s\" where type requires \"%s\"",
+						table_attname, type_attname)));
 
 		/* Compare type. */
 		if (table_attr->atttypid != type_attr->atttypid ||
@@ -8739,8 +8741,8 @@ ATExecAddOf(Relation rel, const TypeName *ofTypename, LOCKMODE lockmode)
 			table_attr->attcollation != type_attr->attcollation)
 			ereport(ERROR,
 					(errcode(ERRCODE_DATATYPE_MISMATCH),
-					 errmsg("table \"%s\" has different type for column \"%s\"",
-							RelationGetRelationName(rel), type_attname)));
+				  errmsg("table \"%s\" has different type for column \"%s\"",
+						 RelationGetRelationName(rel), type_attname)));
 	}
 	DecrTupleDescRefCount(typeTupleDesc);
 
@@ -8748,6 +8750,7 @@ ATExecAddOf(Relation rel, const TypeName *ofTypename, LOCKMODE lockmode)
 	for (; table_attno <= tableTupleDesc->natts; table_attno++)
 	{
 		Form_pg_attribute table_attr = tableTupleDesc->attrs[table_attno - 1];
+
 		if (!table_attr->attisdropped)
 			ereport(ERROR,
 					(errcode(ERRCODE_DATATYPE_MISMATCH),
@@ -8785,7 +8788,7 @@ ATExecAddOf(Relation rel, const TypeName *ofTypename, LOCKMODE lockmode)
 /*
  * ALTER TABLE NOT OF
  *
- * Detach a typed table from its originating type.  Just clear reloftype and
+ * Detach a typed table from its originating type.	Just clear reloftype and
  * remove the dependency.
  */
 static void
@@ -8802,8 +8805,8 @@ ATExecDropOf(Relation rel, LOCKMODE lockmode)
 						RelationGetRelationName(rel))));
 
 	/*
-	 * We don't bother to check ownership of the type --- ownership of the table
-	 * is presumed enough rights.  No lock required on the type, either.
+	 * We don't bother to check ownership of the type --- ownership of the
+	 * table is presumed enough rights.  No lock required on the type, either.
 	 */
 
 	drop_parent_dependency(relid, TypeRelationId, rel->rd_rel->reloftype);

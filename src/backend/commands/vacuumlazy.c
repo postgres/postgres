@@ -86,7 +86,7 @@ typedef struct LVRelStats
 	/* Overall statistics about rel */
 	BlockNumber rel_pages;		/* total number of pages */
 	BlockNumber scanned_pages;	/* number of pages we examined */
-	double		scanned_tuples;	/* counts only tuples on scanned pages */
+	double		scanned_tuples; /* counts only tuples on scanned pages */
 	double		old_rel_tuples; /* previous value of pg_class.reltuples */
 	double		new_rel_tuples; /* new estimated total # of tuples */
 	BlockNumber pages_removed;
@@ -211,7 +211,7 @@ lazy_vacuum_rel(Relation onerel, VacuumStmt *vacstmt,
 	vac_update_relstats(onerel,
 						vacrelstats->rel_pages, vacrelstats->new_rel_tuples,
 						vacrelstats->hasindex,
-						(vacrelstats->scanned_pages < vacrelstats->rel_pages) ?
+					  (vacrelstats->scanned_pages < vacrelstats->rel_pages) ?
 						InvalidTransactionId :
 						FreezeLimit);
 
@@ -341,9 +341,9 @@ lazy_scan_heap(Relation onerel, LVRelStats *vacrelstats,
 	 * of pages.
 	 *
 	 * Before entering the main loop, establish the invariant that
-	 * next_not_all_visible_block is the next block number >= blkno that's
-	 * not all-visible according to the visibility map, or nblocks if there's
-	 * no such block.  Also, we set up the skipping_all_visible_blocks flag,
+	 * next_not_all_visible_block is the next block number >= blkno that's not
+	 * all-visible according to the visibility map, or nblocks if there's no
+	 * such block.	Also, we set up the skipping_all_visible_blocks flag,
 	 * which is needed because we need hysteresis in the decision: once we've
 	 * started skipping blocks, we may as well skip everything up to the next
 	 * not-all-visible block.
@@ -804,7 +804,7 @@ lazy_scan_heap(Relation onerel, LVRelStats *vacrelstats,
 	/* now we can compute the new value for pg_class.reltuples */
 	vacrelstats->new_rel_tuples = vac_estimate_reltuples(onerel, false,
 														 nblocks,
-														 vacrelstats->scanned_pages,
+												  vacrelstats->scanned_pages,
 														 num_tuples);
 
 	/* If any tuples need to be deleted, perform final vacuum cycle */
@@ -1082,11 +1082,11 @@ lazy_truncate_heap(Relation onerel, LVRelStats *vacrelstats)
 	if (new_rel_pages != old_rel_pages)
 	{
 		/*
-		 * Note: we intentionally don't update vacrelstats->rel_pages with
-		 * the new rel size here.  If we did, it would amount to assuming that
-		 * the new pages are empty, which is unlikely.  Leaving the numbers
-		 * alone amounts to assuming that the new pages have the same tuple
-		 * density as existing ones, which is less unlikely.
+		 * Note: we intentionally don't update vacrelstats->rel_pages with the
+		 * new rel size here.  If we did, it would amount to assuming that the
+		 * new pages are empty, which is unlikely.	Leaving the numbers alone
+		 * amounts to assuming that the new pages have the same tuple density
+		 * as existing ones, which is less unlikely.
 		 */
 		UnlockRelation(onerel, AccessExclusiveLock);
 		return;

@@ -362,7 +362,7 @@ RangeVarGetCreationNamespace(const RangeVar *newRelation)
 
 /*
  * RangeVarGetAndCheckCreationNamespace
- *      As RangeVarGetCreationNamespace, but with a permissions check.
+ *		As RangeVarGetCreationNamespace, but with a permissions check.
  */
 Oid
 RangeVarGetAndCheckCreationNamespace(const RangeVar *newRelation)

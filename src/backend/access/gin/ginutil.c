@@ -94,8 +94,8 @@ initGinState(GinState *state, Relation index)
 		 * type for a noncollatable indexed data type (for instance, hstore
 		 * uses text index entries).  If there's no index collation then
 		 * specify default collation in case the support functions need
-		 * collation.  This is harmless if the support functions don't
-		 * care about collation, so we just do it unconditionally.  (We could
+		 * collation.  This is harmless if the support functions don't care
+		 * about collation, so we just do it unconditionally.  (We could
 		 * alternatively call get_typcollation, but that seems like expensive
 		 * overkill --- there aren't going to be any cases where a GIN storage
 		 * type has a nondefault collation.)
@@ -293,7 +293,7 @@ ginCompareEntries(GinState *ginstate, OffsetNumber attnum,
 
 	/* both not null, so safe to call the compareFn */
 	return DatumGetInt32(FunctionCall2Coll(&ginstate->compareFn[attnum - 1],
-										   ginstate->supportCollation[attnum - 1],
+									  ginstate->supportCollation[attnum - 1],
 										   a, b));
 }
 
@@ -400,7 +400,7 @@ ginExtractEntries(GinState *ginstate, OffsetNumber attnum,
 	nullFlags = NULL;			/* in case extractValue doesn't set it */
 	entries = (Datum *)
 		DatumGetPointer(FunctionCall3Coll(&ginstate->extractValueFn[attnum - 1],
-										  ginstate->supportCollation[attnum - 1],
+									  ginstate->supportCollation[attnum - 1],
 										  value,
 										  PointerGetDatum(nentries),
 										  PointerGetDatum(&nullFlags)));

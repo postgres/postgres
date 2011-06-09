@@ -1986,7 +1986,7 @@ plperl_call_perl_trigger_func(plperl_proc_desc *desc, FunctionCallInfo fcinfo,
 	if (!TDsv)
 		elog(ERROR, "couldn't fetch $_TD");
 
-	save_item(TDsv);				/* local $_TD */
+	save_item(TDsv);			/* local $_TD */
 	sv_setsv(TDsv, td);
 
 	PUSHMARK(sp);
@@ -3564,7 +3564,7 @@ hv_store_string(HV *hv, const char *key, SV *val)
 	 * does not appear that hashes track UTF-8-ness of keys at all in Perl
 	 * 5.6.
 	 */
-	hlen = - (int) strlen(hkey);
+	hlen = -(int) strlen(hkey);
 	ret = hv_store(hv, hkey, hlen, val, 0);
 
 	if (hkey != key)
@@ -3589,7 +3589,7 @@ hv_fetch_string(HV *hv, const char *key)
 								  GetDatabaseEncoding(), PG_UTF8);
 
 	/* See notes in hv_store_string */
-	hlen = - (int) strlen(hkey);
+	hlen = -(int) strlen(hkey);
 	ret = hv_fetch(hv, hkey, hlen, 0);
 
 	if (hkey != key)

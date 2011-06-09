@@ -167,7 +167,7 @@ coerce_type(ParseState *pstate, Node *node,
 		 *
 		 * These cases are unlike the ones above because the exposed type of
 		 * the argument must be an actual array or enum type.  In particular
-		 * the argument must *not* be an UNKNOWN constant.  If it is, we just
+		 * the argument must *not* be an UNKNOWN constant.	If it is, we just
 		 * fall through; below, we'll call anyarray_in or anyenum_in, which
 		 * will produce an error.  Also, if what we have is a domain over
 		 * array or enum, we have to relabel it to its base type.
@@ -1290,7 +1290,7 @@ coerce_to_common_type(ParseState *pstate, Node *node,
  *
  * Domains over arrays match ANYARRAY, and are immediately flattened to their
  * base type.  (Thus, for example, we will consider it a match if one ANYARRAY
- * argument is a domain over int4[] while another one is just int4[].)  Also
+ * argument is a domain over int4[] while another one is just int4[].)	Also
  * notice that such a domain does *not* match ANYNONARRAY.
  *
  * If we have UNKNOWN input (ie, an untyped literal) for any polymorphic
@@ -1444,7 +1444,7 @@ check_generic_type_consistency(Oid *actual_arg_types,
  *	  is an extra restriction if not.)
  *
  * Domains over arrays match ANYARRAY arguments, and are immediately flattened
- * to their base type.  (In particular, if the return type is also ANYARRAY,
+ * to their base type.	(In particular, if the return type is also ANYARRAY,
  * we'll set it to the base type not the domain type.)
  *
  * When allow_poly is false, we are not expecting any of the actual_arg_types

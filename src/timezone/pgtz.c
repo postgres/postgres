@@ -1480,9 +1480,9 @@ pg_timezone_initialize(void)
 	 * postgresql.conf, this code will not do what you might expect, namely
 	 * call select_default_timezone() and install that value as the setting.
 	 * Rather, the previously active setting --- typically the one from
-	 * postgresql.conf --- will be reinstalled, relabeled as PGC_S_ENV_VAR.
-	 * If we did try to install the "correct" default value, the effect would
-	 * be that each postmaster child would independently run an extremely
+	 * postgresql.conf --- will be reinstalled, relabeled as PGC_S_ENV_VAR. If
+	 * we did try to install the "correct" default value, the effect would be
+	 * that each postmaster child would independently run an extremely
 	 * expensive search of the timezone database, bringing the database to its
 	 * knees for possibly multiple seconds.  This is so unpleasant, and could
 	 * so easily be triggered quite unintentionally, that it seems better to

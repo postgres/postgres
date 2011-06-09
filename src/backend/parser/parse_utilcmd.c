@@ -157,7 +157,7 @@ transformCreateStmt(CreateStmt *stmt, const char *queryString)
 	stmt = (CreateStmt *) copyObject(stmt);
 
 	/*
-	 * Look up the creation namespace.  This also checks permissions on the
+	 * Look up the creation namespace.	This also checks permissions on the
 	 * target namespace, so that we throw any permissions error as early as
 	 * possible.
 	 */
@@ -169,7 +169,7 @@ transformCreateStmt(CreateStmt *stmt, const char *queryString)
 	 */
 	if (stmt->if_not_exists)
 	{
-		Oid		existing_relid;
+		Oid			existing_relid;
 
 		existing_relid = get_relname_relid(stmt->relation->relname,
 										   namespaceid);
@@ -178,7 +178,7 @@ transformCreateStmt(CreateStmt *stmt, const char *queryString)
 			ereport(NOTICE,
 					(errcode(ERRCODE_DUPLICATE_TABLE),
 					 errmsg("relation \"%s\" already exists, skipping",
-						 stmt->relation->relname)));
+							stmt->relation->relname)));
 			return NIL;
 		}
 	}
@@ -2544,8 +2544,8 @@ transformColumnType(CreateStmtContext *cxt, ColumnDef *column)
 		Form_pg_type typtup = (Form_pg_type) GETSTRUCT(ctype);
 
 		LookupCollation(cxt->pstate,
-								  column->collClause->collname,
-								  column->collClause->location);
+						column->collClause->collname,
+						column->collClause->location);
 		/* Complain if COLLATE is applied to an uncollatable type */
 		if (!OidIsValid(typtup->typcollation))
 			ereport(ERROR,

@@ -33,12 +33,12 @@ typedef struct
 
 	/* Methods */
 
-	bool		(*f_gt) (const void *, const void *, Oid);	/* greater than */
-	bool		(*f_ge) (const void *, const void *, Oid);	/* greater equal */
-	bool		(*f_eq) (const void *, const void *, Oid);	/* equal */
-	bool		(*f_le) (const void *, const void *, Oid);	/* less equal */
-	bool		(*f_lt) (const void *, const void *, Oid);	/* less than */
-	int32		(*f_cmp) (const void *, const void *, Oid);	/* compare */
+	bool		(*f_gt) (const void *, const void *, Oid);		/* greater than */
+	bool		(*f_ge) (const void *, const void *, Oid);		/* greater equal */
+	bool		(*f_eq) (const void *, const void *, Oid);		/* equal */
+	bool		(*f_le) (const void *, const void *, Oid);		/* less equal */
+	bool		(*f_lt) (const void *, const void *, Oid);		/* less than */
+	int32		(*f_cmp) (const void *, const void *, Oid);		/* compare */
 	GBT_VARKEY *(*f_l2n) (GBT_VARKEY *);		/* convert leaf to node */
 } gbtree_vinfo;
 

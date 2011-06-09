@@ -459,7 +459,7 @@ vacuum_set_xid_limits(int freeze_min_age,
  *		If we scanned the whole relation then we should just use the count of
  *		live tuples seen; but if we did not, we should not trust the count
  *		unreservedly, especially not in VACUUM, which may have scanned a quite
- *		nonrandom subset of the table.  When we have only partial information,
+ *		nonrandom subset of the table.	When we have only partial information,
  *		we take the old value of pg_class.reltuples as a measurement of the
  *		tuple density in the unscanned pages.
  *
@@ -471,7 +471,7 @@ vac_estimate_reltuples(Relation relation, bool is_analyze,
 					   BlockNumber scanned_pages,
 					   double scanned_tuples)
 {
-	BlockNumber	old_rel_pages = relation->rd_rel->relpages;
+	BlockNumber old_rel_pages = relation->rd_rel->relpages;
 	double		old_rel_tuples = relation->rd_rel->reltuples;
 	double		old_density;
 	double		new_density;
@@ -483,8 +483,8 @@ vac_estimate_reltuples(Relation relation, bool is_analyze,
 		return scanned_tuples;
 
 	/*
-	 * If scanned_pages is zero but total_pages isn't, keep the existing
-	 * value of reltuples.
+	 * If scanned_pages is zero but total_pages isn't, keep the existing value
+	 * of reltuples.
 	 */
 	if (scanned_pages == 0)
 		return old_rel_tuples;
@@ -498,23 +498,23 @@ vac_estimate_reltuples(Relation relation, bool is_analyze,
 
 	/*
 	 * Okay, we've covered the corner cases.  The normal calculation is to
-	 * convert the old measurement to a density (tuples per page), then
-	 * update the density using an exponential-moving-average approach,
-	 * and finally compute reltuples as updated_density * total_pages.
+	 * convert the old measurement to a density (tuples per page), then update
+	 * the density using an exponential-moving-average approach, and finally
+	 * compute reltuples as updated_density * total_pages.
 	 *
-	 * For ANALYZE, the moving average multiplier is just the fraction of
-	 * the table's pages we scanned.  This is equivalent to assuming
-	 * that the tuple density in the unscanned pages didn't change.  Of
-	 * course, it probably did, if the new density measurement is different.
-	 * But over repeated cycles, the value of reltuples will converge towards
-	 * the correct value, if repeated measurements show the same new density.
+	 * For ANALYZE, the moving average multiplier is just the fraction of the
+	 * table's pages we scanned.  This is equivalent to assuming that the
+	 * tuple density in the unscanned pages didn't change.  Of course, it
+	 * probably did, if the new density measurement is different. But over
+	 * repeated cycles, the value of reltuples will converge towards the
+	 * correct value, if repeated measurements show the same new density.
 	 *
 	 * For VACUUM, the situation is a bit different: we have looked at a
 	 * nonrandom sample of pages, but we know for certain that the pages we
 	 * didn't look at are precisely the ones that haven't changed lately.
 	 * Thus, there is a reasonable argument for doing exactly the same thing
-	 * as for the ANALYZE case, that is use the old density measurement as
-	 * the value for the unscanned pages.
+	 * as for the ANALYZE case, that is use the old density measurement as the
+	 * value for the unscanned pages.
 	 *
 	 * This logic could probably use further refinement.
 	 */

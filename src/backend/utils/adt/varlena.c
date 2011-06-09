@@ -3829,7 +3829,7 @@ text_format(PG_FUNCTION_ARGS)
 		if (*cp < '0' || *cp > '9')
 		{
 			++arg;
-			if (arg <= 0)						/* overflow? */
+			if (arg <= 0)		/* overflow? */
 			{
 				/*
 				 * Should not happen, as you can't pass billions of arguments
@@ -3848,9 +3848,9 @@ text_format(PG_FUNCTION_ARGS)
 			arg = 0;
 			do
 			{
-				int		newarg = arg * 10 + (*cp - '0');
+				int			newarg = arg * 10 + (*cp - '0');
 
-				if (newarg / 10 != arg)			/* overflow? */
+				if (newarg / 10 != arg) /* overflow? */
 					ereport(ERROR,
 							(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
 							 errmsg("argument number is out of range")));

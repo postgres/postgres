@@ -2140,7 +2140,7 @@ regression_main(int argc, char *argv[], init_function ifunc, test_function tfunc
 #ifndef WIN32_ONLY_COMPILER
 			snprintf(buf, sizeof(buf),
 					 SYSTEMQUOTE "\"%s\" -C \"%s/%s\" DESTDIR=\"%s/install\" install >> \"%s/log/install.log\" 2>&1" SYSTEMQUOTE,
-					 makeprog, top_builddir, sl->str, temp_install, outputdir);
+				   makeprog, top_builddir, sl->str, temp_install, outputdir);
 #else
 			fprintf(stderr, _("\n%s: --extra-install option not supported on this platform\n"), progname);
 			exit_nicely(2);

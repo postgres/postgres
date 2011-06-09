@@ -1069,7 +1069,7 @@ DefineDomain(CreateDomainStmt *stmt)
 				   basetypeMod, /* typeMod value */
 				   typNDims,	/* Array dimensions for base type */
 				   typNotNull,	/* Type NOT NULL */
-				   domaincoll);	/* type's collation */
+				   domaincoll); /* type's collation */
 
 	/*
 	 * Process constraints which refer to the domain ID returned by TypeCreate

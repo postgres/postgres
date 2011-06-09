@@ -1034,8 +1034,8 @@ grouping_planner(PlannerInfo *root, double tuple_fraction)
 		if (parse->hasAggs)
 		{
 			/*
-			 * Collect statistics about aggregates for estimating costs.
-			 * Note: we do not attempt to detect duplicate aggregates here; a
+			 * Collect statistics about aggregates for estimating costs. Note:
+			 * we do not attempt to detect duplicate aggregates here; a
 			 * somewhat-overestimated cost is okay for our present purposes.
 			 */
 			count_agg_clauses(root, (Node *) tlist, &agg_costs);

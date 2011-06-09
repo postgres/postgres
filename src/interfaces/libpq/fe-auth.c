@@ -325,7 +325,7 @@ pg_GSS_error_int(PQExpBuffer str, const char *mprefix,
 	do
 	{
 		gss_display_status(&lmin_s, stat, type,
-									GSS_C_NO_OID, &msg_ctx, &lmsg);
+						   GSS_C_NO_OID, &msg_ctx, &lmsg);
 		appendPQExpBuffer(str, "%s: %s\n", mprefix, (char *) lmsg.value);
 		gss_release_buffer(&lmin_s, &lmsg);
 	} while (msg_ctx);
@@ -693,9 +693,9 @@ pg_local_sendauth(PGconn *conn)
 	struct cmsghdr *cmsg;
 	union
 	{
-		struct cmsghdr	hdr;
-		unsigned char	buf[CMSG_SPACE(sizeof(struct cmsgcred))];
-	} cmsgbuf;
+		struct cmsghdr hdr;
+		unsigned char buf[CMSG_SPACE(sizeof(struct cmsgcred))];
+	}			cmsgbuf;
 
 	/*
 	 * The backend doesn't care what we send here, but it wants exactly one

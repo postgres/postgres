@@ -4512,8 +4512,8 @@ get_source_line(const char *src, int lineno)
 
 	/*
 	 * Sanity check, next < s if the line was all-whitespace, which should
-	 * never happen if Python reported a frame created on that line, but
-	 * check anyway.
+	 * never happen if Python reported a frame created on that line, but check
+	 * anyway.
 	 */
 	if (next < s)
 		return NULL;
@@ -4680,7 +4680,10 @@ PLy_traceback(char **xmsg, char **tbmsg, int *tb_depth)
 					&tbstr, "\n  PL/Python function \"%s\", line %ld, in %s",
 								 proname, plain_lineno - 1, fname);
 
-			/* function code object was compiled with "<string>" as the filename */
+			/*
+			 * function code object was compiled with "<string>" as the
+			 * filename
+			 */
 			if (PLy_curr_procedure && plain_filename != NULL &&
 				strcmp(plain_filename, "<string>") == 0)
 			{

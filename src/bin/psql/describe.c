@@ -1746,7 +1746,7 @@ describeOneTableDetails(const char *schemaname,
 		{
 			printfPQExpBuffer(&buf,
 							  "SELECT conname,\n"
-			   "  pg_catalog.pg_get_constraintdef(r.oid, true) as condef\n"
+				 "  pg_catalog.pg_get_constraintdef(r.oid, true) as condef\n"
 							  "FROM pg_catalog.pg_constraint r\n"
 					"WHERE r.conrelid = '%s' AND r.contype = 'f' ORDER BY 1",
 							  oid);
@@ -2693,7 +2693,7 @@ listDomains(const char *pattern, bool showSystem)
 	printfPQExpBuffer(&buf,
 					  "SELECT n.nspname as \"%s\",\n"
 					  "       t.typname as \"%s\",\n"
-					  "       pg_catalog.format_type(t.typbasetype, t.typtypmod) as \"%s\",\n"
+	 "       pg_catalog.format_type(t.typbasetype, t.typtypmod) as \"%s\",\n"
 					  "       TRIM(LEADING\n",
 					  gettext_noop("Schema"),
 					  gettext_noop("Name"),
@@ -2703,7 +2703,7 @@ listDomains(const char *pattern, bool showSystem)
 						  "            COALESCE((SELECT ' collate ' || c.collname FROM pg_catalog.pg_collation c, pg_catalog.pg_type bt\n"
 						  "                      WHERE c.oid = t.typcollation AND bt.oid = t.typbasetype AND t.typcollation <> bt.typcollation), '') ||\n");
 	appendPQExpBuffer(&buf,
-					  "            CASE WHEN t.typnotnull THEN ' not null' ELSE '' END ||\n"
+	   "            CASE WHEN t.typnotnull THEN ' not null' ELSE '' END ||\n"
 					  "            CASE WHEN t.typdefault IS NOT NULL THEN ' default ' || t.typdefault ELSE '' END\n"
 					  "       ) as \"%s\",\n",
 					  gettext_noop("Modifier"));

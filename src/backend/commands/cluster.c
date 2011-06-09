@@ -762,12 +762,12 @@ copy_heap_data(Oid OIDNewHeap, Oid OIDOldHeap, Oid OIDOldIndex,
 
 	/*
 	 * If the OldHeap has a toast table, get lock on the toast table to keep
-	 * it from being vacuumed.  This is needed because autovacuum processes
+	 * it from being vacuumed.	This is needed because autovacuum processes
 	 * toast tables independently of their main tables, with no lock on the
-	 * latter.  If an autovacuum were to start on the toast table after we
+	 * latter.	If an autovacuum were to start on the toast table after we
 	 * compute our OldestXmin below, it would use a later OldestXmin, and then
 	 * possibly remove as DEAD toast tuples belonging to main tuples we think
-	 * are only RECENTLY_DEAD.  Then we'd fail while trying to copy those
+	 * are only RECENTLY_DEAD.	Then we'd fail while trying to copy those
 	 * tuples.
 	 *
 	 * We don't need to open the toast relation here, just lock it.  The lock

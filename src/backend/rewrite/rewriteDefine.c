@@ -488,13 +488,13 @@ DefineQueryRewrite(char *rulename,
 	if (action != NIL || is_instead)
 	{
 		InsertRule(rulename,
-							event_type,
-							event_relid,
-							event_attno,
-							is_instead,
-							event_qual,
-							action,
-							replace);
+				   event_type,
+				   event_relid,
+				   event_attno,
+				   is_instead,
+				   event_qual,
+				   action,
+				   replace);
 
 		/*
 		 * Set pg_class 'relhasrules' field TRUE for event relation. If

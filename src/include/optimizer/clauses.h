@@ -50,7 +50,7 @@ extern List *make_ands_implicit(Expr *clause);
 extern bool contain_agg_clause(Node *clause);
 extern List *pull_agg_clause(Node *clause);
 extern void count_agg_clauses(PlannerInfo *root, Node *clause,
-							  AggClauseCosts *costs);
+				  AggClauseCosts *costs);
 
 extern bool contain_window_function(Node *clause);
 extern WindowFuncLists *find_window_functions(Node *clause, Index maxWinRef);

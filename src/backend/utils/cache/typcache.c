@@ -11,7 +11,7 @@
  *
  * Several seemingly-odd choices have been made to support use of the type
  * cache by generic array and record handling routines, such as array_eq(),
- * record_cmp(), and hash_array().  Because those routines are used as index
+ * record_cmp(), and hash_array().	Because those routines are used as index
  * support operations, they cannot leak memory.  To allow them to execute
  * efficiently, all information that they would like to re-use across calls
  * is kept in the type cache.
@@ -276,7 +276,7 @@ lookup_type_cache(Oid type_id, int flags)
 	if ((flags & (TYPECACHE_EQ_OPR | TYPECACHE_EQ_OPR_FINFO)) &&
 		typentry->eq_opr == InvalidOid)
 	{
-		Oid		eq_opr = InvalidOid;
+		Oid			eq_opr = InvalidOid;
 
 		if (typentry->btree_opf != InvalidOid)
 			eq_opr = get_opfamily_member(typentry->btree_opf,
@@ -291,10 +291,10 @@ lookup_type_cache(Oid type_id, int flags)
 										 HTEqualStrategyNumber);
 
 		/*
-		 * If the proposed equality operator is array_eq or record_eq,
-		 * check to see if the element type or column types support equality.
-		 * If not, array_eq or record_eq would fail at runtime, so we don't
-		 * want to report that the type has equality.
+		 * If the proposed equality operator is array_eq or record_eq, check
+		 * to see if the element type or column types support equality. If
+		 * not, array_eq or record_eq would fail at runtime, so we don't want
+		 * to report that the type has equality.
 		 */
 		if (eq_opr == ARRAY_EQ_OP &&
 			!array_element_has_equality(typentry))
@@ -315,7 +315,7 @@ lookup_type_cache(Oid type_id, int flags)
 	}
 	if ((flags & TYPECACHE_LT_OPR) && typentry->lt_opr == InvalidOid)
 	{
-		Oid		lt_opr = InvalidOid;
+		Oid			lt_opr = InvalidOid;
 
 		if (typentry->btree_opf != InvalidOid)
 			lt_opr = get_opfamily_member(typentry->btree_opf,
@@ -335,7 +335,7 @@ lookup_type_cache(Oid type_id, int flags)
 	}
 	if ((flags & TYPECACHE_GT_OPR) && typentry->gt_opr == InvalidOid)
 	{
-		Oid		gt_opr = InvalidOid;
+		Oid			gt_opr = InvalidOid;
 
 		if (typentry->btree_opf != InvalidOid)
 			gt_opr = get_opfamily_member(typentry->btree_opf,
@@ -356,7 +356,7 @@ lookup_type_cache(Oid type_id, int flags)
 	if ((flags & (TYPECACHE_CMP_PROC | TYPECACHE_CMP_PROC_FINFO)) &&
 		typentry->cmp_proc == InvalidOid)
 	{
-		Oid		cmp_proc = InvalidOid;
+		Oid			cmp_proc = InvalidOid;
 
 		if (typentry->btree_opf != InvalidOid)
 			cmp_proc = get_opfamily_proc(typentry->btree_opf,
@@ -377,7 +377,7 @@ lookup_type_cache(Oid type_id, int flags)
 	if ((flags & (TYPECACHE_HASH_PROC | TYPECACHE_HASH_PROC_FINFO)) &&
 		typentry->hash_proc == InvalidOid)
 	{
-		Oid		hash_proc = InvalidOid;
+		Oid			hash_proc = InvalidOid;
 
 		/*
 		 * We insist that the eq_opr, if one has been determined, match the
@@ -460,7 +460,7 @@ load_typcache_tupdesc(TypeCacheEntry *typentry)
 {
 	Relation	rel;
 
-	if (!OidIsValid(typentry->typrelid))	/* should not happen */
+	if (!OidIsValid(typentry->typrelid))		/* should not happen */
 		elog(ERROR, "invalid typrelid for composite type %u",
 			 typentry->type_id);
 	rel = relation_open(typentry->typrelid, AccessShareLock);
@@ -468,9 +468,9 @@ load_typcache_tupdesc(TypeCacheEntry *typentry)
 
 	/*
 	 * Link to the tupdesc and increment its refcount (we assert it's a
-	 * refcounted descriptor).	We don't use IncrTupleDescRefCount() for
-	 * this, because the reference mustn't be entered in the current
-	 * resource owner; it can outlive the current query.
+	 * refcounted descriptor).	We don't use IncrTupleDescRefCount() for this,
+	 * because the reference mustn't be entered in the current resource owner;
+	 * it can outlive the current query.
 	 */
 	typentry->tupDesc = RelationGetDescr(rel);
 
@@ -520,7 +520,7 @@ array_element_has_hashing(TypeCacheEntry *typentry)
 static void
 cache_array_element_properties(TypeCacheEntry *typentry)
 {
-	Oid		elem_type = get_base_element_type(typentry->type_id);
+	Oid			elem_type = get_base_element_type(typentry->type_id);
 
 	if (OidIsValid(elem_type))
 	{
@@ -571,7 +571,7 @@ cache_record_field_properties(TypeCacheEntry *typentry)
 	{
 		TupleDesc	tupdesc;
 		int			newflags;
-		int 		i;
+		int			i;
 
 		/* Fetch composite type's tupdesc if we don't have it already */
 		if (typentry->tupDesc == NULL)

@@ -1086,7 +1086,7 @@ setup_config(void)
 							  "@authcomment@",
 					   strcmp(authmethod, "trust") ? "" : AUTHTRUST_WARNING);
 
-    /* Replace username for replication */
+	/* Replace username for replication */
 	conflines = replace_token(conflines,
 							  "@default_username@",
 							  username);
@@ -1663,7 +1663,7 @@ setup_collation(void)
 		 */
 		if (normalize_locale_name(alias, localebuf))
 			PG_CMD_PRINTF3("INSERT INTO tmp_pg_collation VALUES (E'%s', E'%s', %d);\n",
-						escape_quotes(alias), quoted_locale, enc);
+						   escape_quotes(alias), quoted_locale, enc);
 	}
 
 	/* Add an SQL-standard name */
@@ -1688,7 +1688,7 @@ setup_collation(void)
 				"   encoding, locale, locale "
 				"  FROM tmp_pg_collation"
 				"  WHERE NOT EXISTS (SELECT 1 FROM pg_collation WHERE collname = tmp_pg_collation.collname)"
-				"  ORDER BY collname, encoding, (collname = locale) DESC, locale;\n");
+	   "  ORDER BY collname, encoding, (collname = locale) DESC, locale;\n");
 
 	pclose(locale_a_handle);
 	PG_CMD_CLOSE;
@@ -1702,7 +1702,7 @@ setup_collation(void)
 #else							/* not HAVE_LOCALE_T && not WIN32 */
 	printf(_("not supported on this platform\n"));
 	fflush(stdout);
-#endif   /* not HAVE_LOCALE_T  && not WIN32*/
+#endif   /* not HAVE_LOCALE_T  && not WIN32 */
 }
 
 /*
@@ -2272,20 +2272,19 @@ check_locale_encoding(const char *locale, int user_enc)
 static void
 strreplace(char *str, char *needle, char *replacement)
 {
-	char *s;
+	char	   *s;
 
 	s = strstr(str, needle);
 	if (s != NULL)
 	{
-		int replacementlen = strlen(replacement);
-		char *rest = s + strlen(needle);
+		int			replacementlen = strlen(replacement);
+		char	   *rest = s + strlen(needle);
 
 		memcpy(s, replacement, replacementlen);
 		memmove(s + replacementlen, rest, strlen(rest) + 1);
 	}
 }
-
-#endif /* WIN32 */
+#endif   /* WIN32 */
 
 /*
  * Windows has a problem with locale names that have a dot in the country
@@ -2306,6 +2305,7 @@ localemap(char *locale)
 	locale = xstrdup(locale);
 
 #ifdef WIN32
+
 	/*
 	 * Map the full country name to an abbreviation that setlocale() accepts.
 	 *
@@ -2321,14 +2321,14 @@ localemap(char *locale)
 
 	/*
 	 * The ISO-3166 country code for Macau S.A.R. is MAC, but Windows doesn't
-	 * seem to recognize that. And Macau isn't listed in the table of
-	 * accepted abbreviations linked above.
+	 * seem to recognize that. And Macau isn't listed in the table of accepted
+	 * abbreviations linked above.
 	 *
-	 * Fortunately, "ZHM" seems to be accepted as an alias for
-	 * "Chinese (Traditional)_Macau S.A.R..950", so we use that. Note that
-	 * it's unlike HKG and ARE, ZHM is an alias for the whole locale name,
-	 * not just the country part. I'm not sure where that "ZHM" comes from,
-	 * must be some legacy naming scheme. But hey, it works.
+	 * Fortunately, "ZHM" seems to be accepted as an alias for "Chinese
+	 * (Traditional)_Macau S.A.R..950", so we use that. Note that it's unlike
+	 * HKG and ARE, ZHM is an alias for the whole locale name, not just the
+	 * country part. I'm not sure where that "ZHM" comes from, must be some
+	 * legacy naming scheme. But hey, it works.
 	 *
 	 * Some versions of Windows spell it "Macau", others "Macao".
 	 */
@@ -2336,7 +2336,7 @@ localemap(char *locale)
 	strreplace(locale, "Chinese_Macau S.A.R..950", "ZHM");
 	strreplace(locale, "Chinese (Traditional)_Macao S.A.R..950", "ZHM");
 	strreplace(locale, "Chinese_Macao S.A.R..950", "ZHM");
-#endif /* WIN32 */
+#endif   /* WIN32 */
 
 	return locale;
 }
@@ -3000,13 +3000,13 @@ main(int argc, char *argv[])
 		else if (!pg_valid_server_encoding_id(ctype_enc))
 		{
 			/*
-			 * We recognized it, but it's not a legal server encoding.
-			 * On Windows, UTF-8 works with any locale, so we can fall back
-			 * to UTF-8.
+			 * We recognized it, but it's not a legal server encoding. On
+			 * Windows, UTF-8 works with any locale, so we can fall back to
+			 * UTF-8.
 			 */
 #ifdef WIN32
 			printf(_("Encoding %s implied by locale is not allowed as a server-side encoding.\n"
-					 "The default database encoding will be set to %s instead.\n"),
+			   "The default database encoding will be set to %s instead.\n"),
 				   pg_encoding_to_char(ctype_enc),
 				   pg_encoding_to_char(PG_UTF8));
 			ctype_enc = PG_UTF8;

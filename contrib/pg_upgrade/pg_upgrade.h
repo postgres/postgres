@@ -378,7 +378,7 @@ void	   *pg_malloc(int size);
 void		pg_free(void *ptr);
 const char *getErrorText(int errNum);
 unsigned int str2uint(const char *str);
-void 		pg_putenv(const char *var, const char *val);
+void		pg_putenv(const char *var, const char *val);
 
 
 /* version.c */

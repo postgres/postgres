@@ -52,8 +52,8 @@ get_db_conn(ClusterInfo *cluster, const char *db_name)
 	char		conn_opts[MAXPGPATH];
 
 	snprintf(conn_opts, sizeof(conn_opts),
-		 "dbname = '%s' user = '%s' port = %d", db_name, os_info.user,
-		 cluster->port);
+			 "dbname = '%s' user = '%s' port = %d", db_name, os_info.user,
+			 cluster->port);
 
 	return PQconnectdb(conn_opts);
 }
@@ -146,16 +146,18 @@ start_postmaster(ClusterInfo *cluster)
 	PGconn	   *conn;
 	bool		exit_hook_registered = false;
 	int			pg_ctl_return = 0;
+
 #ifndef WIN32
-	char		*output_filename = log_opts.filename;
+	char	   *output_filename = log_opts.filename;
 #else
+
 	/*
 	 * On Win32, we can't send both pg_upgrade output and pg_ctl output to the
 	 * same file because we get the error: "The process cannot access the file
 	 * because it is being used by another process." so we have to send all
 	 * other output to 'nul'.
 	 */
-	char		*output_filename = DEVNULL;
+	char	   *output_filename = DEVNULL;
 #endif
 
 	if (!exit_hook_registered)
@@ -180,13 +182,13 @@ start_postmaster(ClusterInfo *cluster)
 			 "-o \"-p %d %s\" start >> \"%s\" 2>&1" SYSTEMQUOTE,
 			 cluster->bindir, output_filename, cluster->pgdata, cluster->port,
 			 (cluster->controldata.cat_ver >=
-				BINARY_UPGRADE_SERVER_FLAG_CAT_VER) ? "-b" :
-				"-c autovacuum=off -c autovacuum_freeze_max_age=2000000000",
+			  BINARY_UPGRADE_SERVER_FLAG_CAT_VER) ? "-b" :
+			 "-c autovacuum=off -c autovacuum_freeze_max_age=2000000000",
 			 log_opts.filename);
 
 	/*
-	 * Don't throw an error right away, let connecting throw the error
-	 * because it might supply a reason for the failure.
+	 * Don't throw an error right away, let connecting throw the error because
+	 * it might supply a reason for the failure.
 	 */
 	pg_ctl_return = exec_prog(false, "%s", cmd);
 
@@ -196,7 +198,7 @@ start_postmaster(ClusterInfo *cluster)
 	{
 		pg_log(PG_REPORT, "\nconnection to database failed: %s\n",
 			   PQerrorMessage(conn));
- 		if (conn)
+		if (conn)
 			PQfinish(conn);
 		pg_log(PG_FATAL, "unable to connect to %s postmaster started with the command: %s\n",
 			   CLUSTER_NAME(cluster), cmd);
@@ -206,8 +208,8 @@ start_postmaster(ClusterInfo *cluster)
 	/* If the connection didn't fail, fail now */
 	if (pg_ctl_return != 0)
 		pg_log(PG_FATAL, "pg_ctl failed to start the %s server\n",
-				CLUSTER_NAME(cluster));
-	
+			   CLUSTER_NAME(cluster));
+
 	os_info.running_cluster = cluster;
 }
 
@@ -218,11 +220,12 @@ stop_postmaster(bool fast)
 	char		cmd[MAXPGPATH];
 	const char *bindir;
 	const char *datadir;
+
 #ifndef WIN32
-	char		*output_filename = log_opts.filename;
+	char	   *output_filename = log_opts.filename;
 #else
 	/* See comment in start_postmaster() about why win32 output is ignored. */
-	char		*output_filename = DEVNULL;
+	char	   *output_filename = DEVNULL;
 #endif
 
 	if (os_info.running_cluster == &old_cluster)
@@ -268,17 +271,17 @@ check_pghost_envvar(void)
 	for (option = start; option->keyword != NULL; option++)
 	{
 		if (option->envvar && (strcmp(option->envvar, "PGHOST") == 0 ||
-			strcmp(option->envvar, "PGHOSTADDR") == 0))
+							   strcmp(option->envvar, "PGHOSTADDR") == 0))
 		{
 			const char *value = getenv(option->envvar);
 
 			if (value && strlen(value) > 0 &&
-				/* check for 'local' host values */
+			/* check for 'local' host values */
 				(strcmp(value, "localhost") != 0 && strcmp(value, "127.0.0.1") != 0 &&
 				 strcmp(value, "::1") != 0 && value[0] != '/'))
 				pg_log(PG_FATAL,
-					"libpq environment variable %s has a non-local server value: %s\n",
-					option->envvar, value);
+					   "libpq environment variable %s has a non-local server value: %s\n",
+					   option->envvar, value);
 		}
 	}
 

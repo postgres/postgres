@@ -228,8 +228,12 @@ ecpg_build_compat_sqlda(int line, PGresult *res, int row, enum COMPAT_MODE compa
 		strcpy(fname, PQfname(res, i));
 		sqlda->sqlvar[i].sqlname = fname;
 		fname += strlen(sqlda->sqlvar[i].sqlname) + 1;
-		/* this is reserved for future use, so we leave it empty for the time being */
-		/* sqlda->sqlvar[i].sqlformat = (char *) (long) PQfformat(res, i);*/
+
+		/*
+		 * this is reserved for future use, so we leave it empty for the time
+		 * being
+		 */
+		/* sqlda->sqlvar[i].sqlformat = (char *) (long) PQfformat(res, i); */
 		sqlda->sqlvar[i].sqlxid = PQftype(res, i);
 		sqlda->sqlvar[i].sqltypelen = PQfsize(res, i);
 	}

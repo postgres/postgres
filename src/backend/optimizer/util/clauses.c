@@ -86,7 +86,7 @@ typedef struct
 static bool contain_agg_clause_walker(Node *node, void *context);
 static bool pull_agg_clause_walker(Node *node, List **context);
 static bool count_agg_clauses_walker(Node *node,
-									 count_agg_clauses_context *context);
+						 count_agg_clauses_context *context);
 static bool find_window_functions_walker(Node *node, WindowFuncLists *lists);
 static bool expression_returns_set_rows_walker(Node *node, double *count);
 static bool contain_subplans_walker(Node *node, void *context);
@@ -2884,9 +2884,9 @@ eval_const_expressions_mutator(Node *node,
 			/*
 			 * We can remove null constants from the list. For a non-null
 			 * constant, if it has not been preceded by any other
-			 * non-null-constant expressions then it is the result.
-			 * Otherwise, it's the next argument, but we can drop following
-			 * arguments since they will never be reached.
+			 * non-null-constant expressions then it is the result. Otherwise,
+			 * it's the next argument, but we can drop following arguments
+			 * since they will never be reached.
 			 */
 			if (IsA(e, Const))
 			{

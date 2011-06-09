@@ -725,7 +725,7 @@ typedef struct RangeTblEntry
 	 *
 	 * If the function returns RECORD, funccoltypes lists the column types
 	 * declared in the RTE's column type specification, funccoltypmods lists
-	 * their declared typmods, funccolcollations their collations.  Otherwise,
+	 * their declared typmods, funccolcollations their collations.	Otherwise,
 	 * those fields are NIL.
 	 */
 	Node	   *funcexpr;		/* expression tree for func call */

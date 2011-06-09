@@ -929,7 +929,7 @@ pg_GSS_error(int severity, char *errmsg, OM_uint32 maj_stat, OM_uint32 min_stat)
 	/* Fetch major status message */
 	msg_ctx = 0;
 	gss_display_status(&lmin_s, maj_stat, GSS_C_GSS_CODE,
-								GSS_C_NO_OID, &msg_ctx, &gmsg);
+					   GSS_C_NO_OID, &msg_ctx, &gmsg);
 	strlcpy(msg_major, gmsg.value, sizeof(msg_major));
 	gss_release_buffer(&lmin_s, &gmsg);
 
@@ -945,7 +945,7 @@ pg_GSS_error(int severity, char *errmsg, OM_uint32 maj_stat, OM_uint32 min_stat)
 	/* Fetch mechanism minor status message */
 	msg_ctx = 0;
 	gss_display_status(&lmin_s, min_stat, GSS_C_MECH_CODE,
-								GSS_C_NO_OID, &msg_ctx, &gmsg);
+					   GSS_C_NO_OID, &msg_ctx, &gmsg);
 	strlcpy(msg_minor, gmsg.value, sizeof(msg_minor));
 	gss_release_buffer(&lmin_s, &gmsg);
 
@@ -1761,7 +1761,7 @@ auth_peer(hbaPort *port)
 		if (errno == ENOSYS)
 			ereport(LOG,
 					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-					 errmsg("peer authentication is not supported on this platform")));
+			errmsg("peer authentication is not supported on this platform")));
 		else
 			ereport(LOG,
 					(errcode_for_socket_access(),

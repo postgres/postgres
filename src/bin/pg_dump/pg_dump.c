@@ -7968,14 +7968,14 @@ dumpCompositeType(Archive *fout, TypeInfo *tyinfo)
 		 * collation does not matter for those.
 		 */
 		appendPQExpBuffer(query, "SELECT a.attname, "
-						  "pg_catalog.format_type(a.atttypid, a.atttypmod) AS atttypdefn, "
+			"pg_catalog.format_type(a.atttypid, a.atttypmod) AS atttypdefn, "
 						  "a.attlen, a.attalign, a.attisdropped, "
 						  "CASE WHEN a.attcollation <> at.typcollation "
 						  "THEN a.attcollation ELSE 0 END AS attcollation, "
 						  "ct.typrelid "
 						  "FROM pg_catalog.pg_type ct "
-						  "JOIN pg_catalog.pg_attribute a ON a.attrelid = ct.typrelid "
-						  "LEFT JOIN pg_catalog.pg_type at ON at.oid = a.atttypid "
+				"JOIN pg_catalog.pg_attribute a ON a.attrelid = ct.typrelid "
+					"LEFT JOIN pg_catalog.pg_type at ON at.oid = a.atttypid "
 						  "WHERE ct.oid = '%u'::pg_catalog.oid "
 						  "ORDER BY a.attnum ",
 						  tyinfo->dobj.catId.oid);
@@ -7988,11 +7988,11 @@ dumpCompositeType(Archive *fout, TypeInfo *tyinfo)
 		 * always be false.
 		 */
 		appendPQExpBuffer(query, "SELECT a.attname, "
-						  "pg_catalog.format_type(a.atttypid, a.atttypmod) AS atttypdefn, "
+			"pg_catalog.format_type(a.atttypid, a.atttypmod) AS atttypdefn, "
 						  "a.attlen, a.attalign, a.attisdropped, "
 						  "0 AS attcollation, "
 						  "ct.typrelid "
-						  "FROM pg_catalog.pg_type ct, pg_catalog.pg_attribute a "
+					 "FROM pg_catalog.pg_type ct, pg_catalog.pg_attribute a "
 						  "WHERE ct.oid = '%u'::pg_catalog.oid "
 						  "AND a.attrelid = ct.typrelid "
 						  "ORDER BY a.attnum ",
@@ -8072,15 +8072,15 @@ dumpCompositeType(Archive *fout, TypeInfo *tyinfo)
 		{
 			/*
 			 * This is a dropped attribute and we're in binary_upgrade mode.
-			 * Insert a placeholder for it in the CREATE TYPE command, and
-			 * set length and alignment with direct UPDATE to the catalogs
+			 * Insert a placeholder for it in the CREATE TYPE command, and set
+			 * length and alignment with direct UPDATE to the catalogs
 			 * afterwards. See similar code in dumpTableSchema().
 			 */
 			appendPQExpBuffer(q, "%s INTEGER /* dummy */", fmtId(attname));
 
 			/* stash separately for insertion after the CREATE TYPE */
 			appendPQExpBuffer(dropped,
-							  "\n-- For binary upgrade, recreate dropped column.\n");
+					  "\n-- For binary upgrade, recreate dropped column.\n");
 			appendPQExpBuffer(dropped, "UPDATE pg_catalog.pg_attribute\n"
 							  "SET attlen = %s, "
 							  "attalign = '%s', attbyval = false\n"
@@ -8380,8 +8380,8 @@ dumpProcLang(Archive *fout, ProcLangInfo *plang)
 	 * However, for a language that belongs to an extension, we must not use
 	 * the shouldDumpProcLangs heuristic, but just dump the language iff we're
 	 * told to (via dobj.dump).  Generally the support functions will belong
-	 * to the same extension and so have the same dump flags ... if they don't,
-	 * this might not work terribly nicely.
+	 * to the same extension and so have the same dump flags ... if they
+	 * don't, this might not work terribly nicely.
 	 */
 	useParams = (funcInfo != NULL &&
 				 (inlineInfo != NULL || !OidIsValid(plang->laninline)) &&
@@ -11181,8 +11181,8 @@ dumpForeignDataWrapper(Archive *fout, FdwInfo *fdwinfo)
 		return;
 
 	/*
-	 * FDWs that belong to an extension are dumped based on their "dump" field.
-	 * Otherwise omit them if we are only dumping some specific object.
+	 * FDWs that belong to an extension are dumped based on their "dump"
+	 * field. Otherwise omit them if we are only dumping some specific object.
 	 */
 	if (!fdwinfo->dobj.ext_member)
 		if (!include_everything)
@@ -11963,7 +11963,7 @@ dumpTableSchema(Archive *fout, TableInfo *tbinfo)
 
 	if (binary_upgrade)
 		binary_upgrade_set_type_oids_by_rel_oid(q,
-													 tbinfo->dobj.catId.oid);
+												tbinfo->dobj.catId.oid);
 
 	/* Is it a table or a view? */
 	if (tbinfo->relkind == RELKIND_VIEW)
@@ -12085,6 +12085,7 @@ dumpTableSchema(Archive *fout, TableInfo *tbinfo)
 						  "UNLOGGED " : "",
 						  reltypename,
 						  fmtId(tbinfo->dobj.name));
+
 		/*
 		 * In case of a binary upgrade, we dump the table normally and attach
 		 * it to the type afterward.

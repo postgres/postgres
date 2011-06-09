@@ -807,9 +807,9 @@ check_client_encoding(char **newval, void **extra, GucSource source)
 	 *
 	 * XXX Although canonicalizing seems like a good idea in the abstract, it
 	 * breaks pre-9.1 JDBC drivers, which expect that if they send "UNICODE"
-	 * as the client_encoding setting then it will read back the same way.
-	 * As a workaround, don't replace the string if it's "UNICODE".  Remove
-	 * that hack when pre-9.1 JDBC drivers are no longer in use.
+	 * as the client_encoding setting then it will read back the same way. As
+	 * a workaround, don't replace the string if it's "UNICODE".  Remove that
+	 * hack when pre-9.1 JDBC drivers are no longer in use.
 	 */
 	if (strcmp(*newval, canonical_name) != 0 &&
 		strcmp(*newval, "UNICODE") != 0)

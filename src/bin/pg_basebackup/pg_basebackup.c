@@ -130,7 +130,7 @@ usage(void)
 	printf(_("  -Z, --compress=0-9       compress tar output with given compression level\n"));
 	printf(_("\nGeneral options:\n"));
 	printf(_("  -c, --checkpoint=fast|spread\n"
-			 "                           set fast or spread checkpointing\n"));
+		   "                           set fast or spread checkpointing\n"));
 	printf(_("  -l, --label=LABEL        set backup label\n"));
 	printf(_("  -P, --progress           show progress information\n"));
 	printf(_("  -v, --verbose            output verbose messages\n"));
@@ -1006,7 +1006,7 @@ main(int argc, char **argv)
 #ifdef HAVE_LIBZ
 				compresslevel = Z_DEFAULT_COMPRESSION;
 #else
-				compresslevel = 1; /* will be rejected below */
+				compresslevel = 1;		/* will be rejected below */
 #endif
 				break;
 			case 'Z':

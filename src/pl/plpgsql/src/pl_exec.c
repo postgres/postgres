@@ -4400,7 +4400,7 @@ exec_get_datum_type_info(PLpgSQL_execstate *estate,
 
 		default:
 			elog(ERROR, "unrecognized dtype: %d", datum->dtype);
-			*typeid = InvalidOid;	/* keep compiler quiet */
+			*typeid = InvalidOid;		/* keep compiler quiet */
 			*typmod = -1;
 			*collation = InvalidOid;
 			break;

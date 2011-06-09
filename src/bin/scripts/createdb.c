@@ -192,11 +192,11 @@ main(int argc, char *argv[])
 
 	appendPQExpBuffer(&sql, ";\n");
 
-    /*
-     * Connect to the 'postgres' database by default, except have
-     * the 'postgres' user use 'template1' so he can create the
-     * 'postgres' database.
-     */
+	/*
+	 * Connect to the 'postgres' database by default, except have the
+	 * 'postgres' user use 'template1' so he can create the 'postgres'
+	 * database.
+	 */
 	conn = connectDatabase(strcmp(dbname, "postgres") == 0 ? "template1" : "postgres",
 						   host, port, username, prompt_password, progname);
 

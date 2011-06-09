@@ -3383,9 +3383,9 @@ add_sort_column(AttrNumber colIdx, Oid sortOp, Oid coll, bool nulls_first,
 		 * opposite nulls direction is redundant.
 		 *
 		 * We could probably consider sort keys with the same sortop and
-		 * different collations to be redundant too, but for the moment
-		 * treat them as not redundant.  This will be needed if we ever
-		 * support collations with different notions of equality.
+		 * different collations to be redundant too, but for the moment treat
+		 * them as not redundant.  This will be needed if we ever support
+		 * collations with different notions of equality.
 		 */
 		if (sortColIdx[i] == colIdx &&
 			sortOperators[numCols] == sortOp &&
@@ -3419,7 +3419,7 @@ add_sort_column(AttrNumber colIdx, Oid sortOp, Oid coll, bool nulls_first,
  *
  * We must convert the pathkey information into arrays of sort key column
  * numbers, sort operator OIDs, collation OIDs, and nulls-first flags,
- * which is the representation the executor wants.  These are returned into
+ * which is the representation the executor wants.	These are returned into
  * the output parameters *p_numsortkeys etc.
  *
  * If the pathkeys include expressions that aren't simple Vars, we will

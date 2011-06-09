@@ -1486,10 +1486,10 @@ ServerLoop(void)
 			WalWriterPID = StartWalWriter();
 
 		/*
-		 *	If we have lost the autovacuum launcher, try to start a new one.
-		 *	We don't want autovacuum to run in binary upgrade mode because
-		 *	autovacuum might update relfrozenxid for empty tables before
-		 *	the physical files are put in place.
+		 * If we have lost the autovacuum launcher, try to start a new one. We
+		 * don't want autovacuum to run in binary upgrade mode because
+		 * autovacuum might update relfrozenxid for empty tables before the
+		 * physical files are put in place.
 		 */
 		if (!IsBinaryUpgrade && AutoVacPID == 0 &&
 			(AutoVacuumingActive() || start_autovac_launcher) &&

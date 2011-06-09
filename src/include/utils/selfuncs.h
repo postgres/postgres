@@ -136,7 +136,7 @@ extern Pattern_Prefix_Status pattern_fixed_prefix(Const *patt,
 					 Const **prefix,
 					 Const **rest);
 extern Const *make_greater_string(const Const *str_const, FmgrInfo *ltproc,
-								  Oid collation);
+					Oid collation);
 
 extern Datum eqsel(PG_FUNCTION_ARGS);
 extern Datum neqsel(PG_FUNCTION_ARGS);

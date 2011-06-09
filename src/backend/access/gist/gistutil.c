@@ -448,7 +448,7 @@ gistdentryinit(GISTSTATE *giststate, int nkey, GISTENTRY *e,
 		gistentryinit(*e, k, r, pg, o, l);
 		dep = (GISTENTRY *)
 			DatumGetPointer(FunctionCall1Coll(&giststate->decompressFn[nkey],
-											  giststate->supportCollation[nkey],
+										   giststate->supportCollation[nkey],
 											  PointerGetDatum(e)));
 		/* decompressFn may just return the given pointer */
 		if (dep != e)
@@ -475,7 +475,7 @@ gistcentryinit(GISTSTATE *giststate, int nkey,
 		gistentryinit(*e, k, r, pg, o, l);
 		cep = (GISTENTRY *)
 			DatumGetPointer(FunctionCall1Coll(&giststate->compressFn[nkey],
-											  giststate->supportCollation[nkey],
+										   giststate->supportCollation[nkey],
 											  PointerGetDatum(e)));
 		/* compressFn may just return the given pointer */
 		if (cep != e)

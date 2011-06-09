@@ -933,10 +933,10 @@ generate_setop_tlist(List *colTypes, List *colCollations,
 		}
 
 		/*
-		 * Ensure the tlist entry's exposed collation matches the set-op.
-		 * This is necessary because plan_set_operations() reports the result
+		 * Ensure the tlist entry's exposed collation matches the set-op. This
+		 * is necessary because plan_set_operations() reports the result
 		 * ordering as a list of SortGroupClauses, which don't carry collation
-		 * themselves but just refer to tlist entries.  If we don't show the
+		 * themselves but just refer to tlist entries.	If we don't show the
 		 * right collation then planner.c might do the wrong thing in
 		 * higher-level queries.
 		 *

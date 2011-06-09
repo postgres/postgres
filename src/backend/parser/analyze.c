@@ -575,7 +575,7 @@ transformInsertStmt(ParseState *pstate, InsertStmt *stmt)
 			 * We must assign collations now because assign_query_collations
 			 * doesn't process rangetable entries.  We just assign all the
 			 * collations independently in each row, and don't worry about
-			 * whether they are consistent vertically.  The outer INSERT query
+			 * whether they are consistent vertically.	The outer INSERT query
 			 * isn't going to care about the collations of the VALUES columns,
 			 * so it's not worth the effort to identify a common collation for
 			 * each one here.  (But note this does have one user-visible
@@ -1100,16 +1100,16 @@ transformValuesClause(ParseState *pstate, SelectStmt *stmt)
 	 * doesn't process rangetable entries, and (2) we need to label the VALUES
 	 * RTE with column collations for use in the outer query.  We don't
 	 * consider conflict of implicit collations to be an error here; instead
-	 * the column will just show InvalidOid as its collation, and you'll get
-	 * a failure later if that results in failure to resolve a collation.
+	 * the column will just show InvalidOid as its collation, and you'll get a
+	 * failure later if that results in failure to resolve a collation.
 	 *
 	 * Note we modify the per-column expression lists in-place.
 	 */
 	collations = NIL;
 	for (i = 0; i < sublist_length; i++)
 	{
-		Oid		coltype;
-		Oid		colcoll;
+		Oid			coltype;
+		Oid			colcoll;
 
 		coltype = select_common_type(pstate, colexprs[i], "VALUES", NULL);
 
@@ -1210,7 +1210,7 @@ transformValuesClause(ParseState *pstate, SelectStmt *stmt)
 				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 				 errmsg("VALUES must not contain table references"),
 				 parser_errposition(pstate,
-						   locate_var_of_level((Node *) exprsLists, 0))));
+							  locate_var_of_level((Node *) exprsLists, 0))));
 
 	/*
 	 * Another thing we can't currently support is NEW/OLD references in rules
@@ -1225,7 +1225,7 @@ transformValuesClause(ParseState *pstate, SelectStmt *stmt)
 				 errmsg("VALUES must not contain OLD or NEW references"),
 				 errhint("Use SELECT ... UNION ALL ... instead."),
 				 parser_errposition(pstate,
-						   locate_var_of_level((Node *) exprsLists, 0))));
+							  locate_var_of_level((Node *) exprsLists, 0))));
 
 	qry->rtable = pstate->p_rtable;
 	qry->jointree = makeFromExpr(pstate->p_joinlist, NULL);
@@ -1237,13 +1237,13 @@ transformValuesClause(ParseState *pstate, SelectStmt *stmt)
 				(errcode(ERRCODE_GROUPING_ERROR),
 				 errmsg("cannot use aggregate function in VALUES"),
 				 parser_errposition(pstate,
-						   locate_agg_of_level((Node *) exprsLists, 0))));
+							  locate_agg_of_level((Node *) exprsLists, 0))));
 	if (pstate->p_hasWindowFuncs)
 		ereport(ERROR,
 				(errcode(ERRCODE_WINDOWING_ERROR),
 				 errmsg("cannot use window function in VALUES"),
 				 parser_errposition(pstate,
-								locate_windowfunc((Node *) exprsLists))));
+									locate_windowfunc((Node *) exprsLists))));
 
 	assign_query_collations(pstate, qry);
 

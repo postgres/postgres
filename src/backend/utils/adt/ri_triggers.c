@@ -83,7 +83,7 @@
 
 #define RIAttName(rel, attnum)	NameStr(*attnumAttName(rel, attnum))
 #define RIAttType(rel, attnum)	attnumTypeId(rel, attnum)
-#define RIAttCollation(rel, attnum)	attnumCollationId(rel, attnum)
+#define RIAttCollation(rel, attnum) attnumCollationId(rel, attnum)
 
 #define RI_TRIGTYPE_INSERT 1
 #define RI_TRIGTYPE_UPDATE 2
@@ -3024,8 +3024,8 @@ ri_GenerateQualCollation(StringInfo buf, Oid collation)
 	collname = NameStr(colltup->collname);
 
 	/*
-	 * We qualify the name always, for simplicity and to ensure the query
-	 * is not search-path-dependent.
+	 * We qualify the name always, for simplicity and to ensure the query is
+	 * not search-path-dependent.
 	 */
 	quoteOneName(onename, get_namespace_name(colltup->collnamespace));
 	appendStringInfo(buf, " COLLATE %s", onename);
@@ -3964,8 +3964,8 @@ ri_AttributesEqual(Oid eq_opr, Oid typeid,
 	}
 
 	/*
-	 * Apply the comparison operator.  We assume it doesn't
-	 * care about collations.
+	 * Apply the comparison operator.  We assume it doesn't care about
+	 * collations.
 	 */
 	return DatumGetBool(FunctionCall2(&entry->eq_opr_finfo,
 									  oldvalue, newvalue));

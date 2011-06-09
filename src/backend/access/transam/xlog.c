@@ -6656,15 +6656,15 @@ StartupXLOG(void)
 			ereport(FATAL,
 					(errmsg("requested recovery stop point is before consistent recovery point")));
 		}
+
 		/*
-		 * Ran off end of WAL before reaching end-of-backup WAL record,
-		 * or minRecoveryPoint. That's usually a bad sign, indicating that
-		 * you tried to recover from an online backup but never called
+		 * Ran off end of WAL before reaching end-of-backup WAL record, or
+		 * minRecoveryPoint. That's usually a bad sign, indicating that you
+		 * tried to recover from an online backup but never called
 		 * pg_stop_backup(), or you didn't archive all the WAL up to that
-		 * point. However, this also happens in crash recovery, if the
-		 * system crashes while an online backup is in progress. We
-		 * must not treat that as an error, or the database will refuse
-		 * to start up.
+		 * point. However, this also happens in crash recovery, if the system
+		 * crashes while an online backup is in progress. We must not treat
+		 * that as an error, or the database will refuse to start up.
 		 */
 		if (InArchiveRecovery)
 		{
@@ -6674,7 +6674,7 @@ StartupXLOG(void)
 						 errhint("Online backup started with pg_start_backup() must be ended with pg_stop_backup(), and all WAL up to that point must be available at recovery.")));
 			else
 				ereport(FATAL,
-						(errmsg("WAL ends before consistent recovery point")));
+					  (errmsg("WAL ends before consistent recovery point")));
 		}
 	}
 

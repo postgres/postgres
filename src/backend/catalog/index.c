@@ -1773,8 +1773,8 @@ index_build(Relation heapRelation,
 	 * However, when reindexing an existing index, we should do nothing here.
 	 * Any HOT chains that are broken with respect to the index must predate
 	 * the index's original creation, so there is no need to change the
-	 * index's usability horizon.  Moreover, we *must not* try to change
-	 * the index's pg_index entry while reindexing pg_index itself, and this
+	 * index's usability horizon.  Moreover, we *must not* try to change the
+	 * index's pg_index entry while reindexing pg_index itself, and this
 	 * optimization nicely prevents that.
 	 */
 	if (indexInfo->ii_BrokenHotChain && !isreindex)
@@ -1824,7 +1824,7 @@ index_build(Relation heapRelation,
 
 	/*
 	 * If it's for an exclusion constraint, make a second pass over the heap
-	 * to verify that the constraint is satisfied.  We must not do this until
+	 * to verify that the constraint is satisfied.	We must not do this until
 	 * the index is fully valid.  (Broken HOT chains shouldn't matter, though;
 	 * see comments for IndexCheckExclusion.)
 	 */
@@ -2136,8 +2136,8 @@ IndexBuildHeapScan(Relation heapRelation,
 						/*
 						 * It's a HOT-updated tuple deleted by our own xact.
 						 * We can assume the deletion will commit (else the
-						 * index contents don't matter), so treat the same
-						 * as RECENTLY_DEAD HOT-updated tuples.
+						 * index contents don't matter), so treat the same as
+						 * RECENTLY_DEAD HOT-updated tuples.
 						 */
 						indexIt = false;
 						/* mark the index as unsafe for old snapshots */
@@ -2146,9 +2146,9 @@ IndexBuildHeapScan(Relation heapRelation,
 					else
 					{
 						/*
-						 * It's a regular tuple deleted by our own xact.
-						 * Index it but don't check for uniqueness, the same
-						 * as a RECENTLY_DEAD tuple.
+						 * It's a regular tuple deleted by our own xact. Index
+						 * it but don't check for uniqueness, the same as a
+						 * RECENTLY_DEAD tuple.
 						 */
 						indexIt = true;
 					}
@@ -2281,9 +2281,8 @@ IndexCheckExclusion(Relation heapRelation,
 
 	/*
 	 * If we are reindexing the target index, mark it as no longer being
-	 * reindexed, to forestall an Assert in index_beginscan when we try to
-	 * use the index for probes.  This is OK because the index is now
-	 * fully valid.
+	 * reindexed, to forestall an Assert in index_beginscan when we try to use
+	 * the index for probes.  This is OK because the index is now fully valid.
 	 */
 	if (ReindexIsCurrentlyProcessingIndex(RelationGetRelid(indexRelation)))
 		ResetReindexProcessing();
@@ -2855,9 +2854,9 @@ reindex_index(Oid indexId, bool skip_constraint_checks)
 	 *
 	 * We can also reset indcheckxmin, because we have now done a
 	 * non-concurrent index build, *except* in the case where index_build
-	 * found some still-broken HOT chains.  If it did, we normally leave
+	 * found some still-broken HOT chains.	If it did, we normally leave
 	 * indcheckxmin alone (note that index_build won't have changed it,
-	 * because this is a reindex).  But if the index was invalid or not ready
+	 * because this is a reindex).	But if the index was invalid or not ready
 	 * and there were broken HOT chains, it seems best to force indcheckxmin
 	 * true, because the normal argument that the HOT chains couldn't conflict
 	 * with the index is suspect for an invalid index.
@@ -2929,7 +2928,7 @@ reindex_index(Oid indexId, bool skip_constraint_checks)
  * the data in a manner that risks a change in constraint validity.
  *
  * Returns true if any indexes were rebuilt (including toast table's index
- * when relevant).  Note that a CommandCounterIncrement will occur after each
+ * when relevant).	Note that a CommandCounterIncrement will occur after each
  * index rebuild.
  */
 bool

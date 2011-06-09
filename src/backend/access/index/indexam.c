@@ -80,7 +80,7 @@
  *
  * Note: the ReindexIsProcessingIndex() check in RELATION_CHECKS is there
  * to check that we don't try to scan or do retail insertions into an index
- * that is currently being rebuilt or pending rebuild.  This helps to catch
+ * that is currently being rebuilt or pending rebuild.	This helps to catch
  * things that don't work when reindexing system catalogs.  The assertion
  * doesn't prevent the actual rebuild because we don't use RELATION_CHECKS
  * when calling the index AM's ambuild routine, and there is no reason for

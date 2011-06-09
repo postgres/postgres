@@ -135,7 +135,7 @@ crashDumpHandler(struct _EXCEPTION_POINTERS * pExceptionInfo)
 
 		systemTicks = GetTickCount();
 		snprintf(dumpPath, _MAX_PATH,
-				 "crashdumps\\postgres-pid%0i-%0i.mdmp", 
+				 "crashdumps\\postgres-pid%0i-%0i.mdmp",
 				 (int) selfPid, (int) systemTicks);
 		dumpPath[_MAX_PATH - 1] = '\0';
 

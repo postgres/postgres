@@ -74,6 +74,7 @@ geqo(PlannerInfo *root, int number_of_rels, List *initial_rels)
 	Pool	   *pool;
 	int			pool_size,
 				number_generations;
+
 #ifdef GEQO_DEBUG
 	int			status_interval;
 #endif

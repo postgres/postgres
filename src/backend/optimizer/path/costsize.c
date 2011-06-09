@@ -2687,7 +2687,7 @@ cost_qual_eval_walker(Node *node, cost_qual_eval_context *context)
 	 * evaluation of AND/OR?  Probably *not*, because that would make the
 	 * results depend on the clause ordering, and we are not in any position
 	 * to expect that the current ordering of the clauses is the one that's
-	 * going to end up being used.  The above per-RestrictInfo caching would
+	 * going to end up being used.	The above per-RestrictInfo caching would
 	 * not mix well with trying to re-order clauses anyway.
 	 */
 	if (IsA(node, FuncExpr))

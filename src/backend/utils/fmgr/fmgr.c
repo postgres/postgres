@@ -1053,7 +1053,7 @@ DirectFunctionCall2Coll(PGFunction func, Oid collation, Datum arg1, Datum arg2)
 
 Datum
 DirectFunctionCall3Coll(PGFunction func, Oid collation, Datum arg1, Datum arg2,
-					Datum arg3)
+						Datum arg3)
 {
 	FunctionCallInfoData fcinfo;
 	Datum		result;
@@ -1078,7 +1078,7 @@ DirectFunctionCall3Coll(PGFunction func, Oid collation, Datum arg1, Datum arg2,
 
 Datum
 DirectFunctionCall4Coll(PGFunction func, Oid collation, Datum arg1, Datum arg2,
-					Datum arg3, Datum arg4)
+						Datum arg3, Datum arg4)
 {
 	FunctionCallInfoData fcinfo;
 	Datum		result;
@@ -1105,7 +1105,7 @@ DirectFunctionCall4Coll(PGFunction func, Oid collation, Datum arg1, Datum arg2,
 
 Datum
 DirectFunctionCall5Coll(PGFunction func, Oid collation, Datum arg1, Datum arg2,
-					Datum arg3, Datum arg4, Datum arg5)
+						Datum arg3, Datum arg4, Datum arg5)
 {
 	FunctionCallInfoData fcinfo;
 	Datum		result;
@@ -1134,8 +1134,8 @@ DirectFunctionCall5Coll(PGFunction func, Oid collation, Datum arg1, Datum arg2,
 
 Datum
 DirectFunctionCall6Coll(PGFunction func, Oid collation, Datum arg1, Datum arg2,
-					Datum arg3, Datum arg4, Datum arg5,
-					Datum arg6)
+						Datum arg3, Datum arg4, Datum arg5,
+						Datum arg6)
 {
 	FunctionCallInfoData fcinfo;
 	Datum		result;
@@ -1166,8 +1166,8 @@ DirectFunctionCall6Coll(PGFunction func, Oid collation, Datum arg1, Datum arg2,
 
 Datum
 DirectFunctionCall7Coll(PGFunction func, Oid collation, Datum arg1, Datum arg2,
-					Datum arg3, Datum arg4, Datum arg5,
-					Datum arg6, Datum arg7)
+						Datum arg3, Datum arg4, Datum arg5,
+						Datum arg6, Datum arg7)
 {
 	FunctionCallInfoData fcinfo;
 	Datum		result;
@@ -1200,8 +1200,8 @@ DirectFunctionCall7Coll(PGFunction func, Oid collation, Datum arg1, Datum arg2,
 
 Datum
 DirectFunctionCall8Coll(PGFunction func, Oid collation, Datum arg1, Datum arg2,
-					Datum arg3, Datum arg4, Datum arg5,
-					Datum arg6, Datum arg7, Datum arg8)
+						Datum arg3, Datum arg4, Datum arg5,
+						Datum arg6, Datum arg7, Datum arg8)
 {
 	FunctionCallInfoData fcinfo;
 	Datum		result;
@@ -1236,9 +1236,9 @@ DirectFunctionCall8Coll(PGFunction func, Oid collation, Datum arg1, Datum arg2,
 
 Datum
 DirectFunctionCall9Coll(PGFunction func, Oid collation, Datum arg1, Datum arg2,
-					Datum arg3, Datum arg4, Datum arg5,
-					Datum arg6, Datum arg7, Datum arg8,
-					Datum arg9)
+						Datum arg3, Datum arg4, Datum arg5,
+						Datum arg6, Datum arg7, Datum arg8,
+						Datum arg9)
 {
 	FunctionCallInfoData fcinfo;
 	Datum		result;
@@ -1327,7 +1327,7 @@ FunctionCall2Coll(FmgrInfo *flinfo, Oid collation, Datum arg1, Datum arg2)
 
 Datum
 FunctionCall3Coll(FmgrInfo *flinfo, Oid collation, Datum arg1, Datum arg2,
-			  Datum arg3)
+				  Datum arg3)
 {
 	FunctionCallInfoData fcinfo;
 	Datum		result;
@@ -1352,7 +1352,7 @@ FunctionCall3Coll(FmgrInfo *flinfo, Oid collation, Datum arg1, Datum arg2,
 
 Datum
 FunctionCall4Coll(FmgrInfo *flinfo, Oid collation, Datum arg1, Datum arg2,
-			  Datum arg3, Datum arg4)
+				  Datum arg3, Datum arg4)
 {
 	FunctionCallInfoData fcinfo;
 	Datum		result;
@@ -1379,7 +1379,7 @@ FunctionCall4Coll(FmgrInfo *flinfo, Oid collation, Datum arg1, Datum arg2,
 
 Datum
 FunctionCall5Coll(FmgrInfo *flinfo, Oid collation, Datum arg1, Datum arg2,
-			  Datum arg3, Datum arg4, Datum arg5)
+				  Datum arg3, Datum arg4, Datum arg5)
 {
 	FunctionCallInfoData fcinfo;
 	Datum		result;
@@ -1408,8 +1408,8 @@ FunctionCall5Coll(FmgrInfo *flinfo, Oid collation, Datum arg1, Datum arg2,
 
 Datum
 FunctionCall6Coll(FmgrInfo *flinfo, Oid collation, Datum arg1, Datum arg2,
-			  Datum arg3, Datum arg4, Datum arg5,
-			  Datum arg6)
+				  Datum arg3, Datum arg4, Datum arg5,
+				  Datum arg6)
 {
 	FunctionCallInfoData fcinfo;
 	Datum		result;
@@ -1440,8 +1440,8 @@ FunctionCall6Coll(FmgrInfo *flinfo, Oid collation, Datum arg1, Datum arg2,
 
 Datum
 FunctionCall7Coll(FmgrInfo *flinfo, Oid collation, Datum arg1, Datum arg2,
-			  Datum arg3, Datum arg4, Datum arg5,
-			  Datum arg6, Datum arg7)
+				  Datum arg3, Datum arg4, Datum arg5,
+				  Datum arg6, Datum arg7)
 {
 	FunctionCallInfoData fcinfo;
 	Datum		result;
@@ -1474,8 +1474,8 @@ FunctionCall7Coll(FmgrInfo *flinfo, Oid collation, Datum arg1, Datum arg2,
 
 Datum
 FunctionCall8Coll(FmgrInfo *flinfo, Oid collation, Datum arg1, Datum arg2,
-			  Datum arg3, Datum arg4, Datum arg5,
-			  Datum arg6, Datum arg7, Datum arg8)
+				  Datum arg3, Datum arg4, Datum arg5,
+				  Datum arg6, Datum arg7, Datum arg8)
 {
 	FunctionCallInfoData fcinfo;
 	Datum		result;
@@ -1510,9 +1510,9 @@ FunctionCall8Coll(FmgrInfo *flinfo, Oid collation, Datum arg1, Datum arg2,
 
 Datum
 FunctionCall9Coll(FmgrInfo *flinfo, Oid collation, Datum arg1, Datum arg2,
-			  Datum arg3, Datum arg4, Datum arg5,
-			  Datum arg6, Datum arg7, Datum arg8,
-			  Datum arg9)
+				  Datum arg3, Datum arg4, Datum arg5,
+				  Datum arg6, Datum arg7, Datum arg8,
+				  Datum arg9)
 {
 	FunctionCallInfoData fcinfo;
 	Datum		result;
@@ -1625,7 +1625,7 @@ OidFunctionCall2Coll(Oid functionId, Oid collation, Datum arg1, Datum arg2)
 
 Datum
 OidFunctionCall3Coll(Oid functionId, Oid collation, Datum arg1, Datum arg2,
-				 Datum arg3)
+					 Datum arg3)
 {
 	FmgrInfo	flinfo;
 	FunctionCallInfoData fcinfo;
@@ -1653,7 +1653,7 @@ OidFunctionCall3Coll(Oid functionId, Oid collation, Datum arg1, Datum arg2,
 
 Datum
 OidFunctionCall4Coll(Oid functionId, Oid collation, Datum arg1, Datum arg2,
-				 Datum arg3, Datum arg4)
+					 Datum arg3, Datum arg4)
 {
 	FmgrInfo	flinfo;
 	FunctionCallInfoData fcinfo;
@@ -1683,7 +1683,7 @@ OidFunctionCall4Coll(Oid functionId, Oid collation, Datum arg1, Datum arg2,
 
 Datum
 OidFunctionCall5Coll(Oid functionId, Oid collation, Datum arg1, Datum arg2,
-				 Datum arg3, Datum arg4, Datum arg5)
+					 Datum arg3, Datum arg4, Datum arg5)
 {
 	FmgrInfo	flinfo;
 	FunctionCallInfoData fcinfo;
@@ -1715,8 +1715,8 @@ OidFunctionCall5Coll(Oid functionId, Oid collation, Datum arg1, Datum arg2,
 
 Datum
 OidFunctionCall6Coll(Oid functionId, Oid collation, Datum arg1, Datum arg2,
-				 Datum arg3, Datum arg4, Datum arg5,
-				 Datum arg6)
+					 Datum arg3, Datum arg4, Datum arg5,
+					 Datum arg6)
 {
 	FmgrInfo	flinfo;
 	FunctionCallInfoData fcinfo;
@@ -1750,8 +1750,8 @@ OidFunctionCall6Coll(Oid functionId, Oid collation, Datum arg1, Datum arg2,
 
 Datum
 OidFunctionCall7Coll(Oid functionId, Oid collation, Datum arg1, Datum arg2,
-				 Datum arg3, Datum arg4, Datum arg5,
-				 Datum arg6, Datum arg7)
+					 Datum arg3, Datum arg4, Datum arg5,
+					 Datum arg6, Datum arg7)
 {
 	FmgrInfo	flinfo;
 	FunctionCallInfoData fcinfo;
@@ -1787,8 +1787,8 @@ OidFunctionCall7Coll(Oid functionId, Oid collation, Datum arg1, Datum arg2,
 
 Datum
 OidFunctionCall8Coll(Oid functionId, Oid collation, Datum arg1, Datum arg2,
-				 Datum arg3, Datum arg4, Datum arg5,
-				 Datum arg6, Datum arg7, Datum arg8)
+					 Datum arg3, Datum arg4, Datum arg5,
+					 Datum arg6, Datum arg7, Datum arg8)
 {
 	FmgrInfo	flinfo;
 	FunctionCallInfoData fcinfo;
@@ -1826,9 +1826,9 @@ OidFunctionCall8Coll(Oid functionId, Oid collation, Datum arg1, Datum arg2,
 
 Datum
 OidFunctionCall9Coll(Oid functionId, Oid collation, Datum arg1, Datum arg2,
-				 Datum arg3, Datum arg4, Datum arg5,
-				 Datum arg6, Datum arg7, Datum arg8,
-				 Datum arg9)
+					 Datum arg3, Datum arg4, Datum arg5,
+					 Datum arg6, Datum arg7, Datum arg8,
+					 Datum arg9)
 {
 	FmgrInfo	flinfo;
 	FunctionCallInfoData fcinfo;

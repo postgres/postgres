@@ -113,11 +113,10 @@ main(int argc, char *argv[])
 	appendPQExpBuffer(&sql, "DROP DATABASE %s;\n",
 					  fmtId(dbname));
 
-    /*
-     * Connect to the 'postgres' database by default, except have
-     * the 'postgres' user use 'template1' so he can drop the
-     * 'postgres' database.
-     */
+	/*
+	 * Connect to the 'postgres' database by default, except have the
+	 * 'postgres' user use 'template1' so he can drop the 'postgres' database.
+	 */
 	conn = connectDatabase(strcmp(dbname, "postgres") == 0 ? "template1" : "postgres",
 						   host, port, username, prompt_password, progname);
 

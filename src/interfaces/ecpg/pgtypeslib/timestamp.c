@@ -503,7 +503,7 @@ dttofmtasc_replace(timestamp * ts, date dDate, int dow, struct tm * tm,
 				case 'G':
 					{
 						/* Keep compiler quiet - Don't use a literal format */
-						const char *fmt = "%G"; 
+						const char *fmt = "%G";
 
 						tm->tm_mon -= 1;
 						i = strftime(q, *pstr_len, fmt, tm);
@@ -689,7 +689,7 @@ dttofmtasc_replace(timestamp * ts, date dDate, int dow, struct tm * tm,
 				case 'V':
 					{
 						/* Keep compiler quiet - Don't use a literal format */
-						const char *fmt = "%V"; 
+						const char *fmt = "%V";
 
 						i = strftime(q, *pstr_len, fmt, tm);
 						if (i == 0)

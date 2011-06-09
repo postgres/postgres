@@ -236,8 +236,8 @@ SyncRepWaitForLSN(XLogRecPtr XactCommitLSN)
 
 		/*
 		 * If the postmaster dies, we'll probably never get an
-		 * acknowledgement, because all the wal sender processes will exit.
-		 * So just bail out.
+		 * acknowledgement, because all the wal sender processes will exit. So
+		 * just bail out.
 		 */
 		if (!PostmasterIsAlive(true))
 		{

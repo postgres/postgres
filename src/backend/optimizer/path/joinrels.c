@@ -953,7 +953,7 @@ is_dummy_rel(RelOptInfo *rel)
  * dummy.
  *
  * Also, when called during GEQO join planning, we are in a short-lived
- * memory context.  We must make sure that the dummy path attached to a
+ * memory context.	We must make sure that the dummy path attached to a
  * baserel survives the GEQO cycle, else the baserel is trashed for future
  * GEQO cycles.  On the other hand, when we are marking a joinrel during GEQO,
  * we don't want the dummy path to clutter the main planning context.  Upshot

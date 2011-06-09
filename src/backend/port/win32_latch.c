@@ -94,7 +94,7 @@ WaitLatchOrSocket(volatile Latch *latch, SOCKET sock, bool forRead,
 	DWORD		rc;
 	HANDLE		events[3];
 	HANDLE		latchevent;
-	HANDLE		sockevent = WSA_INVALID_EVENT; /* silence compiler */
+	HANDLE		sockevent = WSA_INVALID_EVENT;	/* silence compiler */
 	int			numevents;
 	int			result = 0;
 

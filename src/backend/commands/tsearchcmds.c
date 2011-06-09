@@ -96,6 +96,7 @@ get_ts_parser_func(DefElem *defel, int attnum)
 			break;
 		case Anum_pg_ts_parser_prslextype:
 			nargs = 1;
+
 			/*
 			 * Note: because the lextype method returns type internal, it must
 			 * have an internal-type argument for security reasons.  The

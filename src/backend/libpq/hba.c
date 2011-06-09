@@ -494,8 +494,8 @@ check_role(const char *role, Oid roleid, char *param_str)
 				return true;
 		}
 		else if (strcmp(tok, role) == 0 ||
-				 (strcmp(tok, "replication\n") == 0 && 
-				  strcmp(role,"replication") ==0) ||
+				 (strcmp(tok, "replication\n") == 0 &&
+				  strcmp(role, "replication") == 0) ||
 				 strcmp(tok, "all\n") == 0)
 			return true;
 	}

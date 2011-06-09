@@ -300,7 +300,7 @@ TParserInit(char *str, int len)
 	if (prs->charmaxlen > 1)
 	{
 		Oid			collation = DEFAULT_COLLATION_OID;	/* TODO */
-		pg_locale_t	mylocale = 0;	/* TODO */
+		pg_locale_t mylocale = 0;		/* TODO */
 
 		prs->usewide = true;
 		if (lc_ctype_is_c(collation))

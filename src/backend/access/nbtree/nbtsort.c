@@ -738,7 +738,7 @@ _bt_load(BTWriteState *wstate, BTSpool *btspool, BTSpool *btspool2)
 					{
 						compare =
 							DatumGetInt32(FunctionCall2Coll(&entry->sk_func,
-															entry->sk_collation,
+														 entry->sk_collation,
 															attrDatum1,
 															attrDatum2));
 

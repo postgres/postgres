@@ -564,9 +564,9 @@ strftime_win32(char *dst, size_t dstlen, const wchar_t *format, const struct tm 
 	dst[len] = '\0';
 	if (encoding != PG_UTF8)
 	{
-		char	   *convstr = 
-			(char *) pg_do_encoding_conversion((unsigned char *) dst, 
-											   len, PG_UTF8, encoding);
+		char	   *convstr =
+		(char *) pg_do_encoding_conversion((unsigned char *) dst,
+										   len, PG_UTF8, encoding);
 
 		if (dst != convstr)
 		{
@@ -1099,19 +1099,19 @@ wchar2char(char *to, const wchar_t *from, size_t tolen, pg_locale_t locale)
 #ifdef HAVE_WCSTOMBS_L
 		/* Use wcstombs_l for nondefault locales */
 		result = wcstombs_l(to, from, tolen, locale);
-#else /* !HAVE_WCSTOMBS_L */
+#else							/* !HAVE_WCSTOMBS_L */
 		/* We have to temporarily set the locale as current ... ugh */
 		locale_t	save_locale = uselocale(locale);
 
 		result = wcstombs(to, from, tolen);
 
 		uselocale(save_locale);
-#endif /* HAVE_WCSTOMBS_L */
-#else /* !HAVE_LOCALE_T */
+#endif   /* HAVE_WCSTOMBS_L */
+#else							/* !HAVE_LOCALE_T */
 		/* Can't have locale != 0 without HAVE_LOCALE_T */
 		elog(ERROR, "wcstombs_l is not available");
 		result = 0;				/* keep compiler quiet */
-#endif /* HAVE_LOCALE_T */
+#endif   /* HAVE_LOCALE_T */
 	}
 
 	return result;
@@ -1174,19 +1174,19 @@ char2wchar(wchar_t *to, size_t tolen, const char *from, size_t fromlen,
 #ifdef HAVE_WCSTOMBS_L
 			/* Use mbstowcs_l for nondefault locales */
 			result = mbstowcs_l(to, str, tolen, locale);
-#else /* !HAVE_WCSTOMBS_L */
+#else							/* !HAVE_WCSTOMBS_L */
 			/* We have to temporarily set the locale as current ... ugh */
 			locale_t	save_locale = uselocale(locale);
 
 			result = mbstowcs(to, str, tolen);
 
 			uselocale(save_locale);
-#endif /* HAVE_WCSTOMBS_L */
-#else /* !HAVE_LOCALE_T */
+#endif   /* HAVE_WCSTOMBS_L */
+#else							/* !HAVE_LOCALE_T */
 			/* Can't have locale != 0 without HAVE_LOCALE_T */
 			elog(ERROR, "mbstowcs_l is not available");
-			result = 0;				/* keep compiler quiet */
-#endif /* HAVE_LOCALE_T */
+			result = 0;			/* keep compiler quiet */
+#endif   /* HAVE_LOCALE_T */
 		}
 
 		pfree(str);
@@ -1213,4 +1213,4 @@ char2wchar(wchar_t *to, size_t tolen, const char *from, size_t fromlen,
 	return result;
 }
 
-#endif /* USE_WIDE_UPPER_LOWER */
+#endif   /* USE_WIDE_UPPER_LOWER */

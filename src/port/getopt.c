@@ -61,7 +61,7 @@ extern char *optarg;
 #define BADARG	(int)':'
 #define EMSG	""
 
-int getopt(int nargc, char *const * nargv, const char * ostr);
+int			getopt(int nargc, char *const * nargv, const char *ostr);
 
 /*
  * getopt
@@ -74,7 +74,7 @@ int getopt(int nargc, char *const * nargv, const char * ostr);
  * returning -1.)
  */
 int
-getopt(int nargc, char *const * nargv, const char * ostr)
+getopt(int nargc, char *const * nargv, const char *ostr)
 {
 	static char *place = EMSG;	/* option letter processing */
 	char	   *oli;			/* option letter list index */

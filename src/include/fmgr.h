@@ -433,70 +433,70 @@ extern int no_such_variable
  * are allowed to be NULL.
  */
 extern Datum DirectFunctionCall1Coll(PGFunction func, Oid collation,
-									 Datum arg1);
+						Datum arg1);
 extern Datum DirectFunctionCall2Coll(PGFunction func, Oid collation,
-									 Datum arg1, Datum arg2);
+						Datum arg1, Datum arg2);
 extern Datum DirectFunctionCall3Coll(PGFunction func, Oid collation,
-									 Datum arg1, Datum arg2,
-					Datum arg3);
+						Datum arg1, Datum arg2,
+						Datum arg3);
 extern Datum DirectFunctionCall4Coll(PGFunction func, Oid collation,
-									 Datum arg1, Datum arg2,
-					Datum arg3, Datum arg4);
+						Datum arg1, Datum arg2,
+						Datum arg3, Datum arg4);
 extern Datum DirectFunctionCall5Coll(PGFunction func, Oid collation,
-									 Datum arg1, Datum arg2,
-					Datum arg3, Datum arg4, Datum arg5);
+						Datum arg1, Datum arg2,
+						Datum arg3, Datum arg4, Datum arg5);
 extern Datum DirectFunctionCall6Coll(PGFunction func, Oid collation,
-									 Datum arg1, Datum arg2,
-					Datum arg3, Datum arg4, Datum arg5,
-					Datum arg6);
+						Datum arg1, Datum arg2,
+						Datum arg3, Datum arg4, Datum arg5,
+						Datum arg6);
 extern Datum DirectFunctionCall7Coll(PGFunction func, Oid collation,
-									 Datum arg1, Datum arg2,
-					Datum arg3, Datum arg4, Datum arg5,
-					Datum arg6, Datum arg7);
+						Datum arg1, Datum arg2,
+						Datum arg3, Datum arg4, Datum arg5,
+						Datum arg6, Datum arg7);
 extern Datum DirectFunctionCall8Coll(PGFunction func, Oid collation,
-									 Datum arg1, Datum arg2,
-					Datum arg3, Datum arg4, Datum arg5,
-					Datum arg6, Datum arg7, Datum arg8);
+						Datum arg1, Datum arg2,
+						Datum arg3, Datum arg4, Datum arg5,
+						Datum arg6, Datum arg7, Datum arg8);
 extern Datum DirectFunctionCall9Coll(PGFunction func, Oid collation,
-									 Datum arg1, Datum arg2,
-					Datum arg3, Datum arg4, Datum arg5,
-					Datum arg6, Datum arg7, Datum arg8,
-					Datum arg9);
+						Datum arg1, Datum arg2,
+						Datum arg3, Datum arg4, Datum arg5,
+						Datum arg6, Datum arg7, Datum arg8,
+						Datum arg9);
 
 /* These are for invocation of a previously-looked-up function with a
  * directly-computed parameter list.  Note that neither arguments nor result
  * are allowed to be NULL.
  */
 extern Datum FunctionCall1Coll(FmgrInfo *flinfo, Oid collation,
-							   Datum arg1);
+				  Datum arg1);
 extern Datum FunctionCall2Coll(FmgrInfo *flinfo, Oid collation,
-							   Datum arg1, Datum arg2);
+				  Datum arg1, Datum arg2);
 extern Datum FunctionCall3Coll(FmgrInfo *flinfo, Oid collation,
-							   Datum arg1, Datum arg2,
-			  Datum arg3);
+				  Datum arg1, Datum arg2,
+				  Datum arg3);
 extern Datum FunctionCall4Coll(FmgrInfo *flinfo, Oid collation,
-							   Datum arg1, Datum arg2,
-			  Datum arg3, Datum arg4);
+				  Datum arg1, Datum arg2,
+				  Datum arg3, Datum arg4);
 extern Datum FunctionCall5Coll(FmgrInfo *flinfo, Oid collation,
-							   Datum arg1, Datum arg2,
-			  Datum arg3, Datum arg4, Datum arg5);
+				  Datum arg1, Datum arg2,
+				  Datum arg3, Datum arg4, Datum arg5);
 extern Datum FunctionCall6Coll(FmgrInfo *flinfo, Oid collation,
-							   Datum arg1, Datum arg2,
-			  Datum arg3, Datum arg4, Datum arg5,
-			  Datum arg6);
+				  Datum arg1, Datum arg2,
+				  Datum arg3, Datum arg4, Datum arg5,
+				  Datum arg6);
 extern Datum FunctionCall7Coll(FmgrInfo *flinfo, Oid collation,
-							   Datum arg1, Datum arg2,
-			  Datum arg3, Datum arg4, Datum arg5,
-			  Datum arg6, Datum arg7);
+				  Datum arg1, Datum arg2,
+				  Datum arg3, Datum arg4, Datum arg5,
+				  Datum arg6, Datum arg7);
 extern Datum FunctionCall8Coll(FmgrInfo *flinfo, Oid collation,
-							   Datum arg1, Datum arg2,
-			  Datum arg3, Datum arg4, Datum arg5,
-			  Datum arg6, Datum arg7, Datum arg8);
+				  Datum arg1, Datum arg2,
+				  Datum arg3, Datum arg4, Datum arg5,
+				  Datum arg6, Datum arg7, Datum arg8);
 extern Datum FunctionCall9Coll(FmgrInfo *flinfo, Oid collation,
-							   Datum arg1, Datum arg2,
-			  Datum arg3, Datum arg4, Datum arg5,
-			  Datum arg6, Datum arg7, Datum arg8,
-			  Datum arg9);
+				  Datum arg1, Datum arg2,
+				  Datum arg3, Datum arg4, Datum arg5,
+				  Datum arg6, Datum arg7, Datum arg8,
+				  Datum arg9);
 
 /* These are for invocation of a function identified by OID with a
  * directly-computed parameter list.  Note that neither arguments nor result
@@ -506,35 +506,35 @@ extern Datum FunctionCall9Coll(FmgrInfo *flinfo, Oid collation,
  */
 extern Datum OidFunctionCall0Coll(Oid functionId, Oid collation);
 extern Datum OidFunctionCall1Coll(Oid functionId, Oid collation,
-								  Datum arg1);
+					 Datum arg1);
 extern Datum OidFunctionCall2Coll(Oid functionId, Oid collation,
-								  Datum arg1, Datum arg2);
+					 Datum arg1, Datum arg2);
 extern Datum OidFunctionCall3Coll(Oid functionId, Oid collation,
-								  Datum arg1, Datum arg2,
-				 Datum arg3);
+					 Datum arg1, Datum arg2,
+					 Datum arg3);
 extern Datum OidFunctionCall4Coll(Oid functionId, Oid collation,
-								  Datum arg1, Datum arg2,
-				 Datum arg3, Datum arg4);
+					 Datum arg1, Datum arg2,
+					 Datum arg3, Datum arg4);
 extern Datum OidFunctionCall5Coll(Oid functionId, Oid collation,
-								  Datum arg1, Datum arg2,
-				 Datum arg3, Datum arg4, Datum arg5);
+					 Datum arg1, Datum arg2,
+					 Datum arg3, Datum arg4, Datum arg5);
 extern Datum OidFunctionCall6Coll(Oid functionId, Oid collation,
-								  Datum arg1, Datum arg2,
-				 Datum arg3, Datum arg4, Datum arg5,
-				 Datum arg6);
+					 Datum arg1, Datum arg2,
+					 Datum arg3, Datum arg4, Datum arg5,
+					 Datum arg6);
 extern Datum OidFunctionCall7Coll(Oid functionId, Oid collation,
-								  Datum arg1, Datum arg2,
-				 Datum arg3, Datum arg4, Datum arg5,
-				 Datum arg6, Datum arg7);
+					 Datum arg1, Datum arg2,
+					 Datum arg3, Datum arg4, Datum arg5,
+					 Datum arg6, Datum arg7);
 extern Datum OidFunctionCall8Coll(Oid functionId, Oid collation,
-								  Datum arg1, Datum arg2,
-				 Datum arg3, Datum arg4, Datum arg5,
-				 Datum arg6, Datum arg7, Datum arg8);
+					 Datum arg1, Datum arg2,
+					 Datum arg3, Datum arg4, Datum arg5,
+					 Datum arg6, Datum arg7, Datum arg8);
 extern Datum OidFunctionCall9Coll(Oid functionId, Oid collation,
-								  Datum arg1, Datum arg2,
-				 Datum arg3, Datum arg4, Datum arg5,
-				 Datum arg6, Datum arg7, Datum arg8,
-				 Datum arg9);
+					 Datum arg1, Datum arg2,
+					 Datum arg3, Datum arg4, Datum arg5,
+					 Datum arg6, Datum arg7, Datum arg8,
+					 Datum arg9);
 
 /* These macros allow the collation argument to be omitted (with a default of
  * InvalidOid, ie, no collation).  They exist mostly for backwards

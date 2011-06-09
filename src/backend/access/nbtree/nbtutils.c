@@ -635,7 +635,7 @@ _bt_compare_scankey_args(IndexScanDesc scan, ScanKey op,
 			*result = DatumGetBool(OidFunctionCall2Coll(cmp_proc,
 														op->sk_collation,
 														leftarg->sk_argument,
-														rightarg->sk_argument));
+													 rightarg->sk_argument));
 			return true;
 		}
 	}

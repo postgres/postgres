@@ -373,7 +373,7 @@ pgwin32_recv(SOCKET s, char *buf, int len, int f)
  * The second argument to send() is defined by SUS to be a "const void *"
  * and so we use the same signature here to keep compilers happy when
  * handling callers.
- * 
+ *
  * But the buf member of a WSABUF struct is defined as "char *", so we cast
  * the second argument to that here when assigning it, also to keep compilers
  * happy.

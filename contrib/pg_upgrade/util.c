@@ -281,4 +281,3 @@ pg_putenv(const char *var, const char *val)
 #endif
 	}
 }
-

@@ -370,9 +370,9 @@ start_postmaster(void)
 	 * Since there might be quotes to handle here, it is easier simply to pass
 	 * everything to a shell to process them.
 	 *
-	 * XXX it would be better to fork and exec so that we would know the
-	 * child postmaster's PID directly; then test_postmaster_connection could
-	 * use the PID without having to rely on reading it back from the pidfile.
+	 * XXX it would be better to fork and exec so that we would know the child
+	 * postmaster's PID directly; then test_postmaster_connection could use
+	 * the PID without having to rely on reading it back from the pidfile.
 	 */
 	if (log_file != NULL)
 		snprintf(cmd, MAXPGPATH, SYSTEMQUOTE "\"%s\" %s%s < \"%s\" >> \"%s\" 2>&1 &" SYSTEMQUOTE,
@@ -479,7 +479,7 @@ test_postmaster_connection(bool do_checkpoint)
 					time_t		pmstart;
 
 					/*
-					 * Make sanity checks.  If it's for a standalone backend
+					 * Make sanity checks.	If it's for a standalone backend
 					 * (negative PID), or the recorded start time is before
 					 * pg_ctl started, then either we are looking at the wrong
 					 * data directory, or this is a pre-existing pidfile that
@@ -492,8 +492,8 @@ test_postmaster_connection(bool do_checkpoint)
 					if (pmpid <= 0 || pmstart < start_time - 2)
 					{
 						/*
-						 * Set flag to report stale pidfile if it doesn't
-						 * get overwritten before we give up waiting.
+						 * Set flag to report stale pidfile if it doesn't get
+						 * overwritten before we give up waiting.
 						 */
 						found_stale_pidfile = true;
 					}
@@ -552,7 +552,7 @@ test_postmaster_connection(bool do_checkpoint)
 						 * timeout first.
 						 */
 						snprintf(connstr, sizeof(connstr),
-								 "dbname=postgres port=%d host='%s' connect_timeout=5",
+						"dbname=postgres port=%d host='%s' connect_timeout=5",
 								 portnum, host_str);
 					}
 				}
@@ -570,11 +570,11 @@ test_postmaster_connection(bool do_checkpoint)
 		/*
 		 * The postmaster should create postmaster.pid very soon after being
 		 * started.  If it's not there after we've waited 5 or more seconds,
-		 * assume startup failed and give up waiting.  (Note this covers
-		 * both cases where the pidfile was never created, and where it was
-		 * created and then removed during postmaster exit.)  Also, if there
-		 * *is* a file there but it appears stale, issue a suitable warning
-		 * and give up waiting.
+		 * assume startup failed and give up waiting.  (Note this covers both
+		 * cases where the pidfile was never created, and where it was created
+		 * and then removed during postmaster exit.)  Also, if there *is* a
+		 * file there but it appears stale, issue a suitable warning and give
+		 * up waiting.
 		 */
 		if (i >= 5)
 		{
@@ -593,7 +593,7 @@ test_postmaster_connection(bool do_checkpoint)
 
 		/*
 		 * If we've been able to identify the child postmaster's PID, check
-		 * the process is still alive.  This covers cases where the postmaster
+		 * the process is still alive.	This covers cases where the postmaster
 		 * successfully created the pidfile but then crashed without removing
 		 * it.
 		 */

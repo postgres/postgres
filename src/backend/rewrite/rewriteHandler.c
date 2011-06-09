@@ -455,17 +455,17 @@ rewriteRuleAction(Query *parsetree,
 	}
 
 	/*
-	 * If the original query has any CTEs, copy them into the rule action.
-	 * But we don't need them for a utility action.
+	 * If the original query has any CTEs, copy them into the rule action. But
+	 * we don't need them for a utility action.
 	 */
 	if (parsetree->cteList != NIL && sub_action->commandType != CMD_UTILITY)
 	{
 		ListCell   *lc;
 
 		/*
-		 * Annoying implementation restriction: because CTEs are identified
-		 * by name within a cteList, we can't merge a CTE from the original
-		 * query if it has the same name as any CTE in the rule action.
+		 * Annoying implementation restriction: because CTEs are identified by
+		 * name within a cteList, we can't merge a CTE from the original query
+		 * if it has the same name as any CTE in the rule action.
 		 *
 		 * This could possibly be fixed by using some sort of internally
 		 * generated ID, instead of names, to link CTE RTEs to their CTEs.
@@ -2116,15 +2116,15 @@ RewriteQuery(Query *parsetree, List *rewrite_events)
 
 	/*
 	 * If the original query has a CTE list, and we generated more than one
-	 * non-utility result query, we have to fail because we'll have copied
-	 * the CTE list into each result query.  That would break the expectation
-	 * of single evaluation of CTEs.  This could possibly be fixed by
+	 * non-utility result query, we have to fail because we'll have copied the
+	 * CTE list into each result query.  That would break the expectation of
+	 * single evaluation of CTEs.  This could possibly be fixed by
 	 * restructuring so that a CTE list can be shared across multiple Query
 	 * and PlannableStatement nodes.
 	 */
 	if (parsetree->cteList != NIL)
 	{
-		int		qcount = 0;
+		int			qcount = 0;
 
 		foreach(lc1, rewritten)
 		{

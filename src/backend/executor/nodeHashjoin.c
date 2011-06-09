@@ -265,8 +265,8 @@ ExecHashJoin(HashJoinState *node)
 
 				/*
 				 * We check for interrupts here because this corresponds to
-				 * where we'd fetch a row from a child plan node in other
-				 * join types.
+				 * where we'd fetch a row from a child plan node in other join
+				 * types.
 				 */
 				CHECK_FOR_INTERRUPTS();
 

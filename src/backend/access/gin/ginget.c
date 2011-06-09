@@ -56,15 +56,15 @@ callConsistentFn(GinState *ginstate, GinScanKey key)
 	key->recheckCurItem = true;
 
 	return DatumGetBool(FunctionCall8Coll(&ginstate->consistentFn[key->attnum - 1],
-										  ginstate->supportCollation[key->attnum - 1],
+								 ginstate->supportCollation[key->attnum - 1],
 										  PointerGetDatum(key->entryRes),
 										  UInt16GetDatum(key->strategy),
 										  key->query,
 										  UInt32GetDatum(key->nuserentries),
 										  PointerGetDatum(key->extra_data),
-										  PointerGetDatum(&key->recheckCurItem),
+									   PointerGetDatum(&key->recheckCurItem),
 										  PointerGetDatum(key->queryValues),
-										  PointerGetDatum(key->queryCategories)));
+									 PointerGetDatum(key->queryCategories)));
 }
 
 /*
@@ -252,7 +252,7 @@ collectMatchBitmap(GinBtreeData *btree, GinBtreeStack *stack,
 			 *----------
 			 */
 			cmp = DatumGetInt32(FunctionCall4Coll(&btree->ginstate->comparePartialFn[attnum - 1],
-												  btree->ginstate->supportCollation[attnum - 1],
+							   btree->ginstate->supportCollation[attnum - 1],
 												  scanEntry->queryKey,
 												  idatum,
 										 UInt16GetDatum(scanEntry->strategy),
@@ -1178,10 +1178,10 @@ matchPartialInPendingList(GinState *ginstate, Page page,
 		 *----------
 		 */
 		cmp = DatumGetInt32(FunctionCall4Coll(&ginstate->comparePartialFn[entry->attnum - 1],
-											  ginstate->supportCollation[entry->attnum - 1],
+							   ginstate->supportCollation[entry->attnum - 1],
 											  entry->queryKey,
 											  datum[off - 1],
-										  UInt16GetDatum(entry->strategy),
+											  UInt16GetDatum(entry->strategy),
 										PointerGetDatum(entry->extra_data)));
 		if (cmp == 0)
 			return true;

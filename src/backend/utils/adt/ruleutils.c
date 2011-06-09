@@ -5193,8 +5193,8 @@ get_rule_expr(Node *node, deparse_context *context,
 					if (caseexpr->arg)
 					{
 						/*
-						 * The parser should have produced WHEN clauses of
-						 * the form "CaseTestExpr = RHS", possibly with an
+						 * The parser should have produced WHEN clauses of the
+						 * form "CaseTestExpr = RHS", possibly with an
 						 * implicit coercion inserted above the CaseTestExpr.
 						 * For accurate decompilation of rules it's essential
 						 * that we show just the RHS.  However in an
