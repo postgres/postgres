@@ -1233,7 +1233,7 @@ pgwin32_ServiceMain(DWORD argc, LPTSTR * argv)
 		write_eventlog(EVENTLOG_INFORMATION_TYPE, _("Waiting for server startup...\n"));
 		if (test_postmaster_connection(true) == false)
 		{
-			write_eventlog(EVENTLOG_INFORMATION_TYPE, _("Timed out waiting for server startup\n"));
+			write_eventlog(EVENTLOG_ERROR_TYPE, _("Timed out waiting for server startup\n"));
 			pgwin32_SetServiceStatus(SERVICE_STOPPED);
 			return;
 		}
