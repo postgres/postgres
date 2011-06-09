@@ -1834,7 +1834,10 @@ BufferGetTag(Buffer buffer, RelFileNode *rnode, ForkNumber *forknum,
  * written.)
  *
  * If the caller has an smgr reference for the buffer's relation, pass it
- * as the second parameter.  If not, pass NULL.
+ * as the second parameter.  If not, pass NULL.  In the latter case, the
+ * relation will be marked as "transient" so that the corresponding
+ * kernel-level file descriptors are closed when the current transaction ends,
+ * if any.
  */
 static void
 FlushBuffer(volatile BufferDesc *buf, SMgrRelation reln)
@@ -1856,9 +1859,12 @@ FlushBuffer(volatile BufferDesc *buf, SMgrRelation reln)
 	errcontext.previous = error_context_stack;
 	error_context_stack = &errcontext;
 
-	/* Find smgr relation for buffer */
+	/* Find smgr relation for buffer, and mark it as transient */
 	if (reln == NULL)
+	{
 		reln = smgropen(buf->tag.rnode, InvalidBackendId);
+		smgrsettransient(reln);
+	}
 
 	TRACE_POSTGRESQL_BUFFER_FLUSH_START(buf->tag.forkNum,
 										buf->tag.blockNum,
