@@ -9281,7 +9281,7 @@ risnull(CINTTYPE, (char *) &i);
       <listitem>
        <para>
         Functions return this value if an overflow occurred in a
-        calculation. Internally it is defined to -1200 (the <productname>Informix</productname>
+        calculation. Internally it is defined as -1200 (the <productname>Informix</productname>
         definition).
        </para>
       </listitem>
@@ -9292,7 +9292,7 @@ risnull(CINTTYPE, (char *) &i);
       <listitem>
        <para>
         Functions return this value if an underflow occurred in a calculation.
-        Internally it is defined to -1201 (the <productname>Informix</productname> definition).
+        Internally it is defined as -1201 (the <productname>Informix</productname> definition).
        </para>
       </listitem>
      </varlistentry>
@@ -9302,7 +9302,7 @@ risnull(CINTTYPE, (char *) &i);
       <listitem>
        <para>
         Functions return this value if an attempt to divide by zero is
-        observed. Internally it is defined to -1202 (the <productname>Informix</productname> definition).
+        observed. Internally it is defined as -1202 (the <productname>Informix</productname> definition).
        </para>
       </listitem>
      </varlistentry>
@@ -9312,7 +9312,7 @@ risnull(CINTTYPE, (char *) &i);
       <listitem>
        <para>
         Functions return this value if a bad value for a year was found while
-        parsing a date. Internally it is defined to -1204 (the <productname>Informix</productname>
+        parsing a date. Internally it is defined as -1204 (the <productname>Informix</productname>
         definition).
        </para>
       </listitem>
@@ -9323,7 +9323,7 @@ risnull(CINTTYPE, (char *) &i);
       <listitem>
        <para>
         Functions return this value if a bad value for a month was found while
-        parsing a date. Internally it is defined to -1205 (the <productname>Informix</productname>
+        parsing a date. Internally it is defined as -1205 (the <productname>Informix</productname>
         definition).
        </para>
       </listitem>
@@ -9334,7 +9334,7 @@ risnull(CINTTYPE, (char *) &i);
       <listitem>
        <para>
         Functions return this value if a bad value for a day was found while
-        parsing a date. Internally it is defined to -1206 (the <productname>Informix</productname>
+        parsing a date. Internally it is defined as -1206 (the <productname>Informix</productname>
         definition).
        </para>
       </listitem>
@@ -9346,7 +9346,7 @@ risnull(CINTTYPE, (char *) &i);
        <para>
         Functions return this value if a parsing routine needs a short date
         representation but did not get the date string in the right length.
-        Internally it is defined to -1209 (the <productname>Informix</productname> definition).
+        Internally it is defined as -1209 (the <productname>Informix</productname> definition).
        </para>
       </listitem>
      </varlistentry>
@@ -9356,7 +9356,7 @@ risnull(CINTTYPE, (char *) &i);
       <listitem>
        <para>
         Functions return this value if an error occurred during date
-        formatting.  Internally it is defined to -1210 (the
+        formatting.  Internally it is defined as -1210 (the
         <productname>Informix</productname> definition).
        </para>
       </listitem>
@@ -9367,7 +9367,7 @@ risnull(CINTTYPE, (char *) &i);
       <listitem>
        <para>
         Functions return this value if memory was exhausted during
-        their operation.  Internally it is defined to -1211 (the
+        their operation.  Internally it is defined as -1211 (the
         <productname>Informix</productname> definition).
        </para>
       </listitem>
@@ -9379,7 +9379,7 @@ risnull(CINTTYPE, (char *) &i);
        <para>
         Functions return this value if a parsing routine was supposed to get a
         format mask (like <literal>mmddyy</>) but not all fields were listed
-        correctly. Internally it is defined to -1212 (the <productname>Informix</productname> definition).
+        correctly. Internally it is defined as -1212 (the <productname>Informix</productname> definition).
        </para>
       </listitem>
      </varlistentry>
@@ -9392,7 +9392,7 @@ risnull(CINTTYPE, (char *) &i);
         the textual representation for a numeric value because it contains
         errors or if a routine cannot complete a calculation involving numeric
         variables because at least one of the numeric variables is invalid.
-        Internally it is defined to -1213 (the <productname>Informix</productname> definition).
+        Internally it is defined as -1213 (the <productname>Informix</productname> definition).
        </para>
       </listitem>
      </varlistentry>
@@ -9401,7 +9401,8 @@ risnull(CINTTYPE, (char *) &i);
       <term><literal>ECPG_INFORMIX_BAD_EXPONENT</></term>
       <listitem>
        <para>
-        Functions return this value if Internally it is defined to -1216 (the
+        Functions return this value if a parsing routine cannot parse
+        an exponent.  Internally it is defined as -1216 (the
         <productname>Informix</productname> definition).
        </para>
       </listitem>
@@ -9411,7 +9412,8 @@ risnull(CINTTYPE, (char *) &i);
       <term><literal>ECPG_INFORMIX_BAD_DATE</></term>
       <listitem>
        <para>
-        Functions return this value if Internally it is defined to -1218 (the
+        Functions return this value if a parsing routine cannot parse
+        a date.  Internally it is defined as -1218 (the
         <productname>Informix</productname> definition).
        </para>
       </listitem>
@@ -9421,7 +9423,8 @@ risnull(CINTTYPE, (char *) &i);
       <term><literal>ECPG_INFORMIX_EXTRA_CHARS</></term>
       <listitem>
        <para>
-        Functions return this value if Internally it is defined to -1264 (the
+        Functions return this value if a parsing routine is passed extra
+        characters is cannot parse.  Internally it is defined as -1264 (the
         <productname>Informix</productname> definition).
        </para>
       </listitem>
