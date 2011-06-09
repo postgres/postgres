@@ -33,7 +33,7 @@ AfterTriggerSharedData
 AfterTriggers
 AfterTriggersData
 Agg
-AggClauseCounts
+AggClauseCosts
 AggHashEntry
 AggInfo
 AggState
@@ -1006,6 +1006,7 @@ PGSetenvStatusType
 PGShmemHeader
 PGTransactionStatusType
 PGVerbosity
+PG_Locale_Strategy
 PG_Lock_Status
 PG_init_t
 PGcancel
@@ -1157,7 +1158,6 @@ PendingOperationTag
 PendingRelDelete
 PendingUnlinkEntry
 PerlInterpreter
-Perl_ppaddr_t
 PgBackendStatus
 PgIfAddrCallback
 PgStat_BackendFunctionEntry
@@ -1238,7 +1238,6 @@ PrintfTarget
 PrinttupAttrInfo
 PrivGrantee
 PrivTarget
-PrivateMMAggInfo
 ProcArrayStruct
 ProcLangInfo
 ProcSignalReason
@@ -1295,7 +1294,6 @@ RI_QueryHashEntry
 RI_QueryKey
 RSA
 RTEKind
-RUHashEntry
 RWConflict
 RWConflictPoolHeader
 RangeFunction
@@ -1817,6 +1815,7 @@ core_YYSTYPE
 core_yy_extra_type
 core_yyscan_t
 cost_qual_eval_context
+count_agg_clauses_context
 createdb_failure_params
 crosstab_HashEnt
 crosstab_cat_desc
@@ -1855,6 +1854,7 @@ freeaddrinfo_ptr_t
 freefunc
 fsec_t
 func_ptr
+gbt_vsrt_arg
 gbtree_ninfo
 gbtree_vinfo
 generate_series_fctx
@@ -2054,6 +2054,7 @@ rb_comparator
 rb_freefunc
 reduce_outer_joins_state
 regex_t
+regexp
 regexp_matches_ctx
 regmatch_t
 regoff_t
