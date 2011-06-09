@@ -91,6 +91,7 @@ PostgreSQL documentation
    <arg>-D <replaceable>datadir</replaceable></arg>
    <arg>-w</arg>
    <arg>-t <replaceable>seconds</replaceable></arg>
+   <arg>-s</arg>
    <arg>-o <replaceable>options</replaceable></arg>
    <sbr>
 
