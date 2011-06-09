@@ -729,7 +729,7 @@ OldSerXidInit(void)
 /*
  * Record a committed read write serializable xid and the minimum
  * commitSeqNo of any transactions to which this xid had a rw-conflict out.
- * A zero seqNo means that there were no conflicts out from xid.
+ * An invalid seqNo means that there were no conflicts out from xid.
  */
 static void
 OldSerXidAdd(TransactionId xid, SerCommitSeqNo minConflictCommitSeqNo)
@@ -807,6 +807,7 @@ OldSerXidAdd(TransactionId xid, SerCommitSeqNo minConflictCommitSeqNo)
 		slotno = SimpleLruReadPage(OldSerXidSlruCtl, targetPage, true, xid);
 
 	OldSerXidValue(slotno, xid) = minConflictCommitSeqNo;
+	OldSerXidSlruCtl->shared->page_dirty[slotno] = true;
 
 	LWLockRelease(OldSerXidLock);
 }
