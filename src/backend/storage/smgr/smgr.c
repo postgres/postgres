@@ -165,14 +165,31 @@ smgropen(RelFileNode rnode, BackendId backend)
 		reln->smgr_targblock = InvalidBlockNumber;
 		reln->smgr_fsm_nblocks = InvalidBlockNumber;
 		reln->smgr_vm_nblocks = InvalidBlockNumber;
+		reln->smgr_transient = false;
 		reln->smgr_which = 0;	/* we only have md.c at present */
 
 		/* mark it not open */
 		for (forknum = 0; forknum <= MAX_FORKNUM; forknum++)
 			reln->md_fd[forknum] = NULL;
 	}
+	else
+		/* if it was transient before, it no longer is */
+		reln->smgr_transient = false;
 
 	return reln;
+}
+
+/*
+ * smgrsettransient() -- mark an SMgrRelation object as transaction-bound
+ *
+ * The main effect of this is that all opened files are marked to be
+ * kernel-level closed (but not necessarily VFD-closed) when the current
+ * transaction ends.
+ */
+void
+smgrsettransient(SMgrRelation reln)
+{
+	reln->smgr_transient = true;
 }
 
 /*
