@@ -28,6 +28,7 @@ This can format all PostgreSQL *.c and *.h files, but excludes *.y, and
 6) Do a full test build:
 
 	run configure
+	pg_ctl stop
 	gmake -C src install
 	gmake -C contrib install
 	gmake installcheck-world
