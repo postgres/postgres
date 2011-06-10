@@ -134,7 +134,8 @@ typedef struct PredXactListData
 	/*
 	 * These global variables are maintained when registering and cleaning up
 	 * serializable transactions.  They must be global across all backends,
-	 * but are not needed outside the predicate.c source file.
+	 * but are not needed outside the predicate.c source file. Protected
+	 * by SerializableXactHashLock.
 	 */
 	TransactionId SxactGlobalXmin;		/* global xmin for active serializable
 										 * transactions */

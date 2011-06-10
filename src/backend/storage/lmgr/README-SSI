@@ -389,7 +389,7 @@ locks.
 
     * Because PostgreSQL does not have the same concept of an "oldest
 transaction ID" for all serializable transactions as assumed in the
-Cahill these, we track the oldest snapshot xmin among serializable
+Cahill thesis, we track the oldest snapshot xmin among serializable
 transactions, and a count of how many active transactions use that
 xmin. When the count hits zero we find the new oldest xmin and run a
 clean-up based on that.

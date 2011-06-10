@@ -703,8 +703,8 @@ OldSerXidInit(void)
 	 * Set up SLRU management of the pg_serial data.
 	 */
 	OldSerXidSlruCtl->PagePrecedes = OldSerXidPagePrecedesLogically;
-	SimpleLruInit(OldSerXidSlruCtl, "OldSerXid SLRU Ctl", NUM_OLDSERXID_BUFFERS, 0,
-				  OldSerXidLock, "pg_serial");
+	SimpleLruInit(OldSerXidSlruCtl, "OldSerXid SLRU Ctl",
+				  NUM_OLDSERXID_BUFFERS, 0, OldSerXidLock, "pg_serial");
 	/* Override default assumption that writes should be fsync'd */
 	OldSerXidSlruCtl->do_fsync = false;
 
@@ -2954,7 +2954,8 @@ PredicateLockPageCombine(const Relation relation, const BlockNumber oldblkno,
 }
 
 /*
- * Walk the hash table and find the new xmin.
+ * Walk the list of in-progress serializable transactions and find the new
+ * xmin.
  */
 static void
 SetNewSxactGlobalXmin(void)
@@ -3126,6 +3127,10 @@ ReleasePredicateLocks(const bool isCommit)
 		&& !SxactIsReadOnly(MySerializableXact)
 		&& SxactHasSummaryConflictOut(MySerializableXact))
 	{
+		/*
+		 * we don't know which old committed transaction we conflicted with,
+		 * so be conservative and use FirstNormalSerCommitSeqNo here
+		 */
 		MySerializableXact->SeqNo.earliestOutConflictCommit =
 			FirstNormalSerCommitSeqNo;
 		MySerializableXact->flags |= SXACT_FLAG_CONFLICT_OUT;
@@ -3320,7 +3325,8 @@ ReleasePredicateLocksIfROSafe(void)
 }
 
 /*
- * Clear old predicate locks.
+ * Clear old predicate locks, belonging to committed transactions that are no
+ * longer interesting to any in-progress transaction.
  */
 static void
 ClearOldPredicateLocks(void)
@@ -3328,6 +3334,10 @@ ClearOldPredicateLocks(void)
 	SERIALIZABLEXACT *finishedSxact;
 	PREDICATELOCK *predlock;
 
+	/*
+	 * Loop through finished transactions. They are in commit order, so we can
+	 * stop as soon as we find one that's still interesting.
+	 */
 	LWLockAcquire(SerializableFinishedListLock, LW_EXCLUSIVE);
 	finishedSxact = (SERIALIZABLEXACT *)
 		SHMQueueNext(FinishedSerializableTransactions,
@@ -3346,6 +3356,10 @@ ClearOldPredicateLocks(void)
 			|| TransactionIdPrecedesOrEquals(finishedSxact->finishedBefore,
 											 PredXact->SxactGlobalXmin))
 		{
+			/*
+			 * This transaction committed before any in-progress transaction
+			 * took its snapshot. It's no longer interesting.
+			 */
 			LWLockRelease(SerializableXactHashLock);
 			SHMQueueDelete(&(finishedSxact->finishedLink));
 			ReleaseOneSerializableXact(finishedSxact, false, false);
@@ -3362,7 +3376,10 @@ ClearOldPredicateLocks(void)
 			LWLockAcquire(SerializableXactHashLock, LW_SHARED);
 		}
 		else
+		{
+			/* Still interesting. */
 			break;
+		}
 		finishedSxact = nextSxact;
 	}
 	LWLockRelease(SerializableXactHashLock);
@@ -3391,17 +3408,19 @@ ClearOldPredicateLocks(void)
 		canDoPartialCleanup = (predlock->commitSeqNo <= PredXact->CanPartialClearThrough);
 		LWLockRelease(SerializableXactHashLock);
 
+		/*
+		 * If this lock originally belonged to an old enough transaction, we
+		 * can release it.
+		 */
 		if (canDoPartialCleanup)
 		{
 			PREDICATELOCKTAG tag;
-			SHM_QUEUE  *targetLink;
 			PREDICATELOCKTARGET *target;
 			PREDICATELOCKTARGETTAG targettag;
 			uint32		targettaghash;
 			LWLockId	partitionLock;
 
 			tag = predlock->tag;
-			targetLink = &(predlock->targetLink);
 			target = tag.myTarget;
 			targettag = target->tag;
 			targettaghash = PredicateLockTargetTagHashCode(&targettag);
@@ -3409,7 +3428,7 @@ ClearOldPredicateLocks(void)
 
 			LWLockAcquire(partitionLock, LW_EXCLUSIVE);
 
-			SHMQueueDelete(targetLink);
+			SHMQueueDelete(&(predlock->targetLink));
 			SHMQueueDelete(&(predlock->xactLink));
 
 			hash_search_with_hash_value(PredicateLockHash, &tag,
@@ -3437,9 +3456,9 @@ ClearOldPredicateLocks(void)
  * delete the transaction.
  *
  * When the partial flag is set, we can release all predicate locks and
- * out-conflict information -- we've established that there are no longer
+ * in-conflict information -- we've established that there are no longer
  * any overlapping read write transactions for which this transaction could
- * matter.
+ * matter -- but keep the transaction entry itself and any outConflicts.
  *
  * When the summarize flag is set, we've run short of room for sxact data
  * and must summarize to the SLRU.	Predicate locks are transferred to a
@@ -3460,6 +3479,10 @@ ReleaseOneSerializableXact(SERIALIZABLEXACT *sxact, bool partial,
 	Assert(SxactIsRolledBack(sxact) || SxactIsCommitted(sxact));
 	Assert(LWLockHeldByMe(SerializableFinishedListLock));
 
+	/*
+	 * First release all the predicate locks held by this xact (or transfer
+	 * them to OldCommittedSxact if summarize is true)
+	 */
 	LWLockAcquire(SerializablePredicateLockListLock, LW_SHARED);
 	predlock = (PREDICATELOCK *)
 		SHMQueueNext(&(sxact->predicateLocks),
@@ -3545,9 +3568,9 @@ ReleaseOneSerializableXact(SERIALIZABLEXACT *sxact, bool partial,
 	sxidtag.xid = sxact->topXid;
 	LWLockAcquire(SerializableXactHashLock, LW_EXCLUSIVE);
 
+	/* Release all outConflicts (unless 'partial' is true) */
 	if (!partial)
 	{
-		/* Release all outConflicts. */
 		conflict = (RWConflict)
 			SHMQueueNext(&sxact->outConflicts,
 						 &sxact->outConflicts,
@@ -3582,9 +3605,9 @@ ReleaseOneSerializableXact(SERIALIZABLEXACT *sxact, bool partial,
 		conflict = nextConflict;
 	}
 
+	/* Finally, get rid of the xid and the record of the transaction itself. */
 	if (!partial)
 	{
-		/* Get rid of the xid and the record of the transaction itself. */
 		if (sxidtag.xid != InvalidTransactionId)
 			hash_search(SerializableXidHash, &sxidtag, HASH_REMOVE, NULL);
 		ReleasePredXact(sxact);
@@ -3844,7 +3867,8 @@ CheckForSerializableConflictOut(const bool visible, const Relation relation,
 }
 
 /*
- * Check a particular target for rw-dependency conflict in.
+ * Check a particular target for rw-dependency conflict in. A subroutine of
+ * CheckForSerializableConflictIn().
  */
 static void
 CheckTargetForConflictsIn(PREDICATELOCKTARGETTAG *targettag)
