@@ -3433,12 +3433,12 @@ ReadRecord(XLogRecPtr *RecPtr, int emode)
 			goto got_record;
 		}
 		/* align old recptr to next page */
-		if (tmpRecPtr.xrecoff % XLOG_BLCKSZ != 0)
-			tmpRecPtr.xrecoff += (XLOG_BLCKSZ - tmpRecPtr.xrecoff % XLOG_BLCKSZ);
-		if (tmpRecPtr.xrecoff >= XLogFileSize)
+		if (RecPtr->xrecoff % XLOG_BLCKSZ != 0)
+			RecPtr->xrecoff += (XLOG_BLCKSZ - RecPtr->xrecoff % XLOG_BLCKSZ);
+		if (RecPtr->xrecoff >= XLogFileSize)
 		{
-			(tmpRecPtr.xlogid)++;
-			tmpRecPtr.xrecoff = 0;
+			(RecPtr->xlogid)++;
+			RecPtr->xrecoff = 0;
 		}
 		/* We will account for page header size below */
 	}
@@ -3524,11 +3524,13 @@ ReadRecord(XLogRecPtr *RecPtr, int emode)
 	if (targetRecOff == 0)
 	{
 		/*
-		 * Can only get here in the continuing-from-prev-page case, because
-		 * XRecOffIsValid eliminated the zero-page-offset case otherwise. Need
-		 * to skip over the new page's header.
+		 * At page start, so skip over page header.  The Assert checks that
+		 * we're not scribbling on caller's record pointer; it's OK because we
+		 * can only get here in the continuing-from-prev-record case, since
+		 * XRecOffIsValid rejected the zero-page-offset case otherwise.
 		 */
-		tmpRecPtr.xrecoff += pageHeaderSize;
+		Assert(RecPtr == &tmpRecPtr);
+		RecPtr->xrecoff += pageHeaderSize;
 		targetRecOff = pageHeaderSize;
 	}
 	else if (targetRecOff < pageHeaderSize)
