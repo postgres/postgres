@@ -3728,23 +3728,32 @@ ReadRecord(XLogRecPtr *RecPtr, int emode, bool fetching_ckpt)
 		RecPtr = &tmpRecPtr;
 
 		/*
-		 * Align recptr to next page if no more records can fit on the current
-		 * page.
+		 * RecPtr is pointing to end+1 of the previous WAL record.  We must
+		 * advance it if necessary to where the next record starts.  First,
+		 * align to next page if no more records can fit on the current page.
 		 */
 		if (XLOG_BLCKSZ - (RecPtr->xrecoff % XLOG_BLCKSZ) < SizeOfXLogRecord)
+			NextLogPage(*RecPtr);
+
+		/* Check for crossing of xlog segment boundary */
+		if (RecPtr->xrecoff >= XLogFileSize)
 		{
-			NextLogPage(tmpRecPtr);
-			/* We will account for page header size below */
+			(RecPtr->xlogid)++;
+			RecPtr->xrecoff = 0;
 		}
 
-		if (tmpRecPtr.xrecoff >= XLogFileSize)
-		{
-			(tmpRecPtr.xlogid)++;
-			tmpRecPtr.xrecoff = 0;
-		}
+		/*
+		 * If at page start, we must skip over the page header.  But we can't
+		 * do that until we've read in the page, since the header size is
+		 * variable.
+		 */
 	}
 	else
 	{
+		/*
+		 * In this case, the passed-in record pointer should already be
+		 * pointing to a valid record starting position.
+		 */
 		if (!XRecOffIsValid(RecPtr->xrecoff))
 			ereport(PANIC,
 					(errmsg("invalid record offset at %X/%X",
@@ -3773,11 +3782,13 @@ retry:
 	if (targetRecOff == 0)
 	{
 		/*
-		 * Can only get here in the continuing-from-prev-page case, because
-		 * XRecOffIsValid eliminated the zero-page-offset case otherwise. Need
-		 * to skip over the new page's header.
+		 * At page start, so skip over page header.  The Assert checks that
+		 * we're not scribbling on caller's record pointer; it's OK because we
+		 * can only get here in the continuing-from-prev-record case, since
+		 * XRecOffIsValid rejected the zero-page-offset case otherwise.
 		 */
-		tmpRecPtr.xrecoff += pageHeaderSize;
+		Assert(RecPtr == &tmpRecPtr);
+		RecPtr->xrecoff += pageHeaderSize;
 		targetRecOff = pageHeaderSize;
 	}
 	else if (targetRecOff < pageHeaderSize)

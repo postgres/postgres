@@ -154,13 +154,13 @@ typedef XLogLongPageHeaderData *XLogLongPageHeader;
 /* Align a record pointer to next page */
 #define NextLogPage(recptr) \
 	do {	\
-		if (recptr.xrecoff % XLOG_BLCKSZ != 0)	\
-			recptr.xrecoff +=	\
-				(XLOG_BLCKSZ - recptr.xrecoff % XLOG_BLCKSZ);	\
-		if (recptr.xrecoff >= XLogFileSize) \
+		if ((recptr).xrecoff % XLOG_BLCKSZ != 0)	\
+			(recptr).xrecoff +=	\
+				(XLOG_BLCKSZ - (recptr).xrecoff % XLOG_BLCKSZ);	\
+		if ((recptr).xrecoff >= XLogFileSize) \
 		{	\
-			(recptr.xlogid)++;	\
-			recptr.xrecoff = 0; \
+			((recptr).xlogid)++;	\
+			(recptr).xrecoff = 0; \
 		}	\
 	} while (0)
 
