@@ -562,7 +562,7 @@ _dump_lru(void)
 		snprintf(buf + strlen(buf), sizeof(buf) - strlen(buf), "%d ", mru);
 	}
 	snprintf(buf + strlen(buf), sizeof(buf) - strlen(buf), "LEAST");
-	elog(LOG, buf);
+	elog(LOG, "%s", buf);
 }
 #endif   /* FDDEBUG */
 
