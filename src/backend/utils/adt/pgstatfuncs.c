@@ -509,6 +509,7 @@ pg_stat_get_activity(PG_FUNCTION_ARGS)
 		tupdesc = CreateTemplateTupleDesc(12, false);
 		TupleDescInitEntry(tupdesc, (AttrNumber) 1, "datid",
 						   OIDOID, -1, 0);
+		/* This should have been called 'pid';  can't change it. 2011-06-11 */
 		TupleDescInitEntry(tupdesc, (AttrNumber) 2, "procpid",
 						   INT4OID, -1, 0);
 		TupleDescInitEntry(tupdesc, (AttrNumber) 3, "usesysid",
