@@ -160,6 +160,7 @@ InitProcGlobal(void)
 	PGPROC	   *procs;
 	int			i;
 	bool		found;
+	uint32		TotalProcs = MaxBackends + NUM_AUXILIARY_PROCS;
 
 	/* Create the ProcGlobal shared structure */
 	ProcGlobal = (PROC_HDR *)
@@ -167,68 +168,60 @@ InitProcGlobal(void)
 	Assert(!found);
 
 	/*
-	 * Create the PGPROC structures for auxiliary (bgwriter) processes, too.
-	 * These do not get linked into the freeProcs list.
-	 */
-	AuxiliaryProcs = (PGPROC *)
-		ShmemInitStruct("AuxiliaryProcs", NUM_AUXILIARY_PROCS * sizeof(PGPROC),
-						&found);
-	Assert(!found);
-
-	/*
 	 * Initialize the data structures.
 	 */
+	ProcGlobal->spins_per_delay = DEFAULT_SPINS_PER_DELAY;
 	ProcGlobal->freeProcs = NULL;
 	ProcGlobal->autovacFreeProcs = NULL;
 
-	ProcGlobal->spins_per_delay = DEFAULT_SPINS_PER_DELAY;
-
 	/*
-	 * Pre-create the PGPROC structures and create a semaphore for each.
-	 */
-	procs = (PGPROC *) ShmemAlloc((MaxConnections) * sizeof(PGPROC));
-	if (!procs)
-		ereport(FATAL,
-				(errcode(ERRCODE_OUT_OF_MEMORY),
-				 errmsg("out of shared memory")));
-	MemSet(procs, 0, MaxConnections * sizeof(PGPROC));
-	for (i = 0; i < MaxConnections; i++)
-	{
-		PGSemaphoreCreate(&(procs[i].sem));
-		procs[i].links.next = (SHM_QUEUE *) ProcGlobal->freeProcs;
-		ProcGlobal->freeProcs = &procs[i];
-		InitSharedLatch(&procs[i].waitLatch);
-	}
-
-	/*
-	 * Likewise for the PGPROCs reserved for autovacuum.
+	 * Create and initialize all the PGPROC structures we'll need (except for
+	 * those used for 2PC, which are embedded within a GlobalTransactionData
+	 * struct).
 	 *
-	 * Note: the "+1" here accounts for the autovac launcher
+	 * There are three separate consumers of PGPROC structures: (1) normal
+	 * backends, (2) autovacuum workers and the autovacuum launcher, and (3)
+	 * auxiliary processes.  Each PGPROC structure is dedicated to exactly
+	 * one of these purposes, and they do not move between groups.
 	 */
-	procs = (PGPROC *) ShmemAlloc((autovacuum_max_workers + 1) * sizeof(PGPROC));
+	procs = (PGPROC *) ShmemAlloc(TotalProcs * sizeof(PGPROC));
 	if (!procs)
 		ereport(FATAL,
 				(errcode(ERRCODE_OUT_OF_MEMORY),
 				 errmsg("out of shared memory")));
-	MemSet(procs, 0, (autovacuum_max_workers + 1) * sizeof(PGPROC));
-	for (i = 0; i < autovacuum_max_workers + 1; i++)
+	MemSet(procs, 0, TotalProcs * sizeof(PGPROC));
+	for (i = 0; i < TotalProcs; i++)
 	{
+		/* Common initialization for all PGPROCs, regardless of type. */
 		PGSemaphoreCreate(&(procs[i].sem));
-		procs[i].links.next = (SHM_QUEUE *) ProcGlobal->autovacFreeProcs;
-		ProcGlobal->autovacFreeProcs = &procs[i];
 		InitSharedLatch(&procs[i].waitLatch);
+
+		/*
+		 * Newly created PGPROCs for normal backends or for autovacuum must
+		 * be queued up on the appropriate free list.  Because there can only
+		 * ever be a small, fixed number of auxiliary processes, no free
+		 * list is used in that case; InitAuxiliaryProcess() instead uses a
+		 * linear search.
+		 */
+		if (i < MaxConnections)
+		{
+			/* PGPROC for normal backend, add to freeProcs list */
+			procs[i].links.next = (SHM_QUEUE *) ProcGlobal->freeProcs;
+			ProcGlobal->freeProcs = &procs[i];
+		}
+		else if (i < MaxBackends)
+		{
+			/* PGPROC for AV launcher/worker, add to autovacFreeProcs list */
+			procs[i].links.next = (SHM_QUEUE *) ProcGlobal->autovacFreeProcs;
+			ProcGlobal->autovacFreeProcs = &procs[i];
+		}
 	}
 
 	/*
-	 * And auxiliary procs.
+	 * Save a pointer to the block of PGPROC structures reserved for
+	 * auxiliary proceses.
 	 */
-	MemSet(AuxiliaryProcs, 0, NUM_AUXILIARY_PROCS * sizeof(PGPROC));
-	for (i = 0; i < NUM_AUXILIARY_PROCS; i++)
-	{
-		AuxiliaryProcs[i].pid = 0;		/* marks auxiliary proc as not in use */
-		PGSemaphoreCreate(&(AuxiliaryProcs[i].sem));
-		InitSharedLatch(&procs[i].waitLatch);
-	}
+	AuxiliaryProcs = &procs[MaxBackends];
 
 	/* Create ProcStructLock spinlock, too */
 	ProcStructLock = (slock_t *) ShmemAlloc(sizeof(slock_t));
