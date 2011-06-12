@@ -1432,8 +1432,7 @@ GetSafeSnapshot(Snapshot origSnapshot)
 		 * them marked us as conflicted.
 		 */
 		MySerializableXact->flags |= SXACT_FLAG_DEFERRABLE_WAITING;
-		while (!(SHMQueueEmpty((SHM_QUEUE *)
-							 &MySerializableXact->possibleUnsafeConflicts) ||
+		while (!(SHMQueueEmpty(&MySerializableXact->possibleUnsafeConflicts) ||
 				 SxactIsROUnsafe(MySerializableXact)))
 		{
 			LWLockRelease(SerializableXactHashLock);
@@ -3114,13 +3113,13 @@ ReleasePredicateLocks(const bool isCommit)
 		 * opposed to 'outLink' for the r/w xacts.
 		 */
 		possibleUnsafeConflict = (RWConflict)
-			SHMQueueNext((SHM_QUEUE *) &MySerializableXact->possibleUnsafeConflicts,
-				  (SHM_QUEUE *) &MySerializableXact->possibleUnsafeConflicts,
+			SHMQueueNext(&MySerializableXact->possibleUnsafeConflicts,
+						 &MySerializableXact->possibleUnsafeConflicts,
 						 offsetof(RWConflictData, inLink));
 		while (possibleUnsafeConflict)
 		{
 			nextConflict = (RWConflict)
-				SHMQueueNext((SHM_QUEUE *) &MySerializableXact->possibleUnsafeConflicts,
+				SHMQueueNext(&MySerializableXact->possibleUnsafeConflicts,
 							 &possibleUnsafeConflict->inLink,
 							 offsetof(RWConflictData, inLink));
 
@@ -3153,13 +3152,13 @@ ReleasePredicateLocks(const bool isCommit)
 	 * previously committed transactions.
 	 */
 	conflict = (RWConflict)
-		SHMQueueNext((SHM_QUEUE *) &MySerializableXact->outConflicts,
-					 (SHM_QUEUE *) &MySerializableXact->outConflicts,
+		SHMQueueNext(&MySerializableXact->outConflicts,
+					 &MySerializableXact->outConflicts,
 					 offsetof(RWConflictData, outLink));
 	while (conflict)
 	{
 		nextConflict = (RWConflict)
-			SHMQueueNext((SHM_QUEUE *) &MySerializableXact->outConflicts,
+			SHMQueueNext(&MySerializableXact->outConflicts,
 						 &conflict->outLink,
 						 offsetof(RWConflictData, outLink));
 
@@ -3186,13 +3185,13 @@ ReleasePredicateLocks(const bool isCommit)
 	 * we're rolling back, clear them all.
 	 */
 	conflict = (RWConflict)
-		SHMQueueNext((SHM_QUEUE *) &MySerializableXact->inConflicts,
-					 (SHM_QUEUE *) &MySerializableXact->inConflicts,
+		SHMQueueNext(&MySerializableXact->inConflicts,
+					 &MySerializableXact->inConflicts,
 					 offsetof(RWConflictData, inLink));
 	while (conflict)
 	{
 		nextConflict = (RWConflict)
-			SHMQueueNext((SHM_QUEUE *) &MySerializableXact->inConflicts,
+			SHMQueueNext(&MySerializableXact->inConflicts,
 						 &conflict->inLink,
 						 offsetof(RWConflictData, inLink));
 
@@ -3213,13 +3212,13 @@ ReleasePredicateLocks(const bool isCommit)
 		 * up if they are known safe or known unsafe.
 		 */
 		possibleUnsafeConflict = (RWConflict)
-			SHMQueueNext((SHM_QUEUE *) &MySerializableXact->possibleUnsafeConflicts,
-				  (SHM_QUEUE *) &MySerializableXact->possibleUnsafeConflicts,
+			SHMQueueNext(&MySerializableXact->possibleUnsafeConflicts,
+						 &MySerializableXact->possibleUnsafeConflicts,
 						 offsetof(RWConflictData, outLink));
 		while (possibleUnsafeConflict)
 		{
 			nextConflict = (RWConflict)
-				SHMQueueNext((SHM_QUEUE *) &MySerializableXact->possibleUnsafeConflicts,
+				SHMQueueNext(&MySerializableXact->possibleUnsafeConflicts,
 							 &possibleUnsafeConflict->outLink,
 							 offsetof(RWConflictData, outLink));
 
@@ -3290,7 +3289,7 @@ ReleasePredicateLocks(const bool isCommit)
 	/* Add this to the list of transactions to check for later cleanup. */
 	if (isCommit)
 		SHMQueueInsertBefore(FinishedSerializableTransactions,
-						  (SHM_QUEUE *) &(MySerializableXact->finishedLink));
+							 &MySerializableXact->finishedLink);
 
 	if (!isCommit)
 		ReleaseOneSerializableXact(MySerializableXact, false, false);
@@ -3789,7 +3788,7 @@ CheckForSerializableConflictOut(const bool visible, const Relation relation,
 					  errhint("The transaction might succeed if retried.")));
 
 			if (SxactHasSummaryConflictIn(MySerializableXact)
-			|| !SHMQueueEmpty((SHM_QUEUE *) &MySerializableXact->inConflicts))
+				|| !SHMQueueEmpty(&MySerializableXact->inConflicts))
 				ereport(ERROR,
 						(errcode(ERRCODE_T_R_SERIALIZATION_FAILURE),
 						 errmsg("could not serialize access due to read/write dependencies among transactions"),
@@ -4462,8 +4461,8 @@ PreCommit_CheckForSerializationFailure(void)
 	}
 
 	nearConflict = (RWConflict)
-		SHMQueueNext((SHM_QUEUE *) &MySerializableXact->inConflicts,
-					 (SHM_QUEUE *) &MySerializableXact->inConflicts,
+		SHMQueueNext(&MySerializableXact->inConflicts,
+					 &MySerializableXact->inConflicts,
 					 offsetof(RWConflictData, inLink));
 	while (nearConflict)
 	{
@@ -4496,7 +4495,7 @@ PreCommit_CheckForSerializationFailure(void)
 		}
 
 		nearConflict = (RWConflict)
-			SHMQueueNext((SHM_QUEUE *) &MySerializableXact->inConflicts,
+			SHMQueueNext(&MySerializableXact->inConflicts,
 						 &nearConflict->inLink,
 						 offsetof(RWConflictData, inLink));
 	}
@@ -4543,9 +4542,9 @@ AtPrepare_PredicateLocks(void)
 	 * outConflicts lists, if they're non-empty we'll represent that by
 	 * setting the appropriate summary conflict flags.
 	 */
-	if (!SHMQueueEmpty((SHM_QUEUE *) &MySerializableXact->inConflicts))
+	if (!SHMQueueEmpty(&MySerializableXact->inConflicts))
 		xactRecord->flags |= SXACT_FLAG_SUMMARY_CONFLICT_IN;
-	if (!SHMQueueEmpty((SHM_QUEUE *) &MySerializableXact->outConflicts))
+	if (!SHMQueueEmpty(&MySerializableXact->outConflicts))
 		xactRecord->flags |= SXACT_FLAG_SUMMARY_CONFLICT_OUT;
 
 	RegisterTwoPhaseRecord(TWOPHASE_RM_PREDICATELOCK_ID, 0,
