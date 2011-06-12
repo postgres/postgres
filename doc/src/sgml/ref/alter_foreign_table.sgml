@@ -32,7 +32,7 @@ ALTER FOREIGN TABLE <replaceable class="PARAMETER">name</replaceable>
 
 <phrase>where <replaceable class="PARAMETER">action</replaceable> is one of:</phrase>
 
-    ADD [ COLUMN ] <replaceable class="PARAMETER">column</replaceable> <replaceable class="PARAMETER">type</replaceable>
+    ADD [ COLUMN ] <replaceable class="PARAMETER">column</replaceable> <replaceable class="PARAMETER">type</replaceable> [ NULL | NOT NULL ]
     DROP [ COLUMN ] [ IF EXISTS ] <replaceable class="PARAMETER">column</replaceable> [ RESTRICT | CASCADE ]
     ALTER [ COLUMN ] <replaceable class="PARAMETER">column</replaceable> [ SET DATA ] TYPE <replaceable class="PARAMETER">type</replaceable>
     ALTER [ COLUMN ] <replaceable class="PARAMETER">column</replaceable> { SET | DROP } NOT NULL
@@ -125,7 +125,7 @@ ALTER FOREIGN TABLE <replaceable class="PARAMETER">name</replaceable>
     <term><literal>OPTIONS ( [ ADD | SET | DROP ] <replaceable class="PARAMETER">option</replaceable> ['<replaceable class="PARAMETER">value</replaceable>'] [, ... ] )</literal></term>
     <listitem>
      <para>
-      Change options for the foreign table or the column of the foreign table.
+      Change options for the foreign table.
       <literal>ADD</>, <literal>SET</>, and <literal>DROP</>
       specify the action to be performed.  <literal>ADD</> is assumed
       if no operation is explicitly specified.  Option names must be
@@ -150,8 +150,6 @@ ALTER FOREIGN TABLE <replaceable class="PARAMETER">name</replaceable>
    You must own the table to use <command>ALTER FOREIGN TABLE</>.
    To change the schema of a foreign table, you must also have
    <literal>CREATE</literal> privilege on the new schema.
-   To add the table as a new child of a parent table, you must own the
-   parent table as well.
    To alter the owner, you must also be a direct or indirect member of the new
    owning role, and that role must have <literal>CREATE</literal> privilege on
    the table's schema.  (These restrictions enforce that altering the owner
@@ -260,12 +258,11 @@ ALTER FOREIGN TABLE <replaceable class="PARAMETER">name</replaceable>
    </para>
 
    <para>
-    Consistency with the foreign server is not checked when a column is
-    added or removed with <literal>ADD COLUMN</literal> or
-    <literal>DROP COLUMN</literal>, a system <literal>oid</> column is added
-    or removed, a <literal>CHECK</> or <literal>NOT NULL</> constraint is
-    added, or column type is changed with <literal>SET DATA TYPE</>.  It is the
-    user's responsibility to ensure that the table definition matches the
+    Consistency with the foreign server is not checked when a column is added
+    or removed with <literal>ADD COLUMN</literal> or
+    <literal>DROP COLUMN</literal>, a <literal>NOT NULL</> constraint is
+    added, or a column type is changed with <literal>SET DATA TYPE</>.  It is
+    the user's responsibility to ensure that the table definition matches the
     remote side.
    </para>
 
