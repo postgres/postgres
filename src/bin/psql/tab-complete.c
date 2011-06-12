@@ -1553,9 +1553,10 @@ psql_completion(char *text, int start, int end)
 			 pg_strcasecmp(prev_wd, "ON") == 0)
 	{
 		static const char *const list_COMMENT[] =
-		{"CAST", "COLLATION", "CONVERSION", "DATABASE", "FOREIGN DATA WRAPPER",
-			"SERVER", "FOREIGN TABLE", "INDEX", "LANGUAGE", "RULE", "SCHEMA",
-			"SEQUENCE", "TABLE", "TYPE", "VIEW", "COLUMN", "AGGREGATE", "FUNCTION",
+		{"CAST", "COLLATION", "CONVERSION", "DATABASE", "EXTENSION",
+			"FOREIGN DATA WRAPPER", "FOREIGN TABLE",
+			"SERVER", "INDEX", "LANGUAGE", "RULE", "SCHEMA", "SEQUENCE",
+			"TABLE", "TYPE", "VIEW", "COLUMN", "AGGREGATE", "FUNCTION",
 			"OPERATOR", "TRIGGER", "CONSTRAINT", "DOMAIN", "LARGE OBJECT",
 		"TABLESPACE", "TEXT SEARCH", "ROLE", NULL};
 
@@ -1582,11 +1583,10 @@ psql_completion(char *text, int start, int end)
 	}
 	else if ((pg_strcasecmp(prev4_wd, "COMMENT") == 0 &&
 			  pg_strcasecmp(prev3_wd, "ON") == 0) ||
+			 (pg_strcasecmp(prev5_wd, "COMMENT") == 0 &&
+			  pg_strcasecmp(prev4_wd, "ON") == 0) ||
 			 (pg_strcasecmp(prev6_wd, "COMMENT") == 0 &&
-			  pg_strcasecmp(prev5_wd, "ON") == 0) ||
-			 (pg_strcasecmp(prev5_wd, "ON") == 0 &&
-			  pg_strcasecmp(prev4_wd, "TEXT") == 0 &&
-			  pg_strcasecmp(prev3_wd, "SEARCH") == 0))
+			  pg_strcasecmp(prev5_wd, "ON") == 0))
 		COMPLETE_WITH_CONST("IS");
 
 /* COPY */
