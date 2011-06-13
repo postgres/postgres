@@ -242,6 +242,18 @@ ALTER EXTENSION <replaceable class="PARAMETER">extension_name</replaceable> DROP
     </varlistentry>
 
     <varlistentry>
+     <term><replaceable class="parameter">left_type</replaceable></term>
+     <term><replaceable class="parameter">right_type</replaceable></term>
+     <listitem>
+      <para>
+       The data type(s) of the operator's arguments (optionally
+       schema-qualified).  Write <literal>NONE</> for the missing argument
+       of a prefix or postfix operator.
+      </para>
+     </listitem>
+    </varlistentry>
+
+    <varlistentry>
      <term><literal>PROCEDURAL</literal></term>
 
      <listitem>
