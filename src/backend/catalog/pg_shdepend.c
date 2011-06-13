@@ -1274,8 +1274,7 @@ shdepReassignOwned(List *roleids, Oid newrole)
 
 			ereport(ERROR,
 					(errcode(ERRCODE_DEPENDENT_OBJECTS_STILL_EXIST),
-				   errmsg("cannot drop objects owned by %s because they are "
-						  "required by the database system",
+					 errmsg("cannot reassign ownership of objects owned by %s because they are required by the database system",
 						  getObjectDescription(&obj))));
 
 			/*
