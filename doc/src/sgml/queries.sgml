@@ -266,7 +266,9 @@ FROM <replaceable>table_reference</replaceable> <optional>, <replaceable>table_r
         <literal>USING</>: it forms a <literal>USING</> list
         consisting of all column names that appear in both
         input tables.  As with <literal>USING</>, these columns appear
-        only once in the output table.
+        only once in the output table.  If there are no common
+        columns, <literal>NATURAL</literal> behaves like
+        <literal>CROSS JOIN</literal>.
        </para>
 
        <para>
