@@ -2107,6 +2107,10 @@ SET ENABLE_SEQSCAN TO OFF;
         <xref linkend="guc-synchronous-commit"> parameter to
         <literal>local</> or <literal>off</>.
        </para>
+       <para>
+        This parameter can only be set in the <filename>postgresql.conf</>
+        file or on the server command line.
+       </para>
       </listitem>
      </varlistentry>
 
@@ -2239,8 +2243,10 @@ SET ENABLE_SEQSCAN TO OFF;
         about queries currently executing on the standby. This parameter can
         be used to eliminate query cancels caused by cleanup records, but
         can cause database bloat on the primary for some workloads.
-        The default value is <literal>off</literal>.  Feedback messages will not
-        be sent more frequently than once per <varname>wal_receiver_status_interval</>.
+        Feedback messages will not be sent more frequently than once per
+        <varname>wal_receiver_status_interval</>. The default value is
+        <literal>off</literal>. This parameter can only be set in the
+        <filename>postgresql.conf</> file or on the server command line.
        </para>
       </listitem>
      </varlistentry>
