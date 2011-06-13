@@ -4285,7 +4285,9 @@ COPY postgres_log FROM '/full/path/to/logfile.csv' WITH csv;
        <para>
         The current effective value of the search path can be examined
         via the <acronym>SQL</acronym> function
-        <function>current_schemas()</>.  This is not quite the same as
+        <function>current_schemas()</>
+        (see <xref linkend="functions-info">).
+        This is not quite the same as
         examining the value of <varname>search_path</varname>, since
         <function>current_schemas()</> shows how the items
         appearing in <varname>search_path</varname> were resolved.
