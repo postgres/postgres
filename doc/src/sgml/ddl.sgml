@@ -3021,7 +3021,7 @@ ANALYZE measurement;
     <firstterm>foreign data wrapper</firstterm>. A foreign data wrapper is a
     library that can communicate with an external data source, hiding the
     details of connecting to the data source and fetching data from it. There
-    is a foreign data wrapper available as a <file>contrib</file> module,
+    is a foreign data wrapper available as a <filename>contrib</> module,
     which can read plain data files residing on the server.  Other kind of
     foreign data wrappers might be found as third party products.  If none of
     the existing foreign data wrappers suit your needs, you can write your
