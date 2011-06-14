@@ -103,7 +103,7 @@ uninstall:
 	rm -f '$(DESTDIR)$(pkglibdir)/plperl$(DLSUFFIX)'
 
 installcheck: submake
-	$(top_builddir)/src/test/regress/pg_regress --psqldir=$(PSQLDIR) $(REGRESS_OPTS) $(REGRESS)
+	$(top_builddir)/src/test/regress/pg_regress --psqldir="$(PSQLDIR)" $(REGRESS_OPTS) $(REGRESS)
 
 .PHONY: submake
 submake:

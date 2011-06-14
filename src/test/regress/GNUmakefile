@@ -92,7 +92,7 @@ output_files := $(foreach file, $(file_list), expected/$(file).out)
 all: $(input_files) $(output_files)
 
 ifneq ($(PORTNAME),win32)
-abs_srcdir := $(shell cd $(srcdir) && pwd)
+abs_srcdir := $(shell cd "$(srcdir)" && pwd)
 abs_builddir := $(shell pwd)
 else
 abs_srcdir := $(shell cd $(srcdir) && sh -c "pwd -W")
@@ -148,17 +148,17 @@ all-spi:
 check: all
 	-rm -rf ./testtablespace
 	mkdir ./testtablespace
-	./pg_regress --temp-install=./tmp_check --top-builddir=$(top_builddir) --temp-port=$(TEMP_PORT) --schedule=$(srcdir)/parallel_schedule --multibyte=$(MULTIBYTE) --load-language=plpgsql $(MAXCONNOPT) $(NOLOCALE)
+	./pg_regress --temp-install=./tmp_check --top-builddir=$(top_builddir) --temp-port=$(TEMP_PORT) --schedule="$(srcdir)"/parallel_schedule --multibyte=$(MULTIBYTE) --load-language=plpgsql $(MAXCONNOPT) $(NOLOCALE)
 
 installcheck: all
 	-rm -rf ./testtablespace
 	mkdir ./testtablespace
-	./pg_regress --psqldir=$(PSQLDIR) --schedule=$(srcdir)/serial_schedule --multibyte=$(MULTIBYTE) --load-language=plpgsql $(NOLOCALE)
+	./pg_regress --psqldir="$(PSQLDIR)" --schedule="$(srcdir)"/serial_schedule --multibyte=$(MULTIBYTE) --load-language=plpgsql $(NOLOCALE)
 
 installcheck-parallel: all
 	-rm -rf ./testtablespace
 	mkdir ./testtablespace
-	./pg_regress --psqldir=$(PSQLDIR) --schedule=$(srcdir)/parallel_schedule --multibyte=$(MULTIBYTE) --load-language=plpgsql $(MAXCONNOPT) $(NOLOCALE)
+	./pg_regress --psqldir="$(PSQLDIR)" --schedule="$(srcdir)"/parallel_schedule --multibyte=$(MULTIBYTE) --load-language=plpgsql $(MAXCONNOPT) $(NOLOCALE)
 
 
 # old interfaces follow...
@@ -168,10 +168,10 @@ runtest: installcheck
 runtest-parallel: installcheck-parallel
 
 bigtest:
-	./pg_regress --psqldir=$(PSQLDIR) --schedule=$(srcdir)/serial_schedule --multibyte=$(MULTIBYTE) --load-language=plpgsql $(NOLOCALE) numeric_big 
+	./pg_regress --psqldir="$(PSQLDIR)" --schedule="$(srcdir)"/serial_schedule --multibyte=$(MULTIBYTE) --load-language=plpgsql $(NOLOCALE) numeric_big 
 
 bigcheck:
-	./pg_regress --temp-install=./tmp_check --top-builddir=$(top_builddir) --temp-port=$(TEMP_PORT) --schedule=$(srcdir)/parallel_schedule --multibyte=$(MULTIBYTE) --load-language=plpgsql $(MAXCONNOPT) $(NOLOCALE) numeric_big
+	./pg_regress --temp-install=./tmp_check --top-builddir=$(top_builddir) --temp-port=$(TEMP_PORT) --schedule="$(srcdir)"/parallel_schedule --multibyte=$(MULTIBYTE) --load-language=plpgsql $(MAXCONNOPT) $(NOLOCALE) numeric_big
 
 
 ##

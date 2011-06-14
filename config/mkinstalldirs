@@ -105,13 +105,15 @@ esac
 
 for file
 do
-  set fnord `echo ":$file" | sed -ne 's/^:\//#/;s/^://;s/\// /g;s/^#/\//;p'`
+  # pathcomp starts with leading slash if present, else empty
+  pathcomp=`echo "$file" | sed -ne 's|^\(.\).*$|\1|;s|[^/]||;p'`
+  # swap spaces and slashes, then split on spaces
+  set fnord `echo "$file" | tr ' /' '/ '`
   shift
 
-  pathcomp=
   for d
   do
-    pathcomp="$pathcomp$d"
+    pathcomp="$pathcomp"`echo "$d" | tr '/' ' '`
     case $pathcomp in
       -*) pathcomp=./$pathcomp ;;
     esac
