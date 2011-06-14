@@ -144,13 +144,13 @@ check: all
 	$(pg_regress_call) --temp-install=./tmp_check --top-builddir=$(top_builddir) --schedule=$(srcdir)/parallel_schedule $(MAXCONNOPT) $(TEMP_CONF)
 
 installcheck: all
-	$(pg_regress_call) --psqldir=$(PSQLDIR) --schedule=$(srcdir)/serial_schedule
+	$(pg_regress_call) --psqldir="$(PSQLDIR)" --schedule=$(srcdir)/serial_schedule
 
 installcheck-parallel: all
-	$(pg_regress_call) --psqldir=$(PSQLDIR) --schedule=$(srcdir)/parallel_schedule $(MAXCONNOPT)
+	$(pg_regress_call) --psqldir="$(PSQLDIR)" --schedule=$(srcdir)/parallel_schedule $(MAXCONNOPT)
 
 standbycheck: all
-	$(pg_regress_call) --psqldir=$(PSQLDIR) --schedule=$(srcdir)/standby_schedule --use-existing
+	$(pg_regress_call) --psqldir="$(PSQLDIR)" --schedule=$(srcdir)/standby_schedule --use-existing
 
 # old interfaces follow...
 
@@ -159,7 +159,7 @@ runtest: installcheck
 runtest-parallel: installcheck-parallel
 
 bigtest: all
-	$(pg_regress_call) --psqldir=$(PSQLDIR) --schedule=$(srcdir)/serial_schedule numeric_big 
+	$(pg_regress_call) --psqldir="$(PSQLDIR)" --schedule=$(srcdir)/serial_schedule numeric_big 
 
 bigcheck: all
 	$(pg_regress_call) --temp-install=./tmp_check --top-builddir=$(top_builddir) --schedule=$(srcdir)/parallel_schedule $(MAXCONNOPT) numeric_big
