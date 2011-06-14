@@ -2322,7 +2322,7 @@ VALUES ('New York', NULL, NULL, 'NY');
       partitions, if that requirement is planned into the partitioning design.
       <command>ALTER TABLE NO INHERIT</> and <command>DROP TABLE</> are
       both far faster than a bulk operation.
-      It also entirely avoids the <command>VACUUM</command>
+      These commands also entirely avoid the <command>VACUUM</command>
       overhead caused by a bulk <command>DELETE</>.
      </para>
     </listitem>
