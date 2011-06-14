@@ -95,4 +95,4 @@ checktcp: all
 	./pg_regress  --dbname=regress1,connectdb --top-builddir=$(top_builddir) --temp-install=./tmp_check --temp-port=$(TEMP_PORT) --multibyte=$(MULTIBYTE) --load-language=plpgsql $(NOLOCALE) $(THREAD) --schedule=$(srcdir)/ecpg_schedule_tcp --create-role=connectuser,connectdb --host=localhost
 
 installcheck: all
-	./pg_regress  --psqldir=$(PSQLDIR) --dbname=regress1,connectdb --top-builddir=$(top_builddir) --multibyte=$(MULTIBYTE) --load-language=plpgsql $(NOLOCALE) $(THREAD) --schedule=$(srcdir)/ecpg_schedule --create-role=connectuser,connectdb
+	./pg_regress  --psqldir="$(PSQLDIR)" --dbname=regress1,connectdb --top-builddir=$(top_builddir) --multibyte=$(MULTIBYTE) --load-language=plpgsql $(NOLOCALE) $(THREAD) --schedule=$(srcdir)/ecpg_schedule --create-role=connectuser,connectdb
