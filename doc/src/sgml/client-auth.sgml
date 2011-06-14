@@ -231,7 +231,7 @@ hostnossl  <replaceable>database</replaceable>  <replaceable>user</replaceable> 
        An IP address is specified in standard dotted decimal
        notation with a <acronym>CIDR</> mask length.  The mask
        length indicates the number of high-order bits of the client
-       IP address that must match.  Bits to the right of this must
+       IP address that must match.  Bits to the right of this should
        be zero in the given IP address.
        There must not be any white space between the IP address, the
        <literal>/</literal>, and the CIDR mask length.
