@@ -878,8 +878,8 @@ testdb=&gt;
 
         <listitem>
         <para>
-        For each relation (table, view, index, sequence or foreign table)
-        matching the
+        For each relation (table, view, index, sequence, or foreign table)
+        or composite type matching the
         <replaceable class="parameter">pattern</replaceable>, show all
         columns, their types, the tablespace (if not the default) and any
         special attributes such as <literal>NOT NULL</literal> or defaults.
