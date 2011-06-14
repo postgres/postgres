@@ -1,499 +1,648 @@
 #!/usr/bin/perl
 # src/interfaces/ecpg/preproc/parse.pl
-# parser generater for ecpg
+# parser generater for ecpg version 2
 # call with backend parser as stdin
 #
 # Copyright (c) 2007-2011, PostgreSQL Global Development Group
 #
 # Written by Mike Aubury <mike.aubury@aubit.com>
 #	     Michael Meskes <meskes@postgresql.org>
+#            Andy Colson <andy@squeakycode.net>   
 #
 # Placed under the same license as PostgreSQL.
 #
 
-if (@ARGV) {
-	$path = $ARGV[0];
-	shift @ARGV;
-}
+use strict;
+use warnings;
+no warnings 'uninitialized';
 
-if ($path eq '') { $path = "."; }
+my $path = shift @ARGV;
+$path = "." unless $path;
 
-$[ = 1;			# set array base to 1
-$, = ' ';		# set output field separator
-$\ = "\n";		# set output record separator
+my $copymode              = 0;
+my $brace_indent          = 0;
+my $yaccmode              = 0;
+my $header_included       = 0;
+my $feature_not_supported = 0;
+my $tokenmode             = 0;
 
-$copymode = 'off';
-$brace_indent = 0;
-$yaccmode = 0;
-$header_included = 0;
-$feature_not_supported = 0;
-$tokenmode = 0;
+my(%buff, $infield, $comment, %tokens, %addons );
+my($stmt_mode, @fields);
+my($line, $non_term_id);
+
 
 # some token have to be replaced by other symbols
 # either in the rule
-$replace_token{'BCONST'} = 'ecpg_bconst';
-$replace_token{'FCONST'} = 'ecpg_fconst';
-$replace_token{'Sconst'} = 'ecpg_sconst';
-$replace_token{'IDENT'} = 'ecpg_ident';
-$replace_token{'PARAM'} = 'ecpg_param';
+my %replace_token = (
+	'BCONST' => 'ecpg_bconst',
+	'FCONST' => 'ecpg_fconst',
+	'Sconst' => 'ecpg_sconst',
+	'IDENT'  => 'ecpg_ident',
+	'PARAM'  => 'ecpg_param',
+);
+
 # or in the block
-$replace_string{'WITH_TIME'} = 'with time';
-$replace_string{'NULLS_FIRST'} = 'nulls first';
-$replace_string{'NULLS_LAST'} = 'nulls last';
-$replace_string{'TYPECAST'} = '::';
-$replace_string{'DOT_DOT'} = '..';
-$replace_string{'COLON_EQUALS'} = ':=';
+my %replace_string = (
+	'WITH_TIME'    => 'with time',
+	'NULLS_FIRST'  => 'nulls first',
+	'NULLS_LAST'   => 'nulls last',
+	'TYPECAST'     => '::',
+	'DOT_DOT'      => '..',
+	'COLON_EQUALS' => ':=',
+);
 
 # specific replace_types for specific non-terminals - never include the ':'
 # ECPG-only replace_types are defined in ecpg-replace_types
-$replace_types{'PrepareStmt'} = '<prep>';
-$replace_types{'opt_array_bounds'} = '<index>';
-# "ignore" means: do not create type and rules for this non-term-id
-$replace_types{'stmtblock'} = 'ignore';
-$replace_types{'stmtmulti'} = 'ignore';
-$replace_types{'CreateAsStmt'} = 'ignore';
-$replace_types{'DeallocateStmt'} = 'ignore';
-$replace_types{'ColId'} = 'ignore';
-$replace_types{'type_function_name'} = 'ignore';
-$replace_types{'ColLabel'} = 'ignore';
-$replace_types{'Sconst'} = 'ignore';
+my %replace_types = (
+	'PrepareStmt'      => '<prep>',
+	'opt_array_bounds' => '<index>',
+
+	# "ignore" means: do not create type and rules for this non-term-id
+	'stmtblock'          => 'ignore',
+	'stmtmulti'          => 'ignore',
+	'CreateAsStmt'       => 'ignore',
+	'DeallocateStmt'     => 'ignore',
+	'ColId'              => 'ignore',
+	'type_function_name' => 'ignore',
+	'ColLabel'           => 'ignore',
+	'Sconst'             => 'ignore',
+);
 
 # these replace_line commands excise certain keywords from the core keyword
 # lists.  Be sure to account for these in ColLabel and related productions.
-$replace_line{'unreserved_keywordCONNECTION'} = 'ignore';
-$replace_line{'unreserved_keywordCURRENT_P'} = 'ignore';
-$replace_line{'unreserved_keywordDAY_P'} = 'ignore';
-$replace_line{'unreserved_keywordHOUR_P'} = 'ignore';
-$replace_line{'unreserved_keywordINPUT_P'} = 'ignore';
-$replace_line{'unreserved_keywordMINUTE_P'} = 'ignore';
-$replace_line{'unreserved_keywordMONTH_P'} = 'ignore';
-$replace_line{'unreserved_keywordSECOND_P'} = 'ignore';
-$replace_line{'unreserved_keywordYEAR_P'} = 'ignore';
-$replace_line{'col_name_keywordCHAR_P'} = 'ignore';
-$replace_line{'col_name_keywordINT_P'} = 'ignore';
-$replace_line{'col_name_keywordVALUES'} = 'ignore';
-$replace_line{'reserved_keywordTO'} = 'ignore';
-$replace_line{'reserved_keywordUNION'} = 'ignore';
+my %replace_line = (
+	'unreserved_keywordCONNECTION' => 'ignore',
+	'unreserved_keywordCURRENT_P'  => 'ignore',
+	'unreserved_keywordDAY_P'      => 'ignore',
+	'unreserved_keywordHOUR_P'     => 'ignore',
+	'unreserved_keywordINPUT_P'    => 'ignore',
+	'unreserved_keywordMINUTE_P'   => 'ignore',
+	'unreserved_keywordMONTH_P'    => 'ignore',
+	'unreserved_keywordSECOND_P'   => 'ignore',
+	'unreserved_keywordYEAR_P'     => 'ignore',
+	'col_name_keywordCHAR_P'       => 'ignore',
+	'col_name_keywordINT_P'        => 'ignore',
+	'col_name_keywordVALUES'       => 'ignore',
+	'reserved_keywordTO'           => 'ignore',
+	'reserved_keywordUNION'        => 'ignore',
 
-# some other production rules have to be ignored or replaced
-$replace_line{'fetch_argsFORWARDopt_from_incursor_name'} = 'ignore';
-$replace_line{'fetch_argsBACKWARDopt_from_incursor_name'} = 'ignore';
-$replace_line{"opt_array_boundsopt_array_bounds'['Iconst']'"} = 'ignore';
-$replace_line{'VariableShowStmtSHOWvar_name'} = 'SHOW var_name ecpg_into';
-$replace_line{'VariableShowStmtSHOWTIMEZONE'} = 'SHOW TIME ZONE ecpg_into';
-$replace_line{'VariableShowStmtSHOWTRANSACTIONISOLATIONLEVEL'} = 'SHOW TRANSACTION ISOLATION LEVEL ecpg_into';
-$replace_line{'VariableShowStmtSHOWSESSIONAUTHORIZATION'} = 'SHOW SESSION AUTHORIZATION ecpg_into';
-$replace_line{'returning_clauseRETURNINGtarget_list'} = 'RETURNING target_list ecpg_into';
-$replace_line{'ExecuteStmtEXECUTEnameexecute_param_clause'} = 'EXECUTE prepared_name execute_param_clause execute_rest';
-$replace_line{'ExecuteStmtCREATEOptTempTABLEcreate_as_targetASEXECUTEnameexecute_param_clause'} = 'CREATE OptTemp TABLE create_as_target AS EXECUTE prepared_name execute_param_clause';
-$replace_line{'PrepareStmtPREPAREnameprep_type_clauseASPreparableStmt'} = 'PREPARE prepared_name prep_type_clause AS PreparableStmt';
-$replace_line{'var_nameColId'} = 'ECPGColId';
+	# some other production rules have to be ignored or replaced
+	'fetch_argsFORWARDopt_from_incursor_name'      => 'ignore',
+	'fetch_argsBACKWARDopt_from_incursor_name'     => 'ignore',
+	"opt_array_boundsopt_array_bounds'['Iconst']'" => 'ignore',
+	'VariableShowStmtSHOWvar_name'                 => 'SHOW var_name ecpg_into',
+	'VariableShowStmtSHOWTIMEZONE' => 'SHOW TIME ZONE ecpg_into',
+	'VariableShowStmtSHOWTRANSACTIONISOLATIONLEVEL' => 'SHOW TRANSACTION ISOLATION LEVEL ecpg_into',
+	'VariableShowStmtSHOWSESSIONAUTHORIZATION' => 'SHOW SESSION AUTHORIZATION ecpg_into',
+	'returning_clauseRETURNINGtarget_list' => 'RETURNING target_list ecpg_into',
+	'ExecuteStmtEXECUTEnameexecute_param_clause' => 'EXECUTE prepared_name execute_param_clause execute_rest',
+	'ExecuteStmtCREATEOptTempTABLEcreate_as_targetASEXECUTEnameexecute_param_clause' => 
+			'CREATE OptTemp TABLE create_as_target AS EXECUTE prepared_name execute_param_clause',
+	'PrepareStmtPREPAREnameprep_type_clauseASPreparableStmt' => 
+			'PREPARE prepared_name prep_type_clause AS PreparableStmt',
+	'var_nameColId' => 'ECPGColId',
+);
 
-line: while (<>) {
-    chomp;	# strip record separator
-    @Fld = split(' ', $_, -1);
+preload_addons();
 
-    # Dump the action for a rule -
-    # mode indicates if we are processing the 'stmt:' rule (mode==0 means normal,  mode==1 means stmt:)
-    # flds are the fields to use. These may start with a '$' - in which case they are the result of a previous non-terminal
-    #                             if they dont start with a '$' then they are token name
-    #
-    # len is the number of fields in flds...
-    # leadin is the padding to apply at the beginning (just use for formatting)
+main();
 
-    if (/ERRCODE_FEATURE_NOT_SUPPORTED/) {
-	$feature_not_supported = 1;
-	next line;
-    }
+dump_buffer('header');
+dump_buffer('tokens');
+dump_buffer('types');
+dump_buffer('ecpgtype');
+dump_buffer('orig_tokens');
+print '%%', "\n";
+print 'prog: statements;', "\n";
+dump_buffer('rules');
+include_file( 'trailer', 'ecpg.trailer' );
+dump_buffer('trailer');
 
-    if (/^%%/) {
-	$tokenmode = 2;
-	$copymode = 'on';
-	$yaccmode++;
-	$infield = 0;
-	$fieldcount = 0;
-    }
-
-    $S = $_;
-    $prec = 0;
-    # Make sure any braces are split
-    $s = '{', $S =~ s/$s/ { /g;
-    $s = '}', $S =~ s/$s/ } /g;
-    # Any comments are split
-    $s = '[/][*]', $S =~ s#$s# /* #g;
-    $s = '[*][/]', $S =~ s#$s# */ #g;
-
-    # Now split the line into individual fields
-    $n = (@arr = split(' ', $S));
-
-    if ($arr[1] eq '%token' && $tokenmode == 0) {
-	$tokenmode = 1;
-	&include_stuff('tokens', 'ecpg.tokens', '', 1, 0);
-	$type = 1;
-    }
-    elsif ($arr[1] eq '%type' && $header_included == 0) {
-	&include_stuff('header', 'ecpg.header', '', 1, 0);
-	&include_stuff('ecpgtype', 'ecpg.type', '', 1, 0);
-	$header_included = 1;
-    }
-
-    if ($tokenmode == 1) {
-	$str = '';
-	for ($a = 1; $a <= $n; $a++) {
-	    if ($arr[$a] eq '/*') {
-		$comment++;
-		next;
-	    }
-	    if ($arr[$a] eq '*/') {
-		$comment--;
-		next;
-	    }
-	    if ($comment) {
-		next;
-	    }
-	    if (substr($arr[$a], 1, 1) eq '<') {
-		next;
-		# its a type
-	    }
-	    $tokens{$arr[$a]} = 1;
-
-	    $str = $str . ' ' . $arr[$a];
-	    if ($arr[$a] eq 'IDENT' && $arr[$a - 1] eq '%nonassoc') {
-	    # add two more tokens to the list
-		$str = $str . "\n%nonassoc CSTRING\n%nonassoc UIDENT";
-	    }
-	}
-	&add_to_buffer('orig_tokens', $str);
-	next line;
-    }
-
-    # Dont worry about anything if we're not in the right section of gram.y
-    if ($yaccmode != 1) {
-	next line;
-    }
-
-    # Go through each field in turn
-    for ($fieldIndexer = 1; $fieldIndexer <= $n; $fieldIndexer++) {
-	if ($arr[$fieldIndexer] eq '*/' && $comment) {
-	    $comment = 0;
-	    next;
-	}
-	elsif ($comment) {
-	    next;
-	}
-	elsif ($arr[$fieldIndexer] eq '/*') {
-	    # start of a multiline comment
-	    $comment = 1;
-	    next;
-	}
-	elsif ($arr[$fieldIndexer] eq '//') {
-	    next line;
-	}
-	elsif ($arr[$fieldIndexer] eq '}') {
-	    $brace_indent--;
-	    next;
-	}
-	elsif ($arr[$fieldIndexer] eq '{') {
-	    $brace_indent++;
-	    next;
-	}
-
-	if ($brace_indent > 0) {
-	    next;
-	}
-	if ($arr[$fieldIndexer] eq ';') {
-	    if ($copymode eq 'on') {
-		if ($infield && $includetype eq '') {
-		    &dump_line($stmt_mode, $fields, $field_count);
+sub main
+{
+	line: while (<>) 
+	{
+		if (/ERRCODE_FEATURE_NOT_SUPPORTED/) 
+		{
+			$feature_not_supported = 1;
+			next line;
 		}
-		&add_to_buffer('rules', ";\n\n");
-	    }
-	    else {
-		$copymode = 'on';
-	    }
-	    $field_count = 0;
-	    $infield = 0;
-	    $line = '';
-	    $includetype = '';
-	    next;
-	}
 
-	if ($arr[$fieldIndexer] eq '|') {
-	    if ($copymode eq 'on') {
-		if ($infield && $includetype eq '') {
-		    $infield = $infield + &dump_line($stmt_mode, $fields, $field_count);
+		chomp; 
+		
+		# comment out the line below to make the result file match (blank line wise)
+		# the prior version. 
+		#next if ($_ eq '');
+
+		# Dump the action for a rule -
+		# stmt_mode indicates if we are processing the 'stmt:'
+		# rule (mode==0 means normal,  mode==1 means stmt:)
+		# flds are the fields to use. These may start with a '$' - in
+		# which case they are the result of a previous non-terminal
+		#
+		# if they dont start with a '$' then they are token name
+		#
+		# len is the number of fields in flds...
+		# leadin is the padding to apply at the beginning (just use for formatting)
+
+		if (/^%%/) {
+			$tokenmode = 2;
+			$copymode  = 1;
+			$yaccmode++;
+			$infield    = 0;
 		}
-		if ($infield > 1) {
-		    $line = '| ';
+
+		my $prec = 0;
+
+		# Make sure any braces are split
+		s/{/ { /g;
+		s/}/ } /g;
+
+		# Any comments are split
+		s|\/\*| /* |g;
+		s|\*\/| */ |g;
+
+		# Now split the line into individual fields
+		my @arr = split(' ');
+
+		if ( $arr[0] eq '%token' && $tokenmode == 0 ) 
+		{
+			$tokenmode = 1;
+			include_file( 'tokens', 'ecpg.tokens' );
 		}
-	    }
-	    $field_count = 0;
-	    $includetype = '';
-	    next;
-	}
-
-	if ($replace_token{$arr[$fieldIndexer]}) {
-	    $arr[$fieldIndexer] = $replace_token{$arr[$fieldIndexer]};
-	}
-
-	# Are we looking at a declaration of a non-terminal ?
-	if (($arr[$fieldIndexer] =~ '[A-Za-z0-9]+:') || $arr[$fieldIndexer + 1] eq ':') {
-	    $non_term_id = $arr[$fieldIndexer];
-	    $s = ':', $non_term_id =~ s/$s//g;
-
-	    if ($replace_types{$non_term_id} eq '') {
-		$replace_types{$non_term_id} = '<str>';
-	    }
-	    if ($replace_types{$non_term_id} eq 'ignore') {
-		$copymode = ';';
-		$line = '';
-		next line;
-	    }
-	    else {
-		$copymode = 'on';
-	    }
-	    $line = $line . ' ' . $arr[$fieldIndexer];
-	    # Do we have the : attached already ?
-	    # If yes, we'll have already printed the ':'
-	    if (!($arr[$fieldIndexer] =~ '[A-Za-z0-9]+:')) {
-		# Consume the ':' which is next...
-		$line = $line . ':';
-		$fieldIndexer++;
-	    }
-
-	    # Special mode?
-	    if ($non_term_id eq 'stmt') {
-		$stmt_mode = 1;
-	    }
-	    else {
-		$stmt_mode = 0;
-	    }
-	    $tstr = '%type ' . $replace_types{$non_term_id} . ' ' .  $non_term_id;
-	    &add_to_buffer('types', $tstr);
-
-	    if ($copymode eq 'on') {
-		&add_to_buffer('rules', $line);
-	    }
-	    $line = '';
-	    $field_count = 0;
-	    $infield = 1;
-	    next;
-	}
-	elsif ($copymode eq 'on') {
-	    $line = $line . ' ' . $arr[$fieldIndexer];
-	}
-	if ($arr[$fieldIndexer] eq '%prec') {
-	    $prec = 1;
-	    next;
-	}
-
-	if ($copymode eq 'on' && !$prec && !$comment && $arr[$fieldIndexer] ne '/*EMPTY*/' && length($arr[$fieldIndexer]) && $infield) {
-	    $nfield = $field_count + 1;
-	    if ($arr[$fieldIndexer] ne 'Op' && ($tokens{$arr[$fieldIndexer]} > 0 || $arr[$fieldIndexer] =~ "'.+'") || $stmt_mode == 1) {
-		if ($replace_string{$arr[$fieldIndexer]}) {
-		    $S = $replace_string{$arr[$fieldIndexer]};
+		elsif ( $arr[0] eq '%type' && $header_included == 0 ) 
+		{
+			include_file( 'header',   'ecpg.header' );
+			include_file( 'ecpgtype', 'ecpg.type' );
+			$header_included = 1;
 		}
-		else {
-		    $S = $arr[$fieldIndexer];
+
+		if ( $tokenmode == 1 ) 
+		{
+			my $str = '';
+			my $prior = '';
+			for my $a (@arr)
+			{
+				if ( $a eq '/*' ) 
+				{
+					$comment++;
+					next;
+				}
+				if ( $a eq '*/' ) 
+				{
+					$comment--;
+					next;
+				}
+				if ($comment) 
+				{
+					next;
+				}
+				if ( substr( $a, 0, 1 ) eq '<' ) {
+					next;
+
+					# its a type
+				}
+				$tokens{ $a } = 1;
+
+				$str = $str . ' ' . $a;
+				if ( $a eq 'IDENT' && $prior eq '%nonassoc' ) 
+				{
+					# add two more tokens to the list
+					$str = $str . "\n%nonassoc CSTRING\n%nonassoc UIDENT";
+				}
+				$prior = $a;
+			}
+			add_to_buffer( 'orig_tokens', $str );
+			next line;
 		}
-		$s = '_P', $S =~ s/$s//g;
-		$s = "'", $S =~ s/$s//g;
-		if ($stmt_mode == 1) {
-		    $fields{$field_count++} = $S;
+
+		# Dont worry about anything if we're not in the right section of gram.y
+		if ( $yaccmode != 1 ) 
+		{
+			next line;
 		}
-		else {
-		    $fields{$field_count++} = lc($S);
+		
+
+		# Go through each field in turn
+		for (my $fieldIndexer = 0 ; $fieldIndexer < scalar(@arr) ; $fieldIndexer++ ) 
+		{
+			if ( $arr[$fieldIndexer] eq '*/' && $comment ) 
+			{
+				$comment = 0;
+				next;
+			}
+			elsif ($comment) 
+			{
+				next;
+			}
+			elsif ( $arr[$fieldIndexer] eq '/*' ) 
+			{
+				# start of a multiline comment
+				$comment = 1;
+				next;
+			}
+			elsif ( $arr[$fieldIndexer] eq '//' ) 
+			{
+				next line;
+			}
+			elsif ( $arr[$fieldIndexer] eq '}' ) 
+			{
+				$brace_indent--;
+				next;
+			}
+			elsif ( $arr[$fieldIndexer] eq '{' ) 
+			{
+				$brace_indent++;
+				next;
+			}
+
+			if ( $brace_indent > 0 ) 
+			{
+				next;
+			}
+			if ( $arr[$fieldIndexer] eq ';' ) 
+			{
+				if ($copymode) 
+				{
+					if ( $infield ) 
+					{
+						dump_line( $stmt_mode, \@fields );
+					}
+					add_to_buffer( 'rules', ";\n\n" );
+				}
+				else 
+				{
+					$copymode = 1;
+				}
+				@fields   = ();
+				$infield  = 0;
+				$line     = '';
+				next;
+			}
+
+			if ( $arr[$fieldIndexer] eq '|' ) 
+			{
+				if ($copymode) 
+				{
+					if ( $infield  ) 
+					{
+						$infield = $infield + dump_line( $stmt_mode, \@fields );
+					}
+					if ( $infield > 1 ) 
+					{
+						$line = '| ';
+					}
+				}
+				@fields = ();
+				next;
+			}
+
+			if ( exists $replace_token{ $arr[$fieldIndexer] } ) 
+			{
+				$arr[$fieldIndexer] = $replace_token{ $arr[$fieldIndexer] };
+			}
+
+			# Are we looking at a declaration of a non-terminal ?
+			if ( ( $arr[$fieldIndexer] =~ /[A-Za-z0-9]+:/ )
+				|| $arr[ $fieldIndexer + 1 ] eq ':' )
+			{
+				$non_term_id = $arr[$fieldIndexer];
+				$non_term_id =~ tr/://d;
+
+				if ( not defined $replace_types{$non_term_id} ) 
+				{
+					$replace_types{$non_term_id} = '<str>';
+					$copymode = 1;
+				}
+				elsif ( $replace_types{$non_term_id} eq 'ignore' ) 
+				{
+					$copymode = 0;
+					$line     = '';
+					next line;
+				}
+				$line = $line . ' ' . $arr[$fieldIndexer];
+
+				# Do we have the : attached already ?
+				# If yes, we'll have already printed the ':'
+				if ( !( $arr[$fieldIndexer] =~ '[A-Za-z0-9]+:' ) ) 
+				{
+					# Consume the ':' which is next...
+					$line = $line . ':';
+					$fieldIndexer++;
+				}
+
+				# Special mode?
+				if ( $non_term_id eq 'stmt' ) 
+				{
+					$stmt_mode = 1;
+				}
+				else 
+				{
+					$stmt_mode = 0;
+				}
+				my $tstr = '%type ' . $replace_types{$non_term_id} . ' ' . $non_term_id;
+				add_to_buffer( 'types', $tstr );
+
+				if ($copymode) 
+				{
+					add_to_buffer( 'rules', $line );
+				}
+				$line     = '';
+				@fields   = ();
+				$infield  = 1;
+				next;
+			}
+			elsif ($copymode) {
+				$line = $line . ' ' . $arr[$fieldIndexer];
+			}
+			if ( $arr[$fieldIndexer] eq '%prec' ) 
+			{
+				$prec = 1;
+				next;
+			}
+
+			if (   $copymode
+				&& !$prec
+				&& !$comment
+				&& length( $arr[$fieldIndexer] )
+				&& $infield )
+			{
+				if (
+					$arr[$fieldIndexer] ne 'Op'
+					&& ( $tokens{ $arr[$fieldIndexer] } > 0 || $arr[$fieldIndexer] =~ /'.+'/ )
+					|| $stmt_mode == 1
+				  )
+				{
+					my $S;
+					if ( exists $replace_string{ $arr[$fieldIndexer] } ) 
+					{
+						$S = $replace_string{ $arr[$fieldIndexer] };
+					}
+					else 
+					{
+						$S = $arr[$fieldIndexer];
+					}
+					$S =~ s/_P//g;
+					$S =~ tr/'//d;
+					if ( $stmt_mode == 1 ) 
+					{
+						push(@fields, $S);
+					}
+					else 
+					{
+						push(@fields, lc($S));
+					}
+				}
+				else 
+				{
+					push(@fields, '$' . (scalar(@fields)+1));
+				}
+			}
 		}
-	    }
-	    else {
-		$fields{$field_count++} = "\$" . $nfield;
-	    }
 	}
-    }
 }
 
-&dump('header');
-&dump('tokens');
-&dump('types');
-&dump('ecpgtype');
-&dump('orig_tokens');
-print '%%';
-print 'prog: statements;';
-&dump('rules');
-&include_stuff('trailer', 'ecpg.trailer', '', 1, 0);
-&dump('trailer');
 
-sub include_stuff {
-    local($includestream, $includefilename, $includeblock, $copy, $field_count) = @_;
-    $copied = 0;
-    $inblock = 0;
-    $filename = $path . "/" . $includefilename;
-    while (($_ = &Getline2($filename),$getline_ok)) {
-	if ($includeblock ne '' && $Fld[1] eq 'ECPG:' && $inblock == 0) {
-	    if ($Fld[2] eq $includeblock) {
-		$copy = 1;
-		$inblock = 1;
-		$includetype = $Fld[3];
-		if ($includetype eq 'rule') {
-		    &dump_fields($stmt_mode, *fields, $field_count, ' { ');
-		}
-		elsif ($includetype eq 'addon') {
-		    &add_to_buffer('rules', ' { ');
-		}
-	    }
-	    else {
-		$copy = 0;
-	    }
+# append a file onto a buffer.
+# Arguments:  buffer_name, filename (without path)
+sub include_file 
+{
+	my ($buffer, $filename) = @_;
+	my $full = "$path/$filename";
+	open(my $fh, '<', $full) or die;
+	while ( <$fh> ) 
+	{
+		chomp;
+		add_to_buffer( $buffer, $_ );
 	}
-	else {
-	    if ($copy == 1 && $Fld[1] ne 'ECPG:') {
-		&add_to_buffer($includestream, $_);
-		$copied = 1;
-		$inblock = 0;
-	    }
-	}
-    }
-    delete $opened{$filename} && close($filename);
-    if ($includetype eq 'addon') {
-	&dump_fields($stmt_mode, *fields, $field_count, '');
-    }
-    if ($copied == 1) {
-	$field_count = 0;
-	$line = '';
-    }
-    $copied;
+	close($fh);
 }
 
-sub add_to_buffer {
-    local($buffer, $str) = @_;
-    $buff{$buffer, $buffcnt{$buffer}++} = $str;
-}
-
-sub dump {
-    local($buffer) = @_;
-    print '/* ' . $buffer . ' */';
-    for ($a = 0; $a < $buffcnt{$buffer}; $a++) {
-	print $buff{$buffer, $a};
-    }
-}
-
-sub dump_fields {
-    local($mode, *flds, $len, $ln) = @_;
-    if ($mode == 0) {
-	#Normal
-	&add_to_buffer('rules', $ln);
-	if ($feature_not_supported == 1) {
-	    # we found an unsupported feature, but we have to
-	    # filter out ExecuteStmt: CREATE OptTemp TABLE ...
-	    # because the warning there is only valid in some situations
-	    if ($flds{0} ne 'create' || $flds{2} ne 'table') {
-		&add_to_buffer('rules', "mmerror(PARSE_ERROR, ET_WARNING, \"unsupported feature will be passed to server\");");
-	    }
-	    $feature_not_supported = 0;
+sub include_addon
+{
+	my($buffer, $block, $fields, $stmt_mode) = @_;
+	my $rec = $addons{$block};
+	return 0 unless $rec;
+	
+	if ( $rec->{type} eq 'rule' ) 
+	{
+		dump_fields( $stmt_mode, $fields, ' { ' );
+	}
+	elsif ( $rec->{type} eq 'addon' ) 
+	{
+		add_to_buffer( 'rules', ' { ' );
 	}
 
-	if ($len == 0) {
-	    # We have no fields ?
-	    &add_to_buffer('rules', " \$\$=EMPTY; }");
+	#add_to_buffer( $stream, $_ );
+	#We have an array to add to the buffer, we'll add it ourself instead of 
+	#calling add_to_buffer, which does not know about arrays
+	
+	push( @{ $buff{$buffer} }, @{ $rec->{lines} } );
+
+	if ( $rec->{type} eq 'addon' ) 
+	{
+		dump_fields( $stmt_mode, $fields, '' );
 	}
-	else {
-	    # Go through each field and try to 'aggregate' the tokens into a single 'mm_strdup' where possible
-	    $cnt = 0;
-	    for ($z = 0; $z < $len; $z++) {
-		if (substr($flds{$z}, 1, 1) eq "\$") {
-		    $flds_new{$cnt++} = $flds{$z};
-		    next;
-		}
 
-		$str = $flds{$z};
 
-		while (1) {
-		    if ($z >= $len - 1 || substr($flds{$z + 1}, 1, 1) eq "\$") {
-			# We're at the end...
-			$flds_new{$cnt++} = "mm_strdup(\"" . $str . "\")";
-			last;
-		    }
-		    $z++;
-		    $str = $str . ' ' . $flds{$z};
-		}
-	    }
-
-	    # So - how many fields did we end up with ?
-	    if ($cnt == 1) {
-		# Straight assignement
-		$str = " \$\$ = " . $flds_new{0} . ';';
-		&add_to_buffer('rules', $str);
-	    }
-	    else {
-		# Need to concatenate the results to form
-		# our final string
-		$str = " \$\$ = cat_str(" . $cnt;
-
-		for ($z = 0; $z < $cnt; $z++) {
-		    $str = $str . ',' . $flds_new{$z};
-		}
-		$str = $str . ');';
-		&add_to_buffer('rules', $str);
-	    }
-	    if ($literal_mode == 0) {
-		&add_to_buffer('rules', '}');
-	    }
-	}
-    }
-    else {
-	# we're in the stmt: rule
-	if ($len) {
-	    # or just the statement ...
-	    &add_to_buffer('rules', " { output_statement(\$1, 0, ECPGst_normal); }");
-	}
-	else {
-	    &add_to_buffer('rules', " { \$\$ = NULL; }");
-	}
-    }
-}
-
-sub generate_block {
-    local($line) = @_;
-    $block = $non_term_id . $line;
-    $s = ' ', $block =~ s/$s//g;
-    $s = "\\|", $block =~ s/$s//g;
-    return $block;
-}
-
-sub dump_line {
-    local($stmt_mode, $fields, $field_count) = @_;
-    $block = &generate_block($line);
-    if ($replace_line{$block} eq 'ignore') {
+	# if we added something (ie there are lines in our array), return 1
+	return 1 if (scalar(@{ $rec->{lines} }) > 0);
 	return 0;
-    }
-    elsif ($replace_line{$block}) {
-	if (index($line, '|') != 0) {
-	    $line = '| ' . $replace_line{$block};
-	}
-	else {
-	    $line = $replace_line{$block};
-	}
-	$block = &generate_block($line);
-    }
-    &add_to_buffer('rules', $line);
-    $i = &include_stuff('rules', 'ecpg.addons', $block, 0, $field_count);
-    if ($i == 0) {
-	&dump_fields($stmt_mode, *fields, $field_count, ' { ');
-    }
-    return 1;
 }
 
-sub Getline2 {
-    &Pick('',@_);
-    if ($getline_ok = (($_ = <$fh>) ne '')) {
-	chomp;	# strip record separator
-	@Fld = split(' ', $_, -1);
-    }
-    $_;
+
+# include_addon does this same thing, but does not call this
+# sub... so if you change this, you need to fix include_addon too
+#   Pass:  buffer_name, string_to_append
+sub add_to_buffer 
+{
+	push( @{ $buff{$_[0]} }, "$_[1]\n" );
 }
 
-sub Pick {
-    local($mode,$name,$pipe) = @_;
-    $fh = $name;
-    open($name,$mode.$name.$pipe) unless $opened{$name}++;
+sub dump_buffer 
+{
+	my($buffer) = @_;
+	print '/* ', $buffer, ' */',"\n";
+	my $ref = $buff{$buffer};
+	print @$ref;
 }
+
+sub dump_fields 
+{
+	my ( $mode, $flds, $ln ) = @_;
+	my $len = scalar(@$flds);
+
+	if ( $mode == 0 ) 
+	{
+		#Normal
+		add_to_buffer( 'rules', $ln );
+		if ( $feature_not_supported == 1 ) 
+		{
+			# we found an unsupported feature, but we have to
+			# filter out ExecuteStmt: CREATE OptTemp TABLE ...
+			# because the warning there is only valid in some situations
+			if ( $flds->[0] ne 'create' || $flds->[2] ne 'table' ) 
+			{
+				add_to_buffer( 'rules', 
+					'mmerror(PARSE_ERROR, ET_WARNING, "unsupported feature will be passed to server");'
+				);
+			}
+			$feature_not_supported = 0;
+		}
+
+		if ( $len == 0 ) 
+		{
+			# We have no fields ?
+			add_to_buffer( 'rules', ' $$=EMPTY; }' );
+		} 
+		else 
+		{
+			# Go through each field and try to 'aggregate' the tokens 
+			# into a single 'mm_strdup' where possible
+			my @flds_new;
+			my $str;
+			for ( my $z = 0 ; $z < $len ; $z++ ) 
+			{
+				if ( substr( $flds->[$z], 0, 1 ) eq '$' ) 
+				{
+					push(@flds_new, $flds->[$z]);
+					next;
+				}
+
+				$str = $flds->[$z];
+
+				while (1) 
+				{
+					if ( $z >= $len - 1 || substr( $flds->[ $z + 1 ], 0, 1 ) eq '$' )
+					{
+						# We're at the end...
+						push(@flds_new,  "mm_strdup(\"$str\")");
+						last;
+					}
+					$z++;
+					$str = $str . ' ' . $flds->[$z];
+				}
+			}
+
+			# So - how many fields did we end up with ?
+			$len = scalar(@flds_new);
+			if ( $len == 1 ) 
+			{
+				# Straight assignement
+				$str = ' $$ = ' . $flds_new[0] . ';';
+				add_to_buffer( 'rules', $str );
+			}
+			else 
+			{
+				# Need to concatenate the results to form
+				# our final string
+				$str = ' $$ = cat_str(' . $len . ',' . join(',', @flds_new) . ');';
+				add_to_buffer( 'rules', $str );
+			}
+			add_to_buffer( 'rules', '}' );
+		}
+	}
+	else
+	{
+		# we're in the stmt: rule
+		if ($len)
+		{
+			# or just the statement ...
+			add_to_buffer( 'rules', ' { output_statement($1, 0, ECPGst_normal); }' );
+		}
+		else
+		{
+			add_to_buffer( 'rules', ' { $$ = NULL; }' );
+		}
+	}
+}
+
+
+sub dump_line 
+{
+	my($stmt_mode, $fields) = @_;
+	my $block = $non_term_id . $line;
+	$block =~ tr/ |//d;
+	my $rep = $replace_line{$block};
+	if ($rep)
+	{
+		if ($rep eq 'ignore' ) 
+		{
+			return 0;
+		}
+
+		if ( index( $line, '|' ) != -1 ) 
+		{
+			$line = '| ' . $rep;
+		}
+		else 
+		{
+			$line = $rep;
+		}
+		$block = $non_term_id . $line;
+		$block =~ tr/ |//d;
+	}
+	add_to_buffer( 'rules', $line );
+	my $i = include_addon( 'rules', $block, $fields, $stmt_mode);
+	if ( $i == 0 ) 
+	{
+		dump_fields( $stmt_mode, $fields, ' { ' );
+	}
+	return 1;
+}
+
+=top
+	load addons into cache
+	%addons = { 
+		stmtClosePortalStmt => { 'type' => 'block', 'lines' => [ "{", "if (INFORMIX_MODE)" ..., "}" ] },
+		stmtViewStmt => { 'type' => 'rule', 'lines' => [ "| ECPGAllocateDescr", ... ] }
+	}
+
+=cut
+sub preload_addons
+{
+	my $filename = $path . "/ecpg.addons";
+	open(my $fh, '<', $filename) or die;
+	# there may be multple lines starting ECPG: and then multiple lines of code.
+	# the code need to be add to all prior ECPG records.
+	my (@needsRules, @code, $record);
+	# there may be comments before the first ECPG line, skip them
+	my $skip = 1;
+	while ( <$fh> ) 
+	{
+		if (/^ECPG:\s(\S+)\s?(\w+)?/)
+		{
+			$skip = 0;
+			if (@code)
+			{
+				for my $x (@needsRules)
+				{
+					push(@{ $x->{lines} }, @code);
+				}
+				@code = ();
+				@needsRules = ();
+			}
+			$record = {};
+			$record->{type} = $2;
+			$record->{lines} = [];
+			if (exists $addons{$1}) { die "Ga! there are dups!\n"; }
+			$addons{$1} = $record;
+			push(@needsRules, $record);
+		} 
+		else
+		{
+			next if $skip;
+			push(@code, $_);
+		}
+	}
+	close($fh);
+	if (@code)
+	{
+		for my $x (@needsRules)
+		{
+			push(@{ $x->{lines} }, @code);
+		}
+	}
+}
+
+
