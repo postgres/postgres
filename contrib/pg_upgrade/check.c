@@ -16,6 +16,7 @@ static void check_old_cluster_has_new_cluster_dbs(void);
 static void check_locale_and_encoding(ControlData *oldctrl,
 						  ControlData *newctrl);
 static void check_is_super_user(ClusterInfo *cluster);
+static void check_for_prepared_transactions(ClusterInfo *cluster);
 static void check_for_isn_and_int8_passing_mismatch(ClusterInfo *cluster);
 static void check_for_reg_data_type_usage(ClusterInfo *cluster);
 
@@ -65,6 +66,7 @@ check_old_cluster(bool live_check,
 	 * Check for various failure cases
 	 */
 	check_is_super_user(&old_cluster);
+	check_for_prepared_transactions(&old_cluster);
 	check_for_reg_data_type_usage(&old_cluster);
 	check_for_isn_and_int8_passing_mismatch(&old_cluster);
 
@@ -117,6 +119,7 @@ check_new_cluster(void)
 	get_db_and_rel_infos(&new_cluster);
 
 	check_new_cluster_is_empty();
+	check_for_prepared_transactions(&new_cluster);
 	check_old_cluster_has_new_cluster_dbs();
 
 	check_loadable_libraries();
@@ -497,6 +500,36 @@ check_is_super_user(ClusterInfo *cluster)
 	if (PQntuples(res) != 1 || strcmp(PQgetvalue(res, 0, 0), "t") != 0)
 		pg_log(PG_FATAL, "database user \"%s\" is not a superuser\n",
 			   os_info.user);
+
+	PQclear(res);
+
+	PQfinish(conn);
+
+	check_ok();
+}
+
+
+/*
+ *	check_for_prepared_transactions()
+ *
+ *	Make sure there are no prepared transactions because the storage format
+ *	might have changed.
+ */
+static void
+check_for_prepared_transactions(ClusterInfo *cluster)
+{
+	PGresult   *res;
+	PGconn	   *conn = connectToServer(cluster, "template1");
+
+	prep_status("Checking for prepared transactions");
+
+	res = executeQueryOrDie(conn,
+							"SELECT * "
+							"FROM pg_catalog.pg_prepared_xact()");
+
+	if (PQntuples(res) != 0)
+		pg_log(PG_FATAL, "The %s cluster contains prepared transactions\n",
+			   CLUSTER_NAME(cluster));
 
 	PQclear(res);
 
