@@ -369,11 +369,11 @@ static const SchemaQuery Query_for_list_of_updatables = {
 	NULL
 };
 
-static const SchemaQuery Query_for_list_of_tisvf = {
+static const SchemaQuery Query_for_list_of_relations = {
 	/* catname */
 	"pg_catalog.pg_class c",
 	/* selcondition */
-	"c.relkind IN ('r', 'i', 'S', 'v', 'f')",
+	NULL,
 	/* viscondition */
 	"pg_catalog.pg_table_is_visible(c.oid)",
 	/* namespace */
@@ -2826,7 +2826,7 @@ psql_completion(char *text, int start, int end)
 
 	/* must be at end of \d list */
 	else if (strncmp(prev_wd, "\\d", strlen("\\d")) == 0)
-		COMPLETE_WITH_SCHEMA_QUERY(Query_for_list_of_tisvf, NULL);
+		COMPLETE_WITH_SCHEMA_QUERY(Query_for_list_of_relations, NULL);
 
 	else if (strcmp(prev_wd, "\\ef") == 0)
 		COMPLETE_WITH_SCHEMA_QUERY(Query_for_list_of_functions, NULL);
