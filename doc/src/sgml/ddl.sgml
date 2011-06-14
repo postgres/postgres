@@ -2320,7 +2320,8 @@ VALUES ('New York', NULL, NULL, 'NY');
      <para>
       Bulk loads and deletes can be accomplished by adding or removing
       partitions, if that requirement is planned into the partitioning design.
-      <command>ALTER TABLE</> is far faster than a bulk operation.
+      <command>ALTER TABLE NO INHERIT</> and <command>DROP TABLE</> are
+      both far faster than a bulk operation.
       It also entirely avoids the <command>VACUUM</command>
       overhead caused by a bulk <command>DELETE</>.
      </para>
