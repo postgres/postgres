@@ -73,7 +73,7 @@ maintainer-clean: distclean
 	rm -f specparse.c specscanner.c
 
 installcheck: all
-	./pg_isolation_regress --psqldir=$(PSQLDIR) --inputdir=$(srcdir) --schedule=$(srcdir)/isolation_schedule
+	./pg_isolation_regress --psqldir="$(PSQLDIR)" --inputdir=$(srcdir) --schedule=$(srcdir)/isolation_schedule
 
 # We can't support "make check" because isolationtester requires libpq, and
 # in fact (on typical platforms using shared libraries) requires libpq to
