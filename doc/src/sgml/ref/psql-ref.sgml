@@ -2770,18 +2770,16 @@ bar
         <term><varname>ON_ERROR_STOP</varname></term>
         <listitem>
         <para>
-        By default, if non-interactive scripts encounter an error, such
-        as a malformed <acronym>SQL</acronym> command or internal
-        meta-command, processing continues. This has been the
-        traditional behavior of <application>psql</application> but it
-        is sometimes not desirable. If this variable is set, script
-        processing will immediately terminate. If the script was called
-        from another script it will terminate in the same fashion. If
-        the outermost script was not called from an interactive
-        <application>psql</application> session but rather using the
-        <option>-f</option> option, <application>psql</application> will
-        return error code 3, to distinguish this case from fatal error
-        conditions (error code 1).
+        By default, command processing continues after an error.  When this
+        variale is set, it will instead stop immediately.  In interactive mode,
+        <application>psql</application> will return to the command prompt;
+        otherwise, <application>psql</application> will exit, returning
+        error code 3 to distinguish this case from fatal error
+        conditions, which are reported using error code 1.  In either case,
+        any currently running scripts (the toplevel script, if any, and any
+        other scripts which it may have in invoked) will be terminated
+        immediately.  If the toplevel command string contained multiple SQL
+        commands, processing will stop with the current command.
         </para>
         </listitem>
       </varlistentry>
