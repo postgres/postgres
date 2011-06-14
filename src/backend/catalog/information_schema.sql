@@ -274,7 +274,7 @@ CREATE VIEW attributes AS
            CAST(pg_get_expr(ad.adbin, ad.adrelid) AS character_data) AS attribute_default,
            CAST(CASE WHEN a.attnotnull OR (t.typtype = 'd' AND t.typnotnull) THEN 'NO' ELSE 'YES' END
              AS yes_or_no)
-             AS is_nullable,
+             AS is_nullable, -- This column was apparently removed between SQL:2003 and SQL:2008.
 
            CAST(
              CASE WHEN t.typelem <> 0 AND t.typlen = -1 THEN 'ARRAY'
