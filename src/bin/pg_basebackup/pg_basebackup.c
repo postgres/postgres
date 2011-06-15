@@ -264,7 +264,7 @@ ReceiveTarFile(PGconn *conn, PGresult *res, int rownum)
 		if (strcmp(basedir, "-") == 0)
 		{
 #ifdef HAVE_LIBZ
-			if (compresslevel > 0)
+			if (compresslevel != 0)
 			{
 				ztarfile = gzdopen(dup(fileno(stdout)), "wb");
 				if (gzsetparams(ztarfile, compresslevel, Z_DEFAULT_STRATEGY) != Z_OK)
@@ -281,7 +281,7 @@ ReceiveTarFile(PGconn *conn, PGresult *res, int rownum)
 		else
 		{
 #ifdef HAVE_LIBZ
-			if (compresslevel > 0)
+			if (compresslevel != 0)
 			{
 				snprintf(fn, sizeof(fn), "%s/base.tar.gz", basedir);
 				ztarfile = gzopen(fn, "wb");
@@ -305,7 +305,7 @@ ReceiveTarFile(PGconn *conn, PGresult *res, int rownum)
 		 * Specific tablespace
 		 */
 #ifdef HAVE_LIBZ
-		if (compresslevel > 0)
+		if (compresslevel != 0)
 		{
 			snprintf(fn, sizeof(fn), "%s/%s.tar.gz", basedir, PQgetvalue(res, rownum, 0));
 			ztarfile = gzopen(fn, "wb");
@@ -325,7 +325,7 @@ ReceiveTarFile(PGconn *conn, PGresult *res, int rownum)
 	}
 
 #ifdef HAVE_LIBZ
-	if (compresslevel > 0)
+	if (compresslevel != 0)
 	{
 		if (!ztarfile)
 		{
@@ -976,7 +976,7 @@ main(int argc, char **argv)
 		}
 	}
 
-	while ((c = getopt_long(argc, argv, "D:F:l:Z:c:h:p:U:xwWvP",
+	while ((c = getopt_long(argc, argv, "D:F:xl:zZ:c:h:p:U:wWvP",
 							long_options, &option_index)) != -1)
 	{
 		switch (c)
@@ -1089,7 +1089,7 @@ main(int argc, char **argv)
 	/*
 	 * Mutually exclusive arguments
 	 */
-	if (format == 'p' && compresslevel > 0)
+	if (format == 'p' && compresslevel != 0)
 	{
 		fprintf(stderr,
 				_("%s: only tar mode backups can be compressed\n"),
@@ -1100,7 +1100,7 @@ main(int argc, char **argv)
 	}
 
 #ifndef HAVE_LIBZ
-	if (compresslevel > 0)
+	if (compresslevel != 0)
 	{
 		fprintf(stderr,
 				_("%s: this build does not support compression\n"),
