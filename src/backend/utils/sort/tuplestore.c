@@ -570,7 +570,8 @@ tuplestore_puttuple(Tuplestorestate *state, HeapTuple tuple)
 	MemoryContext oldcxt = MemoryContextSwitchTo(state->context);
 
 	/*
-	 * Copy the tuple.	(Must do this even in WRITEFILE case.)
+	 * Copy the tuple.  (Must do this even in WRITEFILE case.  Note that
+	 * COPYTUP includes USEMEM, so we needn't do that here.)
 	 */
 	tuple = COPYTUP(state, tuple);
 
@@ -580,9 +581,8 @@ tuplestore_puttuple(Tuplestorestate *state, HeapTuple tuple)
 }
 
 /*
- * Similar to tuplestore_puttuple(), but start from the values + nulls
- * array. This avoids requiring that the caller construct a HeapTuple,
- * saving a copy.
+ * Similar to tuplestore_puttuple(), but work from values + nulls arrays.
+ * This avoids an extra tuple-construction operation.
  */
 void
 tuplestore_putvalues(Tuplestorestate *state, TupleDesc tdesc,
@@ -592,6 +592,7 @@ tuplestore_putvalues(Tuplestorestate *state, TupleDesc tdesc,
 	MemoryContext oldcxt = MemoryContextSwitchTo(state->context);
 
 	tuple = heap_form_minimal_tuple(tdesc, values, isnull);
+	USEMEM(state, GetMemoryChunkSpace(tuple));
 
 	tuplestore_puttuple_common(state, (void *) tuple);
 
