@@ -42,9 +42,8 @@ ALTER TABLE <replaceable class="PARAMETER">name</replaceable>
     ALTER [ COLUMN ] <replaceable class="PARAMETER">column</replaceable> SET ( <replaceable class="PARAMETER">attribute_option</replaceable> = <replaceable class="PARAMETER">value</replaceable> [, ... ] )
     ALTER [ COLUMN ] <replaceable class="PARAMETER">column</replaceable> RESET ( <replaceable class="PARAMETER">attribute_option</replaceable> [, ... ] )
     ALTER [ COLUMN ] <replaceable class="PARAMETER">column</replaceable> SET STORAGE { PLAIN | EXTERNAL | EXTENDED | MAIN }
-    ADD <replaceable class="PARAMETER">table_constraint</replaceable>
-    ADD <replaceable class="PARAMETER">table_constraint_using_index</replaceable>
     ADD <replaceable class="PARAMETER">table_constraint</replaceable> [ NOT VALID ]
+    ADD <replaceable class="PARAMETER">table_constraint_using_index</replaceable>
     VALIDATE CONSTRAINT <replaceable class="PARAMETER">constraint_name</replaceable>
     DROP CONSTRAINT [ IF EXISTS ]  <replaceable class="PARAMETER">constraint_name</replaceable> [ RESTRICT | CASCADE ]
     DISABLE TRIGGER [ <replaceable class="PARAMETER">trigger_name</replaceable> | ALL | USER ]
@@ -235,27 +234,21 @@ ALTER TABLE <replaceable class="PARAMETER">name</replaceable>
    </varlistentry>
 
    <varlistentry>
-    <term><literal>ADD <replaceable class="PARAMETER">table_constraint</replaceable>
-          [ NOT VALID ]</literal></term>
+    <term><literal>ADD <replaceable class="PARAMETER">table_constraint</replaceable> [ NOT VALID ]</literal></term>
     <listitem>
      <para>
       This form adds a new constraint to a table using the same syntax as
-      <xref linkend="SQL-CREATETABLE">. Newly added foreign key constraints can
-      also be defined as <literal>NOT VALID</literal> to avoid the
-      potentially lengthy initial check that must otherwise be performed.
-      Constraint checks are skipped at create table time, so
-      <xref linkend="SQL-CREATETABLE"> does not contain this option.
-     </para>
-    </listitem>
-   </varlistentry>
-
-   <varlistentry>
-    <term><literal>VALIDATE CONSTRAINT</literal></term>
-    <listitem>
-     <para>
-      This form validates a foreign key constraint that was previously created
-      as <literal>NOT VALID</literal>. Constraints already marked valid do not
-      cause an error response.
+      <xref linkend="SQL-CREATETABLE">, plus the option <literal>NOT
+      VALID</literal>, which is currently only allowed for foreign key
+      constraints.
+      If the constraint is marked <literal>NOT VALID</literal>, the
+      potentially-lengthy initial check to verify that all rows in the table
+      satisfy the constraint is skipped.  The constraint will still be
+      enforced against subsequent inserts or updates (that is, they'll fail
+      unless there is a matching row in the referenced table).  But the
+      database will not assume that the constraint holds for all rows in
+      the table, until it is validated by using the <literal>VALIDATE
+      CONSTRAINT</literal> option.
      </para>
     </listitem>
    </varlistentry>
@@ -308,6 +301,21 @@ ALTER TABLE <replaceable class="PARAMETER">name</replaceable>
        official constraint using this syntax.  See the example below.
       </para>
      </note>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><literal>VALIDATE CONSTRAINT</literal></term>
+    <listitem>
+     <para>
+      This form validates a foreign key constraint that was previously created
+      as <literal>NOT VALID</literal>, by scanning the table to ensure there
+      are no unmatched rows.  Nothing happens if the constraint is
+      already marked valid.
+      The value of separating validation from initial creation of the
+      constraint is that validation requires a lesser lock on the table
+      than constraint creation does.
+     </para>
     </listitem>
    </varlistentry>
 

@@ -1006,6 +1006,8 @@ ConvertTriggerToFK(CreateTrigStmt *stmt, Oid funcoid)
 		}
 		fkcon->deferrable = stmt->deferrable;
 		fkcon->initdeferred = stmt->initdeferred;
+		fkcon->skip_validation = false;
+		fkcon->initially_valid = true;
 
 		/* ... and execute it */
 		ProcessUtility((Node *) atstmt,

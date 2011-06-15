@@ -1898,7 +1898,8 @@
       <entry><structfield>convalidated</structfield></entry>
       <entry><type>bool</type></entry>
       <entry></entry>
-      <entry>Has the constraint been validated? Can only be false for foreign keys</entry>
+      <entry>Has the constraint been validated?
+       Currently, can only be false for foreign keys</entry>
      </row>
 
      <row>

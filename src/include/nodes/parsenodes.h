@@ -1221,7 +1221,7 @@ typedef enum AlterTableType
 	AT_DropInherit,				/* NO INHERIT parent */
 	AT_AddOf,					/* OF <type_name> */
 	AT_DropOf,					/* NOT OF */
-	AT_GenericOptions,			/* OPTIONS (...) */
+	AT_GenericOptions			/* OPTIONS (...) */
 } AlterTableType;
 
 typedef struct AlterTableCmd	/* one subcommand of an ALTER TABLE */
@@ -1234,7 +1234,6 @@ typedef struct AlterTableCmd	/* one subcommand of an ALTER TABLE */
 								 * constraint, or parent table */
 	DropBehavior behavior;		/* RESTRICT or CASCADE for DROP cases */
 	bool		missing_ok;		/* skip error if missing? */
-	bool		validated;
 } AlterTableCmd;
 
 
@@ -1469,8 +1468,9 @@ typedef struct CreateStmt
  *
  * If skip_validation is true then we skip checking that the existing rows
  * in the table satisfy the constraint, and just install the catalog entries
- * for the constraint.	This is currently used only during CREATE TABLE
- * (when we know the table must be empty).
+ * for the constraint.  A new FK constraint is marked as valid iff
+ * initially_valid is true.  (Usually skip_validation and initially_valid
+ * are inverses, but we can set both true if the table is known empty.)
  *
  * Constraint attributes (DEFERRABLE etc) are initially represented as
  * separate Constraint nodes for simplicity of parsing.  parse_utilcmd.c makes
@@ -1544,7 +1544,7 @@ typedef struct Constraint
 	char		fk_upd_action;	/* ON UPDATE action */
 	char		fk_del_action;	/* ON DELETE action */
 	bool		skip_validation;	/* skip validation of existing rows? */
-	bool		initially_valid;	/* start the new constraint as valid */
+	bool		initially_valid;	/* mark the new constraint as valid? */
 } Constraint;
 
 /* ----------------------
@@ -2417,7 +2417,7 @@ typedef enum VacuumOption
 	VACOPT_VERBOSE = 1 << 2,	/* print progress info */
 	VACOPT_FREEZE = 1 << 3,		/* FREEZE option */
 	VACOPT_FULL = 1 << 4,		/* FULL (non-concurrent) vacuum */
-	VACOPT_NOWAIT = 1 << 5
+	VACOPT_NOWAIT = 1 << 5		/* don't wait to get lock (autovacuum only) */
 } VacuumOption;
 
 typedef struct VacuumStmt

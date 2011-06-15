@@ -1751,7 +1751,8 @@ transformFKConstraints(CreateStmtContext *cxt,
 
 	/*
 	 * If CREATE TABLE or adding a column with NULL default, we can safely
-	 * skip validation of the constraint.
+	 * skip validation of FK constraints, and nonetheless mark them valid.
+	 * (This will override any user-supplied NOT VALID flag.)
 	 */
 	if (skipValidation)
 	{
