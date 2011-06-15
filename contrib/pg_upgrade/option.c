@@ -288,21 +288,19 @@ or\n"), old_cluster.port, new_cluster.port, os_info.user);
  * user hasn't provided the required directory name.
  */
 static void
-validateDirectoryOption(char **dirpath,
-					char *envVarName, char *cmdLineOption, char *description)
+validateDirectoryOption(char **dirpath, char *envVarName,
+						char *cmdLineOption, char *description)
 {
-	if (*dirpath == NULL || (strlen(*dirpath) == 0))
+	if (*dirpath == NULL || strlen(*dirpath) == 0)
 	{
 		const char *envVar;
 
 		if ((envVar = getenv(envVarName)) && strlen(envVar))
 			*dirpath = pg_strdup(envVar);
 		else
-		{
 			pg_log(PG_FATAL, "You must identify the directory where the %s\n"
 				   "Please use the %s command-line option or the %s environment variable\n",
 				   description, cmdLineOption, envVarName);
-		}
 	}
 
 	/*
