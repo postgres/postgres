@@ -274,7 +274,8 @@ heapgetpage(HeapScanDesc scan, BlockNumber page)
 			else
 				valid = HeapTupleSatisfiesVisibility(&loctup, snapshot, buffer);
 
-			CheckForSerializableConflictOut(valid, scan->rs_rd, &loctup, buffer);
+			CheckForSerializableConflictOut(valid, scan->rs_rd, &loctup,
+											buffer, snapshot);
 
 			if (valid)
 				scan->rs_vistuples[ntup++] = lineoff;
@@ -469,7 +470,8 @@ heapgettup(HeapScanDesc scan,
 													 snapshot,
 													 scan->rs_cbuf);
 
-				CheckForSerializableConflictOut(valid, scan->rs_rd, tuple, scan->rs_cbuf);
+				CheckForSerializableConflictOut(valid, scan->rs_rd, tuple,
+												scan->rs_cbuf, snapshot);
 
 				if (valid && key != NULL)
 					HeapKeyTest(tuple, RelationGetDescr(scan->rs_rd),
@@ -478,7 +480,7 @@ heapgettup(HeapScanDesc scan,
 				if (valid)
 				{
 					if (!scan->rs_relpredicatelocked)
-						PredicateLockTuple(scan->rs_rd, tuple);
+						PredicateLockTuple(scan->rs_rd, tuple, snapshot);
 					LockBuffer(scan->rs_cbuf, BUFFER_LOCK_UNLOCK);
 					return;
 				}
@@ -747,7 +749,7 @@ heapgettup_pagemode(HeapScanDesc scan,
 				if (valid)
 				{
 					if (!scan->rs_relpredicatelocked)
-						PredicateLockTuple(scan->rs_rd, tuple);
+						PredicateLockTuple(scan->rs_rd, tuple, scan->rs_snapshot);
 					scan->rs_cindex = lineindex;
 					return;
 				}
@@ -755,7 +757,7 @@ heapgettup_pagemode(HeapScanDesc scan,
 			else
 			{
 				if (!scan->rs_relpredicatelocked)
-					PredicateLockTuple(scan->rs_rd, tuple);
+					PredicateLockTuple(scan->rs_rd, tuple, scan->rs_snapshot);
 				scan->rs_cindex = lineindex;
 				return;
 			}
@@ -1470,9 +1472,9 @@ heap_fetch(Relation relation,
 	valid = HeapTupleSatisfiesVisibility(tuple, snapshot, buffer);
 
 	if (valid)
-		PredicateLockTuple(relation, tuple);
+		PredicateLockTuple(relation, tuple, snapshot);
 
-	CheckForSerializableConflictOut(valid, relation, tuple, buffer);
+	CheckForSerializableConflictOut(valid, relation, tuple, buffer, snapshot);
 
 	LockBuffer(buffer, BUFFER_LOCK_UNLOCK);
 
@@ -1588,11 +1590,12 @@ heap_hot_search_buffer(ItemPointer tid, Relation relation, Buffer buffer,
 
 		/* If it's visible per the snapshot, we must return it */
 		valid = HeapTupleSatisfiesVisibility(&heapTuple, snapshot, buffer);
-		CheckForSerializableConflictOut(valid, relation, &heapTuple, buffer);
+		CheckForSerializableConflictOut(valid, relation, &heapTuple, buffer,
+										snapshot);
 		if (valid)
 		{
 			ItemPointerSetOffsetNumber(tid, offnum);
-			PredicateLockTuple(relation, &heapTuple);
+			PredicateLockTuple(relation, &heapTuple, snapshot);
 			if (all_dead)
 				*all_dead = false;
 			return true;
@@ -1750,7 +1753,7 @@ heap_get_latest_tid(Relation relation,
 		 * result candidate.
 		 */
 		valid = HeapTupleSatisfiesVisibility(&tp, snapshot, buffer);
-		CheckForSerializableConflictOut(valid, relation, &tp, buffer);
+		CheckForSerializableConflictOut(valid, relation, &tp, buffer, snapshot);
 		if (valid)
 			*tid = ctid;
 

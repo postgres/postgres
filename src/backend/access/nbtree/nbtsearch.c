@@ -64,10 +64,7 @@ _bt_search(Relation rel, int keysz, ScanKey scankey, bool nextkey,
 
 	/* If index is empty and access = BT_READ, no root page is created. */
 	if (!BufferIsValid(*bufP))
-	{
-		PredicateLockRelation(rel);		/* Nothing finer to lock exists. */
 		return (BTStack) NULL;
-	}
 
 	/* Loop iterates once per level descended in the tree */
 	for (;;)
@@ -92,11 +89,7 @@ _bt_search(Relation rel, int keysz, ScanKey scankey, bool nextkey,
 		page = BufferGetPage(*bufP);
 		opaque = (BTPageOpaque) PageGetSpecialPointer(page);
 		if (P_ISLEAF(opaque))
-		{
-			if (access == BT_READ)
-				PredicateLockPage(rel, BufferGetBlockNumber(*bufP));
 			break;
-		}
 
 		/*
 		 * Find the appropriate item on the internal page, and get the child
@@ -855,9 +848,16 @@ _bt_first(IndexScanDesc scan, ScanDirection dir)
 
 	if (!BufferIsValid(buf))
 	{
-		/* Only get here if index is completely empty */
+		/*
+		 * We only get here if the index is completely empty.
+		 * Lock relation because nothing finer to lock exists.
+		 */
+		PredicateLockRelation(rel, scan->xs_snapshot);
 		return false;
 	}
+	else
+		PredicateLockPage(rel, BufferGetBlockNumber(buf),
+						  scan->xs_snapshot);
 
 	/* initialize moreLeft/moreRight appropriately for scan direction */
 	if (ScanDirectionIsForward(dir))
@@ -1153,7 +1153,7 @@ _bt_steppage(IndexScanDesc scan, ScanDirection dir)
 			opaque = (BTPageOpaque) PageGetSpecialPointer(page);
 			if (!P_IGNORE(opaque))
 			{
-				PredicateLockPage(rel, blkno);
+				PredicateLockPage(rel, blkno, scan->xs_snapshot);
 				/* see if there are any matches on this page */
 				/* note that this will clear moreRight if we can stop */
 				if (_bt_readpage(scan, dir, P_FIRSTDATAKEY(opaque)))
@@ -1201,7 +1201,7 @@ _bt_steppage(IndexScanDesc scan, ScanDirection dir)
 			opaque = (BTPageOpaque) PageGetSpecialPointer(page);
 			if (!P_IGNORE(opaque))
 			{
-				PredicateLockPage(rel, BufferGetBlockNumber(so->currPos.buf));
+				PredicateLockPage(rel, BufferGetBlockNumber(so->currPos.buf), scan->xs_snapshot);
 				/* see if there are any matches on this page */
 				/* note that this will clear moreLeft if we can stop */
 				if (_bt_readpage(scan, dir, PageGetMaxOffsetNumber(page)))
@@ -1363,11 +1363,7 @@ _bt_get_endpoint(Relation rel, uint32 level, bool rightmost)
 		buf = _bt_gettrueroot(rel);
 
 	if (!BufferIsValid(buf))
-	{
-		/* empty index... */
-		PredicateLockRelation(rel);		/* Nothing finer to lock exists. */
 		return InvalidBuffer;
-	}
 
 	page = BufferGetPage(buf);
 	opaque = (BTPageOpaque) PageGetSpecialPointer(page);
@@ -1444,13 +1440,16 @@ _bt_endpoint(IndexScanDesc scan, ScanDirection dir)
 
 	if (!BufferIsValid(buf))
 	{
-		/* empty index... */
-		PredicateLockRelation(rel);		/* Nothing finer to lock exists. */
+		/*
+		 * Empty index. Lock the whole relation, as nothing finer to lock
+		 * exists.
+		 */
+		PredicateLockRelation(rel, scan->xs_snapshot);
 		so->currPos.buf = InvalidBuffer;
 		return false;
 	}
 
-	PredicateLockPage(rel, BufferGetBlockNumber(buf));
+	PredicateLockPage(rel, BufferGetBlockNumber(buf), scan->xs_snapshot);
 	page = BufferGetPage(buf);
 	opaque = (BTPageOpaque) PageGetSpecialPointer(page);
 	Assert(P_ISLEAF(opaque));

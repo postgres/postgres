@@ -148,9 +148,11 @@
  * predicate lock maintenance
  *		RegisterSerializableTransaction(Snapshot snapshot)
  *		RegisterPredicateLockingXid(void)
- *		PredicateLockRelation(Relation relation)
- *		PredicateLockPage(Relation relation, BlockNumber blkno)
- *		PredicateLockTuple(Relation relation, HeapTuple tuple)
+ *		PredicateLockRelation(Relation relation, Snapshot snapshot)
+ *		PredicateLockPage(Relation relation, BlockNumber blkno,
+ *						Snapshot snapshot)
+ *		PredicateLockTuple(Relation relation, HeapTuple tuple,
+ *						Snapshot snapshot)
  *		PredicateLockPageSplit(Relation relation, BlockNumber oldblkno,
  *							   BlockNumber newblkno);
  *		PredicateLockPageCombine(Relation relation, BlockNumber oldblkno,
@@ -160,7 +162,8 @@
  *
  * conflict detection (may also trigger rollback)
  *		CheckForSerializableConflictOut(bool visible, Relation relation,
- *										HeapTupleData *tup, Buffer buffer)
+ *										HeapTupleData *tup, Buffer buffer,
+ *										Snapshot snapshot)
  *		CheckForSerializableConflictIn(Relation relation, HeapTupleData *tup,
  *									   Buffer buffer)
  *		CheckTableForSerializableConflictIn(Relation relation)
@@ -257,26 +260,6 @@
 #define SxactIsROSafe(sxact) (((sxact)->flags & SXACT_FLAG_RO_SAFE) != 0)
 #define SxactIsROUnsafe(sxact) (((sxact)->flags & SXACT_FLAG_RO_UNSAFE) != 0)
 #define SxactIsMarkedForDeath(sxact) (((sxact)->flags & SXACT_FLAG_MARKED_FOR_DEATH) != 0)
-
-/*
- * Is this relation exempt from predicate locking? We don't do predicate
- * locking on system or temporary relations.
- */
-#define SkipPredicateLocksForRelation(relation) \
-	(((relation)->rd_id < FirstBootstrapObjectId) \
-	|| RelationUsesLocalBuffers(relation))
-
-/*
- * When a public interface method is called for serializing a relation within
- * the current transaction, this is the test to see if we should do a quick
- * return.
- */
-#define SkipSerialization(relation) \
-	((!IsolationIsSerializable()) \
-	|| ((MySerializableXact == InvalidSerializableXact)) \
-	|| ReleasePredicateLocksIfROSafe() \
-	|| SkipPredicateLocksForRelation(relation))
-
 
 /*
  * Compute the hash code associated with a PREDICATELOCKTARGETTAG.
@@ -444,7 +427,6 @@ static void PredicateLockAcquire(const PREDICATELOCKTARGETTAG *targettag);
 static void DropAllPredicateLocksFromTable(const Relation relation,
 							   bool transfer);
 static void SetNewSxactGlobalXmin(void);
-static bool ReleasePredicateLocksIfROSafe(void);
 static void ClearOldPredicateLocks(void);
 static void ReleaseOneSerializableXact(SERIALIZABLEXACT *sxact, bool partial,
 						   bool summarize);
@@ -453,6 +435,91 @@ static void CheckTargetForConflictsIn(PREDICATELOCKTARGETTAG *targettag);
 static void FlagRWConflict(SERIALIZABLEXACT *reader, SERIALIZABLEXACT *writer);
 static void OnConflict_CheckForSerializationFailure(const SERIALIZABLEXACT *reader,
 										SERIALIZABLEXACT *writer);
+
+
+/*------------------------------------------------------------------------*/
+
+/*
+ * Does this relation participate in predicate locking? Temporary and system
+ * relations are exempt.
+ */
+static inline bool
+PredicateLockingNeededForRelation(Relation relation)
+{
+	return !(relation->rd_id < FirstBootstrapObjectId ||
+			 RelationUsesLocalBuffers(relation));
+}
+
+/*
+ * When a public interface method is called for a read, this is the test to
+ * see if we should do a quick return.
+ *
+ * Note: this function has side-effects! If this transaction has been flagged
+ * as RO-safe since the last call, we release all predicate locks and reset
+ * MySerializableXact. That makes subsequent calls to return quickly.
+ *
+ * This is marked as 'inline' to make to eliminate the function call overhead
+ * in the common case that serialization is not needed.
+ */
+static inline bool
+SerializationNeededForRead(Relation relation, Snapshot snapshot)
+{
+	/* Nothing to do if this is not a serializable transaction */
+	if (MySerializableXact == InvalidSerializableXact)
+		return false;
+
+	/*
+	 * Don't acquire locks or conflict when scanning with a special snapshot.
+	 * This excludes things like CLUSTER and REINDEX. They use the wholesale
+	 * functions TransferPredicateLocksToHeapRelation() and
+	 * CheckTableForSerializableConflictIn() to participate serialization, but
+	 * the scans involved don't need serialization.
+	 */
+	if (!IsMVCCSnapshot(snapshot))
+		return false;
+
+	/*
+	 * Check if we have just become "RO-safe". If we have, immediately release
+	 * all locks as they're not needed anymore. This also resets
+	 * MySerializableXact, so that subsequent calls to this function can exit
+	 * quickly.
+	 *
+	 * A transaction is flagged as RO_SAFE if all concurrent R/W
+	 * transactions commit without having conflicts out to an earlier
+	 * snapshot, thus ensuring that no conflicts are possible for this
+	 * transaction.
+	 */
+	if (SxactIsROSafe(MySerializableXact))
+	{
+		ReleasePredicateLocks(false);
+		return false;
+	}
+
+	/* Check if the relation doesn't participate in predicate locking */
+	if (!PredicateLockingNeededForRelation(relation))
+		return false;
+
+	return true;	/* no excuse to skip predicate locking */
+}
+
+/*
+ * Like SerializationNeededForRead(), but called on writes.
+ * The logic is the same, but there is no snapshot and we can't be RO-safe.
+ */
+static inline bool
+SerializationNeededForWrite(Relation relation)
+{
+	/* Nothing to do if this is not a serializable transaction */
+	if (MySerializableXact == InvalidSerializableXact)
+		return false;
+
+	/* Check if the relation doesn't participate in predicate locking */
+	if (!PredicateLockingNeededForRelation(relation))
+		return false;
+
+	return true;	/* no excuse to skip predicate locking */
+}
+
 
 /*------------------------------------------------------------------------*/
 
@@ -2244,11 +2311,11 @@ PredicateLockAcquire(const PREDICATELOCKTARGETTAG *targettag)
  * Clear any finer-grained predicate locks this session has on the relation.
  */
 void
-PredicateLockRelation(const Relation relation)
+PredicateLockRelation(const Relation relation, const Snapshot snapshot)
 {
 	PREDICATELOCKTARGETTAG tag;
 
-	if (SkipSerialization(relation))
+	if (!SerializationNeededForRead(relation, snapshot))
 		return;
 
 	SET_PREDICATELOCKTARGETTAG_RELATION(tag,
@@ -2267,11 +2334,12 @@ PredicateLockRelation(const Relation relation)
  * Clear any finer-grained predicate locks this session has on the relation.
  */
 void
-PredicateLockPage(const Relation relation, const BlockNumber blkno)
+PredicateLockPage(const Relation relation, const BlockNumber blkno,
+				  const Snapshot snapshot)
 {
 	PREDICATELOCKTARGETTAG tag;
 
-	if (SkipSerialization(relation))
+	if (!SerializationNeededForRead(relation, snapshot))
 		return;
 
 	SET_PREDICATELOCKTARGETTAG_PAGE(tag,
@@ -2289,13 +2357,14 @@ PredicateLockPage(const Relation relation, const BlockNumber blkno)
  * Skip if this is a temporary table.
  */
 void
-PredicateLockTuple(const Relation relation, const HeapTuple tuple)
+PredicateLockTuple(const Relation relation, const HeapTuple tuple,
+				   const Snapshot snapshot)
 {
 	PREDICATELOCKTARGETTAG tag;
 	ItemPointer tid;
 	TransactionId targetxmin;
 
-	if (SkipSerialization(relation))
+	if (!SerializationNeededForRead(relation, snapshot))
 		return;
 
 	/*
@@ -2666,7 +2735,7 @@ DropAllPredicateLocksFromTable(const Relation relation, bool transfer)
 	if (!TransactionIdIsValid(PredXact->SxactGlobalXmin))
 		return;
 
-	if (SkipPredicateLocksForRelation(relation))
+	if (!PredicateLockingNeededForRelation(relation))
 		return;
 
 	dbId = relation->rd_node.dbNode;
@@ -2881,7 +2950,7 @@ PredicateLockPageSplit(const Relation relation, const BlockNumber oldblkno,
 	if (!TransactionIdIsValid(PredXact->SxactGlobalXmin))
 		return;
 
-	if (SkipPredicateLocksForRelation(relation))
+	if (!PredicateLockingNeededForRelation(relation))
 		return;
 
 	Assert(oldblkno != newblkno);
@@ -3311,30 +3380,6 @@ ReleasePredicateLocks(const bool isCommit)
 }
 
 /*
- * ReleasePredicateLocksIfROSafe
- *		Check if the current transaction is read only and operating on
- *		a safe snapshot. If so, release predicate locks and return
- *		true.
- *
- * A transaction is flagged as RO_SAFE if all concurrent R/W
- * transactions commit without having conflicts out to an earlier
- * snapshot, thus ensuring that no conflicts are possible for this
- * transaction. Thus, we call this function as part of the
- * SkipSerialization check on all public interface methods.
- */
-static bool
-ReleasePredicateLocksIfROSafe(void)
-{
-	if (SxactIsROSafe(MySerializableXact))
-	{
-		ReleasePredicateLocks(false);
-		return true;
-	}
-	else
-		return false;
-}
-
-/*
  * Clear old predicate locks, belonging to committed transactions that are no
  * longer interesting to any in-progress transaction.
  */
@@ -3679,7 +3724,8 @@ XidIsConcurrent(TransactionId xid)
  */
 void
 CheckForSerializableConflictOut(const bool visible, const Relation relation,
-								const HeapTuple tuple, const Buffer buffer)
+								const HeapTuple tuple, const Buffer buffer,
+								const Snapshot snapshot)
 {
 	TransactionId xid;
 	SERIALIZABLEXIDTAG sxidtag;
@@ -3687,7 +3733,7 @@ CheckForSerializableConflictOut(const bool visible, const Relation relation,
 	SERIALIZABLEXACT *sxact;
 	HTSV_Result htsvResult;
 
-	if (SkipSerialization(relation))
+	if (!SerializationNeededForRead(relation, snapshot))
 		return;
 
 	if (SxactIsMarkedForDeath(MySerializableXact))
@@ -4064,7 +4110,7 @@ CheckForSerializableConflictIn(const Relation relation, const HeapTuple tuple,
 {
 	PREDICATELOCKTARGETTAG targettag;
 
-	if (SkipSerialization(relation))
+	if (!SerializationNeededForWrite(relation))
 		return;
 
 	if (SxactIsMarkedForDeath(MySerializableXact))
@@ -4160,7 +4206,7 @@ CheckTableForSerializableConflictIn(const Relation relation)
 	if (!TransactionIdIsValid(PredXact->SxactGlobalXmin))
 		return;
 
-	if (SkipSerialization(relation))
+	if (!SerializationNeededForWrite(relation))
 		return;
 
 	/*

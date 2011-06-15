@@ -113,7 +113,8 @@ SeqRecheck(SeqScanState *node, TupleTableSlot *slot)
 TupleTableSlot *
 ExecSeqScan(SeqScanState *node)
 {
-	PredicateLockRelation(node->ss_currentRelation);
+	PredicateLockRelation(node->ss_currentRelation,
+						  node->ss_currentScanDesc->rs_snapshot);
 	node->ss_currentScanDesc->rs_relpredicatelocked = true;
 	return ExecScan((ScanState *) node,
 					(ExecScanAccessMtd) SeqNext,

@@ -44,16 +44,17 @@ extern bool PageIsPredicateLocked(const Relation relation, const BlockNumber blk
 /* predicate lock maintenance */
 extern Snapshot RegisterSerializableTransaction(Snapshot snapshot);
 extern void RegisterPredicateLockingXid(const TransactionId xid);
-extern void PredicateLockRelation(const Relation relation);
-extern void PredicateLockPage(const Relation relation, const BlockNumber blkno);
-extern void PredicateLockTuple(const Relation relation, const HeapTuple tuple);
+extern void PredicateLockRelation(const Relation relation, const Snapshot snapshot);
+extern void PredicateLockPage(const Relation relation, const BlockNumber blkno, const Snapshot snapshot);
+extern void PredicateLockTuple(const Relation relation, const HeapTuple tuple, const Snapshot snapshot);
 extern void PredicateLockPageSplit(const Relation relation, const BlockNumber oldblkno, const BlockNumber newblkno);
 extern void PredicateLockPageCombine(const Relation relation, const BlockNumber oldblkno, const BlockNumber newblkno);
 extern void TransferPredicateLocksToHeapRelation(const Relation relation);
 extern void ReleasePredicateLocks(const bool isCommit);
 
 /* conflict detection (may also trigger rollback) */
-extern void CheckForSerializableConflictOut(const bool valid, const Relation relation, const HeapTuple tuple, const Buffer buffer);
+extern void CheckForSerializableConflictOut(const bool valid, const Relation relation, const HeapTuple tuple,
+											const Buffer buffer, const Snapshot snapshot);
 extern void CheckForSerializableConflictIn(const Relation relation, const HeapTuple tuple, const Buffer buffer);
 extern void CheckTableForSerializableConflictIn(const Relation relation);
 
