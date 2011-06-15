@@ -258,7 +258,7 @@ static void AlterIndexNamespaces(Relation classRel, Relation rel,
 static void AlterSeqNamespaces(Relation classRel, Relation rel,
 				   Oid oldNspOid, Oid newNspOid,
 				   const char *newNspName, LOCKMODE lockmode);
-static void ATExecValidateConstraint(Relation rel, const char *constrName);
+static void ATExecValidateConstraint(Relation rel, char *constrName);
 static int transformColumnNameList(Oid relId, List *colList,
 						int16 *attnums, Oid *atttypids);
 static int transformFkeyGetPrimaryKey(Relation pkrel, Oid *indexOid,
@@ -5726,9 +5726,9 @@ ATAddForeignKeyConstraint(AlteredTableInfo *tab, Relation rel,
 	createForeignKeyTriggers(rel, fkconstraint, constrOid, indexOid);
 
 	/*
-	 * Tell Phase 3 to check that the constraint is satisfied by existing rows
-	 * We can skip this during table creation or if requested explicitly by
-	 * specifying NOT VALID on an alter table statement.
+	 * Tell Phase 3 to check that the constraint is satisfied by existing rows.
+	 * We can skip this during table creation, or if requested explicitly by
+	 * specifying NOT VALID in an ADD FOREIGN KEY command.
 	 */
 	if (!fkconstraint->skip_validation)
 	{
@@ -5755,7 +5755,7 @@ ATAddForeignKeyConstraint(AlteredTableInfo *tab, Relation rel,
  * ALTER TABLE VALIDATE CONSTRAINT
  */
 static void
-ATExecValidateConstraint(Relation rel, const char *constrName)
+ATExecValidateConstraint(Relation rel, char *constrName)
 {
 	Relation	conrel;
 	SysScanDesc scan;
@@ -5810,7 +5810,7 @@ ATExecValidateConstraint(Relation rel, const char *constrName)
 		 */
 		refrel = heap_open(con->confrelid, RowShareLock);
 
-		validateForeignKeyConstraint((char *) constrName, rel, refrel,
+		validateForeignKeyConstraint(constrName, rel, refrel,
 									 con->conindid,
 									 conid);
 
@@ -5829,6 +5829,7 @@ ATExecValidateConstraint(Relation rel, const char *constrName)
 
 	heap_close(conrel, RowExclusiveLock);
 }
+
 
 /*
  * transformColumnNameList - transform list of column names

@@ -207,12 +207,6 @@ ECPG: CopyStmtCOPYopt_binaryqualified_nameopt_column_listopt_oidscopy_fromcopy_f
 ECPG: CopyStmtCOPYselect_with_parensTOcopy_file_nameopt_withcopy_options addon
 			if (strcmp($4, "stdin") == 0)
 				mmerror(PARSE_ERROR, ET_ERROR, "COPY TO STDIN is not possible");
-ECPG: ConstraintAttributeSpecConstraintDeferrabilitySpecConstraintTimeSpec addon
-			if (strcmp($1, "deferrable") != 0 && strcmp($2, "initially deferrable") == 0 )
-				mmerror(PARSE_ERROR, ET_ERROR, "constraint declared INITIALLY DEFERRED must be DEFERRABLE");
-ECPG: ConstraintAttributeSpecConstraintTimeSpecConstraintDeferrabilitySpec addon
-			if (strcmp($2, "deferrable") != 0 && strcmp($1, "initially deferrable") == 0 )
-				mmerror(PARSE_ERROR, ET_ERROR, "constraint declared INITIALLY DEFERRED must be DEFERRABLE");
 ECPG: var_valueNumericOnly addon
 		if ($1[0] == '$')
 		{
