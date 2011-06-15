@@ -244,9 +244,9 @@
 
 #define SxactIsOnFinishedList(sxact) (!SHMQueueIsDetached(&((sxact)->finishedLink)))
 
-#define SxactIsPrepared(sxact) (((sxact)->flags & SXACT_FLAG_PREPARED) != 0)
 #define SxactIsCommitted(sxact) (((sxact)->flags & SXACT_FLAG_COMMITTED) != 0)
-#define SxactIsRolledBack(sxact) (((sxact)->flags & SXACT_FLAG_ROLLED_BACK) != 0)
+#define SxactIsPrepared(sxact) (((sxact)->flags & SXACT_FLAG_PREPARED) != 0)
+#define SxactIsDoomed(sxact) (((sxact)->flags & SXACT_FLAG_DOOMED) != 0)
 #define SxactIsReadOnly(sxact) (((sxact)->flags & SXACT_FLAG_READ_ONLY) != 0)
 #define SxactHasSummaryConflictIn(sxact) (((sxact)->flags & SXACT_FLAG_SUMMARY_CONFLICT_IN) != 0)
 #define SxactHasSummaryConflictOut(sxact) (((sxact)->flags & SXACT_FLAG_SUMMARY_CONFLICT_OUT) != 0)
@@ -259,7 +259,6 @@
 #define SxactIsDeferrableWaiting(sxact) (((sxact)->flags & SXACT_FLAG_DEFERRABLE_WAITING) != 0)
 #define SxactIsROSafe(sxact) (((sxact)->flags & SXACT_FLAG_RO_SAFE) != 0)
 #define SxactIsROUnsafe(sxact) (((sxact)->flags & SXACT_FLAG_RO_UNSAFE) != 0)
-#define SxactIsMarkedForDeath(sxact) (((sxact)->flags & SXACT_FLAG_MARKED_FOR_DEATH) != 0)
 
 /*
  * Compute the hash code associated with a PREDICATELOCKTARGETTAG.
@@ -609,8 +608,8 @@ RWConflictExists(const SERIALIZABLEXACT *reader, const SERIALIZABLEXACT *writer)
 	Assert(reader != writer);
 
 	/* Check the ends of the purported conflict first. */
-	if (SxactIsRolledBack(reader)
-		|| SxactIsRolledBack(writer)
+	if (SxactIsDoomed(reader)
+		|| SxactIsDoomed(writer)
 		|| SHMQueueEmpty(&reader->outConflicts)
 		|| SHMQueueEmpty(&writer->inConflicts))
 		return false;
@@ -3048,7 +3047,7 @@ SetNewSxactGlobalXmin(void)
 
 	for (sxact = FirstPredXact(); sxact != NULL; sxact = NextPredXact(sxact))
 	{
-		if (!SxactIsRolledBack(sxact)
+		if (!SxactIsDoomed(sxact)
 			&& !SxactIsCommitted(sxact)
 			&& sxact != OldCommittedSxact)
 		{
@@ -3113,7 +3112,7 @@ ReleasePredicateLocks(const bool isCommit)
 	}
 
 	Assert(!isCommit || SxactIsPrepared(MySerializableXact));
-	Assert(!SxactIsRolledBack(MySerializableXact));
+	Assert(!isCommit || !SxactIsDoomed(MySerializableXact));
 	Assert(!SxactIsCommitted(MySerializableXact));
 
 	/* may not be serializable during COMMIT/ROLLBACK PREPARED */
@@ -3153,9 +3152,7 @@ ReleasePredicateLocks(const bool isCommit)
 			MySerializableXact->flags |= SXACT_FLAG_READ_ONLY;
 	}
 	else
-	{
-		MySerializableXact->flags |= SXACT_FLAG_ROLLED_BACK;
-	}
+		MySerializableXact->flags |= SXACT_FLAG_DOOMED;
 
 	if (!topLevelIsDeclaredReadOnly)
 	{
@@ -3531,7 +3528,7 @@ ReleaseOneSerializableXact(SERIALIZABLEXACT *sxact, bool partial,
 				nextConflict;
 
 	Assert(sxact != NULL);
-	Assert(SxactIsRolledBack(sxact) || SxactIsCommitted(sxact));
+	Assert(SxactIsDoomed(sxact) || SxactIsCommitted(sxact));
 	Assert(LWLockHeldByMe(SerializableFinishedListLock));
 
 	/*
@@ -3736,7 +3733,8 @@ CheckForSerializableConflictOut(const bool visible, const Relation relation,
 	if (!SerializationNeededForRead(relation, snapshot))
 		return;
 
-	if (SxactIsMarkedForDeath(MySerializableXact))
+	/* Check if someone else has already decided that we need to die */
+	if (SxactIsDoomed(MySerializableXact))
 	{
 		ereport(ERROR,
 				(errcode(ERRCODE_T_R_SERIALIZATION_FAILURE),
@@ -3850,11 +3848,9 @@ CheckForSerializableConflictOut(const bool visible, const Relation relation,
 	}
 	sxact = sxid->myXact;
 	Assert(TransactionIdEquals(sxact->topXid, xid));
-	if (sxact == MySerializableXact
-		|| SxactIsRolledBack(sxact)
-		|| SxactIsMarkedForDeath(sxact))
+	if (sxact == MySerializableXact || SxactIsDoomed(sxact))
 	{
-		/* We can't conflict with our own transaction or one rolled back. */
+		/* Can't conflict with ourself or a transaction that will roll back. */
 		LWLockRelease(SerializableXactHashLock);
 		return;
 	}
@@ -3869,7 +3865,7 @@ CheckForSerializableConflictOut(const bool visible, const Relation relation,
 	{
 		if (!SxactIsPrepared(sxact))
 		{
-			sxact->flags |= SXACT_FLAG_MARKED_FOR_DEATH;
+			sxact->flags |= SXACT_FLAG_DOOMED;
 			LWLockRelease(SerializableXactHashLock);
 			return;
 		}
@@ -3996,7 +3992,7 @@ CheckTargetForConflictsIn(PREDICATELOCKTARGETTAG *targettag)
 				mypredlocktag = predlock->tag;
 			}
 		}
-		else if (!SxactIsRolledBack(sxact)
+		else if (!SxactIsDoomed(sxact)
 				 && (!SxactIsCommitted(sxact)
 					 || TransactionIdPrecedes(GetTransactionSnapshot()->xmin,
 											  sxact->finishedBefore))
@@ -4009,7 +4005,7 @@ CheckTargetForConflictsIn(PREDICATELOCKTARGETTAG *targettag)
 			 * Re-check after getting exclusive lock because the other
 			 * transaction may have flagged a conflict.
 			 */
-			if (!SxactIsRolledBack(sxact)
+			if (!SxactIsDoomed(sxact)
 				&& (!SxactIsCommitted(sxact)
 					|| TransactionIdPrecedes(GetTransactionSnapshot()->xmin,
 											 sxact->finishedBefore))
@@ -4113,7 +4109,8 @@ CheckForSerializableConflictIn(const Relation relation, const HeapTuple tuple,
 	if (!SerializationNeededForWrite(relation))
 		return;
 
-	if (SxactIsMarkedForDeath(MySerializableXact))
+	/* Check if someone else has already decided that we need to die */
+	if (SxactIsDoomed(MySerializableXact))
 		ereport(ERROR,
 				(errcode(ERRCODE_T_R_SERIALIZATION_FAILURE),
 				 errmsg("could not serialize access due to read/write dependencies among transactions"),
@@ -4417,7 +4414,7 @@ OnConflict_CheckForSerializationFailure(const SERIALIZABLEXACT *reader,
 		{
 			SERIALIZABLEXACT *t0 = conflict->sxactOut;
 
-			if (!SxactIsRolledBack(t0)
+			if (!SxactIsDoomed(t0)
 				&& (!SxactIsCommitted(t0)
 					|| t0->commitSeqNo >= writer->commitSeqNo)
 				&& (!SxactIsReadOnly(t0)
@@ -4464,7 +4461,7 @@ OnConflict_CheckForSerializationFailure(const SERIALIZABLEXACT *reader,
 					 errdetail("Cancelled on conflict out to pivot %u, during read.", writer->topXid),
 					 errhint("The transaction might succeed if retried.")));
 		}
-		writer->flags |= SXACT_FLAG_MARKED_FOR_DEATH;
+		writer->flags |= SXACT_FLAG_DOOMED;
 	}
 }
 
@@ -4496,7 +4493,8 @@ PreCommit_CheckForSerializationFailure(void)
 
 	LWLockAcquire(SerializableXactHashLock, LW_EXCLUSIVE);
 
-	if (SxactIsMarkedForDeath(MySerializableXact))
+	/* Check if someone else has already decided that we need to die */
+	if (SxactIsDoomed(MySerializableXact))
 	{
 		LWLockRelease(SerializableXactHashLock);
 		ereport(ERROR,
@@ -4513,8 +4511,7 @@ PreCommit_CheckForSerializationFailure(void)
 	while (nearConflict)
 	{
 		if (!SxactIsCommitted(nearConflict->sxactOut)
-			&& !SxactIsRolledBack(nearConflict->sxactOut)
-			&& !SxactIsMarkedForDeath(nearConflict->sxactOut))
+			&& !SxactIsDoomed(nearConflict->sxactOut))
 		{
 			RWConflict	farConflict;
 
@@ -4527,10 +4524,9 @@ PreCommit_CheckForSerializationFailure(void)
 				if (farConflict->sxactOut == MySerializableXact
 					|| (!SxactIsCommitted(farConflict->sxactOut)
 						&& !SxactIsReadOnly(farConflict->sxactOut)
-						&& !SxactIsRolledBack(farConflict->sxactOut)
-						&& !SxactIsMarkedForDeath(farConflict->sxactOut)))
+						&& !SxactIsDoomed(farConflict->sxactOut)))
 				{
-					nearConflict->sxactOut->flags |= SXACT_FLAG_MARKED_FOR_DEATH;
+					nearConflict->sxactOut->flags |= SXACT_FLAG_DOOMED;
 					break;
 				}
 				farConflict = (RWConflict)
