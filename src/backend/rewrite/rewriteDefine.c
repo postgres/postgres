@@ -60,7 +60,6 @@ InsertRule(char *rulname,
 {
 	char	   *evqual = nodeToString(event_qual);
 	char	   *actiontree = nodeToString((Node *) action);
-	int			i;
 	Datum		values[Natts_pg_rewrite];
 	bool		nulls[Natts_pg_rewrite];
 	bool		replaces[Natts_pg_rewrite];
@@ -78,16 +77,15 @@ InsertRule(char *rulname,
 	 */
 	MemSet(nulls, false, sizeof(nulls));
 
-	i = 0;
 	namestrcpy(&rname, rulname);
-	values[i++] = NameGetDatum(&rname); /* rulename */
-	values[i++] = ObjectIdGetDatum(eventrel_oid);		/* ev_class */
-	values[i++] = Int16GetDatum(evslot_index);	/* ev_attr */
-	values[i++] = CharGetDatum(evtype + '0');	/* ev_type */
-	values[i++] = CharGetDatum(RULE_FIRES_ON_ORIGIN);	/* ev_enabled */
-	values[i++] = BoolGetDatum(evinstead);		/* is_instead */
-	values[i++] = CStringGetTextDatum(evqual);	/* ev_qual */
-	values[i++] = CStringGetTextDatum(actiontree);		/* ev_action */
+	values[Anum_pg_rewrite_rulename - 1] = NameGetDatum(&rname);
+	values[Anum_pg_rewrite_ev_class - 1] = ObjectIdGetDatum(eventrel_oid);
+	values[Anum_pg_rewrite_ev_attr - 1] = Int16GetDatum(evslot_index);
+	values[Anum_pg_rewrite_ev_type - 1] = CharGetDatum(evtype + '0');
+	values[Anum_pg_rewrite_ev_enabled - 1] = CharGetDatum(RULE_FIRES_ON_ORIGIN);
+	values[Anum_pg_rewrite_is_instead - 1] = BoolGetDatum(evinstead);
+	values[Anum_pg_rewrite_ev_qual - 1] = CStringGetTextDatum(evqual);
+	values[Anum_pg_rewrite_ev_action - 1] = CStringGetTextDatum(actiontree);
 
 	/*
 	 * Ready to store new pg_rewrite tuple

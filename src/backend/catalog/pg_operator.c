@@ -234,22 +234,21 @@ OperatorShellMake(const char *operatorName,
 	 * initialize values[] with the operator name and input data types. Note
 	 * that oprcode is set to InvalidOid, indicating it's a shell.
 	 */
-	i = 0;
 	namestrcpy(&oname, operatorName);
-	values[i++] = NameGetDatum(&oname); /* oprname */
-	values[i++] = ObjectIdGetDatum(operatorNamespace);	/* oprnamespace */
-	values[i++] = ObjectIdGetDatum(GetUserId());		/* oprowner */
-	values[i++] = CharGetDatum(leftTypeId ? (rightTypeId ? 'b' : 'r') : 'l');	/* oprkind */
-	values[i++] = BoolGetDatum(false);	/* oprcanmerge */
-	values[i++] = BoolGetDatum(false);	/* oprcanhash */
-	values[i++] = ObjectIdGetDatum(leftTypeId); /* oprleft */
-	values[i++] = ObjectIdGetDatum(rightTypeId);		/* oprright */
-	values[i++] = ObjectIdGetDatum(InvalidOid); /* oprresult */
-	values[i++] = ObjectIdGetDatum(InvalidOid); /* oprcom */
-	values[i++] = ObjectIdGetDatum(InvalidOid); /* oprnegate */
-	values[i++] = ObjectIdGetDatum(InvalidOid); /* oprcode */
-	values[i++] = ObjectIdGetDatum(InvalidOid); /* oprrest */
-	values[i++] = ObjectIdGetDatum(InvalidOid); /* oprjoin */
+	values[Anum_pg_operator_oprname - 1] = NameGetDatum(&oname);
+	values[Anum_pg_operator_oprnamespace - 1] = ObjectIdGetDatum(operatorNamespace);
+	values[Anum_pg_operator_oprowner - 1] = ObjectIdGetDatum(GetUserId());
+	values[Anum_pg_operator_oprkind - 1] = CharGetDatum(leftTypeId ? (rightTypeId ? 'b' : 'r') : 'l');
+	values[Anum_pg_operator_oprcanmerge - 1] = BoolGetDatum(false);
+	values[Anum_pg_operator_oprcanhash - 1] = BoolGetDatum(false);
+	values[Anum_pg_operator_oprleft - 1] = ObjectIdGetDatum(leftTypeId);
+	values[Anum_pg_operator_oprright - 1] = ObjectIdGetDatum(rightTypeId);
+	values[Anum_pg_operator_oprresult - 1] = ObjectIdGetDatum(InvalidOid);
+	values[Anum_pg_operator_oprcom - 1] = ObjectIdGetDatum(InvalidOid);
+	values[Anum_pg_operator_oprnegate - 1] = ObjectIdGetDatum(InvalidOid);
+	values[Anum_pg_operator_oprcode - 1] = ObjectIdGetDatum(InvalidOid);
+	values[Anum_pg_operator_oprrest - 1] = ObjectIdGetDatum(InvalidOid);
+	values[Anum_pg_operator_oprjoin - 1] = ObjectIdGetDatum(InvalidOid);
 
 	/*
 	 * open pg_operator
@@ -492,22 +491,21 @@ OperatorCreate(const char *operatorName,
 		nulls[i] = false;
 	}
 
-	i = 0;
 	namestrcpy(&oname, operatorName);
-	values[i++] = NameGetDatum(&oname); /* oprname */
-	values[i++] = ObjectIdGetDatum(operatorNamespace);	/* oprnamespace */
-	values[i++] = ObjectIdGetDatum(GetUserId());		/* oprowner */
-	values[i++] = CharGetDatum(leftTypeId ? (rightTypeId ? 'b' : 'r') : 'l');	/* oprkind */
-	values[i++] = BoolGetDatum(canMerge);		/* oprcanmerge */
-	values[i++] = BoolGetDatum(canHash);		/* oprcanhash */
-	values[i++] = ObjectIdGetDatum(leftTypeId); /* oprleft */
-	values[i++] = ObjectIdGetDatum(rightTypeId);		/* oprright */
-	values[i++] = ObjectIdGetDatum(operResultType);		/* oprresult */
-	values[i++] = ObjectIdGetDatum(commutatorId);		/* oprcom */
-	values[i++] = ObjectIdGetDatum(negatorId);	/* oprnegate */
-	values[i++] = ObjectIdGetDatum(procedureId);		/* oprcode */
-	values[i++] = ObjectIdGetDatum(restrictionId);		/* oprrest */
-	values[i++] = ObjectIdGetDatum(joinId);		/* oprjoin */
+	values[Anum_pg_operator_oprname - 1] = NameGetDatum(&oname);
+	values[Anum_pg_operator_oprnamespace - 1] = ObjectIdGetDatum(operatorNamespace);
+	values[Anum_pg_operator_oprowner - 1] = ObjectIdGetDatum(GetUserId());
+	values[Anum_pg_operator_oprkind - 1] = CharGetDatum(leftTypeId ? (rightTypeId ? 'b' : 'r') : 'l');
+	values[Anum_pg_operator_oprcanmerge - 1] = BoolGetDatum(canMerge);
+	values[Anum_pg_operator_oprcanhash - 1] = BoolGetDatum(canHash);
+	values[Anum_pg_operator_oprleft - 1] = ObjectIdGetDatum(leftTypeId);
+	values[Anum_pg_operator_oprright - 1] = ObjectIdGetDatum(rightTypeId);
+	values[Anum_pg_operator_oprresult - 1] = ObjectIdGetDatum(operResultType);
+	values[Anum_pg_operator_oprcom - 1] = ObjectIdGetDatum(commutatorId);
+	values[Anum_pg_operator_oprnegate - 1] = ObjectIdGetDatum(negatorId);
+	values[Anum_pg_operator_oprcode - 1] = ObjectIdGetDatum(procedureId);
+	values[Anum_pg_operator_oprrest - 1] = ObjectIdGetDatum(restrictionId);
+	values[Anum_pg_operator_oprjoin - 1] = ObjectIdGetDatum(joinId);
 
 	pg_operator_desc = heap_open(OperatorRelationId, RowExclusiveLock);
 

@@ -157,11 +157,10 @@ CreateComments(Oid oid, Oid classoid, int32 subid, char *comment)
 			nulls[i] = false;
 			replaces[i] = true;
 		}
-		i = 0;
-		values[i++] = ObjectIdGetDatum(oid);
-		values[i++] = ObjectIdGetDatum(classoid);
-		values[i++] = Int32GetDatum(subid);
-		values[i++] = CStringGetTextDatum(comment);
+		values[Anum_pg_description_objoid - 1] = ObjectIdGetDatum(oid);
+		values[Anum_pg_description_classoid - 1] = ObjectIdGetDatum(classoid);
+		values[Anum_pg_description_objsubid - 1] = Int32GetDatum(subid);
+		values[Anum_pg_description_description - 1] = CStringGetTextDatum(comment);
 	}
 
 	/* Use the index to search for a matching old tuple */
@@ -257,10 +256,9 @@ CreateSharedComments(Oid oid, Oid classoid, char *comment)
 			nulls[i] = false;
 			replaces[i] = true;
 		}
-		i = 0;
-		values[i++] = ObjectIdGetDatum(oid);
-		values[i++] = ObjectIdGetDatum(classoid);
-		values[i++] = CStringGetTextDatum(comment);
+		values[Anum_pg_shdescription_objoid - 1] = ObjectIdGetDatum(oid);
+		values[Anum_pg_shdescription_classoid - 1] = ObjectIdGetDatum(classoid);
+		values[Anum_pg_shdescription_description - 1] = CStringGetTextDatum(comment);
 	}
 
 	/* Use the index to search for a matching old tuple */
