@@ -849,8 +849,8 @@ _bt_first(IndexScanDesc scan, ScanDirection dir)
 	if (!BufferIsValid(buf))
 	{
 		/*
-		 * We only get here if the index is completely empty.
-		 * Lock relation because nothing finer to lock exists.
+		 * We only get here if the index is completely empty. Lock relation
+		 * because nothing finer to lock exists.
 		 */
 		PredicateLockRelation(rel, scan->xs_snapshot);
 		return false;

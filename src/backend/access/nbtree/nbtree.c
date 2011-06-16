@@ -29,7 +29,6 @@
 #include "storage/indexfsm.h"
 #include "storage/ipc.h"
 #include "storage/lmgr.h"
-#include "storage/predicate.h"
 #include "storage/smgr.h"
 #include "tcop/tcopprot.h"
 #include "utils/memutils.h"

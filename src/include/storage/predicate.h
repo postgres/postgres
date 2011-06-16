@@ -54,7 +54,7 @@ extern void ReleasePredicateLocks(const bool isCommit);
 
 /* conflict detection (may also trigger rollback) */
 extern void CheckForSerializableConflictOut(const bool valid, const Relation relation, const HeapTuple tuple,
-											const Buffer buffer, const Snapshot snapshot);
+								const Buffer buffer, const Snapshot snapshot);
 extern void CheckForSerializableConflictIn(const Relation relation, const HeapTuple tuple, const Buffer buffer);
 extern void CheckTableForSerializableConflictIn(const Relation relation);
 
