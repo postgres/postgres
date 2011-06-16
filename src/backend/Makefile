@@ -164,27 +164,27 @@ utils/probes.h: utils/probes.d
 # For headers generated during regular builds, we prefer a relative symlink.
 
 $(top_builddir)/src/include/parser/gram.h: parser/gram.h
-	prereqdir=`cd $(dir $<) >/dev/null && pwd` && \
-	  cd $(dir $@) && rm -f $(notdir $@) && \
+	prereqdir=`cd '$(dir $<)' >/dev/null && pwd` && \
+	  cd '$(dir $@)' && rm -f $(notdir $@) && \
 	  $(LN_S) "$$prereqdir/$(notdir $<)" .
 
 $(top_builddir)/src/include/catalog/schemapg.h: catalog/schemapg.h
-	prereqdir=`cd $(dir $<) >/dev/null && pwd` && \
-	  cd $(dir $@) && rm -f $(notdir $@) && \
+	prereqdir=`cd '$(dir $<)' >/dev/null && pwd` && \
+	  cd '$(dir $@)' && rm -f $(notdir $@) && \
 	  $(LN_S) "$$prereqdir/$(notdir $<)" .
 
 $(top_builddir)/src/include/utils/errcodes.h: utils/errcodes.h
-	cd $(dir $@) && rm -f $(notdir $@) && \
-	    $(LN_S) ../../../$(subdir)/utils/errcodes.h .
+	cd '$(dir $@)' && rm -f $(notdir $@) && \
+	    $(LN_S) "../../../$(subdir)/utils/errcodes.h" .
 
 $(top_builddir)/src/include/utils/fmgroids.h: utils/fmgroids.h
-	prereqdir=`cd $(dir $<) >/dev/null && pwd` && \
-	  cd $(dir $@) && rm -f $(notdir $@) && \
+	prereqdir=`cd '$(dir $<)' >/dev/null && pwd` && \
+	  cd '$(dir $@)' && rm -f $(notdir $@) && \
 	  $(LN_S) "$$prereqdir/$(notdir $<)" .
 
 $(top_builddir)/src/include/utils/probes.h: utils/probes.h
-	cd $(dir $@) && rm -f $(notdir $@) && \
-	    $(LN_S) ../../../$(subdir)/utils/probes.h .
+	cd '$(dir $@)' && rm -f $(notdir $@) && \
+	    $(LN_S) "../../../$(subdir)/utils/probes.h" .
 
 
 utils/probes.o: utils/probes.d $(SUBDIROBJS)

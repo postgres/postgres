@@ -263,7 +263,7 @@ X = @EXEEXT@
 
 ifneq (@PERL@,)
     # quoted to protect pathname with spaces
-    PERL		= "@PERL@"
+    PERL		= '@PERL@'
 else
     PERL		= $(missing) perl
 endif
@@ -437,7 +437,7 @@ endif
 pg_regress_locale_flags = $(if $(ENCODING),--encoding=$(ENCODING)) $(NOLOCALE)
 
 pg_regress_check = $(top_builddir)/src/test/regress/pg_regress --inputdir=$(srcdir) --temp-install=./tmp_check --top-builddir=$(top_builddir) $(pg_regress_locale_flags)
-pg_regress_installcheck = $(top_builddir)/src/test/regress/pg_regress --inputdir=$(srcdir) --psqldir="$(PSQLDIR)" $(pg_regress_locale_flags)
+pg_regress_installcheck = $(top_builddir)/src/test/regress/pg_regress --inputdir=$(srcdir) --psqldir='$(PSQLDIR)' $(pg_regress_locale_flags)
 
 pg_regress_clean_files = results/ regression.diffs regression.out tmp_check/ log/
 

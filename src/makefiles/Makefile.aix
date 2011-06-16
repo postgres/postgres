@@ -9,9 +9,9 @@ AROPT = crs
 libpath := $(shell echo $(subst -L,:,$(filter -L/%,$(LDFLAGS))) | sed -e's/ //g'):/usr/lib:/lib
 
 ifeq ($(host_os), aix3.2.5)
-	rpath = -L$(rpathdir)
+	rpath = -L'$(rpathdir)'
 else
-	rpath = -Wl,-blibpath:$(rpathdir)$(libpath)
+	rpath = -Wl,-blibpath:'$(rpathdir)$(libpath)'
 endif
 
 DLSUFFIX = .so
