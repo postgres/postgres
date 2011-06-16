@@ -144,7 +144,7 @@ typedef struct GISTENTRY
 typedef struct
 {
 	int32		n;				/* number of elements */
-	GISTENTRY	vector[1];		/* variable-length array */
+	GISTENTRY	vector[FLEXIBLE_ARRAY_MEMBER];
 } GistEntryVector;
 
 #define GEVHDRSZ	(offsetof(GistEntryVector, vector))
