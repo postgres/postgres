@@ -677,6 +677,7 @@ bool
 _bt_page_recyclable(Page page)
 {
 	BTPageOpaque opaque;
+	TransactionId cutoff;
 
 	/*
 	 * It's possible to find an all-zeroes page in an index --- for example, a
@@ -689,11 +690,18 @@ _bt_page_recyclable(Page page)
 
 	/*
 	 * Otherwise, recycle if deleted and too old to have any processes
-	 * interested in it.
+	 * interested in it.  If we are generating records for Hot Standby
+	 * defer page recycling until RecentGlobalXmin to respect user
+	 * controls specified by vacuum_defer_cleanup_age or hot_standby_feedback.
 	 */
+	if (XLogStandbyInfoActive())
+		cutoff = RecentGlobalXmin;
+	else
+		cutoff = RecentXmin;
+
 	opaque = (BTPageOpaque) PageGetSpecialPointer(page);
 	if (P_ISDELETED(opaque) &&
-		TransactionIdPrecedesOrEquals(opaque->btpo.xact, RecentXmin))
+		TransactionIdPrecedesOrEquals(opaque->btpo.xact, cutoff))
 		return true;
 	return false;
 }
