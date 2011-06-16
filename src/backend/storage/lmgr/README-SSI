@@ -51,13 +51,13 @@ if a transaction can be shown to always do the right thing when it is
 run alone (before or after any other transaction), it will always do
 the right thing in any mix of concurrent serializable transactions.
 Where conflicts with other transactions would result in an
-inconsistent state within the database, or an inconsistent view of
+inconsistent state within the database or an inconsistent view of
 the data, a serializable transaction will block or roll back to
 prevent the anomaly. The SQL standard provides a specific SQLSTATE
 for errors generated when a transaction rolls back for this reason,
 so that transactions can be retried automatically.
 
-Before version 9.1 PostgreSQL did not support a full serializable
+Before version 9.1, PostgreSQL did not support a full serializable
 isolation level. A request for serializable transaction isolation
 actually provided snapshot isolation. This has well known anomalies
 which can allow data corruption or inconsistent views of the data
@@ -77,7 +77,7 @@ Serializable Isolation Implementation Strategies
 
 Techniques for implementing full serializable isolation have been
 published and in use in many database products for decades. The
-primary technique which has been used is Strict 2 Phase Locking
+primary technique which has been used is Strict Two-Phase Locking
 (S2PL), which operates by blocking writes against data which has been
 read by concurrent transactions and blocking any access (read or
 write) against data which has been written by concurrent
@@ -112,53 +112,89 @@ visualize the difference between the serializable implementations
 described above, is to consider that among transactions executing at
 the serializable transaction isolation level, the results are
 required to be consistent with some serial (one-at-a-time) execution
-of the transactions[1]. How is that order determined in each?
+of the transactions [1]. How is that order determined in each?
 
-S2PL locks rows used by the transaction in a way which blocks
-conflicting access, so that at the moment of a successful commit it
-is certain that no conflicting access has occurred. Some transactions
-may have blocked, essentially being partially serialized with the
-committing transaction, to allow this. Some transactions may have
-been rolled back, due to cycles in the blocking. But with S2PL,
-transactions can always be viewed as having occurred serially, in the
-order of successful commit.
+In S2PL, each transaction locks any data it accesses. It holds the
+locks until committing, preventing other transactions from making
+conflicting accesses to the same data in the interim. Some
+transactions may have to be rolled back to prevent deadlock. But
+successful transactions can always be viewed as having occurred
+sequentially, in the order they committed.
 
 With snapshot isolation, reads never block writes, nor vice versa, so
-there is much less actual serialization. The order in which
-transactions appear to have executed is determined by something more
-subtle than in S2PL: read/write dependencies. If a transaction
-attempts to read data which is not visible to it because the
-transaction which wrote it (or will later write it) is concurrent
-(one of them was running when the other acquired its snapshot), then
-the reading transaction appears to have executed first, regardless of
-the actual sequence of transaction starts or commits (since it sees a
-database state prior to that in which the other transaction leaves
-it). If one transaction has both rw-dependencies in (meaning that a
-concurrent transaction attempts to read data it writes) and out
-(meaning it attempts to read data a concurrent transaction writes),
-and a couple other conditions are met, there can appear to be a cycle
-in execution order of the transactions. This is when the anomalies
-occur.
+more concurrency is possible. The order in which transactions appear
+to have executed is determined by something more subtle than in S2PL:
+read/write dependencies. If a transaction reads data, it appears to
+execute after the transaction that wrote the data it is reading.
+Similarly, if it updates data, it appears to execute after the
+transaction that wrote the previous version. These dependencies, which
+we call "wr-dependencies" and "ww-dependencies", are consistent with
+the commit order, because the first transaction must have committed
+before the second starts. However, there can also be dependencies
+between two *concurrent* transactions, i.e. where one was running when
+the other acquired its snapshot.  These "rw-conflicts" occur when one
+transaction attempts to read data which is not visible to it because
+the transaction which wrote it (or will later write it) is
+concurrent. The reading transaction appears to have executed first,
+regardless of the actual sequence of transaction starts or commits,
+because it sees a database state prior to that in which the other
+transaction leaves it.
 
-SSI works by watching for the conditions mentioned above, and rolling
-back a transaction when needed to prevent any anomaly. The apparent
-order of execution will always be consistent with any actual
-serialization (i.e., a transaction which run by itself can always be
-considered to have run after any transactions committed before it
-started and before any transacton which starts after it commits); but
-among concurrent transactions it will appear that the transaction on
-the read side of a rw-dependency executed before the transaction on
-the write side.
+Anomalies occur when a cycle is created in the graph of dependencies:
+when a dependency or series of dependencies causes transaction A to
+appear to have executed before transaction B, but another series of
+dependencies causes B to appear before A. If that's the case, then
+the results can't be consistent with any serial execution of the
+transactions.
+
+
+SSI Algorithm
+-------------
+
+Serializable transaction in PostgreSQL are implemented using
+Serializable Snapshot Isolation (SSI), based on the work of Cahill
+et al. Fundamentally, this allows snapshot isolation to run as it
+has, while monitoring for conditions which could create a serialization
+anomaly.
+
+SSI is based on the observation [2] that each snapshot isolation
+anomaly corresponds to a cycle that contains a "dangerous structure"
+of two adjacent rw-conflict edges:
+
+      Tin ------> Tpivot ------> Tout
+            rw             rw
+
+SSI works by watching for this dangerous structure, and rolling
+back a transaction when needed to prevent any anomaly. This means it
+only needs to track rw-conflicts between concurrent transactions, not
+wr- and ww-dependencies. It also means there is a risk of false
+positives, because not every dangerous structure corresponds to an
+actual serialization failure.
+
+The PostgreSQL implementation uses two additional optimizations:
+
+* Tout must commit before any other transaction in the cycle
+  (see proof of Theorem 2.1 of [2]). We only roll back a transaction
+  if Tout commits before Tpivot and Tin.
+
+* if Tin is read-only, there can only be an anomaly if Tout committed
+  before Tin takes its snapshot. This optimization is an original
+  one. Proof:
+
+  - Because there is a cycle, there must be some transaction T0 that
+    precedes Tin in the serial order. (T0 might be the same as Tout).
+
+  - The dependency between T0 and Tin can't be a rw-conflict,
+    because Tin was read-only, so it must be a wr-dependency.
+    Those can only occur if T0 committed before Tin started.
+
+  - Because Tout must commit before any other transaction in the
+    cycle, it must commit before T0 commits -- and thus before Tin
+    starts.
 
 
 PostgreSQL Implementation
 -------------------------
-
-The implementation of serializable transactions for PostgreSQL is
-accomplished through Serializable Snapshot Isolation (SSI), based on
-the work of Cahill, et al.  Fundamentally, this allows snapshot
-isolation to run as it has, while monitoring for conditions which
-could create a serialization anomaly.
 
     * Since this technique is based on Snapshot Isolation (SI), those
 areas in PostgreSQL which don't use SI can't be brought under SSI.
@@ -180,7 +216,7 @@ lock or to use SELECT FOR SHARE or SELECT FOR UPDATE.
     * Those who want to continue to use snapshot isolation without
 the additional protections of SSI (and the associated costs of
 enforcing those protections), can use the REPEATABLE READ transaction
-isolation level.  This level will retain its legacy behavior, which
+isolation level.  This level retains its legacy behavior, which
 is identical to the old SERIALIZABLE implementation and fully
 consistent with the standard's requirements for the REPEATABLE READ
 transaction isolation level.
@@ -236,7 +272,7 @@ in PostgreSQL, but tailored to the needs of SIREAD predicate locking,
 are used.  These refer to physical objects actually accessed in the
 course of executing the query, to model the predicates through
 inference.  Anyone interested in this subject should review the
-Hellerstein, Stonebraker and Hamilton paper[2], along with the
+Hellerstein, Stonebraker and Hamilton paper [3], along with the
 locking papers referenced from that and the Cahill papers.
 
 Because the SIREAD locks don't block, traditional locking techniques
@@ -273,6 +309,15 @@ transaction already holds a write lock on any tuple representing the
 row, since a rw-dependency would also create a ww-dependency which
 has more aggressive enforcement and will thus prevent any anomaly.
 
+    * Modifying a heap tuple creates a rw-conflict with any transaction
+that holds a SIREAD lock on that tuple, or on the page or relation
+that contains it.
+
+    * Inserting a new tuple creates a rw-conflict with any transaction
+holding a SIREAD lock on the entire relation. It doesn't conflict with
+page-level locks, because page-level locks are only used to aggregate
+tuple locks. Unlike index page locks, they don't lock "gaps" on the page.
+
 
 Index AM implementations
 ------------------------
@@ -296,13 +341,13 @@ need not generate a conflict, although an update which "moves" a row
 into the scan must generate a conflict.  While correctness allows
 false positives, they should be minimized for performance reasons.
 
-Several optimizations are possible:
+Several optimizations are possible, though not all implemented yet:
 
     * An index scan which is just finding the right position for an
-index insertion or deletion need not acquire a predicate lock.
+index insertion or deletion needs not acquire a predicate lock.
 
     * An index scan which is comparing for equality on the entire key
-for a unique index need not acquire a predicate lock as long as a key
+for a unique index needs not acquire a predicate lock as long as a key
 is found corresponding to a visible tuple which has not been modified
 by another transaction -- there are no "between or around" gaps to
 cover.
@@ -317,10 +362,10 @@ x = 1 AND x = 2), then no predicate lock is needed.
 
 Other index AM implementation considerations:
 
-    * If a btree search discovers that no root page has yet been
-created, a predicate lock on the index relation is required;
-otherwise btree searches must get to the leaf level to determine
-which tuples match, so predicate locks go there.
+    * B-tree index searches acquire predicate locks only on the
+index *leaf* pages needed to lock the appropriate index range. If,
+however, a search discovers that no root page has yet been created, a
+predicate lock on the index relation is required.
 
     * GiST searches can determine that there are no matches at any
 level of the index, so there must be a predicate lock at each index
@@ -346,11 +391,6 @@ to be added from scratch.
 
    2. The existing in-memory lock structures were not suitable for
 tracking SIREAD locks.
-          * The database products used for the prototype
-implementations for the papers used update-in-place with a rollback
-log for their MVCC implementations, while PostgreSQL leaves the old
-version of a row in place and adds a new tuple to represent the row
-at a new location.
           * In PostgreSQL, tuple level locks are not held in RAM for
 any length of time; lock information is written to the tuples
 involved in the transactions.
@@ -450,18 +490,19 @@ there can't be a rw-conflict from T3 to T0.
 
           o In both cases, we didn't need the T1 -> T3 edge.
 
-    * Predicate locking in PostgreSQL will start at the tuple level
-when possible, with automatic conversion of multiple fine-grained
-locks to coarser granularity as need to avoid resource exhaustion.
-The amount of memory used for these structures will be configurable,
-to balance RAM usage against SIREAD lock granularity.
+    * Predicate locking in PostgreSQL starts at the tuple level
+when possible. Multiple fine-grained locks are promoted to a single
+coarser-granularity lock as needed to avoid resource exhaustion.  The
+amount of memory used for these structures is configurable, to balance
+RAM usage against SIREAD lock granularity.
 
-    * A process-local copy of locks held by a process and the coarser
-covering locks with counts, are kept to support granularity promotion
-decisions with low CPU and locking overhead.
+    * Each backend keeps a process-local table of the locks it holds.
+To support granularity promotion decisions with low CPU and locking
+overhead, this table also includes the coarser covering locks and the
+number of finer-granularity locks they cover.
 
-    * Conflicts will be identified by looking for predicate locks
-when tuples are written and looking at the MVCC information when
+    * Conflicts are identified by looking for predicate locks
+when tuples are written, and by looking at the MVCC information when
 tuples are read. There is no matching between two RAM-based locks.
 
     * Because write locks are stored in the heap tuples rather than a
@@ -493,12 +534,12 @@ to be READ ONLY.)
           o We can more aggressively clean up conflicts, predicate
 locks, and SSI transaction information.
 
-    * Allow a READ ONLY transaction to "opt out" of SSI if there are
+    * We allow a READ ONLY transaction to "opt out" of SSI if there are
 no READ WRITE transactions which could cause the READ ONLY
 transaction to ever become part of a "dangerous structure" of
 overlapping transaction dependencies.
 
-    * Allow the user to request that a READ ONLY transaction wait
+    * We allow the user to request that a READ ONLY transaction wait
 until the conditions are right for it to start in the "opt out" state
 described above. We add a DEFERRABLE state to transactions, which is
 specified and maintained in a way similar to READ ONLY. It is
@@ -538,27 +579,12 @@ address it?
 replication solutions, like Postgres-R, Slony, pgpool, HS/SR, etc.
 This is related to the "WAL file replay" issue.
 
-    * Weak-memory-ordering machines. Make sure that shared memory
-access which involves visibility across multiple transactions uses
-locks as needed to avoid problems. On the other hand, ensure that we
-really need volatile where we're using it.
-http://archives.postgresql.org/pgsql-committers/2008-06/msg00228.php
-
     * UNIQUE btree search for equality on all columns. Since a search
 of a UNIQUE index using equality tests on all columns will lock the
 heap tuple if an entry is found, it appears that there is no need to
 get a predicate lock on the index in that case. A predicate lock is
 still needed for such a search if a matching index entry which points
 to a visible tuple is not found.
-
-    * Planner index probes. To avoid problems with data skew at the
-ends of an index which have historically caused bad plans, the
-planner now probes the end of an index to see what the maximum or
-minimum value is when a query appears to be requesting a range of
-data outside what statistics shows is present. These planner checks
-don't require predicate locking, but there's currently no easy way to
-avoid it. What can we do to avoid predicate locking for such planner
-activity?
 
     * Minimize touching of shared memory. Should lists in shared
 memory push entries which have just been returned to the front of the
@@ -573,13 +599,17 @@ Footnotes
 [1] http://www.contrib.andrew.cmu.edu/~shadow/sql/sql1992.txt
 Search for serial execution to find the relevant section.
 
-[2] http://db.cs.berkeley.edu/papers/fntdb07-architecture.pdf
-Joseph M. Hellerstein, Michael Stonebraker and James Hamilton. 2007.
+[2] A. Fekete et al. Making Snapshot Isolation Serializable. In ACM
+Transactions on Database Systems 30:2, Jun. 2005.
+http://dx.doi.org/10.1145/1071610.1071615
+
+[3] Joseph M. Hellerstein, Michael Stonebraker and James Hamilton. 2007.
 Architecture of a Database System. Foundations and Trends(R) in
 Databases Vol. 1, No. 2 (2007) 141-259.
+http://db.cs.berkeley.edu/papers/fntdb07-architecture.pdf
   Of particular interest:
     * 6.1 A Note on ACID
     * 6.2 A Brief Review of Serializability
     * 6.3 Locking and Latching
     * 6.3.1 Transaction Isolation Levels
-    * 6.5.3 Next-Key Locking: Physical Surrogates for Logical
+    * 6.5.3 Next-Key Locking: Physical Surrogates for Logical Properties
