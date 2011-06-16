@@ -224,6 +224,7 @@ nodeTokenType(char *token, int length)
 
 		errno = 0;
 		val = strtol(token, &endptr, 10);
+		(void) val;				/* avoid compiler warning if unused */
 		if (endptr != token + length || errno == ERANGE
 #ifdef HAVE_LONG_INT_64
 		/* if long > 32 bits, check for overflow of int4 */
