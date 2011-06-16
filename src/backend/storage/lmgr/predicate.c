@@ -483,10 +483,9 @@ SerializationNeededForRead(Relation relation, Snapshot snapshot)
 	 * MySerializableXact, so that subsequent calls to this function can exit
 	 * quickly.
 	 *
-	 * A transaction is flagged as RO_SAFE if all concurrent R/W
-	 * transactions commit without having conflicts out to an earlier
-	 * snapshot, thus ensuring that no conflicts are possible for this
-	 * transaction.
+	 * A transaction is flagged as RO_SAFE if all concurrent R/W transactions
+	 * commit without having conflicts out to an earlier snapshot, thus
+	 * ensuring that no conflicts are possible for this transaction.
 	 */
 	if (SxactIsROSafe(MySerializableXact))
 	{
@@ -498,7 +497,7 @@ SerializationNeededForRead(Relation relation, Snapshot snapshot)
 	if (!PredicateLockingNeededForRelation(relation))
 		return false;
 
-	return true;	/* no excuse to skip predicate locking */
+	return true;				/* no excuse to skip predicate locking */
 }
 
 /*
@@ -516,7 +515,7 @@ SerializationNeededForWrite(Relation relation)
 	if (!PredicateLockingNeededForRelation(relation))
 		return false;
 
-	return true;	/* no excuse to skip predicate locking */
+	return true;				/* no excuse to skip predicate locking */
 }
 
 
