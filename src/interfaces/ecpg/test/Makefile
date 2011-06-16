@@ -5,8 +5,8 @@ top_builddir = ../../../..
 include $(top_builddir)/src/Makefile.global
 
 override CPPFLAGS := \
-	-I$(top_builddir)/src/port \
-	-I$(top_srcdir)/src/test/regress \
+	'-I$(top_builddir)/src/port' \
+	'-I$(top_srcdir)/src/test/regress' \
 	'-DHOST_TUPLE="$(host_tuple)"' \
 	'-DMAKEPROG="$(MAKE)"' \
 	'-DSHELLPROG="$(SHELL)"' \
@@ -84,4 +84,4 @@ checktcp: all
 	./pg_regress  --dbname=regress1,connectdb --top-builddir=$(top_builddir) --temp-install=./tmp_check $(pg_regress_locale_flags) $(THREAD) --schedule=$(srcdir)/ecpg_schedule_tcp --create-role=connectuser,connectdb --host=localhost
 
 installcheck: all
-	./pg_regress  --psqldir="$(PSQLDIR)" --dbname=regress1,connectdb --top-builddir=$(top_builddir) $(pg_regress_locale_flags) $(THREAD) --schedule=$(srcdir)/ecpg_schedule --create-role=connectuser,connectdb
+	./pg_regress  --psqldir='$(PSQLDIR)' --dbname=regress1,connectdb --top-builddir=$(top_builddir) $(pg_regress_locale_flags) $(THREAD) --schedule=$(srcdir)/ecpg_schedule --create-role=connectuser,connectdb
