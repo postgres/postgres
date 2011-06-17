@@ -2771,7 +2771,7 @@ bar
         <listitem>
         <para>
         By default, command processing continues after an error.  When this
-        variale is set, it will instead stop immediately.  In interactive mode,
+        variable is set, it will instead stop immediately.  In interactive mode,
         <application>psql</application> will return to the command prompt;
         otherwise, <application>psql</application> will exit, returning
         error code 3 to distinguish this case from fatal error
