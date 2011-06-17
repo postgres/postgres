@@ -111,8 +111,6 @@ ProcGlobalShmemSize(void)
 	size = add_size(size, mul_size(MaxBackends, sizeof(PGPROC)));
 	/* ProcStructLock */
 	size = add_size(size, sizeof(slock_t));
-	/* startupBufferPinWaitBufId */
-	size = add_size(size, sizeof(NBuffers));
 
 	return size;
 }
