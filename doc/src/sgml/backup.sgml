@@ -552,7 +552,8 @@ tar -cf backup.tar /usr/local/pgsql/data
     character in the command.  The simplest useful command is something
     like:
 <programlisting>
-archive_command = 'cp -i %p /mnt/server/archivedir/%f &lt;/dev/null'
+archive_command = 'test ! -f /mnt/server/archivedir/%f && cp %p /mnt/server/archivedir/%f'  # Unix
+archive_command = 'copy "%p" "C:\\server\\archivedir\\%f"'  # Windows
 </programlisting>
     which will copy archivable WAL segments to the directory
     <filename>/mnt/server/archivedir</>.  (This is an example, not a
@@ -560,7 +561,7 @@ archive_command = 'cp -i %p /mnt/server/archivedir/%f &lt;/dev/null'
     <literal>%p</> and <literal>%f</> parameters have been replaced,
     the actual command executed might look like this:
 <programlisting>
-cp -i pg_xlog/00000001000000A900000065 /mnt/server/archivedir/00000001000000A900000065 &lt;/dev/null
+test ! -f /mnt/server/archivedir/00000001000000A900000065 &amp;&amp; cp pg_xlog/00000001000000A900000065 /mnt/server/archivedir/00000001000000A900000065
 </programlisting>
     A similar command will be generated for each new file to be archived.
    </para>
@@ -590,17 +591,19 @@ cp -i pg_xlog/00000001000000A900000065 /mnt/server/archivedir/00000001000000A900
     preserve the integrity of your archive in case of administrator error
     (such as sending the output of two different servers to the same archive
     directory).
+   </para>
+
+   <para>
     It is advisable to test your proposed archive command to ensure that it
     indeed does not overwrite an existing file, <emphasis>and that it returns
-    nonzero status in this case</>.  We have found that <literal>cp -i</> does
-    this correctly on some platforms but not others.  If the chosen command
-    does not itself handle this case correctly, you should add a command
-    to test for pre-existence of the archive file.  For example, something
-    like:
-<programlisting>
-archive_command = 'test ! -f .../%f &amp;&amp; cp %p .../%f'
-</programlisting>
-    works correctly on most Unix variants.
+    nonzero status in this case</>.
+    The example command above for Unix ensures this by including a separate
+    <command>test</> step.  On some Unix platforms, <command>cp</> has
+    switches such as <option>-i</> that can be used to do the same thing
+    less verbosely, but you should not rely on these without verifying that
+    the right exit status is returned.  (In particular, GNU <command>cp</>
+    will return status zero when <option>-i</> is used and the target file
+    already exists, which is <emphasis>not</> the desired behavior.)
    </para>
 
    <para>
