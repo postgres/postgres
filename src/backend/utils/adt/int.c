@@ -1382,6 +1382,10 @@ generate_series_step_int4(PG_FUNCTION_ARGS)
 		/* increment current in preparation for next iteration */
 		fctx->current += fctx->step;
 
+		/* if next-value computation overflows, this is the final result */
+		if (SAMESIGN(result, fctx->step) && !SAMESIGN(result, fctx->current))
+			fctx->step = 0;
+
 		/* do when there is more left to send */
 		SRF_RETURN_NEXT(funcctx, Int32GetDatum(result));
 	}
