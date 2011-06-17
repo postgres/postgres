@@ -111,6 +111,17 @@ getSchemaData(int *numTablesPtr)
 		write_msg(NULL, "reading schemas\n");
 	nsinfo = getNamespaces(&numNamespaces);
 
+	/*
+	 * getTables should be done as soon as possible, so as to minimize the
+	 * window between starting our transaction and acquiring per-table locks.
+	 * However, we have to do getNamespaces first because the tables get
+	 * linked to their containing namespaces during getTables.
+	 */
+	if (g_verbose)
+		write_msg(NULL, "reading user-defined tables\n");
+	tblinfo = getTables(&numTables);
+	tblinfoindex = buildIndexArray(tblinfo, numTables, sizeof(TableInfo));
+
 	if (g_verbose)
 		write_msg(NULL, "reading user-defined functions\n");
 	funinfo = getFuncs(&numFuncs);
@@ -163,11 +174,6 @@ getSchemaData(int *numTablesPtr)
 	if (g_verbose)
 		write_msg(NULL, "reading user-defined conversions\n");
 	convinfo = getConversions(&numConversions);
-
-	if (g_verbose)
-		write_msg(NULL, "reading user-defined tables\n");
-	tblinfo = getTables(&numTables);
-	tblinfoindex = buildIndexArray(tblinfo, numTables, sizeof(TableInfo));
 
 	if (g_verbose)
 		write_msg(NULL, "reading table inheritance information\n");
