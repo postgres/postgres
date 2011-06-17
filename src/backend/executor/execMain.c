@@ -2394,7 +2394,6 @@ OpenIntoRel(QueryDesc *queryDesc)
 	Oid			tablespaceId;
 	Datum		reloptions;
 	Oid			intoRelationId;
-	TupleDesc	tupdesc;
 	DR_intorel *myState;
 	static char *validnsps[] = HEAP_RELOPT_NAMESPACES;
 
@@ -2467,9 +2466,6 @@ OpenIntoRel(QueryDesc *queryDesc)
 									 false);
 	(void) heap_reloptions(RELKIND_RELATION, reloptions, true);
 
-	/* Copy the tupdesc because heap_create_with_catalog modifies it */
-	tupdesc = CreateTupleDescCopy(queryDesc->tupDesc);
-
 	/* Now we can actually create the new relation */
 	intoRelationId = heap_create_with_catalog(intoName,
 											  namespaceId,
@@ -2478,7 +2474,7 @@ OpenIntoRel(QueryDesc *queryDesc)
 											  InvalidOid,
 											  InvalidOid,
 											  GetUserId(),
-											  tupdesc,
+											  queryDesc->tupDesc,
 											  NIL,
 											  RELKIND_RELATION,
 											  into->rel->relpersistence,
@@ -2491,8 +2487,6 @@ OpenIntoRel(QueryDesc *queryDesc)
 											  true,
 											  allowSystemTableMods);
 	Assert(intoRelationId != InvalidOid);
-
-	FreeTupleDesc(tupdesc);
 
 	/*
 	 * Advance command counter so that the newly-created relation's catalog

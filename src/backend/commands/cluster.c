@@ -591,8 +591,7 @@ rebuild_relation(Relation OldHeap, Oid indexOid,
 Oid
 make_new_heap(Oid OIDOldHeap, Oid NewTableSpace)
 {
-	TupleDesc	OldHeapDesc,
-				tupdesc;
+	TupleDesc	OldHeapDesc;
 	char		NewHeapName[NAMEDATALEN];
 	Oid			OIDNewHeap;
 	Oid			toastid;
@@ -605,13 +604,11 @@ make_new_heap(Oid OIDOldHeap, Oid NewTableSpace)
 	OldHeapDesc = RelationGetDescr(OldHeap);
 
 	/*
-	 * Need to make a copy of the tuple descriptor, since
-	 * heap_create_with_catalog modifies it.  Note that the NewHeap will not
+	 * Note that the NewHeap will not
 	 * receive any of the defaults or constraints associated with the OldHeap;
 	 * we don't need 'em, and there's no reason to spend cycles inserting them
 	 * into the catalogs only to delete them.
 	 */
-	tupdesc = CreateTupleDescCopy(OldHeapDesc);
 
 	/*
 	 * But we do want to use reloptions of the old heap for new heap.
@@ -645,7 +642,7 @@ make_new_heap(Oid OIDOldHeap, Oid NewTableSpace)
 										  InvalidOid,
 										  InvalidOid,
 										  OldHeap->rd_rel->relowner,
-										  tupdesc,
+										  OldHeapDesc,
 										  NIL,
 										  OldHeap->rd_rel->relkind,
 										  OldHeap->rd_rel->relpersistence,
