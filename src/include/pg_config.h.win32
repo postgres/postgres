@@ -53,7 +53,7 @@
    (struct s)' as it overestimates the size. Use 'offsetof (struct s, d)'
    instead. Don't use 'offsetof (struct s, d[0])', as this doesn't work with
    MSVC and with C++ compilers. */
-#define FLEXIBLE_ARRAY_MEMBER 1
+#define FLEXIBLE_ARRAY_MEMBER
 
 /* Define to 1 if you want National Language Support. (--enable-nls) */
 /* #undef ENABLE_NLS */
