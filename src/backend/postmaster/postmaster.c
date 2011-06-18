@@ -1024,6 +1024,11 @@ PostmasterMain(int argc, char *argv[])
 			fprintf(fpidfile, "%d\n", MyProcPid);
 			fclose(fpidfile);
 			/* Should we remove the pid file on postmaster exit? */
+
+			/* Make PID file world readable */
+			if (chmod(external_pid_file, S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH) != 0)
+				write_stderr("%s: could not change permissions of external PID file \"%s\": %s\n",
+							 progname, external_pid_file, strerror(errno));
 		}
 		else
 			write_stderr("%s: could not write external PID file \"%s\": %s\n",
