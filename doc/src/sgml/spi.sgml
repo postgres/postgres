@@ -1231,7 +1231,7 @@ Oid SPI_getargtypeid(SPIPlanPtr <parameter>plan</parameter>, int <parameter>argI
 
   <para>
    <function>SPI_getargtypeid</function> returns the OID representing the type
-   id for the <parameter>argIndex</parameter>'th argument of a plan prepared by
+   for the <parameter>argIndex</parameter>'th argument of a plan prepared by
    <function>SPI_prepare</function>. First argument is at index zero.
   </para>
  </refsect1>
@@ -1263,7 +1263,7 @@ Oid SPI_getargtypeid(SPIPlanPtr <parameter>plan</parameter>, int <parameter>argI
  <refsect1>
   <title>Return Value</title>
   <para>
-    The type id of the argument at the given index.
+    The type OID of the argument at the given index.
     If the <parameter>plan</parameter> is <symbol>NULL</symbol> or invalid,
     or <parameter>argIndex</parameter> is less than 0 or
     not less than the number of arguments declared for the

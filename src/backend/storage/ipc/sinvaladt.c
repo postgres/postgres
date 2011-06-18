@@ -323,7 +323,7 @@ SharedInvalBackendInit(bool sendOnly)
 	/* register exit routine to mark my entry inactive at exit */
 	on_shmem_exit(CleanupInvalidationState, PointerGetDatum(segP));
 
-	elog(DEBUG4, "my backend id is %d", MyBackendId);
+	elog(DEBUG4, "my backend ID is %d", MyBackendId);
 }
 
 /*

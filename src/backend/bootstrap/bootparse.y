@@ -248,7 +248,7 @@ Boot_CreateStmt:
 													  (Datum) 0,
 													  false,
 													  true);
-						elog(DEBUG4, "relation created with oid %u", id);
+						elog(DEBUG4, "relation created with OID %u", id);
 					}
 					do_end();
 				}

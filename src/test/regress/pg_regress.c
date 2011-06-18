@@ -2310,7 +2310,7 @@ regression_main(int argc, char *argv[], init_function ifunc, test_function tfunc
 #else
 #define ULONGPID(x) (unsigned long) (x)
 #endif
-		printf(_("running on port %d with pid %lu\n"),
+		printf(_("running on port %d with PID %lu\n"),
 			   port, ULONGPID(postmaster_pid));
 	}
 	else

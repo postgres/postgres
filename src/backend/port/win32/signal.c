@@ -171,7 +171,7 @@ pqsignal(int signum, pqsigfunc handler)
 	return prevfunc;
 }
 
-/* Create the signal listener pipe for specified pid */
+/* Create the signal listener pipe for specified PID */
 HANDLE
 pgwin32_create_signal_listener(pid_t pid)
 {
@@ -186,7 +186,7 @@ pgwin32_create_signal_listener(pid_t pid)
 
 	if (pipe == INVALID_HANDLE_VALUE)
 		ereport(ERROR,
-				(errmsg("could not create signal listener pipe for pid %d: error code %d",
+				(errmsg("could not create signal listener pipe for PID %d: error code %d",
 						(int) pid, (int) GetLastError())));
 
 	return pipe;

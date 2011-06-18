@@ -121,7 +121,7 @@ last started with</entry>
 
 <row>
  <entry><filename>postmaster.pid</></entry>
- <entry>A lock file recording the current postmaster process id (PID),
+ <entry>A lock file recording the current postmaster process ID (PID),
   cluster data directory path,
   postmaster start timestamp,
   port number,
