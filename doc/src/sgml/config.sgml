@@ -259,7 +259,7 @@ SET ENABLE_SEQSCAN TO OFF;
       </indexterm>
       <listitem>
        <para>
-        Specifies the name of an additional process-id (PID) file that the
+        Specifies the name of an additional process-ID (PID) file that the
         server should create for use by server administration programs.
         This parameter can only be set at server start.
        </para>

@@ -3174,7 +3174,7 @@ RAISE NOTICE 'Calling cs_create_job(%)', v_job_id;
     and hint:
 <programlisting>
 RAISE EXCEPTION 'Nonexistent ID --> %', user_id
-      USING HINT = 'Please check your user id';
+      USING HINT = 'Please check your user ID';
 </programlisting>
    </para>
 

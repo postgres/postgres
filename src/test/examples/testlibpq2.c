@@ -121,7 +121,7 @@ main(int argc, char **argv)
 		while ((notify = PQnotifies(conn)) != NULL)
 		{
 			fprintf(stderr,
-					"ASYNC NOTIFY of '%s' received from backend pid %d\n",
+					"ASYNC NOTIFY of '%s' received from backend PID %d\n",
 					notify->relname, notify->be_pid);
 			PQfreemem(notify);
 			nnotifies++;

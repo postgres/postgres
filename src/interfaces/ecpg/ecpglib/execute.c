@@ -1698,7 +1698,7 @@ ecpg_execute(struct statement * stmt)
 	notify = PQnotifies(stmt->connection->connection);
 	if (notify)
 	{
-		ecpg_log("ecpg_execute on line %d: asynchronous notification of \"%s\" from backend pid %d received\n",
+		ecpg_log("ecpg_execute on line %d: asynchronous notification of \"%s\" from backend PID %d received\n",
 				 stmt->lineno, notify->relname, notify->be_pid);
 		PQfreemem(notify);
 	}

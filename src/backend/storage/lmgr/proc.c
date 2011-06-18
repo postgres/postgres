@@ -996,7 +996,7 @@ ProcSleep(LOCALLOCK *locallock, LockMethod lockMethodTable)
 			{
 				int			pid = autovac->pid;
 
-				elog(DEBUG2, "sending cancel to blocking autovacuum pid = %d",
+				elog(DEBUG2, "sending cancel to blocking autovacuum PID %d",
 					 pid);
 
 				/* don't hold the lock across the kill() syscall */

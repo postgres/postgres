@@ -529,7 +529,7 @@ LocalExecuteInvalidationMessage(SharedInvalidationMessage *msg)
 			RelationMapInvalidate(false);
 	}
 	else
-		elog(FATAL, "unrecognized SI message id: %d", msg->id);
+		elog(FATAL, "unrecognized SI message ID: %d", msg->id);
 }
 
 /*

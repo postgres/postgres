@@ -14,7 +14,7 @@
  *	  These routines allow the parser/planner/executor to perform
  *	  rapid lookups on the contents of the system catalogs.
  *
- *	  see utils/syscache.h for a list of the cache id's
+ *	  see utils/syscache.h for a list of the cache IDs
  *
  *-------------------------------------------------------------------------
  */
@@ -842,7 +842,7 @@ SearchSysCache(int cacheId,
 {
 	if (cacheId < 0 || cacheId >= SysCacheSize ||
 		!PointerIsValid(SysCache[cacheId]))
-		elog(ERROR, "invalid cache id: %d", cacheId);
+		elog(ERROR, "invalid cache ID: %d", cacheId);
 
 	return SearchCatCache(SysCache[cacheId], key1, key2, key3, key4);
 }
@@ -1026,7 +1026,7 @@ SysCacheGetAttr(int cacheId, HeapTuple tup,
 	 */
 	if (cacheId < 0 || cacheId >= SysCacheSize ||
 		!PointerIsValid(SysCache[cacheId]))
-		elog(ERROR, "invalid cache id: %d", cacheId);
+		elog(ERROR, "invalid cache ID: %d", cacheId);
 	if (!PointerIsValid(SysCache[cacheId]->cc_tupdesc))
 	{
 		InitCatCachePhase2(SysCache[cacheId], false);
@@ -1047,7 +1047,7 @@ SearchSysCacheList(int cacheId, int nkeys,
 {
 	if (cacheId < 0 || cacheId >= SysCacheSize ||
 		!PointerIsValid(SysCache[cacheId]))
-		elog(ERROR, "invalid cache id: %d", cacheId);
+		elog(ERROR, "invalid cache ID: %d", cacheId);
 
 	return SearchCatCacheList(SysCache[cacheId], nkeys,
 							  key1, key2, key3, key4);

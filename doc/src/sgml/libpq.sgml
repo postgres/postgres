@@ -6116,7 +6116,7 @@ myEventProc(PGEventId evtId, void *evtInfo, void *passThrough)
             break;
         }
 
-        /* unknown event id, just return TRUE. */
+        /* unknown event ID, just return TRUE. */
         default:
             break;
     }
@@ -7553,7 +7553,7 @@ main(int argc, char **argv)
         while ((notify = PQnotifies(conn)) != NULL)
         {
             fprintf(stderr,
-                    "ASYNC NOTIFY of '%s' received from backend pid %d\n",
+                    "ASYNC NOTIFY of '%s' received from backend PID %d\n",
                     notify->relname, notify->be_pid);
             PQfreemem(notify);
             nnotifies++;

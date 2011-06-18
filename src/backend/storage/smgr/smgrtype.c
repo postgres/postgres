@@ -54,7 +54,7 @@ smgrout(PG_FUNCTION_ARGS)
 	char	   *s;
 
 	if (i >= NStorageManagers || i < 0)
-		elog(ERROR, "invalid storage manager id: %d", i);
+		elog(ERROR, "invalid storage manager ID: %d", i);
 
 	s = pstrdup(StorageManager[i].smgr_name);
 	PG_RETURN_CSTRING(s);
