@@ -18,5 +18,4 @@
 /ip.c
 /encnames.c
 /wchar.c
-/libpqdll.def
 /libpq.rc
