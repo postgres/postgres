@@ -114,7 +114,6 @@ analyze_rel(Oid relid, VacuumStmt *vacstmt, BufferAccessStrategy bstrategy)
 	Relation   *Irel;
 	int			nindexes;
 	bool		hasindex;
-	bool		analyzableindex;
 	VacAttrStats **vacattrstats;
 	AnlIndexData *indexdata;
 	int			targrows,
@@ -300,7 +299,6 @@ analyze_rel(Oid relid, VacuumStmt *vacstmt, BufferAccessStrategy bstrategy)
 	vac_open_indexes(onerel, AccessShareLock, &nindexes, &Irel);
 	hasindex = (nindexes > 0);
 	indexdata = NULL;
-	analyzableindex = false;
 	if (hasindex)
 	{
 		indexdata = (AnlIndexData *) palloc0(nindexes * sizeof(AnlIndexData));
@@ -347,10 +345,7 @@ analyze_rel(Oid relid, VacuumStmt *vacstmt, BufferAccessStrategy bstrategy)
 						thisdata->vacattrstats[tcnt] =
 							examine_attribute(Irel[ind], i + 1);
 						if (thisdata->vacattrstats[tcnt] != NULL)
-						{
 							tcnt++;
-							analyzableindex = true;
-						}
 					}
 				}
 				thisdata->attr_cnt = tcnt;
@@ -359,15 +354,10 @@ analyze_rel(Oid relid, VacuumStmt *vacstmt, BufferAccessStrategy bstrategy)
 	}
 
 	/*
-	 * Quit if no analyzable columns.
-	 */
-	if (attr_cnt <= 0 && !analyzableindex)
-		goto cleanup;
-
-	/*
 	 * Determine how many rows we need to sample, using the worst case from
 	 * all analyzable columns.	We use a lower bound of 100 rows to avoid
-	 * possible overflow in Vitter's algorithm.
+	 * possible overflow in Vitter's algorithm.  (Note: that will also be
+	 * the target in the corner case where there are no analyzable columns.)
 	 */
 	targrows = 100;
 	for (i = 0; i < attr_cnt; i++)
@@ -476,9 +466,6 @@ analyze_rel(Oid relid, VacuumStmt *vacstmt, BufferAccessStrategy bstrategy)
 								totalindexrows, false, InvalidTransactionId);
 		}
 	}
-
-	/* We skip to here if there were no analyzable columns */
-cleanup:
 
 	/* If this isn't part of VACUUM ANALYZE, let index AMs do cleanup */
 	if (!vacstmt->vacuum)
