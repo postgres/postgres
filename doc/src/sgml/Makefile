@@ -206,10 +206,19 @@ postgres.pdf:
 ##
 
 JADE.text = $(JADE) $(JADEFLAGS) $(SGMLINCLUDE) $(CATALOG) -d stylesheet.dsl -i output-text -t sgml
+ICONV = iconv
 LYNX = lynx
 
+# The release notes may contain non-ASCII characters (for contributor
+# names), which lynx converts to the encoding determined by the
+# current locale.  The get output that is deterministic and easily
+# readable by everyone, we make lynx produce LATIN1 and then convert
+# that to ASCII with transliteration for the non-ASCII characters.
+# Official releases are currently built on FreeBSD, which has limited
+# locale support and is very picky about locale name spelling.  The
+# below has been finely tuned to run on FreeBSD and Linux/glibc.
 INSTALL HISTORY regress_README: % : %.html
-	$(PERL) -p -e 's/<H(1|2)$$/<H\1 align=center/g' $< | $(LYNX) -force_html -dump -nolist -stdin > $@
+	$(PERL) -p -e 's/<H(1|2)$$/<H\1 align=center/g' $< | LC_ALL=en_US.ISO8859-1 $(LYNX) -force_html -dump -nolist -stdin | $(ICONV) -f latin1 -t us-ascii//TRANSLIT > $@
 
 INSTALL.html: standalone-install.sgml installation.sgml version.sgml
 	$(JADE.text) -V nochunks standalone-install.sgml installation.sgml > $@
