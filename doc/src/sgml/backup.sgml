@@ -530,7 +530,7 @@ tar -cf backup.tar /usr/local/pgsql/data
     character in the command.  The simplest useful command is something
     like
 <programlisting>
-archive_command = 'test ! -f /mnt/server/archivedir/%f && cp %p /mnt/server/archivedir/%f'  # Unix
+archive_command = 'test ! -f /mnt/server/archivedir/%f &amp;&amp; cp %p /mnt/server/archivedir/%f'  # Unix
 archive_command = 'copy "%p" "C:\\server\\archivedir\\%f"'  # Windows
 </programlisting>
     which will copy archivable WAL segments to the directory
