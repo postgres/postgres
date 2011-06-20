@@ -49,12 +49,12 @@ typedef enum ConnType
 	ctHostNoSSL
 } ConnType;
 
-typedef struct
+typedef struct HbaLine
 {
 	int			linenumber;
 	ConnType	conntype;
-	char	   *database;
-	char	   *role;
+	List	   *databases;
+	List	   *roles;
 	struct sockaddr_storage addr;
 	struct sockaddr_storage mask;
 	IPCompareMethod ip_cmp_method;
@@ -87,7 +87,7 @@ typedef struct Port hbaPort;
 
 extern bool load_hba(void);
 extern void load_ident(void);
-extern int	hba_getauthmethod(hbaPort *port);
+extern void hba_getauthmethod(hbaPort *port);
 extern int check_usermap(const char *usermap_name,
 			  const char *pg_role, const char *auth_user,
 			  bool case_sensitive);

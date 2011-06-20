@@ -315,15 +315,11 @@ ClientAuthentication(Port *port)
 
 	/*
 	 * Get the authentication method to use for this frontend/database
-	 * combination.  Note: a failure return indicates a problem with the hba
-	 * config file, not with the request.  hba.c should have dropped an error
-	 * message into the postmaster logfile if it failed.
+	 * combination.  Note: we do not parse the file at this point; this has
+	 * already been done elsewhere.  hba.c dropped an error message
+	 * into the server logfile if parsing the hba config file failed.
 	 */
-	if (hba_getauthmethod(port) != STATUS_OK)
-		ereport(FATAL,
-				(errcode(ERRCODE_CONFIG_FILE_ERROR),
-				 errmsg("missing or erroneous pg_hba.conf file"),
-				 errhint("See server log for details.")));
+	hba_getauthmethod(port);
 
 	/*
 	 * Enable immediate response to SIGTERM/SIGINT/timeout interrupts. (We
