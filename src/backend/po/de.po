@@ -12318,7 +12318,7 @@ msgid ""
 "If your source string is not fixed-width, try using the \"FM\" modifier."
 msgstr ""
 "Wenn die Quellzeichenkette keine feste Breite hat, versuchen Sie den "
-"Modifikator »%s«."
+"Modifikator »FM«."
 
 #: utils/adt/formatting.c:1886 utils/adt/formatting.c:1899
 #: utils/adt/formatting.c:2029
