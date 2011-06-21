@@ -79,6 +79,7 @@ struct px_crypt_algo
 static const struct px_crypt_algo
 			px_crypt_list[] = {
 	{"$2a$", 4, run_crypt_bf},
+	{"$2x$", 4, run_crypt_bf},
 	{"$2$", 3, NULL},			/* N/A */
 	{"$1$", 3, run_crypt_md5},
 	{"_", 1, run_crypt_des},
