@@ -4542,6 +4542,21 @@ PreCommit_CheckForSerializationFailure(void)
 						&& !SxactIsReadOnly(farConflict->sxactOut)
 						&& !SxactIsDoomed(farConflict->sxactOut)))
 				{
+					/*
+					 * Normally, we kill the pivot transaction to make sure we
+					 * make progress if the failing transaction is retried.
+					 * However, we can't kill it if it's already prepared, so
+					 * in that case we commit suicide instead.
+					 */
+					if (SxactIsPrepared(nearConflict->sxactOut))
+					{
+						LWLockRelease(SerializableXactHashLock);
+						ereport(ERROR,
+								(errcode(ERRCODE_T_R_SERIALIZATION_FAILURE),
+								 errmsg("could not serialize access due to read/write dependencies among transactions"),
+								 errdetail("Cancelled on commit attempt with conflict in from prepared pivot."),
+								 errhint("The transaction might succeed if retried.")));
+					}
 					nearConflict->sxactOut->flags |= SXACT_FLAG_DOOMED;
 					break;
 				}
