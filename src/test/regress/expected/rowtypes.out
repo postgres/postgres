@@ -84,7 +84,7 @@ select * from people;
 
 -- at the moment this will not work due to ALTER TABLE inadequacy:
 alter table fullname add column suffix text default '';
-ERROR:  cannot alter table "fullname" because column "people"."fn" uses its rowtype
+ERROR:  cannot alter table "fullname" because column "people.fn" uses its row type
 -- but this should work:
 alter table fullname add column suffix text default null;
 select * from people;

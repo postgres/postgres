@@ -2965,7 +2965,7 @@ static struct config_string ConfigureNamesString[] =
 
 	{
 		{"synchronous_standby_names", PGC_SIGHUP, WAL_REPLICATION,
-			gettext_noop("List of potential standby names to synchronise with."),
+			gettext_noop("List of potential standby names to synchronize with."),
 			NULL,
 			GUC_LIST_INPUT
 		},
@@ -8234,7 +8234,7 @@ check_temp_buffers(int *newval, void **extra, GucSource source)
 	 */
 	if (NLocBuffer && NLocBuffer != *newval)
 	{
-		GUC_check_errdetail("\"temp_buffers\" cannot be changed after any temp tables have been accessed in the session.");
+		GUC_check_errdetail("\"temp_buffers\" cannot be changed after any temporary tables have been accessed in the session.");
 		return false;
 	}
 	return true;

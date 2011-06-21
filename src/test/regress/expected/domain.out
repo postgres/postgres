@@ -510,12 +510,12 @@ create type ddtest1 as (f1 posint);
 create table ddtest2(f1 ddtest1);
 insert into ddtest2 values(row(-1));
 alter domain posint add constraint c1 check(value >= 0);
-ERROR:  cannot alter type "posint" because column "ddtest2"."f1" uses it
+ERROR:  cannot alter type "posint" because column "ddtest2.f1" uses it
 drop table ddtest2;
 create table ddtest2(f1 ddtest1[]);
 insert into ddtest2 values('{(-1)}');
 alter domain posint add constraint c1 check(value >= 0);
-ERROR:  cannot alter type "posint" because column "ddtest2"."f1" uses it
+ERROR:  cannot alter type "posint" because column "ddtest2.f1" uses it
 drop table ddtest2;
 alter domain posint add constraint c1 check(value >= 0);
 create domain posint2 as posint check (value % 2 = 0);

@@ -3966,28 +3966,28 @@ find_composite_type_dependencies(Oid typeOid, Relation origRelation,
 			if (origTypeName)
 				ereport(ERROR,
 						(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-						 errmsg("cannot alter type \"%s\" because column \"%s\".\"%s\" uses it",
+						 errmsg("cannot alter type \"%s\" because column \"%s.%s\" uses it",
 								origTypeName,
 								RelationGetRelationName(rel),
 								NameStr(att->attname))));
 			else if (origRelation->rd_rel->relkind == RELKIND_COMPOSITE_TYPE)
 				ereport(ERROR,
 						(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-						 errmsg("cannot alter type \"%s\" because column \"%s\".\"%s\" uses it",
+						 errmsg("cannot alter type \"%s\" because column \"%s.%s\" uses it",
 								RelationGetRelationName(origRelation),
 								RelationGetRelationName(rel),
 								NameStr(att->attname))));
 			else if (origRelation->rd_rel->relkind == RELKIND_FOREIGN_TABLE)
 				ereport(ERROR,
 						(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-						 errmsg("cannot alter foreign table \"%s\" because column \"%s\".\"%s\" uses its rowtype",
+						 errmsg("cannot alter foreign table \"%s\" because column \"%s.%s\" uses its row type",
 								RelationGetRelationName(origRelation),
 								RelationGetRelationName(rel),
 								NameStr(att->attname))));
 			else
 				ereport(ERROR,
 						(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-						 errmsg("cannot alter table \"%s\" because column \"%s\".\"%s\" uses its rowtype",
+						 errmsg("cannot alter table \"%s\" because column \"%s.%s\" uses its row type",
 								RelationGetRelationName(origRelation),
 								RelationGetRelationName(rel),
 								NameStr(att->attname))));
@@ -6648,7 +6648,7 @@ ATPrepAlterColumnType(List **wqueue,
 		 * expression, else just take the old value and try to coerce it.  We
 		 * do this first so that type incompatibility can be detected before
 		 * we waste effort, and because we need the expression to be parsed
-		 * against the original table rowtype.
+		 * against the original table row type.
 		 */
 		if (transform)
 		{
@@ -7493,7 +7493,7 @@ ATExecChangeOwner(Oid relationOid, Oid newOwnerId, bool recursing, LOCKMODE lock
 									newOwnerId);
 
 		/*
-		 * Also change the ownership of the table's rowtype, if it has one
+		 * Also change the ownership of the table's row type, if it has one
 		 */
 		if (tuple_class->relkind != RELKIND_INDEX)
 			AlterTypeOwnerInternal(tuple_class->reltype, newOwnerId,
@@ -9005,7 +9005,7 @@ AlterTableNamespace(RangeVar *relation, const char *newschema,
 
 	AlterRelationNamespaceInternal(classRel, relid, oldNspOid, nspOid, true);
 
-	/* Fix the table's rowtype too */
+	/* Fix the table's row type too */
 	AlterTypeNamespaceInternal(rel->rd_rel->reltype, nspOid, false, false);
 
 	/* Fix other dependent stuff */
@@ -9089,7 +9089,7 @@ AlterIndexNamespaces(Relation classRel, Relation rel,
 		/*
 		 * Note: currently, the index will not have its own dependency on the
 		 * namespace, so we don't need to do changeDependencyFor(). There's no
-		 * rowtype in pg_type, either.
+		 * row type in pg_type, either.
 		 */
 		AlterRelationNamespaceInternal(classRel, indexOid,
 									   oldNspOid, newNspOid,

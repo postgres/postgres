@@ -1509,7 +1509,7 @@ drop table another;
 create table tab1 (a int, b text);
 create table tab2 (x int, y tab1);
 alter table tab1 alter column b type varchar; -- fails
-ERROR:  cannot alter table "tab1" because column "tab2"."y" uses its rowtype
+ERROR:  cannot alter table "tab1" because column "tab2.y" uses its row type
 -- disallow recursive containment of row types
 create temp table recur1 (f1 int);
 alter table recur1 add column f2 recur1; -- fails
@@ -1845,7 +1845,7 @@ DROP TYPE test_type;
 CREATE TYPE test_type1 AS (a int, b text);
 CREATE TABLE test_tbl1 (x int, y test_type1);
 ALTER TYPE test_type1 ALTER ATTRIBUTE b TYPE varchar; -- fails
-ERROR:  cannot alter type "test_type1" because column "test_tbl1"."y" uses it
+ERROR:  cannot alter type "test_type1" because column "test_tbl1.y" uses it
 CREATE TYPE test_type2 AS (a int, b text);
 CREATE TABLE test_tbl2 OF test_type2;
 CREATE TABLE test_tbl2_subclass () INHERITS (test_tbl2);

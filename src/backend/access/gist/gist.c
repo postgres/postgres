@@ -714,7 +714,7 @@ gistdoinsert(Relation r, IndexTuple itup, Size freespace, GISTSTATE *giststate)
 				ereport(ERROR,
 						(errmsg("index \"%s\" contains an inner tuple marked as invalid",
 								RelationGetRelationName(r)),
-						 errdetail("This is caused by an incomplete page split at crash recovery before upgrading to 9.1."),
+						 errdetail("This is caused by an incomplete page split at crash recovery before upgrading to PostgreSQL 9.1."),
 						 errhint("Please REINDEX it.")));
 
 			/*

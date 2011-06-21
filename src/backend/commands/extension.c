@@ -626,7 +626,7 @@ read_extension_aux_control_file(const ExtensionControlFile *pcontrol,
 }
 
 /*
- * Read a SQL script file into a string, and convert to database encoding
+ * Read an SQL script file into a string, and convert to database encoding
  */
 static char *
 read_extension_script_file(const ExtensionControlFile *control,
@@ -2099,7 +2099,7 @@ pg_extension_config_dump(PG_FUNCTION_ARGS)
 		ereport(ERROR,
 				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 				 errmsg("pg_extension_config_dump() can only be called "
-						"from a SQL script executed by CREATE EXTENSION")));
+						"from an SQL script executed by CREATE EXTENSION")));
 
 	/*
 	 * Check that the table exists and is a member of the extension being
