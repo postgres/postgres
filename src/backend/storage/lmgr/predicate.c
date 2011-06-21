@@ -246,6 +246,7 @@
 
 #define SxactIsCommitted(sxact) (((sxact)->flags & SXACT_FLAG_COMMITTED) != 0)
 #define SxactIsPrepared(sxact) (((sxact)->flags & SXACT_FLAG_PREPARED) != 0)
+#define SxactIsRolledBack(sxact) (((sxact)->flags & SXACT_FLAG_ROLLED_BACK) != 0)
 #define SxactIsDoomed(sxact) (((sxact)->flags & SXACT_FLAG_DOOMED) != 0)
 #define SxactIsReadOnly(sxact) (((sxact)->flags & SXACT_FLAG_READ_ONLY) != 0)
 #define SxactHasSummaryConflictIn(sxact) (((sxact)->flags & SXACT_FLAG_SUMMARY_CONFLICT_IN) != 0)
@@ -3046,7 +3047,7 @@ SetNewSxactGlobalXmin(void)
 
 	for (sxact = FirstPredXact(); sxact != NULL; sxact = NextPredXact(sxact))
 	{
-		if (!SxactIsDoomed(sxact)
+		if (!SxactIsRolledBack(sxact)
 			&& !SxactIsCommitted(sxact)
 			&& sxact != OldCommittedSxact)
 		{
@@ -3113,6 +3114,7 @@ ReleasePredicateLocks(const bool isCommit)
 	Assert(!isCommit || SxactIsPrepared(MySerializableXact));
 	Assert(!isCommit || !SxactIsDoomed(MySerializableXact));
 	Assert(!SxactIsCommitted(MySerializableXact));
+	Assert(!SxactIsRolledBack(MySerializableXact));
 
 	/* may not be serializable during COMMIT/ROLLBACK PREPARED */
 	if (MySerializableXact->pid != 0)
@@ -3151,7 +3153,22 @@ ReleasePredicateLocks(const bool isCommit)
 			MySerializableXact->flags |= SXACT_FLAG_READ_ONLY;
 	}
 	else
+	{
+		/*
+		 * The DOOMED flag indicates that we intend to roll back this
+		 * transaction and so it should not cause serialization failures for
+		 * other transactions that conflict with it. Note that this flag might
+		 * already be set, if another backend marked this transaction for
+		 * abort.
+		 *
+		 * The ROLLED_BACK flag further indicates that ReleasePredicateLocks
+		 * has been called, and so the SerializableXact is eligible for
+		 * cleanup. This means it should not be considered when calculating
+		 * SxactGlobalXmin.
+		 */
 		MySerializableXact->flags |= SXACT_FLAG_DOOMED;
+		MySerializableXact->flags |= SXACT_FLAG_ROLLED_BACK;
+	}
 
 	if (!topLevelIsDeclaredReadOnly)
 	{
@@ -3527,7 +3544,7 @@ ReleaseOneSerializableXact(SERIALIZABLEXACT *sxact, bool partial,
 				nextConflict;
 
 	Assert(sxact != NULL);
-	Assert(SxactIsDoomed(sxact) || SxactIsCommitted(sxact));
+	Assert(SxactIsRolledBack(sxact) || SxactIsCommitted(sxact));
 	Assert(LWLockHeldByMe(SerializableFinishedListLock));
 
 	/*

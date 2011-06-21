@@ -90,21 +90,22 @@ typedef struct SERIALIZABLEXACT
 	int			pid;			/* pid of associated process */
 } SERIALIZABLEXACT;
 
-#define SXACT_FLAG_COMMITTED				0x00000001	/* already committed */
-#define SXACT_FLAG_PREPARED					0x00000002	/* about to commit */
-#define SXACT_FLAG_DOOMED					0x00000004	/* will roll back */
+#define SXACT_FLAG_COMMITTED			0x00000001		/* already committed */
+#define SXACT_FLAG_PREPARED				0x00000002		/* about to commit */
+#define SXACT_FLAG_ROLLED_BACK			0x00000004		/* already rolled back */
+#define SXACT_FLAG_DOOMED				0x00000008		/* will roll back */
 /*
  * The following flag actually means that the flagged transaction has a
  * conflict out *to a transaction which committed ahead of it*.  It's hard
  * to get that into a name of a reasonable length.
  */
-#define SXACT_FLAG_CONFLICT_OUT				0x00000008
-#define SXACT_FLAG_READ_ONLY				0x00000010
-#define SXACT_FLAG_DEFERRABLE_WAITING		0x00000020
-#define SXACT_FLAG_RO_SAFE					0x00000040
-#define SXACT_FLAG_RO_UNSAFE				0x00000080
-#define SXACT_FLAG_SUMMARY_CONFLICT_IN		0x00000100
-#define SXACT_FLAG_SUMMARY_CONFLICT_OUT		0x00000200
+#define SXACT_FLAG_CONFLICT_OUT			0x00000010
+#define SXACT_FLAG_READ_ONLY			0x00000020
+#define SXACT_FLAG_DEFERRABLE_WAITING	0x00000040
+#define SXACT_FLAG_RO_SAFE				0x00000080
+#define SXACT_FLAG_RO_UNSAFE			0x00000100
+#define SXACT_FLAG_SUMMARY_CONFLICT_IN	0x00000200
+#define SXACT_FLAG_SUMMARY_CONFLICT_OUT 0x00000400
 
 /*
  * The following types are used to provide an ad hoc list for holding
