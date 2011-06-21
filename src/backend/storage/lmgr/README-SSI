@@ -3,11 +3,11 @@ src/backend/storage/lmgr/README-SSI
 Serializable Snapshot Isolation (SSI) and Predicate Locking
 ===========================================================
 
-This is currently sitting in the lmgr directory because about 90% of
-the code is an implementation of predicate locking, which is required
-for SSI, rather than being directly related to SSI itself.  When
-another use for predicate locking justifies the effort to tease these
-two things apart, this README file should probably be split.
+This code is in the lmgr directory because about 90% of it is an
+implementation of predicate locking, which is required for SSI,
+rather than being directly related to SSI itself.  When another use
+for predicate locking justifies the effort to tease these two things
+apart, this README file should probably be split.
 
 
 Credits
@@ -151,11 +151,11 @@ transactions.
 SSI Algorithm
 -------------
 
-Serializable transaction in PostgreSQL are implemented using
+As of 9.1, serializable transactions in PostgreSQL are implemented using
 Serializable Snapshot Isolation (SSI), based on the work of Cahill
 et al. Fundamentally, this allows snapshot isolation to run as it
-has, while monitoring for conditions which could create a serialization
-anomaly.
+previously did, while monitoring for conditions which could create a
+serialization anomaly.
 
 SSI is based on the observation [2] that each snapshot isolation
 anomaly corresponds to a cycle that contains a "dangerous structure"
@@ -168,8 +168,10 @@ SSI works by watching for this dangerous structure, and rolling
 back a transaction when needed to prevent any anomaly. This means it
 only needs to track rw-conflicts between concurrent transactions, not
 wr- and ww-dependencies. It also means there is a risk of false
-positives, because not every dangerous structure corresponds to an
-actual serialization failure.
+positives, because not every dangerous structure is embedded in an
+actual cycle.  The number of false positives is low in practice, so
+this represents an acceptable tradeoff for keeping the detection
+overhead low.
 
 The PostgreSQL implementation uses two additional optimizations:
 
@@ -182,11 +184,12 @@ The PostgreSQL implementation uses two additional optimizations:
   one. Proof:
 
   - Because there is a cycle, there must be some transaction T0 that
-    precedes Tin in the serial order. (T0 might be the same as Tout).
+    precedes Tin in the cycle. (T0 might be the same as Tout.)
 
-  - The dependency between T0 and Tin can't be a rw-conflict,
+  - The edge between T0 and Tin can't be a rw-conflict or ww-dependency,
     because Tin was read-only, so it must be a wr-dependency.
-    Those can only occur if T0 committed before Tin started.
+    Those can only occur if T0 committed before Tin took its snapshot,
+    else Tin would have ignored T0's output.
 
   - Because Tout must commit before any other transaction in the
     cycle, it must commit before T0 commits -- and thus before Tin
@@ -258,8 +261,8 @@ full serializable transactions under either strategy. Practical
 implementations of predicate locking generally involve acquiring
 locks against data as it is accessed, using multiple granularities
 (tuple, page, table, etc.) with escalation as needed to keep the lock
-count to a number which can be tracked within RAM structures, and
-this was used in PostgreSQL.  Coarse granularities can cause some
+count to a number which can be tracked within RAM structures.  This
+approach was used in PostgreSQL.  Coarse granularities can cause some
 false positive indications of conflict. The number of false positives
 can be influenced by plan choice.
 
@@ -276,7 +279,7 @@ Hellerstein, Stonebraker and Hamilton paper [3], along with the
 locking papers referenced from that and the Cahill papers.
 
 Because the SIREAD locks don't block, traditional locking techniques
-were be modified.  Intent locking (locking higher level objects
+have to be modified.  Intent locking (locking higher level objects
 before locking lower level objects) doesn't work with non-blocking
 "locks" (which are, in some respects, more like flags than locks).
 
@@ -284,10 +287,10 @@ A configurable amount of shared memory is reserved at postmaster
 start-up to track predicate locks. This size cannot be changed
 without a restart.
 
-    * To prevent resource exhaustion, multiple fine-grained locks may
+To prevent resource exhaustion, multiple fine-grained locks may
 be promoted to a single coarser-grained lock as needed.
 
-    * An attempt to acquire an SIREAD lock on a tuple when the same
+An attempt to acquire an SIREAD lock on a tuple when the same
 transaction already holds an SIREAD lock on the page or the relation
 will be ignored. Likewise, an attempt to lock a page when the
 relation is locked will be ignored, and the acquisition of a coarser
@@ -306,8 +309,8 @@ Predicate locks will be acquired for the heap based on the following:
 will be locked, whether or not it meets selection criteria; except
 that there is no need to acquire an SIREAD lock on a tuple when the
 transaction already holds a write lock on any tuple representing the
-row, since a rw-dependency would also create a ww-dependency which
-has more aggressive enforcement and will thus prevent any anomaly.
+row, since a rw-conflict would also create a ww-dependency which
+has more aggressive enforcement and thus will prevent any anomaly.
 
     * Modifying a heap tuple creates a rw-conflict with any transaction
 that holds a SIREAD lock on that tuple, or on the page or relation
@@ -341,13 +344,13 @@ need not generate a conflict, although an update which "moves" a row
 into the scan must generate a conflict.  While correctness allows
 false positives, they should be minimized for performance reasons.
 
-Several optimizations are possible, though not all implemented yet:
+Several optimizations are possible, though not all are implemented yet:
 
     * An index scan which is just finding the right position for an
-index insertion or deletion needs not acquire a predicate lock.
+index insertion or deletion need not acquire a predicate lock.
 
     * An index scan which is comparing for equality on the entire key
-for a unique index needs not acquire a predicate lock as long as a key
+for a unique index need not acquire a predicate lock as long as a key
 is found corresponding to a visible tuple which has not been modified
 by another transaction -- there are no "between or around" gaps to
 cover.
@@ -361,6 +364,9 @@ index contents because the search conditions are contradictory (e.g.,
 x = 1 AND x = 2), then no predicate lock is needed.
 
 Other index AM implementation considerations:
+
+    * For an index AM that doesn't have support for predicate locking,
+we just acquire a predicate lock on the whole index for any search.
 
     * B-tree index searches acquire predicate locks only on the
 index *leaf* pages needed to lock the appropriate index range. If,
@@ -395,8 +401,8 @@ tracking SIREAD locks.
 any length of time; lock information is written to the tuples
 involved in the transactions.
           * In PostgreSQL, existing lock structures have pointers to
-memory which is related to a connection. SIREAD locks need to persist
-past the end of the originating transaction and even the connection
+memory which is related to a session. SIREAD locks need to persist
+past the end of the originating transaction and even the session
 which ran it.
           * PostgreSQL needs to be able to tolerate a large number of
 transactions executing while one long-running transaction stays open
@@ -411,7 +417,8 @@ isolation level distinct from snapshot isolation.
 in the papers.
 
    5. PostgreSQL doesn't assign a transaction number to a database
-transaction until and unless necessary.
+transaction until and unless necessary (normally, when the transaction
+attempts to modify data).
 
    6. PostgreSQL has pluggable data types with user-definable
 operators, as well as pluggable index types, not all of which are
@@ -453,42 +460,46 @@ versions of the row, based on the following proof that any additional
 serialization failures we would get from that would be false
 positives:
 
-          o If transaction T1 reads a row (thus acquiring a predicate
-lock on it) and a second transaction T2 updates that row, must a
-third transaction T3 which updates the new version of the row have a
-rw-conflict in from T1 to prevent anomalies?  In other words, does it
-matter whether this edge T1 -> T3 is there?
+          o If transaction T1 reads a row version (thus acquiring a
+predicate lock on it) and a second transaction T2 updates that row
+version (thus creating a rw-conflict graph edge from T1 to T2), must a
+third transaction T3 which re-updates the new version of the row also
+have a rw-conflict in from T1 to prevent anomalies?  In other words,
+does it matter whether we recognize the edge T1 -> T3?
 
           o If T1 has a conflict in, it certainly doesn't. Adding the
 edge T1 -> T3 would create a dangerous structure, but we already had
-one from the edge T1 -> T2, so we would have aborted something
-anyway.
+one from the edge T1 -> T2, so we would have aborted something anyway.
+(T2 has already committed, else T3 could not have updated its output;
+but we would have aborted either T1 or T1's predecessor(s).  Hence
+no cycle involving T1 and T3 can survive.)
 
           o Now let's consider the case where T1 doesn't have a
-conflict in. If that's the case, for this edge T1 -> T3 to make a
-difference, T3 must have a rw-conflict out that induces a cycle in
-the dependency graph, i.e. a conflict out to some transaction
-preceding T1 in the serial order. (A conflict out to T1 would work
-too, but that would mean T1 has a conflict in and we would have
-rolled back.)
+rw-conflict in. If that's the case, for this edge T1 -> T3 to make a
+difference, T3 must have a rw-conflict out that induces a cycle in the
+dependency graph, i.e. a conflict out to some transaction preceding T1
+in the graph. (A conflict out to T1 itself would be problematic too,
+but that would mean T1 has a conflict in, the case we already
+eliminated.)
 
           o So now we're trying to figure out if there can be an
 rw-conflict edge T3 -> T0, where T0 is some transaction that precedes
-T1. For T0 to precede T1, there has to be has to be some edge, or
-sequence of edges, from T0 to T1. At least the last edge has to be a
-wr-dependency or ww-dependency rather than a rw-conflict, because T1
-doesn't have a rw-conflict in. And that gives us enough information
-about the order of transactions to see that T3 can't have a
-rw-dependency to T0:
+T1. For T0 to precede T1, there has to be some edge, or sequence of
+edges, from T0 to T1. At least the last edge has to be a wr-dependency
+or ww-dependency rather than a rw-conflict, because T1 doesn't have a
+rw-conflict in. And that gives us enough information about the order
+of transactions to see that T3 can't have a rw-conflict to T0:
  - T0 committed before T1 started (the wr/ww-dependency implies this)
  - T1 started before T2 committed (the T1->T2 rw-conflict implies this)
- - T2 committed before T3 started (otherwise, T3 would be aborted
+ - T2 committed before T3 started (otherwise, T3 would get aborted
                                    because of an update conflict)
 
           o That means T0 committed before T3 started, and therefore
 there can't be a rw-conflict from T3 to T0.
 
-          o In both cases, we didn't need the T1 -> T3 edge.
+          o So in all cases, we don't need the T1 -> T3 edge to
+recognize cycles.  Therefore it's not necessary for T1's SIREAD lock
+on the original tuple version to cover later versions as well.
 
     * Predicate locking in PostgreSQL starts at the tuple level
 when possible. Multiple fine-grained locks are promoted to a single
@@ -520,10 +531,12 @@ NULL to indicate no conflict and a self-reference to indicate
 multiple conflicts or conflicts with committed transactions, we use a
 list of rw-conflicts. With the more complete information, false
 positives are reduced and we have sufficient data for more aggressive
-clean-up and other optimizations.
+clean-up and other optimizations:
+
           o We can avoid ever rolling back a transaction until and
 unless there is a pivot where a transaction on the conflict *out*
 side of the pivot committed before either of the other transactions.
+
           o We can avoid ever rolling back a transaction when the
 transaction on the conflict *in* side of the pivot is explicitly or
 implicitly READ ONLY unless the transaction on the conflict *out*
@@ -531,6 +544,7 @@ side of the pivot committed before the READ ONLY transaction acquired
 its snapshot. (An implicit READ ONLY transaction is one which
 committed without writing, even though it was not explicitly declared
 to be READ ONLY.)
+
           o We can more aggressively clean up conflicts, predicate
 locks, and SSI transaction information.
 
@@ -543,7 +557,7 @@ overlapping transaction dependencies.
 until the conditions are right for it to start in the "opt out" state
 described above. We add a DEFERRABLE state to transactions, which is
 specified and maintained in a way similar to READ ONLY. It is
-ignored for transactions which are not SERIALIZABLE and READ ONLY.
+ignored for transactions that are not SERIALIZABLE and READ ONLY.
 
     * When a transaction must be rolled back, we pick among the
 active transactions such that an immediate retry will not fail again
@@ -593,8 +607,8 @@ might never be touched, or should we keep adding returned items to
 the end of the available list?
 
 
-Footnotes
----------
+References
+----------
 
 [1] http://www.contrib.andrew.cmu.edu/~shadow/sql/sql1992.txt
 Search for serial execution to find the relevant section.
