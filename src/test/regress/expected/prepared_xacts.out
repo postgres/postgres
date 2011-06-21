@@ -88,14 +88,6 @@ SELECT gid FROM pg_prepared_xacts;
 
 BEGIN TRANSACTION ISOLATION LEVEL SERIALIZABLE;
 INSERT INTO pxtest1 VALUES ('fff');
-SELECT * FROM pxtest1;
- foobar 
---------
- aaa
- ddd
- fff
-(3 rows)
-
 -- This should fail, because the gid foo3 is already in use
 PREPARE TRANSACTION 'foo3';
 ERROR:  transaction identifier "foo3" is already in use
@@ -113,6 +105,49 @@ SELECT * FROM pxtest1;
  aaa
  ddd
 (2 rows)
+
+-- Test serialization failure (SSI)
+BEGIN TRANSACTION ISOLATION LEVEL SERIALIZABLE;
+UPDATE pxtest1 SET foobar = 'eee' WHERE foobar = 'ddd';
+SELECT * FROM pxtest1;
+ foobar 
+--------
+ aaa
+ eee
+(2 rows)
+
+PREPARE TRANSACTION 'foo4';
+SELECT gid FROM pg_prepared_xacts;
+ gid  
+------
+ foo4
+(1 row)
+
+BEGIN TRANSACTION ISOLATION LEVEL SERIALIZABLE;
+SELECT * FROM pxtest1;
+ foobar 
+--------
+ aaa
+ ddd
+(2 rows)
+
+INSERT INTO pxtest1 VALUES ('fff');
+-- This should fail, because the two transactions have a write-skew anomaly
+PREPARE TRANSACTION 'foo5';
+ERROR:  could not serialize access due to read/write dependencies among transactions
+DETAIL:  Cancelled on commit attempt with conflict in from prepared pivot.
+HINT:  The transaction might succeed if retried.
+SELECT gid FROM pg_prepared_xacts;
+ gid  
+------
+ foo4
+(1 row)
+
+ROLLBACK PREPARED 'foo4';
+SELECT gid FROM pg_prepared_xacts;
+ gid 
+-----
+(0 rows)
 
 -- Clean up
 DROP TABLE pxtest1;
