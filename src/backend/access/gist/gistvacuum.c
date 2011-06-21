@@ -270,7 +270,7 @@ gistbulkdelete(PG_FUNCTION_ARGS)
 					ereport(LOG,
 							(errmsg("index \"%s\" contains an inner tuple marked as invalid",
 									RelationGetRelationName(rel)),
-							 errdetail("This is caused by an incomplete page split at crash recovery before upgrading to 9.1."),
+							 errdetail("This is caused by an incomplete page split at crash recovery before upgrading to PostgreSQL 9.1."),
 							 errhint("Please REINDEX it.")));
 			}
 		}

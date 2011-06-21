@@ -202,7 +202,7 @@ SyncRepWaitForLSN(XLogRecPtr XactCommitLSN)
 		 * is not true: it's already committed locally. The former is no good
 		 * either: the client has requested synchronous replication, and is
 		 * entitled to assume that an acknowledged commit is also replicated,
-		 * which may not be true. So in this case we issue a WARNING (which
+		 * which might not be true. So in this case we issue a WARNING (which
 		 * some clients may be able to interpret) and shut off further output.
 		 * We do NOT reset ProcDiePending, so that the process will die after
 		 * the commit is cleaned up.
@@ -212,7 +212,7 @@ SyncRepWaitForLSN(XLogRecPtr XactCommitLSN)
 			ereport(WARNING,
 					(errcode(ERRCODE_ADMIN_SHUTDOWN),
 					 errmsg("canceling the wait for synchronous replication and terminating connection due to administrator command"),
-					 errdetail("The transaction has already committed locally, but may not have been replicated to the standby.")));
+					 errdetail("The transaction has already committed locally, but might not have been replicated to the standby.")));
 			whereToSendOutput = DestNone;
 			SyncRepCancelWait();
 			break;
@@ -229,7 +229,7 @@ SyncRepWaitForLSN(XLogRecPtr XactCommitLSN)
 			QueryCancelPending = false;
 			ereport(WARNING,
 					(errmsg("canceling wait for synchronous replication due to user request"),
-					 errdetail("The transaction has already committed locally, but may not have been replicated to the standby.")));
+					 errdetail("The transaction has already committed locally, but might not have been replicated to the standby.")));
 			SyncRepCancelWait();
 			break;
 		}

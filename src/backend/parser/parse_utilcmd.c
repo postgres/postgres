@@ -1481,21 +1481,21 @@ transformIndexConstraint(Constraint *constraint, CreateStmtContext *cxt)
 			ereport(ERROR,
 					(errcode(ERRCODE_WRONG_OBJECT_TYPE),
 					 errmsg("\"%s\" is not a unique index", index_name),
-					 errdetail("Cannot create a PRIMARY KEY or UNIQUE constraint using such an index."),
+					 errdetail("Cannot create a primary key or unique constraint using such an index."),
 					 parser_errposition(cxt->pstate, constraint->location)));
 
 		if (RelationGetIndexExpressions(index_rel) != NIL)
 			ereport(ERROR,
 					(errcode(ERRCODE_WRONG_OBJECT_TYPE),
 					 errmsg("index \"%s\" contains expressions", index_name),
-					 errdetail("Cannot create a PRIMARY KEY or UNIQUE constraint using such an index."),
+					 errdetail("Cannot create a primary key or unique constraint using such an index."),
 					 parser_errposition(cxt->pstate, constraint->location)));
 
 		if (RelationGetIndexPredicate(index_rel) != NIL)
 			ereport(ERROR,
 					(errcode(ERRCODE_WRONG_OBJECT_TYPE),
 					 errmsg("\"%s\" is a partial index", index_name),
-					 errdetail("Cannot create a PRIMARY KEY or UNIQUE constraint using such an index."),
+					 errdetail("Cannot create a primary key or unique constraint using such an index."),
 					 parser_errposition(cxt->pstate, constraint->location)));
 
 		/*
@@ -1565,7 +1565,7 @@ transformIndexConstraint(Constraint *constraint, CreateStmtContext *cxt)
 				ereport(ERROR,
 						(errcode(ERRCODE_WRONG_OBJECT_TYPE),
 						 errmsg("index \"%s\" does not have default sorting behavior", index_name),
-						 errdetail("Cannot create a PRIMARY KEY or UNIQUE constraint using such an index."),
+						 errdetail("Cannot create a primary key or unique constraint using such an index."),
 					 parser_errposition(cxt->pstate, constraint->location)));
 
 			constraint->keys = lappend(constraint->keys, makeString(attname));

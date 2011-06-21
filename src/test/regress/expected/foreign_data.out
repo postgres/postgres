@@ -701,7 +701,7 @@ ALTER FOREIGN TABLE ft1 ALTER COLUMN c8 SET DATA TYPE text;
 -- can't change the column type if it's used elsewhere
 CREATE TABLE use_ft1_column_type (x ft1);
 ALTER FOREIGN TABLE ft1 ALTER COLUMN c8 SET DATA TYPE integer;	-- ERROR
-ERROR:  cannot alter foreign table "ft1" because column "use_ft1_column_type"."x" uses its rowtype
+ERROR:  cannot alter foreign table "ft1" because column "use_ft1_column_type.x" uses its row type
 DROP TABLE use_ft1_column_type;
 ALTER FOREIGN TABLE ft1 ADD CONSTRAINT ft1_c9_check CHECK (c9 < 0); -- ERROR
 ERROR:  "ft1" is not a table
