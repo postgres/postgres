@@ -174,8 +174,9 @@ $(top_builddir)/src/include/catalog/schemapg.h: catalog/schemapg.h
 	  $(LN_S) "$$prereqdir/$(notdir $<)" .
 
 $(top_builddir)/src/include/utils/errcodes.h: utils/errcodes.h
-	cd '$(dir $@)' && rm -f $(notdir $@) && \
-	    $(LN_S) "../../../$(subdir)/utils/errcodes.h" .
+	prereqdir=`cd '$(dir $<)' >/dev/null && pwd` && \
+	  cd '$(dir $@)' && rm -f $(notdir $@) && \
+	  $(LN_S) "$$prereqdir/$(notdir $<)" .
 
 $(top_builddir)/src/include/utils/fmgroids.h: utils/fmgroids.h
 	prereqdir=`cd '$(dir $<)' >/dev/null && pwd` && \
