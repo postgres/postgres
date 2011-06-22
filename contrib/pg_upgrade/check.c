@@ -30,7 +30,7 @@ output_check_banner(bool *live_check)
 		if (old_cluster.port == new_cluster.port)
 			pg_log(PG_FATAL, "When checking a live server, "
 				   "the old and new port numbers must be different.\n");
-		pg_log(PG_REPORT, "PerForming Consistency Checks on Old Live Server\n");
+		pg_log(PG_REPORT, "Performing Consistency Checks on Old Live Server\n");
 		pg_log(PG_REPORT, "------------------------------------------------\n");
 	}
 	else
