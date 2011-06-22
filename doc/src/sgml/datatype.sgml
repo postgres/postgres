@@ -199,6 +199,12 @@
       </row>
 
       <row>
+       <entry><type>smallserial</type></entry>
+       <entry><type>serial2</type></entry>
+       <entry>autoincrementing two-byte integer</entry>
+      </row>
+
+      <row>
        <entry><type>serial</type></entry>
        <entry><type>serial4</type></entry>
        <entry>autoincrementing four-byte integer</entry>
@@ -366,6 +372,13 @@
         <entry>8 bytes</entry>
         <entry>variable-precision, inexact</entry>
         <entry>15 decimal digits precision</entry>
+       </row>
+
+       <row>
+        <entry><type>smallserial</type></entry>
+        <entry>2 bytes</entry>
+        <entry>small autoincrementing integer</entry>
+        <entry>1 to 32767</entry>
        </row>
 
        <row>
@@ -743,11 +756,19 @@ NUMERIC
     <title>Serial Types</title>
 
     <indexterm zone="datatype-serial">
+     <primary>smallserial</primary>
+    </indexterm>
+
+    <indexterm zone="datatype-serial">
      <primary>serial</primary>
     </indexterm>
 
     <indexterm zone="datatype-serial">
      <primary>bigserial</primary>
+    </indexterm>
+
+    <indexterm zone="datatype-serial">
+     <primary>serial2</primary>
     </indexterm>
 
     <indexterm zone="datatype-serial">
@@ -769,8 +790,8 @@ NUMERIC
     </indexterm>
 
     <para>
-     The data types <type>serial</type> and <type>bigserial</type>
-     are not true types, but merely
+     The data types <type>smallserial</type>, <type>serial</type> and 
+     <type>bigserial</type> are not true types, but merely
      a notational convenience for creating unique identifier columns
      (similar to the <literal>AUTO_INCREMENT</literal> property
      supported by some other databases). In the current
@@ -828,7 +849,9 @@ ALTER SEQUENCE <replaceable class="parameter">tablename</replaceable>_<replaceab
      the same way, except that they create a <type>bigint</type>
      column.  <type>bigserial</type> should be used if you anticipate
      the use of more than 2<superscript>31</> identifiers over the
-     lifetime of the table.
+     lifetime of the table. The type names <type>smallserial</type> and
+     <type>serial2</type> also work the same way, execpt that they
+     create a <type>smallint</type> column.
     </para>
 
     <para>

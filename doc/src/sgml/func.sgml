@@ -13366,7 +13366,7 @@ SELECT pg_type_is_visible('myschema.widget'::regtype);
       <row>
        <entry><literal><function>pg_get_serial_sequence(<parameter>table_name</parameter>, <parameter>column_name</parameter>)</function></literal></entry>
        <entry><type>text</type></entry>
-       <entry>get name of the sequence that a <type>serial</type> or <type>bigserial</type> column
+       <entry>get name of the sequence that a <type>serial</type>, <type>smallserial</type> or <type>bigserial</type> column
        uses</entry>
       </row>
       <row>

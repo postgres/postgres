@@ -307,7 +307,14 @@ transformColumnDefinition(CreateStmtContext *cxt, ColumnDef *column)
 	{
 		char	   *typname = strVal(linitial(column->typeName->names));
 
-		if (strcmp(typname, "serial") == 0 ||
+		if (strcmp(typname, "smallserial") == 0 ||
+			strcmp(typname, "serial2") == 0)
+		{
+			is_serial = true;
+			column->typeName->names = NIL;
+			column->typeName->typeOid = INT2OID;
+		}
+		else if (strcmp(typname, "serial") == 0 ||
 			strcmp(typname, "serial4") == 0)
 		{
 			is_serial = true;
