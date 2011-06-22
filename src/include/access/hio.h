@@ -38,6 +38,7 @@ extern void RelationPutHeapTuple(Relation relation, Buffer buffer,
 					 HeapTuple tuple);
 extern Buffer RelationGetBufferForTuple(Relation relation, Size len,
 						  Buffer otherBuffer, int options,
-						  struct BulkInsertStateData * bistate);
+						  struct BulkInsertStateData * bistate,
+						  Buffer *vmbuffer);
 
 #endif   /* HIO_H */

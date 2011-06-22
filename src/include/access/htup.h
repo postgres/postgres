@@ -606,6 +606,7 @@ typedef HeapTupleData *HeapTuple;
 #define XLOG_HEAP2_CLEAN		0x10
 /* 0x20 is free, was XLOG_HEAP2_CLEAN_MOVE */
 #define XLOG_HEAP2_CLEANUP_INFO 0x30
+#define XLOG_HEAP2_VISIBLE		0x40
 
 /*
  * All what we need to find changed tuple
@@ -749,6 +750,15 @@ typedef struct xl_heap_freeze
 } xl_heap_freeze;
 
 #define SizeOfHeapFreeze (offsetof(xl_heap_freeze, cutoff_xid) + sizeof(TransactionId))
+
+/* This is what we need to know about setting a visibility map bit */
+typedef struct xl_heap_visible
+{
+	RelFileNode node;
+	BlockNumber block;
+} xl_heap_visible;
+
+#define SizeOfHeapVisible (offsetof(xl_heap_visible, block) + sizeof(BlockNumber))
 
 extern void HeapTupleHeaderAdvanceLatestRemovedXid(HeapTupleHeader tuple,
 									   TransactionId *latestRemovedXid);

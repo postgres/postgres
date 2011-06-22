@@ -136,6 +136,8 @@ extern XLogRecPtr log_heap_clean(Relation reln, Buffer buffer,
 extern XLogRecPtr log_heap_freeze(Relation reln, Buffer buffer,
 				TransactionId cutoff_xid,
 				OffsetNumber *offsets, int offcnt);
+extern XLogRecPtr log_heap_visible(RelFileNode rnode, BlockNumber block,
+				 Buffer vm_buffer);
 extern XLogRecPtr log_newpage(RelFileNode *rnode, ForkNumber forkNum,
 			BlockNumber blk, Page page);
 

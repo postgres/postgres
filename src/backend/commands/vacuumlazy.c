@@ -513,7 +513,8 @@ lazy_scan_heap(Relation onerel, LVRelStats *vacrelstats,
 				visibilitymap_pin(onerel, blkno, &vmbuffer);
 				LockBuffer(buf, BUFFER_LOCK_SHARE);
 				if (PageIsAllVisible(page))
-					visibilitymap_set(onerel, blkno, PageGetLSN(page), &vmbuffer);
+					visibilitymap_set(onerel, blkno, InvalidXLogRecPtr,
+									  vmbuffer);
 				LockBuffer(buf, BUFFER_LOCK_UNLOCK);
 			}
 
@@ -765,7 +766,8 @@ lazy_scan_heap(Relation onerel, LVRelStats *vacrelstats,
 			 * updating the visibility map, but since this case shouldn't
 			 * happen anyway, don't worry about that.
 			 */
-			visibilitymap_clear(onerel, blkno);
+			visibilitymap_pin(onerel, blkno, &vmbuffer);
+			visibilitymap_clear(onerel, blkno, vmbuffer);
 		}
 
 		LockBuffer(buf, BUFFER_LOCK_UNLOCK);
@@ -776,7 +778,7 @@ lazy_scan_heap(Relation onerel, LVRelStats *vacrelstats,
 			visibilitymap_pin(onerel, blkno, &vmbuffer);
 			LockBuffer(buf, BUFFER_LOCK_SHARE);
 			if (PageIsAllVisible(page))
-				visibilitymap_set(onerel, blkno, PageGetLSN(page), &vmbuffer);
+				visibilitymap_set(onerel, blkno, InvalidXLogRecPtr, vmbuffer);
 			LockBuffer(buf, BUFFER_LOCK_UNLOCK);
 		}
 

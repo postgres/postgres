@@ -5462,7 +5462,6 @@ exitArchiveRecovery(TimeLineID endTLI, uint32 endLogId, uint32 endLogSeg)
 {
 	char		recoveryPath[MAXPGPATH];
 	char		xlogpath[MAXPGPATH];
-	XLogRecPtr	InvalidXLogRecPtr = {0, 0};
 
 	/*
 	 * We are no longer in archive recovery state.
@@ -8069,8 +8068,6 @@ CreateRestartPoint(int flags)
 	if (XLogRecPtrIsInvalid(lastCheckPointRecPtr) ||
 		XLByteLE(lastCheckPoint.redo, ControlFile->checkPointCopy.redo))
 	{
-		XLogRecPtr	InvalidXLogRecPtr = {0, 0};
-
 		ereport(DEBUG2,
 				(errmsg("skipping restartpoint, already performed at %X/%X",
 				  lastCheckPoint.redo.xlogid, lastCheckPoint.redo.xrecoff)));

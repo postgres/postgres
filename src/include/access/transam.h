@@ -135,6 +135,9 @@ extern bool TransactionStartedDuringRecovery(void);
 /* in transam/varsup.c */
 extern PGDLLIMPORT VariableCache ShmemVariableCache;
 
+/* in transam/transam.c */
+extern const XLogRecPtr InvalidXLogRecPtr;
+
 
 /*
  * prototypes for functions in transam/transam.c
