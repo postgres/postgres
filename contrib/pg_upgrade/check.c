@@ -393,8 +393,7 @@ check_old_cluster_has_new_cluster_dbs(void)
  *	This is particularly useful for tablespace deletion.
  */
 void
-create_script_for_old_cluster_deletion(
-									   char **deletion_script_file_name)
+create_script_for_old_cluster_deletion(char **deletion_script_file_name)
 {
 	FILE	   *script = NULL;
 	int			tblnum;

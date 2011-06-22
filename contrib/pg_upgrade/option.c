@@ -17,7 +17,7 @@
 
 
 static void usage(void);
-static void validateDirectoryOption(char **dirpath,
+static void check_required_directory(char **dirpath,
 				   char *envVarName, char *cmdLineOption, char *description);
 
 
@@ -203,13 +203,13 @@ parseCommandLine(int argc, char *argv[])
 	}
 
 	/* Get values from env if not already set */
-	validateDirectoryOption(&old_cluster.bindir, "OLDBINDIR", "-b",
+	check_required_directory(&old_cluster.bindir, "OLDBINDIR", "-b",
 							"old cluster binaries reside");
-	validateDirectoryOption(&new_cluster.bindir, "NEWBINDIR", "-B",
+	check_required_directory(&new_cluster.bindir, "NEWBINDIR", "-B",
 							"new cluster binaries reside");
-	validateDirectoryOption(&old_cluster.pgdata, "OLDDATADIR", "-d",
+	check_required_directory(&old_cluster.pgdata, "OLDDATADIR", "-d",
 							"old cluster data resides");
-	validateDirectoryOption(&new_cluster.pgdata, "NEWDATADIR", "-D",
+	check_required_directory(&new_cluster.pgdata, "NEWDATADIR", "-D",
 							"new cluster data resides");
 }
 
@@ -272,9 +272,9 @@ or\n"), old_cluster.port, new_cluster.port, os_info.user);
 
 
 /*
- * validateDirectoryOption()
+ * check_required_directory()
  *
- * Validates a directory option.
+ * Checks a directory option.
  *	dirpath		  - the directory name supplied on the command line
  *	envVarName	  - the name of an environment variable to get if dirpath is NULL
  *	cmdLineOption - the command line option corresponds to this directory (-o, -O, -n, -N)
@@ -284,7 +284,7 @@ or\n"), old_cluster.port, new_cluster.port, os_info.user);
  * user hasn't provided the required directory name.
  */
 static void
-validateDirectoryOption(char **dirpath, char *envVarName,
+check_required_directory(char **dirpath, char *envVarName,
 						char *cmdLineOption, char *description)
 {
 	if (*dirpath == NULL || strlen(*dirpath) == 0)
