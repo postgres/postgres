@@ -43,8 +43,7 @@ output_check_banner(bool *live_check)
 
 
 void
-check_old_cluster(bool live_check,
-				  char **sequence_script_file_name)
+check_old_cluster(bool live_check, char **sequence_script_file_name)
 {
 	/* -- OLD -- */
 
