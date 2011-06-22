@@ -28,7 +28,7 @@ output_check_banner(migratorContext *ctx, bool *live_check)
 		if (ctx->old.port == ctx->new.port)
 			pg_log(ctx, PG_FATAL, "When checking a live server, "
 				   "the old and new port numbers must be different.\n");
-		pg_log(ctx, PG_REPORT, "PerForming Consistency Checks on Old Live Server\n");
+		pg_log(ctx, PG_REPORT, "Performing Consistency Checks on Old Live Server\n");
 		pg_log(ctx, PG_REPORT, "------------------------------------------------\n");
 	}
 	else
