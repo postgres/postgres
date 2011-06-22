@@ -78,10 +78,12 @@ DROP SEQUENCE sequence_test;
 -- renaming sequences
 CREATE SEQUENCE foo_seq;
 ALTER TABLE foo_seq RENAME TO foo_seq_new;
-SELECT * FROM foo_seq_new;
+SELECT sequence_name, last_value, start_value, increment_by, max_value,
+    min_value, cache_value, is_cycled, is_called FROM foo_seq_new;
 SELECT nextval('foo_seq_new');
 SELECT nextval('foo_seq_new');
-SELECT * FROM foo_seq_new;
+SELECT sequence_name, last_value, start_value, increment_by, max_value,
+    min_value, cache_value, is_cycled, is_called FROM foo_seq_new;
 DROP SEQUENCE foo_seq_new;
 
 -- renaming serial sequences
