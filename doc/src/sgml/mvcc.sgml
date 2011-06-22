@@ -658,6 +658,26 @@ ERROR:  could not serialize access due to read/write dependencies among transact
        protections automatically provided by Serializable transactions.
       </para>
      </listitem>
+     <listitem>
+      <para>
+       When the system is forced to combine multiple page-level predicate
+       locks into a single relation-level predicate lock because the predicate
+       lock table is short of memory, an increase in the rate of serialization
+       failures may occur.  You can avoid this by increasing
+       <xref linkend="guc-max-pred-locks-per-transaction">.
+      </para>
+     </listitem>
+     <listitem>
+      <para>
+       A sequential scan will always necessitate a relation-level predicate
+       lock.  This can result in an increased rate of serialization failures.
+       It may be helpful to encourage the use of index scans by reducing
+       <xref linkend="guc-random-page-cost"> and/or increasing
+       <xref linkend="guc-cpu-tuple-cost">.  Be sure to weigh any decrease
+       in transaction rollbacks and restarts against any overall change in
+       query execution time.
+      </para>
+     </listitem>
     </itemizedlist>
    </para>
 
