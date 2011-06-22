@@ -106,9 +106,9 @@ static List *simplify_and_arguments(List *args,
 					   eval_const_expressions_context *context,
 					   bool *haveNull, bool *forceFalse);
 static Node *simplify_boolean_equality(Oid opno, List *args);
-static Expr *simplify_function(Oid funcid,
-				  Oid result_type, int32 result_typmod,
-				  Oid result_collid, Oid input_collid, List **args,
+static Expr *simplify_function(Expr *oldexpr, Oid funcid,
+				  Oid result_type, int32 result_typmod, Oid result_collid,
+				  Oid input_collid, List **args,
 				  bool has_named_args,
 				  bool allow_inline,
 				  eval_const_expressions_context *context);
@@ -2223,7 +2223,8 @@ eval_const_expressions_mutator(Node *node,
 		 * FuncExpr, but not when the node is recognizably a length coercion;
 		 * we want to preserve the typmod in the eventual Const if so.
 		 */
-		simple = simplify_function(expr->funcid,
+		simple = simplify_function((Expr *) expr,
+								   expr->funcid,
 								   expr->funcresulttype, exprTypmod(node),
 								   expr->funccollid,
 								   expr->inputcollid,
@@ -2275,7 +2276,8 @@ eval_const_expressions_mutator(Node *node,
 		 * Code for op/func reduction is pretty bulky, so split it out as a
 		 * separate function.
 		 */
-		simple = simplify_function(expr->opfuncid,
+		simple = simplify_function((Expr *) expr,
+								   expr->opfuncid,
 								   expr->opresulttype, -1,
 								   expr->opcollid,
 								   expr->inputcollid,
@@ -2372,7 +2374,8 @@ eval_const_expressions_mutator(Node *node,
 			 * Code for op/func reduction is pretty bulky, so split it out as
 			 * a separate function.
 			 */
-			simple = simplify_function(expr->opfuncid,
+			simple = simplify_function((Expr *) expr,
+									   expr->opfuncid,
 									   expr->opresulttype, -1,
 									   expr->opcollid,
 									   expr->inputcollid,
@@ -2561,7 +2564,8 @@ eval_const_expressions_mutator(Node *node,
 		getTypeOutputInfo(exprType((Node *) arg), &outfunc, &outtypisvarlena);
 		getTypeInputInfo(expr->resulttype, &infunc, &intypioparam);
 
-		simple = simplify_function(outfunc,
+		simple = simplify_function(NULL,
+								   outfunc,
 								   CSTRINGOID, -1,
 								   InvalidOid,
 								   InvalidOid,
@@ -2581,7 +2585,8 @@ eval_const_expressions_mutator(Node *node,
 									  Int32GetDatum(-1),
 									  false, true));
 
-			simple = simplify_function(infunc,
+			simple = simplify_function(NULL,
+									   infunc,
 									   expr->resulttype, -1,
 									   expr->resultcollid,
 									   InvalidOid,
@@ -3417,11 +3422,15 @@ simplify_boolean_equality(Oid opno, List *args)
  * Subroutine for eval_const_expressions: try to simplify a function call
  * (which might originally have been an operator; we don't care)
  *
- * Inputs are the function OID, actual result type OID (which is needed for
- * polymorphic functions), result typmod, result collation,
- * the input collation to use for the function,
- * the pre-simplified argument list, and some flags;
- * also the context data for eval_const_expressions.
+ * Inputs are the original expression (can be NULL), function OID, actual
+ * result type OID (which is needed for polymorphic functions), result typmod,
+ * result collation, the input collation to use for the function, the
+ * pre-simplified argument list, and some flags; also the context data for
+ * eval_const_expressions.  In common cases, several of the arguments could be
+ * derived from the original expression.  Sending them separately avoids
+ * duplicating NodeTag-specific knowledge, and it's necessary for CoerceViaIO.
+ * A NULL original expression disables use of transform functions while
+ * retaining all other behaviors.
  *
  * Returns a simplified expression if successful, or NULL if cannot
  * simplify the function call.
@@ -3433,22 +3442,24 @@ simplify_boolean_equality(Oid opno, List *args)
  * pass-by-reference, and it may get modified even if simplification fails.
  */
 static Expr *
-simplify_function(Oid funcid, Oid result_type, int32 result_typmod,
-				  Oid result_collid, Oid input_collid, List **args,
+simplify_function(Expr *oldexpr, Oid funcid,
+				  Oid result_type, int32 result_typmod, Oid result_collid,
+				  Oid input_collid, List **args,
 				  bool has_named_args,
 				  bool allow_inline,
 				  eval_const_expressions_context *context)
 {
 	HeapTuple	func_tuple;
 	Expr	   *newexpr;
+	Oid			transform;
 
 	/*
-	 * We have two strategies for simplification: either execute the function
-	 * to deliver a constant result, or expand in-line the body of the
-	 * function definition (which only works for simple SQL-language
-	 * functions, but that is a common case).  In either case we need access
-	 * to the function's pg_proc tuple, so fetch it just once to use in both
-	 * attempts.
+	 * We have three strategies for simplification: execute the function to
+	 * deliver a constant result, use a transform function to generate a
+	 * substitute node tree, or expand in-line the body of the function
+	 * definition (which only works for simple SQL-language functions, but
+	 * that is a common case).  Each needs access to the function's pg_proc
+	 * tuple, so fetch it just once.
 	 */
 	func_tuple = SearchSysCache1(PROCOID, ObjectIdGetDatum(funcid));
 	if (!HeapTupleIsValid(func_tuple))
@@ -3467,6 +3478,40 @@ simplify_function(Oid funcid, Oid result_type, int32 result_typmod,
 	newexpr = evaluate_function(funcid, result_type, result_typmod,
 								result_collid, input_collid, *args,
 								func_tuple, context);
+
+	/*
+	 * Some functions calls can be simplified at plan time based on properties
+	 * specific to the function.  For example, "varchar(s::varchar(4), 8,
+	 * true)" simplifies to "s::varchar(4)", and "int4mul(n, 1)" could
+	 * simplify to "n".  To define such function-specific optimizations, write
+	 * a "transform function" and store its OID in the pg_proc.protransform of
+	 * the primary function.  Give each transform function the signature
+	 * "protransform(internal) RETURNS internal".  The argument, internally an
+	 * Expr *, is the node representing a call to the primary function.  If
+	 * the transform function's study of that node proves that a simplified
+	 * Expr substitutes for all possible concrete calls represented thereby,
+	 * return that simplified Expr.  Otherwise, return the NULL pointer.
+	 *
+	 * Currently, the specific Expr nodetag can be FuncExpr, OpExpr or
+	 * DistinctExpr.  This list may change in the future.  The function should
+	 * check the nodetag and return the NULL pointer for unexpected inputs.
+	 *
+	 * We make no guarantee that PostgreSQL will never call the primary
+	 * function in cases that the transform function would simplify.  Ensure
+	 * rigorous equivalence between the simplified expression and an actual
+	 * call to the primary function.
+	 *
+	 * Currently, this facility is undocumented and not exposed to users at
+	 * the SQL level.  Core length coercion casts use it to avoid calls
+	 * guaranteed to return their input unchanged.  This in turn allows ALTER
+	 * TABLE ALTER TYPE to avoid rewriting tables for some typmod changes.  In
+	 * the future, this facility may find other applications, like simplifying
+	 * x*0, x*1, and x+0.
+	 */
+	transform = ((Form_pg_proc) GETSTRUCT(func_tuple))->protransform;
+	if (!newexpr && OidIsValid(transform) && oldexpr)
+		newexpr = (Expr *) DatumGetPointer(OidFunctionCall1(transform,
+															PointerGetDatum(oldexpr)));
 
 	if (!newexpr && allow_inline)
 		newexpr = inline_function(funcid, result_type, result_collid,

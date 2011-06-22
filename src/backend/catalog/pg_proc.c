@@ -304,6 +304,7 @@ ProcedureCreate(const char *procedureName,
 	values[Anum_pg_proc_procost - 1] = Float4GetDatum(procost);
 	values[Anum_pg_proc_prorows - 1] = Float4GetDatum(prorows);
 	values[Anum_pg_proc_provariadic - 1] = ObjectIdGetDatum(variadicType);
+	values[Anum_pg_proc_protransform - 1] = ObjectIdGetDatum(InvalidOid);
 	values[Anum_pg_proc_proisagg - 1] = BoolGetDatum(isAgg);
 	values[Anum_pg_proc_proiswindow - 1] = BoolGetDatum(isWindowFunc);
 	values[Anum_pg_proc_prosecdef - 1] = BoolGetDatum(security_definer);

@@ -56,6 +56,7 @@
 #include "nodes/nodeFuncs.h"
 #include "nodes/parsenodes.h"
 #include "optimizer/clauses.h"
+#include "optimizer/planner.h"
 #include "parser/parse_clause.h"
 #include "parser/parse_coerce.h"
 #include "parser/parse_collate.h"
@@ -3495,7 +3496,8 @@ ATRewriteTable(AlteredTableInfo *tab, Oid OIDNewHeap, LOCKMODE lockmode)
 	{
 		NewColumnValue *ex = lfirst(l);
 
-		ex->exprstate = ExecPrepareExpr((Expr *) ex->expr, estate);
+		/* expr already planned */
+		ex->exprstate = ExecInitExpr((Expr *) ex->expr, NULL);
 	}
 
 	notnull_attrs = NIL;
@@ -4398,7 +4400,7 @@ ATExecAddColumn(List **wqueue, AlteredTableInfo *tab, Relation rel,
 
 			newval = (NewColumnValue *) palloc0(sizeof(NewColumnValue));
 			newval->attnum = attribute.attnum;
-			newval->expr = defval;
+			newval->expr = expression_planner(defval);
 
 			tab->newvals = lappend(tab->newvals, newval);
 			tab->rewrite = true;
@@ -6706,6 +6708,9 @@ ATPrepAlterColumnType(List **wqueue,
 
 		/* Fix collations after all else */
 		assign_expr_collations(pstate, transform);
+
+		/* Plan the expr now so we can accurately assess the need to rewrite. */
+		transform = (Node *) expression_planner((Expr *) transform);
 
 		/*
 		 * Add a work queue item to make ATRewriteTable update the column

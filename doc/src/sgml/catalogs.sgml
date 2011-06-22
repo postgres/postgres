@@ -4338,6 +4338,13 @@
      </row>
 
      <row>
+      <entry><structfield>protransform</structfield></entry>
+      <entry><type>regproc</type></entry>
+      <entry><literal><link linkend="catalog-pg-proc"><structname>pg_proc</structname></link>.oid</literal></entry>
+      <entry>Calls to function can be simplified by this other function</entry>
+     </row>
+
+     <row>
       <entry><structfield>proisagg</structfield></entry>
       <entry><type>bool</type></entry>
       <entry></entry>

@@ -684,6 +684,7 @@ extern Datum varcharrecv(PG_FUNCTION_ARGS);
 extern Datum varcharsend(PG_FUNCTION_ARGS);
 extern Datum varchartypmodin(PG_FUNCTION_ARGS);
 extern Datum varchartypmodout(PG_FUNCTION_ARGS);
+extern Datum varchar_transform(PG_FUNCTION_ARGS);
 extern Datum varchar(PG_FUNCTION_ARGS);
 
 /* varlena.c */

@@ -2278,3 +2278,25 @@ transformFrameOffset(ParseState *pstate, int frameOptions, Node *clause)
 
 	return node;
 }
+
+/*
+ * relabel_to_typmod
+ *		Add a RelabelType node that changes just the typmod, and remove all
+ *		now-superfluous RelabelType nodes beneath it.
+ */
+Node *
+relabel_to_typmod(Node *expr, int32 typmod)
+{
+	Oid			type = exprType(expr);
+	Oid			coll = exprCollation(expr);
+
+	/*
+	 * Strip any existing RelabelType, then add one. This is to preserve the
+	 * invariant of no redundant RelabelTypes.
+	 */
+	while (IsA(expr, RelabelType))
+		expr = (Node *) ((RelabelType *) expr)->arg;
+
+	return (Node *) makeRelabelType((Expr *) expr, type, typmod, coll,
+									COERCE_DONTCARE);
+}

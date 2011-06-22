@@ -18,6 +18,8 @@
 #include "access/hash.h"
 #include "access/tuptoaster.h"
 #include "libpq/pqformat.h"
+#include "nodes/nodeFuncs.h"
+#include "parser/parse_clause.h"
 #include "utils/array.h"
 #include "utils/builtins.h"
 #include "mb/pg_wchar.h"
@@ -547,6 +549,38 @@ varcharsend(PG_FUNCTION_ARGS)
 	return textsend(fcinfo);
 }
 
+
+/*
+ * Flatten calls to our length coercion function that leave the new maximum
+ * length >= the previous maximum length.  We ignore the isExplicit argument,
+ * which only affects truncation.
+ */
+Datum
+varchar_transform(PG_FUNCTION_ARGS)
+{
+	FuncExpr   *expr = (FuncExpr *) PG_GETARG_POINTER(0);
+	Node	   *typmod;
+	Node	   *ret = NULL;
+
+	if (!IsA(expr, FuncExpr))
+		PG_RETURN_POINTER(ret);
+
+	Assert(list_length(expr->args) == 3);
+	typmod = lsecond(expr->args);
+
+	if (IsA(typmod, Const))
+	{
+		Node	   *source = linitial(expr->args);
+		int32		new_typmod = DatumGetInt32(((Const *) typmod)->constvalue);
+		int32		old_max = exprTypmod(source) - VARHDRSZ;
+		int32		new_max = new_typmod - VARHDRSZ;
+
+		if (new_max < 0 || (old_max >= 0 && old_max <= new_max))
+			ret = relabel_to_typmod(source, new_typmod);
+	}
+
+	PG_RETURN_POINTER(ret);
+}
 
 /*
  * Converts a VARCHAR type to the specified size.
