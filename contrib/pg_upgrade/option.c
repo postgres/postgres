@@ -19,8 +19,6 @@
 static void usage(void);
 static void validateDirectoryOption(char **dirpath,
 				   char *envVarName, char *cmdLineOption, char *description);
-static void get_pkglibdirs(void);
-static char *get_pkglibdir(const char *bindir);
 
 
 UserOpts	user_opts;
@@ -213,8 +211,6 @@ parseCommandLine(int argc, char *argv[])
 							"old cluster data resides");
 	validateDirectoryOption(&new_cluster.pgdata, "NEWDATADIR", "-D",
 							"new cluster data resides");
-
-	get_pkglibdirs();
 }
 
 
@@ -315,45 +311,4 @@ validateDirectoryOption(char **dirpath,
 		(*dirpath)[strlen(*dirpath) - 1] == '\\')
 #endif
 		(*dirpath)[strlen(*dirpath) - 1] = 0;
-}
-
-
-static void
-get_pkglibdirs(void)
-{
-	/*
-	 * we do not need to know the libpath in the old cluster, and might not
-	 * have a working pg_config to ask for it anyway.
-	 */
-	old_cluster.libpath = NULL;
-	new_cluster.libpath = get_pkglibdir(new_cluster.bindir);
-}
-
-
-static char *
-get_pkglibdir(const char *bindir)
-{
-	char		cmd[MAXPGPATH];
-	char		bufin[MAX_STRING];
-	FILE	   *output;
-	int			i;
-
-	snprintf(cmd, sizeof(cmd), "\"%s/pg_config\" --pkglibdir", bindir);
-
-	if ((output = popen(cmd, "r")) == NULL)
-		pg_log(PG_FATAL, "Could not get pkglibdir data: %s\n",
-			   getErrorText(errno));
-
-	fgets(bufin, sizeof(bufin), output);
-
-	if (output)
-		pclose(output);
-
-	/* Remove trailing newline */
-	i = strlen(bufin) - 1;
-
-	if (bufin[i] == '\n')
-		bufin[i] = '\0';
-
-	return pg_strdup(bufin);
 }
