@@ -19,6 +19,7 @@ static void check_is_super_user(ClusterInfo *cluster);
 static void check_for_prepared_transactions(ClusterInfo *cluster);
 static void check_for_isn_and_int8_passing_mismatch(ClusterInfo *cluster);
 static void check_for_reg_data_type_usage(ClusterInfo *cluster);
+static void check_for_support_lib(ClusterInfo *cluster);
 
 
 void
@@ -245,21 +246,7 @@ check_cluster_versions(void)
 void
 check_cluster_compatibility(bool live_check)
 {
-	char		libfile[MAXPGPATH];
-	FILE	   *lib_test;
-
-	/*
-	 * Test pg_upgrade_support.so is in the proper place.	 We cannot copy it
-	 * ourselves because install directories are typically root-owned.
-	 */
-	snprintf(libfile, sizeof(libfile), "%s/pg_upgrade_support%s", new_cluster.libpath,
-			 DLSUFFIX);
-
-	if ((lib_test = fopen(libfile, "r")) == NULL)
-		pg_log(PG_FATAL,
-			   "pg_upgrade_support%s must be created and installed in %s\n", DLSUFFIX, libfile);
-	else
-		fclose(lib_test);
+	check_for_support_lib(&new_cluster);
 
 	/* get/check pg_control data of servers */
 	get_control_data(&old_cluster, live_check);
@@ -729,4 +716,43 @@ check_for_reg_data_type_usage(ClusterInfo *cluster)
 	}
 	else
 		check_ok();
+}
+
+
+/*
+ * Test pg_upgrade_support.so is in the proper place.	 We cannot copy it
+ * ourselves because install directories are typically root-owned.
+ */
+static void
+check_for_support_lib(ClusterInfo *cluster)
+{
+	char		cmd[MAXPGPATH];
+	char		libdir[MAX_STRING];
+	char		libfile[MAXPGPATH];
+	FILE	   *lib_test;
+	FILE	   *output;
+
+	snprintf(cmd, sizeof(cmd), "\"%s/pg_config\" --pkglibdir", cluster->bindir);
+
+	if ((output = popen(cmd, "r")) == NULL)
+		pg_log(PG_FATAL, "Could not get pkglibdir data: %s\n",
+			   getErrorText(errno));
+
+	fgets(libdir, sizeof(libdir), output);
+
+	pclose(output);
+
+	/* Remove trailing newline */
+	if (strchr(libdir, '\n') != NULL)
+		*strchr(libdir, '\n') = '\0';
+
+	snprintf(libfile, sizeof(libfile), "%s/pg_upgrade_support%s", libdir,
+			 DLSUFFIX);
+
+	if ((lib_test = fopen(libfile, "r")) == NULL)
+		pg_log(PG_FATAL,
+			   "The pg_upgrade_support module must be created and installed in the %s cluster.\n",
+				CLUSTER_NAME(cluster));
+
+	fclose(lib_test);
 }
