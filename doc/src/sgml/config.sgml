@@ -5266,7 +5266,8 @@ dynamic_library_path = 'C:\tools\postgresql;H:\my_project\lib;$libdir'
         practice. On a heavily loaded server you might want to raise it.
         Ideally the setting should exceed your typical transaction time,
         so as to improve the odds that a lock will be released before
-        the waiter decides to check for deadlock.
+        the waiter decides to check for deadlock.  Only superusers can change
+        this setting.
        </para>
 
        <para>

@@ -1532,8 +1532,8 @@ static struct config_int ConfigureNamesInt[] =
 	},
 
 	{
-		/* This is PGC_SIGHUP so all backends have the same value. */
-		{"deadlock_timeout", PGC_SIGHUP, LOCK_MANAGEMENT,
+		/* This is PGC_SUSET to prevent hiding from log_lock_waits. */
+		{"deadlock_timeout", PGC_SUSET, LOCK_MANAGEMENT,
 			gettext_noop("Sets the time to wait on a lock before checking for deadlock."),
 			NULL,
 			GUC_UNIT_MS
