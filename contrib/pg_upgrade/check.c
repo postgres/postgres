@@ -20,6 +20,7 @@ static void check_for_prepared_transactions(ClusterInfo *cluster);
 static void check_for_isn_and_int8_passing_mismatch(ClusterInfo *cluster);
 static void check_for_reg_data_type_usage(ClusterInfo *cluster);
 static void check_for_support_lib(ClusterInfo *cluster);
+static void get_bin_version(ClusterInfo *cluster);
 
 
 void
@@ -217,6 +218,8 @@ output_completion_banner(char *deletion_script_file_name)
 void
 check_cluster_versions(void)
 {
+	prep_status("Checking cluster versions");
+
 	/* get old and new cluster versions */
 	old_cluster.major_version = get_major_server_version(&old_cluster);
 	new_cluster.major_version = get_major_server_version(&new_cluster);
@@ -236,10 +239,26 @@ check_cluster_versions(void)
 
 	/*
 	 * We can't allow downgrading because we use the target pg_dumpall, and
-	 * pg_dumpall cannot operate on new datbase versions, only older versions.
+	 * pg_dumpall cannot operate on new database versions, only older versions.
 	 */
 	if (old_cluster.major_version > new_cluster.major_version)
 		pg_log(PG_FATAL, "This utility cannot be used to downgrade to older major PostgreSQL versions.\n");
+
+	/* get old and new binary versions */
+	get_bin_version(&old_cluster);
+	get_bin_version(&new_cluster);
+
+	/* Ensure binaries match the designated data directories */
+	if (GET_MAJOR_VERSION(old_cluster.major_version) !=
+		GET_MAJOR_VERSION(old_cluster.bin_version))
+		pg_log(PG_FATAL,
+			   "Old cluster data and binary directories are from different major versions.\n");
+	if (GET_MAJOR_VERSION(new_cluster.major_version) !=
+		GET_MAJOR_VERSION(new_cluster.bin_version))
+		pg_log(PG_FATAL,
+			   "New cluster data and binary directories are from different major versions.\n");
+
+	check_ok();
 }
 
 
@@ -756,3 +775,32 @@ check_for_support_lib(ClusterInfo *cluster)
 
 	fclose(lib_test);
 }
+
+
+static void
+get_bin_version(ClusterInfo *cluster)
+{
+	char		cmd[MAXPGPATH], cmd_output[MAX_STRING];
+	FILE	   *output;
+	int			pre_dot, post_dot;
+
+	snprintf(cmd, sizeof(cmd), "\"%s/pg_ctl\" --version", cluster->bindir);
+
+	if ((output = popen(cmd, "r")) == NULL)
+		pg_log(PG_FATAL, "Could not get pg_ctl version data: %s\n",
+			   getErrorText(errno));
+
+	fgets(cmd_output, sizeof(cmd_output), output);
+
+	pclose(output);
+
+	/* Remove trailing newline */
+	if (strchr(cmd_output, '\n') != NULL)
+		*strchr(cmd_output, '\n') = '\0';
+
+	if (sscanf(cmd_output, "%*s %*s %d.%d", &pre_dot, &post_dot) != 2)
+		pg_log(PG_FATAL, "could not get version from %s\n", cmd);
+
+	cluster->bin_version = (pre_dot * 100 + post_dot) * 100;
+}
+
