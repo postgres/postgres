@@ -3259,7 +3259,7 @@ ORDER BY c.ordinal_position;
    difference between this view
    and <literal>column_privileges</literal> is that this view omits
    columns that have been made accessible to the current user by way
-   of a grant to public.
+   of a grant to <literal>PUBLIC</literal>.
   </para>
 
   <table>
@@ -3342,7 +3342,7 @@ ORDER BY c.ordinal_position;
    difference between this view
    and <literal>routine_privileges</literal> is that this view omits
    functions that have been made accessible to the current user by way
-   of a grant to public.
+   of a grant to <literal>PUBLIC</literal>.
   </para>
 
   <table>
@@ -3436,7 +3436,7 @@ ORDER BY c.ordinal_position;
    difference between this view
    and <literal>table_privileges</literal> is that this view omits
    tables that have been made accessible to the current user by way of
-   a grant to public.
+   a grant to <literal>PUBLIC</literal>.
   </para>
 
   <table>
@@ -3520,7 +3520,7 @@ ORDER BY c.ordinal_position;
    <literal>usage_privileges</literal>.  The only effective difference
    between this view and <literal>usage_privileges</literal> is that
    this view omits objects that have been made accessible to the
-   current user by way of a grant to public.
+   current user by way of a grant to <literal>PUBLIC</literal>.
   </para>
 
   <table>
