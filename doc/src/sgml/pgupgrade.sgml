@@ -91,7 +91,7 @@
      <varlistentry>
       <term><option>-k</option></term>
       <term><option>--link</option></term>
-      <listitem><para>link instead of copying files to new cluster</para></listitem>
+      <listitem><para>use hard links instead of copying files to the new cluster</para></listitem>
      </varlistentry>
 
      <varlistentry>
@@ -276,14 +276,18 @@ NET STOP pgsql-8.3  (<productname>PostgreSQL</> 8.3 and older used a different s
     <para>
      Always run the <application>pg_upgrade</> binary of the new server, not the old one.
      <application>pg_upgrade</> requires the specification of the old and new cluster's
-     data and executable (<filename>bin</>) directories. You can also specify separate
+     data and executable (<filename>bin</>) directories. You can also specify
      user and port values, and whether you want the data linked instead of
-     copied (the default). If you use linking, the migration will be much
-     faster (hard link data files rather than copying them), but you
-     will no longer be able to access your old cluster once you start
-     the new cluster after the upgrade.  Link mode also requires that the
-     old and new cluster data directories be in the same file system.
-     See <literal>pg_upgrade --help</> for a full list of options.
+     copied (the default). 
+    </para>
+
+    <para>
+     If you use link mode, the upgrade will be much faster (no file
+     copying), but you will not be able to access your old cluster
+     once you start the new cluster after the upgrade.  Link mode also
+     requires that the old and new cluster data directories be in the
+     same file system. See <literal>pg_upgrade --help</> for a full
+     list of options.
     </para>
  
     <para>
