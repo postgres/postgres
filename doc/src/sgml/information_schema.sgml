@@ -3509,6 +3509,81 @@ ORDER BY c.ordinal_position;
   </table>
  </sect1>
 
+ <sect1 id="infoschema-role-udt-grants">
+  <title><literal>role_udt_grants</literal></title>
+
+  <para>
+   The view <literal>role_udt_grants</literal> is intended to identify
+   <literal>USAGE</literal> privileges granted on user-defined types
+   where the grantor or grantee is a currently enabled role.  Further
+   information can be found under
+   <literal>udt_privileges</literal>.  The only effective difference
+   between this view and <literal>udt_privileges</literal> is that
+   this view omits objects that have been made accessible to the
+   current user by way of a grant to <literal>PUBLIC</literal>.  Since
+   data types do not have real privileges in PostgreSQL, but only an
+   implicit grant to <literal>PUBLIC</literal>, this view is empty.
+  </para>
+
+  <table>
+   <title><literal>role_udt_grants</literal> Columns</title>
+
+   <tgroup cols="3">
+    <thead>
+     <row>
+      <entry>Name</entry>
+      <entry>Data Type</entry>
+      <entry>Description</entry>
+     </row>
+    </thead>
+
+    <tbody>
+     <row>
+      <entry><literal>grantor</literal></entry>
+      <entry><type>sql_identifier</type></entry>
+      <entry>The name of the role that granted the privilege</entry>
+     </row>
+
+     <row>
+      <entry><literal>grantee</literal></entry>
+      <entry><type>sql_identifier</type></entry>
+      <entry>The name of the role that the privilege was granted to</entry>
+     </row>
+
+     <row>
+      <entry><literal>udt_catalog</literal></entry>
+      <entry><type>sql_identifier</type></entry>
+      <entry>Name of the database containing the type (always the current database)</entry>
+     </row>
+
+     <row>
+      <entry><literal>udt_schema</literal></entry>
+      <entry><type>sql_identifier</type></entry>
+      <entry>Name of the schema containing the type</entry>
+     </row>
+
+     <row>
+      <entry><literal>udt_name</literal></entry>
+      <entry><type>sql_identifier</type></entry>
+      <entry>Name of the type</entry>
+     </row>
+
+     <row>
+      <entry><literal>privilege_type</literal></entry>
+      <entry><type>character_data</type></entry>
+      <entry>Always <literal>TYPE USAGE</literal></entry>
+     </row>
+
+     <row>
+      <entry><literal>is_grantable</literal></entry>
+      <entry><type>yes_or_no</type></entry>
+      <entry><literal>YES</literal> if the privilege is grantable, <literal>NO</literal> if not</entry>
+     </row>
+    </tbody>
+   </tgroup>
+  </table>
+ </sect1>
+
  <sect1 id="infoschema-role-usage-grants">
   <title><literal>role_usage_grants</literal></title>
 
@@ -5499,6 +5574,80 @@ ORDER BY c.ordinal_position;
   </note>
  </sect1>
 
+ <sect1 id="infoschema-udt-privileges">
+  <title><literal>udt_privileges</literal></title>
+
+  <para>
+   The view <literal>udt_privileges</literal> is intended to identify
+   <literal>USAGE</literal> privileges granted on user-defined types
+   to a currently enabled role or by a currently enabled role.  Since
+   data types do not have real privileges
+   in <productname>PostgreSQL</productname>, this view shows implicit
+   non-grantable <literal>USAGE</literal> privileges granted by the
+   owner to <literal>PUBLIC</literal> for all types, including
+   built-in ones (except domains,
+   see <xref linkend="infoschema-usage-privileges"> for that).
+  </para>
+
+  <table>
+   <title><literal>udt_privileges</literal> Columns</title>
+
+   <tgroup cols="3">
+    <thead>
+     <row>
+      <entry>Name</entry>
+      <entry>Data Type</entry>
+      <entry>Description</entry>
+     </row>
+    </thead>
+
+    <tbody>
+     <row>
+      <entry><literal>grantor</literal></entry>
+      <entry><type>sql_identifier</type></entry>
+      <entry>Name of the role that granted the privilege</entry>
+     </row>
+
+     <row>
+      <entry><literal>grantee</literal></entry>
+      <entry><type>sql_identifier</type></entry>
+      <entry>Name of the role that the privilege was granted to</entry>
+     </row>
+
+     <row>
+      <entry><literal>udt_catalog</literal></entry>
+      <entry><type>sql_identifier</type></entry>
+      <entry>Name of the database containing the type (always the current database)</entry>
+     </row>
+
+     <row>
+      <entry><literal>udt_schema</literal></entry>
+      <entry><type>sql_identifier</type></entry>
+      <entry>Name of the schema containing the type</entry>
+     </row>
+
+     <row>
+      <entry><literal>udt_name</literal></entry>
+      <entry><type>sql_identifier</type></entry>
+      <entry>Name of the type</entry>
+     </row>
+
+     <row>
+      <entry><literal>privilege_type</literal></entry>
+      <entry><type>character_data</type></entry>
+      <entry>Always <literal>TYPE USAGE</literal></entry>
+     </row>
+
+     <row>
+      <entry><literal>is_grantable</literal></entry>
+      <entry><type>yes_or_no</type></entry>
+      <entry><literal>YES</literal> if the privilege is grantable, <literal>NO</literal> if not</entry>
+     </row>
+    </tbody>
+   </tgroup>
+  </table>
+ </sect1>
+
  <sect1 id="infoschema-usage-privileges">
   <title><literal>usage_privileges</literal></title>
 
@@ -5579,6 +5728,224 @@ ORDER BY c.ordinal_position;
       <entry><literal>is_grantable</literal></entry>
       <entry><type>yes_or_no</type></entry>
       <entry><literal>YES</literal> if the privilege is grantable, <literal>NO</literal> if not</entry>
+     </row>
+    </tbody>
+   </tgroup>
+  </table>
+ </sect1>
+
+ <sect1 id="infoschema-user-defined-types">
+  <title><literal>user_defined_types</literal></title>
+
+  <para>
+   The view <literal>user_defined_types</literal> currently contains
+   all composite types defined in the current database.
+  </para>
+
+  <para>
+   SQL knows about two kinds of user-defined types: structured types
+   (also known as composite types
+   in <productname>PostgreSQL</productname>) and distinct types (not
+   implemented in <productname>PostgreSQL</productname>).  To be
+   future-proof, use the
+   column <literal>user_defined_type_category</literal> to
+   differentiate between these.  Other user-defined types such as base
+   types and enums, which are <productname>PostgreSQL</productname>
+   extensions, are not shown here.  For domains,
+   see <xref linkend="infoschema-domains"> instead.
+  </para>
+
+  <table>
+   <title><literal>user_defined_types</literal> Columns</title>
+
+   <tgroup cols="3">
+    <thead>
+     <row>
+      <entry>Name</entry>
+      <entry>Data Type</entry>
+      <entry>Description</entry>
+     </row>
+    </thead>
+
+    <tbody>
+     <row>
+      <entry><literal>user_defined_type_catalog</literal></entry>
+      <entry><type>sql_identifier</type></entry>
+      <entry>Name of the database that contains the type (always the current database)</entry>
+     </row>
+
+     <row>
+      <entry><literal>user_defined_type_schema</literal></entry>
+      <entry><type>sql_identifier</type></entry>
+      <entry>Name of the schema that contains the type</entry>
+     </row>
+
+     <row>
+      <entry><literal>user_defined_type_name</literal></entry>
+      <entry><type>sql_identifier</type></entry>
+      <entry>Name of the type</entry>
+     </row>
+
+     <row>
+      <entry><literal>user_defined_type_category</literal></entry>
+      <entry><type>character_data</type></entry>
+      <entry>
+       Currently always <literal>STRUCTURED</literal>
+      </entry>
+     </row>
+
+     <row>
+      <entry><literal>is_instantiable</literal></entry>
+      <entry><type>yes_or_no</type></entry>
+      <entry>Applies to a feature not available in <productname>PostgreSQL</></entry>
+     </row>
+
+     <row>
+      <entry><literal>is_final</literal></entry>
+      <entry><type>yes_or_no</type></entry>
+      <entry>Applies to a feature not available in <productname>PostgreSQL</></entry>
+     </row>
+
+     <row>
+      <entry><literal>ordering_form</literal></entry>
+      <entry><type>character_data</type></entry>
+      <entry>Applies to a feature not available in <productname>PostgreSQL</></entry>
+     </row>
+
+     <row>
+      <entry><literal>ordering_category</literal></entry>
+      <entry><type>character_data</type></entry>
+      <entry>Applies to a feature not available in <productname>PostgreSQL</></entry>
+     </row>
+
+     <row>
+      <entry><literal>ordering_routine_catalog</literal></entry>
+      <entry><type>sql_identifier</type></entry>
+      <entry>Applies to a feature not available in <productname>PostgreSQL</></entry>
+     </row>
+
+     <row>
+      <entry><literal>ordering_routine_schema</literal></entry>
+      <entry><type>sql_identifier</type></entry>
+      <entry>Applies to a feature not available in <productname>PostgreSQL</></entry>
+     </row>
+
+     <row>
+      <entry><literal>ordering_routine_name</literal></entry>
+      <entry><type>sql_identifier</type></entry>
+      <entry>Applies to a feature not available in <productname>PostgreSQL</></entry>
+     </row>
+
+     <row>
+      <entry><literal>reference_type</literal></entry>
+      <entry><type>character_data</type></entry>
+      <entry>Applies to a feature not available in <productname>PostgreSQL</></entry>
+     </row>
+
+     <row>
+      <entry><literal>data_type</literal></entry>
+      <entry><type>character_data</type></entry>
+      <entry>
+       Always <literal>USER-DEFINED TYPE</literal> (for joining
+       against <literal>object_type</literal> columns in other
+       views)
+      </entry>
+     </row>
+
+     <row>
+      <entry><literal>character_maximum_length</literal></entry>
+      <entry><type>cardinal_number</type></entry>
+      <entry>Applies to a feature not available in <productname>PostgreSQL</></entry>
+     </row>
+
+     <row>
+      <entry><literal>character_octet_length</literal></entry>
+      <entry><type>cardinal_number</type></entry>
+      <entry>Applies to a feature not available in <productname>PostgreSQL</></entry>
+     </row>
+
+     <row>
+      <entry><literal>character_set_catalog</literal></entry>
+      <entry><type>sql_identifier</type></entry>
+      <entry>Applies to a feature not available in <productname>PostgreSQL</></entry>
+     </row>
+
+     <row>
+      <entry><literal>character_set_schema</literal></entry>
+      <entry><type>sql_identifier</type></entry>
+      <entry>Applies to a feature not available in <productname>PostgreSQL</></entry>
+     </row>
+
+     <row>
+      <entry><literal>character_set_name</literal></entry>
+      <entry><type>sql_identifier</type></entry>
+      <entry>Applies to a feature not available in <productname>PostgreSQL</></entry>
+     </row>
+
+     <row>
+      <entry><literal>collation_catalog</literal></entry>
+      <entry><type>sql_identifier</type></entry>
+      <entry>Applies to a feature not available in <productname>PostgreSQL</></entry>
+     </row>
+
+     <row>
+      <entry><literal>collation_schema</literal></entry>
+      <entry><type>sql_identifier</type></entry>
+      <entry>Applies to a feature not available in <productname>PostgreSQL</></entry>
+     </row>
+
+     <row>
+      <entry><literal>collation_name</literal></entry>
+      <entry><type>sql_identifier</type></entry>
+      <entry>Applies to a feature not available in <productname>PostgreSQL</></entry>
+     </row>
+
+     <row>
+      <entry><literal>numeric_precision</literal></entry>
+      <entry><type>cardinal_number</type></entry>
+      <entry>Applies to a feature not available in <productname>PostgreSQL</></entry>
+     </row>
+
+     <row>
+      <entry><literal>numeric_precision_radix</literal></entry>
+      <entry><type>cardinal_number</type></entry>
+      <entry>Applies to a feature not available in <productname>PostgreSQL</></entry>
+     </row>
+
+     <row>
+      <entry><literal>numeric_scale</literal></entry>
+      <entry><type>cardinal_number</type></entry>
+      <entry>Applies to a feature not available in <productname>PostgreSQL</></entry>
+     </row>
+
+     <row>
+      <entry><literal>datetime_precision</literal></entry>
+      <entry><type>cardinal_number</type></entry>
+      <entry>Applies to a feature not available in <productname>PostgreSQL</></entry>
+     </row>
+
+     <row>
+      <entry><literal>interval_type</literal></entry>
+      <entry><type>character_data</type></entry>
+      <entry>Applies to a feature not available in <productname>PostgreSQL</></entry>
+     </row>
+
+     <row>
+      <entry><literal>interval_precision</literal></entry>
+      <entry><type>character_data</type></entry>
+      <entry>Applies to a feature not available in <productname>PostgreSQL</></entry>
+     </row>
+
+     <row>
+      <entry><literal>source_dtd_identifier</literal></entry>
+      <entry><type>sql_identifier</type></entry>
+      <entry>Applies to a feature not available in <productname>PostgreSQL</></entry>
+     </row>
+
+     <row>
+      <entry><literal>ref_dtd_identifier</literal></entry>
+      <entry><type>sql_identifier</type></entry>
+      <entry>Applies to a feature not available in <productname>PostgreSQL</></entry>
      </row>
     </tbody>
    </tgroup>

@@ -1215,12 +1215,7 @@ GRANT SELECT ON role_column_grants TO PUBLIC;
 -- 5.42 ROLE_USAGE_GRANTS view is based on 5.71 USAGE_PRIVILEGES and is defined there instead.
 
 
-/*
- * 5.43
- * ROLE_UDT_GRANTS view
- */
-
--- feature not supported
+-- 5.43 ROLE_UDT_GRANTS view is based on 5.70 UDT_PRIVILEGES and is defined there instead.
 
 
 /*
@@ -2009,7 +2004,43 @@ GRANT SELECT ON triggers TO PUBLIC;
  * UDT_PRIVILEGES view
  */
 
--- feature not supported
+CREATE VIEW udt_privileges AS
+    SELECT CAST(null AS sql_identifier) AS grantor,
+           CAST('PUBLIC' AS sql_identifier) AS grantee,
+           CAST(current_database() AS sql_identifier) AS udt_catalog,
+           CAST(n.nspname AS sql_identifier) AS udt_schema,
+           CAST(t.typname AS sql_identifier) AS udt_name,
+           CAST('TYPE USAGE' AS character_data) AS privilege_type, -- sic
+           CAST('NO' AS yes_or_no) AS is_grantable
+
+    FROM pg_authid u, pg_namespace n, pg_type t
+
+    WHERE u.oid = t.typowner
+          AND n.oid = t.typnamespace
+          AND t.typtype <> 'd'
+          AND NOT (t.typelem <> 0 AND t.typlen = -1);
+
+GRANT SELECT ON udt_privileges TO PUBLIC;
+
+
+/*
+ * 5.43
+ * ROLE_UDT_GRANTS view
+ */
+
+CREATE VIEW role_udt_grants AS
+    SELECT grantor,
+           grantee,
+           udt_catalog,
+           udt_schema,
+           udt_name,
+           privilege_type,
+           is_grantable
+    FROM udt_privileges
+    WHERE grantor IN (SELECT role_name FROM enabled_roles)
+          OR grantee IN (SELECT role_name FROM enabled_roles);
+
+GRANT SELECT ON role_udt_grants TO PUBLIC;
 
 
 /*
@@ -2156,7 +2187,43 @@ GRANT SELECT ON role_usage_grants TO PUBLIC;
  * USER_DEFINED_TYPES view
  */
 
--- feature not supported
+CREATE VIEW user_defined_types AS
+    SELECT CAST(current_database() AS sql_identifier) AS user_defined_type_catalog,
+           CAST(n.nspname AS sql_identifier) AS user_defined_type_schema,
+           CAST(c.relname AS sql_identifier) AS user_defined_type_name,
+           CAST('STRUCTURED' AS character_data) AS user_defined_type_category,
+           CAST('YES' AS yes_or_no) AS is_instantiable,
+           CAST(null AS yes_or_no) AS is_final,
+           CAST(null AS character_data) AS ordering_form,
+           CAST(null AS character_data) AS ordering_category,
+           CAST(null AS sql_identifier) AS ordering_routine_catalog,
+           CAST(null AS sql_identifier) AS ordering_routine_schema,
+           CAST(null AS sql_identifier) AS ordering_routine_name,
+           CAST(null AS character_data) AS reference_type,
+           CAST('USER-DEFINED TYPE' AS character_data) AS data_type,
+           CAST(null AS cardinal_number) AS character_maximum_length,
+           CAST(null AS cardinal_number) AS character_octet_length,
+           CAST(null AS sql_identifier) AS character_set_catalog,
+           CAST(null AS sql_identifier) AS character_set_schema,
+           CAST(null AS sql_identifier) AS character_set_name,
+           CAST(null AS sql_identifier) AS collation_catalog,
+           CAST(null AS sql_identifier) AS collation_schema,
+           CAST(null AS sql_identifier) AS collation_name,
+           CAST(null AS cardinal_number) AS numeric_precision,
+           CAST(null AS cardinal_number) AS numeric_precision_radix,
+           CAST(null AS cardinal_number) AS numeric_scale,
+           CAST(null AS cardinal_number) AS datetime_precision,
+           CAST(null AS character_data) AS interval_type,
+           CAST(null AS character_data) AS interval_precision,
+           CAST(null AS sql_identifier) AS source_dtd_identifier,
+           CAST(null AS sql_identifier) AS ref_dtd_identifier
+
+    FROM pg_namespace n, pg_class c
+
+    WHERE n.oid = c.relnamespace
+          AND c.relkind = 'c';
+
+GRANT SELECT ON user_defined_types TO PUBLIC;
 
 
 /*
