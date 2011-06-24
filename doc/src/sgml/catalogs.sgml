@@ -7085,13 +7085,18 @@
   </para>
 
   <para>
-   When the <structname>pg_locks</structname> view is accessed, the
-   internal lock manager data structures are momentarily locked, and
-   a copy is made for the view to display.  This ensures that the
-   view produces a consistent set of results, while not blocking
-   normal lock manager operations longer than necessary.  Nonetheless
-   there could be some impact on database performance if this view is
-   frequently accessed.
+   The <structname>pg_locks</structname> view displays data from both the
+   regular lock manager and the predicate lock manager, which are
+   separate systems.  When this view is accessed, the internal data
+   structures of each lock manager are momentarily locked, and copies are
+   made for the view to display.  Each lock manager will therefore
+   produce a consistent set of results, but as we do not lock both lock
+   managers simultaneously, it is possible for locks to be taken or
+   released after we interrogate the regular lock manager and before we
+   interrogate the predicate lock manager.  Each lock manager is only
+   locked for the minimum possible time so as to reduce the performance
+   impact of querying this view, but there could nevertheless be some
+   impact on database performance if it is frequently accessed.
   </para>
 
   <para>
