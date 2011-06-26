@@ -6,11 +6,11 @@
 # needs to contain a file 'nls.mk' with the following make variable
 # assignments:
 #
-# CATALOG_NAME		-- name of the message catalog (xxx.po); probably
-#			   name of the program
-# AVAIL_LANGUAGES	-- list of languages that are provided/supported
-# GETTEXT_FILES		-- list of source files that contain message strings
-# GETTEXT_TRIGGERS	-- (optional) list of functions that contain
+# CATALOG_NAME          -- name of the message catalog (xxx.po); probably
+#                          name of the program
+# AVAIL_LANGUAGES       -- list of languages that are provided/supported
+# GETTEXT_FILES         -- list of source files that contain message strings
+# GETTEXT_TRIGGERS      -- (optional) list of functions that contain
 #                          translatable strings
 #
 # That's all, the rest is done here, if --enable-nls was specified.
