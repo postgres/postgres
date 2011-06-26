@@ -2,8 +2,7 @@
 CATALOG_NAME     = postgres
 AVAIL_LANGUAGES  = de es fr ja pt_BR tr zh_CN zh_TW
 GETTEXT_FILES    = + gettext-files
-GETTEXT_TRIGGERS = errmsg errmsg_plural:1,2 errdetail errdetail_log \
-    errdetail_plural:1,2 errhint errcontext \
+GETTEXT_TRIGGERS = $(BACKEND_COMMON_GETTEXT_TRIGGERS) \
     GUC_check_errmsg GUC_check_errdetail GUC_check_errhint \
     write_stderr yyerror parser_yyerror
 

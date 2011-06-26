@@ -43,6 +43,14 @@ endif
 GETTEXT_TRIGGERS += _
 
 
+# common settings that apply to backend and all backend modules
+BACKEND_COMMON_GETTEXT_TRIGGERS = \
+    errmsg errmsg_plural:1,2 \
+    errdetail errdetail_log errdetail_plural:1,2 \
+    errhint \
+    errcontext
+
+
 all-po: $(MO_FILES)
 
 %.mo: %.po
