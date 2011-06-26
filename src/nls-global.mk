@@ -39,6 +39,9 @@ ifdef XGETTEXT
 XGETTEXT += -ctranslator --copyright-holder='PostgreSQL Global Development Group' --msgid-bugs-address=pgsql-bugs@postgresql.org
 endif
 
+# _ is defined in c.h, so it's global
+GETTEXT_TRIGGERS += _
+
 
 all-po: $(MO_FILES)
 

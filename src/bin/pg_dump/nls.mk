@@ -6,4 +6,4 @@ GETTEXT_FILES    = pg_dump.c common.c pg_backup_archiver.c pg_backup_custom.c \
                    pg_backup_tar.c pg_restore.c pg_dumpall.c \
                    ../../port/exec.c
 GETTEXT_TRIGGERS = write_msg:2 die_horribly:3 exit_horribly:3 simple_prompt \
-                   ExecuteSqlCommand:3 ahlog:3 _
+                   ExecuteSqlCommand:3 ahlog:3
