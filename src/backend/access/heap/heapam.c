@@ -1514,6 +1514,10 @@ heap_fetch(Relation relation,
  * found, we update *tid to reference that tuple's offset number, and
  * return TRUE.  If no match, return FALSE without modifying *tid.
  *
+ * heapTuple is a caller-supplied buffer.  When a match is found, we return
+ * the tuple here, in addition to updating *tid.  If no match is found, the
+ * contents of this buffer on return are undefined.
+ *
  * If all_dead is not NULL, we check non-visible tuples to see if they are
  * globally dead; *all_dead is set TRUE if all members of the HOT chain
  * are vacuumable, FALSE if not.
@@ -1524,28 +1528,31 @@ heap_fetch(Relation relation,
  */
 bool
 heap_hot_search_buffer(ItemPointer tid, Relation relation, Buffer buffer,
-					   Snapshot snapshot, bool *all_dead)
+					   Snapshot snapshot, HeapTuple heapTuple,
+					   bool *all_dead, bool first_call)
 {
 	Page		dp = (Page) BufferGetPage(buffer);
 	TransactionId prev_xmax = InvalidTransactionId;
 	OffsetNumber offnum;
 	bool		at_chain_start;
 	bool		valid;
+	bool		skip;
 
+	/* If this is not the first call, previous call returned a (live!) tuple */
 	if (all_dead)
-		*all_dead = true;
+		*all_dead = first_call;
 
 	Assert(TransactionIdIsValid(RecentGlobalXmin));
 
 	Assert(ItemPointerGetBlockNumber(tid) == BufferGetBlockNumber(buffer));
 	offnum = ItemPointerGetOffsetNumber(tid);
-	at_chain_start = true;
+	at_chain_start = first_call;
+	skip = !first_call;
 
 	/* Scan through possible multiple members of HOT-chain */
 	for (;;)
 	{
 		ItemId		lp;
-		HeapTupleData heapTuple;
 
 		/* check for bogus TID */
 		if (offnum < FirstOffsetNumber || offnum > PageGetMaxOffsetNumber(dp))
@@ -1568,15 +1575,15 @@ heap_hot_search_buffer(ItemPointer tid, Relation relation, Buffer buffer,
 			break;
 		}
 
-		heapTuple.t_data = (HeapTupleHeader) PageGetItem(dp, lp);
-		heapTuple.t_len = ItemIdGetLength(lp);
-		heapTuple.t_tableOid = relation->rd_id;
-		heapTuple.t_self = *tid;
+		heapTuple->t_data = (HeapTupleHeader) PageGetItem(dp, lp);
+		heapTuple->t_len = ItemIdGetLength(lp);
+		heapTuple->t_tableOid = relation->rd_id;
+		heapTuple->t_self = *tid;
 
 		/*
 		 * Shouldn't see a HEAP_ONLY tuple at chain start.
 		 */
-		if (at_chain_start && HeapTupleIsHeapOnly(&heapTuple))
+		if (at_chain_start && HeapTupleIsHeapOnly(heapTuple))
 			break;
 
 		/*
@@ -1585,21 +1592,32 @@ heap_hot_search_buffer(ItemPointer tid, Relation relation, Buffer buffer,
 		 */
 		if (TransactionIdIsValid(prev_xmax) &&
 			!TransactionIdEquals(prev_xmax,
-								 HeapTupleHeaderGetXmin(heapTuple.t_data)))
+								 HeapTupleHeaderGetXmin(heapTuple->t_data)))
 			break;
 
-		/* If it's visible per the snapshot, we must return it */
-		valid = HeapTupleSatisfiesVisibility(&heapTuple, snapshot, buffer);
-		CheckForSerializableConflictOut(valid, relation, &heapTuple, buffer,
-										snapshot);
-		if (valid)
+		/*
+		 * When first_call is true (and thus, skip is initally false) we'll
+		 * return the first tuple we find.  But on later passes, heapTuple
+		 * will initially be pointing to the tuple we returned last time.
+		 * Returning it again would be incorrect (and would loop forever),
+		 * so we skip it and return the next match we find.
+		 */
+		if (!skip)
 		{
-			ItemPointerSetOffsetNumber(tid, offnum);
-			PredicateLockTuple(relation, &heapTuple, snapshot);
-			if (all_dead)
-				*all_dead = false;
-			return true;
+			/* If it's visible per the snapshot, we must return it */
+			valid = HeapTupleSatisfiesVisibility(heapTuple, snapshot, buffer);
+			CheckForSerializableConflictOut(valid, relation, heapTuple,
+											buffer, snapshot);
+			if (valid)
+			{
+				ItemPointerSetOffsetNumber(tid, offnum);
+				PredicateLockTuple(relation, heapTuple, snapshot);
+				if (all_dead)
+					*all_dead = false;
+				return true;
+			}
 		}
+		skip = false;
 
 		/*
 		 * If we can't see it, maybe no one else can either.  At caller
@@ -1607,7 +1625,7 @@ heap_hot_search_buffer(ItemPointer tid, Relation relation, Buffer buffer,
 		 * transactions.
 		 */
 		if (all_dead && *all_dead &&
-			HeapTupleSatisfiesVacuum(heapTuple.t_data, RecentGlobalXmin,
+			HeapTupleSatisfiesVacuum(heapTuple->t_data, RecentGlobalXmin,
 									 buffer) != HEAPTUPLE_DEAD)
 			*all_dead = false;
 
@@ -1615,13 +1633,13 @@ heap_hot_search_buffer(ItemPointer tid, Relation relation, Buffer buffer,
 		 * Check to see if HOT chain continues past this tuple; if so fetch
 		 * the next offnum and loop around.
 		 */
-		if (HeapTupleIsHotUpdated(&heapTuple))
+		if (HeapTupleIsHotUpdated(heapTuple))
 		{
-			Assert(ItemPointerGetBlockNumber(&heapTuple.t_data->t_ctid) ==
+			Assert(ItemPointerGetBlockNumber(&heapTuple->t_data->t_ctid) ==
 				   ItemPointerGetBlockNumber(tid));
-			offnum = ItemPointerGetOffsetNumber(&heapTuple.t_data->t_ctid);
+			offnum = ItemPointerGetOffsetNumber(&heapTuple->t_data->t_ctid);
 			at_chain_start = false;
-			prev_xmax = HeapTupleHeaderGetXmax(heapTuple.t_data);
+			prev_xmax = HeapTupleHeaderGetXmax(heapTuple->t_data);
 		}
 		else
 			break;				/* end of chain */
@@ -1643,10 +1661,12 @@ heap_hot_search(ItemPointer tid, Relation relation, Snapshot snapshot,
 {
 	bool		result;
 	Buffer		buffer;
+	HeapTupleData	heapTuple;
 
 	buffer = ReadBuffer(relation, ItemPointerGetBlockNumber(tid));
 	LockBuffer(buffer, BUFFER_LOCK_SHARE);
-	result = heap_hot_search_buffer(tid, relation, buffer, snapshot, all_dead);
+	result = heap_hot_search_buffer(tid, relation, buffer, snapshot,
+									&heapTuple, all_dead, true);
 	LockBuffer(buffer, BUFFER_LOCK_UNLOCK);
 	ReleaseBuffer(buffer);
 	return result;

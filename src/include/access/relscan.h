@@ -84,9 +84,7 @@ typedef struct IndexScanDescData
 	bool		xs_recheck;		/* T means scan keys must be rechecked */
 
 	/* state data for traversing HOT chains in index_getnext */
-	bool		xs_hot_dead;	/* T if all members of HOT chain are dead */
-	OffsetNumber xs_next_hot;	/* next member of HOT chain, if any */
-	TransactionId xs_prev_xmax; /* previous HOT chain member's XMAX, if any */
+	bool		xs_continue_hot;	/* T if must keep walking HOT chain */
 }	IndexScanDescData;
 
 /* Struct for heap-or-index scans of system tables */

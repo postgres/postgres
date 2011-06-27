@@ -113,9 +113,7 @@ RelationGetIndexScan(Relation indexRelation, int nkeys, int norderbys)
 	ItemPointerSetInvalid(&scan->xs_ctup.t_self);
 	scan->xs_ctup.t_data = NULL;
 	scan->xs_cbuf = InvalidBuffer;
-	scan->xs_hot_dead = false;
-	scan->xs_next_hot = InvalidOffsetNumber;
-	scan->xs_prev_xmax = InvalidTransactionId;
+	scan->xs_continue_hot = false;
 
 	return scan;
 }
