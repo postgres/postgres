@@ -1941,7 +1941,7 @@ heap_insert(Relation relation, HeapTuple tup, CommandId cid,
 	 */
 	buffer = RelationGetBufferForTuple(relation, heaptup->t_len,
 									   InvalidBuffer, options, bistate,
-									   &vmbuffer);
+									   &vmbuffer, NULL);
 
 	/*
 	 * We're about to do the actual insert -- check for conflict at the
@@ -2519,19 +2519,6 @@ heap_update(Relation relation, ItemPointer otid, HeapTuple newtup,
 
 	LockBuffer(buffer, BUFFER_LOCK_EXCLUSIVE);
 
-	/*
-	 * If we didn't pin the visibility map page and the page has become all
-	 * visible while we were busy locking the buffer, we'll have to unlock and
-	 * re-lock, to avoid holding the buffer lock across an I/O.  That's a bit
-	 * unfortunate, but hopefully shouldn't happen often.
-	 */
-	if (vmbuffer == InvalidBuffer && PageIsAllVisible(page))
-	{
-		LockBuffer(buffer, BUFFER_LOCK_UNLOCK);
-		visibilitymap_pin(relation, block, &vmbuffer);
-		LockBuffer(buffer, BUFFER_LOCK_EXCLUSIVE);
-	}
-
 	lp = PageGetItemId(page, ItemPointerGetOffsetNumber(otid));
 	Assert(ItemIdIsNormal(lp));
 
@@ -2668,6 +2655,20 @@ l2:
 	}
 
 	/*
+	 * If we didn't pin the visibility map page and the page has become all
+	 * visible while we were busy locking the buffer, or during some subsequent
+	 * window during which we had it unlocked, we'll have to unlock and
+	 * re-lock, to avoid holding the buffer lock across an I/O.  That's a bit
+	 * unfortunate, but hopefully shouldn't happen often.
+	 */
+	if (vmbuffer == InvalidBuffer && PageIsAllVisible(page))
+	{
+		LockBuffer(buffer, BUFFER_LOCK_UNLOCK);
+		visibilitymap_pin(relation, block, &vmbuffer);
+		LockBuffer(buffer, BUFFER_LOCK_EXCLUSIVE);
+	}
+
+	/*
 	 * We're about to do the actual update -- check for conflict first, to
 	 * avoid possibly having to roll back work we've just done.
 	 */
@@ -2784,7 +2785,7 @@ l2:
 			/* Assume there's no chance to put heaptup on same page. */
 			newbuf = RelationGetBufferForTuple(relation, heaptup->t_len,
 											   buffer, 0, NULL,
-											   &vmbuffer_new);
+											   &vmbuffer_new, &vmbuffer);
 		}
 		else
 		{
@@ -2802,7 +2803,7 @@ l2:
 				LockBuffer(buffer, BUFFER_LOCK_UNLOCK);
 				newbuf = RelationGetBufferForTuple(relation, heaptup->t_len,
 												   buffer, 0, NULL,
-												   &vmbuffer_new);
+												   &vmbuffer_new, &vmbuffer);
 			}
 			else
 			{
@@ -2908,11 +2909,15 @@ l2:
 	{
 		all_visible_cleared = true;
 		PageClearAllVisible(BufferGetPage(buffer));
+		visibilitymap_clear(relation, BufferGetBlockNumber(buffer),
+							vmbuffer);
 	}
 	if (newbuf != buffer && PageIsAllVisible(BufferGetPage(newbuf)))
 	{
 		all_visible_cleared_new = true;
 		PageClearAllVisible(BufferGetPage(newbuf));
+		visibilitymap_clear(relation, BufferGetBlockNumber(newbuf),
+							vmbuffer_new);
 	}
 
 	if (newbuf != buffer)
@@ -2948,14 +2953,6 @@ l2:
 	 * need to look at the contents of the tuple.
 	 */
 	CacheInvalidateHeapTuple(relation, &oldtup);
-
-	/* Clear bits in visibility map */
-	if (all_visible_cleared)
-		visibilitymap_clear(relation, BufferGetBlockNumber(buffer),
-							vmbuffer);
-	if (all_visible_cleared_new)
-		visibilitymap_clear(relation, BufferGetBlockNumber(newbuf),
-							vmbuffer_new);
 
 	/* Now we can release the buffer(s) */
 	if (newbuf != buffer)
