@@ -560,9 +560,19 @@ _bt_getbuf(Relation rel, BlockNumber blkno, int access)
 					 */
 					if (XLogStandbyInfoActive())
 					{
+						TransactionId latestRemovedXid;
+
 						BTPageOpaque opaque = (BTPageOpaque) PageGetSpecialPointer(page);
 
-						_bt_log_reuse_page(rel, blkno, opaque->btpo.xact);
+						/*
+						 * opaque->btpo.xact is the threshold value not the
+						 * value to measure conflicts against. We must retreat
+						 * by one from it to get the correct conflict xid.
+						 */
+						latestRemovedXid = opaque->btpo.xact;
+						TransactionIdRetreat(latestRemovedXid);
+
+						_bt_log_reuse_page(rel, blkno, latestRemovedXid);
 					}
 
 					/* Okay to use page.  Re-initialize and return it */
