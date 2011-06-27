@@ -1004,15 +1004,17 @@ relation_openrv(const RangeVar *relation, LOCKMODE lockmode)
 }
 
 /* ----------------
- *		try_relation_openrv - open any relation specified by a RangeVar
+ *		relation_openrv_extended - open any relation specified by a RangeVar
  *
- *		Same as relation_openrv, but return NULL instead of failing for
- *		relation-not-found.  (Note that some other causes, such as
- *		permissions problems, will still result in an ereport.)
+ *		Same as relation_openrv, but with an additional missing_ok argument
+ *		allowing a NULL return rather than an error if the relation is not
+ *      found.  (Note that some other causes, such as permissions problems,
+ *      will still result in an ereport.)
  * ----------------
  */
 Relation
-try_relation_openrv(const RangeVar *relation, LOCKMODE lockmode)
+relation_openrv_extended(const RangeVar *relation, LOCKMODE lockmode,
+						 bool missing_ok)
 {
 	Oid			relOid;
 
@@ -1032,7 +1034,7 @@ try_relation_openrv(const RangeVar *relation, LOCKMODE lockmode)
 		AcceptInvalidationMessages();
 
 	/* Look up the appropriate relation using namespace search */
-	relOid = RangeVarGetRelid(relation, true);
+	relOid = RangeVarGetRelid(relation, missing_ok);
 
 	/* Return NULL on not-found */
 	if (!OidIsValid(relOid))
@@ -1125,18 +1127,20 @@ heap_openrv(const RangeVar *relation, LOCKMODE lockmode)
 }
 
 /* ----------------
- *		try_heap_openrv - open a heap relation specified
+ *		heap_openrv_extended - open a heap relation specified
  *		by a RangeVar node
  *
- *		As above, but return NULL instead of failing for relation-not-found.
+ *		As above, but optionally return NULL instead of failing for
+ *      relation-not-found.
  * ----------------
  */
 Relation
-try_heap_openrv(const RangeVar *relation, LOCKMODE lockmode)
+heap_openrv_extended(const RangeVar *relation, LOCKMODE lockmode,
+					 bool missing_ok)
 {
 	Relation	r;
 
-	r = try_relation_openrv(relation, lockmode);
+	r = relation_openrv_extended(relation, lockmode, missing_ok);
 
 	if (r)
 	{

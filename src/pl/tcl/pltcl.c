@@ -493,8 +493,8 @@ pltcl_init_load_unknown(Tcl_Interp *interp)
 	 * This is for backwards compatibility.  To ensure that the table
 	 * is trustworthy, we require it to be owned by a superuser.
 	 ************************************************************/
-	pmrel = try_relation_openrv(makeRangeVar(NULL, "pltcl_modules", -1),
-								AccessShareLock);
+	pmrel = relation_openrv_extended(makeRangeVar(NULL, "pltcl_modules", -1),
+									 AccessShareLock, true);
 	if (pmrel == NULL)
 		return;
 	/* must be table or view, else ignore */
