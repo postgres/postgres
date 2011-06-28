@@ -106,6 +106,7 @@ typedef void (*SubXactCallback) (SubXactEvent event, SubTransactionId mySubid,
 #define XLOG_XACT_COMMIT_PREPARED	0x30
 #define XLOG_XACT_ABORT_PREPARED	0x40
 #define XLOG_XACT_ASSIGNMENT		0x50
+#define XLOG_XACT_COMMIT_COMPACT	0x60
 
 typedef struct xl_xact_assignment
 {
@@ -115,6 +116,16 @@ typedef struct xl_xact_assignment
 } xl_xact_assignment;
 
 #define MinSizeOfXactAssignment offsetof(xl_xact_assignment, xsub)
+
+typedef struct xl_xact_commit_compact
+{
+	TimestampTz xact_time;		/* time of commit */
+	int			nsubxacts;		/* number of subtransaction XIDs */
+	/* ARRAY OF COMMITTED SUBTRANSACTION XIDs FOLLOWS */
+	TransactionId subxacts[1];	/* VARIABLE LENGTH ARRAY */
+} xl_xact_commit_compact;
+
+#define MinSizeOfXactCommitCompact offsetof(xl_xact_commit_compact, subxacts)
 
 typedef struct xl_xact_commit
 {
@@ -145,8 +156,8 @@ typedef struct xl_xact_commit
 #define XACT_COMPLETION_FORCE_SYNC_COMMIT		0x02
 
 /* Access macros for above flags */
-#define XactCompletionRelcacheInitFileInval(xlrec)	((xlrec)->xinfo & XACT_COMPLETION_UPDATE_RELCACHE_FILE)
-#define XactCompletionForceSyncCommit(xlrec)		((xlrec)->xinfo & XACT_COMPLETION_FORCE_SYNC_COMMIT)
+#define XactCompletionRelcacheInitFileInval(xinfo)	(xinfo & XACT_COMPLETION_UPDATE_RELCACHE_FILE)
+#define XactCompletionForceSyncCommit(xinfo)		(xinfo & XACT_COMPLETION_FORCE_SYNC_COMMIT)
 
 typedef struct xl_xact_abort
 {
