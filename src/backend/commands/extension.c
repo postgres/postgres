@@ -2703,7 +2703,7 @@ ExecAlterExtensionContentsStmt(AlterExtensionContentsStmt *stmt)
 	 * against concurrent DROP and ALTER EXTENSION ADD/DROP operations.
 	 */
 	object = get_object_address(stmt->objtype, stmt->objname, stmt->objargs,
-								&relation, ShareUpdateExclusiveLock);
+								&relation, ShareUpdateExclusiveLock, false);
 
 	/* Permission check: must own target object, too */
 	check_object_ownership(GetUserId(), stmt->objtype, object,

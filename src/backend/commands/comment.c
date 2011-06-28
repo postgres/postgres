@@ -69,7 +69,7 @@ CommentObject(CommentStmt *stmt)
 	 * against concurrent DROP operations.
 	 */
 	address = get_object_address(stmt->objtype, stmt->objname, stmt->objargs,
-								 &relation, ShareUpdateExclusiveLock);
+								 &relation, ShareUpdateExclusiveLock, false);
 
 	/* Require ownership of the target object. */
 	check_object_ownership(GetUserId(), stmt->objtype, address,
