@@ -297,9 +297,9 @@ CREATE VIEW attributes AS
            CAST(null AS sql_identifier) AS character_set_schema,
            CAST(null AS sql_identifier) AS character_set_name,
 
-           CAST(null AS sql_identifier) AS collation_catalog,
-           CAST(null AS sql_identifier) AS collation_schema,
-           CAST(null AS sql_identifier) AS collation_name,
+           CAST(CASE WHEN nco.nspname IS NOT NULL THEN current_database() END AS sql_identifier) AS collation_catalog,
+           CAST(nco.nspname AS sql_identifier) AS collation_schema,
+           CAST(co.collname AS sql_identifier) AS collation_name,
 
            CAST(
              _pg_numeric_precision(_pg_truetypid(a, t), _pg_truetypmod(a, t))
@@ -336,14 +336,13 @@ CREATE VIEW attributes AS
            CAST(a.attnum AS sql_identifier) AS dtd_identifier,
            CAST('NO' AS yes_or_no) AS is_derived_reference_attribute
 
-    FROM (pg_attribute a LEFT JOIN pg_attrdef ad ON attrelid = adrelid AND attnum = adnum),
-         pg_class c, pg_namespace nc,
-         (pg_type t JOIN pg_namespace nt ON (t.typnamespace = nt.oid))
+    FROM (pg_attribute a LEFT JOIN pg_attrdef ad ON attrelid = adrelid AND attnum = adnum)
+         JOIN (pg_class c JOIN pg_namespace nc ON (c.relnamespace = nc.oid)) ON a.attrelid = c.oid
+         JOIN (pg_type t JOIN pg_namespace nt ON (t.typnamespace = nt.oid)) ON a.atttypid = t.oid
+         LEFT JOIN (pg_collation co JOIN pg_namespace nco ON (co.collnamespace = nco.oid))
+           ON a.attcollation = co.oid AND (nco.nspname, co.collname) <> ('pg_catalog', 'default')
 
-    WHERE a.attrelid = c.oid
-          AND a.atttypid = t.oid
-          AND nc.oid = c.relnamespace
-          AND a.attnum > 0 AND NOT a.attisdropped
+    WHERE a.attnum > 0 AND NOT a.attisdropped
           AND c.relkind in ('c');
 
 GRANT SELECT ON attributes TO PUBLIC;
@@ -678,9 +677,9 @@ CREATE VIEW columns AS
            CAST(null AS sql_identifier) AS character_set_schema,
            CAST(null AS sql_identifier) AS character_set_name,
 
-           CAST(null AS sql_identifier) AS collation_catalog,
-           CAST(null AS sql_identifier) AS collation_schema,
-           CAST(null AS sql_identifier) AS collation_name,
+           CAST(CASE WHEN nco.nspname IS NOT NULL THEN current_database() END AS sql_identifier) AS collation_catalog,
+           CAST(nco.nspname AS sql_identifier) AS collation_schema,
+           CAST(co.collname AS sql_identifier) AS collation_name,
 
            CAST(CASE WHEN t.typtype = 'd' THEN current_database() ELSE null END
              AS sql_identifier) AS domain_catalog,
@@ -718,16 +717,15 @@ CREATE VIEW columns AS
                               AND EXISTS (SELECT 1 FROM pg_rewrite WHERE ev_class = c.oid AND ev_type = '4' AND is_instead))
                 THEN 'YES' ELSE 'NO' END AS yes_or_no) AS is_updatable
 
-    FROM (pg_attribute a LEFT JOIN pg_attrdef ad ON attrelid = adrelid AND attnum = adnum),
-         pg_class c, pg_namespace nc,
-         (pg_type t JOIN pg_namespace nt ON (t.typnamespace = nt.oid))
-           LEFT JOIN (pg_type bt JOIN pg_namespace nbt ON (bt.typnamespace = nbt.oid))
+    FROM (pg_attribute a LEFT JOIN pg_attrdef ad ON attrelid = adrelid AND attnum = adnum)
+         JOIN (pg_class c JOIN pg_namespace nc ON (c.relnamespace = nc.oid)) ON a.attrelid = c.oid
+         JOIN (pg_type t JOIN pg_namespace nt ON (t.typnamespace = nt.oid)) ON a.atttypid = t.oid
+         LEFT JOIN (pg_type bt JOIN pg_namespace nbt ON (bt.typnamespace = nbt.oid))
            ON (t.typtype = 'd' AND t.typbasetype = bt.oid)
+         LEFT JOIN (pg_collation co JOIN pg_namespace nco ON (co.collnamespace = nco.oid))
+           ON a.attcollation = co.oid AND (nco.nspname, co.collname) <> ('pg_catalog', 'default')
 
-    WHERE a.attrelid = c.oid
-          AND a.atttypid = t.oid
-          AND nc.oid = c.relnamespace
-          AND (NOT pg_is_other_temp_schema(nc.oid))
+    WHERE (NOT pg_is_other_temp_schema(nc.oid))
 
           AND a.attnum > 0 AND NOT a.attisdropped AND c.relkind in ('r', 'v', 'f')
 
@@ -914,9 +912,9 @@ CREATE VIEW domains AS
            CAST(null AS sql_identifier) AS character_set_schema,
            CAST(null AS sql_identifier) AS character_set_name,
 
-           CAST(null AS sql_identifier) AS collation_catalog,
-           CAST(null AS sql_identifier) AS collation_schema,
-           CAST(null AS sql_identifier) AS collation_name,
+           CAST(CASE WHEN nco.nspname IS NOT NULL THEN current_database() END AS sql_identifier) AS collation_catalog,
+           CAST(nco.nspname AS sql_identifier) AS collation_schema,
+           CAST(co.collname AS sql_identifier) AS collation_name,
 
            CAST(
              _pg_numeric_precision(t.typbasetype, t.typtypmod)
@@ -954,13 +952,13 @@ CREATE VIEW domains AS
            CAST(null AS cardinal_number) AS maximum_cardinality,
            CAST(1 AS sql_identifier) AS dtd_identifier
 
-    FROM pg_type t, pg_namespace nt,
-         pg_type bt, pg_namespace nbt
+    FROM (pg_type t JOIN pg_namespace nt ON t.typnamespace = nt.oid)
+         JOIN (pg_type bt JOIN pg_namespace nbt ON bt.typnamespace = nbt.oid)
+           ON (t.typbasetype = bt.oid AND t.typtype = 'd')
+         LEFT JOIN (pg_collation co JOIN pg_namespace nco ON (co.collnamespace = nco.oid))
+           ON t.typcollation = co.oid AND (nco.nspname, co.collname) <> ('pg_catalog', 'default')
 
-    WHERE t.typnamespace = nt.oid
-          AND t.typbasetype = bt.oid
-          AND bt.typnamespace = nbt.oid
-          AND t.typtype = 'd';
+    ;
 
 GRANT SELECT ON domains TO PUBLIC;
 
@@ -1515,7 +1513,7 @@ CREATE TABLE sql_implementation_info (
 ) WITHOUT OIDS;
 
 INSERT INTO sql_implementation_info VALUES ('10003', 'CATALOG NAME', NULL, 'Y', NULL);
-INSERT INTO sql_implementation_info VALUES ('10004', 'COLLATING SEQUENCE', NULL, '', 'not supported');
+INSERT INTO sql_implementation_info VALUES ('10004', 'COLLATING SEQUENCE', NULL, (SELECT default_collate_name FROM character_sets), NULL);
 INSERT INTO sql_implementation_info VALUES ('23',    'CURSOR COMMIT BEHAVIOR', 1, NULL, 'close cursors and retain prepared statements');
 INSERT INTO sql_implementation_info VALUES ('2',     'DATA SOURCE NAME', NULL, '', NULL);
 INSERT INTO sql_implementation_info VALUES ('17',    'DBMS NAME', NULL, (select trim(trailing ' ' from substring(version() from '^[^0-9]*'))), NULL);
@@ -2442,9 +2440,9 @@ CREATE VIEW element_types AS
            CAST(null AS sql_identifier) AS character_set_catalog,
            CAST(null AS sql_identifier) AS character_set_schema,
            CAST(null AS sql_identifier) AS character_set_name,
-           CAST(null AS sql_identifier) AS collation_catalog,
-           CAST(null AS sql_identifier) AS collation_schema,
-           CAST(null AS sql_identifier) AS collation_name,
+           CAST(CASE WHEN nco.nspname IS NOT NULL THEN current_database() END AS sql_identifier) AS collation_catalog,
+           CAST(nco.nspname AS sql_identifier) AS collation_schema,
+           CAST(co.collname AS sql_identifier) AS collation_name,
            CAST(null AS cardinal_number) AS numeric_precision,
            CAST(null AS cardinal_number) AS numeric_precision_radix,
            CAST(null AS cardinal_number) AS numeric_scale,
@@ -2470,7 +2468,7 @@ CREATE VIEW element_types AS
            /* columns, attributes */
            SELECT c.relnamespace, CAST(c.relname AS sql_identifier),
                   CASE WHEN c.relkind = 'c' THEN 'USER-DEFINED TYPE'::text ELSE 'TABLE'::text END,
-                  a.attnum, a.atttypid
+                  a.attnum, a.atttypid, a.attcollation
            FROM pg_class c, pg_attribute a
            WHERE c.oid = a.attrelid
                  AND c.relkind IN ('r', 'v', 'f', 'c')
@@ -2480,7 +2478,7 @@ CREATE VIEW element_types AS
 
            /* domains */
            SELECT t.typnamespace, CAST(t.typname AS sql_identifier),
-                  'DOMAIN'::text, 1, t.typbasetype
+                  'DOMAIN'::text, 1, t.typbasetype, t.typcollation
            FROM pg_type t
            WHERE t.typtype = 'd'
 
@@ -2488,7 +2486,7 @@ CREATE VIEW element_types AS
 
            /* parameters */
            SELECT pronamespace, CAST(proname || '_' || CAST(oid AS text) AS sql_identifier),
-                  'ROUTINE'::text, (ss.x).n, (ss.x).x
+                  'ROUTINE'::text, (ss.x).n, (ss.x).x, 0
            FROM (SELECT p.pronamespace, p.proname, p.oid,
                         _pg_expandarray(coalesce(p.proallargtypes, p.proargtypes::oid[])) AS x
                  FROM pg_proc p) AS ss
@@ -2497,10 +2495,12 @@ CREATE VIEW element_types AS
 
            /* result types */
            SELECT p.pronamespace, CAST(p.proname || '_' || CAST(p.oid AS text) AS sql_identifier),
-                  'ROUTINE'::text, 0, p.prorettype
+                  'ROUTINE'::text, 0, p.prorettype, 0
            FROM pg_proc p
 
-         ) AS x (objschema, objname, objtype, objdtdid, objtypeid)
+         ) AS x (objschema, objname, objtype, objdtdid, objtypeid, objcollation)
+         LEFT JOIN (pg_collation co JOIN pg_namespace nco ON (co.collnamespace = nco.oid))
+           ON x.objcollation = co.oid AND (nco.nspname, co.collname) <> ('pg_catalog', 'default')
 
     WHERE n.oid = x.objschema
           AND at.oid = x.objtypeid
