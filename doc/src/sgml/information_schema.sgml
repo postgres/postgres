@@ -2147,7 +2147,7 @@
 
   <para>
    The view <literal>element_types</literal> contains the data type
-   descriptors of the elements of arrays.  When a table column,
+   descriptors of the elements of arrays.  When a table column, composite-type attribute,
    domain, function parameter, or function return value is defined to
    be of an array type, the respective information schema view only
    contains <literal>ARRAY</literal> in the column
@@ -2212,9 +2212,11 @@ ORDER BY c.ordinal_position;
       <entry>
        The type of the object that uses the array being described: one
        of <literal>TABLE</literal> (the array is used by a column of
-       that table), <literal>DOMAIN</literal> (the array is used by
-       that domain), <literal>ROUTINE</literal> (the array is used by
-       a parameter or the return data type of that function).
+       that table), <literal>USER-DEFINED TYPE</literal> (the array is
+       used by an attribute of that composite type),
+       <literal>DOMAIN</literal> (the array is used by that domain),
+       <literal>ROUTINE</literal> (the array is used by a parameter or
+       the return data type of that function).
       </entry>
      </row>
 

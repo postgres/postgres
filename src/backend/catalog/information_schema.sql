@@ -2467,12 +2467,13 @@ CREATE VIEW element_types AS
 
     FROM pg_namespace n, pg_type at, pg_namespace nbt, pg_type bt,
          (
-           /* columns */
+           /* columns, attributes */
            SELECT c.relnamespace, CAST(c.relname AS sql_identifier),
-                  'TABLE'::text, a.attnum, a.atttypid
+                  CASE WHEN c.relkind = 'c' THEN 'USER-DEFINED TYPE'::text ELSE 'TABLE'::text END,
+                  a.attnum, a.atttypid
            FROM pg_class c, pg_attribute a
            WHERE c.oid = a.attrelid
-                 AND c.relkind IN ('r', 'v', 'f')
+                 AND c.relkind IN ('r', 'v', 'f', 'c')
                  AND attnum > 0 AND NOT attisdropped
 
            UNION ALL
