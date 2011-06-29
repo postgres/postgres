@@ -2418,8 +2418,8 @@ transformAlterTableStmt(AlterTableStmt *stmt, const char *queryString)
  * and detect inconsistent/misplaced constraint attributes.
  *
  * NOTE: currently, attributes are only supported for FOREIGN KEY, UNIQUE,
- * and PRIMARY KEY constraints, but someday they ought to be supported
- * for other constraint types.
+ * EXCLUSION, and PRIMARY KEY constraints, but someday they ought to be
+ * supported for other constraint types.
  */
 static void
 transformConstraintAttrs(CreateStmtContext *cxt, List *constraintList)
