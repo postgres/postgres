@@ -2465,7 +2465,7 @@ LockBufferForCleanup(Buffer buffer)
 
 /*
  * Check called from RecoveryConflictInterrupt handler when Startup
- * process requests cancelation of all pin holders that are blocking it.
+ * process requests cancellation of all pin holders that are blocking it.
  */
 bool
 HoldingBufferPinThatDelaysRecovery(void)

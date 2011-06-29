@@ -779,7 +779,7 @@
       </para>
 
       <para>
-       This helps avoid cancelling long-running queries on the standby.
+       This helps avoid canceling long-running queries on the standby.
       </para>
      </listitem>
 

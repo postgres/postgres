@@ -712,7 +712,7 @@ amrestrpos (IndexScanDesc scan);
    read-write conflict with the insert of any tuple into that index by a
    concurrent serializable transaction.  If certain patterns of read-write
    conflicts are detected among a set of concurrent serializable
-   transactions, one of those transactions may be cancelled to protect data
+   transactions, one of those transactions may be canceled to protect data
    integrity.  When the flag is set, it indicates that the index access
    method implements finer-grained predicate locking, which will tend to
    reduce the frequency of such transaction cancellations.

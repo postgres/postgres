@@ -143,7 +143,7 @@ SET SESSION CHARACTERISTICS AS TRANSACTION <replaceable class="parameter">transa
    transaction, the transaction may block when first acquiring its snapshot,
    after which it is able to run without the normal overhead of a
    <literal>SERIALIZABLE</literal> transaction and without any risk of
-   contributing to or being cancelled by a serialization failure.  This mode
+   contributing to or being canceled by a serialization failure.  This mode
    is well suited for long-running reports or backups.
   </para>
  </refsect1>

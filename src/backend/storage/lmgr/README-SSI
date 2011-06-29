@@ -239,9 +239,9 @@ serialization anomalies will fail with SQLSTATE 40001, which has a
 standard meaning of "serialization failure".
 
     * This SSI implementation makes an effort to choose the
-transaction to be cancelled such that an immediate retry of the
+transaction to be canceled such that an immediate retry of the
 transaction will not fail due to conflicts with exactly the same
-transactions.  Pursuant to this goal, no transaction is cancelled
+transactions.  Pursuant to this goal, no transaction is canceled
 until one of the other transactions in the set of conflicts which
 could generate an anomaly has successfully committed.  This is
 conceptually similar to how write conflicts are handled.  To fully
@@ -567,7 +567,7 @@ on conflicts with the same transactions.
 information about older committed transactions to put an upper bound
 on RAM used. Beyond that limit, information spills to disk.
 Performance can degrade in a pessimal situation, but it should be
-tolerable, and transactions won't need to be cancelled or blocked
+tolerable, and transactions won't need to be canceled or blocked
 from starting.
 
 

@@ -535,7 +535,7 @@ FindLockCycleRecurse(PGPROC *checkProc,
 					 * Note we read vacuumFlags without any locking.  This is
 					 * OK only for checking the PROC_IS_AUTOVACUUM flag,
 					 * because that flag is set at process start and never
-					 * reset; there is logic elsewhere to avoid cancelling an
+					 * reset; there is logic elsewhere to avoid canceling an
 					 * autovacuum that is working for preventing Xid
 					 * wraparound problems (which needs to read a different
 					 * vacuumFlag bit), but we don't do that here to avoid

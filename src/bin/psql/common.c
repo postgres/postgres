@@ -194,7 +194,7 @@ NoticeProcessor(void *arg, const char *message)
  * so. We use write() to report to stderr because it's better to use simple
  * facilities in a signal handler.
  *
- * On win32, the signal cancelling happens on a separate thread, because
+ * On win32, the signal canceling happens on a separate thread, because
  * that's how SetConsoleCtrlHandler works. The PQcancel function is safe
  * for this (unlike PQrequestCancel). However, a CRITICAL_SECTION is required
  * to protect the PGcancel structure against being changed while the signal

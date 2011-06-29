@@ -378,7 +378,7 @@ ResetCancelConn(void)
 
 #ifndef WIN32
 /*
- * Handle interrupt signals by cancelling the current command,
+ * Handle interrupt signals by canceling the current command,
  * if it's being executed through executeMaintenanceCommand(),
  * and thus has a cancelConn set.
  */

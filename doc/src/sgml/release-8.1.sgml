@@ -849,7 +849,7 @@
      </para>
 
      <para>
-      This fix prevents a PANIC if a <literal>VACUUM FULL</> is cancelled
+      This fix prevents a PANIC if a <literal>VACUUM FULL</> is canceled
       after it's already committed its tuple movements, as well as transient
       errors if a plain <literal>VACUUM</> is interrupted after having
       truncated the table.
@@ -4203,7 +4203,7 @@ psql -t -f fixseq.sql db1 | psql -e db1
       <para>
        While the <varname>statement_timeout</> configuration
        parameter allows a query taking more than a certain amount of
-       time to be cancelled, the <command>NOWAIT</> option allows a
+       time to be canceled, the <command>NOWAIT</> option allows a
        query to be canceled as soon as a <command>SELECT ... FOR
        UPDATE/SHARE</> command cannot immediately acquire a row lock.
       </para>

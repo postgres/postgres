@@ -1585,7 +1585,7 @@ if (!triggered)
    <para>
     There are also additional types of conflict that can occur with Hot Standby.
     These conflicts are <emphasis>hard conflicts</> in the sense that queries
-    might need to be cancelled and, in some cases, sessions disconnected to resolve them.
+    might need to be canceled and, in some cases, sessions disconnected to resolve them.
     The user is provided with several ways to handle these
     conflicts. Conflict cases include:
 
@@ -1682,7 +1682,7 @@ if (!triggered)
    <para>
     Once the delay specified by <varname>max_standby_archive_delay</> or
     <varname>max_standby_streaming_delay</> has been exceeded, conflicting
-    queries will be cancelled.  This usually results just in a cancellation
+    queries will be canceled.  This usually results just in a cancellation
     error, although in the case of replaying a <command>DROP DATABASE</>
     the entire conflicting session will be terminated.  Also, if the conflict
     is over a lock held by an idle transaction, the conflicting session is
@@ -1690,10 +1690,10 @@ if (!triggered)
    </para>
 
    <para>
-    Cancelled queries may be retried immediately (after beginning a new
+    Canceled queries may be retried immediately (after beginning a new
     transaction, of course).  Since query cancellation depends on
     the nature of the WAL records being replayed, a query that was
-    cancelled may well succeed if it is executed again.
+    canceled may well succeed if it is executed again.
    </para>
 
    <para>
@@ -1751,7 +1751,7 @@ if (!triggered)
     Another option is to increase <xref linkend="guc-vacuum-defer-cleanup-age">
     on the primary server, so that dead rows will not be cleaned up as quickly
     as they normally would be.  This will allow more time for queries to
-    execute before they are cancelled on the standby, without having to set
+    execute before they are canceled on the standby, without having to set
     a high <varname>max_standby_streaming_delay</>.  However it is
     difficult to guarantee any specific execution-time window with this
     approach, since <varname>vacuum_defer_cleanup_age</> is measured in
@@ -1981,7 +1981,7 @@ LOG:  database system is ready to accept read only connections
     <command>DROP TABLESPACE</> can only succeed if the tablespace is empty.
     Some standby users may be actively using the tablespace via their
     <varname>temp_tablespaces</> parameter. If there are temporary files in the
-    tablespace, all active queries are cancelled to ensure that temporary
+    tablespace, all active queries are canceled to ensure that temporary
     files are removed, so the tablespace can be removed and WAL replay
     can continue.
    </para>
