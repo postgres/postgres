@@ -451,6 +451,8 @@ SELECT count(*) FROM onek_with_null WHERE unique1 IS NULL;
 SELECT count(*) FROM onek_with_null WHERE unique1 IS NULL AND unique2 IS NULL;
 SELECT count(*) FROM onek_with_null WHERE unique1 IS NOT NULL;
 SELECT count(*) FROM onek_with_null WHERE unique1 IS NULL AND unique2 IS NOT NULL;
+SELECT count(*) FROM onek_with_null WHERE unique1 IS NOT NULL AND unique1 > 500;
+SELECT count(*) FROM onek_with_null WHERE unique1 IS NULL AND unique1 > 500;
 
 DROP INDEX onek_nulltest;
 
@@ -460,6 +462,8 @@ SELECT count(*) FROM onek_with_null WHERE unique1 IS NULL;
 SELECT count(*) FROM onek_with_null WHERE unique1 IS NULL AND unique2 IS NULL;
 SELECT count(*) FROM onek_with_null WHERE unique1 IS NOT NULL;
 SELECT count(*) FROM onek_with_null WHERE unique1 IS NULL AND unique2 IS NOT NULL;
+SELECT count(*) FROM onek_with_null WHERE unique1 IS NOT NULL AND unique1 > 500;
+SELECT count(*) FROM onek_with_null WHERE unique1 IS NULL AND unique1 > 500;
 
 DROP INDEX onek_nulltest;
 
@@ -469,6 +473,8 @@ SELECT count(*) FROM onek_with_null WHERE unique1 IS NULL;
 SELECT count(*) FROM onek_with_null WHERE unique1 IS NULL AND unique2 IS NULL;
 SELECT count(*) FROM onek_with_null WHERE unique1 IS NOT NULL;
 SELECT count(*) FROM onek_with_null WHERE unique1 IS NULL AND unique2 IS NOT NULL;
+SELECT count(*) FROM onek_with_null WHERE unique1 IS NOT NULL AND unique1 > 500;
+SELECT count(*) FROM onek_with_null WHERE unique1 IS NULL AND unique1 > 500;
 
 DROP INDEX onek_nulltest;
 
@@ -478,6 +484,8 @@ SELECT count(*) FROM onek_with_null WHERE unique1 IS NULL;
 SELECT count(*) FROM onek_with_null WHERE unique1 IS NULL AND unique2 IS NULL;
 SELECT count(*) FROM onek_with_null WHERE unique1 IS NOT NULL;
 SELECT count(*) FROM onek_with_null WHERE unique1 IS NULL AND unique2 IS NOT NULL;
+SELECT count(*) FROM onek_with_null WHERE unique1 IS NOT NULL AND unique1 > 500;
+SELECT count(*) FROM onek_with_null WHERE unique1 IS NULL AND unique1 > 500;
 
 RESET enable_seqscan;
 RESET enable_indexscan;

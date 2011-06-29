@@ -325,8 +325,14 @@ _bt_preprocess_keys(IndexScanDesc scan)
 
 			/*
 			 * If = has been specified, all other keys can be eliminated as
-			 * redundant.  In case of key > 2 && key == 1 we can set qual_ok
-			 * to false and abandon further processing.
+			 * redundant.  If we have a case like key = 1 AND key > 2, we can
+			 * set qual_ok to false and abandon further processing.
+			 *
+			 * We also have to deal with the case of "key IS NULL", which is
+			 * unsatisfiable in combination with any other index condition.
+			 * By the time we get here, that's been classified as an equality
+			 * check, and we've rejected any combination of it with a regular
+			 * equality condition; but not with other types of conditions.
 			 */
 			if (xform[BTEqualStrategyNumber - 1])
 			{
@@ -338,6 +344,13 @@ _bt_preprocess_keys(IndexScanDesc scan)
 
 					if (!chk || j == (BTEqualStrategyNumber - 1))
 						continue;
+
+					if (eq->sk_flags & SK_SEARCHNULL)
+					{
+						/* IS NULL is contradictory to anything else */
+						so->qual_ok = false;
+						return;
+					}
 
 					if (_bt_compare_scankey_args(scan, chk, eq, chk,
 												 &test_result))
