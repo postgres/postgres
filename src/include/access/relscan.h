@@ -35,7 +35,6 @@ typedef struct HeapScanDescData
 	BlockNumber rs_startblock;	/* block # to start at */
 	BufferAccessStrategy rs_strategy;	/* access strategy for reads */
 	bool		rs_syncscan;	/* report location to syncscan logic? */
-	bool		rs_relpredicatelocked;	/* predicate lock on relation exists */
 
 	/* scan current state */
 	bool		rs_inited;		/* false = scan not init'd yet */
