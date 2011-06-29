@@ -304,7 +304,7 @@ canonicalize_path(char *path)
 		}
 		else if (pending_strips > 0 && *spath != '\0')
 		{
-			/* trim a regular directory name cancelled by ".." */
+			/* trim a regular directory name canceled by ".." */
 			trim_directory(path);
 			pending_strips--;
 			/* foo/.. should become ".", not empty */

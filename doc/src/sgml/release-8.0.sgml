@@ -609,7 +609,7 @@
      </para>
 
      <para>
-      This fix prevents a PANIC if a <literal>VACUUM FULL</> is cancelled
+      This fix prevents a PANIC if a <literal>VACUUM FULL</> is canceled
       after it's already committed its tuple movements, as well as transient
       errors if a plain <literal>VACUUM</> is interrupted after having
       truncated the table.

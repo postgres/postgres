@@ -282,7 +282,7 @@ postgres: <replaceable>user</> <replaceable>database</> <replaceable>host</> <re
       total disk blocks read, total buffer hits (i.e., block
       read requests avoided by finding the block already in buffer cache),
       number of rows returned, fetched, inserted, updated and deleted, the
-      total number of queries cancelled due to conflict with recovery (on
+      total number of queries canceled due to conflict with recovery (on
       standby servers), and time of last statistics reset.
      </entry>
      </row>
@@ -290,7 +290,7 @@ postgres: <replaceable>user</> <replaceable>database</> <replaceable>host</> <re
      <row>
       <entry><structname>pg_stat_database_conflicts</><indexterm><primary>pg_stat_database_conflicts</primary></indexterm></entry>
       <entry>One row per database, showing database OID, database name and
-      the number of queries that have been cancelled in this database due to
+      the number of queries that have been canceled in this database due to
       dropped tablespaces, lock timeouts, old snapshots, pinned buffers and
       deadlocks. Will only contain information on standby servers, since
       conflicts do not occur on master servers.
@@ -639,7 +639,7 @@ postgres: <replaceable>user</> <replaceable>database</> <replaceable>host</> <re
       <entry><literal><function>pg_stat_get_db_conflict_tablespace</function>(<type>oid</type>)</literal></entry>
       <entry><type>bigint</type></entry>
       <entry>
-       Number of queries cancelled because of recovery conflict with dropped tablespaces in database
+       Number of queries canceled because of recovery conflict with dropped tablespaces in database
       </entry>
      </row>
 
@@ -647,7 +647,7 @@ postgres: <replaceable>user</> <replaceable>database</> <replaceable>host</> <re
       <entry><literal><function>pg_stat_get_db_conflict_lock</function>(<type>oid</type>)</literal></entry>
       <entry><type>bigint</type></entry>
       <entry>
-       Number of queries cancelled because of recovery conflict with locks in database
+       Number of queries canceled because of recovery conflict with locks in database
       </entry>
      </row>
 
@@ -655,7 +655,7 @@ postgres: <replaceable>user</> <replaceable>database</> <replaceable>host</> <re
       <entry><literal><function>pg_stat_get_db_conflict_snapshot</function>(<type>oid</type>)</literal></entry>
       <entry><type>bigint</type></entry>
       <entry>
-       Number of queries cancelled because of recovery conflict with old snapshots in database
+       Number of queries canceled because of recovery conflict with old snapshots in database
       </entry>
      </row>
 
@@ -663,7 +663,7 @@ postgres: <replaceable>user</> <replaceable>database</> <replaceable>host</> <re
       <entry><literal><function>pg_stat_get_db_conflict_bufferpin</function>(<type>oid</type>)</literal></entry>
       <entry><type>bigint</type></entry>
       <entry>
-       Number of queries cancelled because of recovery conflict with pinned buffers in database
+       Number of queries canceled because of recovery conflict with pinned buffers in database
       </entry>
      </row>
 
@@ -671,7 +671,7 @@ postgres: <replaceable>user</> <replaceable>database</> <replaceable>host</> <re
       <entry><literal><function>pg_stat_get_db_conflict_startup_deadlock</function>(<type>oid</type>)</literal></entry>
       <entry><type>bigint</type></entry>
       <entry>
-       Number of queries cancelled because of recovery conflict with deadlocks in database
+       Number of queries canceled because of recovery conflict with deadlocks in database
       </entry>
      </row>
 

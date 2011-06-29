@@ -714,7 +714,7 @@ AutoVacLauncherMain(int argc, char *argv[])
 					worker->wi_links.next = (SHM_QUEUE *) AutoVacuumShmem->av_freeWorkers;
 					AutoVacuumShmem->av_freeWorkers = worker;
 					AutoVacuumShmem->av_startingWorker = NULL;
-					elog(WARNING, "worker took too long to start; cancelled");
+					elog(WARNING, "worker took too long to start; canceled");
 				}
 			}
 			else
@@ -1461,7 +1461,7 @@ AutoVacWorkerMain(int argc, char *argv[])
 	pqsignal(SIGHUP, SIG_IGN);
 
 	/*
-	 * SIGINT is used to signal cancelling the current table's vacuum; SIGTERM
+	 * SIGINT is used to signal canceling the current table's vacuum; SIGTERM
 	 * means abort and exit cleanly, and SIGQUIT means abandon ship.
 	 */
 	pqsignal(SIGINT, StatementCancelHandler);

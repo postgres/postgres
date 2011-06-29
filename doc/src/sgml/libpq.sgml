@@ -4088,7 +4088,7 @@ int PQflush(PGconn *conn);
  </sect1>
 
  <sect1 id="libpq-cancel">
-  <title>Cancelling Queries in Progress</title>
+  <title>Canceling Queries in Progress</title>
 
   <indexterm zone="libpq-cancel">
    <primary>canceling</primary>

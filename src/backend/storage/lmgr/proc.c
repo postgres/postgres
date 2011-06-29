@@ -1324,7 +1324,7 @@ CheckDeadLock(void)
 		 * the lock.
 		 *
 		 * If blocked by autovacuum, this wakeup will enable ProcSleep to send
-		 * the cancelling signal to the autovacuum worker.
+		 * the canceling signal to the autovacuum worker.
 		 */
 		PGSemaphoreUnlock(&MyProc->sem);
 	}
