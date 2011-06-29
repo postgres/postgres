@@ -28,7 +28,6 @@
 #include "access/relscan.h"
 #include "executor/execdebug.h"
 #include "executor/nodeSeqscan.h"
-#include "storage/predicate.h"
 
 static void InitScanRelation(SeqScanState *node, EState *estate);
 static TupleTableSlot *SeqNext(SeqScanState *node);
@@ -106,16 +105,11 @@ SeqRecheck(SeqScanState *node, TupleTableSlot *slot)
  *		tuple.
  *		We call the ExecScan() routine and pass it the appropriate
  *		access method functions.
- *		For serializable transactions, we first acquire a predicate
- *		lock on the entire relation.
  * ----------------------------------------------------------------
  */
 TupleTableSlot *
 ExecSeqScan(SeqScanState *node)
 {
-	PredicateLockRelation(node->ss_currentRelation,
-						  node->ss_currentScanDesc->rs_snapshot);
-	node->ss_currentScanDesc->rs_relpredicatelocked = true;
 	return ExecScan((ScanState *) node,
 					(ExecScanAccessMtd) SeqNext,
 					(ExecScanRecheckMtd) SeqRecheck);

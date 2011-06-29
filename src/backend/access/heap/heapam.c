@@ -479,8 +479,6 @@ heapgettup(HeapScanDesc scan,
 
 				if (valid)
 				{
-					if (!scan->rs_relpredicatelocked)
-						PredicateLockTuple(scan->rs_rd, tuple, snapshot);
 					LockBuffer(scan->rs_cbuf, BUFFER_LOCK_UNLOCK);
 					return;
 				}
@@ -748,16 +746,12 @@ heapgettup_pagemode(HeapScanDesc scan,
 							nkeys, key, valid);
 				if (valid)
 				{
-					if (!scan->rs_relpredicatelocked)
-						PredicateLockTuple(scan->rs_rd, tuple, scan->rs_snapshot);
 					scan->rs_cindex = lineindex;
 					return;
 				}
 			}
 			else
 			{
-				if (!scan->rs_relpredicatelocked)
-					PredicateLockTuple(scan->rs_rd, tuple, scan->rs_snapshot);
 				scan->rs_cindex = lineindex;
 				return;
 			}
@@ -1224,12 +1218,25 @@ heap_beginscan_internal(Relation relation, Snapshot snapshot,
 	scan->rs_strategy = NULL;	/* set in initscan */
 	scan->rs_allow_strat = allow_strat;
 	scan->rs_allow_sync = allow_sync;
-	scan->rs_relpredicatelocked = false;
 
 	/*
 	 * we can use page-at-a-time mode if it's an MVCC-safe snapshot
 	 */
 	scan->rs_pageatatime = IsMVCCSnapshot(snapshot);
+
+	/*
+	 * For a seqscan in a serializable transaction, acquire a predicate lock
+	 * on the entire relation. This is required not only to lock all the
+	 * matching tuples, but also to conflict with new insertions into the
+	 * table. In an indexscan, we take page locks on the index pages covering
+	 * the range specified in the scan qual, but in a heap scan there is
+	 * nothing more fine-grained to lock. A bitmap scan is a different story,
+	 * there we have already scanned the index and locked the index pages
+	 * covering the predicate. But in that case we still have to lock any
+	 * matching heap tuples.
+	 */
+	if (!is_bitmapscan)
+		PredicateLockRelation(relation, snapshot);
 
 	/* we only need to set this up once */
 	scan->rs_ctup.t_tableOid = RelationGetRelid(relation);
