@@ -1537,9 +1537,17 @@ pg_stat_reset(PG_FUNCTION_ARGS)
 Datum
 pg_stat_reset_shared(PG_FUNCTION_ARGS)
 {
-	char	   *target = text_to_cstring(PG_GETARG_TEXT_PP(0));
+	if (PG_ARGISNULL(0))
+		/*
+		 * Same error message as in pgstat_reset_shared_counters(),
+		 * to keep translations the same.
+		 */
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+				 errmsg("unrecognized reset target: \"%s\"", "null"),
+				 errhint("Target must be \"bgwriter\".")));
 
-	pgstat_reset_shared_counters(target);
+	pgstat_reset_shared_counters(text_to_cstring(PG_GETARG_TEXT_PP(0)));
 
 	PG_RETURN_VOID();
 }
