@@ -58,8 +58,8 @@ parseCommandLine(int argc, char *argv[])
 	os_info.progname = get_progname(argv[0]);
 
 	/* Process libpq env. variables; load values here for usage() output */
-	old_cluster.port = getenv("PGPORT") ? atoi(getenv("PGPORT")) : DEF_PGPORT;
-	new_cluster.port = getenv("PGPORT") ? atoi(getenv("PGPORT")) : DEF_PGPORT;
+	old_cluster.port = getenv("PGPORTOLD") ? atoi(getenv("PGPORTOLD")) : DEF_PGUPORT;
+	new_cluster.port = getenv("PGPORTNEW") ? atoi(getenv("PGPORTNEW")) : DEF_PGUPORT;
 
 	os_user_effective_id = get_user_info(&os_info.user);
 	/* we override just the database user name;  we got the OS id above */
@@ -203,13 +203,13 @@ parseCommandLine(int argc, char *argv[])
 	}
 
 	/* Get values from env if not already set */
-	check_required_directory(&old_cluster.bindir, "OLDBINDIR", "-b",
+	check_required_directory(&old_cluster.bindir, "PGBINOLD", "-b",
 							"old cluster binaries reside");
-	check_required_directory(&new_cluster.bindir, "NEWBINDIR", "-B",
+	check_required_directory(&new_cluster.bindir, "PGBINNEW", "-B",
 							"new cluster binaries reside");
-	check_required_directory(&old_cluster.pgdata, "OLDDATADIR", "-d",
+	check_required_directory(&old_cluster.pgdata, "PGDATAOLD", "-d",
 							"old cluster data resides");
-	check_required_directory(&new_cluster.pgdata, "NEWDATADIR", "-D",
+	check_required_directory(&new_cluster.pgdata, "PGDATANEW", "-D",
 							"new cluster data resides");
 }
 
@@ -254,17 +254,17 @@ For example:\n\
 or\n"), old_cluster.port, new_cluster.port, os_info.user);
 #ifndef WIN32
 	printf(_("\
-  $ export OLDDATADIR=oldCluster/data\n\
-  $ export NEWDATADIR=newCluster/data\n\
-  $ export OLDBINDIR=oldCluster/bin\n\
-  $ export NEWBINDIR=newCluster/bin\n\
+  $ export PGDATAOLD=oldCluster/data\n\
+  $ export PGDATANEW=newCluster/data\n\
+  $ export PGBINOLD=oldCluster/bin\n\
+  $ export PGBINNEW=newCluster/bin\n\
   $ pg_upgrade\n"));
 #else
 	printf(_("\
-  C:\\> set OLDDATADIR=oldCluster/data\n\
-  C:\\> set NEWDATADIR=newCluster/data\n\
-  C:\\> set OLDBINDIR=oldCluster/bin\n\
-  C:\\> set NEWBINDIR=newCluster/bin\n\
+  C:\\> set PGDATAOLD=oldCluster/data\n\
+  C:\\> set PGDATANEW=newCluster/data\n\
+  C:\\> set PGBINOLD=oldCluster/bin\n\
+  C:\\> set PGBINNEW=newCluster/bin\n\
   C:\\> pg_upgrade\n"));
 #endif
 	printf(_("\nReport bugs to <pgsql-bugs@postgresql.org>.\n"));

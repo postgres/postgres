@@ -60,14 +60,14 @@
       <term><option>-b</option> <replaceable>old_bindir</></term>
       <term><option>--old-bindir=</option><replaceable>old_bindir</></term>
       <listitem><para>the old cluster executable directory;
-      environment variable <envar>OLDBINDIR</></para></listitem>
+      environment variable <envar>PGBINOLD</></para></listitem>
      </varlistentry>
 
      <varlistentry>
       <term><option>-B</option> <replaceable>new_bindir</></term>
       <term><option>--new-bindir=</option><replaceable>new_bindir</></term>
       <listitem><para>the new cluster executable directory;
-      environment variable <envar>NEWBINDIR</></para></listitem>
+      environment variable <envar>PGBINNEW</></para></listitem>
      </varlistentry>
 
      <varlistentry>
@@ -80,14 +80,14 @@
       <term><option>-d</option> <replaceable>old_datadir</></term>
       <term><option>--old-datadir=</option><replaceable>old_datadir</></term>
       <listitem><para>the old cluster data directory; environment
-      variable <envar>OLDDATADIR</></para></listitem>
+      variable <envar>PGDATAOLD</></para></listitem>
      </varlistentry>
 
      <varlistentry>
       <term><option>-D</option> <replaceable>new_datadir</></term>
       <term><option>--new-datadir=</option><replaceable>new_datadir</></term>
       <listitem><para>the new cluster data directory; environment
-      variable <envar>NEWDATADIR</></para></listitem>
+      variable <envar>PGDATANEW</></para></listitem>
      </varlistentry>
 
      <varlistentry>
@@ -118,14 +118,14 @@
       <term><option>-p</option> <replaceable>old_port_number</></term>
       <term><option>--old-port=</option><replaceable>old_portnum</></term>
       <listitem><para>the old cluster port number; environment
-      variable <envar>PGPORT</></para></listitem>
+      variable <envar>PGPORTOLD</></para></listitem>
      </varlistentry>
 
      <varlistentry>
       <term><option>-P</option> <replaceable>new_port_number</></term>
       <term><option>--new-port=</option><replaceable>new_portnum</></term>
       <listitem><para>the new cluster port number; environment
-      variable <envar>PGPORT</></para></listitem>
+      variable <envar>PGPORTNEW</></para></listitem>
      </varlistentry>
 
      <varlistentry>
@@ -256,8 +256,7 @@ gmake prefix=/usr/local/pgsql.new install
      so you might want to set authentication to <literal>trust</> in
      <filename>pg_hba.conf</>, or if using <literal>md5</> authentication,
      use a <filename>~/.pgpass</> file (see <xref linkend="libpq-pgpass">)
-     to avoid being prompted repeatedly for a password.  Also make sure
-     pg_upgrade is the only program that can connect to the clusters.
+     to avoid being prompted repeatedly for a password.
     </para>
    </step>
 
@@ -303,9 +302,14 @@ NET STOP pgsql-8.3  (<productname>PostgreSQL</> 8.3 and older used a different s
      copying), but you will not be able to access your old cluster
      once you start the new cluster after the upgrade.  Link mode also
      requires that the old and new cluster data directories be in the
-     same file system.  See <literal>pg_upgrade --help</> for a full
-     list of options.
-    </para>
+     same file system.
+   </para>
+
+   <para>
+    <application>pg_upgrade</> defaults to running servers on port
+    50432 to avoid unintended client connections.  See <literal>pg_upgrade
+    --help</> for a full list of options.
+   </para>
 
     <para>
      For Windows users, you must be logged into an administrative account, and

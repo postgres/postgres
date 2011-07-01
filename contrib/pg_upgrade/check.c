@@ -29,6 +29,9 @@ output_check_banner(bool *live_check)
 	if (user_opts.check && is_server_running(old_cluster.pgdata))
 	{
 		*live_check = true;
+		if (old_cluster.port == DEF_PGUPORT)
+			pg_log(PG_FATAL, "When checking a live old server, "
+				   "you must specify the old server's port number.\n");
 		if (old_cluster.port == new_cluster.port)
 			pg_log(PG_FATAL, "When checking a live server, "
 				   "the old and new port numbers must be different.\n");
