@@ -2046,7 +2046,7 @@ AlterDomainValidateConstraint(List *names, char *constrName)
 	Relation	conrel;
 	HeapTuple	tup;
 	Form_pg_type typTup;
-	Form_pg_constraint con;
+	Form_pg_constraint con = NULL;
 	Form_pg_constraint copy_con;
 	char	   *conbin;
 	SysScanDesc	scan;
@@ -2094,13 +2094,10 @@ AlterDomainValidateConstraint(List *names, char *constrName)
 	}
 
 	if (!found)
-	{
-		con = NULL;		/* keep compiler quiet */
 		ereport(ERROR,
 				(errcode(ERRCODE_UNDEFINED_OBJECT),
 				 errmsg("constraint \"%s\" of domain \"%s\" does not exist",
 						constrName, NameStr(con->conname))));
-	}
 
 	if (con->contype != CONSTRAINT_CHECK)
 		ereport(ERROR,
