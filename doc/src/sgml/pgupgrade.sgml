@@ -256,8 +256,7 @@ gmake prefix=/usr/local/pgsql.new install
      so you might want to set authentication to <literal>trust</> in
      <filename>pg_hba.conf</>, or if using <literal>md5</> authentication,
      use a <filename>~/.pgpass</> file (see <xref linkend="libpq-pgpass">)
-     to avoid being prompted repeatedly for a password.  Also make sure
-     pg_upgrade is the only program that can connect to the clusters.
+     to avoid being prompted repeatedly for a password.
     </para>
    </step>
 
@@ -336,6 +335,9 @@ pg_upgrade.exe
 
     <para>
      Obviously, no one should be accessing the clusters during the upgrade.
+     Consider using a non-default port number, e.g.  50432, for old
+     and new clusters to avoid unintended client connections during
+     the upgrade.
     </para>
 
     <para>
