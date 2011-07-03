@@ -67,7 +67,7 @@ distdir	= postgresql-$(VERSION)
 dummy	= =install=
 garbage = =*  "#"*  ."#"*  *~*  *.orig  *.rej  core  postgresql-*
 
-dist: $(distdir).tar.gz 
+dist: $(distdir).tar.gz $(distdir).tar.bz2
 ifeq ($(split-dist), yes)
 dist: postgresql-base-$(VERSION).tar.gz postgresql-docs-$(VERSION).tar.gz postgresql-opt-$(VERSION).tar.gz postgresql-test-$(VERSION).tar.gz 
 endif
@@ -76,6 +76,8 @@ dist:
 
 $(distdir).tar: distdir
 	$(TAR) chf $@ $(distdir)
+
+.INTERMEDIATE: $(distdir).tar
 
 opt_files = \
 	src/tools src/tutorial \
@@ -115,10 +117,10 @@ distdir:
 	$(MAKE) -C $(distdir) distclean
 	rm -f $(distdir)/README.git
 
-distcheck: $(distdir).tar.gz
+distcheck: dist
 	-rm -rf $(dummy)
 	mkdir $(dummy)
-	$(GZIP) -d -c $< | $(TAR) xf -
+	$(GZIP) -d -c $(distdir).tar.gz | $(TAR) xf -
 	install_prefix=`cd $(dummy) && pwd`; \
 	cd $(distdir) \
 	&& ./configure --prefix="$$install_prefix"
