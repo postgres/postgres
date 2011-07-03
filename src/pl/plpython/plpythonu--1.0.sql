@@ -7,3 +7,5 @@
  */
 
 CREATE PROCEDURAL LANGUAGE plpythonu;
+
+COMMENT ON PROCEDURAL LANGUAGE plpythonu IS 'PL/PythonU untrusted procedural language';

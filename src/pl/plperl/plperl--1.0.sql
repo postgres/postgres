@@ -7,3 +7,5 @@
  */
 
 CREATE PROCEDURAL LANGUAGE plperl;
+
+COMMENT ON PROCEDURAL LANGUAGE plperl IS 'PL/Perl procedural language';

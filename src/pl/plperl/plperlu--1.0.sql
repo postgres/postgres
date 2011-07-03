@@ -7,3 +7,5 @@
  */
 
 CREATE PROCEDURAL LANGUAGE plperlu;
+
+COMMENT ON PROCEDURAL LANGUAGE plperlu IS 'PL/PerlU untrusted procedural language';

@@ -7,3 +7,5 @@
  */
 
 CREATE PROCEDURAL LANGUAGE pltclu;
+
+COMMENT ON PROCEDURAL LANGUAGE pltclu IS 'PL/TclU untrusted procedural language';
