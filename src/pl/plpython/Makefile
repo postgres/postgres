@@ -95,15 +95,7 @@ PSQLDIR = $(bindir)
 
 include $(top_srcdir)/src/Makefile.shlib
 
-# Force this dependency to be known even without dependency info built:
-plpython.o: spiexceptions.h
-
-spiexceptions.h: $(top_srcdir)/src/backend/utils/errcodes.txt generate-spiexceptions.pl
-	$(PERL) $(srcdir)/generate-spiexceptions.pl $< > $@
-
 all: all-lib
-
-distprep: spiexceptions.h
 
 
 install: all install-lib install-data
@@ -151,13 +143,13 @@ installcheck: submake prep3
 	$(pg_regress_installcheck) --inputdir=./python3 --outputdir=./python3 $(REGRESS_OPTS) $(REGRESS)
 
 clean: clean3
-else
+else # not Python 3
 check: submake
 	$(pg_regress_check) $(REGRESS_OPTS) $(REGRESS)
 
 installcheck: submake
 	$(pg_regress_installcheck) $(REGRESS_OPTS) $(REGRESS)
-endif
+endif # not Python 3
 
 .PHONY: submake
 submake:
@@ -170,9 +162,6 @@ ifeq ($(PORTNAME), win32)
 	rm -f python${pytverstr}.def
 endif
 
-maintainer-clean: distclean
-	rm -f spiexceptions.h
-
 else # can't build
 
 all:
@@ -183,3 +172,16 @@ all:
 	 echo ""
 
 endif # can't build
+
+# distprep and maintainer-clean rules should be run even if we can't build.
+
+# Force this dependency to be known even without dependency info built:
+plpython.o: spiexceptions.h
+
+spiexceptions.h: $(top_srcdir)/src/backend/utils/errcodes.txt generate-spiexceptions.pl
+	$(PERL) $(srcdir)/generate-spiexceptions.pl $< > $@
+
+distprep: spiexceptions.h
+
+maintainer-clean: distclean
+	rm -f spiexceptions.h

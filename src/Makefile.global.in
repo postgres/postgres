@@ -19,6 +19,8 @@
 # Meta configuration
 
 standard_targets = all install installdirs uninstall distprep clean distclean maintainer-clean coverage check installcheck maintainer-check
+# these targets should recurse even into subdirectories not being built:
+standard_always_targets = distprep clean distclean maintainer-clean
 
 .PHONY: $(standard_targets) install-strip html man installcheck-parallel
 
@@ -602,6 +604,16 @@ endef
 # $2: list of subdirs (defaults to SUBDIRS variable)
 # $3: target to run in subdir (defaults to current element of $1)
 recurse = $(foreach target,$(if $1,$1,$(standard_targets)),$(foreach subdir,$(if $2,$2,$(SUBDIRS)),$(eval $(call _create_recursive_target,$(target),$(subdir),$(if $3,$3,$(target))))))
+
+# If a makefile's list of SUBDIRS varies depending on configuration, then
+# any subdirectories excluded from SUBDIRS should instead be added to
+# ALWAYS_SUBDIRS, and then it must call recurse_always as well as recurse.
+# This ensures that distprep, distclean, etc will apply to all subdirectories.
+# In the normal case all arguments will be defaulted.
+# $1: targets to make recursive (defaults to standard_always_targets)
+# $2: list of subdirs (defaults to ALWAYS_SUBDIRS variable)
+# $3: target to run in subdir (defaults to current element of $1)
+recurse_always = $(foreach target,$(if $1,$1,$(standard_always_targets)),$(foreach subdir,$(if $2,$2,$(ALWAYS_SUBDIRS)),$(eval $(call _create_recursive_target,$(target),$(subdir),$(if $3,$3,$(target))))))
 
 
 ##########################################################################

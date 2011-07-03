@@ -15,8 +15,12 @@ include $(top_builddir)/src/Makefile.global
 
 SUBDIRS = initdb pg_ctl pg_dump \
 	psql scripts pg_config pg_controldata pg_resetxlog pg_basebackup
+
 ifeq ($(PORTNAME), win32)
-SUBDIRS+=pgevent
+SUBDIRS += pgevent
+else
+ALWAYS_SUBDIRS += pgevent
 endif
 
 $(recurse)
+$(recurse_always)
