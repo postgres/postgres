@@ -2663,7 +2663,7 @@ DATA(insert OID = 2230 (  pg_stat_clear_snapshot		PGNSP PGUID 12 1 0 0 0 f f f f
 DESCR("statistics: discard current transaction's statistics snapshot");
 DATA(insert OID = 2274 (  pg_stat_reset					PGNSP PGUID 12 1 0 0 0 f f f f f v 0 0 2278 "" _null_ _null_ _null_ _null_	pg_stat_reset _null_ _null_ _null_ ));
 DESCR("statistics: reset collected statistics for current database");
-DATA(insert OID = 3775 (  pg_stat_reset_shared			PGNSP PGUID 12 1 0 0 0 f f f f f v 1 0 2278 "25" _null_ _null_ _null_ _null_	pg_stat_reset_shared _null_ _null_ _null_ ));
+DATA(insert OID = 3775 (  pg_stat_reset_shared			PGNSP PGUID 12 1 0 0 0 f f f t f v 1 0 2278 "25" _null_ _null_ _null_ _null_	pg_stat_reset_shared _null_ _null_ _null_ ));
 DESCR("statistics: reset collected statistics shared across the cluster");
 DATA(insert OID = 3776 (  pg_stat_reset_single_table_counters	PGNSP PGUID 12 1 0 0 0 f f f f f v 1 0 2278 "26" _null_ _null_ _null_ _null_	pg_stat_reset_single_table_counters _null_ _null_ _null_ ));
 DESCR("statistics: reset collected statistics for a single table or index in the current database");
