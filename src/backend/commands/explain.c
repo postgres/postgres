@@ -1179,10 +1179,13 @@ ExplainNode(Plan *plan, PlanState *planstate,
 		/*
 		 * Ordinarily we don't pass down our own outer_plan value to our child
 		 * nodes, but in bitmap scan trees we must, since the bottom
-		 * BitmapIndexScan nodes may have outer references.
+		 * BitmapIndexScan nodes may have outer references.  Also, we must do
+		 * so at a Result node, because it might be a pseudoconstant-qual
+		 * gating node inserted into an inner indexscan plan.
 		 */
 		ExplainNode(outerPlan(plan), outerPlanState(planstate),
-					IsA(plan, BitmapHeapScan) ? outer_plan : NULL,
+					(IsA(plan, BitmapHeapScan) ||
+					 IsA(plan, Result)) ? outer_plan : NULL,
 					"Outer", NULL, es);
 	}
 
