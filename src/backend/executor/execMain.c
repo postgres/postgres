@@ -2415,6 +2415,13 @@ OpenIntoRel(QueryDesc *queryDesc)
 				 errmsg("ON COMMIT can only be used on temporary tables")));
 
 	/*
+	 * Find namespace to create in, check its permissions
+	 */
+	intoName = into->rel->relname;
+	namespaceId = RangeVarGetAndCheckCreationNamespace(into->rel);
+	RangeVarAdjustRelationPersistence(into->rel, namespaceId);
+
+	/*
 	 * Security check: disallow creating temp tables from security-restricted
 	 * code.  This is needed because calling code might not expect untrusted
 	 * tables to appear in pg_temp at the front of its search path.
@@ -2424,12 +2431,6 @@ OpenIntoRel(QueryDesc *queryDesc)
 		ereport(ERROR,
 				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
 				 errmsg("cannot create temporary table within security-restricted operation")));
-
-	/*
-	 * Find namespace to create in, check its permissions
-	 */
-	intoName = into->rel->relname;
-	namespaceId = RangeVarGetAndCheckCreationNamespace(into->rel);
 
 	/*
 	 * Select tablespace to use.  If not specified, use default tablespace

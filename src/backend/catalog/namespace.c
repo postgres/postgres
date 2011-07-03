@@ -311,19 +311,6 @@ RangeVarGetCreationNamespace(const RangeVar *newRelation)
 							newRelation->relname)));
 	}
 
-	if (newRelation->relpersistence == RELPERSISTENCE_TEMP)
-	{
-		/* TEMP tables are created in our backend-local temp namespace */
-		if (newRelation->schemaname)
-			ereport(ERROR,
-					(errcode(ERRCODE_INVALID_TABLE_DEFINITION),
-				   errmsg("temporary tables cannot specify a schema name")));
-		/* Initialize temp namespace if first time through */
-		if (!OidIsValid(myTempNamespace))
-			InitTempTableNamespace();
-		return myTempNamespace;
-	}
-
 	if (newRelation->schemaname)
 	{
 		/* check for pg_temp alias */
@@ -337,6 +324,13 @@ RangeVarGetCreationNamespace(const RangeVar *newRelation)
 		/* use exact schema given */
 		namespaceId = get_namespace_oid(newRelation->schemaname, false);
 		/* we do not check for USAGE rights here! */
+	}
+	else if (newRelation->relpersistence == RELPERSISTENCE_TEMP)
+	{
+		/* Initialize temp namespace if first time through */
+		if (!OidIsValid(myTempNamespace))
+			InitTempTableNamespace();
+		return myTempNamespace;
 	}
 	else
 	{
@@ -387,6 +381,43 @@ RangeVarGetAndCheckCreationNamespace(const RangeVar *newRelation)
 	}
 
 	return namespaceId;
+}
+
+/*
+ * Adjust the relpersistence for an about-to-be-created relation based on the
+ * creation namespace, and throw an error for invalid combinations.
+ */
+void
+RangeVarAdjustRelationPersistence(RangeVar *newRelation, Oid nspid)
+{
+	switch (newRelation->relpersistence)
+	{
+		case RELPERSISTENCE_TEMP:
+			if (!isTempOrToastNamespace(nspid))
+			{
+				if (isAnyTempNamespace(nspid))
+					ereport(ERROR,
+							(errcode(ERRCODE_INVALID_TABLE_DEFINITION),
+							 errmsg("cannot create relations in temporary schemas of other sessions")));
+				else
+					ereport(ERROR,
+							(errcode(ERRCODE_INVALID_TABLE_DEFINITION),
+							 errmsg("cannot create temporary relation in non-temporary schema")));
+			}
+			break;
+		case RELPERSISTENCE_PERMANENT:
+			if (isTempOrToastNamespace(nspid))
+				newRelation->relpersistence = RELPERSISTENCE_TEMP;
+			else if (isAnyTempNamespace(nspid))
+				ereport(ERROR,
+						(errcode(ERRCODE_INVALID_TABLE_DEFINITION),
+						 errmsg("cannot create relations in temporary schemas of other sessions")));
+			break;
+		default:
+			ereport(ERROR,
+					(errcode(ERRCODE_INVALID_TABLE_DEFINITION),
+					 errmsg("only temporary relations may be created in temporary schemas")));
+	}
 }
 
 /*

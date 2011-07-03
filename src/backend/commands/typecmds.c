@@ -1609,6 +1609,7 @@ DefineCompositeType(const RangeVar *typevar, List *coldeflist)
 	 * instead of below about a "relation".
 	 */
 	typeNamespace = RangeVarGetCreationNamespace(createStmt->relation);
+	RangeVarAdjustRelationPersistence(createStmt->relation, typeNamespace);
 	old_type_oid =
 		GetSysCacheOid2(TYPENAMENSP,
 						CStringGetDatum(createStmt->relation->relname),
