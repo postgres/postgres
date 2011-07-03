@@ -52,18 +52,26 @@ SUBDIRS = \
 
 ifeq ($(with_openssl),yes)
 SUBDIRS += sslinfo
+else
+ALWAYS_SUBDIRS += sslinfo
 endif
 
 ifeq ($(with_ossp_uuid),yes)
 SUBDIRS += uuid-ossp
+else
+ALWAYS_SUBDIRS += uuid-ossp
 endif
 
 ifeq ($(with_libxml),yes)
 SUBDIRS += xml2
+else
+ALWAYS_SUBDIRS += xml2
 endif
 
 ifeq ($(with_selinux),yes)
 SUBDIRS += sepgsql
+else
+ALWAYS_SUBDIRS += sepgsql
 endif
 
 # Missing:
@@ -71,3 +79,4 @@ endif
 
 
 $(recurse)
+$(recurse_always)
