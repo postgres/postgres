@@ -476,10 +476,10 @@ TAS         = @TAS@
 	$(CPP) $(CPPFLAGS) -o $@ $<
 
 %.gz: %
-	$(GZIP) -f --best $<
+	$(GZIP) --best -c $< >$@
 
 %.bz2: %
-	$(BZIP2) -f $<
+	$(BZIP2) -c $< >$@
 
 ifndef PGXS
 
