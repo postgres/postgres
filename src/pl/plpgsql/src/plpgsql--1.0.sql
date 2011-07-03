@@ -7,3 +7,5 @@
  */
 
 CREATE PROCEDURAL LANGUAGE plpgsql;
+
+COMMENT ON PROCEDURAL LANGUAGE plpgsql IS 'PL/pgSQL procedural language';
