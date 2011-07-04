@@ -1568,90 +1568,88 @@ and c.relname != 'my_locks'
 group by c.relname;
 create table alterlock (f1 int primary key, f2 text);
 NOTICE:  CREATE TABLE / PRIMARY KEY will create implicit index "alterlock_pkey" for table "alterlock"
--- share update exclusive
 begin; alter table alterlock alter column f2 set statistics 150;
 select * from my_locks order by 1;
-  relname  |       max_lockmode       
------------+--------------------------
- alterlock | ShareUpdateExclusiveLock
+  relname  |    max_lockmode     
+-----------+---------------------
+ alterlock | AccessExclusiveLock
 (1 row)
 
 rollback;
 begin; alter table alterlock cluster on alterlock_pkey;
 select * from my_locks order by 1;
-    relname     |       max_lockmode       
-----------------+--------------------------
- alterlock      | ShareUpdateExclusiveLock
- alterlock_pkey | ShareUpdateExclusiveLock
+    relname     |    max_lockmode     
+----------------+---------------------
+ alterlock      | AccessExclusiveLock
+ alterlock_pkey | AccessExclusiveLock
 (2 rows)
 
 commit;
 begin; alter table alterlock set without cluster;
 select * from my_locks order by 1;
-  relname  |       max_lockmode       
------------+--------------------------
- alterlock | ShareUpdateExclusiveLock
+  relname  |    max_lockmode     
+-----------+---------------------
+ alterlock | AccessExclusiveLock
 (1 row)
 
 commit;
 begin; alter table alterlock set (fillfactor = 100);
 select * from my_locks order by 1;
-  relname  |       max_lockmode       
------------+--------------------------
- alterlock | ShareUpdateExclusiveLock
- pg_toast  | ShareUpdateExclusiveLock
+  relname  |    max_lockmode     
+-----------+---------------------
+ alterlock | AccessExclusiveLock
+ pg_toast  | AccessExclusiveLock
 (2 rows)
 
 commit;
 begin; alter table alterlock reset (fillfactor);
 select * from my_locks order by 1;
-  relname  |       max_lockmode       
------------+--------------------------
- alterlock | ShareUpdateExclusiveLock
- pg_toast  | ShareUpdateExclusiveLock
+  relname  |    max_lockmode     
+-----------+---------------------
+ alterlock | AccessExclusiveLock
+ pg_toast  | AccessExclusiveLock
 (2 rows)
 
 commit;
 begin; alter table alterlock set (toast.autovacuum_enabled = off);
 select * from my_locks order by 1;
-  relname  |       max_lockmode       
------------+--------------------------
- alterlock | ShareUpdateExclusiveLock
- pg_toast  | ShareUpdateExclusiveLock
+  relname  |    max_lockmode     
+-----------+---------------------
+ alterlock | AccessExclusiveLock
+ pg_toast  | AccessExclusiveLock
 (2 rows)
 
 commit;
 begin; alter table alterlock set (autovacuum_enabled = off);
 select * from my_locks order by 1;
-  relname  |       max_lockmode       
------------+--------------------------
- alterlock | ShareUpdateExclusiveLock
- pg_toast  | ShareUpdateExclusiveLock
+  relname  |    max_lockmode     
+-----------+---------------------
+ alterlock | AccessExclusiveLock
+ pg_toast  | AccessExclusiveLock
 (2 rows)
 
 commit;
 begin; alter table alterlock alter column f2 set (n_distinct = 1);
 select * from my_locks order by 1;
-  relname  |       max_lockmode       
------------+--------------------------
- alterlock | ShareUpdateExclusiveLock
+  relname  |    max_lockmode     
+-----------+---------------------
+ alterlock | AccessExclusiveLock
 (1 row)
 
 rollback;
 begin; alter table alterlock alter column f2 set storage extended;
 select * from my_locks order by 1;
-  relname  |       max_lockmode       
------------+--------------------------
- alterlock | ShareUpdateExclusiveLock
+  relname  |    max_lockmode     
+-----------+---------------------
+ alterlock | AccessExclusiveLock
 (1 row)
 
 rollback;
--- share row exclusive
 begin; alter table alterlock alter column f2 set default 'x';
 select * from my_locks order by 1;
-  relname  |     max_lockmode      
------------+-----------------------
- alterlock | ShareRowExclusiveLock
+  relname  |    max_lockmode     
+-----------+---------------------
+ alterlock | AccessExclusiveLock
 (1 row)
 
 rollback;

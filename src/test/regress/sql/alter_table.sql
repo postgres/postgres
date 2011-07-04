@@ -1175,7 +1175,6 @@ group by c.relname;
 
 create table alterlock (f1 int primary key, f2 text);
 
--- share update exclusive
 begin; alter table alterlock alter column f2 set statistics 150;
 select * from my_locks order by 1;
 rollback;
@@ -1212,7 +1211,6 @@ begin; alter table alterlock alter column f2 set storage extended;
 select * from my_locks order by 1;
 rollback;
 
--- share row exclusive
 begin; alter table alterlock alter column f2 set default 'x';
 select * from my_locks order by 1;
 rollback;
