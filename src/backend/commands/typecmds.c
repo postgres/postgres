@@ -2046,7 +2046,6 @@ AlterDomainValidateConstraint(List *names, char *constrName)
 	Relation	typrel;
 	Relation	conrel;
 	HeapTuple	tup;
-	Form_pg_type typTup;
 	Form_pg_constraint con = NULL;
 	Form_pg_constraint copy_con;
 	char	   *conbin;
@@ -2068,7 +2067,6 @@ AlterDomainValidateConstraint(List *names, char *constrName)
 	tup = SearchSysCache1(TYPEOID, ObjectIdGetDatum(domainoid));
 	if (!HeapTupleIsValid(tup))
 		elog(ERROR, "cache lookup failed for type %u", domainoid);
-	typTup = (Form_pg_type) GETSTRUCT(tup);
 
 	/* Check it's a domain and check user has permission for ALTER DOMAIN */
 	checkDomainOwner(tup);
