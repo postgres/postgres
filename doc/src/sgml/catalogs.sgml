@@ -1163,7 +1163,7 @@
       <entry><type>bool</type></entry>
       <entry>
        Role can log in. That is, this role can be given as the initial
-       session authorization identifier.
+       session authorization identifier
       </entry>
      </row>
 
@@ -6684,7 +6684,7 @@
       <entry></entry>
       <entry>
        Role can update system catalogs directly.  (Even a superuser cannot do
-       this unless this column is true.)
+       this unless this column is true)
       </entry>
      </row>
 
@@ -6721,6 +6721,13 @@
       <entry></entry>
       <entry>Password expiry time (only used for password authentication);
        null if no expiration</entry>
+     </row>
+
+     <row>
+      <entry><structfield>rolconfig</structfield></entry>
+      <entry><type>text[]</type></entry>
+      <entry></entry>
+      <entry>Role-specific defaults for run-time configuration variables</entry>
      </row>
 
      <row>
