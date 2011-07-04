@@ -5925,11 +5925,7 @@ ORDER BY c.ordinal_position;
      <row>
       <entry><literal>data_type</literal></entry>
       <entry><type>character_data</type></entry>
-      <entry>
-       Always <literal>USER-DEFINED TYPE</literal> (for joining
-       against <literal>object_type</literal> columns in other
-       views)
-      </entry>
+      <entry>Applies to a feature not available in <productname>PostgreSQL</></entry>
      </row>
 
      <row>

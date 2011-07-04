@@ -2198,7 +2198,7 @@ CREATE VIEW user_defined_types AS
            CAST(null AS sql_identifier) AS ordering_routine_schema,
            CAST(null AS sql_identifier) AS ordering_routine_name,
            CAST(null AS character_data) AS reference_type,
-           CAST('USER-DEFINED TYPE' AS character_data) AS data_type,
+           CAST(null AS character_data) AS data_type,
            CAST(null AS cardinal_number) AS character_maximum_length,
            CAST(null AS cardinal_number) AS character_octet_length,
            CAST(null AS sql_identifier) AS character_set_catalog,
