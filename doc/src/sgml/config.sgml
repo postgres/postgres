@@ -2083,15 +2083,15 @@ SET ENABLE_SEQSCAN TO OFF;
         synchronous standby that will wake sleeping users following commit.
         The synchronous standby will be the first named standby that is
         both currently connected and streaming in real-time to the standby
-        (as shown by a state of "STREAMING").  Other standby servers
+        (as shown by a state of <literal>STREAMING</literal>).  Other standby servers
         with listed later will become potential synchronous standbys.
         If the current synchronous standby disconnects for whatever reason
         it will be replaced immediately with the next highest priority standby.
         Specifying more than one standby name can allow very high availability.
        </para>
        <para>
-        The standby name is currently taken as the application_name of the
-        standby, as set in the primary_conninfo on the standby. Names are
+        The standby name is currently taken as the <varname>application_name</> setting of the
+        standby, as set in the <varname>primary_conninfo</> on the standby. Names are
         not enforced for uniqueness. In case of duplicates one of the standbys
         will be chosen to be the synchronous standby, though exactly which
         one is indeterminate.
@@ -2211,12 +2211,13 @@ SET ENABLE_SEQSCAN TO OFF;
       </indexterm>
       <listitem>
       <para>
-       Specifies the minimum frequency, in seconds, for the WAL receiver
+       Specifies the minimum frequency for the WAL receiver
        process on the standby to send information about replication progress
        to the primary, where they can be seen using the
        <literal>pg_stat_replication</literal> view.  The standby will report
        the last transaction log position it has written, the last position it
-       has flushed to disk, and the last position it has applied.  Updates are
+       has flushed to disk, and the last position it has applied.  The parameter
+       value is the maximum interval, in seconds, between reports.  Updates are
        sent each time the write or flush positions changed, or at least as
        often as specified by this parameter.  Thus, the apply position may
        lag slightly behind the true position.  Setting this parameter to zero
