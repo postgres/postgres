@@ -3201,36 +3201,6 @@ local0.*    /var/log/postgresql
        </listitem>
       </varlistentry>
 
-     <varlistentry id="guc-silent-mode" xreflabel="silent_mode">
-      <term><varname>silent_mode</varname> (<type>boolean</type>)</term>
-      <indexterm>
-       <primary><varname>silent_mode</> configuration parameter</primary>
-      </indexterm>
-      <listitem>
-       <para>
-        Runs the server silently. If this parameter is set, the server
-        will automatically run in background and disassociate from the
-        controlling terminal.
-        This parameter can only be set at server start.
-       </para>
-
-       <caution>
-       <para>
-        When this parameter is set,
-        the server's standard output and standard error are redirected
-        to the file <filename>postmaster.log</> within the data directory.
-        There is no provision for rotating this file, so it will grow
-        indefinitely unless server log output is redirected elsewhere
-        by other settings.  It is recommended that <varname>log_destination</>
-        be set to <literal>syslog</> or that <varname>logging_collector</> be
-        enabled when using this option.  Even with those measures, errors
-        reported early during startup may appear in
-        <filename>postmaster.log</> rather than the normal log destination.
-       </para>
-       </caution>
-      </listitem>
-     </varlistentry>
-
       </variablelist>
     </sect2>
      <sect2 id="runtime-config-logging-when">

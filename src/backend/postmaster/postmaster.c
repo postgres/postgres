@@ -58,8 +58,7 @@
  * Error Reporting:
  *		Use write_stderr() only for reporting "interactive" errors
  *		(essentially, bogus arguments on the command line).  Once the
- *		postmaster is launched, use ereport().	In particular, don't use
- *		write_stderr() for anything that occurs after pmdaemonize.
+ *		postmaster is launched, use ereport().
  *
  *-------------------------------------------------------------------------
  */
@@ -192,7 +191,6 @@ static int	SendStop = false;
 
 /* still more option variables */
 bool		EnableSSL = false;
-bool		SilentMode = false; /* silent_mode */
 
 int			PreAuthDelay = 0;
 int			AuthenticationTimeout = 60;
@@ -326,7 +324,6 @@ static DNSServiceRef bonjour_sdref = NULL;
  */
 static void getInstallationPaths(const char *argv0);
 static void checkDataDir(void);
-static void pmdaemonize(void);
 static Port *ConnCreate(int serverFd);
 static void ConnFree(Port *port);
 static void reset_shared(int port);
@@ -776,15 +773,6 @@ PostmasterMain(int argc, char *argv[])
 		ereport(DEBUG3,
 			 (errmsg_internal("-----------------------------------------")));
 	}
-
-	/*
-	 * Fork away from controlling terminal, if silent_mode specified.
-	 *
-	 * Must do this before we grab any interlock files, else the interlocks
-	 * will show the wrong PID.
-	 */
-	if (SilentMode)
-		pmdaemonize();
 
 	/*
 	 * Create lockfile for data directory.
@@ -1269,105 +1257,6 @@ checkDataDir(void)
 	}
 	FreeFile(fp);
 }
-
-
-/*
- * Fork away from the controlling terminal (silent_mode option)
- *
- * Since this requires disconnecting from stdin/stdout/stderr (in case they're
- * linked to the terminal), we re-point stdin to /dev/null and stdout/stderr
- * to "postmaster.log" in the data directory, where we're already chdir'd.
- */
-static void
-pmdaemonize(void)
-{
-#ifndef WIN32
-	const char *pmlogname = "postmaster.log";
-	int			dvnull;
-	int			pmlog;
-	pid_t		pid;
-	int			res;
-
-	/*
-	 * Make sure we can open the files we're going to redirect to.  If this
-	 * fails, we want to complain before disconnecting.  Mention the full path
-	 * of the logfile in the error message, even though we address it by
-	 * relative path.
-	 */
-	dvnull = open(DEVNULL, O_RDONLY, 0);
-	if (dvnull < 0)
-	{
-		write_stderr("%s: could not open file \"%s\": %s\n",
-					 progname, DEVNULL, strerror(errno));
-		ExitPostmaster(1);
-	}
-	pmlog = open(pmlogname, O_CREAT | O_WRONLY | O_APPEND, S_IRUSR | S_IWUSR);
-	if (pmlog < 0)
-	{
-		write_stderr("%s: could not open log file \"%s/%s\": %s\n",
-					 progname, DataDir, pmlogname, strerror(errno));
-		ExitPostmaster(1);
-	}
-
-	/*
-	 * Okay to fork.
-	 */
-	pid = fork_process();
-	if (pid == (pid_t) -1)
-	{
-		write_stderr("%s: could not fork background process: %s\n",
-					 progname, strerror(errno));
-		ExitPostmaster(1);
-	}
-	else if (pid)
-	{							/* parent */
-		/* Parent should just exit, without doing any atexit cleanup */
-		_exit(0);
-	}
-
-	MyProcPid = PostmasterPid = getpid();		/* reset PID vars to child */
-
-	MyStartTime = time(NULL);
-
-	/*
-	 * Some systems use setsid() to dissociate from the TTY's process group,
-	 * while on others it depends on stdin/stdout/stderr.  Do both if
-	 * possible.
-	 */
-#ifdef HAVE_SETSID
-	if (setsid() < 0)
-	{
-		write_stderr("%s: could not dissociate from controlling TTY: %s\n",
-					 progname, strerror(errno));
-		ExitPostmaster(1);
-	}
-#endif
-
-	/*
-	 * Reassociate stdin/stdout/stderr.  fork_process() cleared any pending
-	 * output, so this should be safe.	The only plausible error is EINTR,
-	 * which just means we should retry.
-	 */
-	do
-	{
-		res = dup2(dvnull, 0);
-	} while (res < 0 && errno == EINTR);
-	close(dvnull);
-	do
-	{
-		res = dup2(pmlog, 1);
-	} while (res < 0 && errno == EINTR);
-	do
-	{
-		res = dup2(pmlog, 2);
-	} while (res < 0 && errno == EINTR);
-	close(pmlog);
-#else							/* WIN32 */
-	/* not supported */
-	elog(FATAL, "silent_mode is not supported under Windows");
-#endif   /* WIN32 */
-}
-
 
 /*
  * Main idle loop of postmaster
