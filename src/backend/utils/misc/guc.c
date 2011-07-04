@@ -877,7 +877,7 @@ static struct config_bool ConfigureNamesBool[] =
 	},
 	{
 		{"restart_after_crash", PGC_SIGHUP, ERROR_HANDLING_OPTIONS,
-			gettext_noop("Reinitialize after backend crash."),
+			gettext_noop("Reinitialize server after backend crash."),
 			NULL
 		},
 		&restart_after_crash,
@@ -1368,7 +1368,7 @@ static struct config_bool ConfigureNamesBool[] =
 
 	{
 		{"hot_standby_feedback", PGC_SIGHUP, WAL_STANDBY_SERVERS,
-			gettext_noop("Allows feedback from a hot standby primary that will avoid query conflicts."),
+			gettext_noop("Allows feedback from a hot standby to the primary that will avoid query conflicts."),
 			NULL
 		},
 		&hot_standby_feedback,
@@ -1557,7 +1557,7 @@ static struct config_int ConfigureNamesInt[] =
 
 	{
 		{"wal_receiver_status_interval", PGC_SIGHUP, WAL_STANDBY_SERVERS,
-			gettext_noop("Sets the maximum interval between WAL receiver status reports to the master."),
+			gettext_noop("Sets the maximum interval between WAL receiver status reports to the primary."),
 			NULL,
 			GUC_UNIT_S
 		},
@@ -2955,7 +2955,7 @@ static struct config_string ConfigureNamesString[] =
 
 	{
 		{"synchronous_standby_names", PGC_SIGHUP, WAL_REPLICATION,
-			gettext_noop("List of potential standby names to synchronize with."),
+			gettext_noop("List of names of potential synchronous standbys."),
 			NULL,
 			GUC_LIST_INPUT
 		},

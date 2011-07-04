@@ -3937,7 +3937,7 @@ text_format_string_conversion(StringInfo buf, char conversion,
 		else if (conversion == 'I')
 			ereport(ERROR,
 					(errcode(ERRCODE_NULL_VALUE_NOT_ALLOWED),
-					 errmsg("NULL cannot be escaped as an SQL identifier")));
+					 errmsg("null values cannot be formatted as an SQL identifier")));
 		return;
 	}
 

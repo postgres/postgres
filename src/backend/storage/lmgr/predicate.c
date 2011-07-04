@@ -882,7 +882,7 @@ OldSerXidAdd(TransactionId xid, SerCommitSeqNo minConflictCommitSeqNo)
 			oldSerXidControl->warningIssued = true;
 			ereport(WARNING,
 					(errmsg("memory for serializable conflict tracking is nearly exhausted"),
-					 errhint("There may be an idle transaction or a forgotten prepared transaction causing this.")));
+					 errhint("There might be an idle transaction or a forgotten prepared transaction causing this.")));
 		}
 	}
 

@@ -203,7 +203,7 @@ select format('INSERT INTO %I VALUES(%L,%L)', 'mytab', NULL, 'Hello');
 
 -- should fail, sql identifier cannot be NULL
 select format('INSERT INTO %I VALUES(%L,%L)', NULL, 10, 'Hello');
-ERROR:  NULL cannot be escaped as an SQL identifier
+ERROR:  null values cannot be formatted as an SQL identifier
 -- check positional placeholders
 select format('%1$s %3$s', 1, 2, 3);
  format 
