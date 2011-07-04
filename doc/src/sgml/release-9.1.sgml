@@ -846,8 +846,7 @@
 
       <listitem>
        <para>
-        Add functions to control streaming replication replay (Simon
-        Riggs)
+        Add functions to control streaming replication replay (Simon Riggs)
        </para>
 
        <para>
@@ -1739,20 +1738,6 @@
 
        <para>
         This feature can be used to implement fully updatable views.
-       </para>
-      </listitem>
-
-      <listitem>
-       <para>
-        Minimize lock levels for <link
-        linkend="SQL-CREATETRIGGER"><command>CREATE TRIGGER</></link>
-        and many <link linkend="SQL-ALTERTABLE"><command>ALTER
-        TABLE</></link> and <link linkend="SQL-CREATERULE"><command>CREATE
-        RULE</></link> operations (Simon Riggs)
-       </para>
-
-       <para>
-        This improves database availability when altering active databases.
        </para>
       </listitem>
 
