@@ -2,7 +2,7 @@
 REM src/tools/msvc/pgbison.bat
 
 IF NOT EXIST src\tools\msvc\buildenv.pl goto nobuildenv
-perl -e "require 'src/tools/msvc/buildenv.pl'; while(($k,$v) = each %ENV) { print qq[\@SET $k=$v\n]; }" > bldenv.bat
+perl -e "require 'src/tools/msvc/buildenv.pl'; while(($k,$v) = each %%ENV) { print qq[\@SET $k=$v\n]; }" > bldenv.bat
 CALL bldenv.bat
 del bldenv.bat
 :nobuildenv 
