@@ -2096,13 +2096,13 @@ AlterDomainValidateConstraint(List *names, char *constrName)
 		ereport(ERROR,
 				(errcode(ERRCODE_UNDEFINED_OBJECT),
 				 errmsg("constraint \"%s\" of domain \"%s\" does not exist",
-						constrName, NameStr(con->conname))));
+						constrName, TypeNameToString(typename))));
 
 	if (con->contype != CONSTRAINT_CHECK)
 		ereport(ERROR,
 				(errcode(ERRCODE_WRONG_OBJECT_TYPE),
 				 errmsg("constraint \"%s\" of domain \"%s\" is not a check constraint",
-						constrName, NameStr(con->conname))));
+						constrName, TypeNameToString(typename))));
 
 	val = SysCacheGetAttr(CONSTROID, tuple,
 						  Anum_pg_constraint_conbin,
