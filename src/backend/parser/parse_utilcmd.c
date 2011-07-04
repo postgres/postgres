@@ -1524,7 +1524,7 @@ transformIndexConstraint(Constraint *constraint, CreateStmtContext *cxt)
 		if (index_rel->rd_rel->relam != get_am_oid(DEFAULT_INDEX_TYPE, false))
 			ereport(ERROR,
 					(errcode(ERRCODE_WRONG_OBJECT_TYPE),
-					 errmsg("index \"%s\" is not a b-tree", index_name),
+					 errmsg("index \"%s\" is not a btree", index_name),
 					 parser_errposition(cxt->pstate, constraint->location)));
 
 		/* Must get indclass the hard way */
