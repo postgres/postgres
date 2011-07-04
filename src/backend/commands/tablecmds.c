@@ -2578,6 +2578,31 @@ AlterTableInternal(Oid relid, List *cmds, bool recurse)
 LOCKMODE
 AlterTableGetLockLevel(List *cmds)
 {
+	/*
+	 * Late in 9.1 dev cycle a number of issues were uncovered with access
+	 * to catalog relations, leading to the decision to re-enforce all DDL
+	 * at AccessExclusiveLock level by default.
+	 *
+	 * The issues are that there is a pervasive assumption in the code that
+	 * the catalogs will not be read unless an AccessExclusiveLock is held.
+	 * If that rule is relaxed, we must protect against a number of potential
+	 * effects - infrequent, but proven possible with test cases where
+	 * multiple DDL operations occur in a stream against frequently accessed
+	 * tables.
+	 *
+	 * 1. Catalog tables are read using SnapshotNow, which has a race bug
+	 * that allows a scan to return no valid rows even when one is present
+	 * in the case of a commit of a concurrent update of the catalog table.
+	 * SnapshotNow also ignores transactions in progress, so takes the
+	 * latest committed version without waiting for the latest changes.
+	 *
+	 * 2. Relcache needs to be internally consistent, so unless we lock the
+	 * definition during reads we have no way to guarantee that.
+	 *
+	 * 3. Catcache access isn't coordinated at all so refreshes can occur at
+	 * any time.
+	 */
+#ifdef REDUCED_ALTER_TABLE_LOCK_LEVELS
 	ListCell   *lcmd;
 	LOCKMODE	lockmode = ShareUpdateExclusiveLock;
 
@@ -2726,6 +2751,9 @@ AlterTableGetLockLevel(List *cmds)
 		if (cmd_lockmode > lockmode)
 			lockmode = cmd_lockmode;
 	}
+#else
+	LOCKMODE	lockmode = AccessExclusiveLock;
+#endif
 
 	return lockmode;
 }
