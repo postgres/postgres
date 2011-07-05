@@ -38,14 +38,20 @@
    </para>
 
    <para>
-    The validator function is responsible for validating options given in the
-    <command>CREATE FOREIGN DATA WRAPPER</command>, <command>CREATE
-    SERVER</command> and <command>CREATE FOREIGN TABLE</command> commands.
+    The validator function is responsible for validating options given in
+    <command>CREATE</command> and <command>ALTER</command> commands for its
+    foreign data wrapper, as well as foreign servers, user mappings, and
+    foreign tables using the wrapper.
     The validator function must be registered as taking two arguments, a text
     array containing the options to be validated, and an OID representing the
     type of object the options are associated with (in the form of the OID
-    of the system catalog the object would be stored in).  If no validator
-    function is supplied, the options are not checked at object creation time.
+    of the system catalog the object would be stored in, either
+    <literal>ForeignDataWrapperRelationId</>,
+    <literal>ForeignServerRelationId</>,
+    <literal>UserMappingRelationId</>,
+    or <literal>ForeignTableRelationId</>).
+    If no validator function is supplied, options are not checked at object
+    creation time or object alteration time.
    </para>
 
    <para>
