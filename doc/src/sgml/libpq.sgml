@@ -6319,7 +6319,7 @@ myEventProc(PGEventId evtId, void *evtInfo, void *passThrough)
 
     <tbody>
      <row>
-      <entry><literal>disabled</></entry>
+      <entry><literal>disable</></entry>
       <entry>No</entry>
       <entry>No</entry>
       <entry>I don't care about security, and I don't want to pay the overhead
