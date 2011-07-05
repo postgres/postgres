@@ -165,8 +165,18 @@ transformGenericOptions(Oid catalogId,
 
 	result = optionListToArray(resultOptions);
 
-	if (OidIsValid(fdwvalidator) && DatumGetPointer(result) != NULL)
-		OidFunctionCall2(fdwvalidator, result, ObjectIdGetDatum(catalogId));
+	if (OidIsValid(fdwvalidator))
+	{
+		Datum	valarg = result;
+
+		/*
+		 * Pass a null options list as an empty array, so that validators
+		 * don't have to be declared non-strict to handle the case.
+		 */
+		if (DatumGetPointer(valarg) == NULL)
+			valarg = PointerGetDatum(construct_empty_array(TEXTOID));
+		OidFunctionCall2(fdwvalidator, valarg, ObjectIdGetDatum(catalogId));
+	}
 
 	return result;
 }
