@@ -18,43 +18,6 @@
    </para>
 
    <para>
-    The FDW author needs to implement a handler function, and optionally
-    a validator function. Both functions must be written in a compiled
-    language such as C, using the version-1 interface.
-    For details on C language calling conventions and dynamic loading,
-    see <xref linkend="xfunc-c">.
-   </para>
-
-   <para>
-    The handler function simply returns a struct of function pointers to
-    callback functions that will be called by the planner and executor.
-    Most of the effort in writing an FDW is in implementing these callback
-    functions.
-    The handler function must be registered with
-    <productname>PostgreSQL</productname> as taking no arguments and returning
-    the special pseudo-type <type>fdw_handler</type>.
-    The callback functions are plain C functions and are not visible or
-    callable at the SQL level.
-   </para>
-
-   <para>
-    The validator function is responsible for validating options given in
-    <command>CREATE</command> and <command>ALTER</command> commands for its
-    foreign data wrapper, as well as foreign servers, user mappings, and
-    foreign tables using the wrapper.
-    The validator function must be registered as taking two arguments, a text
-    array containing the options to be validated, and an OID representing the
-    type of object the options are associated with (in the form of the OID
-    of the system catalog the object would be stored in, either
-    <literal>ForeignDataWrapperRelationId</>,
-    <literal>ForeignServerRelationId</>,
-    <literal>UserMappingRelationId</>,
-    or <literal>ForeignTableRelationId</>).
-    If no validator function is supplied, options are not checked at object
-    creation time or object alteration time.
-   </para>
-
-   <para>
     The foreign data wrappers included in the standard distribution are good
     references when trying to write your own.  Look into the
     <filename>contrib/file_fdw</> subdirectory of the source tree.
@@ -71,7 +34,51 @@
     </para>
    </note>
 
-   <sect1 id="fdw-routines">
+   <sect1 id="fdw-functions">
+    <title>Foreign Data Wrapper Functions</title>
+
+    <para>
+     The FDW author needs to implement a handler function, and optionally
+     a validator function. Both functions must be written in a compiled
+     language such as C, using the version-1 interface.
+     For details on C language calling conventions and dynamic loading,
+     see <xref linkend="xfunc-c">.
+    </para>
+
+    <para>
+     The handler function simply returns a struct of function pointers to
+     callback functions that will be called by the planner and executor.
+     Most of the effort in writing an FDW is in implementing these callback
+     functions.
+     The handler function must be registered with
+     <productname>PostgreSQL</productname> as taking no arguments and
+     returning the special pseudo-type <type>fdw_handler</type>.  The
+     callback functions are plain C functions and are not visible or
+     callable at the SQL level.  The callback functions are described in
+     <xref linkend="fdw-callbacks">.
+    </para>
+
+    <para>
+     The validator function is responsible for validating options given in
+     <command>CREATE</command> and <command>ALTER</command> commands for its
+     foreign data wrapper, as well as foreign servers, user mappings, and
+     foreign tables using the wrapper.
+     The validator function must be registered as taking two arguments, a
+     text array containing the options to be validated, and an OID
+     representing the type of object the options are associated with (in
+     the form of the OID of the system catalog the object would be stored
+     in, either
+     <literal>ForeignDataWrapperRelationId</>,
+     <literal>ForeignServerRelationId</>,
+     <literal>UserMappingRelationId</>,
+     or <literal>ForeignTableRelationId</>).
+     If no validator function is supplied, options are not checked at object
+     creation time or object alteration time.
+    </para>
+
+   </sect1>
+
+   <sect1 id="fdw-callbacks">
     <title>Foreign Data Wrapper Callback Routines</title>
 
     <para>
