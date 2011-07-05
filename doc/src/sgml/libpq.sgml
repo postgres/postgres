@@ -6653,7 +6653,7 @@ ldap://ldap.acme.com/cn=dbserver,cn=hosts?pgconnectinfo?base?(objectclass=*)
 
     <tbody>
      <row>
-      <entry><literal>disabled</></entry>
+      <entry><literal>disable</></entry>
       <entry>No</entry>
       <entry>No</entry>
       <entry>I don't care about security, and I don't want to pay the overhead
