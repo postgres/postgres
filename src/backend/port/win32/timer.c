@@ -97,7 +97,7 @@ setitimer(int which, const struct itimerval * value, struct itimerval * ovalue)
 		timerCommArea.event = CreateEvent(NULL, TRUE, FALSE, NULL);
 		if (timerCommArea.event == NULL)
 			ereport(FATAL,
-					(errmsg_internal("failed to create timer event: %d",
+					(errmsg_internal("could not create timer event: %d",
 									 (int) GetLastError())));
 
 		MemSet(&timerCommArea.value, 0, sizeof(struct itimerval));
@@ -107,7 +107,7 @@ setitimer(int which, const struct itimerval * value, struct itimerval * ovalue)
 		timerThreadHandle = CreateThread(NULL, 0, pg_timer_thread, NULL, 0, NULL);
 		if (timerThreadHandle == INVALID_HANDLE_VALUE)
 			ereport(FATAL,
-					(errmsg_internal("failed to create timer thread: %d",
+					(errmsg_internal("could not create timer thread: %d",
 									 (int) GetLastError())));
 	}
 
