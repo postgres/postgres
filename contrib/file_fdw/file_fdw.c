@@ -215,6 +215,14 @@ file_fdw_validator(PG_FUNCTION_ARGS)
 	 */
 	ProcessCopyOptions(NULL, true, other_options);
 
+	/*
+	 * Filename option is required for file_fdw foreign tables.
+	 */
+	if (catalog == ForeignTableRelationId && filename == NULL)
+		ereport(ERROR,
+				(errcode(ERRCODE_FDW_DYNAMIC_PARAMETER_VALUE_NEEDED),
+				 errmsg("filename is required for file_fdw foreign tables")));
+
 	PG_RETURN_VOID();
 }
 
@@ -286,10 +294,14 @@ fileGetOptions(Oid foreigntableid,
 		}
 		prev = lc;
 	}
+
+	/*
+	 * The validator should have checked that a filename was included in the
+	 * options, but check again, just in case.
+	 */
 	if (*filename == NULL)
-		ereport(ERROR,
-				(errcode(ERRCODE_FDW_UNABLE_TO_CREATE_REPLY),
-				 errmsg("filename is required for file_fdw foreign tables")));
+		elog(ERROR, "filename is required for file_fdw foreign tables");
+
 	*other_options = options;
 }
 

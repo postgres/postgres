@@ -59,6 +59,7 @@ CREATE FOREIGN TABLE tbl () SERVER file_server OPTIONS (format 'csv', delimiter 
 ');       -- ERROR
 CREATE FOREIGN TABLE tbl () SERVER file_server OPTIONS (format 'csv', null '
 ');       -- ERROR
+CREATE FOREIGN TABLE tbl () SERVER file_server;  -- ERROR
 
 CREATE FOREIGN TABLE agg_text (
 	a	int2,
