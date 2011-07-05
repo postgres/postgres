@@ -140,8 +140,8 @@ get_control_data(ClusterInfo *cluster, bool live_check)
 				if (!isascii(*p))
 					pg_log(PG_FATAL,
 						   "The 8.3 cluster's pg_controldata is incapable of outputting ASCII, even\n"
-						   "with LANG=C.  You must upgrade this cluster to a newer version of Postgres\n"
-						   "8.3 to fix this bug.  Postgres 8.3.7 and later are known to work properly.\n");
+						   "with LANG=C.  You must upgrade this cluster to a newer version of PostgreSQL\n"
+						   "8.3 to fix this bug.  PostgreSQL 8.3.7 and later are known to work properly.\n");
 		}
 #endif
 
