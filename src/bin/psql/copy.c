@@ -841,7 +841,8 @@ handleCopyIn(PGconn *conn, FILE *copystream, bool isbinary)
 				}
 			}
 
-			pset.lineno++;
+			if (copystream == pset.cur_cmd_source)
+				pset.lineno++;
 		}
 	}
 
