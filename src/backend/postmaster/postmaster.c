@@ -766,7 +766,7 @@ PostmasterMain(int argc, char *argv[])
 		char	  **p;
 
 		ereport(DEBUG3,
-				(errmsg_internal("%s: PostmasterMain: initial environ dump:",
+				(errmsg_internal("%s: PostmasterMain: initial environment dump:",
 								 progname)));
 		ereport(DEBUG3,
 			 (errmsg_internal("-----------------------------------------")));

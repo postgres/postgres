@@ -644,7 +644,7 @@ tmp_dh_cb(SSL *s, int is_export, int keylength)
 	if (r == NULL || 8 * DH_size(r) < keylength)
 	{
 		ereport(DEBUG2,
-				(errmsg_internal("DH: generating parameters (%d bits)....",
+				(errmsg_internal("DH: generating parameters (%d bits)",
 								 keylength)));
 		r = DH_generate_parameters(keylength, DH_GENERATOR_2, NULL, NULL);
 	}

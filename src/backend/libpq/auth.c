@@ -1436,7 +1436,7 @@ pg_SSPI_recvauth(Port *port)
 	if (!LookupAccountSid(NULL, tokenuser->User.Sid, accountname, &accountnamesize,
 						  domainname, &domainnamesize, &accountnameuse))
 		ereport(ERROR,
-			  (errmsg_internal("could not lookup acconut sid: error code %d",
+			  (errmsg_internal("could not look up account SID: error code %d",
 							   (int) GetLastError())));
 
 	free(tokenuser);

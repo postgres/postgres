@@ -99,7 +99,7 @@ TranslateSocketError(void)
 			break;
 		default:
 			ereport(NOTICE,
-					(errmsg_internal("Unknown win32 socket error code: %i", WSAGetLastError())));
+					(errmsg_internal("unrecognized win32 socket error code: %i", WSAGetLastError())));
 			errno = EINVAL;
 	}
 }
@@ -143,11 +143,11 @@ pgwin32_waitforsinglesocket(SOCKET s, int what, int timeout)
 
 		if (waitevent == INVALID_HANDLE_VALUE)
 			ereport(ERROR,
-					(errmsg_internal("Failed to create socket waiting event: %i", (int) GetLastError())));
+					(errmsg_internal("could not create socket waiting event: %i", (int) GetLastError())));
 	}
 	else if (!ResetEvent(waitevent))
 		ereport(ERROR,
-				(errmsg_internal("Failed to reset socket waiting event: %i", (int) GetLastError())));
+				(errmsg_internal("could not reset socket waiting event: %i", (int) GetLastError())));
 
 	/*
 	 * make sure we don't multiplex this kernel event object with a different
@@ -221,7 +221,7 @@ pgwin32_waitforsinglesocket(SOCKET s, int what, int timeout)
 	if (r == WAIT_TIMEOUT)
 		return 0;
 	ereport(ERROR,
-			(errmsg_internal("Bad return from WaitForMultipleObjects: %i (%i)", r, (int) GetLastError())));
+			(errmsg_internal("unrecognized return value from WaitForMultipleObjects: %i (%i)", r, (int) GetLastError())));
 	return 0;
 }
 
@@ -364,7 +364,7 @@ pgwin32_recv(SOCKET s, char *buf, int len, int f)
 		return b;
 	}
 	ereport(NOTICE,
-	  (errmsg_internal("Failed to read from ready socket (after retries)")));
+	  (errmsg_internal("could not read from ready socket (after retries)")));
 	errno = EWOULDBLOCK;
 	return -1;
 }
@@ -645,7 +645,7 @@ pgwin32_socket_strerror(int err)
 		handleDLL = LoadLibraryEx("netmsg.dll", NULL, DONT_RESOLVE_DLL_REFERENCES | LOAD_LIBRARY_AS_DATAFILE);
 		if (handleDLL == NULL)
 			ereport(FATAL,
-					(errmsg_internal("Failed to load netmsg.dll: %i", (int) GetLastError())));
+					(errmsg_internal("could not load netmsg.dll: %i", (int) GetLastError())));
 	}
 
 	ZeroMemory(&wserrbuf, sizeof(wserrbuf));
@@ -658,7 +658,7 @@ pgwin32_socket_strerror(int err)
 					  NULL) == 0)
 	{
 		/* Failed to get id */
-		sprintf(wserrbuf, "Unknown winsock error %i", err);
+		sprintf(wserrbuf, "unrecognized winsock error %i", err);
 	}
 	return wserrbuf;
 }
