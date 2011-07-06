@@ -1159,7 +1159,7 @@ describeOneTableDetails(const char *schemaname,
 						  "c.relpersistence\n"
 						  "FROM pg_catalog.pg_class c\n "
 		   "LEFT JOIN pg_catalog.pg_class tc ON (c.reltoastrelid = tc.oid)\n"
-						  "WHERE c.oid = '%s'\n",
+						  "WHERE c.oid = '%s';",
 						  (verbose ?
 						   "pg_catalog.array_to_string(c.reloptions || "
 						   "array(select 'toast.' || x from pg_catalog.unnest(tc.reloptions) x), ', ')\n"
@@ -1175,7 +1175,7 @@ describeOneTableDetails(const char *schemaname,
 						  "CASE WHEN c.reloftype = 0 THEN '' ELSE c.reloftype::pg_catalog.regtype::pg_catalog.text END\n"
 						  "FROM pg_catalog.pg_class c\n "
 		   "LEFT JOIN pg_catalog.pg_class tc ON (c.reltoastrelid = tc.oid)\n"
-						  "WHERE c.oid = '%s'\n",
+						  "WHERE c.oid = '%s';",
 						  (verbose ?
 						   "pg_catalog.array_to_string(c.reloptions || "
 						   "array(select 'toast.' || x from pg_catalog.unnest(tc.reloptions) x), ', ')\n"
@@ -1190,7 +1190,7 @@ describeOneTableDetails(const char *schemaname,
 						  "%s, c.reltablespace\n"
 						  "FROM pg_catalog.pg_class c\n "
 		   "LEFT JOIN pg_catalog.pg_class tc ON (c.reltoastrelid = tc.oid)\n"
-						  "WHERE c.oid = '%s'\n",
+						  "WHERE c.oid = '%s';",
 						  (verbose ?
 						   "pg_catalog.array_to_string(c.reloptions || "
 						   "array(select 'toast.' || x from pg_catalog.unnest(tc.reloptions) x), ', ')\n"
@@ -1203,7 +1203,7 @@ describeOneTableDetails(const char *schemaname,
 					  "SELECT relchecks, relkind, relhasindex, relhasrules, "
 						  "reltriggers <> 0, relhasoids, "
 						  "%s, reltablespace\n"
-						  "FROM pg_catalog.pg_class WHERE oid = '%s'",
+						  "FROM pg_catalog.pg_class WHERE oid = '%s';",
 						  (verbose ?
 					 "pg_catalog.array_to_string(reloptions, E', ')" : "''"),
 						  oid);
@@ -1214,7 +1214,7 @@ describeOneTableDetails(const char *schemaname,
 					  "SELECT relchecks, relkind, relhasindex, relhasrules, "
 						  "reltriggers <> 0, relhasoids, "
 						  "'', reltablespace\n"
-						  "FROM pg_catalog.pg_class WHERE oid = '%s'",
+						  "FROM pg_catalog.pg_class WHERE oid = '%s';",
 						  oid);
 	}
 	else
@@ -1223,7 +1223,7 @@ describeOneTableDetails(const char *schemaname,
 					  "SELECT relchecks, relkind, relhasindex, relhasrules, "
 						  "reltriggers <> 0, relhasoids, "
 						  "'', ''\n"
-						  "FROM pg_catalog.pg_class WHERE oid = '%s'",
+						  "FROM pg_catalog.pg_class WHERE oid = '%s';",
 						  oid);
 	}
 
@@ -1265,7 +1265,7 @@ describeOneTableDetails(const char *schemaname,
 	{
 		printfPQExpBuffer(&buf, "SELECT * FROM %s", fmtId(schemaname));
 		/* must be separate because fmtId isn't reentrant */
-		appendPQExpBuffer(&buf, ".%s", fmtId(relationname));
+		appendPQExpBuffer(&buf, ".%s;", fmtId(relationname));
 
 		res = PSQLexec(buf.data, false);
 		if (!res)
@@ -1299,7 +1299,7 @@ describeOneTableDetails(const char *schemaname,
 		appendPQExpBuffer(&buf, ",\n  a.attstorage, pg_catalog.col_description(a.attrelid, a.attnum)");
 	appendPQExpBuffer(&buf, "\nFROM pg_catalog.pg_attribute a");
 	appendPQExpBuffer(&buf, "\nWHERE a.attrelid = '%s' AND a.attnum > 0 AND NOT a.attisdropped", oid);
-	appendPQExpBuffer(&buf, "\nORDER BY a.attnum");
+	appendPQExpBuffer(&buf, "\nORDER BY a.attnum;");
 
 	res = PSQLexec(buf.data, false);
 	if (!res)
@@ -1394,7 +1394,7 @@ describeOneTableDetails(const char *schemaname,
 		PGresult   *result;
 
 		printfPQExpBuffer(&buf,
-			  "SELECT pg_catalog.pg_get_viewdef('%s'::pg_catalog.oid, true)",
+			  "SELECT pg_catalog.pg_get_viewdef('%s'::pg_catalog.oid, true);",
 						  oid);
 		result = PSQLexec(buf.data, false);
 		if (!result)
@@ -1509,7 +1509,7 @@ describeOneTableDetails(const char *schemaname,
 					  "pg_catalog.pg_get_expr(i.indpred, i.indrelid, true)\n"
 						  "FROM pg_catalog.pg_index i, pg_catalog.pg_class c, pg_catalog.pg_class c2, pg_catalog.pg_am a\n"
 		  "WHERE i.indexrelid = c.oid AND c.oid = '%s' AND c.relam = a.oid\n"
-						  "AND i.indrelid = c2.oid",
+						  "AND i.indrelid = c2.oid;",
 						  oid);
 
 		result = PSQLexec(buf.data, false);
@@ -1580,7 +1580,7 @@ describeOneTableDetails(const char *schemaname,
 			printfPQExpBuffer(&buf,
 							  "SELECT r.rulename, trim(trailing ';' from pg_catalog.pg_get_ruledef(r.oid, true))\n"
 							  "FROM pg_catalog.pg_rewrite r\n"
-			"WHERE r.ev_class = '%s' AND r.rulename != '_RETURN' ORDER BY 1",
+			"WHERE r.ev_class = '%s' AND r.rulename != '_RETURN' ORDER BY 1;",
 							  oid);
 			result = PSQLexec(buf.data, false);
 			if (!result)
@@ -1637,7 +1637,7 @@ describeOneTableDetails(const char *schemaname,
 								  "  LEFT JOIN pg_catalog.pg_constraint con ON (conrelid = i.indrelid AND conindid = i.indexrelid AND contype IN ('p','u','x'))\n");
 			appendPQExpBuffer(&buf,
 							  "WHERE c.oid = '%s' AND c.oid = i.indrelid AND i.indexrelid = c2.oid\n"
-			  "ORDER BY i.indisprimary DESC, i.indisunique DESC, c2.relname",
+			  "ORDER BY i.indisprimary DESC, i.indisunique DESC, c2.relname;",
 							  oid);
 			result = PSQLexec(buf.data, false);
 			if (!result)
@@ -1717,7 +1717,7 @@ describeOneTableDetails(const char *schemaname,
 							  "SELECT r.conname, "
 							  "pg_catalog.pg_get_constraintdef(r.oid, true)\n"
 							  "FROM pg_catalog.pg_constraint r\n"
-				   "WHERE r.conrelid = '%s' AND r.contype = 'c'\nORDER BY 1",
+				   "WHERE r.conrelid = '%s' AND r.contype = 'c'\nORDER BY 1;",
 							  oid);
 			result = PSQLexec(buf.data, false);
 			if (!result)
@@ -1748,7 +1748,7 @@ describeOneTableDetails(const char *schemaname,
 							  "SELECT conname,\n"
 				 "  pg_catalog.pg_get_constraintdef(r.oid, true) as condef\n"
 							  "FROM pg_catalog.pg_constraint r\n"
-					"WHERE r.conrelid = '%s' AND r.contype = 'f' ORDER BY 1",
+					"WHERE r.conrelid = '%s' AND r.contype = 'f' ORDER BY 1;",
 							  oid);
 			result = PSQLexec(buf.data, false);
 			if (!result)
@@ -1779,7 +1779,7 @@ describeOneTableDetails(const char *schemaname,
 						   "SELECT conname, conrelid::pg_catalog.regclass,\n"
 				 "  pg_catalog.pg_get_constraintdef(c.oid, true) as condef\n"
 							  "FROM pg_catalog.pg_constraint c\n"
-				   "WHERE c.confrelid = '%s' AND c.contype = 'f' ORDER BY 1",
+				   "WHERE c.confrelid = '%s' AND c.contype = 'f' ORDER BY 1;",
 							  oid);
 			result = PSQLexec(buf.data, false);
 			if (!result)
@@ -1812,7 +1812,7 @@ describeOneTableDetails(const char *schemaname,
 								  "SELECT r.rulename, trim(trailing ';' from pg_catalog.pg_get_ruledef(r.oid, true)), "
 								  "ev_enabled\n"
 								  "FROM pg_catalog.pg_rewrite r\n"
-								  "WHERE r.ev_class = '%s' ORDER BY 1",
+								  "WHERE r.ev_class = '%s' ORDER BY 1;",
 								  oid);
 			}
 			else
@@ -1821,7 +1821,7 @@ describeOneTableDetails(const char *schemaname,
 								  "SELECT r.rulename, trim(trailing ';' from pg_catalog.pg_get_ruledef(r.oid, true)), "
 								  "'O'::char AS ev_enabled\n"
 								  "FROM pg_catalog.pg_rewrite r\n"
-								  "WHERE r.ev_class = '%s' ORDER BY 1",
+								  "WHERE r.ev_class = '%s' ORDER BY 1;",
 								  oid);
 			}
 			result = PSQLexec(buf.data, false);
@@ -1927,7 +1927,7 @@ describeOneTableDetails(const char *schemaname,
 							  "  (SELECT 1 FROM pg_catalog.pg_depend d "
 							  "   JOIN pg_catalog.pg_constraint c ON (d.refclassid = c.tableoid AND d.refobjid = c.oid) "
 							  "   WHERE d.classid = t.tableoid AND d.objid = t.oid AND d.deptype = 'i' AND c.contype = 'f'))");
-		appendPQExpBuffer(&buf, "\nORDER BY 1");
+		appendPQExpBuffer(&buf, "\nORDER BY 1;");
 
 		result = PSQLexec(buf.data, false);
 		if (!result)
@@ -2035,7 +2035,7 @@ describeOneTableDetails(const char *schemaname,
 							  "SELECT s.srvname\n"
 							  "FROM pg_catalog.pg_foreign_table f,\n"
 							  "     pg_catalog.pg_foreign_server s\n"
-							  "WHERE f.ftrelid = %s AND s.oid = f.ftserver",
+							  "WHERE f.ftrelid = %s AND s.oid = f.ftserver;",
 							  oid);
 			result = PSQLexec(buf.data, false);
 			if (!result)
@@ -2053,7 +2053,7 @@ describeOneTableDetails(const char *schemaname,
 		}
 
 		/* print inherited tables */
-		printfPQExpBuffer(&buf, "SELECT c.oid::pg_catalog.regclass FROM pg_catalog.pg_class c, pg_catalog.pg_inherits i WHERE c.oid=i.inhparent AND i.inhrelid = '%s' ORDER BY inhseqno", oid);
+		printfPQExpBuffer(&buf, "SELECT c.oid::pg_catalog.regclass FROM pg_catalog.pg_class c, pg_catalog.pg_inherits i WHERE c.oid=i.inhparent AND i.inhrelid = '%s' ORDER BY inhseqno;", oid);
 
 		result = PSQLexec(buf.data, false);
 		if (!result)
@@ -2215,7 +2215,7 @@ add_tablespace_footer(printTableContent *const cont, char relkind,
 			initPQExpBuffer(&buf);
 			printfPQExpBuffer(&buf,
 							  "SELECT spcname FROM pg_catalog.pg_tablespace\n"
-							  "WHERE oid = '%u'", tablespace);
+							  "WHERE oid = '%u';", tablespace);
 			result = PSQLexec(buf.data, false);
 			if (!result)
 				return;
@@ -2424,7 +2424,7 @@ listDbRoleSettings(const char *pattern, const char *pattern2)
 									   NULL, "pg_roles.rolname", NULL, NULL);
 		processSQLNamePattern(pset.db, &buf, pattern2, havewhere, false,
 							  NULL, "pg_database.datname", NULL, NULL);
-		appendPQExpBufferStr(&buf, "ORDER BY role, database");
+		appendPQExpBufferStr(&buf, "ORDER BY role, database;");
 	}
 	else
 	{
@@ -3170,7 +3170,7 @@ describeOneTSParser(const char *oid, const char *nspname, const char *prsname)
 					  "   p.prslextype::pg_catalog.regproc, \n"
 				  "   pg_catalog.obj_description(p.prslextype, 'pg_proc') \n"
 					  " FROM pg_catalog.pg_ts_parser p \n"
-					  " WHERE p.oid = '%s' \n",
+					  " WHERE p.oid = '%s';",
 					  gettext_noop("Start parse"),
 					  gettext_noop("Method"),
 					  gettext_noop("Function"),
@@ -3531,7 +3531,7 @@ describeOneTSConfig(const char *oid, const char *nspname, const char *cfgname,
 	 "FROM pg_catalog.pg_ts_config AS c, pg_catalog.pg_ts_config_map AS m \n"
 					  "WHERE c.oid = '%s' AND m.mapcfg = c.oid \n"
 					  "GROUP BY m.mapcfg, m.maptokentype, c.cfgparser \n"
-					  "ORDER BY 1",
+					  "ORDER BY 1;",
 					  gettext_noop("Token"),
 					  gettext_noop("Dictionaries"),
 					  oid);
