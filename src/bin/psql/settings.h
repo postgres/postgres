@@ -81,7 +81,7 @@ typedef struct _psqlSettings
 	bool		cur_cmd_interactive;
 	int			sversion;		/* backend server version */
 	const char *progname;		/* in case you renamed psql */
-	char	   *inputfile;		/* for error reporting */
+	char	   *inputfile;		/* file being currently processed, if any */
 	char	   *dirname;		/* current directory for \s display */
 
 	uint64		lineno;			/* also for error reporting */

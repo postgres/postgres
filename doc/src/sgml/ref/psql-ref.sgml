@@ -1626,6 +1626,21 @@ Tue Oct 26 21:40:57 CEST 1999
 
 
       <varlistentry>
+        <term><literal>\ir <replaceable class="parameter">filename</replaceable></literal></term>
+        <listitem>
+        <para>
+        The <literal>\ir</> command is similar to <literal>\i</>, but resolves
+        relative pathnames differently.  When executing in interactive mode,
+        the two commands behave identically.  However, when invoked from a
+        script, <literal>\ir</literal> interprets pathnames relative to the
+        directory in which the script is located, rather than the current
+        working directory.
+        </para>
+        </listitem>
+      </varlistentry>
+
+
+      <varlistentry>
         <term><literal>\l</literal> (or <literal>\list</literal>)</term>
         <term><literal>\l+</literal> (or <literal>\list+</literal>)</term>
         <listitem>

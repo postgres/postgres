@@ -784,8 +784,9 @@ exec_command(const char *cmd,
 	}
 
 
-	/* \i is include file */
-	else if (strcmp(cmd, "i") == 0 || strcmp(cmd, "include") == 0)
+	/* \i and \ir include files */
+	else if (strcmp(cmd, "i") == 0 || strcmp(cmd, "include") == 0
+			|| strcmp(cmd, "ir") == 0 || strcmp(cmd, "include_relative") == 0)
 	{
 		char	   *fname = psql_scan_slash_option(scan_state,
 												   OT_NORMAL, NULL, true);
@@ -797,8 +798,12 @@ exec_command(const char *cmd,
 		}
 		else
 		{
+			bool	include_relative;
+
+			include_relative = (strcmp(cmd, "ir") == 0
+								|| strcmp(cmd, "include_relative") == 0);
 			expand_tilde(&fname);
-			success = (process_file(fname, false) == EXIT_SUCCESS);
+			success = (process_file(fname, false, include_relative) == EXIT_SUCCESS);
 			free(fname);
 		}
 	}
@@ -1969,15 +1974,19 @@ do_edit(const char *filename_arg, PQExpBuffer query_buf,
  * process_file
  *
  * Read commands from filename and then them to the main processing loop
- * Handler for \i, but can be used for other things as well.  Returns
+ * Handler for \i and \ir, but can be used for other things as well.  Returns
  * MainLoop() error code.
+ *
+ * If use_relative_path is true and filename is not an absolute path, then open
+ * the file from where the currently processed file (if any) is located.
  */
 int
-process_file(char *filename, bool single_txn)
+process_file(char *filename, bool single_txn, bool use_relative_path)
 {
 	FILE	   *fd;
 	int			result;
 	char	   *oldfilename;
+	char		relpath[MAXPGPATH];
 	PGresult   *res;
 
 	if (!filename)
@@ -1986,6 +1995,24 @@ process_file(char *filename, bool single_txn)
 	if (strcmp(filename, "-") != 0)
 	{
 		canonicalize_path(filename);
+
+		/*
+		 * If we were asked to resolve the pathname relative to the location
+		 * of the currently executing script, and there is one, and this is
+		 * a relative pathname, then prepend all but the last pathname
+		 * component of the current script to this pathname.
+		 */
+		if (use_relative_path && pset.inputfile && !is_absolute_path(filename)
+			&& !has_drive_prefix(filename))
+		{
+			snprintf(relpath, MAXPGPATH, "%s", pset.inputfile);
+			get_parent_directory(relpath);
+			join_path_components(relpath, relpath, filename);
+			canonicalize_path(relpath);
+
+			filename = relpath;
+		}
+
 		fd = fopen(filename, PG_BINARY_R);
 	}
 	else

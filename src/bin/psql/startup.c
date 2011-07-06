@@ -256,7 +256,7 @@ main(int argc, char *argv[])
 		if (!options.no_psqlrc)
 			process_psqlrc(argv[0]);
 
-		successResult = process_file(options.action_string, options.single_txn);
+		successResult = process_file(options.action_string, options.single_txn, false);
 	}
 
 	/*
@@ -604,9 +604,9 @@ process_psqlrc_file(char *filename)
 	sprintf(psqlrc, "%s-%s", filename, PG_VERSION);
 
 	if (access(psqlrc, R_OK) == 0)
-		(void) process_file(psqlrc, false);
+		(void) process_file(psqlrc, false, false);
 	else if (access(filename, R_OK) == 0)
-		(void) process_file(filename, false);
+		(void) process_file(filename, false, false);
 	free(psqlrc);
 }
 

@@ -75,6 +75,17 @@ skip_drive(const char *path)
 #endif
 
 /*
+ *	has_drive_prefix
+ *
+ * Return true if the given pathname has a drive prefix.
+ */
+bool
+has_drive_prefix(const char *path)
+{
+	return skip_drive(path) != path;
+}
+
+/*
  *	first_dir_separator
  *
  * Find the location of the first directory separator, return
