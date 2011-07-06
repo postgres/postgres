@@ -622,52 +622,30 @@ get_op_hash_functions(Oid opno,
 /*
  * get_op_btree_interpretation
  *		Given an operator's OID, find out which btree opfamilies it belongs to,
- *		and what strategy number it has within each one.  The results are
- *		returned as an OID list and a parallel integer list.
+ *		and what properties it has within each one.  The results are returned
+ *		as a palloc'd list of OpBtreeInterpretation structs.
  *
  * In addition to the normal btree operators, we consider a <> operator to be
  * a "member" of an opfamily if its negator is an equality operator of the
  * opfamily.  ROWCOMPARE_NE is returned as the strategy number for this case.
  */
-void
-get_op_btree_interpretation(Oid opno, List **opfamilies, List **opstrats)
+List *
+get_op_btree_interpretation(Oid opno)
 {
+	List	   *result = NIL;
+	OpBtreeInterpretation *thisresult;
 	CatCList   *catlist;
-	bool		op_negated;
 	int			i;
-
-	*opfamilies = NIL;
-	*opstrats = NIL;
 
 	/*
 	 * Find all the pg_amop entries containing the operator.
 	 */
 	catlist = SearchSysCacheList1(AMOPOPID, ObjectIdGetDatum(opno));
 
-	/*
-	 * If we can't find any opfamily containing the op, perhaps it is a <>
-	 * operator.  See if it has a negator that is in an opfamily.
-	 */
-	op_negated = false;
-	if (catlist->n_members == 0)
-	{
-		Oid			op_negator = get_negator(opno);
-
-		if (OidIsValid(op_negator))
-		{
-			op_negated = true;
-			ReleaseSysCacheList(catlist);
-			catlist = SearchSysCacheList1(AMOPOPID,
-										  ObjectIdGetDatum(op_negator));
-		}
-	}
-
-	/* Now search the opfamilies */
 	for (i = 0; i < catlist->n_members; i++)
 	{
 		HeapTuple	op_tuple = &catlist->members[i]->tuple;
 		Form_pg_amop op_form = (Form_pg_amop) GETSTRUCT(op_tuple);
-		Oid			opfamily_id;
 		StrategyNumber op_strategy;
 
 		/* must be btree */
@@ -675,23 +653,66 @@ get_op_btree_interpretation(Oid opno, List **opfamilies, List **opstrats)
 			continue;
 
 		/* Get the operator's btree strategy number */
-		opfamily_id = op_form->amopfamily;
 		op_strategy = (StrategyNumber) op_form->amopstrategy;
 		Assert(op_strategy >= 1 && op_strategy <= 5);
 
-		if (op_negated)
-		{
-			/* Only consider negators that are = */
-			if (op_strategy != BTEqualStrategyNumber)
-				continue;
-			op_strategy = ROWCOMPARE_NE;
-		}
-
-		*opfamilies = lappend_oid(*opfamilies, opfamily_id);
-		*opstrats = lappend_int(*opstrats, op_strategy);
+		thisresult = (OpBtreeInterpretation *)
+			palloc(sizeof(OpBtreeInterpretation));
+		thisresult->opfamily_id = op_form->amopfamily;
+		thisresult->strategy = op_strategy;
+		thisresult->oplefttype = op_form->amoplefttype;
+		thisresult->oprighttype = op_form->amoprighttype;
+		result = lappend(result, thisresult);
 	}
 
 	ReleaseSysCacheList(catlist);
+
+	/*
+	 * If we didn't find any btree opfamily containing the operator, perhaps
+	 * it is a <> operator.  See if it has a negator that is in an opfamily.
+	 */
+	if (result == NIL)
+	{
+		Oid			op_negator = get_negator(opno);
+
+		if (OidIsValid(op_negator))
+		{
+			catlist = SearchSysCacheList1(AMOPOPID,
+										  ObjectIdGetDatum(op_negator));
+
+			for (i = 0; i < catlist->n_members; i++)
+			{
+				HeapTuple	op_tuple = &catlist->members[i]->tuple;
+				Form_pg_amop op_form = (Form_pg_amop) GETSTRUCT(op_tuple);
+				StrategyNumber op_strategy;
+
+				/* must be btree */
+				if (op_form->amopmethod != BTREE_AM_OID)
+					continue;
+
+				/* Get the operator's btree strategy number */
+				op_strategy = (StrategyNumber) op_form->amopstrategy;
+				Assert(op_strategy >= 1 && op_strategy <= 5);
+
+				/* Only consider negators that are = */
+				if (op_strategy != BTEqualStrategyNumber)
+					continue;
+
+				/* OK, report it with "strategy" ROWCOMPARE_NE */
+				thisresult = (OpBtreeInterpretation *)
+					palloc(sizeof(OpBtreeInterpretation));
+				thisresult->opfamily_id = op_form->amopfamily;
+				thisresult->strategy = ROWCOMPARE_NE;
+				thisresult->oplefttype = op_form->amoplefttype;
+				thisresult->oprighttype = op_form->amoprighttype;
+				result = lappend(result, thisresult);
+			}
+
+			ReleaseSysCacheList(catlist);
+		}
+	}
+
+	return result;
 }
 
 /*

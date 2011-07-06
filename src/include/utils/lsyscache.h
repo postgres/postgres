@@ -17,6 +17,15 @@
 #include "access/htup.h"
 #include "nodes/pg_list.h"
 
+/* Result list element for get_op_btree_interpretation */
+typedef struct OpBtreeInterpretation
+{
+	Oid			opfamily_id;		/* btree opfamily containing operator */
+	int			strategy;			/* its strategy number */
+	Oid			oplefttype;			/* declared left input datatype */
+	Oid			oprighttype;		/* declared right input datatype */
+} OpBtreeInterpretation;
+
 /* I/O function selector for get_type_io_data */
 typedef enum IOFuncSelector
 {
@@ -50,8 +59,7 @@ extern bool get_compatible_hash_operators(Oid opno,
 							  Oid *lhs_opno, Oid *rhs_opno);
 extern bool get_op_hash_functions(Oid opno,
 					  RegProcedure *lhs_procno, RegProcedure *rhs_procno);
-extern void get_op_btree_interpretation(Oid opno,
-							List **opfamilies, List **opstrats);
+extern List *get_op_btree_interpretation(Oid opno);
 extern bool equality_ops_are_compatible(Oid opno1, Oid opno2);
 extern Oid get_opfamily_proc(Oid opfamily, Oid lefttype, Oid righttype,
 				  int16 procnum);

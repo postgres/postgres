@@ -1249,6 +1249,7 @@ list_member_strip(List *list, Expr *datum)
  * and in addition we use (6) to represent <>.	<> is not a btree-indexable
  * operator, but we assume here that if an equality operator of a btree
  * opfamily has a negator operator, the negator behaves as <> for the opfamily.
+ * (This convention is also known to get_op_btree_interpretation().)
  *
  * The interpretation of:
  *
@@ -1285,7 +1286,7 @@ list_member_strip(List *list, Expr *datum)
 #define BTEQ BTEqualStrategyNumber
 #define BTGE BTGreaterEqualStrategyNumber
 #define BTGT BTGreaterStrategyNumber
-#define BTNE 6
+#define BTNE ROWCOMPARE_NE
 
 static const StrategyNumber BT_implic_table[6][6] = {
 /*
@@ -1556,18 +1557,12 @@ get_btree_test_op(Oid pred_op, Oid clause_op, bool refute_it)
 	OprProofCacheKey key;
 	OprProofCacheEntry *cache_entry;
 	bool		cfound;
-	bool		pred_op_negated;
-	Oid			pred_op_negator,
-				clause_op_negator,
-				test_op = InvalidOid;
-	Oid			opfamily_id;
+	Oid			test_op = InvalidOid;
 	bool		found = false;
-	StrategyNumber pred_strategy,
-				clause_strategy,
-				test_strategy;
-	Oid			clause_righttype;
-	CatCList   *catlist;
-	int			i;
+	List	   *pred_op_infos,
+			   *clause_op_infos;
+	ListCell   *lcp,
+			   *lcc;
 
 	/*
 	 * Find or make a cache entry for this pair of operators.
@@ -1628,135 +1623,71 @@ get_btree_test_op(Oid pred_op, Oid clause_op, bool refute_it)
 	 * corresponding test operator.  This should work for any logically
 	 * consistent opfamilies.
 	 */
-	catlist = SearchSysCacheList1(AMOPOPID, ObjectIdGetDatum(pred_op));
+	clause_op_infos = get_op_btree_interpretation(clause_op);
+	if (clause_op_infos)
+		pred_op_infos = get_op_btree_interpretation(pred_op);
+	else							/* no point in looking */
+		pred_op_infos = NIL;
 
-	/*
-	 * If we couldn't find any opfamily containing the pred_op, perhaps it is
-	 * a <> operator.  See if it has a negator that is in an opfamily.
-	 */
-	pred_op_negated = false;
-	if (catlist->n_members == 0)
+	foreach(lcp, pred_op_infos)
 	{
-		pred_op_negator = get_negator(pred_op);
-		if (OidIsValid(pred_op_negator))
+		OpBtreeInterpretation *pred_op_info = lfirst(lcp);
+		Oid			opfamily_id = pred_op_info->opfamily_id;
+
+		foreach(lcc, clause_op_infos)
 		{
-			pred_op_negated = true;
-			ReleaseSysCacheList(catlist);
-			catlist = SearchSysCacheList1(AMOPOPID,
-										  ObjectIdGetDatum(pred_op_negator));
-		}
-	}
+			OpBtreeInterpretation *clause_op_info = lfirst(lcc);
+			StrategyNumber pred_strategy,
+						clause_strategy,
+						test_strategy;
 
-	/* Also may need the clause_op's negator */
-	clause_op_negator = get_negator(clause_op);
-
-	/* Now search the opfamilies */
-	for (i = 0; i < catlist->n_members; i++)
-	{
-		HeapTuple	pred_tuple = &catlist->members[i]->tuple;
-		Form_pg_amop pred_form = (Form_pg_amop) GETSTRUCT(pred_tuple);
-		HeapTuple	clause_tuple;
-
-		/* Must be btree */
-		if (pred_form->amopmethod != BTREE_AM_OID)
-			continue;
-
-		/* Get the predicate operator's btree strategy number */
-		opfamily_id = pred_form->amopfamily;
-		pred_strategy = (StrategyNumber) pred_form->amopstrategy;
-		Assert(pred_strategy >= 1 && pred_strategy <= 5);
-
-		if (pred_op_negated)
-		{
-			/* Only consider negators that are = */
-			if (pred_strategy != BTEqualStrategyNumber)
+			/* Must find them in same opfamily */
+			if (opfamily_id != clause_op_info->opfamily_id)
 				continue;
-			pred_strategy = BTNE;
-		}
+			/* Lefttypes should match */
+			Assert(clause_op_info->oplefttype == pred_op_info->oplefttype);
 
-		/*
-		 * From the same opfamily, find a strategy number for the clause_op,
-		 * if possible
-		 */
-		clause_tuple = SearchSysCache3(AMOPOPID,
-									   ObjectIdGetDatum(clause_op),
-									   CharGetDatum(AMOP_SEARCH),
-									   ObjectIdGetDatum(opfamily_id));
-		if (HeapTupleIsValid(clause_tuple))
-		{
-			Form_pg_amop clause_form = (Form_pg_amop) GETSTRUCT(clause_tuple);
+			pred_strategy = pred_op_info->strategy;
+			clause_strategy = clause_op_info->strategy;
 
-			/* Get the restriction clause operator's strategy/datatype */
-			clause_strategy = (StrategyNumber) clause_form->amopstrategy;
-			Assert(clause_strategy >= 1 && clause_strategy <= 5);
-			Assert(clause_form->amoplefttype == pred_form->amoplefttype);
-			clause_righttype = clause_form->amoprighttype;
-			ReleaseSysCache(clause_tuple);
-		}
-		else if (OidIsValid(clause_op_negator))
-		{
-			clause_tuple = SearchSysCache3(AMOPOPID,
-										 ObjectIdGetDatum(clause_op_negator),
-										   CharGetDatum(AMOP_SEARCH),
-										   ObjectIdGetDatum(opfamily_id));
-			if (HeapTupleIsValid(clause_tuple))
+			/*
+			 * Look up the "test" strategy number in the implication table
+			 */
+			if (refute_it)
+				test_strategy = BT_refute_table[clause_strategy - 1][pred_strategy - 1];
+			else
+				test_strategy = BT_implic_table[clause_strategy - 1][pred_strategy - 1];
+
+			if (test_strategy == 0)
 			{
-				Form_pg_amop clause_form = (Form_pg_amop) GETSTRUCT(clause_tuple);
+				/* Can't determine implication using this interpretation */
+				continue;
+			}
 
-				/* Get the restriction clause operator's strategy/datatype */
-				clause_strategy = (StrategyNumber) clause_form->amopstrategy;
-				Assert(clause_strategy >= 1 && clause_strategy <= 5);
-				Assert(clause_form->amoplefttype == pred_form->amoplefttype);
-				clause_righttype = clause_form->amoprighttype;
-				ReleaseSysCache(clause_tuple);
-
-				/* Only consider negators that are = */
-				if (clause_strategy != BTEqualStrategyNumber)
-					continue;
-				clause_strategy = BTNE;
+			/*
+			 * See if opfamily has an operator for the test strategy and the
+			 * datatypes.
+			 */
+			if (test_strategy == BTNE)
+			{
+				test_op = get_opfamily_member(opfamily_id,
+											  pred_op_info->oprighttype,
+											  clause_op_info->oprighttype,
+											  BTEqualStrategyNumber);
+				if (OidIsValid(test_op))
+					test_op = get_negator(test_op);
 			}
 			else
+			{
+				test_op = get_opfamily_member(opfamily_id,
+											  pred_op_info->oprighttype,
+											  clause_op_info->oprighttype,
+											  test_strategy);
+			}
+
+			if (!OidIsValid(test_op))
 				continue;
-		}
-		else
-			continue;
 
-		/*
-		 * Look up the "test" strategy number in the implication table
-		 */
-		if (refute_it)
-			test_strategy = BT_refute_table[clause_strategy - 1][pred_strategy - 1];
-		else
-			test_strategy = BT_implic_table[clause_strategy - 1][pred_strategy - 1];
-
-		if (test_strategy == 0)
-		{
-			/* Can't determine implication using this interpretation */
-			continue;
-		}
-
-		/*
-		 * See if opfamily has an operator for the test strategy and the
-		 * datatypes.
-		 */
-		if (test_strategy == BTNE)
-		{
-			test_op = get_opfamily_member(opfamily_id,
-										  pred_form->amoprighttype,
-										  clause_righttype,
-										  BTEqualStrategyNumber);
-			if (OidIsValid(test_op))
-				test_op = get_negator(test_op);
-		}
-		else
-		{
-			test_op = get_opfamily_member(opfamily_id,
-										  pred_form->amoprighttype,
-										  clause_righttype,
-										  test_strategy);
-		}
-		if (OidIsValid(test_op))
-		{
 			/*
 			 * Last check: test_op must be immutable.
 			 *
@@ -1772,9 +1703,13 @@ get_btree_test_op(Oid pred_op, Oid clause_op, bool refute_it)
 				break;
 			}
 		}
+
+		if (found)
+			break;
 	}
 
-	ReleaseSysCacheList(catlist);
+	list_free_deep(pred_op_infos);
+	list_free_deep(clause_op_infos);
 
 	if (!found)
 	{
