@@ -57,9 +57,26 @@ typedef struct SERIALIZABLEXACT
 {
 	VirtualTransactionId vxid;	/* The executing process always has one of
 								 * these. */
+
+	/*
+	 * We use two numbers to track the order that transactions commit. Before
+	 * commit, a transaction is marked as prepared, and prepareSeqNo is set.
+	 * Shortly after commit, it's marked as committed, and commitSeqNo is set.
+	 * This doesn't give a strict commit order, but these two values together
+	 * are good enough for us, as we can always err on the safe side and
+	 * assume that there's a conflict, if we can't be sure of the exact
+	 * ordering of two commits.
+	 *
+	 * Note that a transaction is marked as prepared for a short period during
+	 * commit processing, even if two-phase commit is not used. But with
+	 * two-phase commit, a transaction can stay in prepared state for some
+	 * time.
+	 */
+	SerCommitSeqNo prepareSeqNo;
 	SerCommitSeqNo commitSeqNo;
-	union						/* these values are not both interesting at
-								 * the same time */
+
+	/* these values are not both interesting at the same time */
+	union
 	{
 		SerCommitSeqNo earliestOutConflictCommit;		/* when committed with
 														 * conflict out */
