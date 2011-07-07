@@ -1482,15 +1482,15 @@
          <primary>decode</primary>
         </indexterm>
         <literal><function>decode(<parameter>string</parameter> <type>text</type>,
-        <parameter>type</parameter> <type>text</type>)</function></literal>
+        <parameter>format</parameter> <type>text</type>)</function></literal>
        </entry>
        <entry><type>bytea</type></entry>
        <entry>
-        Decode binary data from <parameter>string</parameter> previously
-        encoded with <function>encode</>.  Parameter type is same as in <function>encode</>.
+        Decode binary data from textual representation in <parameter>string</>.
+        Options for <parameter>format</> are same as in <function>encode</>.
        </entry>
        <entry><literal>decode('MTIzAAE=', 'base64')</literal></entry>
-       <entry><literal>123\000\001</literal></entry>
+       <entry><literal>\x3132330001</literal></entry>
       </row>
 
       <row>
@@ -1499,13 +1499,13 @@
          <primary>encode</primary>
         </indexterm>
         <literal><function>encode(<parameter>data</parameter> <type>bytea</type>,
-        <parameter>type</parameter> <type>text</type>)</function></literal>
+        <parameter>format</parameter> <type>text</type>)</function></literal>
        </entry>
        <entry><type>text</type></entry>
        <entry>
-        Encode binary data to different representation.  Supported
-        types are: <literal>base64</>, <literal>hex</>, <literal>escape</>.
-        <literal>Escape</> merely outputs null bytes as <literal>\000</> and
+        Encode binary data into a textual representation.  Supported
+        formats are: <literal>base64</>, <literal>hex</>, <literal>escape</>.
+        <literal>escape</> merely outputs null bytes as <literal>\000</> and
         doubles backslashes.
        </entry>
        <entry><literal>encode(E'123\\000\\001', 'base64')</literal></entry>
@@ -1707,7 +1707,7 @@
         <function>quote_nullable</function> is often more suitable.
         See also <xref linkend="plpgsql-quote-literal-example">.
        </entry>
-       <entry><literal>quote_literal('O\'Reilly')</literal></entry>
+       <entry><literal>quote_literal(E'O\'Reilly')</literal></entry>
        <entry><literal>'O''Reilly'</literal></entry>
       </row>
 
@@ -2858,6 +2858,14 @@
     that use the regular function invocation syntax
     (see <xref linkend="functions-binarystring-other">).
    </para>
+
+   <note>
+    <para>
+     The sample results shown on this page assume that the server parameter
+     <link linkend="guc-bytea-output"><varname>bytea_output</></link> is set
+     to <literal>escape</literal> (the traditional PostgreSQL format).
+    </para>
+   </note>
 
    <table id="functions-binarystring-sql">
     <title><acronym>SQL</acronym> Binary String Functions and Operators</title>
