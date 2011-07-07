@@ -878,9 +878,8 @@ ERROR:  could not serialize access due to read/write dependencies among transact
         </para>
 
         <para>
-         Acquired by <command>CREATE TRIGGER</command>,
-         <command>CREATE RULE</command> (except for <literal>ON SELECT</>
-         rules) and some forms of <command>ALTER TABLE</command>.
+         This lock mode is not automatically acquired by any
+         <productname>PostgreSQL</productname> command.
         </para>
        </listitem>
       </varlistentry>
@@ -925,10 +924,10 @@ ERROR:  could not serialize access due to read/write dependencies among transact
         </para>
 
         <para>
-         Acquired by the <command>DROP TABLE</command>,
+         Acquired by the <command>ALTER TABLE</>, <command>DROP TABLE</>,
          <command>TRUNCATE</command>, <command>REINDEX</command>,
          <command>CLUSTER</command>, and <command>VACUUM FULL</command>
-         commands, and some forms of <command>ALTER TABLE</>.
+         commands.
          This is also the default lock mode for <command>LOCK TABLE</command>
          statements that do not specify a mode explicitly.
         </para>
