@@ -1677,8 +1677,9 @@ RegisterSerializableTransactionInt(Snapshot snapshot)
 			 othersxact != NULL;
 			 othersxact = NextPredXact(othersxact))
 		{
-			if (!SxactIsOnFinishedList(othersxact) &&
-				!SxactIsReadOnly(othersxact))
+			if (!SxactIsCommitted(othersxact)
+				&& !SxactIsDoomed(othersxact)
+				&& !SxactIsReadOnly(othersxact))
 			{
 				SetPossibleUnsafeConflict(sxact, othersxact);
 			}
