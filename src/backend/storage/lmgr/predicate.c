@@ -1190,6 +1190,7 @@ InitPredicateLocks(void)
 		}
 		PredXact->OldCommittedSxact = CreatePredXact();
 		SetInvalidVirtualTransactionId(PredXact->OldCommittedSxact->vxid);
+		PredXact->OldCommittedSxact->prepareSeqNo = 0;
 		PredXact->OldCommittedSxact->commitSeqNo = 0;
 		PredXact->OldCommittedSxact->SeqNo.lastCommitBeforeSnapshot = 0;
 		SHMQueueInit(&PredXact->OldCommittedSxact->outConflicts);
@@ -1650,6 +1651,7 @@ RegisterSerializableTransactionInt(Snapshot snapshot)
 	/* Initialize the structure. */
 	sxact->vxid = vxid;
 	sxact->SeqNo.lastCommitBeforeSnapshot = PredXact->LastSxactCommitSeqNo;
+	sxact->prepareSeqNo = InvalidSerCommitSeqNo;
 	sxact->commitSeqNo = InvalidSerCommitSeqNo;
 	SHMQueueInit(&(sxact->outConflicts));
 	SHMQueueInit(&(sxact->inConflicts));
@@ -3267,8 +3269,8 @@ ReleasePredicateLocks(bool isCommit)
 			&& SxactIsCommitted(conflict->sxactIn))
 		{
 			if ((MySerializableXact->flags & SXACT_FLAG_CONFLICT_OUT) == 0
-				|| conflict->sxactIn->commitSeqNo < MySerializableXact->SeqNo.earliestOutConflictCommit)
-				MySerializableXact->SeqNo.earliestOutConflictCommit = conflict->sxactIn->commitSeqNo;
+				|| conflict->sxactIn->prepareSeqNo < MySerializableXact->SeqNo.earliestOutConflictCommit)
+				MySerializableXact->SeqNo.earliestOutConflictCommit = conflict->sxactIn->prepareSeqNo;
 			MySerializableXact->flags |= SXACT_FLAG_CONFLICT_OUT;
 		}
 
@@ -4407,18 +4409,13 @@ OnConflict_CheckForSerializationFailure(const SERIALIZABLEXACT *reader,
 		{
 			SERIALIZABLEXACT *t2 = conflict->sxactIn;
 
-			/*
-			 * Note that if T2 is merely prepared but not yet committed, we
-			 * rely on t->commitSeqNo being InvalidSerCommitSeqNo, which is
-			 * larger than any valid commit sequence number.
-			 */
 			if (SxactIsPrepared(t2)
 				&& (!SxactIsCommitted(reader)
-					|| t2->commitSeqNo <= reader->commitSeqNo)
+					|| t2->prepareSeqNo <= reader->commitSeqNo)
 				&& (!SxactIsCommitted(writer)
-					|| t2->commitSeqNo <= writer->commitSeqNo)
+					|| t2->prepareSeqNo <= writer->commitSeqNo)
 				&& (!SxactIsReadOnly(reader)
-			   || t2->commitSeqNo <= reader->SeqNo.lastCommitBeforeSnapshot))
+			   || t2->prepareSeqNo <= reader->SeqNo.lastCommitBeforeSnapshot))
 			{
 				failure = true;
 				break;
@@ -4459,17 +4456,11 @@ OnConflict_CheckForSerializationFailure(const SERIALIZABLEXACT *reader,
 		{
 			SERIALIZABLEXACT *t0 = conflict->sxactOut;
 
-			/*
-			 * Note that if the writer is merely prepared but not yet
-			 * committed, we rely on writer->commitSeqNo being
-			 * InvalidSerCommitSeqNo, which is larger than any valid commit
-			 * sequence number.
-			 */
 			if (!SxactIsDoomed(t0)
 				&& (!SxactIsCommitted(t0)
-					|| t0->commitSeqNo >= writer->commitSeqNo)
+					|| t0->commitSeqNo >= writer->prepareSeqNo)
 				&& (!SxactIsReadOnly(t0)
-			   || t0->SeqNo.lastCommitBeforeSnapshot >= writer->commitSeqNo))
+			   || t0->SeqNo.lastCommitBeforeSnapshot >= writer->prepareSeqNo))
 			{
 				failure = true;
 				break;
@@ -4608,6 +4599,7 @@ PreCommit_CheckForSerializationFailure(void)
 						 offsetof(RWConflictData, inLink));
 	}
 
+	MySerializableXact->prepareSeqNo = ++(PredXact->LastSxactCommitSeqNo);
 	MySerializableXact->flags |= SXACT_FLAG_PREPARED;
 
 	LWLockRelease(SerializableXactHashLock);
@@ -4782,6 +4774,7 @@ predicatelock_twophase_recover(TransactionId xid, uint16 info,
 		sxact->pid = 0;
 
 		/* a prepared xact hasn't committed yet */
+		sxact->prepareSeqNo = RecoverySerCommitSeqNo;
 		sxact->commitSeqNo = InvalidSerCommitSeqNo;
 		sxact->finishedBefore = InvalidTransactionId;
 
