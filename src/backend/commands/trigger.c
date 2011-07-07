@@ -143,14 +143,7 @@ CreateTrigger(CreateTrigStmt *stmt, const char *queryString,
 	ObjectAddress myself,
 				referenced;
 
-	/*
-	 * ShareRowExclusiveLock is sufficient to prevent concurrent write
-	 * activity to the relation, and thus to lock out any operations that
-	 * might want to fire triggers on the relation.  If we had ON SELECT
-	 * triggers we would need to take an AccessExclusiveLock to add one of
-	 * those, just as we do with ON SELECT rules.
-	 */
-	rel = heap_openrv(stmt->relation, ShareRowExclusiveLock);
+	rel = heap_openrv(stmt->relation, AccessExclusiveLock);
 
 	/*
 	 * Triggers must be on tables or views, and there are additional
@@ -480,7 +473,7 @@ CreateTrigger(CreateTrigStmt *stmt, const char *queryString,
 	 * can skip this for internally generated triggers, since the name
 	 * modification above should be sufficient.
 	 *
-	 * NOTE that this is cool only because we have ShareRowExclusiveLock on
+	 * NOTE that this is cool only because we have AccessExclusiveLock on
 	 * the relation, so the trigger set won't be changing underneath us.
 	 */
 	if (!isInternal)
@@ -1084,14 +1077,11 @@ RemoveTriggerById(Oid trigOid)
 		elog(ERROR, "could not find tuple for trigger %u", trigOid);
 
 	/*
-	 * Open and lock the relation the trigger belongs to.  As in
-	 * CreateTrigger, this is sufficient to lock out all operations that could
-	 * fire or add triggers; but it would need to be revisited if we had ON
-	 * SELECT triggers.
+	 * Open and exclusive-lock the relation the trigger belongs to.
 	 */
 	relid = ((Form_pg_trigger) GETSTRUCT(tup))->tgrelid;
 
-	rel = heap_open(relid, ShareRowExclusiveLock);
+	rel = heap_open(relid, AccessExclusiveLock);
 
 	if (rel->rd_rel->relkind != RELKIND_RELATION &&
 		rel->rd_rel->relkind != RELKIND_VIEW)
