@@ -551,10 +551,12 @@ const char *const config_group_names[] =
 	gettext_noop("Write-Ahead Log / Checkpoints"),
 	/* WAL_ARCHIVING */
 	gettext_noop("Write-Ahead Log / Archiving"),
-	/* WAL_REPLICATION */
-	gettext_noop("Write-Ahead Log / Streaming Replication"),
-	/* WAL_STANDBY_SERVERS */
-	gettext_noop("Write-Ahead Log / Standby Servers"),
+	/* REPLICATION */
+	gettext_noop("Replication"),
+	/* REPLICATION_MASTER */
+	gettext_noop("Replication / Master Server"),
+	/* REPLICATION_STANDBY */
+	gettext_noop("Replication / Standby Servers"),
 	/* QUERY_TUNING */
 	gettext_noop("Query Tuning"),
 	/* QUERY_TUNING_METHOD */
@@ -1367,7 +1369,7 @@ static struct config_bool ConfigureNamesBool[] =
 	},
 
 	{
-		{"hot_standby", PGC_POSTMASTER, WAL_STANDBY_SERVERS,
+		{"hot_standby", PGC_POSTMASTER, REPLICATION_STANDBY,
 			gettext_noop("Allows connections and queries during recovery."),
 			NULL
 		},
@@ -1377,7 +1379,7 @@ static struct config_bool ConfigureNamesBool[] =
 	},
 
 	{
-		{"hot_standby_feedback", PGC_SIGHUP, WAL_STANDBY_SERVERS,
+		{"hot_standby_feedback", PGC_SIGHUP, REPLICATION_STANDBY,
 			gettext_noop("Allows feedback from a hot standby to the primary that will avoid query conflicts."),
 			NULL
 		},
@@ -1544,7 +1546,7 @@ static struct config_int ConfigureNamesInt[] =
 	},
 
 	{
-		{"max_standby_archive_delay", PGC_SIGHUP, WAL_STANDBY_SERVERS,
+		{"max_standby_archive_delay", PGC_SIGHUP, REPLICATION_STANDBY,
 			gettext_noop("Sets the maximum delay before canceling queries when a hot standby server is processing archived WAL data."),
 			NULL,
 			GUC_UNIT_MS
@@ -1555,7 +1557,7 @@ static struct config_int ConfigureNamesInt[] =
 	},
 
 	{
-		{"max_standby_streaming_delay", PGC_SIGHUP, WAL_STANDBY_SERVERS,
+		{"max_standby_streaming_delay", PGC_SIGHUP, REPLICATION_STANDBY,
 			gettext_noop("Sets the maximum delay before canceling queries when a hot standby server is processing streamed WAL data."),
 			NULL,
 			GUC_UNIT_MS
@@ -1566,7 +1568,7 @@ static struct config_int ConfigureNamesInt[] =
 	},
 
 	{
-		{"wal_receiver_status_interval", PGC_SIGHUP, WAL_STANDBY_SERVERS,
+		{"wal_receiver_status_interval", PGC_SIGHUP, REPLICATION_STANDBY,
 			gettext_noop("Sets the maximum interval between WAL receiver status reports to the primary."),
 			NULL,
 			GUC_UNIT_S
@@ -1851,7 +1853,7 @@ static struct config_int ConfigureNamesInt[] =
 	},
 
 	{
-		{"vacuum_defer_cleanup_age", PGC_SIGHUP, WAL_REPLICATION,
+		{"vacuum_defer_cleanup_age", PGC_SIGHUP, REPLICATION_MASTER,
 			gettext_noop("Number of transactions by which VACUUM and HOT cleanup should be deferred, if any."),
 			NULL
 		},
@@ -1911,7 +1913,7 @@ static struct config_int ConfigureNamesInt[] =
 	},
 
 	{
-		{"wal_keep_segments", PGC_SIGHUP, WAL_REPLICATION,
+		{"wal_keep_segments", PGC_SIGHUP, REPLICATION_MASTER,
 			gettext_noop("Sets the number of WAL files held for standby servers."),
 			NULL
 		},
@@ -1979,7 +1981,7 @@ static struct config_int ConfigureNamesInt[] =
 
 	{
 		/* see max_connections */
-		{"max_wal_senders", PGC_POSTMASTER, WAL_REPLICATION,
+		{"max_wal_senders", PGC_POSTMASTER, REPLICATION_MASTER,
 			gettext_noop("Sets the maximum number of simultaneously running WAL sender processes."),
 			NULL
 		},
@@ -1989,7 +1991,7 @@ static struct config_int ConfigureNamesInt[] =
 	},
 
 	{
-		{"wal_sender_delay", PGC_SIGHUP, WAL_REPLICATION,
+		{"wal_sender_delay", PGC_SIGHUP, REPLICATION_MASTER,
 			gettext_noop("WAL sender sleep time between WAL replications."),
 			NULL,
 			GUC_UNIT_MS
@@ -2000,7 +2002,7 @@ static struct config_int ConfigureNamesInt[] =
 	},
 
 	{
-		{"replication_timeout", PGC_SIGHUP, WAL_REPLICATION,
+		{"replication_timeout", PGC_SIGHUP, REPLICATION_MASTER,
 			gettext_noop("Sets the maximum time to wait for WAL replication."),
 			NULL,
 			GUC_UNIT_MS
@@ -2964,7 +2966,7 @@ static struct config_string ConfigureNamesString[] =
 	},
 
 	{
-		{"synchronous_standby_names", PGC_SIGHUP, WAL_REPLICATION,
+		{"synchronous_standby_names", PGC_SIGHUP, REPLICATION_MASTER,
 			gettext_noop("List of names of potential synchronous standbys."),
 			NULL,
 			GUC_LIST_INPUT
