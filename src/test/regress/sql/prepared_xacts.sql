@@ -74,9 +74,9 @@ SELECT gid FROM pg_prepared_xacts;
 
 BEGIN TRANSACTION ISOLATION LEVEL SERIALIZABLE;
 SELECT * FROM pxtest1;
-INSERT INTO pxtest1 VALUES ('fff');
 
 -- This should fail, because the two transactions have a write-skew anomaly
+INSERT INTO pxtest1 VALUES ('fff');
 PREPARE TRANSACTION 'foo5';
 
 SELECT gid FROM pg_prepared_xacts;

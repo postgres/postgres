@@ -131,12 +131,12 @@ SELECT * FROM pxtest1;
  ddd
 (2 rows)
 
-INSERT INTO pxtest1 VALUES ('fff');
 -- This should fail, because the two transactions have a write-skew anomaly
-PREPARE TRANSACTION 'foo5';
+INSERT INTO pxtest1 VALUES ('fff');
 ERROR:  could not serialize access due to read/write dependencies among transactions
-DETAIL:  Canceled on commit attempt with conflict in from prepared pivot.
+DETAIL:  Canceled on identification as a pivot, during write.
 HINT:  The transaction might succeed if retried.
+PREPARE TRANSACTION 'foo5';
 SELECT gid FROM pg_prepared_xacts;
  gid  
 ------
