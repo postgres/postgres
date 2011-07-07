@@ -305,7 +305,13 @@ static SlruCtlData OldSerXidSlruCtlData;
 #define OLDSERXID_PAGESIZE			BLCKSZ
 #define OLDSERXID_ENTRYSIZE			sizeof(SerCommitSeqNo)
 #define OLDSERXID_ENTRIESPERPAGE	(OLDSERXID_PAGESIZE / OLDSERXID_ENTRYSIZE)
-#define OLDSERXID_MAX_PAGE			(SLRU_PAGES_PER_SEGMENT * 0x10000 - 1)
+
+/*
+ * Set maximum pages based on the lesser of the number needed to track all
+ * transactions and the maximum that SLRU supports.
+ */
+#define OLDSERXID_MAX_PAGE			Min(SLRU_PAGES_PER_SEGMENT * 0x10000 - 1, \
+										(MaxTransactionId + 1) / OLDSERXID_ENTRIESPERPAGE - 1)
 
 #define OldSerXidNextPage(page) (((page) >= OLDSERXID_MAX_PAGE) ? 0 : (page) + 1)
 
