@@ -1844,9 +1844,9 @@ SET ENABLE_SEQSCAN TO OFF;
         <varname>archive_mode</> and <varname>archive_command</> are
         separate variables so that <varname>archive_command</> can be
         changed without leaving archiving mode.
-        This parameter can only be set at server start. <varname>wal_level</>
-        must be set to <literal>archive</> or <literal>hot_standby</> to
-        enable <varname>archive_mode</>.
+        This parameter can only be set at server start.
+        <varname>archive_mode</> cannot be enabled when
+        <varname>wal_level</> is set to <literal>minimal</>.
        </para>
       </listitem>
      </varlistentry>
@@ -1911,7 +1911,10 @@ SET ENABLE_SEQSCAN TO OFF;
         files.  Therefore, it is unwise to use a very short
         <varname>archive_timeout</> &mdash; it will bloat your archive
         storage.  <varname>archive_timeout</> settings of a minute or so are
-        usually reasonable.  This parameter can only be set in the
+        usually reasonable.  You should consider using streaming replication,
+        instead of archiving, if you want data to be copied off the master
+        server more quickly than that.
+        This parameter can only be set in the
         <filename>postgresql.conf</> file or on the server command line.
        </para>
       </listitem>
@@ -1920,14 +1923,32 @@ SET ENABLE_SEQSCAN TO OFF;
      </variablelist>
     </sect2>
 
-    <sect2 id="runtime-config-replication">
-     <title>Streaming Replication</title>
+   </sect1>
+
+   <sect1 id="runtime-config-replication">
+    <title>Replication</title>
+
+    <para>
+     These settings control the behavior of the built-in
+     <firstterm>streaming replication</> feature (see
+     <xref linkend="streaming-replication">).
+     Some parameters must be set on the master server, while others must be
+     set on the standby server(s) that will receive replication data.
+    </para>
+
+    <sect2 id="runtime-config-replication-master">
+     <title>Master Server</title>
 
      <para>
-      These settings control the behavior of the built-in
-      <firstterm>streaming replication</> feature.
-      These parameters would be set on the primary server that is
+      These parameters can be set on the primary server that is
       to send replication data to one or more standby servers.
+      Note that in addition to these parameters,
+      <xref linkend="guc-wal-level"> must be set appropriately on the master
+      server, and you will typically want to enable WAL archiving as
+      well (see <xref linkend="runtime-config-wal-archiving">).
+      The values of these parameters on standby servers are irrelevant,
+      although you may wish to set them there in preparation for the
+      possibility of a standby becoming the master.
      </para>
 
      <variablelist>
@@ -1995,7 +2016,7 @@ SET ENABLE_SEQSCAN TO OFF;
         <filename>pg_xlog</>; the system might need to retain more segments
         for WAL archival or to recover from a checkpoint. If
         <varname>wal_keep_segments</> is zero (the default), the system
-        doesn't keep any extra segments for standby purposes, and the number
+        doesn't keep any extra segments for standby purposes, so the number
         of old WAL segments available to standby servers is a function of
         the location of the previous checkpoint and status of WAL
         archiving.  This parameter has no effect on restartpoints.
@@ -2057,20 +2078,7 @@ SET ENABLE_SEQSCAN TO OFF;
        </para>
       </listitem>
      </varlistentry>
-     </variablelist>
-    </sect2>
 
-    <sect2 id="runtime-config-sync-rep">
-     <title>Synchronous Replication</title>
-
-     <para>
-      These settings control the behavior of the built-in
-      <firstterm>synchronous replication</> feature.
-      These parameters would be set on the primary server that is
-      to send replication data to one or more standby servers.
-     </para>
-
-     <variablelist>
      <varlistentry id="guc-synchronous-standby-names" xreflabel="synchronous_standby_names">
       <term><varname>synchronous_standby_names</varname> (<type>string</type>)</term>
       <indexterm>
@@ -2078,29 +2086,37 @@ SET ENABLE_SEQSCAN TO OFF;
       </indexterm>
       <listitem>
        <para>
-        Specifies a priority ordered list of standby names that can offer
-        synchronous replication.  At any one time there will be at most one
-        synchronous standby that will wake sleeping users following commit.
-        The synchronous standby will be the first named standby that is
-        both currently connected and streaming in real-time to the standby
-        (as shown by a state of <literal>STREAMING</literal>).  Other standby servers
-        with listed later will become potential synchronous standbys.
-        If the current synchronous standby disconnects for whatever reason
-        it will be replaced immediately with the next highest priority standby.
+        Specifies a comma-separated list of standby names that can support
+        <firstterm>synchronous replication</>, as described in
+        <xref linkend="synchronous-replication">.
+        At any one time there will be at most one active synchronous standby;
+        transactions waiting for commit will be allowed to proceed after
+        this standby server confirms receipt of their data.
+        The synchronous standby will be the first standby named in this list
+        that is both currently connected and streaming data in real-time
+        (as shown by a state of <literal>STREAMING</literal> in the
+        <link linkend="monitoring-stats-views-table">
+        <literal>pg_stat_replication</></link> view).
+        Other standby servers appearing later in this list represent potential
+        synchronous standbys.
+        If the current synchronous standby disconnects for whatever reason,
+        it will be replaced immediately with the next-highest-priority standby.
         Specifying more than one standby name can allow very high availability.
        </para>
        <para>
-        The standby name is currently taken as the <varname>application_name</> setting of the
-        standby, as set in the <varname>primary_conninfo</> on the standby. Names are
-        not enforced for uniqueness. In case of duplicates one of the standbys
-        will be chosen to be the synchronous standby, though exactly which
-        one is indeterminate.
-        The special entry <literal>*</> matches any application_name, including
-        the default application name of <literal>walreceiver</>.
+        The name of a standby server for this purpose is the
+        <varname>application_name</> setting of the standby, as set in the
+        <varname>primary_conninfo</> of the standby's walreceiver.  There is
+        no mechanism to enforce uniqueness. In case of duplicates one of the
+        matching standbys will be chosen to be the synchronous standby, though
+        exactly which one is indeterminate.
+        The special entry <literal>*</> matches any
+        <varname>application_name</>, including the default application name
+        of <literal>walreceiver</>.
        </para>
        <para>
-        If no synchronous standby names are specified, then synchronous
-        replication is not enabled and transaction commit will never wait for
+        If no synchronous standby names are specified here, then synchronous
+        replication is not enabled and transaction commits will not wait for
         replication.  This is the default configuration.  Even when
         synchronous replication is enabled, individual transactions can be
         configured not to wait for replication by setting the
@@ -2117,12 +2133,13 @@ SET ENABLE_SEQSCAN TO OFF;
      </variablelist>
     </sect2>
 
-    <sect2 id="runtime-config-standby">
-    <title>Standby Servers</title>
+    <sect2 id="runtime-config-replication-standby">
+     <title>Standby Servers</title>
 
      <para>
       These settings control the behavior of a standby server that is
-      to receive replication data.
+      to receive replication data.  Their values on the master server
+      are irrelevant.
      </para>
 
     <variablelist>
@@ -2213,12 +2230,14 @@ SET ENABLE_SEQSCAN TO OFF;
       <para>
        Specifies the minimum frequency for the WAL receiver
        process on the standby to send information about replication progress
-       to the primary, where they can be seen using the
-       <literal>pg_stat_replication</literal> view.  The standby will report
+       to the primary, where it can be seen using the
+       <link linkend="monitoring-stats-views-table">
+       <literal>pg_stat_replication</></link> view.  The standby will report
        the last transaction log position it has written, the last position it
-       has flushed to disk, and the last position it has applied.  The parameter
+       has flushed to disk, and the last position it has applied.
+       This parameter's
        value is the maximum interval, in seconds, between reports.  Updates are
-       sent each time the write or flush positions changed, or at least as
+       sent each time the write or flush positions change, or at least as
        often as specified by this parameter.  Thus, the apply position may
        lag slightly behind the true position.  Setting this parameter to zero
        disables status updates completely.  This parameter can only be set in

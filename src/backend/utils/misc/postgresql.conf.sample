@@ -184,32 +184,41 @@
 #archive_timeout = 0		# force a logfile segment switch after this
 				# number of seconds; 0 disables
 
-# - Streaming Replication - Server Settings
 
-#synchronous_standby_names = ''	# standby servers that provide sync rep
-				# comma-separated list of application_name from standby(s);
-				# '*' = all
+#------------------------------------------------------------------------------
+# REPLICATION
+#------------------------------------------------------------------------------
 
+# - Master Server -
+
+# These settings are ignored on a standby server
 
 #max_wal_senders = 0		# max number of walsender processes
 				# (change requires restart)
 #wal_sender_delay = 1s		# walsender cycle time, 1-10000 milliseconds
 #wal_keep_segments = 0		# in logfile segments, 16MB each; 0 disables
 #vacuum_defer_cleanup_age = 0	# number of xacts by which cleanup is delayed
-#replication_timeout = 60s # in milliseconds, 0 is disabled
+#replication_timeout = 60s	# in milliseconds; 0 disables
+#synchronous_standby_names = ''	# standby servers that provide sync rep
+				# comma-separated list of application_name
+				# from standby(s); '*' = all
 
 # - Standby Servers -
 
+# These settings are ignored on a master server
+
 #hot_standby = off			# "on" allows queries during recovery
 					# (change requires restart)
-#hot_standby_feedback = off	# info from standby to prevent query conflicts
 #max_standby_archive_delay = 30s	# max delay before canceling queries
 					# when reading WAL from archive;
 					# -1 allows indefinite delay
 #max_standby_streaming_delay = 30s	# max delay before canceling queries
 					# when reading streaming WAL;
 					# -1 allows indefinite delay
-#wal_receiver_status_interval = 10s	# replies at least this often, 0 disables
+#wal_receiver_status_interval = 10s	# send replies at least this often
+					# 0 disables
+#hot_standby_feedback = off		# send info from standby to prevent
+					# query conflicts
 
 
 #------------------------------------------------------------------------------
