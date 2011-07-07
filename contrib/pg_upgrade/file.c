@@ -287,7 +287,7 @@ pg_scandir_internal(migratorContext *ctx, const char *dirname,
 	size_t		entrysize;
 
 	if ((dirdesc = opendir(dirname)) == NULL)
-		pg_log(ctx, PG_FATAL, "Could not open directory \"%s\": %m\n", dirname);
+		pg_log(ctx, PG_FATAL, "Could not open directory \"%s\": %s\n", dirname, getErrorText(errno));
 
 	*namelist = NULL;
 
