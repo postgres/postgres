@@ -9,7 +9,7 @@
    <simpara>2011-??-??</simpara>
   </note>
 
-  <para>CURRENT AS OF 2011-06-09</para>
+  <para>CURRENT AS OF 2011-07-07</para>
 
   <sect2>
    <title>Overview</title>
@@ -382,6 +382,19 @@
        <para>
         Reduce the memory requirement for large ispell dictionaries
         (Pavel Stehule, Tom Lane)
+       </para>
+      </listitem>
+
+      <listitem>
+       <para>
+        Avoid leaving data files open after <quote>blind writes</>
+        (Alvaro Herrera)
+       </para>
+
+       <para>
+        This fixes scenarios where backends might hold open files that
+        were long since deleted, preventing the kernel from reclaiming
+        disk space.
        </para>
       </listitem>
 
@@ -2785,6 +2798,20 @@
 
       <para>
        Previously only Solaris 9 kernel tuning was documented.
+      </para>
+     </listitem>
+
+     <listitem>
+      <para>
+       Handle non-ASCII characters consistently in <filename>HISTORY</> file
+       (Peter Eisentraut)
+      </para>
+
+      <para>
+       While the <filename>HISTORY</> file is in English, we do have to deal
+       with non-ASCII letters in contributor names.  These are now
+       transliterated so that they are reasonably legible without assumptions
+       about character set.
       </para>
      </listitem>
 
