@@ -134,8 +134,8 @@ SELECT * FROM pxtest1;
  aaa
 (1 row)
 
-INSERT INTO pxtest1 VALUES ('fff');
 -- This should fail, because the two transactions have a write-skew anomaly
+INSERT INTO pxtest1 VALUES ('fff');
 PREPARE TRANSACTION 'foo5';
 ERROR:  prepared transactions are disabled
 HINT:  Set max_prepared_transactions to a nonzero value.

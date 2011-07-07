@@ -244,6 +244,14 @@
 
 #define SxactIsOnFinishedList(sxact) (!SHMQueueIsDetached(&((sxact)->finishedLink)))
 
+/*
+ * Note that a sxact is marked "prepared" once it has passed
+ * PreCommit_CheckForSerializationFailure, even if it isn't using
+ * 2PC. This is the point at which it can no longer be aborted.
+ *
+ * The PREPARED flag remains set after commit, so SxactIsCommitted
+ * implies SxactIsPrepared.
+ */
 #define SxactIsCommitted(sxact) (((sxact)->flags & SXACT_FLAG_COMMITTED) != 0)
 #define SxactIsPrepared(sxact) (((sxact)->flags & SXACT_FLAG_PREPARED) != 0)
 #define SxactIsRolledBack(sxact) (((sxact)->flags & SXACT_FLAG_ROLLED_BACK) != 0)
@@ -3165,6 +3173,13 @@ ReleasePredicateLocks(bool isCommit)
 		 */
 		MySerializableXact->flags |= SXACT_FLAG_DOOMED;
 		MySerializableXact->flags |= SXACT_FLAG_ROLLED_BACK;
+		/*
+		 * If the transaction was previously prepared, but is now failing due
+		 * to a ROLLBACK PREPARED or (hopefully very rare) error after the
+		 * prepare, clear the prepared flag.  This simplifies conflict
+		 * checking.
+		 */
+		MySerializableXact->flags &= ~SXACT_FLAG_PREPARED;
 	}
 
 	if (!topLevelIsDeclaredReadOnly)
@@ -4363,6 +4378,11 @@ OnConflict_CheckForSerializationFailure(const SERIALIZABLEXACT *reader,
 	 * - the writer committed before T2
 	 * - the reader is a READ ONLY transaction and the reader was concurrent
 	 *	 with T2 (= reader acquired its snapshot before T2 committed)
+	 *
+	 * We also handle the case that T2 is prepared but not yet committed
+	 * here. In that case T2 has already checked for conflicts, so if it
+	 * commits first, making the above conflict real, it's too late for it
+	 * to abort.
 	 *------------------------------------------------------------------------
 	 */
 	if (!failure)
@@ -4381,7 +4401,12 @@ OnConflict_CheckForSerializationFailure(const SERIALIZABLEXACT *reader,
 		{
 			SERIALIZABLEXACT *t2 = conflict->sxactIn;
 
-			if (SxactIsCommitted(t2)
+			/*
+			 * Note that if T2 is merely prepared but not yet committed, we
+			 * rely on t->commitSeqNo being InvalidSerCommitSeqNo, which is
+			 * larger than any valid commit sequence number.
+			 */
+			if (SxactIsPrepared(t2)
 				&& (!SxactIsCommitted(reader)
 					|| t2->commitSeqNo <= reader->commitSeqNo)
 				&& (!SxactIsCommitted(writer)
@@ -4400,7 +4425,8 @@ OnConflict_CheckForSerializationFailure(const SERIALIZABLEXACT *reader,
 	}
 
 	/*------------------------------------------------------------------------
-	 * Check whether the reader has become a pivot with a committed writer:
+	 * Check whether the reader has become a pivot with a writer
+	 * that's committed (or prepared):
 	 *
 	 *		T0 ------> R ------> W
 	 *			 rw		   rw
@@ -4411,7 +4437,7 @@ OnConflict_CheckForSerializationFailure(const SERIALIZABLEXACT *reader,
 	 * - T0 is READ ONLY, and overlaps the writer
 	 *------------------------------------------------------------------------
 	 */
-	if (!failure && SxactIsCommitted(writer) && !SxactIsReadOnly(reader))
+	if (!failure && SxactIsPrepared(writer) && !SxactIsReadOnly(reader))
 	{
 		if (SxactHasSummaryConflictIn(reader))
 		{
@@ -4427,6 +4453,12 @@ OnConflict_CheckForSerializationFailure(const SERIALIZABLEXACT *reader,
 		{
 			SERIALIZABLEXACT *t0 = conflict->sxactOut;
 
+			/*
+			 * Note that if the writer is merely prepared but not yet
+			 * committed, we rely on writer->commitSeqNo being
+			 * InvalidSerCommitSeqNo, which is larger than any valid commit
+			 * sequence number.
+			 */
 			if (!SxactIsDoomed(t0)
 				&& (!SxactIsCommitted(t0)
 					|| t0->commitSeqNo >= writer->commitSeqNo)
