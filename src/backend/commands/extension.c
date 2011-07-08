@@ -813,14 +813,14 @@ execute_extension_script(Oid extensionOid, ExtensionControlFile *control,
 	 * error.
 	 */
 	save_client_min_messages =
-		pstrdup(GetConfigOption("client_min_messages", false));
+		pstrdup(GetConfigOption("client_min_messages", false, false));
 	if (client_min_messages < WARNING)
 		(void) set_config_option("client_min_messages", "warning",
 								 PGC_USERSET, PGC_S_SESSION,
 								 GUC_ACTION_LOCAL, true);
 
 	save_log_min_messages =
-		pstrdup(GetConfigOption("log_min_messages", false));
+		pstrdup(GetConfigOption("log_min_messages", false, false));
 	if (log_min_messages < WARNING)
 		(void) set_config_option("log_min_messages", "warning",
 								 PGC_SUSET, PGC_S_SESSION,
@@ -835,7 +835,7 @@ execute_extension_script(Oid extensionOid, ExtensionControlFile *control,
 	 * but we cannot do that.  We have to actually set the search_path GUC in
 	 * case the extension script examines or changes it.
 	 */
-	save_search_path = pstrdup(GetConfigOption("search_path", false));
+	save_search_path = pstrdup(GetConfigOption("search_path", false, false));
 
 	initStringInfo(&pathbuf);
 	appendStringInfoString(&pathbuf, quote_identifier(schemaName));
