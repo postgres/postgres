@@ -3887,7 +3887,7 @@ text_format(PG_FUNCTION_ARGS)
 		if (arg > PG_NARGS() - 1)
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-					 errmsg("too few arguments for format conversion")));
+					 errmsg("too few arguments for format")));
 
 		/*
 		 * At this point, we should see the main conversion specifier. Whether
@@ -3908,7 +3908,7 @@ text_format(PG_FUNCTION_ARGS)
 			default:
 				ereport(ERROR,
 						(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-						 errmsg("unrecognized conversion specifier: %c",
+						 errmsg("unrecognized conversion specifier \"%c\"",
 								*cp)));
 		}
 	}

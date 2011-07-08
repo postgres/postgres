@@ -515,7 +515,7 @@ ProcessRepliesIfAny(void)
 			default:
 				ereport(FATAL,
 						(errcode(ERRCODE_PROTOCOL_VIOLATION),
-						 errmsg("invalid standby message type %d",
+						 errmsg("invalid standby message type \"%c\"",
 								firstchar)));
 		}
 	}
@@ -566,7 +566,7 @@ ProcessStandbyMessage(void)
 		default:
 			ereport(COMMERROR,
 					(errcode(ERRCODE_PROTOCOL_VIOLATION),
-					 errmsg("unexpected message type %c", msgtype)));
+					 errmsg("unexpected message type \"%c\"", msgtype)));
 			proc_exit(0);
 	}
 }
