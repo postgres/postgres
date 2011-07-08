@@ -119,7 +119,7 @@ perform_base_backup(basebackup_options *opt, DIR *tblspcdir)
 			if (readlink(fullpath, linkpath, sizeof(linkpath) - 1) == -1)
 			{
 				ereport(WARNING,
-				  (errmsg("unable to read symbolic link %s: %m", fullpath)));
+				  (errmsg("could not read symbolic link \"%s\": %m", fullpath)));
 				continue;
 			}
 
@@ -363,7 +363,7 @@ SendBaseBackup(BaseBackupCmd *cmd)
 	dir = AllocateDir("pg_tblspc");
 	if (!dir)
 		ereport(ERROR,
-				(errmsg("unable to open directory pg_tblspc: %m")));
+				(errmsg("could not open directory \"pg_tblspc\": %m")));
 
 	perform_base_backup(&opt, dir);
 

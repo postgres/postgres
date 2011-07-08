@@ -171,11 +171,11 @@ select format('Hello %%%%');
 
 -- should fail
 select format('Hello %s %s', 'World');
-ERROR:  too few arguments for format conversion
+ERROR:  too few arguments for format
 select format('Hello %s');
-ERROR:  too few arguments for format conversion
+ERROR:  too few arguments for format
 select format('Hello %x', 20);
-ERROR:  unrecognized conversion specifier: x
+ERROR:  unrecognized conversion specifier "x"
 -- check literal and sql identifiers
 select format('INSERT INTO %I VALUES(%L,%L)', 'mytab', 10, 'Hello');
                  format                 
@@ -219,15 +219,15 @@ select format('%1$s %12$s', 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12);
 
 -- should fail
 select format('%1$s %4$s', 1, 2, 3);
-ERROR:  too few arguments for format conversion
+ERROR:  too few arguments for format
 select format('%1$s %13$s', 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12);
-ERROR:  too few arguments for format conversion
+ERROR:  too few arguments for format
 select format('%1s', 1);
 ERROR:  unterminated conversion specifier
 select format('%1$', 1);
 ERROR:  unterminated conversion specifier
 select format('%1$1', 1);
-ERROR:  unrecognized conversion specifier: 1
+ERROR:  unrecognized conversion specifier "1"
 --checkk mix of positional and ordered placeholders
 select format('Hello %s %1$s %s', 'World', 'Hello again');
             format             
