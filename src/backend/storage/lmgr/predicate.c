@@ -311,7 +311,7 @@ static SlruCtlData OldSerXidSlruCtlData;
  * transactions and the maximum that SLRU supports.
  */
 #define OLDSERXID_MAX_PAGE			Min(SLRU_PAGES_PER_SEGMENT * 0x10000 - 1, \
-										(MaxTransactionId + 1) / OLDSERXID_ENTRIESPERPAGE - 1)
+										(MaxTransactionId) / OLDSERXID_ENTRIESPERPAGE)
 
 #define OldSerXidNextPage(page) (((page) >= OLDSERXID_MAX_PAGE) ? 0 : (page) + 1)
 
@@ -767,7 +767,7 @@ OldSerXidPagePrecedesLogically(int p, int q)
 	diff = p - q;
 	if (diff >= ((OLDSERXID_MAX_PAGE + 1) / 2))
 		diff -= OLDSERXID_MAX_PAGE + 1;
-	else if (diff < -((OLDSERXID_MAX_PAGE + 1) / 2))
+	else if (diff < -((int) (OLDSERXID_MAX_PAGE + 1) / 2))
 		diff += OLDSERXID_MAX_PAGE + 1;
 	return diff < 0;
 }
