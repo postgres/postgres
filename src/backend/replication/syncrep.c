@@ -171,7 +171,7 @@ SyncRepWaitForLSN(XLogRecPtr XactCommitLSN)
 		 * postmaster death regularly while waiting. Note that timeout here
 		 * does not necessarily release from loop.
 		 */
-		WaitLatch(&MyProc->waitLatch, 60000000L);
+		WaitLatch(&MyProc->waitLatch, WL_LATCH_SET | WL_TIMEOUT, 60000000L);
 
 		/* Must reset the latch before testing state. */
 		ResetLatch(&MyProc->waitLatch);
@@ -239,7 +239,7 @@ SyncRepWaitForLSN(XLogRecPtr XactCommitLSN)
 		 * acknowledgement, because all the wal sender processes will exit. So
 		 * just bail out.
 		 */
-		if (!PostmasterIsAlive(true))
+		if (!PostmasterIsAlive())
 		{
 			ProcDiePending = true;
 			whereToSendOutput = DestNone;

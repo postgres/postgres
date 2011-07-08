@@ -31,6 +31,13 @@ typedef struct
 #endif
 } Latch;
 
+/* Bitmasks for events that may wake-up WaitLatch() clients */
+#define WL_LATCH_SET         (1 << 0)
+#define WL_SOCKET_READABLE   (1 << 1)
+#define WL_SOCKET_WRITEABLE  (1 << 2)
+#define WL_TIMEOUT           (1 << 3)
+#define WL_POSTMASTER_DEATH  (1 << 4)
+
 /*
  * prototypes for functions in latch.c
  */
@@ -38,9 +45,9 @@ extern void InitLatch(volatile Latch *latch);
 extern void InitSharedLatch(volatile Latch *latch);
 extern void OwnLatch(volatile Latch *latch);
 extern void DisownLatch(volatile Latch *latch);
-extern bool WaitLatch(volatile Latch *latch, long timeout);
-extern int WaitLatchOrSocket(volatile Latch *latch, pgsocket sock,
-				  bool forRead, bool forWrite, long timeout);
+extern int WaitLatch(volatile Latch *latch, int wakeEvents, long timeout);
+extern int WaitLatchOrSocket(volatile Latch *latch, int wakeEvents,
+				  pgsocket sock, long timeout);
 extern void SetLatch(volatile Latch *latch);
 extern void ResetLatch(volatile Latch *latch);
 

@@ -267,42 +267,27 @@ MarkPostmasterChildInactive(void)
 
 /*
  * PostmasterIsAlive - check whether postmaster process is still alive
- *
- * amDirectChild should be passed as "true" by code that knows it is
- * executing in a direct child process of the postmaster; pass "false"
- * if an indirect child or not sure.  The "true" case uses a faster and
- * more reliable test, so use it when possible.
  */
 bool
-PostmasterIsAlive(bool amDirectChild)
+PostmasterIsAlive(void)
 {
 #ifndef WIN32
-	if (amDirectChild)
+	char c;
+	ssize_t rc;
+
+	rc = read(postmaster_alive_fds[POSTMASTER_FD_WATCH], &c, 1);
+	if (rc < 0)
 	{
-		pid_t		ppid = getppid();
-
-		/* If the postmaster is still our parent, it must be alive. */
-		if (ppid == PostmasterPid)
+		if (errno == EAGAIN || errno == EWOULDBLOCK)
 			return true;
-
-		/* If the init process is our parent, postmaster must be dead. */
-		if (ppid == 1)
-			return false;
-
-		/*
-		 * If we get here, our parent process is neither the postmaster nor
-		 * init.  This can occur on BSD and MacOS systems if a debugger has
-		 * been attached.  We fall through to the less-reliable kill() method.
-		 */
+		else
+			elog(FATAL, "read on postmaster death monitoring pipe failed: %m");
 	}
+	else if (rc > 0)
+		elog(FATAL, "unexpected data in postmaster death monitoring pipe");
 
-	/*
-	 * Use kill() to see if the postmaster is still alive.	This can sometimes
-	 * give a false positive result, since the postmaster's PID may get
-	 * recycled, but it is good enough for existing uses by indirect children
-	 * and in debugging environments.
-	 */
-	return (kill(PostmasterPid, 0) == 0);
+	return false;
+
 #else							/* WIN32 */
 	return (WaitForSingleObject(PostmasterHandle, 0) == WAIT_TIMEOUT);
 #endif   /* WIN32 */

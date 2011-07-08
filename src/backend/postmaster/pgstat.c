@@ -3111,7 +3111,7 @@ PgstatCollectorMain(int argc, char *argv[])
 			 * We can only get here if the select/poll timeout elapsed. Check
 			 * for postmaster death.
 			 */
-			if (!PostmasterIsAlive(true))
+			if (!PostmasterIsAlive())
 				break;
 		}
 	}							/* end of message-processing loop */

@@ -368,6 +368,7 @@ static int	CountChildren(int target);
 static bool CreateOptsFile(int argc, char *argv[], char *fullprogname);
 static pid_t StartChildProcess(AuxProcType type);
 static void StartAutovacuumWorker(void);
+static void InitPostmasterDeathWatchHandle(void);
 
 #ifdef EXEC_BACKEND
 
@@ -383,8 +384,6 @@ typedef struct
 	HANDLE		procHandle;
 	DWORD		procId;
 } win32_deadchild_waitinfo;
-
-HANDLE		PostmasterHandle;
 #endif
 
 static pid_t backend_forkexec(Port *port);
@@ -439,6 +438,7 @@ typedef struct
 	HANDLE		initial_signal_pipe;
 	HANDLE		syslogPipe[2];
 #else
+	int			postmaster_alive_fds[2];
 	int			syslogPipe[2];
 #endif
 	char		my_exec_path[MAXPGPATH];
@@ -469,6 +469,16 @@ static void ShmemBackendArrayRemove(Backend *bn);
 #define EXIT_STATUS_0(st)  ((st) == 0)
 #define EXIT_STATUS_1(st)  (WIFEXITED(st) && WEXITSTATUS(st) == 1)
 
+#ifndef WIN32
+/*
+ * File descriptors for pipe used to monitor if postmaster is alive.
+ * First is POSTMASTER_FD_WATCH, second is POSTMASTER_FD_OWN.
+ */
+int postmaster_alive_fds[2] = { -1, -1 };
+#else
+/* Process handle of postmaster used for the same purpose on Windows */
+HANDLE		PostmasterHandle;
+#endif
 
 /*
  * Postmaster main entry point
@@ -962,8 +972,13 @@ PostmasterMain(int argc, char *argv[])
 	 */
 	BackendList = DLNewList();
 
-#ifdef WIN32
+	/*
+	 * Initialize pipe (or process handle on Windows) that allows children to
+	 * wake up from sleep on postmaster death.
+	 */
+	InitPostmasterDeathWatchHandle();
 
+#ifdef WIN32
 	/*
 	 * Initialize I/O completion port used to deliver list of dead children.
 	 */
@@ -971,21 +986,6 @@ PostmasterMain(int argc, char *argv[])
 	if (win32ChildQueue == NULL)
 		ereport(FATAL,
 		   (errmsg("could not create I/O completion port for child queue")));
-
-	/*
-	 * Set up a handle that child processes can use to check whether the
-	 * postmaster is still running.
-	 */
-	if (DuplicateHandle(GetCurrentProcess(),
-						GetCurrentProcess(),
-						GetCurrentProcess(),
-						&PostmasterHandle,
-						0,
-						TRUE,
-						DUPLICATE_SAME_ACCESS) == 0)
-		ereport(FATAL,
-				(errmsg_internal("could not duplicate postmaster handle: error code %d",
-								 (int) GetLastError())));
 #endif
 
 	/*
@@ -1964,6 +1964,19 @@ void
 ClosePostmasterPorts(bool am_syslogger)
 {
 	int			i;
+
+#ifndef WIN32
+	/*
+	 * Close the write end of postmaster death watch pipe. It's important to
+	 * do this as early as possible, so that if postmaster dies, others won't
+	 * think that it's still running because we're holding the pipe open.
+	 */
+	if (close(postmaster_alive_fds[POSTMASTER_FD_OWN]))
+		ereport(FATAL,
+			(errcode_for_file_access(),
+			 errmsg_internal("could not close postmaster death monitoring pipe in child process: %m")));
+	postmaster_alive_fds[POSTMASTER_FD_OWN] = -1;
+#endif
 
 	/* Close the listen sockets */
 	for (i = 0; i < MAXLISTEN; i++)
@@ -4643,6 +4656,9 @@ save_backend_variables(BackendParameters *param, Port *port,
 								 pgwin32_create_signal_listener(childPid),
 								 childProcess))
 		return false;
+#else
+	memcpy(&param->postmaster_alive_fds, &postmaster_alive_fds,
+		   sizeof(postmaster_alive_fds));
 #endif
 
 	memcpy(&param->syslogPipe, &syslogPipe, sizeof(syslogPipe));
@@ -4858,6 +4874,9 @@ restore_backend_variables(BackendParameters *param, Port *port)
 #ifdef WIN32
 	PostmasterHandle = param->PostmasterHandle;
 	pgwin32_initial_signal_pipe = param->initial_signal_pipe;
+#else
+	memcpy(&postmaster_alive_fds, &param->postmaster_alive_fds,
+		   sizeof(postmaster_alive_fds));
 #endif
 
 	memcpy(&syslogPipe, &param->syslogPipe, sizeof(syslogPipe));
@@ -4979,3 +4998,54 @@ pgwin32_deadchild_callback(PVOID lpParameter, BOOLEAN TimerOrWaitFired)
 }
 
 #endif   /* WIN32 */
+
+/*
+ * Initialize one and only handle for monitoring postmaster death.
+ *
+ * Called once in the postmaster, so that child processes can subsequently
+ * monitor if their parent is dead.
+ */
+static void
+InitPostmasterDeathWatchHandle(void)
+{
+#ifndef WIN32
+	/*
+	 * Create a pipe. Postmaster holds the write end of the pipe open
+	 * (POSTMASTER_FD_OWN), and children hold the read end. Children can
+	 * pass the read file descriptor to select() to wake up in case postmaster
+	 * dies, or check for postmaster death with a (read() == 0). Children must
+	 * close the write end as soon as possible after forking, because EOF
+	 * won't be signaled in the read end until all processes have closed the
+	 * write fd. That is taken care of in ClosePostmasterPorts().
+	 */
+	Assert(MyProcPid == PostmasterPid);
+	if (pipe(postmaster_alive_fds))
+		ereport(FATAL,
+				(errcode_for_file_access(),
+				 errmsg_internal("could not create pipe to monitor postmaster death: %m")));
+
+	/*
+	 * Set O_NONBLOCK to allow testing for the fd's presence with a read()
+	 * call.
+	 */
+	if (fcntl(postmaster_alive_fds[POSTMASTER_FD_WATCH], F_SETFL, O_NONBLOCK))
+		ereport(FATAL,
+				(errcode_for_socket_access(),
+				 errmsg_internal("could not set postmaster death monitoring pipe to non-blocking mode: %m")));
+
+#else
+	/*
+	 * On Windows, we use a process handle for the same purpose.
+	 */
+	if (DuplicateHandle(GetCurrentProcess(),
+						GetCurrentProcess(),
+						GetCurrentProcess(),
+						&PostmasterHandle,
+						0,
+						TRUE,
+						DUPLICATE_SAME_ACCESS) == 0)
+		ereport(FATAL,
+				(errmsg_internal("could not duplicate postmaster handle: error code %d",
+								 (int) GetLastError())));
+#endif   /* WIN32 */
+}

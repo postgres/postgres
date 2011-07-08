@@ -93,6 +93,7 @@
 #endif
 
 #include "miscadmin.h"
+#include "postmaster/postmaster.h"
 #include "storage/latch.h"
 #include "storage/shmem.h"
 
@@ -176,34 +177,44 @@ DisownLatch(volatile Latch *latch)
 }
 
 /*
- * Wait for given latch to be set or until timeout is exceeded.
- * If the latch is already set, the function returns immediately.
+ * Wait for a given latch to be set, postmaster death, or until timeout is
+ * exceeded. 'wakeEvents' is a bitmask that specifies which of those events
+ * to wait for. If the latch is already set (and WL_LATCH_SET is given), the
+ * function returns immediately.
  *
- * The 'timeout' is given in microseconds, and -1 means wait forever.
- * On some platforms, signals cause the timeout to be restarted, so beware
- * that the function can sleep for several times longer than the specified
- * timeout.
+ * The 'timeout' is given in microseconds. It must be >= 0 if WL_TIMEOUT
+ * event is given, otherwise it is ignored. On some platforms, signals cause
+ * the timeout to be restarted, so beware that the function can sleep for
+ * several times longer than the specified timeout.
  *
  * The latch must be owned by the current process, ie. it must be a
  * backend-local latch initialized with InitLatch, or a shared latch
  * associated with the current process by calling OwnLatch.
  *
- * Returns 'true' if the latch was set, or 'false' if timeout was reached.
+ * Returns bit field indicating which condition(s) caused the wake-up. Note
+ * that if multiple wake-up conditions are true, there is no guarantee that
+ * we return all of them in one call, but we will return at least one. Also,
+ * according to the select(2) man page on Linux, select(2) may spuriously
+ * return and report a file descriptor as readable, when it's not. We use
+ * select(2), so WaitLatch can also spuriously claim that a socket is
+ * readable, or postmaster has died, even when none of the wake conditions
+ * have been satisfied. That should be rare in practice, but the caller
+ * should not use the return value for anything critical, re-checking the
+ * situation with PostmasterIsAlive() or read() on a socket if necessary.
  */
-bool
-WaitLatch(volatile Latch *latch, long timeout)
+int
+WaitLatch(volatile Latch *latch, int wakeEvents, long timeout)
 {
-	return WaitLatchOrSocket(latch, PGINVALID_SOCKET, false, false, timeout) > 0;
+	return WaitLatchOrSocket(latch, wakeEvents, PGINVALID_SOCKET, timeout);
 }
 
 /*
- * Like WaitLatch, but will also return when there's data available in
- * 'sock' for reading or writing. Returns 0 if timeout was reached,
- * 1 if the latch was set, 2 if the socket became readable or writable.
+ * Like WaitLatch, but with an extra socket argument for WL_SOCKET_*
+ * conditions.
  */
 int
-WaitLatchOrSocket(volatile Latch *latch, pgsocket sock, bool forRead,
-				  bool forWrite, long timeout)
+WaitLatchOrSocket(volatile Latch *latch, int wakeEvents, pgsocket sock,
+				  long timeout)
 {
 	struct timeval tv,
 			   *tvp = NULL;
@@ -212,19 +223,26 @@ WaitLatchOrSocket(volatile Latch *latch, pgsocket sock, bool forRead,
 	int			rc;
 	int			result = 0;
 
-	if (latch->owner_pid != MyProcPid)
+	/* Ignore WL_SOCKET_* events if no valid socket is given */
+	if (sock == PGINVALID_SOCKET)
+		wakeEvents &= ~(WL_SOCKET_READABLE | WL_SOCKET_WRITEABLE);
+
+	Assert(wakeEvents != 0);	/* must have at least one wake event */
+
+	if ((wakeEvents & WL_LATCH_SET) && latch->owner_pid != MyProcPid)
 		elog(ERROR, "cannot wait on a latch owned by another process");
 
 	/* Initialize timeout */
-	if (timeout >= 0)
+	if (wakeEvents & WL_TIMEOUT)
 	{
+		Assert(timeout >= 0);
 		tv.tv_sec = timeout / 1000000L;
 		tv.tv_usec = timeout % 1000000L;
 		tvp = &tv;
 	}
 
 	waiting = true;
-	for (;;)
+	do
 	{
 		int			hifd;
 
@@ -235,16 +253,28 @@ WaitLatchOrSocket(volatile Latch *latch, pgsocket sock, bool forRead,
 		 * do that), and the select() will return immediately.
 		 */
 		drainSelfPipe();
-		if (latch->is_set)
+		if ((wakeEvents & WL_LATCH_SET) && latch->is_set)
 		{
-			result = 1;
+			result |= WL_LATCH_SET;
+			/*
+			 * Leave loop immediately, avoid blocking again. We don't attempt
+			 * to report any other events that might also be satisfied.
+			 */
 			break;
 		}
 
 		FD_ZERO(&input_mask);
 		FD_SET(selfpipe_readfd, &input_mask);
 		hifd = selfpipe_readfd;
-		if (sock != PGINVALID_SOCKET && forRead)
+
+		if (wakeEvents & WL_POSTMASTER_DEATH)
+		{
+			FD_SET(postmaster_alive_fds[POSTMASTER_FD_WATCH], &input_mask);
+			if (postmaster_alive_fds[POSTMASTER_FD_WATCH] > hifd)
+				hifd = postmaster_alive_fds[POSTMASTER_FD_WATCH];
+		}
+
+		if (wakeEvents & WL_SOCKET_READABLE)
 		{
 			FD_SET(sock, &input_mask);
 			if (sock > hifd)
@@ -252,14 +282,17 @@ WaitLatchOrSocket(volatile Latch *latch, pgsocket sock, bool forRead,
 		}
 
 		FD_ZERO(&output_mask);
-		if (sock != PGINVALID_SOCKET && forWrite)
+		if (wakeEvents & WL_SOCKET_WRITEABLE)
 		{
 			FD_SET(sock, &output_mask);
 			if (sock > hifd)
 				hifd = sock;
 		}
 
+		/* Sleep */
 		rc = select(hifd + 1, &input_mask, &output_mask, NULL, tvp);
+
+		/* Check return code */
 		if (rc < 0)
 		{
 			if (errno == EINTR)
@@ -268,20 +301,26 @@ WaitLatchOrSocket(volatile Latch *latch, pgsocket sock, bool forRead,
 					(errcode_for_socket_access(),
 					 errmsg("select() failed: %m")));
 		}
-		if (rc == 0)
+		if (rc == 0 && (wakeEvents & WL_TIMEOUT))
 		{
 			/* timeout exceeded */
-			result = 0;
-			break;
+			result |= WL_TIMEOUT;
 		}
-		if (sock != PGINVALID_SOCKET &&
-			((forRead && FD_ISSET(sock, &input_mask)) ||
-			 (forWrite && FD_ISSET(sock, &output_mask))))
+		if ((wakeEvents & WL_SOCKET_READABLE) && FD_ISSET(sock, &input_mask))
 		{
-			result = 2;
-			break;				/* data available in socket */
+			/* data available in socket */
+			result |= WL_SOCKET_READABLE;
 		}
-	}
+		if ((wakeEvents & WL_SOCKET_WRITEABLE) && FD_ISSET(sock, &output_mask))
+		{
+			result |= WL_SOCKET_WRITEABLE;
+		}
+		if ((wakeEvents & WL_POSTMASTER_DEATH) &&
+			 FD_ISSET(postmaster_alive_fds[POSTMASTER_FD_WATCH], &input_mask))
+		{
+			result |= WL_POSTMASTER_DEATH;
+		}
+	} while(result == 0);
 	waiting = false;
 
 	return result;

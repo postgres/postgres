@@ -556,7 +556,7 @@ AutoVacLauncherMain(int argc, char *argv[])
 		 * Emergency bailout if postmaster has died.  This is to avoid the
 		 * necessity for manual cleanup of all postmaster children.
 		 */
-		if (!PostmasterIsAlive(true))
+		if (!PostmasterIsAlive())
 			proc_exit(1);
 
 		launcher_determine_sleep((AutoVacuumShmem->av_freeWorkers != NULL),
@@ -593,7 +593,7 @@ AutoVacLauncherMain(int argc, char *argv[])
 			 * Emergency bailout if postmaster has died.  This is to avoid the
 			 * necessity for manual cleanup of all postmaster children.
 			 */
-			if (!PostmasterIsAlive(true))
+			if (!PostmasterIsAlive())
 				proc_exit(1);
 
 			if (got_SIGTERM || got_SIGHUP || got_SIGUSR2)

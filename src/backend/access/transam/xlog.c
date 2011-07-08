@@ -9938,7 +9938,7 @@ HandleStartupProcInterrupts(void)
 	 * Emergency bailout if postmaster has died.  This is to avoid the
 	 * necessity for manual cleanup of all postmaster children.
 	 */
-	if (IsUnderPostmaster && !PostmasterIsAlive(true))
+	if (IsUnderPostmaster && !PostmasterIsAlive())
 		exit(1);
 }
 
@@ -10165,7 +10165,7 @@ retry:
 					/*
 					 * Wait for more WAL to arrive, or timeout to be reached
 					 */
-					WaitLatch(&XLogCtl->recoveryWakeupLatch, 5000000L);
+					WaitLatch(&XLogCtl->recoveryWakeupLatch, WL_LATCH_SET | WL_TIMEOUT, 5000000L);
 					ResetLatch(&XLogCtl->recoveryWakeupLatch);
 				}
 				else

@@ -50,6 +50,6 @@ extern bool IsPostmasterChildWalSender(int slot);
 extern void MarkPostmasterChildActive(void);
 extern void MarkPostmasterChildInactive(void);
 extern void MarkPostmasterChildWalSender(void);
-extern bool PostmasterIsAlive(bool amDirectChild);
+extern bool PostmasterIsAlive(void);
 
 #endif   /* PMSIGNAL_H */

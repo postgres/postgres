@@ -212,7 +212,7 @@ WalSndHandshake(void)
 		 * Emergency bailout if postmaster has died.  This is to avoid the
 		 * necessity for manual cleanup of all postmaster children.
 		 */
-		if (!PostmasterIsAlive(true))
+		if (!PostmasterIsAlive())
 			exit(1);
 
 		/*
@@ -713,7 +713,7 @@ WalSndLoop(void)
 		 * Emergency bailout if postmaster has died.  This is to avoid the
 		 * necessity for manual cleanup of all postmaster children.
 		 */
-		if (!PostmasterIsAlive(true))
+		if (!PostmasterIsAlive())
 			exit(1);
 
 		/* Process any requests or signals received recently */
@@ -779,6 +779,7 @@ WalSndLoop(void)
 		{
 			TimestampTz finish_time = 0;
 			long		sleeptime;
+			int			wakeEvents;
 
 			/* Reschedule replication timeout */
 			if (replication_timeout > 0)
@@ -805,9 +806,11 @@ WalSndLoop(void)
 			}
 
 			/* Sleep */
-			WaitLatchOrSocket(&MyWalSnd->latch, MyProcPort->sock,
-							  true, pq_is_send_pending(),
-							  sleeptime * 1000L);
+			wakeEvents  = WL_LATCH_SET | WL_SOCKET_READABLE | WL_TIMEOUT;
+			if (pq_is_send_pending())
+				wakeEvents |= WL_SOCKET_WRITEABLE;
+			WaitLatchOrSocket(&MyWalSnd->latch, wakeEvents,
+							  MyProcPort->sock, sleeptime * 1000L);
 
 			/* Check for replication timeout */
 			if (replication_timeout > 0 &&

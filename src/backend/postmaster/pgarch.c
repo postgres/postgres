@@ -40,6 +40,7 @@
 #include "postmaster/postmaster.h"
 #include "storage/fd.h"
 #include "storage/ipc.h"
+#include "storage/latch.h"
 #include "storage/pg_shmem.h"
 #include "storage/pmsignal.h"
 #include "utils/guc.h"
@@ -86,6 +87,11 @@ static volatile sig_atomic_t got_SIGHUP = false;
 static volatile sig_atomic_t got_SIGTERM = false;
 static volatile sig_atomic_t wakened = false;
 static volatile sig_atomic_t ready_to_stop = false;
+
+/*
+ * Latch used by signal handlers to wake up the sleep in the main loop.
+ */
+static Latch mainloop_latch;
 
 /* ----------
  * Local function forward declarations
@@ -228,6 +234,8 @@ PgArchiverMain(int argc, char *argv[])
 
 	MyProcPid = getpid();		/* reset MyProcPid */
 
+	InitLatch(&mainloop_latch); /* initialize latch used in main loop */
+
 	MyStartTime = time(NULL);	/* record Start Time for logging */
 
 	/*
@@ -282,6 +290,8 @@ ArchSigHupHandler(SIGNAL_ARGS)
 {
 	/* set flag to re-read config file at next convenient time */
 	got_SIGHUP = true;
+	/* let the waiting loop iterate */
+	SetLatch(&mainloop_latch);
 }
 
 /* SIGTERM signal handler for archiver process */
@@ -295,6 +305,8 @@ ArchSigTermHandler(SIGNAL_ARGS)
 	 * archive commands.
 	 */
 	got_SIGTERM = true;
+	/* let the waiting loop iterate */
+	SetLatch(&mainloop_latch);
 }
 
 /* SIGUSR1 signal handler for archiver process */
@@ -303,6 +315,8 @@ pgarch_waken(SIGNAL_ARGS)
 {
 	/* set flag that there is work to be done */
 	wakened = true;
+	/* let the waiting loop iterate */
+	SetLatch(&mainloop_latch);
 }
 
 /* SIGUSR2 signal handler for archiver process */
@@ -311,6 +325,8 @@ pgarch_waken_stop(SIGNAL_ARGS)
 {
 	/* set flag to do a final cycle and shut down afterwards */
 	ready_to_stop = true;
+	/* let the waiting loop iterate */
+	SetLatch(&mainloop_latch);
 }
 
 /*
@@ -321,7 +337,7 @@ pgarch_waken_stop(SIGNAL_ARGS)
 static void
 pgarch_MainLoop(void)
 {
-	time_t		last_copy_time = 0;
+	pg_time_t	last_copy_time = 0;
 	bool		time_to_stop;
 
 	/*
@@ -332,8 +348,15 @@ pgarch_MainLoop(void)
 	 */
 	wakened = true;
 
+	/*
+	 * There shouldn't be anything for the archiver to do except to wait
+	 * for a signal ... however, the archiver exists to protect our data,
+	 * so she wakes up occasionally to allow herself to be proactive.
+	 */
 	do
 	{
+		ResetLatch(&mainloop_latch);
+
 		/* When we get SIGUSR2, we do one more archive cycle, then exit */
 		time_to_stop = ready_to_stop;
 
@@ -371,24 +394,26 @@ pgarch_MainLoop(void)
 		}
 
 		/*
-		 * There shouldn't be anything for the archiver to do except to wait
-		 * for a signal ... however, the archiver exists to protect our data,
-		 * so she wakes up occasionally to allow herself to be proactive.
-		 *
-		 * On some platforms, signals won't interrupt the sleep.  To ensure we
-		 * respond reasonably promptly when someone signals us, break down the
-		 * sleep into 1-second increments, and check for interrupts after each
-		 * nap.
+		 * Sleep until a signal is received, or until a poll is forced by
+		 * PGARCH_AUTOWAKE_INTERVAL having passed since last_copy_time, or
+		 * until postmaster dies.
 		 */
-		while (!(wakened || ready_to_stop || got_SIGHUP ||
-				 !PostmasterIsAlive(true)))
+		if (!time_to_stop) /* Don't wait during last iteration */
 		{
-			time_t		curtime;
+			pg_time_t curtime = (pg_time_t) time(NULL);
+			int		timeout;
 
-			pg_usleep(1000000L);
-			curtime = time(NULL);
-			if ((unsigned int) (curtime - last_copy_time) >=
-				(unsigned int) PGARCH_AUTOWAKE_INTERVAL)
+			timeout = PGARCH_AUTOWAKE_INTERVAL - (curtime - last_copy_time);
+			if (timeout > 0)
+			{
+				int rc;
+				rc = WaitLatch(&mainloop_latch,
+							   WL_LATCH_SET | WL_TIMEOUT | WL_POSTMASTER_DEATH,
+							   timeout * 1000000L);
+				if (rc & WL_TIMEOUT)
+					wakened = true;
+			}
+			else
 				wakened = true;
 		}
 
@@ -397,7 +422,7 @@ pgarch_MainLoop(void)
 		 * or after completing one more archiving cycle after receiving
 		 * SIGUSR2.
 		 */
-	} while (PostmasterIsAlive(true) && !time_to_stop);
+	} while (PostmasterIsAlive() && !time_to_stop);
 }
 
 /*
@@ -429,7 +454,7 @@ pgarch_ArchiverCopyLoop(void)
 			 * command, and the second is to avoid conflicts with another
 			 * archiver spawned by a newer postmaster.
 			 */
-			if (got_SIGTERM || !PostmasterIsAlive(true))
+			if (got_SIGTERM || !PostmasterIsAlive())
 				return;
 
 			/*
