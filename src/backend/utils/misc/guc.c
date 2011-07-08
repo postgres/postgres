@@ -5392,6 +5392,46 @@ GetConfigOption(const char *name, bool restrict_superuser)
 }
 
 /*
+ * As above, but return NULL if no such option.
+ * (This is a stopgap to avoid changing GetConfigOption's API within the
+ * 9.0.x release series.)
+ */
+const char *
+GetConfigOptionNoError(const char *name)
+{
+	struct config_generic *record;
+	static char buffer[256];
+
+	record = find_option(name, false, ERROR);
+	if (record == NULL)
+		return NULL;
+
+	switch (record->vartype)
+	{
+		case PGC_BOOL:
+			return *((struct config_bool *) record)->variable ? "on" : "off";
+
+		case PGC_INT:
+			snprintf(buffer, sizeof(buffer), "%d",
+					 *((struct config_int *) record)->variable);
+			return buffer;
+
+		case PGC_REAL:
+			snprintf(buffer, sizeof(buffer), "%g",
+					 *((struct config_real *) record)->variable);
+			return buffer;
+
+		case PGC_STRING:
+			return *((struct config_string *) record)->variable;
+
+		case PGC_ENUM:
+			return config_enum_lookup_by_value((struct config_enum *) record,
+								 *((struct config_enum *) record)->variable);
+	}
+	return NULL;
+}
+
+/*
  * Get the RESET value associated with the given option.
  *
  * Note: this is not re-entrant, due to use of static result buffer;

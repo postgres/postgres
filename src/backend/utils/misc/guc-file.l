@@ -317,9 +317,9 @@ ProcessConfigFile(GucContext context)
 		/* In SIGHUP cases in the postmaster, report changes */
 		if (context == PGC_SIGHUP && !IsUnderPostmaster)
 		{
-			const char *preval = GetConfigOption(item->name, false);
+			const char *preval = GetConfigOptionNoError(item->name);
 
-			/* string variables could be NULL; treat that as empty */
+			/* If option doesn't exist yet or is NULL, treat as empty string */
 			if (!preval)
 				preval = "";
 			/* must dup, else might have dangling pointer below */
@@ -334,7 +334,7 @@ ProcessConfigFile(GucContext context)
 
 			if (pre_value)
 			{
-				const char *post_value = GetConfigOption(item->name, false);
+				const char *post_value = GetConfigOptionNoError(item->name);
 
 				if (!post_value)
 					post_value = "";

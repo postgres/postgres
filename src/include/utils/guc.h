@@ -253,6 +253,7 @@ extern void DefineCustomEnumVariable(
 extern void EmitWarningsOnPlaceholders(const char *className);
 
 extern const char *GetConfigOption(const char *name, bool restrict_superuser);
+extern const char *GetConfigOptionNoError(const char *name);
 extern const char *GetConfigOptionResetString(const char *name);
 extern void ProcessConfigFile(GucContext context);
 extern void InitializeGUCOptions(void);
