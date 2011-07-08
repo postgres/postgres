@@ -2413,6 +2413,13 @@
        </para>
       </listitem>
 
+      <listitem>
+       <para>
+         Improve support for building with
+         <application>Clang</application> (Peter Eisentraut)
+       </para>
+      </listitem>
+
      </itemizedlist>
 
     <sect4>
