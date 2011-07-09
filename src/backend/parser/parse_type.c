@@ -108,8 +108,14 @@ LookupTypeName(ParseState *pstate, const TypeName *typeName,
 				break;
 		}
 
-		/* look up the field */
-		relid = RangeVarGetRelid(rel, false);
+		/*
+		 * Look up the field.
+		 *
+		 * XXX: As no lock is taken here, this might fail in the presence
+		 * of concurrent DDL.  But taking a lock would carry a performance
+		 * penalty and would also require a permissions check.
+		 */
+		relid = RangeVarGetRelid(rel, NoLock, false, false);
 		attnum = get_attnum(relid, field);
 		if (attnum == InvalidAttrNumber)
 			ereport(ERROR,

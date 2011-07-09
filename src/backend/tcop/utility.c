@@ -77,7 +77,15 @@ CheckRelationOwnership(RangeVar *rel, bool noCatalogs)
 	Oid			relOid;
 	HeapTuple	tuple;
 
-	relOid = RangeVarGetRelid(rel, false);
+	/*
+	 * XXX: This is unsafe in the presence of concurrent DDL, since it is
+	 * called before acquiring any lock on the target relation.  However,
+	 * locking the target relation (especially using something like
+	 * AccessExclusiveLock) before verifying that the user has permissions
+	 * is not appealing either.
+	 */
+	relOid = RangeVarGetRelid(rel, NoLock, false, false);
+
 	tuple = SearchSysCache1(RELOID, ObjectIdGetDatum(relOid));
 	if (!HeapTupleIsValid(tuple))		/* should not happen */
 		elog(ERROR, "cache lookup failed for relation %u", relOid);
@@ -1111,20 +1119,17 @@ standard_ProcessUtility(Node *parsetree,
 		case T_DropPropertyStmt:
 			{
 				DropPropertyStmt *stmt = (DropPropertyStmt *) parsetree;
-				Oid			relId;
-
-				relId = RangeVarGetRelid(stmt->relation, false);
 
 				switch (stmt->removeType)
 				{
 					case OBJECT_RULE:
 						/* RemoveRewriteRule checks permissions */
-						RemoveRewriteRule(relId, stmt->property,
+						RemoveRewriteRule(stmt->relation, stmt->property,
 										  stmt->behavior, stmt->missing_ok);
 						break;
 					case OBJECT_TRIGGER:
 						/* DropTrigger checks permissions */
-						DropTrigger(relId, stmt->property,
+						DropTrigger(stmt->relation, stmt->property,
 									stmt->behavior, stmt->missing_ok);
 						break;
 					default:

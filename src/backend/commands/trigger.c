@@ -194,7 +194,17 @@ CreateTrigger(CreateTrigStmt *stmt, const char *queryString,
 						RelationGetRelationName(rel))));
 
 	if (stmt->isconstraint && stmt->constrrel != NULL)
-		constrrelid = RangeVarGetRelid(stmt->constrrel, false);
+	{
+		/*
+		 * We must take a lock on the target relation to protect against
+		 * concurrent drop.  It's not clear that AccessShareLock is strong
+		 * enough, but we certainly need at least that much... otherwise,
+		 * we might end up creating a pg_constraint entry referencing a
+		 * nonexistent table.
+		 */
+		constrrelid = RangeVarGetRelid(stmt->constrrel, AccessShareLock, false,
+									   false);
+	}
 
 	/* permission checks */
 	if (!isInternal)
@@ -1020,10 +1030,14 @@ ConvertTriggerToFK(CreateTrigStmt *stmt, Oid funcoid)
  * DropTrigger - drop an individual trigger by name
  */
 void
-DropTrigger(Oid relid, const char *trigname, DropBehavior behavior,
+DropTrigger(RangeVar *relation, const char *trigname, DropBehavior behavior,
 			bool missing_ok)
 {
+	Oid			relid;
 	ObjectAddress object;
+
+	/* lock level should match RemoveTriggerById */
+	relid = RangeVarGetRelid(relation, ShareRowExclusiveLock, false, false);
 
 	object.classId = TriggerRelationId;
 	object.objectId = get_trigger_oid(relid, trigname, missing_ok);

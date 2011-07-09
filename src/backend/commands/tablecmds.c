@@ -764,8 +764,15 @@ RemoveRelations(DropStmt *drop)
 		 */
 		AcceptInvalidationMessages();
 
-		/* Look up the appropriate relation using namespace search */
-		relOid = RangeVarGetRelid(rel, true);
+		/*
+		 * Look up the appropriate relation using namespace search.
+		 *
+		 * XXX: Doing this without a lock is unsafe in the presence of
+		 * concurrent DDL, but acquiring a lock here might violate the rule
+		 * that a table must be locked before its corresponding index.
+		 * So, for now, we ignore the hazard.
+		 */
+		relOid = RangeVarGetRelid(rel, NoLock, true, false);
 
 		/* Not there? */
 		if (!OidIsValid(relOid))
@@ -2234,6 +2241,8 @@ RenameRelation(Oid myrelid, const char *newrelname, ObjectType reltype)
 	/*
 	 * Grab an exclusive lock on the target table, index, sequence or view,
 	 * which we will NOT release until end of transaction.
+	 *
+	 * Lock level used here should match ExecRenameStmt
 	 */
 	targetrelation = relation_open(myrelid, AccessExclusiveLock);
 

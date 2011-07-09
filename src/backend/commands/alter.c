@@ -108,7 +108,12 @@ ExecRenameStmt(RenameStmt *stmt)
 
 				CheckRelationOwnership(stmt->relation, true);
 
-				relid = RangeVarGetRelid(stmt->relation, false);
+				/*
+				 * Lock level used here should match what will be taken later,
+				 * in RenameRelation, renameatt, or renametrig.
+				 */
+				relid = RangeVarGetRelid(stmt->relation, AccessExclusiveLock,
+										 false, false);
 
 				switch (stmt->renameType)
 				{

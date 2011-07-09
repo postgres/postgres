@@ -2942,7 +2942,8 @@ reindex_relation(Oid relid, int flags)
 
 	/*
 	 * Open and lock the relation.	ShareLock is sufficient since we only need
-	 * to prevent schema and data changes in it.
+	 * to prevent schema and data changes in it.  The lock level used here
+	 * should match ReindexTable().
 	 */
 	rel = heap_open(relid, ShareLock);
 

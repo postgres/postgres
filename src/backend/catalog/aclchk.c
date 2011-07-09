@@ -583,6 +583,11 @@ ExecGrantStmt_oids(InternalGrant *istmt)
  * objectNamesToOids
  *
  * Turn a list of object names of a given type into an Oid list.
+ *
+ * XXX: This function doesn't take any sort of locks on the objects whose
+ * names it looks up.  In the face of concurrent DDL, we might easily latch
+ * onto an old version of an object, causing the GRANT or REVOKE statement
+ * to fail.
  */
 static List *
 objectNamesToOids(GrantObjectType objtype, List *objnames)
@@ -601,7 +606,7 @@ objectNamesToOids(GrantObjectType objtype, List *objnames)
 				RangeVar   *relvar = (RangeVar *) lfirst(cell);
 				Oid			relOid;
 
-				relOid = RangeVarGetRelid(relvar, false);
+				relOid = RangeVarGetRelid(relvar, NoLock, false, false);
 				objects = lappend_oid(objects, relOid);
 			}
 			break;

@@ -22,6 +22,9 @@
 #include "utils/inval.h"
 
 
+uint64 SharedInvalidMessageCounter;
+
+
 /*
  * Because backends sitting idle will not be reading sinval events, we
  * need a way to give an idle backend a swift kick in the rear and make
@@ -90,6 +93,7 @@ ReceiveSharedInvalidMessages(
 	{
 		SharedInvalidationMessage *msg = &messages[nextmsg++];
 
+		SharedInvalidMessageCounter++;
 		invalFunction(msg);
 	}
 
@@ -106,6 +110,7 @@ ReceiveSharedInvalidMessages(
 		{
 			/* got a reset message */
 			elog(DEBUG4, "cache state reset");
+			SharedInvalidMessageCounter++;
 			resetFunction();
 			break;				/* nothing more to do */
 		}
@@ -118,6 +123,7 @@ ReceiveSharedInvalidMessages(
 		{
 			SharedInvalidationMessage *msg = &messages[nextmsg++];
 
+			SharedInvalidMessageCounter++;
 			invalFunction(msg);
 		}
 

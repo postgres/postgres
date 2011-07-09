@@ -823,7 +823,9 @@ regclassin(PG_FUNCTION_ARGS)
 	 */
 	names = stringToQualifiedNameList(class_name_or_oid);
 
-	result = RangeVarGetRelid(makeRangeVarFromNameList(names), false);
+	/* We might not even have permissions on this relation; don't lock it. */
+	result = RangeVarGetRelid(makeRangeVarFromNameList(names), NoLock, false,
+							  false);
 
 	PG_RETURN_OID(result);
 }
@@ -1294,7 +1296,9 @@ text_regclass(PG_FUNCTION_ARGS)
 	RangeVar   *rv;
 
 	rv = makeRangeVarFromNameList(textToQualifiedNameList(relname));
-	result = RangeVarGetRelid(rv, false);
+
+	/* We might not even have permissions on this relation; don't lock it. */
+	result = RangeVarGetRelid(rv, NoLock, false, false);
 
 	PG_RETURN_OID(result);
 }

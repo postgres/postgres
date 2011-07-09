@@ -1531,9 +1531,15 @@ ReindexIndex(RangeVar *indexRelation)
 	Oid			indOid;
 	HeapTuple	tuple;
 
-	indOid = RangeVarGetRelid(indexRelation, false);
+	/*
+	 * XXX: This is not safe in the presence of concurrent DDL. We should
+	 * take AccessExclusiveLock here, but that would violate the rule that
+	 * indexes should only be locked after their parent tables.  For now,
+	 * we live with it.
+	 */
+	indOid = RangeVarGetRelid(indexRelation, NoLock, false, false);
 	tuple = SearchSysCache1(RELOID, ObjectIdGetDatum(indOid));
-	if (!HeapTupleIsValid(tuple))		/* shouldn't happen */
+	if (!HeapTupleIsValid(tuple))
 		elog(ERROR, "cache lookup failed for relation %u", indOid);
 
 	if (((Form_pg_class) GETSTRUCT(tuple))->relkind != RELKIND_INDEX)
@@ -1562,7 +1568,8 @@ ReindexTable(RangeVar *relation)
 	Oid			heapOid;
 	HeapTuple	tuple;
 
-	heapOid = RangeVarGetRelid(relation, false);
+	/* The lock level used here should match reindex_relation(). */
+	heapOid = RangeVarGetRelid(relation, ShareLock, false, false);
 	tuple = SearchSysCache1(RELOID, ObjectIdGetDatum(heapOid));
 	if (!HeapTupleIsValid(tuple))		/* shouldn't happen */
 		elog(ERROR, "cache lookup failed for relation %u", heapOid);

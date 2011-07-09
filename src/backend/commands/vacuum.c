@@ -318,7 +318,16 @@ get_rel_oids(Oid relid, const RangeVar *vacrel)
 		/* Process a specific relation */
 		Oid			relid;
 
-		relid = RangeVarGetRelid(vacrel, false);
+		/*
+		 * Since we don't take a lock here, the relation might be gone,
+		 * or the RangeVar might no longer refer to the OID we look up
+		 * here.  In the former case, VACUUM will do nothing; in the
+		 * latter case, it will process the OID we looked up here, rather
+		 * than the new one.  Neither is ideal, but there's little practical
+		 * alternative, since we're going to commit this transaction and
+		 * begin a new one between now and then.
+		 */
+		relid = RangeVarGetRelid(vacrel, NoLock, false, false);
 
 		/* Make a relation list entry for this guy */
 		oldcontext = MemoryContextSwitchTo(vac_context);

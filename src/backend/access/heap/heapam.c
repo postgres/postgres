@@ -975,26 +975,11 @@ relation_openrv(const RangeVar *relation, LOCKMODE lockmode)
 {
 	Oid			relOid;
 
-	/*
-	 * Check for shared-cache-inval messages before trying to open the
-	 * relation.  This is needed to cover the case where the name identifies a
-	 * rel that has been dropped and recreated since the start of our
-	 * transaction: if we don't flush the old syscache entry then we'll latch
-	 * onto that entry and suffer an error when we do RelationIdGetRelation.
-	 * Note that relation_open does not need to do this, since a relation's
-	 * OID never changes.
-	 *
-	 * We skip this if asked for NoLock, on the assumption that the caller has
-	 * already ensured some appropriate lock is held.
-	 */
-	if (lockmode != NoLock)
-		AcceptInvalidationMessages();
-
-	/* Look up the appropriate relation using namespace search */
-	relOid = RangeVarGetRelid(relation, false);
+	/* Look up and lock the appropriate relation using namespace search */
+	relOid = RangeVarGetRelid(relation, lockmode, false, false);
 
 	/* Let relation_open do the rest */
-	return relation_open(relOid, lockmode);
+	return relation_open(relOid, NoLock);
 }
 
 /* ----------------
@@ -1012,30 +997,15 @@ relation_openrv_extended(const RangeVar *relation, LOCKMODE lockmode,
 {
 	Oid			relOid;
 
-	/*
-	 * Check for shared-cache-inval messages before trying to open the
-	 * relation.  This is needed to cover the case where the name identifies a
-	 * rel that has been dropped and recreated since the start of our
-	 * transaction: if we don't flush the old syscache entry then we'll latch
-	 * onto that entry and suffer an error when we do RelationIdGetRelation.
-	 * Note that relation_open does not need to do this, since a relation's
-	 * OID never changes.
-	 *
-	 * We skip this if asked for NoLock, on the assumption that the caller has
-	 * already ensured some appropriate lock is held.
-	 */
-	if (lockmode != NoLock)
-		AcceptInvalidationMessages();
-
-	/* Look up the appropriate relation using namespace search */
-	relOid = RangeVarGetRelid(relation, missing_ok);
+	/* Look up and lock the appropriate relation using namespace search */
+	relOid = RangeVarGetRelid(relation, lockmode, missing_ok, false);
 
 	/* Return NULL on not-found */
 	if (!OidIsValid(relOid))
 		return NULL;
 
 	/* Let relation_open do the rest */
-	return relation_open(relOid, lockmode);
+	return relation_open(relOid, NoLock);
 }
 
 /* ----------------

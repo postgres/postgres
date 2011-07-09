@@ -116,6 +116,10 @@ typedef union
 } SharedInvalidationMessage;
 
 
+/* Counter of messages processed; don't worry about overflow. */
+extern uint64 SharedInvalidMessageCounter;
+
+
 extern void SendSharedInvalidMessages(const SharedInvalidationMessage *msgs,
 						  int n);
 extern void ReceiveSharedInvalidMessages(

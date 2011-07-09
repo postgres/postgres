@@ -1708,7 +1708,8 @@ plpgsql_parse_cwordtype(List *idents)
 		relvar = makeRangeVar(strVal(linitial(idents)),
 							  strVal(lsecond(idents)),
 							  -1);
-		classOid = RangeVarGetRelid(relvar, true);
+		/* Can't lock relation - we might not have privileges. */
+		classOid = RangeVarGetRelid(relvar, NoLock, true, false);
 		if (!OidIsValid(classOid))
 			goto done;
 		fldname = strVal(lthird(idents));
@@ -1804,16 +1805,11 @@ plpgsql_parse_cwordrowtype(List *idents)
 	/* Avoid memory leaks in long-term function context */
 	oldCxt = MemoryContextSwitchTo(compile_tmp_cxt);
 
-	/* Lookup the relation */
+	/* Look up relation name.  Can't lock it - we might not have privileges. */
 	relvar = makeRangeVar(strVal(linitial(idents)),
 						  strVal(lsecond(idents)),
 						  -1);
-	classOid = RangeVarGetRelid(relvar, true);
-	if (!OidIsValid(classOid))
-		ereport(ERROR,
-				(errcode(ERRCODE_UNDEFINED_TABLE),
-				 errmsg("relation \"%s.%s\" does not exist",
-						strVal(linitial(idents)), strVal(lsecond(idents)))));
+	classOid = RangeVarGetRelid(relvar, NoLock, false, false);
 
 	MemoryContextSwitchTo(oldCxt);
 

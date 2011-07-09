@@ -81,10 +81,11 @@ LockRelationOid(Oid relid, LOCKMODE lockmode)
 	/*
 	 * Now that we have the lock, check for invalidation messages, so that we
 	 * will update or flush any stale relcache entry before we try to use it.
-	 * We can skip this in the not-uncommon case that we already had the same
-	 * type of lock being requested, since then no one else could have
-	 * modified the relcache entry in an undesirable way.  (In the case where
-	 * our own xact modifies the rel, the relcache update happens via
+	 * RangeVarGetRelid() specifically relies on us for this.  We can skip
+	 * this in the not-uncommon case that we already had the same type of lock
+	 * being requested, since then no one else could have modified the
+	 * relcache entry in an undesirable way.  (In the case where our own xact
+	 * modifies the rel, the relcache update happens via
 	 * CommandCounterIncrement, not here.)
 	 */
 	if (res != LOCKACQUIRE_ALREADY_HELD)

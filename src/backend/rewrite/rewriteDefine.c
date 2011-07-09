@@ -196,11 +196,15 @@ DefineRule(RuleStmt *stmt, const char *queryString)
 	Node	   *whereClause;
 	Oid			relId;
 
-	/* Parse analysis ... */
+	/* Parse analysis. */
 	transformRuleStmt(stmt, queryString, &actions, &whereClause);
 
-	/* ... find the relation ... */
-	relId = RangeVarGetRelid(stmt->relation, false);
+	/*
+	 * Find and lock the relation.  Lock level should match
+	 * DefineQueryRewrite.
+	 */
+	relId = RangeVarGetRelid(stmt->relation, AccessExclusiveLock, false,
+							 false);
 
 	/* ... and execute */
 	DefineQueryRewrite(stmt->rulename,
@@ -242,6 +246,8 @@ DefineQueryRewrite(char *rulename,
 	 * grab ShareRowExclusiveLock to lock out insert/update/delete actions and
 	 * to ensure that we lock out current CREATE RULE statements; but because
 	 * of race conditions in access to catalog entries, we can't do that yet.
+	 *
+	 * Note that this lock level should match the one used in DefineRule.
 	 */
 	event_relation = heap_open(event_relid, AccessExclusiveLock);
 

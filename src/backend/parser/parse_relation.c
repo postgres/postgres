@@ -273,11 +273,17 @@ searchRangeTable(ParseState *pstate, RangeVar *relation)
 	 * If it's an unqualified name, check for possible CTE matches. A CTE
 	 * hides any real relation matches.  If no CTE, look for a matching
 	 * relation.
+	 *
+	 * NB: It's not critical that RangeVarGetRelid return the correct answer
+	 * here in the face of concurrent DDL.  If it doesn't, the worst case
+	 * scenario is a less-clear error message.  Also, the tables involved in
+	 * the query are already locked, which reduces the number of cases in
+	 * which surprising behavior can occur.  So we do the name lookup unlocked.
 	 */
 	if (!relation->schemaname)
 		cte = scanNameSpaceForCTE(pstate, refname, &ctelevelsup);
 	if (!cte)
-		relId = RangeVarGetRelid(relation, true);
+		relId = RangeVarGetRelid(relation, NoLock, true, false);
 
 	/* Now look for RTEs matching either the relation/CTE or the alias */
 	for (levelsup = 0;

@@ -24,8 +24,8 @@
 #include "utils/acl.h"
 #include "utils/lsyscache.h"
 
-static void LockTableRecurse(Oid reloid, RangeVar *rv,
-				 LOCKMODE lockmode, bool nowait, bool recurse);
+static void LockTableRecurse(Relation rel, LOCKMODE lockmode, bool nowait,
+				 bool recurse);
 
 
 /*
@@ -37,99 +37,39 @@ LockTableCommand(LockStmt *lockstmt)
 	ListCell   *p;
 
 	/*
+	 * During recovery we only accept these variations: LOCK TABLE foo IN
+	 * ACCESS SHARE MODE LOCK TABLE foo IN ROW SHARE MODE LOCK TABLE foo
+	 * IN ROW EXCLUSIVE MODE This test must match the restrictions defined
+	 * in LockAcquire()
+	 */
+	if (lockstmt->mode > RowExclusiveLock)
+		PreventCommandDuringRecovery("LOCK TABLE");
+
+	/*
 	 * Iterate over the list and process the named relations one at a time
 	 */
 	foreach(p, lockstmt->relations)
 	{
-		RangeVar   *relation = (RangeVar *) lfirst(p);
-		bool		recurse = interpretInhOption(relation->inhOpt);
+		RangeVar   *rv = (RangeVar *) lfirst(p);
+		Relation	rel;
+		bool		recurse = interpretInhOption(rv->inhOpt);
 		Oid			reloid;
 
-		reloid = RangeVarGetRelid(relation, false);
+		reloid = RangeVarGetRelid(rv, lockstmt->mode, false, lockstmt->nowait);
+		rel = relation_open(reloid, NoLock);
 
-		/*
-		 * During recovery we only accept these variations: LOCK TABLE foo IN
-		 * ACCESS SHARE MODE LOCK TABLE foo IN ROW SHARE MODE LOCK TABLE foo
-		 * IN ROW EXCLUSIVE MODE This test must match the restrictions defined
-		 * in LockAcquire()
-		 */
-		if (lockstmt->mode > RowExclusiveLock)
-			PreventCommandDuringRecovery("LOCK TABLE");
-
-		LockTableRecurse(reloid, relation,
-						 lockstmt->mode, lockstmt->nowait, recurse);
+		LockTableRecurse(rel, lockstmt->mode, lockstmt->nowait, recurse);
 	}
 }
 
 /*
  * Apply LOCK TABLE recursively over an inheritance tree
- *
- * At top level, "rv" is the original command argument; we use it to throw
- * an appropriate error message if the relation isn't there.  Below top level,
- * "rv" is NULL and we should just silently ignore any dropped child rel.
  */
 static void
-LockTableRecurse(Oid reloid, RangeVar *rv,
-				 LOCKMODE lockmode, bool nowait, bool recurse)
+LockTableRecurse(Relation rel, LOCKMODE lockmode, bool nowait, bool recurse)
 {
-	Relation	rel;
 	AclResult	aclresult;
-
-	/*
-	 * Acquire the lock.  We must do this first to protect against concurrent
-	 * drops.  Note that a lock against an already-dropped relation's OID
-	 * won't fail.
-	 */
-	if (nowait)
-	{
-		if (!ConditionalLockRelationOid(reloid, lockmode))
-		{
-			/* try to throw error by name; relation could be deleted... */
-			char	   *relname = rv ? rv->relname : get_rel_name(reloid);
-
-			if (relname)
-				ereport(ERROR,
-						(errcode(ERRCODE_LOCK_NOT_AVAILABLE),
-						 errmsg("could not obtain lock on relation \"%s\"",
-								relname)));
-			else
-				ereport(ERROR,
-						(errcode(ERRCODE_LOCK_NOT_AVAILABLE),
-					  errmsg("could not obtain lock on relation with OID %u",
-							 reloid)));
-		}
-	}
-	else
-		LockRelationOid(reloid, lockmode);
-
-	/*
-	 * Now that we have the lock, check to see if the relation really exists
-	 * or not.
-	 */
-	rel = try_relation_open(reloid, NoLock);
-
-	if (!rel)
-	{
-		/* Release useless lock */
-		UnlockRelationOid(reloid, lockmode);
-
-		/* At top level, throw error; otherwise, ignore this child rel */
-		if (rv)
-		{
-			if (rv->schemaname)
-				ereport(ERROR,
-						(errcode(ERRCODE_UNDEFINED_TABLE),
-						 errmsg("relation \"%s.%s\" does not exist",
-								rv->schemaname, rv->relname)));
-			else
-				ereport(ERROR,
-						(errcode(ERRCODE_UNDEFINED_TABLE),
-						 errmsg("relation \"%s\" does not exist",
-								rv->relname)));
-		}
-
-		return;
-	}
+	Oid			reloid = RelationGetRelid(rel);
 
 	/* Verify adequate privilege */
 	if (lockmode == AccessShareLock)
@@ -159,12 +99,48 @@ LockTableRecurse(Oid reloid, RangeVar *rv,
 	{
 		List	   *children = find_inheritance_children(reloid, NoLock);
 		ListCell   *lc;
+		Relation	childrel;
 
 		foreach(lc, children)
 		{
 			Oid			childreloid = lfirst_oid(lc);
 
-			LockTableRecurse(childreloid, NULL, lockmode, nowait, recurse);
+			/*
+			 * Acquire the lock, to protect against concurrent drops.  Note
+			 * that a lock against an already-dropped relation's OID won't
+			 * fail.
+			 */
+			if (!nowait)
+				LockRelationOid(childreloid, lockmode);
+			else if (!ConditionalLockRelationOid(childreloid, lockmode))
+			{
+				/* try to throw error by name; relation could be deleted... */
+				char	   *relname = get_rel_name(childreloid);
+
+				if (relname)
+					ereport(ERROR,
+							(errcode(ERRCODE_LOCK_NOT_AVAILABLE),
+							 errmsg("could not obtain lock on relation \"%s\"",
+								relname)));
+				else
+					ereport(ERROR,
+							(errcode(ERRCODE_LOCK_NOT_AVAILABLE),
+					 errmsg("could not obtain lock on relation with OID %u",
+								 reloid)));
+			}
+
+			/*
+			 * Now that we have the lock, check to see if the relation really
+			 * exists or not.
+			 */
+			childrel = try_relation_open(childreloid, NoLock);
+			if (!childrel)
+			{
+				/* Release useless lock */
+				UnlockRelationOid(childreloid, lockmode);
+			}
+
+			LockTableRecurse(childrel, lockmode, nowait, recurse);
 		}
 	}
 
