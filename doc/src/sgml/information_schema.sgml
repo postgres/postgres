@@ -488,8 +488,13 @@
 
      <row>
       <entry><literal>interval_precision</literal></entry>
-      <entry><type>character_data</type></entry>
-      <entry>Not yet implemented</entry>
+      <entry><type>cardinal_number</type></entry>
+      <entry>
+       Applies to a feature not available
+       in <productname>PostgreSQL</productname>
+       (see <literal>datetime_precision</literal> for the fractional
+       seconds precision of interval type attributes)
+      </entry>
      </row>
 
      <row>
@@ -1343,8 +1348,13 @@
 
      <row>
       <entry><literal>interval_precision</literal></entry>
-      <entry><type>character_data</type></entry>
-      <entry>Not yet implemented</entry>
+      <entry><type>cardinal_number</type></entry>
+      <entry>
+       Applies to a feature not available
+       in <productname>PostgreSQL</productname>
+       (see <literal>datetime_precision</literal> for the fractional
+       seconds precision of interval type columns)
+      </entry>
      </row>
 
      <row>
@@ -2139,8 +2149,13 @@
 
      <row>
       <entry><literal>interval_precision</literal></entry>
-      <entry><type>character_data</type></entry>
-      <entry>Not yet implemented</entry>
+      <entry><type>cardinal_number</type></entry>
+      <entry>
+       Applies to a feature not available
+       in <productname>PostgreSQL</productname>
+       (see <literal>datetime_precision</literal> for the fractional
+       seconds precision of interval type domains)
+      </entry>
      </row>
 
      <row>
@@ -2400,7 +2415,7 @@ ORDER BY c.ordinal_position;
 
      <row>
       <entry><literal>interval_precision</literal></entry>
-      <entry><type>character_data</type></entry>
+      <entry><type>cardinal_number</type></entry>
       <entry>Always null, since this information is not applied to array element data types in <productname>PostgreSQL</></entry>
      </row>
 
@@ -3150,7 +3165,7 @@ ORDER BY c.ordinal_position;
 
      <row>
       <entry><literal>interval_precision</literal></entry>
-      <entry><type>character_data</type></entry>
+      <entry><type>cardinal_number</type></entry>
       <entry>Always null, since this information is not applied to parameter data types in <productname>PostgreSQL</></entry>
      </row>
 
@@ -4037,7 +4052,7 @@ ORDER BY c.ordinal_position;
 
      <row>
       <entry><literal>interval_precision</literal></entry>
-      <entry><type>character_data</type></entry>
+      <entry><type>cardinal_number</type></entry>
       <entry>Always null, since this information is not applied to return data types in <productname>PostgreSQL</></entry>
      </row>
 
@@ -4369,7 +4384,7 @@ ORDER BY c.ordinal_position;
 
      <row>
       <entry><literal>result_cast_interval_precision</literal></entry>
-      <entry><type>character_data</type></entry>
+      <entry><type>cardinal_number</type></entry>
       <entry>Applies to a feature not available in <productname>PostgreSQL</></entry>
      </row>
 
@@ -6008,7 +6023,7 @@ ORDER BY c.ordinal_position;
 
      <row>
       <entry><literal>interval_precision</literal></entry>
-      <entry><type>character_data</type></entry>
+      <entry><type>cardinal_number</type></entry>
       <entry>Applies to a feature not available in <productname>PostgreSQL</></entry>
      </row>
 
