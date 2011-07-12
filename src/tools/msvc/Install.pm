@@ -56,10 +56,11 @@ sub Install
     my $majorver = DetermineMajorVersion();
     print "Installing version $majorver for $conf in $target\n";
 
-    EnsureDirectories($target, 'bin', 'lib', 'share', 'share/timezonesets',
-                      'share/extension', 'share/contrib',
-                      'doc', 'doc/extension', 'doc/contrib',
-                      'symbols', 'share/tsearch_data');
+    EnsureDirectories(
+        $target, 'bin', 'lib', 'share',
+        'share/timezonesets','share/extension', 'share/contrib','doc',
+        'doc/extension', 'doc/contrib','symbols', 'share/tsearch_data'
+    );
 
     CopySolutionOutput($conf, $target);
     lcopy($target . '/lib/libpq.dll', $target . '/bin/libpq.dll');
@@ -113,11 +114,11 @@ sub Install
     CopyContribFiles($config,$target);
     CopyIncludeFiles($target);
 
-	my $pl_extension_files = [];
-	my @pldirs = ('src/pl/plpgsql/src');
-	push @pldirs,"src/pl/plperl" if $config->{perl};
-	push @pldirs,"src/pl/plpython" if $config->{python};
-	push @pldirs,"src/pl/tcl" if $config->{tcl};
+    my $pl_extension_files = [];
+    my @pldirs = ('src/pl/plpgsql/src');
+    push @pldirs,"src/pl/plperl" if $config->{perl};
+    push @pldirs,"src/pl/plpython" if $config->{python};
+    push @pldirs,"src/pl/tcl" if $config->{tcl};
     File::Find::find(
         {
             wanted =>sub {
@@ -127,10 +128,7 @@ sub Install
         },
         @pldirs
     );
-    CopySetOfFiles(
-        'PL Extension files', $pl_extension_files,
-        $target . '/share/extension/'
-    );
+    CopySetOfFiles('PL Extension files', $pl_extension_files,$target . '/share/extension/');
 
     GenerateNLSFiles($target,$config->{nls},$majorver) if ($config->{nls});
 
@@ -350,9 +348,10 @@ sub CopyContribFiles
 
             foreach my $f (split /\s+/,$flist)
             {
-                lcopy('contrib/' . $d . '/' . $f . '.control',
-                      $target . '/share/extension/' . $f . '.control')
-                  || croak("Could not copy file $f.control in contrib $d");
+                lcopy(
+                    'contrib/' . $d . '/' . $f . '.control',
+                    $target . '/share/extension/' . $f . '.control'
+                )|| croak("Could not copy file $f.control in contrib $d");
                 print '.';
             }
         }
@@ -369,7 +368,7 @@ sub CopyContribFiles
             foreach my $f (split /\s+/,$flist)
             {
                 lcopy('contrib/' . $d . '/' . $f,
-                      $target . '/share/' . $moduledir . '/' . basename($f))
+                    $target . '/share/' . $moduledir . '/' . basename($f))
                   || croak("Could not copy file $f in contrib $d");
                 print '.';
             }
@@ -383,8 +382,7 @@ sub CopyContribFiles
 
             foreach my $f (split /\s+/,$flist)
             {
-                lcopy('contrib/' . $d . '/' . $f,
-                      $target . '/share/tsearch_data/' . basename($f))
+                lcopy('contrib/' . $d . '/' . $f,$target . '/share/tsearch_data/' . basename($f))
                   || croak("Could not copy file $f in contrib $d");
                 print '.';
             }
@@ -402,8 +400,7 @@ sub CopyContribFiles
               if ($d eq 'spi');
             foreach my $f (split /\s+/,$flist)
             {
-                lcopy('contrib/' . $d . '/' . $f,
-                      $target . '/doc/' . $moduledir . '/' . $f)
+                lcopy('contrib/' . $d . '/' . $f,$target . '/doc/' . $moduledir . '/' . $f)
                   || croak("Could not copy file $f in contrib $d");
                 print '.';
             }
@@ -473,14 +470,14 @@ sub CopyIncludeFiles
         $target . '/include/server/',
         'src/include/', 'pg_config.h', 'pg_config_os.h'
     );
-    CopyFiles('Grammar header', $target . '/include/server/parser/',
-              'src/backend/parser/', 'gram.h');
+    CopyFiles('Grammar header', $target . '/include/server/parser/','src/backend/parser/',
+        'gram.h');
     CopySetOfFiles('',[ glob("src\\include\\*.h") ],$target . '/include/server/');
     my $D;
     opendir($D, 'src/include') || croak "Could not opendir on src/include!\n";
 
-	# some xcopy progs don't like mixed slash style paths
-	(my $ctarget = $target) =~ s!/!\\!g;
+    # some xcopy progs don't like mixed slash style paths
+    (my $ctarget = $target) =~ s!/!\\!g;
     while (my $d = readdir($D))
     {
         next if ($d =~ /^\./);

@@ -172,6 +172,7 @@ sub mkvcbuild
 
     if ($solution->{options}->{python})
     {
+
         # Attempt to get python version and location.
         # Assume python.exe in specified dir.
         open(P,
@@ -190,8 +191,8 @@ sub mkvcbuild
           if (!(defined($pyprefix) && defined($pyver)));
 
         my $pymajorver = substr($pyver, 0, 1);
-        my $plpython = $solution->AddProject('plpython' . $pymajorver, 'dll',
-                                             'PLs', 'src\pl\plpython');
+        my $plpython =
+          $solution->AddProject('plpython' . $pymajorver, 'dll','PLs', 'src\pl\plpython');
         $plpython->AddIncludeDir($pyprefix . '\include');
         $plpython->AddLibrary($pyprefix . "\\Libs\\python$pyver.lib");
         $plpython->AddReference($postgres);

@@ -72,7 +72,7 @@ my %command = (
     INSTALLCHECK => \&installcheck,
     ECPGCHECK => \&ecpgcheck,
     CONTRIBCHECK => \&contribcheck,
-	ISOLATIONCHECK => \&isolationcheck,
+    ISOLATIONCHECK => \&isolationcheck,
 );
 
 my $proc = $command{$what};
@@ -140,14 +140,13 @@ sub ecpgcheck
 
 sub isolationcheck
 {
-	chdir "../isolation";
-	copy("../../../$Config/isolationtester/isolationtester.exe",".");
+    chdir "../isolation";
+    copy("../../../$Config/isolationtester/isolationtester.exe",".");
     my @args = (
-				"../../../$Config/pg_isolation_regress/pg_isolation_regress",
-				"--psqldir=../../../$Config/psql",
-				"--inputdir=.",  
-				"--schedule=./isolation_schedule"
-			   );
+        "../../../$Config/pg_isolation_regress/pg_isolation_regress",
+        "--psqldir=../../../$Config/psql",
+        "--inputdir=.","--schedule=./isolation_schedule"
+    );
     push(@args,$maxconn) if $maxconn;
     system(@args);
     my $status = $? >>8;
