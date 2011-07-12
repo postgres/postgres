@@ -46,7 +46,7 @@ exec_prog(bool throw_error, const char *fmt,...)
 	if (result != 0)
 	{
 		pg_log(throw_error ? PG_FATAL : PG_INFO,
-			   "There were problems executing %s\n", cmd);
+			   "There were problems executing \"%s\"\n", cmd);
 		return 1;
 	}
 
@@ -72,8 +72,8 @@ is_server_running(const char *datadir)
 	{
 		/* ENOTDIR means we will throw a more useful error later */
 		if (errno != ENOENT && errno != ENOTDIR)
-			pg_log(PG_FATAL, "could not open file \"%s\" for reading\n",
-				   path);
+			pg_log(PG_FATAL, "could not open file \"%s\" for reading: %s\n",
+				   path, getErrorText(errno));
 
 		return false;
 	}
@@ -149,7 +149,7 @@ check_data_dir(const char *pg_data)
 				 requiredSubdirs[subdirnum]);
 
 		if (stat(subDirName, &statBuf) != 0)
-			report_status(PG_FATAL, "check for %s failed:  %s\n",
+			report_status(PG_FATAL, "check for \"%s\" failed: %s\n",
 						  subDirName, getErrorText(errno));
 		else if (!S_ISDIR(statBuf.st_mode))
 			report_status(PG_FATAL, "%s is not a directory\n",
@@ -173,7 +173,7 @@ check_bin_dir(ClusterInfo *cluster)
 
 	/* check bindir */
 	if (stat(cluster->bindir, &statBuf) != 0)
-		report_status(PG_FATAL, "check for %s failed:  %s\n",
+		report_status(PG_FATAL, "check for \"%s\" failed: %s\n",
 					  cluster->bindir, getErrorText(errno));
 	else if (!S_ISDIR(statBuf.st_mode))
 		report_status(PG_FATAL, "%s is not a directory\n",
@@ -216,10 +216,10 @@ validate_exec(const char *dir, const char *cmdName)
 	 * Ensure that the file exists and is a regular file.
 	 */
 	if (stat(path, &buf) < 0)
-		pg_log(PG_FATAL, "check for %s failed - %s\n",
+		pg_log(PG_FATAL, "check for \"%s\" failed: %s\n",
 			   path, getErrorText(errno));
 	else if (!S_ISREG(buf.st_mode))
-		pg_log(PG_FATAL, "check for %s failed - not an executable file\n",
+		pg_log(PG_FATAL, "check for \"%s\" failed: not an executable file\n",
 			   path);
 
 	/*
@@ -231,7 +231,7 @@ validate_exec(const char *dir, const char *cmdName)
 #else
 	if ((buf.st_mode & S_IRUSR) == 0)
 #endif
-		pg_log(PG_FATAL, "check for %s failed - cannot read file (permission denied)\n",
+		pg_log(PG_FATAL, "check for \"%s\" failed: cannot read file (permission denied)\n",
 			   path);
 
 #ifndef WIN32
@@ -239,6 +239,6 @@ validate_exec(const char *dir, const char *cmdName)
 #else
 	if ((buf.st_mode & S_IXUSR) == 0)
 #endif
-		pg_log(PG_FATAL, "check for %s failed - cannot execute (permission denied)\n",
+		pg_log(PG_FATAL, "check for \"%s\" failed: cannot execute (permission denied)\n",
 			   path);
 }

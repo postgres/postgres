@@ -294,8 +294,8 @@ check_required_directory(char **dirpath, char *envVarName,
 		if ((envVar = getenv(envVarName)) && strlen(envVar))
 			*dirpath = pg_strdup(envVar);
 		else
-			pg_log(PG_FATAL, "You must identify the directory where the %s\n"
-				   "Please use the %s command-line option or the %s environment variable\n",
+			pg_log(PG_FATAL, "You must identify the directory where the %s.\n"
+				   "Please use the %s command-line option or the %s environment variable.\n",
 				   description, cmdLineOption, envVarName);
 	}
 

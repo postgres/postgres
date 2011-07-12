@@ -56,13 +56,13 @@ split_old_dump(void)
 
 	snprintf(filename, sizeof(filename), "%s/%s", os_info.cwd, ALL_DUMP_FILE);
 	if ((all_dump = fopen(filename, "r")) == NULL)
-		pg_log(PG_FATAL, "Cannot open dump file %s\n", filename);
+		pg_log(PG_FATAL, "Could not open dump file \"%s\": %s\n", filename, getErrorText(errno));
 	snprintf(filename, sizeof(filename), "%s/%s", os_info.cwd, GLOBALS_DUMP_FILE);
 	if ((globals_dump = fopen(filename, "w")) == NULL)
-		pg_log(PG_FATAL, "Cannot write to dump file %s\n", filename);
+		pg_log(PG_FATAL, "Could not write to dump file \"%s\": %s\n", filename, getErrorText(errno));
 	snprintf(filename, sizeof(filename), "%s/%s", os_info.cwd, DB_DUMP_FILE);
 	if ((db_dump = fopen(filename, "w")) == NULL)
-		pg_log(PG_FATAL, "Cannot write to dump file %s\n", filename);
+		pg_log(PG_FATAL, "Could not write to dump file \"%s\": %s\n", filename, getErrorText(errno));
 	current_output = globals_dump;
 
 	/* patterns used to prevent our own username from being recreated */

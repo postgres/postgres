@@ -74,7 +74,7 @@ setupPageConverter(pageCnvCtx **result)
 	 */
 
 	if ((converter = loadConverterPlugin(newPageVersion, oldPageVersion)) == NULL)
-		return "can't find plugin to convert from old page layout to new page layout";
+		return "could not find plugin to convert from old page layout to new page layout";
 	else
 	{
 		*result = converter;
@@ -100,12 +100,12 @@ getPageVersion(uint16 *version, const char *pathName)
 	ssize_t		bytesRead;
 
 	if ((relfd = open(pathName, O_RDONLY, 0)) < 0)
-		return "can't open relation";
+		return "could not open relation";
 
 	if ((bytesRead = read(relfd, &page, sizeof(page))) != sizeof(page))
 	{
 		close(relfd);
-		return "can't read page header";
+		return "could not read page header";
 	}
 
 	*version = PageGetPageLayoutVersion(&page);

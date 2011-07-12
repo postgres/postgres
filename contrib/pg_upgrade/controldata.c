@@ -451,7 +451,7 @@ get_control_data(ClusterInfo *cluster, bool live_check)
 			pg_log(PG_REPORT, "  float8 argument passing method\n");
 
 		pg_log(PG_FATAL,
-			   "Unable to continue without required control information, terminating\n");
+			   "Cannot continue without required control information, terminating\n");
 	}
 }
 
@@ -506,9 +506,9 @@ check_control_data(ControlData *oldctrl,
 		 * This is a common 8.3 -> 8.4 upgrade problem, so we are more verbose
 		 */
 		pg_log(PG_FATAL,
-			   "You will need to rebuild the new server with configure\n"
-			   "--disable-integer-datetimes or get server binaries built\n"
-			   "with those options.\n");
+			   "You will need to rebuild the new server with configure option\n"
+			   "--disable-integer-datetimes or get server binaries built with those\n"
+			   "options.\n");
 	}
 }
 

@@ -116,7 +116,7 @@ main(int argc, char **argv)
 	 * the old system, but we do it anyway just in case.  We do it late here
 	 * because there is no need to have the schema load use new oids.
 	 */
-	prep_status("Setting next oid for new cluster");
+	prep_status("Setting next OID for new cluster");
 	exec_prog(true, SYSTEMQUOTE "\"%s/pg_resetxlog\" -o %u \"%s\" > "
 			  DEVNULL SYSTEMQUOTE,
 			  new_cluster.bindir, old_cluster.controldata.chkpnt_nxtoid, new_cluster.pgdata);
@@ -165,7 +165,7 @@ setup(char *argv0, bool live_check)
 
 	/* get path to pg_upgrade executable */
 	if (find_my_exec(argv0, exec_path) < 0)
-		pg_log(PG_FATAL, "Could not get pathname to pg_upgrade: %s\n", getErrorText(errno));
+		pg_log(PG_FATAL, "Could not get path name to pg_upgrade: %s\n", getErrorText(errno));
 
 	/* Trim off program name and keep just path */
 	*last_dir_separator(exec_path) = '\0';
@@ -298,7 +298,7 @@ copy_clog_xlog_xid(void)
 	snprintf(old_clog_path, sizeof(old_clog_path), "%s/pg_clog", old_cluster.pgdata);
 	snprintf(new_clog_path, sizeof(new_clog_path), "%s/pg_clog", new_cluster.pgdata);
 	if (!rmtree(new_clog_path, true))
-		pg_log(PG_FATAL, "unable to delete directory %s\n", new_clog_path);
+		pg_log(PG_FATAL, "could not delete directory \"%s\"\n", new_clog_path);
 	check_ok();
 
 	prep_status("Copying old commit clogs to new server");
@@ -314,7 +314,7 @@ copy_clog_xlog_xid(void)
 	check_ok();
 
 	/* set the next transaction id of the new cluster */
-	prep_status("Setting next transaction id for new cluster");
+	prep_status("Setting next transaction ID for new cluster");
 	exec_prog(true, SYSTEMQUOTE "\"%s/pg_resetxlog\" -f -x %u \"%s\" > " DEVNULL SYSTEMQUOTE,
 			  new_cluster.bindir, old_cluster.controldata.chkpnt_nxtxid, new_cluster.pgdata);
 	check_ok();

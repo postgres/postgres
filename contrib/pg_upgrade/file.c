@@ -69,12 +69,12 @@ copyAndUpdateFile(pageCnvCtx *pageConverter,
 			const char *msg = NULL;
 
 			if ((src_fd = open(src, O_RDONLY, 0)) < 0)
-				return "can't open source file";
+				return "could not open source file";
 
 			if ((dstfd = open(dst, O_RDWR | O_CREAT | O_EXCL, S_IRUSR | S_IWUSR)) < 0)
 			{
 				close(src_fd);
-				return "can't create destination file";
+				return "could not create destination file";
 			}
 
 			while ((bytesRead = read(src_fd, buf, BLCKSZ)) == BLCKSZ)
@@ -85,7 +85,7 @@ copyAndUpdateFile(pageCnvCtx *pageConverter,
 #endif
 				if (write(dstfd, buf, BLCKSZ) != BLCKSZ)
 				{
-					msg = "can't write new page to destination";
+					msg = "could not write new page to destination";
 					break;
 				}
 			}
@@ -118,7 +118,7 @@ linkAndUpdateFile(pageCnvCtx *pageConverter,
 				  const char *src, const char *dst)
 {
 	if (pageConverter != NULL)
-		return "Can't in-place update this cluster, page-by-page conversion is required";
+		return "Cannot in-place update this cluster, page-by-page conversion is required";
 
 	if (pg_link_file(src, dst) == -1)
 		return getErrorText(errno);
@@ -360,7 +360,7 @@ check_hard_link(void)
 	if (pg_link_file(existing_file, new_link_file) == -1)
 	{
 		pg_log(PG_FATAL,
-			   "Could not create hard link between old and new data directories:  %s\n"
+			   "Could not create hard link between old and new data directories: %s\n"
 			   "In link mode the old and new data directories must be on the same file system volume.\n",
 			   getErrorText(errno));
 	}

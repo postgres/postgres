@@ -237,9 +237,9 @@ check_loadable_libraries(void)
 		{
 			found = true;
 			if (script == NULL && (script = fopen(output_path, "w")) == NULL)
-				pg_log(PG_FATAL, "Could not create necessary file:  %s\n",
-					   output_path);
-			fprintf(script, "Failed to load library: %s\n%s\n",
+				pg_log(PG_FATAL, "Could not open file \"%s\": %s\n",
+					   output_path, getErrorText(errno));
+			fprintf(script, "Could not load library \"%s\"\n%s\n",
 					lib,
 					PQerrorMessage(conn));
 		}
@@ -255,12 +255,11 @@ check_loadable_libraries(void)
 		fclose(script);
 		pg_log(PG_REPORT, "fatal\n");
 		pg_log(PG_FATAL,
-		"| Your installation references loadable libraries that are missing\n"
-			 "| from the new installation.  You can add these libraries to\n"
-			   "| the new installation, or remove the functions using them\n"
-			"| from the old installation.  A list of the problem libraries\n"
-			   "| is in the file\n"
-			   "| \"%s\".\n\n", output_path);
+			   "Your installation references loadable libraries that are missing from the\n"
+			   "new installation.  You can add these libraries to the new installation,\n"
+			   "or remove the functions using them from the old installation.  A list of\n"
+			   "problem libraries is in the file:\n"
+			   "    %s\n\n", output_path);
 	}
 	else
 		check_ok();

@@ -84,7 +84,7 @@ executeQueryOrDie(PGconn *conn, const char *fmt,...)
 
 	if ((status != PGRES_TUPLES_OK) && (status != PGRES_COMMAND_OK))
 	{
-		pg_log(PG_REPORT, "DB command failed\n%s\n%s\n", command,
+		pg_log(PG_REPORT, "SQL command failed\n%s\n%s\n", command,
 			   PQerrorMessage(conn));
 		PQclear(result);
 		PQfinish(conn);
@@ -200,7 +200,7 @@ start_postmaster(ClusterInfo *cluster)
 			   PQerrorMessage(conn));
 		if (conn)
 			PQfinish(conn);
-		pg_log(PG_FATAL, "unable to connect to %s postmaster started with the command: %s\n",
+		pg_log(PG_FATAL, "could not connect to %s postmaster started with the command: %s\n",
 			   CLUSTER_NAME(cluster), cmd);
 	}
 	PQfinish(conn);

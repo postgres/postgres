@@ -51,7 +51,7 @@ gen_db_file_maps(DbInfo *old_db, DbInfo *new_db,
 		RelInfo    *new_rel = &new_db->rel_arr.rels[relnum];
 
 		if (old_rel->reloid != new_rel->reloid)
-			pg_log(PG_FATAL, "Mismatch of relation id: database \"%s\", old relid %d, new relid %d\n",
+			pg_log(PG_FATAL, "Mismatch of relation OID in database \"%s\": old OID %d, new OID %d\n",
 				   old_db->db_name, old_rel->reloid, new_rel->reloid);
 
 		/*
@@ -63,8 +63,8 @@ gen_db_file_maps(DbInfo *old_db, DbInfo *new_db,
 			((GET_MAJOR_VERSION(old_cluster.major_version) >= 804 ||
 			  strcmp(old_rel->nspname, "pg_toast") != 0) &&
 			 strcmp(old_rel->relname, new_rel->relname) != 0))
-			pg_log(PG_FATAL, "Mismatch of relation names: database \"%s\", "
-				   "old rel %s.%s, new rel %s.%s\n",
+			pg_log(PG_FATAL, "Mismatch of relation names in database \"%s\": "
+				   "old name \"%s.%s\", new name \"%s.%s\"\n",
 				   old_db->db_name, old_rel->nspname, old_rel->relname,
 				   new_rel->nspname, new_rel->relname);
 
@@ -131,7 +131,7 @@ print_maps(FileNameMap *maps, int n_maps, const char *db_name)
 	{
 		int			mapnum;
 
-		pg_log(PG_DEBUG, "mappings for db %s:\n", db_name);
+		pg_log(PG_DEBUG, "mappings for database \"%s\":\n", db_name);
 
 		for (mapnum = 0; mapnum < n_maps; mapnum++)
 			pg_log(PG_DEBUG, "%s.%s: %u to %u\n",

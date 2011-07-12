@@ -91,9 +91,9 @@ get_pg_database_relfilenode(ClusterInfo *cluster)
 
 	res = executeQueryOrDie(conn,
 							"SELECT c.relname, c.relfilenode "
-							"FROM 	pg_catalog.pg_class c, "
+							"FROM	pg_catalog.pg_class c, "
 							"		pg_catalog.pg_namespace n "
-							"WHERE 	c.relnamespace = n.oid AND "
+							"WHERE	c.relnamespace = n.oid AND "
 							"		n.nspname = 'pg_catalog' AND "
 							"		c.relname = 'pg_database' "
 							"ORDER BY c.relname");
@@ -232,24 +232,24 @@ transfer_relfile(pageCnvCtx *pageConverter, const char *old_file,
 	const char *msg;
 
 	if ((user_opts.transfer_mode == TRANSFER_MODE_LINK) && (pageConverter != NULL))
-		pg_log(PG_FATAL, "this upgrade requires page-by-page conversion, "
-			   "you must use copy-mode instead of link-mode\n");
+		pg_log(PG_FATAL, "This upgrade requires page-by-page conversion, "
+			   "you must use copy mode instead of link mode.\n");
 
 	if (user_opts.transfer_mode == TRANSFER_MODE_COPY)
 	{
-		pg_log(PG_INFO, "copying %s to %s\n", old_file, new_file);
+		pg_log(PG_INFO, "copying \"%s\" to \"%s\"\n", old_file, new_file);
 
 		if ((msg = copyAndUpdateFile(pageConverter, old_file, new_file, true)) != NULL)
-			pg_log(PG_FATAL, "error while copying %s.%s (%s to %s): %s\n",
+			pg_log(PG_FATAL, "error while copying relation \"%s.%s\" (\"%s\" to \"%s\"): %s\n",
 				   nspname, relname, old_file, new_file, msg);
 	}
 	else
 	{
-		pg_log(PG_INFO, "linking %s to %s\n", old_file, new_file);
+		pg_log(PG_INFO, "linking \"%s\" to \"%s\"\n", old_file, new_file);
 
 		if ((msg = linkAndUpdateFile(pageConverter, old_file, new_file)) != NULL)
 			pg_log(PG_FATAL,
-				   "error while creating link from %s.%s (%s to %s): %s\n",
+				   "error while creating link for relation \"%s.%s\" (\"%s\" to \"%s\"): %s\n",
 				   nspname, relname, old_file, new_file, msg);
 	}
 	return;

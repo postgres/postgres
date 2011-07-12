@@ -147,10 +147,9 @@ report_clusters_compatible(void)
 	}
 
 	pg_log(PG_REPORT, "\n"
-		   "| If pg_upgrade fails after this point, you must\n"
-		   "| re-initdb the new cluster before continuing.\n"
-		   "| You will also need to remove the \".old\" suffix\n"
-		   "| from %s/global/pg_control.old.\n", old_cluster.pgdata);
+		   "If pg_upgrade fails after this point, you must re-initdb the new cluster\n"
+		   "before continuing.  You will also need to remove the \".old\" suffix from\n"
+		   "%s/global/pg_control.old.\n", old_cluster.pgdata);
 }
 
 
@@ -198,21 +197,20 @@ output_completion_banner(char *deletion_script_file_name)
 	/* Did we copy the free space files? */
 	if (GET_MAJOR_VERSION(old_cluster.major_version) >= 804)
 		pg_log(PG_REPORT,
-			   "| Optimizer statistics are not transferred by pg_upgrade\n"
-			   "| so consider running:\n"
-			   "| \tvacuumdb --all --analyze-only\n"
-			   "| on the newly-upgraded cluster.\n\n");
+			   "Optimizer statistics are not transferred by pg_upgrade so consider\n"
+			   "running:\n"
+			   "    vacuumdb --all --analyze-only\n"
+			   "on the newly-upgraded cluster.\n\n");
 	else
 		pg_log(PG_REPORT,
-			   "| Optimizer statistics and free space information\n"
-			   "| are not transferred by pg_upgrade so consider\n"
-			   "| running:\n"
-			   "| \tvacuumdb --all --analyze\n"
-			   "| on the newly-upgraded cluster.\n\n");
+			   "Optimizer statistics and free space information are not transferred\n"
+			   "by pg_upgrade so consider running:\n"
+			   "    vacuumdb --all --analyze\n"
+			   "on the newly-upgraded cluster.\n\n");
 
 	pg_log(PG_REPORT,
-		   "| Running this script will delete the old cluster's data files:\n"
-		   "| \t%s\n",
+		   "Running this script will delete the old cluster's data files:\n"
+		   "    %s\n",
 		   deletion_script_file_name);
 }
 
@@ -427,8 +425,8 @@ create_script_for_old_cluster_deletion(char **deletion_script_file_name)
 			 os_info.cwd, SCRIPT_EXT);
 
 	if ((script = fopen(*deletion_script_file_name, "w")) == NULL)
-		pg_log(PG_FATAL, "Could not create necessary file:  %s\n",
-			   *deletion_script_file_name);
+		pg_log(PG_FATAL, "Could not open file \"%s\": %s\n",
+			   *deletion_script_file_name, getErrorText(errno));
 
 #ifndef WIN32
 	/* add shebang header */
@@ -477,8 +475,8 @@ create_script_for_old_cluster_deletion(char **deletion_script_file_name)
 
 #ifndef WIN32
 	if (chmod(*deletion_script_file_name, S_IRWXU) != 0)
-		pg_log(PG_FATAL, "Could not add execute permission to file:  %s\n",
-			   *deletion_script_file_name);
+		pg_log(PG_FATAL, "Could not add execute permission to file \"%s\": %s\n",
+			   *deletion_script_file_name, getErrorText(errno));
 #endif
 
 	check_ok();
@@ -600,10 +598,11 @@ check_for_isn_and_int8_passing_mismatch(ClusterInfo *cluster)
 		{
 			found = true;
 			if (script == NULL && (script = fopen(output_path, "w")) == NULL)
-				pg_log(PG_FATAL, "Could not create necessary file:  %s\n", output_path);
+				pg_log(PG_FATAL, "Could not open file \"%s\": %s\n",
+					   output_path, getErrorText(errno));
 			if (!db_used)
 			{
-				fprintf(script, "Database:  %s\n", active_db->db_name);
+				fprintf(script, "Database: %s\n", active_db->db_name);
 				db_used = true;
 			}
 			fprintf(script, "  %s.%s\n",
@@ -623,15 +622,13 @@ check_for_isn_and_int8_passing_mismatch(ClusterInfo *cluster)
 	{
 		pg_log(PG_REPORT, "fatal\n");
 		pg_log(PG_FATAL,
-			   "| Your installation contains \"contrib/isn\" functions\n"
-			   "| which rely on the bigint data type.  Your old and\n"
-			   "| new clusters pass bigint values differently so this\n"
-			   "| cluster cannot currently be upgraded.  You can\n"
-			   "| manually upgrade data that use \"contrib/isn\"\n"
-			   "| facilities and remove \"contrib/isn\" from the\n"
-			   "| old cluster and restart the upgrade.  A list\n"
-			   "| of the problem functions is in the file:\n"
-			   "| \t%s\n\n", output_path);
+			   "Your installation contains \"contrib/isn\" functions which rely on the\n"
+			   "bigint data type.  Your old and new clusters pass bigint values\n"
+			   "differently so this cluster cannot currently be upgraded.  You can\n"
+			   "manually upgrade databases that use \"contrib/isn\" facilities and remove\n"
+			   "\"contrib/isn\" from the old cluster and restart the upgrade.  A list of\n"
+			   "the problem functions is in the file:\n"
+			   "    %s\n\n", output_path);
 	}
 	else
 		check_ok();
@@ -657,7 +654,7 @@ check_for_reg_data_type_usage(ClusterInfo *cluster)
 	bool		found = false;
 	char		output_path[MAXPGPATH];
 
-	prep_status("Checking for reg* system oid user data types");
+	prep_status("Checking for reg* system OID user data types");
 
 	snprintf(output_path, sizeof(output_path), "%s/tables_using_reg.txt",
 			 os_info.cwd);
@@ -702,10 +699,11 @@ check_for_reg_data_type_usage(ClusterInfo *cluster)
 		{
 			found = true;
 			if (script == NULL && (script = fopen(output_path, "w")) == NULL)
-				pg_log(PG_FATAL, "Could not create necessary file:  %s\n", output_path);
+				pg_log(PG_FATAL, "Could not open file \"%s\": %s\n",
+					   output_path, getErrorText(errno));
 			if (!db_used)
 			{
-				fprintf(script, "Database:  %s\n", active_db->db_name);
+				fprintf(script, "Database: %s\n", active_db->db_name);
 				db_used = true;
 			}
 			fprintf(script, "  %s.%s.%s\n",
@@ -726,13 +724,12 @@ check_for_reg_data_type_usage(ClusterInfo *cluster)
 	{
 		pg_log(PG_REPORT, "fatal\n");
 		pg_log(PG_FATAL,
-			   "| Your installation contains one of the reg* data types in\n"
-			   "| user tables.  These data types reference system oids that\n"
-			   "| are not preserved by pg_upgrade, so this cluster cannot\n"
-			   "| currently be upgraded.  You can remove the problem tables\n"
-			   "| and restart the upgrade.  A list of the problem columns\n"
-			   "| is in the file:\n"
-			   "| \t%s\n\n", output_path);
+			   "Your installation contains one of the reg* data types in user tables.\n"
+			   "These data types reference system OIDs that are not preserved by\n"
+			   "pg_upgrade, so this cluster cannot currently be upgraded.  You can\n"
+			   "remove the problem tables and restart the upgrade.  A list of the problem\n"
+			   "columns is in the file:\n"
+			   "    %s\n\n", output_path);
 	}
 	else
 		check_ok();
