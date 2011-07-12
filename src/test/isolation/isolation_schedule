@@ -9,3 +9,6 @@ test: ri-trigger
 test: partial-index
 test: two-ids
 test: multiple-row-versions
+test: fk-contention
+test: fk-deadlock
+test: fk-deadlock2
