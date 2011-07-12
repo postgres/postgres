@@ -1474,11 +1474,16 @@ grouping_planner(PlannerInfo *root, double tuple_fraction)
 			 * step.  That's handled internally by make_sort_from_pathkeys,
 			 * but we need the copyObject steps here to ensure that each plan
 			 * node has a separately modifiable tlist.
+			 *
+			 * Note: it's essential here to use PVC_INCLUDE_AGGREGATES so that
+			 * Vars mentioned only in aggregate expressions aren't pulled out
+			 * as separate targetlist entries.  Otherwise we could be putting
+			 * ungrouped Vars directly into an Agg node's tlist, resulting in
+			 * undefined behavior.
 			 */
-			window_tlist = flatten_tlist(tlist);
-			if (parse->hasAggs)
-				window_tlist = add_to_flat_tlist(window_tlist,
-											pull_agg_clause((Node *) tlist));
+			window_tlist = flatten_tlist(tlist,
+										 PVC_INCLUDE_AGGREGATES,
+										 PVC_INCLUDE_PLACEHOLDERS);
 			window_tlist = add_volatile_sort_exprs(window_tlist, tlist,
 												   activeWindows);
 			result_plan->targetlist = (List *) copyObject(window_tlist);
@@ -2577,14 +2582,18 @@ make_subplanTargetList(PlannerInfo *root,
 	}
 
 	/*
-	 * Otherwise, start with a "flattened" tlist (having just the vars
-	 * mentioned in the targetlist and HAVING qual --- but not upper-level
-	 * Vars; they will be replaced by Params later on).  Note this includes
-	 * vars used in resjunk items, so we are covering the needs of ORDER BY
-	 * and window specifications.
+	 * Otherwise, start with a "flattened" tlist (having just the Vars
+	 * mentioned in the targetlist and HAVING qual).  Note this includes Vars
+	 * used in resjunk items, so we are covering the needs of ORDER BY and
+	 * window specifications.  Vars used within Aggrefs will be pulled out
+	 * here, too.
 	 */
-	sub_tlist = flatten_tlist(tlist);
-	extravars = pull_var_clause(parse->havingQual, PVC_INCLUDE_PLACEHOLDERS);
+	sub_tlist = flatten_tlist(tlist,
+							  PVC_RECURSE_AGGREGATES,
+							  PVC_INCLUDE_PLACEHOLDERS);
+	extravars = pull_var_clause(parse->havingQual,
+								PVC_RECURSE_AGGREGATES,
+								PVC_INCLUDE_PLACEHOLDERS);
 	sub_tlist = add_to_flat_tlist(sub_tlist, extravars);
 	list_free(extravars);
 	*need_tlist_eval = false;	/* only eval if not flat tlist */
