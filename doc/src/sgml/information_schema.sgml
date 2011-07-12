@@ -380,6 +380,42 @@
      </row>
 
      <row>
+      <entry><literal>character_set_catalog</literal></entry>
+      <entry><type>sql_identifier</type></entry>
+      <entry>Applies to a feature not available in <productname>PostgreSQL</></entry>
+     </row>
+
+     <row>
+      <entry><literal>character_set_schema</literal></entry>
+      <entry><type>sql_identifier</type></entry>
+      <entry>Applies to a feature not available in <productname>PostgreSQL</></entry>
+     </row>
+
+     <row>
+      <entry><literal>character_set_name</literal></entry>
+      <entry><type>sql_identifier</type></entry>
+      <entry>Applies to a feature not available in <productname>PostgreSQL</></entry>
+     </row>
+
+     <row>
+      <entry><literal>collation_catalog</literal></entry>
+      <entry><type>sql_identifier</type></entry>
+      <entry>Not yet implemented</entry>
+     </row>
+
+     <row>
+      <entry><literal>collation_schema</literal></entry>
+      <entry><type>sql_identifier</type></entry>
+      <entry>Not yet implemented</entry>
+     </row>
+
+     <row>
+      <entry><literal>collation_name</literal></entry>
+      <entry><type>sql_identifier</type></entry>
+      <entry>Not yet implemented</entry>
+     </row>
+
+     <row>
       <entry><literal>numeric_precision</literal></entry>
       <entry><type>cardinal_number</type></entry>
       <entry>
@@ -1321,19 +1357,19 @@
      <row>
       <entry><literal>collation_catalog</literal></entry>
       <entry><type>sql_identifier</type></entry>
-      <entry>Applies to a feature not available in <productname>PostgreSQL</></entry>
+      <entry>Not yet implemented</entry>
      </row>
 
      <row>
       <entry><literal>collation_schema</literal></entry>
       <entry><type>sql_identifier</type></entry>
-      <entry>Applies to a feature not available in <productname>PostgreSQL</></entry>
+      <entry>Not yet implemented</entry>
      </row>
 
      <row>
       <entry><literal>collation_name</literal></entry>
       <entry><type>sql_identifier</type></entry>
-      <entry>Applies to a feature not available in <productname>PostgreSQL</></entry>
+      <entry>Not yet implemented</entry>
      </row>
 
      <row>
@@ -1996,19 +2032,19 @@
      <row>
       <entry><literal>collation_catalog</literal></entry>
       <entry><type>sql_identifier</type></entry>
-      <entry>Applies to a feature not available in <productname>PostgreSQL</></entry>
+      <entry>Not yet implemented</entry>
      </row>
 
      <row>
       <entry><literal>collation_schema</literal></entry>
       <entry><type>sql_identifier</type></entry>
-      <entry>Applies to a feature not available in <productname>PostgreSQL</></entry>
+      <entry>Not yet implemented</entry>
      </row>
 
      <row>
       <entry><literal>collation_name</literal></entry>
       <entry><type>sql_identifier</type></entry>
-      <entry>Applies to a feature not available in <productname>PostgreSQL</></entry>
+      <entry>Not yet implemented</entry>
      </row>
 
      <row>
@@ -2273,19 +2309,19 @@ ORDER BY c.ordinal_position;
      <row>
       <entry><literal>collation_catalog</literal></entry>
       <entry><type>sql_identifier</type></entry>
-      <entry>Applies to a feature not available in <productname>PostgreSQL</></entry>
+      <entry>Not yet implemented</entry>
      </row>
 
      <row>
       <entry><literal>collation_schema</literal></entry>
       <entry><type>sql_identifier</type></entry>
-      <entry>Applies to a feature not available in <productname>PostgreSQL</></entry>
+      <entry>Not yet implemented</entry>
      </row>
 
      <row>
       <entry><literal>collation_name</literal></entry>
       <entry><type>sql_identifier</type></entry>
-      <entry>Applies to a feature not available in <productname>PostgreSQL</></entry>
+      <entry>Not yet implemented</entry>
      </row>
 
      <row>
@@ -3023,19 +3059,19 @@ ORDER BY c.ordinal_position;
      <row>
       <entry><literal>collation_catalog</literal></entry>
       <entry><type>sql_identifier</type></entry>
-      <entry>Applies to a feature not available in <productname>PostgreSQL</></entry>
+      <entry>Always null, since this information is not applied to parameter data types in <productname>PostgreSQL</></entry>
      </row>
 
      <row>
       <entry><literal>collation_schema</literal></entry>
       <entry><type>sql_identifier</type></entry>
-      <entry>Applies to a feature not available in <productname>PostgreSQL</></entry>
+      <entry>Always null, since this information is not applied to parameter data types in <productname>PostgreSQL</></entry>
      </row>
 
      <row>
       <entry><literal>collation_name</literal></entry>
       <entry><type>sql_identifier</type></entry>
-      <entry>Applies to a feature not available in <productname>PostgreSQL</></entry>
+      <entry>Always null, since this information is not applied to parameter data types in <productname>PostgreSQL</></entry>
      </row>
 
      <row>
@@ -3835,19 +3871,19 @@ ORDER BY c.ordinal_position;
      <row>
       <entry><literal>collation_catalog</literal></entry>
       <entry><type>sql_identifier</type></entry>
-      <entry>Applies to a feature not available in <productname>PostgreSQL</></entry>
+      <entry>Always null, since this information is not applied to return data types in <productname>PostgreSQL</></entry>
      </row>
 
      <row>
       <entry><literal>collation_schema</literal></entry>
       <entry><type>sql_identifier</type></entry>
-      <entry>Applies to a feature not available in <productname>PostgreSQL</></entry>
+      <entry>Always null, since this information is not applied to return data types in <productname>PostgreSQL</></entry>
      </row>
 
      <row>
       <entry><literal>collation_name</literal></entry>
       <entry><type>sql_identifier</type></entry>
-      <entry>Applies to a feature not available in <productname>PostgreSQL</></entry>
+      <entry>Always null, since this information is not applied to return data types in <productname>PostgreSQL</></entry>
      </row>
 
      <row>
