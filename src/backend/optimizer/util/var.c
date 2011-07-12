@@ -56,7 +56,8 @@ typedef struct
 typedef struct
 {
 	List	   *varlist;
-	PVCPlaceHolderBehavior behavior;
+	PVCAggregateBehavior aggbehavior;
+	PVCPlaceHolderBehavior phbehavior;
 } pull_var_clause_context;
 
 typedef struct
@@ -616,16 +617,22 @@ find_minimum_var_level_walker(Node *node,
  * pull_var_clause
  *	  Recursively pulls all Var nodes from an expression clause.
  *
- *	  PlaceHolderVars are handled according to 'behavior':
+ *	  Aggrefs are handled according to 'aggbehavior':
+ *		PVC_REJECT_AGGREGATES		throw error if Aggref found
+ *		PVC_INCLUDE_AGGREGATES		include Aggrefs in output list
+ *		PVC_RECURSE_AGGREGATES		recurse into Aggref arguments
+ *	  Vars within an Aggref's expression are included only in the last case.
+ *
+ *	  PlaceHolderVars are handled according to 'phbehavior':
  *		PVC_REJECT_PLACEHOLDERS		throw error if PlaceHolderVar found
  *		PVC_INCLUDE_PLACEHOLDERS	include PlaceHolderVars in output list
- *		PVC_RECURSE_PLACEHOLDERS	recurse into PlaceHolderVar argument
+ *		PVC_RECURSE_PLACEHOLDERS	recurse into PlaceHolderVar arguments
  *	  Vars within a PHV's expression are included only in the last case.
  *
  *	  CurrentOfExpr nodes are ignored in all cases.
  *
- *	  Upper-level vars (with varlevelsup > 0) are not included.
- *	  (These probably represent errors too, but we don't complain.)
+ *	  Upper-level vars (with varlevelsup > 0) should not be seen here,
+ *	  likewise for upper-level Aggrefs and PlaceHolderVars.
  *
  *	  Returns list of nodes found.	Note the nodes themselves are not
  *	  copied, only referenced.
@@ -634,12 +641,14 @@ find_minimum_var_level_walker(Node *node,
  * of sublinks to subplans!
  */
 List *
-pull_var_clause(Node *node, PVCPlaceHolderBehavior behavior)
+pull_var_clause(Node *node, PVCAggregateBehavior aggbehavior,
+				PVCPlaceHolderBehavior phbehavior)
 {
 	pull_var_clause_context context;
 
 	context.varlist = NIL;
-	context.behavior = behavior;
+	context.aggbehavior = aggbehavior;
+	context.phbehavior = phbehavior;
 
 	pull_var_clause_walker(node, &context);
 	return context.varlist;
@@ -652,20 +661,40 @@ pull_var_clause_walker(Node *node, pull_var_clause_context *context)
 		return false;
 	if (IsA(node, Var))
 	{
-		if (((Var *) node)->varlevelsup == 0)
-			context->varlist = lappend(context->varlist, node);
+		if (((Var *) node)->varlevelsup != 0)
+			elog(ERROR, "Upper-level Var found where not expected");
+		context->varlist = lappend(context->varlist, node);
 		return false;
 	}
-	if (IsA(node, PlaceHolderVar))
+	else if (IsA(node, Aggref))
 	{
-		switch (context->behavior)
+		if (((Aggref *) node)->agglevelsup != 0)
+			elog(ERROR, "Upper-level Aggref found where not expected");
+		switch (context->aggbehavior)
+		{
+			case PVC_REJECT_AGGREGATES:
+				elog(ERROR, "Aggref found where not expected");
+				break;
+			case PVC_INCLUDE_AGGREGATES:
+				context->varlist = lappend(context->varlist, node);
+				/* we do NOT descend into the contained expression */
+				return false;
+			case PVC_RECURSE_AGGREGATES:
+				/* ignore the aggregate, look at its argument instead */
+				break;
+		}
+	}
+	else if (IsA(node, PlaceHolderVar))
+	{
+		if (((PlaceHolderVar *) node)->phlevelsup != 0)
+			elog(ERROR, "Upper-level PlaceHolderVar found where not expected");
+		switch (context->phbehavior)
 		{
 			case PVC_REJECT_PLACEHOLDERS:
 				elog(ERROR, "PlaceHolderVar found where not expected");
 				break;
 			case PVC_INCLUDE_PLACEHOLDERS:
-				if (((PlaceHolderVar *) node)->phlevelsup == 0)
-					context->varlist = lappend(context->varlist, node);
+				context->varlist = lappend(context->varlist, node);
 				/* we do NOT descend into the contained expression */
 				return false;
 			case PVC_RECURSE_PLACEHOLDERS:

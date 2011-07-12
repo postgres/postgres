@@ -3089,7 +3089,9 @@ estimate_num_groups(PlannerInfo *root, List *groupExprs, double input_rows)
 		 * PlaceHolderVar doesn't change the number of groups, which boils
 		 * down to ignoring the possible addition of nulls to the result set).
 		 */
-		varshere = pull_var_clause(groupexpr, PVC_RECURSE_PLACEHOLDERS);
+		varshere = pull_var_clause(groupexpr,
+								   PVC_RECURSE_AGGREGATES,
+								   PVC_RECURSE_PLACEHOLDERS);
 
 		/*
 		 * If we find any variable-free GROUP BY item, then either it is a

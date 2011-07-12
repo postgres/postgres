@@ -135,6 +135,9 @@ SELECT empno, depname, salary, bonus, depadj, MIN(bonus) OVER (ORDER BY empno), 
 		THEN 200 END AS depadj FROM empsalary
 )s;
 
+-- window function over ungrouped agg over empty row set (bug before 9.1)
+SELECT SUM(COUNT(f1)) OVER () FROM int4_tbl WHERE f1=42;
+
 -- test non-default frame specifications
 SELECT four, ten,
 	sum(ten) over (partition by four order by ten),

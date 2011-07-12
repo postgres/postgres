@@ -302,7 +302,9 @@ CreateTrigger(CreateTrigStmt *stmt, const char *queryString,
 		 * subselects in WHEN clauses; it would fail to examine the contents
 		 * of subselects.
 		 */
-		varList = pull_var_clause(whenClause, PVC_REJECT_PLACEHOLDERS);
+		varList = pull_var_clause(whenClause,
+								  PVC_REJECT_AGGREGATES,
+								  PVC_REJECT_PLACEHOLDERS);
 		foreach(lc, varList)
 		{
 			Var		   *var = (Var *) lfirst(lc);
