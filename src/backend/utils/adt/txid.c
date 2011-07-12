@@ -321,7 +321,8 @@ bad_format:
 /*
  * txid_current() returns int8
  *
- *		Return the current toplevel transaction ID as TXID
+ *	Return the current toplevel transaction ID as TXID
+ *	If the current transaction does not have one, one is assigned.
  */
 Datum
 txid_current(PG_FUNCTION_ARGS)
