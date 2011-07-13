@@ -6930,7 +6930,7 @@
       <entry>
        OID of the database in which the object exists, or
        zero if the object is a shared object, or
-       null if the object is a transaction ID
+       null if the lock object is on a transaction ID
       </entry>
      </row>
      <row>
@@ -6938,8 +6938,8 @@
       <entry><type>oid</type></entry>
       <entry><literal><link linkend="catalog-pg-class"><structname>pg_class</structname></link>.oid</literal></entry>
       <entry>
-       OID of the relation, or null if the object is not
-       a relation or part of a relation
+       OID of the relation, or null if the lock object is not
+       on a relation or part of a relation
       </entry>
      </row>
      <row>
@@ -6947,8 +6947,8 @@
       <entry><type>integer</type></entry>
       <entry></entry>
       <entry>
-       Page number within the relation, or null if the object
-       is not a tuple or relation page
+       Page number within the relation, or null if the lock object
+       is not on a tuple or relation page
       </entry>
      </row>
      <row>
@@ -6956,7 +6956,8 @@
       <entry><type>smallint</type></entry>
       <entry></entry>
       <entry>
-       Tuple number within the page, or null if the object is not a tuple
+       Tuple number within the page, or null if the lock object is not
+       on a tuple
       </entry>
      </row>
      <row>
@@ -6964,8 +6965,8 @@
       <entry><type>text</type></entry>
       <entry></entry>
       <entry>
-       Virtual ID of a transaction, or null if the object is not a
-       virtual transaction ID
+       Virtual ID of a transaction lock, or null if the lock object is not
+       on a virtual transaction ID
       </entry>
      </row>
      <row>
@@ -6973,7 +6974,7 @@
       <entry><type>xid</type></entry>
       <entry></entry>
       <entry>
-       ID of a transaction, or null if the object is not a transaction ID
+       ID of a transaction lock, or null if the lock object is not on a transaction ID
       </entry>
      </row>
      <row>
@@ -6982,7 +6983,7 @@
       <entry><literal><link linkend="catalog-pg-class"><structname>pg_class</structname></link>.oid</literal></entry>
       <entry>
        OID of the system catalog containing the object, or null if the
-       object is not a general database object
+       lock object is not on a general database object.
       </entry>
      </row>
      <row>
@@ -6991,7 +6992,7 @@
       <entry>any OID column</entry>
       <entry>
        OID of the object within its system catalog, or null if the
-       object is not a general database object.
+       lock object is not on a general database object.
        For advisory locks it is used to distinguish the two key
        spaces (1 for an int8 key, 2 for two int4 keys).
       </entry>
@@ -7004,7 +7005,7 @@
        For a table column, this is the column number (the
        <structfield>classid</> and <structfield>objid</> refer to the
        table itself).  For all other object types, this column is
-       zero.  Null if the object is not a general database object
+       zero.  Null if the lock object is not on a general database object.
       </entry>
      </row>
      <row>
