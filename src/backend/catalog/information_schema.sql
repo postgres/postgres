@@ -158,7 +158,18 @@ $$SELECT
        WHEN $1 IN (1083, 1114, 1184, 1266) /* time, timestamp, same + tz */
            THEN CASE WHEN $2 < 0 THEN 6 ELSE $2 END
        WHEN $1 IN (1186) /* interval */
-           THEN CASE WHEN $2 < 0 THEN 6 ELSE $2 & 65535 END
+           THEN CASE WHEN $2 < 0 OR $2 & 65535 = 65535 THEN 6 ELSE $2 & 65535 END
+       ELSE null
+  END$$;
+
+CREATE FUNCTION _pg_interval_type(typid oid, mod int4) RETURNS text
+    LANGUAGE sql
+    IMMUTABLE
+    RETURNS NULL ON NULL INPUT
+    AS
+$$SELECT
+  CASE WHEN $1 IN (1186) /* interval */
+           THEN upper(substring(format_type($1, $2) from 'interval[()0-9]* #"%#"' for '#'))
        ELSE null
   END$$;
 
@@ -321,7 +332,10 @@ CREATE VIEW attributes AS
              AS cardinal_number)
              AS datetime_precision,
 
-           CAST(null AS character_data) AS interval_type, -- FIXME
+           CAST(
+             _pg_interval_type(_pg_truetypid(a, t), _pg_truetypmod(a, t))
+             AS character_data)
+             AS interval_type,
            CAST(null AS cardinal_number) AS interval_precision,
 
            CAST(current_database() AS sql_identifier) AS attribute_udt_catalog,
@@ -670,7 +684,10 @@ CREATE VIEW columns AS
              AS cardinal_number)
              AS datetime_precision,
 
-           CAST(null AS character_data) AS interval_type, -- FIXME
+           CAST(
+             _pg_interval_type(_pg_truetypid(a, t), _pg_truetypmod(a, t))
+             AS character_data)
+             AS interval_type,
            CAST(null AS cardinal_number) AS interval_precision,
 
            CAST(null AS sql_identifier) AS character_set_catalog,
@@ -936,7 +953,10 @@ CREATE VIEW domains AS
              AS cardinal_number)
              AS datetime_precision,
 
-           CAST(null AS character_data) AS interval_type, -- FIXME
+           CAST(
+             _pg_interval_type(t.typbasetype, t.typtypmod)
+             AS character_data)
+             AS interval_type,
            CAST(null AS cardinal_number) AS interval_precision,
 
            CAST(t.typdefault AS character_data) AS domain_default,
