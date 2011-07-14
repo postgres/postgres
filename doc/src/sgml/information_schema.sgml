@@ -4313,7 +4313,10 @@ ORDER BY c.ordinal_position;
      <row>
       <entry><literal>is_udt_dependent</literal></entry>
       <entry><type>yes_or_no</type></entry>
-      <entry>Applies to a feature not available in <productname>PostgreSQL</></entry>
+      <entry>
+       Currently always <literal>NO</literal>.  The alternative
+       <literal>YES</literal> applies to a feature not available in
+       <productname>PostgreSQL</></entry>.
      </row>
 
      <row>

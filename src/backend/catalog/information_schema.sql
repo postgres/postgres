@@ -1410,7 +1410,7 @@ CREATE VIEW routines AS
            CAST(null AS time_stamp) AS created,
            CAST(null AS time_stamp) AS last_altered,
            CAST(null AS yes_or_no) AS new_savepoint_level,
-           CAST('YES' AS yes_or_no) AS is_udt_dependent, -- FIXME?
+           CAST('NO' AS yes_or_no) AS is_udt_dependent,
 
            CAST(null AS character_data) AS result_cast_from_data_type,
            CAST(null AS yes_or_no) AS result_cast_as_locator,
