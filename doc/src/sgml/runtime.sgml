@@ -282,7 +282,7 @@ pg_ctl start -l logfile
    Different systems have different conventions for starting up daemons
    at boot time. Many systems have a file
    <filename>/etc/rc.local</filename> or
-   <filename>/etc/rc.d/rc.local</filename>. Others use
+   <filename>/etc/rc.d/rc.local</filename>. Others use <filename>init.d</filename> or
    <filename>rc.d</> directories. Whatever you do, the server must be
    run by the <productname>PostgreSQL</productname> user account
    <emphasis>and not by root</emphasis> or any other user. Therefore you
@@ -329,7 +329,8 @@ fi
 <programlisting>
 /usr/local/pgsql/bin/pg_ctl start -l logfile -D /usr/local/pgsql/data
 </programlisting>
-      to <filename>/etc/rc.d/rc.local</filename> or look at the file
+      to <filename>/etc/rc.d/rc.local</filename>
+      or <filename>/etc/rc.local</filename> or look at the file
       <filename>contrib/start-scripts/linux</filename> in the
       <productname>PostgreSQL</productname> source distribution.
      </para>
