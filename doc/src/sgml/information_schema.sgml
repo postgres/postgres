@@ -4316,7 +4316,8 @@ ORDER BY c.ordinal_position;
       <entry>
        Currently always <literal>NO</literal>.  The alternative
        <literal>YES</literal> applies to a feature not available in
-       <productname>PostgreSQL</></entry>.
+       <productname>PostgreSQL</>.
+      </entry>
      </row>
 
      <row>
