@@ -1806,7 +1806,7 @@ UNBOUNDED FOLLOWING
     The syntaxes using <literal>*</> are used for calling parameter-less
     aggregate functions as window functions, for example
     <literal>count(*) OVER (PARTITION BY x ORDER BY y)</>.
-    <literal>*</> is customarily not used for non-aggregate window functions.
+    The asterisk (<literal>*</>) is customarily not used for non-aggregate window functions.
     Aggregate window functions, unlike normal aggregate functions, do not
     allow <literal>DISTINCT</> or <literal>ORDER BY</> to be used within the
     function argument list.
