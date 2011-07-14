@@ -385,24 +385,38 @@ estimate_rel_size(Relation rel, int32 *attr_widths,
 
 			/*
 			 * HACK: if the relation has never yet been vacuumed, use a
-			 * minimum estimate of 10 pages.  This emulates a desirable aspect
-			 * of pre-8.0 behavior, which is that we wouldn't assume a newly
-			 * created relation is really small, which saves us from making
-			 * really bad plans during initial data loading.  (The plans are
-			 * not wrong when they are made, but if they are cached and used
-			 * again after the table has grown a lot, they are bad.) It would
-			 * be better to force replanning if the table size has changed a
-			 * lot since the plan was made ... but we don't currently have any
-			 * infrastructure for redoing cached plans at all, so we have to
-			 * kluge things here instead.
+			 * minimum size estimate of 10 pages.  The idea here is to avoid
+			 * assuming a newly-created table is really small, even if it
+			 * currently is, because that may not be true once some data gets
+			 * loaded into it.  Once a vacuum or analyze cycle has been done
+			 * on it, it's more reasonable to believe the size is somewhat
+			 * stable.
+			 *
+			 * (Note that this is only an issue if the plan gets cached and
+			 * used again after the table has been filled.  What we're trying
+			 * to avoid is using a nestloop-type plan on a table that has
+			 * grown substantially since the plan was made.  Normally,
+			 * autovacuum/autoanalyze will occur once enough inserts have
+			 * happened and cause cached-plan invalidation; but that doesn't
+			 * happen instantaneously, and it won't happen at all for cases
+			 * such as temporary tables.)
 			 *
 			 * We approximate "never vacuumed" by "has relpages = 0", which
 			 * means this will also fire on genuinely empty relations.	Not
 			 * great, but fortunately that's a seldom-seen case in the real
 			 * world, and it shouldn't degrade the quality of the plan too
 			 * much anyway to err in this direction.
+			 *
+			 * There are two exceptions wherein we don't apply this heuristic.
+			 * One is if the table has inheritance children.  Totally empty
+			 * parent tables are quite common, so we should be willing to
+			 * believe that they are empty.  Also, we don't apply the 10-page
+			 * minimum to indexes.
 			 */
-			if (curpages < 10 && rel->rd_rel->relpages == 0)
+			if (curpages < 10 &&
+				rel->rd_rel->relpages == 0 &&
+				!rel->rd_rel->relhassubclass &&
+				rel->rd_rel->relkind != RELKIND_INDEX)
 				curpages = 10;
 
 			/* report estimated # pages */
@@ -418,9 +432,10 @@ estimate_rel_size(Relation rel, int32 *attr_widths,
 			reltuples = (double) rel->rd_rel->reltuples;
 
 			/*
-			 * If it's an index, discount the metapage.  This is a kluge
-			 * because it assumes more than it ought to about index contents;
-			 * it's reasonably OK for btrees but a bit suspect otherwise.
+			 * If it's an index, discount the metapage while estimating the
+			 * number of tuples.  This is a kluge because it assumes more than
+			 * it ought to about index structure.  Currently it's OK for
+			 * btree, hash, and GIN indexes but suspect for GiST indexes.
 			 */
 			if (rel->rd_rel->relkind == RELKIND_INDEX &&
 				relpages > 0)
@@ -428,6 +443,7 @@ estimate_rel_size(Relation rel, int32 *attr_widths,
 				curpages--;
 				relpages--;
 			}
+
 			/* estimate number of tuples from previous tuple density */
 			if (relpages > 0)
 				density = reltuples / (double) relpages;
