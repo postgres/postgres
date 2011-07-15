@@ -884,9 +884,12 @@ gistFindPath(Relation r, BlockNumber child)
 
 		if (GistPageIsLeaf(page))
 		{
-			/* we can safety go away, follows only leaf pages */
+			/*
+			 * Because we scan the index top-down, all the rest of the pages
+			 * in the queue must be leaf pages as well.
+			 */
 			UnlockReleaseBuffer(buffer);
-			return NULL;
+			break;
 		}
 
 		top->lsn = PageGetLSN(page);
@@ -901,14 +904,25 @@ gistFindPath(Relation r, BlockNumber child)
 		if (top->parent && XLByteLT(top->parent->lsn, GistPageGetOpaque(page)->nsn) &&
 			GistPageGetOpaque(page)->rightlink != InvalidBlockNumber /* sanity check */ )
 		{
-			/* page splited while we thinking of... */
+			/*
+			 * Page was split while we looked elsewhere. We didn't see the
+			 * downlink to the right page when we scanned the parent, so
+			 * add it to the queue now.
+			 *
+			 * Put the right page ahead of the queue, so that we visit it
+			 * next. That's important, because if this is the lowest internal
+			 * level, just above leaves, we might already have queued up some
+			 * leaf pages, and we assume that there can't be any non-leaf
+			 * pages behind leaf pages.
+			 */
 			ptr = (GISTInsertStack *) palloc0(sizeof(GISTInsertStack));
 			ptr->blkno = GistPageGetOpaque(page)->rightlink;
 			ptr->childoffnum = InvalidOffsetNumber;
-			ptr->parent = top;
-			ptr->next = NULL;
-			tail->next = ptr;
-			tail = ptr;
+			ptr->parent = top->parent;
+			ptr->next = top->next;
+			top->next = ptr;
+			if (tail == top)
+				tail = ptr;
 		}
 
 		maxoff = PageGetMaxOffsetNumber(page);
@@ -964,7 +978,9 @@ gistFindPath(Relation r, BlockNumber child)
 		top = top->next;
 	}
 
-	return NULL;
+	elog(ERROR, "failed to re-find parent of a page in index \"%s\", block %u",
+		 RelationGetRelationName(r), child);
+	return NULL; /* keep compiler quiet */
 }
 
 /*
@@ -1035,7 +1051,6 @@ gistFindCorrectParent(Relation r, GISTInsertStack *child)
 
 		/* ok, find new path */
 		ptr = parent = gistFindPath(r, child->blkno);
-		Assert(ptr != NULL);
 
 		/* read all buffers as expected by caller */
 		/* note we don't lock them or gistcheckpage them here! */
