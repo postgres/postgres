@@ -32,8 +32,8 @@ step s1i:  INSERT INTO child VALUES (1, 1);
 step s2i:  INSERT INTO child VALUES (2, 1); 
 step s2u:  UPDATE parent SET aux = 'baz';  <waiting ...>
 step s1u:  UPDATE parent SET aux = 'bar'; 
-step s2u: <... completed>
 ERROR:  deadlock detected
+step s2u: <... completed>
 step s2c:  COMMIT; 
 step s1c:  COMMIT; 
 
@@ -52,8 +52,8 @@ step s2i:  INSERT INTO child VALUES (2, 1);
 step s1i:  INSERT INTO child VALUES (1, 1); 
 step s2u:  UPDATE parent SET aux = 'baz';  <waiting ...>
 step s1u:  UPDATE parent SET aux = 'bar'; 
-step s2u: <... completed>
 ERROR:  deadlock detected
+step s2u: <... completed>
 step s2c:  COMMIT; 
 step s1c:  COMMIT; 
 

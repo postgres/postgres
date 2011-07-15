@@ -19,13 +19,13 @@ teardown
 }
 
 session "s1"
-setup		{ BEGIN; }
+setup		{ BEGIN; SET deadlock_timeout = '20ms'; }
 step "s1i"	{ INSERT INTO child VALUES (1, 1); }
 step "s1u"	{ UPDATE parent SET aux = 'bar'; }
 step "s1c"	{ COMMIT; }
 
 session "s2"
-setup		{ BEGIN; }
+setup		{ BEGIN; SET deadlock_timeout = '10s'; }
 step "s2i"	{ INSERT INTO child VALUES (2, 1); }
 step "s2u"	{ UPDATE parent SET aux = 'baz'; }
 step "s2c"	{ COMMIT; }

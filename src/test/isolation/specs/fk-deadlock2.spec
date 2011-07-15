@@ -24,13 +24,13 @@ teardown
 }
 
 session "s1"
-setup		{ BEGIN; }
+setup		{ BEGIN; SET deadlock_timeout = '20ms'; }
 step "s1u1"	{ UPDATE A SET Col1 = 1 WHERE AID = 1; }
 step "s1u2"	{ UPDATE B SET Col2 = 1 WHERE BID = 2; }
 step "s1c"	{ COMMIT; }
 
 session "s2"
-setup		{ BEGIN; }
+setup		{ BEGIN; SET deadlock_timeout = '10s'; }
 step "s2u1"	{ UPDATE B SET Col2 = 1 WHERE BID = 2; }
 step "s2u2"	{ UPDATE B SET Col2 = 1 WHERE BID = 2; }
 step "s2c"	{ COMMIT; }
