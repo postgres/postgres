@@ -1862,10 +1862,7 @@ CREATE VIEW tables AS
                 THEN 'YES' ELSE 'NO' END AS yes_or_no) AS is_insertable_into,
 
            CAST(CASE WHEN t.typname IS NOT NULL THEN 'YES' ELSE 'NO' END AS yes_or_no) AS is_typed,
-           CAST(
-             CASE WHEN nc.oid = pg_my_temp_schema() THEN 'PRESERVE' -- FIXME
-                  ELSE null END
-             AS character_data) AS commit_action
+           CAST(null AS character_data) AS commit_action
 
     FROM pg_namespace nc JOIN pg_class c ON (nc.oid = c.relnamespace)
            LEFT JOIN (pg_type t JOIN pg_namespace nt ON (t.typnamespace = nt.oid)) ON (c.reloftype = t.oid)

@@ -5416,12 +5416,7 @@ ORDER BY c.ordinal_position;
      <row>
       <entry><literal>commit_action</literal></entry>
       <entry><type>character_data</type></entry>
-      <entry>
-       If the table is a temporary table, then
-       <literal>PRESERVE</literal>, else null.  (The SQL standard
-       defines other commit actions for temporary tables, which are
-       not supported by <productname>PostgreSQL</>.)
-      </entry>
+      <entry>Not yet implemented</entry>
      </row>
     </tbody>
    </tgroup>
