@@ -6928,9 +6928,9 @@
       <entry><type>oid</type></entry>
       <entry><literal><link linkend="catalog-pg-database"><structname>pg_database</structname></link>.oid</literal></entry>
       <entry>
-       OID of the database in which the object exists, or
-       zero if the object is a shared object, or
-       null if the lock object is on a transaction ID
+       OID of the database in which the lock target exists, or
+       zero if the target is a shared object, or
+       null if the target is a transaction ID
       </entry>
      </row>
      <row>
@@ -6938,8 +6938,8 @@
       <entry><type>oid</type></entry>
       <entry><literal><link linkend="catalog-pg-class"><structname>pg_class</structname></link>.oid</literal></entry>
       <entry>
-       OID of the relation, or null if the lock object is not
-       on a relation or part of a relation
+       OID of the relation targeted by the lock, or null if the target is not
+       a relation or part of a relation
       </entry>
      </row>
      <row>
@@ -6947,8 +6947,8 @@
       <entry><type>integer</type></entry>
       <entry></entry>
       <entry>
-       Page number within the relation, or null if the lock object
-       is not on a tuple or relation page
+       Page number targeted by the lock within the relation,
+       or null if the target is not a relation page or tuple
       </entry>
      </row>
      <row>
@@ -6956,8 +6956,8 @@
       <entry><type>smallint</type></entry>
       <entry></entry>
       <entry>
-       Tuple number within the page, or null if the lock object is not
-       on a tuple
+       Tuple number targeted by the lock within the page,
+       or null if the target is not a tuple
       </entry>
      </row>
      <row>
@@ -6965,8 +6965,8 @@
       <entry><type>text</type></entry>
       <entry></entry>
       <entry>
-       Virtual ID of a transaction lock, or null if the lock object is not
-       on a virtual transaction ID
+       Virtual ID of the transaction targeted by the lock,
+       or null if the target is not a virtual transaction ID
       </entry>
      </row>
      <row>
@@ -6974,7 +6974,8 @@
       <entry><type>xid</type></entry>
       <entry></entry>
       <entry>
-       ID of a transaction lock, or null if the lock object is not on a transaction ID
+       ID of the transaction targeted by the lock,
+       or null if the target is not a transaction ID
       </entry>
      </row>
      <row>
@@ -6982,8 +6983,8 @@
       <entry><type>oid</type></entry>
       <entry><literal><link linkend="catalog-pg-class"><structname>pg_class</structname></link>.oid</literal></entry>
       <entry>
-       OID of the system catalog containing the object, or null if the
-       lock object is not on a general database object.
+       OID of the system catalog containing the lock target, or null if the
+       target is not a general database object
       </entry>
      </row>
      <row>
@@ -6991,8 +6992,8 @@
       <entry><type>oid</type></entry>
       <entry>any OID column</entry>
       <entry>
-       OID of the object within its system catalog, or null if the
-       lock object is not on a general database object.
+       OID of the lock target within its system catalog, or null if the
+       target is not a general database object.
        For advisory locks it is used to distinguish the two key
        spaces (1 for an int8 key, 2 for two int4 keys).
       </entry>
@@ -7002,10 +7003,11 @@
       <entry><type>smallint</type></entry>
       <entry></entry>
       <entry>
-       For a table column, this is the column number (the
+       Column number targeted by the lock (the
        <structfield>classid</> and <structfield>objid</> refer to the
-       table itself).  For all other object types, this column is
-       zero.  Null if the lock object is not on a general database object.
+       table itself),
+       or zero if the target is some other general database object,
+       or null if the target is not a general database object
       </entry>
      </row>
      <row>
