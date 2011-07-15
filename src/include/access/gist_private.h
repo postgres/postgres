@@ -218,14 +218,11 @@ typedef struct GISTInsertStack
 	 */
 	GistNSN		lsn;
 
-	/* child's offset */
-	OffsetNumber childoffnum;
+	/* offset of the downlink in the parent page, that points to this page */
+	OffsetNumber downlinkoffnum;
 
 	/* pointer to parent */
 	struct GISTInsertStack *parent;
-
-	/* for gistFindPath */
-	struct GISTInsertStack *next;
 } GISTInsertStack;
 
 typedef struct GistSplitVector
@@ -292,8 +289,6 @@ extern void freeGISTstate(GISTSTATE *giststate);
 
 extern SplitedPageLayout *gistSplit(Relation r, Page page, IndexTuple *itup,
 		  int len, GISTSTATE *giststate);
-
-extern GISTInsertStack *gistFindPath(Relation r, BlockNumber child);
 
 /* gistxlog.c */
 extern void gist_redo(XLogRecPtr lsn, XLogRecord *record);
