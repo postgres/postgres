@@ -1366,15 +1366,21 @@ pg_SSPI_recvauth(Port *port)
 						  _("could not accept SSPI security context"), r);
 		}
 
+		/*
+		 * Overwrite the current context with the one we just received.
+		 * If sspictx is NULL it was the first loop and we need to allocate
+		 * a buffer for it. On subsequent runs, we can just overwrite the
+		 * buffer contents since the size does not change.
+		 */
 		if (sspictx == NULL)
 		{
 			sspictx = malloc(sizeof(CtxtHandle));
 			if (sspictx == NULL)
 				ereport(ERROR,
 						(errmsg("out of memory")));
-
-			memcpy(sspictx, &newctx, sizeof(CtxtHandle));
 		}
+
+		memcpy(sspictx, &newctx, sizeof(CtxtHandle));
 
 		if (r == SEC_I_CONTINUE_NEEDED)
 			elog(DEBUG4, "SSPI continue needed");
