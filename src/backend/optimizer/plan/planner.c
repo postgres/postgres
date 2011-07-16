@@ -85,6 +85,7 @@ static bool choose_hashed_distinct(PlannerInfo *root,
 					   double dNumDistinctRows);
 static List *make_subplanTargetList(PlannerInfo *root, List *tlist,
 					   AttrNumber **groupColIdx, bool *need_tlist_eval);
+static int	get_grouping_column_index(Query *parse, TargetEntry *tle);
 static void locate_grouping_columns(PlannerInfo *root,
 						List *tlist,
 						List *sub_tlist,
@@ -2536,14 +2537,9 @@ choose_hashed_distinct(PlannerInfo *root,
  * For example, given a query like
  *		SELECT a+b,SUM(c+d) FROM table GROUP BY a+b;
  * we want to pass this targetlist to the subplan:
- *		a,b,c,d,a+b
+ *		a+b,c,d
  * where the a+b target will be used by the Sort/Group steps, and the
- * other targets will be used for computing the final results.	(In the
- * above example we could theoretically suppress the a and b targets and
- * pass down only c,d,a+b, but it's not really worth the trouble to
- * eliminate simple var references from the subplan.  We will avoid doing
- * the extra computation to recompute a+b at the outer level; see
- * fix_upper_expr() in setrefs.c.)
+ * other targets will be used for computing the final results.
  *
  * If we are grouping or aggregating, *and* there are no non-Var grouping
  * expressions, then the returned tlist is effectively dummy; we do not
@@ -2569,7 +2565,8 @@ make_subplanTargetList(PlannerInfo *root,
 {
 	Query	   *parse = root->parse;
 	List	   *sub_tlist;
-	List	   *extravars;
+	List	   *non_group_cols;
+	List	   *non_group_vars;
 	int			numCols;
 
 	*groupColIdx = NULL;
@@ -2586,69 +2583,130 @@ make_subplanTargetList(PlannerInfo *root,
 	}
 
 	/*
-	 * Otherwise, start with a "flattened" tlist (having just the Vars
-	 * mentioned in the targetlist and HAVING qual).  Note this includes Vars
-	 * used in resjunk items, so we are covering the needs of ORDER BY and
-	 * window specifications.  Vars used within Aggrefs will be pulled out
-	 * here, too.
+	 * Otherwise, we must build a tlist containing all grouping columns,
+	 * plus any other Vars mentioned in the targetlist and HAVING qual.
 	 */
-	sub_tlist = flatten_tlist(tlist,
-							  PVC_RECURSE_AGGREGATES,
-							  PVC_INCLUDE_PLACEHOLDERS);
-	extravars = pull_var_clause(parse->havingQual,
-								PVC_RECURSE_AGGREGATES,
-								PVC_INCLUDE_PLACEHOLDERS);
-	sub_tlist = add_to_flat_tlist(sub_tlist, extravars);
-	list_free(extravars);
+	sub_tlist = NIL;
+	non_group_cols = NIL;
 	*need_tlist_eval = false;	/* only eval if not flat tlist */
 
-	/*
-	 * If grouping, create sub_tlist entries for all GROUP BY expressions
-	 * (GROUP BY items that are simple Vars should be in the list already),
-	 * and make an array showing where the group columns are in the sub_tlist.
-	 */
 	numCols = list_length(parse->groupClause);
 	if (numCols > 0)
 	{
-		int			keyno = 0;
+		/*
+		 * If grouping, create sub_tlist entries for all GROUP BY columns, and
+		 * make an array showing where the group columns are in the sub_tlist.
+		 *
+		 * Note: with this implementation, the array entries will always be
+		 * 1..N, but we don't want callers to assume that.
+		 */
 		AttrNumber *grpColIdx;
-		ListCell   *gl;
+		ListCell   *tl;
 
-		grpColIdx = (AttrNumber *) palloc(sizeof(AttrNumber) * numCols);
+		grpColIdx = (AttrNumber *) palloc0(sizeof(AttrNumber) * numCols);
 		*groupColIdx = grpColIdx;
 
-		foreach(gl, parse->groupClause)
+		foreach(tl, tlist)
 		{
-			SortGroupClause *grpcl = (SortGroupClause *) lfirst(gl);
-			Node	   *groupexpr = get_sortgroupclause_expr(grpcl, tlist);
-			TargetEntry *te;
+			TargetEntry *tle = (TargetEntry *) lfirst(tl);
+			int			colno;
 
-			/*
-			 * Find or make a matching sub_tlist entry.  If the groupexpr
-			 * isn't a Var, no point in searching.  (Note that the parser
-			 * won't make multiple groupClause entries for the same TLE.)
-			 */
-			if (groupexpr && IsA(groupexpr, Var))
-				te = tlist_member(groupexpr, sub_tlist);
-			else
-				te = NULL;
-
-			if (!te)
+			colno = get_grouping_column_index(parse, tle);
+			if (colno >= 0)
 			{
-				te = makeTargetEntry((Expr *) groupexpr,
-									 list_length(sub_tlist) + 1,
-									 NULL,
-									 false);
-				sub_tlist = lappend(sub_tlist, te);
-				*need_tlist_eval = true;		/* it's not flat anymore */
-			}
+				/*
+				 * It's a grouping column, so add it to the result tlist and
+				 * remember its resno in grpColIdx[].
+				 */
+				TargetEntry *newtle;
 
-			/* and save its resno */
-			grpColIdx[keyno++] = te->resno;
+				newtle = makeTargetEntry(tle->expr,
+										 list_length(sub_tlist) + 1,
+										 NULL,
+										 false);
+				sub_tlist = lappend(sub_tlist, newtle);
+
+				Assert(grpColIdx[colno] == 0);	/* no dups expected */
+				grpColIdx[colno] = newtle->resno;
+
+				if (!(newtle->expr && IsA(newtle->expr, Var)))
+					*need_tlist_eval = true;	/* tlist contains non Vars */
+			}
+			else
+			{
+				/*
+				 * Non-grouping column, so just remember the expression
+				 * for later call to pull_var_clause.  There's no need for
+				 * pull_var_clause to examine the TargetEntry node itself.
+				 */
+				non_group_cols = lappend(non_group_cols, tle->expr);
+			}
 		}
 	}
+	else
+	{
+		/*
+		 * With no grouping columns, just pass whole tlist to pull_var_clause.
+		 * Need (shallow) copy to avoid damaging input tlist below.
+		 */
+		non_group_cols = list_copy(tlist);
+	}
+
+	/*
+	 * If there's a HAVING clause, we'll need the Vars it uses, too.
+	 */
+	if (parse->havingQual)
+		non_group_cols = lappend(non_group_cols, parse->havingQual);
+
+	/*
+	 * Pull out all the Vars mentioned in non-group cols (plus HAVING), and
+	 * add them to the result tlist if not already present.  (A Var used
+	 * directly as a GROUP BY item will be present already.)  Note this
+	 * includes Vars used in resjunk items, so we are covering the needs of
+	 * ORDER BY and window specifications.  Vars used within Aggrefs will be
+	 * pulled out here, too.
+	 */
+	non_group_vars = pull_var_clause((Node *) non_group_cols,
+									 PVC_RECURSE_AGGREGATES,
+									 PVC_INCLUDE_PLACEHOLDERS);
+	sub_tlist = add_to_flat_tlist(sub_tlist, non_group_vars);
+
+	/* clean up cruft */
+	list_free(non_group_vars);
+	list_free(non_group_cols);
 
 	return sub_tlist;
+}
+
+/*
+ * get_grouping_column_index
+ *		Get the GROUP BY column position, if any, of a targetlist entry.
+ *
+ * Returns the index (counting from 0) of the TLE in the GROUP BY list, or -1
+ * if it's not a grouping column.  Note: the result is unique because the
+ * parser won't make multiple groupClause entries for the same TLE.
+ */
+static int
+get_grouping_column_index(Query *parse, TargetEntry *tle)
+{
+	int			colno = 0;
+	Index		ressortgroupref = tle->ressortgroupref;
+	ListCell   *gl;
+
+	/* No need to search groupClause if TLE hasn't got a sortgroupref */
+	if (ressortgroupref == 0)
+		return -1;
+
+	foreach(gl, parse->groupClause)
+	{
+		SortGroupClause *grpcl = (SortGroupClause *) lfirst(gl);
+
+		if (grpcl->tleSortGroupRef == ressortgroupref)
+			return colno;
+		colno++;
+	}
+
+	return -1;
 }
 
 /*
