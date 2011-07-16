@@ -2791,7 +2791,7 @@ exec_stmt_raise(PLpgSQL_execstate *estate, PLpgSQL_stmt_raise *stmt)
 	ereport(stmt->elog_level,
 			(err_code ? errcode(err_code) : 0,
 			 errmsg_internal("%s", err_message),
-			 (err_detail != NULL) ? errdetail("%s", err_detail) : 0,
+			 (err_detail != NULL) ? errdetail_internal("%s", err_detail) : 0,
 			 (err_hint != NULL) ? errhint("%s", err_hint) : 0));
 
 	estate->err_text = NULL;	/* un-suppress... */

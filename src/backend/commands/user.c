@@ -953,7 +953,7 @@ DropRole(DropRoleStmt *stmt)
 					(errcode(ERRCODE_DEPENDENT_OBJECTS_STILL_EXIST),
 					 errmsg("role \"%s\" cannot be dropped because some objects depend on it",
 							role),
-					 errdetail("%s", detail),
+					 errdetail_internal("%s", detail),
 					 errdetail_log("%s", detail_log)));
 
 		/*

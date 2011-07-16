@@ -187,7 +187,7 @@ typedef struct remoteConnHashEnt
 					ereport(ERROR, \
 							(errcode(ERRCODE_SQLCLIENT_UNABLE_TO_ESTABLISH_SQLCONNECTION), \
 							 errmsg("could not establish connection"), \
-							 errdetail("%s", msg))); \
+							 errdetail_internal("%s", msg))); \
 				} \
 				dblink_security_check(conn, rconn); \
 				PQsetClientEncoding(conn, GetDatabaseEncodingName()); \
@@ -263,7 +263,7 @@ dblink_connect(PG_FUNCTION_ARGS)
 		ereport(ERROR,
 				(errcode(ERRCODE_SQLCLIENT_UNABLE_TO_ESTABLISH_SQLCONNECTION),
 				 errmsg("could not establish connection"),
-				 errdetail("%s", msg)));
+				 errdetail_internal("%s", msg)));
 	}
 
 	/* check password actually used if not superuser */
@@ -2261,8 +2261,9 @@ dblink_res_error(const char *conname, PGresult *res, const char *dblink_context_
 
 	ereport(level,
 			(errcode(sqlstate),
-	message_primary ? errmsg("%s", message_primary) : errmsg("unknown error"),
-			 message_detail ? errdetail("%s", message_detail) : 0,
+			 message_primary ? errmsg_internal("%s", message_primary) :
+			 errmsg("unknown error"),
+			 message_detail ? errdetail_internal("%s", message_detail) : 0,
 			 message_hint ? errhint("%s", message_hint) : 0,
 			 message_context ? errcontext("%s", message_context) : 0,
 		  errcontext("Error occurred on dblink connection named \"%s\": %s.",

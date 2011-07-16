@@ -4434,8 +4434,8 @@ PLy_elog(int elevel, const char *fmt,...)
 	PG_TRY();
 	{
 		ereport(elevel,
-				(errmsg("%s", primary ? primary : "no exception data"),
-				 (detail) ? errdetail("%s", detail) : 0,
+				(errmsg_internal("%s", primary ? primary : "no exception data"),
+				 (detail) ? errdetail_internal("%s", detail) : 0,
 				 (tb_depth > 0 && tbmsg) ? errcontext("%s", tbmsg) : 0,
 				 (hint) ? errhint("%s", hint) : 0,
 				 (query) ? internalerrquery(query) : 0,

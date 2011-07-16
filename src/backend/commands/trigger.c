@@ -891,7 +891,7 @@ ConvertTriggerToFK(CreateTrigStmt *stmt, Oid funcoid)
 		ereport(NOTICE,
 		(errmsg("ignoring incomplete trigger group for constraint \"%s\" %s",
 				constr_name, buf.data),
-		 errdetail("%s", _(funcdescr[funcnum]))));
+		 errdetail_internal("%s", _(funcdescr[funcnum]))));
 		oldContext = MemoryContextSwitchTo(TopMemoryContext);
 		info = (OldTriggerInfo *) palloc0(sizeof(OldTriggerInfo));
 		info->args = copyObject(stmt->args);
@@ -907,7 +907,7 @@ ConvertTriggerToFK(CreateTrigStmt *stmt, Oid funcoid)
 		ereport(NOTICE,
 		(errmsg("ignoring incomplete trigger group for constraint \"%s\" %s",
 				constr_name, buf.data),
-		 errdetail("%s", _(funcdescr[funcnum]))));
+		 errdetail_internal("%s", _(funcdescr[funcnum]))));
 	}
 	else
 	{
@@ -919,7 +919,7 @@ ConvertTriggerToFK(CreateTrigStmt *stmt, Oid funcoid)
 		ereport(NOTICE,
 				(errmsg("converting trigger group into constraint \"%s\" %s",
 						constr_name, buf.data),
-				 errdetail("%s", _(funcdescr[funcnum]))));
+				 errdetail_internal("%s", _(funcdescr[funcnum]))));
 		fkcon->contype = CONSTR_FOREIGN;
 		fkcon->location = -1;
 		if (funcnum == 2)
