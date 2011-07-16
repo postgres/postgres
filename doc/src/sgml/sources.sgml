@@ -214,13 +214,12 @@ ereport(ERROR,
    </listitem>
    <listitem>
     <para>
-     <function>errdetail_log(const char *msg, ...)</function> is the same as
-     <function>errdetail</> except that this string goes only to the server
-     log, never to the client.  If both <function>errdetail</> and
-     <function>errdetail_log</> are used then one string goes to the client
-     and the other to the log.  This is useful for error details that are
-     too security-sensitive or too bulky to include in the report
-     sent to the client.
+     <function>errdetail_internal(const char *msg, ...)</function> is the same
+     as <function>errdetail</>, except that the message string will not be
+     translated nor included in the internationalization message dictionary.
+     This should be used for detail messages that are not worth expending
+     translation effort on, for instance because they are too technical to be
+     useful to most users.
     </para>
    </listitem>
    <listitem>
@@ -229,6 +228,18 @@ ereport(ERROR,
      unsigned long n, ...)</function> is like <function>errdetail</>, but with
      support for various plural forms of the message.
      For more information see <xref linkend="nls-guidelines">.
+    </para>
+   </listitem>
+   <listitem>
+    <para>
+     <function>errdetail_log(const char *msg, ...)</function> is the same as
+     <function>errdetail</> except that this string goes only to the server
+     log, never to the client.  If both <function>errdetail</> (or one of
+     its equivalents above) and
+     <function>errdetail_log</> are used then one string goes to the client
+     and the other to the log.  This is useful for error details that are
+     too security-sensitive or too bulky to include in the report
+     sent to the client.
     </para>
    </listitem>
    <listitem>
