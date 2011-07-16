@@ -82,7 +82,7 @@ elog_node_display(int lev, const char *title, void *obj, bool pretty)
 	pfree(s);
 	ereport(lev,
 			(errmsg_internal("%s:", title),
-			 errdetail("%s", f)));
+			 errdetail_internal("%s", f)));
 	pfree(f);
 }
 

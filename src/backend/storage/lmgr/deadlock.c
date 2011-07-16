@@ -939,7 +939,7 @@ DeadLockReport(void)
 	ereport(ERROR,
 			(errcode(ERRCODE_T_R_DEADLOCK_DETECTED),
 			 errmsg("deadlock detected"),
-			 errdetail("%s", clientbuf.data),
+			 errdetail_internal("%s", clientbuf.data),
 			 errdetail_log("%s", logbuf.data),
 			 errhint("See server log for query details.")));
 }

@@ -4294,7 +4294,7 @@ ShowUsage(const char *title)
 
 	ereport(LOG,
 			(errmsg_internal("%s", title),
-			 errdetail("%s", str.data)));
+			 errdetail_internal("%s", str.data)));
 
 	pfree(str.data);
 }

@@ -7975,11 +7975,11 @@ call_bool_check_hook(struct config_bool * conf, bool *newval, void **extra,
 		ereport(elevel,
 				(errcode(GUC_check_errcode_value),
 				 GUC_check_errmsg_string ?
-				 errmsg("%s", GUC_check_errmsg_string) :
+				 errmsg_internal("%s", GUC_check_errmsg_string) :
 				 errmsg("invalid value for parameter \"%s\": %d",
 						conf->gen.name, (int) *newval),
 				 GUC_check_errdetail_string ?
-				 errdetail("%s", GUC_check_errdetail_string) : 0,
+				 errdetail_internal("%s", GUC_check_errdetail_string) : 0,
 				 GUC_check_errhint_string ?
 				 errhint("%s", GUC_check_errhint_string) : 0));
 		/* Flush any strings created in ErrorContext */
@@ -8009,11 +8009,11 @@ call_int_check_hook(struct config_int * conf, int *newval, void **extra,
 		ereport(elevel,
 				(errcode(GUC_check_errcode_value),
 				 GUC_check_errmsg_string ?
-				 errmsg("%s", GUC_check_errmsg_string) :
+				 errmsg_internal("%s", GUC_check_errmsg_string) :
 				 errmsg("invalid value for parameter \"%s\": %d",
 						conf->gen.name, *newval),
 				 GUC_check_errdetail_string ?
-				 errdetail("%s", GUC_check_errdetail_string) : 0,
+				 errdetail_internal("%s", GUC_check_errdetail_string) : 0,
 				 GUC_check_errhint_string ?
 				 errhint("%s", GUC_check_errhint_string) : 0));
 		/* Flush any strings created in ErrorContext */
@@ -8043,11 +8043,11 @@ call_real_check_hook(struct config_real * conf, double *newval, void **extra,
 		ereport(elevel,
 				(errcode(GUC_check_errcode_value),
 				 GUC_check_errmsg_string ?
-				 errmsg("%s", GUC_check_errmsg_string) :
+				 errmsg_internal("%s", GUC_check_errmsg_string) :
 				 errmsg("invalid value for parameter \"%s\": %g",
 						conf->gen.name, *newval),
 				 GUC_check_errdetail_string ?
-				 errdetail("%s", GUC_check_errdetail_string) : 0,
+				 errdetail_internal("%s", GUC_check_errdetail_string) : 0,
 				 GUC_check_errhint_string ?
 				 errhint("%s", GUC_check_errhint_string) : 0));
 		/* Flush any strings created in ErrorContext */
@@ -8077,11 +8077,11 @@ call_string_check_hook(struct config_string * conf, char **newval, void **extra,
 		ereport(elevel,
 				(errcode(GUC_check_errcode_value),
 				 GUC_check_errmsg_string ?
-				 errmsg("%s", GUC_check_errmsg_string) :
+				 errmsg_internal("%s", GUC_check_errmsg_string) :
 				 errmsg("invalid value for parameter \"%s\": \"%s\"",
 						conf->gen.name, *newval ? *newval : ""),
 				 GUC_check_errdetail_string ?
-				 errdetail("%s", GUC_check_errdetail_string) : 0,
+				 errdetail_internal("%s", GUC_check_errdetail_string) : 0,
 				 GUC_check_errhint_string ?
 				 errhint("%s", GUC_check_errhint_string) : 0));
 		/* Flush any strings created in ErrorContext */
@@ -8111,12 +8111,12 @@ call_enum_check_hook(struct config_enum * conf, int *newval, void **extra,
 		ereport(elevel,
 				(errcode(GUC_check_errcode_value),
 				 GUC_check_errmsg_string ?
-				 errmsg("%s", GUC_check_errmsg_string) :
+				 errmsg_internal("%s", GUC_check_errmsg_string) :
 				 errmsg("invalid value for parameter \"%s\": \"%s\"",
 						conf->gen.name,
 						config_enum_lookup_by_value(conf, *newval)),
 				 GUC_check_errdetail_string ?
-				 errdetail("%s", GUC_check_errdetail_string) : 0,
+				 errdetail_internal("%s", GUC_check_errdetail_string) : 0,
 				 GUC_check_errhint_string ?
 				 errhint("%s", GUC_check_errhint_string) : 0));
 		/* Flush any strings created in ErrorContext */

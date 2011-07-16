@@ -378,7 +378,7 @@ incompatible_module_error(const char *libname,
 	ereport(ERROR,
 			(errmsg("incompatible library \"%s\": magic block mismatch",
 					libname),
-			 errdetail("%s", details.data)));
+			 errdetail_internal("%s", details.data)));
 }
 
 /*

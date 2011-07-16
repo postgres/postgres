@@ -1364,14 +1364,14 @@ xml_ereport(int level, int sqlcode, const char *msg)
 
 		ereport(level,
 				(errcode(sqlcode),
-				 errmsg("%s", msg),
-				 errdetail("%s", detail)));
+				 errmsg_internal("%s", msg),
+				 errdetail_internal("%s", detail)));
 	}
 	else
 	{
 		ereport(level,
 				(errcode(sqlcode),
-				 errmsg("%s", msg)));
+				 errmsg_internal("%s", msg)));
 	}
 }
 
@@ -1442,7 +1442,7 @@ xml_ereport_by_code(int level, int sqlcode,
 
 	ereport(level,
 			(errcode(sqlcode),
-			 errmsg("%s", msg),
+			 errmsg_internal("%s", msg),
 			 errdetail(det, code)));
 }
 
