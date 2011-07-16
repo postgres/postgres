@@ -843,6 +843,33 @@ errdetail(const char *fmt,...)
 
 
 /*
+ * errdetail_internal --- add a detail error message text to the current error
+ *
+ * This is exactly like errdetail() except that strings passed to
+ * errdetail_internal are not translated, and are customarily left out of the
+ * internationalization message dictionary.  This should be used for detail
+ * messages that seem not worth translating for one reason or another
+ * (typically, that they don't seem to be useful to average users).
+ */
+int
+errdetail_internal(const char *fmt,...)
+{
+	ErrorData  *edata = &errordata[errordata_stack_depth];
+	MemoryContext oldcontext;
+
+	recursion_depth++;
+	CHECK_STACK_DEPTH();
+	oldcontext = MemoryContextSwitchTo(ErrorContext);
+
+	EVALUATE_MESSAGE(detail, false, false);
+
+	MemoryContextSwitchTo(oldcontext);
+	recursion_depth--;
+	return 0;					/* return value does not matter */
+}
+
+
+/*
  * errdetail_log --- add a detail_log error message text to the current error
  */
 int
