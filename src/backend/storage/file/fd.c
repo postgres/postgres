@@ -1097,6 +1097,10 @@ FileClose(File file)
 		 */
 		vfdP->fdstate &= ~FD_TEMPORARY;
 
+		/* Subtract its size from current usage (do first in case of error) */
+		temporary_files_size -= vfdP->fileSize;
+		vfdP->fileSize = 0;
+
 		if (log_temp_files >= 0)
 		{
 			struct stat filestats;
@@ -1133,10 +1137,6 @@ FileClose(File file)
 			if (unlink(vfdP->fileName))
 				elog(LOG, "could not unlink file \"%s\": %m", vfdP->fileName);
 		}
-
-		/* Subtract its size from current usage */
-		temporary_files_size -= vfdP->fileSize;
-		vfdP->fileSize = 0;
 	}
 
 	/* Unregister it from the resource owner */
@@ -1447,6 +1447,15 @@ FileTruncate(File file, off_t offset)
 		return returnCode;
 
 	returnCode = ftruncate(VfdCache[file].fd, offset);
+
+	if (returnCode == 0 && VfdCache[file].fileSize > offset)
+	{
+		/* adjust our state for truncation of a temp file */
+		Assert(VfdCache[file].fdstate & FD_TEMPORARY);
+		temporary_files_size -= VfdCache[file].fileSize - offset;
+		VfdCache[file].fileSize = offset;
+	}
+
 	return returnCode;
 }
 
