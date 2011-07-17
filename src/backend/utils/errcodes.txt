@@ -4,7 +4,7 @@
 #
 # Copyright (c) 2003-2011, PostgreSQL Global Development Group
 #
-# This list serves a basis for generating source files containing error
+# This list serves as the basis for generating source files containing error
 # codes. It is kept in a common format to make sure all these source files have
 # the same contents.
 # The files generated from this one are:
@@ -24,14 +24,14 @@
 #      sqlstate    E/W/S    errcode_macro_name    spec_name
 #
 # where sqlstate is a five-character string following the SQLSTATE conventions,
-# the second field determines if the code means an error, a warning or success,
+# the second field indicates if the code means an error, a warning or success,
 # errcode_macro_name is the C macro name starting with ERRCODE that will be put
-# in errcodes.h and spec_name is a lowercase, underscore-separated name that
+# in errcodes.h, and spec_name is a lowercase, underscore-separated name that
 # will be used as the PL/pgSQL condition name and will also be included in the
 # SGML list. The last field is optional, if not present the PL/pgSQL condition
 # and the SGML entry will not be generated.
 #
-# Empty lines and ones starting with a hash are comments.
+# Empty lines and lines starting with a hash are comments.
 #
 # There are also special lines in the format of:
 #
@@ -368,6 +368,7 @@ Section: Class 53 - Insufficient Resources
 53100    E    ERRCODE_DISK_FULL                                              disk_full
 53200    E    ERRCODE_OUT_OF_MEMORY                                          out_of_memory
 53300    E    ERRCODE_TOO_MANY_CONNECTIONS                                   too_many_connections
+53400    E    ERRCODE_CONFIGURATION_LIMIT_EXCEEDED                           configuration_limit_exceeded
 
 Section: Class 54 - Program Limit Exceeded
 
@@ -393,7 +394,7 @@ Section: Class 57 - Operator Intervention
 57P01    E    ERRCODE_ADMIN_SHUTDOWN                                         admin_shutdown
 57P02    E    ERRCODE_CRASH_SHUTDOWN                                         crash_shutdown
 57P03    E    ERRCODE_CANNOT_CONNECT_NOW                                     cannot_connect_now
-57P04    E    ERRCODE_DATABASE_DROPPED										 database_dropped
+57P04    E    ERRCODE_DATABASE_DROPPED                                       database_dropped
 
 Section: Class 58 - System Error (errors external to PostgreSQL itself)
 

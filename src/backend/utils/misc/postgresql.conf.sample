@@ -119,6 +119,11 @@
 #maintenance_work_mem = 16MB		# min 1MB
 #max_stack_depth = 2MB			# min 100kB
 
+# - Disk -
+
+#temp_file_limit = -1			# limits per-session temp file space
+					# in kB, or -1 for no limit
+
 # - Kernel Resource Usage -
 
 #max_files_per_process = 1000		# min 25

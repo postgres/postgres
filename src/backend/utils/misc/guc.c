@@ -425,6 +425,8 @@ int			log_min_duration_statement = -1;
 int			log_temp_files = -1;
 int			trace_recovery_messages = LOG;
 
+int			temp_file_limit = -1;
+
 int			num_temp_buffers = 1024;
 
 char	   *data_directory;
@@ -535,6 +537,8 @@ const char *const config_group_names[] =
 	gettext_noop("Resource Usage"),
 	/* RESOURCES_MEM */
 	gettext_noop("Resource Usage / Memory"),
+	/* RESOURCES_DISK */
+	gettext_noop("Resource Usage / Disk"),
 	/* RESOURCES_KERNEL */
 	gettext_noop("Resource Usage / Kernel Resources"),
 	/* RESOURCES_VACUUM_DELAY */
@@ -1691,6 +1695,17 @@ static struct config_int ConfigureNamesInt[] =
 		&max_stack_depth,
 		100, 100, MAX_KILOBYTES,
 		check_max_stack_depth, assign_max_stack_depth, NULL
+	},
+
+	{
+		{"temp_file_limit", PGC_SUSET, RESOURCES_DISK,
+			gettext_noop("Limits the total size of all temp files used by each session."),
+			gettext_noop("-1 means no limit."),
+			GUC_UNIT_KB
+		},
+		&temp_file_limit,
+		-1, -1, INT_MAX,
+		NULL, NULL, NULL
 	},
 
 	{

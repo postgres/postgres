@@ -1025,10 +1025,41 @@ SET ENABLE_SEQSCAN TO OFF;
      </variablelist>
      </sect2>
 
+     <sect2 id="runtime-config-resource-disk">
+     <title>Disk</title>
+
+     <variablelist>
+     <varlistentry id="guc-temp-file-limit" xreflabel="temp_file_limit">
+      <term><varname>temp_file_limit</varname> (<type>integer</type>)</term>
+      <indexterm>
+       <primary><varname>temp_file_limit</> configuration parameter</primary>
+      </indexterm>
+      <listitem>
+       <para>
+        Specifies the maximum amount of disk space that a session can use
+        for temporary files, such as sort and hash temporary files, or the
+        storage file for a held cursor.
+        The value is specified in kilobytes, and <literal>-1</> (the
+        default) means no limit.
+        Only superusers can change this setting.
+       </para>
+       <para>
+        This setting constrains the total space used at any instant by all
+        temporary files used by a given <productname>PostgreSQL</> session.
+        It should be noted that disk space used for explicit temporary
+        tables, as opposed to temporary files used behind-the-scenes in query
+        execution, does <emphasis>not</emphasis> count against this limit.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     </variablelist>
+     </sect2>
+
      <sect2 id="runtime-config-resource-kernel">
      <title>Kernel Resource Usage</title>
-     <variablelist>
 
+     <variablelist>
      <varlistentry id="guc-max-files-per-process" xreflabel="max_files_per_process">
       <term><varname>max_files_per_process</varname> (<type>integer</type>)</term>
       <indexterm>

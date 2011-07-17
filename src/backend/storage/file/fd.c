@@ -128,9 +128,6 @@ static int	max_safe_fds = 32;	/* default if not changed */
 #define FD_XACT_TRANSIENT	(1 << 2)	/* T = close (not delete) at aoXact,
 										 * but keep VFD */
 
-/* Flag to tell whether there are files to close/delete at end of transaction */
-static bool have_pending_fd_cleanup = false;
-
 typedef struct vfd
 {
 	int			fd;				/* current FD, or VFD_CLOSED if none */
@@ -140,6 +137,7 @@ typedef struct vfd
 	File		lruMoreRecently;	/* doubly linked recency-of-use list */
 	File		lruLessRecently;
 	off_t		seekPos;		/* current logical file position */
+	off_t		fileSize;		/* current size of file (0 if not temporary) */
 	char	   *fileName;		/* name of file, or NULL for unused VFD */
 	/* NB: fileName is malloc'd, and must be free'd when closing the VFD */
 	int			fileFlags;		/* open(2) flags for (re)opening the file */
@@ -158,6 +156,17 @@ static Size SizeVfdCache = 0;
  * Number of file descriptors known to be in use by VFD entries.
  */
 static int	nfile = 0;
+
+/* True if there are files to close/delete at end of transaction */
+static bool have_pending_fd_cleanup = false;
+
+/*
+ * Tracks the total size of all temporary files.  Note: when temp_file_limit
+ * is being enforced, this cannot overflow since the limit cannot be more
+ * than INT_MAX kilobytes.  When not enforcing, it could theoretically
+ * overflow, but we don't care.
+ */
+static uint64 temporary_files_size = 0;
 
 /*
  * List of stdio FILEs and <dirent.h> DIRs opened with AllocateFile
@@ -887,6 +896,7 @@ PathNameOpenFile(FileName fileName, int fileFlags, int fileMode)
 	vfdP->fileFlags = fileFlags & ~(O_CREAT | O_TRUNC | O_EXCL);
 	vfdP->fileMode = fileMode;
 	vfdP->seekPos = 0;
+	vfdP->fileSize = 0;
 	vfdP->fdstate = 0x0;
 	vfdP->resowner = NULL;
 
@@ -1123,6 +1133,10 @@ FileClose(File file)
 			if (unlink(vfdP->fileName))
 				elog(LOG, "could not unlink file \"%s\": %m", vfdP->fileName);
 		}
+
+		/* Subtract its size from current usage */
+		temporary_files_size -= vfdP->fileSize;
+		vfdP->fileSize = 0;
 	}
 
 	/* Unregister it from the resource owner */
@@ -1242,6 +1256,31 @@ FileWrite(File file, char *buffer, int amount)
 	if (returnCode < 0)
 		return returnCode;
 
+	/*
+	 * If enforcing temp_file_limit and it's a temp file, check to see if the
+	 * write would overrun temp_file_limit, and throw error if so.  Note: it's
+	 * really a modularity violation to throw error here; we should set errno
+	 * and return -1.  However, there's no way to report a suitable error
+	 * message if we do that.  All current callers would just throw error
+	 * immediately anyway, so this is safe at present.
+	 */
+	if (temp_file_limit >= 0 && (VfdCache[file].fdstate & FD_TEMPORARY))
+	{
+		off_t	newPos = VfdCache[file].seekPos + amount;
+
+		if (newPos > VfdCache[file].fileSize)
+		{
+			uint64	newTotal = temporary_files_size;
+
+			newTotal += newPos - VfdCache[file].fileSize;
+			if (newTotal > (uint64) temp_file_limit * (uint64) 1024)
+				ereport(ERROR,
+						(errcode(ERRCODE_CONFIGURATION_LIMIT_EXCEEDED),
+						 errmsg("temporary file size exceeds temp_file_limit (%dkB)",
+								temp_file_limit)));
+		}
+	}
+
 retry:
 	errno = 0;
 	returnCode = write(VfdCache[file].fd, buffer, amount);
@@ -1251,7 +1290,21 @@ retry:
 		errno = ENOSPC;
 
 	if (returnCode >= 0)
+	{
 		VfdCache[file].seekPos += returnCode;
+
+		/* maintain fileSize and temporary_files_size if it's a temp file */
+		if (VfdCache[file].fdstate & FD_TEMPORARY)
+		{
+			off_t	newPos = VfdCache[file].seekPos;
+
+			if (newPos > VfdCache[file].fileSize)
+			{
+				temporary_files_size += newPos - VfdCache[file].fileSize;
+				VfdCache[file].fileSize = newPos;
+			}
+		}
+	}
 	else
 	{
 		/*
@@ -1854,11 +1907,11 @@ CleanupTempFiles(bool isProcExit)
 				if (fdstate & FD_TEMPORARY)
 				{
 					/*
-					 * If we're in the process of exiting a backend process, close
-					 * all temporary files. Otherwise, only close temporary files
-					 * local to the current transaction. They should be closed by
-					 * the ResourceOwner mechanism already, so this is just a
-					 * debugging cross-check.
+					 * If we're in the process of exiting a backend process,
+					 * close all temporary files. Otherwise, only close
+					 * temporary files local to the current transaction.
+					 * They should be closed by the ResourceOwner mechanism
+					 * already, so this is just a debugging cross-check.
 					 */
 					if (isProcExit)
 						FileClose(i);
