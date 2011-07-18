@@ -1387,11 +1387,11 @@ EXECUTE format('UPDATE tbl SET %I = $1 WHERE key = $2', colname)
      command, which has the form:
 
 <synopsis>
-GET DIAGNOSTICS <replaceable>variable</replaceable> = <replaceable>item</replaceable> <optional> , ... </optional>;
+GET <optional> CURRENT </optional> DIAGNOSTICS <replaceable>variable</replaceable> = <replaceable>item</replaceable> <optional> , ... </optional>;
 </synopsis>
 
      This command allows retrieval of system status indicators.  Each
-     <replaceable>item</replaceable> is a key word identifying a state
+     <replaceable>item</replaceable> is a key word identifying a status
      value to be assigned to the specified variable (which should be
      of the right data type to receive it).  The currently available
      status items are <varname>ROW_COUNT</>, the number of rows
@@ -2522,16 +2522,6 @@ END;
      </para>
     </tip>
 
-    <para>
-     Within an exception handler, the <varname>SQLSTATE</varname>
-     variable contains the error code that corresponds to the
-     exception that was raised (refer to <xref
-     linkend="errcodes-table"> for a list of possible error
-     codes). The <varname>SQLERRM</varname> variable contains the
-     error message associated with the exception. These variables are
-     undefined outside exception handlers.
-    </para>
-
     <example id="plpgsql-upsert-example">
     <title>Exceptions with <command>UPDATE</>/<command>INSERT</></title>
     <para>
@@ -2568,11 +2558,112 @@ LANGUAGE plpgsql;
 SELECT merge_db(1, 'david');
 SELECT merge_db(1, 'dennis');
 </programlisting>
-     This example assumes the <literal>unique_violation</> error is caused by
-     the <command>INSERT</>, and not by an <command>INSERT</> trigger function
-     on the table.
+
+     This coding assumes the <literal>unique_violation</> error is caused by
+     the <command>INSERT</>, and not by, say, an <command>INSERT</> in a
+     trigger function on the table.  More safety could be had by using the
+     features discussed next to check that the trapped error was the one
+     expected.
     </para>
     </example>
+
+   <sect3 id="plpgsql-exception-diagnostics">
+    <title>Obtaining information about an error</title>
+
+    <para>
+     Exception handlers frequently need to identify the specific error that
+     occurred.  There are two ways to get information about the current
+     exception in <application>PL/pgSQL</>: special variables and the
+     <command>GET STACKED DIAGNOSTICS</command> command.
+    </para>
+
+    <para>
+     Within an exception handler, the special variable
+     <varname>SQLSTATE</varname> contains the error code that corresponds to
+     the exception that was raised (refer to <xref linkend="errcodes-table">
+     for a list of possible error codes). The special variable
+     <varname>SQLERRM</varname> contains the error message associated with the
+     exception. These variables are undefined outside exception handlers.
+    </para>
+
+    <para>
+     Within an exception handler, one may also retrieve
+     information about the current exception by using the
+     <command>GET STACKED DIAGNOSTICS</command> command, which has the form:
+
+<synopsis>
+GET STACKED DIAGNOSTICS <replaceable>variable</replaceable> = <replaceable>item</replaceable> <optional> , ... </optional>;
+</synopsis>
+
+     Each <replaceable>item</replaceable> is a key word identifying a status
+     value to be assigned to the specified variable (which should be
+     of the right data type to receive it).  The currently available
+     status items are:
+
+     <table id="plpgsql-exception-diagnostics-values">
+      <title>Error diagnostics values</title>
+      <tgroup cols="3">
+       <thead>
+        <row>
+         <entry>Name</entry>
+         <entry>Type</entry>
+         <entry>Description</entry>
+        </row>
+       </thead>
+       <tbody>
+        <row>
+         <entry><literal>RETURNED_SQLSTATE</literal></entry>
+         <entry>text</entry>
+         <entry>the SQLSTATE error code of the exception</entry>
+        </row>
+        <row>
+         <entry><literal>MESSAGE_TEXT</literal></entry>
+         <entry>text</entry>
+         <entry>the text of the exception's primary message</entry>
+        </row>
+        <row>
+         <entry><literal>PG_EXCEPTION_DETAIL</literal></entry>
+         <entry>text</entry>
+         <entry>the text of the exception's detail message, if any</entry>
+        </row>
+        <row>
+         <entry><literal>PG_EXCEPTION_HINT</literal></entry>
+         <entry>text</entry>
+         <entry>the text of the exception's hint message, if any</entry>
+        </row>
+        <row>
+         <entry><literal>PG_EXCEPTION_CONTEXT</literal></entry>
+         <entry>text</entry>
+         <entry>line(s) of text describing the call stack</entry>
+        </row>
+       </tbody>
+      </tgroup>
+     </table>
+    </para>
+
+    <para>
+     If the exception did not set a value for an item, an empty string
+     will be returned.
+    </para>
+
+    <para>
+     Here is an example:
+<programlisting>
+DECLARE
+  text_var1 text;
+  text_var2 text;
+  text_var3 text;
+BEGIN
+  -- some processing which might cause an exception
+  ...
+EXCEPTION WHEN OTHERS THEN
+  GET STACKED DIAGNOSTICS text_var1 = MESSAGE_TEXT,
+                          text_var2 = PG_EXCEPTION_DETAIL,
+                          text_var3 = PG_EXCEPTION_HINT;
+END;
+</programlisting>
+    </para>
+   </sect3>
   </sect2>
   </sect1>
 

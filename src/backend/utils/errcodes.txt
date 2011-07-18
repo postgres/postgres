@@ -51,7 +51,8 @@
 # class (the first two characters of the code value identify the class).
 # The listing is organized by class to make this prominent.
 #
-# The generic '000' subclass code should be used for an error only
+# Each class should have a generic '000' subclass.  However,
+# the generic '000' subclass code should be used for an error only
 # when there is not a more-specific subclass code defined.
 #
 # The SQL spec requires that all the elements of a SQLSTATE code be
@@ -131,6 +132,11 @@ Section: Class 0L - Invalid Grantor
 Section: Class 0P - Invalid Role Specification
 
 0P000    E    ERRCODE_INVALID_ROLE_SPECIFICATION                             invalid_role_specification
+
+Section: Class 0Z - Diagnostics Exception
+
+0Z000    E    ERRCODE_DIAGNOSTICS_EXCEPTION                                  diagnostics_exception
+0Z002    E    ERRCODE_STACKED_DIAGNOSTICS_ACCESSED_WITHOUT_ACTIVE_HANDLER    stacked_diagnostics_accessed_without_active_handler
 
 Section: Class 20 - Case Not Found
 
@@ -399,6 +405,7 @@ Section: Class 57 - Operator Intervention
 Section: Class 58 - System Error (errors external to PostgreSQL itself)
 
 # (class borrowed from DB2)
+58000    E    ERRCODE_SYSTEM_ERROR                                           system_error
 58030    E    ERRCODE_IO_ERROR                                               io_error
 58P01    E    ERRCODE_UNDEFINED_FILE                                         undefined_file
 58P02    E    ERRCODE_DUPLICATE_FILE                                         duplicate_file
@@ -415,30 +422,30 @@ Section: Class HV - Foreign Data Wrapper Error (SQL/MED)
 HV000    E    ERRCODE_FDW_ERROR                                              fdw_error
 HV005    E    ERRCODE_FDW_COLUMN_NAME_NOT_FOUND                              fdw_column_name_not_found
 HV002    E    ERRCODE_FDW_DYNAMIC_PARAMETER_VALUE_NEEDED                     fdw_dynamic_parameter_value_needed
-HV010    E    ERRCODE_FDW_FUNCTION_SEQUENCE_ERROR      	       	       	     fdw_function_sequence_error
+HV010    E    ERRCODE_FDW_FUNCTION_SEQUENCE_ERROR                            fdw_function_sequence_error
 HV021    E    ERRCODE_FDW_INCONSISTENT_DESCRIPTOR_INFORMATION                fdw_inconsistent_descriptor_information
-HV024    E    ERRCODE_FDW_INVALID_ATTRIBUTE_VALUE			     fdw_invalid_attribute_value
-HV007    E    ERRCODE_FDW_INVALID_COLUMN_NAME				     fdw_invalid_column_name
-HV008    E    ERRCODE_FDW_INVALID_COLUMN_NUMBER				     fdw_invalid_column_number
-HV004    E    ERRCODE_FDW_INVALID_DATA_TYPE				     fdw_invalid_data_type
-HV006    E    ERRCODE_FDW_INVALID_DATA_TYPE_DESCRIPTORS			     fdw_invalid_data_type_descriptors
-HV091    E    ERRCODE_FDW_INVALID_DESCRIPTOR_FIELD_IDENTIFIER		     fdw_invalid_descriptor_field_identifier
-HV00B    E    ERRCODE_FDW_INVALID_HANDLE				     fdw_invalid_handle
-HV00C    E    ERRCODE_FDW_INVALID_OPTION_INDEX				     fdw_invalid_option_index
-HV00D    E    ERRCODE_FDW_INVALID_OPTION_NAME				     fdw_invalid_option_name
-HV090    E    ERRCODE_FDW_INVALID_STRING_LENGTH_OR_BUFFER_LENGTH	     fdw_invalid_string_length_or_buffer_length
-HV00A    E    ERRCODE_FDW_INVALID_STRING_FORMAT				     fdw_invalid_string_format
-HV009    E    ERRCODE_FDW_INVALID_USE_OF_NULL_POINTER			     fdw_invalid_use_of_null_pointer
-HV014    E    ERRCODE_FDW_TOO_MANY_HANDLES				     fdw_too_many_handles
-HV001    E    ERRCODE_FDW_OUT_OF_MEMORY					     fdw_out_of_memory
-HV00P    E    ERRCODE_FDW_NO_SCHEMAS					     fdw_no_schemas
-HV00J    E    ERRCODE_FDW_OPTION_NAME_NOT_FOUND				     fdw_option_name_not_found
-HV00K    E    ERRCODE_FDW_REPLY_HANDLE					     fdw_reply_handle
-HV00Q    E    ERRCODE_FDW_SCHEMA_NOT_FOUND				     fdw_schema_not_found
-HV00R    E    ERRCODE_FDW_TABLE_NOT_FOUND				     fdw_table_not_found
-HV00L    E    ERRCODE_FDW_UNABLE_TO_CREATE_EXECUTION			     fdw_unable_to_create_execution
-HV00M    E    ERRCODE_FDW_UNABLE_TO_CREATE_REPLY			     fdw_unable_to_create_reply
-HV00N    E    ERRCODE_FDW_UNABLE_TO_ESTABLISH_CONNECTION		     fdw_unable_to_establish_connection
+HV024    E    ERRCODE_FDW_INVALID_ATTRIBUTE_VALUE                            fdw_invalid_attribute_value
+HV007    E    ERRCODE_FDW_INVALID_COLUMN_NAME                                fdw_invalid_column_name
+HV008    E    ERRCODE_FDW_INVALID_COLUMN_NUMBER                              fdw_invalid_column_number
+HV004    E    ERRCODE_FDW_INVALID_DATA_TYPE                                  fdw_invalid_data_type
+HV006    E    ERRCODE_FDW_INVALID_DATA_TYPE_DESCRIPTORS                      fdw_invalid_data_type_descriptors
+HV091    E    ERRCODE_FDW_INVALID_DESCRIPTOR_FIELD_IDENTIFIER                fdw_invalid_descriptor_field_identifier
+HV00B    E    ERRCODE_FDW_INVALID_HANDLE                                     fdw_invalid_handle
+HV00C    E    ERRCODE_FDW_INVALID_OPTION_INDEX                               fdw_invalid_option_index
+HV00D    E    ERRCODE_FDW_INVALID_OPTION_NAME                                fdw_invalid_option_name
+HV090    E    ERRCODE_FDW_INVALID_STRING_LENGTH_OR_BUFFER_LENGTH             fdw_invalid_string_length_or_buffer_length
+HV00A    E    ERRCODE_FDW_INVALID_STRING_FORMAT                              fdw_invalid_string_format
+HV009    E    ERRCODE_FDW_INVALID_USE_OF_NULL_POINTER                        fdw_invalid_use_of_null_pointer
+HV014    E    ERRCODE_FDW_TOO_MANY_HANDLES                                   fdw_too_many_handles
+HV001    E    ERRCODE_FDW_OUT_OF_MEMORY                                      fdw_out_of_memory
+HV00P    E    ERRCODE_FDW_NO_SCHEMAS                                         fdw_no_schemas
+HV00J    E    ERRCODE_FDW_OPTION_NAME_NOT_FOUND                              fdw_option_name_not_found
+HV00K    E    ERRCODE_FDW_REPLY_HANDLE                                       fdw_reply_handle
+HV00Q    E    ERRCODE_FDW_SCHEMA_NOT_FOUND                                   fdw_schema_not_found
+HV00R    E    ERRCODE_FDW_TABLE_NOT_FOUND                                    fdw_table_not_found
+HV00L    E    ERRCODE_FDW_UNABLE_TO_CREATE_EXECUTION                         fdw_unable_to_create_execution
+HV00M    E    ERRCODE_FDW_UNABLE_TO_CREATE_REPLY                             fdw_unable_to_create_reply
+HV00N    E    ERRCODE_FDW_UNABLE_TO_ESTABLISH_CONNECTION                     fdw_unable_to_establish_connection
 
 Section: Class P0 - PL/pgSQL Error
 

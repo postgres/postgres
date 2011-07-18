@@ -151,6 +151,9 @@ static bool exec_eval_simple_expr(PLpgSQL_execstate *estate,
 static void exec_assign_expr(PLpgSQL_execstate *estate,
 				 PLpgSQL_datum *target,
 				 PLpgSQL_expr *expr);
+static void exec_assign_c_string(PLpgSQL_execstate *estate,
+					 PLpgSQL_datum *target,
+					 const char *str);
 static void exec_assign_value(PLpgSQL_execstate *estate,
 				  PLpgSQL_datum *target,
 				  Datum value, Oid valtype, bool *isNull);
@@ -1421,6 +1424,17 @@ exec_stmt_getdiag(PLpgSQL_execstate *estate, PLpgSQL_stmt_getdiag *stmt)
 {
 	ListCell   *lc;
 
+	/*
+	 * GET STACKED DIAGNOSTICS is only valid inside an exception handler.
+	 *
+	 * Note: we trust the grammar to have disallowed the relevant item kinds
+	 * if not is_stacked, otherwise we'd dump core below.
+	 */
+	if (stmt->is_stacked && estate->cur_error == NULL)
+		ereport(ERROR,
+				(errcode(ERRCODE_STACKED_DIAGNOSTICS_ACCESSED_WITHOUT_ACTIVE_HANDLER),
+				 errmsg("GET STACKED DIAGNOSTICS cannot be used outside an exception handler")));
+
 	foreach(lc, stmt->diag_items)
 	{
 		PLpgSQL_diag_item *diag_item = (PLpgSQL_diag_item *) lfirst(lc);
@@ -1438,21 +1452,44 @@ exec_stmt_getdiag(PLpgSQL_execstate *estate, PLpgSQL_stmt_getdiag *stmt)
 		switch (diag_item->kind)
 		{
 			case PLPGSQL_GETDIAG_ROW_COUNT:
-
 				exec_assign_value(estate, var,
 								  UInt32GetDatum(estate->eval_processed),
 								  INT4OID, &isnull);
 				break;
 
 			case PLPGSQL_GETDIAG_RESULT_OID:
-
 				exec_assign_value(estate, var,
 								  ObjectIdGetDatum(estate->eval_lastoid),
 								  OIDOID, &isnull);
 				break;
 
+			case PLPGSQL_GETDIAG_ERROR_CONTEXT:
+				exec_assign_c_string(estate, var,
+									 estate->cur_error->context);
+				break;
+
+			case PLPGSQL_GETDIAG_ERROR_DETAIL:
+				exec_assign_c_string(estate, var,
+									 estate->cur_error->detail);
+				break;
+
+			case PLPGSQL_GETDIAG_ERROR_HINT:
+				exec_assign_c_string(estate, var,
+									 estate->cur_error->hint);
+				break;
+
+			case PLPGSQL_GETDIAG_RETURNED_SQLSTATE:
+				exec_assign_c_string(estate, var,
+									 unpack_sql_state(estate->cur_error->sqlerrcode));
+				break;
+
+			case PLPGSQL_GETDIAG_MESSAGE_TEXT:
+				exec_assign_c_string(estate, var,
+									 estate->cur_error->message);
+				break;
+
 			default:
-				elog(ERROR, "unrecognized attribute request: %d",
+				elog(ERROR, "unrecognized diagnostic item kind: %d",
 					 diag_item->kind);
 		}
 	}
@@ -2634,7 +2671,7 @@ exec_stmt_raise(PLpgSQL_execstate *estate, PLpgSQL_stmt_raise *stmt)
 			ReThrowError(estate->cur_error);
 		/* oops, we're not inside a handler */
 		ereport(ERROR,
-				(errcode(ERRCODE_SYNTAX_ERROR),
+				(errcode(ERRCODE_STACKED_DIAGNOSTICS_ACCESSED_WITHOUT_ACTIVE_HANDLER),
 				 errmsg("RAISE without parameters cannot be used outside an exception handler")));
 	}
 
@@ -3650,8 +3687,7 @@ exec_stmt_close(PLpgSQL_execstate *estate, PLpgSQL_stmt_close *stmt)
 
 
 /* ----------
- * exec_assign_expr			Put an expression's result into
- *					a variable.
+ * exec_assign_expr			Put an expression's result into a variable.
  * ----------
  */
 static void
@@ -3665,6 +3701,29 @@ exec_assign_expr(PLpgSQL_execstate *estate, PLpgSQL_datum *target,
 	value = exec_eval_expr(estate, expr, &isnull, &valtype);
 	exec_assign_value(estate, target, value, valtype, &isnull);
 	exec_eval_cleanup(estate);
+}
+
+
+/* ----------
+ * exec_assign_c_string		Put a C string into a text variable.
+ *
+ * We take a NULL pointer as signifying empty string, not SQL null.
+ * ----------
+ */
+static void
+exec_assign_c_string(PLpgSQL_execstate *estate, PLpgSQL_datum *target,
+					 const char *str)
+{
+	text	   *value;
+	bool		isnull = false;
+
+	if (str != NULL)
+		value = cstring_to_text(str);
+	else
+		value = cstring_to_text("");
+	exec_assign_value(estate, target, PointerGetDatum(value),
+					  TEXTOID, &isnull);
+	pfree(value);
 }
 
 

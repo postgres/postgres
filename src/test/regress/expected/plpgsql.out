@@ -3607,6 +3607,81 @@ $$ language plpgsql;
 select raise_test();
 ERROR:  RAISE without parameters cannot be used outside an exception handler
 CONTEXT:  PL/pgSQL function "raise_test" line 3 at RAISE
+-- test access to exception data
+create function zero_divide() returns int as $$
+declare v int := 0;
+begin
+  return 10 / v;
+end;
+$$ language plpgsql;
+create or replace function raise_test() returns void as $$
+begin
+  raise exception 'custom exception'
+     using detail = 'some detail of custom exception',
+           hint = 'some hint related to custom exception';
+end;
+$$ language plpgsql;
+create function stacked_diagnostics_test() returns void as $$
+declare _sqlstate text;
+        _message text;
+        _context text;
+begin
+  perform zero_divide();
+exception when others then
+  get stacked diagnostics
+        _sqlstate = returned_sqlstate,
+        _message = message_text,
+        _context = pg_exception_context;
+  raise notice 'sqlstate: %, message: %, context: [%]',
+    _sqlstate, _message, replace(_context, E'\n', ' <- ');
+end;
+$$ language plpgsql;
+select stacked_diagnostics_test();
+NOTICE:  sqlstate: 22012, message: division by zero, context: [PL/pgSQL function "zero_divide" line 4 at RETURN <- SQL statement "SELECT zero_divide()" <- PL/pgSQL function "stacked_diagnostics_test" line 6 at PERFORM]
+ stacked_diagnostics_test 
+--------------------------
+ 
+(1 row)
+
+create or replace function stacked_diagnostics_test() returns void as $$
+declare _detail text;
+        _hint text;
+        _message text;
+begin
+  perform raise_test();
+exception when others then
+  get stacked diagnostics
+        _message = message_text,
+        _detail = pg_exception_detail,
+        _hint = pg_exception_hint;
+  raise notice 'message: %, detail: %, hint: %', _message, _detail, _hint;
+end;
+$$ language plpgsql;
+select stacked_diagnostics_test();
+NOTICE:  message: custom exception, detail: some detail of custom exception, hint: some hint related to custom exception
+ stacked_diagnostics_test 
+--------------------------
+ 
+(1 row)
+
+-- fail, cannot use stacked diagnostics statement outside handler
+create or replace function stacked_diagnostics_test() returns void as $$
+declare _detail text;
+        _hint text;
+        _message text;
+begin
+  get stacked diagnostics
+        _message = message_text,
+        _detail = pg_exception_detail,
+        _hint = pg_exception_hint;
+  raise notice 'message: %, detail: %, hint: %', _message, _detail, _hint;
+end;
+$$ language plpgsql;
+select stacked_diagnostics_test();
+ERROR:  GET STACKED DIAGNOSTICS cannot be used outside an exception handler
+CONTEXT:  PL/pgSQL function "stacked_diagnostics_test" line 6 at GET DIAGNOSTICS
+drop function zero_divide();
+drop function stacked_diagnostics_test();
 -- check cases where implicit SQLSTATE variable could be confused with
 -- SQLSTATE as a keyword, cf bug #5524
 create or replace function raise_test() returns void as $$

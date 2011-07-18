@@ -203,6 +203,7 @@ static	List			*read_raise_options(void);
 %type <casewhen>	case_when
 %type <list>	case_when_list opt_case_else
 
+%type <boolean>	getdiag_area_opt
 %type <list>	getdiag_list
 %type <diagitem> getdiag_list_item
 %type <ival>	getdiag_item getdiag_target
@@ -251,6 +252,7 @@ static	List			*read_raise_options(void);
 %token <keyword>	K_COLLATE
 %token <keyword>	K_CONSTANT
 %token <keyword>	K_CONTINUE
+%token <keyword>	K_CURRENT
 %token <keyword>	K_CURSOR
 %token <keyword>	K_DEBUG
 %token <keyword>	K_DECLARE
@@ -284,6 +286,7 @@ static	List			*read_raise_options(void);
 %token <keyword>	K_LOG
 %token <keyword>	K_LOOP
 %token <keyword>	K_MESSAGE
+%token <keyword>	K_MESSAGE_TEXT
 %token <keyword>	K_MOVE
 %token <keyword>	K_NEXT
 %token <keyword>	K_NO
@@ -294,18 +297,23 @@ static	List			*read_raise_options(void);
 %token <keyword>	K_OPTION
 %token <keyword>	K_OR
 %token <keyword>	K_PERFORM
+%token <keyword>	K_PG_EXCEPTION_CONTEXT
+%token <keyword>	K_PG_EXCEPTION_DETAIL
+%token <keyword>	K_PG_EXCEPTION_HINT
 %token <keyword>	K_PRIOR
 %token <keyword>	K_QUERY
 %token <keyword>	K_RAISE
 %token <keyword>	K_RELATIVE
 %token <keyword>	K_RESULT_OID
 %token <keyword>	K_RETURN
+%token <keyword>	K_RETURNED_SQLSTATE
 %token <keyword>	K_REVERSE
 %token <keyword>	K_ROWTYPE
 %token <keyword>	K_ROW_COUNT
 %token <keyword>	K_SCROLL
 %token <keyword>	K_SLICE
 %token <keyword>	K_SQLSTATE
+%token <keyword>	K_STACKED
 %token <keyword>	K_STRICT
 %token <keyword>	K_THEN
 %token <keyword>	K_TO
@@ -832,16 +840,71 @@ stmt_assign		: assign_var assign_operator expr_until_semi
 					}
 				;
 
-stmt_getdiag	: K_GET K_DIAGNOSTICS getdiag_list ';'
+stmt_getdiag	: K_GET getdiag_area_opt K_DIAGNOSTICS getdiag_list ';'
 					{
 						PLpgSQL_stmt_getdiag	 *new;
+						ListCell		*lc;
 
 						new = palloc0(sizeof(PLpgSQL_stmt_getdiag));
 						new->cmd_type = PLPGSQL_STMT_GETDIAG;
 						new->lineno   = plpgsql_location_to_lineno(@1);
-						new->diag_items  = $3;
+						new->is_stacked = $2;
+						new->diag_items = $4;
+
+						/*
+						 * Check information items are valid for area option.
+						 */
+						foreach(lc, new->diag_items)
+						{
+							PLpgSQL_diag_item *ditem = (PLpgSQL_diag_item *) lfirst(lc);
+
+							switch (ditem->kind)
+							{
+								/* these fields are disallowed in stacked case */
+								case PLPGSQL_GETDIAG_ROW_COUNT:
+								case PLPGSQL_GETDIAG_RESULT_OID:
+									if (new->is_stacked)
+										ereport(ERROR,
+												(errcode(ERRCODE_SYNTAX_ERROR),
+												 errmsg("diagnostics item %s is not allowed in GET STACKED DIAGNOSTICS",
+														plpgsql_getdiag_kindname(ditem->kind)),
+												 parser_errposition(@1)));
+									break;
+								/* these fields are disallowed in current case */
+								case PLPGSQL_GETDIAG_ERROR_CONTEXT:
+								case PLPGSQL_GETDIAG_ERROR_DETAIL:
+								case PLPGSQL_GETDIAG_ERROR_HINT:
+								case PLPGSQL_GETDIAG_RETURNED_SQLSTATE:
+								case PLPGSQL_GETDIAG_MESSAGE_TEXT:
+									if (!new->is_stacked)
+										ereport(ERROR,
+												(errcode(ERRCODE_SYNTAX_ERROR),
+												 errmsg("diagnostics item %s is not allowed in GET CURRENT DIAGNOSTICS",
+														plpgsql_getdiag_kindname(ditem->kind)),
+												 parser_errposition(@1)));
+									break;
+								default:
+									elog(ERROR, "unrecognized diagnostic item kind: %d",
+										 ditem->kind);
+									break;
+							}
+						}
 
 						$$ = (PLpgSQL_stmt *)new;
+					}
+				;
+
+getdiag_area_opt :
+					{
+						$$ = false;
+					}
+				| K_CURRENT
+					{
+						$$ = false;
+					}
+				| K_STACKED
+					{
+						$$ = true;
 					}
 				;
 
@@ -877,6 +940,21 @@ getdiag_item :
 						else if (tok_is_keyword(tok, &yylval,
 												K_RESULT_OID, "result_oid"))
 							$$ = PLPGSQL_GETDIAG_RESULT_OID;
+						else if (tok_is_keyword(tok, &yylval,
+												K_PG_EXCEPTION_DETAIL, "pg_exception_detail"))
+							$$ = PLPGSQL_GETDIAG_ERROR_DETAIL;
+						else if (tok_is_keyword(tok, &yylval,
+												K_PG_EXCEPTION_HINT, "pg_exception_hint"))
+							$$ = PLPGSQL_GETDIAG_ERROR_HINT;
+						else if (tok_is_keyword(tok, &yylval,
+												K_PG_EXCEPTION_CONTEXT, "pg_exception_context"))
+							$$ = PLPGSQL_GETDIAG_ERROR_CONTEXT;
+						else if (tok_is_keyword(tok, &yylval,
+												K_MESSAGE_TEXT, "message_text"))
+							$$ = PLPGSQL_GETDIAG_MESSAGE_TEXT;
+						else if (tok_is_keyword(tok, &yylval,
+												K_RETURNED_SQLSTATE, "returned_sqlstate"))
+							$$ = PLPGSQL_GETDIAG_RETURNED_SQLSTATE;
 						else
 							yyerror("unrecognized GET DIAGNOSTICS item");
 					}
@@ -2135,6 +2213,7 @@ unreserved_keyword	:
 				| K_ARRAY
 				| K_BACKWARD
 				| K_CONSTANT
+				| K_CURRENT
 				| K_CURSOR
 				| K_DEBUG
 				| K_DETAIL
@@ -2149,20 +2228,26 @@ unreserved_keyword	:
 				| K_LAST
 				| K_LOG
 				| K_MESSAGE
+				| K_MESSAGE_TEXT
 				| K_NEXT
 				| K_NO
 				| K_NOTICE
 				| K_OPTION
+				| K_PG_EXCEPTION_CONTEXT
+				| K_PG_EXCEPTION_DETAIL
+				| K_PG_EXCEPTION_HINT
 				| K_PRIOR
 				| K_QUERY
 				| K_RELATIVE
 				| K_RESULT_OID
+				| K_RETURNED_SQLSTATE
 				| K_REVERSE
 				| K_ROW_COUNT
 				| K_ROWTYPE
 				| K_SCROLL
 				| K_SLICE
 				| K_SQLSTATE
+				| K_STACKED
 				| K_TYPE
 				| K_USE_COLUMN
 				| K_USE_VARIABLE

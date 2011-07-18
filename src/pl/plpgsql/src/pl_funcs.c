@@ -265,6 +265,33 @@ plpgsql_stmt_typename(PLpgSQL_stmt *stmt)
 	return "unknown";
 }
 
+/*
+ * GET DIAGNOSTICS item name as a string, for use in error messages etc.
+ */
+const char *
+plpgsql_getdiag_kindname(int kind)
+{
+	switch (kind)
+	{
+		case PLPGSQL_GETDIAG_ROW_COUNT:
+			return "ROW_COUNT";
+		case PLPGSQL_GETDIAG_RESULT_OID:
+			return "RESULT_OID";
+		case PLPGSQL_GETDIAG_ERROR_CONTEXT:
+			return "PG_EXCEPTION_CONTEXT";
+		case PLPGSQL_GETDIAG_ERROR_DETAIL:
+			return "PG_EXCEPTION_DETAIL";
+		case PLPGSQL_GETDIAG_ERROR_HINT:
+			return "PG_EXCEPTION_HINT";
+		case PLPGSQL_GETDIAG_RETURNED_SQLSTATE:
+			return "RETURNED_SQLSTATE";
+		case PLPGSQL_GETDIAG_MESSAGE_TEXT:
+			return "MESSAGE_TEXT";
+	}
+
+	return "unknown";
+}
+
 
 /**********************************************************************
  * Release memory when a PL/pgSQL function is no longer needed
@@ -1389,7 +1416,7 @@ dump_getdiag(PLpgSQL_stmt_getdiag *stmt)
 	ListCell   *lc;
 
 	dump_ind();
-	printf("GET DIAGNOSTICS ");
+	printf("GET %s DIAGNOSTICS ", stmt->is_stacked ? "STACKED" : "CURRENT");
 	foreach(lc, stmt->diag_items)
 	{
 		PLpgSQL_diag_item *diag_item = (PLpgSQL_diag_item *) lfirst(lc);
@@ -1397,22 +1424,8 @@ dump_getdiag(PLpgSQL_stmt_getdiag *stmt)
 		if (lc != list_head(stmt->diag_items))
 			printf(", ");
 
-		printf("{var %d} = ", diag_item->target);
-
-		switch (diag_item->kind)
-		{
-			case PLPGSQL_GETDIAG_ROW_COUNT:
-				printf("ROW_COUNT");
-				break;
-
-			case PLPGSQL_GETDIAG_RESULT_OID:
-				printf("RESULT_OID");
-				break;
-
-			default:
-				printf("???");
-				break;
-		}
+		printf("{var %d} = %s", diag_item->target,
+			   plpgsql_getdiag_kindname(diag_item->kind));
 	}
 	printf("\n");
 }
