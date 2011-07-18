@@ -2829,6 +2829,8 @@ DATA(insert OID = 2082 (  pg_operator_is_visible	PGNSP PGUID 12 1 0 0 0 f f f t 
 DESCR("is operator visible in search path?");
 DATA(insert OID = 2083 (  pg_opclass_is_visible		PGNSP PGUID 12 1 0 0 0 f f f t f s 1 0 16 "26" _null_ _null_ _null_ _null_ pg_opclass_is_visible _null_ _null_ _null_ ));
 DESCR("is opclass visible in search path?");
+DATA(insert OID = 3829 (  pg_opfamily_is_visible 	PGNSP PGUID 12 1 0 0 0 f f f t f s 1 0 16 "26" _null_ _null_ _null_ _null_ pg_opfamily_is_visible _null_ _null_ _null_ ));
+DESCR("is opfamily visible in search path?");
 DATA(insert OID = 2093 (  pg_conversion_is_visible	PGNSP PGUID 12 1 0 0 0 f f f t f s 1 0 16 "26" _null_ _null_ _null_ _null_ pg_conversion_is_visible _null_ _null_ _null_ ));
 DESCR("is conversion visible in search path?");
 DATA(insert OID = 3756 (  pg_ts_parser_is_visible	PGNSP PGUID 12 1 0 0 0 f f f t f s 1 0 16 "26" _null_ _null_ _null_ _null_ pg_ts_parser_is_visible _null_ _null_ _null_ ));

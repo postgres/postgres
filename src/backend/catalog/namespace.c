@@ -202,6 +202,7 @@ Datum		pg_type_is_visible(PG_FUNCTION_ARGS);
 Datum		pg_function_is_visible(PG_FUNCTION_ARGS);
 Datum		pg_operator_is_visible(PG_FUNCTION_ARGS);
 Datum		pg_opclass_is_visible(PG_FUNCTION_ARGS);
+Datum		pg_opfamily_is_visible(PG_FUNCTION_ARGS);
 Datum		pg_collation_is_visible(PG_FUNCTION_ARGS);
 Datum		pg_conversion_is_visible(PG_FUNCTION_ARGS);
 Datum		pg_ts_parser_is_visible(PG_FUNCTION_ARGS);
@@ -3895,6 +3896,17 @@ pg_opclass_is_visible(PG_FUNCTION_ARGS)
 		PG_RETURN_NULL();
 
 	PG_RETURN_BOOL(OpclassIsVisible(oid));
+}
+
+Datum
+pg_opfamily_is_visible(PG_FUNCTION_ARGS)
+{
+	Oid			oid = PG_GETARG_OID(0);
+
+	if (!SearchSysCacheExists1(OPFAMILYOID, ObjectIdGetDatum(oid)))
+		PG_RETURN_NULL();
+
+	PG_RETURN_BOOL(OpfamilyIsVisible(oid));
 }
 
 Datum
