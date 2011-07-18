@@ -206,10 +206,13 @@ RelationDropStorage(Relation rel)
  * The relation mapper fixes this by telling us to not delete such relations
  * after all as part of its commit.
  *
+ * We also use this to reuse an old build of an index during ALTER TABLE, this
+ * time removing the delete-at-commit entry.
+ *
  * No-op if the relation is not among those scheduled for deletion.
  */
 void
-RelationPreserveStorage(RelFileNode rnode)
+RelationPreserveStorage(RelFileNode rnode, bool atCommit)
 {
 	PendingRelDelete *pending;
 	PendingRelDelete *prev;
@@ -219,11 +222,9 @@ RelationPreserveStorage(RelFileNode rnode)
 	for (pending = pendingDeletes; pending != NULL; pending = next)
 	{
 		next = pending->next;
-		if (RelFileNodeEquals(rnode, pending->relnode))
+		if (RelFileNodeEquals(rnode, pending->relnode)
+			&& pending->atCommit == atCommit)
 		{
-			/* we should only find delete-on-abort entries, else trouble */
-			if (pending->atCommit)
-				elog(ERROR, "cannot preserve a delete-on-commit relation");
 			/* unlink and delete list entry */
 			if (prev)
 				prev->next = next;

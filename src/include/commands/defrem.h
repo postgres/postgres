@@ -18,9 +18,10 @@
 
 
 /* commands/indexcmds.c */
-extern void DefineIndex(RangeVar *heapRelation,
+extern Oid DefineIndex(RangeVar *heapRelation,
 			char *indexRelationName,
 			Oid indexRelationId,
+			Oid relFileNode,
 			char *accessMethodName,
 			char *tableSpaceName,
 			List *attributeList,
@@ -49,6 +50,11 @@ extern char *ChooseIndexName(const char *tabname, Oid namespaceId,
 				List *colnames, List *exclusionOpNames,
 				bool primary, bool isconstraint);
 extern List *ChooseIndexColumnNames(List *indexElems);
+extern bool CheckIndexCompatible(Oid oldId,
+					 RangeVar *heapRelation,
+					 char *accessMethodName,
+					 List *attributeList,
+					 List *exclusionOpNames);
 extern Oid	GetDefaultOpClass(Oid type_id, Oid am_id);
 
 /* commands/functioncmds.c */

@@ -953,6 +953,7 @@ standard_ProcessUtility(Node *parsetree,
 				DefineIndex(stmt->relation,		/* relation */
 							stmt->idxname,		/* index name */
 							InvalidOid, /* no predefined OID */
+							InvalidOid, /* no previous storage */
 							stmt->accessMethod, /* am name */
 							stmt->tableSpace,
 							stmt->indexParams,	/* parameters */

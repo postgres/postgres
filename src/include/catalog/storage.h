@@ -22,7 +22,7 @@
 
 extern void RelationCreateStorage(RelFileNode rnode, char relpersistence);
 extern void RelationDropStorage(Relation rel);
-extern void RelationPreserveStorage(RelFileNode rnode);
+extern void RelationPreserveStorage(RelFileNode rnode, bool atCommit);
 extern void RelationTruncate(Relation rel, BlockNumber nblocks);
 
 /*

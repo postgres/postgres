@@ -347,7 +347,9 @@ static bool ATColumnChangeRequiresRewrite(Node *expr, AttrNumber varattno);
 static void ATExecAlterColumnType(AlteredTableInfo *tab, Relation rel,
 					  AlterTableCmd *cmd, LOCKMODE lockmode);
 static void ATPostAlterTypeCleanup(List **wqueue, AlteredTableInfo *tab, LOCKMODE lockmode);
-static void ATPostAlterTypeParse(char *cmd, List **wqueue, LOCKMODE lockmode);
+static void ATPostAlterTypeParse(Oid oldId, char *cmd,
+					 List **wqueue, LOCKMODE lockmode, bool rewrite);
+static void TryReuseIndex(Oid oldId, IndexStmt *stmt);
 static void change_owner_recurse_to_sequences(Oid relationOid,
 								  Oid newOwnerId, LOCKMODE lockmode);
 static void ATExecClusterOn(Relation rel, const char *indexName, LOCKMODE lockmode);
@@ -5232,37 +5234,52 @@ ATExecAddIndex(AlteredTableInfo *tab, Relation rel,
 	bool		check_rights;
 	bool		skip_build;
 	bool		quiet;
+	Oid			new_index;
 
 	Assert(IsA(stmt, IndexStmt));
 
 	/* suppress schema rights check when rebuilding existing index */
 	check_rights = !is_rebuild;
-	/* skip index build if phase 3 will have to rewrite table anyway */
-	skip_build = tab->rewrite;
+	/* skip index build if phase 3 will do it or we're reusing an old one */
+	skip_build = tab->rewrite || OidIsValid(stmt->oldNode);
 	/* suppress notices when rebuilding existing index */
 	quiet = is_rebuild;
 
 	/* The IndexStmt has already been through transformIndexStmt */
 
-	DefineIndex(stmt->relation, /* relation */
-				stmt->idxname,	/* index name */
-				InvalidOid,		/* no predefined OID */
-				stmt->accessMethod,		/* am name */
-				stmt->tableSpace,
-				stmt->indexParams,		/* parameters */
-				(Expr *) stmt->whereClause,
-				stmt->options,
-				stmt->excludeOpNames,
-				stmt->unique,
-				stmt->primary,
-				stmt->isconstraint,
-				stmt->deferrable,
-				stmt->initdeferred,
-				true,			/* is_alter_table */
-				check_rights,
-				skip_build,
-				quiet,
-				false);
+	new_index = DefineIndex(stmt->relation,		/* relation */
+							stmt->idxname,		/* index name */
+							InvalidOid, /* no predefined OID */
+							stmt->oldNode,
+							stmt->accessMethod, /* am name */
+							stmt->tableSpace,
+							stmt->indexParams,	/* parameters */
+							(Expr *) stmt->whereClause,
+							stmt->options,
+							stmt->excludeOpNames,
+							stmt->unique,
+							stmt->primary,
+							stmt->isconstraint,
+							stmt->deferrable,
+							stmt->initdeferred,
+							true,		/* is_alter_table */
+							check_rights,
+							skip_build,
+							quiet,
+							false);
+
+	/*
+	 * If TryReuseIndex() stashed a relfilenode for us, we used it for the new
+	 * index instead of building from scratch.  The DROP of the old edition of
+	 * this index will have scheduled the storage for deletion at commit, so
+	 * cancel that pending deletion.
+	 */
+	if (OidIsValid(stmt->oldNode))
+	{
+		Relation	irel = index_open(new_index, NoLock);
+		RelationPreserveStorage(irel->rd_node, true);
+		index_close(irel, NoLock);
+	}
 }
 
 /*
@@ -7389,7 +7406,8 @@ static void
 ATPostAlterTypeCleanup(List **wqueue, AlteredTableInfo *tab, LOCKMODE lockmode)
 {
 	ObjectAddress obj;
-	ListCell   *l;
+	ListCell   *def_item;
+	ListCell   *oid_item;
 
 	/*
 	 * Re-parse the index and constraint definitions, and attach them to the
@@ -7399,10 +7417,14 @@ ATPostAlterTypeCleanup(List **wqueue, AlteredTableInfo *tab, LOCKMODE lockmode)
 	 * that before dropping.  It's safe because the parser won't actually look
 	 * at the catalogs to detect the existing entry.
 	 */
-	foreach(l, tab->changedIndexDefs)
-		ATPostAlterTypeParse((char *) lfirst(l), wqueue, lockmode);
-	foreach(l, tab->changedConstraintDefs)
-		ATPostAlterTypeParse((char *) lfirst(l), wqueue, lockmode);
+	forboth(oid_item, tab->changedConstraintOids,
+			def_item, tab->changedConstraintDefs)
+		ATPostAlterTypeParse(lfirst_oid(oid_item), (char *) lfirst(def_item),
+							 wqueue, lockmode, tab->rewrite);
+	forboth(oid_item, tab->changedIndexOids,
+			def_item, tab->changedIndexDefs)
+		ATPostAlterTypeParse(lfirst_oid(oid_item), (char *) lfirst(def_item),
+							 wqueue, lockmode, tab->rewrite);
 
 	/*
 	 * Now we can drop the existing constraints and indexes --- constraints
@@ -7412,18 +7434,18 @@ ATPostAlterTypeCleanup(List **wqueue, AlteredTableInfo *tab, LOCKMODE lockmode)
 	 * should be okay to use DROP_RESTRICT here, since nothing else should be
 	 * depending on these objects.
 	 */
-	foreach(l, tab->changedConstraintOids)
+	foreach(oid_item, tab->changedConstraintOids)
 	{
 		obj.classId = ConstraintRelationId;
-		obj.objectId = lfirst_oid(l);
+		obj.objectId = lfirst_oid(oid_item);
 		obj.objectSubId = 0;
 		performDeletion(&obj, DROP_RESTRICT);
 	}
 
-	foreach(l, tab->changedIndexOids)
+	foreach(oid_item, tab->changedIndexOids)
 	{
 		obj.classId = RelationRelationId;
-		obj.objectId = lfirst_oid(l);
+		obj.objectId = lfirst_oid(oid_item);
 		obj.objectSubId = 0;
 		performDeletion(&obj, DROP_RESTRICT);
 	}
@@ -7435,7 +7457,8 @@ ATPostAlterTypeCleanup(List **wqueue, AlteredTableInfo *tab, LOCKMODE lockmode)
 }
 
 static void
-ATPostAlterTypeParse(char *cmd, List **wqueue, LOCKMODE lockmode)
+ATPostAlterTypeParse(Oid oldId, char *cmd,
+					 List **wqueue, LOCKMODE lockmode, bool rewrite)
 {
 	List	   *raw_parsetree_list;
 	List	   *querytree_list;
@@ -7482,6 +7505,9 @@ ATPostAlterTypeParse(char *cmd, List **wqueue, LOCKMODE lockmode)
 					IndexStmt  *stmt = (IndexStmt *) stm;
 					AlterTableCmd *newcmd;
 
+					if (!rewrite)
+						TryReuseIndex(oldId, stmt);
+
 					rel = relation_openrv(stmt->relation, lockmode);
 					tab = ATGetQueueEntry(wqueue, rel);
 					newcmd = makeNode(AlterTableCmd);
@@ -7506,6 +7532,10 @@ ATPostAlterTypeParse(char *cmd, List **wqueue, LOCKMODE lockmode)
 						switch (cmd->subtype)
 						{
 							case AT_AddIndex:
+								Assert(IsA(cmd->def, IndexStmt));
+								if (!rewrite)
+									TryReuseIndex(get_constraint_index(oldId),
+												  (IndexStmt *) cmd->def);
 								cmd->subtype = AT_ReAddIndex;
 								tab->subcmds[AT_PASS_OLD_INDEX] =
 									lappend(tab->subcmds[AT_PASS_OLD_INDEX], cmd);
@@ -7526,6 +7556,26 @@ ATPostAlterTypeParse(char *cmd, List **wqueue, LOCKMODE lockmode)
 				elog(ERROR, "unexpected statement type: %d",
 					 (int) nodeTag(stm));
 		}
+	}
+}
+
+/*
+ * Subroutine for ATPostAlterTypeParse().  Calls out to CheckIndexCompatible()
+ * for the real analysis, then mutates the IndexStmt based on that verdict.
+*/
+static void
+TryReuseIndex(Oid oldId, IndexStmt *stmt)
+{
+
+	if (CheckIndexCompatible(oldId,
+							 stmt->relation,
+							 stmt->accessMethod,
+							 stmt->indexParams,
+							 stmt->excludeOpNames))
+	{
+		Relation irel = index_open(oldId, NoLock);
+		stmt->oldNode = irel->rd_node.relNode;
+		index_close(irel, NoLock);
 	}
 }
 

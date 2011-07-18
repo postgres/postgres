@@ -834,8 +834,10 @@ ALTER OPERATOR FAMILY integer_ops USING btree ADD
   <para>
    In a B-tree operator family, all the operators in the family must sort
    compatibly, meaning that the transitive laws hold across all the data types
-   supported by the family: <quote>if A = B and B = C, then A =
-   C</>, and <quote>if A &lt; B and B &lt; C, then A &lt; C</>.  For each
+   supported by the family: <quote>if A = B and B = C, then A = C</>,
+   and <quote>if A &lt; B and B &lt; C, then A &lt; C</>.  Moreover, implicit
+   or binary coercion casts between types represented in the operator family
+   must not change the associated sort ordering.  For each
    operator in the family there must be a support function having the same
    two input data types as the operator.  It is recommended that a family be
    complete, i.e., for each combination of data types, all operators are
@@ -851,6 +853,9 @@ ALTER OPERATOR FAMILY integer_ops USING btree ADD
    by the family's equality operators, even when the values are of different
    types.  This is usually difficult to accomplish when the types have
    different physical representations, but it can be done in some cases.
+   Furthermore, casting a value from one data type represented in the operator
+   family to another data type also represented in the operator family via
+   an implicit or binary coercion cast must not change the computed hash value.
    Notice that there is only one support function per data type, not one
    per equality operator.  It is recommended that a family be complete, i.e.,
    provide an equality operator for each combination of data types.

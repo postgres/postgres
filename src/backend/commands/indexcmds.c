@@ -73,6 +73,198 @@ static char *ChooseIndexNameAddition(List *colnames);
 
 
 /*
+ * CheckIndexCompatible
+ *		Determine whether an existing index definition is compatible with a
+ *		prospective index definition, such that the existing index storage
+ *		could become the storage of the new index, avoiding a rebuild.
+ *
+ * 'heapRelation': the relation the index would apply to.
+ * 'accessMethodName': name of the AM to use.
+ * 'attributeList': a list of IndexElem specifying columns and expressions
+ *		to index on.
+ * 'exclusionOpNames': list of names of exclusion-constraint operators,
+ *		or NIL if not an exclusion constraint.
+ *
+ * This is tailored to the needs of ALTER TABLE ALTER TYPE, which recreates
+ * any indexes that depended on a changing column from their pg_get_indexdef
+ * or pg_get_constraintdef definitions.  We omit some of the sanity checks of
+ * DefineIndex.  We assume that the old and new indexes have the same number
+ * of columns and that if one has an expression column or predicate, both do.
+ * Errors arising from the attribute list still apply.
+ *
+ * Most column type changes that can skip a table rewrite will not invalidate
+ * indexes.  For btree and hash indexes, we assume continued validity when
+ * each column of an index would have the same operator family before and
+ * after the change.  Since we do not document a contract for GIN or GiST
+ * operator families, we require an exact operator class match for them and
+ * for any other access methods.
+ *
+ * DefineIndex always verifies that each exclusion operator shares an operator
+ * family with its corresponding index operator class.  For access methods
+ * having no operator family contract, confirm that the old and new indexes
+ * use the exact same exclusion operator.  For btree and hash, there's nothing
+ * more to check.
+ *
+ * We do not yet implement a test to verify compatibility of expression
+ * columns or predicates, so assume any such index is incompatible.
+ */
+bool
+CheckIndexCompatible(Oid oldId,
+					 RangeVar *heapRelation,
+					 char *accessMethodName,
+					 List *attributeList,
+					 List *exclusionOpNames)
+{
+	bool		isconstraint;
+	Oid		   *collationObjectId;
+	Oid		   *classObjectId;
+	Oid			accessMethodId;
+	Oid			relationId;
+	HeapTuple	tuple;
+	Form_pg_am	accessMethodForm;
+	bool		amcanorder;
+	RegProcedure amoptions;
+	int16	   *coloptions;
+	IndexInfo  *indexInfo;
+	int			numberOfAttributes;
+	int			old_natts;
+	bool		isnull;
+	bool		family_am;
+	bool		ret = true;
+	oidvector  *old_indclass;
+	oidvector  *old_indcollation;
+	int			i;
+	Datum		d;
+
+	/* Caller should already have the relation locked in some way. */
+	relationId = RangeVarGetRelid(heapRelation, NoLock, false, false);
+	/*
+	 * We can pretend isconstraint = false unconditionally.  It only serves to
+	 * decide the text of an error message that should never happen for us.
+	 */
+	isconstraint = false;
+
+	numberOfAttributes = list_length(attributeList);
+	Assert(numberOfAttributes > 0);
+	Assert(numberOfAttributes <= INDEX_MAX_KEYS);
+
+	/* look up the access method */
+	tuple = SearchSysCache1(AMNAME, PointerGetDatum(accessMethodName));
+	if (!HeapTupleIsValid(tuple))
+		ereport(ERROR,
+				(errcode(ERRCODE_UNDEFINED_OBJECT),
+				 errmsg("access method \"%s\" does not exist",
+						accessMethodName)));
+	accessMethodId = HeapTupleGetOid(tuple);
+	accessMethodForm = (Form_pg_am) GETSTRUCT(tuple);
+	amcanorder = accessMethodForm->amcanorder;
+	amoptions = accessMethodForm->amoptions;
+	ReleaseSysCache(tuple);
+
+	/*
+	 * Compute the operator classes, collations, and exclusion operators
+	 * for the new index, so we can test whether it's compatible with the
+	 * existing one.  Note that ComputeIndexAttrs might fail here, but that's
+	 * OK: DefineIndex would have called this function with the same arguments
+	 * later on, and it would have failed then anyway.
+	 */
+	indexInfo = makeNode(IndexInfo);
+	indexInfo->ii_Expressions = NIL;
+	indexInfo->ii_ExpressionsState = NIL;
+	indexInfo->ii_PredicateState = NIL;
+	indexInfo->ii_ExclusionOps = NULL;
+	indexInfo->ii_ExclusionProcs = NULL;
+	indexInfo->ii_ExclusionStrats = NULL;
+	collationObjectId = (Oid *) palloc(numberOfAttributes * sizeof(Oid));
+	classObjectId = (Oid *) palloc(numberOfAttributes * sizeof(Oid));
+	coloptions = (int16 *) palloc(numberOfAttributes * sizeof(int16));
+	ComputeIndexAttrs(indexInfo, collationObjectId, classObjectId,
+					  coloptions, attributeList,
+					  exclusionOpNames, relationId,
+					  accessMethodName, accessMethodId,
+					  amcanorder, isconstraint);
+
+
+	/* Get the soon-obsolete pg_index tuple. */
+	tuple = SearchSysCache1(INDEXRELID, ObjectIdGetDatum(oldId));
+	if (!HeapTupleIsValid(tuple))
+		elog(ERROR, "cache lookup failed for index %u", oldId);
+
+	/* We don't assess expressions or predicates; assume incompatibility. */
+	if (!(heap_attisnull(tuple, Anum_pg_index_indpred) &&
+		  heap_attisnull(tuple, Anum_pg_index_indexprs)))
+	{
+		ReleaseSysCache(tuple);
+		return false;
+	}
+
+	/*
+	 * If the old and new operator class of any index column differ in
+	 * operator family or collation, regard the old index as incompatible.
+	 * For access methods other than btree and hash, a family match has no
+	 * defined meaning; require an exact operator class match.
+	 */
+	old_natts = ((Form_pg_index) GETSTRUCT(tuple))->indnatts;
+	Assert(old_natts == numberOfAttributes);
+
+	d = SysCacheGetAttr(INDEXRELID, tuple, Anum_pg_index_indcollation, &isnull);
+	Assert(!isnull);
+	old_indcollation = (oidvector *) DatumGetPointer(d);
+
+	d = SysCacheGetAttr(INDEXRELID, tuple, Anum_pg_index_indclass, &isnull);
+	Assert(!isnull);
+	old_indclass = (oidvector *) DatumGetPointer(d);
+
+	family_am = accessMethodId == BTREE_AM_OID || accessMethodId == HASH_AM_OID;
+
+	for (i = 0; i < old_natts; i++)
+	{
+		Oid			old_class = old_indclass->values[i];
+		Oid			new_class = classObjectId[i];
+
+		if (!(old_indcollation->values[i] == collationObjectId[i]
+			  && (old_class == new_class
+				  || (family_am && (get_opclass_family(old_class)
+									== get_opclass_family(new_class))))))
+		{
+			ret = false;
+			break;
+		}
+	}
+
+	ReleaseSysCache(tuple);
+
+	/*
+	 * For btree and hash, exclusion operators need only fall in the same
+	 * operator family; ComputeIndexAttrs already verified that much.  If we
+	 * get this far, we know that the index operator family has not changed,
+	 * and we're done.  For other access methods, require exact matches for
+	 * all exclusion operators.
+	 */
+	if (ret && !family_am && indexInfo->ii_ExclusionOps != NULL)
+	{
+		Relation	irel;
+		Oid		   *old_operators, *old_procs;
+		uint16	   *old_strats;
+
+		/* Caller probably already holds a stronger lock. */
+		irel = index_open(oldId, AccessShareLock);
+		RelationGetExclusionInfo(irel, &old_operators, &old_procs, &old_strats);
+
+		for (i = 0; i < old_natts; i++)
+			if (old_operators[i] != indexInfo->ii_ExclusionOps[i])
+			{
+				ret = false;
+				break;
+			}
+
+		index_close(irel, NoLock);
+	}
+
+	return ret;
+}
+
+/*
  * DefineIndex
  *		Creates a new index.
  *
@@ -81,6 +273,8 @@ static char *ChooseIndexNameAddition(List *colnames);
  *		that a nonconflicting default name should be picked.
  * 'indexRelationId': normally InvalidOid, but during bootstrap can be
  *		nonzero to specify a preselected OID for the index.
+ * 'relFileNode': normally InvalidOid, but can be nonzero to specify existing
+ *		storage constituting a valid build of this index.
  * 'accessMethodName': name of the AM to use.
  * 'tableSpaceName': name of the tablespace to create the index in.
  *		NULL specifies using the appropriate default.
@@ -103,11 +297,14 @@ static char *ChooseIndexNameAddition(List *colnames);
  *		it will be filled later.
  * 'quiet': suppress the NOTICE chatter ordinarily provided for constraints.
  * 'concurrent': avoid blocking writers to the table while building.
+ *
+ * Returns the OID of the created index.
  */
-void
+Oid
 DefineIndex(RangeVar *heapRelation,
 			char *indexRelationName,
 			Oid indexRelationId,
+			Oid relFileNode,
 			char *accessMethodName,
 			char *tableSpaceName,
 			List *attributeList,
@@ -403,11 +600,17 @@ DefineIndex(RangeVar *heapRelation,
 	}
 
 	/*
+	 * A valid relFileNode implies that we already have a built form of the
+	 * index.  The caller should also decline any index build.
+	 */
+	Assert(!OidIsValid(relFileNode) || (skip_build && !concurrent));
+
+	/*
 	 * Make the catalog entries for the index, including constraints. Then, if
 	 * not skip_build || concurrent, actually build the index.
 	 */
 	indexRelationId =
-		index_create(rel, indexRelationName, indexRelationId,
+		index_create(rel, indexRelationName, indexRelationId, relFileNode,
 					 indexInfo, indexColNames,
 					 accessMethodId, tablespaceId,
 					 collationObjectId, classObjectId,
@@ -421,7 +624,7 @@ DefineIndex(RangeVar *heapRelation,
 	{
 		/* Close the heap and we're done, in the non-concurrent case */
 		heap_close(rel, NoLock);
-		return;
+		return indexRelationId;
 	}
 
 	/* save lockrelid and locktag for below, then close rel */
@@ -709,6 +912,8 @@ DefineIndex(RangeVar *heapRelation,
 	 * Last thing to do is release the session-level lock on the parent table.
 	 */
 	UnlockRelationIdForSession(&heaprelid, ShareUpdateExclusiveLock);
+
+	return indexRelationId;
 }
 
 

@@ -2395,6 +2395,7 @@ RelationBuildLocalRelation(const char *relname,
 						   Oid relnamespace,
 						   TupleDesc tupDesc,
 						   Oid relid,
+						   Oid relfilenode,
 						   Oid reltablespace,
 						   bool shared_relation,
 						   bool mapped_relation,
@@ -2529,10 +2530,8 @@ RelationBuildLocalRelation(const char *relname,
 
 	/*
 	 * Insert relation physical and logical identifiers (OIDs) into the right
-	 * places.	Note that the physical ID (relfilenode) is initially the same
-	 * as the logical ID (OID); except that for a mapped relation, we set
-	 * relfilenode to zero and rely on RelationInitPhysicalAddr to consult the
-	 * map.
+	 * places.  For a mapped relation, we set relfilenode to zero and rely on
+	 * RelationInitPhysicalAddr to consult the map.
 	 */
 	rel->rd_rel->relisshared = shared_relation;
 
@@ -2547,10 +2546,10 @@ RelationBuildLocalRelation(const char *relname,
 	{
 		rel->rd_rel->relfilenode = InvalidOid;
 		/* Add it to the active mapping information */
-		RelationMapUpdateMap(relid, relid, shared_relation, true);
+		RelationMapUpdateMap(relid, relfilenode, shared_relation, true);
 	}
 	else
-		rel->rd_rel->relfilenode = relid;
+		rel->rd_rel->relfilenode = relfilenode;
 
 	RelationInitLockInfo(rel);	/* see lmgr.c */
 
