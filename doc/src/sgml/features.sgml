@@ -22,9 +22,7 @@
   <productname>PostgreSQL</productname> development aims for
   conformance with the latest official version of the standard where
   such conformance does not contradict traditional features or common
-  sense.  The PostgreSQL project is not represented in the ISO/IEC
-  9075 Working Group during the preparation of the SQL standard
-  releases, but even so, many of the features required by the SQL
+  sense.  Many of the features required by the SQL
   standard are supported, though sometimes with slightly differing
   syntax or function.  Further moves towards conformance can be
   expected over time.
