@@ -4655,6 +4655,11 @@ ORDER BY c.ordinal_position;
    embedded SQL in C; that is all you will learn from this table.
   </para>
 
+  <para>
+   This table was removed from the SQL standard in SQL:2008, so there
+   are no entries referring to standards later than SQL:2003.
+  </para>
+
   <table>
    <title><literal>sql_languages</literal> Columns</title>
 
@@ -4682,8 +4687,7 @@ ORDER BY c.ordinal_position;
       <entry><type>character_data</type></entry>
       <entry>
        The year the standard referenced in
-       <literal>sql_language_source</literal> was approved; currently
-       <literal>2003</>
+       <literal>sql_language_source</literal> was approved.
       </entry>
      </row>
 
