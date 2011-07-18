@@ -681,12 +681,12 @@ ecpg_store_input(const int lineno, const bool force_indicator, const struct vari
 					strcpy(mallocedval, "array [");
 
 					for (element = 0; element < asize; element++)
-						sprintf(mallocedval + strlen(mallocedval), "%.14g,", ((float *) var->value)[element]);
+						sprintf(mallocedval + strlen(mallocedval), "%.15g,", ((float *) var->value)[element]);
 
 					strcpy(mallocedval + strlen(mallocedval) - 1, "]");
 				}
 				else
-					sprintf(mallocedval, "%.14g", *((float *) var->value));
+					sprintf(mallocedval, "%.15g", *((float *) var->value));
 
 				*tobeinserted_p = mallocedval;
 				break;
@@ -700,12 +700,12 @@ ecpg_store_input(const int lineno, const bool force_indicator, const struct vari
 					strcpy(mallocedval, "array [");
 
 					for (element = 0; element < asize; element++)
-						sprintf(mallocedval + strlen(mallocedval), "%.14g,", ((double *) var->value)[element]);
+						sprintf(mallocedval + strlen(mallocedval), "%.15g,", ((double *) var->value)[element]);
 
 					strcpy(mallocedval + strlen(mallocedval) - 1, "]");
 				}
 				else
-					sprintf(mallocedval, "%.14g", *((double *) var->value));
+					sprintf(mallocedval, "%.15g", *((double *) var->value));
 
 				*tobeinserted_p = mallocedval;
 				break;
