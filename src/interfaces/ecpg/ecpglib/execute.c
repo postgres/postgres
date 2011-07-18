@@ -478,7 +478,7 @@ sprintf_double_value(char *ptr, double value, const char *delim)
 			sprintf(ptr, "%s%s", "Infinity", delim);
 	}
 	else
-		sprintf(ptr, "%.14g%s", value, delim);
+		sprintf(ptr, "%.15g%s", value, delim);
 }
 
 static void
@@ -494,7 +494,7 @@ sprintf_float_value(char *ptr, float value, const char *delim)
 			sprintf(ptr, "%s%s", "Infinity", delim);
 	}
 	else
-		sprintf(ptr, "%.14g%s", value, delim);
+		sprintf(ptr, "%.15g%s", value, delim);
 }
 
 bool
