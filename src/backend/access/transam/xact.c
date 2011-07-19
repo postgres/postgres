@@ -118,7 +118,8 @@ typedef enum TBlockState
 	/* subtransaction states */
 	TBLOCK_SUBBEGIN,			/* starting a subtransaction */
 	TBLOCK_SUBINPROGRESS,		/* live subtransaction */
-	TBLOCK_SUBEND,				/* RELEASE received */
+	TBLOCK_SUBRELEASE,			/* RELEASE received */
+	TBLOCK_SUBCOMMIT,			/* COMMIT received while TBLOCK_SUBINPROGRESS */
 	TBLOCK_SUBABORT,			/* failed subxact, awaiting ROLLBACK */
 	TBLOCK_SUBABORT_END,		/* failed subxact, ROLLBACK received */
 	TBLOCK_SUBABORT_PENDING,	/* live subxact, ROLLBACK received */
@@ -272,7 +273,7 @@ static TransactionId RecordTransactionAbort(bool isSubXact);
 static void StartTransaction(void);
 
 static void StartSubTransaction(void);
-static void CommitSubTransaction(void);
+static void CommitSubTransaction(bool isTopLevel);
 static void AbortSubTransaction(void);
 static void CleanupSubTransaction(void);
 static void PushTransaction(void);
@@ -2442,7 +2443,8 @@ StartTransactionCommand(void)
 		case TBLOCK_BEGIN:
 		case TBLOCK_SUBBEGIN:
 		case TBLOCK_END:
-		case TBLOCK_SUBEND:
+		case TBLOCK_SUBRELEASE:
+		case TBLOCK_SUBCOMMIT:
 		case TBLOCK_ABORT_END:
 		case TBLOCK_SUBABORT_END:
 		case TBLOCK_ABORT_PENDING:
@@ -2572,17 +2574,32 @@ CommitTransactionCommand(void)
 			break;
 
 			/*
-			 * We were issued a COMMIT or RELEASE command, so we end the
+			 * We were issued a RELEASE command, so we end the
 			 * current subtransaction and return to the parent transaction.
-			 * The parent might be ended too, so repeat till we are all the
-			 * way out or find an INPROGRESS transaction.
+			 * The parent might be ended too, so repeat till we find an
+			 * INPROGRESS transaction or subtransaction.
 			 */
-		case TBLOCK_SUBEND:
+		case TBLOCK_SUBRELEASE:
 			do
 			{
-				CommitSubTransaction();
+				CommitSubTransaction(false);
 				s = CurrentTransactionState;	/* changed by pop */
-			} while (s->blockState == TBLOCK_SUBEND);
+			} while (s->blockState == TBLOCK_SUBRELEASE);
+
+			Assert(s->blockState == TBLOCK_INPROGRESS ||
+				   s->blockState == TBLOCK_SUBINPROGRESS);
+			break;
+
+			/*
+			 * We were issued a COMMIT, so we end the current subtransaction
+			 * hierarchy and perform final commit.
+			 */
+		case TBLOCK_SUBCOMMIT:
+			do
+			{
+				CommitSubTransaction(true);
+				s = CurrentTransactionState;	/* changed by pop */
+			} while (s->blockState == TBLOCK_SUBCOMMIT);
 			/* If we had a COMMIT command, finish off the main xact too */
 			if (s->blockState == TBLOCK_END)
 			{
@@ -2597,10 +2614,8 @@ CommitTransactionCommand(void)
 				s->blockState = TBLOCK_DEFAULT;
 			}
 			else
-			{
-				Assert(s->blockState == TBLOCK_INPROGRESS ||
-					   s->blockState == TBLOCK_SUBINPROGRESS);
-			}
+				elog(ERROR, "CommitTransactionCommand: unexpected state %s",
+					 BlockStateAsString(s->blockState));
 			break;
 
 			/*
@@ -2814,7 +2829,8 @@ AbortCurrentTransaction(void)
 			 * applies if we get a failure while ending a subtransaction.
 			 */
 		case TBLOCK_SUBBEGIN:
-		case TBLOCK_SUBEND:
+		case TBLOCK_SUBRELEASE:
+		case TBLOCK_SUBCOMMIT:
 		case TBLOCK_SUBABORT_PENDING:
 		case TBLOCK_SUBRESTART:
 			AbortSubTransaction();
@@ -3122,7 +3138,8 @@ BeginTransactionBlock(void)
 		case TBLOCK_BEGIN:
 		case TBLOCK_SUBBEGIN:
 		case TBLOCK_END:
-		case TBLOCK_SUBEND:
+		case TBLOCK_SUBRELEASE:
+		case TBLOCK_SUBCOMMIT:
 		case TBLOCK_ABORT_END:
 		case TBLOCK_SUBABORT_END:
 		case TBLOCK_ABORT_PENDING:
@@ -3232,7 +3249,7 @@ EndTransactionBlock(void)
 			while (s->parent != NULL)
 			{
 				if (s->blockState == TBLOCK_SUBINPROGRESS)
-					s->blockState = TBLOCK_SUBEND;
+					s->blockState = TBLOCK_SUBCOMMIT;
 				else
 					elog(FATAL, "EndTransactionBlock: unexpected state %s",
 						 BlockStateAsString(s->blockState));
@@ -3290,7 +3307,8 @@ EndTransactionBlock(void)
 		case TBLOCK_BEGIN:
 		case TBLOCK_SUBBEGIN:
 		case TBLOCK_END:
-		case TBLOCK_SUBEND:
+		case TBLOCK_SUBRELEASE:
+		case TBLOCK_SUBCOMMIT:
 		case TBLOCK_ABORT_END:
 		case TBLOCK_SUBABORT_END:
 		case TBLOCK_ABORT_PENDING:
@@ -3382,7 +3400,8 @@ UserAbortTransactionBlock(void)
 		case TBLOCK_BEGIN:
 		case TBLOCK_SUBBEGIN:
 		case TBLOCK_END:
-		case TBLOCK_SUBEND:
+		case TBLOCK_SUBRELEASE:
+		case TBLOCK_SUBCOMMIT:
 		case TBLOCK_ABORT_END:
 		case TBLOCK_SUBABORT_END:
 		case TBLOCK_ABORT_PENDING:
@@ -3427,7 +3446,8 @@ DefineSavepoint(char *name)
 		case TBLOCK_BEGIN:
 		case TBLOCK_SUBBEGIN:
 		case TBLOCK_END:
-		case TBLOCK_SUBEND:
+		case TBLOCK_SUBRELEASE:
+		case TBLOCK_SUBCOMMIT:
 		case TBLOCK_ABORT:
 		case TBLOCK_SUBABORT:
 		case TBLOCK_ABORT_END:
@@ -3483,7 +3503,8 @@ ReleaseSavepoint(List *options)
 		case TBLOCK_BEGIN:
 		case TBLOCK_SUBBEGIN:
 		case TBLOCK_END:
-		case TBLOCK_SUBEND:
+		case TBLOCK_SUBRELEASE:
+		case TBLOCK_SUBCOMMIT:
 		case TBLOCK_ABORT:
 		case TBLOCK_SUBABORT:
 		case TBLOCK_ABORT_END:
@@ -3534,7 +3555,7 @@ ReleaseSavepoint(List *options)
 	for (;;)
 	{
 		Assert(xact->blockState == TBLOCK_SUBINPROGRESS);
-		xact->blockState = TBLOCK_SUBEND;
+		xact->blockState = TBLOCK_SUBRELEASE;
 		if (xact == target)
 			break;
 		xact = xact->parent;
@@ -3583,7 +3604,8 @@ RollbackToSavepoint(List *options)
 		case TBLOCK_BEGIN:
 		case TBLOCK_SUBBEGIN:
 		case TBLOCK_END:
-		case TBLOCK_SUBEND:
+		case TBLOCK_SUBRELEASE:
+		case TBLOCK_SUBCOMMIT:
 		case TBLOCK_ABORT_END:
 		case TBLOCK_SUBABORT_END:
 		case TBLOCK_ABORT_PENDING:
@@ -3691,7 +3713,8 @@ BeginInternalSubTransaction(char *name)
 		case TBLOCK_DEFAULT:
 		case TBLOCK_BEGIN:
 		case TBLOCK_SUBBEGIN:
-		case TBLOCK_SUBEND:
+		case TBLOCK_SUBRELEASE:
+		case TBLOCK_SUBCOMMIT:
 		case TBLOCK_ABORT:
 		case TBLOCK_SUBABORT:
 		case TBLOCK_ABORT_END:
@@ -3726,7 +3749,7 @@ ReleaseCurrentSubTransaction(void)
 			 BlockStateAsString(s->blockState));
 	Assert(s->state == TRANS_INPROGRESS);
 	MemoryContextSwitchTo(CurTransactionContext);
-	CommitSubTransaction();
+	CommitSubTransaction(false);
 	s = CurrentTransactionState;	/* changed by pop */
 	Assert(s->state == TRANS_INPROGRESS);
 }
@@ -3757,7 +3780,8 @@ RollbackAndReleaseCurrentSubTransaction(void)
 		case TBLOCK_SUBBEGIN:
 		case TBLOCK_INPROGRESS:
 		case TBLOCK_END:
-		case TBLOCK_SUBEND:
+		case TBLOCK_SUBRELEASE:
+		case TBLOCK_SUBCOMMIT:
 		case TBLOCK_ABORT:
 		case TBLOCK_ABORT_END:
 		case TBLOCK_SUBABORT_END:
@@ -3831,7 +3855,8 @@ AbortOutOfAnyTransaction(void)
 				 */
 			case TBLOCK_SUBBEGIN:
 			case TBLOCK_SUBINPROGRESS:
-			case TBLOCK_SUBEND:
+			case TBLOCK_SUBRELEASE:
+			case TBLOCK_SUBCOMMIT:
 			case TBLOCK_SUBABORT_PENDING:
 			case TBLOCK_SUBRESTART:
 				AbortSubTransaction();
@@ -3903,7 +3928,8 @@ TransactionBlockStatusCode(void)
 		case TBLOCK_INPROGRESS:
 		case TBLOCK_SUBINPROGRESS:
 		case TBLOCK_END:
-		case TBLOCK_SUBEND:
+		case TBLOCK_SUBRELEASE:
+		case TBLOCK_SUBCOMMIT:
 		case TBLOCK_PREPARE:
 			return 'T';			/* in transaction */
 		case TBLOCK_ABORT:
@@ -3987,9 +4013,13 @@ StartSubTransaction(void)
  *
  *	The caller has to make sure to always reassign CurrentTransactionState
  *	if it has a local pointer to it after calling this function.
+ *
+ *	isTopLevel means that this CommitSubTransaction() is being issued as a
+ *	sequence of actions leading directly to a main transaction commit
+ *	allowing some actions to be optimised.
  */
 static void
-CommitSubTransaction(void)
+CommitSubTransaction(bool isTopLevel)
 {
 	TransactionState s = CurrentTransactionState;
 
@@ -4036,15 +4066,21 @@ CommitSubTransaction(void)
 
 	/*
 	 * The only lock we actually release here is the subtransaction XID lock.
-	 * The rest just get transferred to the parent resource owner.
 	 */
 	CurrentResourceOwner = s->curTransactionOwner;
 	if (TransactionIdIsValid(s->transactionId))
 		XactLockTableDelete(s->transactionId);
 
+	/*
+	 * Other locks should get transferred to their parent resource owner.
+	 * Doing that is an O(N^2) operation, so if isTopLevel then we can just
+	 * leave the lock records as they are, knowing they will all get released
+	 * by the top level commit using ProcReleaseLocks(). We only optimize
+	 * this for commit; aborts may need to do other cleanup.
+	 */
 	ResourceOwnerRelease(s->curTransactionOwner,
 						 RESOURCE_RELEASE_LOCKS,
-						 true, false);
+						 true, isTopLevel);
 	ResourceOwnerRelease(s->curTransactionOwner,
 						 RESOURCE_RELEASE_AFTER_LOCKS,
 						 true, false);
@@ -4398,8 +4434,10 @@ BlockStateAsString(TBlockState blockState)
 			return "SUB BEGIN";
 		case TBLOCK_SUBINPROGRESS:
 			return "SUB INPROGRS";
-		case TBLOCK_SUBEND:
-			return "SUB END";
+		case TBLOCK_SUBRELEASE:
+			return "SUB RELEASE";
+		case TBLOCK_SUBCOMMIT:
+			return "SUB COMMIT";
 		case TBLOCK_SUBABORT:
 			return "SUB ABORT";
 		case TBLOCK_SUBABORT_END:
