@@ -123,7 +123,6 @@ CheckIndexCompatible(Oid oldId,
 	HeapTuple	tuple;
 	Form_pg_am	accessMethodForm;
 	bool		amcanorder;
-	RegProcedure amoptions;
 	int16	   *coloptions;
 	IndexInfo  *indexInfo;
 	int			numberOfAttributes;
@@ -158,7 +157,6 @@ CheckIndexCompatible(Oid oldId,
 	accessMethodId = HeapTupleGetOid(tuple);
 	accessMethodForm = (Form_pg_am) GETSTRUCT(tuple);
 	amcanorder = accessMethodForm->amcanorder;
-	amoptions = accessMethodForm->amoptions;
 	ReleaseSysCache(tuple);
 
 	/*
