@@ -1962,24 +1962,26 @@ SET ENABLE_SEQSCAN TO OFF;
     <para>
      These settings control the behavior of the built-in
      <firstterm>streaming replication</> feature (see
-     <xref linkend="streaming-replication">).
-     Some parameters must be set on the master server, while others must be
-     set on the standby server(s) that will receive replication data.
+     <xref linkend="streaming-replication">).  Servers will be either a
+     Master or a Standby server.  Masters can send data, while Standby(s)
+     are always receivers of replicated data.  When cascading replication
+     (see <xref linkend="cascading-replication">) is used, Standby server(s)
+     can also be senders, as well as receivers.
+     Parameters are mainly for Sending and Standby servers, though some
+     parameters have meaning only on the Master server.  Settings may vary
+     across the cluster without problems if that is required.
     </para>
 
-    <sect2 id="runtime-config-replication-master">
-     <title>Master Server</title>
+    <sect2 id="runtime-config-replication-sender">
+     <title>Sending Server(s)</title>
 
      <para>
-      These parameters can be set on the primary server that is
+      These parameters can be set on any server that is
       to send replication data to one or more standby servers.
-      Note that in addition to these parameters,
-      <xref linkend="guc-wal-level"> must be set appropriately on the master
-      server, and you will typically want to enable WAL archiving as
-      well (see <xref linkend="runtime-config-wal-archiving">).
-      The values of these parameters on standby servers are irrelevant,
-      although you may wish to set them there in preparation for the
-      possibility of a standby becoming the master.
+      The master is always a sending server, so these parameters must
+      always be set on the master.
+      The role and meaning of these parameters does not change after a
+      standby becomes the master.
      </para>
 
      <variablelist>
@@ -2034,10 +2036,11 @@ SET ENABLE_SEQSCAN TO OFF;
         <filename>pg_xlog</>
         directory, in case a standby server needs to fetch them for streaming
         replication. Each segment is normally 16 megabytes. If a standby
-        server connected to the primary falls behind by more than
-        <varname>wal_keep_segments</> segments, the primary might remove
+        server connected to the sending server falls behind by more than
+        <varname>wal_keep_segments</> segments, the sending server might remove
         a WAL segment still needed by the standby, in which case the
-        replication connection will be terminated.  (However, the standby
+        replication connection will be terminated.  Downstream connections
+        will also eventually fail as a result.  (However, the standby
         server can recover by fetching the segment from archive, if WAL
         archiving is in use.)
        </para>
@@ -2050,41 +2053,12 @@ SET ENABLE_SEQSCAN TO OFF;
         doesn't keep any extra segments for standby purposes, so the number
         of old WAL segments available to standby servers is a function of
         the location of the previous checkpoint and status of WAL
-        archiving.  This parameter has no effect on restartpoints.
+        archiving.
         This parameter can only be set in the
         <filename>postgresql.conf</> file or on the server command line.
        </para>
        </listitem>
       </varlistentry>
-
-     <varlistentry id="guc-vacuum-defer-cleanup-age" xreflabel="vacuum_defer_cleanup_age">
-      <term><varname>vacuum_defer_cleanup_age</varname> (<type>integer</type>)</term>
-      <indexterm>
-       <primary><varname>vacuum_defer_cleanup_age</> configuration parameter</primary>
-      </indexterm>
-      <listitem>
-       <para>
-        Specifies the number of transactions by which <command>VACUUM</> and
-        <acronym>HOT</> updates will defer cleanup of dead row versions. The
-        default is zero transactions, meaning that dead row versions can be
-        removed as soon as possible, that is, as soon as they are no longer
-        visible to any open transaction.  You may wish to set this to a
-        non-zero value on a primary server that is supporting hot standby
-        servers, as described in <xref linkend="hot-standby">.  This allows
-        more time for queries on the standby to complete without incurring
-        conflicts due to early cleanup of rows.  However, since the value
-        is measured in terms of number of write transactions occurring on the
-        primary server, it is difficult to predict just how much additional
-        grace time will be made available to standby queries.
-        This parameter can only be set in the <filename>postgresql.conf</>
-        file or on the server command line.
-       </para>
-       <para>
-        You should also consider setting <varname>hot_standby_feedback</>
-        as an alternative to using this parameter.
-       </para>
-      </listitem>
-     </varlistentry>
 
      <varlistentry id="guc-replication-timeout" xreflabel="replication_timeout">
       <term><varname>replication_timeout</varname> (<type>integer</type>)</term>
@@ -2095,7 +2069,7 @@ SET ENABLE_SEQSCAN TO OFF;
        <para>
         Terminate replication connections that are inactive longer
         than the specified number of milliseconds. This is useful for
-        the primary server to detect a standby crash or network outage.
+        the sending server to detect a standby crash or network outage.
         A value of zero disables the timeout mechanism.  This parameter
         can only be set in
         the <filename>postgresql.conf</> file or on the server command line.
@@ -2109,6 +2083,26 @@ SET ENABLE_SEQSCAN TO OFF;
        </para>
       </listitem>
      </varlistentry>
+
+     </variablelist>
+    </sect2>
+
+    <sect2 id="runtime-config-replication-master">
+     <title>Master Server</title>
+
+     <para>
+      These parameters can be set on the master/primary server that is
+      to send replication data to one or more standby servers.
+      Note that in addition to these parameters,
+      <xref linkend="guc-wal-level"> must be set appropriately on the master
+      server, and may also want to enable WAL archiving as
+      well (see <xref linkend="runtime-config-wal-archiving">).
+      The values of these parameters on standby servers are irrelevant,
+      although you may wish to set them there in preparation for the
+      possibility of a standby becoming the master.
+     </para>
+
+    <variablelist>
 
      <varlistentry id="guc-synchronous-standby-names" xreflabel="synchronous_standby_names">
       <term><varname>synchronous_standby_names</varname> (<type>string</type>)</term>
@@ -2157,6 +2151,35 @@ SET ENABLE_SEQSCAN TO OFF;
        <para>
         This parameter can only be set in the <filename>postgresql.conf</>
         file or on the server command line.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry id="guc-vacuum-defer-cleanup-age" xreflabel="vacuum_defer_cleanup_age">
+      <term><varname>vacuum_defer_cleanup_age</varname> (<type>integer</type>)</term>
+      <indexterm>
+       <primary><varname>vacuum_defer_cleanup_age</> configuration parameter</primary>
+      </indexterm>
+      <listitem>
+       <para>
+        Specifies the number of transactions by which <command>VACUUM</> and
+        <acronym>HOT</> updates will defer cleanup of dead row versions. The
+        default is zero transactions, meaning that dead row versions can be
+        removed as soon as possible, that is, as soon as they are no longer
+        visible to any open transaction.  You may wish to set this to a
+        non-zero value on a primary server that is supporting hot standby
+        servers, as described in <xref linkend="hot-standby">.  This allows
+        more time for queries on the standby to complete without incurring
+        conflicts due to early cleanup of rows.  However, since the value
+        is measured in terms of number of write transactions occurring on the
+        primary server, it is difficult to predict just how much additional
+        grace time will be made available to standby queries.
+        This parameter can only be set in the <filename>postgresql.conf</>
+        file or on the server command line.
+       </para>
+       <para>
+        You should also consider setting <varname>hot_standby_feedback</>
+        on standby server(s) as an alternative to using this parameter.
        </para>
       </listitem>
      </varlistentry>
@@ -2261,7 +2284,7 @@ SET ENABLE_SEQSCAN TO OFF;
       <para>
        Specifies the minimum frequency for the WAL receiver
        process on the standby to send information about replication progress
-       to the primary, where it can be seen using the
+       to the primary or upstream standby, where it can be seen using the
        <link linkend="monitoring-stats-views-table">
        <literal>pg_stat_replication</></link> view.  The standby will report
        the last transaction log position it has written, the last position it
@@ -2276,7 +2299,7 @@ SET ENABLE_SEQSCAN TO OFF;
        The default value is 10 seconds.
       </para>
       <para>
-       When <xref linkend="guc-replication-timeout"> is enabled on the primary,
+       When <xref linkend="guc-replication-timeout"> is enabled on a sending server,
        <varname>wal_receiver_status_interval</> must be enabled, and its value
        must be less than the value of <varname>replication_timeout</>.
       </para>
@@ -2291,6 +2314,7 @@ SET ENABLE_SEQSCAN TO OFF;
       <listitem>
        <para>
         Specifies whether or not a hot standby will send feedback to the primary
+        or upstream standby
         about queries currently executing on the standby. This parameter can
         be used to eliminate query cancels caused by cleanup records, but
         can cause database bloat on the primary for some workloads.
@@ -2298,6 +2322,11 @@ SET ENABLE_SEQSCAN TO OFF;
         <varname>wal_receiver_status_interval</>. The default value is
         <literal>off</literal>. This parameter can only be set in the
         <filename>postgresql.conf</> file or on the server command line.
+       </para>
+       <para>
+        If cascaded replication is in use the feedback is passed upstream
+        until it eventually reaches the primary.  Standbys make no other use
+        of feedback they receive other than to pass upstream.
        </para>
       </listitem>
      </varlistentry>

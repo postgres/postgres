@@ -877,8 +877,66 @@ primary_conninfo = 'host=192.168.1.50 port=5432 user=foo password=foopass'
      network delay, or that the standby is under heavy load.
     </para>
    </sect3>
-
   </sect2>
+
+  <sect2 id="cascading-replication">
+   <title>Cascading Replication</title>
+
+   <indexterm zone="high-availability">
+    <primary>Cascading Replication</primary>
+   </indexterm>
+
+   <para>
+    The cascading replication feature allows a standby server to accept replication
+    connections and stream WAL records to other standbys, acting as a relay.
+    This can be used to reduce the number of direct connections to the master
+    and also to minimise inter-site bandwidth overheads.
+   </para>
+
+   <para>
+    A standby acting as both a receiver and a sender is known as a cascading
+    standby.  Standbys that are more directly connected to the master are known
+    as upstream servers, while those standby servers further away are downstream
+    servers.  Cascading replication does not place limits on the number or
+    arrangement of downstream servers, though each standby connects to only
+    one upstream server which eventually links to a single master/primary
+    server.
+   </para>
+
+   <para>
+    A cascading standby sends not only WAL records received from the
+    master but also those restored from the archive. So even if the replication
+    connection in some upstream connection is terminated, streaming replication
+    continues downstream for as long as new WAL records are available.
+   </para>
+
+   <para>
+    Cascading replication is currently asynchronous. Synchronous replication
+    (see <xref linkend="synchronous-replication">) settings have no effect on
+    cascading replication at present.
+   </para>
+
+   <para>
+    Hot Standby feedback propagates upstream, whatever the cascaded arrangement.
+   </para>
+
+   <para>
+    Promoting a cascading standby terminates the immediate downstream replication
+    connections which it serves. This is because the timeline becomes different
+    between standbys, and they can no longer continue replication.  The
+    effected standby(s) may reconnect to reestablish streaming replication.
+   </para>
+
+   <para>
+    To use cascading replication, set up the cascading standby so that it can
+    accept replication connections, i.e., set <varname>max_wal_senders</>,
+    <varname>hot_standby</> and authentication option (see
+    <xref linkend="streaming-replication"> and <xref linkend="hot-standby">).
+    Also set <varname>primary_conninfo</> in the downstream standby to point
+    to the cascading standby.
+   </para>
+  </sect2>
+
   <sect2 id="synchronous-replication">
    <title>Synchronous Replication</title>
 
@@ -955,7 +1013,9 @@ primary_conninfo = 'host=192.168.1.50 port=5432 user=foo password=foopass'
     confirmation that the commit record has been received. These parameters
     allow the administrator to specify which standby servers should be
     synchronous standbys. Note that the configuration of synchronous
-    replication is mainly on the master.
+    replication is mainly on the master. Named standbys must be directly
+    connected to the master; the master knows nothing about downstream
+    standby servers using cascaded replication.
    </para>
 
    <para>

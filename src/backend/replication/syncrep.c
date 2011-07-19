@@ -469,6 +469,13 @@ SyncRepGetStandbyPriority(void)
 	int			priority = 0;
 	bool		found = false;
 
+	/*
+	 * Since synchronous cascade replication is not allowed, we always
+	 * set the priority of cascading walsender to zero.
+	 */
+	if (am_cascading_walsender)
+		return 0;
+
 	/* Need a modifiable copy of string */
 	rawstring = pstrdup(SyncRepStandbyNames);
 

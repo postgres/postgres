@@ -44,6 +44,7 @@
 #include "miscadmin.h"
 #include "replication/walprotocol.h"
 #include "replication/walreceiver.h"
+#include "replication/walsender.h"
 #include "storage/ipc.h"
 #include "storage/pmsignal.h"
 #include "storage/procarray.h"
@@ -564,8 +565,10 @@ XLogWalRcvFlush(bool dying)
 		}
 		SpinLockRelease(&walrcv->mutex);
 
-		/* Signal the startup process that new WAL has arrived */
+		/* Signal the startup process and walsender that new WAL has arrived */
 		WakeupRecovery();
+		if (AllowCascadeReplication())
+			WalSndWakeup();
 
 		/* Report XLOG streaming progress in PS display */
 		if (update_process_title)
@@ -625,7 +628,7 @@ XLogWalRcvSendReply(void)
 	/* Construct a new message */
 	reply_message.write = LogstreamResult.Write;
 	reply_message.flush = LogstreamResult.Flush;
-	reply_message.apply = GetXLogReplayRecPtr();
+	reply_message.apply = GetXLogReplayRecPtr(NULL);
 	reply_message.sendTime = now;
 
 	elog(DEBUG2, "sending write %X/%X flush %X/%X apply %X/%X",

@@ -35,6 +35,7 @@ typedef struct WalSnd
 	pid_t		pid;			/* this walsender's process id, or 0 */
 	WalSndState state;			/* this walsender's state */
 	XLogRecPtr	sentPtr;		/* WAL has been sent up to this point */
+	bool		needreload;		/* does currently-open file need to be reloaded? */
 
 	/*
 	 * The xlog locations that have been written, flushed, and applied by
@@ -92,6 +93,7 @@ extern WalSndCtlData *WalSndCtl;
 
 /* global state */
 extern bool am_walsender;
+extern bool am_cascading_walsender;
 extern volatile sig_atomic_t walsender_shutdown_requested;
 extern volatile sig_atomic_t walsender_ready_to_stop;
 
@@ -106,7 +108,8 @@ extern Size WalSndShmemSize(void);
 extern void WalSndShmemInit(void);
 extern void WalSndWakeup(void);
 extern void WalSndSetState(WalSndState state);
-extern void XLogRead(char *buf, XLogRecPtr recptr, Size nbytes);
+extern void XLogRead(char *buf, XLogRecPtr startptr, Size count);
+extern void WalSndRqstFileReload(void);
 
 extern Datum pg_stat_get_wal_senders(PG_FUNCTION_ARGS);
 

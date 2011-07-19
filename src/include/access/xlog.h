@@ -221,6 +221,9 @@ extern int	wal_level;
 /* Do we need to WAL-log information required only for Hot Standby? */
 #define XLogStandbyInfoActive() (wal_level >= WAL_LEVEL_HOT_STANDBY)
 
+/* Can we allow the standby to accept replication connection from another standby? */
+#define AllowCascadeReplication() (EnableHotStandby && max_wal_senders > 0)
+
 #ifdef WAL_DEBUG
 extern bool XLOG_DEBUG;
 #endif
@@ -292,7 +295,8 @@ extern bool RecoveryInProgress(void);
 extern bool HotStandbyActive(void);
 extern bool XLogInsertAllowed(void);
 extern void GetXLogReceiptTime(TimestampTz *rtime, bool *fromStream);
-extern XLogRecPtr GetXLogReplayRecPtr(void);
+extern XLogRecPtr GetXLogReplayRecPtr(XLogRecPtr *restoreLastRecPtr);
+extern XLogRecPtr GetStandbyFlushRecPtr(void);
 
 extern void UpdateControlFile(void);
 extern uint64 GetSystemIdentifier(void);

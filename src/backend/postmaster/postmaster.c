@@ -2317,6 +2317,26 @@ reaper(SIGNAL_ARGS)
 			pmState = PM_RUN;
 
 			/*
+			 * Kill any walsenders to force the downstream standby(s) to
+			 * reread the timeline history file, adjust their timelines and
+			 * establish replication connections again. This is required
+			 * because the timeline of cascading standby is not consistent
+			 * with that of cascaded one just after failover. We LOG this
+			 * message since we need to leave a record to explain this
+			 * disconnection.
+			 *
+			 * XXX should avoid the need for disconnection. When we do,
+			 * am_cascading_walsender should be replaced with RecoveryInProgress()
+			 */
+			if (max_wal_senders > 0)
+			{
+				ereport(LOG,
+						(errmsg("terminating walsender all processes to force cascaded"
+								"standby(s) to update timeline and reconnect")));
+				SignalSomeChildren(SIGUSR2, BACKEND_TYPE_WALSND);
+			}
+
+			/*
 			 * Crank up the background writer, if we didn't do that already
 			 * when we entered consistent recovery state.  It doesn't matter
 			 * if this fails, we'll just try again later.

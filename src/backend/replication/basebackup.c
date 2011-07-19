@@ -339,6 +339,11 @@ SendBaseBackup(BaseBackupCmd *cmd)
 	MemoryContext old_context;
 	basebackup_options opt;
 
+	if (am_cascading_walsender)
+		ereport(FATAL,
+				(errcode(ERRCODE_CANNOT_CONNECT_NOW),
+				 errmsg("recovery is still in progress, can't accept WAL streaming connections for backup")));
+
 	parse_basebackup_options(cmd->options, &opt);
 
 	backup_context = AllocSetContextCreate(CurrentMemoryContext,
