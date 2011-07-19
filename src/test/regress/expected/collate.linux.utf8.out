@@ -421,7 +421,7 @@ SELECT table_name, view_definition FROM information_schema.views
  collview3  | SELECT collate_test10.a, lower(((collate_test10.x || collate_test10.x) COLLATE "C")) AS lower FROM collate_test10;
 (3 rows)
 
--- collation propagation in various expression type
+-- collation propagation in various expression types
 SELECT a, coalesce(b, 'foo') FROM collate_test1 ORDER BY 2;
  a | coalesce 
 ---+----------
