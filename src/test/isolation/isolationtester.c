@@ -21,6 +21,7 @@
 #endif
 
 #include "libpq-fe.h"
+#include "pqexpbuffer.h"
 
 #include "isolationtester.h"
 
@@ -31,7 +32,7 @@
  * connections represent spec-defined sessions.
  */
 static PGconn **conns = NULL;
-static const char **backend_ids = NULL;
+static const char **backend_pids = NULL;
 static int	nconns = 0;
 
 static void run_all_permutations(TestSpec * testspec);
@@ -67,6 +68,7 @@ main(int argc, char **argv)
 	TestSpec   *testspec;
 	int			i;
 	PGresult   *res;
+	PQExpBufferData wait_query;
 
 	/*
 	 * If the user supplies a parameter on the command line, use it as the
@@ -89,7 +91,7 @@ main(int argc, char **argv)
 	 */
 	nconns = 1 + testspec->nsessions;
 	conns = calloc(nconns, sizeof(PGconn *));
-	backend_ids = calloc(nconns, sizeof(*backend_ids));
+	backend_pids = calloc(nconns, sizeof(*backend_pids));
 	for (i = 0; i < nconns; i++)
 	{
 		conns[i] = PQconnectdb(conninfo);
@@ -112,23 +114,22 @@ main(int argc, char **argv)
 		}
 		PQclear(res);
 
-		/* Get the backend ID for lock wait checking. */
-		res = PQexec(conns[i], "SELECT i FROM pg_stat_get_backend_idset() t(i) "
-					 "WHERE pg_stat_get_backend_pid(i) = pg_backend_pid()");
+		/* Get the backend pid for lock wait checking. */
+		res = PQexec(conns[i], "SELECT pg_backend_pid()");
 		if (PQresultStatus(res) == PGRES_TUPLES_OK)
 		{
 			if (PQntuples(res) == 1 && PQnfields(res) == 1)
-				backend_ids[i] = strdup(PQgetvalue(res, 0, 0));
+				backend_pids[i] = strdup(PQgetvalue(res, 0, 0));
 			else
 			{
-				fprintf(stderr, "backend id query returned %d rows and %d columns, expected 1 row and 1 column",
+				fprintf(stderr, "backend pid query returned %d rows and %d columns, expected 1 row and 1 column",
 						PQntuples(res), PQnfields(res));
 				exit_nicely();
 			}
 		}
 		else
 		{
-			fprintf(stderr, "backend id query failed: %s",
+			fprintf(stderr, "backend pid query failed: %s",
 					PQerrorMessage(conns[i]));
 			exit_nicely();
 		}
@@ -145,8 +146,87 @@ main(int argc, char **argv)
 			session->steps[stepindex]->session = i;
 	}
 
-	res = PQprepare(conns[0], PREP_WAITING,
-					"SELECT 1 WHERE pg_stat_get_backend_waiting($1)", 0, NULL);
+	/*
+	 * Build the query we'll use to detect lock contention among sessions in
+	 * the test specification.  Most of the time, we could get away with
+	 * simply checking whether a session is waiting for *any* lock: we don't
+	 * exactly expect concurrent use of test tables.  However, autovacuum will
+	 * occasionally take AccessExclusiveLock to truncate a table, and we must
+	 * ignore that transient wait.
+	 */
+	initPQExpBuffer(&wait_query);
+	appendPQExpBufferStr(&wait_query,
+						 "SELECT 1 FROM pg_locks holder, pg_locks waiter "
+						 "WHERE NOT waiter.granted AND waiter.pid = $1 "
+						 "AND holder.granted "
+						 "AND holder.pid <> $1 AND holder.pid IN (");
+	/* The spec syntax requires at least one session; assume that here. */
+	appendPQExpBuffer(&wait_query, "%s", backend_pids[1]);
+	for (i = 2; i < nconns; i++)
+		appendPQExpBuffer(&wait_query, ", %s", backend_pids[i]);
+	appendPQExpBufferStr(&wait_query,
+						 ") "
+
+						 "AND holder.mode = ANY (CASE waiter.mode "
+						 "WHEN 'AccessShareLock' THEN ARRAY["
+						 "'AccessExclusiveLock'] "
+						 "WHEN 'RowShareLock' THEN ARRAY["
+						 "'ExclusiveLock',"
+						 "'AccessExclusiveLock'] "
+						 "WHEN 'RowExclusiveLock' THEN ARRAY["
+						 "'ShareLock',"
+						 "'ShareRowExclusiveLock',"
+						 "'ExclusiveLock',"
+						 "'AccessExclusiveLock'] "
+						 "WHEN 'ShareUpdateExclusiveLock' THEN ARRAY["
+						 "'ShareUpdateExclusiveLock',"
+						 "'ShareLock',"
+						 "'ShareRowExclusiveLock',"
+						 "'ExclusiveLock',"
+						 "'AccessExclusiveLock'] "
+						 "WHEN 'ShareLock' THEN ARRAY["
+						 "'RowExclusiveLock',"
+						 "'ShareUpdateExclusiveLock',"
+						 "'ShareRowExclusiveLock',"
+						 "'ExclusiveLock',"
+						 "'AccessExclusiveLock'] "
+						 "WHEN 'ShareRowExclusiveLock' THEN ARRAY["
+						 "'RowExclusiveLock',"
+						 "'ShareUpdateExclusiveLock',"
+						 "'ShareLock',"
+						 "'ShareRowExclusiveLock',"
+						 "'ExclusiveLock',"
+						 "'AccessExclusiveLock'] "
+						 "WHEN 'ExclusiveLock' THEN ARRAY["
+						 "'RowShareLock',"
+						 "'RowExclusiveLock',"
+						 "'ShareUpdateExclusiveLock',"
+						 "'ShareLock',"
+						 "'ShareRowExclusiveLock',"
+						 "'ExclusiveLock',"
+						 "'AccessExclusiveLock'] "
+						 "WHEN 'AccessExclusiveLock' THEN ARRAY["
+						 "'AccessShareLock',"
+						 "'RowShareLock',"
+						 "'RowExclusiveLock',"
+						 "'ShareUpdateExclusiveLock',"
+						 "'ShareLock',"
+						 "'ShareRowExclusiveLock',"
+						 "'ExclusiveLock',"
+						 "'AccessExclusiveLock'] END) "
+
+						 "AND holder.locktype IS NOT DISTINCT FROM waiter.locktype "
+						 "AND holder.database IS NOT DISTINCT FROM waiter.database "
+						 "AND holder.relation IS NOT DISTINCT FROM waiter.relation "
+						 "AND holder.page IS NOT DISTINCT FROM waiter.page "
+						 "AND holder.tuple IS NOT DISTINCT FROM waiter.tuple "
+						 "AND holder.virtualxid IS NOT DISTINCT FROM waiter.virtualxid "
+						 "AND holder.transactionid IS NOT DISTINCT FROM waiter.transactionid "
+						 "AND holder.classid IS NOT DISTINCT FROM waiter.classid "
+						 "AND holder.objid IS NOT DISTINCT FROM waiter.objid "
+						 "AND holder.objsubid IS NOT DISTINCT FROM waiter.objsubid ");
+
+	res = PQprepare(conns[0], PREP_WAITING, wait_query.data, 0, NULL);
 	if (PQresultStatus(res) != PGRES_COMMAND_OK)
 	{
 		fprintf(stderr, "prepare of lock wait query failed: %s",
@@ -154,6 +234,7 @@ main(int argc, char **argv)
 		exit_nicely();
 	}
 	PQclear(res);
+	termPQExpBuffer(&wait_query);
 
 	/*
 	 * Run the permutations specified in the spec, or all if none were
@@ -411,9 +492,7 @@ run_permutation(TestSpec * testspec, int nsteps, Step ** steps)
  * Our caller already sent the query associated with this step.  Wait for it
  * to either complete or (if given the STEP_NONBLOCK flag) to block while
  * waiting for a lock.  We assume that any lock wait will persist until we
- * have executed additional steps in the permutation.  This is not fully
- * robust -- a concurrent autovacuum could briefly take a lock with which we
- * conflict.  The risk may be low enough to discount.
+ * have executed additional steps in the permutation.
  *
  * When calling this function on behalf of a given step for a second or later
  * time, pass the STEP_RETRY flag.  This only affects the messages printed.
@@ -450,7 +529,7 @@ try_complete_step(Step *step, int flags)
 			int			ntuples;
 
 			res = PQexecPrepared(conns[0], PREP_WAITING, 1,
-								 &backend_ids[step->session + 1],
+								 &backend_pids[step->session + 1],
 								 NULL, NULL, 0);
 			if (PQresultStatus(res) != PGRES_TUPLES_OK)
 			{
