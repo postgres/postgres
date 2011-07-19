@@ -194,19 +194,24 @@
 # REPLICATION
 #------------------------------------------------------------------------------
 
-# - Master Server -
+# - Sending Server(s) -
 
-# These settings are ignored on a standby server
+# Set these on the master and on any standby that will send replication data
 
 #max_wal_senders = 0		# max number of walsender processes
 				# (change requires restart)
 #wal_sender_delay = 1s		# walsender cycle time, 1-10000 milliseconds
 #wal_keep_segments = 0		# in logfile segments, 16MB each; 0 disables
-#vacuum_defer_cleanup_age = 0	# number of xacts by which cleanup is delayed
 #replication_timeout = 60s	# in milliseconds; 0 disables
+
+# - Master Server -
+
+# These settings are ignored on a standby server
+
 #synchronous_standby_names = ''	# standby servers that provide sync rep
 				# comma-separated list of application_name
 				# from standby(s); '*' = all
+#vacuum_defer_cleanup_age = 0	# number of xacts by which cleanup is delayed
 
 # - Standby Servers -
 
