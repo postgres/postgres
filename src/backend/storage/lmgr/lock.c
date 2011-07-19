@@ -155,11 +155,11 @@ static int			FastPathLocalUseCount = 0;
 #define FastPathStrongMode(mode)	((mode) > ShareUpdateExclusiveLock)
 #define FastPathRelevantMode(mode)	((mode) != ShareUpdateExclusiveLock)
 
-static bool FastPathGrantLock(Oid relid, LOCKMODE lockmode);
-static bool FastPathUnGrantLock(Oid relid, LOCKMODE lockmode);
-static bool FastPathTransferLocks(LockMethod lockMethodTable,
+static bool FastPathGrantRelationLock(Oid relid, LOCKMODE lockmode);
+static bool FastPathUnGrantRelationLock(Oid relid, LOCKMODE lockmode);
+static bool FastPathTransferRelationLocks(LockMethod lockMethodTable,
 					  const LOCKTAG *locktag, uint32 hashcode);
-static PROCLOCK *FastPathGetLockEntry(LOCALLOCK *locallock);
+static PROCLOCK *FastPathGetRelationLockEntry(LOCALLOCK *locallock);
 
 /*
  * To make the fast-path lock mechanism work, we must have some way of
@@ -186,9 +186,9 @@ typedef struct
 {
 	slock_t mutex;
 	uint32 count[FAST_PATH_STRONG_LOCK_HASH_PARTITIONS];
-} FastPathStrongLockData;
+} FastPathStrongRelationLockData;
 
-FastPathStrongLockData *FastPathStrongLocks;
+FastPathStrongRelationLockData *FastPathStrongRelationLocks;
 
 #ifndef LOCK_DEBUG
 static bool Dummy_trace = false;
@@ -415,10 +415,11 @@ InitLocks(void)
 	/*
 	 * Allocate fast-path structures.
 	 */
-	FastPathStrongLocks = ShmemInitStruct("Fast Path Strong Lock Data",
-		sizeof(FastPathStrongLockData), &found);
+	FastPathStrongRelationLocks =
+		ShmemInitStruct("Fast Path Strong Relation Lock Data",
+		sizeof(FastPathStrongRelationLockData), &found);
 	if (!found)
-		SpinLockInit(&FastPathStrongLocks->mutex);
+		SpinLockInit(&FastPathStrongRelationLocks->mutex);
 
 	/*
 	 * Allocate non-shared hash table for LOCALLOCK structs.  This stores lock
@@ -720,10 +721,11 @@ LockAcquireExtended(const LOCKTAG *locktag,
 			 * yet to begin to transfer fast-path locks.
 			 */
 			LWLockAcquire(MyProc->backendLock, LW_EXCLUSIVE);
-			if (FastPathStrongLocks->count[fasthashcode] != 0)
+			if (FastPathStrongRelationLocks->count[fasthashcode] != 0)
 				acquired = false;
 			else
-				acquired = FastPathGrantLock(locktag->locktag_field2, lockmode);
+				acquired = FastPathGrantRelationLock(locktag->locktag_field2,
+													 lockmode);
 			LWLockRelease(MyProc->backendLock);
 			if (acquired)
 			{
@@ -742,11 +744,12 @@ LockAcquireExtended(const LOCKTAG *locktag,
 			 * instruction here, on architectures where that is supported.
 			 */
 			Assert(locallock->holdsStrongLockCount == FALSE);
-			SpinLockAcquire(&FastPathStrongLocks->mutex);
-			FastPathStrongLocks->count[fasthashcode]++;
+			SpinLockAcquire(&FastPathStrongRelationLocks->mutex);
+			FastPathStrongRelationLocks->count[fasthashcode]++;
 			locallock->holdsStrongLockCount = TRUE;
-			SpinLockRelease(&FastPathStrongLocks->mutex);
-			if (!FastPathTransferLocks(lockMethodTable, locktag, hashcode))
+			SpinLockRelease(&FastPathStrongRelationLocks->mutex);
+			if (!FastPathTransferRelationLocks(lockMethodTable, locktag,
+											   hashcode))
 			{
 				if (reportMemoryError)
 					ereport(ERROR,
@@ -1099,11 +1102,11 @@ RemoveLocalLock(LOCALLOCK *locallock)
 		uint32	fasthashcode;
 		fasthashcode = FastPathStrongLockHashPartition(locallock->hashcode);
 
-		SpinLockAcquire(&FastPathStrongLocks->mutex);
-		Assert(FastPathStrongLocks->count[fasthashcode] > 0);
-		FastPathStrongLocks->count[fasthashcode]--;
+		SpinLockAcquire(&FastPathStrongRelationLocks->mutex);
+		Assert(FastPathStrongRelationLocks->count[fasthashcode] > 0);
+		FastPathStrongRelationLocks->count[fasthashcode]--;
 		locallock->holdsStrongLockCount = FALSE;
-		SpinLockRelease(&FastPathStrongLocks->mutex);
+		SpinLockRelease(&FastPathStrongRelationLocks->mutex);
 	}
 	if (!hash_search(LockMethodLocalHash,
 					 (void *) &(locallock->tag),
@@ -1642,7 +1645,8 @@ LockRelease(const LOCKTAG *locktag, LOCKMODE lockmode, bool sessionLock)
 		 * it here.  Another backend may have moved it to the main table.
 		 */
 		LWLockAcquire(MyProc->backendLock, LW_EXCLUSIVE);
-		released = FastPathUnGrantLock(locktag->locktag_field2, lockmode);
+		released = FastPathUnGrantRelationLock(locktag->locktag_field2,
+											   lockmode);
 		LWLockRelease(MyProc->backendLock);
 		if (released)
 		{
@@ -1825,7 +1829,7 @@ LockReleaseAll(LOCKMETHODID lockmethodid, bool allLocks)
 
 			/* Attempt fast-path release. */
 			relid = locallock->tag.lock.locktag_field2;
-			if (FastPathUnGrantLock(relid, lockmode))
+			if (FastPathUnGrantRelationLock(relid, lockmode))
 			{
 				RemoveLocalLock(locallock);
 				continue;
@@ -2117,11 +2121,11 @@ LockReassignCurrentOwner(void)
 }
 
 /*
- * FastPathGrantLock
+ * FastPathGrantRelationLock
  *		Grant lock using per-backend fast-path array, if there is space.
  */
 static bool
-FastPathGrantLock(Oid relid, LOCKMODE lockmode)
+FastPathGrantRelationLock(Oid relid, LOCKMODE lockmode)
 {
 	uint32		f;
 	uint32		unused_slot = FP_LOCK_SLOTS_PER_BACKEND;
@@ -2153,12 +2157,12 @@ FastPathGrantLock(Oid relid, LOCKMODE lockmode)
 }
 
 /*
- * FastPathUnGrantLock
+ * FastPathUnGrantRelationLock
  *		Release fast-path lock, if present.  Update backend-private local
  *		use count, while we're at it.
  */
 static bool
-FastPathUnGrantLock(Oid relid, LOCKMODE lockmode)
+FastPathUnGrantRelationLock(Oid relid, LOCKMODE lockmode)
 {
 	uint32		f;
 	bool		result = false;
@@ -2180,12 +2184,12 @@ FastPathUnGrantLock(Oid relid, LOCKMODE lockmode)
 }
 
 /*
- * FastPathTransferLocks
+ * FastPathTransferRelationLocks
  *		Transfer locks matching the given lock tag from per-backend fast-path
  *		arrays to the shared hash table.
  */
 static bool
-FastPathTransferLocks(LockMethod lockMethodTable, const LOCKTAG *locktag,
+FastPathTransferRelationLocks(LockMethod lockMethodTable, const LOCKTAG *locktag,
 					  uint32 hashcode)
 {
 	LWLockId		partitionLock = LockHashPartitionLock(hashcode);
@@ -2267,7 +2271,7 @@ FastPathTransferLocks(LockMethod lockMethodTable, const LOCKTAG *locktag,
  *      transferring it to the primary lock table if necessary.
  */
 static PROCLOCK *
-FastPathGetLockEntry(LOCALLOCK *locallock)
+FastPathGetRelationLockEntry(LOCALLOCK *locallock)
 {
 	LockMethod		lockMethodTable = LockMethods[DEFAULT_LOCKMETHOD];
 	LOCKTAG		   *locktag = &locallock->tag.lock;
@@ -2650,9 +2654,9 @@ LockRefindAndRelease(LockMethod lockMethodTable, PGPROC *proc,
 		&& FastPathTag(&lock->tag) && FastPathStrongMode(lockmode))
 	{
 		uint32	fasthashcode = FastPathStrongLockHashPartition(hashcode);
-		SpinLockAcquire(&FastPathStrongLocks->mutex);
-		FastPathStrongLocks->count[fasthashcode]--;
-		SpinLockRelease(&FastPathStrongLocks->mutex);
+		SpinLockAcquire(&FastPathStrongRelationLocks->mutex);
+		FastPathStrongRelationLocks->count[fasthashcode]--;
+		SpinLockRelease(&FastPathStrongRelationLocks->mutex);
 	}
 }
 
@@ -2715,11 +2719,11 @@ AtPrepare_Locks(void)
 		/*
 		 * If the local lock was taken via the fast-path, we need to move it
 		 * to the primary lock table, or just get a pointer to the existing
-		 * primary lock table if by chance it's already been transferred.
+		 * primary lock table entry if by chance it's already been transferred.
 		 */
 		if (locallock->proclock == NULL)
 		{
-			locallock->proclock = FastPathGetLockEntry(locallock);
+			locallock->proclock = FastPathGetRelationLockEntry(locallock);
 			locallock->lock = locallock->proclock->tag.myLock;
 		}
 
@@ -3010,7 +3014,7 @@ GetLockStatusData(void)
 
 		for (f = 0; f < FP_LOCK_SLOTS_PER_BACKEND; ++f)
 		{
-			LockInstanceData   *instance = &data->locks[el];
+			LockInstanceData   *instance;
 			uint32		lockbits = FAST_PATH_GET_BITS(proc, f);
 
 			/* Skip unallocated slots. */
@@ -3024,6 +3028,7 @@ GetLockStatusData(void)
 					repalloc(data->locks, sizeof(LockInstanceData) * els);
 			}
 
+			instance = &data->locks[el];
 			SET_LOCKTAG_RELATION(instance->locktag, proc->databaseId,
 								 proc->fpRelId[f]);
 			instance->holdMask = lockbits << FAST_PATH_LOCKNUMBER_OFFSET;
@@ -3455,9 +3460,9 @@ lock_twophase_recover(TransactionId xid, uint16 info,
 	if (FastPathTag(&lock->tag) && FastPathStrongMode(lockmode))
 	{
 		uint32	fasthashcode = FastPathStrongLockHashPartition(hashcode);
-		SpinLockAcquire(&FastPathStrongLocks->mutex);
-		FastPathStrongLocks->count[fasthashcode]++;
-		SpinLockRelease(&FastPathStrongLocks->mutex);
+		SpinLockAcquire(&FastPathStrongRelationLocks->mutex);
+		FastPathStrongRelationLocks->count[fasthashcode]++;
+		SpinLockRelease(&FastPathStrongRelationLocks->mutex);
 	}
 
 	LWLockRelease(partitionLock);
