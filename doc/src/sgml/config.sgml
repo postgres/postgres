@@ -2095,7 +2095,7 @@ SET ENABLE_SEQSCAN TO OFF;
       to send replication data to one or more standby servers.
       Note that in addition to these parameters,
       <xref linkend="guc-wal-level"> must be set appropriately on the master
-      server, and may also want to enable WAL archiving as
+      server, and optionally WAL archiving can be enabled as
       well (see <xref linkend="runtime-config-wal-archiving">).
       The values of these parameters on standby servers are irrelevant,
       although you may wish to set them there in preparation for the

@@ -314,7 +314,8 @@ postgres: <replaceable>user</> <replaceable>database</> <replaceable>host</> <re
       The client's host name will be available only if
       <xref linkend="guc-log-hostname"> is set or if the user's host name
       needed to be looked up during <filename>pg_hba.conf</filename>
-      processing.
+      processing. Only directly connected standbys are listed; no information
+      about downstream standby servers is recorded.
      </entry>
      </row>
 
