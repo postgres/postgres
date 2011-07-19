@@ -24,7 +24,7 @@ teardown
 }
 
 session "s1"
-setup		{ BEGIN; SET deadlock_timeout = '20ms'; }
+setup		{ BEGIN; SET deadlock_timeout = '100ms'; }
 step "s1u1"	{ UPDATE A SET Col1 = 1 WHERE AID = 1; }
 step "s1u2"	{ UPDATE B SET Col2 = 1 WHERE BID = 2; }
 step "s1c"	{ COMMIT; }
