@@ -54,10 +54,9 @@ ResetUnloggedRelations(int op)
 				oldctx;
 
 	/* Log it. */
-	ereport(DEBUG1,
-			(errmsg("resetting unlogged relations: cleanup %d init %d",
-					(op & UNLOGGED_RELATION_CLEANUP) != 0,
-					(op & UNLOGGED_RELATION_INIT) != 0)));
+	elog(DEBUG1, "resetting unlogged relations: cleanup %d init %d",
+		 (op & UNLOGGED_RELATION_CLEANUP) != 0,
+		 (op & UNLOGGED_RELATION_INIT) != 0);
 
 	/*
 	 * Just to be sure we don't leak any memory, let's create a temporary
