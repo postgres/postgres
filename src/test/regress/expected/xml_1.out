@@ -172,11 +172,59 @@ SELECT xmlparse(content '<abc>x</abc>');
 ERROR:  unsupported XML feature
 DETAIL:  This functionality requires the server to be built with libxml support.
 HINT:  You need to rebuild PostgreSQL using --with-libxml.
+SELECT xmlparse(content '<invalidentity>&</invalidentity>');
+ERROR:  unsupported XML feature
+DETAIL:  This functionality requires the server to be built with libxml support.
+HINT:  You need to rebuild PostgreSQL using --with-libxml.
+SELECT xmlparse(content '<undefinedentity>&idontexist;</undefinedentity>');
+ERROR:  unsupported XML feature
+DETAIL:  This functionality requires the server to be built with libxml support.
+HINT:  You need to rebuild PostgreSQL using --with-libxml.
+SELECT xmlparse(content '<invalidns xmlns=''&lt;''/>');
+ERROR:  unsupported XML feature
+DETAIL:  This functionality requires the server to be built with libxml support.
+HINT:  You need to rebuild PostgreSQL using --with-libxml.
+SELECT xmlparse(content '<relativens xmlns=''relative''/>');
+ERROR:  unsupported XML feature
+DETAIL:  This functionality requires the server to be built with libxml support.
+HINT:  You need to rebuild PostgreSQL using --with-libxml.
+SELECT xmlparse(content '<twoerrors>&idontexist;</unbalanced>');
+ERROR:  unsupported XML feature
+DETAIL:  This functionality requires the server to be built with libxml support.
+HINT:  You need to rebuild PostgreSQL using --with-libxml.
+SELECT xmlparse(content '<nosuchprefix:tag/>');
+ERROR:  unsupported XML feature
+DETAIL:  This functionality requires the server to be built with libxml support.
+HINT:  You need to rebuild PostgreSQL using --with-libxml.
 SELECT xmlparse(document 'abc');
 ERROR:  unsupported XML feature
 DETAIL:  This functionality requires the server to be built with libxml support.
 HINT:  You need to rebuild PostgreSQL using --with-libxml.
 SELECT xmlparse(document '<abc>x</abc>');
+ERROR:  unsupported XML feature
+DETAIL:  This functionality requires the server to be built with libxml support.
+HINT:  You need to rebuild PostgreSQL using --with-libxml.
+SELECT xmlparse(document '<invalidentity>&</abc>');
+ERROR:  unsupported XML feature
+DETAIL:  This functionality requires the server to be built with libxml support.
+HINT:  You need to rebuild PostgreSQL using --with-libxml.
+SELECT xmlparse(document '<undefinedentity>&idontexist;</abc>');
+ERROR:  unsupported XML feature
+DETAIL:  This functionality requires the server to be built with libxml support.
+HINT:  You need to rebuild PostgreSQL using --with-libxml.
+SELECT xmlparse(document '<invalidns xmlns=''&lt;''/>');
+ERROR:  unsupported XML feature
+DETAIL:  This functionality requires the server to be built with libxml support.
+HINT:  You need to rebuild PostgreSQL using --with-libxml.
+SELECT xmlparse(document '<relativens xmlns=''relative''/>');
+ERROR:  unsupported XML feature
+DETAIL:  This functionality requires the server to be built with libxml support.
+HINT:  You need to rebuild PostgreSQL using --with-libxml.
+SELECT xmlparse(document '<twoerrors>&idontexist;</unbalanced>');
+ERROR:  unsupported XML feature
+DETAIL:  This functionality requires the server to be built with libxml support.
+HINT:  You need to rebuild PostgreSQL using --with-libxml.
+SELECT xmlparse(document '<nosuchprefix:tag/>');
 ERROR:  unsupported XML feature
 DETAIL:  This functionality requires the server to be built with libxml support.
 HINT:  You need to rebuild PostgreSQL using --with-libxml.
@@ -627,8 +675,57 @@ SELECT xml_is_well_formed('<pg:foo xmlns:pg="http://postgresql.org/stuff">bar</p
 ERROR:  unsupported XML feature
 DETAIL:  This functionality requires the server to be built with libxml support.
 HINT:  You need to rebuild PostgreSQL using --with-libxml.
+SELECT xml_is_well_formed('<invalidentity>&</abc>');
+ERROR:  unsupported XML feature
+DETAIL:  This functionality requires the server to be built with libxml support.
+HINT:  You need to rebuild PostgreSQL using --with-libxml.
+SELECT xml_is_well_formed('<undefinedentity>&idontexist;</abc>');
+ERROR:  unsupported XML feature
+DETAIL:  This functionality requires the server to be built with libxml support.
+HINT:  You need to rebuild PostgreSQL using --with-libxml.
+SELECT xml_is_well_formed('<invalidns xmlns=''&lt;''/>');
+ERROR:  unsupported XML feature
+DETAIL:  This functionality requires the server to be built with libxml support.
+HINT:  You need to rebuild PostgreSQL using --with-libxml.
+SELECT xml_is_well_formed('<relativens xmlns=''relative''/>');
+ERROR:  unsupported XML feature
+DETAIL:  This functionality requires the server to be built with libxml support.
+HINT:  You need to rebuild PostgreSQL using --with-libxml.
+SELECT xml_is_well_formed('<twoerrors>&idontexist;</unbalanced>');
+ERROR:  unsupported XML feature
+DETAIL:  This functionality requires the server to be built with libxml support.
+HINT:  You need to rebuild PostgreSQL using --with-libxml.
 SET xmloption TO CONTENT;
 SELECT xml_is_well_formed('abc');
 ERROR:  unsupported XML feature
+DETAIL:  This functionality requires the server to be built with libxml support.
+HINT:  You need to rebuild PostgreSQL using --with-libxml.
+-- Since xpath() deals with namespaces, it's a bit stricter about
+-- what's well-formed and what's not. If we don't obey these rules
+-- (i.e. ignore namespace-related errors from libxml), xpath()
+-- fails in subtle ways. The following would for example produce
+-- the xml value
+--   <invalidns xmlns='<'/>
+-- which is invalid because '<' may not appear un-escaped in
+-- attribute values.
+-- Since different libxml versions emit slightly different
+-- error messages, we suppress the DETAIL in this test.
+\set VERBOSITY terse
+SELECT xpath('/*', '<invalidns xmlns=''&lt;''/>');
+ERROR:  unsupported XML feature at character 20
+\set VERBOSITY default
+-- Again, the XML isn't well-formed for namespace purposes
+SELECT xpath('/*', '<nosuchprefix:tag/>');
+ERROR:  unsupported XML feature
+LINE 1: SELECT xpath('/*', '<nosuchprefix:tag/>');
+                           ^
+DETAIL:  This functionality requires the server to be built with libxml support.
+HINT:  You need to rebuild PostgreSQL using --with-libxml.
+-- XPath deprecates relative namespaces, but they're not supposed to
+-- throw an error, only a warning.
+SELECT xpath('/*', '<relativens xmlns=''relative''/>');
+ERROR:  unsupported XML feature
+LINE 1: SELECT xpath('/*', '<relativens xmlns=''relative''/>');
+                           ^
 DETAIL:  This functionality requires the server to be built with libxml support.
 HINT:  You need to rebuild PostgreSQL using --with-libxml.

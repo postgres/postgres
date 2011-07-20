@@ -1519,6 +1519,23 @@ AC_SUBST(LDAP_LIBS_FE)
 AC_SUBST(LDAP_LIBS_BE)
 
 
+# Older versions of libxml2 lack the xmlStructuredErrorContext variable
+# (which could be a macro referring to a function, if threading is enabled)
+if test "$with_libxml" = yes ; then
+  AC_CACHE_CHECK([for xmlStructuredErrorContext], pgac_cv_libxml_structerrctx,
+  [AC_TRY_LINK([#include <libxml/globals.h>
+                void *globptr;],
+               [globptr = xmlStructuredErrorContext],
+               [pgac_cv_libxml_structerrctx=yes],
+               [pgac_cv_libxml_structerrctx=no])])
+  if test x"$pgac_cv_libxml_structerrctx" = x"yes"; then
+    AC_DEFINE(HAVE_XMLSTRUCTUREDERRORCONTEXT,
+             1,
+             [Define to 1 if your libxml has xmlStructuredErrorContext.])
+  fi
+fi
+
+
 # This test makes sure that run tests work at all.  Sometimes a shared
 # library is found by the linker, but the runtime linker can't find it.
 # This check should come after all modifications of compiler or linker

@@ -62,9 +62,21 @@ SELECT xmlelement(name foo, xmlattributes('<>&"''' as funny, xml 'b<a/>r' as fun
 
 SELECT xmlparse(content 'abc');
 SELECT xmlparse(content '<abc>x</abc>');
+SELECT xmlparse(content '<invalidentity>&</invalidentity>');
+SELECT xmlparse(content '<undefinedentity>&idontexist;</undefinedentity>');
+SELECT xmlparse(content '<invalidns xmlns=''&lt;''/>');
+SELECT xmlparse(content '<relativens xmlns=''relative''/>');
+SELECT xmlparse(content '<twoerrors>&idontexist;</unbalanced>');
+SELECT xmlparse(content '<nosuchprefix:tag/>');
 
 SELECT xmlparse(document 'abc');
 SELECT xmlparse(document '<abc>x</abc>');
+SELECT xmlparse(document '<invalidentity>&</abc>');
+SELECT xmlparse(document '<undefinedentity>&idontexist;</abc>');
+SELECT xmlparse(document '<invalidns xmlns=''&lt;''/>');
+SELECT xmlparse(document '<relativens xmlns=''relative''/>');
+SELECT xmlparse(document '<twoerrors>&idontexist;</unbalanced>');
+SELECT xmlparse(document '<nosuchprefix:tag/>');
 
 
 SELECT xmlpi(name foo);
@@ -208,6 +220,32 @@ SELECT xml_is_well_formed('<foo><bar>baz</foo>');
 SELECT xml_is_well_formed('<local:data xmlns:local="http://127.0.0.1"><local:piece id="1">number one</local:piece><local:piece id="2" /></local:data>');
 SELECT xml_is_well_formed('<pg:foo xmlns:pg="http://postgresql.org/stuff">bar</my:foo>');
 SELECT xml_is_well_formed('<pg:foo xmlns:pg="http://postgresql.org/stuff">bar</pg:foo>');
+SELECT xml_is_well_formed('<invalidentity>&</abc>');
+SELECT xml_is_well_formed('<undefinedentity>&idontexist;</abc>');
+SELECT xml_is_well_formed('<invalidns xmlns=''&lt;''/>');
+SELECT xml_is_well_formed('<relativens xmlns=''relative''/>');
+SELECT xml_is_well_formed('<twoerrors>&idontexist;</unbalanced>');
 
 SET xmloption TO CONTENT;
 SELECT xml_is_well_formed('abc');
+
+-- Since xpath() deals with namespaces, it's a bit stricter about
+-- what's well-formed and what's not. If we don't obey these rules
+-- (i.e. ignore namespace-related errors from libxml), xpath()
+-- fails in subtle ways. The following would for example produce
+-- the xml value
+--   <invalidns xmlns='<'/>
+-- which is invalid because '<' may not appear un-escaped in
+-- attribute values.
+-- Since different libxml versions emit slightly different
+-- error messages, we suppress the DETAIL in this test.
+\set VERBOSITY terse
+SELECT xpath('/*', '<invalidns xmlns=''&lt;''/>');
+\set VERBOSITY default
+
+-- Again, the XML isn't well-formed for namespace purposes
+SELECT xpath('/*', '<nosuchprefix:tag/>');
+
+-- XPath deprecates relative namespaces, but they're not supposed to
+-- throw an error, only a warning.
+SELECT xpath('/*', '<relativens xmlns=''relative''/>');

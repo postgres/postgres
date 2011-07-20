@@ -38,7 +38,7 @@ Datum		xslt_process(PG_FUNCTION_ARGS);
 #ifdef USE_LIBXSLT
 
 /* declarations to come from xpath.c */
-extern void pgxml_parser_init(void);
+extern PgXmlErrorContext *pgxml_parser_init(PgXmlStrictness strictness);
 
 /* local defs */
 static const char **parse_params(text *paramstr);
@@ -56,13 +56,14 @@ xslt_process(PG_FUNCTION_ARGS)
 	text	   *ssheet = PG_GETARG_TEXT_P(1);
 	text	   *paramstr;
 	const char **params;
-	xsltStylesheetPtr stylesheet = NULL;
-	xmlDocPtr	doctree;
-	xmlDocPtr	restree;
-	xmlDocPtr	ssdoc = NULL;
-	xmlChar    *resstr;
-	int			resstat;
-	int			reslen;
+	PgXmlErrorContext *xmlerrcxt;
+	volatile xsltStylesheetPtr stylesheet = NULL;
+	volatile xmlDocPtr doctree = NULL;
+	volatile xmlDocPtr restree = NULL;
+	volatile xmlDocPtr ssdoc = NULL;
+	volatile int resstat = -1;
+	xmlChar    *resstr = NULL;
+	int			reslen = 0;
 
 	if (fcinfo->nargs == 3)
 	{
@@ -77,9 +78,11 @@ xslt_process(PG_FUNCTION_ARGS)
 	}
 
 	/* Setup parser */
-	pgxml_parser_init();
+	xmlerrcxt = pgxml_parser_init(PG_XML_STRICTNESS_LEGACY);
 
-	/* Check to see if document is a file or a literal */
+	PG_TRY();
+	{
+		/* Check to see if document is a file or a literal */
 
 	if (VARDATA(doct)[0] == '<')
 		doctree = xmlParseMemory((char *) VARDATA(doct), VARSIZE(doct) - VARHDRSZ);
@@ -87,7 +90,7 @@ xslt_process(PG_FUNCTION_ARGS)
 		doctree = xmlParseFile(text_to_cstring(doct));
 
 	if (doctree == NULL)
-		xml_ereport(ERROR, ERRCODE_EXTERNAL_ROUTINE_EXCEPTION,
+		xml_ereport(xmlerrcxt, ERROR, ERRCODE_EXTERNAL_ROUTINE_EXCEPTION,
 					"error parsing XML document");
 
 	/* Same for stylesheet */
@@ -96,34 +99,43 @@ xslt_process(PG_FUNCTION_ARGS)
 		ssdoc = xmlParseMemory((char *) VARDATA(ssheet),
 							   VARSIZE(ssheet) - VARHDRSZ);
 		if (ssdoc == NULL)
-		{
-			xmlFreeDoc(doctree);
-			xml_ereport(ERROR, ERRCODE_EXTERNAL_ROUTINE_EXCEPTION,
+			xml_ereport(xmlerrcxt, ERROR, ERRCODE_EXTERNAL_ROUTINE_EXCEPTION,
 						"error parsing stylesheet as XML document");
-		}
 
 		stylesheet = xsltParseStylesheetDoc(ssdoc);
 	}
 	else
 		stylesheet = xsltParseStylesheetFile((xmlChar *) text_to_cstring(ssheet));
 
-
 	if (stylesheet == NULL)
-	{
-		xmlFreeDoc(doctree);
-		xsltCleanupGlobals();
-		xml_ereport(ERROR, ERRCODE_EXTERNAL_ROUTINE_EXCEPTION,
+		xml_ereport(xmlerrcxt, ERROR, ERRCODE_EXTERNAL_ROUTINE_EXCEPTION,
 					"failed to parse stylesheet");
-	}
 
 	restree = xsltApplyStylesheet(stylesheet, doctree, params);
 	resstat = xsltSaveResultToString(&resstr, &reslen, restree, stylesheet);
+	}
+	PG_CATCH();
+	{
+		if (stylesheet != NULL)
+			xsltFreeStylesheet(stylesheet);
+		if (restree != NULL)
+			xmlFreeDoc(restree);
+		if (doctree != NULL)
+			xmlFreeDoc(doctree);
+		xsltCleanupGlobals();
+
+		pg_xml_done(xmlerrcxt, true);
+
+		PG_RE_THROW();
+	}
+	PG_END_TRY();
 
 	xsltFreeStylesheet(stylesheet);
 	xmlFreeDoc(restree);
 	xmlFreeDoc(doctree);
-
 	xsltCleanupGlobals();
+
+	pg_xml_done(xmlerrcxt, false);
 
 	if (resstat < 0)
 		PG_RETURN_NULL();

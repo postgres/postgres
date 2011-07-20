@@ -85,11 +85,27 @@ int			xmloption;
 
 #ifdef USE_LIBXML
 
-static StringInfo xml_err_buf = NULL;
+/* random number to identify PgXmlErrorContext */
+#define ERRCXT_MAGIC	68275028
 
-static void xml_errorHandler(void *ctxt, const char *msg,...);
+struct PgXmlErrorContext
+{
+	int			magic;
+	/* strictness argument passed to pg_xml_init */
+	PgXmlStrictness strictness;
+	/* current error status and accumulated message, if any */
+	bool		err_occurred;
+	StringInfoData err_buf;
+	/* previous libxml error handling state (saved by pg_xml_init) */
+	xmlStructuredErrorFunc saved_errfunc;
+	void	   *saved_errcxt;
+};
+
+static void xml_errorHandler(void *data, xmlErrorPtr error);
 static void xml_ereport_by_code(int level, int sqlcode,
 					const char *msg, int errcode);
+static void chopStringInfoNewlines(StringInfo str);
+static void appendStringInfoLineSeparator(StringInfo str);
 
 #ifdef USE_LIBXMLCONTEXT
 
@@ -552,8 +568,9 @@ xmlelement(XmlExprState *xmlExpr, ExprContext *econtext)
 	int			i;
 	ListCell   *arg;
 	ListCell   *narg;
-	xmlBufferPtr buf = NULL;
-	xmlTextWriterPtr writer = NULL;
+	PgXmlErrorContext *xmlerrcxt;
+	volatile xmlBufferPtr buf = NULL;
+	volatile xmlTextWriterPtr writer = NULL;
 
 	/*
 	 * We first evaluate all the arguments, then start up libxml and create
@@ -598,17 +615,17 @@ xmlelement(XmlExprState *xmlExpr, ExprContext *econtext)
 	}
 
 	/* now safe to run libxml */
-	pg_xml_init();
+	xmlerrcxt = pg_xml_init(PG_XML_STRICTNESS_ALL);
 
 	PG_TRY();
 	{
 		buf = xmlBufferCreate();
-		if (!buf)
-			xml_ereport(ERROR, ERRCODE_OUT_OF_MEMORY,
+		if (buf == NULL || xmlerrcxt->err_occurred)
+			xml_ereport(xmlerrcxt, ERROR, ERRCODE_OUT_OF_MEMORY,
 						"could not allocate xmlBuffer");
 		writer = xmlNewTextWriterMemory(buf, 0);
-		if (!writer)
-			xml_ereport(ERROR, ERRCODE_OUT_OF_MEMORY,
+		if (writer == NULL || xmlerrcxt->err_occurred)
+			xml_ereport(xmlerrcxt, ERROR, ERRCODE_OUT_OF_MEMORY,
 						"could not allocate xmlTextWriter");
 
 		xmlTextWriterStartElement(writer, (xmlChar *) xexpr->name);
@@ -645,11 +662,16 @@ xmlelement(XmlExprState *xmlExpr, ExprContext *econtext)
 			xmlFreeTextWriter(writer);
 		if (buf)
 			xmlBufferFree(buf);
+
+		pg_xml_done(xmlerrcxt, true);
+
 		PG_RE_THROW();
 	}
 	PG_END_TRY();
 
 	xmlBufferFree(buf);
+
+	pg_xml_done(xmlerrcxt, false);
 
 	return result;
 #else
@@ -800,7 +822,7 @@ xml_is_document(xmltype *arg)
 {
 #ifdef USE_LIBXML
 	bool		result;
-	xmlDocPtr	doc = NULL;
+	volatile xmlDocPtr doc = NULL;
 	MemoryContext ccxt = CurrentMemoryContext;
 
 	/* We want to catch ereport(INVALID_XML_DOCUMENT) and return false */
@@ -844,30 +866,24 @@ xml_is_document(xmltype *arg)
 #ifdef USE_LIBXML
 
 /*
- * pg_xml_init --- set up for use of libxml
+ * pg_xml_init_library --- set up for use of libxml
  *
  * This should be called by each function that is about to use libxml
- * facilities.	It has two responsibilities: verify compatibility with the
- * loaded libxml version (done on first call in a session) and establish
- * or re-establish our libxml error handler.  The latter needs to be done
- * anytime we might have passed control to add-on modules (eg libperl) which
- * might have set their own error handler for libxml.
- *
- * This is exported for use by contrib/xml2, as well as other code that might
- * wish to share use of this module's libxml error handler.
+ * facilities but doesn't require error handling.  It initializes libxml
+ * and verifies compatibility with the loaded libxml version.  These are
+ * once-per-session activities.
  *
  * TODO: xmlChar is utf8-char, make proper tuning (initdb with enc!=utf8 and
  * check)
  */
 void
-pg_xml_init(void)
+pg_xml_init_library(void)
 {
 	static bool first_time = true;
 
 	if (first_time)
 	{
 		/* Stuff we need do only once per session */
-		MemoryContext oldcontext;
 
 		/*
 		 * Currently, we have no pure UTF-8 support for internals -- check if
@@ -879,16 +895,8 @@ pg_xml_init(void)
 					 errdetail("libxml2 has incompatible char type: sizeof(char)=%u, sizeof(xmlChar)=%u.",
 							   (int) sizeof(char), (int) sizeof(xmlChar))));
 
-		/* create error buffer in permanent context */
-		oldcontext = MemoryContextSwitchTo(TopMemoryContext);
-		xml_err_buf = makeStringInfo();
-		MemoryContextSwitchTo(oldcontext);
-
-		/* Now that xml_err_buf exists, safe to call xml_errorHandler */
-		xmlSetGenericErrorFunc(NULL, xml_errorHandler);
-
 #ifdef USE_LIBXMLCONTEXT
-		/* Set up memory allocation our way, too */
+		/* Set up libxml's memory allocation our way */
 		xml_memory_init();
 #endif
 
@@ -897,21 +905,119 @@ pg_xml_init(void)
 
 		first_time = false;
 	}
-	else
-	{
-		/* Reset pre-existing buffer to empty */
-		Assert(xml_err_buf != NULL);
-		resetStringInfo(xml_err_buf);
+}
 
-		/*
-		 * We re-establish the error callback function every time.	This makes
-		 * it safe for other subsystems (PL/Perl, say) to also use libxml with
-		 * their own callbacks ... so long as they likewise set up the
-		 * callbacks on every use. It's cheap enough to not be worth worrying
-		 * about, anyway.
-		 */
-		xmlSetGenericErrorFunc(NULL, xml_errorHandler);
-	}
+/*
+ * pg_xml_init --- set up for use of libxml and register an error handler
+ *
+ * This should be called by each function that is about to use libxml
+ * facilities and requires error handling.  It initializes libxml with
+ * pg_xml_init_library() and establishes our libxml error handler.
+ *
+ * strictness determines which errors are reported and which are ignored.
+ *
+ * Calls to this function MUST be followed by a PG_TRY block that guarantees
+ * that pg_xml_done() is called during either normal or error exit.
+ *
+ * This is exported for use by contrib/xml2, as well as other code that might
+ * wish to share use of this module's libxml error handler.
+ */
+PgXmlErrorContext *
+pg_xml_init(PgXmlStrictness strictness)
+{
+	PgXmlErrorContext *errcxt;
+
+	/* Do one-time setup if needed */
+	pg_xml_init_library();
+
+	/* Create error handling context structure */
+	errcxt = (PgXmlErrorContext *) palloc(sizeof(PgXmlErrorContext));
+	errcxt->magic = ERRCXT_MAGIC;
+	errcxt->strictness = strictness;
+	errcxt->err_occurred = false;
+	initStringInfo(&errcxt->err_buf);
+
+	/*
+	 * Save original error handler and install ours. libxml originally didn't
+	 * distinguish between the contexts for generic and for structured error
+	 * handlers.  If we're using an old libxml version, we must thus save
+	 * the generic error context, even though we're using a structured
+	 * error handler.
+	 */
+	errcxt->saved_errfunc = xmlStructuredError;
+
+#ifdef HAVE_XMLSTRUCTUREDERRORCONTEXT
+	errcxt->saved_errcxt = xmlStructuredErrorContext;
+#else
+	errcxt->saved_errcxt = xmlGenericErrorContext;
+#endif
+
+	xmlSetStructuredErrorFunc((void *) errcxt, xml_errorHandler);
+
+	return errcxt;
+}
+
+
+/*
+ * pg_xml_done --- restore previous libxml error handling
+ *
+ * Resets libxml's global error-handling state to what it was before
+ * pg_xml_init() was called.
+ *
+ * This routine verifies that all pending errors have been dealt with
+ * (in assert-enabled builds, anyway).
+ */
+void
+pg_xml_done(PgXmlErrorContext *errcxt, bool isError)
+{
+	void	   *cur_errcxt;
+
+	/* An assert seems like enough protection here */
+	Assert(errcxt->magic == ERRCXT_MAGIC);
+
+	/*
+	 * In a normal exit, there should be no un-handled libxml errors.  But we
+	 * shouldn't try to enforce this during error recovery, since the longjmp
+	 * could have been thrown before xml_ereport had a chance to run.
+	 */
+	Assert(!errcxt->err_occurred || isError);
+
+	/*
+	 * Check that libxml's global state is correct, warn if not.  This is
+	 * a real test and not an Assert because it has a higher probability
+	 * of happening.
+	 */
+#ifdef HAVE_XMLSTRUCTUREDERRORCONTEXT
+	cur_errcxt = xmlStructuredErrorContext;
+#else
+	cur_errcxt = xmlGenericErrorContext;
+#endif
+
+	if (cur_errcxt != (void *) errcxt)
+		elog(WARNING, "libxml error handling state is out of sync with xml.c");
+
+	/* Restore the saved handler */
+	xmlSetStructuredErrorFunc(errcxt->saved_errcxt, errcxt->saved_errfunc);
+
+	/*
+	 * Mark the struct as invalid, just in case somebody somehow manages to
+	 * call xml_errorHandler or xml_ereport with it.
+	 */
+	errcxt->magic = 0;
+
+	/* Release memory */
+	pfree(errcxt->err_buf.data);
+	pfree(errcxt);
+}
+
+
+/*
+ * pg_xml_error_occurred() --- test the error flag
+ */
+bool
+pg_xml_error_occurred(PgXmlErrorContext *errcxt)
+{
+	return errcxt->err_occurred;
 }
 
 
@@ -970,7 +1076,13 @@ parse_xml_decl(const xmlChar *str, size_t *lenp,
 	int			utf8char;
 	int			utf8len;
 
-	pg_xml_init();
+	/*
+	 * Only initialize libxml.  We don't need error handling here, but we do
+	 * need to make sure libxml is initialized before calling any of its
+	 * functions.  Note that this is safe (and a no-op) if caller has already
+	 * done pg_xml_init().
+	 */
+	pg_xml_init_library();
 
 	/* Initialize output arguments to "not present" */
 	if (version)
@@ -1124,8 +1236,6 @@ static bool
 print_xml_decl(StringInfo buf, const xmlChar *version,
 			   pg_enc encoding, int standalone)
 {
-	pg_xml_init();				/* why is this here? */
-
 	if ((version && strcmp((char *) version, PG_XML_DEFAULT_VERSION) != 0)
 		|| (encoding && encoding != PG_UTF8)
 		|| standalone != -1)
@@ -1176,8 +1286,9 @@ xml_parse(text *data, XmlOptionType xmloption_arg, bool preserve_whitespace,
 	int32		len;
 	xmlChar    *string;
 	xmlChar    *utf8string;
-	xmlParserCtxtPtr ctxt;
-	xmlDocPtr	doc;
+	PgXmlErrorContext *xmlerrcxt;
+	volatile xmlParserCtxtPtr ctxt = NULL;
+	volatile xmlDocPtr doc = NULL;
 
 	len = VARSIZE(data) - VARHDRSZ;		/* will be useful later */
 	string = xml_text2xmlChar(data);
@@ -1187,18 +1298,19 @@ xml_parse(text *data, XmlOptionType xmloption_arg, bool preserve_whitespace,
 										   encoding,
 										   PG_UTF8);
 
-	/* Start up libxml and its parser (no-ops if already done) */
-	pg_xml_init();
-	xmlInitParser();
+	/* Start up libxml and its parser */
+	xmlerrcxt = pg_xml_init(PG_XML_STRICTNESS_WELLFORMED);
 
-	ctxt = xmlNewParserCtxt();
-	if (ctxt == NULL)
-		xml_ereport(ERROR, ERRCODE_OUT_OF_MEMORY,
-					"could not allocate parser context");
-
-	/* Use a TRY block to ensure the ctxt is released */
+	/* Use a TRY block to ensure we clean up correctly */
 	PG_TRY();
 	{
+		xmlInitParser();
+
+		ctxt = xmlNewParserCtxt();
+		if (ctxt == NULL || xmlerrcxt->err_occurred)
+			xml_ereport(xmlerrcxt, ERROR, ERRCODE_OUT_OF_MEMORY,
+						"could not allocate parser context");
+
 		if (xmloption_arg == XMLOPTION_DOCUMENT)
 		{
 			/*
@@ -1213,8 +1325,8 @@ xml_parse(text *data, XmlOptionType xmloption_arg, bool preserve_whitespace,
 								 "UTF-8",
 								 XML_PARSE_NOENT | XML_PARSE_DTDATTR
 						   | (preserve_whitespace ? 0 : XML_PARSE_NOBLANKS));
-			if (doc == NULL)
-				xml_ereport(ERROR, ERRCODE_INVALID_XML_DOCUMENT,
+			if (doc == NULL || xmlerrcxt->err_occurred)
+				xml_ereport(xmlerrcxt, ERROR, ERRCODE_INVALID_XML_DOCUMENT,
 							"invalid XML document");
 		}
 		else
@@ -1238,22 +1350,27 @@ xml_parse(text *data, XmlOptionType xmloption_arg, bool preserve_whitespace,
 
 			res_code = xmlParseBalancedChunkMemory(doc, NULL, NULL, 0,
 												   utf8string + count, NULL);
-			if (res_code != 0)
-			{
-				xmlFreeDoc(doc);
-				xml_ereport(ERROR, ERRCODE_INVALID_XML_CONTENT,
+			if (res_code != 0 || xmlerrcxt->err_occurred)
+				xml_ereport(xmlerrcxt, ERROR, ERRCODE_INVALID_XML_CONTENT,
 							"invalid XML content");
-			}
 		}
 	}
 	PG_CATCH();
 	{
-		xmlFreeParserCtxt(ctxt);
+		if (doc != NULL)
+			xmlFreeDoc(doc);
+		if (ctxt != NULL)
+			xmlFreeParserCtxt(ctxt);
+
+		pg_xml_done(xmlerrcxt, true);
+
 		PG_RE_THROW();
 	}
 	PG_END_TRY();
 
 	xmlFreeParserCtxt(ctxt);
+
+	pg_xml_done(xmlerrcxt, false);
 
 	return doc;
 }
@@ -1335,70 +1452,180 @@ xml_pstrdup(const char *string)
  * handler.  Note that pg_xml_init() *must* have been called previously.
  */
 void
-xml_ereport(int level, int sqlcode, const char *msg)
+xml_ereport(PgXmlErrorContext *errcxt, int level, int sqlcode, const char *msg)
 {
 	char	   *detail;
 
-	/*
-	 * It might seem that we should just pass xml_err_buf->data directly to
-	 * errdetail.  However, we want to clean out xml_err_buf before throwing
-	 * error, in case there is another function using libxml further down the
-	 * call stack.
-	 */
-	if (xml_err_buf->len > 0)
-	{
-		detail = pstrdup(xml_err_buf->data);
-		resetStringInfo(xml_err_buf);
-	}
+	/* Defend against someone passing us a bogus context struct */
+	if (errcxt->magic != ERRCXT_MAGIC)
+		elog(ERROR, "xml_ereport called with invalid PgXmlErrorContext");
+
+	/* Flag that the current libxml error has been reported */
+	errcxt->err_occurred = false;
+
+	/* Include detail only if we have some text from libxml */
+	if (errcxt->err_buf.len > 0)
+		detail = errcxt->err_buf.data;
 	else
 		detail = NULL;
 
-	if (detail)
-	{
-		size_t		len;
-
-		/* libxml error messages end in '\n'; get rid of it */
-		len = strlen(detail);
-		if (len > 0 && detail[len - 1] == '\n')
-			detail[len - 1] = '\0';
-
-		ereport(level,
-				(errcode(sqlcode),
-				 errmsg_internal("%s", msg),
-				 errdetail_internal("%s", detail)));
-	}
-	else
-	{
-		ereport(level,
-				(errcode(sqlcode),
-				 errmsg_internal("%s", msg)));
-	}
+	ereport(level,
+			(errcode(sqlcode),
+			 errmsg_internal("%s", msg),
+			 detail ? errdetail_internal("%s", detail) : 0));
 }
 
 
 /*
- * Error handler for libxml error messages
+ * Error handler for libxml errors and warnings
  */
 static void
-xml_errorHandler(void *ctxt, const char *msg,...)
+xml_errorHandler(void *data, xmlErrorPtr error)
 {
-	/* Append the formatted text to xml_err_buf */
-	for (;;)
+	PgXmlErrorContext *xmlerrcxt = (PgXmlErrorContext *) data;
+	xmlParserCtxtPtr ctxt = (xmlParserCtxtPtr) error->ctxt;
+	xmlParserInputPtr input = (ctxt != NULL) ? ctxt->input : NULL;
+	xmlNodePtr node = error->node;
+	const xmlChar *name = (node != NULL &&
+						   node->type == XML_ELEMENT_NODE) ? node->name : NULL;
+	int			domain = error->domain;
+	int			level = error->level;
+	StringInfo	errorBuf;
+
+	/* Defend against someone passing us a bogus context struct */
+	if (xmlerrcxt->magic != ERRCXT_MAGIC)
+		elog(ERROR, "xml_errorHandler called with invalid PgXmlErrorContext");
+
+	/*----------
+	 * Older libxml versions report some errors differently.
+	 * First, some errors were previously reported as coming from the parser
+	 * domain but are now reported as coming from the namespace domain.
+	 * Second, some warnings were upgraded to errors.
+	 * We attempt to compensate for that here.
+	 *----------
+	 */
+	switch (error->code)
 	{
-		va_list		args;
-		bool		success;
-
-		/* Try to format the data. */
-		va_start(args, msg);
-		success = appendStringInfoVA(xml_err_buf, msg, args);
-		va_end(args);
-
-		if (success)
+		case XML_WAR_NS_URI:
+			level = XML_ERR_ERROR;
+			domain = XML_FROM_NAMESPACE;
 			break;
 
-		/* Double the buffer size and try again. */
-		enlargeStringInfo(xml_err_buf, xml_err_buf->maxlen);
+		case XML_ERR_NS_DECL_ERROR:
+		case XML_WAR_NS_URI_RELATIVE:
+		case XML_WAR_NS_COLUMN:
+		case XML_NS_ERR_XML_NAMESPACE:
+		case XML_NS_ERR_UNDEFINED_NAMESPACE:
+		case XML_NS_ERR_QNAME:
+		case XML_NS_ERR_ATTRIBUTE_REDEFINED:
+		case XML_NS_ERR_EMPTY:
+			domain = XML_FROM_NAMESPACE;
+			break;
 	}
+
+	/* Decide whether to act on the error or not */
+	switch (domain)
+	{
+		case XML_FROM_PARSER:
+		case XML_FROM_NONE:
+		case XML_FROM_MEMORY:
+		case XML_FROM_IO:
+			/* Accept error regardless of the parsing purpose */
+			break;
+
+		default:
+			/* Ignore error if only doing well-formedness check */
+			if (xmlerrcxt->strictness == PG_XML_STRICTNESS_WELLFORMED)
+				return;
+			break;
+	}
+
+	/* Prepare error message in errorBuf */
+	errorBuf = makeStringInfo();
+
+	if (error->line > 0)
+		appendStringInfo(errorBuf, "line %d: ", error->line);
+	if (name != NULL)
+		appendStringInfo(errorBuf, "element %s: ", name);
+	appendStringInfoString(errorBuf, error->message);
+
+	/*
+	 * Append context information to errorBuf.
+	 *
+	 * xmlParserPrintFileContext() uses libxml's "generic" error handler to
+	 * write the context.  Since we don't want to duplicate libxml
+	 * functionality here, we set up a generic error handler temporarily.
+	 *
+	 * We use appendStringInfo() directly as libxml's generic error handler.
+	 * This should work because it has essentially the same signature as
+	 * libxml expects, namely (void *ptr, const char *msg, ...).
+	 */
+	if (input != NULL)
+	{
+		xmlGenericErrorFunc errFuncSaved = xmlGenericError;
+		void   *errCtxSaved = xmlGenericErrorContext;
+
+		xmlSetGenericErrorFunc((void *) errorBuf,
+							   (xmlGenericErrorFunc) appendStringInfo);
+
+		/* Add context information to errorBuf */
+		appendStringInfoLineSeparator(errorBuf);
+
+		xmlParserPrintFileContext(input);
+
+		/* Restore generic error func */
+		xmlSetGenericErrorFunc(errCtxSaved, errFuncSaved);
+	}
+
+	/* Get rid of any trailing newlines in errorBuf */
+	chopStringInfoNewlines(errorBuf);
+
+	/*
+	 * Legacy error handling mode.  err_occurred is never set, we just add the
+	 * message to err_buf.  This mode exists because the xml2 contrib module
+	 * uses our error-handling infrastructure, but we don't want to change its
+	 * behaviour since it's deprecated anyway.  This is also why we don't
+	 * distinguish between notices, warnings and errors here --- the old-style
+	 * generic error handler wouldn't have done that either.
+	 */
+	if (xmlerrcxt->strictness == PG_XML_STRICTNESS_LEGACY)
+	{
+		appendStringInfoLineSeparator(&xmlerrcxt->err_buf);
+		appendStringInfoString(&xmlerrcxt->err_buf, errorBuf->data);
+
+		pfree(errorBuf->data);
+		pfree(errorBuf);
+		return;
+	}
+
+	/*
+	 * We don't want to ereport() here because that'd probably leave libxml in
+	 * an inconsistent state.  Instead, we remember the error and ereport()
+	 * from xml_ereport().
+	 *
+	 * Warnings and notices can be reported immediately since they won't cause
+	 * a longjmp() out of libxml.
+	 */
+	if (level >= XML_ERR_ERROR)
+	{
+		appendStringInfoLineSeparator(&xmlerrcxt->err_buf);
+		appendStringInfoString(&xmlerrcxt->err_buf, errorBuf->data);
+
+		xmlerrcxt->err_occurred = true;
+	}
+	else if (level >= XML_ERR_WARNING)
+	{
+		ereport(WARNING,
+				(errmsg_internal("%s", errorBuf->data)));
+	}
+	else
+	{
+		ereport(NOTICE,
+				(errmsg_internal("%s", errorBuf->data)));
+	}
+
+	pfree(errorBuf->data);
+	pfree(errorBuf);
 }
 
 
@@ -1444,6 +1671,29 @@ xml_ereport_by_code(int level, int sqlcode,
 			(errcode(sqlcode),
 			 errmsg_internal("%s", msg),
 			 errdetail(det, code)));
+}
+
+
+/*
+ * Remove all trailing newlines from a StringInfo string
+ */
+static void
+chopStringInfoNewlines(StringInfo str)
+{
+	while (str->len > 0 && str->data[str->len - 1] == '\n')
+		str->data[--str->len] = '\0';
+}
+
+
+/*
+ * Append a newline after removing any existing trailing newlines
+ */
+static void
+appendStringInfoLineSeparator(StringInfo str)
+{
+	chopStringInfoNewlines(str);
+	if (str->len > 0)
+		appendStringInfoChar(str, '\n');
 }
 
 
@@ -1753,21 +2003,22 @@ map_sql_value_to_xml_value(Datum value, Oid type, bool xml_escape_strings)
 			case BYTEAOID:
 				{
 					bytea	   *bstr = DatumGetByteaPP(value);
-					xmlBufferPtr buf = NULL;
-					xmlTextWriterPtr writer = NULL;
+					PgXmlErrorContext *xmlerrcxt;
+					volatile xmlBufferPtr buf = NULL;
+					volatile xmlTextWriterPtr writer = NULL;
 					char	   *result;
 
-					pg_xml_init();
+					xmlerrcxt = pg_xml_init(PG_XML_STRICTNESS_ALL);
 
 					PG_TRY();
 					{
 						buf = xmlBufferCreate();
-						if (!buf)
-							xml_ereport(ERROR, ERRCODE_OUT_OF_MEMORY,
+						if (buf == NULL || xmlerrcxt->err_occurred)
+							xml_ereport(xmlerrcxt, ERROR, ERRCODE_OUT_OF_MEMORY,
 										"could not allocate xmlBuffer");
 						writer = xmlNewTextWriterMemory(buf, 0);
-						if (!writer)
-							xml_ereport(ERROR, ERRCODE_OUT_OF_MEMORY,
+						if (writer == NULL || xmlerrcxt->err_occurred)
+							xml_ereport(xmlerrcxt, ERROR, ERRCODE_OUT_OF_MEMORY,
 										"could not allocate xmlTextWriter");
 
 						if (xmlbinary == XMLBINARY_BASE64)
@@ -1789,11 +2040,16 @@ map_sql_value_to_xml_value(Datum value, Oid type, bool xml_escape_strings)
 							xmlFreeTextWriter(writer);
 						if (buf)
 							xmlBufferFree(buf);
+
+						pg_xml_done(xmlerrcxt, true);
+
 						PG_RE_THROW();
 					}
 					PG_END_TRY();
 
 					xmlBufferFree(buf);
+
+					pg_xml_done(xmlerrcxt, false);
 
 					return result;
 				}
@@ -3312,11 +3568,12 @@ static void
 xpath_internal(text *xpath_expr_text, xmltype *data, ArrayType *namespaces,
 			   int *res_nitems, ArrayBuildState **astate)
 {
-	xmlParserCtxtPtr ctxt = NULL;
-	xmlDocPtr	doc = NULL;
-	xmlXPathContextPtr xpathctx = NULL;
-	xmlXPathCompExprPtr xpathcomp = NULL;
-	xmlXPathObjectPtr xpathobj = NULL;
+	PgXmlErrorContext *xmlerrcxt;
+	volatile xmlParserCtxtPtr ctxt = NULL;
+	volatile xmlDocPtr doc = NULL;
+	volatile xmlXPathContextPtr xpathctx = NULL;
+	volatile xmlXPathCompExprPtr xpathcomp = NULL;
+	volatile xmlXPathObjectPtr xpathobj = NULL;
 	char	   *datastr;
 	int32		len;
 	int32		xpath_len;
@@ -3382,30 +3639,31 @@ xpath_internal(text *xpath_expr_text, xmltype *data, ArrayType *namespaces,
 	memcpy(xpath_expr, VARDATA(xpath_expr_text), xpath_len);
 	xpath_expr[xpath_len] = '\0';
 
-	pg_xml_init();
-	xmlInitParser();
+	xmlerrcxt = pg_xml_init(PG_XML_STRICTNESS_ALL);
 
 	PG_TRY();
 	{
+		xmlInitParser();
+
 		/*
 		 * redundant XML parsing (two parsings for the same value during one
 		 * command execution are possible)
 		 */
 		ctxt = xmlNewParserCtxt();
-		if (ctxt == NULL)
-			xml_ereport(ERROR, ERRCODE_OUT_OF_MEMORY,
+		if (ctxt == NULL || xmlerrcxt->err_occurred)
+			xml_ereport(xmlerrcxt, ERROR, ERRCODE_OUT_OF_MEMORY,
 						"could not allocate parser context");
 		doc = xmlCtxtReadMemory(ctxt, (char *) string, len, NULL, NULL, 0);
-		if (doc == NULL)
-			xml_ereport(ERROR, ERRCODE_INVALID_XML_DOCUMENT,
+		if (doc == NULL || xmlerrcxt->err_occurred)
+			xml_ereport(xmlerrcxt, ERROR, ERRCODE_INVALID_XML_DOCUMENT,
 						"could not parse XML document");
 		xpathctx = xmlXPathNewContext(doc);
-		if (xpathctx == NULL)
-			xml_ereport(ERROR, ERRCODE_OUT_OF_MEMORY,
+		if (xpathctx == NULL || xmlerrcxt->err_occurred)
+			xml_ereport(xmlerrcxt, ERROR, ERRCODE_OUT_OF_MEMORY,
 						"could not allocate XPath context");
 		xpathctx->node = xmlDocGetRootElement(doc);
-		if (xpathctx->node == NULL)
-			xml_ereport(ERROR, ERRCODE_INTERNAL_ERROR,
+		if (xpathctx->node == NULL || xmlerrcxt->err_occurred)
+			xml_ereport(xmlerrcxt, ERROR, ERRCODE_INTERNAL_ERROR,
 						"could not find root XML element");
 
 		/* register namespaces, if any */
@@ -3433,8 +3691,8 @@ xpath_internal(text *xpath_expr_text, xmltype *data, ArrayType *namespaces,
 		}
 
 		xpathcomp = xmlXPathCompile(xpath_expr);
-		if (xpathcomp == NULL)	/* TODO: show proper XPath error details */
-			xml_ereport(ERROR, ERRCODE_INTERNAL_ERROR,
+		if (xpathcomp == NULL || xmlerrcxt->err_occurred)
+			xml_ereport(xmlerrcxt, ERROR, ERRCODE_INTERNAL_ERROR,
 						"invalid XPath expression");
 
 		/*
@@ -3445,8 +3703,8 @@ xpath_internal(text *xpath_expr_text, xmltype *data, ArrayType *namespaces,
 		 * the same.
 		 */
 		xpathobj = xmlXPathCompiledEval(xpathcomp, xpathctx);
-		if (xpathobj == NULL)	/* TODO: reason? */
-			xml_ereport(ERROR, ERRCODE_INTERNAL_ERROR,
+		if (xpathobj == NULL || xmlerrcxt->err_occurred)
+			xml_ereport(xmlerrcxt, ERROR, ERRCODE_INTERNAL_ERROR,
 						"could not create XPath object");
 
 		/* return empty array in cases when nothing is found */
@@ -3482,6 +3740,9 @@ xpath_internal(text *xpath_expr_text, xmltype *data, ArrayType *namespaces,
 			xmlFreeDoc(doc);
 		if (ctxt)
 			xmlFreeParserCtxt(ctxt);
+
+		pg_xml_done(xmlerrcxt, true);
+
 		PG_RE_THROW();
 	}
 	PG_END_TRY();
@@ -3491,6 +3752,8 @@ xpath_internal(text *xpath_expr_text, xmltype *data, ArrayType *namespaces,
 	xmlXPathFreeContext(xpathctx);
 	xmlFreeDoc(doc);
 	xmlFreeParserCtxt(ctxt);
+
+	pg_xml_done(xmlerrcxt, false);
 }
 #endif   /* USE_LIBXML */
 
@@ -3579,7 +3842,7 @@ static bool
 wellformed_xml(text *data, XmlOptionType xmloption_arg)
 {
 	bool		result;
-	xmlDocPtr	doc = NULL;
+	volatile xmlDocPtr doc = NULL;
 
 	/* We want to catch any exceptions and return false */
 	PG_TRY();
