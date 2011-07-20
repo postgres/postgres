@@ -1166,3 +1166,47 @@ processSQLNamePattern(PGconn *conn, PQExpBuffer buf, const char *pattern,
 	return added_clause;
 #undef WHEREAND
 }
+
+/*
+ * buildShSecLabelQuery
+ *
+ * Build a query to retrieve security labels for a shared object.
+ */
+void
+buildShSecLabelQuery(PGconn *conn, const char *catalog_name, uint32 objectId,
+					 PQExpBuffer sql)
+{
+	appendPQExpBuffer(sql,
+					  "SELECT provider, label FROM pg_catalog.pg_shseclabel "
+					  "WHERE classoid = '%s'::pg_catalog.regclass AND "
+					  "objoid = %u", catalog_name, objectId);
+}
+
+/*
+ * emitShSecLabels
+ *
+ * Format security label data retrieved by the query generated in
+ * buildShSecLabelQuery.
+ */
+void
+emitShSecLabels(PGconn *conn, PGresult *res, PQExpBuffer buffer,
+				const char *target, const char *objname)
+{
+	int			i;
+
+	for (i = 0; i < PQntuples(res); i++)
+    {
+		char   *provider = PQgetvalue(res, i, 0);
+		char   *label = PQgetvalue(res, i, 1);
+
+		/* must use fmtId result before calling it again */
+		appendPQExpBuffer(buffer,
+						  "SECURITY LABEL FOR %s ON %s",
+						  fmtId(provider), target);
+		appendPQExpBuffer(buffer,
+						  " %s IS ",
+						  fmtId(objname));
+		appendStringLiteralConn(buffer, label, conn);
+        appendPQExpBuffer(buffer, ";\n");
+	}
+}

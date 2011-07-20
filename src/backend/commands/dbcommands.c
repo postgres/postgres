@@ -39,6 +39,7 @@
 #include "catalog/pg_tablespace.h"
 #include "commands/comment.h"
 #include "commands/dbcommands.h"
+#include "commands/seclabel.h"
 #include "commands/tablespace.h"
 #include "mb/pg_wchar.h"
 #include "miscadmin.h"
@@ -822,9 +823,11 @@ dropdb(const char *dbname, bool missing_ok)
 	ReleaseSysCache(tup);
 
 	/*
-	 * Delete any comments associated with the database.
+	 * Delete any comments or security labels associated with
+	 * the database.
 	 */
 	DeleteSharedComments(db_id, DatabaseRelationId);
+	DeleteSharedSecurityLabel(db_id, DatabaseRelationId);
 
 	/*
 	 * Remove settings associated with this database

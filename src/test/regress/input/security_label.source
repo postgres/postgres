@@ -12,7 +12,7 @@ DROP TABLE IF EXISTS seclabel_tbl1;
 DROP TABLE IF EXISTS seclabel_tbl2;
 DROP TABLE IF EXISTS seclabel_tbl3;
 
-CREATE USER seclabel_user1;
+CREATE USER seclabel_user1 WITH CREATEROLE;
 CREATE USER seclabel_user2;
 
 CREATE TABLE seclabel_tbl1 (a int, b text);
@@ -33,6 +33,11 @@ SECURITY LABEL ON TABLE seclabel_tbl1 IS 'classified';			-- fail
 SECURITY LABEL FOR 'dummy' ON TABLE seclabel_tbl1 IS 'classified';		-- fail
 SECURITY LABEL ON TABLE seclabel_tbl1 IS '...invalid label...';		-- fail
 SECURITY LABEL ON TABLE seclabel_tbl3 IS 'unclassified';			-- fail
+
+SECURITY LABEL ON ROLE seclabel_user1 IS 'classified';			-- fail
+SECURITY LABEL FOR 'dummy' ON ROLE seclabel_user1 IS 'classified';		-- fail
+SECURITY LABEL ON ROLE seclabel_user1 IS '...invalid label...';		-- fail
+SECURITY LABEL ON ROLE seclabel_user3 IS 'unclassified';			-- fail
 
 -- Load dummy external security provider
 LOAD '@libdir@/dummy_seclabel@DLSUFFIX@';
@@ -55,20 +60,37 @@ SET SESSION AUTHORIZATION seclabel_user2;
 SECURITY LABEL ON TABLE seclabel_tbl1 IS 'unclassified';		-- fail
 SECURITY LABEL ON TABLE seclabel_tbl2 IS 'classified';			-- OK
 
+--
+-- Test for shared database object
+--
+SET SESSION AUTHORIZATION seclabel_user1;
+
+SECURITY LABEL ON ROLE seclabel_user1 IS 'classified';			-- OK
+SECURITY LABEL ON ROLE seclabel_user1 IS '...invalid label...';	-- fail
+SECURITY LABEL FOR 'dummy' ON ROLE seclabel_user2 IS 'unclassified';	-- OK
+SECURITY LABEL FOR 'unknown_seclabel' ON ROLE seclabel_user1 IS 'unclassified';	-- fail
+SECURITY LABEL ON ROLE seclabel_user1 IS 'secret';	-- fail (not superuser)
+SECURITY LABEL ON ROLE seclabel_user3 IS 'unclassified';	-- fail (not found)
+
+SET SESSION AUTHORIZATION seclabel_user2;
+SECURITY LABEL ON ROLE seclabel_user2 IS 'unclassified';	-- fail (not privileged)
+
+RESET SESSION AUTHORIZATION;
+
+--
+-- Test for various types of object
+--
 RESET SESSION AUTHORIZATION;
 
 SECURITY LABEL ON TABLE seclabel_tbl1 IS 'top secret';			-- OK
 SECURITY LABEL ON VIEW seclabel_view1 IS 'classified';			-- OK
 SECURITY LABEL ON FUNCTION seclabel_four() IS 'classified';		-- OK
 SECURITY LABEL ON DOMAIN seclabel_domain IS 'classified';		-- OK
-SECURITY LABEL ON LANGUAGE plpgsql IS 'unclassified';			-- OK
-SECURITY LABEL ON SCHEMA public IS 'unclassified';				-- OK
+CREATE SCHEMA seclabel_test;
+SECURITY LABEL ON SCHEMA seclabel_test IS 'unclassified';		-- OK
 
 SELECT objtype, objname, provider, label FROM pg_seclabels
 	ORDER BY objtype, objname;
-
-SECURITY LABEL ON LANGUAGE plpgsql IS NULL;						-- OK
-SECURITY LABEL ON SCHEMA public IS NULL;						-- OK
 
 -- clean up objects
 DROP FUNCTION seclabel_four();
@@ -78,6 +100,7 @@ DROP TABLE seclabel_tbl1;
 DROP TABLE seclabel_tbl2;
 DROP USER seclabel_user1;
 DROP USER seclabel_user2;
+DROP SCHEMA seclabel_test;
 
 -- make sure we don't have any leftovers
 SELECT objtype, objname, provider, label FROM pg_seclabels

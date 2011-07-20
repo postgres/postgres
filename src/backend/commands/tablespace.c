@@ -63,6 +63,7 @@
 #include "catalog/pg_tablespace.h"
 #include "commands/comment.h"
 #include "commands/defrem.h"
+#include "commands/seclabel.h"
 #include "commands/tablespace.h"
 #include "miscadmin.h"
 #include "postmaster/bgwriter.h"
@@ -448,9 +449,10 @@ DropTableSpace(DropTableSpaceStmt *stmt)
 	heap_endscan(scandesc);
 
 	/*
-	 * Remove any comments on this tablespace.
+	 * Remove any comments or security labels on this tablespace.
 	 */
 	DeleteSharedComments(tablespaceoid, TableSpaceRelationId);
+	DeleteSharedSecurityLabel(tablespaceoid, TableSpaceRelationId);
 
 	/*
 	 * Remove dependency on owner.

@@ -2048,6 +2048,24 @@ dumpDatabase(Archive *AH)
 
 	PQclear(res);
 
+	/* Dump shared security label. */
+	if (!no_security_labels && g_fout->remoteVersion >= 90200)
+	{
+		PQExpBuffer seclabelQry = createPQExpBuffer();
+
+		buildShSecLabelQuery(g_conn, "pg_database", dbCatId.oid, seclabelQry);
+		res = PQexec(g_conn, seclabelQry->data);
+		check_sql_result(res, g_conn, seclabelQry->data, PGRES_TUPLES_OK);
+		resetPQExpBuffer(seclabelQry);
+		emitShSecLabels(g_conn, res, seclabelQry, "DATABASE", datname);
+		if (strlen(seclabelQry->data))
+			ArchiveEntry(AH, dbCatId, createDumpId(), datname, NULL, NULL,
+						 dba, false, "SECURITY LABEL", SECTION_NONE,
+						 seclabelQry->data, "", NULL,
+						 &dbDumpId, 1, NULL, NULL);
+		destroyPQExpBuffer(seclabelQry);
+	}
+
 	destroyPQExpBuffer(dbQry);
 	destroyPQExpBuffer(delQry);
 	destroyPQExpBuffer(creaQry);

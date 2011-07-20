@@ -21,6 +21,7 @@ extern char *GetSecurityLabel(const ObjectAddress *object,
 extern void SetSecurityLabel(const ObjectAddress *object,
 				 const char *provider, const char *label);
 extern void DeleteSecurityLabel(const ObjectAddress *object);
+extern void DeleteSharedSecurityLabel(Oid objectId, Oid classId);
 
 /*
  * Statement and ESP hook support

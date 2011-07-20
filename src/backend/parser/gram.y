@@ -5068,11 +5068,14 @@ opt_provider:	FOR ColId_or_Sconst	{ $$ = $2; }
 
 security_label_type:
 			COLUMN								{ $$ = OBJECT_COLUMN; }
+			| DATABASE							{ $$ = OBJECT_DATABASE; }
 			| FOREIGN TABLE						{ $$ = OBJECT_FOREIGN_TABLE; }
 			| SCHEMA							{ $$ = OBJECT_SCHEMA; }
 			| SEQUENCE							{ $$ = OBJECT_SEQUENCE; }
 			| TABLE								{ $$ = OBJECT_TABLE; }
 			| DOMAIN_P							{ $$ = OBJECT_TYPE; }
+			| ROLE								{ $$ = OBJECT_ROLE; }
+			| TABLESPACE						{ $$ = OBJECT_TABLESPACE; }
 			| TYPE_P							{ $$ = OBJECT_TYPE; }
 			| VIEW								{ $$ = OBJECT_VIEW; }
 		;

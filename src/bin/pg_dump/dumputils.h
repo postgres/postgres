@@ -47,5 +47,9 @@ extern bool processSQLNamePattern(PGconn *conn, PQExpBuffer buf,
 					  bool have_where, bool force_escape,
 					  const char *schemavar, const char *namevar,
 					  const char *altnamevar, const char *visibilityrule);
+extern void buildShSecLabelQuery(PGconn *conn, const char *catalog_name,
+					 uint32 objectId, PQExpBuffer sql);
+extern void emitShSecLabels(PGconn *conn, PGresult *res,
+				PQExpBuffer buffer, const char *target, const char *objname);
 
 #endif   /* DUMPUTILS_H */

@@ -283,7 +283,37 @@ FROM
 	pg_seclabel l
 	JOIN pg_namespace nsp ON l.classoid = nsp.tableoid AND l.objoid = nsp.oid
 WHERE
-	l.objsubid = 0;
+	l.objsubid = 0
+UNION ALL
+SELECT
+	l.objoid, l.classoid, 0::int4 AS objsubid,
+	'database'::text AS objtype,
+	NULL::oid AS objnamespace,
+	quote_ident(dat.datname) AS objname,
+	l.provider, l.label
+FROM
+	pg_shseclabel l
+	JOIN pg_database dat ON l.classoid = dat.tableoid AND l.objoid = dat.oid
+UNION ALL
+SELECT
+	l.objoid, l.classoid, 0::int4 AS objsubid,
+	'tablespace'::text AS objtype,
+	NULL::oid AS objnamespace,
+	quote_ident(spc.spcname) AS objname,
+	l.provider, l.label
+FROM
+	pg_shseclabel l
+	JOIN pg_tablespace spc ON l.classoid = spc.tableoid AND l.objoid = spc.oid
+UNION ALL
+SELECT
+	l.objoid, l.classoid, 0::int4 AS objsubid,
+	'role'::text AS objtype,
+	NULL::oid AS objnamespace,
+	quote_ident(rol.rolname) AS objname,
+	l.provider, l.label
+FROM
+	pg_shseclabel l
+	JOIN pg_authid rol ON l.classoid = rol.tableoid AND l.objoid = rol.oid;
 
 CREATE VIEW pg_settings AS
     SELECT * FROM pg_show_all_settings() AS A;
