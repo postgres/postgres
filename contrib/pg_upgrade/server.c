@@ -184,7 +184,7 @@ start_postmaster(ClusterInfo *cluster)
 			 (cluster->controldata.cat_ver >=
 			  BINARY_UPGRADE_SERVER_FLAG_CAT_VER) ? "-b" :
 			 "-c autovacuum=off -c autovacuum_freeze_max_age=2000000000",
-			 log_opts.filename);
+			 output_filename);
 
 	/*
 	 * Don't throw an error right away, let connecting throw the error because

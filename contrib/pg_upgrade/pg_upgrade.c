@@ -193,8 +193,14 @@ prepare_new_cluster(void)
 	prep_status("Analyzing all rows in the new cluster");
 	exec_prog(true,
 			  SYSTEMQUOTE "\"%s/vacuumdb\" --port %d --username \"%s\" "
-			  "--all --analyze >> %s 2>&1" SYSTEMQUOTE,
-	  new_cluster.bindir, new_cluster.port, os_info.user, log_opts.filename);
+			  "--all --analyze >> \"%s\" 2>&1" SYSTEMQUOTE,
+	  new_cluster.bindir, new_cluster.port, os_info.user,
+#ifndef WIN32
+	  log_opts.filename
+#else
+	  DEVNULL
+#endif
+	  );
 	check_ok();
 
 	/*
@@ -206,8 +212,14 @@ prepare_new_cluster(void)
 	prep_status("Freezing all rows on the new cluster");
 	exec_prog(true,
 			  SYSTEMQUOTE "\"%s/vacuumdb\" --port %d --username \"%s\" "
-			  "--all --freeze >> %s 2>&1" SYSTEMQUOTE,
-	  new_cluster.bindir, new_cluster.port, os_info.user, log_opts.filename);
+			  "--all --freeze >> \"%s\" 2>&1" SYSTEMQUOTE,
+	  new_cluster.bindir, new_cluster.port, os_info.user,
+#ifndef WIN32
+	  log_opts.filename
+#else
+	  DEVNULL
+#endif
+	  );
 	check_ok();
 
 	get_pg_database_relfilenode(&new_cluster);
@@ -245,7 +257,13 @@ prepare_new_databases(void)
 			  "--no-psqlrc --port %d --username \"%s\" "
 			  "-f \"%s/%s\" --dbname template1 >> \"%s\"" SYSTEMQUOTE,
 			  new_cluster.bindir, new_cluster.port, os_info.user, os_info.cwd,
-			  GLOBALS_DUMP_FILE, log_opts.filename);
+			  GLOBALS_DUMP_FILE,
+#ifndef WIN32
+			  log_opts.filename
+#else
+			  DEVNULL
+#endif
+			  );
 	check_ok();
 
 	/* we load this to get a current list of databases */
@@ -276,7 +294,13 @@ create_new_objects(void)
 			  "--no-psqlrc --port %d --username \"%s\" "
 			  "-f \"%s/%s\" --dbname template1 >> \"%s\"" SYSTEMQUOTE,
 			  new_cluster.bindir, new_cluster.port, os_info.user, os_info.cwd,
-			  DB_DUMP_FILE, log_opts.filename);
+			  DB_DUMP_FILE,
+#ifndef WIN32
+			  log_opts.filename
+#else
+			  DEVNULL
+#endif
+			  );
 	check_ok();
 
 	/* regenerate now that we have objects in the databases */
@@ -324,7 +348,13 @@ copy_clog_xlog_xid(void)
 	exec_prog(true, SYSTEMQUOTE "\"%s/pg_resetxlog\" -l %u,%u,%u \"%s\" >> \"%s\" 2>&1" SYSTEMQUOTE,
 			  new_cluster.bindir, old_cluster.controldata.chkpnt_tli,
 			old_cluster.controldata.logid, old_cluster.controldata.nxtlogseg,
-			  new_cluster.pgdata, log_opts.filename);
+			  new_cluster.pgdata,
+#ifndef WIN32
+			  log_opts.filename
+#else
+			  DEVNULL
+#endif
+			  );
 	check_ok();
 }
 
