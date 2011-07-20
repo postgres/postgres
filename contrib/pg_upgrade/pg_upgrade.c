@@ -161,8 +161,14 @@ prepare_new_cluster(migratorContext *ctx)
 	prep_status(ctx, "Analyzing all rows in the new cluster");
 	exec_prog(ctx, true,
 			  SYSTEMQUOTE "\"%s/vacuumdb\" --port %d --username \"%s\" "
-			  "--all --analyze >> %s 2>&1" SYSTEMQUOTE,
-			  ctx->new.bindir, ctx->new.port, ctx->user, ctx->logfile);
+			  "--all --analyze >> \"%s\" 2>&1" SYSTEMQUOTE,
+			  ctx->new.bindir, ctx->new.port, ctx->user,
+#ifndef WIN32
+			  ctx->logfile
+#else
+			  DEVNULL
+#endif
+			  );
 	check_ok(ctx);
 
 	/*
@@ -174,8 +180,14 @@ prepare_new_cluster(migratorContext *ctx)
 	prep_status(ctx, "Freezing all rows on the new cluster");
 	exec_prog(ctx, true,
 			  SYSTEMQUOTE "\"%s/vacuumdb\" --port %d --username \"%s\" "
-			  "--all --freeze >> %s 2>&1" SYSTEMQUOTE,
-			  ctx->new.bindir, ctx->new.port, ctx->user, ctx->logfile);
+			  "--all --freeze >> \"%s\" 2>&1" SYSTEMQUOTE,
+			  ctx->new.bindir, ctx->new.port, ctx->user,
+#ifndef WIN32
+			  ctx->logfile
+#else
+			  DEVNULL
+#endif
+			  );
 	check_ok(ctx);
 
 	get_pg_database_relfilenode(ctx, CLUSTER_NEW);
@@ -207,7 +219,13 @@ prepare_new_databases(migratorContext *ctx)
 			  "--no-psqlrc --port %d --username \"%s\" "
 			  "-f \"%s/%s\" --dbname template1 >> \"%s\"" SYSTEMQUOTE,
 			  ctx->new.bindir, ctx->new.port, ctx->user, ctx->cwd,
-			  GLOBALS_DUMP_FILE, ctx->logfile);
+			  GLOBALS_DUMP_FILE,
+#ifndef WIN32
+			  ctx->logfile
+#else
+			  DEVNULL
+#endif
+			  );
 	check_ok(ctx);
 
 	get_db_and_rel_infos(ctx, &ctx->new.dbarr, CLUSTER_NEW);
@@ -230,7 +248,13 @@ create_new_objects(migratorContext *ctx)
 			  "--no-psqlrc --port %d --username \"%s\" "
 			  "-f \"%s/%s\" --dbname template1 >> \"%s\"" SYSTEMQUOTE,
 			  ctx->new.bindir, ctx->new.port, ctx->user, ctx->cwd,
-			  DB_DUMP_FILE, ctx->logfile);
+			  DB_DUMP_FILE,
+#ifndef WIN32
+			  ctx->logfile
+#else
+			  DEVNULL
+#endif
+			  );
 	check_ok(ctx);
 
 	/* regenerate now that we have db schemas */
@@ -282,7 +306,13 @@ copy_clog_xlog_xid(migratorContext *ctx)
 	exec_prog(ctx, true, SYSTEMQUOTE "\"%s/pg_resetxlog\" -l %u,%u,%u \"%s\" >> \"%s\" 2>&1" SYSTEMQUOTE,
 			  ctx->new.bindir, ctx->old.controldata.chkpnt_tli,
 			  ctx->old.controldata.logid, ctx->old.controldata.nxtlogseg,
-			  ctx->new.pgdata, ctx->logfile);
+			  ctx->new.pgdata,
+#ifndef WIN32
+			  ctx->logfile
+#else
+			  DEVNULL
+#endif
+			  );
 	check_ok(ctx);
 }
 
