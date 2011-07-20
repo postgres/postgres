@@ -589,6 +589,18 @@ SELECT xpath('//b', '<a>one <b>two</b> three <b>etc</b></a>');
  {<b>two</b>,<b>etc</b>}
 (1 row)
 
+SELECT xpath('//text()', '<root>&lt;</root>');
+ xpath  
+--------
+ {&lt;}
+(1 row)
+
+SELECT xpath('//@value', '<root value="&lt;"/>');
+ xpath  
+--------
+ {&lt;}
+(1 row)
+
 -- Test xmlexists and xpath_exists
 SELECT xmlexists('//town[text() = ''Toronto'']' PASSING BY REF '<towns><town>Bidford-on-Avon</town><town>Cwmbran</town><town>Bristol</town></towns>');
  xmlexists 

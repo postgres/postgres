@@ -3537,7 +3537,11 @@ xml_xmlnodetoxmltype(xmlNodePtr cur)
 		str = xmlXPathCastNodeToString(cur);
 		PG_TRY();
 		{
-			result = (xmltype *) cstring_to_text((char *) str);
+			/* Here we rely on XML having the same representation as TEXT */
+			char   *escaped = escape_xml((char *) str);
+
+			result = (xmltype *) cstring_to_text(escaped);
+			pfree(escaped);
 		}
 		PG_CATCH();
 		{
