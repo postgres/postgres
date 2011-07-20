@@ -230,7 +230,7 @@ getErrorText(int errNum)
 #ifdef WIN32
 	_dosmaperr(GetLastError());
 #endif
-	return strdup(strerror(errNum));
+	return pg_strdup(strerror(errNum));
 }
 
 
