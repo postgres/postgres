@@ -4676,8 +4676,9 @@
 
   <para>
    The catalog <structname>pg_seclabel</structname> stores security
-   labels on database objects.  See the
-   <xref linkend="sql-security-label"> statement.
+   labels on database objects.  Security labels can be manipulated
+   with the <xref linkend="sql-security-label"> command.  For an easier
+   way to view security labels, see <xref linkend="view-pg-seclabels">.
   </para>
 
   <table>
