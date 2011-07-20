@@ -203,4 +203,12 @@ SECURITY LABEL FOR selinux ON TABLE mytable IS 'system_u:object_r:sepgsql_table_
    There is no <command>SECURITY LABEL</command> command in the SQL standard.
   </para>
  </refsect1>
+
+ <refsect1>
+  <title>See Also</title>
+  <simplelist type="inline">
+   <member><xref linkend="sepgsql"></member>
+   <member><xref linkend="dummy-seclabel"></member>
+  </simplelist>
+ </refsect1>
 </refentry>

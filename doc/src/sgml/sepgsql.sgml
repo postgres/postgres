@@ -96,11 +96,13 @@ Policy from config file:        targeted
 
   <para>
    The following instructions that assume your installation is under the
-   <filename>/usr/local/pgsql</> directory. Adjust the paths shown below as
-   appropriate for your installation.
+   <filename>/usr/local/pgsql</> directory and the database cluster is
+   under the <filename>/path/to/database</> directory. Adjust the paths
+   shown below as appropriate for your installation.
   </para>
 
 <screen>
+$ export PGDATA=/path/to/database
 $ initdb
 $ vi $PGDATA/postgresql.conf
 $ for DBNAME in template0 template1 postgres; do
@@ -113,6 +115,16 @@ $ for DBNAME in template0 template1 postgres; do
    If the installation process completes without error, you can now start the
    server normally.
   </para>
+
+  <para>
+   Please note that you may see the following notifications depending on
+   the combination of a particular version of <productname>libselinux</>
+   and <productname>selinux-policy</>.
+<screen>
+/etc/selinux/targeted/contexts/sepgsql_contexts:  line 33 has invalid object type db_blobs
+</screen>
+   This message is harmless and may be safely ignored.
+  </para>
  </sect2>
 
  <sect2 id="sepgsql-regression">
@@ -124,7 +136,15 @@ $ for DBNAME in template0 template1 postgres; do
   </para>
 
   <para>
-   First, build and install the policy package for the regression test.
+   First, set up <productname>sepgsql</productname> according to
+   the <xref linkend="sepgsql-installation">.  The regression test is
+   intended to be run on a system with a working SE-Linux implementation.
+   The current operating system user must be able to connect to the database
+   as superuser without authentication.
+  </para>
+
+  <para>
+   Second, build and install the policy package for the regression test.
    The <filename>sepgsql-regtest.pp</> is a special purpose policy package
    which provides a set of rules to be allowed during the regression tests.
    It should be built from the policy source file 
@@ -149,7 +169,7 @@ sepgsql-regtest 1.03
 </screen>
 
   <para>
-   Second, turn on <literal>sepgsql_regression_test_mode</>.
+   Third, turn on <literal>sepgsql_regression_test_mode</>.
    We don't enable all the rules in the <filename>sepgsql-regtest.pp</>
    by default, for your system's safety.
    The <literal>sepgsql_regression_test_mode</literal> parameter is associated
