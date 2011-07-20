@@ -147,19 +147,6 @@ start_postmaster(ClusterInfo *cluster)
 	bool		exit_hook_registered = false;
 	int			pg_ctl_return = 0;
 
-#ifndef WIN32
-	char	   *output_filename = log_opts.filename;
-#else
-
-	/*
-	 * On Win32, we can't send both pg_upgrade output and pg_ctl output to the
-	 * same file because we get the error: "The process cannot access the file
-	 * because it is being used by another process." so we have to send all
-	 * other output to 'nul'.
-	 */
-	char	   *output_filename = DEVNULL;
-#endif
-
 	if (!exit_hook_registered)
 	{
 #ifdef HAVE_ATEXIT
@@ -180,11 +167,11 @@ start_postmaster(ClusterInfo *cluster)
 	snprintf(cmd, sizeof(cmd),
 			 SYSTEMQUOTE "\"%s/pg_ctl\" -w -l \"%s\" -D \"%s\" "
 			 "-o \"-p %d %s\" start >> \"%s\" 2>&1" SYSTEMQUOTE,
-			 cluster->bindir, output_filename, cluster->pgdata, cluster->port,
+			 cluster->bindir, log_opts.filename2, cluster->pgdata, cluster->port,
 			 (cluster->controldata.cat_ver >=
 			  BINARY_UPGRADE_SERVER_FLAG_CAT_VER) ? "-b" :
 			 "-c autovacuum=off -c autovacuum_freeze_max_age=2000000000",
-			 log_opts.filename);
+			 log_opts.filename2);
 
 	/*
 	 * Don't throw an error right away, let connecting throw the error because
@@ -221,13 +208,6 @@ stop_postmaster(bool fast)
 	const char *bindir;
 	const char *datadir;
 
-#ifndef WIN32
-	char	   *output_filename = log_opts.filename;
-#else
-	/* See comment in start_postmaster() about why win32 output is ignored. */
-	char	   *output_filename = DEVNULL;
-#endif
-
 	if (os_info.running_cluster == &old_cluster)
 	{
 		bindir = old_cluster.bindir;
@@ -244,8 +224,8 @@ stop_postmaster(bool fast)
 	snprintf(cmd, sizeof(cmd),
 			 SYSTEMQUOTE "\"%s/pg_ctl\" -w -l \"%s\" -D \"%s\" %s stop >> "
 			 "\"%s\" 2>&1" SYSTEMQUOTE,
-			 bindir, output_filename, datadir, fast ? "-m fast" : "",
-			 output_filename);
+			 bindir, log_opts.filename2, datadir, fast ? "-m fast" : "",
+			 log_opts.filename2);
 
 	exec_prog(fast ? false : true, "%s", cmd);
 

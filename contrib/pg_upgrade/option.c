@@ -192,8 +192,15 @@ parseCommandLine(int argc, char *argv[])
 			pg_log(PG_FATAL, "cannot write to log file %s\n", log_opts.filename);
 	}
 	else
-		log_opts.filename = strdup(DEVNULL);
+		log_opts.filename = pg_strdup(DEVNULL);
 
+	/* WIN32 files do not accept writes from multiple processes */
+#ifndef WIN32
+	log_opts.filename2 = pg_strdup(log_opts.filename);
+#else
+	log_opts.filename2 = pg_strdup(DEVNULL);
+#endif
+		
 	/* if no debug file name, output to the terminal */
 	if (log_opts.debug && !log_opts.debug_fd)
 	{

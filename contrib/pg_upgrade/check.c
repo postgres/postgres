@@ -170,7 +170,7 @@ issue_warnings(char *sequence_script_file_name)
 					  "--no-psqlrc --port %d --username \"%s\" "
 					  "-f \"%s\" --dbname template1 >> \"%s\"" SYSTEMQUOTE,
 					  new_cluster.bindir, new_cluster.port, os_info.user,
-					  sequence_script_file_name, log_opts.filename);
+					  sequence_script_file_name, log_opts.filename2);
 			unlink(sequence_script_file_name);
 			check_ok();
 		}
