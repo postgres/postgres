@@ -207,6 +207,10 @@ typedef struct
 	 * because it is being used by another process." so we have to send all
 	 * other output to 'nul'.  Therefore, we set this to DEVNULL on Win32, and
 	 * it equals 'filename' on all other platforms.
+	 *
+	 * We could use the Windows pgwin32_open() flags to allow shared file
+	 * writes but is unclear how all other tools would use those flags, so
+	 * we just avoid it and log a little less on Windows.
 	 */
 	char	   *filename2;
 	FILE	   *fd;				/* log FILE */
