@@ -424,28 +424,8 @@ PQsetvalue(PGresult *res, int tup_num, int field_num, char *value, int len)
 	if (tup_num < 0 || tup_num > res->ntups)
 		return FALSE;
 
-	/* need to grow the tuple table? */
-	if (res->ntups >= res->tupArrSize)
-	{
-		int			n = res->tupArrSize ? res->tupArrSize * 2 : 128;
-		PGresAttValue **tups;
-
-		if (res->tuples)
-			tups = (PGresAttValue **) realloc(res->tuples, n * sizeof(PGresAttValue *));
-		else
-			tups = (PGresAttValue **) malloc(n * sizeof(PGresAttValue *));
-
-		if (!tups)
-			return FALSE;
-
-		memset(tups + res->tupArrSize, 0,
-			   (n - res->tupArrSize) * sizeof(PGresAttValue *));
-		res->tuples = tups;
-		res->tupArrSize = n;
-	}
-
 	/* need to allocate a new tuple? */
-	if (tup_num == res->ntups && !res->tuples[tup_num])
+	if (tup_num == res->ntups)
 	{
 		PGresAttValue *tup;
 		int			i;
@@ -464,8 +444,9 @@ PQsetvalue(PGresult *res, int tup_num, int field_num, char *value, int len)
 			tup[i].value = res->null_field;
 		}
 
-		res->tuples[tup_num] = tup;
-		res->ntups++;
+		/* add it to the array */
+		if (!pqAddTuple(res, tup))
+			return FALSE;
 	}
 
 	attval = &res->tuples[tup_num][field_num];
