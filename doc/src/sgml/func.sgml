@@ -9275,6 +9275,8 @@ SELECT xml_is_well_formed_document('<pg:foo xmlns:pg="http://postgresql.org/stuf
     against the XML value
     <replaceable>xml</replaceable>.  It returns an array of XML values
     corresponding to the node set produced by the XPath expression.
+    If the XPath expression returns a scalar value rather than a node set,
+    a single-element array is returned.
    </para>
 
   <para>

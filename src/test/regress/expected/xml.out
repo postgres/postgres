@@ -601,6 +601,42 @@ SELECT xpath('//@value', '<root value="&lt;"/>');
  {&lt;}
 (1 row)
 
+SELECT xpath('''<<invalid>>''', '<root/>');
+           xpath           
+---------------------------
+ {&lt;&lt;invalid&gt;&gt;}
+(1 row)
+
+SELECT xpath('count(//*)', '<root><sub/><sub/></root>');
+ xpath 
+-------
+ {3}
+(1 row)
+
+SELECT xpath('count(//*)=0', '<root><sub/><sub/></root>');
+  xpath  
+---------
+ {false}
+(1 row)
+
+SELECT xpath('count(//*)=3', '<root><sub/><sub/></root>');
+ xpath  
+--------
+ {true}
+(1 row)
+
+SELECT xpath('name(/*)', '<root><sub/><sub/></root>');
+ xpath  
+--------
+ {root}
+(1 row)
+
+SELECT xpath('/nosuchtag', '<root/>');
+ xpath 
+-------
+ {}
+(1 row)
+
 -- Test xmlexists and xpath_exists
 SELECT xmlexists('//town[text() = ''Toronto'']' PASSING BY REF '<towns><town>Bidford-on-Avon</town><town>Cwmbran</town><town>Bristol</town></towns>');
  xmlexists 
@@ -614,6 +650,12 @@ SELECT xmlexists('//town[text() = ''Cwmbran'']' PASSING BY REF '<towns><town>Bid
  t
 (1 row)
 
+SELECT xmlexists('count(/nosuchtag)' PASSING BY REF '<root/>');
+ xmlexists 
+-----------
+ t
+(1 row)
+
 SELECT xpath_exists('//town[text() = ''Toronto'']','<towns><town>Bidford-on-Avon</town><town>Cwmbran</town><town>Bristol</town></towns>'::xml);
  xpath_exists 
 --------------
@@ -621,6 +663,12 @@ SELECT xpath_exists('//town[text() = ''Toronto'']','<towns><town>Bidford-on-Avon
 (1 row)
 
 SELECT xpath_exists('//town[text() = ''Cwmbran'']','<towns><town>Bidford-on-Avon</town><town>Cwmbran</town><town>Bristol</town></towns>'::xml);
+ xpath_exists 
+--------------
+ t
+(1 row)
+
+SELECT xpath_exists('count(/nosuchtag)', '<root/>'::xml);
  xpath_exists 
 --------------
  t

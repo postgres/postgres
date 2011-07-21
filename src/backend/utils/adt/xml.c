@@ -126,6 +126,8 @@ static bool print_xml_decl(StringInfo buf, const xmlChar *version,
 static xmlDocPtr xml_parse(text *data, XmlOptionType xmloption_arg,
 		  bool preserve_whitespace, int encoding);
 static text *xml_xmlnodetoxmltype(xmlNodePtr cur);
+static int	xml_xpathobjtoxmlarray(xmlXPathObjectPtr xpathobj,
+								   ArrayBuildState **astate);
 #endif   /* USE_LIBXML */
 
 static StringInfo query_to_xml_internal(const char *query, char *tablename,
@@ -3503,6 +3505,7 @@ SPI_sql_row_to_xmlelement(int rownum, StringInfo result, char *tablename,
  */
 
 #ifdef USE_LIBXML
+
 /*
  * Convert XML node to text (dump subtree in case of element,
  * return value otherwise)
@@ -3554,20 +3557,100 @@ xml_xmlnodetoxmltype(xmlNodePtr cur)
 
 	return result;
 }
-#endif
+
+/*
+ * Convert an XML XPath object (the result of evaluating an XPath expression)
+ * to an array of xml values, which is returned at *astate.  The function
+ * result value is the number of elements in the array.
+ *
+ * If "astate" is NULL then we don't generate the array value, but we still
+ * return the number of elements it would have had.
+ *
+ * Nodesets are converted to an array containing the nodes' textual
+ * representations.  Primitive values (float, double, string) are converted
+ * to a single-element array containing the value's string representation.
+ */
+static int
+xml_xpathobjtoxmlarray(xmlXPathObjectPtr xpathobj,
+					   ArrayBuildState **astate)
+{
+	int			result = 0;
+	Datum		datum;
+	Oid			datumtype;
+	char	   *result_str;
+
+	if (astate != NULL)
+		*astate = NULL;
+
+	switch (xpathobj->type)
+	{
+		case XPATH_NODESET:
+			if (xpathobj->nodesetval != NULL)
+			{
+				result = xpathobj->nodesetval->nodeNr;
+				if (astate != NULL)
+				{
+					int		i;
+
+					for (i = 0; i < result; i++)
+					{
+						datum = PointerGetDatum(xml_xmlnodetoxmltype(xpathobj->nodesetval->nodeTab[i]));
+						*astate = accumArrayResult(*astate, datum,
+												   false, XMLOID,
+												   CurrentMemoryContext);
+					}
+				}
+			}
+			return result;
+
+		case XPATH_BOOLEAN:
+			if (astate == NULL)
+				return 1;
+			datum = BoolGetDatum(xpathobj->boolval);
+			datumtype = BOOLOID;
+			break;
+
+		case XPATH_NUMBER:
+			if (astate == NULL)
+				return 1;
+			datum = Float8GetDatum(xpathobj->floatval);
+			datumtype = FLOAT8OID;
+			break;
+
+		case XPATH_STRING:
+			if (astate == NULL)
+				return 1;
+			datum = CStringGetDatum((char *) xpathobj->stringval);
+			datumtype = CSTRINGOID;
+			break;
+
+		default:
+			elog(ERROR, "xpath expression result type %d is unsupported",
+				 xpathobj->type);
+			return 0;			/* keep compiler quiet */
+	}
+
+	/* Common code for scalar-value cases */
+	result_str = map_sql_value_to_xml_value(datum, datumtype, true);
+	datum = PointerGetDatum(cstring_to_xmltype(result_str));
+	*astate = accumArrayResult(*astate, datum,
+							   false, XMLOID,
+							   CurrentMemoryContext);
+	return 1;
+}
 
 
 /*
  * Common code for xpath() and xmlexists()
  *
  * Evaluate XPath expression and return number of nodes in res_items
- * and array of XML values in astate.
+ * and array of XML values in astate.  Either of those pointers can be
+ * NULL if the corresponding result isn't wanted.
  *
  * It is up to the user to ensure that the XML passed is in fact
  * an XML document - XPath doesn't work easily on fragments without
  * a context node being known.
  */
-#ifdef USE_LIBXML
 static void
 xpath_internal(text *xpath_expr_text, xmltype *data, ArrayType *namespaces,
 			   int *res_nitems, ArrayBuildState **astate)
@@ -3711,26 +3794,13 @@ xpath_internal(text *xpath_expr_text, xmltype *data, ArrayType *namespaces,
 			xml_ereport(xmlerrcxt, ERROR, ERRCODE_INTERNAL_ERROR,
 						"could not create XPath object");
 
-		/* return empty array in cases when nothing is found */
-		if (xpathobj->nodesetval == NULL)
-			*res_nitems = 0;
+		/*
+		 * Extract the results as requested.
+		 */
+		if (res_nitems != NULL)
+			*res_nitems = xml_xpathobjtoxmlarray(xpathobj, astate);
 		else
-			*res_nitems = xpathobj->nodesetval->nodeNr;
-
-		if (*res_nitems && astate)
-		{
-			*astate = NULL;
-			for (i = 0; i < xpathobj->nodesetval->nodeNr; i++)
-			{
-				Datum		elem;
-				bool		elemisnull = false;
-
-				elem = PointerGetDatum(xml_xmlnodetoxmltype(xpathobj->nodesetval->nodeTab[i]));
-				*astate = accumArrayResult(*astate, elem,
-										   elemisnull, XMLOID,
-										   CurrentMemoryContext);
-			}
-		}
+			(void) xml_xpathobjtoxmlarray(xpathobj, astate);
 	}
 	PG_CATCH();
 	{

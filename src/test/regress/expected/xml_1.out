@@ -516,6 +516,42 @@ LINE 1: SELECT xpath('//@value', '<root value="&lt;"/>');
                                  ^
 DETAIL:  This functionality requires the server to be built with libxml support.
 HINT:  You need to rebuild PostgreSQL using --with-libxml.
+SELECT xpath('''<<invalid>>''', '<root/>');
+ERROR:  unsupported XML feature
+LINE 1: SELECT xpath('''<<invalid>>''', '<root/>');
+                                        ^
+DETAIL:  This functionality requires the server to be built with libxml support.
+HINT:  You need to rebuild PostgreSQL using --with-libxml.
+SELECT xpath('count(//*)', '<root><sub/><sub/></root>');
+ERROR:  unsupported XML feature
+LINE 1: SELECT xpath('count(//*)', '<root><sub/><sub/></root>');
+                                   ^
+DETAIL:  This functionality requires the server to be built with libxml support.
+HINT:  You need to rebuild PostgreSQL using --with-libxml.
+SELECT xpath('count(//*)=0', '<root><sub/><sub/></root>');
+ERROR:  unsupported XML feature
+LINE 1: SELECT xpath('count(//*)=0', '<root><sub/><sub/></root>');
+                                     ^
+DETAIL:  This functionality requires the server to be built with libxml support.
+HINT:  You need to rebuild PostgreSQL using --with-libxml.
+SELECT xpath('count(//*)=3', '<root><sub/><sub/></root>');
+ERROR:  unsupported XML feature
+LINE 1: SELECT xpath('count(//*)=3', '<root><sub/><sub/></root>');
+                                     ^
+DETAIL:  This functionality requires the server to be built with libxml support.
+HINT:  You need to rebuild PostgreSQL using --with-libxml.
+SELECT xpath('name(/*)', '<root><sub/><sub/></root>');
+ERROR:  unsupported XML feature
+LINE 1: SELECT xpath('name(/*)', '<root><sub/><sub/></root>');
+                                 ^
+DETAIL:  This functionality requires the server to be built with libxml support.
+HINT:  You need to rebuild PostgreSQL using --with-libxml.
+SELECT xpath('/nosuchtag', '<root/>');
+ERROR:  unsupported XML feature
+LINE 1: SELECT xpath('/nosuchtag', '<root/>');
+                                   ^
+DETAIL:  This functionality requires the server to be built with libxml support.
+HINT:  You need to rebuild PostgreSQL using --with-libxml.
 -- Test xmlexists and xpath_exists
 SELECT xmlexists('//town[text() = ''Toronto'']' PASSING BY REF '<towns><town>Bidford-on-Avon</town><town>Cwmbran</town><town>Bristol</town></towns>');
 ERROR:  unsupported XML feature
@@ -529,6 +565,12 @@ LINE 1: ...sts('//town[text() = ''Cwmbran'']' PASSING BY REF '<towns><t...
                                                              ^
 DETAIL:  This functionality requires the server to be built with libxml support.
 HINT:  You need to rebuild PostgreSQL using --with-libxml.
+SELECT xmlexists('count(/nosuchtag)' PASSING BY REF '<root/>');
+ERROR:  unsupported XML feature
+LINE 1: ...LECT xmlexists('count(/nosuchtag)' PASSING BY REF '<root/>')...
+                                                             ^
+DETAIL:  This functionality requires the server to be built with libxml support.
+HINT:  You need to rebuild PostgreSQL using --with-libxml.
 SELECT xpath_exists('//town[text() = ''Toronto'']','<towns><town>Bidford-on-Avon</town><town>Cwmbran</town><town>Bristol</town></towns>'::xml);
 ERROR:  unsupported XML feature
 LINE 1: ...ELECT xpath_exists('//town[text() = ''Toronto'']','<towns><t...
@@ -539,6 +581,12 @@ SELECT xpath_exists('//town[text() = ''Cwmbran'']','<towns><town>Bidford-on-Avon
 ERROR:  unsupported XML feature
 LINE 1: ...ELECT xpath_exists('//town[text() = ''Cwmbran'']','<towns><t...
                                                              ^
+DETAIL:  This functionality requires the server to be built with libxml support.
+HINT:  You need to rebuild PostgreSQL using --with-libxml.
+SELECT xpath_exists('count(/nosuchtag)', '<root/>'::xml);
+ERROR:  unsupported XML feature
+LINE 1: SELECT xpath_exists('count(/nosuchtag)', '<root/>'::xml);
+                                                 ^
 DETAIL:  This functionality requires the server to be built with libxml support.
 HINT:  You need to rebuild PostgreSQL using --with-libxml.
 INSERT INTO xmltest VALUES (4, '<menu><beers><name>Budvar</name><cost>free</cost><name>Carling</name><cost>lots</cost></beers></menu>'::xml);

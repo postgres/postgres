@@ -177,12 +177,20 @@ SELECT xpath('//loc:piece/@id', '<local:data xmlns:local="http://127.0.0.1"><loc
 SELECT xpath('//b', '<a>one <b>two</b> three <b>etc</b></a>');
 SELECT xpath('//text()', '<root>&lt;</root>');
 SELECT xpath('//@value', '<root value="&lt;"/>');
+SELECT xpath('''<<invalid>>''', '<root/>');
+SELECT xpath('count(//*)', '<root><sub/><sub/></root>');
+SELECT xpath('count(//*)=0', '<root><sub/><sub/></root>');
+SELECT xpath('count(//*)=3', '<root><sub/><sub/></root>');
+SELECT xpath('name(/*)', '<root><sub/><sub/></root>');
+SELECT xpath('/nosuchtag', '<root/>');
 
 -- Test xmlexists and xpath_exists
 SELECT xmlexists('//town[text() = ''Toronto'']' PASSING BY REF '<towns><town>Bidford-on-Avon</town><town>Cwmbran</town><town>Bristol</town></towns>');
 SELECT xmlexists('//town[text() = ''Cwmbran'']' PASSING BY REF '<towns><town>Bidford-on-Avon</town><town>Cwmbran</town><town>Bristol</town></towns>');
+SELECT xmlexists('count(/nosuchtag)' PASSING BY REF '<root/>');
 SELECT xpath_exists('//town[text() = ''Toronto'']','<towns><town>Bidford-on-Avon</town><town>Cwmbran</town><town>Bristol</town></towns>'::xml);
 SELECT xpath_exists('//town[text() = ''Cwmbran'']','<towns><town>Bidford-on-Avon</town><town>Cwmbran</town><town>Bristol</town></towns>'::xml);
+SELECT xpath_exists('count(/nosuchtag)', '<root/>'::xml);
 
 INSERT INTO xmltest VALUES (4, '<menu><beers><name>Budvar</name><cost>free</cost><name>Carling</name><cost>lots</cost></beers></menu>'::xml);
 INSERT INTO xmltest VALUES (5, '<menu><beers><name>Molson</name><cost>free</cost><name>Carling</name><cost>lots</cost></beers></menu>'::xml);
