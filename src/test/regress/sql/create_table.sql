@@ -240,3 +240,13 @@ CREATE TABLE IF NOT EXISTS test_tsvector(
 CREATE TABLE IF NOT EXISTS test_tsvector(
 	t text
 );
+
+CREATE UNLOGGED TABLE unlogged1 (a int);			-- OK
+INSERT INTO unlogged1 VALUES (42);
+CREATE UNLOGGED TABLE public.unlogged2 (a int);		-- also OK
+CREATE UNLOGGED TABLE pg_temp.unlogged3 (a int);	-- not OK
+CREATE TABLE pg_temp.implicity_temp (a int);		-- OK
+CREATE TEMP TABLE explicitly_temp (a int);			-- also OK
+CREATE TEMP TABLE pg_temp.doubly_temp (a int);		-- also OK
+CREATE TEMP TABLE public.temp_to_perm (a int);		-- not OK
+DROP TABLE unlogged1, public.unlogged2;
