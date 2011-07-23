@@ -857,5 +857,5 @@ makeOperatorDependencies(HeapTuple tuple)
 							oper->oprowner);
 
 	/* Dependency on extension */
-	recordDependencyOnCurrentExtension(&myself);
+	recordDependencyOnCurrentExtension(&myself, true);
 }

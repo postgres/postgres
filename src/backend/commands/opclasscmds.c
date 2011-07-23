@@ -310,7 +310,7 @@ CreateOpFamily(char *amname, char *opfname, Oid namespaceoid, Oid amoid)
 	recordDependencyOnOwner(OperatorFamilyRelationId, opfamilyoid, GetUserId());
 
 	/* dependency on extension */
-	recordDependencyOnCurrentExtension(&myself);
+	recordDependencyOnCurrentExtension(&myself, false);
 
 	/* Post creation hook for new operator family */
 	InvokeObjectAccessHook(OAT_POST_CREATE,
@@ -713,7 +713,7 @@ DefineOpClass(CreateOpClassStmt *stmt)
 	recordDependencyOnOwner(OperatorClassRelationId, opclassoid, GetUserId());
 
 	/* dependency on extension */
-	recordDependencyOnCurrentExtension(&myself);
+	recordDependencyOnCurrentExtension(&myself, false);
 
 	/* Post creation hook for new operator class */
 	InvokeObjectAccessHook(OAT_POST_CREATE,

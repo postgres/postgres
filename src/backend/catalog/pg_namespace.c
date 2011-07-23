@@ -83,7 +83,7 @@ NamespaceCreate(const char *nspName, Oid ownerId)
 	recordDependencyOnOwner(NamespaceRelationId, nspoid, ownerId);
 
 	/* dependency on extension */
-	recordDependencyOnCurrentExtension(&myself);
+	recordDependencyOnCurrentExtension(&myself, false);
 
 	/* Post creation hook for new schema */
 	InvokeObjectAccessHook(OAT_POST_CREATE, NamespaceRelationId, nspoid, 0);

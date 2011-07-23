@@ -133,7 +133,7 @@ ConversionCreate(const char *conname, Oid connamespace,
 							conowner);
 
 	/* dependency on extension */
-	recordDependencyOnCurrentExtension(&myself);
+	recordDependencyOnCurrentExtension(&myself, false);
 
 	/* Post creation hook for new conversion */
 	InvokeObjectAccessHook(OAT_POST_CREATE,

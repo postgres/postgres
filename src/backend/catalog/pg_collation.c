@@ -131,7 +131,7 @@ CollationCreate(const char *collname, Oid collnamespace,
 							collowner);
 
 	/* dependency on extension */
-	recordDependencyOnCurrentExtension(&myself);
+	recordDependencyOnCurrentExtension(&myself, false);
 
 	/* Post creation hook for new collation */
 	InvokeObjectAccessHook(OAT_POST_CREATE,
