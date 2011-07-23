@@ -1440,25 +1440,21 @@ testdb=&gt;
         <literal>\r</> to cancel.
         </para>
 
-        <tip>
-        <para>
-        <application>psql</application> checks the environment
-        variables <envar>PSQL_EDITOR</envar>, <envar>EDITOR</envar>, and
-        <envar>VISUAL</envar> (in that order) for an editor to use. If
-        all of them are unset, <filename>vi</filename> is used on Unix
-        systems, <filename>notepad.exe</filename> on Windows systems.
-        </para>
-        </tip>
-
         <para>
         If a line number is specified, <application>psql</application> will
         position the cursor on the specified line of the file or query buffer.
-        This feature requires the <varname>EDITOR_LINENUMBER_SWITCH</varname>
-        variable to be set, so that <application>psql</application> knows how
-        to specify the line number to the editor.  Note that if a single
-        all-digits argument is given, <application>psql</application> assumes
-        it is a line number not a file name.
+        Note that if a single all-digits argument is given,
+        <application>psql</application> assumes it is a line number,
+        not a file name.
         </para>
+
+        <tip>
+        <para>
+        See under <xref linkend="app-psql-environment"
+        endterm="app-psql-environment-title"> for how to configure and
+        customize your editor.
+        </para>
+        </tip>
         </listitem>
       </varlistentry>
 
@@ -1514,13 +1510,18 @@ Tue Oct 26 21:40:57 CEST 1999
 
         <para>
         If a line number is specified, <application>psql</application> will
-        position the cursor on the specified line of the function body
-        (note that the function body typically does not begin on the
-        first line of the file).
-        This feature requires the <varname>EDITOR_LINENUMBER_SWITCH</varname>
-        variable to be set, so that <application>psql</application> knows how
-        to specify the line number to the editor.
+        position the cursor on the specified line of the function body.
+        (Note that the function body typically does not begin on the first
+        line of the file.)
         </para>
+
+        <tip>
+        <para>
+        See under <xref linkend="app-psql-environment"
+        endterm="app-psql-environment-title"> for how to configure and
+        customize your editor.
+        </para>
+        </tip>
         </listitem>
       </varlistentry>
 
@@ -2584,27 +2585,6 @@ bar
       </varlistentry>
 
       <varlistentry>
-        <term><varname>EDITOR_LINENUMBER_SWITCH</varname></term>
-        <listitem>
-        <para>
-        When <command>\edit</command> or <command>\ef</command> is used with a
-        line number argument, this variable specifies the command-line switch
-        used to pass the line number to the user's editor.  For editors such
-        as <productname>emacs</> or <productname>vi</>, you can simply set
-        this variable to a plus sign.  Include a trailing space in the value
-        of the variable if there needs to be space between the switch name and
-        the line number.
-        Examples:
-
-<programlisting>
-\set EDITOR_LINENUMBER_SWITCH +
-\set EDITOR_LINENUMBER_SWITCH '--line '
-</programlisting>
-        </para>
-        </listitem>
-      </varlistentry>
-
-      <varlistentry>
         <term><varname>ENCODING</varname></term>
         <listitem>
         <para>
@@ -3152,8 +3132,8 @@ $endif
  </refsect1>
 
 
- <refsect1>
-  <title>Environment</title>
+ <refsect1 id="app-psql-environment">
+  <title id="app-psql-environment-title">Environment</title>
 
   <variablelist>
 
@@ -3203,8 +3183,41 @@ $endif
 
     <listitem>
      <para>
-      Editor used by the <command>\e</command> command.  The variables
-      are examined in the order listed; the first that is set is used.
+      Editor used by the <command>\e</command> and
+      <command>\ef</command> commands.  The variables are examined in
+      the order listed; the first that is set is used.
+     </para>
+
+     <para>
+      The built-in default editors are <filename>vi</filename> on Unix
+      systems and <filename>notepad.exe</filename> on Windows systems.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><envar>PSQL_EDITOR_LINENUMBER_ARG</envar></term>
+
+    <listitem>
+     <para>
+      When <command>\e</command> or <command>\ef</command> is used
+      with a line number argument, this variable specifies the
+      command-line argument used to pass the starting line number to
+      the user's editor.  For editors such as <productname>Emacs</> or
+      <productname>vi</>, this is a plus sign.  Include a trailing
+      space in the value of the variable if there needs to be space
+      between the option name and the line number.  Examples:
+<programlisting>
+PSQL_EDITOR_LINENUMBER_ARG='+'
+PSQL_EDITOR_LINENUMBER_ARG='--line '
+</programlisting>
+     </para>
+
+     <para>
+      The default is <literal>+</literal> on Unix systems
+      (corresponding to the default editor <filename>vi</filename>,
+      and useful for many other common editors); but there is no
+      default on Windows systems.
      </para>
     </listitem>
    </varlistentry>

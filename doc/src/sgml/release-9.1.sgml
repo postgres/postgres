@@ -1994,7 +1994,7 @@
 
        <para>
         This is passed to the editor according to the
-        <envar>EDITOR_LINENUMBER_SWITCH</> psql variable.
+        <envar>PSQL_EDITOR_LINENUMBER_ARG</> environment variable.
        </para>
       </listitem>
 
