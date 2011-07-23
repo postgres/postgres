@@ -388,8 +388,7 @@ create_proc_lang(const char *languageName, bool replace,
 	 * Create dependencies for the new language.  If we are updating an
 	 * existing language, first delete any existing pg_depend entries.
 	 * (However, since we are not changing ownership or permissions, the
-	 * shared dependencies do *not* need to change, and we leave them alone.
-	 * We also don't change any pre-existing extension-membership dependency.)
+	 * shared dependencies do *not* need to change, and we leave them alone.)
 	 */
 	myself.classId = LanguageRelationId;
 	myself.objectId = HeapTupleGetOid(tup);
@@ -404,8 +403,7 @@ create_proc_lang(const char *languageName, bool replace,
 								languageOwner);
 
 	/* dependency on extension */
-	if (!is_update)
-		recordDependencyOnCurrentExtension(&myself);
+	recordDependencyOnCurrentExtension(&myself, is_update);
 
 	/* dependency on the PL handler function */
 	referenced.classId = ProcedureRelationId;

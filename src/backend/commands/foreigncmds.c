@@ -515,7 +515,7 @@ CreateForeignDataWrapper(CreateFdwStmt *stmt)
 	recordDependencyOnOwner(ForeignDataWrapperRelationId, fdwId, ownerId);
 
 	/* dependency on extension */
-	recordDependencyOnCurrentExtension(&myself);
+	recordDependencyOnCurrentExtension(&myself, false);
 
 	/* Post creation hook for new foreign data wrapper */
 	InvokeObjectAccessHook(OAT_POST_CREATE,
@@ -857,7 +857,7 @@ CreateForeignServer(CreateForeignServerStmt *stmt)
 	recordDependencyOnOwner(ForeignServerRelationId, srvId, ownerId);
 
 	/* dependency on extension */
-	recordDependencyOnCurrentExtension(&myself);
+	recordDependencyOnCurrentExtension(&myself, false);
 
 	/* Post creation hook for new foreign server */
 	InvokeObjectAccessHook(OAT_POST_CREATE, ForeignServerRelationId, srvId, 0);
@@ -1137,7 +1137,7 @@ CreateUserMapping(CreateUserMappingStmt *stmt)
 	}
 
 	/* dependency on extension */
-	recordDependencyOnCurrentExtension(&myself);
+	recordDependencyOnCurrentExtension(&myself, false);
 
 	/* Post creation hook for new user mapping */
 	InvokeObjectAccessHook(OAT_POST_CREATE, UserMappingRelationId, umId, 0);

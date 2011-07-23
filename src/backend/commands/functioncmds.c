@@ -1489,6 +1489,7 @@ CreateCast(CreateCastStmt *stmt)
 	char		sourcetyptype;
 	char		targettyptype;
 	Oid			funcid;
+	Oid			castid;
 	int			nargs;
 	char		castcontext;
 	char		castmethod;
@@ -1734,13 +1735,13 @@ CreateCast(CreateCastStmt *stmt)
 
 	tuple = heap_form_tuple(RelationGetDescr(relation), values, nulls);
 
-	simple_heap_insert(relation, tuple);
+	castid = simple_heap_insert(relation, tuple);
 
 	CatalogUpdateIndexes(relation, tuple);
 
 	/* make dependency entries */
 	myself.classId = CastRelationId;
-	myself.objectId = HeapTupleGetOid(tuple);
+	myself.objectId = castid;
 	myself.objectSubId = 0;
 
 	/* dependency on source type */
@@ -1765,11 +1766,10 @@ CreateCast(CreateCastStmt *stmt)
 	}
 
 	/* dependency on extension */
-	recordDependencyOnCurrentExtension(&myself);
+	recordDependencyOnCurrentExtension(&myself, false);
 
 	/* Post creation hook for new cast */
-	InvokeObjectAccessHook(OAT_POST_CREATE,
-						   CastRelationId, myself.objectId, 0);
+	InvokeObjectAccessHook(OAT_POST_CREATE, CastRelationId, castid, 0);
 
 	heap_freetuple(tuple);
 

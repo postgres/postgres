@@ -1256,7 +1256,7 @@ heap_create_with_catalog(const char *relname,
 
 		recordDependencyOnOwner(RelationRelationId, relid, ownerid);
 
-		recordDependencyOnCurrentExtension(&myself);
+		recordDependencyOnCurrentExtension(&myself, false);
 
 		if (reloftypeid)
 		{

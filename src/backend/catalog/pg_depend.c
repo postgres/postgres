@@ -130,14 +130,44 @@ recordMultipleDependencies(const ObjectAddress *depender,
  *
  * This must be called during creation of any user-definable object type
  * that could be a member of an extension.
+ *
+ * If isReplace is true, the object already existed (or might have already
+ * existed), so we must check for a pre-existing extension membership entry.
+ * Passing false is a guarantee that the object is newly created, and so
+ * could not already be a member of any extension.
  */
 void
-recordDependencyOnCurrentExtension(const ObjectAddress *object)
+recordDependencyOnCurrentExtension(const ObjectAddress *object,
+								   bool isReplace)
 {
+	/* Only whole objects can be extension members */
+	Assert(object->objectSubId == 0);
+
 	if (creating_extension)
 	{
 		ObjectAddress extension;
 
+		/* Only need to check for existing membership if isReplace */
+		if (isReplace)
+		{
+			Oid		oldext;
+
+			oldext = getExtensionOfObject(object->classId, object->objectId);
+			if (OidIsValid(oldext))
+			{
+				/* If already a member of this extension, nothing to do */
+				if (oldext == CurrentExtensionObject)
+					return;
+				/* Already a member of some other extension, so reject */
+				ereport(ERROR,
+						(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
+						 errmsg("%s is already a member of extension \"%s\"",
+								getObjectDescription(object),
+								get_extension_name(oldext))));
+			}
+		}
+
+		/* OK, record it as a member of CurrentExtensionObject */
 		extension.classId = ExtensionRelationId;
 		extension.objectId = CurrentExtensionObject;
 		extension.objectSubId = 0;
