@@ -1808,7 +1808,7 @@ editFile(const char *fname, int lineno)
 #else
 	if (lineno > 0)
 		sprintf(sys, SYSTEMQUOTE "\"%s\" %s%d \"%s\"" SYSTEMQUOTE,
-				editorName, editor_lineno_switch, lineno, fname);
+				editorName, editor_lineno_arg, lineno, fname);
 	else
 		sprintf(sys, SYSTEMQUOTE "\"%s\" \"%s\"" SYSTEMQUOTE,
 				editorName, fname);
