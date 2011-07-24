@@ -273,6 +273,11 @@ pqsecure_close(PGconn *conn)
 
 /*
  *	Read data from a secure connection.
+ *
+ * If SSL is in use, this function is responsible for putting a suitable
+ * message into conn->errorMessage upon error; but the caller does that
+ * when not using SSL.  In either case, caller uses the returned errno
+ * to decide whether to continue/retry after error.
  */
 ssize_t
 pqsecure_read(PGconn *conn, void *ptr, size_t len)
@@ -294,6 +299,13 @@ rloop:
 		switch (err)
 		{
 			case SSL_ERROR_NONE:
+				if (n < 0)
+				{
+					printfPQExpBuffer(&conn->errorMessage,
+									  libpq_gettext("SSL_read failed but did not provide error information\n"));
+					/* assume the connection is broken */
+					SOCK_ERRNO_SET(ECONNRESET);
+				}
 				break;
 			case SSL_ERROR_WANT_READ:
 				n = 0;
@@ -311,7 +323,7 @@ rloop:
 				{
 					char		sebuf[256];
 
-					if (n == -1)
+					if (n < 0)
 					{
 						REMEMBER_EPIPE(SOCK_ERRNO == EPIPE);
 						printfPQExpBuffer(&conn->errorMessage,
@@ -322,7 +334,7 @@ rloop:
 					{
 						printfPQExpBuffer(&conn->errorMessage,
 						 libpq_gettext("SSL SYSCALL error: EOF detected\n"));
-
+						/* assume the connection is broken */
 						SOCK_ERRNO_SET(ECONNRESET);
 						n = -1;
 					}
@@ -330,14 +342,19 @@ rloop:
 				}
 			case SSL_ERROR_SSL:
 				{
-					char	   *err = SSLerrmessage();
+					char	   *errm = SSLerrmessage();
 
 					printfPQExpBuffer(&conn->errorMessage,
-									  libpq_gettext("SSL error: %s\n"), err);
-					SSLerrfree(err);
+									  libpq_gettext("SSL error: %s\n"), errm);
+					SSLerrfree(errm);
+					/* assume the connection is broken */
+					SOCK_ERRNO_SET(ECONNRESET);
+					n = -1;
+					break;
 				}
-				/* fall through */
 			case SSL_ERROR_ZERO_RETURN:
+				printfPQExpBuffer(&conn->errorMessage,
+								  libpq_gettext("SSL connection has been closed unexpectedly\n"));
 				SOCK_ERRNO_SET(ECONNRESET);
 				n = -1;
 				break;
@@ -345,6 +362,8 @@ rloop:
 				printfPQExpBuffer(&conn->errorMessage,
 						  libpq_gettext("unrecognized SSL error code: %d\n"),
 								  err);
+				/* assume the connection is broken */
+				SOCK_ERRNO_SET(ECONNRESET);
 				n = -1;
 				break;
 		}
@@ -360,6 +379,11 @@ rloop:
 
 /*
  *	Write data to a secure connection.
+ *
+ * If SSL is in use, this function is responsible for putting a suitable
+ * message into conn->errorMessage upon error; but the caller does that
+ * when not using SSL.  In either case, caller uses the returned errno
+ * to decide whether to continue/retry after error.
  */
 ssize_t
 pqsecure_write(PGconn *conn, const void *ptr, size_t len)
@@ -379,6 +403,13 @@ pqsecure_write(PGconn *conn, const void *ptr, size_t len)
 		switch (err)
 		{
 			case SSL_ERROR_NONE:
+				if (n < 0)
+				{
+					printfPQExpBuffer(&conn->errorMessage,
+									  libpq_gettext("SSL_write failed but did not provide error information\n"));
+					/* assume the connection is broken */
+					SOCK_ERRNO_SET(ECONNRESET);
+				}
 				break;
 			case SSL_ERROR_WANT_READ:
 
@@ -396,7 +427,7 @@ pqsecure_write(PGconn *conn, const void *ptr, size_t len)
 				{
 					char		sebuf[256];
 
-					if (n == -1)
+					if (n < 0)
 					{
 						REMEMBER_EPIPE(SOCK_ERRNO == EPIPE);
 						printfPQExpBuffer(&conn->errorMessage,
@@ -407,6 +438,7 @@ pqsecure_write(PGconn *conn, const void *ptr, size_t len)
 					{
 						printfPQExpBuffer(&conn->errorMessage,
 						 libpq_gettext("SSL SYSCALL error: EOF detected\n"));
+						/* assume the connection is broken */
 						SOCK_ERRNO_SET(ECONNRESET);
 						n = -1;
 					}
@@ -414,14 +446,19 @@ pqsecure_write(PGconn *conn, const void *ptr, size_t len)
 				}
 			case SSL_ERROR_SSL:
 				{
-					char	   *err = SSLerrmessage();
+					char	   *errm = SSLerrmessage();
 
 					printfPQExpBuffer(&conn->errorMessage,
-									  libpq_gettext("SSL error: %s\n"), err);
-					SSLerrfree(err);
+									  libpq_gettext("SSL error: %s\n"), errm);
+					SSLerrfree(errm);
+					/* assume the connection is broken */
+					SOCK_ERRNO_SET(ECONNRESET);
+					n = -1;
+					break;
 				}
-				/* fall through */
 			case SSL_ERROR_ZERO_RETURN:
+				printfPQExpBuffer(&conn->errorMessage,
+								  libpq_gettext("SSL connection has been closed unexpectedly\n"));
 				SOCK_ERRNO_SET(ECONNRESET);
 				n = -1;
 				break;
@@ -429,6 +466,8 @@ pqsecure_write(PGconn *conn, const void *ptr, size_t len)
 				printfPQExpBuffer(&conn->errorMessage,
 						  libpq_gettext("unrecognized SSL error code: %d\n"),
 								  err);
+				/* assume the connection is broken */
+				SOCK_ERRNO_SET(ECONNRESET);
 				n = -1;
 				break;
 		}
