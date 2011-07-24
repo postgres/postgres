@@ -16,6 +16,9 @@
 static void check_data_dir(const char *pg_data);
 static void check_bin_dir(ClusterInfo *cluster);
 static void validate_exec(const char *dir, const char *cmdName);
+#ifdef WIN32
+static int win32_check_directory_write_permissions(void);
+#endif
 
 
 /*
@@ -97,17 +100,11 @@ verify_directories(void)
 
 	prep_status("Checking current, bin, and data directories");
 
-	if (access(".", R_OK | W_OK
 #ifndef WIN32
-
-	/*
-	 * Do a directory execute check only on Unix because execute permission on
-	 * NTFS means "can execute scripts", which we don't care about. Also, X_OK
-	 * is not defined in the Windows API.
-	 */
-			   | X_OK
+	if (access(".", R_OK | W_OK | X_OK) != 0)
+#else
+	if (win32_check_directory_write_permissions() != 0)
 #endif
-			   ) != 0)
 		pg_log(PG_FATAL,
 		  "You must have read and write access in the current directory.\n");
 
@@ -117,6 +114,32 @@ verify_directories(void)
 	check_data_dir(new_cluster.pgdata);
 	check_ok();
 }
+
+
+#ifdef WIN32
+/*
+ * win32_check_directory_write_permissions()
+ *
+ *	access() on WIN32 can't check directory permissions, so we have to
+ *	optionally create, then delete a file to check.
+ *		http://msdn.microsoft.com/en-us/library/1w06ktdy%28v=vs.80%29.aspx
+ */
+static int
+win32_check_directory_write_permissions(void)
+{
+	int fd;
+
+	/*
+	 *	We open a file we would normally create anyway.  We do this even in
+	 *	'check' mode, which isn't ideal, but this is the best we can do.
+	 */	
+	if ((fd = open(GLOBALS_DUMP_FILE, O_RDWR | O_CREAT, S_IRUSR | S_IWUSR)) < 0)
+		return -1;
+	close(fd);
+
+	return unlink(GLOBALS_DUMP_FILE);
+}
+#endif
 
 
 /*
