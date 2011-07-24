@@ -639,7 +639,9 @@ retry3:
 		if (SOCK_ERRNO == ECONNRESET)
 			goto definitelyFailed;
 #endif
-		printfPQExpBuffer(&conn->errorMessage,
+		/* in SSL mode, pqsecure_read set the error message */
+		if (conn->ssl == NULL)
+			printfPQExpBuffer(&conn->errorMessage,
 				   libpq_gettext("could not receive data from server: %s\n"),
 						  SOCK_STRERROR(SOCK_ERRNO, sebuf, sizeof(sebuf)));
 		return -1;
@@ -729,7 +731,9 @@ retry4:
 		if (SOCK_ERRNO == ECONNRESET)
 			goto definitelyFailed;
 #endif
-		printfPQExpBuffer(&conn->errorMessage,
+		/* in SSL mode, pqsecure_read set the error message */
+		if (conn->ssl == NULL)
+			printfPQExpBuffer(&conn->errorMessage,
 				   libpq_gettext("could not receive data from server: %s\n"),
 						  SOCK_STRERROR(SOCK_ERRNO, sebuf, sizeof(sebuf)));
 		return -1;
@@ -745,8 +749,10 @@ retry4:
 	 * means the connection has been closed.  Cope.
 	 */
 definitelyFailed:
-	printfPQExpBuffer(&conn->errorMessage,
-					  libpq_gettext(
+	/* in SSL mode, pqsecure_read set the error message */
+	if (conn->ssl == NULL)
+		printfPQExpBuffer(&conn->errorMessage,
+						  libpq_gettext(
 								"server closed the connection unexpectedly\n"
 				   "\tThis probably means the server terminated abnormally\n"
 							 "\tbefore or while processing the request.\n"));
@@ -823,8 +829,10 @@ pqSendSome(PGconn *conn, int len)
 #ifdef ECONNRESET
 				case ECONNRESET:
 #endif
-					printfPQExpBuffer(&conn->errorMessage,
-									  libpq_gettext(
+					/* in SSL mode, pqsecure_write set the error message */
+					if (conn->ssl == NULL)
+						printfPQExpBuffer(&conn->errorMessage,
+										  libpq_gettext(
 								"server closed the connection unexpectedly\n"
 					"\tThis probably means the server terminated abnormally\n"
 							 "\tbefore or while processing the request.\n"));
@@ -841,7 +849,9 @@ pqSendSome(PGconn *conn, int len)
 					return -1;
 
 				default:
-					printfPQExpBuffer(&conn->errorMessage,
+					/* in SSL mode, pqsecure_write set the error message */
+					if (conn->ssl == NULL)
+						printfPQExpBuffer(&conn->errorMessage,
 						libpq_gettext("could not send data to server: %s\n"),
 							SOCK_STRERROR(SOCK_ERRNO, sebuf, sizeof(sebuf)));
 					/* We don't assume it's a fatal error... */
