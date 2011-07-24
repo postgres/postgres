@@ -719,6 +719,12 @@ initialize_SSL(void)
 							SSLerrmessage())));
 
 		/*
+		 * Disable OpenSSL's moving-write-buffer sanity check, because it
+		 * causes unnecessary failures in nonblocking send cases.
+		 */
+		SSL_CTX_set_mode(SSL_context, SSL_MODE_ACCEPT_MOVING_WRITE_BUFFER);
+
+		/*
 		 * Load and verify certificate and private key
 		 */
 		if (SSL_CTX_use_certificate_file(SSL_context,
