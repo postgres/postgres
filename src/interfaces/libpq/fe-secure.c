@@ -900,6 +900,12 @@ init_ssl_system(PGconn *conn)
 #endif
 			return -1;
 		}
+
+		/*
+		 * Disable OpenSSL's moving-write-buffer sanity check, because it
+		 * causes unnecessary failures in nonblocking send cases.
+		 */
+		SSL_CTX_set_mode(SSL_context, SSL_MODE_ACCEPT_MOVING_WRITE_BUFFER);
 	}
 #ifdef ENABLE_THREAD_SAFETY
 	pthread_mutex_unlock(&init_mutex);
