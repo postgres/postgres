@@ -152,7 +152,9 @@ BeginForeignScan (ForeignScanState *node,
 </programlisting>
 
      Begin executing a foreign scan. This is called during executor startup.
-     It should perform any initialization needed before the scan can start.
+     It should perform any initialization needed before the scan can start,
+     but not start executing the actual scan (that should be done upon the
+     first call to <function>IterateForeignScan</>).
      The <structname>ForeignScanState</> node has already been created, but
      its <structfield>fdw_state</> field is still NULL.  Information about
      the table to scan is accessible through the
