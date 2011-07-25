@@ -33,6 +33,7 @@
 
 #include "postgres_fe.h"
 
+#include "getopt_long.h"
 #include "libpq-fe.h"
 #include "libpq/pqsignal.h"
 #include "portability/instr_time.h"
@@ -43,10 +44,6 @@
 #include <sys/time.h>
 #include <unistd.h>
 #endif   /* ! WIN32 */
-
-#ifdef HAVE_GETOPT_H
-#include <getopt.h>
-#endif
 
 #ifdef HAVE_SYS_SELECT_H
 #include <sys/select.h>
@@ -121,6 +118,11 @@ int			scale = 1;
  * space during inserts and leave 10 percent free.
  */
 int			fillfactor = 100;
+
+/*
+ * use unlogged tables?
+ */
+int			unlogged_tables = 0;
 
 /*
  * end of configurable parameters
@@ -357,6 +359,8 @@ usage(const char *progname)
 		   "  -h HOSTNAME  database server host or socket directory\n"
 		   "  -p PORT      database server port number\n"
 		   "  -U USERNAME  connect as specified database user\n"
+		   "  --unlogged-tables\n"
+		   "               create tables as unlogged tables\n"
 		   "  --help       show this help, then exit\n"
 		   "  --version    output version information, then exit\n"
 		   "\n"
@@ -1259,21 +1263,31 @@ init(void)
 
 	for (i = 0; i < lengthof(DDLs); i++)
 	{
+		char		buffer1[128];
+		char		buffer2[128];
+		char	   *qry = DDLs[i];
+
 		/*
 		 * set fillfactor for branches, tellers and accounts tables
 		 */
-		if ((strstr(DDLs[i], "create table pgbench_branches") == DDLs[i]) ||
-			(strstr(DDLs[i], "create table pgbench_tellers") == DDLs[i]) ||
-			(strstr(DDLs[i], "create table pgbench_accounts") == DDLs[i]))
+		if ((strstr(qry, "create table pgbench_branches") == DDLs[i]) ||
+			(strstr(qry, "create table pgbench_tellers") == DDLs[i]) ||
+			(strstr(qry, "create table pgbench_accounts") == DDLs[i]))
 		{
-			char		ddl_stmt[128];
-
-			snprintf(ddl_stmt, 128, DDLs[i], fillfactor);
-			executeStatement(con, ddl_stmt);
-			continue;
+			snprintf(buffer1, 128, qry, fillfactor);
+			qry = buffer1;
 		}
-		else
-			executeStatement(con, DDLs[i]);
+
+		/*
+		 * set unlogged tables, if requested
+		 */
+		if (unlogged_tables && strncmp(qry, "create table", 12) == 0)
+		{
+			snprintf(buffer2, 128, "create unlogged%s", qry + 6);
+			qry = buffer2;
+		}
+
+		executeStatement(con, qry);
 	}
 
 	executeStatement(con, "begin");
@@ -1767,6 +1781,7 @@ main(int argc, char **argv)
 	int			do_vacuum_accounts = 0; /* do vacuum accounts before testing? */
 	int			ttype = 0;		/* transaction type. 0: TPC-B, 1: SELECT only,
 								 * 2: skip update of branches and tellers */
+	int			optindex;
 	char	   *filename = NULL;
 	bool		scale_given = false;
 
@@ -1779,6 +1794,11 @@ main(int argc, char **argv)
 	int			total_xacts;
 
 	int			i;
+
+	static struct option long_options[] = {
+			{"unlogged-tables", no_argument, &unlogged_tables, 1},
+			{NULL, 0, NULL, 0}
+	};
 
 #ifdef HAVE_GETRLIMIT
 	struct rlimit rlim;
@@ -1823,7 +1843,7 @@ main(int argc, char **argv)
 	state = (CState *) xmalloc(sizeof(CState));
 	memset(state, 0, sizeof(CState));
 
-	while ((c = getopt(argc, argv, "ih:nvp:dSNc:j:Crs:t:T:U:lf:D:F:M:")) != -1)
+	while ((c = getopt_long(argc, argv, "ih:nvp:dSNc:j:Crs:t:T:U:lf:D:F:M:", long_options, &optindex)) != -1)
 	{
 		switch (c)
 		{
@@ -1974,6 +1994,9 @@ main(int argc, char **argv)
 					fprintf(stderr, "invalid query mode (-M): %s\n", optarg);
 					exit(1);
 				}
+				break;
+			case 0:
+				/* This covers the long options. */
 				break;
 			default:
 				fprintf(stderr, _("Try \"%s --help\" for more information.\n"), progname);

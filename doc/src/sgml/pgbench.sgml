@@ -159,6 +159,15 @@ pgbench <optional> <replaceable>options</> </optional> <replaceable>dbname</>
       </listitem>
      </varlistentry>
 
+     <varlistentry>
+      <term><option>--unlogged-tables</option></term>
+      <listitem>
+       <para>
+        Create all tables as unlogged tables, rather than permanent tables.
+       </para>
+      </listitem>
+     </varlistentry>
+
     </variablelist>
    </para>
 
