@@ -3008,6 +3008,9 @@ ANALYZE measurement;
    <indexterm>
     <primary>foreign table</primary>
    </indexterm>
+   <indexterm>
+    <primary>user mapping</primary>
+   </indexterm>
 
    <para>
     <productname>PostgreSQL</productname> implements portions of the SQL/MED
@@ -3037,8 +3040,15 @@ ANALYZE measurement;
     tables</firstterm>, which define the structure of the remote data. A
     foreign table can be used in queries just like a normal table, but a
     foreign table has no storage in the PostgreSQL server.  Whenever it is
-    used, PostgreSQL asks the foreign data wrapper to fetch the data from the
-    external source.
+    used, <productname>PostgreSQL</productname> asks the foreign data wrapper
+    to fetch the data from the external source.
+   </para>
+
+   <para>
+    Accessing remote data may require authentication at the external
+    data source.  This information can be provided by a
+    <firstterm>user mapping</>, which can provide additional options based
+    on the current <productname>PostgreSQL</productname> role.
    </para>
 
    <para>
