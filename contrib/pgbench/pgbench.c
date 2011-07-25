@@ -125,6 +125,12 @@ int			fillfactor = 100;
 int			unlogged_tables = 0;
 
 /*
+ * tablespace selection
+ */
+char	   *tablespace = NULL;
+char	   *index_tablespace = NULL;
+
+/*
  * end of configurable parameters
  *********************************************************************/
 
@@ -359,6 +365,10 @@ usage(const char *progname)
 		   "  -h HOSTNAME  database server host or socket directory\n"
 		   "  -p PORT      database server port number\n"
 		   "  -U USERNAME  connect as specified database user\n"
+		   "  --index-tablespace=TABLESPACE\n"
+		   "               create indexes in the specified tablespace\n"
+		   "  --tablespace=TABLESPACE\n"
+		   "               create tables in the specified tablespace\n"
 		   "  --unlogged-tables\n"
 		   "               create tables as unlogged tables\n"
 		   "  --help       show this help, then exit\n"
@@ -1237,15 +1247,32 @@ init(void)
 	 * versions.  Since pgbench has never pretended to be fully TPC-B
 	 * compliant anyway, we stick with the historical behavior.
 	 */
-	static char *DDLs[] = {
-		"drop table if exists pgbench_branches",
-		"create table pgbench_branches(bid int not null,bbalance int,filler char(88)) with (fillfactor=%d)",
-		"drop table if exists pgbench_tellers",
-		"create table pgbench_tellers(tid int not null,bid int,tbalance int,filler char(84)) with (fillfactor=%d)",
-		"drop table if exists pgbench_accounts",
-		"create table pgbench_accounts(aid int not null,bid int,abalance int,filler char(84)) with (fillfactor=%d)",
-		"drop table if exists pgbench_history",
-		"create table pgbench_history(tid int,bid int,aid int,delta int,mtime timestamp,filler char(22))"
+	struct ddlinfo {
+		char *table;
+		char *cols;
+		int declare_fillfactor;
+	};
+	struct ddlinfo DDLs[] = {
+		{
+			"pgbench_branches",
+			"bid int not null,bbalance int,filler char(88)",
+			1
+		},
+		{
+			"pgbench_tellers",
+			"tid int not null,bid int,tbalance int,filler char(84)",
+			1
+		},
+		{
+			"pgbench_accounts",
+			"aid int not null,bid int,abalance int,filler char(84)",
+			1
+		},
+		{
+			"pgbench_history",
+			"tid int,bid int,aid int,delta int,mtime timestamp,filler char(22)",
+			0
+		}
 	};
 	static char *DDLAFTERs[] = {
 		"alter table pgbench_branches add primary key (bid)",
@@ -1263,31 +1290,33 @@ init(void)
 
 	for (i = 0; i < lengthof(DDLs); i++)
 	{
-		char		buffer1[128];
-		char		buffer2[128];
-		char	   *qry = DDLs[i];
+		char		opts[256];
+		char		buffer[256];
+		struct ddlinfo *ddl = &DDLs[i];
 
-		/*
-		 * set fillfactor for branches, tellers and accounts tables
-		 */
-		if ((strstr(qry, "create table pgbench_branches") == DDLs[i]) ||
-			(strstr(qry, "create table pgbench_tellers") == DDLs[i]) ||
-			(strstr(qry, "create table pgbench_accounts") == DDLs[i]))
+		/* Remove old table, if it exists. */
+		snprintf(buffer, 256, "drop table if exists %s", ddl->table);
+		executeStatement(con, buffer);
+
+		/* Construct new create table statement. */
+		opts[0] = '\0';
+		if (ddl->declare_fillfactor)
+			snprintf(opts+strlen(opts), 256-strlen(opts),
+				" with (fillfactor=%d)", fillfactor);
+		if (tablespace != NULL)
 		{
-			snprintf(buffer1, 128, qry, fillfactor);
-			qry = buffer1;
+			char *escape_tablespace;
+			escape_tablespace = PQescapeIdentifier(con, tablespace,
+												   strlen(tablespace));
+			snprintf(opts+strlen(opts), 256-strlen(opts),
+				" tablespace %s", escape_tablespace);
+			PQfreemem(escape_tablespace);
 		}
+		snprintf(buffer, 256, "create%s table %s(%s)%s",
+				 unlogged_tables ? " unlogged" : "",
+				 ddl->table, ddl->cols, opts);
 
-		/*
-		 * set unlogged tables, if requested
-		 */
-		if (unlogged_tables && strncmp(qry, "create table", 12) == 0)
-		{
-			snprintf(buffer2, 128, "create unlogged%s", qry + 6);
-			qry = buffer2;
-		}
-
-		executeStatement(con, qry);
+		executeStatement(con, buffer);
 	}
 
 	executeStatement(con, "begin");
@@ -1354,7 +1383,23 @@ init(void)
 	 */
 	fprintf(stderr, "set primary key...\n");
 	for (i = 0; i < lengthof(DDLAFTERs); i++)
-		executeStatement(con, DDLAFTERs[i]);
+	{
+		char	buffer[256];
+
+		strncpy(buffer, DDLAFTERs[i], 256);
+
+		if (index_tablespace != NULL)
+		{
+			char *escape_tablespace;
+			escape_tablespace = PQescapeIdentifier(con, index_tablespace,
+												   strlen(index_tablespace));
+			snprintf(buffer+strlen(buffer), 256-strlen(buffer),
+				" using index tablespace %s", escape_tablespace);
+			PQfreemem(escape_tablespace);
+		}
+
+		executeStatement(con, buffer);
+	}
 
 	/* vacuum */
 	fprintf(stderr, "vacuum...");
@@ -1796,6 +1841,8 @@ main(int argc, char **argv)
 	int			i;
 
 	static struct option long_options[] = {
+			{"index-tablespace", required_argument, NULL, 3},
+			{"tablespace", required_argument, NULL, 2},
 			{"unlogged-tables", no_argument, &unlogged_tables, 1},
 			{NULL, 0, NULL, 0}
 	};
@@ -1996,7 +2043,13 @@ main(int argc, char **argv)
 				}
 				break;
 			case 0:
-				/* This covers the long options. */
+				/* This covers long options which take no argument. */
+				break;
+			case 2:							/* tablespace */
+				tablespace = optarg;
+				break;
+			case 3:							/* index-tablespace */
+				index_tablespace = optarg;
 				break;
 			default:
 				fprintf(stderr, _("Try \"%s --help\" for more information.\n"), progname);

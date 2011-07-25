@@ -160,6 +160,26 @@ pgbench <optional> <replaceable>options</> </optional> <replaceable>dbname</>
      </varlistentry>
 
      <varlistentry>
+      <term><option>--index-tablespace=<replaceable>index_tablespace</replaceable></option></term>
+      <listitem>
+       <para>
+        Create indexes in the specified tablespace, rather than the default
+        tablespace.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term><option>--tablespace=<replaceable>tablespace</replaceable></option></term>
+      <listitem>
+       <para>
+        Create tables in the specified tablespace, rather than the default
+        tablespace.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
       <term><option>--unlogged-tables</option></term>
       <listitem>
        <para>
