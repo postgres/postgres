@@ -556,7 +556,6 @@ pqReadData(PGconn *conn)
 {
 	int			someread = 0;
 	int			nread;
-	char		sebuf[256];
 
 	if (conn->sock < 0)
 	{
@@ -625,11 +624,7 @@ retry3:
 		if (SOCK_ERRNO == ECONNRESET)
 			goto definitelyFailed;
 #endif
-		/* in SSL mode, pqsecure_read set the error message */
-		if (conn->ssl == NULL)
-			printfPQExpBuffer(&conn->errorMessage,
-				   libpq_gettext("could not receive data from server: %s\n"),
-						  SOCK_STRERROR(SOCK_ERRNO, sebuf, sizeof(sebuf)));
+		/* pqsecure_read set the error message for us */
 		return -1;
 	}
 	if (nread > 0)
@@ -689,6 +684,11 @@ retry3:
 			/* ready for read */
 			break;
 		default:
+			printfPQExpBuffer(&conn->errorMessage,
+							  libpq_gettext(
+								"server closed the connection unexpectedly\n"
+				   "\tThis probably means the server terminated abnormally\n"
+							 "\tbefore or while processing the request.\n"));
 			goto definitelyFailed;
 	}
 
@@ -717,11 +717,7 @@ retry4:
 		if (SOCK_ERRNO == ECONNRESET)
 			goto definitelyFailed;
 #endif
-		/* in SSL mode, pqsecure_read set the error message */
-		if (conn->ssl == NULL)
-			printfPQExpBuffer(&conn->errorMessage,
-				   libpq_gettext("could not receive data from server: %s\n"),
-						  SOCK_STRERROR(SOCK_ERRNO, sebuf, sizeof(sebuf)));
+		/* pqsecure_read set the error message for us */
 		return -1;
 	}
 	if (nread > 0)
@@ -732,16 +728,10 @@ retry4:
 
 	/*
 	 * OK, we are getting a zero read even though select() says ready. This
-	 * means the connection has been closed.  Cope.
+	 * means the connection has been closed.  Cope.  Note that errorMessage
+	 * has been set already.
 	 */
 definitelyFailed:
-	/* in SSL mode, pqsecure_read set the error message */
-	if (conn->ssl == NULL)
-		printfPQExpBuffer(&conn->errorMessage,
-						  libpq_gettext(
-								"server closed the connection unexpectedly\n"
-				   "\tThis probably means the server terminated abnormally\n"
-							 "\tbefore or while processing the request.\n"));
 	conn->status = CONNECTION_BAD;		/* No more connection to backend */
 	pqsecure_close(conn);
 	closesocket(conn->sock);
@@ -777,7 +767,6 @@ pqSendSome(PGconn *conn, int len)
 	while (len > 0)
 	{
 		int			sent;
-		char		sebuf[256];
 
 #ifndef WIN32
 		sent = pqsecure_write(conn, ptr, len);
@@ -792,11 +781,7 @@ pqSendSome(PGconn *conn, int len)
 
 		if (sent < 0)
 		{
-			/*
-			 * Anything except EAGAIN/EWOULDBLOCK/EINTR is trouble. If it's
-			 * EPIPE or ECONNRESET, assume we've lost the backend connection
-			 * permanently.
-			 */
+			/* Anything except EAGAIN/EWOULDBLOCK/EINTR is trouble */
 			switch (SOCK_ERRNO)
 			{
 #ifdef EAGAIN
@@ -810,17 +795,8 @@ pqSendSome(PGconn *conn, int len)
 				case EINTR:
 					continue;
 
-				case EPIPE:
-#ifdef ECONNRESET
-				case ECONNRESET:
-#endif
-					/* in SSL mode, pqsecure_write set the error message */
-					if (conn->ssl == NULL)
-						printfPQExpBuffer(&conn->errorMessage,
-										  libpq_gettext(
-								"server closed the connection unexpectedly\n"
-					"\tThis probably means the server terminated abnormally\n"
-							 "\tbefore or while processing the request.\n"));
+				default:
+					/* pqsecure_write set the error message for us */
 
 					/*
 					 * We used to close the socket here, but that's a bad idea
@@ -830,16 +806,6 @@ pqSendSome(PGconn *conn, int len)
 					 * pqReadData finds no more data can be read.  But abandon
 					 * attempt to send data.
 					 */
-					conn->outCount = 0;
-					return -1;
-
-				default:
-					/* in SSL mode, pqsecure_write set the error message */
-					if (conn->ssl == NULL)
-						printfPQExpBuffer(&conn->errorMessage,
-						libpq_gettext("could not send data to server: %s\n"),
-							SOCK_STRERROR(SOCK_ERRNO, sebuf, sizeof(sebuf)));
-					/* We don't assume it's a fatal error... */
 					conn->outCount = 0;
 					return -1;
 			}
