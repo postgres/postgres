@@ -257,7 +257,7 @@ ifndef PGXS
 endif
 
 # against installed postmaster
-installcheck: submake
+installcheck: submake $(REGRESS_PREP)
 	$(pg_regress_installcheck) $(REGRESS_OPTS) $(REGRESS)
 
 ifdef PGXS
@@ -265,7 +265,7 @@ check:
 	@echo '"$(MAKE) check" is not supported.'
 	@echo 'Do "$(MAKE) install", then "$(MAKE) installcheck" instead.'
 else
-check: all submake
+check: all submake $(REGRESS_PREP)
 	$(pg_regress_check) --extra-install=$(subdir) $(REGRESS_OPTS) $(REGRESS)
 endif
 endif # REGRESS

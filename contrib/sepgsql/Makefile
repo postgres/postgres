@@ -5,6 +5,7 @@ OBJS = hooks.o selinux.o label.o dml.o \
 	schema.o relation.o proc.o
 DATA_built = sepgsql.sql
 REGRESS = label dml misc
+REGRESS_PREP = check_selinux_environment
 EXTRA_CLEAN = -r tmp *.pp sepgsql-regtest.if sepgsql-regtest.fc
 
 ifdef USE_PGXS
@@ -20,3 +21,6 @@ endif
 
 SHLIB_LINK += $(filter -lselinux, $(LIBS))
 REGRESS_OPTS += --launcher $(top_builddir)/contrib/sepgsql/launcher
+
+check_selinux_environment:
+	@$(top_builddir)/contrib/sepgsql/chkselinuxenv "$(bindir)" "$(datadir)"
