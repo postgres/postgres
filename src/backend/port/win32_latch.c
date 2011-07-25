@@ -98,7 +98,7 @@ WaitLatchOrSocket(volatile Latch *latch, int wakeEvents, SOCKET sock,
 	HANDLE		sockevent = WSA_INVALID_EVENT;
 	int			numevents;
 	int			result = 0;
-	int			pmdeath_eventno;
+	int			pmdeath_eventno = 0;
 	long		timeout_ms;
 
 	Assert(wakeEvents != 0);
