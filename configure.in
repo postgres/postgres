@@ -1311,16 +1311,20 @@ fi
 pgac_save_LIBS="$LIBS"
 LIBS=`echo "$LIBS" | sed -e 's/-ledit//g' -e 's/-lreadline//g'`
 
-AC_REPLACE_FUNCS([crypt erand48 getopt getpeereid getrusage inet_aton random rint srandom strdup strerror strlcat strlcpy strtol strtoul])
+AC_REPLACE_FUNCS([crypt erand48 getopt getrusage inet_aton random rint srandom strdup strerror strlcat strlcpy strtol strtoul])
 
 case $host_os in
 
         # Windows uses a specialised env handler
+        # and doesn't need a replacement getpeereid because it doesn't use
+        # Unix sockets.
         mingw*)
                 AC_DEFINE(HAVE_UNSETENV, 1, [Define to 1 because replacement version used.])
-                ac_cv_func_unsetenv=yes;;
+                AC_DEFINE(HAVE_GETPEEREID, 1, [Define to 1 because function not required.])
+                ac_cv_func_unsetenv=yes
+                ac_cv_func_getpeereid=yes;;
         *)
-                AC_REPLACE_FUNCS([unsetenv])
+                AC_REPLACE_FUNCS([unsetenv getpeereid])
 		;;
 esac
 
