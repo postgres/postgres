@@ -24,9 +24,9 @@ PostgreSQL documentation
 COMMENT ON
 {
   TABLE <replaceable class="PARAMETER">object_name</replaceable> |
-  COLUMN <replaceable class="PARAMETER">table_name</replaceable>.<replaceable class="PARAMETER">column_name</replaceable> |
   AGGREGATE <replaceable class="PARAMETER">agg_name</replaceable> (<replaceable class="PARAMETER">agg_type</replaceable> [, ...] ) |
   CAST (<replaceable>source_type</replaceable> AS <replaceable>target_type</replaceable>) |
+  COLUMN <replaceable class="PARAMETER">relation_name</replaceable>.<replaceable class="PARAMETER">column_name</replaceable> |
   CONSTRAINT <replaceable class="PARAMETER">constraint_name</replaceable> ON <replaceable class="PARAMETER">table_name</replaceable> |
   CONVERSION <replaceable class="PARAMETER">object_name</replaceable> |
   DATABASE <replaceable class="PARAMETER">object_name</replaceable> |
@@ -86,7 +86,7 @@ COMMENT ON
   <variablelist>
    <varlistentry>
     <term><replaceable class="parameter">object_name</replaceable></term>
-    <term><replaceable class="parameter">table_name.column_name</replaceable></term>
+    <term><replaceable class="parameter">relation_name</replaceable>.<replaceable>column_name</replaceable></term>
     <term><replaceable class="parameter">agg_name</replaceable></term>
     <term><replaceable class="parameter">constraint_name</replaceable></term>
     <term><replaceable class="parameter">function_name</replaceable></term>
@@ -99,6 +99,9 @@ COMMENT ON
       aggregates, domains, functions, indexes, operators, operator classes,
       operator families, sequences, text search objects, types, and views can
       be schema-qualified.
+      When commenting on a column,
+      <replaceable class="parameter">relation_name</replaceable> must refer
+      to a table, view, or composite types.
      </para>
     </listitem>
    </varlistentry>
