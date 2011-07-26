@@ -2396,7 +2396,7 @@ radius_add_attribute(radius_packet *packet, uint8 type, const unsigned char *dat
 		 * fail.
 		 */
 		elog(WARNING,
-			 "Adding attribute code %i with length %i to radius packet would create oversize packet, ignoring",
+			 "Adding attribute code %d with length %d to radius packet would create oversize packet, ignoring",
 			 type, len);
 		return;
 
@@ -2673,11 +2673,11 @@ CheckRADIUSAuth(Port *port)
 		{
 #ifdef HAVE_IPV6
 			ereport(LOG,
-				  (errmsg("RADIUS response was sent from incorrect port: %i",
+				  (errmsg("RADIUS response was sent from incorrect port: %d",
 						  ntohs(remoteaddr.sin6_port))));
 #else
 			ereport(LOG,
-				  (errmsg("RADIUS response was sent from incorrect port: %i",
+				  (errmsg("RADIUS response was sent from incorrect port: %d",
 						  ntohs(remoteaddr.sin_port))));
 #endif
 			continue;
@@ -2686,14 +2686,14 @@ CheckRADIUSAuth(Port *port)
 		if (packetlength < RADIUS_HEADER_LENGTH)
 		{
 			ereport(LOG,
-					(errmsg("RADIUS response too short: %i", packetlength)));
+					(errmsg("RADIUS response too short: %d", packetlength)));
 			continue;
 		}
 
 		if (packetlength != ntohs(receivepacket->length))
 		{
 			ereport(LOG,
-					(errmsg("RADIUS response has corrupt length: %i (actual length %i)",
+					(errmsg("RADIUS response has corrupt length: %d (actual length %d)",
 							ntohs(receivepacket->length), packetlength)));
 			continue;
 		}
@@ -2701,7 +2701,7 @@ CheckRADIUSAuth(Port *port)
 		if (packet->id != receivepacket->id)
 		{
 			ereport(LOG,
-					(errmsg("RADIUS response is to a different request: %i (should be %i)",
+					(errmsg("RADIUS response is to a different request: %d (should be %d)",
 							receivepacket->id, packet->id)));
 			continue;
 		}
@@ -2752,7 +2752,7 @@ CheckRADIUSAuth(Port *port)
 		else
 		{
 			ereport(LOG,
-			 (errmsg("RADIUS response has invalid code (%i) for user \"%s\"",
+			 (errmsg("RADIUS response has invalid code (%d) for user \"%s\"",
 					 receivepacket->code, port->user_name)));
 			continue;
 		}

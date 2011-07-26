@@ -217,18 +217,18 @@ progress_report(int tablespacenum, char *fn)
 			 * call)
 			 */
 			fprintf(stderr,
-					INT64_FORMAT "/" INT64_FORMAT " kB (100%%) %i/%i tablespaces %35s\r",
+					INT64_FORMAT "/" INT64_FORMAT " kB (100%%) %d/%d tablespaces %35s\r",
 					totaldone / 1024, totalsize,
 					tablespacenum, tablespacecount, "");
 		else
 			fprintf(stderr,
-					INT64_FORMAT "/" INT64_FORMAT " kB (%i%%) %i/%i tablespaces (%-30.30s)\r",
+					INT64_FORMAT "/" INT64_FORMAT " kB (%d%%) %d/%d tablespaces (%-30.30s)\r",
 					totaldone / 1024, totalsize,
 					percent,
 					tablespacenum, tablespacecount, fn);
 	}
 	else
-		fprintf(stderr, INT64_FORMAT "/" INT64_FORMAT " kB (%i%%) %i/%i tablespaces\r",
+		fprintf(stderr, INT64_FORMAT "/" INT64_FORMAT " kB (%d%%) %d/%d tablespaces\r",
 				totaldone / 1024, totalsize,
 				percent,
 				tablespacenum, tablespacecount);
@@ -269,7 +269,7 @@ ReceiveTarFile(PGconn *conn, PGresult *res, int rownum)
 				ztarfile = gzdopen(dup(fileno(stdout)), "wb");
 				if (gzsetparams(ztarfile, compresslevel, Z_DEFAULT_STRATEGY) != Z_OK)
 				{
-					fprintf(stderr, _("%s: could not set compression level %i: %s\n"),
+					fprintf(stderr, _("%s: could not set compression level %d: %s\n"),
 							progname, compresslevel, get_gz_error(ztarfile));
 					disconnect_and_exit(1);
 				}
@@ -287,7 +287,7 @@ ReceiveTarFile(PGconn *conn, PGresult *res, int rownum)
 				ztarfile = gzopen(fn, "wb");
 				if (gzsetparams(ztarfile, compresslevel, Z_DEFAULT_STRATEGY) != Z_OK)
 				{
-					fprintf(stderr, _("%s: could not set compression level %i: %s\n"),
+					fprintf(stderr, _("%s: could not set compression level %d: %s\n"),
 							progname, compresslevel, get_gz_error(ztarfile));
 					disconnect_and_exit(1);
 				}
@@ -311,7 +311,7 @@ ReceiveTarFile(PGconn *conn, PGresult *res, int rownum)
 			ztarfile = gzopen(fn, "wb");
 			if (gzsetparams(ztarfile, compresslevel, Z_DEFAULT_STRATEGY) != Z_OK)
 			{
-				fprintf(stderr, _("%s: could not set compression level %i: %s\n"),
+				fprintf(stderr, _("%s: could not set compression level %d: %s\n"),
 						progname, compresslevel, get_gz_error(ztarfile));
 				disconnect_and_exit(1);
 			}
@@ -533,7 +533,7 @@ ReceiveAndUnpackTarFile(PGconn *conn, PGresult *res, int rownum)
 			 */
 			if (r != 512)
 			{
-				fprintf(stderr, _("%s: invalid tar block header size: %i\n"),
+				fprintf(stderr, _("%s: invalid tar block header size: %d\n"),
 						progname, r);
 				disconnect_and_exit(1);
 			}
@@ -870,7 +870,7 @@ BaseBackup(void)
 	 */
 	if (format == 't' && strcmp(basedir, "-") == 0 && PQntuples(res) > 1)
 	{
-		fprintf(stderr, _("%s: can only write single tablespace to stdout, database has %i\n"),
+		fprintf(stderr, _("%s: can only write single tablespace to stdout, database has %d\n"),
 				progname, PQntuples(res));
 		disconnect_and_exit(1);
 	}

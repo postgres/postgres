@@ -1114,7 +1114,7 @@ identify_system_timezone(void)
 					 &rootKey) != ERROR_SUCCESS)
 	{
 		ereport(LOG,
-				(errmsg("could not open registry key to identify system time zone: %i",
+				(errmsg("could not open registry key to identify system time zone: %d",
 						(int) GetLastError()),
 				 errdetail("The PostgreSQL time zone will be set to \"%s\".",
 						   "GMT"),
@@ -1145,14 +1145,14 @@ identify_system_timezone(void)
 			if (r == ERROR_NO_MORE_ITEMS)
 				break;
 			ereport(LOG,
-					(errmsg_internal("could not enumerate registry subkeys to identify system time zone: %i", (int) r)));
+					(errmsg_internal("could not enumerate registry subkeys to identify system time zone: %d", (int) r)));
 			break;
 		}
 
 		if ((r = RegOpenKeyEx(rootKey, keyname, 0, KEY_READ, &key)) != ERROR_SUCCESS)
 		{
 			ereport(LOG,
-					(errmsg_internal("could not open registry subkey to identify system time zone: %i", (int) r)));
+					(errmsg_internal("could not open registry subkey to identify system time zone: %d", (int) r)));
 			break;
 		}
 
@@ -1161,7 +1161,7 @@ identify_system_timezone(void)
 		if ((r = RegQueryValueEx(key, "Std", NULL, NULL, (unsigned char *) zonename, &namesize)) != ERROR_SUCCESS)
 		{
 			ereport(LOG,
-					(errmsg_internal("could not query value for key \"std\" to identify system time zone \"%s\": %i",
+					(errmsg_internal("could not query value for key \"std\" to identify system time zone \"%s\": %d",
 									 keyname, (int) r)));
 			RegCloseKey(key);
 			continue;			/* Proceed to look at the next timezone */
@@ -1178,7 +1178,7 @@ identify_system_timezone(void)
 		if ((r = RegQueryValueEx(key, "Dlt", NULL, NULL, (unsigned char *) zonename, &namesize)) != ERROR_SUCCESS)
 		{
 			ereport(LOG,
-					(errmsg_internal("could not query value for key \"dlt\" to identify system time zone \"%s\": %i",
+					(errmsg_internal("could not query value for key \"dlt\" to identify system time zone \"%s\": %d",
 									 keyname, (int) r)));
 			RegCloseKey(key);
 			continue;			/* Proceed to look at the next timezone */

@@ -2355,7 +2355,7 @@ keep_going:						/* We will come back to here until there is
 						if (!conn->ginbuf.value)
 						{
 							printfPQExpBuffer(&conn->errorMessage,
-											  libpq_gettext("out of memory allocating GSSAPI buffer (%i)"),
+											  libpq_gettext("out of memory allocating GSSAPI buffer (%d)"),
 											  llen);
 							goto error_return;
 						}

@@ -319,14 +319,14 @@ winsock_strerror(int err, char *strerrbuf, size_t buflen)
 	}
 
 	if (!success)
-		sprintf(strerrbuf, libpq_gettext("Unknown socket error (0x%08X/%i)"), err, err);
+		sprintf(strerrbuf, libpq_gettext("Unknown socket error (0x%08X/%d)"), err, err);
 	else
 	{
 		strerrbuf[buflen - 1] = '\0';
 		offs = strlen(strerrbuf);
 		if (offs > (int) buflen - 64)
 			offs = buflen - 64;
-		sprintf(strerrbuf + offs, " (0x%08X/%i)", err, err);
+		sprintf(strerrbuf + offs, " (0x%08X/%d)", err, err);
 	}
 	return strerrbuf;
 }

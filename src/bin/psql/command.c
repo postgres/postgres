@@ -1663,7 +1663,7 @@ printSSLInfo(void)
 		return;					/* no SSL */
 
 	SSL_get_cipher_bits(ssl, &sslbits);
-	printf(_("SSL connection (cipher: %s, bits: %i)\n"),
+	printf(_("SSL connection (cipher: %s, bits: %d)\n"),
 		   SSL_get_cipher(ssl), sslbits);
 #else
 
