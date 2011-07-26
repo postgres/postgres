@@ -1350,7 +1350,7 @@ do_edit(const char *filename_arg, PQExpBuffer query_buf)
 		ret = GetTempPath(MAXPGPATH, tmpdir);
 		if (ret == 0 || ret > MAXPGPATH)
 		{
-			psql_error("cannot locate temporary directory: %s",
+			psql_error("cannot locate temporary directory: %s\n",
 					   !ret ? strerror(errno) : "");
 			return false;
 		}
