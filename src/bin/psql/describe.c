@@ -1296,7 +1296,17 @@ describeOneTableDetails(const char *schemaname,
 	if (tableinfo.relkind == 'i')
 		appendPQExpBuffer(&buf, ",\n  pg_catalog.pg_get_indexdef(a.attrelid, a.attnum, TRUE) AS indexdef");
 	if (verbose)
-		appendPQExpBuffer(&buf, ",\n  a.attstorage, pg_catalog.col_description(a.attrelid, a.attnum)");
+	{
+		appendPQExpBuffer(&buf, ",\n  a.attstorage");
+		/*
+		 * In 9.0+, we have column comments for: relations, views, composite
+		 * types, and foreign tables (c.f. CommentObject() in comment.c).
+		 */
+		if (tableinfo.relkind == 'r' || tableinfo.relkind == 'v' ||
+			tableinfo.relkind == 'f' || tableinfo.relkind == 'c')
+			appendPQExpBuffer(&buf, ", pg_catalog.col_description(a.attrelid, a.attnum)");
+	}
+
 	appendPQExpBuffer(&buf, "\nFROM pg_catalog.pg_attribute a");
 	appendPQExpBuffer(&buf, "\nWHERE a.attrelid = '%s' AND a.attnum > 0 AND NOT a.attisdropped", oid);
 	appendPQExpBuffer(&buf, "\nORDER BY a.attnum;");
@@ -1379,7 +1389,10 @@ describeOneTableDetails(const char *schemaname,
 	if (verbose)
 	{
 		headers[cols++] = gettext_noop("Storage");
-		headers[cols++] = gettext_noop("Description");
+		/* Column comments, if the relkind supports this feature. */
+		if (tableinfo.relkind == 'r' || tableinfo.relkind == 'v' ||
+			tableinfo.relkind == 'c' || tableinfo.relkind == 'f')
+			headers[cols++] = gettext_noop("Description");
 	}
 
 	printTableInit(&cont, &myopt, title.data, cols, numrows);
@@ -1471,8 +1484,11 @@ describeOneTableDetails(const char *schemaname,
 										(storage[0] == 'e' ? "external" :
 										 "???")))),
 							  false, false);
-			printTableAddCell(&cont, PQgetvalue(res, i, firstvcol + 1),
-							  false, false);
+			/* Column comments, if the relkind supports this feature. */
+			if (tableinfo.relkind == 'r' || tableinfo.relkind == 'v' ||
+				tableinfo.relkind == 'c' || tableinfo.relkind == 'f')
+				printTableAddCell(&cont, PQgetvalue(res, i, firstvcol + 1),
+								  false, false);
 		}
 	}
 
