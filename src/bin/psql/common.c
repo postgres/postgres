@@ -87,7 +87,7 @@ pg_calloc(size_t nmemb, size_t size)
 	tmp = calloc(nmemb, size);
 	if (!tmp)
 	{
-		psql_error("out of memory");
+		psql_error("out of memory\n");
 		exit(EXIT_FAILURE);
 	}
 	return tmp;
