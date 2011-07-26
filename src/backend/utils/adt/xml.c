@@ -928,6 +928,7 @@ PgXmlErrorContext *
 pg_xml_init(PgXmlStrictness strictness)
 {
 	PgXmlErrorContext *errcxt;
+	void	   *new_errcxt;
 
 	/* Do one-time setup if needed */
 	pg_xml_init_library();
@@ -955,6 +956,34 @@ pg_xml_init(PgXmlStrictness strictness)
 #endif
 
 	xmlSetStructuredErrorFunc((void *) errcxt, xml_errorHandler);
+
+	/*
+	 * Verify that xmlSetStructuredErrorFunc set the context variable we
+	 * expected it to.  If not, the error context pointer we just saved is not
+	 * the correct thing to restore, and since that leaves us without a way to
+	 * restore the context in pg_xml_done, we must fail.
+	 *
+	 * The only known situation in which this test fails is if we compile with
+	 * headers from a libxml2 that doesn't track the structured error context
+	 * separately (<= 2.7.3), but at runtime use a version that does, or vice
+	 * versa.  The libxml2 authors did not treat that change as constituting
+	 * an ABI break, so the LIBXML_TEST_VERSION test in pg_xml_init_library
+	 * fails to protect us from this.
+	 */
+
+#ifdef HAVE_XMLSTRUCTUREDERRORCONTEXT
+	new_errcxt = xmlStructuredErrorContext;
+#else
+	new_errcxt = xmlGenericErrorContext;
+#endif
+
+	if (new_errcxt != (void *) errcxt)
+		ereport(ERROR,
+				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+				 errmsg("could not set up XML error handler"),
+				 errhint("This probably indicates that the version of libxml2"
+						 " being used is not compatible with the libxml2"
+						 " header files that PostgreSQL was built with.")));
 
 	return errcxt;
 }
@@ -1494,9 +1523,14 @@ xml_errorHandler(void *data, xmlErrorPtr error)
 	int			level = error->level;
 	StringInfo	errorBuf;
 
-	/* Defend against someone passing us a bogus context struct */
+	/*
+	 * Defend against someone passing us a bogus context struct.
+	 *
+	 * We force a backend exit if this check fails because longjmp'ing out of
+	 * libxml would likely render it unsafe to use further.
+	 */
 	if (xmlerrcxt->magic != ERRCXT_MAGIC)
-		elog(ERROR, "xml_errorHandler called with invalid PgXmlErrorContext");
+		elog(FATAL, "xml_errorHandler called with invalid PgXmlErrorContext");
 
 	/*----------
 	 * Older libxml versions report some errors differently.
