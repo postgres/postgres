@@ -113,7 +113,7 @@ COMMENT ON
       text search objects, types, and views can be schema-qualified.
       When commenting on a column,
       <replaceable class="parameter">relation_name</replaceable> must refer
-      to a table, view, composite types, or foreign table.
+      to a table, view, composite type, or foreign table.
      </para>
     </listitem>
    </varlistentry>
