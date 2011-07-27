@@ -101,7 +101,7 @@ COMMENT ON
       be schema-qualified.
       When commenting on a column,
       <replaceable class="parameter">relation_name</replaceable> must refer
-      to a table, view, or composite types.
+      to a table, view, or composite type.
      </para>
     </listitem>
    </varlistentry>
