@@ -662,7 +662,7 @@ SetRWConflict(SERIALIZABLEXACT *reader, SERIALIZABLEXACT *writer)
 	if (!conflict)
 		ereport(ERROR,
 				(errcode(ERRCODE_OUT_OF_MEMORY),
-				 errmsg("not enough elements in RWConflictPool to record a rw-conflict"),
+				 errmsg("not enough elements in RWConflictPool to record a read/write conflict"),
 				 errhint("You might need to run fewer transactions at a time or increase max_connections.")));
 
 	SHMQueueDelete(&conflict->outLink);
@@ -690,7 +690,7 @@ SetPossibleUnsafeConflict(SERIALIZABLEXACT *roXact,
 	if (!conflict)
 		ereport(ERROR,
 				(errcode(ERRCODE_OUT_OF_MEMORY),
-				 errmsg("not enough elements in RWConflictPool to record a potential rw-conflict"),
+				 errmsg("not enough elements in RWConflictPool to record a potential read/write conflict"),
 				 errhint("You might need to run fewer transactions at a time or increase max_connections.")));
 
 	SHMQueueDelete(&conflict->outLink);
