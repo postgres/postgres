@@ -117,6 +117,7 @@ static TocEntry *getTocEntryByDumpId(ArchiveHandle *AH, DumpId id);
 static void _moveBefore(ArchiveHandle *AH, TocEntry *pos, TocEntry *te);
 static int	_discoverArchiveFormat(ArchiveHandle *AH);
 
+static int	RestoringToDB(ArchiveHandle *AH);
 static void dump_lo_buf(ArchiveHandle *AH);
 static void _write_msg(const char *modulename, const char *fmt, va_list ap);
 static void _die_horribly(ArchiveHandle *AH, const char *modulename, const char *fmt, va_list ap);
@@ -589,13 +590,7 @@ restore_toc_entry(ArchiveHandle *AH, TocEntry *te,
 					}
 
 					/*
-					 * If we have a copy statement, use it. As of V1.3, these
-					 * are separate to allow easy import from withing a
-					 * database connection. Pre 1.3 archives can not use DB
-					 * connections and are sent to output only.
-					 *
-					 * For V1.3+, the table data MUST have a copy statement so
-					 * that we can go into appropriate mode with libpq.
+					 * If we have a copy statement, use it.
 					 */
 					if (te->copyStmt && strlen(te->copyStmt) > 0)
 					{
@@ -605,7 +600,15 @@ restore_toc_entry(ArchiveHandle *AH, TocEntry *te,
 
 					(*AH->PrintTocDataPtr) (AH, te, ropt);
 
-					AH->writingCopyData = false;
+					/*
+					 * Terminate COPY if needed.
+					 */
+					if (AH->writingCopyData)
+					{
+						if (RestoringToDB(AH))
+							EndDBCopyMode(AH, te);
+						AH->writingCopyData = false;
+					}
 
 					/* close out the transaction started above */
 					if (is_parallel && te->created)
@@ -1248,17 +1251,13 @@ ahprintf(ArchiveHandle *AH, const char *fmt,...)
 {
 	char	   *p = NULL;
 	va_list		ap;
-	int			bSize = strlen(fmt) + 256;		/* Should be enough */
+	int			bSize = strlen(fmt) + 256;		/* Usually enough */
 	int			cnt = -1;
 
 	/*
 	 * This is paranoid: deal with the possibility that vsnprintf is willing
-	 * to ignore trailing null
-	 */
-
-	/*
-	 * or returns > 0 even if string does not fit. It may be the case that it
-	 * returns cnt = bufsize
+	 * to ignore trailing null or returns > 0 even if string does not fit.
+	 * It may be the case that it returns cnt = bufsize.
 	 */
 	while (cnt < 0 || cnt >= (bSize - 1))
 	{
@@ -1340,7 +1339,7 @@ dump_lo_buf(ArchiveHandle *AH)
 
 
 /*
- *	Write buffer to the output file (usually stdout). This is user for
+ *	Write buffer to the output file (usually stdout). This is used for
  *	outputting 'restore' scripts etc. It is even possible for an archive
  *	format to create a custom output routine to 'fake' a restore if it
  *	wants to generate a script (see TAR output).
@@ -1392,7 +1391,7 @@ ahwrite(const void *ptr, size_t size, size_t nmemb, ArchiveHandle *AH)
 		 * connected then send it to the DB.
 		 */
 		if (RestoringToDB(AH))
-			return ExecuteSqlCommandBuf(AH, (void *) ptr, size * nmemb);		/* Always 1, currently */
+			return ExecuteSqlCommandBuf(AH, (const char *) ptr, size * nmemb);
 		else
 		{
 			res = fwrite((void *) ptr, size, nmemb, AH->OF);
@@ -1984,9 +1983,6 @@ _allocAH(const char *FileSpec, const ArchiveFormat fmt,
 
 	AH->mode = mode;
 	AH->compression = compression;
-
-	AH->pgCopyBuf = createPQExpBuffer();
-	AH->sqlBuf = createPQExpBuffer();
 
 	/* Open stdout with no compression for AH output handle */
 	AH->gzOut = 0;
@@ -4199,10 +4195,7 @@ CloneArchive(ArchiveHandle *AH)
 		die_horribly(AH, modulename, "out of memory\n");
 	memcpy(clone, AH, sizeof(ArchiveHandle));
 
-	/* Handle format-independent fields */
-	clone->pgCopyBuf = createPQExpBuffer();
-	clone->sqlBuf = createPQExpBuffer();
-	clone->sqlparse.tagBuf = NULL;
+	/* Handle format-independent fields ... none at the moment */
 
 	/* The clone will have its own connection, so disregard connection state */
 	clone->connection = NULL;
@@ -4235,11 +4228,7 @@ DeCloneArchive(ArchiveHandle *AH)
 	/* Clear format-specific state */
 	(AH->DeClonePtr) (AH);
 
-	/* Clear state allocated by CloneArchive */
-	destroyPQExpBuffer(AH->pgCopyBuf);
-	destroyPQExpBuffer(AH->sqlBuf);
-	if (AH->sqlparse.tagBuf)
-		destroyPQExpBuffer(AH->sqlparse.tagBuf);
+	/* Clear state allocated by CloneArchive ... none at the moment */
 
 	/* Clear any connection-local state */
 	if (AH->currUser)
