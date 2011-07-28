@@ -136,28 +136,6 @@ typedef struct _outputContext
 
 typedef enum
 {
-	SQL_SCAN = 0,				/* normal */
-	SQL_IN_SQL_COMMENT,			/* -- comment */
-	SQL_IN_EXT_COMMENT,			/* slash-star comment */
-	SQL_IN_SINGLE_QUOTE,		/* '...' literal */
-	SQL_IN_E_QUOTE,				/* E'...' literal */
-	SQL_IN_DOUBLE_QUOTE,		/* "..." identifier */
-	SQL_IN_DOLLAR_TAG,			/* possible dollar-quote starting tag */
-	SQL_IN_DOLLAR_QUOTE			/* body of dollar quote */
-} sqlparseState;
-
-typedef struct
-{
-	sqlparseState state;		/* see above */
-	char		lastChar;		/* preceding char, or '\0' initially */
-	bool		backSlash;		/* next char is backslash quoted? */
-	int			braceDepth;		/* parenthesis nesting depth */
-	PQExpBuffer tagBuf;			/* dollar quote tag (NULL if not created) */
-	int			minTagEndPos;	/* first possible end position of $-quote */
-} sqlparseInfo;
-
-typedef enum
-{
 	STAGE_NONE = 0,
 	STAGE_INITIALIZING,
 	STAGE_PROCESSING,
@@ -190,9 +168,6 @@ typedef struct _archiveHandle
 	size_t		offSize;		/* Size of a file offset in the archive -
 								 * Added V1.7 */
 	ArchiveFormat format;		/* Archive format */
-
-	sqlparseInfo sqlparse;
-	PQExpBuffer sqlBuf;
 
 	time_t		createDate;		/* Date archive created */
 
@@ -246,8 +221,6 @@ typedef struct _archiveHandle
 								 * required */
 	bool		writingCopyData;	/* True when we are sending COPY data */
 	bool		pgCopyIn;		/* Currently in libpq 'COPY IN' mode. */
-	PQExpBuffer pgCopyBuf;		/* Left-over data from incomplete lines in
-								 * COPY IN */
 
 	int			loFd;			/* BLOB fd */
 	int			writingBlob;	/* Flag */
