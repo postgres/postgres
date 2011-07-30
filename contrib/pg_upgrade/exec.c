@@ -168,7 +168,9 @@ check_data_dir(const char *pg_data)
 	{
 		struct stat statBuf;
 
-		snprintf(subDirName, sizeof(subDirName), "%s/%s", pg_data,
+		snprintf(subDirName, sizeof(subDirName), "%s%s%s", pg_data,
+			/* Win32 can't stat() a directory with a trailing slash. */
+				 *requiredSubdirs[subdirnum] ? "/" : "",
 				 requiredSubdirs[subdirnum]);
 
 		if (stat(subDirName, &statBuf) != 0)
