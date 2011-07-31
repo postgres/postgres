@@ -439,6 +439,17 @@ ClientAuthentication(Port *port)
 								   NULL, 0,
 								   NI_NUMERICHOST);
 
+#define HOSTNAME_LOOKUP_DETAIL(port) \
+				(port->remote_hostname				  \
+				 ? (port->remote_hostname_resolv == +1					\
+					? errdetail_log("Client IP address resolved to \"%s\", forward lookup matches.", port->remote_hostname) \
+					: (port->remote_hostname_resolv == 0				\
+					   ? errdetail_log("Client IP address resolved to \"%s\", forward lookup not checked.", port->remote_hostname) \
+					   : (port->remote_hostname_resolv == -1			\
+						  ? errdetail_log("Client IP address resolved to \"%s\", forward lookup does not match.", port->remote_hostname) \
+						  : 0)))										\
+				 : 0)
+
 				if (am_walsender)
 				{
 #ifdef USE_SSL
@@ -446,12 +457,14 @@ ClientAuthentication(Port *port)
 					   (errcode(ERRCODE_INVALID_AUTHORIZATION_SPECIFICATION),
 						errmsg("no pg_hba.conf entry for replication connection from host \"%s\", user \"%s\", %s",
 							   hostinfo, port->user_name,
-							   port->ssl ? _("SSL on") : _("SSL off"))));
+							   port->ssl ? _("SSL on") : _("SSL off")),
+						HOSTNAME_LOOKUP_DETAIL(port)));
 #else
 					ereport(FATAL,
 					   (errcode(ERRCODE_INVALID_AUTHORIZATION_SPECIFICATION),
 						errmsg("no pg_hba.conf entry for replication connection from host \"%s\", user \"%s\"",
-							   hostinfo, port->user_name)));
+							   hostinfo, port->user_name),
+						HOSTNAME_LOOKUP_DETAIL(port)));
 #endif
 				}
 				else
@@ -462,13 +475,15 @@ ClientAuthentication(Port *port)
 						errmsg("no pg_hba.conf entry for host \"%s\", user \"%s\", database \"%s\", %s",
 							   hostinfo, port->user_name,
 							   port->database_name,
-							   port->ssl ? _("SSL on") : _("SSL off"))));
+							   port->ssl ? _("SSL on") : _("SSL off")),
+						HOSTNAME_LOOKUP_DETAIL(port)));
 #else
 					ereport(FATAL,
 					   (errcode(ERRCODE_INVALID_AUTHORIZATION_SPECIFICATION),
 						errmsg("no pg_hba.conf entry for host \"%s\", user \"%s\", database \"%s\"",
 							   hostinfo, port->user_name,
-							   port->database_name)));
+							   port->database_name),
+						HOSTNAME_LOOKUP_DETAIL(port)));
 #endif
 				}
 				break;
