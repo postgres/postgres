@@ -471,7 +471,7 @@ SIInsertDataEntries(const SharedInvalidationMessage *data, int n)
 		for (i = 0; i < segP->lastBackend; i++)
 		{
 			ProcState  *stateP = &segP->procState[i];
-			stateP->hasMessages = TRUE;
+			stateP->hasMessages = true;
 		}
 
 		LWLockRelease(SInvalWriteLock);
@@ -542,7 +542,7 @@ SIGetDataEntries(SharedInvalidationMessage *data, int datasize)
 	 * Note that, if we don't end up reading all of the messages, we had
 	 * better be certain to reset this flag before exiting!
 	 */
-	stateP->hasMessages = FALSE;
+	stateP->hasMessages = false;
 
 	/* Fetch current value of maxMsgNum using spinlock */
 	{
@@ -587,13 +587,13 @@ SIGetDataEntries(SharedInvalidationMessage *data, int datasize)
 	 * If we have caught up completely, reset our "signaled" flag so that
 	 * we'll get another signal if we fall behind again.
 	 *
-	 * If we haven't catch up completely, reset the hasMessages flag so that
+	 * If we haven't caught up completely, reset the hasMessages flag so that
 	 * we see the remaining messages next time.
 	 */
 	if (stateP->nextMsgNum >= max)
 		stateP->signaled = false;
 	else
-		stateP->hasMessages = TRUE;
+		stateP->hasMessages = true;
 
 	LWLockRelease(SInvalReadLock);
 	return n;
