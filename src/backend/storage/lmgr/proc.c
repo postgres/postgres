@@ -180,6 +180,9 @@ InitProcGlobal(void)
 	 */
 	ProcGlobal->freeProcs = NULL;
 	ProcGlobal->autovacFreeProcs = NULL;
+	ProcGlobal->startupProc = NULL;
+	ProcGlobal->startupProcPid = 0;
+	ProcGlobal->startupBufferPinWaitBufId = -1;
 
 	ProcGlobal->spins_per_delay = DEFAULT_SPINS_PER_DELAY;
 
@@ -499,7 +502,6 @@ PublishStartupProcessInformation(void)
 
 	procglobal->startupProc = MyProc;
 	procglobal->startupProcPid = MyProcPid;
-	procglobal->startupBufferPinWaitBufId = 0;
 
 	SpinLockRelease(ProcStructLock);
 }
@@ -526,14 +528,10 @@ SetStartupBufferPinWaitBufId(int bufid)
 int
 GetStartupBufferPinWaitBufId(void)
 {
-	int			bufid;
-
 	/* use volatile pointer to prevent code rearrangement */
 	volatile PROC_HDR *procglobal = ProcGlobal;
 
-	bufid = procglobal->startupBufferPinWaitBufId;
-
-	return bufid;
+	return procglobal->startupBufferPinWaitBufId;
 }
 
 /*
