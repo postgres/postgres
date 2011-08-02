@@ -832,13 +832,6 @@ LockAcquireExtended(const LOCKTAG *locktag,
 		}
 
 		/*
-		 * In Hot Standby perform early deadlock detection in normal backends.
-		 * If deadlock found we release partition lock but do not return.
-		 */
-		if (RecoveryInProgress() && !InRecovery)
-			CheckRecoveryConflictDeadlock(partitionLock);
-
-		/*
 		 * Set bitmask of locks this process already holds on this object.
 		 */
 		MyProc->heldLocks = proclock->holdMask;

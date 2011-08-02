@@ -35,7 +35,7 @@ extern void ResolveRecoveryConflictWithDatabase(Oid dbid);
 
 extern void ResolveRecoveryConflictWithBufferPin(void);
 extern void SendRecoveryConflictWithBufferPin(ProcSignalReason reason);
-extern void CheckRecoveryConflictDeadlock(LWLockId partitionLock);
+extern void CheckRecoveryConflictDeadlock(void);
 
 /*
  * Standby Rmgr (RM_STANDBY_ID)
