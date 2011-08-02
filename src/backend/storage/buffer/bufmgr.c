@@ -2422,10 +2422,11 @@ LockBufferForCleanup(Buffer buffer)
 		/* Wait to be signaled by UnpinBuffer() */
 		if (InHotStandby)
 		{
-			/* Share the bufid that Startup process waits on */
+			/* Publish the bufid that Startup process waits on */
 			SetStartupBufferPinWaitBufId(buffer - 1);
 			/* Set alarm and then wait to be signaled by UnpinBuffer() */
 			ResolveRecoveryConflictWithBufferPin();
+			/* Reset the published bufid */
 			SetStartupBufferPinWaitBufId(-1);
 		}
 		else

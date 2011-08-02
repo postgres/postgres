@@ -145,7 +145,7 @@ typedef struct PROC_HDR
 	/* The proc of the Startup process, since not in ProcArray */
 	PGPROC	   *startupProc;
 	int			startupProcPid;
-	/* Buffer id of the buffer that Startup process waits for pin on */
+	/* Buffer id of the buffer that Startup process waits for pin on, or -1 */
 	int			startupBufferPinWaitBufId;
 } PROC_HDR;
 
