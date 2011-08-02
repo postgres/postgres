@@ -463,23 +463,24 @@ SendRecoveryConflictWithBufferPin(ProcSignalReason reason)
 
 /*
  * In Hot Standby perform early deadlock detection.  We abort the lock
- * wait if are about to sleep while holding the buffer pin that Startup
- * process is waiting for. The deadlock occurs because we can only be
- * waiting behind an AccessExclusiveLock, which can only clear when a
- * transaction completion record is replayed, which can only occur when
- * Startup process is not waiting. So if Startup process is waiting we
- * never will clear that lock, so if we wait we cause deadlock. If we
- * are the Startup process then no need to check for deadlocks.
+ * wait if we are about to sleep while holding the buffer pin that Startup
+ * process is waiting for.
+ *
+ * Note: this code is pessimistic, because there is no way for it to
+ * determine whether an actual deadlock condition is present: the lock we
+ * need to wait for might be unrelated to any held by the Startup process.
+ * Sooner or later, this mechanism should get ripped out in favor of somehow
+ * accounting for buffer locks in DeadLockCheck().  However, errors here
+ * seem to be very low-probability in practice, so for now it's not worth
+ * the trouble.
  */
 void
-CheckRecoveryConflictDeadlock(LWLockId partitionLock)
+CheckRecoveryConflictDeadlock(void)
 {
-	Assert(!InRecovery);
+	Assert(!InRecovery);		/* do not call in Startup process */
 
 	if (!HoldingBufferPinThatDelaysRecovery())
 		return;
-
-	LWLockRelease(partitionLock);
 
 	/*
 	 * Error message should match ProcessInterrupts() but we avoid calling

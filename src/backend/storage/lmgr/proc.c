@@ -927,6 +927,15 @@ ProcSleep(LOCALLOCK *locallock, LockMethod lockMethodTable)
 	 */
 	LWLockRelease(partitionLock);
 
+	/*
+	 * Also, now that we will successfully clean up after an ereport, it's
+	 * safe to check to see if there's a buffer pin deadlock against the
+	 * Startup process.  Of course, that's only necessary if we're doing
+	 * Hot Standby and are not the Startup process ourselves.
+	 */
+	if (RecoveryInProgress() && !InRecovery)
+		CheckRecoveryConflictDeadlock();
+
 	/* Reset deadlock_state before enabling the signal handler */
 	deadlock_state = DS_NOT_YET_CHECKED;
 
