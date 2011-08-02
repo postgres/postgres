@@ -120,7 +120,7 @@ ExecLimit(LimitState *node)
 				 * the state machine state to record having done so.
 				 */
 				if (!node->noCount &&
-					node->position >= node->offset + node->count)
+					node->position - node->offset >= node->count)
 				{
 					node->lstate = LIMIT_WINDOWEND;
 					return NULL;
