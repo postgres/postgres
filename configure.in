@@ -1311,7 +1311,7 @@ fi
 pgac_save_LIBS="$LIBS"
 LIBS=`echo "$LIBS" | sed -e 's/-ledit//g' -e 's/-lreadline//g'`
 
-AC_REPLACE_FUNCS([crypt erand48 getopt getrusage inet_aton random rint srandom strdup strerror strlcat strlcpy strtol strtoul])
+AC_REPLACE_FUNCS([crypt getopt getrusage inet_aton random rint srandom strdup strerror strlcat strlcpy strtol strtoul])
 
 case $host_os in
 
@@ -1360,12 +1360,6 @@ fi
 if test "$PORTNAME" = "win32"; then
   AC_LIBOBJ(getopt)
   AC_LIBOBJ(getopt_long)
-fi
-
-# Cygwin's erand48() is broken (always returns zero) in some releases,
-# so force use of ours.
-if test "$PORTNAME" = "cygwin"; then
-  AC_LIBOBJ(erand48)
 fi
 
 # Win32 support

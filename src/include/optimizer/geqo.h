@@ -73,7 +73,7 @@ extern double Geqo_seed;		/* 0 .. 1 */
 typedef struct
 {
 	List	   *initial_rels;	/* the base relations we are joining */
-	unsigned short random_state[3];		/* state for erand48() */
+	unsigned short random_state[3];		/* state for pg_erand48() */
 } GeqoPrivateData;
 
 

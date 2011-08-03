@@ -380,12 +380,9 @@ extern off_t ftello(FILE *stream);
 #endif
 #endif
 
-#ifndef HAVE_ERAND48
-/* we assume all of these are present or missing together */
-extern double erand48(unsigned short xseed[3]);
-extern long lrand48(void);
-extern void srand48(long seed);
-#endif
+extern double pg_erand48(unsigned short xseed[3]);
+extern long pg_lrand48(void);
+extern void pg_srand48(long seed);
 
 #ifndef HAVE_FSEEKO
 #define fseeko(a, b, c) fseek(a, b, c)

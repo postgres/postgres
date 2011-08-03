@@ -198,6 +198,7 @@ typedef struct
 	instr_time	start_time;		/* thread start time */
 	instr_time *exec_elapsed;	/* time spent executing cmds (per Command) */
 	int		   *exec_count;		/* number of cmd executions (per Command) */
+	unsigned short random_state[3]; /* separate randomness for each thread */
 } TState;
 
 #define INVALID_THREAD		((pthread_t) 0)
@@ -380,13 +381,18 @@ usage(const char *progname)
 
 /* random number generator: uniform distribution from min to max inclusive */
 static int
-getrand(int min, int max)
+getrand(TState *thread, int min, int max)
 {
 	/*
 	 * Odd coding is so that min and max have approximately the same chance of
 	 * being selected as do numbers between them.
+	 *
+	 * pg_erand48() is thread-safe and concurrent, which is why we use it
+	 * rather than random(), which in glibc is non-reentrant, and therefore
+	 * protected by a mutex, and therefore a bottleneck on machines with many
+	 * CPUs.
 	 */
-	return min + (int) (((max - min + 1) * (double) random()) / (MAX_RANDOM_VALUE + 1.0));
+	return min + (int) ((max - min + 1) * pg_erand48(thread->random_state));
 }
 
 /* call PQexec() and exit() on failure */
@@ -901,7 +907,7 @@ top:
 		if (commands[st->state] == NULL)
 		{
 			st->state = 0;
-			st->use_file = getrand(0, num_files - 1);
+			st->use_file = getrand(thread, 0, num_files - 1);
 			commands = sql_files[st->use_file];
 		}
 	}
@@ -1068,9 +1074,9 @@ top:
 			}
 
 #ifdef DEBUG
-			printf("min: %d max: %d random: %d\n", min, max, getrand(min, max));
+			printf("min: %d max: %d random: %d\n", min, max, getrand(thread, min, max));
 #endif
-			snprintf(res, sizeof(res), "%d", getrand(min, max));
+			snprintf(res, sizeof(res), "%d", getrand(thread, min, max));
 
 			if (!putVariable(st, argv[0], argv[1], res))
 			{
@@ -2242,6 +2248,9 @@ main(int argc, char **argv)
 		thread->tid = i;
 		thread->state = &state[nclients / nthreads * i];
 		thread->nstate = nclients / nthreads;
+		thread->random_state[0] = random();
+		thread->random_state[1] = random();
+		thread->random_state[2] = random();
 
 		if (is_latencies)
 		{
@@ -2384,7 +2393,7 @@ threadRun(void *arg)
 		Command   **commands = sql_files[st->use_file];
 		int			prev_ecnt = st->ecnt;
 
-		st->use_file = getrand(0, num_files - 1);
+		st->use_file = getrand(thread, 0, num_files - 1);
 		if (!doCustom(thread, st, &result->conn_time, logfile))
 			remains--;			/* I've aborted */
 
@@ -2582,17 +2591,6 @@ pthread_create(pthread_t *thread,
 	/* set alarm again because the child does not inherit timers */
 	if (duration > 0)
 		setalarm(duration);
-
-	/*
-	 * Set a different random seed in each child process.  Otherwise they all
-	 * inherit the parent's state and generate the same "random" sequence. (In
-	 * the threaded case, the different threads will obtain subsets of the
-	 * output of a single random() sequence, which should be okay for our
-	 * purposes.)
-	 */
-	INSTR_TIME_SET_CURRENT(start_time);
-	srandom(((unsigned int) INSTR_TIME_GET_MICROSEC(start_time)) +
-			((unsigned int) getpid()));
 
 	ret = start_routine(arg);
 	write(th->pipes[1], ret, sizeof(TResult));

@@ -21,5 +21,5 @@
 long
 random()
 {
-	return lrand48();
+	return pg_lrand48();
 }

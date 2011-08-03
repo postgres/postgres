@@ -2,10 +2,14 @@
  *
  * erand48.c
  *
- * This file supplies versions of erand48(), lrand48(), and srand48()
- * for machines that lack them.  (These are all the members of the drand48
- * family that Postgres currently requires.  We name the file after erand48
- * because that is the one that configure tests for.)
+ * This file supplies pg_erand48(), pg_lrand48(), and pg_srand48(), which
+ * are just like erand48(), lrand48(), and srand48() except that we use
+ * our own implementation rather than the one provided by the operating
+ * system.  We used to test for an operating system version rather than
+ * unconditionally using our own, but (1) some versions of Cygwin have a
+ * buggy erand48() that always returns zero and (2) as of 2011, glibc's
+ * erand48() is strangely coded to be almost-but-not-quite thread-safe,
+ * which doesn't matter for the backend but is important for pgbench.
  *
  *
  * Copyright (c) 1993 Martin Birgmeier
@@ -72,7 +76,7 @@ _dorand48(unsigned short xseed[3])
 
 
 double
-erand48(unsigned short xseed[3])
+pg_erand48(unsigned short xseed[3])
 {
 	_dorand48(xseed);
 	return ldexp((double) xseed[0], -48) +
@@ -81,14 +85,14 @@ erand48(unsigned short xseed[3])
 }
 
 long
-lrand48(void)
+pg_lrand48(void)
 {
 	_dorand48(_rand48_seed);
 	return ((long) _rand48_seed[2] << 15) + ((long) _rand48_seed[1] >> 1);
 }
 
 void
-srand48(long seed)
+pg_srand48(long seed)
 {
 	_rand48_seed[0] = RAND48_SEED_0;
 	_rand48_seed[1] = (unsigned short) seed;

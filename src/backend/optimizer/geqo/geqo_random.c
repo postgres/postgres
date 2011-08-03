@@ -36,5 +36,5 @@ geqo_rand(PlannerInfo *root)
 {
 	GeqoPrivateData *private = (GeqoPrivateData *) root->join_search_private;
 
-	return erand48(private->random_state);
+	return pg_erand48(private->random_state);
 }

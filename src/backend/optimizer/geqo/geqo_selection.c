@@ -64,9 +64,9 @@ geqo_selection(PlannerInfo *root, Chromosome *momma, Chromosome *daddy,
 	 * Ensure we have selected different genes, except if pool size is only
 	 * one, when we can't.
 	 *
-	 * This code has been observed to hang up in an infinite loop when the
-	 * platform's implementation of erand48() is broken.  We consider that a
-	 * feature: it lets you know you'd better fix the random-number generator.
+	 * This code was observed to hang up in an infinite loop when the
+	 * platform's implementation of erand48() was broken.  We now always
+	 * use our own version.
 	 */
 	if (pool->size > 1)
 	{
