@@ -6,6 +6,56 @@
  *********************************************************************
  */
 
+#include "postgres.h"
+
+/* system stuff */
+#include <unistd.h>
+#include <fcntl.h>
+
+/* postgreSQL stuff */
+#include "catalog/pg_proc.h"
+#include "catalog/pg_type.h"
+#include "commands/trigger.h"
+#include "executor/spi.h"
+#include "funcapi.h"
+#include "fmgr.h"
+#include "mb/pg_wchar.h"
+#include "miscadmin.h"
+#include "nodes/makefuncs.h"
+#include "parser/parse_type.h"
+#include "tcop/tcopprot.h"
+#include "access/transam.h"
+#include "access/xact.h"
+#include "utils/builtins.h"
+#include "utils/hsearch.h"
+#include "utils/lsyscache.h"
+#include "utils/memutils.h"
+#include "utils/rel.h"
+#include "utils/syscache.h"
+#include "utils/typcache.h"
+
+/*
+ * Undefine some things that get (re)defined in the
+ * Python headers. They aren't used below and we've
+ * already included all the headers we need, so this
+ * should be pretty safe.
+ */
+
+#undef _POSIX_C_SOURCE
+#undef _XOPEN_SOURCE
+#undef HAVE_STRERROR
+#undef HAVE_TZNAME
+
+/*
+ * Sometimes python carefully scribbles on our *printf macros.
+ * So we undefine them here and redefine them after it's done its dirty deed.
+ */
+
+#ifdef USE_REPL_SNPRINTF
+#undef snprintf
+#undef vsnprintf
+#endif
+
 #if defined(_MSC_VER) && defined(_DEBUG)
 /* Python uses #pragma to bring in a non-default libpython on VC++ if
  * _DEBUG is defined */
@@ -84,40 +134,29 @@ typedef int Py_ssize_t;
 		PyObject_HEAD_INIT(type) size,
 #endif
 
-#include "postgres.h"
-
-/* system stuff */
-#include <unistd.h>
-#include <fcntl.h>
-
-/* postgreSQL stuff */
-#include "catalog/pg_proc.h"
-#include "catalog/pg_type.h"
-#include "commands/trigger.h"
-#include "executor/spi.h"
-#include "funcapi.h"
-#include "fmgr.h"
-#include "mb/pg_wchar.h"
-#include "miscadmin.h"
-#include "nodes/makefuncs.h"
-#include "parser/parse_type.h"
-#include "tcop/tcopprot.h"
-#include "access/transam.h"
-#include "access/xact.h"
-#include "utils/builtins.h"
-#include "utils/hsearch.h"
-#include "utils/lsyscache.h"
-#include "utils/memutils.h"
-#include "utils/rel.h"
-#include "utils/syscache.h"
-#include "utils/typcache.h"
-
 /* define our text domain for translations */
 #undef TEXTDOMAIN
 #define TEXTDOMAIN PG_TEXTDOMAIN("plpython")
 
 #include <compile.h>
 #include <eval.h>
+
+/* put back our snprintf and vsnprintf */
+#ifdef USE_REPL_SNPRINTF
+#ifdef snprintf
+#undef snprintf
+#endif
+#ifdef vsnprintf
+#undef vsnprintf
+#endif
+#ifdef __GNUC__
+#define vsnprintf(...)  pg_vsnprintf(__VA_ARGS__)
+#define snprintf(...)   pg_snprintf(__VA_ARGS__)
+#else
+#define vsnprintf               pg_vsnprintf
+#define snprintf                pg_snprintf
+#endif   /* __GNUC__ */
+#endif   /* USE_REPL_SNPRINTF */
 
 PG_MODULE_MAGIC;
 
