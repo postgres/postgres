@@ -683,7 +683,7 @@ DefineIndex(RangeVar *heapRelation,
 
 	while (VirtualTransactionIdIsValid(*old_lockholders))
 	{
-		VirtualXactLockTableWait(*old_lockholders);
+		VirtualXactLock(*old_lockholders, true);
 		old_lockholders++;
 	}
 
@@ -769,7 +769,7 @@ DefineIndex(RangeVar *heapRelation,
 
 	while (VirtualTransactionIdIsValid(*old_lockholders))
 	{
-		VirtualXactLockTableWait(*old_lockholders);
+		VirtualXactLock(*old_lockholders, true);
 		old_lockholders++;
 	}
 
@@ -866,7 +866,7 @@ DefineIndex(RangeVar *heapRelation,
 		}
 
 		if (VirtualTransactionIdIsValid(old_snapshots[i]))
-			VirtualXactLockTableWait(old_snapshots[i]);
+			VirtualXactLock(old_snapshots[i], true);
 	}
 
 	/*

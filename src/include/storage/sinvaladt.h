@@ -22,6 +22,7 @@
 #ifndef SINVALADT_H
 #define SINVALADT_H
 
+#include "storage/proc.h"
 #include "storage/sinval.h"
 
 /*
@@ -30,7 +31,7 @@
 extern Size SInvalShmemSize(void);
 extern void CreateSharedInvalidationState(void);
 extern void SharedInvalBackendInit(bool sendOnly);
-extern bool BackendIdIsActive(int backendID);
+extern PGPROC *BackendIdGetProc(int backendID);
 
 extern void SIInsertDataEntries(const SharedInvalidationMessage *data, int n);
 extern int	SIGetDataEntries(SharedInvalidationMessage *data, int datasize);

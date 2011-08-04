@@ -139,6 +139,7 @@ typedef struct ProcState
 {
 	/* procPid is zero in an inactive ProcState array entry. */
 	pid_t		procPid;		/* PID of backend, for signaling */
+	PGPROC	   *proc;			/* PGPROC of backend */
 	/* nextMsgNum is meaningless if procPid == 0 or resetState is true. */
 	int			nextMsgNum;		/* next message number to read */
 	bool		resetState;		/* backend needs to reset its state */
@@ -246,6 +247,7 @@ CreateSharedInvalidationState(void)
 	for (i = 0; i < shmInvalBuffer->maxBackends; i++)
 	{
 		shmInvalBuffer->procState[i].procPid = 0;		/* inactive */
+		shmInvalBuffer->procState[i].proc = NULL;
 		shmInvalBuffer->procState[i].nextMsgNum = 0;	/* meaningless */
 		shmInvalBuffer->procState[i].resetState = false;
 		shmInvalBuffer->procState[i].signaled = false;
@@ -313,6 +315,7 @@ SharedInvalBackendInit(bool sendOnly)
 
 	/* mark myself active, with all extant messages already read */
 	stateP->procPid = MyProcPid;
+	stateP->proc = MyProc;
 	stateP->nextMsgNum = segP->maxMsgNum;
 	stateP->resetState = false;
 	stateP->signaled = false;
@@ -353,6 +356,7 @@ CleanupInvalidationState(int status, Datum arg)
 
 	/* Mark myself inactive */
 	stateP->procPid = 0;
+	stateP->proc = NULL;
 	stateP->nextMsgNum = 0;
 	stateP->resetState = false;
 	stateP->signaled = false;
@@ -369,13 +373,16 @@ CleanupInvalidationState(int status, Datum arg)
 }
 
 /*
- * BackendIdIsActive
- *		Test if the given backend ID is currently assigned to a process.
+ * BackendIdGetProc
+ *		Get the PGPROC structure for a backend, given the backend ID.
+ *		The result may be out of date arbitrarily quickly, so the caller
+ *		must be careful about how this information is used.  NULL is
+ *		returned if the backend is not active.
  */
-bool
-BackendIdIsActive(int backendID)
+PGPROC *
+BackendIdGetProc(int backendID)
 {
-	bool		result;
+	PGPROC	   *result = NULL;
 	SISeg	   *segP = shmInvalBuffer;
 
 	/* Need to lock out additions/removals of backends */
@@ -385,10 +392,8 @@ BackendIdIsActive(int backendID)
 	{
 		ProcState  *stateP = &segP->procState[backendID - 1];
 
-		result = (stateP->procPid != 0);
+		result = stateP->proc;
 	}
-	else
-		result = false;
 
 	LWLockRelease(SInvalWriteLock);
 

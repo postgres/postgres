@@ -263,16 +263,23 @@ Fast Path Locking
 -----------------
 
 Fast path locking is a special purpose mechanism designed to reduce the
-overhead of taking and releasing weak relation locks.  SELECT, INSERT,
-UPDATE, and DELETE must acquire a lock on every relation they operate on,
-as well as various system catalogs that can be used internally.  These locks
-are notable not only for the very high frequency with which they are taken
-and released, but also for the fact that they virtually never conflict.
-Many DML operations can proceed in parallel against the same table at the
-same time; only DDL operations such as CLUSTER, ALTER TABLE, or DROP -- or
-explicit user action such as LOCK TABLE -- will create lock conflicts with
-the "weak" locks (AccessShareLock, RowShareLock, RowExclusiveLock) acquired
-by DML operations.
+overhead of taking and releasing certain types of locks which are taken
+and released very frequently but rarely conflict.  Currently, this includes
+two categories of locks:
+
+(1) Weak relation locks.  SELECT, INSERT, UPDATE, and DELETE must acquire a
+lock on every relation they operate on, as well as various system catalogs
+that can be used internally.  Many DML operations can proceed in parallel
+against the same table at the same time; only DDL operations such as
+CLUSTER, ALTER TABLE, or DROP -- or explicit user action such as LOCK TABLE
+-- will create lock conflicts with the "weak" locks (AccessShareLock,
+RowShareLock, RowExclusiveLock) acquired by DML operations.
+
+(2) VXID locks.  Every transaction takes a lock on its own virtual
+transaction ID.  Currently, the only operations that wait for these locks
+are CREATE INDEX CONCURRENTLY and Hot Standby (in the case of a conflict),
+so most VXID locks are taken and released by the owner without anyone else
+needing to care.
 
 The primary locking mechanism does not cope well with this workload.  Even
 though the lock manager locks are partitioned, the locktag for any given
@@ -284,8 +291,8 @@ even on 2-core servers, and becomes very pronounced as core count increases.
 To alleviate this bottleneck, beginning in PostgreSQL 9.2, each backend is
 permitted to record a limited number of locks on unshared relations in an
 array within its PGPROC structure, rather than using the primary lock table.
-This is called the "fast path" mechanism, and can only be used when the
-locker can verify that no conflicting locks can possibly exist.
+This mechanism can only be used when the locker can verify that no conflicting
+locks can possibly exist.
 
 A key point of this algorithm is that it must be possible to verify the
 absence of possibly conflicting locks without fighting over a shared LWLock or
@@ -316,6 +323,17 @@ and see a zero, then either the value is truly zero, or if it is a stale value,
 the strong locker has yet to acquire the per-backend LWLock we now hold (or,
 indeed, even the first per-backend LWLock) and will notice any weak lock we
 take when it does.
+
+Fast-path VXID locks do not use the FastPathStrongLocks table.  The first
+lock taken on a VXID is always the ExclusiveLock taken by its owner.  Any
+subsequent lockers are share lockers waiting for the VXID to terminate.
+Indeed, the only reason VXID locks use the lock manager at all (rather than
+waiting for the VXID to terminate via some other method) is for deadlock
+detection.  Thus, the initial VXID lock can *always* be taken via the fast
+path without checking for conflicts.  Any subsequent locker must check
+whether the lock has been transferred to the main lock table, and if not,
+do so.  The backend owning the VXID must be careful to clean up any entry
+made in the main lock table at end of transaction.
 
 
 The Deadlock Detection Algorithm

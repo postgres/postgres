@@ -38,6 +38,7 @@
 #include "miscadmin.h"
 #include "pg_trace.h"
 #include "pgstat.h"
+#include "storage/sinvaladt.h"
 #include "storage/standby.h"
 #include "utils/memutils.h"
 #include "utils/ps_status.h"
@@ -160,6 +161,7 @@ static bool FastPathUnGrantRelationLock(Oid relid, LOCKMODE lockmode);
 static bool FastPathTransferRelationLocks(LockMethod lockMethodTable,
 					  const LOCKTAG *locktag, uint32 hashcode);
 static PROCLOCK *FastPathGetRelationLockEntry(LOCALLOCK *locallock);
+static void VirtualXactLockTableCleanup(void);
 
 /*
  * To make the fast-path lock mechanism work, we must have some way of
@@ -1772,6 +1774,15 @@ LockReleaseAll(LOCKMETHODID lockmethodid, bool allLocks)
 		elog(LOG, "LockReleaseAll: lockmethod=%d", lockmethodid);
 #endif
 
+	/*
+	 * Get rid of our fast-path VXID lock, if appropriate.  Note that this
+	 * is the only way that the lock we hold on our own VXID can ever get
+	 * released: it is always and only released when a toplevel transaction
+	 * ends.
+	 */
+	if (lockmethodid == DEFAULT_LOCKMETHOD)
+		VirtualXactLockTableCleanup();
+
 	numLockModes = lockMethodTable->numLockModes;
 
 	/*
@@ -3034,6 +3045,33 @@ GetLockStatusData(void)
 			el++;
 		}
 
+		if (proc->fpVXIDLock)
+		{
+			VirtualTransactionId	vxid;
+			LockInstanceData   *instance;
+
+			if (el >= els)
+			{
+				els += MaxBackends;
+				data->locks = (LockInstanceData *)
+					repalloc(data->locks, sizeof(LockInstanceData) * els);
+			}
+
+			vxid.backendId = proc->backendId;
+			vxid.localTransactionId = proc->fpLocalTransactionId;
+
+			instance = &data->locks[el];
+			SET_LOCKTAG_VIRTUALTRANSACTION(instance->locktag, vxid);
+			instance->holdMask = LOCKBIT_ON(ExclusiveLock);
+			instance->waitLockMode = NoLock;
+			instance->backend = proc->backendId;
+			instance->lxid = proc->lxid;
+			instance->pid = proc->pid;
+			instance->fastpath = true;
+
+			el++;
+		}
+
 		LWLockRelease(proc->backendLock);
 	}
 
@@ -3528,4 +3566,167 @@ lock_twophase_postabort(TransactionId xid, uint16 info,
 						void *recdata, uint32 len)
 {
 	lock_twophase_postcommit(xid, info, recdata, len);
+}
+
+/*
+ *		VirtualXactLockTableInsert
+ *
+ *		Take vxid lock via the fast-path.  There can't be any pre-existing
+ *		lockers, as we haven't advertised this vxid via the ProcArray yet.
+ *
+ *		Since MyProc->fpLocalTransactionId will normally contain the same data
+ *		as MyProc->lxid, you might wonder if we really need both.  The
+ *		difference is that MyProc->lxid is set and cleared unlocked, and
+ *		examined by procarray.c, while fpLocalTransactionId is protected by
+ *		backendLock and is used only by the locking subsystem.  Doing it this
+ *		way makes it easier to verify that there are no funny race conditions.
+ *
+ *		We don't bother recording this lock in the local lock table, since it's
+ *		only ever released at the end of a transaction.  Instead,
+ *		LockReleaseAll() calls VirtualXactLockTableCleanup().
+ */
+void
+VirtualXactLockTableInsert(VirtualTransactionId vxid)
+{
+	Assert(VirtualTransactionIdIsValid(vxid));
+
+	LWLockAcquire(MyProc->backendLock, LW_EXCLUSIVE);
+
+	Assert(MyProc->backendId == vxid.backendId);
+	Assert(MyProc->fpLocalTransactionId == InvalidLocalTransactionId);
+	Assert(MyProc->fpVXIDLock == false);
+
+	MyProc->fpVXIDLock = true;
+	MyProc->fpLocalTransactionId = vxid.localTransactionId;
+
+	LWLockRelease(MyProc->backendLock);
+}
+
+/*
+ *		VirtualXactLockTableCleanup
+ *
+ *		Check whether a VXID lock has been materialized; if so, release it,
+ *		unblocking waiters.
+ */
+static void
+VirtualXactLockTableCleanup()
+{
+	bool	fastpath;
+	LocalTransactionId	lxid;
+
+	Assert(MyProc->backendId != InvalidBackendId);
+
+	/*
+	 * Clean up shared memory state.
+	 */
+	LWLockAcquire(MyProc->backendLock, LW_EXCLUSIVE);
+
+	fastpath = MyProc->fpVXIDLock;
+	lxid = MyProc->fpLocalTransactionId;
+	MyProc->fpVXIDLock = false;
+	MyProc->fpLocalTransactionId = InvalidLocalTransactionId;
+
+	LWLockRelease(MyProc->backendLock);
+
+	/*
+	 * If fpVXIDLock has been cleared without touching fpLocalTransactionId,
+	 * that means someone transferred the lock to the main lock table.
+	 */
+	if (!fastpath && LocalTransactionIdIsValid(lxid))
+	{
+		VirtualTransactionId	vxid;
+		LOCKTAG	locktag;
+
+		vxid.backendId = MyBackendId;
+		vxid.localTransactionId = lxid;
+		SET_LOCKTAG_VIRTUALTRANSACTION(locktag, vxid);
+
+		LockRefindAndRelease(LockMethods[DEFAULT_LOCKMETHOD], MyProc,
+							 &locktag, ExclusiveLock, false);
+	}	
+}
+
+/*
+ *		VirtualXactLock
+ *
+ * If wait = true, wait until the given VXID has been released, and then
+ * return true.
+ *
+ * If wait = false, just check whether the VXID is still running, and return
+ * true or false.
+ */
+bool
+VirtualXactLock(VirtualTransactionId vxid, bool wait)
+{
+	LOCKTAG		tag;
+	PGPROC	   *proc;
+
+	Assert(VirtualTransactionIdIsValid(vxid));
+
+	SET_LOCKTAG_VIRTUALTRANSACTION(tag, vxid);
+
+	/*
+	 * If a lock table entry must be made, this is the PGPROC on whose behalf
+	 * it must be done.  Note that the transaction might end or the PGPROC
+	 * might be reassigned to a new backend before we get around to examining
+	 * it, but it doesn't matter.  If we find upon examination that the
+	 * relevant lxid is no longer running here, that's enough to prove that
+	 * it's no longer running anywhere.
+	 */
+	proc = BackendIdGetProc(vxid.backendId);
+
+	/*
+	 * We must acquire this lock before checking the backendId and lxid
+	 * against the ones we're waiting for.  The target backend will only
+	 * set or clear lxid while holding this lock.
+	 */
+	LWLockAcquire(proc->backendLock, LW_EXCLUSIVE);
+
+	/* If the transaction has ended, our work here is done. */
+	if (proc->backendId != vxid.backendId
+		|| proc->fpLocalTransactionId != vxid.localTransactionId)
+	{
+		LWLockRelease(proc->backendLock);
+		return true;
+	}
+
+	/*
+	 * If we aren't asked to wait, there's no need to set up a lock table
+	 * entry.  The transaction is still in progress, so just return false.
+	 */
+	if (!wait)
+	{
+		LWLockRelease(proc->backendLock);
+		return false;
+	}
+
+	/*
+	 * OK, we're going to need to sleep on the VXID.  But first, we must set
+	 * up the primary lock table entry, if needed.
+	 */
+	if (proc->fpVXIDLock)
+	{
+		PROCLOCK   *proclock;
+		uint32		hashcode;
+
+		hashcode = LockTagHashCode(&tag);
+		proclock = SetupLockInTable(LockMethods[DEFAULT_LOCKMETHOD], proc,
+									&tag, hashcode, ExclusiveLock);
+		if (!proclock)
+			ereport(ERROR,
+					(errcode(ERRCODE_OUT_OF_MEMORY),
+					 errmsg("out of shared memory"),
+		  errhint("You might need to increase max_locks_per_transaction.")));
+		GrantLock(proclock->tag.myLock, proclock, ExclusiveLock);
+		proc->fpVXIDLock = false;
+	}
+
+	/* Done with proc->fpLockBits */
+	LWLockRelease(proc->backendLock);
+
+	/* Time to wait. */
+	(void) LockAcquire(&tag, ShareLock, false, false);
+
+	LockRelease(&tag, ShareLock, false);
+	return true;
 }

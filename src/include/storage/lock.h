@@ -543,4 +543,8 @@ extern void DumpLocks(PGPROC *proc);
 extern void DumpAllLocks(void);
 #endif
 
+/* Lock a VXID (used to wait for a transaction to finish) */
+extern void VirtualXactLockTableInsert(VirtualTransactionId vxid);
+extern bool VirtualXactLock(VirtualTransactionId vxid, bool wait);
+
 #endif   /* LOCK_H */

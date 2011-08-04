@@ -201,7 +201,7 @@ ResolveRecoveryConflictWithVirtualXIDs(VirtualTransactionId *waitlist,
 		standbyWait_us = STANDBY_INITIAL_WAIT_US;
 
 		/* wait until the virtual xid is gone */
-		while (!ConditionalVirtualXactLockTableWait(*waitlist))
+		while (!VirtualXactLock(*waitlist, false))
 		{
 			/*
 			 * Report via ps if we have been waiting for more than 500 msec

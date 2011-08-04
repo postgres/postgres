@@ -1992,7 +1992,7 @@ do_autovacuum(void)
 			backendID = GetTempNamespaceBackendId(classForm->relnamespace);
 
 			/* We just ignore it if the owning backend is still active */
-			if (backendID == MyBackendId || !BackendIdIsActive(backendID))
+			if (backendID == MyBackendId || BackendIdGetProc(backendID) == NULL)
 			{
 				/*
 				 * We found an orphan temp table (which was probably left
