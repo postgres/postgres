@@ -381,7 +381,7 @@ exec_command(const char *cmd,
 				success = listConversions(pattern, show_system);
 				break;
 			case 'C':
-				success = listCasts(pattern);
+				success = listCasts(pattern, show_verbose);
 				break;
 			case 'd':
 				if (strncmp(cmd, "ddp", 3) == 0)

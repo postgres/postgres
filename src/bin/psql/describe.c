@@ -2647,8 +2647,10 @@ listLanguages(const char *pattern, bool verbose, bool showSystem)
 						  gettext_noop("Owner"));
 
 	appendPQExpBuffer(&buf,
-					  "       l.lanpltrusted AS \"%s\"",
-					  gettext_noop("Trusted"));
+					  "       l.lanpltrusted AS \"%s\",\n"
+					  "       d.description AS \"%s\"",
+					  gettext_noop("Trusted"),
+					  gettext_noop("Description"));
 
 	if (verbose)
 	{
@@ -2666,13 +2668,18 @@ listLanguages(const char *pattern, bool verbose, bool showSystem)
 	}
 
 	appendPQExpBuffer(&buf,
-					  "\nFROM pg_catalog.pg_language l\n");
+					  "\nFROM pg_catalog.pg_language l\n"
+					  "LEFT JOIN pg_catalog.pg_description d\n"
+					  "  ON d.classoid = l.tableoid AND d.objoid = l.oid\n"
+					  "  AND d.objsubid = 0\n");
 
-	processSQLNamePattern(pset.db, &buf, pattern, false, false,
-						  NULL, "l.lanname", NULL, NULL);
+	if (pattern)
+		processSQLNamePattern(pset.db, &buf, pattern, false, false,
+							  NULL, "l.lanname", NULL, NULL);
 
 	if (!showSystem && !pattern)
-		appendPQExpBuffer(&buf, "WHERE lanplcallfoid != 0\n");
+		appendPQExpBuffer(&buf, "WHERE l.lanplcallfoid != 0\n");
+
 
 	appendPQExpBuffer(&buf, "ORDER BY 1;");
 
@@ -2820,7 +2827,7 @@ listConversions(const char *pattern, bool showSystem)
  * Describes casts.
  */
 bool
-listCasts(const char *pattern)
+listCasts(const char *pattern, bool verbose)
 {
 	PQExpBufferData buf;
 	PGresult   *res;
@@ -2844,7 +2851,21 @@ listCasts(const char *pattern)
 					  "       CASE WHEN c.castcontext = 'e' THEN '%s'\n"
 					  "            WHEN c.castcontext = 'a' THEN '%s'\n"
 					  "            ELSE '%s'\n"
-					  "       END as \"%s\"\n"
+					  "       END as \"%s\"",
+					  gettext_noop("Source type"),
+					  gettext_noop("Target type"),
+					  gettext_noop("Function"),
+					  gettext_noop("no"),
+					  gettext_noop("in assignment"),
+					  gettext_noop("yes"),
+					  gettext_noop("Implicit?"));
+
+	if (verbose)
+		appendPQExpBuffer(&buf,
+						  ",\n       d.description AS \"%s\"\n",
+						  gettext_noop("Description"));
+
+	appendPQExpBuffer(&buf,
 				 "FROM pg_catalog.pg_cast c LEFT JOIN pg_catalog.pg_proc p\n"
 					  "     ON c.castfunc = p.oid\n"
 					  "     LEFT JOIN pg_catalog.pg_type ts\n"
@@ -2854,13 +2875,15 @@ listCasts(const char *pattern)
 					  "     LEFT JOIN pg_catalog.pg_type tt\n"
 					  "     ON c.casttarget = tt.oid\n"
 					  "     LEFT JOIN pg_catalog.pg_namespace nt\n"
-					  "     ON nt.oid = tt.typnamespace\n"
-					  "WHERE (true",
-					  gettext_noop("Source type"),
-					  gettext_noop("Target type"),
-					  gettext_noop("Function"),
-	  gettext_noop("no"), gettext_noop("in assignment"), gettext_noop("yes"),
-					  gettext_noop("Implicit?"));
+					  "     ON nt.oid = tt.typnamespace\n");
+
+	if (verbose)
+		appendPQExpBuffer(&buf,
+						  "     LEFT JOIN pg_catalog.pg_description d\n"
+						  "     ON d.classoid = c.tableoid AND d.objoid = "
+						  "c.oid AND d.objsubid = 0\n");
+
+	appendPQExpBuffer(&buf, "WHERE ( (true");
 
 	/*
 	 * Match name pattern against either internal or external name of either
@@ -2878,7 +2901,7 @@ listCasts(const char *pattern)
 						  "pg_catalog.format_type(tt.oid, NULL)",
 						  "pg_catalog.pg_type_is_visible(tt.oid)");
 
-	appendPQExpBuffer(&buf, ")\nORDER BY 1, 2;");
+	appendPQExpBuffer(&buf, ") )\nORDER BY 1, 2;");
 
 	res = PSQLexec(buf.data, false);
 	termPQExpBuffer(&buf);
