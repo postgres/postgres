@@ -1425,11 +1425,11 @@ SET ENABLE_SEQSCAN TO OFF;
         operations much faster (see <xref linkend="populate-pitr">).
         Operations in which this optimization can be applied include:
         <simplelist>
-         <item>CREATE TABLE AS</item>
-         <item>CREATE INDEX</item>
-         <item>CLUSTER</item>
-         <item>COPY into tables that were created or truncated in the same
-         transaction
+         <member><command>CREATE TABLE AS</></member>
+         <member><command>CREATE INDEX</></member>
+         <member><command>CLUSTER</></member>
+         <member><command>COPY</> into tables that were created or truncated in the same
+         transaction</member>
         </simplelist>
         But minimal WAL does not contain
         enough information to reconstruct the data from a base backup and the
