@@ -1066,9 +1066,23 @@ top:
 			else
 				max = atoi(argv[3]);
 
-			if (max < min || max > MAX_RANDOM_VALUE)
+			if (max < min)
 			{
-				fprintf(stderr, "%s: invalid maximum number %d\n", argv[0], max);
+				fprintf(stderr, "%s: maximum is less than minimum\n", argv[0]);
+				st->ecnt++;
+				return true;
+			}
+
+			/*
+			 * getrand() neeeds to be able to subtract max from min and add
+			 * one the result without overflowing.  Since we know max > min,
+			 * we can detect overflow just by checking for a negative result.
+			 * But we must check both that the subtraction doesn't overflow,
+			 * and that adding one to the result doesn't overflow either.
+			 */
+			if (max - min < 0 || (max - min) + 1 < 0)
+			{
+				fprintf(stderr, "%s: range too large\n", argv[0]);
 				st->ecnt++;
 				return true;
 			}
