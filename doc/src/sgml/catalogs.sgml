@@ -1157,6 +1157,15 @@
       </entry>
      </row>
 
+     <row>
+      <entry><structfield>attfdwoptions</structfield></entry>
+      <entry><type>text[]</type></entry>
+      <entry></entry>
+      <entry>
+       Attribute-level foreign data wrapper options, as <quote>keyword=value</> strings
+      </entry>
+     </row>
+
     </tbody>
    </tgroup>
   </table>

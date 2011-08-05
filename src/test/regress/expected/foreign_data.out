@@ -646,19 +646,19 @@ ERROR:  syntax error at or near "WITH OIDS"
 LINE 1: CREATE FOREIGN TABLE ft1 () SERVER sc WITH OIDS;
                                               ^
 CREATE FOREIGN TABLE ft1 (
-	c1 integer NOT NULL,
-	c2 text,
+	c1 integer OPTIONS (param1 'val1') NOT NULL,
+	c2 text OPTIONS (param2 'val2', param3 'val3'),
 	c3 date
 ) SERVER sc OPTIONS (delimiter ',', quote '"');
 COMMENT ON FOREIGN TABLE ft1 IS 'ft1';
 COMMENT ON COLUMN ft1.c1 IS 'ft1.c1';
 \d+ ft1
-              Foreign table "public.ft1"
- Column |  Type   | Modifiers | Storage  | Description 
---------+---------+-----------+----------+-------------
- c1     | integer | not null  | plain    | ft1.c1
- c2     | text    |           | extended | 
- c3     | date    |           | plain    | 
+                            Foreign table "public.ft1"
+ Column |  Type   | Modifiers |          Options          | Storage  | Description 
+--------+---------+-----------+---------------------------+----------+-------------
+ c1     | integer | not null  | {param1=val1}             | plain    | ft1.c1
+ c2     | text    |           | {param2=val2,param3=val3} | extended | 
+ c3     | date    |           |                           | plain    | 
 Server: sc
 Has OIDs: no
 
@@ -687,7 +687,7 @@ ALTER FOREIGN TABLE ft1 ADD COLUMN c6 integer;
 ALTER FOREIGN TABLE ft1 ADD COLUMN c7 integer NOT NULL;
 ALTER FOREIGN TABLE ft1 ADD COLUMN c8 integer;
 ALTER FOREIGN TABLE ft1 ADD COLUMN c9 integer;
-ALTER FOREIGN TABLE ft1 ADD COLUMN c10 integer;
+ALTER FOREIGN TABLE ft1 ADD COLUMN c10 integer OPTIONS (p1 'v1');
 ALTER FOREIGN TABLE ft1 ALTER COLUMN c4 SET DEFAULT 0;          -- ERROR
 ERROR:  "ft1" is not a table or view
 ALTER FOREIGN TABLE ft1 ALTER COLUMN c5 DROP DEFAULT;           -- ERROR
@@ -698,6 +698,27 @@ ALTER FOREIGN TABLE ft1 ALTER COLUMN c8 TYPE char(10) USING '0'; -- ERROR
 ERROR:  "ft1" is not a table
 ALTER FOREIGN TABLE ft1 ALTER COLUMN c8 TYPE char(10);
 ALTER FOREIGN TABLE ft1 ALTER COLUMN c8 SET DATA TYPE text;
+ALTER FOREIGN TABLE ft1 ALTER COLUMN xmin OPTIONS (ADD p1 'v1'); -- ERROR
+ERROR:  cannot alter system column "xmin"
+ALTER FOREIGN TABLE ft1 ALTER COLUMN c7 OPTIONS (ADD p1 'v1', ADD p2 'v2'),
+                        ALTER COLUMN c8 OPTIONS (ADD p1 'v1', ADD p2 'v2');
+ALTER FOREIGN TABLE ft1 ALTER COLUMN c8 OPTIONS (SET p2 'V2', DROP p1);
+\d+ ft1
+                            Foreign table "public.ft1"
+ Column |  Type   | Modifiers |          Options          | Storage  | Description 
+--------+---------+-----------+---------------------------+----------+-------------
+ c1     | integer | not null  | {param1=val1}             | plain    | 
+ c2     | text    |           | {param2=val2,param3=val3} | extended | 
+ c3     | date    |           |                           | plain    | 
+ c4     | integer |           |                           | plain    | 
+ c6     | integer | not null  |                           | plain    | 
+ c7     | integer |           | {p1=v1,p2=v2}             | plain    | 
+ c8     | text    |           | {p2=V2}                   | extended | 
+ c9     | integer |           |                           | plain    | 
+ c10    | integer |           | {p1=v1}                   | plain    | 
+Server: sc
+Has OIDs: no
+
 -- can't change the column type if it's used elsewhere
 CREATE TABLE use_ft1_column_type (x ft1);
 ALTER FOREIGN TABLE ft1 ALTER COLUMN c8 SET DATA TYPE integer;	-- ERROR
@@ -726,17 +747,17 @@ ERROR:  relation "ft1" does not exist
 ALTER FOREIGN TABLE foreign_schema.ft1 RENAME c1 TO foreign_column_1;
 ALTER FOREIGN TABLE foreign_schema.ft1 RENAME TO foreign_table_1;
 \d foreign_schema.foreign_table_1
-Foreign table "foreign_schema.foreign_table_1"
-      Column      |  Type   | Modifiers 
-------------------+---------+-----------
- foreign_column_1 | integer | not null
- c2               | text    | 
- c3               | date    | 
- c4               | integer | 
- c6               | integer | not null
- c7               | integer | 
- c8               | text    | 
- c10              | integer | 
+           Foreign table "foreign_schema.foreign_table_1"
+      Column      |  Type   | Modifiers |          Options          
+------------------+---------+-----------+---------------------------
+ foreign_column_1 | integer | not null  | {param1=val1}
+ c2               | text    |           | {param2=val2,param3=val3}
+ c3               | date    |           | 
+ c4               | integer |           | 
+ c6               | integer | not null  | 
+ c7               | integer |           | {p1=v1,p2=v2}
+ c8               | text    |           | {p2=V2}
+ c10              | integer |           | {p1=v1}
 Server: sc
 
 -- Information schema

@@ -500,6 +500,7 @@ typedef struct ColumnDef
 	CollateClause *collClause;	/* untransformed COLLATE spec, if any */
 	Oid			collOid;		/* collation OID (InvalidOid if not set) */
 	List	   *constraints;	/* other constraints on column */
+	List	   *fdwoptions;		/* per-column FDW options */
 } ColumnDef;
 
 /*
@@ -1197,6 +1198,7 @@ typedef enum AlterTableType
 	AT_DropConstraint,			/* drop constraint */
 	AT_DropConstraintRecurse,	/* internal to commands/tablecmds.c */
 	AT_AlterColumnType,			/* alter column type */
+	AT_AlterColumnGenericOptions,	/* alter column OPTIONS (...) */
 	AT_ChangeOwner,				/* change owner */
 	AT_ClusterOn,				/* CLUSTER ON */
 	AT_DropCluster,				/* SET WITHOUT CLUSTER */

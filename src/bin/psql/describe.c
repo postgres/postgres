@@ -1281,7 +1281,12 @@ describeOneTableDetails(const char *schemaname,
 		res = NULL;
 	}
 
-	/* Get column info */
+	/*
+	 * Get column info
+	 *
+	 * You need to modify value of "firstvcol" which willbe defined below if
+	 * you are adding column(s) preceding to verbose-only columns.
+	 */
 	printfPQExpBuffer(&buf, "SELECT a.attname,");
 	appendPQExpBuffer(&buf, "\n  pg_catalog.format_type(a.atttypid, a.atttypmod),"
 					  "\n  (SELECT substring(pg_catalog.pg_get_expr(d.adbin, d.adrelid) for 128)"
@@ -1295,6 +1300,12 @@ describeOneTableDetails(const char *schemaname,
 		appendPQExpBuffer(&buf, "\n  NULL AS attcollation");
 	if (tableinfo.relkind == 'i')
 		appendPQExpBuffer(&buf, ",\n  pg_catalog.pg_get_indexdef(a.attrelid, a.attnum, TRUE) AS indexdef");
+	else
+		appendPQExpBuffer(&buf, ",\n  NULL AS indexdef");
+	if (tableinfo.relkind == 'f' && pset.sversion >= 90200)
+		appendPQExpBuffer(&buf, ",\n  a.attfdwoptions");
+	else
+		appendPQExpBuffer(&buf, ",\n  NULL AS attfdwoptions");
 	if (verbose)
 	{
 		appendPQExpBuffer(&buf, ",\n  a.attstorage");
@@ -1386,6 +1397,9 @@ describeOneTableDetails(const char *schemaname,
 	if (tableinfo.relkind == 'i')
 		headers[cols++] = gettext_noop("Definition");
 
+	if (tableinfo.relkind == 'f' && pset.sversion >= 90200)
+		headers[cols++] = gettext_noop("Options");
+
 	if (verbose)
 	{
 		headers[cols++] = gettext_noop("Storage");
@@ -1471,10 +1485,14 @@ describeOneTableDetails(const char *schemaname,
 		if (tableinfo.relkind == 'i')
 			printTableAddCell(&cont, PQgetvalue(res, i, 6), false, false);
 
+		/* FDW options for foreign table column, only for 9.2 or later */
+		if (tableinfo.relkind == 'f' && pset.sversion >= 90200)
+			printTableAddCell(&cont, PQgetvalue(res, i, 7), false, false);
+
 		/* Storage and Description */
 		if (verbose)
 		{
-			int			firstvcol = (tableinfo.relkind == 'i' ? 7 : 6);
+			int			firstvcol = 8;
 			char	   *storage = PQgetvalue(res, i, firstvcol);
 
 			/* these strings are literal in our syntax, so not translated. */

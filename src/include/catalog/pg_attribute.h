@@ -156,6 +156,9 @@ CATALOG(pg_attribute,1249) BKI_BOOTSTRAP BKI_WITHOUT_OIDS BKI_ROWTYPE_OID(75) BK
 
 	/* Column-level options */
 	text		attoptions[1];
+
+	/* Column-level FDW options */
+	text		attfdwoptions[1];
 } FormData_pg_attribute;
 
 /*
@@ -179,7 +182,7 @@ typedef FormData_pg_attribute *Form_pg_attribute;
  * ----------------
  */
 
-#define Natts_pg_attribute				20
+#define Natts_pg_attribute				21
 #define Anum_pg_attribute_attrelid		1
 #define Anum_pg_attribute_attname		2
 #define Anum_pg_attribute_atttypid		3
@@ -200,6 +203,7 @@ typedef FormData_pg_attribute *Form_pg_attribute;
 #define Anum_pg_attribute_attcollation	18
 #define Anum_pg_attribute_attacl		19
 #define Anum_pg_attribute_attoptions	20
+#define Anum_pg_attribute_attfdwoptions	21
 
 
 /* ----------------

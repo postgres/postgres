@@ -559,6 +559,31 @@ transformColumnDefinition(CreateStmtContext *cxt, ColumnDef *column)
 				break;
 		}
 	}
+
+	/*
+	 * Generate ALTER FOREIGN TABLE ALTER COLUMN statement which adds 
+	 * per-column foreign data wrapper options for this column.
+	 */
+	if (column->fdwoptions != NIL)
+	{
+		AlterTableStmt *stmt;
+		AlterTableCmd  *cmd;
+
+		cmd = makeNode(AlterTableCmd);
+		cmd->subtype = AT_AlterColumnGenericOptions;
+		cmd->name = column->colname;
+		cmd->def = (Node *) column->fdwoptions;
+		cmd->behavior = DROP_RESTRICT;
+		cmd->missing_ok = false;
+
+		stmt = makeNode(AlterTableStmt);
+		stmt->relation = cxt->relation;
+		stmt->cmds = NIL;
+		stmt->relkind = OBJECT_FOREIGN_TABLE;
+		stmt->cmds = lappend(stmt->cmds, cmd);
+
+		cxt->alist = lappend(cxt->alist, stmt);
+	}
 }
 
 /*

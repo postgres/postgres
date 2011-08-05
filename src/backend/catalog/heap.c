@@ -126,7 +126,7 @@ static List *insert_ordered_unique_oid(List *list, Oid datum);
  */
 
 /*
- * The initializers below do not include the attoptions or attacl fields,
+ * The initializers below do not include trailing variable length fields,
  * but that's OK - we're never going to reference anything beyond the
  * fixed-size portion of the structure anyway.
  */
@@ -620,6 +620,7 @@ InsertPgAttributeTuple(Relation pg_attribute_rel,
 	/* start out with empty permissions and empty options */
 	nulls[Anum_pg_attribute_attacl - 1] = true;
 	nulls[Anum_pg_attribute_attoptions - 1] = true;
+	nulls[Anum_pg_attribute_attfdwoptions - 1] = true;
 
 	tup = heap_form_tuple(RelationGetDescr(pg_attribute_rel), values, nulls);
 

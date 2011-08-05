@@ -892,6 +892,12 @@ testdb=&gt;
         </para>
 
         <para>
+        For some types of relation, <literal>\d</> shows additional information
+        for each column: column values for sequences, indexed expression for
+        indexes and per-column foreign data wrapper options for foreign tables.
+        </para>
+
+        <para>
         The command form <literal>\d+</literal> is identical, except that
         more information is displayed: any comments associated with the
         columns of the table are shown, as is the presence of OIDs in the

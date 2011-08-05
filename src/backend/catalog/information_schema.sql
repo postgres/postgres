@@ -2534,6 +2534,39 @@ GRANT SELECT ON element_types TO PUBLIC;
 
 -- SQL/MED views; these use section numbers from part 9 of the standard.
 
+/* Base view for foreign table columns */
+CREATE VIEW _pg_foreign_table_columns AS
+    SELECT n.nspname,
+           c.relname,
+           a.attname,
+           a.attfdwoptions
+    FROM pg_foreign_table t, pg_authid u, pg_namespace n, pg_class c,
+         pg_attribute a
+    WHERE u.oid = c.relowner
+          AND (pg_has_role(c.relowner, 'USAGE')
+               OR has_column_privilege(c.oid, a.attnum, 'SELECT, INSERT, UPDATE, REFERENCES'))
+          AND n.oid = c.relnamespace
+          AND c.oid = t.ftrelid
+          AND c.relkind = 'f'
+          AND a.attrelid = c.oid
+          AND a.attnum > 0;
+
+/*
+ * 24.2
+ * COLUMN_OPTIONS view
+ */
+CREATE VIEW column_options AS
+    SELECT CAST(current_database() AS sql_identifier) AS table_catalog,
+           c.nspname AS table_schema,
+           c.relname AS table_name,
+           c.attname AS column_name,
+           CAST((pg_options_to_table(c.attfdwoptions)).option_name AS sql_identifier) AS option_name,
+           CAST((pg_options_to_table(c.attfdwoptions)).option_value AS character_data) AS option_value
+    FROM _pg_foreign_table_columns c;
+
+GRANT SELECT ON column_options TO PUBLIC;
+
+
 /* Base view for foreign-data wrappers */
 CREATE VIEW _pg_foreign_data_wrappers AS
     SELECT w.oid,

@@ -363,7 +363,7 @@ equalTupleDescs(TupleDesc tupdesc1, TupleDesc tupdesc2)
 			return false;
 		if (attr1->attcollation != attr2->attcollation)
 			return false;
-		/* attacl and attoptions are not even present... */
+		/* attacl, attoptions and attfdwoptions are not even present... */
 	}
 
 	if (tupdesc1->constr != NULL)
@@ -483,7 +483,7 @@ TupleDescInitEntry(TupleDesc desc,
 	att->attisdropped = false;
 	att->attislocal = true;
 	att->attinhcount = 0;
-	/* attacl and attoptions are not present in tupledescs */
+	/* attacl, attoptions and attfdwoptions are not present in tupledescs */
 
 	tuple = SearchSysCache1(TYPEOID, ObjectIdGetDatum(oidtypeid));
 	if (!HeapTupleIsValid(tuple))

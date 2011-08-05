@@ -5574,6 +5574,7 @@ getTableAttrs(TableInfo *tblinfo, int numTables)
 	int			i_attislocal;
 	int			i_attoptions;
 	int			i_attcollation;
+	int			i_attfdwoptions;
 	PGresult   *res;
 	int			ntups;
 	bool		hasdefaults;
@@ -5611,7 +5612,31 @@ getTableAttrs(TableInfo *tblinfo, int numTables)
 
 		resetPQExpBuffer(q);
 
-		if (g_fout->remoteVersion >= 90100)
+		if (g_fout->remoteVersion >= 90200)
+		{
+			/*
+			 * attfdwoptions is new in 9.2.
+			 */
+			appendPQExpBuffer(q, "SELECT a.attnum, a.attname, a.atttypmod, "
+							  "a.attstattarget, a.attstorage, t.typstorage, "
+							  "a.attnotnull, a.atthasdef, a.attisdropped, "
+							  "a.attlen, a.attalign, a.attislocal, "
+				  "pg_catalog.format_type(t.oid,a.atttypmod) AS atttypname, "
+						"array_to_string(a.attoptions, ', ') AS attoptions, "
+							  "CASE WHEN a.attcollation <> t.typcollation "
+							"THEN a.attcollation ELSE 0 END AS attcollation, "
+				  "array_to_string(ARRAY("
+				  "  SELECT option_name || ' ' || quote_literal(option_value) "
+				  "  FROM pg_options_to_table(attfdwoptions)), ', ') "
+				  " AS attfdwoptions "
+			 "FROM pg_catalog.pg_attribute a LEFT JOIN pg_catalog.pg_type t "
+							  "ON a.atttypid = t.oid "
+							  "WHERE a.attrelid = '%u'::pg_catalog.oid "
+							  "AND a.attnum > 0::pg_catalog.int2 "
+							  "ORDER BY a.attrelid, a.attnum",
+							  tbinfo->dobj.catId.oid);
+		}
+		else if (g_fout->remoteVersion >= 90100)
 		{
 			/*
 			 * attcollation is new in 9.1.	Since we only want to dump COLLATE
@@ -5626,7 +5651,8 @@ getTableAttrs(TableInfo *tblinfo, int numTables)
 				  "pg_catalog.format_type(t.oid,a.atttypmod) AS atttypname, "
 						"array_to_string(a.attoptions, ', ') AS attoptions, "
 							  "CASE WHEN a.attcollation <> t.typcollation "
-							"THEN a.attcollation ELSE 0 END AS attcollation "
+							"THEN a.attcollation ELSE 0 END AS attcollation, "
+							  "NULL AS attfdwoptions "
 			 "FROM pg_catalog.pg_attribute a LEFT JOIN pg_catalog.pg_type t "
 							  "ON a.atttypid = t.oid "
 							  "WHERE a.attrelid = '%u'::pg_catalog.oid "
@@ -5643,7 +5669,8 @@ getTableAttrs(TableInfo *tblinfo, int numTables)
 							  "a.attlen, a.attalign, a.attislocal, "
 				  "pg_catalog.format_type(t.oid,a.atttypmod) AS atttypname, "
 						"array_to_string(a.attoptions, ', ') AS attoptions, "
-							  "0 AS attcollation "
+							  "0 AS attcollation, "
+							  "NULL AS attfdwoptions "
 			 "FROM pg_catalog.pg_attribute a LEFT JOIN pg_catalog.pg_type t "
 							  "ON a.atttypid = t.oid "
 							  "WHERE a.attrelid = '%u'::pg_catalog.oid "
@@ -5659,7 +5686,8 @@ getTableAttrs(TableInfo *tblinfo, int numTables)
 							  "a.attnotnull, a.atthasdef, a.attisdropped, "
 							  "a.attlen, a.attalign, a.attislocal, "
 				  "pg_catalog.format_type(t.oid,a.atttypmod) AS atttypname, "
-							  "'' AS attoptions, 0 AS attcollation "
+							  "'' AS attoptions, 0 AS attcollation, "
+							  "NULL AS attfdwoptions "
 			 "FROM pg_catalog.pg_attribute a LEFT JOIN pg_catalog.pg_type t "
 							  "ON a.atttypid = t.oid "
 							  "WHERE a.attrelid = '%u'::pg_catalog.oid "
@@ -5680,7 +5708,8 @@ getTableAttrs(TableInfo *tblinfo, int numTables)
 							  "false AS attisdropped, a.attlen, "
 							  "a.attalign, false AS attislocal, "
 							  "format_type(t.oid,a.atttypmod) AS atttypname, "
-							  "'' AS attoptions, 0 AS attcollation "
+							  "'' AS attoptions, 0 AS attcollation, "
+							  "NULL AS attfdwoptions "
 							  "FROM pg_attribute a LEFT JOIN pg_type t "
 							  "ON a.atttypid = t.oid "
 							  "WHERE a.attrelid = '%u'::oid "
@@ -5698,7 +5727,8 @@ getTableAttrs(TableInfo *tblinfo, int numTables)
 							  "attlen, attalign, "
 							  "false AS attislocal, "
 							  "(SELECT typname FROM pg_type WHERE oid = atttypid) AS atttypname, "
-							  "'' AS attoptions, 0 AS attcollation "
+							  "'' AS attoptions, 0 AS attcollation, "
+							  "NULL AS attfdwoptions "
 							  "FROM pg_attribute a "
 							  "WHERE attrelid = '%u'::oid "
 							  "AND attnum > 0::int2 "
@@ -5726,6 +5756,7 @@ getTableAttrs(TableInfo *tblinfo, int numTables)
 		i_attislocal = PQfnumber(res, "attislocal");
 		i_attoptions = PQfnumber(res, "attoptions");
 		i_attcollation = PQfnumber(res, "attcollation");
+		i_attfdwoptions = PQfnumber(res, "attfdwoptions");
 
 		tbinfo->numatts = ntups;
 		tbinfo->attnames = (char **) malloc(ntups * sizeof(char *));
@@ -5742,6 +5773,7 @@ getTableAttrs(TableInfo *tblinfo, int numTables)
 		tbinfo->attrdefs = (AttrDefInfo **) malloc(ntups * sizeof(AttrDefInfo *));
 		tbinfo->attoptions = (char **) malloc(ntups * sizeof(char *));
 		tbinfo->attcollation = (Oid *) malloc(ntups * sizeof(Oid));
+		tbinfo->attfdwoptions = (char **) malloc(ntups * sizeof(char *));
 		tbinfo->inhAttrs = (bool *) malloc(ntups * sizeof(bool));
 		tbinfo->inhAttrDef = (bool *) malloc(ntups * sizeof(bool));
 		tbinfo->inhNotNull = (bool *) malloc(ntups * sizeof(bool));
@@ -5768,6 +5800,7 @@ getTableAttrs(TableInfo *tblinfo, int numTables)
 			tbinfo->notnull[j] = (PQgetvalue(res, j, i_attnotnull)[0] == 't');
 			tbinfo->attoptions[j] = strdup(PQgetvalue(res, j, i_attoptions));
 			tbinfo->attcollation[j] = atooid(PQgetvalue(res, j, i_attcollation));
+			tbinfo->attfdwoptions[j] = strdup(PQgetvalue(res, j, i_attfdwoptions));
 			tbinfo->attrdefs[j] = NULL; /* fix below */
 			if (PQgetvalue(res, j, i_atthasdef)[0] == 't')
 				hasdefaults = true;
@@ -12468,6 +12501,21 @@ dumpTableSchema(Archive *fout, TableInfo *tbinfo)
 								  fmtId(tbinfo->attnames[j]));
 				appendPQExpBuffer(q, "SET (%s);\n",
 								  tbinfo->attoptions[j]);
+			}
+
+			/*
+			 * Dump per-column fdw options.
+			 */
+			if (tbinfo->relkind == RELKIND_FOREIGN_TABLE &&
+				tbinfo->attfdwoptions[j] &&
+				tbinfo->attfdwoptions[j][0] != '\0')
+			{
+				appendPQExpBuffer(q, "ALTER FOREIGN TABLE %s ",
+								  fmtId(tbinfo->dobj.name));
+				appendPQExpBuffer(q, "ALTER COLUMN %s ",
+								  fmtId(tbinfo->attnames[j]));
+				appendPQExpBuffer(q, "OPTIONS (%s);\n",
+								  tbinfo->attfdwoptions[j]);
 			}
 		}
 	}

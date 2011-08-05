@@ -275,6 +275,7 @@ typedef struct _tableInfo
 	bool	   *attislocal;		/* true if attr has local definition */
 	char	  **attoptions;		/* per-attribute options */
 	Oid		   *attcollation;	/* per-attribute collation selection */
+	char	  **attfdwoptions;	/* per-attribute fdw options */
 
 	/*
 	 * Note: we need to store per-attribute notnull, default, and constraint

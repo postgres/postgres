@@ -19,7 +19,7 @@
  <refsynopsisdiv>
 <synopsis>
 CREATE FOREIGN TABLE [ IF NOT EXISTS ] <replaceable class="PARAMETER">table_name</replaceable> ( [
-  { <replaceable class="PARAMETER">column_name</replaceable> <replaceable class="PARAMETER">data_type</replaceable> [ NULL | NOT NULL ] }
+  { <replaceable class="PARAMETER">column_name</replaceable> <replaceable class="PARAMETER">data_type</replaceable> [ OPTIONS ( <replaceable class="PARAMETER">option</replaceable> '<replaceable class="PARAMETER">value</replaceable>' [, ... ] ) ] [ NULL | NOT NULL ] }
     [, ... ]
 ] )
   SERVER <replaceable class="parameter">server_name</replaceable>
@@ -138,10 +138,12 @@ CREATE FOREIGN TABLE [ IF NOT EXISTS ] <replaceable class="PARAMETER">table_name
     <term><literal>OPTIONS ( <replaceable class="PARAMETER">option</replaceable> '<replaceable class="PARAMETER">value</replaceable>' [, ...] )</literal></term>
     <listitem>
      <para>
-      Options to be associated with the new foreign table.
+      Options to be associated with the new foreign table or one of its
+      columns.
       The allowed option names and values are specific to each foreign
       data wrapper and are validated using the foreign-data wrapper's
-      validator function. Option names must be unique.
+      validator function.  Duplicate option names are not allowed (although
+      it's OK for a table option and a column option to have the same name).
      </para>
     </listitem>
    </varlistentry>

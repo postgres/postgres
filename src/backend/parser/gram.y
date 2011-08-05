@@ -1769,6 +1769,15 @@ alter_table_cmd:
 					def->raw_default = $8;
 					$$ = (Node *)n;
 				}
+			/* ALTER FOREIGN TABLE <name> ALTER [COLUMN] <colname> OPTIONS */
+			| ALTER opt_column ColId alter_generic_options
+				{
+					AlterTableCmd *n = makeNode(AlterTableCmd);
+					n->subtype = AT_AlterColumnGenericOptions;
+					n->name = $3;
+					n->def = (Node *) $4;
+					$$ = (Node *)n;
+				}
 			/* ALTER TABLE <name> ADD CONSTRAINT ... */
 			| ADD_P TableConstraint
 				{
@@ -2497,7 +2506,7 @@ TypedTableElement:
 			| TableConstraint					{ $$ = $1; }
 		;
 
-columnDef:	ColId Typename ColQualList
+columnDef:	ColId Typename create_generic_options ColQualList
 				{
 					ColumnDef *n = makeNode(ColumnDef);
 					n->colname = $1;
@@ -2510,7 +2519,8 @@ columnDef:	ColId Typename ColQualList
 					n->raw_default = NULL;
 					n->cooked_default = NULL;
 					n->collOid = InvalidOid;
-					SplitColQualList($3, &n->constraints, &n->collClause,
+					n->fdwoptions = $3;
+					SplitColQualList($4, &n->constraints, &n->collClause,
 									 yyscanner);
 					$$ = (Node *)n;
 				}
