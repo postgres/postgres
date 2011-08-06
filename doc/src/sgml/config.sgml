@@ -5261,7 +5261,7 @@ dynamic_library_path = 'C:\tools\postgresql;H:\my_project\lib;$libdir'
        </para>
 
        <para>
-        Unlike <varname>local_preload_libraries</>, there is no
+        Unlike <xref linkend="guc-shared-preload-libraries">, there is no
         performance advantage to loading a library at session
         start rather than when it is first used.  Rather, the intent of
         this feature is to allow debugging or performance-measurement
