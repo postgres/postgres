@@ -16,9 +16,9 @@
 #include "postgres.h"
 
 #include "nodes/makefuncs.h"
-#include "nodes/parsenodes.h"
-#include "replication/replnodes.h"
+#include "nodes/replnodes.h"
 #include "replication/walsender.h"
+
 
 /* Result of the parsing is returned here */
 Node *replication_parse_result;

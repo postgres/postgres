@@ -37,16 +37,16 @@
 #include <signal.h>
 #include <unistd.h>
 
-#include "funcapi.h"
-#include "access/xlog_internal.h"
 #include "access/transam.h"
+#include "access/xlog_internal.h"
 #include "catalog/pg_type.h"
+#include "funcapi.h"
 #include "libpq/libpq.h"
 #include "libpq/pqformat.h"
 #include "libpq/pqsignal.h"
 #include "miscadmin.h"
+#include "nodes/replnodes.h"
 #include "replication/basebackup.h"
-#include "replication/replnodes.h"
 #include "replication/walprotocol.h"
 #include "replication/walreceiver.h"
 #include "replication/walsender.h"
