@@ -105,11 +105,12 @@ int			Log_destination = LOG_DESTINATION_STDERR;
 /*
  * Max string length to send to syslog().  Note that this doesn't count the
  * sequence-number prefix we add, and of course it doesn't count the prefix
- * added by syslog itself.	On many implementations it seems that the hard
- * limit is approximately 2K bytes including both those prefixes.
+ * added by syslog itself.  Solaris and sysklogd truncate the final message
+ * at 1024 bytes, so this value leaves 124 bytes for those prefixes.  (Most
+ * other syslog implementations seem to have limits of 2KB or so.)
  */
 #ifndef PG_SYSLOG_LIMIT
-#define PG_SYSLOG_LIMIT 1024
+#define PG_SYSLOG_LIMIT 900
 #endif
 
 static bool openlog_done = false;
