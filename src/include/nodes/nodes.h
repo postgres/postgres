@@ -403,6 +403,13 @@ typedef enum NodeTag
 	T_CommonTableExpr,
 
 	/*
+	 * TAGS FOR REPLICATION GRAMMAR PARSE NODES (replnodes.h)
+	 */
+	T_IdentifySystemCmd,
+	T_BaseBackupCmd,
+	T_StartReplicationCmd,
+
+	/*
 	 * TAGS FOR RANDOM OTHER STUFF
 	 *
 	 * These are objects that aren't part of parse/plan/execute node tree
