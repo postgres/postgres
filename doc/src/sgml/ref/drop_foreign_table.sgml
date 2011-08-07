@@ -21,7 +21,7 @@
 DROP FOREIGN TABLE [ IF EXISTS ] <replaceable class="PARAMETER">name</replaceable> [, ...] [ CASCADE | RESTRICT ]
 </synopsis>
  </refsynopsisdiv>
- 
+
  <refsect1>
   <title>Description</title>
 
@@ -30,7 +30,7 @@ DROP FOREIGN TABLE [ IF EXISTS ] <replaceable class="PARAMETER">name</replaceabl
    Only the owner of a foreign table can remove it.
   </para>
  </refsect1>
-  
+
  <refsect1>
   <title>Parameters</title>
 
@@ -80,14 +80,14 @@ DROP FOREIGN TABLE [ IF EXISTS ] <replaceable class="PARAMETER">name</replaceabl
   <title>Examples</title>
 
   <para>
-   To destroy two foreign tables, <literal>films</literal> and 
+   To destroy two foreign tables, <literal>films</literal> and
    <literal>distributors</literal>:
 
 <programlisting>
 DROP FOREIGN TABLE films, distributors;
 </programlisting></para>
  </refsect1>
- 
+
  <refsect1>
   <title>Compatibility</title>
 

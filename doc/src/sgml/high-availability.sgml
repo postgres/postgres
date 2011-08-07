@@ -872,7 +872,7 @@ primary_conninfo = 'host=192.168.1.50 port=5432 user=foo password=foopass'
      <literal>pg_stat_replication</></link> view. Large differences between
      <function>pg_current_xlog_location</> and <literal>sent_location</> field
      might indicate that the master server is under heavy load, while
-     differences between <literal>sent_location</> and 
+     differences between <literal>sent_location</> and
      <function>pg_last_xlog_receive_location</> on the standby might indicate
      network delay, or that the standby is under heavy load.
     </para>
