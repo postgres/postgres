@@ -86,8 +86,7 @@ DROP VIEW [ IF EXISTS ] <replaceable class="PARAMETER">name</replaceable> [, ...
    This command will remove the view called <literal>kinds</literal>:
 <programlisting>
 DROP VIEW kinds;
-</programlisting>
-  </para>
+</programlisting></para>
  </refsect1>
 
  <refsect1>

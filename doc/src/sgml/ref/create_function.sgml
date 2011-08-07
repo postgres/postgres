@@ -259,8 +259,7 @@ CREATE [ OR REPLACE ] FUNCTION
      <term><literal>WINDOW</literal></term>
 
      <listitem>
-      <para>
-       <literal>WINDOW</literal> indicates that the function is a
+      <para><literal>WINDOW</literal> indicates that the function is a
        <firstterm>window function</> rather than a plain function.
        This is currently only useful for functions written in C.
        The <literal>WINDOW</> attribute cannot be changed when
@@ -282,8 +281,7 @@ CREATE [ OR REPLACE ] FUNCTION
        <literal>VOLATILE</literal> is the default assumption.
       </para>
 
-      <para>
-       <literal>IMMUTABLE</literal> indicates that the function
+      <para><literal>IMMUTABLE</literal> indicates that the function
        cannot modify the database and always
        returns the same result when given the same argument values; that
        is, it does not do database lookups or otherwise use information not
@@ -292,8 +290,7 @@ CREATE [ OR REPLACE ] FUNCTION
        immediately replaced with the function value.
       </para>
 
-      <para>
-       <literal>STABLE</literal> indicates that the function
+      <para><literal>STABLE</literal> indicates that the function
        cannot modify the database,
        and that within a single table scan it will consistently
        return the same result for the same argument values, but that its
@@ -306,8 +303,7 @@ CREATE [ OR REPLACE ] FUNCTION
        as stable, since their values do not change within a transaction.
       </para>
 
-      <para>
-       <literal>VOLATILE</literal> indicates that the function value can
+      <para><literal>VOLATILE</literal> indicates that the function value can
        change even within a single table scan, so no optimizations can be
        made.  Relatively few database functions are volatile in this sense;
        some examples are <literal>random()</>, <literal>currval()</>,
@@ -329,16 +325,14 @@ CREATE [ OR REPLACE ] FUNCTION
      <term><literal>STRICT</literal></term>
 
      <listitem>
-      <para>
-       <literal>CALLED ON NULL INPUT</literal> (the default) indicates
+      <para><literal>CALLED ON NULL INPUT</literal> (the default) indicates
        that the function will be called normally when some of its
        arguments are null.  It is then the function author's
        responsibility to check for null values if necessary and respond
        appropriately.
       </para>
 
-      <para>
-       <literal>RETURNS NULL ON NULL INPUT</literal> or
+      <para><literal>RETURNS NULL ON NULL INPUT</literal> or
        <literal>STRICT</literal> indicates that the function always
        returns null whenever any of its arguments are null.  If this
        parameter is specified, the function is not executed when there
@@ -353,8 +347,7 @@ CREATE [ OR REPLACE ] FUNCTION
     <term><literal><optional>EXTERNAL</optional> SECURITY DEFINER</literal></term>
 
     <listitem>
-     <para>
-      <literal>SECURITY INVOKER</literal> indicates that the function
+     <para><literal>SECURITY INVOKER</literal> indicates that the function
       is to be executed with the privileges of the user that calls it.
       That is the default.  <literal>SECURITY DEFINER</literal>
       specifies that the function is to be executed with the
@@ -499,8 +492,7 @@ CREATE [ OR REPLACE ] FUNCTION
        <varlistentry>
         <term><literal>isCachable</></term>
         <listitem>
-         <para>
-          <literal>isCachable</literal> is an obsolete equivalent of
+         <para><literal>isCachable</literal> is an obsolete equivalent of
           <literal>IMMUTABLE</literal>; it's still accepted for
           backwards-compatibility reasons.
          </para>

@@ -348,8 +348,7 @@ COMMIT;
    <literal>c_films</> is currently positioned:
 <programlisting>
 UPDATE films SET kind = 'Dramatic' WHERE CURRENT OF c_films;
-</programlisting>
-  </para>
+</programlisting></para>
  </refsect1>
 
  <refsect1>

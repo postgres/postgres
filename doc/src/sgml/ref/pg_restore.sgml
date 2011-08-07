@@ -197,8 +197,7 @@
           </para>
          </listitem>
         </varlistentry>
-       </variablelist>
-       </para>
+       </variablelist></para>
       </listitem>
      </varlistentry>
 
@@ -286,8 +285,7 @@
         if filtering switches such as <option>-n</> or <option>-t</> are
         used with <option>-L</>, they will further restrict the items restored.
        </para>
-       <para>
-        <replaceable class="PARAMETER">list-file</> is normally created by
+       <para><replaceable class="PARAMETER">list-file</> is normally created by
         editing the output of a previous <option>-l</> operation.
         Lines can be moved or removed, and can also
         be commented out by placing a semicolon (<literal>;</literal>) at the
@@ -707,8 +705,7 @@ CREATE DATABASE foo WITH TEMPLATE template0;
     </listitem>
 
     <listitem>
-     <para>
-      <application>pg_restore</application> cannot restore large objects
+     <para><application>pg_restore</application> cannot restore large objects
       selectively;  for instance, only those for a specific table.  If
       an archive contains large objects, then all large objects will be
       restored, or none of them if they are excluded via <option>-L</option>,
@@ -821,8 +818,7 @@ CREATE DATABASE foo WITH TEMPLATE template0;
    items 10 and 6, in that order:
 <screen>
 <prompt>$</prompt> <userinput>pg_restore -L db.list db.dump</userinput>
-</screen>
-  </para>
+</screen></para>
 
  </refsect1>
 

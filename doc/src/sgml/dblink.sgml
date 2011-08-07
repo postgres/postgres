@@ -76,8 +76,7 @@ dblink_connect(text connname, text connstr) returns text
     <varlistentry>
      <term><parameter>connstr</parameter></term>
      <listitem>
-      <para>
-       <application>libpq</>-style connection info string, for example
+      <para><application>libpq</>-style connection info string, for example
        <literal>hostaddr=127.0.0.1 port=5432 dbname=mydb user=postgres
        password=mypasswd</>.
        For details see <function>PQconnectdb</> in
@@ -447,8 +446,7 @@ CREATE VIEW myremote_pg_proc AS
     AS t1(proname name, prosrc text);
 
 SELECT * FROM myremote_pg_proc WHERE proname LIKE 'bytea%';
-</programlisting>
-   </para>
+</programlisting></para>
   </refsect1>
 
   <refsect1>

@@ -271,8 +271,7 @@ PostgreSQL documentation
     To remove the language <literal>pltcl</literal>:
 <screen>
 <prompt>$ </prompt><userinput>droplang pltcl dbname</userinput>
-</screen>
-   </para>
+</screen></para>
  </refsect1>
 
  <refsect1>

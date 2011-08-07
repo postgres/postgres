@@ -104,8 +104,7 @@ ALTER CONVERSION iso_8859_1_to_utf8 RENAME TO latin1_to_unicode;
    <literal>joe</literal>:
 <programlisting>
 ALTER CONVERSION iso_8859_1_to_utf8 OWNER TO joe;
-</programlisting>
-  </para>
+</programlisting></para>
  </refsect1>
 
  <refsect1>

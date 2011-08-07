@@ -99,8 +99,7 @@ DROP TRIGGER [ IF EXISTS ] <replaceable class="PARAMETER">name</replaceable> ON 
 
 <programlisting>
 DROP TRIGGER if_dist_exists ON films;
-</programlisting>
-  </para>
+</programlisting></para>
  </refsect1>
 
  <refsect1 id="SQL-DROPTRIGGER-compatibility">

@@ -167,8 +167,7 @@ CREATE FOREIGN TABLE films (
     len         interval hour to minute
 )
 SERVER film_server;
-</programlisting>
-  </para>
+</programlisting></para>
 
  </refsect1>
 

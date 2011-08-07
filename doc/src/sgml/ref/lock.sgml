@@ -222,8 +222,7 @@ DELETE FROM films_user_comments WHERE id IN
     (SELECT id FROM films WHERE rating &lt; 5);
 DELETE FROM films WHERE rating &lt; 5;
 COMMIT WORK;
-</programlisting>
-  </para>
+</programlisting></para>
  </refsect1>
 
  <refsect1>

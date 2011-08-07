@@ -703,8 +703,7 @@ only one flag bit is defined, and the rest must be zero:
            </para>
           </listitem>
          </varlistentry>
-        </variablelist>
-       </para>
+        </variablelist></para>
       </listitem>
      </varlistentry>
 
@@ -850,8 +849,7 @@ ZW      ZIMBABWE
 0000140  \0 002   Z   M  \0  \0  \0 006   Z   A   M   B   I   A 377 377
 0000160 377 377  \0 003  \0  \0  \0 002   Z   W  \0  \0  \0  \b   Z   I
 0000200   M   B   A   B   W   E 377 377 377 377 377 377
-</programlisting>
-  </para>
+</programlisting></para>
  </refsect1>
 
  <refsect1>
@@ -910,7 +908,6 @@ COPY [ BINARY ] <replaceable class="parameter">table_name</replaceable> [ WITH O
     TO { '<replaceable class="parameter">filename</replaceable>' | STDOUT }
     [ [USING] DELIMITERS '<replaceable class="parameter">delimiter</replaceable>' ]
     [ WITH NULL AS '<replaceable class="parameter">null string</replaceable>' ]
-</synopsis>
-  </para>
+</synopsis></para>
  </refsect1>
 </refentry>

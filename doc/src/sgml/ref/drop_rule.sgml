@@ -96,8 +96,7 @@ DROP RULE [ IF EXISTS ] <replaceable class="PARAMETER">name</replaceable> ON <re
 
 <programlisting>
 DROP RULE newrule ON mytable;
-</programlisting>
-  </para>
+</programlisting></para>
  </refsect1>
 
  <refsect1>

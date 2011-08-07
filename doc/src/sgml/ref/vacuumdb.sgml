@@ -369,8 +369,7 @@ PostgreSQL documentation
     <literal>bar</literal> of the table for the optimizer:
 <screen>
 <prompt>$ </prompt><userinput>vacuumdb --analyze --verbose --table 'foo(bar)' xyzzy</userinput>
-</screen>
-   </para>
+</screen></para>
 
  </refsect1>
 

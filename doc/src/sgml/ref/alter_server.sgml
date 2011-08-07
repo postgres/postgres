@@ -100,8 +100,7 @@ ALTER SERVER foo OPTIONS (host 'foo', dbname 'foodb');
    change <literal>host</> option:
 <programlisting>
 ALTER SERVER foo VERSION '8.4' OPTIONS (SET host 'baz');
-</programlisting>
-  </para>
+</programlisting></para>
  </refsect1>
 
  <refsect1>

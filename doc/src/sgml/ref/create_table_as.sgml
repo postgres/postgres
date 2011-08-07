@@ -183,8 +183,7 @@ CREATE [ [ GLOBAL | LOCAL ] { TEMPORARY | TEMP } | UNLOGGED ] TABLE <replaceable
          </para>
         </listitem>
        </varlistentry>
-      </variablelist>
-     </para>
+      </variablelist></para>
     </listitem>
    </varlistentry>
 
@@ -291,8 +290,7 @@ PREPARE recentfilms(date) AS
   SELECT * FROM films WHERE date_prod &gt; $1;
 CREATE TEMP TABLE films_recent WITH (OIDS) ON COMMIT DROP AS
   EXECUTE recentfilms('2002-01-01');
-</programlisting>
-  </para>
+</programlisting></para>
  </refsect1>
 
  <refsect1>
@@ -319,8 +317,7 @@ CREATE TEMP TABLE films_recent WITH (OIDS) ON COMMIT DROP AS
     </listitem>
 
     <listitem>
-     <para>
-      <productname>PostgreSQL</> handles temporary tables in a way
+     <para><productname>PostgreSQL</> handles temporary tables in a way
       rather different from the standard; see
       <xref linkend="sql-createtable">
       for details.
@@ -341,8 +338,7 @@ CREATE TEMP TABLE films_recent WITH (OIDS) ON COMMIT DROP AS
       is an extension.
      </para>
     </listitem>
-   </itemizedlist>
-  </para>
+   </itemizedlist></para>
  </refsect1>
 
  <refsect1>

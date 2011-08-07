@@ -153,8 +153,7 @@ PREPARE TRANSACTION <replaceable class="PARAMETER">transaction_id</replaceable>
 
 <programlisting>
 PREPARE TRANSACTION 'foobar';
-</programlisting>
-  </para>
+</programlisting></para>
  </refsect1>
 
  <refsect1>

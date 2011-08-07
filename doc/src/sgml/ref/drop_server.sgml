@@ -87,8 +87,7 @@ DROP SERVER [ IF EXISTS ] <replaceable class="parameter">server_name</replaceabl
    Drop a server <literal>foo</> if it exists:
 <programlisting>
 DROP SERVER IF EXISTS foo;
-</programlisting>
-  </para>
+</programlisting></para>
  </refsect1>
 
  <refsect1>

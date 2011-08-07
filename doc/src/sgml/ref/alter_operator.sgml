@@ -105,8 +105,7 @@ ALTER OPERATOR <replaceable>name</replaceable> ( { <replaceable>left_type</repla
    Change the owner of a custom operator <literal>a @@ b</literal> for type <type>text</type>:
 <programlisting>
 ALTER OPERATOR @@ (text, text) OWNER TO joe;
-</programlisting>
-  </para>
+</programlisting></para>
  </refsect1>
 
  <refsect1>

@@ -111,8 +111,7 @@ ALTER TABLESPACE index_space RENAME TO fast_raid;
    Change the owner of tablespace <literal>index_space</literal>:
 <programlisting>
 ALTER TABLESPACE index_space OWNER TO mary;
-</programlisting>
-  </para>
+</programlisting></para>
  </refsect1>
 
  <refsect1>

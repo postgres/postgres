@@ -107,9 +107,9 @@ BEGIN
         EXECUTE 'GRANT ALL ON ' || quote_ident(r.table_schema) || '.' || quote_ident(r.table_name) || ' TO webuser';
     END LOOP;
 END$$;
-</programlisting>
-  </para>
+</programlisting></para>
  </refsect1>
+
  <refsect1>
   <title>Compatibility</title>
 

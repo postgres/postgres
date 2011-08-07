@@ -598,8 +598,7 @@ SELECT * FROM points
    To create an index without locking out writes to the table:
 <programlisting>
 CREATE INDEX CONCURRENTLY sales_quantity_index ON sales_table (quantity);
-</programlisting>
-  </para>
+</programlisting></para>
 
  </refsect1>
 

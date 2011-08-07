@@ -85,8 +85,7 @@ DROP USER MAPPING [ IF EXISTS ] FOR { <replaceable class="parameter">user_name</
    Drop a user mapping <literal>bob</>, server <literal>foo</> if it exists:
 <programlisting>
 DROP USER MAPPING IF EXISTS FOR bob SERVER foo;
-</programlisting>
-  </para>
+</programlisting></para>
  </refsect1>
 
  <refsect1>

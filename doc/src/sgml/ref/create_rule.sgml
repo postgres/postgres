@@ -149,8 +149,7 @@ CREATE [ OR REPLACE ] RULE <replaceable class="parameter">name</replaceable> AS 
    <varlistentry>
     <term><option>INSTEAD</option></term>
     <listitem>
-     <para>
-      <literal>INSTEAD</literal> indicates that the commands should be
+     <para><literal>INSTEAD</literal> indicates that the commands should be
       executed <emphasis>instead of</> the original command.
      </para>
     </listitem>
@@ -159,8 +158,7 @@ CREATE [ OR REPLACE ] RULE <replaceable class="parameter">name</replaceable> AS 
    <varlistentry>
     <term><option>ALSO</option></term>
     <listitem>
-     <para>
-      <literal>ALSO</literal> indicates that the commands should be
+     <para><literal>ALSO</literal> indicates that the commands should be
       executed <emphasis>in addition to</emphasis> the original
       command.
      </para>

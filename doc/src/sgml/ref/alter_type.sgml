@@ -313,8 +313,7 @@ ALTER TYPE compfoo ADD ATTRIBUTE f3 int;
    To add a new value to an enum type in a particular sort position:
 <programlisting>
 ALTER TYPE colors ADD VALUE 'orange' AFTER 'red';
-</programlisting>
-  </para>
+</programlisting></para>
  </refsect1>
 
  <refsect1>

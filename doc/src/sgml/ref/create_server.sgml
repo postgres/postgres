@@ -136,8 +136,7 @@ CREATE SERVER foo FOREIGN DATA WRAPPER "default";
    foreign-data wrapper <literal>pgsql</>:
 <programlisting>
 CREATE SERVER myserver FOREIGN DATA WRAPPER pgsql OPTIONS (host 'foo', dbname 'foodb', port '5432');
-</programlisting>
-  </para>
+</programlisting></para>
  </refsect1>
 
  <refsect1>

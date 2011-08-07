@@ -86,8 +86,7 @@ DROP SEQUENCE [ IF EXISTS ] <replaceable class="PARAMETER">name</replaceable> [,
 
 <programlisting>
 DROP SEQUENCE serial;
-</programlisting>
-  </para>
+</programlisting></para>
  </refsect1>
 
  <refsect1>

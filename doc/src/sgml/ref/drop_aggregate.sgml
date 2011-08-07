@@ -99,8 +99,7 @@ DROP AGGREGATE [ IF EXISTS ] <replaceable class="PARAMETER">name</replaceable> (
    <type>integer</type>:
 <programlisting>
 DROP AGGREGATE myavg(integer);
-</programlisting>
-  </para>
+</programlisting></para>
  </refsect1>
 
  <refsect1>

@@ -87,8 +87,7 @@ DROP INDEX [ IF EXISTS ] <replaceable class="PARAMETER">name</replaceable> [, ..
 
 <programlisting>
 DROP INDEX title_idx;
-</programlisting>
-  </para>
+</programlisting></para>
  </refsect1>
 
  <refsect1>

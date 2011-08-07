@@ -254,8 +254,7 @@ PostgreSQL documentation
 <computeroutput>Role "joe" will be permanently removed.
 Are you sure? (y/n) </computeroutput><userinput>y</userinput>
 <computeroutput>DROP ROLE joe;</computeroutput>
-</screen>
-   </para>
+</screen></para>
  </refsect1>
 
 

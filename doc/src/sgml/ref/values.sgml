@@ -214,8 +214,7 @@ UPDATE employees SET salary = salary * v.increase
 <programlisting>
 SELECT * FROM machines
 WHERE ip_address IN (VALUES('192.168.0.1'::inet), ('192.168.0.10'), ('192.168.1.43'));
-</programlisting>
-  </para>
+</programlisting></para>
 
   <tip>
    <para>
@@ -230,8 +229,7 @@ WHERE ip_address IN (VALUES('192.168.0.1'::inet), ('192.168.0.10'), ('192.168.1.
  <refsect1>
   <title>Compatibility</title>
 
-  <para>
-   <command>VALUES</command> conforms to the SQL standard.
+  <para><command>VALUES</command> conforms to the SQL standard.
    <literal>LIMIT</literal> and <literal>OFFSET</literal> are
    <productname>PostgreSQL</productname> extensions; see also
    under <xref linkend="sql-select">.

@@ -79,8 +79,7 @@ ROLLBACK PREPARED <replaceable class="PARAMETER">transaction_id</replaceable>
 
 <programlisting>
 ROLLBACK PREPARED 'foobar';
-</programlisting>
-  </para>
+</programlisting></para>
 
  </refsect1>
 

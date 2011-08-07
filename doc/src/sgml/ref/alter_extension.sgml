@@ -288,8 +288,7 @@ ALTER EXTENSION hstore SET SCHEMA utils;
    To add an existing function to the <literal>hstore</literal> extension:
 <programlisting>
 ALTER EXTENSION hstore ADD FUNCTION populate_record(anyelement, hstore);
-</programlisting>
-  </para>
+</programlisting></para>
  </refsect1>
 
  <refsect1 id="SQL-ALTEREXTENSION-see-also">

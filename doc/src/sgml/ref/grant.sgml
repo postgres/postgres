@@ -586,8 +586,7 @@ GRANT ALL PRIVILEGES ON kinds TO manuel;
 
 <programlisting>
 GRANT admins TO joe;
-</programlisting>
-  </para>
+</programlisting></para>
  </refsect1>
 
  <refsect1 id="sql-grant-compatibility">

@@ -206,8 +206,7 @@ TRUNCATE bigtable, fattable RESTART IDENTITY;
 
 <programlisting>
 TRUNCATE othertable CASCADE;
-</programlisting>
-  </para>
+</programlisting></para>
  </refsect1>
 
  <refsect1>

@@ -77,8 +77,7 @@ DROP CONVERSION [ IF EXISTS ] <replaceable>name</replaceable> [ CASCADE | RESTRI
    To drop the conversion named <literal>myname</>:
 <programlisting>
 DROP CONVERSION myname;
-</programlisting>
-  </para>
+</programlisting></para>
  </refsect1>
 
  <refsect1 id="sql-dropconversion-compat">

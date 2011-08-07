@@ -74,8 +74,7 @@ END [ WORK | TRANSACTION ]
    To commit the current transaction and make all changes permanent:
 <programlisting>
 END;
-</programlisting>
-  </para>
+</programlisting></para>
  </refsect1>
 
  <refsect1>

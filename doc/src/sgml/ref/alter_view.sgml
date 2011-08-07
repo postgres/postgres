@@ -123,8 +123,7 @@ ALTER VIEW <replaceable class="parameter">name</replaceable> SET SCHEMA <replace
    <literal>bar</literal>:
 <programlisting>
 ALTER VIEW foo RENAME TO bar;
-</programlisting>
-  </para>
+</programlisting></para>
  </refsect1>
 
  <refsect1>

@@ -123,8 +123,7 @@ DROP OPERATOR ~ (none, bit);
    for type <type>bigint</type>:
 <programlisting>
 DROP OPERATOR ! (bigint, none);
-</programlisting>
-  </para>
+</programlisting></para>
  </refsect1>
 
  <refsect1>

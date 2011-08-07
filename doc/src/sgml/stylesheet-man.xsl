@@ -8,19 +8,6 @@
 <xsl:import href="stylesheet-common.xsl" />
 
 
-<!-- The following is a workaround for what may actually be a mistake
-     in our markup.  The problem is in a situation like
-
-<para>
- <command>FOO</command> is ...
-
-     there is strictly speaking a line break before "FOO".  In the
-     HTML output, this does not appear to be a problem, but in the man
-     page output, this shows up.  Using this setting, pure whitespace
-     text nodes are removed, so the problem is solved. -->
-<xsl:strip-space elements="para"/>
-
-
 <!-- Parameters -->
 
 <xsl:param name="man.authors.section.enabled">0</xsl:param>

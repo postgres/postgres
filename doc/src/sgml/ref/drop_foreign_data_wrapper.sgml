@@ -87,8 +87,7 @@ DROP FOREIGN DATA WRAPPER [ IF EXISTS ] <replaceable class="parameter">name</rep
    Drop the foreign-data wrapper <literal>dbi</>:
 <programlisting>
 DROP FOREIGN DATA WRAPPER dbi;
-</programlisting>
-  </para>
+</programlisting></para>
  </refsect1>
 
  <refsect1>

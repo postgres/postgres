@@ -74,8 +74,7 @@ REINDEX { INDEX | TABLE | DATABASE | SYSTEM } <replaceable class="PARAMETER">nam
      </para>
     </listitem>
 
-   </itemizedlist>
-  </para>
+   </itemizedlist></para>
  </refsect1>
 
  <refsect1>
@@ -263,8 +262,7 @@ $ <userinput>psql broken_db</userinput>
 ...
 broken_db=&gt; REINDEX DATABASE broken_db;
 broken_db=&gt; \q
-</programlisting>
-  </para>
+</programlisting></para>
  </refsect1>
 
  <refsect1>

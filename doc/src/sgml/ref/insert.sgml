@@ -312,8 +312,7 @@ WITH upd AS (
     RETURNING *
 )
 INSERT INTO employees_log SELECT *, current_timestamp FROM upd;
-</programlisting>
-  </para>
+</programlisting></para>
  </refsect1>
 
  <refsect1>

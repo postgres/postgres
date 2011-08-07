@@ -52,8 +52,7 @@ CREATE OPERATOR <replaceable>name</replaceable> (
    There are a few restrictions on your choice of name:
    <itemizedlist>
     <listitem>
-     <para>
-     <literal>--</literal> and <literal>/*</literal> cannot appear anywhere in an operator name,
+     <para><literal>--</literal> and <literal>/*</literal> cannot appear anywhere in an operator name,
      since they will be taken as the start of a comment.
      </para>
     </listitem>
@@ -215,8 +214,7 @@ CREATE OPERATOR <replaceable>name</replaceable> (
    arguments, use the <literal>OPERATOR()</> syntax, for example:
 <programlisting>
 COMMUTATOR = OPERATOR(myschema.===) ,
-</programlisting>
-  </para>
+</programlisting></para>
  </refsect1>
 
  <refsect1>
@@ -266,8 +264,7 @@ CREATE OPERATOR === (
     JOIN = area_join_procedure,
     HASHES, MERGES
 );
-</programlisting>
-  </para>
+</programlisting></para>
  </refsect1>
 
  <refsect1>

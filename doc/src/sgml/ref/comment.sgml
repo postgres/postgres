@@ -296,8 +296,7 @@ COMMENT ON TEXT SEARCH TEMPLATE snowball IS 'Snowball stemmer';
 COMMENT ON TRIGGER my_trigger ON my_table IS 'Used for RI';
 COMMENT ON TYPE complex IS 'Complex number data type';
 COMMENT ON VIEW my_view IS 'View of departmental costs';
-</programlisting>
-  </para>
+</programlisting></para>
  </refsect1>
 
  <refsect1>

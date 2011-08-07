@@ -241,8 +241,7 @@ ALTER DOMAIN zipcode DROP CONSTRAINT zipchk;
    To move the domain into a different schema:
 <programlisting>
 ALTER DOMAIN zipcode SET SCHEMA customers;
-</programlisting>
-  </para>
+</programlisting></para>
  </refsect1>
 
  <refsect1 id="SQL-ALTERDOMAIN-compatibility">

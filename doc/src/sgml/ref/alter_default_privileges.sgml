@@ -187,8 +187,7 @@ ALTER DEFAULT PRIVILEGES IN SCHEMA myschema REVOKE INSERT ON TABLES FROM webuser
 
 <programlisting>
 ALTER DEFAULT PRIVILEGES FOR ROLE admin REVOKE EXECUTE ON FUNCTIONS FROM PUBLIC;
-</programlisting>
-  </para>
+</programlisting></para>
  </refsect1>
 
  <refsect1>
