@@ -113,7 +113,7 @@ dblink_connect(text connname, text connstr) returns text
   </refsect1>
 
   <refsect1>
-   <title>Example</title>
+   <title>Examples</title>
 
 <screen>
 SELECT dblink_connect('dbname=postgres');
@@ -284,7 +284,7 @@ dblink_disconnect(text connname) returns text
   </refsect1>
 
   <refsect1>
-   <title>Example</title>
+   <title>Examples</title>
 
 <screen>
 SELECT dblink_disconnect();
@@ -450,7 +450,7 @@ SELECT * FROM myremote_pg_proc WHERE proname LIKE 'bytea%';
   </refsect1>
 
   <refsect1>
-   <title>Example</title>
+   <title>Examples</title>
 
 <screen>
 SELECT * FROM dblink('dbname=postgres', 'select proname, prosrc from pg_proc')
@@ -618,7 +618,7 @@ dblink_exec(text sql [, bool fail_on_error]) returns text
   </refsect1>
 
   <refsect1>
-   <title>Example</title>
+   <title>Examples</title>
 
 <screen>
 SELECT dblink_connect('dbname=dblink_test_standby');
@@ -759,7 +759,7 @@ dblink_open(text connname, text cursorname, text sql [, bool fail_on_error]) ret
   </refsect1>
 
   <refsect1>
-   <title>Example</title>
+   <title>Examples</title>
 
 <screen>
 SELECT dblink_connect('dbname=postgres');
@@ -876,7 +876,7 @@ dblink_fetch(text connname, text cursorname, int howmany [, bool fail_on_error])
   </refsect1>
 
   <refsect1>
-   <title>Example</title>
+   <title>Examples</title>
 
 <screen>
 SELECT dblink_connect('dbname=postgres');
@@ -1009,7 +1009,7 @@ dblink_close(text connname, text cursorname [, bool fail_on_error]) returns text
   </refsect1>
 
   <refsect1>
-   <title>Example</title>
+   <title>Examples</title>
 
 <screen>
 SELECT dblink_connect('dbname=postgres');
@@ -1066,7 +1066,7 @@ dblink_get_connections() returns text[]
   </refsect1>
 
   <refsect1>
-   <title>Example</title>
+   <title>Examples</title>
 
 <programlisting>
 SELECT dblink_get_connections();
@@ -1125,7 +1125,7 @@ dblink_error_message(text connname) returns text
   </refsect1>
 
   <refsect1>
-   <title>Example</title>
+   <title>Examples</title>
 
 <programlisting>
 SELECT dblink_error_message('dtest1');
@@ -1203,7 +1203,7 @@ dblink_send_query(text connname, text sql) returns int
   </refsect1>
 
   <refsect1>
-   <title>Example</title>
+   <title>Examples</title>
 
 <programlisting>
 SELECT dblink_send_query('dtest1', 'SELECT * FROM foo WHERE f1 &lt; 3');
@@ -1262,7 +1262,7 @@ dblink_is_busy(text connname) returns int
   </refsect1>
 
   <refsect1>
-   <title>Example</title>
+   <title>Examples</title>
 
 <programlisting>
 SELECT dblink_is_busy('dtest1');
@@ -1322,7 +1322,7 @@ dblink_get_notify(text connname) returns setof (notify_name text, be_pid int, ex
   </refsect1>
 
   <refsect1>
-   <title>Example</title>
+   <title>Examples</title>
 
 <screen>
 SELECT dblink_exec('LISTEN virtual');
@@ -1435,7 +1435,7 @@ dblink_get_result(text connname [, bool fail_on_error]) returns setof record
   </refsect1>
 
   <refsect1>
-   <title>Example</title>
+   <title>Examples</title>
 
 <screen>
 contrib_regression=# SELECT dblink_connect('dtest1', 'dbname=contrib_regression');
@@ -1552,7 +1552,7 @@ dblink_cancel_query(text connname) returns text
   </refsect1>
 
   <refsect1>
-   <title>Example</title>
+   <title>Examples</title>
 
 <programlisting>
 SELECT dblink_cancel_query('dtest1');
@@ -1626,7 +1626,7 @@ CREATE TYPE dblink_pkey_results AS (position int, colname text);
   </refsect1>
 
   <refsect1>
-   <title>Example</title>
+   <title>Examples</title>
 
 <screen>
 CREATE TABLE foobar (
@@ -1767,7 +1767,7 @@ dblink_build_sql_insert(text relname,
   </refsect1>
 
   <refsect1>
-   <title>Example</title>
+   <title>Examples</title>
 
 <screen>
 SELECT dblink_build_sql_insert('foo', '1 2', 2, '{"1", "a"}', '{"1", "b''a"}');
@@ -1881,7 +1881,7 @@ dblink_build_sql_delete(text relname,
   </refsect1>
 
   <refsect1>
-   <title>Example</title>
+   <title>Examples</title>
 
 <screen>
 SELECT dblink_build_sql_delete('"MyFoo"', '1 2', 2, '{"1", "b"}');
@@ -2014,7 +2014,7 @@ dblink_build_sql_update(text relname,
   </refsect1>
 
   <refsect1>
-   <title>Example</title>
+   <title>Examples</title>
 
 <screen>
 SELECT dblink_build_sql_update('foo', '1 2', 2, '{"1", "a"}', '{"1", "b"}');
