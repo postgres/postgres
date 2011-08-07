@@ -745,7 +745,7 @@ PostgreSQL documentation
 
    <para>
     Note that the single-user mode server does not provide sophisticated
-    line-editing features (no command history, for example). 
+    line-editing features (no command history, for example).
     Single-User mode also does not do any background processing, like
     automatic checkpoints.
 

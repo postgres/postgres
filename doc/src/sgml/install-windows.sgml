@@ -49,8 +49,8 @@
   <xref linkend="installation-notes-mingw"> and <xref linkend="installation-notes-cygwin">.
   To produce native 64 bit binaries in these environments, use the tools from
   <productname>MinGW-w64</productname>. These tools can also be used to
-  cross-compile for 32 bit and 64 bit <productname>Windows</productname> 
-  targets on other hosts, such as <productname>Linux</productname> and 
+  cross-compile for 32 bit and 64 bit <productname>Windows</productname>
+  targets on other hosts, such as <productname>Linux</productname> and
   <productname>Darwin</productname>.
   <productname>Cygwin</productname> is not recommended for running a
   production server, and it should only be used for running on
@@ -61,7 +61,7 @@
  </para>
 
  <para>
-  Native builds of <application>psql</application> don't support command 
+  Native builds of <application>psql</application> don't support command
   line editing. The <productname>Cygwin</productname> build does support
   command line editing, so it should be used where psql is needed for
   interactive use on  <productname>Windows</productname>.

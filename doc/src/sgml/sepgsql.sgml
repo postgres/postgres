@@ -147,7 +147,7 @@ $ for DBNAME in template0 template1 postgres; do
    Second, build and install the policy package for the regression test.
    The <filename>sepgsql-regtest.pp</> is a special purpose policy package
    which provides a set of rules to be allowed during the regression tests.
-   It should be built from the policy source file 
+   It should be built from the policy source file
    (<filename>sepgsql-regtest.te</>), which is normally done using
    <command>make</command>.  You will need to locate the appropriate
    Makefile on your system; the path shown below is only an example.

@@ -140,14 +140,14 @@ GRANT <replaceable class="PARAMETER">role_name</replaceable> [, ...] TO <replace
 
   <para>
    PostgreSQL grants default privileges on some types of objects to
-   <literal>PUBLIC</literal>.  No privileges are granted to 
-   <literal>PUBLIC</literal> by default on tables, 
-   columns, schemas or tablespaces. For other types, the default privileges 
-   granted to <literal>PUBLIC</literal> are as follows: 
-   <literal>CONNECT</literal> and <literal>CREATE TEMP TABLE</literal> for 
-   databases; <literal>EXECUTE</literal> privilege for functions; and 
-   <literal>USAGE</literal> privilege for languages. 
-   The object owner can, of course, <command>REVOKE</command> 
+   <literal>PUBLIC</literal>.  No privileges are granted to
+   <literal>PUBLIC</literal> by default on tables,
+   columns, schemas or tablespaces. For other types, the default privileges
+   granted to <literal>PUBLIC</literal> are as follows:
+   <literal>CONNECT</literal> and <literal>CREATE TEMP TABLE</literal> for
+   databases; <literal>EXECUTE</literal> privilege for functions; and
+   <literal>USAGE</literal> privilege for languages.
+   The object owner can, of course, <command>REVOKE</command>
    both default and  expressly granted privileges. (For maximum
    security, issue the <command>REVOKE</> in the same transaction that
    creates the object; then there is no window in which another user

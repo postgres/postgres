@@ -790,7 +790,7 @@ NUMERIC
     </indexterm>
 
     <para>
-     The data types <type>smallserial</type>, <type>serial</type> and 
+     The data types <type>smallserial</type>, <type>serial</type> and
      <type>bigserial</type> are not true types, but merely
      a notational convenience for creating unique identifier columns
      (similar to the <literal>AUTO_INCREMENT</literal> property
@@ -3898,7 +3898,7 @@ SELECT to_tsvector( 'postgraduate' ) @@ to_tsquery( 'postgres:*' );
  t
 (1 row)
 </programlisting>
-     because <literal>postgres</> gets stemmed to <literal>postgr</>: 
+     because <literal>postgres</> gets stemmed to <literal>postgr</>:
 <programlisting>
 SELECT to_tsquery('postgres:*');
  to_tsquery 
