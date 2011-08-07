@@ -291,6 +291,15 @@ ALTER EXTENSION hstore ADD FUNCTION populate_record(anyelement, hstore);
 </programlisting></para>
  </refsect1>
 
+ <refsect1>
+  <title>Compatibility</title>
+
+  <para>
+   <command>ALTER EXTENSION</command> is a <productname>PostgreSQL</>
+   extension.
+  </para>
+ </refsect1>
+
  <refsect1 id="SQL-ALTEREXTENSION-see-also">
   <title>See Also</title>
 
