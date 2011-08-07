@@ -268,10 +268,7 @@ PostgreSQL documentation
           </para>
          </listitem>
         </varlistentry>
-
-       </variablelist>
-       </para>
-
+       </variablelist></para>
       </listitem>
      </varlistentry>
 
@@ -1075,8 +1072,7 @@ CREATE DATABASE foo WITH TEMPLATE template0;
 
 <screen>
 <prompt>$</prompt> <userinput>pg_dump -t '"MixedCaseName"' mydb &gt; mytab.sql</userinput>
-</screen>
-  </para>
+</screen></para>
 
  </refsect1>
 

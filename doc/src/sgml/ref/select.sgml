@@ -125,8 +125,7 @@ TABLE [ ONLY ] <replaceable class="parameter">table_name</replaceable> [ * ]
     </listitem>
 
     <listitem>
-     <para>
-      <literal>SELECT DISTINCT</literal> eliminates duplicate rows from the
+     <para><literal>SELECT DISTINCT</literal> eliminates duplicate rows from the
       result.  <literal>SELECT DISTINCT ON</literal> eliminates rows that
       match on all the specified expressions.  <literal>SELECT ALL</literal>
       (the default) will return all candidate rows, including
@@ -423,8 +422,7 @@ TABLE [ ONLY ] <replaceable class="parameter">table_name</replaceable> [ * ]
         separating <literal>FROM</> items.
        </para>
 
-       <para>
-        <literal>CROSS JOIN</> and <literal>INNER JOIN</literal>
+       <para><literal>CROSS JOIN</> and <literal>INNER JOIN</literal>
         produce a simple Cartesian product, the same result as you get from
         listing the two items at the top level of <literal>FROM</>,
         but restricted by the join condition (if any).
@@ -435,8 +433,7 @@ TABLE [ ONLY ] <replaceable class="parameter">table_name</replaceable> [ * ]
         <literal>WHERE</>.
        </para>
 
-       <para>
-        <literal>LEFT OUTER JOIN</> returns all rows in the qualified
+       <para><literal>LEFT OUTER JOIN</> returns all rows in the qualified
         Cartesian product (i.e., all combined rows that pass its join
         condition), plus one copy of each row in the left-hand table
         for which there was no right-hand row that passed the join
@@ -455,8 +452,7 @@ TABLE [ ONLY ] <replaceable class="parameter">table_name</replaceable> [ * ]
         OUTER JOIN</> by switching the left and right inputs.
        </para>
 
-       <para>
-        <literal>FULL OUTER JOIN</> returns all the joined rows, plus
+       <para><literal>FULL OUTER JOIN</> returns all the joined rows, plus
         one row for each unmatched left-hand row (extended with nulls
         on the right), plus one row for each unmatched right-hand row
         (extended with nulls on the left).
@@ -467,8 +463,7 @@ TABLE [ ONLY ] <replaceable class="parameter">table_name</replaceable> [ * ]
      <varlistentry>
       <term><literal>ON <replaceable class="parameter">join_condition</replaceable></literal></term>
       <listitem>
-       <para>
-        <replaceable class="parameter">join_condition</replaceable> is
+       <para><replaceable class="parameter">join_condition</replaceable> is
         an expression resulting in a value of type
         <type>boolean</type> (similar to a <literal>WHERE</literal>
         clause) that specifies which rows in a join are considered to
@@ -494,8 +489,7 @@ TABLE [ ONLY ] <replaceable class="parameter">table_name</replaceable> [ * ]
      <varlistentry>
       <term><literal>NATURAL</literal></term>
       <listitem>
-       <para>
-        <literal>NATURAL</literal> is shorthand for a
+       <para><literal>NATURAL</literal> is shorthand for a
         <literal>USING</> list that mentions all columns in the two
         tables that have the same names.
        </para>
@@ -832,8 +826,7 @@ SELECT DISTINCT ON (location) location, time, report
     The <literal>UNION</literal> clause has this general form:
 <synopsis>
 <replaceable class="parameter">select_statement</replaceable> UNION [ ALL | DISTINCT ] <replaceable class="parameter">select_statement</replaceable>
-</synopsis>
-    <replaceable class="parameter">select_statement</replaceable> is
+</synopsis><replaceable class="parameter">select_statement</replaceable> is
     any <command>SELECT</command> statement without an <literal>ORDER
     BY</>, <literal>LIMIT</>, <literal>FOR UPDATE</literal>, or
     <literal>FOR SHARE</literal> clause.
@@ -885,8 +878,7 @@ SELECT DISTINCT ON (location) location, time, report
     The <literal>INTERSECT</literal> clause has this general form:
 <synopsis>
 <replaceable class="parameter">select_statement</replaceable> INTERSECT [ ALL | DISTINCT ] <replaceable class="parameter">select_statement</replaceable>
-</synopsis>
-    <replaceable class="parameter">select_statement</replaceable> is
+</synopsis><replaceable class="parameter">select_statement</replaceable> is
     any <command>SELECT</command> statement without an <literal>ORDER
     BY</>, <literal>LIMIT</>, <literal>FOR UPDATE</literal>, or
     <literal>FOR SHARE</literal> clause.
@@ -933,8 +925,7 @@ SELECT DISTINCT ON (location) location, time, report
     The <literal>EXCEPT</literal> clause has this general form:
 <synopsis>
 <replaceable class="parameter">select_statement</replaceable> EXCEPT [ ALL | DISTINCT ] <replaceable class="parameter">select_statement</replaceable>
-</synopsis>
-    <replaceable class="parameter">select_statement</replaceable> is
+</synopsis><replaceable class="parameter">select_statement</replaceable> is
     any <command>SELECT</command> statement without an <literal>ORDER
     BY</>, <literal>LIMIT</>, <literal>FOR UPDATE</literal>, or
     <literal>FOR SHARE</literal> clause.
@@ -1072,8 +1063,7 @@ SELECT name FROM distributors ORDER BY code;
 <synopsis>
 LIMIT { <replaceable class="parameter">count</replaceable> | ALL }
 OFFSET <replaceable class="parameter">start</replaceable>
-</synopsis>
-    <replaceable class="parameter">count</replaceable> specifies the
+</synopsis><replaceable class="parameter">count</replaceable> specifies the
     maximum number of rows to return, while <replaceable
     class="parameter">start</replaceable> specifies the number of rows
     to skip before starting to return rows.  When both are specified,
@@ -1561,8 +1551,7 @@ SELECT 2+2;
     following query is invalid:
 <programlisting>
 SELECT distributors.* WHERE distributors.name = 'Westward';
-</programlisting>
-    <productname>PostgreSQL</productname> releases prior to
+</programlisting><productname>PostgreSQL</productname> releases prior to
     8.1 would accept queries of this form, and add an implicit entry
     to the query's <literal>FROM</literal> clause for each table
     referenced by the query. This is no longer allowed.

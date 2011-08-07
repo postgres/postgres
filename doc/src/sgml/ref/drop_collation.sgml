@@ -84,8 +84,7 @@ DROP COLLATION [ IF EXISTS ] <replaceable>name</replaceable> [ CASCADE | RESTRIC
    To drop the collation named <literal>german</>:
 <programlisting>
 DROP COLLATION german;
-</programlisting>
-  </para>
+</programlisting></para>
  </refsect1>
 
  <refsect1 id="sql-dropcollation-compat">

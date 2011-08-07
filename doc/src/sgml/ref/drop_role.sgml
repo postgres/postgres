@@ -96,8 +96,7 @@ DROP ROLE [ IF EXISTS ] <replaceable class="PARAMETER">name</replaceable> [, ...
    To drop a role:
 <programlisting>
 DROP ROLE jonathan;
-</programlisting>
-  </para>
+</programlisting></para>
  </refsect1>
 
  <refsect1>

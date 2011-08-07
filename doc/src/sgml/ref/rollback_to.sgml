@@ -124,8 +124,7 @@ FETCH 1 FROM foo;
         2
 
 COMMIT;
-</programlisting>
-   </para>
+</programlisting></para>
 
 
  </refsect1>

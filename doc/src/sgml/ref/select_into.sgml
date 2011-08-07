@@ -125,8 +125,7 @@ SELECT [ ALL | DISTINCT [ ON ( <replaceable class="parameter">expression</replac
 
 <programlisting>
 SELECT * INTO films_recent FROM films WHERE date_prod &gt;= '2002-01-01';
-</programlisting>
-  </para>
+</programlisting></para>
  </refsect1>
 
  <refsect1>

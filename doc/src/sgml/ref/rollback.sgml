@@ -71,8 +71,7 @@ ROLLBACK [ WORK | TRANSACTION ]
    To abort all changes:
 <programlisting>
 ROLLBACK;
-</programlisting>
-  </para>
+</programlisting></para>
  </refsect1>
 
  <refsect1>

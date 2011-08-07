@@ -92,8 +92,7 @@ DROP CAST [ IF EXISTS ] (<replaceable>source_type</replaceable> AS <replaceable>
    To drop the cast from type <type>text</type> to type <type>int</type>:
 <programlisting>
 DROP CAST (text AS int);
-</programlisting>
-  </para>
+</programlisting></para>
  </refsect1>
 
  <refsect1 id="sql-dropcast-compat">

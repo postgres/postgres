@@ -103,9 +103,7 @@ ALTER GROUP staff ADD USER karl, john;
 
 <programlisting>
 ALTER GROUP workers DROP USER beth;
-</programlisting>
-
-  </para>
+</programlisting></para>
  </refsect1>
 
  <refsect1>

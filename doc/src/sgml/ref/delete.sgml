@@ -275,8 +275,7 @@ DELETE FROM tasks WHERE status = 'DONE' RETURNING *;
    <literal>c_tasks</> is currently positioned:
 <programlisting>
 DELETE FROM tasks WHERE CURRENT OF c_tasks;
-</programlisting>
-  </para>
+</programlisting></para>
  </refsect1>
 
  <refsect1>

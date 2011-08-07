@@ -72,8 +72,7 @@ COMMIT [ WORK | TRANSACTION ]
    To commit the current transaction and make all changes permanent:
 <programlisting>
 COMMIT;
-</programlisting>
-  </para>
+</programlisting></para>
  </refsect1>
 
  <refsect1>

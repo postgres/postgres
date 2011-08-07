@@ -254,8 +254,7 @@ CPU 0.07s/0.39u sec elapsed 1.56 sec.
 INFO:  analyzing "public.onek"
 INFO:  "onek": 36 pages, 1000 rows sampled, 1000 estimated total rows
 VACUUM
-</programlisting>
-  </para>
+</programlisting></para>
  </refsect1>
 
  <refsect1>

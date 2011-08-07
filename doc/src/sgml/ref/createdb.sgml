@@ -352,8 +352,7 @@ PostgreSQL documentation
 <screen>
 <prompt>$ </prompt><userinput>createdb -p 5000 -h eden -E LATIN1 -e demo</userinput>
 <computeroutput>CREATE DATABASE demo ENCODING 'LATIN1';</computeroutput>
-</screen>
-   </para>
+</screen></para>
  </refsect1>
 
 

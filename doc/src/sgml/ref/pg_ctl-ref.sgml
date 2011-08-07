@@ -519,8 +519,7 @@ PostgreSQL documentation
     running without <function>fsync</function>, use:
 <screen>
 <prompt>$</prompt> <userinput>pg_ctl -o "-F -p 5433" start</userinput>
-</screen>
-   </para>
+</screen></para>
   </refsect2>
 
   <refsect2 id="R2-APP-PGCTL-4">
@@ -534,8 +533,7 @@ PostgreSQL documentation
     <emphasis>how</emphasis> the server shuts down:
 <screen>
 <prompt>$</prompt> <userinput>pg_ctl stop -m fast</userinput>
-</screen>
-   </para>
+</screen></para>
   </refsect2>
 
   <refsect2 id="R2-APP-PGCTL-5">
@@ -564,8 +562,7 @@ PostgreSQL documentation
     To restart using port 5433, disabling <function>fsync</> upon restart:
 <screen>
 <prompt>$</prompt> <userinput>pg_ctl -o "-F -p 5433" restart</userinput>
-</screen>
-   </para>
+</screen></para>
   </refsect2>
 
   <refsect2 id="R2-APP-PGCTL-6">

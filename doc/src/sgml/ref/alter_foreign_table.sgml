@@ -288,8 +288,7 @@ ALTER FOREIGN TABLE distributors ALTER COLUMN street SET NOT NULL;
    To change options of a foreign table:
 <programlisting>
 ALTER FOREIGN TABLE myschema.distributors OPTIONS (ADD opt1 'value', SET opt2, 'value2', DROP opt3 'value3');
-</programlisting>
-  </para>
+</programlisting></para>
 
  </refsect1>
 

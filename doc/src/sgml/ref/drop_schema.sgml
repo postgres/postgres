@@ -93,8 +93,7 @@ DROP SCHEMA [ IF EXISTS ] <replaceable class="PARAMETER">name</replaceable> [, .
 
 <programlisting>
 DROP SCHEMA mystuff CASCADE;
-</programlisting>
-  </para>
+</programlisting></para>
  </refsect1>
 
  <refsect1>

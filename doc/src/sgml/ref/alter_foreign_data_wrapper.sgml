@@ -141,8 +141,7 @@ ALTER FOREIGN DATA WRAPPER dbi OPTIONS (ADD foo '1', DROP 'bar');
    to <literal>bob.myvalidator</>:
 <programlisting>
 ALTER FOREIGN DATA WRAPPER dbi VALIDATOR bob.myvalidator;
-</programlisting>
-  </para>
+</programlisting></para>
  </refsect1>
 
  <refsect1>

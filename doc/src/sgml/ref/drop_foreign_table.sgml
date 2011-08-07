@@ -85,8 +85,7 @@ DROP FOREIGN TABLE [ IF EXISTS ] <replaceable class="PARAMETER">name</replaceabl
 
 <programlisting>
 DROP FOREIGN TABLE films, distributors;
-</programlisting>
-  </para>
+</programlisting></para>
  </refsect1>
  
  <refsect1>

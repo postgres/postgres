@@ -91,8 +91,7 @@ DECLARE <replaceable class="parameter">name</replaceable> [ BINARY ] [ INSENSITI
     <term><literal>SCROLL</literal></term>
     <term><literal>NO SCROLL</literal></term>
     <listitem>
-     <para>
-      <literal>SCROLL</literal> specifies that the cursor can be used
+     <para><literal>SCROLL</literal> specifies that the cursor can be used
       to retrieve rows in a nonsequential fashion (e.g.,
       backward). Depending upon the complexity of the query's
       execution plan, specifying <literal>SCROLL</literal> might impose
@@ -110,8 +109,7 @@ DECLARE <replaceable class="parameter">name</replaceable> [ BINARY ] [ INSENSITI
     <term><literal>WITH HOLD</literal></term>
     <term><literal>WITHOUT HOLD</literal></term>
     <listitem>
-     <para>
-      <literal>WITH HOLD</literal> specifies that the cursor can
+     <para><literal>WITH HOLD</literal> specifies that the cursor can
       continue to be used after the transaction that created it
       successfully commits.  <literal>WITHOUT HOLD</literal> specifies
       that the cursor cannot be used outside of the transaction that

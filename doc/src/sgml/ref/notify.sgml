@@ -204,8 +204,7 @@ Asynchronous notification "virtual" with payload "This is the payload" received 
 LISTEN foo;
 SELECT pg_notify('fo' || 'o', 'pay' || 'load');
 Asynchronous notification "foo" with payload "payload" received from server process with PID 14728.
-</programlisting>
-  </para>
+</programlisting></para>
  </refsect1>
 
  <refsect1>

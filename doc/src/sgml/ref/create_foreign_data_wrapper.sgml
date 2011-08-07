@@ -62,8 +62,7 @@ CREATE FOREIGN DATA WRAPPER <replaceable class="parameter">name</replaceable>
    <varlistentry>
     <term><literal>HANDLER <replaceable class="parameter">handler_function</replaceable></literal></term>
     <listitem>
-     <para>
-      <replaceable class="parameter">handler_function</replaceable> is the
+     <para><replaceable class="parameter">handler_function</replaceable> is the
       name of a previously registered function that will be called to
       retrieve the execution functions for foreign tables.
       The handler function must take no arguments, and
@@ -81,8 +80,7 @@ CREATE FOREIGN DATA WRAPPER <replaceable class="parameter">name</replaceable>
    <varlistentry>
     <term><literal>VALIDATOR <replaceable class="parameter">validator_function</replaceable></literal></term>
     <listitem>
-     <para>
-      <replaceable class="parameter">validator_function</replaceable> is the
+     <para><replaceable class="parameter">validator_function</replaceable> is the
       name of a previously registered function that will be called to
       check the generic options given to the foreign-data wrapper, as
       well as options for foreign servers and user mappings using the
@@ -157,8 +155,7 @@ CREATE FOREIGN DATA WRAPPER file HANDLER file_fdw_handler;
 <programlisting>
 CREATE FOREIGN DATA WRAPPER mywrapper
     OPTIONS (debug 'true');
-</programlisting>
-  </para>
+</programlisting></para>
  </refsect1>
 
  <refsect1>

@@ -113,8 +113,7 @@ conv_proc(
     internal, -- destination (fill with a null terminated C string)
     integer   -- source string length
 ) RETURNS void;
-</programlisting>
-      </para>
+</programlisting></para>
      </listitem>
     </varlistentry>
    </variablelist>
@@ -141,8 +140,7 @@ conv_proc(
    <literal>LATIN1</literal> using <function>myfunc</>:
 <programlisting>
 CREATE CONVERSION myconv FOR 'UTF8' TO 'LATIN1' FROM myfunc;
-</programlisting>
-  </para>
+</programlisting></para>
  </refsect1>
 
 

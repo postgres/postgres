@@ -86,8 +86,7 @@ DROP TABLESPACE [ IF EXISTS ] <replaceable class="PARAMETER">tablespace_name</re
    To remove tablespace <literal>mystuff</literal> from the system:
 <programlisting>
 DROP TABLESPACE mystuff;
-</programlisting>
-  </para>
+</programlisting></para>
  </refsect1>
 
  <refsect1>

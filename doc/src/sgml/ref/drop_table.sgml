@@ -100,8 +100,7 @@ DROP TABLE [ IF EXISTS ] <replaceable class="PARAMETER">name</replaceable> [, ..
 
 <programlisting>
 DROP TABLE films, distributors;
-</programlisting>
-  </para>
+</programlisting></para>
  </refsect1>
 
  <refsect1>

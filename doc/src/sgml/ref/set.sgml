@@ -154,8 +154,7 @@ SET [ SESSION | LOCAL ] TIME ZONE { <replaceable class="PARAMETER">timezone</rep
     <varlistentry>
      <term><literal>SCHEMA</literal></term>
      <listitem>
-      <para>
-       <literal>SET SCHEMA '<replaceable>value</>'</> is an alias for
+      <para><literal>SET SCHEMA '<replaceable>value</>'</> is an alias for
        <literal>SET search_path TO <replaceable>value</></>.  Only one
        schema can be specified using this syntax.
       </para>
@@ -165,8 +164,7 @@ SET [ SESSION | LOCAL ] TIME ZONE { <replaceable class="PARAMETER">timezone</rep
     <varlistentry>
      <term><literal>NAMES</literal></term>
      <listitem>
-      <para>
-       <literal>SET NAMES <replaceable>value</></> is an alias for
+      <para><literal>SET NAMES <replaceable>value</></> is an alias for
        <literal>SET client_encoding TO <replaceable>value</></>.
       </para>
      </listitem>
@@ -187,16 +185,14 @@ SET [ SESSION | LOCAL ] TIME ZONE { <replaceable class="PARAMETER">timezone</rep
        <function>setseed</function>:
 <programlisting>
 SELECT setseed(<replaceable>value</replaceable>);
-</programlisting>
-      </para>
+</programlisting></para>
      </listitem>
     </varlistentry>
 
     <varlistentry>
      <term><literal>TIME ZONE</literal></term>
      <listitem>
-      <para>
-       <literal>SET TIME ZONE <replaceable>value</></> is an alias
+      <para><literal>SET TIME ZONE <replaceable>value</></> is an alias
        for <literal>SET timezone TO <replaceable>value</></>.  The
        syntax <literal>SET TIME ZONE</literal> allows special syntax
        for the time zone specification.  Here are examples of valid
@@ -302,8 +298,7 @@ SET TIME ZONE 'PST8PDT';
    Set the time zone for Italy:
 <screen>
 SET TIME ZONE 'Europe/Rome';
-</screen>
-  </para>
+</screen></para>
  </refsect1>
 
  <refsect1>

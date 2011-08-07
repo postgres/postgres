@@ -83,8 +83,7 @@ PostgreSQL documentation
       (<filename>psqlrc</filename> and <filename>~/.psqlrc</filename>) are
       ignored with this option.
       </para>
-      <para>
-      <replaceable class="parameter">command</replaceable> must be either
+      <para><replaceable class="parameter">command</replaceable> must be either
       a command string that is completely parsable by the server (i.e.,
       it contains no <application>psql</application>-specific features),
       or a single backslash command. Thus you cannot mix
@@ -839,8 +838,7 @@ testdb=&gt;
         backslash escapes do not apply.
         </para>
 
-        <para>
-        <literal>\copy ... from stdin | to stdout</literal>
+        <para><literal>\copy ... from stdin | to stdout</literal>
         reads/writes based on the command input and output respectively.
         All rows are read from the same source that issued the command,
         continuing until <literal>\.</literal> is read or the stream
@@ -1759,8 +1757,7 @@ lo_import 152801
         specified, the query output will be reset to the standard output.
         </para>
 
-        <para>
-        <quote>Query results</quote> includes all tables, command
+        <para><quote>Query results</quote> includes all tables, command
         responses, and notices obtained from the database server, as
         well as output of various backslash commands that query the
         database (such as <command>\d</command>), but not error
@@ -1928,21 +1925,18 @@ lo_import 152801
           is enough.)
           </para>
 
-          <para>
-          <literal>unaligned</> format writes all columns of a row on one
+          <para><literal>unaligned</> format writes all columns of a row on one
           line, separated by the currently active field separator. This
           is useful for creating output that might be intended to be read
           in by other programs (for example, tab-separated or comma-separated
           format).
           </para>
 
-          <para>
-          <literal>aligned</literal> format is the standard, human-readable,
+          <para><literal>aligned</literal> format is the standard, human-readable,
           nicely formatted text output;  this is the default.
           </para>
 
-          <para>
-          <literal>wrapped</> format is like <literal>aligned</> but wraps
+          <para><literal>wrapped</> format is like <literal>aligned</> but wraps
           wide data values across lines to make the output fit in the target
           column width.  The target width is determined as described under
           the <literal>columns</> option.  Note that <application>psql</> will
@@ -1976,8 +1970,7 @@ lo_import 152801
           <literal>wrapped</> output formats.
           </para>
 
-          <para>
-          <literal>ascii</literal> style uses plain <acronym>ASCII</acronym>
+          <para><literal>ascii</literal> style uses plain <acronym>ASCII</acronym>
           characters.  Newlines in data are shown using
           a <literal>+</literal> symbol in the right-hand margin.
           When the <literal>wrapped</literal> format wraps data from
@@ -1986,8 +1979,7 @@ lo_import 152801
           and again in the left-hand margin of the following line.
           </para>
 
-          <para>
-          <literal>old-ascii</literal> style uses plain <acronym>ASCII</>
+          <para><literal>old-ascii</literal> style uses plain <acronym>ASCII</>
           characters, using the formatting style used
           in <productname>PostgreSQL</productname> 8.4 and earlier.
           Newlines in data are shown using a <literal>:</literal>
@@ -1997,8 +1989,7 @@ lo_import 152801
           symbol is used in place of the left-hand column separator.
           </para>
 
-          <para>
-          <literal>unicode</literal> style uses Unicode box-drawing characters.
+          <para><literal>unicode</literal> style uses Unicode box-drawing characters.
           Newlines in data are shown using a carriage return symbol
           in the right-hand margin.  When the data is wrapped from one line
           to the next without a newline character, an ellipsis symbol
@@ -2480,8 +2471,7 @@ testdb=&gt; <userinput>\set foo bar</userinput>
 <programlisting>
 testdb=&gt; <userinput>\echo :foo</userinput>
 bar
-</programlisting>
-    </para>
+</programlisting></para>
 
     <note>
     <para>
@@ -3332,8 +3322,7 @@ PSQL_EDITOR_LINENUMBER_ARG='--line '
       </listitem>
 
       <listitem>
-      <para>
-       <application>psql</application> is only guaranteed to work smoothly
+      <para><application>psql</application> is only guaranteed to work smoothly
        with servers of the same version. That does not mean other combinations
        will fail outright, but subtle and not-so-subtle problems might come
        up.  Backslash commands are particularly likely to fail if the
@@ -3376,8 +3365,7 @@ PSQL_EDITOR_LINENUMBER_ARG='--line '
       raster font does not work with the ANSI code page.
      </para>
     </listitem>
-   </itemizedlist>
- </para>
+   </itemizedlist></para>
 
  </refsect1>
 
@@ -3483,8 +3471,7 @@ second | three
 -[ RECORD 4 ]-
 first  | 4
 second | four
-</programlisting>
-  </para>
+</programlisting></para>
 
  </refsect1>
 

@@ -319,8 +319,7 @@ PostgreSQL documentation
     <literal>bar</literal> in a database named <literal>abcd</literal>:
 <screen>
 <prompt>$ </prompt><userinput>reindexdb --table foo --index bar abcd</userinput>
-</screen>
-   </para>
+</screen></para>
 
  </refsect1>
 

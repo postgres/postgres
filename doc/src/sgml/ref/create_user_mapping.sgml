@@ -94,8 +94,7 @@ CREATE USER MAPPING FOR { <replaceable class="parameter">user_name</replaceable>
    Create a user mapping for user <literal>bob</>, server <literal>foo</>:
 <programlisting>
 CREATE USER MAPPING FOR bob SERVER foo OPTIONS (user 'bob', password 'secret');
-</programlisting>
-  </para>
+</programlisting></para>
 
  </refsect1>
 

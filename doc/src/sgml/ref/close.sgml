@@ -107,8 +107,7 @@ CLOSE { <replaceable class="PARAMETER">name</replaceable> | ALL }
    Close the cursor <literal>liahona</literal>:
 <programlisting>
 CLOSE liahona;
-</programlisting>
-  </para>
+</programlisting></para>
  </refsect1>
 
  <refsect1>

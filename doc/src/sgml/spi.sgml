@@ -392,8 +392,7 @@ typedef struct
     TupleDesc   tupdesc;        /* row descriptor */
     HeapTuple  *vals;           /* rows */
 } SPITupleTable;
-</programlisting>
-   <structfield>vals</> is an array of pointers to rows.  (The number
+</programlisting><structfield>vals</> is an array of pointers to rows.  (The number
    of valid entries is given by <varname>SPI_processed</varname>.)
    <structfield>tupdesc</> is a row descriptor which you can pass to
    SPI functions dealing with rows.  <structfield>tuptabcxt</>,
@@ -425,9 +424,7 @@ typedef struct
    <varlistentry>
     <term><literal>bool <parameter>read_only</parameter></literal></term>
     <listitem>
-     <para>
-      <literal>true</> for read-only execution
-     </para>
+     <para><literal>true</> for read-only execution</para>
     </listitem>
    </varlistentry>
 
@@ -803,9 +800,7 @@ int SPI_execute_with_args(const char *<parameter>command</parameter>,
    <varlistentry>
     <term><literal>bool <parameter>read_only</parameter></literal></term>
     <listitem>
-     <para>
-      <literal>true</> for read-only execution
-     </para>
+     <para><literal>true</> for read-only execution</para>
     </listitem>
    </varlistentry>
 
@@ -1421,9 +1416,7 @@ int SPI_execute_plan(SPIPlanPtr <parameter>plan</parameter>, Datum * <parameter>
    <varlistentry>
     <term><literal>bool <parameter>read_only</parameter></literal></term>
     <listitem>
-     <para>
-      <literal>true</> for read-only execution
-     </para>
+     <para><literal>true</> for read-only execution</para>
     </listitem>
    </varlistentry>
 
@@ -1540,9 +1533,7 @@ int SPI_execute_plan_with_paramlist(SPIPlanPtr <parameter>plan</parameter>,
    <varlistentry>
     <term><literal>bool <parameter>read_only</parameter></literal></term>
     <listitem>
-     <para>
-      <literal>true</> for read-only execution
-     </para>
+     <para><literal>true</> for read-only execution</para>
     </listitem>
    </varlistentry>
 
@@ -1777,9 +1768,7 @@ Portal SPI_cursor_open(const char * <parameter>name</parameter>, SPIPlanPtr <par
    <varlistentry>
     <term><literal>bool <parameter>read_only</parameter></literal></term>
     <listitem>
-     <para>
-      <literal>true</> for read-only execution
-     </para>
+     <para><literal>true</> for read-only execution</para>
     </listitem>
    </varlistentry>
   </variablelist>
@@ -1915,9 +1904,7 @@ Portal SPI_cursor_open_with_args(const char *<parameter>name</parameter>,
    <varlistentry>
     <term><literal>bool <parameter>read_only</parameter></literal></term>
     <listitem>
-     <para>
-      <literal>true</> for read-only execution
-     </para>
+     <para><literal>true</> for read-only execution</para>
     </listitem>
    </varlistentry>
 
@@ -2022,9 +2009,7 @@ Portal SPI_cursor_open_with_paramlist(const char *<parameter>name</parameter>,
    <varlistentry>
     <term><literal>bool <parameter>read_only</parameter></literal></term>
     <listitem>
-     <para>
-      <literal>true</> for read-only execution
-     </para>
+     <para><literal>true</> for read-only execution</para>
     </listitem>
    </varlistentry>
   </variablelist>

@@ -166,8 +166,7 @@ PostgreSQL documentation
          </para>
          </listitem>
         </varlistentry>
-       </variablelist>
-      </para>
+       </variablelist></para>
      </listitem>
     </varlistentry>
 
@@ -253,8 +252,7 @@ PostgreSQL documentation
 ecpg prog1.pgc
 cc -I/usr/local/pgsql/include -c prog1.c
 cc -o prog1 prog1.o -L/usr/local/pgsql/lib -lecpg
-</programlisting>
-  </para>
+</programlisting></para>
  </refsect1>
 
 </refentry>

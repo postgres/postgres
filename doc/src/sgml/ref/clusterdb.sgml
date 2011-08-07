@@ -293,8 +293,7 @@ PostgreSQL documentation
     <literal>xyzzy</literal>:
 <screen>
 <prompt>$ </prompt><userinput>clusterdb --table foo xyzzy</userinput>
-</screen>
-   </para>
+</screen></para>
 
  </refsect1>
 

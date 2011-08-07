@@ -288,8 +288,7 @@ CREATE [ [ GLOBAL | LOCAL ] { TEMPORARY | TEMP } | UNLOGGED ] TABLE [ IF NOT EXI
       error will be reported.
      </para>
 
-     <para>
-      <literal>CHECK</> constraints are merged in essentially the same way as
+     <para><literal>CHECK</> constraints are merged in essentially the same way as
       columns: if multiple parent tables and/or the new table definition
       contain identically-named <literal>CHECK</> constraints, these
       constraints must all have the same check expression, or an error will be
@@ -340,8 +339,7 @@ CREATE [ [ GLOBAL | LOCAL ] { TEMPORARY | TEMP } | UNLOGGED ] TABLE [ IF NOT EXI
       table, unless the <literal>INCLUDING INDEXES</literal> clause is
       specified.
      </para>
-     <para>
-      <literal>STORAGE</> settings for the copied column definitions will only
+     <para><literal>STORAGE</> settings for the copied column definitions will only
       be copied if <literal>INCLUDING STORAGE</literal> is specified.  The
       default behavior is to exclude <literal>STORAGE</> settings, resulting
       in the copied columns in the new table having type-specific default
@@ -354,8 +352,7 @@ CREATE [ [ GLOBAL | LOCAL ] { TEMPORARY | TEMP } | UNLOGGED ] TABLE [ IF NOT EXI
       is specified. The default behavior is to exclude comments, resulting in
       the copied columns and constraints in the new table having no comments.
      </para>
-     <para>
-      <literal>INCLUDING ALL</literal> is an abbreviated form of
+     <para><literal>INCLUDING ALL</literal> is an abbreviated form of
       <literal>INCLUDING DEFAULTS INCLUDING CONSTRAINTS INCLUDING INDEXES INCLUDING STORAGE INCLUDING COMMENTS</literal>.
      </para>
      <para>
@@ -798,8 +795,7 @@ CREATE [ [ GLOBAL | LOCAL ] { TEMPORARY | TEMP } | UNLOGGED ] TABLE [ IF NOT EXI
          </para>
         </listitem>
        </varlistentry>
-      </variablelist>
-     </para>
+      </variablelist></para>
     </listitem>
    </varlistentry>
 
@@ -1061,9 +1057,7 @@ CREATE TABLE films (
     kind        varchar(10),
     len         interval hour to minute
 );
-</programlisting>
 
-<programlisting>
 CREATE TABLE distributors (
      did    integer PRIMARY KEY DEFAULT nextval('serial'),
      name   varchar(40) NOT NULL CHECK (name &lt;&gt; '')
@@ -1151,9 +1145,7 @@ CREATE TABLE distributors (
     name    varchar(40),
     PRIMARY KEY(did)
 );
-</programlisting>
 
-<programlisting>
 CREATE TABLE distributors (
     did     integer PRIMARY KEY,
     name    varchar(40)
@@ -1259,8 +1251,7 @@ CREATE TABLE employees OF employee_type (
     PRIMARY KEY (name),
     salary WITH OPTIONS DEFAULT 1000
 );
-</programlisting>
-  </para>
+</programlisting></para>
  </refsect1>
 
  <refsect1 id="SQL-CREATETABLE-compatibility">

@@ -235,8 +235,7 @@ UPDATE OF <replaceable>column_name1</replaceable> [, <replaceable>column_name2</
       is mentioned as a target of the <command>UPDATE</> command.
      </para>
 
-     <para>
-      <literal>INSTEAD OF UPDATE</> events do not support lists of columns.
+     <para><literal>INSTEAD OF UPDATE</> events do not support lists of columns.
      </para>
     </listitem>
    </varlistentry>
@@ -311,8 +310,7 @@ UPDATE OF <replaceable>column_name1</replaceable> [, <replaceable>column_name2</
       and <literal>DELETE</> triggers cannot refer to <literal>NEW</>.
      </para>
 
-     <para>
-      <literal>INSTEAD OF</> triggers do not support <literal>WHEN</>
+     <para><literal>INSTEAD OF</> triggers do not support <literal>WHEN</>
       conditions.
      </para>
 
@@ -502,8 +500,7 @@ CREATE TRIGGER view_insert
     </listitem>
 
     <listitem>
-     <para>
-      <productname>PostgreSQL</productname> only allows the execution
+     <para><productname>PostgreSQL</productname> only allows the execution
       of a user-defined function for the triggered action.  The standard
       allows the execution of a number of other SQL commands, such as
       <command>CREATE TABLE</command>, as the triggered action.  This

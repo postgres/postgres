@@ -125,8 +125,7 @@ ALTER AGGREGATE myavg(integer) OWNER TO joe;
    <type>integer</type> into schema <literal>myschema</literal>:
 <programlisting>
 ALTER AGGREGATE myavg(integer) SET SCHEMA myschema;
-</programlisting>
-  </para>
+</programlisting></para>
  </refsect1>
 
  <refsect1>

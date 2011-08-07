@@ -282,8 +282,7 @@ ALTER SEQUENCE <replaceable class="parameter">name</replaceable> SET SCHEMA <rep
    Restart a sequence called <literal>serial</literal>, at 105:
 <programlisting>
 ALTER SEQUENCE serial RESTART WITH 105;
-</programlisting>
-  </para>
+</programlisting></para>
  </refsect1>
 
  <refsect1>

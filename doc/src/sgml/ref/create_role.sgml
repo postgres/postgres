@@ -268,8 +268,7 @@ CREATE ROLE <replaceable class="PARAMETER">name</replaceable> [ [ WITH ] <replac
      <varlistentry>
       <term><literal>IN GROUP</> <replaceable class="parameter">role_name</replaceable></term>
       <listitem>
-       <para>
-        <literal>IN GROUP</literal> is an obsolete spelling of
+       <para><literal>IN GROUP</literal> is an obsolete spelling of
         <literal>IN ROLE</>.
        </para>
       </listitem>
@@ -438,8 +437,7 @@ CREATE ROLE miriam WITH LOGIN PASSWORD 'jw8s0F4' VALID UNTIL '2005-01-01';
    Create a role that can create databases and manage roles:
 <programlisting>
 CREATE ROLE admin WITH CREATEDB CREATEROLE;
-</programlisting>
-  </para>
+</programlisting></para>
  </refsect1>
 
  <refsect1>

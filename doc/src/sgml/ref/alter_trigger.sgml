@@ -92,8 +92,7 @@ ALTER TRIGGER <replaceable class="PARAMETER">name</replaceable> ON <replaceable 
    To rename an existing trigger:
 <programlisting>
 ALTER TRIGGER emp_stamp ON emp RENAME TO emp_track_chgs;
-</programlisting>
-  </para>
+</programlisting></para>
  </refsect1>
 
  <refsect1>

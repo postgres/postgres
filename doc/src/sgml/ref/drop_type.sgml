@@ -86,8 +86,7 @@ DROP TYPE [ IF EXISTS ] <replaceable class="PARAMETER">name</replaceable> [, ...
    To remove the data type <type>box</type>:
 <programlisting>
 DROP TYPE box;
-</programlisting>
-  </para>
+</programlisting></para>
  </refsect1>
 
  <refsect1 id="SQL-DROPTYPE-compatibility">

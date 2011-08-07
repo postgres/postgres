@@ -104,8 +104,7 @@ ALTER COLLATION "de_DE" RENAME TO german;
    <literal>joe</literal>:
 <programlisting>
 ALTER COLLATION "en_US" OWNER TO joe;
-</programlisting>
-  </para>
+</programlisting></para>
  </refsect1>
 
  <refsect1>

@@ -153,8 +153,7 @@ ALTER FUNCTION <replaceable>name</replaceable> ( [ [ <replaceable class="paramet
      <term><literal>STRICT</literal></term>
 
      <listitem>
-      <para>
-       <literal>CALLED ON NULL INPUT</literal> changes the function so
+      <para><literal>CALLED ON NULL INPUT</literal> changes the function so
        that it will be invoked when some or all of its arguments are
        null. <literal>RETURNS NULL ON NULL INPUT</literal> or
        <literal>STRICT</literal> changes the function so that it is not

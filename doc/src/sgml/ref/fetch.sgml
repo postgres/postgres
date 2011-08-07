@@ -111,8 +111,7 @@ FETCH [ <replaceable class="PARAMETER">direction</replaceable> [ FROM | IN ] ] <
    <varlistentry>
     <term><replaceable class="PARAMETER">direction</replaceable></term>
     <listitem>
-     <para>
-      <replaceable class="PARAMETER">direction</replaceable> defines
+     <para><replaceable class="PARAMETER">direction</replaceable> defines
       the fetch direction and number of rows to fetch.  It can be one
       of the following:
 
@@ -266,16 +265,14 @@ FETCH [ <replaceable class="PARAMETER">direction</replaceable> [ FROM | IN ] ] <
          </para>
         </listitem>
        </varlistentry>
-      </variablelist>
-     </para>
+      </variablelist></para>
     </listitem>
    </varlistentry>
 
    <varlistentry>
     <term><replaceable class="PARAMETER">count</replaceable></term>
     <listitem>
-     <para>
-      <replaceable class="PARAMETER">count</replaceable> is a
+     <para><replaceable class="PARAMETER">count</replaceable> is a
       possibly-signed integer constant, determining the location or
       number of rows to fetch.  For <literal>FORWARD</> and
       <literal>BACKWARD</> cases, specifying a negative <replaceable
@@ -378,8 +375,7 @@ FETCH PRIOR FROM liahona;
 -- Close the cursor and end the transaction:
 CLOSE liahona;
 COMMIT WORK;
-</programlisting>
-  </para>
+</programlisting></para>
  </refsect1>
 
  <refsect1>

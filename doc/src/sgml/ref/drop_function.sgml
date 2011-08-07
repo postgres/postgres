@@ -132,8 +132,7 @@ DROP FUNCTION [ IF EXISTS ] <replaceable class="parameter">name</replaceable> ( 
 
 <programlisting>
 DROP FUNCTION sqrt(integer);
-</programlisting>
-  </para>
+</programlisting></para>
  </refsect1>
 
  <refsect1 id="SQL-DROPFUNCTION-compatibility">

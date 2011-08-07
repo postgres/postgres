@@ -162,8 +162,7 @@ CREATE DOMAIN <replaceable class="parameter">name</replaceable> [ AS ] <replacea
    <varlistentry>
     <term><literal>CHECK (<replaceable class="PARAMETER">expression</replaceable>)</literal></term>
     <listitem>
-     <para>
-      <literal>CHECK</> clauses specify integrity constraints or tests
+     <para><literal>CHECK</> clauses specify integrity constraints or tests
       which values of the domain must satisfy.
       Each constraint must be an expression
       producing a Boolean result.  It should use the key word <literal>VALUE</>
@@ -202,8 +201,7 @@ CREATE TABLE us_snail_addy (
   city TEXT NOT NULL,
   postal us_postal_code NOT NULL
 );
-</programlisting>
-  </para>
+</programlisting></para>
  </refsect1>
 
  <refsect1 id="SQL-CREATEDOMAIN-compatibility">

@@ -190,8 +190,7 @@ ALTER DATABASE <replaceable class="PARAMETER">name</replaceable> RESET ALL
 
 <programlisting>
 ALTER DATABASE test SET enable_indexscan TO off;
-</programlisting>
-  </para>
+</programlisting></para>
  </refsect1>
 
  <refsect1>

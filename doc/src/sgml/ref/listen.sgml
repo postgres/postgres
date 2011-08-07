@@ -113,8 +113,7 @@ LISTEN <replaceable class="PARAMETER">channel</replaceable>
 LISTEN virtual;
 NOTIFY virtual;
 Asynchronous notification "virtual" received from server process with PID 8448.
-</programlisting>
-  </para>
+</programlisting></para>
  </refsect1>
 
  <refsect1>
