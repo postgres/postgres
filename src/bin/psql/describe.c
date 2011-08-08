@@ -2665,10 +2665,8 @@ listLanguages(const char *pattern, bool verbose, bool showSystem)
 						  gettext_noop("Owner"));
 
 	appendPQExpBuffer(&buf,
-					  "       l.lanpltrusted AS \"%s\",\n"
-					  "       d.description AS \"%s\"",
-					  gettext_noop("Trusted"),
-					  gettext_noop("Description"));
+					  "       l.lanpltrusted AS \"%s\"",
+					  gettext_noop("Trusted"));
 
 	if (verbose)
 	{
@@ -2686,10 +2684,12 @@ listLanguages(const char *pattern, bool verbose, bool showSystem)
 	}
 
 	appendPQExpBuffer(&buf,
+					  ",\n       d.description AS \"%s\""
 					  "\nFROM pg_catalog.pg_language l\n"
 					  "LEFT JOIN pg_catalog.pg_description d\n"
 					  "  ON d.classoid = l.tableoid AND d.objoid = l.oid\n"
-					  "  AND d.objsubid = 0\n");
+					  "  AND d.objsubid = 0\n",
+					  gettext_noop("Description"));
 
 	if (pattern)
 		processSQLNamePattern(pset.db, &buf, pattern, false, false,
@@ -2723,7 +2723,7 @@ listLanguages(const char *pattern, bool verbose, bool showSystem)
  * Describes domains.
  */
 bool
-listDomains(const char *pattern, bool showSystem)
+listDomains(const char *pattern, bool verbose, bool showSystem)
 {
 	PQExpBufferData buf;
 	PGresult   *res;
@@ -2746,16 +2746,29 @@ listDomains(const char *pattern, bool showSystem)
 	appendPQExpBuffer(&buf,
 	   "            CASE WHEN t.typnotnull THEN ' not null' ELSE '' END ||\n"
 					  "            CASE WHEN t.typdefault IS NOT NULL THEN ' default ' || t.typdefault ELSE '' END\n"
-					  "       ) as \"%s\",\n",
-					  gettext_noop("Modifier"));
-	appendPQExpBuffer(&buf,
+					  "       ) as \"%s\",\n"
 					  "       pg_catalog.array_to_string(ARRAY(\n"
 					  "         SELECT pg_catalog.pg_get_constraintdef(r.oid, true) FROM pg_catalog.pg_constraint r WHERE t.oid = r.contypid\n"
-					  "       ), ' ') as \"%s\"\n"
-					  "FROM pg_catalog.pg_type t\n"
-	   "     LEFT JOIN pg_catalog.pg_namespace n ON n.oid = t.typnamespace\n"
-					  "WHERE t.typtype = 'd'\n",
+					  "       ), ' ') as \"%s\"",
+					  gettext_noop("Modifier"),
 					  gettext_noop("Check"));
+
+	if (verbose)
+		appendPQExpBuffer(&buf,
+						  ",\n       d.description as \"%s\"",
+						  gettext_noop("Description"));
+
+	appendPQExpBuffer(&buf,
+					  "\nFROM pg_catalog.pg_type t\n"
+	   "     LEFT JOIN pg_catalog.pg_namespace n ON n.oid = t.typnamespace\n");
+
+	if (verbose)
+		appendPQExpBuffer(&buf,
+						  "     LEFT JOIN pg_catalog.pg_description d "
+						  "ON d.classoid = t.tableoid AND d.objoid = t.oid "
+						  "AND d.objsubid = 0\n");
+
+	appendPQExpBuffer(&buf, "WHERE t.typtype = 'd'\n");
 
 	if (!showSystem && !pattern)
 		appendPQExpBuffer(&buf, "      AND n.nspname <> 'pg_catalog'\n"
@@ -2788,7 +2801,7 @@ listDomains(const char *pattern, bool showSystem)
  * Describes conversions.
  */
 bool
-listConversions(const char *pattern, bool showSystem)
+listConversions(const char *pattern, bool verbose, bool showSystem)
 {
 	PQExpBufferData buf;
 	PGresult   *res;
@@ -2803,9 +2816,7 @@ listConversions(const char *pattern, bool showSystem)
 	   "       pg_catalog.pg_encoding_to_char(c.conforencoding) AS \"%s\",\n"
 		"       pg_catalog.pg_encoding_to_char(c.contoencoding) AS \"%s\",\n"
 					  "       CASE WHEN c.condefault THEN '%s'\n"
-					  "       ELSE '%s' END AS \"%s\"\n"
-			   "FROM pg_catalog.pg_conversion c, pg_catalog.pg_namespace n\n"
-					  "WHERE n.oid = c.connamespace\n",
+					  "       ELSE '%s' END AS \"%s\"",
 					  gettext_noop("Schema"),
 					  gettext_noop("Name"),
 					  gettext_noop("Source"),
@@ -2813,9 +2824,28 @@ listConversions(const char *pattern, bool showSystem)
 					  gettext_noop("yes"), gettext_noop("no"),
 					  gettext_noop("Default?"));
 
+	if (verbose)
+		appendPQExpBuffer(&buf,
+						  ",\n       d.description AS \"%s\"",
+						  gettext_noop("Description"));
+
+	appendPQExpBuffer(&buf,
+					  "\nFROM pg_catalog.pg_conversion c\n"
+					  "     JOIN pg_catalog.pg_namespace n "
+					  "ON n.oid = c.connamespace\n");
+
+	if (verbose)
+		appendPQExpBuffer(&buf,
+						  "LEFT JOIN pg_catalog.pg_description d "
+						  "ON d.classoid = c.tableoid\n"
+						  "          AND d.objoid = c.oid "
+						  "AND d.objsubid = 0\n");
+
+	appendPQExpBuffer(&buf, "WHERE true\n");
+
 	if (!showSystem && !pattern)
-		appendPQExpBuffer(&buf, "      AND n.nspname <> 'pg_catalog'\n"
-						  "      AND n.nspname <> 'information_schema'\n");
+		appendPQExpBuffer(&buf, "  AND n.nspname <> 'pg_catalog'\n"
+						  "  AND n.nspname <> 'information_schema'\n");
 
 	processSQLNamePattern(pset.db, &buf, pattern, true, false,
 						  "n.nspname", "c.conname", NULL,

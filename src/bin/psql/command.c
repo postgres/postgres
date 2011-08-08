@@ -378,7 +378,7 @@ exec_command(const char *cmd,
 				success = describeTablespaces(pattern, show_verbose);
 				break;
 			case 'c':
-				success = listConversions(pattern, show_system);
+				success = listConversions(pattern, show_verbose, show_system);
 				break;
 			case 'C':
 				success = listCasts(pattern, show_verbose);
@@ -390,7 +390,7 @@ exec_command(const char *cmd,
 					success = objectDescription(pattern, show_system);
 				break;
 			case 'D':
-				success = listDomains(pattern, show_system);
+				success = listDomains(pattern, show_verbose, show_system);
 				break;
 			case 'f':			/* function subsystem */
 				switch (cmd[2])

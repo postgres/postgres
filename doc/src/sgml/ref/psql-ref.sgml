@@ -954,7 +954,7 @@ testdb=&gt;
 
 
       <varlistentry>
-        <term><literal>\dc[S] [ <link linkend="APP-PSQL-patterns"><replaceable class="parameter">pattern</replaceable></link> ]</literal></term>
+        <term><literal>\dc[S+] [ <link linkend="APP-PSQL-patterns"><replaceable class="parameter">pattern</replaceable></link> ]</literal></term>
         <listitem>
         <para>
         Lists conversions between character-set encodings.
@@ -964,6 +964,8 @@ testdb=&gt;
         By default, only user-created objects are shown;  supply a
         pattern or the <literal>S</literal> modifier to include system
         objects.
+        If <literal>+</literal> is appended to the command name, each object
+        is listed with its associated description.
         </para>
         </listitem>
       </varlistentry>
@@ -977,6 +979,8 @@ testdb=&gt;
         If <replaceable class="parameter">pattern</replaceable>
         is specified, only casts whose source or target types match the
         pattern are listed.
+        If <literal>+</literal> is appended to the command name, each object
+        is listed with its associated description.
         </para>
         </listitem>
       </varlistentry>
@@ -1038,7 +1042,7 @@ testdb=&gt;
 
 
       <varlistentry>
-        <term><literal>\dD[S] [ <link linkend="APP-PSQL-patterns"><replaceable class="parameter">pattern</replaceable></link> ]</literal></term>
+        <term><literal>\dD[S+] [ <link linkend="APP-PSQL-patterns"><replaceable class="parameter">pattern</replaceable></link> ]</literal></term>
         <listitem>
         <para>
         Lists domains. If <replaceable
@@ -1047,6 +1051,8 @@ testdb=&gt;
         By default, only user-created objects are shown;  supply a
         pattern or the <literal>S</literal> modifier to include system
         objects.
+        If <literal>+</literal> is appended to the command name, each object
+        is listed with its associated description.
         </para>
         </listitem>
       </varlistentry>
