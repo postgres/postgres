@@ -57,6 +57,16 @@ vacuumlo [options] database [database2 ... databaseN]
    </varlistentry>
 
    <varlistentry>
+    <term><option>-l</option> <replaceable>limit</></term>
+    <listitem>
+     <para>
+      Stop after removing LIMIT large objects.  Useful to avoid 
+      exceeding <xref linkend="guc-max-locks-per-transaction">.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
     <term><option>-w</></term>
     <term><option>--no-password</></term>
     <listitem>

@@ -48,6 +48,7 @@ struct _param
 	char	   *pg_host;
 	int			verbose;
 	int			dry_run;
+	long		transaction_limit;
 };
 
 int			vacuumlo(char *, struct _param *);
@@ -65,11 +66,12 @@ vacuumlo(char *database, struct _param * param)
 	PGresult   *res,
 			   *res2;
 	char		buf[BUFSIZE];
-	int			matched;
-	int			deleted;
+	long		matched;
+	long		deleted;
 	int			i;
 	static char *password = NULL;
 	bool		new_pass;
+	bool        success = true;
 
 	if (param->pg_prompt == TRI_YES && password == NULL)
 		password = simple_prompt("Password: ", 100, false);
@@ -280,12 +282,19 @@ vacuumlo(char *database, struct _param * param)
 			{
 				fprintf(stderr, "\nFailed to remove lo %u: ", lo);
 				fprintf(stderr, "%s", PQerrorMessage(conn));
+				if (PQtransactionStatus(conn) == PQTRANS_INERROR)
+				{
+					success = false;
+					break;
+				}
 			}
 			else
 				deleted++;
 		}
 		else
 			deleted++;
+		if (param->transaction_limit != 0 && deleted >= param->transaction_limit)
+			break;
 	}
 	PQclear(res);
 
@@ -298,10 +307,20 @@ vacuumlo(char *database, struct _param * param)
 	PQfinish(conn);
 
 	if (param->verbose)
-		fprintf(stdout, "\r%s %d large objects from %s.\n",
-		   (param->dry_run ? "Would remove" : "Removed"), deleted, database);
+	{
+		if (param->dry_run)
+			fprintf(stdout, "\rWould remove %ld large objects from %s.\n",
+					deleted, database);
+		else if (success)
+			fprintf(stdout,
+					"\rSuccessfully removed %ld large objects from %s.\n",
+					deleted, database);
+		else
+			fprintf(stdout, "\rRemoval from %s failed at object %ld of %ld.\n",
+					database, deleted, matched);
+	}
 
-	return 0;
+	return ((param->dry_run || success) ? 0 : -1);
 }
 
 void
@@ -311,6 +330,7 @@ usage(const char *progname)
 	printf("Usage:\n  %s [OPTION]... DBNAME...\n\n", progname);
 	printf("Options:\n");
 	printf("  -h HOSTNAME  database server host or socket directory\n");
+	printf("  -l LIMIT     stop after removing LIMIT large objects\n");
 	printf("  -n           don't remove large objects, just show what would be done\n");
 	printf("  -p PORT      database server port\n");
 	printf("  -U USERNAME  user name to connect as\n");
@@ -342,6 +362,7 @@ main(int argc, char **argv)
 	param.pg_port = NULL;
 	param.verbose = 0;
 	param.dry_run = 0;
+	param.transaction_limit = 0;
 
 	if (argc > 1)
 	{
@@ -359,7 +380,7 @@ main(int argc, char **argv)
 
 	while (1)
 	{
-		c = getopt(argc, argv, "h:U:p:vnwW");
+		c = getopt(argc, argv, "h:l:U:p:vnwW");
 		if (c == -1)
 			break;
 
@@ -394,6 +415,16 @@ main(int argc, char **argv)
 					exit(1);
 				}
 				param.pg_port = strdup(optarg);
+				break;
+			case 'l':
+				param.transaction_limit = strtol(optarg, NULL, 10);
+				if (param.transaction_limit < 0)
+				{
+					fprintf(stderr,
+				"%s: transaction limit must not be negative (0 disables)\n",
+						progname);
+					exit(1);
+				}
 				break;
 			case 'h':
 				param.pg_host = strdup(optarg);
