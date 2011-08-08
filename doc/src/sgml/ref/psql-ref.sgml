@@ -1098,7 +1098,7 @@ testdb=&gt;
         specified, only those servers whose name matches the pattern
         are listed.  If the form <literal>\des+</literal> is used, a
         full description of each server is shown, including the
-        server's ACL, type, version, and options.
+        server's ACL, type, version, options, and description.
         </para>
         </listitem>
       </varlistentry>
@@ -1112,7 +1112,8 @@ testdb=&gt;
         If <replaceable class="parameter">pattern</replaceable> is
         specified, only entries whose table name or schema name matches
         the pattern are listed.  If the form <literal>\det+</literal>
-        is used, generic options are also displayed.
+        is used, generic options and the foreign table description
+        are also displayed.
         </para>
         </listitem>
       </varlistentry>
@@ -1150,8 +1151,8 @@ testdb=&gt;
         If <replaceable class="parameter">pattern</replaceable> is
         specified, only those foreign-data wrappers whose name matches
         the pattern are listed.  If the form <literal>\dew+</literal>
-        is used, the ACL and options of the foreign-data wrapper are
-        also shown.
+        is used, the ACL, options, and description of the foreign-data
+        wrapper are also shown.
         </para>
         </listitem>
       </varlistentry>

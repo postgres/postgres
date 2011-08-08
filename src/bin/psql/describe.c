@@ -3680,16 +3680,16 @@ listForeignDataWrappers(const char *pattern, bool verbose)
 
 	initPQExpBuffer(&buf);
 	printfPQExpBuffer(&buf,
-					  "SELECT fdwname AS \"%s\",\n"
-					  "  pg_catalog.pg_get_userbyid(fdwowner) AS \"%s\",\n",
+					  "SELECT fdw.fdwname AS \"%s\",\n"
+					  "  pg_catalog.pg_get_userbyid(fdw.fdwowner) AS \"%s\",\n",
 					  gettext_noop("Name"),
 					  gettext_noop("Owner"));
 	if (pset.sversion >= 90100)
 		appendPQExpBuffer(&buf,
-						  "  fdwhandler::pg_catalog.regproc AS \"%s\",\n",
+						  "  fdw.fdwhandler::pg_catalog.regproc AS \"%s\",\n",
 						  gettext_noop("Handler"));
 	appendPQExpBuffer(&buf,
-					  "  fdwvalidator::pg_catalog.regproc AS \"%s\"",
+					  "  fdw.fdwvalidator::pg_catalog.regproc AS \"%s\"",
 					  gettext_noop("Validator"));
 
 	if (verbose)
@@ -3699,9 +3699,20 @@ listForeignDataWrappers(const char *pattern, bool verbose)
 		appendPQExpBuffer(&buf,
 						  ",\n  fdwoptions AS \"%s\"",
 						  gettext_noop("Options"));
+
+		if (pset.sversion >= 90100)
+			appendPQExpBuffer(&buf,
+							  ",\n  d.description AS \"%s\" ",
+							  gettext_noop("Description"));
 	}
 
-	appendPQExpBuffer(&buf, "\nFROM pg_catalog.pg_foreign_data_wrapper\n");
+	appendPQExpBuffer(&buf, "\nFROM pg_catalog.pg_foreign_data_wrapper fdw\n");
+
+	if (verbose && pset.sversion >= 90100)
+		appendPQExpBuffer(&buf,
+						  "LEFT JOIN pg_catalog.pg_description d\n"
+						  "       ON d.classoid = fdw.tableoid "
+						  "AND d.objoid = fdw.oid AND d.objsubid = 0\n");
 
 	processSQLNamePattern(pset.db, &buf, pattern, false, false,
 						  NULL, "fdwname", NULL, NULL);
@@ -3759,15 +3770,23 @@ listForeignServers(const char *pattern, bool verbose)
 						  ",\n"
 						  "  s.srvtype AS \"%s\",\n"
 						  "  s.srvversion AS \"%s\",\n"
-						  "  s.srvoptions AS \"%s\"",
+						  "  s.srvoptions AS \"%s\",\n"
+						  "  d.description AS \"%s\"",
 						  gettext_noop("Type"),
 						  gettext_noop("Version"),
-						  gettext_noop("Options"));
+						  gettext_noop("Options"),
+						  gettext_noop("Description"));
 	}
 
 	appendPQExpBuffer(&buf,
 					  "\nFROM pg_catalog.pg_foreign_server s\n"
 	   "     JOIN pg_catalog.pg_foreign_data_wrapper f ON f.oid=s.srvfdw\n");
+
+	if (verbose)
+		appendPQExpBuffer(&buf,
+						  "LEFT JOIN pg_description d\n       "
+						  "ON d.classoid = s.tableoid AND d.objoid = s.oid "
+						  "AND d.objsubid = 0\n");
 
 	processSQLNamePattern(pset.db, &buf, pattern, false, false,
 						  NULL, "s.srvname", NULL, NULL);
@@ -3872,18 +3891,26 @@ listForeignTables(const char *pattern, bool verbose)
 
 	if (verbose)
 		appendPQExpBuffer(&buf,
-						  ",\n  ft.ftoptions AS \"%s\"",
-						  gettext_noop("Options"));
+						  ",\n  ft.ftoptions AS \"%s\",\n"
+						  "  d.description AS \"%s\"",
+						  gettext_noop("Options"),
+						  gettext_noop("Description"));
 
-	appendPQExpBuffer(&buf, "\nFROM pg_catalog.pg_foreign_table ft,");
-	appendPQExpBuffer(&buf, "\n pg_catalog.pg_class c,");
-	appendPQExpBuffer(&buf, "\n pg_catalog.pg_namespace n,");
-	appendPQExpBuffer(&buf, "\n pg_catalog.pg_foreign_server s\n");
-	appendPQExpBuffer(&buf, "\nWHERE c.oid = ft.ftrelid");
-	appendPQExpBuffer(&buf, "\nAND s.oid = ft.ftserver\n");
-	appendPQExpBuffer(&buf, "\nAND n.oid = c.relnamespace\n");
+	appendPQExpBuffer(&buf,
+					  "\nFROM pg_catalog.pg_foreign_table ft\n"
+					  "  INNER JOIN pg_catalog.pg_class c"
+					  " ON c.oid = ft.ftrelid\n"
+					  "  INNER JOIN pg_catalog.pg_namespace n"
+					  " ON n.oid = c.relnamespace\n"
+					  "  INNER JOIN pg_catalog.pg_foreign_server s"
+					  " ON s.oid = ft.ftserver\n");
+	if (verbose)
+		appendPQExpBuffer(&buf,
+						  "   LEFT JOIN pg_catalog.pg_description d\n"
+						  "          ON d.classoid = c.tableoid AND "
+						  "d.objoid = c.oid AND d.objsubid = 0\n");
 
-	processSQLNamePattern(pset.db, &buf, pattern, true, false,
+	processSQLNamePattern(pset.db, &buf, pattern, false, false,
 						  NULL, "n.nspname", "c.relname", NULL);
 
 	appendPQExpBuffer(&buf, "ORDER BY 1, 2;");
