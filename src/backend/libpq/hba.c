@@ -569,7 +569,7 @@ check_hostname(hbaPort *port, const char *hostname)
 		if (pg_getnameinfo_all(&port->raddr.addr, port->raddr.salen,
 							   remote_hostname, sizeof(remote_hostname),
 							   NULL, 0,
-							   0))
+							   0) != 0)
 			return false;
 
 		port->remote_hostname = pstrdup(remote_hostname);

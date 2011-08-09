@@ -1093,7 +1093,7 @@ inet_client_addr(PG_FUNCTION_ARGS)
 							 remote_host, sizeof(remote_host),
 							 NULL, 0,
 							 NI_NUMERICHOST | NI_NUMERICSERV);
-	if (ret)
+	if (ret != 0)
 		PG_RETURN_NULL();
 
 	clean_ipv6_addr(port->raddr.addr.ss_family, remote_host);
@@ -1132,7 +1132,7 @@ inet_client_port(PG_FUNCTION_ARGS)
 							 NULL, 0,
 							 remote_port, sizeof(remote_port),
 							 NI_NUMERICHOST | NI_NUMERICSERV);
-	if (ret)
+	if (ret != 0)
 		PG_RETURN_NULL();
 
 	PG_RETURN_DATUM(DirectFunctionCall1(int4in, CStringGetDatum(remote_port)));
@@ -1169,7 +1169,7 @@ inet_server_addr(PG_FUNCTION_ARGS)
 							 local_host, sizeof(local_host),
 							 NULL, 0,
 							 NI_NUMERICHOST | NI_NUMERICSERV);
-	if (ret)
+	if (ret != 0)
 		PG_RETURN_NULL();
 
 	clean_ipv6_addr(port->laddr.addr.ss_family, local_host);
@@ -1208,7 +1208,7 @@ inet_server_port(PG_FUNCTION_ARGS)
 							 NULL, 0,
 							 local_port, sizeof(local_port),
 							 NI_NUMERICHOST | NI_NUMERICSERV);
-	if (ret)
+	if (ret != 0)
 		PG_RETURN_NULL();
 
 	PG_RETURN_DATUM(DirectFunctionCall1(int4in, CStringGetDatum(local_port)));

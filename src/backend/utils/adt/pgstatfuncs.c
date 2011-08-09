@@ -682,13 +682,7 @@ pg_stat_get_activity(PG_FUNCTION_ARGS)
 											 remote_host, sizeof(remote_host),
 											 remote_port, sizeof(remote_port),
 											 NI_NUMERICHOST | NI_NUMERICSERV);
-					if (ret)
-					{
-						nulls[9] = true;
-						nulls[10] = true;
-						nulls[11] = true;
-					}
-					else
+					if (ret == 0)
 					{
 						clean_ipv6_addr(beentry->st_clientaddr.addr.ss_family, remote_host);
 						values[9] = DirectFunctionCall1(inet_in,
@@ -698,6 +692,12 @@ pg_stat_get_activity(PG_FUNCTION_ARGS)
 						else
 							nulls[10] = true;
 						values[11] = Int32GetDatum(atoi(remote_port));
+					}
+					else
+					{
+						nulls[9] = true;
+						nulls[10] = true;
+						nulls[11] = true;
 					}
 				}
 				else if (beentry->st_clientaddr.addr.ss_family == AF_UNIX)
@@ -939,7 +939,7 @@ pg_stat_get_backend_client_addr(PG_FUNCTION_ARGS)
 							 remote_host, sizeof(remote_host),
 							 NULL, 0,
 							 NI_NUMERICHOST | NI_NUMERICSERV);
-	if (ret)
+	if (ret != 0)
 		PG_RETURN_NULL();
 
 	clean_ipv6_addr(beentry->st_clientaddr.addr.ss_family, remote_host);
@@ -988,7 +988,7 @@ pg_stat_get_backend_client_port(PG_FUNCTION_ARGS)
 							 NULL, 0,
 							 remote_port, sizeof(remote_port),
 							 NI_NUMERICHOST | NI_NUMERICSERV);
-	if (ret)
+	if (ret != 0)
 		PG_RETURN_NULL();
 
 	PG_RETURN_DATUM(DirectFunctionCall1(int4in,
