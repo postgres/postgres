@@ -3230,7 +3230,7 @@ set_rel_width(PlannerInfo *root, RelOptInfo *rel)
 		else if (IsA(node, PlaceHolderVar))
 		{
 			PlaceHolderVar *phv = (PlaceHolderVar *) node;
-			PlaceHolderInfo *phinfo = find_placeholder_info(root, phv);
+			PlaceHolderInfo *phinfo = find_placeholder_info(root, phv, false);
 
 			tuple_width += phinfo->ph_width;
 		}

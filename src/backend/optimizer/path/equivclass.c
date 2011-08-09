@@ -709,7 +709,7 @@ generate_base_implied_equalities_no_const(PlannerInfo *root,
 		List	   *vars = pull_var_clause((Node *) cur_em->em_expr,
 										   PVC_INCLUDE_PLACEHOLDERS);
 
-		add_vars_to_targetlist(root, vars, ec->ec_relids);
+		add_vars_to_targetlist(root, vars, ec->ec_relids, false);
 		list_free(vars);
 	}
 }
