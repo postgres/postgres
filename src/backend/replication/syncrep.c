@@ -166,13 +166,6 @@ SyncRepWaitForLSN(XLogRecPtr XactCommitLSN)
 	{
 		int			syncRepState;
 
-		/*
-		 * Wait on latch for up to 60 seconds. This allows us to check for
-		 * postmaster death regularly while waiting. Note that timeout here
-		 * does not necessarily release from loop.
-		 */
-		WaitLatch(&MyProc->waitLatch, 60000000L);
-
 		/* Must reset the latch before testing state. */
 		ResetLatch(&MyProc->waitLatch);
 
@@ -184,6 +177,12 @@ SyncRepWaitForLSN(XLogRecPtr XactCommitLSN)
 		 * walsender changes the state to SYNC_REP_WAIT_COMPLETE, it will
 		 * never update it again, so we can't be seeing a stale value in that
 		 * case.
+		 *
+		 * Note: on machines with weak memory ordering, the acquisition of
+		 * the lock is essential to avoid race conditions: we cannot be sure
+		 * the sender's state update has reached main memory until we acquire
+		 * the lock.  We could get rid of this dance if SetLatch/ResetLatch
+		 * contained memory barriers.
 		 */
 		syncRepState = MyProc->syncRepState;
 		if (syncRepState == SYNC_REP_WAITING)
@@ -246,6 +245,13 @@ SyncRepWaitForLSN(XLogRecPtr XactCommitLSN)
 			SyncRepCancelWait();
 			break;
 		}
+
+		/*
+		 * Wait on latch for up to 60 seconds. This allows us to check for
+		 * cancel/die signal or postmaster death regularly while waiting. Note
+		 * that timeout here does not necessarily release from loop.
+		 */
+		WaitLatch(&MyProc->waitLatch, 60000000L);
 	}
 
 	/*

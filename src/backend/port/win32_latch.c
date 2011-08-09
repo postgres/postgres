@@ -1,9 +1,10 @@
 /*-------------------------------------------------------------------------
  *
  * win32_latch.c
- *	  Windows implementation of latches.
+ *	  Routines for inter-process latches
  *
- * See unix_latch.c for information on usage.
+ * See unix_latch.c for header comments for the exported functions;
+ * the API presented here is supposed to be the same as there.
  *
  * The Windows implementation uses Windows events that are inherited by
  * all postmaster child processes.
@@ -23,7 +24,6 @@
 #include <unistd.h>
 
 #include "miscadmin.h"
-#include "replication/walsender.h"
 #include "storage/latch.h"
 #include "storage/shmem.h"
 
@@ -88,7 +88,7 @@ WaitLatch(volatile Latch *latch, long timeout)
 }
 
 int
-WaitLatchOrSocket(volatile Latch *latch, SOCKET sock, bool forRead,
+WaitLatchOrSocket(volatile Latch *latch, pgsocket sock, bool forRead,
 				  bool forWrite, long timeout)
 {
 	DWORD		rc;
@@ -97,6 +97,9 @@ WaitLatchOrSocket(volatile Latch *latch, SOCKET sock, bool forRead,
 	HANDLE		sockevent = WSA_INVALID_EVENT;	/* silence compiler */
 	int			numevents;
 	int			result = 0;
+
+	if (latch->owner_pid != MyProcPid)
+		elog(ERROR, "cannot wait on a latch owned by another process");
 
 	latchevent = latch->event;
 
@@ -187,15 +190,10 @@ SetLatch(volatile Latch *latch)
 
 	/*
 	 * See if anyone's waiting for the latch. It can be the current process if
-	 * we're in a signal handler. Use a local variable here in case the latch
-	 * is just disowned between the test and the SetEvent call, and event
-	 * field set to NULL.
+	 * we're in a signal handler.
 	 *
-	 * Fetch handle field only once, in case the owner simultaneously disowns
-	 * the latch and clears handle. This assumes that HANDLE is atomic, which
-	 * isn't guaranteed to be true! In practice, it should be, and in the
-	 * worst case we end up calling SetEvent with a bogus handle, and SetEvent
-	 * will return an error with no harm done.
+	 * Use a local variable here just in case somebody changes the event field
+	 * concurrently (which really should not happen).
 	 */
 	handle = latch->event;
 	if (handle)
@@ -212,5 +210,8 @@ SetLatch(volatile Latch *latch)
 void
 ResetLatch(volatile Latch *latch)
 {
+	/* Only the owner should reset the latch */
+	Assert(latch->owner_pid == MyProcPid);
+
 	latch->is_set = false;
 }

@@ -338,7 +338,7 @@ InitProcess(void)
 	MyProc->waitLSN.xrecoff = 0;
 	MyProc->syncRepState = SYNC_REP_NOT_WAITING;
 	SHMQueueElemInit(&(MyProc->syncRepLinks));
-	OwnLatch((Latch *) &MyProc->waitLatch);
+	OwnLatch(&MyProc->waitLatch);
 
 	/*
 	 * We might be reusing a semaphore that belonged to a failed process. So
