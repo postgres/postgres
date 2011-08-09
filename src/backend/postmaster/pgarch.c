@@ -406,10 +406,11 @@ pgarch_MainLoop(void)
 			timeout = PGARCH_AUTOWAKE_INTERVAL - (curtime - last_copy_time);
 			if (timeout > 0)
 			{
-				int rc;
+				int		rc;
+
 				rc = WaitLatch(&mainloop_latch,
 							   WL_LATCH_SET | WL_TIMEOUT | WL_POSTMASTER_DEATH,
-							   timeout * 1000000L);
+							   timeout * 1000L);
 				if (rc & WL_TIMEOUT)
 					wakened = true;
 			}

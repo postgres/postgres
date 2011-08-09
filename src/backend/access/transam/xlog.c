@@ -10210,7 +10210,9 @@ retry:
 					/*
 					 * Wait for more WAL to arrive, or timeout to be reached
 					 */
-					WaitLatch(&XLogCtl->recoveryWakeupLatch, WL_LATCH_SET | WL_TIMEOUT, 5000000L);
+					WaitLatch(&XLogCtl->recoveryWakeupLatch,
+							  WL_LATCH_SET | WL_TIMEOUT,
+							  5000L);
 					ResetLatch(&XLogCtl->recoveryWakeupLatch);
 				}
 				else

@@ -812,7 +812,7 @@ WalSndLoop(void)
 			if (pq_is_send_pending())
 				wakeEvents |= WL_SOCKET_WRITEABLE;
 			WaitLatchOrSocket(&MyWalSnd->latch, wakeEvents,
-							  MyProcPort->sock, sleeptime * 1000L);
+							  MyProcPort->sock, sleeptime);
 
 			/* Check for replication timeout */
 			if (replication_timeout > 0 &&

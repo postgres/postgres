@@ -251,7 +251,7 @@ SyncRepWaitForLSN(XLogRecPtr XactCommitLSN)
 		 * cancel/die signal or postmaster death regularly while waiting. Note
 		 * that timeout here does not necessarily release from loop.
 		 */
-		WaitLatch(&MyProc->waitLatch, WL_LATCH_SET | WL_TIMEOUT, 60000000L);
+		WaitLatch(&MyProc->waitLatch, WL_LATCH_SET | WL_TIMEOUT, 60000L);
 	}
 
 	/*

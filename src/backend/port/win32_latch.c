@@ -99,7 +99,6 @@ WaitLatchOrSocket(volatile Latch *latch, int wakeEvents, pgsocket sock,
 	int			numevents;
 	int			result = 0;
 	int			pmdeath_eventno = 0;
-	long		timeout_ms;
 
 	/* Ignore WL_SOCKET_* events if no valid socket is given */
 	if (sock == PGINVALID_SOCKET)
@@ -110,14 +109,11 @@ WaitLatchOrSocket(volatile Latch *latch, int wakeEvents, pgsocket sock,
 	if ((wakeEvents & WL_LATCH_SET) && latch->owner_pid != MyProcPid)
 		elog(ERROR, "cannot wait on a latch owned by another process");
 
-	/* Convert timeout to milliseconds for WaitForMultipleObjects() */
+	/* Convert timeout to form used by WaitForMultipleObjects() */
 	if (wakeEvents & WL_TIMEOUT)
-	{
 		Assert(timeout >= 0);
-		timeout_ms = timeout / 1000;
-	}
 	else
-		timeout_ms = INFINITE;
+		timeout = INFINITE;
 
 	/* Construct an array of event handles for WaitforMultipleObjects() */
 	latchevent = latch->event;
@@ -165,7 +161,7 @@ WaitLatchOrSocket(volatile Latch *latch, int wakeEvents, pgsocket sock,
 			break;
 		}
 
-		rc = WaitForMultipleObjects(numevents, events, FALSE, timeout_ms);
+		rc = WaitForMultipleObjects(numevents, events, FALSE, timeout);
 
 		if (rc == WAIT_FAILED)
 			elog(ERROR, "WaitForMultipleObjects() failed: error code %d", (int) GetLastError());

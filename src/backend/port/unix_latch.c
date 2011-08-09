@@ -137,7 +137,7 @@ DisownLatch(volatile Latch *latch)
  * to wait for. If the latch is already set (and WL_LATCH_SET is given), the
  * function returns immediately.
  *
- * The 'timeout' is given in microseconds. It must be >= 0 if WL_TIMEOUT flag
+ * The 'timeout' is given in milliseconds. It must be >= 0 if WL_TIMEOUT flag
  * is given.  On some platforms, signals cause the timeout to be restarted,
  * so beware that the function can sleep for several times longer than the
  * specified timeout.
@@ -156,6 +156,7 @@ DisownLatch(volatile Latch *latch)
  * have been satisfied. That should be rare in practice, but the caller
  * should not use the return value for anything critical, re-checking the
  * situation with PostmasterIsAlive() or read() on a socket as necessary.
+ * The latch and timeout flag bits can be trusted, however.
  */
 int
 WaitLatch(volatile Latch *latch, int wakeEvents, long timeout)
@@ -191,8 +192,8 @@ WaitLatchOrSocket(volatile Latch *latch, int wakeEvents, pgsocket sock,
 	if (wakeEvents & WL_TIMEOUT)
 	{
 		Assert(timeout >= 0);
-		tv.tv_sec = timeout / 1000000L;
-		tv.tv_usec = timeout % 1000000L;
+		tv.tv_sec = timeout / 1000L;
+		tv.tv_usec = (timeout % 1000L) * 1000L;
 		tvp = &tv;
 	}
 
