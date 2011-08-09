@@ -92,7 +92,7 @@ extern int	join_collapse_limit;
 extern void add_base_rels_to_query(PlannerInfo *root, Node *jtnode);
 extern void build_base_rel_tlists(PlannerInfo *root, List *final_tlist);
 extern void add_vars_to_targetlist(PlannerInfo *root, List *vars,
-					   Relids where_needed);
+					   Relids where_needed, bool create_new_ph);
 extern List *deconstruct_jointree(PlannerInfo *root);
 extern void distribute_restrictinfo_to_rels(PlannerInfo *root,
 								RestrictInfo *restrictinfo);
