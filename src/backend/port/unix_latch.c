@@ -134,7 +134,7 @@ DisownLatch(volatile Latch *latch)
  * Wait for given latch to be set or until timeout is exceeded.
  * If the latch is already set, the function returns immediately.
  *
- * The 'timeout' is given in microseconds, and -1 means wait forever.
+ * The 'timeout' is given in milliseconds, and -1 means wait forever.
  * On some platforms, signals cause the timeout to be restarted, so beware
  * that the function can sleep for several times longer than the specified
  * timeout.
@@ -173,8 +173,8 @@ WaitLatchOrSocket(volatile Latch *latch, pgsocket sock, bool forRead,
 	/* Initialize timeout */
 	if (timeout >= 0)
 	{
-		tv.tv_sec = timeout / 1000000L;
-		tv.tv_usec = timeout % 1000000L;
+		tv.tv_sec = timeout / 1000L;
+		tv.tv_usec = (timeout % 1000L) * 1000L;
 		tvp = &tv;
 	}
 

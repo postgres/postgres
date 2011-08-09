@@ -807,7 +807,7 @@ WalSndLoop(void)
 			/* Sleep */
 			WaitLatchOrSocket(&MyWalSnd->latch, MyProcPort->sock,
 							  true, pq_is_send_pending(),
-							  sleeptime * 1000L);
+							  sleeptime);
 
 			/* Check for replication timeout */
 			if (replication_timeout > 0 &&

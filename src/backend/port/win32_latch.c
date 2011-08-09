@@ -137,7 +137,7 @@ WaitLatchOrSocket(volatile Latch *latch, pgsocket sock, bool forRead,
 		}
 
 		rc = WaitForMultipleObjects(numevents, events, FALSE,
-							   (timeout >= 0) ? (timeout / 1000) : INFINITE);
+							   (timeout >= 0) ? timeout : INFINITE);
 		if (rc == WAIT_FAILED)
 			elog(ERROR, "WaitForMultipleObjects() failed: error code %d", (int) GetLastError());
 		else if (rc == WAIT_TIMEOUT)
