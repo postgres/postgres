@@ -371,8 +371,6 @@ allocate_reloption(bits32 kinds, int type, char *name, char *desc)
 	size_t		size;
 	relopt_gen *newoption;
 
-	Assert(type != RELOPT_TYPE_STRING);
-
 	oldcxt = MemoryContextSwitchTo(TopMemoryContext);
 
 	switch (type)
@@ -385,6 +383,9 @@ allocate_reloption(bits32 kinds, int type, char *name, char *desc)
 			break;
 		case RELOPT_TYPE_REAL:
 			size = sizeof(relopt_real);
+			break;
+		case RELOPT_TYPE_STRING:
+			size = sizeof(relopt_string);
 			break;
 		default:
 			elog(ERROR, "unsupported option type");
@@ -474,44 +475,28 @@ void
 add_string_reloption(bits32 kinds, char *name, char *desc, char *default_val,
 					 validate_string_relopt validator)
 {
-	MemoryContext oldcxt;
 	relopt_string *newoption;
-	int			default_len = 0;
 
-	oldcxt = MemoryContextSwitchTo(TopMemoryContext);
+	/* make sure the validator/default combination is sane */
+	if (validator)
+		(validator) (default_val);
 
-	if (default_val)
-		default_len = strlen(default_val);
-
-	newoption = palloc0(sizeof(relopt_string) + default_len);
-
-	newoption->gen.name = pstrdup(name);
-	if (desc)
-		newoption->gen.desc = pstrdup(desc);
-	else
-		newoption->gen.desc = NULL;
-	newoption->gen.kinds = kinds;
-	newoption->gen.namelen = strlen(name);
-	newoption->gen.type = RELOPT_TYPE_STRING;
+	newoption = (relopt_string *) allocate_reloption(kinds, RELOPT_TYPE_STRING,
+													 name, desc);
 	newoption->validate_cb = validator;
 	if (default_val)
 	{
-		strcpy(newoption->default_val, default_val);
-		newoption->default_len = default_len;
+		newoption->default_val = MemoryContextStrdup(TopMemoryContext,
+													 default_val);
+		newoption->default_len = strlen(default_val);
 		newoption->default_isnull = false;
 	}
 	else
 	{
-		newoption->default_val[0] = '\0';
+		newoption->default_val = "";
 		newoption->default_len = 0;
 		newoption->default_isnull = true;
 	}
-
-	/* make sure the validator/default combination is sane */
-	if (newoption->validate_cb)
-		(newoption->validate_cb) (newoption->default_val);
-
-	MemoryContextSwitchTo(oldcxt);
 
 	add_reloption((relopt_gen *) newoption);
 }

@@ -108,7 +108,7 @@ typedef struct relopt_string
 	int			default_len;
 	bool		default_isnull;
 	validate_string_relopt validate_cb;
-	char		default_val[1]; /* variable length, zero-terminated */
+	char	   *default_val;
 } relopt_string;
 
 /* This is the table datatype for fillRelOptions */
