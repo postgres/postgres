@@ -662,7 +662,8 @@ static bool CheckForStandbyTrigger(void);
 static void xlog_outrec(StringInfo buf, XLogRecord *record);
 #endif
 static void pg_start_backup_callback(int code, Datum arg);
-static bool read_backup_label(XLogRecPtr *checkPointLoc);
+static bool read_backup_label(XLogRecPtr *checkPointLoc,
+				  bool *backupEndRequired);
 static void rm_redo_error_callback(void *arg);
 static int	get_sync_bit(int method);
 
@@ -6016,6 +6017,7 @@ StartupXLOG(void)
 	XLogRecord *record;
 	uint32		freespace;
 	TransactionId oldestActiveXID;
+	bool		backupEndRequired = false;
 
 	/*
 	 * Read control file and check XLOG status looks valid.
@@ -6149,7 +6151,7 @@ StartupXLOG(void)
 	if (StandbyMode)
 		OwnLatch(&XLogCtl->recoveryWakeupLatch);
 
-	if (read_backup_label(&checkPointLoc))
+	if (read_backup_label(&checkPointLoc, &backupEndRequired))
 	{
 		/*
 		 * When a backup_label file is present, we want to roll forward from
@@ -6328,7 +6330,10 @@ StartupXLOG(void)
 		 * set backupStartPoint if we're starting recovery from a base backup
 		 */
 		if (haveBackupLabel)
+		{
 			ControlFile->backupStartPoint = checkPoint.redo;
+			ControlFile->backupEndRequired = backupEndRequired;
+		}
 		ControlFile->time = (pg_time_t) time(NULL);
 		/* No need to hold ControlFileLock yet, we aren't up far enough */
 		UpdateControlFile();
@@ -6698,9 +6703,13 @@ StartupXLOG(void)
 		 * crashes while an online backup is in progress. We must not treat
 		 * that as an error, or the database will refuse to start up.
 		 */
-		if (InArchiveRecovery)
+		if (InArchiveRecovery || ControlFile->backupEndRequired)
 		{
-			if (!XLogRecPtrIsInvalid(ControlFile->backupStartPoint))
+			if (ControlFile->backupEndRequired)
+				ereport(FATAL,
+						(errmsg("WAL ends before end of online backup"),
+						 errhint("All WAL generated while online backup was taken must be available at recovery.")));
+			else if (!XLogRecPtrIsInvalid(ControlFile->backupStartPoint))
 				ereport(FATAL,
 						(errmsg("WAL ends before end of online backup"),
 						 errhint("Online backup started with pg_start_backup() must be ended with pg_stop_backup(), and all WAL up to that point must be available at recovery.")));
@@ -8531,6 +8540,7 @@ xlog_redo(XLogRecPtr lsn, XLogRecord *record)
 			if (XLByteLT(ControlFile->minRecoveryPoint, lsn))
 				ControlFile->minRecoveryPoint = lsn;
 			MemSet(&ControlFile->backupStartPoint, 0, sizeof(XLogRecPtr));
+			ControlFile->backupEndRequired = false;
 			UpdateControlFile();
 
 			LWLockRelease(ControlFileLock);
@@ -9013,6 +9023,8 @@ do_pg_start_backup(const char *backupidstr, bool fast, char **labelfile)
 						 startpoint.xlogid, startpoint.xrecoff, xlogfilename);
 		appendStringInfo(&labelfbuf, "CHECKPOINT LOCATION: %X/%X\n",
 						 checkpointloc.xlogid, checkpointloc.xrecoff);
+		appendStringInfo(&labelfbuf, "BACKUP METHOD: %s\n",
+						 exclusive ? "pg_start_backup" : "streamed");
 		appendStringInfo(&labelfbuf, "START TIME: %s\n", strfbuf);
 		appendStringInfo(&labelfbuf, "LABEL: %s\n", backupidstr);
 
@@ -9768,15 +9780,19 @@ pg_xlogfile_name(PG_FUNCTION_ARGS)
  *
  * Returns TRUE if a backup_label was found (and fills the checkpoint
  * location and its REDO location into *checkPointLoc and RedoStartLSN,
- * respectively); returns FALSE if not.
+ * respectively); returns FALSE if not. If this backup_label came from a
+ * streamed backup, *backupEndRequired is set to TRUE.
  */
 static bool
-read_backup_label(XLogRecPtr *checkPointLoc)
+read_backup_label(XLogRecPtr *checkPointLoc, bool *backupEndRequired)
 {
 	char		startxlogfilename[MAXFNAMELEN];
 	TimeLineID	tli;
 	FILE	   *lfp;
 	char		ch;
+	char		backuptype[20];
+
+	*backupEndRequired = false;
 
 	/*
 	 * See if label file is present
@@ -9809,6 +9825,17 @@ read_backup_label(XLogRecPtr *checkPointLoc)
 		ereport(FATAL,
 				(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
 				 errmsg("invalid data in file \"%s\"", BACKUP_LABEL_FILE)));
+	/*
+	 * BACKUP METHOD line is new in 9.0. Don't complain if it doesn't exist,
+	 * in case you're restoring from a backup taken with an 9.0 beta version
+	 * that didn't emit it.
+	 */
+	if (fscanf(lfp, "BACKUP METHOD: %19s", backuptype) == 1)
+	{
+		if (strcmp(backuptype, "streamed") == 0)
+			*backupEndRequired = true;
+	}
+
 	if (ferror(lfp) || FreeFile(lfp))
 		ereport(FATAL,
 				(errcode_for_file_access(),

@@ -21,7 +21,7 @@
 
 
 /* Version identifier for this pg_control format */
-#define PG_CONTROL_VERSION	903
+#define PG_CONTROL_VERSION	911
 
 /*
  * Body of CheckPoint XLOG records.  This is declared here because we keep
@@ -137,9 +137,16 @@ typedef struct ControlFileData
 	 * we use the redo pointer as a cross-check when we see an end-of-backup
 	 * record, to make sure the end-of-backup record corresponds the base
 	 * backup we're recovering from.
+	 *
+	 * If backupEndRequired is true, we know for sure that we're restoring
+	 * from a backup, and must see a backup-end record before we can safely
+	 * start up. If it's false, but backupStartPoint is set, a backup_label
+	 * file was found at startup but it may have been a leftover from a stray
+	 * pg_start_backup() call, not accompanied by pg_stop_backup().
 	 */
 	XLogRecPtr	minRecoveryPoint;
 	XLogRecPtr	backupStartPoint;
+	bool		backupEndRequired;
 
 	/*
 	 * Parameter settings that determine if the WAL can be used for archival
