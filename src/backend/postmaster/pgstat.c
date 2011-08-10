@@ -3754,8 +3754,10 @@ pgstat_read_statsfile_timestamp(bool permanent, TimestampTz *ts)
 static void
 backend_read_statsfile(void)
 {
+	TimestampTz cur_ts;
 	TimestampTz min_ts;
 	int			count;
+	int			last_delay_errno = 0;
 
 	/* already read it? */
 	if (pgStatDBHash)
@@ -3776,12 +3778,11 @@ backend_read_statsfile(void)
 	 * PGSTAT_STAT_INTERVAL; and we don't want to lie to the collector about
 	 * what our cutoff time really is.
 	 */
+	cur_ts = GetCurrentTimestamp();
 	if (IsAutoVacuumWorkerProcess())
-		min_ts = TimestampTzPlusMilliseconds(GetCurrentTimestamp(),
-											 -PGSTAT_RETRY_DELAY);
+		min_ts = TimestampTzPlusMilliseconds(cur_ts, -PGSTAT_RETRY_DELAY);
 	else
-		min_ts = TimestampTzPlusMilliseconds(GetCurrentTimestamp(),
-											 -PGSTAT_STAT_INTERVAL);
+		min_ts = TimestampTzPlusMilliseconds(cur_ts, -PGSTAT_STAT_INTERVAL);
 
 	/*
 	 * Loop until fresh enough stats file is available or we ran out of time.
@@ -3798,9 +3799,29 @@ backend_read_statsfile(void)
 			file_ts >= min_ts)
 			break;
 
+		/* Make debugging printouts once we've waited unreasonably long */
+		if (count >= PGSTAT_POLL_LOOP_COUNT/2)
+		{
+			TimestampTz now_ts = GetCurrentTimestamp();
+
+#ifdef HAVE_INT64_TIMESTAMP
+			elog(WARNING, "pgstat waiting for " INT64_FORMAT " usec (%d loops), file timestamp " INT64_FORMAT " target timestamp " INT64_FORMAT " last errno %d",
+				 now_ts - cur_ts, count,
+				 file_ts, min_ts,
+				 last_delay_errno);
+#else
+			elog(WARNING, "pgstat waiting for %.6f sec (%d loops), file timestamp %.6f target timestamp %.6f last errno %d",
+				 now_ts - cur_ts, count,
+				 file_ts, min_ts,
+				 last_delay_errno);
+#endif
+		}
+
 		/* Not there or too old, so kick the collector and wait a bit */
+		errno = 0;
 		pgstat_send_inquiry(min_ts);
 		pg_usleep(PGSTAT_RETRY_DELAY * 1000L);
+		last_delay_errno = errno;
 	}
 
 	if (count >= PGSTAT_POLL_LOOP_COUNT)
