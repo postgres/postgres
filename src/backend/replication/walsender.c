@@ -1249,18 +1249,26 @@ WalSndRqstFileReload(void)
 static void
 WalSndSigHupHandler(SIGNAL_ARGS)
 {
+	int			save_errno = errno;
+
 	got_SIGHUP = true;
 	if (MyWalSnd)
 		SetLatch(&MyWalSnd->latch);
+
+	errno = save_errno;
 }
 
 /* SIGTERM: set flag to shut down */
 static void
 WalSndShutdownHandler(SIGNAL_ARGS)
 {
+	int			save_errno = errno;
+
 	walsender_shutdown_requested = true;
 	if (MyWalSnd)
 		SetLatch(&MyWalSnd->latch);
+
+	errno = save_errno;
 }
 
 /*
@@ -1299,16 +1307,24 @@ WalSndQuickDieHandler(SIGNAL_ARGS)
 static void
 WalSndXLogSendHandler(SIGNAL_ARGS)
 {
+	int			save_errno = errno;
+
 	latch_sigusr1_handler();
+
+	errno = save_errno;
 }
 
 /* SIGUSR2: set flag to do a last cycle and shut down afterwards */
 static void
 WalSndLastCycleHandler(SIGNAL_ARGS)
 {
+	int			save_errno = errno;
+
 	walsender_ready_to_stop = true;
 	if (MyWalSnd)
 		SetLatch(&MyWalSnd->latch);
+
+	errno = save_errno;
 }
 
 /* Set up signal handlers */

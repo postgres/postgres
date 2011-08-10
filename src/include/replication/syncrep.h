@@ -33,8 +33,8 @@ extern char *SyncRepStandbyNames;
 /* called by user backend */
 extern void SyncRepWaitForLSN(XLogRecPtr XactCommitLSN);
 
-/* callback at backend exit */
-extern void SyncRepCleanupAtProcExit(int code, Datum arg);
+/* called at backend exit */
+extern void SyncRepCleanupAtProcExit(void);
 
 /* called by wal sender */
 extern void SyncRepInitConfig(void);

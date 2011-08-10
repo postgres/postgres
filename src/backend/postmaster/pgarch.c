@@ -288,16 +288,21 @@ pgarch_exit(SIGNAL_ARGS)
 static void
 ArchSigHupHandler(SIGNAL_ARGS)
 {
+	int			save_errno = errno;
+
 	/* set flag to re-read config file at next convenient time */
 	got_SIGHUP = true;
-	/* let the waiting loop iterate */
 	SetLatch(&mainloop_latch);
+
+	errno = save_errno;
 }
 
 /* SIGTERM signal handler for archiver process */
 static void
 ArchSigTermHandler(SIGNAL_ARGS)
 {
+	int			save_errno = errno;
+
 	/*
 	 * The postmaster never sends us SIGTERM, so we assume that this means
 	 * that init is trying to shut down the whole system.  If we hang around
@@ -305,28 +310,35 @@ ArchSigTermHandler(SIGNAL_ARGS)
 	 * archive commands.
 	 */
 	got_SIGTERM = true;
-	/* let the waiting loop iterate */
 	SetLatch(&mainloop_latch);
+
+	errno = save_errno;
 }
 
 /* SIGUSR1 signal handler for archiver process */
 static void
 pgarch_waken(SIGNAL_ARGS)
 {
+	int			save_errno = errno;
+
 	/* set flag that there is work to be done */
 	wakened = true;
-	/* let the waiting loop iterate */
 	SetLatch(&mainloop_latch);
+
+	errno = save_errno;
 }
 
 /* SIGUSR2 signal handler for archiver process */
 static void
 pgarch_waken_stop(SIGNAL_ARGS)
 {
+	int			save_errno = errno;
+
 	/* set flag to do a final cycle and shut down afterwards */
 	ready_to_stop = true;
-	/* let the waiting loop iterate */
 	SetLatch(&mainloop_latch);
+
+	errno = save_errno;
 }
 
 /*

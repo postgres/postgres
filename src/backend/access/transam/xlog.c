@@ -9957,34 +9957,50 @@ startupproc_quickdie(SIGNAL_ARGS)
 static void
 StartupProcSigUsr1Handler(SIGNAL_ARGS)
 {
+	int			save_errno = errno;
+
 	latch_sigusr1_handler();
+
+	errno = save_errno;
 }
 
 /* SIGUSR2: set flag to finish recovery */
 static void
 StartupProcTriggerHandler(SIGNAL_ARGS)
 {
+	int			save_errno = errno;
+
 	promote_triggered = true;
 	WakeupRecovery();
+
+	errno = save_errno;
 }
 
 /* SIGHUP: set flag to re-read config file at next convenient time */
 static void
 StartupProcSigHupHandler(SIGNAL_ARGS)
 {
+	int			save_errno = errno;
+
 	got_SIGHUP = true;
 	WakeupRecovery();
+
+	errno = save_errno;
 }
 
 /* SIGTERM: set flag to abort redo and exit */
 static void
 StartupProcShutdownHandler(SIGNAL_ARGS)
 {
+	int			save_errno = errno;
+
 	if (in_restore_command)
 		proc_exit(1);
 	else
 		shutdown_requested = true;
 	WakeupRecovery();
+
+	errno = save_errno;
 }
 
 /* Handle SIGHUP and SIGTERM signals of startup process */

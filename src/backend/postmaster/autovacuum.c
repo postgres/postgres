@@ -84,6 +84,7 @@
 #include "postmaster/postmaster.h"
 #include "storage/bufmgr.h"
 #include "storage/ipc.h"
+#include "storage/latch.h"
 #include "storage/pmsignal.h"
 #include "storage/proc.h"
 #include "storage/procsignal.h"
@@ -553,11 +554,11 @@ AutoVacLauncherMain(int argc, char *argv[])
 		Dlelem	   *elem;
 
 		/*
-		 * Emergency bailout if postmaster has died.  This is to avoid the
-		 * necessity for manual cleanup of all postmaster children.
+		 * This loop is a bit different from the normal use of WaitLatch,
+		 * because we'd like to sleep before the first launch of a child
+		 * process.  So it's WaitLatch, then ResetLatch, then check for
+		 * wakening conditions.
 		 */
-		if (!PostmasterIsAlive())
-			proc_exit(1);
 
 		launcher_determine_sleep((AutoVacuumShmem->av_freeWorkers != NULL),
 								 false, &nap);
@@ -566,41 +567,23 @@ AutoVacLauncherMain(int argc, char *argv[])
 		EnableCatchupInterrupt();
 
 		/*
-		 * Sleep for a while according to schedule.
-		 *
-		 * On some platforms, signals won't interrupt the sleep.  To ensure we
-		 * respond reasonably promptly when someone signals us, break down the
-		 * sleep into 1-second increments, and check for interrupts after each
-		 * nap.
+		 * Wait until naptime expires or we get some type of signal (all the
+		 * signal handlers will wake us by calling SetLatch).
 		 */
-		while (nap.tv_sec > 0 || nap.tv_usec > 0)
-		{
-			uint32		sleeptime;
+		WaitLatch(&MyProc->procLatch,
+				  WL_LATCH_SET | WL_TIMEOUT | WL_POSTMASTER_DEATH,
+				  (nap.tv_sec * 1000L) + (nap.tv_usec / 1000L));
 
-			if (nap.tv_sec > 0)
-			{
-				sleeptime = 1000000;
-				nap.tv_sec--;
-			}
-			else
-			{
-				sleeptime = nap.tv_usec;
-				nap.tv_usec = 0;
-			}
-			pg_usleep(sleeptime);
-
-			/*
-			 * Emergency bailout if postmaster has died.  This is to avoid the
-			 * necessity for manual cleanup of all postmaster children.
-			 */
-			if (!PostmasterIsAlive())
-				proc_exit(1);
-
-			if (got_SIGTERM || got_SIGHUP || got_SIGUSR2)
-				break;
-		}
+		ResetLatch(&MyProc->procLatch);
 
 		DisableCatchupInterrupt();
+
+		/*
+		 * Emergency bailout if postmaster has died.  This is to avoid the
+		 * necessity for manual cleanup of all postmaster children.
+		 */
+		if (!PostmasterIsAlive())
+			proc_exit(1);
 
 		/* the normal shutdown case */
 		if (got_SIGTERM)
@@ -1321,21 +1304,39 @@ AutoVacWorkerFailed(void)
 static void
 avl_sighup_handler(SIGNAL_ARGS)
 {
+	int			save_errno = errno;
+
 	got_SIGHUP = true;
+	if (MyProc)
+		SetLatch(&MyProc->procLatch);
+
+	errno = save_errno;
 }
 
 /* SIGUSR2: a worker is up and running, or just finished, or failed to fork */
 static void
 avl_sigusr2_handler(SIGNAL_ARGS)
 {
+	int			save_errno = errno;
+
 	got_SIGUSR2 = true;
+	if (MyProc)
+		SetLatch(&MyProc->procLatch);
+
+	errno = save_errno;
 }
 
 /* SIGTERM: time to die */
 static void
 avl_sigterm_handler(SIGNAL_ARGS)
 {
+	int			save_errno = errno;
+
 	got_SIGTERM = true;
+	if (MyProc)
+		SetLatch(&MyProc->procLatch);
+
+	errno = save_errno;
 }
 
 

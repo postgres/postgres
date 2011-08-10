@@ -196,9 +196,11 @@ InitProcGlobal(void)
 	for (i = 0; i < TotalProcs; i++)
 	{
 		/* Common initialization for all PGPROCs, regardless of type. */
+
+		/* Set up per-PGPROC semaphore, latch, and backendLock */
 		PGSemaphoreCreate(&(procs[i].sem));
+		InitSharedLatch(&(procs[i].procLatch));
 		procs[i].backendLock = LWLockAssign();
-		InitSharedLatch(&procs[i].waitLatch);
 
 		/*
 		 * Newly created PGPROCs for normal backends or for autovacuum must
@@ -300,8 +302,8 @@ InitProcess(void)
 		MarkPostmasterChildActive();
 
 	/*
-	 * Initialize all fields of MyProc, except for the semaphore which was
-	 * prepared for us by InitProcGlobal.
+	 * Initialize all fields of MyProc, except for the semaphore and latch,
+	 * which were prepared for us by InitProcGlobal.
 	 */
 	SHMQueueElemInit(&(MyProc->links));
 	MyProc->waitStatus = STATUS_OK;
@@ -327,12 +329,17 @@ InitProcess(void)
 		SHMQueueInit(&(MyProc->myProcLocks[i]));
 	MyProc->recoveryConflictPending = false;
 
-	/* Initialise for sync rep */
+	/* Initialize fields for sync rep */
 	MyProc->waitLSN.xlogid = 0;
 	MyProc->waitLSN.xrecoff = 0;
 	MyProc->syncRepState = SYNC_REP_NOT_WAITING;
 	SHMQueueElemInit(&(MyProc->syncRepLinks));
-	OwnLatch(&MyProc->waitLatch);
+
+	/*
+	 * Acquire ownership of the PGPROC's latch, so that we can use WaitLatch.
+	 * Note that there's no particular need to do ResetLatch here.
+	 */
+	OwnLatch(&MyProc->procLatch);
 
 	/*
 	 * We might be reusing a semaphore that belonged to a failed process. So
@@ -373,7 +380,6 @@ InitProcessPhase2(void)
 	/*
 	 * Arrange to clean that up at backend exit.
 	 */
-	on_shmem_exit(SyncRepCleanupAtProcExit, 0);
 	on_shmem_exit(RemoveProcFromArray, 0);
 }
 
@@ -448,8 +454,8 @@ InitAuxiliaryProcess(void)
 	SpinLockRelease(ProcStructLock);
 
 	/*
-	 * Initialize all fields of MyProc, except for the semaphore which was
-	 * prepared for us by InitProcGlobal.
+	 * Initialize all fields of MyProc, except for the semaphore and latch,
+	 * which were prepared for us by InitProcGlobal.
 	 */
 	SHMQueueElemInit(&(MyProc->links));
 	MyProc->waitStatus = STATUS_OK;
@@ -468,6 +474,12 @@ InitAuxiliaryProcess(void)
 	MyProc->waitProcLock = NULL;
 	for (i = 0; i < NUM_LOCK_PARTITIONS; i++)
 		SHMQueueInit(&(MyProc->myProcLocks[i]));
+
+	/*
+	 * Acquire ownership of the PGPROC's latch, so that we can use WaitLatch.
+	 * Note that there's no particular need to do ResetLatch here.
+	 */
+	OwnLatch(&MyProc->procLatch);
 
 	/*
 	 * We might be reusing a semaphore that belonged to a failed process. So
@@ -671,12 +683,18 @@ ProcKill(int code, Datum arg)
 
 	Assert(MyProc != NULL);
 
+	/* Make sure we're out of the sync rep lists */
+	SyncRepCleanupAtProcExit();
+
 	/*
 	 * Release any LW locks I am holding.  There really shouldn't be any, but
 	 * it's cheap to check again before we cut the knees off the LWLock
 	 * facility by releasing our PGPROC ...
 	 */
 	LWLockReleaseAll();
+
+	/* Release ownership of the process's latch, too */
+	DisownLatch(&MyProc->procLatch);
 
 	SpinLockAcquire(ProcStructLock);
 
@@ -732,6 +750,9 @@ AuxiliaryProcKill(int code, Datum arg)
 
 	/* Release any LW locks I am holding (see notes above) */
 	LWLockReleaseAll();
+
+	/* Release ownership of the process's latch, too */
+	DisownLatch(&MyProc->procLatch);
 
 	SpinLockAcquire(ProcStructLock);
 
@@ -1609,6 +1630,10 @@ void
 handle_sig_alarm(SIGNAL_ARGS)
 {
 	int			save_errno = errno;
+
+	/* SIGALRM is cause for waking anything waiting on the process latch */
+	if (MyProc)
+		SetLatch(&MyProc->procLatch);
 
 	if (deadlock_timeout_active)
 	{
