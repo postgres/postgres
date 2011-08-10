@@ -135,9 +135,12 @@ DisownLatch(volatile Latch *latch)
  * If the latch is already set, the function returns immediately.
  *
  * The 'timeout' is given in milliseconds, and -1 means wait forever.
- * On some platforms, signals cause the timeout to be restarted, so beware
- * that the function can sleep for several times longer than the specified
- * timeout.
+ * On some platforms, signals do not interrupt the wait, or even
+ * cause the timeout to be restarted, so beware that the function can sleep
+ * for several times longer than the requested timeout.  However, this
+ * difficulty is not so great as it seems, because the signal handlers for any
+ * signals that the caller should respond to ought to be programmed to end the
+ * wait by calling SetLatch.  Ideally, the timeout parameter is vestigial.
  *
  * The latch must be owned by the current process, ie. it must be a
  * backend-local latch initialized with InitLatch, or a shared latch
@@ -228,6 +231,7 @@ WaitLatchOrSocket(volatile Latch *latch, pgsocket sock, bool forRead,
 		{
 			if (errno == EINTR)
 				continue;
+			waiting = false;
 			ereport(ERROR,
 					(errcode_for_socket_access(),
 					 errmsg("select() failed: %m")));
@@ -255,6 +259,10 @@ WaitLatchOrSocket(volatile Latch *latch, pgsocket sock, bool forRead,
  * Sets a latch and wakes up anyone waiting on it.
  *
  * This is cheap if the latch is already set, otherwise not so much.
+ *
+ * NB: when calling this in a signal handler, be sure to save and restore
+ * errno around it.  (That's standard practice in most signal handlers, of
+ * course, but we used to omit it in handlers that only set a flag.)
  */
 void
 SetLatch(volatile Latch *latch)
@@ -300,7 +308,10 @@ SetLatch(volatile Latch *latch)
 	if (owner_pid == 0)
 		return;
 	else if (owner_pid == MyProcPid)
-		sendSelfPipeByte();
+	{
+		if (waiting)
+			sendSelfPipeByte();
+	}
 	else
 		kill(owner_pid, SIGUSR1);
 }
@@ -332,7 +343,11 @@ ResetLatch(volatile Latch *latch)
  * SetLatch uses SIGUSR1 to wake up the process waiting on the latch.
  *
  * Wake up WaitLatch, if we're waiting.  (We might not be, since SIGUSR1 is
- * overloaded for multiple purposes.)
+ * overloaded for multiple purposes; or we might not have reached WaitLatch
+ * yet, in which case we don't need to fill the pipe either.)
+ *
+ * NB: when calling this in a signal handler, be sure to save and restore
+ * errno around it.
  */
 void
 latch_sigusr1_handler(void)
@@ -396,13 +411,19 @@ retry:
 	}
 }
 
-/* Read all available data from the self-pipe */
+/*
+ * Read all available data from the self-pipe
+ *
+ * Note: this is only called when waiting = true.  If it fails and doesn't
+ * return, it must reset that flag first (though ideally, this will never
+ * happen).
+ */
 static void
 drainSelfPipe(void)
 {
 	/*
 	 * There shouldn't normally be more than one byte in the pipe, or maybe a
-	 * few more if multiple processes run SetLatch at the same instant.
+	 * few bytes if multiple processes run SetLatch at the same instant.
 	 */
 	char		buf[16];
 	int			rc;
@@ -417,9 +438,21 @@ drainSelfPipe(void)
 			else if (errno == EINTR)
 				continue;		/* retry */
 			else
+			{
+				waiting = false;
 				elog(ERROR, "read() on self-pipe failed: %m");
+			}
 		}
 		else if (rc == 0)
+		{
+			waiting = false;
 			elog(ERROR, "unexpected EOF on self-pipe");
+		}
+		else if (rc < sizeof(buf))
+		{
+			/* we successfully drained the pipe; no need to read() again */
+			break;
+		}
+		/* else buffer wasn't big enough, so read again */
 	}
 }

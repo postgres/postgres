@@ -373,11 +373,15 @@ WalRcvSigHupHandler(SIGNAL_ARGS)
 static void
 WalRcvShutdownHandler(SIGNAL_ARGS)
 {
+	int			save_errno = errno;
+
 	got_SIGTERM = true;
 
 	/* Don't joggle the elbow of proc_exit */
 	if (!proc_exit_inprogress && WalRcvImmediateInterruptOK)
 		ProcessWalRcvInterrupts();
+
+	errno = save_errno;
 }
 
 /*
