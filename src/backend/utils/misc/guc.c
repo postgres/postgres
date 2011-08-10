@@ -1998,17 +1998,6 @@ static struct config_int ConfigureNamesInt[] =
 	},
 
 	{
-		{"wal_sender_delay", PGC_SIGHUP, REPLICATION_SENDING,
-			gettext_noop("WAL sender sleep time between WAL replications."),
-			NULL,
-			GUC_UNIT_MS
-		},
-		&WalSndDelay,
-		1000, 1, 10000,
-		NULL, NULL, NULL
-	},
-
-	{
 		{"replication_timeout", PGC_SIGHUP, REPLICATION_SENDING,
 			gettext_noop("Sets the maximum time to wait for WAL replication."),
 			NULL,
