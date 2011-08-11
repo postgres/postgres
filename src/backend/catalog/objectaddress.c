@@ -463,6 +463,11 @@ get_object_address_relobject(ObjectType objtype, List *objname, Relation *relp)
 		address.classId = RewriteRelationId;
 		address.objectId = get_rewrite_oid_without_relid(depname, &reloid);
 		address.objectSubId = 0;
+
+		/*
+		 * Caller is expecting to get back the relation, even though we
+		 * didn't end up using it to find the rule.
+		 */
 		relation = heap_open(reloid, AccessShareLock);
 	}
 	else
