@@ -498,6 +498,12 @@ get_object_address_relobject(ObjectType objtype, List *objname,
 		address.objectId =
 			get_rewrite_oid_without_relid(depname, &reloid, missing_ok);
 		address.objectSubId = 0;
+
+		/*
+		 * Caller is expecting to get back the relation, even though we
+		 * didn't end up using it to find the rule.
+		 */
+		relation = heap_open(reloid, AccessShareLock);
 	}
 	else
 	{
