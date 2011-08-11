@@ -15,13 +15,93 @@
    <title>Overview</title>
 
    <para>
-    This release of
-    <productname>PostgreSQL</> adds numerous major features, including:
+    This release shows <productname>PostgreSQL</> moving beyond the
+    traditional relational feature set with new, ground-breaking
+    functionality that is unique to <productname>PostgreSQL</>.
+    Additionally, this release improves streaming replication by adding
+    a synchronous option and monitoring improvements.  Major enhancements
+    include:
    </para>
 
-   <para>
-    (summary to be added)
-   </para>
+   <itemizedlist>
+
+    <!-- This list duplicates items below, but without authors or details-->
+
+    <listitem>
+     <para>
+      Support unlogged tables using the <link
+      linkend="SQL-CREATETABLE-description"><literal>UNLOGGED</></link>
+      option in <link linkend="SQL-CREATETABLE"><command>CREATE
+      TABLE</></link>
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Allow <link linkend="synchronous-replication">synchronous
+      replication</link>
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Add support for <link linkend="SQL-CREATEFOREIGNTABLE">foreign
+      tables</link>
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Add per-column <link
+      linkend="collation">collation</link> support
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Add a <link linkend="SQL-SECURITY-LABEL"><command>SECURITY
+      LABEL</></link> command
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Add a true <link
+      linkend="xact-serializable">serializable</link> isolation
+      level
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Allow data-modification commands
+      (<command>INSERT</>/<command>UPDATE</>/<command>DELETE)</> in
+      <link linkend="queries-with"><literal>WITH</></link> clauses
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Add nearest-neighbor (order-by-operator) searching to <link
+      linkend="GiST"><acronym>GiST</> indexes</link>
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Add <link linkend="extend-extensions">extensions</link> which
+      simplify packaging of additions to <productname>PostgreSQL</>
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Update the <link linkend="plpython">PL/Python</link> server-side
+      language
+     </para>
+    </listitem>
+
+   </itemizedlist>
 
    <para>
     The above items are explained in more detail in the sections below.
