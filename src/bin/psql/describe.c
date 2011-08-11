@@ -1367,7 +1367,7 @@ describeOneTableDetails(const char *schemaname,
 		headers[cols++] = gettext_noop("Definition");
 
 	if (tableinfo.relkind == 'f' && pset.sversion >= 90200)
-		headers[cols++] = gettext_noop("Options");
+		headers[cols++] = gettext_noop("FDW Options");
 
 	if (verbose)
 	{
@@ -2033,9 +2033,12 @@ describeOneTableDetails(const char *schemaname,
 		/* print foreign server name */
 		if (tableinfo.relkind == 'f')
 		{
+			char *ftoptions;
+
 			/* Footer information about foreign table */
 			printfPQExpBuffer(&buf,
-							  "SELECT s.srvname\n"
+							  "SELECT s.srvname,\n"
+							  "       f.ftoptions\n"
 							  "FROM pg_catalog.pg_foreign_table f,\n"
 							  "     pg_catalog.pg_foreign_server s\n"
 							  "WHERE f.ftrelid = %s AND s.oid = f.ftserver;",
@@ -2049,9 +2052,18 @@ describeOneTableDetails(const char *schemaname,
 				goto error_return;
 			}
 
+			/* Print server name */
 			printfPQExpBuffer(&buf, "Server: %s",
 							  PQgetvalue(result, 0, 0));
 			printTableAddFooter(&cont, buf.data);
+
+			/* Print per-table FDW options, if any */
+			ftoptions = PQgetvalue(result, 0, 1);
+			if (ftoptions && ftoptions[0] != '\0')
+			{
+				printfPQExpBuffer(&buf, "FDW Options: %s", ftoptions);
+				printTableAddFooter(&cont, buf.data);
+			}
 			PQclear(result);
 		}
 
@@ -3668,7 +3680,7 @@ listForeignDataWrappers(const char *pattern, bool verbose)
 		printACLColumn(&buf, "fdwacl");
 		appendPQExpBuffer(&buf,
 						  ",\n  fdwoptions AS \"%s\"",
-						  gettext_noop("Options"));
+						  gettext_noop("FDW Options"));
 
 		if (pset.sversion >= 90100)
 			appendPQExpBuffer(&buf,
@@ -3744,7 +3756,7 @@ listForeignServers(const char *pattern, bool verbose)
 						  "  d.description AS \"%s\"",
 						  gettext_noop("Type"),
 						  gettext_noop("Version"),
-						  gettext_noop("Options"),
+						  gettext_noop("FDW Options"),
 						  gettext_noop("Description"));
 	}
 
@@ -3807,7 +3819,7 @@ listUserMappings(const char *pattern, bool verbose)
 	if (verbose)
 		appendPQExpBuffer(&buf,
 						  ",\n  um.umoptions AS \"%s\"",
-						  gettext_noop("Options"));
+						  gettext_noop("FDW Options"));
 
 	appendPQExpBuffer(&buf, "\nFROM pg_catalog.pg_user_mappings um\n");
 
@@ -3863,7 +3875,7 @@ listForeignTables(const char *pattern, bool verbose)
 		appendPQExpBuffer(&buf,
 						  ",\n  ft.ftoptions AS \"%s\",\n"
 						  "  d.description AS \"%s\"",
-						  gettext_noop("Options"),
+						  gettext_noop("FDW Options"),
 						  gettext_noop("Description"));
 
 	appendPQExpBuffer(&buf,
