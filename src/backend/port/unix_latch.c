@@ -14,6 +14,9 @@
  * however reliably interrupts the sleep, and causes select() to return
  * immediately even if the signal arrives before select() begins.
  *
+ * (Actually, we prefer poll() over select() where available, but the
+ * same comments apply to it.)
+ *
  * When SetLatch is called from the same process that owns the latch,
  * SetLatch writes the byte directly to the pipe. If it's owned by another
  * process, SIGUSR1 is sent and the signal handler in the waiting process
@@ -34,6 +37,12 @@
 #include <unistd.h>
 #include <sys/time.h>
 #include <sys/types.h>
+#ifdef HAVE_POLL_H
+#include <poll.h>
+#endif
+#ifdef HAVE_SYS_POLL_H
+#include <sys/poll.h>
+#endif
 #ifdef HAVE_SYS_SELECT_H
 #include <sys/select.h>
 #endif
@@ -175,12 +184,18 @@ int
 WaitLatchOrSocket(volatile Latch *latch, int wakeEvents, pgsocket sock,
 				  long timeout)
 {
+	int			result = 0;
+	int			rc;
+#ifdef HAVE_POLL
+	struct pollfd pfds[3];
+	int			nfds;
+#else
 	struct timeval tv,
 			   *tvp = NULL;
 	fd_set		input_mask;
 	fd_set		output_mask;
-	int			rc;
-	int			result = 0;
+	int			hifd;
+#endif
 
 	/* Ignore WL_SOCKET_* events if no valid socket is given */
 	if (sock == PGINVALID_SOCKET)
@@ -195,21 +210,29 @@ WaitLatchOrSocket(volatile Latch *latch, int wakeEvents, pgsocket sock,
 	if (wakeEvents & WL_TIMEOUT)
 	{
 		Assert(timeout >= 0);
+#ifndef HAVE_POLL
 		tv.tv_sec = timeout / 1000L;
 		tv.tv_usec = (timeout % 1000L) * 1000L;
 		tvp = &tv;
+#endif
+	}
+	else
+	{
+#ifdef HAVE_POLL
+		/* make sure poll() agrees there is no timeout */
+		timeout = -1;
+#endif
 	}
 
 	waiting = true;
 	do
 	{
-		int			hifd;
-
 		/*
 		 * Clear the pipe, then check if the latch is set already. If someone
-		 * sets the latch between this and the select() below, the setter will
-		 * write a byte to the pipe (or signal us and the signal handler will
-		 * do that), and the select() will return immediately.
+		 * sets the latch between this and the poll()/select() below, the
+		 * setter will write a byte to the pipe (or signal us and the signal
+		 * handler will do that), and the poll()/select() will return
+		 * immediately.
 		 *
 		 * Note: we assume that the kernel calls involved in drainSelfPipe()
 		 * and SetLatch() will provide adequate synchronization on machines
@@ -228,7 +251,73 @@ WaitLatchOrSocket(volatile Latch *latch, int wakeEvents, pgsocket sock,
 			break;
 		}
 
-		/* Must wait ... set up the event masks for select() */
+		/* Must wait ... we use poll(2) if available, otherwise select(2) */
+#ifdef HAVE_POLL
+		nfds = 0;
+		if (wakeEvents & (WL_SOCKET_READABLE | WL_SOCKET_WRITEABLE))
+		{
+			/* socket, if used, is always in pfds[0] */
+			pfds[0].fd = sock;
+			pfds[0].events = 0;
+			if (wakeEvents & WL_SOCKET_READABLE)
+				pfds[0].events |= POLLIN;
+			if (wakeEvents & WL_SOCKET_WRITEABLE)
+				pfds[0].events |= POLLOUT;
+			pfds[0].revents = 0;
+			nfds++;
+		}
+
+		pfds[nfds].fd = selfpipe_readfd;
+		pfds[nfds].events = POLLIN;
+		pfds[nfds].revents = 0;
+		nfds++;
+
+		if (wakeEvents & WL_POSTMASTER_DEATH)
+		{
+			/* postmaster fd, if used, is always in pfds[nfds - 1] */
+			pfds[nfds].fd = postmaster_alive_fds[POSTMASTER_FD_WATCH];
+			pfds[nfds].events = POLLIN;
+			pfds[nfds].revents = 0;
+			nfds++;
+		}
+
+		/* Sleep */
+		rc = poll(pfds, nfds, (int) timeout);
+
+		/* Check return code */
+		if (rc < 0)
+		{
+			if (errno == EINTR)
+				continue;
+			waiting = false;
+			ereport(ERROR,
+					(errcode_for_socket_access(),
+					 errmsg("poll() failed: %m")));
+		}
+		if (rc == 0 && (wakeEvents & WL_TIMEOUT))
+		{
+			/* timeout exceeded */
+			result |= WL_TIMEOUT;
+		}
+		if ((wakeEvents & WL_SOCKET_READABLE) &&
+			(pfds[0].revents & POLLIN))
+		{
+			/* data available in socket */
+			result |= WL_SOCKET_READABLE;
+		}
+		if ((wakeEvents & WL_SOCKET_WRITEABLE) &&
+			(pfds[0].revents & POLLOUT))
+		{
+			result |= WL_SOCKET_WRITEABLE;
+		}
+		if ((wakeEvents & WL_POSTMASTER_DEATH) &&
+			(pfds[nfds - 1].revents & POLLIN))
+		{
+			result |= WL_POSTMASTER_DEATH;
+		}
+
+#else /* !HAVE_POLL */
+
 		FD_ZERO(&input_mask);
 		FD_ZERO(&output_mask);
 
@@ -288,6 +377,7 @@ WaitLatchOrSocket(volatile Latch *latch, int wakeEvents, pgsocket sock,
 		{
 			result |= WL_POSTMASTER_DEATH;
 		}
+#endif /* HAVE_POLL */
 	} while (result == 0);
 	waiting = false;
 
