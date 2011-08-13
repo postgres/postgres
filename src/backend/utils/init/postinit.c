@@ -582,6 +582,8 @@ InitPostgres(const char *in_dbname, Oid dboid, const char *username,
 	 */
 	if (!bootstrap)
 	{
+		/* statement_timestamp must be set for timeouts to work correctly */
+		SetCurrentStatementStartTimestamp();
 		StartTransactionCommand();
 		(void) GetTransactionSnapshot();
 	}
