@@ -173,7 +173,7 @@ CustomizableInitialize(void)
 	 */
 	if (stat(archiveLocation, &stat_buf) != 0)
 	{
-		fprintf(stderr, "%s: archiveLocation \"%s\" does not exist\n", progname, archiveLocation);
+		fprintf(stderr, "%s: archive location \"%s\" does not exist\n", progname, archiveLocation);
 		fflush(stderr);
 		exit(2);
 	}
@@ -283,12 +283,12 @@ CustomizableCleanupPriorWALFiles(void)
 #endif
 
 					if (debug)
-						fprintf(stderr, "\nremoving \"%s\"", WALFilePath);
+						fprintf(stderr, "\nremoving file \"%s\"", WALFilePath);
 
 					rc = unlink(WALFilePath);
 					if (rc != 0)
 					{
-						fprintf(stderr, "\n%s: ERROR failed to remove \"%s\": %s",
+						fprintf(stderr, "\n%s: ERROR: could not remove file \"%s\": %s\n",
 								progname, WALFilePath, strerror(errno));
 						break;
 					}
@@ -298,7 +298,8 @@ CustomizableCleanupPriorWALFiles(void)
 				fprintf(stderr, "\n");
 		}
 		else
-			fprintf(stderr, "%s: archiveLocation \"%s\" open error\n", progname, archiveLocation);
+			fprintf(stderr, "%s: could not open archive location \"%s\": %s\n",
+					progname, archiveLocation, strerror(errno));
 
 		closedir(xldir);
 		fflush(stderr);
@@ -693,7 +694,7 @@ main(int argc, char **argv)
 	}
 	else
 	{
-		fprintf(stderr, "%s: use %%f to specify nextWALFileName\n", progname);
+		fprintf(stderr, "%s: must specify WAL file name as second non-option argument (use \"%%f\")\n", progname);
 		fprintf(stderr, "Try \"%s --help\" for more information.\n", progname);
 		exit(2);
 	}
@@ -705,7 +706,7 @@ main(int argc, char **argv)
 	}
 	else
 	{
-		fprintf(stderr, "%s: use %%p to specify xlogFilePath\n", progname);
+		fprintf(stderr, "%s: must specify xlog destination as third non-option argument (use \"%%p\")\n", progname);
 		fprintf(stderr, "Try \"%s --help\" for more information.\n", progname);
 		exit(2);
 	}
