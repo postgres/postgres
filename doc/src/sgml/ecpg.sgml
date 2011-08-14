@@ -9429,7 +9429,7 @@ risnull(CINTTYPE, (char *) &i);
       <listitem>
        <para>
         Functions return this value if a parsing routine is passed extra
-        characters is cannot parse.  Internally it is defined as -1264 (the
+        characters it cannot parse.  Internally it is defined as -1264 (the
         <productname>Informix</productname> definition).
        </para>
       </listitem>
