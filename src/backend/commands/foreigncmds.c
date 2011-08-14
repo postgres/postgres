@@ -202,6 +202,8 @@ AlterForeignDataWrapperOwner(const char *name, Oid newOwnerId)
 	Oid			fdwId;
 	Form_pg_foreign_data_wrapper form;
 
+	rel = heap_open(ForeignDataWrapperRelationId, RowExclusiveLock);
+
 	/* Must be a superuser to change a FDW owner */
 	if (!superuser())
 		ereport(ERROR,
@@ -217,8 +219,6 @@ AlterForeignDataWrapperOwner(const char *name, Oid newOwnerId)
 				 errmsg("permission denied to change owner of foreign-data wrapper \"%s\"",
 						name),
 		errhint("The owner of a foreign-data wrapper must be a superuser.")));
-
-	rel = heap_open(ForeignDataWrapperRelationId, RowExclusiveLock);
 
 	tup = SearchSysCacheCopy1(FOREIGNDATAWRAPPERNAME, CStringGetDatum(name));
 
@@ -340,6 +340,8 @@ CreateForeignDataWrapper(CreateFdwStmt *stmt)
 	Datum		fdwoptions;
 	Oid			ownerId;
 
+	rel = heap_open(ForeignDataWrapperRelationId, RowExclusiveLock);
+
 	/* Must be super user */
 	if (!superuser())
 		ereport(ERROR,
@@ -363,8 +365,6 @@ CreateForeignDataWrapper(CreateFdwStmt *stmt)
 	/*
 	 * Insert tuple into pg_foreign_data_wrapper.
 	 */
-	rel = heap_open(ForeignDataWrapperRelationId, RowExclusiveLock);
-
 	memset(values, 0, sizeof(values));
 	memset(nulls, false, sizeof(nulls));
 
@@ -434,6 +434,8 @@ AlterForeignDataWrapper(AlterFdwStmt *stmt)
 	bool		isnull;
 	Datum		datum;
 	Oid			fdwvalidator;
+
+	rel = heap_open(ForeignDataWrapperRelationId, RowExclusiveLock);
 
 	/* Must be super user */
 	if (!superuser())
@@ -513,9 +515,6 @@ AlterForeignDataWrapper(AlterFdwStmt *stmt)
 	}
 
 	/* Everything looks good - update the tuple */
-
-	rel = heap_open(ForeignDataWrapperRelationId, RowExclusiveLock);
-
 	tp = heap_modify_tuple(tp, RelationGetDescr(rel),
 						   repl_val, repl_null, repl_repl);
 
@@ -613,6 +612,8 @@ CreateForeignServer(CreateForeignServerStmt *stmt)
 	ObjectAddress referenced;
 	ForeignDataWrapper *fdw;
 
+	rel = heap_open(ForeignServerRelationId, RowExclusiveLock);
+
 	/* For now the owner cannot be specified on create. Use effective user ID. */
 	ownerId = GetUserId();
 
@@ -638,8 +639,6 @@ CreateForeignServer(CreateForeignServerStmt *stmt)
 	/*
 	 * Insert tuple into pg_foreign_server.
 	 */
-	rel = heap_open(ForeignServerRelationId, RowExclusiveLock);
-
 	memset(values, 0, sizeof(values));
 	memset(nulls, false, sizeof(nulls));
 
@@ -714,6 +713,8 @@ AlterForeignServer(AlterForeignServerStmt *stmt)
 	Oid			srvId;
 	Form_pg_foreign_server srvForm;
 
+	rel = heap_open(ForeignServerRelationId, RowExclusiveLock);
+
 	tp = SearchSysCacheCopy1(FOREIGNSERVERNAME,
 							 CStringGetDatum(stmt->servername));
 
@@ -779,9 +780,6 @@ AlterForeignServer(AlterForeignServerStmt *stmt)
 	}
 
 	/* Everything looks good - update the tuple */
-
-	rel = heap_open(ForeignServerRelationId, RowExclusiveLock);
-
 	tp = heap_modify_tuple(tp, RelationGetDescr(rel),
 						   repl_val, repl_null, repl_repl);
 
@@ -901,6 +899,8 @@ CreateUserMapping(CreateUserMappingStmt *stmt)
 	ForeignServer *srv;
 	ForeignDataWrapper *fdw;
 
+	rel = heap_open(UserMappingRelationId, RowExclusiveLock);
+
 	useId = GetUserOidFromMapping(stmt->username, false);
 
 	/* Check that the server exists. */
@@ -926,8 +926,6 @@ CreateUserMapping(CreateUserMappingStmt *stmt)
 	/*
 	 * Insert tuple into pg_user_mapping.
 	 */
-	rel = heap_open(UserMappingRelationId, RowExclusiveLock);
-
 	memset(values, 0, sizeof(values));
 	memset(nulls, false, sizeof(nulls));
 
@@ -986,6 +984,8 @@ AlterUserMapping(AlterUserMappingStmt *stmt)
 	Oid			umId;
 	ForeignServer *srv;
 
+	rel = heap_open(UserMappingRelationId, RowExclusiveLock);
+
 	useId = GetUserOidFromMapping(stmt->username, false);
 	srv = GetForeignServerByName(stmt->servername, false);
 
@@ -1043,9 +1043,6 @@ AlterUserMapping(AlterUserMappingStmt *stmt)
 	}
 
 	/* Everything looks good - update the tuple */
-
-	rel = heap_open(UserMappingRelationId, RowExclusiveLock);
-
 	tp = heap_modify_tuple(tp, RelationGetDescr(rel),
 						   repl_val, repl_null, repl_repl);
 
