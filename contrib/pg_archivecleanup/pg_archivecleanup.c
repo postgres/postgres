@@ -83,7 +83,7 @@ Initialize(void)
 	if (stat(archiveLocation, &stat_buf) != 0 ||
 		!S_ISDIR(stat_buf.st_mode))
 	{
-		fprintf(stderr, "%s: archiveLocation \"%s\" does not exist\n",
+		fprintf(stderr, "%s: archive location \"%s\" does not exist\n",
 				progname, archiveLocation);
 		exit(2);
 	}
@@ -135,7 +135,7 @@ CleanupPriorWALFiles(void)
 		closedir(xldir);
 	}
 	else
-		fprintf(stderr, "%s: could not open archiveLocation \"%s\": %s\n",
+		fprintf(stderr, "%s: could not open archive location \"%s\": %s\n",
 				progname, archiveLocation, strerror(errno));
 }
 
