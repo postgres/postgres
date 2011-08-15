@@ -3776,7 +3776,7 @@ CheckForSerializableConflictOut(bool visible, Relation relation,
 		ereport(ERROR,
 				(errcode(ERRCODE_T_R_SERIALIZATION_FAILURE),
 				 errmsg("could not serialize access due to read/write dependencies among transactions"),
-				 errdetail_internal("Canceled on identification as a pivot, during conflict out checking."),
+				 errdetail_internal("Reason code: Canceled on identification as a pivot, during conflict out checking."),
 				 errhint("The transaction might succeed if retried.")));
 	}
 
@@ -3865,7 +3865,7 @@ CheckForSerializableConflictOut(bool visible, Relation relation,
 				ereport(ERROR,
 						(errcode(ERRCODE_T_R_SERIALIZATION_FAILURE),
 						 errmsg("could not serialize access due to read/write dependencies among transactions"),
-						 errdetail_internal("Canceled on conflict out to old pivot %u.", xid),
+						 errdetail_internal("Reason code: Canceled on conflict out to old pivot %u.", xid),
 					  errhint("The transaction might succeed if retried.")));
 
 			if (SxactHasSummaryConflictIn(MySerializableXact)
@@ -3873,7 +3873,7 @@ CheckForSerializableConflictOut(bool visible, Relation relation,
 				ereport(ERROR,
 						(errcode(ERRCODE_T_R_SERIALIZATION_FAILURE),
 						 errmsg("could not serialize access due to read/write dependencies among transactions"),
-						 errdetail_internal("Canceled on identification as a pivot, with conflict out to old committed transaction %u.", xid),
+						 errdetail_internal("Reason code: Canceled on identification as a pivot, with conflict out to old committed transaction %u.", xid),
 					  errhint("The transaction might succeed if retried.")));
 
 			MySerializableXact->flags |= SXACT_FLAG_SUMMARY_CONFLICT_OUT;
@@ -3912,7 +3912,7 @@ CheckForSerializableConflictOut(bool visible, Relation relation,
 			ereport(ERROR,
 					(errcode(ERRCODE_T_R_SERIALIZATION_FAILURE),
 					 errmsg("could not serialize access due to read/write dependencies among transactions"),
-				errdetail_internal("Canceled on conflict out to old pivot."),
+				errdetail_internal("Reason code: Canceled on conflict out to old pivot."),
 					 errhint("The transaction might succeed if retried.")));
 		}
 	}
@@ -4151,7 +4151,7 @@ CheckForSerializableConflictIn(Relation relation, HeapTuple tuple,
 		ereport(ERROR,
 				(errcode(ERRCODE_T_R_SERIALIZATION_FAILURE),
 				 errmsg("could not serialize access due to read/write dependencies among transactions"),
-				 errdetail_internal("Canceled on identification as a pivot, during conflict in checking."),
+				 errdetail_internal("Reason code: Canceled on identification as a pivot, during conflict in checking."),
 				 errhint("The transaction might succeed if retried.")));
 
 	/*
@@ -4489,7 +4489,7 @@ OnConflict_CheckForSerializationFailure(const SERIALIZABLEXACT *reader,
 			ereport(ERROR,
 					(errcode(ERRCODE_T_R_SERIALIZATION_FAILURE),
 					 errmsg("could not serialize access due to read/write dependencies among transactions"),
-					 errdetail_internal("Canceled on identification as a pivot, during write."),
+					 errdetail_internal("Reason code: Canceled on identification as a pivot, during write."),
 					 errhint("The transaction might succeed if retried.")));
 		}
 		else if (SxactIsPrepared(writer))
@@ -4501,7 +4501,7 @@ OnConflict_CheckForSerializationFailure(const SERIALIZABLEXACT *reader,
 			ereport(ERROR,
 					(errcode(ERRCODE_T_R_SERIALIZATION_FAILURE),
 					 errmsg("could not serialize access due to read/write dependencies among transactions"),
-					 errdetail_internal("Canceled on conflict out to pivot %u, during read.", writer->topXid),
+					 errdetail_internal("Reason code: Canceled on conflict out to pivot %u, during read.", writer->topXid),
 					 errhint("The transaction might succeed if retried.")));
 		}
 		writer->flags |= SXACT_FLAG_DOOMED;
@@ -4543,7 +4543,7 @@ PreCommit_CheckForSerializationFailure(void)
 		ereport(ERROR,
 				(errcode(ERRCODE_T_R_SERIALIZATION_FAILURE),
 				 errmsg("could not serialize access due to read/write dependencies among transactions"),
-				 errdetail_internal("Canceled on identification as a pivot, during commit attempt."),
+				 errdetail_internal("Reason code: Canceled on identification as a pivot, during commit attempt."),
 				 errhint("The transaction might succeed if retried.")));
 	}
 
@@ -4581,7 +4581,7 @@ PreCommit_CheckForSerializationFailure(void)
 						ereport(ERROR,
 								(errcode(ERRCODE_T_R_SERIALIZATION_FAILURE),
 								 errmsg("could not serialize access due to read/write dependencies among transactions"),
-								 errdetail_internal("Canceled on commit attempt with conflict in from prepared pivot."),
+								 errdetail_internal("Reason code: Canceled on commit attempt with conflict in from prepared pivot."),
 								 errhint("The transaction might succeed if retried.")));
 					}
 					nearConflict->sxactOut->flags |= SXACT_FLAG_DOOMED;
