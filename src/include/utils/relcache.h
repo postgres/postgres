@@ -84,7 +84,8 @@ extern void RelationCacheMarkNewRelfilenode(Relation rel);
  * Routines to help manage rebuilding of relcache init file
  */
 extern bool RelationIdIsInInitFile(Oid relationId);
-extern void RelationCacheInitFileInvalidate(bool beforeSend);
+extern void RelationCacheInitFilePreInvalidate(void);
+extern void RelationCacheInitFilePostInvalidate(void);
 extern void RelationCacheInitFileRemove(const char *dbPath);
 
 /* should be used only by relcache.c and catcache.c */
