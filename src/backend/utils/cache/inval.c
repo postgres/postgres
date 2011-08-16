@@ -795,10 +795,10 @@ inval_twophase_postcommit(TransactionId xid, uint16 info,
 			SendSharedInvalidMessage(msg);
 			break;
 		case TWOPHASE_INFO_FILE_BEFORE:
-			RelationCacheInitFileInvalidate(true);
+			RelationCacheInitFilePreInvalidate();
 			break;
 		case TWOPHASE_INFO_FILE_AFTER:
-			RelationCacheInitFileInvalidate(false);
+			RelationCacheInitFilePostInvalidate();
 			break;
 		default:
 			Assert(false);
@@ -845,7 +845,7 @@ AtEOXact_Inval(bool isCommit)
 		 * unless we committed.
 		 */
 		if (transInvalInfo->RelcacheInitFileInval)
-			RelationCacheInitFileInvalidate(true);
+			RelationCacheInitFilePreInvalidate();
 
 		AppendInvalidationMessages(&transInvalInfo->PriorCmdInvalidMsgs,
 								   &transInvalInfo->CurrentCmdInvalidMsgs);
@@ -854,7 +854,7 @@ AtEOXact_Inval(bool isCommit)
 									SendSharedInvalidMessage);
 
 		if (transInvalInfo->RelcacheInitFileInval)
-			RelationCacheInitFileInvalidate(false);
+			RelationCacheInitFilePostInvalidate();
 	}
 	else if (transInvalInfo != NULL)
 	{
