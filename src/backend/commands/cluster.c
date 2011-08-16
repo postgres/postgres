@@ -797,6 +797,10 @@ copy_heap_data(Oid OIDNewHeap, Oid OIDOldHeap, Oid OIDOldIndex,
 		 * When doing swap by content, any toast pointers written into NewHeap
 		 * must use the old toast table's OID, because that's where the toast
 		 * data will eventually be found.  Set this up by setting rd_toastoid.
+		 * This also tells tuptoaster.c to preserve the toast value OIDs,
+		 * which we want so as not to invalidate toast pointers in system
+		 * catalog caches.
+		 *
 		 * Note that we must hold NewHeap open until we are done writing data,
 		 * since the relcache will not guarantee to remember this setting once
 		 * the relation is closed.	Also, this technique depends on the fact
