@@ -435,21 +435,14 @@ CatCacheRemoveCList(CatCache *cache, CatCList *cl)
  *	target tuple that has to be invalidated has a different TID than it
  *	did when the event was created.  So now we just compare hash values and
  *	accept the small risk of unnecessary invalidations due to false matches.
- *	(The ItemPointer argument is therefore useless and should get removed.)
  *
  *	This routine is only quasi-public: it should only be used by inval.c.
  */
 void
-CatalogCacheIdInvalidate(int cacheId,
-						 uint32 hashValue,
-						 ItemPointer pointer)
+CatalogCacheIdInvalidate(int cacheId, uint32 hashValue)
 {
 	CatCache   *ccp;
 
-	/*
-	 * sanity checks
-	 */
-	Assert(ItemPointerIsValid(pointer));
 	CACHE1_elog(DEBUG2, "CatalogCacheIdInvalidate: called");
 
 	/*
@@ -699,7 +692,7 @@ CatalogCacheFlushCatalog(Oid catId)
 			ResetCatalogCache(cache);
 
 			/* Tell inval.c to call syscache callbacks for this cache */
-			CallSyscacheCallbacks(cache->id, NULL);
+			CallSyscacheCallbacks(cache->id, 0);
 		}
 	}
 
@@ -1708,10 +1701,15 @@ build_dummy_tuple(CatCache *cache, int nkeys, ScanKey skeys)
  *	The lists of tuples that need to be flushed are kept by inval.c.  This
  *	routine is a helper routine for inval.c.  Given a tuple belonging to
  *	the specified relation, find all catcaches it could be in, compute the
- *	correct hash value for each such catcache, and call the specified function
- *	to record the cache id, hash value, and tuple ItemPointer in inval.c's
- *	lists.	CatalogCacheIdInvalidate will be called later, if appropriate,
+ *	correct hash value for each such catcache, and call the specified
+ *	function to record the cache id and hash value in inval.c's lists.
+ *	CatalogCacheIdInvalidate will be called later, if appropriate,
  *	using the recorded information.
+ *
+ *	For an insert or delete, tuple is the target tuple and newtuple is NULL.
+ *	For an update, we are called just once, with tuple being the old tuple
+ *	version and newtuple the new version.  We should make two list entries
+ *	if the tuple's hash value changed, but only one if it didn't.
  *
  *	Note that it is irrelevant whether the given tuple is actually loaded
  *	into the catcache at the moment.  Even if it's not there now, it might
@@ -1727,7 +1725,8 @@ build_dummy_tuple(CatCache *cache, int nkeys, ScanKey skeys)
 void
 PrepareToInvalidateCacheTuple(Relation relation,
 							  HeapTuple tuple,
-							void (*function) (int, uint32, ItemPointer, Oid))
+							  HeapTuple newtuple,
+							  void (*function) (int, uint32, Oid))
 {
 	CatCache   *ccp;
 	Oid			reloid;
@@ -1747,13 +1746,16 @@ PrepareToInvalidateCacheTuple(Relation relation,
 	/* ----------------
 	 *	for each cache
 	 *	   if the cache contains tuples from the specified relation
-	 *		   compute the tuple's hash value in this cache,
+	 *		   compute the tuple's hash value(s) in this cache,
 	 *		   and call the passed function to register the information.
 	 * ----------------
 	 */
 
 	for (ccp = CacheHdr->ch_caches; ccp; ccp = ccp->cc_next)
 	{
+		uint32		hashvalue;
+		Oid			dbid;
+
 		if (ccp->cc_reloid != reloid)
 			continue;
 
@@ -1761,10 +1763,20 @@ PrepareToInvalidateCacheTuple(Relation relation,
 		if (ccp->cc_tupdesc == NULL)
 			CatalogCacheInitializeCache(ccp);
 
-		(*function) (ccp->id,
-					 CatalogCacheComputeTupleHashValue(ccp, tuple),
-					 &tuple->t_self,
-					 ccp->cc_relisshared ? (Oid) 0 : MyDatabaseId);
+		hashvalue = CatalogCacheComputeTupleHashValue(ccp, tuple);
+		dbid = ccp->cc_relisshared ? (Oid) 0 : MyDatabaseId;
+
+		(*function) (ccp->id, hashvalue, dbid);
+
+		if (newtuple)
+		{
+			uint32		newhashvalue;
+
+			newhashvalue = CatalogCacheComputeTupleHashValue(ccp, newtuple);
+
+			if (newhashvalue != hashvalue)
+				(*function) (ccp->id, newhashvalue, dbid);
+		}
 	}
 }
 

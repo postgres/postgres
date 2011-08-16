@@ -14,7 +14,6 @@
 #ifndef SINVAL_H
 #define SINVAL_H
 
-#include "storage/itemptr.h"
 #include "storage/relfilenode.h"
 
 
@@ -32,22 +31,17 @@
  *
  * Catcache inval events are initially driven by detecting tuple inserts,
  * updates and deletions in system catalogs (see CacheInvalidateHeapTuple).
- * An update generates two inval events, one for the old tuple and one for
- * the new --- this is needed to get rid of both positive entries for the
- * old tuple, and negative cache entries associated with the new tuple's
- * cache key.  (This could perhaps be optimized down to one event when the
- * cache key is not changing, but for now we don't bother to try.)  Note that
- * the inval events themselves don't actually say whether the tuple is being
- * inserted or deleted.
+ * An update can generate two inval events, one for the old tuple and one for
+ * the new, but this is reduced to one event if the tuple's hash key doesn't
+ * change.  Note that the inval events themselves don't actually say whether
+ * the tuple is being inserted or deleted.  Also, since we transmit only a
+ * hash key, there is a small risk of unnecessary invalidations due to chance
+ * matches of hash keys.
  *
  * Note that some system catalogs have multiple caches on them (with different
  * indexes).  On detecting a tuple invalidation in such a catalog, separate
- * catcache inval messages must be generated for each of its caches.  The
- * catcache inval messages carry the hash value for the target tuple, so
- * that the catcache only needs to search one hash chain not all its chains,
- * and so that negative cache entries can be recognized with good accuracy.
- * (Of course this assumes that all the backends are using identical hashing
- * code, but that should be OK.)
+ * catcache inval messages must be generated for each of its caches, since
+ * the hash keys will generally be different.
  *
  * Catcache and relcache invalidations are transactional, and so are sent
  * to other backends upon commit.  Internally to the generating backend,
@@ -62,9 +56,7 @@
 
 typedef struct
 {
-	/* note: field layout chosen with an eye to alignment concerns */
 	int8		id;				/* cache ID --- must be first */
-	ItemPointerData tuplePtr;	/* tuple identifier in cached relation */
 	Oid			dbId;			/* database ID, or 0 if a shared relation */
 	uint32		hashValue;		/* hash value of key for this catcache */
 } SharedInvalCatcacheMsg;
@@ -91,6 +83,7 @@ typedef struct
 
 typedef struct
 {
+	/* note: field layout chosen to pack into 16 bytes */
 	int8		id;				/* type field --- must be first */
 	int8		backend_hi;		/* high bits of backend ID, if temprel */
 	uint16		backend_lo;		/* low bits of backend ID, if temprel */

@@ -2028,7 +2028,7 @@ heap_insert(Relation relation, HeapTuple tup, CommandId cid,
 	 * the heaptup data structure is all in local memory, not in the shared
 	 * buffer.
 	 */
-	CacheInvalidateHeapTuple(relation, heaptup);
+	CacheInvalidateHeapTuple(relation, heaptup, NULL);
 
 	pgstat_count_heap_insert(relation);
 
@@ -2354,7 +2354,7 @@ l1:
 	 * boundary. We have to do this before releasing the buffer because we
 	 * need to look at the contents of the tuple.
 	 */
-	CacheInvalidateHeapTuple(relation, &tp);
+	CacheInvalidateHeapTuple(relation, &tp, NULL);
 
 	/* Now we can release the buffer */
 	ReleaseBuffer(buffer);
@@ -2930,10 +2930,13 @@ l2:
 
 	/*
 	 * Mark old tuple for invalidation from system caches at next command
-	 * boundary. We have to do this before releasing the buffer because we
-	 * need to look at the contents of the tuple.
+	 * boundary, and mark the new tuple for invalidation in case we abort.
+	 * We have to do this before releasing the buffer because oldtup is in
+	 * the buffer.  (heaptup is all in local memory, but it's necessary to
+	 * process both tuple versions in one call to inval.c so we can avoid
+	 * redundant sinval messages.)
 	 */
-	CacheInvalidateHeapTuple(relation, &oldtup);
+	CacheInvalidateHeapTuple(relation, &oldtup, heaptup);
 
 	/* Now we can release the buffer(s) */
 	if (newbuf != buffer)
@@ -2943,14 +2946,6 @@ l2:
 		ReleaseBuffer(vmbuffer_new);
 	if (BufferIsValid(vmbuffer))
 		ReleaseBuffer(vmbuffer);
-
-	/*
-	 * If new tuple is cachable, mark it for invalidation from the caches in
-	 * case we abort.  Note it is OK to do this after releasing the buffer,
-	 * because the heaptup data structure is all in local memory, not in the
-	 * shared buffer.
-	 */
-	CacheInvalidateHeapTuple(relation, heaptup);
 
 	/*
 	 * Release the lmgr tuple lock, if we had it.
@@ -3659,9 +3654,14 @@ heap_inplace_update(Relation relation, HeapTuple tuple)
 
 	UnlockReleaseBuffer(buffer);
 
-	/* Send out shared cache inval if necessary */
+	/*
+	 * Send out shared cache inval if necessary.  Note that because we only
+	 * pass the new version of the tuple, this mustn't be used for any
+	 * operations that could change catcache lookup keys.  But we aren't
+	 * bothering with index updates either, so that's true a fortiori.
+	 */
 	if (!IsBootstrapProcessingMode())
-		CacheInvalidateHeapTuple(relation, tuple);
+		CacheInvalidateHeapTuple(relation, tuple, NULL);
 }
 
 

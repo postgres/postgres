@@ -17,7 +17,6 @@
 #include "access/sdir.h"
 #include "nodes/bitmapset.h"
 #include "nodes/primnodes.h"
-#include "storage/itemptr.h"
 
 
 /* ----------------------------------------------------------------
@@ -793,13 +792,13 @@ typedef struct PlanRowMark
  * relations are recorded as a simple list of OIDs, and everything else
  * is represented as a list of PlanInvalItems.	A PlanInvalItem is designed
  * to be used with the syscache invalidation mechanism, so it identifies a
- * system catalog entry by cache ID and tuple TID.
+ * system catalog entry by cache ID and hash value.
  */
 typedef struct PlanInvalItem
 {
 	NodeTag		type;
 	int			cacheId;		/* a syscache ID, see utils/syscache.h */
-	ItemPointerData tupleId;	/* TID of the object's catalog tuple */
+	uint32		hashValue;		/* hash value of object's cache lookup key */
 } PlanInvalItem;
 
 #endif   /* PLANNODES_H */

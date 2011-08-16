@@ -71,8 +71,8 @@ static void ScanQueryForLocks(Query *parsetree, bool acquire);
 static bool ScanQueryWalker(Node *node, bool *acquire);
 static bool plan_list_is_transient(List *stmt_list);
 static void PlanCacheRelCallback(Datum arg, Oid relid);
-static void PlanCacheFuncCallback(Datum arg, int cacheid, ItemPointer tuplePtr);
-static void PlanCacheSysCallback(Datum arg, int cacheid, ItemPointer tuplePtr);
+static void PlanCacheFuncCallback(Datum arg, int cacheid, uint32 hashvalue);
+static void PlanCacheSysCallback(Datum arg, int cacheid, uint32 hashvalue);
 
 
 /*
@@ -1029,14 +1029,14 @@ PlanCacheRelCallback(Datum arg, Oid relid)
  * PlanCacheFuncCallback
  *		Syscache inval callback function for PROCOID cache
  *
- * Invalidate all plans mentioning the given catalog entry, or all plans
- * mentioning any member of this cache if tuplePtr == NULL.
+ * Invalidate all plans mentioning the object with the specified hash value,
+ * or all plans mentioning any member of this cache if hashvalue == 0.
  *
  * Note that the coding would support use for multiple caches, but right
  * now only user-defined functions are tracked this way.
  */
 static void
-PlanCacheFuncCallback(Datum arg, int cacheid, ItemPointer tuplePtr)
+PlanCacheFuncCallback(Datum arg, int cacheid, uint32 hashvalue)
 {
 	ListCell   *lc1;
 
@@ -1060,8 +1060,8 @@ PlanCacheFuncCallback(Datum arg, int cacheid, ItemPointer tuplePtr)
 
 			if (item->cacheId != cacheid)
 				continue;
-			if (tuplePtr == NULL ||
-				ItemPointerEquals(tuplePtr, &item->tupleId))
+			if (hashvalue == 0 ||
+				item->hashValue == hashvalue)
 			{
 				/* Invalidate the plan! */
 				plan->dead = true;
@@ -1086,8 +1086,8 @@ PlanCacheFuncCallback(Datum arg, int cacheid, ItemPointer tuplePtr)
 
 					if (item->cacheId != cacheid)
 						continue;
-					if (tuplePtr == NULL ||
-						ItemPointerEquals(tuplePtr, &item->tupleId))
+					if (hashvalue == 0 ||
+						item->hashValue == hashvalue)
 					{
 						/* Invalidate the plan! */
 						plan->dead = true;
@@ -1108,7 +1108,7 @@ PlanCacheFuncCallback(Datum arg, int cacheid, ItemPointer tuplePtr)
  * Just invalidate everything...
  */
 static void
-PlanCacheSysCallback(Datum arg, int cacheid, ItemPointer tuplePtr)
+PlanCacheSysCallback(Datum arg, int cacheid, uint32 hashvalue)
 {
 	ResetPlanCache();
 }

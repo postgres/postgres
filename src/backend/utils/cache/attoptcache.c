@@ -53,7 +53,7 @@ typedef struct
  * query execution), this seems OK.
  */
 static void
-InvalidateAttoptCacheCallback(Datum arg, int cacheid, ItemPointer tuplePtr)
+InvalidateAttoptCacheCallback(Datum arg, int cacheid, uint32 hashvalue)
 {
 	HASH_SEQ_STATUS status;
 	AttoptCacheEntry *attopt;

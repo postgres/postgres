@@ -15,6 +15,7 @@
  */
 #include "postgres.h"
 
+#include "access/hash.h"
 #include "access/transam.h"
 #include "catalog/pg_type.h"
 #include "nodes/makefuncs.h"
@@ -1751,25 +1752,21 @@ record_plan_function_dependency(PlannerGlobal *glob, Oid funcid)
 	 */
 	if (funcid >= (Oid) FirstBootstrapObjectId)
 	{
-		HeapTuple	func_tuple;
-		PlanInvalItem *inval_item;
-
-		func_tuple = SearchSysCache1(PROCOID, ObjectIdGetDatum(funcid));
-		if (!HeapTupleIsValid(func_tuple))
-			elog(ERROR, "cache lookup failed for function %u", funcid);
-
-		inval_item = makeNode(PlanInvalItem);
+		PlanInvalItem *inval_item = makeNode(PlanInvalItem);
 
 		/*
-		 * It would work to use any syscache on pg_proc, but plancache.c
-		 * expects us to use PROCOID.
+		 * It would work to use any syscache on pg_proc, but the easiest is
+		 * PROCOID since we already have the function's OID at hand.  Note
+		 * that plancache.c knows we use PROCOID.  Also, we're perhaps
+		 * assuming more than we should about how CatalogCacheComputeHashValue
+		 * computes hash values...
 		 */
 		inval_item->cacheId = PROCOID;
-		inval_item->tupleId = func_tuple->t_self;
+		inval_item->hashValue =
+			DatumGetUInt32(DirectFunctionCall1(hashoid,
+											   ObjectIdGetDatum(funcid)));
 
 		glob->invalItems = lappend(glob->invalItems, inval_item);
-
-		ReleaseSysCache(func_tuple);
 	}
 }
 

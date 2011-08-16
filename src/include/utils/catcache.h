@@ -181,11 +181,11 @@ extern void ReleaseCatCacheList(CatCList *list);
 
 extern void ResetCatalogCaches(void);
 extern void CatalogCacheFlushCatalog(Oid catId);
-extern void CatalogCacheIdInvalidate(int cacheId, uint32 hashValue,
-						 ItemPointer pointer);
+extern void CatalogCacheIdInvalidate(int cacheId, uint32 hashValue);
 extern void PrepareToInvalidateCacheTuple(Relation relation,
 							  HeapTuple tuple,
-						   void (*function) (int, uint32, ItemPointer, Oid));
+							  HeapTuple newtuple,
+							  void (*function) (int, uint32, Oid));
 
 extern void PrintCatCacheLeakWarning(HeapTuple tuple);
 extern void PrintCatCacheListLeakWarning(CatCList *list);

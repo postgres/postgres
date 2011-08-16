@@ -19,7 +19,7 @@
 #include "utils/relcache.h"
 
 
-typedef void (*SyscacheCallbackFunction) (Datum arg, int cacheid, ItemPointer tuplePtr);
+typedef void (*SyscacheCallbackFunction) (Datum arg, int cacheid, uint32 hashvalue);
 typedef void (*RelcacheCallbackFunction) (Datum arg, Oid relid);
 
 
@@ -39,7 +39,9 @@ extern void PostPrepare_Inval(void);
 
 extern void CommandEndInvalidationMessages(void);
 
-extern void CacheInvalidateHeapTuple(Relation relation, HeapTuple tuple);
+extern void CacheInvalidateHeapTuple(Relation relation,
+						 HeapTuple tuple,
+						 HeapTuple newtuple);
 
 extern void CacheInvalidateCatalog(Oid catalogId);
 
@@ -60,7 +62,7 @@ extern void CacheRegisterSyscacheCallback(int cacheid,
 extern void CacheRegisterRelcacheCallback(RelcacheCallbackFunction func,
 							  Datum arg);
 
-extern void CallSyscacheCallbacks(int cacheid, ItemPointer tuplePtr);
+extern void CallSyscacheCallbacks(int cacheid, uint32 hashvalue);
 
 extern void inval_twophase_postcommit(TransactionId xid, uint16 info,
 						  void *recdata, uint32 len);
