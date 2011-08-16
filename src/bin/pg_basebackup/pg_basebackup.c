@@ -59,7 +59,7 @@ static char *xstrdup(const char *s);
 static void *xmalloc0(int size);
 static void usage(void);
 static void verify_dir_is_empty_or_create(char *dirname);
-static void progress_report(int tablespacenum, char *fn);
+static void progress_report(int tablespacenum, const char *filename);
 static PGconn *GetConnection(void);
 
 static void ReceiveTarFile(PGconn *conn, PGresult *res, int rownum);
@@ -201,7 +201,7 @@ verify_dir_is_empty_or_create(char *dirname)
  * is enabled, also print the current file name.
  */
 static void
-progress_report(int tablespacenum, char *fn)
+progress_report(int tablespacenum, const char *filename)
 {
 	int			percent = (int) ((totaldone / 1024) * 100 / totalsize);
 
@@ -210,7 +210,7 @@ progress_report(int tablespacenum, char *fn)
 
 	if (verbose)
 	{
-		if (!fn)
+		if (!filename)
 
 			/*
 			 * No filename given, so clear the status line (used for last
@@ -225,7 +225,7 @@ progress_report(int tablespacenum, char *fn)
 					INT64_FORMAT "/" INT64_FORMAT " kB (%i%%) %i/%i tablespaces (%-30.30s)\r",
 					totaldone / 1024, totalsize,
 					percent,
-					tablespacenum, tablespacecount, fn);
+					tablespacenum, tablespacecount, filename);
 	}
 	else
 		fprintf(stderr, INT64_FORMAT "/" INT64_FORMAT " kB (%i%%) %i/%i tablespaces\r",
@@ -248,7 +248,7 @@ progress_report(int tablespacenum, char *fn)
 static void
 ReceiveTarFile(PGconn *conn, PGresult *res, int rownum)
 {
-	char		fn[MAXPGPATH];
+	char		filename[MAXPGPATH];
 	char	   *copybuf = NULL;
 	FILE	   *tarfile = NULL;
 
@@ -283,8 +283,8 @@ ReceiveTarFile(PGconn *conn, PGresult *res, int rownum)
 #ifdef HAVE_LIBZ
 			if (compresslevel != 0)
 			{
-				snprintf(fn, sizeof(fn), "%s/base.tar.gz", basedir);
-				ztarfile = gzopen(fn, "wb");
+				snprintf(filename, sizeof(filename), "%s/base.tar.gz", basedir);
+				ztarfile = gzopen(filename, "wb");
 				if (gzsetparams(ztarfile, compresslevel, Z_DEFAULT_STRATEGY) != Z_OK)
 				{
 					fprintf(stderr, _("%s: could not set compression level %i: %s\n"),
@@ -295,8 +295,8 @@ ReceiveTarFile(PGconn *conn, PGresult *res, int rownum)
 			else
 #endif
 			{
-				snprintf(fn, sizeof(fn), "%s/base.tar", basedir);
-				tarfile = fopen(fn, "wb");
+				snprintf(filename, sizeof(filename), "%s/base.tar", basedir);
+				tarfile = fopen(filename, "wb");
 			}
 		}
 	else
@@ -307,8 +307,8 @@ ReceiveTarFile(PGconn *conn, PGresult *res, int rownum)
 #ifdef HAVE_LIBZ
 		if (compresslevel != 0)
 		{
-			snprintf(fn, sizeof(fn), "%s/%s.tar.gz", basedir, PQgetvalue(res, rownum, 0));
-			ztarfile = gzopen(fn, "wb");
+			snprintf(filename, sizeof(filename), "%s/%s.tar.gz", basedir, PQgetvalue(res, rownum, 0));
+			ztarfile = gzopen(filename, "wb");
 			if (gzsetparams(ztarfile, compresslevel, Z_DEFAULT_STRATEGY) != Z_OK)
 			{
 				fprintf(stderr, _("%s: could not set compression level %i: %s\n"),
@@ -319,8 +319,8 @@ ReceiveTarFile(PGconn *conn, PGresult *res, int rownum)
 		else
 #endif
 		{
-			snprintf(fn, sizeof(fn), "%s/%s.tar", basedir, PQgetvalue(res, rownum, 0));
-			tarfile = fopen(fn, "wb");
+			snprintf(filename, sizeof(filename), "%s/%s.tar", basedir, PQgetvalue(res, rownum, 0));
+			tarfile = fopen(filename, "wb");
 		}
 	}
 
@@ -331,7 +331,7 @@ ReceiveTarFile(PGconn *conn, PGresult *res, int rownum)
 		{
 			/* Compression is in use */
 			fprintf(stderr, _("%s: could not create compressed file \"%s\": %s\n"),
-					progname, fn, get_gz_error(ztarfile));
+					progname, filename, get_gz_error(ztarfile));
 			disconnect_and_exit(1);
 		}
 	}
@@ -342,7 +342,7 @@ ReceiveTarFile(PGconn *conn, PGresult *res, int rownum)
 		if (!tarfile)
 		{
 			fprintf(stderr, _("%s: could not create file \"%s\": %s\n"),
-					progname, fn, strerror(errno));
+					progname, filename, strerror(errno));
 			disconnect_and_exit(1);
 		}
 	}
@@ -386,7 +386,7 @@ ReceiveTarFile(PGconn *conn, PGresult *res, int rownum)
 				if (gzwrite(ztarfile, zerobuf, sizeof(zerobuf)) != sizeof(zerobuf))
 				{
 					fprintf(stderr, _("%s: could not write to compressed file \"%s\": %s\n"),
-							progname, fn, get_gz_error(ztarfile));
+							progname, filename, get_gz_error(ztarfile));
 				}
 			}
 			else
@@ -395,7 +395,7 @@ ReceiveTarFile(PGconn *conn, PGresult *res, int rownum)
 				if (fwrite(zerobuf, sizeof(zerobuf), 1, tarfile) != 1)
 				{
 					fprintf(stderr, _("%s: could not write to file \"%s\": %s\n"),
-							progname, fn, strerror(errno));
+							progname, filename, strerror(errno));
 					disconnect_and_exit(1);
 				}
 			}
@@ -432,7 +432,7 @@ ReceiveTarFile(PGconn *conn, PGresult *res, int rownum)
 			if (gzwrite(ztarfile, copybuf, r) != r)
 			{
 				fprintf(stderr, _("%s: could not write to compressed file \"%s\": %s\n"),
-						progname, fn, get_gz_error(ztarfile));
+						progname, filename, get_gz_error(ztarfile));
 			}
 		}
 		else
@@ -441,13 +441,13 @@ ReceiveTarFile(PGconn *conn, PGresult *res, int rownum)
 			if (fwrite(copybuf, r, 1, tarfile) != 1)
 			{
 				fprintf(stderr, _("%s: could not write to file \"%s\": %s\n"),
-						progname, fn, strerror(errno));
+						progname, filename, strerror(errno));
 				disconnect_and_exit(1);
 			}
 		}
 		totaldone += r;
 		if (showprogress)
-			progress_report(rownum, fn);
+			progress_report(rownum, filename);
 	}							/* while (1) */
 
 	if (copybuf != NULL)
@@ -468,7 +468,7 @@ static void
 ReceiveAndUnpackTarFile(PGconn *conn, PGresult *res, int rownum)
 {
 	char		current_path[MAXPGPATH];
-	char		fn[MAXPGPATH];
+	char		filename[MAXPGPATH];
 	int			current_len_left;
 	int			current_padding = 0;
 	char	   *copybuf = NULL;
@@ -563,8 +563,8 @@ ReceiveAndUnpackTarFile(PGconn *conn, PGresult *res, int rownum)
 			/*
 			 * First part of header is zero terminated filename
 			 */
-			snprintf(fn, sizeof(fn), "%s/%s", current_path, copybuf);
-			if (fn[strlen(fn) - 1] == '/')
+			snprintf(filename, sizeof(filename), "%s/%s", current_path, copybuf);
+			if (filename[strlen(filename) - 1] == '/')
 			{
 				/*
 				 * Ends in a slash means directory or symlink to directory
@@ -574,18 +574,18 @@ ReceiveAndUnpackTarFile(PGconn *conn, PGresult *res, int rownum)
 					/*
 					 * Directory
 					 */
-					fn[strlen(fn) - 1] = '\0';	/* Remove trailing slash */
-					if (mkdir(fn, S_IRWXU) != 0)
+					filename[strlen(filename) - 1] = '\0';	/* Remove trailing slash */
+					if (mkdir(filename, S_IRWXU) != 0)
 					{
 						fprintf(stderr,
 							_("%s: could not create directory \"%s\": %s\n"),
-								progname, fn, strerror(errno));
+								progname, filename, strerror(errno));
 						disconnect_and_exit(1);
 					}
 #ifndef WIN32
-					if (chmod(fn, (mode_t) filemode))
+					if (chmod(filename, (mode_t) filemode))
 						fprintf(stderr, _("%s: could not set permissions on directory \"%s\": %s\n"),
-								progname, fn, strerror(errno));
+								progname, filename, strerror(errno));
 #endif
 				}
 				else if (copybuf[156] == '2')
@@ -593,12 +593,12 @@ ReceiveAndUnpackTarFile(PGconn *conn, PGresult *res, int rownum)
 					/*
 					 * Symbolic link
 					 */
-					fn[strlen(fn) - 1] = '\0';	/* Remove trailing slash */
-					if (symlink(&copybuf[157], fn) != 0)
+					filename[strlen(filename) - 1] = '\0';	/* Remove trailing slash */
+					if (symlink(&copybuf[157], filename) != 0)
 					{
 						fprintf(stderr,
 								_("%s: could not create symbolic link from \"%s\" to \"%s\": %s\n"),
-								progname, fn, &copybuf[157], strerror(errno));
+								progname, filename, &copybuf[157], strerror(errno));
 						disconnect_and_exit(1);
 					}
 				}
@@ -614,18 +614,18 @@ ReceiveAndUnpackTarFile(PGconn *conn, PGresult *res, int rownum)
 			/*
 			 * regular file
 			 */
-			file = fopen(fn, "wb");
+			file = fopen(filename, "wb");
 			if (!file)
 			{
 				fprintf(stderr, _("%s: could not create file \"%s\": %s\n"),
-						progname, fn, strerror(errno));
+						progname, filename, strerror(errno));
 				disconnect_and_exit(1);
 			}
 
 #ifndef WIN32
-			if (chmod(fn, (mode_t) filemode))
+			if (chmod(filename, (mode_t) filemode))
 				fprintf(stderr, _("%s: could not set permissions on file \"%s\": %s\n"),
-						progname, fn, strerror(errno));
+						progname, filename, strerror(errno));
 #endif
 
 			if (current_len_left == 0)
@@ -658,12 +658,12 @@ ReceiveAndUnpackTarFile(PGconn *conn, PGresult *res, int rownum)
 			if (fwrite(copybuf, r, 1, file) != 1)
 			{
 				fprintf(stderr, _("%s: could not write to file \"%s\": %s\n"),
-						progname, fn, strerror(errno));
+						progname, filename, strerror(errno));
 				disconnect_and_exit(1);
 			}
 			totaldone += r;
 			if (showprogress)
-				progress_report(rownum, fn);
+				progress_report(rownum, filename);
 
 			current_len_left -= r;
 			if (current_len_left == 0 && current_padding == 0)
