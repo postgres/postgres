@@ -204,9 +204,19 @@ static void
 progress_report(int tablespacenum, const char *filename)
 {
 	int			percent = (int) ((totaldone / 1024) * 100 / totalsize);
+	char		totaldone_str[32];
+	char		totalsize_str[32];
 
 	if (percent > 100)
 		percent = 100;
+
+	/*
+	 * Separate step to keep platform-dependent format code out of translatable
+	 * strings.  And we only test for INT64_FORMAT availability in snprintf,
+	 * not fprintf.
+	 */
+	snprintf(totaldone_str, sizeof(totaldone_str), INT64_FORMAT, totaldone / 1024);
+	snprintf(totalsize_str, sizeof(totalsize_str), INT64_FORMAT, totalsize);
 
 	if (verbose)
 	{
@@ -217,21 +227,23 @@ progress_report(int tablespacenum, const char *filename)
 			 * call)
 			 */
 			fprintf(stderr,
-					INT64_FORMAT "/" INT64_FORMAT " kB (100%%) %d/%d tablespaces %35s\r",
-					totaldone / 1024, totalsize,
-					tablespacenum, tablespacecount, "");
+					ngettext("%s/%s kB (100%%), %d/%d tablespace %35s\r",
+							 "%s/%s kB (100%%), %d/%d tablespaces %35s\r",
+							 tablespacecount),
+					totaldone_str, totalsize_str, tablespacenum, tablespacecount, "");
 		else
 			fprintf(stderr,
-					INT64_FORMAT "/" INT64_FORMAT " kB (%d%%) %d/%d tablespaces (%-30.30s)\r",
-					totaldone / 1024, totalsize,
-					percent,
-					tablespacenum, tablespacecount, filename);
+					ngettext("%s/%s kB (%d%%), %d/%d tablespace (%-30.30s)\r",
+							 "%s/%s kB (%d%%), %d/%d tablespaces (%-30.30s)\r",
+							 tablespacecount),
+					totaldone_str, totalsize_str, percent, tablespacenum, tablespacecount, filename);
 	}
 	else
-		fprintf(stderr, INT64_FORMAT "/" INT64_FORMAT " kB (%d%%) %d/%d tablespaces\r",
-				totaldone / 1024, totalsize,
-				percent,
-				tablespacenum, tablespacecount);
+		fprintf(stderr,
+				ngettext("%s/%s kB (%d%%), %d/%d tablespace\r",
+						 "%s/%s kB (%d%%), %d/%d tablespaces\r",
+						 tablespacecount),
+				totaldone_str, totalsize_str, percent, tablespacenum, tablespacecount);
 }
 
 
