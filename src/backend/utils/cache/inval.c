@@ -849,24 +849,12 @@ xactGetCommittedInvalidationMessages(SharedInvalidationMessage **msgs,
 	return numSharedInvalidMessagesArray;
 }
 
-#define RecoveryRelationCacheInitFileInvalidate(dbo, tbo, tf) \
-{ \
-	DatabasePath = GetDatabasePath(dbo, tbo); \
-	elog(trace_recovery(DEBUG4), "removing relcache init file in %s", DatabasePath); \
-	RelationCacheInitFileInvalidate(tf); \
-	pfree(DatabasePath); \
-}
-
 /*
  * ProcessCommittedInvalidationMessages is executed by xact_redo_commit()
  * to process invalidation messages added to commit records.
  *
  * Relcache init file invalidation requires processing both
  * before and after we send the SI messages. See AtEOXact_Inval()
- *
- * We deliberately avoid SetDatabasePath() since it is intended to be used
- * only once by normal backends, so we set DatabasePath directly then
- * pfree after use. See RecoveryRelationCacheInitFileInvalidate() macro.
  */
 void
 ProcessCommittedInvalidationMessages(SharedInvalidationMessage *msgs,
@@ -880,12 +868,25 @@ ProcessCommittedInvalidationMessages(SharedInvalidationMessage *msgs,
 		 (RelcacheInitFileInval ? " and relcache file invalidation" : ""));
 
 	if (RelcacheInitFileInval)
-		RecoveryRelationCacheInitFileInvalidate(dbid, tsid, true);
+	{
+		/*
+		 * RelationCacheInitFilePreInvalidate requires DatabasePath to be set,
+		 * but we should not use SetDatabasePath during recovery, since it is
+		 * intended to be used only once by normal backends.  Hence, a quick
+		 * hack: set DatabasePath directly then unset after use.
+		 */
+		DatabasePath = GetDatabasePath(dbid, tsid);
+		elog(trace_recovery(DEBUG4), "removing relcache init file in \"%s\"",
+			 DatabasePath);
+		RelationCacheInitFilePreInvalidate();
+		pfree(DatabasePath);
+		DatabasePath = NULL;
+	}
 
 	SendSharedInvalidMessages(msgs, nmsgs);
 
 	if (RelcacheInitFileInval)
-		RecoveryRelationCacheInitFileInvalidate(dbid, tsid, false);
+		RelationCacheInitFilePostInvalidate();
 }
 
 /*
@@ -926,7 +927,7 @@ AtEOXact_Inval(bool isCommit)
 		 * unless we committed.
 		 */
 		if (transInvalInfo->RelcacheInitFileInval)
-			RelationCacheInitFileInvalidate(true);
+			RelationCacheInitFilePreInvalidate();
 
 		AppendInvalidationMessages(&transInvalInfo->PriorCmdInvalidMsgs,
 								   &transInvalInfo->CurrentCmdInvalidMsgs);
@@ -935,7 +936,7 @@ AtEOXact_Inval(bool isCommit)
 										 SendSharedInvalidMessages);
 
 		if (transInvalInfo->RelcacheInitFileInval)
-			RelationCacheInitFileInvalidate(false);
+			RelationCacheInitFilePostInvalidate();
 	}
 	else if (transInvalInfo != NULL)
 	{

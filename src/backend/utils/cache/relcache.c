@@ -4402,8 +4402,8 @@ write_relcache_init_file(bool shared)
 	 * updated by SI message processing, but we can't be sure whether what we
 	 * wrote out was up-to-date.)
 	 *
-	 * This mustn't run concurrently with RelationCacheInitFileInvalidate, so
-	 * grab a serialization lock for the duration.
+	 * This mustn't run concurrently with the code that unlinks an init file
+	 * and sends SI messages, so grab a serialization lock for the duration.
 	 */
 	LWLockAcquire(RelCacheInitLock, LW_EXCLUSIVE);
 
@@ -4467,19 +4467,22 @@ RelationIdIsInInitFile(Oid relationId)
  * changed one or more of the relation cache entries that are kept in the
  * local init file.
  *
- * We actually need to remove the init file twice: once just before sending
- * the SI messages that include relcache inval for such relations, and once
- * just after sending them.  The unlink before ensures that a backend that's
- * currently starting cannot read the now-obsolete init file and then miss
- * the SI messages that will force it to update its relcache entries.  (This
- * works because the backend startup sequence gets into the PGPROC array before
- * trying to load the init file.)  The unlink after is to synchronize with a
- * backend that may currently be trying to write an init file based on data
- * that we've just rendered invalid.  Such a backend will see the SI messages,
- * but we can't leave the init file sitting around to fool later backends.
+ * To be safe against concurrent inspection or rewriting of the init file,
+ * we must take RelCacheInitLock, then remove the old init file, then send
+ * the SI messages that include relcache inval for such relations, and then
+ * release RelCacheInitLock.  This serializes the whole affair against
+ * write_relcache_init_file, so that we can be sure that any other process
+ * that's concurrently trying to create a new init file won't move an
+ * already-stale version into place after we unlink.  Also, because we unlink
+ * before sending the SI messages, a backend that's currently starting cannot
+ * read the now-obsolete init file and then miss the SI messages that will
+ * force it to update its relcache entries.  (This works because the backend
+ * startup sequence gets into the sinval array before trying to load the init
+ * file.)
  *
- * Ignore any failure to unlink the file, since it might not be there if
- * no backend has been started since the last removal.
+ * We take the lock and do the unlink in RelationCacheInitFilePreInvalidate,
+ * then release the lock in RelationCacheInitFilePostInvalidate.  Caller must
+ * send any pending SI messages between those calls.
  *
  * Notice this deals only with the local init file, not the shared init file.
  * The reason is that there can never be a "significant" change to the
@@ -4489,32 +4492,35 @@ RelationIdIsInInitFile(Oid relationId)
  * be invalid enough to make it necessary to remove it.
  */
 void
-RelationCacheInitFileInvalidate(bool beforeSend)
+RelationCacheInitFilePreInvalidate(void)
 {
 	char		initfilename[MAXPGPATH];
 
 	snprintf(initfilename, sizeof(initfilename), "%s/%s",
 			 DatabasePath, RELCACHE_INIT_FILENAME);
 
-	if (beforeSend)
-	{
-		/* no interlock needed here */
-		unlink(initfilename);
-	}
-	else
+	LWLockAcquire(RelCacheInitLock, LW_EXCLUSIVE);
+
+	if (unlink(initfilename) < 0)
 	{
 		/*
-		 * We need to interlock this against write_relcache_init_file, to
-		 * guard against possibility that someone renames a new-but-
-		 * already-obsolete init file into place just after we unlink. With
-		 * the interlock, it's certain that write_relcache_init_file will
-		 * notice our SI inval message before renaming into place, or else
-		 * that we will execute second and successfully unlink the file.
+		 * The file might not be there if no backend has been started since
+		 * the last removal.  But complain about failures other than ENOENT.
+		 * Fortunately, it's not too late to abort the transaction if we
+		 * can't get rid of the would-be-obsolete init file.
 		 */
-		LWLockAcquire(RelCacheInitLock, LW_EXCLUSIVE);
-		unlink(initfilename);
-		LWLockRelease(RelCacheInitLock);
+		if (errno != ENOENT)
+			ereport(ERROR,
+					(errcode_for_file_access(),
+					 errmsg("could not remove cache file \"%s\": %m",
+							initfilename)));
 	}
+}
+
+void
+RelationCacheInitFilePostInvalidate(void)
+{
+	LWLockRelease(RelCacheInitLock);
 }
 
 /*
