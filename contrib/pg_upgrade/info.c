@@ -326,7 +326,10 @@ get_rel_infos(migratorContext *ctx, const DbInfo *dbinfo,
 			 "	ON c.relnamespace = n.oid "
 			 "   LEFT OUTER JOIN pg_catalog.pg_tablespace t "
 			 "	ON c.reltablespace = t.oid "
-			 "WHERE (( n.nspname NOT IN ('pg_catalog', 'information_schema') "
+			 "WHERE (( "
+			 /* exclude pg_catalog and pg_temp_ (could be orphaned tables) */
+			 "	n.nspname !~ '^pg_' "
+			 "	AND n.nspname != 'information_schema' "
 			 "	AND c.oid >= %u "
 			 "	) OR ( "
 			 "	n.nspname = 'pg_catalog' "
