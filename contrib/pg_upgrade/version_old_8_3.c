@@ -59,7 +59,8 @@ old_8_3_check_for_name_data_type_usage(ClusterInfo *cluster)
 								"		NOT a.attisdropped AND "
 								"		a.atttypid = 'pg_catalog.name'::pg_catalog.regtype AND "
 								"		c.relnamespace = n.oid AND "
-							  "		n.nspname != 'pg_catalog' AND "
+							 /* exclude pg_catalog and pg_temp_ (could be orphaned tables) */
+								"   n.nspname !~ '^pg_' AND "
 						 "		n.nspname != 'information_schema'");
 
 		ntups = PQntuples(res);
@@ -148,7 +149,8 @@ old_8_3_check_for_tsquery_usage(ClusterInfo *cluster)
 								"		NOT a.attisdropped AND "
 								"		a.atttypid = 'pg_catalog.tsquery'::pg_catalog.regtype AND "
 								"		c.relnamespace = n.oid AND "
-							  "		n.nspname != 'pg_catalog' AND "
+							 /* exclude pg_catalog and pg_temp_ (could be orphaned tables) */
+								"   n.nspname !~ '^pg_' AND "
 						 "		n.nspname != 'information_schema'");
 
 		ntups = PQntuples(res);
@@ -245,7 +247,8 @@ old_8_3_rebuild_tsvector_tables(ClusterInfo *cluster, bool check_mode)
 								"		NOT a.attisdropped AND "
 								"		a.atttypid = 'pg_catalog.tsvector'::pg_catalog.regtype AND "
 								"		c.relnamespace = n.oid AND "
-							  "		n.nspname != 'pg_catalog' AND "
+							 /* exclude pg_catalog and pg_temp_ (could be orphaned tables) */
+								"   n.nspname !~ '^pg_' AND "
 						 "		n.nspname != 'information_schema'");
 
 /*
@@ -263,7 +266,7 @@ old_8_3_rebuild_tsvector_tables(ClusterInfo *cluster, bool check_mode)
 								"		NOT a.attisdropped AND "		\
 								"		a.atttypid = 'pg_catalog.tsvector'::pg_catalog.regtype AND " \
 								"		c.relnamespace = n.oid AND "	\
-								"		n.nspname != 'pg_catalog' AND " \
+								"       n.nspname !~ '^pg_' AND "		\
 								"		n.nspname != 'information_schema') "
 
 		ntups = PQntuples(res);
@@ -616,7 +619,8 @@ old_8_3_create_sequence_script(ClusterInfo *cluster)
 								"		pg_catalog.pg_namespace n "
 								"WHERE	c.relkind = 'S' AND "
 								"		c.relnamespace = n.oid AND "
-							  "		n.nspname != 'pg_catalog' AND "
+							 /* exclude pg_catalog and pg_temp_ (could be orphaned tables) */
+								"   n.nspname !~ '^pg_' AND "
 						 "		n.nspname != 'information_schema'");
 
 		ntups = PQntuples(res);
