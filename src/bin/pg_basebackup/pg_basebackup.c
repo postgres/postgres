@@ -207,8 +207,17 @@ progress_report(int tablespacenum, const char *filename)
 	char		totaldone_str[32];
 	char		totalsize_str[32];
 
+	/*
+	 * Avoid overflowing past 100% or the full size. This may make the
+	 * total size number change as we approach the end of the backup
+	 * (the estimate will always be wrong if WAL is included), but
+	 * that's better than having the done column be bigger than the
+	 * total.
+	 */
 	if (percent > 100)
 		percent = 100;
+	if (totaldone / 1024 > totalsize)
+		totalsize = totaldone / 1024;
 
 	/*
 	 * Separate step to keep platform-dependent format code out of translatable
