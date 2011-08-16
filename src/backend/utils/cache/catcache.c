@@ -423,18 +423,19 @@ CatCacheRemoveCList(CatCache *cache, CatCList *cl)
 /*
  *	CatalogCacheIdInvalidate
  *
- *	Invalidate entries in the specified cache, given a hash value and
- *	item pointer.  Positive entries are deleted if they match the item
- *	pointer.  Negative entries must be deleted if they match the hash
- *	value (since we do not have the exact key of the tuple that's being
- *	inserted).	But this should only rarely result in loss of a cache
- *	entry that could have been kept.
+ *	Invalidate entries in the specified cache, given a hash value.
  *
- *	Note that it's not very relevant whether the tuple identified by
- *	the item pointer is being inserted or deleted.	We don't expect to
- *	find matching positive entries in the one case, and we don't expect
- *	to find matching negative entries in the other; but we will do the
- *	right things in any case.
+ *	We delete cache entries that match the hash value, whether positive
+ *	or negative.  We don't care whether the invalidation is the result
+ *	of a tuple insertion or a deletion.
+ *
+ *	We used to try to match positive cache entries by TID, but that is
+ *	unsafe after a VACUUM FULL on a system catalog: an inval event could
+ *	be queued before VACUUM FULL, and then processed afterwards, when the
+ *	target tuple that has to be invalidated has a different TID than it
+ *	did when the event was created.  So now we just compare hash values and
+ *	accept the small risk of unnecessary invalidations due to false matches.
+ *	(The ItemPointer argument is therefore useless and should get removed.)
  *
  *	This routine is only quasi-public: it should only be used by inval.c.
  */
@@ -496,11 +497,7 @@ CatalogCacheIdInvalidate(int cacheId,
 
 			nextelt = DLGetSucc(elt);
 
-			if (hashValue != ct->hash_value)
-				continue;		/* ignore non-matching hash values */
-
-			if (ct->negative ||
-				ItemPointerEquals(pointer, &ct->tuple.t_self))
+			if (hashValue == ct->hash_value)
 			{
 				if (ct->refcount > 0 ||
 					(ct->c_list && ct->c_list->refcount > 0))
@@ -695,12 +692,8 @@ CatalogCacheFlushCatalog(Oid catId)
 
 	for (cache = CacheHdr->ch_caches; cache; cache = cache->cc_next)
 	{
-		/* We can ignore uninitialized caches, since they must be empty */
-		if (cache->cc_tupdesc == NULL)
-			continue;
-
 		/* Does this cache store tuples of the target catalog? */
-		if (cache->cc_tupdesc->attrs[0]->attrelid == catId)
+		if (cache->cc_reloid == catId)
 		{
 			/* Yes, so flush all its contents */
 			ResetCatalogCache(cache);
