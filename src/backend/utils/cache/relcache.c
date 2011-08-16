@@ -2143,11 +2143,11 @@ RelationCacheInvalidateEntry(Oid relationId)
  *	 so hash_seq_search will complete safely; (b) during the second pass we
  *	 only hold onto pointers to nondeletable entries.
  *
- *	 The two-phase approach also makes it easy to ensure that we process
- *	 nailed-in-cache indexes before other nondeletable items, and that we
- *	 process pg_class_oid_index first of all.  In scenarios where a nailed
- *	 index has been given a new relfilenode, we have to detect that update
- *	 before the nailed index is used in reloading any other relcache entry.
+ *	 The two-phase approach also makes it easy to update relfilenodes for
+ *	 mapped relations before we do anything else, and to ensure that the
+ *	 second pass processes nailed-in-cache items before other nondeletable
+ *	 items.  This should ensure that system catalogs are up to date before
+ *	 we attempt to use them to reload information about other open relations.
  */
 void
 RelationCacheInvalidate(void)
@@ -2159,6 +2159,11 @@ RelationCacheInvalidate(void)
 	List	   *rebuildList = NIL;
 	ListCell   *l;
 
+	/*
+	 * Reload relation mapping data before starting to reconstruct cache.
+	 */
+	RelationMapInvalidateAll();
+
 	/* Phase 1 */
 	hash_seq_init(&status, RelationIdCache);
 
@@ -2169,7 +2174,7 @@ RelationCacheInvalidate(void)
 		/* Must close all smgr references to avoid leaving dangling ptrs */
 		RelationCloseSmgr(relation);
 
-		/* Ignore new relations, since they are never SI targets */
+		/* Ignore new relations, since they are never cross-backend targets */
 		if (relation->rd_createSubid != InvalidSubTransactionId)
 			continue;
 
@@ -2184,21 +2189,32 @@ RelationCacheInvalidate(void)
 		else
 		{
 			/*
-			 * Add this entry to list of stuff to rebuild in second pass.
-			 * pg_class_oid_index goes on the front of rebuildFirstList, other
-			 * nailed indexes on the back, and everything else into
-			 * rebuildList (in no particular order).
+			 * If it's a mapped relation, immediately update its rd_node in
+			 * case its relfilenode changed.  We must do this during phase 1
+			 * in case the relation is consulted during rebuild of other
+			 * relcache entries in phase 2.  It's safe since consulting the
+			 * map doesn't involve any access to relcache entries.
 			 */
-			if (relation->rd_isnailed &&
-				relation->rd_rel->relkind == RELKIND_INDEX)
-			{
-				if (RelationGetRelid(relation) == ClassOidIndexId)
-					rebuildFirstList = lcons(relation, rebuildFirstList);
-				else
-					rebuildFirstList = lappend(rebuildFirstList, relation);
-			}
-			else
+			if (RelationIsMapped(relation))
+				RelationInitPhysicalAddr(relation);
+
+			/*
+			 * Add this entry to list of stuff to rebuild in second pass.
+			 * pg_class goes to the front of rebuildFirstList while
+			 * pg_class_oid_index goes to the back of rebuildFirstList, so
+			 * they are done first and second respectively.  Other nailed
+			 * relations go to the front of rebuildList, so they'll be done
+			 * next in no particular order; and everything else goes to the
+			 * back of rebuildList.
+			 */
+			if (RelationGetRelid(relation) == RelationRelationId)
+				rebuildFirstList = lcons(relation, rebuildFirstList);
+			else if (RelationGetRelid(relation) == ClassOidIndexId)
+				rebuildFirstList = lappend(rebuildFirstList, relation);
+			else if (relation->rd_isnailed)
 				rebuildList = lcons(relation, rebuildList);
+			else
+				rebuildList = lappend(rebuildList, relation);
 		}
 	}
 
@@ -2208,11 +2224,6 @@ RelationCacheInvalidate(void)
 	 * will re-open catalog files.
 	 */
 	smgrcloseall();
-
-	/*
-	 * Reload relation mapping data before starting to reconstruct cache.
-	 */
-	RelationMapInvalidateAll();
 
 	/* Phase 2: rebuild the items found to need rebuild in phase 1 */
 	foreach(l, rebuildFirstList)
