@@ -308,6 +308,27 @@ SELECT * FROM test_inout_params('test_in');
  test_in_inout
 (1 row)
 
+-- try changing the return types and call functions again
+ALTER TABLE table_record DROP COLUMN first;
+ALTER TABLE table_record DROP COLUMN second;
+ALTER TABLE table_record ADD COLUMN first text;
+ALTER TABLE table_record ADD COLUMN second int4;
+SELECT * FROM test_table_record_as('obj', 'one', 1, false);
+ first | second 
+-------+--------
+ one   |      1
+(1 row)
+
+ALTER TYPE type_record DROP ATTRIBUTE first;
+ALTER TYPE type_record DROP ATTRIBUTE second;
+ALTER TYPE type_record ADD ATTRIBUTE first text;
+ALTER TYPE type_record ADD ATTRIBUTE second int4;
+SELECT * FROM test_type_record_as('obj', 'one', 1, false);
+ first | second 
+-------+--------
+ one   |      1
+(1 row)
+
 -- errors cases
 CREATE FUNCTION test_type_record_error1() RETURNS type_record AS $$
     return { 'first': 'first' }
