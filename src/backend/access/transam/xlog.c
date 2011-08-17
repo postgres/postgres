@@ -659,7 +659,8 @@ static bool CheckForStandbyTrigger(void);
 static void xlog_outrec(StringInfo buf, XLogRecord *record);
 #endif
 static void pg_start_backup_callback(int code, Datum arg);
-static bool read_backup_label(XLogRecPtr *checkPointLoc);
+static bool read_backup_label(XLogRecPtr *checkPointLoc,
+				  bool *backupEndRequired);
 static void rm_redo_error_callback(void *arg);
 static int	get_sync_bit(int method);
 
@@ -5995,6 +5996,7 @@ StartupXLOG(void)
 	XLogRecord *record;
 	uint32		freespace;
 	TransactionId oldestActiveXID;
+	bool		backupEndRequired = false;
 
 	/*
 	 * Read control file and check XLOG status looks valid.
@@ -6128,7 +6130,7 @@ StartupXLOG(void)
 	if (StandbyMode)
 		OwnLatch(&XLogCtl->recoveryWakeupLatch);
 
-	if (read_backup_label(&checkPointLoc))
+	if (read_backup_label(&checkPointLoc, &backupEndRequired))
 	{
 		/*
 		 * When a backup_label file is present, we want to roll forward from
@@ -6304,10 +6306,17 @@ StartupXLOG(void)
 		}
 
 		/*
-		 * set backupStartPoint if we're starting recovery from a base backup
+		 * Set backupStartPoint if we're starting recovery from a base backup.
+		 * However, if there was no recovery.conf, and the backup was taken
+		 * with pg_start_backup(), we don't know if the server crashed before
+		 * the backup was finished and we're doing crash recovery on the
+		 * original server, or if we're restoring from the base backup. We
+		 * have to assume we're doing crash recovery in that case, or the
+		 * database would refuse to start up after a crash.
 		 */
-		if (haveBackupLabel)
+		if ((InArchiveRecovery && haveBackupLabel) || backupEndRequired)
 			ControlFile->backupStartPoint = checkPoint.redo;
+
 		ControlFile->time = (pg_time_t) time(NULL);
 		/* No need to hold ControlFileLock yet, we aren't up far enough */
 		UpdateControlFile();
@@ -6670,23 +6679,15 @@ StartupXLOG(void)
 
 		/*
 		 * Ran off end of WAL before reaching end-of-backup WAL record, or
-		 * minRecoveryPoint. That's usually a bad sign, indicating that you
-		 * tried to recover from an online backup but never called
-		 * pg_stop_backup(), or you didn't archive all the WAL up to that
-		 * point. However, this also happens in crash recovery, if the system
-		 * crashes while an online backup is in progress. We must not treat
-		 * that as an error, or the database will refuse to start up.
+		 * minRecoveryPoint.
 		 */
-		if (InArchiveRecovery)
-		{
-			if (!XLogRecPtrIsInvalid(ControlFile->backupStartPoint))
-				ereport(FATAL,
-						(errmsg("WAL ends before end of online backup"),
-						 errhint("Online backup started with pg_start_backup() must be ended with pg_stop_backup(), and all WAL up to that point must be available at recovery.")));
-			else
-				ereport(FATAL,
-					  (errmsg("WAL ends before consistent recovery point")));
-		}
+		if (!XLogRecPtrIsInvalid(ControlFile->backupStartPoint))
+			ereport(FATAL,
+					(errmsg("WAL ends before end of online backup"),
+					 errhint("Online backup started with pg_start_backup() must be ended with pg_stop_backup(), and all WAL up to that point must be available at recovery.")));
+		else
+			ereport(FATAL,
+					(errmsg("WAL ends before consistent recovery point")));
 	}
 
 	/*
@@ -8990,6 +8991,8 @@ do_pg_start_backup(const char *backupidstr, bool fast, char **labelfile)
 						 startpoint.xlogid, startpoint.xrecoff, xlogfilename);
 		appendStringInfo(&labelfbuf, "CHECKPOINT LOCATION: %X/%X\n",
 						 checkpointloc.xlogid, checkpointloc.xrecoff);
+		appendStringInfo(&labelfbuf, "BACKUP METHOD: %s\n",
+						 exclusive ? "pg_start_backup" : "streamed");
 		appendStringInfo(&labelfbuf, "START TIME: %s\n", strfbuf);
 		appendStringInfo(&labelfbuf, "LABEL: %s\n", backupidstr);
 
@@ -9719,15 +9722,19 @@ pg_xlogfile_name(PG_FUNCTION_ARGS)
  *
  * Returns TRUE if a backup_label was found (and fills the checkpoint
  * location and its REDO location into *checkPointLoc and RedoStartLSN,
- * respectively); returns FALSE if not.
+ * respectively); returns FALSE if not. If this backup_label came from a
+ * streamed backup, *backupEndRequired is set to TRUE.
  */
 static bool
-read_backup_label(XLogRecPtr *checkPointLoc)
+read_backup_label(XLogRecPtr *checkPointLoc, bool *backupEndRequired)
 {
 	char		startxlogfilename[MAXFNAMELEN];
 	TimeLineID	tli;
 	FILE	   *lfp;
 	char		ch;
+	char		backuptype[20];
+
+	*backupEndRequired = false;
 
 	/*
 	 * See if label file is present
@@ -9760,6 +9767,16 @@ read_backup_label(XLogRecPtr *checkPointLoc)
 		ereport(FATAL,
 				(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
 				 errmsg("invalid data in file \"%s\"", BACKUP_LABEL_FILE)));
+	/*
+	 * BACKUP METHOD line didn't exist in 9.1beta3 and earlier, so don't
+	 * error out if it doesn't exist.
+	 */
+	if (fscanf(lfp, "BACKUP METHOD: %19s", backuptype) == 1)
+	{
+		if (strcmp(backuptype, "streamed") == 0)
+			*backupEndRequired = true;
+	}
+
 	if (ferror(lfp) || FreeFile(lfp))
 		ereport(FATAL,
 				(errcode_for_file_access(),
