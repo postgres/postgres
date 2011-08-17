@@ -9826,7 +9826,7 @@ read_backup_label(XLogRecPtr *checkPointLoc, bool *backupEndRequired)
 				(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
 				 errmsg("invalid data in file \"%s\"", BACKUP_LABEL_FILE)));
 	/*
-	 * BACKUP METHOD line is new in 9.2. We can't restore from an older backup
+	 * BACKUP METHOD line is new in 9.1. We can't restore from an older backup
 	 * anyway, but since the information on it is not strictly required, don't
 	 * error out if it's missing for some reason.
 	 */
