@@ -1077,14 +1077,15 @@ _array_to_datum(AV *av, int *ndims, int *dims, int cur_depth,
 	int			i = 0;
 	int			len = av_len(av) + 1;
 
-	if (len == 0)
-		astate = accumArrayResult(astate, (Datum) 0, true, atypid, NULL);
-
 	for (i = 0; i < len; i++)
 	{
+		/* fetch the array element */
 		SV		  **svp = av_fetch(av, i, FALSE);
+
+		/* see if this element is an array, if so get that */
 		SV		   *sav = svp ? get_perl_array_ref(*svp) : NULL;
 
+		/* multi-dimensional array? */
 		if (sav)
 		{
 			AV		   *nav = (AV *) SvRV(sav);
@@ -1147,6 +1148,9 @@ plperl_array_to_datum(SV *src, Oid typid)
 
 	astate = _array_to_datum((AV *) SvRV(src), &ndims, dims, 1, astate, typid,
 							 atypid);
+
+	if (!astate)
+		return PointerGetDatum(construct_empty_array(atypid));
 
 	for (i = 0; i < ndims; i++)
 		lbs[i] = 1;
