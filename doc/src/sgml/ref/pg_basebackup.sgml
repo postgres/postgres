@@ -229,8 +229,8 @@ PostgreSQL documentation
         the backup, this is only an approximation and may not end at exactly
         <literal>100%</literal>. In particular, when WAL log is included in the
         backup, the total amount of data cannot be estimated in advance, and
-        in this case the progress report will only count towards the total
-        amount of data without WAL.
+        in this case the estimated target size will increase once it passes the
+        total estimate without WAL.
        </para>
        <para>
         When this is enabled, the backup will start by enumerating the size of
