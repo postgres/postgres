@@ -112,6 +112,21 @@ SELECT * FROM test_in_out_params('test_in');
 SELECT * FROM test_in_out_params_multi('test_in');
 SELECT * FROM test_inout_params('test_in');
 
+-- try changing the return types and call functions again
+
+ALTER TABLE table_record DROP COLUMN first;
+ALTER TABLE table_record DROP COLUMN second;
+ALTER TABLE table_record ADD COLUMN first text;
+ALTER TABLE table_record ADD COLUMN second int4;
+
+SELECT * FROM test_table_record_as('obj', 'one', 1, false);
+
+ALTER TYPE type_record DROP ATTRIBUTE first;
+ALTER TYPE type_record DROP ATTRIBUTE second;
+ALTER TYPE type_record ADD ATTRIBUTE first text;
+ALTER TYPE type_record ADD ATTRIBUTE second int4;
+
+SELECT * FROM test_type_record_as('obj', 'one', 1, false);
 
 -- errors cases
 
