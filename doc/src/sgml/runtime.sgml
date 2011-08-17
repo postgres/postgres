@@ -945,8 +945,8 @@ options        SEMMAP=256
 
 
      <varlistentry>
-      <term><systemitem class="osname">MacOS X</></term>
-      <indexterm><primary>MacOS X</><secondary>IPC configuration</></>
+      <term><systemitem class="osname">Mac OS X</></term>
+      <indexterm><primary>Mac OS X</><secondary>IPC configuration</></>
       <listitem>
        <para>
         The recommended method for configuring shared memory in OS X
