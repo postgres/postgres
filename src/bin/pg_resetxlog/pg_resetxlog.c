@@ -637,6 +637,7 @@ RewriteControlFile(void)
 	ControlFile.minRecoveryPoint.xrecoff = 0;
 	ControlFile.backupStartPoint.xlogid = 0;
 	ControlFile.backupStartPoint.xrecoff = 0;
+	ControlFile.backupEndRequired = false;
 
 	/*
 	 * Force the defaults for max_* settings. The values don't really matter
