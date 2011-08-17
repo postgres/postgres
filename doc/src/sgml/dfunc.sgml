@@ -154,8 +154,8 @@ cc -shared -o foo.so foo.o
    </varlistentry>
 
    <varlistentry>
-    <term><systemitem class="osname">MacOS X</></term>
-    <indexterm><primary>MacOS X</><secondary>shared library</></>
+    <term><systemitem class="osname">Mac OS X</></term>
+    <indexterm><primary>Mac OS X</><secondary>shared library</></>
     <listitem>
      <para>
       Here is an example.  It assumes the developer tools are installed.
