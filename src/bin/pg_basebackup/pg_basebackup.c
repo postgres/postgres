@@ -236,23 +236,25 @@ progress_report(int tablespacenum, const char *filename)
 			 * call)
 			 */
 			fprintf(stderr,
-					ngettext("%s/%s kB (100%%), %d/%d tablespace %35s\r",
-							 "%s/%s kB (100%%), %d/%d tablespaces %35s\r",
+					ngettext("%s/%s kB (100%%), %d/%d tablespace %35s",
+							 "%s/%s kB (100%%), %d/%d tablespaces %35s",
 							 tablespacecount),
 					totaldone_str, totalsize_str, tablespacenum, tablespacecount, "");
 		else
 			fprintf(stderr,
-					ngettext("%s/%s kB (%d%%), %d/%d tablespace (%-30.30s)\r",
-							 "%s/%s kB (%d%%), %d/%d tablespaces (%-30.30s)\r",
+					ngettext("%s/%s kB (%d%%), %d/%d tablespace (%-30.30s)",
+							 "%s/%s kB (%d%%), %d/%d tablespaces (%-30.30s)",
 							 tablespacecount),
 					totaldone_str, totalsize_str, percent, tablespacenum, tablespacecount, filename);
 	}
 	else
 		fprintf(stderr,
-				ngettext("%s/%s kB (%d%%), %d/%d tablespace\r",
-						 "%s/%s kB (%d%%), %d/%d tablespaces\r",
+				ngettext("%s/%s kB (%d%%), %d/%d tablespace",
+						 "%s/%s kB (%d%%), %d/%d tablespaces",
 						 tablespacecount),
 				totaldone_str, totalsize_str, percent, tablespacenum, tablespacecount);
+
+	fprintf(stderr, "\r");
 }
 
 
