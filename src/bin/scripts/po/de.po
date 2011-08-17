@@ -1,7 +1,7 @@
 # German message translation file for "scripts".
 # Peter Eisentraut <peter_e@gmx.net>, 2003 - 2010.
 #
-# pgtranslation Id: pgscripts.po,v 1.11 2010/03/17 21:33:45 petere Exp $
+# pgtranslation Id: pgscripts.po,v 1.12 2011/07/15 19:32:37 petere Exp $
 #
 # Use these quotes: »%s«
 #
@@ -9,24 +9,25 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PostgreSQL 9.0\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
-"POT-Creation-Date: 2010-03-17 19:16+0000\n"
-"PO-Revision-Date: 2010-03-17 23:33+0200\n"
+"POT-Creation-Date: 2011-07-15 08:56+0000\n"
+"PO-Revision-Date: 2011-07-15 21:38+0300\n"
 "Last-Translator: Peter Eisentraut <peter_e@gmx.net>\n"
 "Language-Team: German <peter_e@gmx.net>\n"
+"Language: de\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 
 #: createdb.c:114 createdb.c:133 createlang.c:89 createlang.c:110
 #: createlang.c:163 createuser.c:149 createuser.c:164 dropdb.c:83 dropdb.c:92
-#: dropdb.c:100 droplang.c:100 droplang.c:121 droplang.c:175 dropuser.c:83
+#: dropdb.c:100 droplang.c:88 droplang.c:109 droplang.c:163 dropuser.c:83
 #: dropuser.c:98 clusterdb.c:104 clusterdb.c:119 vacuumdb.c:127 vacuumdb.c:142
 #: reindexdb.c:114 reindexdb.c:128
 #, c-format
 msgid "Try \"%s --help\" for more information.\n"
 msgstr "Versuchen Sie »%s --help« für weitere Informationen.\n"
 
-#: createdb.c:131 createlang.c:108 createuser.c:162 dropdb.c:98 droplang.c:119
+#: createdb.c:131 createlang.c:108 createuser.c:162 dropdb.c:98 droplang.c:107
 #: dropuser.c:96 clusterdb.c:117 vacuumdb.c:140 reindexdb.c:127
 #, c-format
 msgid "%s: too many command-line arguments (first is \"%s\")\n"
@@ -47,18 +48,17 @@ msgstr "%s: --locale und --lc-collate können nicht zusammen angegeben werden\n"
 msgid "%s: \"%s\" is not a valid encoding name\n"
 msgstr "%s: »%s« ist kein gültiger Kodierungsname\n"
 
-#: createdb.c:204
+#: createdb.c:209
 #, c-format
 msgid "%s: database creation failed: %s"
-msgstr "%s: Erzeugung der Datenbank ist fehlgeschlagen: %s"
+msgstr "%s: Erzeugen der Datenbank ist fehlgeschlagen: %s"
 
-#: createdb.c:227
+#: createdb.c:229
 #, c-format
 msgid "%s: comment creation failed (database was created): %s"
-msgstr ""
-"%s: Erzeugung des Kommentars ist fehlgeschlagen (Datenbank wurde erzeugt): %s"
+msgstr "%s: Erzeugen des Kommentars ist fehlgeschlagen (Datenbank wurde erzeugt): %s"
 
-#: createdb.c:244
+#: createdb.c:247
 #, c-format
 msgid ""
 "%s creates a PostgreSQL database.\n"
@@ -67,20 +67,20 @@ msgstr ""
 "%s erzeugt eine PostgreSQL-Datenbank.\n"
 "\n"
 
-#: createdb.c:245 createlang.c:215 createuser.c:300 dropdb.c:140
-#: droplang.c:374 dropuser.c:139 clusterdb.c:236 vacuumdb.c:328
+#: createdb.c:248 createlang.c:223 createuser.c:300 dropdb.c:144
+#: droplang.c:224 dropuser.c:139 clusterdb.c:236 vacuumdb.c:328
 #: reindexdb.c:313
 #, c-format
 msgid "Usage:\n"
 msgstr "Aufruf:\n"
 
-#: createdb.c:246
+#: createdb.c:249
 #, c-format
 msgid "  %s [OPTION]... [DBNAME] [DESCRIPTION]\n"
 msgstr "  %s [OPTION]... [DBNAME] [BESCHREIBUNG]\n"
 
-#: createdb.c:247 createlang.c:217 createuser.c:302 dropdb.c:142
-#: droplang.c:376 dropuser.c:141 clusterdb.c:238 vacuumdb.c:330
+#: createdb.c:250 createlang.c:225 createuser.c:302 dropdb.c:146
+#: droplang.c:226 dropuser.c:141 clusterdb.c:238 vacuumdb.c:330
 #: reindexdb.c:315
 #, c-format
 msgid ""
@@ -90,12 +90,12 @@ msgstr ""
 "\n"
 "Optionen:\n"
 
-#: createdb.c:248
+#: createdb.c:251
 #, c-format
 msgid "  -D, --tablespace=TABLESPACE  default tablespace for the database\n"
 msgstr "  -D, --tablespace=TABLESPACE  Standard-Tablespace der Datenbank\n"
 
-#: createdb.c:249
+#: createdb.c:252
 #, c-format
 msgid ""
 "  -e, --echo                   show the commands being sent to the server\n"
@@ -103,52 +103,52 @@ msgstr ""
 "  -e, --echo                   zeige die Befehle, die an den Server\n"
 "                               gesendet werden\n"
 
-#: createdb.c:250
+#: createdb.c:253
 #, c-format
 msgid "  -E, --encoding=ENCODING      encoding for the database\n"
 msgstr "  -E, --encoding=KODIERUNG     Kodierung für die Datenbank\n"
 
-#: createdb.c:251
+#: createdb.c:254
 #, c-format
 msgid "  -l, --locale=LOCALE          locale settings for the database\n"
 msgstr ""
 "  -l, --locale=LOCALE          Lokale-Einstellungen für die Datenbank\n"
 
-#: createdb.c:252
+#: createdb.c:255
 #, c-format
 msgid "      --lc-collate=LOCALE      LC_COLLATE setting for the database\n"
 msgstr ""
 "      --lc-collate=LOCALE      LC_COLLATE-Einstellung für die Datenbank\n"
 
-#: createdb.c:253
+#: createdb.c:256
 #, c-format
 msgid "      --lc-ctype=LOCALE        LC_CTYPE setting for the database\n"
 msgstr ""
 "      --lc-ctype=LOCALE        LC_CTYPE-Einstellung für die Datenbank\n"
 
-#: createdb.c:254
+#: createdb.c:257
 #, c-format
 msgid "  -O, --owner=OWNER            database user to own the new database\n"
 msgstr "  -O, --owner=EIGENTÜMER       Eigentümer der neuen Datenbank\n"
 
-#: createdb.c:255
+#: createdb.c:258
 #, c-format
 msgid "  -T, --template=TEMPLATE      template database to copy\n"
 msgstr "  -T, --template=TEMPLATE      zu kopierende Template-Datenbank\n"
 
-#: createdb.c:256
+#: createdb.c:259
 #, c-format
 msgid "  --help                       show this help, then exit\n"
 msgstr "  --help                       diese Hilfe anzeigen, dann beenden\n"
 
-#: createdb.c:257
+#: createdb.c:260
 #, c-format
 msgid "  --version                    output version information, then exit\n"
 msgstr ""
 "  --version                    Versionsinformationen anzeigen, dann beenden\n"
 
-#: createdb.c:258 createlang.c:223 createuser.c:321 dropdb.c:147
-#: droplang.c:382 dropuser.c:146 clusterdb.c:247 vacuumdb.c:343
+#: createdb.c:261 createlang.c:231 createuser.c:321 dropdb.c:151
+#: droplang.c:232 dropuser.c:146 clusterdb.c:247 vacuumdb.c:343
 #: reindexdb.c:325
 #, c-format
 msgid ""
@@ -158,7 +158,7 @@ msgstr ""
 "\n"
 "Verbindungsoptionen:\n"
 
-#: createdb.c:259
+#: createdb.c:262
 #, c-format
 msgid ""
 "  -h, --host=HOSTNAME          database server host or socket directory\n"
@@ -166,27 +166,27 @@ msgstr ""
 "  -h, --host=HOSTNAME          Name des Datenbankservers oder Socket-"
 "Verzeichnis\n"
 
-#: createdb.c:260
+#: createdb.c:263
 #, c-format
 msgid "  -p, --port=PORT              database server port\n"
 msgstr "  -p, --port=PORT              Port des Datenbankservers\n"
 
-#: createdb.c:261
+#: createdb.c:264
 #, c-format
 msgid "  -U, --username=USERNAME      user name to connect as\n"
 msgstr "  -U, --username=NAME          Datenbankbenutzername\n"
 
-#: createdb.c:262
+#: createdb.c:265
 #, c-format
 msgid "  -w, --no-password            never prompt for password\n"
 msgstr "  -w, --no-password            niemals nach Passwort fragen\n"
 
-#: createdb.c:263
+#: createdb.c:266
 #, c-format
 msgid "  -W, --password               force password prompt\n"
 msgstr "  -W, --password               Passwortfrage erzwingen\n"
 
-#: createdb.c:264
+#: createdb.c:267
 #, c-format
 msgid ""
 "\n"
@@ -196,8 +196,8 @@ msgstr ""
 "Wenn nichts anderes angegeben ist, dann wird eine Datenbank mit dem Namen\n"
 "des aktuellen Benutzers erzeugt.\n"
 
-#: createdb.c:265 createlang.c:229 createuser.c:329 dropdb.c:153
-#: droplang.c:388 dropuser.c:152 clusterdb.c:254 vacuumdb.c:350
+#: createdb.c:268 createlang.c:237 createuser.c:329 dropdb.c:157
+#: droplang.c:238 dropuser.c:152 clusterdb.c:254 vacuumdb.c:350
 #: reindexdb.c:332
 #, c-format
 msgid ""
@@ -207,27 +207,27 @@ msgstr ""
 "\n"
 "Berichten Sie Fehler an <pgsql-bugs@postgresql.org>.\n"
 
-#: createlang.c:140 droplang.c:151
+#: createlang.c:140 droplang.c:139
 msgid "Name"
 msgstr "Name"
 
-#: createlang.c:141 droplang.c:152
+#: createlang.c:141 droplang.c:140
 msgid "yes"
 msgstr "ja"
 
-#: createlang.c:141 droplang.c:152
+#: createlang.c:141 droplang.c:140
 msgid "no"
 msgstr "nein"
 
-#: createlang.c:142 droplang.c:153
+#: createlang.c:142 droplang.c:141
 msgid "Trusted?"
 msgstr "Vertraut?"
 
-#: createlang.c:151 droplang.c:162
+#: createlang.c:151 droplang.c:150
 msgid "Procedural Languages"
 msgstr "Prozedurale Sprachen"
 
-#: createlang.c:162 droplang.c:173
+#: createlang.c:162 droplang.c:161
 #, c-format
 msgid "%s: missing required argument language name\n"
 msgstr "%s: Sprachenname als Argument fehlt\n"
@@ -237,12 +237,12 @@ msgstr "%s: Sprachenname als Argument fehlt\n"
 msgid "%s: language \"%s\" is already installed in database \"%s\"\n"
 msgstr "%s: Sprache »%s« ist bereits in Datenbank »%s« installiert\n"
 
-#: createlang.c:198
+#: createlang.c:206
 #, c-format
 msgid "%s: language installation failed: %s"
 msgstr "%s: Installation der Sprache fehlgeschlagen: %s"
 
-#: createlang.c:214
+#: createlang.c:222
 #, c-format
 msgid ""
 "%s installs a procedural language into a PostgreSQL database.\n"
@@ -251,19 +251,19 @@ msgstr ""
 "%s installiert eine prozedurale Sprache in einer PostgreSQL-Datenbank.\n"
 "\n"
 
-#: createlang.c:216 droplang.c:375
+#: createlang.c:224 droplang.c:225
 #, c-format
 msgid "  %s [OPTION]... LANGNAME [DBNAME]\n"
 msgstr "%s [OPTION]... SPRACHE [DBNAME]\n"
 
-#: createlang.c:218
+#: createlang.c:226
 #, c-format
 msgid "  -d, --dbname=DBNAME       database to install language in\n"
 msgstr ""
 "  -d, --dbname=DBNAME       Datenbank, in der die Sprache installiert\n"
 "                            werden soll\n"
 
-#: createlang.c:219 createuser.c:306 dropdb.c:143 droplang.c:378
+#: createlang.c:227 createuser.c:306 dropdb.c:147 droplang.c:228
 #: dropuser.c:142 clusterdb.c:241 reindexdb.c:318
 #, c-format
 msgid ""
@@ -272,27 +272,27 @@ msgstr ""
 "  -e, --echo                zeige die Befehle, die an den Server\n"
 "                            gesendet werden\n"
 
-#: createlang.c:220 droplang.c:379
+#: createlang.c:228 droplang.c:229
 #, c-format
 msgid ""
 "  -l, --list                show a list of currently installed languages\n"
 msgstr ""
 "  -l, --list                zeige Liste gegenwärtig installierter Sprachen\n"
 
-#: createlang.c:221 createuser.c:319 dropdb.c:145 droplang.c:380
+#: createlang.c:229 createuser.c:319 dropdb.c:149 droplang.c:230
 #: dropuser.c:144 clusterdb.c:245 reindexdb.c:323
 #, c-format
 msgid "  --help                    show this help, then exit\n"
 msgstr "  --help                    diese Hilfe anzeigen, dann beenden\n"
 
-#: createlang.c:222 createuser.c:320 dropdb.c:146 droplang.c:381
+#: createlang.c:230 createuser.c:320 dropdb.c:150 droplang.c:231
 #: dropuser.c:145 clusterdb.c:246 reindexdb.c:324
 #, c-format
 msgid "  --version                 output version information, then exit\n"
 msgstr ""
 "  --version                 Versionsinformationen anzeigen, dann beenden\n"
 
-#: createlang.c:224 createuser.c:322 dropdb.c:148 droplang.c:383
+#: createlang.c:232 createuser.c:322 dropdb.c:152 droplang.c:233
 #: dropuser.c:147 clusterdb.c:248 vacuumdb.c:344 reindexdb.c:326
 #, c-format
 msgid "  -h, --host=HOSTNAME       database server host or socket directory\n"
@@ -300,25 +300,25 @@ msgstr ""
 "  -h, --host=HOSTNAME       Name des Datenbankservers oder Socket-"
 "Verzeichnis\n"
 
-#: createlang.c:225 createuser.c:323 dropdb.c:149 droplang.c:384
+#: createlang.c:233 createuser.c:323 dropdb.c:153 droplang.c:234
 #: dropuser.c:148 clusterdb.c:249 vacuumdb.c:345 reindexdb.c:327
 #, c-format
 msgid "  -p, --port=PORT           database server port\n"
 msgstr "  -p, --port=PORT           Port des Datenbankservers\n"
 
-#: createlang.c:226 dropdb.c:150 droplang.c:385 clusterdb.c:250 vacuumdb.c:346
+#: createlang.c:234 dropdb.c:154 droplang.c:235 clusterdb.c:250 vacuumdb.c:346
 #: reindexdb.c:328
 #, c-format
 msgid "  -U, --username=USERNAME   user name to connect as\n"
 msgstr "  -U, --username=NAME       Datenbankbenutzername\n"
 
-#: createlang.c:227 createuser.c:325 dropdb.c:151 droplang.c:386
+#: createlang.c:235 createuser.c:325 dropdb.c:155 droplang.c:236
 #: dropuser.c:150 clusterdb.c:251 vacuumdb.c:347 reindexdb.c:329
 #, c-format
 msgid "  -w, --no-password         never prompt for password\n"
 msgstr "  -w, --no-password         niemals nach Passwort fragen\n"
 
-#: createlang.c:228 createuser.c:326 dropdb.c:152 droplang.c:387
+#: createlang.c:236 createuser.c:326 dropdb.c:156 droplang.c:237
 #: dropuser.c:151 clusterdb.c:252 vacuumdb.c:348 reindexdb.c:330
 #, c-format
 msgid "  -W, --password            force password prompt\n"
@@ -361,7 +361,7 @@ msgstr "Passwortverschlüsselung ist fehlgeschlagen.\n"
 #: createuser.c:284
 #, c-format
 msgid "%s: creation of new role failed: %s"
-msgstr "%s: Erzeugung der neuen Rolle fehlgeschlagen: %s"
+msgstr "%s: Erzeugen der neuen Rolle fehlgeschlagen: %s"
 
 #: createuser.c:299
 #, c-format
@@ -489,12 +489,12 @@ msgstr "Datenbank »%s« wird unwiderruflich gelöscht werden.\n"
 msgid "Are you sure?"
 msgstr "Sind Sie sich sicher?"
 
-#: dropdb.c:124
+#: dropdb.c:128
 #, c-format
 msgid "%s: database removal failed: %s"
 msgstr "%s: Löschen der Datenbank fehlgeschlagen: %s"
 
-#: dropdb.c:139
+#: dropdb.c:143
 #, c-format
 msgid ""
 "%s removes a PostgreSQL database.\n"
@@ -503,35 +503,28 @@ msgstr ""
 "%s löscht eine PostgreSQL-Datenbank.\n"
 "\n"
 
-#: dropdb.c:141
+#: dropdb.c:145
 #, c-format
 msgid "  %s [OPTION]... DBNAME\n"
 msgstr " %s [OPTION]... DBNAME\n"
 
-#: dropdb.c:144 dropuser.c:143
+#: dropdb.c:148 dropuser.c:143
 #, c-format
 msgid "  -i, --interactive         prompt before deleting anything\n"
 msgstr ""
 "  -i, --interactive         frage nach, bevor irgendetwas gelöscht wird\n"
 
-#: droplang.c:203
+#: droplang.c:190
 #, c-format
 msgid "%s: language \"%s\" is not installed in database \"%s\"\n"
 msgstr "%s: Sprache »%s« ist nicht in Datenbank »%s« installiert\n"
 
-#: droplang.c:224
-#, c-format
-msgid ""
-"%s: still %s functions declared in language \"%s\"; language not removed\n"
-msgstr ""
-"%s: noch %s Funktionen in Sprache »%s« deklariert; Sprache nicht gelöscht\n"
-
-#: droplang.c:358
+#: droplang.c:208
 #, c-format
 msgid "%s: language removal failed: %s"
 msgstr "%s: Löschen der Sprache fehlgeschlagen: %s"
 
-#: droplang.c:373
+#: droplang.c:223
 #, c-format
 msgid ""
 "%s removes a procedural language from a database.\n"
@@ -540,7 +533,7 @@ msgstr ""
 "%s löscht eine prozedurale Sprache aus einer Datenbank.\n"
 "\n"
 
-#: droplang.c:377
+#: droplang.c:227
 #, c-format
 msgid ""
 "  -d, --dbname=DBNAME       database from which to remove the language\n"
@@ -664,7 +657,8 @@ msgstr ""
 #, c-format
 msgid "%s: cannot use the \"freeze\" option when performing only analyze\n"
 msgstr ""
-"%s: kann Option »freeze« nicht verwenden, wenn nur Analyze durchgeführt wird\n"
+"%s: kann Option »freeze« nicht verwenden, wenn nur Analyze durchgeführt "
+"wird\n"
 
 #: vacuumdb.c:169
 #, c-format
@@ -754,12 +748,16 @@ msgstr "  -v, --verbose                   erzeuge viele Meldungen\n"
 #: vacuumdb.c:339
 #, c-format
 msgid "  -z, --analyze                   update optimizer statistics\n"
-msgstr "  -z, --analyze                   aktualisiere Statistiken für den Optimierer\n"
+msgstr ""
+"  -z, --analyze                   aktualisiere Statistiken für den "
+"Optimierer\n"
 
 #: vacuumdb.c:340
 #, c-format
 msgid "  -Z, --analyze-only              only update optimizer statistics\n"
-msgstr "  -Z, --analyze-only              aktualisiere nur Statistiken für den Optimierer\n"
+msgstr ""
+"  -Z, --analyze-only              aktualisiere nur Statistiken für den "
+"Optimierer\n"
 
 #: vacuumdb.c:341
 #, c-format
@@ -973,3 +971,9 @@ msgstr "Abbruchsanforderung gesendet\n"
 #, c-format
 msgid "Could not send cancel request: %s"
 msgstr "Konnte Abbruchsanforderung nicht senden: %s"
+
+#~ msgid ""
+#~ "%s: still %s functions declared in language \"%s\"; language not removed\n"
+#~ msgstr ""
+#~ "%s: noch %s Funktionen in Sprache »%s« deklariert; Sprache nicht "
+#~ "gelöscht\n"

@@ -7,76 +7,77 @@
 # Updated on 2003-2010 by Alvaro Herrera <alvherre@alvh.no-ip.org>
 # Mario González <gonzalemario@gmail.com>, 2005
 #
-# pgtranslation Id: libpq.po,v 1.12 2010/08/31 17:26:47 alvherre Exp $
+# pgtranslation Id: libpq.po,v 1.13 2011/06/11 02:34:53 alvherre Exp $
 #
 msgid ""
 msgstr ""
 "Project-Id-Version: libpq (PostgreSQL 9.0)\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
-"POT-Creation-Date: 2010-08-31 07:23+0000\n"
-"PO-Revision-Date: 2010-08-31 13:26-0400\n"
+"POT-Creation-Date: 2011-06-10 22:43+0000\n"
+"PO-Revision-Date: 2011-06-10 22:34-0400\n"
 "Last-Translator: Álvaro Herrera <alvherre@alvh.no-ip.org>\n"
 "Language-Team: PgSQL-es-Ayuda <pgsql-es-ayuda@postgresql.org>\n"
+"Language: \n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 
-#: fe-auth.c:212 fe-auth.c:432 fe-auth.c:659
+#: fe-auth.c:210 fe-auth.c:429 fe-auth.c:656
 msgid "host name must be specified\n"
 msgstr "el nombre de servidor debe ser especificado\n"
 
-#: fe-auth.c:242
+#: fe-auth.c:240
 #, c-format
 msgid "could not set socket to blocking mode: %s\n"
 msgstr "no se pudo poner el socket en modo bloqueante: %s\n"
 
-#: fe-auth.c:260 fe-auth.c:264
+#: fe-auth.c:258 fe-auth.c:262
 #, c-format
 msgid "Kerberos 5 authentication rejected: %*s\n"
 msgstr "autentificación Kerberos 5 denegada: %*s\n"
 
-#: fe-auth.c:290
+#: fe-auth.c:288
 #, c-format
 msgid "could not restore non-blocking mode on socket: %s\n"
 msgstr "no se pudo restablecer el modo no bloqueante en el socket: %s\n"
 
-#: fe-auth.c:403
+#: fe-auth.c:400
 msgid "GSSAPI continuation error"
 msgstr "error en continuación de GSSAPI"
 
-#: fe-auth.c:439
+#: fe-auth.c:436
 msgid "duplicate GSS authentication request\n"
 msgstr "petición de autentificación GSS duplicada\n"
 
-#: fe-auth.c:459
+#: fe-auth.c:456
 msgid "GSSAPI name import error"
 msgstr "error en conversión de nombre GSSAPI"
 
-#: fe-auth.c:545
+#: fe-auth.c:542
 msgid "SSPI continuation error"
 msgstr "error en continuación de SSPI"
 
-#: fe-auth.c:556 fe-auth.c:630 fe-auth.c:665 fe-auth.c:762 fe-connect.c:1893
-#: fe-connect.c:3222 fe-connect.c:3439 fe-connect.c:3855 fe-connect.c:3864
-#: fe-connect.c:4001 fe-connect.c:4047 fe-connect.c:4065 fe-connect.c:4144
-#: fe-connect.c:4214 fe-connect.c:4260 fe-connect.c:4278 fe-exec.c:3121
-#: fe-exec.c:3286 fe-lobj.c:696 fe-protocol2.c:1027 fe-protocol3.c:1421
+#: fe-auth.c:553 fe-auth.c:627 fe-auth.c:662 fe-auth.c:757 fe-connect.c:1961
+#: fe-connect.c:3360 fe-connect.c:3578 fe-connect.c:3999 fe-connect.c:4008
+#: fe-connect.c:4145 fe-connect.c:4191 fe-connect.c:4209 fe-connect.c:4288
+#: fe-connect.c:4358 fe-connect.c:4404 fe-connect.c:4422 fe-exec.c:3140
+#: fe-exec.c:3305 fe-lobj.c:696 fe-protocol2.c:1092 fe-protocol3.c:1433
 msgid "out of memory\n"
 msgstr "memoria agotada\n"
 
-#: fe-auth.c:645
+#: fe-auth.c:642
 msgid "could not acquire SSPI credentials"
 msgstr "no se pudo obtener las credenciales SSPI"
 
-#: fe-auth.c:738
+#: fe-auth.c:733
 msgid "SCM_CRED authentication method not supported\n"
 msgstr "el método de autentificación SCM_CRED no está soportado\n"
 
-#: fe-auth.c:812
+#: fe-auth.c:807
 msgid "Kerberos 4 authentication not supported\n"
 msgstr "el método de autentificación Kerberos 4 no está soportado\n"
 
-#: fe-auth.c:828
+#: fe-auth.c:823
 msgid "Kerberos 5 authentication not supported\n"
 msgstr "el método de autentificación Kerberos 5 no está soportado\n"
 
@@ -84,36 +85,37 @@ msgstr "el método de autentificación Kerberos 5 no está soportado\n"
 msgid "GSSAPI authentication not supported\n"
 msgstr "el método de autentificación GSSAPI no está soportado\n"
 
-#: fe-auth.c:919
+#: fe-auth.c:927
 msgid "SSPI authentication not supported\n"
 msgstr "el método de autentificación SSPI no está soportado\n"
 
-#: fe-auth.c:926
+#: fe-auth.c:935
 msgid "Crypt authentication not supported\n"
 msgstr "el método de autentificación Crypt no está soportado\n"
 
-#: fe-auth.c:953
+#: fe-auth.c:962
 #, c-format
 msgid "authentication method %u not supported\n"
 msgstr "el método de autentificación %u no está soportado\n"
 
-#: fe-connect.c:720
+#: fe-connect.c:758
 #, c-format
 msgid "invalid sslmode value: \"%s\"\n"
 msgstr "valor sslmode no válido: «%s»\n"
 
-#: fe-connect.c:741
+#: fe-connect.c:779
 #, c-format
 msgid "sslmode value \"%s\" invalid when SSL support is not compiled in\n"
 msgstr ""
-"el valor sslmode «%s» no es válido cuando no se ha compilado con soporte SSL\n"
+"el valor sslmode «%s» no es válido cuando no se ha compilado con soporte "
+"SSL\n"
 
-#: fe-connect.c:924
+#: fe-connect.c:972
 #, c-format
 msgid "could not set socket to TCP no delay mode: %s\n"
 msgstr "no se pudo establecer el socket en modo TCP sin retardo: %s\n"
 
-#: fe-connect.c:954
+#: fe-connect.c:1002
 #, c-format
 msgid ""
 "could not connect to server: %s\n"
@@ -124,7 +126,18 @@ msgstr ""
 "\t¿Está el servidor en ejecución localmente y aceptando\n"
 "\tconexiones en el socket de dominio Unix «%s»?\n"
 
-#: fe-connect.c:964
+#: fe-connect.c:1057
+#, c-format
+msgid ""
+"could not connect to server: %s\n"
+"\tIs the server running on host \"%s\" (%s) and accepting\n"
+"\tTCP/IP connections on port %s?\n"
+msgstr ""
+"no se pudo conectar con el servidor: %s\n"
+"\t¿Está el servidor en ejecución en el servidor «%s» (%s) y aceptando\n"
+"\tconexiones TCP/IP en el puerto %s?\n"
+
+#: fe-connect.c:1066
 #, c-format
 msgid ""
 "could not connect to server: %s\n"
@@ -135,355 +148,357 @@ msgstr ""
 "\t¿Está el servidor en ejecución en el servidor «%s» y aceptando\n"
 "\tconexiones TCP/IP en el puerto %s?\n"
 
-#: fe-connect.c:1019
+#: fe-connect.c:1117
 #, c-format
 msgid "setsockopt(TCP_KEEPIDLE) failed: %s\n"
 msgstr "setsockopt(TCP_KEEPIDLE) falló: %s\n"
 
-#: fe-connect.c:1032
+#: fe-connect.c:1130
 #, c-format
 msgid "setsockopt(TCP_KEEPALIVE) failed: %s\n"
 msgstr "setsockopt(TCP_KEEPALIVE) falló: %s\n"
 
-#: fe-connect.c:1064
+#: fe-connect.c:1162
 #, c-format
 msgid "setsockopt(TCP_KEEPINTVL) failed: %s\n"
 msgstr "setsockopt(TCP_KEEPINTVL) falló: %s\n"
 
-#: fe-connect.c:1096
+#: fe-connect.c:1194
 #, c-format
 msgid "setsockopt(TCP_KEEPCNT) failed: %s\n"
 msgstr "setsockopt(TCP_KEEPCNT) falló: %s\n"
 
-#: fe-connect.c:1145
+#: fe-connect.c:1242
 #, c-format
 msgid "WSAIoctl(SIO_KEEPALIVE_VALS) failed: %ui\n"
 msgstr "WSAIoctl(SIO_KEEPALIVE_VALS) failed: %ui\n"
 
-#: fe-connect.c:1197
+#: fe-connect.c:1294
 #, c-format
 msgid "invalid port number: \"%s\"\n"
 msgstr "número de puerto no válido: «%s»\n"
 
-#: fe-connect.c:1239
+#: fe-connect.c:1337
 #, c-format
 msgid "could not translate host name \"%s\" to address: %s\n"
 msgstr "no se pudo traducir el nombre «%s» a una dirección: %s\n"
 
-#: fe-connect.c:1243
+#: fe-connect.c:1341
 #, c-format
 msgid "could not translate Unix-domain socket path \"%s\" to address: %s\n"
 msgstr "no se pudo traducir la ruta del socket Unix «%s» a una dirección: %s\n"
 
-#: fe-connect.c:1452
+#: fe-connect.c:1551
 msgid "invalid connection state, probably indicative of memory corruption\n"
 msgstr ""
 "el estado de conexión no es válido, probablemente por corrupción de memoria\n"
 
-#: fe-connect.c:1495
+#: fe-connect.c:1592
 #, c-format
 msgid "could not create socket: %s\n"
 msgstr "no se pudo crear el socket: %s\n"
 
-#: fe-connect.c:1518
+#: fe-connect.c:1615
 #, c-format
 msgid "could not set socket to non-blocking mode: %s\n"
 msgstr "no se pudo establecer el socket en modo no bloqueante: %s\n"
 
-#: fe-connect.c:1530
+#: fe-connect.c:1627
 #, c-format
 msgid "could not set socket to close-on-exec mode: %s\n"
 msgstr "no se pudo poner el socket en modo close-on-exec: %s\n"
 
-#: fe-connect.c:1548
+#: fe-connect.c:1647
 msgid "keepalives parameter must be an integer\n"
 msgstr "el parámetro de keepalives debe ser un entero\n"
 
-#: fe-connect.c:1561
+#: fe-connect.c:1660
 #, c-format
 msgid "setsockopt(SO_KEEPALIVE) failed: %s\n"
 msgstr "setsockopt(SO_KEEPALIVE) falló: %s\n"
 
-#: fe-connect.c:1702
+#: fe-connect.c:1801
 #, c-format
 msgid "could not get socket error status: %s\n"
 msgstr "no se pudo determinar el estado de error del socket: %s\n"
 
-#: fe-connect.c:1740
+#: fe-connect.c:1839
 #, c-format
 msgid "could not get client address from socket: %s\n"
 msgstr "no se pudo obtener la dirección del cliente desde el socket: %s\n"
 
-#: fe-connect.c:1772 fe-connect.c:1786 fe-connect.c:1798
+#: fe-connect.c:1880
+msgid "requirepeer parameter is not supported on this platform\n"
+msgstr "el parámetro requirepeer no está soportado en esta plataforma\n"
+
+#: fe-connect.c:1883
 #, c-format
 msgid "could not get peer credentials: %s\n"
 msgstr "no se pudo obtener credenciales de la contraparte: %s\n"
 
-#: fe-connect.c:1806
-#, c-format
-msgid "could not get effective UID from peer credentials: %s\n"
-msgstr "no se pudo obtener el UID efectivo desde las credenciales de la contraparte: %s\n"
-
-#: fe-connect.c:1821
+#: fe-connect.c:1893
 #, c-format
 msgid "local user with ID %d does not exist\n"
 msgstr "no existe un usuario local con ID %d\n"
 
-#: fe-connect.c:1829
+#: fe-connect.c:1901
 #, c-format
 msgid "requirepeer specifies \"%s\", but actual peer user name is \"%s\"\n"
-msgstr "requirepeer especifica «%s», pero el nombre de usuario de la contraparte es «%s»\n"
+msgstr ""
+"requirepeer especifica «%s», pero el nombre de usuario de la contraparte es "
+"«%s»\n"
 
-#: fe-connect.c:1835
-msgid "requirepeer parameter is not supported on this platform\n"
-msgstr "el parámetro requirepeer no está soportado en esta plataforma\n"
-
-#: fe-connect.c:1867
+#: fe-connect.c:1935
 #, c-format
 msgid "could not send SSL negotiation packet: %s\n"
 msgstr "no se pudo enviar el paquete de negociación SSL: %s\n"
 
-#: fe-connect.c:1906
+#: fe-connect.c:1974
 #, c-format
 msgid "could not send startup packet: %s\n"
 msgstr "no se pudo enviar el paquete de inicio: %s\n"
 
-#: fe-connect.c:1973 fe-connect.c:1992
+#: fe-connect.c:2041 fe-connect.c:2060
 msgid "server does not support SSL, but SSL was required\n"
 msgstr "el servidor no soporta SSL, pero SSL es requerida\n"
 
-#: fe-connect.c:2008
+#: fe-connect.c:2076
 #, c-format
 msgid "received invalid response to SSL negotiation: %c\n"
 msgstr "se ha recibido una respuesta no válida en la negociación SSL: %c\n"
 
-#: fe-connect.c:2084 fe-connect.c:2117
+#: fe-connect.c:2152 fe-connect.c:2185
 #, c-format
 msgid "expected authentication request from server, but received %c\n"
 msgstr ""
 "se esperaba una petición de autentificación desde el servidor, pero se ha "
 "recibido %c\n"
 
-#: fe-connect.c:2288
+#: fe-connect.c:2358
 #, c-format
 msgid "out of memory allocating GSSAPI buffer (%i)"
 msgstr "memoria agotada creando el búfer GSSAPI (%i)"
 
-#: fe-connect.c:2373
+#: fe-connect.c:2443
 msgid "unexpected message from server during startup\n"
 msgstr "se ha recibido un mensaje inesperado del servidor durante el inicio\n"
 
-#: fe-connect.c:2469
+#: fe-connect.c:2539
 #, c-format
 msgid "invalid connection state %d, probably indicative of memory corruption\n"
 msgstr ""
 "estado de conexión no válido %d, probablemente por corrupción de memoria\n"
 
-#: fe-connect.c:2830 fe-connect.c:2890
+#: fe-connect.c:2968 fe-connect.c:3028
 #, c-format
 msgid "PGEventProc \"%s\" failed during PGEVT_CONNRESET event\n"
 msgstr "PGEventProc «%s» falló durante el evento PGEVT_CONNRESET\n"
 
-#: fe-connect.c:3235
+#: fe-connect.c:3373
 #, c-format
 msgid "invalid LDAP URL \"%s\": scheme must be ldap://\n"
 msgstr "URL LDAP no válida «%s»: el esquema debe ser ldap://\n"
 
-#: fe-connect.c:3250
+#: fe-connect.c:3388
 #, c-format
 msgid "invalid LDAP URL \"%s\": missing distinguished name\n"
 msgstr "URL LDAP no válida «%s»: distinguished name faltante\n"
 
-#: fe-connect.c:3261 fe-connect.c:3314
+#: fe-connect.c:3399 fe-connect.c:3452
 #, c-format
 msgid "invalid LDAP URL \"%s\": must have exactly one attribute\n"
 msgstr "URL LDAP no válida «%s»: debe tener exactamente un atributo\n"
 
-#: fe-connect.c:3271 fe-connect.c:3328
+#: fe-connect.c:3409 fe-connect.c:3466
 #, c-format
 msgid "invalid LDAP URL \"%s\": must have search scope (base/one/sub)\n"
-msgstr "URL LDAP no válida «%s»: debe tener ámbito de búsqueda (base/one/sub)\n"
+msgstr ""
+"URL LDAP no válida «%s»: debe tener ámbito de búsqueda (base/one/sub)\n"
 
-#: fe-connect.c:3282
+#: fe-connect.c:3420
 #, c-format
 msgid "invalid LDAP URL \"%s\": no filter\n"
 msgstr "URL LDAP no válida «%s»: no tiene filtro\n"
 
-#: fe-connect.c:3303
+#: fe-connect.c:3441
 #, c-format
 msgid "invalid LDAP URL \"%s\": invalid port number\n"
 msgstr "URL LDAP no válida «%s»: número de puerto no válido\n"
 
-#: fe-connect.c:3337
+#: fe-connect.c:3475
 msgid "could not create LDAP structure\n"
 msgstr "no se pudo crear estructura LDAP\n"
 
-#: fe-connect.c:3379
+#: fe-connect.c:3517
 #, c-format
 msgid "lookup on LDAP server failed: %s\n"
 msgstr "búsqueda en servidor LDAP falló: %s\n"
 
-#: fe-connect.c:3390
+#: fe-connect.c:3528
 msgid "more than one entry found on LDAP lookup\n"
 msgstr "se encontro más de una entrada en búsqueda LDAP\n"
 
-#: fe-connect.c:3391 fe-connect.c:3403
+#: fe-connect.c:3529 fe-connect.c:3541
 msgid "no entry found on LDAP lookup\n"
 msgstr "no se encontró ninguna entrada en búsqueda LDAP\n"
 
-#: fe-connect.c:3414 fe-connect.c:3427
+#: fe-connect.c:3552 fe-connect.c:3565
 msgid "attribute has no values on LDAP lookup\n"
 msgstr "la búsqueda LDAP entregó atributo sin valores\n"
 
-#: fe-connect.c:3478 fe-connect.c:3496 fe-connect.c:3903
+#: fe-connect.c:3617 fe-connect.c:3636 fe-connect.c:4047
 #, c-format
 msgid "missing \"=\" after \"%s\" in connection info string\n"
 msgstr "falta «=» después de «%s» en la cadena de información de la conexión\n"
 
-#: fe-connect.c:3559 fe-connect.c:3985 fe-connect.c:4169
+#: fe-connect.c:3700 fe-connect.c:4129 fe-connect.c:4313
 #, c-format
 msgid "invalid connection option \"%s\"\n"
 msgstr "opción de conexión no válida «%s»\n"
 
-#: fe-connect.c:3572 fe-connect.c:3952
+#: fe-connect.c:3716 fe-connect.c:4096
 msgid "unterminated quoted string in connection info string\n"
 msgstr ""
 "cadena de caracteres entre comillas sin terminar en la cadena de información "
 "de conexión\n"
 
-#: fe-connect.c:3611
+#: fe-connect.c:3755
 msgid "could not get home directory to locate service definition file"
 msgstr ""
 "no se pudo obtener el directorio home para localizar el archivo de "
 "definición de servicio"
 
-#: fe-connect.c:3644
+#: fe-connect.c:3788
 #, c-format
 msgid "definition of service \"%s\" not found\n"
 msgstr "la definición de servicio «%s» no fue encontrada\n"
 
-#: fe-connect.c:3667
+#: fe-connect.c:3811
 #, c-format
 msgid "service file \"%s\" not found\n"
 msgstr "el archivo de servicio «%s» no fue encontrado\n"
 
-#: fe-connect.c:3680
+#: fe-connect.c:3824
 #, c-format
 msgid "line %d too long in service file \"%s\"\n"
 msgstr "la línea %d es demasiado larga en archivo de servicio «%s»\n"
 
-#: fe-connect.c:3751 fe-connect.c:3778
+#: fe-connect.c:3895 fe-connect.c:3922
 #, c-format
 msgid "syntax error in service file \"%s\", line %d\n"
 msgstr "error de sintaxis en archivo de servicio «%s», línea %d\n"
 
-#: fe-connect.c:4445
+#: fe-connect.c:4589
 msgid "connection pointer is NULL\n"
 msgstr "el puntero de conexión es NULL\n"
 
-#: fe-connect.c:4718
+#: fe-connect.c:4866
 #, c-format
 msgid "WARNING: password file \"%s\" is not a plain file\n"
 msgstr "ADVERTENCIA: El archivo de claves «%s» no es un archivo plano\n"
 
-#: fe-connect.c:4727
+#: fe-connect.c:4875
 #, c-format
 msgid ""
 "WARNING: password file \"%s\" has group or world access; permissions should "
 "be u=rw (0600) or less\n"
 msgstr ""
-"ADVERTENCIA: El archivo de claves «%s» tiene permiso de lectura para el grupo "
-"u otros; los permisos deberían ser u=rw (0600) o menos\n"
+"ADVERTENCIA: El archivo de claves «%s» tiene permiso de lectura para el "
+"grupo u otros; los permisos deberían ser u=rw (0600) o menos\n"
 
-#: fe-connect.c:4815
+#: fe-connect.c:4963
 #, c-format
 msgid "password retrieved from file \"%s\"\n"
 msgstr "contraseña obtenida desde el archivo «%s»\n"
 
-#: fe-exec.c:827
+#: fe-exec.c:829
 msgid "NOTICE"
 msgstr "AVISO"
 
-#: fe-exec.c:1014 fe-exec.c:1071 fe-exec.c:1111
+#: fe-exec.c:1016 fe-exec.c:1073 fe-exec.c:1113
 msgid "command string is a null pointer\n"
 msgstr "la cadena de orden es un puntero nulo\n"
 
-#: fe-exec.c:1104 fe-exec.c:1199
+#: fe-exec.c:1106 fe-exec.c:1201
 msgid "statement name is a null pointer\n"
 msgstr "el nombre de sentencia es un puntero nulo\n"
 
-#: fe-exec.c:1119 fe-exec.c:1273 fe-exec.c:1928 fe-exec.c:2125
+#: fe-exec.c:1121 fe-exec.c:1275 fe-exec.c:1944 fe-exec.c:2142
 msgid "function requires at least protocol version 3.0\n"
 msgstr "la función requiere protocolo 3.0 o superior\n"
 
-#: fe-exec.c:1230
+#: fe-exec.c:1232
 msgid "no connection to the server\n"
 msgstr "no hay conexión con el servidor\n"
 
-#: fe-exec.c:1237
+#: fe-exec.c:1239
 msgid "another command is already in progress\n"
 msgstr "hay otra orden en ejecución\n"
 
-#: fe-exec.c:1349
+#: fe-exec.c:1351
 msgid "length must be given for binary parameter\n"
 msgstr "el largo debe ser especificado para un parámetro binario\n"
 
-#: fe-exec.c:1596
+#: fe-exec.c:1604
 #, c-format
 msgid "unexpected asyncStatus: %d\n"
 msgstr "asyncStatus no esperado: %d\n"
 
-#: fe-exec.c:1616
+#: fe-exec.c:1624
 #, c-format
 msgid "PGEventProc \"%s\" failed during PGEVT_RESULTCREATE event\n"
 msgstr "PGEventProc «%s» falló durante el evento PGEVT_RESULTCREATE\n"
 
-#: fe-exec.c:1746
+#: fe-exec.c:1754
 msgid "COPY terminated by new PQexec"
 msgstr "COPY terminado por un nuevo PQexec"
 
-#: fe-exec.c:1754
+#: fe-exec.c:1762
 msgid "COPY IN state must be terminated first\n"
 msgstr "el estado COPY IN debe ser terminado primero\n"
 
-#: fe-exec.c:1774
+#: fe-exec.c:1782
 msgid "COPY OUT state must be terminated first\n"
 msgstr "el estado COPY OUT debe ser terminado primero\n"
 
-#: fe-exec.c:2016 fe-exec.c:2082 fe-exec.c:2167 fe-protocol2.c:1172
-#: fe-protocol3.c:1557
+#: fe-exec.c:1790
+msgid "PQexec not allowed during COPY BOTH\n"
+msgstr "PQexec no está permitido durante COPY BOTH\n"
+
+#: fe-exec.c:2033 fe-exec.c:2099 fe-exec.c:2186 fe-protocol2.c:1237
+#: fe-protocol3.c:1569
 msgid "no COPY in progress\n"
 msgstr "no hay COPY alguno en ejecución\n"
 
-#: fe-exec.c:2359
+#: fe-exec.c:2378
 msgid "connection in wrong state\n"
 msgstr "la conexión está en un estado incorrecto\n"
 
-#: fe-exec.c:2390
+#: fe-exec.c:2409
 msgid "invalid ExecStatusType code"
 msgstr "el código de ExecStatusType no es válido"
 
-#: fe-exec.c:2454 fe-exec.c:2477
+#: fe-exec.c:2473 fe-exec.c:2496
 #, c-format
 msgid "column number %d is out of range 0..%d"
 msgstr "el número de columna %d está fuera del rango 0..%d"
 
-#: fe-exec.c:2470
+#: fe-exec.c:2489
 #, c-format
 msgid "row number %d is out of range 0..%d"
 msgstr "el número de fila %d está fuera del rango 0..%d"
 
-#: fe-exec.c:2492
+#: fe-exec.c:2511
 #, c-format
 msgid "parameter number %d is out of range 0..%d"
 msgstr "el número de parámetro %d está fuera del rango 0..%d"
 
-#: fe-exec.c:2780
+#: fe-exec.c:2799
 #, c-format
 msgid "could not interpret result from server: %s"
 msgstr "no se pudo interpretar el resultado del servidor: %s"
 
-#: fe-exec.c:3019 fe-exec.c:3103
+#: fe-exec.c:3038 fe-exec.c:3122
 msgid "incomplete multibyte character\n"
 msgstr "carácter multibyte incompleto\n"
 
@@ -548,26 +563,26 @@ msgstr "no se puede determinar el OID de la función loread\n"
 msgid "cannot determine OID of function lowrite\n"
 msgstr "no se puede determinar el OID de la función lowrite\n"
 
-#: fe-misc.c:262
+#: fe-misc.c:270
 #, c-format
 msgid "integer of size %lu not supported by pqGetInt"
 msgstr "el entero de tamaño %lu no está soportado por pqGetInt"
 
-#: fe-misc.c:298
+#: fe-misc.c:306
 #, c-format
 msgid "integer of size %lu not supported by pqPutInt"
 msgstr "el entero de tamaño %lu no está soportado por pqPutInt"
 
-#: fe-misc.c:578 fe-misc.c:780
+#: fe-misc.c:586 fe-misc.c:788
 msgid "connection not open\n"
 msgstr "la conexión no está abierta\n"
 
-#: fe-misc.c:643 fe-misc.c:733
+#: fe-misc.c:651 fe-misc.c:741
 #, c-format
 msgid "could not receive data from server: %s\n"
 msgstr "no se pudo recibir datos del servidor: %s\n"
 
-#: fe-misc.c:750 fe-misc.c:828
+#: fe-misc.c:758 fe-misc.c:836
 msgid ""
 "server closed the connection unexpectedly\n"
 "\tThis probably means the server terminated abnormally\n"
@@ -577,49 +592,49 @@ msgstr ""
 "\tProbablemente se debe a que el servidor terminó de manera anormal\n"
 "\tantes o durante el procesamiento de la petición.\n"
 
-#: fe-misc.c:845
+#: fe-misc.c:853
 #, c-format
 msgid "could not send data to server: %s\n"
 msgstr "no se pudo enviar datos al servidor: %s\n"
 
-#: fe-misc.c:964
+#: fe-misc.c:972
 msgid "timeout expired\n"
 msgstr "tiempo de espera agotado\n"
 
-#: fe-misc.c:1009
+#: fe-misc.c:1017
 msgid "socket not open\n"
 msgstr "el socket no está abierto\n"
 
-#: fe-misc.c:1032
+#: fe-misc.c:1040
 #, c-format
 msgid "select() failed: %s\n"
 msgstr "select() fallida: %s\n"
 
-#: fe-protocol2.c:89
+#: fe-protocol2.c:91
 #, c-format
 msgid "invalid setenv state %c, probably indicative of memory corruption\n"
 msgstr ""
 "el estado de setenv %c no es válido, probablemente por corrupción de "
 "memoria\n"
 
-#: fe-protocol2.c:330
+#: fe-protocol2.c:390
 #, c-format
 msgid "invalid state %c, probably indicative of memory corruption\n"
 msgstr "el estado %c no es válido, probablemente por corrupción de memoria\n"
 
-#: fe-protocol2.c:419 fe-protocol3.c:186
+#: fe-protocol2.c:479 fe-protocol3.c:186
 #, c-format
 msgid "message type 0x%02x arrived from server while idle"
 msgstr "un mensaje de tipo 0x%02x llegó del servidor estando inactivo"
 
-#: fe-protocol2.c:462
+#: fe-protocol2.c:522
 #, c-format
 msgid "unexpected character %c following empty query response (\"I\" message)"
 msgstr ""
 "carácter %c no esperado, siguiendo una respuesta de consulta vacía (mensaje "
 "«I»)"
 
-#: fe-protocol2.c:516
+#: fe-protocol2.c:576
 msgid ""
 "server sent data (\"D\" message) without prior row description (\"T\" "
 "message)"
@@ -627,7 +642,7 @@ msgstr ""
 "el servidor envió datos (mensaje «D») sin precederlos con una descripción de "
 "fila (mensaje «T»)"
 
-#: fe-protocol2.c:532
+#: fe-protocol2.c:592
 msgid ""
 "server sent binary data (\"B\" message) without prior row description (\"T\" "
 "message)"
@@ -635,27 +650,27 @@ msgstr ""
 "el servidor envió datos binarios (mensaje «B») sin precederlos con una "
 "description de fila (mensaje «T»)"
 
-#: fe-protocol2.c:547 fe-protocol3.c:382
+#: fe-protocol2.c:612 fe-protocol3.c:388
 #, c-format
 msgid "unexpected response from server; first received character was \"%c\"\n"
 msgstr ""
 "se ha recibido una respuesta inesperada del servidor; el primer carácter "
 "recibido fue «%c»\n"
 
-#: fe-protocol2.c:768 fe-protocol3.c:701
+#: fe-protocol2.c:833 fe-protocol3.c:707
 msgid "out of memory for query result\n"
 msgstr "no hay suficiente memoria para el resultado de la consulta\n"
 
-#: fe-protocol2.c:1215 fe-protocol3.c:1625
+#: fe-protocol2.c:1280 fe-protocol3.c:1637
 #, c-format
 msgid "%s"
 msgstr "%s"
 
-#: fe-protocol2.c:1227
+#: fe-protocol2.c:1292
 msgid "lost synchronization with server, resetting connection"
 msgstr "se perdió la sincronía con el servidor, reseteando la conexión"
 
-#: fe-protocol2.c:1361 fe-protocol2.c:1393 fe-protocol3.c:1828
+#: fe-protocol2.c:1426 fe-protocol2.c:1458 fe-protocol3.c:1840
 #, c-format
 msgid "protocol error: id=0x%x\n"
 msgstr "error de protocolo: id=0x%x\n"
@@ -668,69 +683,69 @@ msgstr ""
 "el servidor envió datos (mensaje «D») sin precederlos con una description de "
 "tupla (mensaje «T»)\n"
 
-#: fe-protocol3.c:403
+#: fe-protocol3.c:409
 #, c-format
 msgid "message contents do not agree with length in message type \"%c\"\n"
 msgstr ""
 "el contenido del mensaje no concuerda con el largo, en el mensaje tipo «%c»\n"
 
-#: fe-protocol3.c:424
+#: fe-protocol3.c:430
 #, c-format
 msgid "lost synchronization with server: got message type \"%c\", length %d\n"
 msgstr ""
 "se perdió la sincronía con el servidor: se recibió un mensaje de tipo «%c», "
 "largo %d\n"
 
-#: fe-protocol3.c:646
+#: fe-protocol3.c:652
 msgid "unexpected field count in \"D\" message\n"
 msgstr "cantidad de campos inesperada en mensaje «D»\n"
 
 #. translator: %s represents a digit string
-#: fe-protocol3.c:788 fe-protocol3.c:807
+#: fe-protocol3.c:798 fe-protocol3.c:817
 #, c-format
 msgid " at character %s"
 msgstr " en el carácter %s"
 
-#: fe-protocol3.c:820
+#: fe-protocol3.c:830
 #, c-format
 msgid "DETAIL:  %s\n"
 msgstr "DETALLE:  %s\n"
 
-#: fe-protocol3.c:823
+#: fe-protocol3.c:833
 #, c-format
 msgid "HINT:  %s\n"
 msgstr "SUGERENCIA:  %s\n"
 
-#: fe-protocol3.c:826
+#: fe-protocol3.c:836
 #, c-format
 msgid "QUERY:  %s\n"
 msgstr "CONSULTA:  %s\n"
 
-#: fe-protocol3.c:829
+#: fe-protocol3.c:839
 #, c-format
 msgid "CONTEXT:  %s\n"
 msgstr "CONTEXTO:  %s\n"
 
-#: fe-protocol3.c:841
+#: fe-protocol3.c:851
 msgid "LOCATION:  "
 msgstr "UBICACIÓN:  "
 
-#: fe-protocol3.c:843
+#: fe-protocol3.c:853
 #, c-format
 msgid "%s, "
 msgstr "%s, "
 
-#: fe-protocol3.c:845
+#: fe-protocol3.c:855
 #, c-format
 msgid "%s:%s"
 msgstr "%s:%s"
 
-#: fe-protocol3.c:1069
+#: fe-protocol3.c:1079
 #, c-format
 msgid "LINE %d: "
 msgstr "LÍNEA %d: "
 
-#: fe-protocol3.c:1453
+#: fe-protocol3.c:1465
 msgid "PQgetline: not doing text COPY OUT\n"
 msgstr "PQgetline: no se está haciendo COPY OUT de texto\n"
 
@@ -739,21 +754,21 @@ msgstr "PQgetline: no se está haciendo COPY OUT de texto\n"
 msgid "could not establish SSL connection: %s\n"
 msgstr "no se pudo establecer conexión SSL: %s\n"
 
-#: fe-secure.c:349 fe-secure.c:436 fe-secure.c:1162
+#: fe-secure.c:349 fe-secure.c:436 fe-secure.c:1180
 #, c-format
 msgid "SSL SYSCALL error: %s\n"
 msgstr "ERROR en llamada SSL: %s\n"
 
-#: fe-secure.c:355 fe-secure.c:442 fe-secure.c:1166
+#: fe-secure.c:355 fe-secure.c:442 fe-secure.c:1184
 msgid "SSL SYSCALL error: EOF detected\n"
 msgstr "ERROR en llamada SSL: detectado fin de archivo\n"
 
-#: fe-secure.c:367 fe-secure.c:453 fe-secure.c:1175
+#: fe-secure.c:367 fe-secure.c:453 fe-secure.c:1193
 #, c-format
 msgid "SSL error: %s\n"
 msgstr "error de SSL: %s\n"
 
-#: fe-secure.c:377 fe-secure.c:463 fe-secure.c:1184
+#: fe-secure.c:377 fe-secure.c:463 fe-secure.c:1202
 #, c-format
 msgid "unrecognized SSL error code: %d\n"
 msgstr "código de error SSL no reconocido: %d\n"
@@ -768,18 +783,13 @@ msgstr ""
 #, c-format
 msgid "server common name \"%s\" does not match host name \"%s\"\n"
 msgstr ""
-"el common name «%s» del servidor no coincide con el nombre de anfitrión «%s»\n"
+"el common name «%s» del servidor no coincide con el nombre de anfitrión "
+"«%s»\n"
 
 #: fe-secure.c:752
 #, c-format
 msgid "could not create SSL context: %s\n"
 msgstr "no se pudo crear el contexto SSL: %s\n"
-
-#: fe-secure.c:843
-msgid "could not get home directory to locate client certificate files\n"
-msgstr ""
-"no se pudo obtener el directorio home para localizar los archivos de "
-"certificado de cliente\n"
 
 #: fe-secure.c:868
 #, c-format
@@ -805,20 +815,20 @@ msgstr "no se pudo inicializar el motor SSL «%s»: %s\n"
 #, c-format
 msgid "could not read private SSL key \"%s\" from engine \"%s\": %s\n"
 msgstr ""
-"no se pudo leer el archivo de la llave privada SSL «%s» desde el motor «%s»: %"
-"s\n"
+"no se pudo leer el archivo de la llave privada SSL «%s» desde el motor «%s»: "
+"%s\n"
 
 #: fe-secure.c:982
 #, c-format
 msgid "could not load private SSL key \"%s\" from engine \"%s\": %s\n"
 msgstr "no se pudo leer la llave privada SSL «%s» desde el motor «%s»: %s\n"
 
-#: fe-secure.c:1017
+#: fe-secure.c:1019
 #, c-format
 msgid "certificate present, but not private key file \"%s\"\n"
 msgstr "el certificado está presente, pero no la llave privada «%s»\n"
 
-#: fe-secure.c:1025
+#: fe-secure.c:1027
 #, c-format
 msgid ""
 "private key file \"%s\" has group or world access; permissions should be "
@@ -827,27 +837,37 @@ msgstr ""
 "el archivo de la llave privada «%s» tiene permiso de lectura para el grupo u "
 "otros; los permisos deberían ser u=rw (0600) o menos\n"
 
-#: fe-secure.c:1036
+#: fe-secure.c:1038
 #, c-format
 msgid "could not load private key file \"%s\": %s\n"
 msgstr "no se pudo cargar el archivo de la llave privada «%s»: %s\n"
 
-#: fe-secure.c:1050
+#: fe-secure.c:1052
 #, c-format
 msgid "certificate does not match private key file \"%s\": %s\n"
 msgstr "el certificado no coincide con la llave privada «%s»: %s\n"
 
-#: fe-secure.c:1075
+#: fe-secure.c:1080
 #, c-format
 msgid "could not read root certificate file \"%s\": %s\n"
 msgstr "no se pudo leer la lista de certificado raíz «%s»: %s\n"
 
-#: fe-secure.c:1099
+#: fe-secure.c:1107
 #, c-format
 msgid "SSL library does not support CRL certificates (file \"%s\")\n"
 msgstr "la biblioteca SSL no soporta certificados CRL (archivo «%s»)\n"
 
-#: fe-secure.c:1120
+#: fe-secure.c:1134
+msgid ""
+"could not get home directory to locate root certificate file\n"
+"Either provide the file or change sslmode to disable server certificate "
+"verification.\n"
+msgstr ""
+"no se pudo obtener el directorio «home» para ubicar el archivo del certificado raíz\n"
+"Debe ya sea entregar este archivo, o bien cambiar sslmode para deshabilitar "
+"la verificación de certificados del servidor.\n"
+
+#: fe-secure.c:1138
 #, c-format
 msgid ""
 "root certificate file \"%s\" does not exist\n"
@@ -858,20 +878,20 @@ msgstr ""
 "Debe ya sea entregar este archivo, o bien cambiar sslmode para deshabilitar "
 "la verificación de certificados del servidor.\n"
 
-#: fe-secure.c:1203
+#: fe-secure.c:1221
 #, c-format
 msgid "certificate could not be obtained: %s\n"
 msgstr "el certificado no pudo ser obtenido: %s\n"
 
-#: fe-secure.c:1231
+#: fe-secure.c:1249
 msgid "SSL certificate's common name contains embedded null\n"
 msgstr "el common name del certificado SSL contiene un null\n"
 
-#: fe-secure.c:1307
+#: fe-secure.c:1325
 msgid "no SSL error reported"
 msgstr "sin error SSL reportado"
 
-#: fe-secure.c:1316
+#: fe-secure.c:1334
 #, c-format
 msgid "SSL error code %lu"
 msgstr "código de error SSL %lu"

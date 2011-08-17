@@ -1,4 +1,4 @@
 # src/bin/pg_basebackup/nls.mk
 CATALOG_NAME     = pg_basebackup
-AVAIL_LANGUAGES  = de es
+AVAIL_LANGUAGES  = de es fr ja
 GETTEXT_FILES    = pg_basebackup.c
