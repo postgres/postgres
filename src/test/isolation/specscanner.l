@@ -64,12 +64,12 @@ teardown		{ return(TEARDOWN); }
 <qstr><<EOF>>	{ yyerror("unterminated quoted string"); }
 
  /* SQL blocks: { UPDATE ... } */
-"{"				{
+"{"{space}*		{
 
 					litbufpos = 0;
 					BEGIN(sql);
 				}
-<sql>"}"		{
+<sql>{space}*"}" {
 					litbuf[litbufpos] = '\0';
 					yylval.str = strdup(litbuf);
 					BEGIN(INITIAL);

@@ -1,7 +1,7 @@
 Parsed test spec with 2 sessions
 
 starting permutation: rxy1 wx1 c1 wy2 rxy2 c2
-step rxy1:  select * from test_t where val2 = 1; 
+step rxy1: select * from test_t where val2 = 1;
 id             val1           val2           
 
 0              a              1              
@@ -15,10 +15,10 @@ id             val1           val2
 8              a              1              
 9              a              1              
 10             a              1              
-step wx1:  update test_t set val2 = 2 where val2 = 1 and id = 10; 
-step c1:  COMMIT; 
-step wy2:  update test_t set val2 = 2 where val2 = 1 and id = 9; 
-step rxy2:  select * from test_t where val2 = 1; 
+step wx1: update test_t set val2 = 2 where val2 = 1 and id = 10;
+step c1: COMMIT;
+step wy2: update test_t set val2 = 2 where val2 = 1 and id = 9;
+step rxy2: select * from test_t where val2 = 1;
 id             val1           val2           
 
 0              a              1              
@@ -30,10 +30,10 @@ id             val1           val2
 6              a              1              
 7              a              1              
 8              a              1              
-step c2:  COMMIT; 
+step c2: COMMIT;
 
 starting permutation: rxy1 wx1 wy2 c1 rxy2 c2
-step rxy1:  select * from test_t where val2 = 1; 
+step rxy1: select * from test_t where val2 = 1;
 id             val1           val2           
 
 0              a              1              
@@ -47,15 +47,15 @@ id             val1           val2
 8              a              1              
 9              a              1              
 10             a              1              
-step wx1:  update test_t set val2 = 2 where val2 = 1 and id = 10; 
-step wy2:  update test_t set val2 = 2 where val2 = 1 and id = 9; 
-step c1:  COMMIT; 
-step rxy2:  select * from test_t where val2 = 1; 
+step wx1: update test_t set val2 = 2 where val2 = 1 and id = 10;
+step wy2: update test_t set val2 = 2 where val2 = 1 and id = 9;
+step c1: COMMIT;
+step rxy2: select * from test_t where val2 = 1;
 ERROR:  could not serialize access due to read/write dependencies among transactions
-step c2:  COMMIT; 
+step c2: COMMIT;
 
 starting permutation: rxy1 wx1 wy2 rxy2 c1 c2
-step rxy1:  select * from test_t where val2 = 1; 
+step rxy1: select * from test_t where val2 = 1;
 id             val1           val2           
 
 0              a              1              
@@ -69,9 +69,9 @@ id             val1           val2
 8              a              1              
 9              a              1              
 10             a              1              
-step wx1:  update test_t set val2 = 2 where val2 = 1 and id = 10; 
-step wy2:  update test_t set val2 = 2 where val2 = 1 and id = 9; 
-step rxy2:  select * from test_t where val2 = 1; 
+step wx1: update test_t set val2 = 2 where val2 = 1 and id = 10;
+step wy2: update test_t set val2 = 2 where val2 = 1 and id = 9;
+step rxy2: select * from test_t where val2 = 1;
 id             val1           val2           
 
 0              a              1              
@@ -84,12 +84,12 @@ id             val1           val2
 7              a              1              
 8              a              1              
 10             a              1              
-step c1:  COMMIT; 
-step c2:  COMMIT; 
+step c1: COMMIT;
+step c2: COMMIT;
 ERROR:  could not serialize access due to read/write dependencies among transactions
 
 starting permutation: rxy1 wx1 wy2 rxy2 c2 c1
-step rxy1:  select * from test_t where val2 = 1; 
+step rxy1: select * from test_t where val2 = 1;
 id             val1           val2           
 
 0              a              1              
@@ -103,9 +103,9 @@ id             val1           val2
 8              a              1              
 9              a              1              
 10             a              1              
-step wx1:  update test_t set val2 = 2 where val2 = 1 and id = 10; 
-step wy2:  update test_t set val2 = 2 where val2 = 1 and id = 9; 
-step rxy2:  select * from test_t where val2 = 1; 
+step wx1: update test_t set val2 = 2 where val2 = 1 and id = 10;
+step wy2: update test_t set val2 = 2 where val2 = 1 and id = 9;
+step rxy2: select * from test_t where val2 = 1;
 id             val1           val2           
 
 0              a              1              
@@ -118,12 +118,12 @@ id             val1           val2
 7              a              1              
 8              a              1              
 10             a              1              
-step c2:  COMMIT; 
-step c1:  COMMIT; 
+step c2: COMMIT;
+step c1: COMMIT;
 ERROR:  could not serialize access due to read/write dependencies among transactions
 
 starting permutation: rxy1 wy2 wx1 c1 rxy2 c2
-step rxy1:  select * from test_t where val2 = 1; 
+step rxy1: select * from test_t where val2 = 1;
 id             val1           val2           
 
 0              a              1              
@@ -137,15 +137,15 @@ id             val1           val2
 8              a              1              
 9              a              1              
 10             a              1              
-step wy2:  update test_t set val2 = 2 where val2 = 1 and id = 9; 
-step wx1:  update test_t set val2 = 2 where val2 = 1 and id = 10; 
-step c1:  COMMIT; 
-step rxy2:  select * from test_t where val2 = 1; 
+step wy2: update test_t set val2 = 2 where val2 = 1 and id = 9;
+step wx1: update test_t set val2 = 2 where val2 = 1 and id = 10;
+step c1: COMMIT;
+step rxy2: select * from test_t where val2 = 1;
 ERROR:  could not serialize access due to read/write dependencies among transactions
-step c2:  COMMIT; 
+step c2: COMMIT;
 
 starting permutation: rxy1 wy2 wx1 rxy2 c1 c2
-step rxy1:  select * from test_t where val2 = 1; 
+step rxy1: select * from test_t where val2 = 1;
 id             val1           val2           
 
 0              a              1              
@@ -159,9 +159,9 @@ id             val1           val2
 8              a              1              
 9              a              1              
 10             a              1              
-step wy2:  update test_t set val2 = 2 where val2 = 1 and id = 9; 
-step wx1:  update test_t set val2 = 2 where val2 = 1 and id = 10; 
-step rxy2:  select * from test_t where val2 = 1; 
+step wy2: update test_t set val2 = 2 where val2 = 1 and id = 9;
+step wx1: update test_t set val2 = 2 where val2 = 1 and id = 10;
+step rxy2: select * from test_t where val2 = 1;
 id             val1           val2           
 
 0              a              1              
@@ -174,12 +174,12 @@ id             val1           val2
 7              a              1              
 8              a              1              
 10             a              1              
-step c1:  COMMIT; 
-step c2:  COMMIT; 
+step c1: COMMIT;
+step c2: COMMIT;
 ERROR:  could not serialize access due to read/write dependencies among transactions
 
 starting permutation: rxy1 wy2 wx1 rxy2 c2 c1
-step rxy1:  select * from test_t where val2 = 1; 
+step rxy1: select * from test_t where val2 = 1;
 id             val1           val2           
 
 0              a              1              
@@ -193,9 +193,9 @@ id             val1           val2
 8              a              1              
 9              a              1              
 10             a              1              
-step wy2:  update test_t set val2 = 2 where val2 = 1 and id = 9; 
-step wx1:  update test_t set val2 = 2 where val2 = 1 and id = 10; 
-step rxy2:  select * from test_t where val2 = 1; 
+step wy2: update test_t set val2 = 2 where val2 = 1 and id = 9;
+step wx1: update test_t set val2 = 2 where val2 = 1 and id = 10;
+step rxy2: select * from test_t where val2 = 1;
 id             val1           val2           
 
 0              a              1              
@@ -208,12 +208,12 @@ id             val1           val2
 7              a              1              
 8              a              1              
 10             a              1              
-step c2:  COMMIT; 
-step c1:  COMMIT; 
+step c2: COMMIT;
+step c1: COMMIT;
 ERROR:  could not serialize access due to read/write dependencies among transactions
 
 starting permutation: rxy1 wy2 rxy2 wx1 c1 c2
-step rxy1:  select * from test_t where val2 = 1; 
+step rxy1: select * from test_t where val2 = 1;
 id             val1           val2           
 
 0              a              1              
@@ -227,8 +227,8 @@ id             val1           val2
 8              a              1              
 9              a              1              
 10             a              1              
-step wy2:  update test_t set val2 = 2 where val2 = 1 and id = 9; 
-step rxy2:  select * from test_t where val2 = 1; 
+step wy2: update test_t set val2 = 2 where val2 = 1 and id = 9;
+step rxy2: select * from test_t where val2 = 1;
 id             val1           val2           
 
 0              a              1              
@@ -241,13 +241,13 @@ id             val1           val2
 7              a              1              
 8              a              1              
 10             a              1              
-step wx1:  update test_t set val2 = 2 where val2 = 1 and id = 10; 
-step c1:  COMMIT; 
-step c2:  COMMIT; 
+step wx1: update test_t set val2 = 2 where val2 = 1 and id = 10;
+step c1: COMMIT;
+step c2: COMMIT;
 ERROR:  could not serialize access due to read/write dependencies among transactions
 
 starting permutation: rxy1 wy2 rxy2 wx1 c2 c1
-step rxy1:  select * from test_t where val2 = 1; 
+step rxy1: select * from test_t where val2 = 1;
 id             val1           val2           
 
 0              a              1              
@@ -261,8 +261,8 @@ id             val1           val2
 8              a              1              
 9              a              1              
 10             a              1              
-step wy2:  update test_t set val2 = 2 where val2 = 1 and id = 9; 
-step rxy2:  select * from test_t where val2 = 1; 
+step wy2: update test_t set val2 = 2 where val2 = 1 and id = 9;
+step rxy2: select * from test_t where val2 = 1;
 id             val1           val2           
 
 0              a              1              
@@ -275,13 +275,13 @@ id             val1           val2
 7              a              1              
 8              a              1              
 10             a              1              
-step wx1:  update test_t set val2 = 2 where val2 = 1 and id = 10; 
-step c2:  COMMIT; 
-step c1:  COMMIT; 
+step wx1: update test_t set val2 = 2 where val2 = 1 and id = 10;
+step c2: COMMIT;
+step c1: COMMIT;
 ERROR:  could not serialize access due to read/write dependencies among transactions
 
 starting permutation: rxy1 wy2 rxy2 c2 wx1 c1
-step rxy1:  select * from test_t where val2 = 1; 
+step rxy1: select * from test_t where val2 = 1;
 id             val1           val2           
 
 0              a              1              
@@ -295,8 +295,8 @@ id             val1           val2
 8              a              1              
 9              a              1              
 10             a              1              
-step wy2:  update test_t set val2 = 2 where val2 = 1 and id = 9; 
-step rxy2:  select * from test_t where val2 = 1; 
+step wy2: update test_t set val2 = 2 where val2 = 1 and id = 9;
+step rxy2: select * from test_t where val2 = 1;
 id             val1           val2           
 
 0              a              1              
@@ -309,14 +309,14 @@ id             val1           val2
 7              a              1              
 8              a              1              
 10             a              1              
-step c2:  COMMIT; 
-step wx1:  update test_t set val2 = 2 where val2 = 1 and id = 10; 
+step c2: COMMIT;
+step wx1: update test_t set val2 = 2 where val2 = 1 and id = 10;
 ERROR:  could not serialize access due to read/write dependencies among transactions
-step c1:  COMMIT; 
+step c1: COMMIT;
 
 starting permutation: wy2 rxy1 wx1 c1 rxy2 c2
-step wy2:  update test_t set val2 = 2 where val2 = 1 and id = 9; 
-step rxy1:  select * from test_t where val2 = 1; 
+step wy2: update test_t set val2 = 2 where val2 = 1 and id = 9;
+step rxy1: select * from test_t where val2 = 1;
 id             val1           val2           
 
 0              a              1              
@@ -330,15 +330,15 @@ id             val1           val2
 8              a              1              
 9              a              1              
 10             a              1              
-step wx1:  update test_t set val2 = 2 where val2 = 1 and id = 10; 
-step c1:  COMMIT; 
-step rxy2:  select * from test_t where val2 = 1; 
+step wx1: update test_t set val2 = 2 where val2 = 1 and id = 10;
+step c1: COMMIT;
+step rxy2: select * from test_t where val2 = 1;
 ERROR:  could not serialize access due to read/write dependencies among transactions
-step c2:  COMMIT; 
+step c2: COMMIT;
 
 starting permutation: wy2 rxy1 wx1 rxy2 c1 c2
-step wy2:  update test_t set val2 = 2 where val2 = 1 and id = 9; 
-step rxy1:  select * from test_t where val2 = 1; 
+step wy2: update test_t set val2 = 2 where val2 = 1 and id = 9;
+step rxy1: select * from test_t where val2 = 1;
 id             val1           val2           
 
 0              a              1              
@@ -352,8 +352,8 @@ id             val1           val2
 8              a              1              
 9              a              1              
 10             a              1              
-step wx1:  update test_t set val2 = 2 where val2 = 1 and id = 10; 
-step rxy2:  select * from test_t where val2 = 1; 
+step wx1: update test_t set val2 = 2 where val2 = 1 and id = 10;
+step rxy2: select * from test_t where val2 = 1;
 id             val1           val2           
 
 0              a              1              
@@ -366,13 +366,13 @@ id             val1           val2
 7              a              1              
 8              a              1              
 10             a              1              
-step c1:  COMMIT; 
-step c2:  COMMIT; 
+step c1: COMMIT;
+step c2: COMMIT;
 ERROR:  could not serialize access due to read/write dependencies among transactions
 
 starting permutation: wy2 rxy1 wx1 rxy2 c2 c1
-step wy2:  update test_t set val2 = 2 where val2 = 1 and id = 9; 
-step rxy1:  select * from test_t where val2 = 1; 
+step wy2: update test_t set val2 = 2 where val2 = 1 and id = 9;
+step rxy1: select * from test_t where val2 = 1;
 id             val1           val2           
 
 0              a              1              
@@ -386,8 +386,8 @@ id             val1           val2
 8              a              1              
 9              a              1              
 10             a              1              
-step wx1:  update test_t set val2 = 2 where val2 = 1 and id = 10; 
-step rxy2:  select * from test_t where val2 = 1; 
+step wx1: update test_t set val2 = 2 where val2 = 1 and id = 10;
+step rxy2: select * from test_t where val2 = 1;
 id             val1           val2           
 
 0              a              1              
@@ -400,13 +400,13 @@ id             val1           val2
 7              a              1              
 8              a              1              
 10             a              1              
-step c2:  COMMIT; 
-step c1:  COMMIT; 
+step c2: COMMIT;
+step c1: COMMIT;
 ERROR:  could not serialize access due to read/write dependencies among transactions
 
 starting permutation: wy2 rxy1 rxy2 wx1 c1 c2
-step wy2:  update test_t set val2 = 2 where val2 = 1 and id = 9; 
-step rxy1:  select * from test_t where val2 = 1; 
+step wy2: update test_t set val2 = 2 where val2 = 1 and id = 9;
+step rxy1: select * from test_t where val2 = 1;
 id             val1           val2           
 
 0              a              1              
@@ -420,7 +420,7 @@ id             val1           val2
 8              a              1              
 9              a              1              
 10             a              1              
-step rxy2:  select * from test_t where val2 = 1; 
+step rxy2: select * from test_t where val2 = 1;
 id             val1           val2           
 
 0              a              1              
@@ -433,14 +433,14 @@ id             val1           val2
 7              a              1              
 8              a              1              
 10             a              1              
-step wx1:  update test_t set val2 = 2 where val2 = 1 and id = 10; 
-step c1:  COMMIT; 
-step c2:  COMMIT; 
+step wx1: update test_t set val2 = 2 where val2 = 1 and id = 10;
+step c1: COMMIT;
+step c2: COMMIT;
 ERROR:  could not serialize access due to read/write dependencies among transactions
 
 starting permutation: wy2 rxy1 rxy2 wx1 c2 c1
-step wy2:  update test_t set val2 = 2 where val2 = 1 and id = 9; 
-step rxy1:  select * from test_t where val2 = 1; 
+step wy2: update test_t set val2 = 2 where val2 = 1 and id = 9;
+step rxy1: select * from test_t where val2 = 1;
 id             val1           val2           
 
 0              a              1              
@@ -454,7 +454,7 @@ id             val1           val2
 8              a              1              
 9              a              1              
 10             a              1              
-step rxy2:  select * from test_t where val2 = 1; 
+step rxy2: select * from test_t where val2 = 1;
 id             val1           val2           
 
 0              a              1              
@@ -467,14 +467,14 @@ id             val1           val2
 7              a              1              
 8              a              1              
 10             a              1              
-step wx1:  update test_t set val2 = 2 where val2 = 1 and id = 10; 
-step c2:  COMMIT; 
-step c1:  COMMIT; 
+step wx1: update test_t set val2 = 2 where val2 = 1 and id = 10;
+step c2: COMMIT;
+step c1: COMMIT;
 ERROR:  could not serialize access due to read/write dependencies among transactions
 
 starting permutation: wy2 rxy1 rxy2 c2 wx1 c1
-step wy2:  update test_t set val2 = 2 where val2 = 1 and id = 9; 
-step rxy1:  select * from test_t where val2 = 1; 
+step wy2: update test_t set val2 = 2 where val2 = 1 and id = 9;
+step rxy1: select * from test_t where val2 = 1;
 id             val1           val2           
 
 0              a              1              
@@ -488,7 +488,7 @@ id             val1           val2
 8              a              1              
 9              a              1              
 10             a              1              
-step rxy2:  select * from test_t where val2 = 1; 
+step rxy2: select * from test_t where val2 = 1;
 id             val1           val2           
 
 0              a              1              
@@ -501,14 +501,14 @@ id             val1           val2
 7              a              1              
 8              a              1              
 10             a              1              
-step c2:  COMMIT; 
-step wx1:  update test_t set val2 = 2 where val2 = 1 and id = 10; 
+step c2: COMMIT;
+step wx1: update test_t set val2 = 2 where val2 = 1 and id = 10;
 ERROR:  could not serialize access due to read/write dependencies among transactions
-step c1:  COMMIT; 
+step c1: COMMIT;
 
 starting permutation: wy2 rxy2 rxy1 wx1 c1 c2
-step wy2:  update test_t set val2 = 2 where val2 = 1 and id = 9; 
-step rxy2:  select * from test_t where val2 = 1; 
+step wy2: update test_t set val2 = 2 where val2 = 1 and id = 9;
+step rxy2: select * from test_t where val2 = 1;
 id             val1           val2           
 
 0              a              1              
@@ -521,7 +521,7 @@ id             val1           val2
 7              a              1              
 8              a              1              
 10             a              1              
-step rxy1:  select * from test_t where val2 = 1; 
+step rxy1: select * from test_t where val2 = 1;
 id             val1           val2           
 
 0              a              1              
@@ -535,14 +535,14 @@ id             val1           val2
 8              a              1              
 9              a              1              
 10             a              1              
-step wx1:  update test_t set val2 = 2 where val2 = 1 and id = 10; 
-step c1:  COMMIT; 
-step c2:  COMMIT; 
+step wx1: update test_t set val2 = 2 where val2 = 1 and id = 10;
+step c1: COMMIT;
+step c2: COMMIT;
 ERROR:  could not serialize access due to read/write dependencies among transactions
 
 starting permutation: wy2 rxy2 rxy1 wx1 c2 c1
-step wy2:  update test_t set val2 = 2 where val2 = 1 and id = 9; 
-step rxy2:  select * from test_t where val2 = 1; 
+step wy2: update test_t set val2 = 2 where val2 = 1 and id = 9;
+step rxy2: select * from test_t where val2 = 1;
 id             val1           val2           
 
 0              a              1              
@@ -555,7 +555,7 @@ id             val1           val2
 7              a              1              
 8              a              1              
 10             a              1              
-step rxy1:  select * from test_t where val2 = 1; 
+step rxy1: select * from test_t where val2 = 1;
 id             val1           val2           
 
 0              a              1              
@@ -569,14 +569,14 @@ id             val1           val2
 8              a              1              
 9              a              1              
 10             a              1              
-step wx1:  update test_t set val2 = 2 where val2 = 1 and id = 10; 
-step c2:  COMMIT; 
-step c1:  COMMIT; 
+step wx1: update test_t set val2 = 2 where val2 = 1 and id = 10;
+step c2: COMMIT;
+step c1: COMMIT;
 ERROR:  could not serialize access due to read/write dependencies among transactions
 
 starting permutation: wy2 rxy2 rxy1 c2 wx1 c1
-step wy2:  update test_t set val2 = 2 where val2 = 1 and id = 9; 
-step rxy2:  select * from test_t where val2 = 1; 
+step wy2: update test_t set val2 = 2 where val2 = 1 and id = 9;
+step rxy2: select * from test_t where val2 = 1;
 id             val1           val2           
 
 0              a              1              
@@ -589,7 +589,7 @@ id             val1           val2
 7              a              1              
 8              a              1              
 10             a              1              
-step rxy1:  select * from test_t where val2 = 1; 
+step rxy1: select * from test_t where val2 = 1;
 id             val1           val2           
 
 0              a              1              
@@ -603,14 +603,14 @@ id             val1           val2
 8              a              1              
 9              a              1              
 10             a              1              
-step c2:  COMMIT; 
-step wx1:  update test_t set val2 = 2 where val2 = 1 and id = 10; 
+step c2: COMMIT;
+step wx1: update test_t set val2 = 2 where val2 = 1 and id = 10;
 ERROR:  could not serialize access due to read/write dependencies among transactions
-step c1:  COMMIT; 
+step c1: COMMIT;
 
 starting permutation: wy2 rxy2 c2 rxy1 wx1 c1
-step wy2:  update test_t set val2 = 2 where val2 = 1 and id = 9; 
-step rxy2:  select * from test_t where val2 = 1; 
+step wy2: update test_t set val2 = 2 where val2 = 1 and id = 9;
+step rxy2: select * from test_t where val2 = 1;
 id             val1           val2           
 
 0              a              1              
@@ -623,8 +623,8 @@ id             val1           val2
 7              a              1              
 8              a              1              
 10             a              1              
-step c2:  COMMIT; 
-step rxy1:  select * from test_t where val2 = 1; 
+step c2: COMMIT;
+step rxy1: select * from test_t where val2 = 1;
 id             val1           val2           
 
 0              a              1              
@@ -637,5 +637,5 @@ id             val1           val2
 7              a              1              
 8              a              1              
 10             a              1              
-step wx1:  update test_t set val2 = 2 where val2 = 1 and id = 10; 
-step c1:  COMMIT; 
+step wx1: update test_t set val2 = 2 where val2 = 1 and id = 10;
+step c1: COMMIT;
