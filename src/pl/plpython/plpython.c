@@ -4170,7 +4170,9 @@ PLy_init_plpy(void)
 	PyObject   *main_mod,
 			   *main_dict,
 			   *plpy_mod;
+#if PY_MAJOR_VERSION < 3
 	PyObject   *plpy;
+#endif
 
 	/*
 	 * initialize plpy module
@@ -4183,7 +4185,7 @@ PLy_init_plpy(void)
 		elog(ERROR, "could not initialize PLy_SubtransactionType");
 
 #if PY_MAJOR_VERSION >= 3
-	plpy = PyModule_Create(&PLy_module);
+	PyModule_Create(&PLy_module);
 	/* for Python 3 we initialized the exceptions in PyInit_plpy */
 #else
 	plpy = Py_InitModule("plpy", PLy_methods);
