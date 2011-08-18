@@ -155,11 +155,13 @@ lazy_vacuum_rel(Relation onerel, VacuumStmt *vacstmt,
 	bool		scan_all;
 	TransactionId freezeTableLimit;
 
-	pg_rusage_init(&ru0);
-
 	/* measure elapsed time iff autovacuum logging requires it */
-	if (IsAutoVacuumWorkerProcess() && Log_autovacuum_min_duration > 0)
-		starttime = GetCurrentTimestamp();
+	if (IsAutoVacuumWorkerProcess() && Log_autovacuum_min_duration >= 0)
+	{
+		pg_rusage_init(&ru0);
+		if (Log_autovacuum_min_duration > 0)
+			starttime = GetCurrentTimestamp();
+	}
 
 	if (vacstmt->options & VACOPT_VERBOSE)
 		elevel = INFO;
