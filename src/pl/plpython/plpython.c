@@ -3205,7 +3205,13 @@ PLy_spi_execute_fetch_result(SPITupleTable *tuptable, int rows, int status)
  */
 
 #if PY_MAJOR_VERSION >= 3
-static PyMODINIT_FUNC
+/*
+ * Must have external linkage, because PyMODINIT_FUNC does dllexport on
+ * Windows-like platforms.
+ */
+PyMODINIT_FUNC PyInit_plpy(void);
+
+PyMODINIT_FUNC
 PyInit_plpy(void)
 {
 	return PyModule_Create(&PLy_module);
