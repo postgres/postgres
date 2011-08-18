@@ -286,7 +286,7 @@ run_permutation(TestSpec * testspec, int nsteps, Step ** steps)
 			{
 				fprintf(stderr, "setup of session %s failed: %s",
 						testspec->sessions[i]->name,
-						PQerrorMessage(conns[0]));
+						PQerrorMessage(conns[i]));
 				exit_nicely();
 			}
 			PQclear(res);
@@ -333,7 +333,7 @@ run_permutation(TestSpec * testspec, int nsteps, Step ** steps)
 			{
 				fprintf(stderr, "teardown of session %s failed: %s",
 						testspec->sessions[i]->name,
-						PQerrorMessage(conns[0]));
+						PQerrorMessage(conns[i]));
 				/* don't exit on teardown failure */
 			}
 			PQclear(res);
