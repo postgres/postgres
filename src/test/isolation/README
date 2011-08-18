@@ -5,13 +5,20 @@ Isolation tests
 
 This directory contains a set of tests for the serializable isolation level.
 Testing isolation requires running multiple overlapping transactions,
-which requires multiple concurrent connections, and can't therefore be
+which requires multiple concurrent connections, and therefore can't be
 tested using the normal pg_regress program.
 
-To represent a test with overlapping transactions, we use a test specification
-file with a custom syntax, described in the next section.
+To run the tests, you need to have a server running at the default port
+expected by libpq.  (You can set PGPORT and so forth in your environment
+to control this.)  Then run
+    gmake installcheck
+Note that the prepared-transactions test will not pass unless you have
+the server's max_prepared_transactions parameter set to at least 3.
 
-isolationtester is program that uses libpq to open multiple connections,
+To represent a test with overlapping transactions, we use a test specification
+file with a custom syntax, which is described in the next section.
+
+isolationtester is a program that uses libpq to open multiple connections,
 and executes a test specified by a spec file. A libpq connection string
 specifies the server and database to connect to; defaults derived from
 environment variables are used otherwise.
@@ -19,8 +26,6 @@ environment variables are used otherwise.
 pg_isolation_regress is a tool similar to pg_regress, but instead of using
 psql to execute a test, it uses isolationtester.
 
-To run the tests, you need to have a server up and running. Run
-    gmake installcheck
 
 Test specification
 ==================
@@ -63,3 +68,16 @@ permutation "<step name>" ...
   all possible overlapping orderings of the given sessions.
 
 Lines beginning with a # are considered comments.
+
+
+Support for blocking commands
+=============================
+
+Each spec may contain commands that block until further action has been taken
+(most likely, some other session runs a step that unblocks it or causes a
+deadlock).  Such a spec needs to be careful to manually specify valid
+permutations, i.e. those that would not expect a blocked session to execute a
+command.  If the spec fails to follow that rule, the spec is aborted.
+
+Only one command can be waiting at a time.  As long as one command is waiting,
+other commands are run to completion synchronously.
