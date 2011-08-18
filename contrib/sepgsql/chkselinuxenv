@@ -40,7 +40,7 @@ echo "ok"
 #
 # Test.2 - 'runcon' must exist and be executable
 #
-echo -n "test runon command            ... "
+echo -n "test runcon command           ... "
 
 CMD_RUNCON="`which runcon 2>/dev/null`"
 if [ ! -x "${CMD_RUNCON}" ]; then
