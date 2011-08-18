@@ -4066,7 +4066,13 @@ PLy_add_exceptions(PyObject *plpy)
 }
 
 #if PY_MAJOR_VERSION >= 3
-static PyMODINIT_FUNC
+/*
+ * Must have external linkage, because PyMODINIT_FUNC does dllexport on
+ * Windows-like platforms.
+ */
+PyMODINIT_FUNC PyInit_plpy(void);
+
+PyMODINIT_FUNC
 PyInit_plpy(void)
 {
 	PyObject   *m;
