@@ -416,7 +416,11 @@ run_permutation(TestSpec * testspec, int nsteps, Step ** steps)
 		if (testspec->sessions[i]->setupsql)
 		{
 			res = PQexec(conns[i + 1], testspec->sessions[i]->setupsql);
-			if (PQresultStatus(res) != PGRES_COMMAND_OK)
+			if (PQresultStatus(res) == PGRES_TUPLES_OK)
+			{
+				printResultSet(res);
+			}
+			else if (PQresultStatus(res) != PGRES_COMMAND_OK)
 			{
 				fprintf(stderr, "setup of session %s failed: %s",
 						testspec->sessions[i]->name,
@@ -477,7 +481,11 @@ run_permutation(TestSpec * testspec, int nsteps, Step ** steps)
 	if (testspec->teardownsql)
 	{
 		res = PQexec(conns[0], testspec->teardownsql);
-		if (PQresultStatus(res) != PGRES_COMMAND_OK)
+		if (PQresultStatus(res) == PGRES_TUPLES_OK)
+		{
+			printResultSet(res);
+		}
+		else if (PQresultStatus(res) != PGRES_COMMAND_OK)
 		{
 			fprintf(stderr, "teardown failed: %s",
 					PQerrorMessage(conns[0]));
