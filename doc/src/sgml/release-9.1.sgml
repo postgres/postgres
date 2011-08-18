@@ -9,32 +9,24 @@
    <simpara>2011-??-??</simpara>
   </note>
 
-  <para>CURRENT AS OF 2011-07-07</para>
+  <para>CURRENT AS OF 2011-08-17</para>
 
   <sect2>
    <title>Overview</title>
 
    <para>
     This release shows <productname>PostgreSQL</> moving beyond the
-    traditional relational feature set with new, ground-breaking
+    traditional relational-database feature set with new, ground-breaking
     functionality that is unique to <productname>PostgreSQL</>.
-    Additionally, this release improves streaming replication by adding
-    a synchronous option and monitoring improvements.  Major enhancements
-    include:
+    The streaming replication feature introduced in release 9.0 is
+    significantly enhanced by adding a synchronous-replication option,
+    streaming backups, and monitoring improvements.
+    Major enhancements include:
    </para>
 
    <itemizedlist>
 
     <!-- This list duplicates items below, but without authors or details-->
-
-    <listitem>
-     <para>
-      Support unlogged tables using the <link
-      linkend="SQL-CREATETABLE-description"><literal>UNLOGGED</></link>
-      option in <link linkend="SQL-CREATETABLE"><command>CREATE
-      TABLE</></link>
-     </para>
-    </listitem>
 
     <listitem>
      <para>
@@ -59,16 +51,23 @@
 
     <listitem>
      <para>
-      Add a <link linkend="SQL-SECURITY-LABEL"><command>SECURITY
-      LABEL</></link> command
+      Add <link linkend="extend-extensions">extensions</link> which
+      simplify packaging of additions to <productname>PostgreSQL</>
      </para>
     </listitem>
 
     <listitem>
      <para>
       Add a true <link
-      linkend="xact-serializable">serializable</link> isolation
-      level
+      linkend="xact-serializable">serializable isolation level</link>
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Support unlogged tables using the <literal>UNLOGGED</>
+      option in <link linkend="SQL-CREATETABLE"><command>CREATE
+      TABLE</></link>
      </para>
     </listitem>
 
@@ -89,8 +88,9 @@
 
     <listitem>
      <para>
-      Add <link linkend="extend-extensions">extensions</link> which
-      simplify packaging of additions to <productname>PostgreSQL</>
+      Add a <link linkend="SQL-SECURITY-LABEL"><command>SECURITY
+      LABEL</></link> command and support for
+      <link linkend="sepgsql"><acronym>SELinux</> permissions control</link>
      </para>
     </listitem>
 
@@ -146,6 +146,17 @@
        strings are the proper way to embed backslash escapes in strings and are
        unaffected by this change.
       </para>
+
+      <warning>
+       <para>
+        This change can break applications that are not expecting it and
+        do their own string escaping according to the old rules.  The
+        consequences could be as severe as introducing SQL-injection security
+        holes.  Be sure to test applications that are exposed to untrusted
+        input, to ensure that they correctly handle single quotes and
+        backslashes in text strings.
+       </para>
+      </warning>
      </listitem>
 
     </itemizedlist>
@@ -383,7 +394,8 @@
 
      <listitem>
       <para>
-       Treat <application>ECPG</> cursor names as case-insensitive (Zoltan Boszormenyi)
+       Treat <application>ECPG</> cursor names as case-insensitive
+       (Zoltan Boszormenyi)
       </para>
      </listitem>
 
@@ -394,9 +406,12 @@
 
   <sect2>
    <title>Changes</title>
-    <para>
-     Version 9.1 has ...
-    </para>
+
+   <para>
+    Below you will find a detailed account of the changes between
+    <productname>PostgreSQL</productname> 9.1 and the previous major
+    release.
+   </para>
 
    <sect3>
     <title>Server</title>
@@ -408,8 +423,7 @@
 
       <listitem>
        <para>
-        Support unlogged tables using the <link
-        linkend="SQL-CREATETABLE-description"><literal>UNLOGGED</></link>
+        Support unlogged tables using the <literal>UNLOGGED</>
         option in <link linkend="SQL-CREATETABLE"><command>CREATE
         TABLE</></link> (Robert Haas)
        </para>
@@ -440,8 +454,11 @@
 
       <listitem>
        <para>
-         Merge duplicate fsync requests on busy systems (Robert Haas,
-         Greg Smith)
+        Merge duplicate fsync requests (Robert Haas, Greg Smith)
+       </para>
+
+       <para>
+        This greatly improves performance under heavy write loads.
        </para>
       </listitem>
 
@@ -584,7 +601,9 @@
        </para>
 
        <para>
-        The old term is still accepted for backward compatibility.
+        The old term is still accepted for backward compatibility, but since
+        the two methods are fundamentally different, it seemed better to adopt
+        different names for them.
        </para>
       </listitem>
 
@@ -631,6 +650,18 @@
          linkend="guc-log-file-mode"><varname>log_file_mode</></link>
          which controls the permissions on log files created by the
          logging collector (Martin Pihlak)
+       </para>
+      </listitem>
+
+      <listitem>
+       <para>
+        Reduce the default maximum line length for <application>syslog</>
+        logging to 900 bytes plus prefixes (Noah Misch)
+       </para>
+
+       <para>
+        This avoids truncation of long log lines on syslog implementations
+        that have a 1KB length limit, rather than the more common 2KB.
        </para>
       </listitem>
 
@@ -1000,8 +1031,8 @@
        </para>
 
        <para>
-        This allows external cluster management software to take control
-        of whether servers restart or not.
+        This allows external cluster management software to control
+        whether the database server restarts or not.
        </para>
       </listitem>
 
@@ -1032,8 +1063,8 @@
       <listitem>
        <para>
         Add a true <link
-        linkend="xact-serializable">serializable</link> isolation
-        level (Kevin Grittner, Dan Ports)
+        linkend="xact-serializable">serializable isolation level</link>
+        (Kevin Grittner, Dan Ports)
        </para>
 
        <para>
@@ -1444,11 +1475,11 @@
       <listitem>
        <para>
         Prevent <link linkend="autovacuum">autovacuum</link> from
-        waiting if it cannot acquire a lock (Robert Haas)
+        waiting if it cannot acquire a table lock (Robert Haas)
        </para>
 
        <para>
-        It will try to vacuum later.
+        It will try to vacuum that table later.
        </para>
       </listitem>
 
@@ -1486,6 +1517,12 @@
        <para>
         This allows <acronym>GiST</> indexes to quickly return the
         <replaceable>N</> closest values in a query with <literal>LIMIT</>.
+        For example
+<programlisting><![CDATA[
+SELECT * FROM places ORDER BY location <-> point '(101,456)' LIMIT 10;
+]]>
+</programlisting>
+        finds the ten places closest to a given target point.
        </para>
       </listitem>
 
@@ -1851,7 +1888,7 @@
       <listitem>
        <para>
         Add <link linkend="plpgsql-foreach-array"><command>FOREACH IN
-        ARRAY</></link> to <link linkend="plpgsql">PL/pgSQL</link>
+        ARRAY</></link> to PL/pgSQL
         (Pavel Stehule)
        </para>
 
@@ -1962,7 +1999,7 @@
 
       <listitem>
        <para>
-         Add PL/Python explicit subtransactions (Jan Urbanski)
+        Add explicit subtransactions to PL/Python (Jan Urbanski)
        </para>
       </listitem>
 
@@ -2055,7 +2092,7 @@
 
       <listitem>
        <para>
-        Add <option>S</> (<quote>system</>) option to <application>psql</>'s
+        Add the <option>S</> (<quote>system</>) option to <application>psql</>'s
         <literal>\dn</> (list schemas) command (Tom Lane)
        </para>
 
@@ -2207,7 +2244,8 @@
 
       <listitem>
        <para>
-        Add a libpq connection option <literal>client_encoding</>
+        Add a libpq connection option <link
+        linkend="libpq-connect-client-encoding"><literal>client_encoding</></link>
         which behaves like the <envar>PGCLIENTENCODING</> environment
         variable (Heikki Linnakangas)
        </para>
@@ -2234,10 +2272,11 @@
 
       <listitem>
        <para>
-        Allow libpq database clients to
-        check the user name of the server process using <link
+        Allow libpq-using clients to
+        check the user name of the server process
+        when connecting via Unix-domain sockets, with the new <link
         linkend="libpq-connect-requirepeer"><literal>requirepeer</></link>
-        when connecting via Unix-domain sockets
+        connection option
         (Peter Eisentraut)
        </para>
 
@@ -2272,8 +2311,16 @@
 
       <listitem>
        <para>
-         Allow ECPG to accept dynamic cursor names even in
-         <literal>WHERE CURRENT OF</literal> clauses
+        Allow ECPG to accept dynamic cursor names even in
+        <literal>WHERE CURRENT OF</literal> clauses
+        (Zoltan Boszormenyi)
+       </para>
+      </listitem>
+
+      <listitem>
+       <para>
+        Make <application>ecpglib</> write <type>double</> values with a
+        precision of 15 digits, not 14 as formerly (Akira Kurosawa)
        </para>
       </listitem>
 
@@ -2422,8 +2469,8 @@
 
       <listitem>
        <para>
-         Add latches to the source code to wait for events (Heikki
-         Linnakangas)
+        Add latches to the source code to support waiting for events (Heikki
+        Linnakangas)
        </para>
       </listitem>
 
@@ -2561,7 +2608,7 @@
 
      <listitem>
       <para>
-        Add nearest-neighbor support to <link
+        Add nearest-neighbor search support to <link
         linkend="pgtrgm"><filename>contrib/pg_trgm</></link> and <link
         linkend="btree-gist"><filename>contrib/btree_gist</></link>
         (Teodor Sigaev)
@@ -2672,7 +2719,7 @@
       <listitem>
        <para>
         Add <link linkend="sepgsql"><filename>contrib/sepgsql</></link>
-        to interface permission checks with <acronym>SE</>-Linux (KaiGai Kohei)
+        to interface permission checks with <acronym>SELinux</> (KaiGai Kohei)
        </para>
 
        <para>
@@ -2698,7 +2745,7 @@
 
       <listitem>
        <para>
-        Add <link linkend="dummy-seclabel">dummy_seclabel</link>
+        Add <link linkend="dummy-seclabel"><filename>dummy_seclabel</></link>
         contrib module (KaiGai Kohei)
        </para>
 
@@ -2808,8 +2855,8 @@
 
      <listitem>
       <para>
-        Extensive <link linkend="ecpg"><application>ECPG</> documentation</link>
-        improvements (Satoshi Nagayasu)
+        Extensive <link linkend="ecpg"><application>ECPG</></link>
+        documentation improvements (Satoshi Nagayasu)
       </para>
      </listitem>
 
@@ -2864,7 +2911,7 @@
 
      <listitem>
       <para>
-       Merge docs for <command>CREATE CONSTRAINT TRIGGER</> and <link
+       Merge documentation for <command>CREATE CONSTRAINT TRIGGER</> and <link
        linkend="SQL-CREATETRIGGER"><command>CREATE TRIGGER</></link>
        (Alvaro Herrera)
       </para>
