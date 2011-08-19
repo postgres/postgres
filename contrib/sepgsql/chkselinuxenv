@@ -9,6 +9,33 @@ PG_DATADIR="$2"
 
 echo
 echo "============== checking selinux environment           =============="
+#
+# Test.0 - necessary commands for environment checks
+#
+echo -n "test installed commands       ... "
+if ! which --help >&/dev/null; then
+    echo "failed"
+    echo
+    echo "'which' command was not found, executable or installed."
+    echo "Please make sure your PATH, or install this command at first."
+    echo
+    echo "If yum is available on your system, it will suggest packages"
+    echo "to be installed:"
+    echo "  # yum provides which"
+    exit 1
+fi
+if ! matchpathcon -n / >&/dev/null; then
+    echo "failed"
+    echo
+    echo "'matchpathcon' command was not found, executable or installed."
+    echo "Please make sure your PATH, or install this command at first."
+    echo
+    echo "If yum is available on your system, it will suggest packages"
+    echo "to be installed:"
+    echo "  # yum provides which"
+    exit 1
+fi
+echo "ok"
 
 #
 # Test.1 - must be launched at unconfined_t domain
@@ -164,24 +191,36 @@ fi
 echo "ok"
 
 #
-# Test.8 - 'psql' command must be labeled as 'bin_t' type
+# Test.8 - 'psql' command must be executable by test domain
 #
-echo -n "test label of psql            ... "
+echo -n "test execution of psql        ... "
 
 CMD_PSQL="${PG_BINDIR}/psql"
-LABEL_PSQL=`stat -c '%C' ${CMD_PSQL} | sed 's/:/ /g' | awk '{print $3}'`
-if [ "${LABEL_PSQL}" != "bin_t" ]; then
+${CMD_RUNCON} -t sepgsql_regtest_user_t ${CMD_PSQL} --help >& /dev/null
+if [ $? -ne 0 ]; then
     echo "failed"
     echo
-    echo "The ${CMD_PSQL} must be labeled as bin_t type."
-    echo "You can assign right label using restorecon, as follows:"
+    echo "The ${CMD_PSQL} must be executable by sepgsql_regtest_user_t"
+    echo "domain. It has restricted privileges compared to unconfined_t,"
+    echo "so you should ensure whether this command is labeled correctly."
     echo
     echo "  \$ su - (not needed, if you owns installation directory)"
-    echo "  # restorecon -R ${PG_BINDIR}"
-    echo
-    echo "Or, using chcon"
-    echo
-    echo "  # chcon -t bin_t ${CMD_PSQL}"
+    EXPECT_PSQL=`matchpathcon -n ${CMD_PSQL} | sed 's/:/ /g' | awk '{print $3}'`
+    if [ "${EXPECT_PSQL}" = "user_home_t" ]; then
+	## Case of installation on /home directory
+	echo "  # restorecon -R ${PG_BINDIR}"
+	echo
+	echo "Or, using chcon"
+	echo
+	echo "  # chcon -t user_home_t ${CMD_PSQL}"
+    else
+	echo "  \$ su - (not needed, if you own the installation directory)"
+	echo "  # restorecon -R ${PG_BINDIR}"
+	echo
+	echo "Or, using chcon"
+	echo
+	echo "  # chcon -t bin_t ${CMD_PSQL}"
+    fi
     echo
     exit 1
 fi
