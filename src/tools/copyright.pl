@@ -22,12 +22,14 @@ print "Using current year:  $year\n";
 find({wanted => \&wanted, no_chdir => 1}, '.');
 
 sub wanted {
-    return unless -f $File::Find::name;
+    my $filename = $File::Find::name;
 
-    my @lines;
-    tie @lines, Tie::File, $File::Find::name;
+    # only regular files
+    return if ! -f $filename;
 
-    foreach my $line (@lines) {
+    open(my $FILE, '<', $filename) or die "Cannot open $filename";
+
+    foreach my $line (<$FILE>) {
         # We only care about lines with a copyright notice.
         next unless $line =~ m/$cc.*$pgdg/;
         # We stop when we've done one substitution.  This is both for
@@ -37,7 +39,7 @@ sub wanted {
         last if $line =~ s/($cc\d{4})(, $pgdg)/$1-$year$2/;
         last if $line =~ s/($cc\d{4})-\d{4}(, $pgdg)/$1-$year$2/;
     }
-    untie @lines;
+    close($FILE) or die "Cannot close $filename";
 }
 
 print "Manually update doc/src/sgml/legal.sgml and src/interfaces/libpq/libpq.rc.in too\n";
