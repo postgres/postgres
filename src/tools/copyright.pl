@@ -11,6 +11,7 @@ use strict;
 use warnings;
 
 use File::Find;
+use Tie::File;
 
 my $pgdg = 'PostgreSQL Global Development Group';
 my $cc = 'Copyright \(c\) ';
@@ -22,14 +23,12 @@ print "Using current year:  $year\n";
 find({wanted => \&wanted, no_chdir => 1}, '.');
 
 sub wanted {
-    my $filename = $File::Find::name;
+    return if ! -f $File::Find::name || -l $File::Find::name;
 
-    # only regular files
-    return if ! -f $filename;
+    my @lines;
+    tie @lines, "Tie::File", $File::Find::name;
 
-    open(my $FILE, '<', $filename) or die "Cannot open $filename";
-
-    foreach my $line (<$FILE>) {
+    foreach my $line (@lines) {
         # We only care about lines with a copyright notice.
         next unless $line =~ m/$cc.*$pgdg/;
         # We stop when we've done one substitution.  This is both for
@@ -39,7 +38,7 @@ sub wanted {
         last if $line =~ s/($cc\d{4})(, $pgdg)/$1-$year$2/;
         last if $line =~ s/($cc\d{4})-\d{4}(, $pgdg)/$1-$year$2/;
     }
-    close($FILE) or die "Cannot close $filename";
+    untie @lines;
 }
 
 print "Manually update doc/src/sgml/legal.sgml and src/interfaces/libpq/libpq.rc.in too\n";
