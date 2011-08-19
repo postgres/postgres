@@ -120,9 +120,15 @@ transfer_single_new_db(pageCnvCtx *pageConverter,
 	int			numFiles = 0;
 	int			mapnum;
 	int			fileno;
-
+	bool		vm_crashsafe_change = false;
+	
 	old_dir[0] = '\0';
 
+	/* Do not copy non-crashsafe vm files for binaries that assume crashsafety */
+	if (old_cluster.controldata.cat_ver < VISIBILITY_MAP_CRASHSAFE_CAT_VER &&
+		new_cluster.controldata.cat_ver >= VISIBILITY_MAP_CRASHSAFE_CAT_VER)
+		vm_crashsafe_change = true;
+	
 	for (mapnum = 0; mapnum < size; mapnum++)
 	{
 		char		old_file[MAXPGPATH];
@@ -168,8 +174,16 @@ transfer_single_new_db(pageCnvCtx *pageConverter,
 
 			for (fileno = 0; fileno < numFiles; fileno++)
 			{
+				char *vm_offset = strstr(namelist[fileno]->d_name, "_vm");
+				bool is_vm_file = false;
+
+				/* Is a visibility map file? (name ends with _vm) */
+				if (vm_offset && strlen(vm_offset) == strlen("_vm"))
+					is_vm_file = true;
+
 				if (strncmp(namelist[fileno]->d_name, scandir_file_pattern,
-							strlen(scandir_file_pattern)) == 0)
+							strlen(scandir_file_pattern)) == 0 &&
+					(!is_vm_file || !vm_crashsafe_change))
 				{
 					snprintf(old_file, sizeof(old_file), "%s/%s", maps[mapnum].old_dir,
 							 namelist[fileno]->d_name);
