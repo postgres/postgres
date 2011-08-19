@@ -13,7 +13,7 @@ use warnings;
 use File::Find;
 
 my $pgdg = 'PostgreSQL Global Development Group';
-my $cc = 'Copyright (c) ';
+my $cc = 'Copyright \(c\) ';
 # year-1900 is what localtime(time) puts in element 5
 my $year = 1900 + ${[localtime(time)]}[5];
 
