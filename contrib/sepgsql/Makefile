@@ -18,5 +18,5 @@ include $(top_builddir)/src/Makefile.global
 include $(top_srcdir)/contrib/contrib-global.mk
 endif
 
-SHLIB_LINK += $(filter -lselinux, $(LIBS))
+SHLIB_LINK += -lselinux
 REGRESS_OPTS += --launcher $(top_builddir)/contrib/sepgsql/launcher
