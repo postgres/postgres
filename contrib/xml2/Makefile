@@ -8,7 +8,7 @@ DATA = xml2--1.0.sql xml2--unpackaged--1.0.sql
 
 REGRESS = xml2
 
-SHLIB_LINK += $(filter -lxslt, $(LIBS)) $(filter -lxml2, $(LIBS))
+SHLIB_LINK += $(filter -lxslt, $(LIBS)) -lxml2
 
 ifdef USE_PGXS
 PG_CONFIG = pg_config
