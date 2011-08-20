@@ -953,8 +953,11 @@ tbm_lossify(TIDBitmap *tbm)
 	/*
 	 * XXX Really stupid implementation: this just lossifies pages in
 	 * essentially random order.  We should be paying some attention to the
-	 * number of bits set in each page, instead.  Also it might be a good idea
-	 * to lossify more than the minimum number of pages during each call.
+	 * number of bits set in each page, instead.
+	 *
+	 * Since we are called as soon as nentries exceeds maxentries, we should
+	 * push nentries down to significantly less than maxentries, or else we'll
+	 * just end up doing this again very soon.  We shoot for maxentries/2.
 	 */
 	Assert(!tbm->iterating);
 	Assert(tbm->status == TBM_HASH);
@@ -975,7 +978,7 @@ tbm_lossify(TIDBitmap *tbm)
 		/* This does the dirty work ... */
 		tbm_mark_page_lossy(tbm, page->blockno);
 
-		if (tbm->nentries <= tbm->maxentries)
+		if (tbm->nentries <= tbm->maxentries / 2)
 		{
 			/* we have done enough */
 			hash_seq_term(&status);
@@ -988,6 +991,19 @@ tbm_lossify(TIDBitmap *tbm)
 		 * not care whether we visit lossy chunks or not.
 		 */
 	}
+
+	/*
+	 * With a big bitmap and small work_mem, it's possible that we cannot
+	 * get under maxentries.  Again, if that happens, we'd end up uselessly
+	 * calling tbm_lossify over and over.  To prevent this from becoming a
+	 * performance sink, force maxentries up to at least double the current
+	 * number of entries.  (In essence, we're admitting inability to fit
+	 * within work_mem when we do this.)  Note that this test will not fire
+	 * if we broke out of the loop early; and if we didn't, the current
+	 * number of entries is simply not reducible any further.
+	 */
+	if (tbm->nentries > tbm->maxentries / 2)
+		tbm->maxentries = Min(tbm->nentries, (INT_MAX - 1) / 2) * 2;
 }
 
 /*
