@@ -52,33 +52,10 @@ typedef char bool;
 #include <sys/param.h>
 #endif
 
-/******************************************************************
- * Windows Hacks
- *****************************************************************/
-
 #ifdef WIN32
 #define MAXHOSTNAMELEN 63
 #include <winsock2.h>
-
-int			mkstemp(char *template);
-
-int
-mkstemp(char *template)
-{
-	FILE	   *foo;
-
-	mktemp(template);
-	foo = fopen(template, "rw");
-	if (!foo)
-		return -1;
-	else
-		return (int) foo;
-}
 #endif
-
-/******************************************************************
- * End Windows Hacks
- *****************************************************************/
 
 
 /* Test for POSIX.1c 2-arg sigwait() and fail on single-arg version */
@@ -86,7 +63,7 @@ mkstemp(char *template)
 int			sigwait(const sigset_t *set, int *sig);
 
 
-#if !defined(ENABLE_THREAD_SAFETY) && !defined(IN_CONFIGURE) && !(defined(WIN32))
+#if !defined(ENABLE_THREAD_SAFETY) && !defined(IN_CONFIGURE) && !defined(WIN32)
 int
 main(int argc, char *argv[])
 {
@@ -99,19 +76,11 @@ main(int argc, char *argv[])
 /* This must be down here because this is the code that uses threads. */
 #include <pthread.h>
 
+#define		TEMP_FILENAME_1 "thread_test.1"
+#define		TEMP_FILENAME_2 "thread_test.2"
+
 static void func_call_1(void);
 static void func_call_2(void);
-
-#ifdef WIN32
-#define		TEMP_FILENAME_1 "thread_test.1.XXXXXX"
-#define		TEMP_FILENAME_2 "thread_test.2.XXXXXX"
-#else
-#define		TEMP_FILENAME_1 "/tmp/thread_test.1.XXXXXX"
-#define		TEMP_FILENAME_2 "/tmp/thread_test.2.XXXXXX"
-#endif
-
-static char *temp_filename_1;
-static char *temp_filename_2;
 
 static pthread_mutex_t init_mutex = PTHREAD_MUTEX_INITIALIZER;
 
@@ -127,12 +96,10 @@ static char *strerror_p2;
 static bool strerror_threadsafe = false;
 #endif
 
-#ifndef WIN32
-#ifndef HAVE_GETPWUID_R
+#if !defined(WIN32) && !defined(HAVE_GETPWUID_R)
 static struct passwd *passwd_p1;
 static struct passwd *passwd_p2;
 static bool getpwuid_threadsafe = false;
-#endif
 #endif
 
 #if !defined(HAVE_GETADDRINFO) && !defined(HAVE_GETHOSTBYNAME_R)
@@ -147,11 +114,8 @@ static bool platform_is_threadsafe = true;
 int
 main(int argc, char *argv[])
 {
-	pthread_t	thread1,
-				thread2;
-	int			fd;
+	pthread_t	thread1, thread2;
 	int			rc;
-
 #ifdef WIN32
 	WSADATA		wsaData;
 	int			err;
@@ -178,17 +142,6 @@ main(int argc, char *argv[])
 	}
 #endif
 
-	/* Make temp filenames, might not have strdup() */
-	temp_filename_1 = malloc(strlen(TEMP_FILENAME_1) + 1);
-	strcpy(temp_filename_1, TEMP_FILENAME_1);
-	fd = mkstemp(temp_filename_1);
-	close(fd);
-
-	temp_filename_2 = malloc(strlen(TEMP_FILENAME_2) + 1);
-	strcpy(temp_filename_2, TEMP_FILENAME_2);
-	fd = mkstemp(temp_filename_2);
-	close(fd);
-
 #if !defined(HAVE_GETADDRINFO) && !defined(HAVE_GETHOSTBYNAME_R)
 	if (gethostname(myhostname, MAXHOSTNAMELEN) != 0)
 	{
@@ -212,7 +165,7 @@ main(int argc, char *argv[])
 	{
 		/*
 		 * strerror() might not be thread-safe, and we already spawned thread
-		 * 1 that uses it
+		 * 1 that uses it, so avoid using it.
 		 */
 		fprintf(stderr, "Failed to create thread 2 **\nexiting\n");
 		exit(1);
@@ -220,6 +173,10 @@ main(int argc, char *argv[])
 
 	while (thread1_done == 0 || thread2_done == 0)
 		sched_yield();			/* if this is a portability problem, remove it */
+
+	/* Test things while we have thread-local storage */
+
+	/* If we got here, we didn't exit() from a thread */
 #ifdef WIN32
 	printf("Your GetLastError() is thread-safe.\n");
 #else
@@ -231,11 +188,9 @@ main(int argc, char *argv[])
 		strerror_threadsafe = true;
 #endif
 
-#ifndef WIN32
-#ifndef HAVE_GETPWUID_R
+#if !defined(WIN32) && !defined(HAVE_GETPWUID_R)
 	if (passwd_p1 != passwd_p2)
 		getpwuid_threadsafe = true;
-#endif
 #endif
 
 #if !defined(HAVE_GETADDRINFO) && !defined(HAVE_GETHOSTBYNAME_R)
@@ -243,10 +198,14 @@ main(int argc, char *argv[])
 		gethostbyname_threadsafe = true;
 #endif
 
+	/* close down threads */
+	
 	pthread_mutex_unlock(&init_mutex);	/* let children exit  */
 
 	pthread_join(thread1, NULL);	/* clean up children */
 	pthread_join(thread2, NULL);
+
+	/* report results */
 
 #ifdef HAVE_STRERROR_R
 	printf("Your system has sterror_r();  it does not need strerror().\n");
@@ -261,8 +220,9 @@ main(int argc, char *argv[])
 	}
 #endif
 
-#ifndef WIN32
-#ifdef HAVE_GETPWUID_R
+#ifdef WIN32
+	printf("getpwuid_r()/getpwuid() are not applicable to Win32 platforms.\n");
+#elif defined(HAVE_GETPWUID_R)
 	printf("Your system has getpwuid_r();  it does not need getpwuid().\n");
 #else
 	printf("Your system uses getpwuid() which is ");
@@ -274,15 +234,11 @@ main(int argc, char *argv[])
 		platform_is_threadsafe = false;
 	}
 #endif
-#else
-	printf("getpwuid_r()/getpwuid() are not applicable to Win32 platforms.\n");
-#endif
 
 #ifdef HAVE_GETADDRINFO
 	printf("Your system has getaddrinfo();  it does not need gethostbyname()\n"
 		   "  or gethostbyname_r().\n");
-#else
-#ifdef HAVE_GETHOSTBYNAME_R
+#elif defined(HAVE_GETHOSTBYNAME_R)
 	printf("Your system has gethostbyname_r();  it does not need gethostbyname().\n");
 #else
 	printf("Your system uses gethostbyname which is ");
@@ -293,7 +249,6 @@ main(int argc, char *argv[])
 		printf("not thread-safe. **\n");
 		platform_is_threadsafe = false;
 	}
-#endif
 #endif
 
 	if (platform_is_threadsafe)
@@ -317,29 +272,23 @@ func_call_1(void)
 	void	   *p;
 #endif
 #ifdef WIN32
-	HANDLE		h1;
-	HANDLE		h2;
+	HANDLE		h1, h2;
 #endif
-	unlink(temp_filename_1);
 
+	unlink(TEMP_FILENAME_1);
 
 	/* create, then try to fail on exclusive create open */
 #ifdef WIN32
-	h1 = CreateFile(temp_filename_1, GENERIC_WRITE, 0, NULL, OPEN_ALWAYS, 0, NULL);
-	h2 = CreateFile(temp_filename_1, GENERIC_WRITE, 0, NULL, CREATE_NEW, 0, NULL);
+	h1 = CreateFile(TEMP_FILENAME_1, GENERIC_WRITE, 0, NULL, OPEN_ALWAYS, 0, NULL);
+	h2 = CreateFile(TEMP_FILENAME_1, GENERIC_WRITE, 0, NULL, CREATE_NEW, 0, NULL);
 	if (h1 == INVALID_HANDLE_VALUE || GetLastError() != ERROR_FILE_EXISTS)
 #else
-	if (open(temp_filename_1, O_RDWR | O_CREAT, 0600) < 0 ||
-		open(temp_filename_1, O_RDWR | O_CREAT | O_EXCL, 0600) >= 0)
+	if (open(TEMP_FILENAME_1, O_RDWR | O_CREAT, 0600) < 0 ||
+		open(TEMP_FILENAME_1, O_RDWR | O_CREAT | O_EXCL, 0600) >= 0)
 #endif
 	{
-#ifdef WIN32
 		fprintf(stderr, "Could not create file in current directory or\n");
-		fprintf(stderr, "Could not generate failure for create file in current directory **\nexiting\n");
-#else
-		fprintf(stderr, "Could not create file in /tmp or\n");
-		fprintf(stderr, "Could not generate failure for create file in /tmp **\nexiting\n");
-#endif
+		fprintf(stderr, "could not generate failure for create file in current directory **\nexiting\n");
 		exit(1);
 	}
 
@@ -350,6 +299,7 @@ func_call_1(void)
 	errno1_set = 1;
 	while (errno2_set == 0)
 		sched_yield();
+
 #ifdef WIN32
 	if (GetLastError() != ERROR_FILE_EXISTS)
 #else
@@ -361,22 +311,21 @@ func_call_1(void)
 #else
 		fprintf(stderr, "errno not thread-safe **\nexiting\n");
 #endif
-		unlink(temp_filename_1);
+		unlink(TEMP_FILENAME_1);
 		exit(1);
 	}
-	unlink(temp_filename_1);
+
+	unlink(TEMP_FILENAME_1);
 
 #ifndef HAVE_STRERROR_R
-	strerror_p1 = strerror(EACCES);
-
 	/*
 	 * If strerror() uses sys_errlist, the pointer might change for different
 	 * errno values, so we don't check to see if it varies within the thread.
 	 */
+	strerror_p1 = strerror(EACCES);
 #endif
 
-#ifndef WIN32
-#ifndef HAVE_GETPWUID_R
+#if !defined(WIN32) && !defined(HAVE_GETPWUID_R)
 	passwd_p1 = getpwuid(0);
 	p = getpwuid(1);
 	if (passwd_p1 != p)
@@ -384,7 +333,6 @@ func_call_1(void)
 		printf("Your getpwuid() changes the static memory area between calls\n");
 		passwd_p1 = NULL;		/* force thread-safe failure report */
 	}
-#endif
 #endif
 
 #if !defined(HAVE_GETADDRINFO) && !defined(HAVE_GETHOSTBYNAME_R)
@@ -413,13 +361,14 @@ func_call_2(void)
 	void	   *p;
 #endif
 
-	unlink(temp_filename_2);
+	unlink(TEMP_FILENAME_2);
+
 	/* open non-existant file */
 #ifdef WIN32
-	CreateFile(temp_filename_2, GENERIC_WRITE, 0, NULL, OPEN_EXISTING, 0, NULL);
+	CreateFile(TEMP_FILENAME_2, GENERIC_WRITE, 0, NULL, OPEN_EXISTING, 0, NULL);
 	if (GetLastError() != ERROR_FILE_NOT_FOUND)
 #else
-	if (open(temp_filename_2, O_RDONLY, 0600) >= 0)
+	if (open(TEMP_FILENAME_2, O_RDONLY, 0600) >= 0)
 #endif
 	{
 		fprintf(stderr, "Read-only open succeeded without create **\nexiting\n");
@@ -433,6 +382,7 @@ func_call_2(void)
 	errno2_set = 1;
 	while (errno1_set == 0)
 		sched_yield();
+
 #ifdef WIN32
 	if (GetLastError() != ENOENT)
 #else
@@ -444,22 +394,21 @@ func_call_2(void)
 #else
 		fprintf(stderr, "errno not thread-safe **\nexiting\n");
 #endif
-		unlink(temp_filename_2);
+		unlink(TEMP_FILENAME_2);
 		exit(1);
 	}
-	unlink(temp_filename_2);
+
+	unlink(TEMP_FILENAME_2);
 
 #ifndef HAVE_STRERROR_R
-	strerror_p2 = strerror(EINVAL);
-
 	/*
 	 * If strerror() uses sys_errlist, the pointer might change for different
 	 * errno values, so we don't check to see if it varies within the thread.
 	 */
+	strerror_p2 = strerror(EINVAL);
 #endif
 
-#ifndef WIN32
-#ifndef HAVE_GETPWUID_R
+#if !defined(WIN32) && !defined(HAVE_GETPWUID_R)
 	passwd_p2 = getpwuid(2);
 	p = getpwuid(3);
 	if (passwd_p2 != p)
@@ -467,7 +416,6 @@ func_call_2(void)
 		printf("Your getpwuid() changes the static memory area between calls\n");
 		passwd_p2 = NULL;		/* force thread-safe failure report */
 	}
-#endif
 #endif
 
 #if !defined(HAVE_GETADDRINFO) && !defined(HAVE_GETHOSTBYNAME_R)
