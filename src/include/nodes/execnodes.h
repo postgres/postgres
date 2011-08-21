@@ -354,7 +354,7 @@ typedef struct EState
 	/* Stuff used for firing triggers: */
 	List	   *es_trig_target_relations;		/* trigger-only ResultRelInfos */
 	TupleTableSlot *es_trig_tuple_slot; /* for trigger output tuples */
-	TupleTableSlot *es_trig_oldtup_slot;		/* for trigger old tuples */
+	TupleTableSlot *es_trig_oldtup_slot;		/* for TriggerEnabled */
 
 	/* Parameter info: */
 	ParamListInfo es_param_list_info;	/* values of external params */
@@ -397,6 +397,12 @@ typedef struct EState
 	HeapTuple  *es_epqTuple;	/* array of EPQ substitute tuples */
 	bool	   *es_epqTupleSet; /* true if EPQ tuple is provided */
 	bool	   *es_epqScanDone; /* true if EPQ tuple has been fetched */
+
+	/*
+	 * this field added at end of struct to avoid post-release ABI breakage in
+	 * existing release branches.  It'll be in a more logical place in 9.2.
+	 */
+	TupleTableSlot *es_trig_newtup_slot;		/* for TriggerEnabled */
 } EState;
 
 

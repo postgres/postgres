@@ -2569,13 +2569,13 @@ TriggerEnabled(EState *estate, ResultRelInfo *relinfo,
 		}
 		if (HeapTupleIsValid(newtup))
 		{
-			if (estate->es_trig_tuple_slot == NULL)
+			if (estate->es_trig_newtup_slot == NULL)
 			{
 				oldContext = MemoryContextSwitchTo(estate->es_query_cxt);
-				estate->es_trig_tuple_slot = ExecInitExtraTupleSlot(estate);
+				estate->es_trig_newtup_slot = ExecInitExtraTupleSlot(estate);
 				MemoryContextSwitchTo(oldContext);
 			}
-			newslot = estate->es_trig_tuple_slot;
+			newslot = estate->es_trig_newtup_slot;
 			if (newslot->tts_tupleDescriptor != tupdesc)
 				ExecSetSlotDescriptor(newslot, tupdesc);
 			ExecStoreTuple(newtup, newslot, InvalidBuffer, false);

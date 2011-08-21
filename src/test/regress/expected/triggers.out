@@ -446,6 +446,35 @@ NOTICE:  trigger_func(after_upd_a_b_row) called: action = UPDATE, when = AFTER, 
 NOTICE:  trigger_func(after_upd_b_row) called: action = UPDATE, when = AFTER, level = ROW
 NOTICE:  trigger_func(after_upd_b_stmt) called: action = UPDATE, when = AFTER, level = STATEMENT
 NOTICE:  trigger_func(after_upd_stmt) called: action = UPDATE, when = AFTER, level = STATEMENT
+--
+-- Test case for bug with BEFORE trigger followed by AFTER trigger with WHEN
+--
+CREATE TABLE some_t (some_col boolean NOT NULL);
+CREATE FUNCTION dummy_update_func() RETURNS trigger AS $$
+BEGIN
+  RAISE NOTICE 'dummy_update_func(%) called: action = %, old = %, new = %',
+    TG_ARGV[0], TG_OP, OLD, NEW;
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+CREATE TRIGGER some_trig_before BEFORE UPDATE ON some_t FOR EACH ROW
+  EXECUTE PROCEDURE dummy_update_func('before');
+CREATE TRIGGER some_trig_aftera AFTER UPDATE ON some_t FOR EACH ROW
+  WHEN (NOT OLD.some_col AND NEW.some_col)
+  EXECUTE PROCEDURE dummy_update_func('aftera');
+CREATE TRIGGER some_trig_afterb AFTER UPDATE ON some_t FOR EACH ROW
+  WHEN (NOT NEW.some_col)
+  EXECUTE PROCEDURE dummy_update_func('afterb');
+INSERT INTO some_t VALUES (TRUE);
+UPDATE some_t SET some_col = TRUE;
+NOTICE:  dummy_update_func(before) called: action = UPDATE, old = (t), new = (t)
+UPDATE some_t SET some_col = FALSE;
+NOTICE:  dummy_update_func(before) called: action = UPDATE, old = (t), new = (f)
+NOTICE:  dummy_update_func(afterb) called: action = UPDATE, old = (t), new = (f)
+UPDATE some_t SET some_col = TRUE;
+NOTICE:  dummy_update_func(before) called: action = UPDATE, old = (f), new = (t)
+NOTICE:  dummy_update_func(aftera) called: action = UPDATE, old = (f), new = (t)
+DROP TABLE some_t;
 -- bogus cases
 CREATE TRIGGER error_upd_and_col BEFORE UPDATE OR UPDATE OF a ON main_table
 FOR EACH ROW EXECUTE PROCEDURE trigger_func('error_upd_and_col');

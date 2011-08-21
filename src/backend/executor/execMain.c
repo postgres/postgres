@@ -790,6 +790,7 @@ InitPlan(QueryDesc *queryDesc, int eflags)
 	estate->es_tupleTable = NIL;
 	estate->es_trig_tuple_slot = NULL;
 	estate->es_trig_oldtup_slot = NULL;
+	estate->es_trig_newtup_slot = NULL;
 
 	/* mark EvalPlanQual not active */
 	estate->es_epqTuple = NULL;
