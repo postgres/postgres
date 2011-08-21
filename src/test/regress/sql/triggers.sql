@@ -308,6 +308,32 @@ SELECT pg_get_triggerdef(oid) FROM pg_trigger WHERE tgrelid = 'main_table'::regc
 UPDATE main_table SET a = 50;
 UPDATE main_table SET b = 10;
 
+--
+-- Test case for bug with BEFORE trigger followed by AFTER trigger with WHEN
+--
+
+CREATE TABLE some_t (some_col boolean NOT NULL);
+CREATE FUNCTION dummy_update_func() RETURNS trigger AS $$
+BEGIN
+  RAISE NOTICE 'dummy_update_func(%) called: action = %, old = %, new = %',
+    TG_ARGV[0], TG_OP, OLD, NEW;
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+CREATE TRIGGER some_trig_before BEFORE UPDATE ON some_t FOR EACH ROW
+  EXECUTE PROCEDURE dummy_update_func('before');
+CREATE TRIGGER some_trig_aftera AFTER UPDATE ON some_t FOR EACH ROW
+  WHEN (NOT OLD.some_col AND NEW.some_col)
+  EXECUTE PROCEDURE dummy_update_func('aftera');
+CREATE TRIGGER some_trig_afterb AFTER UPDATE ON some_t FOR EACH ROW
+  WHEN (NOT NEW.some_col)
+  EXECUTE PROCEDURE dummy_update_func('afterb');
+INSERT INTO some_t VALUES (TRUE);
+UPDATE some_t SET some_col = TRUE;
+UPDATE some_t SET some_col = FALSE;
+UPDATE some_t SET some_col = TRUE;
+DROP TABLE some_t;
+
 -- bogus cases
 CREATE TRIGGER error_upd_and_col BEFORE UPDATE OR UPDATE OF a ON main_table
 FOR EACH ROW EXECUTE PROCEDURE trigger_func('error_upd_and_col');
