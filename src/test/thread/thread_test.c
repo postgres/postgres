@@ -263,6 +263,9 @@ main(int argc, char *argv[])
 	}
 }
 
+/*
+ * func_call_1
+ */
 static void
 func_call_1(void)
 {
@@ -272,23 +275,38 @@ func_call_1(void)
 	void	   *p;
 #endif
 #ifdef WIN32
-	HANDLE		h1, h2;
+	HANDLE		h1;
+#else
+	int fd;
 #endif
 
 	unlink(TEMP_FILENAME_1);
 
+	/* Set errno = EEXIST */
+
 	/* create, then try to fail on exclusive create open */
 #ifdef WIN32
-	h1 = CreateFile(TEMP_FILENAME_1, GENERIC_WRITE, 0, NULL, OPEN_ALWAYS, 0, NULL);
-	h2 = CreateFile(TEMP_FILENAME_1, GENERIC_WRITE, 0, NULL, CREATE_NEW, 0, NULL);
-	if (h1 == INVALID_HANDLE_VALUE || GetLastError() != ERROR_FILE_EXISTS)
+	if ((h1 = CreateFile(TEMP_FILENAME_1, GENERIC_WRITE, 0, NULL, OPEN_ALWAYS, 0, NULL)) ==
+		INVALID_HANDLE_VALUE)
 #else
-	if (open(TEMP_FILENAME_1, O_RDWR | O_CREAT, 0600) < 0 ||
-		open(TEMP_FILENAME_1, O_RDWR | O_CREAT | O_EXCL, 0600) >= 0)
+	if ((fd = open(TEMP_FILENAME_1, O_RDWR | O_CREAT, 0600)) < 0)
 #endif
 	{
-		fprintf(stderr, "Could not create file in current directory or\n");
-		fprintf(stderr, "could not generate failure for create file in current directory **\nexiting\n");
+		fprintf(stderr, "Could not create file %s in current directory\n",
+				TEMP_FILENAME_1);
+		exit(1);
+	}
+	
+#ifdef WIN32
+	if (CreateFile(TEMP_FILENAME_1, GENERIC_WRITE, 0, NULL, CREATE_NEW, 0, NULL)
+		!= INVALID_HANDLE_VALUE || GetLastError() != ERROR_FILE_EXISTS)
+#else
+	if (open(TEMP_FILENAME_1, O_RDWR | O_CREAT | O_EXCL, 0600) >= 0)
+#endif
+	{
+		fprintf(stderr,
+				"Could not generate failure for exclusive file create of %s in current directory **\nexiting\n",
+				TEMP_FILENAME_1);
 		exit(1);
 	}
 
@@ -315,6 +333,11 @@ func_call_1(void)
 		exit(1);
 	}
 
+#ifdef WIN32
+	CloseHandle(h1);
+#else
+	close(fd);
+#endif
 	unlink(TEMP_FILENAME_1);
 
 #ifndef HAVE_STRERROR_R
@@ -352,6 +375,9 @@ func_call_1(void)
 }
 
 
+/*
+ * func_call_2
+ */
 static void
 func_call_2(void)
 {
@@ -363,15 +389,14 @@ func_call_2(void)
 
 	unlink(TEMP_FILENAME_2);
 
-	/* open non-existant file */
-#ifdef WIN32
-	CreateFile(TEMP_FILENAME_2, GENERIC_WRITE, 0, NULL, OPEN_EXISTING, 0, NULL);
-	if (GetLastError() != ERROR_FILE_NOT_FOUND)
-#else
-	if (open(TEMP_FILENAME_2, O_RDONLY, 0600) >= 0)
-#endif
+	/* Set errno = ENOENT */
+
+	/* This will fail, but we can't check errno yet */
+	if (unlink(TEMP_FILENAME_2) != -1)
 	{
-		fprintf(stderr, "Read-only open succeeded without create **\nexiting\n");
+		fprintf(stderr,
+				"Could not generate failure for unlink of %s in current directory **\nexiting\n",
+				TEMP_FILENAME_2);
 		exit(1);
 	}
 
@@ -394,11 +419,8 @@ func_call_2(void)
 #else
 		fprintf(stderr, "errno not thread-safe **\nexiting\n");
 #endif
-		unlink(TEMP_FILENAME_2);
 		exit(1);
 	}
-
-	unlink(TEMP_FILENAME_2);
 
 #ifndef HAVE_STRERROR_R
 	/*
