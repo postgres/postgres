@@ -157,7 +157,7 @@ main(int argc, char *argv[])
 	if (rc != 0)
 	{
 		fprintf(stderr, "Failed to create thread 1: %s **\nexiting\n",
-				strerror(rc));
+				strerror(errno));
 		exit(1);
 	}
 	rc = pthread_create(&thread2, NULL, (void *(*) (void *)) func_call_2, NULL);
@@ -285,6 +285,11 @@ func_call_1(void)
 	/* Set errno = EEXIST */
 
 	/* create, then try to fail on exclusive create open */
+	/*
+	 * It would be great to check errno here but if errno is not thread-safe
+	 * we might get a value from the other thread and mis-report the cause
+	 * of the failure.
+	 */
 #ifdef WIN32
 	if ((h1 = CreateFile(TEMP_FILENAME_1, GENERIC_WRITE, 0, NULL, OPEN_ALWAYS, 0, NULL)) ==
 		INVALID_HANDLE_VALUE)
@@ -299,7 +304,7 @@ func_call_1(void)
 	
 #ifdef WIN32
 	if (CreateFile(TEMP_FILENAME_1, GENERIC_WRITE, 0, NULL, CREATE_NEW, 0, NULL)
-		!= INVALID_HANDLE_VALUE || GetLastError() != ERROR_FILE_EXISTS)
+		!= INVALID_HANDLE_VALUE)
 #else
 	if (open(TEMP_FILENAME_1, O_RDWR | O_CREAT | O_EXCL, 0600) >= 0)
 #endif
