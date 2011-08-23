@@ -11,7 +11,8 @@
 
    <para>
     This chapter describes the settings available in the
-    <filename>recovery.conf</> file. They apply only for the duration of the
+    <filename>recovery.conf</><indexterm><primary>recovery.conf</></>
+    file. They apply only for the duration of the
     recovery.  They must be reset for any subsequent recovery you wish to
     perform.  They cannot be changed once recovery has begun.
    </para>
