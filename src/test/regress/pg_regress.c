@@ -999,7 +999,7 @@ spawn_process(const char *cmdline)
 	/* Open the current token to use as base for the restricted one */
 	if (!OpenProcessToken(GetCurrentProcess(), TOKEN_ALL_ACCESS, &origToken))
 	{
-		fprintf(stderr, _("could not open process token: %lu\n"),
+		fprintf(stderr, _("could not open process token: error code %lu\n"),
 				GetLastError());
 		exit_nicely(2);
 	}
@@ -1011,7 +1011,7 @@ spawn_process(const char *cmdline)
 		!AllocateAndInitializeSid(&NtAuthority, 2,
 								  SECURITY_BUILTIN_DOMAIN_RID, DOMAIN_ALIAS_RID_POWER_USERS, 0, 0, 0, 0, 0, 0, &dropSids[1].Sid))
 	{
-		fprintf(stderr, _("could not allocate SIDs: %lu\n"), GetLastError());
+		fprintf(stderr, _("could not allocate SIDs: error code %lu\n"), GetLastError());
 		exit_nicely(2);
 	}
 
@@ -1030,7 +1030,7 @@ spawn_process(const char *cmdline)
 
 	if (!b)
 	{
-		fprintf(stderr, _("could not create restricted token: %lu\n"),
+		fprintf(stderr, _("could not create restricted token: error code %lu\n"),
 				GetLastError());
 		exit_nicely(2);
 	}
@@ -1054,7 +1054,7 @@ spawn_process(const char *cmdline)
 							 &si,
 							 &pi))
 	{
-		fprintf(stderr, _("could not start process for \"%s\": %lu\n"),
+		fprintf(stderr, _("could not start process for \"%s\": error code %lu\n"),
 				cmdline2, GetLastError());
 		exit_nicely(2);
 	}
@@ -1380,7 +1380,7 @@ wait_for_tests(PID_TYPE * pids, int *statuses, char **names, int num_tests)
 		r = WaitForMultipleObjects(tests_left, active_pids, FALSE, INFINITE);
 		if (r < WAIT_OBJECT_0 || r >= WAIT_OBJECT_0 + tests_left)
 		{
-			fprintf(stderr, _("failed to wait for subprocesses: %lu\n"),
+			fprintf(stderr, _("failed to wait for subprocesses: error code %lu\n"),
 					GetLastError());
 			exit_nicely(2);
 		}
@@ -2295,7 +2295,7 @@ regression_main(int argc, char *argv[], init_function ifunc, test_function tfunc
 						progname, strerror(errno));
 #else
 			if (TerminateProcess(postmaster_pid, 255) == 0)
-				fprintf(stderr, _("\n%s: could not kill failed postmaster: %lu\n"),
+				fprintf(stderr, _("\n%s: could not kill failed postmaster: error code %lu\n"),
 						progname, GetLastError());
 #endif
 

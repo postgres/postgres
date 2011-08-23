@@ -144,8 +144,8 @@ crashDumpHandler(struct _EXCEPTION_POINTERS * pExceptionInfo)
 							  NULL);
 		if (dumpFile == INVALID_HANDLE_VALUE)
 		{
-			write_stderr("could not open crash dump file \"%s\" for writing: error code %u\n",
-						 dumpPath, (unsigned int) GetLastError());
+			write_stderr("could not open crash dump file \"%s\" for writing: error code %lu\n",
+						 dumpPath, GetLastError());
 			return EXCEPTION_CONTINUE_SEARCH;
 		}
 
@@ -153,8 +153,8 @@ crashDumpHandler(struct _EXCEPTION_POINTERS * pExceptionInfo)
 					  NULL, NULL))
 			write_stderr("wrote crash dump to file \"%s\"\n", dumpPath);
 		else
-			write_stderr("could not write crash dump to file \"%s\": error code %08x\n",
-						 dumpPath, (unsigned int) GetLastError());
+			write_stderr("could not write crash dump to file \"%s\": error code %lu\n",
+						 dumpPath, GetLastError());
 
 		CloseHandle(dumpFile);
 	}

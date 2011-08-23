@@ -40,8 +40,8 @@ pgwin32_is_admin(void)
 
 	if (!OpenProcessToken(GetCurrentProcess(), TOKEN_READ, &AccessToken))
 	{
-		write_stderr("could not open process token: error code %d\n",
-					 (int) GetLastError());
+		write_stderr("could not open process token: error code %lu\n",
+					 GetLastError());
 		exit(1);
 	}
 
@@ -60,8 +60,8 @@ pgwin32_is_admin(void)
 		 SECURITY_BUILTIN_DOMAIN_RID, DOMAIN_ALIAS_RID_ADMINS, 0, 0, 0, 0, 0,
 								  0, &AdministratorsSid))
 	{
-		write_stderr("could not get SID for Administrators group: error code %d\n",
-					 (int) GetLastError());
+		write_stderr("could not get SID for Administrators group: error code %lu\n",
+					 GetLastError());
 		exit(1);
 	}
 
@@ -69,8 +69,8 @@ pgwin32_is_admin(void)
 	SECURITY_BUILTIN_DOMAIN_RID, DOMAIN_ALIAS_RID_POWER_USERS, 0, 0, 0, 0, 0,
 								  0, &PowerUsersSid))
 	{
-		write_stderr("could not get SID for PowerUsers group: error code %d\n",
-					 (int) GetLastError());
+		write_stderr("could not get SID for PowerUsers group: error code %lu\n",
+					 GetLastError());
 		exit(1);
 	}
 
@@ -129,8 +129,8 @@ pgwin32_is_service(void)
 
 	if (!OpenProcessToken(GetCurrentProcess(), TOKEN_READ, &AccessToken))
 	{
-		fprintf(stderr, "could not open process token: error code %d\n",
-				(int) GetLastError());
+		fprintf(stderr, "could not open process token: error code %lu\n",
+				GetLastError());
 		return -1;
 	}
 
@@ -223,8 +223,8 @@ pgwin32_get_dynamic_tokeninfo(HANDLE token, TOKEN_INFORMATION_CLASS class,
 
 	if (GetLastError() != ERROR_INSUFFICIENT_BUFFER)
 	{
-		snprintf(errbuf, errsize, "could not get token information: error code %d\n",
-				 (int) GetLastError());
+		snprintf(errbuf, errsize, "could not get token information: error code %lu\n",
+				 GetLastError());
 		return FALSE;
 	}
 
@@ -239,8 +239,8 @@ pgwin32_get_dynamic_tokeninfo(HANDLE token, TOKEN_INFORMATION_CLASS class,
 	if (!GetTokenInformation(token, class, *InfoBuffer,
 							 InfoBufferSize, &InfoBufferSize))
 	{
-		snprintf(errbuf, errsize, "could not get token information: error code %d\n",
-				 (int) GetLastError());
+		snprintf(errbuf, errsize, "could not get token information: error code %lu\n",
+				 GetLastError());
 		return FALSE;
 	}
 

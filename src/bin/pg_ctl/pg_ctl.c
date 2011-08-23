@@ -1320,7 +1320,7 @@ pgwin32_doRegister(void)
 	   NULL, NULL, "RPCSS\0", register_username, register_password)) == NULL)
 	{
 		CloseServiceHandle(hSCM);
-		write_stderr(_("%s: could not register service \"%s\": error code %d\n"), progname, register_servicename, (int) GetLastError());
+		write_stderr(_("%s: could not register service \"%s\": error code %lu\n"), progname, register_servicename, GetLastError());
 		exit(1);
 	}
 	CloseServiceHandle(hService);
@@ -1348,14 +1348,14 @@ pgwin32_doUnregister(void)
 	if ((hService = OpenService(hSCM, register_servicename, DELETE)) == NULL)
 	{
 		CloseServiceHandle(hSCM);
-		write_stderr(_("%s: could not open service \"%s\": error code %d\n"), progname, register_servicename, (int) GetLastError());
+		write_stderr(_("%s: could not open service \"%s\": error code %lu\n"), progname, register_servicename, GetLastError());
 		exit(1);
 	}
 	if (!DeleteService(hService))
 	{
 		CloseServiceHandle(hService);
 		CloseServiceHandle(hSCM);
-		write_stderr(_("%s: could not unregister service \"%s\": error code %d\n"), progname, register_servicename, (int) GetLastError());
+		write_stderr(_("%s: could not unregister service \"%s\": error code %lu\n"), progname, register_servicename, GetLastError());
 		exit(1);
 	}
 	CloseServiceHandle(hService);
@@ -1498,7 +1498,7 @@ pgwin32_doRunAsService(void)
 
 	if (StartServiceCtrlDispatcher(st) == 0)
 	{
-		write_stderr(_("%s: could not start service \"%s\": error code %d\n"), progname, register_servicename, (int) GetLastError());
+		write_stderr(_("%s: could not start service \"%s\": error code %lu\n"), progname, register_servicename, GetLastError());
 		exit(1);
 	}
 }
@@ -1579,7 +1579,7 @@ CreateRestrictedProcess(char *cmd, PROCESS_INFORMATION *processInfo, bool as_ser
 	/* Open the current token to use as a base for the restricted one */
 	if (!OpenProcessToken(GetCurrentProcess(), TOKEN_ALL_ACCESS, &origToken))
 	{
-		write_stderr(_("%s: could not open process token: %lu\n"), progname, GetLastError());
+		write_stderr(_("%s: could not open process token: error code %lu\n"), progname, GetLastError());
 		return 0;
 	}
 
@@ -1592,7 +1592,7 @@ CreateRestrictedProcess(char *cmd, PROCESS_INFORMATION *processInfo, bool as_ser
 	SECURITY_BUILTIN_DOMAIN_RID, DOMAIN_ALIAS_RID_POWER_USERS, 0, 0, 0, 0, 0,
 								  0, &dropSids[1].Sid))
 	{
-		write_stderr(_("%s: could not allocate SIDs: %lu\n"), progname, GetLastError());
+		write_stderr(_("%s: could not allocate SIDs: error code %lu\n"), progname, GetLastError());
 		return 0;
 	}
 
@@ -1611,7 +1611,7 @@ CreateRestrictedProcess(char *cmd, PROCESS_INFORMATION *processInfo, bool as_ser
 
 	if (!b)
 	{
-		write_stderr(_("%s: could not create restricted token: %lu\n"), progname, GetLastError());
+		write_stderr(_("%s: could not create restricted token: error code %lu\n"), progname, GetLastError());
 		return 0;
 	}
 

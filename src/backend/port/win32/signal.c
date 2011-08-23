@@ -83,7 +83,7 @@ pgwin32_signal_initialize(void)
 	pgwin32_signal_event = CreateEvent(NULL, TRUE, FALSE, NULL);
 	if (pgwin32_signal_event == NULL)
 		ereport(FATAL,
-				(errmsg_internal("could not create signal event: %d", (int) GetLastError())));
+				(errmsg_internal("could not create signal event: error code %lu", GetLastError())));
 
 	/* Create thread for handling signals */
 	signal_thread_handle = CreateThread(NULL, 0, pg_signal_thread, NULL, 0, NULL);
@@ -186,8 +186,8 @@ pgwin32_create_signal_listener(pid_t pid)
 
 	if (pipe == INVALID_HANDLE_VALUE)
 		ereport(ERROR,
-				(errmsg("could not create signal listener pipe for PID %d: error code %d",
-						(int) pid, (int) GetLastError())));
+				(errmsg("could not create signal listener pipe for PID %d: error code %lu",
+						(int) pid, GetLastError())));
 
 	return pipe;
 }
@@ -266,7 +266,7 @@ pg_signal_thread(LPVOID param)
 
 			if (pipe == INVALID_HANDLE_VALUE)
 			{
-				write_stderr("could not create signal listener pipe: error code %d; retrying\n", (int) GetLastError());
+				write_stderr("could not create signal listener pipe: error code %lu; retrying\n", GetLastError());
 				SleepEx(500, FALSE);
 				continue;
 			}
@@ -298,7 +298,7 @@ pg_signal_thread(LPVOID param)
 				 * is nothing else we can do other than abort the whole
 				 * process which will be even worse.
 				 */
-				write_stderr("could not create signal listener pipe: error code %d; retrying\n", (int) GetLastError());
+				write_stderr("could not create signal listener pipe: error code %lu; retrying\n", GetLastError());
 
 				/*
 				 * Keep going so we at least dispatch this signal. Hopefully,
@@ -309,8 +309,8 @@ pg_signal_thread(LPVOID param)
 						  (LPTHREAD_START_ROUTINE) pg_signal_dispatch_thread,
 								   (LPVOID) pipe, 0, NULL);
 			if (hThread == INVALID_HANDLE_VALUE)
-				write_stderr("could not create signal dispatch thread: error code %d\n",
-							 (int) GetLastError());
+				write_stderr("could not create signal dispatch thread: error code %lu\n",
+							 GetLastError());
 			else
 				CloseHandle(hThread);
 

@@ -42,8 +42,8 @@ LoadKernel32()
 	kernel32 = LoadLibraryEx("kernel32.dll", NULL, 0);
 	if (kernel32 == NULL)
 		ereport(FATAL,
-				(errmsg_internal("could not load kernel32.dll: %d",
-								 (int) GetLastError())));
+				(errmsg_internal("could not load kernel32.dll: error code %lu",
+								 GetLastError())));
 }
 
 
@@ -73,8 +73,8 @@ RegisterWaitForSingleObject(PHANDLE phNewWaitObject,
 
 		if (_RegisterWaitForSingleObject == NULL)
 			ereport(FATAL,
-					(errmsg_internal("could not locate RegisterWaitForSingleObject in kernel32.dll: %d",
-									 (int) GetLastError())));
+					(errmsg_internal("could not locate RegisterWaitForSingleObject in kernel32.dll: error code %lu",
+									 GetLastError())));
 	}
 
 	return (_RegisterWaitForSingleObject)

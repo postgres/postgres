@@ -38,7 +38,7 @@ InitLatch(volatile Latch *latch)
 
 	latch->event = CreateEvent(NULL, TRUE, FALSE, NULL);
 	if (latch->event == NULL)
-		elog(ERROR, "CreateEvent failed: error code %d", (int) GetLastError());
+		elog(ERROR, "CreateEvent failed: error code %lu", GetLastError());
 }
 
 void
@@ -59,7 +59,7 @@ InitSharedLatch(volatile Latch *latch)
 
 	latch->event = CreateEvent(&sa, TRUE, FALSE, NULL);
 	if (latch->event == NULL)
-		elog(ERROR, "CreateEvent failed: error code %d", (int) GetLastError());
+		elog(ERROR, "CreateEvent failed: error code %lu", GetLastError());
 }
 
 void
@@ -150,7 +150,7 @@ WaitLatchOrSocket(volatile Latch *latch, int wakeEvents, pgsocket sock,
 		 * will return immediately.
 		 */
 		if (!ResetEvent(latchevent))
-			elog(ERROR, "ResetEvent failed: error code %d", (int) GetLastError());
+			elog(ERROR, "ResetEvent failed: error code %lu", GetLastError());
 		if ((wakeEvents & WL_LATCH_SET) && latch->is_set)
 		{
 			result |= WL_LATCH_SET;
@@ -164,7 +164,7 @@ WaitLatchOrSocket(volatile Latch *latch, int wakeEvents, pgsocket sock,
 		rc = WaitForMultipleObjects(numevents, events, FALSE, timeout);
 
 		if (rc == WAIT_FAILED)
-			elog(ERROR, "WaitForMultipleObjects() failed: error code %d", (int) GetLastError());
+			elog(ERROR, "WaitForMultipleObjects() failed: error code %lu", GetLastError());
 
 		/* Participate in Windows signal emulation */
 		else if (rc == WAIT_OBJECT_0 + 1)
@@ -188,7 +188,7 @@ WaitLatchOrSocket(volatile Latch *latch, int wakeEvents, pgsocket sock,
 			ZeroMemory(&resEvents, sizeof(resEvents));
 			if (WSAEnumNetworkEvents(sock, sockevent, &resEvents) == SOCKET_ERROR)
 				ereport(FATAL,
-						(errmsg_internal("failed to enumerate network events: %d", (int) GetLastError())));
+						(errmsg_internal("failed to enumerate network events: error code %lu", GetLastError())));
 
 			if ((wakeEvents & WL_SOCKET_READABLE) &&
 				(resEvents.lNetworkEvents & FD_READ))
@@ -203,7 +203,7 @@ WaitLatchOrSocket(volatile Latch *latch, int wakeEvents, pgsocket sock,
 		}
 		/* Otherwise it must be the latch event */
 		else if (rc != WAIT_OBJECT_0)
-			elog(ERROR, "unexpected return code from WaitForMultipleObjects(): %d", (int) rc);
+			elog(ERROR, "unexpected return code from WaitForMultipleObjects(): %lu", rc);
 	}
 	while (result == 0);
 

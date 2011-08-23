@@ -143,11 +143,11 @@ pgwin32_waitforsinglesocket(SOCKET s, int what, int timeout)
 
 		if (waitevent == INVALID_HANDLE_VALUE)
 			ereport(ERROR,
-					(errmsg_internal("could not create socket waiting event: %d", (int) GetLastError())));
+					(errmsg_internal("could not create socket waiting event: error code %lu", GetLastError())));
 	}
 	else if (!ResetEvent(waitevent))
 		ereport(ERROR,
-				(errmsg_internal("could not reset socket waiting event: %d", (int) GetLastError())));
+				(errmsg_internal("could not reset socket waiting event: error code %lu", GetLastError())));
 
 	/*
 	 * make sure we don't multiplex this kernel event object with a different
@@ -221,7 +221,7 @@ pgwin32_waitforsinglesocket(SOCKET s, int what, int timeout)
 	if (r == WAIT_TIMEOUT)
 		return 0;
 	ereport(ERROR,
-			(errmsg_internal("unrecognized return value from WaitForMultipleObjects: %d (%d)", r, (int) GetLastError())));
+			(errmsg_internal("unrecognized return value from WaitForMultipleObjects: %d (%lu)", r, GetLastError())));
 	return 0;
 }
 
@@ -567,7 +567,7 @@ pgwin32_select(int nfds, fd_set *readfds, fd_set *writefds, fd_set *exceptfds, c
 			ZeroMemory(&resEvents, sizeof(resEvents));
 			if (WSAEnumNetworkEvents(sockets[i], events[i], &resEvents) == SOCKET_ERROR)
 				ereport(FATAL,
-						(errmsg_internal("failed to enumerate network events: %d", (int) GetLastError())));
+						(errmsg_internal("failed to enumerate network events: error code %lu", GetLastError())));
 			/* Read activity? */
 			if (readfds && FD_ISSET(sockets[i], readfds))
 			{
@@ -645,7 +645,7 @@ pgwin32_socket_strerror(int err)
 		handleDLL = LoadLibraryEx("netmsg.dll", NULL, DONT_RESOLVE_DLL_REFERENCES | LOAD_LIBRARY_AS_DATAFILE);
 		if (handleDLL == NULL)
 			ereport(FATAL,
-					(errmsg_internal("could not load netmsg.dll: %d", (int) GetLastError())));
+					(errmsg_internal("could not load netmsg.dll: error code %lu", GetLastError())));
 	}
 
 	ZeroMemory(&wserrbuf, sizeof(wserrbuf));

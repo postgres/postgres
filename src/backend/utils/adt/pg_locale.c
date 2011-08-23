@@ -559,7 +559,7 @@ strftime_win32(char *dst, size_t dstlen, const wchar_t *format, const struct tm 
 	len = WideCharToMultiByte(CP_UTF8, 0, wbuf, len, dst, dstlen, NULL, NULL);
 	if (len == 0)
 		elog(ERROR,
-			 "could not convert string to UTF-8:error %lu", GetLastError());
+			 "could not convert string to UTF-8: error code %lu", GetLastError());
 
 	dst[len] = '\0';
 	if (encoding != PG_UTF8)

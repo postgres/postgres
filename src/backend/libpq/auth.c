@@ -1405,8 +1405,8 @@ pg_SSPI_recvauth(Port *port)
 	secur32 = LoadLibrary("SECUR32.DLL");
 	if (secur32 == NULL)
 		ereport(ERROR,
-				(errmsg_internal("could not load secur32.dll: %d",
-								 (int) GetLastError())));
+				(errmsg_internal("could not load secur32.dll: error code %lu",
+								 GetLastError())));
 
 	_QuerySecurityContextToken = (QUERY_SECURITY_CONTEXT_TOKEN_FN)
 		GetProcAddress(secur32, "QuerySecurityContextToken");
@@ -1414,8 +1414,8 @@ pg_SSPI_recvauth(Port *port)
 	{
 		FreeLibrary(secur32);
 		ereport(ERROR,
-				(errmsg_internal("could not locate QuerySecurityContextToken in secur32.dll: %d",
-								 (int) GetLastError())));
+				(errmsg_internal("could not locate QuerySecurityContextToken in secur32.dll: error code %lu",
+								 GetLastError())));
 	}
 
 	r = (_QuerySecurityContextToken) (sspictx, &token);
@@ -1437,8 +1437,8 @@ pg_SSPI_recvauth(Port *port)
 
 	if (!GetTokenInformation(token, TokenUser, NULL, 0, &retlen) && GetLastError() != 122)
 		ereport(ERROR,
-			 (errmsg_internal("could not get token user size: error code %d",
-							  (int) GetLastError())));
+			 (errmsg_internal("could not get token user size: error code %lu",
+							  GetLastError())));
 
 	tokenuser = malloc(retlen);
 	if (tokenuser == NULL)
@@ -1447,14 +1447,14 @@ pg_SSPI_recvauth(Port *port)
 
 	if (!GetTokenInformation(token, TokenUser, tokenuser, retlen, &retlen))
 		ereport(ERROR,
-				(errmsg_internal("could not get user token: error code %d",
-								 (int) GetLastError())));
+				(errmsg_internal("could not get user token: error code %lu",
+								 GetLastError())));
 
 	if (!LookupAccountSid(NULL, tokenuser->User.Sid, accountname, &accountnamesize,
 						  domainname, &domainnamesize, &accountnameuse))
 		ereport(ERROR,
-			  (errmsg_internal("could not look up account SID: error code %d",
-							   (int) GetLastError())));
+			  (errmsg_internal("could not look up account SID: error code %lu",
+							   GetLastError())));
 
 	free(tokenuser);
 

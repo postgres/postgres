@@ -2444,7 +2444,7 @@ CreateRestrictedProcess(char *cmd, PROCESS_INFORMATION *processInfo)
 	/* Open the current token to use as a base for the restricted one */
 	if (!OpenProcessToken(GetCurrentProcess(), TOKEN_ALL_ACCESS, &origToken))
 	{
-		fprintf(stderr, "Failed to open process token: %lu\n", GetLastError());
+		fprintf(stderr, "Failed to open process token: error code %lu\n", GetLastError());
 		return 0;
 	}
 
@@ -2457,7 +2457,7 @@ CreateRestrictedProcess(char *cmd, PROCESS_INFORMATION *processInfo)
 	SECURITY_BUILTIN_DOMAIN_RID, DOMAIN_ALIAS_RID_POWER_USERS, 0, 0, 0, 0, 0,
 								  0, &dropSids[1].Sid))
 	{
-		fprintf(stderr, "Failed to allocate SIDs: %lu\n", GetLastError());
+		fprintf(stderr, "Failed to allocate SIDs: error code %lu\n", GetLastError());
 		return 0;
 	}
 
@@ -2476,7 +2476,7 @@ CreateRestrictedProcess(char *cmd, PROCESS_INFORMATION *processInfo)
 
 	if (!b)
 	{
-		fprintf(stderr, "Failed to create restricted token: %lu\n", GetLastError());
+		fprintf(stderr, "Failed to create restricted token: error code %lu\n", GetLastError());
 		return 0;
 	}
 
@@ -2497,7 +2497,7 @@ CreateRestrictedProcess(char *cmd, PROCESS_INFORMATION *processInfo)
 							 processInfo))
 
 	{
-		fprintf(stderr, "CreateProcessAsUser failed: %lu\n", GetLastError());
+		fprintf(stderr, "CreateProcessAsUser failed: error code %lu\n", GetLastError());
 		return 0;
 	}
 
@@ -2819,7 +2819,7 @@ main(int argc, char *argv[])
 
 		if (!CreateRestrictedProcess(cmdline, &pi))
 		{
-			fprintf(stderr, "Failed to re-exec with restricted token: %lu.\n", GetLastError());
+			fprintf(stderr, "Failed to re-exec with restricted token: error code %lu\n", GetLastError());
 		}
 		else
 		{
@@ -2834,7 +2834,7 @@ main(int argc, char *argv[])
 
 			if (!GetExitCodeProcess(pi.hProcess, &x))
 			{
-				fprintf(stderr, "Failed to get exit code from subprocess: %lu\n", GetLastError());
+				fprintf(stderr, "Failed to get exit code from subprocess: error code %lu\n", GetLastError());
 				exit(1);
 			}
 			exit(x);

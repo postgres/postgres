@@ -1114,8 +1114,8 @@ identify_system_timezone(void)
 					 &rootKey) != ERROR_SUCCESS)
 	{
 		ereport(LOG,
-				(errmsg("could not open registry key to identify system time zone: %d",
-						(int) GetLastError()),
+				(errmsg("could not open registry key to identify system time zone: error code %lu",
+						GetLastError()),
 				 errdetail("The PostgreSQL time zone will be set to \"%s\".",
 						   "GMT"),
 		errhint("You can specify the correct timezone in postgresql.conf.")));
