@@ -403,7 +403,15 @@ set_append_rel_pathlist(PlannerInfo *root, RelOptInfo *rel,
 			continue;
 		}
 
-		/* CE failed, so finish copying targetlist and join quals */
+		/*
+		 * CE failed, so finish copying/modifying targetlist and join quals.
+		 *
+		 * Note: the resulting childrel->reltargetlist may contain arbitrary
+		 * expressions, which normally would not occur in a reltargetlist.
+		 * That is okay because nothing outside of this routine will look at
+		 * the child rel's reltargetlist.  We do have to cope with the case
+		 * while constructing attr_widths estimates below, though.
+		 */
 		childrel->joininfo = (List *)
 			adjust_appendrel_attrs((Node *) rel->joininfo,
 								   appinfo);
@@ -486,23 +494,36 @@ set_append_rel_pathlist(PlannerInfo *root, RelOptInfo *rel,
 			parent_rows += childrel->rows;
 			parent_size += childrel->width * childrel->rows;
 
+			/*
+			 * Accumulate per-column estimates too.  We need not do anything
+			 * for PlaceHolderVars in the parent list.  If child expression
+			 * isn't a Var, or we didn't record a width estimate for it, we
+			 * have to fall back on a datatype-based estimate.
+			 *
+			 * By construction, child's reltargetlist is 1-to-1 with parent's.
+			 */
 			forboth(parentvars, rel->reltargetlist,
 					childvars, childrel->reltargetlist)
 			{
 				Var		   *parentvar = (Var *) lfirst(parentvars);
-				Var		   *childvar = (Var *) lfirst(childvars);
+				Node	   *childvar = (Node *) lfirst(childvars);
 
-				/*
-				 * Accumulate per-column estimates too.  Whole-row Vars and
-				 * PlaceHolderVars can be ignored here.
-				 */
-				if (IsA(parentvar, Var) &&
-					IsA(childvar, Var))
+				if (IsA(parentvar, Var))
 				{
 					int			pndx = parentvar->varattno - rel->min_attr;
-					int			cndx = childvar->varattno - childrel->min_attr;
+					int32		child_width = 0;
 
-					parent_attrsizes[pndx] += childrel->attr_widths[cndx] * childrel->rows;
+					if (IsA(childvar, Var))
+					{
+						int		cndx = ((Var *) childvar)->varattno - childrel->min_attr;
+
+						child_width = childrel->attr_widths[cndx];
+					}
+					if (child_width <= 0)
+						child_width = get_typavgwidth(exprType(childvar),
+													  exprTypmod(childvar));
+					Assert(child_width > 0);
+					parent_attrsizes[pndx] += child_width * childrel->rows;
 				}
 			}
 		}
