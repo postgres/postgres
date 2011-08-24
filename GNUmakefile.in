@@ -20,6 +20,9 @@ $(call recurse,world,doc src config contrib,all)
 world:
 	+@echo "PostgreSQL, contrib, and documentation successfully made. Ready to install."
 
+# build src/ before contrib/
+world-contrib-recurse: world-src-recurse
+
 html man:
 	$(MAKE) -C doc $@
 
@@ -32,6 +35,9 @@ install-docs:
 $(call recurse,install-world,doc src config contrib,install)
 install-world:
 	+@echo "PostgreSQL, contrib, and documentation installation complete."
+
+# build src/ before contrib/
+install-world-contrib-recurse: install-world-src-recurse
 
 $(call recurse,installdirs uninstall coverage,doc src config)
 
