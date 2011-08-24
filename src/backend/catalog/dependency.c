@@ -98,6 +98,7 @@ typedef struct
 #define DEPFLAG_AUTO		0x0004		/* reached via auto dependency */
 #define DEPFLAG_INTERNAL	0x0008		/* reached via internal dependency */
 #define DEPFLAG_EXTENSION	0x0010		/* reached via extension dependency */
+#define DEPFLAG_REVERSE		0x0020		/* reverse internal/extension link */
 
 
 /* expansible list of ObjectAddresses */
@@ -190,6 +191,9 @@ static void add_exact_object_address_extra(const ObjectAddress *object,
 static bool object_address_present_add_flags(const ObjectAddress *object,
 								 int flags,
 								 ObjectAddresses *addrs);
+static bool stack_address_present_add_flags(const ObjectAddress *object,
+								int flags,
+								ObjectAddressStack *stack);
 static void getRelationDescription(StringInfo buffer, Oid relid);
 static void getOpFamilyDescription(StringInfo buffer, Oid opfid);
 
@@ -459,7 +463,6 @@ findDependentObjects(const ObjectAddress *object,
 	ObjectAddress otherObject;
 	ObjectAddressStack mystack;
 	ObjectAddressExtra extra;
-	ObjectAddressStack *stackptr;
 
 	/*
 	 * If the target object is already being visited in an outer recursion
@@ -477,27 +480,8 @@ findDependentObjects(const ObjectAddress *object,
 	 * auto dependency, too, if we had to.	However there are no known cases
 	 * where that would be necessary.
 	 */
-	for (stackptr = stack; stackptr; stackptr = stackptr->next)
-	{
-		if (object->classId == stackptr->object->classId &&
-			object->objectId == stackptr->object->objectId)
-		{
-			if (object->objectSubId == stackptr->object->objectSubId)
-			{
-				stackptr->flags |= flags;
-				return;
-			}
-
-			/*
-			 * Could visit column with whole table already on stack; this is
-			 * the same case noted in object_address_present_add_flags().
-			 * (It's not clear this can really happen, but we might as well
-			 * check.)
-			 */
-			if (stackptr->object->objectSubId == 0)
-				return;
-		}
-	}
+	if (stack_address_present_add_flags(object, flags, stack))
+		return;
 
 	/*
 	 * It's also possible that the target object has already been completely
@@ -513,12 +497,13 @@ findDependentObjects(const ObjectAddress *object,
 
 	/*
 	 * The target object might be internally dependent on some other object
-	 * (its "owner").  If so, and if we aren't recursing from the owning
-	 * object, we have to transform this deletion request into a deletion
-	 * request of the owning object.  (We'll eventually recurse back to this
-	 * object, but the owning object has to be visited first so it will be
-	 * deleted after.)	The way to find out about this is to scan the
-	 * pg_depend entries that show what this object depends on.
+	 * (its "owner"), and/or be a member of an extension (also considered its
+	 * owner).  If so, and if we aren't recursing from the owning object, we
+	 * have to transform this deletion request into a deletion request of the
+	 * owning object.  (We'll eventually recurse back to this object, but the
+	 * owning object has to be visited first so it will be deleted after.)
+	 * The way to find out about this is to scan the pg_depend entries that
+	 * show what this object depends on.
 	 */
 	ScanKeyInit(&key[0],
 				Anum_pg_depend_classid,
@@ -567,7 +552,7 @@ findDependentObjects(const ObjectAddress *object,
 				 * 1. At the outermost recursion level, disallow the DROP. (We
 				 * just ereport here, rather than proceeding, since no other
 				 * dependencies are likely to be interesting.)	However, if
-				 * the other object is listed in pendingObjects, just release
+				 * the owning object is listed in pendingObjects, just release
 				 * the caller's lock and return; we'll eventually complete the
 				 * DROP when we reach that entry in the pending list.
 				 */
@@ -595,31 +580,31 @@ findDependentObjects(const ObjectAddress *object,
 
 				/*
 				 * 2. When recursing from the other end of this dependency,
-				 * it's okay to continue with the deletion. This holds when
+				 * it's okay to continue with the deletion.  This holds when
 				 * recursing from a whole object that includes the nominal
-				 * other end as a component, too.
+				 * other end as a component, too.  Since there can be more
+				 * than one "owning" object, we have to allow matches that
+				 * are more than one level down in the stack.
 				 */
-				if (stack->object->classId == otherObject.classId &&
-					stack->object->objectId == otherObject.objectId &&
-					(stack->object->objectSubId == otherObject.objectSubId ||
-					 stack->object->objectSubId == 0))
+				if (stack_address_present_add_flags(&otherObject, 0, stack))
 					break;
 
 				/*
-				 * 3. When recursing from anyplace else, transform this
-				 * deletion request into a delete of the other object.
+				 * 3. Not all the owning objects have been visited, so
+				 * transform this deletion request into a delete of this
+				 * owning object.
 				 *
 				 * First, release caller's lock on this object and get
-				 * deletion lock on the other object.  (We must release
+				 * deletion lock on the owning object.  (We must release
 				 * caller's lock to avoid deadlock against a concurrent
-				 * deletion of the other object.)
+				 * deletion of the owning object.)
 				 */
 				ReleaseDeletionLock(object);
 				AcquireDeletionLock(&otherObject);
 
 				/*
-				 * The other object might have been deleted while we waited to
-				 * lock it; if so, neither it nor the current object are
+				 * The owning object might have been deleted while we waited
+				 * to lock it; if so, neither it nor the current object are
 				 * interesting anymore.  We test this by checking the
 				 * pg_depend entry (see notes below).
 				 */
@@ -631,13 +616,18 @@ findDependentObjects(const ObjectAddress *object,
 				}
 
 				/*
-				 * Okay, recurse to the other object instead of proceeding. We
-				 * treat this exactly as if the original reference had linked
-				 * to that object instead of this one; hence, pass through the
-				 * same flags and stack.
+				 * Okay, recurse to the owning object instead of proceeding.
+				 *
+				 * We do not need to stack the current object; we want the
+				 * traversal order to be as if the original reference had
+				 * linked to the owning object instead of this one.
+				 *
+				 * The dependency type is a "reverse" dependency: we need to
+				 * delete the owning object if this one is to be deleted, but
+				 * this linkage is never a reason for an automatic deletion.
 				 */
 				findDependentObjects(&otherObject,
-									 flags,
+									 DEPFLAG_REVERSE,
 									 stack,
 									 targetObjects,
 									 pendingObjects,
@@ -2010,6 +2000,43 @@ object_address_present_add_flags(const ObjectAddress *object,
 				 */
 				return true;
 			}
+		}
+	}
+
+	return false;
+}
+
+/*
+ * Similar to above, except we search an ObjectAddressStack.
+ */
+static bool
+stack_address_present_add_flags(const ObjectAddress *object,
+								int flags,
+								ObjectAddressStack *stack)
+{
+	ObjectAddressStack *stackptr;
+
+	for (stackptr = stack; stackptr; stackptr = stackptr->next)
+	{
+		const ObjectAddress *thisobj = stackptr->object;
+
+		if (object->classId == thisobj->classId &&
+			object->objectId == thisobj->objectId)
+		{
+			if (object->objectSubId == thisobj->objectSubId)
+			{
+				stackptr->flags |= flags;
+				return true;
+			}
+
+			/*
+			 * Could visit column with whole table already on stack; this is
+			 * the same case noted in object_address_present_add_flags(), and
+			 * as in that case, we don't propagate flags for the component to
+			 * the whole object.
+			 */
+			if (thisobj->objectSubId == 0)
+				return true;
 		}
 	}
 
