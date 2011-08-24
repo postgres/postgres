@@ -1050,6 +1050,15 @@ include $(PGXS)
      </varlistentry>
 
      <varlistentry>
+      <term><varname>REGRESS_OPTS</varname></term>
+      <listitem>
+       <para>
+        additional switches to pass to <application>pg_regress</>
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
       <term><varname>EXTRA_CLEAN</varname></term>
       <listitem>
        <para>
