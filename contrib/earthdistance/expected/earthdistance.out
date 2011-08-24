@@ -1,6 +1,14 @@
 --
---  Test earth distance functions
+--  Test earthdistance extension
 --
+-- In this file we also do some testing of extension create/drop scenarios.
+-- That's really exercising the core database's dependency logic, so ideally
+-- we'd do it in the core regression tests, but we can't for lack of suitable
+-- guaranteed-available extensions.  earthdistance is a good test case because
+-- it has a dependency on the cube extension.
+--
+CREATE EXTENSION earthdistance;  -- fail, must install cube first
+ERROR:  required extension "cube" is not installed
 CREATE EXTENSION cube;
 CREATE EXTENSION earthdistance;
 --
@@ -945,3 +953,325 @@ SELECT abs(cube_distance(ll_to_earth(-30,-90), '(0)'::cube) / earth() - 1) <
  t
 (1 row)
 
+--
+-- Now we are going to test extension create/drop scenarios.
+--
+-- list what's installed
+\dT
+                                              List of data types
+ Schema | Name  |                                         Description                                         
+--------+-------+---------------------------------------------------------------------------------------------
+ public | cube  | multi-dimensional cube '(FLOAT-1, FLOAT-2, ..., FLOAT-N), (FLOAT-1, FLOAT-2, ..., FLOAT-N)'
+ public | earth | 
+(2 rows)
+
+\df
+                                         List of functions
+ Schema |       Name        | Result data type |           Argument data types            |  Type  
+--------+-------------------+------------------+------------------------------------------+--------
+ public | cube              | cube             | cube, double precision                   | normal
+ public | cube              | cube             | cube, double precision, double precision | normal
+ public | cube              | cube             | double precision                         | normal
+ public | cube              | cube             | double precision, double precision       | normal
+ public | cube              | cube             | double precision[]                       | normal
+ public | cube              | cube             | double precision[], double precision[]   | normal
+ public | cube_cmp          | integer          | cube, cube                               | normal
+ public | cube_contained    | boolean          | cube, cube                               | normal
+ public | cube_contains     | boolean          | cube, cube                               | normal
+ public | cube_dim          | integer          | cube                                     | normal
+ public | cube_distance     | double precision | cube, cube                               | normal
+ public | cube_enlarge      | cube             | cube, double precision, integer          | normal
+ public | cube_eq           | boolean          | cube, cube                               | normal
+ public | cube_ge           | boolean          | cube, cube                               | normal
+ public | cube_gt           | boolean          | cube, cube                               | normal
+ public | cube_in           | cube             | cstring                                  | normal
+ public | cube_inter        | cube             | cube, cube                               | normal
+ public | cube_is_point     | boolean          | cube                                     | normal
+ public | cube_le           | boolean          | cube, cube                               | normal
+ public | cube_ll_coord     | double precision | cube, integer                            | normal
+ public | cube_lt           | boolean          | cube, cube                               | normal
+ public | cube_ne           | boolean          | cube, cube                               | normal
+ public | cube_out          | cstring          | cube                                     | normal
+ public | cube_overlap      | boolean          | cube, cube                               | normal
+ public | cube_size         | double precision | cube                                     | normal
+ public | cube_subset       | cube             | cube, integer[]                          | normal
+ public | cube_union        | cube             | cube, cube                               | normal
+ public | cube_ur_coord     | double precision | cube, integer                            | normal
+ public | earth             | double precision |                                          | normal
+ public | earth_box         | cube             | earth, double precision                  | normal
+ public | earth_distance    | double precision | earth, earth                             | normal
+ public | g_cube_compress   | internal         | internal                                 | normal
+ public | g_cube_consistent | boolean          | internal, cube, integer, oid, internal   | normal
+ public | g_cube_decompress | internal         | internal                                 | normal
+ public | g_cube_penalty    | internal         | internal, internal, internal             | normal
+ public | g_cube_picksplit  | internal         | internal, internal                       | normal
+ public | g_cube_same       | internal         | cube, cube, internal                     | normal
+ public | g_cube_union      | cube             | internal, internal                       | normal
+ public | gc_to_sec         | double precision | double precision                         | normal
+ public | geo_distance      | double precision | point, point                             | normal
+ public | latitude          | double precision | earth                                    | normal
+ public | ll_to_earth       | earth            | double precision, double precision       | normal
+ public | longitude         | double precision | earth                                    | normal
+ public | sec_to_gc         | double precision | double precision                         | normal
+(44 rows)
+
+\do
+                                      List of operators
+ Schema | Name | Left arg type | Right arg type |   Result type    |       Description        
+--------+------+---------------+----------------+------------------+--------------------------
+ public | &&   | cube          | cube           | boolean          | overlaps
+ public | <    | cube          | cube           | boolean          | lower than
+ public | <=   | cube          | cube           | boolean          | lower than or equal to
+ public | <>   | cube          | cube           | boolean          | different
+ public | <@   | cube          | cube           | boolean          | contained in
+ public | <@>  | point         | point          | double precision | 
+ public | =    | cube          | cube           | boolean          | same as
+ public | >    | cube          | cube           | boolean          | greater than
+ public | >=   | cube          | cube           | boolean          | greater than or equal to
+ public | @    | cube          | cube           | boolean          | contains
+ public | @>   | cube          | cube           | boolean          | contains
+ public | ~    | cube          | cube           | boolean          | contained in
+(12 rows)
+
+drop extension cube;  -- fail, earthdistance requires it
+ERROR:  cannot drop extension cube because other objects depend on it
+DETAIL:  extension earthdistance depends on extension cube
+HINT:  Use DROP ... CASCADE to drop the dependent objects too.
+drop extension earthdistance;
+drop type cube;  -- fail, extension cube requires it
+ERROR:  cannot drop type cube because extension cube requires it
+HINT:  You can drop extension cube instead.
+-- list what's installed
+\dT
+                                             List of data types
+ Schema | Name |                                         Description                                         
+--------+------+---------------------------------------------------------------------------------------------
+ public | cube | multi-dimensional cube '(FLOAT-1, FLOAT-2, ..., FLOAT-N), (FLOAT-1, FLOAT-2, ..., FLOAT-N)'
+(1 row)
+
+\df
+                                         List of functions
+ Schema |       Name        | Result data type |           Argument data types            |  Type  
+--------+-------------------+------------------+------------------------------------------+--------
+ public | cube              | cube             | cube, double precision                   | normal
+ public | cube              | cube             | cube, double precision, double precision | normal
+ public | cube              | cube             | double precision                         | normal
+ public | cube              | cube             | double precision, double precision       | normal
+ public | cube              | cube             | double precision[]                       | normal
+ public | cube              | cube             | double precision[], double precision[]   | normal
+ public | cube_cmp          | integer          | cube, cube                               | normal
+ public | cube_contained    | boolean          | cube, cube                               | normal
+ public | cube_contains     | boolean          | cube, cube                               | normal
+ public | cube_dim          | integer          | cube                                     | normal
+ public | cube_distance     | double precision | cube, cube                               | normal
+ public | cube_enlarge      | cube             | cube, double precision, integer          | normal
+ public | cube_eq           | boolean          | cube, cube                               | normal
+ public | cube_ge           | boolean          | cube, cube                               | normal
+ public | cube_gt           | boolean          | cube, cube                               | normal
+ public | cube_in           | cube             | cstring                                  | normal
+ public | cube_inter        | cube             | cube, cube                               | normal
+ public | cube_is_point     | boolean          | cube                                     | normal
+ public | cube_le           | boolean          | cube, cube                               | normal
+ public | cube_ll_coord     | double precision | cube, integer                            | normal
+ public | cube_lt           | boolean          | cube, cube                               | normal
+ public | cube_ne           | boolean          | cube, cube                               | normal
+ public | cube_out          | cstring          | cube                                     | normal
+ public | cube_overlap      | boolean          | cube, cube                               | normal
+ public | cube_size         | double precision | cube                                     | normal
+ public | cube_subset       | cube             | cube, integer[]                          | normal
+ public | cube_union        | cube             | cube, cube                               | normal
+ public | cube_ur_coord     | double precision | cube, integer                            | normal
+ public | g_cube_compress   | internal         | internal                                 | normal
+ public | g_cube_consistent | boolean          | internal, cube, integer, oid, internal   | normal
+ public | g_cube_decompress | internal         | internal                                 | normal
+ public | g_cube_penalty    | internal         | internal, internal, internal             | normal
+ public | g_cube_picksplit  | internal         | internal, internal                       | normal
+ public | g_cube_same       | internal         | cube, cube, internal                     | normal
+ public | g_cube_union      | cube             | internal, internal                       | normal
+(35 rows)
+
+\do
+                                    List of operators
+ Schema | Name | Left arg type | Right arg type | Result type |       Description        
+--------+------+---------------+----------------+-------------+--------------------------
+ public | &&   | cube          | cube           | boolean     | overlaps
+ public | <    | cube          | cube           | boolean     | lower than
+ public | <=   | cube          | cube           | boolean     | lower than or equal to
+ public | <>   | cube          | cube           | boolean     | different
+ public | <@   | cube          | cube           | boolean     | contained in
+ public | =    | cube          | cube           | boolean     | same as
+ public | >    | cube          | cube           | boolean     | greater than
+ public | >=   | cube          | cube           | boolean     | greater than or equal to
+ public | @    | cube          | cube           | boolean     | contains
+ public | @>   | cube          | cube           | boolean     | contains
+ public | ~    | cube          | cube           | boolean     | contained in
+(11 rows)
+
+create table foo (f1 cube, f2 int);
+drop extension cube;  -- fail, foo.f1 requires it
+ERROR:  cannot drop extension cube because other objects depend on it
+DETAIL:  table foo column f1 depends on type cube
+HINT:  Use DROP ... CASCADE to drop the dependent objects too.
+drop table foo;
+drop extension cube;
+-- list what's installed
+\dT
+     List of data types
+ Schema | Name | Description 
+--------+------+-------------
+(0 rows)
+
+\df
+                       List of functions
+ Schema | Name | Result data type | Argument data types | Type 
+--------+------+------------------+---------------------+------
+(0 rows)
+
+\do
+                             List of operators
+ Schema | Name | Left arg type | Right arg type | Result type | Description 
+--------+------+---------------+----------------+-------------+-------------
+(0 rows)
+
+create schema c;
+create extension cube with schema c;
+-- list what's installed
+\dT public.*
+     List of data types
+ Schema | Name | Description 
+--------+------+-------------
+(0 rows)
+
+\df public.*
+                       List of functions
+ Schema | Name | Result data type | Argument data types | Type 
+--------+------+------------------+---------------------+------
+(0 rows)
+
+\do public.*
+                             List of operators
+ Schema | Name | Left arg type | Right arg type | Result type | Description 
+--------+------+---------------+----------------+-------------+-------------
+(0 rows)
+
+\dT c.*
+                                              List of data types
+ Schema |  Name  |                                         Description                                         
+--------+--------+---------------------------------------------------------------------------------------------
+ c      | c.cube | multi-dimensional cube '(FLOAT-1, FLOAT-2, ..., FLOAT-N), (FLOAT-1, FLOAT-2, ..., FLOAT-N)'
+(1 row)
+
+\df c.*
+                                          List of functions
+ Schema |       Name        | Result data type |            Argument data types             |  Type  
+--------+-------------------+------------------+--------------------------------------------+--------
+ c      | cube              | c.cube           | c.cube, double precision                   | normal
+ c      | cube              | c.cube           | c.cube, double precision, double precision | normal
+ c      | cube              | c.cube           | double precision                           | normal
+ c      | cube              | c.cube           | double precision, double precision         | normal
+ c      | cube              | c.cube           | double precision[]                         | normal
+ c      | cube              | c.cube           | double precision[], double precision[]     | normal
+ c      | cube_cmp          | integer          | c.cube, c.cube                             | normal
+ c      | cube_contained    | boolean          | c.cube, c.cube                             | normal
+ c      | cube_contains     | boolean          | c.cube, c.cube                             | normal
+ c      | cube_dim          | integer          | c.cube                                     | normal
+ c      | cube_distance     | double precision | c.cube, c.cube                             | normal
+ c      | cube_enlarge      | c.cube           | c.cube, double precision, integer          | normal
+ c      | cube_eq           | boolean          | c.cube, c.cube                             | normal
+ c      | cube_ge           | boolean          | c.cube, c.cube                             | normal
+ c      | cube_gt           | boolean          | c.cube, c.cube                             | normal
+ c      | cube_in           | c.cube           | cstring                                    | normal
+ c      | cube_inter        | c.cube           | c.cube, c.cube                             | normal
+ c      | cube_is_point     | boolean          | c.cube                                     | normal
+ c      | cube_le           | boolean          | c.cube, c.cube                             | normal
+ c      | cube_ll_coord     | double precision | c.cube, integer                            | normal
+ c      | cube_lt           | boolean          | c.cube, c.cube                             | normal
+ c      | cube_ne           | boolean          | c.cube, c.cube                             | normal
+ c      | cube_out          | cstring          | c.cube                                     | normal
+ c      | cube_overlap      | boolean          | c.cube, c.cube                             | normal
+ c      | cube_size         | double precision | c.cube                                     | normal
+ c      | cube_subset       | c.cube           | c.cube, integer[]                          | normal
+ c      | cube_union        | c.cube           | c.cube, c.cube                             | normal
+ c      | cube_ur_coord     | double precision | c.cube, integer                            | normal
+ c      | g_cube_compress   | internal         | internal                                   | normal
+ c      | g_cube_consistent | boolean          | internal, c.cube, integer, oid, internal   | normal
+ c      | g_cube_decompress | internal         | internal                                   | normal
+ c      | g_cube_penalty    | internal         | internal, internal, internal               | normal
+ c      | g_cube_picksplit  | internal         | internal, internal                         | normal
+ c      | g_cube_same       | internal         | c.cube, c.cube, internal                   | normal
+ c      | g_cube_union      | c.cube           | internal, internal                         | normal
+(35 rows)
+
+\do c.*
+                                    List of operators
+ Schema | Name | Left arg type | Right arg type | Result type |       Description        
+--------+------+---------------+----------------+-------------+--------------------------
+ c      | &&   | c.cube        | c.cube         | boolean     | overlaps
+ c      | <    | c.cube        | c.cube         | boolean     | lower than
+ c      | <=   | c.cube        | c.cube         | boolean     | lower than or equal to
+ c      | <>   | c.cube        | c.cube         | boolean     | different
+ c      | <@   | c.cube        | c.cube         | boolean     | contained in
+ c      | =    | c.cube        | c.cube         | boolean     | same as
+ c      | >    | c.cube        | c.cube         | boolean     | greater than
+ c      | >=   | c.cube        | c.cube         | boolean     | greater than or equal to
+ c      | @    | c.cube        | c.cube         | boolean     | contains
+ c      | @>   | c.cube        | c.cube         | boolean     | contains
+ c      | ~    | c.cube        | c.cube         | boolean     | contained in
+(11 rows)
+
+create table foo (f1 c.cube, f2 int);
+drop extension cube;  -- fail, foo.f1 requires it
+ERROR:  cannot drop extension cube because other objects depend on it
+DETAIL:  table foo column f1 depends on type c.cube
+HINT:  Use DROP ... CASCADE to drop the dependent objects too.
+drop schema c;  -- fail, cube requires it
+ERROR:  cannot drop schema c because other objects depend on it
+DETAIL:  extension cube depends on schema c
+table foo column f1 depends on type c.cube
+HINT:  Use DROP ... CASCADE to drop the dependent objects too.
+drop extension cube cascade;
+NOTICE:  drop cascades to table foo column f1
+\d foo
+      Table "public.foo"
+ Column |  Type   | Modifiers 
+--------+---------+-----------
+ f2     | integer | 
+
+-- list what's installed
+\dT public.*
+     List of data types
+ Schema | Name | Description 
+--------+------+-------------
+(0 rows)
+
+\df public.*
+                       List of functions
+ Schema | Name | Result data type | Argument data types | Type 
+--------+------+------------------+---------------------+------
+(0 rows)
+
+\do public.*
+                             List of operators
+ Schema | Name | Left arg type | Right arg type | Result type | Description 
+--------+------+---------------+----------------+-------------+-------------
+(0 rows)
+
+\dT c.*
+     List of data types
+ Schema | Name | Description 
+--------+------+-------------
+(0 rows)
+
+\df c.*
+                       List of functions
+ Schema | Name | Result data type | Argument data types | Type 
+--------+------+------------------+---------------------+------
+(0 rows)
+
+\do c.*
+                             List of operators
+ Schema | Name | Left arg type | Right arg type | Result type | Description 
+--------+------+---------------+----------------+-------------+-------------
+(0 rows)
+
+drop schema c;
