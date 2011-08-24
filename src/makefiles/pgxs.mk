@@ -38,6 +38,7 @@
 #   SCRIPTS_built -- script files (not binaries) to install into $PREFIX/bin,
 #     which need to be built first
 #   REGRESS -- list of regression test cases (without suffix)
+#   REGRESS_OPTS -- additional switches to pass to pg_regress
 #   EXTRA_CLEAN -- extra files to remove in 'make clean'
 #   PG_CPPFLAGS -- will be added to CPPFLAGS
 #   PG_LIBS -- will be added to PROGRAM link line
@@ -225,10 +226,8 @@ distclean maintainer-clean: clean
 
 ifdef REGRESS
 
-# Calling makefile can set REGRESS_OPTS, but this is the default:
-ifndef REGRESS_OPTS
-REGRESS_OPTS = --dbname=$(CONTRIB_TESTDB)
-endif
+# Select database to use for running the tests
+REGRESS_OPTS += --dbname=$(CONTRIB_TESTDB)
 
 # where to find psql for running the tests
 PSQLDIR = $(bindir)
