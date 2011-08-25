@@ -5884,7 +5884,8 @@ getForeignDataWrappers(int *numForeignDataWrappers)
 	appendPQExpBuffer(query, "SELECT tableoid, oid, fdwname, "
 		"(%s fdwowner) AS rolname, fdwvalidator::pg_catalog.regproc, fdwacl,"
 					  "array_to_string(ARRAY("
-		 "		SELECT option_name || ' ' || quote_literal(option_value) "
+		 "		SELECT quote_ident(option_name) || ' ' || "
+		 "             quote_literal(option_value) "
 	   "		FROM pg_options_to_table(fdwoptions)), ', ') AS fdwoptions "
 					  "FROM pg_foreign_data_wrapper",
 					  username_subquery);
@@ -5969,7 +5970,8 @@ getForeignServers(int *numForeignServers)
 					  "(%s srvowner) AS rolname, "
 					  "srvfdw, srvtype, srvversion, srvacl,"
 					  "array_to_string(ARRAY("
-		 "		SELECT option_name || ' ' || quote_literal(option_value) "
+		 "		SELECT quote_ident(option_name) || ' ' || "
+		 "             quote_literal(option_value) "
 	   "		FROM pg_options_to_table(srvoptions)), ', ') AS srvoptions "
 					  "FROM pg_foreign_server",
 					  username_subquery);
@@ -10275,7 +10277,7 @@ dumpUserMappings(Archive *fout,
 
 	appendPQExpBuffer(query,
 					  "SELECT usename, "
-					  "array_to_string(ARRAY(SELECT option_name || ' ' || quote_literal(option_value) FROM pg_options_to_table(umoptions)), ', ') AS umoptions\n"
+					  "array_to_string(ARRAY(SELECT quote_ident(option_name) || ' ' || quote_literal(option_value) FROM pg_options_to_table(umoptions)), ', ') AS umoptions\n"
 					  "FROM pg_user_mappings "
 					  "WHERE srvid = %u",
 					  catalogId.oid);
