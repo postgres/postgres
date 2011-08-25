@@ -30,6 +30,7 @@ void seg_scanner_finish(void);
 %option noinput
 %option nounput
 %option noyywrap
+%option warn
 %option prefix="seg_yy"
 
 

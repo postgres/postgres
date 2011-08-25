@@ -32,6 +32,7 @@ void cube_scanner_finish(void);
 %option noinput
 %option nounput
 %option noyywrap
+%option warn
 %option prefix="cube_yy"
 
 

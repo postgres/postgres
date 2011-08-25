@@ -84,6 +84,7 @@ static struct _if_value
 %option nodefault
 %option noinput
 %option noyywrap
+%option warn
 
 %option yylineno
 

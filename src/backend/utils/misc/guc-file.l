@@ -51,6 +51,7 @@ static char *GUC_scanstr(const char *s);
 %option noinput
 %option nounput
 %option noyywrap
+%option warn
 %option prefix="GUC_yy"
 
 

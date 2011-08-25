@@ -132,6 +132,7 @@ static void escape_variable(bool as_ident);
 %option noinput
 %option nounput
 %option noyywrap
+%option warn
 
 /*
  * All of the following definitions and rules should exactly match
