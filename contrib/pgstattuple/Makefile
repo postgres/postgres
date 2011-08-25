@@ -6,6 +6,8 @@ OBJS		= pgstattuple.o pgstatindex.o
 EXTENSION = pgstattuple
 DATA = pgstattuple--1.0.sql pgstattuple--unpackaged--1.0.sql
 
+REGRESS = pgstattuple
+
 ifdef USE_PGXS
 PG_CONFIG = pg_config
 PGXS := $(shell $(PG_CONFIG) --pgxs)

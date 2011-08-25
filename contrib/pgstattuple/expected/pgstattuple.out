@@ -1,0 +1,38 @@
+CREATE EXTENSION pgstattuple;
+--
+-- It's difficult to come up with platform-independent test cases for
+-- the pgstattuple functions, but the results for empty tables and
+-- indexes should be that.
+--
+create table test (a int primary key);
+NOTICE:  CREATE TABLE / PRIMARY KEY will create implicit index "test_pkey" for table "test"
+select * from pgstattuple('test'::text);
+ table_len | tuple_count | tuple_len | tuple_percent | dead_tuple_count | dead_tuple_len | dead_tuple_percent | free_space | free_percent 
+-----------+-------------+-----------+---------------+------------------+----------------+--------------------+------------+--------------
+         0 |           0 |         0 |             0 |                0 |              0 |                  0 |          0 |            0
+(1 row)
+
+select * from pgstattuple('test'::regclass);
+ table_len | tuple_count | tuple_len | tuple_percent | dead_tuple_count | dead_tuple_len | dead_tuple_percent | free_space | free_percent 
+-----------+-------------+-----------+---------------+------------------+----------------+--------------------+------------+--------------
+         0 |           0 |         0 |             0 |                0 |              0 |                  0 |          0 |            0
+(1 row)
+
+select * from pgstatindex('test_pkey');
+ version | tree_level | index_size | root_block_no | internal_pages | leaf_pages | empty_pages | deleted_pages | avg_leaf_density | leaf_fragmentation 
+---------+------------+------------+---------------+----------------+------------+-------------+---------------+------------------+--------------------
+       2 |          0 |          0 |             0 |              0 |          0 |           0 |             0 |              NaN |                NaN
+(1 row)
+
+select pg_relpages('test');
+ pg_relpages 
+-------------
+           0
+(1 row)
+
+select pg_relpages('test_pkey');
+ pg_relpages 
+-------------
+           1
+(1 row)
+
