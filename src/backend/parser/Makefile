@@ -17,7 +17,7 @@ OBJS= analyze.o gram.o keywords.o kwlookup.o parser.o \
       parse_expr.o parse_func.o parse_node.o parse_oper.o parse_param.o \
       parse_relation.o parse_target.o parse_type.o parse_utilcmd.o scansup.o
 
-FLEXFLAGS = -CF
+FLEXFLAGS = -CF -b -p -p
 
 include $(top_srcdir)/src/backend/common.mk
 
@@ -51,6 +51,7 @@ endif
 scan.c: scan.l
 ifdef FLEX
 	$(FLEX) $(FLEXFLAGS) -o'$@' $<
+	@if [ `wc -l <lex.backup` -eq 1 ]; then rm lex.backup; else echo "Scanner requires backup, see lex.backup."; exit 1; fi
 else
 	@$(missing) flex $< $@
 endif
@@ -62,3 +63,5 @@ gram.o keywords.o parser.o: gram.h
 
 # gram.c, gram.h, and scan.c are in the distribution tarball, so they
 # are not cleaned here.
+clean distclean maintainer-clean:
+	rm -f lex.backup

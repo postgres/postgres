@@ -17,7 +17,8 @@
  * for handling float numbers and continued string literals.  If you change
  * the lexical rules, verify that you haven't broken the no-backtrack
  * property by running flex with the "-b" option and checking that the
- * resulting "lex.backup" file says that no backing up is needed.
+ * resulting "lex.backup" file says that no backing up is needed.  (As of
+ * Postgres 9.2, this check is made automatically by the Makefile.)
  *
  *
  * Portions Copyright (c) 1996-2011, PostgreSQL Global Development Group
