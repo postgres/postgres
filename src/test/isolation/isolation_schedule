@@ -9,8 +9,4 @@ test: ri-trigger
 test: partial-index
 test: two-ids
 test: multiple-row-versions
-# Ignore failure from prepared-transactions test, because it fails if
-# prepared transactions are disabled in the server. It should pass if they're
-# enabled, however.
-ignore: prepared-transactions
 test: prepared-transactions
