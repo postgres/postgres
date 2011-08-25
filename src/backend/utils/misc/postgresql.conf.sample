@@ -58,7 +58,7 @@
 
 #listen_addresses = 'localhost'		# what IP address(es) to listen on;
 					# comma-separated list of addresses;
-					# defaults to 'localhost'; use '*' for all
+					# defaults to 'localhost', '*' = all
 					# (change requires restart)
 #port = 5432				# (change requires restart)
 #max_connections = 100			# (change requires restart)
