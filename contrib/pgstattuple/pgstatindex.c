@@ -234,9 +234,17 @@ pgstatindex(PG_FUNCTION_ARGS)
 		values[j] = palloc(32);
 		snprintf(values[j++], 32, INT64_FORMAT, indexStat.deleted_pages);
 		values[j] = palloc(32);
-		snprintf(values[j++], 32, "%.2f", 100.0 - (double) indexStat.free_space / (double) indexStat.max_avail * 100.0);
+		if (indexStat.max_avail > 0)
+			snprintf(values[j++], 32, "%.2f",
+					 100.0 - (double) indexStat.free_space / (double) indexStat.max_avail * 100.0);
+		else
+			snprintf(values[j++], 32, "NaN");
 		values[j] = palloc(32);
-		snprintf(values[j++], 32, "%.2f", (double) indexStat.fragments / (double) indexStat.leaf_pages * 100.0);
+		if (indexStat.leaf_pages > 0)
+			snprintf(values[j++], 32, "%.2f",
+					 (double) indexStat.fragments / (double) indexStat.leaf_pages * 100.0);
+		else
+			snprintf(values[j++], 32, "NaN");
 
 		tuple = BuildTupleFromCStrings(TupleDescGetAttInMetadata(tupleDesc),
 									   values);
