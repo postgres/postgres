@@ -116,7 +116,7 @@ DROP FOREIGN DATA WRAPPER foo CASCADE;
 
 -- exercise CREATE SERVER
 CREATE SERVER s1 FOREIGN DATA WRAPPER foo;                  -- ERROR
-CREATE FOREIGN DATA WRAPPER foo OPTIONS (test_wrapper 'true');
+CREATE FOREIGN DATA WRAPPER foo OPTIONS ("test wrapper" 'true');
 CREATE SERVER s1 FOREIGN DATA WRAPPER foo;
 CREATE SERVER s1 FOREIGN DATA WRAPPER foo;                  -- ERROR
 CREATE SERVER s2 FOREIGN DATA WRAPPER foo OPTIONS (host 'a', dbname 'b');
@@ -154,7 +154,7 @@ ALTER SERVER s0;                                            -- ERROR
 ALTER SERVER s0 OPTIONS (a '1');                            -- ERROR
 ALTER SERVER s1 VERSION '1.0' OPTIONS (servername 's1');
 ALTER SERVER s2 VERSION '1.1';
-ALTER SERVER s3 OPTIONS (tnsname 'orcl', port '1521');
+ALTER SERVER s3 OPTIONS ("tns name" 'orcl', port '1521');
 GRANT USAGE ON FOREIGN SERVER s1 TO regress_test_role;
 GRANT USAGE ON FOREIGN SERVER s6 TO regress_test_role2 WITH GRANT OPTION;
 \des+
@@ -210,7 +210,7 @@ CREATE USER MAPPING FOR regress_test_missing_role SERVER s1;  -- ERROR
 CREATE USER MAPPING FOR current_user SERVER s1;             -- ERROR
 CREATE USER MAPPING FOR current_user SERVER s4;
 CREATE USER MAPPING FOR user SERVER s4;                     -- ERROR duplicate
-CREATE USER MAPPING FOR public SERVER s4 OPTIONS (mapping 'is public');
+CREATE USER MAPPING FOR public SERVER s4 OPTIONS ("this mapping" 'is public');
 CREATE USER MAPPING FOR user SERVER s8 OPTIONS (username 'test', password 'secret');    -- ERROR
 CREATE USER MAPPING FOR user SERVER s8 OPTIONS (user 'test', password 'secret');
 ALTER SERVER s5 OWNER TO regress_test_role;
@@ -264,10 +264,10 @@ CREATE FOREIGN TABLE ft1 () SERVER no_server;                   -- ERROR
 CREATE FOREIGN TABLE ft1 (c1 serial) SERVER sc;                 -- ERROR
 CREATE FOREIGN TABLE ft1 () SERVER sc WITH OIDS;                -- ERROR
 CREATE FOREIGN TABLE ft1 (
-	c1 integer OPTIONS (param1 'val1') NOT NULL,
+	c1 integer OPTIONS ("param 1" 'val1') NOT NULL,
 	c2 text OPTIONS (param2 'val2', param3 'val3'),
 	c3 date
-) SERVER sc OPTIONS (delimiter ',', quote '"');
+) SERVER sc OPTIONS (delimiter ',', quote '"', "be quoted" 'value');
 COMMENT ON FOREIGN TABLE ft1 IS 'ft1';
 COMMENT ON COLUMN ft1.c1 IS 'ft1.c1';
 \d+ ft1
