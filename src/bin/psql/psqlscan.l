@@ -724,6 +724,23 @@ other			.
 				}
 
 	/*
+	 * These rules just avoid the need for scanner backup if one of the
+	 * two rules above fails to match completely.
+	 */
+
+:'[A-Za-z0-9_]*	{
+					/* Throw back everything but the colon */
+					yyless(1);
+					ECHO;
+				}
+
+:\"[A-Za-z0-9_]*	{
+					/* Throw back everything but the colon */
+					yyless(1);
+					ECHO;
+				}
+
+	/*
 	 * Back to backend-compatible rules.
 	 */
 
@@ -913,7 +930,7 @@ other			.
 					}
 				}
 
-:[A-Za-z0-9_]*	{
+:[A-Za-z0-9_]+	{
 					/* Possible psql variable substitution */
 					if (option_type == OT_VERBATIM)
 						ECHO;
@@ -958,6 +975,20 @@ other			.
 						escape_variable(true);
 						return LEXRES_OK;
 					}
+				}
+
+:'[A-Za-z0-9_]*	{
+					/* Throw back everything but the colon */
+					yyless(1);
+					ECHO;
+					BEGIN(xslashdefaultarg);
+				}
+
+:\"[A-Za-z0-9_]*	{
+					/* Throw back everything but the colon */
+					yyless(1);
+					ECHO;
+					BEGIN(xslashdefaultarg);
 				}
 
 "|"				{
