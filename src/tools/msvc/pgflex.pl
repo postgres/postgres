@@ -65,6 +65,20 @@ if ($? == 0)
         print $cfile $ccode;
         close($cfile);
     }
+	if ($flexflags =~ /\s-b\s/)
+	{
+		my $lexback = dirname($input) . "/lex.backup";
+		open($lfile,$lexback) || die "opening $lexback for reading: $!";
+		my $lexbacklines = <$lfile>;
+		close($lfile);
+		my $linecount = $lexbacklines =~ tr /\n/\n/;
+		if ($linecount != 1)
+		{
+			print "Scanner requires backup, see lex.backup.\n";
+			exit 1;
+		}
+		unlink $lexback;
+	}
 
     exit 0;
 
