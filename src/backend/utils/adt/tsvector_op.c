@@ -340,11 +340,14 @@ tsvector_concat(PG_FUNCTION_ARGS)
 				j,
 				i1,
 				i2,
-				dataoff;
+				dataoff,
+				output_bytes,
+				output_size;
 	char	   *data,
 			   *data1,
 			   *data2;
 
+	/* Get max position in in1; we'll need this to offset in2's positions */
 	ptr = ARRPTR(in1);
 	i = in1->size;
 	while (i--)
@@ -368,10 +371,23 @@ tsvector_concat(PG_FUNCTION_ARGS)
 	data2 = STRPTR(in2);
 	i1 = in1->size;
 	i2 = in2->size;
-	/* conservative estimate of space needed */
-	out = (TSVector) palloc0(VARSIZE(in1) + VARSIZE(in2));
-	SET_VARSIZE(out, VARSIZE(in1) + VARSIZE(in2));
+
+	/*
+	 * Conservative estimate of space needed.  We might need all the data
+	 * in both inputs, and conceivably add a pad byte before position data
+	 * for each item where there was none before.
+	 */
+	output_bytes = VARSIZE(in1) + VARSIZE(in2) + i1 + i2;
+
+	out = (TSVector) palloc0(output_bytes);
+	SET_VARSIZE(out, output_bytes);
+
+	/*
+	 * We must make out->size valid so that STRPTR(out) is sensible.  We'll
+	 * collapse out any unused space at the end.
+	 */
 	out->size = in1->size + in2->size;
+
 	ptr = ARRPTR(out);
 	data = STRPTR(out);
 	dataoff = 0;
@@ -513,10 +529,18 @@ tsvector_concat(PG_FUNCTION_ARGS)
 				(errcode(ERRCODE_PROGRAM_LIMIT_EXCEEDED),
 				 errmsg("string is too long for tsvector (%d bytes, max %d bytes)", dataoff, MAXSTRPOS)));
 
-	out->size = ptr - ARRPTR(out);
-	SET_VARSIZE(out, CALCDATASIZE(out->size, dataoff));
+	/*
+	 * Adjust sizes (asserting that we didn't overrun the original estimates)
+	 * and collapse out any unused array entries.
+	 */
+	output_size = ptr - ARRPTR(out);
+	Assert(output_size <= out->size);
+	out->size = output_size;
 	if (data != STRPTR(out))
 		memmove(STRPTR(out), data, dataoff);
+	output_bytes = CALCDATASIZE(out->size, dataoff);
+	Assert(output_bytes <= VARSIZE(out));
+	SET_VARSIZE(out, output_bytes);
 
 	PG_FREE_IF_COPY(in1, 0);
 	PG_FREE_IF_COPY(in2, 1);
