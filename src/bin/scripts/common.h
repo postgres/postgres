@@ -10,8 +10,8 @@
 #define COMMON_H
 
 #include "libpq-fe.h"
-#include "getopt_long.h"
-#include "pqexpbuffer.h"
+#include "getopt_long.h"	/* pgrminclude ignore */
+#include "pqexpbuffer.h"	/* pgrminclude ignore */
 
 enum trivalue
 {
