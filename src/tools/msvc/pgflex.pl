@@ -67,7 +67,7 @@ if ($? == 0)
     }
 	if ($flexflags =~ /\s-b\s/)
 	{
-		my $lexback = dirname($input) . "/lex.backup";
+		my $lexback = "lex.backup";
 		open($lfile,$lexback) || die "opening $lexback for reading: $!";
 		my $lexbacklines = <$lfile>;
 		close($lfile);
