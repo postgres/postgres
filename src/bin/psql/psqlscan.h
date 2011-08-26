@@ -33,7 +33,7 @@ enum slash_option_type
 	OT_SQLIDHACK,				/* SQL identifier, but don't downcase */
 	OT_FILEPIPE,				/* it's a filename or pipe */
 	OT_WHOLE_LINE,				/* just snarf the rest of the line */
-	OT_VERBATIM					/* literal (no backticks or variables) */
+	OT_NO_EVAL					/* no expansion of backticks or variables */
 };
 
 

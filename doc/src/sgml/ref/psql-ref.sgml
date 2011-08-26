@@ -156,8 +156,8 @@ PostgreSQL documentation
       Use the file <replaceable class="parameter">filename</replaceable>
       as the source of commands instead of reading commands interactively.
       After the file is processed, <application>psql</application>
-      terminates. This is in many ways equivalent to the internal
-      command <command>\i</command>.
+      terminates. This is in many ways equivalent to the meta-command
+      <command>\i</command>.
       </para>
 
       <para>
@@ -223,7 +223,7 @@ PostgreSQL documentation
       <listitem>
       <para>
       List all available databases, then exit. Other non-connection
-      options are ignored. This is similar to the internal command
+      options are ignored. This is similar to the meta-command
       <command>\list</command>.
       </para>
       </listitem>
@@ -393,9 +393,9 @@ PostgreSQL documentation
       <listitem>
       <para>
       Perform a variable assignment, like the <command>\set</command>
-      internal command. Note that you must separate name and value, if
+      meta-command. Note that you must separate name and value, if
       any, by an equal sign on the command line. To unset a variable,
-      leave off the equal sign. To just set a variable without a value,
+      leave off the equal sign. To set a variable with an empty value,
       use the equal sign but leave off the value. These assignments are
       done during a very early stage of start-up, so variables reserved
       for internal purposes might get overwritten later.
@@ -659,32 +659,32 @@ testdb=&gt;
     </para>
 
     <para>
-    To include whitespace into an argument you can quote it with a
-    single quote. To include a single quote into such an argument,
-    use two single quotes. Anything contained in single quotes is
+    To include whitespace in an argument you can quote it with
+    single quotes. To include a single quote in an argument,
+    write two single quotes within single-quoted text.
+    Anything contained in single quotes is
     furthermore subject to C-like substitutions for
     <literal>\n</literal> (new line), <literal>\t</literal> (tab),
+    <literal>\b</literal> (backspace), <literal>\r</literal> (carriage return),
+    <literal>\f</literal> (form feed),
     <literal>\</literal><replaceable>digits</replaceable> (octal), and
     <literal>\x</literal><replaceable>digits</replaceable> (hexadecimal).
+    A backslash preceding any other character within single-quoted text
+    quotes that single character, whatever it is.
     </para>
 
     <para>
-    If an unquoted argument begins with a colon (<literal>:</literal>),
-    it is taken as a <application>psql</> variable and the value of the
-    variable is used as the argument instead.  If the variable name is
-    surrounded by single quotes (e.g. <literal>:'var'</literal>), it
-    will be escaped as an SQL literal and the result will be used as
-    the argument.  If the variable name is surrounded by double quotes,
-    it will be escaped as an SQL identifier and the result will be used
-    as the argument.
+    Within an argument, text that is enclosed in backquotes
+    (<literal>`</literal>) is taken as a command line that is passed to the
+    shell. The output of the command (with any trailing newline removed)
+    replaces the backquoted text.
     </para>
 
     <para>
-    Arguments that are enclosed in backquotes (<literal>`</literal>)
-    are taken as a command line that is passed to the shell. The
-    output of the command (with any trailing newline removed) is taken
-    as the argument value. The above escape sequences also apply in
-    backquotes.
+    If an unquoted colon (<literal>:</literal>) followed by a
+    <application>psql</> variable name appears within an argument, it is
+    replaced by the variable's value, as described in <xref
+    linkend="APP-PSQL-interpolation" endterm="APP-PSQL-interpolation-title">.
     </para>
 
     <para>
@@ -1803,15 +1803,16 @@ lo_import 152801
         <term><literal>\prompt [ <replaceable class="parameter">text</replaceable> ] <replaceable class="parameter">name</replaceable></literal></term>
         <listitem>
         <para>
-         Prompts the user to set variable <replaceable
-         class="parameter">name</>.  An optional prompt, <replaceable
+         Prompts the user to supply text, which is assigned to the variable
+         <replaceable class="parameter">name</>.
+         An optional prompt string, <replaceable
          class="parameter">text</>, can be specified.  (For multiword
-         prompts, use single quotes.)
+         prompts, surround the text with single quotes.)
         </para>
 
         <para>
          By default, <literal>\prompt</> uses the terminal for input and
-         output.  However, if the <option>-f</> command line switch is
+         output.  However, if the <option>-f</> command line switch was
          used, <literal>\prompt</> uses standard input and standard output.
         </para>
         </listitem>
@@ -2197,12 +2198,17 @@ lo_import 152801
 
         <listitem>
         <para>
-        Sets the internal variable <replaceable
+        Sets the <application>psql</> variable <replaceable
         class="parameter">name</replaceable> to <replaceable
-        class="parameter">value</replaceable> or, if more than one value
-        is given, to the concatenation of all of them. If no second
-        argument is given, the variable is just set with no value. To
+        class="parameter">value</replaceable>, or if more than one value
+        is given, to the concatenation of all of them. If only one
+        argument is given, the variable is set with an empty value. To
         unset a variable, use the <command>\unset</command> command.
+        </para>
+
+        <para>
+        <command>\set</> without any arguments displays the names and values
+        of all currently-set <application>psql</> variables.
         </para>
 
         <para>
@@ -2221,7 +2227,7 @@ lo_import 152801
 
         <note>
         <para>
-        This command is totally separate from the <acronym>SQL</acronym>
+        This command is unrelated to the <acronym>SQL</acronym>
         command <xref linkend="SQL-SET">.
         </para>
         </note>
@@ -2290,6 +2296,18 @@ lo_import 152801
          takes, in milliseconds.  With parameter, sets same.
         </para>
        </listitem>
+      </varlistentry>
+
+
+      <varlistentry>
+        <term><literal>\unset <replaceable class="parameter">name</replaceable></literal></term>
+
+        <listitem>
+        <para>
+        Unsets (deletes) the <application>psql</> variable <replaceable
+        class="parameter">name</replaceable>.
+        </para>
+        </listitem>
       </varlistentry>
 
 
@@ -2467,18 +2485,28 @@ lo_import 152801
 
     <para>
     To set a variable, use the <application>psql</application> meta-command
-    <command>\set</command>:
+    <command>\set</command>.  For example,
 <programlisting>
 testdb=&gt; <userinput>\set foo bar</userinput>
 </programlisting>
     sets the variable <literal>foo</literal> to the value
     <literal>bar</literal>. To retrieve the content of the variable, precede
-    the name with a colon and use it as the argument of any slash
-    command:
+    the name with a colon, for example:
 <programlisting>
 testdb=&gt; <userinput>\echo :foo</userinput>
 bar
-</programlisting></para>
+</programlisting>
+    This works in both regular SQL commands and meta-commands; there is
+    more detail in <xref linkend="APP-PSQL-interpolation"
+    endterm="APP-PSQL-interpolation-title">, below.
+    </para>
+
+    <para>
+    If you call <command>\set</command> without a second argument, the
+    variable is set, with an empty string as value. To unset (i.e., delete)
+    a variable, use the command <command>\unset</command>.  To show the
+    values of all variables, call <command>\set</command> without any argument.
+    </para>
 
     <note>
     <para>
@@ -2494,12 +2522,6 @@ bar
     variable.
     </para>
     </note>
-
-    <para>
-    If you call <command>\set</command> without a second argument, the
-    variable is set, with an empty string as value. To unset (or delete) a
-    variable, use the command <command>\unset</command>.
-    </para>
 
     <para>
     A number of these variables are treated specially
@@ -2863,47 +2885,57 @@ bar
 
    </refsect3>
 
-   <refsect3>
-    <title><acronym>SQL</acronym> Interpolation</title>
+   <refsect3 id="APP-PSQL-interpolation">
+    <title id="APP-PSQL-interpolation-title"><acronym>SQL</acronym> Interpolation</title>
 
     <para>
-    An additional useful feature of <application>psql</application>
+    A key feature of <application>psql</application>
     variables is that you can substitute (<quote>interpolate</quote>)
-    them into regular <acronym>SQL</acronym> statements.
-    <application>psql</application> provides special facilities for
-    ensuring that values used as SQL literals and identifiers are
-    properly escaped.  The syntax for interpolating a value without
-    any special escaping is again to prepend the variable name with a colon
-    (<literal>:</literal>):
+    them into regular <acronym>SQL</acronym> statements, as well as the
+    arguments of meta-commands.  Furthermore,
+    <application>psql</application> provides facilities for
+    ensuring that variable values used as SQL literals and identifiers are
+    properly quoted.  The syntax for interpolating a value without
+    any quoting is to prepend the variable name with a colon
+    (<literal>:</literal>).  For example,
 <programlisting>
 testdb=&gt; <userinput>\set foo 'my_table'</userinput>
 testdb=&gt; <userinput>SELECT * FROM :foo;</userinput>
 </programlisting>
-    would then query the table <literal>my_table</literal>. Note that this
+    would query the table <literal>my_table</literal>. Note that this
     may be unsafe: the value of the variable is copied literally, so it can
-    even contain unbalanced quotes or backslash commands. You must make sure
+    contain unbalanced quotes, or even backslash commands. You must make sure
     that it makes sense where you put it.
     </para>
 
     <para>
     When a value is to be used as an SQL literal or identifier, it is
-    safest to arrange for it to be escaped.  To escape the value of
+    safest to arrange for it to be quoted.  To quote the value of
     a variable as an SQL literal, write a colon followed by the variable
-    name in single quotes.  To escape the value an SQL identifier, write
-    a colon followed by the variable name in double quotes.  The previous
-    example would be more safely written this way:
+    name in single quotes.  To quote the value as an SQL identifier, write
+    a colon followed by the variable name in double quotes.
+    These constructs deal correctly with quotes and other special
+    characters embedded within the variable value.
+    The previous example would be more safely written this way:
 <programlisting>
 testdb=&gt; <userinput>\set foo 'my_table'</userinput>
 testdb=&gt; <userinput>SELECT * FROM :"foo";</userinput>
 </programlisting>
-    Variable interpolation will not be performed into quoted
-    <acronym>SQL</acronym> entities.
     </para>
 
     <para>
-    One  possible use of this mechanism is to
-    copy the contents of a file into a table column. First load the file into a
-    variable and then proceed as above:
+    Variable interpolation will not be performed within quoted
+    <acronym>SQL</acronym> literals and identifiers.  Therefore, a
+    construction such as <literal>':foo'</> doesn't work to produce a quoted
+    literal from a variable's value (and it would be unsafe if it did work,
+    since it wouldn't correctly handle quotes embedded in the value).
+    </para>
+
+    <para>
+    One example use of this mechanism is to
+    copy the contents of a file into a table column.
+    First load the file into a variable and then interpolate the variable's
+    value as a quoted string:
 <programlisting>
 testdb=&gt; <userinput>\set content `cat my_file.txt`</userinput>
 testdb=&gt; <userinput>INSERT INTO my_table VALUES (:'content');</userinput>
@@ -2914,17 +2946,20 @@ testdb=&gt; <userinput>INSERT INTO my_table VALUES (:'content');</userinput>
 
     <para>
     Since colons can legally appear in SQL commands, an apparent attempt
-    at interpolation (such as <literal>:name</literal>,
+    at interpolation (that is, <literal>:name</literal>,
     <literal>:'name'</literal>, or <literal>:"name"</literal>) is not
-    changed unless the named variable is currently set. In any case, you
+    replaced unless the named variable is currently set. In any case, you
     can escape a colon with a backslash to protect it from substitution.
-    (The colon syntax for variables is standard <acronym>SQL</acronym> for
+    </para>
+
+    <para>
+    The colon syntax for variables is standard <acronym>SQL</acronym> for
     embedded query languages, such as <application>ECPG</application>.
-    The colon syntax for array slices and type casts are
-    <productname>PostgreSQL</productname> extensions, hence the
-    conflict.  The colon syntax for escaping a variable's value as an
-    SQL literal or identifier is a <application>psql</application>
-    extension.)
+    The colon syntaxes for array slices and type casts are
+    <productname>PostgreSQL</productname> extensions, which can sometimes
+    conflict with the standard usage.  The colon-quote syntax for escaping a
+    variable's value as an SQL literal or identifier is a
+    <application>psql</application> extension.
     </para>
 
    </refsect3>
