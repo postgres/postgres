@@ -120,6 +120,7 @@ static bool var_is_current_source(PsqlScanState state, const char *varname);
 static YY_BUFFER_STATE prepare_buffer(const char *txt, int len,
 									  char **txtcopy);
 static void emit(const char *txt, int len);
+static char *extract_substring(const char *txt, int len);
 static void escape_variable(bool as_ident);
 
 #define ECHO emit(yytext, yyleng)
@@ -383,6 +384,9 @@ realfail1		({integer}|{decimal})[Ee]
 realfail2		({integer}|{decimal})[Ee][-+]
 
 param			\${integer}
+
+/* psql-specific: characters allowed in variable names */
+variable_char	[A-Za-z\200-\377_0-9]
 
 other			.
 
@@ -680,11 +684,12 @@ other			.
 					return LEXRES_BACKSLASH;
 				}
 
-:[A-Za-z0-9_]+	{
+:{variable_char}+	{
 					/* Possible psql variable substitution */
-					const char *varname = yytext + 1;
+					char   *varname;
 					const char *value;
 
+					varname = extract_substring(yytext + 1, yyleng - 1);
 					value = GetVariable(pset.vars, varname);
 
 					if (value)
@@ -713,13 +718,15 @@ other			.
 						 */
 						ECHO;
 					}
+
+					free(varname);
 				}
 
-:'[A-Za-z0-9_]+'	{
+:'{variable_char}+'	{
 					escape_variable(false);
 				}
 
-:\"[A-Za-z0-9_]+\"	{
+:\"{variable_char}+\"	{
 					escape_variable(true);
 				}
 
@@ -728,13 +735,13 @@ other			.
 	 * two rules above fails to match completely.
 	 */
 
-:'[A-Za-z0-9_]*	{
+:'{variable_char}*	{
 					/* Throw back everything but the colon */
 					yyless(1);
 					ECHO;
 				}
 
-:\"[A-Za-z0-9_]*	{
+:\"{variable_char}*	{
 					/* Throw back everything but the colon */
 					yyless(1);
 					ECHO;
@@ -930,15 +937,18 @@ other			.
 					}
 				}
 
-:[A-Za-z0-9_]+	{
+:{variable_char}+	{
 					/* Possible psql variable substitution */
 					if (option_type == OT_VERBATIM)
 						ECHO;
 					else
 					{
+						char   *varname;
 						const char *value;
 
-						value = GetVariable(pset.vars, yytext + 1);
+						varname = extract_substring(yytext + 1, yyleng - 1);
+						value = GetVariable(pset.vars, varname);
+						free(varname);
 
 						/*
 						 * The variable value is just emitted without any
@@ -956,7 +966,7 @@ other			.
 					return LEXRES_OK;
 				}
 
-:'[A-Za-z0-9_]+'	{
+:'{variable_char}+'	{
 					if (option_type == OT_VERBATIM)
 						ECHO;
 					else
@@ -967,7 +977,7 @@ other			.
 				}
 
 
-:\"[A-Za-z0-9_]+\"	{
+:\"{variable_char}+\"	{
 					if (option_type == OT_VERBATIM)
 						ECHO;
 					else
@@ -977,14 +987,14 @@ other			.
 					}
 				}
 
-:'[A-Za-z0-9_]*	{
+:'{variable_char}*	{
 					/* Throw back everything but the colon */
 					yyless(1);
 					ECHO;
 					BEGIN(xslashdefaultarg);
 				}
 
-:\"[A-Za-z0-9_]*	{
+:\"{variable_char}*	{
 					/* Throw back everything but the colon */
 					yyless(1);
 					ECHO;
@@ -1844,16 +1854,58 @@ emit(const char *txt, int len)
 	}
 }
 
+/*
+ * extract_substring --- fetch the true value of (part of) the current token
+ *
+ * This is like emit(), except that the data is returned as a malloc'd string
+ * rather than being pushed directly to output_buf.
+ */
+static char *
+extract_substring(const char *txt, int len)
+{
+	char	   *result = (char *) pg_malloc(len + 1);
+
+	if (cur_state->safe_encoding)
+		memcpy(result, txt, len);
+	else
+	{
+		/* Gotta do it the hard way */
+		const char *reference = cur_state->refline;
+		int		i;
+
+		reference += (txt - cur_state->curline);
+
+		for (i = 0; i < len; i++)
+		{
+			char	ch = txt[i];
+
+			if (ch == (char) 0xFF)
+				ch = reference[i];
+			result[i] = ch;
+		}
+	}
+	result[len] = '\0';
+	return result;
+}
+
+/*
+ * escape_variable --- process :'VARIABLE' or :"VARIABLE"
+ *
+ * If the variable name is found, escape its value using the appropriate
+ * quoting method and emit the value to output_buf.  (Since the result is
+ * surely quoted, there is never any reason to rescan it.)  If we don't
+ * find the variable or the escaping function fails, emit the token as-is.
+ */
 static void
 escape_variable(bool as_ident)
 {
-	char		saved_char;
+	char	   *varname;
 	const char *value;
 
 	/* Variable lookup. */
-	saved_char = yytext[yyleng - 1];
-	yytext[yyleng - 1] = '\0';
-	value = GetVariable(pset.vars, yytext + 2);
+	varname = extract_substring(yytext + 2, yyleng - 3);
+	value = GetVariable(pset.vars, varname);
+	free(varname);
 
 	/* Escaping. */
 	if (value)
@@ -1870,9 +1922,11 @@ escape_variable(bool as_ident)
 			else
 				escaped_value =
 					PQescapeLiteral(pset.db, value, strlen(value));
+
 			if (escaped_value == NULL)
 			{
 				const char *error = PQerrorMessage(pset.db);
+
 				psql_error("%s", error);
 			}
 			else
@@ -1888,6 +1942,5 @@ escape_variable(bool as_ident)
 	 * If we reach this point, some kind of error has occurred.  Emit the
 	 * original text into the output buffer.
 	 */
-	yytext[yyleng - 1] = saved_char;
 	emit(yytext, yyleng);
 }

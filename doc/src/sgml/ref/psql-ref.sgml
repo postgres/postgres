@@ -2206,7 +2206,7 @@ lo_import 152801
         </para>
 
         <para>
-        Valid variable names can contain characters, digits, and
+        Valid variable names can contain letters, digits, and
         underscores. See the section <xref
         linkend="APP-PSQL-variables"
         endterm="APP-PSQL-variables-title"> below for details.
@@ -2461,8 +2461,12 @@ lo_import 152801
     <application>psql</application> provides variable substitution
     features similar to common Unix command shells.
     Variables are simply name/value pairs, where the value
-    can be any string of any length. To set variables, use the
-    <application>psql</application> meta-command
+    can be any string of any length.  The name must consist of letters
+    (including non-Latin letters), digits, and underscores.
+    </para>
+
+    <para>
+    To set a variable, use the <application>psql</application> meta-command
     <command>\set</command>:
 <programlisting>
 testdb=&gt; <userinput>\set foo bar</userinput>
@@ -2498,16 +2502,15 @@ bar
     </para>
 
     <para>
-    <application>psql</application>'s internal variable names can
-    consist of letters, numbers, and underscores in any order and any
-    number of them. A number of these variables are treated specially
-    by <application>psql</application>. They indicate certain option
+    A number of these variables are treated specially
+    by <application>psql</application>. They represent certain option
     settings that can be changed at run time by altering the value of
-    the variable or that represent some state of the application. Although
-    you can use these variables for any other purpose, this is not
+    the variable, or in some cases represent changeable state of
+    <application>psql</application>. Although
+    you can use these variables for other purposes, this is not
     recommended, as the program behavior might grow really strange
-    really quickly. By convention, all specially treated variables
-    consist of all upper-case letters (and possibly numbers and
+    really quickly. By convention, all specially treated variables' names
+    consist of all upper-case ASCII letters (and possibly digits and
     underscores). To ensure maximum compatibility in the future, avoid
     using such variable names for your own purposes. A list of all specially
     treated variables follows.

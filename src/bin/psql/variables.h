@@ -32,10 +32,6 @@ struct _variable
 
 typedef struct _variable *VariableSpace;
 
-/* Allowed chars in a variable's name */
-#define VALID_VARIABLE_CHARS "abcdefghijklmnopqrstuvwxyz"\
-							 "ABCDEFGHIJKLMNOPQRSTUVWXYZ" "0123456789_"
-
 VariableSpace CreateVariableSpace(void);
 const char *GetVariable(VariableSpace space, const char *name);
 
