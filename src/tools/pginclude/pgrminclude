@@ -13,7 +13,7 @@ while read FILE
 do
         # Skip files with #if and #ifdef blocks because the blocks
       	# might contain code that is not compiled on this platform.
-	grep -q '^if' "$FILE" && continue
+	grep -q '^#if' "$FILE" && continue
 
 	if [ `expr $FILE : '.*\.h$'` -ne 0 ]
 	then	IS_INCLUDE="Y"
