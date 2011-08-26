@@ -1,10 +1,14 @@
 :
 # remove extra #include's
 
+pgdefine || (echo "pgdefine must be in your PATH" 1>&2; exit 1)
+
 # src/tools/pginclude/pgrminclude
 
 trap "rm -f /tmp/$$.c /tmp/$$.o /tmp/$$ /tmp/$$a /tmp/$$b" 0 1 2 3 15
-find . \( -name CVS -a -prune \) -o -type f -name '*.[ch]' -print |
+# do include files first
+(find . \( -name .git -a -prune \) -o -type f -name '*.h' -print;
+ find . \( -name .git -a -prune \) -o -type f -name '*.c' -print ) |
 grep -v '\./postgres.h' |
 grep -v '\./postgres_fe.h' |
 grep -v '\./pg_config.h' |
