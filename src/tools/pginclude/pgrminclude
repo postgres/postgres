@@ -11,19 +11,18 @@ grep -v '\./pg_config.h' |
 grep -v '\./c.h' |
 while read FILE
 do
-        # Skip files with #if and #ifdef blocks because the blocks
-      	# might contain code that is not compiled on this platform.
-	grep -q '^#if' "$FILE" && continue
-
 	if [ `expr $FILE : '.*\.h$'` -ne 0 ]
 	then	IS_INCLUDE="Y"
 	else	IS_INCLUDE="N"
 	fi
 
 	# loop through all includes
-	cat "$FILE" | grep "^#include" |
+	cat "$FILE" | 
+	grep "^#include\>" |
 	grep -v '/\* *pgrminclude  *ignore *\*/' |
 	sed 's/^#include[ 	]*[<"]\([^>"]*\).*$/\1/g' |
+	grep -v 'parser/kwlist\.h' |
+	grep -v '\.c$' |
 	while read INCLUDE
 	do
 		if [ "$1" = "-v" ]
@@ -43,12 +42,18 @@ do
 		grep -A1 '^#include[ 	][ 	]*[<"]'"$INCLUDE"'[>"]' "$FILE" |
 		     egrep -q '^#else|^#endif' && continue
 
-		# remove defines from include files
+	        # Remove all #if and #ifdef blocks because the blocks
+      		# might contain code that is not compiled on this platform.
+		cat "$FILE" |
+		grep -v "^#if" |
+		grep -v "^#else" |
+		grep -v "^#endif" |
 		if [ "$IS_INCLUDE" = "Y" ]
-		then	cat "$FILE" | grep -v "^#if" | grep -v "^#else" |
-			grep -v "^#endif" | sed 's/->[a-zA-Z0-9_\.]*//g' >/tmp/$$a
-		else	cat "$FILE" >/tmp/$$a
-		fi
+		then	# remove struct references
+#			sed 's/->[a-zA-Z0-9_\.]*//g'
+			cat
+		else	cat
+		fi >/tmp/$$a
 
 		# set up initial file contents
 		grep -v '^#include[ 	][ 	]*[<"]'"$INCLUDE"'[>"]' \
