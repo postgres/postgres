@@ -22,6 +22,7 @@ do
 
 	# loop through all includes
 	cat "$FILE" | grep "^#include" |
+	grep -v '/\* *pgrminclude  *ignore *\*/' |
 	sed 's/^#include[ 	]*[<"]\([^>"]*\).*$/\1/g' |
 	while read INCLUDE
 	do
