@@ -17,6 +17,7 @@
  */
 #include "postgres.h"
 
+#include "access/xlog.h"
 #include "access/xlogutils.h"
 #include "catalog/catalog.h"
 #include "storage/bufmgr.h"

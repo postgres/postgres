@@ -39,6 +39,7 @@
 #include "pg_trace.h"
 #include "pgstat.h"
 #include "storage/sinvaladt.h"
+#include "storage/spin.h"
 #include "storage/standby.h"
 #include "utils/memutils.h"
 #include "utils/ps_status.h"

@@ -18,8 +18,9 @@
 #include <fcntl.h>
 #include <sys/file.h>
 
-#include "catalog/catalog.h"
 #include "miscadmin.h"
+#include "access/xlog.h"
+#include "catalog/catalog.h"
 #include "portability/instr_time.h"
 #include "postmaster/bgwriter.h"
 #include "storage/fd.h"
