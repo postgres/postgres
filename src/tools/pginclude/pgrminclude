@@ -51,13 +51,7 @@ do
 		cat "$FILE" |
 		grep -v "^#if" |
 		grep -v "^#else" |
-		grep -v "^#endif" |
-		if [ "$IS_INCLUDE" = "Y" ]
-		then	# remove struct references
-#			sed 's/->[a-zA-Z0-9_\.]*//g'
-			cat
-		else	cat
-		fi >/tmp/$$a
+		grep -v "^#endif" >/tmp/$$a
 
 		# set up initial file contents
 		grep -v '^#include[ 	][ 	]*[<"]'"$INCLUDE"'[>"]' \
@@ -78,7 +72,7 @@ do
 
 		cc -fsyntax-only -Werror -Wall -Wmissing-prototypes \
 			-Wmissing-declarations -I/pg/include -I/pg/backend \
-			-I/pg/interfaces/libpq -I`dirname $FILE` $CFLAGS -c /tmp/$$.c \
+			-I/pg/interfaces/libpq -I`dirname $FILE` $CFLAGS -O1 -c /tmp/$$.c \
 			-o /tmp/$$.o >/tmp/$$ 2>&1
 		if [ "$?" -eq 0 ]
 		then	echo "$FILE $INCLUDE"
