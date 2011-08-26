@@ -18,6 +18,23 @@
 
 /*
  * TSVector type.
+ *
+ * Structure of tsvector datatype:
+ * 1) standard varlena header
+ * 2) int4		size - number of lexemes (WordEntry array entries)
+ * 3) Array of WordEntry - one per lexeme; must be sorted according to
+ *				tsCompareString() (ie, memcmp of lexeme strings).
+ *				WordEntry->pos gives the number of bytes from end of WordEntry
+ *				array to start of lexeme's string, which is of length len.
+ * 4) Per-lexeme data storage:
+ *	  lexeme string (not null-terminated)
+ *	  if haspos is true:
+ *		padding byte if necessary to make the position data 2-byte aligned
+ *		uint16			number of positions that follow
+ *		WordEntryPos[]	positions
+ *
+ * The positions for each lexeme must be sorted.
+ *
  * Note, tsvectorsend/recv believe that sizeof(WordEntry) == 4
  */
 
@@ -46,7 +63,7 @@ typedef uint16 WordEntryPos;
 typedef struct
 {
 	uint16		npos;
-	WordEntryPos pos[1];		/* var length */
+	WordEntryPos pos[1];		/* variable length */
 } WordEntryPosVector;
 
 
@@ -60,40 +77,25 @@ typedef struct
 #define MAXNUMPOS	(256)
 #define LIMITPOS(x) ( ( (x) >= MAXENTRYPOS ) ? (MAXENTRYPOS-1) : (x) )
 
-/*
- * Structure of tsvector datatype:
- * 1) standard varlena header
- * 2) int4		size - number of lexemes or WordEntry array, which is the same
- * 3) Array of WordEntry - sorted array, comparison based on word's length
- *							and strncmp(). WordEntry->pos points number of
- *							bytes from end of WordEntry array to start of
- *							corresponding lexeme.
- * 4) Lexeme's storage:
- *	  lexeme (without null-terminator)
- *	  if haspos is true:
- *		padding byte if necessary to make the number of positions 2-byte aligned
- *		uint16		number of positions that follow.
- *		uint16[]	positions
- *
- * The positions must be sorted.
- */
-
+/* This struct represents a complete tsvector datum */
 typedef struct
 {
 	int32		vl_len_;		/* varlena header (do not touch directly!) */
 	int32		size;
-	WordEntry	entries[1];		/* var size */
-	/* lexemes follow */
+	WordEntry	entries[1];		/* variable length */
+	/* lexemes follow the entries[] array */
 } TSVectorData;
 
 typedef TSVectorData *TSVector;
 
 #define DATAHDRSIZE (offsetof(TSVectorData, entries))
-#define CALCDATASIZE(x, lenstr) (DATAHDRSIZE + (x) * sizeof(WordEntry) + (lenstr) )
+#define CALCDATASIZE(nentries, lenstr) (DATAHDRSIZE + (nentries) * sizeof(WordEntry) + (lenstr) )
+
+/* pointer to start of a tsvector's WordEntry array */
 #define ARRPTR(x)	( (x)->entries )
 
-/* returns a pointer to the beginning of lexemes */
-#define STRPTR(x)	( (char *) &(x)->entries[x->size] )
+/* pointer to start of a tsvector's lexeme storage */
+#define STRPTR(x)	( (char *) &(x)->entries[(x)->size] )
 
 #define _POSVECPTR(x, e)	((WordEntryPosVector *)(STRPTR(x) + SHORTALIGN((e)->pos + (e)->len)))
 #define POSDATALEN(x,e) ( ( (e)->haspos ) ? (_POSVECPTR(x,e)->npos) : 0 )
@@ -231,7 +233,7 @@ typedef struct
 {
 	int32		vl_len_;		/* varlena header (do not touch directly!) */
 	int4		size;			/* number of QueryItems */
-	char		data[1];
+	char		data[1];		/* data starts here */
 } TSQueryData;
 
 typedef TSQueryData *TSQuery;
