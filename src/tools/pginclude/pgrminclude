@@ -1,7 +1,10 @@
 :
 # remove extra #include's
 
-pgdefine || (echo "pgdefine must be in your PATH" 1>&2; exit 1)
+if ! pgdefine
+then	echo "pgdefine must be in your PATH" 1>&2
+	exit 1
+fi
 
 # src/tools/pginclude/pgrminclude
 
