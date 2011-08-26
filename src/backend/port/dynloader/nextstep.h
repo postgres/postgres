@@ -9,7 +9,7 @@
 #ifndef PORT_PROTOS_H
 #define PORT_PROTOS_H
 
-#include "utils/dynamic_loader.h"
+#include "utils/dynamic_loader.h"	/* pgrminclude ignore */
 
 void	   *next_dlopen(char *name);
 int			next_dlclose(void *handle);
