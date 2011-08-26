@@ -266,9 +266,10 @@ get_rel_infos(ClusterInfo *cluster, DbInfo *dbinfo)
 			 "  LEFT OUTER JOIN pg_catalog.pg_tablespace t "
 			 "	   ON c.reltablespace = t.oid "
 			 "WHERE relkind IN ('r','t', 'i'%s) AND "
-			 /* exclude pg_catalog and pg_temp_ (could be orphaned tables) */
-			 "  ((n.nspname !~ '^pg_' AND "
-			"     n.nspname NOT IN ('information_schema', 'binary_upgrade') AND "
+			 /* exclude possible orphaned temp tables */
+			 "  ((n.nspname !~ '^pg_temp_' AND "
+			 "    n.nspname !~ '^pg_toast_temp_' AND "
+			 "    n.nspname NOT IN ('pg_catalog', 'information_schema', 'binary_upgrade') AND "
 			 "	  c.oid >= %u) "
 			 "  OR (n.nspname = 'pg_catalog' AND "
 	"    relname IN ('pg_largeobject', 'pg_largeobject_loid_pn_index'%s) )) "
