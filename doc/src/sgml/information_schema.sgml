@@ -3684,7 +3684,14 @@ ORDER BY c.ordinal_position;
      <row>
       <entry><literal>with_hierarchy</literal></entry>
       <entry><type>yes_or_no</type></entry>
-      <entry>Applies to a feature not available in <productname>PostgreSQL</></entry>
+      <entry>
+       In the SQL standard, <literal>WITH HIERARCHY OPTION</literal>
+       is a separate (sub-)privilege allowing certain operations on
+       table inheritance hierarchies.  In PostgreSQL, this is included
+       in the <literal>SELECT</literal> privilege, so this column
+       shows <literal>YES</literal> if the privilege
+       is <literal>SELECT</literal>, else <literal>NO</literal>.
+      </entry>
      </row>
     </tbody>
    </tgroup>
@@ -5364,7 +5371,14 @@ ORDER BY c.ordinal_position;
      <row>
       <entry><literal>with_hierarchy</literal></entry>
       <entry><type>yes_or_no</type></entry>
-      <entry>Applies to a feature not available in <productname>PostgreSQL</></entry>
+      <entry>
+       In the SQL standard, <literal>WITH HIERARCHY OPTION</literal>
+       is a separate (sub-)privilege allowing certain operations on
+       table inheritance hierarchies.  In PostgreSQL, this is included
+       in the <literal>SELECT</literal> privilege, so this column
+       shows <literal>YES</literal> if the privilege
+       is <literal>SELECT</literal>, else <literal>NO</literal>.
+      </entry>
      </row>
     </tbody>
    </tgroup>

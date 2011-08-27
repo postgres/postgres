@@ -1785,7 +1785,7 @@ CREATE VIEW table_privileges AS
                   pg_has_role(grantee.oid, c.relowner, 'USAGE')
                   OR c.grantable
                   THEN 'YES' ELSE 'NO' END AS yes_or_no) AS is_grantable,
-           CAST('NO' AS yes_or_no) AS with_hierarchy
+           CAST(CASE WHEN c.prtype = 'SELECT' THEN 'YES' ELSE 'NO' END AS yes_or_no) AS with_hierarchy
 
     FROM (
             SELECT oid, relname, relnamespace, relkind, relowner, (aclexplode(relacl)).* FROM pg_class
