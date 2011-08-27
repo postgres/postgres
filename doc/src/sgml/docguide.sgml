@@ -126,6 +126,10 @@
        produce HTML or PDF output, but official PostgreSQL releases
        use the DSSSL stylesheets for that.
       </para>
+
+      <para>
+       The minimum required version is currently 1.74.0.
+      </para>
      </listitem>
     </varlistentry>
 
