@@ -1449,6 +1449,9 @@ keep_going:						/* We will come back to here until there is
 						closesocket(conn->sock);
 						conn->sock = -1;
 						conn->status = CONNECTION_NEEDED;
+						/* Discard any unread/unsent data */
+						conn->inStart = conn->inCursor = conn->inEnd = 0;
+						conn->outCount = 0;
 						goto keep_going;
 					}
 					else
@@ -1486,6 +1489,9 @@ keep_going:						/* We will come back to here until there is
 						closesocket(conn->sock);
 						conn->sock = -1;
 						conn->status = CONNECTION_NEEDED;
+						/* Discard any unread/unsent data */
+						conn->inStart = conn->inCursor = conn->inEnd = 0;
+						conn->outCount = 0;
 						goto keep_going;
 					}
 				}
@@ -1599,6 +1605,9 @@ keep_going:						/* We will come back to here until there is
 						closesocket(conn->sock);
 						conn->sock = -1;
 						conn->status = CONNECTION_NEEDED;
+						/* Discard any unread/unsent data */
+						conn->inStart = conn->inCursor = conn->inEnd = 0;
+						conn->outCount = 0;
 						goto keep_going;
 					}
 
@@ -1666,6 +1675,9 @@ keep_going:						/* We will come back to here until there is
 						closesocket(conn->sock);
 						conn->sock = -1;
 						conn->status = CONNECTION_NEEDED;
+						/* Discard any unread/unsent data */
+						conn->inStart = conn->inCursor = conn->inEnd = 0;
+						conn->outCount = 0;
 						goto keep_going;
 					}
 
@@ -1685,6 +1697,9 @@ keep_going:						/* We will come back to here until there is
 						closesocket(conn->sock);
 						conn->sock = -1;
 						conn->status = CONNECTION_NEEDED;
+						/* Discard any unread/unsent data */
+						conn->inStart = conn->inCursor = conn->inEnd = 0;
+						conn->outCount = 0;
 						goto keep_going;
 					}
 #endif
