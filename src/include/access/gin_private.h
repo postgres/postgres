@@ -14,6 +14,7 @@
 #include "access/gin.h"
 #include "access/itup.h"
 #include "fmgr.h"
+#include "storage/bufmgr.h"
 #include "utils/rbtree.h"
 
 

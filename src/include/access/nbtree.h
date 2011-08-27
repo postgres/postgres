@@ -19,7 +19,7 @@
 #include "access/sdir.h"
 #include "access/xlog.h"
 #include "access/xlogutils.h"
-
+#include "catalog/pg_index.h"
 
 /* There's room for a 16-bit vacuum cycle ID in BTPageOpaqueData */
 typedef uint16 BTCycleId;

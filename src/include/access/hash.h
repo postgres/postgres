@@ -22,6 +22,7 @@
 #include "access/sdir.h"
 #include "access/xlog.h"
 #include "fmgr.h"
+#include "storage/bufmgr.h"
 #include "storage/lock.h"
 #include "utils/relcache.h"
 

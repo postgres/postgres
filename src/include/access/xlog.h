@@ -14,10 +14,10 @@
 #include "access/rmgr.h"
 #include "access/xlogdefs.h"
 #include "lib/stringinfo.h"
+#include "replication/walsender.h"
 #include "storage/buf.h"
 #include "utils/pg_crc.h"
 #include "utils/timestamp.h"
-
 
 /*
  * The overall layout of an XLOG record is:

@@ -15,6 +15,7 @@
 
 #include "postgres.h"
 
+#include "access/xlogdefs.h"
 #include "nodes/makefuncs.h"
 #include "nodes/replnodes.h"
 #include "replication/walsender.h"

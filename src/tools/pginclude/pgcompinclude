@@ -14,6 +14,9 @@ do
 	sed 's/->[a-zA-Z0-9_\.]*//g' "$FILE" >/tmp/$$a
 	echo "#include \"postgres.h\"" >/tmp/$$.c
 	echo "#include \"/tmp/$$a\"" >>/tmp/$$.c
+	# supress fcinfo errors
+	echo "#undef PG_GETARG_DATUM" >>/tmp/$$.c
+	echo "#define PG_GETARG_DATUM(n)" >>/tmp/$$.c
 	echo "void include_test(void);" >>/tmp/$$.c
 	echo "void include_test() {" >>/tmp/$$.c
 	pgdefine "$FILE" >>/tmp/$$.c
