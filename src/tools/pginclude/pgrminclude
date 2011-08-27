@@ -6,8 +6,6 @@ then	echo "pgdefine must be in your PATH" 1>&2
 	exit 1
 fi
 
-# src/tools/pginclude/pgrminclude
-
 trap "rm -f /tmp/$$.c /tmp/$$.o /tmp/$$ /tmp/$$a /tmp/$$b" 0 1 2 3 15
 # do include files first
 (find . \( -name .git -a -prune \) -o -type f -name '*.h' -print;
