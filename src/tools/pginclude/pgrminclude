@@ -43,15 +43,16 @@ do
 		# preserve configure-specific includes
 		# these includes are surrounded by #ifdef's
 		grep -B1 '^#include[ 	][ 	]*[<"]'"$INCLUDE"'[>"]' "$FILE" |
-		     egrep -q '^#if|^#else' && continue
+		     egrep -q '^#if|^#else|^#elif' && continue
 		grep -A1 '^#include[ 	][ 	]*[<"]'"$INCLUDE"'[>"]' "$FILE" |
-		     egrep -q '^#else|^#endif' && continue
+		     egrep -q '^#else|^#elif|^#endif' && continue
 
 	        # Remove all #if and #ifdef blocks because the blocks
       		# might contain code that is not compiled on this platform.
 		cat "$FILE" |
 		grep -v "^#if" |
 		grep -v "^#else" |
+		grep -v "^#elif" |
 		grep -v "^#endif" >/tmp/$$a
 
 		# set up initial file contents
