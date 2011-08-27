@@ -2746,9 +2746,9 @@ bar
         otherwise, <application>psql</application> will exit, returning
         error code 3 to distinguish this case from fatal error
         conditions, which are reported using error code 1.  In either case,
-        any currently running scripts (the toplevel script, if any, and any
+        any currently running scripts (the top-level script, if any, and any
         other scripts which it may have in invoked) will be terminated
-        immediately.  If the toplevel command string contained multiple SQL
+        immediately.  If the top-level command string contained multiple SQL
         commands, processing will stop with the current command.
         </para>
         </listitem>
