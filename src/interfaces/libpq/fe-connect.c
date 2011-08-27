@@ -1865,16 +1865,19 @@ keep_going:						/* We will come back to here until there is
 						/* should not happen really */
 						return PGRES_POLLING_READING;
 					}
-					/* mark byte consumed */
-					conn->inStart = conn->inCursor;
 					if (SSLok == 'S')
 					{
+						/* mark byte consumed */
+						conn->inStart = conn->inCursor;
 						/* Set up global SSL state if required */
 						if (pqsecure_initialize(conn) != 0)
 							goto error_return;
 					}
 					else if (SSLok == 'N')
 					{
+						/* mark byte consumed */
+						conn->inStart = conn->inCursor;
+						/* OK to do without SSL? */
 						if (conn->sslmode[0] == 'r' ||	/* "require" */
 							conn->sslmode[0] == 'v')	/* "verify-ca" or
 														 * "verify-full" */
@@ -1891,29 +1894,17 @@ keep_going:						/* We will come back to here until there is
 					}
 					else if (SSLok == 'E')
 					{
-						/* Received error - probably protocol mismatch */
-						if (conn->Pfdebug)
-							fprintf(conn->Pfdebug, "received error from server, attempting fallback to pre-7.0\n");
-						if (conn->sslmode[0] == 'r' ||	/* "require" */
-							conn->sslmode[0] == 'v')	/* "verify-ca" or
-														 * "verify-full" */
-						{
-							/* Require SSL, but server is too old */
-							appendPQExpBuffer(&conn->errorMessage,
-											  libpq_gettext("server does not support SSL, but SSL was required\n"));
-							goto error_return;
-						}
-						/* Otherwise, try again without SSL */
-						conn->allow_ssl_try = false;
-						/* Assume it ain't gonna handle protocol 3, either */
-						conn->pversion = PG_PROTOCOL(2, 0);
-						/* Must drop the old connection */
-						closesocket(conn->sock);
-						conn->sock = -1;
-						conn->status = CONNECTION_NEEDED;
-						/* Discard any unread/unsent data */
-						conn->inStart = conn->inCursor = conn->inEnd = 0;
-						conn->outCount = 0;
+						/*
+						 * Server failure of some sort, such as failure to
+						 * fork a backend process.  We need to process and
+						 * report the error message, which might be formatted
+						 * according to either protocol 2 or protocol 3.
+						 * Rather than duplicate the code for that, we flip
+						 * into AWAITING_RESPONSE state and let the code there
+						 * deal with it.  Note we have *not* consumed the "E"
+						 * byte here.
+						 */
+						conn->status = CONNECTION_AWAITING_RESPONSE;
 						goto keep_going;
 					}
 					else
@@ -2148,8 +2139,7 @@ keep_going:						/* We will come back to here until there is
 					 * then do a non-SSL retry
 					 */
 					if (conn->sslmode[0] == 'p' /* "prefer" */
-						&& conn->ssl
-						&& conn->allow_ssl_try	/* redundant? */
+						&& conn->allow_ssl_try
 						&& !conn->wait_ssl_try) /* redundant? */
 					{
 						/* only retry once */
