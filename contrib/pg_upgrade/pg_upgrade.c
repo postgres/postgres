@@ -35,6 +35,8 @@
 
 
 
+#include "postgres.h"
+
 #include "pg_upgrade.h"
 
 #ifdef HAVE_LANGINFO_H

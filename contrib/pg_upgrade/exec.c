@@ -7,6 +7,8 @@
  *	contrib/pg_upgrade/exec.c
  */
 
+#include "postgres.h"
+
 #include "pg_upgrade.h"
 
 #include <fcntl.h>

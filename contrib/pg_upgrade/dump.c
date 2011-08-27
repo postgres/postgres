@@ -7,6 +7,8 @@
  *	contrib/pg_upgrade/dump.c
  */
 
+#include "postgres.h"
+
 #include "pg_upgrade.h"
 
 

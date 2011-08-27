@@ -2,6 +2,8 @@
 
 /* contrib/ltree/crc32.c */
 
+#include "postgres.h"
+
 #include <sys/types.h>
 #include <stdio.h>
 #include <sys/types.h>

@@ -7,6 +7,8 @@
  *	contrib/pg_upgrade/controldata.c
  */
 
+#include "postgres.h"
+
 #include "pg_upgrade.h"
 
 #include <ctype.h>

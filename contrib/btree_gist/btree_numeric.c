@@ -1,6 +1,8 @@
 /*
  * contrib/btree_gist/btree_numeric.c
  */
+#include "postgres.h"
+
 #include "btree_gist.h"
 
 #include <math.h>

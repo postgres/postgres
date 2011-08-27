@@ -7,6 +7,8 @@
  *	contrib/pg_upgrade/util.c
  */
 
+#include "postgres.h"
+
 #include "pg_upgrade.h"
 
 #include <signal.h>

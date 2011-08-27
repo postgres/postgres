@@ -7,6 +7,8 @@
  *	contrib/pg_upgrade/page.c
  */
 
+#include "postgres.h"
+
 #include "pg_upgrade.h"
 
 #include "storage/bufpage.h"

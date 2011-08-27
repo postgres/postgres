@@ -5,8 +5,6 @@
  *	contrib/pg_upgrade/pg_upgrade.h
  */
 
-#include "postgres.h"
-
 #include <unistd.h>
 #include <assert.h>
 #include <dirent.h>

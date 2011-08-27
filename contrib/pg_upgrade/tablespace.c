@@ -7,6 +7,8 @@
  *	contrib/pg_upgrade/tablespace.c
  */
 
+#include "postgres.h"
+
 #include "pg_upgrade.h"
 
 static void get_tablespace_paths(void);

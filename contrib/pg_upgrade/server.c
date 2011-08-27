@@ -7,6 +7,8 @@
  *	contrib/pg_upgrade/server.c
  */
 
+#include "postgres.h"
+
 #include "pg_upgrade.h"
 
 

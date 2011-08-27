@@ -7,6 +7,8 @@
  *	contrib/pg_upgrade/relfilenode.c
  */
 
+#include "postgres.h"
+
 #include "pg_upgrade.h"
 
 #include "catalog/pg_class.h"

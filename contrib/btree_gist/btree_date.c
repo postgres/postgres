@@ -1,6 +1,8 @@
 /*
  * contrib/btree_gist/btree_date.c
  */
+#include "postgres.h"
+
 #include "btree_gist.h"
 #include "btree_utils_num.h"
 #include "utils/date.h"

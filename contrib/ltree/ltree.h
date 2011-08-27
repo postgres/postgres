@@ -3,7 +3,6 @@
 #ifndef __LTREE_H__
 #define __LTREE_H__
 
-#include "postgres.h"
 #include "fmgr.h"
 #include "tsearch/ts_locale.h"
 

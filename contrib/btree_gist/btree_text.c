@@ -1,6 +1,8 @@
 /*
  * contrib/btree_gist/btree_text.c
  */
+#include "postgres.h"
+
 #include "btree_gist.h"
 #include "btree_utils_var.h"
 #include "utils/builtins.h"

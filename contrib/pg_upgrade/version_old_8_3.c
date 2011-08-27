@@ -7,6 +7,8 @@
  *	contrib/pg_upgrade/version_old_8_3.c
  */
 
+#include "postgres.h"
+
 #include "pg_upgrade.h"
 
 #include "access/transam.h"

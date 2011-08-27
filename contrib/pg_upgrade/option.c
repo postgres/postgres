@@ -7,6 +7,8 @@
  *	contrib/pg_upgrade/option.c
  */
 
+#include "postgres.h"
+
 #include "pg_upgrade.h"
 
 #include "getopt_long.h"
