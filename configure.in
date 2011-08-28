@@ -1860,13 +1860,6 @@ else
   PGAC_PROG_CC_LDFLAGS_OPT([-Wl,--as-needed], $link_test_func)
 fi
 
-
-# Begin output steps
-
-AC_MSG_NOTICE([using CFLAGS=$CFLAGS])
-AC_MSG_NOTICE([using CPPFLAGS=$CPPFLAGS])
-AC_MSG_NOTICE([using LDFLAGS=$LDFLAGS])
-
 # Create compiler version string
 if test x"$GCC" = x"yes" ; then
   cc_string=`${CC} --version | sed q`
@@ -1888,6 +1881,13 @@ tr '.' '	' |
 $AWK '{printf "%d%02d%02d", $1, $2, (NF >= 3) ? $3 : 0}'`"]
 AC_DEFINE_UNQUOTED(PG_VERSION_NUM, $PG_VERSION_NUM, [PostgreSQL version as a number])
 
+
+# Begin output steps
+
+AC_MSG_NOTICE([using compiler=$cc_string])
+AC_MSG_NOTICE([using CFLAGS=$CFLAGS])
+AC_MSG_NOTICE([using CPPFLAGS=$CPPFLAGS])
+AC_MSG_NOTICE([using LDFLAGS=$LDFLAGS])
 
 # prepare build tree if outside source tree
 # Note 1: test -ef might not exist, but it's more reliable than `pwd`.

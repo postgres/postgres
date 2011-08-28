@@ -29700,16 +29700,6 @@ fi
 
 fi
 
-
-# Begin output steps
-
-{ $as_echo "$as_me:$LINENO: using CFLAGS=$CFLAGS" >&5
-$as_echo "$as_me: using CFLAGS=$CFLAGS" >&6;}
-{ $as_echo "$as_me:$LINENO: using CPPFLAGS=$CPPFLAGS" >&5
-$as_echo "$as_me: using CPPFLAGS=$CPPFLAGS" >&6;}
-{ $as_echo "$as_me:$LINENO: using LDFLAGS=$LDFLAGS" >&5
-$as_echo "$as_me: using LDFLAGS=$LDFLAGS" >&6;}
-
 # Create compiler version string
 if test x"$GCC" = x"yes" ; then
   cc_string=`${CC} --version | sed q`
@@ -29737,6 +29727,17 @@ cat >>confdefs.h <<_ACEOF
 _ACEOF
 
 
+
+# Begin output steps
+
+{ $as_echo "$as_me:$LINENO: using compiler=$cc_string" >&5
+$as_echo "$as_me: using compiler=$cc_string" >&6;}
+{ $as_echo "$as_me:$LINENO: using CFLAGS=$CFLAGS" >&5
+$as_echo "$as_me: using CFLAGS=$CFLAGS" >&6;}
+{ $as_echo "$as_me:$LINENO: using CPPFLAGS=$CPPFLAGS" >&5
+$as_echo "$as_me: using CPPFLAGS=$CPPFLAGS" >&6;}
+{ $as_echo "$as_me:$LINENO: using LDFLAGS=$LDFLAGS" >&5
+$as_echo "$as_me: using LDFLAGS=$LDFLAGS" >&6;}
 
 # prepare build tree if outside source tree
 # Note 1: test -ef might not exist, but it's more reliable than `pwd`.
