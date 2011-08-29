@@ -41,7 +41,7 @@
  *
  *	int TAS_SPIN(slock_t *lock)
  *		Like TAS(), but this version is used when waiting for a lock
- *		previously found to be contended.  Typically, this is the
+ *		previously found to be contended.  By default, this is the
  *		same as TAS(), but on some architectures it's better to poll a
  *		contended lock using an unlocked instruction and retry the
  *		atomic test-and-set only when it appears free.
@@ -54,10 +54,22 @@
  *	on Alpha TAS() will "fail" if interrupted.  Therefore a retry loop must
  *	always be used, even if you are certain the lock is free.
  *
- *	ANOTHER CAUTION: be sure that TAS(), TAS_SPIN(), and S_UNLOCK() represent
- *	sequence points, ie, loads and stores of other values must not be moved
- *	across a lock or unlock.  In most cases it suffices to make the operation
- *	be done through a "volatile" pointer.
+ *	Another caution for users of these macros is that it is the caller's
+ *	responsibility to ensure that the compiler doesn't re-order accesses
+ *	to shared memory to precede the actual lock acquisition, or follow the
+ *	lock release.  Typically we handle this by using volatile-qualified
+ *	pointers to refer to both the spinlock itself and the shared data
+ *	structure being accessed within the spinlocked critical section.
+ *	That fixes it because compilers are not allowed to re-order accesses
+ *	to volatile objects relative to other such accesses.
+ *
+ *	On platforms with weak memory ordering, the TAS(), TAS_SPIN(), and
+ *	S_UNLOCK() macros must further include hardware-level memory fence
+ *	instructions to prevent similar re-ordering at the hardware level.
+ *	TAS() and TAS_SPIN() must guarantee that loads and stores issued after
+ *	the macro are not executed until the lock has been obtained.  Conversely,
+ *	S_UNLOCK() must guarantee that loads and stores issued before the macro
+ *	have been executed before the lock is released.
  *
  *	On most supported platforms, TAS() uses a tas() function written
  *	in assembly language to execute a hardware atomic-test-and-set
@@ -228,6 +240,9 @@ spin_delay(void)
 typedef unsigned int slock_t;
 
 #define TAS(lock) tas(lock)
+
+/* On IA64, it's a win to use a non-locking test before the xchg proper */
+#define TAS_SPIN(lock)	(*(lock) ? 1 : TAS(lock))
 
 #ifndef __INTEL_COMPILER
 
@@ -735,7 +750,8 @@ typedef unsigned int slock_t;
 
 #include <ia64/sys/inline.h>
 #define TAS(lock) _Asm_xchg(_SZ_W, lock, 1, _LDHINT_NONE)
-#define TAS_SPIN(lock) (*(lock) ? 1 : TAS(lock))
+/* On IA64, it's a win to use a non-locking test before the xchg proper */
+#define TAS_SPIN(lock)	(*(lock) ? 1 : TAS(lock))
 
 #endif	/* HPUX on IA64, non gcc */
 
