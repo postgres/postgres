@@ -3125,6 +3125,12 @@ restore_toc_entries_parallel(ArchiveHandle *AH)
 	if (AH->version < K_VERS_1_8)
 		die_horribly(AH, modulename, "parallel restore is not supported with archives made by pre-8.0 pg_dump\n");
 
+	/*
+	 * It's also not gonna work if we can't reopen the input file, so let's
+	 * try that immediately.
+	 */
+	(AH->ReopenPtr) (AH);
+
 	slots = (ParallelSlot *) calloc(sizeof(ParallelSlot), n_slots);
 
 	/* Adjust dependency information */
