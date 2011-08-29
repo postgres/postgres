@@ -735,10 +735,15 @@ _ReopenArchive(ArchiveHandle *AH)
 
 	if (AH->mode == archModeWrite)
 		die_horribly(AH, modulename, "can only reopen input archives\n");
+
+	/*
+	 * These two cases are user-facing errors since they represent unsupported
+	 * (but not invalid) use-cases.  Word the error messages appropriately.
+	 */
 	if (AH->fSpec == NULL || strcmp(AH->fSpec, "") == 0)
-		die_horribly(AH, modulename, "cannot reopen stdin\n");
+		die_horribly(AH, modulename, "parallel restore from stdin is not supported\n");
 	if (!ctx->hasSeek)
-		die_horribly(AH, modulename, "cannot reopen non-seekable file\n");
+		die_horribly(AH, modulename, "parallel restore from non-seekable file is not supported\n");
 
 	errno = 0;
 	tpos = ftello(AH->FH);
