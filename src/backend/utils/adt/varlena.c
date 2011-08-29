@@ -3622,11 +3622,19 @@ string_agg_finalfn(PG_FUNCTION_ARGS)
 		PG_RETURN_NULL();
 }
 
+/*
+ * Implementation of both concat() and concat_ws().
+ *
+ * sepstr/seplen describe the separator.  argidx is the first argument
+ * to concatenate (counting from zero).
+ */
 static text *
-concat_internal(const char *sepstr, int seplen, int argidx, FunctionCallInfo fcinfo)
+concat_internal(const char *sepstr, int seplen, int argidx,
+				FunctionCallInfo fcinfo)
 {
-	StringInfoData str;
 	text	   *result;
+	StringInfoData str;
+	bool		first_arg = true;
 	int			i;
 
 	initStringInfo(&str);
@@ -3635,17 +3643,21 @@ concat_internal(const char *sepstr, int seplen, int argidx, FunctionCallInfo fci
 	{
 		if (!PG_ARGISNULL(i))
 		{
+			Datum		value = PG_GETARG_DATUM(i);
 			Oid			valtype;
-			Datum		value;
 			Oid			typOutput;
 			bool		typIsVarlena;
 
-			if (i > argidx)
+			/* add separator if appropriate */
+			if (first_arg)
+				first_arg = false;
+			else
 				appendBinaryStringInfo(&str, sepstr, seplen);
 
-			/* append n-th value */
-			value = PG_GETARG_DATUM(i);
+			/* call the appropriate type output function, append the result */
 			valtype = get_fn_expr_argtype(fcinfo->flinfo, i);
+			if (!OidIsValid(valtype))
+				elog(ERROR, "could not determine data type of concat() input");
 			getTypeOutputInfo(valtype, &typOutput, &typIsVarlena);
 			appendStringInfoString(&str,
 								   OidOutputFunctionCall(typOutput, value));
@@ -3664,12 +3676,12 @@ concat_internal(const char *sepstr, int seplen, int argidx, FunctionCallInfo fci
 Datum
 text_concat(PG_FUNCTION_ARGS)
 {
-	PG_RETURN_TEXT_P(concat_internal(NULL, 0, 0, fcinfo));
+	PG_RETURN_TEXT_P(concat_internal("", 0, 0, fcinfo));
 }
 
 /*
- * Concatenate all but first argument values with separators. The first
- * parameter is used as a separator. NULL arguments are ignored.
+ * Concatenate all but first argument value with separators. The first
+ * parameter is used as the separator. NULL arguments are ignored.
  */
 Datum
 text_concat_ws(PG_FUNCTION_ARGS)
@@ -3682,8 +3694,8 @@ text_concat_ws(PG_FUNCTION_ARGS)
 
 	sep = PG_GETARG_TEXT_PP(0);
 
-	PG_RETURN_TEXT_P(concat_internal(
-					   VARDATA_ANY(sep), VARSIZE_ANY_EXHDR(sep), 1, fcinfo));
+	PG_RETURN_TEXT_P(concat_internal(VARDATA_ANY(sep), VARSIZE_ANY_EXHDR(sep),
+									 1, fcinfo));
 }
 
 /*
