@@ -5130,7 +5130,7 @@ cat >>conftest.$ac_ext <<_ACEOF
 int
 main ()
 {
-main ();
+return main ();
   ;
   return 0;
 }
@@ -5193,17 +5193,17 @@ cat confdefs.h >>conftest.$ac_ext
 cat >>conftest.$ac_ext <<_ACEOF
 /* end confdefs.h.  */
 
-/* Override any gcc2 internal prototype to avoid an error.  */
+/* Override any GCC internal prototype to avoid an error.
+   Use char because int might match the return type of a GCC
+   builtin and then its argument prototype would still apply.  */
 #ifdef __cplusplus
 extern "C"
 #endif
-/* We use char because int might match the return type of a gcc2
-   builtin and then its argument prototype would still apply.  */
 char setproctitle ();
 int
 main ()
 {
-setproctitle ();
+return setproctitle ();
   ;
   return 0;
 }
@@ -5248,17 +5248,17 @@ cat confdefs.h >>conftest.$ac_ext
 cat >>conftest.$ac_ext <<_ACEOF
 /* end confdefs.h.  */
 
-/* Override any gcc2 internal prototype to avoid an error.  */
+/* Override any GCC internal prototype to avoid an error.
+   Use char because int might match the return type of a GCC
+   builtin and then its argument prototype would still apply.  */
 #ifdef __cplusplus
 extern "C"
 #endif
-/* We use char because int might match the return type of a gcc2
-   builtin and then its argument prototype would still apply.  */
 char setproctitle ();
 int
 main ()
 {
-setproctitle ();
+return setproctitle ();
   ;
   return 0;
 }
@@ -5319,17 +5319,17 @@ cat confdefs.h >>conftest.$ac_ext
 cat >>conftest.$ac_ext <<_ACEOF
 /* end confdefs.h.  */
 
-/* Override any gcc2 internal prototype to avoid an error.  */
+/* Override any GCC internal prototype to avoid an error.
+   Use char because int might match the return type of a GCC
+   builtin and then its argument prototype would still apply.  */
 #ifdef __cplusplus
 extern "C"
 #endif
-/* We use char because int might match the return type of a gcc2
-   builtin and then its argument prototype would still apply.  */
 char dlopen ();
 int
 main ()
 {
-dlopen ();
+return dlopen ();
   ;
   return 0;
 }
@@ -5374,17 +5374,17 @@ cat confdefs.h >>conftest.$ac_ext
 cat >>conftest.$ac_ext <<_ACEOF
 /* end confdefs.h.  */
 
-/* Override any gcc2 internal prototype to avoid an error.  */
+/* Override any GCC internal prototype to avoid an error.
+   Use char because int might match the return type of a GCC
+   builtin and then its argument prototype would still apply.  */
 #ifdef __cplusplus
 extern "C"
 #endif
-/* We use char because int might match the return type of a gcc2
-   builtin and then its argument prototype would still apply.  */
 char dlopen ();
 int
 main ()
 {
-dlopen ();
+return dlopen ();
   ;
   return 0;
 }
@@ -5445,17 +5445,17 @@ cat confdefs.h >>conftest.$ac_ext
 cat >>conftest.$ac_ext <<_ACEOF
 /* end confdefs.h.  */
 
-/* Override any gcc2 internal prototype to avoid an error.  */
+/* Override any GCC internal prototype to avoid an error.
+   Use char because int might match the return type of a GCC
+   builtin and then its argument prototype would still apply.  */
 #ifdef __cplusplus
 extern "C"
 #endif
-/* We use char because int might match the return type of a gcc2
-   builtin and then its argument prototype would still apply.  */
 char socket ();
 int
 main ()
 {
-socket ();
+return socket ();
   ;
   return 0;
 }
@@ -5500,17 +5500,17 @@ cat confdefs.h >>conftest.$ac_ext
 cat >>conftest.$ac_ext <<_ACEOF
 /* end confdefs.h.  */
 
-/* Override any gcc2 internal prototype to avoid an error.  */
+/* Override any GCC internal prototype to avoid an error.
+   Use char because int might match the return type of a GCC
+   builtin and then its argument prototype would still apply.  */
 #ifdef __cplusplus
 extern "C"
 #endif
-/* We use char because int might match the return type of a gcc2
-   builtin and then its argument prototype would still apply.  */
 char socket ();
 int
 main ()
 {
-socket ();
+return socket ();
   ;
   return 0;
 }
@@ -5571,17 +5571,17 @@ cat confdefs.h >>conftest.$ac_ext
 cat >>conftest.$ac_ext <<_ACEOF
 /* end confdefs.h.  */
 
-/* Override any gcc2 internal prototype to avoid an error.  */
+/* Override any GCC internal prototype to avoid an error.
+   Use char because int might match the return type of a GCC
+   builtin and then its argument prototype would still apply.  */
 #ifdef __cplusplus
 extern "C"
 #endif
-/* We use char because int might match the return type of a gcc2
-   builtin and then its argument prototype would still apply.  */
 char shl_load ();
 int
 main ()
 {
-shl_load ();
+return shl_load ();
   ;
   return 0;
 }
@@ -5626,17 +5626,17 @@ cat confdefs.h >>conftest.$ac_ext
 cat >>conftest.$ac_ext <<_ACEOF
 /* end confdefs.h.  */
 
-/* Override any gcc2 internal prototype to avoid an error.  */
+/* Override any GCC internal prototype to avoid an error.
+   Use char because int might match the return type of a GCC
+   builtin and then its argument prototype would still apply.  */
 #ifdef __cplusplus
 extern "C"
 #endif
-/* We use char because int might match the return type of a gcc2
-   builtin and then its argument prototype would still apply.  */
 char shl_load ();
 int
 main ()
 {
-shl_load ();
+return shl_load ();
   ;
   return 0;
 }
@@ -5700,17 +5700,17 @@ cat confdefs.h >>conftest.$ac_ext
 cat >>conftest.$ac_ext <<_ACEOF
 /* end confdefs.h.  */
 
-/* Override any gcc2 internal prototype to avoid an error.  */
+/* Override any GCC internal prototype to avoid an error.
+   Use char because int might match the return type of a GCC
+   builtin and then its argument prototype would still apply.  */
 #ifdef __cplusplus
 extern "C"
 #endif
-/* We use char because int might match the return type of a gcc2
-   builtin and then its argument prototype would still apply.  */
 char ldopen ();
 int
 main ()
 {
-ldopen ();
+return ldopen ();
   ;
   return 0;
 }
@@ -5755,17 +5755,17 @@ cat confdefs.h >>conftest.$ac_ext
 cat >>conftest.$ac_ext <<_ACEOF
 /* end confdefs.h.  */
 
-/* Override any gcc2 internal prototype to avoid an error.  */
+/* Override any GCC internal prototype to avoid an error.
+   Use char because int might match the return type of a GCC
+   builtin and then its argument prototype would still apply.  */
 #ifdef __cplusplus
 extern "C"
 #endif
-/* We use char because int might match the return type of a gcc2
-   builtin and then its argument prototype would still apply.  */
 char ldopen ();
 int
 main ()
 {
-ldopen ();
+return ldopen ();
   ;
   return 0;
 }
@@ -5828,17 +5828,17 @@ cat confdefs.h >>conftest.$ac_ext
 cat >>conftest.$ac_ext <<_ACEOF
 /* end confdefs.h.  */
 
-/* Override any gcc2 internal prototype to avoid an error.  */
+/* Override any GCC internal prototype to avoid an error.
+   Use char because int might match the return type of a GCC
+   builtin and then its argument prototype would still apply.  */
 #ifdef __cplusplus
 extern "C"
 #endif
-/* We use char because int might match the return type of a gcc2
-   builtin and then its argument prototype would still apply.  */
 char getopt_long ();
 int
 main ()
 {
-getopt_long ();
+return getopt_long ();
   ;
   return 0;
 }
@@ -5883,17 +5883,17 @@ cat confdefs.h >>conftest.$ac_ext
 cat >>conftest.$ac_ext <<_ACEOF
 /* end confdefs.h.  */
 
-/* Override any gcc2 internal prototype to avoid an error.  */
+/* Override any GCC internal prototype to avoid an error.
+   Use char because int might match the return type of a GCC
+   builtin and then its argument prototype would still apply.  */
 #ifdef __cplusplus
 extern "C"
 #endif
-/* We use char because int might match the return type of a gcc2
-   builtin and then its argument prototype would still apply.  */
 char getopt_long ();
 int
 main ()
 {
-getopt_long ();
+return getopt_long ();
   ;
   return 0;
 }
@@ -5954,17 +5954,17 @@ cat confdefs.h >>conftest.$ac_ext
 cat >>conftest.$ac_ext <<_ACEOF
 /* end confdefs.h.  */
 
-/* Override any gcc2 internal prototype to avoid an error.  */
+/* Override any GCC internal prototype to avoid an error.
+   Use char because int might match the return type of a GCC
+   builtin and then its argument prototype would still apply.  */
 #ifdef __cplusplus
 extern "C"
 #endif
-/* We use char because int might match the return type of a gcc2
-   builtin and then its argument prototype would still apply.  */
 char crypt ();
 int
 main ()
 {
-crypt ();
+return crypt ();
   ;
   return 0;
 }
@@ -6009,17 +6009,17 @@ cat confdefs.h >>conftest.$ac_ext
 cat >>conftest.$ac_ext <<_ACEOF
 /* end confdefs.h.  */
 
-/* Override any gcc2 internal prototype to avoid an error.  */
+/* Override any GCC internal prototype to avoid an error.
+   Use char because int might match the return type of a GCC
+   builtin and then its argument prototype would still apply.  */
 #ifdef __cplusplus
 extern "C"
 #endif
-/* We use char because int might match the return type of a gcc2
-   builtin and then its argument prototype would still apply.  */
 char crypt ();
 int
 main ()
 {
-crypt ();
+return crypt ();
   ;
   return 0;
 }
@@ -6081,17 +6081,17 @@ cat confdefs.h >>conftest.$ac_ext
 cat >>conftest.$ac_ext <<_ACEOF
 /* end confdefs.h.  */
 
-/* Override any gcc2 internal prototype to avoid an error.  */
+/* Override any GCC internal prototype to avoid an error.
+   Use char because int might match the return type of a GCC
+   builtin and then its argument prototype would still apply.  */
 #ifdef __cplusplus
 extern "C"
 #endif
-/* We use char because int might match the return type of a gcc2
-   builtin and then its argument prototype would still apply.  */
 char fdatasync ();
 int
 main ()
 {
-fdatasync ();
+return fdatasync ();
   ;
   return 0;
 }
@@ -6136,17 +6136,17 @@ cat confdefs.h >>conftest.$ac_ext
 cat >>conftest.$ac_ext <<_ACEOF
 /* end confdefs.h.  */
 
-/* Override any gcc2 internal prototype to avoid an error.  */
+/* Override any GCC internal prototype to avoid an error.
+   Use char because int might match the return type of a GCC
+   builtin and then its argument prototype would still apply.  */
 #ifdef __cplusplus
 extern "C"
 #endif
-/* We use char because int might match the return type of a gcc2
-   builtin and then its argument prototype would still apply.  */
 char fdatasync ();
 int
 main ()
 {
-fdatasync ();
+return fdatasync ();
   ;
   return 0;
 }
@@ -6208,17 +6208,17 @@ cat confdefs.h >>conftest.$ac_ext
 cat >>conftest.$ac_ext <<_ACEOF
 /* end confdefs.h.  */
 
-/* Override any gcc2 internal prototype to avoid an error.  */
+/* Override any GCC internal prototype to avoid an error.
+   Use char because int might match the return type of a GCC
+   builtin and then its argument prototype would still apply.  */
 #ifdef __cplusplus
 extern "C"
 #endif
-/* We use char because int might match the return type of a gcc2
-   builtin and then its argument prototype would still apply.  */
 char shmget ();
 int
 main ()
 {
-shmget ();
+return shmget ();
   ;
   return 0;
 }
@@ -6263,17 +6263,17 @@ cat confdefs.h >>conftest.$ac_ext
 cat >>conftest.$ac_ext <<_ACEOF
 /* end confdefs.h.  */
 
-/* Override any gcc2 internal prototype to avoid an error.  */
+/* Override any GCC internal prototype to avoid an error.
+   Use char because int might match the return type of a GCC
+   builtin and then its argument prototype would still apply.  */
 #ifdef __cplusplus
 extern "C"
 #endif
-/* We use char because int might match the return type of a gcc2
-   builtin and then its argument prototype would still apply.  */
 char shmget ();
 int
 main ()
 {
-shmget ();
+return shmget ();
   ;
   return 0;
 }
@@ -6345,17 +6345,17 @@ cat confdefs.h >>conftest.$ac_ext
 cat >>conftest.$ac_ext <<_ACEOF
 /* end confdefs.h.  */
 
-/* Override any gcc2 internal prototype to avoid an error.  */
+/* Override any GCC internal prototype to avoid an error.
+   Use char because int might match the return type of a GCC
+   builtin and then its argument prototype would still apply.  */
 #ifdef __cplusplus
 extern "C"
 #endif
-/* We use char because int might match the return type of a gcc2
-   builtin and then its argument prototype would still apply.  */
 char readline ();
 int
 main ()
 {
-readline ();
+return readline ();
   ;
   return 0;
 }
@@ -6456,17 +6456,17 @@ cat confdefs.h >>conftest.$ac_ext
 cat >>conftest.$ac_ext <<_ACEOF
 /* end confdefs.h.  */
 
-/* Override any gcc2 internal prototype to avoid an error.  */
+/* Override any GCC internal prototype to avoid an error.
+   Use char because int might match the return type of a GCC
+   builtin and then its argument prototype would still apply.  */
 #ifdef __cplusplus
 extern "C"
 #endif
-/* We use char because int might match the return type of a gcc2
-   builtin and then its argument prototype would still apply.  */
 char inflate ();
 int
 main ()
 {
-inflate ();
+return inflate ();
   ;
   return 0;
 }
@@ -6556,17 +6556,17 @@ cat confdefs.h >>conftest.$ac_ext
 cat >>conftest.$ac_ext <<_ACEOF
 /* end confdefs.h.  */
 
-/* Override any gcc2 internal prototype to avoid an error.  */
+/* Override any GCC internal prototype to avoid an error.
+   Use char because int might match the return type of a GCC
+   builtin and then its argument prototype would still apply.  */
 #ifdef __cplusplus
 extern "C"
 #endif
-/* We use char because int might match the return type of a gcc2
-   builtin and then its argument prototype would still apply.  */
 char com_err ();
 int
 main ()
 {
-com_err ();
+return com_err ();
   ;
   return 0;
 }
@@ -6611,17 +6611,17 @@ cat confdefs.h >>conftest.$ac_ext
 cat >>conftest.$ac_ext <<_ACEOF
 /* end confdefs.h.  */
 
-/* Override any gcc2 internal prototype to avoid an error.  */
+/* Override any GCC internal prototype to avoid an error.
+   Use char because int might match the return type of a GCC
+   builtin and then its argument prototype would still apply.  */
 #ifdef __cplusplus
 extern "C"
 #endif
-/* We use char because int might match the return type of a gcc2
-   builtin and then its argument prototype would still apply.  */
 char com_err ();
 int
 main ()
 {
-com_err ();
+return com_err ();
   ;
   return 0;
 }
@@ -6686,17 +6686,17 @@ cat confdefs.h >>conftest.$ac_ext
 cat >>conftest.$ac_ext <<_ACEOF
 /* end confdefs.h.  */
 
-/* Override any gcc2 internal prototype to avoid an error.  */
+/* Override any GCC internal prototype to avoid an error.
+   Use char because int might match the return type of a GCC
+   builtin and then its argument prototype would still apply.  */
 #ifdef __cplusplus
 extern "C"
 #endif
-/* We use char because int might match the return type of a gcc2
-   builtin and then its argument prototype would still apply.  */
 char krb5_sendauth ();
 int
 main ()
 {
-krb5_sendauth ();
+return krb5_sendauth ();
   ;
   return 0;
 }
@@ -6741,17 +6741,17 @@ cat confdefs.h >>conftest.$ac_ext
 cat >>conftest.$ac_ext <<_ACEOF
 /* end confdefs.h.  */
 
-/* Override any gcc2 internal prototype to avoid an error.  */
+/* Override any GCC internal prototype to avoid an error.
+   Use char because int might match the return type of a GCC
+   builtin and then its argument prototype would still apply.  */
 #ifdef __cplusplus
 extern "C"
 #endif
-/* We use char because int might match the return type of a gcc2
-   builtin and then its argument prototype would still apply.  */
 char krb5_sendauth ();
 int
 main ()
 {
-krb5_sendauth ();
+return krb5_sendauth ();
   ;
   return 0;
 }
@@ -6817,17 +6817,17 @@ cat confdefs.h >>conftest.$ac_ext
 cat >>conftest.$ac_ext <<_ACEOF
 /* end confdefs.h.  */
 
-/* Override any gcc2 internal prototype to avoid an error.  */
+/* Override any GCC internal prototype to avoid an error.
+   Use char because int might match the return type of a GCC
+   builtin and then its argument prototype would still apply.  */
 #ifdef __cplusplus
 extern "C"
 #endif
-/* We use char because int might match the return type of a gcc2
-   builtin and then its argument prototype would still apply.  */
 char com_err ();
 int
 main ()
 {
-com_err ();
+return com_err ();
   ;
   return 0;
 }
@@ -6872,17 +6872,17 @@ cat confdefs.h >>conftest.$ac_ext
 cat >>conftest.$ac_ext <<_ACEOF
 /* end confdefs.h.  */
 
-/* Override any gcc2 internal prototype to avoid an error.  */
+/* Override any GCC internal prototype to avoid an error.
+   Use char because int might match the return type of a GCC
+   builtin and then its argument prototype would still apply.  */
 #ifdef __cplusplus
 extern "C"
 #endif
-/* We use char because int might match the return type of a gcc2
-   builtin and then its argument prototype would still apply.  */
 char com_err ();
 int
 main ()
 {
-com_err ();
+return com_err ();
   ;
   return 0;
 }
@@ -6953,17 +6953,17 @@ cat confdefs.h >>conftest.$ac_ext
 cat >>conftest.$ac_ext <<_ACEOF
 /* end confdefs.h.  */
 
-/* Override any gcc2 internal prototype to avoid an error.  */
+/* Override any GCC internal prototype to avoid an error.
+   Use char because int might match the return type of a GCC
+   builtin and then its argument prototype would still apply.  */
 #ifdef __cplusplus
 extern "C"
 #endif
-/* We use char because int might match the return type of a gcc2
-   builtin and then its argument prototype would still apply.  */
 char CRYPTO_new_ex_data ();
 int
 main ()
 {
-CRYPTO_new_ex_data ();
+return CRYPTO_new_ex_data ();
   ;
   return 0;
 }
@@ -7031,17 +7031,17 @@ cat confdefs.h >>conftest.$ac_ext
 cat >>conftest.$ac_ext <<_ACEOF
 /* end confdefs.h.  */
 
-/* Override any gcc2 internal prototype to avoid an error.  */
+/* Override any GCC internal prototype to avoid an error.
+   Use char because int might match the return type of a GCC
+   builtin and then its argument prototype would still apply.  */
 #ifdef __cplusplus
 extern "C"
 #endif
-/* We use char because int might match the return type of a gcc2
-   builtin and then its argument prototype would still apply.  */
 char SSL_library_init ();
 int
 main ()
 {
-SSL_library_init ();
+return SSL_library_init ();
   ;
   return 0;
 }
@@ -7110,17 +7110,17 @@ cat confdefs.h >>conftest.$ac_ext
 cat >>conftest.$ac_ext <<_ACEOF
 /* end confdefs.h.  */
 
-/* Override any gcc2 internal prototype to avoid an error.  */
+/* Override any GCC internal prototype to avoid an error.
+   Use char because int might match the return type of a GCC
+   builtin and then its argument prototype would still apply.  */
 #ifdef __cplusplus
 extern "C"
 #endif
-/* We use char because int might match the return type of a gcc2
-   builtin and then its argument prototype would still apply.  */
 char CRYPTO_new_ex_data ();
 int
 main ()
 {
-CRYPTO_new_ex_data ();
+return CRYPTO_new_ex_data ();
   ;
   return 0;
 }
@@ -7188,17 +7188,17 @@ cat confdefs.h >>conftest.$ac_ext
 cat >>conftest.$ac_ext <<_ACEOF
 /* end confdefs.h.  */
 
-/* Override any gcc2 internal prototype to avoid an error.  */
+/* Override any GCC internal prototype to avoid an error.
+   Use char because int might match the return type of a GCC
+   builtin and then its argument prototype would still apply.  */
 #ifdef __cplusplus
 extern "C"
 #endif
-/* We use char because int might match the return type of a gcc2
-   builtin and then its argument prototype would still apply.  */
 char SSL_library_init ();
 int
 main ()
 {
-SSL_library_init ();
+return SSL_library_init ();
   ;
   return 0;
 }
@@ -7270,17 +7270,17 @@ cat confdefs.h >>conftest.$ac_ext
 cat >>conftest.$ac_ext <<_ACEOF
 /* end confdefs.h.  */
 
-/* Override any gcc2 internal prototype to avoid an error.  */
+/* Override any GCC internal prototype to avoid an error.
+   Use char because int might match the return type of a GCC
+   builtin and then its argument prototype would still apply.  */
 #ifdef __cplusplus
 extern "C"
 #endif
-/* We use char because int might match the return type of a gcc2
-   builtin and then its argument prototype would still apply.  */
 char pam_start ();
 int
 main ()
 {
-pam_start ();
+return pam_start ();
   ;
   return 0;
 }
@@ -13559,30 +13559,24 @@ cat >>conftest.$ac_ext <<_ACEOF
 
 #undef $ac_func
 
-/* Override any gcc2 internal prototype to avoid an error.  */
+/* Override any GCC internal prototype to avoid an error.
+   Use char because int might match the return type of a GCC
+   builtin and then its argument prototype would still apply.  */
 #ifdef __cplusplus
 extern "C"
-{
 #endif
-/* We use char because int might match the return type of a gcc2
-   builtin and then its argument prototype would still apply.  */
 char $ac_func ();
 /* The GNU C library defines this for functions which it implements
     to always fail with ENOSYS.  Some functions are actually named
     something starting with __ and the normal name is an alias.  */
-#if defined (__stub_$ac_func) || defined (__stub___$ac_func)
+#if defined __stub_$ac_func || defined __stub___$ac_func
 choke me
-#else
-char (*f) () = $ac_func;
-#endif
-#ifdef __cplusplus
-}
 #endif
 
 int
 main ()
 {
-return f != $ac_func;
+return $ac_func ();
   ;
   return 0;
 }
@@ -14125,30 +14119,24 @@ cat >>conftest.$ac_ext <<_ACEOF
 
 #undef $ac_func
 
-/* Override any gcc2 internal prototype to avoid an error.  */
+/* Override any GCC internal prototype to avoid an error.
+   Use char because int might match the return type of a GCC
+   builtin and then its argument prototype would still apply.  */
 #ifdef __cplusplus
 extern "C"
-{
 #endif
-/* We use char because int might match the return type of a gcc2
-   builtin and then its argument prototype would still apply.  */
 char $ac_func ();
 /* The GNU C library defines this for functions which it implements
     to always fail with ENOSYS.  Some functions are actually named
     something starting with __ and the normal name is an alias.  */
-#if defined (__stub_$ac_func) || defined (__stub___$ac_func)
+#if defined __stub_$ac_func || defined __stub___$ac_func
 choke me
-#else
-char (*f) () = $ac_func;
-#endif
-#ifdef __cplusplus
-}
 #endif
 
 int
 main ()
 {
-return f != $ac_func;
+return $ac_func ();
   ;
   return 0;
 }
@@ -14229,30 +14217,24 @@ cat >>conftest.$ac_ext <<_ACEOF
 
 #undef $ac_func
 
-/* Override any gcc2 internal prototype to avoid an error.  */
+/* Override any GCC internal prototype to avoid an error.
+   Use char because int might match the return type of a GCC
+   builtin and then its argument prototype would still apply.  */
 #ifdef __cplusplus
 extern "C"
-{
 #endif
-/* We use char because int might match the return type of a gcc2
-   builtin and then its argument prototype would still apply.  */
 char $ac_func ();
 /* The GNU C library defines this for functions which it implements
     to always fail with ENOSYS.  Some functions are actually named
     something starting with __ and the normal name is an alias.  */
-#if defined (__stub_$ac_func) || defined (__stub___$ac_func)
+#if defined __stub_$ac_func || defined __stub___$ac_func
 choke me
-#else
-char (*f) () = $ac_func;
-#endif
-#ifdef __cplusplus
-}
 #endif
 
 int
 main ()
 {
-return f != $ac_func;
+return $ac_func ();
   ;
   return 0;
 }
@@ -14562,30 +14544,24 @@ cat >>conftest.$ac_ext <<_ACEOF
 
 #undef $ac_func
 
-/* Override any gcc2 internal prototype to avoid an error.  */
+/* Override any GCC internal prototype to avoid an error.
+   Use char because int might match the return type of a GCC
+   builtin and then its argument prototype would still apply.  */
 #ifdef __cplusplus
 extern "C"
-{
 #endif
-/* We use char because int might match the return type of a gcc2
-   builtin and then its argument prototype would still apply.  */
 char $ac_func ();
 /* The GNU C library defines this for functions which it implements
     to always fail with ENOSYS.  Some functions are actually named
     something starting with __ and the normal name is an alias.  */
-#if defined (__stub_$ac_func) || defined (__stub___$ac_func)
+#if defined __stub_$ac_func || defined __stub___$ac_func
 choke me
-#else
-char (*f) () = $ac_func;
-#endif
-#ifdef __cplusplus
-}
 #endif
 
 int
 main ()
 {
-return f != $ac_func;
+return $ac_func ();
   ;
   return 0;
 }
@@ -14684,30 +14660,24 @@ cat >>conftest.$ac_ext <<_ACEOF
 
 #undef $ac_func
 
-/* Override any gcc2 internal prototype to avoid an error.  */
+/* Override any GCC internal prototype to avoid an error.
+   Use char because int might match the return type of a GCC
+   builtin and then its argument prototype would still apply.  */
 #ifdef __cplusplus
 extern "C"
-{
 #endif
-/* We use char because int might match the return type of a gcc2
-   builtin and then its argument prototype would still apply.  */
 char $ac_func ();
 /* The GNU C library defines this for functions which it implements
     to always fail with ENOSYS.  Some functions are actually named
     something starting with __ and the normal name is an alias.  */
-#if defined (__stub_$ac_func) || defined (__stub___$ac_func)
+#if defined __stub_$ac_func || defined __stub___$ac_func
 choke me
-#else
-char (*f) () = $ac_func;
-#endif
-#ifdef __cplusplus
-}
 #endif
 
 int
 main ()
 {
-return f != $ac_func;
+return $ac_func ();
   ;
   return 0;
 }
@@ -14805,30 +14775,24 @@ cat >>conftest.$ac_ext <<_ACEOF
 
 #undef $ac_func
 
-/* Override any gcc2 internal prototype to avoid an error.  */
+/* Override any GCC internal prototype to avoid an error.
+   Use char because int might match the return type of a GCC
+   builtin and then its argument prototype would still apply.  */
 #ifdef __cplusplus
 extern "C"
-{
 #endif
-/* We use char because int might match the return type of a gcc2
-   builtin and then its argument prototype would still apply.  */
 char $ac_func ();
 /* The GNU C library defines this for functions which it implements
     to always fail with ENOSYS.  Some functions are actually named
     something starting with __ and the normal name is an alias.  */
-#if defined (__stub_$ac_func) || defined (__stub___$ac_func)
+#if defined __stub_$ac_func || defined __stub___$ac_func
 choke me
-#else
-char (*f) () = $ac_func;
-#endif
-#ifdef __cplusplus
-}
 #endif
 
 int
 main ()
 {
-return f != $ac_func;
+return $ac_func ();
   ;
   return 0;
 }
@@ -14949,30 +14913,24 @@ cat >>conftest.$ac_ext <<_ACEOF
 
 #undef $ac_func
 
-/* Override any gcc2 internal prototype to avoid an error.  */
+/* Override any GCC internal prototype to avoid an error.
+   Use char because int might match the return type of a GCC
+   builtin and then its argument prototype would still apply.  */
 #ifdef __cplusplus
 extern "C"
-{
 #endif
-/* We use char because int might match the return type of a gcc2
-   builtin and then its argument prototype would still apply.  */
 char $ac_func ();
 /* The GNU C library defines this for functions which it implements
     to always fail with ENOSYS.  Some functions are actually named
     something starting with __ and the normal name is an alias.  */
-#if defined (__stub_$ac_func) || defined (__stub___$ac_func)
+#if defined __stub_$ac_func || defined __stub___$ac_func
 choke me
-#else
-char (*f) () = $ac_func;
-#endif
-#ifdef __cplusplus
-}
 #endif
 
 int
 main ()
 {
-return f != $ac_func;
+return $ac_func ();
   ;
   return 0;
 }
@@ -15102,30 +15060,24 @@ cat >>conftest.$ac_ext <<_ACEOF
 
 #undef $ac_func
 
-/* Override any gcc2 internal prototype to avoid an error.  */
+/* Override any GCC internal prototype to avoid an error.
+   Use char because int might match the return type of a GCC
+   builtin and then its argument prototype would still apply.  */
 #ifdef __cplusplus
 extern "C"
-{
 #endif
-/* We use char because int might match the return type of a gcc2
-   builtin and then its argument prototype would still apply.  */
 char $ac_func ();
 /* The GNU C library defines this for functions which it implements
     to always fail with ENOSYS.  Some functions are actually named
     something starting with __ and the normal name is an alias.  */
-#if defined (__stub_$ac_func) || defined (__stub___$ac_func)
+#if defined __stub_$ac_func || defined __stub___$ac_func
 choke me
-#else
-char (*f) () = $ac_func;
-#endif
-#ifdef __cplusplus
-}
 #endif
 
 int
 main ()
 {
-return f != $ac_func;
+return $ac_func ();
   ;
   return 0;
 }
@@ -15316,30 +15268,24 @@ cat >>conftest.$ac_ext <<_ACEOF
 
 #undef $ac_func
 
-/* Override any gcc2 internal prototype to avoid an error.  */
+/* Override any GCC internal prototype to avoid an error.
+   Use char because int might match the return type of a GCC
+   builtin and then its argument prototype would still apply.  */
 #ifdef __cplusplus
 extern "C"
-{
 #endif
-/* We use char because int might match the return type of a gcc2
-   builtin and then its argument prototype would still apply.  */
 char $ac_func ();
 /* The GNU C library defines this for functions which it implements
     to always fail with ENOSYS.  Some functions are actually named
     something starting with __ and the normal name is an alias.  */
-#if defined (__stub_$ac_func) || defined (__stub___$ac_func)
+#if defined __stub_$ac_func || defined __stub___$ac_func
 choke me
-#else
-char (*f) () = $ac_func;
-#endif
-#ifdef __cplusplus
-}
 #endif
 
 int
 main ()
 {
-return f != $ac_func;
+return $ac_func ();
   ;
   return 0;
 }
@@ -15418,30 +15364,24 @@ cat >>conftest.$ac_ext <<_ACEOF
 
 #undef $ac_func
 
-/* Override any gcc2 internal prototype to avoid an error.  */
+/* Override any GCC internal prototype to avoid an error.
+   Use char because int might match the return type of a GCC
+   builtin and then its argument prototype would still apply.  */
 #ifdef __cplusplus
 extern "C"
-{
 #endif
-/* We use char because int might match the return type of a gcc2
-   builtin and then its argument prototype would still apply.  */
 char $ac_func ();
 /* The GNU C library defines this for functions which it implements
     to always fail with ENOSYS.  Some functions are actually named
     something starting with __ and the normal name is an alias.  */
-#if defined (__stub_$ac_func) || defined (__stub___$ac_func)
+#if defined __stub_$ac_func || defined __stub___$ac_func
 choke me
-#else
-char (*f) () = $ac_func;
-#endif
-#ifdef __cplusplus
-}
 #endif
 
 int
 main ()
 {
-return f != $ac_func;
+return $ac_func ();
   ;
   return 0;
 }
@@ -15634,30 +15574,24 @@ cat >>conftest.$ac_ext <<_ACEOF
 
 #undef syslog
 
-/* Override any gcc2 internal prototype to avoid an error.  */
+/* Override any GCC internal prototype to avoid an error.
+   Use char because int might match the return type of a GCC
+   builtin and then its argument prototype would still apply.  */
 #ifdef __cplusplus
 extern "C"
-{
 #endif
-/* We use char because int might match the return type of a gcc2
-   builtin and then its argument prototype would still apply.  */
 char syslog ();
 /* The GNU C library defines this for functions which it implements
     to always fail with ENOSYS.  Some functions are actually named
     something starting with __ and the normal name is an alias.  */
-#if defined (__stub_syslog) || defined (__stub___syslog)
+#if defined __stub_syslog || defined __stub___syslog
 choke me
-#else
-char (*f) () = syslog;
-#endif
-#ifdef __cplusplus
-}
 #endif
 
 int
 main ()
 {
-return f != syslog;
+return syslog ();
   ;
   return 0;
 }
@@ -15941,30 +15875,24 @@ cat >>conftest.$ac_ext <<_ACEOF
 
 #undef $ac_func
 
-/* Override any gcc2 internal prototype to avoid an error.  */
+/* Override any GCC internal prototype to avoid an error.
+   Use char because int might match the return type of a GCC
+   builtin and then its argument prototype would still apply.  */
 #ifdef __cplusplus
 extern "C"
-{
 #endif
-/* We use char because int might match the return type of a gcc2
-   builtin and then its argument prototype would still apply.  */
 char $ac_func ();
 /* The GNU C library defines this for functions which it implements
     to always fail with ENOSYS.  Some functions are actually named
     something starting with __ and the normal name is an alias.  */
-#if defined (__stub_$ac_func) || defined (__stub___$ac_func)
+#if defined __stub_$ac_func || defined __stub___$ac_func
 choke me
-#else
-char (*f) () = $ac_func;
-#endif
-#ifdef __cplusplus
-}
 #endif
 
 int
 main ()
 {
-return f != $ac_func;
+return $ac_func ();
   ;
   return 0;
 }
@@ -16044,30 +15972,24 @@ cat >>conftest.$ac_ext <<_ACEOF
 
 #undef $ac_func
 
-/* Override any gcc2 internal prototype to avoid an error.  */
+/* Override any GCC internal prototype to avoid an error.
+   Use char because int might match the return type of a GCC
+   builtin and then its argument prototype would still apply.  */
 #ifdef __cplusplus
 extern "C"
-{
 #endif
-/* We use char because int might match the return type of a gcc2
-   builtin and then its argument prototype would still apply.  */
 char $ac_func ();
 /* The GNU C library defines this for functions which it implements
     to always fail with ENOSYS.  Some functions are actually named
     something starting with __ and the normal name is an alias.  */
-#if defined (__stub_$ac_func) || defined (__stub___$ac_func)
+#if defined __stub_$ac_func || defined __stub___$ac_func
 choke me
-#else
-char (*f) () = $ac_func;
-#endif
-#ifdef __cplusplus
-}
 #endif
 
 int
 main ()
 {
-return f != $ac_func;
+return $ac_func ();
   ;
   return 0;
 }
@@ -16148,30 +16070,24 @@ cat >>conftest.$ac_ext <<_ACEOF
 
 #undef $ac_func
 
-/* Override any gcc2 internal prototype to avoid an error.  */
+/* Override any GCC internal prototype to avoid an error.
+   Use char because int might match the return type of a GCC
+   builtin and then its argument prototype would still apply.  */
 #ifdef __cplusplus
 extern "C"
-{
 #endif
-/* We use char because int might match the return type of a gcc2
-   builtin and then its argument prototype would still apply.  */
 char $ac_func ();
 /* The GNU C library defines this for functions which it implements
     to always fail with ENOSYS.  Some functions are actually named
     something starting with __ and the normal name is an alias.  */
-#if defined (__stub_$ac_func) || defined (__stub___$ac_func)
+#if defined __stub_$ac_func || defined __stub___$ac_func
 choke me
-#else
-char (*f) () = $ac_func;
-#endif
-#ifdef __cplusplus
-}
 #endif
 
 int
 main ()
 {
-return f != $ac_func;
+return $ac_func ();
   ;
   return 0;
 }
@@ -16248,30 +16164,24 @@ cat >>conftest.$ac_ext <<_ACEOF
 
 #undef $ac_func
 
-/* Override any gcc2 internal prototype to avoid an error.  */
+/* Override any GCC internal prototype to avoid an error.
+   Use char because int might match the return type of a GCC
+   builtin and then its argument prototype would still apply.  */
 #ifdef __cplusplus
 extern "C"
-{
 #endif
-/* We use char because int might match the return type of a gcc2
-   builtin and then its argument prototype would still apply.  */
 char $ac_func ();
 /* The GNU C library defines this for functions which it implements
     to always fail with ENOSYS.  Some functions are actually named
     something starting with __ and the normal name is an alias.  */
-#if defined (__stub_$ac_func) || defined (__stub___$ac_func)
+#if defined __stub_$ac_func || defined __stub___$ac_func
 choke me
-#else
-char (*f) () = $ac_func;
-#endif
-#ifdef __cplusplus
-}
 #endif
 
 int
 main ()
 {
-return f != $ac_func;
+return $ac_func ();
   ;
   return 0;
 }
@@ -16543,17 +16453,17 @@ cat confdefs.h >>conftest.$ac_ext
 cat >>conftest.$ac_ext <<_ACEOF
 /* end confdefs.h.  */
 
-/* Override any gcc2 internal prototype to avoid an error.  */
+/* Override any GCC internal prototype to avoid an error.
+   Use char because int might match the return type of a GCC
+   builtin and then its argument prototype would still apply.  */
 #ifdef __cplusplus
 extern "C"
 #endif
-/* We use char because int might match the return type of a gcc2
-   builtin and then its argument prototype would still apply.  */
 char pthread_join ();
 int
 main ()
 {
-pthread_join ();
+return pthread_join ();
   ;
   return 0;
 }
@@ -17224,30 +17134,24 @@ cat >>conftest.$ac_ext <<_ACEOF
 
 #undef $ac_func
 
-/* Override any gcc2 internal prototype to avoid an error.  */
+/* Override any GCC internal prototype to avoid an error.
+   Use char because int might match the return type of a GCC
+   builtin and then its argument prototype would still apply.  */
 #ifdef __cplusplus
 extern "C"
-{
 #endif
-/* We use char because int might match the return type of a gcc2
-   builtin and then its argument prototype would still apply.  */
 char $ac_func ();
 /* The GNU C library defines this for functions which it implements
     to always fail with ENOSYS.  Some functions are actually named
     something starting with __ and the normal name is an alias.  */
-#if defined (__stub_$ac_func) || defined (__stub___$ac_func)
+#if defined __stub_$ac_func || defined __stub___$ac_func
 choke me
-#else
-char (*f) () = $ac_func;
-#endif
-#ifdef __cplusplus
-}
 #endif
 
 int
 main ()
 {
-return f != $ac_func;
+return $ac_func ();
   ;
   return 0;
 }
@@ -17462,17 +17366,17 @@ cat confdefs.h >>conftest.$ac_ext
 cat >>conftest.$ac_ext <<_ACEOF
 /* end confdefs.h.  */
 
-/* Override any gcc2 internal prototype to avoid an error.  */
+/* Override any GCC internal prototype to avoid an error.
+   Use char because int might match the return type of a GCC
+   builtin and then its argument prototype would still apply.  */
 #ifdef __cplusplus
 extern "C"
 #endif
-/* We use char because int might match the return type of a gcc2
-   builtin and then its argument prototype would still apply.  */
 char ldap_bind ();
 int
 main ()
 {
-ldap_bind ();
+return ldap_bind ();
   ;
   return 0;
 }
@@ -17543,17 +17447,17 @@ cat confdefs.h >>conftest.$ac_ext
 cat >>conftest.$ac_ext <<_ACEOF
 /* end confdefs.h.  */
 
-/* Override any gcc2 internal prototype to avoid an error.  */
+/* Override any GCC internal prototype to avoid an error.
+   Use char because int might match the return type of a GCC
+   builtin and then its argument prototype would still apply.  */
 #ifdef __cplusplus
 extern "C"
 #endif
-/* We use char because int might match the return type of a gcc2
-   builtin and then its argument prototype would still apply.  */
 char ldap_simple_bind ();
 int
 main ()
 {
-ldap_simple_bind ();
+return ldap_simple_bind ();
   ;
   return 0;
 }
@@ -17626,17 +17530,17 @@ cat confdefs.h >>conftest.$ac_ext
 cat >>conftest.$ac_ext <<_ACEOF
 /* end confdefs.h.  */
 
-/* Override any gcc2 internal prototype to avoid an error.  */
+/* Override any GCC internal prototype to avoid an error.
+   Use char because int might match the return type of a GCC
+   builtin and then its argument prototype would still apply.  */
 #ifdef __cplusplus
 extern "C"
 #endif
-/* We use char because int might match the return type of a gcc2
-   builtin and then its argument prototype would still apply.  */
 char ldap_bind ();
 int
 main ()
 {
-ldap_bind ();
+return ldap_bind ();
   ;
   return 0;
 }
@@ -22120,17 +22024,17 @@ cat confdefs.h >>conftest.$ac_ext
 cat >>conftest.$ac_ext <<_ACEOF
 /* end confdefs.h.  */
 
-/* Override any gcc2 internal prototype to avoid an error.  */
+/* Override any GCC internal prototype to avoid an error.
+   Use char because int might match the return type of a GCC
+   builtin and then its argument prototype would still apply.  */
 #ifdef __cplusplus
 extern "C"
 #endif
-/* We use char because int might match the return type of a gcc2
-   builtin and then its argument prototype would still apply.  */
 char bind_textdomain_codeset ();
 int
 main ()
 {
-bind_textdomain_codeset ();
+return bind_textdomain_codeset ();
   ;
   return 0;
 }
@@ -22175,17 +22079,17 @@ cat confdefs.h >>conftest.$ac_ext
 cat >>conftest.$ac_ext <<_ACEOF
 /* end confdefs.h.  */
 
-/* Override any gcc2 internal prototype to avoid an error.  */
+/* Override any GCC internal prototype to avoid an error.
+   Use char because int might match the return type of a GCC
+   builtin and then its argument prototype would still apply.  */
 #ifdef __cplusplus
 extern "C"
 #endif
-/* We use char because int might match the return type of a gcc2
-   builtin and then its argument prototype would still apply.  */
 char bind_textdomain_codeset ();
 int
 main ()
 {
-bind_textdomain_codeset ();
+return bind_textdomain_codeset ();
   ;
   return 0;
 }
