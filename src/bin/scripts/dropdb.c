@@ -21,6 +21,8 @@ static void help(const char *progname);
 int
 main(int argc, char *argv[])
 {
+	static int		if_exists = 0;
+
 	static struct option long_options[] = {
 		{"host", required_argument, NULL, 'h'},
 		{"port", required_argument, NULL, 'p'},
@@ -29,6 +31,7 @@ main(int argc, char *argv[])
 		{"password", no_argument, NULL, 'W'},
 		{"echo", no_argument, NULL, 'e'},
 		{"interactive", no_argument, NULL, 'i'},
+		{"if-exists", no_argument, &if_exists, 1},
 		{NULL, 0, NULL, 0}
 	};
 
@@ -79,6 +82,9 @@ main(int argc, char *argv[])
 			case 'i':
 				interactive = true;
 				break;
+			case 0:
+				/* this covers the long options */
+				break;
 			default:
 				fprintf(stderr, _("Try \"%s --help\" for more information.\n"), progname);
 				exit(1);
@@ -110,8 +116,8 @@ main(int argc, char *argv[])
 
 	initPQExpBuffer(&sql);
 
-	appendPQExpBuffer(&sql, "DROP DATABASE %s;\n",
-					  fmtId(dbname));
+	appendPQExpBuffer(&sql, "DROP DATABASE %s%s;\n",
+					  (if_exists ? "IF EXISTS " : ""), fmtId(dbname));
 
 	/*
 	 * Connect to the 'postgres' database by default, except have the
@@ -146,6 +152,7 @@ help(const char *progname)
 	printf(_("\nOptions:\n"));
 	printf(_("  -e, --echo                show the commands being sent to the server\n"));
 	printf(_("  -i, --interactive         prompt before deleting anything\n"));
+	printf(_("  --if-exists               don't report error if database doesn't exist\n"));
 	printf(_("  --help                    show this help, then exit\n"));
 	printf(_("  --version                 output version information, then exit\n"));
 	printf(_("\nConnection options:\n"));
