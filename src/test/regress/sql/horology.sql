@@ -91,7 +91,13 @@ SELECT timestamp without time zone '12/31/294276' - timestamp without time zone 
 -- So, just try to test parser and hope for the best - thomas 97/04/26
 SELECT (timestamp without time zone 'today' = (timestamp without time zone 'yesterday' + interval '1 day')) as "True";
 SELECT (timestamp without time zone 'today' = (timestamp without time zone 'tomorrow' - interval '1 day')) as "True";
+SELECT (timestamp without time zone 'today 10:30' = (timestamp without time zone 'yesterday' + interval '1 day 10 hr 30 min')) as "True";
+SELECT (timestamp without time zone '10:30 today' = (timestamp without time zone 'yesterday' + interval '1 day 10 hr 30 min')) as "True";
 SELECT (timestamp without time zone 'tomorrow' = (timestamp without time zone 'yesterday' + interval '2 days')) as "True";
+SELECT (timestamp without time zone 'tomorrow 16:00:00' = (timestamp without time zone 'today' + interval '1 day 16 hours')) as "True";
+SELECT (timestamp without time zone '16:00:00 tomorrow' = (timestamp without time zone 'today' + interval '1 day 16 hours')) as "True";
+SELECT (timestamp without time zone 'yesterday 12:34:56' = (timestamp without time zone 'tomorrow' - interval '2 days - 12:34:56')) as "True";
+SELECT (timestamp without time zone '12:34:56 yesterday' = (timestamp without time zone 'tomorrow' - interval '2 days - 12:34:56')) as "True";
 SELECT (timestamp without time zone 'tomorrow' > 'now') as "True";
 
 -- Convert from date and time to timestamp
@@ -112,7 +118,14 @@ SELECT timestamp with time zone '1999-12-01' + interval '1 month - 1 second' AS 
 
 SELECT (timestamp with time zone 'today' = (timestamp with time zone 'yesterday' + interval '1 day')) as "True";
 SELECT (timestamp with time zone 'today' = (timestamp with time zone 'tomorrow' - interval '1 day')) as "True";
+SELECT (timestamp with time zone 'today 10:30+05' = timestamptz(date 'today', time with time zone '10:30 +05')) as "True";
+SELECT (timestamp with time zone '10:30+05 today' = timestamptz(date 'today', time with time zone '10:30 +05')) as "True";
 SELECT (timestamp with time zone 'tomorrow' = (timestamp with time zone 'yesterday' + interval '2 days')) as "True";
+SELECT (timestamp with time zone 'tomorrow 10:30+05' = (timestamp with time zone 'today 10:30+05' + interval '1 day')) as "True";
+SELECT (timestamp with time zone '10:30+05 tomorrow' = (timestamp with time zone 'today 10:30+05' + interval '1 day')) as "True";
+SELECT (timestamp with time zone 'yesterday 12:34:56-7' = timestamptz(date 'yesterday', time with time zone '12:34:56-7')) as "True";
+SELECT (timestamp with time zone '12:34:56 yesterday -7' = timestamptz(date 'yesterday', time with time zone '12:34:56-7')) as "True";
+SELECT (timestamp with time zone '12:34:56-7 yesterday' = timestamptz(date 'yesterday', time with time zone '12:34:56-7')) as "True";
 SELECT (timestamp with time zone 'tomorrow' > 'now') as "True";
 
 -- timestamp with time zone, interval arithmetic around DST change

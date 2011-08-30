@@ -799,6 +799,7 @@ DecodeDateTime(char **field, int *ftype, int nf,
 	bool		is2digits = FALSE;
 	bool		bc = FALSE;
 	pg_tz	   *namedTz = NULL;
+	struct pg_tm cur_tm;
 
 	/*
 	 * We'll insist on at least all of the date fields, but initialize the
@@ -1197,32 +1198,26 @@ DecodeDateTime(char **field, int *ftype, int nf,
 							case DTK_YESTERDAY:
 								tmask = DTK_DATE_M;
 								*dtype = DTK_DATE;
-								GetCurrentDateTime(tm);
-								j2date(date2j(tm->tm_year, tm->tm_mon, tm->tm_mday) - 1,
+								GetCurrentDateTime(&cur_tm);
+								j2date(date2j(cur_tm.tm_year, cur_tm.tm_mon, cur_tm.tm_mday) - 1,
 									&tm->tm_year, &tm->tm_mon, &tm->tm_mday);
-								tm->tm_hour = 0;
-								tm->tm_min = 0;
-								tm->tm_sec = 0;
 								break;
 
 							case DTK_TODAY:
 								tmask = DTK_DATE_M;
 								*dtype = DTK_DATE;
-								GetCurrentDateTime(tm);
-								tm->tm_hour = 0;
-								tm->tm_min = 0;
-								tm->tm_sec = 0;
+								GetCurrentDateTime(&cur_tm);
+								tm->tm_year = cur_tm.tm_year;
+								tm->tm_mon = cur_tm.tm_mon;
+								tm->tm_mday = cur_tm.tm_mday;
 								break;
 
 							case DTK_TOMORROW:
 								tmask = DTK_DATE_M;
 								*dtype = DTK_DATE;
-								GetCurrentDateTime(tm);
-								j2date(date2j(tm->tm_year, tm->tm_mon, tm->tm_mday) + 1,
+								GetCurrentDateTime(&cur_tm);
+								j2date(date2j(cur_tm.tm_year, cur_tm.tm_mon, cur_tm.tm_mday) + 1,
 									&tm->tm_year, &tm->tm_mon, &tm->tm_mday);
-								tm->tm_hour = 0;
-								tm->tm_min = 0;
-								tm->tm_sec = 0;
 								break;
 
 							case DTK_ZULU:
