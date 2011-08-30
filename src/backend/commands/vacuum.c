@@ -485,8 +485,10 @@ vac_estimate_reltuples(Relation relation, bool is_analyze,
 		return scanned_tuples;
 
 	/*
-	 * If scanned_pages is zero but total_pages isn't, keep the existing
-	 * value of reltuples.
+	 * If scanned_pages is zero but total_pages isn't, keep the existing value
+	 * of reltuples.  (Note: callers should avoid updating the pg_class
+	 * statistics in this situation, since no new information has been
+	 * provided.)
 	 */
 	if (scanned_pages == 0)
 		return old_rel_tuples;
