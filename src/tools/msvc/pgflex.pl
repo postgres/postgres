@@ -12,10 +12,14 @@ use File::Basename;
 
 require 'src/tools/msvc/buildenv.pl' if -e 'src/tools/msvc/buildenv.pl';
 
-system('flex -V > NUL');
-if ($? != 0)
+my ($flexver) = `flex -V`; # grab first line
+$flexver=(split(/\s+/,$flexver))[1]; 
+$flexver =~ s/[^0-9.]//g; 
+my @verparts = split(/\./,$flexver);
+unless ($verparts[0] == 2 && $verparts[1] == 5 && $verparts[2] >= 31)
 {
-    print "WARNING! flex install not found, attempting to build without\n";
+    print "WARNING! Flex install not found, or unsupported Flex version.\n";
+    print "echo Attempting to build without.\n";
     exit 0;
 }
 
