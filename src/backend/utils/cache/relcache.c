@@ -1415,8 +1415,8 @@ formrdesc(const char *relationName, Oid relationReltype,
 	/* formrdesc is used only for permanent relations */
 	relation->rd_rel->relpersistence = RELPERSISTENCE_PERMANENT;
 
-	relation->rd_rel->relpages = 1;
-	relation->rd_rel->reltuples = 1;
+	relation->rd_rel->relpages = 0;
+	relation->rd_rel->reltuples = 0;
 	relation->rd_rel->relkind = RELKIND_RELATION;
 	relation->rd_rel->relhasoids = hasoids;
 	relation->rd_rel->relnatts = (int16) natts;
