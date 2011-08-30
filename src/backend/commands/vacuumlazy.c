@@ -84,6 +84,7 @@ typedef struct LVRelStats
 	/* hasindex = true means two-pass strategy; false means one-pass */
 	bool		hasindex;
 	/* Overall statistics about rel */
+	BlockNumber old_rel_pages;	/* previous value of pg_class.relpages */
 	BlockNumber rel_pages;		/* total number of pages */
 	BlockNumber scanned_pages;	/* number of pages we examined */
 	double		scanned_tuples; /* counts only tuples on scanned pages */
@@ -154,6 +155,9 @@ lazy_vacuum_rel(Relation onerel, VacuumStmt *vacstmt,
 	TimestampTz starttime = 0;
 	bool		scan_all;
 	TransactionId freezeTableLimit;
+	BlockNumber new_rel_pages;
+	double		new_rel_tuples;
+	TransactionId new_frozen_xid;
 
 	pg_rusage_init(&ru0);
 
@@ -176,6 +180,7 @@ lazy_vacuum_rel(Relation onerel, VacuumStmt *vacstmt,
 
 	vacrelstats = (LVRelStats *) palloc0(sizeof(LVRelStats));
 
+	vacrelstats->old_rel_pages = onerel->rd_rel->relpages;
 	vacrelstats->old_rel_tuples = onerel->rd_rel->reltuples;
 	vacrelstats->num_index_scans = 0;
 
@@ -205,20 +210,39 @@ lazy_vacuum_rel(Relation onerel, VacuumStmt *vacstmt,
 	FreeSpaceMapVacuum(onerel);
 
 	/*
-	 * Update statistics in pg_class.  But don't change relfrozenxid if we
-	 * skipped any pages.
+	 * Update statistics in pg_class.
+	 *
+	 * A corner case here is that if we scanned no pages at all because every
+	 * page is all-visible, we should not update relpages/reltuples, because
+	 * we have no new information to contribute.  In particular this keeps
+	 * us from replacing relpages=reltuples=0 (which means "unknown tuple
+	 * density") with nonzero relpages and reltuples=0 (which means "zero
+	 * tuple density") unless there's some actual evidence for the latter.
+	 *
+	 * Also, don't change relfrozenxid if we skipped any pages, since then
+	 * we don't know for certain that all tuples have a newer xmin.
 	 */
+	new_rel_pages = vacrelstats->rel_pages;
+	new_rel_tuples = vacrelstats->new_rel_tuples;
+	if (vacrelstats->scanned_pages == 0 && new_rel_pages > 0)
+	{
+		new_rel_pages = vacrelstats->old_rel_pages;
+		new_rel_tuples = vacrelstats->old_rel_tuples;
+	}
+
+	new_frozen_xid = FreezeLimit;
+	if (vacrelstats->scanned_pages < vacrelstats->rel_pages)
+		new_frozen_xid = InvalidTransactionId;
+
 	vac_update_relstats(onerel,
-						vacrelstats->rel_pages, vacrelstats->new_rel_tuples,
+						new_rel_pages, new_rel_tuples,
 						vacrelstats->hasindex,
-					  (vacrelstats->scanned_pages < vacrelstats->rel_pages) ?
-						InvalidTransactionId :
-						FreezeLimit);
+						new_frozen_xid);
 
 	/* report results to the stats collector, too */
 	pgstat_report_vacuum(RelationGetRelid(onerel),
 						 onerel->rd_rel->relisshared,
-						 vacrelstats->new_rel_tuples);
+						 new_rel_tuples);
 
 	/* and log the action if appropriate */
 	if (IsAutoVacuumWorkerProcess() && Log_autovacuum_min_duration >= 0)
@@ -238,7 +262,7 @@ lazy_vacuum_rel(Relation onerel, VacuumStmt *vacstmt,
 							vacrelstats->pages_removed,
 							vacrelstats->rel_pages,
 							vacrelstats->tuples_deleted,
-							vacrelstats->new_rel_tuples,
+							new_rel_tuples,
 							pg_rusage_show(&ru0))));
 	}
 }
