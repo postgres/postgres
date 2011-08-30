@@ -92,7 +92,7 @@ PostgreSQL documentation
       <term><option>--if-exists</></term>
       <listitem>
        <para>
-        Do not throw an error if the database does not exist. A notice is
+        Do not throw an error if the user does not exist. A notice is
         issued in this case.
        </para>
       </listitem>
