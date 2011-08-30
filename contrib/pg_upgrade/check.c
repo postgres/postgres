@@ -531,7 +531,7 @@ check_for_prepared_transactions(ClusterInfo *cluster)
 
 	res = executeQueryOrDie(conn,
 							"SELECT * "
-							"FROM pg_catalog.pg_prepared_xact()");
+							"FROM pg_catalog.pg_prepared_xacts");
 
 	if (PQntuples(res) != 0)
 		pg_log(PG_FATAL, "The %s cluster contains prepared transactions\n",
