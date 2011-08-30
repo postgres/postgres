@@ -59,27 +59,27 @@ For example, consider the following sequence of user commands:
 In the main processing loop, this results in the following function call
 sequence:
 
-	 /	StartTransactionCommand;
-	/		StartTransaction;
-1) <		ProcessUtility;				<< BEGIN
-	\		BeginTransactionBlock;
-	 \	CommitTransactionCommand;
+     /  StartTransactionCommand;
+    /       StartTransaction;
+1) <        ProcessUtility;             << BEGIN
+    \       BeginTransactionBlock;
+     \  CommitTransactionCommand;
 
-	/	StartTransactionCommand;
-2) /		ProcessQuery;				<< SELECT ...
-   \		CommitTransactionCommand;
-	\		CommandCounterIncrement;
+    /   StartTransactionCommand;
+2) /        ProcessQuery;               << SELECT ...
+   \        CommitTransactionCommand;
+    \       CommandCounterIncrement;
 
-	/	StartTransactionCommand;
-3) /		ProcessQuery;				<< INSERT ...
-   \		CommitTransactionCommand;
-	\		CommandCounterIncrement;
+    /   StartTransactionCommand;
+3) /        ProcessQuery;               << INSERT ...
+   \        CommitTransactionCommand;
+    \       CommandCounterIncrement;
 
-	 /	StartTransactionCommand;
-	/	ProcessUtility;				<< COMMIT
-4) <			EndTransactionBlock;
-	\	CommitTransactionCommand;
-	 \		CommitTransaction;
+     /  StartTransactionCommand;
+    /   ProcessUtility;                 << COMMIT
+4) <            EndTransactionBlock;
+    \   CommitTransactionCommand;
+     \      CommitTransaction;
 
 The point of this example is to demonstrate the need for
 StartTransactionCommand and CommitTransactionCommand to be state smart -- they
@@ -87,25 +87,25 @@ should call CommandCounterIncrement between the calls to BeginTransactionBlock
 and EndTransactionBlock and outside these calls they need to do normal start,
 commit or abort processing.
 
-Furthermore, suppose the "SELECT * FROM foo" caused an abort condition.	In
+Furthermore, suppose the "SELECT * FROM foo" caused an abort condition. In
 this case AbortCurrentTransaction is called, and the transaction is put in
 aborted state.  In this state, any user input is ignored except for
 transaction-termination statements, or ROLLBACK TO <savepoint> commands.
 
 Transaction aborts can occur in two ways:
 
-1)	system dies from some internal cause  (syntax error, etc)
-2)	user types ROLLBACK
+1) system dies from some internal cause  (syntax error, etc)
+2) user types ROLLBACK
 
 The reason we have to distinguish them is illustrated by the following two
 situations:
 
-	case 1					case 2
-	------					------
-1) user types BEGIN			1) user types BEGIN
-2) user does something			2) user does something
-3) user does not like what		3) system aborts for some reason
-   she sees and types ABORT		   (syntax error, etc)
+        case 1                                  case 2
+        ------                                  ------
+1) user types BEGIN                     1) user types BEGIN
+2) user does something                  2) user does something
+3) user does not like what              3) system aborts for some reason
+   she sees and types ABORT                (syntax error, etc)
 
 In case 1, we want to abort the transaction and return to the default state.
 In case 2, there may be more commands coming our way which are part of the
