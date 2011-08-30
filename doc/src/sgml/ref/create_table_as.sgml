@@ -204,12 +204,11 @@ CREATE [ [ GLOBAL | LOCAL ] { TEMPORARY | TEMP } | UNLOGGED ] TABLE <replaceable
     <term><replaceable>query</replaceable></term>
     <listitem>
      <para>
-      A <xref linkend="sql-select"
-     >, <link linkend="sql-table">TABLE</link>,
-      or
-      <xref linkend="sql-values"> command,
-      or an <xref linkend="sql-execute"> command
-      that runs a prepared <command>SELECT</>, <command>TABLE</>, or <command>VALUES</> query.
+      A <xref linkend="sql-select">, <link
+      linkend="sql-table">TABLE</link>, or <xref linkend="sql-values">
+      command, or an <xref linkend="sql-execute"> command that runs a
+      prepared <command>SELECT</>, <command>TABLE</>, or
+      <command>VALUES</> query.
      </para>
     </listitem>
    </varlistentry>

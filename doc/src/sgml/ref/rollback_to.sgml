@@ -64,9 +64,9 @@ ROLLBACK [ WORK | TRANSACTION ] TO [ SAVEPOINT ] <replaceable>savepoint_name</re
   <title>Notes</title>
 
   <para>
-   Use <xref linkend="SQL-RELEASE-SAVEPOINT"
-  > to destroy a savepoint without
-   discarding the effects of commands executed after it was established.
+   Use <xref linkend="SQL-RELEASE-SAVEPOINT"> to destroy a savepoint
+   without discarding the effects of commands executed after it was
+   established.
   </para>
 
   <para>

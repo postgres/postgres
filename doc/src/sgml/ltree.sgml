@@ -108,7 +108,7 @@ a.  b.     c.      d.               e.
 </programlisting>
      This query will match any label path that:
     </para>
-    <orderedlist numeration='loweralpha'>
+    <orderedlist numeration="loweralpha">
      <listitem>
       <para>
        begins with the label <literal>Top</literal>

@@ -1092,7 +1092,7 @@ ts_headline(<optional> <replaceable class="PARAMETER">config</replaceable> <type
        if they contain spaces or commas.
       </para>
      </listitem>
-     <listitem >
+     <listitem>
       <para>
        <literal>MaxWords</>, <literal>MinWords</literal>: these numbers
        determine the longest and shortest headlines to output.

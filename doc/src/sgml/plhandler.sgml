@@ -166,8 +166,7 @@ CREATE LANGUAGE plsample
     to allow language-specific checking to be done during
     <xref linkend="sql-createfunction">.
     An inline handler can be provided to allow the language to support
-    anonymous code blocks executed via the <xref linkend="sql-do"
-   > command.
+    anonymous code blocks executed via the <xref linkend="sql-do"> command.
    </para>
 
    <para>

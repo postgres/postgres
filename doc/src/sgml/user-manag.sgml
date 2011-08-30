@@ -244,9 +244,8 @@ CREATE USER <replaceable>name</replaceable>;
 
     A role's attributes can be modified after creation with
     <command>ALTER ROLE</command>.<indexterm><primary>ALTER ROLE</></>
-    See the reference pages for the <xref linkend="sql-createrole"
-   > and <xref linkend="sql-alterrole"
-   > commands for details.
+    See the reference pages for the <xref linkend="sql-createrole">
+    and <xref linkend="sql-alterrole"> commands for details.
    </para>
 
   <tip>
