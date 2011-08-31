@@ -139,9 +139,11 @@ static double ineq_histogram_selectivity(PlannerInfo *root,
 						   FmgrInfo *opproc, bool isgt,
 						   Datum constval, Oid consttype);
 static double eqjoinsel_inner(Oid operator,
-				VariableStatData *vardata1, VariableStatData *vardata2);
+				VariableStatData *vardata1, VariableStatData *vardata2,
+				RelOptInfo *rel1, RelOptInfo *rel2);
 static double eqjoinsel_semi(Oid operator,
-			   VariableStatData *vardata1, VariableStatData *vardata2);
+			   VariableStatData *vardata1, VariableStatData *vardata2,
+			   RelOptInfo *rel1, RelOptInfo *rel2);
 static bool convert_to_scalar(Datum value, Oid valuetypid, double *scaledvalue,
 				  Datum lobound, Datum hibound, Oid boundstypid,
 				  double *scaledlobound, double *scaledhibound);
@@ -170,6 +172,7 @@ static bool get_actual_variable_range(PlannerInfo *root,
 						  VariableStatData *vardata,
 						  Oid sortop,
 						  Datum *min, Datum *max);
+static RelOptInfo *find_join_input_rel(PlannerInfo *root, Relids relids);
 static Selectivity prefix_selectivity(PlannerInfo *root,
 				   VariableStatData *vardata,
 				   Oid vartype, Oid opfamily, Const *prefixcon);
@@ -1990,24 +1993,47 @@ eqjoinsel(PG_FUNCTION_ARGS)
 	VariableStatData vardata1;
 	VariableStatData vardata2;
 	bool		join_is_reversed;
+	RelOptInfo *rel1;
+	RelOptInfo *rel2;
 
 	get_join_variables(root, args, sjinfo,
 					   &vardata1, &vardata2, &join_is_reversed);
+
+	/*
+	 * Identify the join's direct input relations.  We use the min lefthand
+	 * and min righthand as the inputs, even though the join might actually
+	 * get done with larger input relations.  The min inputs are guaranteed to
+	 * have been formed by now, though, and always using them ensures
+	 * consistency of estimates.
+	 */
+	if (!join_is_reversed)
+	{
+		rel1 = find_join_input_rel(root, sjinfo->min_lefthand);
+		rel2 = find_join_input_rel(root, sjinfo->min_righthand);
+	}
+	else
+	{
+		rel1 = find_join_input_rel(root, sjinfo->min_righthand);
+		rel2 = find_join_input_rel(root, sjinfo->min_lefthand);
+	}
 
 	switch (sjinfo->jointype)
 	{
 		case JOIN_INNER:
 		case JOIN_LEFT:
 		case JOIN_FULL:
-			selec = eqjoinsel_inner(operator, &vardata1, &vardata2);
+			selec = eqjoinsel_inner(operator, &vardata1, &vardata2,
+									rel1, rel2);
 			break;
 		case JOIN_SEMI:
 		case JOIN_ANTI:
 			if (!join_is_reversed)
-				selec = eqjoinsel_semi(operator, &vardata1, &vardata2);
+				selec = eqjoinsel_semi(operator, &vardata1, &vardata2,
+									   rel1, rel2);
 			else
 				selec = eqjoinsel_semi(get_commutator(operator),
-									   &vardata2, &vardata1);
+									   &vardata2, &vardata1,
+									   rel2, rel1);
 			break;
 		default:
 			/* other values not expected here */
@@ -2033,7 +2059,8 @@ eqjoinsel(PG_FUNCTION_ARGS)
  */
 static double
 eqjoinsel_inner(Oid operator,
-				VariableStatData *vardata1, VariableStatData *vardata2)
+				VariableStatData *vardata1, VariableStatData *vardata2,
+				RelOptInfo *rel1, RelOptInfo *rel2)
 {
 	double		selec;
 	double		nd1;
@@ -2233,15 +2260,19 @@ eqjoinsel_inner(Oid operator,
 		 * be, providing a crude correction for the selectivity of restriction
 		 * clauses on those relations.	(We don't do that in the other path
 		 * since there we are comparing the nd values to stats for the whole
-		 * relations.)
+		 * relations.)  We can apply this clamp both with respect to the base
+		 * relations from which the join variables come, and to the immediate
+		 * input relations of the current join.
 		 */
 		double		nullfrac1 = stats1 ? stats1->stanullfrac : 0.0;
 		double		nullfrac2 = stats2 ? stats2->stanullfrac : 0.0;
 
 		if (vardata1->rel)
 			nd1 = Min(nd1, vardata1->rel->rows);
+		nd1 = Min(nd1, rel1->rows);
 		if (vardata2->rel)
 			nd2 = Min(nd2, vardata2->rel->rows);
+		nd2 = Min(nd2, rel2->rows);
 
 		selec = (1.0 - nullfrac1) * (1.0 - nullfrac2);
 		if (nd1 > nd2)
@@ -2268,7 +2299,8 @@ eqjoinsel_inner(Oid operator,
  */
 static double
 eqjoinsel_semi(Oid operator,
-			   VariableStatData *vardata1, VariableStatData *vardata2)
+			   VariableStatData *vardata1, VariableStatData *vardata2,
+			   RelOptInfo *rel1, RelOptInfo *rel2)
 {
 	double		selec;
 	double		nd1;
@@ -2417,8 +2449,10 @@ eqjoinsel_semi(Oid operator,
 		{
 			if (vardata1->rel)
 				nd1 = Min(nd1, vardata1->rel->rows);
+			nd1 = Min(nd1, rel1->rows);
 			if (vardata2->rel)
 				nd2 = Min(nd2, vardata2->rel->rows);
+			nd2 = Min(nd2, rel2->rows);
 
 			if (nd1 <= nd2 || nd2 <= 0)
 				selec = 1.0 - nullfrac1;
@@ -4720,6 +4754,37 @@ get_actual_variable_range(PlannerInfo *root, VariableStatData *vardata,
 	}
 
 	return have_data;
+}
+
+/*
+ * find_join_input_rel
+ *		Look up the input relation for a join.
+ *
+ * We assume that the input relation's RelOptInfo must have been constructed
+ * already.
+ */
+static RelOptInfo *
+find_join_input_rel(PlannerInfo *root, Relids relids)
+{
+	RelOptInfo *rel = NULL;
+
+	switch (bms_membership(relids))
+	{
+		case BMS_EMPTY_SET:
+			/* should not happen */
+			break;
+		case BMS_SINGLETON:
+			rel = find_base_rel(root, bms_singleton_member(relids));
+			break;
+		case BMS_MULTIPLE:
+			rel = find_join_rel(root, relids);
+			break;
+	}
+
+	if (rel == NULL)
+		elog(ERROR, "could not find RelOptInfo for given relids");
+
+	return rel;
 }
 
 
