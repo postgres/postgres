@@ -1028,14 +1028,14 @@ primary_conninfo = 'host=192.168.1.50 port=5432 user=foo password=foopass'
 
    <para>
     When a standby first attaches to the primary, it will not yet be properly
-    synchronized. This is described as <literal>CATCHUP</> mode. Once
+    synchronized. This is described as <literal>catchup</> mode. Once
     the lag between standby and primary reaches zero for the first time
-    we move to real-time <literal>STREAMING</> state.
+    we move to real-time <literal>streaming</> state.
     The catch-up duration may be long immediately after the standby has
     been created. If the standby is shut down, then the catch-up period
     will increase according to the length of time the standby has been down.
     The standby is only able to become a synchronous standby
-    once it has reached <literal>STREAMING</> state.
+    once it has reached <literal>streaming</> state.
    </para>
 
    <para>
