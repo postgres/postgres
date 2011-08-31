@@ -2103,7 +2103,7 @@ SET ENABLE_SEQSCAN TO OFF;
         this standby server confirms receipt of their data.
         The synchronous standby will be the first standby named in this list
         that is both currently connected and streaming data in real-time
-        (as shown by a state of <literal>STREAMING</literal> in the
+        (as shown by a state of <literal>streaming</literal> in the
         <link linkend="monitoring-stats-views-table">
         <literal>pg_stat_replication</></link> view).
         Other standby servers appearing later in this list represent potential
