@@ -1369,6 +1369,7 @@ if test "$PORTNAME" = "win32"; then
   AC_LIBOBJ(open)
   AC_LIBOBJ(win32env)
   AC_LIBOBJ(win32error)
+  AC_LIBOBJ(win32setlocale)
   AC_DEFINE([HAVE_SYMLINK], 1,
             [Define to 1 if you have the `symlink' function.])
   AC_CHECK_TYPES(MINIDUMP_TYPE, [pgac_minidump_type=yes], [pgac_minidump_type=no], [

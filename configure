@@ -21149,6 +21149,12 @@ esac
  ;;
 esac
 
+  case " $LIBOBJS " in
+  *" win32setlocale.$ac_objext "* ) ;;
+  *) LIBOBJS="$LIBOBJS win32setlocale.$ac_objext"
+ ;;
+esac
+
 
 cat >>confdefs.h <<\_ACEOF
 #define HAVE_SYMLINK 1
