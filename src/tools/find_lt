@@ -1,0 +1,6 @@
+#!/bin/sh
+
+# src/tools/find_lt
+# SGML is fine with ">"
+
+grep "$@" '<[^]a-z0-9"/!-]' *.sgml ref/*.sgml
