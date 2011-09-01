@@ -29,8 +29,6 @@
 #include "pg_trace.h"
 #include "storage/ipc.h"
 #include "storage/predicate.h"
-#include "storage/proc.h"
-#include "storage/spin.h"
 
 
 /* We use the ShmemLock spinlock to protect LWLockAssign */

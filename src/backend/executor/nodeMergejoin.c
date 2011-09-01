@@ -93,14 +93,12 @@
 #include "postgres.h"
 
 #include "access/nbtree.h"
-#include "catalog/pg_amop.h"
 #include "executor/execdebug.h"
 #include "executor/nodeMergejoin.h"
 #include "miscadmin.h"
 #include "utils/acl.h"
 #include "utils/lsyscache.h"
 #include "utils/memutils.h"
-#include "utils/syscache.h"
 
 
 /*

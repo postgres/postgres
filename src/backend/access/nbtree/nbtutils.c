@@ -17,15 +17,10 @@
 
 #include <time.h>
 
-#include "access/genam.h"
 #include "access/nbtree.h"
 #include "access/reloptions.h"
 #include "access/relscan.h"
-#include "executor/execdebug.h"
 #include "miscadmin.h"
-#include "storage/bufmgr.h"
-#include "storage/lwlock.h"
-#include "storage/shmem.h"
 #include "utils/lsyscache.h"
 #include "utils/rel.h"
 

@@ -23,7 +23,6 @@
 #include "access/transam.h"
 #include "catalog/index.h"
 #include "miscadmin.h"
-#include "pgstat.h"
 #include "storage/bufmgr.h"
 #include "utils/builtins.h"
 #include "utils/lsyscache.h"

@@ -43,7 +43,6 @@
 #include "access/htup.h"
 #include "nodes/bitmapset.h"
 #include "nodes/tidbitmap.h"
-#include "storage/bufpage.h"
 #include "utils/hsearch.h"
 
 /*

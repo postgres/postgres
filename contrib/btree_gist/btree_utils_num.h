@@ -5,6 +5,7 @@
 #define __BTREE_UTILS_NUM_H__
 
 #include "btree_gist.h"
+#include "access/gist.h"
 #include "utils/rel.h"
 
 #include <math.h>

@@ -24,7 +24,6 @@
 #include "parser/parse_oper.h"
 #include "parser/parse_type.h"
 #include "utils/builtins.h"
-#include "utils/hsearch.h"
 #include "utils/inval.h"
 #include "utils/lsyscache.h"
 #include "utils/syscache.h"

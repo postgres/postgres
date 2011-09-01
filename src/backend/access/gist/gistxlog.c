@@ -15,10 +15,7 @@
 
 #include "access/gist_private.h"
 #include "access/xlogutils.h"
-#include "miscadmin.h"
-#include "storage/bufmgr.h"
 #include "utils/memutils.h"
-#include "utils/rel.h"
 
 typedef struct
 {

@@ -57,7 +57,6 @@
 
 #include "postgres.h"
 
-#include "access/heapam.h"
 #include "access/sysattr.h"
 #include "access/tuptoaster.h"
 #include "executor/tuptable.h"

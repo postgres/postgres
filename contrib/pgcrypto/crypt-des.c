@@ -62,7 +62,6 @@
 
 #include "postgres.h"
 
-#include "px.h"
 #include "px-crypt.h"
 
 /* for ntohl/htonl */

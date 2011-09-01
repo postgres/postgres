@@ -17,12 +17,9 @@
 #include "postgres.h"
 
 #include "access/reloptions.h"
-#include "catalog/pg_attribute.h"
 #include "utils/attoptcache.h"
-#include "utils/catcache.h"
 #include "utils/hsearch.h"
 #include "utils/inval.h"
-#include "utils/rel.h"
 #include "utils/syscache.h"
 
 

@@ -10,8 +10,6 @@
 #define SECLABEL_H
 
 #include "catalog/objectaddress.h"
-#include "nodes/primnodes.h"
-#include "nodes/parsenodes.h"
 
 /*
  * Internal APIs

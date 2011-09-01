@@ -56,7 +56,6 @@
 #include "access/xact.h"
 #include "miscadmin.h"
 #include "pg_trace.h"
-#include "storage/backendid.h"
 #include "storage/lmgr.h"
 #include "storage/procarray.h"
 #include "utils/builtins.h"

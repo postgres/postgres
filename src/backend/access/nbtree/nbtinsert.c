@@ -19,7 +19,6 @@
 #include "access/nbtree.h"
 #include "access/transam.h"
 #include "miscadmin.h"
-#include "storage/bufmgr.h"
 #include "storage/lmgr.h"
 #include "storage/predicate.h"
 #include "utils/inval.h"

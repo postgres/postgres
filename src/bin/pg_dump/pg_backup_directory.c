@@ -33,7 +33,6 @@
  *-------------------------------------------------------------------------
  */
 
-#include "pg_backup_archiver.h"
 #include "compress_io.h"
 
 #include <dirent.h>

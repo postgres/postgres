@@ -86,10 +86,8 @@
  */
 #include "postgres.h"
 
-#include "access/twophase_rmgr.h"
 #include "access/xact.h"
 #include "catalog/catalog.h"
-#include "catalog/pg_tablespace.h"
 #include "miscadmin.h"
 #include "storage/sinval.h"
 #include "storage/smgr.h"

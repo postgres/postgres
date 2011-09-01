@@ -14,7 +14,6 @@
 
 #include "postgres.h"
 
-#include "px.h"
 #include "px-crypt.h"
 
 typedef unsigned int BF_word;

@@ -21,8 +21,6 @@
 #ifndef PG_DB_ROLE_SETTING_H
 #define PG_DB_ROLE_SETTING_H
 
-#include "catalog/genbki.h"
-#include "nodes/parsenodes.h"
 #include "utils/guc.h"
 #include "utils/relcache.h"
 

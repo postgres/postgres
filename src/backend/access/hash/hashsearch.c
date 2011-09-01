@@ -18,7 +18,6 @@
 #include "access/relscan.h"
 #include "miscadmin.h"
 #include "pgstat.h"
-#include "storage/bufmgr.h"
 #include "utils/rel.h"
 
 

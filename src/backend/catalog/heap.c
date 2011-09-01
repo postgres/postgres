@@ -29,8 +29,6 @@
  */
 #include "postgres.h"
 
-#include "access/genam.h"
-#include "access/heapam.h"
 #include "access/sysattr.h"
 #include "access/transam.h"
 #include "access/xact.h"
@@ -38,8 +36,6 @@
 #include "catalog/dependency.h"
 #include "catalog/heap.h"
 #include "catalog/index.h"
-#include "catalog/indexing.h"
-#include "catalog/namespace.h"
 #include "catalog/objectaccess.h"
 #include "catalog/pg_attrdef.h"
 #include "catalog/pg_collation.h"
@@ -61,8 +57,6 @@
 #include "parser/parse_collate.h"
 #include "parser/parse_expr.h"
 #include "parser/parse_relation.h"
-#include "storage/bufmgr.h"
-#include "storage/freespace.h"
 #include "storage/predicate.h"
 #include "storage/smgr.h"
 #include "utils/acl.h"

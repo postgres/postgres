@@ -49,9 +49,7 @@
 #include "catalog/storage.h"
 #include "miscadmin.h"
 #include "storage/fd.h"
-#include "storage/lwlock.h"
 #include "utils/inval.h"
-#include "utils/pg_crc.h"
 #include "utils/relmapper.h"
 
 

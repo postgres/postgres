@@ -14,7 +14,6 @@
 #ifndef ALTER_H
 #define ALTER_H
 
-#include "nodes/parsenodes.h"
 #include "utils/acl.h"
 #include "utils/relcache.h"
 

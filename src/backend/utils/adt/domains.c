@@ -33,7 +33,6 @@
 
 #include "commands/typecmds.h"
 #include "executor/executor.h"
-#include "lib/stringinfo.h"
 #include "utils/builtins.h"
 #include "utils/lsyscache.h"
 

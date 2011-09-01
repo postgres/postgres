@@ -28,13 +28,10 @@
  */
 #include "postgres.h"
 
-#include "access/genam.h"
 #include "access/hash.h"
 #include "miscadmin.h"
-#include "storage/bufmgr.h"
 #include "storage/lmgr.h"
 #include "storage/smgr.h"
-#include "utils/lsyscache.h"
 
 
 static bool _hash_alloc_buckets(Relation rel, BlockNumber firstblock,

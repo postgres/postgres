@@ -11,7 +11,6 @@
 
 #include "pg_upgrade.h"
 
-#include "access/transam.h"
 
 
 /*

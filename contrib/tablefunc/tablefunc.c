@@ -35,14 +35,10 @@
 #include <math.h>
 
 #include "catalog/pg_type.h"
-#include "fmgr.h"
 #include "funcapi.h"
 #include "executor/spi.h"
-#include "lib/stringinfo.h"
 #include "miscadmin.h"
 #include "utils/builtins.h"
-#include "utils/guc.h"
-#include "utils/lsyscache.h"
 
 #include "tablefunc.h"
 

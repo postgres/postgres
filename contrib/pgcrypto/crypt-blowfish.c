@@ -34,7 +34,6 @@
 
 #include "postgres.h"
 
-#include "px.h"
 #include "px-crypt.h"
 
 #ifdef __i386__

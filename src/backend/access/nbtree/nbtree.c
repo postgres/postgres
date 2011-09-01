@@ -18,14 +18,10 @@
  */
 #include "postgres.h"
 
-#include "access/genam.h"
 #include "access/nbtree.h"
 #include "access/relscan.h"
 #include "catalog/index.h"
-#include "catalog/storage.h"
 #include "commands/vacuum.h"
-#include "storage/bufmgr.h"
-#include "storage/freespace.h"
 #include "storage/indexfsm.h"
 #include "storage/ipc.h"
 #include "storage/lmgr.h"

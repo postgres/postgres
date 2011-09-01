@@ -13,11 +13,9 @@
  */
 #include "postgres.h"
 
-#include "catalog/namespace.h"
 #include "tsearch/ts_cache.h"
 #include "tsearch/ts_utils.h"
 #include "utils/builtins.h"
-#include "utils/syscache.h"
 
 
 Datum

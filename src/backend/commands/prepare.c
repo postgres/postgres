@@ -28,10 +28,8 @@
 #include "parser/parse_type.h"
 #include "rewrite/rewriteHandler.h"
 #include "tcop/pquery.h"
-#include "tcop/tcopprot.h"
 #include "tcop/utility.h"
 #include "utils/builtins.h"
-#include "utils/memutils.h"
 #include "utils/snapmgr.h"
 
 

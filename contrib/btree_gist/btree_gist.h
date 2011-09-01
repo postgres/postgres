@@ -4,8 +4,7 @@
 #ifndef __BTREE_GIST_H__
 #define __BTREE_GIST_H__
 
-#include "access/gist.h"
-#include "access/itup.h"
+#include "fmgr.h"
 #include "access/nbtree.h"
 
 #define BtreeGistNotEqualStrategyNumber 6

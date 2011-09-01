@@ -11,7 +11,6 @@
 #define GIN_H
 
 #include "access/xlog.h"
-#include "storage/block.h"
 #include "utils/relcache.h"
 
 

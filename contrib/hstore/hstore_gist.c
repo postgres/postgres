@@ -4,7 +4,6 @@
 #include "postgres.h"
 
 #include "access/gist.h"
-#include "access/itup.h"
 #include "access/skey.h"
 #include "catalog/pg_type.h"
 

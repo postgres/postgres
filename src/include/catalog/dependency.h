@@ -14,7 +14,6 @@
 #ifndef DEPENDENCY_H
 #define DEPENDENCY_H
 
-#include "nodes/parsenodes.h"	/* for DropBehavior */
 #include "catalog/objectaddress.h"
 
 

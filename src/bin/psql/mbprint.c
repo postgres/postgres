@@ -12,7 +12,6 @@
 
 #include "postgres_fe.h"
 #include "mbprint.h"
-#include "libpq-fe.h"
 #ifndef PGSCRIPTS
 #include "settings.h"
 #endif

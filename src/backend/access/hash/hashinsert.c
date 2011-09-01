@@ -16,7 +16,6 @@
 #include "postgres.h"
 
 #include "access/hash.h"
-#include "storage/bufmgr.h"
 #include "utils/rel.h"
 
 

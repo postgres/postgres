@@ -21,7 +21,6 @@
 #include "nodes/makefuncs.h"
 #include "nodes/nodeFuncs.h"
 #include "optimizer/clauses.h"
-#include "optimizer/cost.h"
 #include "optimizer/paths.h"
 #include "optimizer/planmain.h"
 #include "optimizer/prep.h"

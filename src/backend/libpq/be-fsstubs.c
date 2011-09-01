@@ -42,7 +42,6 @@
 #include <sys/stat.h>
 #include <unistd.h>
 
-#include "catalog/pg_largeobject_metadata.h"
 #include "libpq/be-fsstubs.h"
 #include "libpq/libpq-fs.h"
 #include "miscadmin.h"

@@ -15,12 +15,10 @@
 #include "postgres.h"
 
 #include "access/heapam.h"
-#include "access/htup.h"
 #include "access/transam.h"
 #include "miscadmin.h"
 #include "pgstat.h"
 #include "storage/bufmgr.h"
-#include "storage/off.h"
 #include "utils/rel.h"
 #include "utils/tqual.h"
 

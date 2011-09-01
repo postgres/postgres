@@ -15,7 +15,6 @@
 
 #include "access/gin_private.h"
 #include "access/xlogutils.h"
-#include "storage/bufmgr.h"
 #include "utils/memutils.h"
 
 static MemoryContext opCtx;		/* working memory for operations */

@@ -25,10 +25,7 @@
 
 #include "access/xlog_internal.h"
 #include "replication/walreceiver.h"
-#include "storage/fd.h"
 #include "storage/pmsignal.h"
-#include "storage/shmem.h"
-#include "utils/guc.h"
 
 WalRcvData *WalRcv = NULL;
 

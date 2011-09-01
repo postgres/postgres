@@ -15,9 +15,7 @@
 #define STANDBY_H
 
 #include "access/xlog.h"
-#include "storage/lock.h"
 #include "storage/procsignal.h"
-#include "storage/relfilenode.h"
 
 /* User-settable GUC parameters */
 extern int	vacuum_defer_cleanup_age;

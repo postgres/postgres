@@ -20,12 +20,10 @@
 #include "postgres.h"
 
 #include "access/printtup.h"
-#include "lib/stringinfo.h"
 #include "nodes/print.h"
 #include "optimizer/clauses.h"
 #include "parser/parsetree.h"
 #include "utils/lsyscache.h"
-#include "utils/rel.h"
 
 
 /*

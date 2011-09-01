@@ -16,10 +16,8 @@
 #include "catalog/namespace.h"
 #include "catalog/pg_type.h"
 #include "commands/trigger.h"
-#include "fmgr.h"
 #include "tsearch/ts_utils.h"
 #include "utils/builtins.h"
-#include "utils/guc.h"
 #include "utils/syscache.h"
 
 PG_MODULE_MAGIC;

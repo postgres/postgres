@@ -15,11 +15,9 @@
 #include "postgres.h"
 
 #include "access/gin_private.h"
-#include "catalog/storage.h"
 #include "commands/vacuum.h"
 #include "miscadmin.h"
 #include "postmaster/autovacuum.h"
-#include "storage/bufmgr.h"
 #include "storage/indexfsm.h"
 #include "storage/lmgr.h"
 

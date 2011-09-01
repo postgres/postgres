@@ -14,13 +14,11 @@
  */
 #include "postgres.h"
 
-#include "access/heapam.h"
 #include "access/tuptoaster.h"
 #include "access/xact.h"
 #include "catalog/dependency.h"
 #include "catalog/heap.h"
 #include "catalog/index.h"
-#include "catalog/indexing.h"
 #include "catalog/namespace.h"
 #include "catalog/pg_namespace.h"
 #include "catalog/pg_opclass.h"

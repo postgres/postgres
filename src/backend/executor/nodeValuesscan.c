@@ -25,7 +25,6 @@
 
 #include "executor/executor.h"
 #include "executor/nodeValuesscan.h"
-#include "utils/memutils.h"
 
 
 static TupleTableSlot *ValuesNext(ValuesScanState *node);

@@ -13,10 +13,7 @@
 #ifndef SPI_H
 #define SPI_H
 
-#include "nodes/parsenodes.h"
 #include "utils/portal.h"
-#include "utils/relcache.h"
-#include "utils/snapshot.h"
 
 
 typedef struct SPITupleTable

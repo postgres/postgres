@@ -14,9 +14,7 @@
  */
 #include "postgres.h"
 
-#include "access/heapam.h"
 #include "access/transam.h"
-#include "access/xact.h"
 #include "access/xlogutils.h"
 #include "catalog/dependency.h"
 #include "catalog/namespace.h"
@@ -27,9 +25,7 @@
 #include "funcapi.h"
 #include "miscadmin.h"
 #include "nodes/makefuncs.h"
-#include "storage/bufmgr.h"
 #include "storage/lmgr.h"
-#include "storage/proc.h"
 #include "storage/smgr.h"
 #include "utils/acl.h"
 #include "utils/builtins.h"

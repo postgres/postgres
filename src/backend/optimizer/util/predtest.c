@@ -15,17 +15,13 @@
  */
 #include "postgres.h"
 
-#include "catalog/pg_am.h"
-#include "catalog/pg_amop.h"
 #include "catalog/pg_proc.h"
 #include "catalog/pg_type.h"
 #include "executor/executor.h"
 #include "miscadmin.h"
-#include "nodes/nodeFuncs.h"
 #include "optimizer/clauses.h"
 #include "optimizer/planmain.h"
 #include "optimizer/predtest.h"
-#include "utils/array.h"
 #include "utils/inval.h"
 #include "utils/lsyscache.h"
 #include "utils/syscache.h"

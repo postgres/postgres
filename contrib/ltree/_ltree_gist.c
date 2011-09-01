@@ -9,7 +9,6 @@
 
 #include "access/gist.h"
 #include "access/skey.h"
-#include "utils/array.h"
 #include "crc32.h"
 #include "ltree.h"
 

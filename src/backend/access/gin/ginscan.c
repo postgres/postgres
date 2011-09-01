@@ -17,7 +17,6 @@
 #include "access/gin_private.h"
 #include "access/relscan.h"
 #include "pgstat.h"
-#include "storage/bufmgr.h"
 #include "utils/memutils.h"
 #include "utils/rel.h"
 

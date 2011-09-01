@@ -17,7 +17,6 @@
 #include "access/xact.h"
 #include "catalog/pg_proc.h"
 #include "catalog/pg_type.h"
-#include "commands/trigger.h"
 #include "executor/functions.h"
 #include "funcapi.h"
 #include "miscadmin.h"

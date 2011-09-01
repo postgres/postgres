@@ -14,7 +14,6 @@
 #define TUPTOASTER_H
 
 #include "access/htup.h"
-#include "storage/bufpage.h"
 #include "utils/relcache.h"
 
 /*

@@ -24,14 +24,12 @@
  */
 #include "postgres.h"
 
-#include "access/heapam.h"
 #include "access/sysattr.h"
 #include "catalog/pg_type.h"
 #include "executor/execdebug.h"
 #include "executor/nodeTidscan.h"
 #include "optimizer/clauses.h"
 #include "storage/bufmgr.h"
-#include "utils/array.h"
 #include "utils/rel.h"
 
 

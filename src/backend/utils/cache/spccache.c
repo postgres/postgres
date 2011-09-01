@@ -23,8 +23,6 @@
 #include "commands/tablespace.h"
 #include "miscadmin.h"
 #include "optimizer/cost.h"
-#include "utils/catcache.h"
-#include "utils/hsearch.h"
 #include "utils/inval.h"
 #include "utils/spccache.h"
 #include "utils/syscache.h"

@@ -20,10 +20,8 @@
 
 #include "executor/executor.h"
 #include "miscadmin.h"
-#include "parser/parse_oper.h"
 #include "utils/lsyscache.h"
 #include "utils/memutils.h"
-#include "utils/syscache.h"
 
 
 static TupleHashTable CurTupleHashTable = NULL;

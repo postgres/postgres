@@ -27,7 +27,6 @@
 #include "optimizer/subselect.h"
 #include "optimizer/var.h"
 #include "parser/parse_relation.h"
-#include "parser/parsetree.h"
 #include "rewrite/rewriteManip.h"
 #include "utils/builtins.h"
 #include "utils/lsyscache.h"

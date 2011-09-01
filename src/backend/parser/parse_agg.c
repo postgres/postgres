@@ -18,13 +18,11 @@
 #include "nodes/makefuncs.h"
 #include "nodes/nodeFuncs.h"
 #include "optimizer/tlist.h"
-#include "optimizer/var.h"
 #include "parser/parse_agg.h"
 #include "parser/parse_clause.h"
 #include "parser/parsetree.h"
 #include "rewrite/rewriteManip.h"
 #include "utils/builtins.h"
-#include "utils/lsyscache.h"
 
 
 typedef struct

@@ -17,10 +17,6 @@
 #define XLOG_INTERNAL_H
 
 #include "access/xlog.h"
-#include "fmgr.h"
-#include "pgtime.h"
-#include "storage/block.h"
-#include "storage/relfilenode.h"
 
 
 /*

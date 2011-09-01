@@ -22,7 +22,6 @@
 #include "postgres.h"
 
 #include "access/hash.h"
-#include "nodes/bitmapset.h"
 
 
 /*

@@ -19,10 +19,8 @@
 #include "postgres.h"
 
 #include "access/gin_private.h"
-#include "catalog/index.h"
 #include "commands/vacuum.h"
 #include "miscadmin.h"
-#include "storage/bufmgr.h"
 #include "utils/memutils.h"
 #include "utils/rel.h"
 

@@ -15,12 +15,10 @@
 
 #include "postgres.h"
 
-#include "access/genam.h"
 #include "access/nbtree.h"
 #include "access/relscan.h"
 #include "miscadmin.h"
 #include "pgstat.h"
-#include "storage/bufmgr.h"
 #include "storage/predicate.h"
 #include "utils/lsyscache.h"
 #include "utils/rel.h"

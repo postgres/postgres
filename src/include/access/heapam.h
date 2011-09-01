@@ -14,13 +14,9 @@
 #ifndef HEAPAM_H
 #define HEAPAM_H
 
-#include "access/htup.h"
 #include "access/sdir.h"
 #include "access/skey.h"
 #include "access/xlog.h"
-#include "nodes/primnodes.h"
-#include "storage/bufpage.h"
-#include "storage/lock.h"
 #include "utils/relcache.h"
 #include "utils/snapshot.h"
 

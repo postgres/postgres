@@ -41,7 +41,6 @@
  */
 #include "postgres.h"
 
-#include "utils/plancache.h"
 #include "access/transam.h"
 #include "catalog/namespace.h"
 #include "executor/executor.h"
@@ -52,11 +51,9 @@
 #include "parser/parsetree.h"
 #include "storage/lmgr.h"
 #include "tcop/pquery.h"
-#include "tcop/tcopprot.h"
 #include "tcop/utility.h"
 #include "utils/inval.h"
 #include "utils/memutils.h"
-#include "utils/resowner.h"
 #include "utils/snapmgr.h"
 #include "utils/syscache.h"
 

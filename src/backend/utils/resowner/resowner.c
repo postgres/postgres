@@ -21,12 +21,9 @@
 #include "postgres.h"
 
 #include "access/hash.h"
-#include "storage/bufmgr.h"
 #include "storage/predicate.h"
-#include "storage/proc.h"
 #include "utils/memutils.h"
 #include "utils/rel.h"
-#include "utils/resowner.h"
 #include "utils/snapmgr.h"
 
 

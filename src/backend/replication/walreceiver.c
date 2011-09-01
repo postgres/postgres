@@ -38,19 +38,14 @@
 #include <signal.h>
 #include <unistd.h>
 
-#include "access/transam.h"
 #include "access/xlog_internal.h"
 #include "libpq/pqsignal.h"
 #include "miscadmin.h"
 #include "replication/walprotocol.h"
 #include "replication/walreceiver.h"
-#include "replication/walsender.h"
 #include "storage/ipc.h"
 #include "storage/pmsignal.h"
 #include "storage/procarray.h"
-#include "utils/builtins.h"
-#include "utils/guc.h"
-#include "utils/memutils.h"
 #include "utils/ps_status.h"
 #include "utils/resowner.h"
 

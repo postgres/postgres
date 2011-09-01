@@ -18,7 +18,6 @@
  */
 
 #include "postgres.h"
-#include "lib/stringinfo.h"
 #include "storage/fsm_internals.h"
 #include "utils/builtins.h"
 #include "miscadmin.h"

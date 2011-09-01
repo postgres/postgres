@@ -16,7 +16,6 @@
 #include "postgres.h"
 
 #include "nodes/params.h"
-#include "parser/parse_param.h"
 #include "utils/datum.h"
 #include "utils/lsyscache.h"
 

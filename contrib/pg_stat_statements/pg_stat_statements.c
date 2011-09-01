@@ -23,8 +23,6 @@
 #include <unistd.h>
 
 #include "access/hash.h"
-#include "catalog/pg_type.h"
-#include "executor/executor.h"
 #include "executor/instrument.h"
 #include "funcapi.h"
 #include "mb/pg_wchar.h"
@@ -32,11 +30,8 @@
 #include "pgstat.h"
 #include "storage/fd.h"
 #include "storage/ipc.h"
-#include "storage/spin.h"
 #include "tcop/utility.h"
 #include "utils/builtins.h"
-#include "utils/hsearch.h"
-#include "utils/guc.h"
 
 
 PG_MODULE_MAGIC;

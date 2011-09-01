@@ -15,7 +15,6 @@
 #define FREESPACE_H_
 
 #include "storage/block.h"
-#include "storage/bufpage.h"
 #include "storage/relfilenode.h"
 #include "utils/relcache.h"
 

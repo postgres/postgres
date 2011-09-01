@@ -18,7 +18,6 @@
 #include "commands/vacuum.h"
 #include "tsearch/ts_type.h"
 #include "utils/builtins.h"
-#include "utils/hsearch.h"
 
 
 /* A hash key for lexemes */

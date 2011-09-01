@@ -22,7 +22,6 @@
 #endif
 
 #include "libpq-fe.h"
-#include "libpq/libpq-fs.h"
 
 #define atooid(x)  ((Oid) strtoul((x), NULL, 10))
 

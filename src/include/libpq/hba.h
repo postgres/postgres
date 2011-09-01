@@ -12,7 +12,6 @@
 #define HBA_H
 
 #include "nodes/pg_list.h"
-#include "libpq/pqcomm.h"
 
 
 typedef enum UserAuth

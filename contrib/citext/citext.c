@@ -5,7 +5,6 @@
 
 #include "access/hash.h"
 #include "catalog/pg_collation.h"
-#include "fmgr.h"
 #include "utils/builtins.h"
 #include "utils/formatting.h"
 

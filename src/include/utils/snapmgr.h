@@ -14,7 +14,6 @@
 #define SNAPMGR_H
 
 #include "utils/resowner.h"
-#include "utils/snapshot.h"
 
 
 extern bool FirstSnapshotSet;

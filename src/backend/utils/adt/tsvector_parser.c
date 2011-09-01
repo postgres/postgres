@@ -14,11 +14,8 @@
 
 #include "postgres.h"
 
-#include "libpq/pqformat.h"
-#include "tsearch/ts_type.h"
 #include "tsearch/ts_locale.h"
 #include "tsearch/ts_utils.h"
-#include "utils/memutils.h"
 
 
 /*

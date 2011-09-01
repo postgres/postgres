@@ -21,9 +21,6 @@
 #include <getopt.h>
 #endif
 
-#include "access/genam.h"
-#include "access/heapam.h"
-#include "access/xact.h"
 #include "bootstrap/bootstrap.h"
 #include "catalog/index.h"
 #include "catalog/pg_collation.h"
@@ -36,8 +33,6 @@
 #include "replication/walreceiver.h"
 #include "storage/bufmgr.h"
 #include "storage/ipc.h"
-#include "storage/proc.h"
-#include "storage/procsignal.h"
 #include "tcop/tcopprot.h"
 #include "utils/builtins.h"
 #include "utils/fmgroids.h"

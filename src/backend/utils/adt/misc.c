@@ -19,7 +19,6 @@
 #include <dirent.h>
 #include <math.h>
 
-#include "access/xact.h"
 #include "catalog/catalog.h"
 #include "catalog/pg_type.h"
 #include "catalog/pg_tablespace.h"

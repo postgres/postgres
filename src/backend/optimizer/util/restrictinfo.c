@@ -15,8 +15,6 @@
 #include "postgres.h"
 
 #include "optimizer/clauses.h"
-#include "optimizer/cost.h"
-#include "optimizer/paths.h"
 #include "optimizer/predtest.h"
 #include "optimizer/restrictinfo.h"
 #include "optimizer/var.h"

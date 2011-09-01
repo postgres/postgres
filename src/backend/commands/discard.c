@@ -18,8 +18,6 @@
 #include "commands/async.h"
 #include "commands/discard.h"
 #include "commands/prepare.h"
-#include "commands/variable.h"
-#include "utils/plancache.h"
 #include "utils/portal.h"
 
 static void DiscardAll(bool isTopLevel);

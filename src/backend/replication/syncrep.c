@@ -46,20 +46,10 @@
 #include <unistd.h>
 
 #include "access/xact.h"
-#include "access/xlog_internal.h"
 #include "miscadmin.h"
-#include "postmaster/autovacuum.h"
-#include "replication/syncrep.h"
-#include "replication/walsender.h"
-#include "storage/latch.h"
-#include "storage/ipc.h"
 #include "storage/pmsignal.h"
-#include "storage/proc.h"
 #include "tcop/tcopprot.h"
 #include "utils/builtins.h"
-#include "utils/guc.h"
-#include "utils/guc_tables.h"
-#include "utils/memutils.h"
 #include "utils/ps_status.h"
 
 /* User-settable parameters for sync rep */

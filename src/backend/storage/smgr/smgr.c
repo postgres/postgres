@@ -17,13 +17,10 @@
  */
 #include "postgres.h"
 
-#include "access/xlogutils.h"
-#include "catalog/catalog.h"
 #include "commands/tablespace.h"
 #include "storage/bufmgr.h"
 #include "storage/ipc.h"
 #include "storage/smgr.h"
-#include "utils/hsearch.h"
 #include "utils/inval.h"
 
 

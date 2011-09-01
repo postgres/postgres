@@ -15,7 +15,6 @@
 #include "postgres.h"
 
 #include "access/gin_private.h"
-#include "storage/bufmgr.h"
 #include "utils/rel.h"
 
 int

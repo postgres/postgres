@@ -36,7 +36,6 @@
 #include "access/slru.h"
 #include "access/transam.h"
 #include "pg_trace.h"
-#include "postmaster/bgwriter.h"
 
 /*
  * Defines for CLOG page sizes.  A page is the same BLCKSZ as is used

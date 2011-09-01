@@ -16,10 +16,8 @@
 
 #include "access/gist_private.h"
 #include "access/relscan.h"
-#include "executor/execdebug.h"
 #include "miscadmin.h"
 #include "pgstat.h"
-#include "storage/bufmgr.h"
 #include "utils/builtins.h"
 #include "utils/memutils.h"
 #include "utils/rel.h"

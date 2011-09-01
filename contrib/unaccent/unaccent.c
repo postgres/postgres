@@ -13,10 +13,8 @@
 
 #include "postgres.h"
 
-#include "fmgr.h"
 #include "catalog/namespace.h"
 #include "commands/defrem.h"
-#include "mb/pg_wchar.h"
 #include "tsearch/ts_cache.h"
 #include "tsearch/ts_locale.h"
 #include "tsearch/ts_public.h"

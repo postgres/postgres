@@ -14,18 +14,14 @@
 #include "access/heapam.h"
 #include "catalog/catalog.h"
 #include "catalog/indexing.h"
-#include "catalog/namespace.h"
 #include "catalog/pg_seclabel.h"
 #include "catalog/pg_shseclabel.h"
 #include "commands/seclabel.h"
 #include "miscadmin.h"
-#include "utils/acl.h"
 #include "utils/builtins.h"
 #include "utils/fmgroids.h"
-#include "utils/lsyscache.h"
 #include "utils/memutils.h"
 #include "utils/rel.h"
-#include "utils/syscache.h"
 #include "utils/tqual.h"
 
 typedef struct

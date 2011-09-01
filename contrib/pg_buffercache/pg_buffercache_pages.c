@@ -8,12 +8,10 @@
  */
 #include "postgres.h"
 
-#include "access/heapam.h"
 #include "catalog/pg_type.h"
 #include "funcapi.h"
 #include "storage/buf_internals.h"
 #include "storage/bufmgr.h"
-#include "utils/relcache.h"
 
 
 #define NUM_BUFFERCACHE_PAGES_ELEM	8

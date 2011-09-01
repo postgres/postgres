@@ -10,7 +10,6 @@
 #include "commands/trigger.h"
 #include "executor/spi.h"
 #include "libpq/be-fsstubs.h"
-#include "libpq/libpq-fs.h"
 #include "utils/rel.h"
 
 

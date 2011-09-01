@@ -11,10 +11,7 @@
 
 #include "postgres.h"
 
-#include "fmgr.h"
-#include "catalog/dependency.h"
 #include "catalog/namespace.h"
-#include "catalog/pg_class.h"
 #include "catalog/pg_type.h"
 #include "commands/extension.h"
 #include "miscadmin.h"

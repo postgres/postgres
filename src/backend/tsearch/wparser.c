@@ -14,20 +14,12 @@
 #include "postgres.h"
 
 #include "funcapi.h"
-#include "access/genam.h"
-#include "access/skey.h"
-#include "catalog/indexing.h"
 #include "catalog/namespace.h"
-#include "catalog/pg_ts_parser.h"
 #include "catalog/pg_type.h"
 #include "commands/defrem.h"
 #include "tsearch/ts_cache.h"
-#include "tsearch/ts_public.h"
 #include "tsearch/ts_utils.h"
 #include "utils/builtins.h"
-#include "utils/fmgroids.h"
-#include "utils/rel.h"
-#include "utils/syscache.h"
 
 
 /******sql-level interface******/

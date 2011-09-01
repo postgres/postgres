@@ -8,7 +8,6 @@
 #ifndef SETTINGS_H
 #define SETTINGS_H
 
-#include "libpq-fe.h"
 
 #include "variables.h"
 #include "print.h"

@@ -20,7 +20,6 @@
  */
 #include "postgres.h"
 
-#include "nodes/bitmapset.h"
 #include "access/hash.h"
 
 

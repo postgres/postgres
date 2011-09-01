@@ -17,11 +17,8 @@
 
 #include "access/gist_private.h"
 #include "access/reloptions.h"
-#include "storage/freespace.h"
 #include "storage/indexfsm.h"
 #include "storage/lmgr.h"
-#include "storage/bufmgr.h"
-#include "utils/rel.h"
 
 /*
  * static *S used for temrorary storage (saves stack and palloc() call)

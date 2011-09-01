@@ -66,7 +66,6 @@
 
 #include "postgres.h"
 
-#include "access/heapam.h"
 #include "access/nbtree.h"
 #include "miscadmin.h"
 #include "storage/smgr.h"

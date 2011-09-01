@@ -16,13 +16,9 @@
 
 #include "access/genam.h"
 #include "access/heapam.h"
-#include "access/skey.h"
 #include "nodes/params.h"
 #include "nodes/plannodes.h"
-#include "nodes/tidbitmap.h"
-#include "utils/hsearch.h"
 #include "utils/reltrigger.h"
-#include "utils/snapshot.h"
 #include "utils/tuplestore.h"
 
 

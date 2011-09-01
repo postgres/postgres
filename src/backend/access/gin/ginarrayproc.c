@@ -15,7 +15,6 @@
 
 #include "access/gin.h"
 #include "access/skey.h"
-#include "utils/array.h"
 #include "utils/builtins.h"
 #include "utils/lsyscache.h"
 

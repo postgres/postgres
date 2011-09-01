@@ -11,7 +11,6 @@
 #include "utils/builtins.h"
 #include "utils/lsyscache.h"
 #include "utils/selfuncs.h"
-#include "utils/syscache.h"
 #include "ltree.h"
 
 PG_MODULE_MAGIC;

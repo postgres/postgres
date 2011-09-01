@@ -73,7 +73,6 @@
 #include "access/visibilitymap.h"
 #include "miscadmin.h"
 #include "storage/bufmgr.h"
-#include "storage/bufpage.h"
 #include "storage/lmgr.h"
 #include "storage/smgr.h"
 

@@ -14,11 +14,9 @@
  */
 #include "postgres.h"
 
-#include "catalog/pg_operator.h"
 #include "catalog/pg_type.h"
 #include "nodes/nodeFuncs.h"
 #include "optimizer/clauses.h"
-#include "optimizer/cost.h"
 #include "optimizer/joininfo.h"
 #include "optimizer/pathnode.h"
 #include "optimizer/paths.h"
@@ -27,11 +25,7 @@
 #include "optimizer/prep.h"
 #include "optimizer/restrictinfo.h"
 #include "optimizer/var.h"
-#include "parser/parse_expr.h"
-#include "parser/parse_oper.h"
-#include "utils/builtins.h"
 #include "utils/lsyscache.h"
-#include "utils/syscache.h"
 
 
 /* These parameters are set by GUC */

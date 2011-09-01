@@ -15,7 +15,6 @@
 
 #include "commands/explain.h"
 #include "utils/plancache.h"
-#include "utils/timestamp.h"
 
 /*
  * The data structure representing a prepared statement.  This is now just

@@ -20,7 +20,6 @@
 #include "funcapi.h"
 #include "miscadmin.h"
 #include "utils/builtins.h"
-#include "utils/guc.h"
 #include "utils/lsyscache.h"
 #include "utils/syscache.h"
 

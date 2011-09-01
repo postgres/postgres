@@ -13,14 +13,12 @@
  */
 #include "postgres.h"
 
-#include "access/heapam.h"
 #include "catalog/namespace.h"
 #include "catalog/pg_proc.h"
 #include "catalog/pg_type.h"
 #include "funcapi.h"
 #include "nodes/nodeFuncs.h"
 #include "parser/parse_coerce.h"
-#include "utils/array.h"
 #include "utils/builtins.h"
 #include "utils/lsyscache.h"
 #include "utils/memutils.h"

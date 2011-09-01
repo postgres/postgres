@@ -17,7 +17,6 @@
 #include "access/sdir.h"
 #include "access/skey.h"
 #include "nodes/tidbitmap.h"
-#include "storage/buf.h"
 #include "storage/lock.h"
 #include "utils/relcache.h"
 #include "utils/snapshot.h"

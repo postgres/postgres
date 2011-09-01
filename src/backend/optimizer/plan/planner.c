@@ -17,7 +17,6 @@
 
 #include <limits.h>
 
-#include "catalog/pg_operator.h"
 #include "executor/executor.h"
 #include "executor/nodeAgg.h"
 #include "miscadmin.h"
@@ -32,17 +31,12 @@
 #include "optimizer/prep.h"
 #include "optimizer/subselect.h"
 #include "optimizer/tlist.h"
-#include "optimizer/var.h"
 #ifdef OPTIMIZER_DEBUG
 #include "nodes/print.h"
 #endif
 #include "parser/analyze.h"
-#include "parser/parse_expr.h"
-#include "parser/parse_oper.h"
 #include "parser/parsetree.h"
-#include "utils/lsyscache.h"
 #include "utils/rel.h"
-#include "utils/syscache.h"
 
 
 /* GUC parameter */

@@ -50,22 +50,14 @@
 #include <unistd.h>
 
 #include "access/xlog_internal.h"
-#include "catalog/pg_control.h"
 #include "libpq/pqsignal.h"
 #include "miscadmin.h"
 #include "pgstat.h"
 #include "postmaster/bgwriter.h"
-#include "replication/syncrep.h"
 #include "storage/bufmgr.h"
-#include "storage/fd.h"
 #include "storage/ipc.h"
-#include "storage/lwlock.h"
 #include "storage/pmsignal.h"
-#include "storage/shmem.h"
 #include "storage/smgr.h"
-#include "storage/spin.h"
-#include "tcop/tcopprot.h"
-#include "utils/guc.h"
 #include "utils/memutils.h"
 #include "utils/resowner.h"
 

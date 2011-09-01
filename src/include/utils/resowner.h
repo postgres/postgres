@@ -19,7 +19,6 @@
 #ifndef RESOWNER_H
 #define RESOWNER_H
 
-#include "storage/buf.h"
 #include "storage/fd.h"
 #include "utils/catcache.h"
 #include "utils/plancache.h"

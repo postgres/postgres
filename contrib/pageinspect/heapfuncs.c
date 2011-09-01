@@ -25,12 +25,7 @@
 
 #include "postgres.h"
 
-#include "fmgr.h"
 #include "funcapi.h"
-#include "access/heapam.h"
-#include "access/transam.h"
-#include "catalog/namespace.h"
-#include "catalog/pg_type.h"
 #include "utils/builtins.h"
 #include "miscadmin.h"
 

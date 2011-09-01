@@ -23,10 +23,7 @@
 
 #include <ctype.h>
 
-#include "lib/stringinfo.h"
 #include "foreign/fdwapi.h"
-#include "nodes/plannodes.h"
-#include "nodes/relation.h"
 #include "utils/datum.h"
 
 

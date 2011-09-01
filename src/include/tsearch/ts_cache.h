@@ -13,7 +13,6 @@
 #ifndef TS_CACHE_H
 #define TS_CACHE_H
 
-#include "fmgr.h"
 #include "utils/guc.h"
 
 

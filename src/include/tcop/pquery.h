@@ -14,7 +14,6 @@
 #ifndef PQUERY_H
 #define PQUERY_H
 
-#include "nodes/parsenodes.h"
 #include "utils/portal.h"
 
 

@@ -24,7 +24,6 @@
 
 #include "storage/freespace.h"
 #include "storage/indexfsm.h"
-#include "storage/smgr.h"
 
 /*
  * Exported routines

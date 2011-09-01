@@ -42,7 +42,6 @@
 #include "executor/execdebug.h"
 #include "executor/nodeMergeAppend.h"
 #include "utils/lsyscache.h"
-#include "utils/rel.h"
 
 /*
  * It gets quite confusing having a heap array (indexed by integers) which

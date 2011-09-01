@@ -16,7 +16,6 @@
 
 #include <math.h>
 
-#include "catalog/pg_operator.h"
 #include "foreign/fdwapi.h"
 #include "miscadmin.h"
 #include "nodes/nodeFuncs.h"
@@ -25,12 +24,9 @@
 #include "optimizer/pathnode.h"
 #include "optimizer/paths.h"
 #include "optimizer/tlist.h"
-#include "optimizer/var.h"
-#include "parser/parse_expr.h"
 #include "parser/parsetree.h"
 #include "utils/selfuncs.h"
 #include "utils/lsyscache.h"
-#include "utils/syscache.h"
 
 
 static List *translate_sub_tlist(List *tlist, int relid);

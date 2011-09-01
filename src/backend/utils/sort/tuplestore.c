@@ -59,7 +59,6 @@
 #include "storage/buffile.h"
 #include "utils/memutils.h"
 #include "utils/resowner.h"
-#include "utils/tuplestore.h"
 
 
 /*

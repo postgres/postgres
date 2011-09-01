@@ -15,16 +15,12 @@
 
 #include "postgres.h"
 
-#include "access/heapam.h"
 #include "access/sysattr.h"
 #include "catalog/catalog.h"
-#include "catalog/dependency.h"
 #include "catalog/indexing.h"
-#include "catalog/namespace.h"
 #include "catalog/objectaddress.h"
 #include "catalog/pg_authid.h"
 #include "catalog/pg_cast.h"
-#include "catalog/pg_class.h"
 #include "catalog/pg_collation.h"
 #include "catalog/pg_constraint.h"
 #include "catalog/pg_conversion.h"
@@ -68,7 +64,6 @@
 #include "utils/fmgroids.h"
 #include "utils/lsyscache.h"
 #include "utils/syscache.h"
-#include "utils/rel.h"
 #include "utils/tqual.h"
 
 static ObjectAddress get_object_address_unqualified(ObjectType objtype,

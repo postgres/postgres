@@ -16,7 +16,6 @@
 #include "access/heapam.h"
 #include "access/xact.h"
 #include "access/reloptions.h"
-#include "catalog/catalog.h"
 #include "catalog/dependency.h"
 #include "catalog/indexing.h"
 #include "catalog/objectaccess.h"

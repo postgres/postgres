@@ -4,8 +4,6 @@
 #include "postgres.h"
 
 #include "access/hash.h"
-#include "access/heapam.h"
-#include "access/htup.h"
 #include "catalog/pg_type.h"
 #include "funcapi.h"
 #include "utils/builtins.h"

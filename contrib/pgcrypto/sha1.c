@@ -40,7 +40,6 @@
 
 #include <sys/param.h>
 
-#include "px.h"
 #include "sha1.h"
 
 /* constant table */

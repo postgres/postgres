@@ -24,13 +24,11 @@
  */
 #include "postgres.h"
 
-#include "access/genam.h"
 #include "access/nbtree.h"
 #include "access/relscan.h"
 #include "executor/execdebug.h"
 #include "executor/nodeIndexscan.h"
 #include "optimizer/clauses.h"
-#include "utils/array.h"
 #include "utils/lsyscache.h"
 #include "utils/memutils.h"
 #include "utils/rel.h"

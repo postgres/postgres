@@ -23,7 +23,6 @@
 #include "nodes/nodeFuncs.h"
 #include "optimizer/clauses.h"
 #include "optimizer/tlist.h"
-#include "optimizer/var.h"
 #include "parser/analyze.h"
 #include "parser/parsetree.h"
 #include "parser/parse_clause.h"
@@ -34,7 +33,6 @@
 #include "parser/parse_relation.h"
 #include "parser/parse_target.h"
 #include "rewrite/rewriteManip.h"
-#include "utils/guc.h"
 #include "utils/lsyscache.h"
 #include "utils/rel.h"
 

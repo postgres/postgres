@@ -16,7 +16,6 @@
 
 #include "storage/buf.h"
 #include "storage/bufpage.h"
-#include "lib/stringinfo.h"
 
 /*
  * Structure of a FSM page. See src/backend/storage/freespace/README for

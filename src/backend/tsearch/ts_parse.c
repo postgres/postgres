@@ -15,7 +15,6 @@
 #include "postgres.h"
 
 #include "tsearch/ts_cache.h"
-#include "tsearch/ts_public.h"
 #include "tsearch/ts_utils.h"
 
 #define IGNORE_LONGLEXEME	1

@@ -15,7 +15,6 @@
 #define FUNCTIONS_H
 
 #include "nodes/execnodes.h"
-#include "tcop/dest.h"
 
 /* This struct is known only within executor/functions.c */
 typedef struct SQLFunctionParseInfo *SQLFunctionParseInfoPtr;

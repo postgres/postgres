@@ -16,7 +16,6 @@
 
 #include "access/heapam.h"
 #include "catalog/indexing.h"
-#include "catalog/pg_class.h"
 #include "catalog/pg_rewrite.h"
 #include "rewrite/rewriteSupport.h"
 #include "utils/fmgroids.h"

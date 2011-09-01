@@ -15,8 +15,8 @@
 #ifndef IP_H
 #define IP_H
 
-#include "getaddrinfo.h"
-#include "libpq/pqcomm.h"
+#include "getaddrinfo.h"	/* pgrminclude ignore */
+#include "libpq/pqcomm.h"	/* pgrminclude ignore */
 
 
 #ifdef	HAVE_UNIX_SOCKETS

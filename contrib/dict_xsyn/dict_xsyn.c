@@ -15,7 +15,6 @@
 #include <ctype.h>
 
 #include "commands/defrem.h"
-#include "fmgr.h"
 #include "tsearch/ts_locale.h"
 #include "tsearch/ts_utils.h"
 

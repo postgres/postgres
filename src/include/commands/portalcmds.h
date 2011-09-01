@@ -14,8 +14,6 @@
 #ifndef PORTALCMDS_H
 #define PORTALCMDS_H
 
-#include "nodes/parsenodes.h"
-#include "nodes/plannodes.h"
 #include "utils/portal.h"
 
 

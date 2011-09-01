@@ -33,7 +33,6 @@
 #include "funcapi.h"
 #include "regex/regex.h"
 #include "utils/builtins.h"
-#include "utils/guc.h"
 
 #define PG_GETARG_TEXT_PP_IF_EXISTS(_n) \
 	(PG_NARGS() > (_n) ? PG_GETARG_TEXT_PP(_n) : NULL)

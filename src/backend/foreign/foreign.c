@@ -13,22 +13,14 @@
 #include "postgres.h"
 
 #include "access/reloptions.h"
-#include "catalog/namespace.h"
 #include "catalog/pg_foreign_data_wrapper.h"
 #include "catalog/pg_foreign_server.h"
 #include "catalog/pg_foreign_table.h"
-#include "catalog/pg_type.h"
 #include "catalog/pg_user_mapping.h"
 #include "foreign/fdwapi.h"
 #include "foreign/foreign.h"
-#include "funcapi.h"
 #include "miscadmin.h"
-#include "nodes/parsenodes.h"
-#include "utils/acl.h"
-#include "utils/array.h"
 #include "utils/builtins.h"
-#include "utils/lsyscache.h"
-#include "utils/memutils.h"
 #include "utils/syscache.h"
 
 

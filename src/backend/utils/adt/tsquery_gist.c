@@ -16,7 +16,6 @@
 
 #include "access/skey.h"
 #include "access/gist.h"
-#include "tsearch/ts_type.h"
 #include "tsearch/ts_utils.h"
 
 #define GETENTRY(vec,pos) DatumGetTSQuerySign((vec)->vector[pos].key)

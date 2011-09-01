@@ -19,12 +19,8 @@
 #include "postgres.h"
 
 #include "access/xact.h"
-#include "fmgr.h"
 #include "commands/trigger.h"
 #include "executor/spi.h"
-#include "lib/stringinfo.h"
-#include "nodes/bitmapset.h"
-#include "utils/tuplestore.h"
 
 /**********************************************************************
  * Definitions

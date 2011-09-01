@@ -17,7 +17,6 @@
 #include "catalog/pg_type.h"
 #include "executor/spi.h"
 #include "miscadmin.h"
-#include "tsearch/ts_type.h"
 #include "tsearch/ts_utils.h"
 #include "utils/builtins.h"
 

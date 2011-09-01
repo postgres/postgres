@@ -83,7 +83,6 @@
  */
 #include "postgres.h"
 
-#include "funcapi.h"
 
 #include "hstore.h"
 

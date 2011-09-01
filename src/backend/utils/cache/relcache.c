@@ -30,7 +30,6 @@
 #include <fcntl.h>
 #include <unistd.h>
 
-#include "access/genam.h"
 #include "access/reloptions.h"
 #include "access/sysattr.h"
 #include "access/transam.h"
@@ -61,16 +60,13 @@
 #include "optimizer/prep.h"
 #include "optimizer/var.h"
 #include "rewrite/rewriteDefine.h"
-#include "storage/fd.h"
 #include "storage/lmgr.h"
 #include "storage/smgr.h"
-#include "utils/array.h"
 #include "utils/builtins.h"
 #include "utils/fmgroids.h"
 #include "utils/inval.h"
 #include "utils/lsyscache.h"
 #include "utils/memutils.h"
-#include "utils/relcache.h"
 #include "utils/relmapper.h"
 #include "utils/resowner.h"
 #include "utils/syscache.h"

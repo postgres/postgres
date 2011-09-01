@@ -42,8 +42,6 @@
 
 #include "postgres.h"
 
-#include "access/genam.h"
-#include "access/heapam.h"
 #include "access/relscan.h"
 #include "access/transam.h"
 #include "catalog/index.h"
@@ -52,7 +50,6 @@
 #include "parser/parsetree.h"
 #include "storage/lmgr.h"
 #include "utils/memutils.h"
-#include "utils/relcache.h"
 #include "utils/tqual.h"
 
 

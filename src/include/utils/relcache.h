@@ -16,7 +16,6 @@
 
 #include "access/tupdesc.h"
 #include "nodes/bitmapset.h"
-#include "nodes/pg_list.h"
 
 
 typedef struct RelationData *Relation;

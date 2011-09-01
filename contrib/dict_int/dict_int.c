@@ -13,7 +13,6 @@
 #include "postgres.h"
 
 #include "commands/defrem.h"
-#include "fmgr.h"
 #include "tsearch/ts_public.h"
 
 PG_MODULE_MAGIC;

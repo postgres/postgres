@@ -14,7 +14,6 @@
  */
 #include "postgres.h"
 
-#include "access/heapam.h"
 #include "access/xact.h"
 #include "catalog/catalog.h"
 #include "catalog/dependency.h"
@@ -28,7 +27,6 @@
 #include "tcop/utility.h"
 #include "utils/acl.h"
 #include "utils/builtins.h"
-#include "utils/lsyscache.h"
 #include "utils/rel.h"
 #include "utils/syscache.h"
 

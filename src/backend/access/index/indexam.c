@@ -64,13 +64,11 @@
 
 #include "access/relscan.h"
 #include "access/transam.h"
-#include "access/xact.h"
 #include "catalog/index.h"
 #include "pgstat.h"
 #include "storage/bufmgr.h"
 #include "storage/lmgr.h"
 #include "storage/predicate.h"
-#include "utils/relcache.h"
 #include "utils/snapmgr.h"
 #include "utils/tqual.h"
 

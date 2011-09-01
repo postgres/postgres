@@ -23,8 +23,6 @@
 
 #include <unistd.h>
 
-#include "access/genam.h"
-#include "access/heapam.h"
 #include "access/relscan.h"
 #include "access/sysattr.h"
 #include "access/transam.h"
@@ -34,8 +32,6 @@
 #include "catalog/dependency.h"
 #include "catalog/heap.h"
 #include "catalog/index.h"
-#include "catalog/indexing.h"
-#include "catalog/namespace.h"
 #include "catalog/pg_collation.h"
 #include "catalog/pg_constraint.h"
 #include "catalog/pg_operator.h"
@@ -59,11 +55,9 @@
 #include "storage/smgr.h"
 #include "utils/builtins.h"
 #include "utils/fmgroids.h"
-#include "utils/guc.h"
 #include "utils/inval.h"
 #include "utils/lsyscache.h"
 #include "utils/memutils.h"
-#include "utils/relcache.h"
 #include "utils/syscache.h"
 #include "utils/tuplesort.h"
 #include "utils/snapmgr.h"

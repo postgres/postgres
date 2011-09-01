@@ -14,9 +14,7 @@
 #ifndef SMGR_H
 #define SMGR_H
 
-#include "access/xlog.h"
 #include "fmgr.h"
-#include "storage/backendid.h"
 #include "storage/block.h"
 #include "storage/relfilenode.h"
 

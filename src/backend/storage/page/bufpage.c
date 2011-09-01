@@ -15,7 +15,6 @@
 #include "postgres.h"
 
 #include "access/htup.h"
-#include "storage/bufpage.h"
 
 
 /* ----------------------------------------------------------------

@@ -6,6 +6,7 @@
 
 #include "btree_gist.h"
 
+#include "access/gist.h"
 #include "mb/pg_wchar.h"
 
 /* Variable length key */

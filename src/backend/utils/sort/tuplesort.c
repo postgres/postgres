@@ -100,11 +100,8 @@
 
 #include <limits.h>
 
-#include "access/genam.h"
 #include "access/nbtree.h"
 #include "catalog/index.h"
-#include "catalog/pg_amop.h"
-#include "catalog/pg_operator.h"
 #include "commands/tablespace.h"
 #include "executor/executor.h"
 #include "miscadmin.h"
@@ -115,7 +112,6 @@
 #include "utils/memutils.h"
 #include "utils/pg_rusage.h"
 #include "utils/rel.h"
-#include "utils/syscache.h"
 #include "utils/tuplesort.h"
 
 

@@ -14,11 +14,9 @@
  */
 #include "postgres.h"
 
-#include "access/genam.h"
 #include "access/gist_private.h"
 #include "access/gistscan.h"
 #include "access/relscan.h"
-#include "storage/bufmgr.h"
 #include "utils/memutils.h"
 #include "utils/rel.h"
 
