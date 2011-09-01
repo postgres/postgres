@@ -1503,8 +1503,12 @@ ECPGdo(const int lineno, const int compat, const int force_indicator, const char
 	 */
 	if (statement_type == ECPGst_prepnormal)
 	{
-		if (!ecpg_auto_prepare(lineno, connection_name, compat, &prepname, query))
+		if (!ecpg_auto_prepare(lineno, connection_name, compat, &prepname, query)) {
+			setlocale(LC_NUMERIC, oldlocale);
+			ecpg_free(oldlocale);
+			va_end(args);
 			return (false);
+		}
 
 		/*
 		 * statement is now prepared, so instead of the query we have to
