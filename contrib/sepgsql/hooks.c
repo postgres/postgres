@@ -184,9 +184,7 @@ sepgsql_exec_check_perms(List *rangeTabls, bool abort)
 static bool
 sepgsql_needs_fmgr_hook(Oid functionId)
 {
-	char	   *old_label;
-	char	   *new_label;
-	char	   *function_label;
+	ObjectAddress	object;
 
 	if (next_needs_fmgr_hook &&
 		(*next_needs_fmgr_hook) (functionId))
@@ -198,14 +196,8 @@ sepgsql_needs_fmgr_hook(Oid functionId)
 	 * functions as trusted-procedure, if the security policy has a rule that
 	 * switches security label of the client on execution.
 	 */
-	old_label = sepgsql_get_client_label();
-	new_label = sepgsql_proc_get_domtrans(functionId);
-	if (strcmp(old_label, new_label) != 0)
-	{
-		pfree(new_label);
+	if (sepgsql_avc_trusted_proc(functionId) != NULL)
 		return true;
-	}
-	pfree(new_label);
 
 	/*
 	 * Even if not a trusted-procedure, this function should not be inlined
@@ -213,17 +205,15 @@ sepgsql_needs_fmgr_hook(Oid functionId)
 	 * that it shall be actually failed later because of same reason with
 	 * ACL_EXECUTE.
 	 */
-	function_label = sepgsql_get_label(ProcedureRelationId, functionId, 0);
-	if (sepgsql_check_perms(sepgsql_get_client_label(),
-							function_label,
-							SEPG_CLASS_DB_PROCEDURE,
-							SEPG_DB_PROCEDURE__EXECUTE,
-							NULL, false) != true)
-	{
-		pfree(function_label);
+	object.classId = ProcedureRelationId;
+	object.objectId = functionId;
+	object.objectSubId = 0;
+	if (!sepgsql_avc_check_perms(&object,
+								 SEPG_CLASS_DB_PROCEDURE,
+								 SEPG_DB_PROCEDURE__EXECUTE,
+								 SEPGSQL_AVC_NOAUDIT, false))
 		return true;
-	}
-	pfree(function_label);
+
 	return false;
 }
 
@@ -251,33 +241,31 @@ sepgsql_fmgr_hook(FmgrHookEventType event,
 			if (!stack)
 			{
 				MemoryContext oldcxt;
-				const char *cur_label = sepgsql_get_client_label();
 
 				oldcxt = MemoryContextSwitchTo(flinfo->fn_mcxt);
 				stack = palloc(sizeof(*stack));
 				stack->old_label = NULL;
-				stack->new_label = sepgsql_proc_get_domtrans(flinfo->fn_oid);
+				stack->new_label = sepgsql_avc_trusted_proc(flinfo->fn_oid);
 				stack->next_private = 0;
 
 				MemoryContextSwitchTo(oldcxt);
 
-				if (strcmp(cur_label, stack->new_label) != 0)
-				{
-					/*
-					 * process:transition permission between old and new
-					 * label, when user tries to switch security label of the
-					 * client on execution of trusted procedure.
-					 */
-					sepgsql_check_perms(cur_label, stack->new_label,
-										SEPG_CLASS_PROCESS,
-										SEPG_PROCESS__TRANSITION,
-										NULL, true);
-				}
+				/*
+				 * process:transition permission between old and new label,
+				 * when user tries to switch security label of the client
+				 * on execution of trusted procedure.
+				 */
+				if (stack->new_label)
+					sepgsql_avc_check_perms_label(stack->new_label,
+												  SEPG_CLASS_PROCESS,
+												  SEPG_PROCESS__TRANSITION,
+												  NULL, true);
 
 				*private = PointerGetDatum(stack);
 			}
 			Assert(!stack->old_label);
-			stack->old_label = sepgsql_set_client_label(stack->new_label);
+			if (stack->new_label)
+				stack->old_label = sepgsql_set_client_label(stack->new_label);
 
 			if (next_fmgr_hook)
 				(*next_fmgr_hook) (event, flinfo, &stack->next_private);
@@ -290,7 +278,8 @@ sepgsql_fmgr_hook(FmgrHookEventType event,
 			if (next_fmgr_hook)
 				(*next_fmgr_hook) (event, flinfo, &stack->next_private);
 
-			sepgsql_set_client_label(stack->old_label);
+			if (stack->old_label)
+				sepgsql_set_client_label(stack->old_label);
 			stack->old_label = NULL;
 			break;
 
@@ -432,6 +421,9 @@ _PG_init(void)
 				(errcode(ERRCODE_INTERNAL_ERROR),
 				 errmsg("SELinux: failed to get server security label: %m")));
 	sepgsql_set_client_label(context);
+
+	/* Initialize userspace access vector cache */
+	sepgsql_avc_init();
 
 	/* Security label provider hook */
 	register_label_provider(SEPGSQL_LABEL_TAG,

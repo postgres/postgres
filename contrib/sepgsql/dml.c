@@ -150,12 +150,11 @@ check_relation_privileges(Oid relOid,
 						  uint32 required,
 						  bool abort)
 {
-	char		relkind = get_rel_relkind(relOid);
-	char	   *scontext = sepgsql_get_client_label();
-	char	   *tcontext;
+	ObjectAddress	object;
 	char	   *audit_name;
 	Bitmapset  *columns;
 	int			index;
+	char		relkind = get_rel_relkind(relOid);
 	bool		result = true;
 
 	/*
@@ -184,45 +183,43 @@ check_relation_privileges(Oid relOid,
 	/*
 	 * Check permissions on the relation
 	 */
-	tcontext = sepgsql_get_label(RelationRelationId, relOid, 0);
-	audit_name = getObjectDescriptionOids(RelationRelationId, relOid);
+	object.classId = RelationRelationId;
+	object.objectId = relOid;
+	object.objectSubId = 0;
+	audit_name = getObjectDescription(&object);
 	switch (relkind)
 	{
 		case RELKIND_RELATION:
-			result = sepgsql_check_perms(scontext,
-										 tcontext,
-										 SEPG_CLASS_DB_TABLE,
-										 required,
-										 audit_name,
-										 abort);
+			result = sepgsql_avc_check_perms(&object,
+											 SEPG_CLASS_DB_TABLE,
+											 required,
+											 audit_name,
+											 abort);
 			break;
 
 		case RELKIND_SEQUENCE:
 			Assert((required & ~SEPG_DB_TABLE__SELECT) == 0);
 
 			if (required & SEPG_DB_TABLE__SELECT)
-				result = sepgsql_check_perms(scontext,
-											 tcontext,
-											 SEPG_CLASS_DB_SEQUENCE,
-											 SEPG_DB_SEQUENCE__GET_VALUE,
-											 audit_name,
-											 abort);
+				result = sepgsql_avc_check_perms(&object,
+												 SEPG_CLASS_DB_SEQUENCE,
+												 SEPG_DB_SEQUENCE__GET_VALUE,
+												 audit_name,
+												 abort);
 			break;
 
 		case RELKIND_VIEW:
-			result = sepgsql_check_perms(scontext,
-										 tcontext,
-										 SEPG_CLASS_DB_VIEW,
-										 SEPG_DB_VIEW__EXPAND,
-										 audit_name,
-										 abort);
+			result = sepgsql_avc_check_perms(&object,
+											 SEPG_CLASS_DB_VIEW,
+											 SEPG_DB_VIEW__EXPAND,
+											 audit_name,
+											 abort);
 			break;
 
 		default:
 			/* nothing to be checked */
 			break;
 	}
-	pfree(tcontext);
 	pfree(audit_name);
 
 	/*
@@ -242,7 +239,6 @@ check_relation_privileges(Oid relOid,
 	{
 		AttrNumber	attnum;
 		uint32		column_perms = 0;
-		ObjectAddress object;
 
 		if (bms_is_member(index, selected))
 			column_perms |= SEPG_DB_COLUMN__SELECT;
@@ -258,20 +254,17 @@ check_relation_privileges(Oid relOid,
 
 		/* obtain column's permission */
 		attnum = index + FirstLowInvalidHeapAttributeNumber;
-		tcontext = sepgsql_get_label(RelationRelationId, relOid, attnum);
 
 		object.classId = RelationRelationId;
 		object.objectId = relOid;
 		object.objectSubId = attnum;
 		audit_name = getObjectDescription(&object);
 
-		result = sepgsql_check_perms(scontext,
-									 tcontext,
-									 SEPG_CLASS_DB_COLUMN,
-									 column_perms,
-									 audit_name,
-									 abort);
-		pfree(tcontext);
+		result = sepgsql_avc_check_perms(&object,
+										 SEPG_CLASS_DB_COLUMN,
+										 column_perms,
+										 audit_name,
+										 abort);
 		pfree(audit_name);
 
 		if (!result)

@@ -65,35 +65,30 @@ sepgsql_schema_post_create(Oid namespaceId)
 void
 sepgsql_schema_relabel(Oid namespaceId, const char *seclabel)
 {
-	char	   *scontext = sepgsql_get_client_label();
-	char	   *tcontext;
-	char	   *audit_name;
+	ObjectAddress	object;
+	char		   *audit_name;
 
-	audit_name = getObjectDescriptionOids(NamespaceRelationId, namespaceId);
+	object.classId = NamespaceRelationId;
+	object.objectId = namespaceId;
+	object.objectSubId = 0;
+	audit_name = getObjectDescription(&object);
 
 	/*
 	 * check db_schema:{setattr relabelfrom} permission
 	 */
-	tcontext = sepgsql_get_label(NamespaceRelationId, namespaceId, 0);
-
-	sepgsql_check_perms(scontext,
-						tcontext,
-						SEPG_CLASS_DB_SCHEMA,
-						SEPG_DB_SCHEMA__SETATTR |
-						SEPG_DB_SCHEMA__RELABELFROM,
-						audit_name,
-						true);
-
+	sepgsql_avc_check_perms(&object,
+							SEPG_CLASS_DB_SCHEMA,
+							SEPG_DB_SCHEMA__SETATTR |
+							SEPG_DB_SCHEMA__RELABELFROM,
+							audit_name,
+							true);
 	/*
 	 * check db_schema:{relabelto} permission
 	 */
-	sepgsql_check_perms(scontext,
-						seclabel,
-						SEPG_CLASS_DB_SCHEMA,
-						SEPG_DB_SCHEMA__RELABELTO,
-						audit_name,
-						true);
-
-	pfree(tcontext);
+	sepgsql_avc_check_perms_label(seclabel,
+								  SEPG_CLASS_DB_SCHEMA,
+								  SEPG_DB_SCHEMA__RELABELTO,
+								  audit_name,
+								  true);
 	pfree(audit_name);
 }

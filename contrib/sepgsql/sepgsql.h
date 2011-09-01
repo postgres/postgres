@@ -15,6 +15,7 @@
 #include "fmgr.h"
 
 #include <selinux/selinux.h>
+#include <selinux/avc.h>
 
 /*
  * SE-PostgreSQL Label Tag
@@ -245,6 +246,22 @@ extern bool sepgsql_check_perms(const char *scontext,
 					uint32 required,
 					const char *audit_name,
 					bool abort);
+/*
+ * uavc.c
+ */
+#define SEPGSQL_AVC_NOAUDIT			((void *)(-1))
+extern bool sepgsql_avc_check_perms_label(const char *tcontext,
+										  uint16 tclass,
+										  uint32 required,
+										  const char *audit_name,
+										  bool abort);
+extern bool sepgsql_avc_check_perms(const ObjectAddress *tobject,
+									uint16 tclass,
+									uint32 required,
+									const char *audit_name,
+									bool abort);
+extern char *sepgsql_avc_trusted_proc(Oid functionId);
+extern void sepgsql_avc_init(void);
 
 /*
  * label.c
@@ -286,6 +303,5 @@ extern void sepgsql_relation_relabel(Oid relOid, const char *seclabel);
  */
 extern void sepgsql_proc_post_create(Oid functionId);
 extern void sepgsql_proc_relabel(Oid functionId, const char *seclabel);
-extern char *sepgsql_proc_get_domtrans(Oid functionId);
 
 #endif   /* SEPGSQL_H */

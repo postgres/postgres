@@ -64,7 +64,7 @@
     or higher with <productname>SELinux</productname> enabled.  It is not
     available on any other platform, and must be explicitly enabled using
     <literal>--with-selinux</>.  You will also need <productname>libselinux</>
-    2.0.93 or higher and <productname>selinux-policy</> 3.9.13 or higher
+    2.0.99 or higher and <productname>selinux-policy</> 3.9.13 or higher
     (some distributions may backport the necessary rules into older policy
     versions).
   </para>
@@ -473,16 +473,6 @@ postgres=# SELECT cid, cname, show_credit(cid) FROM customer;
   <title>Limitations</title>
 
   <variablelist>
-   <varlistentry>
-    <term>Userspace access vector cache</term>
-    <listitem>
-     <para>
-      <productname>sepgsql</> does not yet support an access vector cache.
-      This would likely improve performance.
-     </para>
-    </listitem>
-   </varlistentry>
-
    <varlistentry>
     <term>Data Definition Language (DDL) Permissions</term>
     <listitem>

@@ -964,8 +964,8 @@ fi
 
 # for contrib/sepgsql
 if test "$with_selinux" = yes; then
-  AC_CHECK_LIB(selinux, selinux_sepgsql_context_path, [],
-               [AC_MSG_ERROR([library 'libselinux', version 2.0.93 or newer, is required for SELinux support])])
+  AC_CHECK_LIB(selinux, selinux_status_open, [],
+               [AC_MSG_ERROR([library 'libselinux', version 2.0.99 or newer, is required for SELinux support])])
 fi
 
 # for contrib/uuid-ossp

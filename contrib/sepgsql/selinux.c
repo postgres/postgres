@@ -642,7 +642,7 @@ bool
 sepgsql_getenforce(void)
 {
 	if (sepgsql_mode == SEPGSQL_MODE_DEFAULT &&
-		security_getenforce() > 0)
+		selinux_status_getenforce() > 0)
 		return true;
 
 	return false;

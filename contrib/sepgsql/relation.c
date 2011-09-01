@@ -79,10 +79,8 @@ void
 sepgsql_attribute_relabel(Oid relOid, AttrNumber attnum,
 						  const char *seclabel)
 {
-	char	   *scontext = sepgsql_get_client_label();
-	char	   *tcontext;
-	char	   *audit_name;
 	ObjectAddress object;
+	char		 *audit_name;
 
 	if (get_rel_relkind(relOid) != RELKIND_RELATION)
 		ereport(ERROR,
@@ -97,26 +95,20 @@ sepgsql_attribute_relabel(Oid relOid, AttrNumber attnum,
 	/*
 	 * check db_column:{setattr relabelfrom} permission
 	 */
-	tcontext = sepgsql_get_label(RelationRelationId, relOid, attnum);
-	sepgsql_check_perms(scontext,
-						tcontext,
-						SEPG_CLASS_DB_COLUMN,
-						SEPG_DB_COLUMN__SETATTR |
-						SEPG_DB_COLUMN__RELABELFROM,
-						audit_name,
-						true);
-
+	sepgsql_avc_check_perms(&object,
+							SEPG_CLASS_DB_COLUMN,
+							SEPG_DB_COLUMN__SETATTR |
+							SEPG_DB_COLUMN__RELABELFROM,
+							audit_name,
+							true);
 	/*
 	 * check db_column:{relabelto} permission
 	 */
-	sepgsql_check_perms(scontext,
-						seclabel,
-						SEPG_CLASS_DB_COLUMN,
-						SEPG_DB_PROCEDURE__RELABELTO,
-						audit_name,
-						true);
-
-	pfree(tcontext);
+	sepgsql_avc_check_perms_label(seclabel,
+								  SEPG_CLASS_DB_COLUMN,
+								  SEPG_DB_PROCEDURE__RELABELTO,
+								  audit_name,
+								  true);
 	pfree(audit_name);
 }
 
@@ -227,8 +219,7 @@ out:
 void
 sepgsql_relation_relabel(Oid relOid, const char *seclabel)
 {
-	char	   *scontext = sepgsql_get_client_label();
-	char	   *tcontext;
+	ObjectAddress	object;
 	char	   *audit_name;
 	char		relkind;
 	uint16_t	tclass = 0;
@@ -246,31 +237,27 @@ sepgsql_relation_relabel(Oid relOid, const char *seclabel)
 				 errmsg("cannot set security labels on relations except "
 						"for tables, sequences or views")));
 
-	audit_name = getObjectDescriptionOids(RelationRelationId, relOid);
+	object.classId = RelationRelationId;
+	object.objectId = relOid;
+	object.objectSubId = 0;
+	audit_name = getObjectDescription(&object);
 
 	/*
 	 * check db_xxx:{setattr relabelfrom} permission
 	 */
-	tcontext = sepgsql_get_label(RelationRelationId, relOid, 0);
-
-	sepgsql_check_perms(scontext,
-						tcontext,
-						tclass,
-						SEPG_DB_TABLE__SETATTR |
-						SEPG_DB_TABLE__RELABELFROM,
-						audit_name,
-						true);
-
+	sepgsql_avc_check_perms(&object,
+							tclass,
+							SEPG_DB_TABLE__SETATTR |
+							SEPG_DB_TABLE__RELABELFROM,
+							audit_name,
+							true);
 	/*
 	 * check db_xxx:{relabelto} permission
 	 */
-	sepgsql_check_perms(scontext,
-						seclabel,
-						tclass,
-						SEPG_DB_TABLE__RELABELTO,
-						audit_name,
-						true);
-
-	pfree(tcontext);
+	sepgsql_avc_check_perms_label(seclabel,
+								  tclass,
+								  SEPG_DB_TABLE__RELABELTO,
+								  audit_name,
+								  true);
 	pfree(audit_name);
 }
