@@ -18,5 +18,8 @@ do
 	sed 's/([a-zA-Z0-9_ ]*,/(0,/g' |
 	sed 's/,[a-zA-Z0-9_ ]*,/,0,/g' |
 	sed 's/,[a-zA-Z0-9_ ]*)/,0)/g' |
+	# do not cast 'return' macros as (void)
+	sed 's/(=void)\(.*return\)/\1/g' |
+	sed 's/(=void)\(.*RETURN\)/\1/g' |
 	sed 's/(=void)/(void)/g'
 done
