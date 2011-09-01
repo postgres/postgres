@@ -11,7 +11,7 @@
 #ifndef HBA_H
 #define HBA_H
 
-#include "libpq/pqcomm.h"
+#include "libpq/pqcomm.h"	/* pgrminclude remove */ /* needed for NetBSD */
 #include "nodes/pg_list.h"
 
 
