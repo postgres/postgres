@@ -210,7 +210,7 @@ echo "ok"
 # template1 database must be labeled
 echo -n "checking for labels in template1    ... "
 NUM=`${CMD_PSQL} template1 -Atc 'SELECT count(*) FROM pg_catalog.pg_seclabel' 2>/dev/null`
-if [ -z "${NUM}" -o "$NUM" -eq 0 ]; then
+if [ -z "${NUM}" ]; then
     echo "failed"
     echo ""
     echo "In order to regression test sepgsql, initial labels must be assigned"
