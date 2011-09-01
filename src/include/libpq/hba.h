@@ -11,6 +11,7 @@
 #ifndef HBA_H
 #define HBA_H
 
+#include "libpq/pqcomm.h"
 #include "nodes/pg_list.h"
 
 
