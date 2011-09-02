@@ -253,7 +253,6 @@ static void StoreCatalogInheritance(Oid relationId, List *supers);
 static void StoreCatalogInheritance1(Oid relationId, Oid parentOid,
 						 int16 seqNumber, Relation inhRelation);
 static int	findAttrByName(const char *attributeName, List *schema);
-static void setRelhassubclassInRelation(Oid relationId, bool relhassubclass);
 static void AlterIndexNamespaces(Relation classRel, Relation rel,
 					 Oid oldNspOid, Oid newNspOid);
 static void AlterSeqNamespaces(Relation classRel, Relation rel,
@@ -1359,7 +1358,10 @@ MergeAttributes(List *schema, List *supers, char relpersistence,
 		 * add children to the same parent simultaneously, and that parent has
 		 * no pre-existing children, then both will attempt to update the
 		 * parent's relhassubclass field, leading to a "tuple concurrently
-		 * updated" error.
+		 * updated" error.  Also, this interlocks against a concurrent ANALYZE
+		 * on the parent table, which might otherwise be attempting to clear
+		 * the parent's relhassubclass field, if its previous children were
+		 * recently dropped.
 		 */
 		relation = heap_openrv(parent, ShareUpdateExclusiveLock);
 
@@ -1958,7 +1960,7 @@ StoreCatalogInheritance1(Oid relationId, Oid parentOid,
 	/*
 	 * Mark the parent as having subclasses.
 	 */
-	setRelhassubclassInRelation(parentOid, true);
+	SetRelationHasSubclass(parentOid, true);
 }
 
 /*
@@ -1985,11 +1987,22 @@ findAttrByName(const char *attributeName, List *schema)
 	return 0;
 }
 
+
 /*
- * Update a relation's pg_class.relhassubclass entry to the given value
+ * SetRelationHasSubclass
+ *		Set the value of the relation's relhassubclass field in pg_class.
+ *
+ * NOTE: caller must be holding an appropriate lock on the relation.
+ * ShareUpdateExclusiveLock is sufficient.
+ *
+ * NOTE: an important side-effect of this operation is that an SI invalidation
+ * message is sent out to all backends --- including me --- causing plans
+ * referencing the relation to be rebuilt with the new list of children.
+ * This must happen even if we find that no change is needed in the pg_class
+ * row.
  */
-static void
-setRelhassubclassInRelation(Oid relationId, bool relhassubclass)
+void
+SetRelationHasSubclass(Oid relationId, bool relhassubclass)
 {
 	Relation	relationRelation;
 	HeapTuple	tuple;
@@ -1997,9 +2010,6 @@ setRelhassubclassInRelation(Oid relationId, bool relhassubclass)
 
 	/*
 	 * Fetch a modifiable copy of the tuple, modify it, update pg_class.
-	 *
-	 * If the tuple already has the right relhassubclass setting, we don't
-	 * need to update it, but we still need to issue an SI inval message.
 	 */
 	relationRelation = heap_open(RelationRelationId, RowExclusiveLock);
 	tuple = SearchSysCacheCopy1(RELOID, ObjectIdGetDatum(relationId));
