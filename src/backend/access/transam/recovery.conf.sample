@@ -72,7 +72,7 @@
 # just after or just before the given target, respectively).
 #
 #
-#recovery_target_name = ''  # e.g. 'daily backup 2011-01-26'
+#recovery_target_name = ''	# e.g. 'daily backup 2011-01-26'
 #
 #recovery_target_time = ''	# e.g. '2004-07-14 22:39:00 EST'
 #
