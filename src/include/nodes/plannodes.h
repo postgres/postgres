@@ -380,18 +380,12 @@ typedef struct TidScan
  * the generic lefttree field as you might expect.	This is because we do
  * not want plan-tree-traversal routines to recurse into the subplan without
  * knowing that they are changing Query contexts.
- *
- * Note: subrtable is used just to carry the subquery rangetable from
- * createplan.c to setrefs.c; it should always be NIL by the time the
- * executor sees the plan.	Similarly for subrowmark.
  * ----------------
  */
 typedef struct SubqueryScan
 {
 	Scan		scan;
 	Plan	   *subplan;
-	List	   *subrtable;		/* temporary workspace for planner */
-	List	   *subrowmark;		/* temporary workspace for planner */
 } SubqueryScan;
 
 /* ----------------

@@ -3221,9 +3221,9 @@ set_joinrel_size_estimates(PlannerInfo *root, RelOptInfo *rel,
  * We set the same fields as set_baserel_size_estimates.
  */
 void
-set_subquery_size_estimates(PlannerInfo *root, RelOptInfo *rel,
-							PlannerInfo *subroot)
+set_subquery_size_estimates(PlannerInfo *root, RelOptInfo *rel)
 {
+	PlannerInfo *subroot = rel->subroot;
 	RangeTblEntry *rte;
 	ListCell   *lc;
 

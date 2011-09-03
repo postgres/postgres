@@ -79,9 +79,7 @@ typedef struct PlannerGlobal
 
 	List	   *subplans;		/* Plans for SubPlan nodes */
 
-	List	   *subrtables;		/* Rangetables for SubPlan nodes */
-
-	List	   *subrowmarks;	/* PlanRowMarks for SubPlan nodes */
+	List	   *subroots;		/* PlannerInfos for SubPlan nodes */
 
 	Bitmapset  *rewindPlanIDs;	/* indices of subplans that require REWIND */
 
@@ -322,10 +320,9 @@ typedef struct PlannerInfo
  *		pages - number of disk pages in relation (zero if not a table)
  *		tuples - number of tuples in relation (not considering restrictions)
  *		subplan - plan for subquery (NULL if it's not a subquery)
- *		subrtable - rangetable for subquery (NIL if it's not a subquery)
- *		subrowmark - rowmarks for subquery (NIL if it's not a subquery)
+ *		subroot - PlannerInfo for subquery (NULL if it's not a subquery)
  *
- *		Note: for a subquery, tuples and subplan are not set immediately
+ *		Note: for a subquery, tuples, subplan, subroot are not set immediately
  *		upon creation of the RelOptInfo object; they are filled in when
  *		set_base_rel_pathlist processes the object.
  *
@@ -408,8 +405,7 @@ typedef struct RelOptInfo
 	BlockNumber pages;
 	double		tuples;
 	struct Plan *subplan;		/* if subquery */
-	List	   *subrtable;		/* if subquery */
-	List	   *subrowmark;		/* if subquery */
+	PlannerInfo *subroot;		/* if subquery */
 
 	/* used by various scans and joins: */
 	List	   *baserestrictinfo;		/* RestrictInfo structures (if base

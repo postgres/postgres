@@ -1557,9 +1557,7 @@ create_subqueryscan_plan(PlannerInfo *root, Path *best_path,
 	scan_plan = make_subqueryscan(tlist,
 								  scan_clauses,
 								  scan_relid,
-								  best_path->parent->subplan,
-								  best_path->parent->subrtable,
-								  best_path->parent->subrowmark);
+								  best_path->parent->subplan);
 
 	copy_path_costsize(&scan_plan->scan.plan, best_path);
 
@@ -2931,9 +2929,7 @@ SubqueryScan *
 make_subqueryscan(List *qptlist,
 				  List *qpqual,
 				  Index scanrelid,
-				  Plan *subplan,
-				  List *subrtable,
-				  List *subrowmark)
+				  Plan *subplan)
 {
 	SubqueryScan *node = makeNode(SubqueryScan);
 	Plan	   *plan = &node->scan.plan;
@@ -2952,8 +2948,6 @@ make_subqueryscan(List *qptlist,
 	plan->righttree = NULL;
 	node->scan.scanrelid = scanrelid;
 	node->subplan = subplan;
-	node->subrtable = subrtable;
-	node->subrowmark = subrowmark;
 
 	return node;
 }

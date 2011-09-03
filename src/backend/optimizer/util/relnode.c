@@ -46,6 +46,35 @@ static List *subbuild_joinrel_joinlist(RelOptInfo *joinrel,
 
 
 /*
+ * setup_simple_rel_arrays
+ *	  Prepare the arrays we use for quickly accessing base relations.
+ */
+void
+setup_simple_rel_arrays(PlannerInfo *root)
+{
+	Index		rti;
+	ListCell   *lc;
+
+	/* Arrays are accessed using RT indexes (1..N) */
+	root->simple_rel_array_size = list_length(root->parse->rtable) + 1;
+
+	/* simple_rel_array is initialized to all NULLs */
+	root->simple_rel_array = (RelOptInfo **)
+		palloc0(root->simple_rel_array_size * sizeof(RelOptInfo *));
+
+	/* simple_rte_array is an array equivalent of the rtable list */
+	root->simple_rte_array = (RangeTblEntry **)
+		palloc0(root->simple_rel_array_size * sizeof(RangeTblEntry *));
+	rti = 1;
+	foreach(lc, root->parse->rtable)
+	{
+		RangeTblEntry *rte = (RangeTblEntry *) lfirst(lc);
+
+		root->simple_rte_array[rti++] = rte;
+	}
+}
+
+/*
  * build_simple_rel
  *	  Construct a new RelOptInfo for a base relation or 'other' relation.
  */
@@ -81,8 +110,7 @@ build_simple_rel(PlannerInfo *root, int relid, RelOptKind reloptkind)
 	rel->pages = 0;
 	rel->tuples = 0;
 	rel->subplan = NULL;
-	rel->subrtable = NIL;
-	rel->subrowmark = NIL;
+	rel->subroot = NULL;
 	rel->baserestrictinfo = NIL;
 	rel->baserestrictcost.startup = 0;
 	rel->baserestrictcost.per_tuple = 0;
@@ -335,8 +363,7 @@ build_join_rel(PlannerInfo *root,
 	joinrel->pages = 0;
 	joinrel->tuples = 0;
 	joinrel->subplan = NULL;
-	joinrel->subrtable = NIL;
-	joinrel->subrowmark = NIL;
+	joinrel->subroot = NULL;
 	joinrel->baserestrictinfo = NIL;
 	joinrel->baserestrictcost.startup = 0;
 	joinrel->baserestrictcost.per_tuple = 0;

@@ -130,6 +130,7 @@ plan_set_operations(PlannerInfo *root, double tuple_fraction,
 	Query	   *parse = root->parse;
 	SetOperationStmt *topop = (SetOperationStmt *) parse->setOperations;
 	Node	   *node;
+	RangeTblEntry *leftmostRTE;
 	Query	   *leftmostQuery;
 
 	Assert(topop && IsA(topop, SetOperationStmt));
@@ -143,6 +144,13 @@ plan_set_operations(PlannerInfo *root, double tuple_fraction,
 	Assert(parse->distinctClause == NIL);
 
 	/*
+	 * We'll need to build RelOptInfos for each of the leaf subqueries,
+	 * which are RTE_SUBQUERY rangetable entries in this Query.  Prepare the
+	 * index arrays for that.
+	 */
+	setup_simple_rel_arrays(root);
+
+	/*
 	 * Find the leftmost component Query.  We need to use its column names for
 	 * all generated tlists (else SELECT INTO won't work right).
 	 */
@@ -150,8 +158,8 @@ plan_set_operations(PlannerInfo *root, double tuple_fraction,
 	while (node && IsA(node, SetOperationStmt))
 		node = ((SetOperationStmt *) node)->larg;
 	Assert(node && IsA(node, RangeTblRef));
-	leftmostQuery = rt_fetch(((RangeTblRef *) node)->rtindex,
-							 parse->rtable)->subquery;
+	leftmostRTE = root->simple_rte_array[((RangeTblRef *) node)->rtindex];
+	leftmostQuery = leftmostRTE->subquery;
 	Assert(leftmostQuery != NULL);
 
 	/*
@@ -206,13 +214,21 @@ recurse_set_operations(Node *setOp, PlannerInfo *root,
 	if (IsA(setOp, RangeTblRef))
 	{
 		RangeTblRef *rtr = (RangeTblRef *) setOp;
-		RangeTblEntry *rte = rt_fetch(rtr->rtindex, root->parse->rtable);
+		RangeTblEntry *rte = root->simple_rte_array[rtr->rtindex];
 		Query	   *subquery = rte->subquery;
+		RelOptInfo *rel;
 		PlannerInfo *subroot;
 		Plan	   *subplan,
 				   *plan;
 
 		Assert(subquery != NULL);
+
+		/*
+		 * We need to build a RelOptInfo for each leaf subquery.  This isn't
+		 * used for anything here, but it carries the subroot data structures
+		 * forward to setrefs.c processing.
+		 */
+		rel = build_simple_rel(root, rtr->rtindex, RELOPT_BASEREL);
 
 		/*
 		 * Generate plan for primitive subquery
@@ -221,6 +237,10 @@ recurse_set_operations(Node *setOp, PlannerInfo *root,
 								   root,
 								   false, tuple_fraction,
 								   &subroot);
+
+		/* Save subroot and subplan in RelOptInfo for setrefs.c */
+		rel->subplan = subplan;
+		rel->subroot = subroot;
 
 		/*
 		 * Estimate number of groups if caller wants it.  If the subquery used
@@ -250,9 +270,7 @@ recurse_set_operations(Node *setOp, PlannerInfo *root,
 												   refnames_tlist),
 							  NIL,
 							  rtr->rtindex,
-							  subplan,
-							  subroot->parse->rtable,
-							  subroot->rowMarks);
+							  subplan);
 
 		/*
 		 * We don't bother to determine the subquery's output ordering since

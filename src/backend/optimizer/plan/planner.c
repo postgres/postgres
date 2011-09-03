@@ -21,6 +21,9 @@
 #include "executor/nodeAgg.h"
 #include "miscadmin.h"
 #include "nodes/makefuncs.h"
+#ifdef OPTIMIZER_DEBUG
+#include "nodes/print.h"
+#endif
 #include "optimizer/clauses.h"
 #include "optimizer/cost.h"
 #include "optimizer/pathnode.h"
@@ -31,11 +34,9 @@
 #include "optimizer/prep.h"
 #include "optimizer/subselect.h"
 #include "optimizer/tlist.h"
-#ifdef OPTIMIZER_DEBUG
-#include "nodes/print.h"
-#endif
 #include "parser/analyze.h"
 #include "parser/parsetree.h"
+#include "rewrite/rewriteManip.h"
 #include "utils/rel.h"
 
 
@@ -135,8 +136,7 @@ standard_planner(Query *parse, int cursorOptions, ParamListInfo boundParams)
 	PlannerInfo *root;
 	Plan	   *top_plan;
 	ListCell   *lp,
-			   *lrt,
-			   *lrm;
+			   *lr;
 
 	/* Cursor options may come from caller or from DECLARE CURSOR stmt */
 	if (parse->utilityStmt &&
@@ -154,8 +154,7 @@ standard_planner(Query *parse, int cursorOptions, ParamListInfo boundParams)
 	glob->boundParams = boundParams;
 	glob->paramlist = NIL;
 	glob->subplans = NIL;
-	glob->subrtables = NIL;
-	glob->subrowmarks = NIL;
+	glob->subroots = NIL;
 	glob->rewindPlanIDs = NULL;
 	glob->finalrtable = NIL;
 	glob->finalrowmarks = NIL;
@@ -212,24 +211,15 @@ standard_planner(Query *parse, int cursorOptions, ParamListInfo boundParams)
 	Assert(glob->finalrtable == NIL);
 	Assert(glob->finalrowmarks == NIL);
 	Assert(glob->resultRelations == NIL);
-	top_plan = set_plan_references(glob, top_plan,
-								   root->parse->rtable,
-								   root->rowMarks);
+	top_plan = set_plan_references(root, top_plan);
 	/* ... and the subplans (both regular subplans and initplans) */
-	Assert(list_length(glob->subplans) == list_length(glob->subrtables));
-	Assert(list_length(glob->subplans) == list_length(glob->subrowmarks));
-	lrt = list_head(glob->subrtables);
-	lrm = list_head(glob->subrowmarks);
-	foreach(lp, glob->subplans)
+	Assert(list_length(glob->subplans) == list_length(glob->subroots));
+	forboth(lp, glob->subplans, lr, glob->subroots)
 	{
 		Plan	   *subplan = (Plan *) lfirst(lp);
-		List	   *subrtable = (List *) lfirst(lrt);
-		List	   *subrowmark = (List *) lfirst(lrm);
+		PlannerInfo *subroot = (PlannerInfo *) lfirst(lr);
 
-		lfirst(lp) = set_plan_references(glob, subplan,
-										 subrtable, subrowmark);
-		lrt = lnext(lrt);
-		lrm = lnext(lrm);
+		lfirst(lp) = set_plan_references(subroot, subplan);
 	}
 
 	/* build the PlannedStmt result */
@@ -550,7 +540,7 @@ subquery_planner(PlannerGlobal *glob, Query *parse,
 				List	   *rlist;
 
 				Assert(parse->resultRelation);
-				rlist = set_returning_clause_references(root->glob,
+				rlist = set_returning_clause_references(root,
 														parse->returningList,
 														plan,
 													  parse->resultRelation);
@@ -735,54 +725,163 @@ inheritance_planner(PlannerInfo *root)
 {
 	Query	   *parse = root->parse;
 	int			parentRTindex = parse->resultRelation;
+	List	   *final_rtable = NIL;
+	int			save_rel_array_size = 0;
+	RelOptInfo **save_rel_array = NULL;
 	List	   *subplans = NIL;
 	List	   *resultRelations = NIL;
 	List	   *returningLists = NIL;
-	List	   *rtable = NIL;
 	List	   *rowMarks;
-	List	   *tlist;
-	PlannerInfo subroot;
-	ListCell   *l;
+	ListCell   *lc;
 
-	foreach(l, root->append_rel_list)
+	/*
+	 * We generate a modified instance of the original Query for each target
+	 * relation, plan that, and put all the plans into a list that will be
+	 * controlled by a single ModifyTable node.  All the instances share the
+	 * same rangetable, but each instance must have its own set of subquery
+	 * RTEs within the finished rangetable because (1) they are likely to get
+	 * scribbled on during planning, and (2) it's not inconceivable that
+	 * subqueries could get planned differently in different cases.  We need
+	 * not create duplicate copies of other RTE kinds, in particular not the
+	 * target relations, because they don't have either of those issues.  Not
+	 * having to duplicate the target relations is important because doing so
+	 * (1) would result in a rangetable of length O(N^2) for N targets, with
+	 * at least O(N^3) work expended here; and (2) would greatly complicate
+	 * management of the rowMarks list.
+	 */
+	foreach(lc, root->append_rel_list)
 	{
-		AppendRelInfo *appinfo = (AppendRelInfo *) lfirst(l);
+		AppendRelInfo *appinfo = (AppendRelInfo *) lfirst(lc);
+		PlannerInfo subroot;
 		Plan	   *subplan;
+		Index		rti;
 
 		/* append_rel_list contains all append rels; ignore others */
 		if (appinfo->parent_relid != parentRTindex)
 			continue;
 
 		/*
-		 * Generate modified query with this rel as target.
+		 * We need a working copy of the PlannerInfo so that we can control
+		 * propagation of information back to the main copy.
 		 */
 		memcpy(&subroot, root, sizeof(PlannerInfo));
+
+		/*
+		 * Generate modified query with this rel as target.  We first apply
+		 * adjust_appendrel_attrs, which copies the Query and changes
+		 * references to the parent RTE to refer to the current child RTE,
+		 * then fool around with subquery RTEs.
+		 */
 		subroot.parse = (Query *)
 			adjust_appendrel_attrs((Node *) parse,
 								   appinfo);
-		subroot.init_plans = NIL;
-		subroot.hasInheritedTarget = true;
+
+		/*
+		 * The rowMarks list might contain references to subquery RTEs, so
+		 * make a copy that we can apply ChangeVarNodes to.  (Fortunately,
+		 * the executor doesn't need to see the modified copies --- we can
+		 * just pass it the original rowMarks list.)
+		 */
+		subroot.rowMarks = (List *) copyObject(root->rowMarks);
+
+		/*
+		 * Add placeholders to the child Query's rangetable list to fill the
+		 * RT indexes already reserved for subqueries in previous children.
+		 * These won't be referenced, so there's no need to make them very
+		 * valid-looking.
+		 */
+		while (list_length(subroot.parse->rtable) < list_length(final_rtable))
+			subroot.parse->rtable = lappend(subroot.parse->rtable,
+											makeNode(RangeTblEntry));
+
+		/*
+		 * If this isn't the first child Query, generate duplicates of all
+		 * subquery RTEs, and adjust Var numbering to reference the duplicates.
+		 * To simplify the loop logic, we scan the original rtable not the
+		 * copy just made by adjust_appendrel_attrs; that should be OK since
+		 * subquery RTEs couldn't contain any references to the target rel.
+		 */
+		if (final_rtable != NIL)
+		{
+			ListCell   *lr;
+
+			rti = 1;
+			foreach(lr, parse->rtable)
+			{
+				RangeTblEntry *rte = (RangeTblEntry *) lfirst(lr);
+
+				if (rte->rtekind == RTE_SUBQUERY)
+				{
+					Index	newrti;
+
+					/*
+					 * The RTE can't contain any references to its own RT
+					 * index, so we can save a few cycles by applying
+					 * ChangeVarNodes before we append the RTE to the
+					 * rangetable.
+					 */
+					newrti = list_length(subroot.parse->rtable) + 1;
+					ChangeVarNodes((Node *) subroot.parse, rti, newrti, 0);
+					ChangeVarNodes((Node *) subroot.rowMarks, rti, newrti, 0);
+					rte = copyObject(rte);
+					subroot.parse->rtable = lappend(subroot.parse->rtable,
+													rte);
+				}
+				rti++;
+			}
+		}
+
 		/* We needn't modify the child's append_rel_list */
 		/* There shouldn't be any OJ info to translate, as yet */
 		Assert(subroot.join_info_list == NIL);
 		/* and we haven't created PlaceHolderInfos, either */
 		Assert(subroot.placeholder_list == NIL);
+		/* build a separate list of initplans for each child */
+		subroot.init_plans = NIL;
+		/* hack to mark target relation as an inheritance partition */
+		subroot.hasInheritedTarget = true;
 
 		/* Generate plan */
 		subplan = grouping_planner(&subroot, 0.0 /* retrieve all tuples */ );
 
 		/*
 		 * If this child rel was excluded by constraint exclusion, exclude it
-		 * from the plan.
+		 * from the result plan.
 		 */
 		if (is_dummy_plan(subplan))
 			continue;
 
-		/* Save rtable from first rel for use below */
-		if (subplans == NIL)
-			rtable = subroot.parse->rtable;
-
 		subplans = lappend(subplans, subplan);
+
+		/*
+		 * If this is the first non-excluded child, its post-planning rtable
+		 * becomes the initial contents of final_rtable; otherwise, append
+		 * just its modified subquery RTEs to final_rtable.
+		 */
+		if (final_rtable == NIL)
+			final_rtable = subroot.parse->rtable;
+		else
+			final_rtable = list_concat(final_rtable,
+									   list_copy_tail(subroot.parse->rtable,
+													  list_length(final_rtable)));
+
+		/*
+		 * We need to collect all the RelOptInfos from all child plans into
+		 * the main PlannerInfo, since setrefs.c will need them.  We use the
+		 * last child's simple_rel_array (previous ones are too short), so we
+		 * have to propagate forward the RelOptInfos that were already built
+		 * in previous children.
+		 */
+		Assert(subroot.simple_rel_array_size >= save_rel_array_size);
+		for (rti = 1; rti < save_rel_array_size; rti++)
+		{
+			RelOptInfo *brel = save_rel_array[rti];
+
+			if (brel)
+				subroot.simple_rel_array[rti] = brel;
+		}
+		save_rel_array_size = subroot.simple_rel_array_size;
+		save_rel_array = subroot.simple_rel_array;
 
 		/* Make sure any initplans from this rel get into the outer list */
 		root->init_plans = list_concat(root->init_plans, subroot.init_plans);
@@ -795,7 +894,7 @@ inheritance_planner(PlannerInfo *root)
 		{
 			List	   *rlist;
 
-			rlist = set_returning_clause_references(root->glob,
+			rlist = set_returning_clause_references(&subroot,
 												subroot.parse->returningList,
 													subplan,
 													appinfo->child_relid);
@@ -813,6 +912,8 @@ inheritance_planner(PlannerInfo *root)
 	if (subplans == NIL)
 	{
 		/* although dummy, it must have a valid tlist for executor */
+		List	   *tlist;
+
 		tlist = preprocess_targetlist(root, parse->targetList);
 		return (Plan *) make_result(root,
 									tlist,
@@ -822,17 +923,11 @@ inheritance_planner(PlannerInfo *root)
 	}
 
 	/*
-	 * Planning might have modified the rangetable, due to changes of the
-	 * Query structures inside subquery RTEs.  We have to ensure that this
-	 * gets propagated back to the master copy.  But can't do this until we
-	 * are done planning, because all the calls to grouping_planner need
-	 * virgin sub-Queries to work from.  (We are effectively assuming that
-	 * sub-Queries will get planned identically each time, or at least that
-	 * the impacts on their rangetables will be the same each time.)
-	 *
-	 * XXX should clean this up someday
+	 * Put back the final adjusted rtable into the master copy of the Query.
 	 */
-	parse->rtable = rtable;
+	parse->rtable = final_rtable;
+	root->simple_rel_array_size = save_rel_array_size;
+	root->simple_rel_array = save_rel_array;
 
 	/*
 	 * If there was a FOR UPDATE/SHARE clause, the LockRows node will have
@@ -3149,13 +3244,8 @@ plan_cluster_use_sort(Oid tableOid, Oid indexOid)
 	rte->inFromCl = true;
 	query->rtable = list_make1(rte);
 
-	/* ... and insert it into PlannerInfo */
-	root->simple_rel_array_size = 2;
-	root->simple_rel_array = (RelOptInfo **)
-		palloc0(root->simple_rel_array_size * sizeof(RelOptInfo *));
-	root->simple_rte_array = (RangeTblEntry **)
-		palloc0(root->simple_rel_array_size * sizeof(RangeTblEntry *));
-	root->simple_rte_array[1] = rte;
+	/* Set up RTE/RelOptInfo arrays */
+	setup_simple_rel_arrays(root);
 
 	/* Build RelOptInfo */
 	rel = build_simple_rel(root, 1, RELOPT_BASEREL);

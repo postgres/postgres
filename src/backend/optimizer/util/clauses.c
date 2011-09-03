@@ -57,7 +57,7 @@ typedef struct
 typedef struct
 {
 	ParamListInfo boundParams;
-	PlannerGlobal *glob;
+	PlannerInfo *root;
 	List	   *active_fns;
 	Node	   *case_val;
 	bool		estimate;
@@ -2058,15 +2058,10 @@ eval_const_expressions(PlannerInfo *root, Node *node)
 	eval_const_expressions_context context;
 
 	if (root)
-	{
 		context.boundParams = root->glob->boundParams;	/* bound Params */
-		context.glob = root->glob;		/* for inlined-function dependencies */
-	}
 	else
-	{
 		context.boundParams = NULL;
-		context.glob = NULL;
-	}
+	context.root = root;		/* for inlined-function dependencies */
 	context.active_fns = NIL;	/* nothing being recursively simplified */
 	context.case_val = NULL;	/* no CASE being examined */
 	context.estimate = false;	/* safe transformations only */
@@ -2097,7 +2092,7 @@ estimate_expression_value(PlannerInfo *root, Node *node)
 
 	context.boundParams = root->glob->boundParams;		/* bound Params */
 	/* we do not need to mark the plan as depending on inlined functions */
-	context.glob = NULL;
+	context.root = NULL;
 	context.active_fns = NIL;	/* nothing being recursively simplified */
 	context.case_val = NULL;	/* no CASE being examined */
 	context.estimate = true;	/* unsafe transformations OK */
@@ -4123,8 +4118,8 @@ inline_function(Oid funcid, Oid result_type, Oid result_collid,
 	 * Since there is now no trace of the function in the plan tree, we must
 	 * explicitly record the plan's dependency on the function.
 	 */
-	if (context->glob)
-		record_plan_function_dependency(context->glob, funcid);
+	if (context->root)
+		record_plan_function_dependency(context->root, funcid);
 
 	/*
 	 * Recursively try to simplify the modified expression.  Here we must add
@@ -4559,7 +4554,7 @@ inline_set_returning_function(PlannerInfo *root, RangeTblEntry *rte)
 	 * Since there is now no trace of the function in the plan tree, we must
 	 * explicitly record the plan's dependency on the function.
 	 */
-	record_plan_function_dependency(root->glob, func_oid);
+	record_plan_function_dependency(root, func_oid);
 
 	return querytree;
 

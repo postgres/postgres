@@ -791,11 +791,10 @@ set_subquery_pathlist(PlannerInfo *root, RelOptInfo *rel,
 									root,
 									false, tuple_fraction,
 									&subroot);
-	rel->subrtable = subroot->parse->rtable;
-	rel->subrowmark = subroot->rowMarks;
+	rel->subroot = subroot;
 
 	/* Mark rel with estimated output rows, width, etc */
-	set_subquery_size_estimates(root, rel, subroot);
+	set_subquery_size_estimates(root, rel);
 
 	/* Convert subquery pathkeys to outer representation */
 	pathkeys = convert_subquery_pathkeys(root, rel, subroot->query_pathkeys);

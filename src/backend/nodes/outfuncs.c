@@ -489,8 +489,6 @@ _outSubqueryScan(StringInfo str, SubqueryScan *node)
 	_outScanInfo(str, (Scan *) node);
 
 	WRITE_NODE_FIELD(subplan);
-	WRITE_NODE_FIELD(subrtable);
-	WRITE_NODE_FIELD(subrowmark);
 }
 
 static void
@@ -1656,8 +1654,7 @@ _outPlannerGlobal(StringInfo str, PlannerGlobal *node)
 	/* NB: this isn't a complete set of fields */
 	WRITE_NODE_FIELD(paramlist);
 	WRITE_NODE_FIELD(subplans);
-	WRITE_NODE_FIELD(subrtables);
-	WRITE_NODE_FIELD(subrowmarks);
+	WRITE_NODE_FIELD(subroots);
 	WRITE_BITMAPSET_FIELD(rewindPlanIDs);
 	WRITE_NODE_FIELD(finalrtable);
 	WRITE_NODE_FIELD(finalrowmarks);
@@ -1734,8 +1731,7 @@ _outRelOptInfo(StringInfo str, RelOptInfo *node)
 	WRITE_UINT_FIELD(pages);
 	WRITE_FLOAT_FIELD(tuples, "%.0f");
 	WRITE_NODE_FIELD(subplan);
-	WRITE_NODE_FIELD(subrtable);
-	WRITE_NODE_FIELD(subrowmark);
+	WRITE_NODE_FIELD(subroot);
 	WRITE_NODE_FIELD(baserestrictinfo);
 	WRITE_NODE_FIELD(joininfo);
 	WRITE_BOOL_FIELD(has_eclass_joins);

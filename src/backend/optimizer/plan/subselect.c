@@ -52,8 +52,7 @@ typedef struct finalize_primnode_context
 } finalize_primnode_context;
 
 
-static Node *build_subplan(PlannerInfo *root, Plan *plan,
-			  List *rtable, List *rowmarks,
+static Node *build_subplan(PlannerInfo *root, Plan *plan, PlannerInfo *subroot,
 			  SubLinkType subLinkType, Node *testexpr,
 			  bool adjust_testexpr, bool unknownEqFalse);
 static List *generate_subquery_params(PlannerInfo *root, List *tlist,
@@ -389,8 +388,7 @@ make_subplan(PlannerInfo *root, Query *orig_subquery, SubLinkType subLinkType,
 							&subroot);
 
 	/* And convert to SubPlan or InitPlan format. */
-	result = build_subplan(root, plan,
-						   subroot->parse->rtable, subroot->rowMarks,
+	result = build_subplan(root, plan, subroot,
 						   subLinkType, testexpr, true, isTopQual);
 
 	/*
@@ -430,9 +428,7 @@ make_subplan(PlannerInfo *root, Query *orig_subquery, SubLinkType subLinkType,
 				AlternativeSubPlan *asplan;
 
 				/* OK, convert to SubPlan format. */
-				hashplan = (SubPlan *) build_subplan(root, plan,
-													 subroot->parse->rtable,
-													 subroot->rowMarks,
+				hashplan = (SubPlan *) build_subplan(root, plan, subroot,
 													 ANY_SUBLINK, newtestexpr,
 													 false, true);
 				/* Check we got what we expected */
@@ -460,7 +456,7 @@ make_subplan(PlannerInfo *root, Query *orig_subquery, SubLinkType subLinkType,
  * as explained in the comments for make_subplan.
  */
 static Node *
-build_subplan(PlannerInfo *root, Plan *plan, List *rtable, List *rowmarks,
+build_subplan(PlannerInfo *root, Plan *plan, PlannerInfo *subroot,
 			  SubLinkType subLinkType, Node *testexpr,
 			  bool adjust_testexpr, bool unknownEqFalse)
 {
@@ -644,11 +640,10 @@ build_subplan(PlannerInfo *root, Plan *plan, List *rtable, List *rowmarks,
 	}
 
 	/*
-	 * Add the subplan and its rtable to the global lists.
+	 * Add the subplan and its PlannerInfo to the global lists.
 	 */
 	root->glob->subplans = lappend(root->glob->subplans, plan);
-	root->glob->subrtables = lappend(root->glob->subrtables, rtable);
-	root->glob->subrowmarks = lappend(root->glob->subrowmarks, rowmarks);
+	root->glob->subroots = lappend(root->glob->subroots, subroot);
 	splan->plan_id = list_length(root->glob->subplans);
 
 	if (isInitPlan)
@@ -1018,13 +1013,10 @@ SS_process_ctes(PlannerInfo *root)
 		splan->setParam = list_make1_int(prm->paramid);
 
 		/*
-		 * Add the subplan and its rtable to the global lists.
+		 * Add the subplan and its PlannerInfo to the global lists.
 		 */
 		root->glob->subplans = lappend(root->glob->subplans, plan);
-		root->glob->subrtables = lappend(root->glob->subrtables,
-										 subroot->parse->rtable);
-		root->glob->subrowmarks = lappend(root->glob->subrowmarks,
-										  subroot->rowMarks);
+		root->glob->subroots = lappend(root->glob->subroots, subroot);
 		splan->plan_id = list_length(root->glob->subplans);
 
 		root->init_plans = lappend(root->init_plans, splan);
@@ -2406,14 +2398,10 @@ SS_make_initplan_from_plan(PlannerInfo *root, Plan *plan,
 	SS_finalize_plan(root, plan, false);
 
 	/*
-	 * Add the subplan and its rtable to the global lists.
+	 * Add the subplan and its PlannerInfo to the global lists.
 	 */
-	root->glob->subplans = lappend(root->glob->subplans,
-								   plan);
-	root->glob->subrtables = lappend(root->glob->subrtables,
-									 root->parse->rtable);
-	root->glob->subrowmarks = lappend(root->glob->subrowmarks,
-									  root->rowMarks);
+	root->glob->subplans = lappend(root->glob->subplans, plan);
+	root->glob->subroots = lappend(root->glob->subroots, root);
 
 	/*
 	 * Create a SubPlan node and add it to the outer list of InitPlans. Note
