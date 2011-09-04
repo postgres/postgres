@@ -1654,7 +1654,6 @@ _outPlannerGlobal(StringInfo str, PlannerGlobal *node)
 	/* NB: this isn't a complete set of fields */
 	WRITE_NODE_FIELD(paramlist);
 	WRITE_NODE_FIELD(subplans);
-	WRITE_NODE_FIELD(subroots);
 	WRITE_BITMAPSET_FIELD(rewindPlanIDs);
 	WRITE_NODE_FIELD(finalrtable);
 	WRITE_NODE_FIELD(finalrowmarks);
