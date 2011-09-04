@@ -15,7 +15,6 @@
 #define _PROC_H_
 
 #include "access/xlog.h"
-#include "replication/syncrep.h"
 #include "storage/latch.h"
 #include "storage/lock.h"
 #include "storage/pg_sema.h"
