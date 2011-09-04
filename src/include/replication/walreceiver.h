@@ -12,6 +12,7 @@
 #ifndef _WALRECEIVER_H
 #define _WALRECEIVER_H
 
+#include "access/xlog.h"
 #include "access/xlogdefs.h"
 #include "storage/spin.h"
 #include "pgtime.h"
@@ -26,6 +27,9 @@ extern bool hot_standby_feedback;
  * XXX: Should this move to pg_config_manual.h?
  */
 #define MAXCONNINFO		1024
+
+/* Can we allow the standby to accept replication connection from another standby? */
+#define AllowCascadeReplication() (EnableHotStandby && max_wal_senders > 0)
 
 /*
  * Values for WalRcv->walRcvState.
