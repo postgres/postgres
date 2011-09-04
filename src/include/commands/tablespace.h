@@ -15,6 +15,7 @@
 #define TABLESPACE_H
 
 #include "access/xlog.h"
+#include "nodes/parsenodes.h"
 
 /* XLOG stuff */
 #define XLOG_TBLSPC_CREATE		0x00

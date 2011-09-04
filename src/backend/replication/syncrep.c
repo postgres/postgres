@@ -47,7 +47,10 @@
 
 #include "access/xact.h"
 #include "miscadmin.h"
+#include "replication/syncrep.h"
+#include "replication/walsender.h"
 #include "storage/pmsignal.h"
+#include "storage/proc.h"
 #include "tcop/tcopprot.h"
 #include "utils/builtins.h"
 #include "utils/ps_status.h"
@@ -57,6 +60,9 @@ char	   *SyncRepStandbyNames;
 
 #define SyncStandbysDefined() \
 	(SyncRepStandbyNames != NULL && SyncRepStandbyNames[0] != '\0')
+
+#define SyncRepRequested() \
+	(max_wal_senders > 0 && synchronous_commit > SYNCHRONOUS_COMMIT_LOCAL_FLUSH)
 
 static bool announce_next_takeover = true;
 

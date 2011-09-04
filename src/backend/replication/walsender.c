@@ -47,6 +47,7 @@
 #include "miscadmin.h"
 #include "nodes/replnodes.h"
 #include "replication/basebackup.h"
+#include "replication/syncrep.h"
 #include "replication/walprotocol.h"
 #include "replication/walreceiver.h"
 #include "replication/walsender.h"

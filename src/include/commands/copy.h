@@ -15,6 +15,8 @@
 #define COPY_H
 
 #include "nodes/execnodes.h"
+#include "nodes/parsenodes.h"
+#include "tcop/dest.h"
 
 /* CopyStateData is private in commands/copy.c */
 typedef struct CopyStateData *CopyState;

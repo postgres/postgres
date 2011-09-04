@@ -12,10 +12,9 @@
 #ifndef _WALSENDER_H
 #define _WALSENDER_H
 
-#include "fmgr.h"
+#include "access/xlog.h"
 #include "nodes/nodes.h"
 #include "storage/latch.h"
-#include "replication/syncrep.h"
 #include "storage/shmem.h"
 #include "storage/spin.h"
 

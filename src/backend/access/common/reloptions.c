@@ -23,8 +23,10 @@
 #include "commands/defrem.h"
 #include "commands/tablespace.h"
 #include "nodes/makefuncs.h"
+#include "utils/array.h"
 #include "utils/attoptcache.h"
 #include "utils/builtins.h"
+#include "utils/guc.h"
 #include "utils/memutils.h"
 #include "utils/rel.h"
 

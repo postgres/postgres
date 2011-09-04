@@ -33,6 +33,7 @@
 #include "replication/walreceiver.h"
 #include "storage/bufmgr.h"
 #include "storage/ipc.h"
+#include "storage/proc.h"
 #include "tcop/tcopprot.h"
 #include "utils/builtins.h"
 #include "utils/fmgroids.h"

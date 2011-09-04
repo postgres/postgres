@@ -15,6 +15,7 @@
 #define DBCOMMANDS_H
 
 #include "access/xlog.h"
+#include "nodes/parsenodes.h"
 
 /* XLOG stuff */
 #define XLOG_DBASE_CREATE		0x00

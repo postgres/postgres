@@ -30,6 +30,7 @@
 #include "pgstat.h"
 #include "storage/fd.h"
 #include "storage/ipc.h"
+#include "storage/spin.h"
 #include "tcop/utility.h"
 #include "utils/builtins.h"
 

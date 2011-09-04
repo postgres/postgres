@@ -13,14 +13,7 @@
 #ifndef _SYNCREP_H
 #define _SYNCREP_H
 
-#include "access/xlog.h"
-#include "storage/proc.h"
-#include "storage/shmem.h"
-#include "storage/spin.h"
 #include "utils/guc.h"
-
-#define SyncRepRequested() \
-	(max_wal_senders > 0 && synchronous_commit > SYNCHRONOUS_COMMIT_LOCAL_FLUSH)
 
 /* syncRepState */
 #define SYNC_REP_NOT_WAITING		0
@@ -45,6 +38,7 @@ extern void SyncRepUpdateSyncStandbysDefined(void);
 
 /* called by various procs */
 extern int	SyncRepWakeQueue(bool all);
+
 extern bool check_synchronous_standby_names(char **newval, void **extra, GucSource source);
 
 #endif   /* _SYNCREP_H */

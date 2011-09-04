@@ -18,6 +18,7 @@
 #include "commands/trigger.h"
 #include "tsearch/ts_utils.h"
 #include "utils/builtins.h"
+#include "utils/guc.h"
 #include "utils/syscache.h"
 
 PG_MODULE_MAGIC;

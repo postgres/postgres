@@ -14,6 +14,7 @@
 #define TRIGGER_H
 
 #include "nodes/execnodes.h"
+#include "nodes/parsenodes.h"
 
 /*
  * TriggerData is the node type that is passed as fmgr "context" info

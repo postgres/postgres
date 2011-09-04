@@ -51,8 +51,11 @@
 #include "postmaster/walwriter.h"
 #include "storage/bufmgr.h"
 #include "storage/ipc.h"
+#include "storage/lwlock.h"
 #include "storage/pmsignal.h"
 #include "storage/smgr.h"
+#include "utils/guc.h"
+#include "utils/hsearch.h"
 #include "utils/memutils.h"
 #include "utils/resowner.h"
 

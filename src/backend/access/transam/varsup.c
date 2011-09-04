@@ -21,6 +21,7 @@
 #include "miscadmin.h"
 #include "postmaster/autovacuum.h"
 #include "storage/pmsignal.h"
+#include "storage/proc.h"
 #include "utils/syscache.h"
 
 

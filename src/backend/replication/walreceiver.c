@@ -43,9 +43,11 @@
 #include "miscadmin.h"
 #include "replication/walprotocol.h"
 #include "replication/walreceiver.h"
+#include "replication/walsender.h"
 #include "storage/ipc.h"
 #include "storage/pmsignal.h"
 #include "storage/procarray.h"
+#include "utils/guc.h"
 #include "utils/ps_status.h"
 #include "utils/resowner.h"
 

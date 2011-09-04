@@ -33,6 +33,7 @@
 #include "parser/parse_relation.h"
 #include "parser/parse_target.h"
 #include "rewrite/rewriteManip.h"
+#include "utils/guc.h"
 #include "utils/lsyscache.h"
 #include "utils/rel.h"
 

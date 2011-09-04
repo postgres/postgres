@@ -20,7 +20,9 @@
 #define TCOPPROT_H
 
 #include "executor/execdesc.h"
+#include "nodes/parsenodes.h"
 #include "storage/procsignal.h"
+#include "utils/guc.h"
 
 
 /* Required daylight between max_stack_depth and the kernel limit, in bytes */

@@ -17,6 +17,8 @@
 #define XLOG_INTERNAL_H
 
 #include "access/xlog.h"
+#include "storage/block.h"
+#include "storage/relfilenode.h"
 
 
 /*

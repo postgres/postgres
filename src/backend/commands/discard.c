@@ -18,6 +18,7 @@
 #include "commands/async.h"
 #include "commands/discard.h"
 #include "commands/prepare.h"
+#include "utils/guc.h"
 #include "utils/portal.h"
 
 static void DiscardAll(bool isTopLevel);

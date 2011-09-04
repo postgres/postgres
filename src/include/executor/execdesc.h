@@ -16,6 +16,7 @@
 #define EXECDESC_H
 
 #include "nodes/execnodes.h"
+#include "tcop/dest.h"
 
 
 /* ----------------

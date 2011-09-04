@@ -25,6 +25,7 @@
 #include "nodes/makefuncs.h"
 #include "parser/parse_type.h"
 #include "utils/builtins.h"
+#include "utils/guc.h"
 #include "utils/lsyscache.h"
 #include "utils/memutils.h"
 #include "utils/rel.h"

@@ -15,6 +15,8 @@
 #define STORAGE_H
 
 #include "access/xlog.h"
+#include "storage/block.h"
+#include "storage/relfilenode.h"
 #include "utils/relcache.h"
 
 extern void RelationCreateStorage(RelFileNode rnode, char relpersistence);

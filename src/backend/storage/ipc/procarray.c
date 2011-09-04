@@ -52,6 +52,7 @@
 #include "access/twophase.h"
 #include "miscadmin.h"
 #include "storage/procarray.h"
+#include "storage/spin.h"
 #include "utils/builtins.h"
 #include "utils/snapmgr.h"
 

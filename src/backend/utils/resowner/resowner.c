@@ -22,6 +22,7 @@
 
 #include "access/hash.h"
 #include "storage/predicate.h"
+#include "storage/proc.h"
 #include "utils/memutils.h"
 #include "utils/rel.h"
 #include "utils/snapmgr.h"

@@ -30,6 +30,7 @@
 #include "executor/nodeTidscan.h"
 #include "optimizer/clauses.h"
 #include "storage/bufmgr.h"
+#include "utils/array.h"
 #include "utils/rel.h"
 
 

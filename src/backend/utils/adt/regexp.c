@@ -32,6 +32,7 @@
 #include "catalog/pg_type.h"
 #include "funcapi.h"
 #include "regex/regex.h"
+#include "utils/array.h"
 #include "utils/builtins.h"
 
 #define PG_GETARG_TEXT_PP_IF_EXISTS(_n) \

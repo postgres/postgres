@@ -18,6 +18,7 @@
 
 #include "funcapi.h"
 #include "libpq/pqformat.h"
+#include "utils/array.h"
 #include "utils/builtins.h"
 #include "utils/datum.h"
 #include "utils/lsyscache.h"

@@ -13,6 +13,7 @@
 #ifndef SPI_H
 #define SPI_H
 
+#include "nodes/parsenodes.h"
 #include "utils/portal.h"
 
 

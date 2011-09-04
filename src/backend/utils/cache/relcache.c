@@ -62,6 +62,7 @@
 #include "rewrite/rewriteDefine.h"
 #include "storage/lmgr.h"
 #include "storage/smgr.h"
+#include "utils/array.h"
 #include "utils/builtins.h"
 #include "utils/fmgroids.h"
 #include "utils/inval.h"

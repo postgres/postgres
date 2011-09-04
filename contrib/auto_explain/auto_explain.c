@@ -14,6 +14,7 @@
 
 #include "commands/explain.h"
 #include "executor/instrument.h"
+#include "utils/guc.h"
 
 PG_MODULE_MAGIC;
 
