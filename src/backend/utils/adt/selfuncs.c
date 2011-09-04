@@ -244,6 +244,7 @@ var_eq_const(VariableStatData *vardata, Oid operator,
 			 bool varonleft)
 {
 	double		selec;
+	bool		isdefault;
 
 	/*
 	 * If the constant is NULL, assume operator is strict and return zero, ie,
@@ -344,7 +345,7 @@ var_eq_const(VariableStatData *vardata, Oid operator,
 			 * all the not-common values share this remaining fraction
 			 * equally, so we divide by the number of other distinct values.
 			 */
-			otherdistinct = get_variable_numdistinct(vardata) - nnumbers;
+			otherdistinct = get_variable_numdistinct(vardata, &isdefault) - nnumbers;
 			if (otherdistinct > 1)
 				selec /= otherdistinct;
 
@@ -366,7 +367,7 @@ var_eq_const(VariableStatData *vardata, Oid operator,
 		 * of distinct values and assuming they are equally common. (The guess
 		 * is unlikely to be very good, but we do know a few special cases.)
 		 */
-		selec = 1.0 / get_variable_numdistinct(vardata);
+		selec = 1.0 / get_variable_numdistinct(vardata, &isdefault);
 	}
 
 	/* result should be in range, but make sure... */
@@ -384,6 +385,7 @@ var_eq_non_const(VariableStatData *vardata, Oid operator,
 				 bool varonleft)
 {
 	double		selec;
+	bool		isdefault;
 
 	/*
 	 * If we matched the var to a unique index, assume there is exactly one
@@ -414,7 +416,7 @@ var_eq_non_const(VariableStatData *vardata, Oid operator,
 		 * idea?)
 		 */
 		selec = 1.0 - stats->stanullfrac;
-		ndistinct = get_variable_numdistinct(vardata);
+		ndistinct = get_variable_numdistinct(vardata, &isdefault);
 		if (ndistinct > 1)
 			selec /= ndistinct;
 
@@ -441,7 +443,7 @@ var_eq_non_const(VariableStatData *vardata, Oid operator,
 		 * of distinct values and assuming they are equally common. (The guess
 		 * is unlikely to be very good, but we do know a few special cases.)
 		 */
-		selec = 1.0 / get_variable_numdistinct(vardata);
+		selec = 1.0 / get_variable_numdistinct(vardata, &isdefault);
 	}
 
 	/* result should be in range, but make sure... */
@@ -2071,6 +2073,8 @@ eqjoinsel_inner(Oid operator,
 	double		selec;
 	double		nd1;
 	double		nd2;
+	bool		isdefault1;
+	bool		isdefault2;
 	Form_pg_statistic stats1 = NULL;
 	Form_pg_statistic stats2 = NULL;
 	bool		have_mcvs1 = false;
@@ -2084,8 +2088,8 @@ eqjoinsel_inner(Oid operator,
 	float4	   *numbers2 = NULL;
 	int			nnumbers2 = 0;
 
-	nd1 = get_variable_numdistinct(vardata1);
-	nd2 = get_variable_numdistinct(vardata2);
+	nd1 = get_variable_numdistinct(vardata1, &isdefault1);
+	nd2 = get_variable_numdistinct(vardata2, &isdefault2);
 
 	if (HeapTupleIsValid(vardata1->statsTuple))
 	{
@@ -2296,6 +2300,8 @@ eqjoinsel_semi(Oid operator,
 	double		selec;
 	double		nd1;
 	double		nd2;
+	bool		isdefault1;
+	bool		isdefault2;
 	Form_pg_statistic stats1 = NULL;
 	bool		have_mcvs1 = false;
 	Datum	   *values1 = NULL;
@@ -2308,8 +2314,8 @@ eqjoinsel_semi(Oid operator,
 	float4	   *numbers2 = NULL;
 	int			nnumbers2 = 0;
 
-	nd1 = get_variable_numdistinct(vardata1);
-	nd2 = get_variable_numdistinct(vardata2);
+	nd1 = get_variable_numdistinct(vardata1, &isdefault1);
+	nd2 = get_variable_numdistinct(vardata2, &isdefault2);
 
 	/*
 	 * We clamp nd2 to be not more than what we estimate the inner relation's
@@ -2441,7 +2447,7 @@ eqjoinsel_semi(Oid operator,
 		 * nd2 is default, punt and assume half of the uncertain rows have
 		 * join partners.
 		 */
-		if (nd1 != DEFAULT_NUM_DISTINCT && nd2 != DEFAULT_NUM_DISTINCT)
+		if (!isdefault1 && !isdefault2)
 		{
 			nd1 -= nmatches;
 			nd2 -= nmatches;
@@ -2464,7 +2470,7 @@ eqjoinsel_semi(Oid operator,
 		 */
 		double		nullfrac1 = stats1 ? stats1->stanullfrac : 0.0;
 
-		if (nd1 != DEFAULT_NUM_DISTINCT && nd2 != DEFAULT_NUM_DISTINCT)
+		if (!isdefault1 && !isdefault2)
 		{
 			if (nd1 <= nd2 || nd2 < 0)
 				selec = 1.0 - nullfrac1;
@@ -2955,9 +2961,10 @@ add_unique_group_var(PlannerInfo *root, List *varinfos,
 {
 	GroupVarInfo *varinfo;
 	double		ndistinct;
+	bool		isdefault;
 	ListCell   *lc;
 
-	ndistinct = get_variable_numdistinct(vardata);
+	ndistinct = get_variable_numdistinct(vardata, &isdefault);
 
 	/* cannot use foreach here because of possible list_delete */
 	lc = list_head(varinfos);
@@ -3292,14 +3299,23 @@ estimate_hash_bucketsize(PlannerInfo *root, Node *hashkey, double nbuckets)
 				stanullfrac,
 				mcvfreq,
 				avgfreq;
+	bool		isdefault;
 	float4	   *numbers;
 	int			nnumbers;
 
 	examine_variable(root, hashkey, 0, &vardata);
 
-	/* Get number of distinct values and fraction that are null */
-	ndistinct = get_variable_numdistinct(&vardata);
+	/* Get number of distinct values */
+	ndistinct = get_variable_numdistinct(&vardata, &isdefault);
 
+	/* If ndistinct isn't real, punt and return 0.1, per comments above */
+	if (isdefault)
+	{
+		ReleaseVariableStats(vardata);
+		return (Selectivity) 0.1;
+	}
+
+	/* Get fraction that are null */
 	if (HeapTupleIsValid(vardata.statsTuple))
 	{
 		Form_pg_statistic stats;
@@ -3308,19 +3324,7 @@ estimate_hash_bucketsize(PlannerInfo *root, Node *hashkey, double nbuckets)
 		stanullfrac = stats->stanullfrac;
 	}
 	else
-	{
-		/*
-		 * Believe a default ndistinct only if it came from stats. Otherwise
-		 * punt and return 0.1, per comments above.
-		 */
-		if (ndistinct == DEFAULT_NUM_DISTINCT)
-		{
-			ReleaseVariableStats(vardata);
-			return (Selectivity) 0.1;
-		}
-
 		stanullfrac = 0.0;
-	}
 
 	/* Compute avg freq of all distinct data values in raw relation */
 	avgfreq = (1.0 - stanullfrac) / ndistinct;
@@ -4414,15 +4418,19 @@ examine_simple_variable(PlannerInfo *root, Var *var,
  *	  Estimate the number of distinct values of a variable.
  *
  * vardata: results of examine_variable
+ * *isdefault: set to TRUE if the result is a default rather than based on
+ * anything meaningful.
  *
  * NB: be careful to produce an integral result, since callers may compare
  * the result to exact integer counts.
  */
 double
-get_variable_numdistinct(VariableStatData *vardata)
+get_variable_numdistinct(VariableStatData *vardata, bool *isdefault)
 {
 	double		stadistinct;
 	double		ntuples;
+
+	*isdefault = false;
 
 	/*
 	 * Determine the stadistinct value to use.	There are cases where we can
@@ -4496,10 +4504,16 @@ get_variable_numdistinct(VariableStatData *vardata)
 	 * Otherwise we need to get the relation size; punt if not available.
 	 */
 	if (vardata->rel == NULL)
+	{
+		*isdefault = true;
 		return DEFAULT_NUM_DISTINCT;
+	}
 	ntuples = vardata->rel->tuples;
 	if (ntuples <= 0.0)
+	{
+		*isdefault = true;
 		return DEFAULT_NUM_DISTINCT;
+	}
 
 	/*
 	 * If we had a relative estimate, use that.
@@ -4509,11 +4523,13 @@ get_variable_numdistinct(VariableStatData *vardata)
 
 	/*
 	 * With no data, estimate ndistinct = ntuples if the table is small, else
-	 * use default.
+	 * use default.  We use DEFAULT_NUM_DISTINCT as the cutoff for "small"
+	 * so that the behavior isn't discontinuous.
 	 */
 	if (ntuples < DEFAULT_NUM_DISTINCT)
 		return ntuples;
 
+	*isdefault = true;
 	return DEFAULT_NUM_DISTINCT;
 }
 
