@@ -168,6 +168,8 @@ static double convert_one_bytea_to_scalar(unsigned char *value, int valuelen,
 							int rangelo, int rangehi);
 static char *convert_string_datum(Datum value, Oid typid);
 static double convert_timevalue_to_scalar(Datum value, Oid typid);
+static void examine_simple_variable(PlannerInfo *root, Var *var,
+						VariableStatData *vardata);
 static bool get_variable_range(PlannerInfo *root, VariableStatData *vardata,
 				   Oid sortop, Datum *min, Datum *max);
 static bool get_actual_variable_range(PlannerInfo *root,
@@ -4153,46 +4155,16 @@ examine_variable(PlannerInfo *root, Node *node, int varRelid,
 		(varRelid == 0 || varRelid == ((Var *) basenode)->varno))
 	{
 		Var		   *var = (Var *) basenode;
-		RangeTblEntry *rte;
 
+		/* Set up result fields other than the stats tuple */
 		vardata->var = basenode;	/* return Var without relabeling */
 		vardata->rel = find_base_rel(root, var->varno);
 		vardata->atttype = var->vartype;
 		vardata->atttypmod = var->vartypmod;
 		vardata->isunique = has_unique_index(vardata->rel, var->varattno);
 
-		rte = root->simple_rte_array[var->varno];
-
-		if (get_relation_stats_hook &&
-			(*get_relation_stats_hook) (root, rte, var->varattno, vardata))
-		{
-			/*
-			 * The hook took control of acquiring a stats tuple.  If it did
-			 * supply a tuple, it'd better have supplied a freefunc.
-			 */
-			if (HeapTupleIsValid(vardata->statsTuple) &&
-				!vardata->freefunc)
-				elog(ERROR, "no function provided to release variable stats with");
-		}
-		else if (rte->rtekind == RTE_RELATION)
-		{
-			vardata->statsTuple = SearchSysCache3(STATRELATTINH,
-												ObjectIdGetDatum(rte->relid),
-												Int16GetDatum(var->varattno),
-												  BoolGetDatum(rte->inh));
-			vardata->freefunc = ReleaseSysCache;
-		}
-		else
-		{
-			/*
-			 * XXX This means the Var comes from a JOIN or sub-SELECT. Later
-			 * add code to dig down into the join etc and see if we can trace
-			 * the variable to something with stats.  (But beware of
-			 * sub-SELECTs with DISTINCT/GROUP BY/etc.	Perhaps there are no
-			 * cases where this would really be useful, because we'd have
-			 * flattened the subselect if it is??)
-			 */
-		}
+		/* Try to locate some stats */
+		examine_simple_variable(root, var, vardata);
 
 		return;
 	}
@@ -4331,6 +4303,109 @@ examine_variable(PlannerInfo *root, Node *node, int varRelid,
 			if (vardata->statsTuple)
 				break;
 		}
+	}
+}
+
+/*
+ * examine_simple_variable
+ *		Handle a simple Var for examine_variable
+ *
+ * This is split out as a subroutine so that we can recurse to deal with
+ * Vars referencing subqueries.
+ *
+ * We already filled in all the fields of *vardata except for the stats tuple.
+ */
+static void
+examine_simple_variable(PlannerInfo *root, Var *var,
+						VariableStatData *vardata)
+{
+	RangeTblEntry *rte = root->simple_rte_array[var->varno];
+
+	Assert(IsA(rte, RangeTblEntry));
+
+	if (get_relation_stats_hook &&
+		(*get_relation_stats_hook) (root, rte, var->varattno, vardata))
+	{
+		/*
+		 * The hook took control of acquiring a stats tuple.  If it did supply
+		 * a tuple, it'd better have supplied a freefunc.
+		 */
+		if (HeapTupleIsValid(vardata->statsTuple) &&
+			!vardata->freefunc)
+			elog(ERROR, "no function provided to release variable stats with");
+	}
+	else if (rte->rtekind == RTE_RELATION)
+	{
+		/*
+		 * Plain table or parent of an inheritance appendrel, so look up the
+		 * column in pg_statistic
+		 */
+		vardata->statsTuple = SearchSysCache3(STATRELATTINH,
+											  ObjectIdGetDatum(rte->relid),
+											  Int16GetDatum(var->varattno),
+											  BoolGetDatum(rte->inh));
+		vardata->freefunc = ReleaseSysCache;
+	}
+	else if (rte->rtekind == RTE_SUBQUERY && !rte->inh)
+	{
+		/*
+		 * Plain subquery (not one that was converted to an appendrel).
+		 *
+		 * Punt if subquery uses set operations, GROUP BY, or DISTINCT --- any
+		 * of these will mash underlying columns' stats beyond recognition.
+		 * (Set ops are particularly nasty; if we forged ahead, we would
+		 * return stats relevant to only the leftmost subselect...)
+		 */
+		Query	   *subquery = rte->subquery;
+		RelOptInfo *rel;
+		TargetEntry *ste;
+
+		if (subquery->setOperations ||
+			subquery->groupClause ||
+			subquery->distinctClause)
+			return;
+
+		/*
+		 * OK, fetch RelOptInfo for subquery.  Note that we don't change the
+		 * rel returned in vardata, since caller expects it to be a rel of the
+		 * caller's query level.  Because we might already be recursing, we
+		 * can't use that rel pointer either, but have to look up the Var's
+		 * rel afresh.
+		 */
+		rel = find_base_rel(root, var->varno);
+
+		/* Subquery should have been planned already */
+		Assert(rel->subroot && IsA(rel->subroot, PlannerInfo));
+
+		/* Get the subquery output expression referenced by the upper Var */
+		ste = get_tle_by_resno(subquery->targetList, var->varattno);
+		if (ste == NULL || ste->resjunk)
+			elog(ERROR, "subquery %s does not have attribute %d",
+				 rte->eref->aliasname, var->varattno);
+		var = (Var *) ste->expr;
+
+		/* Can only handle a simple Var of subquery's query level */
+		if (var && IsA(var, Var) &&
+			var->varlevelsup == 0)
+		{
+			/*
+			 * OK, recurse into the subquery.  Note that the original setting
+			 * of vardata->isunique (which will surely be false) is left
+			 * unchanged in this situation.  That's what we want, since even
+			 * if the underlying column is unique, the subquery may have
+			 * joined to other tables in a way that creates duplicates.
+			 */
+			examine_simple_variable(rel->subroot, var, vardata);
+		}
+	}
+	else
+	{
+		/*
+		 * Otherwise, the Var comes from a FUNCTION, VALUES, or CTE RTE.  (We
+		 * won't see RTE_JOIN here because join alias Vars have already been
+		 * flattened.)  There's not much we can do with function outputs, but
+		 * maybe someday try to be smarter about VALUES and/or CTEs.
+		 */
 	}
 }
 
