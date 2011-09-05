@@ -1,5 +1,5 @@
 # <pre>
-# @(#)australasia	8.23
+# @(#)australasia	8.25
 # This file is in the public domain, so clarified as of
 # 2009-05-17 by Arthur David Olson.
 
@@ -529,12 +529,57 @@ Zone Pacific/Pago_Pago	 12:37:12 -	LMT	1879 Jul  5
 # Margaret Fruean ACTING CHIEF EXECUTIVE OFFICER MINISTRY OF COMMERCE,
 # INDUSTRY AND LABOUR 28th February 2011
 
+# From David Zuelke (2011-05-09):
+# Subject: Samoa to move timezone from east to west of international date line
+# 
+# <a href="http://www.morningstar.co.uk/uk/markets/newsfeeditem.aspx?id=138501958347963">
+# http://www.morningstar.co.uk/uk/markets/newsfeeditem.aspx?id=138501958347963
+# </a>
+
+# From Mark Sim-Smith (2011-08-17):
+# I have been in contact with Leilani Tuala Warren from the Samoa Law
+# Reform Commission, and she has sent me a copy of the Bill that she
+# confirmed has been passed...Most of the sections are about maps rather
+# than the time zone change, but I'll paste the relevant bits below. But
+# the essence is that at midnight 29 Dec (UTC-11 I suppose), Samoa
+# changes from UTC-11 to UTC+13:
+#
+# International Date Line Bill 2011
+#
+# AN ACT to provide for the change to standard time in Samoa and to make
+# consequential amendments to the position of the International Date
+# Line, and for related purposes.
+#
+# BE IT ENACTED by the Legislative Assembly of Samoa in Parliament
+# assembled as follows:
+#
+# 1. Short title and commencement-(1) This Act may be cited as the
+# International Date Line Act 2011. (2) Except for section 5(3) this Act
+# commences at 12 o'clock midnight, on Thursday 29th December 2011. (3)
+# Section 5(3) commences on the date of assent by the Head of State.
+#
+# [snip]
+#
+# 3. Interpretation - [snip] "Samoa standard time" in this Act and any
+# other statute of Samoa which refers to 'Samoa standard time' means the
+# time 13 hours in advance of Co-ordinated Universal Time.
+#
+# 4. Samoa standard time - (1) Upon the commencement of this Act, Samoa
+# standard time shall be set at 13 hours in advance of Co-ordinated
+# Universal Time for the whole of Samoa. (2) All references to Samoa's
+# time zone and to Samoa standard time in Samoa in all legislation and
+# instruments after the commencement of this Act shall be references to
+# Samoa standard time as provided for in this Act. (3) Nothing in this
+# Act affects the provisions of the Daylight Saving Act 2009, except that
+# it defines Samoa standard time....
+
 Zone Pacific/Apia	 12:33:04 -	LMT	1879 Jul  5
 			-11:26:56 -	LMT	1911
 			-11:30	-	SAMT	1950		# Samoa Time
 			-11:00	-	WST	2010 Sep 26
 			-11:00	1:00	WSDT	2011 Apr 2 4:00
-			-11:00	-	WST
+			-11:00	-	WST	2011 Dec 30
+			 13:00	-	WST
 
 # Solomon Is
 # excludes Bougainville, for which see Papua New Guinea
