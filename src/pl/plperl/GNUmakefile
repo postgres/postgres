@@ -57,17 +57,21 @@ include $(top_srcdir)/src/Makefile.shlib
 plperl.o: perlchunks.h plperl_opmask.h
 
 plperl_opmask.h: plperl_opmask.pl
+	@if [ x"$(perl_privlibexp)" = x"" ]; then echo "configure switch --with-perl was not specified."; exit 1; fi
 	$(PERL) $< $@
 
-perlchunks.h: $(PERLCHUNKS) 
+perlchunks.h: $(PERLCHUNKS)
+	@if [ x"$(perl_privlibexp)" = x"" ]; then echo "configure switch --with-perl was not specified."; exit 1; fi
 	$(PERL) $(srcdir)/text2macro.pl --strip='^(\#.*|\s*)$$' $^ > $@
 
 all: all-lib
 
 SPI.c: SPI.xs
+	@if [ x"$(perl_privlibexp)" = x"" ]; then echo "configure switch --with-perl was not specified."; exit 1; fi
 	$(PERL) $(perl_privlibexp)/ExtUtils/xsubpp -typemap $(perl_privlibexp)/ExtUtils/typemap $< >$@
 
 Util.c: Util.xs
+	@if [ x"$(perl_privlibexp)" = x"" ]; then echo "configure switch --with-perl was not specified."; exit 1; fi
 	$(PERL) $(perl_privlibexp)/ExtUtils/xsubpp -typemap $(perl_privlibexp)/ExtUtils/typemap $< >$@
 
 install: all installdirs install-lib
