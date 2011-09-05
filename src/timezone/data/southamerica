@@ -1,5 +1,5 @@
 # <pre>
-# @(#)southamerica	8.48
+# @(#)southamerica	8.50
 # This file is in the public domain, so clarified as of
 # 2009-05-17 by Arthur David Olson.
 
@@ -745,7 +745,7 @@ Zone	America/La_Paz	-4:32:36 -	LMT	1890
 #
 # As a result of the above Decree I believe the America/Rio_Branco
 # timezone shall be modified from UTC-5 to UTC-4 and a new timezone shall
-# be created to represent the the west side of the Para State. I
+# be created to represent the...west side of the Para State. I
 # suggest this new timezone be called Santarem as the most
 # important/populated city in the affected area.
 #
@@ -1275,6 +1275,14 @@ Zone	America/Bogota	-4:56:20 -	LMT	1884 Mar 13
 Zone	America/Curacao	-4:35:44 -	LMT	1912 Feb 12	# Willemstad
 			-4:30	-	ANT	1965 # Netherlands Antilles Time
 			-4:00	-	AST
+
+# From Arthur David Olson (2011-06-15):
+# At least for now, use links for places with new iso3166 codes.
+# The name "Lower Prince's Quarter" is both longer than fourteen charaters
+# and contains an apostrophe; use "Lower_Princes" below.
+
+Link	America/Curacao	America/Lower_Princes # Sint Maarten
+Link	America/Curacao	America/Kralendijk # Bonaire, Sint Estatius and Saba
 
 # Ecuador
 #
