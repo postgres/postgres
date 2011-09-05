@@ -1,4 +1,4 @@
-# @(#)asia	8.64
+# @(#)asia	8.65
 # This file is in the public domain, so clarified as of
 # 2009-05-17 by Arthur David Olson.
 
@@ -76,6 +76,10 @@ Rule RussiaAsia	1992	only	-	Sep	lastSat	23:00	0	-
 Rule RussiaAsia	1993	max	-	Mar	lastSun	 2:00s	1:00	S
 Rule RussiaAsia	1993	1995	-	Sep	lastSun	 2:00s	0	-
 Rule RussiaAsia	1996	max	-	Oct	lastSun	 2:00s	0	-
+
+# From Arthur David Olson (2011-06-15):
+# While Russia abandoned DST in 2011, Armenia may choose to
+# follow Russia's "old" rules.
 
 # Afghanistan
 # Zone	NAME		GMTOFF	RULES	FORMAT	[UNTIL]

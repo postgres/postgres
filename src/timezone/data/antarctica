@@ -1,5 +1,5 @@
 # <pre>
-# @(#)antarctica	8.8
+# @(#)antarctica	8.9
 # This file is in the public domain, so clarified as of
 # 2009-05-17 by Arthur David Olson.
 
@@ -18,18 +18,6 @@
 # Except for the French entries,
 # I made up all time zone abbreviations mentioned here; corrections welcome!
 # FORMAT is `zzz' and GMTOFF is 0 for locations while uninhabited.
-
-# These rules are stolen from the `europe' file.
-# Rule	NAME	FROM	TO	TYPE	IN	ON	AT	SAVE	LETTER/S
-Rule	RussAQ	1981	1984	-	Apr	 1	 0:00	1:00	S
-Rule	RussAQ	1981	1983	-	Oct	 1	 0:00	0	-
-Rule	RussAQ	1984	1991	-	Sep	lastSun	 2:00s	0	-
-Rule	RussAQ	1985	1991	-	Mar	lastSun	 2:00s	1:00	S
-Rule	RussAQ	1992	only	-	Mar	lastSat	 23:00	1:00	S
-Rule	RussAQ	1992	only	-	Sep	lastSat	 23:00	0	-
-Rule	RussAQ	1993	max	-	Mar	lastSun	 2:00s	1:00	S
-Rule	RussAQ	1993	1995	-	Sep	lastSun	 2:00s	0	-
-Rule	RussAQ	1996	max	-	Oct	lastSun	 2:00s	0	-
 
 # These rules are stolen from the `southamerica' file.
 # Rule	NAME	FROM	TO	TYPE	IN	ON	AT	SAVE	LETTER/S
