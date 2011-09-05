@@ -9,7 +9,8 @@
 
  <para>
   The <filename>pg_trgm</filename> module provides functions and operators
-  for determining the similarity of text based on trigram matching, as
+  for determining the similarity of <acronym>ASCII</>
+  alphanumeric text based on trigram matching, as
   well as index operator classes that support fast searching for similar
   strings.
  </para>
