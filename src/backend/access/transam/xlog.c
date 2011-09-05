@@ -5259,22 +5259,22 @@ readRecoveryCommandFile(void)
 		{
 			recoveryRestoreCommand = pstrdup(item->value);
 			ereport(DEBUG2,
-					(errmsg("restore_command = '%s'",
-							recoveryRestoreCommand)));
+					(errmsg_internal("restore_command = '%s'",
+									 recoveryRestoreCommand)));
 		}
 		else if (strcmp(item->name, "recovery_end_command") == 0)
 		{
 			recoveryEndCommand = pstrdup(item->value);
 			ereport(DEBUG2,
-					(errmsg("recovery_end_command = '%s'",
-							recoveryEndCommand)));
+					(errmsg_internal("recovery_end_command = '%s'",
+									 recoveryEndCommand)));
 		}
 		else if (strcmp(item->name, "archive_cleanup_command") == 0)
 		{
 			archiveCleanupCommand = pstrdup(item->value);
 			ereport(DEBUG2,
-					(errmsg("archive_cleanup_command = '%s'",
-							archiveCleanupCommand)));
+					(errmsg_internal("archive_cleanup_command = '%s'",
+									 archiveCleanupCommand)));
 		}
 		else if (strcmp(item->name, "pause_at_recovery_target") == 0)
 		{
@@ -5283,7 +5283,8 @@ readRecoveryCommandFile(void)
 						(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
 						 errmsg("parameter \"%s\" requires a Boolean value", "pause_at_recovery_target")));
 			ereport(DEBUG2,
-					(errmsg("pause_at_recovery_target = '%s'", item->value)));
+					(errmsg_internal("pause_at_recovery_target = '%s'",
+									 item->value)));
 		}
 		else if (strcmp(item->name, "recovery_target_timeline") == 0)
 		{
@@ -5301,10 +5302,10 @@ readRecoveryCommandFile(void)
 			}
 			if (rtli)
 				ereport(DEBUG2,
-						(errmsg("recovery_target_timeline = %u", rtli)));
+						(errmsg_internal("recovery_target_timeline = %u", rtli)));
 			else
 				ereport(DEBUG2,
-						(errmsg("recovery_target_timeline = latest")));
+						(errmsg_internal("recovery_target_timeline = latest")));
 		}
 		else if (strcmp(item->name, "recovery_target_xid") == 0)
 		{
@@ -5315,8 +5316,8 @@ readRecoveryCommandFile(void)
 				 (errmsg("recovery_target_xid is not a valid number: \"%s\"",
 						 item->value)));
 			ereport(DEBUG2,
-					(errmsg("recovery_target_xid = %u",
-							recoveryTargetXid)));
+					(errmsg_internal("recovery_target_xid = %u",
+							 		 recoveryTargetXid)));
 			recoveryTarget = RECOVERY_TARGET_XID;
 		}
 		else if (strcmp(item->name, "recovery_target_time") == 0)
@@ -5339,8 +5340,8 @@ readRecoveryCommandFile(void)
 												ObjectIdGetDatum(InvalidOid),
 														Int32GetDatum(-1)));
 			ereport(DEBUG2,
-					(errmsg("recovery_target_time = '%s'",
-							timestamptz_to_str(recoveryTargetTime))));
+					(errmsg_internal("recovery_target_time = '%s'",
+							 		 timestamptz_to_str(recoveryTargetTime))));
 		}
 		else if (strcmp(item->name, "recovery_target_name") == 0)
 		{
@@ -5356,11 +5357,12 @@ readRecoveryCommandFile(void)
 			if (strlen(recoveryTargetName) >= MAXFNAMELEN)
 				ereport(FATAL,
 						(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-						 errmsg("recovery_target_name is too long (maximum %d characters)", MAXFNAMELEN - 1)));
+						 errmsg("recovery_target_name is too long (maximum %d characters)",
+								MAXFNAMELEN - 1)));
 
 			ereport(DEBUG2,
-					(errmsg("recovery_target_name = '%s'",
-							recoveryTargetName)));
+					(errmsg_internal("recovery_target_name = '%s'",
+									 recoveryTargetName)));
 		}
 		else if (strcmp(item->name, "recovery_target_inclusive") == 0)
 		{
@@ -5370,32 +5372,35 @@ readRecoveryCommandFile(void)
 			if (!parse_bool(item->value, &recoveryTargetInclusive))
 				ereport(ERROR,
 						(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-						 errmsg("parameter \"%s\" requires a Boolean value", "recovery_target_inclusive")));
+						 errmsg("parameter \"%s\" requires a Boolean value",
+								"recovery_target_inclusive")));
 			ereport(DEBUG2,
-					(errmsg("recovery_target_inclusive = %s", item->value)));
+					(errmsg_internal("recovery_target_inclusive = %s",
+									 item->value)));
 		}
 		else if (strcmp(item->name, "standby_mode") == 0)
 		{
 			if (!parse_bool(item->value, &StandbyMode))
 				ereport(ERROR,
 						(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-						 errmsg("parameter \"%s\" requires a Boolean value", "standby_mode")));
+						 errmsg("parameter \"%s\" requires a Boolean value",
+								"standby_mode")));
 			ereport(DEBUG2,
-					(errmsg("standby_mode = '%s'", item->value)));
+					(errmsg_internal("standby_mode = '%s'", item->value)));
 		}
 		else if (strcmp(item->name, "primary_conninfo") == 0)
 		{
 			PrimaryConnInfo = pstrdup(item->value);
 			ereport(DEBUG2,
-					(errmsg("primary_conninfo = '%s'",
-							PrimaryConnInfo)));
+					(errmsg_internal("primary_conninfo = '%s'",
+									 PrimaryConnInfo)));
 		}
 		else if (strcmp(item->name, "trigger_file") == 0)
 		{
 			TriggerFile = pstrdup(item->value);
 			ereport(DEBUG2,
-					(errmsg("trigger_file = '%s'",
-							TriggerFile)));
+					(errmsg_internal("trigger_file = '%s'",
+									 TriggerFile)));
 		}
 		else
 			ereport(FATAL,
@@ -7988,7 +7993,8 @@ RecoveryRestartPoint(const CheckPoint *checkPoint)
 		if (RmgrTable[rmid].rm_safe_restartpoint != NULL)
 			if (!(RmgrTable[rmid].rm_safe_restartpoint()))
 			{
-				elog(trace_recovery(DEBUG2), "RM %d not safe to record restart point at %X/%X",
+				elog(trace_recovery(DEBUG2),
+					 "RM %d not safe to record restart point at %X/%X",
 					 rmid,
 					 checkPoint->redo.xlogid,
 					 checkPoint->redo.xrecoff);
