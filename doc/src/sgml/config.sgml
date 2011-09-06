@@ -3086,6 +3086,10 @@ local0.*    /var/log/postgresql
         any time-zone-dependent <literal>%</literal>-escapes, the computation
         is done in the zone specified
         by <xref linkend="guc-log-timezone">.)
+        The supported <literal>%</literal>-escapes are similar to those
+        listed in the Open Group's <ulink
+        url="http://pubs.opengroup.org/onlinepubs/009695399/functions/strftime.html">strftime
+        </ulink> specification.
         Note that the system's <systemitem>strftime</systemitem> is not used
         directly, so platform-specific (nonstandard) extensions do not work.
        </para>
