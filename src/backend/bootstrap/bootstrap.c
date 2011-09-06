@@ -817,7 +817,7 @@ InsertOneValue(char *value, int i)
 	Oid			typoutput;
 	char	   *prt;
 
-	AssertArg(i >= 0 || i < MAXATTR);
+	AssertArg(i >= 0 && i < MAXATTR);
 
 	elog(DEBUG4, "inserting column %d value \"%s\"", i, value);
 
@@ -842,7 +842,7 @@ void
 InsertOneNull(int i)
 {
 	elog(DEBUG4, "inserting column %d NULL", i);
-	Assert(i >= 0 || i < MAXATTR);
+	Assert(i >= 0 && i < MAXATTR);
 	values[i] = PointerGetDatum(NULL);
 	Nulls[i] = true;
 }
