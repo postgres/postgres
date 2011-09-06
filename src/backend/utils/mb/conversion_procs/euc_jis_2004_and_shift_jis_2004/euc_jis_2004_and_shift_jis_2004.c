@@ -218,8 +218,7 @@ get_ten(int b, int *ku)
 static void
 shift_jis_20042euc_jis_2004(const unsigned char *sjis, unsigned char *p, int len)
 {
-	int			c1,
-				c2;
+	int			c1;
 	int			ku,
 				ten,
 				kubun;
@@ -229,7 +228,6 @@ shift_jis_20042euc_jis_2004(const unsigned char *sjis, unsigned char *p, int len
 	while (len > 0)
 	{
 		c1 = *sjis;
-		c2 = sjis[1];
 
 		if (!IS_HIGHBIT_SET(c1))
 		{
@@ -245,7 +243,7 @@ shift_jis_20042euc_jis_2004(const unsigned char *sjis, unsigned char *p, int len
 
 		l = pg_encoding_verifymb(PG_SHIFT_JIS_2004, (const char *) sjis, len);
 
-		if (l < 0)
+		if (l < 0 || l > len)
 			report_invalid_encoding(PG_SHIFT_JIS_2004,
 									(const char *) sjis, len);
 
@@ -257,6 +255,8 @@ shift_jis_20042euc_jis_2004(const unsigned char *sjis, unsigned char *p, int len
 		}
 		else if (l == 2)
 		{
+			int			c2 = sjis[1];
+
 			plane = 1;
 			ku = 1;
 			ten = 1;
