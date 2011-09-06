@@ -831,12 +831,11 @@ examine_attribute(Relation onerel, int attnum, Node *index_expr)
 		stats->attrtypmod = attr->atttypmod;
 	}
 
-	typtuple = SearchSysCache1(TYPEOID, ObjectIdGetDatum(stats->attrtypid));
+	typtuple = SearchSysCacheCopy1(TYPEOID,
+								   ObjectIdGetDatum(stats->attrtypid));
 	if (!HeapTupleIsValid(typtuple))
 		elog(ERROR, "cache lookup failed for type %u", stats->attrtypid);
-	stats->attrtype = (Form_pg_type) palloc(sizeof(FormData_pg_type));
-	memcpy(stats->attrtype, GETSTRUCT(typtuple), sizeof(FormData_pg_type));
-	ReleaseSysCache(typtuple);
+	stats->attrtype = (Form_pg_type) GETSTRUCT(typtuple);
 	stats->anl_context = anl_context;
 	stats->tupattnum = attnum;
 
@@ -865,7 +864,7 @@ examine_attribute(Relation onerel, int attnum, Node *index_expr)
 
 	if (!ok || stats->compute_stats == NULL || stats->minrows <= 0)
 	{
-		pfree(stats->attrtype);
+		heap_freetuple(typtuple);
 		pfree(stats->attr);
 		pfree(stats);
 		return NULL;
