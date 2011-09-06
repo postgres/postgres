@@ -6494,6 +6494,8 @@ myEventProc(PGEventId evtId, void *evtInfo, void *passThrough)
 <synopsis>
 <replaceable>hostname</replaceable>:<replaceable>port</replaceable>:<replaceable>database</replaceable>:<replaceable>username</replaceable>:<replaceable>password</replaceable>
 </synopsis>
+   (You can add a reminder comment to the file by copying the line above and
+   preceeding it with <literal>#</>.)
    Each of the first four fields can be a literal value, or
    <literal>*</literal>, which matches anything.  The password field from
    the first line that matches the current connection parameters will be
