@@ -812,6 +812,10 @@ ProcessCommittedInvalidationMessages(SharedInvalidationMessage *msgs,
  * about CurrentCmdInvalidMsgs too, since those changes haven't touched
  * the caches yet.
  *
+ * We still send invalidation messages for session-local objects to other
+ * backends because, while other backends cannot see any tuples, they can
+ * drop tables that are session-local to another session.
+ * 
  * In any case, reset the various lists to empty.  We need not physically
  * free memory here, since TopTransactionContext is about to be emptied
  * anyway.
