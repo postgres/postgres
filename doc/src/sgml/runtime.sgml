@@ -597,13 +597,13 @@ psql: could not connect to server: No such file or directory
        <row>
         <entry><varname>SEMMNI</></>
         <entry>Maximum number of semaphore identifiers (i.e., sets)</>
-        <entry>at least <literal>ceil((max_connections + autovacuum_max_workers) / 16)</literal></>
+        <entry>at least <literal>ceil((max_connections + autovacuum_max_workers + 4) / 16)</literal></>
        </row>
 
        <row>
         <entry><varname>SEMMNS</></>
         <entry>Maximum number of semaphores system-wide</>
-        <entry><literal>ceil((max_connections + autovacuum_max_workers) / 16) * 17</literal> plus room for other applications</>
+        <entry><literal>ceil((max_connections + autovacuum_max_workers + 4) / 16) * 17</literal> plus room for other applications</>
        </row>
 
        <row>
@@ -678,7 +678,7 @@ psql: could not connect to server: No such file or directory
     linkend="sysvipc-parameters">).  The parameter <varname>SEMMNI</>
     determines the limit on the number of semaphore sets that can
     exist on the system at one time.  Hence this parameter must be at
-    least <literal>ceil((max_connections + autovacuum_max_workers) / 16)</>.
+    least <literal>ceil((max_connections + autovacuum_max_workers + 4) / 16)</>.
     Lowering the number
     of allowed connections is a temporary workaround for failures,
     which are usually confusingly worded <quote>No space
