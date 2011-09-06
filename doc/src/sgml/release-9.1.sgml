@@ -368,6 +368,24 @@
    </sect3>
 
    <sect3>
+    <title>Contrib</title>
+
+    <itemizedlist>
+
+     <listitem>
+      <para>
+       All contrib modules are now installed with <link
+       linkend="SQL-CREATEEXTENSION"><command>CREATE EXTENSION</></link>
+       rather than by manually invoking their SQL scripts
+       (Dimitri Fontaine, Tom Lane)
+      </para>
+     </listitem>
+
+    </itemizedlist>
+
+   </sect3>
+
+   <sect3>
     <title>Other Incompatibilities</title>
 
     <itemizedlist>
