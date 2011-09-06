@@ -940,6 +940,9 @@ PERFORM <replaceable>query</replaceable>;
      result.  Write the <replaceable>query</replaceable> the same
      way you would write an SQL <command>SELECT</> command, but replace the
      initial keyword <command>SELECT</> with <command>PERFORM</command>.
+     For <keyword>WITH</> queries, use <keyword>PERFORM</> and then
+     place the query in parentheses.  (In this case, the query can only
+     return one row.)
      <application>PL/pgSQL</application> variables will be
      substituted into the query just as for commands that return no result,
      and the plan is cached in the same way.  Also, the special variable
