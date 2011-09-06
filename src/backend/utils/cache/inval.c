@@ -75,6 +75,15 @@
  *	transaction but must be kept till top-level commit otherwise.  For
  *	simplicity we keep the controlling list-of-lists in TopTransactionContext.
  *
+ *	Currently, inval messages are sent without regard for the possibility
+ *	that the object described by the catalog tuple might be a session-local
+ *	object such as a temporary table.  This is because (1) this code has
+ *	no practical way to tell the difference, and (2) it is not certain that
+ *	other backends don't have catalog cache or even relcache entries for
+ *	such tables, anyway; there is nothing that prevents that.  It might be
+ *	worth trying to avoid sending such inval traffic in the future, if those
+ *	problems can be overcome cheaply.
+ *
  *
  * Portions Copyright (c) 1996-2011, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
@@ -811,10 +820,6 @@ ProcessCommittedInvalidationMessages(SharedInvalidationMessage *msgs,
  * since they'll not have seen our changed tuples anyway.  We can forget
  * about CurrentCmdInvalidMsgs too, since those changes haven't touched
  * the caches yet.
- *
- * We still send invalidation messages for session-local objects to other
- * backends because, while other backends cannot see any tuples, they can
- * drop tables that are session-local to another session.
  * 
  * In any case, reset the various lists to empty.  We need not physically
  * free memory here, since TopTransactionContext is about to be emptied
