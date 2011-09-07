@@ -465,6 +465,11 @@ psql --username postgres --file script.sql postgres
   </para>
 
   <para>
+   pg_upgrade will not work if the <filename>ltree</>
+   contrib module is installed in a database.
+  </para>
+
+  <para>
    You must drop any such columns and migrate them manually.
   </para>
  

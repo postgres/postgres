@@ -72,6 +72,7 @@ check_old_cluster(migratorContext *ctx, bool live_check,
 	{
 		old_8_3_check_for_name_data_type_usage(ctx, CLUSTER_OLD);
 		old_8_3_check_for_tsquery_usage(ctx, CLUSTER_OLD);
+		old_8_3_check_ltree_usage(ctx, CLUSTER_OLD);
 		if (ctx->check)
 		{
 			old_8_3_rebuild_tsvector_tables(ctx, true, CLUSTER_OLD);

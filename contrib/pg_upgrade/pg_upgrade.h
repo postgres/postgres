@@ -394,6 +394,8 @@ void old_8_3_check_for_name_data_type_usage(migratorContext *ctx,
 									   Cluster whichCluster);
 void old_8_3_check_for_tsquery_usage(migratorContext *ctx,
 								Cluster whichCluster);
+void old_8_3_check_ltree_usage(migratorContext *ctx,
+								Cluster whichCluster);
 void old_8_3_rebuild_tsvector_tables(migratorContext *ctx,
 								bool check_mode, Cluster whichCluster);
 void old_8_3_invalidate_hash_gin_indexes(migratorContext *ctx,
