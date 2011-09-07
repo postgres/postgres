@@ -80,6 +80,8 @@ CLEAN :
 	-@erase "$(INTDIR)\inet_aton.obj"
 	-@erase "$(INTDIR)\crypt.obj"
 	-@erase "$(INTDIR)\noblock.obj"
+	-@erase "$(INTDIR)\chklocale.obj"
+	-@erase "$(INTDIR)\inet_net_ntop.obj"
 	-@erase "$(INTDIR)\md5.obj"
 	-@erase "$(INTDIR)\ip.obj"
 	-@erase "$(INTDIR)\fe-auth.obj"
@@ -123,6 +125,8 @@ LIB32_OBJS= \
 	"$(INTDIR)\inet_aton.obj" \
 	"$(INTDIR)\crypt.obj" \
 	"$(INTDIR)\noblock.obj" \
+	"$(INTDIR)\chklocale.obj" \
+	"$(INTDIR)\inet_net_ntop.obj" \
 	"$(INTDIR)\md5.obj" \
 	"$(INTDIR)\ip.obj" \
 	"$(INTDIR)\fe-auth.obj" \
@@ -220,6 +224,16 @@ LINK32_FLAGS = -Gn -L$(BCB)\lib;$(INTDIR); -x -Tpd -v
 "$(INTDIR)\noblock.obj" : ..\..\port\noblock.c
 	$(CPP) @<<
 	$(CPP_PROJ) ..\..\port\noblock.c
+<<
+
+"$(INTDIR)\chklocale.obj" : ..\..\port\chklocale.c
+	$(CPP) @<<
+	$(CPP_PROJ) ..\..\port\chklocale.c
+<<
+
+"$(INTDIR)\inet_net_ntop.obj" : ..\..\port\inet_net_ntop.c
+	$(CPP) @<<
+	$(CPP_PROJ) ..\..\port\inet_net_ntop.c
 <<
 
 "$(INTDIR)\md5.obj" : ..\..\backend\libpq\md5.c
