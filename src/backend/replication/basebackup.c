@@ -368,7 +368,7 @@ SendBaseBackup(BaseBackupCmd *cmd)
 	dir = AllocateDir("pg_tblspc");
 	if (!dir)
 		ereport(ERROR,
-				(errmsg("could not open directory \"pg_tblspc\": %m")));
+				(errmsg("could not open directory \"%s\": %m", "pg_tblspc")));
 
 	perform_base_backup(&opt, dir);
 
