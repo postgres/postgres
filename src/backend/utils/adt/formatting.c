@@ -964,6 +964,7 @@ static void dump_node(FormatNode *node, int max);
 
 static char *get_th(char *num, int type);
 static char *str_numth(char *dest, char *num, int type);
+static int	adjust_partial_year_to_2020(int year);
 static int	strspace_len(char *str);
 static int	strdigits_len(char *str);
 static void from_char_set_mode(TmFromChar *tmfc, const FromCharDateMode mode);
@@ -1968,6 +1969,31 @@ is_next_separator(FormatNode *n)
 	return TRUE;				/* some non-digit input (separator) */
 }
 
+
+static int
+adjust_partial_year_to_2020(int year)
+{
+	/*
+	 * Adjust all dates toward 2020;  this is effectively what happens
+	 * when we assume '70' is 1970 and '69' is 2069.
+	 */
+	/* Force 0-69 into the 2000's */
+	if (year < 70)
+		return year + 2000;
+	/* Force 70-99 into the 1900's */
+	else if (year >= 70 && year < 100)
+		return year + 1900;
+	/* Force 100-519 into the 2000's */
+	else if (year >= 100 && year < 519)
+		return year + 2000;
+	/* Force 520-999 into the 1000's */
+	else if (year >= 520 && year < 1000)
+		return year + 1000;
+	else
+		return year;
+}
+
+
 static int
 strspace_len(char *str)
 {
@@ -2930,43 +2956,23 @@ DCH_from_char(FormatNode *node, char *in, TmFromChar *out)
 				break;
 			case DCH_YYY:
 			case DCH_IYY:
-				from_char_parse_int(&out->year, &s, n);
+				if (from_char_parse_int(&out->year, &s, n) < 4)
+					out->year = adjust_partial_year_to_2020(out->year);
 				out->yysz = 3;
-
-				/*
-				 * 3-digit year: '100' ... '999' = 1100 ... 1999 '000' ...
-				 * '099' = 2000 ... 2099
-				 */
-				if (out->year >= 100)
-					out->year += 1000;
-				else
-					out->year += 2000;
 				s += SKIP_THth(n->suffix);
 				break;
 			case DCH_YY:
 			case DCH_IY:
-				from_char_parse_int(&out->year, &s, n);
+				if (from_char_parse_int(&out->year, &s, n) < 4)
+					out->year = adjust_partial_year_to_2020(out->year);
 				out->yysz = 2;
-
-				/*
-				 * 2-digit year: '00' ... '69'	= 2000 ... 2069 '70' ... '99'
-				 * = 1970 ... 1999
-				 */
-				if (out->year < 70)
-					out->year += 2000;
-				else
-					out->year += 1900;
 				s += SKIP_THth(n->suffix);
 				break;
 			case DCH_Y:
 			case DCH_I:
-				from_char_parse_int(&out->year, &s, n);
+				if (from_char_parse_int(&out->year, &s, n) < 4)
+					out->year = adjust_partial_year_to_2020(out->year);
 				out->yysz = 1;
-
-				/*
-				 * 1-digit year: always +2000
-				 */
-				out->year += 2000;
 				s += SKIP_THth(n->suffix);
 				break;
 			case DCH_RM:

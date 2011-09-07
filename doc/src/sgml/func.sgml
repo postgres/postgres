@@ -5550,6 +5550,15 @@ SELECT SUBSTRING('XY1234Z', 'Y*?([0-9]{1,3})');
 
      <listitem>
       <para>
+       If the year format specification is less than four digits, e.g.
+       <literal>YYY</>, and the supplied year is less than four digits,
+       the year will be adjusted to be nearest to the year 2020, e.g.
+       <literal>95</> becomes 1995.
+      </para>
+     </listitem>
+
+     <listitem>
+      <para>
        The <literal>YYYY</literal> conversion from string to <type>timestamp</type> or
        <type>date</type> has a restriction when processing years with more than 4 digits. You must
        use some non-digit character or template after <literal>YYYY</literal>,
