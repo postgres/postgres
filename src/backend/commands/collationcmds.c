@@ -123,7 +123,7 @@ DefineCollation(List *names, List *parameters)
 	if (!collcollate)
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
-			errmsg("parameter \"lc_collate\" parameter must be specified")));
+				 errmsg("parameter \"lc_collate\" must be specified")));
 
 	if (!collctype)
 		ereport(ERROR,
