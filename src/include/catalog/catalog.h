@@ -14,6 +14,11 @@
 #ifndef CATALOG_H
 #define CATALOG_H
 
+/*
+ *	'pgrminclude ignore' needed here because CppAsString2() does not throw
+ *	an error if the symbol is not defined.
+ */
+#include "catalog/catversion.h"	/* pgrminclude ignore */
 #include "catalog/pg_class.h"
 #include "storage/relfilenode.h"
 #include "utils/relcache.h"
