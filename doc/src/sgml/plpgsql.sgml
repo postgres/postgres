@@ -3373,8 +3373,8 @@ RAISE unique_violation USING MESSAGE = 'Duplicate user ID: ' || user_id;
       <para>
        Data type <type>RECORD</type>; variable holding the new
        database row for <command>INSERT</>/<command>UPDATE</> operations in row-level
-       triggers. This variable is <symbol>NULL</symbol> in statement-level triggers
-       and for <command>DELETE</command> operations.
+       triggers. This variable is not defined in statement-level triggers
+       or <command>DELETE</command> operations.
       </para>
      </listitem>
     </varlistentry>
@@ -3385,8 +3385,8 @@ RAISE unique_violation USING MESSAGE = 'Duplicate user ID: ' || user_id;
       <para>
        Data type <type>RECORD</type>; variable holding the old
        database row for <command>UPDATE</>/<command>DELETE</> operations in row-level
-       triggers. This variable is <symbol>NULL</symbol> in statement-level triggers
-       and for <command>INSERT</command> operations.
+       triggers. This variable is not defined in statement-level triggers
+       or <command>INSERT</command> operations.
       </para>
      </listitem>
     </varlistentry>
