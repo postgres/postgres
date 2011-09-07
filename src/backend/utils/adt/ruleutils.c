@@ -207,9 +207,9 @@ static char *get_variable(Var *var, int levelsup, bool showstar,
 			 deparse_context *context);
 static RangeTblEntry *find_rte_by_refname(const char *refname,
 					deparse_context *context);
+static Node *find_param_referent(Param *param, deparse_context *context,
+					deparse_namespace **dpns_p, ListCell **ancestor_cell_p);
 static void get_parameter(Param *param, deparse_context *context);
-static void print_parameter_expr(Node *expr, ListCell *ancestor_cell,
-					 deparse_namespace *dpns, deparse_context *context);
 static const char *get_simple_binary_op_name(OpExpr *expr);
 static bool isSimpleNode(Node *node, Node *parentNode, int prettyFlags);
 static void appendContextKeyword(deparse_context *context, const char *str,
@@ -3892,15 +3892,21 @@ get_variable(Var *var, int levelsup, bool showstar, deparse_context *context)
 
 
 /*
- * Get the name of a field of an expression of composite type.
- *
- * This is fairly straightforward except for the case of a Var of type RECORD.
- * Since no actual table or view column is allowed to have type RECORD, such
- * a Var must refer to a JOIN or FUNCTION RTE or to a subquery output.	We
- * drill down to find the ultimate defining expression and attempt to infer
- * the field name from it.	We ereport if we can't determine the name.
+ * Get the name of a field of an expression of composite type.  The
+ * expression is usually a Var, but we handle other cases too.
  *
  * levelsup is an extra offset to interpret the Var's varlevelsup correctly.
+ *
+ * This is fairly straightforward when the expression has a named composite
+ * type; we need only look up the type in the catalogs.  However, the type
+ * could also be RECORD.  Since no actual table or view column is allowed to
+ * have type RECORD, a Var of type RECORD must refer to a JOIN or FUNCTION RTE
+ * or to a subquery output.  We drill down to find the ultimate defining
+ * expression and attempt to infer the field name from it.  We ereport if we
+ * can't determine the name.
+ *
+ * Similarly, a PARAM of type RECORD has to refer to some expression of
+ * a determinable composite type.
  */
 static const char *
 get_name_for_var_field(Var *var, int fieldno,
@@ -3923,6 +3929,29 @@ get_name_for_var_field(Var *var, int fieldno,
 
 		if (fieldno > 0 && fieldno <= list_length(r->colnames))
 			return strVal(list_nth(r->colnames, fieldno - 1));
+	}
+
+	/*
+	 * If it's a Param of type RECORD, try to find what the Param refers to.
+	 */
+	if (IsA(var, Param))
+	{
+		Param	   *param = (Param *) var;
+		ListCell   *ancestor_cell;
+
+		expr = find_param_referent(param, context, &dpns, &ancestor_cell);
+		if (expr)
+		{
+			/* Found a match, so recurse to decipher the field name */
+			deparse_namespace save_dpns;
+			const char *result;
+
+			push_ancestor_plan(dpns, ancestor_cell, &save_dpns);
+			result = get_name_for_var_field((Var *) expr, fieldno,
+											0, context);
+			pop_ancestor_plan(dpns, &save_dpns);
+			return result;
+		}
 	}
 
 	/*
@@ -4279,17 +4308,25 @@ find_rte_by_refname(const char *refname, deparse_context *context)
 }
 
 /*
- * Display a Param appropriately.
+ * Try to find the referenced expression for a PARAM_EXEC Param that might
+ * reference a parameter supplied by an upper NestLoop or SubPlan plan node.
+ *
+ * If successful, return the expression and set *dpns_p and *ancestor_cell_p
+ * appropriately for calling push_ancestor_plan().  If no referent can be
+ * found, return NULL.
  */
-static void
-get_parameter(Param *param, deparse_context *context)
+static Node *
+find_param_referent(Param *param, deparse_context *context,
+					deparse_namespace **dpns_p, ListCell **ancestor_cell_p)
 {
+	/* Initialize output parameters to prevent compiler warnings */
+	*dpns_p = NULL;
+	*ancestor_cell_p = NULL;
+
 	/*
-	 * If it's a PARAM_EXEC parameter, try to locate the expression from which
-	 * the parameter was computed.	This will necessarily be in some ancestor
-	 * of the current expression's PlanState.  Note that failing to find a
-	 * referent isn't an error, since the Param might well be a subplan output
-	 * rather than an input.
+	 * If it's a PARAM_EXEC parameter, look for a matching NestLoopParam or
+	 * SubPlan argument.  This will necessarily be in some ancestor of the
+	 * current expression's PlanState.
 	 */
 	if (param->paramkind == PARAM_EXEC)
 	{
@@ -4324,10 +4361,10 @@ get_parameter(Param *param, deparse_context *context)
 
 					if (nlp->paramno == param->paramid)
 					{
-						/* Found a match, so print it */
-						print_parameter_expr((Node *) nlp->paramval, lc,
-											 dpns, context);
-						return;
+						/* Found a match, so return it */
+						*dpns_p = dpns;
+						*ancestor_cell_p = lc;
+						return (Node *) nlp->paramval;
 					}
 				}
 			}
@@ -4353,9 +4390,10 @@ get_parameter(Param *param, deparse_context *context)
 
 					if (paramid == param->paramid)
 					{
-						/* Found a match, so print it */
-						print_parameter_expr(arg, lc, dpns, context);
-						return;
+						/* Found a match, so return it */
+						*dpns_p = dpns;
+						*ancestor_cell_p = lc;
+						return arg;
 					}
 				}
 
@@ -4390,50 +4428,71 @@ get_parameter(Param *param, deparse_context *context)
 		}
 	}
 
+	/* No referent found */
+	return NULL;
+}
+
+/*
+ * Display a Param appropriately.
+ */
+static void
+get_parameter(Param *param, deparse_context *context)
+{
+	Node	   *expr;
+	deparse_namespace *dpns;
+	ListCell   *ancestor_cell;
+
+	/*
+	 * If it's a PARAM_EXEC parameter, try to locate the expression from which
+	 * the parameter was computed.  Note that failing to find a referent isn't
+	 * an error, since the Param might well be a subplan output rather than an
+	 * input.
+	 */
+	expr = find_param_referent(param, context, &dpns, &ancestor_cell);
+	if (expr)
+	{
+		/* Found a match, so print it */
+		deparse_namespace save_dpns;
+		bool		save_varprefix;
+		bool		need_paren;
+
+		/* Switch attention to the ancestor plan node */
+		push_ancestor_plan(dpns, ancestor_cell, &save_dpns);
+
+		/*
+		 * Force prefixing of Vars, since they won't belong to the relation
+		 * being scanned in the original plan node.
+		 */
+		save_varprefix = context->varprefix;
+		context->varprefix = true;
+
+		/*
+		 * A Param's expansion is typically a Var, Aggref, or upper-level
+		 * Param, which wouldn't need extra parentheses.  Otherwise, insert
+		 * parens to ensure the expression looks atomic.
+		 */
+		need_paren = !(IsA(expr, Var) ||
+					   IsA(expr, Aggref) ||
+					   IsA(expr, Param));
+		if (need_paren)
+			appendStringInfoChar(context->buf, '(');
+
+		get_rule_expr(expr, context, false);
+
+		if (need_paren)
+			appendStringInfoChar(context->buf, ')');
+
+		context->varprefix = save_varprefix;
+
+		pop_ancestor_plan(dpns, &save_dpns);
+
+		return;
+	}
+
 	/*
 	 * Not PARAM_EXEC, or couldn't find referent: just print $N.
 	 */
 	appendStringInfo(context->buf, "$%d", param->paramid);
-}
-
-/* Print a parameter reference expression found by get_parameter */
-static void
-print_parameter_expr(Node *expr, ListCell *ancestor_cell,
-					 deparse_namespace *dpns, deparse_context *context)
-{
-	deparse_namespace save_dpns;
-	bool		save_varprefix;
-	bool		need_paren;
-
-	/* Switch attention to the ancestor plan node */
-	push_ancestor_plan(dpns, ancestor_cell, &save_dpns);
-
-	/*
-	 * Force prefixing of Vars, since they won't belong to the relation being
-	 * scanned in the original plan node.
-	 */
-	save_varprefix = context->varprefix;
-	context->varprefix = true;
-
-	/*
-	 * A Param's expansion is typically a Var, Aggref, or upper-level Param,
-	 * which wouldn't need extra parentheses.  Otherwise, insert parens to
-	 * ensure the expression looks atomic.
-	 */
-	need_paren = !(IsA(expr, Var) ||
-				   IsA(expr, Aggref) ||
-				   IsA(expr, Param));
-	if (need_paren)
-		appendStringInfoChar(context->buf, '(');
-
-	get_rule_expr(expr, context, false);
-
-	if (need_paren)
-		appendStringInfoChar(context->buf, ')');
-
-	context->varprefix = save_varprefix;
-
-	pop_ancestor_plan(dpns, &save_dpns);
 }
 
 /*
