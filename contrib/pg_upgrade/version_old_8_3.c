@@ -202,6 +202,87 @@ old_8_3_check_for_tsquery_usage(ClusterInfo *cluster)
 
 
 /*
+ *	old_8_3_check_ltree_usage()
+ *	8.3 -> 8.4
+ *	The internal ltree structure was changed in 8.4 so upgrading is impossible.
+ */
+void
+old_8_3_check_ltree_usage(ClusterInfo *cluster)
+{
+	int			dbnum;
+	FILE	   *script = NULL;
+	bool		found = false;
+	char		output_path[MAXPGPATH];
+
+	prep_status("Checking for contrib/ltree");
+
+	snprintf(output_path, sizeof(output_path), "%s/contrib_ltree.txt",
+			 os_info.cwd);
+
+	for (dbnum = 0; dbnum < cluster->dbarr.ndbs; dbnum++)
+	{
+		PGresult   *res;
+		bool		db_used = false;
+		int			ntups;
+		int			rowno;
+		int			i_nspname,
+					i_proname;
+		DbInfo	   *active_db = &cluster->dbarr.dbs[dbnum];
+		PGconn	   *conn = connectToServer(cluster, active_db->db_name);
+
+		/* Find any functions coming from contrib/ltree */
+		res = executeQueryOrDie(conn,
+								"SELECT n.nspname, p.proname "
+								"FROM	pg_catalog.pg_proc p, "
+								"		pg_catalog.pg_namespace n "
+								"WHERE	p.pronamespace = n.oid AND "
+								"		p.probin = '$libdir/ltree'");
+
+		ntups = PQntuples(res);
+		i_nspname = PQfnumber(res, "nspname");
+		i_proname = PQfnumber(res, "proname");
+		for (rowno = 0; rowno < ntups; rowno++)
+		{
+			found = true;
+			if (script == NULL && (script = fopen(output_path, "w")) == NULL)
+				pg_log(PG_FATAL, "Could not open file \"%s\": %s\n",
+					   output_path, getErrorText(errno));
+			if (!db_used)
+			{
+				fprintf(script, "Database: %s\n", active_db->db_name);
+				db_used = true;
+			}
+			fprintf(script, "  %s.%s\n",
+					PQgetvalue(res, rowno, i_nspname),
+					PQgetvalue(res, rowno, i_proname));
+		}
+
+		PQclear(res);
+
+		PQfinish(conn);
+	}
+
+	if (script)
+		fclose(script);
+
+	if (found)
+	{
+		pg_log(PG_REPORT, "fatal\n");
+		pg_log(PG_FATAL,
+			   "Your installation contains the \"ltree\" data type.  This data type\n"
+			   "changed its internal storage format between your old and new clusters so this\n"
+			   "cluster cannot currently be upgraded.  You can manually upgrade databases\n"
+			   "that use \"contrib/ltree\" facilities and remove \"contrib/ltree\" from the old\n"
+			   "cluster and restart the upgrade.  A list of the problem functions is in the\n"
+			   "file:\n"
+			   "    %s\n\n", output_path);
+	}
+	else
+		check_ok();
+}
+
+
+/*
  * old_8_3_rebuild_tsvector_tables()
  *	8.3 -> 8.4
  * 8.3 sorts lexemes by its length and if lengths are the same then it uses
