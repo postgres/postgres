@@ -3673,6 +3673,9 @@ NUM_prepare_locale(NUMProc *Np)
 /* ----------
  * Return pointer of last relevant number after decimal point
  *	12.0500 --> last relevant is '5'
+ *	12.0000 --> last relevant is '.'
+ * If there is no decimal point, return NULL (which will result in same
+ * behavior as if FM hadn't been specified).
  * ----------
  */
 static char *
@@ -3686,7 +3689,8 @@ get_last_relevant_decnum(char *num)
 #endif
 
 	if (!p)
-		p = num;
+		return NULL;
+
 	result = p;
 
 	while (*(++p))
@@ -4223,13 +4227,22 @@ NUM_processor(FormatNode *node, NUMDesc *Num, char *inout, char *number,
 	{
 		Np->num_pre = plen;
 
-		if (IS_FILLMODE(Np->Num))
+		if (IS_FILLMODE(Np->Num) && IS_DECIMAL(Np->Num))
 		{
-			if (IS_DECIMAL(Np->Num))
-				Np->last_relevant = get_last_relevant_decnum(
-															 Np->number +
-									 ((Np->Num->zero_end - Np->num_pre > 0) ?
-									  Np->Num->zero_end - Np->num_pre : 0));
+			Np->last_relevant = get_last_relevant_decnum(Np->number);
+
+			/*
+			 * If any '0' specifiers are present, make sure we don't strip
+			 * those digits.
+			 */
+			if (Np->last_relevant && Np->Num->zero_end > Np->num_pre)
+			{
+				char   *last_zero;
+
+				last_zero = Np->number + (Np->Num->zero_end - Np->num_pre);
+				if (Np->last_relevant < last_zero)
+					Np->last_relevant = last_zero;
+			}
 		}
 
 		if (Np->sign_wrote == FALSE && Np->num_pre == 0)
