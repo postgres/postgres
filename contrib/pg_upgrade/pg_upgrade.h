@@ -390,6 +390,7 @@ void new_9_0_populate_pg_largeobject_metadata(ClusterInfo *cluster,
 
 void		old_8_3_check_for_name_data_type_usage(ClusterInfo *cluster);
 void		old_8_3_check_for_tsquery_usage(ClusterInfo *cluster);
+void		old_8_3_check_ltree_usage(ClusterInfo *cluster);
 void		old_8_3_rebuild_tsvector_tables(ClusterInfo *cluster, bool check_mode);
 void		old_8_3_invalidate_hash_gin_indexes(ClusterInfo *cluster, bool check_mode);
 void old_8_3_invalidate_bpchar_pattern_ops_indexes(ClusterInfo *cluster,

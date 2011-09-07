@@ -77,6 +77,7 @@ check_old_cluster(bool live_check,
 	{
 		old_8_3_check_for_name_data_type_usage(&old_cluster);
 		old_8_3_check_for_tsquery_usage(&old_cluster);
+		old_8_3_check_ltree_usage(&old_cluster);
 		if (user_opts.check)
 		{
 			old_8_3_rebuild_tsvector_tables(&old_cluster, true);
