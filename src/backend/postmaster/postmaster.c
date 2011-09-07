@@ -2328,10 +2328,11 @@ reaper(SIGNAL_ARGS)
 			 * XXX should avoid the need for disconnection. When we do,
 			 * am_cascading_walsender should be replaced with RecoveryInProgress()
 			 */
-			if (max_wal_senders > 0)
+			if (max_wal_senders > 0 && CountChildren(BACKEND_TYPE_WALSND) > 0)
 			{
 				ereport(LOG,
-						(errmsg("terminating all walsender processes to force cascaded standby(s) to update timeline and reconnect")));
+						(errmsg("terminating all walsender processes to force cascaded "
+								"standby(s) to update timeline and reconnect")));
 				SignalSomeChildren(SIGUSR2, BACKEND_TYPE_WALSND);
 			}
 
