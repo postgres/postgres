@@ -6,10 +6,8 @@
 
   <note>
    <title>Release Date</title>
-   <simpara>2011-??-??</simpara>
+   <simpara>2011-09-12</simpara>
   </note>
-
-  <para>CURRENT AS OF 2011-08-17</para>
 
   <sect2>
    <title>Overview</title>
@@ -74,7 +72,7 @@
     <listitem>
      <para>
       Allow data-modification commands
-      (<command>INSERT</>/<command>UPDATE</>/<command>DELETE)</> in
+      (<command>INSERT</>/<command>UPDATE</>/<command>DELETE</>) in
       <link linkend="queries-with"><literal>WITH</></link> clauses
      </para>
     </listitem>
@@ -262,7 +260,7 @@
      <listitem>
       <para>
         Require superuser or <literal>CREATEROLE</> permissions in order to
-        set role comments (Tom Lane)
+        set comments on roles (Tom Lane)
       </para>
      </listitem>
 
@@ -283,8 +281,8 @@
       </para>
 
       <para>
-       Previously <function>pg_last_xlog_receive_location()</> could
-       move backward when streaming replication is restarted.
+       Previously, the value of <function>pg_last_xlog_receive_location()</>
+       could move backward when streaming replication is restarted.
       </para>
      </listitem>
 
@@ -296,7 +294,7 @@
       </para>
 
       <para>
-       Previously replication connections were always logged.
+       Previously, replication connections were always logged.
       </para>
      </listitem>
 
@@ -507,8 +505,8 @@
        </para>
 
        <para>
-        This fixes scenarios where backends might hold open files that
-        were long since deleted, preventing the kernel from reclaiming
+        This fixes scenarios in which backends might hold files open long
+        after they were deleted, preventing the kernel from reclaiming
         disk space.
        </para>
       </listitem>
@@ -658,7 +656,7 @@
        </para>
 
        <para>
-        New details show <acronym>WAL</> file and sync activity.
+        New details include <acronym>WAL</> file and sync activity.
        </para>
       </listitem>
 
@@ -757,14 +755,14 @@
 
       <listitem>
        <para>
-        Allow auto-tuning of <link
+        Provide auto-tuning of <link
         linkend="guc-wal-buffers"><varname>wal_buffers</></link> (Greg
         Smith)
        </para>
 
        <para>
-        <varname>wal_buffers</> is now auto-tuned by default based on
-        the size of <varname>shared_buffers</>.
+        By default, the value of <varname>wal_buffers</> is now chosen
+        automatically based on the value of <varname>shared_buffers</>.
        </para>
       </listitem>
 
@@ -804,8 +802,8 @@
       </para>
 
       <para>
-       This allows the primary to wait for a standby to write the transaction
-       information to disk before acknowledging the commit.
+       This allows the primary server to wait for a standby to write a
+       transaction's information to disk before acknowledging the commit.
        One standby at a time can take the role of the synchronous standby,
        as controlled by the
        <link linkend="guc-synchronous-standby-names"><varname>synchronous_standby_names</varname></link>
@@ -818,8 +816,8 @@
 
      <listitem>
       <para>
-       Add protocol support for sending file system backups to standbys using
-       the streaming replication network connection (Magnus Hagander,
+       Add protocol support for sending file system backups to standby servers
+       using the streaming replication network connection (Magnus Hagander,
        Heikki Linnakangas)
       </para>
 
@@ -856,7 +854,7 @@
 
      <listitem>
       <para>
-       Add replication <link linkend="SQL-CREATEROLE">permission</link>
+       Add a <link linkend="SQL-CREATEROLE">replication permission</link>
        for roles (Magnus Hagander)
       </para>
 
@@ -955,7 +953,7 @@
        <para>
         Increase the maximum values for
         <link linkend="guc-max-standby-archive-delay"><varname>max_standby_archive_delay</varname></link> and
-        <link linkend="guc-max-standby-streaming-delay"><varname>max_standby_streaming_delay</varname></link>.
+        <link linkend="guc-max-standby-streaming-delay"><varname>max_standby_streaming_delay</varname></link>
        </para>
 
        <para>
@@ -1089,7 +1087,7 @@
         Previously, asking for serializable isolation guaranteed only that a
         single MVCC snapshot would be used for the entire transaction, which
         allowed certain documented anomalies.  The old snapshot isolation
-        behavior is still accessible by requesting the <link
+        behavior is still available by requesting the <link
         linkend="xact-repeatable-read"><literal>REPEATABLE READ</></link>
         isolation level.
        </para>
@@ -1098,7 +1096,7 @@
       <listitem>
        <para>
         Allow data-modification commands
-        (<command>INSERT</>/<command>UPDATE</>/<command>DELETE)</> in
+        (<command>INSERT</>/<command>UPDATE</>/<command>DELETE</>) in
         <link linkend="queries-with"><literal>WITH</></link> clauses
         (Marko Tiikkaja, Hitoshi Harada)
        </para>
@@ -1126,7 +1124,7 @@
        </para>
 
        <para>
-        Some other database system already allowed this behavior, and
+        The SQL standard allows this behavior, and
         because of the primary key, the result is unambiguous.
        </para>
       </listitem>
@@ -1151,9 +1149,9 @@
        </para>
 
        <para>
-        Previously <command>EXPLAIN ANALYZE</> used a slightly different
-        snapshot for queries involving rules.  The <command>EXPLAIN ANALYZE</>
-        behavior was judged to be more logical.
+        Previously <command>EXPLAIN ANALYZE</> used slightly different
+        snapshot timing for queries involving rules.  The
+        <command>EXPLAIN ANALYZE</> behavior was judged to be more logical.
        </para>
       </listitem>
 
@@ -1172,7 +1170,8 @@
        </para>
 
        <para>
-        Previously collation could only be set at database creation.
+        Previously collation (the sort ordering of text strings) could only be
+        chosen at database creation.
         Collation can now be set per column, domain, index, or
         expression, via the SQL-standard <literal>COLLATE</> clause.
        </para>
@@ -1315,8 +1314,8 @@
        </para>
 
        <para>
-        The new option is called <literal>NOT VALID</>, which can
-        later be modified to <literal>VALIDATED</> and validation
+        The new option is called <literal>NOT VALID</>.  The constraint's
+        state can later be modified to <literal>VALIDATED</> and validation
         checks performed. Together these allow you to add a foreign key
         with minimal impact on read and write operations.
        </para>
@@ -1352,14 +1351,14 @@
       <listitem>
        <para>
         Fix possible <quote>tuple concurrently updated</quote> error
-        when two backends attempted to add an inheritance
+        when two backends attempt to add an inheritance
         child to the same table at the same time (Robert Haas)
        </para>
 
        <para>
         <link linkend="sql-altertable"><command>ALTER TABLE</command></link>
-        now takes a stronger lock on the parent table, so that both children do
-        not try to update it simultaneously.
+        now takes a stronger lock on the parent table, so that the sessions
+        cannot try to update it simultaneously.
        </para>
       </listitem>
 
@@ -1401,8 +1400,8 @@
       </para>
 
       <para>
-       This is similar to the existing session-level advisory locks,
-       but the locks are automatically released at transaction end.
+       These are similar to the existing session-level advisory locks,
+       but such locks are automatically released at transaction end.
       </para>
      </listitem>
 
@@ -1599,7 +1598,7 @@ SELECT * FROM places ORDER BY location <-> point '(101,456)' LIMIT 10;
 
       <para>
        Previously all <type>numeric</> values had four-byte headers;
-       this saves on disk storage.
+       this change saves on disk storage.
       </para>
      </listitem>
 
@@ -1667,7 +1666,7 @@ SELECT * FROM places ORDER BY location <-> point '(101,456)' LIMIT 10;
      <listitem>
       <para>
        Add support for casting from <type>int4</> and <type>int8</>
-       to <type>numeric</> (Joey Adams)
+       to <type>money</> (Joey Adams)
       </para>
      </listitem>
 
@@ -1737,9 +1736,9 @@ SELECT * FROM places ORDER BY location <-> point '(101,456)' LIMIT 10;
       <listitem>
        <para>
         Add SQL function <link
-        linkend="format"><function>format(text)</></link>, which
-        behaves like C's <function>printf()</> (Pavel Stehule, Robert
-        Haas)
+        linkend="format"><function>format(text, ...)</></link>, which
+        behaves analogously to C's <function>printf()</> (Pavel Stehule,
+        Robert Haas)
        </para>
 
        <para>
@@ -2027,7 +2026,7 @@ SELECT * FROM places ORDER BY location <-> point '(101,456)' LIMIT 10;
        </para>
 
        <para>
-        The functions are <link
+        These functions are <link
         linkend="plpython-util"><literal>plpy.quote_ident</></link>,
         <link linkend="plpython-util"><literal>plpy.quote_literal</></link>,
         and <link
@@ -2605,7 +2604,7 @@ SELECT * FROM places ORDER BY location <-> point '(101,456)' LIMIT 10;
 
      <listitem>
       <para>
-       Modify <filename>contrib</> modules and stored procedure
+       Modify <filename>contrib</> modules and procedural
        languages to install via the new <link
        linkend="extend-extensions">extension</link> mechanism (Tom Lane,
        Dimitri Fontaine)
