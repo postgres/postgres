@@ -1,0 +1,384 @@
+# LANGUAGE message translation file for pg_basebackup
+# Copyright (C) 2011 PostgreSQL Global Development Group
+# This file is distributed under the same license as the PostgreSQL package.
+#
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2011.
+msgid ""
+msgstr ""
+"Project-Id-Version: PostgreSQL 9.1\n"
+"Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
+"POT-Creation-Date: 2011-08-30 15:04+0200\n"
+"PO-Revision-Date: 2011-09-06 11:42+0200\n"
+"Last-Translator: \n"
+"Language-Team: Czech <kde-i18n-doc@kde.org>\n"
+"Language: \n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=3; plural=(n==1) ? 0 : (n>=2 && n<=4) ? 1 : 2;\n"
+"X-Generator: Lokalize 1.2\n"
+
+#: pg_basebackup.c:96 pg_basebackup.c:110
+#, c-format
+msgid "%s: out of memory\n"
+msgstr "%s: nedostatek pamětí\n"
+
+#: pg_basebackup.c:121
+#, c-format
+msgid ""
+"%s takes a base backup of a running PostgreSQL server.\n"
+"\n"
+msgstr ""
+"%s vytvoří base backup běžícího PostgreSQL serveru.\n"
+"\n"
+
+#: pg_basebackup.c:123
+#, c-format
+msgid "Usage:\n"
+msgstr "Použití:\n"
+
+#: pg_basebackup.c:124
+#, c-format
+msgid "  %s [OPTION]...\n"
+msgstr "  %s [VOLBA]...\n"
+
+#: pg_basebackup.c:125
+#, c-format
+msgid ""
+"\n"
+"Options controlling the output:\n"
+msgstr ""
+"\n"
+"Volby ovlivňující výstup:\n"
+
+#: pg_basebackup.c:126
+#, c-format
+msgid "  -D, --pgdata=DIRECTORY   receive base backup into directory\n"
+msgstr "  -D, --pgdata=ADRESÁŘ   ulož base backup do adresáře\n"
+
+#: pg_basebackup.c:127
+#, c-format
+msgid "  -F, --format=p|t         output format (plain, tar)\n"
+msgstr "  -F, --format=p|t         výstupní formát (plain, tar)\n"
+
+#: pg_basebackup.c:128
+#, c-format
+msgid "  -x, --xlog               include required WAL files in backup\n"
+msgstr "  -x, --xlog               zahrň do zálohy potřebné WAL soubory\n"
+
+#: pg_basebackup.c:129
+#, c-format
+msgid "  -z, --gzip               compress tar output\n"
+msgstr "  -z, --gzip               komprimuj výstup taru\n"
+
+#: pg_basebackup.c:130
+#, c-format
+msgid ""
+"  -Z, --compress=0-9       compress tar output with given compression level\n"
+msgstr ""
+"  -Z, --compress=0-9       komprimuj výstup taru zvolenou úrovní komprese\n"
+
+#: pg_basebackup.c:131
+#, c-format
+msgid ""
+"\n"
+"General options:\n"
+msgstr ""
+"\n"
+"Obecné volby:\n"
+
+#: pg_basebackup.c:132
+#, c-format
+msgid ""
+"  -c, --checkpoint=fast|spread\n"
+"                           set fast or spread checkpointing\n"
+msgstr ""
+"  -c, --checkpoint=fast|spread\n"
+"                           nastavte fast nebo spread checkpointing\n"
+
+#: pg_basebackup.c:134
+#, c-format
+msgid "  -l, --label=LABEL        set backup label\n"
+msgstr "  -l, --label=NÁZEV        nastavte jmenovku zálohy\n"
+
+#: pg_basebackup.c:135
+#, c-format
+msgid "  -P, --progress           show progress information\n"
+msgstr "  -P, --progress           zobrazuj informace o průběhu\n"
+
+#: pg_basebackup.c:136
+#, c-format
+msgid "  -v, --verbose            output verbose messages\n"
+msgstr "  -v, --verbose            zobrazuj podrobnější zprávy\n"
+
+#: pg_basebackup.c:137
+#, c-format
+msgid "  --help                   show this help, then exit\n"
+msgstr "  --help                   zobraz tuto nápovědu, poté skonči\n"
+
+#: pg_basebackup.c:138
+#, c-format
+msgid "  --version                output version information, then exit\n"
+msgstr "  --version                zobraz informaci o verzi, poté skonči\n"
+
+#: pg_basebackup.c:139
+#, c-format
+msgid ""
+"\n"
+"Connection options:\n"
+msgstr ""
+"\n"
+"Volby spojení:\n"
+
+#: pg_basebackup.c:140
+#, c-format
+msgid "  -h, --host=HOSTNAME      database server host or socket directory\n"
+msgstr ""
+"  -h, --host=HOSTNAME      host databázového serveru nebo adresář se sockety\n"
+
+#: pg_basebackup.c:141
+#, c-format
+msgid "  -p, --port=PORT          database server port number\n"
+msgstr "  -p, --port=PORT          port databázového serveru\n"
+
+#: pg_basebackup.c:142
+#, c-format
+msgid "  -U, --username=NAME      connect as specified database user\n"
+msgstr "  -U, --username=JMÉNO      připoj se jako uvedený uživatel\n"
+
+#: pg_basebackup.c:143
+#, c-format
+msgid "  -w, --no-password        never prompt for password\n"
+msgstr "  -w, --no-password        nikdy se neptej na heslo\n"
+
+#: pg_basebackup.c:144
+#, c-format
+msgid ""
+"  -W, --password           force password prompt (should happen "
+"automatically)\n"
+msgstr ""
+"  -W, --password           zeptej se na heslo (mělo by se dít automaticky)\n"
+
+#: pg_basebackup.c:145
+#, c-format
+msgid ""
+"\n"
+"Report bugs to <pgsql-bugs@postgresql.org>.\n"
+msgstr ""
+"\n"
+"Chyby hlaste na <pgsql-bugs@postgresql.org>.\n"
+
+#: pg_basebackup.c:167 pg_basebackup.c:604
+#, c-format
+msgid "%s: could not create directory \"%s\": %s\n"
+msgstr "%s: nelze vytvořit adresář \"%s\": %s\n"
+
+#: pg_basebackup.c:184
+#, c-format
+msgid "%s: directory \"%s\" exists but is not empty\n"
+msgstr "%s: adresář \"%s\" existuje ale není prázdný\n"
+
+#: pg_basebackup.c:192
+#, c-format
+msgid "%s: could not access directory \"%s\": %s\n"
+msgstr "%s: nelze přistoupit k adresáři \"%s\": %s\n"
+
+#: pg_basebackup.c:239
+#, c-format
+msgid "%s/%s kB (100%%), %d/%d tablespace %35s"
+msgid_plural "%s/%s kB (100%%), %d/%d tablespaces %35s"
+msgstr[0] "%s/%s kB (100%%), %d/%d tablespace %35s"
+msgstr[1] "%s/%s kB (100%%), %d/%d tablespaces %35s"
+msgstr[2] "%s/%s kB (100%%), %d/%d tablespaces %35s"
+
+#: pg_basebackup.c:245
+#, c-format
+msgid "%s/%s kB (%d%%), %d/%d tablespace (%-30.30s)"
+msgid_plural "%s/%s kB (%d%%), %d/%d tablespaces (%-30.30s)"
+msgstr[0] "%s/%s kB (%d%%), %d/%d tablespace (%-30.30s)"
+msgstr[1] "%s/%s kB (%d%%), %d/%d tablespaces (%-30.30s)"
+msgstr[2] "%s/%s kB (%d%%), %d/%d tablespaces (%-30.30s)"
+
+#: pg_basebackup.c:252
+#, c-format
+msgid "%s/%s kB (%d%%), %d/%d tablespace"
+msgid_plural "%s/%s kB (%d%%), %d/%d tablespaces"
+msgstr[0] "%s/%s kB (%d%%), %d/%d tablespace"
+msgstr[1] "%s/%s kB (%d%%), %d/%d tablespaces"
+msgstr[2] "%s/%s kB (%d%%), %d/%d tablespaces"
+
+#: pg_basebackup.c:295 pg_basebackup.c:313 pg_basebackup.c:337
+#, c-format
+msgid "%s: could not set compression level %i: %s\n"
+msgstr "%s: nelze nastavit úroveň komprese %i: %s\n"
+
+#: pg_basebackup.c:356
+#, c-format
+msgid "%s: could not create compressed file \"%s\": %s\n"
+msgstr "%s: nelze vytvořit komprimovaný soubor \"%s\": %s\n"
+
+#: pg_basebackup.c:367 pg_basebackup.c:643
+#, c-format
+msgid "%s: could not create file \"%s\": %s\n"
+msgstr "%s: nelze vytvořit soubor \"%s\": %s\n"
+
+#: pg_basebackup.c:379 pg_basebackup.c:516
+#, c-format
+msgid "%s: could not get COPY data stream: %s"
+msgstr "%s: nelze získat COPY data stream: %s"
+
+#: pg_basebackup.c:411 pg_basebackup.c:457
+#, c-format
+msgid "%s: could not write to compressed file \"%s\": %s\n"
+msgstr "%s: nelze zapsat do komprimovaného souboru \"%s\": %s\n"
+
+#: pg_basebackup.c:420 pg_basebackup.c:466 pg_basebackup.c:683
+#, c-format
+msgid "%s: could not write to file \"%s\": %s\n"
+msgstr "%s: nelze zapsat do souboru \"%s\": %s\n"
+
+#: pg_basebackup.c:447 pg_basebackup.c:545
+#, c-format
+msgid "%s: could not read COPY data: %s"
+msgstr "%s: nelze číst COPY data: %s"
+
+#: pg_basebackup.c:559
+#, c-format
+msgid "%s: invalid tar block header size: %i\n"
+msgstr "%s: neplatná velikost hlavičky tar bloku: %i\n"
+
+#: pg_basebackup.c:567
+#, c-format
+msgid "%s: could not parse file size\n"
+msgstr "%s: nelze načíst velikost souboru\n"
+
+#: pg_basebackup.c:575
+#, c-format
+msgid "%s: could not parse file mode\n"
+msgstr "%s: nelze načíst mód souboru\n"
+
+#: pg_basebackup.c:610
+#, c-format
+msgid "%s: could not set permissions on directory \"%s\": %s\n"
+msgstr "%s: nelze nastavit přístupová práva na adresáři \"%s\": %s\n"
+
+#: pg_basebackup.c:623
+#, c-format
+msgid "%s: could not create symbolic link from \"%s\" to \"%s\": %s\n"
+msgstr "%s: nelze vytvořit symbolický odkaz z \"%s\" na \"%s\": %s\n"
+
+#: pg_basebackup.c:630
+#, c-format
+msgid "%s: unrecognized link indicator \"%c\"\n"
+msgstr ""
+
+#: pg_basebackup.c:650
+#, c-format
+msgid "%s: could not set permissions on file \"%s\": %s\n"
+msgstr "%s: nelze nastavit přístupová práva na souboru \"%s\": %s\n"
+
+#: pg_basebackup.c:708
+#, c-format
+msgid "%s: COPY stream ended before last file was finished\n"
+msgstr "%s: COPY stream skončil před dokončením posledního souboru\n"
+
+#: pg_basebackup.c:769
+msgid "Password: "
+msgstr "Heslo: "
+
+#: pg_basebackup.c:789
+#, c-format
+msgid "%s: could not connect to server: %s"
+msgstr "%s: nelze se připojit k serveru: %s"
+
+#: pg_basebackup.c:829
+#, c-format
+msgid "%s: could not send base backup command: %s"
+msgstr "%s: nelze poslat base backup příkaz: %s"
+
+#: pg_basebackup.c:840
+#, c-format
+msgid "%s: could not initiate base backup: %s"
+msgstr "%s: nelze inicializovat base backup: %s"
+
+#: pg_basebackup.c:846
+#, c-format
+msgid "%s: no start point returned from server\n"
+msgstr "%s: server nevráti žádný počáteční bod (start point)\n"
+
+#: pg_basebackup.c:862
+#, c-format
+msgid "%s: could not get backup header: %s"
+msgstr "%s: nelze získat hlavičku zálohy: %s"
+
+#: pg_basebackup.c:868
+#, c-format
+msgid "%s: no data returned from server\n"
+msgstr "%s: ze serveru nebyla vrácena žádná data\n"
+
+#: pg_basebackup.c:896
+#, c-format
+msgid "%s: can only write single tablespace to stdout, database has %i\n"
+msgstr ""
+"%s: na standardní výstup lze vypsat jen jeden tablespace, databáze jich má %"
+"i\n"
+
+#: pg_basebackup.c:925
+#, c-format
+msgid "%s: could not get WAL end position from server\n"
+msgstr "%s: ze serveru nelze získat koncovou WAL pozici\n"
+
+#: pg_basebackup.c:931
+#, c-format
+msgid "%s: no WAL end position returned from server\n"
+msgstr "%s: ze serveru nebyla vrácena žádná koncová WAL pozice\n"
+
+#: pg_basebackup.c:943
+#, c-format
+msgid "%s: final receive failed: %s"
+msgstr ""
+
+#: pg_basebackup.c:1017
+#, c-format
+msgid "%s: invalid output format \"%s\", must be \"plain\" or \"tar\"\n"
+msgstr "%s: chybný formát výstupu \"%s\", musí být \"plain\" nebo \"tar\"\n"
+
+#: pg_basebackup.c:1039
+#, c-format
+msgid "%s: invalid compression level \"%s\"\n"
+msgstr "%s: chybná úroveň komprese \"%s\"\n"
+
+#: pg_basebackup.c:1051
+#, c-format
+msgid ""
+"%s: invalid checkpoint argument \"%s\", must be \"fast\" or \"spread\"\n"
+msgstr ""
+"%s: chybný checkpoint argument \"%s\", musí být \"fast\" nebo \"spread\"\n"
+
+#: pg_basebackup.c:1082 pg_basebackup.c:1096 pg_basebackup.c:1107
+#: pg_basebackup.c:1120
+#, c-format
+msgid "Try \"%s --help\" for more information.\n"
+msgstr "Zadejte \"%s --help\" pro více informací.\n"
+
+#: pg_basebackup.c:1094
+#, c-format
+msgid "%s: too many command-line arguments (first is \"%s\")\n"
+msgstr "%s: příliš mnoho parametrů na příkazové řádce (první je \"%s\")\n"
+
+#: pg_basebackup.c:1106
+#, c-format
+msgid "%s: no target directory specified\n"
+msgstr "%s: nebyl zadán cílový adresář\n"
+
+#: pg_basebackup.c:1118
+#, c-format
+msgid "%s: only tar mode backups can be compressed\n"
+msgstr "%s: pouze tar zálohy mohou být komprimované\n"
+
+#: pg_basebackup.c:1129
+#, c-format
+msgid "%s: this build does not support compression\n"
+msgstr "%s: tento build nepodporuje kompresi\n"
+
+

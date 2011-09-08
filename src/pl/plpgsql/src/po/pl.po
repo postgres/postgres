@@ -2,21 +2,22 @@
 # Copyright (C) 2011 PostgreSQL Global Development Group
 # This file is distributed under the same license as the PostgreSQL package.
 # FIRST AUTHOR <EMAIL@ADDRESS>, 2011.
-#
+# Begina Felicysym <begina.felicysym@wp.eu>, 2011.
 msgid ""
 msgstr ""
 "Project-Id-Version: PostgreSQL 9.1\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
-"POT-Creation-Date: 2011-08-07 20:52+0000\n"
-"PO-Revision-Date: 2011-07-28 22:36+0100\n"
-"Last-Translator: Wojciech Muła <wojciech_mula@poczta.onet.pl>\n"
-"Language-Team: \n"
-"Language: \n"
+"POT-Creation-Date: 2011-09-03 20:52+0000\n"
+"PO-Revision-Date: 2011-09-04 21:32+0200\n"
+"Last-Translator: Begina Felicysym <begina.felicysym@wp.eu>\n"
+"Language-Team: Polish TotroiseSvn translation team\n"
+"Language: pl\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"Plural-Forms: nplurals=3; plural=n==1 ? 0 : n%10>=2 && n%10<=4 && (n%100<10 "
-"|| n%100>=20) ? 1 : 2;\n"
+"Plural-Forms: nplurals=3; plural=(n==1 ? 0 : n%10>=2 && n%10<=4 && (n%100<10 "
+"|| n%100>=20) ? 1 : 2);\n"
+"X-Generator: Virtaal 0.7.1-beta1\n"
 
 #: pl_comp.c:427 pl_handler.c:266
 #, c-format
@@ -30,9 +31,7 @@ msgstr "nie można określić, jaki typ zwraca funkcja polimorficzna \"%s\""
 
 #: pl_comp.c:536
 msgid "trigger functions can only be called as triggers"
-msgstr ""
-"procedury wyzwalaczy nie mogą być wywoływane bezpośrednio, a jedynie przez "
-"wyzwalacze"
+msgstr "procedury wyzwalaczy mogą być wywoływane jedynie przez wyzwalacze"
 
 #: pl_comp.c:540 pl_handler.c:251
 #, c-format
@@ -54,7 +53,7 @@ msgstr ""
 #: pl_comp.c:912
 #, c-format
 msgid "compilation of PL/pgSQL function \"%s\" near line %d"
-msgstr "kompilacja funkcji PL/pgSQL \"%s\", w wierszu %d"
+msgstr "kompilacja funkcji PL/pgSQL \"%s\", w okolicach linii %d"
 
 #: pl_comp.c:935
 #, c-format
@@ -97,14 +96,14 @@ msgid "relation \"%s\" is not a table"
 msgstr "relacja \"%s\" nie jest tabelą"
 
 #: pl_comp.c:2117
-#, fuzzy, c-format
+#, c-format
 msgid "type \"%s\" is only a shell"
 msgstr "typ \"%s\" jest jedynie powłoką"
 
 #: pl_comp.c:2190 pl_comp.c:2243
 #, c-format
 msgid "unrecognized exception condition \"%s\""
-msgstr "nieznana nazwa wyjątku \"%s\""
+msgstr "nieznany warunek wyjątku \"%s\""
 
 #: pl_comp.c:2401
 #, c-format
@@ -113,13 +112,12 @@ msgid ""
 msgstr "nie można określić typu argumentu dla funkcji polimorficznej \"%s\""
 
 #: pl_exec.c:239 pl_exec.c:510
-#, fuzzy
 msgid "during initialization of execution state"
-msgstr "podczas inicjalizacji ??? wykonywania zapytania"
+msgstr "podczas inicjacji stanu wykonywania"
 
 #: pl_exec.c:246
 msgid "while storing call arguments into local variables"
-msgstr "podczas przepisywania argumentów aktualnych do lokalnych zmiennych"
+msgstr "podczas przepisywania argumentów wywołania do lokalnych zmiennych"
 
 #: pl_exec.c:301 pl_exec.c:667
 msgid "during function entry"
@@ -149,7 +147,7 @@ msgstr "został zwrócony rekord o niewłaściwym typie"
 
 #: pl_exec.c:452 pl_exec.c:706
 msgid "during function exit"
-msgstr "podczas kończenie funkcji"
+msgstr "podczas wyjścia z funkcji"
 
 #: pl_exec.c:702
 msgid "control reached end of trigger procedure without RETURN"
@@ -163,7 +161,7 @@ msgstr "procedura wyzwalacza nie może zwracać zbioru rekordów"
 msgid ""
 "returned row structure does not match the structure of the triggering table"
 msgstr ""
-"struktura zwróconego rekord nie odpowiada strukturze tabeli dla której "
+"struktura zwróconego rekordu nie odpowiada strukturze tabeli dla której "
 "wywołano wyzwalacz"
 
 #: pl_exec.c:796
@@ -189,7 +187,7 @@ msgstr "funkcja PL/pgSQL \"%s\""
 
 #: pl_exec.c:929
 msgid "during statement block local variable initialization"
-msgstr "podczas inicjalizacji zmiennych lokalnych bloku instrukcji"
+msgstr "podczas inicjacji zmiennych lokalnych bloku instrukcji"
 
 #: pl_exec.c:971
 #, c-format
@@ -216,7 +214,7 @@ msgstr "etykieta instrukcji wyboru nie znaleziona"
 
 #: pl_exec.c:1571
 msgid "CASE statement is missing ELSE part."
-msgstr "w wyrażeniu CASE brakuje ELSE"
+msgstr "w wyrażeniu CASE brakuje części ELSE."
 
 #: pl_exec.c:1725
 msgid "lower bound of FOR loop cannot be null"
@@ -254,7 +252,7 @@ msgstr "wyrażenie w instrukcji FOREACH nie może być NULL"
 #: pl_exec.c:2069
 #, c-format
 msgid "FOREACH expression must yield an array, not type %s"
-msgstr "typem wyrażenie w instrukcji FOREACH musi być tablica (array), nie %s"
+msgstr "typem wyrażenie w instrukcji FOREACH musi być tablica, nie %s"
 
 #: pl_exec.c:2086
 #, c-format
@@ -263,12 +261,11 @@ msgstr "wymiar wycinka tablicy (%d) przekracza dopuszczalny zakres 0..%d"
 
 #: pl_exec.c:2113
 msgid "FOREACH ... SLICE loop variable must be of an array type"
-msgstr ""
-"zmienna użyta w pętli FOREACH ... SLICE musi być typu tablicowego (array)"
+msgstr "zmienna użyta w pętli FOREACH ... SLICE musi być typu tablicowego"
 
 #: pl_exec.c:2117
 msgid "FOREACH loop variable must not be of an array type"
-msgstr "zmienna użyta w pętli FOREACH nie może być typu tablicowego (array)"
+msgstr "zmienna użyta w pętli FOREACH nie może być typu tablicowego"
 
 #: pl_exec.c:2375 gram.y:2844
 msgid "cannot use RETURN NEXT in a non-SETOF function"
@@ -290,7 +287,7 @@ msgstr "struktura rekordu \"%s\" nie jest jeszcze znana"
 #: pl_exec.c:4289 pl_exec.c:4357 pl_exec.c:4380
 msgid "The tuple structure of a not-yet-assigned record is indeterminate."
 msgstr ""
-"Struktura jest nieokreślona dla niezainicjowanego rekordu abstrakcyjnego"
+"Struktura jest nieokreślona dla niezainicjowanego rekordu abstrakcyjnego."
 
 #: pl_exec.c:2427 pl_exec.c:2446
 msgid "wrong record type supplied in RETURN NEXT"
@@ -360,7 +357,7 @@ msgstr "zapytanie nie zwróciło żadnych wierszy"
 
 #: pl_exec.c:3138 pl_exec.c:3318
 msgid "query returned more than one row"
-msgstr "zapytanie zwróciło więcej niż jeden rekord"
+msgstr "zapytanie zwróciło więcej niż jeden wiersz"
 
 #: pl_exec.c:3152
 msgid "query has no destination for result data"
@@ -409,12 +406,10 @@ msgstr ""
 "wartości NULL"
 
 #: pl_exec.c:3760
-#, fuzzy
 msgid "cannot assign non-composite value to a row variable"
 msgstr "nie można przypisać wartości skalarnej do zmiennej rekordowej"
 
 #: pl_exec.c:3802
-#, fuzzy
 msgid "cannot assign non-composite value to a record variable"
 msgstr "nie można przypisać wartości skalarnej do zmiennej rekordowej"
 
@@ -425,13 +420,13 @@ msgstr "liczba wymiarów tablicy (%d) przekracza maksimum (%d)"
 
 #: pl_exec.c:3992
 msgid "subscripted object is not an array"
-msgstr "indeksowanie jest możliwe jedynie dla obiektu typu tablicowego (array)"
+msgstr "indeksowanie jest możliwe jedynie dla obiektu typu tablicowego"
 
 #: pl_exec.c:4015
 msgid "array subscript in assignment must not be null"
 msgstr ""
-"w instrukcji przypisania do elementu tablicy (array) indeksem elementu nie "
-"może być NULL"
+"w instrukcji przypisania do elementu tablicy indeksem elementu nie może być "
+"NULL"
 
 #: pl_exec.c:4493
 #, c-format
@@ -461,9 +456,9 @@ msgid "block label must be placed before DECLARE, not after"
 msgstr "etykieta bloku musi pojawić się przed częścią DECLARE, nie po niej"
 
 #: gram.y:450
-#, fuzzy, c-format
+#, c-format
 msgid "collations are not supported by type %s"
-msgstr "rzutowanie nie jest dostępne dla typu %s"
+msgstr "porównania nie jest dostępne dla typu %s"
 
 #: gram.y:465
 msgid "row or record variable cannot be CONSTANT"
@@ -551,9 +546,8 @@ msgid "FETCH statement cannot return multiple rows"
 msgstr "instrukcja FETCH nie może zwracać wielu wierszy"
 
 #: gram.y:1932
-#, fuzzy
 msgid "cursor variable must be a simple variable"
-msgstr "zmienna kursorowa musi być zmienną prostą"
+msgstr "zmienna kursorowa musi być zmienną skalarną"
 
 #: gram.y:1938
 #, c-format
@@ -605,7 +599,7 @@ msgstr "INTO użyte więcej niż raz"
 
 #: gram.y:2713
 msgid "expected FROM or IN"
-msgstr "spodziewano się \"FROM\" lub \"IN\""
+msgstr "spodziewano się FROM lub IN"
 
 #: gram.y:2773
 msgid "RETURN cannot have a parameter in function returning set"
@@ -703,18 +697,16 @@ msgid "FOR with integer loop variable"
 msgstr "pętla FOR ze zmienną typu całkowitego"
 
 #: pl_funcs.c:232
-#, fuzzy
 msgid "FOR over SELECT rows"
 msgstr "pętla FOR po rekordach z zapytania SELECT"
 
 #: pl_funcs.c:234
-#, fuzzy
 msgid "FOR over cursor"
-msgstr "pętla FOR po wartościach kursora"
+msgstr "pętla FOR względem kursora"
 
 #: pl_funcs.c:236
 msgid "FOREACH over array"
-msgstr "pętla FOREACH po elementach tablicy (array)"
+msgstr "pętla FOREACH po elementach tablicy"
 
 #: pl_funcs.c:248
 msgid "SQL statement"

@@ -1,179 +1,223 @@
 # translation of psql-cs.po to Czech
 # Czech message translation file for psql
 #
-# src/bin/psql/po/cs.po
+# pgtranslation Id: psql.po,v 1.6 2011/09/08 18:23:06 petere Exp $
 # Karel Žák, 2001-2003, 2004.
-# Zdeněk Kotala, 2009.
-
+# Zdeněk Kotala, 2009, 2011.
 msgid ""
 msgstr ""
 "Project-Id-Version: postgresql 8.4\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
-"POT-Creation-Date: 2009-05-21 21:08+0000\n"
-"PO-Revision-Date: 2009-05-24 15:46+0200\n"
-"Last-Translator: Zdeněk Kotala\n"
-"Language-Team: Czech \n"
+"POT-Creation-Date: 2011-08-30 11:35+0200\n"
+"PO-Revision-Date: 2011-08-30 14:46+0200\n"
+"Last-Translator: \n"
+"Language-Team: Czech <kde-i18n-doc@kde.org>\n"
+"Language: \n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=3; plural=(n==1) ? 0 : (n>=2 && n<=4) ? 1 : 2;\n"
+"X-Generator: Lokalize 1.2\n"
 
-#: command.c:112
+#: command.c:113
 #, c-format
 msgid "Invalid command \\%s. Try \\? for help.\n"
 msgstr "Neplatný příkaz \\%s. Použijte \\? pro nápovědu.\n"
 
-#: command.c:114
+#: command.c:115
 #, c-format
 msgid "invalid command \\%s\n"
 msgstr "neplatný příkaz \\%s\n"
 
-#: command.c:125
+#: command.c:126
 #, c-format
 msgid "\\%s: extra argument \"%s\" ignored\n"
-msgstr "\\%s: vedlejší argument \"%s\" ignorován\n"
+msgstr "\\%s: nadbytečný argument \"%s\" ignorován\n"
 
-#: command.c:267
+#: command.c:268
 #, c-format
 msgid "could not get home directory: %s\n"
 msgstr "nelze získat domácí adresář: %s\n"
 
-#: command.c:283
+#: command.c:284
 #, c-format
 msgid "\\%s: could not change directory to \"%s\": %s\n"
 msgstr "\\%s: nelze změnit adresář na \"%s\": %s\n"
 
-#: command.c:316 common.c:935
+#: command.c:305 common.c:493 common.c:773
+#, c-format
+msgid "You are currently not connected to a database.\n"
+msgstr "Aktuálně nejste připojeni k databázi.\n"
+
+#: command.c:312
+#, c-format
+msgid ""
+"You are connected to database \"%s\" as user \"%s\" via socket in \"%s\" at "
+"port \"%s\".\n"
+msgstr ""
+"Jste připojeni k databázi \"%s\" jako uživatel \"%s\" přes socket v \"%s\" na"
+"portu \"%s\".\n"
+
+#: command.c:315
+#, c-format
+#| msgid "You are now connected to database \"%s\""
+msgid ""
+"You are connected to database \"%s\" as user \"%s\" on host \"%s\" at port "
+"\"%s\".\n"
+msgstr ""
+"Nyní jste připojeni k databázi \"%s\" jako uživatel \"%s\" na serveru \"%s\" "
+"na portu"
+"\"%s\".\n"
+
+#: command.c:339 common.c:940
 #, c-format
 msgid "Time: %.3f ms\n"
 msgstr "Čas: %.3f ms\n"
 
-#: command.c:468 command.c:496 command.c:1035
+#: command.c:524 command.c:588 command.c:1285
 msgid "no query buffer\n"
-msgstr "v paměti není žádný dotaz\n"
+msgstr "v historii není žádný dotaz\n"
 
-#: command.c:538
+#: command.c:557 command.c:2507
+#, c-format
+#| msgid "invalid binary \"%s\""
+msgid "invalid line number: %s\n"
+msgstr "neplatné číslo řádky: %s\n"
+
+#: command.c:662
 msgid "No changes"
 msgstr "Žádné změny"
 
-#: command.c:592
+#: command.c:716
 #, c-format
 msgid "%s: invalid encoding name or conversion procedure not found\n"
 msgstr "%s: neplatné jméno kódování nebo nenalezena konverzní funkce\n"
 
-#: command.c:660 command.c:694 command.c:708 command.c:725 command.c:829
-#: command.c:879 command.c:1015 command.c:1046
+#: command.c:795 command.c:829 command.c:843 command.c:860 command.c:964
+#: command.c:1014 command.c:1265 command.c:1296
 #, c-format
 msgid "\\%s: missing required argument\n"
 msgstr "\\%s: chybí požadovaný argument\n"
 
-#: command.c:757
+#: command.c:892
 msgid "Query buffer is empty."
 msgstr "Buffer dotazů je prázdný."
 
-#: command.c:767
+#: command.c:902
 msgid "Enter new password: "
 msgstr "Zadejte nové heslo: "
 
-#: command.c:768
+#: command.c:903
 msgid "Enter it again: "
 msgstr "Zadejte znova: "
 
-#: command.c:772
+#: command.c:907
 #, c-format
 msgid "Passwords didn't match.\n"
 msgstr "Hesla se neshodují.\n"
 
-#: command.c:790
+#: command.c:925
 #, c-format
 msgid "Password encryption failed.\n"
 msgstr "Zašifrování hesla selhalo.\n"
 
-#: command.c:858 command.c:959 command.c:1020
+#: command.c:993 command.c:1094 command.c:1270
 #, c-format
 msgid "\\%s: error\n"
 msgstr "\\%s: chyba\n"
 
-#: command.c:899
+#: command.c:1034
 msgid "Query buffer reset (cleared)."
 msgstr "Buffer dotazů vyprázdněn."
 
-#: command.c:912
+#: command.c:1047
 #, c-format
 msgid "Wrote history to file \"%s/%s\".\n"
-msgstr "Historie zapsána do soubor: \"%s/%s\".\n"
+msgstr "Historie zapsána do souboru: \"%s/%s\".\n"
 
-#: command.c:950 common.c:52 common.c:66 input.c:198 mainloop.c:69
-#: mainloop.c:227 print.c:61 print.c:75
+#: command.c:1085 common.c:52 common.c:66 common.c:90 input.c:209
+#: mainloop.c:72 mainloop.c:234 print.c:137 print.c:151
 #, c-format
 msgid "out of memory\n"
-msgstr "paměť vyčerpána\n"
+msgstr "nedostatek paměti\n"
 
-#: command.c:1000
+#: command.c:1115
+#| msgid "\\copy: arguments required\n"
+msgid "function name is required\n"
+msgstr "je vyžadováno jméno funkce\n"
+
+#: command.c:1250
 msgid "Timing is on."
 msgstr "Sledování času je zapnuto."
 
-#: command.c:1002
+#: command.c:1252
 msgid "Timing is off."
 msgstr "Sledování času je vypnuto."
 
-#: command.c:1063 command.c:1083 command.c:1581 command.c:1588 command.c:1597
-#: command.c:1607 command.c:1616 command.c:1630 command.c:1647 command.c:1680
-#: common.c:137 copy.c:517 copy.c:581
+#: command.c:1313 command.c:1333 command.c:1895 command.c:1902 command.c:1911
+#: command.c:1921 command.c:1930 command.c:1944 command.c:1961 command.c:1999
+#: common.c:137 copy.c:283 copy.c:361
 #, c-format
 msgid "%s: %s\n"
 msgstr "%s: %s\n"
 
-#: command.c:1165 startup.c:159
+#: command.c:1415 startup.c:159
 msgid "Password: "
 msgstr "Heslo: "
 
-#: command.c:1172 startup.c:162 startup.c:164
+#: command.c:1422 startup.c:162 startup.c:164
 #, c-format
 msgid "Password for user %s: "
-msgstr "Vložte heslo uživatele %s: "
+msgstr "Heslo pro uživatele %s: "
 
-#: command.c:1268 command.c:2110 common.c:183 common.c:460 common.c:525
-#: common.c:811 common.c:836 common.c:920 copy.c:652 copy.c:697 copy.c:826
+#: command.c:1541 command.c:2541 common.c:183 common.c:460 common.c:525
+#: common.c:816 common.c:841 common.c:925 copy.c:432 copy.c:477 copy.c:607
 #, c-format
 msgid "%s"
 msgstr "%s"
 
-#: command.c:1272
+#: command.c:1545
 msgid "Previous connection kept\n"
 msgstr "Předchozí spojení zachováno\n"
 
-#: command.c:1276
+#: command.c:1549
 #, c-format
 msgid "\\connect: %s"
 msgstr "\\connect: %s"
 
-#: command.c:1300
+#: command.c:1582
 #, c-format
-msgid "You are now connected to database \"%s\""
-msgstr "Nyní jste připojeni do databáze \"%s\""
+#| msgid "You are now connected to database \"%s\""
+msgid ""
+"You are now connected to database \"%s\" as user \"%s\" via socket in \"%s\" "
+"at port \"%s\".\n"
+msgstr ""
+"You are now connected to database \"%s\" as user \"%s\" via socket in \"%s\" "
+"at port \"%s\".\n"
 
-#: command.c:1303
+#: command.c:1585
 #, c-format
-msgid " on host \"%s\""
-msgstr " na počítač \"%s\""
+#| msgid "You are now connected to database \"%s\""
+msgid ""
+"You are now connected to database \"%s\" as user \"%s\" on host \"%s\" at "
+"port \"%s\".\n"
+msgstr ""
+"Nyní jste připojeni k databázi \"%s\" jako uživatel \"%s\" na serveru \"%s\" "
+"na portu"
+"\"%s\".\n"
 
-#: command.c:1306
+#: command.c:1589
 #, c-format
-msgid " at port \"%s\""
-msgstr " na port \"%s\""
+#| msgid "You are now connected to database \"%s\""
+msgid "You are now connected to database \"%s\" as user \"%s\".\n"
+msgstr "Nyní jste připojeni k databázi \"%s\" jako uživatel \"%s\".\n"
 
-#: command.c:1309
-#, c-format
-msgid " as user \"%s\""
-msgstr " jako uživatel \"%s\""
-
-#: command.c:1344
+#: command.c:1623
 #, c-format
 msgid "%s (%s, server %s)\n"
 msgstr "%s (%s, server %s)\n"
 
-#: command.c:1351
+#: command.c:1631
 #, c-format
 msgid ""
 "WARNING: %s version %d.%d, server version %d.%d.\n"
@@ -182,158 +226,182 @@ msgstr ""
 "VAROVÁNÍ: %s verze %d.%d, verze serveru %d.%d.\n"
 "          Některé vlastnosti psql nemusí fungovat.\n"
 
-#: command.c:1381
+#: command.c:1661
 #, c-format
 msgid "SSL connection (cipher: %s, bits: %i)\n"
 msgstr "SSL spojení (šifra: %s, bitů: %i)\n"
 
-#: command.c:1390
+#: command.c:1671
 #, c-format
 msgid "SSL connection (unknown cipher)\n"
 msgstr "SSL spojení (neznámá šifra)\n"
 
-#: command.c:1411
+#: command.c:1692
 #, c-format
 msgid ""
 "WARNING: Console code page (%u) differs from Windows code page (%u)\n"
 "         8-bit characters might not work correctly. See psql reference\n"
 "         page \"Notes for Windows users\" for details.\n"
 msgstr ""
+"VAROVÁNÍ: Kódová stránka konzole (%u) není shodná s kódovou stránkou\n"
+"         Windows (%u) 8-bitové znaky nemusí fungovat správně. Další\n"
+"         informace najdete v manuálu k psql na stránce \"Poznámky pro\n"
+"         uživatele Windows.\"\n"
 
-#: command.c:1500
+#: command.c:1776
+msgid ""
+"environment variable PSQL_EDITOR_LINENUMBER_ARG must be set to specify a "
+"line number\n"
+msgstr ""
+"proměnná prostředí PSQL_EDITOR_LINENUMBER_ARG musí být nastavena pro zadání"
+"čísla řádky\n"
+
+#: command.c:1813
 #, c-format
 msgid "could not start editor \"%s\"\n"
 msgstr "nelze spustit editor \"%s\"\n"
 
-#: command.c:1502
+#: command.c:1815
 msgid "could not start /bin/sh\n"
 msgstr "nelze spustit /bin/sh\n"
 
-#: command.c:1539
+#: command.c:1853
 #, c-format
-msgid "cannot locate temporary directory: %s"
-msgstr "nelze otevřít dočasný soubor: %s"
+#| msgid "cannot locate temporary directory: %s"
+msgid "could not locate temporary directory: %s\n"
+msgstr "nelze najít dočasný adresář: %s\n"
 
-#: command.c:1566
+#: command.c:1880
 #, c-format
 msgid "could not open temporary file \"%s\": %s\n"
 msgstr "nelze otevřít dočasný soubor \"%s\": %s\n"
 
-#: command.c:1764
+#: command.c:2110
 msgid ""
 "\\pset: allowed formats are unaligned, aligned, wrapped, html, latex, troff-"
 "ms\n"
-msgstr "" 
-"\\pset: dovolené formáty jsou: unaligned, aligned, wrapped, html, latex, troff-"
-"ms\n"
+msgstr ""
+"\\pset: dovolené formáty jsou: unaligned, aligned, wrapped, html, latex, "
+"troff-ms\n"
 
-#: command.c:1769
+#: command.c:2115
 #, c-format
 msgid "Output format is %s.\n"
 msgstr "Výstupní formát je %s.\n"
 
-#: command.c:1779
+#: command.c:2131
+msgid "\\pset: allowed line styles are ascii, old-ascii, unicode\n"
+msgstr "\\pset: povolené styly řádek jsou ascii, old-ascii, unicode\n"
+
+#: command.c:2136
+#, c-format
+msgid "Line style is %s.\n"
+msgstr "Styl čar je %s.\n"
+
+#: command.c:2147
 #, c-format
 msgid "Border style is %d.\n"
 msgstr "Styl rámečků je %d.\n"
 
-#: command.c:1791
+#: command.c:2159
 #, c-format
 msgid "Expanded display is on.\n"
 msgstr "Rozšířené zobrazení zapnuto.\n"
 
-#: command.c:1792
+#: command.c:2160
 #, c-format
 msgid "Expanded display is off.\n"
 msgstr "Rozšířené zobrazení vypnuto.\n"
 
-#: command.c:1805
+#: command.c:2173
+#, fuzzy
 msgid "Showing locale-adjusted numeric output."
 msgstr "Zobrazí číselný výstup dle národního nastavení."
 
-#: command.c:1807
+#: command.c:2175
+#, fuzzy
 msgid "Locale-adjusted numeric output is off."
 msgstr "Zobrazení číselného výstupu dle národního nastavení je vypnuto."
 
-#: command.c:1820
+#: command.c:2188
 #, c-format
 msgid "Null display is \"%s\".\n"
 msgstr "Null je zobrazován jako '\"%s\"'.\n"
 
-#: command.c:1832
+#: command.c:2200
 #, c-format
 msgid "Field separator is \"%s\".\n"
 msgstr "Oddělovač polí je '\"%s\"'.\n"
 
-#: command.c:1846
+#: command.c:2214
 #, c-format
 msgid "Record separator is <newline>."
 msgstr "Oddělovač záznamů je <newline>."
 
-#: command.c:1848
+#: command.c:2216
 #, c-format
 msgid "Record separator is \"%s\".\n"
 msgstr "Oddělovač záznamů je '\"%s\"'.\n"
 
-#: command.c:1862
+#: command.c:2230
 msgid "Showing only tuples."
 msgstr "Zobrazovány jsou pouze záznamy."
 
-#: command.c:1864
+#: command.c:2232
 msgid "Tuples only is off."
 msgstr "Zobrazování pouze záznamů je vypnuto."
 
-#: command.c:1880
+#: command.c:2248
 #, c-format
 msgid "Title is \"%s\".\n"
 msgstr "Nadpis je \"%s\".\n"
 
-#: command.c:1882
+#: command.c:2250
 #, c-format
 msgid "Title is unset.\n"
 msgstr "Nadpis není nastaven.\n"
 
-#: command.c:1898
+#: command.c:2266
 #, c-format
 msgid "Table attribute is \"%s\".\n"
 msgstr "Atribut tabulky je \"%s\".\n"
 
-#: command.c:1900
+#: command.c:2268
 #, c-format
 msgid "Table attributes unset.\n"
 msgstr "Atributy tabulky nejsou nastaveny.\n"
 
-#: command.c:1921
+#: command.c:2289
 msgid "Pager is used for long output."
 msgstr "Stránkování je zapnuto pro dlouhé výstupy."
 
-#: command.c:1923
+#: command.c:2291
 msgid "Pager is always used."
 msgstr "Stránkování je vždy použito."
 
-#: command.c:1925
+#: command.c:2293
 msgid "Pager usage is off."
 msgstr "Stránkování je vypnuto."
 
-#: command.c:1939
+#: command.c:2307
 msgid "Default footer is on."
-msgstr "Implicitní záhlaví je zapnuto."
+msgstr "Implicitní zápatí je zapnuto."
 
-#: command.c:1941
+#: command.c:2309
 msgid "Default footer is off."
-msgstr "Implicitní záhlaví je vypnuto."
+msgstr "Implicitní zápatí je vypnuto."
 
-#: command.c:1952
+#: command.c:2320
 #, c-format
 msgid "Target width for \"wrapped\" format is %d.\n"
-msgstr ""
+msgstr "Cílová šířka pro \"wrapped\" formát je %d.\n"
 
-#: command.c:1957
+#: command.c:2325
 #, c-format
 msgid "\\pset: unknown option: %s\n"
 msgstr "\\pset: neznámá volba: %s\n"
 
-#: command.c:2011
+#: command.c:2379
 msgid "\\!: failed\n"
 msgstr "\\!: selhal\n"
 
@@ -341,10 +409,6 @@ msgstr "\\!: selhal\n"
 #, c-format
 msgid "%s: pg_strdup: cannot duplicate null pointer (internal error)\n"
 msgstr "%s: pg_strdup: nelze duplikovat nulový ukazatel (interní chyba)\n"
-
-#: common.c:90
-msgid "out of memory"
-msgstr "paměť vyčerpána"
 
 #: common.c:343
 msgid "connection to server was lost\n"
@@ -362,11 +426,7 @@ msgstr "Nepodařilo se.\n"
 msgid "Succeeded.\n"
 msgstr "Podařilo se.\n"
 
-#: common.c:493 common.c:768
-msgid "You are currently not connected to a database.\n"
-msgstr "Neexistuje spojeni s databází.\n"
-
-#: common.c:499 common.c:506 common.c:794
+#: common.c:499 common.c:506 common.c:799
 #, c-format
 msgid ""
 "********* QUERY **********\n"
@@ -379,13 +439,22 @@ msgstr ""
 "**************************\n"
 "\n"
 
-#: common.c:558
+#: common.c:560
+#, c-format
+msgid ""
+"Asynchronous notification \"%s\" with payload \"%s\" received from server "
+"process with PID %d.\n"
+msgstr ""
+"Asynchronní upozornění \"%s\" s obsahem \"%s\" obdrženo ze serverového "
+"procesu s PID %d.\n"
+
+#: common.c:563
 #, c-format
 msgid ""
 "Asynchronous notification \"%s\" received from server process with PID %d.\n"
 msgstr "Asynchronní upozornění \"%s\" obdrženo z procesu serveru s PID %d.\n"
 
-#: common.c:776
+#: common.c:781
 #, c-format
 msgid ""
 "***(Single step mode: verify command)"
@@ -397,84 +466,89 @@ msgstr ""
 "***(Krokovací mód: potvrďte příkaz)"
 "*******************************************\n"
 "%s\n"
-"***(stiskněte return pro zpracování nebo x pro zrušení)********************\n"
+"***(stiskněte return pro zpracování nebo x a return pro zrušení)"
+"********************\n"
 
-#: common.c:827
+#: common.c:832
 #, c-format
 msgid ""
 "The server (version %d.%d) does not support savepoints for "
 "ON_ERROR_ROLLBACK.\n"
-msgstr "Serveru (verze %d.%d) nepodporuje savepoints pro ON_ERROR_ROLLBACK.\n"
+msgstr "Server (verze %d.%d) nepodporuje savepoints pro ON_ERROR_ROLLBACK.\n"
 
-#: copy.c:120
+#: copy.c:96
 msgid "\\copy: arguments required\n"
 msgstr "\\copy: argumenty jsou povinné\n"
 
-#: copy.c:399
+#: copy.c:228
 #, c-format
 msgid "\\copy: parse error at \"%s\"\n"
 msgstr "\\copy: chyba na \"%s\"\n"
 
-#: copy.c:401
+#: copy.c:230
 msgid "\\copy: parse error at end of line\n"
 msgstr "\\copy: chyba na konci řádku\n"
 
-#: copy.c:528
+#: copy.c:294
 #, c-format
 msgid "%s: cannot copy from/to a directory\n"
 msgstr "%s: nelze kopírovat z/do adresáře\n"
 
-#: copy.c:554
+#: copy.c:331
 #, c-format
 msgid "\\copy: %s"
 msgstr "\\copy: %s"
 
-#: copy.c:558 copy.c:572
+#: copy.c:335 copy.c:349
 #, c-format
 msgid "\\copy: unexpected response (%d)\n"
 msgstr "\\copy: neočekávaná odezva (%d)\n"
 
-#: copy.c:627 copy.c:637
+#: copy.c:353
+msgid "trying to exit copy mode"
+msgstr "pokouším se opustit copy mód"
+
+#: copy.c:407 copy.c:417
 #, c-format
 msgid "could not write COPY data: %s\n"
 msgstr "nelze zapsat data příkazu COPY: %s\n"
 
-#: copy.c:644
+#: copy.c:424
 #, c-format
 msgid "COPY data transfer failed: %s"
 msgstr "přenos dat příkazem COPY selhal: %s"
 
-#: copy.c:692
+#: copy.c:472
 msgid "canceled by user"
 msgstr "zrušeno na žádost uživatele"
 
 # common.c:485
-#: copy.c:707
+#: copy.c:487
 msgid ""
 "Enter data to be copied followed by a newline.\n"
 "End with a backslash and a period on a line by itself."
 msgstr ""
-"Vstupní data budu kopírována od následující řádky.\n"
-"Ukončení kopírování pomocí samostatné řádky s lomítkem (backslash) a tečkou."
+"Zadejte data pro kopírování následovaná novým řádkem.\n"
+"Ukončete zpětným lomítkem a tečkou na samostatném řádku."
 
-#: copy.c:819
+#: copy.c:600
 msgid "aborted because of read failure"
 msgstr "přerušeno z důvodu chyby čtení"
 
-#: help.c:52
+#: help.c:48
 msgid "on"
 msgstr "zapnuto"
 
-#: help.c:52
+#: help.c:48
 msgid "off"
 msgstr "vypnuto"
 
-#: help.c:74
+#: help.c:70
 #, c-format
 msgid "could not get current user name: %s\n"
-msgstr "nelze získat uživatelské jméno: %s\n"
+msgstr "nelze získat aktuální uživatelské jméno: %s\n"
 
-#: help.c:86
+#: help.c:82
 #, c-format
 msgid ""
 "psql is the PostgreSQL interactive terminal.\n"
@@ -483,12 +557,12 @@ msgstr ""
 "psql je PostgreSQL interaktivní terminál.\n"
 "\n"
 
-#: help.c:87
+#: help.c:83
 #, c-format
 msgid "Usage:\n"
 msgstr "Použití:\n"
 
-#: help.c:88
+#: help.c:84
 #, c-format
 msgid ""
 "  psql [OPTION]... [DBNAME [USERNAME]]\n"
@@ -497,51 +571,53 @@ msgstr ""
 "  psql [PŘEPÍNAČE]... [DATABÁZE [UŽIVATEL]]\n"
 "\n"
 
-#: help.c:90
+#: help.c:86
 #, c-format
 msgid "General options:\n"
-msgstr "Základní přepínače:\n"
+msgstr "Základní volby:\n"
 
-#: help.c:95
+#: help.c:91
 #, c-format
 msgid ""
 "  -c, --command=COMMAND    run only single command (SQL or internal) and "
 "exit\n"
 msgstr ""
-"  -c, --command=PŘÍKAZ     provede pouze jeden příkaz (SQL nebo interní) a skončí\n"
+"  -c, --command=PŘÍKAZ     provede pouze jeden příkaz (SQL nebo interní) a "
+"skončí\n"
 
-#: help.c:96
+#: help.c:92
 #, c-format
 msgid ""
 "  -d, --dbname=DBNAME      database name to connect to (default: \"%s\")\n"
 msgstr ""
 "  -d, --dbname=DATABÁZE    jméno databáze pro spojení (implicitně: \"%s\")\n"
 
-#: help.c:97
+#: help.c:93
 #, c-format
 msgid "  -f, --file=FILENAME      execute commands from file, then exit\n"
 msgstr "  -f, --file=SOUBOR        provede příkazy ze souboru a skončí\n"
 
-#: help.c:98
+#: help.c:94
 #, c-format
 msgid "  -l, --list               list available databases, then exit\n"
-msgstr "  -l, --list               vypíše seznam dostupných databází a skončí\n"
+msgstr ""
+"  -l, --list               vypíše seznam dostupných databází a skončí\n"
 
-#: help.c:99
+#: help.c:95
 #, c-format
 msgid ""
 "  -v, --set=, --variable=NAME=VALUE\n"
 "                           set psql variable NAME to VALUE\n"
 msgstr ""
-"  -v, ..set=, --variable=JMÉNO=HODNOTA\n"
+"  -v, --set=, --variable=JMÉNO=HODNOTA\n"
 "                           nastaví psql proměnnou 'JMÉNO' na 'HODNOTA'\n"
 
-#: help.c:101
+#: help.c:97
 #, c-format
 msgid "  -X, --no-psqlrc          do not read startup file (~/.psqlrc)\n"
 msgstr "  -X, --no-psqlrc          nečíst inicializační soubor (~/.psqlrc)\n"
 
-#: help.c:102
+#: help.c:98
 #, c-format
 msgid ""
 "  -1 (\"one\"), --single-transaction\n"
@@ -550,17 +626,17 @@ msgstr ""
 "  -1 (\"jedna\"), --single-transaction\n"
 "                           zpracuj soubor v rámci jedné transakce\n"
 
-#: help.c:104
+#: help.c:100
 #, c-format
 msgid "  --help                   show this help, then exit\n"
 msgstr "  --help                   ukáže tuto nápovědu a skončí\n"
 
-#: help.c:105
+#: help.c:101
 #, c-format
 msgid "  --version                output version information, then exit\n"
 msgstr "  --version                ukáže informace o verzi a skončí\n"
 
-#: help.c:107
+#: help.c:103
 #, c-format
 msgid ""
 "\n"
@@ -569,61 +645,64 @@ msgstr ""
 "\n"
 "Vstupní a výstupní přepínače:\n"
 
-#: help.c:108
+#: help.c:104
 #, c-format
 msgid "  -a, --echo-all           echo all input from script\n"
 msgstr "  -a, --echo-all           ukáže všechny vstupy ze skriptu\n"
 
-#: help.c:109
+#: help.c:105
 #, c-format
 msgid "  -e, --echo-queries       echo commands sent to server\n"
 msgstr "  -e --echo-queries        ukáže všechny příkazy poslané na server\n"
 
-#: help.c:110
+#: help.c:106
 #, c-format
 msgid ""
 "  -E, --echo-hidden        display queries that internal commands generate\n"
-msgstr "" 
-"  -E, --echo-hidden        ukáže dotazy, které generují interní příkazy\n"
+msgstr "  -E, --echo-hidden        ukáže dotazy generované interními příkazy\n"
 
-#: help.c:111
+#: help.c:107
 #, c-format
 msgid "  -L, --log-file=FILENAME  send session log to file\n"
 msgstr "  -L, --log-file=FILENAME  uloží záznam sezení do souboru\n"
 
-#: help.c:112
+#: help.c:108
 #, c-format
 msgid ""
 "  -n, --no-readline        disable enhanced command line editing (readline)\n"
 msgstr ""
-"  -n, --no-readline        vypne editační možnosti příkazové řádky (podpora readline)\n"
+"  -n, --no-readline        vypne pokročilé editační možnosti příkazové řádky "
+"(podpora readline)\n"
 
-#: help.c:113
+#: help.c:109
 #, c-format
 msgid "  -o, --output=FILENAME    send query results to file (or |pipe)\n"
-msgstr "  -o,  --output=SOUBOR     zapíše výsledek dotazu do souboru (nebo |roury)\n"
+msgstr ""
+"  -o,  --output=SOUBOR     zapíše výsledek dotazu do souboru (nebo |roury)\n"
 
-#: help.c:114
+#: help.c:110
 #, c-format
 msgid ""
 "  -q, --quiet              run quietly (no messages, only query output)\n"
 msgstr ""
 "  -q, --quiet              tichý chod (bez hlášek, pouze výstupy dotazů)\n"
 
-#: help.c:115
+#: help.c:111
 #, c-format
 msgid "  -s, --single-step        single-step mode (confirm each query)\n"
-msgstr "  -s, --single-step        krokovací mód (nutné potvrzení každého dotazu)\n"
+msgstr ""
+"  -s, --single-step        krokovací mód (nutné potvrzení každého dotazu)\n"
 
-#: help.c:116
+#: help.c:112
 #, c-format
 msgid ""
 "  -S, --single-line        single-line mode (end of line terminates SQL "
 "command)\n"
 msgstr ""
-"  -S, --single-line        jednořádkový mód (konec řádky ukončuje SQL příkaz)\n"
+"  -S, --single-line        jednořádkový mód (konec řádky ukončuje SQL "
+"příkaz)\n"
 
-#: help.c:118
+#: help.c:114
 #, c-format
 msgid ""
 "\n"
@@ -632,12 +711,12 @@ msgstr ""
 "\n"
 "Výstupní formát je:\n"
 
-#: help.c:119
+#: help.c:115
 #, c-format
 msgid "  -A, --no-align           unaligned table output mode\n"
 msgstr "  -A, --no-align           mód nezarovnaného formátu tabulky\n"
 
-#: help.c:120
+#: help.c:116
 #, c-format
 msgid ""
 "  -F, --field-separator=STRING\n"
@@ -646,21 +725,21 @@ msgstr ""
 "  -F, --field-separator=ŘETĚZEC\n"
 "                           oddělovač polí (implicitně: \"%s\")\n"
 
-#: help.c:123
+#: help.c:119
 #, c-format
 msgid "  -H, --html               HTML table output mode\n"
 msgstr "  -H, --html               Mód HTML formátu tabulky\n"
 
-#: help.c:124
+#: help.c:120
 #, c-format
 msgid ""
 "  -P, --pset=VAR[=ARG]     set printing option VAR to ARG (see \\pset "
 "command)\n"
 msgstr ""
-"  -P, --pset=VAR[=ARG]     nastaví zobrazovací parametr 'VAR' na hodnotu 'ARG' (viz. příkaz "
-"\\pset)\n"
+"  -P, --pset=VAR[=ARG]     nastaví zobrazovací parametr 'VAR' na hodnotu "
+"'ARG' (viz. příkaz \\pset)\n"
 
-#: help.c:125
+#: help.c:121
 #, c-format
 msgid ""
 "  -R, --record-separator=STRING\n"
@@ -669,25 +748,26 @@ msgstr ""
 "  -R, --record-separator=ŘETĚZEC\n"
 "                           oddělovač záznamů (implicitně: newline)\n"
 
-#: help.c:127
+#: help.c:123
 #, c-format
 msgid "  -t, --tuples-only        print rows only\n"
 msgstr "  -t, --tuples-only        tiskne pouze řádky\n"
 
-#: help.c:128
+#: help.c:124
 #, c-format
 msgid ""
 "  -T, --table-attr=TEXT    set HTML table tag attributes (e.g., width, "
 "border)\n"
 msgstr ""
-"  -T, --table-attr=TEXT    nastavení atributů HTML tabulky (např. width, border)\n"
+"  -T, --table-attr=TEXT    nastavení atributů HTML tabulky (např. width, "
+"border)\n"
 
-#: help.c:129
+#: help.c:125
 #, c-format
 msgid "  -x, --expanded           turn on expanded table output\n"
 msgstr "  -x, --expanded           výstupu v rozšířené tabulce\n"
 
-#: help.c:131
+#: help.c:127
 #, c-format
 msgid ""
 "\n"
@@ -696,41 +776,39 @@ msgstr ""
 "\n"
 "Parametry spojení:\n"
 
-#: help.c:134
+#: help.c:130
 #, c-format
 msgid ""
 "  -h, --host=HOSTNAME      database server host or socket directory "
 "(default: \"%s\")\n"
 msgstr ""
-"  -h, --host=HOSTNAME      jméno databázového serveru nebo adresář se soketem "
-"(implicitně: \"%s\")\n"
+"  -h, --host=HOSTNAME      jméno databázového serveru nebo adresář se "
+"soketem (implicitně: \"%s\")\n"
 
-#: help.c:135
+#: help.c:131
 msgid "local socket"
 msgstr "lokální soket"
 
-#: help.c:138
+#: help.c:134
 #, c-format
-msgid ""
-"  -p, --port=PORT          database server port (default: \"%s\")\n"
+msgid "  -p, --port=PORT          database server port (default: \"%s\")\n"
 msgstr ""
-"  -p, --port=PORT          specifikuje port databázového serveru (implicitně: \"%s"
-"\")\n"
+"  -p, --port=PORT          specifikuje port databázového serveru "
+"(implicitně: \"%s\")\n"
 
-#: help.c:144
+#: help.c:140
 #, c-format
-msgid ""
-"  -U, --username=USERNAME  database user name (default: \"%s\")\n"
+msgid "  -U, --username=USERNAME  database user name (default: \"%s\")\n"
 msgstr ""
-"  -U, --username=JMÉNO     specifikuje jméno databázového uživatele (implicitně: \"%s"
-"\")\n"
+"  -U, --username=JMÉNO     specifikuje jméno databázového uživatele "
+"(implicitně: \"%s\")\n"
 
-#: help.c:145
-#, fu c-format
+#: help.c:141
+#, c-format
 msgid "  -w, --no-password        never prompt for password\n"
 msgstr "  -w, --no-password        neptá se na heslo\n"
 
-#: help.c:146
+#: help.c:142
 #, c-format
 msgid ""
 "  -W, --password           force password prompt (should happen "
@@ -739,7 +817,7 @@ msgstr ""
 "  -W, --password           vynucený dotaz na heslo (měl by být proveden "
 "automaticky)\n"
 
-#: help.c:148
+#: help.c:144
 #, c-format
 msgid ""
 "\n"
@@ -755,315 +833,374 @@ msgstr ""
 "části věnované psql.\n"
 "\n"
 
-#: help.c:151
+#: help.c:147
 #, c-format
 msgid "Report bugs to <pgsql-bugs@postgresql.org>.\n"
 msgstr "Chyby posílejte na adresu <pgsql-bugs@postgresql.org>.\n"
 
-#: help.c:169
+#: help.c:165
 #, c-format
 msgid "General\n"
 msgstr "Hlavní\n"
 
-#: help.c:170
+#: help.c:166
 #, c-format
 msgid ""
 "  \\copyright             show PostgreSQL usage and distribution terms\n"
 msgstr ""
 "  \\copyright             zobrazí podmínky použití a distribuce PostgreSQL\n"
 
-#: help.c:171
+#: help.c:167
 #, c-format
 msgid ""
 "  \\g [FILE] or ;         execute query (and send results to file or |pipe)\n"
 msgstr ""
-"  \\g [SOUBOR] nebo ;     pošle SQL dotaz na server (a zapíše výsledek do souboru"
-" nebo |roury)\n"
+"  \\g [SOUBOR] nebo ;     pošle SQL dotaz na server (a zapíše výsledek do "
+"souboru nebo |roury)\n"
 
-#: help.c:172
+#: help.c:168
 #, c-format
 msgid ""
 "  \\h [NAME]              help on syntax of SQL commands, * for all "
 "commands\n"
 msgstr ""
-"  \\h [JMÉNO]             nápověda syntaxe SQL příkazů, * pro všechny příkazy\n"
+"  \\h [JMÉNO]             nápověda syntaxe SQL příkazů, * pro všechny "
+"příkazy\n"
 
-#: help.c:173
+#: help.c:169
 #, c-format
 msgid "  \\q                     quit psql\n"
 msgstr "  \\q                     ukončení psql\n"
 
-#: help.c:176
+#: help.c:172
 #, c-format
 msgid "Query Buffer\n"
 msgstr "Paměť dotazu\n"
 
-#: help.c:177
+#: help.c:173
 #, c-format
+#| msgid ""
+#| "  \\e [FILE]              edit the query buffer (or file) with external "
+#| "editor\n"
 msgid ""
-"  \\e [FILE]              edit the query buffer (or file) with external "
+"  \\e [FILE] [LINE]       edit the query buffer (or file) with external "
 "editor\n"
 msgstr ""
-"  \\e [SOUBOR]            editace aktuálního dotazu (nebo souboru) v externím "
-"editoru\n"
+"  \\e [SOUBOR] [ŘÁDEK]           editace aktuálního dotazu (nebo souboru) v "
+"externím editoru\n"
 
-#: help.c:178
+#: help.c:174
 #, c-format
+#| msgid ""
+#| "  \\ef [FUNCNAME]         edit function definition with external editor\n"
 msgid ""
-"  \\ef [FUNCNAME]         edit function definition with external editor\n"
+"  \\ef [FUNCNAME [LINE]]  edit function definition with external editor\n"
 msgstr ""
-"  \\ef [JMENOFUNKCE]      editace definice funkce v externím editoru\n"
+"  \\ef [JMENOFUNKCE [ŘÁDEK]]      editace definice funkce v externím editoru\n"
 
-#: help.c:179
+#: help.c:175
 #, c-format
 msgid "  \\p                     show the contents of the query buffer\n"
 msgstr "  \\p                     ukázat současný obsah paměti s dotazem\n"
 
-#: help.c:180
+#: help.c:176
 #, c-format
 msgid "  \\r                     reset (clear) the query buffer\n"
 msgstr "  \\r                     vyprázdnění paměti s dotazy\n"
 
-#: help.c:182
+#: help.c:178
 #, c-format
 msgid "  \\s [FILE]              display history or save it to file\n"
 msgstr "  \\s [SOUBOR]            vytiskne historii nebo ji uloží do souboru\n"
 
-#: help.c:184
+#: help.c:180
 #, c-format
 msgid "  \\w FILE                write query buffer to file\n"
 msgstr "  \\w SOUBOR              zapsání paměti s dotazem do souboru\n"
 
-#: help.c:187
+#: help.c:183
 #, c-format
 msgid "Input/Output\n"
 msgstr "Vstup/Výstup\n"
 
-#: help.c:188
+#: help.c:184
 #, c-format
 msgid ""
 "  \\copy ...              perform SQL COPY with data stream to the client "
 "host\n"
-msgstr ""
-"  \\copy ...              provede SQL COPY s tokem dat na klienta\n"
+msgstr "  \\copy ...              provede SQL COPY s tokem dat na klienta\n"
 
-#: help.c:189
+#: help.c:185
 #, c-format
 msgid "  \\echo [STRING]         write string to standard output\n"
 msgstr "  \\echo [TEXT]           vypsání textu na standardní výstup\n"
 
-#: help.c:190
+#: help.c:186
 #, c-format
 msgid "  \\i FILE                execute commands from file\n"
 msgstr "  \\i SOUBOR              provedení příkazů ze souboru\n"
 
-#: help.c:191
+#: help.c:187
 #, c-format
-msgid ""
-"  \\o [FILE]              send all query results to file or |pipe\n"
+msgid "  \\o [FILE]              send all query results to file or |pipe\n"
 msgstr ""
-"  \\o [SOUBOR]            přesměrování výsledků dotazu do souboru nebo |roury\n"
+"  \\o [SOUBOR]            přesměrování výsledků dotazu do souboru nebo |"
+"roury\n"
 
-#: help.c:192
+#: help.c:188
 #, c-format
 msgid ""
 "  \\qecho [STRING]        write string to query output stream (see \\o)\n"
-msgstr ""
-"  \\qecho [ŘETĚZEC]       vypsání textu na výstup dotazů (viz. \\o)\n"
+msgstr "  \\qecho [ŘETĚZEC]       vypsání textu na výstup dotazů (viz. \\o)\n"
 
-#: help.c:195
+#: help.c:191
 #, c-format
 msgid "Informational\n"
 msgstr "Informační\n"
 
-#: help.c:196
+#: help.c:192
 #, c-format
 msgid "  (options: S = show system objects, + = additional detail)\n"
 msgstr "  (volby: S = zobraz systémové objekty, + = další detaily)\n"
 
-#: help.c:197
+#: help.c:193
 #, c-format
 msgid "  \\d[S+]                 list tables, views, and sequences\n"
 msgstr "  \\dp[S+]                seznam tabulek, pohledů a sekvencí\n"
 
-#: help.c:198
+#: help.c:194
 #, c-format
 msgid "  \\d[S+]  NAME           describe table, view, sequence, or index\n"
-msgstr "  \\d[S+]  JMÉNO          popis tabulky, pohledů, sekvence nebo indexu\n"
+msgstr ""
+"  \\d[S+]  JMÉNO          popis tabulky, pohledů, sekvence nebo indexu\n"
 
-#: help.c:199
+#: help.c:195
 #, c-format
-msgid "  \\da[+]  [PATTERN]      list aggregates\n"
-msgstr "  \\da[+]  [VZOR]         seznam agregátních funkcí\n"
+msgid "  \\da[S]  [PATTERN]      list aggregates\n"
+msgstr "  \\da[+]  [VZOR]         seznam agregačních funkcí\n"
 
-#: help.c:200
+#: help.c:196
 #, c-format
 msgid "  \\db[+]  [PATTERN]      list tablespaces\n"
-msgstr "  \\db[+]  [VZOR]         seznam tablespaců\n"
+msgstr "  \\db[+]  [VZOR]         seznam tablespaces\n"
 
-#: help.c:201
+#: help.c:197
 #, c-format
 msgid "  \\dc[S]  [PATTERN]      list conversions\n"
 msgstr "  \\dc[S]  [VZOR]         seznam konverzí\n"
 
-#: help.c:202
+#: help.c:198
 #, c-format
 msgid "  \\dC     [PATTERN]      list casts\n"
 msgstr "  \\dC     [VZOR]         seznam přetypování\n"
 
-#: help.c:203
+#: help.c:199
 #, c-format
 msgid "  \\dd[S]  [PATTERN]      show comments on objects\n"
-msgstr "  \\dd[S]  [VZOR]         ukázat komentář k objektu\n"
+msgstr "  \\dd[S]  [VZOR]         ukázat komentáře k objektům\n"
 
-#: help.c:204
+#: help.c:200
+#, c-format
+msgid "  \\ddp    [PATTERN]      list default privileges\n"
+msgstr "  \\dC     [VZOR]         seznam implicitních výrazů\n"
+
+#: help.c:201
 #, c-format
 msgid "  \\dD[S]  [PATTERN]      list domains\n"
 msgstr "  \\dD[S]  [VZOR]         seznam domén (domain)\n"
 
-#: help.c:205
+#: help.c:202
+#, c-format
+msgid "  \\det[+] [PATTERN]      list foreign tables\n"
+msgstr "  \\det[+] [VZOR]         seznam foreign tabulek\n"
+
+#: help.c:203
 #, c-format
 msgid "  \\des[+] [PATTERN]      list foreign servers\n"
 msgstr "  \\des[+] [VZOR]         seznam foreign serverů\n"
 
-#: help.c:206
+#: help.c:204
 #, c-format
 msgid "  \\deu[+] [PATTERN]      list user mappings\n"
 msgstr "  \\deu[+] [VZOR]         seznam mapování uživatelů\n"
 
-#: help.c:207
+#: help.c:205
 #, c-format
 msgid "  \\dew[+] [PATTERN]      list foreign-data wrappers\n"
-msgstr "  \\dew[+] [VZOR]         seznam foreign-data wrappers\n"
+msgstr "  \\dew[+] [VZOR]         seznam foreign-data wrapperů\n"
 
-#: help.c:208
+#: help.c:206
 #, c-format
 msgid ""
 "  \\df[antw][S+] [PATRN]  list [only agg/normal/trigger/window] functions\n"
 msgstr ""
 "  \\df[antw][S+] [VZOR]   seznam [pouze agg/normal/trigger/window] funkcí\n"
 
-#: help.c:209
+#: help.c:207
 #, c-format
 msgid "  \\dF[+]  [PATTERN]      list text search configurations\n"
-msgstr "  \\dF[+]   [VZOR]        seznam konfigurací fulltextového vyhledávání\n"
+msgstr ""
+"  \\dF[+]   [VZOR]        seznam konfigurací fulltextového vyhledávání\n"
 
-#: help.c:210
+#: help.c:208
 #, c-format
 msgid "  \\dFd[+] [PATTERN]      list text search dictionaries\n"
 msgstr "  \\dFd[+] [VZOR]         seznam slovníků fulltextového vyhledávání\n"
 
-#: help.c:211
+#: help.c:209
 #, c-format
 msgid "  \\dFp[+] [PATTERN]      list text search parsers\n"
 msgstr "  \\dFp[+] [VZOR]         seznam parserů fulltextového vyhledávání\n"
 
-#: help.c:212
+#: help.c:210
 #, c-format
 msgid "  \\dFt[+] [PATTERN]      list text search templates\n"
 msgstr "  \\dFt[+] [VZOR]         seznam šablon fulltextového vyhledávání\n"
 
-#: help.c:213
+#: help.c:211
 #, c-format
-msgid "  \\dg     [PATTERN]      list roles (groups)\n"
-msgstr "  \\dg     [VZOR]         seznam rolí (skupin)\n"
+#| msgid "  \\dg[+]  [PATTERN]      list roles (groups)\n"
+msgid "  \\dg[+]  [PATTERN]      list roles\n"
+msgstr "  \\dg[+]     [VZOR]         seznam rolí\n"
 
-#: help.c:214
+#: help.c:212
 #, c-format
 msgid "  \\di[S+] [PATTERN]      list indexes\n"
 msgstr "  \\di[S+] [VZOR]         seznam indexů\n"
 
-#: help.c:215
+#: help.c:213
 #, c-format
 msgid "  \\dl                    list large objects, same as \\lo_list\n"
-msgstr "  \\dl                    seznam \"large object\" stejné jako \\lo_list\n"
+msgstr ""
+"  \\dl                    seznam \"large object\" stejné jako \\lo_list\n"
+
+#: help.c:214
+#, c-format
+#| msgid "  \\dt[S+] [PATTERN]      list tables\n"
+msgid "  \\dL[S+] [PATTERN]      list procedural languages\n"
+msgstr "  \\dL[S+] [VZOR]         seznam procedurálních jazyků\n"
+
+#: help.c:215
+#, c-format
+#| msgid "  \\dn[+]  [PATTERN]      list schemas\n"
+msgid "  \\dn[S+] [PATTERN]      list schemas\n"
+msgstr "  \\dn[+]  [VZOR]         seznam schémat\n"
 
 #: help.c:216
 #, c-format
-msgid "  \\dn[+]  [PATTERN]      list schemas\n"
-msgstr "  \\dn[+]  [VZOR]         seznam schémat\n"
+msgid "  \\do[S]  [PATTERN]      list operators\n"
+msgstr "  \\do[S]  [VZOR]         seznam operátorů\n"
 
 #: help.c:217
 #, c-format
-msgid "  \\do[S]  [PATTERN]      list operators\n"
-msgstr "  \\do[S]  [VZOR]         seznam operátorů\n"
+#| msgid "  \\dD[S]  [PATTERN]      list domains\n"
+msgid "  \\dO[S+] [PATTERN]      list collations\n"
+msgstr "  \\dO[S+]  [VZOR]         seznam collations\n"
 
 #: help.c:218
 #, c-format
 msgid ""
 "  \\dp     [PATTERN]      list table, view, and sequence access privileges\n"
 msgstr ""
-"  \\dp     [VZOR]         seznam přístupových práv tabulek, pohledů a sekvencí\n"
+"  \\dp     [VZOR]         seznam přístupových práv tabulek, pohledů a "
+"sekvencí\n"
 
 #: help.c:219
+#, c-format
+msgid "  \\drds [PATRN1 [PATRN2]] list per-database role settings\n"
+msgstr ""
+"  \\drds [VZOR1 [VZOR2]] seznam nastavení rolí pro jednotlivé databáze\n"
+
+#: help.c:220
 #, c-format
 msgid "  \\ds[S+] [PATTERN]      list sequences\n"
 msgstr "  \\ds[S+] [VZOR]         seznam sekvencí\n"
 
-#: help.c:220
+#: help.c:221
 #, c-format
 msgid "  \\dt[S+] [PATTERN]      list tables\n"
 msgstr "  \\dt[S+] [VZOR]         seznam tabulek\n"
 
-#: help.c:221
+#: help.c:222
 #, c-format
 msgid "  \\dT[S+] [PATTERN]      list data types\n"
 msgstr "  \\dT[S+] [VZOR]         seznam datových typů\n"
 
-#: help.c:222
-#, c-format
-msgid "  \\du     [PATTERN]      list roles (users)\n"
-msgstr "  \\du     [VZOR]         seznam rolí (uživatelů)\n"
-
 #: help.c:223
+#, c-format
+#| msgid "  \\du[+]  [PATTERN]      list roles (users)\n"
+msgid "  \\du[+]  [PATTERN]      list roles\n"
+msgstr "  \\du[+] [VZOR]         seznam rolí (uživatelů)\n"
+
+#: help.c:224
 #, c-format
 msgid "  \\dv[S+] [PATTERN]      list views\n"
 msgstr "  \\dv[S+] [VZOR]         seznam pohledů\n"
 
-#: help.c:224
+#: help.c:225
+#, c-format
+#| msgid "  \\dt[S+] [PATTERN]      list tables\n"
+msgid "  \\dE[S+] [PATTERN]      list foreign tables\n"
+msgstr "  \\dE[S+] [VZOR]         seznam foreign tabulek\n"
+
+#: help.c:226
+#, c-format
+#| msgid "  \\dc[S]  [PATTERN]      list conversions\n"
+msgid "  \\dx[+]  [PATTERN]      list extensions\n"
+msgstr "  \\dx[+]  [VZOR]         seznam rozšíření\n"
+
+#: help.c:227
 #, c-format
 msgid "  \\l[+]                  list all databases\n"
-msgstr "  \\l[+]                  seznam databázích \n"
+msgstr "  \\l[+]                  seznam databází\n"
 
-#: help.c:225
+#: help.c:228
+#, c-format
+#| msgid ""
+#| "  \\ef [FUNCNAME]         edit function definition with external editor\n"
+msgid "  \\sf[+] FUNCNAME        show a function's definition\n"
+msgstr "  \\sf[+] [JMENOFUNKCE]      zobrazí definici funkce\n"
+
+#: help.c:229
 #, c-format
 msgid "  \\z      [PATTERN]      same as \\dp\n"
 msgstr "  \\z      [VZOR]         stejné jako \\dp\n"
 
-#: help.c:228
+#: help.c:232
 #, c-format
 msgid "Formatting\n"
 msgstr "Formátování\n"
 
-#: help.c:229
+#: help.c:233
 #, c-format
 msgid ""
 "  \\a                     toggle between unaligned and aligned output mode\n"
-msgstr "" 
-"  \\a                     přepíná mezi 'unaligned' a 'aligned' modem výstupu\n"
+msgstr ""
+"  \\a                     přepíná mezi 'unaligned' a 'aligned' modem "
+"výstupu\n"
 
-#: help.c:230
+#: help.c:234
 #, c-format
 msgid "  \\C [STRING]            set table title, or unset if none\n"
 msgstr ""
 "  \\C [ŘETĚZEC]           nastaví titulek tabulky nebo odnastaví pokud není "
 "definován řetězec\n"
 
-#: help.c:231
+#: help.c:235
 #, c-format
 msgid ""
 "  \\f [STRING]            show or set field separator for unaligned query "
 "output\n"
 msgstr ""
-"  \\f [ŘETĚZEC]           nastaví nebo zobrazí oddělovače polí pro nezarovnaný "
-"výstup dotazů\n"
+"  \\f [ŘETĚZEC]           nastaví nebo zobrazí oddělovače polí pro "
+"nezarovnaný výstup dotazů\n"
 
-#: help.c:232
+#: help.c:236
 #, c-format
 msgid "  \\H                     toggle HTML output mode (currently %s)\n"
 msgstr "  \\H                     zapne HTML mód výstupu (nyní %s)\n"
 
-#: help.c:234
+#: help.c:238
 #, c-format
 msgid ""
 "  \\pset NAME [VALUE]     set table output option\n"
@@ -1073,32 +1210,32 @@ msgid ""
 "pager})\n"
 msgstr ""
 "  \\pset JMÉNO [HODNOTA]  nastaví parametry výstupní tabulky\n"
-"                         (JMÉNO := {format|border|expanded|fieldsep|footer|null|\n"
+"                         (JMÉNO := {format|border|expanded|fieldsep|footer|"
+"null|\n"
 "                         recordsep|tuples_only|title|tableattr|pager})\n"
 
-#: help.c:237
+#: help.c:241
 #, c-format
 msgid "  \\t [on|off]            show only rows (currently %s)\n"
 msgstr "  \\t [on|off]            ukazovat pouze řádky (nyní %s)\n"
 
-#: help.c:239
+#: help.c:243
 #, c-format
 msgid ""
 "  \\T [STRING]            set HTML <table> tag attributes, or unset if none\n"
-msgstr ""
-"  \\T [ŘETĚZEC]           nastavení atributů HTML tagu <table>\n"
+msgstr "  \\T [ŘETĚZEC]           nastavení atributů HTML tagu <table>\n"
 
-#: help.c:240
+#: help.c:244
 #, c-format
 msgid "  \\x [on|off]            toggle expanded output (currently %s)\n"
 msgstr "  \\x [on|off]            zapne rozšířený mód výstupu (nyní %s)\n"
 
-#: help.c:244
+#: help.c:248
 #, c-format
 msgid "Connection\n"
 msgstr "Spojení\n"
 
-#: help.c:245
+#: help.c:249
 #, c-format
 msgid ""
 "  \\c[onnect] [DBNAME|- USER|- HOST|- PORT|-]\n"
@@ -1107,71 +1244,79 @@ msgstr ""
 " \\c[onnect] [DATABÁZE|- UŽIVATEL|- HOST|- PORT|-]]\n"
 "                         vytvoří spojení do nové databáze (současná \"%s\")\n"
 
-#: help.c:248
+#: help.c:252
 #, c-format
 msgid "  \\encoding [ENCODING]   show or set client encoding\n"
 msgstr "  \\encoding [KÓDOVÁNÍ]   zobrazení nebo nastavení kódování klienta\n"
 
-#: help.c:249
+#: help.c:253
 #, c-format
 msgid "  \\password [USERNAME]   securely change the password for a user\n"
 msgstr "  \\password [UŽIVATEL]   bezpečná změna hesla uživatele\n"
 
-#: help.c:252
+#: help.c:254
+#, c-format
+msgid ""
+"  \\conninfo              display information about current connection\n"
+msgstr "  \\conninfo              zobrazí informace o aktuálním spojení\n"
+
+#: help.c:257
 #, c-format
 msgid "Operating System\n"
 msgstr "Operační systém\n"
 
-#: help.c:253
+#: help.c:258
 #, c-format
 msgid "  \\cd [DIR]              change the current working directory\n"
 msgstr "  \\cd [ADRESÁŘ]          změna aktuálního pracovního adresář\n"
 
-#: help.c:254
+#: help.c:259
 #, c-format
 msgid "  \\timing [on|off]       toggle timing of commands (currently %s)\n"
 msgstr "  \\timing [on|off]       použít sledování času u příkazů (nyní %s)\n"
 
-#: help.c:256
+#: help.c:261
 #, c-format
 msgid ""
 "  \\! [COMMAND]           execute command in shell or start interactive "
 "shell\n"
 msgstr ""
-"  \\! [PŘÍKAZ]            provedení příkazu v shellu nebo nastartuje interaktivní "
-"shell\n"
+"  \\! [PŘÍKAZ]            provedení příkazu v shellu nebo nastartuje "
+"interaktivní shell\n"
 
-#: help.c:259
+#: help.c:264
 #, c-format
 msgid "Variables\n"
 msgstr "Proměnné\n"
 
-#: help.c:260
+#: help.c:265
 #, c-format
 msgid "  \\prompt [TEXT] NAME    prompt user to set internal variable\n"
-msgstr "  \\prompt [TEXT] PROMĚNÁ vyzve uživatele, aby zadal hodnotu proměnné\n"
+msgstr ""
+"  \\prompt [TEXT] PROMĚNÁ vyzve uživatele, aby zadal hodnotu proměnné\n"
 
-#: help.c:261
+#: help.c:266
 #, c-format
 msgid ""
 "  \\set [NAME [VALUE]]    set internal variable, or list all if no "
 "parameters\n"
 msgstr ""
 "  \\set [PROMĚNÁ [HODNOTA]]\n"
-"                         nastavení interní proměnné nebo bez parametrů zobrazí\n"
+"                         nastavení interní proměnné nebo bez parametrů "
+"zobrazí\n"
 "                         seznam všech proměnných\n"
 
-#: help.c:262
+#: help.c:267
 #, c-format
 msgid "  \\unset NAME            unset (delete) internal variable\n"
 msgstr "  \\unset JMÉNO           zrušení interní proměnné\n"
 
-#: help.c:265
+#: help.c:270
 #, c-format
 msgid "Large Objects\n"
-msgstr "Velké objekty\n"
+msgstr "Velké objekty (LO)\n"
 
-#: help.c:266
+#: help.c:271
 #, c-format
 msgid ""
 "  \\lo_export LOBOID FILE\n"
@@ -1188,7 +1333,7 @@ msgstr ""
 msgid "Available help:\n"
 msgstr "Dostupná nápověda:\n"
 
-#: help.c:407
+#: help.c:402
 #, c-format
 msgid ""
 "Command:     %s\n"
@@ -1203,26 +1348,26 @@ msgstr ""
 "%s\n"
 "\n"
 
-#: help.c:423
+#: help.c:418
 #, c-format
 msgid ""
-"No help available for \"%-.*s\".\n"
+"No help available for \"%s\".\n"
 "Try \\h with no arguments to see available help.\n"
 msgstr ""
-"Nápověda pro \"%-.*s\" je nedostupná.\n"
+"Nápověda pro \"%s\" je nedostupná.\n"
 "Pomocí \\h bez parametrů lze získat seznam dostupných nápověd.\n"
 
-#: input.c:187
+#: input.c:198
 #, c-format
 msgid "could not read from input file: %s\n"
 msgstr "nelze číst vstupní soubor: %s\n"
 
-#: input.c:347
+#: input.c:406
 #, c-format
 msgid "could not save history to file \"%s\": %s\n"
 msgstr "nelze uložit historii do souboru \"%s\": %s\n"
 
-#: input.c:352
+#: input.c:411
 msgid "history is not supported by this installation\n"
 msgstr "historie není podporována pro tuto instalaci\n"
 
@@ -1234,39 +1379,45 @@ msgstr "%s: není spojení s databází\n"
 #: large_obj.c:85
 #, c-format
 msgid "%s: current transaction is aborted\n"
-msgstr "%s: současná transakce je jen nestandardně ukončena (abort)\n"
+msgstr "%s: současná transakce je nestandardně ukončena (abort)\n"
 
 #: large_obj.c:88
 #, c-format
 msgid "%s: unknown transaction status\n"
 msgstr "%s: neznámý status transakce\n"
 
-#: large_obj.c:286
+#: large_obj.c:289 large_obj.c:300
 msgid "ID"
-msgstr ""
+msgstr "ID"
 
-#: large_obj.c:287 describe.c:95 describe.c:158 describe.c:337 describe.c:490
-#: describe.c:565 describe.c:636 describe.c:759 describe.c:1237
-#: describe.c:2008 describe.c:2136 describe.c:2428 describe.c:2490
-#: describe.c:2626 describe.c:2665 describe.c:2732 describe.c:2791
-#: describe.c:2800 describe.c:2859
+#: large_obj.c:290 describe.c:147 describe.c:335 describe.c:637 describe.c:787
+#: describe.c:2513 describe.c:2631 describe.c:2968 describe.c:3599
+#: describe.c:3664
+msgid "Owner"
+msgstr "Vlastník"
+
+#: large_obj.c:291 large_obj.c:301 describe.c:96 describe.c:159 describe.c:338
+#: describe.c:501 describe.c:590 describe.c:661 describe.c:852 describe.c:1382
+#: describe.c:2330 describe.c:2537 describe.c:2911 describe.c:2976
+#: describe.c:3041 describe.c:3177 describe.c:3216 describe.c:3283
+#: describe.c:3342 describe.c:3351 describe.c:3410 describe.c:3849
 msgid "Description"
 msgstr "Popis"
 
-#: large_obj.c:295
+#: large_obj.c:310
 msgid "Large objects"
 msgstr "Velké objekty (LO)"
 
-#: mainloop.c:156
+#: mainloop.c:159
 #, c-format
 msgid "Use \"\\q\" to leave %s.\n"
 msgstr "Použijte \"\\q\" pro odchod z %s.\n"
 
-#: mainloop.c:182
+#: mainloop.c:189
 msgid "You are using psql, the command-line interface to PostgreSQL."
 msgstr "Používáte psql, řádkový nástroj pro připojení k PostgreSQL."
 
-#: mainloop.c:183
+#: mainloop.c:190
 #, c-format
 msgid ""
 "Type:  \\copyright for distribution terms\n"
@@ -1277,49 +1428,50 @@ msgid ""
 msgstr ""
 "Pište: \\copyright pro podmínky distribuce\n"
 "       \\h pro nápovědu k SQL příkazům\n"
-"       \\? pro nápovědu k pgsql příkazům\n"
+"       \\? pro nápovědu k psql příkazům\n"
 "       \\g nebo středník pro ukončení SQL příkazů\n"
 "       \\q pro ukončení programu\n"
 
-#: print.c:973
+#: print.c:1138
 #, c-format
 msgid "(No rows)\n"
 msgstr "(Žádné řádky)\n"
 
-#: print.c:1960
+#: print.c:2028
 #, c-format
 msgid "Interrupted\n"
-msgstr ""
+msgstr "Přerušeno\n"
 
-#: print.c:2027
+#: print.c:2097
 #, c-format
 msgid "Cannot add header to table content: column count of %d exceeded.\n"
-msgstr ""
+msgstr "Nelze přidat hlavičku k obsahu tabulky: překročen počet sloupců %d.\n"
 
-#: print.c:2064
+#: print.c:2137
 #, c-format
 msgid "Cannot add cell to table content: total cell count of %d exceeded.\n"
 msgstr ""
+"Nelze přidat buňku do obsahu tabulky: překročen celkový počet buněk %d.\n"
 
-#: print.c:2263
+#: print.c:2358
 #, c-format
 msgid "invalid output format (internal error): %d"
 msgstr "specifikován neplatný formát výstupu (interní chyba): %d"
 
-#: print.c:2351
+#: print.c:2455
 #, c-format
-msgid "(1 row)"
+msgid "(%lu row)"
 msgid_plural "(%lu rows)"
 msgstr[0] "(%lu řádka)"
 msgstr[1] "(%lu řádky)"
 msgstr[2] "(%lu řádek)"
 
-#: startup.c:217
+#: startup.c:243
 #, c-format
 msgid "%s: could not open log file \"%s\": %s\n"
 msgstr "%s: nelze otevřít logovací soubor \"%s\": %s\n"
 
-#: startup.c:279
+#: startup.c:305
 #, c-format
 msgid ""
 "Type \"help\" for help.\n"
@@ -1328,677 +1480,788 @@ msgstr ""
 "Pro získání nápovědy napište \"help\".\n"
 "\n"
 
-#: startup.c:425
+#: startup.c:451
 #, c-format
 msgid "%s: could not set printing parameter \"%s\"\n"
 msgstr "%s: nelze nastavit parametr zobrazení \"%s\"\n"
 
-#: startup.c:464
+#: startup.c:490
 #, c-format
 msgid "%s: could not delete variable \"%s\"\n"
-msgstr "%s: nelze smazat proměnná \"%s\"\n"
+msgstr "%s: nelze smazat proměnnou \"%s\"\n"
 
-#: startup.c:474
+#: startup.c:500
 #, c-format
 msgid "%s: could not set variable \"%s\"\n"
-msgstr "%s: nelze nastavit proměnná \"%s\"\n"
+msgstr "%s: nelze nastavit proměnnou \"%s\"\n"
 
-#: startup.c:511 startup.c:517
+#: startup.c:537 startup.c:543
 #, c-format
 msgid "Try \"%s --help\" for more information.\n"
 msgstr "Zkuste \"%s --help\" pro více informací.\n"
 
-#: startup.c:534
+#: startup.c:560
 #, c-format
 msgid "%s: warning: extra command-line argument \"%s\" ignored\n"
-msgstr "%s: varování: zvláštní parametr příkazové řádky \"%s\" ignorován\n"
+msgstr "%s: varování: nadbytečný parametr příkazové řádky \"%s\" ignorován\n"
 
-#: startup.c:599
+#: startup.c:625
 msgid "contains support for command-line editing"
-msgstr "obsahuje podporu editaci příkazové řádky "
+msgstr "obsahuje podporu pro editaci příkazové řádky "
 
-#: describe.c:68 describe.c:235 describe.c:462 describe.c:560 describe.c:681
-#: describe.c:756 describe.c:2114 describe.c:2234 describe.c:2289
-#: describe.c:2488 describe.c:2715 describe.c:2787 describe.c:2798
-#: describe.c:2857
+#: describe.c:69 describe.c:236 describe.c:463 describe.c:585 describe.c:706
+#: describe.c:788 describe.c:849 describe.c:2504 describe.c:2698
+#: describe.c:2768 describe.c:2903 describe.c:3039 describe.c:3266
+#: describe.c:3338 describe.c:3349 describe.c:3408 describe.c:3782
+#: describe.c:3848
 msgid "Schema"
 msgstr "Schéma"
 
-#: describe.c:69 describe.c:145 describe.c:236 describe.c:463 describe.c:561
-#: describe.c:611 describe.c:682 describe.c:757 describe.c:2115
-#: describe.c:2235 describe.c:2290 describe.c:2419 describe.c:2489
-#: describe.c:2716 describe.c:2788 describe.c:2799 describe.c:2858
-#: describe.c:3048 describe.c:3107
+#: describe.c:70 describe.c:146 describe.c:237 describe.c:464 describe.c:586
+#: describe.c:636 describe.c:707 describe.c:850 describe.c:2505
+#: describe.c:2627 describe.c:2699 describe.c:2769 describe.c:2904
+#: describe.c:2967 describe.c:3040 describe.c:3267 describe.c:3339
+#: describe.c:3350 describe.c:3409 describe.c:3598 describe.c:3663
+#: describe.c:3846
 msgid "Name"
 msgstr "Jméno"
 
-#: describe.c:70 describe.c:248 describe.c:294 describe.c:311
+#: describe.c:71 describe.c:249 describe.c:295 describe.c:312
 msgid "Result data type"
 msgstr "Datový typ výsledku"
 
-#: describe.c:84 describe.c:88 describe.c:249 describe.c:295 describe.c:312
+#: describe.c:85 describe.c:89 describe.c:250 describe.c:296 describe.c:313
 msgid "Argument data types"
 msgstr "Datový typ parametru"
 
-#: describe.c:113
+#: describe.c:114
 msgid "List of aggregate functions"
-msgstr "Seznam agregátních funkcí"
+msgstr "Seznam agregačních funkcí"
 
-#: describe.c:134
+#: describe.c:135
 #, c-format
 msgid "The server (version %d.%d) does not support tablespaces.\n"
-msgstr "Server (verze %d.%d) nepodporuje tablespace.\n"
+msgstr "Server (verze %d.%d) nepodporuje tablespaces.\n"
 
-#: describe.c:146 describe.c:334 describe.c:612 describe.c:2122
-#: describe.c:2420 describe.c:3049 describe.c:3108
-msgid "Owner"
-msgstr "Vlastník"
-
-#: describe.c:147
+#: describe.c:148
 msgid "Location"
 msgstr "Umístění"
 
-#: describe.c:175
+#: describe.c:176
 msgid "List of tablespaces"
 msgstr "Seznam tablespaces"
 
-#: describe.c:212
+#: describe.c:213
 #, c-format
 msgid "\\df only takes [antwS+] as options\n"
-msgstr "pro \\df můžete použít pouze tyto přepínače [antwS+]\n"
+msgstr "pro \\df můžete použít pouze přepínače [antwS+]\n"
 
-#: describe.c:218
+#: describe.c:219
 #, c-format
-msgid "\\df does not take a \"w\" option in %d.%d.\n"
-msgstr "pro \\df nelze použít \"w\" ve verzi %d.%d.\n"
+msgid "\\df does not take a \"w\" option with server version %d.%d\n"
+msgstr "pro \\df nelze použít volbu \"w\" ve verzi serveru %d.%d.\n"
 
 #. translator: "agg" is short for "aggregate"
-#: describe.c:251 describe.c:297 describe.c:314
+#: describe.c:252 describe.c:298 describe.c:315
 msgid "agg"
-msgstr ""
+msgstr "agg"
 
-#: describe.c:252
+#: describe.c:253
 msgid "window"
-msgstr ""
+msgstr "window"
 
-#: describe.c:253 describe.c:298 describe.c:315 describe.c:896
+#: describe.c:254 describe.c:299 describe.c:316 describe.c:990
 msgid "trigger"
 msgstr "trigger"
 
-#: describe.c:254 describe.c:299 describe.c:316
+#: describe.c:255 describe.c:300 describe.c:317
 msgid "normal"
-msgstr "normální"
+msgstr "normal"
 
-#: describe.c:255 describe.c:300 describe.c:317 describe.c:684 describe.c:1222
-#: describe.c:2121 describe.c:2236 describe.c:3120
+#: describe.c:256 describe.c:301 describe.c:318 describe.c:710 describe.c:792
+#: describe.c:1362 describe.c:2512 describe.c:2700 describe.c:3676
 msgid "Type"
 msgstr "Typ"
 
-#: describe.c:330
-#, fuzzy
-msgid "immutable"
-msgstr "tabulka"
-
 #: describe.c:331
-msgid "stable"
-msgstr "stabilní"
+msgid "immutable"
+msgstr "immutable"
 
 #: describe.c:332
-msgid "volatile"
-msgstr ""
+msgid "stable"
+msgstr "stable"
 
 #: describe.c:333
-msgid "Volatility"
-msgstr ""
+msgid "volatile"
+msgstr "volatile"
 
-#: describe.c:335
+#: describe.c:334
+msgid "Volatility"
+msgstr "Volatilita"
+
+#: describe.c:336
 msgid "Language"
 msgstr "Jazyk"
 
-#: describe.c:336
+#: describe.c:337
 msgid "Source code"
 msgstr "Zdrojový kód"
 
-#: describe.c:434
+#: describe.c:435
 msgid "List of functions"
 msgstr "Seznam funkcí"
 
-#: describe.c:473
+#: describe.c:474
 msgid "Internal name"
 msgstr "Interní jméno"
 
-#: describe.c:474 describe.c:628 describe.c:2132
+#: describe.c:475 describe.c:653 describe.c:2529 describe.c:2533
 msgid "Size"
 msgstr "Velikost"
 
-#: describe.c:486
+#: describe.c:496
 msgid "Elements"
-msgstr "Prvky"
+msgstr "Složky"
 
-#: describe.c:529
+#: describe.c:541
 msgid "List of data types"
 msgstr "Seznam datových typů"
 
-#: describe.c:562
+#: describe.c:587
 msgid "Left arg type"
 msgstr "Typ levého arg."
 
-#: describe.c:563
+#: describe.c:588
 msgid "Right arg type"
 msgstr "Typ pravého arg."
 
-#: describe.c:564
+#: describe.c:589
 msgid "Result type"
 msgstr "Typ výsledku"
 
-#: describe.c:583
+#: describe.c:608
 msgid "List of operators"
 msgstr "Seznam operátorů"
 
-#: describe.c:613
+#: describe.c:638
 msgid "Encoding"
 msgstr "Kódování"
 
-#: describe.c:618
-msgid "Collation"
-msgstr ""
+#: describe.c:643 describe.c:2905
+#| msgid "Collation"
+msgid "Collate"
+msgstr "Collation"
 
-#: describe.c:619
-#, fuzzy
+#: describe.c:644 describe.c:2906
 msgid "Ctype"
-msgstr "Typ"
+msgstr "CType"
 
-#: describe.c:632
+#: describe.c:657
 msgid "Tablespace"
 msgstr "Tablespace"
 
-#: describe.c:649
+#: describe.c:674
 msgid "List of databases"
 msgstr "Seznam databází"
 
-#: describe.c:683 describe.c:851 describe.c:2116
+#: describe.c:708 describe.c:789 describe.c:944 describe.c:2506 sql_help.c:595
+#: sql_help.c:842 sql_help.c:969 sql_help.c:1432 sql_help.c:1562
+#: sql_help.c:1596 sql_help.c:1842 sql_help.c:2000 sql_help.c:2185
+#: sql_help.c:2266 sql_help.c:2472 sql_help.c:3103 sql_help.c:3123
+#: sql_help.c:3125 sql_help.c:3126
 msgid "table"
 msgstr "tabulka"
 
-#: describe.c:683 describe.c:852 describe.c:2117
+#: describe.c:708 describe.c:945 describe.c:2507
 msgid "view"
 msgstr "pohled"
 
-#: describe.c:683 describe.c:854 describe.c:2119
+#: describe.c:708 describe.c:790 describe.c:947 describe.c:2509
 msgid "sequence"
 msgstr "sekvence"
 
-#: describe.c:695
-#
-msgid "Column access privileges"
-msgstr "Přístupová práva k attributům"
+#: describe.c:709 describe.c:948 describe.c:2511
+#| msgid "reftable"
+msgid "foreign table"
+msgstr "foreign_tabulka"
 
-#: describe.c:721 describe.c:3215 describe.c:3219
+#
+#: describe.c:721
+msgid "Column access privileges"
+msgstr "Přístupová práva k atributům"
+
+#: describe.c:747 describe.c:3993 describe.c:3997
 msgid "Access privileges"
 msgstr "Přístupová práva"
 
-#: describe.c:758
-msgid "Object"
-msgstr "Objekt"
+#: describe.c:775
+#, c-format
+msgid ""
+"The server (version %d.%d) does not support altering default privileges.\n"
+msgstr "Server (verze %d.%d) nepodporuje foreign servery.\n"
 
-#: describe.c:770
-msgid "aggregate"
-msgstr "agregát"
-
-#: describe.c:790
+#: describe.c:791 describe.c:883
 msgid "function"
 msgstr "funkce"
 
-#: describe.c:809
+#: describe.c:815
+msgid "Default access privileges"
+msgstr "Implicitní přístupová práva"
+
+#: describe.c:851
+msgid "Object"
+msgstr "Objekt"
+
+#: describe.c:863
+msgid "aggregate"
+msgstr "agregace"
+
+#: describe.c:902 sql_help.c:1715 sql_help.c:2833 sql_help.c:2903
+#: sql_help.c:3036 sql_help.c:3141 sql_help.c:3192
 msgid "operator"
 msgstr "operátor"
 
-#: describe.c:828
+#: describe.c:921
 msgid "data type"
 msgstr "datový typ"
 
-#: describe.c:853 describe.c:2118
+#: describe.c:946 describe.c:2508
 msgid "index"
 msgstr "index"
 
-#: describe.c:875
+#: describe.c:969
 msgid "rule"
 msgstr "rule"
 
-#: describe.c:919
+#: describe.c:1013
 msgid "Object descriptions"
 msgstr "Popis objektu"
 
-#: describe.c:972
+#: describe.c:1066
 #, c-format
 msgid "Did not find any relation named \"%s\".\n"
 msgstr "Nelze nalézt relaci se jménem \"%s\".\n"
 
-#: describe.c:1109
+#: describe.c:1238
 #, c-format
 msgid "Did not find any relation with OID %s.\n"
 msgstr "Nelze nalézt relaci se OID \"%s\".\n"
 
-#: describe.c:1184
+#: describe.c:1314
+#, c-format
+#| msgid "for table \"%s.%s\""
+msgid "Unlogged table \"%s.%s\""
+msgstr "Unlogged tabulka \"%s.%s\""
+
+#: describe.c:1317
 #, c-format
 msgid "Table \"%s.%s\""
 msgstr "Tabulka \"%s.%s\""
 
-#: describe.c:1188
+#: describe.c:1321
 #, c-format
 msgid "View \"%s.%s\""
-msgstr "Náhled \"%s.%s\""
+msgstr "Pohled \"%s.%s\""
 
-#: describe.c:1192
+#: describe.c:1325
 #, c-format
 msgid "Sequence \"%s.%s\""
 msgstr "Sekvence \"%s.%s\""
 
-#: describe.c:1196
+#: describe.c:1330
+#, c-format
+#| msgid "Index \"%s.%s\""
+msgid "Unlogged index \"%s.%s\""
+msgstr "Unlogged index \"%s.%s\""
+
+#: describe.c:1333
 #, c-format
 msgid "Index \"%s.%s\""
 msgstr "Index \"%s.%s\""
 
-#: describe.c:1201
+#: describe.c:1338
 #, c-format
 msgid "Special relation \"%s.%s\""
 msgstr "Speciální relace \"%s.%s\""
 
-#: describe.c:1205
+#: describe.c:1342
 #, c-format
 msgid "TOAST table \"%s.%s\""
 msgstr "TOAST tabulka \"%s.%s\""
 
-#: describe.c:1209
+#: describe.c:1346
 #, c-format
 msgid "Composite type \"%s.%s\""
 msgstr "Složený typ \"%s.%s\""
 
-#: describe.c:1221
+#: describe.c:1350
+#, c-format
+#| msgid "for table \"%s.%s\""
+msgid "Foreign table \"%s.%s\""
+msgstr "Foreign tabulka \"%s.%s\""
+
+#: describe.c:1361
 msgid "Column"
 msgstr "Sloupec"
 
-#: describe.c:1227
+#: describe.c:1369
 msgid "Modifiers"
 msgstr "Modifikátory"
 
-#: describe.c:1232
+#: describe.c:1374
 msgid "Value"
 msgstr "Hodnota"
 
-#: describe.c:1236
-msgid "Storage"
-msgstr "Úložiště"
+#: describe.c:1377
+msgid "Definition"
+msgstr "Definice"
 
-#: describe.c:1278
+#: describe.c:1381
+msgid "Storage"
+msgstr "Uložení"
+
+#: describe.c:1427
+#, c-format
+#| msgid "lc_collate"
+msgid "collate %s"
+msgstr "collate %s"
+
+#: describe.c:1435
 msgid "not null"
 msgstr "not null"
 
 #. translator: default values of column definitions
-#: describe.c:1287
+#: describe.c:1445
 #, c-format
 msgid "default %s"
 msgstr "implicitně %s"
 
-#: describe.c:1353
+#: describe.c:1536
 msgid "primary key, "
 msgstr "primární klíč,"
 
-#: describe.c:1355
+#: describe.c:1538
 msgid "unique, "
 msgstr "unikátní,"
 
-#: describe.c:1361
+#: describe.c:1544
 #, c-format
 msgid "for table \"%s.%s\""
 msgstr "pro tabulku \"%s.%s\""
 
-#: describe.c:1365
+#: describe.c:1548
 #, c-format
 msgid ", predicate (%s)"
 msgstr ", predikát (%s)"
 
-#: describe.c:1368
+#: describe.c:1551
 msgid ", clustered"
-msgstr ", klastrován"
+msgstr ", clusterován"
 
-#: describe.c:1371
+#: describe.c:1554
 msgid ", invalid"
 msgstr ", neplatný"
 
-#: describe.c:1385
+#: describe.c:1557
+msgid ", deferrable"
+msgstr ", odložitelný"
+
+#: describe.c:1560
+msgid ", initially deferred"
+msgstr ", iniciálně odložený"
+
+#: describe.c:1574
 msgid "View definition:"
 msgstr "Definice pohledu:"
 
-#: describe.c:1402 describe.c:1655
+#: describe.c:1591 describe.c:1874
 msgid "Rules:"
-msgstr "Rule:"
+msgstr "Rules:"
 
-#: describe.c:1449
+#: describe.c:1650
 msgid "Indexes:"
 msgstr "Indexy:"
 
-#: describe.c:1509
+#: describe.c:1730
 msgid "Check constraints:"
 msgstr "Kontrolní pravidla:"
 
-#: describe.c:1540
+#: describe.c:1761
 msgid "Foreign-key constraints:"
 msgstr "Podmínky cizího klíče:"
 
-#: describe.c:1571
+#: describe.c:1792
 msgid "Referenced by:"
-msgstr ""
+msgstr "Odkazovaný:"
 
-#. translator: the first %s is a FK name, the following are
-#. * a table name and the FK definition
-#: describe.c:1576
-#, c-format
-msgid "  \"%s\" IN %s %s"
-msgstr "  \"%s\" IN %s %s"
-
-#: describe.c:1658
+#: describe.c:1877
 msgid "Disabled rules:"
-msgstr "Vypnutá pravidla:"
+msgstr "Vypnutá pravidla (rules):"
 
-#: describe.c:1661
+#: describe.c:1880
 msgid "Rules firing always:"
-msgstr "Vždy vykonávaná pravidla:"
+msgstr "Vždy spouštěná pravidla:"
 
-#: describe.c:1664
+#: describe.c:1883
 msgid "Rules firing on replica only:"
-msgstr "Pravidla vykonaná jen na replice:"
+msgstr "Pravidla spouštěná jen na replice:"
 
-#: describe.c:1760
+#: describe.c:1991
 msgid "Triggers:"
 msgstr "Triggery:"
 
-#: describe.c:1763
+#: describe.c:1994
 msgid "Disabled triggers:"
 msgstr "Vypnuté triggery:"
 
-#: describe.c:1766
+#: describe.c:1997
 msgid "Triggers firing always:"
-msgstr "Vždy vykonávané triggery:"
+msgstr "Vždy spouštěné triggery:"
 
-#: describe.c:1769
+#: describe.c:2000
 msgid "Triggers firing on replica only:"
-msgstr "Triggery vykonávané jen na replice:"
+msgstr "Triggery spouštěné jen na replice:"
 
-#: describe.c:1802
+#: describe.c:2066
 msgid "Inherits"
 msgstr "Dědí"
 
-#: describe.c:1817
+#: describe.c:2096
+#, c-format
+msgid "Number of child tables: %d (Use \\d+ to list them.)"
+msgstr "Počet podřízených tabulek: %d (Použijte \\d+ pro jejich seznam.)"
+
+#: describe.c:2103
+msgid "Child tables"
+msgstr "Podřízené tabulky"
+
+#: describe.c:2125
+#, c-format
+msgid "Typed table of type: %s"
+msgstr ""
+
+#: describe.c:2132
 msgid "Has OIDs"
 msgstr "Má OID"
 
-#: describe.c:1820 describe.c:2293 describe.c:2366
+#: describe.c:2135 describe.c:2772 describe.c:2846
 msgid "yes"
 msgstr "ano"
 
-#: describe.c:1820 describe.c:2293 describe.c:2366
+#: describe.c:2135 describe.c:2772 describe.c:2846
 msgid "no"
 msgstr "ne"
 
-#: describe.c:1828 describe.c:3058 describe.c:3122 describe.c:3178
+#: describe.c:2143 describe.c:3614 describe.c:3678 describe.c:3734
+#: describe.c:3789
 msgid "Options"
-msgstr "Přepínače"
+msgstr "Volby"
 
-#: describe.c:1913
+#: describe.c:2228
 #, c-format
 msgid "Tablespace: \"%s\""
 msgstr "Tablespace: \"%s\""
 
-#. translator: before this string there's an index
-#. * description like '"foo_pkey" PRIMARY KEY, btree (a)'
-#: describe.c:1923
+#: describe.c:2241
 #, c-format
 msgid ", tablespace \"%s\""
 msgstr ", tablespace: \"%s\""
 
-#: describe.c:2001
+#: describe.c:2323
 msgid "List of roles"
 msgstr "Seznam rolí"
 
-#: describe.c:2003
+#: describe.c:2325
 msgid "Role name"
 msgstr "Jméno role"
 
-#: describe.c:2004
+#: describe.c:2326
 msgid "Attributes"
 msgstr "Atributy"
 
-#: describe.c:2005
+#: describe.c:2327
 msgid "Member of"
-msgstr ""
+msgstr "Je členem"
 
-#: describe.c:2016
+#: describe.c:2338
 msgid "Superuser"
 msgstr "Super-uživatel"
 
-#: describe.c:2019
+#: describe.c:2341
 msgid "No inheritance"
-msgstr ""
+msgstr "Bez dědičnosti"
 
-#: describe.c:2022
+#: describe.c:2344
 msgid "Create role"
-msgstr "Vytvoř roly"
+msgstr "Vytvoř roli"
 
-#: describe.c:2025
+#: describe.c:2347
 msgid "Create DB"
 msgstr "Vytvoř DB"
 
-#: describe.c:2028
+#: describe.c:2350
 msgid "Cannot login"
 msgstr "Nemohu se přihlásit"
 
-#: describe.c:2037
+#: describe.c:2354
+#| msgid "Destination"
+msgid "Replication"
+msgstr "Replikace"
+
+#: describe.c:2363
 msgid "No connections"
 msgstr "Není spojení"
 
-#: describe.c:2039
+#: describe.c:2365
 #, c-format
-msgid "1 connection"
+msgid "%d connection"
 msgid_plural "%d connections"
 msgstr[0] "%d spojení"
 msgstr[1] "%d spojení"
 msgstr[2] "%d spojení"
 
-#: describe.c:2120
+#: describe.c:2432
+#, c-format
+msgid "No per-database role settings support in this server version.\n"
+msgstr "Tato verze serveru nepodporuje nastavení rolí dle databáze.\n"
+
+#: describe.c:2443
+#, c-format
+msgid "No matching settings found.\n"
+msgstr "Odpovídající relace nebyla nalezena.\n"
+
+#: describe.c:2445
+#, c-format
+msgid "No settings found.\n"
+msgstr "Žádné nastavení nenalezeno.\n"
+
+#: describe.c:2450
+msgid "List of settings"
+msgstr "Seznam nastavení"
+
+#: describe.c:2510
 msgid "special"
 msgstr "speciální"
 
-#: describe.c:2127
+#: describe.c:2518 describe.c:3783
 msgid "Table"
 msgstr "Tabulka"
 
-#: describe.c:2186
+#: describe.c:2592
 #, c-format
 msgid "No matching relations found.\n"
-msgstr "Srovnatelná relace nebyla nalezena.\n"
+msgstr "Odpovídající relace nebyla nalezena.\n"
 
-#: describe.c:2188
+#: describe.c:2594
 #, c-format
 msgid "No relations found.\n"
-msgstr "Relace nebyla nalezena.\n"
+msgstr "Žádné relace nenalezeny.\n"
 
-#: describe.c:2193
+#: describe.c:2599
 msgid "List of relations"
 msgstr "Seznam relací"
 
-#: describe.c:2237
+#: describe.c:2635
+msgid "Trusted"
+msgstr "Důvěryhodný"
+
+#: describe.c:2643
+#| msgid "Internal name"
+msgid "Internal Language"
+msgstr "Interní Jazyk"
+
+#: describe.c:2644
+msgid "Call Handler"
+msgstr ""
+
+#: describe.c:2645 describe.c:3606
+msgid "Validator"
+msgstr "Validátor"
+
+#: describe.c:2648
+msgid "Inline Handler"
+msgstr ""
+
+#: describe.c:2669
+#| msgid "List of roles"
+msgid "List of languages"
+msgstr "Seznam jazyků"
+
+#: describe.c:2709
 msgid "Modifier"
 msgstr "Modifikátor"
 
-#: describe.c:2238
+#: describe.c:2717
 msgid "Check"
-msgstr ""
+msgstr "Kontrola"
 
-#: describe.c:2256
+#: describe.c:2735
 msgid "List of domains"
 msgstr "Seznam domén"
 
-#: describe.c:2291
+#: describe.c:2770
 msgid "Source"
-msgstr "Zdrojový kód"
+msgstr "Zdroj"
 
-#: describe.c:2292
+#: describe.c:2771
 msgid "Destination"
 msgstr "Cíl"
 
-#: describe.c:2294
+#: describe.c:2773
 msgid "Default?"
 msgstr "Implicitně?"
 
-#: describe.c:2312
+#: describe.c:2791
 msgid "List of conversions"
 msgstr "Seznam konverzí"
 
-#: describe.c:2363
+#: describe.c:2843
 msgid "Source type"
 msgstr "Zdrojový typ"
 
-#: describe.c:2364
+#: describe.c:2844
 msgid "Target type"
 msgstr "Cílový typ"
 
-#: describe.c:2365 describe.c:2625
+#: describe.c:2845 describe.c:3176
 msgid "Function"
 msgstr "Funkce"
 
-#: describe.c:2366
+#: describe.c:2846
 msgid "in assignment"
-msgstr "v zadání"
+msgstr "v přiřazení"
 
-#: describe.c:2367
+#: describe.c:2847
 msgid "Implicit?"
 msgstr "Implicitně?"
 
-#: describe.c:2393
+#: describe.c:2873
 msgid "List of casts"
 msgstr "Seznam přetypování"
 
-#: describe.c:2448
+#: describe.c:2941
+#| msgid "List of relations"
+msgid "List of collations"
+msgstr "Seznam collations"
+
+#: describe.c:2999
 msgid "List of schemas"
 msgstr "Seznam schémat"
 
-#: describe.c:2471 describe.c:2704 describe.c:2772 describe.c:2840
+#: describe.c:3022 describe.c:3255 describe.c:3323 describe.c:3391
 #, c-format
 msgid "The server (version %d.%d) does not support full text search.\n"
 msgstr "Server (verze %d.%d) nepodporuje fulltextové vyhledávání.\n"
 
-#: describe.c:2505
+#: describe.c:3056
 msgid "List of text search parsers"
 msgstr "Seznam fulltextových parserů"
 
-#: describe.c:2548
+#: describe.c:3099
 #, c-format
 msgid "Did not find any text search parser named \"%s\".\n"
 msgstr "Nelze nalézt fulltextový parser se jménem \"%s\".\n"
 
-#: describe.c:2623
+#: describe.c:3174
 msgid "Start parse"
 msgstr "Začátek parsování"
 
-#: describe.c:2624
+#: describe.c:3175
 msgid "Method"
 msgstr "Metoda"
 
-#: describe.c:2628
+#: describe.c:3179
 msgid "Get next token"
 msgstr "Získej další token"
 
-#: describe.c:2630
+#: describe.c:3181
 msgid "End parse"
 msgstr "Konec parsování"
 
-#: describe.c:2632
+#: describe.c:3183
 msgid "Get headline"
 msgstr "Získej záhlaví"
 
-#: describe.c:2634
+#: describe.c:3185
 msgid "Get token types"
-msgstr "Získej typ tokenu"
+msgstr "Získej typy tokenu"
 
-#: describe.c:2644
+#: describe.c:3195
 #, c-format
 msgid "Text search parser \"%s.%s\""
 msgstr "Fulltextový parser \"%s.%s\""
 
-#: describe.c:2646
+#: describe.c:3197
 #, c-format
 msgid "Text search parser \"%s\""
 msgstr "Fulltextový parser \"%s\""
 
-#: describe.c:2664
+#: describe.c:3215
 msgid "Token name"
 msgstr "Jméno tokenu"
 
-#: describe.c:2675
+#: describe.c:3226
 #, c-format
 msgid "Token types for parser \"%s.%s\""
 msgstr "Jméno tokenu pro parser \"%s.%s\""
 
-#: describe.c:2677
+#: describe.c:3228
 #, c-format
 msgid "Token types for parser \"%s\""
 msgstr "Typ tokenu pro parser \"%s\""
 
-#: describe.c:2726
+#: describe.c:3277
 msgid "Template"
 msgstr "Šablona"
 
-#: describe.c:2727
+#: describe.c:3278
 msgid "Init options"
-msgstr "Počáteční nastavení"
+msgstr ""
 
-#: describe.c:2749
+#: describe.c:3300
 msgid "List of text search dictionaries"
 msgstr "Seznam fulltextových slovníků"
 
-#: describe.c:2789
-#, fuzzy
+#: describe.c:3340
 msgid "Init"
-msgstr "???"
+msgstr ""
 
-#: describe.c:2790
-#, fuzzy
+#: describe.c:3341
 msgid "Lexize"
-msgstr "???"
+msgstr ""
 
-#: describe.c:2817
+#: describe.c:3368
 msgid "List of text search templates"
 msgstr "Seznam fulltextových šablon"
 
-#: describe.c:2874
+#: describe.c:3425
 msgid "List of text search configurations"
 msgstr "Seznam fulltextových konfigurací"
 
-#: describe.c:2918
+#: describe.c:3469
 #, c-format
 msgid "Did not find any text search configuration named \"%s\".\n"
 msgstr "Nelze nalézt fulltextovou konfiguraci se jménem \"%s\".\n"
 
-#: describe.c:2984
+#: describe.c:3535
 msgid "Token"
 msgstr "Token"
 
-#: describe.c:2985
+#: describe.c:3536
 msgid "Dictionaries"
 msgstr "Slovníky"
 
-#: describe.c:2996
+#: describe.c:3547
 #, c-format
 msgid "Text search configuration \"%s.%s\""
 msgstr "Fulltextová konfigurace \"%s.%s\""
 
-#: describe.c:2999
+#: describe.c:3550
 #, c-format
 msgid "Text search configuration \"%s\""
 msgstr "Fulltextová konfigurace \"%s\""
 
-#: describe.c:3003
+#: describe.c:3554
 #, c-format
 msgid ""
 "\n"
@@ -2007,7 +2270,7 @@ msgstr ""
 "\n"
 "Parser: \"%s.%s\""
 
-#: describe.c:3006
+#: describe.c:3557
 #, c-format
 msgid ""
 "\n"
@@ -2016,1977 +2279,1889 @@ msgstr ""
 "\n"
 "Parser: \"%s\""
 
-#: describe.c:3038
+#: describe.c:3589
 #, c-format
 msgid "The server (version %d.%d) does not support foreign-data wrappers.\n"
 msgstr "Server (verze %d.%d) nepodporuje foreign-data wrappery.\n"
 
-#: describe.c:3050
-msgid "Validator"
-msgstr "Validátor"
+#: describe.c:3603
+msgid "Handler"
+msgstr ""
 
-#: describe.c:3074
+#: describe.c:3630
 msgid "List of foreign-data wrappers"
 msgstr "Seznam foreign-data wrapperů"
 
-#: describe.c:3097
+#: describe.c:3653
 #, c-format
 msgid "The server (version %d.%d) does not support foreign servers.\n"
 msgstr "Server (verze %d.%d) nepodporuje foreign servery.\n"
 
-#: describe.c:3109
+#: describe.c:3665
 msgid "Foreign-data wrapper"
 msgstr "Foreign-data wrapper"
 
-#: describe.c:3121
+#: describe.c:3677 describe.c:3847
 msgid "Version"
 msgstr "Verze"
 
-#: describe.c:3140
+#: describe.c:3696
 msgid "List of foreign servers"
 msgstr "Seznam foreign serverů"
 
-#: describe.c:3163
+#: describe.c:3719
 #, c-format
 msgid "The server (version %d.%d) does not support user mappings.\n"
 msgstr "Server (verze %d.%d) nepodporuje mapování uživatelů.\n"
 
-#: describe.c:3172
+#: describe.c:3728 describe.c:3784
 msgid "Server"
 msgstr "Server"
 
-#: describe.c:3173
+#: describe.c:3729
 msgid "User name"
 msgstr "Uživatelské jméno"
 
-#: describe.c:3193
+#: describe.c:3749
 msgid "List of user mappings"
 msgstr "Seznam mapování uživatelů"
 
-#: sql_help.h:25 sql_help.h:505
+#: describe.c:3772
+#, c-format
+#| msgid "The server (version %d.%d) does not support foreign servers.\n"
+msgid "The server (version %d.%d) does not support foreign tables.\n"
+msgstr "Server (verze %d.%d) nepodporuje foreign tabulky.\n"
+
+#: describe.c:3810
+#| msgid "List of foreign servers"
+msgid "List of foreign tables"
+msgstr "Seznam foreign tabulek"
+
+#: describe.c:3833 describe.c:3887
+#, c-format
+#| msgid "The server (version %d.%d) does not support tablespaces.\n"
+msgid "The server (version %d.%d) does not support extensions.\n"
+msgstr "Server (verze %d.%d) nepodporuje extensions.\n"
+
+#: describe.c:3864
+#| msgid "List of conversions"
+msgid "List of installed extensions"
+msgstr "Seznam instalovaných extensions"
+
+#: describe.c:3914
+#, c-format
+#| msgid "Did not find any relation named \"%s\".\n"
+msgid "Did not find any extension named \"%s\".\n"
+msgstr "Nelze nalézt extension se jménem \"%s\".\n"
+
+#: describe.c:3917
+#, c-format
+#| msgid "Did not find any relation named \"%s\".\n"
+msgid "Did not find any extensions.\n"
+msgstr "Nelze nalézt žádnou extension.\n"
+
+#: describe.c:3961
+#| msgid "Object descriptions"
+msgid "Object Description"
+msgstr "Popis objektu"
+
+#: describe.c:3970
+#, c-format
+msgid "Objects in extension \"%s\""
+msgstr "Objekty v rozšíření \"%s\""
+
+#: sql_help.h:182 sql_help.h:837
 msgid "abort the current transaction"
 msgstr "nestandardní ukončení (abort) současné transakce"
 
-#: sql_help.h:26
-msgid "ABORT [ WORK | TRANSACTION ]"
-msgstr "ABORT [ WORK | TRANSACTION ]"
-
-#: sql_help.h:29
+#: sql_help.h:187
 msgid "change the definition of an aggregate function"
 msgstr "změna definice agregátní funkce"
 
-#: sql_help.h:30
-msgid ""
-"ALTER AGGREGATE name ( type [ , ... ] ) RENAME TO new_name\n"
-"ALTER AGGREGATE name ( type [ , ... ] ) OWNER TO new_owner\n"
-"ALTER AGGREGATE name ( type [ , ... ] ) SET SCHEMA new_schema"
-msgstr ""
+#: sql_help.h:192
+#| msgid "change the definition of a function"
+msgid "change the definition of a collation"
+msgstr "změní definici collation"
 
-#: sql_help.h:33
+#: sql_help.h:197
 msgid "change the definition of a conversion"
 msgstr "změna definice konverze"
 
-#: sql_help.h:34
-msgid ""
-"ALTER CONVERSION name RENAME TO newname\n"
-"ALTER CONVERSION name OWNER TO newowner"
-msgstr ""
-
-#: sql_help.h:37
+#: sql_help.h:202
 msgid "change a database"
 msgstr "změní databázi"
 
-#: sql_help.h:38
-msgid ""
-"ALTER DATABASE name [ [ WITH ] option [ ... ] ]\n"
-"\n"
-"where option can be:\n"
-"\n"
-"    CONNECTION LIMIT connlimit\n"
-"\n"
-"ALTER DATABASE name RENAME TO newname\n"
-"\n"
-"ALTER DATABASE name OWNER TO new_owner\n"
-"\n"
-"ALTER DATABASE name SET TABLESPACE new_tablespace\n"
-"\n"
-"ALTER DATABASE name SET configuration_parameter { TO | = } { value | "
-"DEFAULT }\n"
-"ALTER DATABASE name SET configuration_parameter FROM CURRENT\n"
-"ALTER DATABASE name RESET configuration_parameter\n"
-"ALTER DATABASE name RESET ALL"
-msgstr ""
+#: sql_help.h:207
+msgid "define default access privileges"
+msgstr "definuje výchozí přístupová práva"
 
-#: sql_help.h:41
+#: sql_help.h:212
 msgid "change the definition of a domain"
 msgstr "změní definici domény"
 
-#: sql_help.h:42
-msgid ""
-"ALTER DOMAIN name\n"
-"    { SET DEFAULT expression | DROP DEFAULT }\n"
-"ALTER DOMAIN name\n"
-"    { SET | DROP } NOT NULL\n"
-"ALTER DOMAIN name\n"
-"    ADD domain_constraint\n"
-"ALTER DOMAIN name\n"
-"    DROP CONSTRAINT constraint_name [ RESTRICT | CASCADE ]\n"
-"ALTER DOMAIN name\n"
-"    OWNER TO new_owner \n"
-"ALTER DOMAIN name\n"
-"    SET SCHEMA new_schema"
-msgstr ""
+#: sql_help.h:217
+#| msgid "change the definition of a conversion"
+msgid "change the definition of an extension"
+msgstr "změna definice extension"
 
-#: sql_help.h:45
+#: sql_help.h:222
 msgid "change the definition of a foreign-data wrapper"
 msgstr "změní definici foreign-data wrapperu"
 
-#: sql_help.h:46
-msgid ""
-"ALTER FOREIGN DATA WRAPPER name\n"
-"    [ VALIDATOR valfunction | NO VALIDATOR ]\n"
-"    [ OPTIONS ( [ ADD | SET | DROP ] option ['value'] [, ... ]) ]\n"
-"ALTER FOREIGN DATA WRAPPER name OWNER TO new_owner"
-msgstr ""
+#: sql_help.h:227
+#| msgid "change the definition of a foreign server"
+msgid "change the definition of a foreign table"
+msgstr "změní definici foreign tabulky"
 
-#: sql_help.h:49
+#: sql_help.h:232
 msgid "change the definition of a function"
 msgstr "změní definici funkce"
 
-#: sql_help.h:50
-msgid ""
-"ALTER FUNCTION name ( [ [ argmode ] [ argname ] argtype [, ...] ] )\n"
-"    action [ ... ] [ RESTRICT ]\n"
-"ALTER FUNCTION name ( [ [ argmode ] [ argname ] argtype [, ...] ] )\n"
-"    RENAME TO new_name\n"
-"ALTER FUNCTION name ( [ [ argmode ] [ argname ] argtype [, ...] ] )\n"
-"    OWNER TO new_owner\n"
-"ALTER FUNCTION name ( [ [ argmode ] [ argname ] argtype [, ...] ] )\n"
-"    SET SCHEMA new_schema\n"
-"\n"
-"where action is one of:\n"
-"\n"
-"    CALLED ON NULL INPUT | RETURNS NULL ON NULL INPUT | STRICT\n"
-"    IMMUTABLE | STABLE | VOLATILE\n"
-"    [ EXTERNAL ] SECURITY INVOKER | [ EXTERNAL ] SECURITY DEFINER\n"
-"    COST execution_cost\n"
-"    ROWS result_rows\n"
-"    SET configuration_parameter { TO | = } { value | DEFAULT }\n"
-"    SET configuration_parameter FROM CURRENT\n"
-"    RESET configuration_parameter\n"
-"    RESET ALL"
-msgstr ""
-
-#: sql_help.h:53
+#: sql_help.h:237
 msgid "change role name or membership"
-msgstr ""
+msgstr "změní jméno role nebo členství"
 
-#: sql_help.h:54
-msgid ""
-"ALTER GROUP groupname ADD USER username [, ... ]\n"
-"ALTER GROUP groupname DROP USER username [, ... ]\n"
-"\n"
-"ALTER GROUP groupname RENAME TO newname"
-msgstr ""
-
-#: sql_help.h:57
+#: sql_help.h:242
 msgid "change the definition of an index"
 msgstr "změní definici indexu"
 
-#: sql_help.h:58
-msgid ""
-"ALTER INDEX name RENAME TO new_name\n"
-"ALTER INDEX name SET TABLESPACE tablespace_name\n"
-"ALTER INDEX name SET ( storage_parameter = value [, ... ] )\n"
-"ALTER INDEX name RESET ( storage_parameter [, ... ] )"
-msgstr ""
-
-#: sql_help.h:61
+#: sql_help.h:247
 msgid "change the definition of a procedural language"
 msgstr "změní definici procedurálního jazyka"
 
-#: sql_help.h:62
-msgid ""
-"ALTER [ PROCEDURAL ] LANGUAGE name RENAME TO newname\n"
-"ALTER [ PROCEDURAL ] LANGUAGE name OWNER TO new_owner"
-msgstr ""
+#: sql_help.h:252
+msgid "change the definition of a large object"
+msgstr "změní definici large objektu"
 
-#: sql_help.h:65
+#: sql_help.h:257
 msgid "change the definition of an operator"
 msgstr "změní definici operátoru"
 
-#: sql_help.h:66
-msgid ""
-"ALTER OPERATOR name ( { lefttype | NONE } , { righttype | NONE } ) OWNER TO "
-"newowner"
-msgstr ""
-
-#: sql_help.h:69
+#: sql_help.h:262
 msgid "change the definition of an operator class"
-msgstr "změní definici třídy operátoru"
+msgstr "změní definici třídy operátorů"
 
-#: sql_help.h:70
-msgid ""
-"ALTER OPERATOR CLASS name USING index_method RENAME TO newname\n"
-"ALTER OPERATOR CLASS name USING index_method OWNER TO newowner"
-msgstr ""
-
-#: sql_help.h:73
+#: sql_help.h:267
 msgid "change the definition of an operator family"
-msgstr "změní definici rodiny operátoru"
+msgstr "změní definici rodiny operátorů"
 
-#: sql_help.h:74
-msgid ""
-"ALTER OPERATOR FAMILY name USING index_method ADD\n"
-"  {  OPERATOR strategy_number operator_name ( op_type, op_type )\n"
-"   | FUNCTION support_number [ ( op_type [ , op_type ] ) ] funcname "
-"( argument_type [, ...] )\n"
-"  } [, ... ]\n"
-"ALTER OPERATOR FAMILY name USING index_method DROP\n"
-"  {  OPERATOR strategy_number ( op_type [ , op_type ] )\n"
-"   | FUNCTION support_number ( op_type [ , op_type ] )\n"
-"  } [, ... ]\n"
-"ALTER OPERATOR FAMILY name USING index_method RENAME TO newname\n"
-"ALTER OPERATOR FAMILY name USING index_method OWNER TO newowner"
-msgstr ""
-
-#: sql_help.h:77 sql_help.h:125
+#: sql_help.h:272 sql_help.h:332
 msgid "change a database role"
-msgstr "změní roli databáze"
+msgstr "změní databázovou roli"
 
-#: sql_help.h:78
-msgid ""
-"ALTER ROLE name [ [ WITH ] option [ ... ] ]\n"
-"\n"
-"where option can be:\n"
-"    \n"
-"      SUPERUSER | NOSUPERUSER\n"
-"    | CREATEDB | NOCREATEDB\n"
-"    | CREATEROLE | NOCREATEROLE\n"
-"    | CREATEUSER | NOCREATEUSER\n"
-"    | INHERIT | NOINHERIT\n"
-"    | LOGIN | NOLOGIN\n"
-"    | CONNECTION LIMIT connlimit\n"
-"    | [ ENCRYPTED | UNENCRYPTED ] PASSWORD 'password'\n"
-"    | VALID UNTIL 'timestamp' \n"
-"\n"
-"ALTER ROLE name RENAME TO newname\n"
-"\n"
-"ALTER ROLE name SET configuration_parameter { TO | = } { value | DEFAULT }\n"
-"ALTER ROLE name SET configuration_parameter FROM CURRENT\n"
-"ALTER ROLE name RESET configuration_parameter\n"
-"ALTER ROLE name RESET ALL"
-msgstr ""
-
-#: sql_help.h:81
+#: sql_help.h:277
 msgid "change the definition of a schema"
 msgstr "změní definici schématu"
 
-#: sql_help.h:82
-msgid ""
-"ALTER SCHEMA name RENAME TO newname\n"
-"ALTER SCHEMA name OWNER TO newowner"
-msgstr ""
-
-#: sql_help.h:85
+#: sql_help.h:282
 msgid "change the definition of a sequence generator"
 msgstr "změní definici generátoru sekvencí"
 
-#: sql_help.h:86
-msgid ""
-"ALTER SEQUENCE name [ INCREMENT [ BY ] increment ]\n"
-"    [ MINVALUE minvalue | NO MINVALUE ] [ MAXVALUE maxvalue | NO MAXVALUE ]\n"
-"    [ START [ WITH ] start ]\n"
-"    [ RESTART [ [ WITH ] restart ] ]\n"
-"    [ CACHE cache ] [ [ NO ] CYCLE ]\n"
-"    [ OWNED BY { table.column | NONE } ]\n"
-"ALTER SEQUENCE name OWNER TO new_owner\n"
-"ALTER SEQUENCE name RENAME TO new_name\n"
-"ALTER SEQUENCE name SET SCHEMA new_schema"
-msgstr ""
-
-#: sql_help.h:89
+#: sql_help.h:287
 msgid "change the definition of a foreign server"
 msgstr "změní definici foreign serveru"
 
-#: sql_help.h:90
-msgid ""
-"ALTER SERVER servername [ VERSION 'newversion' ]\n"
-"    [ OPTIONS ( [ ADD | SET | DROP ] option ['value'] [, ... ] ) ]\n"
-"ALTER SERVER servername OWNER TO new_owner"
-msgstr ""
-
-#: sql_help.h:93
+#: sql_help.h:292
 msgid "change the definition of a table"
 msgstr "změní definici tabulky"
 
-#: sql_help.h:94
-msgid ""
-"ALTER TABLE [ ONLY ] name [ * ]\n"
-"    action [, ... ]\n"
-"ALTER TABLE [ ONLY ] name [ * ]\n"
-"    RENAME [ COLUMN ] column TO new_column\n"
-"ALTER TABLE name\n"
-"    RENAME TO new_name\n"
-"ALTER TABLE name\n"
-"    SET SCHEMA new_schema\n"
-"\n"
-"where action is one of:\n"
-"\n"
-"    ADD [ COLUMN ] column type [ column_constraint [ ... ] ]\n"
-"    DROP [ COLUMN ] column [ RESTRICT | CASCADE ]\n"
-"    ALTER [ COLUMN ] column [ SET DATA ] TYPE type [ USING expression ]\n"
-"    ALTER [ COLUMN ] column SET DEFAULT expression\n"
-"    ALTER [ COLUMN ] column DROP DEFAULT\n"
-"    ALTER [ COLUMN ] column { SET | DROP } NOT NULL\n"
-"    ALTER [ COLUMN ] column SET STATISTICS integer\n"
-"    ALTER [ COLUMN ] column SET STORAGE { PLAIN | EXTERNAL | EXTENDED | "
-"MAIN }\n"
-"    ADD table_constraint\n"
-"    DROP CONSTRAINT constraint_name [ RESTRICT | CASCADE ]\n"
-"    DISABLE TRIGGER [ trigger_name | ALL | USER ]\n"
-"    ENABLE TRIGGER [ trigger_name | ALL | USER ]\n"
-"    ENABLE REPLICA TRIGGER trigger_name\n"
-"    ENABLE ALWAYS TRIGGER trigger_name\n"
-"    DISABLE RULE rewrite_rule_name\n"
-"    ENABLE RULE rewrite_rule_name\n"
-"    ENABLE REPLICA RULE rewrite_rule_name\n"
-"    ENABLE ALWAYS RULE rewrite_rule_name\n"
-"    CLUSTER ON index_name\n"
-"    SET WITHOUT CLUSTER\n"
-"    SET WITH OIDS\n"
-"    SET WITHOUT OIDS\n"
-"    SET ( storage_parameter = value [, ... ] )\n"
-"    RESET ( storage_parameter [, ... ] )\n"
-"    INHERIT parent_table\n"
-"    NO INHERIT parent_table\n"
-"    OWNER TO new_owner\n"
-"    SET TABLESPACE new_tablespace"
-msgstr ""
-
-#: sql_help.h:97
+#: sql_help.h:297
 msgid "change the definition of a tablespace"
 msgstr "změní definici tablespace"
 
-#: sql_help.h:98
-msgid ""
-"ALTER TABLESPACE name RENAME TO newname\n"
-"ALTER TABLESPACE name OWNER TO newowner"
-msgstr ""
-
-#: sql_help.h:101
+#: sql_help.h:302
 msgid "change the definition of a text search configuration"
 msgstr "změní definici konfigurace fulltextového vyhledávání"
 
-#: sql_help.h:102
-msgid ""
-"ALTER TEXT SEARCH CONFIGURATION name\n"
-"    ADD MAPPING FOR token_type [, ... ] WITH dictionary_name [, ... ]\n"
-"ALTER TEXT SEARCH CONFIGURATION name\n"
-"    ALTER MAPPING FOR token_type [, ... ] WITH dictionary_name [, ... ]\n"
-"ALTER TEXT SEARCH CONFIGURATION name\n"
-"    ALTER MAPPING REPLACE old_dictionary WITH new_dictionary\n"
-"ALTER TEXT SEARCH CONFIGURATION name\n"
-"    ALTER MAPPING FOR token_type [, ... ] REPLACE old_dictionary WITH "
-"new_dictionary\n"
-"ALTER TEXT SEARCH CONFIGURATION name\n"
-"    DROP MAPPING [ IF EXISTS ] FOR token_type [, ... ]\n"
-"ALTER TEXT SEARCH CONFIGURATION name RENAME TO newname\n"
-"ALTER TEXT SEARCH CONFIGURATION name OWNER TO newowner"
-msgstr ""
-
-#: sql_help.h:105
+#: sql_help.h:307
 msgid "change the definition of a text search dictionary"
 msgstr "změní definici slovníku pro fulltextové vyhledávání"
 
-#: sql_help.h:106
-msgid ""
-"ALTER TEXT SEARCH DICTIONARY name (\n"
-"    option [ = value ] [, ... ]\n"
-")\n"
-"ALTER TEXT SEARCH DICTIONARY name RENAME TO newname\n"
-"ALTER TEXT SEARCH DICTIONARY name OWNER TO newowner"
-msgstr ""
-
-#: sql_help.h:109
+#: sql_help.h:312
 msgid "change the definition of a text search parser"
 msgstr "změní definici parseru pro fulltextové vyhledávání"
 
-#: sql_help.h:110
-msgid "ALTER TEXT SEARCH PARSER name RENAME TO newname"
-msgstr ""
-
-#: sql_help.h:113
+#: sql_help.h:317
 msgid "change the definition of a text search template"
 msgstr "změní definici šablony pro fulltextové vyhledávání"
 
-#: sql_help.h:114
-msgid "ALTER TEXT SEARCH TEMPLATE name RENAME TO newname"
-msgstr ""
-
-#: sql_help.h:117
+#: sql_help.h:322
 msgid "change the definition of a trigger"
 msgstr "změní definici triggeru"
 
-#: sql_help.h:118
-msgid "ALTER TRIGGER name ON table RENAME TO newname"
-msgstr ""
-
-#: sql_help.h:121
+#: sql_help.h:327
 msgid "change the definition of a type"
 msgstr "změní definici datového typu"
 
-#: sql_help.h:122
-msgid ""
-"ALTER TYPE name RENAME TO new_name\n"
-"ALTER TYPE name OWNER TO new_owner \n"
-"ALTER TYPE name SET SCHEMA new_schema"
-msgstr ""
-
-#: sql_help.h:126
-msgid ""
-"ALTER USER name [ [ WITH ] option [ ... ] ]\n"
-"\n"
-"where option can be:\n"
-"    \n"
-"      SUPERUSER | NOSUPERUSER\n"
-"    | CREATEDB | NOCREATEDB\n"
-"    | CREATEROLE | NOCREATEROLE\n"
-"    | CREATEUSER | NOCREATEUSER\n"
-"    | INHERIT | NOINHERIT\n"
-"    | LOGIN | NOLOGIN\n"
-"    | CONNECTION LIMIT connlimit\n"
-"    | [ ENCRYPTED | UNENCRYPTED ] PASSWORD 'password'\n"
-"    | VALID UNTIL 'timestamp' \n"
-"\n"
-"ALTER USER name RENAME TO newname\n"
-"\n"
-"ALTER USER name SET configuration_parameter { TO | = } { value | DEFAULT }\n"
-"ALTER USER name SET configuration_parameter FROM CURRENT\n"
-"ALTER USER name RESET configuration_parameter\n"
-"ALTER USER name RESET ALL"
-msgstr ""
-
-#: sql_help.h:129
+#: sql_help.h:337
 msgid "change the definition of a user mapping"
 msgstr "změní definici mapování uživatelů"
 
-#: sql_help.h:130
-msgid ""
-"ALTER USER MAPPING FOR { username | USER | CURRENT_USER | PUBLIC }\n"
-"    SERVER servername\n"
-"    OPTIONS ( [ ADD | SET | DROP ] option ['value'] [, ... ] )"
-msgstr ""
-
-#: sql_help.h:133
+#: sql_help.h:342
 msgid "change the definition of a view"
 msgstr "změní definici pohledu"
 
-#: sql_help.h:134
-msgid ""
-"ALTER VIEW name ALTER [ COLUMN ] column SET DEFAULT expression\n"
-"ALTER VIEW name ALTER [ COLUMN ] column DROP DEFAULT\n"
-"ALTER VIEW name OWNER TO new_owner\n"
-"ALTER VIEW name RENAME TO new_name\n"
-"ALTER VIEW name SET SCHEMA new_schema"
-msgstr ""
-
-#: sql_help.h:137
+#: sql_help.h:347
 msgid "collect statistics about a database"
 msgstr "shromáždí statistické informace o databázi"
 
-#: sql_help.h:138
-msgid "ANALYZE [ VERBOSE ] [ table [ ( column [, ...] ) ] ]"
-msgstr ""
-
-#: sql_help.h:141 sql_help.h:553
+#: sql_help.h:352 sql_help.h:902
 msgid "start a transaction block"
 msgstr "nastartuje nový transakční blok"
 
-#: sql_help.h:142
-msgid ""
-"BEGIN [ WORK | TRANSACTION ] [ transaction_mode [, ...] ]\n"
-"\n"
-"where transaction_mode is one of:\n"
-"\n"
-"    ISOLATION LEVEL { SERIALIZABLE | REPEATABLE READ | READ COMMITTED | READ "
-"UNCOMMITTED }\n"
-"    READ WRITE | READ ONLY"
-msgstr ""
-
-#: sql_help.h:145
+#: sql_help.h:357
 msgid "force a transaction log checkpoint"
 msgstr "vynutí checkpoint transakčního logu"
 
-#: sql_help.h:146
-msgid "CHECKPOINT"
-msgstr ""
-
-#: sql_help.h:149
+#: sql_help.h:362
 msgid "close a cursor"
 msgstr "uzavře kursor"
 
-#: sql_help.h:150
-msgid "CLOSE { name | ALL }"
-msgstr ""
-
-#: sql_help.h:153
+#: sql_help.h:367
 msgid "cluster a table according to an index"
 msgstr "přerovná obsah tabulky dle indexu"
 
-#: sql_help.h:154
-msgid ""
-"CLUSTER [VERBOSE] tablename [ USING indexname ]\n"
-"CLUSTER [VERBOSE]"
-msgstr ""
-
-#: sql_help.h:157
+#: sql_help.h:372
 msgid "define or change the comment of an object"
 msgstr "definuje nebo změní komentář objektu"
 
-#: sql_help.h:158
-msgid ""
-"COMMENT ON\n"
-"{\n"
-"  TABLE object_name |\n"
-"  COLUMN table_name.column_name |\n"
-"  AGGREGATE agg_name (agg_type [, ...] ) |\n"
-"  CAST (sourcetype AS targettype) |\n"
-"  CONSTRAINT constraint_name ON table_name |\n"
-"  CONVERSION object_name |\n"
-"  DATABASE object_name |\n"
-"  DOMAIN object_name |\n"
-"  FUNCTION func_name ( [ [ argmode ] [ argname ] argtype [, ...] ] ) |\n"
-"  INDEX object_name |\n"
-"  LARGE OBJECT large_object_oid |\n"
-"  OPERATOR op (leftoperand_type, rightoperand_type) |\n"
-"  OPERATOR CLASS object_name USING index_method |\n"
-"  OPERATOR FAMILY object_name USING index_method |\n"
-"  [ PROCEDURAL ] LANGUAGE object_name |\n"
-"  ROLE object_name |\n"
-"  RULE rule_name ON table_name |\n"
-"  SCHEMA object_name |\n"
-"  SEQUENCE object_name |\n"
-"  TABLESPACE object_name |\n"
-"  TEXT SEARCH CONFIGURATION object_name |\n"
-"  TEXT SEARCH DICTIONARY object_name |\n"
-"  TEXT SEARCH PARSER object_name |\n"
-"  TEXT SEARCH TEMPLATE object_name |\n"
-"  TRIGGER trigger_name ON table_name |\n"
-"  TYPE object_name |\n"
-"  VIEW object_name\n"
-"} IS 'text'"
-msgstr ""
-
-#: sql_help.h:161 sql_help.h:433
+#: sql_help.h:377 sql_help.h:747
 msgid "commit the current transaction"
 msgstr "potvrzení aktuální transakce"
 
-#: sql_help.h:162
-msgid "COMMIT [ WORK | TRANSACTION ]"
-msgstr ""
-
-#: sql_help.h:165
+#: sql_help.h:382
 msgid "commit a transaction that was earlier prepared for two-phase commit"
-msgstr "potvrzení aktuáln?i transakce, která byla již dříve připravena pro dvojfázový commit"
-
-#: sql_help.h:166
-msgid "COMMIT PREPARED transaction_id"
 msgstr ""
+"potvrzení aktuální transakce, která byla již dříve připravena pro dvoufázový "
+"commit"
 
-#: sql_help.h:169
+#: sql_help.h:387
 msgid "copy data between a file and a table"
 msgstr "kopíruje data mezi souborem a tabulkou"
 
-#: sql_help.h:170
-msgid ""
-"COPY tablename [ ( column [, ...] ) ]\n"
-"    FROM { 'filename' | STDIN }\n"
-"    [ [ WITH ] \n"
-"          [ BINARY ]\n"
-"          [ OIDS ]\n"
-"          [ DELIMITER [ AS ] 'delimiter' ]\n"
-"          [ NULL [ AS ] 'null string' ]\n"
-"          [ CSV [ HEADER ]\n"
-"                [ QUOTE [ AS ] 'quote' ] \n"
-"                [ ESCAPE [ AS ] 'escape' ]\n"
-"                [ FORCE NOT NULL column [, ...] ]\n"
-"\n"
-"COPY { tablename [ ( column [, ...] ) ] | ( query ) }\n"
-"    TO { 'filename' | STDOUT }\n"
-"    [ [ WITH ] \n"
-"          [ BINARY ]\n"
-"          [ OIDS ]\n"
-"          [ DELIMITER [ AS ] 'delimiter' ]\n"
-"          [ NULL [ AS ] 'null string' ]\n"
-"          [ CSV [ HEADER ]\n"
-"                [ QUOTE [ AS ] 'quote' ] \n"
-"                [ ESCAPE [ AS ] 'escape' ]\n"
-"                [ FORCE QUOTE column [, ...] ]"
-msgstr ""
-
-#: sql_help.h:173
+#: sql_help.h:392
 msgid "define a new aggregate function"
-msgstr "definuje novou agregátní funkci"
+msgstr "definuje novou agrefunkci"
 
-#: sql_help.h:174
-msgid ""
-"CREATE AGGREGATE name ( input_data_type [ , ... ] ) (\n"
-"    SFUNC = sfunc,\n"
-"    STYPE = state_data_type\n"
-"    [ , FINALFUNC = ffunc ]\n"
-"    [ , INITCOND = initial_condition ]\n"
-"    [ , SORTOP = sort_operator ]\n"
-")\n"
-"\n"
-"or the old syntax\n"
-"\n"
-"CREATE AGGREGATE name (\n"
-"    BASETYPE = base_type,\n"
-"    SFUNC = sfunc,\n"
-"    STYPE = state_data_type\n"
-"    [ , FINALFUNC = ffunc ]\n"
-"    [ , INITCOND = initial_condition ]\n"
-"    [ , SORTOP = sort_operator ]\n"
-")"
-msgstr ""
-
-#: sql_help.h:177
+#: sql_help.h:397
 msgid "define a new cast"
 msgstr "definuje nové přetypování"
 
-#: sql_help.h:178
-msgid ""
-"CREATE CAST (sourcetype AS targettype)\n"
-"    WITH FUNCTION funcname (argtypes)\n"
-"    [ AS ASSIGNMENT | AS IMPLICIT ]\n"
-"\n"
-"CREATE CAST (sourcetype AS targettype)\n"
-"    WITHOUT FUNCTION\n"
-"    [ AS ASSIGNMENT | AS IMPLICIT ]\n"
-"\n"
-"CREATE CAST (sourcetype AS targettype)\n"
-"    WITH INOUT\n"
-"    [ AS ASSIGNMENT | AS IMPLICIT ]"
-msgstr ""
+#: sql_help.h:402
+#| msgid "define a new function"
+msgid "define a new collation"
+msgstr "definuje novou collation"
 
-#: sql_help.h:181
-msgid "define a new constraint trigger"
-msgstr "defunuje nový constraint trigger"
-
-#: sql_help.h:182
-msgid ""
-"CREATE CONSTRAINT TRIGGER name\n"
-"    AFTER event [ OR ... ]\n"
-"    ON table_name\n"
-"    [ FROM referenced_table_name ]\n"
-"    { NOT DEFERRABLE | [ DEFERRABLE ] { INITIALLY IMMEDIATE | INITIALLY "
-"DEFERRED } }\n"
-"    FOR EACH ROW\n"
-"    EXECUTE PROCEDURE funcname ( arguments )"
-msgstr ""
-
-#: sql_help.h:185
+#: sql_help.h:407
 msgid "define a new encoding conversion"
 msgstr "definuje novou konverzi kódování"
 
-#: sql_help.h:186
-msgid ""
-"CREATE [ DEFAULT ] CONVERSION name\n"
-"    FOR source_encoding TO dest_encoding FROM funcname"
-msgstr ""
-
-#: sql_help.h:189
+#: sql_help.h:412
 msgid "create a new database"
 msgstr "vytvoří novou databázi"
 
-#: sql_help.h:190
-msgid ""
-"CREATE DATABASE name\n"
-"    [ [ WITH ] [ OWNER [=] dbowner ]\n"
-"           [ TEMPLATE [=] template ]\n"
-"           [ ENCODING [=] encoding ]\n"
-"           [ LC_COLLATE [=] lc_collate ]\n"
-"           [ LC_CTYPE [=] lc_ctype ]\n"
-"           [ TABLESPACE [=] tablespace ]\n"
-"           [ CONNECTION LIMIT [=] connlimit ] ]"
-msgstr ""
-
-#: sql_help.h:193
+#: sql_help.h:417
 msgid "define a new domain"
 msgstr "definuje novou atributovou doménu"
 
-#: sql_help.h:194
-msgid ""
-"CREATE DOMAIN name [ AS ] data_type\n"
-"    [ DEFAULT expression ]\n"
-"    [ constraint [ ... ] ]\n"
-"\n"
-"where constraint is:\n"
-"\n"
-"[ CONSTRAINT constraint_name ]\n"
-"{ NOT NULL | NULL | CHECK (expression) }"
-msgstr ""
+#: sql_help.h:422
+msgid "install an extension"
+msgstr "instaluje rozšíření"
 
-#: sql_help.h:197
+#: sql_help.h:427
 msgid "define a new foreign-data wrapper"
 msgstr "definuje nový foreign-data wrapper"
 
-#: sql_help.h:198
-msgid ""
-"CREATE FOREIGN DATA WRAPPER name\n"
-"    [ VALIDATOR valfunction | NO VALIDATOR ]\n"
-"    [ OPTIONS ( option 'value' [, ... ] ) ]"
-msgstr ""
+#: sql_help.h:432
+#| msgid "define a new foreign server"
+msgid "define a new foreign table"
+msgstr "definuje nový foreign tabulku"
 
-#: sql_help.h:201
+#: sql_help.h:437
 msgid "define a new function"
 msgstr "definuje novou funkci"
 
-#: sql_help.h:202
-msgid ""
-"CREATE [ OR REPLACE ] FUNCTION\n"
-"    name ( [ [ argmode ] [ argname ] argtype [ { DEFAULT | = } defexpr ] "
-"[, ...] ] )\n"
-"    [ RETURNS rettype\n"
-"      | RETURNS TABLE ( colname coltype [, ...] ) ]\n"
-"  { LANGUAGE langname\n"
-"    | WINDOW\n"
-"    | IMMUTABLE | STABLE | VOLATILE\n"
-"    | CALLED ON NULL INPUT | RETURNS NULL ON NULL INPUT | STRICT\n"
-"    | [ EXTERNAL ] SECURITY INVOKER | [ EXTERNAL ] SECURITY DEFINER\n"
-"    | COST execution_cost\n"
-"    | ROWS result_rows\n"
-"    | SET configuration_parameter { TO value | = value | FROM CURRENT }\n"
-"    | AS 'definition'\n"
-"    | AS 'obj_file', 'link_symbol'\n"
-"  } ...\n"
-"    [ WITH ( attribute [, ...] ) ]"
-msgstr ""
-
-#: sql_help.h:205 sql_help.h:229 sql_help.h:285
+#: sql_help.h:442 sql_help.h:472 sql_help.h:542
 msgid "define a new database role"
 msgstr "definuje novou databázovou roli"
 
-#: sql_help.h:206
-msgid ""
-"CREATE GROUP name [ [ WITH ] option [ ... ] ]\n"
-"\n"
-"where option can be:\n"
-"    \n"
-"      SUPERUSER | NOSUPERUSER\n"
-"    | CREATEDB | NOCREATEDB\n"
-"    | CREATEROLE | NOCREATEROLE\n"
-"    | CREATEUSER | NOCREATEUSER\n"
-"    | INHERIT | NOINHERIT\n"
-"    | LOGIN | NOLOGIN\n"
-"    | [ ENCRYPTED | UNENCRYPTED ] PASSWORD 'password'\n"
-"    | VALID UNTIL 'timestamp' \n"
-"    | IN ROLE rolename [, ...]\n"
-"    | IN GROUP rolename [, ...]\n"
-"    | ROLE rolename [, ...]\n"
-"    | ADMIN rolename [, ...]\n"
-"    | USER rolename [, ...]\n"
-"    | SYSID uid"
-msgstr ""
-
-#: sql_help.h:209
+#: sql_help.h:447
 msgid "define a new index"
 msgstr "definuje nový index"
 
-#: sql_help.h:210
-msgid ""
-"CREATE [ UNIQUE ] INDEX [ CONCURRENTLY ] name ON table [ USING method ]\n"
-"    ( { column | ( expression ) } [ opclass ] [ ASC | DESC ] [ NULLS { FIRST "
-"| LAST } ] [, ...] )\n"
-"    [ WITH ( storage_parameter = value [, ... ] ) ]\n"
-"    [ TABLESPACE tablespace ]\n"
-"    [ WHERE predicate ]"
-msgstr ""
-
-#: sql_help.h:213
+#: sql_help.h:452
 msgid "define a new procedural language"
 msgstr "definuje nový procedurální jazyk"
 
-#: sql_help.h:214
-msgid ""
-"CREATE [ PROCEDURAL ] LANGUAGE name\n"
-"CREATE [ TRUSTED ] [ PROCEDURAL ] LANGUAGE name\n"
-"    HANDLER call_handler [ VALIDATOR valfunction ]"
-msgstr ""
-
-#: sql_help.h:217
+#: sql_help.h:457
 msgid "define a new operator"
 msgstr "definuje nový operátor"
 
-#: sql_help.h:218
-msgid ""
-"CREATE OPERATOR name (\n"
-"    PROCEDURE = funcname\n"
-"    [, LEFTARG = lefttype ] [, RIGHTARG = righttype ]\n"
-"    [, COMMUTATOR = com_op ] [, NEGATOR = neg_op ]\n"
-"    [, RESTRICT = res_proc ] [, JOIN = join_proc ]\n"
-"    [, HASHES ] [, MERGES ]\n"
-")"
-msgstr ""
-
-#: sql_help.h:221
+#: sql_help.h:462
 msgid "define a new operator class"
-msgstr "definuje novou operátorovou třídu"
+msgstr "definuje novou třídu operátorů"
 
-#: sql_help.h:222
-msgid ""
-"CREATE OPERATOR CLASS name [ DEFAULT ] FOR TYPE data_type\n"
-"  USING index_method [ FAMILY family_name ] AS\n"
-"  {  OPERATOR strategy_number operator_name [ ( op_type, op_type ) ]\n"
-"   | FUNCTION support_number [ ( op_type [ , op_type ] ) ] funcname "
-"( argument_type [, ...] )\n"
-"   | STORAGE storage_type\n"
-"  } [, ... ]"
-msgstr ""
-
-#: sql_help.h:225
+#: sql_help.h:467
 msgid "define a new operator family"
 msgstr "definuje novou rodinu operátorů"
 
-#: sql_help.h:226
-msgid "CREATE OPERATOR FAMILY name USING index_method"
-msgstr ""
-
-#: sql_help.h:230
-msgid ""
-"CREATE ROLE name [ [ WITH ] option [ ... ] ]\n"
-"\n"
-"where option can be:\n"
-"    \n"
-"      SUPERUSER | NOSUPERUSER\n"
-"    | CREATEDB | NOCREATEDB\n"
-"    | CREATEROLE | NOCREATEROLE\n"
-"    | CREATEUSER | NOCREATEUSER\n"
-"    | INHERIT | NOINHERIT\n"
-"    | LOGIN | NOLOGIN\n"
-"    | CONNECTION LIMIT connlimit\n"
-"    | [ ENCRYPTED | UNENCRYPTED ] PASSWORD 'password'\n"
-"    | VALID UNTIL 'timestamp' \n"
-"    | IN ROLE rolename [, ...]\n"
-"    | IN GROUP rolename [, ...]\n"
-"    | ROLE rolename [, ...]\n"
-"    | ADMIN rolename [, ...]\n"
-"    | USER rolename [, ...]\n"
-"    | SYSID uid"
-msgstr ""
-
-#: sql_help.h:233
+#: sql_help.h:477
 msgid "define a new rewrite rule"
-msgstr "definuje nové pravidlo pro rewrite systém"
+msgstr "definuje nové přepisovací pravidlo (rule)"
 
-#: sql_help.h:234
-msgid ""
-"CREATE [ OR REPLACE ] RULE name AS ON event\n"
-"    TO table [ WHERE condition ]\n"
-"    DO [ ALSO | INSTEAD ] { NOTHING | command | ( command ; command ... ) }"
-msgstr ""
-
-#: sql_help.h:237
+#: sql_help.h:482
 msgid "define a new schema"
 msgstr "definuje nové schéma"
 
-#: sql_help.h:238
-msgid ""
-"CREATE SCHEMA schemaname [ AUTHORIZATION username ] [ schema_element "
-"[ ... ] ]\n"
-"CREATE SCHEMA AUTHORIZATION username [ schema_element [ ... ] ]"
-msgstr ""
-
-#: sql_help.h:241
+#: sql_help.h:487
 msgid "define a new sequence generator"
 msgstr "definuje nový generátor sekvencí"
 
-#: sql_help.h:242
-msgid ""
-"CREATE [ TEMPORARY | TEMP ] SEQUENCE name [ INCREMENT [ BY ] increment ]\n"
-"    [ MINVALUE minvalue | NO MINVALUE ] [ MAXVALUE maxvalue | NO MAXVALUE ]\n"
-"    [ START [ WITH ] start ] [ CACHE cache ] [ [ NO ] CYCLE ]\n"
-"    [ OWNED BY { table.column | NONE } ]"
-msgstr ""
-
-#: sql_help.h:245
+#: sql_help.h:492
 msgid "define a new foreign server"
 msgstr "definuje nový foreign server"
 
-#: sql_help.h:246
-msgid ""
-"CREATE SERVER servername [ TYPE 'servertype' ] [ VERSION 'serverversion' ]\n"
-"    FOREIGN DATA WRAPPER fdwname\n"
-"    [ OPTIONS ( option 'value' [, ... ] ) ]"
-msgstr ""
-
-#: sql_help.h:249
+#: sql_help.h:497
 msgid "define a new table"
 msgstr "definuje novou tabulku"
 
-#: sql_help.h:250
-msgid ""
-"CREATE [ [ GLOBAL | LOCAL ] { TEMPORARY | TEMP } ] TABLE table_name ( [\n"
-"  { column_name data_type [ DEFAULT default_expr ] [ column_constraint "
-"[ ... ] ]\n"
-"    | table_constraint\n"
-"    | LIKE parent_table [ { INCLUDING | EXCLUDING } { DEFAULTS | CONSTRAINTS "
-"| INDEXES } ] ... }\n"
-"    [, ... ]\n"
-"] )\n"
-"[ INHERITS ( parent_table [, ... ] ) ]\n"
-"[ WITH ( storage_parameter [= value] [, ... ] ) | WITH OIDS | WITHOUT "
-"OIDS ]\n"
-"[ ON COMMIT { PRESERVE ROWS | DELETE ROWS | DROP } ]\n"
-"[ TABLESPACE tablespace ]\n"
-"\n"
-"where column_constraint is:\n"
-"\n"
-"[ CONSTRAINT constraint_name ]\n"
-"{ NOT NULL | \n"
-"  NULL | \n"
-"  UNIQUE index_parameters |\n"
-"  PRIMARY KEY index_parameters |\n"
-"  CHECK ( expression ) |\n"
-"  REFERENCES reftable [ ( refcolumn ) ] [ MATCH FULL | MATCH PARTIAL | MATCH "
-"SIMPLE ]\n"
-"    [ ON DELETE action ] [ ON UPDATE action ] }\n"
-"[ DEFERRABLE | NOT DEFERRABLE ] [ INITIALLY DEFERRED | INITIALLY "
-"IMMEDIATE ]\n"
-"\n"
-"and table_constraint is:\n"
-"\n"
-"[ CONSTRAINT constraint_name ]\n"
-"{ UNIQUE ( column_name [, ... ] ) index_parameters |\n"
-"  PRIMARY KEY ( column_name [, ... ] ) index_parameters |\n"
-"  CHECK ( expression ) |\n"
-"  FOREIGN KEY ( column_name [, ... ] ) REFERENCES reftable [ ( refcolumn "
-"[, ... ] ) ]\n"
-"    [ MATCH FULL | MATCH PARTIAL | MATCH SIMPLE ] [ ON DELETE action ] [ ON "
-"UPDATE action ] }\n"
-"[ DEFERRABLE | NOT DEFERRABLE ] [ INITIALLY DEFERRED | INITIALLY "
-"IMMEDIATE ]\n"
-"\n"
-"index_parameters in UNIQUE and PRIMARY KEY constraints are:\n"
-"\n"
-"[ WITH ( storage_parameter [= value] [, ... ] ) ]\n"
-"[ USING INDEX TABLESPACE tablespace ]"
-msgstr ""
-
-#: sql_help.h:253 sql_help.h:525
+#: sql_help.h:502 sql_help.h:867
 msgid "define a new table from the results of a query"
 msgstr "definuje novou tabulku dle výsledku dotazu"
 
-#: sql_help.h:254
-msgid ""
-"CREATE [ [ GLOBAL | LOCAL ] { TEMPORARY | TEMP } ] TABLE table_name\n"
-"    [ (column_name [, ...] ) ]\n"
-"    [ WITH ( storage_parameter [= value] [, ... ] ) | WITH OIDS | WITHOUT "
-"OIDS ]\n"
-"    [ ON COMMIT { PRESERVE ROWS | DELETE ROWS | DROP } ]\n"
-"    [ TABLESPACE tablespace ]\n"
-"    AS query\n"
-"    [ WITH [ NO ] DATA ]"
-msgstr ""
-
-#: sql_help.h:257
+#: sql_help.h:507
 msgid "define a new tablespace"
 msgstr "definuje nový tablespace"
 
-#: sql_help.h:258
-msgid ""
-"CREATE TABLESPACE tablespacename [ OWNER username ] LOCATION 'directory'"
-msgstr ""
-
-#: sql_help.h:261
+#: sql_help.h:512
 msgid "define a new text search configuration"
 msgstr "definuje novou konfiguraci fulltextového vyhledávání"
 
-#: sql_help.h:262
-msgid ""
-"CREATE TEXT SEARCH CONFIGURATION name (\n"
-"    PARSER = parser_name |\n"
-"    COPY = source_config\n"
-")"
-msgstr ""
-
-#: sql_help.h:265
+#: sql_help.h:517
 msgid "define a new text search dictionary"
 msgstr "definuje nový slovník pro fulltextové vyhledávání"
 
-#: sql_help.h:266
-msgid ""
-"CREATE TEXT SEARCH DICTIONARY name (\n"
-"    TEMPLATE = template\n"
-"    [, option = value [, ... ]]\n"
-")"
-msgstr ""
-
-#: sql_help.h:269
+#: sql_help.h:522
 msgid "define a new text search parser"
 msgstr "definuje nový parser pro fulltextové vyhledávání"
 
-#: sql_help.h:270
-msgid ""
-"CREATE TEXT SEARCH PARSER name (\n"
-"    START = start_function ,\n"
-"    GETTOKEN = gettoken_function ,\n"
-"    END = end_function ,\n"
-"    LEXTYPES = lextypes_function\n"
-"    [, HEADLINE = headline_function ]\n"
-")"
-msgstr ""
-
-#: sql_help.h:273
+#: sql_help.h:527
 msgid "define a new text search template"
 msgstr "definuje novou šablonu pro fulltextové vyhledávání"
 
-#: sql_help.h:274
-msgid ""
-"CREATE TEXT SEARCH TEMPLATE name (\n"
-"    [ INIT = init_function , ]\n"
-"    LEXIZE = lexize_function\n"
-")"
-msgstr ""
-
-#: sql_help.h:277
+#: sql_help.h:532
 msgid "define a new trigger"
 msgstr "definuje nový trigger"
 
-#: sql_help.h:278
-msgid ""
-"CREATE TRIGGER name { BEFORE | AFTER } { event [ OR ... ] }\n"
-"    ON table [ FOR [ EACH ] { ROW | STATEMENT } ]\n"
-"    EXECUTE PROCEDURE funcname ( arguments )"
-msgstr ""
-
-#: sql_help.h:281
+#: sql_help.h:537
 msgid "define a new data type"
 msgstr "definuje nový datový typ"
 
-#: sql_help.h:282
-msgid ""
-"CREATE TYPE name AS\n"
-"    ( attribute_name data_type [, ... ] )\n"
-"\n"
-"CREATE TYPE name AS ENUM\n"
-"    ( 'label' [, ... ] )\n"
-"\n"
-"CREATE TYPE name (\n"
-"    INPUT = input_function,\n"
-"    OUTPUT = output_function\n"
-"    [ , RECEIVE = receive_function ]\n"
-"    [ , SEND = send_function ]\n"
-"    [ , TYPMOD_IN = type_modifier_input_function ]\n"
-"    [ , TYPMOD_OUT = type_modifier_output_function ]\n"
-"    [ , ANALYZE = analyze_function ]\n"
-"    [ , INTERNALLENGTH = { internallength | VARIABLE } ]\n"
-"    [ , PASSEDBYVALUE ]\n"
-"    [ , ALIGNMENT = alignment ]\n"
-"    [ , STORAGE = storage ]\n"
-"    [ , LIKE = like_type ]\n"
-"    [ , CATEGORY = category ]\n"
-"    [ , PREFERRED = preferred ]\n"
-"    [ , DEFAULT = default ]\n"
-"    [ , ELEMENT = element ]\n"
-"    [ , DELIMITER = delimiter ]\n"
-")\n"
-"\n"
-"CREATE TYPE name"
-msgstr ""
-
-#: sql_help.h:286
-msgid ""
-"CREATE USER name [ [ WITH ] option [ ... ] ]\n"
-"\n"
-"where option can be:\n"
-"    \n"
-"      SUPERUSER | NOSUPERUSER\n"
-"    | CREATEDB | NOCREATEDB\n"
-"    | CREATEROLE | NOCREATEROLE\n"
-"    | CREATEUSER | NOCREATEUSER\n"
-"    | INHERIT | NOINHERIT\n"
-"    | LOGIN | NOLOGIN\n"
-"    | CONNECTION LIMIT connlimit\n"
-"    | [ ENCRYPTED | UNENCRYPTED ] PASSWORD 'password'\n"
-"    | VALID UNTIL 'timestamp' \n"
-"    | IN ROLE rolename [, ...]\n"
-"    | IN GROUP rolename [, ...]\n"
-"    | ROLE rolename [, ...]\n"
-"    | ADMIN rolename [, ...]\n"
-"    | USER rolename [, ...]\n"
-"    | SYSID uid"
-msgstr ""
-
-#: sql_help.h:289
+#: sql_help.h:547
 msgid "define a new mapping of a user to a foreign server"
-msgstr ""
+msgstr "definuje nové mapování uživatele na vzdálený server"
 
-#: sql_help.h:290
-msgid ""
-"CREATE USER MAPPING FOR { username | USER | CURRENT_USER | PUBLIC }\n"
-"    SERVER servername\n"
-"    [ OPTIONS ( option 'value' [ , ... ] ) ]"
-msgstr ""
-
-#: sql_help.h:293
+#: sql_help.h:552
 msgid "define a new view"
-msgstr "definuje nový náhled"
+msgstr "definuje nový pohled"
 
-#: sql_help.h:294
-msgid ""
-"CREATE [ OR REPLACE ] [ TEMP | TEMPORARY ] VIEW name [ ( column_name "
-"[, ...] ) ]\n"
-"    AS query"
-msgstr ""
-
-#: sql_help.h:297
+#: sql_help.h:557
 msgid "deallocate a prepared statement"
-msgstr "dealokuje uložený příkaz"
+msgstr "dealokuje připravený dotaz (prepared statement)"
 
-#: sql_help.h:298
-msgid "DEALLOCATE [ PREPARE ] { name | ALL }"
-msgstr ""
-
-#: sql_help.h:301
+#: sql_help.h:562
 msgid "define a cursor"
 msgstr "definuje kursor"
 
-#: sql_help.h:302
-msgid ""
-"DECLARE name [ BINARY ] [ INSENSITIVE ] [ [ NO ] SCROLL ]\n"
-"    CURSOR [ { WITH | WITHOUT } HOLD ] FOR query"
-msgstr ""
-
-#: sql_help.h:305
+#: sql_help.h:567
 msgid "delete rows of a table"
 msgstr "smaže řádky z takulky"
 
-#: sql_help.h:306
-msgid ""
-"DELETE FROM [ ONLY ] table [ [ AS ] alias ]\n"
-"    [ USING usinglist ]\n"
-"    [ WHERE condition | WHERE CURRENT OF cursor_name ]\n"
-"    [ RETURNING * | output_expression [ [ AS ] output_name ] [, ...] ]"
-msgstr ""
-
-#: sql_help.h:309
+#: sql_help.h:572
 msgid "discard session state"
-msgstr ""
+msgstr "zahodí stav session"
 
-#: sql_help.h:310
-msgid "DISCARD { ALL | PLANS | TEMPORARY | TEMP }"
-msgstr ""
+#: sql_help.h:577
+msgid "execute an anonymous code block"
+msgstr "spustí anonymní blok kódu"
 
-#: sql_help.h:313
+#: sql_help.h:582
 msgid "remove an aggregate function"
-msgstr "odstraní agregátní funkci"
+msgstr "odstraní agregační funkci"
 
-#: sql_help.h:314
-msgid ""
-"DROP AGGREGATE [ IF EXISTS ] name ( type [ , ... ] ) [ CASCADE | RESTRICT ]"
-msgstr ""
-
-#: sql_help.h:317
+#: sql_help.h:587
 msgid "remove a cast"
 msgstr "odstraní definici přetypování"
 
-#: sql_help.h:318
-msgid ""
-"DROP CAST [ IF EXISTS ] (sourcetype AS targettype) [ CASCADE | RESTRICT ]"
-msgstr ""
+#: sql_help.h:592
+#| msgid "remove a function"
+msgid "remove a collation"
+msgstr "odstraní collation"
 
-#: sql_help.h:321
+#: sql_help.h:597
 msgid "remove a conversion"
 msgstr "odstraní konverzi"
 
-#: sql_help.h:322
-msgid "DROP CONVERSION [ IF EXISTS ] name [ CASCADE | RESTRICT ]"
-msgstr ""
-
-#: sql_help.h:325
+#: sql_help.h:602
 msgid "remove a database"
 msgstr "odstraní databázi"
 
-#: sql_help.h:326
-msgid "DROP DATABASE [ IF EXISTS ] name"
-msgstr ""
-
-#: sql_help.h:329
+#: sql_help.h:607
 msgid "remove a domain"
-msgstr "odstraní atributovou doménu"
+msgstr "odstraní doménu"
 
-#: sql_help.h:330
-msgid "DROP DOMAIN [ IF EXISTS ] name [, ...] [ CASCADE | RESTRICT ]"
-msgstr ""
+#: sql_help.h:612
+#| msgid "remove a conversion"
+msgid "remove an extension"
+msgstr "odstraní extension"
 
-#: sql_help.h:333
+#: sql_help.h:617
 msgid "remove a foreign-data wrapper"
 msgstr "odstraní foreign-data wrapper"
 
-#: sql_help.h:334
-msgid "DROP FOREIGN DATA WRAPPER [ IF EXISTS ] name [ CASCADE | RESTRICT ]"
-msgstr ""
+#: sql_help.h:622
+#| msgid "remove a table"
+msgid "remove a foreign table"
+msgstr "odstraní foreign tabulku"
 
-#: sql_help.h:337
+#: sql_help.h:627
 msgid "remove a function"
 msgstr "odstraní funkci"
 
-#: sql_help.h:338
-msgid ""
-"DROP FUNCTION [ IF EXISTS ] name ( [ [ argmode ] [ argname ] argtype "
-"[, ...] ] )\n"
-"    [ CASCADE | RESTRICT ]"
-msgstr ""
-
-#: sql_help.h:341 sql_help.h:369 sql_help.h:421
+#: sql_help.h:632 sql_help.h:667 sql_help.h:732
 msgid "remove a database role"
 msgstr "odstraní databázovou roli"
 
-#: sql_help.h:342
-msgid "DROP GROUP [ IF EXISTS ] name [, ...]"
-msgstr ""
-
-#: sql_help.h:345
+#: sql_help.h:637
 msgid "remove an index"
 msgstr "odstraní index"
 
-#: sql_help.h:346
-msgid "DROP INDEX [ IF EXISTS ] name [, ...] [ CASCADE | RESTRICT ]"
-msgstr ""
-
-#: sql_help.h:349
+#: sql_help.h:642
 msgid "remove a procedural language"
 msgstr "odstraní procedurální jazyk"
 
-#: sql_help.h:350
-msgid "DROP [ PROCEDURAL ] LANGUAGE [ IF EXISTS ] name [ CASCADE | RESTRICT ]"
-msgstr ""
-
-#: sql_help.h:353
+#: sql_help.h:647
 msgid "remove an operator"
 msgstr "odstraní operátor"
 
-#: sql_help.h:354
-msgid ""
-"DROP OPERATOR [ IF EXISTS ] name ( { lefttype | NONE } , { righttype | "
-"NONE } ) [ CASCADE | RESTRICT ]"
-msgstr ""
-
-#: sql_help.h:357
+#: sql_help.h:652
 msgid "remove an operator class"
-msgstr "odstraní operátorovou třídu"
+msgstr "odstraní třídu operátorů"
 
-#: sql_help.h:358
-msgid ""
-"DROP OPERATOR CLASS [ IF EXISTS ] name USING index_method [ CASCADE | "
-"RESTRICT ]"
-msgstr ""
-
-#: sql_help.h:361
+#: sql_help.h:657
 msgid "remove an operator family"
 msgstr "odstraní rodinu operátorů"
 
-#: sql_help.h:362
-msgid ""
-"DROP OPERATOR FAMILY [ IF EXISTS ] name USING index_method [ CASCADE | "
-"RESTRICT ]"
-msgstr ""
-
-#: sql_help.h:365
+#: sql_help.h:662
 msgid "remove database objects owned by a database role"
 msgstr "odstraní objekty vlastněné databázovou rolí"
 
-#: sql_help.h:366
-msgid "DROP OWNED BY name [, ...] [ CASCADE | RESTRICT ]"
-msgstr ""
-
-#: sql_help.h:370
-msgid "DROP ROLE [ IF EXISTS ] name [, ...]"
-msgstr ""
-
-#: sql_help.h:373
+#: sql_help.h:672
 msgid "remove a rewrite rule"
-msgstr "odstraní pravidlo pro rewrite systém"
+msgstr "odstraní přepisovací pravidlo (rule)"
 
-#: sql_help.h:374
-msgid "DROP RULE [ IF EXISTS ] name ON relation [ CASCADE | RESTRICT ]"
-msgstr ""
-
-#: sql_help.h:377
+#: sql_help.h:677
 msgid "remove a schema"
 msgstr "odstraní schéma"
 
-#: sql_help.h:378
-msgid "DROP SCHEMA [ IF EXISTS ] name [, ...] [ CASCADE | RESTRICT ]"
-msgstr ""
-
-#: sql_help.h:381
+#: sql_help.h:682
 msgid "remove a sequence"
-msgstr "odstraní sekvencí"
+msgstr "odstraní sekvenci"
 
-#: sql_help.h:382
-msgid "DROP SEQUENCE [ IF EXISTS ] name [, ...] [ CASCADE | RESTRICT ]"
-msgstr ""
-
-#: sql_help.h:385
+#: sql_help.h:687
 msgid "remove a foreign server descriptor"
 msgstr "odstraní deskriptor foreign serveru"
 
-#: sql_help.h:386
-msgid "DROP SERVER [ IF EXISTS ] servername [ CASCADE | RESTRICT ]"
-msgstr ""
-
-#: sql_help.h:389
+#: sql_help.h:692
 msgid "remove a table"
 msgstr "odstraní tabulku"
 
-#: sql_help.h:390
-msgid "DROP TABLE [ IF EXISTS ] name [, ...] [ CASCADE | RESTRICT ]"
-msgstr ""
-
-#: sql_help.h:393
+#: sql_help.h:697
 msgid "remove a tablespace"
 msgstr "odstraní tablespace"
 
-#: sql_help.h:394
-msgid "DROP TABLESPACE [ IF EXISTS ] tablespacename"
-msgstr ""
-
-#: sql_help.h:397
+#: sql_help.h:702
 msgid "remove a text search configuration"
 msgstr "odstraní konfiguraci fulltextového vyhledávání"
 
-#: sql_help.h:398
-msgid ""
-"DROP TEXT SEARCH CONFIGURATION [ IF EXISTS ] name [ CASCADE | RESTRICT ]"
-msgstr ""
-
-#: sql_help.h:401
+#: sql_help.h:707
 msgid "remove a text search dictionary"
 msgstr "odstraní slovn?ik pro fulltextové vyhledávání"
 
-#: sql_help.h:402
-msgid "DROP TEXT SEARCH DICTIONARY [ IF EXISTS ] name [ CASCADE | RESTRICT ]"
-msgstr ""
-
-#: sql_help.h:405
+#: sql_help.h:712
 msgid "remove a text search parser"
 msgstr "odstraní parser pro fulltextové vyhledávání"
 
-#: sql_help.h:406
-msgid "DROP TEXT SEARCH PARSER [ IF EXISTS ] name [ CASCADE | RESTRICT ]"
-msgstr ""
-
-#: sql_help.h:409
+#: sql_help.h:717
 msgid "remove a text search template"
 msgstr "odstraní Šablonu fulltextového vyhledávání"
 
-#: sql_help.h:410
-msgid "DROP TEXT SEARCH TEMPLATE [ IF EXISTS ] name [ CASCADE | RESTRICT ]"
-msgstr ""
-
-#: sql_help.h:413
+#: sql_help.h:722
 msgid "remove a trigger"
 msgstr "odstraní trigger"
 
-#: sql_help.h:414
-msgid "DROP TRIGGER [ IF EXISTS ] name ON table [ CASCADE | RESTRICT ]"
-msgstr ""
-
-#: sql_help.h:417
+#: sql_help.h:727
 msgid "remove a data type"
 msgstr "odstraní datový typ"
 
-#: sql_help.h:418
-msgid "DROP TYPE [ IF EXISTS ] name [, ...] [ CASCADE | RESTRICT ]"
-msgstr ""
-
-#: sql_help.h:422
-msgid "DROP USER [ IF EXISTS ] name [, ...]"
-msgstr ""
-
-#: sql_help.h:425
+#: sql_help.h:737
 msgid "remove a user mapping for a foreign server"
 msgstr "odstraní mapování uživatele z foreign serveru"
 
-#: sql_help.h:426
-msgid ""
-"DROP USER MAPPING [ IF EXISTS ] FOR { username | USER | CURRENT_USER | "
-"PUBLIC } SERVER servername"
-msgstr ""
-
-#: sql_help.h:429
+#: sql_help.h:742
 msgid "remove a view"
 msgstr "odstraní náhled"
 
-#: sql_help.h:430
-msgid "DROP VIEW [ IF EXISTS ] name [, ...] [ CASCADE | RESTRICT ]"
-msgstr ""
-
-#: sql_help.h:434
-msgid "END [ WORK | TRANSACTION ]"
-msgstr ""
-
-#: sql_help.h:437
+#: sql_help.h:752
 msgid "execute a prepared statement"
-msgstr "provede uložený příkaz"
+msgstr "provede připravený dotaz (prepared statement)"
 
-#: sql_help.h:438
-msgid "EXECUTE name [ ( parameter [, ...] ) ]"
-msgstr ""
-
-#: sql_help.h:441
+#: sql_help.h:757
 msgid "show the execution plan of a statement"
 msgstr "ukáže prováděcí plán dotazu"
 
-#: sql_help.h:442
-msgid "EXPLAIN [ ANALYZE ] [ VERBOSE ] statement"
-msgstr ""
-
-#: sql_help.h:445
+#: sql_help.h:762
 msgid "retrieve rows from a query using a cursor"
-msgstr "zašle řádky výsledku z dotazu kursoru"
+msgstr "načte řádky z výsledku dotazu pomocí kursoru"
 
-#: sql_help.h:446
-msgid ""
-"FETCH [ direction { FROM | IN } ] cursorname\n"
-"\n"
-"where direction can be empty or one of:\n"
-"\n"
-"    NEXT\n"
-"    PRIOR\n"
-"    FIRST\n"
-"    LAST\n"
-"    ABSOLUTE count\n"
-"    RELATIVE count\n"
-"    count\n"
-"    ALL\n"
-"    FORWARD\n"
-"    FORWARD count\n"
-"    FORWARD ALL\n"
-"    BACKWARD\n"
-"    BACKWARD count\n"
-"    BACKWARD ALL"
-msgstr ""
-
-#: sql_help.h:449
+#: sql_help.h:767
 msgid "define access privileges"
 msgstr "definuje přístupová práva"
 
-#: sql_help.h:450
-msgid ""
-"GRANT { { SELECT | INSERT | UPDATE | DELETE | TRUNCATE | REFERENCES | "
-"TRIGGER }\n"
-"    [,...] | ALL [ PRIVILEGES ] }\n"
-"    ON [ TABLE ] tablename [, ...]\n"
-"    TO { [ GROUP ] rolename | PUBLIC } [, ...] [ WITH GRANT OPTION ]\n"
-"\n"
-"GRANT { { SELECT | INSERT | UPDATE | REFERENCES } ( column [, ...] )\n"
-"    [,...] | ALL [ PRIVILEGES ] ( column [, ...] ) }\n"
-"    ON [ TABLE ] tablename [, ...]\n"
-"    TO { [ GROUP ] rolename | PUBLIC } [, ...] [ WITH GRANT OPTION ]\n"
-"\n"
-"GRANT { { USAGE | SELECT | UPDATE }\n"
-"    [,...] | ALL [ PRIVILEGES ] }\n"
-"    ON SEQUENCE sequencename [, ...]\n"
-"    TO { [ GROUP ] rolename | PUBLIC } [, ...] [ WITH GRANT OPTION ]\n"
-"\n"
-"GRANT { { CREATE | CONNECT | TEMPORARY | TEMP } [,...] | ALL "
-"[ PRIVILEGES ] }\n"
-"    ON DATABASE dbname [, ...]\n"
-"    TO { [ GROUP ] rolename | PUBLIC } [, ...] [ WITH GRANT OPTION ]\n"
-"\n"
-"GRANT { USAGE | ALL [ PRIVILEGES ] }\n"
-"    ON FOREIGN DATA WRAPPER fdwname [, ...]\n"
-"    TO { [ GROUP ] rolename | PUBLIC } [, ...] [ WITH GRANT OPTION ]\n"
-"\n"
-"GRANT { USAGE | ALL [ PRIVILEGES ] }\n"
-"    ON FOREIGN SERVER servername [, ...]\n"
-"    TO { [ GROUP ] rolename | PUBLIC } [, ...] [ WITH GRANT OPTION ]\n"
-"\n"
-"GRANT { EXECUTE | ALL [ PRIVILEGES ] }\n"
-"    ON FUNCTION funcname ( [ [ argmode ] [ argname ] argtype [, ...] ] ) "
-"[, ...]\n"
-"    TO { [ GROUP ] rolename | PUBLIC } [, ...] [ WITH GRANT OPTION ]\n"
-"\n"
-"GRANT { USAGE | ALL [ PRIVILEGES ] }\n"
-"    ON LANGUAGE langname [, ...]\n"
-"    TO { [ GROUP ] rolename | PUBLIC } [, ...] [ WITH GRANT OPTION ]\n"
-"\n"
-"GRANT { { CREATE | USAGE } [,...] | ALL [ PRIVILEGES ] }\n"
-"    ON SCHEMA schemaname [, ...]\n"
-"    TO { [ GROUP ] rolename | PUBLIC } [, ...] [ WITH GRANT OPTION ]\n"
-"\n"
-"GRANT { CREATE | ALL [ PRIVILEGES ] }\n"
-"    ON TABLESPACE tablespacename [, ...]\n"
-"    TO { [ GROUP ] rolename | PUBLIC } [, ...] [ WITH GRANT OPTION ]\n"
-"\n"
-"GRANT role [, ...] TO rolename [, ...] [ WITH ADMIN OPTION ]"
-msgstr ""
-
-#: sql_help.h:453
+#: sql_help.h:772
 msgid "create new rows in a table"
 msgstr "přidá nové řádky do tabulky"
 
-#: sql_help.h:454
-msgid ""
-"INSERT INTO table [ ( column [, ...] ) ]\n"
-"    { DEFAULT VALUES | VALUES ( { expression | DEFAULT } [, ...] ) [, ...] | "
-"query }\n"
-"    [ RETURNING * | output_expression [ [ AS ] output_name ] [, ...] ]"
-msgstr ""
-
-#: sql_help.h:457
+#: sql_help.h:777
 msgid "listen for a notification"
 msgstr "naslouchá upozorněním"
 
-#: sql_help.h:458
-msgid "LISTEN name"
-msgstr ""
+#: sql_help.h:782
+msgid "load a shared library file"
+msgstr "načte sdílenou knihovnu"
 
-#: sql_help.h:461
-msgid "load or reload a shared library file"
-msgstr "načte nebo opětovně načte sdílenou knihovnu"
-
-#: sql_help.h:462
-msgid "LOAD 'filename'"
-msgstr ""
-
-#: sql_help.h:465
+#: sql_help.h:787
 msgid "lock a table"
 msgstr "uzamkne tabulku"
 
-#: sql_help.h:466
-msgid ""
-"LOCK [ TABLE ] [ ONLY ] name [, ...] [ IN lockmode MODE ] [ NOWAIT ]\n"
-"\n"
-"where lockmode is one of:\n"
-"\n"
-"    ACCESS SHARE | ROW SHARE | ROW EXCLUSIVE | SHARE UPDATE EXCLUSIVE\n"
-"    | SHARE | SHARE ROW EXCLUSIVE | EXCLUSIVE | ACCESS EXCLUSIVE"
-msgstr ""
-
-#: sql_help.h:469
+#: sql_help.h:792
+#, fuzzy
 msgid "position a cursor"
 msgstr "přemístí kursor"
 
-#: sql_help.h:470
-msgid "MOVE [ direction { FROM | IN } ] cursorname"
-msgstr ""
-
-#: sql_help.h:473
+#: sql_help.h:797
 msgid "generate a notification"
 msgstr "generuje upozornění"
 
-#: sql_help.h:474
-msgid "NOTIFY name"
-msgstr ""
-
-#: sql_help.h:477
+#: sql_help.h:802
 msgid "prepare a statement for execution"
-msgstr "připraví a uloží příkaz pro provedení"
+msgstr "připraví a uloží dotaz pro provedení"
 
-#: sql_help.h:478
-msgid "PREPARE name [ ( datatype [, ...] ) ] AS statement"
-msgstr ""
-
-#: sql_help.h:481
+#: sql_help.h:807
 msgid "prepare the current transaction for two-phase commit"
 msgstr "přípraví aktuální transakci pro dvoufázoví commit"
 
-#: sql_help.h:482
-msgid "PREPARE TRANSACTION transaction_id"
-msgstr ""
-
-#: sql_help.h:485
+#: sql_help.h:812
 msgid "change the ownership of database objects owned by a database role"
 msgstr "změní vlastníka databázových objektů vlastněných databázovou rolí"
 
-#: sql_help.h:486
-msgid "REASSIGN OWNED BY old_role [, ...] TO new_role"
-msgstr ""
-
-#: sql_help.h:489
+#: sql_help.h:817
 msgid "rebuild indexes"
 msgstr "znovuvytvoří indexy"
 
-#: sql_help.h:490
-msgid "REINDEX { INDEX | TABLE | DATABASE | SYSTEM } name [ FORCE ]"
-msgstr ""
-
-#: sql_help.h:493
+#: sql_help.h:822
 msgid "destroy a previously defined savepoint"
 msgstr "odstraní dříve vytvořený savepoint"
 
-#: sql_help.h:494
-msgid "RELEASE [ SAVEPOINT ] savepoint_name"
-msgstr ""
-
-#: sql_help.h:497
+#: sql_help.h:827
 msgid "restore the value of a run-time parameter to the default value"
 msgstr "přenastaví parametr běhu na implicitní hodnotu"
 
-#: sql_help.h:498
-msgid ""
-"RESET configuration_parameter\n"
-"RESET ALL"
-msgstr ""
-
-#: sql_help.h:501
+#: sql_help.h:832
 msgid "remove access privileges"
 msgstr "odstraní přístupová práva"
 
-#: sql_help.h:502
-msgid ""
-"REVOKE [ GRANT OPTION FOR ]\n"
-"    { { SELECT | INSERT | UPDATE | DELETE | TRUNCATE | REFERENCES | "
-"TRIGGER }\n"
-"    [,...] | ALL [ PRIVILEGES ] }\n"
-"    ON [ TABLE ] tablename [, ...]\n"
-"    FROM { [ GROUP ] rolename | PUBLIC } [, ...]\n"
-"    [ CASCADE | RESTRICT ]\n"
-"\n"
-"REVOKE [ GRANT OPTION FOR ]\n"
-"    { { SELECT | INSERT | UPDATE | REFERENCES } ( column [, ...] )\n"
-"    [,...] | ALL [ PRIVILEGES ] ( column [, ...] ) }\n"
-"    ON [ TABLE ] tablename [, ...]\n"
-"    FROM { [ GROUP ] rolename | PUBLIC } [, ...]\n"
-"    [ CASCADE | RESTRICT ]\n"
-"\n"
-"REVOKE [ GRANT OPTION FOR ]\n"
-"    { { USAGE | SELECT | UPDATE }\n"
-"    [,...] | ALL [ PRIVILEGES ] }\n"
-"    ON SEQUENCE sequencename [, ...]\n"
-"    FROM { [ GROUP ] rolename | PUBLIC } [, ...]\n"
-"    [ CASCADE | RESTRICT ]\n"
-"\n"
-"REVOKE [ GRANT OPTION FOR ]\n"
-"    { { CREATE | CONNECT | TEMPORARY | TEMP } [,...] | ALL [ PRIVILEGES ] }\n"
-"    ON DATABASE dbname [, ...]\n"
-"    FROM { [ GROUP ] rolename | PUBLIC } [, ...]\n"
-"    [ CASCADE | RESTRICT ]\n"
-"\n"
-"REVOKE [ GRANT OPTION FOR ]\n"
-"    { USAGE | ALL [ PRIVILEGES ] }\n"
-"    ON FOREIGN DATA WRAPPER fdwname [, ...]\n"
-"    FROM { [ GROUP ] rolename | PUBLIC } [, ...]\n"
-"    [ CASCADE | RESTRICT ]\n"
-"\n"
-"REVOKE [ GRANT OPTION FOR ]\n"
-"    { USAGE | ALL [ PRIVILEGES ] }\n"
-"    ON FOREIGN SERVER servername [, ...]\n"
-"    FROM { [ GROUP ] rolename | PUBLIC } [, ...]\n"
-"    [ CASCADE | RESTRICT ]\n"
-"\n"
-"REVOKE [ GRANT OPTION FOR ]\n"
-"    { EXECUTE | ALL [ PRIVILEGES ] }\n"
-"    ON FUNCTION funcname ( [ [ argmode ] [ argname ] argtype [, ...] ] ) "
-"[, ...]\n"
-"    FROM { [ GROUP ] rolename | PUBLIC } [, ...]\n"
-"    [ CASCADE | RESTRICT ]\n"
-"\n"
-"REVOKE [ GRANT OPTION FOR ]\n"
-"    { USAGE | ALL [ PRIVILEGES ] }\n"
-"    ON LANGUAGE langname [, ...]\n"
-"    FROM { [ GROUP ] rolename | PUBLIC } [, ...]\n"
-"    [ CASCADE | RESTRICT ]\n"
-"\n"
-"REVOKE [ GRANT OPTION FOR ]\n"
-"    { { CREATE | USAGE } [,...] | ALL [ PRIVILEGES ] }\n"
-"    ON SCHEMA schemaname [, ...]\n"
-"    FROM { [ GROUP ] rolename | PUBLIC } [, ...]\n"
-"    [ CASCADE | RESTRICT ]\n"
-"\n"
-"REVOKE [ GRANT OPTION FOR ]\n"
-"    { CREATE | ALL [ PRIVILEGES ] }\n"
-"    ON TABLESPACE tablespacename [, ...]\n"
-"    FROM { [ GROUP ] rolename | PUBLIC } [, ...]\n"
-"    [ CASCADE | RESTRICT ]\n"
-"\n"
-"REVOKE [ ADMIN OPTION FOR ]\n"
-"    role [, ...] FROM rolename [, ...]\n"
-"    [ CASCADE | RESTRICT ]"
-msgstr ""
-
-#: sql_help.h:506
-msgid "ROLLBACK [ WORK | TRANSACTION ]"
-msgstr ""
-
-#: sql_help.h:509
+#: sql_help.h:842
 msgid "cancel a transaction that was earlier prepared for two-phase commit"
 msgstr "zruší transakci, která byla připravena pro dvoufázový commit"
 
-#: sql_help.h:510
-msgid "ROLLBACK PREPARED transaction_id"
-msgstr ""
-
-#: sql_help.h:513
+#: sql_help.h:847
 msgid "roll back to a savepoint"
 msgstr "vrátí se na savepoint"
 
-#: sql_help.h:514
-msgid "ROLLBACK [ WORK | TRANSACTION ] TO [ SAVEPOINT ] savepoint_name"
-msgstr ""
-
-#: sql_help.h:517
+#: sql_help.h:852
 msgid "define a new savepoint within the current transaction"
 msgstr "definuje nový savepoint uvnitř aktuální transakce"
 
-#: sql_help.h:518
-msgid "SAVEPOINT savepoint_name"
-msgstr ""
+#: sql_help.h:857
+#| msgid "define or change the comment of an object"
+msgid "define or change a security label applied to an object"
+msgstr "definuje nebo změní bezpečnostní štítek aplikovaný na objekt"
 
-#: sql_help.h:521 sql_help.h:557 sql_help.h:581
+#: sql_help.h:862 sql_help.h:907 sql_help.h:937
 msgid "retrieve rows from a table or view"
 msgstr "vybere řádky z tabulky nebo náhledu"
 
-#: sql_help.h:522 sql_help.h:558 sql_help.h:582
-msgid ""
-"[ WITH [ RECURSIVE ] with_query [, ...] ]\n"
-"SELECT [ ALL | DISTINCT [ ON ( expression [, ...] ) ] ]\n"
-"    * | expression [ [ AS ] output_name ] [, ...]\n"
-"    [ FROM from_item [, ...] ]\n"
-"    [ WHERE condition ]\n"
-"    [ GROUP BY expression [, ...] ]\n"
-"    [ HAVING condition [, ...] ]\n"
-"    [ WINDOW window_name AS ( window_definition ) [, ...] ]\n"
-"    [ { UNION | INTERSECT | EXCEPT } [ ALL ] select ]\n"
-"    [ ORDER BY expression [ ASC | DESC | USING operator ] [ NULLS { FIRST | "
-"LAST } ] [, ...] ]\n"
-"    [ LIMIT { count | ALL } ]\n"
-"    [ OFFSET start [ ROW | ROWS ] ]\n"
-"    [ FETCH { FIRST | NEXT } [ count ] { ROW | ROWS } ONLY ]\n"
-"    [ FOR { UPDATE | SHARE } [ OF table_name [, ...] ] [ NOWAIT ] [...] ]\n"
-"\n"
-"where from_item can be one of:\n"
-"\n"
-"    [ ONLY ] table_name [ * ] [ [ AS ] alias [ ( column_alias [, ...] ) ] ]\n"
-"    ( select ) [ AS ] alias [ ( column_alias [, ...] ) ]\n"
-"    with_query_name [ [ AS ] alias [ ( column_alias [, ...] ) ] ]\n"
-"    function_name ( [ argument [, ...] ] ) [ AS ] alias [ ( column_alias "
-"[, ...] | column_definition [, ...] ) ]\n"
-"    function_name ( [ argument [, ...] ] ) AS ( column_definition [, ...] )\n"
-"    from_item [ NATURAL ] join_type from_item [ ON join_condition | USING "
-"( join_column [, ...] ) ]\n"
-"\n"
-"and with_query is:\n"
-"\n"
-"    with_query_name [ ( column_name [, ...] ) ] AS ( select )\n"
-"\n"
-"TABLE { [ ONLY ] table_name [ * ] | with_query_name }"
-msgstr ""
-
-#: sql_help.h:526
-msgid ""
-"[ WITH [ RECURSIVE ] with_query [, ...] ]\n"
-"SELECT [ ALL | DISTINCT [ ON ( expression [, ...] ) ] ]\n"
-"    * | expression [ [ AS ] output_name ] [, ...]\n"
-"    INTO [ TEMPORARY | TEMP ] [ TABLE ] new_table\n"
-"    [ FROM from_item [, ...] ]\n"
-"    [ WHERE condition ]\n"
-"    [ GROUP BY expression [, ...] ]\n"
-"    [ HAVING condition [, ...] ]\n"
-"    [ WINDOW window_name AS ( window_definition ) [, ...] ]\n"
-"    [ { UNION | INTERSECT | EXCEPT } [ ALL ] select ]\n"
-"    [ ORDER BY expression [ ASC | DESC | USING operator ] [ NULLS { FIRST | "
-"LAST } ] [, ...] ]\n"
-"    [ LIMIT { count | ALL } ]\n"
-"    [ OFFSET start [ ROW | ROWS ] ]\n"
-"    [ FETCH { FIRST | NEXT } [ count ] { ROW | ROWS } ONLY ]\n"
-"    [ FOR { UPDATE | SHARE } [ OF table_name [, ...] ] [ NOWAIT ] [...] ]"
-msgstr ""
-
-#: sql_help.h:529
+#: sql_help.h:872
 msgid "change a run-time parameter"
 msgstr "změní parametry běhu"
 
-#: sql_help.h:530
-msgid ""
-"SET [ SESSION | LOCAL ] configuration_parameter { TO | = } { value | 'value' "
-"| DEFAULT }\n"
-"SET [ SESSION | LOCAL ] TIME ZONE { timezone | LOCAL | DEFAULT }"
-msgstr ""
+#: sql_help.h:877
+msgid "set constraint check timing for the current transaction"
+msgstr "nastaví mód kontroly omezení (constraints) pro aktuální transakci"
 
-#: sql_help.h:533
-msgid "set constraint checking modes for the current transaction"
-msgstr "nastaví constraint checking mód pro aktuální transakci"
-
-#: sql_help.h:534
-msgid "SET CONSTRAINTS { ALL | name [, ...] } { DEFERRED | IMMEDIATE }"
-msgstr ""
-
-#: sql_help.h:537
+#: sql_help.h:882
 msgid "set the current user identifier of the current session"
-msgstr ""
+msgstr "nastaví uživatelský identifikátor aktuální session"
 
-#: sql_help.h:538
-msgid ""
-"SET [ SESSION | LOCAL ] ROLE rolename\n"
-"SET [ SESSION | LOCAL ] ROLE NONE\n"
-"RESET ROLE"
-msgstr ""
-
-#: sql_help.h:541
+#: sql_help.h:887
 msgid ""
 "set the session user identifier and the current user identifier of the "
 "current session"
-msgstr "" 
-
-#: sql_help.h:542
-msgid ""
-"SET [ SESSION | LOCAL ] SESSION AUTHORIZATION username\n"
-"SET [ SESSION | LOCAL ] SESSION AUTHORIZATION DEFAULT\n"
-"RESET SESSION AUTHORIZATION"
 msgstr ""
+"nastaví uživatelský identifikátor session a identifikátor "
+"aktuálníhouživatele pro aktuální session"
 
-#: sql_help.h:545
+#: sql_help.h:892
 msgid "set the characteristics of the current transaction"
 msgstr "nastaví charakteristiku pro aktualní trasakci"
 
-#: sql_help.h:546
-msgid ""
-"SET TRANSACTION transaction_mode [, ...]\n"
-"SET SESSION CHARACTERISTICS AS TRANSACTION transaction_mode [, ...]\n"
-"\n"
-"where transaction_mode is one of:\n"
-"\n"
-"    ISOLATION LEVEL { SERIALIZABLE | REPEATABLE READ | READ COMMITTED | READ "
-"UNCOMMITTED }\n"
-"    READ WRITE | READ ONLY"
-msgstr ""
-
-#: sql_help.h:549
+#: sql_help.h:897
 msgid "show the value of a run-time parameter"
 msgstr "zobrazí hodnoty run-time parametrů"
 
-#: sql_help.h:550
-msgid ""
-"SHOW name\n"
-"SHOW ALL"
-msgstr ""
-
-#: sql_help.h:554
-msgid ""
-"START TRANSACTION [ transaction_mode [, ...] ]\n"
-"\n"
-"where transaction_mode is one of:\n"
-"\n"
-"    ISOLATION LEVEL { SERIALIZABLE | REPEATABLE READ | READ COMMITTED | READ "
-"UNCOMMITTED }\n"
-"    READ WRITE | READ ONLY"
-msgstr ""
-
-#: sql_help.h:561
+#: sql_help.h:912
 msgid "empty a table or set of tables"
 msgstr "zruší obsah tabulky nebo skupiny tabulek"
 
-#: sql_help.h:562
-msgid ""
-"TRUNCATE [ TABLE ] [ ONLY ] name [, ... ]\n"
-"    [ RESTART IDENTITY | CONTINUE IDENTITY ] [ CASCADE | RESTRICT ]"
-msgstr ""
-
-#: sql_help.h:565
+#: sql_help.h:917
 msgid "stop listening for a notification"
 msgstr "ukončí naslouchání připomínkám"
 
-#: sql_help.h:566
-msgid "UNLISTEN { name | * }"
-msgstr ""
-
-#: sql_help.h:569
+#: sql_help.h:922
 msgid "update rows of a table"
 msgstr "aktualizuje řádky tabulky"
 
-#: sql_help.h:570
-msgid ""
-"UPDATE [ ONLY ] table [ [ AS ] alias ]\n"
-"    SET { column = { expression | DEFAULT } |\n"
-"          ( column [, ...] ) = ( { expression | DEFAULT } [, ...] ) } "
-"[, ...]\n"
-"    [ FROM fromlist ]\n"
-"    [ WHERE condition | WHERE CURRENT OF cursor_name ]\n"
-"    [ RETURNING * | output_expression [ [ AS ] output_name ] [, ...] ]"
-msgstr ""
-
-#: sql_help.h:573
+#: sql_help.h:927
 msgid "garbage-collect and optionally analyze a database"
 msgstr "provede úklid a případně analýzu databáze"
 
-#: sql_help.h:574
-msgid ""
-"VACUUM [ FULL ] [ FREEZE ] [ VERBOSE ] [ table ]\n"
-"VACUUM [ FULL ] [ FREEZE ] [ VERBOSE ] ANALYZE [ table [ (column "
-"[, ...] ) ] ]"
-msgstr ""
-
-#: sql_help.h:577
+#: sql_help.h:932
 msgid "compute a set of rows"
 msgstr "spočítá množinu řádek"
 
-#: sql_help.h:578
-msgid ""
-"VALUES ( expression [, ...] ) [, ...]\n"
-"    [ ORDER BY sort_expression [ ASC | DESC | USING operator ] [, ...] ]\n"
-"    [ LIMIT { count | ALL } ]\n"
-"    [ OFFSET start [ ROW | ROWS ] ]\n"
-"    [ FETCH { FIRST | NEXT } [ count ] { ROW | ROWS } ONLY ]"
+#: sql_help.c:26 sql_help.c:29 sql_help.c:32 sql_help.c:44 sql_help.c:46
+#: sql_help.c:48 sql_help.c:59 sql_help.c:61 sql_help.c:63 sql_help.c:87
+#: sql_help.c:91 sql_help.c:93 sql_help.c:95 sql_help.c:97 sql_help.c:100
+#: sql_help.c:102 sql_help.c:104 sql_help.c:179 sql_help.c:181 sql_help.c:182
+#: sql_help.c:184 sql_help.c:186 sql_help.c:188 sql_help.c:276 sql_help.c:281
+#: sql_help.c:306 sql_help.c:308 sql_help.c:311 sql_help.c:313 sql_help.c:351
+#: sql_help.c:356 sql_help.c:361 sql_help.c:366 sql_help.c:404 sql_help.c:406
+#: sql_help.c:408 sql_help.c:411 sql_help.c:421 sql_help.c:423 sql_help.c:442
+#: sql_help.c:446 sql_help.c:459 sql_help.c:462 sql_help.c:465 sql_help.c:485
+#: sql_help.c:497 sql_help.c:505 sql_help.c:508 sql_help.c:511 sql_help.c:541
+#: sql_help.c:547 sql_help.c:549 sql_help.c:553 sql_help.c:556 sql_help.c:559
+#: sql_help.c:569 sql_help.c:571 sql_help.c:588 sql_help.c:597 sql_help.c:599
+#: sql_help.c:601 sql_help.c:675 sql_help.c:677 sql_help.c:680 sql_help.c:682
+#: sql_help.c:740 sql_help.c:742 sql_help.c:744 sql_help.c:747 sql_help.c:768
+#: sql_help.c:771 sql_help.c:774 sql_help.c:777 sql_help.c:781 sql_help.c:783
+#: sql_help.c:785 sql_help.c:787 sql_help.c:801 sql_help.c:804 sql_help.c:806
+#: sql_help.c:808 sql_help.c:818 sql_help.c:820 sql_help.c:830 sql_help.c:832
+#: sql_help.c:841 sql_help.c:862 sql_help.c:864 sql_help.c:866 sql_help.c:869
+#: sql_help.c:871 sql_help.c:873 sql_help.c:911 sql_help.c:917 sql_help.c:919
+#: sql_help.c:922 sql_help.c:924 sql_help.c:926 sql_help.c:951 sql_help.c:954
+#: sql_help.c:956 sql_help.c:958 sql_help.c:960 sql_help.c:1000
+#: sql_help.c:1183 sql_help.c:1191 sql_help.c:1235 sql_help.c:1239
+#: sql_help.c:1249 sql_help.c:1267 sql_help.c:1290 sql_help.c:1322
+#: sql_help.c:1367 sql_help.c:1409 sql_help.c:1431 sql_help.c:1451
+#: sql_help.c:1452 sql_help.c:1469 sql_help.c:1489 sql_help.c:1511
+#: sql_help.c:1539 sql_help.c:1560 sql_help.c:1590 sql_help.c:1771
+#: sql_help.c:1784 sql_help.c:1801 sql_help.c:1817 sql_help.c:1840
+#: sql_help.c:1883 sql_help.c:1887 sql_help.c:1889 sql_help.c:1907
+#: sql_help.c:1934 sql_help.c:1967 sql_help.c:1977 sql_help.c:1986
+#: sql_help.c:2030 sql_help.c:2048 sql_help.c:2056 sql_help.c:2064
+#: sql_help.c:2072 sql_help.c:2088 sql_help.c:2096 sql_help.c:2105
+#: sql_help.c:2116 sql_help.c:2124 sql_help.c:2132 sql_help.c:2140
+#: sql_help.c:2150 sql_help.c:2159 sql_help.c:2168 sql_help.c:2176
+#: sql_help.c:2184 sql_help.c:2193 sql_help.c:2201 sql_help.c:2217
+#: sql_help.c:2233 sql_help.c:2241 sql_help.c:2249 sql_help.c:2257
+#: sql_help.c:2265 sql_help.c:2274 sql_help.c:2282 sql_help.c:2299
+#: sql_help.c:2314 sql_help.c:2506 sql_help.c:2557 sql_help.c:2584
+#: sql_help.c:2927 sql_help.c:2973 sql_help.c:3080
+msgid "name"
+msgstr "jméno"
+
+#: sql_help.c:27 sql_help.c:30 sql_help.c:33 sql_help.c:317 sql_help.c:320
+#: sql_help.c:2031
+msgid "type"
+msgstr "typ"
+
+#: sql_help.c:28 sql_help.c:45 sql_help.c:60 sql_help.c:92 sql_help.c:312
+#: sql_help.c:360 sql_help.c:393 sql_help.c:405 sql_help.c:422 sql_help.c:461
+#: sql_help.c:507 sql_help.c:548 sql_help.c:570 sql_help.c:600 sql_help.c:681
+#: sql_help.c:741 sql_help.c:784 sql_help.c:805 sql_help.c:819 sql_help.c:831
+#: sql_help.c:843 sql_help.c:870 sql_help.c:918 sql_help.c:959
+msgid "new_name"
+msgstr "nové_jméno"
+
+#: sql_help.c:31 sql_help.c:47 sql_help.c:62 sql_help.c:94 sql_help.c:187
+#: sql_help.c:282 sql_help.c:322 sql_help.c:365 sql_help.c:424 sql_help.c:433
+#: sql_help.c:445 sql_help.c:464 sql_help.c:510 sql_help.c:572 sql_help.c:598
+#: sql_help.c:617 sql_help.c:725 sql_help.c:743 sql_help.c:786 sql_help.c:807
+#: sql_help.c:865 sql_help.c:957
+msgid "new_owner"
+msgstr "nový_vlastník"
+
+#: sql_help.c:34 sql_help.c:49 sql_help.c:64 sql_help.c:189 sql_help.c:228
+#: sql_help.c:314 sql_help.c:370 sql_help.c:449 sql_help.c:467 sql_help.c:513
+#: sql_help.c:602 sql_help.c:683 sql_help.c:788 sql_help.c:809 sql_help.c:821
+#: sql_help.c:833 sql_help.c:872 sql_help.c:961
+msgid "new_schema"
+msgstr "nové_schéma"
+
+#: sql_help.c:88 sql_help.c:279 sql_help.c:323 sql_help.c:542 sql_help.c:614
+#: sql_help.c:802 sql_help.c:912 sql_help.c:938 sql_help.c:1142
+#: sql_help.c:1147 sql_help.c:1325 sql_help.c:1343 sql_help.c:1410
+#: sql_help.c:1540 sql_help.c:1611 sql_help.c:1786 sql_help.c:1935
+#: sql_help.c:1957 sql_help.c:2332
+msgid "option"
+msgstr "volba"
+
+#: sql_help.c:89 sql_help.c:543 sql_help.c:913 sql_help.c:1411 sql_help.c:1541
+#: sql_help.c:1936
+msgid "where option can be:"
+msgstr "kde volba může být:"
+
+#: sql_help.c:90 sql_help.c:544 sql_help.c:914 sql_help.c:1274 sql_help.c:1542
+#: sql_help.c:1937
+msgid "connlimit"
+msgstr "connlimit"
+
+#: sql_help.c:96 sql_help.c:726
+msgid "new_tablespace"
+msgstr "nový_tablespace"
+
+#: sql_help.c:98 sql_help.c:101 sql_help.c:103 sql_help.c:374 sql_help.c:376
+#: sql_help.c:377 sql_help.c:551 sql_help.c:555 sql_help.c:558 sql_help.c:920
+#: sql_help.c:923 sql_help.c:925 sql_help.c:1378 sql_help.c:2601
+#: sql_help.c:2916
+msgid "configuration_parameter"
+msgstr "konfigurační_parametr"
+
+#: sql_help.c:99 sql_help.c:280 sql_help.c:324 sql_help.c:375 sql_help.c:410
+#: sql_help.c:552 sql_help.c:615 sql_help.c:702 sql_help.c:720 sql_help.c:746
+#: sql_help.c:803 sql_help.c:921 sql_help.c:939 sql_help.c:1326
+#: sql_help.c:1344 sql_help.c:1379 sql_help.c:1380 sql_help.c:1439
+#: sql_help.c:1612 sql_help.c:1686 sql_help.c:1694 sql_help.c:1726
+#: sql_help.c:1748 sql_help.c:1787 sql_help.c:1958 sql_help.c:2917
+#: sql_help.c:2918
+msgid "value"
+msgstr "hodnota"
+
+#: sql_help.c:151
+msgid "target_role"
+msgstr "cílová_role"
+
+#: sql_help.c:152 sql_help.c:1575 sql_help.c:2430 sql_help.c:2437
+#: sql_help.c:2449 sql_help.c:2455 sql_help.c:2684 sql_help.c:2691
+#: sql_help.c:2703 sql_help.c:2709
+msgid "schema_name"
+msgstr "jméno_schématu"
+
+#: sql_help.c:153
+msgid "abbreviated_grant_or_revoke"
+msgstr "zkrácený_grant_nebo_revoke"
+
+#: sql_help.c:154
+msgid "where abbreviated_grant_or_revoke is one of:"
+msgstr "kde zkrácený_grant_nebo_revoke je jedno z:"
+
+#: sql_help.c:155 sql_help.c:156 sql_help.c:157 sql_help.c:158 sql_help.c:159
+#: sql_help.c:160 sql_help.c:1414 sql_help.c:1415 sql_help.c:1416
+#: sql_help.c:1417 sql_help.c:1418 sql_help.c:1545 sql_help.c:1546
+#: sql_help.c:1547 sql_help.c:1548 sql_help.c:1549 sql_help.c:1940
+#: sql_help.c:1941 sql_help.c:1942 sql_help.c:1943 sql_help.c:1944
+#: sql_help.c:2431 sql_help.c:2435 sql_help.c:2438 sql_help.c:2440
+#: sql_help.c:2442 sql_help.c:2444 sql_help.c:2450 sql_help.c:2452
+#: sql_help.c:2454 sql_help.c:2456 sql_help.c:2458 sql_help.c:2459
+#: sql_help.c:2460 sql_help.c:2685 sql_help.c:2689 sql_help.c:2692
+#: sql_help.c:2694 sql_help.c:2696 sql_help.c:2698 sql_help.c:2704
+#: sql_help.c:2706 sql_help.c:2708 sql_help.c:2710 sql_help.c:2712
+#: sql_help.c:2713 sql_help.c:2714 sql_help.c:2937
+msgid "role_name"
+msgstr "jméno_role"
+
+#: sql_help.c:180 sql_help.c:693 sql_help.c:695 sql_help.c:953 sql_help.c:1293
+#: sql_help.c:1297 sql_help.c:1435 sql_help.c:1698 sql_help.c:1708
+#: sql_help.c:1730 sql_help.c:2474 sql_help.c:2822 sql_help.c:2823
+#: sql_help.c:2827 sql_help.c:2832 sql_help.c:2891 sql_help.c:2892
+#: sql_help.c:2897 sql_help.c:2902 sql_help.c:3025 sql_help.c:3026
+#: sql_help.c:3030 sql_help.c:3035 sql_help.c:3106 sql_help.c:3108
+#: sql_help.c:3139 sql_help.c:3181 sql_help.c:3182 sql_help.c:3186
+#: sql_help.c:3191
+msgid "expression"
+msgstr "výraz"
+
+#: sql_help.c:183
+msgid "domain_constraint"
+msgstr "omezení_domény"
+
+#: sql_help.c:185 sql_help.c:708 sql_help.c:709 sql_help.c:728 sql_help.c:1059
+#: sql_help.c:1296 sql_help.c:1697 sql_help.c:1707
+msgid "constraint_name"
+msgstr "jméno_omezení"
+
+#: sql_help.c:225 sql_help.c:227 sql_help.c:229 sql_help.c:231 sql_help.c:1308
+#: sql_help.c:2080
+msgid "extension_name"
+msgstr "název_extension"
+
+#: sql_help.c:226 sql_help.c:613
+msgid "new_version"
+msgstr "nová_verze"
+
+#: sql_help.c:230 sql_help.c:232
+msgid "member_object"
+msgstr "členský_objekt"
+
+#: sql_help.c:233
+msgid "where member_object is:"
+msgstr "kde členský_objekt je:"
+
+#: sql_help.c:234 sql_help.c:1052 sql_help.c:2771
+msgid "agg_name"
+msgstr "jméno_agregace"
+
+#: sql_help.c:235 sql_help.c:1053 sql_help.c:2772
+msgid "agg_type"
+msgstr "typ_agregace"
+
+#: sql_help.c:236 sql_help.c:1054 sql_help.c:1215 sql_help.c:1219
+#: sql_help.c:1221 sql_help.c:2039
+msgid "source_type"
+msgstr "zdrojový_typ"
+
+#: sql_help.c:237 sql_help.c:1055 sql_help.c:1216 sql_help.c:1220
+#: sql_help.c:1222 sql_help.c:2040
+msgid "target_type"
+msgstr "cílový_typ"
+
+#: sql_help.c:238 sql_help.c:239 sql_help.c:240 sql_help.c:241 sql_help.c:242
+#: sql_help.c:250 sql_help.c:252 sql_help.c:254 sql_help.c:255 sql_help.c:256
+#: sql_help.c:257 sql_help.c:258 sql_help.c:259 sql_help.c:260 sql_help.c:261
+#: sql_help.c:262 sql_help.c:263 sql_help.c:264 sql_help.c:1056
+#: sql_help.c:1061 sql_help.c:1062 sql_help.c:1063 sql_help.c:1064
+#: sql_help.c:1065 sql_help.c:1066 sql_help.c:1071 sql_help.c:1076
+#: sql_help.c:1078 sql_help.c:1080 sql_help.c:1081 sql_help.c:1084
+#: sql_help.c:1085 sql_help.c:1086 sql_help.c:1087 sql_help.c:1088
+#: sql_help.c:1089 sql_help.c:1090 sql_help.c:1091 sql_help.c:1092
+#: sql_help.c:1095 sql_help.c:1096 sql_help.c:2768 sql_help.c:2773
+#: sql_help.c:2774 sql_help.c:2780 sql_help.c:2781 sql_help.c:2782
+#: sql_help.c:2783 sql_help.c:2784
+msgid "object_name"
+msgstr "jméno_objektu"
+
+#: sql_help.c:243 sql_help.c:495 sql_help.c:1067 sql_help.c:1217
+#: sql_help.c:1252 sql_help.c:1470 sql_help.c:1501 sql_help.c:1845
+#: sql_help.c:2445 sql_help.c:2699 sql_help.c:2775 sql_help.c:2848
+#: sql_help.c:2853 sql_help.c:3051 sql_help.c:3056 sql_help.c:3207
+#: sql_help.c:3212
+msgid "function_name"
+msgstr "jméno_funkce"
+
+#: sql_help.c:244 sql_help.c:352 sql_help.c:357 sql_help.c:362 sql_help.c:367
+#: sql_help.c:1068 sql_help.c:1368 sql_help.c:2106 sql_help.c:2446
+#: sql_help.c:2700 sql_help.c:2776
+msgid "argmode"
+msgstr "mód_argumentu"
+
+#: sql_help.c:245 sql_help.c:353 sql_help.c:358 sql_help.c:363 sql_help.c:368
+#: sql_help.c:1069 sql_help.c:1369 sql_help.c:2107 sql_help.c:2777
+msgid "argname"
+msgstr "jméno_argumentu"
+
+#: sql_help.c:246 sql_help.c:354 sql_help.c:359 sql_help.c:364 sql_help.c:369
+#: sql_help.c:1070 sql_help.c:1370 sql_help.c:2108 sql_help.c:2778
+msgid "argtype"
+msgstr "typ_argumentu"
+
+#: sql_help.c:247 sql_help.c:488 sql_help.c:1073 sql_help.c:1494
+msgid "operator_name"
+msgstr "jméno_operátoru"
+
+#: sql_help.c:248 sql_help.c:443 sql_help.c:447 sql_help.c:1074
+#: sql_help.c:1471 sql_help.c:2141
+msgid "left_type"
+msgstr "levý_typ"
+
+#: sql_help.c:249 sql_help.c:444 sql_help.c:448 sql_help.c:1075
+#: sql_help.c:1472 sql_help.c:2142
+msgid "right_type"
+msgstr "pravý_typ"
+
+#: sql_help.c:251 sql_help.c:253 sql_help.c:460 sql_help.c:463 sql_help.c:466
+#: sql_help.c:486 sql_help.c:498 sql_help.c:506 sql_help.c:509 sql_help.c:512
+#: sql_help.c:1077 sql_help.c:1079 sql_help.c:1491 sql_help.c:1512
+#: sql_help.c:1713 sql_help.c:2151 sql_help.c:2160
+msgid "index_method"
+msgstr "metoda_indexování"
+
+#: sql_help.c:277 sql_help.c:1323
+#| msgid "headline_function"
+msgid "handler_function"
 msgstr ""
 
-#: ../../port/exec.c:195 ../../port/exec.c:309 ../../port/exec.c:352
+#: sql_help.c:278 sql_help.c:1324
+#| msgid "init_function"
+msgid "validator_function"
+msgstr ""
+
+#: sql_help.c:307 sql_help.c:355 sql_help.c:676 sql_help.c:863 sql_help.c:1704
+#: sql_help.c:1705 sql_help.c:1721 sql_help.c:1722
+msgid "action"
+msgstr "akce"
+
+#: sql_help.c:309 sql_help.c:316 sql_help.c:318 sql_help.c:319 sql_help.c:321
+#: sql_help.c:596 sql_help.c:678 sql_help.c:685 sql_help.c:689 sql_help.c:690
+#: sql_help.c:694 sql_help.c:696 sql_help.c:697 sql_help.c:698 sql_help.c:700
+#: sql_help.c:703 sql_help.c:705 sql_help.c:952 sql_help.c:955 sql_help.c:970
+#: sql_help.c:1140 sql_help.c:1144 sql_help.c:1156 sql_help.c:1157
+#: sql_help.c:1434 sql_help.c:1597 sql_help.c:1729 sql_help.c:2432
+#: sql_help.c:2433 sql_help.c:2473 sql_help.c:2686 sql_help.c:2687
+#: sql_help.c:3105 sql_help.c:3107 sql_help.c:3124 sql_help.c:3127
+msgid "column"
+msgstr "sloupec"
+
+#: sql_help.c:310 sql_help.c:679
+msgid "new_column"
+msgstr "nový_sloupec"
+
+#: sql_help.c:315 sql_help.c:371 sql_help.c:684 sql_help.c:876
+msgid "where action is one of:"
+msgstr "kde akce je jedno z:"
+
+#: sql_help.c:372 sql_help.c:1376
+msgid "execution_cost"
+msgstr "execution_cost"
+
+#: sql_help.c:373 sql_help.c:1377
+msgid "result_rows"
+msgstr "výsledné_řádky"
+
+#: sql_help.c:388 sql_help.c:390 sql_help.c:392
+msgid "group_name"
+msgstr ""
+
+#: sql_help.c:389 sql_help.c:391 sql_help.c:936 sql_help.c:1268
+#: sql_help.c:1576 sql_help.c:1578 sql_help.c:1759 sql_help.c:1955
+#: sql_help.c:2290 sql_help.c:2947
+msgid "user_name"
+msgstr "uživatel"
+
+#: sql_help.c:407 sql_help.c:1758 sql_help.c:2225 sql_help.c:2457
+#: sql_help.c:2711
+msgid "tablespace_name"
+msgstr "jméno_tablespace"
+
+#: sql_help.c:409 sql_help.c:412 sql_help.c:719 sql_help.c:721 sql_help.c:1438
+#: sql_help.c:1685 sql_help.c:1693 sql_help.c:1725 sql_help.c:1747
+msgid "storage_parameter"
+msgstr "parametr_uložení"
+
+#: sql_help.c:432 sql_help.c:1072 sql_help.c:2779
+msgid "large_object_oid"
+msgstr "oid_large_objektu"
+
+#: sql_help.c:487 sql_help.c:499 sql_help.c:1493
+msgid "strategy_number"
+msgstr "číslo_strategie"
+
+#: sql_help.c:489 sql_help.c:490 sql_help.c:493 sql_help.c:494 sql_help.c:500
+#: sql_help.c:501 sql_help.c:503 sql_help.c:504 sql_help.c:1495
+#: sql_help.c:1496 sql_help.c:1499 sql_help.c:1500
+msgid "op_type"
+msgstr "typ_operátoru"
+
+#: sql_help.c:491 sql_help.c:1497
+#| msgid "family_name"
+msgid "sort_family_name"
+msgstr ""
+
+#: sql_help.c:492 sql_help.c:502 sql_help.c:1498
+msgid "support_number"
+msgstr ""
+
+#: sql_help.c:496 sql_help.c:1218 sql_help.c:1502
+msgid "argument_type"
+msgstr "typ_argumentu"
+
+#: sql_help.c:545 sql_help.c:915 sql_help.c:1412 sql_help.c:1543
+#: sql_help.c:1938
+msgid "password"
+msgstr "heslo"
+
+#: sql_help.c:546 sql_help.c:916 sql_help.c:1413 sql_help.c:1544
+#: sql_help.c:1939
+msgid "timestamp"
+msgstr "timestamp"
+
+#: sql_help.c:550 sql_help.c:554 sql_help.c:557 sql_help.c:560 sql_help.c:2439
+#: sql_help.c:2693
+msgid "database_name"
+msgstr "jméno_databáze"
+
+#: sql_help.c:589 sql_help.c:1591
+msgid "increment"
+msgstr "inkrement"
+
+#: sql_help.c:590 sql_help.c:1592
+msgid "minvalue"
+msgstr "min_hodnota"
+
+#: sql_help.c:591 sql_help.c:1593
+msgid "maxvalue"
+msgstr "max_hodnota"
+
+#: sql_help.c:592 sql_help.c:1594 sql_help.c:2835 sql_help.c:2905
+#: sql_help.c:3038 sql_help.c:3143 sql_help.c:3194
+msgid "start"
+msgstr "start"
+
+#: sql_help.c:593
+msgid "restart"
+msgstr "restart"
+
+#: sql_help.c:594 sql_help.c:1595
+msgid "cache"
+msgstr "cache"
+
+#: sql_help.c:612 sql_help.c:616 sql_help.c:937 sql_help.c:1342
+#: sql_help.c:1607 sql_help.c:1956 sql_help.c:2209 sql_help.c:2291
+#: sql_help.c:2443 sql_help.c:2697
+msgid "server_name"
+msgstr "jméno_serveru"
+
+#: sql_help.c:686 sql_help.c:691 sql_help.c:878 sql_help.c:882 sql_help.c:1291
+#: sql_help.c:1341 sql_help.c:1490 sql_help.c:1678 sql_help.c:1885
+#: sql_help.c:2558
+msgid "data_type"
+msgstr "datový_typ"
+
+#: sql_help.c:687 sql_help.c:692 sql_help.c:879 sql_help.c:883 sql_help.c:1292
+#: sql_help.c:1436 sql_help.c:1679 sql_help.c:1886
+#| msgid "Collation"
+msgid "collation"
+msgstr "collation"
+
+#: sql_help.c:688 sql_help.c:1680 sql_help.c:1691
+msgid "column_constraint"
+msgstr "omezení_sloupce"
+
+#: sql_help.c:699
+msgid "integer"
+msgstr "integer"
+
+#: sql_help.c:701 sql_help.c:704
+msgid "attribute_option"
+msgstr "volba_atributu"
+
+#: sql_help.c:706 sql_help.c:1681 sql_help.c:1692
+msgid "table_constraint"
+msgstr "omezení_tabulky"
+
+#: sql_help.c:707
+#| msgid "table_constraint"
+msgid "table_constraint_using_index"
+msgstr "omezení_tabulky_s_využitím_indexu"
+
+#: sql_help.c:710 sql_help.c:711 sql_help.c:712 sql_help.c:713 sql_help.c:1093
+msgid "trigger_name"
+msgstr "jméno_triggeru"
+
+#: sql_help.c:714 sql_help.c:715 sql_help.c:716 sql_help.c:717
+msgid "rewrite_rule_name"
+msgstr "přepisovací_pravidlo"
+
+#: sql_help.c:718 sql_help.c:729 sql_help.c:1010
+msgid "index_name"
+msgstr "jméno_indexu"
+
+#: sql_help.c:722 sql_help.c:723 sql_help.c:1682 sql_help.c:1684
+msgid "parent_table"
+msgstr "nadřízená_tabulka"
+
+#: sql_help.c:724 sql_help.c:1689
+msgid "type_name"
+msgstr "jméno_typu"
+
+#: sql_help.c:727
+#| msgid "and table_constraint is:"
+msgid "and table_constraint_using_index is:"
+msgstr "a omezení_tabulky_s_využitím_indexu je:"
+
+#: sql_help.c:745 sql_help.c:748
+msgid "tablespace_option"
+msgstr "volba_tablespace"
+
+#: sql_help.c:769 sql_help.c:772 sql_help.c:778 sql_help.c:782
+msgid "token_type"
+msgstr "typ_tokenu"
+
+#: sql_help.c:770 sql_help.c:773
+msgid "dictionary_name"
+msgstr "jméno_slovníku"
+
+#: sql_help.c:775 sql_help.c:779
+msgid "old_dictionary"
+msgstr "starý_slovník"
+
+#: sql_help.c:776 sql_help.c:780
+msgid "new_dictionary"
+msgstr "nový_slovník"
+
+#: sql_help.c:867 sql_help.c:877 sql_help.c:880 sql_help.c:881 sql_help.c:1884
+msgid "attribute_name"
+msgstr "jméno_atributu"
+
+#: sql_help.c:868
+#| msgid "attribute_name"
+msgid "new_attribute_name"
+msgstr "nové_jméno_atributu"
+
+#: sql_help.c:874
+#| msgid "new_name"
+msgid "new_enum_value"
+msgstr "nová_enum_hodnota"
+
+#: sql_help.c:875
+msgid "existing_enum_value"
+msgstr ""
+
+#: sql_help.c:984 sql_help.c:2962 sql_help.c:2963 sql_help.c:2987
+msgid "transaction_mode"
+msgstr "transakční_mód"
+
+#: sql_help.c:985 sql_help.c:2964 sql_help.c:2988
+msgid "where transaction_mode is one of:"
+msgstr "kde transakční_mód je jedno z:"
+
+#: sql_help.c:1009 sql_help.c:1060 sql_help.c:1083 sql_help.c:1094
+#: sql_help.c:1139 sql_help.c:1143 sql_help.c:1339 sql_help.c:1676
+#: sql_help.c:1688 sql_help.c:1745 sql_help.c:2429 sql_help.c:2434
+#: sql_help.c:2683 sql_help.c:2688 sql_help.c:2769 sql_help.c:2837
+#: sql_help.c:2839 sql_help.c:2868 sql_help.c:2907 sql_help.c:3040
+#: sql_help.c:3042 sql_help.c:3071 sql_help.c:3196 sql_help.c:3198
+#: sql_help.c:3227
+msgid "table_name"
+msgstr "jméno_tabulky"
+
+#: sql_help.c:1057
+msgid "relation_name"
+msgstr "název_relace"
+
+#: sql_help.c:1058 sql_help.c:1340 sql_help.c:1373 sql_help.c:1677
+#: sql_help.c:1690 sql_help.c:1709 sql_help.c:1711 sql_help.c:1718
+#: sql_help.c:1746 sql_help.c:1848 sql_help.c:1968 sql_help.c:2770
+#: sql_help.c:2863 sql_help.c:3066 sql_help.c:3222
+msgid "column_name"
+msgstr "jméno_sloupce"
+
+#: sql_help.c:1082
+msgid "rule_name"
+msgstr "jméno_pravidla"
+
+#: sql_help.c:1097
+msgid "text"
+msgstr "text"
+
+#: sql_help.c:1112 sql_help.c:2567 sql_help.c:2729
+msgid "transaction_id"
+msgstr "id_transakce"
+
+#: sql_help.c:1141 sql_help.c:1146 sql_help.c:2493
+msgid "filename"
+msgstr "jméno_souboru"
+
+#: sql_help.c:1145 sql_help.c:1750 sql_help.c:1969 sql_help.c:1987
+#: sql_help.c:2475
+msgid "query"
+msgstr "dotaz"
+
+#: sql_help.c:1148 sql_help.c:2335
+msgid "where option can be one of:"
+msgstr "kde volba je jedno z:"
+
+#: sql_help.c:1149
+msgid "format_name"
+msgstr "jméno_formátu"
+
+#: sql_help.c:1150 sql_help.c:1153 sql_help.c:2336 sql_help.c:2337
+#: sql_help.c:2338 sql_help.c:2339
+msgid "boolean"
+msgstr "boolean"
+
+#: sql_help.c:1151
+msgid "delimiter_character"
+msgstr "oddělovací_znak"
+
+#: sql_help.c:1152
+msgid "null_string"
+msgstr "null_string"
+
+#: sql_help.c:1154
+msgid "quote_character"
+msgstr ""
+
+#: sql_help.c:1155
+msgid "escape_character"
+msgstr ""
+
+#: sql_help.c:1158
+#| msgid "encoding"
+msgid "encoding_name"
+msgstr "název_kódování"
+
+#: sql_help.c:1184
+msgid "input_data_type"
+msgstr "vstupní_datový_typ"
+
+#: sql_help.c:1185 sql_help.c:1193
+msgid "sfunc"
+msgstr ""
+
+#: sql_help.c:1186 sql_help.c:1194
+msgid "state_data_type"
+msgstr "datový_typ_stavu"
+
+#: sql_help.c:1187 sql_help.c:1195
+msgid "ffunc"
+msgstr ""
+
+#: sql_help.c:1188 sql_help.c:1196
+msgid "initial_condition"
+msgstr "výchozí_podmínka"
+
+#: sql_help.c:1189 sql_help.c:1197
+msgid "sort_operator"
+msgstr "operátor_třídění"
+
+#: sql_help.c:1190
+msgid "or the old syntax"
+msgstr "nebo stará syntaxe"
+
+#: sql_help.c:1192
+msgid "base_type"
+msgstr "základní_typ"
+
+#: sql_help.c:1236
+#| msgid "local socket"
+msgid "locale"
+msgstr "locale"
+
+#: sql_help.c:1237 sql_help.c:1271
+msgid "lc_collate"
+msgstr "lc_collate"
+
+#: sql_help.c:1238 sql_help.c:1272
+msgid "lc_ctype"
+msgstr "lc_ctype"
+
+#: sql_help.c:1240
+#| msgid "Destination"
+msgid "existing_collation"
+msgstr "existující_collation"
+
+#: sql_help.c:1250
+msgid "source_encoding"
+msgstr "kódování_zdroje"
+
+#: sql_help.c:1251
+msgid "dest_encoding"
+msgstr "kódování_cíle"
+
+#: sql_help.c:1269 sql_help.c:1785
+msgid "template"
+msgstr "šablona"
+
+#: sql_help.c:1270
+msgid "encoding"
+msgstr "kódování"
+
+#: sql_help.c:1273 sql_help.c:1440 sql_help.c:1687 sql_help.c:1695
+#: sql_help.c:1727 sql_help.c:1749
+msgid "tablespace"
+msgstr "tablespace"
+
+#: sql_help.c:1294
+msgid "constraint"
+msgstr "omezení"
+
+#: sql_help.c:1295
+msgid "where constraint is:"
+msgstr "kde omezení je:"
+
+#: sql_help.c:1309
+#| msgid "Schema"
+msgid "schema"
+msgstr "schéma"
+
+#: sql_help.c:1310
+#| msgid "Version"
+msgid "version"
+msgstr "verze"
+
+#: sql_help.c:1311
+#| msgid "new_version"
+msgid "old_version"
+msgstr "stará_verze"
+
+#: sql_help.c:1371 sql_help.c:1699
+msgid "default_expr"
+msgstr "implicitní_výraz"
+
+#: sql_help.c:1372
+msgid "rettype"
+msgstr "návratový_typ"
+
+#: sql_help.c:1374
+msgid "column_type"
+msgstr "typ_sloupce"
+
+#: sql_help.c:1375 sql_help.c:2021 sql_help.c:2451 sql_help.c:2705
+msgid "lang_name"
+msgstr "jméno_jazyka"
+
+#: sql_help.c:1381
+msgid "definition"
+msgstr "definice"
+
+#: sql_help.c:1382
+msgid "obj_file"
+msgstr "obj_file"
+
+#: sql_help.c:1383
+msgid "link_symbol"
+msgstr ""
+
+#: sql_help.c:1384
+msgid "attribute"
+msgstr "atribut"
+
+#: sql_help.c:1419 sql_help.c:1550 sql_help.c:1945
+msgid "uid"
+msgstr "uid"
+
+#: sql_help.c:1433
+msgid "method"
+msgstr "metoda"
+
+#: sql_help.c:1437 sql_help.c:1731
+msgid "opclass"
+msgstr "třída_operátoru"
+
+#: sql_help.c:1441 sql_help.c:1717
+msgid "predicate"
+msgstr "predikát"
+
+#: sql_help.c:1453
+msgid "call_handler"
+msgstr ""
+
+#: sql_help.c:1454
+msgid "inline_handler"
+msgstr ""
+
+#: sql_help.c:1455
+msgid "valfunction"
+msgstr ""
+
+#: sql_help.c:1473
+msgid "com_op"
+msgstr "com_op"
+
+#: sql_help.c:1474
+msgid "neg_op"
+msgstr "neg_op"
+
+#: sql_help.c:1475
+msgid "res_proc"
+msgstr "res_proc"
+
+#: sql_help.c:1476
+msgid "join_proc"
+msgstr "join_proc"
+
+#: sql_help.c:1492
+msgid "family_name"
+msgstr "family_name"
+
+#: sql_help.c:1503
+msgid "storage_type"
+msgstr "typ_uložení"
+
+#: sql_help.c:1561 sql_help.c:1841
+msgid "event"
+msgstr "událost"
+
+#: sql_help.c:1563 sql_help.c:1844 sql_help.c:2003 sql_help.c:2826
+#: sql_help.c:2828 sql_help.c:2896 sql_help.c:2898 sql_help.c:3029
+#: sql_help.c:3031 sql_help.c:3110 sql_help.c:3185 sql_help.c:3187
+msgid "condition"
+msgstr "podmínka"
+
+#: sql_help.c:1564 sql_help.c:1565 sql_help.c:1566
+msgid "command"
+msgstr "příkaz"
+
+#: sql_help.c:1577 sql_help.c:1579
+msgid "schema_element"
+msgstr "prvek_schématu"
+
+#: sql_help.c:1608
+msgid "server_type"
+msgstr "typ_serveru"
+
+#: sql_help.c:1609
+msgid "server_version"
+msgstr "verze_serveru"
+
+#: sql_help.c:1610 sql_help.c:2441 sql_help.c:2695
+msgid "fdw_name"
+msgstr "fdw_jméno"
+
+#: sql_help.c:1683
+msgid "like_option"
+msgstr "like_volba"
+
+#: sql_help.c:1696
+msgid "where column_constraint is:"
+msgstr "kde omezení_sloupce je:"
+
+#: sql_help.c:1700 sql_help.c:1701 sql_help.c:1710 sql_help.c:1712
+#: sql_help.c:1716
+msgid "index_parameters"
+msgstr "parametry_indexu"
+
+#: sql_help.c:1702 sql_help.c:1719
+msgid "reftable"
+msgstr "odkazovaná_tabulka"
+
+#: sql_help.c:1703 sql_help.c:1720
+msgid "refcolumn"
+msgstr "odkazovaný_sloupec"
+
+#: sql_help.c:1706
+msgid "and table_constraint is:"
+msgstr "a omezení_tabulky je:"
+
+#: sql_help.c:1714
+msgid "exclude_element"
+msgstr ""
+
+#: sql_help.c:1723
+msgid "and like_option is:"
+msgstr "a like_volba je:"
+
+#: sql_help.c:1724
+msgid "index_parameters in UNIQUE, PRIMARY KEY, and EXCLUDE constraints are:"
+msgstr "parametry_indexu v UNIQUE, PRIMARY KEY, a EXCLUDE omezeních jsou:"
+
+#: sql_help.c:1728
+msgid "exclude_element in an EXCLUDE constraint is:"
+msgstr "exclude_element v EXCLUDE omezení je:"
+
+#: sql_help.c:1760
+msgid "directory"
+msgstr "adresář"
+
+#: sql_help.c:1772
+msgid "parser_name"
+msgstr "jméno_parseru"
+
+#: sql_help.c:1773
+msgid "source_config"
+msgstr ""
+
+#: sql_help.c:1802
+msgid "start_function"
+msgstr "start_funkce"
+
+#: sql_help.c:1803
+msgid "gettoken_function"
+msgstr "gettoken_funkce"
+
+#: sql_help.c:1804
+msgid "end_function"
+msgstr "end_function"
+
+#: sql_help.c:1805
+msgid "lextypes_function"
+msgstr "lextypes_funkce"
+
+#: sql_help.c:1806
+msgid "headline_function"
+msgstr "headline_funkce"
+
+#: sql_help.c:1818
+msgid "init_function"
+msgstr "init_funkce"
+
+#: sql_help.c:1819
+msgid "lexize_function"
+msgstr "lexize_funkce"
+
+#: sql_help.c:1843
+msgid "referenced_table_name"
+msgstr "jméno_odkazované_tabulky"
+
+#: sql_help.c:1846
+msgid "arguments"
+msgstr "argumenty"
+
+#: sql_help.c:1847
+#| msgid "where option can be one of:"
+msgid "where event can be one of:"
+msgstr "kde událost může být jedno z:"
+
+#: sql_help.c:1888 sql_help.c:2785
+msgid "label"
+msgstr "popisek"
+
+#: sql_help.c:1890
+msgid "input_function"
+msgstr "vstupní_funkce"
+
+#: sql_help.c:1891
+msgid "output_function"
+msgstr "výstupní_funkce"
+
+#: sql_help.c:1892
+msgid "receive_function"
+msgstr "receive_funkce"
+
+#: sql_help.c:1893
+msgid "send_function"
+msgstr "send_funkce"
+
+#: sql_help.c:1894
+msgid "type_modifier_input_function"
+msgstr ""
+
+#: sql_help.c:1895
+msgid "type_modifier_output_function"
+msgstr ""
+
+#: sql_help.c:1896
+msgid "analyze_function"
+msgstr "analyze_funkce"
+
+#: sql_help.c:1897
+msgid "internallength"
+msgstr "interní_délka"
+
+#: sql_help.c:1898
+msgid "alignment"
+msgstr "zarovnání"
+
+#: sql_help.c:1899
+msgid "storage"
+msgstr "uložení"
+
+#: sql_help.c:1900
+msgid "like_type"
+msgstr "like_typ"
+
+#: sql_help.c:1901
+msgid "category"
+msgstr "kategorie"
+
+#: sql_help.c:1902
+msgid "preferred"
+msgstr "preferovaný"
+
+#: sql_help.c:1903
+msgid "default"
+msgstr "implicitní"
+
+#: sql_help.c:1904
+msgid "element"
+msgstr "prvek"
+
+#: sql_help.c:1905
+msgid "delimiter"
+msgstr "oddělovač"
+
+#: sql_help.c:1906
+#| msgid "lc_collate"
+msgid "collatable"
+msgstr ""
+
+#: sql_help.c:1999 sql_help.c:2471 sql_help.c:2821 sql_help.c:2890
+#: sql_help.c:3024 sql_help.c:3102 sql_help.c:3180
+msgid "with_query"
+msgstr "with_dotaz"
+
+#: sql_help.c:2001 sql_help.c:2840 sql_help.c:2843 sql_help.c:2846
+#: sql_help.c:2850 sql_help.c:3043 sql_help.c:3046 sql_help.c:3049
+#: sql_help.c:3053 sql_help.c:3104 sql_help.c:3199 sql_help.c:3202
+#: sql_help.c:3205 sql_help.c:3209
+msgid "alias"
+msgstr "alias"
+
+#: sql_help.c:2002
+msgid "using_list"
+msgstr "using_seznam"
+
+#: sql_help.c:2004 sql_help.c:2365 sql_help.c:2534 sql_help.c:3111
+msgid "cursor_name"
+msgstr "jméno_kurzoru"
+
+#: sql_help.c:2005 sql_help.c:2476 sql_help.c:3112
+msgid "output_expression"
+msgstr "výstupní_výraz"
+
+#: sql_help.c:2006 sql_help.c:2477 sql_help.c:2824 sql_help.c:2893
+#: sql_help.c:3027 sql_help.c:3113 sql_help.c:3183
+msgid "output_name"
+msgstr "výstupní_jméno"
+
+#: sql_help.c:2022
+msgid "code"
+msgstr "kód"
+
+#: sql_help.c:2315
+msgid "parameter"
+msgstr "parametr"
+
+#: sql_help.c:2333 sql_help.c:2334 sql_help.c:2559
+msgid "statement"
+msgstr "příkaz"
+
+#: sql_help.c:2364 sql_help.c:2533
+msgid "direction"
+msgstr "směr"
+
+#: sql_help.c:2366 sql_help.c:2535
+msgid "where direction can be empty or one of:"
+msgstr "kde směr může být prázdný nebo jedno z:"
+
+#: sql_help.c:2367 sql_help.c:2368 sql_help.c:2369 sql_help.c:2370
+#: sql_help.c:2371 sql_help.c:2536 sql_help.c:2537 sql_help.c:2538
+#: sql_help.c:2539 sql_help.c:2540 sql_help.c:2834 sql_help.c:2836
+#: sql_help.c:2904 sql_help.c:2906 sql_help.c:3037 sql_help.c:3039
+#: sql_help.c:3142 sql_help.c:3144 sql_help.c:3193 sql_help.c:3195
+msgid "count"
+msgstr "počet"
+
+#: sql_help.c:2436 sql_help.c:2690
+msgid "sequence_name"
+msgstr "sekvence"
+
+#: sql_help.c:2447 sql_help.c:2701
+msgid "arg_name"
+msgstr "jméno_argumentu"
+
+#: sql_help.c:2448 sql_help.c:2702
+msgid "arg_type"
+msgstr "typ_argumentu"
+
+#: sql_help.c:2453 sql_help.c:2707
+msgid "loid"
+msgstr "loid"
+
+#: sql_help.c:2485 sql_help.c:2548 sql_help.c:3088
+msgid "channel"
+msgstr "kanál"
+
+#: sql_help.c:2507
+msgid "lockmode"
+msgstr "mód_zámku"
+
+#: sql_help.c:2508
+msgid "where lockmode is one of:"
+msgstr "kde mód_zámku je jedno z:"
+
+#: sql_help.c:2549
+msgid "payload"
+msgstr "náklad"
+
+#: sql_help.c:2575
+msgid "old_role"
+msgstr "stará_role"
+
+#: sql_help.c:2576
+msgid "new_role"
+msgstr "nová_role"
+
+#: sql_help.c:2592 sql_help.c:2737 sql_help.c:2745
+msgid "savepoint_name"
+msgstr "jméno_savepointu"
+
+#: sql_help.c:2767
+msgid "provider"
+msgstr ""
+
+#: sql_help.c:2825 sql_help.c:2856 sql_help.c:2858 sql_help.c:2895
+#: sql_help.c:3028 sql_help.c:3059 sql_help.c:3061 sql_help.c:3184
+#: sql_help.c:3215 sql_help.c:3217
+msgid "from_item"
+msgstr "z_položky"
+
+#: sql_help.c:2829 sql_help.c:2899 sql_help.c:3032 sql_help.c:3188
+msgid "window_name"
+msgstr "jméno_okna"
+
+#: sql_help.c:2830 sql_help.c:2900 sql_help.c:3033 sql_help.c:3189
+msgid "window_definition"
+msgstr "definice_okna"
+
+#: sql_help.c:2831 sql_help.c:2842 sql_help.c:2864 sql_help.c:2901
+#: sql_help.c:3034 sql_help.c:3045 sql_help.c:3067 sql_help.c:3190
+#: sql_help.c:3201 sql_help.c:3223
+msgid "select"
+msgstr "select"
+
+#: sql_help.c:2838 sql_help.c:3041 sql_help.c:3197
+msgid "where from_item can be one of:"
+msgstr "kde z_položky může být jedno z:"
+
+#: sql_help.c:2841 sql_help.c:2844 sql_help.c:2847 sql_help.c:2851
+#: sql_help.c:3044 sql_help.c:3047 sql_help.c:3050 sql_help.c:3054
+#: sql_help.c:3200 sql_help.c:3203 sql_help.c:3206 sql_help.c:3210
+msgid "column_alias"
+msgstr "alias_sloupce"
+
+#: sql_help.c:2845 sql_help.c:2862 sql_help.c:3048 sql_help.c:3065
+#: sql_help.c:3204 sql_help.c:3221
+msgid "with_query_name"
+msgstr "jméno_with_dotazu"
+
+#: sql_help.c:2849 sql_help.c:2854 sql_help.c:3052 sql_help.c:3057
+#: sql_help.c:3208 sql_help.c:3213
+msgid "argument"
+msgstr "argument"
+
+#: sql_help.c:2852 sql_help.c:2855 sql_help.c:3055 sql_help.c:3058
+#: sql_help.c:3211 sql_help.c:3214
+msgid "column_definition"
+msgstr "definice_sloupce"
+
+#: sql_help.c:2857 sql_help.c:3060 sql_help.c:3216
+msgid "join_type"
+msgstr "typ_joinu"
+
+#: sql_help.c:2859 sql_help.c:3062 sql_help.c:3218
+msgid "join_condition"
+msgstr "joinovací_podmínka"
+
+#: sql_help.c:2860 sql_help.c:3063 sql_help.c:3219
+msgid "join_column"
+msgstr "joinovací_sloupec"
+
+#: sql_help.c:2861 sql_help.c:3064 sql_help.c:3220
+msgid "and with_query is:"
+msgstr "a with_dotaz je:"
+
+#: sql_help.c:2865 sql_help.c:3068 sql_help.c:3224
+msgid "insert"
+msgstr "insert "
+
+#: sql_help.c:2866 sql_help.c:3069 sql_help.c:3225
+msgid "update"
+msgstr "update"
+
+#: sql_help.c:2867 sql_help.c:3070 sql_help.c:3226
+msgid "delete"
+msgstr "delete"
+
+#: sql_help.c:2894
+msgid "new_table"
+msgstr "nová_tabulka"
+
+#: sql_help.c:2919
+msgid "timezone"
+msgstr "časová_zóna"
+
+#: sql_help.c:3109
+msgid "from_list"
+msgstr "from_seznam"
+
+#: sql_help.c:3140
+msgid "sort_expression"
+msgstr ""
+
+#: ../../port/exec.c:125 ../../port/exec.c:239 ../../port/exec.c:282
 #, c-format
 msgid "could not identify current directory: %s"
 msgstr "nelze získat aktuální adresář: %s"
 
-#: ../../port/exec.c:214
+#: ../../port/exec.c:144
 #, c-format
 msgid "invalid binary \"%s\""
 msgstr "neplatný binární soubor\"%s\""
 
-#: ../../port/exec.c:263
+#: ../../port/exec.c:193
 #, c-format
 msgid "could not read binary \"%s\""
 msgstr "nelze číst binární soubor \"%s\""
 
-#: ../../port/exec.c:270
+#: ../../port/exec.c:200
 #, c-format
 msgid "could not find a \"%s\" to execute"
 msgstr "nelze najít spustitelný soubor \"%s\""
 
-#: ../../port/exec.c:325 ../../port/exec.c:361
+#: ../../port/exec.c:255 ../../port/exec.c:291
 #, c-format
 msgid "could not change directory to \"%s\""
 msgstr "nelze změnit adresář na \"%s\""
 
-#: ../../port/exec.c:340
+#: ../../port/exec.c:270
 #, c-format
 msgid "could not read symbolic link \"%s\""
 msgstr "nelze číst symbolický link \"%s\""
 
-#: ../../port/exec.c:586
+#: ../../port/exec.c:517
 #, c-format
 msgid "child process exited with exit code %d"
 msgstr "potomek skončil s návratovým kódem %d"
 
-#: ../../port/exec.c:590
+#: ../../port/exec.c:521
 #, c-format
 msgid "child process was terminated by exception 0x%X"
-msgstr "potomek byl ukončen vyjímkou 0x%X"
+msgstr "potomek byl ukončen výjimkou 0x%X"
 
-#: ../../port/exec.c:599
+#: ../../port/exec.c:530
 #, c-format
 msgid "child process was terminated by signal %s"
 msgstr "potomek byl ukončen signálem %s"
 
-#: ../../port/exec.c:602
+#: ../../port/exec.c:533
 #, c-format
 msgid "child process was terminated by signal %d"
 msgstr "potomek byl ukončen signálem %d"
 
-#: ../../port/exec.c:606
+#: ../../port/exec.c:537
 #, c-format
 msgid "child process exited with unrecognized status %d"
 msgstr "potomek skončil s nerozponaným stavem %d"
 
+#~ msgid " on host \"%s\""
+#~ msgstr " na počítač \"%s\""
+
+#~ msgid " at port \"%s\""
+#~ msgstr " na port \"%s\""
+
+#~ msgid " as user \"%s\""
+#~ msgstr " jako uživatel \"%s\""
+
+#~ msgid "out of memory"
+#~ msgstr "nedostatek paměti"
+
+#~ msgid "define a new constraint trigger"
+#~ msgstr "defunuje nový constraint trigger"
+
+#~ msgid "  \"%s\" IN %s %s"
+#~ msgstr "  \"%s\" IN %s %s"
+
+#~ msgid "ABORT [ WORK | TRANSACTION ]"
+#~ msgstr "ABORT [ WORK | TRANSACTION ]"

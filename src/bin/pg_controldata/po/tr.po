@@ -5,10 +5,11 @@ msgid ""
 msgstr ""
 "Project-Id-Version: pg_controldata-tr\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
-"POT-Creation-Date: 2010-08-31 20:06+0000\n"
-"PO-Revision-Date: 2010-09-01 10:33+0200\n"
+"POT-Creation-Date: 2011-08-29 20:40+0000\n"
+"PO-Revision-Date: 2011-08-30 01:43+0200\n"
 "Last-Translator: Devrim GÜNDÜZ <devrim@gunduz.org>\n"
 "Language-Team: Turkish <ceviri@postgresql.org.tr>\n"
+"Language: tr\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
@@ -240,93 +241,106 @@ msgstr "Yedek başlama yeri:           %X/%X\n"
 
 #: pg_controldata.c:235
 #, c-format
+msgid "End-of-backup record required:        %s\n"
+msgstr "Yedek sonu kaydı gerekiyor:        %s\n"
+
+#: pg_controldata.c:236
+msgid "yes"
+msgstr "evet"
+
+#: pg_controldata.c:236
+msgid "no"
+msgstr "hayır"
+
+#: pg_controldata.c:237
+#, c-format
 msgid "Current wal_level setting:            %s\n"
 msgstr "Mevcut wal_level ayarı           %s\n"
 
-#: pg_controldata.c:237
+#: pg_controldata.c:239
 #, c-format
 msgid "Current max_connections setting:      %d\n"
 msgstr "Mevcut max_connections ayarı:      %d\n"
 
-#: pg_controldata.c:239
+#: pg_controldata.c:241
 #, c-format
 msgid "Current max_prepared_xacts setting:   %d\n"
 msgstr "Mevcut max_prepared_xacts ayarı:   %d\n"
 
-#: pg_controldata.c:241
+#: pg_controldata.c:243
 #, c-format
 msgid "Current max_locks_per_xact setting:   %d\n"
 msgstr "Mevcut max_locks_per_xact ayarı:   %d\n"
 
-#: pg_controldata.c:243
+#: pg_controldata.c:245
 #, c-format
 msgid "Maximum data alignment:               %u\n"
 msgstr "Azami veri hizalama:                %u\n"
 
-#: pg_controldata.c:246
+#: pg_controldata.c:248
 #, c-format
 msgid "Database block size:                  %u\n"
 msgstr "Veritabanı blok boyutu:                  %u\n"
 
-#: pg_controldata.c:248
+#: pg_controldata.c:250
 #, c-format
 msgid "Blocks per segment of large relation: %u\n"
 msgstr "Büyük ilişkilerin parçası başına blok sayısı: %u\n"
 
-#: pg_controldata.c:250
+#: pg_controldata.c:252
 #, c-format
 msgid "WAL block size:                       %u\n"
 msgstr "WAL blok boyutu:                  %u\n"
 
-#: pg_controldata.c:252
+#: pg_controldata.c:254
 #, c-format
 msgid "Bytes per WAL segment:                %u\n"
 msgstr "Her bir WAL parçası başına byte sayısı:                %u\n"
 
-#: pg_controldata.c:254
+#: pg_controldata.c:256
 #, c-format
 msgid "Maximum length of identifiers:        %u\n"
 msgstr "Belirteçlerin en fazla uzunluğu:        %u\n"
 
-#: pg_controldata.c:256
+#: pg_controldata.c:258
 #, c-format
 msgid "Maximum columns in an index:          %u\n"
 msgstr "İndekste en fazla kolon sayısı:        %u\n"
 
-#: pg_controldata.c:258
+#: pg_controldata.c:260
 #, c-format
 msgid "Maximum size of a TOAST chunk:        %u\n"
 msgstr "TOAST parçasının en yüksek boyutu:        %u\n"
 
-#: pg_controldata.c:260
+#: pg_controldata.c:262
 #, c-format
 msgid "Date/time type storage:               %s\n"
 msgstr "Tarih/zaman tipi saklanması:               %s\n"
 
-#: pg_controldata.c:261
+#: pg_controldata.c:263
 msgid "64-bit integers"
 msgstr "64-bit tamsayı"
 
-#: pg_controldata.c:261
+#: pg_controldata.c:263
 msgid "floating-point numbers"
 msgstr "kayan noktalı sayılar"
 
-#: pg_controldata.c:262
+#: pg_controldata.c:264
 #, c-format
 msgid "Float4 argument passing:              %s\n"
 msgstr "Float4 argument passing:              %s\n"
 
-#: pg_controldata.c:263
 #: pg_controldata.c:265
+#: pg_controldata.c:267
 msgid "by value"
 msgstr "değer ile"
 
-#: pg_controldata.c:263
 #: pg_controldata.c:265
+#: pg_controldata.c:267
 msgid "by reference"
 msgstr "referans ile"
 
-#: pg_controldata.c:264
+#: pg_controldata.c:266
 #, c-format
 msgid "Float8 argument passing:              %s\n"
 msgstr "Float8 argument passing:              %s\n"

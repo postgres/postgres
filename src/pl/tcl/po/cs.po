@@ -1,0 +1,55 @@
+# LANGUAGE message translation file for pltcl
+# Copyright (C) 2011 PostgreSQL Global Development Group
+# This file is distributed under the same license as the PostgreSQL package.
+#
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2011.
+msgid ""
+msgstr ""
+"Project-Id-Version: PostgreSQL 9.0\n"
+"Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
+"POT-Creation-Date: 2011-09-04 02:52+0000\n"
+"PO-Revision-Date: 2011-09-04 23:43+0200\n"
+"Last-Translator: \n"
+"Language-Team: Czech <kde-i18n-doc@kde.org>\n"
+"Language: \n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"X-Generator: Lokalize 1.2\n"
+"Plural-Forms: nplurals=3; plural=(n==1) ? 0 : (n>=2 && n<=4) ? 1 : 2;\n"
+
+#: pltcl.c:1149
+#, c-format
+msgid "%s"
+msgstr "%s"
+
+#: pltcl.c:1150
+#, c-format
+msgid ""
+"%s\n"
+"in PL/Tcl function \"%s\""
+msgstr ""
+"%s\n"
+"v PL/Tcl funkci \"%s\""
+
+#: pltcl.c:1254 pltcl.c:1261
+msgid "out of memory"
+msgstr "nedostatek paměti"
+
+#: pltcl.c:1308
+msgid "trigger functions can only be called as triggers"
+msgstr "trigger funkce mohou může být volány pouze jako triggery"
+
+#: pltcl.c:1317
+#, c-format
+msgid "PL/Tcl functions cannot return type %s"
+msgstr "PL/Tcl funkce nemohou vracet datový typ %s"
+
+#: pltcl.c:1329
+msgid "PL/Tcl functions cannot return composite types"
+msgstr "PL/Tcl funkce nemohou vracet složené datové typy"
+
+#: pltcl.c:1368
+#, c-format
+msgid "PL/Tcl functions cannot accept type %s"
+msgstr "PL/Tcl funkce nemohou přijímat datový typ %s"

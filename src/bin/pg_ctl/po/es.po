@@ -1,18 +1,18 @@
 # Spanish translation of pg_ctl.
 #
-# Copyright (C) 2004-2010 PostgreSQL Global Development Group
+# Copyright (C) 2004-2011 PostgreSQL Global Development Group
 # This file is distributed under the same license as the PostgreSQL package.
 #
-# Alvaro Herrera <alvherre@alvh.no-ip.org>, 2004-2010
+# Alvaro Herrera <alvherre@alvh.no-ip.org>, 2004-2011
 #
-# pgtranslation Id: pg_ctl.po,v 1.9 2011/06/11 02:40:33 alvherre Exp $
+# pgtranslation Id: pg_ctl.po,v 1.10 2011/09/03 02:09:22 alvherre Exp $
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: pg_ctl (PostgreSQL 9.0)\n"
+"Project-Id-Version: pg_ctl (PostgreSQL 9.1)\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
-"POT-Creation-Date: 2011-06-10 22:40+0000\n"
-"PO-Revision-Date: 2011-06-10 22:40-0400\n"
+"POT-Creation-Date: 2011-09-02 10:54+0000\n"
+"PO-Revision-Date: 2011-09-02 23:08-0300\n"
 "Last-Translator: Álvaro Herrera <alvherre@alvh.no-ip.org>\n"
 "Language-Team: PgSQL Español <pgsql-es-ayuda@postgresql.org>\n"
 "Language: \n"
@@ -42,7 +42,8 @@ msgid ""
 "%s: -w option is not supported when starting a pre-9.1 server\n"
 msgstr ""
 "\n"
-"%s: la opción -w no está soportada cuando se inicia un servidor anterior a 9.1\n"
+"%s: la opción -w no está soportada cuando se inicia un servidor anterior a "
+"9.1\n"
 
 #: pg_ctl.c:540
 #, c-format
@@ -50,6 +51,8 @@ msgid ""
 "\n"
 "%s: -w option cannot use a relative socket directory specification\n"
 msgstr ""
+"\n"
+"%s: la opción -w no puede usar una especificación relativa de directorio\n"
 
 #: pg_ctl.c:588
 #, c-format
@@ -57,6 +60,8 @@ msgid ""
 "\n"
 "%s: this data directory appears to be running a pre-existing postmaster\n"
 msgstr ""
+"\n"
+"%s: este directorio de datos parece estar ejecutando un postmaster pre-existente\n"
 
 #: pg_ctl.c:638
 #, c-format
@@ -128,7 +133,7 @@ msgstr "servidor iniciado\n"
 
 #: pg_ctl.c:823 pg_ctl.c:827
 msgid " stopped waiting\n"
-msgstr ""
+msgstr " abandonando la espera\n"
 
 #: pg_ctl.c:824
 msgid "server is still starting up\n"
@@ -150,7 +155,8 @@ msgstr " falló\n"
 #: pg_ctl.c:835
 #, c-format
 msgid "%s: could not wait for server because of misconfiguration\n"
-msgstr "%s: no se pudo esperar al servidor debido a un error de configuración\n"
+msgstr ""
+"%s: no se pudo esperar al servidor debido a un error de configuración\n"
 
 #: pg_ctl.c:841
 msgid "server starting\n"
@@ -206,6 +212,8 @@ msgid ""
 "HINT: The \"-m fast\" option immediately disconnects sessions rather than\n"
 "waiting for session-initiated disconnection.\n"
 msgstr ""
+"SUGERENCIA: La opción «-m fast» desconecta las sesiones inmediatamente\n"
+"en lugar de esperar que cada sesión finalice por sí misma.\n"
 
 #: pg_ctl.c:922 pg_ctl.c:1012
 msgid "server stopped\n"
@@ -362,6 +370,31 @@ msgstr "Servidor iniciado y aceptando conexiones\n"
 msgid "%s: could not start service \"%s\": error code %d\n"
 msgstr "%s: no se pudo iniciar el servicio «%s»: código de error %d\n"
 
+#: pg_ctl.c:1573
+#, c-format
+msgid "%s: WARNING: cannot create restricted tokens on this platform\n"
+msgstr "%s: ATENCIÓN: no se pueden crear tokens restrigidos en esta plataforma\n"
+
+#: pg_ctl.c:1582
+#, c-format
+msgid "%s: could not open process token: %lu\n"
+msgstr "%s: no se pudo abrir el token de proceso: %lu\n"
+
+#: pg_ctl.c:1595
+#, c-format
+msgid "%s: could not allocate SIDs: %lu\n"
+msgstr "%s: no se pudo emplazar los SIDs: %lu\n"
+
+#: pg_ctl.c:1614
+#, c-format
+msgid "%s: could not create restricted token: %lu\n"
+msgstr "%s: no se pudo crear el token restringido: %lu\n"
+
+#: pg_ctl.c:1652
+#, c-format
+msgid "%s: WARNING: could not locate all job object functions in system API\n"
+msgstr "%s: ATENCIÓN: no fue posible encontrar todas las funciones de gestión de tareas en la API del sistema\n"
+
 #: pg_ctl.c:1738
 #, c-format
 msgid "Try \"%s --help\" for more information.\n"
@@ -373,6 +406,7 @@ msgid ""
 "%s is a utility to initialize, start, stop, or control a PostgreSQL server.\n"
 "\n"
 msgstr ""
+"%s es un programa para inicializar, iniciar, detener o controlar un servidor PostgreSQL.\n"
 
 #: pg_ctl.c:1747
 #, c-format
@@ -644,18 +678,20 @@ msgid ""
 "Start types are:\n"
 msgstr ""
 "\n"
-"Tipos de inicio son:\n"
+"Tipos de inicio del servicio son:\n"
 
 #: pg_ctl.c:1803
 #, c-format
 msgid ""
 "  auto       start service automatically during system startup (default)\n"
 msgstr ""
+"  auto       iniciar automáticamente al inicio del sistema (por omisión)\n"
 
 #: pg_ctl.c:1804
 #, c-format
 msgid "  demand     start service on demand\n"
 msgstr ""
+"  demand     iniciar el servicio en demanda\n"
 
 #: pg_ctl.c:1807
 #, c-format

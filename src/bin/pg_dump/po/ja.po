@@ -6,7 +6,7 @@ msgstr ""
 "Project-Id-Version: PostgreSQL 9.1 beta 2\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
 "POT-Creation-Date: 2011-06-14 22:01+0900\n"
-"PO-Revision-Date: 2011-06-14 22:14+0900\n"
+"PO-Revision-Date: 2011-08-30 21:33+0900\n"
 "Last-Translator: HOTTA Michihide <hotta@net-newbie.com>\n"
 "Language-Team: jpug-doc <jpug-doc@ml.postgresql.jp>\n"
 "MIME-Version: 1.0\n"
@@ -37,7 +37,7 @@ msgstr "-c/--clean と -a/--data-only は同時には使用できません\n"
 #: pg_dump.c:526
 msgid ""
 "options --inserts/--column-inserts and -o/--oids cannot be used together\n"
-msgstr "\"--inserts/--column-insertsと-o/--oidsは同時には使用できません\n"
+msgstr "--inserts/--column-insertsと-o/--oidsは同時には使用できません\n"
 
 #: pg_dump.c:527
 msgid "(The INSERT command cannot set OIDs.)\n"
@@ -597,7 +597,7 @@ msgstr "(システムカタログが破損している可能性があります)\
 
 #: pg_dump.c:8555
 msgid "WARNING: bogus value in proargmodes array\n"
-msgstr "警告: proargnames配列内におかしな値があります\n"
+msgstr "警告: proargmodes配列内におかしな値があります\n"
 
 #: pg_dump.c:8869
 msgid "WARNING: could not parse proallargtypes array\n"
@@ -1111,7 +1111,7 @@ msgstr "ディレクトリ名称が長すぎます: \"%s\"\n"
 msgid ""
 "directory \"%s\" does not appear to be a valid archive (\"toc.dat\" does not "
 "exist)\n"
-msgstr "\"%s\"ディレクトリは有効なアーカイブではないようです（\"\"toc.dat\"がありません）\n"
+msgstr "\"%s\"ディレクトリは有効なアーカイブではないようです（\"toc.dat\"がありません）\n"
 
 #: pg_backup_archiver.c:1812 pg_backup_custom.c:171 pg_backup_custom.c:757
 #: pg_backup_files.c:155 pg_backup_files.c:307
@@ -1728,8 +1728,7 @@ msgstr ""
 #: pg_restore.c:300
 #, c-format
 msgid "%s: options -d/--dbname and -f/--file cannot be used together\n"
-msgstr ""
-"\"%s: -d/--dbnameオプションと-f/--fileオプションは同時に使用できません\n"
+msgstr "%s: -d/--dbnameオプションと-f/--fileオプションは同時に使用できません\n"
 
 #: pg_restore.c:312
 #, c-format
@@ -1867,7 +1866,7 @@ msgid ""
 "  -P, --function=NAME(args)\n"
 "                           restore named function\n"
 msgstr ""
-"  -P, --function=NAME(args)\\n\"\n"
+"  -P, --function=NAME(args)\n"
 "                           指名された関数をリストア\n"
 
 #: pg_restore.c:422
@@ -1993,9 +1992,7 @@ msgstr ""
 #, c-format
 msgid ""
 "%s: options -g/--globals-only and -r/--roles-only cannot be used together\n"
-msgstr ""
-"\"%s: -g/--globals-onlyオプションと-r/--roles-onlyオプションは同時に使用でき"
-"ません\n"
+msgstr "%s: -g/--globals-onlyオプションと-r/--roles-onlyオプションは同時に使用できません\n"
 
 #: pg_dumpall.c:323
 #, c-format
@@ -2003,7 +2000,7 @@ msgid ""
 "%s: options -g/--globals-only and -t/--tablespaces-only cannot be used "
 "together\n"
 msgstr ""
-"\"%s: -g/--globals-onlyオプションと-t/--tablespaces-onlyオプションは同時\n"
+"%s: -g/--globals-onlyオプションと-t/--tablespaces-onlyオプションは同時\n"
 "に使用できません\n"
 
 #: pg_dumpall.c:332
@@ -2012,7 +2009,7 @@ msgid ""
 "%s: options -r/--roles-only and -t/--tablespaces-only cannot be used "
 "together\n"
 msgstr ""
-"\"%s: -r/--roles-onlyオプションと-t/--tablespaces-onlyオプション)は同時\n"
+"%s: -r/--roles-onlyオプションと-t/--tablespaces-onlyオプション)は同時\n"
 "に使用できません\n"
 
 #: pg_dumpall.c:374 pg_dumpall.c:1678
