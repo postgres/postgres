@@ -1394,7 +1394,7 @@ ecpg_execute(struct statement * stmt)
 					if (PQresultStatus(results) == PGRES_COMMAND_OK)
 						ecpg_log("ecpg_execute line %d: Got PGRES_COMMAND_OK after PGRES_COPY_OUT\n", stmt->lineno);
 					else
-						ecpg_log("ecpg_execute line %d: Got error after PGRES_COPY_OUT: %s", PQresultErrorMessage(results));
+						ecpg_log("ecpg_execute line %d: Got error after PGRES_COPY_OUT: %s", stmt->lineno, PQresultErrorMessage(results));
 				}
 				break;
 			}
