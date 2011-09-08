@@ -219,6 +219,17 @@ static relopt_real realRelOpts[] =
 
 static relopt_string stringRelOpts[] =
 {
+	{
+		{
+			"buffering",
+			"Enables buffering build for this GiST index",
+			RELOPT_KIND_GIST
+		},
+		4,
+		false,
+		gistValidateBufferingOption,
+		"auto"
+	},
 	/* list terminator */
 	{{NULL}}
 };

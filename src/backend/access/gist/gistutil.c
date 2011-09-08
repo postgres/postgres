@@ -667,13 +667,30 @@ gistoptions(PG_FUNCTION_ARGS)
 {
 	Datum		reloptions = PG_GETARG_DATUM(0);
 	bool		validate = PG_GETARG_BOOL(1);
-	bytea	   *result;
+	relopt_value *options;
+	GiSTOptions *rdopts;
+	int			numoptions;
+	static const relopt_parse_elt tab[] = {
+		{"fillfactor", RELOPT_TYPE_INT, offsetof(GiSTOptions, fillfactor)},
+		{"buffering", RELOPT_TYPE_STRING, offsetof(GiSTOptions, bufferingModeOffset)}
+	};
 
-	result = default_reloptions(reloptions, validate, RELOPT_KIND_GIST);
+	options = parseRelOptions(reloptions, validate, RELOPT_KIND_GIST,
+							  &numoptions);
 
-	if (result)
-		PG_RETURN_BYTEA_P(result);
-	PG_RETURN_NULL();
+	/* if none set, we're done */
+	if (numoptions == 0)
+		PG_RETURN_NULL();
+
+	rdopts = allocateReloptStruct(sizeof(GiSTOptions), options, numoptions);
+
+	fillRelOptions((void *) rdopts, sizeof(GiSTOptions), options, numoptions,
+				   validate, tab, lengthof(tab));
+
+	pfree(options);
+
+	PG_RETURN_BYTEA_P(rdopts);
+
 }
 
 /*

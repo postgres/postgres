@@ -341,6 +341,26 @@ CREATE [ UNIQUE ] INDEX [ CONCURRENTLY ] [ <replaceable class="parameter">name</
    </varlistentry>
 
    </variablelist>
+   <para>
+    GiST indexes additionaly accepts parameters:
+   </para>
+
+   <variablelist>
+
+   <varlistentry>
+    <term><literal>BUFFERING</></term>
+    <listitem>
+    <para>
+     Determines whether the buffering build technique described in
+     <xref linkend="gist-buffering-build"> is used to build the index. With
+     <literal>OFF</> it is disabled, with <literal>ON</> it is enabled, and
+     with <literal>AUTO</> it is initially disabled, but turned on
+     on-the-fly once the index size reaches <xref linkend="guc-effective-cache-size">. The default is <literal>AUTO</>.
+    </para>
+    </listitem>
+   </varlistentry>
+
+   </variablelist>
   </refsect2>
 
   <refsect2 id="SQL-CREATEINDEX-CONCURRENTLY">

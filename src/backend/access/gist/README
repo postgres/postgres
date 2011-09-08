@@ -24,12 +24,19 @@ The current implementation of GiST supports:
   * provides NULL-safe interface to GiST core
   * Concurrency
   * Recovery support via WAL logging
+  * Buffering build algorithm
 
 The support for concurrency implemented in PostgreSQL was developed based on
 the paper "Access Methods for Next-Generation Database Systems" by
 Marcel Kornaker:
 
     http://www.sai.msu.su/~megera/postgres/gist/papers/concurrency/access-methods-for-next-generation.pdf.gz
+
+Buffering build algorithm for GiST was developed based on the paper "Efficient
+Bulk Operations on Dynamic R-trees" by Lars Arge, Klaus Hinrichs, Jan Vahrenhold
+and Jeffrey Scott Vitter.
+
+    http://citeseerx.ist.psu.edu/viewdoc/download?doi=10.1.1.135.9894&rep=rep1&type=pdf
 
 The original algorithms were modified in several ways:
 
@@ -277,6 +284,134 @@ importantly, dealing with pages with missing downlink pointers in the parent
 would complicate the insertion algorithm. So when an insertion sees a page
 with F_FOLLOW_RIGHT set, it immediately tries to bring the split that
 crashed in the middle to completion by adding the downlink in the parent.
+
+Buffering build algorithm
+-------------------------
+
+In the buffering index build algorithm, some or all internal nodes have a
+buffer attached to them. When a tuple is inserted at the top, the descend down
+the tree is stopped as soon as a buffer is reached, and the tuple is pushed to
+the buffer. When a buffer gets too full, all the tuples in it are flushed to
+the lower level, where they again hit lower level buffers or leaf pages. This
+makes the insertions happen in more of a breadth-first than depth-first order,
+which greatly reduces the amount of random I/O required.
+
+In the algorithm, levels are numbered so that leaf pages have level zero,
+and internal node levels count up from 1. This numbering ensures that a page's
+level number never changes, even when the root page is split.
+
+Level                    Tree
+
+3                         *
+                      /       \
+2                *                 *
+              /  |  \           /  |  \
+1          *     *     *     *     *     *
+          / \   / \   / \   / \   / \   / \
+0        o   o o   o o   o o   o o   o o   o
+
+* - internal page
+o - leaf page
+
+Internal pages that belong to certain levels have buffers associated with
+them. Leaf pages never have buffers. Which levels have buffers is controlled
+by "level step" parameter: level numbers that are multiples of level_step
+have buffers, while others do not. For example, if level_step = 2, then
+pages on levels 2, 4, 6, ... have buffers. If level_step = 1 then every
+internal page has a buffer.
+
+Level        Tree (level_step = 1)                Tree (level_step = 2)
+
+3                      *                                     *
+                   /       \                             /       \
+2             *(b)              *(b)                *(b)              *(b)
+           /  |  \           /  |  \             /  |  \           /  |  \
+1       *(b)  *(b)  *(b)  *(b)  *(b)  *(b)    *     *     *     *     *     *
+       / \   / \   / \   / \   / \   / \     / \   / \   / \   / \   / \   / \
+0     o   o o   o o   o o   o o   o o   o   o   o o   o o   o o   o o   o o   o
+
+(b) - buffer
+
+Logically, a buffer is just bunch of tuples. Physically, it is divided in
+pages, backed by a temporary file. Each buffer can be in one of two states:
+a) Last page of the buffer is kept in main memory. A node buffer is
+automatically switched to this state when a new index tuple is added to it,
+or a tuple is removed from it.
+b) All pages of the buffer are swapped out to disk. When a buffer becomes too
+full, and we start to flush it, all other buffers are switched to this state.
+
+When an index tuple is inserted, its initial processing can end in one of the
+following points:
+1) Leaf page, if the depth of the index <= level_step, meaning that
+   none of the internal pages have buffers associated with them.
+2) Buffer of topmost level page that has buffers.
+
+New index tuples are processed until one of the buffers in the topmost
+buffered level becomes half-full. When a buffer becomes half-full, it's added
+to the emptying queue, and will be emptied before a new tuple is processed.
+
+Buffer emptying process means that index tuples from the buffer are moved
+into buffers at a lower level, or leaf pages. First, all the other buffers are
+swapped to disk to free up the memory. Then tuples are popped from the buffer
+one by one, and cascaded down the tree to the next buffer or leaf page below
+the buffered node.
+
+Emptying a buffer has the interesting dynamic property that any intermediate
+pages between the buffer being emptied, and the next buffered or leaf level
+below it, become cached. If there are no more buffers below the node, the leaf
+pages where the tuples finally land on get cached too. If there are, the last
+buffer page of each buffer below is kept in memory. This is illustrated in
+the figures below:
+
+   Buffer being emptied to
+     lower-level buffers               Buffer being emptied to leaf pages
+
+               +(fb)                                 +(fb)
+            /     \                                /     \
+        +             +                        +             +
+      /   \         /   \                    /   \         /   \
+    *(ab)   *(ab) *(ab)   *(ab)            x       x     x       x
+
++    - cached internal page
+x    - cached leaf page
+*    - non-cached internal page
+(fb) - buffer being emptied
+(ab) - buffers being appended to, with last page in memory
+
+In the beginning of the index build, the level-step is chosen so that all those
+pages involved in emptying one buffer fit in cache, so after each of those
+pages have been accessed once and cached, emptying a buffer doesn't involve
+any more I/O. This locality is where the speedup of the buffering algorithm
+comes from.
+
+Emptying one buffer can fill up one or more of the lower-level buffers,
+triggering emptying of them as well. Whenever a buffer becomes too full, it's
+added to the emptying queue, and will be emptied after the current buffer has
+been processed.
+
+To keep the size of each buffer limited even in the worst case, buffer emptying
+is scheduled as soon as a buffer becomes half-full, and emptying it continues
+until 1/2 of the nominal buffer size worth of tuples has been emptied. This
+guarantees that when buffer emptying begins, all the lower-level buffers
+are at most half-full. In the worst case that all the tuples are cascaded down
+to the same lower-level buffer, that buffer therefore has enough space to
+accommodate all the tuples emptied from the upper-level buffer. There is no
+hard size limit in any of the data structures used, though, so this only needs
+to be approximate; small overfilling of some buffers doesn't matter.
+
+If an internal page that has a buffer associated with it is split, the buffer
+needs to be split too. All tuples in the buffer are scanned through and
+relocated to the correct sibling buffers, using the penalty function to decide
+which buffer each tuple should go to.
+
+After all tuples from the heap have been processed, there are still some index
+tuples in the buffers. At this point, final buffer emptying starts. All buffers
+are emptied in top-down order. This is slightly complicated by the fact that
+new buffers can be allocated during the emptying, due to page splits. However,
+the new buffers will always be siblings of buffers that haven't been fully
+emptied yet; tuples never move upwards in the tree. The final emptying loops
+through buffers at a given level until all buffers at that level have been
+emptied, and then moves down to the next level.
 
 
 Authors:

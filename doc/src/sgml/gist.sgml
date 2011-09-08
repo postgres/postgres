@@ -642,6 +642,40 @@ my_distance(PG_FUNCTION_ARGS)
 
   </variablelist>
 
+ <sect2 id="gist-buffering-build">
+  <title>GiST buffering build</title>
+  <para>
+   Building large GiST indexes by simply inserting all the tuples tends to be
+   slow, because if the index tuples are scattered across the index and the
+   index is large enough to not fit in cache, the insertions need to perform
+   a lot of random I/O. PostgreSQL from version 9.2 supports a more efficient
+   method to build GiST indexes based on buffering, which can dramatically
+   reduce number of random I/O needed for non-ordered data sets. For
+   well-ordered datasets the benefit is smaller or non-existent, because
+   only a small number of pages receive new tuples at a time, and those pages
+   fit in cache even if the index as whole does not.
+  </para>
+
+  <para>
+   However, buffering index build needs to call the <function>penalty</>
+   function more often, which consumes some extra CPU resources. Also, the
+   buffers used in the buffering build need temporary disk space, up to
+   the size of the resulting index. Buffering can also infuence the quality
+   of the produced index, in both positive and negative directions. That
+   influence depends on various factors, like the distribution of the input
+   data and operator class implementation.
+  </para>
+
+  <para>
+   By default, the index build switches to the buffering method when the
+   index size reaches <xref linkend="guc-effective-cache-size">. It can
+   be manually turned on or off by the <literal>BUFFERING</literal> parameter
+   to the CREATE INDEX clause. The default behavior is good for most cases,
+   but turning buffering off might speed up the build somewhat if the input
+   data is ordered.
+  </para>
+
+ </sect2>
 </sect1>
 
 <sect1 id="gist-examples">

@@ -24,33 +24,7 @@
 #include "utils/memutils.h"
 #include "utils/rel.h"
 
-/* Working state for gistbuild and its callback */
-typedef struct
-{
-	GISTSTATE	giststate;
-	int			numindexattrs;
-	double		indtuples;
-	MemoryContext tmpCtx;
-} GISTBuildState;
-
-/* A List of these is used represent a split-in-progress. */
-typedef struct
-{
-	Buffer		buf;			/* the split page "half" */
-	IndexTuple	downlink;		/* downlink for this half. */
-} GISTPageSplitInfo;
-
 /* non-export function prototypes */
-static void gistbuildCallback(Relation index,
-				  HeapTuple htup,
-				  Datum *values,
-				  bool *isnull,
-				  bool tupleIsAlive,
-				  void *state);
-static void gistdoinsert(Relation r,
-			 IndexTuple itup,
-			 Size freespace,
-			 GISTSTATE *GISTstate);
 static void gistfixsplit(GISTInsertState *state, GISTSTATE *giststate);
 static bool gistinserttuples(GISTInsertState *state, GISTInsertStack *stack,
 				 GISTSTATE *giststate,
@@ -86,138 +60,6 @@ createTempGistContext(void)
 								 ALLOCSET_DEFAULT_MINSIZE,
 								 ALLOCSET_DEFAULT_INITSIZE,
 								 ALLOCSET_DEFAULT_MAXSIZE);
-}
-
-/*
- * Routine to build an index.  Basically calls insert over and over.
- *
- * XXX: it would be nice to implement some sort of bulk-loading
- * algorithm, but it is not clear how to do that.
- */
-Datum
-gistbuild(PG_FUNCTION_ARGS)
-{
-	Relation	heap = (Relation) PG_GETARG_POINTER(0);
-	Relation	index = (Relation) PG_GETARG_POINTER(1);
-	IndexInfo  *indexInfo = (IndexInfo *) PG_GETARG_POINTER(2);
-	IndexBuildResult *result;
-	double		reltuples;
-	GISTBuildState buildstate;
-	Buffer		buffer;
-	Page		page;
-
-	/*
-	 * We expect to be called exactly once for any index relation. If that's
-	 * not the case, big trouble's what we have.
-	 */
-	if (RelationGetNumberOfBlocks(index) != 0)
-		elog(ERROR, "index \"%s\" already contains data",
-			 RelationGetRelationName(index));
-
-	/* no locking is needed */
-	initGISTstate(&buildstate.giststate, index);
-
-	/* initialize the root page */
-	buffer = gistNewBuffer(index);
-	Assert(BufferGetBlockNumber(buffer) == GIST_ROOT_BLKNO);
-	page = BufferGetPage(buffer);
-
-	START_CRIT_SECTION();
-
-	GISTInitBuffer(buffer, F_LEAF);
-
-	MarkBufferDirty(buffer);
-
-	if (RelationNeedsWAL(index))
-	{
-		XLogRecPtr	recptr;
-		XLogRecData rdata;
-
-		rdata.data = (char *) &(index->rd_node);
-		rdata.len = sizeof(RelFileNode);
-		rdata.buffer = InvalidBuffer;
-		rdata.next = NULL;
-
-		recptr = XLogInsert(RM_GIST_ID, XLOG_GIST_CREATE_INDEX, &rdata);
-		PageSetLSN(page, recptr);
-		PageSetTLI(page, ThisTimeLineID);
-	}
-	else
-		PageSetLSN(page, GetXLogRecPtrForTemp());
-
-	UnlockReleaseBuffer(buffer);
-
-	END_CRIT_SECTION();
-
-	/* build the index */
-	buildstate.numindexattrs = indexInfo->ii_NumIndexAttrs;
-	buildstate.indtuples = 0;
-
-	/*
-	 * create a temporary memory context that is reset once for each tuple
-	 * inserted into the index
-	 */
-	buildstate.tmpCtx = createTempGistContext();
-
-	/* do the heap scan */
-	reltuples = IndexBuildHeapScan(heap, index, indexInfo, true,
-								   gistbuildCallback, (void *) &buildstate);
-
-	/* okay, all heap tuples are indexed */
-	MemoryContextDelete(buildstate.tmpCtx);
-
-	freeGISTstate(&buildstate.giststate);
-
-	/*
-	 * Return statistics
-	 */
-	result = (IndexBuildResult *) palloc(sizeof(IndexBuildResult));
-
-	result->heap_tuples = reltuples;
-	result->index_tuples = buildstate.indtuples;
-
-	PG_RETURN_POINTER(result);
-}
-
-/*
- * Per-tuple callback from IndexBuildHeapScan
- */
-static void
-gistbuildCallback(Relation index,
-				  HeapTuple htup,
-				  Datum *values,
-				  bool *isnull,
-				  bool tupleIsAlive,
-				  void *state)
-{
-	GISTBuildState *buildstate = (GISTBuildState *) state;
-	IndexTuple	itup;
-	MemoryContext oldCtx;
-
-	oldCtx = MemoryContextSwitchTo(buildstate->tmpCtx);
-
-	/* form an index tuple and point it at the heap tuple */
-	itup = gistFormTuple(&buildstate->giststate, index,
-						 values, isnull, true /* size is currently bogus */ );
-	itup->t_tid = htup->t_self;
-
-	/*
-	 * Since we already have the index relation locked, we call gistdoinsert
-	 * directly.  Normal access method calls dispatch through gistinsert,
-	 * which locks the relation for write.	This is the right thing to do if
-	 * you're inserting single tups, but not when you're initializing the
-	 * whole index at once.
-	 *
-	 * In this path we respect the fillfactor setting, whereas insertions
-	 * after initial build do not.
-	 */
-	gistdoinsert(index, itup,
-			  RelationGetTargetPageFreeSpace(index, GIST_DEFAULT_FILLFACTOR),
-				 &buildstate->giststate);
-
-	buildstate->indtuples += 1;
-	MemoryContextSwitchTo(oldCtx);
-	MemoryContextReset(buildstate->tmpCtx);
 }
 
 /*
@@ -285,6 +127,11 @@ gistinsert(PG_FUNCTION_ARGS)
  * to the right of 'leftchildbuf', or updating the downlink for 'leftchildbuf'.
  * F_FOLLOW_RIGHT flag on 'leftchildbuf' is cleared and NSN is set.
  *
+ * If 'markfollowright' is true and the page is split, the left child is
+ * marked with F_FOLLOW_RIGHT flag. That is the normal case. During buffered
+ * index build, however, there is no concurrent access and the page splitting
+ * is done in a slightly simpler fashion, and false is passed.
+ *
  * If there is not enough room on the page, it is split. All the split
  * pages are kept pinned and locked and returned in *splitinfo, the caller
  * is responsible for inserting the downlinks for them. However, if
@@ -293,13 +140,16 @@ gistinsert(PG_FUNCTION_ARGS)
  * In that case, we continue to hold the root page locked, and the child
  * pages are released; note that new tuple(s) are *not* on the root page
  * but in one of the new child pages.
+ *
+ * Returns 'true' if the page was split, 'false' otherwise.
  */
-static bool
-gistplacetopage(GISTInsertState *state, GISTSTATE *giststate,
+bool
+gistplacetopage(Relation rel, Size freespace, GISTSTATE *giststate,
 				Buffer buffer,
 				IndexTuple *itup, int ntup, OffsetNumber oldoffnum,
 				Buffer leftchildbuf,
-				List **splitinfo)
+				List **splitinfo,
+				bool markfollowright)
 {
 	Page		page = BufferGetPage(buffer);
 	bool		is_leaf = (GistPageIsLeaf(page)) ? true : false;
@@ -331,7 +181,7 @@ gistplacetopage(GISTInsertState *state, GISTSTATE *giststate,
 	 * one-element todelete array; in the split case, it's handled implicitly
 	 * because the tuple vector passed to gistSplit won't include this tuple.
 	 */
-	is_split = gistnospace(page, itup, ntup, oldoffnum, state->freespace);
+	is_split = gistnospace(page, itup, ntup, oldoffnum, freespace);
 	if (is_split)
 	{
 		/* no space for insertion */
@@ -362,7 +212,7 @@ gistplacetopage(GISTInsertState *state, GISTSTATE *giststate,
 				memmove(itvec + pos, itvec + pos + 1, sizeof(IndexTuple) * (tlen - pos));
 		}
 		itvec = gistjoinvector(itvec, &tlen, itup, ntup);
-		dist = gistSplit(state->r, page, itvec, tlen, giststate);
+		dist = gistSplit(rel, page, itvec, tlen, giststate);
 
 		/*
 		 * Set up pages to work with. Allocate new buffers for all but the
@@ -392,7 +242,7 @@ gistplacetopage(GISTInsertState *state, GISTSTATE *giststate,
 		for (; ptr; ptr = ptr->next)
 		{
 			/* Allocate new page */
-			ptr->buffer = gistNewBuffer(state->r);
+			ptr->buffer = gistNewBuffer(rel);
 			GISTInitBuffer(ptr->buffer, (is_leaf) ? F_LEAF : 0);
 			ptr->page = BufferGetPage(ptr->buffer);
 			ptr->block.blkno = BufferGetBlockNumber(ptr->buffer);
@@ -463,7 +313,7 @@ gistplacetopage(GISTInsertState *state, GISTSTATE *giststate,
 			for (i = 0; i < ptr->block.num; i++)
 			{
 				if (PageAddItem(ptr->page, (Item) data, IndexTupleSize((IndexTuple) data), i + FirstOffsetNumber, false, false) == InvalidOffsetNumber)
-					elog(ERROR, "failed to add item to index page in \"%s\"", RelationGetRelationName(state->r));
+					elog(ERROR, "failed to add item to index page in \"%s\"", RelationGetRelationName(rel));
 				data += IndexTupleSize((IndexTuple) data);
 			}
 
@@ -474,7 +324,15 @@ gistplacetopage(GISTInsertState *state, GISTSTATE *giststate,
 			else
 				GistPageGetOpaque(ptr->page)->rightlink = oldrlink;
 
-			if (ptr->next && !is_rootsplit)
+			/*
+			 * Mark the all but the right-most page with the follow-right
+			 * flag. It will be cleared as soon as the downlink is inserted
+			 * into the parent, but this ensures that if we error out before
+			 * that, the index is still consistent. (in buffering build mode,
+			 * any error will abort the index build anyway, so this is not
+			 * needed.)
+			 */
+			if (ptr->next && !is_rootsplit && markfollowright)
 				GistMarkFollowRight(ptr->page);
 			else
 				GistClearFollowRight(ptr->page);
@@ -506,9 +364,10 @@ gistplacetopage(GISTInsertState *state, GISTSTATE *giststate,
 		dist->page = BufferGetPage(dist->buffer);
 
 		/* Write the WAL record */
-		if (RelationNeedsWAL(state->r))
-			recptr = gistXLogSplit(state->r->rd_node, blkno, is_leaf,
-								   dist, oldrlink, oldnsn, leftchildbuf);
+		if (RelationNeedsWAL(rel))
+			recptr = gistXLogSplit(rel->rd_node, blkno, is_leaf,
+								   dist, oldrlink, oldnsn, leftchildbuf,
+								   markfollowright);
 		else
 			recptr = GetXLogRecPtrForTemp();
 
@@ -547,7 +406,7 @@ gistplacetopage(GISTInsertState *state, GISTSTATE *giststate,
 		if (BufferIsValid(leftchildbuf))
 			MarkBufferDirty(leftchildbuf);
 
-		if (RelationNeedsWAL(state->r))
+		if (RelationNeedsWAL(rel))
 		{
 			OffsetNumber ndeloffs = 0,
 						deloffs[1];
@@ -558,7 +417,7 @@ gistplacetopage(GISTInsertState *state, GISTSTATE *giststate,
 				ndeloffs = 1;
 			}
 
-			recptr = gistXLogUpdate(state->r->rd_node, buffer,
+			recptr = gistXLogUpdate(rel->rd_node, buffer,
 									deloffs, ndeloffs, itup, ntup,
 									leftchildbuf);
 
@@ -570,8 +429,6 @@ gistplacetopage(GISTInsertState *state, GISTSTATE *giststate,
 			recptr = GetXLogRecPtrForTemp();
 			PageSetLSN(page, recptr);
 		}
-
-		*splitinfo = NIL;
 	}
 
 	/*
@@ -608,7 +465,7 @@ gistplacetopage(GISTInsertState *state, GISTSTATE *giststate,
  * this routine assumes it is invoked in a short-lived memory context,
  * so it does not bother releasing palloc'd allocations.
  */
-static void
+void
 gistdoinsert(Relation r, IndexTuple itup, Size freespace, GISTSTATE *giststate)
 {
 	ItemId		iid;
@@ -1192,10 +1049,12 @@ gistinserttuples(GISTInsertState *state, GISTInsertStack *stack,
 	List	   *splitinfo;
 	bool		is_split;
 
-	is_split = gistplacetopage(state, giststate, stack->buffer,
+	is_split = gistplacetopage(state->r, state->freespace, giststate,
+							   stack->buffer,
 							   tuples, ntup, oldoffnum,
 							   leftchild,
-							   &splitinfo);
+							   &splitinfo,
+							   true);
 	if (splitinfo)
 		gistfinishsplit(state, stack, giststate, splitinfo);
 
