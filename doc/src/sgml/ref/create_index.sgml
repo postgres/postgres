@@ -342,7 +342,7 @@ CREATE [ UNIQUE ] INDEX [ CONCURRENTLY ] [ <replaceable class="parameter">name</
 
    </variablelist>
    <para>
-    GiST indexes additionaly accepts parameters:
+    GiST indexes additionally accept parameter:
    </para>
 
    <variablelist>
