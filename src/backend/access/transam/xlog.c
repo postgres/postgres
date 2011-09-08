@@ -44,6 +44,7 @@
 #include "storage/fd.h"
 #include "storage/ipc.h"
 #include "storage/pmsignal.h"
+#include "storage/proc.h"
 #include "storage/procarray.h"
 #include "storage/smgr.h"
 #include "storage/spin.h"
@@ -5569,6 +5570,7 @@ StartupXLOG(void)
 			 */
 			if (InArchiveRecovery && IsUnderPostmaster)
 			{
+				PublishStartupProcessInformation();
 				SetForwardFsyncRequests();
 				SendPostmasterSignal(PMSIGNAL_RECOVERY_STARTED);
 				bgwriterLaunched = true;

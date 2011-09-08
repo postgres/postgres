@@ -133,6 +133,11 @@ typedef struct PROC_HDR
 	PGPROC	   *autovacFreeProcs;
 	/* Current shared estimate of appropriate spins_per_delay value */
 	int			spins_per_delay;
+
+	/* PGPROC of Startup process */
+	PGPROC	   *startupProc;
+	/* Pid of Startup process */
+	int			startupProcPid;
 } PROC_HDR;
 
 /*
@@ -175,6 +180,7 @@ extern void LockWaitCancel(void);
 
 extern void ProcWaitForSignal(void);
 extern void ProcSendSignal(int pid);
+extern void PublishStartupProcessInformation(void);
 
 extern bool enable_sig_alarm(int delayms, bool is_statement_timeout);
 extern bool disable_sig_alarm(bool is_statement_timeout);

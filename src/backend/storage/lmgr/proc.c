@@ -1287,10 +1287,51 @@ ProcWaitForSignal(void)
 void
 ProcSendSignal(int pid)
 {
-	PGPROC	   *proc = BackendPidGetProc(pid);
+	PGPROC	   *proc = NULL;
+
+	proc = BackendPidGetProc(pid);
+
+	if (proc == NULL)
+	{
+		/* use volatile pointer to prevent code rearrangement */
+		volatile PROC_HDR *procglobal = ProcGlobal;
+
+		SpinLockAcquire(ProcStructLock);
+
+		/*
+		 * Check to see whether it is the Startup process we wish to signal.
+		 * This call is made by the buffer manager when it wishes to wake up a
+		 * process that has been waiting for a pin in so it can obtain a
+		 * cleanup lock using LockBufferForCleanup(). Startup is not a normal
+		 * backend, so BackendPidGetProc() will not return any pid at all. So
+		 * we remember the information for this special case.
+		 */
+		if (pid == procglobal->startupProcPid)
+			proc = procglobal->startupProc;
+
+		SpinLockRelease(ProcStructLock);
+	}
 
 	if (proc != NULL)
 		PGSemaphoreUnlock(&proc->sem);
+}
+
+/*
+ * Record the PID and PGPROC structures for the Startup process, for use in
+ * ProcSendSignal().  See comments there for further explanation.
+ */
+void
+PublishStartupProcessInformation(void)
+{
+	/* use volatile pointer to prevent code rearrangement */
+	volatile PROC_HDR *procglobal = ProcGlobal;
+
+	SpinLockAcquire(ProcStructLock);
+
+	procglobal->startupProc = MyProc;
+	procglobal->startupProcPid = MyProcPid;
+
+	SpinLockRelease(ProcStructLock);
 }
 
 
