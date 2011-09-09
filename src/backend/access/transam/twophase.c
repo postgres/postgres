@@ -64,6 +64,7 @@
 #include "storage/smgr.h"
 #include "utils/builtins.h"
 #include "utils/memutils.h"
+#include "utils/timestamp.h"
 
 
 /*

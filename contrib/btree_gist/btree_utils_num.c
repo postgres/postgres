@@ -7,6 +7,7 @@
 #include "btree_utils_num.h"
 #include "utils/cash.h"
 #include "utils/date.h"
+#include "utils/timestamp.h"
 
 
 GISTENTRY *

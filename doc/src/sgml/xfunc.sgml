@@ -1904,7 +1904,7 @@ memcpy(destination->data, buffer, 40);
         <row>
          <entry><type>interval</type></entry>
          <entry><type>Interval*</type></entry>
-         <entry><filename>utils/timestamp.h</filename></entry>
+         <entry><filename>datatype/timestamp.h</filename></entry>
         </row>
         <row>
          <entry><type>lseg</type></entry>
@@ -1969,7 +1969,7 @@ memcpy(destination->data, buffer, 40);
         <row>
          <entry><type>timestamp</type></entry>
          <entry><type>Timestamp*</type></entry>
-         <entry><filename>utils/timestamp.h</filename></entry>
+         <entry><filename>datatype/timestamp.h</filename></entry>
         </row>
         <row>
          <entry><type>tinterval</type></entry>

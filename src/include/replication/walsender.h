@@ -13,6 +13,7 @@
 #define _WALSENDER_H
 
 #include "access/xlog.h"
+#include "fmgr.h"
 #include "nodes/nodes.h"
 #include "storage/latch.h"
 #include "storage/shmem.h"

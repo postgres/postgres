@@ -20,8 +20,8 @@
 #include <math.h>
 
 #include "catalog/catalog.h"
-#include "catalog/pg_type.h"
 #include "catalog/pg_tablespace.h"
+#include "catalog/pg_type.h"
 #include "commands/dbcommands.h"
 #include "funcapi.h"
 #include "miscadmin.h"
@@ -30,8 +30,9 @@
 #include "storage/fd.h"
 #include "storage/pmsignal.h"
 #include "storage/procarray.h"
-#include "utils/builtins.h"
 #include "tcop/tcopprot.h"
+#include "utils/builtins.h"
+#include "utils/timestamp.h"
 
 #define atooid(x)  ((Oid) strtoul((x), NULL, 10))
 

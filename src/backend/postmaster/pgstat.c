@@ -62,6 +62,7 @@
 #include "utils/memutils.h"
 #include "utils/ps_status.h"
 #include "utils/rel.h"
+#include "utils/timestamp.h"
 #include "utils/tqual.h"
 
 

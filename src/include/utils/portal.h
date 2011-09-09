@@ -46,9 +46,9 @@
 #ifndef PORTAL_H
 #define PORTAL_H
 
+#include "datatype/timestamp.h"
 #include "executor/execdesc.h"
 #include "utils/resowner.h"
-#include "utils/timestamp.h"
 
 /*
  * We have several execution strategies for Portals, depending on what

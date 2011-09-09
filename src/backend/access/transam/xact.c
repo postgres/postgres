@@ -49,6 +49,7 @@
 #include "utils/memutils.h"
 #include "utils/relmapper.h"
 #include "utils/snapmgr.h"
+#include "utils/timestamp.h"
 #include "pg_trace.h"
 
 

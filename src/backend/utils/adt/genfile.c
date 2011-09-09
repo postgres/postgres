@@ -28,6 +28,7 @@
 #include "storage/fd.h"
 #include "utils/builtins.h"
 #include "utils/memutils.h"
+#include "utils/timestamp.h"
 
 typedef struct
 {

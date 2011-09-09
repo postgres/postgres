@@ -26,6 +26,7 @@
 #include "miscadmin.h"
 #include "utils/builtins.h"
 #include "utils/syscache.h"
+#include "utils/timestamp.h"
 
 
 int

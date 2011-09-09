@@ -25,6 +25,7 @@
 #include "libpq/pqformat.h"
 #include "miscadmin.h"
 #include "utils/builtins.h"
+#include "utils/datetime.h"
 #include "utils/nabstime.h"
 
 #define MIN_DAYNUM (-24856)		/* December 13, 1901 */

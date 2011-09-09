@@ -50,6 +50,7 @@
 #include "utils/guc.h"
 #include "utils/ps_status.h"
 #include "utils/resowner.h"
+#include "utils/timestamp.h"
 
 /* Global variable to indicate if this process is a walreceiver process */
 bool		am_walreceiver;

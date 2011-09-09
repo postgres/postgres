@@ -15,10 +15,10 @@
 #define _PROC_H_
 
 #include "access/xlog.h"
+#include "datatype/timestamp.h"
 #include "storage/latch.h"
 #include "storage/lock.h"
 #include "storage/pg_sema.h"
-#include "utils/timestamp.h"
 
 /*
  * Each backend advertises up to PGPROC_MAX_CACHED_SUBXIDS TransactionIds

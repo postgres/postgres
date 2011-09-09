@@ -17,8 +17,7 @@
 #include <limits.h>
 
 #include "fmgr.h"
-#include "utils/timestamp.h"
-#include "utils/datetime.h"
+#include "pgtime.h"
 
 
 /* ----------------------------------------------------------------

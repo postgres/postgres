@@ -13,7 +13,7 @@
 #define _WALPROTOCOL_H
 
 #include "access/xlogdefs.h"
-#include "utils/timestamp.h"
+#include "datatype/timestamp.h"
 
 
 /*

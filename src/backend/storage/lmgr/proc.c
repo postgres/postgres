@@ -47,6 +47,7 @@
 #include "storage/procarray.h"
 #include "storage/procsignal.h"
 #include "storage/spin.h"
+#include "utils/timestamp.h"
 
 
 /* GUC variables */

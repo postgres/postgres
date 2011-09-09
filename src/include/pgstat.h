@@ -11,11 +11,12 @@
 #ifndef PGSTAT_H
 #define PGSTAT_H
 
+#include "datatype/timestamp.h"
+#include "fmgr.h"
 #include "libpq/pqcomm.h"
 #include "portability/instr_time.h"
 #include "utils/hsearch.h"
 #include "utils/relcache.h"
-#include "utils/timestamp.h"
 
 
 /* Values for track_functions GUC variable --- order is significant! */

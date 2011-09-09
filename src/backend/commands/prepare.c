@@ -31,6 +31,7 @@
 #include "tcop/utility.h"
 #include "utils/builtins.h"
 #include "utils/snapmgr.h"
+#include "utils/timestamp.h"
 
 
 /*

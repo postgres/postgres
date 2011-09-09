@@ -24,6 +24,7 @@
 #include "miscadmin.h"
 #include "utils/builtins.h"
 #include "utils/memutils.h"
+#include "utils/timestamp.h"
 
 /*
  * Estimate of the maximum number of open portals a user would have,

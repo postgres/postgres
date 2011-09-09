@@ -65,9 +65,9 @@ typedef struct
 #endif
 #endif   /* ENABLE_SSPI */
 
+#include "datatype/timestamp.h"
 #include "libpq/hba.h"
 #include "libpq/pqcomm.h"
-#include "utils/timestamp.h"
 
 
 typedef enum CAC_state

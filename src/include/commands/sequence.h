@@ -13,9 +13,10 @@
 #ifndef SEQUENCE_H
 #define SEQUENCE_H
 
+#include "access/xlog.h"
+#include "fmgr.h"
 #include "nodes/parsenodes.h"
 #include "storage/relfilenode.h"
-#include "access/xlog.h"
 
 
 typedef struct FormData_pg_sequence

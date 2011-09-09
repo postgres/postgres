@@ -14,13 +14,14 @@
  */
 #include "postgres.h"
 
+#include "catalog/pg_type.h"
 #include "funcapi.h"
+#include "libpq/ip.h"
 #include "miscadmin.h"
 #include "pgstat.h"
-#include "catalog/pg_type.h"
 #include "utils/builtins.h"
 #include "utils/inet.h"
-#include "libpq/ip.h"
+#include "utils/timestamp.h"
 
 /* bogus ... these externs should be in a header file */
 extern Datum pg_stat_get_numscans(PG_FUNCTION_ARGS);

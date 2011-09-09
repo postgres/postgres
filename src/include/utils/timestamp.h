@@ -13,90 +13,10 @@
 #ifndef TIMESTAMP_H
 #define TIMESTAMP_H
 
-#include <math.h>
-#include <limits.h>
-#include <float.h>
-
+#include "datatype/timestamp.h"
 #include "fmgr.h"
 #include "pgtime.h"
-#ifdef HAVE_INT64_TIMESTAMP
-#include "utils/int8.h"
-#endif
 
-/*
- * Timestamp represents absolute time.
- *
- * Interval represents delta time. Keep track of months (and years), days,
- * and hours/minutes/seconds separately since the elapsed time spanned is
- * unknown until instantiated relative to an absolute time.
- *
- * Note that Postgres uses "time interval" to mean a bounded interval,
- * consisting of a beginning and ending time, not a time span - thomas 97/03/20
- *
- * We have two implementations, one that uses int64 values with units of
- * microseconds, and one that uses double values with units of seconds.
- *
- * TimeOffset and fsec_t are convenience typedefs for temporary variables
- * that are of different types in the two cases.  Do not use fsec_t in values
- * stored on-disk, since it is not the same size in both implementations.
- * Also, fsec_t is only meant for *fractional* seconds; beware of overflow
- * if the value you need to store could be many seconds.
- */
-
-#ifdef HAVE_INT64_TIMESTAMP
-
-typedef int64 Timestamp;
-typedef int64 TimestampTz;
-typedef int64 TimeOffset;
-typedef int32 fsec_t;			/* fractional seconds (in microseconds) */
-#else
-
-typedef double Timestamp;
-typedef double TimestampTz;
-typedef double TimeOffset;
-typedef double fsec_t;			/* fractional seconds (in seconds) */
-#endif
-
-typedef struct
-{
-	TimeOffset	time;			/* all time units other than days, months and
-								 * years */
-	int32		day;			/* days, after time for alignment */
-	int32		month;			/* months and years, after time for alignment */
-} Interval;
-
-
-#define MAX_TIMESTAMP_PRECISION 6
-#define MAX_INTERVAL_PRECISION 6
-
-/* in both timestamp.h and ecpg/dt.h */
-#define DAYS_PER_YEAR	365.25	/* assumes leap year every four years */
-#define MONTHS_PER_YEAR 12
-/*
- *	DAYS_PER_MONTH is very imprecise.  The more accurate value is
- *	365.2425/12 = 30.436875, or '30 days 10:29:06'.  Right now we only
- *	return an integral number of days, but someday perhaps we should
- *	also return a 'time' value to be used as well.	ISO 8601 suggests
- *	30 days.
- */
-#define DAYS_PER_MONTH	30		/* assumes exactly 30 days per month */
-#define HOURS_PER_DAY	24		/* assume no daylight savings time changes */
-
-/*
- *	This doesn't adjust for uneven daylight savings time intervals or leap
- *	seconds, and it crudely estimates leap years.  A more accurate value
- *	for days per years is 365.2422.
- */
-#define SECS_PER_YEAR	(36525 * 864)	/* avoid floating-point computation */
-#define SECS_PER_DAY	86400
-#define SECS_PER_HOUR	3600
-#define SECS_PER_MINUTE 60
-#define MINS_PER_HOUR	60
-
-#define USECS_PER_DAY	INT64CONST(86400000000)
-#define USECS_PER_HOUR	INT64CONST(3600000000)
-#define USECS_PER_MINUTE INT64CONST(60000000)
-#define USECS_PER_SEC	INT64CONST(1000000)
 
 /*
  * Macros for fmgr-callable functions.
@@ -123,8 +43,6 @@ typedef struct
 #define PG_RETURN_TIMESTAMPTZ(x) return TimestampTzGetDatum(x)
 #define PG_RETURN_INTERVAL_P(x) return IntervalPGetDatum(x)
 
-#define DT_NOBEGIN		(-INT64CONST(0x7fffffffffffffff) - 1)
-#define DT_NOEND		(INT64CONST(0x7fffffffffffffff))
 #else							/* !HAVE_INT64_TIMESTAMP */
 
 #define DatumGetTimestamp(X)  ((Timestamp) DatumGetFloat8(X))
@@ -143,32 +61,8 @@ typedef struct
 #define PG_RETURN_TIMESTAMPTZ(x) return TimestampTzGetDatum(x)
 #define PG_RETURN_INTERVAL_P(x) return IntervalPGetDatum(x)
 
-#ifdef HUGE_VAL
-#define DT_NOBEGIN		(-HUGE_VAL)
-#define DT_NOEND		(HUGE_VAL)
-#else
-#define DT_NOBEGIN		(-DBL_MAX)
-#define DT_NOEND		(DBL_MAX)
-#endif
 #endif   /* HAVE_INT64_TIMESTAMP */
 
-
-#define TIMESTAMP_NOBEGIN(j)	\
-	do {(j) = DT_NOBEGIN;} while (0)
-#define TIMESTAMP_IS_NOBEGIN(j) ((j) == DT_NOBEGIN)
-
-#define TIMESTAMP_NOEND(j)		\
-	do {(j) = DT_NOEND;} while (0)
-#define TIMESTAMP_IS_NOEND(j)	((j) == DT_NOEND)
-
-#define TIMESTAMP_NOT_FINITE(j) (TIMESTAMP_IS_NOBEGIN(j) || TIMESTAMP_IS_NOEND(j))
-
-/*
- *	Round off to MAX_TIMESTAMP_PRECISION decimal places.
- *	Note: this is also used for rounding off intervals.
- */
-#define TS_PREC_INV 1000000.0
-#define TSROUND(j) (rint(((double) (j)) * TS_PREC_INV) / TS_PREC_INV)
 
 #define TIMESTAMP_MASK(b) (1 << (b))
 #define INTERVAL_MASK(b) (1 << (b))

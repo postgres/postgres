@@ -47,6 +47,7 @@
 #include "storage/standby.h"
 #include "utils/rel.h"
 #include "utils/resowner.h"
+#include "utils/timestamp.h"
 
 
 /* Note: these two macros only work on shared buffers, not local ones! */

@@ -58,6 +58,7 @@
 #include "utils/guc.h"
 #include "utils/ps_status.h"
 #include "utils/relmapper.h"
+#include "utils/timestamp.h"
 #include "pg_trace.h"
 
 

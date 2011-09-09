@@ -33,6 +33,7 @@
 #include "utils/builtins.h"
 #include "utils/fmgroids.h"
 #include "utils/syscache.h"
+#include "utils/timestamp.h"
 #include "utils/tqual.h"
 
 /* Potentially set by contrib/pg_upgrade_support functions */

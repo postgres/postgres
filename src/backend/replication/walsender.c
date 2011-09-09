@@ -62,6 +62,7 @@
 #include "utils/memutils.h"
 #include "utils/ps_status.h"
 #include "utils/resowner.h"
+#include "utils/timestamp.h"
 
 
 /* Array of WalSnds in shared memory */

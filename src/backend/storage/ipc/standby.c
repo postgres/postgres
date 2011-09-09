@@ -28,6 +28,7 @@
 #include "storage/sinvaladt.h"
 #include "storage/standby.h"
 #include "utils/ps_status.h"
+#include "utils/timestamp.h"
 
 /* User-settable GUC parameters */
 int			vacuum_defer_cleanup_age;

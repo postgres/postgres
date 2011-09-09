@@ -24,6 +24,7 @@
 #include "parser/parse_expr.h"
 #include "parser/parse_relation.h"
 #include "utils/builtins.h"
+#include "utils/int8.h"
 #include "utils/lsyscache.h"
 #include "utils/syscache.h"
 #include "utils/varbit.h"
