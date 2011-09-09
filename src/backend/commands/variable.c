@@ -259,23 +259,6 @@ check_timezone(char **newval, void **extra, GucSource source)
 	char	   *endptr;
 	double		hours;
 
-	if (*newval == NULL)
-	{
-		/*
-		 * The boot_val given for TimeZone in guc.c is NULL.  When we see this
-		 * we just do nothing.	If this isn't overridden from the config file
-		 * then pg_timezone_initialize() will eventually select a default
-		 * value from the environment.	This hack has two purposes: to avoid
-		 * wasting cycles loading values that might soon be overridden from
-		 * the config file, and to avoid trying to read the timezone files
-		 * during InitializeGUCOptions().  The latter doesn't work in an
-		 * EXEC_BACKEND subprocess because my_exec_path hasn't been set yet
-		 * and so we can't locate PGSHAREDIR.
-		 */
-		Assert(source == PGC_S_DEFAULT);
-		return true;
-	}
-
 	/*
 	 * Initialize the "extra" struct that will be passed to assign_timezone.
 	 * We don't want to change any of the three global variables except as
@@ -374,7 +357,7 @@ check_timezone(char **newval, void **extra, GucSource source)
 				return false;
 			}
 
-			if (!tz_acceptable(new_tz))
+			if (!pg_tz_acceptable(new_tz))
 			{
 				GUC_check_errmsg("time zone \"%s\" appears to use leap seconds",
 								 *newval);
@@ -426,10 +409,6 @@ void
 assign_timezone(const char *newval, void *extra)
 {
 	timezone_extra *myextra = (timezone_extra *) extra;
-
-	/* Do nothing for the boot_val default of NULL */
-	if (!myextra)
-		return;
 
 	session_timezone = myextra->session_timezone;
 	CTimeZone = myextra->CTimeZone;
@@ -490,20 +469,8 @@ check_log_timezone(char **newval, void **extra, GucSource source)
 {
 	pg_tz	   *new_tz;
 
-	if (*newval == NULL)
-	{
-		/*
-		 * The boot_val given for log_timezone in guc.c is NULL.  When we see
-		 * this we just do nothing.  If this isn't overridden from the config
-		 * file then pg_timezone_initialize() will eventually select a default
-		 * value from the environment.
-		 */
-		Assert(source == PGC_S_DEFAULT);
-		return true;
-	}
-
 	/*
-	 * Otherwise assume it is a timezone name, and try to load it.
+	 * Assume it is a timezone name, and try to load it.
 	 */
 	new_tz = pg_tzset(*newval);
 
@@ -513,7 +480,7 @@ check_log_timezone(char **newval, void **extra, GucSource source)
 		return false;
 	}
 
-	if (!tz_acceptable(new_tz))
+	if (!pg_tz_acceptable(new_tz))
 	{
 		GUC_check_errmsg("time zone \"%s\" appears to use leap seconds",
 						 *newval);
@@ -538,10 +505,6 @@ check_log_timezone(char **newval, void **extra, GucSource source)
 void
 assign_log_timezone(const char *newval, void *extra)
 {
-	/* Do nothing for the boot_val default of NULL */
-	if (!extra)
-		return;
-
 	log_timezone = *((pg_tz **) extra);
 }
 

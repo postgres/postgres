@@ -239,9 +239,7 @@ SELECT setseed(<replaceable>value</replaceable>);
          <listitem>
           <para>
            Set the time zone to your local time zone (that is, the
-           server's default value of <varname>timezone</>; if this
-           has not been explicitly set anywhere, it will be the zone that
-           the server's operating system defaults to).
+           server's default value of <varname>timezone</>).
           </para>
          </listitem>
         </varlistentry>

@@ -796,21 +796,6 @@ PostmasterMain(int argc, char *argv[])
 	CreateDataDirLockFile(true);
 
 	/*
-	 * If timezone is not set, determine what the OS uses.	(In theory this
-	 * should be done during GUC initialization, but because it can take as
-	 * much as several seconds, we delay it until after we've created the
-	 * postmaster.pid file.  This prevents problems with boot scripts that
-	 * expect the pidfile to appear quickly.  Also, we avoid problems with
-	 * trying to locate the timezone files too early in initialization.)
-	 */
-	pg_timezone_initialize();
-
-	/*
-	 * Likewise, init timezone_abbreviations if not already set.
-	 */
-	pg_timezone_abbrev_initialize();
-
-	/*
 	 * Initialize SSL library, if specified.
 	 */
 #ifdef USE_SSL

@@ -16,6 +16,7 @@
 
 #include <fcntl.h>
 
+#include "datatype/timestamp.h"
 #include "private.h"
 #include "pgtz.h"
 #include "tzfile.h"
@@ -734,6 +735,7 @@ tzparse(const char *name, struct state * sp, int lastditch)
 		 * can't assume pg_open_tzfile() is sane yet, and we don't care about
 		 * leap seconds anyway.
 		 */
+		sp->goback = sp->goahead = FALSE;
 		load_result = -1;
 	}
 	else
@@ -1475,4 +1477,30 @@ pg_get_timezone_name(pg_tz *tz)
 	if (tz)
 		return tz->TZname;
 	return NULL;
+}
+
+/*
+ * Check whether timezone is acceptable.
+ *
+ * What we are doing here is checking for leap-second-aware timekeeping.
+ * We need to reject such TZ settings because they'll wreak havoc with our
+ * date/time arithmetic.
+ */
+bool
+pg_tz_acceptable(pg_tz *tz)
+{
+	struct pg_tm *tt;
+	pg_time_t	time2000;
+
+	/*
+	 * To detect leap-second timekeeping, run pg_localtime for what should be
+	 * GMT midnight, 2000-01-01.  Insist that the tm_sec value be zero; any
+	 * other result has to be due to leap seconds.
+	 */
+	time2000 = (POSTGRES_EPOCH_JDATE - UNIX_EPOCH_JDATE) * SECS_PER_DAY;
+	tt = pg_localtime(&time2000, tz);
+	if (!tt || tt->tm_sec != 0)
+		return false;
+
+	return true;
 }

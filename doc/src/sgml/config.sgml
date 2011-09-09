@@ -3915,9 +3915,10 @@ FROM pg_stat_activity;
         Sets the time zone used for timestamps written in the server log.
         Unlike <xref linkend="guc-timezone">, this value is cluster-wide,
         so that all sessions will report timestamps consistently.
-        If not explicitly set, the server initializes this variable to the
-        time zone specified by its system environment.  See <xref
-        linkend="datatype-timezones"> for more information.
+        The built-in default is <literal>GMT</>, but that is typically
+        overridden in <filename>postgresql.conf</>; <application>initdb</>
+        will install a setting there corresponding to its system environment.
+        See <xref linkend="datatype-timezones"> for more information.
         This parameter can only be set in the <filename>postgresql.conf</>
         file or on the server command line.
        </para>
@@ -4963,9 +4964,10 @@ SET XML OPTION { DOCUMENT | CONTENT };
       <listitem>
        <para>
         Sets the time zone for displaying and interpreting time stamps.
-        If not explicitly set, the server initializes this variable to the
-        time zone specified by its system environment.  See <xref
-        linkend="datatype-timezones"> for more information.
+        The built-in default is <literal>GMT</>, but that is typically
+        overridden in <filename>postgresql.conf</>; <application>initdb</>
+        will install a setting there corresponding to its system environment.
+        See <xref linkend="datatype-timezones"> for more information.
        </para>
       </listitem>
      </varlistentry>

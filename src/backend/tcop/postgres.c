@@ -3537,10 +3537,6 @@ PostgresMain(int argc, char *argv[], const char *username)
 	{
 		if (!SelectConfigFiles(userDoption, progname))
 			proc_exit(1);
-		/* If timezone is not set, determine what the OS uses */
-		pg_timezone_initialize();
-		/* If timezone_abbreviations is not set, select default */
-		pg_timezone_abbrev_initialize();
 	}
 
 	/*

@@ -61,6 +61,9 @@
 #include "getopt_long.h"
 #include "miscadmin.h"
 
+/* Ideally this would be in a .h file, but it hardly seems worth the trouble */
+extern const char *select_default_timezone(const char *share_path);
+
 
 /*
  * these values are passed in by makefile defines
@@ -947,8 +950,9 @@ static void
 setup_config(void)
 {
 	char	  **conflines;
-	char		repltok[100];
+	char		repltok[TZ_STRLEN_MAX + 100];
 	char		path[MAXPGPATH];
+	const char *default_timezone;
 
 	fputs(_("creating configuration files ... "), stdout);
 	fflush(stdout);
@@ -1010,6 +1014,17 @@ setup_config(void)
 	conflines = replace_token(conflines,
 						 "#default_text_search_config = 'pg_catalog.simple'",
 							  repltok);
+
+	default_timezone = select_default_timezone(share_path);
+	if (default_timezone)
+	{
+		snprintf(repltok, sizeof(repltok), "timezone = '%s'",
+				 escape_quotes(default_timezone));
+		conflines = replace_token(conflines, "#timezone = 'GMT'", repltok);
+		snprintf(repltok, sizeof(repltok), "log_timezone = '%s'",
+				 escape_quotes(default_timezone));
+		conflines = replace_token(conflines, "#log_timezone = 'GMT'", repltok);
+	}
 
 	snprintf(path, sizeof(path), "%s/postgresql.conf", pg_data);
 
@@ -2795,14 +2810,6 @@ main(int argc, char *argv[])
 	pgdenv = pg_malloc(8 + strlen(pg_data));
 	sprintf(pgdenv, "PGDATA=%s", pg_data);
 	putenv(pgdenv);
-
-	/*
-	 * Also ensure that TZ is set, so that we don't waste time identifying the
-	 * system timezone each of the many times we start a standalone backend.
-	 * It's okay to use a hard-wired value here because nothing done during
-	 * initdb cares about the timezone setting.
-	 */
-	putenv("TZ=GMT");
 
 	if ((ret = find_other_exec(argv[0], "postgres", PG_BACKEND_VERSIONSTR,
 							   backend_exec)) < 0)

@@ -40,6 +40,11 @@ struct pg_tm
 typedef struct pg_tz pg_tz;
 typedef struct pg_tzenum pg_tzenum;
 
+/* Maximum length of a timezone name (not including trailing null) */
+#define TZ_STRLEN_MAX 255
+
+/* these functions are in localtime.c */
+
 extern struct pg_tm *pg_localtime(const pg_time_t *timep, const pg_tz *tz);
 extern struct pg_tm *pg_gmtime(const pg_time_t *timep);
 extern int pg_next_dst_boundary(const pg_time_t *timep,
@@ -52,22 +57,20 @@ extern int pg_next_dst_boundary(const pg_time_t *timep,
 extern size_t pg_strftime(char *s, size_t max, const char *format,
 			const struct pg_tm * tm);
 
-extern void pg_timezone_pre_initialize(void);
-extern void pg_timezone_initialize(void);
-extern pg_tz *pg_tzset(const char *tzname);
-extern bool tz_acceptable(pg_tz *tz);
 extern bool pg_get_timezone_offset(const pg_tz *tz, long int *gmtoff);
 extern const char *pg_get_timezone_name(pg_tz *tz);
+extern bool pg_tz_acceptable(pg_tz *tz);
+
+/* these functions and variables are in pgtz.c */
+
+extern pg_tz *session_timezone;
+extern pg_tz *log_timezone;
+
+extern void pg_timezone_initialize(void);
+extern pg_tz *pg_tzset(const char *tzname);
 
 extern pg_tzenum *pg_tzenumerate_start(void);
 extern pg_tz *pg_tzenumerate_next(pg_tzenum *dir);
 extern void pg_tzenumerate_end(pg_tzenum *dir);
-
-extern pg_tz *session_timezone;
-extern pg_tz *log_timezone;
-extern pg_tz *gmt_timezone;
-
-/* Maximum length of a timezone name (not including trailing null) */
-#define TZ_STRLEN_MAX 255
 
 #endif   /* _PGTIME_H */

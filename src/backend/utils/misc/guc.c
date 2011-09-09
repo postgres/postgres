@@ -187,6 +187,7 @@ static bool check_log_stats(bool *newval, void **extra, GucSource source);
 static bool check_canonical_path(char **newval, void **extra, GucSource source);
 static bool check_timezone_abbreviations(char **newval, void **extra, GucSource source);
 static void assign_timezone_abbreviations(const char *newval, void *extra);
+static void pg_timezone_abbrev_initialize(void);
 static const char *show_archive_command(void);
 static void assign_tcp_keepalives_idle(int newval, void *extra);
 static void assign_tcp_keepalives_interval(int newval, void *extra);
@@ -2547,7 +2548,7 @@ static struct config_string ConfigureNamesString[] =
 			NULL
 		},
 		&log_timezone_string,
-		NULL,
+		"GMT",
 		check_log_timezone, assign_log_timezone, show_log_timezone
 	},
 
@@ -2827,7 +2828,7 @@ static struct config_string ConfigureNamesString[] =
 			GUC_REPORT
 		},
 		&timezone_string,
-		NULL,
+		"GMT",
 		check_timezone, assign_timezone, show_timezone
 	},
 	{
@@ -3817,7 +3818,7 @@ InitializeGUCOptions(void)
 	 * Before log_line_prefix could possibly receive a nonempty setting, make
 	 * sure that timezone processing is minimally alive (see elog.c).
 	 */
-	pg_timezone_pre_initialize();
+	pg_timezone_initialize();
 
 	/*
 	 * Build sorted array of all GUC variables.
@@ -4113,6 +4114,15 @@ SelectConfigFiles(const char *userDoption, const char *progname)
 	 * DataDir in advance.)
 	 */
 	SetConfigOption("data_directory", DataDir, PGC_POSTMASTER, PGC_S_OVERRIDE);
+
+	/*
+	 * If timezone_abbreviations wasn't set in the configuration file, install
+	 * the default value.  We do it this way because we can't safely install
+	 * a "real" value until my_exec_path is set, which may not have happened
+	 * when InitializeGUCOptions runs, so the bootstrap default value cannot
+	 * be the real desired default.
+	 */
+	pg_timezone_abbrev_initialize();
 
 	/*
 	 * Figure out where pg_hba.conf is, and make sure the path is absolute.
@@ -8444,8 +8454,11 @@ assign_timezone_abbreviations(const char *newval, void *extra)
  * This is called after initial loading of postgresql.conf.  If no
  * timezone_abbreviations setting was found therein, select default.
  * If a non-default value is already installed, nothing will happen.
+ *
+ * This can also be called from ProcessConfigFile to establish the default
+ * value after a postgresql.conf entry for it is removed.
  */
-void
+static void
 pg_timezone_abbrev_initialize(void)
 {
 	SetConfigOption("timezone_abbreviations", "Default",

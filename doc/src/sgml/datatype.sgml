@@ -2286,7 +2286,7 @@ January 8 04:05:06 1999 PST
     but continue to be prone to arbitrary changes, particularly with
     respect to daylight-savings rules.
     <productname>PostgreSQL</productname> uses the widely-used
-    <literal>zoneinfo</> time zone database for information about
+    <literal>zoneinfo</> (Olson) time zone database for information about
     historical time zone rules.  For times in the future, the assumption
     is that the latest known rules for a given time zone will
     continue to be observed indefinitely far into the future.
@@ -2432,26 +2432,9 @@ January 8 04:05:06 1999 PST
      The <xref linkend="guc-timezone"> configuration parameter can
      be set in the file <filename>postgresql.conf</>, or in any of the
      other standard ways described in <xref linkend="runtime-config">.
-     There are also several special ways to set it:
+     There are also some special ways to set it:
 
      <itemizedlist>
-      <listitem>
-       <para>
-        If <varname>timezone</> is not specified in
-        <filename>postgresql.conf</> or as a server command-line option,
-        the server attempts to use the value of the <envar>TZ</envar>
-        environment variable as the default time zone.  If <envar>TZ</envar>
-        is not defined or is not any of the time zone names known to
-        <productname>PostgreSQL</productname>, the server attempts to
-        determine the operating system's default time zone by checking the
-        behavior of the C library function <literal>localtime()</>.  The
-        default time zone is selected as the closest match among
-        <productname>PostgreSQL</productname>'s known time zones.
-        (These rules are also used to choose the default value of
-        <xref linkend="guc-log-timezone">, if not specified.)
-       </para>
-      </listitem>
-
       <listitem>
        <para>
         The <acronym>SQL</acronym> command <command>SET TIME ZONE</command>

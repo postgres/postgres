@@ -1805,24 +1805,20 @@ setup_formatted_log_time(void)
 {
 	struct timeval tv;
 	pg_time_t	stamp_time;
-	pg_tz	   *tz;
 	char		msbuf[8];
 
 	gettimeofday(&tv, NULL);
 	stamp_time = (pg_time_t) tv.tv_sec;
 
 	/*
-	 * Normally we print log timestamps in log_timezone, but during startup we
-	 * could get here before that's set. If so, fall back to gmt_timezone
-	 * (which guc.c ensures is set up before Log_line_prefix can become
-	 * nonempty).
+	 * Note: we expect that guc.c will ensure that log_timezone is set up
+	 * (at least with a minimal GMT value) before Log_line_prefix can become
+	 * nonempty or CSV mode can be selected.
 	 */
-	tz = log_timezone ? log_timezone : gmt_timezone;
-
 	pg_strftime(formatted_log_time, FORMATTED_TS_LEN,
 	/* leave room for milliseconds... */
 				"%Y-%m-%d %H:%M:%S     %Z",
-				pg_localtime(&stamp_time, tz));
+				pg_localtime(&stamp_time, log_timezone));
 
 	/* 'paste' milliseconds into place... */
 	sprintf(msbuf, ".%03d", (int) (tv.tv_usec / 1000));
@@ -1836,19 +1832,15 @@ static void
 setup_formatted_start_time(void)
 {
 	pg_time_t	stamp_time = (pg_time_t) MyStartTime;
-	pg_tz	   *tz;
 
 	/*
-	 * Normally we print log timestamps in log_timezone, but during startup we
-	 * could get here before that's set. If so, fall back to gmt_timezone
-	 * (which guc.c ensures is set up before Log_line_prefix can become
-	 * nonempty).
+	 * Note: we expect that guc.c will ensure that log_timezone is set up
+	 * (at least with a minimal GMT value) before Log_line_prefix can become
+	 * nonempty or CSV mode can be selected.
 	 */
-	tz = log_timezone ? log_timezone : gmt_timezone;
-
 	pg_strftime(formatted_start_time, FORMATTED_TS_LEN,
 				"%Y-%m-%d %H:%M:%S %Z",
-				pg_localtime(&stamp_time, tz));
+				pg_localtime(&stamp_time, log_timezone));
 }
 
 /*
@@ -1947,14 +1939,11 @@ log_line_prefix(StringInfo buf, ErrorData *edata)
 			case 't':
 				{
 					pg_time_t	stamp_time = (pg_time_t) time(NULL);
-					pg_tz	   *tz;
 					char		strfbuf[128];
-
-					tz = log_timezone ? log_timezone : gmt_timezone;
 
 					pg_strftime(strfbuf, sizeof(strfbuf),
 								"%Y-%m-%d %H:%M:%S %Z",
-								pg_localtime(&stamp_time, tz));
+								pg_localtime(&stamp_time, log_timezone));
 					appendStringInfoString(buf, strfbuf);
 				}
 				break;
