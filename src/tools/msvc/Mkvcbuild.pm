@@ -299,6 +299,7 @@ sub mkvcbuild
     # src/bin
     my $initdb = AddSimpleFrontend('initdb');
     $initdb->AddIncludeDir('src\interfaces\libpq');
+    $initdb->AddIncludeDir('src\timezone');
     $initdb->AddDefine('FRONTEND');
     $initdb->AddLibrary('wsock32.lib');
     $initdb->AddLibrary('ws2_32.lib');
