@@ -198,6 +198,14 @@
     applications is that they can be run on any host, independent of
     where the database server resides.
    </para>
+
+   <para>
+    When specified on the command line, user and databases names have
+    their case preserved &mdash; the presence of spaces or special
+    characters might require quoting.  Table names and other identifiers
+    do not have their case preserved, except where documented, and
+    might require quoting.
+   </para>
   </partintro>
 
    &clusterdb;

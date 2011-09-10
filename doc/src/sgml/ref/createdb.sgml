@@ -90,7 +90,8 @@ PostgreSQL documentation
       <term><option>--tablespace=<replaceable class="parameter">tablespace</replaceable></></term>
       <listitem>
        <para>
-        Specifies the default tablespace for the database.
+        Specifies the default tablespace for the database. (This name
+        is processed as a double-quoted identifier.)
        </para>
       </listitem>
      </varlistentry>
@@ -154,6 +155,7 @@ PostgreSQL documentation
       <listitem>
        <para>
         Specifies the database user who will own the new database.
+        (This name is processed as a double-quoted identifier.)
        </para>
       </listitem>
      </varlistentry>
@@ -163,7 +165,8 @@ PostgreSQL documentation
       <term><option>--template=<replaceable class="parameter">template</replaceable></></term>
       <listitem>
        <para>
-        Specifies the template database from which to build this database.
+        Specifies the template database from which to build this
+        database.  (This name is processed as a double-quoted identifier.)
        </para>
       </listitem>
      </varlistentry>

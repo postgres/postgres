@@ -165,6 +165,7 @@ main(int argc, char *argv[])
 		exit(1);
 	}
 
+	/* lower case language name */
 	for (p = langname; *p; p++)
 		if (*p >= 'A' && *p <= 'Z')
 			*p += ('a' - 'A');

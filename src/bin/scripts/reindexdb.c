@@ -223,9 +223,9 @@ reindex_one_database(const char *name, const char *dbname, const char *type,
 
 	appendPQExpBuffer(&sql, "REINDEX");
 	if (strcmp(type, "TABLE") == 0)
-		appendPQExpBuffer(&sql, " TABLE %s", fmtId(name));
+		appendPQExpBuffer(&sql, " TABLE %s", name);
 	else if (strcmp(type, "INDEX") == 0)
-		appendPQExpBuffer(&sql, " INDEX %s", fmtId(name));
+		appendPQExpBuffer(&sql, " INDEX %s", name);
 	else if (strcmp(type, "DATABASE") == 0)
 		appendPQExpBuffer(&sql, " DATABASE %s", fmtId(name));
 	appendPQExpBuffer(&sql, ";\n");

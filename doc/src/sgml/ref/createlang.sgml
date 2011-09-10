@@ -70,7 +70,8 @@ PostgreSQL documentation
       <term><replaceable class="parameter">langname</replaceable></term>
       <listitem>
        <para>
-        Specifies the name of the procedural language to be installed.
+        Specifies the name of the procedural language to be
+        installed.  (This name is lower-cased.)
        </para>
       </listitem>
      </varlistentry>

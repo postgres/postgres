@@ -73,6 +73,7 @@ PostgreSQL documentation
       <listitem>
        <para>
         Specifies the name of the procedural language to be removed.
+        (This name is lower-cased.)
        </para>
       </listitem>
      </varlistentry>
