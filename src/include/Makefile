@@ -17,7 +17,7 @@ all: pg_config.h pg_config_os.h
 
 
 # Subdirectories containing headers for server-side dev
-SUBDIRS = access bootstrap catalog commands executor foreign lib libpq mb \
+SUBDIRS = access bootstrap catalog commands datatype executor foreign lib libpq mb \
 	nodes optimizer parser postmaster regex replication rewrite storage \
 	tcop snowball snowball/libstemmer tsearch tsearch/dicts utils \
 	port port/win32 port/win32_msvc port/win32_msvc/sys \
