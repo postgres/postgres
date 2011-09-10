@@ -1001,7 +1001,7 @@ ALTER TABLE ONLY distributors DROP CONSTRAINT zipchk;
   <para>
    To add a foreign key constraint to a table:
 <programlisting>
-ALTER TABLE distributors ADD CONSTRAINT distfk FOREIGN KEY (address) REFERENCES addresses (address) MATCH FULL;
+ALTER TABLE distributors ADD CONSTRAINT distfk FOREIGN KEY (address) REFERENCES addresses (address);
 </programlisting>
   </para>
 
