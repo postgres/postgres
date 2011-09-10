@@ -41,7 +41,7 @@
 SELECT * FROM table1;
 </programlisting>
   Assuming that there is a table called <literal>table1</literal>,
-  this command would retrieve all rows and all columns from
+  this command would retrieve all rows and all user-defined columns from
   <literal>table1</literal>.  (The method of retrieval depends on the
   client application.  For example, the
   <application>psql</application> program will display an ASCII-art
