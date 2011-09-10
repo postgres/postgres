@@ -204,7 +204,8 @@ const char *px_resolve_alias(const PX_Alias *aliases, const char *name);
 void		px_set_debug_handler(void (*handler) (const char *));
 
 #ifdef PX_DEBUG
-void		px_debug(const char *fmt,...);
+void		px_debug(const char *fmt, ...)
+	__attribute__((format(PG_PRINTF_ATTRIBUTE, 1, 2)));
 #else
 #define px_debug(...)
 #endif

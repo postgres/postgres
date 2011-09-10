@@ -292,8 +292,8 @@ void		split_old_dump(void);
 
 /* exec.c */
 
-int exec_prog(bool throw_error,
-		  const char *cmd,...);
+int exec_prog(bool throw_error, const char *cmd, ...)
+	__attribute__((format(PG_PRINTF_ATTRIBUTE, 2, 3)));
 void		verify_directories(void);
 bool		is_server_running(const char *datadir);
 void		rename_old_pg_control(void);
@@ -377,7 +377,8 @@ void		init_tablespaces(void);
 /* server.c */
 
 PGconn	   *connectToServer(ClusterInfo *cluster, const char *db_name);
-PGresult   *executeQueryOrDie(PGconn *conn, const char *fmt,...);
+PGresult   *executeQueryOrDie(PGconn *conn, const char *fmt, ...)
+	__attribute__((format(PG_PRINTF_ATTRIBUTE, 2, 3)));
 
 void		start_postmaster(ClusterInfo *cluster);
 void		stop_postmaster(bool fast);
@@ -390,9 +391,12 @@ void		check_pghost_envvar(void);
 char	   *quote_identifier(const char *s);
 int			get_user_info(char **user_name);
 void		check_ok(void);
-void		report_status(eLogType type, const char *fmt,...);
-void		pg_log(eLogType type, char *fmt,...);
-void		prep_status(const char *fmt,...);
+void		report_status(eLogType type, const char *fmt, ...)
+	__attribute__((format(PG_PRINTF_ATTRIBUTE, 2, 3)));
+void		pg_log(eLogType type, char *fmt, ...)
+	__attribute__((format(PG_PRINTF_ATTRIBUTE, 2, 3)));
+void		prep_status(const char *fmt, ...)
+	__attribute__((format(PG_PRINTF_ATTRIBUTE, 1, 2)));
 void		check_ok(void);
 char	   *pg_strdup(const char *s);
 void	   *pg_malloc(int size);

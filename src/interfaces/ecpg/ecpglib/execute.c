@@ -332,7 +332,7 @@ ecpg_store_result(const PGresult *results, int act_field,
 		 */
 		if ((var->arrsize > 0 && ntuples > var->arrsize) || (var->ind_arrsize > 0 && ntuples > var->ind_arrsize))
 		{
-			ecpg_log("ecpg_store_result on line %d: incorrect number of matches; %d don't fit into array of %d\n",
+			ecpg_log("ecpg_store_result on line %d: incorrect number of matches; %d don't fit into array of %ld\n",
 					 stmt->lineno, ntuples, var->arrsize);
 			ecpg_raise(stmt->lineno, INFORMIX_MODE(stmt->compat) ? ECPG_INFORMIX_SUBSELECT_NOT_ONE : ECPG_TOO_MANY_MATCHES, ECPG_SQLSTATE_CARDINALITY_VIOLATION, NULL);
 			return false;

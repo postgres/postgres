@@ -119,8 +119,8 @@ static int	_discoverArchiveFormat(ArchiveHandle *AH);
 
 static int	RestoringToDB(ArchiveHandle *AH);
 static void dump_lo_buf(ArchiveHandle *AH);
-static void _write_msg(const char *modulename, const char *fmt, va_list ap);
-static void _die_horribly(ArchiveHandle *AH, const char *modulename, const char *fmt, va_list ap);
+static void _write_msg(const char *modulename, const char *fmt, va_list ap) __attribute__((format(PG_PRINTF_ATTRIBUTE, 2, 0)));
+static void _die_horribly(ArchiveHandle *AH, const char *modulename, const char *fmt, va_list ap) __attribute__((format(PG_PRINTF_ATTRIBUTE, 3, 0)));
 
 static void dumpTimestamp(ArchiveHandle *AH, const char *msg, time_t tim);
 static void SetOutput(ArchiveHandle *AH, char *filename, int compression);

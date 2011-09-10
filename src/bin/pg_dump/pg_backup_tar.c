@@ -112,7 +112,7 @@ static void tarClose(ArchiveHandle *AH, TAR_MEMBER *TH);
 #ifdef __NOT_USED__
 static char *tarGets(char *buf, size_t len, TAR_MEMBER *th);
 #endif
-static int	tarPrintf(ArchiveHandle *AH, TAR_MEMBER *th, const char *fmt,...);
+static int	tarPrintf(ArchiveHandle *AH, TAR_MEMBER *th, const char *fmt, ...) __attribute__((format(PG_PRINTF_ATTRIBUTE, 3, 4)));
 
 static void _tarAddFile(ArchiveHandle *AH, TAR_MEMBER *th);
 static int	_tarChecksum(char *th);

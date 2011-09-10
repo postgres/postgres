@@ -286,7 +286,7 @@ get_rel_infos(ClusterInfo *cluster, DbInfo *dbinfo)
 			 (GET_MAJOR_VERSION(old_cluster.major_version) <= 804) ?
 	"" : ", 'pg_largeobject_metadata', 'pg_largeobject_metadata_oid_index'");
 
-	res = executeQueryOrDie(conn, query);
+	res = executeQueryOrDie(conn, "%s", query);
 
 	ntups = PQntuples(res);
 
