@@ -134,8 +134,8 @@ static int
 compareQueryOperand(const void *a, const void *b, void *arg)
 {
 	char	   *operand = (char *) arg;
-	QueryOperand *qa = (*(QueryOperand **) a);
-	QueryOperand *qb = (*(QueryOperand **) b);
+	QueryOperand *qa = (*(QueryOperand * const *) a);
+	QueryOperand *qb = (*(QueryOperand * const *) b);
 
 	return tsCompareString(operand + qa->distance, qa->length,
 						   operand + qb->distance, qb->length,
@@ -498,8 +498,8 @@ typedef struct
 static int
 compareDocR(const void *va, const void *vb)
 {
-	DocRepresentation *a = (DocRepresentation *) va;
-	DocRepresentation *b = (DocRepresentation *) vb;
+	const DocRepresentation *a = (const DocRepresentation *) va;
+	const DocRepresentation *b = (const DocRepresentation *) vb;
 
 	if (a->pos == b->pos)
 		return 0;

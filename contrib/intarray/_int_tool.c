@@ -388,15 +388,15 @@ int_to_intset(int32 n)
 int
 compASC(const void *a, const void *b)
 {
-	if (*(int4 *) a == *(int4 *) b)
+	if (*(const int4 *) a == *(const int4 *) b)
 		return 0;
-	return (*(int4 *) a > *(int4 *) b) ? 1 : -1;
+	return (*(const int4 *) a > *(const int4 *) b) ? 1 : -1;
 }
 
 int
 compDESC(const void *a, const void *b)
 {
-	if (*(int4 *) a == *(int4 *) b)
+	if (*(const int4 *) a == *(const int4 *) b)
 		return 0;
-	return (*(int4 *) a < *(int4 *) b) ? 1 : -1;
+	return (*(const int4 *) a < *(const int4 *) b) ? 1 : -1;
 }

@@ -69,8 +69,8 @@ gbt_intvlt(const void *a, const void *b)
 static int
 gbt_intvkey_cmp(const void *a, const void *b)
 {
-	intvKEY    *ia = (intvKEY *) (((Nsrt *) a)->t);
-	intvKEY    *ib = (intvKEY *) (((Nsrt *) b)->t);
+	intvKEY    *ia = (intvKEY *) (((const Nsrt *) a)->t);
+	intvKEY    *ib = (intvKEY *) (((const Nsrt *) b)->t);
 	int			res;
 
 	res = DatumGetInt32(DirectFunctionCall2(interval_cmp, IntervalPGetDatum(&ia->lower), IntervalPGetDatum(&ib->lower)));
@@ -90,7 +90,7 @@ intr2num(const Interval *i)
 static float8
 gbt_intv_dist(const void *a, const void *b)
 {
-	return (float8) Abs(intr2num((Interval *) a) - intr2num((Interval *) b));
+	return (float8) Abs(intr2num((const Interval *) a) - intr2num((const Interval *) b));
 }
 
 /*

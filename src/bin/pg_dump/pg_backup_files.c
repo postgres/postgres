@@ -268,7 +268,7 @@ _WriteData(ArchiveHandle *AH, const void *data, size_t dLen)
 {
 	lclTocEntry *tctx = (lclTocEntry *) AH->currToc->formatData;
 
-	GZWRITE((void *) data, 1, dLen, tctx->FH);
+	GZWRITE(data, 1, dLen, tctx->FH);
 
 	return dLen;
 }

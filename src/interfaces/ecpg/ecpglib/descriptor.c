@@ -155,36 +155,36 @@ set_int_item(int lineno, int *target, const void *var, enum ECPGttype vartype)
 	switch (vartype)
 	{
 		case ECPGt_short:
-			*target = *(short *) var;
+			*target = *(const short *) var;
 			break;
 		case ECPGt_int:
-			*target = *(int *) var;
+			*target = *(const int *) var;
 			break;
 		case ECPGt_long:
-			*target = *(long *) var;
+			*target = *(const long *) var;
 			break;
 		case ECPGt_unsigned_short:
-			*target = *(unsigned short *) var;
+			*target = *(const unsigned short *) var;
 			break;
 		case ECPGt_unsigned_int:
-			*target = *(unsigned int *) var;
+			*target = *(const unsigned int *) var;
 			break;
 		case ECPGt_unsigned_long:
-			*target = *(unsigned long *) var;
+			*target = *(const unsigned long *) var;
 			break;
 #ifdef HAVE_LONG_LONG_INT
 		case ECPGt_long_long:
-			*target = *(long long int *) var;
+			*target = *(const long long int *) var;
 			break;
 		case ECPGt_unsigned_long_long:
-			*target = *(unsigned long long int *) var;
+			*target = *(const unsigned long long int *) var;
 			break;
 #endif   /* HAVE_LONG_LONG_INT */
 		case ECPGt_float:
-			*target = *(float *) var;
+			*target = *(const float *) var;
 			break;
 		case ECPGt_double:
-			*target = *(double *) var;
+			*target = *(const double *) var;
 			break;
 		default:
 			ecpg_raise(lineno, ECPG_VAR_NOT_NUMERIC, ECPG_SQLSTATE_RESTRICTED_DATA_TYPE_ATTRIBUTE_VIOLATION, NULL);

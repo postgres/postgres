@@ -371,7 +371,7 @@ BF_decode(BF_word *dst, const char *src, int size)
 {
 	unsigned char *dptr = (unsigned char *) dst;
 	unsigned char *end = dptr + size;
-	unsigned char *sptr = (unsigned char *) src;
+	const unsigned char *sptr = (const unsigned char *) src;
 	unsigned int tmp,
 				c1,
 				c2,
@@ -401,8 +401,8 @@ BF_decode(BF_word *dst, const char *src, int size)
 static void
 BF_encode(char *dst, const BF_word *src, int size)
 {
-	unsigned char *sptr = (unsigned char *) src;
-	unsigned char *end = sptr + size;
+	const unsigned char *sptr = (const unsigned char *) src;
+	const unsigned char *end = sptr + size;
 	unsigned char *dptr = (unsigned char *) dst;
 	unsigned int c1,
 				c2;

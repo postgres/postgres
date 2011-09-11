@@ -1011,8 +1011,8 @@ tbm_lossify(TIDBitmap *tbm)
 static int
 tbm_comparator(const void *left, const void *right)
 {
-	BlockNumber l = (*((const PagetableEntry **) left))->blockno;
-	BlockNumber r = (*((const PagetableEntry **) right))->blockno;
+	BlockNumber l = (*((PagetableEntry * const *) left))->blockno;
+	BlockNumber r = (*((PagetableEntry * const *) right))->blockno;
 
 	if (l < r)
 		return -1;

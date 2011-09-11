@@ -650,8 +650,8 @@ buildIndexArray(void *objArray, int numObjs, Size objSize)
 static int
 DOCatalogIdCompare(const void *p1, const void *p2)
 {
-	DumpableObject *obj1 = *(DumpableObject **) p1;
-	DumpableObject *obj2 = *(DumpableObject **) p2;
+	const DumpableObject *obj1 = *(DumpableObject * const *) p1;
+	const DumpableObject *obj2 = *(DumpableObject * const *) p2;
 	int			cmpval;
 
 	/*

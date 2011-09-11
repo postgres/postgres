@@ -937,7 +937,7 @@ SetupLockInTable(LockMethod lockMethodTable, PGPROC *proc,
 	 * anytime.
 	 */
 	lock = (LOCK *) hash_search_with_hash_value(LockMethodLockHash,
-												(void *) locktag,
+												(const void *) locktag,
 												hashcode,
 												HASH_ENTER_NULL,
 												&found);
@@ -1673,7 +1673,7 @@ LockRelease(const LOCKTAG *locktag, LOCKMODE lockmode, bool sessionLock)
 
 		Assert(FastPathTag(locktag) && FastPathWeakMode(lockmode));
 		lock = (LOCK *) hash_search_with_hash_value(LockMethodLockHash,
-													(void *) locktag,
+													(const void *) locktag,
 													locallock->hashcode,
 													HASH_FIND,
 													&found);
@@ -2505,7 +2505,7 @@ GetLockConflicts(const LOCKTAG *locktag, LOCKMODE lockmode)
 	LWLockAcquire(partitionLock, LW_SHARED);
 
 	lock = (LOCK *) hash_search_with_hash_value(LockMethodLockHash,
-												(void *) locktag,
+												(const void *) locktag,
 												hashcode,
 												HASH_FIND,
 												NULL);

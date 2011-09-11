@@ -33,16 +33,16 @@ compareWORD(const void *a, const void *b)
 	int			res;
 
 	res = tsCompareString(
-						  ((ParsedWord *) a)->word, ((ParsedWord *) a)->len,
-						  ((ParsedWord *) b)->word, ((ParsedWord *) b)->len,
+						  ((const ParsedWord *) a)->word, ((const ParsedWord *) a)->len,
+						  ((const ParsedWord *) b)->word, ((const ParsedWord *) b)->len,
 						  false);
 
 	if (res == 0)
 	{
-		if (((ParsedWord *) a)->pos.pos == ((ParsedWord *) b)->pos.pos)
+		if (((const ParsedWord *) a)->pos.pos == ((const ParsedWord *) b)->pos.pos)
 			return 0;
 
-		res = (((ParsedWord *) a)->pos.pos > ((ParsedWord *) b)->pos.pos) ? 1 : -1;
+		res = (((const ParsedWord *) a)->pos.pos > ((const ParsedWord *) b)->pos.pos) ? 1 : -1;
 	}
 
 	return res;

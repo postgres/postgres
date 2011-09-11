@@ -276,24 +276,25 @@ parse_hstore(HSParser *state)
 static int
 comparePairs(const void *a, const void *b)
 {
-	if (((Pairs *) a)->keylen == ((Pairs *) b)->keylen)
+	const Pairs *pa = a;
+	const Pairs *pb = b;
+
+	if (pa->keylen == pb->keylen)
 	{
-		int			res = memcmp(((Pairs *) a)->key,
-								 ((Pairs *) b)->key,
-								 ((Pairs *) a)->keylen);
+		int			res = memcmp(pa->key, pb->key, pa->keylen);
 
 		if (res)
 			return res;
 
 		/* guarantee that needfree will be later */
-		if (((Pairs *) b)->needfree == ((Pairs *) a)->needfree)
+		if (pb->needfree == pa->needfree)
 			return 0;
-		else if (((Pairs *) a)->needfree)
+		else if (pa->needfree)
 			return 1;
 		else
 			return -1;
 	}
-	return (((Pairs *) a)->keylen > ((Pairs *) b)->keylen) ? 1 : -1;
+	return (pa->keylen > pb->keylen) ? 1 : -1;
 }
 
 /*

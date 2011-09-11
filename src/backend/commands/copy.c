@@ -296,7 +296,7 @@ static char *limit_printout_length(const char *str);
 static void SendCopyBegin(CopyState cstate);
 static void ReceiveCopyBegin(CopyState cstate);
 static void SendCopyEnd(CopyState cstate);
-static void CopySendData(CopyState cstate, void *databuf, int datasize);
+static void CopySendData(CopyState cstate, const void *databuf, int datasize);
 static void CopySendString(CopyState cstate, const char *str);
 static void CopySendChar(CopyState cstate, char c);
 static void CopySendEndOfRow(CopyState cstate);
@@ -431,9 +431,9 @@ SendCopyEnd(CopyState cstate)
  *----------
  */
 static void
-CopySendData(CopyState cstate, void *databuf, int datasize)
+CopySendData(CopyState cstate, const void *databuf, int datasize)
 {
-	appendBinaryStringInfo(cstate->fe_msgbuf, (char *) databuf, datasize);
+	appendBinaryStringInfo(cstate->fe_msgbuf, databuf, datasize);
 }
 
 static void
@@ -1535,7 +1535,7 @@ CopyTo(CopyState cstate)
 		int32		tmp;
 
 		/* Signature */
-		CopySendData(cstate, (char *) BinarySignature, 11);
+		CopySendData(cstate, BinarySignature, 11);
 		/* Flags field */
 		tmp = 0;
 		if (cstate->oids)

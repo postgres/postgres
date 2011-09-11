@@ -1074,7 +1074,7 @@ ecpg_store_input(const int lineno, const bool force_indicator, const struct vari
 
 			default:
 				/* Not implemented yet */
-				ecpg_raise(lineno, ECPG_UNSUPPORTED, ECPG_SQLSTATE_ECPG_INTERNAL_ERROR, (char *) ecpg_type_name(var->type));
+				ecpg_raise(lineno, ECPG_UNSUPPORTED, ECPG_SQLSTATE_ECPG_INTERNAL_ERROR, ecpg_type_name(var->type));
 				return false;
 				break;
 		}
@@ -1940,7 +1940,7 @@ bool
 ECPGdo_descriptor(int line, const char *connection,
 				  const char *descriptor, const char *query)
 {
-	return ECPGdo(line, ECPG_COMPAT_PGSQL, true, connection, '\0', 0, (char *) query, ECPGt_EOIT,
+	return ECPGdo(line, ECPG_COMPAT_PGSQL, true, connection, '\0', 0, query, ECPGt_EOIT,
 				  ECPGt_descriptor, descriptor, 0L, 0L, 0L,
 				  ECPGt_NO_INDICATOR, NULL, 0L, 0L, 0L, ECPGt_EORT);
 }

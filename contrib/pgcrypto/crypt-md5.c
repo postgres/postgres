@@ -72,18 +72,18 @@ px_crypt_md5(const char *pw, const char *salt, char *passwd, unsigned dstlen)
 	err = px_find_digest("md5", &ctx1);
 
 	/* The password first, since that is what is most unknown */
-	px_md_update(ctx, (uint8 *) pw, strlen(pw));
+	px_md_update(ctx, (const uint8 *) pw, strlen(pw));
 
 	/* Then our magic string */
 	px_md_update(ctx, (uint8 *) magic, strlen(magic));
 
 	/* Then the raw salt */
-	px_md_update(ctx, (uint8 *) sp, sl);
+	px_md_update(ctx, (const uint8 *) sp, sl);
 
 	/* Then just as many characters of the MD5(pw,salt,pw) */
-	px_md_update(ctx1, (uint8 *) pw, strlen(pw));
-	px_md_update(ctx1, (uint8 *) sp, sl);
-	px_md_update(ctx1, (uint8 *) pw, strlen(pw));
+	px_md_update(ctx1, (const uint8 *) pw, strlen(pw));
+	px_md_update(ctx1, (const uint8 *) sp, sl);
+	px_md_update(ctx1, (const uint8 *) pw, strlen(pw));
 	px_md_finish(ctx1, final);
 	for (pl = strlen(pw); pl > 0; pl -= MD5_SIZE)
 		px_md_update(ctx, final, pl > MD5_SIZE ? MD5_SIZE : pl);
@@ -96,7 +96,7 @@ px_crypt_md5(const char *pw, const char *salt, char *passwd, unsigned dstlen)
 		if (i & 1)
 			px_md_update(ctx, final, 1);
 		else
-			px_md_update(ctx, (uint8 *) pw, 1);
+			px_md_update(ctx, (const uint8 *) pw, 1);
 
 	/* Now make the output string */
 	strcpy(passwd, magic);
@@ -114,20 +114,20 @@ px_crypt_md5(const char *pw, const char *salt, char *passwd, unsigned dstlen)
 	{
 		px_md_reset(ctx1);
 		if (i & 1)
-			px_md_update(ctx1, (uint8 *) pw, strlen(pw));
+			px_md_update(ctx1, (const uint8 *) pw, strlen(pw));
 		else
 			px_md_update(ctx1, final, MD5_SIZE);
 
 		if (i % 3)
-			px_md_update(ctx1, (uint8 *) sp, sl);
+			px_md_update(ctx1, (const uint8 *) sp, sl);
 
 		if (i % 7)
-			px_md_update(ctx1, (uint8 *) pw, strlen(pw));
+			px_md_update(ctx1, (const uint8 *) pw, strlen(pw));
 
 		if (i & 1)
 			px_md_update(ctx1, final, MD5_SIZE);
 		else
-			px_md_update(ctx1, (uint8 *) pw, strlen(pw));
+			px_md_update(ctx1, (const uint8 *) pw, strlen(pw));
 		px_md_finish(ctx1, final);
 	}
 

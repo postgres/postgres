@@ -45,7 +45,7 @@ makeA_Expr(A_Expr_Kind kind, List *name,
  *		As above, given a simple (unqualified) operator name
  */
 A_Expr *
-makeSimpleA_Expr(A_Expr_Kind kind, const char *name,
+makeSimpleA_Expr(A_Expr_Kind kind, char *name,
 				 Node *lexpr, Node *rexpr, int location)
 {
 	A_Expr	   *a = makeNode(A_Expr);

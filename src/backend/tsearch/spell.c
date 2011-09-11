@@ -140,7 +140,7 @@ lowerstr_ctx(IspellDict *Conf, const char *src)
 #define MAXNORMLEN 256
 
 #define STRNCMP(s,p)	strncmp( (s), (p), strlen(p) )
-#define GETWCHAR(W,L,N,T) ( ((uint8*)(W))[ ((T)==FF_PREFIX) ? (N) : ( (L) - 1 - (N) ) ] )
+#define GETWCHAR(W,L,N,T) ( ((const uint8*)(W))[ ((T)==FF_PREFIX) ? (N) : ( (L) - 1 - (N) ) ] )
 #define GETCHAR(A,N,T)	  GETWCHAR( (A)->repl, (A)->replen, N, T )
 
 static char *VoidString = "";
@@ -148,12 +148,12 @@ static char *VoidString = "";
 static int
 cmpspell(const void *s1, const void *s2)
 {
-	return (strcmp((*(const SPELL **) s1)->word, (*(const SPELL **) s2)->word));
+	return (strcmp((*(SPELL * const *) s1)->word, (*(SPELL * const *) s2)->word));
 }
 static int
 cmpspellaffix(const void *s1, const void *s2)
 {
-	return (strncmp((*(const SPELL **) s1)->p.flag, (*(const SPELL **) s2)->p.flag, MAXFLAGLEN));
+	return (strncmp((*(SPELL * const *) s1)->p.flag, (*(SPELL * const *) s2)->p.flag, MAXFLAGLEN));
 }
 
 static char *
@@ -332,7 +332,7 @@ FindWord(IspellDict *Conf, const char *word, int affixflag, int flag)
 	SPNodeData *StopLow,
 			   *StopHigh,
 			   *StopMiddle;
-	uint8	   *ptr = (uint8 *) word;
+	const uint8 *ptr = (const uint8 *) word;
 
 	flag &= FF_DICTFLAGMASK;
 

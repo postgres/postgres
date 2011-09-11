@@ -348,7 +348,7 @@ cmpLexemeInfo(LexemeInfo *a, LexemeInfo *b)
 }
 
 static int
-cmpLexeme(TheLexeme *a, TheLexeme *b)
+cmpLexeme(const TheLexeme *a, const TheLexeme *b)
 {
 	if (a->lexeme == NULL)
 	{
@@ -366,14 +366,14 @@ cmpLexeme(TheLexeme *a, TheLexeme *b)
 static int
 cmpLexemeQ(const void *a, const void *b)
 {
-	return cmpLexeme((TheLexeme *) a, (TheLexeme *) b);
+	return cmpLexeme((const TheLexeme *) a, (const TheLexeme *) b);
 }
 
 static int
 cmpTheLexeme(const void *a, const void *b)
 {
-	TheLexeme  *la = (TheLexeme *) a;
-	TheLexeme  *lb = (TheLexeme *) b;
+	const TheLexeme  *la = (const TheLexeme *) a;
+	const TheLexeme  *lb = (const TheLexeme *) b;
 	int			res;
 
 	if ((res = cmpLexeme(la, lb)) != 0)

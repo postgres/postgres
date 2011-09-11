@@ -35,34 +35,34 @@ Datum		gbt_int8_same(PG_FUNCTION_ARGS);
 static bool
 gbt_int8gt(const void *a, const void *b)
 {
-	return (*((int64 *) a) > *((int64 *) b));
+	return (*((const int64 *) a) > *((const int64 *) b));
 }
 static bool
 gbt_int8ge(const void *a, const void *b)
 {
-	return (*((int64 *) a) >= *((int64 *) b));
+	return (*((const int64 *) a) >= *((const int64 *) b));
 }
 static bool
 gbt_int8eq(const void *a, const void *b)
 {
-	return (*((int64 *) a) == *((int64 *) b));
+	return (*((const int64 *) a) == *((const int64 *) b));
 }
 static bool
 gbt_int8le(const void *a, const void *b)
 {
-	return (*((int64 *) a) <= *((int64 *) b));
+	return (*((const int64 *) a) <= *((const int64 *) b));
 }
 static bool
 gbt_int8lt(const void *a, const void *b)
 {
-	return (*((int64 *) a) < *((int64 *) b));
+	return (*((const int64 *) a) < *((const int64 *) b));
 }
 
 static int
 gbt_int8key_cmp(const void *a, const void *b)
 {
-	int64KEY   *ia = (int64KEY *) (((Nsrt *) a)->t);
-	int64KEY   *ib = (int64KEY *) (((Nsrt *) b)->t);
+	int64KEY   *ia = (int64KEY *) (((const Nsrt *) a)->t);
+	int64KEY   *ib = (int64KEY *) (((const Nsrt *) b)->t);
 
 	if (ia->lower == ib->lower)
 	{

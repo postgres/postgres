@@ -35,34 +35,34 @@ Datum		gbt_oid_same(PG_FUNCTION_ARGS);
 static bool
 gbt_oidgt(const void *a, const void *b)
 {
-	return (*((Oid *) a) > *((Oid *) b));
+	return (*((const Oid *) a) > *((const Oid *) b));
 }
 static bool
 gbt_oidge(const void *a, const void *b)
 {
-	return (*((Oid *) a) >= *((Oid *) b));
+	return (*((const Oid *) a) >= *((const Oid *) b));
 }
 static bool
 gbt_oideq(const void *a, const void *b)
 {
-	return (*((Oid *) a) == *((Oid *) b));
+	return (*((const Oid *) a) == *((const Oid *) b));
 }
 static bool
 gbt_oidle(const void *a, const void *b)
 {
-	return (*((Oid *) a) <= *((Oid *) b));
+	return (*((const Oid *) a) <= *((const Oid *) b));
 }
 static bool
 gbt_oidlt(const void *a, const void *b)
 {
-	return (*((Oid *) a) < *((Oid *) b));
+	return (*((const Oid *) a) < *((const Oid *) b));
 }
 
 static int
 gbt_oidkey_cmp(const void *a, const void *b)
 {
-	oidKEY	   *ia = (oidKEY *) (((Nsrt *) a)->t);
-	oidKEY	   *ib = (oidKEY *) (((Nsrt *) b)->t);
+	oidKEY	   *ia = (oidKEY *) (((const Nsrt *) a)->t);
+	oidKEY	   *ib = (oidKEY *) (((const Nsrt *) b)->t);
 
 	if (ia->lower == ib->lower)
 	{

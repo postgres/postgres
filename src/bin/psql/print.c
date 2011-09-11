@@ -559,7 +559,7 @@ print_aligned_text(const printTableContent *cont, FILE *fout)
 					nl_lines,
 					bytes_required;
 
-		pg_wcssize((unsigned char *) cont->headers[i], strlen(cont->headers[i]),
+		pg_wcssize((const unsigned char *) cont->headers[i], strlen(cont->headers[i]),
 				   encoding, &width, &nl_lines, &bytes_required);
 		if (width > max_width[i])
 			max_width[i] = width;
@@ -583,7 +583,7 @@ print_aligned_text(const printTableContent *cont, FILE *fout)
 					nl_lines,
 					bytes_required;
 
-		pg_wcssize((unsigned char *) *ptr, strlen(*ptr), encoding,
+		pg_wcssize((const unsigned char *) *ptr, strlen(*ptr), encoding,
 				   &width, &nl_lines, &bytes_required);
 
 		if (width > max_width[i % col_count])
@@ -731,7 +731,7 @@ print_aligned_text(const printTableContent *cont, FILE *fout)
 						nl_lines,
 						bytes_required;
 
-			pg_wcssize((unsigned char *) *ptr, strlen(*ptr), encoding,
+			pg_wcssize((const unsigned char *) *ptr, strlen(*ptr), encoding,
 					   &width, &nl_lines, &bytes_required);
 
 			/*
@@ -768,7 +768,7 @@ print_aligned_text(const printTableContent *cont, FILE *fout)
 			int			width,
 						height;
 
-			pg_wcssize((unsigned char *) cont->title, strlen(cont->title),
+			pg_wcssize((const unsigned char *) cont->title, strlen(cont->title),
 					   encoding, &width, &height, NULL);
 			if (width >= width_total)
 				/* Aligned */
@@ -790,7 +790,7 @@ print_aligned_text(const printTableContent *cont, FILE *fout)
 									   PRINT_RULE_TOP, format, fout);
 
 			for (i = 0; i < col_count; i++)
-				pg_wcsformat((unsigned char *) cont->headers[i],
+				pg_wcsformat((const unsigned char *) cont->headers[i],
 							 strlen(cont->headers[i]), encoding,
 							 col_lineptrs[i], max_nl_lines[i]);
 
@@ -861,7 +861,7 @@ print_aligned_text(const printTableContent *cont, FILE *fout)
 		 */
 		for (j = 0; j < col_count; j++)
 		{
-			pg_wcsformat((unsigned char *) ptr[j], strlen(ptr[j]), encoding,
+			pg_wcsformat((const unsigned char *) ptr[j], strlen(ptr[j]), encoding,
 						 col_lineptrs[j], max_nl_lines[j]);
 			curr_nl_line[j] = 0;
 		}
@@ -1146,7 +1146,7 @@ print_aligned_vertical(const printTableContent *cont, FILE *fout)
 					height,
 					fs;
 
-		pg_wcssize((unsigned char *) cont->headers[i], strlen(cont->headers[i]),
+		pg_wcssize((const unsigned char *) cont->headers[i], strlen(cont->headers[i]),
 				   encoding, &width, &height, &fs);
 		if (width > hwidth)
 			hwidth = width;
@@ -1163,7 +1163,7 @@ print_aligned_vertical(const printTableContent *cont, FILE *fout)
 					height,
 					fs;
 
-		pg_wcssize((unsigned char *) *ptr, strlen(*ptr), encoding,
+		pg_wcssize((const unsigned char *) *ptr, strlen(*ptr), encoding,
 				   &width, &height, &fs);
 		if (width > dwidth)
 			dwidth = width;
@@ -1219,11 +1219,11 @@ print_aligned_vertical(const printTableContent *cont, FILE *fout)
 		}
 
 		/* Format the header */
-		pg_wcsformat((unsigned char *) cont->headers[i % cont->ncolumns],
+		pg_wcsformat((const unsigned char *) cont->headers[i % cont->ncolumns],
 					 strlen(cont->headers[i % cont->ncolumns]),
 					 encoding, hlineptr, hheight);
 		/* Format the data */
-		pg_wcsformat((unsigned char *) *ptr, strlen(*ptr), encoding,
+		pg_wcsformat((const unsigned char *) *ptr, strlen(*ptr), encoding,
 					 dlineptr, dheight);
 
 		line_count = 0;

@@ -35,34 +35,34 @@ Datum		gbt_cash_same(PG_FUNCTION_ARGS);
 static bool
 gbt_cashgt(const void *a, const void *b)
 {
-	return (*((Cash *) a) > *((Cash *) b));
+	return (*((const Cash *) a) > *((const Cash *) b));
 }
 static bool
 gbt_cashge(const void *a, const void *b)
 {
-	return (*((Cash *) a) >= *((Cash *) b));
+	return (*((const Cash *) a) >= *((const Cash *) b));
 }
 static bool
 gbt_casheq(const void *a, const void *b)
 {
-	return (*((Cash *) a) == *((Cash *) b));
+	return (*((const Cash *) a) == *((const Cash *) b));
 }
 static bool
 gbt_cashle(const void *a, const void *b)
 {
-	return (*((Cash *) a) <= *((Cash *) b));
+	return (*((const Cash *) a) <= *((const Cash *) b));
 }
 static bool
 gbt_cashlt(const void *a, const void *b)
 {
-	return (*((Cash *) a) < *((Cash *) b));
+	return (*((const Cash *) a) < *((const Cash *) b));
 }
 
 static int
 gbt_cashkey_cmp(const void *a, const void *b)
 {
-	cashKEY    *ia = (cashKEY *) (((Nsrt *) a)->t);
-	cashKEY    *ib = (cashKEY *) (((Nsrt *) b)->t);
+	cashKEY    *ia = (cashKEY *) (((const Nsrt *) a)->t);
+	cashKEY    *ib = (cashKEY *) (((const Nsrt *) b)->t);
 
 	if (ia->lower == ib->lower)
 	{

@@ -138,8 +138,8 @@ sortDumpableObjectsByTypeName(DumpableObject **objs, int numObjs)
 static int
 DOTypeNameCompare(const void *p1, const void *p2)
 {
-	DumpableObject *obj1 = *(DumpableObject **) p1;
-	DumpableObject *obj2 = *(DumpableObject **) p2;
+	DumpableObject *obj1 = *(DumpableObject * const *) p1;
+	DumpableObject *obj2 = *(DumpableObject * const *) p2;
 	int			cmpval;
 
 	/* Sort by type */
@@ -170,8 +170,8 @@ DOTypeNameCompare(const void *p1, const void *p2)
 	/* To have a stable sort order, break ties for some object types */
 	if (obj1->objType == DO_FUNC || obj1->objType == DO_AGG)
 	{
-		FuncInfo   *fobj1 = *(FuncInfo **) p1;
-		FuncInfo   *fobj2 = *(FuncInfo **) p2;
+		FuncInfo   *fobj1 = *(FuncInfo * const *) p1;
+		FuncInfo   *fobj2 = *(FuncInfo * const *) p2;
 
 		cmpval = fobj1->nargs - fobj2->nargs;
 		if (cmpval != 0)
@@ -200,8 +200,8 @@ sortDumpableObjectsByTypeOid(DumpableObject **objs, int numObjs)
 static int
 DOTypeOidCompare(const void *p1, const void *p2)
 {
-	DumpableObject *obj1 = *(DumpableObject **) p1;
-	DumpableObject *obj2 = *(DumpableObject **) p2;
+	DumpableObject *obj1 = *(DumpableObject * const *) p1;
+	DumpableObject *obj2 = *(DumpableObject * const *) p2;
 	int			cmpval;
 
 	cmpval = oldObjectTypePriority[obj1->objType] -

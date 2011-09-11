@@ -1362,8 +1362,8 @@ get_next_S(double t, int n, double *stateptr)
 static int
 compare_rows(const void *a, const void *b)
 {
-	HeapTuple	ha = *(HeapTuple *) a;
-	HeapTuple	hb = *(HeapTuple *) b;
+	HeapTuple	ha = *(const HeapTuple *) a;
+	HeapTuple	hb = *(const HeapTuple *) b;
 	BlockNumber ba = ItemPointerGetBlockNumber(&ha->t_self);
 	OffsetNumber oa = ItemPointerGetOffsetNumber(&ha->t_self);
 	BlockNumber bb = ItemPointerGetBlockNumber(&hb->t_self);
@@ -2700,10 +2700,10 @@ compute_scalar_stats(VacAttrStatsP stats,
 static int
 compare_scalars(const void *a, const void *b, void *arg)
 {
-	Datum		da = ((ScalarItem *) a)->value;
-	int			ta = ((ScalarItem *) a)->tupno;
-	Datum		db = ((ScalarItem *) b)->value;
-	int			tb = ((ScalarItem *) b)->tupno;
+	Datum		da = ((const ScalarItem *) a)->value;
+	int			ta = ((const ScalarItem *) a)->tupno;
+	Datum		db = ((const ScalarItem *) b)->value;
+	int			tb = ((const ScalarItem *) b)->tupno;
 	CompareScalarsContext *cxt = (CompareScalarsContext *) arg;
 	int32		compare;
 
@@ -2734,8 +2734,8 @@ compare_scalars(const void *a, const void *b, void *arg)
 static int
 compare_mcvs(const void *a, const void *b)
 {
-	int			da = ((ScalarMCVItem *) a)->first;
-	int			db = ((ScalarMCVItem *) b)->first;
+	int			da = ((const ScalarMCVItem *) a)->first;
+	int			db = ((const ScalarMCVItem *) b)->first;
 
 	return da - db;
 }

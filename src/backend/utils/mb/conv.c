@@ -247,8 +247,8 @@ compare1(const void *p1, const void *p2)
 	uint32		v1,
 				v2;
 
-	v1 = *(uint32 *) p1;
-	v2 = ((pg_utf_to_local *) p2)->utf;
+	v1 = *(const uint32 *) p1;
+	v2 = ((const pg_utf_to_local *) p2)->utf;
 	return (v1 > v2) ? 1 : ((v1 == v2) ? 0 : -1);
 }
 
@@ -262,8 +262,8 @@ compare2(const void *p1, const void *p2)
 	uint32		v1,
 				v2;
 
-	v1 = *(uint32 *) p1;
-	v2 = ((pg_local_to_utf *) p2)->code;
+	v1 = *(const uint32 *) p1;
+	v2 = ((const pg_local_to_utf *) p2)->code;
 	return (v1 > v2) ? 1 : ((v1 == v2) ? 0 : -1);
 }
 
@@ -279,10 +279,10 @@ compare3(const void *p1, const void *p2)
 				d1,
 				d2;
 
-	s1 = *(uint32 *) p1;
-	s2 = *((uint32 *) p1 + 1);
-	d1 = ((pg_utf_to_local_combined *) p2)->utf1;
-	d2 = ((pg_utf_to_local_combined *) p2)->utf2;
+	s1 = *(const uint32 *) p1;
+	s2 = *((const uint32 *) p1 + 1);
+	d1 = ((const pg_utf_to_local_combined *) p2)->utf1;
+	d2 = ((const pg_utf_to_local_combined *) p2)->utf2;
 	return (s1 > d1 || (s1 == d1 && s2 > d2)) ? 1 : ((s1 == d1 && s2 == d2) ? 0 : -1);
 }
 
@@ -296,8 +296,8 @@ compare4(const void *p1, const void *p2)
 	uint32		v1,
 				v2;
 
-	v1 = *(uint32 *) p1;
-	v2 = ((pg_local_to_utf_combined *) p2)->code;
+	v1 = *(const uint32 *) p1;
+	v2 = ((const pg_local_to_utf_combined *) p2)->code;
 	return (v1 > v2) ? 1 : ((v1 == v2) ? 0 : -1);
 }
 

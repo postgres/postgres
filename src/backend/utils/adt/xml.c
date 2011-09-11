@@ -396,7 +396,7 @@ cstring_to_xmltype(const char *string)
 static xmltype *
 xmlBuffer_to_xmltype(xmlBufferPtr buf)
 {
-	return (xmltype *) cstring_to_text_with_len((char *) xmlBufferContent(buf),
+	return (xmltype *) cstring_to_text_with_len((const char *) xmlBufferContent(buf),
 												xmlBufferLength(buf));
 }
 #endif
@@ -1267,7 +1267,7 @@ static bool
 print_xml_decl(StringInfo buf, const xmlChar *version,
 			   pg_enc encoding, int standalone)
 {
-	if ((version && strcmp((char *) version, PG_XML_DEFAULT_VERSION) != 0)
+	if ((version && strcmp((const char *) version, PG_XML_DEFAULT_VERSION) != 0)
 		|| (encoding && encoding != PG_UTF8)
 		|| standalone != -1)
 	{

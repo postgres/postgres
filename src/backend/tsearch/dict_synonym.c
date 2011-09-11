@@ -83,7 +83,7 @@ findwrd(char *in, char **end, uint16 *flags)
 static int
 compareSyn(const void *a, const void *b)
 {
-	return strcmp(((Syn *) a)->in, ((Syn *) b)->in);
+	return strcmp(((const Syn *) a)->in, ((const Syn *) b)->in);
 }
 
 

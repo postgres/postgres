@@ -407,8 +407,8 @@ des_setkey(const char *key)
 	if (!des_initialised)
 		des_init();
 
-	rawkey0 = ntohl(*(uint32 *) key);
-	rawkey1 = ntohl(*(uint32 *) (key + 4));
+	rawkey0 = ntohl(*(const uint32 *) key);
+	rawkey1 = ntohl(*(const uint32 *) (key + 4));
 
 	if ((rawkey0 | rawkey1)
 		&& rawkey0 == old_rawkey0

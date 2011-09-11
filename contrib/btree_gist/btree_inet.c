@@ -36,34 +36,34 @@ Datum		gbt_inet_same(PG_FUNCTION_ARGS);
 static bool
 gbt_inetgt(const void *a, const void *b)
 {
-	return (*((double *) a) > *((double *) b));
+	return (*((const double *) a) > *((const double *) b));
 }
 static bool
 gbt_inetge(const void *a, const void *b)
 {
-	return (*((double *) a) >= *((double *) b));
+	return (*((const double *) a) >= *((const double *) b));
 }
 static bool
 gbt_ineteq(const void *a, const void *b)
 {
-	return (*((double *) a) == *((double *) b));
+	return (*((const double *) a) == *((const double *) b));
 }
 static bool
 gbt_inetle(const void *a, const void *b)
 {
-	return (*((double *) a) <= *((double *) b));
+	return (*((const double *) a) <= *((const double *) b));
 }
 static bool
 gbt_inetlt(const void *a, const void *b)
 {
-	return (*((double *) a) < *((double *) b));
+	return (*((const double *) a) < *((const double *) b));
 }
 
 static int
 gbt_inetkey_cmp(const void *a, const void *b)
 {
-	inetKEY    *ia = (inetKEY *) (((Nsrt *) a)->t);
-	inetKEY    *ib = (inetKEY *) (((Nsrt *) b)->t);
+	inetKEY    *ia = (inetKEY *) (((const Nsrt *) a)->t);
+	inetKEY    *ib = (inetKEY *) (((const Nsrt *) b)->t);
 
 	if (ia->lower == ib->lower)
 	{

@@ -1393,7 +1393,7 @@ ahwrite(const void *ptr, size_t size, size_t nmemb, ArchiveHandle *AH)
 	}
 	else if (AH->gzOut)
 	{
-		res = GZWRITE((void *) ptr, size, nmemb, AH->OF);
+		res = GZWRITE(ptr, size, nmemb, AH->OF);
 		if (res != (nmemb * size))
 			die_horribly(AH, modulename, "could not write to output file: %s\n", strerror(errno));
 		return res;
@@ -1416,7 +1416,7 @@ ahwrite(const void *ptr, size_t size, size_t nmemb, ArchiveHandle *AH)
 			return ExecuteSqlCommandBuf(AH, (const char *) ptr, size * nmemb);
 		else
 		{
-			res = fwrite((void *) ptr, size, nmemb, AH->OF);
+			res = fwrite(ptr, size, nmemb, AH->OF);
 			if (res != nmemb)
 				die_horribly(AH, modulename, "could not write to output file: %s\n",
 							 strerror(errno));

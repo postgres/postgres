@@ -34,34 +34,34 @@ Datum		gbt_float4_same(PG_FUNCTION_ARGS);
 static bool
 gbt_float4gt(const void *a, const void *b)
 {
-	return (*((float4 *) a) > *((float4 *) b));
+	return (*((const float4 *) a) > *((const float4 *) b));
 }
 static bool
 gbt_float4ge(const void *a, const void *b)
 {
-	return (*((float4 *) a) >= *((float4 *) b));
+	return (*((const float4 *) a) >= *((const float4 *) b));
 }
 static bool
 gbt_float4eq(const void *a, const void *b)
 {
-	return (*((float4 *) a) == *((float4 *) b));
+	return (*((const float4 *) a) == *((const float4 *) b));
 }
 static bool
 gbt_float4le(const void *a, const void *b)
 {
-	return (*((float4 *) a) <= *((float4 *) b));
+	return (*((const float4 *) a) <= *((const float4 *) b));
 }
 static bool
 gbt_float4lt(const void *a, const void *b)
 {
-	return (*((float4 *) a) < *((float4 *) b));
+	return (*((const float4 *) a) < *((const float4 *) b));
 }
 
 static int
 gbt_float4key_cmp(const void *a, const void *b)
 {
-	float4KEY  *ia = (float4KEY *) (((Nsrt *) a)->t);
-	float4KEY  *ib = (float4KEY *) (((Nsrt *) b)->t);
+	float4KEY  *ia = (float4KEY *) (((const Nsrt *) a)->t);
+	float4KEY  *ib = (float4KEY *) (((const Nsrt *) b)->t);
 
 	if (ia->lower == ib->lower)
 	{

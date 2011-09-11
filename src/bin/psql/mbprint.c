@@ -205,7 +205,7 @@ pg_wcswidth(const unsigned char *pwcs, size_t len, int encoding)
  * This MUST be kept in sync with pg_wcsformat!
  */
 void
-pg_wcssize(unsigned char *pwcs, size_t len, int encoding,
+pg_wcssize(const unsigned char *pwcs, size_t len, int encoding,
 		   int *result_width, int *result_height, int *result_format_size)
 {
 	int			w,
@@ -288,7 +288,7 @@ pg_wcssize(unsigned char *pwcs, size_t len, int encoding,
  * This MUST be kept in sync with pg_wcssize!
  */
 void
-pg_wcsformat(unsigned char *pwcs, size_t len, int encoding,
+pg_wcsformat(const unsigned char *pwcs, size_t len, int encoding,
 			 struct lineptr * lines, int count)
 {
 	int			w,

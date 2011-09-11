@@ -35,34 +35,34 @@ Datum		gbt_int4_same(PG_FUNCTION_ARGS);
 static bool
 gbt_int4gt(const void *a, const void *b)
 {
-	return (*((int32 *) a) > *((int32 *) b));
+	return (*((const int32 *) a) > *((const int32 *) b));
 }
 static bool
 gbt_int4ge(const void *a, const void *b)
 {
-	return (*((int32 *) a) >= *((int32 *) b));
+	return (*((const int32 *) a) >= *((const int32 *) b));
 }
 static bool
 gbt_int4eq(const void *a, const void *b)
 {
-	return (*((int32 *) a) == *((int32 *) b));
+	return (*((const int32 *) a) == *((const int32 *) b));
 }
 static bool
 gbt_int4le(const void *a, const void *b)
 {
-	return (*((int32 *) a) <= *((int32 *) b));
+	return (*((const int32 *) a) <= *((const int32 *) b));
 }
 static bool
 gbt_int4lt(const void *a, const void *b)
 {
-	return (*((int32 *) a) < *((int32 *) b));
+	return (*((const int32 *) a) < *((const int32 *) b));
 }
 
 static int
 gbt_int4key_cmp(const void *a, const void *b)
 {
-	int32KEY   *ia = (int32KEY *) (((Nsrt *) a)->t);
-	int32KEY   *ib = (int32KEY *) (((Nsrt *) b)->t);
+	int32KEY   *ia = (int32KEY *) (((const Nsrt *) a)->t);
+	int32KEY   *ib = (int32KEY *) (((const Nsrt *) b)->t);
 
 	if (ia->lower == ib->lower)
 	{

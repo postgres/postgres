@@ -131,8 +131,8 @@ gtsvectorout(PG_FUNCTION_ARGS)
 static int
 compareint(const void *va, const void *vb)
 {
-	int4		a = *((int4 *) va);
-	int4		b = *((int4 *) vb);
+	int4		a = *((const int4 *) va);
+	int4		b = *((const int4 *) vb);
 
 	if (a == b)
 		return 0;
@@ -593,8 +593,8 @@ typedef struct
 static int
 comparecost(const void *va, const void *vb)
 {
-	SPLITCOST  *a = (SPLITCOST *) va;
-	SPLITCOST  *b = (SPLITCOST *) vb;
+	const SPLITCOST  *a = (const SPLITCOST *) va;
+	const SPLITCOST  *b = (const SPLITCOST *) vb;
 
 	if (a->cost == b->cost)
 		return 0;

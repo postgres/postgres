@@ -36,7 +36,7 @@ static bool
 gbt_dategt(const void *a, const void *b)
 {
 	return DatumGetBool(
-						DirectFunctionCall2(date_gt, DateADTGetDatum(*((DateADT *) a)), DateADTGetDatum(*((DateADT *) b)))
+						DirectFunctionCall2(date_gt, DateADTGetDatum(*((const DateADT *) a)), DateADTGetDatum(*((const DateADT *) b)))
 		);
 }
 
@@ -44,7 +44,7 @@ static bool
 gbt_datege(const void *a, const void *b)
 {
 	return DatumGetBool(
-						DirectFunctionCall2(date_ge, DateADTGetDatum(*((DateADT *) a)), DateADTGetDatum(*((DateADT *) b)))
+						DirectFunctionCall2(date_ge, DateADTGetDatum(*((const DateADT *) a)), DateADTGetDatum(*((const DateADT *) b)))
 		);
 }
 
@@ -52,7 +52,7 @@ static bool
 gbt_dateeq(const void *a, const void *b)
 {
 	return DatumGetBool(
-						DirectFunctionCall2(date_eq, DateADTGetDatum(*((DateADT *) a)), DateADTGetDatum(*((DateADT *) b)))
+						DirectFunctionCall2(date_eq, DateADTGetDatum(*((const DateADT *) a)), DateADTGetDatum(*((const DateADT *) b)))
 		);
 }
 
@@ -60,7 +60,7 @@ static bool
 gbt_datele(const void *a, const void *b)
 {
 	return DatumGetBool(
-						DirectFunctionCall2(date_le, DateADTGetDatum(*((DateADT *) a)), DateADTGetDatum(*((DateADT *) b)))
+						DirectFunctionCall2(date_le, DateADTGetDatum(*((const DateADT *) a)), DateADTGetDatum(*((const DateADT *) b)))
 		);
 }
 
@@ -68,7 +68,7 @@ static bool
 gbt_datelt(const void *a, const void *b)
 {
 	return DatumGetBool(
-						DirectFunctionCall2(date_lt, DateADTGetDatum(*((DateADT *) a)), DateADTGetDatum(*((DateADT *) b)))
+						DirectFunctionCall2(date_lt, DateADTGetDatum(*((const DateADT *) a)), DateADTGetDatum(*((const DateADT *) b)))
 		);
 }
 
@@ -77,8 +77,8 @@ gbt_datelt(const void *a, const void *b)
 static int
 gbt_datekey_cmp(const void *a, const void *b)
 {
-	dateKEY    *ia = (dateKEY *) (((Nsrt *) a)->t);
-	dateKEY    *ib = (dateKEY *) (((Nsrt *) b)->t);
+	dateKEY    *ia = (dateKEY *) (((const Nsrt *) a)->t);
+	dateKEY    *ib = (dateKEY *) (((const Nsrt *) b)->t);
 	int			res;
 
 	res = DatumGetInt32(DirectFunctionCall2(date_cmp, DateADTGetDatum(ia->lower), DateADTGetDatum(ib->lower)));

@@ -35,34 +35,34 @@ Datum		gbt_float8_same(PG_FUNCTION_ARGS);
 static bool
 gbt_float8gt(const void *a, const void *b)
 {
-	return (*((float8 *) a) > *((float8 *) b));
+	return (*((const float8 *) a) > *((const float8 *) b));
 }
 static bool
 gbt_float8ge(const void *a, const void *b)
 {
-	return (*((float8 *) a) >= *((float8 *) b));
+	return (*((const float8 *) a) >= *((const float8 *) b));
 }
 static bool
 gbt_float8eq(const void *a, const void *b)
 {
-	return (*((float8 *) a) == *((float8 *) b));
+	return (*((const float8 *) a) == *((const float8 *) b));
 }
 static bool
 gbt_float8le(const void *a, const void *b)
 {
-	return (*((float8 *) a) <= *((float8 *) b));
+	return (*((const float8 *) a) <= *((const float8 *) b));
 }
 static bool
 gbt_float8lt(const void *a, const void *b)
 {
-	return (*((float8 *) a) < *((float8 *) b));
+	return (*((const float8 *) a) < *((const float8 *) b));
 }
 
 static int
 gbt_float8key_cmp(const void *a, const void *b)
 {
-	float8KEY  *ia = (float8KEY *) (((Nsrt *) a)->t);
-	float8KEY  *ib = (float8KEY *) (((Nsrt *) b)->t);
+	float8KEY  *ia = (float8KEY *) (((const Nsrt *) a)->t);
+	float8KEY  *ib = (float8KEY *) (((const Nsrt *) b)->t);
 
 	if (ia->lower == ib->lower)
 	{

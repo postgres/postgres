@@ -123,8 +123,8 @@ static unsigned char BF_itoa64[64 + 1] =
 static void
 BF_encode(char *dst, const BF_word *src, int size)
 {
-	unsigned char *sptr = (unsigned char *) src;
-	unsigned char *end = sptr + size;
+	const unsigned char *sptr = (const unsigned char *) src;
+	const unsigned char *end = sptr + size;
 	unsigned char *dptr = (unsigned char *) dst;
 	unsigned int c1,
 				c2;
@@ -180,7 +180,7 @@ _crypt_gensalt_blowfish_rn(unsigned long count,
 	output[5] = '0' + count % 10;
 	output[6] = '$';
 
-	BF_encode(&output[7], (BF_word *) input, 16);
+	BF_encode(&output[7], (const BF_word *) input, 16);
 	output[7 + 22] = '\0';
 
 	return output;

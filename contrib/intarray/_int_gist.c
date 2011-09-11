@@ -357,10 +357,10 @@ typedef struct
 static int
 comparecost(const void *a, const void *b)
 {
-	if (((SPLITCOST *) a)->cost == ((SPLITCOST *) b)->cost)
+	if (((const SPLITCOST *) a)->cost == ((const SPLITCOST *) b)->cost)
 		return 0;
 	else
-		return (((SPLITCOST *) a)->cost > ((SPLITCOST *) b)->cost) ? 1 : -1;
+		return (((const SPLITCOST *) a)->cost > ((const SPLITCOST *) b)->cost) ? 1 : -1;
 }
 
 /*
