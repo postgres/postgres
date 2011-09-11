@@ -2577,7 +2577,6 @@ pthread_create(pthread_t *thread,
 {
 	fork_pthread *th;
 	void	   *ret;
-	instr_time	start_time;
 
 	th = (fork_pthread *) xmalloc(sizeof(fork_pthread));
 	if (pipe(th->pipes) < 0)
