@@ -964,10 +964,14 @@ gistEmptyAllBuffers(GISTBuildState *buildstate)
 				 * Add this buffer to the emptying queue, and proceed to empty
 				 * the queue.
 				 */
-				MemoryContextSwitchTo(gfbb->context);
-				gfbb->bufferEmptyingQueue =
-					lcons(nodeBuffer, gfbb->bufferEmptyingQueue);
-				MemoryContextSwitchTo(buildstate->tmpCtx);
+				if (!nodeBuffer->queuedForEmptying)
+				{
+					MemoryContextSwitchTo(gfbb->context);
+					nodeBuffer->queuedForEmptying = true;
+					gfbb->bufferEmptyingQueue =
+						lcons(nodeBuffer, gfbb->bufferEmptyingQueue);
+					MemoryContextSwitchTo(buildstate->tmpCtx);
+				}
 				gistProcessEmptyingQueue(buildstate);
 			}
 			else
