@@ -371,8 +371,17 @@ deflist_to_tuplestore(ReturnSetInfo *rsinfo, List *options)
 		DefElem    *def = lfirst(cell);
 
 		values[0] = CStringGetTextDatum(def->defname);
-		values[1] = CStringGetTextDatum(((Value *) def->arg)->val.str);
-		nulls[0] = nulls[1] = false;
+		nulls[0] = false;
+		if (def->arg)
+		{
+			values[1] = CStringGetTextDatum(((Value *) (def->arg))->val.str);
+			nulls[1] = false;
+		}
+		else
+		{
+			values[1] = (Datum) 0;
+			nulls[1] = true;
+		}
 		tuplestore_putvalues(tupstore, tupdesc, values, nulls);
 	}
 
