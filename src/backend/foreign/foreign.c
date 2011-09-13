@@ -260,7 +260,7 @@ deflist_to_tuplestore(ReturnSetInfo *rsinfo, List *options)
 	TupleDesc	tupdesc;
 	Tuplestorestate *tupstore;
 	Datum		values[2];
-	bool		nulls[2] = {0};
+	bool		nulls[2];
 	MemoryContext per_query_ctx;
 	MemoryContext oldcontext;
 
@@ -292,7 +292,17 @@ deflist_to_tuplestore(ReturnSetInfo *rsinfo, List *options)
 		DefElem    *def = lfirst(cell);
 
 		values[0] = CStringGetTextDatum(def->defname);
-		values[1] = CStringGetTextDatum(((Value *) def->arg)->val.str);
+		nulls[0] = false;
+		if (def->arg)
+		{
+			values[1] = CStringGetTextDatum(((Value *) (def->arg))->val.str);
+			nulls[1] = false;
+		}
+		else
+		{
+			values[1] = (Datum) 0;
+			nulls[1] = true;
+		}
 		tuplestore_putvalues(tupstore, tupdesc, values, nulls);
 	}
 
