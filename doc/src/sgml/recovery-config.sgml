@@ -326,7 +326,7 @@ restore_command = 'copy "C:\\server\\archivedir\\%f" "%p"'  # Windows
           of the primary server, as well as the port number if it is not
           the same as the standby server's default.
           Also specify a user name corresponding to a role that has the
-          <literal>SUPERUSER</> and <literal>LOGIN</> privileges on the
+          <literal>REPLICATION</> and <literal>LOGIN</> privileges on the
           primary (see
           <xref linkend="streaming-replication-authentication">).
           A password needs to be provided too, if the primary demands password
