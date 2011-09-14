@@ -87,8 +87,8 @@ CLEAN :
 	-@erase "$(INTDIR)\inet_aton.obj"
 	-@erase "$(INTDIR)\crypt.obj"
 	-@erase "$(INTDIR)\noblock.obj"
-	-@erase "$(INTDIR)\chklocale.obj" 
-	-@erase "$(INTDIR)\inet_net_ntop.obj" 
+	-@erase "$(INTDIR)\chklocale.obj"
+	-@erase "$(INTDIR)\inet_net_ntop.obj"
 	-@erase "$(INTDIR)\md5.obj"
 	-@erase "$(INTDIR)\ip.obj"
 	-@erase "$(INTDIR)\fe-auth.obj"
@@ -114,6 +114,7 @@ CLEAN :
 	-@erase "$(INTDIR)\pgsleep.obj"
 	-@erase "$(INTDIR)\open.obj"
 	-@erase "$(INTDIR)\win32error.obj"
+	-@erase "$(INTDIR)\win32setlocale.obj"
 	-@erase "$(OUTDIR)\$(OUTFILENAME).lib"
 	-@erase "$(OUTDIR)\$(OUTFILENAME)dll.lib"
 	-@erase "$(OUTDIR)\libpq.res"
@@ -159,6 +160,7 @@ LIB32_OBJS= \
 	"$(INTDIR)\pgsleep.obj" \
 	"$(INTDIR)\open.obj" \
 	"$(INTDIR)\win32error.obj" \
+	"$(INTDIR)\win32setlocale.obj" \
 	"$(INTDIR)\pthread-win32.obj"
 
 
@@ -328,6 +330,11 @@ LINK32_OBJS= \
 "$(INTDIR)\win32error.obj" : ..\..\port\win32error.c
 	$(CPP) @<<
 	$(CPP_PROJ) /I"." ..\..\port\win32error.c
+<<
+
+"$(INTDIR)\win32setlocale.obj" : ..\..\port\win32setlocale.c
+	$(CPP) @<<
+	$(CPP_PROJ) /I"." ..\..\port\win32setlocale.c
 <<
 
 .c{$(CPP_OBJS)}.obj:
