@@ -190,12 +190,11 @@ check_primary_key(PG_FUNCTION_ARGS)
 
 		/*
 		 * Remember that SPI_prepare places plan in current memory context -
-		 * so, we have to save plan in Top memory context for latter use.
+		 * so, we have to save plan in Top memory context for later use.
 		 */
-		pplan = SPI_saveplan(pplan);
-		if (pplan == NULL)
+		if (SPI_keepplan(pplan))
 			/* internal error */
-			elog(ERROR, "check_primary_key: SPI_saveplan returned %d", SPI_result);
+			elog(ERROR, "check_primary_key: SPI_keepplan failed");
 		plan->splan = (SPIPlanPtr *) malloc(sizeof(SPIPlanPtr));
 		*(plan->splan) = pplan;
 		plan->nplans = 1;
@@ -537,13 +536,12 @@ check_foreign_key(PG_FUNCTION_ARGS)
 
 			/*
 			 * Remember that SPI_prepare places plan in current memory context
-			 * - so, we have to save plan in Top memory context for latter
+			 * - so, we have to save plan in Top memory context for later
 			 * use.
 			 */
-			pplan = SPI_saveplan(pplan);
-			if (pplan == NULL)
+			if (SPI_keepplan(pplan))
 				/* internal error */
-				elog(ERROR, "check_foreign_key: SPI_saveplan returned %d", SPI_result);
+				elog(ERROR, "check_foreign_key: SPI_keepplan failed");
 
 			plan->splan[r] = pplan;
 

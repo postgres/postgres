@@ -8,7 +8,7 @@
  *	across query and transaction boundaries, in fact they live as long as
  *	the backend does.  This works because the hashtable structures
  *	themselves are allocated by dynahash.c in its permanent DynaHashCxt,
- *	and the SPI plans they point to are saved using SPI_saveplan().
+ *	and the SPI plans they point to are saved using SPI_keepplan().
  *	There is not currently any provision for throwing away a no-longer-needed
  *	plan --- consider improving this someday.
  *
@@ -3316,7 +3316,7 @@ ri_PlanCheck(const char *querystr, int nargs, Oid *argtypes,
 	/* Save the plan if requested */
 	if (cache_plan)
 	{
-		qplan = SPI_saveplan(qplan);
+		SPI_keepplan(qplan);
 		ri_HashPreparedPlan(qkey, qplan);
 	}
 

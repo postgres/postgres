@@ -280,9 +280,9 @@ CreateNewPortal(void)
  * (before rewriting) was an empty string.	Also, the passed commandTag must
  * be a pointer to a constant string, since it is not copied.
  *
- * If cplan is provided, then it is a cached plan containing the stmts,
- * and the caller must have done RevalidateCachedPlan(), causing a refcount
- * increment.  The refcount will be released when the portal is destroyed.
+ * If cplan is provided, then it is a cached plan containing the stmts, and
+ * the caller must have done GetCachedPlan(), causing a refcount increment.
+ * The refcount will be released when the portal is destroyed.
  *
  * If cplan is NULL, then it is the caller's responsibility to ensure that
  * the passed plan trees have adequate lifetime.  Typically this is done by

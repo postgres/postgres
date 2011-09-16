@@ -287,7 +287,7 @@ typedef struct PLySubtransactionData
 typedef struct PLyPlanObject
 {
 	PyObject_HEAD
-	void	   *plan;			/* return of an SPI_saveplan */
+	SPIPlanPtr	plan;
 	int			nargs;
 	Oid		   *types;
 	Datum	   *values;
@@ -3327,7 +3327,6 @@ PLy_spi_prepare(PyObject *self, PyObject *args)
 	PyObject   *list = NULL;
 	PyObject   *volatile optr = NULL;
 	char	   *query;
-	void	   *tmpplan;
 	volatile MemoryContext oldcontext;
 	volatile ResourceOwner oldowner;
 	volatile int nargs;
@@ -3431,12 +3430,8 @@ PLy_spi_prepare(PyObject *self, PyObject *args)
 				 SPI_result_code_string(SPI_result));
 
 		/* transfer plan from procCxt to topCxt */
-		tmpplan = plan->plan;
-		plan->plan = SPI_saveplan(tmpplan);
-		SPI_freeplan(tmpplan);
-		if (plan->plan == NULL)
-			elog(ERROR, "SPI_saveplan failed: %s",
-				 SPI_result_code_string(SPI_result));
+		if (SPI_keepplan(plan->plan))
+			elog(ERROR, "SPI_keepplan failed");
 
 		/* Commit the inner transaction, return to outer xact context */
 		ReleaseCurrentSubTransaction();

@@ -316,7 +316,8 @@ pg_get_ruledef_worker(Oid ruleoid, int prettyFlags)
 		plan = SPI_prepare(query_getrulebyoid, 1, argtypes);
 		if (plan == NULL)
 			elog(ERROR, "SPI_prepare failed for \"%s\"", query_getrulebyoid);
-		plan_getrulebyoid = SPI_saveplan(plan);
+		SPI_keepplan(plan);
+		plan_getrulebyoid = plan;
 	}
 
 	/*
@@ -450,7 +451,8 @@ pg_get_viewdef_worker(Oid viewoid, int prettyFlags)
 		plan = SPI_prepare(query_getviewrule, 2, argtypes);
 		if (plan == NULL)
 			elog(ERROR, "SPI_prepare failed for \"%s\"", query_getviewrule);
-		plan_getviewrule = SPI_saveplan(plan);
+		SPI_keepplan(plan);
+		plan_getviewrule = plan;
 	}
 
 	/*

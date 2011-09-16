@@ -32,27 +32,32 @@ typedef struct
 } _SPI_connection;
 
 /*
- * SPI plans have two states: saved or unsaved.
+ * SPI plans have three states: saved, unsaved, or temporary.
  *
- * For an unsaved plan, the _SPI_plan struct and all its subsidiary data are in
- * a dedicated memory context identified by plancxt.  An unsaved plan is good
- * at most for the current transaction, since the locks that protect it from
- * schema changes will be lost at end of transaction.  Hence the plancxt is
- * always a transient one.
+ * Ordinarily, the _SPI_plan struct itself as well as the argtypes array
+ * are in a dedicated memory context identified by plancxt (which can be
+ * really small).  All the other subsidiary state is in plancache entries
+ * identified by plancache_list (note: the list cells themselves are in
+ * plancxt).
  *
- * For a saved plan, the _SPI_plan struct and the argument type array are in
- * the plancxt (which can be really small).  All the other subsidiary state
- * is in plancache entries identified by plancache_list (note: the list cells
- * themselves are in plancxt).	We rely on plancache.c to keep the cache
- * entries up-to-date as needed.  The plancxt is a child of CacheMemoryContext
- * since it should persist until explicitly destroyed.
+ * In an unsaved plan, the plancxt as well as the plancache entries' contexts
+ * are children of the SPI procedure context, so they'll all disappear at
+ * function exit.  plancache.c also knows that the plancache entries are
+ * "unsaved", so it doesn't link them into its global list; hence they do
+ * not respond to inval events.  This is OK since we are presumably holding
+ * adequate locks to prevent other backends from messing with the tables.
  *
- * To avoid redundant coding, the representation of unsaved plans matches
- * that of saved plans, ie, plancache_list is a list of CachedPlanSource
- * structs which in turn point to CachedPlan structs.  However, in an unsaved
- * plan all these structs are just created by spi.c and are not known to
- * plancache.c.  We don't try very hard to make all their fields valid,
- * only the ones spi.c actually uses.
+ * For a saved plan, the plancxt is made a child of CacheMemoryContext
+ * since it should persist until explicitly destroyed.  Likewise, the
+ * plancache entries will be under CacheMemoryContext since we tell
+ * plancache.c to save them.  We rely on plancache.c to keep the cache
+ * entries up-to-date as needed in the face of invalidation events.
+ *
+ * There are also "temporary" SPI plans, in which the _SPI_plan struct is
+ * not even palloc'd but just exists in some function's local variable.
+ * The plancache entries are unsaved and exist under the SPI executor context,
+ * while additional data such as argtypes and list cells is loose in the SPI
+ * executor context.  Such plans can be identified by having plancxt == NULL.
  *
  * Note: if the original query string contained only whitespace and comments,
  * the plancache_list will be NIL and so there is no place to store the

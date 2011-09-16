@@ -37,11 +37,11 @@ PREPARE <replaceable class="PARAMETER">name</replaceable> [ ( <replaceable class
    <command>PREPARE</command> creates a prepared statement. A prepared
    statement is a server-side object that can be used to optimize
    performance. When the <command>PREPARE</command> statement is
-   executed, the specified statement is parsed, rewritten, and
-   planned. When an <command>EXECUTE</command> command is subsequently
-   issued, the prepared statement need only be executed. Thus, the
-   parsing, rewriting, and planning stages are only performed once,
-   instead of every time the statement is executed.
+   executed, the specified statement is parsed, analyzed, and rewritten.
+   When an <command>EXECUTE</command> command is subsequently
+   issued, the prepared statement is planned and executed.  This division
+   of labor avoids repetitive parse analysis work, while allowing
+   the execution plan to depend on the specific parameter values supplied.
   </para>
 
   <para>
@@ -65,7 +65,7 @@ PREPARE <replaceable class="PARAMETER">name</replaceable> [ ( <replaceable class
    forgotten, so it must be recreated before being used again. This
    also means that a single  prepared statement cannot be used by
    multiple simultaneous database clients; however, each client can create
-   their own prepared statement to use.  The prepared statement can be
+   their own prepared statement to use.  Prepared statements can be
    manually cleaned up using the <xref linkend="sql-deallocate"> command.
   </para>
 
@@ -127,20 +127,22 @@ PREPARE <replaceable class="PARAMETER">name</replaceable> [ ( <replaceable class
   <title>Notes</title>
 
   <para>
-   In some situations, the query plan produced for a prepared
-   statement will be inferior to the query plan that would have been
-   chosen if the statement had been submitted and executed
-   normally. This is because when the statement is planned and the
-   planner attempts to determine the optimal query plan, the actual
-   values of any parameters specified in the statement are
-   unavailable. <productname>PostgreSQL</productname> collects
-   statistics on the distribution of data in the table, and can use
-   constant values in a statement to make guesses about the likely
-   result of executing the statement. Since this data is unavailable
-   when planning prepared statements with parameters, the chosen plan
-   might be suboptimal. To examine the query plan
-   <productname>PostgreSQL</productname> has chosen for a prepared
-   statement, use <xref linkend="sql-explain">.
+   If a prepared statement is executed enough times, the server may eventually
+   decide to save and re-use a generic plan rather than re-planning each time.
+   This will occur immediately if the prepared statement has no parameters;
+   otherwise it occurs only if the generic plan appears to be not much more
+   expensive than a plan that depends on specific parameter values.
+   Typically, a generic plan will be selected only if the query's performance
+   is estimated to be fairly insensitive to the specific parameter values
+   supplied.
+  </para>
+
+  <para>
+   To examine the query plan <productname>PostgreSQL</productname> is using
+   for a prepared statement, use <xref linkend="sql-explain">.
+   If a generic plan is in use, it will contain parameter symbols
+   <literal>$<replaceable>n</></literal>, while a custom plan will have the
+   current actual parameter values substituted into it.
   </para>
 
   <para>
@@ -151,7 +153,7 @@ PREPARE <replaceable class="PARAMETER">name</replaceable> [ ( <replaceable class
   </para>
 
   <para>
-   You can see all available prepared statements of a session by querying the
+   You can see all prepared statements available in the session by querying the
    <link linkend="view-pg-prepared-statements"><structname>pg_prepared_statements</structname></link>
    system view.
   </para>

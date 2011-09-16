@@ -44,13 +44,7 @@ extern void ExplainExecuteQuery(ExecuteStmt *execstmt, ExplainState *es,
 
 /* Low-level access to stored prepared statements */
 extern void StorePreparedStatement(const char *stmt_name,
-					   Node *raw_parse_tree,
-					   const char *query_string,
-					   const char *commandTag,
-					   Oid *param_types,
-					   int num_params,
-					   int cursor_options,
-					   List *stmt_list,
+					   CachedPlanSource *plansource,
 					   bool from_sql);
 extern PreparedStatement *FetchPreparedStatement(const char *stmt_name,
 					   bool throwError);

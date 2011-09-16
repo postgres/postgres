@@ -125,9 +125,8 @@
     into multiple steps.  The state retained between steps is represented
     by two types of objects: <firstterm>prepared statements</> and
     <firstterm>portals</>.  A prepared statement represents the result of
-    parsing, semantic analysis, and (optionally) planning of a textual query
-    string.
-    A prepared statement is not necessarily ready to execute, because it might
+    parsing and semantic analysis of a textual query string.
+    A prepared statement is not in itself ready to execute, because it might
     lack specific values for <firstterm>parameters</>.  A portal represents
     a ready-to-execute or already-partially-executed statement, with any
     missing parameter values filled in.  (For <command>SELECT</> statements,
@@ -692,7 +691,7 @@
     the unnamed statement as destination is issued.  (Note that a simple
     Query message also destroys the unnamed statement.)  Named prepared
     statements must be explicitly closed before they can be redefined by
-    a Parse message, but this is not required for the unnamed statement.
+    another Parse message, but this is not required for the unnamed statement.
     Named prepared statements can also be created and accessed at the SQL
     command level, using <command>PREPARE</> and <command>EXECUTE</>.
    </para>
@@ -722,35 +721,14 @@
    </note>
 
    <para>
-    Query planning for named prepared-statement objects occurs when the Parse
-    message is processed. If a query will be repeatedly executed with
-    different parameters, it might be beneficial to send a single Parse message
-    containing a parameterized query, followed by multiple Bind
-    and Execute messages. This will avoid replanning the query on each
-    execution.
+    Query planning typically occurs when the Bind message is processed.
+    If the prepared statement has no parameters, or is executed repeatedly,
+    the server might save the created plan and re-use it during subsequent
+    Bind messages for the same prepared statement.  However, it will do so
+    only if it finds that a generic plan can be created that is not much
+    less efficient than a plan that depends on the specific parameter values
+    supplied.  This happens transparently so far as the protocol is concerned.
    </para>
-
-   <para>
-    The unnamed prepared statement is likewise planned during Parse processing
-    if the Parse message defines no parameters.  But if there are parameters,
-    query planning occurs every time Bind parameters are supplied.  This allows the
-    planner to make use of the actual values of the parameters provided by
-    each Bind message, rather than use generic estimates.
-   </para>
-
-   <note>
-    <para>
-     Query plans generated from a parameterized query might be less
-     efficient than query plans generated from an equivalent query with actual
-     parameter values substituted. The query planner cannot make decisions
-     based on actual parameter values (for example, index selectivity) when
-     planning a parameterized query assigned to a named prepared-statement
-     object.  This possible penalty is avoided when using the unnamed
-     statement, since it is not planned until actual parameter values are
-     available.  The cost is that planning must occur afresh for each Bind,
-     even if the query stays the same.
-    </para>
-   </note>
 
    <para>
     If successfully created, a named portal object lasts till the end of the
@@ -758,8 +736,8 @@
     destroyed at the end of the transaction, or as soon as the next Bind
     statement specifying the unnamed portal as destination is issued.  (Note
     that a simple Query message also destroys the unnamed portal.)  Named
-    portals must be explicitly closed before they can be redefined by a Bind
-    message, but this is not required for the unnamed portal.
+    portals must be explicitly closed before they can be redefined by another
+    Bind message, but this is not required for the unnamed portal.
     Named portals can also be created and accessed at the SQL
     command level, using <command>DECLARE CURSOR</> and <command>FETCH</>.
    </para>
@@ -1280,7 +1258,9 @@
     The frontend should also be prepared to handle an ErrorMessage
     response to SSLRequest from the server.  This would only occur if
     the server predates the addition of <acronym>SSL</acronym> support
-    to <productname>PostgreSQL</>.  In this case the connection must
+    to <productname>PostgreSQL</>.  (Such servers are now very ancient,
+    and likely do not exist in the wild anymore.)
+    In this case the connection must
     be closed, but the frontend might choose to open a fresh connection
     and proceed without requesting <acronym>SSL</acronym>.
    </para>

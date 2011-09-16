@@ -165,7 +165,7 @@ typedef struct plperl_call_data
 typedef struct plperl_query_desc
 {
 	char		qname[24];
-	void	   *plan;
+	SPIPlanPtr	plan;
 	int			nargs;
 	Oid		   *argtypes;
 	FmgrInfo   *arginfuncs;
@@ -2951,7 +2951,7 @@ plperl_spi_query(char *query)
 
 	PG_TRY();
 	{
-		void	   *plan;
+		SPIPlanPtr	plan;
 		Portal		portal;
 
 		/* Make sure the query is validly encoded */
@@ -3118,7 +3118,7 @@ plperl_spi_prepare(char *query, int argc, SV **argv)
 	plperl_query_desc *qdesc;
 	plperl_query_entry *hash_entry;
 	bool		found;
-	void	   *plan;
+	SPIPlanPtr	plan;
 	int			i;
 
 	MemoryContext oldcontext = CurrentMemoryContext;
@@ -3182,13 +3182,9 @@ plperl_spi_prepare(char *query, int argc, SV **argv)
 		 * Save the plan into permanent memory (right now it's in the
 		 * SPI procCxt, which will go away at function end).
 		 ************************************************************/
-		qdesc->plan = SPI_saveplan(plan);
-		if (qdesc->plan == NULL)
-			elog(ERROR, "SPI_saveplan() failed: %s",
-				 SPI_result_code_string(SPI_result));
-
-		/* Release the procCxt copy to avoid within-function memory leak */
-		SPI_freeplan(plan);
+		if (SPI_keepplan(plan))
+			elog(ERROR, "SPI_keepplan() failed");
+		qdesc->plan = plan;
 
 		/* Commit the inner transaction, return to outer xact context */
 		ReleaseCurrentSubTransaction();
@@ -3516,7 +3512,7 @@ plperl_spi_query_prepared(char *query, int argc, SV **argv)
 void
 plperl_spi_freeplan(char *query)
 {
-	void	   *plan;
+	SPIPlanPtr	plan;
 	plperl_query_desc *qdesc;
 	plperl_query_entry *hash_entry;
 

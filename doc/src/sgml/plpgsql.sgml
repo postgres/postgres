@@ -839,12 +839,10 @@ PREPARE <replaceable>statement_name</>(integer, integer) AS SELECT $1 &lt; $2;
      and then this prepared statement is <command>EXECUTE</>d for each
      execution of the <command>IF</> statement, with the current values
      of the <application>PL/pgSQL</application> variables supplied as
-     parameter values.
-     The query plan prepared in this way is saved for the life of the database
-     connection, as described in
-     <xref linkend="plpgsql-plan-caching">.  Normally these details are
+     parameter values.  Normally these details are
      not important to a <application>PL/pgSQL</application> user, but
      they are useful to know when trying to diagnose a problem.
+     More information appears in <xref linkend="plpgsql-plan-caching">.
     </para>
   </sect1>
 
@@ -919,10 +917,9 @@ my_record.user_id := 20;
 
     <para>
      When executing a SQL command in this way,
-     <application>PL/pgSQL</application> plans the command just once
-     and re-uses the plan on subsequent executions, for the life of
-     the database connection.  The implications of this are discussed
-     in detail in <xref linkend="plpgsql-plan-caching">.
+     <application>PL/pgSQL</application> may cache and re-use the execution
+     plan for the command, as discussed in
+     <xref linkend="plpgsql-plan-caching">.
     </para>
 
     <para>
@@ -1137,8 +1134,8 @@ EXECUTE <replaceable class="command">command-string</replaceable> <optional> INT
 
     <para>
      Also, there is no plan caching for commands executed via
-     <command>EXECUTE</command>.  Instead, the
-     command is prepared each time the statement is run. Thus the command
+     <command>EXECUTE</command>.  Instead, the command is always planned
+     each time the statement is run. Thus the command
      string can be dynamically created within the function to perform
      actions on different tables and columns.
     </para>
@@ -1206,11 +1203,11 @@ EXECUTE 'SELECT count(*) FROM '
      The important difference is that <command>EXECUTE</> will re-plan
      the command on each execution, generating a plan that is specific
      to the current parameter values; whereas
-     <application>PL/pgSQL</application> normally creates a generic plan
-     and caches it for re-use.  In situations where the best plan depends
-     strongly on the parameter values, <command>EXECUTE</> can be
-     significantly faster; while when the plan is not sensitive to parameter
-     values, re-planning will be a waste.
+     <application>PL/pgSQL</application> may otherwise create a generic plan
+     and cache it for re-use.  In situations where the best plan depends
+     strongly on the parameter values, it can be helpful to use
+     <command>EXECUTE</> to positively ensure that a generic plan is not
+     selected.
     </para>
 
     <para>
@@ -4103,17 +4100,14 @@ $$ LANGUAGE plpgsql;
     </indexterm>
     As each expression and <acronym>SQL</acronym> command is first
     executed in the function, the <application>PL/pgSQL</> interpreter
-    creates a prepared execution plan (using the
-    <acronym>SPI</acronym> manager's <function>SPI_prepare</function>
-    and <function>SPI_saveplan</function> functions).
+    parses and analyzes the command to create a prepared statement,
+    using the <acronym>SPI</acronym> manager's
+    <function>SPI_prepare</function> function.
     Subsequent visits to that expression or command
-    reuse the prepared plan.  Thus, a function with conditional code
-    that contains many statements for which execution plans might be
-    required will only prepare and save those plans that are really
-    used during the lifetime of the database connection.  This can
-    substantially reduce the total amount of time required to parse
-    and generate execution plans for the statements in a
-    <application>PL/pgSQL</> function. A disadvantage is that errors
+    reuse the prepared statement.  Thus, a function with conditional code
+    paths that are seldom visited will never incur the overhead of
+    analyzing those commands that are never executed within the current
+    session.  A disadvantage is that errors
     in a specific expression or command cannot be detected until that
     part of the function is reached in execution.  (Trivial syntax
     errors will be detected during the initial parsing pass, but
@@ -4121,46 +4115,31 @@ $$ LANGUAGE plpgsql;
    </para>
 
    <para>
-    A saved plan will be re-planned automatically if there is any schema
-    change to any table used in the query, or if any user-defined function
-    used in the query is redefined.  This makes the re-use of prepared plans
-    transparent in most cases, but there are corner cases where a stale plan
-    might be re-used.  An example is that dropping and re-creating a
-    user-defined operator won't affect already-cached plans; they'll continue
-    to call the original operator's underlying function, if that has not been
-    changed.  When necessary, the cache can be flushed by starting a fresh
-    database session.
+    <application>PL/pgSQL</> (or more precisely, the SPI manager) can
+    furthermore attempt to cache the execution plan associated with any
+    particular prepared statement.  If a cached plan is not used, then
+    a fresh execution plan is generated on each visit to the statement,
+    and the current parameter values (that is, <application>PL/pgSQL</>
+    variable values) can be used to optimize the selected plan.  If the
+    statement has no parameters, or is executed many times, the SPI manager
+    will consider creating a <firstterm>generic</> plan that is not dependent
+    on specific parameter values, and caching that for re-use.  Typically
+    this will happen only if the execution plan is not very sensitive to
+    the values of the <application>PL/pgSQL</> variables referenced in it.
+    If it is, generating a plan each time is a net win.
    </para>
 
    <para>
-    Because <application>PL/pgSQL</application> saves execution plans
-    in this way, SQL commands that appear directly in a
+    Because <application>PL/pgSQL</application> saves prepared statements
+    and sometimes execution plans in this way,
+    SQL commands that appear directly in a
     <application>PL/pgSQL</application> function must refer to the
     same tables and columns on every execution; that is, you cannot use
     a parameter as the name of a table or column in an SQL command.  To get
     around this restriction, you can construct dynamic commands using
     the <application>PL/pgSQL</application> <command>EXECUTE</command>
-    statement &mdash; at the price of constructing a new execution plan on
-    every execution.
-   </para>
-
-   <para>
-    Another important point is that the prepared plans are parameterized
-    to allow the values of <application>PL/pgSQL</application> variables
-    to change from one use to the next, as discussed in detail above.
-    Sometimes this means that a plan is less efficient than it would be
-    if generated for a specific variable value.  As an example, consider
-<programlisting>
-SELECT * INTO myrec FROM dictionary WHERE word LIKE search_term;
-</programlisting>
-    where <literal>search_term</> is a <application>PL/pgSQL</application>
-    variable.  The cached plan for this query will never use an index on
-    <structfield>word</>, since the planner cannot assume that the
-    <literal>LIKE</> pattern will be left-anchored at run time.  To use
-    an index the query must be planned with a specific constant
-    <literal>LIKE</> pattern provided.  This is another situation where
-    <command>EXECUTE</command> can be used to force a new plan to be
-    generated for each execution.
+    statement &mdash; at the price of performing new parse analysis and
+    constructing a new execution plan on every execution.
    </para>
 
     <para>
@@ -4168,14 +4147,14 @@ SELECT * INTO myrec FROM dictionary WHERE word LIKE search_term;
      connection.  When fields of a record variable are used in
      expressions or statements, the data types of the fields must not
      change from one call of the function to the next, since each
-     expression will be planned using the data type that is present
+     expression will be analyzed using the data type that is present
      when the expression is first reached.  <command>EXECUTE</command> can be
      used to get around this problem when necessary.
     </para>
 
     <para>
      If the same function is used as a trigger for more than one table,
-     <application>PL/pgSQL</application> prepares and caches plans
+     <application>PL/pgSQL</application> prepares and caches statements
      independently for each such table &mdash; that is, there is a cache
      for each trigger function and table combination, not just for each
      function.  This alleviates some of the problems with varying
@@ -4186,14 +4165,14 @@ SELECT * INTO myrec FROM dictionary WHERE word LIKE search_term;
 
     <para>
      Likewise, functions having polymorphic argument types have a separate
-     plan cache for each combination of actual argument types they have been
-     invoked for, so that data type differences do not cause unexpected
+     statement cache for each combination of actual argument types they have
+     been invoked for, so that data type differences do not cause unexpected
      failures.
     </para>
 
    <para>
-    Plan caching can sometimes have surprising effects on the interpretation
-    of time-sensitive values.  For example there
+    Statement caching can sometimes have surprising effects on the
+    interpretation of time-sensitive values.  For example there
     is a difference between what these two functions do:
 
 <programlisting>
@@ -4221,15 +4200,17 @@ $$ LANGUAGE plpgsql;
     <para>
      In the case of <function>logfunc1</function>, the
      <productname>PostgreSQL</productname> main parser knows when
-     preparing the plan for the <command>INSERT</command> that the
+     analyzing the <command>INSERT</command> that the
      string <literal>'now'</literal> should be interpreted as
      <type>timestamp</type>, because the target column of
      <classname>logtable</classname> is of that type. Thus,
-     <literal>'now'</literal> will be converted to a constant when the
-     <command>INSERT</command> is planned, and then used in all
+     <literal>'now'</literal> will be converted to a <type>timestamp</type>
+     constant when the
+     <command>INSERT</command> is analyzed, and then used in all
      invocations of <function>logfunc1</function> during the lifetime
      of the session. Needless to say, this isn't what the programmer
-     wanted.
+     wanted.  A better idea is to use the <literal>now()</> or
+     <literal>current_timestamp</> function.
     </para>
 
     <para>
@@ -4243,7 +4224,9 @@ $$ LANGUAGE plpgsql;
      string to the <type>timestamp</type> type by calling the
      <function>text_out</function> and <function>timestamp_in</function>
      functions for the conversion.  So, the computed time stamp is updated
-     on each execution as the programmer expects.
+     on each execution as the programmer expects.  Even though this
+     happens to work as expected, it's not terribly efficient, so
+     use of the <literal>now()</> function would still be a better idea.
     </para>
 
   </sect2>

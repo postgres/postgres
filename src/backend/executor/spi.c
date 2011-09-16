@@ -56,8 +56,7 @@ static int _SPI_execute_plan(SPIPlanPtr plan, ParamListInfo paramLI,
 				  bool read_only, bool fire_triggers, long tcount);
 
 static ParamListInfo _SPI_convert_params(int nargs, Oid *argtypes,
-					Datum *Values, const char *Nulls,
-					int pflags);
+					Datum *Values, const char *Nulls);
 
 static int	_SPI_pquery(QueryDesc *queryDesc, bool fire_triggers, long tcount);
 
@@ -67,7 +66,7 @@ static void _SPI_cursor_operation(Portal portal,
 					  FetchDirection direction, long count,
 					  DestReceiver *dest);
 
-static SPIPlanPtr _SPI_copy_plan(SPIPlanPtr plan, MemoryContext parentcxt);
+static SPIPlanPtr _SPI_make_plan_non_temp(SPIPlanPtr plan);
 static SPIPlanPtr _SPI_save_plan(SPIPlanPtr plan);
 
 static int	_SPI_begin_call(bool execmem);
@@ -391,8 +390,7 @@ SPI_execute_plan(SPIPlanPtr plan, Datum *Values, const char *Nulls,
 
 	res = _SPI_execute_plan(plan,
 							_SPI_convert_params(plan->nargs, plan->argtypes,
-												Values, Nulls,
-												0),
+												Values, Nulls),
 							InvalidSnapshot, InvalidSnapshot,
 							read_only, true, tcount);
 
@@ -462,8 +460,7 @@ SPI_execute_snapshot(SPIPlanPtr plan,
 
 	res = _SPI_execute_plan(plan,
 							_SPI_convert_params(plan->nargs, plan->argtypes,
-												Values, Nulls,
-												0),
+												Values, Nulls),
 							snapshot, crosscheck_snapshot,
 							read_only, fire_triggers, tcount);
 
@@ -474,11 +471,8 @@ SPI_execute_snapshot(SPIPlanPtr plan,
 /*
  * SPI_execute_with_args -- plan and execute a query with supplied arguments
  *
- * This is functionally comparable to SPI_prepare followed by
- * SPI_execute_plan, except that since we know the plan will be used only
- * once, we can tell the planner to rely on the parameter values as constants.
- * This eliminates potential performance disadvantages compared to
- * inserting the parameter values directly into the query text.
+ * This is functionally equivalent to SPI_prepare followed by
+ * SPI_execute_plan.
  */
 int
 SPI_execute_with_args(const char *src,
@@ -509,12 +503,9 @@ SPI_execute_with_args(const char *src,
 	plan.parserSetupArg = NULL;
 
 	paramLI = _SPI_convert_params(nargs, argtypes,
-								  Values, Nulls,
-								  PARAM_FLAG_CONST);
+								  Values, Nulls);
 
 	_SPI_prepare_plan(src, &plan, paramLI);
-
-	/* We don't need to copy the plan since it will be thrown away anyway */
 
 	res = _SPI_execute_plan(&plan, paramLI,
 							InvalidSnapshot, InvalidSnapshot,
@@ -558,7 +549,7 @@ SPI_prepare_cursor(const char *src, int nargs, Oid *argtypes,
 	_SPI_prepare_plan(src, &plan, NULL);
 
 	/* copy plan to procedure context */
-	result = _SPI_copy_plan(&plan, _SPI_current->procCxt);
+	result = _SPI_make_plan_non_temp(&plan);
 
 	_SPI_end_call(true);
 
@@ -595,11 +586,37 @@ SPI_prepare_params(const char *src,
 	_SPI_prepare_plan(src, &plan, NULL);
 
 	/* copy plan to procedure context */
-	result = _SPI_copy_plan(&plan, _SPI_current->procCxt);
+	result = _SPI_make_plan_non_temp(&plan);
 
 	_SPI_end_call(true);
 
 	return result;
+}
+
+int
+SPI_keepplan(SPIPlanPtr plan)
+{
+	ListCell   *lc;
+
+	if (plan == NULL || plan->magic != _SPI_PLAN_MAGIC || plan->saved)
+		return SPI_ERROR_ARGUMENT;
+
+	/*
+	 * Mark it saved, reparent it under CacheMemoryContext, and mark all the
+	 * component CachedPlanSources as saved.  This sequence cannot fail
+	 * partway through, so there's no risk of long-term memory leakage.
+	 */
+	plan->saved = true;
+	MemoryContextSetParent(plan->plancxt, CacheMemoryContext);
+
+	foreach(lc, plan->plancache_list)
+	{
+		CachedPlanSource *plansource = (CachedPlanSource *) lfirst(lc);
+
+		SaveCachedPlan(plansource);
+	}
+
+	return 0;
 }
 
 SPIPlanPtr
@@ -607,8 +624,7 @@ SPI_saveplan(SPIPlanPtr plan)
 {
 	SPIPlanPtr	newplan;
 
-	/* We don't currently support copying an already-saved plan */
-	if (plan == NULL || plan->magic != _SPI_PLAN_MAGIC || plan->saved)
+	if (plan == NULL || plan->magic != _SPI_PLAN_MAGIC)
 	{
 		SPI_result = SPI_ERROR_ARGUMENT;
 		return NULL;
@@ -620,8 +636,7 @@ SPI_saveplan(SPIPlanPtr plan)
 
 	newplan = _SPI_save_plan(plan);
 
-	_SPI_curid--;
-	SPI_result = 0;
+	SPI_result = _SPI_end_call(false);
 
 	return newplan;
 }
@@ -629,20 +644,17 @@ SPI_saveplan(SPIPlanPtr plan)
 int
 SPI_freeplan(SPIPlanPtr plan)
 {
+	ListCell   *lc;
+
 	if (plan == NULL || plan->magic != _SPI_PLAN_MAGIC)
 		return SPI_ERROR_ARGUMENT;
 
-	/* If plancache.c owns the plancache entries, we must release them */
-	if (plan->saved)
+	/* Release the plancache entries */
+	foreach(lc, plan->plancache_list)
 	{
-		ListCell   *lc;
+		CachedPlanSource *plansource = (CachedPlanSource *) lfirst(lc);
 
-		foreach(lc, plan->plancache_list)
-		{
-			CachedPlanSource *plansource = (CachedPlanSource *) lfirst(lc);
-
-			DropCachedPlan(plansource);
-		}
+		DropCachedPlan(plansource);
 	}
 
 	/* Now get rid of the _SPI_plan and subsidiary data in its plancxt */
@@ -1020,8 +1032,7 @@ SPI_cursor_open(const char *name, SPIPlanPtr plan,
 
 	/* build transient ParamListInfo in caller's context */
 	paramLI = _SPI_convert_params(plan->nargs, plan->argtypes,
-								  Values, Nulls,
-								  0);
+								  Values, Nulls);
 
 	portal = SPI_cursor_open_internal(name, plan, paramLI, read_only);
 
@@ -1036,9 +1047,7 @@ SPI_cursor_open(const char *name, SPIPlanPtr plan,
 /*
  * SPI_cursor_open_with_args()
  *
- * Parse and plan a query and open it as a portal.	Like SPI_execute_with_args,
- * we can tell the planner to rely on the parameter values as constants,
- * because the plan will only be used once.
+ * Parse and plan a query and open it as a portal.
  */
 Portal
 SPI_cursor_open_with_args(const char *name,
@@ -1071,8 +1080,7 @@ SPI_cursor_open_with_args(const char *name,
 
 	/* build transient ParamListInfo in executor context */
 	paramLI = _SPI_convert_params(nargs, argtypes,
-								  Values, Nulls,
-								  PARAM_FLAG_CONST);
+								  Values, Nulls);
 
 	_SPI_prepare_plan(src, &plan, paramLI);
 
@@ -1080,9 +1088,6 @@ SPI_cursor_open_with_args(const char *name,
 
 	/* Adjust stack so that SPI_cursor_open_internal doesn't complain */
 	_SPI_curid--;
-
-	/* SPI_cursor_open_internal must be called in procedure memory context */
-	_SPI_procmem();
 
 	result = SPI_cursor_open_internal(name, &plan, paramLI, read_only);
 
@@ -1148,7 +1153,7 @@ SPI_cursor_open_internal(const char *name, SPIPlanPtr plan,
 	plansource = (CachedPlanSource *) linitial(plan->plancache_list);
 
 	/* Push the SPI stack */
-	if (_SPI_begin_call(false) < 0)
+	if (_SPI_begin_call(true) < 0)
 		elog(ERROR, "SPI_cursor_open called while not connected");
 
 	/* Reset SPI result (note we deliberately don't touch lastoid) */
@@ -1174,22 +1179,27 @@ SPI_cursor_open_internal(const char *name, SPIPlanPtr plan,
 									   plansource->query_string);
 
 	/*
-	 * Note: we mustn't have any failure occur between RevalidateCachedPlan
-	 * and PortalDefineQuery; that would result in leaking our plancache
-	 * refcount.
+	 * Note: for a saved plan, we mustn't have any failure occur between
+	 * GetCachedPlan and PortalDefineQuery; that would result in leaking our
+	 * plancache refcount.
 	 */
-	if (plan->saved)
+
+	/* Replan if needed, and increment plan refcount for portal */
+	cplan = GetCachedPlan(plansource, paramLI, false);
+	stmt_list = cplan->stmt_list;
+
+	if (!plan->saved)
 	{
-		/* Replan if needed, and increment plan refcount for portal */
-		cplan = RevalidateCachedPlan(plansource, false);
-		stmt_list = cplan->stmt_list;
-	}
-	else
-	{
-		/* No replan, but copy the plan into the portal's context */
+		/*
+		 * We don't want the portal to depend on an unsaved CachedPlanSource,
+		 * so must copy the plan into the portal's context.  An error here
+		 * will result in leaking our refcount on the plan, but it doesn't
+		 * matter because the plan is unsaved and hence transient anyway.
+		 */
 		oldcontext = MemoryContextSwitchTo(PortalGetHeapMemory(portal));
-		stmt_list = copyObject(plansource->plan->stmt_list);
+		stmt_list = copyObject(stmt_list);
 		MemoryContextSwitchTo(oldcontext);
+		ReleaseCachedPlan(cplan, false);
 		cplan = NULL;			/* portal shouldn't depend on cplan */
 	}
 
@@ -1238,9 +1248,9 @@ SPI_cursor_open_internal(const char *name, SPIPlanPtr plan,
 	/*
 	 * If told to be read-only, we'd better check for read-only queries. This
 	 * can't be done earlier because we need to look at the finished, planned
-	 * queries.  (In particular, we don't want to do it between
-	 * RevalidateCachedPlan and PortalDefineQuery, because throwing an error
-	 * between those steps would result in leaking our plancache refcount.)
+	 * queries.  (In particular, we don't want to do it between GetCachedPlan
+	 * and PortalDefineQuery, because throwing an error between those steps
+	 * would result in leaking our plancache refcount.)
 	 */
 	if (read_only)
 	{
@@ -1288,7 +1298,7 @@ SPI_cursor_open_internal(const char *name, SPIPlanPtr plan,
 	Assert(portal->strategy != PORTAL_MULTI_QUERY);
 
 	/* Pop the SPI stack */
-	_SPI_end_call(false);
+	_SPI_end_call(true);
 
 	/* Return the created portal */
 	return portal;
@@ -1420,7 +1430,6 @@ bool
 SPI_is_cursor_plan(SPIPlanPtr plan)
 {
 	CachedPlanSource *plansource;
-	CachedPlan *cplan;
 
 	if (plan == NULL || plan->magic != _SPI_PLAN_MAGIC)
 	{
@@ -1435,19 +1444,11 @@ SPI_is_cursor_plan(SPIPlanPtr plan)
 	}
 	plansource = (CachedPlanSource *) linitial(plan->plancache_list);
 
-	/* Need _SPI_begin_call in case replanning invokes SPI-using functions */
-	SPI_result = _SPI_begin_call(false);
-	if (SPI_result < 0)
-		return false;
-
-	if (plan->saved)
-	{
-		/* Make sure the plan is up to date */
-		cplan = RevalidateCachedPlan(plansource, true);
-		ReleaseCachedPlan(cplan, true);
-	}
-
-	_SPI_end_call(false);
+	/*
+	 * We used to force revalidation of the cached plan here, but that seems
+	 * unnecessary: invalidation could mean a change in the rowtype of the
+	 * tuples returned by a plan, but not whether it returns tuples at all.
+	 */
 	SPI_result = 0;
 
 	/* Does it return tuples? */
@@ -1466,25 +1467,18 @@ SPI_is_cursor_plan(SPIPlanPtr plan)
 bool
 SPI_plan_is_valid(SPIPlanPtr plan)
 {
+	ListCell   *lc;
+
 	Assert(plan->magic == _SPI_PLAN_MAGIC);
-	if (plan->saved)
-	{
-		ListCell   *lc;
 
-		foreach(lc, plan->plancache_list)
-		{
-			CachedPlanSource *plansource = (CachedPlanSource *) lfirst(lc);
-
-			if (!CachedPlanIsValid(plansource))
-				return false;
-		}
-		return true;
-	}
-	else
+	foreach(lc, plan->plancache_list)
 	{
-		/* An unsaved plan is assumed valid for its (short) lifetime */
-		return true;
+		CachedPlanSource *plansource = (CachedPlanSource *) lfirst(lc);
+
+		if (!CachedPlanIsValid(plansource))
+			return false;
 	}
+	return true;
 }
 
 /*
@@ -1646,7 +1640,7 @@ spi_printtup(TupleTableSlot *slot, DestReceiver *self)
  */
 
 /*
- * Parse and plan a querystring.
+ * Parse and analyze a querystring.
  *
  * At entry, plan->argtypes and plan->nargs (or alternatively plan->parserSetup
  * and plan->parserSetupArg) must be valid, as must plan->cursor_options.
@@ -1656,8 +1650,10 @@ spi_printtup(TupleTableSlot *slot, DestReceiver *self)
  * param type information embedded in the plan!
  *
  * Results are stored into *plan (specifically, plan->plancache_list).
- * Note however that the result trees are all in CurrentMemoryContext
- * and need to be copied somewhere to survive.
+ * Note that the result data is all in CurrentMemoryContext or child contexts
+ * thereof; in practice this means it is in the SPI executor context, and
+ * what we are creating is a "temporary" SPIPlan.  Cruft generated during
+ * parsing is also left in CurrentMemoryContext.
  */
 static void
 _SPI_prepare_plan(const char *src, SPIPlanPtr plan, ParamListInfo boundParams)
@@ -1682,8 +1678,8 @@ _SPI_prepare_plan(const char *src, SPIPlanPtr plan, ParamListInfo boundParams)
 	raw_parsetree_list = pg_parse_query(src);
 
 	/*
-	 * Do parse analysis, rule rewrite, and planning for each raw parsetree,
-	 * then cons up a phony plancache entry for each one.
+	 * Do parse analysis and rule rewrite for each raw parsetree, storing
+	 * the results into unsaved plancache entries.
 	 */
 	plancache_list = NIL;
 
@@ -1692,7 +1688,14 @@ _SPI_prepare_plan(const char *src, SPIPlanPtr plan, ParamListInfo boundParams)
 		Node	   *parsetree = (Node *) lfirst(list_item);
 		List	   *stmt_list;
 		CachedPlanSource *plansource;
-		CachedPlan *cplan;
+
+		/*
+		 * Create the CachedPlanSource before we do parse analysis, since
+		 * it needs to see the unmodified raw parse tree.
+		 */
+		plansource = CreateCachedPlan(parsetree,
+									  src,
+									  CreateCommandTag(parsetree));
 
 		/*
 		 * Parameter datatypes are driven by parserSetup hook if provided,
@@ -1701,41 +1704,29 @@ _SPI_prepare_plan(const char *src, SPIPlanPtr plan, ParamListInfo boundParams)
 		if (plan->parserSetup != NULL)
 		{
 			Assert(plan->nargs == 0);
-			/* Need a copyObject here to keep parser from modifying raw tree */
-			stmt_list = pg_analyze_and_rewrite_params(copyObject(parsetree),
+			stmt_list = pg_analyze_and_rewrite_params(parsetree,
 													  src,
 													  plan->parserSetup,
 													  plan->parserSetupArg);
 		}
 		else
 		{
-			/* Need a copyObject here to keep parser from modifying raw tree */
-			stmt_list = pg_analyze_and_rewrite(copyObject(parsetree),
+			stmt_list = pg_analyze_and_rewrite(parsetree,
 											   src,
 											   plan->argtypes,
 											   plan->nargs);
 		}
-		stmt_list = pg_plan_queries(stmt_list, cursor_options, boundParams);
 
-		plansource = (CachedPlanSource *) palloc0(sizeof(CachedPlanSource));
-		cplan = (CachedPlan *) palloc0(sizeof(CachedPlan));
-
-		plansource->raw_parse_tree = parsetree;
-		/* cast-away-const here is a bit ugly, but there's no reason to copy */
-		plansource->query_string = (char *) src;
-		plansource->commandTag = CreateCommandTag(parsetree);
-		plansource->param_types = plan->argtypes;
-		plansource->num_params = plan->nargs;
-		plansource->parserSetup = plan->parserSetup;
-		plansource->parserSetupArg = plan->parserSetupArg;
-		plansource->fully_planned = true;
-		plansource->fixed_result = false;
-		/* no need to set search_path, generation or saved_xmin */
-		plansource->resultDesc = PlanCacheComputeResultDesc(stmt_list);
-		plansource->plan = cplan;
-
-		cplan->stmt_list = stmt_list;
-		cplan->fully_planned = true;
+		/* Finish filling in the CachedPlanSource */
+		CompleteCachedPlan(plansource,
+						   stmt_list,
+						   NULL,
+						   plan->argtypes,
+						   plan->nargs,
+						   plan->parserSetup,
+						   plan->parserSetupArg,
+						   cursor_options,
+						   false);	/* not fixed result */
 
 		plancache_list = lappend(plancache_list, plansource);
 	}
@@ -1824,18 +1815,12 @@ _SPI_execute_plan(SPIPlanPtr plan, ParamListInfo paramLI,
 
 		spierrcontext.arg = (void *) plansource->query_string;
 
-		if (plan->saved)
-		{
-			/* Replan if needed, and increment plan refcount locally */
-			cplan = RevalidateCachedPlan(plansource, true);
-			stmt_list = cplan->stmt_list;
-		}
-		else
-		{
-			/* No replan here */
-			cplan = NULL;
-			stmt_list = plansource->plan->stmt_list;
-		}
+		/*
+		 * Replan if needed, and increment plan refcount.  If it's a saved
+		 * plan, the refcount must be backed by the CurrentResourceOwner.
+		 */
+		cplan = GetCachedPlan(plansource, paramLI, plan->saved);
+		stmt_list = cplan->stmt_list;
 
 		/*
 		 * In the default non-read-only case, get a new snapshot, replacing
@@ -1966,8 +1951,7 @@ _SPI_execute_plan(SPIPlanPtr plan, ParamListInfo paramLI,
 		}
 
 		/* Done with this plan, so release refcount */
-		if (cplan)
-			ReleaseCachedPlan(cplan, true);
+		ReleaseCachedPlan(cplan, plan->saved);
 		cplan = NULL;
 
 		/*
@@ -1987,7 +1971,7 @@ fail:
 
 	/* We no longer need the cached plan refcount, if any */
 	if (cplan)
-		ReleaseCachedPlan(cplan, true);
+		ReleaseCachedPlan(cplan, plan->saved);
 
 	/*
 	 * Pop the error context stack
@@ -2018,8 +2002,7 @@ fail:
  */
 static ParamListInfo
 _SPI_convert_params(int nargs, Oid *argtypes,
-					Datum *Values, const char *Nulls,
-					int pflags)
+					Datum *Values, const char *Nulls)
 {
 	ParamListInfo paramLI;
 
@@ -2043,7 +2026,7 @@ _SPI_convert_params(int nargs, Oid *argtypes,
 
 			prm->value = Values[i];
 			prm->isnull = (Nulls && Nulls[i] == 'n');
-			prm->pflags = pflags;
+			prm->pflags = PARAM_FLAG_CONST;
 			prm->ptype = argtypes[i];
 		}
 	}
@@ -2283,23 +2266,98 @@ _SPI_checktuples(void)
 }
 
 /*
- * Make an "unsaved" copy of the given plan, in a child context of parentcxt.
+ * Convert a "temporary" SPIPlan into an "unsaved" plan.
+ *
+ * The passed _SPI_plan struct is on the stack, and all its subsidiary data
+ * is in or under the current SPI executor context.  Copy the plan into the
+ * SPI procedure context so it will survive _SPI_end_call().  To minimize
+ * data copying, this destructively modifies the input plan, by taking the
+ * plancache entries away from it and reparenting them to the new SPIPlan.
  */
 static SPIPlanPtr
-_SPI_copy_plan(SPIPlanPtr plan, MemoryContext parentcxt)
+_SPI_make_plan_non_temp(SPIPlanPtr plan)
+{
+	SPIPlanPtr	newplan;
+	MemoryContext parentcxt = _SPI_current->procCxt;
+	MemoryContext plancxt;
+	MemoryContext oldcxt;
+	ListCell   *lc;
+
+	/* Assert the input is a temporary SPIPlan */
+	Assert(plan->magic == _SPI_PLAN_MAGIC);
+	Assert(plan->plancxt == NULL);
+
+	/*
+	 * Create a memory context for the plan, underneath the procedure context.
+	 * We don't expect the plan to be very large, so use smaller-than-default
+	 * alloc parameters.
+	 */
+	plancxt = AllocSetContextCreate(parentcxt,
+									"SPI Plan",
+									ALLOCSET_SMALL_MINSIZE,
+									ALLOCSET_SMALL_INITSIZE,
+									ALLOCSET_SMALL_MAXSIZE);
+	oldcxt = MemoryContextSwitchTo(plancxt);
+
+	/* Copy the SPI_plan struct and subsidiary data into the new context */
+	newplan = (SPIPlanPtr) palloc(sizeof(_SPI_plan));
+	newplan->magic = _SPI_PLAN_MAGIC;
+	newplan->saved = false;
+	newplan->plancache_list = NIL;
+	newplan->plancxt = plancxt;
+	newplan->cursor_options = plan->cursor_options;
+	newplan->nargs = plan->nargs;
+	if (plan->nargs > 0)
+	{
+		newplan->argtypes = (Oid *) palloc(plan->nargs * sizeof(Oid));
+		memcpy(newplan->argtypes, plan->argtypes, plan->nargs * sizeof(Oid));
+	}
+	else
+		newplan->argtypes = NULL;
+	newplan->parserSetup = plan->parserSetup;
+	newplan->parserSetupArg = plan->parserSetupArg;
+
+	/*
+	 * Reparent all the CachedPlanSources into the procedure context.  In
+	 * theory this could fail partway through due to the pallocs, but we
+	 * don't care too much since both the procedure context and the executor
+	 * context would go away on error.
+	 */
+	foreach(lc, plan->plancache_list)
+	{
+		CachedPlanSource *plansource = (CachedPlanSource *) lfirst(lc);
+
+		CachedPlanSetParentContext(plansource, parentcxt);
+
+		/* Build new list, with list cells in plancxt */
+		newplan->plancache_list = lappend(newplan->plancache_list, plansource);
+	}
+
+	MemoryContextSwitchTo(oldcxt);
+
+	/* For safety, unlink the CachedPlanSources from the temporary plan */
+	plan->plancache_list = NIL;
+
+	return newplan;
+}
+
+/*
+ * Make a "saved" copy of the given plan.
+ */
+static SPIPlanPtr
+_SPI_save_plan(SPIPlanPtr plan)
 {
 	SPIPlanPtr	newplan;
 	MemoryContext plancxt;
 	MemoryContext oldcxt;
 	ListCell   *lc;
 
-	Assert(!plan->saved);		/* not currently supported */
-
 	/*
 	 * Create a memory context for the plan.  We don't expect the plan to be
-	 * very large, so use smaller-than-default alloc parameters.
+	 * very large, so use smaller-than-default alloc parameters.  It's a
+	 * transient context until we finish copying everything.
 	 */
-	plancxt = AllocSetContextCreate(parentcxt,
+	plancxt = AllocSetContextCreate(CurrentMemoryContext,
 									"SPI Plan",
 									ALLOCSET_SMALL_MINSIZE,
 									ALLOCSET_SMALL_INITSIZE,
@@ -2324,113 +2382,32 @@ _SPI_copy_plan(SPIPlanPtr plan, MemoryContext parentcxt)
 	newplan->parserSetup = plan->parserSetup;
 	newplan->parserSetupArg = plan->parserSetupArg;
 
+	/* Copy all the plancache entries */
 	foreach(lc, plan->plancache_list)
 	{
 		CachedPlanSource *plansource = (CachedPlanSource *) lfirst(lc);
 		CachedPlanSource *newsource;
-		CachedPlan *cplan;
-		CachedPlan *newcplan;
 
-		/* Note: we assume we don't need to revalidate the plan */
-		cplan = plansource->plan;
-
-		newsource = (CachedPlanSource *) palloc0(sizeof(CachedPlanSource));
-		newcplan = (CachedPlan *) palloc0(sizeof(CachedPlan));
-
-		newsource->raw_parse_tree = copyObject(plansource->raw_parse_tree);
-		newsource->query_string = pstrdup(plansource->query_string);
-		newsource->commandTag = plansource->commandTag;
-		newsource->param_types = newplan->argtypes;
-		newsource->num_params = newplan->nargs;
-		newsource->parserSetup = newplan->parserSetup;
-		newsource->parserSetupArg = newplan->parserSetupArg;
-		newsource->fully_planned = plansource->fully_planned;
-		newsource->fixed_result = plansource->fixed_result;
-		/* no need to worry about seach_path, generation or saved_xmin */
-		if (plansource->resultDesc)
-			newsource->resultDesc = CreateTupleDescCopy(plansource->resultDesc);
-		newsource->plan = newcplan;
-
-		newcplan->stmt_list = copyObject(cplan->stmt_list);
-		newcplan->fully_planned = cplan->fully_planned;
-
+		newsource = CopyCachedPlan(plansource);
 		newplan->plancache_list = lappend(newplan->plancache_list, newsource);
 	}
 
 	MemoryContextSwitchTo(oldcxt);
-
-	return newplan;
-}
-
-/*
- * Make a "saved" copy of the given plan, entrusting everything to plancache.c
- */
-static SPIPlanPtr
-_SPI_save_plan(SPIPlanPtr plan)
-{
-	SPIPlanPtr	newplan;
-	MemoryContext plancxt;
-	MemoryContext oldcxt;
-	ListCell   *lc;
-
-	Assert(!plan->saved);		/* not currently supported */
 
 	/*
-	 * Create a memory context for the plan.  We don't expect the plan to be
-	 * very large, so use smaller-than-default alloc parameters.
+	 * Mark it saved, reparent it under CacheMemoryContext, and mark all the
+	 * component CachedPlanSources as saved.  This sequence cannot fail
+	 * partway through, so there's no risk of long-term memory leakage.
 	 */
-	plancxt = AllocSetContextCreate(CacheMemoryContext,
-									"SPI Plan",
-									ALLOCSET_SMALL_MINSIZE,
-									ALLOCSET_SMALL_INITSIZE,
-									ALLOCSET_SMALL_MAXSIZE);
-	oldcxt = MemoryContextSwitchTo(plancxt);
-
-	/* Copy the SPI plan into its own context */
-	newplan = (SPIPlanPtr) palloc(sizeof(_SPI_plan));
-	newplan->magic = _SPI_PLAN_MAGIC;
 	newplan->saved = true;
-	newplan->plancache_list = NIL;
-	newplan->plancxt = plancxt;
-	newplan->cursor_options = plan->cursor_options;
-	newplan->nargs = plan->nargs;
-	if (plan->nargs > 0)
-	{
-		newplan->argtypes = (Oid *) palloc(plan->nargs * sizeof(Oid));
-		memcpy(newplan->argtypes, plan->argtypes, plan->nargs * sizeof(Oid));
-	}
-	else
-		newplan->argtypes = NULL;
-	newplan->parserSetup = plan->parserSetup;
-	newplan->parserSetupArg = plan->parserSetupArg;
+	MemoryContextSetParent(newplan->plancxt, CacheMemoryContext);
 
-	foreach(lc, plan->plancache_list)
+	foreach(lc, newplan->plancache_list)
 	{
 		CachedPlanSource *plansource = (CachedPlanSource *) lfirst(lc);
-		CachedPlanSource *newsource;
-		CachedPlan *cplan;
 
-		/* Note: we assume we don't need to revalidate the plan */
-		cplan = plansource->plan;
-
-		newsource = CreateCachedPlan(plansource->raw_parse_tree,
-									 plansource->query_string,
-									 plansource->commandTag,
-									 newplan->argtypes,
-									 newplan->nargs,
-									 newplan->cursor_options,
-									 cplan->stmt_list,
-									 true,
-									 false);
-		if (newplan->parserSetup != NULL)
-			CachedPlanSetParserHook(newsource,
-									newplan->parserSetup,
-									newplan->parserSetupArg);
-
-		newplan->plancache_list = lappend(newplan->plancache_list, newsource);
+		SaveCachedPlan(plansource);
 	}
-
-	MemoryContextSwitchTo(oldcxt);
 
 	return newplan;
 }

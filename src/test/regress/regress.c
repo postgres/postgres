@@ -622,9 +622,8 @@ ttdummy(PG_FUNCTION_ARGS)
 		if (pplan == NULL)
 			elog(ERROR, "ttdummy (%s): SPI_prepare returned %d", relname, SPI_result);
 
-		pplan = SPI_saveplan(pplan);
-		if (pplan == NULL)
-			elog(ERROR, "ttdummy (%s): SPI_saveplan returned %d", relname, SPI_result);
+		if (SPI_keepplan(pplan))
+			elog(ERROR, "ttdummy (%s): SPI_keepplan failed", relname);
 
 		splan = pplan;
 	}

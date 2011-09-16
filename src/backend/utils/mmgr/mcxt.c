@@ -343,6 +343,18 @@ GetMemoryChunkContext(void *pointer)
 }
 
 /*
+ * MemoryContextGetParent
+ *		Get the parent context (if any) of the specified context
+ */
+MemoryContext
+MemoryContextGetParent(MemoryContext context)
+{
+	AssertArg(MemoryContextIsValid(context));
+
+	return context->parent;
+}
+
+/*
  * MemoryContextIsEmpty
  *		Is a memory context empty of any allocated space?
  */

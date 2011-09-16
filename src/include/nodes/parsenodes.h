@@ -1996,7 +1996,10 @@ typedef struct SecLabelStmt
 #define CURSOR_OPT_NO_SCROLL	0x0004	/* NO SCROLL explicitly given */
 #define CURSOR_OPT_INSENSITIVE	0x0008	/* INSENSITIVE */
 #define CURSOR_OPT_HOLD			0x0010	/* WITH HOLD */
+/* these planner-control flags do not correspond to any SQL grammar: */
 #define CURSOR_OPT_FAST_PLAN	0x0020	/* prefer fast-start plan */
+#define CURSOR_OPT_GENERIC_PLAN	0x0040	/* force use of generic plan */
+#define CURSOR_OPT_CUSTOM_PLAN	0x0080	/* force use of custom plan */
 
 typedef struct DeclareCursorStmt
 {
