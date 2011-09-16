@@ -111,14 +111,37 @@
  </variablelist>
 
  <para>
-  <command>COPY</>'s <literal>OIDS</literal>, <literal>FORCE_QUOTE</literal>,
-  and <literal>FORCE_NOT_NULL</literal> options are currently not supported by
+  A column of a foreign table created using this wrapper can have the
+  following options:
+ </para>
+
+ <variablelist>
+
+  <varlistentry>
+   <term><literal>force_not_null</literal></term>
+
+   <listitem>
+    <para>
+     This is a boolean option.  If true, it specifies that values of the
+     column should not be matched against the null string (that is, the
+     file-level <literal>null</literal> option).  This has the same effect
+     as listing the column in <command>COPY</>'s
+     <literal>FORCE_NOT_NULL</literal> option.
+    </para>
+   </listitem>
+  </varlistentry>
+
+ </variablelist>
+
+ <para>
+  <command>COPY</>'s <literal>OIDS</literal> and
+  <literal>FORCE_QUOTE</literal> options are currently not supported by
   <literal>file_fdw</>.
  </para>
 
  <para>
-  These options can only be specified for a foreign table, not in the
-  options of the <literal>file_fdw</> foreign-data wrapper, nor in the
+  These options can only be specified for a foreign table or its columns, not
+  in the options of the <literal>file_fdw</> foreign-data wrapper, nor in the
   options of a server or user mapping using the wrapper.
  </para>
 

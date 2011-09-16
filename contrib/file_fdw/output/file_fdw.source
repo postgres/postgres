@@ -93,6 +93,37 @@ CREATE FOREIGN TABLE agg_bad (
 	b	float4
 ) SERVER file_server
 OPTIONS (format 'csv', filename '@abs_srcdir@/data/agg.bad', header 'true', delimiter ';', quote '@', escape '"', null '');
+-- per-column options tests
+CREATE FOREIGN TABLE text_csv (
+    word1 text OPTIONS (force_not_null 'true'),
+    word2 text OPTIONS (force_not_null 'off')
+) SERVER file_server
+OPTIONS (format 'text', filename '@abs_srcdir@/data/text.csv', null 'NULL');
+SELECT * FROM text_csv; -- ERROR
+ERROR:  COPY force not null available only in CSV mode
+ALTER FOREIGN TABLE text_csv OPTIONS (SET format 'csv');
+SELECT * FROM text_csv;
+ word1 | word2 
+-------+-------
+ AAA   | aaa
+ XYZ   | xyz
+ NULL  | 
+ ABC   | abc
+(4 rows)
+
+-- force_not_null is not allowed to be specified at any foreign object level:
+ALTER FOREIGN DATA WRAPPER file_fdw OPTIONS (ADD force_not_null '*'); -- ERROR
+ERROR:  invalid option "force_not_null"
+HINT:  Valid options in this context are: 
+ALTER SERVER file_server OPTIONS (ADD force_not_null '*'); -- ERROR
+ERROR:  invalid option "force_not_null"
+HINT:  Valid options in this context are: 
+CREATE USER MAPPING FOR public SERVER file_server OPTIONS (force_not_null '*'); -- ERROR
+ERROR:  invalid option "force_not_null"
+HINT:  Valid options in this context are: 
+CREATE FOREIGN TABLE tbl () SERVER file_server OPTIONS (force_not_null '*'); -- ERROR
+ERROR:  invalid option "force_not_null"
+HINT:  Valid options in this context are: filename, format, header, delimiter, quote, escape, null, encoding
 -- basic query tests
 SELECT * FROM agg_text WHERE b > 10.0 ORDER BY a;
   a  |   b    
@@ -216,7 +247,7 @@ SET ROLE file_fdw_superuser;
 -- cleanup
 RESET ROLE;
 DROP EXTENSION file_fdw CASCADE;
-NOTICE:  drop cascades to 7 other objects
+NOTICE:  drop cascades to 8 other objects
 DETAIL:  drop cascades to server file_server
 drop cascades to user mapping for file_fdw_user
 drop cascades to user mapping for file_fdw_superuser
@@ -224,4 +255,5 @@ drop cascades to user mapping for no_priv_user
 drop cascades to foreign table agg_text
 drop cascades to foreign table agg_csv
 drop cascades to foreign table agg_bad
+drop cascades to foreign table text_csv
 DROP ROLE file_fdw_superuser, file_fdw_user, no_priv_user;

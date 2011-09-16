@@ -23,8 +23,10 @@
 #include "foreign/fdwapi.h"
 #include "foreign/foreign.h"
 #include "miscadmin.h"
+#include "nodes/makefuncs.h"
 #include "optimizer/cost.h"
 #include "utils/rel.h"
+#include "utils/syscache.h"
 
 PG_MODULE_MAGIC;
 
@@ -40,6 +42,8 @@ struct FileFdwOption
 /*
  * Valid options for file_fdw.
  * These options are based on the options for COPY FROM command.
+ * But note that force_not_null is handled as a boolean option attached to
+ * each column, not as a table option.
  *
  * Note: If you are adding new option for user mapping, you need to modify
  * fileGetOptions(), which currently doesn't bother to look at user mappings.
@@ -57,15 +61,10 @@ static struct FileFdwOption valid_options[] = {
 	{"escape", ForeignTableRelationId},
 	{"null", ForeignTableRelationId},
 	{"encoding", ForeignTableRelationId},
+	{"force_not_null", AttributeRelationId},
 
 	/*
 	 * force_quote is not supported by file_fdw because it's for COPY TO.
-	 */
-
-	/*
-	 * force_not_null is not supported by file_fdw.  It would need a parser
-	 * for list of columns, not to mention a way to check the column list
-	 * against the table.
 	 */
 
 	/* Sentinel */
@@ -109,6 +108,7 @@ static void fileEndForeignScan(ForeignScanState *node);
 static bool is_valid_option(const char *option, Oid context);
 static void fileGetOptions(Oid foreigntableid,
 			   char **filename, List **other_options);
+static List *get_file_fdw_attribute_options(Oid relid);
 static void estimate_costs(PlannerInfo *root, RelOptInfo *baserel,
 			   const char *filename,
 			   Cost *startup_cost, Cost *total_cost);
@@ -145,6 +145,7 @@ file_fdw_validator(PG_FUNCTION_ARGS)
 	List	   *options_list = untransformRelOptions(PG_GETARG_DATUM(0));
 	Oid			catalog = PG_GETARG_OID(1);
 	char	   *filename = NULL;
+	DefElem	   *force_not_null = NULL;
 	List	   *other_options = NIL;
 	ListCell   *cell;
 
@@ -198,7 +199,11 @@ file_fdw_validator(PG_FUNCTION_ARGS)
 							 buf.data)));
 		}
 
-		/* Separate out filename, since ProcessCopyOptions won't allow it */
+		/*
+		 * Separate out filename and force_not_null, since ProcessCopyOptions
+		 * won't accept them.  (force_not_null only comes in a boolean
+		 * per-column flavor here.)
+		 */
 		if (strcmp(def->defname, "filename") == 0)
 		{
 			if (filename)
@@ -206,6 +211,16 @@ file_fdw_validator(PG_FUNCTION_ARGS)
 						(errcode(ERRCODE_SYNTAX_ERROR),
 						 errmsg("conflicting or redundant options")));
 			filename = defGetString(def);
+		}
+		else if (strcmp(def->defname, "force_not_null") == 0)
+		{
+			if (force_not_null)
+				ereport(ERROR,
+						(errcode(ERRCODE_SYNTAX_ERROR),
+						 errmsg("conflicting or redundant options")));
+			force_not_null = def;
+			/* Don't care what the value is, as long as it's a legal boolean */
+			(void) defGetBoolean(def);
 		}
 		else
 			other_options = lappend(other_options, def);
@@ -277,6 +292,7 @@ fileGetOptions(Oid foreigntableid,
 	options = list_concat(options, wrapper->options);
 	options = list_concat(options, server->options);
 	options = list_concat(options, table->options);
+	options = list_concat(options, get_file_fdw_attribute_options(foreigntableid));
 
 	/*
 	 * Separate out the filename.
@@ -304,6 +320,88 @@ fileGetOptions(Oid foreigntableid,
 		elog(ERROR, "filename is required for file_fdw foreign tables");
 
 	*other_options = options;
+}
+
+/*
+ * Retrieve per-column generic options from pg_attribute and construct a list
+ * of DefElems representing them.
+ *
+ * At the moment we only have "force_not_null", which should be combined into
+ * a single DefElem listing all such columns, since that's what COPY expects.
+ */
+static List *
+get_file_fdw_attribute_options(Oid relid)
+{
+	Relation	rel;
+	TupleDesc	tupleDesc;
+	AttrNumber	natts;
+	AttrNumber	attnum;
+	List	   *fnncolumns = NIL;
+
+	rel = heap_open(relid, AccessShareLock);
+	tupleDesc = RelationGetDescr(rel);
+	natts = tupleDesc->natts;
+
+	/* Retrieve FDW options for all user-defined attributes. */
+	for (attnum = 1; attnum <= natts; attnum++)
+	{
+		HeapTuple	tuple;
+		Form_pg_attribute attr;
+		Datum		datum;
+		bool		isnull;
+
+		/* Skip dropped attributes. */
+		if (tupleDesc->attrs[attnum - 1]->attisdropped)
+			continue;
+
+		/*
+		 * We need the whole pg_attribute tuple not just what is in the
+		 * tupleDesc, so must do a catalog lookup.
+		 */
+		tuple = SearchSysCache2(ATTNUM,
+								RelationGetRelid(rel),
+								Int16GetDatum(attnum));
+		if (!HeapTupleIsValid(tuple))
+			elog(ERROR, "cache lookup failed for attribute %d of relation %u",
+				 attnum, RelationGetRelid(rel));
+		attr = (Form_pg_attribute) GETSTRUCT(tuple);
+
+		datum = SysCacheGetAttr(ATTNUM,
+								tuple,
+								Anum_pg_attribute_attfdwoptions,
+								&isnull);
+		if (!isnull)
+		{
+			List	   *options = untransformRelOptions(datum);
+			ListCell   *lc;
+
+			foreach(lc, options)
+			{
+				DefElem	   *def = (DefElem *) lfirst(lc);
+
+				if (strcmp(def->defname, "force_not_null") == 0)
+				{
+					if (defGetBoolean(def))
+					{
+						char   *attname = pstrdup(NameStr(attr->attname));
+
+						fnncolumns = lappend(fnncolumns, makeString(attname));
+					}
+				}
+				/* maybe in future handle other options here */
+			}
+		}
+
+		ReleaseSysCache(tuple);
+	}
+
+	heap_close(rel, AccessShareLock);
+
+	/* Return DefElem only when some column(s) have force_not_null */
+	if (fnncolumns != NIL)
+		return list_make1(makeDefElem("force_not_null", (Node *) fnncolumns));
+	else
+		return NIL;
 }
 
 /*

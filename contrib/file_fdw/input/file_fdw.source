@@ -78,6 +78,22 @@ CREATE FOREIGN TABLE agg_bad (
 ) SERVER file_server
 OPTIONS (format 'csv', filename '@abs_srcdir@/data/agg.bad', header 'true', delimiter ';', quote '@', escape '"', null '');
 
+-- per-column options tests
+CREATE FOREIGN TABLE text_csv (
+    word1 text OPTIONS (force_not_null 'true'),
+    word2 text OPTIONS (force_not_null 'off')
+) SERVER file_server
+OPTIONS (format 'text', filename '@abs_srcdir@/data/text.csv', null 'NULL');
+SELECT * FROM text_csv; -- ERROR
+ALTER FOREIGN TABLE text_csv OPTIONS (SET format 'csv');
+SELECT * FROM text_csv;
+
+-- force_not_null is not allowed to be specified at any foreign object level:
+ALTER FOREIGN DATA WRAPPER file_fdw OPTIONS (ADD force_not_null '*'); -- ERROR
+ALTER SERVER file_server OPTIONS (ADD force_not_null '*'); -- ERROR
+CREATE USER MAPPING FOR public SERVER file_server OPTIONS (force_not_null '*'); -- ERROR
+CREATE FOREIGN TABLE tbl () SERVER file_server OPTIONS (force_not_null '*'); -- ERROR
+
 -- basic query tests
 SELECT * FROM agg_text WHERE b > 10.0 ORDER BY a;
 SELECT * FROM agg_csv ORDER BY a;
