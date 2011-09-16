@@ -138,12 +138,15 @@ gistendscan(PG_FUNCTION_ARGS)
 	{
 		gistfreestack(so->stack);
 		if (so->giststate != NULL)
+		{
 			freeGISTstate(so->giststate);
+			pfree(so->giststate);
+		}
 		/* drop pins on buffers -- we aren't holding any locks */
 		if (BufferIsValid(so->curbuf))
 			ReleaseBuffer(so->curbuf);
 		MemoryContextDelete(so->tempCxt);
-		pfree(scan->opaque);
+		pfree(so);
 	}
 
 	PG_RETURN_VOID();
