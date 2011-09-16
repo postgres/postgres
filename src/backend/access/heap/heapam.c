@@ -1917,19 +1917,24 @@ heap_insert(Relation relation, HeapTuple tup, CommandId cid,
 		heaptup = tup;
 
 	/*
+	 * We're about to do the actual insert -- but check for conflict first,
+	 * to avoid possibly having to roll back work we've just done.
+	 *
+	 * For a heap insert, we only need to check for table-level SSI locks.
+	 * Our new tuple can't possibly conflict with existing tuple locks, and
+	 * heap page locks are only consolidated versions of tuple locks; they do
+	 * not lock "gaps" as index page locks do.  So we don't need to identify
+	 * a buffer before making the call.
+	 */
+	CheckForSerializableConflictIn(relation, NULL, InvalidBuffer);
+
+	/*
 	 * Find buffer to insert this tuple into.  If the page is all visible,
 	 * this will also pin the requisite visibility map page.
 	 */
 	buffer = RelationGetBufferForTuple(relation, heaptup->t_len,
 									   InvalidBuffer, options, bistate,
 									   &vmbuffer, NULL);
-
-	/*
-	 * We're about to do the actual insert -- check for conflict at the
-	 * relation or buffer level first, to avoid possibly having to roll back
-	 * work we've just done.
-	 */
-	CheckForSerializableConflictIn(relation, NULL, buffer);
 
 	/* NO EREPORT(ERROR) from here till changes are logged */
 	START_CRIT_SECTION();
