@@ -80,11 +80,14 @@
 #define PGSTAT_STAT_INTERVAL	500		/* Minimum time between stats file
 										 * updates; in milliseconds. */
 
-#define PGSTAT_RETRY_DELAY		10		/* How long to wait between statistics
-										 * update requests; in milliseconds. */
+#define PGSTAT_RETRY_DELAY		10		/* How long to wait between checks for
+										 * a new file; in milliseconds. */
 
-#define PGSTAT_MAX_WAIT_TIME	5000	/* Maximum time to wait for a stats
+#define PGSTAT_MAX_WAIT_TIME	10000	/* Maximum time to wait for a stats
 										 * file update; in milliseconds. */
+
+#define PGSTAT_INQ_INTERVAL		640		/* How often to ping the collector for
+										 * a new file; in milliseconds. */
 
 #define PGSTAT_RESTART_INTERVAL 60		/* How often to attempt to restart a
 										 * failed statistics collector; in
@@ -94,6 +97,7 @@
 										 * death; in seconds. */
 
 #define PGSTAT_POLL_LOOP_COUNT	(PGSTAT_MAX_WAIT_TIME / PGSTAT_RETRY_DELAY)
+#define PGSTAT_INQ_LOOP_COUNT	(PGSTAT_INQ_INTERVAL / PGSTAT_RETRY_DELAY)
 
 
 /* ----------
@@ -3758,7 +3762,6 @@ backend_read_statsfile(void)
 	TimestampTz cur_ts;
 	TimestampTz min_ts;
 	int			count;
-	int			last_delay_errno = 0;
 
 	/* already read it? */
 	if (pgStatDBHash)
@@ -3788,7 +3791,7 @@ backend_read_statsfile(void)
 	/*
 	 * Loop until fresh enough stats file is available or we ran out of time.
 	 * The stats inquiry message is sent repeatedly in case collector drops
-	 * it.
+	 * it; but not every single time, as that just swamps the collector.
 	 */
 	for (count = 0; count < PGSTAT_POLL_LOOP_COUNT; count++)
 	{
@@ -3800,29 +3803,11 @@ backend_read_statsfile(void)
 			file_ts >= min_ts)
 			break;
 
-		/* Make debugging printouts once we've waited unreasonably long */
-		if (count >= PGSTAT_POLL_LOOP_COUNT/2)
-		{
-			TimestampTz now_ts = GetCurrentTimestamp();
-
-#ifdef HAVE_INT64_TIMESTAMP
-			elog(WARNING, "pgstat waiting for " INT64_FORMAT " usec (%d loops), file timestamp " INT64_FORMAT " target timestamp " INT64_FORMAT " last errno %d",
-				 now_ts - cur_ts, count,
-				 file_ts, min_ts,
-				 last_delay_errno);
-#else
-			elog(WARNING, "pgstat waiting for %.6f sec (%d loops), file timestamp %.6f target timestamp %.6f last errno %d",
-				 now_ts - cur_ts, count,
-				 file_ts, min_ts,
-				 last_delay_errno);
-#endif
-		}
-
 		/* Not there or too old, so kick the collector and wait a bit */
-		errno = 0;
-		pgstat_send_inquiry(min_ts);
+		if ((count % PGSTAT_INQ_LOOP_COUNT) == 0)
+			pgstat_send_inquiry(min_ts);
+
 		pg_usleep(PGSTAT_RETRY_DELAY * 1000L);
-		last_delay_errno = errno;
 	}
 
 	if (count >= PGSTAT_POLL_LOOP_COUNT)
