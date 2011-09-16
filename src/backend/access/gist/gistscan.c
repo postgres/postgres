@@ -242,6 +242,7 @@ gistendscan(PG_FUNCTION_ARGS)
 	GISTScanOpaque so = (GISTScanOpaque) scan->opaque;
 
 	freeGISTstate(so->giststate);
+	pfree(so->giststate);
 	MemoryContextDelete(so->queueCxt);
 	MemoryContextDelete(so->tempCxt);
 	pfree(so->tmpTreeItem);
