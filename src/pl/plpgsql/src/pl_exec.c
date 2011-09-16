@@ -3013,11 +3013,6 @@ exec_stmt_execsql(PLpgSQL_execstate *estate,
 	PLpgSQL_expr *expr = stmt->sqlstmt;
 
 	/*
-	 * Set up ParamListInfo (hook function and possibly data values)
-	 */
-	paramLI = setup_param_list(estate, expr);
-
-	/*
 	 * On the first call for this statement generate the plan, and detect
 	 * whether the statement is INSERT/UPDATE/DELETE
 	 */
@@ -3048,6 +3043,11 @@ exec_stmt_execsql(PLpgSQL_execstate *estate,
 			}
 		}
 	}
+
+	/*
+	 * Set up ParamListInfo (hook function and possibly data values)
+	 */
+	paramLI = setup_param_list(estate, expr);
 
 	/*
 	 * If we have INTO, then we only need one row back ... but if we have INTO
@@ -5001,11 +5001,17 @@ setup_param_list(PLpgSQL_execstate *estate, PLpgSQL_expr *expr)
 	ParamListInfo paramLI;
 
 	/*
+	 * We must have created the SPIPlan already (hence, query text has been
+	 * parsed/analyzed at least once); else we cannot rely on expr->paramnos.
+	 */
+	Assert(expr->plan != NULL);
+
+	/*
 	 * Could we re-use these arrays instead of palloc'ing a new one each time?
 	 * However, we'd have to re-fill the array each time anyway, since new
 	 * values might have been assigned to the variables.
 	 */
-	if (estate->ndatums > 0)
+	if (!bms_is_empty(expr->paramnos))
 	{
 		Bitmapset  *tmpset;
 		int			dno;
@@ -5048,12 +5054,19 @@ setup_param_list(PLpgSQL_execstate *estate, PLpgSQL_expr *expr)
 		/*
 		 * Also make sure this is set before parser hooks need it.	There is
 		 * no need to save and restore, since the value is always correct once
-		 * set.
+		 * set.  (Should be set already, but let's be sure.)
 		 */
 		expr->func = estate->func;
 	}
 	else
+	{
+		/*
+		 * Expression requires no parameters.  Be sure we represent this case
+		 * as a NULL ParamListInfo, so that plancache.c knows there is no
+		 * point in a custom plan.
+		 */
 		paramLI = NULL;
+	}
 	return paramLI;
 }
 
