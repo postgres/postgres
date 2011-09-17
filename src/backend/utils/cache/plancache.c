@@ -718,8 +718,21 @@ BuildCachedPlan(CachedPlanSource *plansource, List *qlist,
 	MemoryContext plan_context;
 	MemoryContext oldcxt;
 
-	/* Assert that caller checked the querytree */
-	Assert(plansource->is_valid);
+	/*
+	 * Normally the querytree should be valid already, but if it's not,
+	 * rebuild it.
+	 *
+	 * NOTE: GetCachedPlan should have called RevalidateCachedQuery first, so
+	 * we ought to be holding sufficient locks to prevent any invalidation.
+	 * However, if we're building a custom plan after having built and
+	 * rejected a generic plan, it's possible to reach here with is_valid
+	 * false due to an invalidation while making the generic plan.  In theory
+	 * the invalidation must be a false positive, perhaps a consequence of an
+	 * sinval reset event or the CLOBBER_CACHE_ALWAYS debug code.  But for
+	 * safety, let's treat it as real and redo the RevalidateCachedQuery call.
+	 */
+	if (!plansource->is_valid)
+		qlist = RevalidateCachedQuery(plansource);
 
 	/*
 	 * If we don't already have a copy of the querytree list that can be
