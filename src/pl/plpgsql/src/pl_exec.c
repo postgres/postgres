@@ -3027,7 +3027,6 @@ exec_stmt_execsql(PLpgSQL_execstate *estate,
 			CachedPlanSource *plansource = (CachedPlanSource *) lfirst(l);
 			ListCell   *l2;
 
-			Assert(plansource->is_valid);
 			foreach(l2, plansource->query_list)
 			{
 				Query  *q = (Query *) lfirst(l2);
