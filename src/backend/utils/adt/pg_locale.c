@@ -707,8 +707,7 @@ cache_locale_time(void)
  *	otherwise returns the pointer to a static area which
  *	contains the iso formatted locale name.
  */
-static
-char *
+static char *
 IsoLocaleName(const char *winlocname)
 {
 #if (_MSC_VER >= 1400)			/* VC8.0 or later */
@@ -937,6 +936,27 @@ lc_ctype_is_c(Oid collation)
 }
 
 
+/* simple subroutine for reporting errors from newlocale() */
+static void
+report_newlocale_failure(const char *localename)
+{
+	/* copy errno in case one of the ereport auxiliary functions changes it */
+	int			save_errno = errno;
+
+	/*
+	 * ENOENT means "no such locale", not "no such file", so clarify that
+	 * errno with an errdetail message.
+	 */
+	ereport(ERROR,
+			(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+			 errmsg("could not create locale \"%s\": %m",
+					localename),
+			 (save_errno == ENOENT ?
+			  errdetail("The operating system could not find any locale data for the locale name \"%s\".",
+						localename) : 0)));
+}
+
+
 /*
  * Create a locale_t from a collation OID.	Results are cached for the
  * lifetime of the backend.  Thus, do not free the result with freelocale().
@@ -995,10 +1015,7 @@ pg_newlocale_from_collation(Oid collid)
 			result = _create_locale(LC_ALL, collcollate);
 #endif
 			if (!result)
-				ereport(ERROR,
-						(errcode_for_file_access(),
-						 errmsg("could not create locale \"%s\": %m",
-								collcollate)));
+				report_newlocale_failure(collcollate);
 		}
 		else
 		{
@@ -1008,16 +1025,10 @@ pg_newlocale_from_collation(Oid collid)
 
 			loc1 = newlocale(LC_COLLATE_MASK, collcollate, NULL);
 			if (!loc1)
-				ereport(ERROR,
-						(errcode_for_file_access(),
-						 errmsg("could not create locale \"%s\": %m",
-								collcollate)));
+				report_newlocale_failure(collcollate);
 			result = newlocale(LC_CTYPE_MASK, collctype, loc1);
 			if (!result)
-				ereport(ERROR,
-						(errcode_for_file_access(),
-						 errmsg("could not create locale \"%s\": %m",
-								collctype)));
+				report_newlocale_failure(collctype);
 #else
 
 			/*
