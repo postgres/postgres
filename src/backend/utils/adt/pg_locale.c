@@ -937,6 +937,7 @@ lc_ctype_is_c(Oid collation)
 
 
 /* simple subroutine for reporting errors from newlocale() */
+#ifdef HAVE_LOCALE_T
 static void
 report_newlocale_failure(const char *localename)
 {
@@ -955,6 +956,7 @@ report_newlocale_failure(const char *localename)
 			  errdetail("The operating system could not find any locale data for the locale name \"%s\".",
 						localename) : 0)));
 }
+#endif /* HAVE_LOCALE_T */
 
 
 /*
