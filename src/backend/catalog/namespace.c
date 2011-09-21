@@ -225,7 +225,6 @@ RangeVarGetRelid(const RangeVar *relation, LOCKMODE lockmode, bool missing_ok,
 				 bool nowait)
 {
 	uint64		inval_count;
-	Oid			namespaceId;
 	Oid			relId;
 	Oid			oldRelId = InvalidOid;
 	bool		retry = false;
@@ -278,17 +277,27 @@ RangeVarGetRelid(const RangeVar *relation, LOCKMODE lockmode, bool missing_ok,
 		 */
 		if (relation->relpersistence == RELPERSISTENCE_TEMP)
 		{
-			if (relation->schemaname)
-				ereport(ERROR,
-						(errcode(ERRCODE_INVALID_TABLE_DEFINITION),
-					   errmsg("temporary tables cannot specify a schema name")));
-			if (OidIsValid(myTempNamespace))
+			if (!OidIsValid(myTempNamespace))
+				relId = InvalidOid;	/* this probably can't happen? */
+			else
+			{
+				if (relation->schemaname)
+				{
+					Oid		namespaceId;
+					namespaceId = LookupExplicitNamespace(relation->schemaname);
+					if (namespaceId != myTempNamespace)
+						ereport(ERROR,
+								(errcode(ERRCODE_INVALID_TABLE_DEFINITION),
+							   errmsg("temporary tables cannot specify a schema name")));
+				}
+
 				relId = get_relname_relid(relation->relname, myTempNamespace);
-			else	/* this probably can't happen? */
-				relId = InvalidOid;
+			}
 		}
 		else if (relation->schemaname)
 		{
+			Oid			namespaceId;
+
 			/* use exact schema given */
 			namespaceId = LookupExplicitNamespace(relation->schemaname);
 			relId = get_relname_relid(relation->relname, namespaceId);
