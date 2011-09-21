@@ -272,7 +272,7 @@ run_all_permutations(TestSpec * testspec)
 
 	/*
 	 * To generate the permutations, we conceptually put the steps of each
-	 * session on a pile. To generate a permuation, we pick steps from the
+	 * session on a pile. To generate a permutation, we pick steps from the
 	 * piles until all piles are empty. By picking steps from piles in
 	 * different order, we get different permutations.
 	 *
