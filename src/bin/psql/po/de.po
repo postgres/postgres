@@ -1,7 +1,7 @@
 # German message translation file for psql
 # Peter Eisentraut <peter_e@gmx.net>, 2001 - 2009.
 #
-# pgtranslation Id: psql.po,v 1.8.2.6 2009/10/04 20:39:28 petere Exp $
+# pgtranslation Id: psql.po,v 1.8.2.7 2011/07/27 20:53:58 petere Exp $
 #
 # Use these quotes: »%s«
 #
@@ -9,10 +9,11 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PostgreSQL 8.2\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2009-10-02 20:15+0000\n"
-"PO-Revision-Date: 2009-10-04 23:38+0300\n"
+"POT-Creation-Date: 2011-07-26 21:30+0000\n"
+"PO-Revision-Date: 2011-07-27 23:53+0300\n"
 "Last-Translator: Peter Eisentraut <peter_e@gmx.net>\n"
 "Language-Team: German <peter_e@gmx.net>\n"
+"Language: de\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=ISO-8859-1\n"
 "Content-Transfer-Encoding: 8bit\n"
@@ -89,8 +90,8 @@ msgstr "Anfragepuffer wurde gelöscht."
 msgid "Wrote history to file \"%s/%s\".\n"
 msgstr "Befehlsgeschichte in Datei »%s/%s« geschrieben.\n"
 
-#: command.c:777 common.c:75 common.c:89 mainloop.c:67 print.c:56 print.c:70
-#: print.c:885
+#: command.c:777 common.c:75 common.c:89 common.c:113 mainloop.c:67 print.c:56
+#: print.c:70 print.c:835
 #, c-format
 msgid "out of memory\n"
 msgstr "Speicher aufgebraucht\n"
@@ -120,7 +121,7 @@ msgid "Password: "
 msgstr "Passwort: "
 
 #: command.c:1076 common.c:206 common.c:483 common.c:548 common.c:834
-#: common.c:859 common.c:932 copy.c:687 copy.c:732 copy.c:861
+#: common.c:859 common.c:932 copy.c:687 copy.c:732 copy.c:862
 #, c-format
 msgid "%s"
 msgstr "%s"
@@ -165,121 +166,121 @@ msgstr "konnte /bin/sh nicht starten\n"
 
 #: command.c:1247
 #, c-format
-msgid "cannot locate temporary directory: %s"
-msgstr "konnte temporäres Verzeichnis nicht finden: %s"
+msgid "cannot locate temporary directory: %s\n"
+msgstr "konnte temporäres Verzeichnis nicht finden: %s\n"
 
 #: command.c:1274
 #, c-format
 msgid "could not open temporary file \"%s\": %s\n"
 msgstr "konnte temporäre Datei »%s« nicht öffnen: %s\n"
 
-#: command.c:1464
+#: command.c:1482
 msgid "\\pset: allowed formats are unaligned, aligned, html, latex, troff-ms\n"
 msgstr ""
 "\\pset: zulässige Formate sind unaligned, aligned, html, latex, troff-ms\n"
 
-#: command.c:1469
+#: command.c:1487
 #, c-format
 msgid "Output format is %s.\n"
 msgstr "Ausgabeformat ist »%s«.\n"
 
-#: command.c:1479
+#: command.c:1497
 #, c-format
 msgid "Border style is %d.\n"
 msgstr "Rahmenstil ist %d.\n"
 
-#: command.c:1488
+#: command.c:1506
 #, c-format
 msgid "Expanded display is on.\n"
 msgstr "Erweiterte Anzeige ist an.\n"
 
-#: command.c:1489
+#: command.c:1507
 #, c-format
 msgid "Expanded display is off.\n"
 msgstr "Erweiterte Anzeige ist aus.\n"
 
-#: command.c:1499
+#: command.c:1517
 msgid "Showing locale-adjusted numeric output."
 msgstr "Zeige numerische Daten in lokalisiertem Format."
 
-#: command.c:1501
+#: command.c:1519
 msgid "Locale-adjusted numeric output is off."
 msgstr "Lokalisiertes Format für numerische Daten ist aus."
 
-#: command.c:1514
+#: command.c:1532
 #, c-format
 msgid "Null display is \"%s\".\n"
 msgstr "Null-Anzeige ist »%s«.\n"
 
-#: command.c:1526
+#: command.c:1544
 #, c-format
 msgid "Field separator is \"%s\".\n"
 msgstr "Feldtrennzeichen ist »%s«.\n"
 
-#: command.c:1540
+#: command.c:1558
 #, c-format
 msgid "Record separator is <newline>."
 msgstr "Satztrennzeichen ist <newline>."
 
-#: command.c:1542
+#: command.c:1560
 #, c-format
 msgid "Record separator is \"%s\".\n"
 msgstr "Satztrennzeichen ist »%s«.\n"
 
-#: command.c:1553
+#: command.c:1571
 msgid "Showing only tuples."
 msgstr "Zeige nur Datenzeilen."
 
-#: command.c:1555
+#: command.c:1573
 msgid "Tuples only is off."
 msgstr "Nur Datenzeilen ist aus."
 
-#: command.c:1571
+#: command.c:1589
 #, c-format
 msgid "Title is \"%s\".\n"
 msgstr "Titel ist »%s«.\n"
 
-#: command.c:1573
+#: command.c:1591
 #, c-format
 msgid "Title is unset.\n"
 msgstr "Titel ist nicht gesetzt.\n"
 
-#: command.c:1589
+#: command.c:1607
 #, c-format
 msgid "Table attribute is \"%s\".\n"
 msgstr "Tabellenattribut ist »%s«.\n"
 
-#: command.c:1591
+#: command.c:1609
 #, c-format
 msgid "Table attributes unset.\n"
 msgstr "Tabellenattribute sind nicht gesetzt.\n"
 
-#: command.c:1607
+#: command.c:1625
 msgid "Pager is used for long output."
 msgstr "Pager wird für lange Ausgaben verwendet."
 
-#: command.c:1609
+#: command.c:1627
 msgid "Pager is always used."
 msgstr "Pager wird immer verwendet."
 
-#: command.c:1611
+#: command.c:1629
 msgid "Pager usage is off."
 msgstr "Pager-Verwendung ist aus."
 
-#: command.c:1622
+#: command.c:1640
 msgid "Default footer is on."
 msgstr "Standardfußzeile ist an."
 
-#: command.c:1624
+#: command.c:1642
 msgid "Default footer is off."
 msgstr "Standardfußzeile ist aus."
 
-#: command.c:1630
+#: command.c:1648
 #, c-format
 msgid "\\pset: unknown option: %s\n"
 msgstr "\\pset: unbekannte Option: %s\n"
 
-#: command.c:1685
+#: command.c:1703
 msgid "\\!: failed\n"
 msgstr "\\!: fehlgeschlagen\n"
 
@@ -287,10 +288,6 @@ msgstr "\\!: fehlgeschlagen\n"
 #, c-format
 msgid "%s: pg_strdup: cannot duplicate null pointer (internal error)\n"
 msgstr "%s: pg_strdup: kann NULL-Zeiger nicht kopieren (interner Fehler)\n"
-
-#: common.c:113
-msgid "out of memory"
-msgstr "Speicher aufgebraucht"
 
 #: common.c:366
 msgid "connection to server was lost\n"
@@ -414,7 +411,7 @@ msgstr ""
 "Geben Sie die zu kopierenden Daten ein, gefolgt von einem Zeilenende.\n"
 "Beenden Sie mit einem Backslash und einem Punkt alleine auf einer Zeile."
 
-#: copy.c:854
+#: copy.c:855
 msgid "aborted because of read failure"
 msgstr "abgebrochen wegen Lesenfehlers"
 
@@ -1034,27 +1031,27 @@ msgstr "Large Objects"
 msgid "Use \"\\q\" to leave %s.\n"
 msgstr "Verwenden Sie »\\q«, um %s zu verlassen.\n"
 
-#: print.c:773
+#: print.c:730
 #, c-format
 msgid "(No rows)\n"
 msgstr "(Keine Zeilen)\n"
 
-#: print.c:1808
+#: print.c:1692
 #, c-format
 msgid "Interrupted\n"
 msgstr "Unterbrochen\n"
 
-#: print.c:1916
+#: print.c:1800
 #, c-format
 msgid "invalid output format (internal error): %d"
 msgstr "ungültiges Ausgabeformat (interner Fehler): %d"
 
-#: print.c:1975
+#: print.c:1903
 #, c-format
 msgid "(1 row)"
 msgstr "(1 Zeile)"
 
-#: print.c:1977
+#: print.c:1905
 #, c-format
 msgid "(%lu rows)"
 msgstr "(%lu Zeilen)"
