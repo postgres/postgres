@@ -1,7 +1,7 @@
 # German message translation file for PostgreSQL server
 # Peter Eisentraut <peter_e@gmx.net>, 2001 - 2011.
 #
-# pgtranslation Id: postgres.po,v 1.107 2011/09/08 17:43:11 petere Exp $
+# pgtranslation Id: postgres.po,v 1.108 2011/09/22 03:33:40 petere Exp $
 #
 # Use these quotes: »%s«
 #
@@ -9,8 +9,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PostgreSQL 9.1\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
-"POT-Creation-Date: 2011-09-08 06:57+0000\n"
-"PO-Revision-Date: 2011-09-08 20:41+0300\n"
+"POT-Creation-Date: 2011-09-21 22:58+0000\n"
+"PO-Revision-Date: 2011-09-22 06:31+0300\n"
 "Last-Translator: Peter Eisentraut <peter_e@gmx.net>\n"
 "Language-Team: German <peter_e@gmx.net>\n"
 "Language: de\n"
@@ -2053,8 +2053,8 @@ msgstr "»%s« ist ein Index"
 msgid "\"%s\" is a composite type"
 msgstr "»%s« ist ein zusammengesetzter Typ"
 
-#: access/heap/heapam.c:3211 access/heap/heapam.c:3242
-#: access/heap/heapam.c:3277
+#: access/heap/heapam.c:3216 access/heap/heapam.c:3247
+#: access/heap/heapam.c:3282
 #, c-format
 msgid "could not obtain lock on row in relation \"%s\""
 msgstr "konnte Sperre für Zeile in Relation »%s« nicht setzen"
@@ -3149,121 +3149,121 @@ msgstr "baue Index »%s« von Tabelle »%s«"
 msgid "cannot reindex temporary tables of other sessions"
 msgstr "kann temporäre Tabellen anderer Sitzungen nicht reindizieren"
 
-#: catalog/namespace.c:235 catalog/namespace.c:309 commands/trigger.c:4147
+#: catalog/namespace.c:234 catalog/namespace.c:318 commands/trigger.c:4147
 #, c-format
 msgid "cross-database references are not implemented: \"%s.%s.%s\""
 msgstr "Verweise auf andere Datenbanken sind nicht implementiert: »%s.%s.%s«"
 
-#: catalog/namespace.c:253
+#: catalog/namespace.c:260
 msgid "temporary tables cannot specify a schema name"
 msgstr "temporäre Tabellen können keinen Schemanamen angeben"
 
-#: catalog/namespace.c:276 commands/lockcmds.c:122 parser/parse_relation.c:835
+#: catalog/namespace.c:285 commands/lockcmds.c:122 parser/parse_relation.c:835
 #, c-format
 msgid "relation \"%s.%s\" does not exist"
 msgstr "Relation »%s.%s« existiert nicht"
 
-#: catalog/namespace.c:281 commands/lockcmds.c:127 parser/parse_relation.c:848
+#: catalog/namespace.c:290 commands/lockcmds.c:127 parser/parse_relation.c:848
 #: parser/parse_relation.c:856 utils/adt/regproc.c:810
 #, c-format
 msgid "relation \"%s\" does not exist"
 msgstr "Relation »%s« existiert nicht"
 
-#: catalog/namespace.c:349 catalog/namespace.c:2580
+#: catalog/namespace.c:358 catalog/namespace.c:2589
 msgid "no schema has been selected to create in"
 msgstr "kein Schema für die Objekterzeugung ausgewählt"
 
-#: catalog/namespace.c:401 catalog/namespace.c:414
+#: catalog/namespace.c:410 catalog/namespace.c:423
 msgid "cannot create relations in temporary schemas of other sessions"
 msgstr "kann keine Relationen in temporären Schemas anderer Sitzungen erzeugen"
 
-#: catalog/namespace.c:405
+#: catalog/namespace.c:414
 msgid "cannot create temporary relation in non-temporary schema"
 msgstr ""
 "kann keine temporäre Relation in einem nicht-temporären Schema erzeugen"
 
-#: catalog/namespace.c:420
+#: catalog/namespace.c:429
 msgid "only temporary relations may be created in temporary schemas"
 msgstr "nur temporäre Relationen können in temporären Schemas erzeugt werden"
 
-#: catalog/namespace.c:1897 commands/tsearchcmds.c:320
+#: catalog/namespace.c:1906 commands/tsearchcmds.c:320
 #, c-format
 msgid "text search parser \"%s\" does not exist"
 msgstr "Textsucheparser »%s« existiert nicht"
 
-#: catalog/namespace.c:2020 commands/tsearchcmds.c:769
+#: catalog/namespace.c:2029 commands/tsearchcmds.c:769
 #, c-format
 msgid "text search dictionary \"%s\" does not exist"
 msgstr "Textsuchewörterbuch »%s« existiert nicht"
 
-#: catalog/namespace.c:2144 commands/tsearchcmds.c:1304
+#: catalog/namespace.c:2153 commands/tsearchcmds.c:1304
 #, c-format
 msgid "text search template \"%s\" does not exist"
 msgstr "Textsuchevorlage »%s« existiert nicht"
 
-#: catalog/namespace.c:2267 commands/tsearchcmds.c:1753
+#: catalog/namespace.c:2276 commands/tsearchcmds.c:1753
 #: commands/tsearchcmds.c:1909
 #, c-format
 msgid "text search configuration \"%s\" does not exist"
 msgstr "Textsuchekonfiguration »%s« existiert nicht"
 
-#: catalog/namespace.c:2380 parser/parse_expr.c:775 parser/parse_target.c:1085
+#: catalog/namespace.c:2389 parser/parse_expr.c:775 parser/parse_target.c:1085
 #, c-format
 msgid "cross-database references are not implemented: %s"
 msgstr "Verweise auf andere Datenbanken sind nicht implementiert: %s"
 
-#: catalog/namespace.c:2386 parser/parse_expr.c:782 parser/parse_target.c:1092
+#: catalog/namespace.c:2395 parser/parse_expr.c:782 parser/parse_target.c:1092
 #: gram.y:11611 gram.y:12810
 #, c-format
 msgid "improper qualified name (too many dotted names): %s"
 msgstr "falscher qualifizierter Name (zu viele Namensteile): %s"
 
-#: catalog/namespace.c:2514
+#: catalog/namespace.c:2523
 #, c-format
 msgid "%s is already in schema \"%s\""
 msgstr "%s ist bereits in Schema »%s«"
 
-#: catalog/namespace.c:2522
+#: catalog/namespace.c:2531
 msgid "cannot move objects into or out of temporary schemas"
 msgstr "Objekte können nicht in oder aus temporären Schemas verschoben werden"
 
-#: catalog/namespace.c:2528
+#: catalog/namespace.c:2537
 msgid "cannot move objects into or out of TOAST schema"
 msgstr "Objekte können nicht in oder aus TOAST-Schemas verschoben werden"
 
-#: catalog/namespace.c:2601 catalog/namespace.c:3586 catalog/namespace.c:3589
+#: catalog/namespace.c:2610 catalog/namespace.c:3595 catalog/namespace.c:3598
 #: commands/schemacmds.c:253 commands/schemacmds.c:322
 #, c-format
 msgid "schema \"%s\" does not exist"
 msgstr "Schema »%s« existiert nicht"
 
-#: catalog/namespace.c:2632
+#: catalog/namespace.c:2641
 #, c-format
 msgid "improper relation name (too many dotted names): %s"
 msgstr "falscher Relationsname (zu viele Namensteile): %s"
 
-#: catalog/namespace.c:3031
+#: catalog/namespace.c:3040
 #, c-format
 msgid "collation \"%s\" for encoding \"%s\" does not exist"
 msgstr "Sortierfolge »%s« für Kodierung »%s« existiert nicht"
 
-#: catalog/namespace.c:3083
+#: catalog/namespace.c:3092
 #, c-format
 msgid "conversion \"%s\" does not exist"
 msgstr "Konversion »%s« existiert nicht"
 
-#: catalog/namespace.c:3288
+#: catalog/namespace.c:3297
 #, c-format
 msgid "permission denied to create temporary tables in database \"%s\""
 msgstr ""
 "keine Berechtigung, um temporäre Tabellen in Datenbank »%s« zu erzeugen"
 
-#: catalog/namespace.c:3304
+#: catalog/namespace.c:3313
 msgid "cannot create temporary tables during recovery"
 msgstr ""
 "während der Wiederherstellung können keine temporäre Tabellen erzeugt werden"
 
-#: catalog/namespace.c:3548 commands/tablespace.c:1121 commands/variable.c:59
+#: catalog/namespace.c:3557 commands/tablespace.c:1121 commands/variable.c:59
 #: replication/syncrep.c:656 utils/misc/guc.c:8161
 msgid "List syntax is invalid."
 msgstr "Die Listensyntax ist ungültig."
@@ -4676,14 +4676,14 @@ msgid "The owner of a foreign-data wrapper must be a superuser."
 msgstr "Der Eigentümer eines Fremddaten-Wrappers muss ein Superuser sein."
 
 #: commands/foreigncmds.c:241 commands/foreigncmds.c:564
-#: commands/foreigncmds.c:712 foreign/foreign.c:515
+#: commands/foreigncmds.c:712 foreign/foreign.c:524
 #, c-format
 msgid "foreign-data wrapper \"%s\" does not exist"
 msgstr "Fremddaten-Wrapper »%s« existiert nicht"
 
 #: commands/foreigncmds.c:284 commands/foreigncmds.c:890
 #: commands/foreigncmds.c:978 commands/foreigncmds.c:1262
-#: foreign/foreign.c:535
+#: foreign/foreign.c:544
 #, c-format
 msgid "server \"%s\" does not exist"
 msgstr "Server »%s« existiert nicht"
@@ -8568,12 +8568,12 @@ msgstr "Benutzerabbildung für »%s« nicht gefunden"
 msgid "foreign-data wrapper \"%s\" has no handler"
 msgstr "Fremddaten-Wrapper »%s« hat keinen Handler"
 
-#: foreign/foreign.c:489
+#: foreign/foreign.c:498
 #, c-format
 msgid "invalid option \"%s\""
 msgstr "ungültige Option »%s«"
 
-#: foreign/foreign.c:490
+#: foreign/foreign.c:499
 #, c-format
 msgid "Valid options in this context are: %s"
 msgstr "Gültige Optionen in diesem Zusammenhang sind: %s"
@@ -15274,13 +15274,19 @@ msgstr "gewünschtes Zeichen ist zu groß für die Kodierung: %d"
 msgid "null character not permitted"
 msgstr "Null-Zeichen ist nicht erlaubt"
 
-#: utils/adt/pg_locale.c:1000 utils/adt/pg_locale.c:1013
-#: utils/adt/pg_locale.c:1019
+#: utils/adt/pg_locale.c:953
 #, c-format
 msgid "could not create locale \"%s\": %m"
 msgstr "konnte Locale »%s« nicht erzeugen: %m"
 
-#: utils/adt/pg_locale.c:1030
+#: utils/adt/pg_locale.c:956
+#, c-format
+msgid ""
+"The operating system could not find any locale data for the locale name \"%s"
+"\"."
+msgstr "Das Betriebssystem konnte keine Locale-Daten für den Locale-Namen »%s« finden."
+
+#: utils/adt/pg_locale.c:1043
 msgid ""
 "collations with different collate and ctype values are not supported on this "
 "platform"
@@ -15288,17 +15294,17 @@ msgstr ""
 "Sortierfolgen mit unterschiedlichen »collate«- und »ctype«-Werten werden auf "
 "dieser Plattform nicht unterstützt"
 
-#: utils/adt/pg_locale.c:1045
+#: utils/adt/pg_locale.c:1058
 msgid "nondefault collations are not supported on this platform"
 msgstr ""
 "Sortierfolgen außer der Standardsortierfolge werden auf dieser Plattform "
 "nicht unterstützt"
 
-#: utils/adt/pg_locale.c:1216
+#: utils/adt/pg_locale.c:1229
 msgid "invalid multibyte character for locale"
 msgstr "ungültiges Mehrbytezeichen für Locale"
 
-#: utils/adt/pg_locale.c:1217
+#: utils/adt/pg_locale.c:1230
 msgid ""
 "The server's LC_CTYPE locale is probably incompatible with the database "
 "encoding."

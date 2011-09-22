@@ -7,7 +7,7 @@ msgstr ""
 "Project-Id-Version: libpq\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
 "POT-Creation-Date: 2011-09-03 20:56+0000\n"
-"PO-Revision-Date: 2011-09-04 17:01+0200\n"
+"PO-Revision-Date: 2011-09-09 00:23+0200\n"
 "Last-Translator: Begina Felicysym <begina.felicysym@wp.eu>\n"
 "Language-Team: Polish TotroiseSvn translation team\n"
 "Language: pl\n"
@@ -860,7 +860,7 @@ msgstr "certyfikat nie mo¿e zostaæ otrzymany: %s\n"
 
 #: fe-secure.c:1400
 msgid "SSL certificate's common name contains embedded null\n"
-msgstr "nazwa zwyczajowa certyfikaTU SSL zawiera osadzony null\n"
+msgstr "nazwa zwyczajowa certyfikatu SSL zawiera osadzony null\n"
 
 #: fe-secure.c:1476
 msgid "no SSL error reported"

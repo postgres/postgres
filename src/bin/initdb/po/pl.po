@@ -7,7 +7,7 @@ msgstr ""
 "Project-Id-Version: initdb-cs\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
 "POT-Creation-Date: 2011-09-03 20:53+0000\n"
-"PO-Revision-Date: 2011-09-04 16:13+0200\n"
+"PO-Revision-Date: 2011-09-12 00:31+0200\n"
 "Last-Translator: Begina Felicysym <begina.felicysym@wp.eu>\n"
 "Language-Team: Polish TotroiseSvn translation team\n"
 "Language: pl\n"
@@ -267,7 +267,7 @@ msgstr "pobieranie jêzyka PL/pgSQL u¿ywanego po stronie serwera ... "
 
 #: initdb.c:1945
 msgid "vacuuming database template1 ... "
-msgstr "czyszczenie bazy template1 ... "
+msgstr "odkurzanie bazy template1 ... "
 
 #: initdb.c:2001
 msgid "copying template1 to template0 ... "

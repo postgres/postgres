@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PostgreSQL 9.1\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
 "POT-Creation-Date: 2011-09-03 20:55+0000\n"
-"PO-Revision-Date: 2011-09-04 22:59+0200\n"
+"PO-Revision-Date: 2011-09-10 00:06+0200\n"
 "Last-Translator: Begina Felicysym <begina.felicysym@wp.eu>\n"
 "Language-Team: Polish TotroiseSvn translation team\n"
 "Language: pl\n"
@@ -426,8 +426,8 @@ msgstr ""
 msgid ""
 "Asynchronous notification \"%s\" with payload \"%s\" received from server "
 "process with PID %d.\n"
-msgstr "Asynchroniczne powiadomienie \"%s\" o rozmiarze \"%s\" otrzymano z procesu "
-"serwera PID %d.\n"
+msgstr "Asynchroniczne powiadomienie \"%s\" o ładunku \"%s\" otrzymano z procesu serwera "
+"PID %d.\n"
 
 #: common.c:563
 #, c-format
@@ -2440,7 +2440,7 @@ msgstr "początek bloku transakcji"
 
 #: sql_help.h:357
 msgid "force a transaction log checkpoint"
-msgstr "wymuszenie punkty sprawdzenia logów transakcji"
+msgstr "wymuszenie punkty kontrolne logów transakcji"
 
 #: sql_help.h:362
 msgid "close a cursor"

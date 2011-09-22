@@ -1,6 +1,6 @@
 # src/backend/nls.mk
 CATALOG_NAME	:= postgres
-AVAIL_LANGUAGES	:= de es fr ja pt_BR zh_CN zh_TW
+AVAIL_LANGUAGES	:= de es fr ja pl pt_BR zh_CN zh_TW
 GETTEXT_FILES	:= + gettext-files
 GETTEXT_TRIGGERS:= _ errmsg errmsg_plural:1,2 errdetail errdetail_log \
     errdetail_plural:1,2 errhint errcontext \
