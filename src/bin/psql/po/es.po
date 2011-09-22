@@ -12,13 +12,13 @@ msgid ""
 msgstr ""
 "Project-Id-Version: psql (PostgreSQL 8.4)\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
-"POT-Creation-Date: 2010-09-24 19:02+0000\n"
-"PO-Revision-Date: 2010-09-24 18:08-0400\n"
+"POT-Creation-Date: 2011-09-22 08:46+0000\n"
+"PO-Revision-Date: 2011-09-22 11:32-0300\n"
 "Last-Translator: Álvaro Herrera <alvherre@alvh.no-ip.org>\n"
 "Language-Team: PgSQL Español <pgsql-es-ayuda@postgresql.org>\n"
 "Language: \n"
 "MIME-Version: 1.0\n"
-"Content-Type: text/plain; charset=utf-8\n"
+"Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=n != 1;\n"
 "X-Poedit-Language: Spanish\n"
@@ -110,7 +110,7 @@ msgstr "El búfer de consulta ha sido reiniciado (limpiado)."
 msgid "Wrote history to file \"%s/%s\".\n"
 msgstr "Se escribió la historia en el archivo \"%s/%s\".\n"
 
-#: command.c:951 common.c:52 common.c:66 input.c:198 mainloop.c:70
+#: command.c:951 common.c:52 common.c:66 common.c:90 input.c:198 mainloop.c:70
 #: mainloop.c:228 print.c:61 print.c:75
 #, c-format
 msgid "out of memory\n"
@@ -141,7 +141,7 @@ msgid "Password for user %s: "
 msgstr "Contraseña para usuario %s: "
 
 #: command.c:1270 command.c:2131 common.c:183 common.c:460 common.c:525
-#: common.c:811 common.c:836 common.c:920 copy.c:655 copy.c:700 copy.c:829
+#: common.c:811 common.c:836 common.c:920 copy.c:655 copy.c:700 copy.c:830
 #, c-format
 msgid "%s"
 msgstr "%s"
@@ -223,8 +223,8 @@ msgstr "no se pudo iniciar /bin/sh\n"
 
 #: command.c:1542
 #, c-format
-msgid "cannot locate temporary directory: %s"
-msgstr "no se encontró el directorio temporal: %s"
+msgid "cannot locate temporary directory: %s\n"
+msgstr "no se puede ubicar el directorio temporal: %s\n"
 
 #: command.c:1569
 #, c-format
@@ -354,10 +354,6 @@ msgstr "\\!: falló\n"
 msgid "%s: pg_strdup: cannot duplicate null pointer (internal error)\n"
 msgstr "%s: pg_strdup: no se puede duplicar puntero nulo (error interno)\n"
 
-#: common.c:90
-msgid "out of memory"
-msgstr "memoria agotada"
-
 #: common.c:343
 msgid "connection to server was lost\n"
 msgstr "se ha perdido la conexión al servidor\n"
@@ -475,7 +471,7 @@ msgstr ""
 "Ingrese los datos a ser copiados seguidos de un fin de línea.\n"
 "Termine con un backslash y un punto."
 
-#: copy.c:822
+#: copy.c:823
 msgid "aborted because of read failure"
 msgstr "se abortó por un error de lectura"
 
@@ -4815,3 +4811,6 @@ msgstr "el proceso hijo fue terminado por una señal %d"
 #, c-format
 msgid "child process exited with unrecognized status %d"
 msgstr "el proceso hijo terminó con código no reconocido %d"
+
+#~ msgid "out of memory"
+#~ msgstr "memoria agotada"

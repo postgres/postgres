@@ -5,10 +5,11 @@ msgid ""
 msgstr ""
 "Project-Id-Version: psql-tr\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
-"POT-Creation-Date: 2009-09-06 03:09+0000\n"
-"PO-Revision-Date: 2009-09-06 19:50+0200\n"
+"POT-Creation-Date: 2011-09-22 05:19+0000\n"
+"PO-Revision-Date: 2011-09-22 10:29+0200\n"
 "Last-Translator: Devrim GÜNDÜZ <devrim@gunduz.org>\n"
 "Language-Team: Turkish <ceviri@postgresql.org.tr>\n"
+"Language: tr\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
@@ -119,6 +120,7 @@ msgstr "Geçmiş, \"%s/%s\" dosyasına yazılmış.\n"
 #: command.c:951
 #: common.c:52
 #: common.c:66
+#: common.c:90
 #: input.c:198
 #: mainloop.c:70
 #: mainloop.c:228
@@ -166,7 +168,7 @@ msgid "Password for user %s: "
 msgstr "%s kulalnıcısının şifresi: "
 
 #: command.c:1270
-#: command.c:2113
+#: command.c:2131
 #: common.c:183
 #: common.c:460
 #: common.c:525
@@ -175,7 +177,7 @@ msgstr "%s kulalnıcısının şifresi: "
 #: common.c:920
 #: copy.c:655
 #: copy.c:700
-#: copy.c:829
+#: copy.c:830
 #, c-format
 msgid "%s"
 msgstr "%s"
@@ -255,125 +257,125 @@ msgstr "/bin/sh başlatılamıyor\n"
 
 #: command.c:1542
 #, c-format
-msgid "cannot locate temporary directory: %s"
-msgstr "geçici dizin bulunamıyor: %s"
+msgid "cannot locate temporary directory: %s\n"
+msgstr "geçici dizin bulunamıyor: %s\n"
 
 #: command.c:1569
 #, c-format
 msgid "could not open temporary file \"%s\": %s\n"
 msgstr "\"%s\" geçici dosya açılamıyor: %s\n"
 
-#: command.c:1767
+#: command.c:1785
 msgid "\\pset: allowed formats are unaligned, aligned, wrapped, html, latex, troff-ms\n"
 msgstr "\\pset: izin verilen biçimler: unaligned, aligned, wrapped, html, latex, troff-ms\n"
 
-#: command.c:1772
+#: command.c:1790
 #, c-format
 msgid "Output format is %s.\n"
 msgstr "Çıktı formatı: %s.\n"
 
-#: command.c:1782
+#: command.c:1800
 #, c-format
 msgid "Border style is %d.\n"
 msgstr "Kenar stili: %d.\n"
 
-#: command.c:1794
+#: command.c:1812
 #, c-format
 msgid "Expanded display is on.\n"
 msgstr "Geniş gösterme açık.\n"
 
-#: command.c:1795
+#: command.c:1813
 #, c-format
 msgid "Expanded display is off.\n"
 msgstr "Geniş gösterme kapalı.\n"
 
-#: command.c:1808
+#: command.c:1826
 msgid "Showing locale-adjusted numeric output."
 msgstr "Yerel duyarlı sayısal çıktı gösteriliyor."
 
-#: command.c:1810
+#: command.c:1828
 msgid "Locale-adjusted numeric output is off."
 msgstr "Yerel duyarlı sayısıal çıktı biçimlendirme kapalı."
 
-#: command.c:1823
+#: command.c:1841
 #, c-format
 msgid "Null display is \"%s\".\n"
 msgstr "Null display is \"%s\".\n"
 
-#: command.c:1835
+#: command.c:1853
 #, c-format
 msgid "Field separator is \"%s\".\n"
 msgstr "Alan ayracı: \"%s\".\n"
 
-#: command.c:1849
+#: command.c:1867
 #, c-format
 msgid "Record separator is <newline>."
 msgstr "Kayıt ayracı <newline>."
 
-#: command.c:1851
+#: command.c:1869
 #, c-format
 msgid "Record separator is \"%s\".\n"
 msgstr "Kayıt ayracı \"%s\".\n"
 
-#: command.c:1865
+#: command.c:1883
 msgid "Showing only tuples."
 msgstr "Sadece kayıtlar gösteriliyor."
 
-#: command.c:1867
+#: command.c:1885
 msgid "Tuples only is off."
 msgstr "Sadece kayıtları gösterme kapalı."
 
-#: command.c:1883
+#: command.c:1901
 #, c-format
 msgid "Title is \"%s\".\n"
 msgstr "Başlık \"%s\".\n"
 
-#: command.c:1885
+#: command.c:1903
 #, c-format
 msgid "Title is unset.\n"
 msgstr "Başlık kaldırıldı\n"
 
-#: command.c:1901
+#: command.c:1919
 #, c-format
 msgid "Table attribute is \"%s\".\n"
 msgstr "Tablo özelliği: \"%s\".\n"
 
-#: command.c:1903
+#: command.c:1921
 #, c-format
 msgid "Table attributes unset.\n"
 msgstr "Tablo özellikleri kaldırıldı.\n"
 
-#: command.c:1924
+#: command.c:1942
 msgid "Pager is used for long output."
 msgstr "Uzun çıktı için sayfalama kullanıacaktır."
 
-#: command.c:1926
+#: command.c:1944
 msgid "Pager is always used."
 msgstr "Sayfalama her zaman kullanılacak."
 
-#: command.c:1928
+#: command.c:1946
 msgid "Pager usage is off."
 msgstr "Sayfalama kullanımı kapalı."
 
-#: command.c:1942
+#: command.c:1960
 msgid "Default footer is on."
 msgstr "Varsayılan alt başlık açık."
 
-#: command.c:1944
+#: command.c:1962
 msgid "Default footer is off."
 msgstr "Varsayılan alt başlık kapalı."
 
-#: command.c:1955
+#: command.c:1973
 #, c-format
 msgid "Target width for \"wrapped\" format is %d.\n"
 msgstr " \"wrapped\" biçimi için hedef genişlik %d.\n"
 
-#: command.c:1960
+#: command.c:1978
 #, c-format
 msgid "\\pset: unknown option: %s\n"
 msgstr "\\pset: bilinmeyen seçenek: %s\n"
 
-#: command.c:2014
+#: command.c:2032
 msgid "\\!: failed\n"
 msgstr "\\!: başarısız\n"
 
@@ -381,10 +383,6 @@ msgstr "\\!: başarısız\n"
 #, c-format
 msgid "%s: pg_strdup: cannot duplicate null pointer (internal error)\n"
 msgstr "%s: pg_strdup: null pointer  duplicate edilemiyor (iç hata)\n"
-
-#: common.c:90
-msgid "out of memory"
-msgstr "yetersiz bellek"
 
 #: common.c:343
 msgid "connection to server was lost\n"
@@ -499,7 +497,7 @@ msgstr ""
 "Kopyalanacak veriyi girin ve ardından entera basın.\n"
 "Sonuçlandırmak için yeni satırda ters taksim işareti ve nokta girin."
 
-#: copy.c:822
+#: copy.c:823
 msgid "aborted because of read failure"
 msgstr "okuma hatası nedeniyle kesildi"
 
@@ -1255,32 +1253,32 @@ msgstr ""
 "       \\g ya da noktalı virgül:  sorguyu çalıştırmak için\n"
 "       \\q çıkmak için\n"
 
-#: print.c:974
+#: print.c:955
 #, c-format
 msgid "(No rows)\n"
 msgstr "(Satır yok)\n"
 
-#: print.c:1961
+#: print.c:1872
 #, c-format
 msgid "Interrupted\n"
 msgstr "kesildi\n"
 
-#: print.c:2028
+#: print.c:1941
 #, c-format
 msgid "Cannot add header to table content: column count of %d exceeded.\n"
 msgstr "B aşlık tablo içeriğine eklenemedi: %d kolon sayısı aşıldı.\n"
 
-#: print.c:2065
+#: print.c:1981
 #, c-format
 msgid "Cannot add cell to table content: total cell count of %d exceeded.\n"
 msgstr "Hücre tablo içeriğine eklenemedi: %d olan toplan hücre sayısı açıldı.\n"
 
-#: print.c:2264
+#: print.c:2201
 #, c-format
 msgid "invalid output format (internal error): %d"
 msgstr "geçersiz çıktı biçimi (iç hata): %d"
 
-#: print.c:2353
+#: print.c:2298
 #, c-format
 msgid "(%lu row)"
 msgid_plural "(%lu rows)"
@@ -4735,33 +4733,47 @@ msgstr "alt süreç %d sinyali tarafından sonlandırılmıştır"
 msgid "child process exited with unrecognized status %d"
 msgstr "alt süreç %d bilinmeyen durumu ile sonlandırılmıştır"
 
+#~ msgid "out of memory"
+#~ msgstr "yetersiz bellek"
+
 #~ msgid "  \"%s\" IN %s %s"
 #~ msgstr "  \"%s\",  %s %s içinde"
+
 #~ msgid "(1 row)"
+
 #~ msgid_plural "(%lu rows)"
 #~ msgstr[0] "(%lu satır)"
 #~ msgstr[1] "(1 satır)"
+
 #~ msgid "Usage:"
 #~ msgstr "Kullanımı:"
+
 #~ msgid "General options:"
 #~ msgstr "Genel tercihler:"
+
 #~ msgid "  -1 (\"one\")      execute command file as a single transaction"
 #~ msgstr "  -1 (rakamla bir)      komutu tek bir transaction olarak işle"
+
 #~ msgid "  --help          show this help, then exit"
 #~ msgstr "  --help          yardım metnini göster ve çık"
+
 #~ msgid "  --version       output version information, then exit"
 #~ msgstr "  --version       sürüm bilgisini göster ve çık"
+
 #~ msgid "  -t              print rows only (-P tuples_only)"
 #~ msgstr "  -t              sadece satırları göster (-P tuples_only)"
+
 #~ msgid ""
 #~ "\n"
 #~ "Connection options:"
 #~ msgstr ""
 #~ "\n"
 #~ "Bağlantı tercihleri:"
+
 #~ msgid ""
 #~ "  -W              force password prompt (should happen automatically)"
 #~ msgstr "  -W              şifre sorulmasını sağla (otomatik olarak olmalı)"
+
 #~ msgid ""
 #~ "  \\d{t|i|s|v|S} [PATTERN] (add \"+\" for more detail)\n"
 #~ "                 list tables/indexes/sequences/views/system tables\n"
@@ -4769,57 +4781,69 @@ msgstr "alt süreç %d bilinmeyen durumu ile sonlandırılmıştır"
 #~ "  \\d{t|i|s|v|S} [PATTERN] (daha fazla ayrıntı için \"+\" ekleyin)\n"
 #~ "                 tablolar/indeksler/sequenceler/viewlar/system "
 #~ "tablolarını listele\n"
+
 #~ msgid "  \\db [PATTERN]  list tablespaces (add \"+\" for more detail)\n"
 #~ msgstr ""
 #~ "  \\db [PATTERN]  tablespaceleri listele (daha fazla ayrıntı için \"+\" "
 #~ "ekleyin)\n"
+
 #~ msgid "  \\df [PATTERN]  list functions (add \"+\" for more detail)\n"
 #~ msgstr ""
 #~ "  \\df [PATTERN]  fonksiyonları göster (daha fazla ayrıntı için \"+\" "
 #~ "ekleyin)\n"
+
 #~ msgid ""
 #~ "  \\dFd [PATTERN] list text search dictionaries (add \"+\" for more "
 #~ "detail)\n"
 #~ msgstr ""
 #~ "  \\dFd [PATTERN]  metin arama sözlüklerini listele (daha fazla ayrıntı "
 #~ "için \"+\" ekleyin)\n"
+
 #~ msgid ""
 #~ "  \\dFp [PATTERN] list text search parsers (add \"+\" for more detail)\n"
 #~ msgstr ""
 #~ "  \\dFp [PATTERN] metin arama ayrıştırıcılarını listele (daha fazla "
 #~ "ayrıntı için \"+\" ekleyin)\n"
+
 #~ msgid "  \\dn [PATTERN]  list schemas (add \"+\" for more detail)\n"
 #~ msgstr ""
 #~ "  \\dn [PATTERN]  şemaları göster (daha fazla ayrıntı için \"+\" "
 #~ "ekleyin)\n"
+
 #~ msgid "  \\dT [PATTERN]  list data types (add \"+\" for more detail)\n"
 #~ msgstr ""
 #~ "  \\dT [PATTERN]  veri tipleri listele (daha fazla ayrıntı için \"+\" "
 #~ "ekleyin)\n"
+
 #~ msgid "  \\l             list all databases (add \"+\" for more detail)\n"
 #~ msgstr ""
 #~ "  \\l             tüm veritabanlarını listele (daha fazla ayrıntı için \"+"
 #~ "\" ekleyin)\n"
+
 #~ msgid ""
 #~ "  \\z [PATTERN]   list table, view, and sequence access privileges (same "
 #~ "as \\dp)\n"
 #~ msgstr ""
 #~ "  \\z [PATTERN]   tablo, view, ve sequence erişim haklarını listele (\\dp "
 #~ "ile aynı)\n"
+
 #~ msgid "Copy, Large Object\n"
 #~ msgstr "Copy, Large Object\n"
+
 #~ msgid ""
 #~ "Welcome to %s %s (server %s), the PostgreSQL interactive terminal.\n"
 #~ "\n"
 #~ msgstr ""
 #~ "PostgreSQL etkilişimli arayüzü %s %s(server %s).\n"
 #~ "\n"
+
 #~ msgid ""
 #~ "Welcome to %s %s, the PostgreSQL interactive terminal.\n"
 #~ "\n"
 #~ msgstr ""
 #~ "PostgreSQL etkilişimli arayüzü %s %s.\n"
 #~ "\n"
+
 #~ msgid ""
 #~ "WARNING:  You are connected to a server with major version %d.%d,\n"
 #~ "but your %s client is major version %d.%d.  Some backslash commands,\n"
@@ -4830,18 +4854,24 @@ msgstr "alt süreç %d bilinmeyen durumu ile sonlandırılmıştır"
 #~ "ancak %s istemcinizin sürümü %d.%d. \\d gibi bazı backslash ile başlayan "
 #~ "komutlar düzgün çalışmayabilir\n"
 #~ "\n"
+
 #~ msgid "Access privileges for database \"%s\""
 #~ msgstr "\"%s\" veritabanının erişim hakları"
+
 #~ msgid "?%c? \"%s.%s\""
 #~ msgstr "?%c? \"%s.%s\""
+
 #~ msgid "    \"%s\""
 #~ msgstr "    \"%s\""
+
 #~ msgid "no limit"
 #~ msgstr "sınırsız"
+
 #~ msgid "ALTER VIEW name RENAME TO newname"
 #~ msgstr "ALTER VIEW view_adı RENAME TO yeni_ad"
+
 #~ msgid "%s: Warning: The -u option is deprecated. Use -U.\n"
 #~ msgstr "%s: Uyarı: -u parametresi kullanımdan kalkmıştır. -U kullanın.\n"
+
 #~ msgid "(binary compatible)"
 #~ msgstr "(ikili (binary) uyumlu)"
-

@@ -1,13 +1,13 @@
 # Brazilian Portuguese message translation file for psql
 # Copyright (C) 2009 PostgreSQL Global Development Group
 # This file is distributed under the same license as the PostgreSQL package.
-# Euler Taveira de Oliveira <euler@timbira.com>, 2003-2010.
+# Euler Taveira de Oliveira <euler@timbira.com>, 2003-2011.
 #
 msgid ""
 msgstr ""
 "Project-Id-Version: PostgreSQL 8.4\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
-"POT-Creation-Date: 2010-06-18 19:28-0300\n"
+"POT-Creation-Date: 2011-08-20 22:17-0300\n"
 "PO-Revision-Date: 2005-11-02 10:30-0300\n"
 "Last-Translator: Euler Taveira de Oliveira <euler@timbira.com>\n"
 "Language-Team: Brazilian Portuguese <pgbr-dev@listas.postgresql.org.br>\n"
@@ -104,7 +104,7 @@ msgstr "Buffer de consulta reiniciado (limpo)."
 msgid "Wrote history to file \"%s/%s\".\n"
 msgstr "Histórico escrito para arquivo \"%s/%s\".\n"
 
-#: command.c:951 common.c:52 common.c:66 input.c:198 mainloop.c:70
+#: command.c:951 common.c:52 common.c:66 common.c:90 input.c:198 mainloop.c:70
 #: mainloop.c:228 print.c:61 print.c:75
 #, c-format
 msgid "out of memory\n"
@@ -135,7 +135,7 @@ msgid "Password for user %s: "
 msgstr "Senha para usuário %s: "
 
 #: command.c:1270 command.c:2131 common.c:183 common.c:460 common.c:525
-#: common.c:811 common.c:836 common.c:920 copy.c:655 copy.c:700 copy.c:829
+#: common.c:811 common.c:836 common.c:920 copy.c:655 copy.c:700 copy.c:830
 #, c-format
 msgid "%s"
 msgstr "%s"
@@ -220,8 +220,8 @@ msgstr "não pôde iniciar /bin/sh\n"
 
 #: command.c:1542
 #, c-format
-msgid "cannot locate temporary directory: %s"
-msgstr "não pôde localizar diretório temporário: %s"
+msgid "cannot locate temporary directory: %s\n"
+msgstr "não pôde localizar diretório temporário: %s\n"
 
 #: command.c:1569
 #, c-format
@@ -351,10 +351,6 @@ msgstr "\\!: falhou\n"
 msgid "%s: pg_strdup: cannot duplicate null pointer (internal error)\n"
 msgstr "%s: pg_strdup: não pode duplicar ponteiro nulo (erro interno)\n"
 
-#: common.c:90
-msgid "out of memory"
-msgstr "sem memória"
-
 #: common.c:343
 msgid "connection to server was lost\n"
 msgstr "conexão com servidor foi perdida\n"
@@ -473,7 +469,7 @@ msgstr ""
 "Informe os dados a serem copiados seguido pelo caracter de nova linha.\n"
 "Finalize com uma barra invertida e um ponto na linha."
 
-#: copy.c:822
+#: copy.c:823
 msgid "aborted because of read failure"
 msgstr "interrompido devido a falha de leitura"
 
@@ -546,7 +542,6 @@ msgid "  -l, --list               list available databases, then exit\n"
 msgstr ""
 "  -l, --list               lista os bancos de dados disponíveis e termina\n"
 
-#, c-format
 #: help.c:99
 #, c-format
 msgid ""
@@ -975,7 +970,8 @@ msgstr "  \\dew[+] [MODELO]       lista adaptadores de dados externos\n"
 msgid ""
 "  \\df[antw][S+] [PATRN]  list [only agg/normal/trigger/window] functions\n"
 msgstr ""
-"  \\df[antw][S+] [MODELO] lista funções [somente agr/normal/gatilho/deslizante]\n"
+"  \\df[antw][S+] [MODELO] lista funções [somente agr/normal/gatilho/"
+"deslizante]\n"
 
 #: help.c:209
 #, c-format
@@ -1338,12 +1334,16 @@ msgstr "Interrompido\n"
 #: print.c:1941
 #, c-format
 msgid "Cannot add header to table content: column count of %d exceeded.\n"
-msgstr "Não pode adicionar cabeçalho a conteúdo de tabela: quantidade de colunas %d foi excedida.\n"
+msgstr ""
+"Não pode adicionar cabeçalho a conteúdo de tabela: quantidade de colunas %d "
+"foi excedida.\n"
 
 #: print.c:1981
 #, c-format
 msgid "Cannot add cell to table content: total cell count of %d exceeded.\n"
-msgstr "Não pode adicionar célula a conteúdo de tabela: quantidade total de células %d foi excedida.\n"
+msgstr ""
+"Não pode adicionar célula a conteúdo de tabela: quantidade total de células "
+"%d foi excedida.\n"
 
 #: print.c:2201
 #, c-format
@@ -3368,7 +3368,8 @@ msgid ""
 "    FOREIGN DATA WRAPPER fdwname\n"
 "    [ OPTIONS ( option 'value' [, ... ] ) ]"
 msgstr ""
-"CREATE SERVER nome_servidor [ TYPE 'tipo_servidor' ] [ VERSION 'versão_servidor' ]\n"
+"CREATE SERVER nome_servidor [ TYPE 'tipo_servidor' ] [ VERSION "
+"'versão_servidor' ]\n"
 "    FOREIGN DATA WRAPPER nome_ade\n"
 "    [ OPTIONS ( opção 'valor' [, ... ] ) ]"
 
