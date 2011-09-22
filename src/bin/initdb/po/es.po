@@ -5,18 +5,19 @@
 #
 # Álvaro Herrera <alvherre@alvh.no-ip.org>, 2004-2010
 #
-# pgtranslation Id: initdb.po,v 1.10 2010/09/24 21:58:59 petere Exp $
+# pgtranslation Id: initdb.po,v 1.10.2.1 2011/09/22 14:15:12 alvherre Exp $
 #
 msgid ""
 msgstr ""
 "Project-Id-Version: initdb (PostgreSQL 8.4)\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
-"POT-Creation-Date: 2010-08-30 20:02+0000\n"
+"POT-Creation-Date: 2011-09-22 05:07+0000\n"
 "PO-Revision-Date: 2010-09-25 00:37+0300\n"
 "Last-Translator: Álvaro Herrera <alvherre@alvh.no-ip.org>\n"
 "Language-Team: PgSQL-es-Ayuda <pgsql-es-ayuda@postgresql.org>\n"
+"Language: \n"
 "MIME-Version: 1.0\n"
-"Content-Type: text/plain; charset=utf-8\n"
+"Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 
 #: initdb.c:254 initdb.c:268
@@ -78,7 +79,8 @@ msgstr "%s: no se pudo eliminar el directorio de registro de transacciones\n"
 #, c-format
 msgid "%s: removing contents of transaction log directory \"%s\"\n"
 msgstr ""
-"%s: eliminando el contenido del directorio de registro de transacciones «%s»\n"
+"%s: eliminando el contenido del directorio de registro de transacciones "
+"«%s»\n"
 
 #: initdb.c:618
 #, c-format

@@ -5,10 +5,11 @@ msgid ""
 msgstr ""
 "Project-Id-Version: psql-tr\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
-"POT-Creation-Date: 2010-08-31 20:03+0000\n"
-"PO-Revision-Date: 2010-09-14 14:36+0200\n"
+"POT-Creation-Date: 2011-09-16 09:08+0000\n"
+"PO-Revision-Date: 2011-09-22 01:28+0200\n"
 "Last-Translator: Devrim GÜNDÜZ <devrim@gunduz.org>\n"
 "Language-Team: Turkish <ceviri@postgresql.org.tr>\n"
+"Language: tr\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
@@ -119,6 +120,7 @@ msgstr "Geçmiş, \"%s/%s\" dosyasına yazılmış.\n"
 #: command.c:978
 #: common.c:52
 #: common.c:66
+#: common.c:90
 #: input.c:209
 #: mainloop.c:72
 #: mainloop.c:234
@@ -175,7 +177,7 @@ msgstr "%s kulalnıcısının şifresi: "
 #: common.c:925
 #: copy.c:432
 #: copy.c:477
-#: copy.c:606
+#: copy.c:607
 #, c-format
 msgid "%s"
 msgstr "%s"
@@ -255,8 +257,8 @@ msgstr "/bin/sh başlatılamıyor\n"
 
 #: command.c:1591
 #, c-format
-msgid "cannot locate temporary directory: %s"
-msgstr "geçici dizin bulunamıyor: %s"
+msgid "cannot locate temporary directory: %s\n"
+msgstr "geçici dizin bulunamıyor: %s\n"
 
 #: command.c:1618
 #, c-format
@@ -277,9 +279,9 @@ msgid "\\pset: allowed line styles are ascii, old-ascii, unicode\n"
 msgstr ""
 
 #: command.c:1865
-#, fuzzy, c-format
+#, c-format
 msgid "Line style is %s.\n"
-msgstr "Kenar stili: %d.\n"
+msgstr "Satır stili: %s.\n"
 
 #: command.c:1876
 #, c-format
@@ -390,10 +392,6 @@ msgstr "\\!: başarısız\n"
 #, c-format
 msgid "%s: pg_strdup: cannot duplicate null pointer (internal error)\n"
 msgstr "%s: pg_strdup: null pointer  duplicate edilemiyor (iç hata)\n"
-
-#: common.c:90
-msgid "out of memory"
-msgstr "yetersiz bellek"
 
 #: common.c:343
 msgid "connection to server was lost\n"
@@ -513,7 +511,7 @@ msgstr ""
 "Kopyalanacak veriyi girin ve ardından entera basın.\n"
 "Sonuçlandırmak için yeni satırda ters taksim işareti ve nokta girin."
 
-#: copy.c:599
+#: copy.c:600
 msgid "aborted because of read failure"
 msgstr "okuma hatası nedeniyle kesildi"
 
@@ -891,9 +889,9 @@ msgid "  \\d[S+]  NAME           describe table, view, sequence, or index\n"
 msgstr "  \\d[S+}  AD                tablo, indeks, sequence, ya da view tanımlarını göster\n"
 
 #: help.c:199
-#, fuzzy, c-format
+#, c-format
 msgid "  \\da[S]  [PATTERN]      list aggregates\n"
-msgstr "  \\da[+]  [PATTERN]      aggregateleri listele\n"
+msgstr "  \\da[S]  [PATTERN]      aggregateleri listele\n"
 
 #: help.c:200
 #, c-format
@@ -916,9 +914,9 @@ msgid "  \\dd[S]  [PATTERN]      show comments on objects\n"
 msgstr "  \\dd[S]  [PATTERN]      nesnelerin yorumlarını göster\n"
 
 #: help.c:204
-#, fuzzy, c-format
+#, c-format
 msgid "  \\ddp    [PATTERN]      list default privileges\n"
-msgstr "  \\dC     [PATTERN]      castleri listele\n"
+msgstr "  \\ddp    [PATTERN]      öntanımlı izinleri listele\n"
 
 #: help.c:205
 #, c-format
@@ -1583,11 +1581,11 @@ msgstr "Veritabanlarının listesi"
 #: sql_help.c:1723
 #: sql_help.c:1884
 #: sql_help.c:1965
-#: sql_help.c:2159
-#: sql_help.c:2719
-#: sql_help.c:2739
-#: sql_help.c:2741
-#: sql_help.c:2742
+#: sql_help.c:2169
+#: sql_help.c:2729
+#: sql_help.c:2749
+#: sql_help.c:2751
+#: sql_help.c:2752
 msgid "table"
 msgstr "tablo"
 
@@ -1625,9 +1623,8 @@ msgid "function"
 msgstr "fonksiyon"
 
 #: describe.c:790
-#, fuzzy
 msgid "Default access privileges"
-msgstr "erişim haklarını tanımla"
+msgstr "öntanımlı erişim yetkileri"
 
 #: describe.c:826
 msgid "Object"
@@ -1639,11 +1636,11 @@ msgstr "aggregate"
 
 #: describe.c:877
 #: sql_help.c:1457
-#: sql_help.c:2457
-#: sql_help.c:2525
-#: sql_help.c:2656
-#: sql_help.c:2757
-#: sql_help.c:2808
+#: sql_help.c:2467
+#: sql_help.c:2535
+#: sql_help.c:2666
+#: sql_help.c:2767
+#: sql_help.c:2818
 msgid "operator"
 msgstr "operatör"
 
@@ -1935,9 +1932,9 @@ msgid "No matching settings found.\n"
 msgstr "Eşleşen nesne bulunamadı.\n"
 
 #: describe.c:2316
-#, fuzzy, c-format
+#, c-format
 msgid "No settings found.\n"
-msgstr "Nesne bulunamadı.\n"
+msgstr "Ayar bulunamadı.\n"
 
 #: describe.c:2321
 msgid "List of settings"
@@ -2221,9 +2218,8 @@ msgid "change a database"
 msgstr "veritabanını değiştir"
 
 #: sql_help.h:193
-#, fuzzy
 msgid "define default access privileges"
-msgstr "erişim haklarını tanımla"
+msgstr "öntanımlı erişim haklarını tanımla"
 
 #: sql_help.h:198
 msgid "change the definition of a domain"
@@ -2889,12 +2885,12 @@ msgstr "compute a set of rows"
 #: sql_help.c:1981
 #: sql_help.c:1998
 #: sql_help.c:2013
-#: sql_help.c:2193
-#: sql_help.c:2221
-#: sql_help.c:2248
-#: sql_help.c:2549
-#: sql_help.c:2594
-#: sql_help.c:2698
+#: sql_help.c:2203
+#: sql_help.c:2231
+#: sql_help.c:2258
+#: sql_help.c:2559
+#: sql_help.c:2604
+#: sql_help.c:2708
 msgid "name"
 msgstr "ad"
 
@@ -2981,6 +2977,7 @@ msgstr "yeni_şema"
 #: sql_help.c:1528
 #: sql_help.c:1660
 #: sql_help.c:1682
+#: sql_help.c:2031
 msgid "option"
 msgstr "seçenek"
 
@@ -2999,15 +2996,13 @@ msgstr "seçenek şunlar olabilir:"
 #: sql_help.c:1056
 #: sql_help.c:1285
 #: sql_help.c:1662
-#, fuzzy
 msgid "connlimit"
-msgstr "sınırsız"
+msgstr "bağlantı sınırı"
 
 #: sql_help.c:78
 #: sql_help.c:559
-#, fuzzy
 msgid "new_tablespace"
-msgstr "Tablespace"
+msgstr "yeni_tablespace"
 
 #: sql_help.c:80
 #: sql_help.c:83
@@ -3022,8 +3017,8 @@ msgstr "Tablespace"
 #: sql_help.c:715
 #: sql_help.c:717
 #: sql_help.c:1124
-#: sql_help.c:2265
-#: sql_help.c:2538
+#: sql_help.c:2275
+#: sql_help.c:2548
 msgid "configuration_parameter"
 msgstr "yapılandırma_parametresi"
 
@@ -3050,8 +3045,8 @@ msgstr "yapılandırma_parametresi"
 #: sql_help.c:1490
 #: sql_help.c:1529
 #: sql_help.c:1683
-#: sql_help.c:2539
-#: sql_help.c:2540
+#: sql_help.c:2549
+#: sql_help.c:2550
 msgid "value"
 msgstr "değer"
 
@@ -3061,14 +3056,14 @@ msgstr "hedef_rol"
 
 #: sql_help.c:134
 #: sql_help.c:1318
-#: sql_help.c:2119
-#: sql_help.c:2126
-#: sql_help.c:2138
-#: sql_help.c:2144
-#: sql_help.c:2348
-#: sql_help.c:2355
-#: sql_help.c:2367
-#: sql_help.c:2373
+#: sql_help.c:2129
+#: sql_help.c:2136
+#: sql_help.c:2148
+#: sql_help.c:2154
+#: sql_help.c:2358
+#: sql_help.c:2365
+#: sql_help.c:2377
+#: sql_help.c:2383
 msgid "schema_name"
 msgstr "şema_adı"
 
@@ -3101,33 +3096,33 @@ msgstr ""
 #: sql_help.c:1667
 #: sql_help.c:1668
 #: sql_help.c:1669
-#: sql_help.c:2120
-#: sql_help.c:2124
-#: sql_help.c:2127
-#: sql_help.c:2129
-#: sql_help.c:2131
-#: sql_help.c:2133
+#: sql_help.c:2130
+#: sql_help.c:2134
+#: sql_help.c:2137
 #: sql_help.c:2139
 #: sql_help.c:2141
 #: sql_help.c:2143
-#: sql_help.c:2145
-#: sql_help.c:2147
-#: sql_help.c:2148
 #: sql_help.c:2149
-#: sql_help.c:2349
-#: sql_help.c:2353
-#: sql_help.c:2356
-#: sql_help.c:2358
-#: sql_help.c:2360
-#: sql_help.c:2362
+#: sql_help.c:2151
+#: sql_help.c:2153
+#: sql_help.c:2155
+#: sql_help.c:2157
+#: sql_help.c:2158
+#: sql_help.c:2159
+#: sql_help.c:2359
+#: sql_help.c:2363
+#: sql_help.c:2366
 #: sql_help.c:2368
 #: sql_help.c:2370
 #: sql_help.c:2372
-#: sql_help.c:2374
-#: sql_help.c:2376
-#: sql_help.c:2377
 #: sql_help.c:2378
-#: sql_help.c:2559
+#: sql_help.c:2380
+#: sql_help.c:2382
+#: sql_help.c:2384
+#: sql_help.c:2386
+#: sql_help.c:2387
+#: sql_help.c:2388
+#: sql_help.c:2569
 msgid "role_name"
 msgstr "rol_adı"
 
@@ -3141,26 +3136,26 @@ msgstr "rol_adı"
 #: sql_help.c:1441
 #: sql_help.c:1450
 #: sql_help.c:1472
-#: sql_help.c:2161
-#: sql_help.c:2446
-#: sql_help.c:2447
-#: sql_help.c:2451
+#: sql_help.c:2171
 #: sql_help.c:2456
-#: sql_help.c:2513
-#: sql_help.c:2514
-#: sql_help.c:2519
+#: sql_help.c:2457
+#: sql_help.c:2461
+#: sql_help.c:2466
+#: sql_help.c:2523
 #: sql_help.c:2524
-#: sql_help.c:2645
-#: sql_help.c:2646
-#: sql_help.c:2650
+#: sql_help.c:2529
+#: sql_help.c:2534
 #: sql_help.c:2655
-#: sql_help.c:2722
-#: sql_help.c:2724
-#: sql_help.c:2755
-#: sql_help.c:2797
-#: sql_help.c:2798
-#: sql_help.c:2802
+#: sql_help.c:2656
+#: sql_help.c:2660
+#: sql_help.c:2665
+#: sql_help.c:2732
+#: sql_help.c:2734
+#: sql_help.c:2765
 #: sql_help.c:2807
+#: sql_help.c:2808
+#: sql_help.c:2812
+#: sql_help.c:2817
 msgid "expression"
 msgstr "ifade"
 
@@ -3191,8 +3186,8 @@ msgstr "valfunction"
 #: sql_help.c:851
 #: sql_help.c:1114
 #: sql_help.c:1805
-#: sql_help.c:2135
-#: sql_help.c:2364
+#: sql_help.c:2145
+#: sql_help.c:2374
 msgid "argmode"
 msgstr ""
 
@@ -3213,9 +3208,8 @@ msgstr "bağımsız değişken adı"
 #: sql_help.c:853
 #: sql_help.c:1116
 #: sql_help.c:1807
-#, fuzzy
 msgid "argtype"
-msgstr "Hedef tipi"
+msgstr "argüman tipi"
 
 #: sql_help.c:218
 #: sql_help.c:514
@@ -3256,15 +3250,15 @@ msgstr "grup_adı"
 #: sql_help.c:1501
 #: sql_help.c:1680
 #: sql_help.c:1989
-#: sql_help.c:2569
+#: sql_help.c:2579
 msgid "user_name"
 msgstr "kullanıcı_adı"
 
 #: sql_help.c:270
 #: sql_help.c:1500
 #: sql_help.c:1924
-#: sql_help.c:2146
-#: sql_help.c:2375
+#: sql_help.c:2156
+#: sql_help.c:2385
 msgid "tablespace_name"
 msgstr "tablespace_adı"
 
@@ -3358,14 +3352,14 @@ msgstr ""
 #: sql_help.c:1215
 #: sql_help.c:1245
 #: sql_help.c:1576
-#: sql_help.c:2134
-#: sql_help.c:2363
-#: sql_help.c:2472
-#: sql_help.c:2477
-#: sql_help.c:2671
-#: sql_help.c:2676
-#: sql_help.c:2823
-#: sql_help.c:2828
+#: sql_help.c:2144
+#: sql_help.c:2373
+#: sql_help.c:2482
+#: sql_help.c:2487
+#: sql_help.c:2681
+#: sql_help.c:2686
+#: sql_help.c:2833
+#: sql_help.c:2838
 msgid "function_name"
 msgstr "fonksiyon_adı"
 
@@ -3395,8 +3389,8 @@ msgstr "timestamp"
 #: sql_help.c:402
 #: sql_help.c:405
 #: sql_help.c:408
-#: sql_help.c:2128
-#: sql_help.c:2357
+#: sql_help.c:2138
+#: sql_help.c:2367
 msgid "database_name"
 msgstr "veritabanı_adı"
 
@@ -3417,11 +3411,11 @@ msgstr "en yüksek değer"
 
 #: sql_help.c:440
 #: sql_help.c:1337
-#: sql_help.c:2459
-#: sql_help.c:2527
-#: sql_help.c:2658
-#: sql_help.c:2759
-#: sql_help.c:2810
+#: sql_help.c:2469
+#: sql_help.c:2537
+#: sql_help.c:2668
+#: sql_help.c:2769
+#: sql_help.c:2820
 msgid "start"
 msgstr "başlat"
 
@@ -3456,15 +3450,15 @@ msgstr "önbellek"
 #: sql_help.c:1180
 #: sql_help.c:1340
 #: sql_help.c:1471
-#: sql_help.c:2121
-#: sql_help.c:2122
-#: sql_help.c:2160
-#: sql_help.c:2350
-#: sql_help.c:2351
-#: sql_help.c:2721
-#: sql_help.c:2723
-#: sql_help.c:2740
-#: sql_help.c:2743
+#: sql_help.c:2131
+#: sql_help.c:2132
+#: sql_help.c:2170
+#: sql_help.c:2360
+#: sql_help.c:2361
+#: sql_help.c:2731
+#: sql_help.c:2733
+#: sql_help.c:2750
+#: sql_help.c:2753
 msgid "column"
 msgstr "kolon"
 
@@ -3475,8 +3469,8 @@ msgstr "kolon"
 #: sql_help.c:1681
 #: sql_help.c:1908
 #: sql_help.c:1990
-#: sql_help.c:2132
-#: sql_help.c:2361
+#: sql_help.c:2142
+#: sql_help.c:2371
 msgid "server_name"
 msgstr "sunucu_adı"
 
@@ -3564,20 +3558,19 @@ msgid "new_dictionary"
 msgstr "yeni_sözlük"
 
 #: sql_help.c:775
-#: sql_help.c:2583
-#: sql_help.c:2584
-#: sql_help.c:2607
+#: sql_help.c:2593
+#: sql_help.c:2594
+#: sql_help.c:2617
 msgid "transaction_mode"
 msgstr "transaction_modu"
 
 #: sql_help.c:776
-#: sql_help.c:2585
-#: sql_help.c:2608
+#: sql_help.c:2595
+#: sql_help.c:2618
 msgid "where transaction_mode is one of:"
 msgstr "transaction_modu aşağıdakilerden birisi olabilir:"
 
 #: sql_help.c:800
-#: sql_help.c:839
 #: sql_help.c:846
 #: sql_help.c:866
 #: sql_help.c:875
@@ -3587,20 +3580,20 @@ msgstr "transaction_modu aşağıdakilerden birisi olabilir:"
 #: sql_help.c:1418
 #: sql_help.c:1430
 #: sql_help.c:1487
-#: sql_help.c:2118
-#: sql_help.c:2123
-#: sql_help.c:2347
-#: sql_help.c:2352
-#: sql_help.c:2461
-#: sql_help.c:2463
-#: sql_help.c:2489
-#: sql_help.c:2529
-#: sql_help.c:2660
-#: sql_help.c:2662
-#: sql_help.c:2688
-#: sql_help.c:2812
-#: sql_help.c:2814
-#: sql_help.c:2840
+#: sql_help.c:2128
+#: sql_help.c:2133
+#: sql_help.c:2357
+#: sql_help.c:2362
+#: sql_help.c:2471
+#: sql_help.c:2473
+#: sql_help.c:2499
+#: sql_help.c:2539
+#: sql_help.c:2670
+#: sql_help.c:2672
+#: sql_help.c:2698
+#: sql_help.c:2822
+#: sql_help.c:2824
+#: sql_help.c:2850
 msgid "table_name"
 msgstr "tablo_adı"
 
@@ -3625,7 +3618,38 @@ msgstr "tablo_adı"
 msgid "object_name"
 msgstr "nesne_adı"
 
+#: sql_help.c:839
+msgid "agg_name"
+msgstr ""
+
 #: sql_help.c:840
+#, fuzzy
+msgid "agg_type"
+msgstr "Hedef tipi"
+
+#: sql_help.c:841
+#: sql_help.c:994
+#: sql_help.c:998
+#: sql_help.c:1000
+#: sql_help.c:1762
+msgid "source_type"
+msgstr "kaynak_tipi"
+
+#: sql_help.c:842
+#: sql_help.c:995
+#: sql_help.c:999
+#: sql_help.c:1001
+#: sql_help.c:1763
+#, fuzzy
+msgid "target_type"
+msgstr "Hedef tipi"
+
+#: sql_help.c:843
+#, fuzzy
+msgid "relation_name"
+msgstr "dil_adı"
+
+#: sql_help.c:844
 #: sql_help.c:1119
 #: sql_help.c:1419
 #: sql_help.c:1432
@@ -3634,39 +3658,12 @@ msgstr "nesne_adı"
 #: sql_help.c:1460
 #: sql_help.c:1488
 #: sql_help.c:1693
-#: sql_help.c:2487
-#: sql_help.c:2686
-#: sql_help.c:2838
+#: sql_help.c:2497
+#: sql_help.c:2696
+#: sql_help.c:2848
 #, fuzzy
 msgid "column_name"
 msgstr "Rol adı"
-
-#: sql_help.c:841
-msgid "agg_name"
-msgstr ""
-
-#: sql_help.c:842
-#, fuzzy
-msgid "agg_type"
-msgstr "Hedef tipi"
-
-#: sql_help.c:843
-#: sql_help.c:994
-#: sql_help.c:998
-#: sql_help.c:1000
-#: sql_help.c:1762
-#, fuzzy
-msgid "source_type"
-msgstr "Kaynak tipi"
-
-#: sql_help.c:844
-#: sql_help.c:995
-#: sql_help.c:999
-#: sql_help.c:1001
-#: sql_help.c:1763
-#, fuzzy
-msgid "target_type"
-msgstr "Hedef tipi"
 
 #: sql_help.c:865
 #, fuzzy
@@ -3678,28 +3675,27 @@ msgid "text"
 msgstr "metin"
 
 #: sql_help.c:893
-#: sql_help.c:2231
-#: sql_help.c:2393
-#, fuzzy
+#: sql_help.c:2241
+#: sql_help.c:2403
 msgid "transaction_id"
-msgstr "transaction salt okunurdur"
+msgstr "transaction_numarası"
 
 #: sql_help.c:921
 #: sql_help.c:926
-#: sql_help.c:2180
-#, fuzzy
+#: sql_help.c:2190
 msgid "filename"
-msgstr "Rol adı"
+msgstr "dosya adı"
 
 #: sql_help.c:925
 #: sql_help.c:1492
 #: sql_help.c:1694
 #: sql_help.c:1712
-#: sql_help.c:2162
+#: sql_help.c:2172
 msgid "query"
 msgstr "sorgu"
 
 #: sql_help.c:928
+#: sql_help.c:2034
 msgid "where option can be one of:"
 msgstr "seçenek aşağıdakilerden birisi olabilir:"
 
@@ -3710,10 +3706,10 @@ msgstr "Bilgi edinme\n"
 
 #: sql_help.c:930
 #: sql_help.c:933
-#: sql_help.c:2023
-#: sql_help.c:2024
-#: sql_help.c:2025
-#: sql_help.c:2026
+#: sql_help.c:2035
+#: sql_help.c:2036
+#: sql_help.c:2037
+#: sql_help.c:2038
 msgid "boolean"
 msgstr "boolean"
 
@@ -3731,20 +3727,17 @@ msgid "quote_character"
 msgstr " %d karakterinde "
 
 #: sql_help.c:935
-#, fuzzy
 msgid "escape_character"
-msgstr "escape satırı geçersiz"
+msgstr "kaçış_karakteri"
 
 #: sql_help.c:963
-#, fuzzy
 msgid "input_data_type"
-msgstr "veri tipi"
+msgstr "giriş_veri_tipi"
 
 #: sql_help.c:964
 #: sql_help.c:972
-#, fuzzy
 msgid "sfunc"
-msgstr "sequence"
+msgstr "sfunc"
 
 #: sql_help.c:965
 #: sql_help.c:973
@@ -3793,15 +3786,15 @@ msgstr ""
 #: sql_help.c:1306
 #: sql_help.c:1575
 #: sql_help.c:1726
-#: sql_help.c:2450
-#: sql_help.c:2452
-#: sql_help.c:2518
-#: sql_help.c:2520
-#: sql_help.c:2649
-#: sql_help.c:2651
-#: sql_help.c:2726
-#: sql_help.c:2801
-#: sql_help.c:2803
+#: sql_help.c:2460
+#: sql_help.c:2462
+#: sql_help.c:2528
+#: sql_help.c:2530
+#: sql_help.c:2659
+#: sql_help.c:2661
+#: sql_help.c:2736
+#: sql_help.c:2811
+#: sql_help.c:2813
 #, fuzzy
 msgid "condition"
 msgstr "%d bağlantı"
@@ -3835,7 +3828,7 @@ msgstr "Dil Kodlaması"
 
 #: sql_help.c:1053
 msgid "lc_collate"
-msgstr ""
+msgstr "lc_collate"
 
 #: sql_help.c:1054
 #, fuzzy
@@ -3848,15 +3841,14 @@ msgstr "Ctype"
 #: sql_help.c:1438
 #: sql_help.c:1469
 #: sql_help.c:1491
-#, fuzzy
 msgid "tablespace"
-msgstr "Tablespace"
+msgstr "tablespace"
 
 #: sql_help.c:1072
 #: sql_help.c:1235
 #: sql_help.c:1420
 #: sql_help.c:1613
-#: sql_help.c:2222
+#: sql_help.c:2232
 msgid "data_type"
 msgstr "veri_tipi"
 
@@ -3885,8 +3877,8 @@ msgstr "kolon_tipi"
 
 #: sql_help.c:1121
 #: sql_help.c:1744
-#: sql_help.c:2140
-#: sql_help.c:2369
+#: sql_help.c:2150
+#: sql_help.c:2379
 msgid "lang_name"
 msgstr "dil_adı"
 
@@ -3981,8 +3973,8 @@ msgid "server_version"
 msgstr "sunucu_sürümü"
 
 #: sql_help.c:1353
-#: sql_help.c:2130
-#: sql_help.c:2359
+#: sql_help.c:2140
+#: sql_help.c:2369
 msgid "fdw_name"
 msgstr "fdw_adı"
 
@@ -4124,9 +4116,8 @@ msgid "internallength"
 msgstr "internallength"
 
 #: sql_help.c:1625
-#, fuzzy
 msgid "alignment"
-msgstr "atama"
+msgstr ""
 
 #: sql_help.c:1626
 msgid "storage"
@@ -4157,19 +4148,19 @@ msgid "delimiter"
 msgstr "sınırlayıcı"
 
 #: sql_help.c:1724
-#: sql_help.c:2464
-#: sql_help.c:2467
-#: sql_help.c:2470
 #: sql_help.c:2474
-#: sql_help.c:2663
-#: sql_help.c:2666
-#: sql_help.c:2669
+#: sql_help.c:2477
+#: sql_help.c:2480
+#: sql_help.c:2484
 #: sql_help.c:2673
-#: sql_help.c:2720
-#: sql_help.c:2815
-#: sql_help.c:2818
-#: sql_help.c:2821
+#: sql_help.c:2676
+#: sql_help.c:2679
+#: sql_help.c:2683
+#: sql_help.c:2730
 #: sql_help.c:2825
+#: sql_help.c:2828
+#: sql_help.c:2831
+#: sql_help.c:2835
 msgid "alias"
 msgstr "takma ad"
 
@@ -4178,26 +4169,26 @@ msgid "using_list"
 msgstr "using_list"
 
 #: sql_help.c:1727
-#: sql_help.c:2054
-#: sql_help.c:2204
-#: sql_help.c:2727
+#: sql_help.c:2064
+#: sql_help.c:2214
+#: sql_help.c:2737
 msgid "cursor_name"
 msgstr "imleç_adı"
 
 #: sql_help.c:1728
-#: sql_help.c:2163
-#: sql_help.c:2728
+#: sql_help.c:2173
+#: sql_help.c:2738
 #, fuzzy
 msgid "output_expression"
 msgstr "birden fazla varsayılan ifade"
 
 #: sql_help.c:1729
-#: sql_help.c:2164
-#: sql_help.c:2448
-#: sql_help.c:2515
-#: sql_help.c:2647
-#: sql_help.c:2729
-#: sql_help.c:2799
+#: sql_help.c:2174
+#: sql_help.c:2458
+#: sql_help.c:2525
+#: sql_help.c:2657
+#: sql_help.c:2739
+#: sql_help.c:2809
 msgid "output_name"
 msgstr "output_name"
 
@@ -4209,227 +4200,227 @@ msgstr "kod"
 msgid "parameter"
 msgstr "değişken"
 
-#: sql_help.c:2027
-#: sql_help.c:2028
-#: sql_help.c:2223
+#: sql_help.c:2032
+#: sql_help.c:2033
+#: sql_help.c:2233
 msgid "statement"
 msgstr "ifade"
 
-#: sql_help.c:2053
-#: sql_help.c:2203
+#: sql_help.c:2063
+#: sql_help.c:2213
 #, fuzzy
 msgid "direction"
 msgstr "%d bağlantı"
 
-#: sql_help.c:2055
+#: sql_help.c:2065
 msgid "where direction can be empty or one of:"
 msgstr ""
 
-#: sql_help.c:2056
-#: sql_help.c:2057
-#: sql_help.c:2058
-#: sql_help.c:2059
-#: sql_help.c:2060
-#: sql_help.c:2458
-#: sql_help.c:2460
-#: sql_help.c:2526
-#: sql_help.c:2528
-#: sql_help.c:2657
-#: sql_help.c:2659
-#: sql_help.c:2758
-#: sql_help.c:2760
-#: sql_help.c:2809
-#: sql_help.c:2811
+#: sql_help.c:2066
+#: sql_help.c:2067
+#: sql_help.c:2068
+#: sql_help.c:2069
+#: sql_help.c:2070
+#: sql_help.c:2468
+#: sql_help.c:2470
+#: sql_help.c:2536
+#: sql_help.c:2538
+#: sql_help.c:2667
+#: sql_help.c:2669
+#: sql_help.c:2768
+#: sql_help.c:2770
+#: sql_help.c:2819
+#: sql_help.c:2821
 msgid "count"
 msgstr "toplam sayı"
 
-#: sql_help.c:2125
-#: sql_help.c:2354
+#: sql_help.c:2135
+#: sql_help.c:2364
 msgid "sequence_name"
 msgstr "sequence_adı"
 
-#: sql_help.c:2136
-#: sql_help.c:2365
+#: sql_help.c:2146
+#: sql_help.c:2375
 msgid "arg_name"
 msgstr ""
 
-#: sql_help.c:2137
-#: sql_help.c:2366
+#: sql_help.c:2147
+#: sql_help.c:2376
 msgid "arg_type"
 msgstr "bağımsız_değişken_tipi"
 
-#: sql_help.c:2142
-#: sql_help.c:2371
+#: sql_help.c:2152
+#: sql_help.c:2381
 msgid "loid"
 msgstr ""
 
-#: sql_help.c:2172
-#: sql_help.c:2212
-#: sql_help.c:2706
+#: sql_help.c:2182
+#: sql_help.c:2222
+#: sql_help.c:2716
 msgid "channel"
 msgstr "kanal"
 
-#: sql_help.c:2194
+#: sql_help.c:2204
 msgid "lockmode"
 msgstr ""
 
-#: sql_help.c:2195
+#: sql_help.c:2205
 msgid "where lockmode is one of:"
 msgstr ""
 
-#: sql_help.c:2213
+#: sql_help.c:2223
 msgid "payload"
 msgstr ""
 
-#: sql_help.c:2239
+#: sql_help.c:2249
 msgid "old_role"
-msgstr ""
+msgstr "eski_rol"
 
-#: sql_help.c:2240
+#: sql_help.c:2250
 msgid "new_role"
-msgstr ""
+msgstr "yeni_rol"
 
-#: sql_help.c:2256
-#: sql_help.c:2401
-#: sql_help.c:2409
+#: sql_help.c:2266
+#: sql_help.c:2411
+#: sql_help.c:2419
 msgid "savepoint_name"
 msgstr "savepoint_adı"
 
-#: sql_help.c:2445
-#: sql_help.c:2512
-#: sql_help.c:2644
-#: sql_help.c:2796
+#: sql_help.c:2455
+#: sql_help.c:2522
+#: sql_help.c:2654
+#: sql_help.c:2806
 msgid "with_query"
 msgstr ""
 
-#: sql_help.c:2449
-#: sql_help.c:2480
-#: sql_help.c:2482
-#: sql_help.c:2517
-#: sql_help.c:2648
-#: sql_help.c:2679
-#: sql_help.c:2681
-#: sql_help.c:2800
-#: sql_help.c:2831
-#: sql_help.c:2833
+#: sql_help.c:2459
+#: sql_help.c:2490
+#: sql_help.c:2492
+#: sql_help.c:2527
+#: sql_help.c:2658
+#: sql_help.c:2689
+#: sql_help.c:2691
+#: sql_help.c:2810
+#: sql_help.c:2841
+#: sql_help.c:2843
 msgid "from_item"
 msgstr "from_item"
 
-#: sql_help.c:2453
-#: sql_help.c:2521
-#: sql_help.c:2652
-#: sql_help.c:2804
+#: sql_help.c:2463
+#: sql_help.c:2531
+#: sql_help.c:2662
+#: sql_help.c:2814
 msgid "window_name"
 msgstr "pencere_adı"
 
-#: sql_help.c:2454
-#: sql_help.c:2522
-#: sql_help.c:2653
-#: sql_help.c:2805
+#: sql_help.c:2464
+#: sql_help.c:2532
+#: sql_help.c:2663
+#: sql_help.c:2815
 msgid "window_definition"
 msgstr "window_tanımı"
 
-#: sql_help.c:2455
-#: sql_help.c:2466
-#: sql_help.c:2488
-#: sql_help.c:2523
-#: sql_help.c:2654
-#: sql_help.c:2665
-#: sql_help.c:2687
-#: sql_help.c:2806
-#: sql_help.c:2817
-#: sql_help.c:2839
+#: sql_help.c:2465
+#: sql_help.c:2476
+#: sql_help.c:2498
+#: sql_help.c:2533
+#: sql_help.c:2664
+#: sql_help.c:2675
+#: sql_help.c:2697
+#: sql_help.c:2816
+#: sql_help.c:2827
+#: sql_help.c:2849
 msgid "select"
 msgstr ""
 
-#: sql_help.c:2462
-#: sql_help.c:2661
-#: sql_help.c:2813
+#: sql_help.c:2472
+#: sql_help.c:2671
+#: sql_help.c:2823
 msgid "where from_item can be one of:"
 msgstr ""
 
-#: sql_help.c:2465
-#: sql_help.c:2468
-#: sql_help.c:2471
 #: sql_help.c:2475
-#: sql_help.c:2664
-#: sql_help.c:2667
-#: sql_help.c:2670
+#: sql_help.c:2478
+#: sql_help.c:2481
+#: sql_help.c:2485
 #: sql_help.c:2674
-#: sql_help.c:2816
-#: sql_help.c:2819
-#: sql_help.c:2822
+#: sql_help.c:2677
+#: sql_help.c:2680
+#: sql_help.c:2684
 #: sql_help.c:2826
+#: sql_help.c:2829
+#: sql_help.c:2832
+#: sql_help.c:2836
 msgid "column_alias"
 msgstr "kolon_takma_adı"
 
-#: sql_help.c:2469
-#: sql_help.c:2486
-#: sql_help.c:2490
-#: sql_help.c:2668
-#: sql_help.c:2685
-#: sql_help.c:2689
-#: sql_help.c:2820
-#: sql_help.c:2837
-#: sql_help.c:2841
+#: sql_help.c:2479
+#: sql_help.c:2496
+#: sql_help.c:2500
+#: sql_help.c:2678
+#: sql_help.c:2695
+#: sql_help.c:2699
+#: sql_help.c:2830
+#: sql_help.c:2847
+#: sql_help.c:2851
 msgid "with_query_name"
 msgstr ""
 
-#: sql_help.c:2473
-#: sql_help.c:2478
-#: sql_help.c:2672
-#: sql_help.c:2677
-#: sql_help.c:2824
-#: sql_help.c:2829
+#: sql_help.c:2483
+#: sql_help.c:2488
+#: sql_help.c:2682
+#: sql_help.c:2687
+#: sql_help.c:2834
+#: sql_help.c:2839
 msgid "argument"
 msgstr "bağımsız değişken"
 
-#: sql_help.c:2476
-#: sql_help.c:2479
-#: sql_help.c:2675
-#: sql_help.c:2678
-#: sql_help.c:2827
-#: sql_help.c:2830
+#: sql_help.c:2486
+#: sql_help.c:2489
+#: sql_help.c:2685
+#: sql_help.c:2688
+#: sql_help.c:2837
+#: sql_help.c:2840
 msgid "column_definition"
 msgstr "kolon_tanımı"
 
-#: sql_help.c:2481
-#: sql_help.c:2680
-#: sql_help.c:2832
+#: sql_help.c:2491
+#: sql_help.c:2690
+#: sql_help.c:2842
 msgid "join_type"
 msgstr ""
 
-#: sql_help.c:2483
-#: sql_help.c:2682
-#: sql_help.c:2834
+#: sql_help.c:2493
+#: sql_help.c:2692
+#: sql_help.c:2844
 msgid "join_condition"
 msgstr ""
 
-#: sql_help.c:2484
-#: sql_help.c:2683
-#: sql_help.c:2835
+#: sql_help.c:2494
+#: sql_help.c:2693
+#: sql_help.c:2845
 msgid "join_column"
 msgstr ""
 
-#: sql_help.c:2485
-#: sql_help.c:2684
-#: sql_help.c:2836
+#: sql_help.c:2495
+#: sql_help.c:2694
+#: sql_help.c:2846
 msgid "and with_query is:"
 msgstr ""
 
-#: sql_help.c:2516
+#: sql_help.c:2526
 msgid "new_table"
 msgstr "yeni_tablo"
 
-#: sql_help.c:2541
+#: sql_help.c:2551
 msgid "timezone"
-msgstr ""
+msgstr "zaman dilimi"
 
-#: sql_help.c:2725
+#: sql_help.c:2735
 msgid "from_list"
 msgstr ""
 
-#: sql_help.c:2756
+#: sql_help.c:2766
 msgid "sort_expression"
 msgstr ""
 
@@ -4490,6 +4481,9 @@ msgstr "alt süreç %d sinyali tarafından sonlandırılmıştır"
 #, c-format
 msgid "child process exited with unrecognized status %d"
 msgstr "alt süreç %d bilinmeyen durumu ile sonlandırılmıştır"
+
+#~ msgid "out of memory"
+#~ msgstr "yetersiz bellek"
 
 #~ msgid "ABORT [ WORK | TRANSACTION ]"
 #~ msgstr "ABORT [ WORK | TRANSACTION ]"

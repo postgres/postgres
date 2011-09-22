@@ -1,58 +1,81 @@
-# Korean message translation file for PostgreSQL pgscripts
 # Ioseph Kim <ioseph@uri.sarang.net>, 2004.
 #
 msgid ""
 msgstr ""
 "Project-Id-Version: PostgreSQL 8.4\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
-"POT-Creation-Date: 2010-09-09 16:34+0000\n"
-"PO-Revision-Date: 2010-09-24 12:37-0400\n"
-"Last-Translator: EnterpriseDB translation team <dev-escalations@enterprisedb.com>\n"
+"POT-Creation-Date: 2011-06-20 12:54+0000\n"
+"PO-Revision-Date: 2011-07-29 16:46+0800\n"
+"Last-Translator: Changjian Yuan <dev-escalations@enterprisedb.com>\n"
 "Language-Team: EnterpriseDB translation team <dev-escalations@enterprisedb.com>\n"
+"Language: \n"
 "MIME-Version: 1.0\n"
-"Content-Type: text/plain; charset=euc-kr\n"
+"Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=1; plural=0;\n"
 
-#: createdb.c:114 createdb.c:133 createlang.c:89 createlang.c:110
-#: createlang.c:163 createuser.c:149 createuser.c:164 dropdb.c:83 dropdb.c:92
-#: dropdb.c:100 droplang.c:100 droplang.c:121 droplang.c:175 dropuser.c:83
-#: dropuser.c:98 clusterdb.c:104 clusterdb.c:119 vacuumdb.c:121 vacuumdb.c:136
-#: reindexdb.c:114 reindexdb.c:128
+#: createdb.c:114
+#: createdb.c:133
+#: createlang.c:89
+#: createlang.c:110
+#: createlang.c:163
+#: createuser.c:149
+#: createuser.c:164
+#: dropdb.c:83
+#: dropdb.c:92
+#: dropdb.c:100
+#: droplang.c:100
+#: droplang.c:121
+#: droplang.c:175
+#: dropuser.c:83
+#: dropuser.c:98
+#: clusterdb.c:104
+#: clusterdb.c:119
+#: vacuumdb.c:127
+#: vacuumdb.c:142
+#: reindexdb.c:114
+#: reindexdb.c:128
 #, c-format
 msgid "Try \"%s --help\" for more information.\n"
-msgstr "º¸´Ù ÀÚ¼¼ÇÑ »ç¿ë¹ıÀº \"%s --help\"\n"
+msgstr "ë³´ë‹¤ ìì„¸í•œ ì‚¬ìš©ë²•ì€ \"%s --help\"\n"
 
-#: createdb.c:131 createlang.c:108 createuser.c:162 dropdb.c:98 droplang.c:119
-#: dropuser.c:96 clusterdb.c:117 vacuumdb.c:134 reindexdb.c:127
+#: createdb.c:131
+#: createlang.c:108
+#: createuser.c:162
+#: dropdb.c:98
+#: droplang.c:119
+#: dropuser.c:96
+#: clusterdb.c:117
+#: vacuumdb.c:140
+#: reindexdb.c:127
 #, c-format
 msgid "%s: too many command-line arguments (first is \"%s\")\n"
-msgstr "%s: ³Ê¹« ¸¹Àº ¸í·ÉÇà ÀÎ¼öµé (½ÃÀÛ \"%s\")\n"
+msgstr "%s: ë„ˆë¬´ ë§ì€ ëª…ë ¹í–‰ ì¸ìˆ˜ë“¤ (ì‹œì‘ \"%s\")\n"
 
 #: createdb.c:141
 #, c-format
 msgid "%s: only one of --locale and --lc-ctype can be specified\n"
-msgstr "%s: --locale ¹× --lc-ctype Áß ÇÏ³ª¸¸ ÁöÁ¤ÇÒ ¼ö ÀÖÀ½\n"
+msgstr "%s: --locale ë° --lc-ctype ì¤‘ í•˜ë‚˜ë§Œ ì§€ì •í•  ìˆ˜ ìˆìŒ\n"
 
 #: createdb.c:147
 #, c-format
 msgid "%s: only one of --locale and --lc-collate can be specified\n"
-msgstr "%s: --locale ¹× --lc-collate Áß ÇÏ³ª¸¸ ÁöÁ¤ÇÒ ¼ö ÀÖÀ½\n"
+msgstr "%s: --locale ë° --lc-collate ì¤‘ í•˜ë‚˜ë§Œ ì§€ì •í•  ìˆ˜ ìˆìŒ\n"
 
 #: createdb.c:159
 #, c-format
 msgid "%s: \"%s\" is not a valid encoding name\n"
-msgstr "%s: \"%s\" ÀÎÄÚµùÀº »ç¿ë °¡´ÉÇÑ ÀÎÄÚµù ÀÌ¸§ÀÌ ¾Æ´Ô\n"
+msgstr "%s: \"%s\" ì¸ì½”ë”©ì€ ì‚¬ìš© ê°€ëŠ¥í•œ ì¸ì½”ë”© ì´ë¦„ì´ ì•„ë‹˜\n"
 
 #: createdb.c:204
 #, c-format
 msgid "%s: database creation failed: %s"
-msgstr "%s: µ¥ÀÌÅÍº£ÀÌ½º ¸¸µé±â ½ÇÆĞ: %s"
+msgstr "%s: ë°ì´í„°ë² ì´ìŠ¤ ë§Œë“¤ê¸° ì‹¤íŒ¨: %s"
 
 #: createdb.c:227
 #, c-format
 msgid "%s: comment creation failed (database was created): %s"
-msgstr "%s: ÄÚ¸àÆ® Ãß°¡ÇÏ±â ½ÇÆĞ (µ¥ÀÌÅÍº£ÀÌ½º´Â ¸¸µé¾îÁ³À½): %s"
+msgstr "%s: ì½”ë©˜íŠ¸ ì¶”ê°€í•˜ê¸° ì‹¤íŒ¨ (ë°ì´í„°ë² ì´ìŠ¤ëŠ” ë§Œë“¤ì–´ì¡ŒìŒ): %s"
 
 #: createdb.c:244
 #, c-format
@@ -60,23 +83,35 @@ msgid ""
 "%s creates a PostgreSQL database.\n"
 "\n"
 msgstr ""
-"%s ÇÁ·Î±×·¥Àº PostgreSQL µ¥ÀÌÅÍº£ÀÌ½º¸¦ ¸¸µì´Ï´Ù.\n"
+"%s í”„ë¡œê·¸ë¨ì€ PostgreSQL ë°ì´í„°ë² ì´ìŠ¤ë¥¼ ë§Œë“­ë‹ˆë‹¤.\n"
 "\n"
 
-#: createdb.c:245 createlang.c:215 createuser.c:300 dropdb.c:140
-#: droplang.c:332 dropuser.c:139 clusterdb.c:236 vacuumdb.c:262
+#: createdb.c:245
+#: createlang.c:215
+#: createuser.c:300
+#: dropdb.c:140
+#: droplang.c:374
+#: dropuser.c:139
+#: clusterdb.c:236
+#: vacuumdb.c:328
 #: reindexdb.c:313
 #, c-format
 msgid "Usage:\n"
-msgstr "»ç¿ë¹ı:\n"
+msgstr "ì‚¬ìš©ë²•:\n"
 
 #: createdb.c:246
 #, c-format
 msgid "  %s [OPTION]... [DBNAME] [DESCRIPTION]\n"
-msgstr "  %s [¿É¼Ç]... [DBÀÌ¸§] [¼³¸í]\n"
+msgstr "  %s [ì˜µì…˜]... [DBì´ë¦„] [ì„¤ëª…]\n"
 
-#: createdb.c:247 createlang.c:217 createuser.c:302 dropdb.c:142
-#: droplang.c:334 dropuser.c:141 clusterdb.c:238 vacuumdb.c:264
+#: createdb.c:247
+#: createlang.c:217
+#: createuser.c:302
+#: dropdb.c:142
+#: droplang.c:376
+#: dropuser.c:141
+#: clusterdb.c:238
+#: vacuumdb.c:330
 #: reindexdb.c:315
 #, c-format
 msgid ""
@@ -84,62 +119,66 @@ msgid ""
 "Options:\n"
 msgstr ""
 "\n"
-"¿É¼Çµé:\n"
+"ì˜µì…˜ë“¤:\n"
 
 #: createdb.c:248
 #, c-format
 msgid "  -D, --tablespace=TABLESPACE  default tablespace for the database\n"
-msgstr ""
-"  -D, --tablespace=TABLESPACE  µ¥ÀÌÅÍº£ÀÌ½º¸¦ À§ÇÑ ±âº» Å×ÀÌºí½ºÆäÀÌ½º\n"
+msgstr "  -D, --tablespace=TABLESPACE  ë°ì´í„°ë² ì´ìŠ¤ë¥¼ ìœ„í•œ ê¸°ë³¸ í…Œì´ë¸”ìŠ¤í˜ì´ìŠ¤\n"
 
 #: createdb.c:249
 #, c-format
-msgid ""
-"  -e, --echo                   show the commands being sent to the server\n"
-msgstr "  -e, --echo                   ¼­¹ö·Î º¸³»´Â ÀÛ¾÷ ¸í·ÉµéÀ» º¸¿©ÁÜ\n"
+msgid "  -e, --echo                   show the commands being sent to the server\n"
+msgstr "  -e, --echo                   ì„œë²„ë¡œ ë³´ë‚´ëŠ” ì‘ì—… ëª…ë ¹ë“¤ì„ ë³´ì—¬ì¤Œ\n"
 
 #: createdb.c:250
 #, c-format
 msgid "  -E, --encoding=ENCODING      encoding for the database\n"
-msgstr "  -E, --encoding=ENCODING      µ¥ÀÌÅÍº£ÀÌ½º ÀÎÄÚµù\n"
+msgstr "  -E, --encoding=ENCODING      ë°ì´í„°ë² ì´ìŠ¤ ì¸ì½”ë”©\n"
 
 #: createdb.c:251
 #, c-format
 msgid "  -l, --locale=LOCALE          locale settings for the database\n"
-msgstr "  -l, --locale=LOCALE          µ¥ÀÌÅÍº£ÀÌ½ºÀÇ ·ÎÄ¶ ¼³Á¤\n"
+msgstr "  -l, --locale=LOCALE          ë°ì´í„°ë² ì´ìŠ¤ì˜ ë¡œìº˜ ì„¤ì •\n"
 
 #: createdb.c:252
 #, c-format
 msgid "      --lc-collate=LOCALE      LC_COLLATE setting for the database\n"
-msgstr "      --lc-collate=LOCALE      µ¥ÀÌÅÍº£ÀÌ½ºÀÇ LC_COLLATE ¼³Á¤\n"
+msgstr "      --lc-collate=LOCALE      ë°ì´í„°ë² ì´ìŠ¤ì˜ LC_COLLATE ì„¤ì •\n"
 
 #: createdb.c:253
 #, c-format
 msgid "      --lc-ctype=LOCALE        LC_CTYPE setting for the database\n"
-msgstr "      --lc-ctype=LOCALE        µ¥ÀÌÅÍº£ÀÌ½ºÀÇ LC_CTYPE ¼³Á¤\n"
+msgstr "      --lc-ctype=LOCALE        ë°ì´í„°ë² ì´ìŠ¤ì˜ LC_CTYPE ì„¤ì •\n"
 
 #: createdb.c:254
 #, c-format
 msgid "  -O, --owner=OWNER            database user to own the new database\n"
-msgstr "  -O, --owner=OWNER            µ¥ÀÌÅÍº£ÀÌ½º ¼ÒÀ¯ÁÖ\n"
+msgstr "  -O, --owner=OWNER            ë°ì´í„°ë² ì´ìŠ¤ ì†Œìœ ì£¼\n"
 
 #: createdb.c:255
 #, c-format
 msgid "  -T, --template=TEMPLATE      template database to copy\n"
-msgstr "  -T, --template=TEMPLATE      º¹»çÇÒ ÅÛÇÃ¸´ µ¥ÀÌÅÍº£ÀÌ½º\n"
+msgstr "  -T, --template=TEMPLATE      ë³µì‚¬í•  í…œí”Œë¦¿ ë°ì´í„°ë² ì´ìŠ¤\n"
 
 #: createdb.c:256
 #, c-format
 msgid "  --help                       show this help, then exit\n"
-msgstr "  --help                       ÀÌ µµ¿ò¸»À» º¸¿©ÁÖ°í ¸¶Ä§\n"
+msgstr "  --help                       ì´ ë„ì›€ë§ì„ ë³´ì—¬ì£¼ê³  ë§ˆì¹¨\n"
 
 #: createdb.c:257
 #, c-format
 msgid "  --version                    output version information, then exit\n"
-msgstr "  --version                    ¹öÀü Á¤º¸¸¦ º¸¿©ÁÖ°í ¸¶Ä§\n"
+msgstr "  --version                    ë²„ì „ ì •ë³´ë¥¼ ë³´ì—¬ì£¼ê³  ë§ˆì¹¨\n"
 
-#: createdb.c:258 createlang.c:223 createuser.c:321 dropdb.c:147
-#: droplang.c:340 dropuser.c:146 clusterdb.c:247 vacuumdb.c:276
+#: createdb.c:258
+#: createlang.c:223
+#: createuser.c:321
+#: dropdb.c:147
+#: droplang.c:382
+#: dropuser.c:146
+#: clusterdb.c:247
+#: vacuumdb.c:343
 #: reindexdb.c:325
 #, c-format
 msgid ""
@@ -147,34 +186,32 @@ msgid ""
 "Connection options:\n"
 msgstr ""
 "\n"
-"¿¬°á ¿É¼Çµé:\n"
+"ì—°ê²° ì˜µì…˜ë“¤:\n"
 
 #: createdb.c:259
 #, c-format
-msgid ""
-"  -h, --host=HOSTNAME          database server host or socket directory\n"
-msgstr ""
-"  -h, --host=HOSTNAME          µ¥ÀÌÅÍº£ÀÌ½º ¼­¹ö È£½ºÆ®³ª ¼ÒÄÏ µğ·ºÅÍ¸®\n"
+msgid "  -h, --host=HOSTNAME          database server host or socket directory\n"
+msgstr "  -h, --host=HOSTNAME          ë°ì´í„°ë² ì´ìŠ¤ ì„œë²„ í˜¸ìŠ¤íŠ¸ë‚˜ ì†Œì¼“ ë””ë ‰í„°ë¦¬\n"
 
 #: createdb.c:260
 #, c-format
 msgid "  -p, --port=PORT              database server port\n"
-msgstr "  -p, --port=PORT              µ¥ÀÌÅÍº£ÀÌ½º ¼­¹ö Æ÷Æ®\n"
+msgstr "  -p, --port=PORT              ë°ì´í„°ë² ì´ìŠ¤ ì„œë²„ í¬íŠ¸\n"
 
 #: createdb.c:261
 #, c-format
 msgid "  -U, --username=USERNAME      user name to connect as\n"
-msgstr "  -U, --username=USERNAME      Á¢¼ÓÇÒ »ç¿ëÀÚ\n"
+msgstr "  -U, --username=USERNAME      ì ‘ì†í•  ì‚¬ìš©ì\n"
 
 #: createdb.c:262
 #, c-format
 msgid "  -w, --no-password            never prompt for password\n"
-msgstr "  -w, --no-password            ¾ÏÈ£ ÇÁ·ÒÇÁÆ® Ç¥½Ã ¾È ÇÔ\n"
+msgstr "  -w, --no-password            ì•”í˜¸ í”„ë¡¬í”„íŠ¸ í‘œì‹œ ì•ˆ í•¨\n"
 
 #: createdb.c:263
 #, c-format
 msgid "  -W, --password               force password prompt\n"
-msgstr "  -W, --password               ¾ÏÈ£ ÇÁ·ÒÇÁÆ® Ç¥½ÃÇÔ\n"
+msgstr "  -W, --password               ì•”í˜¸ í”„ë¡¬í”„íŠ¸ í‘œì‹œí•¨\n"
 
 #: createdb.c:264
 #, c-format
@@ -183,11 +220,16 @@ msgid ""
 "By default, a database with the same name as the current user is created.\n"
 msgstr ""
 "\n"
-"ÃÊ±â°ªÀ¸·Î, DBÀÌ¸§À» ÁöÁ¤ÇÏÁö ¾ÊÀ¸¸é, ÇöÀç »ç¿ëÀÚÀÇ ÀÌ¸§°ú °°Àº µ¥ÀÌÅÍº£ÀÌ½º"
-"°¡ ¸¸µé¾îÁı´Ï´Ù.\n"
+"ì´ˆê¸°ê°’ìœ¼ë¡œ, DBì´ë¦„ì„ ì§€ì •í•˜ì§€ ì•Šìœ¼ë©´, í˜„ì¬ ì‚¬ìš©ìì˜ ì´ë¦„ê³¼ ê°™ì€ ë°ì´í„°ë² ì´ìŠ¤ê°€ ë§Œë“¤ì–´ì§‘ë‹ˆë‹¤.\n"
 
-#: createdb.c:265 createlang.c:229 createuser.c:329 dropdb.c:153
-#: droplang.c:346 dropuser.c:152 clusterdb.c:254 vacuumdb.c:283
+#: createdb.c:265
+#: createlang.c:229
+#: createuser.c:329
+#: dropdb.c:153
+#: droplang.c:388
+#: dropuser.c:152
+#: clusterdb.c:254
+#: vacuumdb.c:350
 #: reindexdb.c:332
 #, c-format
 msgid ""
@@ -195,42 +237,48 @@ msgid ""
 "Report bugs to <pgsql-bugs@postgresql.org>.\n"
 msgstr ""
 "\n"
-"¿À·ùº¸°í: <pgsql-bugs@postgresql.org>.\n"
+"ì˜¤ë¥˜ë³´ê³ : <pgsql-bugs@postgresql.org>.\n"
 
-#: createlang.c:140 droplang.c:151
+#: createlang.c:140
+#: droplang.c:151
 msgid "Name"
-msgstr "ÀÌ¸§"
+msgstr "ì´ë¦„"
 
-#: createlang.c:141 droplang.c:152
+#: createlang.c:141
+#: droplang.c:152
 msgid "yes"
-msgstr "¿¹"
+msgstr "ì˜ˆ"
 
-#: createlang.c:141 droplang.c:152
+#: createlang.c:141
+#: droplang.c:152
 msgid "no"
-msgstr "¾Æ´Ï¿À"
+msgstr "ì•„ë‹ˆì˜¤"
 
-#: createlang.c:142 droplang.c:153
+#: createlang.c:142
+#: droplang.c:153
 msgid "Trusted?"
-msgstr "½Å·ÚµÈ?"
+msgstr "ì‹ ë¢°ëœ?"
 
-#: createlang.c:151 droplang.c:162
+#: createlang.c:151
+#: droplang.c:162
 msgid "Procedural Languages"
-msgstr "ÇÁ·Î½ÃÁê¾ó ¾ğ¾îµé"
+msgstr "í”„ë¡œì‹œì¥¬ì–¼ ì–¸ì–´ë“¤"
 
-#: createlang.c:162 droplang.c:173
+#: createlang.c:162
+#: droplang.c:173
 #, c-format
 msgid "%s: missing required argument language name\n"
-msgstr "%s: ÇÊ¼ö Ç×¸ñÀÎ, ¾ğ¾î ÀÌ¸§À» ÁöÁ¤ÇÒ ÀÎ¼ö°¡ ºüÁ³½À´Ï´Ù\n"
+msgstr "%s: í•„ìˆ˜ í•­ëª©ì¸, ì–¸ì–´ ì´ë¦„ì„ ì§€ì •í•  ì¸ìˆ˜ê°€ ë¹ ì¡ŒìŠµë‹ˆë‹¤\n"
 
 #: createlang.c:184
 #, c-format
 msgid "%s: language \"%s\" is already installed in database \"%s\"\n"
-msgstr "%s: \"%s\" ¾ğ¾î´Â ÀÌ¹Ì \"%s\" µ¥ÀÌÅÍº£ÀÌ½º¿¡ ¼³Ä¡µÇ¾î ÀÖ½À´Ï´Ù.\n"
+msgstr "%s: \"%s\" ì–¸ì–´ëŠ” ì´ë¯¸ \"%s\" ë°ì´í„°ë² ì´ìŠ¤ì— ì„¤ì¹˜ë˜ì–´ ìˆìŠµë‹ˆë‹¤.\n"
 
 #: createlang.c:198
 #, c-format
 msgid "%s: language installation failed: %s"
-msgstr "%s: ¾ğ¾î ¼³Ä¡ ½ÇÆĞ: %s"
+msgstr "%s: ì–¸ì–´ ì„¤ì¹˜ ì‹¤íŒ¨: %s"
 
 #: createlang.c:214
 #, c-format
@@ -238,113 +286,155 @@ msgid ""
 "%s installs a procedural language into a PostgreSQL database.\n"
 "\n"
 msgstr ""
-"%s ÇÁ·Î±×·¥Àº PostgreSQL µ¥ÀÌÅÍº£ÀÌ½º¿¡ ÇÁ·Î½ÃÁê¾ó ¾ğ¾î¸¦ ¼³Ä¡ÇÕ´Ï´Ù.\n"
+"%s í”„ë¡œê·¸ë¨ì€ PostgreSQL ë°ì´í„°ë² ì´ìŠ¤ì— í”„ë¡œì‹œì¥¬ì–¼ ì–¸ì–´ë¥¼ ì„¤ì¹˜í•©ë‹ˆë‹¤.\n"
 "\n"
 
-#: createlang.c:216 droplang.c:333
+#: createlang.c:216
+#: droplang.c:375
 #, c-format
 msgid "  %s [OPTION]... LANGNAME [DBNAME]\n"
-msgstr "  %s [¿É¼Ç]... ¾ğ¾îÀÌ¸§ [DBÀÌ¸§]\n"
+msgstr "  %s [ì˜µì…˜]... ì–¸ì–´ì´ë¦„ [DBì´ë¦„]\n"
 
 #: createlang.c:218
 #, c-format
 msgid "  -d, --dbname=DBNAME       database to install language in\n"
-msgstr "  -d, --dbname=DBNAME       ¾ğ¾î¸¦ ¼³Ä¡ÇÒ DBÀÌ¸§\n"
+msgstr "  -d, --dbname=DBNAME       ì–¸ì–´ë¥¼ ì„¤ì¹˜í•  DBì´ë¦„\n"
 
-#: createlang.c:219 createuser.c:306 dropdb.c:143 droplang.c:336
-#: dropuser.c:142 clusterdb.c:241 reindexdb.c:318
+#: createlang.c:219
+#: createuser.c:306
+#: dropdb.c:143
+#: droplang.c:378
+#: dropuser.c:142
+#: clusterdb.c:241
+#: reindexdb.c:318
 #, c-format
-msgid ""
-"  -e, --echo                show the commands being sent to the server\n"
-msgstr "  -e, --echo                ¼­¹ö·Î º¸³»´Â ÀÛ¾÷ ¸í·ÉÀ» º¸¿©ÁÜ\n"
+msgid "  -e, --echo                show the commands being sent to the server\n"
+msgstr "  -e, --echo                ì„œë²„ë¡œ ë³´ë‚´ëŠ” ì‘ì—… ëª…ë ¹ì„ ë³´ì—¬ì¤Œ\n"
 
-#: createlang.c:220 droplang.c:337
+#: createlang.c:220
+#: droplang.c:379
 #, c-format
-msgid ""
-"  -l, --list                show a list of currently installed languages\n"
-msgstr "  -l, --list                ÇöÀç ¼³Ä¡ µÇ¾îÀÖ´Â ¾ğ¾îµéÀ» º¸¿©ÁÜ\n"
+msgid "  -l, --list                show a list of currently installed languages\n"
+msgstr "  -l, --list                í˜„ì¬ ì„¤ì¹˜ ë˜ì–´ìˆëŠ” ì–¸ì–´ë“¤ì„ ë³´ì—¬ì¤Œ\n"
 
-#: createlang.c:221 createuser.c:319 dropdb.c:145 droplang.c:338
-#: dropuser.c:144 clusterdb.c:245 reindexdb.c:323
+#: createlang.c:221
+#: createuser.c:319
+#: dropdb.c:145
+#: droplang.c:380
+#: dropuser.c:144
+#: clusterdb.c:245
+#: reindexdb.c:323
 #, c-format
 msgid "  --help                    show this help, then exit\n"
-msgstr "  --help                    ÀÌ µµ¿ò¸»À» º¸¿©ÁÖ°í ¸¶Ä§\n"
+msgstr "  --help                    ì´ ë„ì›€ë§ì„ ë³´ì—¬ì£¼ê³  ë§ˆì¹¨\n"
 
-#: createlang.c:222 createuser.c:320 dropdb.c:146 droplang.c:339
-#: dropuser.c:145 clusterdb.c:246 reindexdb.c:324
+#: createlang.c:222
+#: createuser.c:320
+#: dropdb.c:146
+#: droplang.c:381
+#: dropuser.c:145
+#: clusterdb.c:246
+#: reindexdb.c:324
 #, c-format
 msgid "  --version                 output version information, then exit\n"
-msgstr "  --version                 ¹öÀü Á¤º¸¸¦ º¸¿©ÁÖ°í ¸¶Ä§\n"
+msgstr "  --version                 ë²„ì „ ì •ë³´ë¥¼ ë³´ì—¬ì£¼ê³  ë§ˆì¹¨\n"
 
-#: createlang.c:224 createuser.c:322 dropdb.c:148 droplang.c:341
-#: dropuser.c:147 clusterdb.c:248 vacuumdb.c:277 reindexdb.c:326
+#: createlang.c:224
+#: createuser.c:322
+#: dropdb.c:148
+#: droplang.c:383
+#: dropuser.c:147
+#: clusterdb.c:248
+#: vacuumdb.c:344
+#: reindexdb.c:326
 #, c-format
 msgid "  -h, --host=HOSTNAME       database server host or socket directory\n"
-msgstr ""
-"  -h, --host=HOSTNAME       µ¥ÀÌÅÍº£ÀÌ½º ¼­¹ö È£½ºÆ® ¶Ç´Â ¼ÒÄÏ µğ·ºÅÍ¸®\n"
+msgstr "  -h, --host=HOSTNAME       ë°ì´í„°ë² ì´ìŠ¤ ì„œë²„ í˜¸ìŠ¤íŠ¸ ë˜ëŠ” ì†Œì¼“ ë””ë ‰í„°ë¦¬\n"
 
-#: createlang.c:225 createuser.c:323 dropdb.c:149 droplang.c:342
-#: dropuser.c:148 clusterdb.c:249 vacuumdb.c:278 reindexdb.c:327
+#: createlang.c:225
+#: createuser.c:323
+#: dropdb.c:149
+#: droplang.c:384
+#: dropuser.c:148
+#: clusterdb.c:249
+#: vacuumdb.c:345
+#: reindexdb.c:327
 #, c-format
 msgid "  -p, --port=PORT           database server port\n"
-msgstr "  -p, --port=PORT           µ¥ÀÌÅÍº£ÀÌ½º ¼­¹ö Æ÷Æ®\n"
+msgstr "  -p, --port=PORT           ë°ì´í„°ë² ì´ìŠ¤ ì„œë²„ í¬íŠ¸\n"
 
-#: createlang.c:226 dropdb.c:150 droplang.c:343 clusterdb.c:250 vacuumdb.c:279
+#: createlang.c:226
+#: dropdb.c:150
+#: droplang.c:385
+#: clusterdb.c:250
+#: vacuumdb.c:346
 #: reindexdb.c:328
 #, c-format
 msgid "  -U, --username=USERNAME   user name to connect as\n"
-msgstr "  -U, --username=USERNAME   Á¢¼ÓÇÒ »ç¿ëÀÚÀÌ¸§\n"
+msgstr "  -U, --username=USERNAME   ì ‘ì†í•  ì‚¬ìš©ìì´ë¦„\n"
 
-#: createlang.c:227 createuser.c:325 dropdb.c:151 droplang.c:344
-#: dropuser.c:150 clusterdb.c:251 vacuumdb.c:280 reindexdb.c:329
+#: createlang.c:227
+#: createuser.c:325
+#: dropdb.c:151
+#: droplang.c:386
+#: dropuser.c:150
+#: clusterdb.c:251
+#: vacuumdb.c:347
+#: reindexdb.c:329
 #, c-format
 msgid "  -w, --no-password         never prompt for password\n"
-msgstr "  -w, --no-password         ¾ÏÈ£ ÇÁ·ÒÇÁÆ® Ç¥½Ã ¾È ÇÔ\n"
+msgstr "  -w, --no-password         ì•”í˜¸ í”„ë¡¬í”„íŠ¸ í‘œì‹œ ì•ˆ í•¨\n"
 
-#: createlang.c:228 createuser.c:326 dropdb.c:152 droplang.c:345
-#: dropuser.c:151 clusterdb.c:252 vacuumdb.c:281 reindexdb.c:330
+#: createlang.c:228
+#: createuser.c:326
+#: dropdb.c:152
+#: droplang.c:387
+#: dropuser.c:151
+#: clusterdb.c:252
+#: vacuumdb.c:348
+#: reindexdb.c:330
 #, c-format
 msgid "  -W, --password            force password prompt\n"
-msgstr "  -W, --password            ¾ÏÈ£ ÇÁ·ÒÇÁÆ® Ç¥½ÃÇÔ\n"
+msgstr "  -W, --password            ì•”í˜¸ í”„ë¡¬í”„íŠ¸ í‘œì‹œí•¨\n"
 
 #: createuser.c:169
 msgid "Enter name of role to add: "
-msgstr "Ãß°¡ÇÒ »õ ·Ñ(role)ÀÌ¸§: "
+msgstr "ì¶”ê°€í•  ìƒˆ ë¡¤(role)ì´ë¦„: "
 
 #: createuser.c:176
 msgid "Enter password for new role: "
-msgstr "»õ ·ÑÀÇ ¾ÏÈ£: "
+msgstr "ìƒˆ ë¡¤ì˜ ì•”í˜¸: "
 
 #: createuser.c:177
 msgid "Enter it again: "
-msgstr "¾ÏÈ£ È®ÀÎ: "
+msgstr "ì•”í˜¸ í™•ì¸: "
 
 #: createuser.c:180
 #, c-format
 msgid "Passwords didn't match.\n"
-msgstr "¾ÏÈ£°¡ ¼­·Î Æ²¸².\n"
+msgstr "ì•”í˜¸ê°€ ì„œë¡œ í‹€ë¦¼.\n"
 
 #: createuser.c:189
 msgid "Shall the new role be a superuser?"
-msgstr "»õ ·ÑÀ» superuser ±ÇÇÑÀ¸·Î ÁöÁ¤ÇÒ±î¿ä?"
+msgstr "ìƒˆ ë¡¤ì„ superuser ê¶Œí•œìœ¼ë¡œ ì§€ì •í• ê¹Œìš”?"
 
 #: createuser.c:204
 msgid "Shall the new role be allowed to create databases?"
-msgstr "ÀÌ »õ ·Ñ¿¡°Ô µ¥ÀÌÅÍº£ÀÌ½º¸¦ ¸¸µé ¼ö ÀÖ´Â ±ÇÇÒÀ» ÁÙ±î¿ä?"
+msgstr "ì´ ìƒˆ ë¡¤ì—ê²Œ ë°ì´í„°ë² ì´ìŠ¤ë¥¼ ë§Œë“¤ ìˆ˜ ìˆëŠ” ê¶Œí• ì„ ì¤„ê¹Œìš”?"
 
 #: createuser.c:212
 msgid "Shall the new role be allowed to create more new roles?"
-msgstr "ÀÌ »õ ·Ñ¿¡°Ô ¶Ç ´Ù¸¥ ·ÑÀ» ¸¸µé ¼ö ÀÖ´Â ±ÇÇÑÀ» ÁÙ±î¿ä?"
+msgstr "ì´ ìƒˆ ë¡¤ì—ê²Œ ë˜ ë‹¤ë¥¸ ë¡¤ì„ ë§Œë“¤ ìˆ˜ ìˆëŠ” ê¶Œí•œì„ ì¤„ê¹Œìš”?"
 
 #: createuser.c:245
 #, c-format
 msgid "Password encryption failed.\n"
-msgstr "¾ÏÈ£ ¾ÏÈ£È­ ½ÇÆĞ.\n"
+msgstr "ì•”í˜¸ ì•”í˜¸í™” ì‹¤íŒ¨.\n"
 
 #: createuser.c:284
 #, c-format
 msgid "%s: creation of new role failed: %s"
-msgstr "%s: »õ ·Ñ ¸¸µé±â ½ÇÆĞ: %s"
+msgstr "%s: ìƒˆ ë¡¤ ë§Œë“¤ê¸° ì‹¤íŒ¨: %s"
 
 #: createuser.c:299
 #, c-format
@@ -352,34 +442,34 @@ msgid ""
 "%s creates a new PostgreSQL role.\n"
 "\n"
 msgstr ""
-"%s ÇÁ·Î±×·¥Àº PostgreSQL ·ÑÀ» ¸¸µì´Ï´Ù.\n"
+"%s í”„ë¡œê·¸ë¨ì€ PostgreSQL ë¡¤ì„ ë§Œë“­ë‹ˆë‹¤.\n"
 "\n"
 
-#: createuser.c:301 dropuser.c:140
+#: createuser.c:301
+#: dropuser.c:140
 #, c-format
 msgid "  %s [OPTION]... [ROLENAME]\n"
-msgstr "  %s [¿É¼Ç]... [·ÑÀÌ¸§]\n"
+msgstr "  %s [ì˜µì…˜]... [ë¡¤ì´ë¦„]\n"
 
 #: createuser.c:303
 #, c-format
-msgid ""
-"  -c, --connection-limit=N  connection limit for role (default: no limit)\n"
-msgstr "  -c, --connection-limit=N  ¿¬°á Á¦ÇÑ ¼ö (ÃÊ±â°ª: ¹«Á¦ÇÑ)\n"
+msgid "  -c, --connection-limit=N  connection limit for role (default: no limit)\n"
+msgstr "  -c, --connection-limit=N  ì—°ê²° ì œí•œ ìˆ˜ (ì´ˆê¸°ê°’: ë¬´ì œí•œ)\n"
 
 #: createuser.c:304
 #, c-format
 msgid "  -d, --createdb            role can create new databases\n"
-msgstr "  -d, --createdb            »õ µ¥ÀÌÅÍº£ÀÌ½º¸¦ ¸¸µé ¼ö ÀÖÀ½\n"
+msgstr "  -d, --createdb            ìƒˆ ë°ì´í„°ë² ì´ìŠ¤ë¥¼ ë§Œë“¤ ìˆ˜ ìˆìŒ\n"
 
 #: createuser.c:305
 #, c-format
 msgid "  -D, --no-createdb         role cannot create databases\n"
-msgstr "  -D, --no-createdb         »õ µ¥ÀÌÅÍº£ÀÌ½º¸¦ ¸¸µé ¼ö ¾øÀ½\n"
+msgstr "  -D, --no-createdb         ìƒˆ ë°ì´í„°ë² ì´ìŠ¤ë¥¼ ë§Œë“¤ ìˆ˜ ì—†ìŒ\n"
 
 #: createuser.c:307
 #, c-format
 msgid "  -E, --encrypted           encrypt stored password\n"
-msgstr "  -E, --encrypted           ¾ÏÈ£È­µÈ ¾ÏÈ£ »ç¿ë\n"
+msgstr "  -E, --encrypted           ì•”í˜¸í™”ëœ ì•”í˜¸ ì‚¬ìš©\n"
 
 #: createuser.c:308
 #, c-format
@@ -387,61 +477,60 @@ msgid ""
 "  -i, --inherit             role inherits privileges of roles it is a\n"
 "                            member of (default)\n"
 msgstr ""
-"  -i, --inherit             ·ÑÀÇ ±ÇÇÑÀ» »ó¼ÓÇÒ ¼ö ÀÖÀ½\n"
-"                            (ÃÊ±â°ª)\n"
+"  -i, --inherit             ë¡¤ì˜ ê¶Œí•œì„ ìƒì†í•  ìˆ˜ ìˆìŒ\n"
+"                            (ì´ˆê¸°ê°’)\n"
 
 #: createuser.c:310
 #, c-format
 msgid "  -I, --no-inherit          role does not inherit privileges\n"
-msgstr "  -I, --no-inherit          ÀÌ ·ÑÀÇ ±ÇÇÑÀ» »ó¼ÓÇÒ ¼ö ¾øÀ½\n"
+msgstr "  -I, --no-inherit          ì´ ë¡¤ì˜ ê¶Œí•œì„ ìƒì†í•  ìˆ˜ ì—†ìŒ\n"
 
 #: createuser.c:311
 #, c-format
 msgid "  -l, --login               role can login (default)\n"
-msgstr "  -l, --login               ·Î±×ÀÎ Çã¿ë (ÃÊ±â°ª)\n"
+msgstr "  -l, --login               ë¡œê·¸ì¸ í—ˆìš© (ì´ˆê¸°ê°’)\n"
 
 #: createuser.c:312
 #, c-format
 msgid "  -L, --no-login            role cannot login\n"
-msgstr "  -L, --no-login            ·Î±×ÀÎ ÇÒ ¼ö ¾øÀ½\n"
+msgstr "  -L, --no-login            ë¡œê·¸ì¸ í•  ìˆ˜ ì—†ìŒ\n"
 
 #: createuser.c:313
 #, c-format
 msgid "  -N, --unencrypted         do not encrypt stored password\n"
-msgstr "  -N, --unencrypted         ¾ÏÈ£È­ µÇÁö ¾ÊÀº ¾ÏÈ£ »ç¿ë\n"
+msgstr "  -N, --unencrypted         ì•”í˜¸í™” ë˜ì§€ ì•Šì€ ì•”í˜¸ ì‚¬ìš©\n"
 
 #: createuser.c:314
 #, c-format
 msgid "  -P, --pwprompt            assign a password to new role\n"
-msgstr "  -P, --pwprompt            »õ ·ÑÀÇ ¾ÏÈ£ ÁöÁ¤\n"
+msgstr "  -P, --pwprompt            ìƒˆ ë¡¤ì˜ ì•”í˜¸ ì§€ì •\n"
 
 #: createuser.c:315
 #, c-format
 msgid "  -r, --createrole          role can create new roles\n"
-msgstr "  -r, --createrole          »õ ·ÑÀ» ¸¸µé ¼ö ÀÖÀ½\n"
+msgstr "  -r, --createrole          ìƒˆ ë¡¤ì„ ë§Œë“¤ ìˆ˜ ìˆìŒ\n"
 
 #: createuser.c:316
 #, c-format
 msgid "  -R, --no-createrole       role cannot create roles\n"
-msgstr "  -R, --no-createrole       »õ ·ÑÀ» ¸¸µé ¼ö ¾øÀ½\n"
+msgstr "  -R, --no-createrole       ìƒˆ ë¡¤ì„ ë§Œë“¤ ìˆ˜ ì—†ìŒ\n"
 
 #: createuser.c:317
 #, c-format
 msgid "  -s, --superuser           role will be superuser\n"
-msgstr "  -s, --superuser           superuser ±ÇÇÑÀ¸·Î ÁöÁ¤\n"
+msgstr "  -s, --superuser           superuser ê¶Œí•œìœ¼ë¡œ ì§€ì •\n"
 
 #: createuser.c:318
 #, c-format
 msgid "  -S, --no-superuser        role will not be superuser\n"
-msgstr "  -S, --no-superuser        ÀÏ¹İ »ç¿ëÀÚ ±ÇÇÑÀ¸·Î ÁöÁ¤\n"
+msgstr "  -S, --no-superuser        ì¼ë°˜ ì‚¬ìš©ì ê¶Œí•œìœ¼ë¡œ ì§€ì •\n"
 
 #: createuser.c:324
 #, c-format
-msgid ""
-"  -U, --username=USERNAME   user name to connect as (not the one to create)\n"
+msgid "  -U, --username=USERNAME   user name to connect as (not the one to create)\n"
 msgstr ""
-"  -U, --username=USERNAME   ¼­¹ö¿¡ Á¢¼ÓÇÒ »ç¿ëÀÚ\n"
-"                            (»ç¿ëÀÚ¸¸µé±â ÀÛ¾÷À» ÇÒ »ç¿ëÀÚ)\n"
+"  -U, --username=USERNAME   ì„œë²„ì— ì ‘ì†í•  ì‚¬ìš©ì\n"
+"                            (ì‚¬ìš©ìë§Œë“¤ê¸° ì‘ì—…ì„ í•  ì‚¬ìš©ì)\n"
 
 #: createuser.c:327
 #, c-format
@@ -451,27 +540,28 @@ msgid ""
 "be prompted interactively.\n"
 msgstr ""
 "\n"
-"-d, -D, -r, -R, -s, -S ¹× ROLENAME Áß ÇÏ³ª¸¦ ÁöÁ¤ÇÏÁö ¾ÊÀ¸¸é\n"
-"´ëÈ­Çü ÇÁ·ÒÇÁÆ®°¡ Ç¥½ÃµË´Ï´Ù.\n"
+"-d, -D, -r, -R, -s, -S ë° ROLENAME ì¤‘ í•˜ë‚˜ë¥¼ ì§€ì •í•˜ì§€ ì•Šìœ¼ë©´\n"
+"ëŒ€í™”í˜• í”„ë¡¬í”„íŠ¸ê°€ í‘œì‹œë©ë‹ˆë‹¤.\n"
 
 #: dropdb.c:91
 #, c-format
 msgid "%s: missing required argument database name\n"
-msgstr "%s: ÇÊ¼ö Ç×¸ñÀÎ µ¥ÀÌÅÍº£ÀÌ½º ÀÌ¸§ÀÌ ºüÁ³½À´Ï´Ù\n"
+msgstr "%s: í•„ìˆ˜ í•­ëª©ì¸ ë°ì´í„°ë² ì´ìŠ¤ ì´ë¦„ì´ ë¹ ì¡ŒìŠµë‹ˆë‹¤\n"
 
 #: dropdb.c:106
 #, c-format
 msgid "Database \"%s\" will be permanently removed.\n"
-msgstr "\"%s\" µ¥ÀÌÅÍº£ÀÌ½º°¡ ¿ÏÀüÈ÷ »èÁ¦ µÉ °ÍÀÔ´Ï´Ù.\n"
+msgstr "\"%s\" ë°ì´í„°ë² ì´ìŠ¤ê°€ ì™„ì „íˆ ì‚­ì œ ë  ê²ƒì…ë‹ˆë‹¤.\n"
 
-#: dropdb.c:107 dropuser.c:108
+#: dropdb.c:107
+#: dropuser.c:108
 msgid "Are you sure?"
-msgstr "Á¤¸» °è¼Ó ÇÒ±î¿ä? (y/n) "
+msgstr "ì •ë§ ê³„ì† í• ê¹Œìš”? (y/n) "
 
 #: dropdb.c:124
 #, c-format
 msgid "%s: database removal failed: %s"
-msgstr "%s: µ¥ÀÌÅÍº£ÀÌ½º »èÁ¦ ½ÇÆĞ: %s"
+msgstr "%s: ë°ì´í„°ë² ì´ìŠ¤ ì‚­ì œ ì‹¤íŒ¨: %s"
 
 #: dropdb.c:139
 #, c-format
@@ -479,65 +569,62 @@ msgid ""
 "%s removes a PostgreSQL database.\n"
 "\n"
 msgstr ""
-"%s ÇÁ·Î±×·¥Àº PostgreSQL µ¥ÀÌÅÍº£ÀÌ½º¸¦ »èÁ¦ÇÕ´Ï´Ù.\n"
+"%s í”„ë¡œê·¸ë¨ì€ PostgreSQL ë°ì´í„°ë² ì´ìŠ¤ë¥¼ ì‚­ì œí•©ë‹ˆë‹¤.\n"
 "\n"
 
 #: dropdb.c:141
 #, c-format
 msgid "  %s [OPTION]... DBNAME\n"
-msgstr "  %s [¿É¼Ç]... DBÀÌ¸§\n"
+msgstr "  %s [ì˜µì…˜]... DBì´ë¦„\n"
 
-#: dropdb.c:144 dropuser.c:143
+#: dropdb.c:144
+#: dropuser.c:143
 #, c-format
 msgid "  -i, --interactive         prompt before deleting anything\n"
-msgstr "  -i, --interactive         Áö¿ì±â Àü¿¡ ÇÑ ¹ø ´õ ¹°¾îº½\n"
+msgstr "  -i, --interactive         ì§€ìš°ê¸° ì „ì— í•œ ë²ˆ ë” ë¬¼ì–´ë´„\n"
 
 #: droplang.c:203
 #, c-format
 msgid "%s: language \"%s\" is not installed in database \"%s\"\n"
-msgstr "%s: \"%s\" ¾ğ¾î´Â \"%s\" µ¥ÀÌÅÍº£ÀÌ½º¿¡ ¼³Ä¡ µÇ¾îÀÖÁö ¾Ê½À´Ï´Ù\n"
+msgstr "%s: \"%s\" ì–¸ì–´ëŠ” \"%s\" ë°ì´í„°ë² ì´ìŠ¤ì— ì„¤ì¹˜ ë˜ì–´ìˆì§€ ì•ŠìŠµë‹ˆë‹¤\n"
 
-#: droplang.c:223
+#: droplang.c:224
 #, c-format
-msgid ""
-"%s: still %s functions declared in language \"%s\"; language not removed\n"
-msgstr ""
-"%s: ÇöÀç %s°³ÀÇ ÇÔ¼ö°¡ \"%s\" ¾ğ¾î ±â¹İÀ¸·Î ÀÛ¼ºµÇ¾î »ç¿ëµÇ°í ÀÖ½À´Ï´Ù; ÀÌ ¾ğ"
-"¾î´Â »èÁ¦µÉ ¼ö ¾ø½À´Ï´Ù.\n"
+msgid "%s: still %s functions declared in language \"%s\"; language not removed\n"
+msgstr "%s: í˜„ì¬ %sê°œì˜ í•¨ìˆ˜ê°€ \"%s\" ì–¸ì–´ ê¸°ë°˜ìœ¼ë¡œ ì‘ì„±ë˜ì–´ ì‚¬ìš©ë˜ê³  ìˆìŠµë‹ˆë‹¤; ì´ ì–¸ì–´ëŠ” ì‚­ì œë  ìˆ˜ ì—†ìŠµë‹ˆë‹¤.\n"
 
-#: droplang.c:316
+#: droplang.c:358
 #, c-format
 msgid "%s: language removal failed: %s"
-msgstr "%s: ¾ğ¾î »èÁ¦ ½ÇÆĞ: %s"
+msgstr "%s: ì–¸ì–´ ì‚­ì œ ì‹¤íŒ¨: %s"
 
-#: droplang.c:331
+#: droplang.c:373
 #, c-format
 msgid ""
 "%s removes a procedural language from a database.\n"
 "\n"
 msgstr ""
-"%s ÇÁ·Î±×·¥Àº µ¥ÀÌÅÍº£ÀÌ½º¿¡¼­ ÇÁ·Î½ÃÁê¾ó ¾ğ¾î¸¦ »èÁ¦ÇÕ´Ï´Ù.\n"
+"%s í”„ë¡œê·¸ë¨ì€ ë°ì´í„°ë² ì´ìŠ¤ì—ì„œ í”„ë¡œì‹œì¥¬ì–¼ ì–¸ì–´ë¥¼ ì‚­ì œí•©ë‹ˆë‹¤.\n"
 "\n"
 
-#: droplang.c:335
+#: droplang.c:377
 #, c-format
-msgid ""
-"  -d, --dbname=DBNAME       database from which to remove the language\n"
-msgstr "  -d, --dbname=DBNAME       ¾ğ¾î¸¦ »èÁ¦ÇÒ µ¥ÀÌÅÍº£ÀÌ½º\n"
+msgid "  -d, --dbname=DBNAME       database from which to remove the language\n"
+msgstr "  -d, --dbname=DBNAME       ì–¸ì–´ë¥¼ ì‚­ì œí•  ë°ì´í„°ë² ì´ìŠ¤\n"
 
 #: dropuser.c:103
 msgid "Enter name of role to drop: "
-msgstr "»èÁ¦ÇÒ ·Ñ ÀÌ¸§À» ÀÔ·ÂÇÏ½Ê½Ã¿À: "
+msgstr "ì‚­ì œí•  ë¡¤ ì´ë¦„ì„ ì…ë ¥í•˜ì‹­ì‹œì˜¤: "
 
 #: dropuser.c:107
 #, c-format
 msgid "Role \"%s\" will be permanently removed.\n"
-msgstr "\"%s\" ·ÑÀº ¿µ±¸È÷ »èÁ¦µÉ °ÍÀÔ´Ï´Ù.\n"
+msgstr "\"%s\" ë¡¤ì€ ì˜êµ¬íˆ ì‚­ì œë  ê²ƒì…ë‹ˆë‹¤.\n"
 
 #: dropuser.c:123
 #, c-format
 msgid "%s: removal of role \"%s\" failed: %s"
-msgstr "%s: \"%s\" ·Ñ »èÁ¦ ½ÇÆĞ: %s"
+msgstr "%s: \"%s\" ë¡¤ ì‚­ì œ ì‹¤íŒ¨: %s"
 
 #: dropuser.c:138
 #, c-format
@@ -545,39 +632,38 @@ msgid ""
 "%s removes a PostgreSQL role.\n"
 "\n"
 msgstr ""
-"%s ÇÁ·Î±×·¥Àº PostgreSQL ·ÑÀ» »èÁ¦ÇÕ´Ï´Ù.\n"
+"%s í”„ë¡œê·¸ë¨ì€ PostgreSQL ë¡¤ì„ ì‚­ì œí•©ë‹ˆë‹¤.\n"
 "\n"
 
 #: dropuser.c:149
 #, c-format
-msgid ""
-"  -U, --username=USERNAME   user name to connect as (not the one to drop)\n"
-msgstr "  -U, --username=USERNAME   ÀÌ ÀÛ¾÷À» ÁøÇàÇÒ DB¿¡ Á¢¼ÓÇÒ »ç¿ëÀÚ\n"
+msgid "  -U, --username=USERNAME   user name to connect as (not the one to drop)\n"
+msgstr "  -U, --username=USERNAME   ì´ ì‘ì—…ì„ ì§„í–‰í•  DBì— ì ‘ì†í•  ì‚¬ìš©ì\n"
 
 #: clusterdb.c:129
 #, c-format
 msgid "%s: cannot cluster all databases and a specific one at the same time\n"
-msgstr "%s: ¸ğµç DB ÀÛ¾÷°ú Æ¯Á¤ DB ÀÛ¾÷Àº µ¿½Ã¿¡ ÇÒ ¼ö ¾ø½À´Ï´Ù.\n"
+msgstr "%s: ëª¨ë“  DB ì‘ì—…ê³¼ íŠ¹ì • DB ì‘ì—…ì€ ë™ì‹œì— í•  ìˆ˜ ì—†ìŠµë‹ˆë‹¤.\n"
 
 #: clusterdb.c:135
 #, c-format
 msgid "%s: cannot cluster a specific table in all databases\n"
-msgstr "%s: ¸ğµç DB¸¦ ´ë»óÀ¸·Î Æ¯Á¤ Å×ÀÌºíÀ» Å¬·¯½ºÅÍÇÒ ¼ö ¾ø½À´Ï´Ù.\n"
+msgstr "%s: ëª¨ë“  DBë¥¼ ëŒ€ìƒìœ¼ë¡œ íŠ¹ì • í…Œì´ë¸”ì„ í´ëŸ¬ìŠ¤í„°í•  ìˆ˜ ì—†ìŠµë‹ˆë‹¤.\n"
 
 #: clusterdb.c:187
 #, c-format
 msgid "%s: clustering of table \"%s\" in database \"%s\" failed: %s"
-msgstr "%s: \"%s\" Å×ÀÌºí(ÇØ´çDB: \"%s\") Å¬·¯½ºÅÍ ÀÛ¾÷ ½ÇÆĞ: %s"
+msgstr "%s: \"%s\" í…Œì´ë¸”(í•´ë‹¹DB: \"%s\") í´ëŸ¬ìŠ¤í„° ì‘ì—… ì‹¤íŒ¨: %s"
 
 #: clusterdb.c:190
 #, c-format
 msgid "%s: clustering of database \"%s\" failed: %s"
-msgstr "%s: \"%s\" µ¥ÀÌÅÍº£ÀÌ½º Å¬·¯½ºÅÍ ½ÇÆĞ: %s"
+msgstr "%s: \"%s\" ë°ì´í„°ë² ì´ìŠ¤ í´ëŸ¬ìŠ¤í„° ì‹¤íŒ¨: %s"
 
 #: clusterdb.c:219
 #, c-format
 msgid "%s: clustering database \"%s\"\n"
-msgstr "%s: \"%s\" µ¥ÀÌÅÍº£ÀÌ½º Å¬·¯½ºÅÍ ÀÛ¾÷ Áß\n"
+msgstr "%s: \"%s\" ë°ì´í„°ë² ì´ìŠ¤ í´ëŸ¬ìŠ¤í„° ì‘ì—… ì¤‘\n"
 
 #: clusterdb.c:235
 #, c-format
@@ -585,39 +671,42 @@ msgid ""
 "%s clusters all previously clustered tables in a database.\n"
 "\n"
 msgstr ""
-"%s ÇÁ·Î±×·¥Àº DB ¾È¿¡¼­ ÀÌÀü¿¡ Å¬·¯½ºÅÍµÈ ¸ğµç Å×ÀÌºíÀ» Ã£¾Æ\n"
-"´Ù½Ã Å¬·¯½ºÅÍ ÀÛ¾÷À» ÇÕ´Ï´Ù.\n"
+"%s í”„ë¡œê·¸ë¨ì€ DB ì•ˆì—ì„œ ì´ì „ì— í´ëŸ¬ìŠ¤í„°ëœ ëª¨ë“  í…Œì´ë¸”ì„ ì°¾ì•„\n"
+"ë‹¤ì‹œ í´ëŸ¬ìŠ¤í„° ì‘ì—…ì„ í•©ë‹ˆë‹¤.\n"
 "\n"
 
-#: clusterdb.c:237 vacuumdb.c:263 reindexdb.c:314
+#: clusterdb.c:237
+#: vacuumdb.c:329
+#: reindexdb.c:314
 #, c-format
 msgid "  %s [OPTION]... [DBNAME]\n"
-msgstr "  %s [¿É¼Ç]... [DBÀÌ¸§]\n"
+msgstr "  %s [ì˜µì…˜]... [DBì´ë¦„]\n"
 
 #: clusterdb.c:239
 #, c-format
 msgid "  -a, --all                 cluster all databases\n"
-msgstr "  -a, --all                 ¸ğµç µ¥ÀÌÅÍº£ÀÌ½º¸¦ ´ë»óÀ¸·Î\n"
+msgstr "  -a, --all                 ëª¨ë“  ë°ì´í„°ë² ì´ìŠ¤ë¥¼ ëŒ€ìƒìœ¼ë¡œ\n"
 
 #: clusterdb.c:240
 #, c-format
 msgid "  -d, --dbname=DBNAME       database to cluster\n"
-msgstr "  -d, --dbname=DBNAME       Å¬·¯½ºÅÍ ÀÛ¾÷ÇÒ DB\n"
+msgstr "  -d, --dbname=DBNAME       í´ëŸ¬ìŠ¤í„° ì‘ì—…í•  DB\n"
 
-#: clusterdb.c:242 reindexdb.c:320
+#: clusterdb.c:242
+#: reindexdb.c:320
 #, c-format
 msgid "  -q, --quiet               don't write any messages\n"
-msgstr "  -q, --quiet               ¾î¶°ÇÑ ¸Ş½ÃÁöµµ º¸¿©ÁÖÁö ¾ÊÀ½\n"
+msgstr "  -q, --quiet               ì–´ë– í•œ ë©”ì‹œì§€ë„ ë³´ì—¬ì£¼ì§€ ì•ŠìŒ\n"
 
 #: clusterdb.c:243
 #, c-format
 msgid "  -t, --table=TABLE         cluster specific table only\n"
-msgstr "  -t, --table=TABLE         ÁöÁ¤ÇÑ Å×ÀÌºí¸¸ Å¬·¯½ºÅÍ\n"
+msgstr "  -t, --table=TABLE         ì§€ì •í•œ í…Œì´ë¸”ë§Œ í´ëŸ¬ìŠ¤í„°\n"
 
 #: clusterdb.c:244
 #, c-format
 msgid "  -v, --verbose             write a lot of output\n"
-msgstr "  -v, --verbose             ¸¹Àº Ãâ·Â ÀÛ¼º\n"
+msgstr "  -v, --verbose             ë§ì€ ì¶œë ¥ ì‘ì„±\n"
 
 #: clusterdb.c:253
 #, c-format
@@ -626,178 +715,176 @@ msgid ""
 "Read the description of the SQL command CLUSTER for details.\n"
 msgstr ""
 "\n"
-"º¸´Ù ÀÚ¼¼ÇÑ ³»¿ëÀº CLUSTER SQL ¸í·É¾î ¼³¸í¼­¸¦ ÂüÁ¶ÇÏ½Ê½Ã¿À.\n"
+"ë³´ë‹¤ ìì„¸í•œ ë‚´ìš©ì€ CLUSTER SQL ëª…ë ¹ì–´ ì„¤ëª…ì„œë¥¼ ì°¸ì¡°í•˜ì‹­ì‹œì˜¤.\n"
 
-#: vacuumdb.c:146
+#: vacuumdb.c:150
+#, c-format
+msgid "%s: cannot use the \"full\" option when performing only analyze\n"
+msgstr "%s: ë¶„ì„ë§Œ ìˆ˜í–‰í•  ë•ŒëŠ” \"full\" ì˜µì…˜ì„ ì‚¬ìš©í•  ìˆ˜ ì—†ìŒ\n"
+
+#: vacuumdb.c:156
+#, c-format
+msgid "%s: cannot use the \"freeze\" option when performing only analyze\n"
+msgstr "%s: ë¶„ì„ë§Œ ìˆ˜í–‰í•  ë•ŒëŠ” \"freeze\" ì˜µì…˜ì„ ì‚¬ìš©í•  ìˆ˜ ì—†ìŒ\n"
+
+#: vacuumdb.c:169
 #, c-format
 msgid "%s: cannot vacuum all databases and a specific one at the same time\n"
-msgstr ""
-"%s: -a ¿É¼ÇÀÌ ÀÖÀ» °æ¿ì´Â ÇÑ µ¥ÀÌÅÍº£ÀÌ½º¸¦ ´ë»óÀ¸·Î ÀÛ¾÷À» ÁøÇàÇÒ ¼ö ¾ø½À´Ï"
-"´Ù.\n"
+msgstr "%s: -a ì˜µì…˜ì´ ìˆì„ ê²½ìš°ëŠ” í•œ ë°ì´í„°ë² ì´ìŠ¤ë¥¼ ëŒ€ìƒìœ¼ë¡œ ì‘ì—…ì„ ì§„í–‰í•  ìˆ˜ ì—†ìŠµë‹ˆë‹¤.\n"
 
-#: vacuumdb.c:152
+#: vacuumdb.c:175
 #, c-format
 msgid "%s: cannot vacuum a specific table in all databases\n"
-msgstr "%s: ¸ğµç µ¥ÀÌÅÍº£ÀÌ½º¸¦ ´ë»óÀ¸·Î Æ¯Á¤ Å×ÀÌºíÀ» Ã»¼ÒÇÒ ¼ö´Â ¾øÀ½\n"
+msgstr "%s: ëª¨ë“  ë°ì´í„°ë² ì´ìŠ¤ë¥¼ ëŒ€ìƒìœ¼ë¡œ íŠ¹ì • í…Œì´ë¸”ì„ ì²­ì†Œí•  ìˆ˜ëŠ” ì—†ìŒ\n"
 
-#: vacuumdb.c:212
+#: vacuumdb.c:278
 #, c-format
 msgid "%s: vacuuming of table \"%s\" in database \"%s\" failed: %s"
-msgstr "%s: \"%s\" Å×ÀÌºí (ÇØ´ç DB: \"%s\") Ã»¼ÒÇÏ±â ½ÇÆĞ: %s"
+msgstr "%s: \"%s\" í…Œì´ë¸” (í•´ë‹¹ DB: \"%s\") ì²­ì†Œí•˜ê¸° ì‹¤íŒ¨: %s"
 
-#: vacuumdb.c:215
+#: vacuumdb.c:281
 #, c-format
 msgid "%s: vacuuming of database \"%s\" failed: %s"
-msgstr "%s: \"%s\" µ¥ÀÌÅÍº£ÀÌ½º Ã»¼ÒÇÏ±â ½ÇÆĞ: %s"
+msgstr "%s: \"%s\" ë°ì´í„°ë² ì´ìŠ¤ ì²­ì†Œí•˜ê¸° ì‹¤íŒ¨: %s"
 
-#: vacuumdb.c:245
+#: vacuumdb.c:311
 #, c-format
 msgid "%s: vacuuming database \"%s\"\n"
-msgstr "%s: \"%s\" µ¥ÀÌÅÍº£ÀÌ½º¸¦ Ã»¼Ò Áß\n"
+msgstr "%s: \"%s\" ë°ì´í„°ë² ì´ìŠ¤ë¥¼ ì²­ì†Œ ì¤‘\n"
 
-#: vacuumdb.c:261
+#: vacuumdb.c:327
 #, c-format
 msgid ""
 "%s cleans and analyzes a PostgreSQL database.\n"
 "\n"
 msgstr ""
-"%s ÇÁ·Î±×·¥Àº PostgreSQL µ¥ÀÌÅÍº£ÀÌ½º ÀÚ·á Á¤¸® ¹×\n"
-"Äû¸® ÃÖÀûÈ­±âÀÇ Âü°í ÀÚ·á¸¦ °»½ÅÇÕ´Ï´Ù.\n"
+"%s í”„ë¡œê·¸ë¨ì€ PostgreSQL ë°ì´í„°ë² ì´ìŠ¤ ìë£Œ ì •ë¦¬ ë°\n"
+"í€´ë¦¬ ìµœì í™”ê¸°ì˜ ì°¸ê³  ìë£Œë¥¼ ê°±ì‹ í•©ë‹ˆë‹¤.\n"
 "\n"
 
-#: vacuumdb.c:265
+#: vacuumdb.c:331
 #, c-format
 msgid "  -a, --all                       vacuum all databases\n"
-msgstr "  -a, --all                       ¸ğµç µ¥ÀÌÅÍº£ÀÌ½º Ã»¼Ò\n"
+msgstr "  -a, --all                       ëª¨ë“  ë°ì´í„°ë² ì´ìŠ¤ ì²­ì†Œ\n"
 
-#: vacuumdb.c:266
+#: vacuumdb.c:332
 #, c-format
 msgid "  -d, --dbname=DBNAME             database to vacuum\n"
-msgstr "  -d, --dbname=DBNAME             DBNAME µ¥ÀÌÅÍº£ÀÌ½º Ã»¼Ò\n"
+msgstr "  -d, --dbname=DBNAME             DBNAME ë°ì´í„°ë² ì´ìŠ¤ ì²­ì†Œ\n"
 
-#: vacuumdb.c:267
+#: vacuumdb.c:333
 #, c-format
-msgid ""
-"  -e, --echo                      show the commands being sent to the "
-"server\n"
-msgstr "  -e, --echo                      ¼­¹ö·Î º¸³»´Â ¸í·ÉµéÀ» º¸¿©ÁÜ\n"
+msgid "  -e, --echo                      show the commands being sent to the server\n"
+msgstr "  -e, --echo                      ì„œë²„ë¡œ ë³´ë‚´ëŠ” ëª…ë ¹ë“¤ì„ ë³´ì—¬ì¤Œ\n"
 
-#: vacuumdb.c:268
+#: vacuumdb.c:334
 #, c-format
 msgid "  -f, --full                      do full vacuuming\n"
-msgstr "  -f, --full                      ´ëÃ»¼Ò\n"
+msgstr "  -f, --full                      ëŒ€ì²­ì†Œ\n"
 
-#: vacuumdb.c:269
+#: vacuumdb.c:335
 #, c-format
 msgid "  -F, --freeze                    freeze row transaction information\n"
-msgstr "  -F, --freeze                    Çà Æ®·£Àè¼Ç Á¤º¸ µ¿°á\n"
+msgstr "  -F, --freeze                    í–‰ íŠ¸ëœì­ì…˜ ì •ë³´ ë™ê²°\n"
 
-#: vacuumdb.c:270
+#: vacuumdb.c:336
 #, c-format
 msgid "  -q, --quiet                     don't write any messages\n"
-msgstr "  -q, --quiet                     ¾î¶°ÇÑ ¸Ş½ÃÁöµµ º¸¿©ÁÖÁö ¾ÊÀ½\n"
+msgstr "  -q, --quiet                     ì–´ë– í•œ ë©”ì‹œì§€ë„ ë³´ì—¬ì£¼ì§€ ì•ŠìŒ\n"
 
-#: vacuumdb.c:271
+#: vacuumdb.c:337
 #, c-format
 msgid "  -t, --table='TABLE[(COLUMNS)]'  vacuum specific table only\n"
-msgstr "  -t, --table='TABLE[(COLUMNS)]'  ÁöÁ¤ÇÑ Æ¯Á¤ Å×ÀÌºí¸¸ Ã»¼Ò\n"
+msgstr "  -t, --table='TABLE[(COLUMNS)]'  ì§€ì •í•œ íŠ¹ì • í…Œì´ë¸”ë§Œ ì²­ì†Œ\n"
 
-#: vacuumdb.c:272
+#: vacuumdb.c:338
 #, c-format
 msgid "  -v, --verbose                   write a lot of output\n"
-msgstr "  -v, --verbose                   ÀÛ¾÷³»¿ªÀÇ ÀÚ¼¼ÇÑ Ãâ·Â\n"
+msgstr "  -v, --verbose                   ì‘ì—…ë‚´ì—­ì˜ ìì„¸í•œ ì¶œë ¥\n"
 
-#: vacuumdb.c:273
+#: vacuumdb.c:339
 #, c-format
-msgid "  -z, --analyze                   update optimizer hints\n"
-msgstr "  -z, --analyze                   Äõ¸®ÃÖÀûÈ­±â ÈùÆ® ÀÚ·á¸¦ °»½ÅÇÔ\n"
+msgid "  -z, --analyze                   update optimizer statistics\n"
+msgstr "  -z, --analyze                   ìµœì í™” í”„ë¡œê·¸ë¨ í†µê³„ ì—…ë°ì´íŠ¸\n"
 
-#: vacuumdb.c:274
+#: vacuumdb.c:340
+#, c-format
+msgid "  -Z, --analyze-only              only update optimizer statistics\n"
+msgstr "  -Z, --analyze-only              ìµœì í™” í”„ë¡œê·¸ë¨ í†µê³„ë§Œ ì—…ë°ì´íŠ¸\n"
+
+#: vacuumdb.c:341
 #, c-format
 msgid "  --help                          show this help, then exit\n"
-msgstr "  --help                          ÀÌ µµ¿ò¸»À» º¸¿©ÁÖ°í ¸¶Ä§\n"
+msgstr "  --help                          ì´ ë„ì›€ë§ì„ ë³´ì—¬ì£¼ê³  ë§ˆì¹¨\n"
 
-#: vacuumdb.c:275
+#: vacuumdb.c:342
 #, c-format
-msgid ""
-"  --version                       output version information, then exit\n"
-msgstr "  --version                       ¹öÀü Á¤º¸¸¦ º¸¿©ÁÖ°í ¸¶Ä§\n"
+msgid "  --version                       output version information, then exit\n"
+msgstr "  --version                       ë²„ì „ ì •ë³´ë¥¼ ë³´ì—¬ì£¼ê³  ë§ˆì¹¨\n"
 
-#: vacuumdb.c:282
+#: vacuumdb.c:349
 #, c-format
 msgid ""
 "\n"
 "Read the description of the SQL command VACUUM for details.\n"
 msgstr ""
 "\n"
-"º¸´Ù ÀÚ¼¼ÇÑ ³»¿ëÀº VACUUM SQL ¸í·É¾î ¼³¸í¼­¸¦ ÂüÁ¶ÇÏ½Ê½Ã¿À.\n"
+"ë³´ë‹¤ ìì„¸í•œ ë‚´ìš©ì€ VACUUM SQL ëª…ë ¹ì–´ ì„¤ëª…ì„œë¥¼ ì°¸ì¡°í•˜ì‹­ì‹œì˜¤.\n"
 
 #: reindexdb.c:138
 #, c-format
 msgid "%s: cannot reindex all databases and a specific one at the same time\n"
-msgstr ""
-"%s: ¸ğµç µ¥ÀÌÅÍº£ÀÌ½º Àç»öÀÎ ÀÛ¾÷°ú Æ¯Á¤ µ¥ÀÌÅÍº£ÀÌ½º Àç»öÀÎ ÀÛ¾÷Àº µ¿½Ã¿¡ Áø"
-"ÇàÇÒ ¼ö ¾ø½À´Ï´Ù\n"
+msgstr "%s: ëª¨ë“  ë°ì´í„°ë² ì´ìŠ¤ ì¬ìƒ‰ì¸ ì‘ì—…ê³¼ íŠ¹ì • ë°ì´í„°ë² ì´ìŠ¤ ì¬ìƒ‰ì¸ ì‘ì—…ì€ ë™ì‹œì— ì§„í–‰í•  ìˆ˜ ì—†ìŠµë‹ˆë‹¤\n"
 
 #: reindexdb.c:143
 #, c-format
 msgid "%s: cannot reindex all databases and system catalogs at the same time\n"
-msgstr ""
-"%s: ¸ğµç µ¥ÀÌÅÍº£ÀÌ½º Àç»öÀÎ ÀÛ¾÷°ú ½Ã½ºÅÛ Ä«Å»·Î±× Àç»öÀÎ ÀÛ¾÷Àº µ¿½Ã¿¡ ÁøÇà"
-"ÇÒ ¼ö ¾ø½À´Ï´Ù\n"
+msgstr "%s: ëª¨ë“  ë°ì´í„°ë² ì´ìŠ¤ ì¬ìƒ‰ì¸ ì‘ì—…ê³¼ ì‹œìŠ¤í…œ ì¹´íƒˆë¡œê·¸ ì¬ìƒ‰ì¸ ì‘ì—…ì€ ë™ì‹œì— ì§„í–‰í•  ìˆ˜ ì—†ìŠµë‹ˆë‹¤\n"
 
 #: reindexdb.c:148
 #, c-format
 msgid "%s: cannot reindex a specific table in all databases\n"
-msgstr ""
-"%s: ¸ğµç µ¥ÀÌÅÍº£ÀÌ½º Àç»öÀÎ ÀÛ¾÷¿¡¼­ Æ¯Á¤ Å×ÀÌºíÀÇ Àç»öÀÎ ÀÛ¾÷À» ÁöÁ¤ÇÒ ¼ö "
-"¾ø½À´Ï´Ù\n"
+msgstr "%s: ëª¨ë“  ë°ì´í„°ë² ì´ìŠ¤ ì¬ìƒ‰ì¸ ì‘ì—…ì—ì„œ íŠ¹ì • í…Œì´ë¸”ì˜ ì¬ìƒ‰ì¸ ì‘ì—…ì„ ì§€ì •í•  ìˆ˜ ì—†ìŠµë‹ˆë‹¤\n"
 
 #: reindexdb.c:153
 #, c-format
 msgid "%s: cannot reindex a specific index in all databases\n"
-msgstr ""
-"%s: ¸ğµç µ¥ÀÌÅÍº£ÀÌ½º Àç»öÀÎ ÀÛ¾÷¿¡¼­ Æ¯Á¤ ÀÎµ¦½º Àç»öÀÎ ÀÛ¾÷À» ÁöÁ¤ÇÒ ¼ö ¾ø"
-"½À´Ï´Ù\n"
+msgstr "%s: ëª¨ë“  ë°ì´í„°ë² ì´ìŠ¤ ì¬ìƒ‰ì¸ ì‘ì—…ì—ì„œ íŠ¹ì • ì¸ë±ìŠ¤ ì¬ìƒ‰ì¸ ì‘ì—…ì„ ì§€ì •í•  ìˆ˜ ì—†ìŠµë‹ˆë‹¤\n"
 
 #: reindexdb.c:164
 #, c-format
-msgid ""
-"%s: cannot reindex a specific table and system catalogs at the same time\n"
-msgstr ""
-"%s: Æ¯Á¤ Å×ÀÌºí°ú ½Ã½ºÅÛ Ä«Å»·Î±× Àç»öÀÎ ÀÛ¾÷Àº µ¿½Ã¿¡ ÁøÇàÇÒ ¼ö ¾ø½À´Ï´Ù\n"
+msgid "%s: cannot reindex a specific table and system catalogs at the same time\n"
+msgstr "%s: íŠ¹ì • í…Œì´ë¸”ê³¼ ì‹œìŠ¤í…œ ì¹´íƒˆë¡œê·¸ ì¬ìƒ‰ì¸ ì‘ì—…ì€ ë™ì‹œì— ì§„í–‰í•  ìˆ˜ ì—†ìŠµë‹ˆë‹¤\n"
 
 #: reindexdb.c:169
 #, c-format
-msgid ""
-"%s: cannot reindex a specific index and system catalogs at the same time\n"
-msgstr ""
-"%s: Æ¯Á¤ ÀÎµ¦½º¿Í ½Ã½ºÅÛ Ä«Å»·Î±× Àç»öÀÎ ÀÛ¾÷Àº µ¿½Ã¿¡ ÁøÇàÇÒ ¼ö ¾ø½À´Ï´Ù\n"
+msgid "%s: cannot reindex a specific index and system catalogs at the same time\n"
+msgstr "%s: íŠ¹ì • ì¸ë±ìŠ¤ì™€ ì‹œìŠ¤í…œ ì¹´íƒˆë¡œê·¸ ì¬ìƒ‰ì¸ ì‘ì—…ì€ ë™ì‹œì— ì§„í–‰í•  ìˆ˜ ì—†ìŠµë‹ˆë‹¤\n"
 
 #: reindexdb.c:238
 #, c-format
 msgid "%s: reindexing of table \"%s\" in database \"%s\" failed: %s"
-msgstr "%s: \"%s\" Å×ÀÌºí(ÇØ´çDB: \"%s\") Àç»öÀÎ ÀÛ¾÷ ½ÇÆĞ: %s"
+msgstr "%s: \"%s\" í…Œì´ë¸”(í•´ë‹¹DB: \"%s\") ì¬ìƒ‰ì¸ ì‘ì—… ì‹¤íŒ¨: %s"
 
 #: reindexdb.c:241
 #, c-format
 msgid "%s: reindexing of index \"%s\" in database \"%s\" failed: %s"
-msgstr "%s: \"%s\" ÀÎµ¦½º(ÇØ´çDB: \"%s\") Àç»öÀÎ ÀÛ¾÷ ½ÇÆĞ: %s"
+msgstr "%s: \"%s\" ì¸ë±ìŠ¤(í•´ë‹¹DB: \"%s\") ì¬ìƒ‰ì¸ ì‘ì—… ì‹¤íŒ¨: %s"
 
 #: reindexdb.c:244
 #, c-format
 msgid "%s: reindexing of database \"%s\" failed: %s"
-msgstr "%s: \"%s\" µ¥ÀÌÅÍº£ÀÌ½º Àç»öÀÎ ÀÛ¾÷ ½ÇÆĞ: %s"
+msgstr "%s: \"%s\" ë°ì´í„°ë² ì´ìŠ¤ ì¬ìƒ‰ì¸ ì‘ì—… ì‹¤íŒ¨: %s"
 
 #: reindexdb.c:273
 #, c-format
 msgid "%s: reindexing database \"%s\"\n"
-msgstr "%s: \"%s\" µ¥ÀÌÅÍº£ÀÌ½º Àç»öÀÎ ÀÛ¾÷ Áß\n"
+msgstr "%s: \"%s\" ë°ì´í„°ë² ì´ìŠ¤ ì¬ìƒ‰ì¸ ì‘ì—… ì¤‘\n"
 
 #: reindexdb.c:300
 #, c-format
 msgid "%s: reindexing of system catalogs failed: %s"
-msgstr "%s: ½Ã½ºÅÛ Ä«Å»·Î±× Àç»öÀÎ ÀÛ¾÷ ½ÇÆĞ: %s"
+msgstr "%s: ì‹œìŠ¤í…œ ì¹´íƒˆë¡œê·¸ ì¬ìƒ‰ì¸ ì‘ì—… ì‹¤íŒ¨: %s"
 
 #: reindexdb.c:312
 #, c-format
@@ -805,33 +892,33 @@ msgid ""
 "%s reindexes a PostgreSQL database.\n"
 "\n"
 msgstr ""
-"%s ÇÁ·Î±×·¥Àº PostgreSQL µ¥ÀÌÅÍº£ÀÌ½º Àç»öÀÎ ÀÛ¾÷À» ÇÕ´Ï´Ù.\n"
+"%s í”„ë¡œê·¸ë¨ì€ PostgreSQL ë°ì´í„°ë² ì´ìŠ¤ ì¬ìƒ‰ì¸ ì‘ì—…ì„ í•©ë‹ˆë‹¤.\n"
 "\n"
 
 #: reindexdb.c:316
 #, c-format
 msgid "  -a, --all                 reindex all databases\n"
-msgstr "  -a, --all                 ¸ğµç µ¥ÀÌÅÍº£ÀÌ½º Àç»öÀÎ\n"
+msgstr "  -a, --all                 ëª¨ë“  ë°ì´í„°ë² ì´ìŠ¤ ì¬ìƒ‰ì¸\n"
 
 #: reindexdb.c:317
 #, c-format
 msgid "  -d, --dbname=DBNAME       database to reindex\n"
-msgstr "  -d, --dbname=DBNAME       ÁöÁ¤ÇÑ µ¥ÀÌÅÍº£ÀÌ½ºÀÇ Àç»öÀÎ ÀÛ¾÷\n"
+msgstr "  -d, --dbname=DBNAME       ì§€ì •í•œ ë°ì´í„°ë² ì´ìŠ¤ì˜ ì¬ìƒ‰ì¸ ì‘ì—…\n"
 
 #: reindexdb.c:319
 #, c-format
 msgid "  -i, --index=INDEX         recreate specific index only\n"
-msgstr "  -i, --index=INDEX         ÁöÁ¤ÇÑ ÀÎµ¦½º¸¸ ´Ù½Ã ¸¸µë\n"
+msgstr "  -i, --index=INDEX         ì§€ì •í•œ ì¸ë±ìŠ¤ë§Œ ë‹¤ì‹œ ë§Œë“¬\n"
 
 #: reindexdb.c:321
 #, c-format
 msgid "  -s, --system              reindex system catalogs\n"
-msgstr "  -s, --system              ½Ã½ºÅÛ Ä«Å»·Î±× Àç»öÀÎ\n"
+msgstr "  -s, --system              ì‹œìŠ¤í…œ ì¹´íƒˆë¡œê·¸ ì¬ìƒ‰ì¸\n"
 
 #: reindexdb.c:322
 #, c-format
 msgid "  -t, --table=TABLE         reindex specific table only\n"
-msgstr "  -t, --table=TABLE         ÁöÁ¤ÇÑ Å×ÀÌºí¸¸ Àç»öÀÎ ÀÛ¾÷\n"
+msgstr "  -t, --table=TABLE         ì§€ì •í•œ í…Œì´ë¸”ë§Œ ì¬ìƒ‰ì¸ ì‘ì—…\n"
 
 #: reindexdb.c:331
 #, c-format
@@ -840,78 +927,89 @@ msgid ""
 "Read the description of the SQL command REINDEX for details.\n"
 msgstr ""
 "\n"
-"º¸´Ù ÀÚ¼¼ÇÑ ³»¿ëÀº REINDEX SQL ¸í·É¾î ¼³¸í¼­¸¦ ÂüÁ¶ÇÏ½Ê½Ã¿À.\n"
+"ë³´ë‹¤ ìì„¸í•œ ë‚´ìš©ì€ REINDEX SQL ëª…ë ¹ì–´ ì„¤ëª…ì„œë¥¼ ì°¸ì¡°í•˜ì‹­ì‹œì˜¤.\n"
 
 #: common.c:45
 #, c-format
 msgid "%s: could not obtain information about current user: %s\n"
-msgstr "%s: ÇöÀç »ç¿ëÀÚ Á¤º¸¸¦ ±¸ÇÒ ¼ö ¾øÀ½: %s\n"
+msgstr "%s: í˜„ì¬ ì‚¬ìš©ì ì •ë³´ë¥¼ êµ¬í•  ìˆ˜ ì—†ìŒ: %s\n"
 
 #: common.c:56
 #, c-format
 msgid "%s: could not get current user name: %s\n"
-msgstr "%s: ÇöÀç »ç¿ëÀÚ ÀÌ¸§À» ±¸ÇÒ ¼ö ¾øÀ½: %s\n"
+msgstr "%s: í˜„ì¬ ì‚¬ìš©ì ì´ë¦„ì„ êµ¬í•  ìˆ˜ ì—†ìŒ: %s\n"
 
-#: common.c:103 common.c:127
+#: common.c:103
+#: common.c:155
 msgid "Password: "
-msgstr "¾ÏÈ£:"
+msgstr "ì•”í˜¸:"
 
-#: common.c:116
+#: common.c:117
+#, c-format
+msgid "%s: out of memory\n"
+msgstr "%s: ë©”ëª¨ë¦¬ ë¶€ì¡±\n"
+
+#: common.c:144
 #, c-format
 msgid "%s: could not connect to database %s\n"
-msgstr "%s: %s µ¥ÀÌÅÍº£ÀÌ½º¿¡ ¿¬°á ÇÒ ¼ö ¾øÀ½\n"
+msgstr "%s: %s ë°ì´í„°ë² ì´ìŠ¤ì— ì—°ê²° í•  ìˆ˜ ì—†ìŒ\n"
 
-#: common.c:138
+#: common.c:166
 #, c-format
 msgid "%s: could not connect to database %s: %s"
-msgstr "%s: %s µ¥ÀÌÅÍº£ÀÌ½º¿¡ ¿¬°á ÇÒ ¼ö ¾øÀ½: %s"
+msgstr "%s: %s ë°ì´í„°ë² ì´ìŠ¤ì— ì—°ê²° í•  ìˆ˜ ì—†ìŒ: %s"
 
-#: common.c:162 common.c:190
+#: common.c:190
+#: common.c:218
 #, c-format
 msgid "%s: query failed: %s"
-msgstr "%s: Äõ¸® ½ÇÆĞ: %s"
+msgstr "%s: ì¿¼ë¦¬ ì‹¤íŒ¨: %s"
 
-#: common.c:164 common.c:192
+#: common.c:192
+#: common.c:220
 #, c-format
 msgid "%s: query was: %s\n"
-msgstr "%s: »ç¿ëµÈ Äõ¸®: %s\n"
+msgstr "%s: ì‚¬ìš©ëœ ì¿¼ë¦¬: %s\n"
 
-#: common.c:238
+#: common.c:266
 #, c-format
 msgid "pg_strdup: cannot duplicate null pointer (internal error)\n"
-msgstr "pg_strdup: null Æ÷ÀÎÅÍ¸¦ Áßº¹ÇÒ ¼ö ¾øÀ½(³»ºÎ ¿À·ù)\n"
+msgstr "pg_strdup: null í¬ì¸í„°ë¥¼ ì¤‘ë³µí•  ìˆ˜ ì—†ìŒ(ë‚´ë¶€ ì˜¤ë¥˜)\n"
 
-#: common.c:244
+#: common.c:272
 #, c-format
 msgid "out of memory\n"
-msgstr "¸Ş¸ğ¸® ºÎÁ·\n"
+msgstr "ë©”ëª¨ë¦¬ ë¶€ì¡±\n"
 
 #. translator: abbreviation for "yes"
-#: common.c:255
+#: common.c:283
 msgid "y"
 msgstr "y"
 
 #. translator: abbreviation for "no"
-#: common.c:257
+#: common.c:285
 msgid "n"
 msgstr "n"
 
-#: common.c:268
+#: common.c:296
 #, c-format
 msgid "%s (%s/%s) "
 msgstr "%s (%s/%s) "
 
-#: common.c:289
+#: common.c:317
 #, c-format
 msgid "Please answer \"%s\" or \"%s\".\n"
-msgstr "\"%s\" ¶Ç´Â \"%s\" ¸¸ Çã¿ëÇÕ´Ï´Ù.\n"
+msgstr "\"%s\" ë˜ëŠ” \"%s\" ë§Œ í—ˆìš©í•©ë‹ˆë‹¤.\n"
 
-#: common.c:367 common.c:400
+#: common.c:395
+#: common.c:428
 #, c-format
 msgid "Cancel request sent\n"
-msgstr "Ãë¼Ò ¿äÃ»À» Àü¼ÛÇÔ\n"
+msgstr "ì·¨ì†Œ ìš”ì²­ì„ ì „ì†¡í•¨\n"
 
-#: common.c:369 common.c:402
+#: common.c:397
+#: common.c:430
 #, c-format
 msgid "Could not send cancel request: %s"
-msgstr "Ãë¼Ò ¿äÃ»À» Àü¼ÛÇÒ ¼ö ¾øÀ½: %s"
+msgstr "ì·¨ì†Œ ìš”ì²­ì„ ì „ì†¡í•  ìˆ˜ ì—†ìŒ: %s"
+

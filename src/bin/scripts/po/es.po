@@ -6,16 +6,17 @@
 # Alvaro Herrera, <alvherre@alvh.no-ip.org>, 2003-2010
 # Jaime Casanova, <systemguards@gmail.com>, 2005
 #
-# pgtranslation Id: pgscripts.po,v 1.8 2010/04/26 22:12:27 alvherre Exp $
+# pgtranslation Id: pgscripts.po,v 1.8.2.1 2011/09/22 14:15:13 alvherre Exp $
 #
 msgid ""
 msgstr ""
 "Project-Id-Version: pgscripts (PostgreSQL 9.0)\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
-"POT-Creation-Date: 2010-04-26 21:15+0000\n"
+"POT-Creation-Date: 2011-09-22 05:06+0000\n"
 "PO-Revision-Date: 2010-04-26 18:11-0400\n"
 "Last-Translator: Ávaro Herrera <alvherre@alvh.no-ip.org>\n"
 "Language-Team: Castellano <pgsql-es-ayuda@postgresql.org>\n"
+"Language: \n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
@@ -768,12 +769,15 @@ msgstr "  -v, --verbose             desplegar varios mensajes informativos\n"
 #: vacuumdb.c:339
 #, c-format
 msgid "  -z, --analyze                   update optimizer statistics\n"
-msgstr "  -z, --analyze             actualizar las estadísticas del optimizador\n"
+msgstr ""
+"  -z, --analyze             actualizar las estadísticas del optimizador\n"
 
 #: vacuumdb.c:340
 #, c-format
 msgid "  -Z, --analyze-only              only update optimizer statistics\n"
-msgstr "  -Z, --analyze-only        actualizar sólo las estadísticas del optimizador\n"
+msgstr ""
+"  -Z, --analyze-only        actualizar sólo las estadísticas del "
+"optimizador\n"
 
 #: vacuumdb.c:341
 #, c-format
@@ -840,7 +844,8 @@ msgstr ""
 #: reindexdb.c:238
 #, c-format
 msgid "%s: reindexing of table \"%s\" in database \"%s\" failed: %s"
-msgstr "%s: falló la reindexación de la tabla «%s» en la base de datos «%s»: %s"
+msgstr ""
+"%s: falló la reindexación de la tabla «%s» en la base de datos «%s»: %s"
 
 #: reindexdb.c:241
 #, c-format

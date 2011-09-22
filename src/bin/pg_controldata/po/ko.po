@@ -1,29 +1,29 @@
-# Korean message translation file for PostgreSQL pg_controldata
 # Ioseph Kim <ioseph@uri.sarang.net>, 2004.
 #
 msgid ""
 msgstr ""
 "Project-Id-Version: PostgreSQL 8.4\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
-"POT-Creation-Date: 2010-09-09 16:34+0000\n"
-"PO-Revision-Date: 2010-09-24 12:36-0400\n"
-"Last-Translator: EnterpriseDB translation team <dev-escalations@enterprisedb.com>\n"
+"POT-Creation-Date: 2011-06-20 12:55+0000\n"
+"PO-Revision-Date: 2011-07-29 16:46+0800\n"
+"Last-Translator: Changjian Yuan <dev-escalations@enterprisedb.com>\n"
 "Language-Team: EnterpriseDB translation team <dev-escalations@enterprisedb.com>\n"
+"Language: \n"
 "MIME-Version: 1.0\n"
-"Content-Type: text/plain; charset=euc-kr\n"
+"Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=1; plural=0;\n"
 
-#: pg_controldata.c:24
+#: pg_controldata.c:33
 #, c-format
 msgid ""
 "%s displays control information of a PostgreSQL database cluster.\n"
 "\n"
 msgstr ""
-"%s ÇÁ·Î±×·¥Àº PostgreSQL µ¥ÀÌÅÍº£ÀÌ½º Å¬·¯½ºÅÍÀÇ Á¦¾îÁ¤º¸¸¦ º¸¿©ÁÜ.\n"
+"%s í”„ë¡œê·¸ë¨ì€ PostgreSQL ë°ì´í„°ë² ì´ìŠ¤ í´ëŸ¬ìŠ¤í„°ì˜ ì œì–´ì •ë³´ë¥¼ ë³´ì—¬ì¤Œ.\n"
 "\n"
 
-#: pg_controldata.c:28
+#: pg_controldata.c:37
 #, c-format
 msgid ""
 "Usage:\n"
@@ -33,81 +33,88 @@ msgid ""
 "  --help         show this help, then exit\n"
 "  --version      output version information, then exit\n"
 msgstr ""
-"»ç¿ë¹ı:\n"
-"  %s [¿É¼Ç] [DATADIR]\n"
+"ì‚¬ìš©ë²•:\n"
+"  %s [ì˜µì…˜] [DATADIR]\n"
 "\n"
-"¿É¼Çµé:\n"
-"  --help         ÀÌ µµ¿ò¸»À» º¸¿©ÁÖ°í ¸¶Ä§\n"
-"  --version      ¹öÀü Á¤º¸¸¦ º¸¿©ÁÖ°í ¸¶Ä§\n"
+"ì˜µì…˜ë“¤:\n"
+"  --help         ì´ ë„ì›€ë§ì„ ë³´ì—¬ì£¼ê³  ë§ˆì¹¨\n"
+"  --version      ë²„ì „ ì •ë³´ë¥¼ ë³´ì—¬ì£¼ê³  ë§ˆì¹¨\n"
 
-#: pg_controldata.c:36
+#: pg_controldata.c:45
 #, c-format
 msgid ""
 "\n"
-"If no data directory (DATADIR) is specified, the environment variable "
-"PGDATA\n"
+"If no data directory (DATADIR) is specified, the environment variable PGDATA\n"
 "is used.\n"
 "\n"
 msgstr ""
 "\n"
-"DATADIRÀÎ µ¥ÀÌÅÍ µğ·ºÅÍ¸®¸¦ ÁöÁ¤ÇÏÁö ¾ÊÀ¸¸ç, PGDATA È¯°æ º¯¼ö°ªÀ»\n"
-"»ç¿ëÇÕ´Ï´Ù.\n"
+"DATADIRì¸ ë°ì´í„° ë””ë ‰í„°ë¦¬ë¥¼ ì§€ì •í•˜ì§€ ì•Šìœ¼ë©°, PGDATA í™˜ê²½ ë³€ìˆ˜ê°’ì„\n"
+"ì‚¬ìš©í•©ë‹ˆë‹¤.\n"
 "\n"
 
-#: pg_controldata.c:38
+#: pg_controldata.c:47
 #, c-format
 msgid "Report bugs to <pgsql-bugs@postgresql.org>.\n"
-msgstr "¿À·ùº¸°í: <pgsql-bugs@postgresql.org>.\n"
+msgstr "ì˜¤ë¥˜ë³´ê³ : <pgsql-bugs@postgresql.org>.\n"
 
-#: pg_controldata.c:48
+#: pg_controldata.c:57
 msgid "starting up"
-msgstr "½ÃÀÛ Áß"
+msgstr "ì‹œì‘ ì¤‘"
 
-#: pg_controldata.c:50
+#: pg_controldata.c:59
 msgid "shut down"
-msgstr "ÁßÁöµÊ"
+msgstr "ì¤‘ì§€ë¨"
 
-#: pg_controldata.c:52
+#: pg_controldata.c:61
+msgid "shut down in recovery"
+msgstr "ë³µêµ¬ ì¤‘ ì¢…ë£Œ"
+
+#: pg_controldata.c:63
 msgid "shutting down"
-msgstr "ÁßÁö Áß"
+msgstr "ì¤‘ì§€ ì¤‘"
 
-#: pg_controldata.c:54
+#: pg_controldata.c:65
 msgid "in crash recovery"
-msgstr "ºñÁ¤»ó Á¾·á º¹±¸ Áß"
+msgstr "ë¹„ì •ìƒ ì¢…ë£Œ ë³µêµ¬ ì¤‘"
 
-#: pg_controldata.c:56
+#: pg_controldata.c:67
 msgid "in archive recovery"
-msgstr "ÀÚ·á º¹±¸ Áß"
+msgstr "ìë£Œ ë³µêµ¬ ì¤‘"
 
-#: pg_controldata.c:58
+#: pg_controldata.c:69
 msgid "in production"
-msgstr "Á¤»ó°¡µ¿Áß"
+msgstr "ì •ìƒê°€ë™ì¤‘"
 
-#: pg_controldata.c:60
+#: pg_controldata.c:71
 msgid "unrecognized status code"
-msgstr "¾Ë¼ö ¾ø´Â »óÅÂ ÄÚµå"
+msgstr "ì•Œìˆ˜ ì—†ëŠ” ìƒíƒœ ì½”ë“œ"
 
-#: pg_controldata.c:103
+#: pg_controldata.c:86
+msgid "unrecognized wal_level"
+msgstr "ì¸ì‹í•  ìˆ˜ ì—†ëŠ” wal_level"
+
+#: pg_controldata.c:129
 #, c-format
 msgid "%s: no data directory specified\n"
-msgstr "%s: µ¥ÀÌÅÍ µğ·ºÅÍ¸®¸¦ ÁöÁ¤ÇÏÁö ¾Ê¾Ò½À´Ï´Ù\n"
+msgstr "%s: ë°ì´í„° ë””ë ‰í„°ë¦¬ë¥¼ ì§€ì •í•˜ì§€ ì•Šì•˜ìŠµë‹ˆë‹¤\n"
 
-#: pg_controldata.c:104
+#: pg_controldata.c:130
 #, c-format
 msgid "Try \"%s --help\" for more information.\n"
-msgstr "º¸´Ù ÀÚ¼¼ÇÑ Á¤º¸´Â \"%s --help\"\n"
+msgstr "ë³´ë‹¤ ìì„¸í•œ ì •ë³´ëŠ” \"%s --help\"\n"
 
-#: pg_controldata.c:112
+#: pg_controldata.c:138
 #, c-format
 msgid "%s: could not open file \"%s\" for reading: %s\n"
-msgstr "%s: \"%s\" ÆÄÀÏÀ» ÀĞ±â ¸ğµå·Î ¿­ ¼ö ¾ø½À´Ï´Ù: %s\n"
+msgstr "%s: \"%s\" íŒŒì¼ì„ ì½ê¸° ëª¨ë“œë¡œ ì—´ ìˆ˜ ì—†ìŠµë‹ˆë‹¤: %s\n"
 
-#: pg_controldata.c:119
+#: pg_controldata.c:145
 #, c-format
 msgid "%s: could not read file \"%s\": %s\n"
-msgstr "%s: \"%s\" ÆÄÀÏÀ» ÀĞÀ» ¼ö ¾ø½À´Ï´Ù: %s\n"
+msgstr "%s: \"%s\" íŒŒì¼ì„ ì½ì„ ìˆ˜ ì—†ìŠµë‹ˆë‹¤: %s\n"
 
-#: pg_controldata.c:133
+#: pg_controldata.c:159
 #, c-format
 msgid ""
 "WARNING: Calculated CRC checksum does not match value stored in file.\n"
@@ -115,168 +122,209 @@ msgid ""
 "is expecting.  The results below are untrustworthy.\n"
 "\n"
 msgstr ""
-"°æ°í: °è»êµÈ CRC Ã¼Å©¼¶°ªÀÌ ÆÄÀÏ¿¡ ÀÖ´Â °ª°ú Æ²¸³´Ï´Ù.\n"
-"ÀÌ °æ¿ì´Â ÆÄÀÏÀÌ ¼Õ»óµÇ¾ú°Å³ª, ÀÌ ÇÁ·Î±×·¥°ú ÄÁÆ®·Ñ ÆÄÀÏÀÇ ¹öÀüÀÌ Æ²¸°\n"
-"°æ¿ìÀÔ´Ï´Ù. °á°ú°ªµéÀº ¹ÏÁö ¸øÇÒ °ªµéÀÌ Ãâ·ÂµÉ ¼ö ÀÖ½À´Ï´Ù.\n"
+"ê²½ê³ : ê³„ì‚°ëœ CRC ì²´í¬ì„¬ê°’ì´ íŒŒì¼ì— ìˆëŠ” ê°’ê³¼ í‹€ë¦½ë‹ˆë‹¤.\n"
+"ì´ ê²½ìš°ëŠ” íŒŒì¼ì´ ì†ìƒë˜ì—ˆê±°ë‚˜, ì´ í”„ë¡œê·¸ë¨ê³¼ ì»¨íŠ¸ë¡¤ íŒŒì¼ì˜ ë²„ì „ì´ í‹€ë¦°\n"
+"ê²½ìš°ì…ë‹ˆë‹¤. ê²°ê³¼ê°’ë“¤ì€ ë¯¿ì§€ ëª»í•  ê°’ë“¤ì´ ì¶œë ¥ë  ìˆ˜ ìˆìŠµë‹ˆë‹¤.\n"
 "\n"
 
-#: pg_controldata.c:160
+#: pg_controldata.c:186
 #, c-format
 msgid "pg_control version number:            %u\n"
-msgstr "pg_control ¹öÀü ¹øÈ£:                 %u\n"
+msgstr "pg_control ë²„ì „ ë²ˆí˜¸:                 %u\n"
 
-#: pg_controldata.c:163
+#: pg_controldata.c:189
 #, c-format
 msgid ""
 "WARNING: possible byte ordering mismatch\n"
 "The byte ordering used to store the pg_control file might not match the one\n"
-"used by this program.  In that case the results below would be incorrect, "
-"and\n"
+"used by this program.  In that case the results below would be incorrect, and\n"
 "the PostgreSQL installation would be incompatible with this data directory.\n"
 msgstr ""
-"°æ°í: ¹ÙÀÌÆ® ¼ø¼­°¡ ÀÏÄ¡ÇÏÁö ¾Ê½À´Ï´Ù.\n"
-"pg_control ÆÄÀÏÀ» ÀúÀåÇÏ´Â µ¥ »ç¿ëµÈ ¹ÙÀÌÆ® ¼ø¼­´Â \n"
-"ÀÌ ÇÁ·Î±×·¥¿¡¼­ »ç¿ëÇÏ´Â ¼ø¼­¿Í ÀÏÄ¡ÇØ¾ß ÇÕ´Ï´Ù.  ÀÌ °æ¿ì ¾Æ·¡ °á°ú´Â ¿Ã¹Ù¸£"
-"Áö ¾ÊÀ¸¸ç\n"
-"ÀÌ µ¥ÀÌÅÍ µğ·ºÅÍ¸®¿¡ PostgreSQLÀ» ¼³Ä¡ÇÒ ¼ö ¾ø½À´Ï´Ù.\n"
-
-#: pg_controldata.c:167
-#, c-format
-msgid "Catalog version number:               %u\n"
-msgstr "Ä«Å»·Î±× ¹öÀü ¹øÈ£:                   %u\n"
-
-#: pg_controldata.c:169
-#, c-format
-msgid "Database system identifier:           %s\n"
-msgstr "µ¥ÀÌÅÍº£ÀÌ½º ½Ã½ºÅÛ ½Äº°ÀÚ:           %s\n"
-
-#: pg_controldata.c:171
-#, c-format
-msgid "Database cluster state:               %s\n"
-msgstr "µ¥ÀÌÅÍº£ÀÌ½º Å¬·¯½ºÅÍ »óÅÂ:           %s\n"
-
-#: pg_controldata.c:173
-#, c-format
-msgid "pg_control last modified:             %s\n"
-msgstr "pg_control ¸¶Áö¸· º¯°æ½Ã°£:           %s\n"
-
-#: pg_controldata.c:175
-#, c-format
-msgid "Latest checkpoint location:           %X/%X\n"
-msgstr "¸¶Áö¸· Ã¼Å©Æ÷ÀÎÆ® À§Ä¡:               %X/%X\n"
-
-#: pg_controldata.c:178
-#, c-format
-msgid "Prior checkpoint location:            %X/%X\n"
-msgstr "ÀÌÀü Ã¼Å©Æ÷ÀÎÆ® À§Ä¡:                 %X/%X\n"
-
-#: pg_controldata.c:181
-#, c-format
-msgid "Latest checkpoint's REDO location:    %X/%X\n"
-msgstr "¸¶Áö¸· Ã¼Å©Æ÷ÀÎÆ® REDO À§Ä¡:          %X/%X\n"
-
-#: pg_controldata.c:184
-#, c-format
-msgid "Latest checkpoint's TimeLineID:       %u\n"
-msgstr "¸¶Áö¸· Ã¼Å©Æ÷ÀÎÆ® TimeLineID:         %u\n"
-
-#: pg_controldata.c:186
-#, c-format
-msgid "Latest checkpoint's NextXID:          %u/%u\n"
-msgstr "¸¶Áö¸· Ã¼Å©Æ÷ÀÎÆ® NextXID:            %u/%u\n"
-
-#: pg_controldata.c:189
-#, c-format
-msgid "Latest checkpoint's NextOID:          %u\n"
-msgstr "¸¶Áö¸· Ã¼Å©Æ÷ÀÎÆ® NextOID:            %u\n"
-
-#: pg_controldata.c:191
-#, c-format
-msgid "Latest checkpoint's NextMultiXactId:  %u\n"
-msgstr "¸¶Áö¸· Ã¼Å©Æ÷ÀÎÆ® NextMultiXactId:    %u\n"
+"ê²½ê³ : ë°”ì´íŠ¸ ìˆœì„œê°€ ì¼ì¹˜í•˜ì§€ ì•ŠìŠµë‹ˆë‹¤.\n"
+"pg_control íŒŒì¼ì„ ì €ì¥í•˜ëŠ” ë° ì‚¬ìš©ëœ ë°”ì´íŠ¸ ìˆœì„œëŠ” \n"
+"ì´ í”„ë¡œê·¸ë¨ì—ì„œ ì‚¬ìš©í•˜ëŠ” ìˆœì„œì™€ ì¼ì¹˜í•´ì•¼ í•©ë‹ˆë‹¤.  ì´ ê²½ìš° ì•„ë˜ ê²°ê³¼ëŠ” ì˜¬ë°”ë¥´ì§€ ì•Šìœ¼ë©°\n"
+"ì´ ë°ì´í„° ë””ë ‰í„°ë¦¬ì— PostgreSQLì„ ì„¤ì¹˜í•  ìˆ˜ ì—†ìŠµë‹ˆë‹¤.\n"
 
 #: pg_controldata.c:193
 #, c-format
-msgid "Latest checkpoint's NextMultiOffset:  %u\n"
-msgstr "¸¶Áö¸· Ã¼Å©Æ÷ÀÎÆ® NextMultiOffset:    %u\n"
+msgid "Catalog version number:               %u\n"
+msgstr "ì¹´íƒˆë¡œê·¸ ë²„ì „ ë²ˆí˜¸:                   %u\n"
 
 #: pg_controldata.c:195
 #, c-format
-msgid "Time of latest checkpoint:            %s\n"
-msgstr "¸¶Áö¸· Ã¼Å©Æ÷ÀÎÆ® ½Ã°£:               %s\n"
+msgid "Database system identifier:           %s\n"
+msgstr "ë°ì´í„°ë² ì´ìŠ¤ ì‹œìŠ¤í…œ ì‹ë³„ì:           %s\n"
 
 #: pg_controldata.c:197
 #, c-format
-msgid "Minimum recovery ending location:     %X/%X\n"
-msgstr "ÃÖ¼Ò º¹±¸ ¸¶Áö¸· À§Ä¡:                %X/%X\n"
+msgid "Database cluster state:               %s\n"
+msgstr "ë°ì´í„°ë² ì´ìŠ¤ í´ëŸ¬ìŠ¤í„° ìƒíƒœ:           %s\n"
 
-#: pg_controldata.c:200
+#: pg_controldata.c:199
 #, c-format
-msgid "Maximum data alignment:               %u\n"
-msgstr "ÃÖ´ë ÀÚ·á Á¤·Ä:                       %u\n"
+msgid "pg_control last modified:             %s\n"
+msgstr "pg_control ë§ˆì§€ë§‰ ë³€ê²½ì‹œê°„:           %s\n"
 
-#: pg_controldata.c:203
+#: pg_controldata.c:201
 #, c-format
-msgid "Database block size:                  %u\n"
-msgstr "µ¥ÀÌÅÍº£ÀÌ½º ºí·Ï Å©±â:               %u\n"
+msgid "Latest checkpoint location:           %X/%X\n"
+msgstr "ë§ˆì§€ë§‰ ì²´í¬í¬ì¸íŠ¸ ìœ„ì¹˜:               %X/%X\n"
 
-#: pg_controldata.c:205
+#: pg_controldata.c:204
 #, c-format
-msgid "Blocks per segment of large relation: %u\n"
-msgstr "´ëÇü ¸±·¹ÀÌ¼ÇÀÇ ¼¼±×¸ÕÆ®´ç ºí·° °³¼ö: %u\n"
+msgid "Prior checkpoint location:            %X/%X\n"
+msgstr "ì´ì „ ì²´í¬í¬ì¸íŠ¸ ìœ„ì¹˜:                 %X/%X\n"
 
 #: pg_controldata.c:207
 #, c-format
-msgid "WAL block size:                       %u\n"
-msgstr "WAL ºí·Ï Å©±â:                        %u\n"
+msgid "Latest checkpoint's REDO location:    %X/%X\n"
+msgstr "ë§ˆì§€ë§‰ ì²´í¬í¬ì¸íŠ¸ REDO ìœ„ì¹˜:          %X/%X\n"
 
-#: pg_controldata.c:209
+#: pg_controldata.c:210
 #, c-format
-msgid "Bytes per WAL segment:                %u\n"
-msgstr "WAL ¼¼±×¸ÕÆ®ÀÇ Å©±â(byte):            %u\n"
+msgid "Latest checkpoint's TimeLineID:       %u\n"
+msgstr "ë§ˆì§€ë§‰ ì²´í¬í¬ì¸íŠ¸ TimeLineID:         %u\n"
 
-#: pg_controldata.c:211
+#: pg_controldata.c:212
 #, c-format
-msgid "Maximum length of identifiers:        %u\n"
-msgstr "½Äº°ÀÚ ÃÖ´ë ±æÀÌ:                     %u\n"
-
-#: pg_controldata.c:213
-#, c-format
-msgid "Maximum columns in an index:          %u\n"
-msgstr "ÀÎµ¦½º¿¡¼­ »ç¿ëÇÏ´Â ÃÖ´ë ¿­ ¼ö:      %u\n"
+msgid "Latest checkpoint's NextXID:          %u/%u\n"
+msgstr "ë§ˆì§€ë§‰ ì²´í¬í¬ì¸íŠ¸ NextXID:            %u/%u\n"
 
 #: pg_controldata.c:215
 #, c-format
-msgid "Maximum size of a TOAST chunk:        %u\n"
-msgstr "TOAST Ã»Å©ÀÇ ÃÖ´ë Å©±â:        %u\n"
+msgid "Latest checkpoint's NextOID:          %u\n"
+msgstr "ë§ˆì§€ë§‰ ì²´í¬í¬ì¸íŠ¸ NextOID:            %u\n"
 
 #: pg_controldata.c:217
 #, c-format
-msgid "Date/time type storage:               %s\n"
-msgstr "³¯Â¥/½Ã°£Çü ÀÚ·áÀÇ ÀúÀå¹æ½Ä:          %s\n"
-
-#: pg_controldata.c:218
-msgid "64-bit integers"
-msgstr "64-ºñÆ® Á¤¼ö"
-
-#: pg_controldata.c:218
-msgid "floating-point numbers"
-msgstr "ºÎµ¿¼Ò¼ö"
+msgid "Latest checkpoint's NextMultiXactId:  %u\n"
+msgstr "ë§ˆì§€ë§‰ ì²´í¬í¬ì¸íŠ¸ NextMultiXactId:    %u\n"
 
 #: pg_controldata.c:219
 #, c-format
-msgid "Float4 argument passing:              %s\n"
-msgstr "Float4 ÀÎ¼ö Àü´Ş:              %s\n"
-
-#: pg_controldata.c:220 pg_controldata.c:222
-msgid "by value"
-msgstr "°ªº°"
-
-#: pg_controldata.c:220 pg_controldata.c:222
-msgid "by reference"
-msgstr "ÂüÁ¶º°"
+msgid "Latest checkpoint's NextMultiOffset:  %u\n"
+msgstr "ë§ˆì§€ë§‰ ì²´í¬í¬ì¸íŠ¸ NextMultiOffset:    %u\n"
 
 #: pg_controldata.c:221
 #, c-format
+msgid "Latest checkpoint's oldestXID:        %u\n"
+msgstr "ë§ˆì§€ë§‰ ì²´í¬í¬ì¸íŠ¸ oldestXID:        %u\n"
+
+#: pg_controldata.c:223
+#, c-format
+msgid "Latest checkpoint's oldestXID's DB:   %u\n"
+msgstr "ë§ˆì§€ë§‰ ì²´í¬í¬ì¸íŠ¸ oldestXIDì˜ DB:   %u\n"
+
+#: pg_controldata.c:225
+#, c-format
+msgid "Latest checkpoint's oldestActiveXID:  %u\n"
+msgstr "ë§ˆì§€ë§‰ ì²´í¬í¬ì¸íŠ¸ oldestActiveXID:  %u\n"
+
+#: pg_controldata.c:227
+#, c-format
+msgid "Time of latest checkpoint:            %s\n"
+msgstr "ë§ˆì§€ë§‰ ì²´í¬í¬ì¸íŠ¸ ì‹œê°„:               %s\n"
+
+#: pg_controldata.c:229
+#, c-format
+msgid "Minimum recovery ending location:     %X/%X\n"
+msgstr "ìµœì†Œ ë³µêµ¬ ë§ˆì§€ë§‰ ìœ„ì¹˜:                %X/%X\n"
+
+#: pg_controldata.c:232
+#, c-format
+msgid "Backup start location:                %X/%X\n"
+msgstr "ë°±ì—… ì‹œì‘ ìœ„ì¹˜:                %X/%X\n"
+
+#: pg_controldata.c:235
+#, c-format
+msgid "Current wal_level setting:            %s\n"
+msgstr "í˜„ì¬ wal_level ì„¤ì •:            %s\n"
+
+#: pg_controldata.c:237
+#, c-format
+msgid "Current max_connections setting:      %d\n"
+msgstr "í˜„ì¬ max_connections ì„¤ì •:      %d\n"
+
+#: pg_controldata.c:239
+#, c-format
+msgid "Current max_prepared_xacts setting:   %d\n"
+msgstr "í˜„ì¬ max_prepared_xacts ì„¤ì •:   %d\n"
+
+#: pg_controldata.c:241
+#, c-format
+msgid "Current max_locks_per_xact setting:   %d\n"
+msgstr "í˜„ì¬ max_locks_per_xact ì„¤ì •:   %d\n"
+
+#: pg_controldata.c:243
+#, c-format
+msgid "Maximum data alignment:               %u\n"
+msgstr "ìµœëŒ€ ìë£Œ ì •ë ¬:                       %u\n"
+
+#: pg_controldata.c:246
+#, c-format
+msgid "Database block size:                  %u\n"
+msgstr "ë°ì´í„°ë² ì´ìŠ¤ ë¸”ë¡ í¬ê¸°:               %u\n"
+
+#: pg_controldata.c:248
+#, c-format
+msgid "Blocks per segment of large relation: %u\n"
+msgstr "ëŒ€í˜• ë¦´ë ˆì´ì…˜ì˜ ì„¸ê·¸ë¨¼íŠ¸ë‹¹ ë¸”ëŸ­ ê°œìˆ˜: %u\n"
+
+#: pg_controldata.c:250
+#, c-format
+msgid "WAL block size:                       %u\n"
+msgstr "WAL ë¸”ë¡ í¬ê¸°:                        %u\n"
+
+#: pg_controldata.c:252
+#, c-format
+msgid "Bytes per WAL segment:                %u\n"
+msgstr "WAL ì„¸ê·¸ë¨¼íŠ¸ì˜ í¬ê¸°(byte):            %u\n"
+
+#: pg_controldata.c:254
+#, c-format
+msgid "Maximum length of identifiers:        %u\n"
+msgstr "ì‹ë³„ì ìµœëŒ€ ê¸¸ì´:                     %u\n"
+
+#: pg_controldata.c:256
+#, c-format
+msgid "Maximum columns in an index:          %u\n"
+msgstr "ì¸ë±ìŠ¤ì—ì„œ ì‚¬ìš©í•˜ëŠ” ìµœëŒ€ ì—´ ìˆ˜:      %u\n"
+
+#: pg_controldata.c:258
+#, c-format
+msgid "Maximum size of a TOAST chunk:        %u\n"
+msgstr "TOAST ì²­í¬ì˜ ìµœëŒ€ í¬ê¸°:        %u\n"
+
+#: pg_controldata.c:260
+#, c-format
+msgid "Date/time type storage:               %s\n"
+msgstr "ë‚ ì§œ/ì‹œê°„í˜• ìë£Œì˜ ì €ì¥ë°©ì‹:          %s\n"
+
+#: pg_controldata.c:261
+msgid "64-bit integers"
+msgstr "64-ë¹„íŠ¸ ì •ìˆ˜"
+
+#: pg_controldata.c:261
+msgid "floating-point numbers"
+msgstr "ë¶€ë™ì†Œìˆ˜"
+
+#: pg_controldata.c:262
+#, c-format
+msgid "Float4 argument passing:              %s\n"
+msgstr "Float4 ì¸ìˆ˜ ì „ë‹¬:              %s\n"
+
+#: pg_controldata.c:263
+#: pg_controldata.c:265
+msgid "by value"
+msgstr "ê°’ë³„"
+
+#: pg_controldata.c:263
+#: pg_controldata.c:265
+msgid "by reference"
+msgstr "ì°¸ì¡°ë³„"
+
+#: pg_controldata.c:264
+#, c-format
 msgid "Float8 argument passing:              %s\n"
-msgstr "Float8 ÀÎ¼ö Àü´Ş:              %s\n"
+msgstr "Float8 ì¸ìˆ˜ ì „ë‹¬:              %s\n"
+

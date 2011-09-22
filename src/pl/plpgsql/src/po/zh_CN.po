@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PostgreSQL 9.0\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
-"POT-Creation-Date: 2010-10-15 16:49+0000\n"
+"POT-Creation-Date: 2011-06-20 12:53+0000\n"
 "PO-Revision-Date: 2010-10-01 12:53+0800\n"
 "Last-Translator: Weibin <ssmei_2000@yahoo.com>\n"
 "Language-Team: Weibin <ssmei_2000@yahoo.com>\n"
@@ -17,80 +17,86 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=1; plural=0;\n"
 
-#: pl_comp.c:422 pl_handler.c:256
+#: pl_comp.c:423 pl_handler.c:256
 #, c-format
 msgid "PL/pgSQL functions cannot accept type %s"
 msgstr "PL/pgSQL函数不使用类型%s"
 
-#: pl_comp.c:501
+#: pl_comp.c:502
 #, c-format
 msgid "could not determine actual return type for polymorphic function \"%s\""
 msgstr "无法确定多态函数\"%s\"的实际返回类型"
 
-#: pl_comp.c:531
+#: pl_comp.c:532
 msgid "trigger functions can only be called as triggers"
 msgstr "触发器函数只能以触发器的形式调用"
 
-#: pl_comp.c:535 pl_handler.c:241
+#: pl_comp.c:536 pl_handler.c:241
 #, c-format
 msgid "PL/pgSQL functions cannot return type %s"
 msgstr "PL/pgSQL函数不能返回类型%s"
 
-#: pl_comp.c:576
+#: pl_comp.c:577
 msgid "trigger functions cannot have declared arguments"
 msgstr "触发器函数不能有已声明的参数"
 
-#: pl_comp.c:577
+#: pl_comp.c:578
 msgid ""
 "The arguments of the trigger can be accessed through TG_NARGS and TG_ARGV "
 "instead."
 msgstr "触发器的参数可以通过TG_NARGS和TG_ARGV进行访问."
 
-#: pl_comp.c:880
+#: pl_comp.c:881
 #, c-format
 msgid "compilation of PL/pgSQL function \"%s\" near line %d"
 msgstr "在第%2$d行附件编译PL/pgSQL函数\"%1$s\""
 
-#: pl_comp.c:978
+#: pl_comp.c:989
 #, c-format
 msgid "column reference \"%s\" is ambiguous"
 msgstr "字段关联 \"%s\" 是不明确的"
 
-#: pl_comp.c:980
+#: pl_comp.c:991
 msgid "It could refer to either a PL/pgSQL variable or a table column."
 msgstr "可以指向一个PL/pgSQL变量或表中的列"
 
-#: pl_comp.c:1690
+#: pl_comp.c:1171 pl_comp.c:1199 pl_exec.c:3655 pl_exec.c:3989 pl_exec.c:4070
+#: pl_exec.c:4107
+#, c-format
+msgid "record \"%s\" has no field \"%s\""
+msgstr "记录\"%s\"没有字段\"%s\""
+
+#: pl_comp.c:1719
 #, c-format
 msgid "relation \"%s\" does not exist"
 msgstr "关系 \"%s\" 不存在"
 
-#: pl_comp.c:1722
+#: pl_comp.c:1751
 #, c-format
 msgid "relation \"%s.%s\" does not exist"
 msgstr "关系 \"%s.%s\" 不存在"
 
-#: pl_comp.c:1804
+#: pl_comp.c:1833
 #, c-format
 msgid "variable \"%s\" has pseudo-type %s"
 msgstr "变量\"%s\"具有伪类型%s"
 
-#: pl_comp.c:1865
+#: pl_comp.c:1894
 #, c-format
 msgid "relation \"%s\" is not a table"
 msgstr "关系 \"%s\"不是一张表"
 
-#: pl_comp.c:2017
+#: pl_comp.c:2046
 #, c-format
 msgid "type \"%s\" is only a shell"
 msgstr "类型 \"%s\" 只是一个 shell"
 
-#: pl_comp.c:2087 pl_comp.c:2140
+#: pl_comp.c:2116 pl_comp.c:2169
 #, c-format
 msgid "unrecognized exception condition \"%s\""
 msgstr "不可识别的异常条件\"%s\""
 
-#: pl_comp.c:2295
+#: pl_comp.c:2324
 #, c-format
 msgid ""
 "could not determine actual argument type for polymorphic function \"%s\""
@@ -317,7 +323,7 @@ msgstr "对于结果数据，查询没有目标"
 msgid "If you want to discard the results of a SELECT, use PERFORM instead."
 msgstr "如果您想要放弃SELECT语句的结果，请使用PERFORM."
 
-#: pl_exec.c:2979 pl_exec.c:5602
+#: pl_exec.c:2979 pl_exec.c:5628
 msgid "query string argument of EXECUTE is null"
 msgstr "EXECUTE的查询字符串参数是空值"
 
@@ -355,11 +361,6 @@ msgstr "无法将非组合值分配给记录变量"
 #: pl_exec.c:3595
 msgid "cannot assign non-composite value to a record variable"
 msgstr "无法将非组合值分配给记录类型变量"
-
-#: pl_exec.c:3655 pl_exec.c:3989 pl_exec.c:4070 pl_exec.c:4107
-#, c-format
-msgid "record \"%s\" has no field \"%s\""
-msgstr "记录\"%s\"没有字段\"%s\""
 
 #: pl_exec.c:3765
 #, c-format

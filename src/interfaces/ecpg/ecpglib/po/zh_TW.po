@@ -1,0 +1,172 @@
+# Copyright (C) 2011 PostgreSQL Global Development Group
+# This file is distributed under the same license as the PostgreSQL package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2011.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: \n"
+"POT-Creation-Date: \n"
+"PO-Revision-Date: \n"
+"Last-Translator: Changjian Yuan <dev-escalations@enterprisedb.com>\n"
+"Language-Team: \n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+
+#: connect.c:226
+msgid "empty message text"
+msgstr "空白的訊息文字"
+
+#: connect.c:381
+#: connect.c:407
+#: connect.c:520
+msgid "<DEFAULT>"
+msgstr "<DEFAULT>"
+
+#: error.c:29
+#, c-format
+msgid "no data found on line %d"
+msgstr "行 %d 沒有資料"
+
+#: error.c:39
+#, c-format
+msgid "out of memory on line %d"
+msgstr "行 %d 的記憶體不足"
+
+#: error.c:49
+#, c-format
+msgid "unsupported type \"%s\" on line %d"
+msgstr "不支援的型別 \"%s\" (行 %d 上)"
+
+#: error.c:59
+#, c-format
+msgid "too many arguments on line %d"
+msgstr "行 %d 的引數太多"
+
+#: error.c:69
+#, c-format
+msgid "too few arguments on line %d"
+msgstr "行 %d 的引數太少"
+
+#: error.c:79
+#, c-format
+msgid "invalid input syntax for type int: \"%s\", on line %d"
+msgstr "型別 int 的輸入語法無效: \"%s\"，位於行 %d"
+
+#: error.c:89
+#, c-format
+msgid "invalid input syntax for type unsigned int: \"%s\", on line %d"
+msgstr "不帶正負號型別 int 的輸入語法無效: \"%s\"，位於行 %d"
+
+#: error.c:99
+#, c-format
+msgid "invalid input syntax for floating-point type: \"%s\", on line %d"
+msgstr "浮點型別的輸入語法無效: \"%s\"，位於行 %d"
+
+#: error.c:110
+#, c-format
+msgid "invalid syntax for type boolean: \"%s\", on line %d"
+msgstr "布林型別的語法無效: \"%s\"，位於行 %d"
+
+#: error.c:118
+#, c-format
+msgid "could not convert boolean value: size mismatch, on line %d"
+msgstr "無法轉換布林值: 大小不符，位於行 %d"
+
+#: error.c:128
+#, c-format
+msgid "empty query on line %d"
+msgstr "行 %d 的查詢是空白的"
+
+#: error.c:138
+#, c-format
+msgid "null value without indicator on line %d"
+msgstr "行 %d 的 Null 值沒有指標"
+
+#: error.c:148
+#, c-format
+msgid "variable does not have an array type on line %d"
+msgstr "行 %d 的變數沒有陣列型別"
+
+#: error.c:158
+#, c-format
+msgid "data read from server is not an array on line %d"
+msgstr "行 %d 發生從伺服器讀取的資料不是陣列的狀況"
+
+#: error.c:168
+#, c-format
+msgid "inserting an array of variables is not supported on line %d"
+msgstr "行 %d 發生插入的變數陣列不受支援的狀況"
+
+#: error.c:178
+#, c-format
+msgid "connection \"%s\" does not exist on line %d"
+msgstr "連線 \"%s\" 不存在 (行 %d 上)"
+
+#: error.c:188
+#, c-format
+msgid "not connected to connection \"%s\" on line %d"
+msgstr "未連線到連線 \"%s\" (行 %d 上)"
+
+#: error.c:198
+#, c-format
+msgid "invalid statement name \"%s\" on line %d"
+msgstr "無效的陳述式名稱 \"%s\" (行 %d 上)"
+
+#: error.c:208
+#, c-format
+msgid "descriptor \"%s\" not found on line %d"
+msgstr "找不到描述子 \"%s\" (行 %d 上)"
+
+#: error.c:218
+#, c-format
+msgid "descriptor index out of range on line %d"
+msgstr "行 %d 的描述子索引超出範圍"
+
+#: error.c:228
+#, c-format
+msgid "unrecognized descriptor item \"%s\" on line %d"
+msgstr "無法辦識的描述子項目 \"%s\" (行 %d 上)"
+
+#: error.c:238
+#, c-format
+msgid "variable does not have a numeric type on line %d"
+msgstr "行 %d 的變數沒有數值型別"
+
+#: error.c:248
+#, c-format
+msgid "variable does not have a character type on line %d"
+msgstr "行 %d 的變數沒有字元型別"
+
+#: error.c:258
+#, c-format
+msgid "error in transaction processing on line %d"
+msgstr "行 %d 出現交易處理錯誤"
+
+#: error.c:268
+#, c-format
+msgid "could not connect to database \"%s\" on line %d"
+msgstr "無法連線到資料庫 \"%s\" (行 %d 上)"
+
+#: error.c:278
+#, c-format
+msgid "SQL error %d on line %d"
+msgstr "發生 SQL 錯誤 %d (行 %d 上)"
+
+#: error.c:318
+msgid "the connection to the server was lost"
+msgstr "與伺服器的連線已中斷"
+
+#: error.c:405
+#, c-format
+msgid "SQL error: %s\n"
+msgstr "SQL 錯誤:%s\n"
+
+#: execute.c:1912
+msgid "<empty>"
+msgstr "<empty>"
+
+#: misc.c:113
+msgid "NULL"
+msgstr "NULL"
+

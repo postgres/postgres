@@ -5,48 +5,49 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PostgreSQL 9.0 beta 3\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
-"POT-Creation-Date: 2010-07-20 12:55+0900\n"
+"POT-Creation-Date: 2011-06-20 12:55+0000\n"
 "PO-Revision-Date: 2010-07-15 19:26+0900\n"
 "Last-Translator: HOTTA Michihide <hotta@net-newbie.com>\n"
 "Language-Team: jpug-doc <jpug-doc@ml.postgresql.jp>\n"
+"Language: \n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=1; plural=0;\n"
 
-#: pg_ctl.c:225 pg_ctl.c:240 pg_ctl.c:1834
+#: pg_ctl.c:229 pg_ctl.c:244 pg_ctl.c:1857
 #, c-format
 msgid "%s: out of memory\n"
 msgstr "%s: メモリ不足です\n"
 
-#: pg_ctl.c:274
+#: pg_ctl.c:278
 #, c-format
 msgid "%s: could not open PID file \"%s\": %s\n"
 msgstr "%s: PIDファイル\"%s\"をオープンできませんでした: %s\n"
 
-#: pg_ctl.c:281
+#: pg_ctl.c:285
 #, c-format
 msgid "%s: invalid data in PID file \"%s\"\n"
 msgstr "%s: PIDファイル\"%s\"内に無効なデータがあります\n"
 
-#: pg_ctl.c:557
+#: pg_ctl.c:561
 #, c-format
 msgid "%s: cannot set core file size limit; disallowed by hard limit\n"
 msgstr ""
 "%s: コアファイルのサイズ制限を設定できません:固定の制限により許されていませ"
 "ん\n"
 
-#: pg_ctl.c:582
+#: pg_ctl.c:586
 #, c-format
 msgid "%s: could not read file \"%s\"\n"
 msgstr "%s: ファイル\"%s\"を読み取ることに失敗しました\n"
 
-#: pg_ctl.c:587
+#: pg_ctl.c:591
 #, c-format
 msgid "%s: option file \"%s\" must have exactly one line\n"
 msgstr "%s: オプションファイル\"%s\"は1行のみでなければなりません\n"
 
-#: pg_ctl.c:635
+#: pg_ctl.c:639
 #, c-format
 msgid ""
 "The program \"%s\" is needed by %s but was not found in the\n"
@@ -57,7 +58,7 @@ msgstr ""
 "にありませんでした。\n"
 "インストール状況を確認してください。\n"
 
-#: pg_ctl.c:641
+#: pg_ctl.c:645
 #, c-format
 msgid ""
 "The program \"%s\" was found by \"%s\"\n"
@@ -68,24 +69,24 @@ msgstr ""
 "バージョンではありませんでした。\n"
 "インストレーションを検査してください。\n"
 
-#: pg_ctl.c:674
+#: pg_ctl.c:678
 #, c-format
 msgid "%s: database system initialization failed\n"
 msgstr "%s: データベースシステムが初期化に失敗しました\n"
 
-#: pg_ctl.c:690
+#: pg_ctl.c:694
 #, c-format
 msgid "%s: another server might be running; trying to start server anyway\n"
 msgstr ""
 "%s: 他のサーバが動作中の可能性がありますが、とにかくpostmasterの起動を試みま"
 "す。\n"
 
-#: pg_ctl.c:727
+#: pg_ctl.c:731
 #, c-format
 msgid "%s: could not start server: exit code was %d\n"
 msgstr "%s: サーバを起動できませんでした。終了コードは%dでした。\n"
 
-#: pg_ctl.c:738 pg_ctl.c:751
+#: pg_ctl.c:742 pg_ctl.c:755
 #, c-format
 msgid ""
 "%s: could not start server\n"
@@ -94,48 +95,48 @@ msgstr ""
 "%s: サーバを起動できませんでした。\n"
 "ログ出力を確認してください。\n"
 
-#: pg_ctl.c:747
+#: pg_ctl.c:751
 msgid "waiting for server to start..."
 msgstr "サーバの起動完了を待っています..."
 
-#: pg_ctl.c:758 pg_ctl.c:831 pg_ctl.c:911
+#: pg_ctl.c:762 pg_ctl.c:843 pg_ctl.c:931
 msgid " done\n"
 msgstr "完了\n"
 
-#: pg_ctl.c:759
+#: pg_ctl.c:763
 msgid "server started\n"
 msgstr "サーバ起動完了\n"
 
-#: pg_ctl.c:763
+#: pg_ctl.c:767
 msgid "server starting\n"
 msgstr "サーバは起動中です。\n"
 
-#: pg_ctl.c:778 pg_ctl.c:853 pg_ctl.c:933
+#: pg_ctl.c:782 pg_ctl.c:865 pg_ctl.c:953
 #, c-format
 msgid "%s: PID file \"%s\" does not exist\n"
 msgstr "%s: PIDファイル\"%s\"がありません\n"
 
-#: pg_ctl.c:779 pg_ctl.c:855 pg_ctl.c:934
+#: pg_ctl.c:783 pg_ctl.c:867 pg_ctl.c:954
 msgid "Is server running?\n"
 msgstr "サーバが動作していますか?\n"
 
-#: pg_ctl.c:785
+#: pg_ctl.c:789
 #, c-format
 msgid "%s: cannot stop server; single-user server is running (PID: %ld)\n"
 msgstr ""
 "%s: サーバを停止できません。シングルユーザサーバ(PID: %ld)が動作していま"
 "す。\n"
 
-#: pg_ctl.c:793 pg_ctl.c:877
+#: pg_ctl.c:797 pg_ctl.c:889
 #, c-format
 msgid "%s: could not send stop signal (PID: %ld): %s\n"
 msgstr "%s: 停止シグナルを送信できませんでした。(PID: %ld): %s\n"
 
-#: pg_ctl.c:800
+#: pg_ctl.c:804
 msgid "server shutting down\n"
 msgstr "サーバの停止中です\n"
 
-#: pg_ctl.c:807 pg_ctl.c:884
+#: pg_ctl.c:819 pg_ctl.c:904
 msgid ""
 "WARNING: online backup mode is active\n"
 "Shutdown will not complete until pg_stop_backup() is called.\n"
@@ -145,140 +146,140 @@ msgstr ""
 "pg_stop_backup()が呼び出されるまでシャットダウンは完了しません\n"
 "\n"
 
-#: pg_ctl.c:811 pg_ctl.c:888
+#: pg_ctl.c:823 pg_ctl.c:908
 msgid "waiting for server to shut down..."
 msgstr "サーバ停止処理の完了を待っています..."
 
-#: pg_ctl.c:826 pg_ctl.c:905
+#: pg_ctl.c:838 pg_ctl.c:925
 msgid " failed\n"
 msgstr "失敗しました\n"
 
-#: pg_ctl.c:828 pg_ctl.c:907
+#: pg_ctl.c:840 pg_ctl.c:927
 #, c-format
 msgid "%s: server does not shut down\n"
 msgstr "%s: サーバは停止していません\n"
 
-#: pg_ctl.c:833 pg_ctl.c:912
+#: pg_ctl.c:845 pg_ctl.c:932
 msgid "server stopped\n"
 msgstr "サーバは停止しました\n"
 
-#: pg_ctl.c:856 pg_ctl.c:918
+#: pg_ctl.c:868 pg_ctl.c:938
 msgid "starting server anyway\n"
 msgstr "とにかくサーバを起動しています\n"
 
-#: pg_ctl.c:865
+#: pg_ctl.c:877
 #, c-format
 msgid "%s: cannot restart server; single-user server is running (PID: %ld)\n"
 msgstr ""
 "%s: サーバを再起動できません。シングルユーザサーバ(PID: %ld)が動作中です。\n"
 
-#: pg_ctl.c:868 pg_ctl.c:943
+#: pg_ctl.c:880 pg_ctl.c:963
 msgid "Please terminate the single-user server and try again.\n"
 msgstr "シングルユーザサーバを終了させてから、再度実行してください\n"
 
-#: pg_ctl.c:916
+#: pg_ctl.c:936
 #, c-format
 msgid "%s: old server process (PID: %ld) seems to be gone\n"
 msgstr "%s: 古いサーバプロセス(PID: %ld)が動作していないようです\n"
 
-#: pg_ctl.c:940
+#: pg_ctl.c:960
 #, c-format
 msgid "%s: cannot reload server; single-user server is running (PID: %ld)\n"
 msgstr ""
 "%s: サーバをリロードできません。シングルユーザサーバ(PID: %ld)が動作中です\n"
 
-#: pg_ctl.c:949
+#: pg_ctl.c:969
 #, c-format
 msgid "%s: could not send reload signal (PID: %ld): %s\n"
 msgstr "%s: リロードシグナルを送信できませんでした。(PID: %ld): %s\n"
 
-#: pg_ctl.c:954
+#: pg_ctl.c:974
 msgid "server signaled\n"
 msgstr "サーバにシグナルを送信しました\n"
 
-#: pg_ctl.c:998
+#: pg_ctl.c:1018
 #, c-format
 msgid "%s: single-user server is running (PID: %ld)\n"
 msgstr "%s: シングルユーザサーバが動作中です(PID: %ld)\n"
 
-#: pg_ctl.c:1010
+#: pg_ctl.c:1030
 #, c-format
 msgid "%s: server is running (PID: %ld)\n"
 msgstr "%s: サーバが動作中です(PID: %ld)\n"
 
-#: pg_ctl.c:1021
+#: pg_ctl.c:1041
 #, c-format
 msgid "%s: no server running\n"
 msgstr "%s: サーバが動作していません\n"
 
-#: pg_ctl.c:1032
+#: pg_ctl.c:1052
 #, c-format
 msgid "%s: could not send signal %d (PID: %ld): %s\n"
 msgstr "%s: シグナル%dを送信できませんでした(PID: %ld): %s\n"
 
-#: pg_ctl.c:1066
+#: pg_ctl.c:1086
 #, c-format
 msgid "%s: could not find own program executable\n"
 msgstr "%s: 本プログラムの実行ファイルの検索に失敗しました\n"
 
-#: pg_ctl.c:1076
+#: pg_ctl.c:1096
 #, c-format
 msgid "%s: could not find postgres program executable\n"
 msgstr "%s: postgres の実行ファイルが見つかりません\n"
 
-#: pg_ctl.c:1138 pg_ctl.c:1170
+#: pg_ctl.c:1161 pg_ctl.c:1193
 #, c-format
 msgid "%s: could not open service manager\n"
 msgstr "%s: サービスマネージャのオープンに失敗しました\n"
 
-#: pg_ctl.c:1144
+#: pg_ctl.c:1167
 #, c-format
 msgid "%s: service \"%s\" already registered\n"
 msgstr "%s: サービス\\\"%s\\\"は登録済みです\n"
 
-#: pg_ctl.c:1155
+#: pg_ctl.c:1178
 #, c-format
 msgid "%s: could not register service \"%s\": error code %d\n"
 msgstr "%s: サービス\"%s\"の登録に失敗しました: エラーコード %d\n"
 
-#: pg_ctl.c:1176
+#: pg_ctl.c:1199
 #, c-format
 msgid "%s: service \"%s\" not registered\n"
 msgstr "%s: サービス\"%s\"は登録されていません\n"
 
-#: pg_ctl.c:1183
+#: pg_ctl.c:1206
 #, c-format
 msgid "%s: could not open service \"%s\": error code %d\n"
 msgstr "%s: サービス\"%s\"のオープンに失敗しました: エラーコード %d\n"
 
-#: pg_ctl.c:1190
+#: pg_ctl.c:1213
 #, c-format
 msgid "%s: could not unregister service \"%s\": error code %d\n"
 msgstr "%s: サービス\"%s\"の登録削除に失敗しました: エラーコード %d\n"
 
-#: pg_ctl.c:1276
+#: pg_ctl.c:1299
 msgid "Waiting for server startup...\n"
 msgstr "サーバの起動完了を待っています...\n"
 
-#: pg_ctl.c:1279
+#: pg_ctl.c:1302
 msgid "Timed out waiting for server startup\n"
 msgstr "サーバの起動待機がタイムアウトしました\n"
 
-#: pg_ctl.c:1283
+#: pg_ctl.c:1306
 msgid "Server started and accepting connections\n"
 msgstr "サーバは起動し、接続を受け付けています\n"
 
-#: pg_ctl.c:1333
+#: pg_ctl.c:1356
 #, c-format
 msgid "%s: could not start service \"%s\": error code %d\n"
 msgstr "%s: サービス\"%s\"の起動に失敗しました: エラーコード %d\n"
 
-#: pg_ctl.c:1568
+#: pg_ctl.c:1591
 #, c-format
 msgid "Try \"%s --help\" for more information.\n"
 msgstr "詳細は\"%s --help\"を実行してください。\n"
 
-#: pg_ctl.c:1576
+#: pg_ctl.c:1599
 #, c-format
 msgid ""
 "%s is a utility to start, stop, restart, reload configuration files,\n"
@@ -289,17 +290,17 @@ msgstr ""
 "を行うユーティリティです。また、PostgreSQLプロセスへシグナルも送信します。\n"
 "\n"
 
-#: pg_ctl.c:1578
+#: pg_ctl.c:1601
 #, c-format
 msgid "Usage:\n"
 msgstr "使用方法:\n"
 
-#: pg_ctl.c:1579
+#: pg_ctl.c:1602
 #, c-format
 msgid "  %s init[db]               [-D DATADIR] [-s] [-o \"OPTIONS\"]\n"
 msgstr "  %s init[db]               [-D DATADIR] [-s] [-o \"オプション\"]\n"
 
-#: pg_ctl.c:1580
+#: pg_ctl.c:1603
 #, c-format
 msgid ""
 "  %s start   [-w] [-t SECS] [-D DATADIR] [-s] [-l FILENAME] [-o \"OPTIONS"
@@ -308,12 +309,12 @@ msgstr ""
 "  %s start   [-w] [-t SECS] [-D DATADIR] [-s] [-l FILENAME] [-o \"OPTIONS"
 "\"]\n"
 
-#: pg_ctl.c:1581
+#: pg_ctl.c:1604
 #, c-format
 msgid "  %s stop    [-W] [-t SECS] [-D DATADIR] [-s] [-m SHUTDOWN-MODE]\n"
 msgstr "  %s stop    [-W] [-t SECS] [-D DATADIR] [-s] [-m SHUTDOWN-MODE]\n"
 
-#: pg_ctl.c:1582
+#: pg_ctl.c:1605
 #, c-format
 msgid ""
 "  %s restart [-w] [-t SECS] [-D DATADIR] [-s] [-m SHUTDOWN-MODE]\n"
@@ -322,22 +323,22 @@ msgstr ""
 "  %s restart [-w] [-t SECS] [-D DATADIR] [-s] [-m SHUTDOWN-MODE]\n"
 "                 [-o \"OPTIONS\"]\n"
 
-#: pg_ctl.c:1584
+#: pg_ctl.c:1607
 #, c-format
 msgid "  %s reload  [-D DATADIR] [-s]\n"
 msgstr "  %s reload  [-D DATADIR] [-s]\n"
 
-#: pg_ctl.c:1585
+#: pg_ctl.c:1608
 #, c-format
 msgid "  %s status  [-D DATADIR]\n"
 msgstr "  %s status  [-D DATADIR]\n"
 
-#: pg_ctl.c:1586
+#: pg_ctl.c:1609
 #, c-format
 msgid "  %s kill    SIGNALNAME PID\n"
 msgstr "  %s kill    SIGNALNAME PID\n"
 
-#: pg_ctl.c:1588
+#: pg_ctl.c:1611
 #, c-format
 msgid ""
 "  %s register   [-N SERVICENAME] [-U USERNAME] [-P PASSWORD] [-D DATADIR]\n"
@@ -346,12 +347,12 @@ msgstr ""
 "  %s register   [-N SERVICENAME] [-U USERNAME] [-P PASSWORD] [-D DATADIR]\n"
 "                    [-w] [-t SECS] [-o \"OPTIONS\"]\n"
 
-#: pg_ctl.c:1590
+#: pg_ctl.c:1613
 #, c-format
 msgid "  %s unregister [-N SERVICENAME]\n"
 msgstr "  %s unregister [-N SERVICENAME]\n"
 
-#: pg_ctl.c:1593
+#: pg_ctl.c:1616
 #, c-format
 msgid ""
 "\n"
@@ -360,44 +361,44 @@ msgstr ""
 "\n"
 "一般的なオプション:\n"
 
-#: pg_ctl.c:1594
+#: pg_ctl.c:1617
 #, c-format
 msgid "  -D, --pgdata DATADIR   location of the database storage area\n"
 msgstr "  -D, --pgdata DATADIR   データベース格納領域の場所です\n"
 
-#: pg_ctl.c:1595
+#: pg_ctl.c:1618
 #, c-format
 msgid "  -s, --silent           only print errors, no informational messages\n"
 msgstr ""
 "  -s, --silent           エラーメッセージのみを表示し、情報メッセージは表示し"
 "ません\n"
 
-#: pg_ctl.c:1596
+#: pg_ctl.c:1619
 #, c-format
 msgid "  -t SECS                seconds to wait when using -w option\n"
 msgstr "  -t SECS               -wオプションを使用する時の待機秒数です。\n"
 
-#: pg_ctl.c:1597
+#: pg_ctl.c:1620
 #, c-format
 msgid "  -w                     wait until operation completes\n"
 msgstr "  -w                     作業が完了するまで待機します\n"
 
-#: pg_ctl.c:1598
+#: pg_ctl.c:1621
 #, c-format
 msgid "  -W                     do not wait until operation completes\n"
 msgstr "  -W                     作業の完了まで待機しません\n"
 
-#: pg_ctl.c:1599
+#: pg_ctl.c:1622
 #, c-format
 msgid "  --help                 show this help, then exit\n"
 msgstr "  --help                 ヘルプを表示し、終了します\n"
 
-#: pg_ctl.c:1600
+#: pg_ctl.c:1623
 #, c-format
 msgid "  --version              output version information, then exit\n"
 msgstr "  --version              バージョン情報を表示し、終了します\n"
 
-#: pg_ctl.c:1601
+#: pg_ctl.c:1624
 #, c-format
 msgid ""
 "(The default is to wait for shutdown, but not for start or restart.)\n"
@@ -407,12 +408,12 @@ msgstr ""
 "ません。)\n"
 "\n"
 
-#: pg_ctl.c:1602
+#: pg_ctl.c:1625
 #, c-format
 msgid "If the -D option is omitted, the environment variable PGDATA is used.\n"
 msgstr "-Dオプションの省略時、PGDATA環境変数が使用されます。\n"
 
-#: pg_ctl.c:1604
+#: pg_ctl.c:1627
 #, c-format
 msgid ""
 "\n"
@@ -421,24 +422,24 @@ msgstr ""
 "\n"
 "起動、再起動用のオプション\n"
 
-#: pg_ctl.c:1606
+#: pg_ctl.c:1629
 #, c-format
 msgid "  -c, --core-files       allow postgres to produce core files\n"
 msgstr ""
 "  -c, --core-files       postgresはコアファイルを生成することができます。\n"
 
-#: pg_ctl.c:1608
+#: pg_ctl.c:1631
 #, c-format
 msgid "  -c, --core-files       not applicable on this platform\n"
 msgstr "  -c, --core-files       このプラットフォームでは実行できません\n"
 
-#: pg_ctl.c:1610
+#: pg_ctl.c:1633
 #, c-format
 msgid "  -l, --log FILENAME     write (or append) server log to FILENAME\n"
 msgstr ""
 "  -l, --log FILENAME     サーバログをFILENAMEへ出力(あるいは追加)します\n"
 
-#: pg_ctl.c:1611
+#: pg_ctl.c:1634
 #, c-format
 msgid ""
 "  -o OPTIONS             command line options to pass to postgres\n"
@@ -447,12 +448,12 @@ msgstr ""
 "  -o オプション          postgres(PostgreSQLサーバ実行ファイル)または\n"
 "                         initdb に渡すコマンドラインオプション\n"
 
-#: pg_ctl.c:1613
+#: pg_ctl.c:1636
 #, c-format
 msgid "  -p PATH-TO-POSTGRES    normally not necessary\n"
 msgstr "  -p PATH-TO-POSTGRES    通常は不要です\n"
 
-#: pg_ctl.c:1614
+#: pg_ctl.c:1637
 #, c-format
 msgid ""
 "\n"
@@ -461,13 +462,13 @@ msgstr ""
 "\n"
 "停止、再起動用のオプション:\n"
 
-#: pg_ctl.c:1615
+#: pg_ctl.c:1638
 #, c-format
 msgid "  -m SHUTDOWN-MODE   can be \"smart\", \"fast\", or \"immediate\"\n"
 msgstr ""
 "  -m SHUTDOWN-MODE   \"smart\"、\"fast\"、\"immediate\"のいずれかです\n"
 
-#: pg_ctl.c:1617
+#: pg_ctl.c:1640
 #, c-format
 msgid ""
 "\n"
@@ -476,17 +477,17 @@ msgstr ""
 "\n"
 "シャットダウンモードは以下の通りです:\n"
 
-#: pg_ctl.c:1618
+#: pg_ctl.c:1641
 #, c-format
 msgid "  smart       quit after all clients have disconnected\n"
 msgstr "  smart       全クライアントの接続切断後に停止します\n"
 
-#: pg_ctl.c:1619
+#: pg_ctl.c:1642
 #, c-format
 msgid "  fast        quit directly, with proper shutdown\n"
 msgstr "  fast        シャットダウン手続き後に停止します\n"
 
-#: pg_ctl.c:1620
+#: pg_ctl.c:1643
 #, c-format
 msgid ""
 "  immediate   quit without complete shutdown; will lead to recovery on "
@@ -495,7 +496,7 @@ msgstr ""
 "  immediate   シャットダウン手続きを行わずに停止します。再起動時にリカバリ状"
 "態になる可能性があります\n"
 
-#: pg_ctl.c:1622
+#: pg_ctl.c:1645
 #, c-format
 msgid ""
 "\n"
@@ -504,7 +505,7 @@ msgstr ""
 "\n"
 "killモードで利用できるシグナル名:\n"
 
-#: pg_ctl.c:1626
+#: pg_ctl.c:1649
 #, c-format
 msgid ""
 "\n"
@@ -513,24 +514,24 @@ msgstr ""
 "\n"
 "登録、登録解除用のオプション:\n"
 
-#: pg_ctl.c:1627
+#: pg_ctl.c:1650
 #, c-format
 msgid ""
 "  -N SERVICENAME  service name with which to register PostgreSQL server\n"
 msgstr "  -N SERVICENAME  PostgreSQLサーバを登録するためのサービス名です\n"
 
-#: pg_ctl.c:1628
+#: pg_ctl.c:1651
 #, c-format
 msgid "  -P PASSWORD     password of account to register PostgreSQL server\n"
 msgstr ""
 "  -P PASSWORD     PostgreSQLサーバを登録するアカウントのパスワードです\n"
 
-#: pg_ctl.c:1629
+#: pg_ctl.c:1652
 #, c-format
 msgid "  -U USERNAME     user name of account to register PostgreSQL server\n"
 msgstr "  -U USERNAME     PostgreSQLサーバを登録するアカウントのユーザ名です\n"
 
-#: pg_ctl.c:1632
+#: pg_ctl.c:1655
 #, c-format
 msgid ""
 "\n"
@@ -539,17 +540,17 @@ msgstr ""
 "\n"
 "不具合は<pgsql-bugs@postgresql.org>まで報告してください。\n"
 
-#: pg_ctl.c:1657
+#: pg_ctl.c:1680
 #, c-format
 msgid "%s: unrecognized shutdown mode \"%s\"\n"
 msgstr "%s: シャットダウンモード\"%s\"は不明です\n"
 
-#: pg_ctl.c:1690
+#: pg_ctl.c:1713
 #, c-format
 msgid "%s: unrecognized signal name \"%s\"\n"
 msgstr "%s: シグナル名\"%s\"は不明です\n"
 
-#: pg_ctl.c:1755
+#: pg_ctl.c:1778
 #, c-format
 msgid ""
 "%s: cannot be run as root\n"
@@ -560,27 +561,27 @@ msgstr ""
 "サーバプロセスの所有者となる(非特権)ユーザとして(例えば\"su\"を使用して)\n"
 "ログインしてください。\n"
 
-#: pg_ctl.c:1864
+#: pg_ctl.c:1887
 #, c-format
 msgid "%s: too many command-line arguments (first is \"%s\")\n"
 msgstr "%s: コマンドライン引数が多すぎます(先頭は\"%s\")\n"
 
-#: pg_ctl.c:1886
+#: pg_ctl.c:1909
 #, c-format
 msgid "%s: missing arguments for kill mode\n"
 msgstr "%s: killモード用の引数がありません\n"
 
-#: pg_ctl.c:1904
+#: pg_ctl.c:1927
 #, c-format
 msgid "%s: unrecognized operation mode \"%s\"\n"
 msgstr "%s: 操作モード\"%s\"は不明です\n"
 
-#: pg_ctl.c:1914
+#: pg_ctl.c:1937
 #, c-format
 msgid "%s: no operation specified\n"
 msgstr "%s: 操作モードが指定されていません\n"
 
-#: pg_ctl.c:1930
+#: pg_ctl.c:1953
 #, c-format
 msgid ""
 "%s: no database directory specified and environment variable PGDATA unset\n"

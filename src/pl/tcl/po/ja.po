@@ -7,21 +7,22 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PostgreSQL 9.0 beta 3\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
-"POT-Creation-Date: 2010-07-20 12:58+0900\n"
+"POT-Creation-Date: 2011-06-20 12:54+0000\n"
 "PO-Revision-Date: 2010-07-17 18:29+0900\n"
 "Last-Translator: HOTTA Michihide <hotta@net-newbie.com>\n"
 "Language-Team: Japan PostgreSQL Users Group <jpug-doc@ml.postgresql.jp>\n"
+"Language: \n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=1; plural=0;\n"
 
-#: pltcl.c:1075
+#: pltcl.c:1142
 #, c-format
 msgid "%s"
 msgstr "%s"
 
-#: pltcl.c:1076
+#: pltcl.c:1143
 #, c-format
 msgid ""
 "%s\n"
@@ -30,24 +31,24 @@ msgstr ""
 "%s\n"
 "PL/Tcl 関数 \"%s\""
 
-#: pltcl.c:1173
+#: pltcl.c:1245 pltcl.c:1252
 msgid "out of memory"
 msgstr "メモリ不足です"
 
-#: pltcl.c:1234
+#: pltcl.c:1299
 msgid "trigger functions can only be called as triggers"
 msgstr "トリガー関数はトリガーとしてのみコールできます"
 
-#: pltcl.c:1243
+#: pltcl.c:1308
 #, c-format
 msgid "PL/Tcl functions cannot return type %s"
 msgstr "PL/Tcl 関数は戻り値の型 %s を返せません"
 
-#: pltcl.c:1255
+#: pltcl.c:1320
 msgid "PL/Tcl functions cannot return composite types"
 msgstr "PL/Tcl 関数は戻り値の型として複合型を返せません"
 
-#: pltcl.c:1294
+#: pltcl.c:1359
 #, c-format
 msgid "PL/Tcl functions cannot accept type %s"
 msgstr "PL/Tcl 関数は型 %s を受け付けません"

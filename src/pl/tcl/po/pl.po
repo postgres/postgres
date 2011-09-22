@@ -1,0 +1,53 @@
+# LANGUAGE message translation file for pltcl
+# Copyright (C) 2011 PostgreSQL Global Development Group
+# This file is distributed under the same license as the PostgreSQL package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2011.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: pltcl (PostgreSQL 9.0)\n"
+"Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
+"POT-Creation-Date: 2011-09-22 05:06+0000\n"
+"PO-Revision-Date: 2011-09-22 10:44-0300\n"
+"Last-Translator: Begina Felicysym <begina.felicysym@wp.eu>\n"
+"Language-Team: TortoiseSVN Polish translation team\n"
+"Language: \n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+
+#: pltcl.c:1142
+#, c-format
+msgid "%s"
+msgstr "%s"
+
+#: pltcl.c:1143
+#, c-format
+msgid ""
+"%s\n"
+"in PL/Tcl function \"%s\""
+msgstr ""
+"%s\n"
+"w funkcji PL/Tcl \"%s\""
+
+#: pltcl.c:1245 pltcl.c:1252
+msgid "out of memory"
+msgstr "brak pamięci"
+
+#: pltcl.c:1299
+msgid "trigger functions can only be called as triggers"
+msgstr "procedury wyzwalaczy mogą być wywoływane jedynie przez wyzwalacze"
+
+#: pltcl.c:1308
+#, c-format
+msgid "PL/Tcl functions cannot return type %s"
+msgstr "funkcje PL/Perl nie mogą zwracać wartości typu %s"
+
+#: pltcl.c:1320
+msgid "PL/Tcl functions cannot return composite types"
+msgstr "funkcje PL/Tcl nie mogą zwracać wartości złożonych"
+
+#: pltcl.c:1359
+#, c-format
+msgid "PL/Tcl functions cannot accept type %s"
+msgstr "funkcje PL/Tcl nie akceptują typu %s"

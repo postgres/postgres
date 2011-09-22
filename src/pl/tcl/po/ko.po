@@ -1,0 +1,52 @@
+# Copyright (C) 2011 PostgreSQL Global Development Group
+# This file is distributed under the same license as the PostgreSQL package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2011.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: \n"
+"POT-Creation-Date: \n"
+"PO-Revision-Date: \n"
+"Last-Translator: Changjian Yuan <dev-escalations@enterprisedb.com>\n"
+"Language-Team: \n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+
+#: pltcl.c:1142
+#, c-format
+msgid "%s"
+msgstr "%s"
+
+#: pltcl.c:1143
+#, c-format
+msgid ""
+"%s\n"
+"in PL/Tcl function \"%s\""
+msgstr ""
+"%s\n"
+"PL/Tcl 함수 \"%s\" 내"
+
+#: pltcl.c:1245
+#: pltcl.c:1252
+msgid "out of memory"
+msgstr "메모리 부족"
+
+#: pltcl.c:1299
+msgid "trigger functions can only be called as triggers"
+msgstr "트리거 함수는 트리거로만 호출될 수 있음"
+
+#: pltcl.c:1308
+#, c-format
+msgid "PL/Tcl functions cannot return type %s"
+msgstr "PL/Tcl 함수에서 %s 형식을 반환할 수 없음"
+
+#: pltcl.c:1320
+msgid "PL/Tcl functions cannot return composite types"
+msgstr "PL/Tcl 함수에서 복합 형식을 반환할 수 없음"
+
+#: pltcl.c:1359
+#, c-format
+msgid "PL/Tcl functions cannot accept type %s"
+msgstr "PL/Tcl 함수에서 %s 형식을 사용할 수 없음"
+

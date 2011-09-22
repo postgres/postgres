@@ -6,14 +6,14 @@ msgid ""
 msgstr ""
 "Project-Id-Version: pg_dump (PostgreSQL 9.0)\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
-"POT-Creation-Date: 2010-10-06 00:51+0000\n"
+"POT-Creation-Date: 2011-06-20 12:55+0000\n"
 "PO-Revision-Date: 2010-10-03 15:43+0800\n"
 "Last-Translator: Weibin <ssmei_2000@yahoo.com>\n"
 "Language-Team: Chinese (Simplified)\n"
+"Language: \n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"Language: \n"
 "Plural-Forms: nplurals=1; plural=0;\n"
 
 #: pg_dump.c:453 pg_restore.c:268 pg_dumpall.c:291
@@ -350,7 +350,7 @@ msgstr ""
 msgid "Report bugs to <pgsql-bugs@postgresql.org>.\n"
 msgstr "报告错误至 <pgsql-bugs@postgresql.org>.\n"
 
-#: pg_dump.c:855 pg_backup_archiver.c:1401
+#: pg_dump.c:855 pg_backup_archiver.c:1422
 msgid "*** aborted because of error\n"
 msgstr "*** 因为错误退出\n"
 
@@ -368,12 +368,12 @@ msgstr "正在转储表 %s 的内容\n"
 msgid "Dumping the contents of table \"%s\" failed: PQgetCopyData() failed.\n"
 msgstr "转储表 \"%s\" 的内容的 SQL 命令失败: PQendcopy() 失败.\n"
 
-#: pg_dump.c:1218 pg_dump.c:12419
+#: pg_dump.c:1218 pg_dump.c:12449
 #, c-format
 msgid "Error message from server: %s"
 msgstr "来自服务器的错误信息: %s"
 
-#: pg_dump.c:1219 pg_dump.c:12420
+#: pg_dump.c:1219 pg_dump.c:12450
 #, c-format
 msgid "The command was: %s\n"
 msgstr "命令是: %s\n"
@@ -415,7 +415,7 @@ msgstr "正在读取大对象\n"
 msgid "saving large objects\n"
 msgstr "保存大对象\n"
 
-#: pg_dump.c:2121 pg_backup_archiver.c:946
+#: pg_dump.c:2121 pg_backup_archiver.c:948
 #, c-format
 msgid "could not open large object %u: %s"
 msgstr "无法打开大对象%u: %s"
@@ -425,10 +425,10 @@ msgstr "无法打开大对象%u: %s"
 msgid "error reading large object %u: %s"
 msgstr "在读取大对象时发生错误%u: %s"
 
-#: pg_dump.c:2181 pg_dump.c:2229 pg_dump.c:2291 pg_dump.c:6918 pg_dump.c:7121
-#: pg_dump.c:7937 pg_dump.c:8475 pg_dump.c:8725 pg_dump.c:8831 pg_dump.c:9216
-#: pg_dump.c:9392 pg_dump.c:9589 pg_dump.c:9816 pg_dump.c:9971 pg_dump.c:10158
-#: pg_dump.c:12225
+#: pg_dump.c:2181 pg_dump.c:2229 pg_dump.c:2291 pg_dump.c:6938 pg_dump.c:7141
+#: pg_dump.c:7957 pg_dump.c:8495 pg_dump.c:8745 pg_dump.c:8851 pg_dump.c:9236
+#: pg_dump.c:9412 pg_dump.c:9609 pg_dump.c:9836 pg_dump.c:9991 pg_dump.c:10178
+#: pg_dump.c:12255
 #, c-format
 msgid "query returned %d row instead of one: %s\n"
 msgid_plural "query returned %d rows instead of one: %s\n"
@@ -474,34 +474,34 @@ msgstr "警告: 聚集函数 \"%s\" 的所有者非法\n"
 msgid "WARNING: owner of function \"%s\" appears to be invalid\n"
 msgstr "警告: 函数 \"%s\" 的所有者非法\n"
 
-#: pg_dump.c:3806
+#: pg_dump.c:3826
 #, c-format
 msgid "WARNING: owner of table \"%s\" appears to be invalid\n"
 msgstr "警告: 数据表 \"%s\" 的所有者非法\n"
 
-#: pg_dump.c:3949
+#: pg_dump.c:3969
 #, c-format
 msgid "reading indexes for table \"%s\"\n"
 msgstr "为表 \"%s\" 读取索引\n"
 
-#: pg_dump.c:4269
+#: pg_dump.c:4289
 #, c-format
 msgid "reading foreign key constraints for table \"%s\"\n"
 msgstr "为表 \"%s\" 读取外键约束\n"
 
-#: pg_dump.c:4501
+#: pg_dump.c:4521
 #, c-format
 msgid ""
 "failed sanity check, parent table OID %u of pg_rewrite entry OID %u not "
 "found\n"
 msgstr "健全检查失败,pg_rewrite项OID %2$u 的源表 OID%1$u 未找到\n"
 
-#: pg_dump.c:4585
+#: pg_dump.c:4605
 #, c-format
 msgid "reading triggers for table \"%s\"\n"
 msgstr "为表 \"%s\" 读取触发器\n"
 
-#: pg_dump.c:4748
+#: pg_dump.c:4768
 #, c-format
 msgid ""
 "query produced null referenced table name for foreign key trigger \"%s\" on "
@@ -510,178 +510,178 @@ msgstr ""
 "对在表 \"%2$s\" 上的外键触发器 \"%1$s\" 上的查询生成了 NULL 个引用表(表的 "
 "OID 是: %3$u)\n"
 
-#: pg_dump.c:5118
+#: pg_dump.c:5138
 #, c-format
 msgid "finding the columns and types of table \"%s\"\n"
 msgstr "正在查找表 \"%s\" 的字段和类型\n"
 
-#: pg_dump.c:5237
+#: pg_dump.c:5257
 #, c-format
 msgid "invalid column numbering in table \"%s\"\n"
 msgstr "在表 \"%s\" 中的字段个数是无效的\n"
 
-#: pg_dump.c:5273
+#: pg_dump.c:5293
 #, c-format
 msgid "finding default expressions of table \"%s\"\n"
 msgstr "正在查找表 \"%s\" 的默认表达式\n"
 
-#: pg_dump.c:5358
+#: pg_dump.c:5378
 #, c-format
 msgid "invalid adnum value %d for table \"%s\"\n"
 msgstr "表 \"%2$s\" 的无效 adnum 值 %1$d\n"
 
-#: pg_dump.c:5376
+#: pg_dump.c:5396
 #, c-format
 msgid "finding check constraints for table \"%s\"\n"
 msgstr "正在为表 \"%s\" 查找检查约束\n"
 
-#: pg_dump.c:5456
+#: pg_dump.c:5476
 #, c-format
 msgid "expected %d check constraint on table \"%s\" but found %d\n"
 msgid_plural "expected %d check constraints on table \"%s\" but found %d\n"
 msgstr[0] "在表\"%2$s\"上期望有%1$d个检查约束,但是找到了%3$d个\n"
 
-#: pg_dump.c:5460
+#: pg_dump.c:5480
 msgid "(The system catalogs might be corrupted.)\n"
 msgstr "(系统表可能损坏了.)\n"
 
-#: pg_dump.c:7248 pg_dump.c:7355
+#: pg_dump.c:7268 pg_dump.c:7375
 #, c-format
 msgid "query returned no rows: %s\n"
 msgstr "查询放弃, 没有记录: %s\n"
 
-#: pg_dump.c:7705
+#: pg_dump.c:7725
 msgid "WARNING: bogus value in proargmodes array\n"
 msgstr "警告: 无法分析 proargmodes 数组\n"
 
-#: pg_dump.c:8017
+#: pg_dump.c:8037
 msgid "WARNING: could not parse proallargtypes array\n"
 msgstr "警告: 无法分析 proallargtypes 数组\n"
 
-#: pg_dump.c:8033
+#: pg_dump.c:8053
 msgid "WARNING: could not parse proargmodes array\n"
 msgstr "警告: 无法分析 proargmodes 数组\n"
 
-#: pg_dump.c:8047
+#: pg_dump.c:8067
 msgid "WARNING: could not parse proargnames array\n"
 msgstr "警告: 无法分析 proargnames 数组\n"
 
-#: pg_dump.c:8058
+#: pg_dump.c:8078
 msgid "WARNING: could not parse proconfig array\n"
 msgstr "警告: 无法解析 proconfig 数组\n"
 
-#: pg_dump.c:8114
+#: pg_dump.c:8134
 #, c-format
 msgid "unrecognized provolatile value for function \"%s\"\n"
 msgstr "函数 \"%s\" 的意外正向易失值\n"
 
-#: pg_dump.c:8317
+#: pg_dump.c:8337
 msgid "WARNING: bogus value in pg_cast.castmethod field\n"
 msgstr "警告: 在pg_cast.castmethod字段中的是假值\n"
 
-#: pg_dump.c:8694
+#: pg_dump.c:8714
 #, c-format
 msgid "WARNING: could not find operator with OID %s\n"
 msgstr "警告: 未找到 OID 为 %s 的操作符\n"
 
-#: pg_dump.c:9615
+#: pg_dump.c:9635
 #, c-format
 msgid ""
 "WARNING: aggregate function %s could not be dumped correctly for this "
 "database version; ignored\n"
 msgstr "警告: 无法为此版本的数据库正确转储聚集函数 \"%s\"; 忽略\n"
 
-#: pg_dump.c:10343
+#: pg_dump.c:10363
 #, c-format
 msgid "unknown object type (%d) in default privileges\n"
 msgstr "在缺省权限中的未知对象类型(%d)\n"
 
-#: pg_dump.c:10360
+#: pg_dump.c:10380
 #, c-format
 msgid "could not parse default ACL list (%s)\n"
 msgstr "无法解析缺省ACL列表(%s)\n"
 
-#: pg_dump.c:10417
+#: pg_dump.c:10437
 #, c-format
 msgid "could not parse ACL list (%s) for object \"%s\" (%s)\n"
 msgstr "无法为对象 \"%2$s\" 分析 ACL 列表 (%1$s) (%3$s)\n"
 
-#: pg_dump.c:10560
+#: pg_dump.c:10580
 #, c-format
 msgid "query to obtain definition of view \"%s\" returned no data\n"
 msgstr "获取视图 \"%s\" 定义的查询没有返回数据\n"
 
-#: pg_dump.c:10563
+#: pg_dump.c:10583
 #, c-format
 msgid ""
 "query to obtain definition of view \"%s\" returned more than one definition\n"
 msgstr "获取视图 \"%s\" 定义的查询返回超过一个定义\n"
 
-#: pg_dump.c:10572
+#: pg_dump.c:10592
 #, c-format
 msgid "definition of view \"%s\" appears to be empty (length zero)\n"
 msgstr "视图 \"%s\" 的定义是空的(零长)\n"
 
-#: pg_dump.c:11048
+#: pg_dump.c:11078
 #, c-format
 msgid "invalid column number %d for table \"%s\"\n"
 msgstr "对于表 \"%2$s\" 字段个数 %1$d 是无效的\n"
 
-#: pg_dump.c:11156
+#: pg_dump.c:11186
 #, c-format
 msgid "missing index for constraint \"%s\"\n"
 msgstr "对于约束 \"%s\" 缺少索引\n"
 
-#: pg_dump.c:11344
+#: pg_dump.c:11374
 #, c-format
 msgid "unrecognized constraint type: %c\n"
 msgstr "未知的约束类型: %c\n"
 
-#: pg_dump.c:11407
+#: pg_dump.c:11437
 msgid "missing pg_database entry for this database\n"
 msgstr "缺少此数据库的 pg_database 记录\n"
 
-#: pg_dump.c:11412
+#: pg_dump.c:11442
 msgid "found more than one pg_database entry for this database\n"
 msgstr "找到此数据库的多于一条的 pg_database 记录\n"
 
-#: pg_dump.c:11444
+#: pg_dump.c:11474
 msgid "could not find entry for pg_indexes in pg_class\n"
 msgstr "在 pg_class 中无法为 pg_indexes 找到记录\n"
 
-#: pg_dump.c:11449
+#: pg_dump.c:11479
 msgid "found more than one entry for pg_indexes in pg_class\n"
 msgstr "在 pg_class 表中找到多条 pg_indexes 的记录\n"
 
-#: pg_dump.c:11520
+#: pg_dump.c:11550
 #, c-format
 msgid "query to get data of sequence \"%s\" returned %d row (expected 1)\n"
 msgid_plural ""
 "query to get data of sequence \"%s\" returned %d rows (expected 1)\n"
 msgstr[0] "查询得到了序列\"%s\"的数据，返回了%d条记录(期望一条)\n"
 
-#: pg_dump.c:11531
+#: pg_dump.c:11561
 #, c-format
 msgid "query to get data of sequence \"%s\" returned name \"%s\"\n"
 msgstr "获取序列 \"%s\" 的数据的查询返回了名字 \"%s\"\n"
 
-#: pg_dump.c:11825
+#: pg_dump.c:11855
 #, c-format
 msgid "invalid argument string (%s) for trigger \"%s\" on table \"%s\"\n"
 msgstr "给表 \"%3$s\" 上的触发器 \"%2$s\" 的错误参数 (%1$s)\n"
 
-#: pg_dump.c:11941
+#: pg_dump.c:11971
 #, c-format
 msgid ""
 "query to get rule \"%s\" for table \"%s\" failed: wrong number of rows "
 "returned\n"
 msgstr "获取表 \"%2$s\" 的规则 \"%1$s\" 查询失败: 返回了错误的行数\n"
 
-#: pg_dump.c:12036
+#: pg_dump.c:12066
 msgid "reading dependency data\n"
 msgstr "读取从属数据\n"
 
-#: pg_dump.c:12414
+#: pg_dump.c:12444
 msgid "SQL command failed\n"
 msgstr "SQL 命令失败\n"
 
@@ -689,132 +689,132 @@ msgstr "SQL 命令失败\n"
 msgid "reading schemas\n"
 msgstr "读取模式\n"
 
-#: common.c:119
+#: common.c:125
+msgid "reading user-defined tables\n"
+msgstr "读取用户定义表\n"
+
+#: common.c:130
 msgid "reading user-defined functions\n"
 msgstr "读取用户定义函数\n"
 
-#: common.c:125
+#: common.c:136
 msgid "reading user-defined types\n"
 msgstr "读取用户定义类型\n"
 
-#: common.c:131
+#: common.c:142
 msgid "reading procedural languages\n"
 msgstr "读取过程语言\n"
 
-#: common.c:135
+#: common.c:146
 msgid "reading user-defined aggregate functions\n"
 msgstr "读取用户定义聚集函数\n"
 
-#: common.c:139
+#: common.c:150
 msgid "reading user-defined operators\n"
 msgstr "读取用户定义操作符\n"
 
-#: common.c:144
+#: common.c:155
 msgid "reading user-defined operator classes\n"
 msgstr "读取用户定义操作符集\n"
 
-#: common.c:148
+#: common.c:159
 msgid "reading user-defined text search parsers\n"
 msgstr "读取用户定义的文本搜索解析器\n"
 
-#: common.c:152
+#: common.c:163
 msgid "reading user-defined text search templates\n"
 msgstr "读取用户定义的文本搜索模板\n"
 
-#: common.c:156
+#: common.c:167
 msgid "reading user-defined text search dictionaries\n"
 msgstr "读取用户定义的文本搜索字典\n"
 
 # sql_help.h:129
-#: common.c:160
+#: common.c:171
 msgid "reading user-defined text search configurations\n"
 msgstr "读取用户定义的文本搜索配置\n"
 
-#: common.c:164
+#: common.c:175
 msgid "reading user-defined foreign-data wrappers\n"
 msgstr "读取用户定义外部数据封装器\n"
 
-#: common.c:168
+#: common.c:179
 msgid "reading user-defined foreign servers\n"
 msgstr "读取用户定义的外部服务器\n"
 
-#: common.c:172
+#: common.c:183
 msgid "reading default privileges\n"
 msgstr "正在读取缺省权限\n"
 
-#: common.c:176
+#: common.c:187
 msgid "reading user-defined operator families\n"
 msgstr "读取用户定义操作符\n"
 
-#: common.c:180
+#: common.c:191
 msgid "reading user-defined conversions\n"
 msgstr "读取用户定义的字符集转换\n"
 
-#: common.c:184
-msgid "reading user-defined tables\n"
-msgstr "读取用户定义表\n"
-
-#: common.c:189
+#: common.c:195
 msgid "reading table inheritance information\n"
 msgstr "读取表继承信息\n"
 
-#: common.c:193
+#: common.c:199
 msgid "reading rewrite rules\n"
 msgstr "读取重写规则\n"
 
-#: common.c:197
+#: common.c:203
 msgid "reading type casts\n"
 msgstr "读取类型转换\n"
 
-#: common.c:202
+#: common.c:208
 msgid "finding inheritance relationships\n"
 msgstr "正在查找关系继承\n"
 
-#: common.c:206
+#: common.c:212
 msgid "reading column info for interesting tables\n"
 msgstr "正在读取感兴趣表的列信息\n"
 
-#: common.c:210
+#: common.c:216
 msgid "flagging inherited columns in subtables\n"
 msgstr "在子表里标记继承字段\n"
 
-#: common.c:214
+#: common.c:220
 msgid "reading indexes\n"
 msgstr "读取索引\n"
 
-#: common.c:218
+#: common.c:224
 msgid "reading constraints\n"
 msgstr "读取约束\n"
 
-#: common.c:222
+#: common.c:228
 msgid "reading triggers\n"
 msgstr "读取触发器\n"
 
-#: common.c:802
+#: common.c:808
 #, c-format
 msgid "failed sanity check, parent OID %u of table \"%s\" (OID %u) not found\n"
 msgstr "健全检查失败, 未找到表 \"%2$s\" (OID %3$u) 的 OID 为 %1$u 的父辈\n"
 
-#: common.c:844
+#: common.c:850
 #, c-format
 msgid "could not parse numeric array \"%s\": too many numbers\n"
 msgstr "无法分析数值数组\"%s\": 数字太多\n"
 
-#: common.c:859
+#: common.c:865
 #, c-format
 msgid "could not parse numeric array \"%s\": invalid character in number\n"
 msgstr "无法分析数值数组\"%s\": 出现无效字符\n"
 
 # fe-exec.c:737
-#: common.c:972
+#: common.c:978
 msgid "cannot duplicate null pointer\n"
 msgstr "无法重复空指针\n"
 
-#: common.c:975 common.c:986 common.c:997 common.c:1008
-#: pg_backup_archiver.c:727 pg_backup_archiver.c:1103
-#: pg_backup_archiver.c:1234 pg_backup_archiver.c:1705
-#: pg_backup_archiver.c:1862 pg_backup_archiver.c:1908
-#: pg_backup_archiver.c:4048 pg_backup_custom.c:144 pg_backup_custom.c:149
+#: common.c:981 common.c:992 common.c:1003 common.c:1014
+#: pg_backup_archiver.c:729 pg_backup_archiver.c:1124
+#: pg_backup_archiver.c:1255 pg_backup_archiver.c:1726
+#: pg_backup_archiver.c:1883 pg_backup_archiver.c:1929
+#: pg_backup_archiver.c:4134 pg_backup_custom.c:144 pg_backup_custom.c:149
 #: pg_backup_custom.c:155 pg_backup_custom.c:170 pg_backup_custom.c:570
 #: pg_backup_custom.c:1113 pg_backup_custom.c:1122 pg_backup_db.c:154
 #: pg_backup_db.c:164 pg_backup_db.c:212 pg_backup_db.c:256 pg_backup_db.c:271
@@ -827,414 +827,414 @@ msgstr "内存用尽\n"
 msgid "archiver"
 msgstr "归档"
 
-#: pg_backup_archiver.c:195 pg_backup_archiver.c:1198
+#: pg_backup_archiver.c:197 pg_backup_archiver.c:1219
 #, c-format
 msgid "could not close output file: %s\n"
 msgstr "无法关闭输出文件: %s\n"
 
-#: pg_backup_archiver.c:220
+#: pg_backup_archiver.c:222
 msgid "-C and -c are incompatible options\n"
 msgstr "-C 和 -c 是互不兼容的选项\n"
 
-#: pg_backup_archiver.c:227
+#: pg_backup_archiver.c:229
 msgid "-C and -1 are incompatible options\n"
 msgstr "-C 和 -c 是互不兼容的选项\n"
 
-#: pg_backup_archiver.c:239
+#: pg_backup_archiver.c:241
 msgid ""
 "cannot restore from compressed archive (compression not supported in this "
 "installation)\n"
 msgstr "无法从压缩的归档中恢复 (未配置压缩支持)\n"
 
-#: pg_backup_archiver.c:249
+#: pg_backup_archiver.c:251
 msgid "connecting to database for restore\n"
 msgstr "为恢复数据库与数据库联接\n"
 
-#: pg_backup_archiver.c:251
+#: pg_backup_archiver.c:253
 msgid "direct database connections are not supported in pre-1.3 archives\n"
 msgstr "1.3 以前的归档里不支持直接数据库联接\n"
 
-#: pg_backup_archiver.c:293
+#: pg_backup_archiver.c:295
 msgid "implied data-only restore\n"
 msgstr "隐含的只恢复数据\n"
 
-#: pg_backup_archiver.c:344
+#: pg_backup_archiver.c:346
 #, c-format
 msgid "dropping %s %s\n"
 msgstr "删除 %s %s\n"
 
-#: pg_backup_archiver.c:396
+#: pg_backup_archiver.c:398
 #, c-format
 msgid "setting owner and privileges for %s %s\n"
 msgstr "为 %s %s 设置属主和权限\n"
 
-#: pg_backup_archiver.c:454 pg_backup_archiver.c:456
+#: pg_backup_archiver.c:456 pg_backup_archiver.c:458
 #, c-format
 msgid "warning from original dump file: %s\n"
 msgstr "来自原始转储文件的警告: %s\n"
 
-#: pg_backup_archiver.c:463
+#: pg_backup_archiver.c:465
 #, c-format
 msgid "creating %s %s\n"
 msgstr "创建 %s %s\n"
 
-#: pg_backup_archiver.c:507
+#: pg_backup_archiver.c:509
 #, c-format
 msgid "connecting to new database \"%s\"\n"
 msgstr "联接到新数据库 \"%s\"\n"
 
-#: pg_backup_archiver.c:535
+#: pg_backup_archiver.c:537
 #, c-format
 msgid "restoring %s\n"
 msgstr "正在恢复%s\n"
 
-#: pg_backup_archiver.c:549
+#: pg_backup_archiver.c:551
 #, c-format
 msgid "restoring data for table \"%s\"\n"
 msgstr "为表 \"%s\" 恢复数据\n"
 
-#: pg_backup_archiver.c:609
+#: pg_backup_archiver.c:611
 #, c-format
 msgid "executing %s %s\n"
 msgstr "执行 %s %s\n"
 
-#: pg_backup_archiver.c:642
+#: pg_backup_archiver.c:644
 #, c-format
 msgid "disabling triggers for %s\n"
 msgstr "为%s禁用触发器\n"
 
-#: pg_backup_archiver.c:668
+#: pg_backup_archiver.c:670
 #, c-format
 msgid "enabling triggers for %s\n"
 msgstr "为%s启用触发器\n"
 
-#: pg_backup_archiver.c:698
+#: pg_backup_archiver.c:700
 msgid ""
 "internal error -- WriteData cannot be called outside the context of a "
 "DataDumper routine\n"
 msgstr "内部错误 -- WriteData 不能在 DataDumper 过程的环境之外调用\n"
 
-#: pg_backup_archiver.c:854
+#: pg_backup_archiver.c:856
 msgid "large-object output not supported in chosen format\n"
 msgstr "选定的格式不支持大对象输出\n"
 
-#: pg_backup_archiver.c:908
+#: pg_backup_archiver.c:910
 #, c-format
 msgid "restored %d large object\n"
 msgid_plural "restored %d large objects\n"
 msgstr[0] "恢复%d个大对象\n"
 
-#: pg_backup_archiver.c:929
+#: pg_backup_archiver.c:931
 #, c-format
 msgid "restoring large object with OID %u\n"
 msgstr "恢复带有OID %u 的大对象\n"
 
-#: pg_backup_archiver.c:941
+#: pg_backup_archiver.c:943
 #, c-format
 msgid "could not create large object %u: %s"
 msgstr "无法创建大对象%u: %s"
 
 # fe-lobj.c:400 fe-lobj.c:483
-#: pg_backup_archiver.c:1006
+#: pg_backup_archiver.c:1005
 #, c-format
 msgid "could not open TOC file \"%s\": %s\n"
 msgstr "无法打开TOC文件 \"%s\": %s\n"
 
-#: pg_backup_archiver.c:1025
+#: pg_backup_archiver.c:1046
 #, c-format
 msgid "WARNING: line ignored: %s\n"
 msgstr "警告: 忽略的行: %s\n"
 
-#: pg_backup_archiver.c:1032
+#: pg_backup_archiver.c:1053
 #, c-format
 msgid "could not find entry for ID %d\n"
 msgstr "无法为 ID %d 找到记录\n"
 
-#: pg_backup_archiver.c:1053 pg_backup_files.c:172 pg_backup_files.c:457
+#: pg_backup_archiver.c:1074 pg_backup_files.c:172 pg_backup_files.c:457
 #, c-format
 msgid "could not close TOC file: %s\n"
 msgstr "无法关闭 TOC 文件: %s\n"
 
-#: pg_backup_archiver.c:1177 pg_backup_custom.c:181 pg_backup_files.c:130
+#: pg_backup_archiver.c:1198 pg_backup_custom.c:181 pg_backup_files.c:130
 #: pg_backup_files.c:262
 #, c-format
 msgid "could not open output file \"%s\": %s\n"
 msgstr "无法打开输出文件\"%s\": %s\n"
 
-#: pg_backup_archiver.c:1180 pg_backup_custom.c:188 pg_backup_files.c:137
+#: pg_backup_archiver.c:1201 pg_backup_custom.c:188 pg_backup_files.c:137
 #, c-format
 msgid "could not open output file: %s\n"
 msgstr "无法打开输出文件: %s\n"
 
-#: pg_backup_archiver.c:1277
+#: pg_backup_archiver.c:1298
 #, c-format
 msgid "wrote %lu byte of large object data (result = %lu)\n"
 msgid_plural "wrote %lu bytes of large object data (result = %lu)\n"
 msgstr[0] "已经写入了大对象的%lu字节(结果 = %lu)\n"
 
-#: pg_backup_archiver.c:1283
+#: pg_backup_archiver.c:1304
 #, c-format
 msgid "could not write to large object (result: %lu, expected: %lu)\n"
 msgstr "无法写入大对象 (结果: %lu, 预期: %lu)\n"
 
-#: pg_backup_archiver.c:1341 pg_backup_archiver.c:1364 pg_backup_custom.c:781
+#: pg_backup_archiver.c:1362 pg_backup_archiver.c:1385 pg_backup_custom.c:781
 #: pg_backup_custom.c:1035 pg_backup_custom.c:1049 pg_backup_files.c:432
 #: pg_backup_tar.c:586 pg_backup_tar.c:1089 pg_backup_tar.c:1382
 #, c-format
 msgid "could not write to output file: %s\n"
 msgstr "无法写到输出文件: %s\n"
 
-#: pg_backup_archiver.c:1349
+#: pg_backup_archiver.c:1370
 msgid "could not write to custom output routine\n"
 msgstr "无法写出到客户输出过程\n"
 
-#: pg_backup_archiver.c:1447
+#: pg_backup_archiver.c:1468
 msgid "Error while INITIALIZING:\n"
 msgstr "INITIALIZING 时错误:\n"
 
-#: pg_backup_archiver.c:1452
+#: pg_backup_archiver.c:1473
 msgid "Error while PROCESSING TOC:\n"
 msgstr "PROCESSING TOC 时错误:\n"
 
-#: pg_backup_archiver.c:1457
+#: pg_backup_archiver.c:1478
 msgid "Error while FINALIZING:\n"
 msgstr "FINALIZING 时错误:\n"
 
-#: pg_backup_archiver.c:1462
+#: pg_backup_archiver.c:1483
 #, c-format
 msgid "Error from TOC entry %d; %u %u %s %s %s\n"
 msgstr "错误来自 TOC 记录 %d; %u %u %s %s %s\n"
 
-#: pg_backup_archiver.c:1598
+#: pg_backup_archiver.c:1619
 #, c-format
 msgid "unexpected data offset flag %d\n"
 msgstr "意外的数据偏移标志 %d\n"
 
-#: pg_backup_archiver.c:1611
+#: pg_backup_archiver.c:1632
 msgid "file offset in dump file is too large\n"
 msgstr "在转储文件中的文件偏移量太大\n"
 
-#: pg_backup_archiver.c:1708 pg_backup_archiver.c:3009 pg_backup_custom.c:757
+#: pg_backup_archiver.c:1729 pg_backup_archiver.c:3030 pg_backup_custom.c:757
 #: pg_backup_files.c:419 pg_backup_tar.c:785
 msgid "unexpected end of file\n"
 msgstr "意外的文件结尾\n"
 
-#: pg_backup_archiver.c:1725
+#: pg_backup_archiver.c:1746
 msgid "attempting to ascertain archive format\n"
 msgstr "试图确认归档格式\n"
 
-#: pg_backup_archiver.c:1741 pg_backup_custom.c:200 pg_backup_custom.c:888
+#: pg_backup_archiver.c:1762 pg_backup_custom.c:200 pg_backup_custom.c:888
 #: pg_backup_files.c:155 pg_backup_files.c:307
 #, c-format
 msgid "could not open input file \"%s\": %s\n"
 msgstr "无法打开输入文件 \"%s\": %s\n"
 
-#: pg_backup_archiver.c:1748 pg_backup_custom.c:207 pg_backup_files.c:162
+#: pg_backup_archiver.c:1769 pg_backup_custom.c:207 pg_backup_files.c:162
 #, c-format
 msgid "could not open input file: %s\n"
 msgstr "无法打开输入文件: %s\n"
 
-#: pg_backup_archiver.c:1757
+#: pg_backup_archiver.c:1778
 #, c-format
 msgid "could not read input file: %s\n"
 msgstr "无法读取输入文件: %s\n"
 
-#: pg_backup_archiver.c:1759
+#: pg_backup_archiver.c:1780
 #, c-format
 msgid "input file is too short (read %lu, expected 5)\n"
 msgstr "输入文件太短 (读了 %lu, 预期 5)\n"
 
-#: pg_backup_archiver.c:1817
+#: pg_backup_archiver.c:1838
 msgid "input file does not appear to be a valid archive (too short?)\n"
 msgstr "输入文件看上去不象有效的归档 (太短?)\n"
 
-#: pg_backup_archiver.c:1820
+#: pg_backup_archiver.c:1841
 msgid "input file does not appear to be a valid archive\n"
 msgstr "输入文件看上去不象有效的归档\n"
 
-#: pg_backup_archiver.c:1840
+#: pg_backup_archiver.c:1861
 #, c-format
 msgid "could not close input file: %s\n"
 msgstr "无法关闭输入文件: %s\n"
 
-#: pg_backup_archiver.c:1857
+#: pg_backup_archiver.c:1878
 #, c-format
 msgid "allocating AH for %s, format %d\n"
 msgstr "为 %s 分配 AH, 格式 %d\n"
 
-#: pg_backup_archiver.c:1965
+#: pg_backup_archiver.c:1986
 #, c-format
 msgid "unrecognized file format \"%d\"\n"
 msgstr "不可识别的文件格式 \"%d\"\n"
 
-#: pg_backup_archiver.c:2087
+#: pg_backup_archiver.c:2108
 #, c-format
 msgid "entry ID %d out of range -- perhaps a corrupt TOC\n"
 msgstr "记录 ID %d 超出范围 - 可能是损坏了的 TOC\n"
 
-#: pg_backup_archiver.c:2203
+#: pg_backup_archiver.c:2224
 #, c-format
 msgid "read TOC entry %d (ID %d) for %s %s\n"
 msgstr "为 %3$s %4$s 读取 TOC 记录 %1$d (ID %2$d)\n"
 
-#: pg_backup_archiver.c:2237
+#: pg_backup_archiver.c:2258
 #, c-format
 msgid "unrecognized encoding \"%s\"\n"
 msgstr "未知编码: \"%s\"\n"
 
-#: pg_backup_archiver.c:2242
+#: pg_backup_archiver.c:2263
 #, c-format
 msgid "invalid ENCODING item: %s\n"
 msgstr "无效的ENCODING成员:%s\n"
 
-#: pg_backup_archiver.c:2260
+#: pg_backup_archiver.c:2281
 #, c-format
 msgid "invalid STDSTRINGS item: %s\n"
 msgstr "无效的STDSTRINGS成员:%s\n"
 
-#: pg_backup_archiver.c:2452
+#: pg_backup_archiver.c:2473
 #, c-format
 msgid "could not set session user to \"%s\": %s"
 msgstr "无法设置会话用户为 \"%s\": %s"
 
-#: pg_backup_archiver.c:2790 pg_backup_archiver.c:2940
+#: pg_backup_archiver.c:2811 pg_backup_archiver.c:2961
 #, c-format
 msgid "WARNING: don't know how to set owner for object type %s\n"
 msgstr "警告: 不知道如何为对象类型%s设置属主\n"
 
-#: pg_backup_archiver.c:2972
+#: pg_backup_archiver.c:2993
 msgid ""
 "WARNING: requested compression not available in this installation -- archive "
 "will be uncompressed\n"
 msgstr "警告: 所要求的压缩无法在本次安装中获取 - 归档将不被压缩\n"
 
-#: pg_backup_archiver.c:3012
+#: pg_backup_archiver.c:3033
 msgid "did not find magic string in file header\n"
 msgstr "在文件头中没有找到魔术字串\n"
 
-#: pg_backup_archiver.c:3025
+#: pg_backup_archiver.c:3046
 #, c-format
 msgid "unsupported version (%d.%d) in file header\n"
 msgstr "在文件头中有不支持的版本 (%d.%d)\n"
 
-#: pg_backup_archiver.c:3030
+#: pg_backup_archiver.c:3051
 #, c-format
 msgid "sanity check on integer size (%lu) failed\n"
 msgstr "整数尺寸 (%lu) 的健全检查失败\n"
 
-#: pg_backup_archiver.c:3034
+#: pg_backup_archiver.c:3055
 msgid ""
 "WARNING: archive was made on a machine with larger integers, some operations "
 "might fail\n"
 msgstr "警告: 归档不是在支持更大范围整数的主机上产生的, 有些操作可能失败\n"
 
-#: pg_backup_archiver.c:3044
+#: pg_backup_archiver.c:3065
 #, c-format
 msgid "expected format (%d) differs from format found in file (%d)\n"
 msgstr "预期的格式 (%d) 和在文件里找到的格式 (%d) 不同\n"
 
-#: pg_backup_archiver.c:3060
+#: pg_backup_archiver.c:3081
 msgid ""
 "WARNING: archive is compressed, but this installation does not support "
 "compression -- no data will be available\n"
 msgstr "警告: 归档是压缩过的, 但是当前安装不支持压缩 - 数据将不可使用\n"
 
-#: pg_backup_archiver.c:3078
+#: pg_backup_archiver.c:3099
 msgid "WARNING: invalid creation date in header\n"
 msgstr "警告: 在头中的创建日期无效\n"
 
-#: pg_backup_archiver.c:3175
+#: pg_backup_archiver.c:3197
 msgid "entering restore_toc_entries_parallel\n"
 msgstr "正在进入restore_toc_entries_parallel\n"
 
 # input.c:213
-#: pg_backup_archiver.c:3179
+#: pg_backup_archiver.c:3201
 msgid "parallel restore is not supported with this archive file format\n"
 msgstr "不支持以这种归档文件格式进行并行恢复\n"
 
-#: pg_backup_archiver.c:3183
+#: pg_backup_archiver.c:3205
 msgid ""
 "parallel restore is not supported with archives made by pre-8.0 pg_dump\n"
 msgstr "不支持使用8.0版本以前的pg_dump命令产生的存档文件进行并行恢复\n"
 
-#: pg_backup_archiver.c:3205
+#: pg_backup_archiver.c:3246
 #, c-format
 msgid "processing item %d %s %s\n"
 msgstr "正在处理成员%d %s %s\n"
 
-#: pg_backup_archiver.c:3266
+#: pg_backup_archiver.c:3322
 msgid "entering main parallel loop\n"
 msgstr "正在进入主并行循环\n"
 
-#: pg_backup_archiver.c:3280
+#: pg_backup_archiver.c:3336
 #, c-format
 msgid "skipping item %d %s %s\n"
 msgstr "忽略成员%d %s %s\n"
 
-#: pg_backup_archiver.c:3296
+#: pg_backup_archiver.c:3352
 #, c-format
 msgid "launching item %d %s %s\n"
 msgstr "正在启动成员%d %s %s\n"
 
-#: pg_backup_archiver.c:3333
+#: pg_backup_archiver.c:3389
 #, c-format
 msgid "worker process crashed: status %d\n"
 msgstr "工作进程崩溃: 状态 %d\n"
 
-#: pg_backup_archiver.c:3338
+#: pg_backup_archiver.c:3394
 msgid "finished main parallel loop\n"
 msgstr "已完成主并行循环\n"
 
-#: pg_backup_archiver.c:3356
+#: pg_backup_archiver.c:3412
 #, c-format
 msgid "processing missed item %d %s %s\n"
 msgstr "正在处理丢失的成员%d %s %s\n"
 
-#: pg_backup_archiver.c:3382
+#: pg_backup_archiver.c:3438
 msgid "parallel_restore should not return\n"
 msgstr "parallel_restore不应返回\n"
 
 # fe-connect.c:891
-#: pg_backup_archiver.c:3388
+#: pg_backup_archiver.c:3444
 #, c-format
 msgid "could not create worker process: %s\n"
 msgstr "无法创建工作进程: %s\n"
 
 # fe-connect.c:891
-#: pg_backup_archiver.c:3396
+#: pg_backup_archiver.c:3452
 #, c-format
 msgid "could not create worker thread: %s\n"
 msgstr "无法创建工作线程: %s\n"
 
-#: pg_backup_archiver.c:3620
+#: pg_backup_archiver.c:3676
 msgid "no item ready\n"
 msgstr "没有成员准备好\n"
 
-#: pg_backup_archiver.c:3715
+#: pg_backup_archiver.c:3771
 msgid "could not find slot of finished worker\n"
 msgstr "无法找到已完成的工作进程的位置\n"
 
-#: pg_backup_archiver.c:3717
+#: pg_backup_archiver.c:3773
 #, c-format
 msgid "finished item %d %s %s\n"
 msgstr "已完成的成员%d %s %s\n"
 
-#: pg_backup_archiver.c:3730
+#: pg_backup_archiver.c:3786
 #, c-format
 msgid "worker process failed: exit code %d\n"
 msgstr "子进程已退出, 退出码为 %d\n"
 
-#: pg_backup_archiver.c:3882
+#: pg_backup_archiver.c:3982
 #, c-format
 msgid "transferring dependency %d -> %d to %d\n"
 msgstr "传输依赖关系从%d -> %d 到%d\n"
 
-#: pg_backup_archiver.c:3956
+#: pg_backup_archiver.c:4051
 #, c-format
 msgid "reducing dependencies for %d\n"
 msgstr "为%d减少依赖关系\n"
 
-#: pg_backup_archiver.c:4014
+#: pg_backup_archiver.c:4100
 #, c-format
 msgid "table \"%s\" could not be created, will not restore its data\n"
 msgstr "无法创建表\"%s\" , 这样无法恢复它的数据\n"

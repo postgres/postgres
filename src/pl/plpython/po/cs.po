@@ -1,0 +1,343 @@
+# LANGUAGE message translation file for plpython
+# Copyright (C) 2011 PostgreSQL Global Development Group
+# This file is distributed under the same license as the PostgreSQL package.
+#
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2011.
+msgid ""
+msgstr ""
+"Project-Id-Version: PostgreSQL 9.0\n"
+"Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
+"POT-Creation-Date: 2011-09-03 21:05+0000\n"
+"PO-Revision-Date: 2011-09-06 12:33+0200\n"
+"Last-Translator: \n"
+"Language-Team: Czech <kde-i18n-doc@kde.org>\n"
+"Language: \n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=3; plural=(n==1) ? 0 : (n>=2 && n<=4) ? 1 : 2;\n"
+"X-Generator: Lokalize 1.2\n"
+
+#: plpython.c:418
+#, c-format
+msgid "PL/Python function \"%s\""
+msgstr "PL/Python funkce \"%s\""
+
+#: plpython.c:425
+msgid "PL/Python anonymous code block"
+msgstr "PL/Python anonymní blok kódu"
+
+#: plpython.c:432
+msgid "while modifying trigger row"
+msgstr "během modifikace řádku triggeru"
+
+#: plpython.c:439
+msgid "while creating return value"
+msgstr "během vytváření návratové hodnoty"
+
+#: plpython.c:608 plpython.c:634
+msgid "unexpected return value from trigger procedure"
+msgstr "neočekávaná návratová hodnota z trigger procedury"
+
+#: plpython.c:609
+msgid "Expected None or a string."
+msgstr "Očekáváno None nebo řetězec."
+
+#: plpython.c:624
+msgid ""
+"PL/Python trigger function returned \"MODIFY\" in a DELETE trigger -- ignored"
+msgstr ""
+"PL/Python trigger funkce vrátila \"MODIFY\" v DELETE triggeru -- ignorováno"
+
+#: plpython.c:635
+msgid "Expected None, \"OK\", \"SKIP\", or \"MODIFY\"."
+msgstr "Očekáváno None, \"OK\", \"SKIP\", nebo \"MODIFY\"."
+
+#: plpython.c:687
+msgid "TD[\"new\"] deleted, cannot modify row"
+msgstr "TD[\"new\"] smazáno, nelze modifikovat řádek"
+
+#: plpython.c:690
+msgid "TD[\"new\"] is not a dictionary"
+msgstr "TD[\"new\"] není slovník"
+
+#: plpython.c:714
+#, c-format
+msgid "TD[\"new\"] dictionary key at ordinal position %d is not a string"
+msgstr "TD[\"new\"] klíč slovníku na pozici %d není řetězec"
+
+#: plpython.c:720
+#, c-format
+msgid ""
+"key \"%s\" found in TD[\"new\"] does not exist as a column in the triggering "
+"row"
+msgstr ""
+"klíč \"%s\" nalezený v TD[\"new\"] neexistuje jako sloupec v řádku pro který "
+"se spustil trigger"
+
+#: plpython.c:816
+msgid "could not create new dictionary while building trigger arguments"
+msgstr "během vytváření argumentů triggeru nelze vytvářet nový slovník"
+
+#: plpython.c:1022
+msgid "unsupported set function return mode"
+msgstr "nepodporovaný návratový mód funkce vracející tabulku"
+
+#: plpython.c:1023
+msgid ""
+"PL/Python set-returning functions only support returning only value per call."
+msgstr ""
+"PL/Python funkce vracející tabulku podporují pouze vracení hodnoty pro každé "
+"volání."
+
+#: plpython.c:1035
+msgid "returned object cannot be iterated"
+msgstr "přes vrácený objekt nelze iterovat"
+
+#: plpython.c:1036
+msgid "PL/Python set-returning functions must return an iterable object."
+msgstr "PL/Python funkce vracející tabulku musí vracet iterovatelný objekt."
+
+#: plpython.c:1063
+msgid "error fetching next item from iterator"
+msgstr "chyba při načítání další položky z iterátoru"
+
+#: plpython.c:1098
+msgid "PL/Python function with return type \"void\" did not return None"
+msgstr ""
+"PL/Python funkce s návratovým typem \"void\" nevrátila hodnotu \"None\""
+
+#: plpython.c:1253
+msgid "PyList_SetItem() failed, while setting up arguments"
+msgstr "volání PyList_SetItem() selhalo během vytváření argumentů"
+
+#: plpython.c:1257
+msgid "PyDict_SetItemString() failed, while setting up arguments"
+msgstr "volání PyDict_SetItemString() selhalo během přípravy argumentů"
+
+#: plpython.c:1326
+msgid "PyCObject_AsVoidPtr() failed"
+msgstr "volání PyCObject_AsVoidPtr() selhalo"
+
+#: plpython.c:1434
+msgid "trigger functions can only be called as triggers"
+msgstr ""
+"funkce pro obsluhu triggerů mohou být volané pouze prostřednictvím triggerů"
+
+#: plpython.c:1438 plpython.c:1822
+#, c-format
+msgid "PL/Python functions cannot return type %s"
+msgstr "PL/Python funkce nemohou vracet typ %s"
+
+#: plpython.c:1516
+#, c-format
+msgid "PL/Python functions cannot accept type %s"
+msgstr "PL/Python funkce nepodporují typ %s"
+
+#: plpython.c:1555
+msgid "PyCObject_FromVoidPtr() failed"
+msgstr "volání PyCObject_FromVoidPtr() selhalo"
+
+#: plpython.c:1613
+#, c-format
+msgid "could not compile PL/Python function \"%s\""
+msgstr "nelze zkompiloval PL/Python funkci \"%s\""
+
+#: plpython.c:1824
+msgid "PL/Python does not support conversion to arrays of row types."
+msgstr "PL/Python nepodporuje konverzi na pole řádkových typů."
+
+#: plpython.c:2027
+msgid "cannot convert multidimensional array to Python list"
+msgstr "vícerozměrné pole nelze převést na Python seznam (list)"
+
+#: plpython.c:2028
+msgid "PL/Python only supports one-dimensional arrays."
+msgstr "PL/Python podporuje pouze jednorozměrná pole."
+
+#: plpython.c:2067
+msgid "could not create new dictionary"
+msgstr "nepodařilo se vytvořit nový slovník"
+
+#: plpython.c:2139
+msgid "could not create bytes representation of Python object"
+msgstr "nepodařilo se vytvořit bytovou reprezentaci Python objektu"
+
+#: plpython.c:2193
+msgid "could not create string representation of Python object"
+msgstr "nepodařilo se vytvořit řetězcovou reprezentaci Python objektu"
+
+#: plpython.c:2204
+msgid ""
+"could not convert Python object into cstring: Python string representation "
+"appears to contain null bytes"
+msgstr ""
+"nepodařilo se převést Python objekt na cstring: zdá se že řetězcová "
+"reprezentace Python objektu obsahuje null byty"
+
+#: plpython.c:2238
+msgid ""
+"return value of function with array return type is not a Python sequence"
+msgstr ""
+"návratová hodnota funkce s návratovým typem pole není Python posloupnost "
+"(sequence)"
+
+#: plpython.c:2313
+#, c-format
+msgid "key \"%s\" not found in mapping"
+msgstr "klíč \"%s\" nenalezen v mapování"
+
+#: plpython.c:2314
+msgid ""
+"To return null in a column, add the value None to the mapping with the key "
+"named after the column."
+msgstr ""
+"Pro vrácení hodnoty null ve sloupci, přidejte do mapování hodnotu None s "
+"klíčem"
+"pojmenovaným jako sloupec."
+
+#: plpython.c:2357
+msgid "length of returned sequence did not match number of columns in row"
+msgstr "délka vrácené posloupnosti neodpovídala počtu sloupců v řádku"
+
+#: plpython.c:2450
+#, c-format
+msgid "attribute \"%s\" does not exist in Python object"
+msgstr "atribut \"%s\" v Python objektu neexistuje"
+
+#: plpython.c:2451
+msgid ""
+"To return null in a column, let the returned object have an attribute named "
+"after column with value None."
+msgstr ""
+"Pro vrácení null ve sloupci, nechť vracený objekt má atribut pojmenovaný po "
+"sloupci"
+"s hodnotou None."
+
+#: plpython.c:2685
+msgid "plan.status takes no arguments"
+msgstr "plan.status nepřijímá žádné argumenty"
+
+#: plpython.c:2804 plpython.c:2947
+msgid "transaction aborted"
+msgstr "transakce přerušena"
+
+#: plpython.c:2811
+msgid "invalid arguments for plpy.prepare"
+msgstr "neplatné argumenty pro plpy.prepare"
+
+#: plpython.c:2818
+msgid "second argument of plpy.prepare must be a sequence"
+msgstr "druhý argument pro plpy.prepare musí být posloupnost"
+
+#: plpython.c:2868
+#, c-format
+msgid "plpy.prepare: type name at ordinal position %d is not a string"
+msgstr "plpy.prepare: název typu na pozici %d není řetězec"
+
+#: plpython.c:2895
+msgid "plpy.prepare does not support composite types"
+msgstr "plpy.prepare nepodporuje složené typy"
+
+#: plpython.c:2924
+msgid "unrecognized error in PLy_spi_prepare"
+msgstr "nerozpoznaná chyba v PLy_spi_prepare"
+
+#: plpython.c:2960
+msgid "plpy.execute expected a query or a plan"
+msgstr "plpy.execute očekávala dotaz nebo plán"
+
+#: plpython.c:2977
+msgid "plpy.execute takes a sequence as its second argument"
+msgstr "plpy.execute jako druhý argument očekává posloupnost"
+
+#: plpython.c:2993
+msgid "could not execute plan"
+msgstr "nelze spustit plán"
+
+#: plpython.c:2996
+#, c-format
+msgid "Expected sequence of %d argument, got %d: %s"
+msgid_plural "Expected sequence of %d arguments, got %d: %s"
+msgstr[0] "Očekávaná posloupnost %d argumentu, přišlo %d: %s"
+msgstr[1] "Očekávaná posloupnost %d argumentů, přišlo %d: %s"
+msgstr[2] "Očekávaná posloupnost %d argumentů, přišlo %d: %s"
+
+#: plpython.c:3075
+msgid "unrecognized error in PLy_spi_execute_plan"
+msgstr "nerozpoznaná chyba v PLy_spi_execute_plan"
+
+#: plpython.c:3094
+#, c-format
+msgid "SPI_execute_plan failed: %s"
+msgstr "volání SPI_execute_plan selhalo: %s"
+
+#: plpython.c:3121
+msgid "unrecognized error in PLy_spi_execute_query"
+msgstr "nerozpoznaná chyba v PLy_spi_execute_query"
+
+#: plpython.c:3130
+#, c-format
+msgid "SPI_execute failed: %s"
+msgstr "volání SPI_execute selhalo: %s"
+
+#: plpython.c:3187
+msgid "unrecognized error in PLy_spi_execute_fetch_result"
+msgstr "nerozpoznaná chyba v PLy_spi_execute_fetch_result"
+
+#: plpython.c:3247
+msgid "Python major version mismatch in session"
+msgstr "Rozpor mezi hlavními verzemi Pythonu v session"
+
+#: plpython.c:3248
+#, c-format
+msgid ""
+"This session has previously used Python major version %d, and it is now "
+"attempting to use Python major version %d."
+msgstr ""
+"Tato session již dříve používala Python s hlavní verzí %d, a nyní se pokouší"
+"použív Python s hlavní verzí %d."
+
+#: plpython.c:3250
+msgid "Start a new session to use a different Python major version."
+msgstr "Spouští se nová session pro použití jiné hlavní verze Pythonu."
+
+#: plpython.c:3265
+msgid "untrapped error in initialization"
+msgstr "nezachycená chyba v inicializaci"
+
+#: plpython.c:3268
+msgid "could not create procedure cache"
+msgstr "nepodařilo se vytvořit procedure cache"
+
+#: plpython.c:3280
+msgid "could not import \"__main__\" module"
+msgstr "nepodařilo se naimportovat \"__main__\" modul"
+
+#: plpython.c:3287
+msgid "could not initialize globals"
+msgstr "nepodařilo se inicializovat globální proměnné (globals)"
+
+#: plpython.c:3405
+msgid "could not parse error message in plpy.elog"
+msgstr "nepodařilo se naparsovat chybovou hlášku v plpy.elog"
+
+#: plpython.c:3534 plpython.c:3538
+#, c-format
+msgid "PL/Python: %s"
+msgstr "PL/Python: %s"
+
+#: plpython.c:3535
+#, c-format
+msgid "%s"
+msgstr "%s"
+
+#: plpython.c:3648
+msgid "out of memory"
+msgstr "nedostatek paměti"
+
+#: plpython.c:3702
+msgid "could not convert Python Unicode object to PostgreSQL server encoding"
+msgstr "nelze převést Python Unicode objekt do serverového kódování PostgreSQL"
+
+

@@ -1,0 +1,172 @@
+# Copyright (C) 2011 PostgreSQL Global Development Group
+# This file is distributed under the same license as the PostgreSQL package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2011.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: \n"
+"POT-Creation-Date: \n"
+"PO-Revision-Date: \n"
+"Last-Translator: Changjian Yuan <dev-escalations@enterprisedb.com>\n"
+"Language-Team: \n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+
+#: connect.c:226
+msgid "empty message text"
+msgstr "빈 메시지 텍스트"
+
+#: connect.c:381
+#: connect.c:407
+#: connect.c:520
+msgid "<DEFAULT>"
+msgstr "<DEFAULT>"
+
+#: error.c:29
+#, c-format
+msgid "no data found on line %d"
+msgstr "%d번째 줄에 데이터 없음"
+
+#: error.c:39
+#, c-format
+msgid "out of memory on line %d"
+msgstr "%d번째 줄에 메모리 부족"
+
+#: error.c:49
+#, c-format
+msgid "unsupported type \"%s\" on line %d"
+msgstr "\"%s\" 형식이 %d번째 줄에서 지원되지 않음"
+
+#: error.c:59
+#, c-format
+msgid "too many arguments on line %d"
+msgstr "%d번째 줄에 인수가 너무 많음"
+
+#: error.c:69
+#, c-format
+msgid "too few arguments on line %d"
+msgstr "%d번째 줄에 인수가 너무 적음"
+
+#: error.c:79
+#, c-format
+msgid "invalid input syntax for type int: \"%s\", on line %d"
+msgstr "정수 유형에 대한 잘못된 입력 구문: \"%s\", %d번째 줄"
+
+#: error.c:89
+#, c-format
+msgid "invalid input syntax for type unsigned int: \"%s\", on line %d"
+msgstr "부호 없는 정수 유형에 대한 잘못된 입력 구문: \"%s\", %d번째 줄"
+
+#: error.c:99
+#, c-format
+msgid "invalid input syntax for floating-point type: \"%s\", on line %d"
+msgstr "부동 소수점 유형에 대한 잘못된 입력 구문: \"%s\", %d번째 줄"
+
+#: error.c:110
+#, c-format
+msgid "invalid syntax for type boolean: \"%s\", on line %d"
+msgstr "부울 유형에 대한 잘못된 구문: \"%s\", %d번째 줄"
+
+#: error.c:118
+#, c-format
+msgid "could not convert boolean value: size mismatch, on line %d"
+msgstr "부울 값을 변환할 수 없음: 크기 불일치, %d번째 줄"
+
+#: error.c:128
+#, c-format
+msgid "empty query on line %d"
+msgstr "%d번째 줄의 쿼리가 비어 있음"
+
+#: error.c:138
+#, c-format
+msgid "null value without indicator on line %d"
+msgstr "%d번째 줄의 null 값에 지표 없음"
+
+#: error.c:148
+#, c-format
+msgid "variable does not have an array type on line %d"
+msgstr "%d번째 줄의 변수에 배열 형식 없음"
+
+#: error.c:158
+#, c-format
+msgid "data read from server is not an array on line %d"
+msgstr "서버에서 읽은 %d번째 줄의 데이터가 배열이 아님"
+
+#: error.c:168
+#, c-format
+msgid "inserting an array of variables is not supported on line %d"
+msgstr "%d번째 줄에서 변수 배열 삽입이 지원되지 않음"
+
+#: error.c:178
+#, c-format
+msgid "connection \"%s\" does not exist on line %d"
+msgstr "\"%s\" 연결이 %d번째 줄에 없음"
+
+#: error.c:188
+#, c-format
+msgid "not connected to connection \"%s\" on line %d"
+msgstr "\"%s\" 연결에 연결되지 않음(%d번째 줄)"
+
+#: error.c:198
+#, c-format
+msgid "invalid statement name \"%s\" on line %d"
+msgstr "문 이름 \"%s\"이(가) %d번째 줄에서 잘못됨"
+
+#: error.c:208
+#, c-format
+msgid "descriptor \"%s\" not found on line %d"
+msgstr "\"%s\" 설명자가 %d번째 줄에 없음"
+
+#: error.c:218
+#, c-format
+msgid "descriptor index out of range on line %d"
+msgstr "%d번째 줄에서 설명자 인덱스가 범위를 벗어남"
+
+#: error.c:228
+#, c-format
+msgid "unrecognized descriptor item \"%s\" on line %d"
+msgstr "설명자 항목 \"%s\"을(를) %d번째 줄에서 인식할 수 없음"
+
+#: error.c:238
+#, c-format
+msgid "variable does not have a numeric type on line %d"
+msgstr "%d번째 줄의 변수에 숫자 형식이 없음"
+
+#: error.c:248
+#, c-format
+msgid "variable does not have a character type on line %d"
+msgstr "%d번째 줄의 변수에 문자 형식이 없음"
+
+#: error.c:258
+#, c-format
+msgid "error in transaction processing on line %d"
+msgstr "%d번째 줄에서 트랙잭션 처리 중 오류 발생"
+
+#: error.c:268
+#, c-format
+msgid "could not connect to database \"%s\" on line %d"
+msgstr "\"%s\" 데이터베이스에 연결할 수 없음(%d번째 줄)"
+
+#: error.c:278
+#, c-format
+msgid "SQL error %d on line %d"
+msgstr "SQL 오류 %d 발생(%d번째 줄)"
+
+#: error.c:318
+msgid "the connection to the server was lost"
+msgstr "서버에 대한 연결이 끊어짐"
+
+#: error.c:405
+#, c-format
+msgid "SQL error: %s\n"
+msgstr "SQL 오류: %s\n"
+
+#: execute.c:1912
+msgid "<empty>"
+msgstr "<empty>"
+
+#: misc.c:113
+msgid "NULL"
+msgstr "Null"
+

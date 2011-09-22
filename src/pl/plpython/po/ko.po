@@ -1,0 +1,310 @@
+# Copyright (C) 2011 PostgreSQL Global Development Group
+# This file is distributed under the same license as the PostgreSQL package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2011.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: PostgreSQL 9.0\n"
+"Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
+"POT-Creation-Date: 2011-06-20 12:54+0000\n"
+"PO-Revision-Date: 2011-07-29 16:47+0800\n"
+"Last-Translator: Changjian Yuan <dev-escalations@enterprisedb.com>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"Language: \n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=1; plural=0;\n"
+
+#: plpython.c:418
+#, c-format
+msgid "PL/Python function \"%s\""
+msgstr "PL/Python 함수 \"%s\""
+
+#: plpython.c:425
+msgid "PL/Python anonymous code block"
+msgstr "PL/Python 익명 코드 블록"
+
+#: plpython.c:432
+msgid "while modifying trigger row"
+msgstr "트리거 행 수정 중"
+
+#: plpython.c:439
+msgid "while creating return value"
+msgstr "반환 값 작성 중"
+
+#: plpython.c:608
+#: plpython.c:634
+msgid "unexpected return value from trigger procedure"
+msgstr "트리거 프로시저의 예기치 않은 반환 값"
+
+#: plpython.c:609
+msgid "Expected None or a string."
+msgstr "None 또는 문자열이 필요합니다."
+
+#: plpython.c:624
+msgid "PL/Python trigger function returned \"MODIFY\" in a DELETE trigger -- ignored"
+msgstr "PL/Python 트리거 함수가 DELETE 트리거에서 \"MODIFY\" 반환 -- 무시됨"
+
+#: plpython.c:635
+msgid "Expected None, \"OK\", \"SKIP\", or \"MODIFY\"."
+msgstr "None, \"OK\", \"SKIP\" 또는 \"MODIFY\"가 필요합니다."
+
+#: plpython.c:687
+msgid "TD[\"new\"] deleted, cannot modify row"
+msgstr "TD[\"new\"]가 삭제되어 행을 수정할 수 없음"
+
+#: plpython.c:690
+msgid "TD[\"new\"] is not a dictionary"
+msgstr "TD[\"new\"]는 사전이 아님"
+
+#: plpython.c:714
+#, c-format
+msgid "TD[\"new\"] dictionary key at ordinal position %d is not a string"
+msgstr "서수 위치 %d의 TD[\"new\"] 사전 키가 문자열이 아님"
+
+#: plpython.c:720
+#, c-format
+msgid "key \"%s\" found in TD[\"new\"] does not exist as a column in the triggering row"
+msgstr "TD[\"new\"]에서 검색된 \"%s\" 키가 트리거하는 행에서 열이 아님"
+
+#: plpython.c:816
+msgid "could not create new dictionary while building trigger arguments"
+msgstr "트리거 인수를 작성하는 동안 새 사전을 만들 수 없음"
+
+#: plpython.c:1022
+msgid "unsupported set function return mode"
+msgstr "지원되지 않는 집합 함수 반환 모드"
+
+#: plpython.c:1023
+msgid "PL/Python set-returning functions only support returning only value per call."
+msgstr "PL/Python 집합 반환 함수는 호출당 값만 반환할 수 있습니다."
+
+#: plpython.c:1035
+msgid "returned object cannot be iterated"
+msgstr "반환된 개체를 반복할 수 없음"
+
+#: plpython.c:1036
+msgid "PL/Python set-returning functions must return an iterable object."
+msgstr "PL/Python 집합 반환 함수는 반복 가능한 개체를 반환해야 합니다."
+
+#: plpython.c:1063
+msgid "error fetching next item from iterator"
+msgstr "반복기에서 다음 항목을 인출하는 동안 오류 발생"
+
+#: plpython.c:1098
+msgid "PL/Python function with return type \"void\" did not return None"
+msgstr "반환 형식이 \"void\"인 PL/Python 함수가 None을 반환하지 않음"
+
+#: plpython.c:1253
+msgid "PyList_SetItem() failed, while setting up arguments"
+msgstr "인수 설정 중 PyList_SetItem() 실패"
+
+#: plpython.c:1257
+msgid "PyDict_SetItemString() failed, while setting up arguments"
+msgstr "인수 설정 중 PyDict_SetItemString() 실패"
+
+#: plpython.c:1326
+msgid "PyCObject_AsVoidPtr() failed"
+msgstr "PyCObject_AsVoidPtr() 실패"
+
+#: plpython.c:1434
+msgid "trigger functions can only be called as triggers"
+msgstr "트리거 함수는 트리거로만 호출될 수 있음"
+
+#: plpython.c:1438
+#: plpython.c:1822
+#, c-format
+msgid "PL/Python functions cannot return type %s"
+msgstr "PL/Python 함수는 %s 형식을 반환할 수 없음"
+
+#: plpython.c:1516
+#, c-format
+msgid "PL/Python functions cannot accept type %s"
+msgstr "PL/Python 함수에 %s 형식을 사용할 수 없음"
+
+#: plpython.c:1555
+msgid "PyCObject_FromVoidPtr() failed"
+msgstr "PyCObject_FromVoidPtr() 실패"
+
+#: plpython.c:1613
+#, c-format
+msgid "could not compile PL/Python function \"%s\""
+msgstr "PL/Python 함수 \"%s\"을(를) 컴파일할 수 없음"
+
+#: plpython.c:1824
+msgid "PL/Python does not support conversion to arrays of row types."
+msgstr "PL/Python에서는 행 형식의 배열로 변환하는 것을 지원하지 않습니다."
+
+#: plpython.c:2027
+msgid "cannot convert multidimensional array to Python list"
+msgstr "다차원 배열을 Python 목록으로 변환할 수 없음"
+
+#: plpython.c:2028
+msgid "PL/Python only supports one-dimensional arrays."
+msgstr "PL/Python에서는 1차원 배열만 지원합니다."
+
+#: plpython.c:2067
+msgid "could not create new dictionary"
+msgstr "새 사전을 만들 수 없음"
+
+#: plpython.c:2139
+msgid "could not create bytes representation of Python object"
+msgstr "Python 개체의 바이트 표현을 만들 수 없음"
+
+#: plpython.c:2193
+msgid "could not create string representation of Python object"
+msgstr "Python 개체의 문자열 표현을 만들 수 없음"
+
+#: plpython.c:2204
+msgid "could not convert Python object into cstring: Python string representation appears to contain null bytes"
+msgstr "Python 개체는 cstring으로 변환할 수 없음: Python 문자열 표현이 null 바이트를 포함하는 것으로 나타남"
+
+#: plpython.c:2238
+msgid "return value of function with array return type is not a Python sequence"
+msgstr "배열 반환 형식의 함수 반환 값이 Python 시퀀스가 아님"
+
+#: plpython.c:2313
+#, c-format
+msgid "key \"%s\" not found in mapping"
+msgstr "매핑에서 \"%s\" 키를 찾지 못함"
+
+#: plpython.c:2314
+msgid "To return null in a column, add the value None to the mapping with the key named after the column."
+msgstr "열에 null을 반환하려면 열과 이름이 같은 키가 있는 매핑에 None 값을 추가하십시오."
+
+#: plpython.c:2357
+msgid "length of returned sequence did not match number of columns in row"
+msgstr "반환된 시퀀스 길이가 행의 열 수와 일치하지 않음"
+
+#: plpython.c:2450
+#, c-format
+msgid "attribute \"%s\" does not exist in Python object"
+msgstr "\"%s\" 특성이 Python 개체에 없음"
+
+#: plpython.c:2451
+msgid "To return null in a column, let the returned object have an attribute named after column with value None."
+msgstr "열에 null을 반환하려면 반환된 개체에 값이 None인 열과 이름이 같은 특성이 있어야 합니다."
+
+#: plpython.c:2685
+msgid "plan.status takes no arguments"
+msgstr "plan.status가 인수를 사용하지 않음"
+
+#: plpython.c:2804
+#: plpython.c:2947
+msgid "transaction aborted"
+msgstr "트랜잭션이 중단됨"
+
+#: plpython.c:2811
+msgid "invalid arguments for plpy.prepare"
+msgstr "plpy.prepare에 대해 잘못된 인수"
+
+#: plpython.c:2818
+msgid "second argument of plpy.prepare must be a sequence"
+msgstr "plpy.prepare의 두 번째 인수가 시퀀스여야 함"
+
+#: plpython.c:2868
+#, c-format
+msgid "plpy.prepare: type name at ordinal position %d is not a string"
+msgstr "plpy.prepare: 서수 위치 %d의 형식 이름이 문자열이 아님"
+
+#: plpython.c:2895
+msgid "plpy.prepare does not support composite types"
+msgstr "plpy.prepare가 복합 형식을 지원하지 않음"
+
+#: plpython.c:2924
+msgid "unrecognized error in PLy_spi_prepare"
+msgstr "PLy_spi_prepare에 인식할 수 없는 오류 발생"
+
+#: plpython.c:2960
+msgid "plpy.execute expected a query or a plan"
+msgstr "plpy.execute에 쿼리 또는 계획 필요"
+
+#: plpython.c:2977
+msgid "plpy.execute takes a sequence as its second argument"
+msgstr "plpy.execute가 두 번째 인수로 시퀀스 사용"
+
+#: plpython.c:2993
+msgid "could not execute plan"
+msgstr "계획을 실행할 수 없음"
+
+#: plpython.c:2996
+#, c-format
+msgid "Expected sequence of %d argument, got %d: %s"
+msgid_plural "Expected sequence of %d arguments, got %d: %s"
+msgstr[0] "%d개의 인수 시퀀스가 필요하지만 %d개 가져옴: %s"
+
+#: plpython.c:3075
+msgid "unrecognized error in PLy_spi_execute_plan"
+msgstr "PLy_spi_execute_plan에 인식할 수 없는 오류 발생"
+
+#: plpython.c:3094
+#, c-format
+msgid "SPI_execute_plan failed: %s"
+msgstr "SPI_execute_plan 실패: %s"
+
+#: plpython.c:3121
+msgid "unrecognized error in PLy_spi_execute_query"
+msgstr "PLy_spi_execute_query에 인식할 수 없는 오류 발생"
+
+#: plpython.c:3130
+#, c-format
+msgid "SPI_execute failed: %s"
+msgstr "SPI_execute 실패: %s"
+
+#: plpython.c:3187
+msgid "unrecognized error in PLy_spi_execute_fetch_result"
+msgstr "PLy_spi_execute_fetch_result에 인식할 수 없는 오류 발생"
+
+#: plpython.c:3241
+msgid "Python major version mismatch in session"
+msgstr "Python 주 버전이 세션에서 불일치함"
+
+#: plpython.c:3242
+#, c-format
+msgid "This session has previously used Python major version %d, and it is now attempting to use Python major version %d."
+msgstr "이 세션은 이전에 Python 주 버전 %d을(를) 사용했지만 이제는 Python 주 버전 %d을(를) 사용하려고 합니다."
+
+#: plpython.c:3244
+msgid "Start a new session to use a different Python major version."
+msgstr "다른 Python 주 버전을 사용하려면 새 세션을 시작하십시오."
+
+#: plpython.c:3259
+msgid "untrapped error in initialization"
+msgstr "초기화에 트래핑되지 않는 오류 발생"
+
+#: plpython.c:3262
+msgid "could not create procedure cache"
+msgstr "프로시저 캐시를 만들 수 없음"
+
+#: plpython.c:3274
+msgid "could not import \"__main__\" module"
+msgstr "\"__main__\" 모듈을 가져올 수 없음"
+
+#: plpython.c:3281
+msgid "could not initialize globals"
+msgstr "전역 변수를 초기화할 수 없음"
+
+#: plpython.c:3399
+msgid "could not parse error message in plpy.elog"
+msgstr "plpy.elog의 오류 메시지를 구문 분석할 수 없음"
+
+#: plpython.c:3528
+#: plpython.c:3532
+#, c-format
+msgid "PL/Python: %s"
+msgstr "PL/Python: %s"
+
+#: plpython.c:3529
+#, c-format
+msgid "%s"
+msgstr "%s"
+
+#: plpython.c:3642
+msgid "out of memory"
+msgstr "메모리 부족"
+
+#: plpython.c:3696
+msgid "could not convert Python Unicode object to PostgreSQL server encoding"
+msgstr "Python Unicode 개체를 PostgreSQL 서버 인코딩으로 변환할 수 없음"
+

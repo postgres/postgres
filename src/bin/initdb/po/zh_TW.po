@@ -1,275 +1,284 @@
-# 2004-12-13 Zhenbang Wei <forth@zbwei.net>
 #
 msgid ""
 msgstr ""
 "Project-Id-Version: PostgreSQL 8.4\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
-"POT-Creation-Date: 2010-09-09 16:27+0000\n"
-"PO-Revision-Date: 2010-09-24 17:05-0400\n"
-"Last-Translator: EnterpriseDB translation team <dev-escalations@enterprisedb.com>\n"
+"POT-Creation-Date: 2011-06-20 12:54+0000\n"
+"PO-Revision-Date: 2011-07-29 16:01+0800\n"
+"Last-Translator: Changjian Yuan <dev-escalations@enterprisedb.com>\n"
 "Language-Team: EnterpriseDB translation team <dev-escalations@enterprisedb.com>\n"
+"Language: \n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=1; plural=0;\n"
 
-#: initdb.c:254 initdb.c:268
+#: initdb.c:254
+#: initdb.c:268
 #, c-format
 msgid "%s: out of memory\n"
 msgstr "%s：記憶體用盡\n"
 
-#: initdb.c:377 initdb.c:1490
+#: initdb.c:377
+#: initdb.c:1432
 #, c-format
 msgid "%s: could not open file \"%s\" for reading: %s\n"
 msgstr "%s：無法開啟檔案\"%s\"讀取資料: %s\n"
 
-#: initdb.c:439 initdb.c:998 initdb.c:1027
+#: initdb.c:433
+#: initdb.c:956
+#: initdb.c:985
 #, c-format
 msgid "%s: could not open file \"%s\" for writing: %s\n"
 msgstr "%s：無法開啟檔案\"%s\"寫入資料: %s\n"
 
-#: initdb.c:447 initdb.c:455 initdb.c:1005 initdb.c:1033
+#: initdb.c:441
+#: initdb.c:449
+#: initdb.c:963
+#: initdb.c:991
 #, c-format
 msgid "%s: could not write file \"%s\": %s\n"
 msgstr "%s：無法寫入檔案\"%s\"：%s\n"
 
-#: initdb.c:474
+#: initdb.c:468
 #, c-format
 msgid "%s: could not execute command \"%s\": %s\n"
 msgstr "%s：無法執行命令\"%s\"：%s\n"
 
-#: initdb.c:594
+#: initdb.c:588
 #, c-format
 msgid "%s: removing data directory \"%s\"\n"
 msgstr "%s：刪除資料目錄 \"%s\"\n"
 
-#: initdb.c:597
+#: initdb.c:591
 #, c-format
 msgid "%s: failed to remove data directory\n"
 msgstr "%s：無法刪除資料目錄\n"
 
-#: initdb.c:603
+#: initdb.c:597
 #, c-format
 msgid "%s: removing contents of data directory \"%s\"\n"
 msgstr "%s：刪除資料目錄\"%s\"的內容\n"
 
-#: initdb.c:606
+#: initdb.c:600
 #, c-format
 msgid "%s: failed to remove contents of data directory\n"
 msgstr "%s：無法刪除資料目錄的內容\n"
 
 # access/transam/xlog.c:2163
-#: initdb.c:612
+#: initdb.c:606
 #, c-format
 msgid "%s: removing transaction log directory \"%s\"\n"
 msgstr "%s: 正在移除交易日誌目錄 \"%s\"\n"
 
-#: initdb.c:615
+#: initdb.c:609
 #, c-format
 msgid "%s: failed to remove transaction log directory\n"
 msgstr "%s: 無法移除交易日誌目錄\n"
 
-#: initdb.c:621
+#: initdb.c:615
 #, c-format
 msgid "%s: removing contents of transaction log directory \"%s\"\n"
 msgstr "%s: 正在移除交易日誌目錄的內容 \"%s\"\n"
 
-#: initdb.c:624
+#: initdb.c:618
 #, c-format
 msgid "%s: failed to remove contents of transaction log directory\n"
 msgstr "%s: 無法移除交易日誌目錄的內容\n"
 
-#: initdb.c:633
+#: initdb.c:627
 #, c-format
 msgid "%s: data directory \"%s\" not removed at user's request\n"
 msgstr "%s：無法依使用者的要求刪除資料目錄 \"%s\"\n"
 
-#: initdb.c:638
+#: initdb.c:632
 #, c-format
 msgid "%s: transaction log directory \"%s\" not removed at user's request\n"
 msgstr "%s: 無法依使用者要求刪除交易日誌目錄 \"%s\"\n"
 
-#: initdb.c:660
+#: initdb.c:654
 #, c-format
 msgid ""
 "%s: cannot be run as root\n"
 "Please log in (using, e.g., \"su\") as the (unprivileged) user that will\n"
 "own the server process.\n"
 msgstr ""
-"%s：無法以root身份執行\n"
+"%s：無法以root身分執行\n"
 "請以將會擁有伺服器行程的非特權使用者登入(例如用\"su\")。\n"
 
-#: initdb.c:672
+#: initdb.c:666
 #, c-format
 msgid "%s: could not obtain information about current user: %s\n"
 msgstr "%s：無法取得目前使用者的資訊：%s\n"
 
-#: initdb.c:689
+#: initdb.c:683
 #, c-format
 msgid "%s: could not get current user name: %s\n"
 msgstr "%s：無法取得目前使用者的名稱：%s\n"
 
-#: initdb.c:720
+#: initdb.c:714
 #, c-format
 msgid "%s: \"%s\" is not a valid server encoding name\n"
 msgstr "%s：\"%s\" 不是有效的伺服器編碼名稱\n"
 
-#: initdb.c:918 initdb.c:3058
+#: initdb.c:876
+#: initdb.c:3009
 #, c-format
 msgid "%s: could not create directory \"%s\": %s\n"
 msgstr "%s：無法建立目錄\"%s\"：%s\n"
 
-#: initdb.c:948
+#: initdb.c:906
 #, c-format
 msgid "%s: file \"%s\" does not exist\n"
 msgstr "%s: 檔案 \"%s\" 不存在\n"
 
-#: initdb.c:950 initdb.c:959 initdb.c:969
+#: initdb.c:908
+#: initdb.c:917
+#: initdb.c:927
 #, c-format
 msgid ""
 "This might mean you have a corrupted installation or identified\n"
 "the wrong directory with the invocation option -L.\n"
 msgstr ""
-"這可能表示你的安裝已損毀，或是指定\n"
+"這可能表示您的安裝已損毀，或是指定\n"
 "給引動選項 -L 的目錄不正確。\n"
 
 # utils/fmgr/dfmgr.c:107 utils/fmgr/dfmgr.c:209 utils/fmgr/dfmgr.c:263
-#: initdb.c:956
+#: initdb.c:914
 #, c-format
 msgid "%s: could not access file \"%s\": %s\n"
 msgstr "%s: 無法存取檔案 \"%s\":%s\n"
 
-#: initdb.c:967
+#: initdb.c:925
 #, c-format
 msgid "%s: file \"%s\" is not a regular file\n"
 msgstr "%s: 檔案 \"%s\" 不是一般檔案\n"
 
-#: initdb.c:1075
+#: initdb.c:1033
 #, c-format
 msgid "selecting default max_connections ... "
 msgstr "選擇預設的max_connections ..."
 
-#: initdb.c:1104
+#: initdb.c:1062
 #, c-format
 msgid "selecting default shared_buffers ... "
 msgstr "選擇預設的shared_buffers ..."
 
-#: initdb.c:1147
+#: initdb.c:1105
 msgid "creating configuration files ... "
 msgstr "建立設定檔..."
 
-#: initdb.c:1314
+#: initdb.c:1272
 #, c-format
 msgid "creating template1 database in %s/base/1 ... "
 msgstr "建立 template1 資料庫於 %s/base/1 ... "
 
-#: initdb.c:1330
+#: initdb.c:1288
 #, c-format
 msgid ""
 "%s: input file \"%s\" does not belong to PostgreSQL %s\n"
 "Check your installation or specify the correct path using the option -L.\n"
 msgstr ""
 "%s：輸入檔\"%s\"不屬於 PostgreSQL %s\n"
-"請檢查你的安裝或用 -L 選項指定正確的路徑。\n"
+"請檢查您的安裝或用 -L 選項指定正確的路徑。\n"
 
-#: initdb.c:1429
+#: initdb.c:1373
 msgid "initializing pg_authid ... "
 msgstr "正在初始化 pg_authid..."
 
-#: initdb.c:1465
+#: initdb.c:1407
 msgid "Enter new superuser password: "
 msgstr "輸入新的管理者密碼："
 
-#: initdb.c:1466
+#: initdb.c:1408
 msgid "Enter it again: "
 msgstr "再輸入一次："
 
-#: initdb.c:1469
+#: initdb.c:1411
 #, c-format
 msgid "Passwords didn't match.\n"
 msgstr "密碼不符。\n"
 
-#: initdb.c:1496
+#: initdb.c:1438
 #, c-format
 msgid "%s: could not read password from file \"%s\": %s\n"
 msgstr "%s：無法從檔案\"%s\"讀取密碼：%s\n"
 
-#: initdb.c:1509
+#: initdb.c:1451
 #, c-format
 msgid "setting password ... "
 msgstr "設定密碼..."
 
-#: initdb.c:1533
-#, c-format
-msgid "%s: The password file was not generated. Please report this problem.\n"
-msgstr "%s：無法產生密碼檔，請回報這個錯誤。\n"
-
-#: initdb.c:1617
+#: initdb.c:1549
 msgid "initializing dependencies ... "
 msgstr "正在初始化相依性..."
 
-#: initdb.c:1645
+#: initdb.c:1577
 msgid "creating system views ... "
 msgstr "建立系統views..."
 
-#: initdb.c:1681
+#: initdb.c:1613
 msgid "loading system objects' descriptions ... "
 msgstr "正在載入系統物件的描述..."
 
-#: initdb.c:1733
+#: initdb.c:1665
 msgid "creating conversions ... "
 msgstr "建立conversions ... "
 
-#: initdb.c:1768
+#: initdb.c:1700
 msgid "creating dictionaries ... "
 msgstr "正在建立字典..."
 
-#: initdb.c:1821
+#: initdb.c:1754
 msgid "setting privileges on built-in objects ... "
 msgstr "設定內建物件的權限 ... "
 
-#: initdb.c:1879
+#: initdb.c:1812
 msgid "creating information schema ... "
 msgstr "建立information schema ... "
 
-#: initdb.c:1935
+#: initdb.c:1868
+msgid "loading PL/pgSQL server-side language ... "
+msgstr "正在載入 PL/pgSQL 伺服器端語言 ..."
+
+#: initdb.c:1893
 msgid "vacuuming database template1 ... "
 msgstr "重整資料庫template1 ..."
 
-#: initdb.c:1989
+#: initdb.c:1947
 msgid "copying template1 to template0 ... "
 msgstr "複製template1到template0 ..."
 
-#: initdb.c:2020
+#: initdb.c:1978
 msgid "copying template1 to postgres ... "
 msgstr "正在複製 template1 到 postgres..."
 
-#: initdb.c:2077
+#: initdb.c:2035
 #, c-format
 msgid "caught signal\n"
 msgstr "捕捉到信號\n"
 
-#: initdb.c:2083
+#: initdb.c:2041
 #, c-format
 msgid "could not write to child process: %s\n"
 msgstr "無法寫至子行程：%s\n"
 
-#: initdb.c:2091
+#: initdb.c:2049
 #, c-format
 msgid "ok\n"
 msgstr "成功\n"
 
-#: initdb.c:2211
+#: initdb.c:2169
 #, c-format
 msgid "%s: invalid locale name \"%s\"\n"
 msgstr "%s：無效的locale名稱\"%s\"\n"
 
-#: initdb.c:2244
+#: initdb.c:2195
 #, c-format
 msgid "%s: encoding mismatch\n"
 msgstr "%s: 編碼不相符\n"
 
-#: initdb.c:2246
+#: initdb.c:2197
 #, c-format
 msgid ""
 "The encoding you selected (%s) and the encoding that the\n"
@@ -284,7 +293,7 @@ msgstr ""
 "請重新執行 %s，且不以明確方式指定編碼，\n"
 "或選擇相符的編碼組合。\n"
 
-#: initdb.c:2427
+#: initdb.c:2378
 #, c-format
 msgid ""
 "%s initializes a PostgreSQL database cluster.\n"
@@ -293,17 +302,17 @@ msgstr ""
 "%s 初始化PostgreSQL資料庫cluster。\n"
 "\n"
 
-#: initdb.c:2428
+#: initdb.c:2379
 #, c-format
 msgid "Usage:\n"
 msgstr "使用方法：\n"
 
-#: initdb.c:2429
+#: initdb.c:2380
 #, c-format
 msgid "  %s [OPTION]... [DATADIR]\n"
 msgstr "  %s [選項]... [資料目錄]\n"
 
-#: initdb.c:2430
+#: initdb.c:2381
 #, c-format
 msgid ""
 "\n"
@@ -312,35 +321,32 @@ msgstr ""
 "\n"
 "選項：\n"
 
-#: initdb.c:2431
+#: initdb.c:2382
 #, c-format
-msgid ""
-"  -A, --auth=METHOD         default authentication method for local "
-"connections\n"
+msgid "  -A, --auth=METHOD         default authentication method for local connections\n"
 msgstr "  -A, --auth=METHOD         本地端預設的連線驗證方式\n"
 
-#: initdb.c:2432
+#: initdb.c:2383
 #, c-format
 msgid " [-D, --pgdata=]DATADIR     location for this database cluster\n"
 msgstr " [-D, --pgdata=]DATADIR     資料庫cluster的目錄\n"
 
-#: initdb.c:2433
+#: initdb.c:2384
 #, c-format
 msgid "  -E, --encoding=ENCODING   set default encoding for new databases\n"
 msgstr "  -E, --encoding=ENCODING   新資料庫的預設編稼\n"
 
-#: initdb.c:2434
+#: initdb.c:2385
 #, c-format
 msgid "      --locale=LOCALE       set default locale for new databases\n"
 msgstr "      --locale=LOCALE       設定新資料庫的預設區域\n"
 
-#: initdb.c:2435
+#: initdb.c:2386
 #, c-format
 msgid ""
 "      --lc-collate=, --lc-ctype=, --lc-messages=LOCALE\n"
 "      --lc-monetary=, --lc-numeric=, --lc-time=LOCALE\n"
-"                            set default locale in the respective category "
-"for\n"
+"                            set default locale in the respective category for\n"
 "                            new databases (default taken from environment)\n"
 msgstr ""
 "      --lc-collate=, --lc-ctype=, --lc-messages=LOCALE\n"
@@ -348,18 +354,17 @@ msgstr ""
 "                            設定個別種類中的預設區域，for\n"
 "                            新資料庫 (取自環境的預設值)\n"
 
-#: initdb.c:2439
+#: initdb.c:2390
 #, c-format
 msgid "      --no-locale           equivalent to --locale=C\n"
 msgstr "      --no-locale           功能同 --locale=C\n"
 
-#: initdb.c:2440
+#: initdb.c:2391
 #, c-format
-msgid ""
-"      --pwfile=FILE         read password for the new superuser from file\n"
+msgid "      --pwfile=FILE         read password for the new superuser from file\n"
 msgstr "      --pwfile=FILE         從檔案讀取新超級用戶的密碼\n"
 
-#: initdb.c:2441
+#: initdb.c:2392
 #, c-format
 msgid ""
 "  -T, --text-search-config=CFG\n"
@@ -368,24 +373,22 @@ msgstr ""
 "  -T, --text-search-config=CFG\n"
 "                            預設文本搜尋設定\n"
 
-#: initdb.c:2443
+#: initdb.c:2394
 #, c-format
 msgid "  -U, --username=NAME       database superuser name\n"
 msgstr "  -U, --username=NAME       資料庫管理者名稱\n"
 
-#: initdb.c:2444
+#: initdb.c:2395
 #, c-format
-msgid ""
-"  -W, --pwprompt            prompt for a password for the new superuser\n"
+msgid "  -W, --pwprompt            prompt for a password for the new superuser\n"
 msgstr "  -W, --pwprompt            詢問新管理者的密碼\n"
 
-#: initdb.c:2445
+#: initdb.c:2396
 #, c-format
-msgid ""
-"  -X, --xlogdir=XLOGDIR     location for the transaction log directory\n"
+msgid "  -X, --xlogdir=XLOGDIR     location for the transaction log directory\n"
 msgstr "  -X, --xlogdir=XLOGDIR     交易日誌目錄的位置\n"
 
-#: initdb.c:2446
+#: initdb.c:2397
 #, c-format
 msgid ""
 "\n"
@@ -394,27 +397,27 @@ msgstr ""
 "\n"
 "非常用選項:\n"
 
-#: initdb.c:2447
+#: initdb.c:2398
 #, c-format
 msgid "  -d, --debug               generate lots of debugging output\n"
 msgstr "  -d, --debug               顯示除錯訊息\n"
 
-#: initdb.c:2448
+#: initdb.c:2399
 #, c-format
 msgid "  -L DIRECTORY              where to find the input files\n"
 msgstr "  -L DIRECTORY              where to find the input files\n"
 
-#: initdb.c:2449
+#: initdb.c:2400
 #, c-format
 msgid "  -n, --noclean             do not clean up after errors\n"
 msgstr "  -n, --noclean             發生錯誤時不清除\n"
 
-#: initdb.c:2450
+#: initdb.c:2401
 #, c-format
 msgid "  -s, --show                show internal settings\n"
 msgstr "  -s, --show                顯示內部設定\n"
 
-#: initdb.c:2451
+#: initdb.c:2402
 #, c-format
 msgid ""
 "\n"
@@ -423,17 +426,17 @@ msgstr ""
 "\n"
 "其他選項:\n"
 
-#: initdb.c:2452
+#: initdb.c:2403
 #, c-format
 msgid "  -?, --help                show this help, then exit\n"
 msgstr "  -?, --help                顯示這份說明然後結束\n"
 
-#: initdb.c:2453
+#: initdb.c:2404
 #, c-format
 msgid "  -V, --version             output version information, then exit\n"
 msgstr "  -V, --version             顯示版本資訊然後結束\n"
 
-#: initdb.c:2454
+#: initdb.c:2405
 #, c-format
 msgid ""
 "\n"
@@ -443,7 +446,7 @@ msgstr ""
 "\n"
 "如果沒有指定資料普錄就?使用環境變數PGDATA。\n"
 
-#: initdb.c:2456
+#: initdb.c:2407
 #, c-format
 msgid ""
 "\n"
@@ -452,32 +455,34 @@ msgstr ""
 "\n"
 "回報錯誤給<pgsql-bugs@postgresql.org>。\n"
 
-#: initdb.c:2561
+#: initdb.c:2512
 #, c-format
 msgid "Running in debug mode.\n"
 msgstr "以除錯模式執行。\n"
 
-#: initdb.c:2565
+#: initdb.c:2516
 #, c-format
 msgid "Running in noclean mode.  Mistakes will not be cleaned up.\n"
 msgstr "以noclean模式執行，發生錯誤時不會清理。\n"
 
-#: initdb.c:2608 initdb.c:2626 initdb.c:2894
+#: initdb.c:2559
+#: initdb.c:2577
+#: initdb.c:2845
 #, c-format
 msgid "Try \"%s --help\" for more information.\n"
 msgstr "執行\"%s --help\"取得更多資訊。\n"
 
-#: initdb.c:2624
+#: initdb.c:2575
 #, c-format
 msgid "%s: too many command-line arguments (first is \"%s\")\n"
-msgstr "%s：命令列參數過多(第一個是 \"%s\")\n"
+msgstr "%s：命令列引數過多(第一個是 \"%s\")\n"
 
-#: initdb.c:2633
+#: initdb.c:2584
 #, c-format
 msgid "%s: password prompt and password file cannot be specified together\n"
 msgstr "%s: 密碼提示和密碼檔不能一起指定\n"
 
-#: initdb.c:2639
+#: initdb.c:2590
 msgid ""
 "\n"
 "WARNING: enabling \"trust\" authentication for local connections\n"
@@ -486,20 +491,19 @@ msgid ""
 msgstr ""
 "\n"
 "警告：對本地端連線使用\"trust\"驗證\n"
-"你可以編輯pg_hba.conf改變設定，或在執行initdb時使用 -A 選項。\n"
+"您可以編輯pg_hba.conf改變設定，或在執行initdb時使用 -A 選項。\n"
 
-#: initdb.c:2662
+#: initdb.c:2613
 #, c-format
 msgid "%s: unrecognized authentication method \"%s\"\n"
 msgstr "%s：無法辨認的驗證方式\"%s\"\n"
 
-#: initdb.c:2672
+#: initdb.c:2623
 #, c-format
-msgid ""
-"%s: must specify a password for the superuser to enable %s authentication\n"
-msgstr "%s：你必須提供管理者的密碼才能使用 %s 驗證方式。\n"
+msgid "%s: must specify a password for the superuser to enable %s authentication\n"
+msgstr "%s：您必須提供管理者的密碼才能使用 %s 驗證方式。\n"
 
-#: initdb.c:2687
+#: initdb.c:2638
 #, c-format
 msgid ""
 "%s: no data directory specified\n"
@@ -508,10 +512,10 @@ msgid ""
 "environment variable PGDATA.\n"
 msgstr ""
 "%s：未指定資料目錄\n"
-"你必須指定資料庫系統存放資料的目錄，你可以使用 -D 選項\n"
+"您必須指定資料庫系統存放資料的目錄，您可以使用 -D 選項\n"
 "或是環境變數PGDATA。\n"
 
-#: initdb.c:2763
+#: initdb.c:2722
 #, c-format
 msgid ""
 "The program \"postgres\" is needed by %s but was not found in the\n"
@@ -519,9 +523,9 @@ msgid ""
 "Check your installation.\n"
 msgstr ""
 "%s 需要程式 \"postgres\"，但是在與\"%s\"相同的目錄中找不到。\n"
-"請檢查你的安裝。\n"
+"請檢查您的安裝。\n"
 
-#: initdb.c:2770
+#: initdb.c:2729
 #, c-format
 msgid ""
 "The program \"postgres\" was found by \"%s\"\n"
@@ -529,19 +533,14 @@ msgid ""
 "Check your installation.\n"
 msgstr ""
 "\"%s\"已找到程式\"postgres\"，但是與 %s 的版本不符。\n"
-"請檢查你的安裝。\n"
+"請檢查您的安裝。\n"
 
-#: initdb.c:2789
+#: initdb.c:2748
 #, c-format
 msgid "%s: input file location must be an absolute path\n"
 msgstr "%s：輸入檔位置必須是絕對路徑\n"
 
-#: initdb.c:2797
-#, c-format
-msgid "%s: could not determine valid short version string\n"
-msgstr "%s：無法取得短版本字串\n"
-
-#: initdb.c:2852
+#: initdb.c:2805
 #, c-format
 msgid ""
 "The files belonging to this database system will be owned by user \"%s\".\n"
@@ -551,12 +550,12 @@ msgstr ""
 "使用者\"%s\"將會成為資料庫系統檔案和伺服器行程的擁有者。\n"
 "\n"
 
-#: initdb.c:2862
+#: initdb.c:2815
 #, c-format
 msgid "The database cluster will be initialized with locale %s.\n"
 msgstr "資料庫cluster會以locale %s初始化。\n"
 
-#: initdb.c:2865
+#: initdb.c:2818
 #, c-format
 msgid ""
 "The database cluster will be initialized with locales\n"
@@ -575,22 +574,22 @@ msgstr ""
 "  NUMERIC:  %s\n"
 "  TIME:     %s\n"
 
-#: initdb.c:2891
+#: initdb.c:2842
 #, c-format
 msgid "%s: could not find suitable encoding for locale %s\n"
 msgstr "%s: 無法為區域 %s 找到合適的編碼\n"
 
-#: initdb.c:2893
+#: initdb.c:2844
 #, c-format
 msgid "Rerun %s with the -E option.\n"
 msgstr "用 -E 選項重新執行 %s。\n"
 
-#: initdb.c:2902
+#: initdb.c:2853
 #, c-format
 msgid "%s: locale %s requires unsupported encoding %s\n"
 msgstr "%s: 區域 %s 需要不支援的編碼 %s\n"
 
-#: initdb.c:2905
+#: initdb.c:2856
 #, c-format
 msgid ""
 "Encoding %s is not allowed as a server-side encoding.\n"
@@ -599,78 +598,80 @@ msgstr ""
 "編碼 %s 不可做為伺服器端編碼。\n"
 "請以不同的區域選項重新執行 %s。\n"
 
-#: initdb.c:2913
+#: initdb.c:2864
 #, c-format
 msgid "The default database encoding has accordingly been set to %s.\n"
 msgstr "預設資料庫編碼被設為 %s。\n"
 
-#: initdb.c:2930
+#: initdb.c:2881
 #, c-format
 msgid "%s: could not find suitable text search configuration for locale %s\n"
 msgstr "%s: 無法為區域 %s 找到合適的文本搜尋設定\n"
 
 # utils/misc/guc.c:2507
-#: initdb.c:2941
+#: initdb.c:2892
 #, c-format
-msgid ""
-"%s: warning: suitable text search configuration for locale %s is unknown\n"
+msgid "%s: warning: suitable text search configuration for locale %s is unknown\n"
 msgstr "%s: 警告: 適合區域 %s 的文本搜尋設定不明\n"
 
-#: initdb.c:2946
+#: initdb.c:2897
 #, c-format
-msgid ""
-"%s: warning: specified text search configuration \"%s\" might not match "
-"locale %s\n"
+msgid "%s: warning: specified text search configuration \"%s\" might not match locale %s\n"
 msgstr "%s: 警告: 指定的文本搜尋設定 \"%s\" 可能與區域 %s 不相符\n"
 
-#: initdb.c:2951
+#: initdb.c:2902
 #, c-format
 msgid "The default text search configuration will be set to \"%s\".\n"
 msgstr "預設的文本搜尋設定將設為 \"%s\"。\n"
 
-#: initdb.c:2985 initdb.c:3052
+#: initdb.c:2936
+#: initdb.c:3003
 #, c-format
 msgid "creating directory %s ... "
 msgstr "建立目錄 %s ..."
 
-#: initdb.c:2999 initdb.c:3069
+#: initdb.c:2950
+#: initdb.c:3020
 #, c-format
 msgid "fixing permissions on existing directory %s ... "
 msgstr "修正現有目錄 %s 的權限..."
 
-#: initdb.c:3005 initdb.c:3075
+#: initdb.c:2956
+#: initdb.c:3026
 #, c-format
 msgid "%s: could not change permissions of directory \"%s\": %s\n"
 msgstr "%s：無法修改目錄\"%s\"的權限：%s\n"
 
 # commands/tablespace.c:334
-#: initdb.c:3018 initdb.c:3087
+#: initdb.c:2969
+#: initdb.c:3038
 #, c-format
 msgid "%s: directory \"%s\" exists but is not empty\n"
 msgstr "%s: 目錄 \"%s\" 存在但不是空的\n"
 
-#: initdb.c:3021
+#: initdb.c:2972
 #, c-format
 msgid ""
 "If you want to create a new database system, either remove or empty\n"
 "the directory \"%s\" or run %s\n"
 "with an argument other than \"%s\".\n"
 msgstr ""
-"如果你想建立新的資料庫系統，請將目錄 \"%s\" 移除或清空，\n"
+"如果您想建立新的資料庫系統，請將目錄 \"%s\" 移除或清空，\n"
 "或是在執行 %s\n"
-" 時加上 \"%s\" 以外的參數。\n"
+" 時加上 \"%s\" 以外的引數。\n"
 
-#: initdb.c:3029 initdb.c:3097
+#: initdb.c:2980
+#: initdb.c:3048
 #, c-format
 msgid "%s: could not access directory \"%s\": %s\n"
 msgstr "%s：無法存取目錄\"%s\"：%s\n"
 
-#: initdb.c:3043
+#: initdb.c:2994
 #, c-format
 msgid "%s: transaction log directory location must be an absolute path\n"
 msgstr "%s: 交易日誌目錄位置必須是絕對路徑\n"
 
-#: initdb.c:3090
+#: initdb.c:3041
 #, c-format
 msgid ""
 "If you want to store the transaction log there, either\n"
@@ -680,23 +681,23 @@ msgstr ""
 "請移除或清空目錄 \"%s\"。\n"
 
 # commands/tablespace.c:355 commands/tablespace.c:984
-#: initdb.c:3109
+#: initdb.c:3060
 #, c-format
 msgid "%s: could not create symbolic link \"%s\": %s\n"
 msgstr "%s: 無法建立符號連結 \"%s\":%s\n"
 
 # commands/tablespace.c:386 commands/tablespace.c:483
-#: initdb.c:3114
+#: initdb.c:3065
 #, c-format
 msgid "%s: symlinks are not supported on this platform"
 msgstr "%s: 此平台不支援符號連結"
 
-#: initdb.c:3120
+#: initdb.c:3071
 #, c-format
 msgid "creating subdirectories ... "
 msgstr "正在建立子目錄..."
 
-#: initdb.c:3182
+#: initdb.c:3135
 #, c-format
 msgid ""
 "\n"
@@ -715,7 +716,9 @@ msgstr ""
 "    %s%s%spg_ctl%s -D %s%s%s -l logfile start\n"
 "\n"
 
-#: ../../port/dirmod.c:75 ../../port/dirmod.c:88 ../../port/dirmod.c:101
+#: ../../port/dirmod.c:75
+#: ../../port/dirmod.c:88
+#: ../../port/dirmod.c:101
 #, c-format
 msgid "out of memory\n"
 msgstr "記憶體用盡\n"
@@ -747,78 +750,85 @@ msgid "could not stat file or directory \"%s\": %s\n"
 msgstr "無法對檔案或目錄 \"%s\" 執行 stat 函式:%s\n"
 
 # commands/tablespace.c:610
-#: ../../port/dirmod.c:472 ../../port/dirmod.c:489
+#: ../../port/dirmod.c:472
+#: ../../port/dirmod.c:489
 #, c-format
 msgid "could not remove file or directory \"%s\": %s\n"
 msgstr "無法移除檔案或目錄 \"%s\":%s\n"
 
-#: ../../port/exec.c:195 ../../port/exec.c:309 ../../port/exec.c:352
+#: ../../port/exec.c:125
+#: ../../port/exec.c:239
+#: ../../port/exec.c:282
 #, c-format
 msgid "could not identify current directory: %s"
 msgstr "無法識別目前的目錄：%s"
 
 # command.c:122
-#: ../../port/exec.c:214
+#: ../../port/exec.c:144
 #, c-format
 msgid "invalid binary \"%s\""
 msgstr "無效的二進制碼 \"%s\""
 
 # command.c:1103
-#: ../../port/exec.c:263
+#: ../../port/exec.c:193
 #, c-format
 msgid "could not read binary \"%s\""
 msgstr "無法讀取二進制碼 \"%s\""
 
-#: ../../port/exec.c:270
+#: ../../port/exec.c:200
 #, c-format
 msgid "could not find a \"%s\" to execute"
 msgstr "未能找到一個 \"%s\" 來執行"
 
-#: ../../port/exec.c:325 ../../port/exec.c:361
+#: ../../port/exec.c:255
+#: ../../port/exec.c:291
 #, c-format
 msgid "could not change directory to \"%s\""
 msgstr "無法切換目錄至\"%s\""
 
-#: ../../port/exec.c:340
+#: ../../port/exec.c:270
 #, c-format
 msgid "could not read symbolic link \"%s\""
 msgstr "無法讀取符號連結\"%s\""
 
-#: ../../port/exec.c:586
+#: ../../port/exec.c:516
 #, c-format
 msgid "child process exited with exit code %d"
 msgstr "子行程結束，結束代碼 %d"
 
-#: ../../port/exec.c:590
+#: ../../port/exec.c:520
 #, c-format
 msgid "child process was terminated by exception 0x%X"
 msgstr "子進程被例外(exception) 0x%X 終止"
 
-#: ../../port/exec.c:599
+#: ../../port/exec.c:529
 #, c-format
 msgid "child process was terminated by signal %s"
 msgstr "子進程被信號 %s 終止"
 
-#: ../../port/exec.c:602
+#: ../../port/exec.c:532
 #, c-format
 msgid "child process was terminated by signal %d"
 msgstr "子行程被信號 %d 結束"
 
-#: ../../port/exec.c:606
+#: ../../port/exec.c:536
 #, c-format
 msgid "child process exited with unrecognized status %d"
 msgstr "子行程結束，不明結束代碼 %d"
 
+#~ msgid ""
+#~ "%s: The password file was not generated. Please report this problem.\n"
+#~ msgstr "%s：無法產生密碼檔，請回報這個錯誤。\n"
+#~ msgid "%s: could not determine valid short version string\n"
+#~ msgstr "%s：無法取得短版本字串\n"
 #~ msgid "enabling unlimited row size for system tables ... "
 #~ msgstr "啟用系統資料表的無資料筆數限制 ..."
-
 #~ msgid ""
 #~ "  --locale=LOCALE           initialize database cluster with given "
 #~ "locale\n"
 #~ msgstr "  --locale=LOCALE           以指定的locale初始化資料庫cluster\n"
-
 #~ msgid "creating directory %s/%s ... "
 #~ msgstr "建立目錄 %s/%s ..."
-
 #~ msgid "%s: failed\n"
 #~ msgstr "%s：失敗\n"
+

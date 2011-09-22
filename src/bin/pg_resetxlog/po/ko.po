@@ -1,105 +1,115 @@
-# Korean message translation file for PostgreSQL pg_resetxlog
 # Ioseph Kim <ioseph@uri.sarang.net>, 2004.
 #
 msgid ""
 msgstr ""
 "Project-Id-Version: PostgreSQL 8.4\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
-"POT-Creation-Date: 2010-09-09 16:34+0000\n"
-"PO-Revision-Date: 2010-09-24 12:37-0400\n"
-"Last-Translator: EnterpriseDB translation team <dev-escalations@enterprisedb.com>\n"
+"POT-Creation-Date: 2011-06-20 12:56+0000\n"
+"PO-Revision-Date: 2011-07-29 16:46+0800\n"
+"Last-Translator: Changjian Yuan <dev-escalations@enterprisedb.com>\n"
 "Language-Team: EnterpriseDB translation team <dev-escalations@enterprisedb.com>\n"
+"Language: \n"
 "MIME-Version: 1.0\n"
-"Content-Type: text/plain; charset=euc-kr\n"
+"Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=1; plural=0;\n"
 
 #: pg_resetxlog.c:135
 #, c-format
 msgid "%s: invalid argument for option -e\n"
-msgstr "%s: -e ¿É¼Ç°ªÀÌ Àû´çÄ¡ ¾ÊÀ½\n"
+msgstr "%s: -e ì˜µì…˜ê°’ì´ ì ë‹¹ì¹˜ ì•ŠìŒ\n"
 
-#: pg_resetxlog.c:136 pg_resetxlog.c:151 pg_resetxlog.c:166 pg_resetxlog.c:181
-#: pg_resetxlog.c:196 pg_resetxlog.c:211 pg_resetxlog.c:218 pg_resetxlog.c:225
-#: pg_resetxlog.c:231 pg_resetxlog.c:239
+#: pg_resetxlog.c:136
+#: pg_resetxlog.c:151
+#: pg_resetxlog.c:166
+#: pg_resetxlog.c:181
+#: pg_resetxlog.c:196
+#: pg_resetxlog.c:211
+#: pg_resetxlog.c:218
+#: pg_resetxlog.c:225
+#: pg_resetxlog.c:231
+#: pg_resetxlog.c:239
 #, c-format
 msgid "Try \"%s --help\" for more information.\n"
-msgstr "ÀÚ¼¼ÇÑ »ç¿ë¹ıÀº \"%s --help\"\n"
+msgstr "ìì„¸í•œ ì‚¬ìš©ë²•ì€ \"%s --help\"\n"
 
 #: pg_resetxlog.c:141
 #, c-format
 msgid "%s: transaction ID epoch (-e) must not be -1\n"
-msgstr "%s: Æ®·£Àè¼Ç ID epoch (-e) °ªÀº -1ÀÌ ¾Æ´Ï¿©¾ßÇÔ\n"
+msgstr "%s: íŠ¸ëœì­ì…˜ ID epoch (-e) ê°’ì€ -1ì´ ì•„ë‹ˆì—¬ì•¼í•¨\n"
 
 #: pg_resetxlog.c:150
 #, c-format
 msgid "%s: invalid argument for option -x\n"
-msgstr "%s: -x ¿É¼Ç°ªÀÌ Àû´çÄ¡ ¾ÊÀ½\n"
+msgstr "%s: -x ì˜µì…˜ê°’ì´ ì ë‹¹ì¹˜ ì•ŠìŒ\n"
 
 #: pg_resetxlog.c:156
 #, c-format
 msgid "%s: transaction ID (-x) must not be 0\n"
-msgstr "%s: Æ®·£Àè¼Ç ID (-x) °ªÀº 0ÀÌ ¾Æ´Ï¿©¾ßÇÔ\n"
+msgstr "%s: íŠ¸ëœì­ì…˜ ID (-x) ê°’ì€ 0ì´ ì•„ë‹ˆì—¬ì•¼í•¨\n"
 
 #: pg_resetxlog.c:165
 #, c-format
 msgid "%s: invalid argument for option -o\n"
-msgstr "%s: -o ¿É¼Ç°ªÀÌ Àû´çÄ¡ ¾ÊÀ½\n"
+msgstr "%s: -o ì˜µì…˜ê°’ì´ ì ë‹¹ì¹˜ ì•ŠìŒ\n"
 
 #: pg_resetxlog.c:171
 #, c-format
 msgid "%s: OID (-o) must not be 0\n"
-msgstr "%s: OID (-o) °ªÀº 0ÀÌ ¾Æ´Ï¿©¾ßÇÔ\n"
+msgstr "%s: OID (-o) ê°’ì€ 0ì´ ì•„ë‹ˆì—¬ì•¼í•¨\n"
 
 #: pg_resetxlog.c:180
 #, c-format
 msgid "%s: invalid argument for option -m\n"
-msgstr "%s: -m ¿É¼Ç°ªÀÌ Àû´çÄ¡ ¾ÊÀ½\n"
+msgstr "%s: -m ì˜µì…˜ê°’ì´ ì ë‹¹ì¹˜ ì•ŠìŒ\n"
 
 #: pg_resetxlog.c:186
 #, c-format
 msgid "%s: multitransaction ID (-m) must not be 0\n"
-msgstr "%s: ¸ÖÆ¼Æ®·£Àè¼Ç ID (-m) °ªÀº 0ÀÌ ¾Æ´Ï¿©¾ßÇÔ\n"
+msgstr "%s: ë©€í‹°íŠ¸ëœì­ì…˜ ID (-m) ê°’ì€ 0ì´ ì•„ë‹ˆì—¬ì•¼í•¨\n"
 
 #: pg_resetxlog.c:195
 #, c-format
 msgid "%s: invalid argument for option -O\n"
-msgstr "%s: -O ¿É¼Ç°ªÀÌ Àû´çÄ¡ ¾ÊÀ½\n"
+msgstr "%s: -O ì˜µì…˜ê°’ì´ ì ë‹¹ì¹˜ ì•ŠìŒ\n"
 
 #: pg_resetxlog.c:201
 #, c-format
 msgid "%s: multitransaction offset (-O) must not be -1\n"
-msgstr "%s: ¸ÖÆ¼Æ®·£Àè¼Ç ¿É¼Â (-O) °ªÀº -1ÀÌ ¾Æ´Ï¿©¾ßÇÔ\n"
+msgstr "%s: ë©€í‹°íŠ¸ëœì­ì…˜ ì˜µì…‹ (-O) ê°’ì€ -1ì´ ì•„ë‹ˆì—¬ì•¼í•¨\n"
 
-#: pg_resetxlog.c:210 pg_resetxlog.c:217 pg_resetxlog.c:224
+#: pg_resetxlog.c:210
+#: pg_resetxlog.c:217
+#: pg_resetxlog.c:224
 #, c-format
 msgid "%s: invalid argument for option -l\n"
-msgstr "%s: -l ¿É¼Ç°ªÀÌ Àû´çÄ¡ ¾ÊÀ½\n"
+msgstr "%s: -l ì˜µì…˜ê°’ì´ ì ë‹¹ì¹˜ ì•ŠìŒ\n"
 
 #: pg_resetxlog.c:238
 #, c-format
 msgid "%s: no data directory specified\n"
-msgstr "%s: µ¥ÀÌÅÍ µğ·ºÅÍ¸®¸¦ ÁöÁ¤ÇÏÁö ¾Ê¾ÒÀ½\n"
+msgstr "%s: ë°ì´í„° ë””ë ‰í„°ë¦¬ë¥¼ ì§€ì •í•˜ì§€ ì•Šì•˜ìŒ\n"
 
 #: pg_resetxlog.c:252
 #, c-format
 msgid "%s: cannot be executed by \"root\"\n"
-msgstr "%s: ÀÌ ÇÁ·Î±×·¥Àº \"root\"·Î ½ÇÇàµÉ ¼ö ¾øÀ½\n"
+msgstr "%s: ì´ í”„ë¡œê·¸ë¨ì€ \"root\"ë¡œ ì‹¤í–‰ë  ìˆ˜ ì—†ìŒ\n"
 
 #: pg_resetxlog.c:254
 #, c-format
 msgid "You must run %s as the PostgreSQL superuser.\n"
-msgstr "PostgreSQL superuser·Î %s ÇÁ·Î±×·¥À» ½ÇÇàÇÏ½Ê½Ã¿À.\n"
+msgstr "PostgreSQL superuserë¡œ %s í”„ë¡œê·¸ë¨ì„ ì‹¤í–‰í•˜ì‹­ì‹œì˜¤.\n"
 
 #: pg_resetxlog.c:264
 #, c-format
 msgid "%s: could not change directory to \"%s\": %s\n"
-msgstr "%s: \"%s\" µğ·ºÅÍ¸®·Î ¹Ù²Ü ¼ö ¾øÀ½: %s\n"
+msgstr "%s: \"%s\" ë””ë ‰í„°ë¦¬ë¡œ ë°”ê¿€ ìˆ˜ ì—†ìŒ: %s\n"
 
-#: pg_resetxlog.c:279 pg_resetxlog.c:393
+#: pg_resetxlog.c:279
+#: pg_resetxlog.c:407
 #, c-format
 msgid "%s: could not open file \"%s\" for reading: %s\n"
-msgstr "%s: \"%s\" ÆÄÀÏÀ» ÀĞ±â ¸ğµå·Î ¿­ ¼ö ¾øÀ½: %s\n"
+msgstr "%s: \"%s\" íŒŒì¼ì„ ì½ê¸° ëª¨ë“œë¡œ ì—´ ìˆ˜ ì—†ìŒ: %s\n"
 
 #: pg_resetxlog.c:285
 #, c-format
@@ -107,335 +117,350 @@ msgid ""
 "%s: lock file \"%s\" exists\n"
 "Is a server running?  If not, delete the lock file and try again.\n"
 msgstr ""
-"%s: \"%s\" Àá±İ ÆÄÀÏÀÌ ÀÖ½À´Ï´Ù.\n"
-"¼­¹ö°¡ °¡µ¿ÁßÀÎ°¡¿ä? ±×·¸Áö ¾Ê´Ù¸é, ÀÌ ÆÄÀÏÀ» Áö¿ì°í ´Ù½Ã ½ÃµµÇÏ½Ê½Ã¿À.\n"
+"%s: \"%s\" ì ê¸ˆ íŒŒì¼ì´ ìˆìŠµë‹ˆë‹¤.\n"
+"ì„œë²„ê°€ ê°€ë™ì¤‘ì¸ê°€ìš”? ê·¸ë ‡ì§€ ì•Šë‹¤ë©´, ì´ íŒŒì¼ì„ ì§€ìš°ê³  ë‹¤ì‹œ ì‹œë„í•˜ì‹­ì‹œì˜¤.\n"
 
-#: pg_resetxlog.c:341
+#: pg_resetxlog.c:355
 #, c-format
 msgid ""
 "\n"
 "If these values seem acceptable, use -f to force reset.\n"
 msgstr ""
 "\n"
-"ÀÌ ¼³Á¤°ªµéÀÌ Å¸´çÇÏ´Ù°í ÆÇ´ÜµÇ¸é, °­Á¦·Î °»½ÅÇÏ·Á¸é, -f ¿É¼ÇÀ» ¾²¼¼¿ä.\n"
+"ì´ ì„¤ì •ê°’ë“¤ì´ íƒ€ë‹¹í•˜ë‹¤ê³  íŒë‹¨ë˜ë©´, ê°•ì œë¡œ ê°±ì‹ í•˜ë ¤ë©´, -f ì˜µì…˜ì„ ì“°ì„¸ìš”.\n"
 
-#: pg_resetxlog.c:353
+#: pg_resetxlog.c:367
 #, c-format
 msgid ""
 "The database server was not shut down cleanly.\n"
 "Resetting the transaction log might cause data to be lost.\n"
 "If you want to proceed anyway, use -f to force reset.\n"
 msgstr ""
-"ÀÌ µ¥ÀÌÅÍº£ÀÌ½º ¼­¹ö´Â Á¤»óÀûÀ¸·Î ÁßÁöµÇÁö ¸øÇß½À´Ï´Ù.\n"
-"Æ®·£Àè¼Ç ·Î±×¸¦ ´Ù½Ã ¼³Á¤ÇÏ´Â °ÍÀº ÀÚ·á ¼Õ½ÇÀ» ¾ß±âÇÒ ¼ö ÀÖ½À´Ï´Ù.\n"
-"±×·³¿¡µµ ºÒ±¸ÇÏ°í ÁøÇàÇÏ·Á¸é, -f ¿É¼ÇÀ» »ç¿ëÇØ¼­ °­Á¦ ¼³Á¤À» ÇÏ½Ê½Ã¿À.\n"
+"ì´ ë°ì´í„°ë² ì´ìŠ¤ ì„œë²„ëŠ” ì •ìƒì ìœ¼ë¡œ ì¤‘ì§€ë˜ì§€ ëª»í–ˆìŠµë‹ˆë‹¤.\n"
+"íŠ¸ëœì­ì…˜ ë¡œê·¸ë¥¼ ë‹¤ì‹œ ì„¤ì •í•˜ëŠ” ê²ƒì€ ìë£Œ ì†ì‹¤ì„ ì•¼ê¸°í•  ìˆ˜ ìˆìŠµë‹ˆë‹¤.\n"
+"ê·¸ëŸ¼ì—ë„ ë¶ˆêµ¬í•˜ê³  ì§„í–‰í•˜ë ¤ë©´, -f ì˜µì…˜ì„ ì‚¬ìš©í•´ì„œ ê°•ì œ ì„¤ì •ì„ í•˜ì‹­ì‹œì˜¤.\n"
 
-#: pg_resetxlog.c:367
+#: pg_resetxlog.c:381
 #, c-format
 msgid "Transaction log reset\n"
-msgstr "Æ®·£Àè¼Ç ·Î±× Àç¼³Á¤\n"
+msgstr "íŠ¸ëœì­ì…˜ ë¡œê·¸ ì¬ì„¤ì •\n"
 
-#: pg_resetxlog.c:396
+#: pg_resetxlog.c:410
 #, c-format
 msgid ""
 "If you are sure the data directory path is correct, execute\n"
 "  touch %s\n"
 "and try again.\n"
 msgstr ""
-"ÁöÁ¤ÇÑ µ¥ÀÌÅÍ µğ·ºÅÍ¸®°¡ ¸Â´Ù¸é, ´ÙÀ½ ¸í·ÉÀ» ½ÇÇàÇÏ°í, ´Ù½Ã ½ÃµµÇØ\n"
-"º¸½Ê½Ã¿À.\n"
+"ì§€ì •í•œ ë°ì´í„° ë””ë ‰í„°ë¦¬ê°€ ë§ë‹¤ë©´, ë‹¤ìŒ ëª…ë ¹ì„ ì‹¤í–‰í•˜ê³ , ë‹¤ì‹œ ì‹œë„í•´\n"
+"ë³´ì‹­ì‹œì˜¤.\n"
 "  touch %s\n"
-"(win32¿¡¼­ ¾î¶»°Ô ÇÏ³ª?)\n"
+"(win32ì—ì„œ ì–´ë–»ê²Œ í•˜ë‚˜?)\n"
 
-#: pg_resetxlog.c:409
+#: pg_resetxlog.c:423
 #, c-format
 msgid "%s: could not read file \"%s\": %s\n"
-msgstr "%s: \"%s\" ÆÄÀÏÀ» ÀĞÀ» ¼ö ¾øÀ½: %s\n"
+msgstr "%s: \"%s\" íŒŒì¼ì„ ì½ì„ ìˆ˜ ì—†ìŒ: %s\n"
 
-#: pg_resetxlog.c:432
+#: pg_resetxlog.c:446
 #, c-format
 msgid "%s: pg_control exists but has invalid CRC; proceed with caution\n"
-msgstr ""
-"%s: pg_controlÆÄÀÏÀÌ ÀÖÁö¸¸, CRC°ªÀÌ Àß¸øµÇ¾ú½À´Ï´Ù; °æ°í°ú ÇÔ²² ÁøÇàÇÔ\n"
+msgstr "%s: pg_controlíŒŒì¼ì´ ìˆì§€ë§Œ, CRCê°’ì´ ì˜ëª»ë˜ì—ˆìŠµë‹ˆë‹¤; ê²½ê³ ê³¼ í•¨ê»˜ ì§„í–‰í•¨\n"
 
-#: pg_resetxlog.c:441
+#: pg_resetxlog.c:455
 #, c-format
 msgid "%s: pg_control exists but is broken or unknown version; ignoring it\n"
-msgstr "%s: pg_controlÆÄÀÏÀÌ ÀÖÁö¸¸, ¼Õ»óµÇ¾ú°Å³ª ¹öÀüÀ» ¾Ë ¼ö ¾øÀ½; ¹«½ÃÇÔ\n"
+msgstr "%s: pg_controlíŒŒì¼ì´ ìˆì§€ë§Œ, ì†ìƒë˜ì—ˆê±°ë‚˜ ë²„ì „ì„ ì•Œ ìˆ˜ ì—†ìŒ; ë¬´ì‹œí•¨\n"
 
-#: pg_resetxlog.c:525
+#: pg_resetxlog.c:549
 #, c-format
 msgid ""
 "Guessed pg_control values:\n"
 "\n"
 msgstr ""
-"ÃßÃøµÈ pg_control ¼³Á¤°ªµé:\n"
+"ì¶”ì¸¡ëœ pg_control ì„¤ì •ê°’ë“¤:\n"
 "\n"
 
-#: pg_resetxlog.c:527
+#: pg_resetxlog.c:551
 #, c-format
 msgid ""
 "pg_control values:\n"
 "\n"
 msgstr ""
-"pg_control ¼³Á¤°ªµé:\n"
+"pg_control ì„¤ì •ê°’ë“¤:\n"
 "\n"
-
-#: pg_resetxlog.c:536
-#, c-format
-msgid "First log file ID after reset:        %u\n"
-msgstr "Àç¼³Á¤ ÈÄ Ã¹ ·Î±× ÆÄÀÏ ID:        %u\n"
-
-#: pg_resetxlog.c:538
-#, c-format
-msgid "First log file segment after reset:   %u\n"
-msgstr "Àç¼³Á¤ ÈÄ Ã¹ ·Î±× ÆÄÀÏ ¼¼±×¸ÕÆ®:   %u\n"
-
-#: pg_resetxlog.c:540
-#, c-format
-msgid "pg_control version number:            %u\n"
-msgstr "pg_control ¹öÀü ¹øÈ£:                 %u\n"
-
-#: pg_resetxlog.c:542
-#, c-format
-msgid "Catalog version number:               %u\n"
-msgstr "Ä«Å»·Î±× ¹öÀü ¹øÈ£:                   %u\n"
-
-#: pg_resetxlog.c:544
-#, c-format
-msgid "Database system identifier:           %s\n"
-msgstr "µ¥ÀÌÅÍº£ÀÌ½º ½Ã½ºÅÛ ½Äº°ÀÚ:           %s\n"
-
-#: pg_resetxlog.c:546
-#, c-format
-msgid "Latest checkpoint's TimeLineID:       %u\n"
-msgstr "¸¶Áö¸· Ã¼Å©Æ÷ÀÎÆ® TimeLineID:         %u\n"
-
-#: pg_resetxlog.c:548
-#, c-format
-msgid "Latest checkpoint's NextXID:          %u/%u\n"
-msgstr "¸¶Áö¸· Ã¼Å©Æ÷ÀÎÆ® NextXID:            %u/%u\n"
-
-#: pg_resetxlog.c:551
-#, c-format
-msgid "Latest checkpoint's NextOID:          %u\n"
-msgstr "¸¶Áö¸· Ã¼Å©Æ÷ÀÎÆ® NextOID:            %u\n"
-
-#: pg_resetxlog.c:553
-#, c-format
-msgid "Latest checkpoint's NextMultiXactId:  %u\n"
-msgstr "¸¶Áö¸· Ã¼Å©Æ÷ÀÎÆ® NextMultiXactId:    %u\n"
-
-#: pg_resetxlog.c:555
-#, c-format
-msgid "Latest checkpoint's NextMultiOffset:  %u\n"
-msgstr "¸¶Áö¸· Ã¼Å©Æ÷ÀÎÆ® NextMultiOffset:    %u\n"
-
-#: pg_resetxlog.c:557
-#, c-format
-msgid "Maximum data alignment:               %u\n"
-msgstr "ÃÖ´ë ÀÚ·á Á¤·Ä:                       %u\n"
 
 #: pg_resetxlog.c:560
 #, c-format
-msgid "Database block size:                  %u\n"
-msgstr "µ¥ÀÌÅÍº£ÀÌ½º ºí·Ï Å©±â:               %u\n"
+msgid "First log file ID after reset:        %u\n"
+msgstr "ì¬ì„¤ì • í›„ ì²« ë¡œê·¸ íŒŒì¼ ID:        %u\n"
 
 #: pg_resetxlog.c:562
 #, c-format
-msgid "Blocks per segment of large relation: %u\n"
-msgstr "´ëÇü ¸±·¹ÀÌ¼ÇÀÇ ¼¼±×¸ÕÆ®´ç ºí·° °¹¼ö: %u\n"
+msgid "First log file segment after reset:   %u\n"
+msgstr "ì¬ì„¤ì • í›„ ì²« ë¡œê·¸ íŒŒì¼ ì„¸ê·¸ë¨¼íŠ¸:   %u\n"
 
 #: pg_resetxlog.c:564
 #, c-format
-msgid "WAL block size:                       %u\n"
-msgstr "WAL ºí·Ï Å©±â:                        %u\n"
+msgid "pg_control version number:            %u\n"
+msgstr "pg_control ë²„ì „ ë²ˆí˜¸:                 %u\n"
 
 #: pg_resetxlog.c:566
 #, c-format
-msgid "Bytes per WAL segment:                %u\n"
-msgstr "WAL ¼¼±×¸ÕÆ®ÀÇ Å©±â(byte):            %u\n"
+msgid "Catalog version number:               %u\n"
+msgstr "ì¹´íƒˆë¡œê·¸ ë²„ì „ ë²ˆí˜¸:                   %u\n"
 
 #: pg_resetxlog.c:568
 #, c-format
-msgid "Maximum length of identifiers:        %u\n"
-msgstr "½Äº°ÀÚ ÃÖ´ë ±æÀÌ:                     %u\n"
+msgid "Database system identifier:           %s\n"
+msgstr "ë°ì´í„°ë² ì´ìŠ¤ ì‹œìŠ¤í…œ ì‹ë³„ì:           %s\n"
 
 #: pg_resetxlog.c:570
 #, c-format
-msgid "Maximum columns in an index:          %u\n"
-msgstr "ÀÎµ¦½º¿¡¼­ »ç¿ëÇÏ´Â ÃÖ´ë ¿­ ¼ö:      %u\n"
+msgid "Latest checkpoint's TimeLineID:       %u\n"
+msgstr "ë§ˆì§€ë§‰ ì²´í¬í¬ì¸íŠ¸ TimeLineID:         %u\n"
 
 #: pg_resetxlog.c:572
 #, c-format
-msgid "Maximum size of a TOAST chunk:        %u\n"
-msgstr "TOAST Ã»Å©ÀÇ ÃÖ´ë Å©±â:        %u\n"
+msgid "Latest checkpoint's NextXID:          %u/%u\n"
+msgstr "ë§ˆì§€ë§‰ ì²´í¬í¬ì¸íŠ¸ NextXID:            %u/%u\n"
 
-#: pg_resetxlog.c:574
+#: pg_resetxlog.c:575
+#, c-format
+msgid "Latest checkpoint's NextOID:          %u\n"
+msgstr "ë§ˆì§€ë§‰ ì²´í¬í¬ì¸íŠ¸ NextOID:            %u\n"
+
+#: pg_resetxlog.c:577
+#, c-format
+msgid "Latest checkpoint's NextMultiXactId:  %u\n"
+msgstr "ë§ˆì§€ë§‰ ì²´í¬í¬ì¸íŠ¸ NextMultiXactId:    %u\n"
+
+#: pg_resetxlog.c:579
+#, c-format
+msgid "Latest checkpoint's NextMultiOffset:  %u\n"
+msgstr "ë§ˆì§€ë§‰ ì²´í¬í¬ì¸íŠ¸ NextMultiOffset:    %u\n"
+
+#: pg_resetxlog.c:581
+#, c-format
+msgid "Latest checkpoint's oldestXID:        %u\n"
+msgstr "ë§ˆì§€ë§‰ ì²´í¬í¬ì¸íŠ¸ oldestXID:        %u\n"
+
+#: pg_resetxlog.c:583
+#, c-format
+msgid "Latest checkpoint's oldestXID's DB:   %u\n"
+msgstr "ë§ˆì§€ë§‰ ì²´í¬í¬ì¸íŠ¸ oldestXIDì˜ DB:   %u\n"
+
+#: pg_resetxlog.c:585
+#, c-format
+msgid "Latest checkpoint's oldestActiveXID:  %u\n"
+msgstr "ë§ˆì§€ë§‰ ì²´í¬í¬ì¸íŠ¸ oldestActiveXID:  %u\n"
+
+#: pg_resetxlog.c:587
+#, c-format
+msgid "Maximum data alignment:               %u\n"
+msgstr "ìµœëŒ€ ìë£Œ ì •ë ¬:                       %u\n"
+
+#: pg_resetxlog.c:590
+#, c-format
+msgid "Database block size:                  %u\n"
+msgstr "ë°ì´í„°ë² ì´ìŠ¤ ë¸”ë¡ í¬ê¸°:               %u\n"
+
+#: pg_resetxlog.c:592
+#, c-format
+msgid "Blocks per segment of large relation: %u\n"
+msgstr "ëŒ€í˜• ë¦´ë ˆì´ì…˜ì˜ ì„¸ê·¸ë¨¼íŠ¸ë‹¹ ë¸”ëŸ­ ê°¯ìˆ˜: %u\n"
+
+#: pg_resetxlog.c:594
+#, c-format
+msgid "WAL block size:                       %u\n"
+msgstr "WAL ë¸”ë¡ í¬ê¸°:                        %u\n"
+
+#: pg_resetxlog.c:596
+#, c-format
+msgid "Bytes per WAL segment:                %u\n"
+msgstr "WAL ì„¸ê·¸ë¨¼íŠ¸ì˜ í¬ê¸°(byte):            %u\n"
+
+#: pg_resetxlog.c:598
+#, c-format
+msgid "Maximum length of identifiers:        %u\n"
+msgstr "ì‹ë³„ì ìµœëŒ€ ê¸¸ì´:                     %u\n"
+
+#: pg_resetxlog.c:600
+#, c-format
+msgid "Maximum columns in an index:          %u\n"
+msgstr "ì¸ë±ìŠ¤ì—ì„œ ì‚¬ìš©í•˜ëŠ” ìµœëŒ€ ì—´ ìˆ˜:      %u\n"
+
+#: pg_resetxlog.c:602
+#, c-format
+msgid "Maximum size of a TOAST chunk:        %u\n"
+msgstr "TOAST ì²­í¬ì˜ ìµœëŒ€ í¬ê¸°:        %u\n"
+
+#: pg_resetxlog.c:604
 #, c-format
 msgid "Date/time type storage:               %s\n"
-msgstr "³¯Â¥/½Ã°£Çü ÀÚ·áÀÇ ÀúÀå¹æ½Ä:          %s\n"
+msgstr "ë‚ ì§œ/ì‹œê°„í˜• ìë£Œì˜ ì €ì¥ë°©ì‹:          %s\n"
 
-#: pg_resetxlog.c:575
+#: pg_resetxlog.c:605
 msgid "64-bit integers"
-msgstr "64-ºñÆ® Á¤¼ö"
+msgstr "64-ë¹„íŠ¸ ì •ìˆ˜"
 
-#: pg_resetxlog.c:575
+#: pg_resetxlog.c:605
 msgid "floating-point numbers"
-msgstr "ºÎµ¿¼Ò¼ö"
+msgstr "ë¶€ë™ì†Œìˆ˜"
 
-#: pg_resetxlog.c:576
+#: pg_resetxlog.c:606
 #, c-format
 msgid "Float4 argument passing:              %s\n"
-msgstr "Float4 ÀÎ¼ö Àü´Ş:              %s\n"
+msgstr "Float4 ì¸ìˆ˜ ì „ë‹¬:              %s\n"
 
-#: pg_resetxlog.c:577 pg_resetxlog.c:579
+#: pg_resetxlog.c:607
+#: pg_resetxlog.c:609
 msgid "by value"
-msgstr "°ªº°"
+msgstr "ê°’ë³„"
 
-#: pg_resetxlog.c:577 pg_resetxlog.c:579
+#: pg_resetxlog.c:607
+#: pg_resetxlog.c:609
 msgid "by reference"
-msgstr "ÂüÁ¶º°"
+msgstr "ì°¸ì¡°ë³„"
 
-#: pg_resetxlog.c:578
+#: pg_resetxlog.c:608
 #, c-format
 msgid "Float8 argument passing:              %s\n"
-msgstr "Float8 ÀÎ¼ö Àü´Ş:              %s\n"
+msgstr "Float8 ì¸ìˆ˜ ì „ë‹¬:              %s\n"
 
-#: pg_resetxlog.c:629
+#: pg_resetxlog.c:671
 #, c-format
-msgid ""
-"%s: internal error -- sizeof(ControlFileData) is too large ... fix "
-"PG_CONTROL_SIZE\n"
-msgstr ""
-"%s: ³»ºÎ ¿À·ù -- sizeof(ControlFileData) °ªÀÌ ³Ê¹« Å­ ... PG_CONTROL_SIZE °í"
-"ÃÄ¾ßÇÔ\n"
+msgid "%s: internal error -- sizeof(ControlFileData) is too large ... fix PG_CONTROL_SIZE\n"
+msgstr "%s: ë‚´ë¶€ ì˜¤ë¥˜ -- sizeof(ControlFileData) ê°’ì´ ë„ˆë¬´ í¼ ... PG_CONTROL_SIZE ê³ ì³ì•¼í•¨\n"
 
-#: pg_resetxlog.c:644
+#: pg_resetxlog.c:686
 #, c-format
 msgid "%s: could not create pg_control file: %s\n"
-msgstr "%s: pg_control ÆÄÀÏ ¸¸µé ¼ö ¾øÀ½: %s\n"
+msgstr "%s: pg_control íŒŒì¼ ë§Œë“¤ ìˆ˜ ì—†ìŒ: %s\n"
 
-#: pg_resetxlog.c:655
+#: pg_resetxlog.c:697
 #, c-format
 msgid "%s: could not write pg_control file: %s\n"
-msgstr "%s: pg_control ÆÄÀÏ ¾µ ¼ö ¾øÀ½: %s\n"
+msgstr "%s: pg_control íŒŒì¼ ì“¸ ìˆ˜ ì—†ìŒ: %s\n"
 
-#: pg_resetxlog.c:662 pg_resetxlog.c:969
+#: pg_resetxlog.c:704
+#: pg_resetxlog.c:1011
 #, c-format
 msgid "%s: fsync error: %s\n"
-msgstr "%s: fsync ¿À·ù: %s\n"
+msgstr "%s: fsync ì˜¤ë¥˜: %s\n"
 
-#: pg_resetxlog.c:700 pg_resetxlog.c:775 pg_resetxlog.c:831
+#: pg_resetxlog.c:742
+#: pg_resetxlog.c:817
+#: pg_resetxlog.c:873
 #, c-format
 msgid "%s: could not open directory \"%s\": %s\n"
-msgstr "%s: \"%s\" µğ·ºÅÍ¸® ¿­ ¼ö ¾øÀ½: %s\n"
+msgstr "%s: \"%s\" ë””ë ‰í„°ë¦¬ ì—´ ìˆ˜ ì—†ìŒ: %s\n"
 
-#: pg_resetxlog.c:744 pg_resetxlog.c:808 pg_resetxlog.c:865
+#: pg_resetxlog.c:786
+#: pg_resetxlog.c:850
+#: pg_resetxlog.c:907
 #, c-format
 msgid "%s: could not read from directory \"%s\": %s\n"
-msgstr "%s: \"%s\" µğ·ºÅÍ¸® ÀĞÀ» ¼ö ¾øÀ½: %s\n"
+msgstr "%s: \"%s\" ë””ë ‰í„°ë¦¬ ì½ì„ ìˆ˜ ì—†ìŒ: %s\n"
 
-#: pg_resetxlog.c:789 pg_resetxlog.c:846
+#: pg_resetxlog.c:831
+#: pg_resetxlog.c:888
 #, c-format
 msgid "%s: could not delete file \"%s\": %s\n"
-msgstr "%s: \"%s\" ÆÄÀÏ »èÁ¦ ÇÒ ¼ö ¾øÀ½: %s\n"
+msgstr "%s: \"%s\" íŒŒì¼ ì‚­ì œ í•  ìˆ˜ ì—†ìŒ: %s\n"
 
-#: pg_resetxlog.c:936
+#: pg_resetxlog.c:978
 #, c-format
 msgid "%s: could not open file \"%s\": %s\n"
-msgstr "%s: \"%s\" ÆÄÀÏ ¿­ ¼ö ¾øÀ½: %s\n"
+msgstr "%s: \"%s\" íŒŒì¼ ì—´ ìˆ˜ ì—†ìŒ: %s\n"
 
-#: pg_resetxlog.c:947 pg_resetxlog.c:961
+#: pg_resetxlog.c:989
+#: pg_resetxlog.c:1003
 #, c-format
 msgid "%s: could not write file \"%s\": %s\n"
-msgstr "%s: \"%s\" ÆÄÀÏ ¾µ ¼ö ¾øÀ½: %s\n"
+msgstr "%s: \"%s\" íŒŒì¼ ì“¸ ìˆ˜ ì—†ìŒ: %s\n"
 
-#: pg_resetxlog.c:980
+#: pg_resetxlog.c:1022
 #, c-format
 msgid ""
 "%s resets the PostgreSQL transaction log.\n"
 "\n"
 msgstr ""
-"%s ÇÁ·Î±×·¥Àº PostgreSQL Æ®·£Àè¼Ç ·Î±×¸¦ ´Ù½Ã ¼³Á¤ÇÕ´Ï´Ù.\n"
+"%s í”„ë¡œê·¸ë¨ì€ PostgreSQL íŠ¸ëœì­ì…˜ ë¡œê·¸ë¥¼ ë‹¤ì‹œ ì„¤ì •í•©ë‹ˆë‹¤.\n"
 "\n"
 
-#: pg_resetxlog.c:981
+#: pg_resetxlog.c:1023
 #, c-format
 msgid ""
 "Usage:\n"
 "  %s [OPTION]... DATADIR\n"
 "\n"
 msgstr ""
-"»ç¿ë¹ı:\n"
-"  %s [¿É¼Ç]... DATADIR\n"
+"ì‚¬ìš©ë²•:\n"
+"  %s [ì˜µì…˜]... DATADIR\n"
 "\n"
 
-#: pg_resetxlog.c:982
+#: pg_resetxlog.c:1024
 #, c-format
 msgid "Options:\n"
-msgstr "¿É¼Çµé:\n"
+msgstr "ì˜µì…˜ë“¤:\n"
 
-#: pg_resetxlog.c:983
+#: pg_resetxlog.c:1025
 #, c-format
 msgid "  -e XIDEPOCH     set next transaction ID epoch\n"
-msgstr "  -e XIDEPOCH     ´ÙÀ½ Æ®·¢Àè¼Ç ID epoch ÁöÁ¤\n"
+msgstr "  -e XIDEPOCH     ë‹¤ìŒ íŠ¸ë™ì­ì…˜ ID epoch ì§€ì •\n"
 
-#: pg_resetxlog.c:984
+#: pg_resetxlog.c:1026
 #, c-format
 msgid "  -f              force update to be done\n"
-msgstr "  -f              °­Á¦·Î °»½ÅÇÔ\n"
+msgstr "  -f              ê°•ì œë¡œ ê°±ì‹ í•¨\n"
 
-#: pg_resetxlog.c:985
+#: pg_resetxlog.c:1027
 #, c-format
-msgid ""
-"  -l TLI,FILE,SEG force minimum WAL starting location for new transaction "
-"log\n"
-msgstr "  -l TLI,FILE,SEG »õ Æ®·¢Àè¼Ç ·Î±×¸¦ À§ÇÑ ÃÖ¼Ò WAL ½ÃÀÛ À§Ä¡ ÁöÁ¤\n"
+msgid "  -l TLI,FILE,SEG force minimum WAL starting location for new transaction log\n"
+msgstr "  -l TLI,FILE,SEG ìƒˆ íŠ¸ë™ì­ì…˜ ë¡œê·¸ë¥¼ ìœ„í•œ ìµœì†Œ WAL ì‹œì‘ ìœ„ì¹˜ ì§€ì •\n"
 
-#: pg_resetxlog.c:986
+#: pg_resetxlog.c:1028
 #, c-format
 msgid "  -m XID          set next multitransaction ID\n"
-msgstr "  -m XID          ´ÙÀ½ ¸ÖÆ¼Æ®·£Àè¼Ç ID ÁöÁ¤\n"
+msgstr "  -m XID          ë‹¤ìŒ ë©€í‹°íŠ¸ëœì­ì…˜ ID ì§€ì •\n"
 
-#: pg_resetxlog.c:987
+#: pg_resetxlog.c:1029
 #, c-format
-msgid ""
-"  -n              no update, just show extracted control values (for "
-"testing)\n"
-msgstr ""
-"  -n              °»½ÅÇÏÁö ¾ÊÀ½, ÄÁÆ®·Ñ °ªµéÀ» º¸¿©ÁÖ±â¸¸ ÇÔ(Å×½ºÆ®¿ë)\n"
+msgid "  -n              no update, just show extracted control values (for testing)\n"
+msgstr "  -n              ê°±ì‹ í•˜ì§€ ì•ŠìŒ, ì»¨íŠ¸ë¡¤ ê°’ë“¤ì„ ë³´ì—¬ì£¼ê¸°ë§Œ í•¨(í…ŒìŠ¤íŠ¸ìš©)\n"
 
-#: pg_resetxlog.c:988
+#: pg_resetxlog.c:1030
 #, c-format
 msgid "  -o OID          set next OID\n"
-msgstr "  -o OID          ´ÙÀ½ OID ÁöÁ¤\n"
+msgstr "  -o OID          ë‹¤ìŒ OID ì§€ì •\n"
 
-#: pg_resetxlog.c:989
+#: pg_resetxlog.c:1031
 #, c-format
 msgid "  -O OFFSET       set next multitransaction offset\n"
-msgstr "  -O OFFSET       ´ÙÀ½ ¸ÖÆ¼Æ®·£Àè¼Ç ¿É¼Â ÁöÁ¤\n"
+msgstr "  -O OFFSET       ë‹¤ìŒ ë©€í‹°íŠ¸ëœì­ì…˜ ì˜µì…‹ ì§€ì •\n"
 
-#: pg_resetxlog.c:990
+#: pg_resetxlog.c:1032
 #, c-format
 msgid "  -x XID          set next transaction ID\n"
-msgstr "  -x XID          ´ÙÀ½ XID(Æ®·£Àè¼Ç ID) ÁöÁ¤\n"
+msgstr "  -x XID          ë‹¤ìŒ XID(íŠ¸ëœì­ì…˜ ID) ì§€ì •\n"
 
-#: pg_resetxlog.c:991
+#: pg_resetxlog.c:1033
 #, c-format
 msgid "  --help          show this help, then exit\n"
-msgstr "  --help          ÀÌ µµ¿ò¸»À» º¸¿©ÁÖ°í ¸¶Ä§\n"
+msgstr "  --help          ì´ ë„ì›€ë§ì„ ë³´ì—¬ì£¼ê³  ë§ˆì¹¨\n"
 
-#: pg_resetxlog.c:992
+#: pg_resetxlog.c:1034
 #, c-format
 msgid "  --version       output version information, then exit\n"
-msgstr "  --version       ¹öÀü Á¤º¸¸¦ º¸¿©ÁÖ°í ¸¶Ä§\n"
+msgstr "  --version       ë²„ì „ ì •ë³´ë¥¼ ë³´ì—¬ì£¼ê³  ë§ˆì¹¨\n"
 
-#: pg_resetxlog.c:993
+#: pg_resetxlog.c:1035
 #, c-format
 msgid ""
 "\n"
 "Report bugs to <pgsql-bugs@postgresql.org>.\n"
 msgstr ""
 "\n"
-"¿À·ùº¸°í: <pgsql-bugs@postgresql.org>.\n"
+"ì˜¤ë¥˜ë³´ê³ : <pgsql-bugs@postgresql.org>.\n"
+

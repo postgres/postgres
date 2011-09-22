@@ -1,0 +1,313 @@
+# Copyright (C) 2011 PostgreSQL Global Development Group
+# This file is distributed under the same license as the PostgreSQL package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2011.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: PostgreSQL 9.0\n"
+"Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
+"POT-Creation-Date: 2011-06-20 12:54+0000\n"
+"PO-Revision-Date: 2011-07-29 16:03+0800\n"
+"Last-Translator: Changjian Yuan <dev-escalations@enterprisedb.com>\n"
+"Language-Team: EnterpriseDB translation team <dev-escalations@enterprisedb.com>\n"
+"Language: \n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=1; plural=0;\n"
+
+#: plpython.c:418
+#, c-format
+msgid "PL/Python function \"%s\""
+msgstr "PL/Python 函式 \"%s\""
+
+#: plpython.c:425
+msgid "PL/Python anonymous code block"
+msgstr "PL/Python 匿名程式碼區塊"
+
+#: plpython.c:432
+msgid "while modifying trigger row"
+msgstr "修改觸發程序資料列時"
+
+#: plpython.c:439
+msgid "while creating return value"
+msgstr "建立傳回值時"
+
+#: plpython.c:608
+#: plpython.c:634
+msgid "unexpected return value from trigger procedure"
+msgstr "觸發程序傳回非預期的值"
+
+#: plpython.c:609
+msgid "Expected None or a string."
+msgstr "預期 None 或字串。"
+
+#: plpython.c:624
+msgid "PL/Python trigger function returned \"MODIFY\" in a DELETE trigger -- ignored"
+msgstr "PL/Python 觸發程序函式在 DELETE 觸發程序中傳回 \"MODIFY\" -- 已忽略"
+
+#: plpython.c:635
+msgid "Expected None, \"OK\", \"SKIP\", or \"MODIFY\"."
+msgstr "預期 None、\"OK\"、\"SKIP\" 或 \"MODIFY\"。"
+
+#: plpython.c:687
+msgid "TD[\"new\"] deleted, cannot modify row"
+msgstr "TD[\"new\"] 已刪除，無法修改資料列"
+
+#: plpython.c:690
+msgid "TD[\"new\"] is not a dictionary"
+msgstr "TD[\"new\"] 不是字典"
+
+#: plpython.c:714
+#, c-format
+msgid "TD[\"new\"] dictionary key at ordinal position %d is not a string"
+msgstr "在序數位置 %d 的 TD[\"new\"] 字典索引鍵不是字串"
+
+#: plpython.c:720
+#, c-format
+msgid "key \"%s\" found in TD[\"new\"] does not exist as a column in the triggering row"
+msgstr "在 TD[\"new\"] 中找到的索引鍵 \"%s\" 不是以資料行型式存在於觸發資料列中"
+
+#: plpython.c:816
+msgid "could not create new dictionary while building trigger arguments"
+msgstr "建立觸發程序引數時，無法建立新字典"
+
+#: plpython.c:1022
+msgid "unsupported set function return mode"
+msgstr "不支援的 set 函式傳回模式"
+
+#: plpython.c:1023
+msgid "PL/Python set-returning functions only support returning only value per call."
+msgstr "PL/Python 集合-傳回函式只支援每個呼叫只傳回值。"
+
+#: plpython.c:1035
+msgid "returned object cannot be iterated"
+msgstr "傳回的物件無法反覆執行"
+
+#: plpython.c:1036
+msgid "PL/Python set-returning functions must return an iterable object."
+msgstr "PL/Python 集合-傳回函式必須傳回可反覆執行的物件。"
+
+#: plpython.c:1063
+msgid "error fetching next item from iterator"
+msgstr "從 Iterator 取得下一個項目時發生錯誤"
+
+#: plpython.c:1098
+msgid "PL/Python function with return type \"void\" did not return None"
+msgstr "傳回型別為 \"void\" 的 PL/Python 函式未傳回 None"
+
+#: plpython.c:1253
+msgid "PyList_SetItem() failed, while setting up arguments"
+msgstr "設定引數時，PyList_SetItem() 失敗"
+
+#: plpython.c:1257
+msgid "PyDict_SetItemString() failed, while setting up arguments"
+msgstr "設定引數時，PyDict_SetItemString() 失敗"
+
+#: plpython.c:1326
+msgid "PyCObject_AsVoidPtr() failed"
+msgstr "PyCObject_AsVoidPtr() 失敗"
+
+#: plpython.c:1434
+msgid "trigger functions can only be called as triggers"
+msgstr "觸發程序函式只能當做觸發程序呼叫"
+
+#: plpython.c:1438
+#: plpython.c:1822
+#, c-format
+msgid "PL/Python functions cannot return type %s"
+msgstr "PL/Python 函式無法傳回型別 %s"
+
+#: plpython.c:1516
+#, c-format
+msgid "PL/Python functions cannot accept type %s"
+msgstr "PL/Python 函式無法接受型別 %s"
+
+#: plpython.c:1555
+msgid "PyCObject_FromVoidPtr() failed"
+msgstr "PyCObject_FromVoidPtr() 失敗"
+
+#: plpython.c:1613
+#, c-format
+msgid "could not compile PL/Python function \"%s\""
+msgstr "無法編譯 PL/Python 函式 \"%s\""
+
+#: plpython.c:1824
+msgid "PL/Python does not support conversion to arrays of row types."
+msgstr "PL/Python 不支援資料列型別陣列的轉換。"
+
+#: plpython.c:2027
+msgid "cannot convert multidimensional array to Python list"
+msgstr "無法將多維度陣列轉換為 Python 清單"
+
+#: plpython.c:2028
+msgid "PL/Python only supports one-dimensional arrays."
+msgstr "PL/Python 只支援一維陣列。"
+
+#: plpython.c:2067
+msgid "could not create new dictionary"
+msgstr "無法建立新字典"
+
+#: plpython.c:2139
+msgid "could not create bytes representation of Python object"
+msgstr "無法建立 Python 物件的位元組表示"
+
+#: plpython.c:2193
+msgid "could not create string representation of Python object"
+msgstr "無法建立 Python 物件的字串表示"
+
+#: plpython.c:2204
+msgid "could not convert Python object into cstring: Python string representation appears to contain null bytes"
+msgstr "無法將 Python 物件轉換為 cstring:Python 字串表示包含 Null 位元組"
+
+#: plpython.c:2238
+msgid "return value of function with array return type is not a Python sequence"
+msgstr "陣列傳回型別的函式傳回值不是 Python 序列"
+
+#: plpython.c:2313
+#, c-format
+msgid "key \"%s\" not found in mapping"
+msgstr "在對應中找不到索引鍵 \"%s\""
+
+#: plpython.c:2314
+msgid "To return null in a column, add the value None to the mapping with the key named after the column."
+msgstr "若要在資料行中傳回 Null，請將 None 值加入到具有以資料行命名之索引鍵的對應中。"
+
+#: plpython.c:2357
+msgid "length of returned sequence did not match number of columns in row"
+msgstr "傳回的序列長度不符合資料列中的資料行數量"
+
+#: plpython.c:2450
+#, c-format
+msgid "attribute \"%s\" does not exist in Python object"
+msgstr "Python 物件中不存在屬性 \"%s\""
+
+#: plpython.c:2451
+msgid "To return null in a column, let the returned object have an attribute named after column with value None."
+msgstr "若要在資料行中傳回 Null，請讓傳回的物件具有以資料行命名並含有 None 值的屬性。"
+
+#: plpython.c:2685
+msgid "plan.status takes no arguments"
+msgstr "plan.status 不接受引數"
+
+#: plpython.c:2804
+#: plpython.c:2947
+msgid "transaction aborted"
+msgstr "交易已中止"
+
+#: plpython.c:2811
+msgid "invalid arguments for plpy.prepare"
+msgstr "plpy.prepare 的引數無效"
+
+#: plpython.c:2818
+msgid "second argument of plpy.prepare must be a sequence"
+msgstr "plpy.prepare 的第二個引數必須是序列"
+
+#: plpython.c:2868
+#, c-format
+msgid "plpy.prepare: type name at ordinal position %d is not a string"
+msgstr "plpy.prepare:在序數位置 %d 的型別名稱不是字串"
+
+#: plpython.c:2895
+msgid "plpy.prepare does not support composite types"
+msgstr "plpy.prepare 不支援複合型別"
+
+#: plpython.c:2924
+msgid "unrecognized error in PLy_spi_prepare"
+msgstr "PLy_spi_prepare 發生無法辨識的錯誤"
+
+#: plpython.c:2960
+msgid "plpy.execute expected a query or a plan"
+msgstr "plpy.execute 預期查詢或計劃"
+
+#: plpython.c:2977
+msgid "plpy.execute takes a sequence as its second argument"
+msgstr "plpy.execute 接受序列做為它的第二個引數"
+
+#: plpython.c:2993
+msgid "could not execute plan"
+msgstr "無法執行計劃"
+
+#: plpython.c:2996
+#, c-format
+msgid "Expected sequence of %d argument, got %d: %s"
+msgid_plural "Expected sequence of %d arguments, got %d: %s"
+msgstr[0] "預期 %d 個引數的序列，收到 %d 個: %s"
+
+#: plpython.c:3075
+msgid "unrecognized error in PLy_spi_execute_plan"
+msgstr "PLy_spi_execute_plan 發生無法辨識的錯誤"
+
+#: plpython.c:3094
+#, c-format
+msgid "SPI_execute_plan failed: %s"
+msgstr "SPI_execute_plan 失敗:%s"
+
+#: plpython.c:3121
+msgid "unrecognized error in PLy_spi_execute_query"
+msgstr "PLy_spi_execute_query 發生無法辨識的錯誤"
+
+#: plpython.c:3130
+#, c-format
+msgid "SPI_execute failed: %s"
+msgstr "SPI_execute 失敗:%s"
+
+#: plpython.c:3187
+msgid "unrecognized error in PLy_spi_execute_fetch_result"
+msgstr "PLy_spi_execute_fetch_result 發生無法辨識的錯誤"
+
+#: plpython.c:3241
+msgid "Python major version mismatch in session"
+msgstr "在階段中，Python 主要版本不相符"
+
+#: plpython.c:3242
+#, c-format
+msgid "This session has previously used Python major version %d, and it is now attempting to use Python major version %d."
+msgstr "此階段先前使用 Python 主要版本 %d，而現在正在嘗試使用 Python 主要版本 %d。"
+
+#: plpython.c:3244
+msgid "Start a new session to use a different Python major version."
+msgstr "啟動新階段以使用不同的 Python 主要版本。"
+
+#: plpython.c:3259
+msgid "untrapped error in initialization"
+msgstr "初始化作業發生未截獲的錯誤"
+
+#: plpython.c:3262
+msgid "could not create procedure cache"
+msgstr "無法建立程序快取"
+
+#: plpython.c:3274
+msgid "could not import \"__main__\" module"
+msgstr "無法匯入 \"__main__\" 模組"
+
+#: plpython.c:3281
+msgid "could not initialize globals"
+msgstr "無法初始化全域項目"
+
+#: plpython.c:3399
+msgid "could not parse error message in plpy.elog"
+msgstr "無法解譯 plpy.elog 中的錯誤訊息"
+
+#: plpython.c:3528
+#: plpython.c:3532
+#, c-format
+msgid "PL/Python: %s"
+msgstr "PL/Python:%s"
+
+# commands/vacuum.c:2258 commands/vacuumlazy.c:489 commands/vacuumlazy.c:770
+# nodes/print.c:86 storage/lmgr/deadlock.c:888 tcop/postgres.c:3285
+#: plpython.c:3529
+#, c-format
+msgid "%s"
+msgstr "%s"
+
+# common.c:123
+#: plpython.c:3642
+msgid "out of memory"
+msgstr "記憶體用盡"
+
+#: plpython.c:3696
+msgid "could not convert Python Unicode object to PostgreSQL server encoding"
+msgstr "無法將 Python Unicode 物件轉換為 PostgreSQL 伺服器編碼"
+
