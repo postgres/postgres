@@ -1,7 +1,7 @@
 # translation of psql-fr.po to FR_fr
 # French message translation file for psql
 #
-# $PostgreSQL: pgsql/src/bin/psql/po/fr.po,v 1.22.2.4 2009/12/08 22:15:48 petere Exp $
+# $PostgreSQL: pgsql/src/bin/psql/po/fr.po,v 1.22 2008/01/30 11:05:40 petere Exp $
 #
 # Use these quotes: « %s »
 # Peter Eisentraut <peter_e@gmx.net>, 2001.
@@ -11,10 +11,11 @@ msgid ""
 msgstr ""
 "Project-Id-Version: psql-83-fr\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2009-11-23 12:06+0000\n"
-"PO-Revision-Date: 2009-11-24 22:49+0100\n"
+"POT-Creation-Date: 2011-08-02 11:27+0000\n"
+"PO-Revision-Date: 2011-08-16 18:59+0100\n"
 "Last-Translator: Guillaume Lelarge <guillaume@lelarge.info>\n"
 "Language-Team:  <pgsql-fr-generale@postgresql.org>\n"
+"Language: \n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=ISO-8859-15\n"
 "Content-Transfer-Encoding: 8bit\n"
@@ -114,10 +115,11 @@ msgstr "Historique sauvegardé dans le fichier « %s/%s ».\n"
 #: command.c:870
 #: common.c:50
 #: common.c:64
+#: common.c:88
 #: mainloop.c:67
 #: print.c:56
 #: print.c:70
-#: print.c:885
+#: print.c:835
 #, c-format
 msgid "out of memory\n"
 msgstr "mémoire épuisée\n"
@@ -168,7 +170,7 @@ msgstr "Mot de passe pour l'utilisateur %s : "
 #: common.c:907
 #: copy.c:647
 #: copy.c:692
-#: copy.c:821
+#: copy.c:822
 #, c-format
 msgid "%s"
 msgstr "%s"
@@ -213,120 +215,120 @@ msgstr "n'a pas pu exécuter /bin/sh\n"
 
 #: command.c:1353
 #, c-format
-msgid "cannot locate temporary directory: %s"
-msgstr "n'a pas pu localiser le répertoire temporaire : %s"
+msgid "cannot locate temporary directory: %s\n"
+msgstr "ne peut pas localiser le répertoire temporaire : %s\n"
 
 #: command.c:1380
 #, c-format
 msgid "could not open temporary file \"%s\": %s\n"
 msgstr "n'a pas pu ouvrir le fichier temporaire « %s » : %s\n"
 
-#: command.c:1570
+#: command.c:1588
 msgid "\\pset: allowed formats are unaligned, aligned, html, latex, troff-ms\n"
 msgstr "\\pset : les formats autorisés sont unaligned, aligned, html, latex, troff-ms\n"
 
-#: command.c:1575
+#: command.c:1593
 #, c-format
 msgid "Output format is %s.\n"
 msgstr "Le format de sortie est %s.\n"
 
-#: command.c:1585
+#: command.c:1603
 #, c-format
 msgid "Border style is %d.\n"
 msgstr "Le style de bordure est %d.\n"
 
-#: command.c:1597
+#: command.c:1615
 #, c-format
 msgid "Expanded display is on.\n"
 msgstr "Affichage étendu activé.\n"
 
-#: command.c:1598
+#: command.c:1616
 #, c-format
 msgid "Expanded display is off.\n"
 msgstr "Affichage étendu désactivé.\n"
 
-#: command.c:1611
+#: command.c:1629
 msgid "Showing locale-adjusted numeric output."
 msgstr "Affichage de la sortie numérique adaptée à la locale."
 
-#: command.c:1613
+#: command.c:1631
 msgid "Locale-adjusted numeric output is off."
 msgstr "L'affichage de la sortie numérique adaptée à la locale est désactivé."
 
-#: command.c:1626
+#: command.c:1644
 #, c-format
 msgid "Null display is \"%s\".\n"
 msgstr "L'affichage de null est « %s ».\n"
 
-#: command.c:1638
+#: command.c:1656
 #, c-format
 msgid "Field separator is \"%s\".\n"
 msgstr "Le séparateur de champs est « %s ».\n"
 
-#: command.c:1652
+#: command.c:1670
 #, c-format
 msgid "Record separator is <newline>."
 msgstr "Le séparateur d'enregistrements est <saut de ligne>."
 
-#: command.c:1654
+#: command.c:1672
 #, c-format
 msgid "Record separator is \"%s\".\n"
 msgstr "Le séparateur d'enregistrements est « %s ».\n"
 
-#: command.c:1668
+#: command.c:1686
 msgid "Showing only tuples."
 msgstr "Affichage des tuples seuls."
 
-#: command.c:1670
+#: command.c:1688
 msgid "Tuples only is off."
 msgstr "L'affichage des tuples seuls est désactivé."
 
-#: command.c:1686
+#: command.c:1704
 #, c-format
 msgid "Title is \"%s\".\n"
 msgstr "Le titre est « %s ».\n"
 
-#: command.c:1688
+#: command.c:1706
 #, c-format
 msgid "Title is unset.\n"
 msgstr "Le titre n'est pas défini.\n"
 
-#: command.c:1704
+#: command.c:1722
 #, c-format
 msgid "Table attribute is \"%s\".\n"
 msgstr "L'attribut de la table est « %s ».\n"
 
-#: command.c:1706
+#: command.c:1724
 #, c-format
 msgid "Table attributes unset.\n"
 msgstr "Les attributs de la table ne sont pas définis.\n"
 
-#: command.c:1727
+#: command.c:1745
 msgid "Pager is used for long output."
 msgstr "Le pagineur est utilisé pour les affichages importants."
 
-#: command.c:1729
+#: command.c:1747
 msgid "Pager is always used."
 msgstr "Le pagineur est toujours utilisé."
 
-#: command.c:1731
+#: command.c:1749
 msgid "Pager usage is off."
 msgstr "Le pagineur n'est pas utilisé."
 
-#: command.c:1745
+#: command.c:1763
 msgid "Default footer is on."
 msgstr "Le bas de page pas défaut est activé."
 
-#: command.c:1747
+#: command.c:1765
 msgid "Default footer is off."
 msgstr "Le bas de page par défaut est désactivé."
 
-#: command.c:1753
+#: command.c:1771
 #, c-format
 msgid "\\pset: unknown option: %s\n"
 msgstr "\\pset : option inconnue : %s\n"
 
-#: command.c:1808
+#: command.c:1826
 msgid "\\!: failed\n"
 msgstr "\\! : échec\n"
 
@@ -334,10 +336,6 @@ msgstr "\\! : échec\n"
 #, c-format
 msgid "%s: pg_strdup: cannot duplicate null pointer (internal error)\n"
 msgstr "%s : pg_strdup : ne peut pas dupliquer le pointeur null (erreur interne)\n"
-
-#: common.c:88
-msgid "out of memory"
-msgstr "mémoire épuisée"
 
 #: common.c:341
 msgid "connection to server was lost\n"
@@ -456,7 +454,7 @@ msgstr ""
 "Saisissez les données à copier suivies d'un saut de ligne.\n"
 "Terminez avec un antislash et un point seuls sur une ligne."
 
-#: copy.c:814
+#: copy.c:815
 msgid "aborted because of read failure"
 msgstr "annulé du fait d'une erreur de lecture"
 
@@ -1179,27 +1177,27 @@ msgstr "« Large objects »"
 msgid "Use \"\\q\" to leave %s.\n"
 msgstr "Saisissez « \\q » pour quitter %s.\n"
 
-#: print.c:773
+#: print.c:730
 #, c-format
 msgid "(No rows)\n"
 msgstr "(Aucune ligne)\n"
 
-#: print.c:1808
+#: print.c:1692
 #, c-format
 msgid "Interrupted\n"
 msgstr "Interrompu\n"
 
-#: print.c:1916
+#: print.c:1800
 #, c-format
 msgid "invalid output format (internal error): %d"
 msgstr "format de sortie invalide (erreur interne) : %d"
 
-#: print.c:1996
+#: print.c:1922
 #, c-format
 msgid "(1 row)"
 msgstr "(1 ligne)"
 
-#: print.c:1998
+#: print.c:1924
 #, c-format
 msgid "(%lu rows)"
 msgstr "(%lu lignes)"
@@ -4370,3 +4368,5 @@ msgstr "le processus fils a été terminé par le signal %d"
 msgid "child process exited with unrecognized status %d"
 msgstr "le processus fils a quitté avec un statut %d non reconnu"
 
+#~ msgid "out of memory"
+#~ msgstr "mémoire épuisée"
