@@ -1,6 +1,377 @@
 <!-- doc/src/sgml/release-8.3.sgml -->
 <!-- See header comment in release.sgml about typical markup -->
 
+ <sect1 id="release-8-3-16">
+  <title>Release 8.3.16</title>
+
+  <note>
+  <title>Release Date</title>
+  <simpara>2011-09-26</simpara>
+  </note>
+
+  <para>
+   This release contains a variety of fixes from 8.3.15.
+   For information about new features in the 8.3 major release, see
+   <xref linkend="release-8-3">.
+  </para>
+
+  <sect2>
+   <title>Migration to Version 8.3.16</title>
+
+   <para>
+    A dump/restore is not required for those running 8.3.X.
+    However, if you are upgrading from a version earlier than 8.3.8,
+    see the release notes for 8.3.8.
+   </para>
+
+  </sect2>
+
+  <sect2>
+   <title>Changes</title>
+
+   <itemizedlist>
+
+    <listitem>
+     <para>
+      Fix bugs in indexing of in-doubt HOT-updated tuples (Tom Lane)
+     </para>
+
+     <para>
+      These bugs could result in index corruption after reindexing a system
+      catalog.  They are not believed to affect user indexes.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix multiple bugs in GiST index page split processing (Heikki
+      Linnakangas)
+     </para>
+
+     <para>
+      The probability of occurrence was low, but these could lead to index
+      corruption.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix possible buffer overrun in <function>tsvector_concat()</>
+      (Tom Lane)
+     </para>
+
+     <para>
+      The function could underestimate the amount of memory needed for its
+      result, leading to server crashes.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix crash in <function>xml_recv</> when processing a
+      <quote>standalone</> parameter (Tom Lane)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Avoid possibly accessing off the end of memory in <command>ANALYZE</>
+      and in SJIS-2004 encoding conversion (Noah Misch)
+     </para>
+
+     <para>
+      This fixes some very-low-probability server crash scenarios.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix race condition in relcache init file invalidation (Tom Lane)
+     </para>
+
+     <para>
+      There was a window wherein a new backend process could read a stale init
+      file but miss the inval messages that would tell it the data is stale.
+      The result would be bizarre failures in catalog accesses, typically
+      <quote>could not read block 0 in file ...</> later during startup.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix memory leak at end of a GiST index scan (Tom Lane)
+     </para>
+
+     <para>
+      Commands that perform many separate GiST index scans, such as
+      verification of a new GiST-based exclusion constraint on a table
+      already containing many rows, could transiently require large amounts of
+      memory due to this leak.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix performance problem when constructing a large, lossy bitmap
+      (Tom Lane)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix array- and path-creating functions to ensure padding bytes are
+      zeroes (Tom Lane)
+     </para>
+
+     <para>
+      This avoids some situations where the planner will think that
+      semantically-equal constants are not equal, resulting in poor
+      optimization.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Work around gcc 4.6.0 bug that breaks WAL replay (Tom Lane)
+     </para>
+
+     <para>
+      This could lead to loss of committed transactions after a server crash.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix dump bug for <literal>VALUES</> in a view (Tom Lane)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Disallow <literal>SELECT FOR UPDATE/SHARE</> on sequences (Tom Lane)
+     </para>
+
+     <para>
+      This operation doesn't work as expected and can lead to failures.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Defend against integer overflow when computing size of a hash table (Tom
+      Lane)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix cases where <command>CLUSTER</> might attempt to access
+      already-removed TOAST data (Tom Lane)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix portability bugs in use of credentials control messages for
+      <quote>peer</> authentication (Tom Lane)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix SSPI login when multiple roundtrips are required (Ahmed Shinwari,
+      Magnus Hagander)
+     </para>
+
+     <para>
+      The typical symptom of this problem was <quote>The function requested is
+      not supported</> errors during SSPI login.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix typo in <function>pg_srand48</> seed initialization (Andres Freund)
+     </para>
+
+     <para>
+      This led to failure to use all bits of the provided seed.  This function
+      is not used on most platforms (only those without <function>srandom</>),
+      and the potential security exposure from a less-random-than-expected
+      seed seems minimal in any case.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Avoid integer overflow when the sum of <literal>LIMIT</> and
+      <literal>OFFSET</> values exceeds 2^63 (Heikki Linnakangas)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Add overflow checks to <type>int4</> and <type>int8</> versions of
+      <function>generate_series()</> (Robert Haas)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix trailing-zero removal in <function>to_char()</> (Marti Raudsepp)
+     </para>
+
+     <para>
+      In a format with <literal>FM</> and no digit positions
+      after the decimal point, zeroes to the left of the decimal point could
+      be removed incorrectly.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix <function>pg_size_pretty()</> to avoid overflow for inputs close to
+      2^63 (Tom Lane)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      In <application>pg_ctl</>, support silent mode for service registrations
+      on Windows (MauMau)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix <application>psql</>'s counting of script file line numbers during
+      <literal>COPY</> from a different file (Tom Lane)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix <application>pg_restore</>'s direct-to-database mode for
+      <varname>standard_conforming_strings</> (Tom Lane)
+     </para>
+
+     <para>
+      <application>pg_restore</> could emit incorrect commands when restoring
+      directly to a database server from an archive file that had been made
+      with <varname>standard_conforming_strings</> set to <literal>on</>.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix write-past-buffer-end and memory leak in <application>libpq</>'s
+      LDAP service lookup code (Albe Laurenz)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      In <application>libpq</>, avoid failures when using nonblocking I/O
+      and an SSL connection (Martin Pihlak, Tom Lane)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Improve libpq's handling of failures during connection startup
+      (Tom Lane)
+     </para>
+
+     <para>
+      In particular, the response to a server report of <function>fork()</>
+      failure during SSL connection startup is now saner.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Improve <application>libpq</>'s error reporting for SSL failures (Tom
+      Lane)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Make <application>ecpglib</> write <type>double</> values with 15 digits
+      precision (Akira Kurosawa)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      In <application>ecpglib</>, be sure <literal>LC_NUMERIC</> setting is
+      restored after an error (Michael Meskes)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Apply upstream fix for blowfish signed-character bug (CVE-2011-2483)
+      (Tom Lane)
+     </para>
+
+     <para>
+      <filename>contrib/pg_crypto</>'s blowfish encryption code could give
+      wrong results on platforms where char is signed (which is most),
+      leading to encrypted passwords being weaker than they should be.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix memory leak in <filename>contrib/seg</> (Heikki Linnakangas)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix <function>pgstatindex()</> to give consistent results for empty
+      indexes (Tom Lane)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Allow building with perl 5.14 (Alex Hunsaker)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Update configure script's method for probing existence of system
+      functions (Tom Lane)
+     </para>
+
+     <para>
+      The version of autoconf we used in 8.3 and 8.2 could be fooled by
+      compilers that perform link-time optimization.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix assorted issues with build and install file paths containing spaces
+      (Tom Lane)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Update time zone data files to <application>tzdata</> release 2011i
+      for DST law changes in Canada, Egypt, Russia, Samoa, and South Sudan.
+     </para>
+    </listitem>
+
+   </itemizedlist>
+
+  </sect2>
+ </sect1>
+
  <sect1 id="release-8-3-15">
   <title>Release 8.3.15</title>
 
