@@ -22,6 +22,7 @@ BufferUsage pgBufferUsage;
 static void BufferUsageAccumDiff(BufferUsage *dst,
 					 const BufferUsage *add, const BufferUsage *sub);
 
+
 /* Allocate new instrumentation structure(s) */
 Instrumentation *
 InstrAlloc(int n, int instrument_options)
@@ -31,13 +32,14 @@ InstrAlloc(int n, int instrument_options)
 	/* timer is always required for now */
 	Assert(instrument_options & INSTRUMENT_TIMER);
 
+	/* initialize all fields to zeroes, then modify as needed */
 	instr = palloc0(n * sizeof(Instrumentation));
 	if (instrument_options & INSTRUMENT_BUFFERS)
 	{
 		int			i;
 
 		for (i = 0; i < n; i++)
-			instr[i].needs_bufusage = true;
+			instr[i].need_bufusage = true;
 	}
 
 	return instr;
@@ -52,8 +54,8 @@ InstrStartNode(Instrumentation *instr)
 	else
 		elog(DEBUG2, "InstrStartNode called twice in a row");
 
-	/* initialize buffer usage per plan node */
-	if (instr->needs_bufusage)
+	/* save buffer usage totals at node entry, if needed */
+	if (instr->need_bufusage)
 		instr->bufusage_start = pgBufferUsage;
 }
 
@@ -77,8 +79,8 @@ InstrStopNode(Instrumentation *instr, double nTuples)
 
 	INSTR_TIME_SET_ZERO(instr->starttime);
 
-	/* Adds delta of buffer usage to node's count. */
-	if (instr->needs_bufusage)
+	/* Add delta of buffer usage since entry to node's totals */
+	if (instr->need_bufusage)
 		BufferUsageAccumDiff(&instr->bufusage,
 							 &pgBufferUsage, &instr->bufusage_start);
 
@@ -119,12 +121,12 @@ InstrEndLoop(Instrumentation *instr)
 	instr->tuplecount = 0;
 }
 
+/* dst += add - sub */
 static void
 BufferUsageAccumDiff(BufferUsage *dst,
 					 const BufferUsage *add,
 					 const BufferUsage *sub)
 {
-	/* dst += add - sub */
 	dst->shared_blks_hit += add->shared_blks_hit - sub->shared_blks_hit;
 	dst->shared_blks_read += add->shared_blks_read - sub->shared_blks_read;
 	dst->shared_blks_written += add->shared_blks_written - sub->shared_blks_written;

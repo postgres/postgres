@@ -214,6 +214,8 @@ ExecNestLoop(NestLoopState *node)
 						return result;
 					}
 				}
+				else
+					InstrCountFiltered2(node, 1);
 			}
 
 			/*
@@ -270,7 +272,11 @@ ExecNestLoop(NestLoopState *node)
 					return result;
 				}
 			}
+			else
+				InstrCountFiltered2(node, 1);
 		}
+		else
+			InstrCountFiltered1(node, 1);
 
 		/*
 		 * Tuple fails qual, so free per-tuple memory and try again.

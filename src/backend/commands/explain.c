@@ -18,7 +18,6 @@
 #include "commands/defrem.h"
 #include "commands/prepare.h"
 #include "executor/hashjoin.h"
-#include "executor/instrument.h"
 #include "foreign/fdwapi.h"
 #include "optimizer/clauses.h"
 #include "parser/parsetree.h"
@@ -76,6 +75,8 @@ static void show_sort_keys_common(PlanState *planstate,
 					  List *ancestors, ExplainState *es);
 static void show_sort_info(SortState *sortstate, ExplainState *es);
 static void show_hash_info(HashState *hashstate, ExplainState *es);
+static void show_instrumentation_count(const char *qlabel, int which,
+						   PlanState *planstate, ExplainState *es);
 static void show_foreignscan_info(ForeignScanState *fsstate, ExplainState *es);
 static const char *explain_get_index_name(Oid indexId);
 static void ExplainScanTarget(Scan *plan, ExplainState *es);
@@ -1000,9 +1001,15 @@ ExplainNode(PlanState *planstate, List *ancestors,
 		case T_IndexScan:
 			show_scan_qual(((IndexScan *) plan)->indexqualorig,
 						   "Index Cond", planstate, ancestors, es);
+			if (((IndexScan *) plan)->indexqualorig)
+				show_instrumentation_count("Rows Removed by Index Recheck", 2,
+										   planstate, es);
 			show_scan_qual(((IndexScan *) plan)->indexorderbyorig,
 						   "Order By", planstate, ancestors, es);
 			show_scan_qual(plan->qual, "Filter", planstate, ancestors, es);
+			if (plan->qual)
+				show_instrumentation_count("Rows Removed by Filter", 1,
+										   planstate, es);
 			break;
 		case T_BitmapIndexScan:
 			show_scan_qual(((BitmapIndexScan *) plan)->indexqualorig,
@@ -1011,6 +1018,9 @@ ExplainNode(PlanState *planstate, List *ancestors,
 		case T_BitmapHeapScan:
 			show_scan_qual(((BitmapHeapScan *) plan)->bitmapqualorig,
 						   "Recheck Cond", planstate, ancestors, es);
+			if (((BitmapHeapScan *) plan)->bitmapqualorig)
+				show_instrumentation_count("Rows Removed by Index Recheck", 2,
+										   planstate, es);
 			/* FALL THRU */
 		case T_SeqScan:
 		case T_ValuesScan:
@@ -1018,6 +1028,9 @@ ExplainNode(PlanState *planstate, List *ancestors,
 		case T_WorkTableScan:
 		case T_SubqueryScan:
 			show_scan_qual(plan->qual, "Filter", planstate, ancestors, es);
+			if (plan->qual)
+				show_instrumentation_count("Rows Removed by Filter", 1,
+										   planstate, es);
 			break;
 		case T_FunctionScan:
 			if (es->verbose)
@@ -1025,6 +1038,9 @@ ExplainNode(PlanState *planstate, List *ancestors,
 								"Function Call", planstate, ancestors,
 								es->verbose, es);
 			show_scan_qual(plan->qual, "Filter", planstate, ancestors, es);
+			if (plan->qual)
+				show_instrumentation_count("Rows Removed by Filter", 1,
+										   planstate, es);
 			break;
 		case T_TidScan:
 			{
@@ -1038,34 +1054,61 @@ ExplainNode(PlanState *planstate, List *ancestors,
 					tidquals = list_make1(make_orclause(tidquals));
 				show_scan_qual(tidquals, "TID Cond", planstate, ancestors, es);
 				show_scan_qual(plan->qual, "Filter", planstate, ancestors, es);
+				if (plan->qual)
+					show_instrumentation_count("Rows Removed by Filter", 1,
+											   planstate, es);
 			}
 			break;
 		case T_ForeignScan:
 			show_scan_qual(plan->qual, "Filter", planstate, ancestors, es);
+			if (plan->qual)
+				show_instrumentation_count("Rows Removed by Filter", 1,
+										   planstate, es);
 			show_foreignscan_info((ForeignScanState *) planstate, es);
 			break;
 		case T_NestLoop:
 			show_upper_qual(((NestLoop *) plan)->join.joinqual,
 							"Join Filter", planstate, ancestors, es);
+			if (((NestLoop *) plan)->join.joinqual)
+				show_instrumentation_count("Rows Removed by Join Filter", 1,
+										   planstate, es);
 			show_upper_qual(plan->qual, "Filter", planstate, ancestors, es);
+			if (plan->qual)
+				show_instrumentation_count("Rows Removed by Filter", 2,
+										   planstate, es);
 			break;
 		case T_MergeJoin:
 			show_upper_qual(((MergeJoin *) plan)->mergeclauses,
 							"Merge Cond", planstate, ancestors, es);
 			show_upper_qual(((MergeJoin *) plan)->join.joinqual,
 							"Join Filter", planstate, ancestors, es);
+			if (((MergeJoin *) plan)->join.joinqual)
+				show_instrumentation_count("Rows Removed by Join Filter", 1,
+										   planstate, es);
 			show_upper_qual(plan->qual, "Filter", planstate, ancestors, es);
+			if (plan->qual)
+				show_instrumentation_count("Rows Removed by Filter", 2,
+										   planstate, es);
 			break;
 		case T_HashJoin:
 			show_upper_qual(((HashJoin *) plan)->hashclauses,
 							"Hash Cond", planstate, ancestors, es);
 			show_upper_qual(((HashJoin *) plan)->join.joinqual,
 							"Join Filter", planstate, ancestors, es);
+			if (((HashJoin *) plan)->join.joinqual)
+				show_instrumentation_count("Rows Removed by Join Filter", 1,
+										   planstate, es);
 			show_upper_qual(plan->qual, "Filter", planstate, ancestors, es);
+			if (plan->qual)
+				show_instrumentation_count("Rows Removed by Filter", 2,
+										   planstate, es);
 			break;
 		case T_Agg:
 		case T_Group:
 			show_upper_qual(plan->qual, "Filter", planstate, ancestors, es);
+			if (plan->qual)
+				show_instrumentation_count("Rows Removed by Filter", 1,
+										   planstate, es);
 			break;
 		case T_Sort:
 			show_sort_keys((SortState *) planstate, ancestors, es);
@@ -1079,6 +1122,9 @@ ExplainNode(PlanState *planstate, List *ancestors,
 			show_upper_qual((List *) ((Result *) plan)->resconstantqual,
 							"One-Time Filter", planstate, ancestors, es);
 			show_upper_qual(plan->qual, "Filter", planstate, ancestors, es);
+			if (plan->qual)
+				show_instrumentation_count("Rows Removed by Filter", 1,
+										   planstate, es);
 			break;
 		case T_Hash:
 			show_hash_info((HashState *) planstate, es);
@@ -1505,6 +1551,37 @@ show_hash_info(HashState *hashstate, ExplainState *es)
 							 hashtable->nbuckets, hashtable->nbatch,
 							 spacePeakKb);
 		}
+	}
+}
+
+/*
+ * If it's EXPLAIN ANALYZE, show instrumentation information for a plan node
+ *
+ * "which" identifies which instrumentation counter to print
+ */
+static void
+show_instrumentation_count(const char *qlabel, int which,
+						   PlanState *planstate, ExplainState *es)
+{
+	double		nfiltered;
+	double		nloops;
+
+	if (!es->analyze || !planstate->instrument)
+		return;
+
+	if (which == 2)
+		nfiltered = planstate->instrument->nfiltered2;
+	else
+		nfiltered = planstate->instrument->nfiltered1;
+	nloops = planstate->instrument->nloops;
+
+	/* In text mode, suppress zero counts; they're not interesting enough */
+	if (nfiltered > 0 || es->format != EXPLAIN_FORMAT_TEXT)
+	{
+		if (nloops > 0)
+			ExplainPropertyFloat(qlabel, nfiltered / nloops, 0, es);
+		else
+			ExplainPropertyFloat(qlabel, 0.0, 0, es);
 	}
 }
 

@@ -325,7 +325,11 @@ ExecHashJoin(HashJoinState *node)
 							return result;
 						}
 					}
+					else
+						InstrCountFiltered2(node, 1);
 				}
+				else
+					InstrCountFiltered1(node, 1);
 				break;
 
 			case HJ_FILL_OUTER_TUPLE:
@@ -360,6 +364,8 @@ ExecHashJoin(HashJoinState *node)
 							return result;
 						}
 					}
+					else
+						InstrCountFiltered2(node, 1);
 				}
 				break;
 
@@ -397,6 +403,8 @@ ExecHashJoin(HashJoinState *node)
 						return result;
 					}
 				}
+				else
+					InstrCountFiltered2(node, 1);
 				break;
 
 			case HJ_NEED_NEW_BATCH:

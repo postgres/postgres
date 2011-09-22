@@ -96,7 +96,11 @@ IndexNext(IndexScanState *node)
 			econtext->ecxt_scantuple = slot;
 			ResetExprContext(econtext);
 			if (!ExecQual(node->indexqualorig, econtext, false))
-				continue;		/* nope, so ask index for another one */
+			{
+				/* Fails recheck, so drop it and loop back for another */
+				InstrCountFiltered2(node, 1);
+				continue;
+			}
 		}
 
 		return slot;

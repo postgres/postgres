@@ -118,6 +118,8 @@ ExecGroup(GroupState *node)
 				return result;
 			}
 		}
+		else
+			InstrCountFiltered1(node, 1);
 	}
 
 	/*
@@ -179,6 +181,8 @@ ExecGroup(GroupState *node)
 				return result;
 			}
 		}
+		else
+			InstrCountFiltered1(node, 1);
 	}
 
 	/* NOTREACHED */

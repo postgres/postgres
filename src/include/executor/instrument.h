@@ -28,6 +28,7 @@ typedef struct BufferUsage
 	long		temp_blks_written;		/* # of temp blocks written */
 } BufferUsage;
 
+/* Flag bits included in InstrAlloc's instrument_options bitmask */
 typedef enum InstrumentOption
 {
 	INSTRUMENT_TIMER = 1 << 0,	/* needs timer */
@@ -37,9 +38,10 @@ typedef enum InstrumentOption
 
 typedef struct Instrumentation
 {
+	/* Parameters set at node creation: */
+	bool		need_bufusage;	/* TRUE if we need buffer usage data */
 	/* Info about current plan cycle: */
 	bool		running;		/* TRUE if we've completed first tuple */
-	bool		needs_bufusage; /* TRUE if we need buffer usage */
 	instr_time	starttime;		/* Start time of current iteration of node */
 	instr_time	counter;		/* Accumulated runtime for this node */
 	double		firsttuple;		/* Time for first tuple of this cycle */
@@ -50,6 +52,8 @@ typedef struct Instrumentation
 	double		total;			/* Total total time (in seconds) */
 	double		ntuples;		/* Total tuples produced */
 	double		nloops;			/* # of run cycles for this node */
+	double		nfiltered1;		/* # tuples removed by scanqual or joinqual */
+	double		nfiltered2;		/* # tuples removed by "other" quals */
 	BufferUsage bufusage;		/* Total buffer usage */
 } Instrumentation;
 

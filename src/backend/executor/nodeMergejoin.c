@@ -505,6 +505,8 @@ MJFillOuter(MergeJoinState *node)
 			return result;
 		}
 	}
+	else
+		InstrCountFiltered2(node, 1);
 
 	return NULL;
 }
@@ -544,6 +546,8 @@ MJFillInner(MergeJoinState *node)
 			return result;
 		}
 	}
+	else
+		InstrCountFiltered2(node, 1);
 
 	return NULL;
 }
@@ -893,7 +897,11 @@ ExecMergeJoin(MergeJoinState *node)
 							return result;
 						}
 					}
+					else
+						InstrCountFiltered2(node, 1);
 				}
+				else
+					InstrCountFiltered1(node, 1);
 				break;
 
 				/*

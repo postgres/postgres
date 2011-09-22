@@ -47,7 +47,6 @@
 #include "commands/tablespace.h"
 #include "commands/trigger.h"
 #include "executor/execdebug.h"
-#include "executor/instrument.h"
 #include "miscadmin.h"
 #include "optimizer/clauses.h"
 #include "parser/parse_clause.h"

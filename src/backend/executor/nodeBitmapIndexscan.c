@@ -22,7 +22,6 @@
 #include "postgres.h"
 
 #include "executor/execdebug.h"
-#include "executor/instrument.h"
 #include "executor/nodeBitmapIndexscan.h"
 #include "executor/nodeIndexscan.h"
 #include "miscadmin.h"

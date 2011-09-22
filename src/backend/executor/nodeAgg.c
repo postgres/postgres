@@ -1204,6 +1204,8 @@ agg_retrieve_direct(AggState *aggstate)
 				return result;
 			}
 		}
+		else
+			InstrCountFiltered1(aggstate, 1);
 	}
 
 	/* No more groups */
@@ -1354,6 +1356,8 @@ agg_retrieve_hash_table(AggState *aggstate)
 				return result;
 			}
 		}
+		else
+			InstrCountFiltered1(aggstate, 1);
 	}
 
 	/* No more groups */

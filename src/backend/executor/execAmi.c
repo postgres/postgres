@@ -13,7 +13,6 @@
 #include "postgres.h"
 
 #include "executor/execdebug.h"
-#include "executor/instrument.h"
 #include "executor/nodeAgg.h"
 #include "executor/nodeAppend.h"
 #include "executor/nodeBitmapAnd.h"
