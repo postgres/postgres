@@ -127,7 +127,7 @@ if [ "${POLICY_STATUS}" != "on" ]; then
     echo "turned on in order to enable the rules necessary to run the"
 	echo "regression tests."
 	echo ""
-	if "${POLICY_STATUS}" = ""; then
+	if [ "${POLICY_STATUS}" = "" ]; then
 		echo "We attempted to determine the state of this Boolean using"
 		echo "'getsebool', but that command did not produce the expected"
 		echo "output.  Please verify that getsebool is available and in"
