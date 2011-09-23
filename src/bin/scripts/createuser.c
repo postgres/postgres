@@ -37,6 +37,8 @@ main(int argc, char *argv[])
 		{"no-inherit", no_argument, NULL, 'I'},
 		{"login", no_argument, NULL, 'l'},
 		{"no-login", no_argument, NULL, 'L'},
+		{"replication", no_argument, NULL, 1},
+		{"no-replication", no_argument, NULL, 2},
 		/* adduser is obsolete, undocumented spelling of superuser */
 		{"adduser", no_argument, NULL, 'a'},
 		{"no-adduser", no_argument, NULL, 'A'},
@@ -66,6 +68,7 @@ main(int argc, char *argv[])
 				createrole = TRI_DEFAULT,
 				inherit = TRI_DEFAULT,
 				login = TRI_DEFAULT,
+				replication = TRI_DEFAULT,
 				encrypted = TRI_DEFAULT;
 
 	PQExpBufferData sql;
@@ -144,6 +147,12 @@ main(int argc, char *argv[])
 				break;
 			case 'N':
 				encrypted = TRI_NO;
+				break;
+			case 1:
+				replication = TRI_YES;
+				break;
+			case 2:
+				replication = TRI_NO;
 				break;
 			default:
 				fprintf(stderr, _("Try \"%s --help\" for more information.\n"), progname);
@@ -271,6 +280,10 @@ main(int argc, char *argv[])
 		appendPQExpBuffer(&sql, " LOGIN");
 	if (login == TRI_NO)
 		appendPQExpBuffer(&sql, " NOLOGIN");
+	if (replication == TRI_YES)
+		appendPQExpBuffer(&sql, " REPLICATION");
+	if (replication == TRI_NO)
+		appendPQExpBuffer(&sql, " NOREPLICATION");
 	if (conn_limit != NULL)
 		appendPQExpBuffer(&sql, " CONNECTION LIMIT %s", conn_limit);
 	appendPQExpBuffer(&sql, ";\n");
@@ -316,6 +329,8 @@ help(const char *progname)
 	printf(_("  -R, --no-createrole       role cannot create roles\n"));
 	printf(_("  -s, --superuser           role will be superuser\n"));
 	printf(_("  -S, --no-superuser        role will not be superuser\n"));
+	printf(_("  --replication             role can initiate replication\n"));
+	printf(_("  --no-replication          role cannot initiate replication\n"));
 	printf(_("  --help                    show this help, then exit\n"));
 	printf(_("  --version                 output version information, then exit\n"));
 	printf(_("\nConnection options:\n"));
