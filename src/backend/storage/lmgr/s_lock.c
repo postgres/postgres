@@ -20,6 +20,7 @@
 
 #include "storage/s_lock.h"
 
+slock_t  dummy_spinlock;
 
 static int	spins_per_delay = DEFAULT_SPINS_PER_DELAY;
 
