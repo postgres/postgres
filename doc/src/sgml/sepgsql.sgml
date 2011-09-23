@@ -117,13 +117,18 @@ $ for DBNAME in template0 template1 postgres; do
   </para>
 
   <para>
-   Please note that you may see the following notifications depending on
-   the combination of a particular version of <productname>libselinux</>
-   and <productname>selinux-policy</>.
+   Please note that you may see some or all of the following notifications
+   depending on the combination of a particular version of
+   <productname>libselinux</> and <productname>selinux-policy</>.
 <screen>
 /etc/selinux/targeted/contexts/sepgsql_contexts:  line 33 has invalid object type db_blobs
+/etc/selinux/targeted/contexts/sepgsql_contexts:  line 36 has invalid object type db_language
+/etc/selinux/targeted/contexts/sepgsql_contexts:  line 37 has invalid object type db_language
+/etc/selinux/targeted/contexts/sepgsql_contexts:  line 38 has invalid object type db_language
+/etc/selinux/targeted/contexts/sepgsql_contexts:  line 39 has invalid object type db_language
+/etc/selinux/targeted/contexts/sepgsql_contexts:  line 40 has invalid object type db_language
 </screen>
-   This message is harmless and may be safely ignored.
+   These messages are harmless and may be safely ignored.
   </para>
  </sect2>
 
