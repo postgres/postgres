@@ -2,7 +2,7 @@
 
 MODULE_big = sepgsql
 OBJS = hooks.o selinux.o uavc.o label.o dml.o \
-	schema.o relation.o proc.o
+	database.o schema.o relation.o proc.o
 DATA_built = sepgsql.sql
 
 REGRESS = label dml misc

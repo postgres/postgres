@@ -11,8 +11,10 @@
 #include "postgres.h"
 
 #include "catalog/dependency.h"
+#include "catalog/pg_database.h"
 #include "catalog/pg_namespace.h"
 #include "commands/seclabel.h"
+#include "miscadmin.h"
 #include "utils/lsyscache.h"
 
 #include "sepgsql.h"
@@ -26,22 +28,17 @@
 void
 sepgsql_schema_post_create(Oid namespaceId)
 {
-	char	   *scontext = sepgsql_get_client_label();
+	char	   *scontext;
 	char	   *tcontext;
 	char	   *ncontext;
 	ObjectAddress object;
 
 	/*
-	 * FIXME: Right now, we assume pg_database object has a fixed security
-	 * label, because pg_seclabel does not support to store label of shared
-	 * database objects.
-	 */
-	tcontext = "system_u:object_r:sepgsql_db_t:s0";
-
-	/*
 	 * Compute a default security label when we create a new schema object
 	 * under the working database.
 	 */
+	scontext = sepgsql_get_client_label();
+	tcontext = sepgsql_get_label(DatabaseRelationId, MyDatabaseId, 0);
 	ncontext = sepgsql_compute_create(scontext, tcontext,
 									  SEPG_CLASS_DB_SCHEMA);
 
@@ -54,6 +51,7 @@ sepgsql_schema_post_create(Oid namespaceId)
 	SetSecurityLabel(&object, SEPGSQL_LABEL_TAG, ncontext);
 
 	pfree(ncontext);
+	pfree(tcontext);
 }
 
 /*

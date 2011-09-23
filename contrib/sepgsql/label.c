@@ -17,6 +17,7 @@
 #include "catalog/indexing.h"
 #include "catalog/pg_attribute.h"
 #include "catalog/pg_class.h"
+#include "catalog/pg_database.h"
 #include "catalog/pg_namespace.h"
 #include "catalog/pg_proc.h"
 #include "commands/dbcommands.h"
@@ -121,9 +122,14 @@ sepgsql_object_relabel(const ObjectAddress *object, const char *seclabel)
 	 */
 	switch (object->classId)
 	{
+		case DatabaseRelationId:
+			sepgsql_database_relabel(object->objectId, seclabel);
+			break;
+
 		case NamespaceRelationId:
 			sepgsql_schema_relabel(object->objectId, seclabel);
 			break;
+
 		case RelationRelationId:
 			if (object->objectSubId == 0)
 				sepgsql_relation_relabel(object->objectId,
@@ -133,6 +139,7 @@ sepgsql_object_relabel(const ObjectAddress *object, const char *seclabel)
 										  object->objectSubId,
 										  seclabel);
 			break;
+
 		case ProcedureRelationId:
 			sepgsql_proc_relabel(object->objectId, seclabel);
 			break;
@@ -315,6 +322,7 @@ exec_object_restorecon(struct selabel_handle * sehnd, Oid catalogId)
 							   SnapshotNow, 0, NULL);
 	while (HeapTupleIsValid(tuple = systable_getnext(sscan)))
 	{
+		Form_pg_database datForm;
 		Form_pg_namespace nspForm;
 		Form_pg_class relForm;
 		Form_pg_attribute attForm;
@@ -330,6 +338,19 @@ exec_object_restorecon(struct selabel_handle * sehnd, Oid catalogId)
 		 */
 		switch (catalogId)
 		{
+			case DatabaseRelationId:
+				datForm = (Form_pg_database) GETSTRUCT(tuple);
+
+				objtype = SELABEL_DB_DATABASE;
+
+				objname = quote_object_name(NameStr(datForm->datname),
+											NULL, NULL, NULL);
+
+				object.classId = DatabaseRelationId;
+				object.objectId = HeapTupleGetOid(tuple);
+				object.objectSubId = 0;
+				break;
+
 			case NamespaceRelationId:
 				nspForm = (Form_pg_namespace) GETSTRUCT(tuple);
 
@@ -506,10 +527,7 @@ sepgsql_restorecon(PG_FUNCTION_ARGS)
 			   errmsg("SELinux: failed to initialize labeling handle: %m")));
 	PG_TRY();
 	{
-		/*
-		 * Right now, we have no support labeling on the shared database
-		 * objects, such as database, role, or tablespace.
-		 */
+		exec_object_restorecon(sehnd, DatabaseRelationId);
 		exec_object_restorecon(sehnd, NamespaceRelationId);
 		exec_object_restorecon(sehnd, RelationRelationId);
 		exec_object_restorecon(sehnd, AttributeRelationId);

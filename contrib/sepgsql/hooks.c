@@ -12,6 +12,7 @@
 
 #include "catalog/objectaccess.h"
 #include "catalog/pg_class.h"
+#include "catalog/pg_database.h"
 #include "catalog/pg_namespace.h"
 #include "catalog/pg_proc.h"
 #include "commands/seclabel.h"
@@ -125,6 +126,10 @@ sepgsql_object_access(ObjectAccessType access,
 		case OAT_POST_CREATE:
 			switch (classId)
 			{
+				case DatabaseRelationId:
+					sepgsql_database_post_create(objectId);
+					break;
+
 				case NamespaceRelationId:
 					sepgsql_schema_post_create(objectId);
 					break;

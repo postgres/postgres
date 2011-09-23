@@ -284,6 +284,12 @@ extern Datum sepgsql_restorecon(PG_FUNCTION_ARGS);
 extern bool sepgsql_dml_privileges(List *rangeTabls, bool abort);
 
 /*
+ * database.c
+ */
+extern void sepgsql_database_post_create(Oid databaseId);
+extern void sepgsql_database_relabel(Oid databaseId, const char *seclabel);
+
+/*
  * schema.c
  */
 extern void sepgsql_schema_post_create(Oid namespaceId);
