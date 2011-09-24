@@ -60,7 +60,6 @@ static Node *preprocess_expression(PlannerInfo *root, Node *expr, int kind);
 static void preprocess_qual_conditions(PlannerInfo *root, Node *jtnode);
 static Plan *inheritance_planner(PlannerInfo *root);
 static Plan *grouping_planner(PlannerInfo *root, double tuple_fraction);
-static bool is_dummy_plan(Plan *plan);
 static void preprocess_rowmarks(PlannerInfo *root);
 static double preprocess_limit(PlannerInfo *root,
 				 double tuple_fraction,
@@ -1841,9 +1840,11 @@ grouping_planner(PlannerInfo *root, double tuple_fraction)
  * is deemed not to need scanning due to constraint exclusion.
  *
  * Currently, such dummy plans are Result nodes with constant FALSE
- * filter quals.
+ * filter quals (see set_dummy_rel_pathlist and create_append_plan).
+ *
+ * XXX this probably ought to be somewhere else, but not clear where.
  */
-static bool
+bool
 is_dummy_plan(Plan *plan)
 {
 	if (IsA(plan, Result))

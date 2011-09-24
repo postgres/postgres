@@ -35,6 +35,8 @@ extern Plan *subquery_planner(PlannerGlobal *glob, Query *parse,
 				 bool hasRecursion, double tuple_fraction,
 				 PlannerInfo **subroot);
 
+extern bool is_dummy_plan(Plan *plan);
+
 extern Expr *expression_planner(Expr *expr);
 
 extern bool plan_cluster_use_sort(Oid tableOid, Oid indexOid);

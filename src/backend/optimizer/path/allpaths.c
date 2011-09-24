@@ -171,7 +171,18 @@ static void
 set_rel_pathlist(PlannerInfo *root, RelOptInfo *rel,
 				 Index rti, RangeTblEntry *rte)
 {
-	if (rte->inh)
+	if (rel->reloptkind == RELOPT_BASEREL &&
+		relation_excluded_by_constraints(root, rel, rte))
+	{
+		/*
+		 * We proved we don't need to scan the rel via constraint exclusion,
+		 * so set up a single dummy path for it.  Here we only check this for
+		 * regular baserels; if it's an otherrel, CE was already checked in
+		 * set_append_rel_pathlist().
+		 */
+		set_dummy_rel_pathlist(rel);
+	}
+	else if (rte->inh)
 	{
 		/* It's an "append relation", process accordingly */
 		set_append_rel_pathlist(root, rel, rti, rte);
@@ -229,19 +240,6 @@ set_rel_pathlist(PlannerInfo *root, RelOptInfo *rel,
 static void
 set_plain_rel_pathlist(PlannerInfo *root, RelOptInfo *rel, RangeTblEntry *rte)
 {
-	/*
-	 * If we can prove we don't need to scan the rel via constraint exclusion,
-	 * set up a single dummy path for it.  We only need to check for regular
-	 * baserels; if it's an otherrel, CE was already checked in
-	 * set_append_rel_pathlist().
-	 */
-	if (rel->reloptkind == RELOPT_BASEREL &&
-		relation_excluded_by_constraints(root, rel, rte))
-	{
-		set_dummy_rel_pathlist(rel);
-		return;
-	}
-
 	/*
 	 * Test any partial indexes of rel for applicability.  We must do this
 	 * first since partial unique indexes can affect size estimates.
@@ -439,17 +437,28 @@ set_append_rel_pathlist(PlannerInfo *root, RelOptInfo *rel,
 		 * otherrels.  So we just leave the child's attr_needed empty.
 		 */
 
-		/* Remember which childrels are live, for MergeAppend logic below */
-		live_childrels = lappend(live_childrels, childrel);
-
 		/*
-		 * Compute the child's access paths, and add the cheapest one to the
-		 * Append path we are constructing for the parent.
+		 * Compute the child's access paths.
 		 */
 		set_rel_pathlist(root, childrel, childRTindex, childRTE);
 
+		/*
+		 * It is possible that constraint exclusion detected a contradiction
+		 * within a child subquery, even though we didn't prove one above.
+		 * If what we got back was a dummy path, we can skip this child.
+		 */
+		if (IS_DUMMY_PATH(childrel->cheapest_total_path))
+			continue;
+
+		/*
+		 * Child is live, so add its cheapest access path to the Append path
+		 * we are constructing for the parent.
+		 */
 		subpaths = accumulate_append_subpath(subpaths,
 											 childrel->cheapest_total_path);
+
+		/* Remember which childrels are live, for MergeAppend logic below */
+		live_childrels = lappend(live_childrels, childrel);
 
 		/*
 		 * Collect a list of all the available path orderings for all the
@@ -792,6 +801,17 @@ set_subquery_pathlist(PlannerInfo *root, RelOptInfo *rel,
 									false, tuple_fraction,
 									&subroot);
 	rel->subroot = subroot;
+
+	/*
+	 * It's possible that constraint exclusion proved the subquery empty.
+	 * If so, it's convenient to turn it back into a dummy path so that we
+	 * will recognize appropriate optimizations at this level.
+	 */
+	if (is_dummy_plan(rel->subplan))
+	{
+		set_dummy_rel_pathlist(rel);
+		return;
+	}
 
 	/* Mark rel with estimated output rows, width, etc */
 	set_subquery_size_estimates(root, rel);
