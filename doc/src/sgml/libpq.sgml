@@ -304,7 +304,9 @@
         
              <row>
               <entry><literal>require</></entry>
-              <entry>only try an <acronym>SSL</> connection</entry>
+              <entry>only try an <acronym>SSL</> connection. If a root CA
+               file is present, verify the certificate in the same way as
+               if <literal>verify-ca</literal> was specified</entry>
              </row>
 
              <row>
@@ -6197,6 +6199,18 @@ myEventProc(PGEventId evtId, void *evtInfo, void *passThrough)
    by the connection parameters <literal>sslrootcert</> and <literal>sslcrl</>
    or the environment variables <envar>PGSSLROOTCERT</> and <envar>PGSSLCRL</>.
   </para>
+
+  <note>
+   <para>
+    For backwards compatibility with earlier versions of PostgreSQL, if a
+    root CA file exists, the behavior of
+    <literal>sslmode</literal>=<literal>require</literal> will be the same
+    as that of <literal>verify-ca</literal>, meaning the sever certificate
+    is validated against the CA. Relying on this behavior is discouraged,
+    and applications that need certificate validation should always use
+    <literal>validate-ca</literal> or <literal>validate-full</literal>.
+   </para>
+  </note>
  </sect2>
 
  <sect2 id="libpq-ssl-clientcert">
