@@ -8,17 +8,19 @@
 #################################################################
 
 #
-# This script compares the timezone information in the Windows
-# registry with that in pgtz.c. A list of changes will be written
-# to stdout - no attempt is made to automatically edit the file.
+# This script compares the timezone information in the Windows registry
+# with that in src/bin/initdb/findtimezone.c.  A list of changes will be
+# written to stdout - no attempt is made to automatically edit the file.
 #
-# Run the script from the src/timezone directory.
+# Run the script from the top-level PG source directory.
 #
 
 use strict;
 use warnings;
 
 use Win32::Registry;
+
+my $tzfile = 'src/bin/initdb/findtimezone.c';
 
 #
 # Fetch all timezones in the registry
@@ -57,16 +59,16 @@ $basekey->Close();
 # Fetch all timezones currently in the file
 #
 my @file_zones;
-open(PGTZ,'<pgtz.c') or die "Could not open pgtz.c!\n";
+open(TZFILE,"<$tzfile") or die "Could not open $tzfile!\n";
 my $t = $/;
 undef $/;
-my $pgtz = <PGTZ>;
-close(PGTZ);
+my $pgtz = <TZFILE>;
+close(TZFILE);
 $/ = $t;
 
 # Attempt to locate and extract the complete win32_tzmap struct
 $pgtz =~ /win32_tzmap\[\] =\s+{\s+\/\*[^\/]+\*\/\s+(.+?)};/gs
-  or die "Could not locate struct win32_tzmap in pgtz.c!";
+  or die "Could not locate struct win32_tzmap in $tzfile!";
 $pgtz = $1;
 
 # Extract each individual record from the struct
