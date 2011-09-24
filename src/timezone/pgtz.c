@@ -716,9 +716,10 @@ static const struct
 		"Cen. Australia Standard Time", "Cen. Australia Daylight Time",
 		"Australia/Adelaide"
 	},							/* (GMT+09:30) Adelaide */
+	/* Central America (other than Mexico) generally does not observe DST */
 	{
 		"Central America Standard Time", "Central America Daylight Time",
-		"CST6CDT"
+		"CST6"
 	},							/* (GMT-06:00) Central America */
 	{
 		"Central Asia Standard Time", "Central Asia Daylight Time",
