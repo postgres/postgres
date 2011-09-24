@@ -20,7 +20,7 @@
   There are several different ways of building PostgreSQL on
   <productname>Windows</productname>. The simplest way to build with
   Microsoft tools is to install a supported version of the
-  <productname>Microsoft Platform SDK</productname> and use use the included
+  <productname>Microsoft Platform SDK</productname> and use the included
   compiler. It is also possible to build with the full
   <productname>Microsoft Visual C++ 2005 or 2008</productname>. In some cases
   that requires the installation of the <productname>Platform SDK</productname>
