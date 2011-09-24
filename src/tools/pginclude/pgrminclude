@@ -43,8 +43,8 @@ compile_file() {
 	[ "$INCLUDE" = "postgres_fe.h" ] && continue
 	[ "$INCLUDE" = "pg_config.h" ] && continue
 	[ "$INCLUDE" = "c.h" ] && continue
-	# CppAsString2 will expand undefined identifiers, so skip files that use it
-	grep -q '\<CppAsString2\>' "$FILE" && continue
+	# Stringify macros will expand undefined identifiers, so skip files that use it
+	egrep -q '\<(CppAsString2?|CppConcat)\>' "$FILE" && continue
 
 	# preserve configure-specific includes
 	# these includes are surrounded by #ifdef's
