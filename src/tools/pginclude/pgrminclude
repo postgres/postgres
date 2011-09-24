@@ -1,6 +1,18 @@
 :
 # remove extra #include's
 
+# Limitations:  2011-09-24
+#
+# Pgrminclude, when processing header files, can cause includes to be
+# removed that require the addition of new illogical header files.
+# This is dependent on what order the header files are processed.
+# Manual review of header files now needed to satisfy pgcompinclude is
+# required.
+#
+# C program files that have #ifdef blocks that contain code that cannot
+# be compiled on the platform from which pgrminclude is run cannot be
+# processed, and are skipped.
+
 if ! pgdefine
 then	echo "pgdefine must be in your PATH" 1>&2
 	exit 1
