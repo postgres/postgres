@@ -528,20 +528,14 @@ main(int argc, char **argv)
 		exit(1);
 	}
 
+	/* Identify archive format to emit */
 	archiveFormat = parseArchiveFormat(format, &archiveMode);
 
 	/* archiveFormat specific setup */
 	if (archiveFormat == archNull)
 		plainText = 1;
 
-	/*
-	 * Ignore compression level for plain format. XXX: This is a bit
-	 * inconsistent, tar-format throws an error instead.
-	 */
-	if (archiveFormat == archNull)
-		compressLevel = 0;
-
-	/* Custom and directory formats are compressed by default */
+	/* Custom and directory formats are compressed by default, others not */
 	if (compressLevel == -1)
 	{
 		if (archiveFormat == archCustom || archiveFormat == archDirectory)
@@ -550,7 +544,7 @@ main(int argc, char **argv)
 			compressLevel = 0;
 	}
 
-	/* open the output file */
+	/* Open the output file */
 	g_fout = CreateArchive(filename, archiveFormat, compressLevel, archiveMode);
 
 	if (g_fout == NULL)
