@@ -1,6 +1,11 @@
 :
 # remove extra #include's
 
+# pgcompinclude must be run before and after pgrminclude.  It must be
+# run before  because we don't want include dependencies to leak into
+# the C program files, and after because removal of includes from headers
+# can cause new include unfulfilled dependencies.
+#
 # Limitations:  2011-09-24
 #
 # Pgrminclude, when processing header files, can cause includes to be
@@ -115,8 +120,8 @@ compile_file() {
 
 # Process include files first because they can affect the compilation 
 # of *.c files.
-(find . \( -name .git -a -prune \) -o -type f -name '*.h' -print;
- find . \( -name .git -a -prune \) -o -type f -name '*.c' -print ) |
+(find . \( -name .git -a -prune \) -o -type f -name '*.h' -print | sort;
+ find . \( -name .git -a -prune \) -o -type f -name '*.c' -print | sort) |
 grep -v '/postgres.h$' |
 grep -v '/postgres_fe.h$' |
 grep -v '/pg_config.h$' |
