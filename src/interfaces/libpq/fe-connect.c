@@ -291,8 +291,8 @@ static void freePGconn(PGconn *conn);
 static void closePGconn(PGconn *conn);
 static PQconninfoOption *conninfo_parse(const char *conninfo,
 			   PQExpBuffer errorMessage, bool use_defaults);
-static PQconninfoOption *conninfo_array_parse(const char **keywords,
-					 const char **values, PQExpBuffer errorMessage,
+static PQconninfoOption *conninfo_array_parse(const char *const * keywords,
+					 const char *const * values, PQExpBuffer errorMessage,
 					 bool use_defaults, int expand_dbname);
 static char *conninfo_getval(PQconninfoOption *connOptions,
 				const char *keyword);
@@ -362,8 +362,8 @@ pgthreadlock_t pg_g_threadlock = default_threadlock;
  * call succeeded.
  */
 PGconn *
-PQconnectdbParams(const char **keywords,
-				  const char **values,
+PQconnectdbParams(const char *const * keywords,
+				  const char *const * values,
 				  int expand_dbname)
 {
 	PGconn	   *conn = PQconnectStartParams(keywords, values, expand_dbname);
@@ -381,8 +381,8 @@ PQconnectdbParams(const char **keywords,
  * check server status, accepting parameters identical to PQconnectdbParams
  */
 PGPing
-PQpingParams(const char **keywords,
-			 const char **values,
+PQpingParams(const char *const * keywords,
+			 const char *const * values,
 			 int expand_dbname)
 {
 	PGconn	   *conn = PQconnectStartParams(keywords, values, expand_dbname);
@@ -464,8 +464,8 @@ PQping(const char *conninfo)
  * See PQconnectPoll for more info.
  */
 PGconn *
-PQconnectStartParams(const char **keywords,
-					 const char **values,
+PQconnectStartParams(const char *const * keywords,
+					 const char *const * values,
 					 int expand_dbname)
 {
 	PGconn	   *conn;
@@ -4249,7 +4249,7 @@ conninfo_parse(const char *conninfo, PQExpBuffer errorMessage,
  * keywords will take precedence, however.
  */
 static PQconninfoOption *
-conninfo_array_parse(const char **keywords, const char **values,
+conninfo_array_parse(const char *const * keywords, const char *const * values,
 					 PQExpBuffer errorMessage, bool use_defaults,
 					 int expand_dbname)
 {

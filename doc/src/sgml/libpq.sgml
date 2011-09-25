@@ -98,7 +98,9 @@
        Makes a new connection to the database server.
 
 <synopsis>
-PGconn *PQconnectdbParams(const char **keywords, const char **values, int expand_dbname);
+PGconn *PQconnectdbParams(const char * const *keywords,
+                          const char * const *values,
+                          int expand_dbname);
 </synopsis>
       </para>
 
@@ -730,8 +732,8 @@ PGconn *PQsetdb(char *pghost,
        Make a connection to the database server in a nonblocking manner.
 
 <synopsis>
-PGconn *PQconnectStartParams(const char **keywords,
-                             const char **values,
+PGconn *PQconnectStartParams(const char * const *keywords,
+                             const char * const *values,
                              int expand_dbname);
 
 PGconn *PQconnectStart(const char *conninfo);
@@ -1112,7 +1114,9 @@ PostgresPollingStatusType PQresetPoll(PGconn *conn);
        values to obtain the server status.
 
 <synopsis>
-PGPing PQpingParams(const char **keywords, const char **values, int expand_dbname);
+PGPing PQpingParams(const char * const *keywords,
+                    const char * const *values,
+                    int expand_dbname);
 </synopsis>
 
        The function returns one of the following values:
