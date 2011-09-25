@@ -54,6 +54,7 @@
 #include "nodes/nodeFuncs.h"
 #include "optimizer/planmain.h"
 #include "optimizer/prep.h"
+#include "parser/analyze.h"
 #include "parser/parsetree.h"
 #include "storage/lmgr.h"
 #include "tcop/pquery.h"
@@ -756,14 +757,12 @@ BuildCachedPlan(CachedPlanSource *plansource, List *qlist,
 	PushOverrideSearchPath(plansource->search_path);
 
 	/*
-	 * If a snapshot is already set (the normal case), we can just use
-	 * that for parsing/planning.  But if it isn't, install one.  Note: no
-	 * point in checking whether parse analysis requires a snapshot;
-	 * utility commands don't have invalidatable plans, so we'd not get
-	 * here for such a command.
+	 * If a snapshot is already set (the normal case), we can just use that
+	 * for planning.  But if it isn't, and we need one, install one.
 	 */
 	snapshot_set = false;
-	if (!ActiveSnapshotSet())
+	if (!ActiveSnapshotSet() &&
+		analyze_requires_snapshot(plansource->raw_parse_tree))
 	{
 		PushActiveSnapshot(GetTransactionSnapshot());
 		snapshot_set = true;
