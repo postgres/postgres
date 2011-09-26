@@ -55,7 +55,7 @@
  *		of ExecInitNode() is a plan state tree built with the same structure
  *		as the underlying plan tree.
  *
- *	  * Then when ExecRun() is called, it calls ExecutePlan() which calls
+ *	  * Then when ExecutorRun() is called, it calls ExecutePlan() which calls
  *		ExecProcNode() repeatedly on the top node of the plan state tree.
  *		Each time this happens, ExecProcNode() will end up calling
  *		ExecNestLoop(), which calls ExecProcNode() on its subplans.
@@ -65,7 +65,7 @@
  *		form the tuples it returns.
  *
  *	  * Eventually ExecSeqScan() stops returning tuples and the nest
- *		loop join ends.  Lastly, ExecEnd() calls ExecEndNode() which
+ *		loop join ends.  Lastly, ExecutorEnd() calls ExecEndNode() which
  *		calls ExecEndNestLoop() which in turn calls ExecEndNode() on
  *		its subplans which result in ExecEndSeqScan().
  *
