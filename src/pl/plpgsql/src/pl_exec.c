@@ -874,7 +874,8 @@ copy_plpgsql_datum(PLpgSQL_datum *datum)
 
 			/*
 			 * These datum records are read-only at runtime, so no need to
-			 * copy them
+			 * copy them (well, ARRAYELEM contains some cached type data,
+			 * but we'd just as soon centralize the caching anyway)
 			 */
 			result = datum;
 			break;
@@ -3986,20 +3987,16 @@ exec_assign_value(PLpgSQL_execstate *estate,
 				/*
 				 * Target is an element of an array
 				 */
+				PLpgSQL_arrayelem *arrayelem;
 				int			nsubscripts;
 				int			i;
 				PLpgSQL_expr *subscripts[MAXDIM];
 				int			subscriptvals[MAXDIM];
-				bool		oldarrayisnull;
-				Oid			arraytypeid,
-							arrayelemtypeid;
-				int32		arraytypmod;
-				int16		arraytyplen,
-							elemtyplen;
-				bool		elemtypbyval;
-				char		elemtypalign;
 				Datum		oldarraydatum,
 							coerced_value;
+				bool		oldarrayisnull;
+				Oid			parenttypoid;
+				int32		parenttypmod;
 				ArrayType  *oldarrayval;
 				ArrayType  *newarrayval;
 				SPITupleTable *save_eval_tuptable;
@@ -4020,13 +4017,14 @@ exec_assign_value(PLpgSQL_execstate *estate,
 				 * back to find the base array datum, and save the subscript
 				 * expressions as we go.  (We are scanning right to left here,
 				 * but want to evaluate the subscripts left-to-right to
-				 * minimize surprises.)
+				 * minimize surprises.)  Note that arrayelem is left pointing
+				 * to the leftmost arrayelem datum, where we will cache the
+				 * array element type data.
 				 */
 				nsubscripts = 0;
 				do
 				{
-					PLpgSQL_arrayelem *arrayelem = (PLpgSQL_arrayelem *) target;
-
+					arrayelem = (PLpgSQL_arrayelem *) target;
 					if (nsubscripts >= MAXDIM)
 						ereport(ERROR,
 								(errcode(ERRCODE_PROGRAM_LIMIT_EXCEEDED),
@@ -4038,24 +4036,51 @@ exec_assign_value(PLpgSQL_execstate *estate,
 
 				/* Fetch current value of array datum */
 				exec_eval_datum(estate, target,
-								&arraytypeid, &arraytypmod,
+								&parenttypoid, &parenttypmod,
 								&oldarraydatum, &oldarrayisnull);
 
-				/* If target is domain over array, reduce to base type */
-				arraytypeid = getBaseTypeAndTypmod(arraytypeid, &arraytypmod);
+				/* Update cached type data if necessary */
+				if (arrayelem->parenttypoid != parenttypoid ||
+					arrayelem->parenttypmod != parenttypmod)
+				{
+					Oid			arraytypoid;
+					int32		arraytypmod = parenttypmod;
+					int16		arraytyplen;
+					Oid			elemtypoid;
+					int16		elemtyplen;
+					bool		elemtypbyval;
+					char		elemtypalign;
 
-				/* ... and identify the element type */
-				arrayelemtypeid = get_element_type(arraytypeid);
-				if (!OidIsValid(arrayelemtypeid))
-					ereport(ERROR,
-							(errcode(ERRCODE_DATATYPE_MISMATCH),
-							 errmsg("subscripted object is not an array")));
+					/* If target is domain over array, reduce to base type */
+					arraytypoid = getBaseTypeAndTypmod(parenttypoid,
+													   &arraytypmod);
 
-				get_typlenbyvalalign(arrayelemtypeid,
-									 &elemtyplen,
-									 &elemtypbyval,
-									 &elemtypalign);
-				arraytyplen = get_typlen(arraytypeid);
+					/* ... and identify the element type */
+					elemtypoid = get_element_type(arraytypoid);
+					if (!OidIsValid(elemtypoid))
+						ereport(ERROR,
+								(errcode(ERRCODE_DATATYPE_MISMATCH),
+								 errmsg("subscripted object is not an array")));
+
+					/* Collect needed data about the types */
+					arraytyplen = get_typlen(arraytypoid);
+
+					get_typlenbyvalalign(elemtypoid,
+										 &elemtyplen,
+										 &elemtypbyval,
+										 &elemtypalign);
+
+					/* Now safe to update the cached data */
+					arrayelem->parenttypoid = parenttypoid;
+					arrayelem->parenttypmod = parenttypmod;
+					arrayelem->arraytypoid = arraytypoid;
+					arrayelem->arraytypmod = arraytypmod;
+					arrayelem->arraytyplen = arraytyplen;
+					arrayelem->elemtypoid = elemtypoid;
+					arrayelem->elemtyplen = elemtyplen;
+					arrayelem->elemtypbyval = elemtypbyval;
+					arrayelem->elemtypalign = elemtypalign;
+				}
 
 				/*
 				 * Evaluate the subscripts, switch into left-to-right order.
@@ -4093,8 +4118,8 @@ exec_assign_value(PLpgSQL_execstate *estate,
 				/* Coerce source value to match array element type. */
 				coerced_value = exec_simple_cast_value(value,
 													   valtype,
-													   arrayelemtypeid,
-													   arraytypmod,
+													   arrayelem->elemtypoid,
+													   arrayelem->arraytypmod,
 													   *isNull);
 
 				/*
@@ -4107,12 +4132,12 @@ exec_assign_value(PLpgSQL_execstate *estate,
 				 * array, either, so that's a no-op too.  This is all ugly but
 				 * corresponds to the current behavior of ExecEvalArrayRef().
 				 */
-				if (arraytyplen > 0 &&	/* fixed-length array? */
+				if (arrayelem->arraytyplen > 0 &&	/* fixed-length array? */
 					(oldarrayisnull || *isNull))
 					return;
 
 				if (oldarrayisnull)
-					oldarrayval = construct_empty_array(arrayelemtypeid);
+					oldarrayval = construct_empty_array(arrayelem->elemtypoid);
 				else
 					oldarrayval = (ArrayType *) DatumGetPointer(oldarraydatum);
 
@@ -4124,16 +4149,17 @@ exec_assign_value(PLpgSQL_execstate *estate,
 										subscriptvals,
 										coerced_value,
 										*isNull,
-										arraytyplen,
-										elemtyplen,
-										elemtypbyval,
-										elemtypalign);
+										arrayelem->arraytyplen,
+										arrayelem->elemtyplen,
+										arrayelem->elemtypbyval,
+										arrayelem->elemtypalign);
 
 				/*
 				 * Avoid leaking the result of exec_simple_cast_value, if it
 				 * performed a conversion to a pass-by-ref type.
 				 */
-				if (!*isNull && coerced_value != value && !elemtypbyval)
+				if (!*isNull && coerced_value != value &&
+					!arrayelem->elemtypbyval)
 					pfree(DatumGetPointer(coerced_value));
 
 				/*
@@ -4145,7 +4171,7 @@ exec_assign_value(PLpgSQL_execstate *estate,
 				*isNull = false;
 				exec_assign_value(estate, target,
 								  PointerGetDatum(newarrayval),
-								  arraytypeid, isNull);
+								  arrayelem->arraytypoid, isNull);
 
 				/*
 				 * Avoid leaking the modified array value, too.

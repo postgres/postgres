@@ -299,6 +299,16 @@ typedef struct
 	int			dno;
 	PLpgSQL_expr *subscript;
 	int			arrayparentno;	/* dno of parent array variable */
+	/* Remaining fields are cached info about the array variable's type */
+	Oid			parenttypoid;	/* type of array variable; 0 if not yet set */
+	int32		parenttypmod;	/* typmod of array variable */
+	Oid			arraytypoid;	/* OID of actual array type */
+	int32		arraytypmod;	/* typmod of array (and its elements too) */
+	int16		arraytyplen;	/* typlen of array type */
+	Oid			elemtypoid;		/* OID of array element type */
+	int16		elemtyplen;		/* typlen of element type */
+	bool		elemtypbyval;	/* element type is pass-by-value? */
+	char		elemtypalign;	/* typalign of element type */
 } PLpgSQL_arrayelem;
 
 

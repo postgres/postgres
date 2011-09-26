@@ -4509,3 +4509,65 @@ NOTICE:  {"(35,78)","(88,76)"}
 
 drop function foreach_test(anyarray);
 drop type xy_tuple;
+--
+-- Assorted tests for array subscript assignment
+--
+create temp table rtype (id int, ar text[]);
+create function arrayassign1() returns text[] language plpgsql as $$
+declare
+ r record;
+begin
+  r := row(12, '{foo,bar,baz}')::rtype;
+  r.ar[2] := 'replace';
+  return r.ar;
+end$$;
+select arrayassign1();
+   arrayassign1    
+-------------------
+ {foo,replace,baz}
+(1 row)
+
+select arrayassign1(); -- try again to exercise internal caching
+   arrayassign1    
+-------------------
+ {foo,replace,baz}
+(1 row)
+
+create domain orderedarray as int[2]
+  constraint sorted check (value[1] < value[2]);
+select '{1,2}'::orderedarray;
+ orderedarray 
+--------------
+ {1,2}
+(1 row)
+
+select '{2,1}'::orderedarray;  -- fail
+ERROR:  value for domain orderedarray violates check constraint "sorted"
+create function testoa(x1 int, x2 int, x3 int) returns orderedarray
+language plpgsql as $$
+declare res orderedarray;
+begin
+  res := array[x1, x2];
+  res[2] := x3;
+  return res;
+end$$;
+select testoa(1,2,3);
+ testoa 
+--------
+ {1,3}
+(1 row)
+
+select testoa(1,2,3); -- try again to exercise internal caching
+ testoa 
+--------
+ {1,3}
+(1 row)
+
+select testoa(2,1,3); -- fail at initial assign
+ERROR:  value for domain orderedarray violates check constraint "sorted"
+CONTEXT:  PL/pgSQL function "testoa" line 4 at assignment
+select testoa(1,2,1); -- fail at update
+ERROR:  value for domain orderedarray violates check constraint "sorted"
+CONTEXT:  PL/pgSQL function "testoa" line 5 at assignment
+drop function arrayassign1();
+drop function testoa(x1 int, x2 int, x3 int);

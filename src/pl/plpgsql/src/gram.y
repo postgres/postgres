@@ -998,6 +998,8 @@ assign_var		: T_DATUM
 						new->dtype		= PLPGSQL_DTYPE_ARRAYELEM;
 						new->subscript	= $3;
 						new->arrayparentno = $1;
+						/* initialize cached type data to "not valid" */
+						new->parenttypoid = InvalidOid;
 
 						plpgsql_adddatum((PLpgSQL_datum *) new);
 

@@ -3559,3 +3559,44 @@ select foreach_test(ARRAY[[(10,20),(40,69)],[(35,78),(88,76)]]::xy_tuple[]);
 
 drop function foreach_test(anyarray);
 drop type xy_tuple;
+
+--
+-- Assorted tests for array subscript assignment
+--
+
+create temp table rtype (id int, ar text[]);
+
+create function arrayassign1() returns text[] language plpgsql as $$
+declare
+ r record;
+begin
+  r := row(12, '{foo,bar,baz}')::rtype;
+  r.ar[2] := 'replace';
+  return r.ar;
+end$$;
+
+select arrayassign1();
+select arrayassign1(); -- try again to exercise internal caching
+
+create domain orderedarray as int[2]
+  constraint sorted check (value[1] < value[2]);
+
+select '{1,2}'::orderedarray;
+select '{2,1}'::orderedarray;  -- fail
+
+create function testoa(x1 int, x2 int, x3 int) returns orderedarray
+language plpgsql as $$
+declare res orderedarray;
+begin
+  res := array[x1, x2];
+  res[2] := x3;
+  return res;
+end$$;
+
+select testoa(1,2,3);
+select testoa(1,2,3); -- try again to exercise internal caching
+select testoa(2,1,3); -- fail at initial assign
+select testoa(1,2,1); -- fail at update
+
+drop function arrayassign1();
+drop function testoa(x1 int, x2 int, x3 int);
