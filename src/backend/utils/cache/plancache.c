@@ -697,7 +697,8 @@ CheckCachedPlan(CachedPlanSource *plansource)
 /*
  * BuildCachedPlan: construct a new CachedPlan from a CachedPlanSource.
  *
- * qlist should be the result value from a previous RevalidateCachedQuery.
+ * qlist should be the result value from a previous RevalidateCachedQuery,
+ * or it can be set to NIL if we need to re-copy the plansource's query_list.
  *
  * To build a generic, parameter-value-independent plan, pass NULL for
  * boundParams.  To build a custom plan, pass the actual parameter values via
@@ -980,6 +981,13 @@ GetCachedPlan(CachedPlanSource *plansource, ParamListInfo boundParams,
 			 * plan.
 			 */
 			customplan = choose_custom_plan(plansource, boundParams);
+
+			/*
+			 * If we choose to plan again, we need to re-copy the query_list,
+			 * since the planner probably scribbled on it.  We can force
+			 * BuildCachedPlan to do that by passing NIL.
+			 */
+			qlist = NIL;
 		}
 	}
 
