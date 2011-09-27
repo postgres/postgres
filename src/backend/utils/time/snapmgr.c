@@ -7,6 +7,14 @@
  * persistent memory.  When a snapshot is no longer in any of these lists
  * (tracked by separate refcounts on each snapshot), its memory can be freed.
  *
+ * The FirstXactSnapshot, if any, is treated a bit specially: we increment its
+ * regd_count and count it in RegisteredSnapshots, but this reference is not
+ * tracked by a resource owner. We used to use the TopTransactionResourceOwner
+ * to track this snapshot reference, but that introduces logical circularity
+ * and thus makes it impossible to clean up in a sane fashion.  It's better to
+ * handle this reference as an internally-tracked registration, so that this
+ * module is entirely lower-level than ResourceOwners.
+ *
  * These arrangements let us reset MyProc->xmin when there are no snapshots
  * referenced by this transaction.	(One possible improvement would be to be
  * able to advance Xmin when the snapshot with the earliest Xmin is no longer
@@ -97,11 +105,11 @@ static int	RegisteredSnapshots = 0;
 bool		FirstSnapshotSet = false;
 
 /*
- * Remembers whether this transaction registered a transaction snapshot at
- * start.  We cannot trust FirstSnapshotSet in combination with
- * IsolationUsesXactSnapshot(), because GUC may be reset before us.
+ * Remember the serializable transaction snapshot, if any.  We cannot trust
+ * FirstSnapshotSet in combination with IsolationUsesXactSnapshot(), because
+ * GUC may be reset before us, changing the value of IsolationUsesXactSnapshot.
  */
-static bool registered_xact_snapshot = false;
+static Snapshot FirstXactSnapshot = NULL;
 
 
 static Snapshot CopySnapshot(Snapshot snapshot);
@@ -125,23 +133,27 @@ GetTransactionSnapshot(void)
 	if (!FirstSnapshotSet)
 	{
 		Assert(RegisteredSnapshots == 0);
+		Assert(FirstXactSnapshot == NULL);
 
 		/*
 		 * In transaction-snapshot mode, the first snapshot must live until
 		 * end of xact regardless of what the caller does with it, so we must
-		 * register it internally here and unregister it at end of xact.
+		 * make a copy of it rather than returning CurrentSnapshotData
+		 * directly.
 		 */
 		if (IsolationUsesXactSnapshot())
 		{
+			/* First, create the snapshot in CurrentSnapshotData */
 			if (IsolationIsSerializable())
-				CurrentSnapshot = RegisterSerializableTransaction(&CurrentSnapshotData);
+				CurrentSnapshot = GetSerializableTransactionSnapshot(&CurrentSnapshotData);
 			else
-			{
 				CurrentSnapshot = GetSnapshotData(&CurrentSnapshotData);
-				CurrentSnapshot = RegisterSnapshotOnOwner(CurrentSnapshot,
-												TopTransactionResourceOwner);
-			}
-			registered_xact_snapshot = true;
+			/* Make a saved copy */
+			CurrentSnapshot = CopySnapshot(CurrentSnapshot);
+			FirstXactSnapshot = CurrentSnapshot;
+			/* Mark it as "registered" in FirstXactSnapshot */
+			FirstXactSnapshot->regd_count++;
+			RegisteredSnapshots++;
 		}
 		else
 			CurrentSnapshot = GetSnapshotData(&CurrentSnapshotData);
@@ -523,32 +535,29 @@ AtSubAbort_Snapshot(int level)
 }
 
 /*
- * AtEarlyCommit_Snapshot
- *
- * Snapshot manager's cleanup function, to be called on commit, before
- * doing resowner.c resource release.
- */
-void
-AtEarlyCommit_Snapshot(void)
-{
-	/*
-	 * In transaction-snapshot mode we must unregister our private refcount to
-	 * the transaction-snapshot.
-	 */
-	if (registered_xact_snapshot)
-		UnregisterSnapshotFromOwner(CurrentSnapshot,
-									TopTransactionResourceOwner);
-	registered_xact_snapshot = false;
-
-}
-
-/*
  * AtEOXact_Snapshot
  *		Snapshot manager's cleanup function for end of transaction
  */
 void
 AtEOXact_Snapshot(bool isCommit)
 {
+	/*
+	 * In transaction-snapshot mode we must release our privately-managed
+	 * reference to the transaction snapshot.  We must decrement
+	 * RegisteredSnapshots to keep the check below happy.  But we don't bother
+	 * to do FreeSnapshot, for two reasons: the memory will go away with
+	 * TopTransactionContext anyway, and if someone has left the snapshot
+	 * stacked as active, we don't want the code below to be chasing through
+	 * a dangling pointer.
+	 */
+	if (FirstXactSnapshot != NULL)
+	{
+		Assert(FirstXactSnapshot->regd_count > 0);
+		Assert(RegisteredSnapshots > 0);
+		RegisteredSnapshots--;
+	}
+	FirstXactSnapshot = NULL;
+
 	/* On commit, complain about leftover snapshots */
 	if (isCommit)
 	{
@@ -574,5 +583,6 @@ AtEOXact_Snapshot(bool isCommit)
 	SecondarySnapshot = NULL;
 
 	FirstSnapshotSet = false;
-	registered_xact_snapshot = false;
+
+	SnapshotResetXmin();
 }

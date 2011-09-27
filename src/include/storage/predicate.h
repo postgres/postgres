@@ -42,7 +42,7 @@ extern void CheckPointPredicate(void);
 extern bool PageIsPredicateLocked(Relation relation, BlockNumber blkno);
 
 /* predicate lock maintenance */
-extern Snapshot RegisterSerializableTransaction(Snapshot snapshot);
+extern Snapshot GetSerializableTransactionSnapshot(Snapshot snapshot);
 extern void RegisterPredicateLockingXid(TransactionId xid);
 extern void PredicateLockRelation(Relation relation, Snapshot snapshot);
 extern void PredicateLockPage(Relation relation, BlockNumber blkno, Snapshot snapshot);

@@ -146,7 +146,7 @@
  *		PageIsPredicateLocked(Relation relation, BlockNumber blkno)
  *
  * predicate lock maintenance
- *		RegisterSerializableTransaction(Snapshot snapshot)
+ *		GetSerializableTransactionSnapshot(Snapshot snapshot)
  *		RegisterPredicateLockingXid(void)
  *		PredicateLockRelation(Relation relation, Snapshot snapshot)
  *		PredicateLockPage(Relation relation, BlockNumber blkno,
@@ -417,7 +417,7 @@ static void OldSerXidSetActiveSerXmin(TransactionId xid);
 static uint32 predicatelock_hash(const void *key, Size keysize);
 static void SummarizeOldestCommittedSxact(void);
 static Snapshot GetSafeSnapshot(Snapshot snapshot);
-static Snapshot RegisterSerializableTransactionInt(Snapshot snapshot);
+static Snapshot GetSerializableTransactionSnapshotInt(Snapshot snapshot);
 static bool PredicateLockExists(const PREDICATELOCKTARGETTAG *targettag);
 static bool GetParentPredicateLockTag(const PREDICATELOCKTARGETTAG *tag,
 						  PREDICATELOCKTARGETTAG *parent);
@@ -1485,6 +1485,10 @@ SummarizeOldestCommittedSxact(void)
  *		without further checks. This requires waiting for concurrent
  *		transactions to complete, and retrying with a new snapshot if
  *		one of them could possibly create a conflict.
+ *
+ *		As with GetSerializableTransactionSnapshot (which this is a subroutine
+ *		for), the passed-in Snapshot pointer should reference a static data
+ *		area that can safely be passed to GetSnapshotData.
  */
 static Snapshot
 GetSafeSnapshot(Snapshot origSnapshot)
@@ -1496,12 +1500,12 @@ GetSafeSnapshot(Snapshot origSnapshot)
 	while (true)
 	{
 		/*
-		 * RegisterSerializableTransactionInt is going to call
-		 * GetSnapshotData, so we need to provide it the static snapshot our
-		 * caller passed to us. It returns a copy of that snapshot and
-		 * registers it on TopTransactionResourceOwner.
+		 * GetSerializableTransactionSnapshotInt is going to call
+		 * GetSnapshotData, so we need to provide it the static snapshot area
+		 * our caller passed to us.  The pointer returned is actually the same
+		 * one passed to it, but we avoid assuming that here.
 		 */
-		snapshot = RegisterSerializableTransactionInt(origSnapshot);
+		snapshot = GetSerializableTransactionSnapshotInt(origSnapshot);
 
 		if (MySerializableXact == InvalidSerializableXact)
 			return snapshot;	/* no concurrent r/w xacts; it's safe */
@@ -1535,8 +1539,6 @@ GetSafeSnapshot(Snapshot origSnapshot)
 				(errcode(ERRCODE_T_R_SERIALIZATION_FAILURE),
 				 errmsg("deferrable snapshot was unsafe; trying a new one")));
 		ReleasePredicateLocks(false);
-		UnregisterSnapshotFromOwner(snapshot,
-									TopTransactionResourceOwner);
 	}
 
 	/*
@@ -1549,28 +1551,34 @@ GetSafeSnapshot(Snapshot origSnapshot)
 }
 
 /*
- * Acquire and register a snapshot which can be used for this transaction..
+ * Acquire a snapshot that can be used for the current transaction.
+ *
  * Make sure we have a SERIALIZABLEXACT reference in MySerializableXact.
  * It should be current for this process and be contained in PredXact.
+ *
+ * The passed-in Snapshot pointer should reference a static data area that
+ * can safely be passed to GetSnapshotData.  The return value is actually
+ * always this same pointer; no new snapshot data structure is allocated
+ * within this function.
  */
 Snapshot
-RegisterSerializableTransaction(Snapshot snapshot)
+GetSerializableTransactionSnapshot(Snapshot snapshot)
 {
 	Assert(IsolationIsSerializable());
 
 	/*
 	 * A special optimization is available for SERIALIZABLE READ ONLY
 	 * DEFERRABLE transactions -- we can wait for a suitable snapshot and
-	 * thereby avoid all SSI overhead once it's running..
+	 * thereby avoid all SSI overhead once it's running.
 	 */
 	if (XactReadOnly && XactDeferrable)
 		return GetSafeSnapshot(snapshot);
 
-	return RegisterSerializableTransactionInt(snapshot);
+	return GetSerializableTransactionSnapshotInt(snapshot);
 }
 
 static Snapshot
-RegisterSerializableTransactionInt(Snapshot snapshot)
+GetSerializableTransactionSnapshotInt(Snapshot snapshot)
 {
 	PGPROC	   *proc;
 	VirtualTransactionId vxid;
@@ -1607,9 +1615,8 @@ RegisterSerializableTransactionInt(Snapshot snapshot)
 		}
 	} while (!sxact);
 
-	/* Get and register a snapshot */
+	/* Get the snapshot */
 	snapshot = GetSnapshotData(snapshot);
-	snapshot = RegisterSnapshotOnOwner(snapshot, TopTransactionResourceOwner);
 
 	/*
 	 * If there are no serializable transactions which are not read-only, we
