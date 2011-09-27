@@ -31,6 +31,7 @@ struct Step
 	int			session;
 	char	   *name;
 	char	   *sql;
+	char	   *errormsg;
 };
 
 typedef struct

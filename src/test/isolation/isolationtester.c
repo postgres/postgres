@@ -384,6 +384,50 @@ step_bsearch_cmp(const void *a, const void *b)
 }
 
 /*
+ * If a step caused an error to be reported, print it out and clear it.
+ */
+static void
+report_error_message(Step *step)
+{
+	if (step->errormsg)
+	{
+		fprintf(stdout, "%s\n", step->errormsg);
+		free(step->errormsg);
+		step->errormsg = NULL;
+	}
+}
+
+/*
+ * As above, but reports messages possibly emitted by two steps.  This is
+ * useful when we have a blocked command awakened by another one; we want to
+ * report both messages identically, for the case where we don't care which
+ * one fails due to a timeout such as deadlock timeout.
+ */
+static void
+report_two_error_messages(Step *step1, Step *step2)
+{
+	char *prefix;
+
+	prefix = malloc(strlen(step1->name) + strlen(step2->name) + 2);
+	sprintf(prefix, "%s %s", step1->name, step2->name);
+
+	if (step1->errormsg)
+	{
+		fprintf(stdout, "error in steps %s: %s\n", prefix,
+				step1->errormsg);
+		free(step1->errormsg);
+		step1->errormsg = NULL;
+	}
+	if (step2->errormsg)
+	{
+		fprintf(stdout, "error in steps %s: %s\n", prefix,
+				step2->errormsg);
+		free(step2->errormsg);
+		step2->errormsg = NULL;
+	}
+}
+
+/*
  * Run one permutation
  */
 static void
@@ -448,17 +492,32 @@ run_permutation(TestSpec * testspec, int nsteps, Step ** steps)
 			/* Some other step is already waiting: just block. */
 			try_complete_step(step, 0);
 
-			/* See if this step unblocked the waiting step. */
+			/*
+			 * See if this step unblocked the waiting step; report both error
+			 * messages together if so.
+			 */
 			if (!try_complete_step(waiting, STEP_NONBLOCK | STEP_RETRY))
+			{
+				report_two_error_messages(step, waiting);
 				waiting = NULL;
+			}
+			else
+				report_error_message(step);
 		}
-		else if (try_complete_step(step, STEP_NONBLOCK))
-			waiting = step;
+		else
+		{
+			if (try_complete_step(step, STEP_NONBLOCK))
+				waiting = step;
+			report_error_message(step);
+		}
 	}
 
 	/* Finish any waiting query. */
 	if (waiting != NULL)
+	{
 		try_complete_step(waiting, STEP_RETRY);
+		report_error_message(waiting);
+	}
 
 	/* Perform per-session teardown */
 	for (i = 0; i < testspec->nsessions; i++)
@@ -504,6 +563,10 @@ run_permutation(TestSpec * testspec, int nsteps, Step ** steps)
  *
  * When calling this function on behalf of a given step for a second or later
  * time, pass the STEP_RETRY flag.  This only affects the messages printed.
+ *
+ * If the connection returns an error, the message is saved in step->errormsg.
+ * Caller should call report_error_message shortly after this, to have it
+ * printed and cleared.
  *
  * If the STEP_NONBLOCK flag was specified and the query is waiting to acquire
  * a lock, returns true.  Otherwise, returns false.
@@ -579,9 +642,19 @@ try_complete_step(Step *step, int flags)
 				printResultSet(res);
 				break;
 			case PGRES_FATAL_ERROR:
+				if (step->errormsg != NULL)
+				{
+					printf("WARNING: this step had a leftover error message\n");
+					printf("%s\n", step->errormsg);
+				}
 				/* Detail may contain xid values, so just show primary. */
-				printf("%s:  %s\n", PQresultErrorField(res, PG_DIAG_SEVERITY),
-					   PQresultErrorField(res, PG_DIAG_MESSAGE_PRIMARY));
+				step->errormsg = malloc(5 +
+										strlen(PQresultErrorField(res, PG_DIAG_SEVERITY)) + 
+										strlen(PQresultErrorField(res,
+																  PG_DIAG_MESSAGE_PRIMARY)));
+				sprintf(step->errormsg, "%s:  %s",
+						PQresultErrorField(res, PG_DIAG_SEVERITY),
+						PQresultErrorField(res, PG_DIAG_MESSAGE_PRIMARY));
 				break;
 			default:
 				printf("unexpected result status: %s\n",
