@@ -594,6 +594,26 @@ SELECT SUM(COUNT(f1)) OVER () FROM int4_tbl WHERE f1=42;
    0
 (1 row)
 
+-- window function with ORDER BY an expression involving aggregates (9.1 bug)
+select ten,
+  sum(unique1) + sum(unique2) as res,
+  rank() over (order by sum(unique1) + sum(unique2)) as rank
+from tenk1
+group by ten order by ten;
+ ten |   res    | rank 
+-----+----------+------
+   0 |  9976146 |    4
+   1 | 10114187 |    9
+   2 | 10059554 |    8
+   3 |  9878541 |    1
+   4 |  9881005 |    2
+   5 |  9981670 |    5
+   6 |  9947099 |    3
+   7 | 10120309 |   10
+   8 |  9991305 |    6
+   9 | 10040184 |    7
+(10 rows)
+
 -- test non-default frame specifications
 SELECT four, ten,
 	sum(ten) over (partition by four order by ten),
