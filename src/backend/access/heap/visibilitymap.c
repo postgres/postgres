@@ -45,9 +45,19 @@
  *
  * In heapam.c, whenever a page is modified so that not all tuples on the
  * page are visible to everyone anymore, the corresponding bit in the
- * visibility map is cleared. The bit in the visibility map is cleared
- * after releasing the lock on the heap page, to avoid holding the lock
- * over possible I/O to read in the visibility map page.
+ * visibility map is cleared. In order to be crash-safe, we need to do this
+ * while still holding a lock on the heap page and in the same critical
+ * section that logs the page modification. However, we don't want to hold
+ * the buffer lock over any I/O that may be required to read in the visibility
+ * map page.  To avoid this, we examine the heap page before locking it;
+ * if the page-level PD_ALL_VISIBLE bit is set, we pin the visibility map
+ * bit.  Then, we lock the buffer.  But this creates a race condition: there
+ * is a possibility that in the time it takes to lock the buffer, the
+ * PD_ALL_VISIBLE bit gets set.  If that happens, we have to unlock the
+ * buffer, pin the visibility map page, and relock the buffer.  This shouldn't
+ * happen often, because only VACUUM currently sets visibility map bits,
+ * and the race will only occur if VACUUM processes a given page at almost
+ * exactly the same time that someone tries to further modify it.
  *
  * To set a bit, you need to hold a lock on the heap page. That prevents
  * the race condition where VACUUM sees that all tuples on the page are

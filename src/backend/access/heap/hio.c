@@ -178,6 +178,10 @@ GetVisibilityMapPins(Relation relation, Buffer buffer1, Buffer buffer2,
  *	happen if space is freed in that page after heap_update finds there's not
  *	enough there).	In that case, the page will be pinned and locked only once.
  *
+ *	For the vmbuffer and vmbuffer_other arguments, we avoid deadlock by
+ *	locking them only after locking the corresponding heap page, and taking
+ *	no further lwlocks while they are locked.
+ *
  *	We normally use FSM to help us find free space.  However,
  *	if HEAP_INSERT_SKIP_FSM is specified, we just append a new empty page to
  *	the end of the relation if the tuple won't fit on the current target page.
