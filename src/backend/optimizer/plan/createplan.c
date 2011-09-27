@@ -3533,7 +3533,13 @@ prepare_sort_from_pathkeys(PlannerInfo *root, Plan *lefttree, List *pathkeys,
 
 			if (!tle)
 			{
-				/* No matching tlist item; look for a computable expression */
+				/*
+				 * No matching tlist item; look for a computable expression.
+				 * Note that we treat Aggrefs as if they were variables; this
+				 * is necessary when attempting to sort the output from an Agg
+				 * node for use in a WindowFunc (since grouping_planner will
+				 * have treated the Aggrefs as variables, too).
+				 */
 				Expr	   *sortexpr = NULL;
 
 				foreach(j, ec->ec_members)
@@ -3546,7 +3552,7 @@ prepare_sort_from_pathkeys(PlannerInfo *root, Plan *lefttree, List *pathkeys,
 						continue;
 					sortexpr = em->em_expr;
 					exprvars = pull_var_clause((Node *) sortexpr,
-											   PVC_RECURSE_AGGREGATES,
+											   PVC_INCLUDE_AGGREGATES,
 											   PVC_INCLUDE_PLACEHOLDERS);
 					foreach(k, exprvars)
 					{

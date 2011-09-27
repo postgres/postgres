@@ -138,6 +138,13 @@ SELECT empno, depname, salary, bonus, depadj, MIN(bonus) OVER (ORDER BY empno), 
 -- window function over ungrouped agg over empty row set (bug before 9.1)
 SELECT SUM(COUNT(f1)) OVER () FROM int4_tbl WHERE f1=42;
 
+-- window function with ORDER BY an expression involving aggregates (9.1 bug)
+select ten,
+  sum(unique1) + sum(unique2) as res,
+  rank() over (order by sum(unique1) + sum(unique2)) as rank
+from tenk1
+group by ten order by ten;
+
 -- test non-default frame specifications
 SELECT four, ten,
 	sum(ten) over (partition by four order by ten),
