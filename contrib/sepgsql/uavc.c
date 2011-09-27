@@ -130,13 +130,29 @@ sepgsql_avc_reclaim(void)
 	}
 }
 
-/*
+/* -------------------------------------------------------------------------
+ *
  * sepgsql_avc_check_valid
  *
- * It checks whether the cached entries are still valid, or not.
- * If security policy has been reloaded since last reference of access
- * vector cache, we have to release all the entries, because they are
- * not valid yet.
+ * This function checks whether the cached entries are still valid.  If
+ * the security policy has been reloaded (or any other events that requires
+ * resetting userspace caches has occurred) since the last reference to
+ * the access vector cache, we must flush the cache.
+ *
+ * Access control decisions must be atomic, but multiple system calls may
+ * be required to make a decision; thus, when referencing the access vector
+ * cache, we must loop until we complete without an intervening cache flush
+ * event.  In practice, looping even once should be very rare.  Callers should
+ * do something like this:
+ *
+ *   sepgsql_avc_check_valid();
+ *   do {
+ *           :
+ *       <reference to uavc>
+ *           :
+ *   } while (!sepgsql_avc_check_valid())
+ *
+ * -------------------------------------------------------------------------
  */
 static bool
 sepgsql_avc_check_valid(void)
@@ -153,8 +169,8 @@ sepgsql_avc_check_valid(void)
 /*
  * sepgsql_avc_unlabeled
  *
- * It returns an alternative label to be applied when no label or invalid 
- * label would be assigned on objects.
+ * Returns an alternative label to be applied when no label or an invalid 
+ * label would otherwise be assigned.
  */
 static char *
 sepgsql_avc_unlabeled(void)
@@ -221,9 +237,15 @@ sepgsql_avc_compute(const char *scontext, const char *tcontext, uint16 tclass)
 		sepgsql_compute_avd(scontext, ucontext, tclass, &avd);
 
 	/*
-	 * To boost up trusted procedure checks on db_procedure object
-	 * class, we also confirm the decision when user calls a procedure
-	 * labeled as 'tcontext'.
+	 * It also caches a security label to be switched when a client
+	 * labeled as 'scontext' executes a procedure labeled as 'tcontext',
+	 * not only access control decision on the procedure.
+	 * The security label to be switched shall be computed uniquely on
+	 * a pair of 'scontext' and 'tcontext', thus, it is reasonable to
+	 * cache the new label on avc, and enables to reduce unnecessary
+	 * system calls.
+	 * It shall be referenced at sepgsql_needs_fmgr_hook to check whether
+	 * the supplied function is a trusted procedure, or not.
 	 */
 	if (tclass == SEPG_CLASS_DB_PROCEDURE)
 	{
@@ -278,9 +300,8 @@ sepgsql_avc_compute(const char *scontext, const char *tcontext, uint16 tclass)
 /*
  * sepgsql_avc_lookup
  *
- * It lookups a cache entry that matches with the supplied object
- * identifiers and object class. If not found, it tries to create
- * a new cache entry.
+ * Look up a cache entry that matches the supplied security contexts and
+ * object class.  If not found, create a new cache entry.
  */
 static avc_cache *
 sepgsql_avc_lookup(const char *scontext, const char *tcontext, uint16 tclass)
@@ -338,8 +359,8 @@ sepgsql_avc_check_perms_label(const char *tcontext,
 		result = true;
 
 		/*
-		 * If target object is unlabeled, we assume it has
-		 * system 'unlabeled' security context instead.
+		 * If the target object is unlabeled, we perform the check using the
+		 * label supplied by sepgsql_avc_unlabeled().
 		 */
 		if (tcontext)
 			cache = sepgsql_avc_lookup(scontext, tcontext, tclass);
@@ -362,10 +383,10 @@ sepgsql_avc_check_perms_label(const char *tcontext,
 		{
 			/*
 			 * In permissive mode or permissive domain, violated permissions
-			 * shall be audited on the log files at once, and implicitly
-			 * allowed them to avoid flood of access denied logs, because
-			 * the purpose of permissive mode/domain is to collect violation
-			 * log to fix up security policy itself.
+			 * shall be audited to the log files at once, and then implicitly
+			 * allowed to avoid a flood of access denied logs, because
+			 * the purpose of permissive mode/domain is to collect a violation
+			 * log that will make it possible to fix up the security policy.
 			 */
 			if (!sepgsql_getenforce() || cache->permissive)
 				cache->allowed |= required;
@@ -422,9 +443,9 @@ sepgsql_avc_check_perms(const ObjectAddress *tobject,
 /*
  * sepgsql_avc_trusted_proc
  *
- * It returns a security label to be switched on execution of the supplied
- * procedure, if it was configured as a trusted procedure. Otherwise, NULL
- * shall be returned.
+ * If the supplied function OID is configured as a trusted procedure, this
+ * function will return a security label to be used during the execution of
+ * that function.  Otherwise, it returns NULL.
  */
 char *
 sepgsql_avc_trusted_proc(Oid functionId)
@@ -455,7 +476,7 @@ sepgsql_avc_trusted_proc(Oid functionId)
 /*
  * sepgsql_avc_exit
  *
- * It clean up userspace avc stuff on process exit
+ * Clean up userspace AVC on process exit.
  */
 static void
 sepgsql_avc_exit(int code, Datum arg)
@@ -466,8 +487,7 @@ sepgsql_avc_exit(int code, Datum arg)
 /*
  * sepgsql_avc_init
  *
- * It shall be invoked at once from _PG_init routine to initialize
- * userspace access vector cache stuff.
+ * Initialize the userspace AVC.  This should be called from _PG_init.
  */
 void
 sepgsql_avc_init(void)
@@ -504,8 +524,6 @@ sepgsql_avc_init(void)
 		ereport(LOG,
 				(errmsg("SELinux: kernel status page uses fallback mode")));
 
-	/*
-	 * To close selinux status page on process exit
-	 */
+	/* Arrange to close selinux status page on process exit. */
 	on_proc_exit(sepgsql_avc_exit, 0);
 }
