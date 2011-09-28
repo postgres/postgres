@@ -606,7 +606,7 @@ TruncateCLOG(TransactionId oldestXact)
 	cutoffPage = TransactionIdToPage(oldestXact);
 
 	/* Check to see if there's any files that could be removed */
-	if (!SlruScanDirectory(ClogCtl, cutoffPage, false))
+	if (!SlruScanDirectory(ClogCtl, SlruScanDirCbReportPresence, &cutoffPage))
 		return;					/* nothing to remove */
 
 	/* Write XLOG record and flush XLOG to disk */

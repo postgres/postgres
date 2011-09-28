@@ -194,7 +194,7 @@ typedef struct QueuePosition
 
 /* choose logically smaller QueuePosition */
 #define QUEUE_POS_MIN(x,y) \
-	(asyncQueuePagePrecedesLogically((x).page, (y).page) ? (x) : \
+	(asyncQueuePagePrecedes((x).page, (y).page) ? (x) : \
 	 (x).page != (y).page ? (y) : \
 	 (x).offset < (y).offset ? (x) : (y))
 
@@ -360,8 +360,7 @@ static bool backendHasExecutedInitialListen = false;
 bool		Trace_notify = false;
 
 /* local function prototypes */
-static bool asyncQueuePagePrecedesPhysically(int p, int q);
-static bool asyncQueuePagePrecedesLogically(int p, int q);
+static bool asyncQueuePagePrecedes(int p, int q);
 static void queue_listen(ListenActionKind action, const char *channel);
 static void Async_UnlistenOnExit(int code, Datum arg);
 static void Exec_ListenPreCommit(void);
@@ -388,25 +387,11 @@ static void NotifyMyFrontEnd(const char *channel,
 static bool AsyncExistsPendingNotify(const char *channel, const char *payload);
 static void ClearPendingActionsAndNotifies(void);
 
-
 /*
  * We will work on the page range of 0..QUEUE_MAX_PAGE.
- *
- * asyncQueuePagePrecedesPhysically just checks numerically without any magic
- * if one page precedes another one.  This is wrong for normal operation but
- * is helpful when clearing pg_notify/ during startup.
- *
- * asyncQueuePagePrecedesLogically compares using wraparound logic, as is
- * required by slru.c.
  */
 static bool
-asyncQueuePagePrecedesPhysically(int p, int q)
-{
-	return p < q;
-}
-
-static bool
-asyncQueuePagePrecedesLogically(int p, int q)
+asyncQueuePagePrecedes(int p, int q)
 {
 	int			diff;
 
@@ -484,7 +469,7 @@ AsyncShmemInit(void)
 	/*
 	 * Set up SLRU management of the pg_notify data.
 	 */
-	AsyncCtl->PagePrecedes = asyncQueuePagePrecedesLogically;
+	AsyncCtl->PagePrecedes = asyncQueuePagePrecedes;
 	SimpleLruInit(AsyncCtl, "Async Ctl", NUM_ASYNC_BUFFERS, 0,
 				  AsyncCtlLock, "pg_notify");
 	/* Override default assumption that writes should be fsync'd */
@@ -494,15 +479,8 @@ AsyncShmemInit(void)
 	{
 		/*
 		 * During start or reboot, clean out the pg_notify directory.
-		 *
-		 * Since we want to remove every file, we temporarily use
-		 * asyncQueuePagePrecedesPhysically() and pass INT_MAX as the
-		 * comparison value; every file in the directory should therefore
-		 * appear to be less than that.
 		 */
-		AsyncCtl->PagePrecedes = asyncQueuePagePrecedesPhysically;
-		(void) SlruScanDirectory(AsyncCtl, INT_MAX, true);
-		AsyncCtl->PagePrecedes = asyncQueuePagePrecedesLogically;
+		(void) SlruScanDirectory(AsyncCtl, SlruScanDirCbDeleteAll, NULL);
 
 		/* Now initialize page zero to empty */
 		LWLockAcquire(AsyncCtlLock, LW_EXCLUSIVE);
@@ -1223,7 +1201,7 @@ asyncQueueIsFull(void)
 		nexthead = 0;			/* wrap around */
 	boundary = QUEUE_POS_PAGE(QUEUE_TAIL);
 	boundary -= boundary % SLRU_PAGES_PER_SEGMENT;
-	return asyncQueuePagePrecedesLogically(nexthead, boundary);
+	return asyncQueuePagePrecedes(nexthead, boundary);
 }
 
 /*
@@ -2074,7 +2052,7 @@ asyncQueueAdvanceTail(void)
 	 */
 	newtailpage = QUEUE_POS_PAGE(min);
 	boundary = newtailpage - (newtailpage % SLRU_PAGES_PER_SEGMENT);
-	if (asyncQueuePagePrecedesLogically(oldtailpage, boundary))
+	if (asyncQueuePagePrecedes(oldtailpage, boundary))
 	{
 		/*
 		 * SimpleLruTruncate() will ask for AsyncCtlLock but will also release

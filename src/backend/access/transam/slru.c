@@ -132,6 +132,8 @@ static bool SlruPhysicalWritePage(SlruCtl ctl, int pageno, int slotno,
 static void SlruReportIOError(SlruCtl ctl, int pageno, TransactionId xid);
 static int	SlruSelectLRUPage(SlruCtl ctl, int pageno);
 
+static bool SlruScanDirCbDeleteCutoff(SlruCtl ctl, char *filename,
+						  int segpage, void *data);
 
 /*
  * Initialization of shared memory
@@ -1137,33 +1139,84 @@ restart:;
 	LWLockRelease(shared->ControlLock);
 
 	/* Now we can remove the old segment(s) */
-	(void) SlruScanDirectory(ctl, cutoffPage, true);
+	(void) SlruScanDirectory(ctl, SlruScanDirCbDeleteCutoff, &cutoffPage);
 }
 
 /*
- * SimpleLruTruncate subroutine: scan directory for removable segments.
- * Actually remove them iff doDeletions is true.  Return TRUE iff any
- * removable segments were found.  Note: no locking is needed.
- *
- * This can be called directly from clog.c, for reasons explained there.
+ * SlruScanDirectory callback
+ * 		This callback reports true if there's any segment prior to the one
+ * 		containing the page passed as "data".
  */
 bool
-SlruScanDirectory(SlruCtl ctl, int cutoffPage, bool doDeletions)
+SlruScanDirCbReportPresence(SlruCtl ctl, char *filename, int segpage, void *data)
 {
-	bool		found = false;
+	int		cutoffPage = *(int *) data;
+
+	cutoffPage -= cutoffPage % SLRU_PAGES_PER_SEGMENT;
+
+	if (ctl->PagePrecedes(segpage, cutoffPage))
+		return true;	/* found one; don't iterate any more */
+
+	return false;	/* keep going */
+}
+
+/*
+ * SlruScanDirectory callback.
+ *		This callback deletes segments prior to the one passed in as "data".
+ */
+static bool
+SlruScanDirCbDeleteCutoff(SlruCtl ctl, char *filename, int segpage, void *data)
+{
+	char	path[MAXPGPATH];
+	int		cutoffPage = *(int *) data;
+
+	if (ctl->PagePrecedes(segpage, cutoffPage))
+	{
+		snprintf(path, MAXPGPATH, "%s/%s", ctl->Dir, filename);
+		ereport(DEBUG2,
+				(errmsg("removing file \"%s\"", path)));
+		unlink(path);
+	}
+
+	return false;	/* keep going */
+}
+
+/*
+ * SlruScanDirectory callback.
+ *		This callback deletes all segments.
+ */
+bool
+SlruScanDirCbDeleteAll(SlruCtl ctl, char *filename, int segpage, void *data)
+{
+	char	path[MAXPGPATH];
+
+	snprintf(path, MAXPGPATH, "%s/%s", ctl->Dir, filename);
+	ereport(DEBUG2,
+			(errmsg("removing file \"%s\"", path)));
+	unlink(path);
+
+	return false;	/* keep going */
+}
+
+/*
+ * Scan the SimpleLRU directory and apply a callback to each file found in it.
+ *
+ * If the callback returns true, the scan is stopped.  The last return value
+ * from the callback is returned.
+ *
+ * Note that the ordering in which the directory is scanned is not guaranteed.
+ *
+ * Note that no locking is applied.
+ */
+bool
+SlruScanDirectory(SlruCtl ctl, SlruScanCallback callback, void *data)
+{
 	DIR		   *cldir;
 	struct dirent *clde;
 	int			segno;
 	int			segpage;
-	char		path[MAXPGPATH];
-
-	/*
-	 * The cutoff point is the start of the segment containing cutoffPage.
-	 * (This is redundant when called from SimpleLruTruncate, but not when
-	 * called directly from clog.c.)
-	 */
-	cutoffPage -= cutoffPage % SLRU_PAGES_PER_SEGMENT;
-
+	bool		retval;
+	
 	cldir = AllocateDir(ctl->Dir);
 	while ((clde = ReadDir(cldir, ctl->Dir)) != NULL)
 	{
@@ -1172,20 +1225,15 @@ SlruScanDirectory(SlruCtl ctl, int cutoffPage, bool doDeletions)
 		{
 			segno = (int) strtol(clde->d_name, NULL, 16);
 			segpage = segno * SLRU_PAGES_PER_SEGMENT;
-			if (ctl->PagePrecedes(segpage, cutoffPage))
-			{
-				found = true;
-				if (doDeletions)
-				{
-					snprintf(path, MAXPGPATH, "%s/%s", ctl->Dir, clde->d_name);
-					ereport(DEBUG2,
-							(errmsg("removing file \"%s\"", path)));
-					unlink(path);
-				}
-			}
+
+			elog(DEBUG2, "SlruScanDirectory invoking callback on %s/%s",
+				 ctl->Dir, clde->d_name);
+			retval = callback(ctl, clde->d_name, segpage, data);
+			if (retval)
+				break;
 		}
 	}
 	FreeDir(cldir);
 
-	return found;
+	return retval;
 }

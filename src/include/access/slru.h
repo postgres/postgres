@@ -145,6 +145,15 @@ extern int SimpleLruReadPage_ReadOnly(SlruCtl ctl, int pageno,
 extern void SimpleLruWritePage(SlruCtl ctl, int slotno);
 extern void SimpleLruFlush(SlruCtl ctl, bool checkpoint);
 extern void SimpleLruTruncate(SlruCtl ctl, int cutoffPage);
-extern bool SlruScanDirectory(SlruCtl ctl, int cutoffPage, bool doDeletions);
+
+typedef bool (*SlruScanCallback) (SlruCtl ctl, char *filename, int segpage,
+					 void *data);
+extern bool SlruScanDirectory(SlruCtl ctl, SlruScanCallback callback, void *data);
+
+/* SlruScanDirectory public callbacks */
+extern bool SlruScanDirCbReportPresence(SlruCtl ctl, char *filename,
+							int segpage, void *data);
+extern bool SlruScanDirCbDeleteAll(SlruCtl ctl, char *filename, int segpage,
+					   void *data);
 
 #endif   /* SLRU_H */
