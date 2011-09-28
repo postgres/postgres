@@ -2533,8 +2533,8 @@ SET ENABLE_SEQSCAN TO OFF;
        <para>
         Sets the planner's estimate of the cost of a disk page fetch
         that is part of a series of sequential fetches.  The default is 1.0.
-        This value can be overridden for a particular tablespace by setting
-        the tablespace parameter of the same name
+        This value can be overridden for tables and indexes in a particular
+        tablespace by setting the tablespace parameter of the same name
         (see <xref linkend="sql-altertablespace">).
        </para>
       </listitem>
@@ -2549,8 +2549,8 @@ SET ENABLE_SEQSCAN TO OFF;
        <para>
         Sets the planner's estimate of the cost of a
         non-sequentially-fetched disk page.  The default is 4.0.
-        This value can be overridden for a particular tablespace by setting
-        the tablespace parameter of the same name
+        This value can be overridden for tables and indexes in a particular
+        tablespace by setting the tablespace parameter of the same name
         (see <xref linkend="sql-altertablespace">).
        </para>
 

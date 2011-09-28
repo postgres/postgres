@@ -14,8 +14,8 @@
    and tuning <productname>PostgreSQL</productname> performance.
   </para>
 
-  <sect1 id="using-explain">
-   <title>Using <command>EXPLAIN</command></title>
+ <sect1 id="using-explain">
+  <title>Using <command>EXPLAIN</command></title>
 
    <indexterm zone="using-explain">
     <primary>EXPLAIN</primary>
@@ -31,84 +31,100 @@
     plan to match the query structure and the properties of the data
     is absolutely critical for good performance, so the system includes
     a complex <firstterm>planner</> that tries to choose good plans.
-    You can use the
-    <xref linkend="sql-explain"> command
+    You can use the <xref linkend="sql-explain"> command
     to see what query plan the planner creates for any query.
-    Plan-reading is an art that deserves an extensive tutorial, which
-    this is not; but here is some basic information.
+    Plan-reading is an art that requires some experience to master,
+    but this section attempts to cover the basics.
    </para>
 
    <para>
+    Examples in this section are drawn from the regression test database
+    after doing a <command>VACUUM ANALYZE</>, using 9.2 development sources.
+    You should be able to get similar results if you try the examples
+    yourself, but your estimated costs and row counts might vary slightly
+    because <command>ANALYZE</>'s statistics are random samples rather
+    than exact, and because costs are inherently somewhat platform-dependent.
+   </para>
+
+   <para>
+    The examples use <command>EXPLAIN</>'s default <quote>text</> output
+    format, which is compact and convenient for humans to read.
+    If you want to feed <command>EXPLAIN</>'s output to a program for further
+    analysis, you should use one of its machine-readable output formats
+    (XML, JSON, or YAML) instead.
+   </para>
+
+  <sect2 id="using-explain-basics">
+   <title><command>EXPLAIN</command> Basics</title>
+
+   <para>
     The structure of a query plan is a tree of <firstterm>plan nodes</>.
-    Nodes at the bottom level of the tree are table scan nodes: they return raw rows
+    Nodes at the bottom level of the tree are scan nodes: they return raw rows
     from a table.  There are different types of scan nodes for different
     table access methods: sequential scans, index scans, and bitmap index
-    scans.  If the query requires joining, aggregation, sorting, or other
+    scans.  There are also non-table row sources, such as <literal>VALUES</>
+    clauses and set-returning functions in <literal>FROM</>, which have their
+    own scan node types.
+    If the query requires joining, aggregation, sorting, or other
     operations on the raw rows, then there will be additional nodes
     above the scan nodes to perform these operations.  Again,
     there is usually more than one possible way to do these operations,
     so different node types can appear here too.  The output
     of <command>EXPLAIN</command> has one line for each node in the plan
     tree, showing the basic node type plus the cost estimates that the planner
-    made for the execution of that plan node.  The first line (topmost node)
-    has the estimated total execution cost for the plan; it is this number
-    that the planner seeks to minimize.
+    made for the execution of that plan node.  Additional lines might appear,
+    indented from the node's summary line,
+    to show additional properties of the node.
+    The very first line (the summary line for the topmost
+    node) has the estimated total execution cost for the plan; it is this
+    number that the planner seeks to minimize.
    </para>
 
    <para>
     Here is a trivial example, just to show what the output looks like:
-    <footnote>
-     <para>
-      Examples in this section are drawn from the regression test database
-      after doing a <command>VACUUM ANALYZE</>, using 8.2 development sources.
-      You should be able to get similar results if you try the examples yourself,
-      but your estimated costs and row counts might vary slightly
-      because <command>ANALYZE</>'s statistics are random samples rather
-      than exact.
-     </para>
-    </footnote>
 
-<programlisting>
+<screen>
 EXPLAIN SELECT * FROM tenk1;
 
                          QUERY PLAN
 -------------------------------------------------------------
  Seq Scan on tenk1  (cost=0.00..458.00 rows=10000 width=244)
-</programlisting>
+</screen>
    </para>
 
    <para>
-    The numbers that are quoted by <command>EXPLAIN</command> are (left
+    Since this query has no <literal>WHERE</> clause, it must scan all the
+    rows of the table, so the planner has chosen to use a simple sequential
+    scan plan.  The numbers that are quoted in parentheses are (left
     to right):
 
     <itemizedlist>
      <listitem>
       <para>
-       Estimated start-up cost (time expended before the output scan can start,
-       e.g., time to do the sorting in a sort node)
+       Estimated start-up cost.  This is the time expended before the output
+       phase can begin, e.g., time to do the sorting in a sort node.
       </para>
      </listitem>
 
      <listitem>
       <para>
-       Estimated total cost (if all rows are retrieved, though they might
-       not be; e.g., a query with a <literal>LIMIT</> clause will stop
-       short of paying the total cost of the <literal>Limit</> plan node's
-       input node)
+       Estimated total cost.  This is stated on the assumption that the plan
+       node is run to completion, i.e., all available rows are retrieved.
+       In practice a node's parent node might stop short of reading all
+       available rows (see the <literal>LIMIT</> example below).
       </para>
      </listitem>
 
      <listitem>
       <para>
-       Estimated number of rows output by this plan node (again, only if
-       executed to completion)
+       Estimated number of rows output by this plan node.  Again, the node
+       is assumed to be run to completion.
       </para>
      </listitem>
 
      <listitem>
       <para>
-       Estimated average width (in bytes) of rows output by this plan
-       node
+       Estimated average width of rows output by this plan node (in bytes).
       </para>
      </listitem>
     </itemizedlist>
@@ -120,12 +136,12 @@ EXPLAIN SELECT * FROM tenk1;
     Traditional practice is to measure the costs in units of disk page
     fetches; that is, <xref linkend="guc-seq-page-cost"> is conventionally
     set to <literal>1.0</> and the other cost parameters are set relative
-    to that.  (The examples in this section are run with the default cost
-    parameters.)
+    to that.  The examples in this section are run with the default cost
+    parameters.
    </para>
 
    <para>
-    It's important to note that the cost of an upper-level node includes
+    It's important to understand that the cost of an upper-level node includes
     the cost of all its child nodes.  It's also important to realize that
     the cost only reflects things that the planner cares about.
     In particular, the cost does not consider the time spent transmitting
@@ -136,30 +152,29 @@ EXPLAIN SELECT * FROM tenk1;
    </para>
 
    <para>
-    The <literal>rows</> value is a little tricky
-    because it is <emphasis>not</emphasis> the
-    number of rows processed or scanned by the plan node.  It is usually less,
-    reflecting the estimated selectivity of any <literal>WHERE</>-clause
-    conditions that are being
-    applied at the node.  Ideally the top-level rows estimate will
-    approximate the number of rows actually returned, updated, or deleted
-    by the query.
+    The <literal>rows</> value is a little tricky because it is
+    not the number of rows processed or scanned by the
+    plan node, but rather the number emitted by the node.  This is often
+    less than the number scanned, as a result of filtering by any
+    <literal>WHERE</>-clause conditions that are being applied at the node.
+    Ideally the top-level rows estimate will approximate the number of rows
+    actually returned, updated, or deleted by the query.
    </para>
 
    <para>
     Returning to our example:
 
-<programlisting>
+<screen>
 EXPLAIN SELECT * FROM tenk1;
 
                          QUERY PLAN
 -------------------------------------------------------------
  Seq Scan on tenk1  (cost=0.00..458.00 rows=10000 width=244)
-</programlisting>
+</screen>
    </para>
 
    <para>
-    This is about as straightforward as it gets.  If you do:
+    These numbers are derived very straightforwardly.  If you do:
 
 <programlisting>
 SELECT relpages, reltuples FROM pg_class WHERE relname = 'tenk1';
@@ -174,23 +189,24 @@ SELECT relpages, reltuples FROM pg_class WHERE relname = 'tenk1';
    </para>
 
    <para>
-    Now let's modify the original query to add a <literal>WHERE</> condition:
+    Now let's modify the query to add a <literal>WHERE</> condition:
 
-<programlisting>
+<screen>
 EXPLAIN SELECT * FROM tenk1 WHERE unique1 &lt; 7000;
 
                          QUERY PLAN
 ------------------------------------------------------------
- Seq Scan on tenk1  (cost=0.00..483.00 rows=7033 width=244)
+ Seq Scan on tenk1  (cost=0.00..483.00 rows=7001 width=244)
    Filter: (unique1 &lt; 7000)
-</programlisting>
+</screen>
 
     Notice that the <command>EXPLAIN</> output shows the <literal>WHERE</>
-    clause being applied as a <quote>filter</> condition; this means that
+    clause being applied as a <quote>filter</> condition attached to the Seq
+    Scan plan node.  This means that
     the plan node checks the condition for each row it scans, and outputs
     only the ones that pass the condition.
-    The estimate of output rows has been reduced because of the <literal>WHERE</>
-    clause.
+    The estimate of output rows has been reduced because of the
+    <literal>WHERE</> clause.
     However, the scan will still have to visit all 10000 rows, so the cost
     hasn't decreased; in fact it has gone up a bit (by 10000 * <xref
     linkend="guc-cpu-operator-cost">, to be exact) to reflect the extra CPU
@@ -200,7 +216,7 @@ EXPLAIN SELECT * FROM tenk1 WHERE unique1 &lt; 7000;
    <para>
     The actual number of rows this query would select is 7000, but the <literal>rows</>
     estimate is only approximate.  If you try to duplicate this experiment,
-    you will probably get a slightly different estimate; moreover, it will
+    you will probably get a slightly different estimate; moreover, it can
     change after each <command>ANALYZE</command> command, because the
     statistics produced by <command>ANALYZE</command> are taken from a
     randomized sample of the table.
@@ -209,22 +225,22 @@ EXPLAIN SELECT * FROM tenk1 WHERE unique1 &lt; 7000;
    <para>
     Now, let's make the condition more restrictive:
 
-<programlisting>
+<screen>
 EXPLAIN SELECT * FROM tenk1 WHERE unique1 &lt; 100;
 
                                   QUERY PLAN
 ------------------------------------------------------------------------------
- Bitmap Heap Scan on tenk1  (cost=2.37..232.35 rows=106 width=244)
+ Bitmap Heap Scan on tenk1  (cost=5.03..229.17 rows=101 width=244)
    Recheck Cond: (unique1 &lt; 100)
-   ->  Bitmap Index Scan on tenk1_unique1  (cost=0.00..2.37 rows=106 width=0)
+   -&gt;  Bitmap Index Scan on tenk1_unique1  (cost=0.00..5.01 rows=101 width=0)
          Index Cond: (unique1 &lt; 100)
-</programlisting>
+</screen>
 
-    Here the planner has decided to use a two-step plan: the bottom plan
+    Here the planner has decided to use a two-step plan: the child plan
     node visits an index to find the locations of rows matching the index
     condition, and then the upper plan node actually fetches those rows
-    from the table itself.  Fetching the rows separately is much more
-    expensive than sequentially reading them, but because not all the pages
+    from the table itself.  Fetching rows separately is much more
+    expensive than reading them sequentially, but because not all the pages
     of the table have to be visited, this is still cheaper than a sequential
     scan.  (The reason for using two plan levels is that the upper plan
     node sorts the row locations identified by the index into physical order
@@ -234,65 +250,67 @@ EXPLAIN SELECT * FROM tenk1 WHERE unique1 &lt; 100;
    </para>
 
    <para>
-    If the <literal>WHERE</> condition is selective enough, the planner might
-    switch to a <quote>simple</> index scan plan:
+    Now let's add another condition to the <literal>WHERE</> clause:
 
-<programlisting>
-EXPLAIN SELECT * FROM tenk1 WHERE unique1 &lt; 3;
-
-                                  QUERY PLAN
-------------------------------------------------------------------------------
- Index Scan using tenk1_unique1 on tenk1  (cost=0.00..10.00 rows=2 width=244)
-   Index Cond: (unique1 &lt; 3)
-</programlisting>
-
-    In this case the table rows are fetched in index order, which makes them
-    even more expensive to read, but there are so few that the extra cost
-    of sorting the row locations is not worth it.  You'll most often see
-    this plan type for queries that fetch just a single row, and for queries
-    that have an <literal>ORDER BY</> condition that matches the index
-    order.
-   </para>
-
-   <para>
-    Add another condition to the <literal>WHERE</> clause:
-
-<programlisting>
-EXPLAIN SELECT * FROM tenk1 WHERE unique1 &lt; 3 AND stringu1 = 'xxx';
+<screen>
+EXPLAIN SELECT * FROM tenk1 WHERE unique1 &lt; 100 AND stringu1 = 'xxx';
 
                                   QUERY PLAN
 ------------------------------------------------------------------------------
- Index Scan using tenk1_unique1 on tenk1  (cost=0.00..10.01 rows=1 width=244)
-   Index Cond: (unique1 &lt; 3)
+ Bitmap Heap Scan on tenk1  (cost=5.01..229.40 rows=1 width=244)
+   Recheck Cond: (unique1 &lt; 100)
    Filter: (stringu1 = 'xxx'::name)
-</programlisting>
+   -&gt;  Bitmap Index Scan on tenk1_unique1  (cost=0.00..5.01 rows=101 width=0)
+         Index Cond: (unique1 &lt; 100)
+</screen>
 
     The added condition <literal>stringu1 = 'xxx'</literal> reduces the
-    output-rows estimate, but not the cost because we still have to visit the
-    same set of rows.  Notice that the <literal>stringu1</> clause
-    cannot be applied as an index condition (since this index is only on
-    the <literal>unique1</> column).  Instead it is applied as a filter on
+    output-rowcount estimate, but not the cost because we still have to visit
+    the same set of rows.  Notice that the <literal>stringu1</> clause
+    cannot be applied as an index condition, since this index is only on
+    the <literal>unique1</> column.  Instead it is applied as a filter on
     the rows retrieved by the index.  Thus the cost has actually gone up
     slightly to reflect this extra checking.
    </para>
 
    <para>
-    If there are indexes on several columns referenced in <literal>WHERE</>, the
-    planner might choose to use an AND or OR combination of the indexes:
+    In some cases the planner will prefer a <quote>simple</> index scan plan:
 
-<programlisting>
+<screen>
+EXPLAIN SELECT * FROM tenk1 WHERE unique1 = 42;
+
+                                 QUERY PLAN
+-----------------------------------------------------------------------------
+ Index Scan using tenk1_unique1 on tenk1  (cost=0.00..8.27 rows=1 width=244)
+   Index Cond: (unique1 = 42)
+</screen>
+
+    In this type of plan the table rows are fetched in index order, which
+    makes them even more expensive to read, but there are so few that the
+    extra cost of sorting the row locations is not worth it.  You'll most
+    often see this plan type for queries that fetch just a single row.  It's
+    also often used for queries that have an <literal>ORDER BY</> condition
+    that matches the index order, because then no extra sort step is needed to
+    satisfy the <literal>ORDER BY</>.
+   </para>
+
+   <para>
+    If there are indexes on several columns referenced in <literal>WHERE</>,
+    the planner might choose to use an AND or OR combination of the indexes:
+
+<screen>
 EXPLAIN SELECT * FROM tenk1 WHERE unique1 &lt; 100 AND unique2 &gt; 9000;
 
                                      QUERY PLAN
 -------------------------------------------------------------------------------------
- Bitmap Heap Scan on tenk1  (cost=11.27..49.11 rows=11 width=244)
+ Bitmap Heap Scan on tenk1  (cost=25.01..60.14 rows=10 width=244)
    Recheck Cond: ((unique1 &lt; 100) AND (unique2 &gt; 9000))
-   -&gt;  BitmapAnd  (cost=11.27..11.27 rows=11 width=0)
-         -&gt;  Bitmap Index Scan on tenk1_unique1  (cost=0.00..2.37 rows=106 width=0)
+   -&gt;  BitmapAnd  (cost=25.01..25.01 rows=10 width=0)
+         -&gt;  Bitmap Index Scan on tenk1_unique1  (cost=0.00..5.01 rows=101 width=0)
                Index Cond: (unique1 &lt; 100)
-         -&gt;  Bitmap Index Scan on tenk1_unique2  (cost=0.00..8.65 rows=1042 width=0)
+         -&gt;  Bitmap Index Scan on tenk1_unique2  (cost=0.00..19.74 rows=999 width=0)
                Index Cond: (unique2 &gt; 9000)
-</programlisting>
+</screen>
 
     But this requires visiting both indexes, so it's not necessarily a win
     compared to using just one index and treating the other condition as
@@ -301,51 +319,178 @@ EXPLAIN SELECT * FROM tenk1 WHERE unique1 &lt; 100 AND unique2 &gt; 9000;
    </para>
 
    <para>
-    Let's try joining two tables, using the columns we have been discussing:
+    Here is an example showing the effects of <literal>LIMIT</>:
 
-<programlisting>
-EXPLAIN SELECT *
-FROM tenk1 t1, tenk2 t2
-WHERE t1.unique1 &lt; 100 AND t1.unique2 = t2.unique2;
+<screen>
+EXPLAIN SELECT * FROM tenk1 WHERE unique1 &lt; 100 AND unique2 &gt; 9000 LIMIT 2;
 
-                                      QUERY PLAN
---------------------------------------------------------------------------------------
- Nested Loop  (cost=2.37..553.11 rows=106 width=488)
-   -&gt;  Bitmap Heap Scan on tenk1 t1  (cost=2.37..232.35 rows=106 width=244)
-         Recheck Cond: (unique1 &lt; 100)
-         -&gt;  Bitmap Index Scan on tenk1_unique1  (cost=0.00..2.37 rows=106 width=0)
-               Index Cond: (unique1 &lt; 100)
-   -&gt;  Index Scan using tenk2_unique2 on tenk2 t2  (cost=0.00..3.01 rows=1 width=244)
-         Index Cond: (unique2 = t1.unique2)
-</programlisting>
+                                     QUERY PLAN
+-------------------------------------------------------------------------------------
+ Limit  (cost=0.00..14.25 rows=2 width=244)
+   -&gt;  Index Scan using tenk1_unique2 on tenk1  (cost=0.00..71.23 rows=10 width=244)
+         Index Cond: (unique2 &gt; 9000)
+         Filter: (unique1 &lt; 100)
+</screen>
    </para>
 
    <para>
-    In this nested-loop join, the outer (upper) scan is the same bitmap index scan we
-    saw earlier, and so its cost and row count are the same because we are
-    applying the <literal>WHERE</> clause <literal>unique1 &lt; 100</literal>
+    This is the same query as above, but we added a <literal>LIMIT</> so that
+    not all the rows need be retrieved, and the planner changed its mind about
+    what to do.  Notice that the total cost and row count of the Index Scan
+    node are shown as if it were run to completion.  However, the Limit node
+    is expected to stop after retrieving only a fifth of those rows, so its
+    total cost is only a fifth as much, and that's the actual estimated cost
+    of the query.  This plan is preferred over adding a Limit node to the
+    previous plan because the Limit could not avoid paying the startup cost
+    of the bitmap scan, so the total cost would be something over 25 units
+    with that approach.
+   </para>
+
+   <para>
+    Let's try joining two tables, using the columns we have been discussing:
+
+<screen>
+EXPLAIN SELECT *
+FROM tenk1 t1, tenk2 t2
+WHERE t1.unique1 &lt; 10 AND t1.unique2 = t2.unique2;
+
+                                      QUERY PLAN
+--------------------------------------------------------------------------------------
+ Nested Loop  (cost=4.33..118.25 rows=10 width=488)
+   -&gt;  Bitmap Heap Scan on tenk1 t1  (cost=4.33..39.44 rows=10 width=244)
+         Recheck Cond: (unique1 &lt; 10)
+         -&gt;  Bitmap Index Scan on tenk1_unique1  (cost=0.00..4.33 rows=10 width=0)
+               Index Cond: (unique1 &lt; 10)
+   -&gt;  Index Scan using tenk2_unique2 on tenk2 t2  (cost=0.00..7.87 rows=1 width=244)
+         Index Cond: (unique2 = t1.unique2)
+</screen>
+   </para>
+
+   <para>
+    In this plan, we have a nested-loop join node with two table scans as
+    inputs, or children.  The indentation of the node summary lines reflects
+    the plan tree structure.  The join's first, or <quote>outer</>, child
+    is a bitmap scan similar to those we saw before.  Its cost and row count
+    are the same as we'd get from <literal>SELECT ... WHERE unique1 &lt; 10</>
+    because we are
+    applying the <literal>WHERE</> clause <literal>unique1 &lt; 10</literal>
     at that node.
     The <literal>t1.unique2 = t2.unique2</literal> clause is not relevant yet,
-    so it doesn't affect the row count of the outer scan.  For the inner (lower) scan, the
-    <literal>unique2</> value of the current outer-scan row is plugged into
-    the inner index scan to produce an index condition like
-    <literal>unique2 = <replaceable>constant</replaceable></literal>.
-    So we get the same inner-scan plan and costs that we'd get from, say,
-    <literal>EXPLAIN SELECT * FROM tenk2 WHERE unique2 = 42</literal>.  The
+    so it doesn't affect the row count of the outer scan.  The nested-loop
+    join node will run its second,
+    or <quote>inner</> child once for each row obtained from the outer child.
+    Column values from the current outer row can be plugged into the inner
+    scan; here, the <literal>t1.unique2</> value from the outer row is available,
+    so we get a plan and costs similar to what we saw above for a simple
+    <literal>SELECT ... WHERE t2.unique2 = <replaceable>constant</></> case.
+    (The estimated cost is actually a bit lower than what was seen above,
+    as a result of caching that's expected to occur during the repeated
+    indexscans on <literal>t2</>.)  The
     costs of the loop node are then set on the basis of the cost of the outer
-    scan, plus one repetition of the inner scan for each outer row (106 * 3.01,
+    scan, plus one repetition of the inner scan for each outer row (10 * 7.87,
     here), plus a little CPU time for join processing.
    </para>
 
    <para>
     In this example the join's output row count is the same as the product
     of the two scans' row counts, but that's not true in all cases because
-    you can have <literal>WHERE</> clauses that mention both tables
+    there can be additional <literal>WHERE</> clauses that mention both tables
     and so can only be applied at the join point, not to either input scan.
-    For example, if we added
-    <literal>WHERE ... AND t1.hundred &lt; t2.hundred</literal>,
-    that would decrease the output row count of the join node, but not change
-    either input scan.
+    For example, if we add one more condition:
+
+<screen>
+EXPLAIN SELECT *
+FROM tenk1 t1, tenk2 t2
+WHERE t1.unique1 &lt; 10 AND t1.unique2 = t2.unique2 AND t1.hundred &lt; t2.hundred;
+
+                                      QUERY PLAN
+--------------------------------------------------------------------------------------
+ Nested Loop  (cost=4.33..118.28 rows=3 width=488)
+   Join Filter: (t1.hundred &lt; t2.hundred)
+   -&gt;  Bitmap Heap Scan on tenk1 t1  (cost=4.33..39.44 rows=10 width=244)
+         Recheck Cond: (unique1 &lt; 10)
+         -&gt;  Bitmap Index Scan on tenk1_unique1  (cost=0.00..4.33 rows=10 width=0)
+               Index Cond: (unique1 &lt; 10)
+   -&gt;  Index Scan using tenk2_unique2 on tenk2 t2  (cost=0.00..7.87 rows=1 width=244)
+         Index Cond: (unique2 = t1.unique2)
+</screen>
+
+    The extra condition <literal>t1.hundred &lt; t2.hundred</literal> can't be
+    tested in the <literal>tenk2_unique2</> index, so it's applied at the
+    join node.  This reduces the estimated output row count of the join node,
+    but does not change either input scan.
+   </para>
+
+   <para>
+    When dealing with outer joins, you might see join plan nodes with both
+    <quote>Join Filter</> and plain <quote>Filter</> conditions attached.
+    Join Filter conditions come from the outer join's <literal>ON</> clause,
+    so a row that fails the Join Filter condition could still get emitted as
+    a null-extended row.  But a plain Filter condition is applied after the
+    outer-join rules and so acts to remove rows unconditionally.  In an inner
+    join there is no semantic difference between these types of filters.
+   </para>
+
+   <para>
+    If we change the query's selectivity a bit, we might get a very different
+    join plan:
+
+<screen>
+EXPLAIN SELECT *
+FROM tenk1 t1, tenk2 t2
+WHERE t1.unique1 &lt; 100 AND t1.unique2 = t2.unique2;
+
+                                        QUERY PLAN
+------------------------------------------------------------------------------------------
+ Hash Join  (cost=230.43..713.94 rows=101 width=488)
+   Hash Cond: (t2.unique2 = t1.unique2)
+   -&gt;  Seq Scan on tenk2 t2  (cost=0.00..445.00 rows=10000 width=244)
+   -&gt;  Hash  (cost=229.17..229.17 rows=101 width=244)
+         -&gt;  Bitmap Heap Scan on tenk1 t1  (cost=5.03..229.17 rows=101 width=244)
+               Recheck Cond: (unique1 &lt; 100)
+               -&gt;  Bitmap Index Scan on tenk1_unique1  (cost=0.00..5.01 rows=101 width=0)
+                     Index Cond: (unique1 &lt; 100)
+</screen>
+   </para>
+
+   <para>
+    Here, the planner has chosen to use a hash join, in which rows of one
+    table are entered into an in-memory hash table, after which the other
+    table is scanned and the hash table is probed for matches to each row.
+    Again note how the indentation reflects the plan structure: the bitmap
+    scan on <literal>tenk1</> is the input to the Hash node, which constructs
+    the hash table.  That's then returned to the Hash Join node, which reads
+    rows from its outer child plan and searches the hash table for each one.
+   </para>
+
+   <para>
+    Another possible type of join is a merge join, illustrated here:
+
+<screen>
+EXPLAIN SELECT *
+FROM tenk1 t1, onek t2
+WHERE t1.unique1 &lt; 100 AND t1.unique2 = t2.unique2;
+
+                                        QUERY PLAN
+------------------------------------------------------------------------------------------
+ Merge Join  (cost=197.83..267.93 rows=10 width=488)
+   Merge Cond: (t1.unique2 = t2.unique2)
+   -&gt;  Index Scan using tenk1_unique2 on tenk1 t1  (cost=0.00..656.25 rows=101 width=244)
+         Filter: (unique1 &lt; 100)
+   -&gt;  Sort  (cost=197.83..200.33 rows=1000 width=244)
+         Sort Key: t2.unique2
+         -&gt;  Seq Scan on onek t2  (cost=0.00..148.00 rows=1000 width=244)
+</screen>
+   </para>
+
+   <para>
+    Merge join requires its input data to be sorted on the join keys.  In this
+    plan the <literal>tenk1</> data is sorted by using an index scan to visit
+    the rows in the correct order, but a sequential scan and sort is preferred
+    for <literal>onek</>, because there are many more rows to be visited in
+    that table.
+    (Seqscan-and-sort frequently beats an indexscan for sorting many rows,
+    because of the nonsequential disk access required by the indexscan.)
    </para>
 
    <para>
@@ -354,111 +499,283 @@ WHERE t1.unique1 &lt; 100 AND t1.unique2 = t2.unique2;
     flags described in <xref linkend="runtime-config-query-enable">.
     (This is a crude tool, but useful.  See
     also <xref linkend="explicit-joins">.)
+    For example, if we're unconvinced that seqscan-and-sort is the best way to
+    deal with table <literal>onek</> in the previous example, we could try
 
-<programlisting>
-SET enable_nestloop = off;
+<screen>
+SET enable_sort = off;
+
 EXPLAIN SELECT *
-FROM tenk1 t1, tenk2 t2
+FROM tenk1 t1, onek t2
 WHERE t1.unique1 &lt; 100 AND t1.unique2 = t2.unique2;
 
                                         QUERY PLAN
 ------------------------------------------------------------------------------------------
- Hash Join  (cost=232.61..741.67 rows=106 width=488)
-   Hash Cond: (t2.unique2 = t1.unique2)
-   -&gt;  Seq Scan on tenk2 t2  (cost=0.00..458.00 rows=10000 width=244)
-   -&gt;  Hash  (cost=232.35..232.35 rows=106 width=244)
-         -&gt;  Bitmap Heap Scan on tenk1 t1  (cost=2.37..232.35 rows=106 width=244)
-               Recheck Cond: (unique1 &lt; 100)
-               -&gt;  Bitmap Index Scan on tenk1_unique1  (cost=0.00..2.37 rows=106 width=0)
-                     Index Cond: (unique1 &lt; 100)
-</programlisting>
+ Merge Join  (cost=0.00..292.36 rows=10 width=488)
+   Merge Cond: (t1.unique2 = t2.unique2)
+   -&gt;  Index Scan using tenk1_unique2 on tenk1 t1  (cost=0.00..656.25 rows=101 width=244)
+         Filter: (unique1 &lt; 100)
+   -&gt;  Index Scan using onek_unique2 on onek t2  (cost=0.00..224.76 rows=1000 width=244)
+</screen>
 
-    This plan proposes to extract the 100 interesting rows of <classname>tenk1</classname>
-    using that same old index scan, stash them into an in-memory hash table,
-    and then do a sequential scan of <classname>tenk2</classname>, probing into the hash table
-    for possible matches of <literal>t1.unique2 = t2.unique2</literal> for each <classname>tenk2</classname> row.
-    The cost to read <classname>tenk1</classname> and set up the hash table is a start-up
-    cost for the hash join, since there will be no output until we can
-    start reading <classname>tenk2</classname>.  The total time estimate for the join also
-    includes a hefty charge for the CPU time to probe the hash table
-    10000 times.  Note, however, that we are <emphasis>not</emphasis> charging 10000 times 232.35;
-    the hash table setup is only done once in this plan type.
+    which shows that the planner thinks that sorting <literal>onek</> by
+    indexscanning is about 12% more expensive than seqscan-and-sort.
+    Of course, the next question is whether it's right about that.
+    We can investigate that using <command>EXPLAIN ANALYZE</>, as discussed
+    below.
    </para>
 
+  </sect2>
+
+  <sect2 id="using-explain-analyze">
+   <title><command>EXPLAIN ANALYZE</command></title>
+
    <para>
-    It is possible to check the accuracy of the planner's estimated costs
-    by using <command>EXPLAIN ANALYZE</>.  This command actually executes the query,
-    and then displays the true run time accumulated within each plan node
-    along with the same estimated costs that a plain <command>EXPLAIN</command> shows.
-    For example, we might get a result like this:
+    It is possible to check the accuracy of the planner's estimates
+    by using <command>EXPLAIN</>'s <literal>ANALYZE</> option.  With this
+    option, <command>EXPLAIN</> actually executes the query, and then displays
+    the true row counts and true run time accumulated within each plan node,
+    along with the same estimates that a plain <command>EXPLAIN</command>
+    shows.  For example, we might get a result like this:
 
 <screen>
 EXPLAIN ANALYZE SELECT *
 FROM tenk1 t1, tenk2 t2
-WHERE t1.unique1 &lt; 100 AND t1.unique2 = t2.unique2;
+WHERE t1.unique1 &lt; 10 AND t1.unique2 = t2.unique2;
 
-                                                            QUERY PLAN
-----------------------------------------------------------------------------------------------------------------------------------
- Nested Loop  (cost=2.37..553.11 rows=106 width=488) (actual time=1.392..12.700 rows=100 loops=1)
-   -&gt;  Bitmap Heap Scan on tenk1 t1  (cost=2.37..232.35 rows=106 width=244) (actual time=0.878..2.367 rows=100 loops=1)
-         Recheck Cond: (unique1 &lt; 100)
-         -&gt;  Bitmap Index Scan on tenk1_unique1  (cost=0.00..2.37 rows=106 width=0) (actual time=0.546..0.546 rows=100 loops=1)
-               Index Cond: (unique1 &lt; 100)
-   -&gt;  Index Scan using tenk2_unique2 on tenk2 t2  (cost=0.00..3.01 rows=1 width=244) (actual time=0.067..0.078 rows=1 loops=100)
+                                                           QUERY PLAN
+---------------------------------------------------------------------------------------------------------------------------------
+ Nested Loop  (cost=4.33..118.25 rows=10 width=488) (actual time=0.370..1.126 rows=10 loops=1)
+   -&gt;  Bitmap Heap Scan on tenk1 t1  (cost=4.33..39.44 rows=10 width=244) (actual time=0.254..0.380 rows=10 loops=1)
+         Recheck Cond: (unique1 &lt; 10)
+         -&gt;  Bitmap Index Scan on tenk1_unique1  (cost=0.00..4.33 rows=10 width=0) (actual time=0.164..0.164 rows=10 loops=1)
+               Index Cond: (unique1 &lt; 10)
+   -&gt;  Index Scan using tenk2_unique2 on tenk2 t2  (cost=0.00..7.87 rows=1 width=244) (actual time=0.041..0.048 rows=1 loops=10)
          Index Cond: (unique2 = t1.unique2)
- Total runtime: 14.452 ms
+ Total runtime: 2.414 ms
 </screen>
 
     Note that the <quote>actual time</quote> values are in milliseconds of
     real time, whereas the <literal>cost</> estimates are expressed in
     arbitrary units; so they are unlikely to match up.
-    The thing to pay attention to is whether the ratios of actual time and
-    estimated costs are consistent.
+    The thing that's usually most important to look for is whether the
+    estimated row counts are reasonably close to reality.  In this example
+    the estimates were all dead-on, but that's quite unusual in practice.
    </para>
 
    <para>
     In some query plans, it is possible for a subplan node to be executed more
-    than once.  For example, the inner index scan is executed once per outer
-    row in the above nested-loop plan.  In such cases, the
+    than once.  For example, the inner index scan will be executed once per
+    outer row in the above nested-loop plan.  In such cases, the
     <literal>loops</> value reports the
     total number of executions of the node, and the actual time and rows
     values shown are averages per-execution.  This is done to make the numbers
     comparable with the way that the cost estimates are shown.  Multiply by
     the <literal>loops</> value to get the total time actually spent in
-    the node.
+    the node.  In the above example, we spent a total of 0.480 milliseconds
+    executing the indexscans on <literal>tenk2</>.
+   </para>
+
+   <para>
+    In some cases <command>EXPLAIN ANALYZE</> shows additional execution
+    statistics beyond the plan node execution times and row counts.
+    For example, Sort and Hash nodes provide extra information:
+
+<screen>
+EXPLAIN ANALYZE SELECT *
+FROM tenk1 t1, tenk2 t2
+WHERE t1.unique1 &lt; 100 AND t1.unique2 = t2.unique2 ORDER BY t1.fivethous;
+
+                                                                 QUERY PLAN
+--------------------------------------------------------------------------------------------------------------------------------------------
+ Sort  (cost=717.30..717.56 rows=101 width=488) (actual time=104.950..105.327 rows=100 loops=1)
+   Sort Key: t1.fivethous
+   Sort Method: quicksort  Memory: 68kB
+   -&gt;  Hash Join  (cost=230.43..713.94 rows=101 width=488) (actual time=3.680..102.396 rows=100 loops=1)
+         Hash Cond: (t2.unique2 = t1.unique2)
+         -&gt;  Seq Scan on tenk2 t2  (cost=0.00..445.00 rows=10000 width=244) (actual time=0.046..46.219 rows=10000 loops=1)
+         -&gt;  Hash  (cost=229.17..229.17 rows=101 width=244) (actual time=3.184..3.184 rows=100 loops=1)
+               Buckets: 1024  Batches: 1  Memory Usage: 27kB
+               -&gt;  Bitmap Heap Scan on tenk1 t1  (cost=5.03..229.17 rows=101 width=244) (actual time=0.612..1.959 rows=100 loops=1)
+                     Recheck Cond: (unique1 &lt; 100)
+                     -&gt;  Bitmap Index Scan on tenk1_unique1  (cost=0.00..5.01 rows=101 width=0) (actual time=0.390..0.390 rows=100 loops=1)
+                           Index Cond: (unique1 &lt; 100)
+ Total runtime: 107.392 ms
+</screen>
+
+    The Sort node shows the sort method used (in particular, whether the sort
+    was in-memory or on-disk) and the amount of memory or disk space needed.
+    The Hash node shows the number of hash buckets and batches as well as the
+    peak amount of memory used for the hash table.  (If the number of batches
+    exceeds one, there will also be disk space usage involved, but that is not
+    shown.)
+   </para>
+
+   <para>
+    Another type of extra information is the number of rows removed by a
+    filter condition:
+
+<screen>
+EXPLAIN ANALYZE SELECT * FROM tenk1 WHERE ten &lt; 7;
+
+                                                QUERY PLAN
+----------------------------------------------------------------------------------------------------------
+ Seq Scan on tenk1  (cost=0.00..483.00 rows=7000 width=244) (actual time=0.111..59.249 rows=7000 loops=1)
+   Filter: (ten &lt; 7)
+   Rows Removed by Filter: 3000
+ Total runtime: 85.340 ms
+</screen>
+
+    These counts can be particularly valuable for filter conditions applied at
+    join nodes.  The <quote>Rows Removed</> line only appears when at least
+    one scanned row, or potential join pair in the case of a join node,
+    is rejected by the filter condition.
+   </para>
+
+   <para>
+    A case similar to filter conditions occurs with <quote>lossy</>
+    indexscans.  For example, consider this search for polygons containing a
+    specific point:
+
+<screen>
+EXPLAIN ANALYZE SELECT * FROM polygon_tbl WHERE f1 @&gt; polygon '(0.5,2.0)';
+
+                                              QUERY PLAN
+------------------------------------------------------------------------------------------------------
+ Seq Scan on polygon_tbl  (cost=0.00..1.05 rows=1 width=32) (actual time=0.251..0.251 rows=0 loops=1)
+   Filter: (f1 @&gt; '((0.5,2))'::polygon)
+   Rows Removed by Filter: 4
+ Total runtime: 0.517 ms
+</screen>
+
+    The planner thinks (quite correctly) that this sample table is too small
+    to bother with an indexscan, so we have a plain sequential scan in which
+    all the rows got rejected by the filter condition.  But if we force an
+    indexscan to be used, we see:
+
+<screen>
+SET enable_seqscan TO off;
+
+EXPLAIN ANALYZE SELECT * FROM polygon_tbl WHERE f1 @&gt; polygon '(0.5,2.0)';
+
+                                                        QUERY PLAN
+--------------------------------------------------------------------------------------------------------------------------
+ Index Scan using gpolygonind on polygon_tbl  (cost=0.00..8.27 rows=1 width=32) (actual time=0.293..0.293 rows=0 loops=1)
+   Index Cond: (f1 @&gt; '((0.5,2))'::polygon)
+   Rows Removed by Index Recheck: 1
+ Total runtime: 1.054 ms
+</screen>
+
+    Here we can see that the index returned one candidate row, which was
+    then rejected by a recheck of the index condition.  This happens because a
+    GiST index is <quote>lossy</> for polygon containment tests: it actually
+    returns the rows with polygons that overlap the target, and then we have
+    to do the exact containment test on those rows.
+   </para>
+
+   <para>
+    <command>EXPLAIN</> has a <literal>BUFFERS</> option that can be used with
+    <literal>ANALYZE</> to get even more runtime statistics:
+
+<screen>
+EXPLAIN (ANALYZE, BUFFERS) SELECT * FROM tenk1 WHERE unique1 &lt; 100 AND unique2 &gt; 9000;
+
+                                                            QUERY PLAN
+-----------------------------------------------------------------------------------------------------------------------------------
+ Bitmap Heap Scan on tenk1  (cost=25.07..60.23 rows=10 width=244) (actual time=3.069..3.213 rows=10 loops=1)
+   Recheck Cond: ((unique1 &lt; 100) AND (unique2 &gt; 9000))
+   Buffers: shared hit=16
+   -&gt;  BitmapAnd  (cost=25.07..25.07 rows=10 width=0) (actual time=2.967..2.967 rows=0 loops=1)
+         Buffers: shared hit=7
+         -&gt;  Bitmap Index Scan on tenk1_unique1  (cost=0.00..5.02 rows=102 width=0) (actual time=0.732..0.732 rows=200 loops=1)
+               Index Cond: (unique1 &lt; 100)
+               Buffers: shared hit=2
+         -&gt;  Bitmap Index Scan on tenk1_unique2  (cost=0.00..19.80 rows=1007 width=0) (actual time=2.015..2.015 rows=1009 loops=1)
+               Index Cond: (unique2 &gt; 9000)
+               Buffers: shared hit=5
+ Total runtime: 3.917 ms
+</screen>
+
+    The numbers provided by <literal>BUFFERS</> help to identify which parts
+    of the query are the most I/O-intensive.
+   </para>
+
+   <para>
+    Keep in mind that because <command>EXPLAIN ANALYZE</command> actually
+    runs the query, any side-effects will happen as usual, even though
+    whatever results the query might output are discarded in favor of
+    printing the <command>EXPLAIN</> data.  If you want to analyze a
+    data-modifying query without changing your tables, you can
+    roll the command back afterwards, for example:
+
+<screen>
+BEGIN;
+
+EXPLAIN ANALYZE UPDATE tenk1 SET hundred = hundred + 1 WHERE unique1 &lt; 100;
+
+                                                           QUERY PLAN
+--------------------------------------------------------------------------------------------------------------------------------
+ Update on tenk1  (cost=5.03..229.42 rows=101 width=250) (actual time=81.055..81.055 rows=0 loops=1)
+   -&gt;  Bitmap Heap Scan on tenk1  (cost=5.03..229.42 rows=101 width=250) (actual time=0.766..3.396 rows=100 loops=1)
+         Recheck Cond: (unique1 &lt; 100)
+         -&gt;  Bitmap Index Scan on tenk1_unique1  (cost=0.00..5.01 rows=101 width=0) (actual time=0.461..0.461 rows=100 loops=1)
+               Index Cond: (unique1 &lt; 100)
+ Total runtime: 81.922 ms
+
+ROLLBACK;
+</screen>
+   </para>
+
+   <para>
+    As seen in this example, when the query is an <command>INSERT</>,
+    <command>UPDATE</>, or <command>DELETE</> command, the actual work of
+    applying the table changes is done by a top-level Insert, Update,
+    or Delete plan node.  The plan nodes underneath this node perform
+    the work of locating the old rows and/or computing the new data.
+    So above, we see the same sort of bitmap table scan we've seen already,
+    and its output is fed to an Update node that stores the updated rows.
+    It's worth noting that although the data-modifying node can take a
+    considerable amount of runtime (here, it's consuming the lion's share
+    of the time), the planner does not currently add anything to the cost
+    estimates to account for that work.  That's because the work to be done is
+    the same for every correct query plan, so it doesn't affect planning
+    decisions.
    </para>
 
    <para>
     The <literal>Total runtime</literal> shown by <command>EXPLAIN
-    ANALYZE</command> includes executor start-up and shut-down time, but not
-    parsing, rewriting, or planning time.  For <command>INSERT</>,
-    <command>UPDATE</>, and <command>DELETE</> commands, the time spent
-    applying the table changes is charged to a top-level Insert, Update,
-    or Delete plan node.  (The plan nodes underneath this node represent
-    the work of locating the old rows and/or computing the new ones.)
-    Time spent executing <literal>BEFORE</> triggers, if any, is charged to
-    the related Insert, Update, or Delete node, although time spent executing
-    <literal>AFTER</> triggers is not.  The time spent in each trigger
-    (either <literal>BEFORE</> or <literal>AFTER</>) is also shown separately
-    and is included in total run time.
-    Note, however, that deferred constraint triggers will not be executed
-    until end of transaction and are thus not shown by
+    ANALYZE</command> includes executor start-up and shut-down time, as well
+    as the time to run any triggers that are fired, but it does not include
+    parsing, rewriting, or planning time.
+    Time spent executing <literal>BEFORE</> triggers, if any, is included in
+    the time for the related Insert, Update, or Delete node; but time
+    spent executing <literal>AFTER</> triggers is not counted there because
+    <literal>AFTER</> triggers are fired after completion of the whole plan.
+    The total time spent in each trigger
+    (either <literal>BEFORE</> or <literal>AFTER</>) is also shown separately.
+    Note that deferred constraint triggers will not be executed
+    until end of transaction and are thus not shown at all by
     <command>EXPLAIN ANALYZE</command>.
    </para>
+
+  </sect2>
+
+  <sect2 id="using-explain-caveats">
+   <title>Caveats</title>
 
    <para>
     There are two significant ways in which run times measured by
     <command>EXPLAIN ANALYZE</command> can deviate from normal execution of
     the same query.  First, since no output rows are delivered to the client,
-    network transmission costs and I/O formatting costs are not included.
-    Second, the overhead added by <command>EXPLAIN ANALYZE</command> can be
-    significant, especially on machines with slow <function>gettimeofday()</>
-    kernel calls.
+    network transmission costs and I/O conversion costs are not included.
+    Second, the measurement overhead added by <command>EXPLAIN
+    ANALYZE</command> can be significant, especially on machines with slow
+    <function>gettimeofday()</> operating-system calls.
    </para>
 
    <para>
-    It is worth noting that <command>EXPLAIN</> results should not be extrapolated
-    to situations other than the one you are actually testing; for example,
+    <command>EXPLAIN</> results should not be extrapolated to situations
+    much different from the one you are actually testing; for example,
     results on a toy-sized table cannot be assumed to apply to large tables.
     The planner's cost estimates are not linear and so it might choose
     a different plan for a larger or smaller table.  An extreme example
@@ -466,9 +783,60 @@ WHERE t1.unique1 &lt; 100 AND t1.unique2 = t2.unique2;
     always get a sequential scan plan whether indexes are available or not.
     The planner realizes that it's going to take one disk page read to
     process the table in any case, so there's no value in expending additional
-    page reads to look at an index.
+    page reads to look at an index.  (We saw this happening in the
+    <literal>polygon_tbl</> example above.)
    </para>
-  </sect1>
+
+   <para>
+    There are cases in which the actual and estimated values won't match up
+    well, but nothing is really wrong.  One such case occurs when
+    plan node execution is stopped short by a <literal>LIMIT</> or similar
+    effect.  For example, in the <literal>LIMIT</> query we used before,
+
+<screen>
+EXPLAIN ANALYZE SELECT * FROM tenk1 WHERE unique1 &lt; 100 AND unique2 &gt; 9000 LIMIT 2;
+
+                                                          QUERY PLAN
+-------------------------------------------------------------------------------------------------------------------------------
+ Limit  (cost=0.00..14.25 rows=2 width=244) (actual time=1.652..2.293 rows=2 loops=1)
+   -&gt;  Index Scan using tenk1_unique2 on tenk1  (cost=0.00..71.23 rows=10 width=244) (actual time=1.631..2.259 rows=2 loops=1)
+         Index Cond: (unique2 &gt; 9000)
+         Filter: (unique1 &lt; 100)
+         Rows Removed by Filter: 287
+ Total runtime: 2.857 ms
+</screen>
+
+    the estimated cost and rowcount for the Index Scan node are shown as
+    though it were run to completion.  But in reality the Limit node stopped
+    requesting rows after it got two, so the actual rowcount is only 2 and
+    the runtime is less than the cost estimate would suggest.  This is not
+    an estimation error, only a discrepancy in the way the estimates and true
+    values are displayed.
+   </para>
+
+   <para>
+    Merge joins also have measurement artifacts that can confuse the unwary.
+    A merge join will stop reading one input if it's exhausted the other input
+    and the next key value in the one input is greater than the last key value
+    of the other input; in such a case there can be no more matches and so no
+    need to scan the rest of the first input.  This results in not reading all
+    of one child, with results like those mentioned for <literal>LIMIT</>.
+    Also, if the outer (first) child contains rows with duplicate key values,
+    the inner (second) child is backed up and rescanned for the portion of its
+    rows matching that key value.  <command>EXPLAIN ANALYZE</> counts these
+    repeated emissions of the same inner rows as if they were real additional
+    rows.  When there are many outer duplicates, the reported actual rowcount
+    for the inner child plan node can be significantly larger than the number
+    of rows that are actually in the inner relation.
+   </para>
+
+   <para>
+    BitmapAnd and BitmapOr nodes always report their actual rowcounts as zero,
+    due to implementation limitations.
+   </para>
+  </sect2>
+
+ </sect1>
 
  <sect1 id="planner-stats">
   <title>Statistics Used by the Planner</title>
@@ -519,10 +887,12 @@ WHERE relname LIKE 'tenk1%';
    and <structfield>relpages</structfield> are not updated on-the-fly,
    and so they usually contain somewhat out-of-date values.
    They are updated by <command>VACUUM</>, <command>ANALYZE</>, and a
-   few DDL commands such as <command>CREATE INDEX</>.  A stand-alone
-   <command>ANALYZE</>, that is one not part of <command>VACUUM</>,
-   generates an approximate <structfield>reltuples</structfield> value
-   since it does not read every row of the table.  The planner
+   few DDL commands such as <command>CREATE INDEX</>.  A <command>VACUUM</>
+   or <command>ANALYZE</> operation that does not scan the entire table
+   (which is commonly the case) will incrementally update the
+   <structfield>reltuples</structfield> count on the basis of the part
+   of the table it did scan, resulting in an approximate value.
+   In any case, the planner
    will scale the values it finds in <structname>pg_class</structname>
    to match the current physical table size, thus obtaining a closer
    approximation.
@@ -571,7 +941,7 @@ SELECT attname, inherited, n_distinct,
 FROM pg_stats
 WHERE tablename = 'road';
 
- attname | inherited | n_distinct |          most_common_vals          
+ attname | inherited | n_distinct |          most_common_vals
 ---------+-----------+------------+------------------------------------
  name    | f         |  -0.363388 | I- 580                        Ramp+
          |           |            | I- 880                        Ramp+

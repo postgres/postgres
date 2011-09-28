@@ -60,11 +60,12 @@ EXPLAIN [ ANALYZE ] [ VERBOSE ] <replaceable class="parameter">statement</replac
   <para>
    The most critical part of the display is the estimated statement execution
    cost, which is the planner's guess at how long it will take to run the
-   statement (measured in units of disk page fetches).  Actually two numbers
-   are shown: the start-up time before the first row can be returned, and
-   the total time to return all the rows.  For most queries the total time
+   statement (measured in cost units that are arbitrary, but conventionally
+   mean disk page fetches).  Actually two numbers
+   are shown: the start-up cost before the first row can be returned, and
+   the total cost to return all the rows.  For most queries the total cost
    is what matters, but in contexts such as a subquery in <literal>EXISTS</literal>, the planner
-   will choose the smallest start-up time instead of the smallest total time
+   will choose the smallest start-up cost instead of the smallest total cost
    (since the executor will stop after getting one row, anyway).
    Also, if you limit the number of rows to return with a <literal>LIMIT</literal> clause,
    the planner makes an appropriate interpolation between the endpoint
@@ -72,10 +73,11 @@ EXPLAIN [ ANALYZE ] [ VERBOSE ] <replaceable class="parameter">statement</replac
   </para>
 
   <para>
-   The <literal>ANALYZE</literal> option causes the statement to be actually executed, not only
-   planned.  The total elapsed time expended within each plan node (in
-   milliseconds) and total number of rows it actually returned are added to
-   the display.  This is useful for seeing whether the planner's estimates
+   The <literal>ANALYZE</literal> option causes the statement to be actually
+   executed, not only planned.  Then actual runtime statistics are added to
+   the display, including the total elapsed time expended within each plan
+   node (in milliseconds) and the total number of rows it actually returned.
+   This is useful for seeing whether the planner's estimates
    are close to reality.
   </para>
 
@@ -116,8 +118,8 @@ ROLLBACK;
     <term><literal>ANALYZE</literal></term>
     <listitem>
      <para>
-      Carry out the command and show the actual run times.  This
-      parameter defaults to <literal>FALSE</literal>.
+      Carry out the command and show actual run times and other statistics.
+      This parameter defaults to <literal>FALSE</literal>.
      </para>
     </listitem>
    </varlistentry>
@@ -154,12 +156,16 @@ ROLLBACK;
       Include information on buffer usage. Specifically, include the number of
       shared blocks hits, reads, and writes, the number of local blocks hits,
       reads, and writes, and the number of temp blocks reads and writes.
-      Shared blocks, local blocks, and temp blocks contain tables and indexes,
-      temporary tables and temporary indexes, and disk blocks used in sort and
-      materialized plans, respectively. The number of blocks shown for an
+      A <quote>hit</> means that a read was avoided because the block was
+      found already in cache when needed.
+      Shared blocks contain data from regular tables and indexes;
+      local blocks contain data from temporary tables and indexes;
+      while temp blocks contain short-term working data used in sorts, hashes,
+      Materialize plan nodes, and similar cases.
+      The number of blocks shown for an
       upper-level node includes those used by all its child nodes.  In text
       format, only non-zero values are printed.  This parameter may only be
-      used with <literal>ANALYZE</literal> parameter.  It defaults to
+      used when <literal>ANALYZE</literal> is also enabled.  It defaults to
       <literal>FALSE</literal>.
      </para>
     </listitem>
@@ -206,35 +212,43 @@ ROLLBACK;
  </refsect1>
 
  <refsect1>
-  <title>Notes</title>
+  <title>Outputs</title>
 
-  <para>
-   There is only sparse documentation on the optimizer's use of cost
-   information in <productname>PostgreSQL</productname>.  Refer to
-   <xref linkend="using-explain"> for more information.
-  </para>
+   <para>
+    The command's result is a textual description of the plan selected
+    for the <replaceable class="parameter">statement</replaceable>,
+    optionally annotated with execution statistics.
+    <xref linkend="using-explain"> describes the information provided.
+   </para>
+ </refsect1>
+
+ <refsect1>
+  <title>Notes</title>
 
   <para>
    In order to allow the <productname>PostgreSQL</productname> query
    planner to make reasonably informed decisions when optimizing
-   queries, the <xref linkend="sql-analyze">
-   statement should be run to record statistics about the distribution
-   of data within the table. If you have not done this (or if the
-   statistical distribution of the data in the table has changed
-   significantly since the last time <command>ANALYZE</command> was
-   run), the estimated costs are unlikely to conform to the real
-   properties of the query, and consequently an inferior query plan
-   might be chosen.
+   queries, the <link
+   linkend="catalog-pg-statistic"><structname>pg_statistic</structname></link>
+   data should be up-to-date for all tables used in the query.  Normally
+   the <link linkend="autovacuum">autovacuum daemon</link> will take care
+   of that automatically.  But if a table has recently had substantial
+   changes in its contents, you might need to do a manual
+   <xref linkend="sql-analyze"> rather than wait for autovacuum to catch up
+   with the changes.
   </para>
 
   <para>
    In order to measure the run-time cost of each node in the execution
    plan, the current implementation of <command>EXPLAIN
-   ANALYZE</command> can add considerable profiling overhead to query
-   execution. As a result, running <command>EXPLAIN ANALYZE</command>
+   ANALYZE</command> adds profiling overhead to query execution.
+   As a result, running <command>EXPLAIN ANALYZE</command>
    on a query can sometimes take significantly longer than executing
    the query normally. The amount of overhead depends on the nature of
-   the query.
+   the query, as well as the platform being used.  The worst case occurs
+   for plan nodes that in themselves require very little time per
+   execution, and on machines that have relatively slow operating
+   system calls for obtaining the time of day.
   </para>
  </refsect1>
 
@@ -256,10 +270,10 @@ EXPLAIN SELECT * FROM foo;
   </para>
 
   <para>
-  Here is the same query, with JSON formatting:
+  Here is the same query, with JSON output formatting:
 <programlisting>
 EXPLAIN (FORMAT JSON) SELECT * FROM foo;
-           QUERY PLAN           
+           QUERY PLAN
 --------------------------------
  [                             +
    {                           +
@@ -295,10 +309,10 @@ EXPLAIN SELECT * FROM foo WHERE i = 4;
   </para>
 
   <para>
-  Here is the same query, but in YAML output:
+  Here is the same query, but in YAML format:
 <programlisting>
 EXPLAIN (FORMAT YAML) SELECT * FROM foo WHERE i='4';
-          QUERY PLAN           
+          QUERY PLAN
 -------------------------------
  - Plan:                      +
      Node Type: "Index Scan"  +
@@ -314,10 +328,10 @@ EXPLAIN (FORMAT YAML) SELECT * FROM foo WHERE i='4';
 (1 row)
 </programlisting>
 
-    XML output is left as an exercise to the reader.
+    XML format is left as an exercise for the reader.
   </para>
   <para>
-   Here is the same plan with costs suppressed:
+   Here is the same plan with cost estimates suppressed:
 
 <programlisting>
 EXPLAIN (COSTS FALSE) SELECT * FROM foo WHERE i = 4;
@@ -357,7 +371,7 @@ PREPARE query(int, int) AS SELECT sum(bar) FROM test
 
 EXPLAIN ANALYZE EXECUTE query(100, 200);
 
-                                                       QUERY PLAN                                                        
+                                                       QUERY PLAN
 -------------------------------------------------------------------------------------------------------------------------
  HashAggregate  (cost=39.53..39.53 rows=1 width=8) (actual time=0.661..0.672 rows=7 loops=1)
    -&gt;  Index Scan using test_pkey on test  (cost=0.00..32.97 rows=1311 width=8) (actual time=0.050..0.395 rows=99 loops=1)
