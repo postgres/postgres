@@ -1,0 +1,264 @@
+#!/bin/sh
+#
+# Run the sepgsql regression tests, after making a lot of environmental checks
+# to try to ensure that the SELinux environment is set up appropriately and
+# the database is configured correctly.
+#
+# Note that this must be run against an installed Postgres database.
+# There's no equivalent of "make check", and that wouldn't be terribly useful
+# since much of the value is in checking that you installed sepgsql into
+# your database correctly.
+#
+# This must be run in the contrib/sepgsql directory of a Postgres build tree.
+#
+
+PG_BINDIR=`pg_config --bindir`
+
+echo
+echo "============== checking selinux environment           =============="
+
+# matchpathcon must be present to assess whether the installation environment
+# is OK.
+echo -n "checking for matchpathcon           ... "
+if ! matchpathcon -n . >/dev/null 2>&1; then
+    echo "not found"
+    echo ""
+    echo "The matchpathcon command must be available."
+    echo "Please install it or update your PATH to include it"
+    echo "(it is typically in '/usr/sbin', which might not be in your PATH)."
+    echo "matchpathcon is typically included in the libselinux-utils package."
+    exit 1
+fi
+echo "ok"
+
+# runcon must be present to launch psql using the correct environment
+echo -n "checking for runcon                 ... "
+if ! runcon --help >/dev/null 2>&1; then
+    echo "not found"
+    echo ""
+    echo "The runcon command must be available."
+    echo "runcon is typically included in the coreutils package."
+    echo ""
+    exit 1
+fi
+echo "ok"
+
+# check sestatus too, since that lives in yet another package
+echo -n "checking for sestatus               ... "
+if ! sestatus >/dev/null 2>&1; then
+    echo "not found"
+    echo ""
+    echo "The sestatus command must be available."
+    echo "sestatus is typically included in the policycoreutils package."
+    echo ""
+    exit 1
+fi
+echo "ok"
+
+# check that the user is running in the unconfined_t domain
+echo -n "checking current user domain        ... "
+DOMAIN=`id -Z 2>/dev/null | sed 's/:/ /g' | awk '{print $3}'`
+echo ${DOMAIN:-failed}
+if [ "${DOMAIN}" != unconfined_t ]; then
+    echo ""
+    echo "The regression tests must be launched from the unconfined_t domain."
+    echo ""
+    echo "The unconfined_t domain is typically the default domain for user"
+    echo "shell processes.  If the default has been changed on your system,"
+    echo "you can revert the changes like this:"
+    echo ""
+    echo "  \$ sudo semanage login -d `whoami`"
+    echo ""
+    echo "Or, you can add a setting to log in using the unconfined_t domain:"
+    echo ""
+    echo "  \$ sudo semanage login -a -s unconfined_u -r s0-s0:c0.c255 `whoami`"
+    echo ""
+    exit 1
+fi
+
+# SELinux must be configured in enforcing mode
+echo -n "checking selinux operating mode     ... "
+CURRENT_MODE=`LANG=C sestatus | grep '^Current mode:' | awk '{print $3}'`
+echo ${CURRENT_MODE:-failed}
+if [ "${CURRENT_MODE}" = enforcing ]; then
+    : OK
+elif [ "${CURRENT_MODE}" = permissive -o "${CURRENT_MODE}" = disabled ]; then
+    echo ""
+    echo "Before running the regression tests, SELinux must be enabled and"
+    echo "must be running in enforcing mode."
+    echo ""
+    echo "If SELinux is currently running in permissive mode, you can"
+    echo "switch to enforcing mode using the 'setenforce' command."
+    echo
+    echo "  \$ sudo setenforce 1"
+    echo ""
+    echo "The system default setting is configured in /etc/selinux/config,"
+    echo "or using a kernel boot parameter."
+    echo ""
+    exit 1
+else
+    echo ""
+    echo "Unable to determine the current selinux operating mode.  Please"
+    echo "verify that the sestatus command is installed and in your PATH."
+    echo ""
+    exit 1
+fi
+
+# 'sepgsql-regtest' policy module must be loaded
+echo -n "checking for sepgsql-regtest policy ... "
+SELINUX_MNT=`LANG=C sestatus | grep '^SELinuxfs mount:' | awk '{print $3}'`
+if [ "$SELINUX_MNT" = "" ]; then
+    echo "failed"
+    echo ""
+    echo "Unable to find SELinuxfs mount point."
+    echo ""
+    echo "The sestatus command should report the location where SELinuxfs"
+    echo "is mounted, but did not do so."
+    echo ""
+    exit 1
+fi
+if [ ! -e "${SELINUX_MNT}/booleans/sepgsql_regression_test_mode" ]; then
+    echo "failed"
+    echo ""
+    echo "The 'sepgsql-regtest' policy module appears not to be installed."
+    echo "Without this policy installed, the regression tests will fail."
+    echo "You can install this module using the following commands:"
+    echo ""
+    echo "  \$ make -f /usr/share/selinux/devel/Makefile"
+    echo "  \$ sudo semodule -u sepgsql-regtest.pp"
+    echo ""
+    echo "To confirm that the policy package is installed, use this command:"
+    echo ""
+    echo "  \$ sudo semodule -l | grep sepgsql"
+    echo ""
+    exit 1
+fi
+echo "ok"
+
+# Verify that sepgsql_regression_test_mode is active.
+echo -n "checking whether policy is enabled  ... "
+POLICY_STATUS=`getsebool sepgsql_regression_test_mode | awk '{print $3}'`
+echo ${POLICY_STATUS:-failed}
+if [ "${POLICY_STATUS}" != on ]; then
+    echo ""
+    echo "The SELinux boolean 'sepgsql_regression_test_mode' must be"
+    echo "turned on in order to enable the rules necessary to run the"
+    echo "regression tests."
+    echo ""
+    if [ "${POLICY_STATUS}" = "" ]; then
+        echo "We attempted to determine the state of this Boolean using"
+        echo "'getsebool', but that command did not produce the expected"
+        echo "output.  Please verify that getsebool is available and in"
+        echo "your PATH."
+    else
+        echo "You can turn on this variable using the following commands:"
+        echo ""
+        echo "  \$ sudo setsebool sepgsql_regression_test_mode on"
+        echo ""
+        echo "For security reasons, it is suggested that you turn off this"
+        echo "variable when regression testing is complete and the associated"
+        echo "rules are no longer needed."
+    fi
+    echo ""
+    exit 1
+fi
+
+# 'psql' command must be executable from test domain
+echo -n "checking whether we can run psql    ... "
+CMD_PSQL="${PG_BINDIR}/psql"
+if [ ! -e "${CMD_PSQL}" ]; then
+    echo "not found"
+    echo
+    echo "${CMD_PSQL} was not found."
+    echo "Check your PostgreSQL installation."
+    echo
+    exit 1
+fi
+runcon -t sepgsql_regtest_user_t "${CMD_PSQL}" --help >& /dev/null
+if [ $? -ne 0 ]; then
+    echo "failed"
+    echo
+    echo "${CMD_PSQL} must be executable from the"
+    echo "sepgsql_regtest_user_t domain. That domain has restricted privileges"
+    echo "compared to unconfined_t, so the problem may be the psql file's"
+    echo "SELinux label. Try"
+    echo
+    PSQL_T=`matchpathcon -n "${CMD_PSQL}" | sed 's/:/ /g' | awk '{print $3}'`
+    if [ "${PSQL_T}" = "user_home_t" ]; then
+        # Installation appears to be in /home directory
+        echo "  \$ sudo restorecon -R ${PG_BINDIR}"
+        echo
+        echo "Or, using chcon"
+        echo
+        echo "  \$ sudo chcon -t user_home_t ${CMD_PSQL}"
+    else
+        echo "  \$ sudo restorecon -R ${PG_BINDIR}"
+        echo
+        echo "Or, using chcon"
+        echo
+        echo "  \$ sudo chcon -t bin_t ${CMD_PSQL}"
+    fi
+    echo
+    exit 1
+fi
+echo "ok"
+
+# loadable module must be installed and not configured to permissive mode
+echo -n "checking sepgsql installation       ... "
+VAL="`${CMD_PSQL} -t -c 'SHOW sepgsql.permissive' template1 2>/dev/null`"
+RETVAL="$?"
+if [ $RETVAL -eq 2 ]; then
+    echo "failed"
+    echo ""
+    echo "Could not connect to the database server."
+    echo "Please check your PostgreSQL installation."
+    echo ""
+    exit 1
+elif [ $RETVAL -ne 0 ]; then
+    echo "failed"
+    echo ""
+    echo "The sepgsql module does not appear to be loaded.  Please verify"
+    echo "that the 'shared_preload_libraries' setting in postgresql.conf"
+    echo "includes 'sepgsql', and then restart the server."
+    echo ""
+    echo "See Installation section of the contrib/sepgsql documentation."
+    echo ""
+    exit 1
+elif ! echo "$VAL" | grep -q 'off$'; then
+    echo "failed"
+    echo ""
+    echo "The parameter 'sepgsql.permissive' is set to 'on'.  It must be"
+    echo "turned off before running the regression tests."
+    echo ""
+    exit 1
+fi
+echo "ok"
+
+# template1 database must be labeled
+# NOTE: this test is wrong; we really ought to be checking template0.
+# But we can't connect to that without extra pushups, and it's not worth it.
+echo -n "checking for labels in template1    ... "
+NUM=`${CMD_PSQL} -At -c 'SELECT count(*) FROM pg_catalog.pg_seclabel' template1 2>/dev/null`
+if [ -z "${NUM}" ]; then
+    echo "failed"
+    echo ""
+    echo "In order to test sepgsql, initial labels must be assigned within"
+    echo "the 'template1' database.  These labels will be copied into the"
+    echo "regression test database."
+    echo ""
+    echo "See Installation section of the contrib/sepgsql documentation."
+    echo ""
+    exit 1
+fi
+echo "found ${NUM}"
+
+#
+# checking complete - let's run the tests
+#
+
+echo
+echo "============== running sepgsql regression tests       =============="
+
+make REGRESS="label dml misc" REGRESS_OPTS="--launcher ./launcher" installcheck
+
+# exit with the exit code provided by "make"
