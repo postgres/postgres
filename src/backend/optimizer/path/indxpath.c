@@ -41,6 +41,9 @@
 #define IsBooleanOpfamily(opfamily) \
 	((opfamily) == BOOL_BTREE_FAM_OID || (opfamily) == BOOL_HASH_FAM_OID)
 
+#define IndexCollMatchesExprColl(idxcollation, exprcollation) \
+	((idxcollation) == InvalidOid || (idxcollation) == (exprcollation))
+
 /* Whether to use ScalarArrayOpExpr to build index qualifications */
 typedef enum
 {
@@ -1181,6 +1184,13 @@ group_clauses_by_indexkey(IndexOptInfo *index,
  *	  We do not actually do the commuting here, but we check whether a
  *	  suitable commutator operator is available.
  *
+ *	  If the index has a collation, the clause must have the same collation.
+ *	  For collation-less indexes, we assume it doesn't matter; this is
+ *	  necessary for cases like "hstore ? text", wherein hstore's operators
+ *	  don't care about collation but the clause will get marked with a
+ *	  collation anyway because of the text argument.  (This logic is
+ *	  embodied in the macro IndexCollMatchesExprColl.)
+ *
  *	  It is also possible to match RowCompareExpr clauses to indexes (but
  *	  currently, only btree indexes handle this).  In this routine we will
  *	  report a match if the first column of the row comparison matches the
@@ -1303,7 +1313,7 @@ match_clause_to_indexcol(IndexOptInfo *index,
 		bms_is_subset(right_relids, outer_relids) &&
 		!contain_volatile_functions(rightop))
 	{
-		if (idxcollation == expr_coll &&
+		if (IndexCollMatchesExprColl(idxcollation, expr_coll) &&
 			is_indexable_operator(expr_op, opfamily, true))
 			return true;
 
@@ -1322,7 +1332,7 @@ match_clause_to_indexcol(IndexOptInfo *index,
 		bms_is_subset(left_relids, outer_relids) &&
 		!contain_volatile_functions(leftop))
 	{
-		if (idxcollation == expr_coll &&
+		if (IndexCollMatchesExprColl(idxcollation, expr_coll) &&
 			is_indexable_operator(expr_op, opfamily, false))
 			return true;
 
@@ -1398,8 +1408,8 @@ match_rowcompare_to_indexcol(IndexOptInfo *index,
 	expr_op = linitial_oid(clause->opnos);
 	expr_coll = linitial_oid(clause->inputcollids);
 
-	/* Collations must match */
-	if (expr_coll != idxcollation)
+	/* Collations must match, if relevant */
+	if (!IndexCollMatchesExprColl(idxcollation, expr_coll))
 		return false;
 
 	/*
@@ -1571,7 +1581,7 @@ match_clause_to_ordering_op(IndexOptInfo *index,
 	/*
 	 * We can forget the whole thing right away if wrong collation.
 	 */
-	if (expr_coll != idxcollation)
+	if (!IndexCollMatchesExprColl(idxcollation, expr_coll))
 		return NULL;
 
 	/*
@@ -1862,7 +1872,7 @@ eclass_matches_any_index(EquivalenceClass *ec, EquivalenceMember *em,
 			 */
 			if ((index->relam != BTREE_AM_OID ||
 				 list_member_oid(ec->ec_opfamilies, curFamily)) &&
-				ec->ec_collation == curCollation &&
+				IndexCollMatchesExprColl(curCollation, ec->ec_collation) &&
 				match_index_to_operand((Node *) em->em_expr, indexcol, index))
 				return true;
 		}
@@ -2967,7 +2977,8 @@ expand_indexqual_rowcompare(RestrictInfo *rinfo,
 			break;
 
 		/* Does collation match? */
-		if (lfirst_oid(collids_cell) != index->indexcollations[i])
+		if (!IndexCollMatchesExprColl(index->indexcollations[i],
+									  lfirst_oid(collids_cell)))
 			break;
 
 		/* Add opfamily and datatypes to lists */
