@@ -4382,6 +4382,17 @@ examine_simple_variable(PlannerInfo *root, Var *var,
 		/* Subquery should have been planned already */
 		Assert(rel->subroot && IsA(rel->subroot, PlannerInfo));
 
+		/*
+		 * Switch our attention to the subquery as mangled by the planner.
+		 * It was okay to look at the pre-planning version for the tests
+		 * above, but now we need a Var that will refer to the subroot's
+		 * live RelOptInfos.  For instance, if any subquery pullup happened
+		 * during planning, Vars in the targetlist might have gotten replaced,
+		 * and we need to see the replacement expressions.
+		 */
+		subquery = rel->subroot->parse;
+		Assert(IsA(subquery, Query));
+
 		/* Get the subquery output expression referenced by the upper Var */
 		ste = get_tle_by_resno(subquery->targetList, var->varattno);
 		if (ste == NULL || ste->resjunk)
