@@ -94,25 +94,29 @@ gistinsert(PG_FUNCTION_ARGS)
 	IndexUniqueCheck checkUnique = (IndexUniqueCheck) PG_GETARG_INT32(5);
 #endif
 	IndexTuple	itup;
-	GISTSTATE	giststate;
-	MemoryContext oldCtx;
-	MemoryContext insertCtx;
+	GISTSTATE  *giststate;
+	MemoryContext oldCxt;
 
-	insertCtx = createTempGistContext();
-	oldCtx = MemoryContextSwitchTo(insertCtx);
+	giststate = initGISTstate(r);
 
-	initGISTstate(&giststate, r);
+	/*
+	 * We use the giststate's scan context as temp context too.  This means
+	 * that any memory leaked by the support functions is not reclaimed until
+	 * end of insert.  In most cases, we aren't going to call the support
+	 * functions very many times before finishing the insert, so this seems
+	 * cheaper than resetting a temp context for each function call.
+	 */
+	oldCxt = MemoryContextSwitchTo(giststate->tempCxt);
 
-	itup = gistFormTuple(&giststate, r,
+	itup = gistFormTuple(giststate, r,
 						 values, isnull, true /* size is currently bogus */ );
 	itup->t_tid = *ht_ctid;
 
-	gistdoinsert(r, itup, 0, &giststate);
+	gistdoinsert(r, itup, 0, giststate);
 
 	/* cleanup */
-	freeGISTstate(&giststate);
-	MemoryContextSwitchTo(oldCtx);
-	MemoryContextDelete(insertCtx);
+	MemoryContextSwitchTo(oldCxt);
+	freeGISTstate(giststate);
 
 	PG_RETURN_BOOL(false);
 }
@@ -1213,47 +1217,64 @@ gistSplit(Relation r,
 }
 
 /*
- * Fill a GISTSTATE with information about the index
+ * Create a GISTSTATE and fill it with information about the index
  */
-void
-initGISTstate(GISTSTATE *giststate, Relation index)
+GISTSTATE *
+initGISTstate(Relation index)
 {
+	GISTSTATE  *giststate;
+	MemoryContext scanCxt;
+	MemoryContext oldCxt;
 	int			i;
 
+	/* safety check to protect fixed-size arrays in GISTSTATE */
 	if (index->rd_att->natts > INDEX_MAX_KEYS)
 		elog(ERROR, "numberOfAttributes %d > %d",
 			 index->rd_att->natts, INDEX_MAX_KEYS);
 
+	/* Create the memory context that will hold the GISTSTATE */
+	scanCxt = AllocSetContextCreate(CurrentMemoryContext,
+									"GiST scan context",
+									ALLOCSET_DEFAULT_MINSIZE,
+									ALLOCSET_DEFAULT_INITSIZE,
+									ALLOCSET_DEFAULT_MAXSIZE);
+	oldCxt = MemoryContextSwitchTo(scanCxt);
+
+	/* Create and fill in the GISTSTATE */
+	giststate = (GISTSTATE *) palloc(sizeof(GISTSTATE));
+
+	giststate->scanCxt = scanCxt;
+	giststate->tempCxt = scanCxt;	/* caller must change this if needed */
 	giststate->tupdesc = index->rd_att;
 
 	for (i = 0; i < index->rd_att->natts; i++)
 	{
 		fmgr_info_copy(&(giststate->consistentFn[i]),
 					   index_getprocinfo(index, i + 1, GIST_CONSISTENT_PROC),
-					   CurrentMemoryContext);
+					   scanCxt);
 		fmgr_info_copy(&(giststate->unionFn[i]),
 					   index_getprocinfo(index, i + 1, GIST_UNION_PROC),
-					   CurrentMemoryContext);
+					   scanCxt);
 		fmgr_info_copy(&(giststate->compressFn[i]),
 					   index_getprocinfo(index, i + 1, GIST_COMPRESS_PROC),
-					   CurrentMemoryContext);
+					   scanCxt);
 		fmgr_info_copy(&(giststate->decompressFn[i]),
 					   index_getprocinfo(index, i + 1, GIST_DECOMPRESS_PROC),
-					   CurrentMemoryContext);
+					   scanCxt);
 		fmgr_info_copy(&(giststate->penaltyFn[i]),
 					   index_getprocinfo(index, i + 1, GIST_PENALTY_PROC),
-					   CurrentMemoryContext);
+					   scanCxt);
 		fmgr_info_copy(&(giststate->picksplitFn[i]),
 					   index_getprocinfo(index, i + 1, GIST_PICKSPLIT_PROC),
-					   CurrentMemoryContext);
+					   scanCxt);
 		fmgr_info_copy(&(giststate->equalFn[i]),
 					   index_getprocinfo(index, i + 1, GIST_EQUAL_PROC),
-					   CurrentMemoryContext);
+					   scanCxt);
 		/* opclasses are not required to provide a Distance method */
 		if (OidIsValid(index_getprocid(index, i + 1, GIST_DISTANCE_PROC)))
 			fmgr_info_copy(&(giststate->distanceFn[i]),
 						 index_getprocinfo(index, i + 1, GIST_DISTANCE_PROC),
-						   CurrentMemoryContext);
+						   scanCxt);
 		else
 			giststate->distanceFn[i].fn_oid = InvalidOid;
 
@@ -1273,10 +1294,15 @@ initGISTstate(GISTSTATE *giststate, Relation index)
 		else
 			giststate->supportCollation[i] = DEFAULT_COLLATION_OID;
 	}
+
+	MemoryContextSwitchTo(oldCxt);
+
+	return giststate;
 }
 
 void
 freeGISTstate(GISTSTATE *giststate)
 {
-	/* no work */
+	/* It's sufficient to delete the scanCxt */
+	MemoryContextDelete(giststate->scanCxt);
 }

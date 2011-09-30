@@ -48,9 +48,21 @@ typedef struct
  *
  * This struct retains call info for the index's opclass-specific support
  * functions (per index column), plus the index's tuple descriptor.
+ *
+ * scanCxt holds the GISTSTATE itself as well as any data that lives for the
+ * lifetime of the index operation.  We pass this to the support functions
+ * via fn_mcxt, so that they can store scan-lifespan data in it.  The
+ * functions are invoked in tempCxt, which is typically short-lifespan
+ * (that is, it's reset after each tuple).  However, tempCxt can be the same
+ * as scanCxt if we're not bothering with per-tuple context resets.
  */
 typedef struct GISTSTATE
 {
+	MemoryContext scanCxt;		/* context for scan-lifespan data */
+	MemoryContext tempCxt;		/* short-term context for calling functions */
+
+	TupleDesc	tupdesc;		/* index's tuple descriptor */
+
 	FmgrInfo	consistentFn[INDEX_MAX_KEYS];
 	FmgrInfo	unionFn[INDEX_MAX_KEYS];
 	FmgrInfo	compressFn[INDEX_MAX_KEYS];
@@ -62,8 +74,6 @@ typedef struct GISTSTATE
 
 	/* Collations to pass to the support functions */
 	Oid			supportCollation[INDEX_MAX_KEYS];
-
-	TupleDesc	tupdesc;
 } GISTSTATE;
 
 
@@ -132,7 +142,6 @@ typedef struct GISTScanOpaqueData
 	GISTSTATE  *giststate;		/* index information, see above */
 	RBTree	   *queue;			/* queue of unvisited items */
 	MemoryContext queueCxt;		/* context holding the queue */
-	MemoryContext tempCxt;		/* workspace context for calling functions */
 	bool		qual_ok;		/* false if qual can never be satisfied */
 	bool		firstCall;		/* true until first gistgettuple call */
 
@@ -422,7 +431,7 @@ typedef struct GiSTOptions
 extern Datum gistbuildempty(PG_FUNCTION_ARGS);
 extern Datum gistinsert(PG_FUNCTION_ARGS);
 extern MemoryContext createTempGistContext(void);
-extern void initGISTstate(GISTSTATE *giststate, Relation index);
+extern GISTSTATE *initGISTstate(Relation index);
 extern void freeGISTstate(GISTSTATE *giststate);
 extern void gistdoinsert(Relation r,
 			 IndexTuple itup,

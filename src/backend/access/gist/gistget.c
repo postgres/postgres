@@ -307,12 +307,12 @@ gistScanPage(IndexScanDesc scan, GISTSearchItem *pageItem, double *myDistances,
 		 * Must call gistindex_keytest in tempCxt, and clean up any leftover
 		 * junk afterward.
 		 */
-		oldcxt = MemoryContextSwitchTo(so->tempCxt);
+		oldcxt = MemoryContextSwitchTo(so->giststate->tempCxt);
 
 		match = gistindex_keytest(scan, it, page, i, &recheck);
 
 		MemoryContextSwitchTo(oldcxt);
-		MemoryContextReset(so->tempCxt);
+		MemoryContextReset(so->giststate->tempCxt);
 
 		/* Ignore tuple if it doesn't match */
 		if (!match)

@@ -54,7 +54,7 @@ typedef enum
 typedef struct
 {
 	Relation	indexrel;
-	GISTSTATE	giststate;
+	GISTSTATE  *giststate;
 	GISTBuildBuffers *gfbb;
 
 	int64		indtuples;		/* number of tuples indexed */
@@ -63,7 +63,6 @@ typedef struct
 	Size		freespace;		/* amount of free space to leave on pages */
 
 	GistBufferingMode bufferingMode;
-	MemoryContext tmpCtx;
 } GISTBuildState;
 
 static void gistInitBuffering(GISTBuildState *buildstate);
@@ -146,7 +145,14 @@ gistbuild(PG_FUNCTION_ARGS)
 			 RelationGetRelationName(index));
 
 	/* no locking is needed */
-	initGISTstate(&buildstate.giststate, index);
+	buildstate.giststate = initGISTstate(index);
+
+	/*
+	 * Create a temporary memory context that is reset once for each tuple
+	 * processed.  (Note: we don't bother to make this a child of the
+	 * giststate's scanCxt, so we have to delete it separately at the end.)
+	 */
+	buildstate.giststate->tempCxt = createTempGistContext();
 
 	/* initialize the root page */
 	buffer = gistNewBuffer(index);
@@ -185,12 +191,6 @@ gistbuild(PG_FUNCTION_ARGS)
 	buildstate.indtuplesSize = 0;
 
 	/*
-	 * create a temporary memory context that is reset once for each tuple
-	 * processed.
-	 */
-	buildstate.tmpCtx = createTempGistContext();
-
-	/*
 	 * Do the heap scan.
 	 */
 	reltuples = IndexBuildHeapScan(heap, index, indexInfo, true,
@@ -208,9 +208,9 @@ gistbuild(PG_FUNCTION_ARGS)
 
 	/* okay, all heap tuples are indexed */
 	MemoryContextSwitchTo(oldcxt);
-	MemoryContextDelete(buildstate.tmpCtx);
+	MemoryContextDelete(buildstate.giststate->tempCxt);
 
-	freeGISTstate(&buildstate.giststate);
+	freeGISTstate(buildstate.giststate);
 
 	/*
 	 * Return statistics
@@ -440,10 +440,10 @@ gistBuildCallback(Relation index,
 	IndexTuple	itup;
 	MemoryContext oldCtx;
 
-	oldCtx = MemoryContextSwitchTo(buildstate->tmpCtx);
+	oldCtx = MemoryContextSwitchTo(buildstate->giststate->tempCxt);
 
 	/* form an index tuple and point it at the heap tuple */
-	itup = gistFormTuple(&buildstate->giststate, index, values, isnull, true);
+	itup = gistFormTuple(buildstate->giststate, index, values, isnull, true);
 	itup->t_tid = htup->t_self;
 
 	if (buildstate->bufferingMode == GIST_BUFFERING_ACTIVE)
@@ -458,7 +458,7 @@ gistBuildCallback(Relation index,
 		 * locked, we call gistdoinsert directly.
 		 */
 		gistdoinsert(index, itup, buildstate->freespace,
-					 &buildstate->giststate);
+					 buildstate->giststate);
 	}
 
 	/* Update tuple count and total size. */
@@ -466,7 +466,7 @@ gistBuildCallback(Relation index,
 	buildstate->indtuplesSize += IndexTupleSize(itup);
 
 	MemoryContextSwitchTo(oldCtx);
-	MemoryContextReset(buildstate->tmpCtx);
+	MemoryContextReset(buildstate->giststate->tempCxt);
 
 	if (buildstate->bufferingMode == GIST_BUFFERING_ACTIVE &&
 		buildstate->indtuples % BUFFERING_MODE_TUPLE_SIZE_STATS_TARGET == 0)
@@ -520,7 +520,7 @@ static bool
 gistProcessItup(GISTBuildState *buildstate, IndexTuple itup,
 				GISTBufferingInsertStack *startparent)
 {
-	GISTSTATE  *giststate = &buildstate->giststate;
+	GISTSTATE  *giststate = buildstate->giststate;
 	GISTBuildBuffers *gfbb = buildstate->gfbb;
 	Relation	indexrel = buildstate->indexrel;
 	GISTBufferingInsertStack *path;
@@ -652,7 +652,7 @@ gistbufferinginserttuples(GISTBuildState *buildstate, Buffer buffer,
 
 	is_split = gistplacetopage(buildstate->indexrel,
 							   buildstate->freespace,
-							   &buildstate->giststate,
+							   buildstate->giststate,
 							   buffer,
 							   itup, ntup, oldoffnum,
 							   InvalidBuffer,
@@ -720,7 +720,7 @@ gistbufferinginserttuples(GISTBuildState *buildstate, Buffer buffer,
 		 * buffers that will eventually be inserted to them.
 		 */
 		gistRelocateBuildBuffersOnSplit(gfbb,
-										&buildstate->giststate,
+										buildstate->giststate,
 										buildstate->indexrel,
 										path, buffer, splitinfo);
 
@@ -919,7 +919,7 @@ gistProcessEmptyingQueue(GISTBuildState *buildstate)
 			}
 
 			/* Free all the memory allocated during index tuple processing */
-			MemoryContextReset(CurrentMemoryContext);
+			MemoryContextReset(buildstate->giststate->tempCxt);
 		}
 	}
 }
@@ -938,7 +938,7 @@ gistEmptyAllBuffers(GISTBuildState *buildstate)
 	MemoryContext oldCtx;
 	int			i;
 
-	oldCtx = MemoryContextSwitchTo(buildstate->tmpCtx);
+	oldCtx = MemoryContextSwitchTo(buildstate->giststate->tempCxt);
 
 	/*
 	 * Iterate through the levels from top to bottom.
@@ -970,7 +970,7 @@ gistEmptyAllBuffers(GISTBuildState *buildstate)
 					nodeBuffer->queuedForEmptying = true;
 					gfbb->bufferEmptyingQueue =
 						lcons(nodeBuffer, gfbb->bufferEmptyingQueue);
-					MemoryContextSwitchTo(buildstate->tmpCtx);
+					MemoryContextSwitchTo(buildstate->giststate->tempCxt);
 				}
 				gistProcessEmptyingQueue(buildstate);
 			}

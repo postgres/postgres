@@ -104,26 +104,36 @@ gistbeginscan(PG_FUNCTION_ARGS)
 	int			nkeys = PG_GETARG_INT32(1);
 	int			norderbys = PG_GETARG_INT32(2);
 	IndexScanDesc scan;
+	GISTSTATE  *giststate;
 	GISTScanOpaque so;
+	MemoryContext oldCxt;
 
 	scan = RelationGetIndexScan(r, nkeys, norderbys);
 
+	/* First, set up a GISTSTATE with a scan-lifespan memory context */
+	giststate = initGISTstate(scan->indexRelation);
+
+	/*
+	 * Everything made below is in the scanCxt, or is a child of the scanCxt,
+	 * so it'll all go away automatically in gistendscan.
+	 */
+	oldCxt = MemoryContextSwitchTo(giststate->scanCxt);
+
 	/* initialize opaque data */
 	so = (GISTScanOpaque) palloc0(sizeof(GISTScanOpaqueData));
-	so->queueCxt = AllocSetContextCreate(CurrentMemoryContext,
-										 "GiST queue context",
-										 ALLOCSET_DEFAULT_MINSIZE,
-										 ALLOCSET_DEFAULT_INITSIZE,
-										 ALLOCSET_DEFAULT_MAXSIZE);
-	so->tempCxt = createTempGistContext();
-	so->giststate = (GISTSTATE *) palloc(sizeof(GISTSTATE));
-	initGISTstate(so->giststate, scan->indexRelation);
+	so->giststate = giststate;
+	giststate->tempCxt = createTempGistContext();
+	so->queue = NULL;
+	so->queueCxt = giststate->scanCxt;			/* see gistrescan */
+
 	/* workspaces with size dependent on numberOfOrderBys: */
 	so->tmpTreeItem = palloc(GSTIHDRSZ + sizeof(double) * scan->numberOfOrderBys);
 	so->distances = palloc(sizeof(double) * scan->numberOfOrderBys);
 	so->qual_ok = true;			/* in case there are zero keys */
 
 	scan->opaque = so;
+
+	MemoryContextSwitchTo(oldCxt);
 
 	PG_RETURN_POINTER(scan);
 }
@@ -137,12 +147,44 @@ gistrescan(PG_FUNCTION_ARGS)
 
 	/* nkeys and norderbys arguments are ignored */
 	GISTScanOpaque so = (GISTScanOpaque) scan->opaque;
+	bool		first_time;
 	int			i;
 	MemoryContext oldCxt;
 
 	/* rescan an existing indexscan --- reset state */
-	MemoryContextReset(so->queueCxt);
-	so->curTreeItem = NULL;
+
+	/*
+	 * The first time through, we create the search queue in the scanCxt.
+	 * Subsequent times through, we create the queue in a separate queueCxt,
+	 * which is created on the second call and reset on later calls.  Thus, in
+	 * the common case where a scan is only rescan'd once, we just put the
+	 * queue in scanCxt and don't pay the overhead of making a second memory
+	 * context.  If we do rescan more than once, the first RBTree is just left
+	 * for dead until end of scan; this small wastage seems worth the savings
+	 * in the common case.
+	 */
+	if (so->queue == NULL)
+	{
+		/* first time through */
+		Assert(so->queueCxt == so->giststate->scanCxt);
+		first_time = true;
+	}
+	else if (so->queueCxt == so->giststate->scanCxt)
+	{
+		/* second time through */
+		so->queueCxt = AllocSetContextCreate(so->giststate->scanCxt,
+											 "GiST queue context",
+											 ALLOCSET_DEFAULT_MINSIZE,
+											 ALLOCSET_DEFAULT_INITSIZE,
+											 ALLOCSET_DEFAULT_MAXSIZE);
+		first_time = false;
+	}
+	else
+	{
+		/* third or later time through */
+		MemoryContextReset(so->queueCxt);
+		first_time = false;
+	}
 
 	/* create new, empty RBTree for search queue */
 	oldCxt = MemoryContextSwitchTo(so->queueCxt);
@@ -154,11 +196,28 @@ gistrescan(PG_FUNCTION_ARGS)
 						  scan);
 	MemoryContextSwitchTo(oldCxt);
 
+	so->curTreeItem = NULL;
 	so->firstCall = true;
 
 	/* Update scan key, if a new one is given */
 	if (key && scan->numberOfKeys > 0)
 	{
+		/*
+		 * If this isn't the first time through, preserve the fn_extra
+		 * pointers, so that if the consistentFns are using them to cache
+		 * data, that data is not leaked across a rescan.
+		 */
+		if (!first_time)
+		{
+			for (i = 0; i < scan->numberOfKeys; i++)
+			{
+				ScanKey		skey = scan->keyData + i;
+
+				so->giststate->consistentFn[skey->sk_attno - 1].fn_extra =
+					skey->sk_func.fn_extra;
+			}
+		}
+
 		memmove(scan->keyData, key,
 				scan->numberOfKeys * sizeof(ScanKeyData));
 
@@ -172,6 +231,10 @@ gistrescan(PG_FUNCTION_ARGS)
 		 * Next, if any of keys is a NULL and that key is not marked with
 		 * SK_SEARCHNULL/SK_SEARCHNOTNULL then nothing can be found (ie, we
 		 * assume all indexable operators are strict).
+		 *
+		 * Note: we intentionally memcpy the FmgrInfo to sk_func rather than
+		 * using fmgr_info_copy.  This is so that the fn_extra field gets
+		 * preserved across multiple rescans.
 		 */
 		so->qual_ok = true;
 
@@ -192,6 +255,18 @@ gistrescan(PG_FUNCTION_ARGS)
 	/* Update order-by key, if a new one is given */
 	if (orderbys && scan->numberOfOrderBys > 0)
 	{
+		/* As above, preserve fn_extra if not first time through */
+		if (!first_time)
+		{
+			for (i = 0; i < scan->numberOfOrderBys; i++)
+			{
+				ScanKey		skey = scan->orderByData + i;
+
+				so->giststate->distanceFn[skey->sk_attno - 1].fn_extra =
+					skey->sk_func.fn_extra;
+			}
+		}
+
 		memmove(scan->orderByData, orderbys,
 				scan->numberOfOrderBys * sizeof(ScanKeyData));
 
@@ -201,6 +276,8 @@ gistrescan(PG_FUNCTION_ARGS)
 		 * function in the form of its strategy number, which is available
 		 * from the sk_strategy field, and its subtype from the sk_subtype
 		 * field.
+		 *
+		 * See above comment about why we don't use fmgr_info_copy here.
 		 */
 		for (i = 0; i < scan->numberOfOrderBys; i++)
 		{
@@ -239,13 +316,11 @@ gistendscan(PG_FUNCTION_ARGS)
 	IndexScanDesc scan = (IndexScanDesc) PG_GETARG_POINTER(0);
 	GISTScanOpaque so = (GISTScanOpaque) scan->opaque;
 
+	/*
+	 * freeGISTstate is enough to clean up everything made by gistbeginscan,
+	 * as well as the queueCxt if there is a separate context for it.
+	 */
 	freeGISTstate(so->giststate);
-	pfree(so->giststate);
-	MemoryContextDelete(so->queueCxt);
-	MemoryContextDelete(so->tempCxt);
-	pfree(so->tmpTreeItem);
-	pfree(so->distances);
-	pfree(so);
 
 	PG_RETURN_VOID();
 }
