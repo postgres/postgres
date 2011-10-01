@@ -490,20 +490,20 @@ select view_a from view_a;
 (1 row)
 
 select (select view_a) from view_a;
- ?column? 
-----------
+ view_a 
+--------
  (42)
 (1 row)
 
 select (select (select view_a)) from view_a;
- ?column? 
-----------
+ view_a 
+--------
  (42)
 (1 row)
 
 select (select (a.*)::text) from view_a a;
- ?column? 
-----------
+  a   
+------
  (42)
 (1 row)
 

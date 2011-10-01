@@ -758,8 +758,9 @@ UNBOUNDED FOLLOWING
     If you do not specify a column name, a name is chosen automatically
     by <productname>PostgreSQL</productname>.  If the column's expression
     is a simple column reference then the chosen name is the same as that
-    column's name; in more complex cases a generated name looking like
-    <literal>?column<replaceable>N</>?</literal> is usually chosen.
+    column's name.  In more complex cases a function or type name may be
+    used, or the system may fall back on a generated name such as
+    <literal>?column?</literal>.
    </para>
 
    <para>

@@ -2109,9 +2109,9 @@ SELECT ARRAY[]::integer[];
    bracketed) subquery. For example:
 <programlisting>
 SELECT ARRAY(SELECT oid FROM pg_proc WHERE proname LIKE 'bytea%');
-                          ?column?
--------------------------------------------------------------
- {2011,1954,1948,1952,1951,1244,1950,2005,1949,1953,2006,31}
+                                 array
+-----------------------------------------------------------------------
+ {2011,1954,1948,1952,1951,1244,1950,2005,1949,1953,2006,31,2412,2413}
 (1 row)
 </programlisting>
    The subquery must return a single column. The resulting

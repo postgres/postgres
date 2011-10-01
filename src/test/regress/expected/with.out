@@ -1065,7 +1065,7 @@ with cte(foo) as ( select 42 ) select * from ((select foo from cte)) q;
 select ( with cte(foo) as ( values(f1) )
          select (select foo from cte) )
 from int4_tbl;
-  ?column?   
+     foo     
 -------------
            0
       123456
@@ -1077,7 +1077,7 @@ from int4_tbl;
 select ( with cte(foo) as ( values(f1) )
           values((select foo from cte)) )
 from int4_tbl;
-  ?column?   
+   column1   
 -------------
            0
       123456
