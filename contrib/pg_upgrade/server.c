@@ -101,27 +101,27 @@ executeQueryOrDie(PGconn *conn, const char *fmt,...)
 /*
  * get_major_server_version()
  *
- * gets the version (in unsigned int form) for the given "datadir". Assumes
+ * gets the version (in unsigned int form) for the given datadir. Assumes
  * that datadir is an absolute path to a valid pgdata directory. The version
  * is retrieved by reading the PG_VERSION file.
  */
 uint32
 get_major_server_version(ClusterInfo *cluster)
 {
-	const char *datadir = cluster->pgdata;
 	FILE	   *version_fd;
 	char		ver_filename[MAXPGPATH];
 	int			integer_version = 0;
 	int			fractional_version = 0;
 
-	snprintf(ver_filename, sizeof(ver_filename), "%s/PG_VERSION", datadir);
+	snprintf(ver_filename, sizeof(ver_filename), "%s/PG_VERSION",
+			 cluster->pgdata);
 	if ((version_fd = fopen(ver_filename, "r")) == NULL)
 		return 0;
 
 	if (fscanf(version_fd, "%63s", cluster->major_version_str) == 0 ||
 		sscanf(cluster->major_version_str, "%d.%d", &integer_version,
 			   &fractional_version) != 2)
-		pg_log(PG_FATAL, "could not get version from %s\n", datadir);
+		pg_log(PG_FATAL, "could not get version from %s\n", cluster->pgdata);
 
 	fclose(version_fd);
 
