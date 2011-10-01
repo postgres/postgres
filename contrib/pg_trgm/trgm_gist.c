@@ -190,22 +190,31 @@ gtrgm_consistent(PG_FUNCTION_ARGS)
 	TRGM	   *key = (TRGM *) DatumGetPointer(entry->key);
 	TRGM	   *qtrg;
 	bool		res;
+	Size		querysize = VARSIZE(query);
 	char	   *cache = (char *) fcinfo->flinfo->fn_extra,
-			   *cacheContents = cache + MAXALIGN(sizeof(StrategyNumber));
+			   *cachedQuery = cache + MAXALIGN(sizeof(StrategyNumber));
 
 	/*
 	 * Store both the strategy number and extracted trigrams in cache, because
 	 * trigram extraction is relatively CPU-expensive.	We must include
 	 * strategy number because trigram extraction depends on strategy.
+	 *
+	 * The cached structure contains the strategy number, then the input
+	 * query (starting at a MAXALIGN boundary), then the TRGM value (also
+	 * starting at a MAXALIGN boundary).
 	 */
-	if (cache == NULL || strategy != *((StrategyNumber *) cache) ||
-		VARSIZE(cacheContents) != VARSIZE(query) ||
-		memcmp(cacheContents, query, VARSIZE(query)) != 0)
+	if (cache == NULL ||
+		strategy != *((StrategyNumber *) cache) ||
+		VARSIZE(cachedQuery) != querysize ||
+		memcmp(cachedQuery, query, querysize) != 0)
 	{
+		char	   *newcache;
+
 		switch (strategy)
 		{
 			case SimilarityStrategyNumber:
-				qtrg = generate_trgm(VARDATA(query), VARSIZE(query) - VARHDRSZ);
+				qtrg = generate_trgm(VARDATA(query),
+									 querysize - VARHDRSZ);
 				break;
 			case ILikeStrategyNumber:
 #ifndef IGNORECASE
@@ -213,7 +222,8 @@ gtrgm_consistent(PG_FUNCTION_ARGS)
 #endif
 				/* FALL THRU */
 			case LikeStrategyNumber:
-				qtrg = generate_wildcard_trgm(VARDATA(query), VARSIZE(query) - VARHDRSZ);
+				qtrg = generate_wildcard_trgm(VARDATA(query),
+											  querysize - VARHDRSZ);
 				break;
 			default:
 				elog(ERROR, "unrecognized strategy number: %d", strategy);
@@ -221,23 +231,22 @@ gtrgm_consistent(PG_FUNCTION_ARGS)
 				break;
 		}
 
+		newcache = MemoryContextAlloc(fcinfo->flinfo->fn_mcxt,
+									  MAXALIGN(sizeof(StrategyNumber)) +
+									  MAXALIGN(querysize) +
+									  VARSIZE(qtrg));
+		cachedQuery = newcache + MAXALIGN(sizeof(StrategyNumber));
+
+		*((StrategyNumber *) newcache) = strategy;
+		memcpy(cachedQuery, query, querysize);
+		memcpy(cachedQuery + MAXALIGN(querysize), qtrg, VARSIZE(qtrg));
+
 		if (cache)
 			pfree(cache);
-
-		fcinfo->flinfo->fn_extra =
-			MemoryContextAlloc(fcinfo->flinfo->fn_mcxt,
-							   MAXALIGN(sizeof(StrategyNumber)) +
-							   MAXALIGN(VARSIZE(query)) +
-							   VARSIZE(qtrg));
-		cache = (char *) fcinfo->flinfo->fn_extra;
-		cacheContents = cache + MAXALIGN(sizeof(StrategyNumber));
-
-		*((StrategyNumber *) cache) = strategy;
-		memcpy(cacheContents, query, VARSIZE(query));
-		memcpy(cacheContents + MAXALIGN(VARSIZE(query)), qtrg, VARSIZE(qtrg));
+		fcinfo->flinfo->fn_extra = newcache;
 	}
 
-	qtrg = (TRGM *) (cacheContents + MAXALIGN(VARSIZE(query)));
+	qtrg = (TRGM *) (cachedQuery + MAXALIGN(querysize));
 
 	switch (strategy)
 	{
@@ -328,24 +337,35 @@ gtrgm_distance(PG_FUNCTION_ARGS)
 	TRGM	   *key = (TRGM *) DatumGetPointer(entry->key);
 	TRGM	   *qtrg;
 	float8		res;
+	Size		querysize = VARSIZE(query);
 	char	   *cache = (char *) fcinfo->flinfo->fn_extra;
 
-	if (cache == NULL || VARSIZE(cache) != VARSIZE(query) || memcmp(cache, query, VARSIZE(query)) != 0)
+	/*
+	 * Cache the generated trigrams across multiple calls with the same
+	 * query.
+	 */
+	if (cache == NULL ||
+		VARSIZE(cache) != querysize ||
+		memcmp(cache, query, querysize) != 0)
 	{
-		qtrg = generate_trgm(VARDATA(query), VARSIZE(query) - VARHDRSZ);
+		char	   *newcache;
+
+		qtrg = generate_trgm(VARDATA(query), querysize - VARHDRSZ);
+
+		newcache = MemoryContextAlloc(fcinfo->flinfo->fn_mcxt,
+									  MAXALIGN(querysize) +
+									  VARSIZE(qtrg));
+
+		memcpy(newcache, query, querysize);
+		memcpy(newcache + MAXALIGN(querysize), qtrg, VARSIZE(qtrg));
 
 		if (cache)
 			pfree(cache);
-
-		fcinfo->flinfo->fn_extra = MemoryContextAlloc(fcinfo->flinfo->fn_mcxt,
-								   MAXALIGN(VARSIZE(query)) + VARSIZE(qtrg));
-		cache = (char *) fcinfo->flinfo->fn_extra;
-
-		memcpy(cache, query, VARSIZE(query));
-		memcpy(cache + MAXALIGN(VARSIZE(query)), qtrg, VARSIZE(qtrg));
+		fcinfo->flinfo->fn_extra = newcache;
+		cache = newcache;
 	}
 
-	qtrg = (TRGM *) (cache + MAXALIGN(VARSIZE(query)));
+	qtrg = (TRGM *) (cache + MAXALIGN(querysize));
 
 	switch (strategy)
 	{
@@ -552,9 +572,36 @@ gtrgm_penalty(PG_FUNCTION_ARGS)
 
 	if (ISARRKEY(newval))
 	{
-		BITVEC		sign;
+		char	   *cache = (char *) fcinfo->flinfo->fn_extra;
+		TRGM	   *cachedVal = (TRGM *) (cache + MAXALIGN(sizeof(BITVEC)));
+		Size		newvalsize = VARSIZE(newval);
+		BITVECP		sign;
 
-		makesign(sign, newval);
+		/*
+		 * Cache the sign data across multiple calls with the same newval.
+		 */
+		if (cache == NULL ||
+			VARSIZE(cachedVal) != newvalsize ||
+			memcmp(cachedVal, newval, newvalsize) != 0)
+		{
+			char	   *newcache;
+
+			newcache = MemoryContextAlloc(fcinfo->flinfo->fn_mcxt,
+										  MAXALIGN(sizeof(BITVEC)) +
+										  newvalsize);
+
+			makesign((BITVECP) newcache, newval);
+
+			cachedVal = (TRGM *) (newcache + MAXALIGN(sizeof(BITVEC)));
+			memcpy(cachedVal, newval, newvalsize);
+
+			if (cache)
+				pfree(cache);
+			fcinfo->flinfo->fn_extra = newcache;
+			cache = newcache;
+		}
+
+		sign = (BITVECP) cache;
 
 		if (ISALLTRUE(origval))
 			*penalty = ((float) (SIGLENBIT - sizebitvec(sign))) / (float) (SIGLENBIT + 1);
@@ -643,20 +690,16 @@ gtrgm_picksplit(PG_FUNCTION_ARGS)
 	CACHESIGN  *cache;
 	SPLITCOST  *costvector;
 
-	nbytes = (maxoff + 2) * sizeof(OffsetNumber);
-	v->spl_left = (OffsetNumber *) palloc(nbytes);
-	v->spl_right = (OffsetNumber *) palloc(nbytes);
-
+	/* cache the sign data for each existing item */
 	cache = (CACHESIGN *) palloc(sizeof(CACHESIGN) * (maxoff + 2));
-	fillcache(&cache[FirstOffsetNumber], GETENTRY(entryvec, FirstOffsetNumber));
+	for (k = FirstOffsetNumber; k <= maxoff; k = OffsetNumberNext(k))
+		fillcache(&cache[k], GETENTRY(entryvec, k));
 
+	/* now find the two furthest-apart items */
 	for (k = FirstOffsetNumber; k < maxoff; k = OffsetNumberNext(k))
 	{
 		for (j = OffsetNumberNext(k); j <= maxoff; j = OffsetNumberNext(j))
 		{
-			if (k == FirstOffsetNumber)
-				fillcache(&cache[j], GETENTRY(entryvec, j));
-
 			size_waste = hemdistcache(&(cache[j]), &(cache[k]));
 			if (size_waste > waste)
 			{
@@ -667,16 +710,19 @@ gtrgm_picksplit(PG_FUNCTION_ARGS)
 		}
 	}
 
-	left = v->spl_left;
-	v->spl_nleft = 0;
-	right = v->spl_right;
-	v->spl_nright = 0;
-
+	/* just in case we didn't make a selection ... */
 	if (seed_1 == 0 || seed_2 == 0)
 	{
 		seed_1 = 1;
 		seed_2 = 2;
 	}
+
+	/* initialize the result vectors */
+	nbytes = (maxoff + 2) * sizeof(OffsetNumber);
+	v->spl_left = left = (OffsetNumber *) palloc(nbytes);
+	v->spl_right = right = (OffsetNumber *) palloc(nbytes);
+	v->spl_nleft = 0;
+	v->spl_nright = 0;
 
 	/* form initial .. */
 	if (cache[seed_1].allistrue)
