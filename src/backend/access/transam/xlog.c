@@ -5295,10 +5295,12 @@ readRecoveryCommandFile(void)
 	}
 
 	/*
-	 * Since we're asking ParseConfigFp() to error out at FATAL, there's no
-	 * need to check the return value.
+	 * Since we're asking ParseConfigFp() to report errors as FATAL, there's
+	 * no need to check the return value.
 	 */
-	ParseConfigFp(fd, RECOVERY_COMMAND_FILE, 0, FATAL, &head, &tail);
+	(void) ParseConfigFp(fd, RECOVERY_COMMAND_FILE, 0, FATAL, &head, &tail);
+
+	FreeFile(fd);
 
 	for (item = head; item; item = item->next)
 	{
@@ -5504,7 +5506,6 @@ readRecoveryCommandFile(void)
 	}
 
 	FreeConfigVariables(head);
-	FreeFile(fd);
 }
 
 /*

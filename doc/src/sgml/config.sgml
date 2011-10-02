@@ -101,7 +101,9 @@ include 'filename'
     value. Alternatively, you can send the signal to a single server
     process directly.  Some parameters can only be set at server start;
     any changes to their entries in the configuration file will be ignored
-    until the server is restarted.
+    until the server is restarted.  Invalid parameter settings in the
+    configuration file are likewise ignored (but logged) during
+    <systemitem>SIGHUP</> processing.
    </para>
 
    <para>

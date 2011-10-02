@@ -5046,11 +5046,12 @@ config_enum_get_options(struct config_enum * record, const char *prefix,
 
 
 /*
- * Sets option `name' to given value. The value should be a string
- * which is going to be parsed and converted to the appropriate data
- * type.  The context and source parameters indicate in which context this
- * function is being called so it can apply the access restrictions
- * properly.
+ * Sets option `name' to given value.
+ *
+ * The value should be a string, which will be parsed and converted to
+ * the appropriate data type.  The context and source parameters indicate
+ * in which context this function is being called, so that it can apply the
+ * access restrictions properly.
  *
  * If value is NULL, set the option to its default value (normally the
  * reset_val, but if source == PGC_S_DEFAULT we instead use the boot_val).
@@ -5061,18 +5062,20 @@ config_enum_get_options(struct config_enum * record, const char *prefix,
  * If changeVal is false then don't really set the option but do all
  * the checks to see if it would work.
  *
+ * Return value:
+ *	+1: the value is valid and was successfully applied.
+ *	0:  the name or value is invalid (but see below).
+ *	-1: the value was not applied because of context, priority, or changeVal.
+ *
  * If there is an error (non-existing option, invalid value) then an
- * ereport(ERROR) is thrown *unless* this is called in a context where we
- * don't want to ereport (currently, startup or SIGHUP config file reread).
- * In that case we write a suitable error message via ereport(LOG) and
- * return false. This is working around the deficiencies in the ereport
- * mechanism, so don't blame me.  In all other cases, the function
- * returns true, including cases where the input is valid but we chose
- * not to apply it because of context or source-priority considerations.
+ * ereport(ERROR) is thrown *unless* this is called for a source for which
+ * we don't want an ERROR (currently, those are defaults, the config file,
+ * and per-database or per-user settings).  In those cases we write a
+ * suitable error message via ereport() and return 0.
  *
  * See also SetConfigOption for an external interface.
  */
-bool
+int
 set_config_option(const char *name, const char *value,
 				  GucContext context, GucSource source,
 				  GucAction action, bool changeVal)
@@ -5082,7 +5085,7 @@ set_config_option(const char *name, const char *value,
 	bool		prohibitValueChange = false;
 	bool		makeDefault;
 
-	if (context == PGC_SIGHUP || source == PGC_S_DEFAULT)
+	if (source == PGC_S_DEFAULT || source == PGC_S_FILE)
 	{
 		/*
 		 * To avoid cluttering the log, only the postmaster bleats loudly
@@ -5102,17 +5105,8 @@ set_config_option(const char *name, const char *value,
 		ereport(elevel,
 				(errcode(ERRCODE_UNDEFINED_OBJECT),
 			   errmsg("unrecognized configuration parameter \"%s\"", name)));
-		return false;
+		return 0;
 	}
-
-	/*
-	 * If source is postgresql.conf, mark the found record with
-	 * GUC_IS_IN_FILE. This is for the convenience of ProcessConfigFile.  Note
-	 * that we do it even if changeVal is false, since ProcessConfigFile wants
-	 * the marking to occur during its testing pass.
-	 */
-	if (source == PGC_S_FILE)
-		record->status |= GUC_IS_IN_FILE;
 
 	/*
 	 * Check if the option can be set at this time. See guc.h for the precise
@@ -5121,22 +5115,13 @@ set_config_option(const char *name, const char *value,
 	switch (record->context)
 	{
 		case PGC_INTERNAL:
-			if (context == PGC_SIGHUP)
-			{
-				/*
-				 * Historically we've just silently ignored attempts to set
-				 * PGC_INTERNAL variables from the config file.  Maybe it'd be
-				 * better to use the prohibitValueChange logic for this?
-				 */
-				return true;
-			}
-			else if (context != PGC_INTERNAL)
+			if (context != PGC_INTERNAL)
 			{
 				ereport(elevel,
 						(errcode(ERRCODE_CANT_CHANGE_RUNTIME_PARAM),
 						 errmsg("parameter \"%s\" cannot be changed",
 								name)));
-				return false;
+				return 0;
 			}
 			break;
 		case PGC_POSTMASTER:
@@ -5150,13 +5135,7 @@ set_config_option(const char *name, const char *value,
 				 * hooks, etc, we can't just compare the given string directly
 				 * to what's stored.  Set a flag to check below after we have
 				 * the final storable value.
-				 *
-				 * During the "checking" pass we just do nothing, to avoid
-				 * printing the warning twice.
 				 */
-				if (!changeVal)
-					return true;
-
 				prohibitValueChange = true;
 			}
 			else if (context != PGC_POSTMASTER)
@@ -5165,7 +5144,7 @@ set_config_option(const char *name, const char *value,
 						(errcode(ERRCODE_CANT_CHANGE_RUNTIME_PARAM),
 						 errmsg("parameter \"%s\" cannot be changed without restarting the server",
 								name)));
-				return false;
+				return 0;
 			}
 			break;
 		case PGC_SIGHUP:
@@ -5175,7 +5154,7 @@ set_config_option(const char *name, const char *value,
 						(errcode(ERRCODE_CANT_CHANGE_RUNTIME_PARAM),
 						 errmsg("parameter \"%s\" cannot be changed now",
 								name)));
-				return false;
+				return 0;
 			}
 
 			/*
@@ -5197,7 +5176,7 @@ set_config_option(const char *name, const char *value,
 				 * backend start.
 				 */
 				if (IsUnderPostmaster)
-					return true;
+					return -1;
 			}
 			else if (context != PGC_POSTMASTER && context != PGC_BACKEND &&
 					 source != PGC_S_CLIENT)
@@ -5206,7 +5185,7 @@ set_config_option(const char *name, const char *value,
 						(errcode(ERRCODE_CANT_CHANGE_RUNTIME_PARAM),
 						 errmsg("parameter \"%s\" cannot be set after connection start",
 								name)));
-				return false;
+				return 0;
 			}
 			break;
 		case PGC_SUSET:
@@ -5216,7 +5195,7 @@ set_config_option(const char *name, const char *value,
 						(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
 						 errmsg("permission denied to set parameter \"%s\"",
 								name)));
-				return false;
+				return 0;
 			}
 			break;
 		case PGC_USERSET:
@@ -5254,7 +5233,7 @@ set_config_option(const char *name, const char *value,
 					(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
 					 errmsg("cannot set parameter \"%s\" within security-definer function",
 							name)));
-			return false;
+			return 0;
 		}
 		if (InSecurityRestrictedOperation())
 		{
@@ -5262,7 +5241,7 @@ set_config_option(const char *name, const char *value,
 					(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
 					 errmsg("cannot set parameter \"%s\" within security-restricted operation",
 							name)));
-			return false;
+			return 0;
 		}
 	}
 
@@ -5288,7 +5267,7 @@ set_config_option(const char *name, const char *value,
 		{
 			elog(DEBUG3, "\"%s\": setting ignored because previous source is higher priority",
 				 name);
-			return true;
+			return -1;
 		}
 		changeVal = false;
 	}
@@ -5312,18 +5291,18 @@ set_config_option(const char *name, const char *value,
 								(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
 						  errmsg("parameter \"%s\" requires a Boolean value",
 								 name)));
-						return false;
+						return 0;
 					}
 					if (!call_bool_check_hook(conf, &newval, &newextra,
 											  source, elevel))
-						return false;
+						return 0;
 				}
 				else if (source == PGC_S_DEFAULT)
 				{
 					newval = conf->boot_val;
 					if (!call_bool_check_hook(conf, &newval, &newextra,
 											  source, elevel))
-						return false;
+						return 0;
 				}
 				else
 				{
@@ -5335,11 +5314,14 @@ set_config_option(const char *name, const char *value,
 				if (prohibitValueChange)
 				{
 					if (*conf->variable != newval)
+					{
 						ereport(elevel,
 								(errcode(ERRCODE_CANT_CHANGE_RUNTIME_PARAM),
 								 errmsg("parameter \"%s\" cannot be changed without restarting the server",
 										name)));
-					return false;
+						return 0;
+					}
+					return -1;
 				}
 
 				if (changeVal)
@@ -5401,7 +5383,7 @@ set_config_option(const char *name, const char *value,
 						 errmsg("invalid value for parameter \"%s\": \"%s\"",
 								name, value),
 								 hintmsg ? errhint("%s", _(hintmsg)) : 0));
-						return false;
+						return 0;
 					}
 					if (newval < conf->min || newval > conf->max)
 					{
@@ -5409,18 +5391,18 @@ set_config_option(const char *name, const char *value,
 								(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
 								 errmsg("%d is outside the valid range for parameter \"%s\" (%d .. %d)",
 										newval, name, conf->min, conf->max)));
-						return false;
+						return 0;
 					}
 					if (!call_int_check_hook(conf, &newval, &newextra,
 											 source, elevel))
-						return false;
+						return 0;
 				}
 				else if (source == PGC_S_DEFAULT)
 				{
 					newval = conf->boot_val;
 					if (!call_int_check_hook(conf, &newval, &newextra,
 											 source, elevel))
-						return false;
+						return 0;
 				}
 				else
 				{
@@ -5432,11 +5414,14 @@ set_config_option(const char *name, const char *value,
 				if (prohibitValueChange)
 				{
 					if (*conf->variable != newval)
+					{
 						ereport(elevel,
 								(errcode(ERRCODE_CANT_CHANGE_RUNTIME_PARAM),
 								 errmsg("parameter \"%s\" cannot be changed without restarting the server",
 										name)));
-					return false;
+						return 0;
+					}
+					return -1;
 				}
 
 				if (changeVal)
@@ -5495,7 +5480,7 @@ set_config_option(const char *name, const char *value,
 								(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
 						  errmsg("parameter \"%s\" requires a numeric value",
 								 name)));
-						return false;
+						return 0;
 					}
 					if (newval < conf->min || newval > conf->max)
 					{
@@ -5503,18 +5488,18 @@ set_config_option(const char *name, const char *value,
 								(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
 								 errmsg("%g is outside the valid range for parameter \"%s\" (%g .. %g)",
 										newval, name, conf->min, conf->max)));
-						return false;
+						return 0;
 					}
 					if (!call_real_check_hook(conf, &newval, &newextra,
 											  source, elevel))
-						return false;
+						return 0;
 				}
 				else if (source == PGC_S_DEFAULT)
 				{
 					newval = conf->boot_val;
 					if (!call_real_check_hook(conf, &newval, &newextra,
 											  source, elevel))
-						return false;
+						return 0;
 				}
 				else
 				{
@@ -5526,11 +5511,14 @@ set_config_option(const char *name, const char *value,
 				if (prohibitValueChange)
 				{
 					if (*conf->variable != newval)
+					{
 						ereport(elevel,
 								(errcode(ERRCODE_CANT_CHANGE_RUNTIME_PARAM),
 								 errmsg("parameter \"%s\" cannot be changed without restarting the server",
 										name)));
-					return false;
+						return 0;
+					}
+					return -1;
 				}
 
 				if (changeVal)
@@ -5589,7 +5577,7 @@ set_config_option(const char *name, const char *value,
 					 */
 					newval = guc_strdup(elevel, value);
 					if (newval == NULL)
-						return false;
+						return 0;
 
 					/*
 					 * The only built-in "parsing" check we have is to apply
@@ -5602,7 +5590,7 @@ set_config_option(const char *name, const char *value,
 												source, elevel))
 					{
 						free(newval);
-						return false;
+						return 0;
 					}
 				}
 				else if (source == PGC_S_DEFAULT)
@@ -5612,7 +5600,7 @@ set_config_option(const char *name, const char *value,
 					{
 						newval = guc_strdup(elevel, conf->boot_val);
 						if (newval == NULL)
-							return false;
+							return 0;
 					}
 					else
 						newval = NULL;
@@ -5621,7 +5609,7 @@ set_config_option(const char *name, const char *value,
 												source, elevel))
 					{
 						free(newval);
-						return false;
+						return 0;
 					}
 				}
 				else
@@ -5640,11 +5628,14 @@ set_config_option(const char *name, const char *value,
 					/* newval shouldn't be NULL, so we're a bit sloppy here */
 					if (*conf->variable == NULL || newval == NULL ||
 						strcmp(*conf->variable, newval) != 0)
+					{
 						ereport(elevel,
 								(errcode(ERRCODE_CANT_CHANGE_RUNTIME_PARAM),
 								 errmsg("parameter \"%s\" cannot be changed without restarting the server",
 										name)));
-					return false;
+						return 0;
+					}
+					return -1;
 				}
 
 				if (changeVal)
@@ -5718,18 +5709,18 @@ set_config_option(const char *name, const char *value,
 
 						if (hintmsg)
 							pfree(hintmsg);
-						return false;
+						return 0;
 					}
 					if (!call_enum_check_hook(conf, &newval, &newextra,
 											  source, elevel))
-						return false;
+						return 0;
 				}
 				else if (source == PGC_S_DEFAULT)
 				{
 					newval = conf->boot_val;
 					if (!call_enum_check_hook(conf, &newval, &newextra,
 											  source, elevel))
-						return false;
+						return 0;
 				}
 				else
 				{
@@ -5741,11 +5732,14 @@ set_config_option(const char *name, const char *value,
 				if (prohibitValueChange)
 				{
 					if (*conf->variable != newval)
+					{
 						ereport(elevel,
 								(errcode(ERRCODE_CANT_CHANGE_RUNTIME_PARAM),
 								 errmsg("parameter \"%s\" cannot be changed without restarting the server",
 										name)));
-					return false;
+						return 0;
+					}
+					return -1;
 				}
 
 				if (changeVal)
@@ -5794,7 +5788,7 @@ set_config_option(const char *name, const char *value,
 	if (changeVal && (record->flags & GUC_REPORT))
 		ReportGUCOption(record);
 
-	return true;
+	return changeVal ? 1 : -1;
 }
 
 
@@ -6095,12 +6089,12 @@ ExecSetVariableStmt(VariableSetStmt *stmt)
 	{
 		case VAR_SET_VALUE:
 		case VAR_SET_CURRENT:
-			set_config_option(stmt->name,
-							  ExtractSetVariableArgs(stmt),
-							  (superuser() ? PGC_SUSET : PGC_USERSET),
-							  PGC_S_SESSION,
-							  action,
-							  true);
+			(void) set_config_option(stmt->name,
+									 ExtractSetVariableArgs(stmt),
+									 (superuser() ? PGC_SUSET : PGC_USERSET),
+									 PGC_S_SESSION,
+									 action,
+									 true);
 			break;
 		case VAR_SET_MULTI:
 
@@ -6158,12 +6152,12 @@ ExecSetVariableStmt(VariableSetStmt *stmt)
 			break;
 		case VAR_SET_DEFAULT:
 		case VAR_RESET:
-			set_config_option(stmt->name,
-							  NULL,
-							  (superuser() ? PGC_SUSET : PGC_USERSET),
-							  PGC_S_SESSION,
-							  action,
-							  true);
+			(void) set_config_option(stmt->name,
+									 NULL,
+									 (superuser() ? PGC_SUSET : PGC_USERSET),
+									 PGC_S_SESSION,
+									 action,
+									 true);
 			break;
 		case VAR_RESET_ALL:
 			ResetAllOptions();
@@ -6203,12 +6197,12 @@ SetPGVariable(const char *name, List *args, bool is_local)
 	char	   *argstring = flatten_set_variable_args(name, args);
 
 	/* Note SET DEFAULT (argstring == NULL) is equivalent to RESET */
-	set_config_option(name,
-					  argstring,
-					  (superuser() ? PGC_SUSET : PGC_USERSET),
-					  PGC_S_SESSION,
-					  is_local ? GUC_ACTION_LOCAL : GUC_ACTION_SET,
-					  true);
+	(void) set_config_option(name,
+							 argstring,
+							 (superuser() ? PGC_SUSET : PGC_USERSET),
+							 PGC_S_SESSION,
+							 is_local ? GUC_ACTION_LOCAL : GUC_ACTION_SET,
+							 true);
 }
 
 /*
@@ -6246,12 +6240,12 @@ set_config_by_name(PG_FUNCTION_ARGS)
 		is_local = PG_GETARG_BOOL(2);
 
 	/* Note SET DEFAULT (argstring == NULL) is equivalent to RESET */
-	set_config_option(name,
-					  value,
-					  (superuser() ? PGC_SUSET : PGC_USERSET),
-					  PGC_S_SESSION,
-					  is_local ? GUC_ACTION_LOCAL : GUC_ACTION_SET,
-					  true);
+	(void) set_config_option(name,
+							 value,
+							 (superuser() ? PGC_SUSET : PGC_USERSET),
+							 PGC_S_SESSION,
+							 is_local ? GUC_ACTION_LOCAL : GUC_ACTION_SET,
+							 true);
 
 	/* get the new current value */
 	new_value = GetConfigOptionByName(name, NULL);
@@ -6421,7 +6415,7 @@ define_custom_variable(struct config_generic * variable)
 	{
 		if (set_config_option(name, value,
 							  phcontext, pHolder->gen.source,
-							  GUC_ACTION_SET, true))
+							  GUC_ACTION_SET, true) > 0)
 		{
 			/* Also copy over any saved source-location information */
 			if (pHolder->gen.sourcefile)
@@ -7943,9 +7937,9 @@ validate_option_array_item(const char *name, const char *value,
 	/* if a permissions error should be thrown, let set_config_option do it */
 
 	/* test for permissions and valid option value */
-	set_config_option(name, value,
-					  superuser() ? PGC_SUSET : PGC_USERSET,
-					  PGC_S_TEST, GUC_ACTION_SET, false);
+	(void) set_config_option(name, value,
+							 superuser() ? PGC_SUSET : PGC_USERSET,
+							 PGC_S_TEST, GUC_ACTION_SET, false);
 
 	return true;
 }
