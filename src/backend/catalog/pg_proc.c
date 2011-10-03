@@ -599,6 +599,11 @@ ProcedureCreate(const char *procedureName,
 		recordDependencyOn(&myself, &referenced, DEPENDENCY_NORMAL);
 	}
 
+	/* dependency on parameter default expressions */
+	if (parameterDefaults)
+		recordDependencyOnExpr(&myself, (Node *) parameterDefaults,
+							   NIL, DEPENDENCY_NORMAL);
+
 	/* dependency on owner */
 	if (!is_update)
 		recordDependencyOnOwner(ProcedureRelationId, retval, proowner);
