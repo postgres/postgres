@@ -2779,7 +2779,7 @@ RI_Initial_Check(Trigger *trigger, Relation fk_rel, Relation pk_rel)
 	snprintf(workmembuf, sizeof(workmembuf), "%d", maintenance_work_mem);
 	(void) set_config_option("work_mem", workmembuf,
 							 PGC_USERSET, PGC_S_SESSION,
-							 GUC_ACTION_LOCAL, true);
+							 GUC_ACTION_LOCAL, true, 0);
 
 	if (SPI_connect() != SPI_OK_CONNECT)
 		elog(ERROR, "SPI_connect failed");
@@ -2868,7 +2868,7 @@ RI_Initial_Check(Trigger *trigger, Relation fk_rel, Relation pk_rel)
 	snprintf(workmembuf, sizeof(workmembuf), "%d", old_work_mem);
 	(void) set_config_option("work_mem", workmembuf,
 							 PGC_USERSET, PGC_S_SESSION,
-							 GUC_ACTION_LOCAL, true);
+							 GUC_ACTION_LOCAL, true, 0);
 
 	return true;
 }

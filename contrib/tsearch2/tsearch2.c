@@ -253,11 +253,8 @@ tsa_set_curcfg(PG_FUNCTION_ARGS)
 	name = DatumGetCString(DirectFunctionCall1(regconfigout,
 											   ObjectIdGetDatum(arg0)));
 
-	set_config_option("default_text_search_config", name,
-					  PGC_USERSET,
-					  PGC_S_SESSION,
-					  GUC_ACTION_SET,
-					  true);
+	SetConfigOption("default_text_search_config", name,
+					PGC_USERSET, PGC_S_SESSION);
 
 	PG_RETURN_VOID();
 }
@@ -271,11 +268,8 @@ tsa_set_curcfg_byname(PG_FUNCTION_ARGS)
 
 	name = text_to_cstring(arg0);
 
-	set_config_option("default_text_search_config", name,
-					  PGC_USERSET,
-					  PGC_S_SESSION,
-					  GUC_ACTION_SET,
-					  true);
+	SetConfigOption("default_text_search_config", name,
+					PGC_USERSET, PGC_S_SESSION);
 
 	PG_RETURN_VOID();
 }

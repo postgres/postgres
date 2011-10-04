@@ -816,14 +816,14 @@ execute_extension_script(Oid extensionOid, ExtensionControlFile *control,
 	if (client_min_messages < WARNING)
 		(void) set_config_option("client_min_messages", "warning",
 								 PGC_USERSET, PGC_S_SESSION,
-								 GUC_ACTION_LOCAL, true);
+								 GUC_ACTION_LOCAL, true, 0);
 
 	save_log_min_messages =
 		pstrdup(GetConfigOption("log_min_messages", false, false));
 	if (log_min_messages < WARNING)
 		(void) set_config_option("log_min_messages", "warning",
 								 PGC_SUSET, PGC_S_SESSION,
-								 GUC_ACTION_LOCAL, true);
+								 GUC_ACTION_LOCAL, true, 0);
 
 	/*
 	 * Set up the search path to contain the target schema, then the schemas
@@ -849,7 +849,7 @@ execute_extension_script(Oid extensionOid, ExtensionControlFile *control,
 
 	(void) set_config_option("search_path", pathbuf.data,
 							 PGC_USERSET, PGC_S_SESSION,
-							 GUC_ACTION_LOCAL, true);
+							 GUC_ACTION_LOCAL, true, 0);
 
 	/*
 	 * Set creating_extension and related variables so that
@@ -915,13 +915,13 @@ execute_extension_script(Oid extensionOid, ExtensionControlFile *control,
 	 */
 	(void) set_config_option("search_path", save_search_path,
 							 PGC_USERSET, PGC_S_SESSION,
-							 GUC_ACTION_LOCAL, true);
+							 GUC_ACTION_LOCAL, true, 0);
 	(void) set_config_option("client_min_messages", save_client_min_messages,
 							 PGC_USERSET, PGC_S_SESSION,
-							 GUC_ACTION_LOCAL, true);
+							 GUC_ACTION_LOCAL, true, 0);
 	(void) set_config_option("log_min_messages", save_log_min_messages,
 							 PGC_SUSET, PGC_S_SESSION,
-							 GUC_ACTION_LOCAL, true);
+							 GUC_ACTION_LOCAL, true, 0);
 }
 
 /*
