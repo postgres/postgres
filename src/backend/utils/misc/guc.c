@@ -7264,6 +7264,8 @@ _ShowOption(struct config_generic * record, bool use_units)
  *
  *		variable name, string, null terminated
  *		variable value, string, null terminated
+ *		variable sourcefile, string, null terminated (empty if none)
+ *		variable sourceline, integer
  *		variable source, integer
  *		variable scontext, integer
  */
@@ -7325,6 +7327,11 @@ write_one_nondefault_variable(FILE *fp, struct config_generic * gconf)
 
 	fputc(0, fp);
 
+	if (gconf->sourcefile)
+		fprintf(fp, "%s", gconf->sourcefile);
+	fputc(0, fp);
+
+	fwrite(&gconf->sourceline, 1, sizeof(gconf->sourceline), fp);
 	fwrite(&gconf->source, 1, sizeof(gconf->source), fp);
 	fwrite(&gconf->scontext, 1, sizeof(gconf->scontext), fp);
 }
@@ -7417,7 +7424,9 @@ read_nondefault_variables(void)
 {
 	FILE	   *fp;
 	char	   *varname,
-			   *varvalue;
+			   *varvalue,
+			   *varsourcefile;
+	int			varsourceline;
 	GucSource	varsource;
 	GucContext	varscontext;
 
@@ -7444,8 +7453,13 @@ read_nondefault_variables(void)
 			break;
 
 		if ((record = find_option(varname, true, FATAL)) == NULL)
-			elog(FATAL, "failed to locate variable %s in exec config params file", varname);
+			elog(FATAL, "failed to locate variable \"%s\" in exec config params file", varname);
+
 		if ((varvalue = read_string_with_null(fp)) == NULL)
+			elog(FATAL, "invalid format of exec config params file");
+		if ((varsourcefile = read_string_with_null(fp)) == NULL)
+			elog(FATAL, "invalid format of exec config params file");
+		if (fread(&varsourceline, 1, sizeof(varsourceline), fp) != sizeof(varsourceline))
 			elog(FATAL, "invalid format of exec config params file");
 		if (fread(&varsource, 1, sizeof(varsource), fp) != sizeof(varsource))
 			elog(FATAL, "invalid format of exec config params file");
@@ -7455,8 +7469,12 @@ read_nondefault_variables(void)
 		(void) set_config_option(varname, varvalue,
 								 varscontext, varsource,
 								 GUC_ACTION_SET, true);
+		if (varsourcefile[0])
+			set_config_sourcefile(varname, varsourcefile, varsourceline);
+
 		free(varname);
 		free(varvalue);
+		free(varsourcefile);
 	}
 
 	FreeFile(fp);
