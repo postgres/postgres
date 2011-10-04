@@ -1211,12 +1211,12 @@ SlruScanDirCbDeleteAll(SlruCtl ctl, char *filename, int segpage, void *data)
 bool
 SlruScanDirectory(SlruCtl ctl, SlruScanCallback callback, void *data)
 {
+	bool		retval = false;
 	DIR		   *cldir;
 	struct dirent *clde;
 	int			segno;
 	int			segpage;
-	bool		retval;
-	
+
 	cldir = AllocateDir(ctl->Dir);
 	while ((clde = ReadDir(cldir, ctl->Dir)) != NULL)
 	{
