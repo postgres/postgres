@@ -111,8 +111,6 @@ ProcessConfigFile(GucContext context)
 	ConfigVariable *item,
 				   *head,
 				   *tail;
-	char	   *cvc = NULL;
-	struct config_string *cvc_struct;
 	int			i;
 
 	/*
@@ -139,50 +137,6 @@ ProcessConfigFile(GucContext context)
 	}
 
 	/*
-	 * We need the proposed new value of custom_variable_classes to check
-	 * custom variables with.  ParseConfigFile ensured that if it's in
-	 * the file, it's first in the list.  But first check to see if we
-	 * have an active value from the command line, which should override
-	 * the file in any case.  (Since there's no relevant env var, the
-	 * only possible nondefault sources are the file and ARGV.)
-	 */
-	cvc_struct = (struct config_string *)
-		find_option("custom_variable_classes", false, elevel);
-	Assert(cvc_struct);
-	if (cvc_struct->gen.reset_source > PGC_S_FILE)
-	{
-		cvc = guc_strdup(elevel, cvc_struct->reset_val);
-		if (cvc == NULL)
-		{
-			error = true;
-			goto cleanup_list;
-		}
-	}
-	else if (head != NULL &&
-			 guc_name_compare(head->name, "custom_variable_classes") == 0)
-	{
-		/*
-		 * Need to canonicalize the value by calling the check hook.
-		 */
-		void   *extra = NULL;
-
-		cvc = guc_strdup(elevel, head->value);
-		if (cvc == NULL)
-		{
-			error = true;
-			goto cleanup_list;
-		}
-		if (!call_string_check_hook(cvc_struct, &cvc, &extra,
-									PGC_S_FILE, elevel))
-		{
-			error = true;
-			goto cleanup_list;
-		}
-		if (extra)
-			free(extra);
-	}
-
-	/*
 	 * Mark all extant GUC variables as not present in the config file.
 	 * We need this so that we can tell below which ones have been removed
 	 * from the file since we last processed it.
@@ -199,39 +153,29 @@ ProcessConfigFile(GucContext context)
 	 * quasi-syntactic check on the validity of the config file.  It is
 	 * important that the postmaster and all backends agree on the results
 	 * of this phase, else we will have strange inconsistencies about which
-	 * processes accept a config file update and which don't.  Hence, custom
-	 * variable names can only be checked against custom_variable_classes,
-	 * not against any loadable modules that might (or might not) be present.
-	 * Likewise, we don't attempt to validate the options' values here.
+	 * processes accept a config file update and which don't.  Hence, unknown
+	 * custom variable names have to be accepted without complaint.  For the
+	 * same reason, we don't attempt to validate the options' values here.
 	 *
 	 * In addition, the GUC_IS_IN_FILE flag is set on each existing GUC
 	 * variable mentioned in the file.
 	 */
 	for (item = head; item; item = item->next)
 	{
-		char   *sep = strchr(item->name, GUC_QUALIFIER_SEPARATOR);
 		struct config_generic *record;
 
-		if (sep)
-		{
-			/* Custom variable, so check against custom_variable_classes */
-			if (!is_custom_class(item->name, sep - item->name, cvc))
-			{
-				ereport(elevel,
-						(errcode(ERRCODE_UNDEFINED_OBJECT),
-						 errmsg("unrecognized configuration parameter \"%s\" in file \"%s\" line %u",
-								item->name,
-								item->filename, item->sourceline)));
-				error = true;
-				continue;
-			}
-		}
-
+		/*
+		 * Try to find the variable; but do not create a custom placeholder
+		 * if it's not there already.
+		 */
 		record = find_option(item->name, false, elevel);
 
 		if (record)
+		{
+			/* Found, so mark it as present in file */
 			record->status |= GUC_IS_IN_FILE;
-		else if (!sep)
+		}
+		else if (strchr(item->name, GUC_QUALIFIER_SEPARATOR) == NULL)
 		{
 			/* Invalid non-custom variable, so complain */
 			ereport(elevel,
@@ -382,8 +326,6 @@ ProcessConfigFile(GucContext context)
 
  cleanup_list:
 	FreeConfigVariables(head);
-	if (cvc)
-		free(cvc);
 
 	if (error)
 	{
@@ -580,40 +522,6 @@ ParseConfigFp(FILE *fp, const char *config_file, int depth, int elevel,
 			ConfigFileLineno = save_ConfigFileLineno;
 			pfree(opt_name);
 			pfree(opt_value);
-		}
-		else if (guc_name_compare(opt_name, "custom_variable_classes") == 0)
-		{
-			/*
-			 * This variable must be processed first as it controls
-			 * the validity of other variables; so it goes at the head
-			 * of the result list.  If we already found a value for it,
-			 * replace with this one.
-			 */
-			item = *head_p;
-			if (item != NULL &&
-				guc_name_compare(item->name, "custom_variable_classes") == 0)
-			{
-				/* replace existing head item */
-				pfree(item->name);
-				pfree(item->value);
-				item->name = opt_name;
-				item->value = opt_value;
-				item->filename = pstrdup(config_file);
-				item->sourceline = ConfigFileLineno-1;
-			}
-			else
-			{
-				/* prepend to list */
-				item = palloc(sizeof *item);
-				item->name = opt_name;
-				item->value = opt_value;
-				item->filename = pstrdup(config_file);
-				item->sourceline = ConfigFileLineno-1;
-				item->next = *head_p;
-				*head_p = item;
-				if (*tail_p == NULL)
-					*tail_p = item;
-			}
 		}
 		else
 		{

@@ -1219,10 +1219,6 @@ CREATE TRIGGER test_valid_id_trig
 
   <para>
   This section lists configuration parameters that affect <application>PL/Perl</>.
-  To set any of these parameters before <application>PL/Perl</> has been loaded,
-  it is necessary to have added <quote><literal>plperl</></> to the
-  <xref linkend="guc-custom-variable-classes"> list in
-  <filename>postgresql.conf</filename>.
   </para>
 
   <variablelist>

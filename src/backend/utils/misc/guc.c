@@ -178,7 +178,6 @@ static void assign_syslog_ident(const char *newval, void *extra);
 static void assign_session_replication_role(int newval, void *extra);
 static bool check_temp_buffers(int *newval, void **extra, GucSource source);
 static bool check_phony_autocommit(bool *newval, void **extra, GucSource source);
-static bool check_custom_variable_classes(char **newval, void **extra, GucSource source);
 static bool check_debug_assertions(bool *newval, void **extra, GucSource source);
 static bool check_bonjour(bool *newval, void **extra, GucSource source);
 static bool check_ssl(bool *newval, void **extra, GucSource source);
@@ -467,7 +466,6 @@ static char *log_timezone_string;
 static char *timezone_abbreviations_string;
 static char *XactIsoLevel_string;
 static char *session_authorization_string;
-static char *custom_variable_classes;
 static int	max_function_args;
 static int	max_index_keys;
 static int	max_identifier_length;
@@ -2886,17 +2884,6 @@ static struct config_string ConfigureNamesString[] =
 	},
 
 	{
-		{"custom_variable_classes", PGC_SIGHUP, CUSTOM_OPTIONS,
-			gettext_noop("Sets the list of known custom variable classes."),
-			NULL,
-			GUC_LIST_INPUT | GUC_LIST_QUOTE
-		},
-		&custom_variable_classes,
-		NULL,
-		check_custom_variable_classes, NULL, NULL
-	},
-
-	{
 		{"data_directory", PGC_POSTMASTER, FILE_LOCATIONS,
 			gettext_noop("Sets the server's data directory."),
 			NULL,
@@ -3623,8 +3610,7 @@ add_guc_variable(struct config_generic * var, int elevel)
 }
 
 /*
- * Create and add a placeholder variable. It's presumed to belong
- * to a valid custom variable class at this point.
+ * Create and add a placeholder variable for a custom variable name.
  */
 static struct config_generic *
 add_placeholder_variable(const char *name, int elevel)
@@ -3670,42 +3656,6 @@ add_placeholder_variable(const char *name, int elevel)
 }
 
 /*
- * Detect whether the portion of "name" before dotPos matches any custom
- * variable class name listed in custom_var_classes.  The latter must be
- * formatted the way that assign_custom_variable_classes does it, ie,
- * no whitespace.  NULL is valid for custom_var_classes.
- */
-static bool
-is_custom_class(const char *name, int dotPos, const char *custom_var_classes)
-{
-	bool		result = false;
-	const char *ccs = custom_var_classes;
-
-	if (ccs != NULL)
-	{
-		const char *start = ccs;
-
-		for (;; ++ccs)
-		{
-			char		c = *ccs;
-
-			if (c == '\0' || c == ',')
-			{
-				if (dotPos == ccs - start && strncmp(start, name, dotPos) == 0)
-				{
-					result = true;
-					break;
-				}
-				if (c == '\0')
-					break;
-				start = ccs + 1;
-			}
-		}
-	}
-	return result;
-}
-
-/*
  * Look up option NAME.  If it exists, return a pointer to its record,
  * else return NULL.  If create_placeholders is TRUE, we'll create a
  * placeholder record for a valid-looking custom variable name.
@@ -3745,13 +3695,9 @@ find_option(const char *name, bool create_placeholders, int elevel)
 	if (create_placeholders)
 	{
 		/*
-		 * Check if the name is qualified, and if so, check if the qualifier
-		 * matches any custom variable class.  If so, add a placeholder.
+		 * Check if the name is qualified, and if so, add a placeholder.
 		 */
-		const char *dot = strchr(name, GUC_QUALIFIER_SEPARATOR);
-
-		if (dot != NULL &&
-			is_custom_class(name, dot - name, custom_variable_classes))
+		if (strchr(name, GUC_QUALIFIER_SEPARATOR) != NULL)
 			return add_placeholder_variable(name, elevel);
 	}
 
@@ -7406,7 +7352,6 @@ write_nondefault_variables(GucContext context)
 {
 	int			elevel;
 	FILE	   *fp;
-	struct config_generic *cvc_conf;
 	int			i;
 
 	Assert(context == PGC_POSTMASTER || context == PGC_SIGHUP);
@@ -7426,20 +7371,9 @@ write_nondefault_variables(GucContext context)
 		return;
 	}
 
-	/*
-	 * custom_variable_classes must be written out first; otherwise we might
-	 * reject custom variable values while reading the file.
-	 */
-	cvc_conf = find_option("custom_variable_classes", false, ERROR);
-	if (cvc_conf)
-		write_one_nondefault_variable(fp, cvc_conf);
-
 	for (i = 0; i < num_guc_variables; i++)
 	{
-		struct config_generic *gconf = guc_variables[i];
-
-		if (gconf != cvc_conf)
-			write_one_nondefault_variable(fp, gconf);
+		write_one_nondefault_variable(fp, guc_variables[i]);
 	}
 
 	if (FreeFile(fp))
@@ -7886,20 +7820,15 @@ validate_option_array_item(const char *name, const char *value,
 	 * permissions normally (ie, allow if variable is USERSET, or if it's
 	 * SUSET and user is superuser).
 	 *
-	 * name is not known, but exists or can be created as a placeholder
-	 * (implying it has a prefix listed in custom_variable_classes). We allow
-	 * this case if you're a superuser, otherwise not.  Superusers are assumed
-	 * to know what they're doing.  We can't allow it for other users, because
-	 * when the placeholder is resolved it might turn out to be a SUSET
-	 * variable; define_custom_variable assumes we checked that.
+	 * name is not known, but exists or can be created as a placeholder (i.e.,
+	 * it has a prefixed name).  We allow this case if you're a superuser,
+	 * otherwise not.  Superusers are assumed to know what they're doing.
+	 * We can't allow it for other users, because when the placeholder is
+	 * resolved it might turn out to be a SUSET variable;
+	 * define_custom_variable assumes we checked that.
 	 *
 	 * name is not known and can't be created as a placeholder.  Throw error,
-	 * unless skipIfNoPermissions is true, in which case return FALSE. (It's
-	 * tempting to allow this case to superusers, if the name is qualified but
-	 * not listed in custom_variable_classes.  That would ease restoring of
-	 * dumps containing ALTER ROLE/DATABASE SET.  However, it's not clear that
-	 * this usage justifies such a loss of error checking. You can always fix
-	 * custom_variable_classes before you restore.)
+	 * unless skipIfNoPermissions is true, in which case return FALSE.
 	 */
 	gconf = find_option(name, true, WARNING);
 	if (!gconf)
@@ -7909,7 +7838,8 @@ validate_option_array_item(const char *name, const char *value,
 			return false;
 		ereport(ERROR,
 				(errcode(ERRCODE_UNDEFINED_OBJECT),
-			   errmsg("unrecognized configuration parameter \"%s\"", name)));
+				 errmsg("unrecognized configuration parameter \"%s\"",
+						name)));
 	}
 
 	if (gconf->flags & GUC_CUSTOM_PLACEHOLDER)
@@ -8259,69 +8189,6 @@ check_phony_autocommit(bool *newval, void **extra, GucSource source)
 		GUC_check_errmsg("SET AUTOCOMMIT TO OFF is no longer supported");
 		return false;
 	}
-	return true;
-}
-
-static bool
-check_custom_variable_classes(char **newval, void **extra, GucSource source)
-{
-	/*
-	 * Check syntax. newval must be a comma separated list of identifiers.
-	 * Whitespace is allowed but removed from the result.
-	 */
-	bool		hasSpaceAfterToken = false;
-	const char *cp = *newval;
-	int			symLen = 0;
-	char		c;
-	StringInfoData buf;
-
-	/* Default NULL is OK */
-	if (cp == NULL)
-		return true;
-
-	initStringInfo(&buf);
-	while ((c = *cp++) != '\0')
-	{
-		if (isspace((unsigned char) c))
-		{
-			if (symLen > 0)
-				hasSpaceAfterToken = true;
-			continue;
-		}
-
-		if (c == ',')
-		{
-			if (symLen > 0)		/* terminate identifier */
-			{
-				appendStringInfoChar(&buf, ',');
-				symLen = 0;
-			}
-			hasSpaceAfterToken = false;
-			continue;
-		}
-
-		if (hasSpaceAfterToken || !(isalnum((unsigned char) c) || c == '_'))
-		{
-			/*
-			 * Syntax error due to token following space after token or
-			 * non-identifier character
-			 */
-			pfree(buf.data);
-			return false;
-		}
-		appendStringInfoChar(&buf, c);
-		symLen++;
-	}
-
-	/* Remove stray ',' at end */
-	if (symLen == 0 && buf.len > 0)
-		buf.data[--buf.len] = '\0';
-
-	/* GUC wants the result malloc'd */
-	free(*newval);
-	*newval = guc_strdup(LOG, buf.data);
-
-	pfree(buf.data);
 	return true;
 }
 

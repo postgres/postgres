@@ -158,16 +158,14 @@ LOAD 'auto_explain';
   </variablelist>
 
   <para>
-   In order to set these parameters in your <filename>postgresql.conf</> file,
-   you will need to add <literal>auto_explain</> to
-   <xref linkend="guc-custom-variable-classes">.  Typical usage might be:
+   These parameters must be set in <filename>postgresql.conf</>.
+   Typical usage might be:
   </para>
 
 <programlisting>
 # postgresql.conf
 shared_preload_libraries = 'auto_explain'
 
-custom_variable_classes = 'auto_explain'
 auto_explain.log_min_duration = '3s'
 </programlisting>
  </sect2>

@@ -1,7 +1,7 @@
 -- Use ONLY plperlu tests here. For plperl/plerlu combined tests
 -- see plperl_plperlu.sql
 
--- Avoid need for custom_variable_classes = 'plperl'
+-- Must load plperl before we can set on_plperlu_init
 LOAD 'plperl';
 
 -- Test plperl.on_plperlu_init gets run

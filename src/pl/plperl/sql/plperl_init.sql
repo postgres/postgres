@@ -1,6 +1,6 @@
 -- test plperl.on_plperl_init errors are fatal
 
--- Avoid need for custom_variable_classes = 'plperl'
+-- Must load plperl before we can set on_plperl_init
 LOAD 'plperl';
 
 SET SESSION plperl.on_plperl_init = ' system("/nonesuch") ';

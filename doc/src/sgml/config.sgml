@@ -5940,58 +5940,25 @@ dynamic_library_path = 'C:\tools\postgresql;H:\my_project\lib;$libdir'
     <para>
      This feature was designed to allow parameters not normally known to
      <productname>PostgreSQL</productname> to be added by add-on modules
-     (such as procedural languages).  This allows add-on modules to be
+     (such as procedural languages).  This allows extension modules to be
      configured in the standard ways.
     </para>
 
-    <variablelist>
-
-     <varlistentry id="guc-custom-variable-classes" xreflabel="custom_variable_classes">
-      <term><varname>custom_variable_classes</varname> (<type>string</type>)</term>
-      <indexterm>
-       <primary><varname>custom_variable_classes</> configuration parameter</primary>
-      </indexterm>
-      <listitem>
-       <para>
-        This variable specifies one or several class names to be used for
-        custom variables, in the form of a comma-separated list. A custom
-        variable is a variable not normally known
-        to <productname>PostgreSQL</productname> proper but used by some
-        add-on module.  Such variables must have names consisting of a class
-        name, a dot, and a variable name.  <varname>custom_variable_classes</>
-        specifies all the class names in use in a particular installation.
-        This parameter can only be set in the <filename>postgresql.conf</>
-        file or on the server command line.
-       </para>
-
-      </listitem>
-     </varlistentry>
-    </variablelist>
-
     <para>
-     The difficulty with setting custom variables in
-     <filename>postgresql.conf</> is that the file must be read before add-on
-     modules have been loaded, and so custom variables would ordinarily be
-     rejected as unknown.  When <varname>custom_variable_classes</> is set,
-     the server will accept definitions of arbitrary variables within each
-     specified class.  These variables will be treated as placeholders and
-     will have no function until the module that defines them is loaded. When a
-     module for a specific class is loaded, it will add the proper variable
-     definitions for its class name, convert any placeholder
-     values according to those definitions, and issue warnings for any
-     unrecognized placeholders of its class that remain.
+     Custom options have two-part names: an extension name, then a dot, then
+     the parameter name proper, much like qualified names in SQL.  An example
+     is <literal>plpgsql.variable_conflict</>.
     </para>
 
     <para>
-     Here is an example of what <filename>postgresql.conf</> might contain
-     when using custom variables:
-
-<programlisting>
-custom_variable_classes = 'plpgsql,plperl'
-plpgsql.variable_conflict = use_variable
-plperl.use_strict = true
-plruby.use_strict = true        # generates error: unknown class name
-</programlisting>
+     Because custom options may need to be set in processes that have not
+     loaded the relevant extension module, <productname>PostgreSQL</>
+     will accept a setting for any two-part parameter name.  Such variables
+     are treated as placeholders and have no function until the module that
+     defines them is loaded. When an extension module is loaded, it will add
+     its variable definitions, convert any placeholder values according to
+     those definitions, and issue warnings for any unrecognized placeholders
+     that begin with its extension name.
     </para>
    </sect1>
 

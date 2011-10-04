@@ -4007,11 +4007,8 @@ BEGIN
     <literal>use_column</> (where <literal>error</> is the factory default).
     This parameter affects subsequent compilations
     of statements in <application>PL/pgSQL</> functions, but not statements
-    already compiled in the current session.  To set the parameter before
-    <application>PL/pgSQL</> has been loaded, it is necessary to have added
-    <quote><literal>plpgsql</></> to the <xref
-    linkend="guc-custom-variable-classes"> list in
-    <filename>postgresql.conf</filename>.  Because changing this setting
+    already compiled in the current session.
+    Because changing this setting
     can cause unexpected changes in the behavior of <application>PL/pgSQL</>
     functions, it can only be changed by a superuser.
    </para>

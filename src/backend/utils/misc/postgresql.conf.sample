@@ -560,4 +560,4 @@
 # CUSTOMIZED OPTIONS
 #------------------------------------------------------------------------------
 
-#custom_variable_classes = ''		# list of custom variable class names
+# Add settings for extensions here
