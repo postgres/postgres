@@ -3861,8 +3861,10 @@ static void
 InitializeOneGUCOption(struct config_generic * gconf)
 {
 	gconf->status = 0;
-	gconf->reset_source = PGC_S_DEFAULT;
 	gconf->source = PGC_S_DEFAULT;
+	gconf->reset_source = PGC_S_DEFAULT;
+	gconf->scontext = PGC_INTERNAL;
+	gconf->reset_scontext = PGC_INTERNAL;
 	gconf->stack = NULL;
 	gconf->extra = NULL;
 	gconf->sourcefile = NULL;
@@ -4213,6 +4215,7 @@ ResetAllOptions(void)
 		}
 
 		gconf->source = gconf->reset_source;
+		gconf->scontext = gconf->reset_scontext;
 
 		if (gconf->flags & GUC_REPORT)
 			ReportGUCOption(gconf);
@@ -4254,6 +4257,7 @@ push_old_value(struct config_generic * gconf, GucAction action)
 				if (stack->state == GUC_SET)
 				{
 					/* SET followed by SET LOCAL, remember SET's value */
+					stack->masked_scontext = gconf->scontext;
 					set_stack_value(gconf, &stack->masked);
 					stack->state = GUC_SET_LOCAL;
 				}
@@ -4291,6 +4295,7 @@ push_old_value(struct config_generic * gconf, GucAction action)
 			break;
 	}
 	stack->source = gconf->source;
+	stack->scontext = gconf->scontext;
 	set_stack_value(gconf, &stack->prior);
 
 	gconf->stack = stack;
@@ -4431,6 +4436,7 @@ AtEOXact_GUC(bool isCommit, int nestLevel)
 						if (prev->state == GUC_SET)
 						{
 							/* LOCAL migrates down */
+							prev->masked_scontext = stack->scontext;
 							prev->masked = stack->prior;
 							prev->state = GUC_SET_LOCAL;
 						}
@@ -4445,6 +4451,7 @@ AtEOXact_GUC(bool isCommit, int nestLevel)
 						/* prior state at this level no longer wanted */
 						discard_stack_value(gconf, &stack->prior);
 						/* copy down the masked state */
+						prev->masked_scontext = stack->masked_scontext;
 						if (prev->state == GUC_SET_LOCAL)
 							discard_stack_value(gconf, &prev->masked);
 						prev->masked = stack->masked;
@@ -4460,16 +4467,19 @@ AtEOXact_GUC(bool isCommit, int nestLevel)
 				/* Perform appropriate restoration of the stacked value */
 				config_var_value newvalue;
 				GucSource	newsource;
+				GucContext	newscontext;
 
 				if (restoreMasked)
 				{
 					newvalue = stack->masked;
 					newsource = PGC_S_SESSION;
+					newscontext = stack->masked_scontext;
 				}
 				else
 				{
 					newvalue = stack->prior;
 					newsource = stack->source;
+					newscontext = stack->scontext;
 				}
 
 				switch (gconf->vartype)
@@ -4581,7 +4591,9 @@ AtEOXact_GUC(bool isCommit, int nestLevel)
 				set_extra_field(gconf, &(stack->prior.extra), NULL);
 				set_extra_field(gconf, &(stack->masked.extra), NULL);
 
+				/* And restore source information */
 				gconf->source = newsource;
+				gconf->scontext = newscontext;
 			}
 
 			/* Finish popping the state stack */
@@ -5255,6 +5267,7 @@ set_config_option(const char *name, const char *value,
 					newval = conf->reset_val;
 					newextra = conf->reset_extra;
 					source = conf->gen.reset_source;
+					context = conf->gen.reset_scontext;
 				}
 
 				if (prohibitValueChange)
@@ -5282,6 +5295,7 @@ set_config_option(const char *name, const char *value,
 					set_extra_field(&conf->gen, &conf->gen.extra,
 									newextra);
 					conf->gen.source = source;
+					conf->gen.scontext = context;
 				}
 				if (makeDefault)
 				{
@@ -5293,6 +5307,7 @@ set_config_option(const char *name, const char *value,
 						set_extra_field(&conf->gen, &conf->reset_extra,
 										newextra);
 						conf->gen.reset_source = source;
+						conf->gen.reset_scontext = context;
 					}
 					for (stack = conf->gen.stack; stack; stack = stack->prev)
 					{
@@ -5302,6 +5317,7 @@ set_config_option(const char *name, const char *value,
 							set_extra_field(&conf->gen, &stack->prior.extra,
 											newextra);
 							stack->source = source;
+							stack->scontext = context;
 						}
 					}
 				}
@@ -5355,6 +5371,7 @@ set_config_option(const char *name, const char *value,
 					newval = conf->reset_val;
 					newextra = conf->reset_extra;
 					source = conf->gen.reset_source;
+					context = conf->gen.reset_scontext;
 				}
 
 				if (prohibitValueChange)
@@ -5382,6 +5399,7 @@ set_config_option(const char *name, const char *value,
 					set_extra_field(&conf->gen, &conf->gen.extra,
 									newextra);
 					conf->gen.source = source;
+					conf->gen.scontext = context;
 				}
 				if (makeDefault)
 				{
@@ -5393,6 +5411,7 @@ set_config_option(const char *name, const char *value,
 						set_extra_field(&conf->gen, &conf->reset_extra,
 										newextra);
 						conf->gen.reset_source = source;
+						conf->gen.reset_scontext = context;
 					}
 					for (stack = conf->gen.stack; stack; stack = stack->prev)
 					{
@@ -5402,6 +5421,7 @@ set_config_option(const char *name, const char *value,
 							set_extra_field(&conf->gen, &stack->prior.extra,
 											newextra);
 							stack->source = source;
+							stack->scontext = context;
 						}
 					}
 				}
@@ -5452,6 +5472,7 @@ set_config_option(const char *name, const char *value,
 					newval = conf->reset_val;
 					newextra = conf->reset_extra;
 					source = conf->gen.reset_source;
+					context = conf->gen.reset_scontext;
 				}
 
 				if (prohibitValueChange)
@@ -5479,6 +5500,7 @@ set_config_option(const char *name, const char *value,
 					set_extra_field(&conf->gen, &conf->gen.extra,
 									newextra);
 					conf->gen.source = source;
+					conf->gen.scontext = context;
 				}
 				if (makeDefault)
 				{
@@ -5490,6 +5512,7 @@ set_config_option(const char *name, const char *value,
 						set_extra_field(&conf->gen, &conf->reset_extra,
 										newextra);
 						conf->gen.reset_source = source;
+						conf->gen.reset_scontext = context;
 					}
 					for (stack = conf->gen.stack; stack; stack = stack->prev)
 					{
@@ -5499,6 +5522,7 @@ set_config_option(const char *name, const char *value,
 							set_extra_field(&conf->gen, &stack->prior.extra,
 											newextra);
 							stack->source = source;
+							stack->scontext = context;
 						}
 					}
 				}
@@ -5567,6 +5591,7 @@ set_config_option(const char *name, const char *value,
 					newval = conf->reset_val;
 					newextra = conf->reset_extra;
 					source = conf->gen.reset_source;
+					context = conf->gen.reset_scontext;
 				}
 
 				if (prohibitValueChange)
@@ -5596,6 +5621,7 @@ set_config_option(const char *name, const char *value,
 					set_extra_field(&conf->gen, &conf->gen.extra,
 									newextra);
 					conf->gen.source = source;
+					conf->gen.scontext = context;
 				}
 
 				if (makeDefault)
@@ -5608,6 +5634,7 @@ set_config_option(const char *name, const char *value,
 						set_extra_field(&conf->gen, &conf->reset_extra,
 										newextra);
 						conf->gen.reset_source = source;
+						conf->gen.reset_scontext = context;
 					}
 					for (stack = conf->gen.stack; stack; stack = stack->prev)
 					{
@@ -5618,6 +5645,7 @@ set_config_option(const char *name, const char *value,
 							set_extra_field(&conf->gen, &stack->prior.extra,
 											newextra);
 							stack->source = source;
+							stack->scontext = context;
 						}
 					}
 				}
@@ -5673,6 +5701,7 @@ set_config_option(const char *name, const char *value,
 					newval = conf->reset_val;
 					newextra = conf->reset_extra;
 					source = conf->gen.reset_source;
+					context = conf->gen.reset_scontext;
 				}
 
 				if (prohibitValueChange)
@@ -5700,6 +5729,7 @@ set_config_option(const char *name, const char *value,
 					set_extra_field(&conf->gen, &conf->gen.extra,
 									newextra);
 					conf->gen.source = source;
+					conf->gen.scontext = context;
 				}
 				if (makeDefault)
 				{
@@ -5711,6 +5741,7 @@ set_config_option(const char *name, const char *value,
 						set_extra_field(&conf->gen, &conf->reset_extra,
 										newextra);
 						conf->gen.reset_source = source;
+						conf->gen.reset_scontext = context;
 					}
 					for (stack = conf->gen.stack; stack; stack = stack->prev)
 					{
@@ -5720,6 +5751,7 @@ set_config_option(const char *name, const char *value,
 							set_extra_field(&conf->gen, &stack->prior.extra,
 											newextra);
 							stack->source = source;
+							stack->scontext = context;
 						}
 					}
 				}
@@ -6252,7 +6284,6 @@ define_custom_variable(struct config_generic * variable)
 	const char **nameAddr = &name;
 	const char *value;
 	struct config_string *pHolder;
-	GucContext	phcontext;
 	struct config_generic **res;
 
 	/*
@@ -6299,56 +6330,6 @@ define_custom_variable(struct config_generic * variable)
 	*res = variable;
 
 	/*
-	 * Infer context for assignment based on source of existing value. We
-	 * can't tell this with exact accuracy, but we can at least do something
-	 * reasonable in typical cases.
-	 */
-	switch (pHolder->gen.source)
-	{
-		case PGC_S_DEFAULT:
-		case PGC_S_DYNAMIC_DEFAULT:
-		case PGC_S_ENV_VAR:
-		case PGC_S_FILE:
-		case PGC_S_ARGV:
-
-			/*
-			 * If we got past the check in init_custom_variable, we can safely
-			 * assume that any existing value for a PGC_POSTMASTER variable
-			 * was set in postmaster context.
-			 */
-			if (variable->context == PGC_POSTMASTER)
-				phcontext = PGC_POSTMASTER;
-			else
-				phcontext = PGC_SIGHUP;
-			break;
-
-		case PGC_S_DATABASE:
-		case PGC_S_USER:
-		case PGC_S_DATABASE_USER:
-
-			/*
-			 * The existing value came from an ALTER ROLE/DATABASE SET
-			 * command. We can assume that at the time the command was issued,
-			 * we checked that the issuing user was superuser if the variable
-			 * requires superuser privileges to set.  So it's safe to use
-			 * SUSET context here.
-			 */
-			phcontext = PGC_SUSET;
-			break;
-
-		case PGC_S_CLIENT:
-		case PGC_S_SESSION:
-		default:
-
-			/*
-			 * We must assume that the value came from an untrusted user, even
-			 * if the current_user is a superuser.
-			 */
-			phcontext = PGC_USERSET;
-			break;
-	}
-
-	/*
 	 * Assign the string value stored in the placeholder to the real variable.
 	 *
 	 * XXX this is not really good enough --- it should be a nontransactional
@@ -6360,8 +6341,8 @@ define_custom_variable(struct config_generic * variable)
 	if (value)
 	{
 		if (set_config_option(name, value,
-							  phcontext, pHolder->gen.source,
-							  GUC_ACTION_SET, true) > 0)
+							  pHolder->gen.scontext, pHolder->gen.source,
+							  GUC_ACTION_SET, true) != 0)
 		{
 			/* Also copy over any saved source-location information */
 			if (pHolder->gen.sourcefile)
@@ -7284,6 +7265,7 @@ _ShowOption(struct config_generic * record, bool use_units)
  *		variable name, string, null terminated
  *		variable value, string, null terminated
  *		variable source, integer
+ *		variable scontext, integer
  */
 static void
 write_one_nondefault_variable(FILE *fp, struct config_generic * gconf)
@@ -7319,8 +7301,7 @@ write_one_nondefault_variable(FILE *fp, struct config_generic * gconf)
 			{
 				struct config_real *conf = (struct config_real *) gconf;
 
-				/* Could lose precision here? */
-				fprintf(fp, "%f", *conf->variable);
+				fprintf(fp, "%.17g", *conf->variable);
 			}
 			break;
 
@@ -7344,7 +7325,8 @@ write_one_nondefault_variable(FILE *fp, struct config_generic * gconf)
 
 	fputc(0, fp);
 
-	fwrite(&gconf->source, sizeof(gconf->source), 1, fp);
+	fwrite(&gconf->source, 1, sizeof(gconf->source), fp);
+	fwrite(&gconf->scontext, 1, sizeof(gconf->scontext), fp);
 }
 
 void
@@ -7436,7 +7418,8 @@ read_nondefault_variables(void)
 	FILE	   *fp;
 	char	   *varname,
 			   *varvalue;
-	int			varsource;
+	GucSource	varsource;
+	GucContext	varscontext;
 
 	/*
 	 * Open file
@@ -7464,11 +7447,14 @@ read_nondefault_variables(void)
 			elog(FATAL, "failed to locate variable %s in exec config params file", varname);
 		if ((varvalue = read_string_with_null(fp)) == NULL)
 			elog(FATAL, "invalid format of exec config params file");
-		if (fread(&varsource, sizeof(varsource), 1, fp) == 0)
+		if (fread(&varsource, 1, sizeof(varsource), fp) != sizeof(varsource))
+			elog(FATAL, "invalid format of exec config params file");
+		if (fread(&varscontext, 1, sizeof(varscontext), fp) != sizeof(varscontext))
 			elog(FATAL, "invalid format of exec config params file");
 
-		(void) set_config_option(varname, varvalue, record->context,
-								 varsource, GUC_ACTION_SET, true);
+		(void) set_config_option(varname, varvalue,
+								 varscontext, varsource,
+								 GUC_ACTION_SET, true);
 		free(varname);
 		free(varvalue);
 	}

@@ -1,7 +1,7 @@
 -- Use ONLY plperlu tests here. For plperl/plerlu combined tests
 -- see plperl_plperlu.sql
 
--- Must load plperl before we can set on_plperlu_init
+-- This test tests setting on_plperlu_init after loading plperl
 LOAD 'plperl';
 
 -- Test plperl.on_plperlu_init gets run

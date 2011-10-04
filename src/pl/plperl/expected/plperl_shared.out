@@ -1,7 +1,6 @@
 -- test plperl.on_plperl_init via the shared hash
 -- (must be done before plperl is first used)
--- Must load plperl before we can set on_plperl_init
-LOAD 'plperl';
+-- This test tests setting on_plperl_init before loading plperl
 -- testing on_plperl_init gets run, and that it can alter %_SHARED
 SET plperl.on_plperl_init = '$_SHARED{on_init} = 42';
 -- test the shared hash

@@ -118,9 +118,11 @@ typedef struct guc_stack
 	int			nest_level;		/* nesting depth at which we made entry */
 	GucStackState state;		/* see enum above */
 	GucSource	source;			/* source of the prior value */
+	/* masked value's source must be PGC_S_SESSION, so no need to store it */
+	GucContext	scontext;		/* context that set the prior value */
+	GucContext	masked_scontext; /* context that set the masked value */
 	config_var_value prior;		/* previous value of variable */
 	config_var_value masked;	/* SET value in a GUC_SET_LOCAL entry */
-	/* masked value's source must be PGC_S_SESSION, so no need to store it */
 } GucStack;
 
 /*
@@ -143,20 +145,20 @@ struct config_generic
 	enum config_group group;	/* to help organize variables by function */
 	const char *short_desc;		/* short desc. of this variable's purpose */
 	const char *long_desc;		/* long desc. of this variable's purpose */
-	int			flags;			/* flag bits, see below */
+	int			flags;			/* flag bits, see guc.h */
 	/* variable fields, initialized at runtime: */
 	enum config_type vartype;	/* type of variable (set only at startup) */
 	int			status;			/* status bits, see below */
-	GucSource	reset_source;	/* source of the reset_value */
 	GucSource	source;			/* source of the current actual value */
+	GucSource	reset_source;	/* source of the reset_value */
+	GucContext	scontext;		/* context that set the current value */
+	GucContext	reset_scontext;	/* context that set the reset value */
 	GucStack   *stack;			/* stacked prior values */
 	void	   *extra;			/* "extra" pointer for current actual value */
 	char	   *sourcefile;		/* file current setting is from (NULL if not
-								 * file) */
+								 * set in config file) */
 	int			sourceline;		/* line in source file */
 };
-
-/* bit values in flags field are defined in guc.h */
 
 /* bit values in status field */
 #define GUC_IS_IN_FILE		0x0001		/* found it in config file */
