@@ -6743,6 +6743,8 @@ is_newvalue_equal(struct config_generic * record, const char *newvalue)
  *
  *		variable name, string, null terminated
  *		variable value, string, null terminated
+ *		variable sourcefile, string, null terminated (empty if none)
+ *		variable sourceline, integer
  *		variable source, integer
  */
 static void
@@ -6779,8 +6781,7 @@ write_one_nondefault_variable(FILE *fp, struct config_generic * gconf)
 			{
 				struct config_real *conf = (struct config_real *) gconf;
 
-				/* Could lose precision here? */
-				fprintf(fp, "%f", *conf->variable);
+				fprintf(fp, "%.17g", *conf->variable);
 			}
 			break;
 
@@ -6804,7 +6805,12 @@ write_one_nondefault_variable(FILE *fp, struct config_generic * gconf)
 
 	fputc(0, fp);
 
-	fwrite(&gconf->source, sizeof(gconf->source), 1, fp);
+	if (gconf->sourcefile)
+		fprintf(fp, "%s", gconf->sourcefile);
+	fputc(0, fp);
+
+	fwrite(&gconf->sourceline, 1, sizeof(gconf->sourceline), fp);
+	fwrite(&gconf->source, 1, sizeof(gconf->source), fp);
 }
 
 void
@@ -6907,8 +6913,10 @@ read_nondefault_variables(void)
 {
 	FILE	   *fp;
 	char	   *varname,
-			   *varvalue;
-	int			varsource;
+			   *varvalue,
+			   *varsourcefile;
+	int			varsourceline;
+	GucSource	varsource;
 
 	/*
 	 * Open file
@@ -6933,16 +6941,26 @@ read_nondefault_variables(void)
 			break;
 
 		if ((record = find_option(varname, true, FATAL)) == NULL)
-			elog(FATAL, "failed to locate variable %s in exec config params file", varname);
+			elog(FATAL, "failed to locate variable \"%s\" in exec config params file", varname);
+
 		if ((varvalue = read_string_with_null(fp)) == NULL)
 			elog(FATAL, "invalid format of exec config params file");
-		if (fread(&varsource, sizeof(varsource), 1, fp) == 0)
+		if ((varsourcefile = read_string_with_null(fp)) == NULL)
+			elog(FATAL, "invalid format of exec config params file");
+		if (fread(&varsourceline, 1, sizeof(varsourceline), fp) != sizeof(varsourceline))
+			elog(FATAL, "invalid format of exec config params file");
+		if (fread(&varsource, 1, sizeof(varsource), fp) != sizeof(varsource))
 			elog(FATAL, "invalid format of exec config params file");
 
-		(void) set_config_option(varname, varvalue, record->context,
-								 varsource, GUC_ACTION_SET, true);
+		(void) set_config_option(varname, varvalue,
+								 record->context, varsource,
+								 GUC_ACTION_SET, true);
+		if (varsourcefile[0])
+			set_config_sourcefile(varname, varsourcefile, varsourceline);
+
 		free(varname);
 		free(varvalue);
+		free(varsourcefile);
 	}
 
 	FreeFile(fp);
