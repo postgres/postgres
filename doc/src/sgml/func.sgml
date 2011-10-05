@@ -10015,6 +10015,8 @@ SELECT ... WHERE CASE WHEN x &lt;&gt; 0 THEN y/x &gt; 1.5 ELSE false END;
 <programlisting>
 SELECT COALESCE(description, short_description, '(none)') ...
 </programlisting>
+   This returns <varname>description</> if it is not null, or
+   <varname>short_description</> if it is not null, or <literal>(none)</>.
   </para>
 
    <para>
