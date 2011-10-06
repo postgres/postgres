@@ -141,6 +141,20 @@ PostgreSQL documentation
      </varlistentry>
 
      <varlistentry>
+      <term><option>-C <replaceable>name</replaceable></option></term>
+      <listitem>
+       <para>
+        Returns the value of a named run-time parameter, and exits.
+        (See the <option>-c</> option above for details.)  This can
+        be used on a running server, and returns values from
+        <filename>postgresql.conf</>, modified by any parameters
+        supplied in this invocation.  It does not reflect parameters
+        supplied when the cluster was started.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
       <term><option>-d <replaceable>debug-level</replaceable></option></term>
       <listitem>
        <para>

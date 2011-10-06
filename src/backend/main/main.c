@@ -283,6 +283,7 @@ help(const char *progname)
 #endif
 	printf(_("  -B NBUFFERS     number of shared buffers\n"));
 	printf(_("  -c NAME=VALUE   set run-time parameter\n"));
+	printf(_("  -C NAME         return run-time parameter\n"));
 	printf(_("  -d 1-5          debugging level\n"));
 	printf(_("  -D DATADIR      database directory\n"));
 	printf(_("  -e              use European date input format (DMY)\n"));

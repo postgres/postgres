@@ -81,6 +81,7 @@ static ShutdownMode shutdown_mode = SMART_MODE;
 static int	sig = SIGTERM;		/* default */
 static CtlCommand ctl_command = NO_COMMAND;
 static char *pg_data = NULL;
+static char *pg_config = NULL;
 static char *pgdata_opt = NULL;
 static char *post_opts = NULL;
 static const char *progname;
@@ -131,6 +132,7 @@ static void do_status(void);
 static void do_promote(void);
 static void do_kill(pgpid_t pid);
 static void print_msg(const char *msg);
+static void adjust_data_dir(void);
 
 #if defined(WIN32) || defined(__CYGWIN__)
 static bool pgwin32_IsInstalled(SC_HANDLE);
@@ -1265,10 +1267,10 @@ pgwin32_CommandLine(bool registration)
 		strcat(cmdLine, "\"");
 	}
 
-	if (pg_data)
+	if (pg_config)
 	{
 		strcat(cmdLine, " -D \"");
-		strcat(cmdLine, pg_data);
+		strcat(cmdLine, pg_config);
 		strcat(cmdLine, "\"");
 	}
 
@@ -1886,6 +1888,59 @@ set_starttype(char *starttypeopt)
 }
 #endif
 
+/*
+ * adjust_data_dir
+ *
+ * If a configuration-only directory was specified, find the real data dir.
+ */
+void
+adjust_data_dir(void)
+{
+	char		cmd[MAXPGPATH], filename[MAXPGPATH], *my_exec_path;
+	FILE	   *fd;
+
+	/* If there is no postgresql.conf, it can't be a config-only dir */
+	snprintf(filename, sizeof(filename), "%s/postgresql.conf", pg_config);
+	if ((fd = fopen(filename, "r")) == NULL)
+		return;
+	fclose(fd);
+
+	/* If PG_VERSION exists, it can't be a config-only dir */
+	snprintf(filename, sizeof(filename), "%s/PG_VERSION", pg_config);
+	if ((fd = fopen(filename, "r")) != NULL)
+	{
+		fclose(fd);
+		return;
+	}
+
+	/* Must be a configuration directory, so find the data directory */
+
+	/* we use a private my_exec_path to avoid interfering with later uses */
+	if (exec_path == NULL)
+		my_exec_path = find_other_exec_or_die(argv0, "postgres", PG_BACKEND_VERSIONSTR);
+	else
+		my_exec_path = xstrdup(exec_path);
+
+	snprintf(cmd, MAXPGPATH, SYSTEMQUOTE "\"%s\" %s%s -C data_directory" SYSTEMQUOTE,
+			 my_exec_path, pgdata_opt ? pgdata_opt : "", post_opts ?
+			 post_opts : "");
+
+	fd = popen(cmd, "r");
+	if (fd == NULL || fgets(filename, sizeof(filename), fd) == NULL)
+	{
+		write_stderr(_("%s: cannot find the data directory using %s\n"), progname, my_exec_path);
+		exit(1);
+	}
+	pclose(fd);
+	free(my_exec_path);
+
+	if (strlen(filename) > 0 && filename[strlen(filename) - 1] == '\n')
+		filename[strlen(filename) - 1] = '\0';
+	free(pg_data);
+	pg_data = xstrdup(filename);
+	canonicalize_path(pg_data);
+}
+
 
 int
 main(int argc, char **argv)
@@ -2120,14 +2175,17 @@ main(int argc, char **argv)
 	}
 
 	/* Note we put any -D switch into the env var above */
-	pg_data = getenv("PGDATA");
-	if (pg_data)
+	pg_config = getenv("PGDATA");
+	if (pg_config)
 	{
-		pg_data = xstrdup(pg_data);
-		canonicalize_path(pg_data);
+		pg_config = xstrdup(pg_config);
+		canonicalize_path(pg_config);
+		pg_data = xstrdup(pg_config);
 	}
 
-	if (pg_data == NULL &&
+	adjust_data_dir();
+	
+	if (pg_config == NULL &&
 		ctl_command != KILL_COMMAND && ctl_command != UNREGISTER_COMMAND)
 	{
 		write_stderr(_("%s: no database directory specified and environment variable PGDATA unset\n"),

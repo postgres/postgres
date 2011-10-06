@@ -203,6 +203,8 @@ bool		enable_bonjour = false;
 char	   *bonjour_name;
 bool		restart_after_crash = true;
 
+char 		*output_config_variable = NULL;
+
 /* PIDs of special child processes; 0 when not running */
 static pid_t StartupPID = 0,
 			BgWriterPID = 0,
@@ -537,7 +539,7 @@ PostmasterMain(int argc, char *argv[])
 	 * tcop/postgres.c (the option sets should not conflict) and with the
 	 * common help() function in main/main.c.
 	 */
-	while ((opt = getopt(argc, argv, "A:B:bc:D:d:EeFf:h:ijk:lN:nOo:Pp:r:S:sTt:W:-:")) != -1)
+	while ((opt = getopt(argc, argv, "A:B:bc:C:D:d:EeFf:h:ijk:lN:nOo:Pp:r:S:sTt:W:-:")) != -1)
 	{
 		switch (opt)
 		{
@@ -552,6 +554,10 @@ PostmasterMain(int argc, char *argv[])
 			case 'b':
 				/* Undocumented flag used for binary upgrades */
 				IsBinaryUpgrade = true;
+				break;
+
+			case 'C':
+				output_config_variable = optarg;
 				break;
 
 			case 'D':
@@ -728,6 +734,13 @@ PostmasterMain(int argc, char *argv[])
 	if (!SelectConfigFiles(userDoption, progname))
 		ExitPostmaster(2);
 
+	if (output_config_variable != NULL)
+	{
+		/* permission is handled because the user is reading inside the data dir */
+		puts(GetConfigOption(output_config_variable, false, false));
+		ExitPostmaster(0);
+	}
+	
 	/* Verify that DataDir looks reasonable */
 	checkDataDir();
 
