@@ -299,6 +299,8 @@ pgstatindex(PG_FUNCTION_ARGS)
 		Buffer		buffer = ReadBuffer(rel, blkno);
 		BTPageStat	stat;
 
+		CHECK_FOR_INTERRUPTS();
+
 		/* scan one page */
 		stat.blkno = blkno;
 		GetBTPageStatistics(blkno, buffer, &stat);
