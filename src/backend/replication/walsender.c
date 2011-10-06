@@ -1207,6 +1207,13 @@ WalSndShutdownHandler(SIGNAL_ARGS)
 	if (MyWalSnd)
 		SetLatch(&MyWalSnd->latch);
 
+	/*
+	 * Set the standard (non-walsender) state as well, so that we can
+	 * abort things like do_pg_stop_backup().
+	 */
+	InterruptPending = true;
+	ProcDiePending = true;
+
 	errno = save_errno;
 }
 
