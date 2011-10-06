@@ -156,6 +156,8 @@ pgstatindex(PG_FUNCTION_ARGS)
 		Page		page;
 		BTPageOpaque opaque;
 
+		CHECK_FOR_INTERRUPTS();
+
 		/* Read and lock buffer */
 		buffer = ReadBuffer(rel, blkno);
 		LockBuffer(buffer, BUFFER_LOCK_SHARE);
