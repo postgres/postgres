@@ -201,9 +201,7 @@ mv /usr/local/pgsql /usr/local/pgsql.old
     <title>Install the new PostgreSQL binaries</title>
 
     <para>
-     Install the new server's binaries and support files. You can use the
-     same port numbers for both clusters, typically 5432, because the old and
-     new clusters will not be running at the same time.
+     Install the new server's binaries and support files.
     </para>
 
     <para>
@@ -340,6 +338,8 @@ pg_upgrade.exe
      Obviously, no one should be accessing the clusters during the
      upgrade.  <application>pg_upgrade</> defaults to running servers
      on port 50432 to avoid unintended client connections.
+     You can use the same port numbers for both clusters because the
+     old and new clusters will not be running at the same time.
     </para>
 
     <para>
