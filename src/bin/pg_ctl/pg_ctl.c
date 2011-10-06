@@ -1934,8 +1934,10 @@ adjust_data_dir(void)
 	pclose(fd);
 	free(my_exec_path);
 
-	if (strlen(filename) > 0 && filename[strlen(filename) - 1] == '\n')
-		filename[strlen(filename) - 1] = '\0';
+	/* Remove trailing newline */
+	if (strchr(filename, '\n') != NULL)
+		*strchr(filename, '\n') = '\0';
+
 	free(pg_data);
 	pg_data = xstrdup(filename);
 	canonicalize_path(pg_data);
