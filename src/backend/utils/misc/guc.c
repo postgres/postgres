@@ -4367,8 +4367,9 @@ AtStart_GUC(void)
 
 /*
  * Enter a new nesting level for GUC values.  This is called at subtransaction
- * start and when entering a function that has proconfig settings.	NOTE that
- * we must not risk error here, else subtransaction start will be unhappy.
+ * start, and when entering a function that has proconfig settings, and in
+ * some other places where we want to set GUC variables transiently.
+ * NOTE we must not risk error here, else subtransaction start will be unhappy.
  */
 int
 NewGUCNestLevel(void)
@@ -4378,8 +4379,9 @@ NewGUCNestLevel(void)
 
 /*
  * Do GUC processing at transaction or subtransaction commit or abort, or
- * when exiting a function that has proconfig settings.  (The name is thus
- * a bit of a misnomer; perhaps it should be ExitGUCNestLevel or some such.)
+ * when exiting a function that has proconfig settings, or when undoing a
+ * transient assignment to some GUC variables.  (The name is thus a bit of
+ * a misnomer; perhaps it should be ExitGUCNestLevel or some such.)
  * During abort, we discard all GUC settings that were applied at nesting
  * levels >= nestLevel.  nestLevel == 1 corresponds to the main transaction.
  */
@@ -4412,11 +4414,11 @@ AtEOXact_GUC(bool isCommit, int nestLevel)
 		GucStack   *stack;
 
 		/*
-		 * Process and pop each stack entry within the nest level.	To
-		 * simplify fmgr_security_definer(), we allow failure exit from a
-		 * function-with-SET-options to be recovered at the surrounding
-		 * transaction or subtransaction abort; so there could be more than
-		 * one stack entry to pop.
+		 * Process and pop each stack entry within the nest level. To simplify
+		 * fmgr_security_definer() and other places that use GUC_ACTION_SAVE,
+		 * we allow failure exit from code that uses a local nest level to be
+		 * recovered at the surrounding transaction or subtransaction abort;
+		 * so there could be more than one stack entry to pop.
 		 */
 		while ((stack = gconf->stack) != NULL &&
 			   stack->nest_level >= nestLevel)
