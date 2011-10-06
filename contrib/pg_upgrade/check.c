@@ -754,11 +754,11 @@ check_for_support_lib(ClusterInfo *cluster)
 
 	snprintf(cmd, sizeof(cmd), "\"%s/pg_config\" --pkglibdir", cluster->bindir);
 
-	if ((output = popen(cmd, "r")) == NULL)
-		pg_log(PG_FATAL, "Could not get pkglibdir data: %s\n",
-			   getErrorText(errno));
+	if ((output = popen(cmd, "r")) == NULL ||
+		fgets(libdir, sizeof(libdir), output) == NULL)
+		pg_log(PG_FATAL, "Could not get pkglibdir data using %s: %s\n",
+			   cmd, getErrorText(errno));
 
-	fgets(libdir, sizeof(libdir), output);
 
 	pclose(output);
 
@@ -787,11 +787,10 @@ get_bin_version(ClusterInfo *cluster)
 
 	snprintf(cmd, sizeof(cmd), "\"%s/pg_ctl\" --version", cluster->bindir);
 
-	if ((output = popen(cmd, "r")) == NULL)
-		pg_log(PG_FATAL, "Could not get pg_ctl version data: %s\n",
-			   getErrorText(errno));
-
-	fgets(cmd_output, sizeof(cmd_output), output);
+	if ((output = popen(cmd, "r")) == NULL ||
+		fgets(cmd_output, sizeof(cmd_output), output) == NULL)
+		pg_log(PG_FATAL, "Could not get pg_ctl version data using %s: %s\n",
+			   cmd, getErrorText(errno));
 
 	pclose(output);
 
