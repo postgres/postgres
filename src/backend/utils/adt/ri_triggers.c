@@ -2633,7 +2633,7 @@ RI_Initial_Check(Trigger *trigger, Relation fk_rel, Relation pk_rel)
 	RangeTblEntry *fkrte;
 	const char *sep;
 	int			i;
-	int			old_work_mem;
+	int			save_nestlevel;
 	char		workmembuf[32];
 	int			spi_result;
 	SPIPlanPtr	qplan;
@@ -2772,14 +2772,16 @@ RI_Initial_Check(Trigger *trigger, Relation fk_rel, Relation pk_rel)
 	 * this seems to meet the criteria for being considered a "maintenance"
 	 * operation, and accordingly we use maintenance_work_mem.
 	 *
-	 * We do the equivalent of "SET LOCAL work_mem" so that transaction abort
-	 * will restore the old value if we lose control due to an error.
+	 * We use the equivalent of a function SET option to allow the setting to
+	 * persist for exactly the duration of the check query.  guc.c also takes
+	 * care of undoing the setting on error.
 	 */
-	old_work_mem = work_mem;
+	save_nestlevel = NewGUCNestLevel();
+
 	snprintf(workmembuf, sizeof(workmembuf), "%d", maintenance_work_mem);
 	(void) set_config_option("work_mem", workmembuf,
 							 PGC_USERSET, PGC_S_SESSION,
-							 GUC_ACTION_LOCAL, true, 0);
+							 GUC_ACTION_SAVE, true, 0);
 
 	if (SPI_connect() != SPI_OK_CONNECT)
 		elog(ERROR, "SPI_connect failed");
@@ -2862,13 +2864,9 @@ RI_Initial_Check(Trigger *trigger, Relation fk_rel, Relation pk_rel)
 		elog(ERROR, "SPI_finish failed");
 
 	/*
-	 * Restore work_mem for the remainder of the current transaction. This is
-	 * another SET LOCAL, so it won't affect the session value.
+	 * Restore work_mem.
 	 */
-	snprintf(workmembuf, sizeof(workmembuf), "%d", old_work_mem);
-	(void) set_config_option("work_mem", workmembuf,
-							 PGC_USERSET, PGC_S_SESSION,
-							 GUC_ACTION_LOCAL, true, 0);
+	AtEOXact_GUC(true, save_nestlevel);
 
 	return true;
 }
