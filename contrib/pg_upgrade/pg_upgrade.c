@@ -68,6 +68,9 @@ main(int argc, char **argv)
 
 	parseCommandLine(argc, argv);
 
+	adjust_data_dir(&old_cluster);
+	adjust_data_dir(&new_cluster);
+
 	output_check_banner(&live_check);
 
 	setup(argv[0], live_check);

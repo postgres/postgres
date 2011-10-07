@@ -169,7 +169,7 @@ start_postmaster(ClusterInfo *cluster)
 	snprintf(cmd, sizeof(cmd),
 			 SYSTEMQUOTE "\"%s/pg_ctl\" -w -l \"%s\" -D \"%s\" "
 			 "-o \"-p %d %s\" start >> \"%s\" 2>&1" SYSTEMQUOTE,
-			 cluster->bindir, log_opts.filename2, cluster->pgdata, cluster->port,
+			 cluster->bindir, log_opts.filename2, cluster->pgconfig, cluster->port,
 			 (cluster->controldata.cat_ver >=
 			  BINARY_UPGRADE_SERVER_FLAG_CAT_VER) ? "-b" :
 			 "-c autovacuum=off -c autovacuum_freeze_max_age=2000000000",
@@ -208,17 +208,17 @@ stop_postmaster(bool fast)
 {
 	char		cmd[MAXPGPATH];
 	const char *bindir;
-	const char *datadir;
+	const char *configdir;
 
 	if (os_info.running_cluster == &old_cluster)
 	{
 		bindir = old_cluster.bindir;
-		datadir = old_cluster.pgdata;
+		configdir = old_cluster.pgconfig;
 	}
 	else if (os_info.running_cluster == &new_cluster)
 	{
 		bindir = new_cluster.bindir;
-		datadir = new_cluster.pgdata;
+		configdir = new_cluster.pgconfig;
 	}
 	else
 		return;					/* no cluster running */
@@ -226,7 +226,7 @@ stop_postmaster(bool fast)
 	snprintf(cmd, sizeof(cmd),
 			 SYSTEMQUOTE "\"%s/pg_ctl\" -w -l \"%s\" -D \"%s\" %s stop >> "
 			 "\"%s\" 2>&1" SYSTEMQUOTE,
-			 bindir, log_opts.filename2, datadir, fast ? "-m fast" : "",
+			 bindir, log_opts.filename2, configdir, fast ? "-m fast" : "",
 			 log_opts.filename2);
 
 	exec_prog(fast ? false : true, "%s", cmd);
