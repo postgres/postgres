@@ -62,14 +62,24 @@ extern slock_t	dummy_spinlock;
 /* This works on any architecture, since it's only talking to GCC itself. */
 #define pg_compiler_barrier()	__asm__ __volatile__("" : : : "memory")
 
-#if defined(__i386__) || defined(__x86_64__)		/* 32 or 64 bit x86 */
+#if defined(__i386__)
 
 /*
- * x86 and x86_64 do not allow loads to be reorded with other loads, or
- * stores to be reordered with other stores, but a load can be performed
- * before a subsequent store.
+ * i386 does not allow loads to be reorded with other loads, or stores to be
+ * reordered with other stores, but a load can be performed before a subsequent
+ * store.
  *
  * "lock; addl" has worked for longer than "mfence".
+ */
+#define pg_memory_barrier()		\
+	__asm__ __volatile__ ("lock; addl $0,0(%%esp)" : : : "memory")
+#define pg_read_barrier()		pg_compiler_barrier()
+#define pg_write_barrier()		pg_compiler_barrier()
+
+#elif defined(__x86_64__)		/* 64 bit x86 */
+
+/*
+ * x86_64 has similar ordering characteristics to i386.
  *
  * Technically, some x86-ish chips support uncached memory access and/or
  * special instructions that are weakly ordered.  In those cases we'd need
@@ -77,7 +87,7 @@ extern slock_t	dummy_spinlock;
  * do those things, a compiler barrier should be enough.
  */
 #define pg_memory_barrier()		\
-	__asm__ __volatile__ ("lock; addl $0,0(%%esp)" : : : "memory")
+	__asm__ __volatile__ ("lock; addl $0,0(%%rsp)" : : : "memory")
 #define pg_read_barrier()		pg_compiler_barrier()
 #define pg_write_barrier()		pg_compiler_barrier()
 
