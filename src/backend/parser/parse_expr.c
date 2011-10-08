@@ -632,12 +632,15 @@ transformAExprOp(ParseState *pstate, A_Expr *a)
 	/*
 	 * Special-case "foo = NULL" and "NULL = foo" for compatibility with
 	 * standards-broken products (like Microsoft's).  Turn these into IS NULL
-	 * exprs.
+	 * exprs. (If either side is a CaseTestExpr, then the expression was
+	 * generated internally from a CASE-WHEN expression, and
+	 * transform_null_equals does not apply.)
 	 */
 	if (Transform_null_equals &&
 		list_length(a->name) == 1 &&
 		strcmp(strVal(linitial(a->name)), "=") == 0 &&
-		(exprIsNullConstant(lexpr) || exprIsNullConstant(rexpr)))
+		(exprIsNullConstant(lexpr) || exprIsNullConstant(rexpr)) &&
+		(!IsA(lexpr, CaseTestExpr) && !IsA(rexpr, CaseTestExpr)))
 	{
 		NullTest   *n = makeNode(NullTest);
 
