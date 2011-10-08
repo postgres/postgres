@@ -507,7 +507,8 @@ postgres: <replaceable>user</> <replaceable>database</> <replaceable>host</> <re
     considering bitmap scans, because <structfield>idx_tup_read</> counts
     index entries retrieved from the index while <structfield>idx_tup_fetch</>
     counts live rows fetched from the table; the latter will be less if any
-    dead or not-yet-committed rows are fetched using the index.
+    dead or not-yet-committed rows are fetched using the index, or if any
+    heap fetches are avoided by means of an index-only scan.
    </para>
   </note>
 
