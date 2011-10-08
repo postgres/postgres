@@ -65,7 +65,7 @@ extern slock_t	dummy_spinlock;
 #if defined(__i386__)
 
 /*
- * i386 does not allow loads to be reorded with other loads, or stores to be
+ * i386 does not allow loads to be reordered with other loads, or stores to be
  * reordered with other stores, but a load can be performed before a subsequent
  * store.
  *
