@@ -95,7 +95,7 @@ static SeqScan *make_seqscan(List *qptlist, List *qpqual, Index scanrelid);
 static IndexScan *make_indexscan(List *qptlist, List *qpqual, Index scanrelid,
 			   Oid indexid, List *indexqual, List *indexqualorig,
 			   List *indexorderby, List *indexorderbyorig,
-			   ScanDirection indexscandir);
+			   ScanDirection indexscandir, bool indexonly);
 static BitmapIndexScan *make_bitmap_indexscan(Index scanrelid, Oid indexid,
 					  List *indexqual,
 					  List *indexqualorig);
@@ -1183,7 +1183,8 @@ create_indexscan_plan(PlannerInfo *root,
 							   stripped_indexquals,
 							   fixed_indexorderbys,
 							   indexorderbys,
-							   best_path->indexscandir);
+							   best_path->indexscandir,
+							   best_path->indexonly);
 
 	copy_path_costsize(&scan_plan->scan.plan, &best_path->path);
 	/* use the indexscan-specific rows estimate, not the parent rel's */
@@ -2841,7 +2842,8 @@ make_indexscan(List *qptlist,
 			   List *indexqualorig,
 			   List *indexorderby,
 			   List *indexorderbyorig,
-			   ScanDirection indexscandir)
+			   ScanDirection indexscandir,
+			   bool indexonly)
 {
 	IndexScan  *node = makeNode(IndexScan);
 	Plan	   *plan = &node->scan.plan;
@@ -2858,6 +2860,7 @@ make_indexscan(List *qptlist,
 	node->indexorderby = indexorderby;
 	node->indexorderbyorig = indexorderbyorig;
 	node->indexorderdir = indexscandir;
+	node->indexonly = indexonly;
 
 	return node;
 }

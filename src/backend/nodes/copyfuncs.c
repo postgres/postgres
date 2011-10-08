@@ -370,6 +370,7 @@ _copyIndexScan(IndexScan *from)
 	COPY_NODE_FIELD(indexorderby);
 	COPY_NODE_FIELD(indexorderbyorig);
 	COPY_SCALAR_FIELD(indexorderdir);
+	COPY_SCALAR_FIELD(indexonly);
 
 	return newnode;
 }

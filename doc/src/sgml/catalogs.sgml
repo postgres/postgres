@@ -477,6 +477,13 @@
      </row>
 
      <row>
+      <entry><structfield>amcanreturn</structfield></entry>
+      <entry><type>bool</type></entry>
+      <entry></entry>
+      <entry>Can the access method return the contents of index entries?</entry>
+     </row>
+
+     <row>
       <entry><structfield>amoptionalkey</structfield></entry>
       <entry><type>bool</type></entry>
       <entry></entry>

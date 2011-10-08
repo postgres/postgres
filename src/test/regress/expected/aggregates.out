@@ -449,12 +449,12 @@ analyze tenk1;		-- ensure we get consistent plans here
 -- Basic cases
 explain (costs off)
   select min(unique1) from tenk1;
-                      QUERY PLAN                       
--------------------------------------------------------
+                         QUERY PLAN                         
+------------------------------------------------------------
  Result
    InitPlan 1 (returns $0)
      ->  Limit
-           ->  Index Scan using tenk1_unique1 on tenk1
+           ->  Index Only Scan using tenk1_unique1 on tenk1
                  Index Cond: (unique1 IS NOT NULL)
 (5 rows)
 
@@ -466,12 +466,12 @@ select min(unique1) from tenk1;
 
 explain (costs off)
   select max(unique1) from tenk1;
-                           QUERY PLAN                           
-----------------------------------------------------------------
+                             QUERY PLAN                              
+---------------------------------------------------------------------
  Result
    InitPlan 1 (returns $0)
      ->  Limit
-           ->  Index Scan Backward using tenk1_unique1 on tenk1
+           ->  Index Only Scan Backward using tenk1_unique1 on tenk1
                  Index Cond: (unique1 IS NOT NULL)
 (5 rows)
 
@@ -488,7 +488,7 @@ explain (costs off)
  Result
    InitPlan 1 (returns $0)
      ->  Limit
-           ->  Index Scan Backward using tenk1_unique1 on tenk1
+           ->  Index Only Scan Backward using tenk1_unique1 on tenk1
                  Index Cond: ((unique1 IS NOT NULL) AND (unique1 < 42))
 (5 rows)
 
@@ -505,7 +505,7 @@ explain (costs off)
  Result
    InitPlan 1 (returns $0)
      ->  Limit
-           ->  Index Scan Backward using tenk1_unique1 on tenk1
+           ->  Index Only Scan Backward using tenk1_unique1 on tenk1
                  Index Cond: ((unique1 IS NOT NULL) AND (unique1 > 42))
 (5 rows)
 
@@ -522,7 +522,7 @@ explain (costs off)
  Result
    InitPlan 1 (returns $0)
      ->  Limit
-           ->  Index Scan Backward using tenk1_unique1 on tenk1
+           ->  Index Only Scan Backward using tenk1_unique1 on tenk1
                  Index Cond: ((unique1 IS NOT NULL) AND (unique1 > 42000))
 (5 rows)
 
@@ -535,12 +535,12 @@ select max(unique1) from tenk1 where unique1 > 42000;
 -- multi-column index (uses tenk1_thous_tenthous)
 explain (costs off)
   select max(tenthous) from tenk1 where thousand = 33;
-                                QUERY PLAN                                
---------------------------------------------------------------------------
+                                 QUERY PLAN                                 
+----------------------------------------------------------------------------
  Result
    InitPlan 1 (returns $0)
      ->  Limit
-           ->  Index Scan Backward using tenk1_thous_tenthous on tenk1
+           ->  Index Only Scan Backward using tenk1_thous_tenthous on tenk1
                  Index Cond: ((thousand = 33) AND (tenthous IS NOT NULL))
 (5 rows)
 
@@ -557,7 +557,7 @@ explain (costs off)
  Result
    InitPlan 1 (returns $0)
      ->  Limit
-           ->  Index Scan using tenk1_thous_tenthous on tenk1
+           ->  Index Only Scan using tenk1_thous_tenthous on tenk1
                  Index Cond: ((thousand = 33) AND (tenthous IS NOT NULL))
 (5 rows)
 
@@ -578,7 +578,7 @@ explain (costs off)
      ->  Result
            InitPlan 1 (returns $1)
              ->  Limit
-                   ->  Index Scan using tenk1_unique1 on tenk1
+                   ->  Index Only Scan using tenk1_unique1 on tenk1
                          Index Cond: ((unique1 IS NOT NULL) AND (unique1 > int4_tbl.f1))
 (7 rows)
 
@@ -596,12 +596,12 @@ select f1, (select min(unique1) from tenk1 where unique1 > f1) AS gt
 -- check some cases that were handled incorrectly in 8.3.0
 explain (costs off)
   select distinct max(unique2) from tenk1;
-                           QUERY PLAN                           
-----------------------------------------------------------------
+                             QUERY PLAN                              
+---------------------------------------------------------------------
  HashAggregate
    InitPlan 1 (returns $0)
      ->  Limit
-           ->  Index Scan Backward using tenk1_unique2 on tenk1
+           ->  Index Only Scan Backward using tenk1_unique2 on tenk1
                  Index Cond: (unique2 IS NOT NULL)
    ->  Result
 (6 rows)
@@ -614,13 +614,13 @@ select distinct max(unique2) from tenk1;
 
 explain (costs off)
   select max(unique2) from tenk1 order by 1;
-                           QUERY PLAN                           
-----------------------------------------------------------------
+                             QUERY PLAN                              
+---------------------------------------------------------------------
  Sort
    Sort Key: ($0)
    InitPlan 1 (returns $0)
      ->  Limit
-           ->  Index Scan Backward using tenk1_unique2 on tenk1
+           ->  Index Only Scan Backward using tenk1_unique2 on tenk1
                  Index Cond: (unique2 IS NOT NULL)
    ->  Result
 (7 rows)
@@ -633,13 +633,13 @@ select max(unique2) from tenk1 order by 1;
 
 explain (costs off)
   select max(unique2) from tenk1 order by max(unique2);
-                           QUERY PLAN                           
-----------------------------------------------------------------
+                             QUERY PLAN                              
+---------------------------------------------------------------------
  Sort
    Sort Key: ($0)
    InitPlan 1 (returns $0)
      ->  Limit
-           ->  Index Scan Backward using tenk1_unique2 on tenk1
+           ->  Index Only Scan Backward using tenk1_unique2 on tenk1
                  Index Cond: (unique2 IS NOT NULL)
    ->  Result
 (7 rows)
@@ -652,13 +652,13 @@ select max(unique2) from tenk1 order by max(unique2);
 
 explain (costs off)
   select max(unique2) from tenk1 order by max(unique2)+1;
-                           QUERY PLAN                           
-----------------------------------------------------------------
+                             QUERY PLAN                              
+---------------------------------------------------------------------
  Sort
    Sort Key: (($0 + 1))
    InitPlan 1 (returns $0)
      ->  Limit
-           ->  Index Scan Backward using tenk1_unique2 on tenk1
+           ->  Index Only Scan Backward using tenk1_unique2 on tenk1
                  Index Cond: (unique2 IS NOT NULL)
    ->  Result
 (7 rows)
@@ -671,13 +671,13 @@ select max(unique2) from tenk1 order by max(unique2)+1;
 
 explain (costs off)
   select max(unique2), generate_series(1,3) as g from tenk1 order by g desc;
-                           QUERY PLAN                           
-----------------------------------------------------------------
+                             QUERY PLAN                              
+---------------------------------------------------------------------
  Sort
    Sort Key: (generate_series(1, 3))
    InitPlan 1 (returns $0)
      ->  Limit
-           ->  Index Scan Backward using tenk1_unique2 on tenk1
+           ->  Index Only Scan Backward using tenk1_unique2 on tenk1
                  Index Cond: (unique2 IS NOT NULL)
    ->  Result
 (7 rows)
@@ -705,32 +705,32 @@ insert into minmaxtest2 values(15), (16);
 insert into minmaxtest3 values(17), (18);
 explain (costs off)
   select min(f1), max(f1) from minmaxtest;
-                                      QUERY PLAN                                      
---------------------------------------------------------------------------------------
+                                        QUERY PLAN                                         
+-------------------------------------------------------------------------------------------
  Result
    InitPlan 1 (returns $0)
      ->  Limit
            ->  Merge Append
                  Sort Key: public.minmaxtest.f1
-                 ->  Index Scan using minmaxtesti on minmaxtest
+                 ->  Index Only Scan using minmaxtesti on minmaxtest
                        Index Cond: (f1 IS NOT NULL)
-                 ->  Index Scan using minmaxtest1i on minmaxtest1 minmaxtest
+                 ->  Index Only Scan using minmaxtest1i on minmaxtest1 minmaxtest
                        Index Cond: (f1 IS NOT NULL)
-                 ->  Index Scan Backward using minmaxtest2i on minmaxtest2 minmaxtest
+                 ->  Index Only Scan Backward using minmaxtest2i on minmaxtest2 minmaxtest
                        Index Cond: (f1 IS NOT NULL)
-                 ->  Index Scan using minmaxtest3i on minmaxtest3 minmaxtest
+                 ->  Index Only Scan using minmaxtest3i on minmaxtest3 minmaxtest
                        Index Cond: (f1 IS NOT NULL)
    InitPlan 2 (returns $1)
      ->  Limit
            ->  Merge Append
                  Sort Key: public.minmaxtest.f1
-                 ->  Index Scan Backward using minmaxtesti on minmaxtest
+                 ->  Index Only Scan Backward using minmaxtesti on minmaxtest
                        Index Cond: (f1 IS NOT NULL)
-                 ->  Index Scan Backward using minmaxtest1i on minmaxtest1 minmaxtest
+                 ->  Index Only Scan Backward using minmaxtest1i on minmaxtest1 minmaxtest
                        Index Cond: (f1 IS NOT NULL)
-                 ->  Index Scan using minmaxtest2i on minmaxtest2 minmaxtest
+                 ->  Index Only Scan using minmaxtest2i on minmaxtest2 minmaxtest
                        Index Cond: (f1 IS NOT NULL)
-                 ->  Index Scan Backward using minmaxtest3i on minmaxtest3 minmaxtest
+                 ->  Index Only Scan Backward using minmaxtest3i on minmaxtest3 minmaxtest
                        Index Cond: (f1 IS NOT NULL)
 (25 rows)
 

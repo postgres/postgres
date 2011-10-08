@@ -31,7 +31,7 @@ typedef enum
 } PVCPlaceHolderBehavior;
 
 extern Relids pull_varnos(Node *node);
-extern void pull_varattnos(Node *node, Bitmapset **varattnos);
+extern void pull_varattnos(Node *node, Index varno, Bitmapset **varattnos);
 extern bool contain_var_clause(Node *node);
 extern bool contain_vars_of_level(Node *node, int levelsup);
 extern int	locate_var_of_level(Node *node, int levelsup);

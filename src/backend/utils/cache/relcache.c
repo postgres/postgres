@@ -3684,10 +3684,10 @@ RelationGetIndexAttrBitmap(Relation relation)
 		}
 
 		/* Collect all attributes used in expressions, too */
-		pull_varattnos((Node *) indexInfo->ii_Expressions, &indexattrs);
+		pull_varattnos((Node *) indexInfo->ii_Expressions, 1, &indexattrs);
 
 		/* Collect all attributes in the index predicate, too */
-		pull_varattnos((Node *) indexInfo->ii_Predicate, &indexattrs);
+		pull_varattnos((Node *) indexInfo->ii_Predicate, 1, &indexattrs);
 
 		index_close(indexDesc, AccessShareLock);
 	}

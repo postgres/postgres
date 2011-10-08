@@ -73,6 +73,7 @@ static void btvacuumscan(IndexVacuumInfo *info, IndexBulkDeleteResult *stats,
 			 BTCycleId cycleid);
 static void btvacuumpage(BTVacState *vstate, BlockNumber blkno,
 			 BlockNumber orig_blkno);
+static IndexTuple bt_getindextuple(IndexScanDesc scan);
 
 
 /*
@@ -310,7 +311,92 @@ btgettuple(PG_FUNCTION_ARGS)
 	else
 		res = _bt_first(scan, dir);
 
+	/* Return the whole index tuple if requested */
+	if (scan->xs_want_itup)
+	{
+		/* First, free the last one ... */
+		if (scan->xs_itup != NULL)
+		{
+			pfree(scan->xs_itup);
+			scan->xs_itup = NULL;
+		}
+
+		if (res)
+			scan->xs_itup = bt_getindextuple(scan);
+	}
+
 	PG_RETURN_BOOL(res);
+}
+
+/*
+ * bt_getindextuple - fetch index tuple at current position.
+ *
+ * This can fail to find the tuple if new tuples have been inserted on the
+ * index page since we stepped onto the page.  NULL is returned in that case.
+ * (We could try a bit harder by searching for the TID; but if insertions
+ * are happening, it's reasonably likely that an index-only scan will fail
+ * anyway because of visibility.  So probably not worth the trouble.)
+ *
+ * The tuple returned is a palloc'd copy, so that we don't need to keep a
+ * lock on the index page.
+ *
+ * The caller must have pin on so->currPos.buf.
+ */
+static IndexTuple
+bt_getindextuple(IndexScanDesc scan)
+{
+	BTScanOpaque so = (BTScanOpaque) scan->opaque;
+	Page		page;
+	BTPageOpaque opaque;
+	OffsetNumber minoff;
+	OffsetNumber maxoff;
+	int			itemIndex;
+	OffsetNumber offnum;
+	IndexTuple	ituple,
+				result;
+
+	Assert(BufferIsValid(so->currPos.buf));
+
+	LockBuffer(so->currPos.buf, BT_READ);
+
+	/* Locate the tuple, being paranoid about possibility the page changed */
+	page = BufferGetPage(so->currPos.buf);
+	opaque = (BTPageOpaque) PageGetSpecialPointer(page);
+	minoff = P_FIRSTDATAKEY(opaque);
+	maxoff = PageGetMaxOffsetNumber(page);
+
+	itemIndex = so->currPos.itemIndex;
+	/* pure paranoia */
+	Assert(itemIndex >= so->currPos.firstItem &&
+		   itemIndex <= so->currPos.lastItem);
+
+	offnum = so->currPos.items[itemIndex].indexOffset;
+	if (offnum < minoff || offnum > maxoff)
+	{
+		/* should never happen, since we have pin on page, but be careful */
+		LockBuffer(so->currPos.buf, BUFFER_LOCK_UNLOCK);
+		return NULL;
+	}
+
+	ituple = (IndexTuple) PageGetItem(page, PageGetItemId(page, offnum));
+
+	if (ItemPointerEquals(&ituple->t_tid, &scan->xs_ctup.t_self))
+	{
+		/* yup, it's the desired tuple, so make a copy */
+		Size	itupsz = IndexTupleSize(ituple);
+
+		result = palloc(itupsz);
+		memcpy(result, ituple, itupsz);
+	}
+	else
+	{
+		/* oops, it got moved */
+		result = NULL;
+	}
+
+	LockBuffer(so->currPos.buf, BUFFER_LOCK_UNLOCK);
+
+	return result;
 }
 
 /*
@@ -463,6 +549,12 @@ btendscan(PG_FUNCTION_ARGS)
 	if (so->keyData != NULL)
 		pfree(so->keyData);
 	pfree(so);
+
+	if (scan->xs_itup != NULL)
+	{
+		pfree(scan->xs_itup);
+		scan->xs_itup = NULL;
+	}
 
 	PG_RETURN_VOID();
 }

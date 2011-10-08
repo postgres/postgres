@@ -1226,6 +1226,7 @@ typedef struct
  *		RuntimeContext	   expr context for evaling runtime Skeys
  *		RelationDesc	   index relation descriptor
  *		ScanDesc		   index scan descriptor
+ *		VMBuffer		   buffer in use for visibility map testing, if any
  * ----------------
  */
 typedef struct IndexScanState
@@ -1242,6 +1243,7 @@ typedef struct IndexScanState
 	ExprContext *iss_RuntimeContext;
 	Relation	iss_RelationDesc;
 	IndexScanDesc iss_ScanDesc;
+	Buffer		iss_VMBuffer;
 } IndexScanState;
 
 /* ----------------

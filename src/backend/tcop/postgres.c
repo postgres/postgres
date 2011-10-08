@@ -3065,7 +3065,7 @@ set_debug_options(int debug_flag, GucContext context, GucSource source)
 bool
 set_plan_disabling_options(const char *arg, GucContext context, GucSource source)
 {
-	char	   *tmp = NULL;
+	const char *tmp = NULL;
 
 	switch (arg[0])
 	{
@@ -3074,6 +3074,9 @@ set_plan_disabling_options(const char *arg, GucContext context, GucSource source
 			break;
 		case 'i':				/* indexscan */
 			tmp = "enable_indexscan";
+			break;
+		case 'o':				/* indexonlyscan */
+			tmp = "enable_indexonlyscan";
 			break;
 		case 'b':				/* bitmapscan */
 			tmp = "enable_bitmapscan";

@@ -93,6 +93,8 @@ RelationGetIndexScan(Relation indexRelation, int nkeys, int norderbys)
 	else
 		scan->orderByData = NULL;
 
+	scan->xs_want_itup = false;			/* may be set later */
+
 	/*
 	 * During recovery we ignore killed tuples and don't bother to kill them
 	 * either. We do this because the xmin on the primary node could easily be
@@ -108,6 +110,8 @@ RelationGetIndexScan(Relation indexRelation, int nkeys, int norderbys)
 	scan->ignore_killed_tuples = !scan->xactStartedInRecovery;
 
 	scan->opaque = NULL;
+
+	scan->xs_itup = NULL;
 
 	ItemPointerSetInvalid(&scan->xs_ctup.t_self);
 	scan->xs_ctup.t_data = NULL;

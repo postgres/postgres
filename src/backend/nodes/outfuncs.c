@@ -447,6 +447,7 @@ _outIndexScan(StringInfo str, IndexScan *node)
 	WRITE_NODE_FIELD(indexorderby);
 	WRITE_NODE_FIELD(indexorderbyorig);
 	WRITE_ENUM_FIELD(indexorderdir, ScanDirection);
+	WRITE_BOOL_FIELD(indexonly);
 }
 
 static void
@@ -1500,6 +1501,7 @@ _outIndexPath(StringInfo str, IndexPath *node)
 	WRITE_NODE_FIELD(indexorderbys);
 	WRITE_BOOL_FIELD(isjoininner);
 	WRITE_ENUM_FIELD(indexscandir, ScanDirection);
+	WRITE_BOOL_FIELD(indexonly);
 	WRITE_FLOAT_FIELD(indextotalcost, "%.2f");
 	WRITE_FLOAT_FIELD(indexselectivity, "%.4f");
 	WRITE_FLOAT_FIELD(rows, "%.0f");

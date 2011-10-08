@@ -134,6 +134,11 @@
    <structfield>amsearchnulls</structfield>, indicating that it supports
    <literal>IS NULL</> and <literal>IS NOT NULL</> clauses as search
    conditions.
+   An index method can also set <structfield>amcanreturn</structfield>,
+   indicating that it can support <firstterm>index-only scans</> by returning
+   the indexed column values for an index entry in the form of an IndexTuple.
+   (An example of an index AM that cannot do this is hash, which stores only
+   the hash values not the original data.)
   </para>
 
  </sect1>
@@ -386,6 +391,18 @@ amgettuple (IndexScanDesc scan,
   </para>
 
   <para>
+   If the access method supports index-only scans (i.e.,
+   <structfield>amcanreturn</structfield> is TRUE in its <structname>pg_am</>
+   row), then on success it must also check
+   <literal>scan-&gt;xs_want_itup</>, and if that is true it should return
+   the original indexed data for the index entry, in the form of an
+   <structname>IndexTuple</> stored at <literal>scan-&gt;xs_itup</>.  However,
+   it is permissible for the access method to sometimes fail to provide this
+   data, in which case it must set <literal>scan-&gt;xs_itup</> to NULL.  That
+   will result in a regular heap fetch occurring.
+  </para>
+
+  <para>
    The <function>amgettuple</> function need only be provided if the access
    method supports <quote>plain</> index scans.  If it doesn't, the
    <structfield>amgettuple</> field in its <structname>pg_am</> row must
@@ -582,6 +599,15 @@ amrestrpos (IndexScanDesc scan);
   </para>
 
   <para>
+   If the index stores the original indexed data values (and not some lossy
+   representation of them), it is useful to support index-only scans, in
+   which the index returns the actual data not just the TID of the heap tuple.
+   This will only work if the visibility map shows that the TID is on an
+   all-visible page; else the heap tuple must be visited anyway to check
+   MVCC visibility.  But that is no concern of the access method's.
+  </para>
+
+  <para>
    Instead of using <function>amgettuple</>, an index scan can be done with
    <function>amgetbitmap</> to fetch all tuples in one call.  This can be
    noticeably more efficient than <function>amgettuple</> because it allows
@@ -593,7 +619,11 @@ amrestrpos (IndexScanDesc scan);
    supported. Secondly, the tuples are returned in a bitmap which doesn't
    have any specific ordering, which is why <function>amgetbitmap</> doesn't
    take a <literal>direction</> argument.  (Ordering operators will never be
-   supplied for such a scan, either.)  Finally, <function>amgetbitmap</>
+   supplied for such a scan, either.)
+   Also, there is no provision for index-only scans with
+   <function>amgetbitmap</>, since there is no way to return the contents of
+   index tuples.
+   Finally, <function>amgetbitmap</>
    does not guarantee any locking of the returned tuples, with implications
    spelled out in <xref linkend="index-locking">.
   </para>

@@ -25,8 +25,8 @@
 #include "optimizer/paths.h"
 #include "optimizer/tlist.h"
 #include "parser/parsetree.h"
-#include "utils/selfuncs.h"
 #include "utils/lsyscache.h"
+#include "utils/selfuncs.h"
 
 
 static List *translate_sub_tlist(List *tlist, int relid);
@@ -418,6 +418,7 @@ create_seqscan_path(PlannerInfo *root, RelOptInfo *rel)
  * 'indexscandir' is ForwardScanDirection or BackwardScanDirection
  *			for an ordered index, or NoMovementScanDirection for
  *			an unordered index.
+ * 'indexonly' is true if an index-only scan is wanted.
  * 'outer_rel' is the outer relation if this is a join inner indexscan path.
  *			(pathkeys and indexscandir are ignored if so.)	NULL if not.
  *
@@ -430,6 +431,7 @@ create_index_path(PlannerInfo *root,
 				  List *indexorderbys,
 				  List *pathkeys,
 				  ScanDirection indexscandir,
+				  bool indexonly,
 				  RelOptInfo *outer_rel)
 {
 	IndexPath  *pathnode = makeNode(IndexPath);
@@ -468,6 +470,7 @@ create_index_path(PlannerInfo *root,
 
 	pathnode->isjoininner = (outer_rel != NULL);
 	pathnode->indexscandir = indexscandir;
+	pathnode->indexonly = indexonly;
 
 	if (outer_rel != NULL)
 	{
@@ -506,7 +509,8 @@ create_index_path(PlannerInfo *root,
 		pathnode->rows = rel->rows;
 	}
 
-	cost_index(pathnode, root, index, indexquals, indexorderbys, outer_rel);
+	cost_index(pathnode, root, index, indexquals, indexorderbys,
+			   indexonly, outer_rel);
 
 	return pathnode;
 }

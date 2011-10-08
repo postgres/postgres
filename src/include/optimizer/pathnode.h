@@ -34,6 +34,7 @@ extern IndexPath *create_index_path(PlannerInfo *root,
 				  List *indexorderbys,
 				  List *pathkeys,
 				  ScanDirection indexscandir,
+				  bool indexonly,
 				  RelOptInfo *outer_rel);
 extern BitmapHeapPath *create_bitmap_heap_path(PlannerInfo *root,
 						RelOptInfo *rel,

@@ -18,6 +18,7 @@
 #include <math.h>
 
 #include "access/skey.h"
+#include "access/sysattr.h"
 #include "catalog/pg_am.h"
 #include "catalog/pg_collation.h"
 #include "catalog/pg_operator.h"
@@ -88,6 +89,7 @@ static PathClauseUsage *classify_index_clause_usage(Path *path,
 							List **clauselist);
 static void find_indexpath_quals(Path *bitmapqual, List **quals, List **preds);
 static int	find_list_position(Node *node, List **nodelist);
+static bool check_index_only(RelOptInfo *rel, IndexOptInfo *index);
 static List *group_clauses_by_indexkey(IndexOptInfo *index,
 						  List *clauses, List *outer_clauses,
 						  Relids outer_relids,
@@ -314,6 +316,8 @@ find_usable_indexes(PlannerInfo *root, RelOptInfo *rel,
 		bool		useful_predicate;
 		bool		found_clause;
 		bool		index_is_ordered;
+		bool		index_only_scan = false;
+		bool		checked_index_only = false;
 
 		/*
 		 * Check that index supports the desired scan type(s)
@@ -438,6 +442,10 @@ find_usable_indexes(PlannerInfo *root, RelOptInfo *rel,
 		 */
 		if (found_clause || useful_pathkeys != NIL || useful_predicate)
 		{
+			/* First, detect whether index-only scan is possible */
+			index_only_scan = check_index_only(rel, index);
+			checked_index_only = true;
+
 			ipath = create_index_path(root, index,
 									  restrictclauses,
 									  orderbyclauses,
@@ -445,6 +453,7 @@ find_usable_indexes(PlannerInfo *root, RelOptInfo *rel,
 									  index_is_ordered ?
 									  ForwardScanDirection :
 									  NoMovementScanDirection,
+									  index_only_scan,
 									  outer_rel);
 			result = lappend(result, ipath);
 		}
@@ -462,11 +471,15 @@ find_usable_indexes(PlannerInfo *root, RelOptInfo *rel,
 														index_pathkeys);
 			if (useful_pathkeys != NIL)
 			{
+				if (!checked_index_only)
+					index_only_scan = check_index_only(rel, index);
+
 				ipath = create_index_path(root, index,
 										  restrictclauses,
 										  NIL,
 										  useful_pathkeys,
 										  BackwardScanDirection,
+										  index_only_scan,
 										  outer_rel);
 				result = lappend(result, ipath);
 			}
@@ -1037,6 +1050,82 @@ find_list_position(Node *node, List **nodelist)
 	*nodelist = lappend(*nodelist, node);
 
 	return i;
+}
+
+
+/*
+ * check_index_only
+ *		Determine whether an index-only scan is possible for this index.
+ */
+static bool
+check_index_only(RelOptInfo *rel, IndexOptInfo *index)
+{
+	bool		result;
+	Bitmapset  *attrs_used = NULL;
+	Bitmapset  *index_attrs = NULL;
+	ListCell   *lc;
+	int			i;
+
+	/* Index-only scans must be enabled, and AM must be capable of it */
+	if (!enable_indexonlyscan)
+		return false;
+	if (!index->amcanreturn)
+		return false;
+
+	/*
+	 * Check that all needed attributes of the relation are available from
+	 * the index.
+	 *
+	 * XXX this is overly conservative for partial indexes, since we will
+	 * consider attributes involved in the index predicate as required even
+	 * though the predicate won't need to be checked at runtime.  (The same
+	 * is true for attributes used only in index quals, if we are certain
+	 * that the index is not lossy.)  However, it would be quite expensive
+	 * to determine that accurately at this point, so for now we take the
+	 * easy way out.
+	 */
+
+	/*
+	 * Add all the attributes needed for joins or final output.  Note: we must
+	 * look at reltargetlist, not the attr_needed data, because attr_needed
+	 * isn't computed for inheritance child rels.
+	 */
+	pull_varattnos((Node *) rel->reltargetlist, rel->relid, &attrs_used);
+
+	/* Add all the attributes used by restriction clauses. */
+	foreach(lc, rel->baserestrictinfo)
+	{
+		RestrictInfo   *rinfo = (RestrictInfo *) lfirst(lc);
+
+		pull_varattnos((Node *) rinfo->clause, rel->relid, &attrs_used);
+	}
+
+	/* Construct a bitmapset of columns stored in the index. */
+	for (i = 0; i < index->ncolumns; i++)
+	{
+		int		attno = index->indexkeys[i];
+
+		/*
+		 * For the moment, we just ignore index expressions.  It might be nice
+		 * to do something with them, later.  We also ignore index columns
+		 * that are system columns (such as OID), because the virtual-tuple
+		 * coding used by IndexStoreHeapTuple() can't deal with them.
+		 */
+		if (attno <= 0)
+			continue;
+
+		index_attrs =
+			bms_add_member(index_attrs,
+						   attno - FirstLowInvalidHeapAttributeNumber);
+	}
+
+	/* Do we have all the necessary attributes? */
+	result = bms_is_subset(attrs_used, index_attrs);
+
+	bms_free(attrs_used);
+	bms_free(index_attrs);
+
+	return result;
 }
 
 

@@ -300,6 +300,10 @@ typedef Scan SeqScan;
  * that the sort ordering is fully determinable from the top-level operators.
  * indexorderbyorig is unused at run time, but is needed for EXPLAIN.
  * (Note these fields are used for amcanorderbyop cases, not amcanorder cases.)
+ *
+ * indexorderdir specifies the scan ordering, for indexscans on amcanorder
+ * indexes (for other indexes it should be "don't care").  indexonly specifies
+ * an index-only scan, for indexscans on amcanreturn indexes.
  * ----------------
  */
 typedef struct IndexScan
@@ -311,6 +315,7 @@ typedef struct IndexScan
 	List	   *indexorderby;	/* list of index ORDER BY exprs */
 	List	   *indexorderbyorig;		/* the same in original form */
 	ScanDirection indexorderdir;	/* forward or backward or don't care */
+	bool		indexonly;		/* attempt to skip heap fetches? */
 } IndexScan;
 
 /* ----------------

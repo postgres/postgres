@@ -36,6 +36,12 @@ typedef struct
 
 typedef struct
 {
+	Bitmapset  *varattnos;
+	Index		varno;
+} pull_varattnos_context;
+
+typedef struct
+{
 	int			var_location;
 	int			sublevels_up;
 } locate_var_of_level_context;
@@ -70,7 +76,7 @@ typedef struct
 
 static bool pull_varnos_walker(Node *node,
 				   pull_varnos_context *context);
-static bool pull_varattnos_walker(Node *node, Bitmapset **varattnos);
+static bool pull_varattnos_walker(Node *node, pull_varattnos_context *context);
 static bool contain_var_clause_walker(Node *node, void *context);
 static bool contain_vars_of_level_walker(Node *node, int *sublevels_up);
 static bool locate_var_of_level_walker(Node *node,
@@ -177,23 +183,31 @@ pull_varnos_walker(Node *node, pull_varnos_context *context)
  * pull_varattnos
  *		Find all the distinct attribute numbers present in an expression tree,
  *		and add them to the initial contents of *varattnos.
- *		Only Vars that reference RTE 1 of rtable level zero are considered.
+ *		Only Vars of the given varno and rtable level zero are considered.
  *
  * Attribute numbers are offset by FirstLowInvalidHeapAttributeNumber so that
  * we can include system attributes (e.g., OID) in the bitmap representation.
  *
- * Currently, this does not support subqueries nor expressions containing
- * references to multiple tables; not needed since it's only applied to
- * index expressions and predicates.
+ * Currently, this does not support unplanned subqueries; that is not needed
+ * for current uses.  It will handle already-planned SubPlan nodes, though,
+ * looking into only the "testexpr" and the "args" list.  (The subplan cannot
+ * contain any other references to Vars of the current level.)
  */
 void
-pull_varattnos(Node *node, Bitmapset **varattnos)
+pull_varattnos(Node *node, Index varno, Bitmapset **varattnos)
 {
-	(void) pull_varattnos_walker(node, varattnos);
+	pull_varattnos_context context;
+
+	context.varattnos = *varattnos;
+	context.varno = varno;
+
+	(void) pull_varattnos_walker(node, &context);
+
+	*varattnos = context.varattnos;
 }
 
 static bool
-pull_varattnos_walker(Node *node, Bitmapset **varattnos)
+pull_varattnos_walker(Node *node, pull_varattnos_context *context)
 {
 	if (node == NULL)
 		return false;
@@ -201,17 +215,18 @@ pull_varattnos_walker(Node *node, Bitmapset **varattnos)
 	{
 		Var		   *var = (Var *) node;
 
-		Assert(var->varno == 1);
-		*varattnos = bms_add_member(*varattnos,
-						 var->varattno - FirstLowInvalidHeapAttributeNumber);
+		if (var->varno == context->varno && var->varlevelsup == 0)
+			context->varattnos =
+				bms_add_member(context->varattnos,
+							   var->varattno - FirstLowInvalidHeapAttributeNumber);
 		return false;
 	}
-	/* Should not find a subquery or subplan */
+
+	/* Should not find an unplanned subquery */
 	Assert(!IsA(node, Query));
-	Assert(!IsA(node, SubPlan));
 
 	return expression_tree_walker(node, pull_varattnos_walker,
-								  (void *) varattnos);
+								  (void *) context);
 }
 
 

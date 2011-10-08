@@ -26,6 +26,7 @@
 
 #include "access/nbtree.h"
 #include "access/relscan.h"
+#include "access/visibilitymap.h"
 #include "executor/execdebug.h"
 #include "executor/nodeIndexscan.h"
 #include "optimizer/clauses.h"
@@ -36,6 +37,7 @@
 
 
 static TupleTableSlot *IndexNext(IndexScanState *node);
+static void IndexStoreHeapTuple(TupleTableSlot *slot, IndexScanDesc scandesc);
 
 
 /* ----------------------------------------------------------------
@@ -54,6 +56,7 @@ IndexNext(IndexScanState *node)
 	IndexScanDesc scandesc;
 	HeapTuple	tuple;
 	TupleTableSlot *slot;
+	ItemPointer tid;
 
 	/*
 	 * extract necessary information from index scan node
@@ -73,19 +76,63 @@ IndexNext(IndexScanState *node)
 	slot = node->ss.ss_ScanTupleSlot;
 
 	/*
-	 * ok, now that we have what we need, fetch the next tuple.
+	 * OK, now that we have what we need, fetch the next TID.
 	 */
-	while ((tuple = index_getnext(scandesc, direction)) != NULL)
+	while ((tid = index_getnext_tid(scandesc, direction)) != NULL)
 	{
 		/*
-		 * Store the scanned tuple in the scan tuple slot of the scan state.
-		 * Note: we pass 'false' because tuples returned by amgetnext are
-		 * pointers onto disk pages and must not be pfree()'d.
+		 * Attempt index-only scan, if possible.  For this, we need to have
+		 * gotten an index tuple from the AM, and we need the TID to reference
+		 * a heap page on which all tuples are known visible to everybody.
+		 * If that's the case, we don't need to visit the heap page for tuple
+		 * visibility testing, and we don't need any column values that are
+		 * not available from the index.
+		 *
+		 * Note: in the index-only path, we are still holding pin on the
+		 * scan's xs_cbuf, ie, the previously visited heap page.  It's not
+		 * clear whether it'd be better to release that pin.
 		 */
-		ExecStoreTuple(tuple,	/* tuple to store */
-					   slot,	/* slot to store in */
-					   scandesc->xs_cbuf,		/* buffer containing tuple */
-					   false);	/* don't pfree */
+		if (scandesc->xs_itup != NULL &&
+			visibilitymap_test(scandesc->heapRelation,
+							   ItemPointerGetBlockNumber(tid),
+							   &node->iss_VMBuffer))
+		{
+			/*
+			 * Convert index tuple to look like a heap tuple, and store the
+			 * results in the scan tuple slot.
+			 */
+			IndexStoreHeapTuple(slot, scandesc);
+		}
+		else
+		{
+			/* Index-only approach not possible, so fetch heap tuple. */
+			tuple = index_fetch_heap(scandesc);
+
+			/* Tuple might not be visible. */
+			if (tuple == NULL)
+				continue;
+
+			/*
+			 * Only MVCC snapshots are supported here, so there should be no
+			 * need to keep following the HOT chain once a visible entry has
+			 * been found.  If we did want to allow that, we'd need to keep
+			 * more state to remember not to call index_getnext_tid next time.
+			 */
+			if (scandesc->xs_continue_hot)
+				elog(ERROR, "unsupported use of non-MVCC snapshot in executor");
+
+			/*
+			 * Store the scanned tuple in the scan tuple slot of the scan
+			 * state.
+			 *
+			 * Note: we pass 'false' because tuples returned by amgetnext are
+			 * pointers onto disk pages and must not be pfree()'d.
+			 */
+			ExecStoreTuple(tuple,	/* tuple to store */
+						   slot,	/* slot to store in */
+						   scandesc->xs_cbuf,	/* buffer containing tuple */
+						   false);	/* don't pfree */
+		}
 
 		/*
 		 * If the index was lossy, we have to recheck the index quals using
@@ -111,6 +158,53 @@ IndexNext(IndexScanState *node)
 	 * the scan..
 	 */
 	return ExecClearTuple(slot);
+}
+
+/*
+ * IndexStoreHeapTuple
+ *
+ *		When performing an index-only scan, we build a faux heap tuple
+ *		from the index tuple.  Columns not present in the index are set to
+ *		NULL, which is OK because we know they won't be referenced.
+ *
+ *		The faux tuple is built as a virtual tuple that depends on the
+ *		scandesc's xs_itup, so that must remain valid for as long as we
+ *		need the slot contents.
+ */
+static void
+IndexStoreHeapTuple(TupleTableSlot *slot, IndexScanDesc scandesc)
+{
+	Form_pg_index indexForm = scandesc->indexRelation->rd_index;
+	TupleDesc	indexDesc = RelationGetDescr(scandesc->indexRelation);
+	int			nindexatts = indexDesc->natts;
+	int			nheapatts = slot->tts_tupleDescriptor->natts;
+	Datum	   *values = slot->tts_values;
+	bool	   *isnull = slot->tts_isnull;
+	int			i;
+
+	/* We must first set the slot to empty, and mark all columns as null */
+	ExecClearTuple(slot);
+
+	memset(isnull, true, nheapatts * sizeof(bool));
+
+	/* Transpose index tuple into heap tuple. */
+	for (i = 0; i < nindexatts; i++)
+	{
+		int		indexatt = indexForm->indkey.values[i];
+
+		/* Ignore expression columns, as well as system attributes */
+		if (indexatt <= 0)
+			continue;
+
+		Assert(indexatt <= nheapatts);
+
+		values[indexatt - 1] = index_getattr(scandesc->xs_itup, i + 1,
+											 indexDesc,
+											 &isnull[indexatt - 1]);
+	}
+
+	/* And now we can mark the slot as holding a virtual tuple. */
+	ExecStoreVirtualTuple(slot);
 }
 
 /*
@@ -399,6 +493,13 @@ ExecEndIndexScan(IndexScanState *node)
 	indexScanDesc = node->iss_ScanDesc;
 	relation = node->ss.ss_currentRelation;
 
+	/* Release VM buffer pin, if any. */
+	if (node->iss_VMBuffer != InvalidBuffer)
+	{
+		ReleaseBuffer(node->iss_VMBuffer);
+		node->iss_VMBuffer = InvalidBuffer;
+	}
+
 	/*
 	 * Free the exprcontext(s) ... now dead code, see ExecFreeExprContext
 	 */
@@ -610,6 +711,10 @@ ExecInitIndexScan(IndexScan *node, EState *estate, int eflags)
 											   estate->es_snapshot,
 											   indexstate->iss_NumScanKeys,
 											 indexstate->iss_NumOrderByKeys);
+
+	/* Prepare for possible index-only scan */
+	indexstate->iss_ScanDesc->xs_want_itup = node->indexonly;
+	indexstate->iss_VMBuffer = InvalidBuffer;
 
 	/*
 	 * If no run-time keys to calculate, go ahead and pass the scankeys to the

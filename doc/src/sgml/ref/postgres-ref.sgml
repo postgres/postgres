@@ -376,12 +376,15 @@ PostgreSQL documentation
 
     <variablelist>
      <varlistentry>
-      <term><option>-f</option> <literal>{ s | i | m | n | h }</literal></term>
+      <term><option>-f</option> <literal>{ s | i | o | b | t | n | m | h }</literal></term>
       <listitem>
        <para>
         Forbids the use of particular scan and join methods:
         <literal>s</literal> and <literal>i</literal>
-        disable sequential and index scans respectively, while
+        disable sequential and index scans respectively,
+        <literal>o</literal>, <literal>b</literal> and <literal>t</literal>
+        disable index-only scans, bitmap index scans, and TID scans
+        respectively, while
         <literal>n</literal>, <literal>m</literal>, and <literal>h</literal>
         disable nested-loop, merge and hash joins respectively.
        </para>

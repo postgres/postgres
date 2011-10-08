@@ -482,6 +482,7 @@ typedef struct IndexOptInfo
 	bool		unique;			/* true if a unique index */
 	bool		hypothetical;	/* true if index doesn't really exist */
 	bool		amcanorderbyop; /* does AM support order by operator result? */
+	bool		amcanreturn;	/* does AM know how to return tuples? */
 	bool		amoptionalkey;	/* can query omit key for the first column? */
 	bool		amsearchnulls;	/* can AM search for NULL/NOT NULL entries? */
 	bool		amhasgettuple;	/* does AM have amgettuple interface? */
@@ -672,6 +673,10 @@ typedef struct Path
  * NoMovementScanDirection for an indexscan, but the planner wants to
  * distinguish ordered from unordered indexes for building pathkeys.)
  *
+ * 'indexonly' is TRUE for an index-only scan, that is, the index's access
+ * method has amcanreturn = TRUE and we only need columns available from the
+ * index.
+ *
  * 'indextotalcost' and 'indexselectivity' are saved in the IndexPath so that
  * we need not recompute them when considering using the same index in a
  * bitmap index/heap scan (see BitmapHeapPath).  The costs of the IndexPath
@@ -693,6 +698,7 @@ typedef struct IndexPath
 	List	   *indexorderbys;
 	bool		isjoininner;
 	ScanDirection indexscandir;
+	bool		indexonly;
 	Cost		indextotalcost;
 	Selectivity indexselectivity;
 	double		rows;			/* estimated number of result tuples */
