@@ -1587,7 +1587,7 @@
       </row>
 
       <row>
-       <entry><literal><function>length(<parameter>string</parameter><type>bytea</type>,
+       <entry><literal><function>length(<parameter>string</parameter> <type>bytea</type>,
         <parameter>encoding</parameter> <type>name</type> )</function></literal></entry>
        <entry><type>int</type></entry>
        <entry>
