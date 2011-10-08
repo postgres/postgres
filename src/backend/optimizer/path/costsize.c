@@ -264,6 +264,7 @@ cost_index(IndexPath *path, PlannerInfo *root,
 
 	if (!enable_indexscan)
 		startup_cost += disable_cost;
+	/* we don't need to check enable_indexonlyscan; indxpath.c does that */
 
 	/*
 	 * Call index-access-method-specific code to estimate the processing cost
@@ -345,7 +346,8 @@ cost_index(IndexPath *path, PlannerInfo *root,
 											(double) index->pages,
 											root);
 
-		pages_fetched = ceil(pages_fetched * visibility_fraction);
+		if (indexonly)
+			pages_fetched = ceil(pages_fetched * visibility_fraction);
 
 		max_IO_cost = (pages_fetched * spc_random_page_cost) / num_scans;
 
@@ -366,7 +368,8 @@ cost_index(IndexPath *path, PlannerInfo *root,
 											(double) index->pages,
 											root);
 
-		pages_fetched = ceil(pages_fetched * visibility_fraction);
+		if (indexonly)
+			pages_fetched = ceil(pages_fetched * visibility_fraction);
 
 		min_IO_cost = (pages_fetched * spc_random_page_cost) / num_scans;
 	}
@@ -381,7 +384,8 @@ cost_index(IndexPath *path, PlannerInfo *root,
 											(double) index->pages,
 											root);
 
-		pages_fetched = ceil(pages_fetched * visibility_fraction);
+		if (indexonly)
+			pages_fetched = ceil(pages_fetched * visibility_fraction);
 
 		/* max_IO_cost is for the perfectly uncorrelated case (csquared=0) */
 		max_IO_cost = pages_fetched * spc_random_page_cost;
@@ -389,7 +393,8 @@ cost_index(IndexPath *path, PlannerInfo *root,
 		/* min_IO_cost is for the perfectly correlated case (csquared=1) */
 		pages_fetched = ceil(indexSelectivity * (double) baserel->pages);
 
-		pages_fetched = ceil(pages_fetched * visibility_fraction);
+		if (indexonly)
+			pages_fetched = ceil(pages_fetched * visibility_fraction);
 
 		min_IO_cost = spc_random_page_cost;
 		if (pages_fetched > 1)
