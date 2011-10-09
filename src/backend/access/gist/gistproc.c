@@ -23,7 +23,7 @@
 
 static bool gist_box_leaf_consistent(BOX *key, BOX *query,
 						 StrategyNumber strategy);
-static double size_box(Datum dbox);
+static double size_box(BOX *box);
 static bool rtree_internal_consistent(BOX *key, BOX *query,
 						  StrategyNumber strategy);
 
@@ -35,21 +35,16 @@ static bool rtree_internal_consistent(BOX *key, BOX *query,
  * Box ops
  **************************************************/
 
-static Datum
-rt_box_union(PG_FUNCTION_ARGS)
+/*
+ * Calculates union of two boxes, a and b. The result is stored in *n.
+ */
+static void
+rt_box_union(BOX *n, BOX *a, BOX *b)
 {
-	BOX		   *a = PG_GETARG_BOX_P(0);
-	BOX		   *b = PG_GETARG_BOX_P(1);
-	BOX		   *n;
-
-	n = (BOX *) palloc(sizeof(BOX));
-
 	n->high.x = Max(a->high.x, b->high.x);
 	n->high.y = Max(a->high.y, b->high.y);
 	n->low.x = Min(a->low.x, b->low.x);
 	n->low.y = Min(a->low.y, b->low.y);
-
-	PG_RETURN_BOX_P(n);
 }
 
 /*
@@ -166,10 +161,12 @@ gist_box_penalty(PG_FUNCTION_ARGS)
 	GISTENTRY  *origentry = (GISTENTRY *) PG_GETARG_POINTER(0);
 	GISTENTRY  *newentry = (GISTENTRY *) PG_GETARG_POINTER(1);
 	float	   *result = (float *) PG_GETARG_POINTER(2);
-	Datum		ud;
+	BOX		   *origbox = DatumGetBoxP(origentry->key);
+	BOX		   *newbox = DatumGetBoxP(newentry->key);
+	BOX			unionbox;
 
-	ud = DirectFunctionCall2(rt_box_union, origentry->key, newentry->key);
-	*result = (float) (size_box(ud) - size_box(origentry->key));
+	rt_box_union(&unionbox, origbox, newbox);
+	*result = (float) (size_box(&unionbox) - size_box(origbox));
 	PG_RETURN_POINTER(result);
 }
 
@@ -937,11 +934,9 @@ gist_box_leaf_consistent(BOX *key, BOX *query, StrategyNumber strategy)
 }
 
 static double
-size_box(Datum dbox)
+size_box(BOX *box)
 {
-	BOX		   *box = DatumGetBoxP(dbox);
-
-	if (box == NULL || box->high.x <= box->low.x || box->high.y <= box->low.y)
+	if (box->high.x <= box->low.x || box->high.y <= box->low.y)
 		return 0.0;
 	return (box->high.x - box->low.x) * (box->high.y - box->low.y);
 }
