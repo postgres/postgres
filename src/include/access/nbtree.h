@@ -472,12 +472,18 @@ typedef BTStackData *BTStack;
  * items were killed, we re-lock the page to mark them killed, then unlock.
  * Finally we drop the pin and step to the next page in the appropriate
  * direction.
+ *
+ * If we are doing an index-only scan, we save the entire IndexTuple for each
+ * matched item, otherwise only its heap TID and offset.  The IndexTuples go
+ * into a separate workspace array; each BTScanPosItem stores its tuple's
+ * offset within that array.
  */
 
 typedef struct BTScanPosItem	/* what we remember about each match */
 {
 	ItemPointerData heapTid;	/* TID of referenced heap item */
 	OffsetNumber indexOffset;	/* index item's location within page */
+	LocationIndex tupleOffset;	/* IndexTuple's offset in workspace, if any */
 } BTScanPosItem;
 
 typedef struct BTScanPosData
@@ -494,6 +500,12 @@ typedef struct BTScanPosData
 	 */
 	bool		moreLeft;
 	bool		moreRight;
+
+	/*
+	 * If we are doing an index-only scan, nextTupleOffset is the first free
+	 * location in the associated tuple storage workspace.
+	 */
+	int			nextTupleOffset;
 
 	/*
 	 * The items array is always ordered in index order (ie, increasing
@@ -523,6 +535,14 @@ typedef struct BTScanOpaqueData
 	/* info about killed items if any (killedItems is NULL if never used) */
 	int		   *killedItems;	/* currPos.items indexes of killed items */
 	int			numKilled;		/* number of currently stored items */
+
+	/*
+	 * If we are doing an index-only scan, these are the tuple storage
+	 * workspaces for the currPos and markPos respectively.  Each is of
+	 * size BLCKSZ, so it can hold as much as a full page's worth of tuples.
+	 */
+	char	   *currTuples;		/* tuple storage for currPos */
+	char	   *markTuples;		/* tuple storage for markPos */
 
 	/*
 	 * If the marked position is on the same page as current position, we
@@ -620,7 +640,7 @@ extern ScanKey _bt_mkscankey_nodata(Relation rel);
 extern void _bt_freeskey(ScanKey skey);
 extern void _bt_freestack(BTStack stack);
 extern void _bt_preprocess_keys(IndexScanDesc scan);
-extern bool _bt_checkkeys(IndexScanDesc scan,
+extern IndexTuple _bt_checkkeys(IndexScanDesc scan,
 			  Page page, OffsetNumber offnum,
 			  ScanDirection dir, bool *continuescan);
 extern void _bt_killitems(IndexScanDesc scan, bool haveLock);

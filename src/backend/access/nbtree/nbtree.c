@@ -73,7 +73,6 @@ static void btvacuumscan(IndexVacuumInfo *info, IndexBulkDeleteResult *stats,
 			 BTCycleId cycleid);
 static void btvacuumpage(BTVacState *vstate, BlockNumber blkno,
 			 BlockNumber orig_blkno);
-static IndexTuple bt_getindextuple(IndexScanDesc scan);
 
 
 /*
@@ -311,92 +310,7 @@ btgettuple(PG_FUNCTION_ARGS)
 	else
 		res = _bt_first(scan, dir);
 
-	/* Return the whole index tuple if requested */
-	if (scan->xs_want_itup)
-	{
-		/* First, free the last one ... */
-		if (scan->xs_itup != NULL)
-		{
-			pfree(scan->xs_itup);
-			scan->xs_itup = NULL;
-		}
-
-		if (res)
-			scan->xs_itup = bt_getindextuple(scan);
-	}
-
 	PG_RETURN_BOOL(res);
-}
-
-/*
- * bt_getindextuple - fetch index tuple at current position.
- *
- * This can fail to find the tuple if new tuples have been inserted on the
- * index page since we stepped onto the page.  NULL is returned in that case.
- * (We could try a bit harder by searching for the TID; but if insertions
- * are happening, it's reasonably likely that an index-only scan will fail
- * anyway because of visibility.  So probably not worth the trouble.)
- *
- * The tuple returned is a palloc'd copy, so that we don't need to keep a
- * lock on the index page.
- *
- * The caller must have pin on so->currPos.buf.
- */
-static IndexTuple
-bt_getindextuple(IndexScanDesc scan)
-{
-	BTScanOpaque so = (BTScanOpaque) scan->opaque;
-	Page		page;
-	BTPageOpaque opaque;
-	OffsetNumber minoff;
-	OffsetNumber maxoff;
-	int			itemIndex;
-	OffsetNumber offnum;
-	IndexTuple	ituple,
-				result;
-
-	Assert(BufferIsValid(so->currPos.buf));
-
-	LockBuffer(so->currPos.buf, BT_READ);
-
-	/* Locate the tuple, being paranoid about possibility the page changed */
-	page = BufferGetPage(so->currPos.buf);
-	opaque = (BTPageOpaque) PageGetSpecialPointer(page);
-	minoff = P_FIRSTDATAKEY(opaque);
-	maxoff = PageGetMaxOffsetNumber(page);
-
-	itemIndex = so->currPos.itemIndex;
-	/* pure paranoia */
-	Assert(itemIndex >= so->currPos.firstItem &&
-		   itemIndex <= so->currPos.lastItem);
-
-	offnum = so->currPos.items[itemIndex].indexOffset;
-	if (offnum < minoff || offnum > maxoff)
-	{
-		/* should never happen, since we have pin on page, but be careful */
-		LockBuffer(so->currPos.buf, BUFFER_LOCK_UNLOCK);
-		return NULL;
-	}
-
-	ituple = (IndexTuple) PageGetItem(page, PageGetItemId(page, offnum));
-
-	if (ItemPointerEquals(&ituple->t_tid, &scan->xs_ctup.t_self))
-	{
-		/* yup, it's the desired tuple, so make a copy */
-		Size	itupsz = IndexTupleSize(ituple);
-
-		result = palloc(itupsz);
-		memcpy(result, ituple, itupsz);
-	}
-	else
-	{
-		/* oops, it got moved */
-		result = NULL;
-	}
-
-	LockBuffer(so->currPos.buf, BUFFER_LOCK_UNLOCK);
-
-	return result;
 }
 
 /*
@@ -471,6 +385,15 @@ btbeginscan(PG_FUNCTION_ARGS)
 		so->keyData = NULL;
 	so->killedItems = NULL;		/* until needed */
 	so->numKilled = 0;
+
+	/*
+	 * We don't know yet whether the scan will be index-only, so we do not
+	 * allocate the tuple workspace arrays until btrescan.
+	 */
+	so->currTuples = so->markTuples = NULL;
+	so->currPos.nextTupleOffset = 0;
+	so->markPos.nextTupleOffset = 0;
+
 	scan->opaque = so;
 
 	PG_RETURN_POINTER(scan);
@@ -504,6 +427,18 @@ btrescan(PG_FUNCTION_ARGS)
 		so->markPos.buf = InvalidBuffer;
 	}
 	so->markItemIndex = -1;
+
+	/*
+	 * Allocate tuple workspace arrays, if needed for an index-only scan and
+	 * not already done in a previous rescan call.  To save on palloc
+	 * overhead, both workspaces are allocated as one palloc block; only this
+	 * function and btendscan know that.
+	 */
+	if (scan->xs_want_itup && so->currTuples == NULL)
+	{
+		so->currTuples = (char *) palloc(BLCKSZ * 2);
+		so->markTuples = so->currTuples + BLCKSZ;
+	}
 
 	/*
 	 * Reset the scan keys. Note that keys ordering stuff moved to _bt_first.
@@ -544,17 +479,15 @@ btendscan(PG_FUNCTION_ARGS)
 	}
 	so->markItemIndex = -1;
 
+	/* Release storage */
 	if (so->killedItems != NULL)
 		pfree(so->killedItems);
 	if (so->keyData != NULL)
 		pfree(so->keyData);
+	if (so->currTuples != NULL)
+		pfree(so->currTuples);
+	/* so->markTuples should not be pfree'd, see btrescan */
 	pfree(so);
-
-	if (scan->xs_itup != NULL)
-	{
-		pfree(scan->xs_itup);
-		scan->xs_itup = NULL;
-	}
 
 	PG_RETURN_VOID();
 }
@@ -626,6 +559,9 @@ btrestrpos(PG_FUNCTION_ARGS)
 			memcpy(&so->currPos, &so->markPos,
 				   offsetof(BTScanPosData, items[1]) +
 				   so->markPos.lastItem * sizeof(BTScanPosItem));
+			if (so->currTuples)
+				memcpy(so->currTuples, so->markTuples,
+					   so->markPos.nextTupleOffset);
 		}
 	}
 

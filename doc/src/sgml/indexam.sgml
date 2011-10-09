@@ -394,12 +394,13 @@ amgettuple (IndexScanDesc scan,
    If the access method supports index-only scans (i.e.,
    <structfield>amcanreturn</structfield> is TRUE in its <structname>pg_am</>
    row), then on success it must also check
-   <literal>scan-&gt;xs_want_itup</>, and if that is true it should return
+   <literal>scan-&gt;xs_want_itup</>, and if that is true it must return
    the original indexed data for the index entry, in the form of an
-   <structname>IndexTuple</> stored at <literal>scan-&gt;xs_itup</>.  However,
-   it is permissible for the access method to sometimes fail to provide this
-   data, in which case it must set <literal>scan-&gt;xs_itup</> to NULL.  That
-   will result in a regular heap fetch occurring.
+   <structname>IndexTuple</> pointer stored at <literal>scan-&gt;xs_itup</>.
+   (Management of the data referenced by the pointer is the access method's
+   responsibility.  The data must remain good at least until the next
+   <function>amgettuple</>, <function>amrescan</>, or <function>amendscan</>
+   call for the scan.)
   </para>
 
   <para>

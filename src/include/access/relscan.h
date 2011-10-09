@@ -79,7 +79,7 @@ typedef struct IndexScanDescData
 	void	   *opaque;			/* access-method-specific info */
 
 	/* in an index-only scan, this is valid after a successful amgettuple */
-	IndexTuple	xs_itup;		/* index tuple returned by AM, or NULL */
+	IndexTuple	xs_itup;		/* index tuple returned by AM */
 
 	/* xs_ctup/xs_cbuf/xs_recheck are valid after a successful index_getnext */
 	HeapTupleData xs_ctup;		/* current heap tuple, if any */

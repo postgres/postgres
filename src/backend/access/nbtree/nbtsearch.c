@@ -26,6 +26,8 @@
 
 static bool _bt_readpage(IndexScanDesc scan, ScanDirection dir,
 			 OffsetNumber offnum);
+static void _bt_saveitem(BTScanOpaque so, int itemIndex,
+			 OffsetNumber offnum, IndexTuple itup);
 static bool _bt_steppage(IndexScanDesc scan, ScanDirection dir);
 static Buffer _bt_walk_left(Relation rel, Buffer buf);
 static bool _bt_endpoint(IndexScanDesc scan, ScanDirection dir);
@@ -429,8 +431,9 @@ _bt_compare(Relation rel,
  *		if backwards scan, the last item) in the tree that satisfies the
  *		qualifications in the scan key.  On success exit, the page containing
  *		the current index tuple is pinned but not locked, and data about
- *		the matching tuple(s) on the page has been loaded into so->currPos,
- *		and scan->xs_ctup.t_self is set to the heap TID of the current tuple.
+ *		the matching tuple(s) on the page has been loaded into so->currPos.
+ *		scan->xs_ctup.t_self is set to the heap TID of the current tuple,
+ *		and if requested, scan->xs_itup points to a copy of the index tuple.
  *
  * If there are no matching items in the index, we return FALSE, with no
  * pins or locks held.
@@ -456,6 +459,7 @@ _bt_first(IndexScanDesc scan, ScanDirection dir)
 	int			keysCount = 0;
 	int			i;
 	StrategyNumber strat_total;
+	BTScanPosItem *currItem;
 
 	pgstat_count_index_scan(rel);
 
@@ -912,7 +916,10 @@ _bt_first(IndexScanDesc scan, ScanDirection dir)
 	LockBuffer(so->currPos.buf, BUFFER_LOCK_UNLOCK);
 
 	/* OK, itemIndex says what to return */
-	scan->xs_ctup.t_self = so->currPos.items[so->currPos.itemIndex].heapTid;
+	currItem = &so->currPos.items[so->currPos.itemIndex];
+	scan->xs_ctup.t_self = currItem->heapTid;
+	if (scan->xs_want_itup)
+		scan->xs_itup = (IndexTuple) (so->currTuples + currItem->tupleOffset);
 
 	return true;
 }
@@ -925,7 +932,8 @@ _bt_first(IndexScanDesc scan, ScanDirection dir)
  *		previously returned.
  *
  *		On successful exit, scan->xs_ctup.t_self is set to the TID of the
- *		next heap tuple, and so->currPos is updated as needed.
+ *		next heap tuple, and if requested, scan->xs_itup points to a copy of
+ *		the index tuple.  so->currPos is updated as needed.
  *
  *		On failure exit (no more tuples), we release pin and set
  *		so->currPos.buf to InvalidBuffer.
@@ -934,6 +942,7 @@ bool
 _bt_next(IndexScanDesc scan, ScanDirection dir)
 {
 	BTScanOpaque so = (BTScanOpaque) scan->opaque;
+	BTScanPosItem *currItem;
 
 	/*
 	 * Advance to next tuple on current page; or if there's no more, try to
@@ -967,7 +976,10 @@ _bt_next(IndexScanDesc scan, ScanDirection dir)
 	}
 
 	/* OK, itemIndex says what to return */
-	scan->xs_ctup.t_self = so->currPos.items[so->currPos.itemIndex].heapTid;
+	currItem = &so->currPos.items[so->currPos.itemIndex];
+	scan->xs_ctup.t_self = currItem->heapTid;
+	if (scan->xs_want_itup)
+		scan->xs_itup = (IndexTuple) (so->currTuples + currItem->tupleOffset);
 
 	return true;
 }
@@ -996,6 +1008,7 @@ _bt_readpage(IndexScanDesc scan, ScanDirection dir, OffsetNumber offnum)
 	OffsetNumber minoff;
 	OffsetNumber maxoff;
 	int			itemIndex;
+	IndexTuple	itup;
 	bool		continuescan;
 
 	/* we must have the buffer pinned and locked */
@@ -1013,6 +1026,9 @@ _bt_readpage(IndexScanDesc scan, ScanDirection dir, OffsetNumber offnum)
 	 */
 	so->currPos.nextPage = opaque->btpo_next;
 
+	/* initialize tuple workspace to empty */
+	so->currPos.nextTupleOffset = 0;
+
 	if (ScanDirectionIsForward(dir))
 	{
 		/* load items[] in ascending order */
@@ -1022,12 +1038,11 @@ _bt_readpage(IndexScanDesc scan, ScanDirection dir, OffsetNumber offnum)
 
 		while (offnum <= maxoff)
 		{
-			if (_bt_checkkeys(scan, page, offnum, dir, &continuescan))
+			itup = _bt_checkkeys(scan, page, offnum, dir, &continuescan);
+			if (itup != NULL)
 			{
 				/* tuple passes all scan key conditions, so remember it */
-				/* _bt_checkkeys put the heap ptr into scan->xs_ctup.t_self */
-				so->currPos.items[itemIndex].heapTid = scan->xs_ctup.t_self;
-				so->currPos.items[itemIndex].indexOffset = offnum;
+				_bt_saveitem(so, itemIndex, offnum, itup);
 				itemIndex++;
 			}
 			if (!continuescan)
@@ -1054,13 +1069,12 @@ _bt_readpage(IndexScanDesc scan, ScanDirection dir, OffsetNumber offnum)
 
 		while (offnum >= minoff)
 		{
-			if (_bt_checkkeys(scan, page, offnum, dir, &continuescan))
+			itup = _bt_checkkeys(scan, page, offnum, dir, &continuescan);
+			if (itup != NULL)
 			{
 				/* tuple passes all scan key conditions, so remember it */
-				/* _bt_checkkeys put the heap ptr into scan->xs_ctup.t_self */
 				itemIndex--;
-				so->currPos.items[itemIndex].heapTid = scan->xs_ctup.t_self;
-				so->currPos.items[itemIndex].indexOffset = offnum;
+				_bt_saveitem(so, itemIndex, offnum, itup);
 			}
 			if (!continuescan)
 			{
@@ -1079,6 +1093,25 @@ _bt_readpage(IndexScanDesc scan, ScanDirection dir, OffsetNumber offnum)
 	}
 
 	return (so->currPos.firstItem <= so->currPos.lastItem);
+}
+
+/* Save an index item into so->currPos.items[itemIndex] */
+static void
+_bt_saveitem(BTScanOpaque so, int itemIndex,
+			 OffsetNumber offnum, IndexTuple itup)
+{
+	BTScanPosItem *currItem = &so->currPos.items[itemIndex];
+
+	currItem->heapTid = itup->t_tid;
+	currItem->indexOffset = offnum;
+	if (so->currTuples)
+	{
+		Size		itupsz = IndexTupleSize(itup);
+
+		currItem->tupleOffset = so->currPos.nextTupleOffset;
+		memcpy(so->currTuples + so->currPos.nextTupleOffset, itup, itupsz);
+		so->currPos.nextTupleOffset += MAXALIGN(itupsz);
+	}
 }
 
 /*
@@ -1119,6 +1152,9 @@ _bt_steppage(IndexScanDesc scan, ScanDirection dir)
 		memcpy(&so->markPos, &so->currPos,
 			   offsetof(BTScanPosData, items[1]) +
 			   so->currPos.lastItem * sizeof(BTScanPosItem));
+		if (so->markTuples)
+			memcpy(so->markTuples, so->currTuples,
+				   so->currPos.nextTupleOffset);
 		so->markPos.itemIndex = so->markItemIndex;
 		so->markItemIndex = -1;
 	}
@@ -1428,6 +1464,7 @@ _bt_endpoint(IndexScanDesc scan, ScanDirection dir)
 	Page		page;
 	BTPageOpaque opaque;
 	OffsetNumber start;
+	BTScanPosItem *currItem;
 
 	/*
 	 * Scan down to the leftmost or rightmost leaf page.  This is a simplified
@@ -1505,7 +1542,10 @@ _bt_endpoint(IndexScanDesc scan, ScanDirection dir)
 	LockBuffer(so->currPos.buf, BUFFER_LOCK_UNLOCK);
 
 	/* OK, itemIndex says what to return */
-	scan->xs_ctup.t_self = so->currPos.items[so->currPos.itemIndex].heapTid;
+	currItem = &so->currPos.items[so->currPos.itemIndex];
+	scan->xs_ctup.t_self = currItem->heapTid;
+	if (scan->xs_want_itup)
+		scan->xs_itup = (IndexTuple) (so->currTuples + currItem->tupleOffset);
 
 	return true;
 }

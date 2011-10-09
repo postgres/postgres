@@ -92,7 +92,7 @@ IndexNext(IndexScanState *node)
 		 * scan's xs_cbuf, ie, the previously visited heap page.  It's not
 		 * clear whether it'd be better to release that pin.
 		 */
-		if (scandesc->xs_itup != NULL &&
+		if (scandesc->xs_want_itup &&
 			visibilitymap_test(scandesc->heapRelation,
 							   ItemPointerGetBlockNumber(tid),
 							   &node->iss_VMBuffer))

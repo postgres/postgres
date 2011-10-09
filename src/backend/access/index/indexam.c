@@ -443,9 +443,10 @@ index_getnext_tid(IndexScanDesc scan, ScanDirection direction)
 	Assert(TransactionIdIsValid(RecentGlobalXmin));
 
 	/*
-	 * The AM's gettuple proc finds the next index entry matching the scan
-	 * keys, and puts the TID in xs_ctup.t_self.  It should also set
-	 * scan->xs_recheck, though we pay no attention to that here.
+	 * The AM's amgettuple proc finds the next index entry matching the scan
+	 * keys, and puts the TID into scan->xs_ctup.t_self.  It should also set
+	 * scan->xs_recheck and possibly scan->xs_itup, though we pay no attention
+	 * to those fields here.
 	 */
 	found = DatumGetBool(FunctionCall2(procedure,
 									   PointerGetDatum(scan),

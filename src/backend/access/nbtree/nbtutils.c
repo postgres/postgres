@@ -835,8 +835,8 @@ _bt_mark_scankey_required(ScanKey skey)
 /*
  * Test whether an indextuple satisfies all the scankey conditions.
  *
- * If so, copy its TID into scan->xs_ctup.t_self, and return TRUE.
- * If not, return FALSE (xs_ctup is not changed).
+ * If so, return the address of the index tuple on the index page.
+ * If not, return NULL.
  *
  * If the tuple fails to pass the qual, we also determine whether there's
  * any need to continue the scan beyond this tuple, and set *continuescan
@@ -848,14 +848,16 @@ _bt_mark_scankey_required(ScanKey skey)
  * offnum: offset number of index tuple (must be a valid item!)
  * dir: direction we are scanning in
  * continuescan: output parameter (will be set correctly in all cases)
+ *
+ * Caller must hold pin and lock on the index page.
  */
-bool
+IndexTuple
 _bt_checkkeys(IndexScanDesc scan,
 			  Page page, OffsetNumber offnum,
 			  ScanDirection dir, bool *continuescan)
 {
 	ItemId		iid = PageGetItemId(page, offnum);
-	bool		tuple_valid;
+	bool		tuple_alive;
 	IndexTuple	tuple;
 	TupleDesc	tupdesc;
 	BTScanOpaque so;
@@ -879,24 +881,24 @@ _bt_checkkeys(IndexScanDesc scan,
 		if (ScanDirectionIsForward(dir))
 		{
 			if (offnum < PageGetMaxOffsetNumber(page))
-				return false;
+				return NULL;
 		}
 		else
 		{
 			BTPageOpaque opaque = (BTPageOpaque) PageGetSpecialPointer(page);
 
 			if (offnum > P_FIRSTDATAKEY(opaque))
-				return false;
+				return NULL;
 		}
 
 		/*
-		 * OK, we want to check the keys, but we'll return FALSE even if the
-		 * tuple passes the key tests.
+		 * OK, we want to check the keys so we can set continuescan correctly,
+		 * but we'll return NULL even if the tuple passes the key tests.
 		 */
-		tuple_valid = false;
+		tuple_alive = false;
 	}
 	else
-		tuple_valid = true;
+		tuple_alive = true;
 
 	tuple = (IndexTuple) PageGetItem(page, iid);
 
@@ -915,7 +917,7 @@ _bt_checkkeys(IndexScanDesc scan,
 		{
 			if (_bt_check_rowcompare(key, tuple, tupdesc, dir, continuescan))
 				continue;
-			return false;
+			return NULL;
 		}
 
 		datum = index_getattr(tuple,
@@ -953,7 +955,7 @@ _bt_checkkeys(IndexScanDesc scan,
 			/*
 			 * In any case, this indextuple doesn't match the qual.
 			 */
-			return false;
+			return NULL;
 		}
 
 		if (isNull)
@@ -988,7 +990,7 @@ _bt_checkkeys(IndexScanDesc scan,
 			/*
 			 * In any case, this indextuple doesn't match the qual.
 			 */
-			return false;
+			return NULL;
 		}
 
 		test = FunctionCall2Coll(&key->sk_func, key->sk_collation,
@@ -1016,15 +1018,16 @@ _bt_checkkeys(IndexScanDesc scan,
 			/*
 			 * In any case, this indextuple doesn't match the qual.
 			 */
-			return false;
+			return NULL;
 		}
 	}
 
-	/* If we get here, the tuple passes all index quals. */
-	if (tuple_valid)
-		scan->xs_ctup.t_self = tuple->t_tid;
+	/* Check for failure due to it being a killed tuple. */
+	if (!tuple_alive)
+		return NULL;
 
-	return tuple_valid;
+	/* If we get here, the tuple passes all index quals. */
+	return tuple;
 }
 
 /*
