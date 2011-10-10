@@ -363,7 +363,7 @@ PGconn *PQconnectdbParams(const char **keywords, const char **values, int expand
            client's connection to the server is considered dead.  A value of
            zero uses the system default. This parameter is ignored for
            connections made via a Unix-domain socket, or if keepalives are disabled.
-           It is only supported on systems where the <symbol>TCP_KEEPINTVL</>
+           It is only supported on systems where the <symbol>TCP_KEEPCNT</>
            socket option is available; on other systems, it has no effect.
           </para>
          </listitem>
