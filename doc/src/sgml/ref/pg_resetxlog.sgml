@@ -15,6 +15,10 @@ PostgreSQL documentation
   <refpurpose>reset the write-ahead log and other control information of a <productname>PostgreSQL</productname> database cluster</refpurpose>
  </refnamediv>
 
+ <indexterm zone="app-pgresetxlog">
+  <primary>pg_resetxlog</primary>
+ </indexterm>
+
  <refsynopsisdiv>
   <cmdsynopsis>
    <command>pg_resetxlog</command>
