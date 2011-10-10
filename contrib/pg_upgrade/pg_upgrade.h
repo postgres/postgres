@@ -189,6 +189,7 @@ typedef struct
 	char	   *pgdata;			/* pathname for cluster's $PGDATA directory */
 	char	   *pgconfig;		/* pathname for cluster's config file directory */
 	char	   *bindir;			/* pathname for cluster's executable directory */
+	char	   *pgopts;			/* options to pass to the server, like pg_ctl -o */
 	unsigned short port;		/* port number where postmaster is waiting */
 	uint32		major_version;	/* PG_VERSION of cluster */
 	char		major_version_str[64];	/* string PG_VERSION of cluster */

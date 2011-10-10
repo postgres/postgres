@@ -115,6 +115,20 @@
      </varlistentry>
 
      <varlistentry>
+      <term><option>-o</option> <replaceable class="parameter">options</replaceable></term>
+      <term><option>--old-options</option> <replaceable class="parameter">options</replaceable></term>
+      <listitem><para>options to be passed directly to the
+      old <command>postgres</command> command</para></listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term><option>-O</option> <replaceable class="parameter">options</replaceable></term>
+      <term><option>--new-options</option> <replaceable class="parameter">options</replaceable></term>
+      <listitem><para>options to be passed directly to the
+      new <command>postgres</command> command</para></listitem>
+     </varlistentry>
+
+     <varlistentry>
       <term><option>-p</option> <replaceable>old_port_number</></term>
       <term><option>--old-port=</option><replaceable>old_portnum</></term>
       <listitem><para>the old cluster port number; environment
@@ -557,6 +571,14 @@ psql --username postgres --file script.sql postgres
   <para>
    For deployment testing, create a schema-only copy of the old cluster,
    insert dummy data, and upgrade that.
+  </para>
+
+  <para>
+   If you are upgrading a pre-<productname>PostgreSQL</> 9.2 cluster
+   that uses a configuration-file-only directory, you must pass the
+   real data directory location to <application>pg_upgrade</>, and
+   pass the configuration directory location to the server, e.g.
+   <literal>-d /real-data-directory -o '-D /configuration-directory'</>.
   </para>
 
   <para>

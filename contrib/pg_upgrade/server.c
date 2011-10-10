@@ -168,12 +168,12 @@ start_postmaster(ClusterInfo *cluster)
 	 */
 	snprintf(cmd, sizeof(cmd),
 			 SYSTEMQUOTE "\"%s/pg_ctl\" -w -l \"%s\" -D \"%s\" "
-			 "-o \"-p %d %s\" start >> \"%s\" 2>&1" SYSTEMQUOTE,
+			 "-o \"-p %d %s %s\" start >> \"%s\" 2>&1" SYSTEMQUOTE,
 			 cluster->bindir, log_opts.filename2, cluster->pgconfig, cluster->port,
 			 (cluster->controldata.cat_ver >=
 			  BINARY_UPGRADE_SERVER_FLAG_CAT_VER) ? "-b" :
 			 "-c autovacuum=off -c autovacuum_freeze_max_age=2000000000",
-			 log_opts.filename2);
+			 cluster->pgopts ? cluster->pgopts : "", log_opts.filename2);
 
 	/*
 	 * Don't throw an error right away, let connecting throw the error because
@@ -207,27 +207,21 @@ void
 stop_postmaster(bool fast)
 {
 	char		cmd[MAXPGPATH];
-	const char *bindir;
-	const char *configdir;
+	ClusterInfo *cluster;
 
 	if (os_info.running_cluster == &old_cluster)
-	{
-		bindir = old_cluster.bindir;
-		configdir = old_cluster.pgconfig;
-	}
+		cluster = &old_cluster;
 	else if (os_info.running_cluster == &new_cluster)
-	{
-		bindir = new_cluster.bindir;
-		configdir = new_cluster.pgconfig;
-	}
+		cluster = &new_cluster;
 	else
-		return;					/* no cluster running */
+		return;		/* no cluster running */
 
 	snprintf(cmd, sizeof(cmd),
-			 SYSTEMQUOTE "\"%s/pg_ctl\" -w -l \"%s\" -D \"%s\" %s stop >> "
-			 "\"%s\" 2>&1" SYSTEMQUOTE,
-			 bindir, log_opts.filename2, configdir, fast ? "-m fast" : "",
-			 log_opts.filename2);
+			 SYSTEMQUOTE "\"%s/pg_ctl\" -w -l \"%s\" -D \"%s\" -o \"%s\" "
+			 "%s stop >> \"%s\" 2>&1" SYSTEMQUOTE,
+			 cluster->bindir, log_opts.filename2, cluster->pgconfig,
+			 cluster->pgopts ? cluster->pgopts : "",
+			fast ? "-m fast" : "", log_opts.filename2);
 
 	exec_prog(fast ? false : true, "%s", cmd);
 

@@ -39,6 +39,8 @@ parseCommandLine(int argc, char *argv[])
 		{"new-datadir", required_argument, NULL, 'D'},
 		{"old-bindir", required_argument, NULL, 'b'},
 		{"new-bindir", required_argument, NULL, 'B'},
+		{"old-options", required_argument, NULL, 'o'},
+		{"new-options", required_argument, NULL, 'O'},
 		{"old-port", required_argument, NULL, 'p'},
 		{"new-port", required_argument, NULL, 'P'},
 
@@ -93,7 +95,7 @@ parseCommandLine(int argc, char *argv[])
 
 	getcwd(os_info.cwd, MAXPGPATH);
 
-	while ((option = getopt_long(argc, argv, "d:D:b:B:cgG:kl:p:P:u:v",
+	while ((option = getopt_long(argc, argv, "d:D:b:B:cgG:kl:o:O:p:P:u:v",
 								 long_options, &optindex)) != -1)
 	{
 		switch (option)
@@ -141,6 +143,19 @@ parseCommandLine(int argc, char *argv[])
 				log_opts.filename = pg_strdup(optarg);
 				break;
 
+			case 'o':
+				old_cluster.pgopts = pg_strdup(optarg);
+				break;
+
+			case 'O':
+				new_cluster.pgopts = pg_strdup(optarg);
+				break;
+
+			/*
+			 * Someday, the port number option could be removed and
+			 * passed using -o/-O, but that requires postmaster -C
+			 * to be supported on all old/new versions.
+			 */
 			case 'p':
 				if ((old_cluster.port = atoi(optarg)) <= 0)
 				{
@@ -242,6 +257,8 @@ Options:\n\
   -G, --debugfile=FILENAME      output debugging activity to file\n\
   -k, --link                    link instead of copying files to new cluster\n\
   -l, --logfile=FILENAME        log session activity to file\n\
+  -o, --old-options=OPTIONS     old cluster options to pass to the server\n\
+  -O, --new-options=OPTIONS     new cluster options to pass to the server\n\
   -p, --old-port=OLDPORT        old cluster port number (default %d)\n\
   -P, --new-port=NEWPORT        new cluster port number (default %d)\n\
   -u, --user=NAME               clusters superuser (default \"%s\")\n\
