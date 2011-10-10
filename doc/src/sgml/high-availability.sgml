@@ -924,16 +924,17 @@ primary_conninfo = 'host=192.168.1.50 port=5432 user=foo password=foopass'
     Promoting a cascading standby terminates the immediate downstream replication
     connections which it serves. This is because the timeline becomes different
     between standbys, and they can no longer continue replication.  The
-    effected standby(s) may reconnect to reestablish streaming replication.
+    affected standby(s) may reconnect to reestablish streaming replication.
    </para>
 
    <para>
     To use cascading replication, set up the cascading standby so that it can
-    accept replication connections, i.e., set <varname>max_wal_senders</>,
-    <varname>hot_standby</> and authentication option (see
-    <xref linkend="streaming-replication"> and <xref linkend="hot-standby">).
-    Also set <varname>primary_conninfo</> in the downstream standby to point
-    to the cascading standby.
+    accept replication connections (that is, set
+    <xref linkend="guc-max-wal-senders"> and <xref linkend="guc-hot-standby">,
+    and configure
+    <link linkend="auth-pg-hba-conf">host-based authentication</link>).
+    You will also need to set <varname>primary_conninfo</> in the downstream
+    standby to point to the cascading standby.
    </para>
   </sect2>
 
