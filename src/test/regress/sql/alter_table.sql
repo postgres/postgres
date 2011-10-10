@@ -1456,3 +1456,11 @@ CREATE TYPE tt_t1 AS (x int, y numeric(8,2));
 ALTER TABLE tt7 OF tt_t1;			-- reassign an already-typed table
 ALTER TABLE tt7 NOT OF;
 \d tt7
+
+-- make sure we can drop a constraint on the parent but it remains on the child
+CREATE TABLE test_drop_constr_parent (c text CHECK (c IS NOT NULL));
+CREATE TABLE test_drop_constr_child () INHERITS (test_drop_constr_parent);
+ALTER TABLE ONLY test_drop_constr_parent DROP CONSTRAINT "test_drop_constr_parent_c_check";
+-- should fail
+INSERT INTO test_drop_constr_child (c) VALUES (NULL);
+DROP TABLE test_drop_constr_parent CASCADE;
