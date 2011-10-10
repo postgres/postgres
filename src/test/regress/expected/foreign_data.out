@@ -631,7 +631,7 @@ DROP SERVER s7;
 
 -- CREATE FOREIGN TABLE
 CREATE SCHEMA foreign_schema;
-CREATE SERVER sc FOREIGN DATA WRAPPER dummy;
+CREATE SERVER s0 FOREIGN DATA WRAPPER dummy;
 CREATE FOREIGN TABLE ft1 ();                                    -- ERROR
 ERROR:  syntax error at or near ";"
 LINE 1: CREATE FOREIGN TABLE ft1 ();
@@ -641,15 +641,15 @@ ERROR:  server "no_server" does not exist
 CREATE FOREIGN TABLE ft1 (c1 serial) SERVER sc;                 -- ERROR
 NOTICE:  CREATE FOREIGN TABLE will create implicit sequence "ft1_c1_seq" for serial column "ft1.c1"
 ERROR:  default values on foreign tables are not supported
-CREATE FOREIGN TABLE ft1 () SERVER sc WITH OIDS;                -- ERROR
+CREATE FOREIGN TABLE ft1 () SERVER s0 WITH OIDS;                -- ERROR
 ERROR:  syntax error at or near "WITH OIDS"
-LINE 1: CREATE FOREIGN TABLE ft1 () SERVER sc WITH OIDS;
+LINE 1: CREATE FOREIGN TABLE ft1 () SERVER s0 WITH OIDS;
                                               ^
 CREATE FOREIGN TABLE ft1 (
 	c1 integer OPTIONS ("param 1" 'val1') NOT NULL,
 	c2 text OPTIONS (param2 'val2', param3 'val3'),
 	c3 date
-) SERVER sc OPTIONS (delimiter ',', quote '"', "be quoted" 'value');
+) SERVER s0 OPTIONS (delimiter ',', quote '"', "be quoted" 'value');
 COMMENT ON FOREIGN TABLE ft1 IS 'ft1';
 COMMENT ON COLUMN ft1.c1 IS 'ft1.c1';
 \d+ ft1
@@ -659,7 +659,7 @@ COMMENT ON COLUMN ft1.c1 IS 'ft1.c1';
  c1     | integer | not null  | ("param 1" 'val1')             | plain    | ft1.c1
  c2     | text    |           | (param2 'val2', param3 'val3') | extended | 
  c3     | date    |           |                                | plain    | 
-Server: sc
+Server: s0
 FDW Options: (delimiter ',', quote '"', "be quoted" 'value')
 Has OIDs: no
 
@@ -667,7 +667,7 @@ Has OIDs: no
                                  List of foreign tables
  Schema | Table | Server |                   FDW Options                   | Description 
 --------+-------+--------+-------------------------------------------------+-------------
- public | ft1   | sc     | (delimiter ',', quote '"', "be quoted" 'value') | ft1
+ public | ft1   | s0     | (delimiter ',', quote '"', "be quoted" 'value') | ft1
 (1 row)
 
 CREATE INDEX id_ft1_c2 ON ft1 (c2);                             -- ERROR
@@ -717,7 +717,7 @@ ALTER FOREIGN TABLE ft1 ALTER COLUMN c8 OPTIONS (SET p2 'V2', DROP p1);
  c8     | text    |           | (p2 'V2')                      | extended | 
  c9     | integer |           |                                | plain    | 
  c10    | integer |           | (p1 'v1')                      | plain    | 
-Server: sc
+Server: s0
 FDW Options: (delimiter ',', quote '"', "be quoted" 'value')
 Has OIDs: no
 
@@ -760,7 +760,7 @@ ALTER FOREIGN TABLE foreign_schema.ft1 RENAME TO foreign_table_1;
  c7               | integer |           | (p1 'v1', p2 'v2')
  c8               | text    |           | (p2 'V2')
  c10              | integer |           | (p1 'v1')
-Server: sc
+Server: s0
 FDW Options: (quote '~', "be quoted" 'value', escape '@')
 
 -- Information schema
@@ -781,11 +781,11 @@ SELECT * FROM information_schema.foreign_data_wrapper_options ORDER BY 1, 2, 3;
 SELECT * FROM information_schema.foreign_servers ORDER BY 1, 2;
  foreign_server_catalog | foreign_server_name | foreign_data_wrapper_catalog | foreign_data_wrapper_name | foreign_server_type | foreign_server_version | authorization_identifier 
 ------------------------+---------------------+------------------------------+---------------------------+---------------------+------------------------+--------------------------
+ regression             | s0                  | regression                   | dummy                     |                     |                        | foreign_data_user
  regression             | s4                  | regression                   | foo                       | oracle              |                        | foreign_data_user
  regression             | s5                  | regression                   | foo                       |                     | 15.0                   | regress_test_role
  regression             | s6                  | regression                   | foo                       |                     | 16.0                   | regress_test_indirect
  regression             | s8                  | regression                   | postgresql                |                     |                        | foreign_data_user
- regression             | sc                  | regression                   | dummy                     |                     |                        | foreign_data_user
  regression             | t1                  | regression                   | foo                       |                     |                        | regress_test_indirect
  regression             | t2                  | regression                   | foo                       |                     |                        | regress_test_role
 (7 rows)
@@ -847,7 +847,7 @@ SELECT * FROM information_schema.role_usage_grants WHERE object_type LIKE 'FOREI
 SELECT * FROM information_schema.foreign_tables ORDER BY 1, 2, 3;
  foreign_table_catalog | foreign_table_schema | foreign_table_name | foreign_server_catalog | foreign_server_name 
 -----------------------+----------------------+--------------------+------------------------+---------------------
- regression            | foreign_schema       | foreign_table_1    | regression             | sc
+ regression            | foreign_schema       | foreign_table_1    | regression             | s0
 (1 row)
 
 SELECT * FROM information_schema.foreign_table_options ORDER BY 1, 2, 3, 4;
@@ -1131,7 +1131,7 @@ DROP ROLE unprivileged_role;
 DROP ROLE regress_test_role2;
 DROP FOREIGN DATA WRAPPER postgresql CASCADE;
 DROP FOREIGN DATA WRAPPER dummy CASCADE;
-NOTICE:  drop cascades to server sc
+NOTICE:  drop cascades to server s0
 \c
 DROP ROLE foreign_data_user;
 -- At this point we should have no wrappers, no servers, and no mappings.
