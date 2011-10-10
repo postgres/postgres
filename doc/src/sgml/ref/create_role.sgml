@@ -170,7 +170,7 @@ CREATE ROLE <replaceable class="PARAMETER">name</replaceable> [ [ WITH ] <replac
         If not specified,
         <literal>NOLOGIN</literal> is the default, except when
         <command>CREATE ROLE</> is invoked through its alternative spelling
-        <command>CREATE USER</>.
+        <xref linkend="sql-createuser">.
        </para>
       </listitem>
      </varlistentry>
