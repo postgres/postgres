@@ -46,7 +46,7 @@
 					# (change requires restart)
 
 # If external_pid_file is not explicitly set, no extra PID file is written.
-#external_pid_file = '(none)'		# write an extra PID file
+#external_pid_file = ''			# write an extra PID file
 					# (change requires restart)
 
 
