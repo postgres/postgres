@@ -82,6 +82,147 @@ static ObjectAddress get_object_address_opcf(ObjectType objtype, List *objname,
 						List *objargs, bool missing_ok);
 static bool object_exists(ObjectAddress address);
 
+/*
+ * ObjectProperty
+ *
+ * This array provides a common part of system object structure; to help
+ * consolidate routines to handle various kind of object classes.
+ */
+typedef struct
+{
+	Oid			class_oid;			/* oid of catalog */
+	Oid			oid_index_oid; 		/* oid of index on system oid column */
+	int			oid_catcache_id;	/* id of catcache on system oid column  */
+} ObjectPropertyType;
+
+static ObjectPropertyType ObjectProperty[] =
+{
+	{
+		CastRelationId,
+		CastOidIndexId,
+		-1
+	},
+	{
+		CollationRelationId,
+		CollationOidIndexId,
+		COLLOID
+	},
+	{
+		ConstraintRelationId,
+		ConstraintOidIndexId,
+		CONSTROID
+	},
+	{
+		ConversionRelationId,
+		ConversionOidIndexId,
+		CONVOID
+	},
+	{
+		DatabaseRelationId,
+		DatabaseOidIndexId,
+		DATABASEOID
+	},
+	{
+		ExtensionRelationId,
+		ExtensionOidIndexId,
+		-1
+	},
+	{
+		ForeignDataWrapperRelationId,
+		ForeignDataWrapperOidIndexId,
+		FOREIGNDATAWRAPPEROID
+	},
+	{
+		ForeignServerRelationId,
+		ForeignServerOidIndexId,
+		FOREIGNSERVEROID
+	},
+	{
+		ProcedureRelationId,
+		ProcedureOidIndexId,
+		PROCOID
+	},
+	{
+		LanguageRelationId,
+		LanguageOidIndexId,
+		LANGOID
+	},
+	{
+		LargeObjectMetadataRelationId,
+		LargeObjectMetadataOidIndexId,
+		-1
+	},
+	{
+		OperatorClassRelationId,
+		OpclassOidIndexId,
+		CLAOID
+	},
+	{
+		OperatorRelationId,
+		OperatorOidIndexId,
+		OPEROID
+	},
+	{
+		OperatorFamilyRelationId,
+		OpfamilyOidIndexId,
+		OPFAMILYOID
+	},
+	{
+		AuthIdRelationId,
+		AuthIdOidIndexId,
+		AUTHOID
+	},
+	{
+		RewriteRelationId,
+		RewriteOidIndexId,
+		-1
+	},
+	{
+		NamespaceRelationId,
+		NamespaceOidIndexId,
+		NAMESPACEOID
+	},
+	{
+		RelationRelationId,
+		ClassOidIndexId,
+		RELOID
+	},
+	{
+		TableSpaceRelationId,
+		TablespaceOidIndexId,
+		TABLESPACEOID,
+	},
+	{
+		TriggerRelationId,
+		TriggerOidIndexId,
+		-1
+	},
+	{
+		TSConfigRelationId,
+		TSConfigOidIndexId,
+		TSCONFIGOID
+	},
+	{
+		TSDictionaryRelationId,
+		TSDictionaryOidIndexId,
+		TSDICTOID
+	},
+	{
+		TSParserRelationId,
+		TSParserOidIndexId,
+		TSPARSEROID
+	},
+	{
+		TSTemplateRelationId,
+		TSTemplateOidIndexId,
+		TSTEMPLATEOID
+	},
+	{
+		TypeRelationId,
+		TypeOidIndexId,
+		TYPEOID
+	}
+};
 
 /*
  * Translate an object name and arguments (as passed by the parser) to an
@@ -448,7 +589,7 @@ get_relation_by_qualified_name(ObjectType objtype, List *objname,
 			break;
 	}
 
-	/* Done */
+	/* Done. */
 	address.objectId = RelationGetRelid(relation);
 	*relp = relation;
 
@@ -697,99 +838,33 @@ object_exists(ObjectAddress address)
 		}
 		return found;
 	}
-
-	/*
-	 * For object types that have a relevant syscache, we use it; for
-	 * everything else, we'll have to do an index-scan.  This switch sets
-	 * either the cache to be used for the syscache lookup, or the index to be
-	 * used for the index scan.
-	 */
-	switch (address.classId)
+	else 
 	{
-		case RelationRelationId:
-			cache = RELOID;
-			break;
-		case RewriteRelationId:
-			indexoid = RewriteOidIndexId;
-			break;
-		case TriggerRelationId:
-			indexoid = TriggerOidIndexId;
-			break;
-		case ConstraintRelationId:
-			cache = CONSTROID;
-			break;
-		case DatabaseRelationId:
-			cache = DATABASEOID;
-			break;
-		case TableSpaceRelationId:
-			cache = TABLESPACEOID;
-			break;
-		case AuthIdRelationId:
-			cache = AUTHOID;
-			break;
-		case NamespaceRelationId:
-			cache = NAMESPACEOID;
-			break;
-		case LanguageRelationId:
-			cache = LANGOID;
-			break;
-		case TypeRelationId:
-			cache = TYPEOID;
-			break;
-		case ProcedureRelationId:
-			cache = PROCOID;
-			break;
-		case OperatorRelationId:
-			cache = OPEROID;
-			break;
-		case CollationRelationId:
-			cache = COLLOID;
-			break;
-		case ConversionRelationId:
-			cache = CONVOID;
-			break;
-		case OperatorClassRelationId:
-			cache = CLAOID;
-			break;
-		case OperatorFamilyRelationId:
-			cache = OPFAMILYOID;
-			break;
-		case LargeObjectRelationId:
+		int			index;
 
-			/*
-			 * Weird backward compatibility hack: ObjectAddress notation uses
-			 * LargeObjectRelationId for large objects, but since PostgreSQL
-			 * 9.0, the relevant catalog is actually
-			 * LargeObjectMetadataRelationId.
-			 */
+		/*
+		 * Weird backward compatibility hack: ObjectAddress notation uses
+		 * LargeObjectRelationId for large objects, but since PostgreSQL
+		 * 9.0, the relevant catalog is actually LargeObjectMetadataRelationId.
+		 */
+		if (address.classId == LargeObjectRelationId)
 			address.classId = LargeObjectMetadataRelationId;
-			indexoid = LargeObjectMetadataOidIndexId;
-			break;
-		case CastRelationId:
-			indexoid = CastOidIndexId;
-			break;
-		case ForeignDataWrapperRelationId:
-			cache = FOREIGNDATAWRAPPEROID;
-			break;
-		case ForeignServerRelationId:
-			cache = FOREIGNSERVEROID;
-			break;
-		case TSParserRelationId:
-			cache = TSPARSEROID;
-			break;
-		case TSDictionaryRelationId:
-			cache = TSDICTOID;
-			break;
-		case TSTemplateRelationId:
-			cache = TSTEMPLATEOID;
-			break;
-		case TSConfigRelationId:
-			cache = TSCONFIGOID;
-			break;
-		case ExtensionRelationId:
-			indexoid = ExtensionOidIndexId;
-			break;
-		default:
+
+		/*
+		 * For object types that have a relevant syscache, we use it; for
+		 * everything else, we'll have to do an index-scan.  Search the
+		 * ObjectProperty array to find out which it is.
+		 */
+		for (index = 0; index < lengthof(ObjectProperty); index++)
+		{
+			if (ObjectProperty[index].class_oid == address.classId)
+			{
+				cache = ObjectProperty[index].oid_catcache_id;
+				indexoid = ObjectProperty[index].oid_index_oid;
+				break;
+			}
+		}
+		if (index == lengthof(ObjectProperty))
 			elog(ERROR, "unrecognized classid: %u", address.classId);
 	}
 
