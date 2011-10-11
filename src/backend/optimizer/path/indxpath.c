@@ -317,8 +317,7 @@ find_usable_indexes(PlannerInfo *root, RelOptInfo *rel,
 		bool		useful_predicate;
 		bool		found_clause;
 		bool		index_is_ordered;
-		bool		index_only_scan = false;
-		bool		checked_index_only = false;
+		bool		index_only_scan;
 
 		/*
 		 * Check that index supports the desired scan type(s)
@@ -436,17 +435,20 @@ find_usable_indexes(PlannerInfo *root, RelOptInfo *rel,
 		}
 
 		/*
-		 * 3. Generate an indexscan path if there are relevant restriction
+		 * 3. Check if an index-only scan is possible.
+		 */
+		index_only_scan = check_index_only(rel, index);
+
+		/*
+		 * 4. Generate an indexscan path if there are relevant restriction
 		 * clauses in the current clauses, OR the index ordering is
 		 * potentially useful for later merging or final output ordering, OR
-		 * the index has a predicate that was proven by the current clauses.
+		 * the index has a predicate that was proven by the current clauses,
+		 * OR an index-only scan is possible.
 		 */
-		if (found_clause || useful_pathkeys != NIL || useful_predicate)
+		if (found_clause || useful_pathkeys != NIL || useful_predicate ||
+			index_only_scan)
 		{
-			/* First, detect whether index-only scan is possible */
-			index_only_scan = check_index_only(rel, index);
-			checked_index_only = true;
-
 			ipath = create_index_path(root, index,
 									  restrictclauses,
 									  orderbyclauses,
@@ -460,7 +462,7 @@ find_usable_indexes(PlannerInfo *root, RelOptInfo *rel,
 		}
 
 		/*
-		 * 4. If the index is ordered, a backwards scan might be interesting.
+		 * 5. If the index is ordered, a backwards scan might be interesting.
 		 * Again, this is only interesting at top level.
 		 */
 		if (index_is_ordered && possibly_useful_pathkeys &&
@@ -472,9 +474,6 @@ find_usable_indexes(PlannerInfo *root, RelOptInfo *rel,
 														index_pathkeys);
 			if (useful_pathkeys != NIL)
 			{
-				if (!checked_index_only)
-					index_only_scan = check_index_only(rel, index);
-
 				ipath = create_index_path(root, index,
 										  restrictclauses,
 										  NIL,
