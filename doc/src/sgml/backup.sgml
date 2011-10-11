@@ -869,7 +869,11 @@ SELECT pg_stop_backup();
     of mistakes when restoring.  This is easy to arrange if
     <filename>pg_xlog/</> is a symbolic link pointing to someplace outside
     the cluster directory, which is a common setup anyway for performance
-    reasons.
+    reasons.  You might also want to exclude <filename>postmaster.pid</>
+    and <filename>postmaster.opts</>, which record information
+    about the running <application>postmaster</>, not about the
+    <application>postmaster</> which will eventually use this backup.
+    (These files can confuse <application>pg_ctl</>.)
    </para>
 
    <para>
