@@ -3675,6 +3675,8 @@ VirtualXactLock(VirtualTransactionId vxid, bool wait)
 	 * it's no longer running anywhere.
 	 */
 	proc = BackendIdGetProc(vxid.backendId);
+	if (proc == NULL)
+		return true;
 
 	/*
 	 * We must acquire this lock before checking the backendId and lxid
