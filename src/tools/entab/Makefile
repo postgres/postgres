@@ -20,9 +20,7 @@ halt.o	: halt.c
 clean:
 	rm -f *.o $(TARGET) log core
 
-install:
-	make clean
-	make CFLAGS=-O
+install: $(TARGET)
 	install -s $(TARGET) $(BINDIR)
 	rm -f $(BINDIR)/detab
 	ln $(BINDIR)/$(TARGET) $(BINDIR)/detab
